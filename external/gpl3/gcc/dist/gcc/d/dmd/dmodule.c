@@ -202,7 +202,7 @@ static void checkModFileAlias(OutBuffer *buf, OutBuffer *dotmods,
         const char *m = (*ms)[j];
         const char *q = strchr(m, '=');
         assert(q);
-        if (dotmods->offset <= (size_t)(q - m) && memcmp(dotmods->peekString(), m, q - m) == 0)
+        if (dotmods->offset == (size_t)(q - m) && memcmp(dotmods->peekString(), m, q - m) == 0)
         {
             buf->reset();
             size_t qlen = strlen(q + 1);
@@ -679,7 +679,8 @@ void Module::importAll(Scope *)
     // If it isn't there, some compiler rewrites, like
     //    classinst == classinst -> .object.opEquals(classinst, classinst)
     // would fail inside object.d.
-    if (members->dim == 0 || ((*members)[0])->ident != Id::object)
+    if (members->dim == 0 || ((*members)[0])->ident != Id::object ||
+        (*members)[0]->isImport() == NULL)
     {
         Import *im = new Import(Loc(), NULL, Id::object, NULL, 0);
         members->shift(im);

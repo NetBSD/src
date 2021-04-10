@@ -1,5 +1,5 @@
 /* Definition of RISC-V target for GNU compiler.
-   Copyright (C) 2016-2019 Free Software Foundation, Inc.
+   Copyright (C) 2016-2020 Free Software Foundation, Inc.
    Contributed by Andrew Waterman (andrew@sifive.com).
 
 This file is part of GCC.
@@ -45,5 +45,10 @@ enum riscv_microarchitecture_type {
   sifive_7
 };
 extern enum riscv_microarchitecture_type riscv_microarchitecture;
+
+enum riscv_align_data {
+  riscv_align_data_type_xlen,
+  riscv_align_data_type_natural
+};
 
 #endif /* ! GCC_RISCV_OPTS_H */

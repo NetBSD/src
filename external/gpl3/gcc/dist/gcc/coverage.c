@@ -1,5 +1,5 @@
 /* Read and write coverage files, and associated functionality.
-   Copyright (C) 1990-2019 Free Software Foundation, Inc.
+   Copyright (C) 1990-2020 Free Software Foundation, Inc.
    Contributed by James E. Wilson, UC Berkeley/Cygnus Support;
    based on some ideas from Dain Samples of UC Berkeley.
    Further mangling by Bob Manson, Cygnus Support.
@@ -47,9 +47,9 @@ along with GCC; see the file COPYING3.  If not see
 #include "context.h"
 #include "pass_manager.h"
 #include "intl.h"
-#include "params.h"
 #include "auto-profile.h"
 #include "profile.h"
+#include "diagnostic.h"
 
 #include "gcov-io.c"
 
@@ -266,7 +266,7 @@ read_counts_file (void)
 	  else if (entry->lineno_checksum != lineno_checksum
 		   || entry->cfg_checksum != cfg_checksum)
 	    {
-	      error ("Profile data for function %u is corrupted", fn_ident);
+	      error ("profile data for function %u is corrupted", fn_ident);
 	      error ("checksum is (%x,%x) instead of (%x,%x)",
 		     entry->lineno_checksum, entry->cfg_checksum,
 		     lineno_checksum, cfg_checksum);
@@ -324,7 +324,7 @@ get_coverage_counts (unsigned counter, unsigned cfg_checksum,
 	}
       return NULL;
     }
-  if (PARAM_VALUE (PARAM_PROFILE_FUNC_INTERNAL_ID))
+  if (param_profile_func_internal_id)
     elt.ident = current_function_funcdef_no + 1;
   else
     {
@@ -560,7 +560,7 @@ coverage_compute_profile_id (struct cgraph_node *n)
     {
       expanded_location xloc
 	= expand_location (DECL_SOURCE_LOCATION (n->decl));
-      bool use_name_only = (PARAM_VALUE (PARAM_PROFILE_FUNC_INTERNAL_ID) == 0);
+      bool use_name_only = (param_profile_func_internal_id == 0);
 
       chksum = (use_name_only ? 0 : xloc.line);
       if (xloc.file)
@@ -628,7 +628,7 @@ coverage_begin_function (unsigned lineno_checksum, unsigned cfg_checksum)
 
   /* Announce function */
   offset = gcov_write_tag (GCOV_TAG_FUNCTION);
-  if (PARAM_VALUE (PARAM_PROFILE_FUNC_INTERNAL_ID))
+  if (param_profile_func_internal_id)
     gcov_write_unsigned (current_function_funcdef_no + 1);
   else
     {
@@ -643,7 +643,7 @@ coverage_begin_function (unsigned lineno_checksum, unsigned cfg_checksum)
 		     (DECL_ASSEMBLER_NAME (current_function_decl)));
   gcov_write_unsigned (DECL_ARTIFICIAL (current_function_decl)
 		       && !DECL_FUNCTION_VERSIONED (current_function_decl)
-		       && !DECL_LAMBDA_FUNCTION (current_function_decl));
+		       && !DECL_LAMBDA_FUNCTION_P (current_function_decl));
   gcov_write_filename (xloc.file);
   gcov_write_unsigned (xloc.line);
   gcov_write_unsigned (xloc.column);
@@ -682,7 +682,7 @@ coverage_end_function (unsigned lineno_checksum, unsigned cfg_checksum)
 
       item = ggc_alloc<coverage_data> ();
 
-      if (PARAM_VALUE (PARAM_PROFILE_FUNC_INTERNAL_ID))
+      if (param_profile_func_internal_id)
 	item->ident = current_function_funcdef_no + 1;
       else
 	{
@@ -1072,8 +1072,7 @@ build_init_ctor (tree gcov_info_type)
 static void
 build_gcov_exit_decl (void)
 {
-  tree init_fn = build_function_type_list (void_type_node, void_type_node,
-					   NULL);
+  tree init_fn = build_function_type_list (void_type_node, NULL);
   init_fn = build_decl (BUILTINS_LOCATION, FUNCTION_DECL,
 			get_identifier ("__gcov_exit"), init_fn);
   TREE_PUBLIC (init_fn) = 1;
@@ -1201,6 +1200,13 @@ coverage_obj_finish (vec<constructor_elt, va_gc> *ctor)
 void
 coverage_init (const char *filename)
 {
+  const char *original_filename = filename;
+  int original_len = strlen (original_filename);
+#if HAVE_DOS_BASED_FILE_SYSTEM
+  const char *separator = "\\";
+#else
+  const char *separator = "/";
+#endif
   int len = strlen (filename);
   int prefix_len = 0;
 
@@ -1217,12 +1223,20 @@ coverage_init (const char *filename)
 	 of filename in order to prevent file path clashing.  */
       if (profile_data_prefix)
 	{
-#if HAVE_DOS_BASED_FILE_SYSTEM
-	  const char *separator = "\\";
-#else
-	  const char *separator = "/";
-#endif
 	  filename = concat (getpwd (), separator, filename, NULL);
+	  if (profile_prefix_path)
+	    {
+	      if (!strncmp (filename, profile_prefix_path,
+			    strlen (profile_prefix_path)))
+		{
+		  filename += strlen (profile_prefix_path);
+		  while (*filename == *separator)
+		    filename++;
+		}
+	      else
+		warning (0, "filename %qs does not start with profile "
+			 "prefix %qs", filename, profile_prefix_path);
+	    }
 	  filename = mangle_path (filename);
 	  len = strlen (filename);
 	}
@@ -1240,7 +1254,7 @@ coverage_init (const char *filename)
   if (profile_data_prefix)
     {
       memcpy (da_file_name, profile_data_prefix, prefix_len);
-      da_file_name[prefix_len++] = '/';
+      da_file_name[prefix_len++] = *separator;
     }
   memcpy (da_file_name + prefix_len, filename, len);
   strcpy (da_file_name + prefix_len + len, GCOV_DATA_SUFFIX);
@@ -1255,9 +1269,14 @@ coverage_init (const char *filename)
   /* Name of bbg file.  */
   if (flag_test_coverage && !flag_compare_debug)
     {
-      bbg_file_name = XNEWVEC (char, len + strlen (GCOV_NOTE_SUFFIX) + 1);
-      memcpy (bbg_file_name, filename, len);
-      strcpy (bbg_file_name + len, GCOV_NOTE_SUFFIX);
+      if (profile_note_location)
+	bbg_file_name = xstrdup (profile_note_location);
+      else
+	{
+	  bbg_file_name = XNEWVEC (char, original_len + strlen (GCOV_NOTE_SUFFIX) + 1);
+	  memcpy (bbg_file_name, original_filename, original_len);
+	  strcpy (bbg_file_name + original_len, GCOV_NOTE_SUFFIX);
+	}
 
       if (!gcov_open (bbg_file_name, -1))
 	{

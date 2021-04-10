@@ -1,5 +1,5 @@
 /* Calculate branch probabilities, and basic block execution counts.
-   Copyright (C) 1990-2019 Free Software Foundation, Inc.
+   Copyright (C) 1990-2020 Free Software Foundation, Inc.
    Contributed by James E. Wilson, UC Berkeley/Cygnus Support;
    based on some ideas from Dain Samples of UC Berkeley.
    Further mangling by Bob Manson, Cygnus Support.
@@ -160,32 +160,31 @@ instrument_values (histogram_values values)
       switch (hist->type)
 	{
 	case HIST_TYPE_INTERVAL:
-	  gimple_gen_interval_profiler (hist, t, 0);
+	  gimple_gen_interval_profiler (hist, t);
 	  break;
 
 	case HIST_TYPE_POW2:
-	  gimple_gen_pow2_profiler (hist, t, 0);
+	  gimple_gen_pow2_profiler (hist, t);
 	  break;
 
-	case HIST_TYPE_SINGLE_VALUE:
-	  gimple_gen_one_value_profiler (hist, t, 0);
+	case HIST_TYPE_TOPN_VALUES:
+	  gimple_gen_topn_values_profiler (hist, t);
 	  break;
 
  	case HIST_TYPE_INDIR_CALL:
- 	case HIST_TYPE_INDIR_CALL_TOPN:
- 	  gimple_gen_ic_profiler (hist, t, 0);
+	  gimple_gen_ic_profiler (hist, t);
   	  break;
 
 	case HIST_TYPE_AVERAGE:
-	  gimple_gen_average_profiler (hist, t, 0);
+	  gimple_gen_average_profiler (hist, t);
 	  break;
 
 	case HIST_TYPE_IOR:
-	  gimple_gen_ior_profiler (hist, t, 0);
+	  gimple_gen_ior_profiler (hist, t);
 	  break;
 
 	case HIST_TYPE_TIME_PROFILE:
-	  gimple_gen_time_profiler (t, 0);
+	  gimple_gen_time_profiler (t);
 	  break;
 
 	default:
@@ -636,9 +635,20 @@ compute_branch_probabilities (unsigned cfg_checksum, unsigned lineno_checksum)
 	}
       if (bb_gcov_count (bb))
 	{
+	  bool set_to_guessed = false;
 	  FOR_EACH_EDGE (e, ei, bb->succs)
-	    e->probability = profile_probability::probability_in_gcov_type
-		(edge_gcov_count (e), bb_gcov_count (bb));
+	    {
+	      bool prev_never = e->probability == profile_probability::never ();
+	      e->probability = profile_probability::probability_in_gcov_type
+		  (edge_gcov_count (e), bb_gcov_count (bb));
+	      if (e->probability == profile_probability::never ()
+		  && !prev_never
+		  && flag_profile_partial_training)
+		set_to_guessed = true;
+	    }
+	  if (set_to_guessed)
+	    FOR_EACH_EDGE (e, ei, bb->succs)
+	      e->probability = e->probability.guessed ();
 	  if (bb->index >= NUM_FIXED_BLOCKS
 	      && block_ends_with_condjump_p (bb)
 	      && EDGE_COUNT (bb->succs) >= 2)
@@ -698,17 +708,23 @@ compute_branch_probabilities (unsigned cfg_checksum, unsigned lineno_checksum)
 	}
     }
 
-  if (exec_counts)
+  if (exec_counts
+      && (bb_gcov_count (ENTRY_BLOCK_PTR_FOR_FN (cfun))
+	  || !flag_profile_partial_training))
     profile_status_for_fn (cfun) = PROFILE_READ;
 
   /* If we have real data, use them!  */
   if (bb_gcov_count (ENTRY_BLOCK_PTR_FOR_FN (cfun))
       || !flag_guess_branch_prob)
     FOR_ALL_BB_FN (bb, cfun)
-      bb->count = profile_count::from_gcov_type (bb_gcov_count (bb));
+      if (bb_gcov_count (bb) || !flag_profile_partial_training)
+        bb->count = profile_count::from_gcov_type (bb_gcov_count (bb));
+      else
+	bb->count = profile_count::guessed_zero ();
   /* If function was not trained, preserve local estimates including statically
      determined zero counts.  */
-  else if (profile_status_for_fn (cfun) == PROFILE_READ)
+  else if (profile_status_for_fn (cfun) == PROFILE_READ
+	   && !flag_profile_partial_training)
     FOR_ALL_BB_FN (bb, cfun)
       if (!(bb->count == profile_count::zero ()))
         bb->count = bb->count.global0 ();
@@ -744,6 +760,42 @@ compute_branch_probabilities (unsigned cfg_checksum, unsigned lineno_checksum)
   free_aux_for_blocks ();
 }
 
+/* Sort the histogram value and count for TOPN and INDIR_CALL type.  */
+
+static void
+sort_hist_values (histogram_value hist)
+{
+  /* counters[2] equal to -1 means that all counters are invalidated.  */
+  if (hist->hvalue.counters[2] == -1)
+    return;
+
+  gcc_assert (hist->type == HIST_TYPE_TOPN_VALUES
+	      || hist->type == HIST_TYPE_INDIR_CALL);
+
+  gcc_assert (hist->n_counters == GCOV_TOPN_VALUES_COUNTERS);
+
+  /* Hist value is organized as:
+     [total_executions, value1, counter1, ..., value4, counter4]
+     Use decrease bubble sort to rearrange it.  The sort starts from <value1,
+     counter1> and compares counter first.  If counter is same, compares the
+     value, exchange it if small to keep stable.  */
+  for (unsigned i = 0; i < GCOV_TOPN_VALUES - 1; i++)
+    {
+      bool swapped = false;
+      for (unsigned j = 0; j < GCOV_TOPN_VALUES - 1 - i; j++)
+	{
+	  gcov_type *p = &hist->hvalue.counters[2 * j + 1];
+	  if (p[1] < p[3] || (p[1] == p[3] && p[0] < p[2]))
+	    {
+	      std::swap (p[0], p[2]);
+	      std::swap (p[1], p[3]);
+	      swapped = true;
+	    }
+	}
+      if (!swapped)
+	break;
+    }
+}
 /* Load value histograms values whose description is stored in VALUES array
    from .gcda file.  
 
@@ -809,13 +861,33 @@ compute_value_histograms (histogram_values values, unsigned cfg_checksum,
         else
           hist->hvalue.counters[j] = 0;
 
+      if (hist->type == HIST_TYPE_TOPN_VALUES
+	  || hist->type == HIST_TYPE_INDIR_CALL)
+	{
+	  /* Each count value is multiplied by GCOV_TOPN_VALUES.  */
+	  if (hist->hvalue.counters[2] != -1)
+	    for (unsigned i = 0; i < GCOV_TOPN_VALUES; i++)
+	      hist->hvalue.counters[2 * i + 2]
+		= RDIV (hist->hvalue.counters[2 * i + 2], GCOV_TOPN_VALUES);
+
+	  sort_hist_values (hist);
+	}
+
       /* Time profiler counter is not related to any statement,
          so that we have to read the counter and set the value to
          the corresponding call graph node.  */
       if (hist->type == HIST_TYPE_TIME_PROFILE)
         {
 	  node = cgraph_node::get (hist->fun->decl);
-	  node->tp_first_run = hist->hvalue.counters[0];
+	  if (hist->hvalue.counters[0] >= 0
+	      && hist->hvalue.counters[0] < INT_MAX / 2)
+	    node->tp_first_run = hist->hvalue.counters[0];
+	  else
+	    {
+	      if (flag_profile_correction)
+		error ("corrupted profile info: invalid time profile");
+	      node->tp_first_run = 0;
+	    }
 
           if (dump_file)
             fprintf (dump_file, "Read tp_first_run: %d\n", node->tp_first_run);
@@ -867,6 +939,8 @@ struct location_triplet_hash : typed_noop_remove <location_triplet>
   {
     ref.lineno = -1;
   }
+
+  static const bool empty_zero_p = false;
 
   static void
   mark_empty (location_triplet &ref)
@@ -1293,7 +1367,7 @@ branch_prob (bool thunk)
 	      seen_locations.add (loc);
 	      expanded_location curr_location = expand_location (loc);
 	      output_location (&streamed_locations, curr_location.file,
-			       curr_location.line, &offset, bb);
+			       MAX (1, curr_location.line), &offset, bb);
 	    }
 
 	  for (gsi = gsi_start_bb (bb); !gsi_end_p (gsi); gsi_next (&gsi))
@@ -1304,7 +1378,7 @@ branch_prob (bool thunk)
 		{
 		  seen_locations.add (loc);
 		  output_location (&streamed_locations, gimple_filename (stmt),
-				   gimple_lineno (stmt), &offset, bb);
+				   MAX (1, gimple_lineno (stmt)), &offset, bb);
 		}
 	    }
 
@@ -1319,7 +1393,7 @@ branch_prob (bool thunk)
 	    {
 	      expanded_location curr_location = expand_location (loc);
 	      output_location (&streamed_locations, curr_location.file,
-			       curr_location.line, &offset, bb);
+			       MAX (1, curr_location.line), &offset, bb);
 	    }
 
 	  if (offset)
@@ -1371,14 +1445,14 @@ branch_prob (bool thunk)
   if (flag_branch_probabilities
       && (profile_status_for_fn (cfun) == PROFILE_READ))
     {
-      struct loop *loop;
+      class loop *loop;
       if (dump_file && (dump_flags & TDF_DETAILS))
 	report_predictor_hitrates ();
 
       /* At this moment we have precise loop iteration count estimates.
 	 Record them to loop structure before the profile gets out of date. */
       FOR_EACH_LOOP (loop, 0)
-	if (loop->header->count > 0)
+	if (loop->header->count > 0 && loop->header->count.reliable_p ())
 	  {
 	    gcov_type nit = expected_loop_iterations_unbounded (loop);
 	    widest_int bound = gcov_type_to_wide_int (nit);

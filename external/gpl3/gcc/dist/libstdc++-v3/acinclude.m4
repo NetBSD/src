@@ -211,7 +211,7 @@ AC_DEFUN([GLIBCXX_CHECK_LINKER_FEATURES], [
       glibcxx_ld_is_gold=yes
     fi
     ldver=`$LD --version 2>/dev/null |
-	   sed -e 's/GNU gold /GNU ld /;s/GNU ld version /GNU ld /;s/GNU ld ([^)]*) /GNU ld /;s/GNU ld \([0-9.][0-9.]*\).*/\1/; q'`
+	   sed -e 's/[. ][0-9]\{8\}$//;s/.* \([^ ]\{1,\}\)$/\1/; q'`
     changequote([,])
     glibcxx_gnu_ld_version=`echo $ldver | \
 	   $AWK -F. '{ if (NF<3) [$]3=0; print ([$]1*100+[$]2)*100+[$]3 }'`
@@ -316,6 +316,8 @@ AC_DEFUN([GLIBCXX_CHECK_SETRLIMIT_ancilliary], [
 ])
 
 AC_DEFUN([GLIBCXX_CHECK_SETRLIMIT], [
+  AC_LANG_SAVE
+  AC_LANG_CPLUSPLUS
   setrlimit_have_headers=yes
   AC_CHECK_HEADERS(unistd.h sys/time.h sys/resource.h,
 		   [],
@@ -352,6 +354,7 @@ AC_DEFUN([GLIBCXX_CHECK_SETRLIMIT], [
   else
     ac_res_limits=no
   fi
+  AC_LANG_RESTORE
   AC_MSG_RESULT($ac_res_limits)
 ])
 
@@ -782,6 +785,8 @@ AC_DEFUN([GLIBCXX_EXPORT_INSTALL_INFO], [
     [version_specific_libs=no])
   AC_MSG_RESULT($version_specific_libs)
 
+  GCC_WITH_TOOLEXECLIBDIR
+
   # Default case for install directory for include files.
   if test $version_specific_libs = no && test $gxx_include_dir = no; then
     gxx_include_dir='include/c++/${gcc_version}'
@@ -812,7 +817,14 @@ AC_DEFUN([GLIBCXX_EXPORT_INSTALL_INFO], [
     if test -n "$with_cross_host" &&
        test x"$with_cross_host" != x"no"; then
       glibcxx_toolexecdir='${exec_prefix}/${host_alias}'
-      glibcxx_toolexeclibdir='${toolexecdir}/lib'
+      case ${with_toolexeclibdir} in
+	no)
+	  glibcxx_toolexeclibdir='${toolexecdir}/lib'
+	  ;;
+	*)
+	  glibcxx_toolexeclibdir=${with_toolexeclibdir}
+	  ;;
+      esac
     else
       glibcxx_toolexecdir='${libdir}/gcc/${host_alias}'
       glibcxx_toolexeclibdir='${libdir}'
@@ -1404,6 +1416,11 @@ AC_DEFUN([GLIBCXX_ENABLE_LIBSTDCXX_TIME], [
         ac_has_nanosleep=yes
         ac_has_sched_yield=yes
         ;;
+      # VxWorks has nanosleep as soon as the kernel is configured with
+      # INCLUDE_POSIX_TIMERS, which is normally/most-often the case.
+      vxworks*)
+        ac_has_nanosleep=yes
+        ;;
       gnu* | linux* | kfreebsd*-gnu | knetbsd*-gnu)
         # Don't use link test for freestanding library, in case gcc_no_link=yes
         if test x"$is_hosted" = xyes; then
@@ -1435,6 +1452,9 @@ AC_DEFUN([GLIBCXX_ENABLE_LIBSTDCXX_TIME], [
         ac_has_nanosleep=yes
         ac_has_sched_yield=yes
         ;;
+      uclinux*)
+        ac_has_nanosleep=yes
+        ac_has_sched_yield=yes
     esac
 
   elif test x"$enable_libstdcxx_time" != x"no"; then
@@ -1520,7 +1540,7 @@ AC_DEFUN([GLIBCXX_ENABLE_LIBSTDCXX_TIME], [
 
   if test x"$ac_has_clock_monotonic" != x"yes"; then
     case ${target_os} in
-      linux*)
+      linux* | uclinux*)
 	AC_MSG_CHECKING([for clock_gettime syscall])
 	AC_TRY_COMPILE(
 	  [#include <unistd.h>
@@ -2154,7 +2174,7 @@ AC_DEFUN([GLIBCXX_CHECK_STDIO_PROTO], [
   AC_CACHE_VAL(glibcxx_cv_gets, [
   AC_COMPILE_IFELSE([AC_LANG_SOURCE(
 	  [#include <stdio.h>
-	   namespace test 
+	   namespace test
 	   {
               using ::gets;
 	   }
@@ -2320,35 +2340,6 @@ AC_DEFUN([GLIBCXX_CHECK_MATH11_PROTO], [
 
   CXXFLAGS="$ac_save_CXXFLAGS"
   AC_LANG_RESTORE
-])
-
-dnl
-dnl Check whether macros, etc are present for <system_error>
-dnl
-AC_DEFUN([GLIBCXX_CHECK_SYSTEM_ERROR], [
-
-m4_pushdef([n_syserr], [1])dnl
-m4_foreach([syserr], [EOWNERDEAD, ENOTRECOVERABLE, ENOLINK, EPROTO, ENODATA,
-		      ENOSR, ENOSTR, ETIME, EBADMSG, ECANCELED,
-		      EOVERFLOW, ENOTSUP, EIDRM, ETXTBSY,
-		      ECHILD, ENOSPC, EPERM,
-		      ETIMEDOUT, EWOULDBLOCK],
-[m4_pushdef([SYSERR], m4_toupper(syserr))dnl
-AC_MSG_CHECKING([for syserr])
-AC_CACHE_VAL([glibcxx_cv_system_error[]n_syserr], [
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <errno.h>]],
-				   [int i = syserr;])],
-		  [glibcxx_cv_system_error[]n_syserr=yes],
-		  [glibcxx_cv_system_error[]n_syserr=no])
-])
-AC_MSG_RESULT([$glibcxx_cv_system_error[]n_syserr])
-if test x"$glibcxx_cv_system_error[]n_syserr" = x"yes"; then
-  AC_DEFINE([HAVE_]SYSERR, 1, [Define if ]syserr[ exists.])
-fi
-m4_define([n_syserr], m4_incr(n_syserr))dnl
-m4_popdef([SYSERR])dnl
-])
-m4_popdef([n_syserr])dnl
 ])
 
 dnl
@@ -2771,9 +2762,9 @@ AC_DEFUN([GLIBCXX_ENABLE_VTABLE_VERIFY], [
     esac
     VTV_PCH_CXXFLAGS="-fvtable-verify=std"
   else
-    VTV_CXXFLAGS= 
+    VTV_CXXFLAGS=
     VTV_PCH_CXXFLAGS=
-    VTV_CXXLINKFLAGS= 
+    VTV_CXXLINKFLAGS=
   fi
 
   AC_SUBST(VTV_CXXFLAGS)
@@ -2893,8 +2884,20 @@ dnl       Where DEFAULT is either `yes' or `no'.
 dnl
 AC_DEFUN([GLIBCXX_ENABLE_DEBUG], [
   AC_MSG_CHECKING([for additional debug build])
+  skip_debug_build=
   GLIBCXX_ENABLE(libstdcxx-debug,$1,,[build extra debug library])
-  AC_MSG_RESULT($enable_libstdcxx_debug)
+  if test x$enable_libstdcxx_debug = xyes; then
+    if test -f $toplevel_builddir/../stage_final \
+      && test -f $toplevel_builddir/../stage_current; then
+      stage_final=`cat $toplevel_builddir/../stage_final`
+      stage_current=`cat $toplevel_builddir/../stage_current`
+      if test x$stage_current != x$stage_final ; then
+	skip_debug_build=" (skipped for bootstrap stage $stage_current)"
+	enable_libstdcxx_debug=no
+      fi
+    fi
+  fi
+  AC_MSG_RESULT($enable_libstdcxx_debug$skip_debug_build)
   GLIBCXX_CONDITIONAL(GLIBCXX_BUILD_DEBUG, test $enable_libstdcxx_debug = yes)
 ])
 
@@ -3943,7 +3946,7 @@ dnl
 AC_DEFUN([GLIBCXX_CHECK_GTHREADS], [
   GLIBCXX_ENABLE(libstdcxx-threads,auto,,[enable C++11 threads support])
 
-  if test x$enable_libstdcxx_threads = xauto || 
+  if test x$enable_libstdcxx_threads = xauto ||
      test x$enable_libstdcxx_threads = xyes; then
 
   AC_LANG_SAVE
@@ -3996,11 +3999,23 @@ AC_DEFUN([GLIBCXX_CHECK_GTHREADS], [
 	      [Define if gthreads library is available.])
 
     # Also check for pthread_rwlock_t for std::shared_timed_mutex in C++14
-    AC_CHECK_TYPE([pthread_rwlock_t],
-            [AC_DEFINE([_GLIBCXX_USE_PTHREAD_RWLOCK_T], 1,
-            [Define if POSIX read/write locks are available in <gthr.h>.])],
-            [],
-            [#include "gthr.h"])
+    # but only do so if we're using pthread in the gthread library.
+    # On VxWorks for example, pthread_rwlock_t is defined in sys/types.h
+    # but the pthread library is not there by default and the gthread library
+    # does not use it.
+    AC_TRY_COMPILE([#include "gthr.h"],
+    [
+      #if (!defined(_PTHREADS))
+      #error
+      #endif
+    ], [ac_gthread_use_pthreads=yes], [ac_gthread_use_pthreads=no])
+    if test x"$ac_gthread_use_pthreads" = x"yes"; then
+      AC_CHECK_TYPE([pthread_rwlock_t],
+             [AC_DEFINE([_GLIBCXX_USE_PTHREAD_RWLOCK_T], 1,
+             [Define if POSIX read/write locks are available in <gthr.h>.])],
+             [],
+             [#include "gthr.h"])
+    fi
   fi
 
   CXXFLAGS="$ac_save_CXXFLAGS"
@@ -4045,6 +4060,26 @@ AC_DEFUN([GLIBCXX_CHECK_X86_RDRAND], [
 		[ Defined if as can handle rdrand. ])
   fi
   AC_MSG_RESULT($ac_cv_x86_rdrand)
+])
+
+dnl
+dnl Check whether rdseed is supported in the assembler.
+AC_DEFUN([GLIBCXX_CHECK_X86_RDSEED], [
+  AC_MSG_CHECKING([for rdseed support in assembler])
+  AC_CACHE_VAL(ac_cv_x86_rdseed, [
+  ac_cv_x86_rdseed=no
+  case "$target" in
+    i?86-*-* | \
+    x86_64-*-*)
+    AC_TRY_COMPILE(, [asm("rdseed %eax");],
+		[ac_cv_x86_rdseed=yes], [ac_cv_x86_rdseed=no])
+  esac
+  ])
+  if test $ac_cv_x86_rdseed = yes; then
+    AC_DEFINE(_GLIBCXX_X86_RDSEED, 1,
+		[ Defined if as can handle rdseed. ])
+  fi
+  AC_MSG_RESULT($ac_cv_x86_rdseed)
 ])
 
 dnl
@@ -4152,6 +4187,101 @@ AC_DEFUN([GLIBCXX_CHECK_PTHREADS_NUM_PROCESSORS_NP], [
   AC_MSG_RESULT($glibcxx_cv_PTHREADS_NUM_PROCESSORS_NP)
 
   CXXFLAGS="$ac_save_CXXFLAGS"
+  AC_LANG_RESTORE
+])
+
+dnl
+dnl Check whether pthread_cond_clockwait is available in <pthread.h> for std::condition_variable to use,
+dnl and define _GLIBCXX_USE_PTHREAD_COND_CLOCKWAIT.
+dnl
+AC_DEFUN([GLIBCXX_CHECK_PTHREAD_COND_CLOCKWAIT], [
+
+  AC_LANG_SAVE
+  AC_LANG_CPLUSPLUS
+  ac_save_CXXFLAGS="$CXXFLAGS"
+  CXXFLAGS="$CXXFLAGS -fno-exceptions"
+  ac_save_LIBS="$LIBS"
+  LIBS="$LIBS -lpthread"
+
+  AC_MSG_CHECKING([for pthread_cond_clockwait])
+  AC_CACHE_VAL(glibcxx_cv_PTHREAD_COND_CLOCKWAIT, [
+    GCC_TRY_COMPILE_OR_LINK(
+      [#include <pthread.h>],
+      [pthread_mutex_t mutex; pthread_cond_t cond; struct timespec ts; int n = pthread_cond_clockwait(&cond, &mutex, 0, &ts);],
+      [glibcxx_cv_PTHREAD_COND_CLOCKWAIT=yes],
+      [glibcxx_cv_PTHREAD_COND_CLOCKWAIT=no])
+  ])
+  if test $glibcxx_cv_PTHREAD_COND_CLOCKWAIT = yes; then
+    AC_DEFINE(_GLIBCXX_USE_PTHREAD_COND_CLOCKWAIT, 1, [Define if pthread_cond_clockwait is available in <pthread.h>.])
+  fi
+  AC_MSG_RESULT($glibcxx_cv_PTHREAD_COND_CLOCKWAIT)
+
+  CXXFLAGS="$ac_save_CXXFLAGS"
+  LIBS="$ac_save_LIBS"
+  AC_LANG_RESTORE
+])
+
+dnl
+dnl Check whether pthread_mutex_clocklock is available in <pthread.h> for std::timed_mutex to use,
+dnl and define _GLIBCXX_USE_PTHREAD_MUTEX_CLOCKLOCK.
+dnl
+AC_DEFUN([GLIBCXX_CHECK_PTHREAD_MUTEX_CLOCKLOCK], [
+
+  AC_LANG_SAVE
+  AC_LANG_CPLUSPLUS
+  ac_save_CXXFLAGS="$CXXFLAGS"
+  CXXFLAGS="$CXXFLAGS -fno-exceptions"
+  ac_save_LIBS="$LIBS"
+  LIBS="$LIBS -lpthread"
+
+  AC_MSG_CHECKING([for pthread_mutex_clocklock])
+  AC_CACHE_VAL(glibcxx_cv_PTHREAD_MUTEX_CLOCKLOCK, [
+    GCC_TRY_COMPILE_OR_LINK(
+      [#include <pthread.h>],
+      [pthread_mutex_t mutex; struct timespec ts; int n = pthread_mutex_clocklock(&mutex, CLOCK_REALTIME, &ts);],
+      [glibcxx_cv_PTHREAD_MUTEX_CLOCKLOCK=yes],
+      [glibcxx_cv_PTHREAD_MUTEX_CLOCKLOCK=no])
+  ])
+  if test $glibcxx_cv_PTHREAD_MUTEX_CLOCKLOCK = yes; then
+    AC_DEFINE(_GLIBCXX_USE_PTHREAD_MUTEX_CLOCKLOCK, 1, [Define if pthread_mutex_clocklock is available in <pthread.h>.])
+  fi
+  AC_MSG_RESULT($glibcxx_cv_PTHREAD_MUTEX_CLOCKLOCK)
+
+  CXXFLAGS="$ac_save_CXXFLAGS"
+  LIBS="$ac_save_LIBS"
+  AC_LANG_RESTORE
+])
+
+dnl
+dnl Check whether pthread_mutex_clocklock is available in <pthread.h> for std::timed_mutex to use,
+dnl and define _GLIBCXX_USE_PTHREAD_MUTEX_CLOCKLOCK.
+dnl
+AC_DEFUN([GLIBCXX_CHECK_PTHREAD_RWLOCK_CLOCKLOCK], [
+
+  AC_LANG_SAVE
+  AC_LANG_CPLUSPLUS
+  ac_save_CXXFLAGS="$CXXFLAGS"
+  CXXFLAGS="$CXXFLAGS -fno-exceptions"
+  ac_save_LIBS="$LIBS"
+  LIBS="$LIBS -lpthread"
+
+  AC_MSG_CHECKING([for pthread_rwlock_clockrdlock, pthread_wlock_clockwrlock])
+  AC_CACHE_VAL(glibcxx_cv_PTHREAD_RWLOCK_CLOCKLOCK, [
+    GCC_TRY_COMPILE_OR_LINK(
+      [#include <pthread.h>],
+      [pthread_rwlock_t rwl; struct timespec ts;]
+      [int n = pthread_rwlock_clockrdlock(&rwl, CLOCK_REALTIME, &ts);]
+      [int m = pthread_rwlock_clockwrlock(&rwl, CLOCK_REALTIME, &ts);],
+      [glibcxx_cv_PTHREAD_RWLOCK_CLOCKLOCK=yes],
+      [glibcxx_cv_PTHREAD_RWLOCK_CLOCKLOCK=no])
+  ])
+  if test $glibcxx_cv_PTHREAD_RWLOCK_CLOCKLOCK = yes; then
+    AC_DEFINE(_GLIBCXX_USE_PTHREAD_RWLOCK_CLOCKLOCK, 1, [Define if pthread_rwlock_clockrdlock and pthread_rwlock_clockwrlock are available in <pthread.h>.])
+  fi
+  AC_MSG_RESULT($glibcxx_cv_PTHREAD_RWLOCK_CLOCKLOCK)
+
+  CXXFLAGS="$ac_save_CXXFLAGS"
+  LIBS="$ac_save_LIBS"
   AC_LANG_RESTORE
 ])
 
@@ -4355,13 +4485,16 @@ AC_DEFUN([GLIBCXX_ENABLE_FILESYSTEM_TS], [
       freebsd*|netbsd*|openbsd*|dragonfly*|darwin*)
         enable_libstdcxx_filesystem_ts=yes
         ;;
-      gnu* | linux* | kfreebsd*-gnu | knetbsd*-gnu)
+      gnu* | linux* | kfreebsd*-gnu | knetbsd*-gnu | uclinux*)
         enable_libstdcxx_filesystem_ts=yes
         ;;
       rtems*)
         enable_libstdcxx_filesystem_ts=yes
         ;;
       solaris*)
+        enable_libstdcxx_filesystem_ts=yes
+        ;;
+      mingw*)
         enable_libstdcxx_filesystem_ts=yes
         ;;
       *)
@@ -4374,7 +4507,8 @@ AC_DEFUN([GLIBCXX_ENABLE_FILESYSTEM_TS], [
 ])
 
 dnl
-dnl Check whether the library calls required by the Filesystem TS are present.
+dnl Check whether the library calls required by the C++17 Filesystem library
+dnl and the Filesystem TS are present.
 dnl Defines:
 dnl  HAVE_STRUCT_DIRENT_D_TYPE
 dnl  _GLIBCXX_USE_REALPATH
@@ -4389,226 +4523,224 @@ dnl  HAVE_SYMLINK
 dnl
 AC_DEFUN([GLIBCXX_CHECK_FILESYSTEM_DEPS], [dnl
 dnl
-  if test $enable_libstdcxx_filesystem_ts = yes; then
-    AC_LANG_SAVE
-    AC_LANG_CPLUSPLUS
-    ac_save_CXXFLAGS="$CXXFLAGS"
-    CXXFLAGS="$CXXFLAGS -fno-exceptions"
+  AC_LANG_SAVE
+  AC_LANG_CPLUSPLUS
+  ac_save_CXXFLAGS="$CXXFLAGS"
+  CXXFLAGS="$CXXFLAGS -fno-exceptions"
 dnl
-    AC_MSG_CHECKING([for struct dirent.d_type])
-    AC_CACHE_VAL(glibcxx_cv_dirent_d_type, [dnl
-      GCC_TRY_COMPILE_OR_LINK(
-        [#include <dirent.h>],
-        [
-         struct dirent d;
-         if (sizeof d.d_type) return 0;
-        ],
-        [glibcxx_cv_dirent_d_type=yes],
-        [glibcxx_cv_dirent_d_type=no])
-    ])
-    if test $glibcxx_cv_dirent_d_type = yes; then
-      AC_DEFINE(HAVE_STRUCT_DIRENT_D_TYPE, 1, [Define to 1 if `d_type' is a member of `struct dirent'.])
-    fi
-    AC_MSG_RESULT($glibcxx_cv_dirent_d_type)
-dnl
-    AC_MSG_CHECKING([for realpath])
-    AC_CACHE_VAL(glibcxx_cv_realpath, [dnl
-      GCC_TRY_COMPILE_OR_LINK(
-        [
-         #include <limits.h>
-         #include <stdlib.h>
-         #include <unistd.h>
-        ],
-        [
-         #if _XOPEN_VERSION < 500
-         #error
-         #elif _XOPEN_VERSION >= 700 || defined(PATH_MAX)
-         char *tmp = realpath((const char*)NULL, (char*)NULL);
-         #else
-         #error
-         #endif
-        ],
-        [glibcxx_cv_realpath=yes],
-        [glibcxx_cv_realpath=no])
-    ])
-    if test $glibcxx_cv_realpath = yes; then
-      AC_DEFINE(_GLIBCXX_USE_REALPATH, 1, [Define if usable realpath is available in <stdlib.h>.])
-    fi
-    AC_MSG_RESULT($glibcxx_cv_realpath)
-dnl
-    AC_MSG_CHECKING([for utimensat])
-    AC_CACHE_VAL(glibcxx_cv_utimensat, [dnl
-      GCC_TRY_COMPILE_OR_LINK(
-        [
-          #include <fcntl.h>
-          #include <sys/stat.h>
-        ],
-        [
-          struct timespec ts[2] = { { 0, UTIME_OMIT }, { 1, 1 } };
-          int i = utimensat(AT_FDCWD, "path", ts, 0);
-        ],
-        [glibcxx_cv_utimensat=yes],
-        [glibcxx_cv_utimensat=no])
-    ])
-    if test $glibcxx_cv_utimensat = yes; then
-      AC_DEFINE(_GLIBCXX_USE_UTIMENSAT, 1, [Define if utimensat and UTIME_OMIT are available in <sys/stat.h> and AT_FDCWD in <fcntl.h>.])
-    fi
-    AC_MSG_RESULT($glibcxx_cv_utimensat)
-dnl
-    AC_MSG_CHECKING([for utime])
-    AC_CACHE_VAL(glibcxx_cv_utime, [dnl
-      GCC_TRY_COMPILE_OR_LINK(
-        [
-          #include <utime.h>
-        ],
-        [
-          struct utimbuf t = { 1, 1 };
-          int i = utime("path", &t);
-        ],
-        [glibcxx_cv_utime=yes],
-        [glibcxx_cv_utime=no])
-    ])
-    if test $glibcxx_cv_utime = yes; then
-      AC_DEFINE(_GLIBCXX_USE_UTIME, 1, [Define if utime is available in <utime.h>.])
-    fi
-    AC_MSG_RESULT($glibcxx_cv_utime)
-dnl
-    AC_MSG_CHECKING([for lstat])
-    AC_CACHE_VAL(glibcxx_cv_lstat, [dnl
-      GCC_TRY_COMPILE_OR_LINK(
-        [ #include <sys/stat.h> ],
-        [
-          struct stat st;
-          int i = lstat("path", &st);
-        ],
-        [glibcxx_cv_lstat=yes],
-        [glibcxx_cv_lstat=no])
-    ])
-    if test $glibcxx_cv_lstat = yes; then
-      AC_DEFINE(_GLIBCXX_USE_LSTAT, 1, [Define if lstat is available in <sys/stat.h>.])
-    fi
-    AC_MSG_RESULT($glibcxx_cv_lstat)
-dnl
-    AC_MSG_CHECKING([for struct stat.st_mtim.tv_nsec])
-    AC_CACHE_VAL(glibcxx_cv_st_mtim, [dnl
-      GCC_TRY_COMPILE_OR_LINK(
-        [ #include <sys/stat.h> ],
-        [
-          struct stat st;
-          return st.st_mtim.tv_nsec;
-        ],
-        [glibcxx_cv_st_mtim=yes],
-        [glibcxx_cv_st_mtim=no])
-    ])
-    if test $glibcxx_cv_st_mtim = yes; then
-      AC_DEFINE(_GLIBCXX_USE_ST_MTIM, 1, [Define if struct stat has timespec members.])
-    fi
-    AC_MSG_RESULT($glibcxx_cv_st_mtim)
-dnl
-    AC_MSG_CHECKING([for fchmod])
-    AC_CACHE_VAL(glibcxx_cv_fchmod, [dnl
-      GCC_TRY_COMPILE_OR_LINK(
-        [#include <sys/stat.h>],
-        [fchmod(1, S_IWUSR);],
-        [glibcxx_cv_fchmod=yes],
-        [glibcxx_cv_fchmod=no])
-    ])
-    if test $glibcxx_cv_fchmod = yes; then
-      AC_DEFINE(_GLIBCXX_USE_FCHMOD, 1, [Define if fchmod is available in <sys/stat.h>.])
-    fi
-    AC_MSG_RESULT($glibcxx_cv_fchmod)
-dnl
-    AC_MSG_CHECKING([for fchmodat])
-    AC_CACHE_VAL(glibcxx_cv_fchmodat, [dnl
-      GCC_TRY_COMPILE_OR_LINK(
-        [
-          #include <fcntl.h>
-          #include <sys/stat.h>
-        ],
-        [fchmodat(AT_FDCWD, "", 0, AT_SYMLINK_NOFOLLOW);],
-        [glibcxx_cv_fchmodat=yes],
-        [glibcxx_cv_fchmodat=no])
-    ])
-    if test $glibcxx_cv_fchmodat = yes; then
-      AC_DEFINE(_GLIBCXX_USE_FCHMODAT, 1, [Define if fchmodat is available in <sys/stat.h>.])
-    fi
-    AC_MSG_RESULT($glibcxx_cv_fchmodat)
-dnl
-    AC_MSG_CHECKING([for sendfile that can copy files])
-    AC_CACHE_VAL(glibcxx_cv_sendfile, [dnl
-      case "${target_os}" in
-        gnu* | linux* | solaris*)
-          GCC_TRY_COMPILE_OR_LINK(
-            [#include <sys/sendfile.h>],
-            [sendfile(1, 2, (off_t*)0, sizeof 1);],
-            [glibcxx_cv_sendfile=yes],
-            [glibcxx_cv_sendfile=no])
-          ;;
-        *)
-          glibcxx_cv_sendfile=no
-          ;;
-      esac
-    ])
-    if test $glibcxx_cv_sendfile = yes; then
-      AC_DEFINE(_GLIBCXX_USE_SENDFILE, 1, [Define if sendfile is available in <sys/sendfile.h>.])
-    fi
-    AC_MSG_RESULT($glibcxx_cv_sendfile)
-dnl
-    AC_MSG_CHECKING([for link])
-    AC_CACHE_VAL(glibcxx_cv_link, [dnl
-      GCC_TRY_COMPILE_OR_LINK(
-        [#include <unistd.h>],
-        [link("", "");],
-        [glibcxx_cv_link=yes],
-        [glibcxx_cv_link=no])
-    ])
-    if test $glibcxx_cv_link = yes; then
-      AC_DEFINE(HAVE_LINK, 1, [Define if link is available in <unistd.h>.])
-    fi
-    AC_MSG_RESULT($glibcxx_cv_link)
-dnl
-    AC_MSG_CHECKING([for readlink])
-    AC_CACHE_VAL(glibcxx_cv_readlink, [dnl
-      GCC_TRY_COMPILE_OR_LINK(
-        [#include <unistd.h>],
-        [char buf[32]; readlink("", buf, sizeof(buf));],
-        [glibcxx_cv_readlink=yes],
-        [glibcxx_cv_readlink=no])
-    ])
-    if test $glibcxx_cv_readlink = yes; then
-      AC_DEFINE(HAVE_READLINK, 1, [Define if readlink is available in <unistd.h>.])
-    fi
-    AC_MSG_RESULT($glibcxx_cv_readlink)
-dnl
-    AC_MSG_CHECKING([for symlink])
-    AC_CACHE_VAL(glibcxx_cv_symlink, [dnl
-      GCC_TRY_COMPILE_OR_LINK(
-        [#include <unistd.h>],
-        [symlink("", "");],
-        [glibcxx_cv_symlink=yes],
-        [glibcxx_cv_symlink=no])
-    ])
-    if test $glibcxx_cv_symlink = yes; then
-      AC_DEFINE(HAVE_SYMLINK, 1, [Define if symlink is available in <unistd.h>.])
-    fi
-    AC_MSG_RESULT($glibcxx_cv_symlink)
-dnl
-    AC_MSG_CHECKING([for truncate])
-    AC_CACHE_VAL(glibcxx_cv_truncate, [dnl
-      GCC_TRY_COMPILE_OR_LINK(
-        [#include <unistd.h>],
-        [truncate("", 99);],
-        [glibcxx_cv_truncate=yes],
-        [glibcxx_cv_truncate=no])
-    ])
-    if test $glibcxx_cv_truncate = yes; then
-      AC_DEFINE(HAVE_TRUNCATE, 1, [Define if truncate is available in <unistd.h>.])
-    fi
-    AC_MSG_RESULT($glibcxx_cv_truncate)
-dnl
-    CXXFLAGS="$ac_save_CXXFLAGS"
-    AC_LANG_RESTORE
+  AC_MSG_CHECKING([for struct dirent.d_type])
+  AC_CACHE_VAL(glibcxx_cv_dirent_d_type, [dnl
+    GCC_TRY_COMPILE_OR_LINK(
+      [#include <dirent.h>],
+      [
+       struct dirent d;
+       if (sizeof d.d_type) return 0;
+      ],
+      [glibcxx_cv_dirent_d_type=yes],
+      [glibcxx_cv_dirent_d_type=no])
+  ])
+  if test $glibcxx_cv_dirent_d_type = yes; then
+    AC_DEFINE(HAVE_STRUCT_DIRENT_D_TYPE, 1, [Define to 1 if `d_type' is a member of `struct dirent'.])
   fi
+  AC_MSG_RESULT($glibcxx_cv_dirent_d_type)
+dnl
+  AC_MSG_CHECKING([for realpath])
+  AC_CACHE_VAL(glibcxx_cv_realpath, [dnl
+    GCC_TRY_COMPILE_OR_LINK(
+      [
+       #include <limits.h>
+       #include <stdlib.h>
+       #include <unistd.h>
+      ],
+      [
+       #if _XOPEN_VERSION < 500
+       #error
+       #elif _XOPEN_VERSION >= 700 || defined(PATH_MAX)
+       char *tmp = realpath((const char*)NULL, (char*)NULL);
+       #else
+       #error
+       #endif
+      ],
+      [glibcxx_cv_realpath=yes],
+      [glibcxx_cv_realpath=no])
+  ])
+  if test $glibcxx_cv_realpath = yes; then
+    AC_DEFINE(_GLIBCXX_USE_REALPATH, 1, [Define if usable realpath is available in <stdlib.h>.])
+  fi
+  AC_MSG_RESULT($glibcxx_cv_realpath)
+dnl
+  AC_MSG_CHECKING([for utimensat])
+  AC_CACHE_VAL(glibcxx_cv_utimensat, [dnl
+    GCC_TRY_COMPILE_OR_LINK(
+      [
+	#include <fcntl.h>
+	#include <sys/stat.h>
+      ],
+      [
+	struct timespec ts[2] = { { 0, UTIME_OMIT }, { 1, 1 } };
+	int i = utimensat(AT_FDCWD, "path", ts, 0);
+      ],
+      [glibcxx_cv_utimensat=yes],
+      [glibcxx_cv_utimensat=no])
+  ])
+  if test $glibcxx_cv_utimensat = yes; then
+    AC_DEFINE(_GLIBCXX_USE_UTIMENSAT, 1, [Define if utimensat and UTIME_OMIT are available in <sys/stat.h> and AT_FDCWD in <fcntl.h>.])
+  fi
+  AC_MSG_RESULT($glibcxx_cv_utimensat)
+dnl
+  AC_MSG_CHECKING([for utime])
+  AC_CACHE_VAL(glibcxx_cv_utime, [dnl
+    GCC_TRY_COMPILE_OR_LINK(
+      [
+	#include <utime.h>
+      ],
+      [
+	struct utimbuf t = { 1, 1 };
+	int i = utime("path", &t);
+      ],
+      [glibcxx_cv_utime=yes],
+      [glibcxx_cv_utime=no])
+  ])
+  if test $glibcxx_cv_utime = yes; then
+    AC_DEFINE(_GLIBCXX_USE_UTIME, 1, [Define if utime is available in <utime.h>.])
+  fi
+  AC_MSG_RESULT($glibcxx_cv_utime)
+dnl
+  AC_MSG_CHECKING([for lstat])
+  AC_CACHE_VAL(glibcxx_cv_lstat, [dnl
+    GCC_TRY_COMPILE_OR_LINK(
+      [ #include <sys/stat.h> ],
+      [
+	struct stat st;
+	int i = lstat("path", &st);
+      ],
+      [glibcxx_cv_lstat=yes],
+      [glibcxx_cv_lstat=no])
+  ])
+  if test $glibcxx_cv_lstat = yes; then
+    AC_DEFINE(_GLIBCXX_USE_LSTAT, 1, [Define if lstat is available in <sys/stat.h>.])
+  fi
+  AC_MSG_RESULT($glibcxx_cv_lstat)
+dnl
+  AC_MSG_CHECKING([for struct stat.st_mtim.tv_nsec])
+  AC_CACHE_VAL(glibcxx_cv_st_mtim, [dnl
+    GCC_TRY_COMPILE_OR_LINK(
+      [ #include <sys/stat.h> ],
+      [
+	struct stat st;
+	return st.st_mtim.tv_nsec;
+      ],
+      [glibcxx_cv_st_mtim=yes],
+      [glibcxx_cv_st_mtim=no])
+  ])
+  if test $glibcxx_cv_st_mtim = yes; then
+    AC_DEFINE(_GLIBCXX_USE_ST_MTIM, 1, [Define if struct stat has timespec members.])
+  fi
+  AC_MSG_RESULT($glibcxx_cv_st_mtim)
+dnl
+  AC_MSG_CHECKING([for fchmod])
+  AC_CACHE_VAL(glibcxx_cv_fchmod, [dnl
+    GCC_TRY_COMPILE_OR_LINK(
+      [#include <sys/stat.h>],
+      [fchmod(1, S_IWUSR);],
+      [glibcxx_cv_fchmod=yes],
+      [glibcxx_cv_fchmod=no])
+  ])
+  if test $glibcxx_cv_fchmod = yes; then
+    AC_DEFINE(_GLIBCXX_USE_FCHMOD, 1, [Define if fchmod is available in <sys/stat.h>.])
+  fi
+  AC_MSG_RESULT($glibcxx_cv_fchmod)
+dnl
+  AC_MSG_CHECKING([for fchmodat])
+  AC_CACHE_VAL(glibcxx_cv_fchmodat, [dnl
+    GCC_TRY_COMPILE_OR_LINK(
+      [
+	#include <fcntl.h>
+	#include <sys/stat.h>
+      ],
+      [fchmodat(AT_FDCWD, "", 0, AT_SYMLINK_NOFOLLOW);],
+      [glibcxx_cv_fchmodat=yes],
+      [glibcxx_cv_fchmodat=no])
+  ])
+  if test $glibcxx_cv_fchmodat = yes; then
+    AC_DEFINE(_GLIBCXX_USE_FCHMODAT, 1, [Define if fchmodat is available in <sys/stat.h>.])
+  fi
+  AC_MSG_RESULT($glibcxx_cv_fchmodat)
+dnl
+  AC_MSG_CHECKING([for sendfile that can copy files])
+  AC_CACHE_VAL(glibcxx_cv_sendfile, [dnl
+    case "${target_os}" in
+      gnu* | linux* | solaris* | uclinux*)
+	GCC_TRY_COMPILE_OR_LINK(
+	  [#include <sys/sendfile.h>],
+	  [sendfile(1, 2, (off_t*)0, sizeof 1);],
+	  [glibcxx_cv_sendfile=yes],
+	  [glibcxx_cv_sendfile=no])
+	;;
+      *)
+	glibcxx_cv_sendfile=no
+	;;
+    esac
+  ])
+  if test $glibcxx_cv_sendfile = yes; then
+    AC_DEFINE(_GLIBCXX_USE_SENDFILE, 1, [Define if sendfile is available in <sys/sendfile.h>.])
+  fi
+  AC_MSG_RESULT($glibcxx_cv_sendfile)
+dnl
+  AC_MSG_CHECKING([for link])
+  AC_CACHE_VAL(glibcxx_cv_link, [dnl
+    GCC_TRY_COMPILE_OR_LINK(
+      [#include <unistd.h>],
+      [link("", "");],
+      [glibcxx_cv_link=yes],
+      [glibcxx_cv_link=no])
+  ])
+  if test $glibcxx_cv_link = yes; then
+    AC_DEFINE(HAVE_LINK, 1, [Define if link is available in <unistd.h>.])
+  fi
+  AC_MSG_RESULT($glibcxx_cv_link)
+dnl
+  AC_MSG_CHECKING([for readlink])
+  AC_CACHE_VAL(glibcxx_cv_readlink, [dnl
+    GCC_TRY_COMPILE_OR_LINK(
+      [#include <unistd.h>],
+      [char buf[32]; readlink("", buf, sizeof(buf));],
+      [glibcxx_cv_readlink=yes],
+      [glibcxx_cv_readlink=no])
+  ])
+  if test $glibcxx_cv_readlink = yes; then
+    AC_DEFINE(HAVE_READLINK, 1, [Define if readlink is available in <unistd.h>.])
+  fi
+  AC_MSG_RESULT($glibcxx_cv_readlink)
+dnl
+  AC_MSG_CHECKING([for symlink])
+  AC_CACHE_VAL(glibcxx_cv_symlink, [dnl
+    GCC_TRY_COMPILE_OR_LINK(
+      [#include <unistd.h>],
+      [symlink("", "");],
+      [glibcxx_cv_symlink=yes],
+      [glibcxx_cv_symlink=no])
+  ])
+  if test $glibcxx_cv_symlink = yes; then
+    AC_DEFINE(HAVE_SYMLINK, 1, [Define if symlink is available in <unistd.h>.])
+  fi
+  AC_MSG_RESULT($glibcxx_cv_symlink)
+dnl
+  AC_MSG_CHECKING([for truncate])
+  AC_CACHE_VAL(glibcxx_cv_truncate, [dnl
+    GCC_TRY_COMPILE_OR_LINK(
+      [#include <unistd.h>],
+      [truncate("", 99);],
+      [glibcxx_cv_truncate=yes],
+      [glibcxx_cv_truncate=no])
+  ])
+  if test $glibcxx_cv_truncate = yes; then
+    AC_DEFINE(HAVE_TRUNCATE, 1, [Define if truncate is available in <unistd.h>.])
+  fi
+  AC_MSG_RESULT($glibcxx_cv_truncate)
+dnl
+  CXXFLAGS="$ac_save_CXXFLAGS"
+  AC_LANG_RESTORE
 ])
 
 dnl

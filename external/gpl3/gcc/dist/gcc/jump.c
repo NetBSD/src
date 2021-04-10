@@ -1,5 +1,5 @@
 /* Optimize jump instructions, for GNU compiler.
-   Copyright (C) 1987-2019 Free Software Foundation, Inc.
+   Copyright (C) 1987-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -1094,7 +1094,6 @@ mark_jump_label_1 (rtx x, rtx_insn *insn, bool in_mem, bool is_target)
     case CC0:
     case REG:
     case CLOBBER:
-    case CLOBBER_HIGH:
     case CALL:
       return;
 

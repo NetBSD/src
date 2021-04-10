@@ -1,6 +1,6 @@
 /* Medium-level subroutines: convert bit-field store and extract
    and shifts, multiplies and divides to rtl instructions.
-   Copyright (C) 1987-2019 Free Software Foundation, Inc.
+   Copyright (C) 1987-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -18,6 +18,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* Work around tree-optimization/91825.  */
+#pragma GCC diagnostic warning "-Wmaybe-uninitialized"
 
 #include "config.h"
 #include "system.h"
@@ -599,7 +601,7 @@ store_bit_field_using_insv (const extraction_insn *insv, rtx op0,
 			    unsigned HOST_WIDE_INT bitnum,
 			    rtx value, scalar_int_mode value_mode)
 {
-  struct expand_operand ops[4];
+  class expand_operand ops[4];
   rtx value1;
   rtx xop0 = op0;
   rtx_insn *last = get_last_insn ();
@@ -623,9 +625,16 @@ store_bit_field_using_insv (const extraction_insn *insv, rtx op0,
       /* If xop0 is a register, we need it in OP_MODE
 	 to make it acceptable to the format of insv.  */
       if (GET_CODE (xop0) == SUBREG)
-	/* We can't just change the mode, because this might clobber op0,
-	   and we will need the original value of op0 if insv fails.  */
-	xop0 = gen_rtx_SUBREG (op_mode, SUBREG_REG (xop0), SUBREG_BYTE (xop0));
+	{
+	  /* If such a SUBREG can't be created, give up.  */
+	  if (!validate_subreg (op_mode, GET_MODE (SUBREG_REG (xop0)),
+				SUBREG_REG (xop0), SUBREG_BYTE (xop0)))
+	    return false;
+	  /* We can't just change the mode, because this might clobber op0,
+	     and we will need the original value of op0 if insv fails.  */
+	  xop0 = gen_rtx_SUBREG (op_mode, SUBREG_REG (xop0),
+				 SUBREG_BYTE (xop0));
+	}
       if (REG_P (xop0) && GET_MODE (xop0) != op_mode)
 	xop0 = gen_lowpart_SUBREG (op_mode, xop0);
     }
@@ -759,7 +768,7 @@ store_bit_field_1 (rtx str_rtx, poly_uint64 bitsize, poly_uint64 bitnum,
       && known_eq (bitsize, GET_MODE_BITSIZE (innermode))
       && multiple_p (bitnum, GET_MODE_BITSIZE (innermode), &pos))
     {
-      struct expand_operand ops[3];
+      class expand_operand ops[3];
       enum insn_code icode = optab_handler (vec_set_optab, outermode);
 
       create_fixed_operand (&ops[0], op0);
@@ -891,7 +900,7 @@ store_integral_bit_field (rtx op0, opt_scalar_int_mode op0_mode,
       && known_eq (bitsize, GET_MODE_BITSIZE (fieldmode))
       && optab_handler (movstrict_optab, fieldmode) != CODE_FOR_nothing)
     {
-      struct expand_operand ops[2];
+      class expand_operand ops[2];
       enum insn_code icode = optab_handler (movstrict_optab, fieldmode);
       rtx arg0 = op0;
       unsigned HOST_WIDE_INT subreg_off;
@@ -931,8 +940,7 @@ store_integral_bit_field (rtx op0, opt_scalar_int_mode op0_mode,
 	 However, only do that if the value is not BLKmode.  */
 
       const bool backwards = WORDS_BIG_ENDIAN && fieldmode != BLKmode;
-      unsigned int nwords = (bitsize + (BITS_PER_WORD - 1)) / BITS_PER_WORD;
-      unsigned int i;
+      const int nwords = (bitsize + (BITS_PER_WORD - 1)) / BITS_PER_WORD;
       rtx_insn *last;
 
       /* This is the mode we must force value to, so that there will be enough
@@ -948,35 +956,31 @@ store_integral_bit_field (rtx op0, opt_scalar_int_mode op0_mode,
 	value_mode = smallest_int_mode_for_size (nwords * BITS_PER_WORD);
 
       last = get_last_insn ();
-      for (i = 0; i < nwords; i++)
+      for (int i = 0; i < nwords; i++)
 	{
-	  /* If I is 0, use the low-order word in both field and target;
-	     if I is 1, use the next to lowest word; and so on.  */
-	  unsigned int wordnum = (backwards
-				  ? GET_MODE_SIZE (value_mode) / UNITS_PER_WORD
-				  - i - 1
-				  : i);
-	  unsigned int bit_offset = (backwards ^ reverse
-				     ? MAX ((int) bitsize - ((int) i + 1)
-					    * BITS_PER_WORD,
-					    0)
-				     : (int) i * BITS_PER_WORD);
-	  rtx value_word = operand_subword_force (value, wordnum, value_mode);
-	  unsigned HOST_WIDE_INT new_bitsize =
-	    MIN (BITS_PER_WORD, bitsize - i * BITS_PER_WORD);
-
-	  /* If the remaining chunk doesn't have full wordsize we have
-	     to make sure that for big-endian machines the higher order
-	     bits are used.  */
-	  if (new_bitsize < BITS_PER_WORD && BYTES_BIG_ENDIAN && !backwards)
-	    {
-	      int shift = BITS_PER_WORD - new_bitsize;
-	      rtx shift_rtx = gen_int_shift_amount (word_mode, shift);
-	      value_word = simplify_expand_binop (word_mode, lshr_optab,
-						  value_word, shift_rtx,
-						  NULL_RTX, true,
-						  OPTAB_LIB_WIDEN);
-	    }
+	  /* Number of bits to be stored in this iteration, i.e. BITS_PER_WORD
+	     except maybe for the last iteration.  */
+	  const unsigned HOST_WIDE_INT new_bitsize
+	    = MIN (BITS_PER_WORD, bitsize - i * BITS_PER_WORD);
+	  /* Bit offset from the starting bit number in the target.  */
+	  const unsigned int bit_offset
+	    = backwards ^ reverse
+	      ? MAX ((int) bitsize - (i + 1) * BITS_PER_WORD, 0)
+	      : i * BITS_PER_WORD;
+	  /* Starting word number in the value.  */
+	  const unsigned int wordnum
+	    = backwards
+	      ? GET_MODE_SIZE (value_mode) / UNITS_PER_WORD - (i + 1)
+	      : i;
+	  /* The chunk of the value in word_mode.  We use bit-field extraction
+	      in BLKmode to handle unaligned memory references and to shift the
+	      last chunk right on big-endian machines if need be.  */
+	  rtx value_word
+	    = fieldmode == BLKmode
+	      ? extract_bit_field (value, new_bitsize, wordnum * BITS_PER_WORD,
+				   1, NULL_RTX, word_mode, word_mode, false,
+				   NULL)
+	      : operand_subword_force (value, wordnum, value_mode);
 
 	  if (!store_bit_field_1 (op0, new_bitsize,
 				  bitnum + bit_offset,
@@ -1520,7 +1524,7 @@ extract_bit_field_using_extv (const extraction_insn *extv, rtx op0,
 			      int unsignedp, rtx target,
 			      machine_mode mode, machine_mode tmode)
 {
-  struct expand_operand ops[4];
+  class expand_operand ops[4];
   rtx spec_target = target;
   rtx spec_target_subreg = 0;
   scalar_int_mode ext_mode = extv->field_mode;
@@ -1662,12 +1666,10 @@ extract_bit_field_1 (rtx str_rtx, poly_uint64 bitsize, poly_uint64 bitnum,
 	  poly_uint64 nunits;
 	  if (!multiple_p (GET_MODE_BITSIZE (GET_MODE (op0)),
 			   GET_MODE_UNIT_BITSIZE (tmode), &nunits)
-	      || !mode_for_vector (inner_mode, nunits).exists (&new_mode)
-	      || !VECTOR_MODE_P (new_mode)
+	      || !related_vector_mode (tmode, inner_mode,
+				       nunits).exists (&new_mode)
 	      || maybe_ne (GET_MODE_SIZE (new_mode),
-			   GET_MODE_SIZE (GET_MODE (op0)))
-	      || GET_MODE_INNER (new_mode) != GET_MODE_INNER (tmode)
-	      || !targetm.vector_mode_supported_p (new_mode))
+			   GET_MODE_SIZE (GET_MODE (op0))))
 	    new_mode = VOIDmode;
 	}
       poly_uint64 pos;
@@ -1676,7 +1678,7 @@ extract_bit_field_1 (rtx str_rtx, poly_uint64 bitsize, poly_uint64 bitnum,
 	      != CODE_FOR_nothing)
 	  && multiple_p (bitnum, GET_MODE_BITSIZE (tmode), &pos))
 	{
-	  struct expand_operand ops[3];
+	  class expand_operand ops[3];
 	  machine_mode outermode = new_mode;
 	  machine_mode innermode = tmode;
 	  enum insn_code icode
@@ -1743,7 +1745,7 @@ extract_bit_field_1 (rtx str_rtx, poly_uint64 bitsize, poly_uint64 bitnum,
 	  && known_eq (bitsize, GET_MODE_BITSIZE (innermode))
 	  && multiple_p (bitnum, GET_MODE_BITSIZE (innermode), &pos))
 	{
-	  struct expand_operand ops[3];
+	  class expand_operand ops[3];
 
 	  create_output_operand (&ops[0], target, innermode);
 	  ops[0].target = 1;
@@ -2067,7 +2069,10 @@ extract_integral_bit_field (rtx op0, opt_scalar_int_mode op0_mode,
    If a TARGET is specified and we can store in it at no extra cost,
    we do so, and return TARGET.
    Otherwise, we return a REG of mode TMODE or MODE, with TMODE preferred
-   if they are equally easy.  */
+   if they are equally easy.
+
+   If the result can be stored at TARGET, and ALT_RTL is non-NULL,
+   then *ALT_RTL is set to TARGET (before legitimziation).  */
 
 rtx
 extract_bit_field (rtx str_rtx, poly_uint64 bitsize, poly_uint64 bitnum,
@@ -5449,7 +5454,7 @@ emit_cstore (rtx target, enum insn_code icode, enum rtx_code code,
 	     int unsignedp, rtx x, rtx y, int normalizep,
 	     machine_mode target_mode)
 {
-  struct expand_operand ops[4];
+  class expand_operand ops[4];
   rtx op0, comparison, subtarget;
   rtx_insn *last;
   scalar_int_mode result_mode = targetm.cstore_mode (icode);

@@ -1,5 +1,5 @@
 /* IPA visibility pass
-   Copyright (C) 2003-2019 Free Software Foundation, Inc.
+   Copyright (C) 2003-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -220,9 +220,17 @@ cgraph_externally_visible_p (struct cgraph_node *node,
       && lookup_attribute ("dllexport",
 			   DECL_ATTRIBUTES (node->decl)))
     return true;
+
+  /* Limitation of gas requires us to output targets of symver aliases as
+     global symbols.  This is binutils PR 25295.  */
+  ipa_ref *ref;
+  FOR_EACH_ALIAS (node, ref)
+    if (ref->referring->symver)
+      return true;
+
   if (node->resolution == LDPR_PREVAILING_DEF_IRONLY)
     return false;
-  /* When doing LTO or whole program, we can bring COMDAT functoins static.
+  /* When doing LTO or whole program, we can bring COMDAT functions static.
      This improves code quality and we know we will duplicate them at most twice
      (in the case that we are not using plugin and link with object file
       implementing same COMDAT)  */
@@ -284,14 +292,13 @@ varpool_node::externally_visible_p (void)
 			   DECL_ATTRIBUTES (decl)))
     return true;
 
-  /* See if we have linker information about symbol not being used or
-     if we need to make guess based on the declaration.
+  /* Limitation of gas requires us to output targets of symver aliases as
+     global symbols.  This is binutils PR 25295.  */
+  ipa_ref *ref;
+  FOR_EACH_ALIAS (this, ref)
+    if (ref->referring->symver)
+      return true;
 
-     Even if the linker clams the symbol is unused, never bring internal
-     symbols that are declared by user as used or externally visible.
-     This is needed for i.e. references from asm statements.   */
-  if (used_from_object_file_p ())
-    return true;
   if (resolution == LDPR_PREVAILING_DEF_IRONLY)
     return false;
 
@@ -502,7 +509,7 @@ optimize_weakref (symtab_node *node)
 
   if (dump_file)
     fprintf (dump_file, "Optimizing weakref %s %s\n",
-	     node->name(),
+	     node->dump_name (),
 	     static_alias ? "as static alias" : "as transparent alias");
 
   if (static_alias)
@@ -625,8 +632,10 @@ function_and_variable_visibility (bool whole_program)
 	continue;
 
       cgraph_node *alias = 0;
-      for (cgraph_edge *e = node->callees; e; e = e->next_callee)
+      cgraph_edge *next_edge;
+      for (cgraph_edge *e = node->callees; e; e = next_edge)
 	{
+	  next_edge = e->next_callee;
 	  /* Recursive function calls usually can't be interposed.  */
 
 	  if (!e->recursive_p ())
@@ -642,7 +651,7 @@ function_and_variable_visibility (bool whole_program)
 	  if (gimple_has_body_p (e->caller->decl))
 	    {
 	      push_cfun (DECL_STRUCT_FUNCTION (e->caller->decl));
-	      e->redirect_call_stmt_to_callee ();
+	      cgraph_edge::redirect_call_stmt_to_callee (e);
 	      pop_cfun ();
 	    }
 	}
@@ -707,7 +716,7 @@ function_and_variable_visibility (bool whole_program)
 		  || DECL_EXTERNAL (node->decl));
       if (cgraph_externally_visible_p (node, whole_program))
         {
-	  gcc_assert (!node->global.inlined_to);
+	  gcc_assert (!node->inlined_to);
 	  node->externally_visible = true;
 	}
       else
@@ -747,8 +756,8 @@ function_and_variable_visibility (bool whole_program)
     }
   FOR_EACH_DEFINED_FUNCTION (node)
     {
-      if (!node->local.local)
-        node->local.local |= node->local_p ();
+      if (!node->local)
+	node->local |= node->local_p ();
 
       /* If we know that function cannot be overwritten by a
 	 different semantics and moreover its section cannot be
@@ -773,7 +782,7 @@ function_and_variable_visibility (bool whole_program)
 		  if (gimple_has_body_p (e->caller->decl))
 		    {
 		      push_cfun (DECL_STRUCT_FUNCTION (e->caller->decl));
-		      e->redirect_call_stmt_to_callee ();
+		      cgraph_edge::redirect_call_stmt_to_callee (e);
 		      pop_cfun ();
 		    }
 		}
@@ -868,18 +877,18 @@ function_and_variable_visibility (bool whole_program)
     {
       fprintf (dump_file, "\nMarking local functions:");
       FOR_EACH_DEFINED_FUNCTION (node)
-	if (node->local.local)
-	  fprintf (dump_file, " %s", node->name ());
+	if (node->local)
+	  fprintf (dump_file, " %s", node->dump_name ());
       fprintf (dump_file, "\n\n");
       fprintf (dump_file, "\nMarking externally visible functions:");
       FOR_EACH_DEFINED_FUNCTION (node)
 	if (node->externally_visible)
-	  fprintf (dump_file, " %s", node->name ());
+	  fprintf (dump_file, " %s", node->dump_name ());
       fprintf (dump_file, "\n\n");
       fprintf (dump_file, "\nMarking externally visible variables:");
       FOR_EACH_DEFINED_VARIABLE (vnode)
 	if (vnode->externally_visible)
-	  fprintf (dump_file, " %s", vnode->name ());
+	  fprintf (dump_file, " %s", vnode->dump_name ());
       fprintf (dump_file, "\n\n");
     }
   symtab->function_flags_ready = true;

@@ -1,5 +1,5 @@
 /* AddressSanitizer, a fast memory error detector.
-   Copyright (C) 2012-2019 Free Software Foundation, Inc.
+   Copyright (C) 2012-2020 Free Software Foundation, Inc.
    Contributed by Kostya Serebryany <kcc@google.com>
 
 This file is part of GCC.
@@ -59,10 +59,10 @@ along with GCC; see the file COPYING3.  If not see
 #include "gimple-builder.h"
 #include "gimple-fold.h"
 #include "ubsan.h"
-#include "params.h"
 #include "builtins.h"
 #include "fnmatch.h"
 #include "tree-inline.h"
+#include "tree-ssa.h"
 
 /* AddressSanitizer finds out-of-bounds and use-after-free bugs
    with <2x slowdown on average.
@@ -309,13 +309,13 @@ asan_mark_p (gimple *stmt, enum asan_mark_flags flag)
 bool
 asan_sanitize_stack_p (void)
 {
-  return (sanitize_flags_p (SANITIZE_ADDRESS) && ASAN_STACK);
+  return (sanitize_flags_p (SANITIZE_ADDRESS) && param_asan_stack);
 }
 
 bool
 asan_sanitize_allocas_p (void)
 {
-  return (asan_sanitize_stack_p () && ASAN_PROTECT_ALLOCAS);
+  return (asan_sanitize_stack_p () && param_asan_protect_allocas);
 }
 
 /* Checks whether section SEC should be sanitized.  */
@@ -342,6 +342,13 @@ asan_shadow_offset ()
       asan_shadow_offset_value = targetm.asan_shadow_offset ();
     }
   return asan_shadow_offset_value;
+}
+
+/* Returns Asan shadow offset has been set.  */
+bool
+asan_shadow_offset_set_p ()
+{
+  return asan_shadow_offset_computed;
 }
 
 alias_set_type asan_shadow_set = -1;
@@ -795,7 +802,7 @@ get_mem_refs_of_builtin_call (gcall *call,
       handle_builtin_alloca (call, iter);
       break;
     /* And now the __atomic* and __sync builtins.
-       These are handled differently from the classical memory memory
+       These are handled differently from the classical memory
        access builtins above.  */
 
     case BUILT_IN_ATOMIC_LOAD_1:
@@ -1225,8 +1232,9 @@ shadow_mem_size (unsigned HOST_WIDE_INT size)
 #define RZ_BUFFER_SIZE 4
 
 /* ASAN redzone buffer container that handles emission of shadow bytes.  */
-struct asan_redzone_buffer
+class asan_redzone_buffer
 {
+public:
   /* Constructor.  */
   asan_redzone_buffer (rtx shadow_mem, HOST_WIDE_INT prev_offset):
     m_shadow_mem (shadow_mem), m_prev_offset (prev_offset),
@@ -1428,7 +1436,7 @@ asan_emit_stack_protection (rtx base, rtx pbase, unsigned int alignb,
 
   /* Emit the prologue sequence.  */
   if (asan_frame_size > 32 && asan_frame_size <= 65536 && pbase
-      && ASAN_USE_AFTER_RETURN)
+      && param_asan_use_after_return)
     {
       use_after_return_class = floor_log2 (asan_frame_size - 1) - 5;
       /* __asan_stack_malloc_N guarantees alignment
@@ -1597,8 +1605,25 @@ asan_emit_stack_protection (rtx base, rtx pbase, unsigned int alignb,
       if (use_after_return_class < 5
 	  && can_store_by_pieces (sz, builtin_memset_read_str, &c,
 				  BITS_PER_UNIT, true))
-	store_by_pieces (shadow_mem, sz, builtin_memset_read_str, &c,
-			 BITS_PER_UNIT, true, RETURN_BEGIN);
+	{
+	  /* Emit:
+	       memset(ShadowBase, kAsanStackAfterReturnMagic, ShadowSize);
+	       **SavedFlagPtr(FakeStack, class_id) = 0
+	  */
+	  store_by_pieces (shadow_mem, sz, builtin_memset_read_str, &c,
+			   BITS_PER_UNIT, true, RETURN_BEGIN);
+
+	  unsigned HOST_WIDE_INT offset
+	    = (1 << (use_after_return_class + 6));
+	  offset -= GET_MODE_SIZE (ptr_mode);
+	  mem = gen_rtx_MEM (ptr_mode, base);
+	  mem = adjust_address (mem, ptr_mode, offset);
+	  rtx addr = gen_reg_rtx (ptr_mode);
+	  emit_move_insn (addr, mem);
+	  addr = convert_memory_address (Pmode, addr);
+	  mem = gen_rtx_MEM (QImode, addr);
+	  emit_move_insn (mem, const0_rtx);
+	}
       else if (use_after_return_class >= 5
 	       || !set_storage_via_setmem (shadow_mem,
 					   GEN_INT (sz),
@@ -1713,8 +1738,8 @@ asan_emit_allocas_unpoison (rtx top, rtx bot, rtx_insn *before)
   rtx ret = init_one_libfunc ("__asan_allocas_unpoison");
   top = convert_memory_address (ptr_mode, top);
   bot = convert_memory_address (ptr_mode, bot);
-  ret = emit_library_call_value (ret, NULL_RTX, LCT_NORMAL, ptr_mode,
-				 top, ptr_mode, bot, ptr_mode);
+  emit_library_call (ret, LCT_NORMAL, ptr_mode,
+		     top, ptr_mode, bot, ptr_mode);
 
   do_pending_stack_adjust ();
   rtx_insn *insns = get_insns ();
@@ -1749,7 +1774,7 @@ is_odr_indicator (tree decl)
 bool
 asan_protect_global (tree decl, bool ignore_decl_rtl_set_p)
 {
-  if (!ASAN_GLOBALS)
+  if (!param_asan_globals)
     return false;
 
   rtx rtl, symbol;
@@ -2061,10 +2086,10 @@ static tree
 maybe_create_ssa_name (location_t loc, tree base, gimple_stmt_iterator *iter,
 		       bool before_p)
 {
+  STRIP_USELESS_TYPE_CONVERSION (base);
   if (TREE_CODE (base) == SSA_NAME)
     return base;
-  gimple *g = gimple_build_assign (make_ssa_name (TREE_TYPE (base)),
-				  TREE_CODE (base), base);
+  gimple *g = gimple_build_assign (make_ssa_name (TREE_TYPE (base)), base);
   gimple_set_location (g, loc);
   if (before_p)
     gsi_insert_before (iter, g, GSI_SAME_STMT);
@@ -2189,9 +2214,9 @@ static void
 instrument_derefs (gimple_stmt_iterator *iter, tree t,
 		   location_t location, bool is_store)
 {
-  if (is_store && !ASAN_INSTRUMENT_WRITES)
+  if (is_store && !param_asan_instrument_writes)
     return;
-  if (!is_store && !ASAN_INSTRUMENT_READS)
+  if (!is_store && !param_asan_instrument_reads)
     return;
 
   tree type, base;
@@ -2252,7 +2277,7 @@ instrument_derefs (gimple_stmt_iterator *iter, tree t,
     {
       if (DECL_THREAD_LOCAL_P (inner))
 	return;
-      if (!ASAN_GLOBALS && is_global_var (inner))
+      if (!param_asan_globals && is_global_var (inner))
         return;
       if (!TREE_STATIC (inner))
 	{
@@ -2345,7 +2370,7 @@ instrument_mem_region_access (tree base, tree len,
 static bool
 instrument_builtin_call (gimple_stmt_iterator *iter)
 {
-  if (!ASAN_MEMINTRIN)
+  if (!param_asan_memintrin)
     return false;
 
   bool iter_advanced_p = false;
@@ -2660,6 +2685,7 @@ asan_global_struct (void)
   TYPE_FIELDS (ret) = fields[0];
   TYPE_NAME (ret) = type_decl;
   TYPE_STUB_DECL (ret) = type_decl;
+  TYPE_ARTIFICIAL (ret) = 1;
   layout_type (ret);
   return ret;
 }
@@ -3218,7 +3244,8 @@ asan_expand_mark_ifn (gimple_stmt_iterator *iter)
   tree base_addr = gimple_assign_lhs (g);
 
   /* Generate direct emission if size_in_bytes is small.  */
-  if (size_in_bytes <= ASAN_PARAM_USE_AFTER_SCOPE_DIRECT_EMISSION_THRESHOLD)
+  if (size_in_bytes
+      <= (unsigned)param_use_after_scope_direct_emission_threshold)
     {
       const unsigned HOST_WIDE_INT shadow_size
 	= shadow_mem_size (size_in_bytes);

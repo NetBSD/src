@@ -1,5 +1,5 @@
 /* d-tree.h -- Definitions and declarations for code generation.
-   Copyright (C) 2006-2019 Free Software Foundation, Inc.
+   Copyright (C) 2006-2020 Free Software Foundation, Inc.
 
 GCC is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -29,7 +29,6 @@ class FuncDeclaration;
 class StructDeclaration;
 class TypeInfoDeclaration;
 class VarDeclaration;
-class UserAttributeDeclaration;
 class Expression;
 class ClassReferenceExp;
 class Module;
@@ -204,6 +203,7 @@ struct GTY(()) lang_identifier
 
   /* The frontend Declaration associated with this identifier.  */
   Declaration * GTY((skip)) dsymbol;
+  AggregateDeclaration * GTY((skip)) daggregate;
 };
 
 #define IDENTIFIER_LANG_SPECIFIC(NODE) \
@@ -217,6 +217,9 @@ struct GTY(()) lang_identifier
 
 #define IDENTIFIER_DSYMBOL(NODE) \
   (IDENTIFIER_LANG_SPECIFIC (NODE)->dsymbol)
+
+#define IDENTIFIER_DAGGREGATE(NODE) \
+  (IDENTIFIER_LANG_SPECIFIC (NODE)->daggregate)
 
 /* Global state pertinent to the current function.  */
 
@@ -481,7 +484,7 @@ extern bool doing_semantic_analysis_p;
 /* In d-attribs.c.  */
 extern tree insert_type_attribute (tree, const char *, tree = NULL_TREE);
 extern tree insert_decl_attribute (tree, const char *, tree = NULL_TREE);
-extern tree build_attributes (Expressions *);
+extern void apply_user_attributes (Dsymbol *, tree);
 
 /* In d-builtins.cc.  */
 extern const attribute_spec d_langhook_attribute_table[];
@@ -501,8 +504,8 @@ extern tree d_decl_context (Dsymbol *);
 extern tree copy_aggregate_type (tree);
 extern bool declaration_reference_p (Declaration *);
 extern tree declaration_type (Declaration *);
-extern bool argument_reference_p (Parameter *);
-extern tree type_passed_as (Parameter *);
+extern bool parameter_reference_p (Parameter *);
+extern tree parameter_type (Parameter *);
 extern tree build_integer_cst (dinteger_t, tree = d_int_type);
 extern tree build_float_cst (const real_t &, Type *);
 extern tree d_array_length (tree);
@@ -558,8 +561,6 @@ extern tree build_array_from_val (Type *, tree);
 extern tree void_okay_p (tree);
 extern tree build_bounds_condition (const Loc &, tree, tree, bool);
 extern bool array_bounds_check (void);
-extern tree create_temporary_var (tree);
-extern tree maybe_temporary_var (tree, tree *);
 extern tree bind_expr (tree, tree);
 extern TypeFunction *get_function_type (Type *);
 extern bool call_by_alias_p (FuncDeclaration *, FuncDeclaration *);
@@ -568,6 +569,7 @@ extern tree d_build_call (TypeFunction *, tree, tree, Expressions *);
 extern tree d_assert_call (const Loc &, libcall_fn, tree = NULL_TREE);
 extern tree build_float_modulus (tree, tree, tree);
 extern tree build_vthis_function (tree, tree);
+extern tree error_no_frame_access (Dsymbol *);
 extern tree get_frame_for_symbol (Dsymbol *);
 extern tree build_vthis (AggregateDeclaration *);
 extern void build_closure (FuncDeclaration *);
@@ -583,7 +585,7 @@ extern tree convert_for_assignment (tree, Type *, Type *);
 extern tree convert_for_argument (tree, Parameter *);
 extern tree convert_for_condition (tree, Type *);
 extern tree d_array_convert (Expression *);
-extern tree d_array_convert (Type *, Expression *, vec<tree, va_gc> **);
+extern tree d_array_convert (Type *, Expression *);
 
 /* In d-incpath.cc.  */
 extern void add_import_paths (const char *, const char *, bool);
@@ -600,6 +602,7 @@ extern tree d_signed_type (tree);
 extern void d_keep (tree);
 
 /* In decl.cc.  */
+extern const char *d_mangle_decl (Dsymbol *);
 extern tree mangle_internal_decl (Dsymbol *, const char *, const char *);
 extern void build_decl_tree (Dsymbol *);
 extern tree get_symbol_decl (Declaration *);
@@ -676,8 +679,7 @@ extern tree make_array_type (Type *, unsigned HOST_WIDE_INT);
 extern tree make_struct_type (const char *, int n, ...);
 extern tree insert_type_modifiers (tree, unsigned);
 extern void insert_aggregate_field (tree, tree, size_t);
-extern void finish_aggregate_type (unsigned, unsigned, tree,
-				   UserAttributeDeclaration *);
+extern void finish_aggregate_type (unsigned, unsigned, tree);
 extern tree build_ctype (Type *);
 
 #endif  /* GCC_D_TREE_H  */

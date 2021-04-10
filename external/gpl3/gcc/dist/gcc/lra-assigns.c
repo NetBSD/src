@@ -1,5 +1,5 @@
 /* Assign reload pseudos.
-   Copyright (C) 2010-2019 Free Software Foundation, Inc.
+   Copyright (C) 2010-2020 Free Software Foundation, Inc.
    Contributed by Vladimir Makarov <vmakarov@redhat.com>.
 
 This file is part of GCC.
@@ -91,9 +91,9 @@ along with GCC; see the file COPYING3.	If not see
 #include "recog.h"
 #include "rtl-error.h"
 #include "sparseset.h"
-#include "params.h"
 #include "lra.h"
 #include "lra-int.h"
+#include "function-abi.h"
 
 /* Current iteration number of the pass and current iteration number
    of the pass after the latest spill pass when any former reload
@@ -493,18 +493,15 @@ find_hard_regno_for_1 (int regno, int *cost, int try_only_hard_regno,
   HARD_REG_SET impossible_start_hard_regs, available_regs;
 
   if (hard_reg_set_empty_p (regno_set))
-    COPY_HARD_REG_SET (conflict_set, lra_no_alloc_regs);
+    conflict_set = lra_no_alloc_regs;
   else
-    {
-      COMPL_HARD_REG_SET (conflict_set, regno_set);
-      IOR_HARD_REG_SET (conflict_set, lra_no_alloc_regs);
-    }
+    conflict_set = ~regno_set | lra_no_alloc_regs;
   rclass = regno_allocno_class_array[regno];
   rclass_intersect_p = ira_reg_classes_intersect_p[rclass];
   curr_hard_regno_costs_check++;
   sparseset_clear (conflict_reload_and_inheritance_pseudos);
   sparseset_clear (live_range_hard_reg_pseudos);
-  IOR_HARD_REG_SET (conflict_set, lra_reg_info[regno].conflict_hard_regs);
+  conflict_set |= lra_reg_info[regno].conflict_hard_regs;
   biggest_mode = lra_reg_info[regno].biggest_mode;
   for (r = lra_reg_info[regno].live_ranges; r != NULL; r = r->next)
     {
@@ -614,7 +611,7 @@ find_hard_regno_for_1 (int regno, int *cost, int try_only_hard_regno,
       }
   /* Make sure that all registers in a multi-word pseudo belong to the
      required class.  */
-  IOR_COMPL_HARD_REG_SET (conflict_set, reg_class_contents[rclass]);
+  conflict_set |= ~reg_class_contents[rclass];
   lra_assert (rclass != NO_REGS);
   rclass_size = ira_class_hard_regs_num[rclass];
   best_hard_regno = -1;
@@ -622,8 +619,7 @@ find_hard_regno_for_1 (int regno, int *cost, int try_only_hard_regno,
   biggest_nregs = hard_regno_nregs (hard_regno, biggest_mode);
   nregs_diff = (biggest_nregs
 		- hard_regno_nregs (hard_regno, PSEUDO_REGNO_MODE (regno)));
-  COPY_HARD_REG_SET (available_regs, reg_class_contents[rclass]);
-  AND_COMPL_HARD_REG_SET (available_regs, lra_no_alloc_regs);
+  available_regs = reg_class_contents[rclass] & ~lra_no_alloc_regs;
   for (i = 0; i < rclass_size; i++)
     {
       if (try_only_hard_regno >= 0)
@@ -658,7 +654,7 @@ find_hard_regno_for_1 (int regno, int *cost, int try_only_hard_regno,
 	  for (j = 0;
 	       j < hard_regno_nregs (hard_regno, PSEUDO_REGNO_MODE (regno));
 	       j++)
-	    if (! TEST_HARD_REG_BIT (call_used_reg_set, hard_regno + j)
+	    if (! crtl->abi->clobbers_full_reg_p (hard_regno + j)
 		&& ! df_regs_ever_live_p (hard_regno + j))
 	      /* It needs save restore.	 */
 	      hard_regno_costs[hard_regno]
@@ -968,6 +964,8 @@ spill_for (int regno, bitmap spilled_pseudo_bitmap, bool first_p)
       bitmap_clear (&spill_pseudos_bitmap);
       for (j = hard_regno_nregs (hard_regno, mode) - 1; j >= 0; j--)
 	{
+          if (hard_regno + j >= FIRST_PSEUDO_REGISTER)
+	    break;
 	  if (try_hard_reg_pseudos_check[hard_regno + j] != curr_pseudo_check)
 	    continue;
 	  lra_assert (!bitmap_empty_p (&try_hard_reg_pseudos[hard_regno + j]));
@@ -1011,7 +1009,7 @@ spill_for (int regno, bitmap spilled_pseudo_bitmap, bool first_p)
 	}
       n = 0;
       if (sparseset_cardinality (live_range_reload_inheritance_pseudos)
-	  <= (unsigned)LRA_MAX_CONSIDERED_RELOAD_PSEUDOS)
+	  <= (unsigned)param_lra_max_considered_reload_pseudos)
 	EXECUTE_IF_SET_IN_SPARSESET (live_range_reload_inheritance_pseudos,
 				     reload_regno)
 	  if ((int) reload_regno != regno
@@ -1135,7 +1133,7 @@ static int *sorted_pseudos;
 /* The constraints pass is allowed to create equivalences between
    pseudos that make the current allocation "incorrect" (in the sense
    that pseudos are assigned to hard registers from their own conflict
-   sets).  The global variable lra_risky_transformations_p says
+   sets).  The global variable check_and_force_assignment_correctness_p says
    whether this might have happened.
 
    Process pseudos assigned to hard registers (less frequently used
@@ -1156,7 +1154,7 @@ setup_live_pseudos_and_spill_after_risky_transforms (bitmap
   bitmap_iterator bi;
   int max_regno = max_reg_num ();
 
-  if (! lra_risky_transformations_p)
+  if (! check_and_force_assignment_correctness_p)
     {
       for (i = FIRST_PSEUDO_REGISTER; i < max_regno; i++)
 	if (reg_renumber[i] >= 0 && lra_reg_info[i].nrefs > 0)
@@ -1217,8 +1215,8 @@ setup_live_pseudos_and_spill_after_risky_transforms (bitmap
 		  sparseset_set_bit (live_range_hard_reg_pseudos, r2->regno);
 	    }
 	}
-      COPY_HARD_REG_SET (conflict_set, lra_no_alloc_regs);
-      IOR_HARD_REG_SET (conflict_set, lra_reg_info[regno].conflict_hard_regs);
+      conflict_set = lra_no_alloc_regs;
+      conflict_set |= lra_reg_info[regno].conflict_hard_regs;
       val = lra_reg_info[regno].val;
       offset = lra_reg_info[regno].offset;
       EXECUTE_IF_SET_IN_SPARSESET (live_range_hard_reg_pseudos, conflict_regno)
@@ -1638,14 +1636,14 @@ lra_assign (bool &fails_p)
   bitmap_initialize (&all_spilled_pseudos, &reg_obstack);
   create_live_range_start_chains ();
   setup_live_pseudos_and_spill_after_risky_transforms (&all_spilled_pseudos);
-  if (! lra_asm_error_p && flag_checking && !flag_ipa_ra)
+  if (! lra_asm_error_p && flag_checking)
     /* Check correctness of allocation for call-crossed pseudos but
        only when there are no asm errors as in the case of errors the
        asm is removed and it can result in incorrect allocation.  */
     for (i = FIRST_PSEUDO_REGISTER; i < max_regno; i++)
-      if (lra_reg_info[i].nrefs != 0 && reg_renumber[i] >= 0
-	  && lra_reg_info[i].call_insn
-	  && overlaps_hard_reg_set_p (call_used_reg_set,
+      if (lra_reg_info[i].nrefs != 0
+	  && reg_renumber[i] >= 0
+	  && overlaps_hard_reg_set_p (lra_reg_info[i].conflict_hard_regs,
 				      PSEUDO_REGNO_MODE (i), reg_renumber[i]))
 	gcc_unreachable ();
   /* Setup insns to process on the next constraint pass.  */
@@ -1692,8 +1690,10 @@ lra_assign (bool &fails_p)
       && (lra_assignment_iter_after_spill
 	  > LRA_MAX_ASSIGNMENT_ITERATION_NUMBER))
     internal_error
-      ("Maximum number of LRA assignment passes is achieved (%d)\n",
+      ("maximum number of LRA assignment passes is achieved (%d)",
        LRA_MAX_ASSIGNMENT_ITERATION_NUMBER);
+  /* Reset the assignment correctness flag: */
+  check_and_force_assignment_correctness_p = false;
   return no_spills_p;
 }
 
