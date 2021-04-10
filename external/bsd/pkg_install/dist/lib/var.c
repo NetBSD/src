@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.3 2017/04/20 13:18:23 joerg Exp $	*/
+/*	$NetBSD: var.c,v 1.4 2021/04/10 19:49:59 nia Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: var.c,v 1.3 2017/04/20 13:18:23 joerg Exp $");
+__RCSID("$NetBSD: var.c,v 1.4 2021/04/10 19:49:59 nia Exp $");
 
 #if HAVE_SYS_STAT_H
 #include <sys/stat.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.3 2020/12/02 13:53:50 wiz Exp $	*/
+/*	$NetBSD: perform.c,v 1.4 2021/04/10 19:49:59 nia Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: perform.c,v 1.3 2020/12/02 13:53:50 wiz Exp $");
+__RCSID("$NetBSD: perform.c,v 1.4 2021/04/10 19:49:59 nia Exp $");
 
 /*
  * FreeBSD install - a package for the installation and maintainance

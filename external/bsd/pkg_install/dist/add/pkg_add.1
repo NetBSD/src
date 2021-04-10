@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.3 2018/03/25 04:04:36 sevan Exp $
+.\" $NetBSD: pkg_add.1,v 1.4 2021/04/10 19:49:59 nia Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -17,7 +17,7 @@
 .\"
 .\"     @(#)pkg_add.1
 .\"
-.Dd March 21, 2018
+.Dd March 8, 2021
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -189,7 +189,7 @@ URL pointing at a file available on an ftp or web site.
 Thus you may extract files directly from their anonymous ftp or WWW
 locations (e.g.,
 .Nm
-ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD/i386/3.1_2007Q2/shells/bash-3.2.9.tgz
+http://cdn.NetBSD.org/pub/pkgsrc/packages/NetBSD/x86_64/9.0/All/bash-5.0.18.tgz
 or
 .Nm
 http://www.example.org/packages/screen-4.0.tbz).
@@ -376,7 +376,20 @@ In all cases,
 .Nm
 will try to install binary packages listed in dependencies list.
 .Pp
-You can specify a compiled binary package explicitly on the command line.
+You can grab a compiled binary package from remote location by specifying
+a URL:
+.Bd -literal
+# pkg_add http://cdn.NetBSD.org/pub/pkgsrc/packages/NetBSD/x86_64/9.0/All/firefox-84.0.tgz
+.Ed
+.Pp
+The base URL can also be provided by the configuration variable,
+.Dv PKG_PATH :
+.Bd -literal
+# export PKG_PATH=http://cdn.NetBSD.org/pub/pkgsrc/packages/NetBSD/x86_64/9.0/All
+# pkg_add firefox
+.Ed
+.Pp
+You can also specify a compiled binary package by filesystem path:
 .Bd -literal
 # pkg_add /usr/pkgsrc/packages/All/tcsh-6.14.00.tgz
 .Ed
@@ -387,20 +400,9 @@ will install the latest version available.
 With
 .Fl v ,
 .Nm
-emits more messages to terminal.
+emits more messages to terminal:
 .Bd -literal
 # pkg_add -v /usr/pkgsrc/packages/All/unzip
-.Ed
-.Pp
-You can grab a compiled binary package from remote location by specifying
-a URL.
-The base URL can also be provided by the configuration variable,
-.Dv PKG_PATH .
-.Bd -literal
-# pkg_add -v ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD/i386/3.1_2007Q2/All/firefox-2.0.0.4.tgz
-
-# export PKG_PATH=ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD/i386/3.1_2007Q2/All
-# pkg_add -v firefox
 .Ed
 .Sh SEE ALSO
 .Xr pkg_admin 1 ,

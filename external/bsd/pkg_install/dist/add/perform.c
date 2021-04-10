@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.8 2020/12/12 11:00:57 wiz Exp $	*/
+/*	$NetBSD: perform.c,v 1.9 2021/04/10 19:49:59 nia Exp $	*/
 #if HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -6,7 +6,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: perform.c,v 1.8 2020/12/12 11:00:57 wiz Exp $");
+__RCSID("$NetBSD: perform.c,v 1.9 2021/04/10 19:49:59 nia Exp $");
 
 /*-
  * Copyright (c) 2003 Grant Beattie <grant@NetBSD.org>
@@ -129,53 +129,45 @@ static const struct pkg_meta_desc {
 static int pkg_do(const char *, int, int);
 
 static int
-end_of_version(const char *opsys, const char *version_end)
-{
-    if (*version_end == '\0')
-	return 1;
-
-    if (strcmp(opsys, "NetBSD") == 0) {
-	if (strncmp(version_end, "_ALPHA", 6) == 0
-	    || strncmp(version_end, "_BETA", 5) == 0
-	    || strncmp(version_end, "_RC", 3) == 0
-	    || strncmp(version_end, "_STABLE", 7) == 0
-	    || strncmp(version_end, "_PATCH", 6) == 0)
-	    return 1;
-    }
-
-    return 0;
-}
-
-static int
 compatible_platform(const char *opsys, const char *host, const char *package)
 {
-    int i = 0;
+	const char *loc;
+	size_t majorlen = 0;
 
-    /*
-     * If the user has set the CHECK_OS_VERSION variable to "no" then skip any
-     * uname version checks and assume they know what they are doing.  This can
-     * be useful on OS where the kernel version is not a good indicator of
-     * userland compatibility, or differs but retains ABI compatibility.
-     */
-    if (strcasecmp(check_os_version, "no") == 0)
-	return 1;
+	/*
+	 * If the user has set the CHECK_OS_VERSION variable to "no" then skip any
+	 * uname version checks and assume they know what they are doing.  This can
+	 * be useful on OS where the kernel version is not a good indicator of
+	 * userland compatibility, or differs but retains ABI compatibility.
+	 */
+	if (strcasecmp(check_os_version, "no") == 0)
+	    return 1;
 
-    /* returns 1 if host and package operating system match */
-    if (strcmp(host, package) == 0)
-	return 1;
-
-    /* accept, if host version is a minor release of package version */
-    if (strncmp(host, package, strlen(package)) == 0)
-	return 1;
-
-    /* find offset of first difference */
-    for (i=0; (host[i] != '\0') && (host[i] == package[i]);)
-	i++;
-
-    if (end_of_version(opsys, host+i) && end_of_version(opsys, package+i))
-	return 1;
-
-    return 0;
+	/* returns 1 if host and package operating system match */
+	if (strcmp(opsys, "NetBSD") == 0) {
+		/*
+		 * warn about -current package on a stable release and
+		 * the reverse
+		 */
+		if ((strstr(host, ".99.") != NULL &&
+		    strstr(package, ".99.") == NULL) ||
+		    (strstr(package, ".99.") != NULL &&
+		    strstr(host, ".99.") == NULL)) {
+			return 0;
+		}
+		/* compare the major version only */
+		loc = strchr(host, '.');
+		if (loc != NULL) {
+			majorlen = loc - host;
+			if (majorlen != (strchr(package, '.') - package))
+				return 0;
+			if (strncmp(host, package, majorlen) == 0)
+				return 1;
+		}
+	}
+	if (strcmp(host, package) == 0)
+		return 1;
+	return 0;
 }
 
 static int
