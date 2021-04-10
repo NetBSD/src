@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1237 2021/03/31 06:35:35 simonb Exp $
+#	$NetBSD: bsd.own.mk,v 1.1238 2021/04/10 00:35:24 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -75,9 +75,9 @@ MKGCCCMDS?=	no
 # We import the old gcc as "gcc.old" when upgrading.  EXTERNAL_GCC_SUBDIR is
 # set to the relevant subdirectory in src/external/gpl3 for his HAVE_GCC.
 #
-.if ${HAVE_GCC} == 8
+.if ${HAVE_GCC} == 9
 EXTERNAL_GCC_SUBDIR?=	gcc.old
-.elif ${HAVE_GCC} == 9
+.elif ${HAVE_GCC} == 10
 EXTERNAL_GCC_SUBDIR?=	gcc
 .else
 EXTERNAL_GCC_SUBDIR?=	/does/not/exist
