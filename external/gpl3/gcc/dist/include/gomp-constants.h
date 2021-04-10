@@ -1,6 +1,6 @@
 /* Communication between GCC and libgomp.
 
-   Copyright (C) 2014-2019 Free Software Foundation, Inc.
+   Copyright (C) 2014-2020 Free Software Foundation, Inc.
 
    Contributed by Mentor Embedded.
 
@@ -40,8 +40,11 @@
 #define GOMP_MAP_FLAG_SPECIAL_0		(1 << 2)
 #define GOMP_MAP_FLAG_SPECIAL_1		(1 << 3)
 #define GOMP_MAP_FLAG_SPECIAL_2		(1 << 4)
+#define GOMP_MAP_FLAG_SPECIAL_4		(1 << 6)
 #define GOMP_MAP_FLAG_SPECIAL		(GOMP_MAP_FLAG_SPECIAL_1 \
 					 | GOMP_MAP_FLAG_SPECIAL_0)
+#define GOMP_MAP_DEEP_COPY		(GOMP_MAP_FLAG_SPECIAL_4 \
+					 | GOMP_MAP_FLAG_SPECIAL_2)
 /* Flag to force a specific behavior (or else, trigger a run-time error).  */
 #define GOMP_MAP_FLAG_FORCE		(1 << 7)
 
@@ -62,7 +65,10 @@ enum gomp_map_kind
     /* Also internal, behaves like GOMP_MAP_TO, but additionally any
        GOMP_MAP_POINTER records consecutive after it which have addresses
        falling into that range will not be ignored if GOMP_MAP_TO_PSET wasn't
-       mapped already.  */
+       mapped already.
+       For OpenACC attach operations (e.g. copyin of struct members),
+       GOMP_MAP_TO_PSET is followed by a single GOMP_MAP_ATTACH mapping
+       instead.  */
     GOMP_MAP_TO_PSET =			(GOMP_MAP_FLAG_SPECIAL_0 | 1),
     /* Must already be present.  */
     GOMP_MAP_FORCE_PRESENT =		(GOMP_MAP_FLAG_SPECIAL_0 | 2),
@@ -71,12 +77,13 @@ enum gomp_map_kind
     /* Is a device pointer.  OMP_CLAUSE_SIZE for these is unused; is implicitly
        POINTER_SIZE_UNITS.  */
     GOMP_MAP_FORCE_DEVICEPTR =		(GOMP_MAP_FLAG_SPECIAL_1 | 0),
-    /* Do not map, copy bits for firstprivate instead.  */
     /* OpenACC device_resident.  */
     GOMP_MAP_DEVICE_RESIDENT =		(GOMP_MAP_FLAG_SPECIAL_1 | 1),
     /* OpenACC link.  */
     GOMP_MAP_LINK =			(GOMP_MAP_FLAG_SPECIAL_1 | 2),
-    /* Allocate.  */
+    /* Use device data if present, fall back to host address otherwise.  */
+    GOMP_MAP_IF_PRESENT =		(GOMP_MAP_FLAG_SPECIAL_1 | 3),
+    /* Do not map, copy bits for firstprivate instead.  */
     GOMP_MAP_FIRSTPRIVATE =		(GOMP_MAP_FLAG_SPECIAL | 0),
     /* Similarly, but store the value in the pointer rather than
        pointed by the pointer.  */
@@ -97,6 +104,10 @@ enum gomp_map_kind
     GOMP_MAP_FORCE_FROM =		(GOMP_MAP_FLAG_FORCE | GOMP_MAP_FROM),
     /* ..., and copy to and from device.  */
     GOMP_MAP_FORCE_TOFROM =		(GOMP_MAP_FLAG_FORCE | GOMP_MAP_TOFROM),
+    /* Like GOMP_MAP_USE_DEVICE_PTR above, translate a host to a device
+       address.  If translation fails because the target is not mapped,
+       continue using the host address. */
+    GOMP_MAP_USE_DEVICE_PTR_IF_PRESENT = (GOMP_MAP_FLAG_SPECIAL_2 | 0),
     /* If not already present, allocate.  And unconditionally copy to
        device.  */
     GOMP_MAP_ALWAYS_TO =		(GOMP_MAP_FLAG_SPECIAL_2 | GOMP_MAP_TO),
@@ -128,12 +139,28 @@ enum gomp_map_kind
     /* Decrement usage count and deallocate if zero.  */
     GOMP_MAP_RELEASE =			(GOMP_MAP_FLAG_SPECIAL_2
 					 | GOMP_MAP_DELETE),
+    /* The attach/detach mappings below use the OMP_CLAUSE_SIZE field as a
+       bias.  This will typically be zero, except when mapping an array slice
+       with a non-zero base.  In that case the bias will indicate the
+       (positive) difference between the start of the actual mapped data and
+       the "virtual" origin of the array.
+       In OpenACC, attach a pointer to a mapped struct field.  */
+    GOMP_MAP_ATTACH =			(GOMP_MAP_DEEP_COPY | 0),
+    /* In OpenACC, detach a pointer to a mapped struct field.  */
+    GOMP_MAP_DETACH =			(GOMP_MAP_DEEP_COPY | 1),
+    /* In OpenACC, detach a pointer to a mapped struct field.  */
+    GOMP_MAP_FORCE_DETACH =		(GOMP_MAP_DEEP_COPY
+					 | GOMP_MAP_FLAG_FORCE | 1),
 
     /* Internal to GCC, not used in libgomp.  */
     /* Do not map, but pointer assign a pointer instead.  */
     GOMP_MAP_FIRSTPRIVATE_POINTER =	(GOMP_MAP_LAST | 1),
     /* Do not map, but pointer assign a reference instead.  */
-    GOMP_MAP_FIRSTPRIVATE_REFERENCE =	(GOMP_MAP_LAST | 2)
+    GOMP_MAP_FIRSTPRIVATE_REFERENCE =	(GOMP_MAP_LAST | 2),
+    /* An attach or detach operation.  Rewritten to the appropriate type during
+       gimplification, depending on directive (i.e. "enter data" or
+       parallel/kernels region vs. "exit data").  */
+    GOMP_MAP_ATTACH_DETACH =		(GOMP_MAP_LAST | 3)
   };
 
 #define GOMP_MAP_COPY_TO_P(X) \
@@ -175,6 +202,7 @@ enum gomp_map_kind
 #define GOMP_DEVICE_NVIDIA_PTX		5
 #define GOMP_DEVICE_INTEL_MIC		6
 #define GOMP_DEVICE_HSA			7
+#define GOMP_DEVICE_GCN			8
 
 #define GOMP_DEVICE_ICV			-1
 #define GOMP_DEVICE_HOST_FALLBACK	-2
@@ -216,6 +244,7 @@ enum gomp_map_kind
 #define GOMP_VERSION_NVIDIA_PTX 1
 #define GOMP_VERSION_INTEL_MIC 0
 #define GOMP_VERSION_HSA 0
+#define GOMP_VERSION_GCN 1
 
 #define GOMP_VERSION_PACK(LIB, DEV) (((LIB) << 16) | (DEV))
 #define GOMP_VERSION_LIB(PACK) (((PACK) >> 16) & 0xffff)

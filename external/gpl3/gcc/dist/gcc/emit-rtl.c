@@ -1,5 +1,5 @@
 /* Emit RTL for the GCC expander.
-   Copyright (C) 1987-2019 Free Software Foundation, Inc.
+   Copyright (C) 1987-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -54,13 +54,15 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree-eh.h"
 #include "explow.h"
 #include "expr.h"
-#include "params.h"
 #include "builtins.h"
 #include "rtl-iter.h"
 #include "stor-layout.h"
 #include "opts.h"
 #include "predict.h"
 #include "rtx-vector-builder.h"
+#include "gimple.h"
+#include "gimple-ssa.h"
+#include "gimplify.h"
 
 struct target_rtl default_target_rtl;
 #if SWITCHABLE_TARGET
@@ -348,7 +350,7 @@ const_fixed_hasher::equal (rtx x, rtx y)
 /* Return true if the given memory attributes are equal.  */
 
 bool
-mem_attrs_eq_p (const struct mem_attrs *p, const struct mem_attrs *q)
+mem_attrs_eq_p (const class mem_attrs *p, const class mem_attrs *q)
 {
   if (p == q)
     return true;
@@ -463,6 +465,17 @@ set_mode_and_regno (rtx x, machine_mode mode, unsigned int regno)
   set_regno_raw (x, regno, nregs);
 }
 
+/* Initialize a fresh REG rtx with mode MODE and register REGNO.  */
+
+rtx
+init_raw_REG (rtx x, machine_mode mode, unsigned int regno)
+{
+  set_mode_and_regno (x, mode, regno);
+  REG_ATTRS (x) = NULL;
+  ORIGINAL_REGNO (x) = regno;
+  return x;
+}
+
 /* Generate a new REG rtx.  Make sure ORIGINAL_REGNO is set properly, and
    don't attempt to share with the various global pieces of rtl (such as
    frame_pointer_rtx).  */
@@ -471,9 +484,7 @@ rtx
 gen_raw_REG (machine_mode mode, unsigned int regno)
 {
   rtx x = rtx_alloc (REG MEM_STAT_INFO);
-  set_mode_and_regno (x, mode, regno);
-  REG_ATTRS (x) = NULL;
-  ORIGINAL_REGNO (x) = regno;
+  init_raw_REG (x, mode, regno);
   return x;
 }
 
@@ -1921,7 +1932,7 @@ set_mem_attributes_minus_bitpos (rtx ref, tree t, int objectp,
 {
   poly_int64 apply_bitpos = 0;
   tree type;
-  struct mem_attrs attrs, *defattrs, *refattrs;
+  class mem_attrs attrs, *defattrs, *refattrs;
   addr_space_t as;
 
   /* It can happen that type_for_mode was given a mode for which there
@@ -2054,8 +2065,10 @@ set_mem_attributes_minus_bitpos (rtx ref, tree t, int objectp,
 	  new_size = DECL_SIZE_UNIT (t);
 	}
 
-      /* ???  If we end up with a constant here do record a MEM_EXPR.  */
-      else if (CONSTANT_CLASS_P (t))
+      /* ???  If we end up with a constant or a descriptor do not
+	 record a MEM_EXPR.  */
+      else if (CONSTANT_CLASS_P (t)
+	       || TREE_CODE (t) == CONSTRUCTOR)
 	;
 
       /* If this is a field reference, record it.  */
@@ -2069,63 +2082,37 @@ set_mem_attributes_minus_bitpos (rtx ref, tree t, int objectp,
 	    new_size = DECL_SIZE_UNIT (TREE_OPERAND (t, 1));
 	}
 
-      /* If this is an array reference, look for an outer field reference.  */
-      else if (TREE_CODE (t) == ARRAY_REF)
+      /* Else record it.  */
+      else
 	{
-	  tree off_tree = size_zero_node;
-	  /* We can't modify t, because we use it at the end of the
-	     function.  */
-	  tree t2 = t;
-
-	  do
-	    {
-	      tree index = TREE_OPERAND (t2, 1);
-	      tree low_bound = array_ref_low_bound (t2);
-	      tree unit_size = array_ref_element_size (t2);
-
-	      /* We assume all arrays have sizes that are a multiple of a byte.
-		 First subtract the lower bound, if any, in the type of the
-		 index, then convert to sizetype and multiply by the size of
-		 the array element.  */
-	      if (! integer_zerop (low_bound))
-		index = fold_build2 (MINUS_EXPR, TREE_TYPE (index),
-				     index, low_bound);
-
-	      off_tree = size_binop (PLUS_EXPR,
-				     size_binop (MULT_EXPR,
-						 fold_convert (sizetype,
-							       index),
-						 unit_size),
-				     off_tree);
-	      t2 = TREE_OPERAND (t2, 0);
-	    }
-	  while (TREE_CODE (t2) == ARRAY_REF);
-
-	  if (DECL_P (t2)
-	      || (TREE_CODE (t2) == COMPONENT_REF
-		  /* For trailing arrays t2 doesn't have a size that
-		     covers all valid accesses.  */
-		  && ! array_at_struct_end_p (t)))
-	    {
-	      attrs.expr = t2;
-	      attrs.offset_known_p = false;
-	      if (poly_int_tree_p (off_tree, &attrs.offset))
-		{
-		  attrs.offset_known_p = true;
-		  apply_bitpos = bitpos;
-		}
-	    }
-	  /* Else do not record a MEM_EXPR.  */
-	}
-
-      /* If this is an indirect reference, record it.  */
-      else if (TREE_CODE (t) == MEM_REF 
-	       || TREE_CODE (t) == TARGET_MEM_REF)
-	{
+	  gcc_assert (handled_component_p (t)
+		      || TREE_CODE (t) == MEM_REF
+		      || TREE_CODE (t) == TARGET_MEM_REF);
 	  attrs.expr = t;
 	  attrs.offset_known_p = true;
 	  attrs.offset = 0;
 	  apply_bitpos = bitpos;
+	}
+
+      /* If this is a reference based on a partitioned decl replace the
+	 base with a MEM_REF of the pointer representative we created
+	 during stack slot partitioning.  */
+      if (attrs.expr
+	  && VAR_P (base)
+	  && ! is_global_var (base)
+	  && cfun->gimple_df->decls_to_pointers != NULL)
+	{
+	  tree *namep = cfun->gimple_df->decls_to_pointers->get (base);
+	  if (namep)
+	    {
+	      attrs.expr = unshare_expr (attrs.expr);
+	      tree *orig_base = &attrs.expr;
+	      while (handled_component_p (*orig_base))
+		orig_base = &TREE_OPERAND (*orig_base, 0);
+	      tree aptrt = reference_alias_ptr_type (*orig_base);
+	      *orig_base = build2 (MEM_REF, TREE_TYPE (*orig_base), *namep,
+				   build_int_cst (aptrt, 0));
+	    }
 	}
 
       /* Compute the alignment.  */
@@ -2310,7 +2297,7 @@ change_address (rtx memref, machine_mode mode, rtx addr)
 {
   rtx new_rtx = change_address_1 (memref, mode, addr, 1, false);
   machine_mode mmode = GET_MODE (new_rtx);
-  struct mem_attrs *defattrs;
+  class mem_attrs *defattrs;
 
   mem_attrs attrs (*get_mem_attrs (memref));
   defattrs = mode_mem_attrs[(int) mmode];
@@ -2354,7 +2341,7 @@ adjust_address_1 (rtx memref, machine_mode mode, poly_int64 offset,
   rtx addr = XEXP (memref, 0);
   rtx new_rtx;
   scalar_int_mode address_mode;
-  struct mem_attrs attrs (*get_mem_attrs (memref)), *defattrs;
+  class mem_attrs attrs (*get_mem_attrs (memref)), *defattrs;
   unsigned HOST_WIDE_INT max_align;
 #ifdef POINTERS_EXTEND_UNSIGNED
   scalar_int_mode pointer_mode
@@ -2500,7 +2487,7 @@ offset_address (rtx memref, rtx offset, unsigned HOST_WIDE_INT pow2)
 {
   rtx new_rtx, addr = XEXP (memref, 0);
   machine_mode address_mode;
-  struct mem_attrs *defattrs;
+  class mem_attrs *defattrs;
 
   mem_attrs attrs (*get_mem_attrs (memref));
   address_mode = get_address_mode (memref);
@@ -2729,15 +2716,15 @@ set_new_first_and_last_insn (rtx_insn *first, rtx_insn *last)
   set_last_insn (last);
   cur_insn_uid = 0;
 
-  if (MIN_NONDEBUG_INSN_UID || MAY_HAVE_DEBUG_INSNS)
+  if (param_min_nondebug_insn_uid || MAY_HAVE_DEBUG_INSNS)
     {
       int debug_count = 0;
 
-      cur_insn_uid = MIN_NONDEBUG_INSN_UID - 1;
+      cur_insn_uid = param_min_nondebug_insn_uid - 1;
       cur_debug_insn_uid = 0;
 
       for (insn = first; insn; insn = NEXT_INSN (insn))
-	if (INSN_UID (insn) < MIN_NONDEBUG_INSN_UID)
+	if (INSN_UID (insn) < param_min_nondebug_insn_uid)
 	  cur_debug_insn_uid = MAX (cur_debug_insn_uid, INSN_UID (insn));
 	else
 	  {
@@ -2747,7 +2734,7 @@ set_new_first_and_last_insn (rtx_insn *first, rtx_insn *last)
 	  }
 
       if (debug_count)
-	cur_debug_insn_uid = MIN_NONDEBUG_INSN_UID + debug_count;
+	cur_debug_insn_uid = param_min_nondebug_insn_uid + debug_count;
       else
 	cur_debug_insn_uid++;
     }
@@ -2865,7 +2852,6 @@ verify_rtx_sharing (rtx orig, rtx insn)
       /* SCRATCH must be shared because they represent distinct values.  */
       return;
     case CLOBBER:
-    case CLOBBER_HIGH:
       /* Share clobbers of hard registers (like cc0), but do not share pseudo reg
          clobbers or clobbers of hard registers that originated as pseudos.
          This is needed to allow safe register renaming.  */
@@ -3119,7 +3105,6 @@ repeat:
       /* SCRATCH must be shared because they represent distinct values.  */
       return;
     case CLOBBER:
-    case CLOBBER_HIGH:
       /* Share clobbers of hard registers (like cc0), but do not share pseudo reg
          clobbers or clobbers of hard registers that originated as pseudos.
          This is needed to allow safe register renaming.  */
@@ -3414,10 +3399,10 @@ get_max_insn_count (void)
      differences due to debug insns, and not be affected by
      -fmin-insn-uid, to avoid excessive table size and to simplify
      debugging of -fcompare-debug failures.  */
-  if (cur_debug_insn_uid > MIN_NONDEBUG_INSN_UID)
+  if (cur_debug_insn_uid > param_min_nondebug_insn_uid)
     n -= cur_debug_insn_uid;
   else
-    n -= MIN_NONDEBUG_INSN_UID;
+    n -= param_min_nondebug_insn_uid;
 
   return n;
 }
@@ -3993,7 +3978,7 @@ try_split (rtx pat, rtx_insn *trial, int last)
   before = PREV_INSN (trial);
   after = NEXT_INSN (trial);
 
-  tem = emit_insn_after_setloc (seq, trial, INSN_LOCATION (trial));
+  emit_insn_after_setloc (seq, trial, INSN_LOCATION (trial));
 
   delete_insn (trial);
 
@@ -4054,7 +4039,7 @@ make_debug_insn_raw (rtx pattern)
 
   insn = as_a <rtx_debug_insn *> (rtx_alloc (DEBUG_INSN));
   INSN_UID (insn) = cur_debug_insn_uid++;
-  if (cur_debug_insn_uid > MIN_NONDEBUG_INSN_UID)
+  if (cur_debug_insn_uid > param_min_nondebug_insn_uid)
     INSN_UID (insn) = cur_insn_uid++;
 
   PATTERN (insn) = pattern;
@@ -5693,7 +5678,6 @@ copy_insn_1 (rtx orig)
     case SIMPLE_RETURN:
       return orig;
     case CLOBBER:
-    case CLOBBER_HIGH:
       /* Share clobbers of hard registers (like cc0), but do not share pseudo reg
          clobbers or clobbers of hard registers that originated as pseudos.
          This is needed to allow safe register renaming.  */
@@ -5830,8 +5814,8 @@ init_emit (void)
 {
   set_first_insn (NULL);
   set_last_insn (NULL);
-  if (MIN_NONDEBUG_INSN_UID)
-    cur_insn_uid = MIN_NONDEBUG_INSN_UID;
+  if (param_min_nondebug_insn_uid)
+    cur_insn_uid = param_min_nondebug_insn_uid;
   else
     cur_insn_uid = 1;
   cur_debug_insn_uid = 1;
@@ -6505,21 +6489,6 @@ gen_hard_reg_clobber (machine_mode mode, unsigned int regno)
 	    gen_rtx_CLOBBER (VOIDmode, gen_rtx_REG (mode, regno)));
 }
 
-static GTY((deletable)) rtx
-hard_reg_clobbers_high[NUM_MACHINE_MODES][FIRST_PSEUDO_REGISTER];
-
-/* Return a CLOBBER_HIGH expression for register REGNO that clobbers MODE,
-   caching into HARD_REG_CLOBBERS_HIGH.  */
-rtx
-gen_hard_reg_clobber_high (machine_mode mode, unsigned int regno)
-{
-  if (hard_reg_clobbers_high[mode][regno])
-    return hard_reg_clobbers_high[mode][regno];
-  else
-    return (hard_reg_clobbers_high[mode][regno]
-	    = gen_rtx_CLOBBER_HIGH (VOIDmode, gen_rtx_REG (mode, regno)));
-}
-
 location_t prologue_location;
 location_t epilogue_location;
 
@@ -6556,6 +6525,18 @@ location_t
 curr_insn_location (void)
 {
   return curr_location;
+}
+
+/* Set the location of the insn chain starting at INSN to LOC.  */
+void
+set_insn_locations (rtx_insn *insn, location_t loc)
+{
+  while (insn)
+    {
+      if (INSN_P (insn))
+	INSN_LOCATION (insn) = loc;
+      insn = NEXT_INSN (insn);
+    }
 }
 
 /* Return lexical scope block insn belongs to.  */

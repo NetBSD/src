@@ -1,5 +1,5 @@
 /* Parse tree dumper
-   Copyright (C) 2003-2019 Free Software Foundation, Inc.
+   Copyright (C) 2003-2020 Free Software Foundation, Inc.
    Contributed by Steven Bosscher
 
 This file is part of GCC.
@@ -66,6 +66,19 @@ void debug (symbol_attribute *attr)
   dumpfile = tmp;
 }
 
+void debug (gfc_formal_arglist *formal)
+{
+  FILE *tmp = dumpfile;
+  dumpfile = stderr;
+  for (; formal; formal = formal->next)
+    {
+      fputc ('\n', dumpfile);
+      show_symbol (formal->sym);
+    }
+  fputc ('\n', dumpfile);
+  dumpfile = tmp;
+}
+
 void debug (symbol_attribute attr)
 {
   debug (&attr);
@@ -75,9 +88,15 @@ void debug (gfc_expr *e)
 {
   FILE *tmp = dumpfile;
   dumpfile = stderr;
-  show_expr (e);
-  fputc (' ', dumpfile);
-  show_typespec (&e->ts);
+  if (e != NULL)
+    {
+      show_expr (e);
+      fputc (' ', dumpfile);
+      show_typespec (&e->ts);
+    }
+  else
+    fputs ("() ", dumpfile);
+
   fputc ('\n', dumpfile);
   dumpfile = tmp;
 }
@@ -540,6 +559,16 @@ show_expr (gfc_expr *p)
 	  fputc (')', dumpfile);
 	  break;
 
+	case BT_BOZ:
+	  if (p->boz.rdx == 2)
+	    fputs ("b'", dumpfile);
+	  else if (p->boz.rdx == 8)
+	    fputs ("o'", dumpfile);
+	  else
+	    fputs ("z'", dumpfile);
+	  fprintf (dumpfile, "%s'", p->boz.str);
+	  break;
+
 	case BT_HOLLERITH:
 	  fprintf (dumpfile, HOST_WIDE_INT_PRINT_DEC "H",
 		   p->representation.length);
@@ -706,7 +735,7 @@ show_attr (symbol_attribute *attr, const char * module)
   if (attr->flavor != FL_UNKNOWN)
     {
       if (attr->flavor == FL_DERIVED && attr->pdt_template)
-	fputs (" (PDT template", dumpfile);
+	fputs (" (PDT-TEMPLATE", dumpfile);
       else
     fprintf (dumpfile, "(%s ", gfc_code2string (flavors, attr->flavor));
     }
@@ -741,6 +770,12 @@ show_attr (symbol_attribute *attr, const char * module)
     fputs (" LEN", dumpfile);
   if (attr->pointer)
     fputs (" POINTER", dumpfile);
+  if (attr->subref_array_pointer)
+    fputs (" SUBREF-ARRAY-POINTER", dumpfile);
+  if (attr->cray_pointer)
+    fputs (" CRAY-POINTER", dumpfile);
+  if (attr->cray_pointee)
+    fputs (" CRAY-POINTEE", dumpfile);
   if (attr->is_protected)
     fputs (" PROTECTED", dumpfile);
   if (attr->value)
@@ -762,6 +797,10 @@ show_attr (symbol_attribute *attr, const char * module)
     fputs (" RESULT", dumpfile);
   if (attr->entry)
     fputs (" ENTRY", dumpfile);
+  if (attr->entry_master)
+    fputs (" ENTRY-MASTER", dumpfile);
+  if (attr->mixed_entry_master)
+    fputs (" MIXED-ENTRY-MASTER", dumpfile);
   if (attr->is_bind_c)
     fputs (" BIND(C)", dumpfile);
 
@@ -790,15 +829,80 @@ show_attr (symbol_attribute *attr, const char * module)
 
   if (attr->sequence)
     fputs (" SEQUENCE", dumpfile);
+  if (attr->alloc_comp)
+    fputs (" ALLOC-COMP", dumpfile);
+  if (attr->pointer_comp)
+    fputs (" POINTER-COMP", dumpfile);
+  if (attr->proc_pointer_comp)
+    fputs (" PROC-POINTER-COMP", dumpfile);
+  if (attr->private_comp)
+    fputs (" PRIVATE-COMP", dumpfile);
+  if (attr->zero_comp)
+    fputs (" ZERO-COMP", dumpfile);
+  if (attr->coarray_comp)
+    fputs (" COARRAY-COMP", dumpfile);
+  if (attr->lock_comp)
+    fputs (" LOCK-COMP", dumpfile);
+  if (attr->event_comp)
+    fputs (" EVENT-COMP", dumpfile);
+  if (attr->defined_assign_comp)
+    fputs (" DEFINED-ASSIGNED-COMP", dumpfile);
+  if (attr->unlimited_polymorphic)
+    fputs (" UNLIMITED-POLYMORPHIC", dumpfile);
+  if (attr->has_dtio_procs)
+    fputs (" HAS-DTIO-PROCS", dumpfile);
+  if (attr->caf_token)
+    fputs (" CAF-TOKEN", dumpfile);
+  if (attr->select_type_temporary)
+    fputs (" SELECT-TYPE-TEMPORARY", dumpfile);
+  if (attr->associate_var)
+    fputs (" ASSOCIATE-VAR", dumpfile);
+  if (attr->pdt_kind)
+    fputs (" PDT-KIND", dumpfile);
+  if (attr->pdt_len)
+    fputs (" PDT-LEN", dumpfile);
+  if (attr->pdt_type)
+    fputs (" PDT-TYPE", dumpfile);
+  if (attr->pdt_array)
+    fputs (" PDT-ARRAY", dumpfile);
+  if (attr->pdt_string)
+    fputs (" PDT-STRING", dumpfile);
+  if (attr->omp_udr_artificial_var)
+    fputs (" OMP-UDT-ARTIFICIAL-VAR", dumpfile);
+  if (attr->omp_declare_target)
+    fputs (" OMP-DECLARE-TARGET", dumpfile);
+  if (attr->omp_declare_target_link)
+    fputs (" OMP-DECLARE-TARGET-LINK", dumpfile);
   if (attr->elemental)
     fputs (" ELEMENTAL", dumpfile);
   if (attr->pure)
     fputs (" PURE", dumpfile);
   if (attr->implicit_pure)
-    fputs (" IMPLICIT_PURE", dumpfile);
+    fputs (" IMPLICIT-PURE", dumpfile);
   if (attr->recursive)
     fputs (" RECURSIVE", dumpfile);
+  if (attr->unmaskable)
+    fputs (" UNMASKABKE", dumpfile);
+  if (attr->masked)
+    fputs (" MASKED", dumpfile);
+  if (attr->contained)
+    fputs (" CONTAINED", dumpfile);
+  if (attr->mod_proc)
+    fputs (" MOD-PROC", dumpfile);
+  if (attr->module_procedure)
+    fputs (" MODULE-PROCEDURE", dumpfile);
+  if (attr->public_used)
+    fputs (" PUBLIC_USED", dumpfile);
+  if (attr->array_outer_dependency)
+    fputs (" ARRAY-OUTER-DEPENDENCY", dumpfile);
+  if (attr->noreturn)
+    fputs (" NORETURN", dumpfile);
+  if (attr->always_explicit)
+    fputs (" ALWAYS-EXPLICIT", dumpfile);
+  if (attr->is_main_program)
+    fputs (" IS-MAIN-PROGRAM", dumpfile);
 
+  /* FIXME: Still missing are oacc_routine_lop and ext_attr.  */
   fputc (')', dumpfile);
 }
 
@@ -981,11 +1085,17 @@ show_symbol (gfc_symbol *sym)
       show_expr (sym->value);
     }
 
-  if (sym->as)
+  if (sym->ts.type != BT_CLASS && sym->as)
     {
       show_indent ();
       fputs ("Array spec:", dumpfile);
       show_array_spec (sym->as);
+    }
+  else if (sym->ts.type == BT_CLASS && CLASS_DATA (sym)->as)
+    {
+      show_indent ();
+      fputs ("Array spec:", dumpfile);
+      show_array_spec (CLASS_DATA (sym)->as);
     }
 
   if (sym->generic)
@@ -1482,6 +1592,7 @@ show_omp_clauses (gfc_omp_clauses *omp_clauses)
 	  case OMP_LIST_CACHE: type = "CACHE"; break;
 	  case OMP_LIST_IS_DEVICE_PTR: type = "IS_DEVICE_PTR"; break;
 	  case OMP_LIST_USE_DEVICE_PTR: type = "USE_DEVICE_PTR"; break;
+	  case OMP_LIST_USE_DEVICE_ADDR: type = "USE_DEVICE_ADDR"; break;
 	  default:
 	    gcc_unreachable ();
 	  }
@@ -1618,6 +1729,8 @@ show_omp_node (int level, gfc_code *c)
     case EXEC_OACC_PARALLEL: name = "PARALLEL"; is_oacc = true; break;
     case EXEC_OACC_KERNELS_LOOP: name = "KERNELS LOOP"; is_oacc = true; break;
     case EXEC_OACC_KERNELS: name = "KERNELS"; is_oacc = true; break;
+    case EXEC_OACC_SERIAL_LOOP: name = "SERIAL LOOP"; is_oacc = true; break;
+    case EXEC_OACC_SERIAL: name = "SERIAL"; is_oacc = true; break;
     case EXEC_OACC_DATA: name = "DATA"; is_oacc = true; break;
     case EXEC_OACC_HOST_DATA: name = "HOST_DATA"; is_oacc = true; break;
     case EXEC_OACC_LOOP: name = "LOOP"; is_oacc = true; break;
@@ -1693,6 +1806,8 @@ show_omp_node (int level, gfc_code *c)
     case EXEC_OACC_PARALLEL:
     case EXEC_OACC_KERNELS_LOOP:
     case EXEC_OACC_KERNELS:
+    case EXEC_OACC_SERIAL_LOOP:
+    case EXEC_OACC_SERIAL:
     case EXEC_OACC_DATA:
     case EXEC_OACC_HOST_DATA:
     case EXEC_OACC_LOOP:
@@ -2149,18 +2264,22 @@ show_code_node (int level, gfc_code *c)
 
     case EXEC_SELECT:
     case EXEC_SELECT_TYPE:
+    case EXEC_SELECT_RANK:
       d = c->block;
-      if (c->op == EXEC_SELECT_TYPE)
+      fputc ('\n', dumpfile);
+      code_indent (level, 0);
+      if (c->op == EXEC_SELECT_RANK)
+	fputs ("SELECT RANK ", dumpfile);
+      else if (c->op == EXEC_SELECT_TYPE)
 	fputs ("SELECT TYPE ", dumpfile);
       else
 	fputs ("SELECT CASE ", dumpfile);
       show_expr (c->expr1);
-      fputc ('\n', dumpfile);
 
       for (; d; d = d->block)
 	{
+	  fputc ('\n', dumpfile);
 	  code_indent (level, 0);
-
 	  fputs ("CASE ", dumpfile);
 	  for (cp = d->ext.block.case_list; cp; cp = cp->next)
 	    {
@@ -2171,9 +2290,9 @@ show_code_node (int level, gfc_code *c)
 	      fputc (')', dumpfile);
 	      fputc (' ', dumpfile);
 	    }
-	  fputc ('\n', dumpfile);
 
 	  show_code (level + 1, d->next);
+	  fputc ('\n', dumpfile);
 	}
 
       code_indent (level, c->label1);
@@ -2878,6 +2997,8 @@ show_code_node (int level, gfc_code *c)
     case EXEC_OACC_PARALLEL:
     case EXEC_OACC_KERNELS_LOOP:
     case EXEC_OACC_KERNELS:
+    case EXEC_OACC_SERIAL_LOOP:
+    case EXEC_OACC_SERIAL:
     case EXEC_OACC_DATA:
     case EXEC_OACC_HOST_DATA:
     case EXEC_OACC_LOOP:
@@ -3136,45 +3257,28 @@ get_c_type_name (gfc_typespec *ts, gfc_array_spec *as, const char **pre,
   if (ts->type == BT_REAL || ts->type == BT_INTEGER || ts->type == BT_COMPLEX)
     {
       if (ts->is_c_interop && ts->interop_kind)
-	{
-	  *type_name = ts->interop_kind->name + 2;
-	  if (strcmp (*type_name, "signed_char") == 0)
-	    *type_name = "signed char";
-	  else if (strcmp (*type_name, "size_t") == 0)
-	    *type_name = "ssize_t";
-	  else if (strcmp (*type_name, "float_complex") == 0)
-	    *type_name = "__GFORTRAN_FLOAT_COMPLEX";
-	  else if (strcmp (*type_name, "double_complex") == 0)
-	    *type_name = "__GFORTRAN_DOUBLE_COMPLEX";
-	  else if (strcmp (*type_name, "long_double_complex") == 0)
-	    *type_name = "__GFORTRAN_LONG_DOUBLE_COMPLEX";
-
-	  ret = T_OK;
-	}
+	ret = T_OK;
       else
-	{
-	  /* The user did not specify a C interop type.  Let's look through
-	     the available table and use the first one, but warn.  */
-	  for (int i = 0; i < ISOCBINDING_NUMBER; i++)
-	    {
-	      if (c_interop_kinds_table[i].f90_type == ts->type
-		  && c_interop_kinds_table[i].value == ts->kind)
-		{
-		  *type_name = c_interop_kinds_table[i].name + 2;
-		  if (strcmp (*type_name, "signed_char") == 0)
-		    *type_name = "signed char";
-		  else if (strcmp (*type_name, "size_t") == 0)
-		    *type_name = "ssize_t";
-		  else if (strcmp (*type_name, "float_complex") == 0)
-		    *type_name = "__GFORTRAN_FLOAT_COMPLEX";
-		  else if (strcmp (*type_name, "double_complex") == 0)
-		    *type_name = "__GFORTRAN_DOUBLE_COMPLEX";
-		  else if (strcmp (*type_name, "long_double_complex") == 0)
-		    *type_name = "__GFORTRAN_LONG_DOUBLE_COMPLEX";
+	ret = T_WARN;
 
-		  ret = T_WARN;
-		  break;
-		}
+      for (int i = 0; i < ISOCBINDING_NUMBER; i++)
+	{
+	  if (c_interop_kinds_table[i].f90_type == ts->type
+	      && c_interop_kinds_table[i].value == ts->kind)
+	    {
+	      *type_name = c_interop_kinds_table[i].name + 2;
+	      if (strcmp (*type_name, "signed_char") == 0)
+		*type_name = "signed char";
+	      else if (strcmp (*type_name, "size_t") == 0)
+		*type_name = "ssize_t";
+	      else if (strcmp (*type_name, "float_complex") == 0)
+		*type_name = "__GFORTRAN_FLOAT_COMPLEX";
+	      else if (strcmp (*type_name, "double_complex") == 0)
+		*type_name = "__GFORTRAN_DOUBLE_COMPLEX";
+	      else if (strcmp (*type_name, "long_double_complex") == 0)
+		*type_name = "__GFORTRAN_LONG_DOUBLE_COMPLEX";
+
+	      break;
 	    }
 	}
     }

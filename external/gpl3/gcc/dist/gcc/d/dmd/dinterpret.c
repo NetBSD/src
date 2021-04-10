@@ -1652,21 +1652,28 @@ public:
     {
         // Little sanity check to make sure it's really a Throwable
         ClassReferenceExp *boss = oldest->thrown;
-        assert((*boss->value->elements)[4]->type->ty == Tclass);    // Throwable.next
+        const int next = 4;                         // index of Throwable.next
+        assert((*boss->value->elements)[next]->type->ty == Tclass); // Throwable.next
         ClassReferenceExp *collateral = newest->thrown;
         if ( isAnErrorException(collateral->originalClass()) &&
             !isAnErrorException(boss->originalClass()))
         {
+            /* Find the index of the Error.bypassException field
+             */
+            int bypass = next + 1;
+            if ((*collateral->value->elements)[bypass]->type->ty == Tuns32)
+                bypass += 1;  // skip over _refcount field
+            assert((*collateral->value->elements)[bypass]->type->ty == Tclass);
+
             // The new exception bypass the existing chain
-            assert((*collateral->value->elements)[5]->type->ty == Tclass);
-            (*collateral->value->elements)[5] = boss;
+            (*collateral->value->elements)[bypass] = boss;
             return newest;
         }
-        while ((*boss->value->elements)[4]->op == TOKclassreference)
+        while ((*boss->value->elements)[next]->op == TOKclassreference)
         {
-            boss = (ClassReferenceExp *)(*boss->value->elements)[4];
+            boss = (ClassReferenceExp *)(*boss->value->elements)[next];
         }
-        (*boss->value->elements)[4] = collateral;
+        (*boss->value->elements)[next] = collateral;
         return oldest;
     }
 
@@ -1940,15 +1947,6 @@ public:
             Type *elemtype = ((TypeArray *)(val->type))->next;
             d_uns64 elemsize = elemtype->size();
 
-            // It's OK to cast from fixed length to dynamic array, eg &int[3] to int[]*
-            if (val->type->ty == Tsarray && pointee->ty == Tarray &&
-                elemsize == pointee->nextOf()->size())
-            {
-                new(pue) AddrExp(e->loc, val, e->type);
-                result = pue->exp();
-                return;
-            }
-
             // It's OK to cast from fixed length to fixed length array, eg &int[n] to int[d]*.
             if (val->type->ty == Tsarray && pointee->ty == Tsarray &&
                 elemsize == pointee->nextOf()->size())
@@ -2085,9 +2083,9 @@ public:
             if (v->ident == Id::ctfe)
                 return new IntegerExp(loc, 1, Type::tbool);
 
-            if (!v->originalType && v->_scope)   // semantic() not yet run
+            if (!v->originalType && v->semanticRun < PASSsemanticdone) // semantic() not yet run
             {
-                v->semantic (v->_scope);
+                v->semantic(NULL);
                 if (v->type->ty == Terror)
                     return CTFEExp::cantexp;
             }
@@ -4649,6 +4647,10 @@ public:
                     result = getVarExp(e->loc, istate, ((SymbolExp *)ea)->var, ctfeNeedRvalue);
                 else if (ea->op == TOKaddress)
                     result = interpret(((AddrExp *)ea)->e1, istate);
+                // https://issues.dlang.org/show_bug.cgi?id=18871
+                // https://issues.dlang.org/show_bug.cgi?id=18819
+                else if (ea->op == TOKarrayliteral)
+                    result = interpret((ArrayLiteralExp *)ea, istate);
                 else
                     assert(0);
                 if (CTFEExp::isCantExp(result))
@@ -6053,9 +6055,16 @@ public:
         result = (*se->elements)[i];
         if (!result)
         {
-            e->error("Internal Compiler Error: null field %s", v->toChars());
-            result = CTFEExp::cantexp;
-            return;
+            // https://issues.dlang.org/show_bug.cgi?id=19897
+            // Zero-length fields don't have an initializer.
+            if (v->type->size() == 0)
+                result = voidInitLiteral(e->type, v).copy();
+            else
+            {
+                e->error("Internal Compiler Error: null field %s", v->toChars());
+                result = CTFEExp::cantexp;
+                return;
+            }
         }
         if (result->op == TOKvoid)
         {

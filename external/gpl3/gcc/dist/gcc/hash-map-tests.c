@@ -1,5 +1,5 @@
 /* Unit tests for hash-map.h.
-   Copyright (C) 2015-2019 Free Software Foundation, Inc.
+   Copyright (C) 2015-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -53,7 +53,7 @@ test_map_of_strings_to_int ()
   const char *eric = "half a bee";
 
   /* A fresh hash_map should be empty.  */
-  ASSERT_EQ (0, m.elements ());
+  ASSERT_TRUE (m.is_empty ());
   ASSERT_EQ (NULL, m.get (ostrich));
 
   /* Populate the hash_map.  */
@@ -101,6 +101,204 @@ test_map_of_strings_to_int ()
   ASSERT_EQ (1, string_map.elements ());
   ASSERT_EQ (true, string_map.put (another_ant, 5));
   ASSERT_EQ (1, string_map.elements ());
+
+  free (another_ant);
+}
+
+/* Construct a hash_map using int_hash and verify that
+   various operations work correctly.  */
+
+static void
+test_map_of_int_to_strings ()
+{
+  const int EMPTY = -1;
+  const int DELETED = -2;
+  typedef int_hash <int, EMPTY, DELETED> int_hash_t;
+  hash_map <int_hash_t, const char *> m;
+
+  const char *ostrich = "ostrich";
+  const char *elephant = "elephant";
+  const char *ant = "ant";
+  const char *spider = "spider";
+  const char *millipede = "Illacme plenipes";
+  const char *eric = "half a bee";
+
+  /* A fresh hash_map should be empty.  */
+  ASSERT_EQ (0, m.elements ());
+  ASSERT_EQ (NULL, m.get (2));
+
+  /* Populate the hash_map.  */
+  ASSERT_EQ (false, m.put (2, ostrich));
+  ASSERT_EQ (false, m.put (4, elephant));
+  ASSERT_EQ (false, m.put (6, ant));
+  ASSERT_EQ (false, m.put (8, spider));
+  ASSERT_EQ (false, m.put (750, millipede));
+  ASSERT_EQ (false, m.put (3, eric));
+
+  /* Verify that we can recover the stored values.  */
+  ASSERT_EQ (6, m.elements ());
+  ASSERT_EQ (*m.get (2), ostrich);
+  ASSERT_EQ (*m.get (4), elephant);
+  ASSERT_EQ (*m.get (6), ant);
+  ASSERT_EQ (*m.get (8), spider);
+  ASSERT_EQ (*m.get (750), millipede);
+  ASSERT_EQ (*m.get (3), eric);
+}
+
+typedef class hash_map_test_val_t
+{
+public:
+  static int ndefault;
+  static int ncopy;
+  static int nassign;
+  static int ndtor;
+
+  hash_map_test_val_t ()
+    : ptr (&ptr)
+  {
+    ++ndefault;
+  }
+
+  hash_map_test_val_t (const hash_map_test_val_t &rhs)
+    : ptr (&ptr)
+  {
+    ++ncopy;
+    gcc_assert (rhs.ptr == &rhs.ptr);
+  }
+
+  hash_map_test_val_t& operator= (const hash_map_test_val_t &rhs)
+  {
+    ++nassign;
+    gcc_assert (ptr == &ptr);
+    gcc_assert (rhs.ptr == &rhs.ptr);
+    return *this;
+  }
+
+  ~hash_map_test_val_t ()
+  {
+    gcc_assert (ptr == &ptr);
+    ++ndtor;
+  }
+
+  void *ptr;
+} val_t;
+
+int val_t::ndefault;
+int val_t::ncopy;
+int val_t::nassign;
+int val_t::ndtor;
+
+static void
+test_map_of_type_with_ctor_and_dtor ()
+{
+  typedef hash_map <void *, val_t> Map;
+
+  {
+    /* Test default ctor.  */
+    Map m;
+    (void)&m;
+  }
+
+  ASSERT_TRUE (val_t::ndefault == 0);
+  ASSERT_TRUE (val_t::ncopy == 0);
+  ASSERT_TRUE (val_t::nassign == 0);
+  ASSERT_TRUE (val_t::ndtor == 0);
+
+  {
+    /* Test single insertion.  */
+    Map m;
+    void *p = &p;
+    m.get_or_insert (p);
+  }
+
+  ASSERT_TRUE (val_t::ndefault + val_t::ncopy == val_t::ndtor);
+
+  {
+    /* Test copy ctor.  */
+    Map m1;
+    void *p = &p;
+    val_t &rv1 = m1.get_or_insert (p);
+
+    int ncopy = val_t::ncopy;
+    int nassign = val_t::nassign;
+
+    Map m2 (m1);
+    val_t *pv2 = m2.get (p);
+
+    ASSERT_TRUE (ncopy + 1 == val_t::ncopy);
+    ASSERT_TRUE (nassign == val_t::nassign);
+
+    ASSERT_TRUE (&rv1 != pv2);
+  }
+
+  ASSERT_TRUE (val_t::ndefault + val_t::ncopy == val_t::ndtor);
+
+#if 0   /* Avoid testing until bug 90959 is fixed.  */
+  {
+    /* Test copy assignment into an empty map.  */
+    Map m1;
+    void *p = &p;
+    val_t &rv1 = m1.get_or_insert (p);
+
+    int ncopy = val_t::ncopy;
+    int nassign = val_t::nassign;
+
+    Map m2;
+    m2 = m1;
+    val_t *pv2 = m2.get (p);
+
+    ASSERT_TRUE (ncopy == val_t::ncopy);
+    ASSERT_TRUE (nassign + 1 == val_t::nassign);
+
+    ASSERT_TRUE (&rv1 != pv2);
+  }
+
+  ASSERT_TRUE (val_t::ndefault + val_t::ncopy == val_t::ndtor);
+
+#endif
+
+  {
+    Map m;
+    void *p = &p, *q = &q;
+    val_t &v1 = m.get_or_insert (p);
+    val_t &v2 = m.get_or_insert (q);
+
+    ASSERT_TRUE (v1.ptr == &v1.ptr && &v2.ptr == v2.ptr);
+  }
+
+  ASSERT_TRUE (val_t::ndefault + val_t::ncopy == val_t::ndtor);
+
+  {
+    Map m;
+    void *p = &p, *q = &q;
+    m.get_or_insert (p);
+    m.remove (p);
+    m.get_or_insert (q);
+    m.remove (q);
+
+    ASSERT_TRUE (val_t::ndefault + val_t::ncopy == val_t::ndtor);
+  }
+}
+
+/* Test calling empty on a hash_map that has a key type with non-zero
+   "empty" value.  */
+
+static void
+test_nonzero_empty_key ()
+{
+  typedef int_hash<int, INT_MIN, INT_MAX> IntHash;
+  hash_map<int, int, simple_hashmap_traits<IntHash, int> > x;
+
+  for (int i = 1; i != 32; ++i)
+    x.put (i, i);
+
+  ASSERT_EQ (x.get (0), NULL);
+  ASSERT_EQ (*x.get (1), 1);
+
+  x.empty ();
+
+  ASSERT_EQ (x.get (0), NULL);
+  ASSERT_EQ (x.get (1), NULL);
 }
 
 /* Run all of the selftests within this file.  */
@@ -109,6 +307,9 @@ void
 hash_map_tests_c_tests ()
 {
   test_map_of_strings_to_int ();
+  test_map_of_int_to_strings ();
+  test_map_of_type_with_ctor_and_dtor ();
+  test_nonzero_empty_key ();
 }
 
 } // namespace selftest

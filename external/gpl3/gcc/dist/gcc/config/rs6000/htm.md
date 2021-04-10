@@ -1,5 +1,5 @@
 ;; Hardware Transactional Memory (HTM) patterns.
-;; Copyright (C) 2013-2019 Free Software Foundation, Inc.
+;; Copyright (C) 2013-2020 Free Software Foundation, Inc.
 ;; Contributed by Peter Bergner <bergner@vnet.ibm.com>.
 
 ;; This file is part of GCC.
@@ -267,18 +267,16 @@
 
 (define_insn "htm_mfspr_<mode>"
   [(set (match_operand:GPR 0 "gpc_reg_operand" "=r")
-        (unspec_volatile:GPR [(match_operand 1 "u10bit_cint_operand" "n")
-			      (match_operand:GPR 2 "htm_spr_reg_operand" "")]
+        (unspec_volatile:GPR [(match_operand 1 "u10bit_cint_operand" "n")]
 			     UNSPECV_HTM_MFSPR))]
   "TARGET_HTM"
   "mfspr %0,%1";
   [(set_attr "type" "htm")])
 
 (define_insn "htm_mtspr_<mode>"
-  [(set (match_operand:GPR 2 "htm_spr_reg_operand" "")
-        (unspec_volatile:GPR [(match_operand:GPR 0 "gpc_reg_operand" "r")
-			      (match_operand 1 "u10bit_cint_operand" "n")]
-			     UNSPECV_HTM_MTSPR))]
+  [(unspec_volatile [(match_operand:GPR 0 "gpc_reg_operand" "r")
+		     (match_operand 1 "u10bit_cint_operand" "n")]
+		    UNSPECV_HTM_MTSPR)]
   "TARGET_HTM"
   "mtspr %1,%0";
   [(set_attr "type" "htm")])

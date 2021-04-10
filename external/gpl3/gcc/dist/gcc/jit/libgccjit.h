@@ -1,5 +1,5 @@
 /* A pure C API to enable client code to embed GCC as a JIT-compiler.
-   Copyright (C) 2013-2019 Free Software Foundation, Inc.
+   Copyright (C) 2013-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -601,6 +601,21 @@ gcc_jit_context_new_field (gcc_jit_context *ctxt,
 			   gcc_jit_location *loc,
 			   gcc_jit_type *type,
 			   const char *name);
+
+#define LIBGCCJIT_HAVE_gcc_jit_context_new_bitfield
+
+/* Create a bit field, for use within a struct or union.
+
+   This API entrypoint was added in LIBGCCJIT_ABI_12; you can test for its
+   presence using
+     #ifdef LIBGCCJIT_HAVE_gcc_jit_context_new_bitfield
+*/
+extern gcc_jit_field *
+gcc_jit_context_new_bitfield (gcc_jit_context *ctxt,
+			      gcc_jit_location *loc,
+			      gcc_jit_type *type,
+			      int width,
+			      const char *name);
 
 /* Upcasting from field to object.  */
 extern gcc_jit_object *
@@ -1471,6 +1486,22 @@ gcc_jit_context_new_rvalue_from_vector (gcc_jit_context *ctxt,
 					gcc_jit_type *vec_type,
 					size_t num_elements,
 					gcc_jit_rvalue **elements);
+
+#define LIBGCCJIT_HAVE_gcc_jit_version
+
+/* Functions to retrive libgccjit version.
+   Analogous to __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__ in C code.
+
+   These API entrypoints were added in LIBGCCJIT_ABI_13; you can test for their
+   presence using
+     #ifdef LIBGCCJIT_HAVE_gcc_jit_version
+ */
+extern int
+gcc_jit_version_major (void);
+extern int
+gcc_jit_version_minor (void);
+extern int
+gcc_jit_version_patchlevel (void);
 
 #ifdef __cplusplus
 }

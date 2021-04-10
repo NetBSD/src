@@ -1,5 +1,5 @@
 /* Driver of optimization process
-   Copyright (C) 2003-2019 Free Software Foundation, Inc.
+   Copyright (C) 2003-2020 Free Software Foundation, Inc.
    Contributed by Jan Hubicka
 
 This file is part of GCC.
@@ -75,7 +75,7 @@ along with GCC; see the file COPYING3.  If not see
 	   a) early optimizations. These are local passes executed in
 	      the topological order on the callgraph.
 
-	      The purpose of early optimiations is to optimize away simple
+	      The purpose of early optimizations is to optimize away simple
 	      things that may otherwise confuse IP analysis. Very simple
 	      propagation across the callgraph is done i.e. to discover
 	      functions without side effects and simple inlining is performed.
@@ -83,7 +83,7 @@ along with GCC; see the file COPYING3.  If not see
 	   b) early small interprocedural passes.
 
 	      Those are interprocedural passes executed only at compilation
-	      time.  These include, for example, transational memory lowering,
+	      time.  These include, for example, transactional memory lowering,
 	      unreachable code removal and other simple transformations.
 
 	   c) IP analysis stage.  All interprocedural passes do their
@@ -107,7 +107,7 @@ along with GCC; see the file COPYING3.  If not see
 	      IP propagation. This is done based on the earlier analysis
 	      without having function bodies at hand.
 	   f) Ltrans streaming.  When doing WHOPR LTO, the program
-	      is partitioned and streamed into multple object files.
+	      is partitioned and streamed into multiple object files.
 
        Compile time and/or parallel linktime stage (ltrans)
 
@@ -118,7 +118,7 @@ along with GCC; see the file COPYING3.  If not see
 	 2) Virtual clone materialization
 	    (cgraph_materialize_clone)
 
-	    IP passes can produce copies of existing functoins (such
+	    IP passes can produce copies of existing functions (such
 	    as versioned clones or inline clones) without actually
 	    manipulating their bodies by creating virtual clones in
 	    the callgraph. At this time the virtual clones are
@@ -205,6 +205,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "lto-section-names.h"
 #include "stringpool.h"
 #include "attribs.h"
+#include "ipa-inline.h"
 
 /* Queue of cgraph nodes scheduled to be added into cgraph.  This is a
    secondary queue used during optimization to accommodate passes that
@@ -274,7 +275,7 @@ symtab_node::needed_p (void)
 /* Head and terminator of the queue of nodes to be processed while building
    callgraph.  */
 
-static symtab_node symtab_terminator;
+static symtab_node symtab_terminator (SYMTAB_SYMBOL);
 static symtab_node *queued_nodes = &symtab_terminator;
 
 /* Add NODE to queue starting at QUEUED_NODES. 
@@ -336,11 +337,14 @@ symbol_table::process_new_functions (void)
 	    {
 	      bool summaried_computed = ipa_fn_summaries != NULL;
 	      g->get_passes ()->execute_early_local_passes ();
-	      /* Early passes compure inline parameters to do inlining
+	      /* Early passes compute inline parameters to do inlining
 		 and splitting.  This is redundant for functions added late.
 		 Just throw away whatever it did.  */
 	      if (!summaried_computed)
-		ipa_free_fn_summary ();
+		{
+		  ipa_free_fn_summary ();
+		  ipa_free_size_summary ();
+		}
 	    }
 	  else if (ipa_fn_summaries != NULL)
 	    compute_fn_summary (node, true);
@@ -388,8 +392,7 @@ cgraph_node::reset (void)
   gcc_assert (!process);
 
   /* Reset our data structures so we can analyze the function again.  */
-  memset (&local, 0, sizeof (local));
-  memset (&global, 0, sizeof (global));
+  inlined_to = NULL;
   memset (&rtl, 0, sizeof (rtl));
   analyzed = false;
   definition = false;
@@ -442,7 +445,7 @@ cgraph_node::finalize_function (tree decl, bool no_collect)
       gcc_assert (!DECL_CONTEXT (decl)
 		  || TREE_CODE (DECL_CONTEXT (decl)) !=	FUNCTION_DECL);
       node->reset ();
-      node->local.redefined_extern_inline = true;
+      node->redefined_extern_inline = true;
     }
 
   /* Set definition first before calling notice_global_symbol so that
@@ -550,7 +553,7 @@ cgraph_node::add_new_function (tree fndecl, bool lowered)
 	/* Bring the function into finalized state and enqueue for later
 	   analyzing and compilation.  */
 	node = cgraph_node::get_create (fndecl);
-	node->local.local = false;
+	node->local = false;
 	node->definition = true;
 	node->force_output = true;
 	if (TREE_PUBLIC (fndecl))
@@ -692,8 +695,8 @@ cgraph_node::analyze (void)
 
 /* C++ frontend produce same body aliases all over the place, even before PCH
    gets streamed out. It relies on us linking the aliases with their function
-   in order to do the fixups, but ipa-ref is not PCH safe.  Consequentely we
-   first produce aliases without links, but once C++ FE is sure he won't sream
+   in order to do the fixups, but ipa-ref is not PCH safe.  Consequently we
+   first produce aliases without links, but once C++ FE is sure he won't stream
    PCH we build the links via this function.  */
 
 void
@@ -707,6 +710,89 @@ symbol_table::process_same_body_aliases (void)
 	 ? (symtab_node *)varpool_node::get_create (node->alias_target)
 	 : (symtab_node *)cgraph_node::get_create (node->alias_target));
   cpp_implicit_aliases_done = true;
+}
+
+/* Process a symver attribute.  */
+
+static void
+process_symver_attribute (symtab_node *n)
+{
+  tree value = lookup_attribute ("symver", DECL_ATTRIBUTES (n->decl));
+
+  if (!value)
+    return;
+  if (lookup_attribute ("symver", TREE_CHAIN (value)))
+    {
+      error_at (DECL_SOURCE_LOCATION (n->decl),
+		"multiple versions for one symbol");
+      return;
+    }
+  tree symver = get_identifier_with_length
+		  (TREE_STRING_POINTER (TREE_VALUE (TREE_VALUE (value))),
+		   TREE_STRING_LENGTH (TREE_VALUE (TREE_VALUE (value))));
+  symtab_node *def = symtab_node::get_for_asmname (symver);
+
+  if (def)
+    {
+      error_at (DECL_SOURCE_LOCATION (n->decl),
+		"duplicate definition of a symbol version");
+      inform (DECL_SOURCE_LOCATION (def->decl),
+	      "same version was previously defined here");
+      return;
+    }
+  if (!n->definition)
+    {
+      error_at (DECL_SOURCE_LOCATION (n->decl),
+		"symbol needs to be defined to have a version");
+      return;
+    }
+  if (DECL_COMMON (n->decl))
+    {
+      error_at (DECL_SOURCE_LOCATION (n->decl),
+		"common symbol cannot be versioned");
+      return;
+    }
+  if (DECL_COMDAT (n->decl))
+    {
+      error_at (DECL_SOURCE_LOCATION (n->decl),
+		"comdat symbol cannot be versioned");
+      return;
+    }
+  if (n->weakref)
+    {
+      error_at (DECL_SOURCE_LOCATION (n->decl),
+		"weakref cannot be versioned");
+      return;
+    }
+  if (!TREE_PUBLIC (n->decl))
+    {
+      error_at (DECL_SOURCE_LOCATION (n->decl),
+		"versioned symbol must be public");
+      return;
+    }
+  if (DECL_VISIBILITY (n->decl) != VISIBILITY_DEFAULT)
+    {
+      error_at (DECL_SOURCE_LOCATION (n->decl),
+		"versioned symbol must have default visibility");
+      return;
+    }
+
+  /* Create new symbol table entry representing the version.  */
+  tree new_decl = copy_node (n->decl);
+
+  DECL_INITIAL (new_decl) = NULL_TREE;
+  if (TREE_CODE (new_decl) == FUNCTION_DECL)
+    DECL_STRUCT_FUNCTION (new_decl) = NULL;
+  SET_DECL_ASSEMBLER_NAME (new_decl, symver);
+  TREE_PUBLIC (new_decl) = 1;
+  DECL_ATTRIBUTES (new_decl) = NULL;
+
+  symtab_node *symver_node = symtab_node::get_create (new_decl);
+  symver_node->alias = true;
+  symver_node->definition = true;
+  symver_node->symver = true;
+  symver_node->create_reference (n, IPA_REF_ALIAS, NULL);
+  symver_node->analyzed = true;
 }
 
 /* Process attributes common for vars and functions.  */
@@ -728,6 +814,7 @@ process_common_attributes (symtab_node *node, tree decl)
 
   if (lookup_attribute ("no_reorder", DECL_ATTRIBUTES (decl)))
     node->no_reorder = 1;
+  process_symver_attribute (node);
 }
 
 /* Look for externally_visible and used attributes and mark cgraph nodes
@@ -765,6 +852,16 @@ process_function_and_variable_attributes (cgraph_node *first,
        node = symtab->next_function (node))
     {
       tree decl = node->decl;
+
+      if (node->alias
+	  && lookup_attribute ("flatten", DECL_ATTRIBUTES (decl)))
+	{
+	  tree tdecl = node->get_alias_target_tree ();
+	  if (!tdecl || !DECL_P (tdecl)
+	      || !lookup_attribute ("flatten", DECL_ATTRIBUTES (tdecl)))
+	    warning_at (DECL_SOURCE_LOCATION (decl), OPT_Wattributes,
+			"%<flatten%> attribute is ignored on aliases");
+	}
       if (DECL_PRESERVE_P (decl))
 	node->mark_force_output ();
       else if (lookup_attribute ("externally_visible", DECL_ATTRIBUTES (decl)))
@@ -775,14 +872,23 @@ process_function_and_variable_attributes (cgraph_node *first,
 			" attribute have effect only on public objects");
 	}
       if (lookup_attribute ("weakref", DECL_ATTRIBUTES (decl))
-	  && (node->definition && !node->alias))
+	  && node->definition
+	  && (!node->alias || DECL_INITIAL (decl) != error_mark_node))
 	{
-	  warning_at (DECL_SOURCE_LOCATION (node->decl), OPT_Wattributes,
+	  /* NODE->DEFINITION && NODE->ALIAS is nonzero for valid weakref
+	     function declarations; DECL_INITIAL is non-null for invalid
+	     weakref functions that are also defined.  */
+	  warning_at (DECL_SOURCE_LOCATION (decl), OPT_Wattributes,
 		      "%<weakref%> attribute ignored"
 		      " because function is defined");
 	  DECL_WEAK (decl) = 0;
 	  DECL_ATTRIBUTES (decl) = remove_attribute ("weakref",
 						     DECL_ATTRIBUTES (decl));
+	  DECL_ATTRIBUTES (decl) = remove_attribute ("alias",
+						     DECL_ATTRIBUTES (decl));
+	  node->alias = false;
+	  node->weakref = false;
+	  node->transparent_alias = false;
 	}
       else if (lookup_attribute ("alias", DECL_ATTRIBUTES (decl))
 	  && node->definition
@@ -796,8 +902,8 @@ process_function_and_variable_attributes (cgraph_node *first,
 	  /* redefining extern inline function makes it DECL_UNINLINABLE.  */
 	  && !DECL_UNINLINABLE (decl))
 	warning_at (DECL_SOURCE_LOCATION (decl), OPT_Wattributes,
-		    "always_inline function might not be inlinable");
-     
+		    "%<always_inline%> function might not be inlinable");
+
       process_common_attributes (node, decl);
     }
   for (vnode = symtab->first_variable (); vnode != first_var;
@@ -852,7 +958,7 @@ varpool_node::finalize_decl (tree decl)
     node->no_reorder = true;
   if (TREE_THIS_VOLATILE (decl) || DECL_PRESERVE_P (decl)
       /* Traditionally we do not eliminate static variables when not
-	 optimizing and when not doing toplevel reoder.  */
+	 optimizing and when not doing toplevel reorder.  */
       || (node->no_reorder && !DECL_COMDAT (node->decl)
 	  && !DECL_ARTIFICIAL (node->decl)))
     node->force_output = true;
@@ -873,7 +979,7 @@ varpool_node::finalize_decl (tree decl)
 /* EDGE is an polymorphic call.  Mark all possible targets as reachable
    and if there is only one target, perform trivial devirtualization. 
    REACHABLE_CALL_TARGETS collects target lists we already walked to
-   avoid udplicate work.  */
+   avoid duplicate work.  */
 
 static void
 walk_polymorphic_call_targets (hash_set<void *> *reachable_call_targets,
@@ -934,19 +1040,17 @@ walk_polymorphic_call_targets (hash_set<void *> *reachable_call_targets,
             {
 	      dump_printf_loc (MSG_OPTIMIZED_LOCATIONS, edge->call_stmt,
 			       "devirtualizing call in %s to %s\n",
-			       edge->caller->name (), target->name ());
+			       edge->caller->dump_name (),
+			       target->dump_name ());
 	    }
 
-	  edge->make_direct (target);
-	  edge->redirect_call_stmt_to_callee ();
+	  edge = cgraph_edge::make_direct (edge, target);
+	  gimple *new_call = cgraph_edge::redirect_call_stmt_to_callee (edge);
 
 	  if (symtab->dump_file)
 	    {
-	      fprintf (symtab->dump_file,
-		       "Devirtualized as: ");
-	      print_gimple_stmt (symtab->dump_file,
-				 edge->call_stmt, 0,
-				 TDF_SLIM);
+	      fprintf (symtab->dump_file, "Devirtualized as: ");
+	      print_gimple_stmt (symtab->dump_file, new_call, 0, TDF_SLIM);
 	    }
 	}
     }
@@ -967,15 +1071,15 @@ check_global_declaration (symtab_node *snode)
       && DECL_INITIAL (decl) == 0
       && DECL_EXTERNAL (decl)
       && ! DECL_ARTIFICIAL (decl)
-      && ! TREE_NO_WARNING (decl)
-      && ! TREE_PUBLIC (decl)
-      && (warn_unused_function
-	  || snode->referred_to_p (/*include_self=*/false)))
+      && ! TREE_PUBLIC (decl))
     {
-      if (snode->referred_to_p (/*include_self=*/false))
+      if (TREE_NO_WARNING (decl))
+	;
+      else if (snode->referred_to_p (/*include_self=*/false))
 	pedwarn (input_location, 0, "%q+F used but never defined", decl);
       else
-	warning (OPT_Wunused_function, "%q+F declared %<static%> but never defined", decl);
+	warning (OPT_Wunused_function, "%q+F declared %<static%> but never "
+				       "defined", decl);
       /* This symbol is effectively an "extern" declaration now.  */
       TREE_PUBLIC (decl) = 1;
     }
@@ -1081,7 +1185,7 @@ analyze_functions (bool first_time)
 		fprintf (symtab->dump_file, "Trivially needed symbols:");
 	      changed = true;
 	      if (symtab->dump_file)
-		fprintf (symtab->dump_file, " %s", node->asm_name ());
+		fprintf (symtab->dump_file, " %s", node->dump_asm_name ());
 	      if (!changed && symtab->dump_file)
 		fprintf (symtab->dump_file, "\n");
 	    }
@@ -1118,7 +1222,7 @@ analyze_functions (bool first_time)
 		  && !cnode->dispatcher_function)
 		{
 		  cnode->reset ();
-		  cnode->local.redefined_extern_inline = true;
+		  cnode->redefined_extern_inline = true;
 		  continue;
 		}
 
@@ -1133,7 +1237,7 @@ analyze_functions (bool first_time)
 			|| opt_for_fn (edge->callee->decl, optimize)
 			/* Weakrefs needs to be preserved.  */
 			|| edge->callee->alias
-			/* always_inline functions are inlined aven at -O0.  */
+			/* always_inline functions are inlined even at -O0.  */
 		        || lookup_attribute
 				 ("always_inline",
 			          DECL_ATTRIBUTES (edge->callee->decl))
@@ -1227,7 +1331,7 @@ analyze_functions (bool first_time)
     {
       next = node->next;
       /* For symbols declared locally we clear TREE_READONLY when emitting
-	 the construtor (if one is needed).  For external declarations we can
+	 the constructor (if one is needed).  For external declarations we can
 	 not safely assume that the type is readonly because we may be called
 	 during its construction.  */
       if (TREE_CODE (node->decl) == VAR_DECL
@@ -1238,7 +1342,7 @@ analyze_functions (bool first_time)
       if (!node->aux && !node->referred_to_p ())
 	{
 	  if (symtab->dump_file)
-	    fprintf (symtab->dump_file, " %s", node->name ());
+	    fprintf (symtab->dump_file, " %s", node->dump_name ());
 
 	  /* See if the debugger can use anything before the DECL
 	     passes away.  Perhaps it can notice a DECL that is now a
@@ -1504,7 +1608,7 @@ mark_functions_to_output (void)
       if (node->analyzed
 	  && !node->thunk.thunk_p
 	  && !node->alias
-	  && !node->global.inlined_to
+	  && !node->inlined_to
 	  && !TREE_ASM_WRITTEN (decl)
 	  && !DECL_EXTERNAL (decl))
 	{
@@ -1529,7 +1633,7 @@ mark_functions_to_output (void)
 	{
 	  /* We should've reclaimed all functions that are not needed.  */
 	  if (flag_checking
-	      && !node->global.inlined_to
+	      && !node->inlined_to
 	      && gimple_has_body_p (decl)
 	      /* FIXME: in ltrans unit when offline copy is outside partition but inline copies
 		 are inside partition, we can end up not removing the body since we no longer
@@ -1542,7 +1646,7 @@ mark_functions_to_output (void)
 	      node->debug ();
 	      internal_error ("failed to reclaim unneeded function");
 	    }
-	  gcc_assert (node->global.inlined_to
+	  gcc_assert (node->inlined_to
 		      || !gimple_has_body_p (decl)
 		      || node->in_other_partition
 		      || node->clones
@@ -1557,7 +1661,7 @@ mark_functions_to_output (void)
       if (node->same_comdat_group && !node->process)
 	{
 	  tree decl = node->decl;
-	  if (!node->global.inlined_to
+	  if (!node->inlined_to
 	      && gimple_has_body_p (decl)
 	      /* FIXME: in an ltrans unit when the offline copy is outside a
 		 partition but inline copies are inside a partition, we can
@@ -1790,7 +1894,6 @@ cgraph_node::expand_thunk (bool output_asm_thunks, bool force_gimple_thunk)
       && targetm.asm_out.can_output_mi_thunk (thunk_fndecl, fixed_offset,
 					      virtual_value, alias))
     {
-      const char *fnname;
       tree fn_block;
       tree restype = TREE_TYPE (TREE_TYPE (thunk_fndecl));
 
@@ -1814,7 +1917,6 @@ cgraph_node::expand_thunk (bool output_asm_thunks, bool force_gimple_thunk)
 	= build_decl (DECL_SOURCE_LOCATION (thunk_fndecl),
 		      RESULT_DECL, 0, restype);
       DECL_CONTEXT (DECL_RESULT (thunk_fndecl)) = thunk_fndecl;
-      fnname = IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (thunk_fndecl));
 
       /* The back end expects DECL_INITIAL to contain a BLOCK, so we
 	 create one.  */
@@ -1828,12 +1930,10 @@ cgraph_node::expand_thunk (bool output_asm_thunks, bool force_gimple_thunk)
       insn_locations_init ();
       set_curr_insn_location (DECL_SOURCE_LOCATION (thunk_fndecl));
       prologue_location = curr_insn_location ();
-      assemble_start_function (thunk_fndecl, fnname);
 
       targetm.asm_out.output_mi_thunk (asm_out_file, thunk_fndecl,
 				       fixed_offset, virtual_value, alias);
 
-      assemble_end_function (thunk_fndecl, fnname);
       insn_locations_finalize ();
       init_insn_lengths ();
       free_after_compilation (cfun);
@@ -1864,7 +1964,7 @@ cgraph_node::expand_thunk (bool output_asm_thunks, bool force_gimple_thunk)
       greturn *ret;
       bool alias_is_noreturn = TREE_THIS_VOLATILE (alias);
 
-      /* We may be called from expand_thunk that releses body except for
+      /* We may be called from expand_thunk that releases body except for
 	 DECL_ARGUMENTS.  In this case force_gimple_thunk is true.  */
       if (in_lto_p && !force_gimple_thunk)
 	get_untransformed_body ();
@@ -1997,7 +2097,7 @@ cgraph_node::expand_thunk (bool output_asm_thunks, bool force_gimple_thunk)
 	  gimple_call_set_chain (call, decl);
 	}
 
-      /* Return slot optimization is always possible and in fact requred to
+      /* Return slot optimization is always possible and in fact required to
          return values with DECL_BY_REFERENCE.  */
       if (aggregate_value_p (resdecl, TREE_TYPE (thunk_fndecl))
 	  && (!is_gimple_reg_type (TREE_TYPE (resdecl))
@@ -2118,7 +2218,7 @@ cgraph_node::assemble_thunks_and_aliases (void)
 
   for (e = callers; e;)
     if (e->caller->thunk.thunk_p
-	&& !e->caller->global.inlined_to)
+	&& !e->caller->inlined_to)
       {
 	cgraph_node *thunk = e->caller;
 
@@ -2139,8 +2239,12 @@ cgraph_node::assemble_thunks_and_aliases (void)
 	  /* Force assemble_alias to really output the alias this time instead
 	     of buffering it in same alias pairs.  */
 	  TREE_ASM_WRITTEN (decl) = 1;
-	  do_assemble_alias (alias->decl,
-			     DECL_ASSEMBLER_NAME (decl));
+	  if (alias->symver)
+	    do_assemble_symver (alias->decl,
+				DECL_ASSEMBLER_NAME (decl));
+	  else
+	    do_assemble_alias (alias->decl,
+			       DECL_ASSEMBLER_NAME (decl));
 	  alias->assemble_thunks_and_aliases ();
 	  TREE_ASM_WRITTEN (decl) = saved_written;
 	}
@@ -2155,7 +2259,7 @@ cgraph_node::expand (void)
   location_t saved_loc;
 
   /* We ought to not compile any inline clones.  */
-  gcc_assert (!global.inlined_to);
+  gcc_assert (!inlined_to);
 
   /* __RTL functions are compiled as soon as they are parsed, so don't
      do it again.  */
@@ -2188,6 +2292,7 @@ cgraph_node::expand (void)
 
   bitmap_obstack_initialize (&reg_obstack); /* FIXME, only at RTL generation*/
 
+  update_ssa (TODO_update_ssa_only_virtuals);
   execute_all_ipa_transforms (false);
 
   /* Perform all tree transforms and optimizations.  */
@@ -2254,12 +2359,13 @@ cgraph_node::expand (void)
   if (cfun)
     pop_cfun ();
 
-  /* It would make a lot more sense to output thunks before function body to get more
-     forward and lest backwarding jumps.  This however would need solving problem
-     with comdats. See PR48668.  Also aliases must come after function itself to
-     make one pass assemblers, like one on AIX, happy.  See PR 50689.
-     FIXME: Perhaps thunks should be move before function IFF they are not in comdat
-     groups.  */
+  /* It would make a lot more sense to output thunks before function body to
+     get more forward and fewer backward jumps.  This however would need
+     solving problem with comdats.  See PR48668.  Also aliases must come after
+     function itself to make one pass assemblers, like one on AIX, happy.
+     See PR 50689.
+     FIXME: Perhaps thunks should be move before function IFF they are not in
+     comdat groups.  */
   assemble_thunks_and_aliases ();
   release_body ();
   /* Eliminate all call edges.  This is important so the GIMPLE_CALL no longer
@@ -2268,22 +2374,32 @@ cgraph_node::expand (void)
   remove_all_references ();
 }
 
-/* Node comparer that is responsible for the order that corresponds
+/* Node comparator that is responsible for the order that corresponds
    to time when a function was launched for the first time.  */
 
-static int
-node_cmp (const void *pa, const void *pb)
+int
+tp_first_run_node_cmp (const void *pa, const void *pb)
 {
   const cgraph_node *a = *(const cgraph_node * const *) pa;
   const cgraph_node *b = *(const cgraph_node * const *) pb;
+  unsigned int tp_first_run_a = a->tp_first_run;
+  unsigned int tp_first_run_b = b->tp_first_run;
+
+  if (!opt_for_fn (a->decl, flag_profile_reorder_functions)
+      || a->no_reorder)
+    tp_first_run_a = 0;
+  if (!opt_for_fn (b->decl, flag_profile_reorder_functions)
+      || b->no_reorder)
+    tp_first_run_b = 0;
+
+  if (tp_first_run_a == tp_first_run_b)
+    return a->order - b->order;
 
   /* Functions with time profile must be before these without profile.  */
-  if (!a->tp_first_run || !b->tp_first_run)
-    return a->tp_first_run - b->tp_first_run;
+  tp_first_run_a = (tp_first_run_a - 1) & INT_MAX;
+  tp_first_run_b = (tp_first_run_b - 1) & INT_MAX;
 
-  return a->tp_first_run != b->tp_first_run
-	 ? b->tp_first_run - a->tp_first_run
-	 : b->order - a->order;
+  return tp_first_run_a - tp_first_run_b;
 }
 
 /* Expand all functions that must be output.
@@ -2302,8 +2418,10 @@ expand_all_functions (void)
   cgraph_node *node;
   cgraph_node **order = XCNEWVEC (cgraph_node *,
 					 symtab->cgraph_count);
+  cgraph_node **tp_first_run_order = XCNEWVEC (cgraph_node *,
+					 symtab->cgraph_count);
   unsigned int expanded_func_count = 0, profiled_func_count = 0;
-  int order_pos, new_order_pos = 0;
+  int order_pos, tp_first_run_order_pos = 0, new_order_pos = 0;
   int i;
 
   order_pos = ipa_reverse_postorder (order);
@@ -2313,11 +2431,38 @@ expand_all_functions (void)
      optimization.  So we must be sure to not reference them.  */
   for (i = 0; i < order_pos; i++)
     if (order[i]->process)
-      order[new_order_pos++] = order[i];
+      {
+	if (order[i]->tp_first_run
+	    && opt_for_fn (order[i]->decl, flag_profile_reorder_functions))
+	  tp_first_run_order[tp_first_run_order_pos++] = order[i];
+	else
+          order[new_order_pos++] = order[i];
+      }
 
-  if (flag_profile_reorder_functions)
-    qsort (order, new_order_pos, sizeof (cgraph_node *), node_cmp);
+  /* First output functions with time profile in specified order.  */
+  qsort (tp_first_run_order, tp_first_run_order_pos,
+	 sizeof (cgraph_node *), tp_first_run_node_cmp);
+  for (i = 0; i < tp_first_run_order_pos; i++)
+    {
+      node = tp_first_run_order[i];
 
+      if (node->process)
+	{
+	  expanded_func_count++;
+	  profiled_func_count++;
+
+	  if (symtab->dump_file)
+	    fprintf (symtab->dump_file,
+		     "Time profile order in expand_all_functions:%s:%d\n",
+		     node->dump_asm_name (), node->tp_first_run);
+	  node->process = 0;
+	  node->expand ();
+	}
+    }
+
+  /* Output functions in RPO so callees get optimized before callers.  This
+     makes ipa-ra and other propagators to work.
+     FIXME: This is far from optimal code layout.  */
   for (i = new_order_pos - 1; i >= 0; i--)
     {
       node = order[i];
@@ -2325,29 +2470,23 @@ expand_all_functions (void)
       if (node->process)
 	{
 	  expanded_func_count++;
-	  if(node->tp_first_run)
-	    profiled_func_count++;
-
-	  if (symtab->dump_file)
-	    fprintf (symtab->dump_file,
-		     "Time profile order in expand_all_functions:%s:%d\n",
-		     node->asm_name (), node->tp_first_run);
 	  node->process = 0;
 	  node->expand ();
 	}
     }
 
-    if (dump_file)
-      fprintf (dump_file, "Expanded functions with time profile (%s):%u/%u\n",
-               main_input_filename, profiled_func_count, expanded_func_count);
+  if (dump_file)
+    fprintf (dump_file, "Expanded functions with time profile (%s):%u/%u\n",
+	     main_input_filename, profiled_func_count, expanded_func_count);
 
-  if (symtab->dump_file && flag_profile_reorder_functions)
+  if (symtab->dump_file && tp_first_run_order_pos)
     fprintf (symtab->dump_file, "Expanded functions with time profile:%u/%u\n",
              profiled_func_count, expanded_func_count);
 
   symtab->process_new_functions ();
   free_gimplify_stack ();
-
+  delete ipa_saved_clone_sources;
+  ipa_saved_clone_sources = NULL;
   free (order);
 }
 
@@ -2355,7 +2494,6 @@ expand_all_functions (void)
 
 enum cgraph_order_sort_kind
 {
-  ORDER_UNDEFINED = 0,
   ORDER_FUNCTION,
   ORDER_VAR,
   ORDER_VAR_UNDEF,
@@ -2364,6 +2502,30 @@ enum cgraph_order_sort_kind
 
 struct cgraph_order_sort
 {
+  /* Construct from a cgraph_node.  */
+  cgraph_order_sort (cgraph_node *node)
+  : kind (ORDER_FUNCTION), order (node->order)
+  {
+    u.f = node;
+  }
+
+  /* Construct from a varpool_node.  */
+  cgraph_order_sort (varpool_node *node)
+  : kind (node->definition ? ORDER_VAR : ORDER_VAR_UNDEF), order (node->order)
+  {
+    u.v = node;
+  }
+
+  /* Construct from a asm_node.  */
+  cgraph_order_sort (asm_node *node)
+  : kind (ORDER_ASM), order (node->order)
+  {
+    u.a = node;
+  }
+
+  /* Assembly cgraph_order_sort based on its type.  */
+  void process ();
+
   enum cgraph_order_sort_kind kind;
   union
   {
@@ -2371,7 +2533,44 @@ struct cgraph_order_sort
     varpool_node *v;
     asm_node *a;
   } u;
+  int order;
 };
+
+/* Assembly cgraph_order_sort based on its type.  */
+
+void
+cgraph_order_sort::process ()
+{
+  switch (kind)
+    {
+    case ORDER_FUNCTION:
+      u.f->process = 0;
+      u.f->expand ();
+      break;
+    case ORDER_VAR:
+      u.v->assemble_decl ();
+      break;
+    case ORDER_VAR_UNDEF:
+      assemble_undefined_decl (u.v->decl);
+      break;
+    case ORDER_ASM:
+      assemble_asm (u.a->asm_str);
+      break;
+    default:
+      gcc_unreachable ();
+    }
+}
+
+/* Compare cgraph_order_sort by order.  */
+
+static int
+cgraph_order_cmp (const void *a_p, const void *b_p)
+{
+  const cgraph_order_sort *nodea = (const cgraph_order_sort *)a_p;
+  const cgraph_order_sort *nodeb = (const cgraph_order_sort *)b_p;
+
+  return nodea->order - nodeb->order;
+}
 
 /* Output all functions, variables, and asm statements in the order
    according to their order fields, which is the order in which they
@@ -2382,89 +2581,41 @@ struct cgraph_order_sort
 static void
 output_in_order (void)
 {
-  int max;
-  cgraph_order_sort *nodes;
   int i;
-  cgraph_node *pf;
-  varpool_node *pv;
-  asm_node *pa;
-  max = symtab->order;
-  nodes = XCNEWVEC (cgraph_order_sort, max);
+  cgraph_node *cnode;
+  varpool_node *vnode;
+  asm_node *anode;
+  auto_vec<cgraph_order_sort> nodes;
+  cgraph_order_sort *node;
 
-  FOR_EACH_DEFINED_FUNCTION (pf)
-    {
-      if (pf->process && !pf->thunk.thunk_p && !pf->alias)
-	{
-	  if (!pf->no_reorder)
-	    continue;
-	  i = pf->order;
-	  gcc_assert (nodes[i].kind == ORDER_UNDEFINED);
-	  nodes[i].kind = ORDER_FUNCTION;
-	  nodes[i].u.f = pf;
-	}
-    }
+  FOR_EACH_DEFINED_FUNCTION (cnode)
+    if (cnode->process && !cnode->thunk.thunk_p
+	&& !cnode->alias && cnode->no_reorder)
+      nodes.safe_push (cgraph_order_sort (cnode));
 
   /* There is a similar loop in symbol_table::output_variables.
      Please keep them in sync.  */
-  FOR_EACH_VARIABLE (pv)
-    {
-      if (!pv->no_reorder)
-	continue;
-      if (DECL_HARD_REGISTER (pv->decl)
-	  || DECL_HAS_VALUE_EXPR_P (pv->decl))
-	continue;
-      i = pv->order;
-      gcc_assert (nodes[i].kind == ORDER_UNDEFINED);
-      nodes[i].kind = pv->definition ? ORDER_VAR : ORDER_VAR_UNDEF;
-      nodes[i].u.v = pv;
-    }
+  FOR_EACH_VARIABLE (vnode)
+    if (vnode->no_reorder
+	&& !DECL_HARD_REGISTER (vnode->decl)
+	&& !DECL_HAS_VALUE_EXPR_P (vnode->decl))
+      nodes.safe_push (cgraph_order_sort (vnode));
 
-  for (pa = symtab->first_asm_symbol (); pa; pa = pa->next)
-    {
-      i = pa->order;
-      gcc_assert (nodes[i].kind == ORDER_UNDEFINED);
-      nodes[i].kind = ORDER_ASM;
-      nodes[i].u.a = pa;
-    }
+  for (anode = symtab->first_asm_symbol (); anode; anode = anode->next)
+    nodes.safe_push (cgraph_order_sort (anode));
+
+  /* Sort nodes by order.  */
+  nodes.qsort (cgraph_order_cmp);
 
   /* In toplevel reorder mode we output all statics; mark them as needed.  */
+  FOR_EACH_VEC_ELT (nodes, i, node)
+    if (node->kind == ORDER_VAR)
+      node->u.v->finalize_named_section_flags ();
 
-  for (i = 0; i < max; ++i)
-    if (nodes[i].kind == ORDER_VAR)
-      nodes[i].u.v->finalize_named_section_flags ();
-
-  for (i = 0; i < max; ++i)
-    {
-      switch (nodes[i].kind)
-	{
-	case ORDER_FUNCTION:
-	  nodes[i].u.f->process = 0;
-	  nodes[i].u.f->expand ();
-	  break;
-
-	case ORDER_VAR:
-	  nodes[i].u.v->assemble_decl ();
-	  break;
-
-	case ORDER_VAR_UNDEF:
-	  assemble_undefined_decl (nodes[i].u.v->decl);
-	  break;
-
-	case ORDER_ASM:
-	  assemble_asm (nodes[i].u.a->asm_str);
-	  break;
-
-	case ORDER_UNDEFINED:
-	  break;
-
-	default:
-	  gcc_unreachable ();
-	}
-    }
+  FOR_EACH_VEC_ELT (nodes, i, node)
+    node->process ();
 
   symtab->clear_asm_symbols ();
-
-  free (nodes);
 }
 
 static void
@@ -2603,10 +2754,7 @@ symbol_table::compile (void)
 
   timevar_push (TV_CGRAPHOPT);
   if (pre_ipa_mem_report)
-    {
-      fprintf (stderr, "Memory consumption before IPA\n");
-      dump_memory_report (false);
-    }
+    dump_memory_report ("Memory consumption before IPA");
   if (!quiet_flag)
     fprintf (stderr, "Performing interprocedural optimizations\n");
   state = IPA;
@@ -2617,8 +2765,11 @@ symbol_table::compile (void)
 
   /* Don't run the IPA passes if there was any error or sorry messages.  */
   if (!seen_error ())
+  {
+    timevar_start (TV_CGRAPH_IPA_PASSES);
     ipa_passes ();
-
+    timevar_stop (TV_CGRAPH_IPA_PASSES);
+  }
   /* Do nothing else if any IPA pass found errors or if we are just streaming LTO.  */
   if (seen_error ()
       || ((!in_lto_p || flag_incremental_link == INCREMENTAL_LINK_LTO)
@@ -2635,10 +2786,7 @@ symbol_table::compile (void)
       symtab->dump (dump_file);
     }
   if (post_ipa_mem_report)
-    {
-      fprintf (stderr, "Memory consumption after IPA\n");
-      dump_memory_report (false);
-    }
+    dump_memory_report ("Memory consumption after IPA");
   timevar_pop (TV_CGRAPHOPT);
 
   /* Output everything.  */
@@ -2655,14 +2803,14 @@ symbol_table::compile (void)
 
   /* When weakref support is missing, we automatically translate all
      references to NODE to references to its ultimate alias target.
-     The renaming mechanizm uses flag IDENTIFIER_TRANSPARENT_ALIAS and
+     The renaming mechanism uses flag IDENTIFIER_TRANSPARENT_ALIAS and
      TREE_CHAIN.
 
      Set up this mapping before we output any assembler but once we are sure
      that all symbol renaming is done.
 
-     FIXME: All this uglyness can go away if we just do renaming at gimple
-     level by physically rewritting the IL.  At the moment we can only redirect
+     FIXME: All this ugliness can go away if we just do renaming at gimple
+     level by physically rewriting the IL.  At the moment we can only redirect
      calls, so we need infrastructure for renaming references as well.  */
 #ifndef ASM_OUTPUT_WEAKREF
   symtab_node *node;
@@ -2684,7 +2832,11 @@ symbol_table::compile (void)
   /* Output first asm statements and anything ordered. The process
      flag is cleared for these nodes, so we skip them later.  */
   output_in_order ();
+
+  timevar_start (TV_CGRAPH_FUNC_EXPANSION);
   expand_all_functions ();
+  timevar_stop (TV_CGRAPH_FUNC_EXPANSION);
+
   output_variables ();
 
   process_new_functions ();
@@ -2707,7 +2859,7 @@ symbol_table::compile (void)
       bool error_found = false;
 
       FOR_EACH_DEFINED_FUNCTION (node)
-	if (node->global.inlined_to
+	if (node->inlined_to
 	    || gimple_has_body_p (node->decl))
 	  {
 	    error_found = true;

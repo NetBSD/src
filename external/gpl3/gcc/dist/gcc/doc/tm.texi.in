@@ -1,4 +1,4 @@
-@c Copyright (C) 1988-2019 Free Software Foundation, Inc.
+@c Copyright (C) 1988-2020 Free Software Foundation, Inc.
 @c This is part of the GCC manual.
 @c For copying conditions, see the file gcc.texi.
 
@@ -735,10 +735,6 @@ options are changed via @code{#pragma GCC optimize} or by using the
 @end deftypevr
 
 @hook TARGET_OPTION_INIT_STRUCT
-
-@hook TARGET_OPTION_DEFAULT_PARAMS
-
-@hook TARGET_OPTION_VALIDATE_PARAM
 
 @defmac SWITCHABLE_TARGET
 Some targets need to switch between substantially different subtargets
@@ -1689,6 +1685,9 @@ function calls.
 If a register has 0 in @code{CALL_USED_REGISTERS}, the compiler
 automatically saves it on function entry and restores it on function
 exit, if the register is used within the function.
+
+Exactly one of @code{CALL_USED_REGISTERS} and @code{CALL_REALLY_USED_REGISTERS}
+must be defined.  Modern ports should define @code{CALL_REALLY_USED_REGISTERS}.
 @end defmac
 
 @defmac CALL_REALLY_USED_REGISTERS
@@ -1698,18 +1697,22 @@ exit, if the register is used within the function.
 Like @code{CALL_USED_REGISTERS} except this macro doesn't require
 that the entire set of @code{FIXED_REGISTERS} be included.
 (@code{CALL_USED_REGISTERS} must be a superset of @code{FIXED_REGISTERS}).
-This macro is optional.  If not specified, it defaults to the value
-of @code{CALL_USED_REGISTERS}.
+
+Exactly one of @code{CALL_USED_REGISTERS} and @code{CALL_REALLY_USED_REGISTERS}
+must be defined.  Modern ports should define @code{CALL_REALLY_USED_REGISTERS}.
 @end defmac
 
 @cindex call-used register
 @cindex call-clobbered register
 @cindex call-saved register
+@hook TARGET_FNTYPE_ABI
+
+@hook TARGET_INSN_CALLEE_ABI
+
+@cindex call-used register
+@cindex call-clobbered register
+@cindex call-saved register
 @hook TARGET_HARD_REGNO_CALL_PART_CLOBBERED
-
-@hook TARGET_REMOVE_EXTRA_CALL_PRESERVED_REGS
-
-@hook TARGET_RETURN_CALL_WITH_MAX_CLOBBERS
 
 @hook TARGET_GET_MULTILIB_ABI_NAME
 
@@ -3362,6 +3365,8 @@ stack.
 
 @hook TARGET_VECTOR_MODE_SUPPORTED_P
 
+@hook TARGET_COMPATIBLE_VECTOR_TYPES_P
+
 @hook TARGET_ARRAY_MODE
 
 @hook TARGET_ARRAY_MODE_SUPPORTED_P
@@ -3785,8 +3790,6 @@ These machine description macros help implement varargs:
 
 @hook TARGET_STORE_RETURNED_BOUNDS
 
-@hook TARGET_SETUP_INCOMING_VARARG_BOUNDS
-
 @node Trampolines
 @section Support for Nested Functions
 @cindex support for nested functions
@@ -3991,6 +3994,8 @@ macro, a reasonable default is used.
 
 @hook TARGET_LIBC_HAS_FUNCTION
 
+@hook TARGET_LIBC_HAS_FAST_FUNCTION
+
 @defmac NEXT_OBJC_RUNTIME
 Set this macro to 1 to use the "NeXT" Objective-C message sending conventions
 by default.  This calling convention involves passing the object, the selector
@@ -4160,8 +4165,6 @@ address;  but often a machine-dependent strategy can generate better code.
 
 @hook TARGET_VECTORIZE_VEC_PERM_CONST
 
-@hook TARGET_VECTORIZE_BUILTIN_CONVERSION
-
 @hook TARGET_VECTORIZE_BUILTIN_VECTORIZED_FUNCTION
 
 @hook TARGET_VECTORIZE_BUILTIN_MD_VECTORIZED_FUNCTION
@@ -4172,7 +4175,9 @@ address;  but often a machine-dependent strategy can generate better code.
 
 @hook TARGET_VECTORIZE_SPLIT_REDUCTION
 
-@hook TARGET_VECTORIZE_AUTOVECTORIZE_VECTOR_SIZES
+@hook TARGET_VECTORIZE_AUTOVECTORIZE_VECTOR_MODES
+
+@hook TARGET_VECTORIZE_RELATED_MODE
 
 @hook TARGET_VECTORIZE_GET_MASK_MODE
 
@@ -4197,6 +4202,8 @@ address;  but often a machine-dependent strategy can generate better code.
 @hook TARGET_SIMD_CLONE_USABLE
 
 @hook TARGET_SIMT_VF
+
+@hook TARGET_OMP_DEVICE_KIND_ARCH_ISA
 
 @hook TARGET_GOACC_VALIDATE_DIMS
 
@@ -5403,11 +5410,11 @@ as the number of bits.
 @end defmac
 
 @defmac ASM_OUTPUT_ALIGNED_DECL_LOCAL (@var{stream}, @var{decl}, @var{name}, @var{size}, @var{alignment})
-Like @code{ASM_OUTPUT_ALIGNED_DECL} except that @var{decl} of the
+Like @code{ASM_OUTPUT_ALIGNED_LOCAL} except that @var{decl} of the
 variable to be output, if there is one, or @code{NULL_TREE} if there
 is no corresponding variable.  If you define this macro, GCC will use it
-in place of both @code{ASM_OUTPUT_DECL} and
-@code{ASM_OUTPUT_ALIGNED_DECL}.  Define this macro when you need to see
+in place of both @code{ASM_OUTPUT_LOCAL} and
+@code{ASM_OUTPUT_ALIGNED_LOCAL}.  Define this macro when you need to see
 the variable's decl in order to chose what to output.
 @end defmac
 
@@ -6447,6 +6454,8 @@ the jump-table.
 
 @hook TARGET_ASM_UNWIND_EMIT_BEFORE_INSN
 
+@hook TARGET_ASM_SHOULD_RESTORE_CFA_STATE
+
 @node Exception Region Output
 @subsection Assembler Commands for Exception Regions
 
@@ -7200,6 +7209,8 @@ on this implementation detail.
 
 @hook TARGET_INSERT_ATTRIBUTES
 
+@hook TARGET_HANDLE_GENERIC_ATTRIBUTE
+
 @hook TARGET_FUNCTION_ATTRIBUTE_INLINABLE_P
 
 @hook TARGET_OPTION_VALID_ATTRIBUTE_P
@@ -7932,6 +7943,8 @@ to by @var{ce_info}.
 
 @hook TARGET_RESOLVE_OVERLOADED_BUILTIN
 
+@hook TARGET_CHECK_BUILTIN_CALL
+
 @hook TARGET_FOLD_BUILTIN
 
 @hook TARGET_GIMPLE_FOLD_BUILTIN
@@ -7941,6 +7954,14 @@ to by @var{ce_info}.
 @hook TARGET_GET_FUNCTION_VERSIONS_DISPATCHER
 
 @hook TARGET_GENERATE_VERSION_DISPATCHER_BODY
+
+@hook TARGET_PREDICT_DOLOOP_P
+
+@hook TARGET_HAVE_COUNT_REG_DECR_P
+
+@hook TARGET_DOLOOP_COST_FOR_GENERIC
+
+@hook TARGET_DOLOOP_COST_FOR_ADDRESS
 
 @hook TARGET_CAN_USE_DOLOOP_P
 
@@ -7979,27 +8000,7 @@ object files that are not referenced from @code{main} and uses export
 lists.
 @end defmac
 
-@defmac MODIFY_JNI_METHOD_CALL (@var{mdecl})
-Define this macro to a C expression representing a variant of the
-method call @var{mdecl}, if Java Native Interface (JNI) methods
-must be invoked differently from other methods on your target.
-For example, on 32-bit Microsoft Windows, JNI methods must be invoked using
-the @code{stdcall} calling convention and this macro is then
-defined as this expression:
-
-@smallexample
-build_type_attribute_variant (@var{mdecl},
-                              build_tree_list
-                              (get_identifier ("stdcall"),
-                               NULL))
-@end smallexample
-@end defmac
-
 @hook TARGET_CANNOT_MODIFY_JUMPS_P
-
-@hook TARGET_BRANCH_TARGET_REGISTER_CLASS
-
-@hook TARGET_BRANCH_TARGET_REGISTER_CALLEE_SAVED
 
 @hook TARGET_HAVE_CONDITIONAL_EXECUTION
 
@@ -8089,6 +8090,8 @@ and scanf formatter settings.
 @hook TARGET_PROMOTED_TYPE
 
 @hook TARGET_CONVERT_TO_TYPE
+
+@hook TARGET_VERIFY_TYPE_CONTEXT
 
 @defmac OBJC_JBLEN
 This macro determines the size of the objective C jump buffer for the

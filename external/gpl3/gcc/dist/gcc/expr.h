@@ -1,5 +1,5 @@
 /* Definitions for code generation pass of GNU compiler.
-   Copyright (C) 1987-2019 Free Software Foundation, Inc.
+   Copyright (C) 1987-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -114,7 +114,10 @@ extern rtx emit_block_move_hints (rtx, rtx, rtx, enum block_op_methods,
 			          unsigned int, HOST_WIDE_INT,
 				  unsigned HOST_WIDE_INT,
 				  unsigned HOST_WIDE_INT,
-				  unsigned HOST_WIDE_INT);
+				  unsigned HOST_WIDE_INT,
+				  bool bail_out_libcall = false,
+				  bool *is_move_done = NULL,
+				  bool might_overlap = false);
 extern rtx emit_block_cmp_hints (rtx, rtx, rtx, tree, rtx, bool,
 				 by_pieces_constfn, void *);
 extern bool emit_storent_insn (rtx to, rtx from);

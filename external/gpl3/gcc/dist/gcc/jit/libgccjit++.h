@@ -1,5 +1,5 @@
 /* A C++ API for libgccjit, purely as inline wrapper functions.
-   Copyright (C) 2014-2019 Free Software Foundation, Inc.
+   Copyright (C) 2014-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -48,6 +48,8 @@ namespace gccjit
     class case_;
   class timer;
   class auto_time;
+
+  namespace version {};
 
   /* Errors within the API become C++ exceptions of this class.  */
   class error
@@ -151,6 +153,9 @@ namespace gccjit
 
     field new_field (type type_, const std::string &name,
 		     location loc = location ());
+
+    field new_bitfield (type type_, int width, const std::string &name,
+			location loc = location ());
 
     struct_ new_struct_type (const std::string &name,
 			     std::vector<field> &fields,
@@ -755,6 +760,17 @@ context::new_field (type type_, const std::string &name, location loc)
 					   loc.get_inner_location (),
 					   type_.get_inner_type (),
 					   name.c_str ()));
+}
+
+inline field
+context::new_bitfield (type type_, int width, const std::string &name,
+		       location loc)
+{
+  return field (gcc_jit_context_new_bitfield (m_inner_ctxt,
+					      loc.get_inner_location (),
+					      type_.get_inner_type (),
+					      width,
+					      name.c_str ()));
 }
 
 inline struct_
@@ -1899,6 +1915,26 @@ auto_time::~auto_time ()
   m_timer.pop (m_item_name);
 }
 
+namespace version
+{
+inline int
+major_v ()
+{
+  return gcc_jit_version_major ();
+}
+
+inline int
+minor_v ()
+{
+  return gcc_jit_version_minor ();
+}
+
+inline int
+patchlevel_v ()
+{
+  return gcc_jit_version_patchlevel ();
+}
+} // namespace version
 } // namespace gccjit
 
 #endif /* #ifndef LIBGCCJIT_PLUS_PLUS_H */

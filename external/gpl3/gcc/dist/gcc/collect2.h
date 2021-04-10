@@ -1,5 +1,5 @@
-/* Header file for collect/tlink routines.
-   Copyright (C) 1998-2019 Free Software Foundation, Inc.
+/* Header file for collect routines.
+   Copyright (C) 1998-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -20,19 +20,13 @@ along with GCC; see the file COPYING3.  If not see
 #ifndef GCC_COLLECT2_H
 #define GCC_COLLECT2_H
 
-extern void do_tlink (char **, char **);
-
 extern struct pex_obj *collect_execute (const char *, char **, const char *,
 					const char *, int flags);
 
 extern int collect_wait (const char *, struct pex_obj *);
 
-extern void dump_ld_file (const char *, FILE *);
-
 extern int file_exists (const char *);
 
-extern const char *ldout;
-extern const char *lderrout;
 extern const char *c_file_name;
 extern struct obstack temporary_obstack;
 extern char *temporary_firstobj;

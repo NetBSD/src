@@ -1,5 +1,5 @@
 /* A type-safe hash table template.
-   Copyright (C) 2012-2019 Free Software Foundation, Inc.
+   Copyright (C) 2012-2020 Free Software Foundation, Inc.
    Contributed by Lawrence Crowl <crowl@google.com>
 
 This file is part of GCC.
@@ -35,14 +35,17 @@ along with GCC; see the file COPYING3.  If not see
       several things.
 
          - A typedef named 'value_type' to the value type (from above).
+	 Provided a suitable Descriptor class it may be a user-defined,
+	 non-POD type.
 
          - A static member function named 'hash' that takes a value_type
          (or 'const value_type &') and returns a hashval_t value.
 
          - A typedef named 'compare_type' that is used to test when a value
-         is found.  This type is the comparison type.  Usually, it will be the
-         same as value_type.  If it is not the same type, you must generally
-         explicitly compute hash values and pass them to the hash table.
+	 is found.  This type is the comparison type.  Usually, it will be
+	 the same as value_type and may be a user-defined, non-POD type.
+	 If it is not the same type, you must generally explicitly compute
+	 hash values and pass them to the hash table.
 
          - A static member function named 'equal' that takes a value_type
          and a compare_type, and returns a bool.  Both arguments can be
@@ -295,11 +298,15 @@ struct prime_ent
 
 extern struct prime_ent const prime_tab[];
 
+/* Limit number of comparisons when calling hash_table<>::verify.  */
+extern unsigned int hash_table_sanitize_eq_limit;
 
 /* Functions for computing hash table indexes.  */
 
 extern unsigned int hash_table_higher_prime_index (unsigned long n)
    ATTRIBUTE_PURE;
+
+extern ATTRIBUTE_NORETURN ATTRIBUTE_COLD void hashtab_chk_error ();
 
 /* Return X % Y using multiplicative inverse values INV and SHIFT.
 
@@ -371,10 +378,12 @@ class hash_table
 
 public:
   explicit hash_table (size_t, bool ggc = false,
+		       bool sanitize_eq_and_hash = true,
 		       bool gather_mem_stats = GATHER_STATISTICS,
 		       mem_alloc_origin origin = HASH_TABLE_ORIGIN
 		       CXX_MEM_STAT_INFO);
   explicit hash_table (const hash_table &, bool ggc = false,
+		       bool sanitize_eq_and_hash = true,
 		       bool gather_mem_stats = GATHER_STATISTICS,
 		       mem_alloc_origin origin = HASH_TABLE_ORIGIN
 		       CXX_MEM_STAT_INFO);
@@ -382,10 +391,10 @@ public:
 
   /* Create a hash_table in gc memory.  */
   static hash_table *
-  create_ggc (size_t n CXX_MEM_STAT_INFO)
+  create_ggc (size_t n, bool sanitize_eq_and_hash = true CXX_MEM_STAT_INFO)
   {
     hash_table *table = ggc_alloc<hash_table> ();
-    new (table) hash_table (n, true, GATHER_STATISTICS,
+    new (table) hash_table (n, true, sanitize_eq_and_hash, GATHER_STATISTICS,
 			    HASH_TABLE_ORIGIN PASS_MEM_STAT);
     return table;
   }
@@ -401,6 +410,9 @@ public:
 
   /* This function clears all entries in this hash table.  */
   void empty () { if (elements ()) empty_slow (); }
+
+  /* Return true when there are no elements in this hash table.  */
+  bool is_empty () const { return elements () == 0; }
 
   /* This function clears a specified SLOT in a hash table.  It is
      useful when you've already done the lookup and don't want to do it
@@ -496,6 +508,9 @@ public:
     }
 
 private:
+  /* FIXME: Make the class assignable.  See pr90959.  */
+  void operator= (hash_table&);
+
   template<typename T> friend void gt_ggc_mx (hash_table<T> *);
   template<typename T> friend void gt_pch_nx (hash_table<T> *);
   template<typename T> friend void
@@ -513,6 +528,7 @@ private:
 
   value_type *alloc_entries (size_t n CXX_MEM_STAT_INFO) const;
   value_type *find_empty_slot_for_expand (hashval_t);
+  void verify (const compare_type &comparable, hashval_t hash);
   bool too_empty_p (unsigned int);
   void expand ();
   static bool is_deleted (value_type &v)
@@ -561,6 +577,9 @@ private:
   /* if m_entries is stored in ggc memory.  */
   bool m_ggc;
 
+  /* True if the table should be sanitized for equal and hash functions.  */
+  bool m_sanitize_eq_and_hash;
+
   /* If we should gather memory statistics for the table.  */
 #if GATHER_STATISTICS
   bool m_gather_mem_stats;
@@ -583,12 +602,13 @@ extern void dump_hash_table_loc_statistics (void);
 template<typename Descriptor, bool Lazy,
 	 template<typename Type> class Allocator>
 hash_table<Descriptor, Lazy, Allocator>::hash_table (size_t size, bool ggc,
+						     bool sanitize_eq_and_hash,
 						     bool gather_mem_stats
 						     ATTRIBUTE_UNUSED,
 						     mem_alloc_origin origin
 						     MEM_STAT_DECL) :
   m_n_elements (0), m_n_deleted (0), m_searches (0), m_collisions (0),
-  m_ggc (ggc)
+  m_ggc (ggc), m_sanitize_eq_and_hash (sanitize_eq_and_hash)
 #if GATHER_STATISTICS
   , m_gather_mem_stats (gather_mem_stats)
 #endif
@@ -614,12 +634,14 @@ template<typename Descriptor, bool Lazy,
 	 template<typename Type> class Allocator>
 hash_table<Descriptor, Lazy, Allocator>::hash_table (const hash_table &h,
 						     bool ggc,
+						     bool sanitize_eq_and_hash,
 						     bool gather_mem_stats
 						     ATTRIBUTE_UNUSED,
 						     mem_alloc_origin origin
 						     MEM_STAT_DECL) :
   m_n_elements (h.m_n_elements), m_n_deleted (h.m_n_deleted),
-  m_searches (0), m_collisions (0), m_ggc (ggc)
+  m_searches (0), m_collisions (0), m_ggc (ggc),
+  m_sanitize_eq_and_hash (sanitize_eq_and_hash)
 #if GATHER_STATISTICS
   , m_gather_mem_stats (gather_mem_stats)
 #endif
@@ -641,7 +663,7 @@ hash_table<Descriptor, Lazy, Allocator>::hash_table (const hash_table &h,
 	  if (is_deleted (entry))
 	    mark_deleted (nentries[i]);
 	  else if (!is_empty (entry))
-	    nentries[i] = entry;
+	    new ((void*) (nentries + i)) value_type (entry);
 	}
       m_entries = nentries;
     }
@@ -691,8 +713,9 @@ hash_table<Descriptor, Lazy,
     nentries = ::ggc_cleared_vec_alloc<value_type> (n PASS_MEM_STAT);
 
   gcc_assert (nentries != NULL);
-  for (size_t i = 0; i < n; i++)
-    mark_empty (nentries[i]);
+  if (!Descriptor::empty_zero_p)
+    for (size_t i = 0; i < n; i++)
+      mark_empty (nentries[i]);
 
   return nentries;
 }
@@ -796,8 +819,7 @@ hash_table<Descriptor, Lazy, Allocator>::expand ()
       if (!is_empty (x) && !is_deleted (x))
         {
           value_type *q = find_empty_slot_for_expand (Descriptor::hash (x));
-
-          *q = x;
+	  new ((void*) q) value_type (x);
         }
 
       p++;
@@ -820,9 +842,8 @@ hash_table<Descriptor, Lazy, Allocator>::empty_slow ()
   size_t size = m_size;
   size_t nsize = size;
   value_type *entries = m_entries;
-  int i;
 
-  for (i = size - 1; i >= 0; i--)
+  for (size_t i = size - 1; i < size; i--)
     if (!is_empty (entries[i]) && !is_deleted (entries[i]))
       Descriptor::remove (entries[i]);
 
@@ -834,8 +855,9 @@ hash_table<Descriptor, Lazy, Allocator>::empty_slow ()
 
   if (nsize != size)
     {
-      int nindex = hash_table_higher_prime_index (nsize);
-      int nsize = prime_tab[nindex].prime;
+      unsigned int nindex = hash_table_higher_prime_index (nsize);
+
+      nsize = prime_tab[nindex].prime;
 
       if (!m_ggc)
 	Allocator <value_type> ::data_free (m_entries);
@@ -846,15 +868,12 @@ hash_table<Descriptor, Lazy, Allocator>::empty_slow ()
       m_size = nsize;
       m_size_prime_index = nindex;
     }
+  else if (Descriptor::empty_zero_p)
+    memset ((void *) entries, 0, size * sizeof (value_type));
   else
-    {
-#ifndef BROKEN_VALUE_INITIALIZATION
-      for ( ; size; ++entries, --size)
-	*entries = value_type ();
-#else
-      memset (entries, 0, size * sizeof (value_type));
-#endif
-    }
+    for (size_t i = 0; i < size; i++)
+      mark_empty (entries[i]);
+
   m_n_deleted = 0;
   m_n_elements = 0;
 }
@@ -909,7 +928,13 @@ hash_table<Descriptor, Lazy, Allocator>
       entry = &m_entries[index];
       if (is_empty (*entry)
           || (!is_deleted (*entry) && Descriptor::equal (*entry, comparable)))
-        return *entry;
+	{
+#if CHECKING_P
+	  if (m_sanitize_eq_and_hash)
+	    verify (comparable, hash);
+#endif
+	  return *entry;
+	}
     }
 }
 
@@ -938,8 +963,12 @@ hash_table<Descriptor, Lazy, Allocator>
   if (insert == INSERT && m_size * 3 <= m_n_elements * 4)
     expand ();
 
-  m_searches++;
+#if CHECKING_P
+  if (m_sanitize_eq_and_hash)
+    verify (comparable, hash);
+#endif
 
+  m_searches++;
   value_type *first_deleted_slot = NULL;
   hashval_t index = hash_table_mod1 (hash, m_size_prime_index);
   hashval_t hash2 = hash_table_mod2 (hash, m_size_prime_index);
@@ -984,6 +1013,25 @@ hash_table<Descriptor, Lazy, Allocator>
 
   m_n_elements++;
   return &m_entries[index];
+}
+
+/* Verify that all existing elements in th hash table which are
+   equal to COMPARABLE have an equal HASH value provided as argument.  */
+
+template<typename Descriptor, bool Lazy,
+	 template<typename Type> class Allocator>
+void
+hash_table<Descriptor, Lazy, Allocator>
+::verify (const compare_type &comparable, hashval_t hash)
+{
+  for (size_t i = 0; i < MIN (hash_table_sanitize_eq_limit, m_size); i++)
+    {
+      value_type *entry = &m_entries[i];
+      if (!is_empty (*entry) && !is_deleted (*entry)
+	  && hash != Descriptor::hash (*entry)
+	  && Descriptor::equal (*entry, comparable))
+	hashtab_chk_error ();
+    }
 }
 
 /* This function deletes an element with the given COMPARABLE value

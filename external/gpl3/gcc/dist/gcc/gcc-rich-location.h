@@ -1,5 +1,5 @@
 /* Declarations relating to class gcc_rich_location
-   Copyright (C) 2014-2019 Free Software Foundation, Inc.
+   Copyright (C) 2014-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -62,7 +62,9 @@ class gcc_rich_location : public rich_location
 
      Implemented in diagnostic-show-locus.c.  */
 
-  bool add_location_if_nearby (location_t loc);
+  bool add_location_if_nearby (location_t loc,
+			       bool restrict_to_current_line_spans = true,
+			       const range_label *label = NULL);
 
   /* Add a fix-it hint suggesting the insertion of CONTENT before
      INSERTION_POINT.
@@ -111,7 +113,7 @@ class text_range_label : public range_label
 
   label_text get_text (unsigned /*range_idx*/) const FINAL OVERRIDE
   {
-    return label_text (const_cast <char *> (m_text), false);
+    return label_text::borrow (m_text);
   }
 
  private:
@@ -181,7 +183,7 @@ class maybe_range_label_for_tree_type_mismatch : public range_label
   tree m_other_expr;
 };
 
-struct op_location_t;
+class op_location_t;
 
 /* A subclass of rich_location for showing problems with binary operations.
 

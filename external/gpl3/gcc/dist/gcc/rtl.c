@@ -1,5 +1,5 @@
 /* RTL utility routines.
-   Copyright (C) 1987-2019 Free Software Foundation, Inc.
+   Copyright (C) 1987-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -106,7 +106,7 @@ const enum rtx_class rtx_class[NUM_RTX_CODE] = {
 #undef DEF_RTL_EXPR
 };
 
-/* Whether rtxs with the given code code store data in the hwint field.  */
+/* Whether rtxs with the given code store data in the hwint field.  */
 
 #define RTX_CODE_HWINT_P_1(ENUM)					\
     ((ENUM) == CONST_INT || (ENUM) == CONST_DOUBLE			\
@@ -219,12 +219,7 @@ rtx_alloc_stat_v (RTX_CODE code MEM_STAT_DECL, int extra)
   rtx rt = ggc_alloc_rtx_def_stat (RTX_CODE_SIZE (code) + extra
 				   PASS_MEM_STAT);
 
-  /* We want to clear everything up to the FLD array.  Normally, this
-     is one int, but we don't want to assume that and it isn't very
-     portable anyway; this is.  */
-
-  memset (rt, 0, RTX_HDR_SIZE);
-  PUT_CODE (rt, code);
+  rtx_init (rt, code);
 
   if (GATHER_STATISTICS)
     {
@@ -314,10 +309,6 @@ copy_rtx (rtx orig)
 	  && ORIGINAL_REGNO (XEXP (orig, 0)) == REGNO (XEXP (orig, 0)))
 	return orig;
       break;
-
-    case CLOBBER_HIGH:
-	gcc_assert (REG_P (XEXP (orig, 0)));
-	return orig;
 
     case CONST:
       if (shared_const_p (orig))

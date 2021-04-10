@@ -1,5 +1,5 @@
 ;;- Machine description for Blackfin for GNU compiler
-;;  Copyright (C) 2005-2019 Free Software Foundation, Inc.
+;;  Copyright (C) 2005-2020 Free Software Foundation, Inc.
 ;;  Contributed by Analog Devices.
 
 ;; This file is part of GCC.
@@ -752,7 +752,8 @@
   "@
    %d0 = %h1 << 0%!
    %d0 = %1;"
-  [(set_attr "type" "dsp32shiftimm,mvi")])
+  [(set_attr "type" "dsp32shiftimm,mvi")
+   (set_attr "length" "*,4")])
 
 (define_expand "insv"
   [(set (zero_extract:SI (match_operand:SI 0 "register_operand" "")
@@ -2316,14 +2317,14 @@
    (set_attr "length" "16")
    (set_attr "seq_insns" "multi")])
 
-(define_expand "movmemsi"
+(define_expand "cpymemsi"
   [(match_operand:BLK 0 "general_operand" "")
    (match_operand:BLK 1 "general_operand" "")
    (match_operand:SI 2 "const_int_operand" "")
    (match_operand:SI 3 "const_int_operand" "")]
   ""
 {
-  if (bfin_expand_movmem (operands[0], operands[1], operands[2], operands[3]))
+  if (bfin_expand_cpymem (operands[0], operands[1], operands[2], operands[3]))
     DONE;
   FAIL;
 })

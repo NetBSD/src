@@ -671,8 +671,8 @@ Expression *semanticTraits(TraitsExp *e, Scope *sc)
                 e->error("argument %s has no protection", o->toChars());
             return new ErrorExp();
         }
-        if (s->_scope)
-            s->semantic(s->_scope);
+        if (s->semanticRun == PASSinit)
+            s->semantic(NULL);
 
         const char *protName = protectionToChars(s->prot().kind);   // TODO: How about package(names)
         assert(protName);
@@ -1135,12 +1135,32 @@ Expression *semanticTraits(TraitsExp *e, Scope *sc)
         {
             Dsymbol *s = getDsymbol(o);
             Declaration *d = NULL;
-            if (!s || (d = s->isDeclaration()) == NULL)
+            AggregateDeclaration *ad = NULL;
+            if (!s || ((d = s->isDeclaration()) == NULL
+                       && (ad = s->isAggregateDeclaration()) == NULL))
             {
                 e->error("argument to `__traits(getLinkage, %s)` is not a declaration", o->toChars());
                 return new ErrorExp();
             }
-            link = d->linkage;
+            if (d != NULL)
+                link = d->linkage;
+            else
+            {
+                switch (ad->classKind)
+                {
+                    case ClassKind::d:
+                        link = LINKd;
+                        break;
+                    case ClassKind::cpp:
+                        link = LINKcpp;
+                        break;
+                    case ClassKind::objc:
+                        link = LINKobjc;
+                        break;
+                    default:
+                        assert(0);
+                }
+            }
         }
         const char *linkage = linkageToChars(link);
         StringExp *se = new StringExp(e->loc, const_cast<char *>(linkage));
@@ -1182,16 +1202,27 @@ Expression *semanticTraits(TraitsExp *e, Scope *sc)
             {
                 if (!sm)
                     return 1;
+
+                // skip local symbols, such as static foreach loop variables
+                if (Declaration *decl = sm->isDeclaration())
+                {
+                    if (decl->storage_class & STClocal)
+                    {
+                        return 0;
+                    }
+                }
+
                 //printf("\t[%i] %s %s\n", i, sm->kind(), sm->toChars());
                 if (sm->ident)
                 {
-                    const char *idx = sm->ident->toChars();
-                    if (idx[0] == '_' && idx[1] == '_' &&
-                        sm->ident != Id::ctor &&
-                        sm->ident != Id::dtor &&
-                        sm->ident != Id::__xdtor &&
-                        sm->ident != Id::postblit &&
-                        sm->ident != Id::__xpostblit)
+                    // https://issues.dlang.org/show_bug.cgi?id=10096
+                    // https://issues.dlang.org/show_bug.cgi?id=10100
+                    // Skip over internal members in __traits(allMembers)
+                    if ((sm->isCtorDeclaration() && sm->ident != Id::ctor) ||
+                        (sm->isDtorDeclaration() && sm->ident != Id::dtor) ||
+                        (sm->isPostBlitDeclaration() && sm->ident != Id::postblit) ||
+                        sm->isInvariantDeclaration() ||
+                        sm->isUnitTestDeclaration())
                     {
                         return 0;
                     }
@@ -1240,7 +1271,7 @@ Expression *semanticTraits(TraitsExp *e, Scope *sc)
         ClassDeclaration *cd = sds->isClassDeclaration();
         if (cd && e->ident == Id::allMembers)
         {
-            if (cd->_scope)
+            if (cd->semanticRun < PASSsemanticdone)
                 cd->semantic(NULL);    // Bugzilla 13668: Try to resolve forward reference
 
             struct PushBaseMembers
@@ -1352,6 +1383,13 @@ Expression *semanticTraits(TraitsExp *e, Scope *sc)
 
         RootObject *o1 = (*e->args)[0];
         RootObject *o2 = (*e->args)[1];
+
+        // issue 12001, allow isSame, <BasicType>, <BasicType>
+        Type *t1 = isType(o1);
+        Type *t2 = isType(o2);
+        if (t1 && t2 && t1->equals(t2))
+            return True(e);
+
         Dsymbol *s1 = getDsymbol(o1);
         Dsymbol *s2 = getDsymbol(o2);
         //printf("isSame: %s, %s\n", o1->toChars(), o2->toChars());
@@ -1411,7 +1449,7 @@ Expression *semanticTraits(TraitsExp *e, Scope *sc)
         TupleExp *te= new TupleExp(e->loc, exps);
         return semantic(te, sc);
     }
-    else if(e->ident == Id::getVirtualIndex)
+    else if (e->ident == Id::getVirtualIndex)
     {
         if (dim != 1)
             return dimError(e, 1, dim);

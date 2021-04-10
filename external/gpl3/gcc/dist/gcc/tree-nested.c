@@ -1,5 +1,5 @@
 /* Nested function decomposition for GIMPLE.
-   Copyright (C) 2004-2019 Free Software Foundation, Inc.
+   Copyright (C) 2004-2020 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -167,6 +167,16 @@ create_tmp_var_for (struct nesting_info *info, tree type, const char *prefix)
   info->new_local_var_chain = tmp_var;
 
   return tmp_var;
+}
+
+/* Like build_simple_mem_ref, but set TREE_THIS_NOTRAP on the result.  */
+
+static tree
+build_simple_mem_ref_notrap (tree ptr)
+{
+  tree t = build_simple_mem_ref (ptr);
+  TREE_THIS_NOTRAP (t) = 1;
+  return t;
 }
 
 /* Take the address of EXP to be used within function CONTEXT.
@@ -877,7 +887,7 @@ get_static_chain (struct nesting_info *info, tree target_context,
 	{
 	  tree field = get_chain_field (i);
 
-	  x = build_simple_mem_ref (x);
+	  x = build_simple_mem_ref_notrap (x);
 	  x = build3 (COMPONENT_REF, TREE_TYPE (field), x, field, NULL_TREE);
 	  x = init_tmp_var (info, x, gsi);
 	}
@@ -914,12 +924,12 @@ get_frame_field (struct nesting_info *info, tree target_context,
 	{
 	  tree field = get_chain_field (i);
 
-	  x = build_simple_mem_ref (x);
+	  x = build_simple_mem_ref_notrap (x);
 	  x = build3 (COMPONENT_REF, TREE_TYPE (field), x, field, NULL_TREE);
 	  x = init_tmp_var (info, x, gsi);
 	}
 
-      x = build_simple_mem_ref (x);
+      x = build_simple_mem_ref_notrap (x);
     }
 
   x = build3 (COMPONENT_REF, TREE_TYPE (field), x, field, NULL_TREE);
@@ -963,16 +973,16 @@ get_nonlocal_debug_decl (struct nesting_info *info, tree decl)
       for (i = info->outer; i->context != target_context; i = i->outer)
 	{
 	  field = get_chain_field (i);
-	  x = build_simple_mem_ref (x);
+	  x = build_simple_mem_ref_notrap (x);
 	  x = build3 (COMPONENT_REF, TREE_TYPE (field), x, field, NULL_TREE);
 	}
-      x = build_simple_mem_ref (x);
+      x = build_simple_mem_ref_notrap (x);
     }
 
   field = lookup_field_for_decl (i, decl, INSERT);
   x = build3 (COMPONENT_REF, TREE_TYPE (field), x, field, NULL_TREE);
   if (use_pointer_in_frame (decl))
-    x = build_simple_mem_ref (x);
+    x = build_simple_mem_ref_notrap (x);
 
   /* ??? We should be remapping types as well, surely.  */
   new_decl = build_decl (DECL_SOURCE_LOCATION (decl),
@@ -1060,7 +1070,7 @@ convert_nonlocal_reference_op (tree *tp, int *walk_subtrees, void *data)
 	    if (use_pointer_in_frame (t))
 	      {
 		x = init_tmp_var (info, x, &wi->gsi);
-		x = build_simple_mem_ref (x);
+		x = build_simple_mem_ref_notrap (x);
 	      }
 	  }
 
@@ -1178,7 +1188,7 @@ convert_nonlocal_omp_clauses (tree *pclauses, struct walk_stmt_info *wi)
 {
   struct nesting_info *const info = (struct nesting_info *) wi->info;
   bool need_chain = false, need_stmts = false;
-  tree clause, decl;
+  tree clause, decl, *pdecl;
   int dummy;
   bitmap new_suppress;
 
@@ -1187,6 +1197,7 @@ convert_nonlocal_omp_clauses (tree *pclauses, struct walk_stmt_info *wi)
 
   for (clause = *pclauses; clause ; clause = OMP_CLAUSE_CHAIN (clause))
     {
+      pdecl = NULL;
       switch (OMP_CLAUSE_CODE (clause))
 	{
 	case OMP_CLAUSE_REDUCTION:
@@ -1194,6 +1205,15 @@ convert_nonlocal_omp_clauses (tree *pclauses, struct walk_stmt_info *wi)
 	case OMP_CLAUSE_TASK_REDUCTION:
 	  if (OMP_CLAUSE_REDUCTION_PLACEHOLDER (clause))
 	    need_stmts = true;
+	  if (TREE_CODE (OMP_CLAUSE_DECL (clause)) == MEM_REF)
+	    {
+	      pdecl = &TREE_OPERAND (OMP_CLAUSE_DECL (clause), 0);
+	      if (TREE_CODE (*pdecl) == POINTER_PLUS_EXPR)
+		pdecl = &TREE_OPERAND (*pdecl, 0);
+	      if (TREE_CODE (*pdecl) == INDIRECT_REF
+		  || TREE_CODE (*pdecl) == ADDR_EXPR)
+		pdecl = &TREE_OPERAND (*pdecl, 0);
+	    }
 	  goto do_decl_clause;
 
 	case OMP_CLAUSE_LASTPRIVATE:
@@ -1217,9 +1237,12 @@ convert_nonlocal_omp_clauses (tree *pclauses, struct walk_stmt_info *wi)
 	case OMP_CLAUSE_TO_DECLARE:
 	case OMP_CLAUSE_LINK:
 	case OMP_CLAUSE_USE_DEVICE_PTR:
+	case OMP_CLAUSE_USE_DEVICE_ADDR:
 	case OMP_CLAUSE_IS_DEVICE_PTR:
 	do_decl_clause:
-	  decl = OMP_CLAUSE_DECL (clause);
+	  if (pdecl == NULL)
+	    pdecl = &OMP_CLAUSE_DECL (clause);
+	  decl = *pdecl;
 	  if (VAR_P (decl)
 	      && (TREE_STATIC (decl) || DECL_EXTERNAL (decl)))
 	    break;
@@ -1228,7 +1251,7 @@ convert_nonlocal_omp_clauses (tree *pclauses, struct walk_stmt_info *wi)
 	      if (OMP_CLAUSE_CODE (clause) == OMP_CLAUSE_SHARED)
 		OMP_CLAUSE_SHARED_READONLY (clause) = 0;
 	      bitmap_set_bit (new_suppress, DECL_UID (decl));
-	      OMP_CLAUSE_DECL (clause) = get_nonlocal_debug_decl (info, decl);
+	      *pdecl = get_nonlocal_debug_decl (info, decl);
 	      if (OMP_CLAUSE_CODE (clause) != OMP_CLAUSE_PRIVATE)
 		need_chain = true;
 	    }
@@ -1343,11 +1366,14 @@ convert_nonlocal_omp_clauses (tree *pclauses, struct walk_stmt_info *wi)
 	case OMP_CLAUSE_THREADS:
 	case OMP_CLAUSE_SIMD:
 	case OMP_CLAUSE_DEFAULTMAP:
+	case OMP_CLAUSE_ORDER:
 	case OMP_CLAUSE_SEQ:
 	case OMP_CLAUSE_INDEPENDENT:
 	case OMP_CLAUSE_AUTO:
 	case OMP_CLAUSE_IF_PRESENT:
 	case OMP_CLAUSE_FINALIZE:
+	case OMP_CLAUSE__CONDTEMP_:
+	case OMP_CLAUSE__SCANTEMP_:
 	  break;
 
 	  /* The following clause belongs to the OpenACC cache directive, which
@@ -1396,12 +1422,22 @@ convert_nonlocal_omp_clauses (tree *pclauses, struct walk_stmt_info *wi)
 	      if (OMP_CLAUSE_REDUCTION_DECL_PLACEHOLDER (clause))
 		DECL_CONTEXT (OMP_CLAUSE_REDUCTION_DECL_PLACEHOLDER (clause))
 		  = info->context;
+	      tree save_local_var_chain = info->new_local_var_chain;
+	      info->new_local_var_chain = NULL;
+	      gimple_seq *seq = &OMP_CLAUSE_REDUCTION_GIMPLE_INIT (clause);
 	      walk_body (convert_nonlocal_reference_stmt,
-			 convert_nonlocal_reference_op, info,
-			 &OMP_CLAUSE_REDUCTION_GIMPLE_INIT (clause));
+			 convert_nonlocal_reference_op, info, seq);
+	      if (info->new_local_var_chain)
+		declare_vars (info->new_local_var_chain,
+			      gimple_seq_first_stmt (*seq), false);
+	      info->new_local_var_chain = NULL;
+	      seq = &OMP_CLAUSE_REDUCTION_GIMPLE_MERGE (clause);
 	      walk_body (convert_nonlocal_reference_stmt,
-			 convert_nonlocal_reference_op, info,
-			 &OMP_CLAUSE_REDUCTION_GIMPLE_MERGE (clause));
+			 convert_nonlocal_reference_op, info, seq);
+	      if (info->new_local_var_chain)
+		declare_vars (info->new_local_var_chain,
+			      gimple_seq_first_stmt (*seq), false);
+	      info->new_local_var_chain = save_local_var_chain;
 	      DECL_CONTEXT (OMP_CLAUSE_REDUCTION_PLACEHOLDER (clause))
 		= old_context;
 	      if (OMP_CLAUSE_REDUCTION_DECL_PLACEHOLDER (clause))
@@ -1411,15 +1447,31 @@ convert_nonlocal_omp_clauses (tree *pclauses, struct walk_stmt_info *wi)
 	  break;
 
 	case OMP_CLAUSE_LASTPRIVATE:
-	  walk_body (convert_nonlocal_reference_stmt,
-		     convert_nonlocal_reference_op, info,
-		     &OMP_CLAUSE_LASTPRIVATE_GIMPLE_SEQ (clause));
+	  {
+	    tree save_local_var_chain = info->new_local_var_chain;
+	    info->new_local_var_chain = NULL;
+	    gimple_seq *seq = &OMP_CLAUSE_LASTPRIVATE_GIMPLE_SEQ (clause);
+	    walk_body (convert_nonlocal_reference_stmt,
+		       convert_nonlocal_reference_op, info, seq);
+	    if (info->new_local_var_chain)
+	      declare_vars (info->new_local_var_chain,
+			    gimple_seq_first_stmt (*seq), false);
+	    info->new_local_var_chain = save_local_var_chain;
+	  }
 	  break;
 
 	case OMP_CLAUSE_LINEAR:
-	  walk_body (convert_nonlocal_reference_stmt,
-		     convert_nonlocal_reference_op, info,
-		     &OMP_CLAUSE_LINEAR_GIMPLE_SEQ (clause));
+	  {
+	    tree save_local_var_chain = info->new_local_var_chain;
+	    info->new_local_var_chain = NULL;
+	    gimple_seq *seq = &OMP_CLAUSE_LINEAR_GIMPLE_SEQ (clause);
+	    walk_body (convert_nonlocal_reference_stmt,
+		       convert_nonlocal_reference_op, info, seq);
+	    if (info->new_local_var_chain)
+	      declare_vars (info->new_local_var_chain,
+			    gimple_seq_first_stmt (*seq), false);
+	    info->new_local_var_chain = save_local_var_chain;
+	  }
 	  break;
 
 	default:
@@ -1618,6 +1670,7 @@ convert_nonlocal_reference_stmt (gimple_stmt_iterator *gsi, bool *handled_ops_p,
     case GIMPLE_OMP_SECTION:
     case GIMPLE_OMP_MASTER:
     case GIMPLE_OMP_ORDERED:
+    case GIMPLE_OMP_SCAN:
       walk_body (convert_nonlocal_reference_stmt, convert_nonlocal_reference_op,
 	         info, gimple_omp_body_ptr (stmt));
       break;
@@ -1894,7 +1947,7 @@ convert_local_omp_clauses (tree *pclauses, struct walk_stmt_info *wi)
 {
   struct nesting_info *const info = (struct nesting_info *) wi->info;
   bool need_frame = false, need_stmts = false;
-  tree clause, decl;
+  tree clause, decl, *pdecl;
   int dummy;
   bitmap new_suppress;
 
@@ -1903,6 +1956,7 @@ convert_local_omp_clauses (tree *pclauses, struct walk_stmt_info *wi)
 
   for (clause = *pclauses; clause ; clause = OMP_CLAUSE_CHAIN (clause))
     {
+      pdecl = NULL;
       switch (OMP_CLAUSE_CODE (clause))
 	{
 	case OMP_CLAUSE_REDUCTION:
@@ -1910,6 +1964,15 @@ convert_local_omp_clauses (tree *pclauses, struct walk_stmt_info *wi)
 	case OMP_CLAUSE_TASK_REDUCTION:
 	  if (OMP_CLAUSE_REDUCTION_PLACEHOLDER (clause))
 	    need_stmts = true;
+	  if (TREE_CODE (OMP_CLAUSE_DECL (clause)) == MEM_REF)
+	    {
+	      pdecl = &TREE_OPERAND (OMP_CLAUSE_DECL (clause), 0);
+	      if (TREE_CODE (*pdecl) == POINTER_PLUS_EXPR)
+		pdecl = &TREE_OPERAND (*pdecl, 0);
+	      if (TREE_CODE (*pdecl) == INDIRECT_REF
+		  || TREE_CODE (*pdecl) == ADDR_EXPR)
+		pdecl = &TREE_OPERAND (*pdecl, 0);
+	    }
 	  goto do_decl_clause;
 
 	case OMP_CLAUSE_LASTPRIVATE:
@@ -1933,9 +1996,12 @@ convert_local_omp_clauses (tree *pclauses, struct walk_stmt_info *wi)
 	case OMP_CLAUSE_TO_DECLARE:
 	case OMP_CLAUSE_LINK:
 	case OMP_CLAUSE_USE_DEVICE_PTR:
+	case OMP_CLAUSE_USE_DEVICE_ADDR:
 	case OMP_CLAUSE_IS_DEVICE_PTR:
 	do_decl_clause:
-	  decl = OMP_CLAUSE_DECL (clause);
+	  if (pdecl == NULL)
+	    pdecl = &OMP_CLAUSE_DECL (clause);
+	  decl = *pdecl;
 	  if (VAR_P (decl)
 	      && (TREE_STATIC (decl) || DECL_EXTERNAL (decl)))
 	    break;
@@ -1948,8 +2014,7 @@ convert_local_omp_clauses (tree *pclauses, struct walk_stmt_info *wi)
 		  if (OMP_CLAUSE_CODE (clause) == OMP_CLAUSE_SHARED)
 		    OMP_CLAUSE_SHARED_READONLY (clause) = 0;
 		  bitmap_set_bit (new_suppress, DECL_UID (decl));
-		  OMP_CLAUSE_DECL (clause)
-		    = get_local_debug_decl (info, decl, field);
+		  *pdecl = get_local_debug_decl (info, decl, field);
 		  need_frame = true;
 		}
 	    }
@@ -2070,11 +2135,14 @@ convert_local_omp_clauses (tree *pclauses, struct walk_stmt_info *wi)
 	case OMP_CLAUSE_THREADS:
 	case OMP_CLAUSE_SIMD:
 	case OMP_CLAUSE_DEFAULTMAP:
+	case OMP_CLAUSE_ORDER:
 	case OMP_CLAUSE_SEQ:
 	case OMP_CLAUSE_INDEPENDENT:
 	case OMP_CLAUSE_AUTO:
 	case OMP_CLAUSE_IF_PRESENT:
 	case OMP_CLAUSE_FINALIZE:
+	case OMP_CLAUSE__CONDTEMP_:
+	case OMP_CLAUSE__SCANTEMP_:
 	  break;
 
 	  /* The following clause belongs to the OpenACC cache directive, which
@@ -2320,6 +2388,7 @@ convert_local_reference_stmt (gimple_stmt_iterator *gsi, bool *handled_ops_p,
     case GIMPLE_OMP_SECTION:
     case GIMPLE_OMP_MASTER:
     case GIMPLE_OMP_ORDERED:
+    case GIMPLE_OMP_SCAN:
       walk_body (convert_local_reference_stmt, convert_local_reference_op,
 		 info, gimple_omp_body_ptr (stmt));
       break;
@@ -2335,6 +2404,7 @@ convert_local_reference_stmt (gimple_stmt_iterator *gsi, bool *handled_ops_p,
 	{
 	  tree lhs = gimple_assign_lhs (stmt);
 	  if (DECL_P (lhs)
+	      && decl_function_context (lhs) == info->context
 	      && !use_pointer_in_frame (lhs)
 	      && lookup_field_for_decl (info, lhs, NO_INSERT))
 	    {
@@ -2829,6 +2899,7 @@ convert_gimple_call (gimple_stmt_iterator *gsi, bool *handled_ops_p,
     case GIMPLE_OMP_MASTER:
     case GIMPLE_OMP_TASKGROUP:
     case GIMPLE_OMP_ORDERED:
+    case GIMPLE_OMP_SCAN:
     case GIMPLE_OMP_CRITICAL:
       walk_body (convert_gimple_call, NULL, info, gimple_omp_body_ptr (stmt));
       break;

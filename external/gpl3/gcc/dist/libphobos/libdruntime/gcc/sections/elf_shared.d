@@ -1,5 +1,5 @@
 // ELF-specific support for sections with shared libraries.
-// Copyright (C) 2019 Free Software Foundation, Inc.
+// Copyright (C) 2019-2020 Free Software Foundation, Inc.
 
 // GCC is free software; you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free
@@ -22,6 +22,8 @@
 
 module gcc.sections.elf_shared;
 
+version (MIPS32)  version = MIPS_Any;
+version (MIPS64)  version = MIPS_Any;
 version (RISCV32) version = RISCV_Any;
 version (RISCV64) version = RISCV_Any;
 version (S390)    version = IBMZ_Any;
@@ -763,6 +765,8 @@ version (Shared)
                     // in glibc: #define DL_RO_DYN_SECTION 1
                     version (RISCV_Any)
                         strtab = cast(const(char)*)(info.dlpi_addr + dyn.d_un.d_ptr); // relocate
+                    else version (MIPS_Any)
+                        strtab = cast(const(char)*)(info.dlpi_addr + dyn.d_un.d_ptr); // relocate
                     else
                         strtab = cast(const(char)*)dyn.d_un.d_ptr;
                 }
@@ -1028,7 +1032,7 @@ struct tls_index
 }
 
 extern(C) void* __tls_get_addr(tls_index* ti) nothrow @nogc;
-extern(C) void* __tls_get_addr_internal(tls_index* ti) nothrow @nogc;
+extern(C) void* __ibmz_get_tls_offset(tls_index *ti) nothrow @nogc;
 
 /* The dynamic thread vector (DTV) pointers may point 0x8000 past the start of
  * each TLS block. This is at least true for PowerPC and Mips platforms.
@@ -1084,11 +1088,15 @@ void[] getTLSRange(size_t mod, size_t sz) nothrow @nogc
 
         // base offset
         auto ti = tls_index(mod, 0);
-        version (IBMZ_Any)
+        version (CRuntime_Musl)
+            return (__tls_get_addr(&ti)-TLS_DTV_OFFSET)[0 .. sz];
+        else version (IBMZ_Any)
         {
-            auto idx = cast(void *)__tls_get_addr_internal(&ti)
-                + cast(ulong)__builtin_thread_pointer();
-            return idx[0 .. sz];
+            // IBM Z only provides __tls_get_offset instead of __tls_get_addr
+            // which returns an offset relative to the thread pointer.
+            auto addr = __ibmz_get_tls_offset(&ti);
+            addr = addr + cast(c_ulong)__builtin_thread_pointer();
+            return addr[0 .. sz];
         }
         else
             return (__tls_get_addr(&ti)-TLS_DTV_OFFSET)[0 .. sz];

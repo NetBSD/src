@@ -1,5 +1,5 @@
 /* Control flow optimization code for GNU compiler.
-   Copyright (C) 1987-2019 Free Software Foundation, Inc.
+   Copyright (C) 1987-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -43,7 +43,6 @@ along with GCC; see the file COPYING3.  If not see
 #include "insn-config.h"
 #include "emit-rtl.h"
 #include "cselib.h"
-#include "params.h"
 #include "tree-pass.h"
 #include "cfgloop.h"
 #include "cfgrtl.h"
@@ -54,6 +53,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "dbgcnt.h"
 #include "rtl-iter.h"
 #include "regs.h"
+#include "function-abi.h"
 
 #define FORWARDER_BLOCK_P(BB) ((BB)->flags & BB_FORWARDER_BLOCK)
 
@@ -1230,12 +1230,7 @@ old_insns_match_p (int mode ATTRIBUTE_UNUSED, rtx_insn *i1, rtx_insn *i2)
 	    }
 	}
 
-      HARD_REG_SET i1_used, i2_used;
-
-      get_call_reg_set_usage (i1, &i1_used, call_used_reg_set);
-      get_call_reg_set_usage (i2, &i2_used, call_used_reg_set);
-
-      if (!hard_reg_set_equal_p (i1_used, i2_used))
+      if (insn_callee_abi (i1) != insn_callee_abi (i2))
         return dir_none;
     }
 
@@ -1269,7 +1264,7 @@ old_insns_match_p (int mode ATTRIBUTE_UNUSED, rtx_insn *i1, rtx_insn *i2)
 	if (REG_NOTE_KIND (note) == REG_DEAD && STACK_REG_P (XEXP (note, 0)))
 	  SET_HARD_REG_BIT (i2_regset, REGNO (XEXP (note, 0)));
 
-      if (!hard_reg_set_equal_p (i1_regset, i2_regset))
+      if (i1_regset != i2_regset)
 	return dir_none;
     }
 #endif
@@ -2026,7 +2021,7 @@ try_crossjump_to_edge (int mode, edge e1, edge e2,
      of matching instructions or the 'from' block was totally matched
      (such that its predecessors will hopefully be redirected and the
      block removed).  */
-  if ((nmatch < PARAM_VALUE (PARAM_MIN_CROSSJUMP_INSNS))
+  if ((nmatch < param_min_crossjump_insns)
       && (newpos1 != BB_HEAD (src1)))
     return false;
 
@@ -2219,7 +2214,7 @@ try_crossjump_bb (int mode, basic_block bb)
      a block that falls through into BB, as that adds no branches to the
      program.  We'll try that combination first.  */
   fallthru = NULL;
-  max = PARAM_VALUE (PARAM_MAX_CROSSJUMP_EDGES);
+  max = param_max_crossjump_edges;
 
   if (EDGE_COUNT (bb->preds) > max)
     return false;
@@ -3197,7 +3192,10 @@ cleanup_cfg (int mode)
 	      && !delete_trivially_dead_insns (get_insns (), max_reg_num ()))
 	    break;
 	  if ((mode & CLEANUP_CROSSJUMP) && crossjumps_occurred)
-	    run_fast_dce ();
+	    {
+	      run_fast_dce ();
+	      mode &= ~CLEANUP_FORCE_FAST_DCE;
+	    }
 	}
       else
 	break;
@@ -3205,6 +3203,9 @@ cleanup_cfg (int mode)
 
   if (mode & CLEANUP_CROSSJUMP)
     remove_fake_exit_edges ();
+
+  if (mode & CLEANUP_FORCE_FAST_DCE)
+    run_fast_dce ();
 
   /* Don't call delete_dead_jumptables in cfglayout mode, because
      that function assumes that jump tables are in the insns stream.

@@ -1,5 +1,5 @@
 /* Memory address lowering and addressing mode selection.
-   Copyright (C) 2004-2019 Free Software Foundation, Inc.
+   Copyright (C) 2004-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -47,6 +47,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "dumpfile.h"
 #include "tree-affine.h"
 #include "gimplify.h"
+#include "builtins.h"
 
 /* FIXME: We compute address costs using RTL.  */
 #include "tree-ssa-address.h"
@@ -1015,45 +1016,24 @@ copy_ref_info (tree new_ref, tree old_ref)
 
   new_ptr_base = TREE_OPERAND (new_ref, 0);
 
+  tree base = get_base_address (old_ref);
+  if (!base)
+    return;
+
   /* We can transfer points-to information from an old pointer
      or decl base to the new one.  */
   if (new_ptr_base
       && TREE_CODE (new_ptr_base) == SSA_NAME
       && !SSA_NAME_PTR_INFO (new_ptr_base))
     {
-      tree base = get_base_address (old_ref);
-      if (!base)
-	;
-      else if ((TREE_CODE (base) == MEM_REF
-		|| TREE_CODE (base) == TARGET_MEM_REF)
-	       && TREE_CODE (TREE_OPERAND (base, 0)) == SSA_NAME
-	       && SSA_NAME_PTR_INFO (TREE_OPERAND (base, 0)))
+      if ((TREE_CODE (base) == MEM_REF
+	   || TREE_CODE (base) == TARGET_MEM_REF)
+	  && TREE_CODE (TREE_OPERAND (base, 0)) == SSA_NAME
+	  && SSA_NAME_PTR_INFO (TREE_OPERAND (base, 0)))
 	{
-	  struct ptr_info_def *new_pi;
-	  unsigned int align, misalign;
-
 	  duplicate_ssa_name_ptr_info
 	    (new_ptr_base, SSA_NAME_PTR_INFO (TREE_OPERAND (base, 0)));
-	  new_pi = SSA_NAME_PTR_INFO (new_ptr_base);
-	  /* We have to be careful about transferring alignment information.  */
-	  if (get_ptr_info_alignment (new_pi, &align, &misalign)
-	      && TREE_CODE (old_ref) == MEM_REF
-	      && !(TREE_CODE (new_ref) == TARGET_MEM_REF
-		   && (TMR_INDEX2 (new_ref)
-		       /* TODO: Below conditions can be relaxed if TMR_INDEX
-			  is an indcution variable and its initial value and
-			  step are aligned.  */
-		       || (TMR_INDEX (new_ref) && !TMR_STEP (new_ref))
-		       || (TMR_STEP (new_ref)
-			   && (TREE_INT_CST_LOW (TMR_STEP (new_ref))
-			       < align)))))
-	    {
-	      poly_uint64 inc = (mem_ref_offset (old_ref)
-				 - mem_ref_offset (new_ref)).force_uhwi ();
-	      adjust_ptr_info_misalignment (new_pi, inc);
-	    }
-	  else
-	    mark_ptr_info_alignment_unknown (new_pi);
+	  reset_flow_sensitive_info (new_ptr_base);
 	}
       else if (VAR_P (base)
 	       || TREE_CODE (base) == PARM_DECL
@@ -1063,6 +1043,14 @@ copy_ref_info (tree new_ref, tree old_ref)
 	  pt_solution_set_var (&pi->pt, base);
 	}
     }
+
+  /* And alignment info.  Note we cannot transfer misalignment info
+     since that sits on the SSA name but this is flow-sensitive info
+     which we cannot transfer in this generic routine.  */
+  unsigned old_align = get_object_alignment (old_ref);
+  unsigned new_align = get_object_alignment (new_ref);
+  if (new_align < old_align)
+    TREE_TYPE (new_ref) = build_aligned_type (TREE_TYPE (new_ref), old_align);
 }
 
 /* Move constants in target_mem_ref REF to offset.  Returns the new target
@@ -1139,6 +1127,39 @@ maybe_fold_tmr (tree ref)
   TREE_SIDE_EFFECTS (new_ref) = TREE_SIDE_EFFECTS (ref);
   TREE_THIS_VOLATILE (new_ref) = TREE_THIS_VOLATILE (ref);
   return new_ref;
+}
+
+/* Return the preferred index scale factor for accessing memory of mode
+   MEM_MODE in the address space of pointer BASE.  Assume that we're
+   optimizing for speed if SPEED is true and for size otherwise.  */
+unsigned int
+preferred_mem_scale_factor (tree base, machine_mode mem_mode,
+			    bool speed)
+{
+  /* For BLKmode, we can't do anything so return 1.  */
+  if (mem_mode == BLKmode)
+    return 1;
+
+  struct mem_address parts = {};
+  addr_space_t as = TYPE_ADDR_SPACE (TREE_TYPE (base));
+  unsigned int fact = GET_MODE_UNIT_SIZE (mem_mode);
+
+  /* Addressing mode "base + index".  */
+  parts.index = integer_one_node;
+  parts.base = integer_one_node;
+  rtx addr = addr_for_mem_ref (&parts, as, false);
+  unsigned cost = address_cost (addr, mem_mode, as, speed);
+
+  /* Addressing mode "base + index << scale".  */
+  parts.step = wide_int_to_tree (sizetype, fact);
+  addr = addr_for_mem_ref (&parts, as, false);
+  unsigned new_cost = address_cost (addr, mem_mode, as, speed);
+
+  /* Compare the cost of an address with an unscaled index with
+     a scaled index and return factor if useful. */
+  if (new_cost < cost)
+    return GET_MODE_UNIT_SIZE (mem_mode);
+  return 1;
 }
 
 /* Dump PARTS to FILE.  */

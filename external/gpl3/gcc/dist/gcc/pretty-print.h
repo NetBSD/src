@@ -1,5 +1,5 @@
 /* Various declarations for language-independent pretty-print subroutines.
-   Copyright (C) 2002-2019 Free Software Foundation, Inc.
+   Copyright (C) 2002-2020 Free Software Foundation, Inc.
    Contributed by Gabriel Dos Reis <gdr@integrable-solutions.net>
 
 This file is part of GCC.
@@ -22,6 +22,7 @@ along with GCC; see the file COPYING3.  If not see
 #define GCC_PRETTY_PRINT_H
 
 #include "obstack.h"
+#include "diagnostic-url.h"
 
 /* Maximum number of format string arguments.  */
 #define PP_NL_ARGMAX   30
@@ -74,8 +75,9 @@ struct chunk_info
 
 /* The output buffer datatype.  This is best seen as an abstract datatype
    whose fields should not be accessed directly by clients.  */
-struct output_buffer
+class output_buffer
 {
+public:
   output_buffer ();
   ~output_buffer ();
 
@@ -191,6 +193,7 @@ class format_postprocessor
 {
  public:
   virtual ~format_postprocessor () {}
+  virtual format_postprocessor *clone() const = 0;
   virtual void handle (pretty_printer *) = 0;
 };
 
@@ -214,13 +217,17 @@ class format_postprocessor
 /* The data structure that contains the bare minimum required to do
    proper pretty-printing.  Clients may derived from this structure
    and add additional fields they need.  */
-struct pretty_printer
+class pretty_printer
 {
+public:
   /* Default construct a pretty printer with specified
      maximum line length cut off limit.  */
   explicit pretty_printer (int = 0);
+  explicit pretty_printer (const pretty_printer &other);
 
   virtual ~pretty_printer ();
+
+  virtual pretty_printer *clone () const;
 
   /* Where we print external representation of ENTITY.  */
   output_buffer *buffer;
@@ -271,6 +278,9 @@ struct pretty_printer
 
   /* Nonzero means that text should be colorized.  */
   bool show_color;
+
+  /* Whether URLs should be emitted, and which terminator to use.  */
+  diagnostic_url_format url_format;
 };
 
 static inline const char *
@@ -384,12 +394,18 @@ extern void pp_indent (pretty_printer *);
 extern void pp_newline (pretty_printer *);
 extern void pp_character (pretty_printer *, int);
 extern void pp_string (pretty_printer *, const char *);
+
 extern void pp_write_text_to_stream (pretty_printer *);
 extern void pp_write_text_as_dot_label_to_stream (pretty_printer *, bool);
+extern void pp_write_text_as_html_like_dot_to_stream (pretty_printer *pp);
+
 extern void pp_maybe_space (pretty_printer *);
 
 extern void pp_begin_quote (pretty_printer *, bool);
 extern void pp_end_quote (pretty_printer *, bool);
+
+extern void pp_begin_url (pretty_printer *pp, const char *url);
+extern void pp_end_url (pretty_printer *pp);
 
 /* Switch into verbatim mode and return the old mode.  */
 static inline pp_wrapping_mode_t

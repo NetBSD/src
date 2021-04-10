@@ -1,5 +1,5 @@
 /* Coalesce SSA_NAMES together for the out-of-ssa pass.
-   Copyright (C) 2004-2019 Free Software Foundation, Inc.
+   Copyright (C) 2004-2020 Free Software Foundation, Inc.
    Contributed by Andrew MacLeod <amacleod@redhat.com>
 
 This file is part of GCC.
@@ -674,8 +674,9 @@ ssa_conflicts_dump (FILE *file, ssa_conflicts *ptr)
    marked as being live.  This delays clearing of these bitmaps until
    they are actually needed again.  */
 
-struct live_track
+class live_track
 {
+public:
   bitmap_obstack obstack;	/* A place to allocate our bitmaps.  */
   bitmap_head live_base_var;		/* Indicates if a basevar is live.  */
   bitmap_head *live_base_partitions;	/* Live partitions for each basevar.  */

@@ -1,5 +1,5 @@
 # Process this file with autoconf to produce a configure script.
-# Copyright (C) 2006-2019 Free Software Foundation, Inc.
+# Copyright (C) 2006-2020 Free Software Foundation, Inc.
 #
 # GCC is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -113,13 +113,60 @@ AC_SUBST(phobos_compiler_shared_flag)
 lt_prog_compiler_pic_D="$phobos_compiler_shared_flag"
 pic_mode='default'
 
+# Determine what GCC version number to use in filesystem paths.
+GCC_BASE_VER
+
+# libphobos/libdruntime specific options and feature detection
+DRUNTIME_CONFIGURE
+DRUNTIME_MULTILIB
+DRUNTIME_WERROR
+DRUNTIME_CPU_SOURCES
+DRUNTIME_OS_SOURCES
+DRUNTIME_OS_THREAD_MODEL
+DRUNTIME_OS_ARM_EABI_UNWINDER
+DRUNTIME_OS_MINFO_BRACKETING
+DRUNTIME_OS_DLPI_TLS_MODID
+DRUNTIME_OS_LINK_SPEC
+DRUNTIME_LIBRARIES_CLIB
+
+WITH_LOCAL_DRUNTIME([
+  AC_LANG_PUSH([D])
+  AC_SEARCH_LIBS([malloc], [c])
+  AC_SEARCH_LIBS([pthread_create], [pthread])
+  AC_SEARCH_LIBS([cosf], [m])
+  AC_SEARCH_LIBS([clock_gettime], [rt])
+  DRUNTIME_ENABLE_ATOMIC_BUILTINS
+  AC_LANG_POP([D])
+], [-nophoboslib])
+
+DRUNTIME_LIBRARIES_ATOMIC
+DRUNTIME_LIBRARIES_BACKTRACE
+DRUNTIME_LIBRARIES_DLOPEN
+DRUNTIME_LIBRARIES_NET
+DRUNTIME_LIBRARIES_UCONTEXT
+DRUNTIME_LIBRARIES_ZLIB
+DRUNTIME_INSTALL_DIRECTORIES
+
 AC_MSG_CHECKING([for --enable-libphobos])
 AC_ARG_ENABLE(libphobos,
   [AS_HELP_STRING([--enable-libphobos], [Enable libphobos])])
 AC_MSG_RESULT($enable_libphobos)
 
+AC_MSG_CHECKING([for --with-libphobos-druntime-only])
+AC_ARG_WITH(libphobos-druntime-only,
+  AS_HELP_STRING([--with-libphobos-druntime-only={yes,no,auto}],
+		 [build only the druntime library (default: auto)]),,
+	    [with_libphobos_druntime_only=auto])
+AC_MSG_RESULT($with_libphobos_druntime_only)
+
+case "$with_libphobos_druntime_only" in
+  yes|no|auto) ;;
+  *) AC_MSG_ERROR([Invalid argument for --with-libphobos-druntime-only]) ;;
+esac
+
 # See if supported.
 unset LIBPHOBOS_SUPPORTED
+unset LIBDRUNTIME_ONLY
 AC_MSG_CHECKING([for host support for libphobos])
 . ${srcdir}/configure.tgt
 case ${host} in
@@ -136,6 +183,10 @@ case ${host} in
     if test x$druntime_cv_use_gas = xno; then
       LIBPHOBOS_SUPPORTED=no
     fi
+    # 64-bit D execution fails with Solaris ld without -z relax=transtls support.
+    if test "$druntime_ld_gld" = "no" && test "$druntime_ld_relax_transtls" = "no"; then
+      LIBPHOBOS_SUPPORTED=no
+    fi
     ;;
 esac
 AC_MSG_RESULT($LIBPHOBOS_SUPPORTED)
@@ -149,40 +200,39 @@ yes:*) use_libphobos=yes ;;
 esac
 AM_CONDITIONAL(ENABLE_LIBPHOBOS, test x$use_libphobos = xyes)
 
-# Determine what GCC version number to use in filesystem paths.
-GCC_BASE_VER
+# Decide if only libdruntime should be built.
+case $LIBDRUNTIME_ONLY:$with_libphobos_druntime_only in
+*:no)  only_libdruntime=no  ;;
+*:yes) only_libdruntime=yes ;;
+yes:*) only_libdruntime=yes ;;
+*:*)   only_libdruntime=no  ;;
+esac
+AM_CONDITIONAL(ENABLE_LIBDRUNTIME_ONLY, test x$only_libdruntime = xyes)
 
-# libphobos/libdruntime specific options and feature detection
-DRUNTIME_CONFIGURE
-DRUNTIME_MULTILIB
-DRUNTIME_WERROR
-DRUNTIME_GC
-DRUNTIME_CPU_SOURCES
-DRUNTIME_OS_UNIX
-DRUNTIME_OS_SOURCES
-DRUNTIME_OS_THREAD_MODEL
-DRUNTIME_OS_ARM_EABI_UNWINDER
-DRUNTIME_OS_MINFO_BRACKETING
-DRUNTIME_OS_DLPI_TLS_MODID
-DRUNTIME_OS_LINK_SPEC
-DRUNTIME_LIBRARIES_CLIB
-
-WITH_LOCAL_DRUNTIME([
-  AC_LANG_PUSH([D])
-  AC_SEARCH_LIBS([malloc], [c])
-  DRUNTIME_LIBRARIES_THREAD
-  AC_SEARCH_LIBS([cosf], [m])
-  AC_SEARCH_LIBS([clock_gettime], [rt])
-  DRUNTIME_ENABLE_ATOMIC_BUILTINS
-  AC_LANG_POP([D])
-], [-nophoboslib])
-
-DRUNTIME_LIBRARIES_ATOMIC
-DRUNTIME_LIBRARIES_BACKTRACE
-DRUNTIME_LIBRARIES_DLOPEN
-DRUNTIME_LIBRARIES_NET
-DRUNTIME_LIBRARIES_ZLIB
-DRUNTIME_INSTALL_DIRECTORIES
+# Enable expensive internal checks
+AC_ARG_ENABLE(libphobos-checking,
+[AS_HELP_STRING([[--enable-libphobos-checking[=LIST]]],
+		[enable expensive run-time checks.  With LIST,
+		 enable only specific categories of checks.
+		 Categories are: yes,no,all,none,release.
+		 Flags are: assert or other strings])],
+[ac_checking_flags="${enableval}"],[ac_checking_flags=release])
+IFS="${IFS= 	}"; ac_save_IFS="$IFS"; IFS="$IFS,"
+for check in release $ac_checking_flags
+do
+	case $check in
+	# These set all the flags to specific states
+	yes|all) RELEASE_FLAG="-fno-release" ; ASSERT_FLAG= ;;
+	no|none|release) RELEASE_FLAG="-frelease" ; ASSERT_FLAG= ;;
+	# These enable particular checks
+	assert) ASSERT_FLAG="-fassert" ;;
+	# Accept
+	*) ;;
+	esac
+done
+IFS="$ac_save_IFS"
+CHECKING_DFLAGS="$RELEASE_FLAG $ASSERT_FLAG"
+AC_SUBST(CHECKING_DFLAGS)
 
 # Add drtbegin.o/drtend.o to startfile/endfile specs in libgphobos.spec
 if test "$DCFG_MINFO_BRACKETING" = "false"; then
@@ -197,19 +247,17 @@ SPEC_PHOBOS_DEPS="$LIBS"
 AC_SUBST(SPEC_PHOBOS_DEPS)
 
 # Libdruntime / phobos soname version
-libtool_VERSION=76:3:0
+libtool_VERSION=1:0:0
 AC_SUBST(libtool_VERSION)
 
 # Set default flags (after DRUNTIME_WERROR!)
 if test -z "$GDCFLAGS"; then
-    GDCFLAGS="-Wall $WERROR_FLAG -g -frelease -O2"
+    GDCFLAGS="-g -O2"
 fi
 AC_SUBST(GDCFLAGS)
 
-if test -z "$GDCFLAGSX"; then
-    GDCFLAGSX="-Wall $WERROR_FLAG -g -fno-release -funittest"
-fi
-AC_SUBST(GDCFLAGSX)
+WARN_DFLAGS="-Wall $WERROR_FLAG"
+AC_SUBST(WARN_DFLAGS)
 
 # Sanity check for the cross-compilation case:
 AC_CHECK_HEADER(stdio.h,:,

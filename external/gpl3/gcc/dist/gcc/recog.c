@@ -1,5 +1,5 @@
 /* Subroutines used by or related to instruction recognition.
-   Copyright (C) 1987-2019 Free Software Foundation, Inc.
+   Copyright (C) 1987-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -40,6 +40,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "cfgcleanup.h"
 #include "reload.h"
 #include "tree-pass.h"
+#include "function-abi.h"
 
 #ifndef STACK_POP_CODE
 #if STACK_GROWS_DOWNWARD
@@ -920,23 +921,6 @@ validate_simplify_insn (rtx_insn *insn)
 	  }
       }
   return ((num_changes_pending () > 0) && (apply_change_group () > 0));
-}
-
-/* Return 1 if the insn using CC0 set by INSN does not contain
-   any ordered tests applied to the condition codes.
-   EQ and NE tests do not count.  */
-
-int
-next_insn_tests_no_inequality (rtx_insn *insn)
-{
-  rtx_insn *next = next_cc0_user (insn);
-
-  /* If there is no next insn, we have to take the conservative choice.  */
-  if (next == 0)
-    return 0;
-
-  return (INSN_P (next)
-	  && ! inequality_comparisons_p (PATTERN (next)));
 }
 
 /* Return 1 if OP is a valid general operand for machine mode MODE.
@@ -2563,10 +2547,7 @@ constrain_operands (int strict, alternative_mask alternatives)
     return 1;
 
   for (c = 0; c < recog_data.n_operands; c++)
-    {
-      constraints[c] = recog_data.constraints[c];
-      matching_operands[c] = -1;
-    }
+    constraints[c] = recog_data.constraints[c];
 
   do
     {
@@ -2585,6 +2566,9 @@ constrain_operands (int strict, alternative_mask alternatives)
 	  which_alternative++;
 	  continue;
 	}
+
+      for (opno = 0; opno < recog_data.n_operands; opno++)
+	matching_operands[opno] = -1;
 
       for (opno = 0; opno < recog_data.n_operands; opno++)
 	{
@@ -2756,10 +2740,9 @@ constrain_operands (int strict, alternative_mask alternatives)
 			       /* Before reload, accept what reload can turn
 				  into a mem.  */
 			       || (strict < 0 && CONSTANT_P (op))
-			       /* Before reload, accept a pseudo,
+			       /* Before reload, accept a pseudo or hard register,
 				  since LRA can turn it into a mem.  */
-			       || (strict < 0 && targetm.lra_p () && REG_P (op)
-				   && REGNO (op) >= FIRST_PSEUDO_REGISTER)
+			       || (strict < 0 && targetm.lra_p () && REG_P (op))
 			       /* During reload, accept a pseudo  */
 			       || (reload_in_progress && REG_P (op)
 				   && REGNO (op) >= FIRST_PSEUDO_REGISTER)))
@@ -3227,7 +3210,8 @@ peep2_find_free_register (int from, int to, const char *class_str,
 	      break;
 	    }
 	  /* And that we don't create an extra save/restore.  */
-	  if (! call_used_regs[regno + j] && ! df_regs_ever_live_p (regno + j))
+	  if (! crtl->abi->clobbers_full_reg_p (regno + j)
+	      && ! df_regs_ever_live_p (regno + j))
 	    {
 	      success = 0;
 	      break;
@@ -3724,8 +3708,7 @@ store_data_bypass_p_1 (rtx_insn *out_insn, rtx in_set)
     {
       rtx out_exp = XVECEXP (out_pat, 0, i);
 
-      if (GET_CODE (out_exp) == CLOBBER || GET_CODE (out_exp) == USE
-	  || GET_CODE (out_exp) == CLOBBER_HIGH)
+      if (GET_CODE (out_exp) == CLOBBER || GET_CODE (out_exp) == USE)
 	continue;
 
       gcc_assert (GET_CODE (out_exp) == SET);
@@ -3756,8 +3739,7 @@ store_data_bypass_p (rtx_insn *out_insn, rtx_insn *in_insn)
     {
       rtx in_exp = XVECEXP (in_pat, 0, i);
 
-      if (GET_CODE (in_exp) == CLOBBER || GET_CODE (in_exp) == USE
-	  || GET_CODE (in_exp) == CLOBBER_HIGH)
+      if (GET_CODE (in_exp) == CLOBBER || GET_CODE (in_exp) == USE)
 	continue;
 
       gcc_assert (GET_CODE (in_exp) == SET);
@@ -3809,7 +3791,7 @@ if_test_bypass_p (rtx_insn *out_insn, rtx_insn *in_insn)
 	{
 	  rtx exp = XVECEXP (out_pat, 0, i);
 
-	  if (GET_CODE (exp) == CLOBBER  || GET_CODE (exp) == CLOBBER_HIGH)
+	  if (GET_CODE (exp) == CLOBBER)
 	    continue;
 
 	  gcc_assert (GET_CODE (exp) == SET);
@@ -3942,14 +3924,7 @@ public:
   virtual bool gate (function *)
     {
       /* If optimizing, then go ahead and split insns now.  */
-      if (optimize > 0)
-	return true;
-
-#ifdef STACK_REGS
-      return true;
-#else
-      return false;
-#endif
+      return optimize > 0;
     }
 
   virtual unsigned int execute (function *)
@@ -3968,12 +3943,66 @@ make_pass_split_after_reload (gcc::context *ctxt)
   return new pass_split_after_reload (ctxt);
 }
 
+static bool
+enable_split_before_sched2 (void)
+{
+#ifdef INSN_SCHEDULING
+  return optimize > 0 && flag_schedule_insns_after_reload;
+#else
+  return false;
+#endif
+}
+
+namespace {
+
+const pass_data pass_data_split_before_sched2 =
+{
+  RTL_PASS, /* type */
+  "split3", /* name */
+  OPTGROUP_NONE, /* optinfo_flags */
+  TV_NONE, /* tv_id */
+  0, /* properties_required */
+  0, /* properties_provided */
+  0, /* properties_destroyed */
+  0, /* todo_flags_start */
+  0, /* todo_flags_finish */
+};
+
+class pass_split_before_sched2 : public rtl_opt_pass
+{
+public:
+  pass_split_before_sched2 (gcc::context *ctxt)
+    : rtl_opt_pass (pass_data_split_before_sched2, ctxt)
+  {}
+
+  /* opt_pass methods: */
+  virtual bool gate (function *)
+    {
+      return enable_split_before_sched2 ();
+    }
+
+  virtual unsigned int execute (function *)
+    {
+      split_all_insns ();
+      return 0;
+    }
+
+}; // class pass_split_before_sched2
+
+} // anon namespace
+
+rtl_opt_pass *
+make_pass_split_before_sched2 (gcc::context *ctxt)
+{
+  return new pass_split_before_sched2 (ctxt);
+}
+
 namespace {
 
 const pass_data pass_data_split_before_regstack =
 {
   RTL_PASS, /* type */
-  "split3", /* name */
+  "split4", /* name */
   OPTGROUP_NONE, /* optinfo_flags */
   TV_NONE, /* tv_id */
   0, /* properties_required */
@@ -4008,13 +4037,9 @@ pass_split_before_regstack::gate (function *)
      and scheduling after reload is not done, they might not be
      split until final which doesn't allow splitting
      if HAVE_ATTR_length.  */
-# ifdef INSN_SCHEDULING
-  return (optimize && !flag_schedule_insns_after_reload);
-# else
-  return (optimize);
-# endif
+  return !enable_split_before_sched2 ();
 #else
-  return 0;
+  return false;
 #endif
 }
 
@@ -4024,62 +4049,6 @@ rtl_opt_pass *
 make_pass_split_before_regstack (gcc::context *ctxt)
 {
   return new pass_split_before_regstack (ctxt);
-}
-
-static unsigned int
-rest_of_handle_split_before_sched2 (void)
-{
-#ifdef INSN_SCHEDULING
-  split_all_insns ();
-#endif
-  return 0;
-}
-
-namespace {
-
-const pass_data pass_data_split_before_sched2 =
-{
-  RTL_PASS, /* type */
-  "split4", /* name */
-  OPTGROUP_NONE, /* optinfo_flags */
-  TV_NONE, /* tv_id */
-  0, /* properties_required */
-  0, /* properties_provided */
-  0, /* properties_destroyed */
-  0, /* todo_flags_start */
-  0, /* todo_flags_finish */
-};
-
-class pass_split_before_sched2 : public rtl_opt_pass
-{
-public:
-  pass_split_before_sched2 (gcc::context *ctxt)
-    : rtl_opt_pass (pass_data_split_before_sched2, ctxt)
-  {}
-
-  /* opt_pass methods: */
-  virtual bool gate (function *)
-    {
-#ifdef INSN_SCHEDULING
-      return optimize > 0 && flag_schedule_insns_after_reload;
-#else
-      return false;
-#endif
-    }
-
-  virtual unsigned int execute (function *)
-    {
-      return rest_of_handle_split_before_sched2 ();
-    }
-
-}; // class pass_split_before_sched2
-
-} // anon namespace
-
-rtl_opt_pass *
-make_pass_split_before_sched2 (gcc::context *ctxt)
-{
-  return new pass_split_before_sched2 (ctxt);
 }
 
 namespace {

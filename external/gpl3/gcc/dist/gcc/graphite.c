@@ -1,5 +1,5 @@
 /* Gimple Represented as Polyhedra.
-   Copyright (C) 2006-2019 Free Software Foundation, Inc.
+   Copyright (C) 2006-2020 Free Software Foundation, Inc.
    Contributed by Sebastian Pop <sebastian.pop@inria.fr>.
 
 This file is part of GCC.
@@ -36,7 +36,6 @@ along with GCC; see the file COPYING3.  If not see
 #include "diagnostic-core.h"
 #include "cfgloop.h"
 #include "tree-pass.h"
-#include "params.h"
 #include "pretty-print.h"
 #include "cfganal.h"
 
@@ -234,6 +233,7 @@ struct sese_scev_hash : typed_noop_remove <seir_cache_key>
 	    && operand_equal_p (key1.expr, key2.expr, 0));
   }
   static void mark_deleted (seir_cache_key &key) { key.expr = NULL_TREE; }
+  static const bool empty_zero_p = false;
   static void mark_empty (seir_cache_key &key) { key.entry_dest = 0; }
   static bool is_deleted (const seir_cache_key &key) { return !key.expr; }
   static bool is_empty (const seir_cache_key &key) { return key.entry_dest == 0; }

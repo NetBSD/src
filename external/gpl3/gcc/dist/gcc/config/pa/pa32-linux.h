@@ -1,5 +1,5 @@
 /* Definitions for PA_RISC with ELF-32 format
-   Copyright (C) 2000-2019 Free Software Foundation, Inc.
+   Copyright (C) 2000-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -56,6 +56,11 @@ call_ ## FUNC (void)					\
   asm (TEXT_SECTION_ASM_OP);				\
 }
 #endif
+
+/* We need to link against libgcc.a for __canonicalize_funcptr_for_compare
+   and $$dyncall.  */
+#undef  ENDFILE_SPEC
+#define ENDFILE_SPEC GNU_USER_TARGET_ENDFILE_SPEC "libgcc.a%s"
 
 #undef  WCHAR_TYPE
 #define WCHAR_TYPE "long int"

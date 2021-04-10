@@ -1,5 +1,5 @@
 /* Basic IPA optimizations and utilities.
-   Copyright (C) 2003-2019 Free Software Foundation, Inc.
+   Copyright (C) 2003-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -71,9 +71,9 @@ update_inlined_to_pointer (struct cgraph_node *node, struct cgraph_node *inlined
 {
   struct cgraph_edge *e;
   for (e = node->callees; e; e = e->next_callee)
-    if (e->callee->global.inlined_to)
+    if (e->callee->inlined_to)
       {
-        e->callee->global.inlined_to = inlined_to;
+	e->callee->inlined_to = inlined_to;
 	update_inlined_to_pointer (e->callee, inlined_to);
       }
 }
@@ -242,11 +242,12 @@ walk_polymorphic_call_targets (hash_set<void *> *reachable_call_targets,
 			       edge->caller->dump_name (),
 			       target->dump_name ());
 	    }
-	  edge = edge->make_direct (target);
+	  edge = cgraph_edge::make_direct (edge, target);
 	  if (ipa_fn_summaries)
-	    ipa_update_overall_fn_summary (node);
+	    ipa_update_overall_fn_summary (node->inlined_to
+					   ? node->inlined_to : node);
 	  else if (edge->call_stmt)
-	    edge->redirect_call_stmt_to_callee ();
+	    cgraph_edge::redirect_call_stmt_to_callee (edge);
 	}
     }
 }
@@ -335,11 +336,11 @@ symbol_table::remove_unreachable_nodes (FILE *file)
       node->used_as_abstract_origin = false;
       node->indirect_call_target = false;
       if (node->definition
-	  && !node->global.inlined_to
+	  && !node->inlined_to
 	  && !node->in_other_partition
 	  && !node->can_remove_if_no_direct_calls_and_refs_p ())
 	{
-	  gcc_assert (!node->global.inlined_to);
+	  gcc_assert (!node->inlined_to);
 	  reachable.add (node);
 	  enqueue_node (node, &first, &reachable);
 	}
@@ -390,17 +391,20 @@ symbol_table::remove_unreachable_nodes (FILE *file)
 		      n->used_as_abstract_origin = true;
 		}
 	    }
-	  /* If any symbol in a comdat group is reachable, force
-	     all externally visible symbols in the same comdat
+	  /* If any non-external and non-local symbol in a comdat group is
+ 	     reachable, force all externally visible symbols in the same comdat
 	     group to be reachable as well.  Comdat-local symbols
 	     can be discarded if all uses were inlined.  */
-	  if (node->same_comdat_group)
+	  if (node->same_comdat_group
+	      && node->externally_visible
+	      && !DECL_EXTERNAL (node->decl))
 	    {
 	      symtab_node *next;
 	      for (next = node->same_comdat_group;
 		   next != node;
 		   next = next->same_comdat_group)
 		if (!next->comdat_local_p ()
+		    && !DECL_EXTERNAL (next->decl)
 		    && !reachable.add (next))
 		  enqueue_node (next, &first, &reachable);
 	    }
@@ -451,7 +455,7 @@ symbol_table::remove_unreachable_nodes (FILE *file)
 
 	      /* When inline clone exists, mark body to be preserved so when removing
 		 offline copy of the function we don't kill it.  */
-	      if (cnode->global.inlined_to)
+	      if (cnode->inlined_to)
 	        body_needed_for_clonning.add (cnode->decl);
 
 	      /* For non-inline clones, force their origins to the boundary and ensure
@@ -520,9 +524,14 @@ symbol_table::remove_unreachable_nodes (FILE *file)
 	     reliably.  */
 	  if (node->alias || node->thunk.thunk_p)
 	    ;
-	  else if (!body_needed_for_clonning.contains (node->decl)
-	      && !node->alias && !node->thunk.thunk_p)
-	    node->release_body ();
+	  else if (!body_needed_for_clonning.contains (node->decl))
+	    {
+	      /* Make the node a non-clone so that we do not attempt to
+		 materialize it later.  */
+	      if (node->clone_of)
+		node->remove_from_clone_tree ();
+	      node->release_body ();
+	    }
 	  else if (!node->clone_of)
 	    gcc_assert (in_lto_p || DECL_RESULT (node->decl));
 	  if (node->definition && !node->alias && !node->thunk.thunk_p)
@@ -544,7 +553,7 @@ symbol_table::remove_unreachable_nodes (FILE *file)
 		= remove_attribute ("always_inline",
 				    DECL_ATTRIBUTES (node->decl));
 	      if (!node->in_other_partition)
-		node->local.local = false;
+		node->local = false;
 	      node->remove_callees ();
 	      node->remove_all_references ();
 	      changed = true;
@@ -560,11 +569,11 @@ symbol_table::remove_unreachable_nodes (FILE *file)
      to turn it into normal cone.  */
   FOR_EACH_FUNCTION (node)
     {
-      if (node->global.inlined_to
+      if (node->inlined_to
 	  && !node->callers)
 	{
 	  gcc_assert (node->clones);
-	  node->global.inlined_to = NULL;
+	  node->inlined_to = NULL;
 	  update_inlined_to_pointer (node, node);
 	}
       node->aux = NULL;
@@ -610,7 +619,7 @@ symbol_table::remove_unreachable_nodes (FILE *file)
 	  if (vnode->definition)
 	    {
 	      if (file)
-		fprintf (file, " %s", vnode->name ());
+		fprintf (file, " %s", vnode->dump_name ());
 	      changed = true;
 	    }
 	  /* Keep body if it may be useful for constant folding.  */
@@ -643,7 +652,7 @@ symbol_table::remove_unreachable_nodes (FILE *file)
 	    (has_addr_references_p, NULL, true))
 	  {
 	    if (file)
-	      fprintf (file, " %s", node->name ());
+	      fprintf (file, " %s", node->dump_name ());
 	    node->address_taken = false;
 	    changed = true;
 	    if (node->local_p ()
@@ -655,7 +664,7 @@ symbol_table::remove_unreachable_nodes (FILE *file)
 		    || !node->call_for_symbol_and_aliases
 		       (is_indirect_call_target_p, NULL, true)))
 	      {
-		node->local.local = true;
+		node->local = true;
 		if (file)
 		  fprintf (file, " (local)");
 	      }
@@ -788,7 +797,8 @@ ipa_discover_variable_flags (void)
 	if (!address_taken)
 	  {
 	    if (TREE_ADDRESSABLE (vnode->decl) && dump_file)
-	      fprintf (dump_file, " %s (non-addressable)", vnode->name ());
+	      fprintf (dump_file, " %s (non-addressable)",
+		       vnode->dump_name ());
 	    vnode->call_for_symbol_and_aliases (clear_addressable_bit, NULL,
 					        true);
 	  }
@@ -799,13 +809,13 @@ ipa_discover_variable_flags (void)
 	    && vnode->get_section () == NULL)
 	  {
 	    if (!TREE_READONLY (vnode->decl) && dump_file)
-	      fprintf (dump_file, " %s (read-only)", vnode->name ());
+	      fprintf (dump_file, " %s (read-only)", vnode->dump_name ());
 	    vnode->call_for_symbol_and_aliases (set_readonly_bit, NULL, true);
 	  }
 	if (!vnode->writeonly && !read && !address_taken && written)
 	  {
 	    if (dump_file)
-	      fprintf (dump_file, " %s (write-only)", vnode->name ());
+	      fprintf (dump_file, " %s (write-only)", vnode->dump_name ());
 	    vnode->call_for_symbol_and_aliases (set_writeonly_bit, &remove_p, 
 					        true);
 	  }
@@ -836,13 +846,18 @@ cgraph_build_static_cdtor_1 (char which, tree body, int priority, bool final,
   /* The priority is encoded in the constructor or destructor name.
      collect2 will sort the names and arrange that they are called at
      program startup.  */
-  if (final)
-    sprintf (which_buf, "%c_%.5d_%d", which, priority, counter++);
+  if (!targetm.have_ctors_dtors && final)
+    {
+      sprintf (which_buf, "%c_%.5d_%d", which, priority, counter++);
+      name = get_file_function_name (which_buf);
+    }
   else
-  /* Proudce sane name but one not recognizable by collect2, just for the
-     case we fail to inline the function.  */
-    sprintf (which_buf, "sub_%c_%.5d_%d", which, priority, counter++);
-  name = get_file_function_name (which_buf);
+    {
+      /* Proudce sane name but one not recognizable by collect2, just for the
+	 case we fail to inline the function.  */
+      sprintf (which_buf, "_sub_%c_%.5d_%d", which, priority, counter++);
+      name = get_identifier (which_buf);
+    }
 
   decl = build_decl (input_location, FUNCTION_DECL, name,
 		     build_function_type_list (void_type_node, NULL_TREE));
@@ -909,7 +924,14 @@ cgraph_build_static_cdtor_1 (char which, tree body, int priority, bool final,
 void
 cgraph_build_static_cdtor (char which, tree body, int priority)
 {
-  cgraph_build_static_cdtor_1 (which, body, priority, false, NULL, NULL);
+  /* FIXME: We should be able to
+     gcc_assert (!in_lto_p);
+     because at LTO time the global options are not safe to use.
+     Unfortunately ASAN finish_file will produce constructors late and they
+     may lead to surprises.  */
+  cgraph_build_static_cdtor_1 (which, body, priority, false,
+			       optimization_default_node,
+			       target_option_default_node);
 }
 
 /* When target does not have ctors and dtors, we call all constructor
@@ -1207,8 +1229,8 @@ propagate_single_user (varpool_node *vnode, cgraph_node *function,
       struct cgraph_node *cnode = dyn_cast <cgraph_node *> (ref->referring);
       if (cnode)
 	{
-	  if (cnode->global.inlined_to)
-	    cnode = cnode->global.inlined_to;
+	  if (cnode->inlined_to)
+	    cnode = cnode->inlined_to;
 	  if (!function)
 	    function = cnode;
 	  else if (function != cnode)

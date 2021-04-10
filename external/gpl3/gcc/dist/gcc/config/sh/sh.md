@@ -1,5 +1,5 @@
 ;;- Machine description for Renesas / SuperH SH.
-;;  Copyright (C) 1993-2019 Free Software Foundation, Inc.
+;;  Copyright (C) 1993-2020 Free Software Foundation, Inc.
 ;;  Contributed by Steve Chamberlain (sac@cygnus.com).
 ;;  Improved by Jim Wilson (wilson@cygnus.com).
 
@@ -8395,9 +8395,15 @@
 ;; Store (negated) T bit as all zeros or ones in a reg.
 ;;	subc	Rn,Rn	! Rn = Rn - Rn - T; T = T
 ;;	not	Rn,Rn	! Rn = 0 - Rn
+;;
+;; Note the call to sh_split_treg_set_expr may clobber
+;; the T reg.  We must express this, even though it's
+;; not immediately obvious this pattern changes the
+;; T register.
 (define_insn_and_split "mov_neg_si_t"
   [(set (match_operand:SI 0 "arith_reg_dest" "=r")
-	(neg:SI (match_operand 1 "treg_set_expr")))]
+	(neg:SI (match_operand 1 "treg_set_expr")))
+   (clobber (reg:SI T_REG))]
   "TARGET_SH1"
 {
   gcc_assert (t_reg_operand (operands[1], VOIDmode));
@@ -8906,7 +8912,7 @@
 
 ;; String/block move insn.
 
-(define_expand "movmemsi"
+(define_expand "cpymemsi"
   [(parallel [(set (mem:BLK (match_operand:BLK 0))
 		   (mem:BLK (match_operand:BLK 1)))
 	      (use (match_operand:SI 2 "nonmemory_operand"))

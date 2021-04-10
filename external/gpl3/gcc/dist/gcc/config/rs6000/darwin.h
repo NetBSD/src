@@ -1,5 +1,5 @@
 /* Target definitions for PowerPC running Darwin (Mac OS X).
-   Copyright (C) 1997-2019 Free Software Foundation, Inc.
+   Copyright (C) 1997-2020 Free Software Foundation, Inc.
    Contributed by Apple Computer Inc.
 
    This file is part of GCC.
@@ -43,8 +43,7 @@
 
 /* We're not ever going to do TOCs.  */
 
-#define TARGET_TOC 0
-#define TARGET_NO_TOC 1
+#define TARGET_HAS_TOC 0
 
 /* Override the default rs6000 definition.  */
 #undef  PTRDIFF_TYPE
@@ -95,6 +94,24 @@
 
 #define RS6000_DEFAULT_LONG_DOUBLE_SIZE 128
 
+/* Machine dependent libraries.
+   Include libmx when targeting Darwin 7.0 and above, but before libSystem,
+   since the functions are actually in libSystem but for 7.x compatibility
+   we want them to be looked for in libmx first.
+   Include libSystemStubs when compiling against 10.3 - 10.5 SDKs (we assume
+   this is the case when targetting these) - but not for 64-bit long double.
+   Don't do either for m64, the library is either a dummy or non-existent.
+*/
+
+#undef LIB_SPEC
+#define LIB_SPEC \
+"%{!static:								\
+  %{!m64:%{!mlong-double-64:						\
+    %{pg:%:version-compare(>< 10.3 10.5 mmacosx-version-min= -lSystemStubs_profile)} \
+    %{!pg:%:version-compare(>< 10.3 10.5 mmacosx-version-min= -lSystemStubs)} \
+     %:version-compare(>< 10.3 10.4 mmacosx-version-min= -lmx)}}	\
+  -lSystem								\
+}"
 
 /* We want -fPIC by default, unless we're using -static to compile for
    the kernel or some such.  The "-faltivec" option should have been
@@ -252,24 +269,27 @@
 #undef REGISTER_NAMES
 #define REGISTER_NAMES							\
 {									\
+  /* GPRs */								\
      "r0",  "r1",  "r2",  "r3",  "r4",  "r5",  "r6",  "r7",		\
      "r8",  "r9", "r10", "r11", "r12", "r13", "r14", "r15",		\
     "r16", "r17", "r18", "r19", "r20", "r21", "r22", "r23",		\
     "r24", "r25", "r26", "r27", "r28", "r29", "r30", "r31",		\
+  /* FPRs */								\
      "f0",  "f1",  "f2",  "f3",  "f4",  "f5",  "f6",  "f7",		\
      "f8",  "f9", "f10", "f11", "f12", "f13", "f14", "f15",		\
     "f16", "f17", "f18", "f19", "f20", "f21", "f22", "f23",		\
     "f24", "f25", "f26", "f27", "f28", "f29", "f30", "f31",		\
-     "mq",  "lr", "ctr",  "ap",						\
+  /* VRs */								\
+     "v0",  "v1",  "v2",  "v3",  "v4",  "v5",  "v6",  "v7",		\
+     "v8",  "v9", "v10", "v11", "v12", "v13", "v14", "v15",		\
+    "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23",		\
+    "v24", "v25", "v26", "v27", "v28", "v29", "v30", "v31",		\
+  /* lr ctr ca ap */							\
+     "lr", "ctr", "xer",  "ap",						\
+  /* cr0..cr7 */							\
     "cr0", "cr1", "cr2", "cr3", "cr4", "cr5", "cr6", "cr7",		\
-    "xer",								\
-     "v0",  "v1",  "v2",  "v3",  "v4",  "v5",  "v6",  "v7",             \
-     "v8",  "v9", "v10", "v11", "v12", "v13", "v14", "v15",             \
-    "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23",             \
-    "v24", "v25", "v26", "v27", "v28", "v29", "v30", "v31",             \
-    "vrsave", "vscr",							\
-    "sfp",								\
-    "tfhar", "tfiar", "texasr"						\
+  /* vrsave vscr sfp */							\
+    "vrsave", "vscr", "sfp"						\
 }
 
 /* This outputs NAME to FILE.  */

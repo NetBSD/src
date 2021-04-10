@@ -1,25 +1,26 @@
-2020-03-12  Release Manager
+2021-04-08  Release Manager
 
-	* GCC 9.3.0 released.
+	* GCC 10.3.0 released.
 
-2020-01-13  Joseph Myers  <joseph@codesourcery.com>
+2020-07-23  Release Manager
 
-	Backport from mainline:
-	2019-12-09  Joseph Myers  <joseph@codesourcery.com>
+	* GCC 10.2.0 released.
+
+2020-05-07  Release Manager
+
+	* GCC 10.1.0 released.
+
+2020-01-01  Jakub Jelinek  <jakub@redhat.com>
+
+	Update copyright years.
+
+2019-12-09  Joseph Myers  <joseph@codesourcery.com>
 
 	PR middle-end/91226
 	* bid/bid2dpd_dpd2bid.c (_bid_to_dpd64): Handle non-canonical
 	significands.
 	(_bid_to_dpd128): Likewise.  Check for case where combination
 	field starts 1100, 1101 or 1110.
-
-2019-08-12  Release Manager
-
-	* GCC 9.2.0 released.
-
-2019-05-03  Release Manager
-
-	* GCC 9.1.0 released.
 
 2019-01-01  Jakub Jelinek  <jakub@redhat.com>
 
@@ -725,7 +726,7 @@
 	* decDPD.h: Likewise.
 	* decLibrary.c, decRound.c: Likewise.
 
-Copyright (C) 2005-2019 Free Software Foundation, Inc.
+Copyright (C) 2005-2020 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

@@ -1,5 +1,5 @@
 /* Tree based alias analysis and alias oracle.
-   Copyright (C) 2008-2019 Free Software Foundation, Inc.
+   Copyright (C) 2008-2020 Free Software Foundation, Inc.
    Contributed by Richard Guenther  <rguenther@suse.de>
 
    This file is part of GCC.
@@ -68,8 +68,9 @@ struct GTY(()) pt_solution
 /* Simplified and cached information about a memory reference tree.
    Used by the alias-oracle internally and externally in alternate
    interfaces.  */
-struct ao_ref
+class ao_ref
 {
+public:
   /* The original full memory reference tree or NULL_TREE if that is
      not available.  */
   tree ref;
@@ -131,13 +132,18 @@ extern bool call_may_clobber_ref_p (gcall *, tree);
 extern bool call_may_clobber_ref_p_1 (gcall *, ao_ref *);
 extern bool stmt_kills_ref_p (gimple *, tree);
 extern bool stmt_kills_ref_p (gimple *, ao_ref *);
+enum translate_flags
+  { TR_TRANSLATE, TR_VALUEIZE_AND_DISAMBIGUATE, TR_DISAMBIGUATE };
 extern tree get_continuation_for_phi (gimple *, ao_ref *, bool,
 				      unsigned int &, bitmap *, bool,
-				      void *(*)(ao_ref *, tree, void *, bool *),
-				      void *);
+				      void *(*)(ao_ref *, tree, void *,
+						translate_flags *),
+				      void *, translate_flags
+				        = TR_VALUEIZE_AND_DISAMBIGUATE);
 extern void *walk_non_aliased_vuses (ao_ref *, tree, bool,
 				     void *(*)(ao_ref *, tree, void *),
-				     void *(*)(ao_ref *, tree, void *, bool *),
+				     void *(*)(ao_ref *, tree, void *,
+					       translate_flags *),
 				     tree (*)(tree), unsigned &, void *);
 extern int walk_aliased_vdefs (ao_ref *, tree,
 			       bool (*)(ao_ref *, tree, void *),
@@ -156,7 +162,7 @@ extern void dump_alias_stats (FILE *);
 
 /* In tree-ssa-structalias.c  */
 extern unsigned int compute_may_aliases (void);
-extern bool pt_solution_empty_p (struct pt_solution *);
+extern bool pt_solution_empty_p (const pt_solution *);
 extern bool pt_solution_singleton_or_null_p (struct pt_solution *, unsigned *);
 extern bool pt_solution_includes_global (struct pt_solution *);
 extern bool pt_solution_includes (struct pt_solution *, const_tree);

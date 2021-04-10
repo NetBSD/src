@@ -1,5 +1,5 @@
 /* Common subexpression elimination for GNU compiler.
-   Copyright (C) 1987-2019 Free Software Foundation, Inc.
+   Copyright (C) 1987-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -92,7 +92,7 @@ extern bool cselib_dummy_expand_value_rtx_cb (rtx, bitmap, int,
 					      cselib_expand_callback, void *);
 extern rtx cselib_subst_to_values (rtx, machine_mode);
 extern rtx cselib_subst_to_values_from_insn (rtx, machine_mode, rtx_insn *);
-extern void cselib_invalidate_rtx (rtx, const_rtx = NULL);
+extern void cselib_invalidate_rtx (rtx);
 
 extern void cselib_reset_table (unsigned int);
 extern unsigned int cselib_get_next_uid (void);
@@ -104,6 +104,8 @@ extern void cselib_add_permanent_equiv (cselib_val *, rtx, rtx_insn *);
 extern bool cselib_have_permanent_equivalences (void);
 extern void cselib_set_value_sp_based (cselib_val *);
 extern bool cselib_sp_based_value_p (cselib_val *);
+extern void cselib_record_sp_cfa_base_equiv (HOST_WIDE_INT, rtx_insn *);
+extern bool cselib_sp_derived_value_p (cselib_val *);
 
 extern void dump_cselib_table (FILE *);
 

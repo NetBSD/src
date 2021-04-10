@@ -1,14 +1,79 @@
-2020-03-12  Release Manager
+2021-04-08  Release Manager
 
-	* GCC 9.3.0 released.
+	* GCC 10.3.0 released.
 
-2019-08-12  Release Manager
+2021-01-03  Iain Sandoe  <iain@sandoe.co.uk>
+	    Jakub Jelinek   <jakub@redhat.com>
 
-	* GCC 9.2.0 released.
+	PR target/97865
+	* Makefile.am: Add dynamic_lookup to LD flags for Darwin.
+	* configure.ac: Test for Darwin host and set a flag.
+	* Makefile.in: Regenerate.
+	* configure: Regenerate.
 
-2019-05-03  Release Manager
+2020-07-23  Release Manager
 
-	* GCC 9.1.0 released.
+	* GCC 10.2.0 released.
+
+2020-05-07  Release Manager
+
+	* GCC 10.1.0 released.
+
+2020-02-12  Patrick Palka  <ppalka@redhat.com>
+
+	PR c++/69448
+	PR c++/80471
+	* libcp1plugin.cc (plugin_get_expr_type): No need to explicitly set
+	AUTO_IS_DECLTYPE anymore.
+
+2020-01-07  Paolo Carlini  <paolo.carlini@oracle.com>
+
+	* libcp1plugin.cc (plugin_build_new_expr): Update build_new call.
+
+2020-01-01  Jakub Jelinek  <jakub@redhat.com>
+
+	Update copyright years.
+
+2019-12-30  Paolo Carlini  <paolo.carlini@oracle.com>
+
+	* libcp1plugin.cc (plugin_build_unary_expr): Update delete_sanity
+	call.
+
+2019-12-18  Paolo Carlini  <paolo.carlini@oracle.com>
+
+	* libcp1plugin.cc (plugin_build_unary_expr): Update build_throw
+	and cxx_sizeof_or_alignof_expr calls.
+	(plugin_build_unary_type_expr): Likewise for
+	cxx_sizeof_or_alignof_type.
+
+2019-12-09  Paolo Carlini  <paolo.carlini@oracle.com>
+
+	* libcp1plugin.cc (plugin_build_cast_expr): Adjust build_cast
+	declaration.
+
+2019-12-05  Paolo Carlini  <paolo.carlini@oracle.com>
+
+	* libcp1plugin.cc (plugin_build_expression_list_expr): Adjust
+	build_functional_cast call.
+
+2019-11-25  Paolo Carlini  <paolo.carlini@oracle.com>
+
+	* libcp1plugin.cc (plugin_pragma_push_user_expression): Update
+	cp_build_indirect_ref call.
+
+2019-09-27  Maciej W. Rozycki  <macro@wdc.com>
+
+	* configure: Regenerate.
+
+2019-05-21  Nathan Sidwell  <nathan@acm.org>
+
+	* libcp1plugin.cc (plugin_add_using_decl): Use
+	finish_nonmember_using_decl.
+
+2019-05-20  Nathan Sidwell  <nathan@acm.org>
+
+	* libcp1plugin.cc (plugin_add_using_namespace): Call renamed
+	finish_using_directive.
 
 2019-01-01  Jakub Jelinek  <jakub@redhat.com>
 

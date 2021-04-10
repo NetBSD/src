@@ -1,5 +1,5 @@
 /* decl.cc -- Lower D frontend declarations to GCC trees.
-   Copyright (C) 2006-2019 Free Software Foundation, Inc.
+   Copyright (C) 2006-2020 Free Software Foundation, Inc.
 
 GCC is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -59,8 +59,8 @@ along with GCC; see the file COPYING3.  If not see
 
 /* Return identifier for the external mangled name of DECL.  */
 
-static const char *
-mangle_decl (Dsymbol *decl)
+const char *
+d_mangle_decl (Dsymbol *decl)
 {
   if (decl->isFuncDeclaration ())
     return mangleExact ((FuncDeclaration *)decl);
@@ -78,7 +78,7 @@ mangle_decl (Dsymbol *decl)
 tree
 mangle_internal_decl (Dsymbol *decl, const char *name, const char *suffix)
 {
-  const char *prefix = mangle_decl (decl);
+  const char *prefix = d_mangle_decl (decl);
   unsigned namelen = strlen (name);
   unsigned buflen = (2 + strlen (prefix) + namelen + strlen (suffix)) * 2;
   char *buf = (char *) alloca (buflen);
@@ -463,7 +463,7 @@ public:
 			    fd2->toPrettyChars ());
 		    inform (make_location_t (d->loc),
 			    "use %<alias %s = %s.%s;%> to introduce base class "
-			    "overload set.", fd->toChars (),
+			    "overload set", fd->toChars (),
 			    fd->parent->toChars (), fd->toChars ());
 		  }
 		else
@@ -673,31 +673,13 @@ public:
 	return;
       }
 
-    /* Do not store variables we cannot take the address of,
-       but keep the values for purposes of debugging.  */
     if (!d->canTakeAddressOf ())
       {
-	/* Don't know if there is a good way to handle instantiations.  */
-	if (d->isInstantiated ())
-	  return;
-
-	/* Cannot make an expression out of a void initializer.  */
-	if (!d->_init || d->_init->isVoidInitializer ())
-	  return;
-
-	tree decl = get_symbol_decl (d);
-	Expression *ie = initializerToExpression (d->_init);
-
-	/* CONST_DECL was initially intended for enumerals and may be used for
-	   scalars in general, but not for aggregates.  Here a non-constant
-	   value is generated anyway so as the CONST_DECL only serves as a
-	   placeholder for the value, however the DECL itself should never be
-	   referenced in any generated code, or passed to the back-end.  */
+	/* Do not store variables we cannot take the address of,
+	   but keep the values for purposes of debugging.  */
 	if (!d->type->isscalar ())
-	  DECL_INITIAL (decl) = build_expr (ie, false);
-	else
 	  {
-	    DECL_INITIAL (decl) = build_expr (ie, true);
+	    tree decl = get_symbol_decl (d);
 	    d_pushdecl (decl);
 	    rest_of_decl_compilation (decl, 1, 0);
 	  }
@@ -981,11 +963,14 @@ public:
       {
 	tree resdecl = DECL_RESULT (fndecl);
 
-	TREE_TYPE (resdecl)
-	  = build_reference_type (TREE_TYPE (resdecl));
-	DECL_BY_REFERENCE (resdecl) = 1;
-	TREE_ADDRESSABLE (resdecl) = 0;
-	relayout_decl (resdecl);
+	/* Return non-trivial structs by invisible reference.  */
+	if (TREE_ADDRESSABLE (TREE_TYPE (resdecl)))
+	  {
+	    TREE_TYPE (resdecl) = build_reference_type (TREE_TYPE (resdecl));
+	    DECL_BY_REFERENCE (resdecl) = 1;
+	    TREE_ADDRESSABLE (resdecl) = 0;
+	    relayout_decl (resdecl);
+	  }
 
 	if (d->nrvo_var)
 	  {
@@ -995,7 +980,9 @@ public:
 	    DECL_NAME (resdecl) = DECL_NAME (var);
 	    /* Don't forget that we take its address.  */
 	    TREE_ADDRESSABLE (var) = 1;
-	    resdecl = build_deref (resdecl);
+
+	    if (DECL_BY_REFERENCE (resdecl))
+	      resdecl = build_deref (resdecl);
 
 	    SET_DECL_VALUE_EXPR (var, resdecl);
 	    DECL_HAS_VALUE_EXPR_P (var) = 1;
@@ -1110,7 +1097,10 @@ get_symbol_decl (Declaration *decl)
       /* Set function type afterwards as there could be self references.  */
       TREE_TYPE (decl->csym) = build_ctype (fd->type);
 
-      if (!fd->fbody)
+      /* Set DECL_INITIAL now if the function has a definition.  */
+      if (fd->fbody)
+	DECL_INITIAL (decl->csym) = error_mark_node;
+      else
 	DECL_EXTERNAL (decl->csym) = 1;
     }
   else
@@ -1135,6 +1125,25 @@ get_symbol_decl (Declaration *decl)
 
       if (vd->storage_class & STCextern)
 	DECL_EXTERNAL (decl->csym) = 1;
+
+      /* CONST_DECL was initially intended for enumerals and may be used for
+	 scalars in general, but not for aggregates.  Here a non-constant
+	 value is generated anyway so as the CONST_DECL only serves as a
+	 placeholder for the value, however the DECL itself should never be
+	 referenced in any generated code, or passed to the back-end.  */
+      if (vd->storage_class & STCmanifest)
+	{
+	  /* Cannot make an expression out of a void initializer.  */
+	  if (vd->_init && !vd->_init->isVoidInitializer ())
+	    {
+	      Expression *ie = initializerToExpression (vd->_init);
+
+	      if (!vd->type->isscalar ())
+		DECL_INITIAL (decl->csym) = build_expr (ie, false);
+	      else
+		DECL_INITIAL (decl->csym) = build_expr (ie, true);
+	    }
+	}
     }
 
   /* Set the declaration mangled identifier if static.  */
@@ -1145,32 +1154,44 @@ get_symbol_decl (Declaration *decl)
       if (decl->mangleOverride)
 	mangled_name = get_identifier (decl->mangleOverride);
       else
-	mangled_name = get_identifier (mangle_decl (decl));
+	mangled_name = get_identifier (d_mangle_decl (decl));
 
       mangled_name = targetm.mangle_decl_assembler_name (decl->csym,
 							 mangled_name);
       /* The frontend doesn't handle duplicate definitions of unused symbols
 	 with the same mangle.  So a check is done here instead.  */
-      if (!DECL_EXTERNAL (decl->csym))
+      if (IDENTIFIER_DSYMBOL (mangled_name))
 	{
-	  if (IDENTIFIER_DSYMBOL (mangled_name))
+	  Declaration *other = IDENTIFIER_DSYMBOL (mangled_name);
+	  tree olddecl = decl->csym;
+	  decl->csym = get_symbol_decl (other);
+
+	  /* The current declaration is a prototype or marked extern, merge
+	     applied user attributes and return.  */
+	  if (DECL_EXTERNAL (olddecl) && !DECL_INITIAL (olddecl))
 	    {
-	      Declaration *other = IDENTIFIER_DSYMBOL (mangled_name);
-
-	      /* Non-templated variables shouldn't be defined twice.  */
-	      if (!decl->isInstantiated ())
-		ScopeDsymbol::multiplyDefined (decl->loc, decl, other);
-
-	      decl->csym = get_symbol_decl (other);
+	      apply_user_attributes (decl, decl->csym);
 	      return decl->csym;
 	    }
-
+	  /* The previous declaration is a prototype or marked extern, set the
+	     current declaration as the main reference of the symbol.  */
+	  else if (DECL_EXTERNAL (decl->csym) && !DECL_INITIAL (decl->csym))
+	    {
+	      IDENTIFIER_DSYMBOL (mangled_name) = decl;
+	      DECL_EXTERNAL (decl->csym) = 0;
+	    }
+	  /* Non-extern, non-templated decls shouldn't be defined twice.  */
+	  else if (!decl->isInstantiated ())
+	    ScopeDsymbol::multiplyDefined (decl->loc, decl, other);
+	}
+      else
+	{
 	  IDENTIFIER_PRETTY_NAME (mangled_name)
 	    = get_identifier (decl->toPrettyChars (true));
 	  IDENTIFIER_DSYMBOL (mangled_name) = decl;
-	}
 
-      SET_DECL_ASSEMBLER_NAME (decl->csym, mangled_name);
+	  SET_DECL_ASSEMBLER_NAME (decl->csym, mangled_name);
+	}
     }
 
   DECL_LANG_SPECIFIC (decl->csym) = build_lang_decl (decl);
@@ -1261,6 +1282,13 @@ get_symbol_decl (Declaration *decl)
 	  DECL_DECLARED_INLINE_P (decl->csym) = 1;
 	  DECL_NO_INLINE_WARNING_P (decl->csym) = 1;
 	}
+
+      /* In [pragma/inline], functions decorated with 'pragma(inline)' affects
+	 whether they are inlined or not.  */
+      if (fd->inlining == PINLINEalways)
+	DECL_DECLARED_INLINE_P (decl->csym) = 1;
+      else if (fd->inlining == PINLINEnever)
+	DECL_UNINLINABLE (decl->csym) = 1;
 
       /* Function was declared 'naked'.  */
       if (fd->naked)
@@ -1358,13 +1386,7 @@ get_symbol_decl (Declaration *decl)
     }
 
   /* Apply any user attributes that may affect semantic meaning.  */
-  if (decl->userAttribDecl)
-    {
-      Expressions *attrs = decl->userAttribDecl->getAttributes ();
-      decl_attributes (&decl->csym, build_attributes (attrs), 0);
-    }
-  else if (DECL_ATTRIBUTES (decl->csym) != NULL)
-    decl_attributes (&decl->csym, DECL_ATTRIBUTES (decl->csym), 0);
+  apply_user_attributes (decl, decl->csym);
 
   /* %% Probably should be a little more intelligent about setting this.  */
   TREE_USED (decl->csym) = 1;
@@ -1489,6 +1511,11 @@ get_decl_tree (Declaration *decl)
 
       AggregateDeclaration *ad = fd->isThis ();
       gcc_assert (ad != NULL);
+
+      /* The parent function is for the same `this' declaration we are
+	 building a chain to.  Non-local declaration is inaccessible.  */
+      if (fd->vthis == vd)
+	return error_no_frame_access (fd);
 
       t = get_decl_tree (fd->vthis);
       Dsymbol *outer = fd;
@@ -1803,8 +1830,11 @@ make_thunk (FuncDeclaration *decl, int offset)
 
   DECL_CONTEXT (thunk) = d_decl_context (decl);
 
-  /* Thunks inherit the public access of the function they are targetting.  */
-  TREE_PUBLIC (thunk) = TREE_PUBLIC (function);
+  /* Thunks inherit the public access of the function they are targetting.
+     When the function is outside the current compilation unit however, then the
+     thunk must be kept private to not conflict.  */
+  TREE_PUBLIC (thunk) = TREE_PUBLIC (function) && !DECL_EXTERNAL (function);
+
   DECL_EXTERNAL (thunk) = 0;
 
   /* Thunks are always addressable.  */
@@ -2330,7 +2360,7 @@ build_type_decl (tree type, Dsymbol *dsym)
 
   tree decl = build_decl (make_location_t (dsym->loc), TYPE_DECL,
 			  get_identifier (name), type);
-  SET_DECL_ASSEMBLER_NAME (decl, get_identifier (mangle_decl (dsym)));
+  SET_DECL_ASSEMBLER_NAME (decl, get_identifier (d_mangle_decl (dsym)));
   TREE_PUBLIC (decl) = 1;
   DECL_ARTIFICIAL (decl) = 1;
   DECL_CONTEXT (decl) = d_decl_context (dsym);

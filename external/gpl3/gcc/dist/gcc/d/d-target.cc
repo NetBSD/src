@@ -1,5 +1,5 @@
 /* d-target.cc -- Target interface for the D front end.
-   Copyright (C) 2013-2019 Free Software Foundation, Inc.
+   Copyright (C) 2013-2020 Free Software Foundation, Inc.
 
 GCC is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -30,6 +30,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree.h"
 #include "memmodel.h"
 #include "fold-const.h"
+#include "diagnostic.h"
 #include "stor-layout.h"
 #include "tm.h"
 #include "tm_p.h"
@@ -52,7 +53,7 @@ bool Target::cppExceptions;
 int Target::classinfosize;
 unsigned long long Target::maxStaticDataSize;
 
-/* Floating-point constants for for .max, .min, and other properties.  */
+/* Floating-point constants for .max, .min, and other properties.  */
 template <typename T> real_t Target::FPTypeProperties<T>::max;
 template <typename T> real_t Target::FPTypeProperties<T>::min_normal;
 template <typename T> real_t Target::FPTypeProperties<T>::nan;
@@ -81,7 +82,7 @@ define_float_constants (tree type)
   const real_format *fmt = REAL_MODE_FORMAT (mode);
 
   /* The largest representable value that's not infinity.  */
-  get_max_float (fmt, buf, sizeof (buf));
+  get_max_float (fmt, buf, sizeof (buf), false);
   real_from_string (&T::max.rv (), buf);
 
   /* The smallest representable normalized value that's not 0.  */
@@ -140,21 +141,29 @@ Target::_init (void)
   /* Size of run-time TypeInfo object.  */
   Target::classinfosize = 19 * Target::ptrsize;
 
-  /* Allow data sizes up to half of the address space.  */
-  Target::maxStaticDataSize = tree_to_shwi (TYPE_MAX_VALUE (ptrdiff_type_node));
+  /* Much of the dmd front-end uses ints for sizes and offsets, and cannot
+     handle any larger data type without some pervasive rework.  */
+  Target::maxStaticDataSize = tree_to_shwi (TYPE_MAX_VALUE (integer_type_node));
 
   /* Define what type to use for size_t, ptrdiff_t.  */
-  if (POINTER_SIZE == 64)
+  if (Target::ptrsize == 8)
     {
       global.params.isLP64 = true;
       Tsize_t = Tuns64;
       Tptrdiff_t = Tint64;
     }
-  else
+  else if (Target::ptrsize == 4)
     {
       Tsize_t = Tuns32;
       Tptrdiff_t = Tint32;
     }
+  else if (Target::ptrsize == 2)
+    {
+      Tsize_t = Tuns16;
+      Tptrdiff_t = Tint16;
+    }
+  else
+    sorry ("D does not support pointers on this target.");
 
   Type::tsize_t = Type::basic[Tsize_t];
   Type::tptrdiff_t = Type::basic[Tptrdiff_t];
@@ -400,4 +409,16 @@ LINK
 Target::systemLinkage (void)
 {
   return LINKc;
+}
+
+/* Generate a TypeTuple of the equivalent types used to determine if a
+   function argument of the given type can be passed in registers.
+   The results of this are highly platform dependent, and intended
+   primarly for use in implementing va_arg() with RTTI.  */
+
+TypeTuple *
+Target::toArgTypes (Type *)
+{
+  /* Not implemented, however this is not currently used anywhere.  */
+  return NULL;
 }

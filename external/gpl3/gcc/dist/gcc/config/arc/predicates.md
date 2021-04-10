@@ -1,5 +1,5 @@
 ;; Predicate definitions for Synopsys DesignWare ARC.
-;; Copyright (C) 2007-2019 Free Software Foundation, Inc.
+;; Copyright (C) 2007-2020 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -285,6 +285,8 @@
 	return GET_MODE (op) == SFmode;
       return 0;
     case REG :
+      if (REGNO (op) == LP_COUNT)
+	return 1;
       return register_operand (op, mode);
     case SUBREG :
       /* (subreg (mem ...) ...) can occur here if the inner part was once a
@@ -686,11 +688,11 @@
 
 (define_predicate "mlo_operand"
   (and (match_code "reg")
-       (match_test "REGNO (op) == (TARGET_BIG_ENDIAN ? 59 : 58)")))
+       (match_test "REGNO (op) == R58_REG")))
 
 (define_predicate "mhi_operand"
   (and (match_code "reg")
-       (match_test "REGNO (op) == (TARGET_BIG_ENDIAN ? 58 : 59)")))
+       (match_test "REGNO (op) == R59_REG")))
 
 (define_predicate "accl_operand"
   (and (match_code "reg")
@@ -793,3 +795,8 @@
   {
    return arc_check_multi (op, false);
 })
+
+(define_predicate "arc_nonmemory_operand"
+  (ior (match_test "register_operand (op, mode)")
+       (and (match_code "const_int, symbol_ref")
+	    (match_test "!optimize_size"))))

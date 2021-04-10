@@ -1,5 +1,5 @@
 /* Generic SSA value propagation engine.
-   Copyright (C) 2004-2019 Free Software Foundation, Inc.
+   Copyright (C) 2004-2020 Free Software Foundation, Inc.
    Contributed by Diego Novillo <dnovillo@redhat.com>
 
    This file is part of GCC.
@@ -421,14 +421,6 @@ ssa_prop_init (void)
 	e->flags &= ~EDGE_EXECUTABLE;
     }
   uid_to_stmt.safe_grow (gimple_stmt_max_uid (cfun));
-
-  /* Seed the algorithm by adding the successors of the entry block to the
-     edge worklist.  */
-  FOR_EACH_EDGE (e, ei, ENTRY_BLOCK_PTR_FOR_FN (cfun)->succs)
-    {
-      e->flags &= ~EDGE_EXECUTABLE;
-      add_control_edge (e);
-    }
 }
 
 
@@ -625,8 +617,7 @@ finish_update_gimple_call (gimple_stmt_iterator *si_p, gimple *new_stmt,
 {
   gimple_call_set_lhs (new_stmt, gimple_call_lhs (stmt));
   move_ssa_defining_stmt_for_defs (new_stmt, stmt);
-  gimple_set_vuse (new_stmt, gimple_vuse (stmt));
-  gimple_set_vdef (new_stmt, gimple_vdef (stmt));
+  gimple_move_vops (new_stmt, stmt);
   gimple_set_location (new_stmt, gimple_location (stmt));
   if (gimple_block (new_stmt) == NULL_TREE)
     gimple_set_block (new_stmt, gimple_block (stmt));
@@ -706,8 +697,7 @@ update_call_from_tree (gimple_stmt_iterator *si_p, tree expr)
           STRIP_USELESS_TYPE_CONVERSION (expr);
           new_stmt = gimple_build_assign (lhs, expr);
           move_ssa_defining_stmt_for_defs (new_stmt, stmt);
-	  gimple_set_vuse (new_stmt, gimple_vuse (stmt));
-	  gimple_set_vdef (new_stmt, gimple_vdef (stmt));
+	  gimple_move_vops (new_stmt, stmt);
         }
       else if (!TREE_SIDE_EFFECTS (expr))
         {
@@ -732,8 +722,7 @@ update_call_from_tree (gimple_stmt_iterator *si_p, tree expr)
 	  else
 	    lhs = create_tmp_var (TREE_TYPE (expr));
           new_stmt = gimple_build_assign (lhs, expr);
-	  gimple_set_vuse (new_stmt, gimple_vuse (stmt));
-	  gimple_set_vdef (new_stmt, gimple_vdef (stmt));
+	  gimple_move_vops (new_stmt, stmt);
           move_ssa_defining_stmt_for_defs (new_stmt, stmt);
         }
       gimple_set_location (new_stmt, gimple_location (stmt));
@@ -761,7 +750,16 @@ ssa_propagation_engine::ssa_propagate (void)
 
   /* Iterate until the worklists are empty.  We iterate both blocks
      and stmts in RPO order, using sets of two worklists to first
-     complete the current iteration before iterating over backedges.  */
+     complete the current iteration before iterating over backedges.
+     Seed the algorithm by adding the successors of the entry block to the
+     edge worklist.  */
+  edge e;
+  edge_iterator ei;
+  FOR_EACH_EDGE (e, ei, ENTRY_BLOCK_PTR_FOR_FN (cfun)->succs)
+    {
+      e->flags &= ~EDGE_EXECUTABLE;
+      add_control_edge (e);
+    }
   while (1)
     {
       int next_block_order = (bitmap_empty_p (cfg_blocks)
@@ -816,7 +814,6 @@ ssa_propagation_engine::ssa_propagate (void)
 
   ssa_prop_fini ();
 }
-
 
 /* Return true if STMT is of the form 'mem_ref = RHS', where 'mem_ref'
    is a non-volatile pointer dereference, a structure reference or a
@@ -1071,6 +1068,14 @@ substitute_and_fold_dom_walker::before_dom_children (basic_block bb)
       if (did_replace)
 	{
 	  fold_stmt (&i, follow_single_use_edges);
+	  stmt = gsi_stmt (i);
+	  gimple_set_modified (stmt, true);
+	}
+      /* Also fold if we want to fold all statements.  */
+      else if (substitute_and_fold_engine->fold_all_stmts
+	  && fold_stmt (&i, follow_single_use_edges))
+	{
+	  did_replace = true;
 	  stmt = gsi_stmt (i);
 	  gimple_set_modified (stmt, true);
 	}

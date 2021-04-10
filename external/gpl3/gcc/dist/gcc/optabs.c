@@ -1,5 +1,5 @@
 /* Expand the basic unary and binary arithmetic operations, for GNU compiler.
-   Copyright (C) 1987-2019 Free Software Foundation, Inc.
+   Copyright (C) 1987-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -250,7 +250,7 @@ rtx
 expand_widen_pattern_expr (sepops ops, rtx op0, rtx op1, rtx wide_op,
 			   rtx target, int unsignedp)
 {
-  struct expand_operand eops[4];
+  class expand_operand eops[4];
   tree oprnd0, oprnd1, oprnd2;
   machine_mode wmode = VOIDmode, tmode0, tmode1 = VOIDmode;
   optab widen_pattern_optab;
@@ -344,7 +344,7 @@ rtx
 expand_ternary_op (machine_mode mode, optab ternary_optab, rtx op0,
 		   rtx op1, rtx op2, rtx target, int unsignedp)
 {
-  struct expand_operand ops[4];
+  class expand_operand ops[4];
   enum insn_code icode = optab_handler (ternary_optab, mode);
 
   gcc_assert (optab_handler (ternary_optab, mode) != CODE_FOR_nothing);
@@ -413,7 +413,7 @@ expand_vector_broadcast (machine_mode vmode, rtx op)
   insn_code icode = optab_handler (vec_duplicate_optab, vmode);
   if (icode != CODE_FOR_nothing)
     {
-      struct expand_operand ops[2];
+      class expand_operand ops[2];
       create_output_operand (&ops[0], NULL_RTX, vmode);
       create_input_operand (&ops[1], op, GET_MODE (op));
       expand_insn (icode, 2, ops);
@@ -1039,7 +1039,7 @@ expand_binop_directly (enum insn_code icode, machine_mode mode, optab binoptab,
   machine_mode xmode0 = insn_data[(int) icode].operand[1].mode;
   machine_mode xmode1 = insn_data[(int) icode].operand[2].mode;
   machine_mode mode0, mode1, tmp_mode;
-  struct expand_operand ops[3];
+  class expand_operand ops[3];
   bool commutative_p;
   rtx_insn *pat;
   rtx xop0 = op0, xop1 = op1;
@@ -1050,7 +1050,7 @@ expand_binop_directly (enum insn_code icode, machine_mode mode, optab binoptab,
   commutative_p = commutative_optab_p (binoptab);
   if (commutative_p
       && GET_MODE (xop0) != xmode0 && GET_MODE (xop1) != xmode1
-      && GET_MODE (xop0) == xmode1 && GET_MODE (xop1) == xmode1)
+      && GET_MODE (xop0) == xmode1 && GET_MODE (xop1) == xmode0)
     std::swap (xop0, xop1);
 
   /* If we are optimizing, force expensive constants into a register.  */
@@ -1395,6 +1395,8 @@ expand_binop (machine_mode mode, optab binoptab, rtx op0, rtx op1,
       if (target == 0
 	  || target == op0
 	  || target == op1
+	  || reg_overlap_mentioned_p (target, op0)
+	  || reg_overlap_mentioned_p (target, op1)
 	  || !valid_multiword_target_p (target))
 	target = gen_reg_rtx (int_mode);
 
@@ -1475,6 +1477,8 @@ expand_binop (machine_mode mode, optab binoptab, rtx op0, rtx op1,
 	  if (target == 0
 	      || target == op0
 	      || target == op1
+	      || reg_overlap_mentioned_p (target, op0)
+	      || reg_overlap_mentioned_p (target, op1)
 	      || !valid_multiword_target_p (target))
 	    target = gen_reg_rtx (int_mode);
 
@@ -1533,6 +1537,8 @@ expand_binop (machine_mode mode, optab binoptab, rtx op0, rtx op1,
 	  || target == op0
 	  || target == op1
 	  || !REG_P (target)
+	  || reg_overlap_mentioned_p (target, op0)
+	  || reg_overlap_mentioned_p (target, op1)
 	  || !valid_multiword_target_p (target))
 	target = gen_reg_rtx (int_mode);
 
@@ -2012,7 +2018,7 @@ expand_twoval_unop (optab unoptab, rtx op0, rtx targ0, rtx targ1,
 
   if (optab_handler (unoptab, mode) != CODE_FOR_nothing)
     {
-      struct expand_operand ops[3];
+      class expand_operand ops[3];
       enum insn_code icode = optab_handler (unoptab, mode);
 
       create_fixed_operand (&ops[0], targ0);
@@ -2084,7 +2090,7 @@ expand_twoval_binop (optab binoptab, rtx op0, rtx op1, rtx targ0, rtx targ1,
 
   if (optab_handler (binoptab, mode) != CODE_FOR_nothing)
     {
-      struct expand_operand ops[4];
+      class expand_operand ops[4];
       enum insn_code icode = optab_handler (binoptab, mode);
       machine_mode mode0 = insn_data[icode].operand[1].mode;
       machine_mode mode1 = insn_data[icode].operand[2].mode;
@@ -2095,8 +2101,8 @@ expand_twoval_binop (optab binoptab, rtx op0, rtx op1, rtx targ0, rtx targ1,
       xop1 = avoid_expensive_constant (mode1, binoptab, 1, xop1, unsignedp);
 
       create_fixed_operand (&ops[0], targ0);
-      create_convert_operand_from (&ops[1], op0, mode, unsignedp);
-      create_convert_operand_from (&ops[2], op1, mode, unsignedp);
+      create_convert_operand_from (&ops[1], xop0, mode, unsignedp);
+      create_convert_operand_from (&ops[2], xop1, mode, unsignedp);
       create_fixed_operand (&ops[3], targ1);
       if (maybe_expand_insn (icode, 4, ops))
 	return 1;
@@ -2670,6 +2676,7 @@ expand_absneg_bit (enum rtx_code code, scalar_float_mode mode,
 
   if (target == 0
       || target == op0
+      || reg_overlap_mentioned_p (target, op0)
       || (nwords > 1 && !valid_multiword_target_p (target)))
     target = gen_reg_rtx (mode);
 
@@ -2724,7 +2731,7 @@ expand_unop_direct (machine_mode mode, optab unoptab, rtx op0, rtx target,
 {
   if (optab_handler (unoptab, mode) != CODE_FOR_nothing)
     {
-      struct expand_operand ops[2];
+      class expand_operand ops[2];
       enum insn_code icode = optab_handler (unoptab, mode);
       rtx_insn *last = get_last_insn ();
       rtx_insn *pat;
@@ -2948,7 +2955,10 @@ expand_unop (machine_mode mode, optab unoptab, rtx op0, rtx target,
       int i;
       rtx_insn *insns;
 
-      if (target == 0 || target == op0 || !valid_multiword_target_p (target))
+      if (target == 0
+	  || target == op0
+	  || reg_overlap_mentioned_p (target, op0)
+	  || !valid_multiword_target_p (target))
 	target = gen_reg_rtx (int_mode);
 
       start_sequence ();
@@ -2970,6 +2980,17 @@ expand_unop (machine_mode mode, optab unoptab, rtx op0, rtx target,
 
       emit_insn (insns);
       return target;
+    }
+
+  /* Emit ~op0 as op0 ^ -1.  */
+  if (unoptab == one_cmpl_optab
+      && (SCALAR_INT_MODE_P (mode) || GET_MODE_CLASS (mode) == MODE_VECTOR_INT)
+      && optab_handler (xor_optab, mode) != CODE_FOR_nothing)
+    {
+      temp = expand_binop (mode, xor_optab, op0, CONSTM1_RTX (mode),
+			   target, unsignedp, OPTAB_DIRECT);
+      if (temp)
+	return temp;
     }
 
   if (optab_to_code (unoptab) == NEG)
@@ -3458,6 +3479,8 @@ expand_copysign_bit (scalar_float_mode mode, rtx op0, rtx op1, rtx target,
   if (target == 0
       || target == op0
       || target == op1
+      || reg_overlap_mentioned_p (target, op0)
+      || reg_overlap_mentioned_p (target, op1)
       || (nwords > 1 && !valid_multiword_target_p (target)))
     target = gen_reg_rtx (mode);
 
@@ -3578,7 +3601,7 @@ bool
 maybe_emit_unop_insn (enum insn_code icode, rtx target, rtx op0,
 		      enum rtx_code code)
 {
-  struct expand_operand ops[2];
+  class expand_operand ops[2];
   rtx_insn *pat;
 
   create_output_operand (&ops[0], target, GET_MODE (target));
@@ -3727,7 +3750,7 @@ emit_libcall_block_1 (rtx_insn *insns, rtx target, rtx result, rtx equiv,
 	  data.first = insns;
 	  data.insn = insn;
 	  data.must_stay = 0;
-	  note_stores (PATTERN (insn), no_conflict_move_test, &data);
+	  note_stores (insn, no_conflict_move_test, &data);
 	  if (! data.must_stay)
 	    {
 	      if (PREV_INSN (insn))
@@ -3806,6 +3829,25 @@ can_compare_p (enum rtx_code code, machine_mode mode,
   while (mode != VOIDmode);
 
   return 0;
+}
+
+/* Return whether the backend can emit a vector comparison for code CODE,
+   comparing operands of mode CMP_OP_MODE and producing a result with
+   VALUE_MODE.  */
+
+bool
+can_vcond_compare_p (enum rtx_code code, machine_mode value_mode,
+		     machine_mode cmp_op_mode)
+{
+  enum insn_code icode;
+  bool unsigned_p = (code == LTU || code == LEU || code == GTU || code == GEU);
+  rtx reg1 = alloca_raw_REG (cmp_op_mode, LAST_VIRTUAL_REGISTER + 1);
+  rtx reg2 = alloca_raw_REG (cmp_op_mode, LAST_VIRTUAL_REGISTER + 2);
+  rtx test = alloca_rtx_fmt_ee (code, value_mode, reg1, reg2);
+
+  return (icode = get_vcond_icode (value_mode, cmp_op_mode, unsigned_p))
+	 != CODE_FOR_nothing
+	 && insn_operand_matches (icode, 3, test);
 }
 
 /* This function is called when we are going to emit a compare instruction that
@@ -4289,7 +4331,7 @@ emit_indirect_jump (rtx loc)
     sorry ("indirect jumps are not available on this target");
   else
     {
-      struct expand_operand ops[1];
+      class expand_operand ops[1];
       create_address_operand (&ops[0], loc);
       expand_jump_insn (targetm.code_for_indirect_jump, 1, ops);
       emit_barrier ();
@@ -4394,7 +4436,7 @@ emit_conditional_move (rtx target, enum rtx_code code, rtx op0, rtx op1,
 			    OPTAB_WIDEN, &comparison, &cmpmode);
 	  if (comparison)
 	    {
-	      struct expand_operand ops[4];
+	      class expand_operand ops[4];
 
 	      create_output_operand (&ops[0], target, mode);
 	      create_fixed_operand (&ops[1], comparison);
@@ -4460,7 +4502,7 @@ emit_conditional_neg_or_complement (rtx target, rtx_code code,
     target = gen_reg_rtx (mode);
 
   rtx_insn *last = get_last_insn ();
-  struct expand_operand ops[4];
+  class expand_operand ops[4];
 
   create_output_operand (&ops[0], target, mode);
   create_fixed_operand (&ops[1], cond);
@@ -4548,7 +4590,7 @@ emit_conditional_add (rtx target, enum rtx_code code, rtx op0, rtx op1,
                     &comparison, &cmode);
   if (comparison)
     {
-      struct expand_operand ops[4];
+      class expand_operand ops[4];
 
       create_output_operand (&ops[0], target, mode);
       create_fixed_operand (&ops[1], comparison);
@@ -5414,7 +5456,7 @@ vector_compare_rtx (machine_mode cmp_mode, enum tree_code tcode,
 		    tree t_op0, tree t_op1, bool unsignedp,
 		    enum insn_code icode, unsigned int opno)
 {
-  struct expand_operand ops[2];
+  class expand_operand ops[2];
   rtx rtx_op0, rtx_op1;
   machine_mode m0, m1;
   enum rtx_code rcode = get_rtx_code (tcode, unsignedp);
@@ -5444,19 +5486,45 @@ vector_compare_rtx (machine_mode cmp_mode, enum tree_code tcode,
 }
 
 /* Check if vec_perm mask SEL is a constant equivalent to a shift of
-   the first vec_perm operand, assuming the second operand is a constant
-   vector of zeros.  Return the shift distance in bits if so, or NULL_RTX
-   if the vec_perm is not a shift.  MODE is the mode of the value being
-   shifted.  */
+   the first vec_perm operand, assuming the second operand (for left shift
+   first operand) is a constant vector of zeros.  Return the shift distance
+   in bits if so, or NULL_RTX if the vec_perm is not a shift.  MODE is the
+   mode of the value being shifted.  SHIFT_OPTAB is vec_shr_optab for right
+   shift or vec_shl_optab for left shift.  */
 static rtx
-shift_amt_for_vec_perm_mask (machine_mode mode, const vec_perm_indices &sel)
+shift_amt_for_vec_perm_mask (machine_mode mode, const vec_perm_indices &sel,
+			     optab shift_optab)
 {
   unsigned int bitsize = GET_MODE_UNIT_BITSIZE (mode);
   poly_int64 first = sel[0];
   if (maybe_ge (sel[0], GET_MODE_NUNITS (mode)))
     return NULL_RTX;
 
-  if (!sel.series_p (0, 1, first, 1))
+  if (shift_optab == vec_shl_optab)
+    {
+      unsigned int nelt;
+      if (!GET_MODE_NUNITS (mode).is_constant (&nelt))
+	return NULL_RTX;
+      unsigned firstidx = 0;
+      for (unsigned int i = 0; i < nelt; i++)
+	{
+	  if (known_eq (sel[i], nelt))
+	    {
+	      if (i == 0 || firstidx)
+		return NULL_RTX;
+	      firstidx = i;
+	    }
+	  else if (firstidx
+		   ? maybe_ne (sel[i], nelt + i - firstidx)
+		   : maybe_ge (sel[i], nelt))
+	    return NULL_RTX;
+	}
+
+      if (firstidx == 0)
+	return NULL_RTX;
+      first = firstidx;
+    }
+  else if (!sel.series_p (0, 1, first, 1))
     {
       unsigned int nelt;
       if (!GET_MODE_NUNITS (mode).is_constant (&nelt))
@@ -5483,10 +5551,10 @@ expand_vec_perm_1 (enum insn_code icode, rtx target,
 {
   machine_mode tmode = GET_MODE (target);
   machine_mode smode = GET_MODE (sel);
-  struct expand_operand ops[4];
+  class expand_operand ops[4];
 
   gcc_assert (GET_MODE_CLASS (smode) == MODE_VECTOR_INT
-	      || mode_for_int_vector (tmode).require () == smode);
+	      || related_int_vector_mode (tmode).require () == smode);
   create_output_operand (&ops[0], target, tmode);
   create_input_operand (&ops[3], sel, smode);
 
@@ -5544,25 +5612,39 @@ expand_vec_perm_const (machine_mode mode, rtx v0, rtx v1,
      target instruction.  */
   vec_perm_indices indices (sel, 2, GET_MODE_NUNITS (mode));
 
-  /* See if this can be handled with a vec_shr.  We only do this if the
-     second vector is all zeroes.  */
-  insn_code shift_code = optab_handler (vec_shr_optab, mode);
-  insn_code shift_code_qi = ((qimode != VOIDmode && qimode != mode)
-			     ? optab_handler (vec_shr_optab, qimode)
-			     : CODE_FOR_nothing);
-
-  if (v1 == CONST0_RTX (GET_MODE (v1))
-      && (shift_code != CODE_FOR_nothing
-	  || shift_code_qi != CODE_FOR_nothing))
+  /* See if this can be handled with a vec_shr or vec_shl.  We only do this
+     if the second (for vec_shr) or first (for vec_shl) vector is all
+     zeroes.  */
+  insn_code shift_code = CODE_FOR_nothing;
+  insn_code shift_code_qi = CODE_FOR_nothing;
+  optab shift_optab = unknown_optab;
+  rtx v2 = v0;
+  if (v1 == CONST0_RTX (GET_MODE (v1)))
+    shift_optab = vec_shr_optab;
+  else if (v0 == CONST0_RTX (GET_MODE (v0)))
     {
-      rtx shift_amt = shift_amt_for_vec_perm_mask (mode, indices);
+      shift_optab = vec_shl_optab;
+      v2 = v1;
+    }
+  if (shift_optab != unknown_optab)
+    {
+      shift_code = optab_handler (shift_optab, mode);
+      shift_code_qi = ((qimode != VOIDmode && qimode != mode)
+		       ? optab_handler (shift_optab, qimode)
+		       : CODE_FOR_nothing);
+    }
+  if (shift_code != CODE_FOR_nothing || shift_code_qi != CODE_FOR_nothing)
+    {
+      rtx shift_amt = shift_amt_for_vec_perm_mask (mode, indices, shift_optab);
       if (shift_amt)
 	{
-	  struct expand_operand ops[3];
+	  class expand_operand ops[3];
+	  if (shift_amt == const0_rtx)
+	    return v2;
 	  if (shift_code != CODE_FOR_nothing)
 	    {
 	      create_output_operand (&ops[0], target, mode);
-	      create_input_operand (&ops[1], v0, mode);
+	      create_input_operand (&ops[1], v2, mode);
 	      create_convert_operand_from_type (&ops[2], shift_amt, sizetype);
 	      if (maybe_expand_insn (shift_code, 3, ops))
 		return ops[0].value;
@@ -5571,7 +5653,7 @@ expand_vec_perm_const (machine_mode mode, rtx v0, rtx v1,
 	    {
 	      rtx tmp = gen_reg_rtx (qimode);
 	      create_output_operand (&ops[0], tmp, qimode);
-	      create_input_operand (&ops[1], gen_lowpart (qimode, v0), qimode);
+	      create_input_operand (&ops[1], gen_lowpart (qimode, v2), qimode);
 	      create_convert_operand_from_type (&ops[2], shift_amt, sizetype);
 	      if (maybe_expand_insn (shift_code_qi, 3, ops))
 		return gen_lowpart (mode, ops[0].value);
@@ -5611,8 +5693,7 @@ expand_vec_perm_const (machine_mode mode, rtx v0, rtx v1,
   /* The optabs are only defined for selectors with the same width
      as the values being permuted.  */
   machine_mode required_sel_mode;
-  if (!mode_for_int_vector (mode).exists (&required_sel_mode)
-      || !VECTOR_MODE_P (required_sel_mode))
+  if (!related_int_vector_mode (mode).exists (&required_sel_mode))
     {
       delete_insns_since (last);
       return NULL_RTX;
@@ -5744,7 +5825,7 @@ rtx
 expand_vec_cond_mask_expr (tree vec_cond_type, tree op0, tree op1, tree op2,
 			   rtx target)
 {
-  struct expand_operand ops[4];
+  class expand_operand ops[4];
   machine_mode mode = TYPE_MODE (vec_cond_type);
   machine_mode mask_mode = TYPE_MODE (TREE_TYPE (op0));
   enum insn_code icode = get_vcond_mask_icode (mode, mask_mode);
@@ -5776,7 +5857,7 @@ rtx
 expand_vec_cond_expr (tree vec_cond_type, tree op0, tree op1, tree op2,
 		      rtx target)
 {
-  struct expand_operand ops[6];
+  class expand_operand ops[6];
   enum insn_code icode;
   rtx comparison, rtx_op1, rtx_op2;
   machine_mode mode = TYPE_MODE (vec_cond_type);
@@ -5865,7 +5946,7 @@ expand_vec_cond_expr (tree vec_cond_type, tree op0, tree op1, tree op2,
 rtx
 expand_vec_series_expr (machine_mode vmode, rtx op0, rtx op1, rtx target)
 {
-  struct expand_operand ops[3];
+  class expand_operand ops[3];
   enum insn_code icode;
   machine_mode emode = GET_MODE_INNER (vmode);
 
@@ -5885,7 +5966,7 @@ expand_vec_series_expr (machine_mode vmode, rtx op0, rtx op1, rtx target)
 rtx
 expand_vec_cmp_expr (tree type, tree exp, rtx target)
 {
-  struct expand_operand ops[4];
+  class expand_operand ops[4];
   enum insn_code icode;
   rtx comparison;
   machine_mode mask_mode = TYPE_MODE (type);
@@ -5926,7 +6007,7 @@ rtx
 expand_mult_highpart (machine_mode mode, rtx op0, rtx op1,
 		      rtx target, bool uns_p)
 {
-  struct expand_operand eops[3];
+  class expand_operand eops[3];
   enum insn_code icode;
   int method, i;
   machine_mode wmode;
@@ -6079,7 +6160,7 @@ maybe_emit_atomic_exchange (rtx target, rtx mem, rtx val, enum memmodel model)
   icode = direct_optab_handler (atomic_exchange_optab, mode);
   if (icode != CODE_FOR_nothing)
     {
-      struct expand_operand ops[4];
+      class expand_operand ops[4];
 
       create_output_operand (&ops[0], target, mode);
       create_fixed_operand (&ops[1], mem);
@@ -6117,7 +6198,7 @@ maybe_emit_sync_lock_test_and_set (rtx target, rtx mem, rtx val,
 
   if (icode != CODE_FOR_nothing)
     {
-      struct expand_operand ops[3];
+      class expand_operand ops[3];
       create_output_operand (&ops[0], target, mode);
       create_fixed_operand (&ops[1], mem);
       create_input_operand (&ops[2], val, mode);
@@ -6177,7 +6258,7 @@ static rtx
 maybe_emit_atomic_test_and_set (rtx target, rtx mem, enum memmodel model)
 {
   machine_mode pat_bool_mode;
-  struct expand_operand ops[3];
+  class expand_operand ops[3];
 
   if (!targetm.have_atomic_test_and_set ())
     return NULL_RTX;
@@ -6347,7 +6428,7 @@ expand_atomic_compare_and_swap (rtx *ptarget_bool, rtx *ptarget_oval,
 				enum memmodel fail_model)
 {
   machine_mode mode = GET_MODE (mem);
-  struct expand_operand ops[8];
+  class expand_operand ops[8];
   enum insn_code icode;
   rtx target_oval, target_bool = NULL_RTX;
   rtx libfunc;
@@ -6429,7 +6510,7 @@ expand_atomic_compare_and_swap (rtx *ptarget_bool, rtx *ptarget_oval,
       /* Otherwise, work out if the compare-and-swap succeeded.  */
       cc_reg = NULL_RTX;
       if (have_insn_for (COMPARE, CCmode))
-	note_stores (PATTERN (get_last_insn ()), find_cc_set, &cc_reg);
+	note_stores (get_last_insn (), find_cc_set, &cc_reg);
       if (cc_reg)
 	{
 	  target_bool = emit_store_flag_force (target_bool, EQ, cc_reg,
@@ -6549,7 +6630,7 @@ expand_atomic_load (rtx target, rtx mem, enum memmodel model)
   icode = direct_optab_handler (atomic_load_optab, mode);
   if (icode != CODE_FOR_nothing)
     {
-      struct expand_operand ops[3];
+      class expand_operand ops[3];
       rtx_insn *last = get_last_insn ();
       if (is_mm_seq_cst (model))
 	expand_memory_blockage ();
@@ -6602,7 +6683,7 @@ expand_atomic_store (rtx mem, rtx val, enum memmodel model, bool use_release)
 {
   machine_mode mode = GET_MODE (mem);
   enum insn_code icode;
-  struct expand_operand ops[3];
+  class expand_operand ops[3];
 
   /* If the target supports the store directly, great.  */
   icode = direct_optab_handler (atomic_store_optab, mode);
@@ -6812,7 +6893,7 @@ maybe_emit_op (const struct atomic_op_functions *optab, rtx target, rtx mem,
 	       rtx val, bool use_memmodel, enum memmodel model, bool after)
 {
   machine_mode mode = GET_MODE (mem);
-  struct expand_operand ops[4];
+  class expand_operand ops[4];
   enum insn_code icode;
   int op_counter = 0;
   int num_ops;
@@ -7126,7 +7207,7 @@ valid_multiword_target_p (rtx target)
    of that rtx if so.  */
 
 void
-create_integer_operand (struct expand_operand *op, poly_int64 intval)
+create_integer_operand (class expand_operand *op, poly_int64 intval)
 {
   create_expand_operand (op, EXPAND_INTEGER,
 			 gen_int_mode (intval, MAX_MODE_INT),
@@ -7138,7 +7219,7 @@ create_integer_operand (struct expand_operand *op, poly_int64 intval)
 
 static bool
 maybe_legitimize_operand_same_code (enum insn_code icode, unsigned int opno,
-				    struct expand_operand *op)
+				    class expand_operand *op)
 {
   /* See if the operand matches in its current form.  */
   if (insn_operand_matches (icode, opno, op->value))
@@ -7180,20 +7261,18 @@ maybe_legitimize_operand_same_code (enum insn_code icode, unsigned int opno,
 
 static bool
 maybe_legitimize_operand (enum insn_code icode, unsigned int opno,
-			  struct expand_operand *op)
+			  class expand_operand *op)
 {
-  machine_mode mode, imode;
-  bool old_volatile_ok, result;
+  machine_mode mode, imode, tmode;
 
   mode = op->mode;
   switch (op->type)
     {
     case EXPAND_FIXED:
-      old_volatile_ok = volatile_ok;
-      volatile_ok = true;
-      result = maybe_legitimize_operand_same_code (icode, opno, op);
-      volatile_ok = old_volatile_ok;
-      return result;
+      {
+	temporary_volatile_ok v (true);
+	return maybe_legitimize_operand_same_code (icode, opno, op);
+      }
 
     case EXPAND_OUTPUT:
       gcc_assert (mode != VOIDmode);
@@ -7231,9 +7310,17 @@ maybe_legitimize_operand (enum insn_code icode, unsigned int opno,
 	gcc_assert (mode != VOIDmode);
 
       imode = insn_data[(int) icode].operand[opno].mode;
+      tmode = (VECTOR_MODE_P (imode) && !VECTOR_MODE_P (mode)
+	       ? GET_MODE_INNER (imode) : imode);
+      if (tmode != VOIDmode && tmode != mode)
+	{
+	  op->value = convert_modes (tmode, mode, op->value, op->unsigned_p);
+	  mode = tmode;
+	}
       if (imode != VOIDmode && imode != mode)
 	{
-	  op->value = convert_modes (imode, mode, op->value, op->unsigned_p);
+	  gcc_assert (VECTOR_MODE_P (imode) && !VECTOR_MODE_P (mode));
+	  op->value = expand_vector_broadcast (imode, op->value);
 	  mode = imode;
 	}
       goto input;
@@ -7262,7 +7349,7 @@ maybe_legitimize_operand (enum insn_code icode, unsigned int opno,
    TYPE is the type of VALUE.  */
 
 void
-create_convert_operand_from_type (struct expand_operand *op,
+create_convert_operand_from_type (class expand_operand *op,
 				  rtx value, tree type)
 {
   create_convert_operand_from (op, value, TYPE_MODE (type),
@@ -7277,8 +7364,8 @@ create_convert_operand_from_type (struct expand_operand *op,
 static inline bool
 can_reuse_operands_p (enum insn_code icode,
 		      unsigned int opno1, unsigned int opno2,
-		      const struct expand_operand *op1,
-		      const struct expand_operand *op2)
+		      const class expand_operand *op1,
+		      const class expand_operand *op2)
 {
   /* Check requirements that are common to all types.  */
   if (op1->type != op2->type
@@ -7313,7 +7400,7 @@ can_reuse_operands_p (enum insn_code icode,
 
 bool
 maybe_legitimize_operands (enum insn_code icode, unsigned int opno,
-			   unsigned int nops, struct expand_operand *ops)
+			   unsigned int nops, class expand_operand *ops)
 {
   rtx_insn *last = get_last_insn ();
   rtx *orig_values = XALLOCAVEC (rtx, nops);
@@ -7355,7 +7442,7 @@ maybe_legitimize_operands (enum insn_code icode, unsigned int opno,
 
 rtx_insn *
 maybe_gen_insn (enum insn_code icode, unsigned int nops,
-		struct expand_operand *ops)
+		class expand_operand *ops)
 {
   gcc_assert (nops == (unsigned int) insn_data[(int) icode].n_generator_args);
   if (!maybe_legitimize_operands (icode, 0, nops, ops))
@@ -7399,7 +7486,7 @@ maybe_gen_insn (enum insn_code icode, unsigned int nops,
 
 bool
 maybe_expand_insn (enum insn_code icode, unsigned int nops,
-		   struct expand_operand *ops)
+		   class expand_operand *ops)
 {
   rtx_insn *pat = maybe_gen_insn (icode, nops, ops);
   if (pat)
@@ -7414,7 +7501,7 @@ maybe_expand_insn (enum insn_code icode, unsigned int nops,
 
 bool
 maybe_expand_jump_insn (enum insn_code icode, unsigned int nops,
-			struct expand_operand *ops)
+			class expand_operand *ops)
 {
   rtx_insn *pat = maybe_gen_insn (icode, nops, ops);
   if (pat)
@@ -7430,7 +7517,7 @@ maybe_expand_jump_insn (enum insn_code icode, unsigned int nops,
 
 void
 expand_insn (enum insn_code icode, unsigned int nops,
-	     struct expand_operand *ops)
+	     class expand_operand *ops)
 {
   if (!maybe_expand_insn (icode, nops, ops))
     gcc_unreachable ();
@@ -7440,7 +7527,7 @@ expand_insn (enum insn_code icode, unsigned int nops,
 
 void
 expand_jump_insn (enum insn_code icode, unsigned int nops,
-		  struct expand_operand *ops)
+		  class expand_operand *ops)
 {
   if (!maybe_expand_jump_insn (icode, nops, ops))
     gcc_unreachable ();

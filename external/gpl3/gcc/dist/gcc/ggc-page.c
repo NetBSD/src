@@ -1,5 +1,5 @@
 /* "Bag-of-pages" garbage collector for the GNU compiler.
-   Copyright (C) 1999-2019 Free Software Foundation, Inc.
+   Copyright (C) 1999-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -30,7 +30,6 @@ along with GCC; see the file COPYING3.  If not see
 #include "flags.h"
 #include "ggc-internal.h"
 #include "timevar.h"
-#include "params.h"
 #include "cgraph.h"
 #include "cfgloop.h"
 #include "plugin.h"
@@ -200,7 +199,7 @@ static const size_t extra_order_size_table[] = {
   sizeof (struct function),
   sizeof (struct basic_block_def),
   sizeof (struct cgraph_node),
-  sizeof (struct loop),
+  sizeof (class loop),
 };
 
 /* The total number of orders.  */
@@ -529,7 +528,6 @@ static void clear_page_group_in_use (page_group *, char *);
 #endif
 static struct page_entry * alloc_page (unsigned);
 static void free_page (struct page_entry *);
-static void release_pages (void);
 static void clear_marks (void);
 static void sweep_pages (void);
 static void ggc_recalculate_in_use_p (page_entry *);
@@ -943,8 +941,8 @@ alloc_page (unsigned order)
   if (GGC_DEBUG_LEVEL >= 2)
     fprintf (G.debug_file,
 	     "Allocating page at %p, object size=%lu, data %p-%p\n",
-	     (void *) entry, (unsigned long) OBJECT_SIZE (order), page,
-	     page + entry_size - 1);
+	     (void *) entry, (unsigned long) OBJECT_SIZE (order),
+	     (void *) page, (void *) (page + entry_size - 1));
 
   return entry;
 }
@@ -977,7 +975,7 @@ free_page (page_entry *entry)
   if (GGC_DEBUG_LEVEL >= 2)
     fprintf (G.debug_file,
 	     "Deallocating page at %p, data %p-%p\n", (void *) entry,
-	     entry->page, entry->page + entry->bytes - 1);
+	     (void *) entry->page, (void *) (entry->page + entry->bytes - 1));
 
   /* Mark the page as inaccessible.  Discard the handle to avoid handle
      leak.  */
@@ -2186,9 +2184,12 @@ ggc_collect (void)
      total allocations haven't expanded much since the last
      collection.  */
   float allocated_last_gc =
-    MAX (G.allocated_last_gc, (size_t)PARAM_VALUE (GGC_MIN_HEAPSIZE) * 1024);
+    MAX (G.allocated_last_gc, (size_t)param_ggc_min_heapsize * 1024);
 
-  float min_expand = allocated_last_gc * PARAM_VALUE (GGC_MIN_EXPAND) / 100;
+  /* It is also good time to get memory block pool into limits.  */
+  memory_block_pool::trim ();
+
+  float min_expand = allocated_last_gc * param_ggc_min_expand / 100;
   if (G.allocated < allocated_last_gc + min_expand && !ggc_force_collect)
     return;
 
@@ -2268,7 +2269,7 @@ ggc_grow (void)
   else
     ggc_collect ();
   if (!quiet_flag)
-    fprintf (stderr, " {GC start %luk} ", (unsigned long) G.allocated / 1024);
+    fprintf (stderr, " {GC %luk} ", (unsigned long) G.allocated / 1024);
 }
 
 void
@@ -2489,7 +2490,7 @@ ggc_pch_write_object (struct ggc_pch_data *d,
     }
 
   if (fwrite (x, size, 1, f) != 1)
-    fatal_error (input_location, "can%'t write PCH file: %m");
+    fatal_error (input_location, "cannot write PCH file: %m");
 
   /* If SIZE is not the same as OBJECT_SIZE(order), then we need to pad the
      object out to OBJECT_SIZE(order).  This happens for strings.  */
@@ -2505,13 +2506,13 @@ ggc_pch_write_object (struct ggc_pch_data *d,
       if (padding <= sizeof (emptyBytes))
         {
           if (fwrite (emptyBytes, 1, padding, f) != padding)
-            fatal_error (input_location, "can%'t write PCH file");
+	    fatal_error (input_location, "cannot write PCH file");
         }
       else
         {
           /* Larger than our buffer?  Just default to fseek.  */
           if (fseek (f, padding, SEEK_CUR) != 0)
-            fatal_error (input_location, "can%'t write PCH file");
+	    fatal_error (input_location, "cannot write PCH file");
         }
     }
 
@@ -2520,14 +2521,14 @@ ggc_pch_write_object (struct ggc_pch_data *d,
       && fseek (f, ROUND_UP_VALUE (d->d.totals[order] * OBJECT_SIZE (order),
 				   G.pagesize),
 		SEEK_CUR) != 0)
-    fatal_error (input_location, "can%'t write PCH file: %m");
+    fatal_error (input_location, "cannot write PCH file: %m");
 }
 
 void
 ggc_pch_finish (struct ggc_pch_data *d, FILE *f)
 {
   if (fwrite (&d->d, sizeof (d->d), 1, f) != 1)
-    fatal_error (input_location, "can%'t write PCH file: %m");
+    fatal_error (input_location, "cannot write PCH file: %m");
   free (d);
 }
 

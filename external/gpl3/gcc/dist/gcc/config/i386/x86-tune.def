@@ -1,5 +1,5 @@
 /* Definitions of x86 tunable features.
-   Copyright (C) 2013-2019 Free Software Foundation, Inc.
+   Copyright (C) 2013-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -70,7 +70,7 @@ DEF_TUNE (X86_TUNE_SSE_PARTIAL_REG_DEPENDENCY, "sse_partial_reg_dependency",
    upper part undefined.  */
 DEF_TUNE (X86_TUNE_SSE_SPLIT_REGS, "sse_split_regs", m_ATHLON_K8)
 
-/* X86_TUNE_PARTIAL_FLAG_REG_STALL: this flag disables use of of flags
+/* X86_TUNE_PARTIAL_FLAG_REG_STALL: this flag disables use of flags
    set by instructions affecting just some flags (in particular shifts).
    This is because Core2 resolves dependencies on whole flags register
    and such sequences introduce false dependency on previous instruction
@@ -313,6 +313,17 @@ DEF_TUNE (X86_TUNE_ONE_IF_CONV_INSN, "one_if_conv_insn",
 	  m_SILVERMONT | m_KNL | m_KNM | m_INTEL | m_CORE_ALL | m_GOLDMONT
 	  | m_GOLDMONT_PLUS | m_TREMONT | m_GENERIC)
 
+/* X86_TUNE_AVOID_MFENCE: Use lock prefixed instructions instead of mfence.  */
+DEF_TUNE (X86_TUNE_AVOID_MFENCE, "avoid_mfence",
+	 m_CORE_ALL | m_BDVER | m_ZNVER | m_GENERIC)
+
+/* X86_TUNE_EXPAND_ABS: This enables a new abs pattern by
+   generating instructions for abs (x) = (((signed) x >> (W-1) ^ x) -
+   (signed) x >> (W-1)) instead of cmove or SSE max/abs instructions.  */
+DEF_TUNE (X86_TUNE_EXPAND_ABS, "expand_abs",
+	  m_CORE_ALL | m_SILVERMONT | m_KNL | m_KNM | m_GOLDMONT
+	  | m_GOLDMONT_PLUS | m_TREMONT )
+
 /*****************************************************************************/
 /* 387 instruction selection tuning                                          */
 /*****************************************************************************/
@@ -355,15 +366,15 @@ DEF_TUNE (X86_TUNE_SSE_UNALIGNED_LOAD_OPTIMAL, "sse_unaligned_load_optimal",
 	  | m_INTEL | m_GOLDMONT | m_GOLDMONT_PLUS
 	  | m_TREMONT | m_AMDFAM10 | m_BDVER | m_BTVER | m_ZNVER | m_GENERIC)
 
-/* X86_TUNE_SSE_UNALIGNED_STORE_OPTIMAL: Use movups for misaligned stores instead
-   of a sequence loading registers by parts.  */
+/* X86_TUNE_SSE_UNALIGNED_STORE_OPTIMAL: Use movups for misaligned stores
+   instead of a sequence loading registers by parts.  */
 DEF_TUNE (X86_TUNE_SSE_UNALIGNED_STORE_OPTIMAL, "sse_unaligned_store_optimal",
 	  m_NEHALEM | m_SANDYBRIDGE | m_CORE_AVX2 | m_SILVERMONT | m_KNL | m_KNM
 	  | m_INTEL | m_GOLDMONT | m_GOLDMONT_PLUS
 	  | m_TREMONT | m_BDVER | m_ZNVER | m_GENERIC)
 
-/* Use packed single precision instructions where posisble.  I.e. movups instead
-   of movupd.  */
+/* X86_TUNE_SSE_PACKED_SINGLE_INSN_OPTIMAL: Use packed single
+   precision 128bit instructions instead of double where possible.   */
 DEF_TUNE (X86_TUNE_SSE_PACKED_SINGLE_INSN_OPTIMAL, "sse_packed_single_insn_optimal",
 	  m_BDVER | m_ZNVER)
 
@@ -433,7 +444,7 @@ DEF_TUNE (X86_TUNE_AVOID_128FMA_CHAINS, "avoid_fma_chains", m_ZNVER)
 
 /* X86_TUNE_AVOID_256FMA_CHAINS: Avoid creating loops with tight 256bit or
    smaller FMA chain.  */
-DEF_TUNE (X86_TUNE_AVOID_256FMA_CHAINS, "avoid_fma256_chains", m_ZNVER2)
+DEF_TUNE (X86_TUNE_AVOID_256FMA_CHAINS, "avoid_fma256_chains", m_ZNVER2 | m_ZNVER3)
 
 /*****************************************************************************/
 /* AVX instruction selection tuning (some of SSE flags affects AVX, too)     */
@@ -448,6 +459,10 @@ DEF_TUNE (X86_TUNE_AVX256_UNALIGNED_LOAD_OPTIMAL, "256_unaligned_load_optimal",
    split.  */
 DEF_TUNE (X86_TUNE_AVX256_UNALIGNED_STORE_OPTIMAL, "256_unaligned_store_optimal",
 	  ~(m_NEHALEM | m_SANDYBRIDGE | m_BDVER | m_ZNVER1 | m_GENERIC))
+
+/* X86_TUNE_AVX256_SPLIT_REGS: if true, AVX256 ops are split into two AVX128 ops.  */
+DEF_TUNE (X86_TUNE_AVX256_SPLIT_REGS, "avx256_split_regs",m_BDVER | m_BTVER2
+	  | m_ZNVER1)
 
 /* X86_TUNE_AVX128_OPTIMAL: Enable 128-bit AVX instruction generation for
    the auto-vectorizer.  */

@@ -471,6 +471,9 @@ void FuncDeclaration::semantic(Scope *sc)
         _scope = NULL;
     }
 
+    if (!sc || errors)
+        return;
+
     parent = sc->parent;
     Dsymbol *parent = toParent();
 
@@ -873,7 +876,7 @@ void FuncDeclaration::semantic(Scope *sc)
 
                 /* These quirky conditions mimic what VC++ appears to do
                  */
-                if (global.params.mscoff && cd->cpp &&
+                if (global.params.mscoff && cd->isCPPclass() &&
                     cd->baseClass && cd->baseClass->vtbl.dim)
                 {
                     /* if overriding an interface function, then this is not
@@ -899,7 +902,7 @@ void FuncDeclaration::semantic(Scope *sc)
                 {
                     //printf("\tintroducing function %s\n", toChars());
                     introducing = 1;
-                    if (cd->cpp && Target::reverseCppOverloads)
+                    if (cd->isCPPclass() && Target::reverseCppOverloads)
                     {
                         // with dmc, overloaded functions are grouped and in reverse order
                         vtblIndex = (int)cd->vtbl.dim;
@@ -932,6 +935,7 @@ void FuncDeclaration::semantic(Scope *sc)
 
             case -2:
                 // can't determine because of forward references
+                errors = true;
                 return;
 
             default:
@@ -1049,6 +1053,7 @@ void FuncDeclaration::semantic(Scope *sc)
 
                 case -2:
                     // can't determine because of forward references
+                    errors = true;
                     return;
 
                 default:
@@ -1207,8 +1212,9 @@ Ldone:
         if (type && mod)
         {
             printedMain = true;
-            const char *name = FileName::searchPath(global.path, mod->srcfile->toChars(), true);
-            message("entry     %-10s\t%s", type, name);
+            const char *name = mod->srcfile->toChars();
+            const char *path = FileName::searchPath(global.path, name, true);
+            message("entry     %-10s\t%s", type, path ? path : name);
         }
     }
 
@@ -1486,8 +1492,7 @@ void FuncDeclaration::semantic3(Scope *sc)
          * e.g.
          *      class C { int x; static assert(is(typeof({ this.x = 1; }))); }
          *
-         * To properly accept it, mark these lambdas as member functions -
-         * isThis() returns true and isNested() returns false.
+         * To properly accept it, mark these lambdas as member functions.
          */
         if (FuncLiteralDeclaration *fld = isFuncLiteralDeclaration())
         {
@@ -1505,7 +1510,6 @@ void FuncDeclaration::semantic3(Scope *sc)
                     if (fld->tok != TOKfunction)
                         fld->tok = TOKdelegate;
                 }
-                assert(!isNested());
             }
         }
 
@@ -1520,6 +1524,18 @@ void FuncDeclaration::semantic3(Scope *sc)
         {
             if (f->linkage == LINKd)
             {
+                // Variadic arguments depend on Typeinfo being defined
+                if (!global.params.useTypeInfo || !Type::dtypeinfo || !Type::typeinfotypelist)
+                {
+                    if (!global.params.useTypeInfo)
+                        error("D-style variadic functions cannot be used with -betterC");
+                    else if (!Type::typeinfotypelist)
+                        error("`object.TypeInfo_Tuple` could not be found, but is implicitly used in D-style variadic functions");
+                    else
+                        error("`object.TypeInfo` could not be found, but is implicitly used in D-style variadic functions");
+                    fatal();
+                }
+
                 // Declare _arguments[]
                 v_arguments = new VarDeclaration(Loc(), Type::typeinfotypelist->type, Id::_arguments_typeinfo, NULL);
                 v_arguments->storage_class |= STCtemp | STCparameter;

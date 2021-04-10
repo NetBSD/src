@@ -1,5 +1,5 @@
 /* Command line option handling.
-   Copyright (C) 2006-2019 Free Software Foundation, Inc.
+   Copyright (C) 2006-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -510,6 +510,17 @@ add_misspelling_candidates (auto_vec<char *> *candidates,
 	  candidates->safe_push (alternative);
 	}
     }
+
+  /* For all params (e.g. --param=key=value),
+     include also '--param key=value'.  */
+  const char *prefix = "--param=";
+  if (strstr (opt_text, prefix) == opt_text)
+    {
+      char *param = xstrdup (opt_text + 1);
+      gcc_assert (param[6] == '=');
+      param[6] = ' ';
+      candidates->safe_push (param);
+    }
 }
 
 /* Decode the switch beginning at ARGV for the language indicated by
@@ -667,7 +678,7 @@ decode_cmdline_option (const char **argv, unsigned int lang_mask,
       size_t new_opt_index = option->alias_target;
 
       if (new_opt_index == OPT_SPECIAL_ignore
-	  || new_opt_index == OPT_SPECIAL_deprecated)
+	  || new_opt_index == OPT_SPECIAL_warn_removed)
 	{
 	  gcc_assert (option->alias_arg == NULL);
 	  gcc_assert (option->neg_alias_arg == NULL);
@@ -840,7 +851,7 @@ decode_cmdline_option (const char **argv, unsigned int lang_mask,
 	decoded->canonical_option[i] = NULL;
     }
   if (opt_index != OPT_SPECIAL_unknown && opt_index != OPT_SPECIAL_ignore
-      && opt_index != OPT_SPECIAL_deprecated)
+      && opt_index != OPT_SPECIAL_warn_removed)
     {
       generate_canonical_option (opt_index, arg, value, decoded);
       if (separate_args > 1)
@@ -961,6 +972,15 @@ decode_cmdline_options_to_array (unsigned int argc, const char **argv,
 	  continue;
 	}
 
+      /* Interpret "--param" "key=name" as "--param=key=name".  */
+      const char *needle = "--param";
+      if (i + 1 < argc && strcmp (opt, needle) == 0)
+	{
+	  const char *replacement
+	    = opts_concat (needle, "=", argv[i + 1], NULL);
+	  argv[++i] = replacement;
+	}
+
       n = decode_cmdline_option (argv + i, lang_mask,
 				 &opt_array[num_decoded_options]);
       num_decoded_options++;
@@ -1018,7 +1038,7 @@ prune_options (struct cl_decoded_option **decoded_options,
 	{
 	case OPT_SPECIAL_unknown:
 	case OPT_SPECIAL_ignore:
-	case OPT_SPECIAL_deprecated:
+	case OPT_SPECIAL_warn_removed:
 	case OPT_SPECIAL_program_name:
 	case OPT_SPECIAL_input_file:
 	  goto keep;
@@ -1252,7 +1272,7 @@ cmdline_handle_error (location_t loc, const struct cl_option *option,
 {
   if (errors & CL_ERR_DISABLED)
     {
-      error_at (loc, "command line option %qs"
+      error_at (loc, "command-line option %qs"
 		     " is not supported by this configuration", opt);
       return true;
     }
@@ -1341,14 +1361,14 @@ read_cmdline_option (struct gcc_options *opts,
   if (decoded->opt_index == OPT_SPECIAL_unknown)
     {
       if (handlers->unknown_option_callback (decoded))
-	error_at (loc, "unrecognized command line option %qs", decoded->arg);
+	error_at (loc, "unrecognized command-line option %qs", decoded->arg);
       return;
     }
 
   if (decoded->opt_index == OPT_SPECIAL_ignore)
     return;
 
-  if (decoded->opt_index == OPT_SPECIAL_deprecated)
+  if (decoded->opt_index == OPT_SPECIAL_warn_removed)
     {
       /* Warn only about positive ignored options.  */
       if (decoded->value)
@@ -1373,7 +1393,7 @@ read_cmdline_option (struct gcc_options *opts,
 
   if (!handle_option (opts, opts_set, decoded, lang_mask, DK_UNSPECIFIED,
 		      loc, handlers, false, dc))
-    error_at (loc, "unrecognized command line option %qs", opt);
+    error_at (loc, "unrecognized command-line option %qs", opt);
 }
 
 /* Set any field in OPTS, and OPTS_SET if not NULL, for option
@@ -1526,9 +1546,17 @@ option_flag_var (int opt_index, struct gcc_options *opts)
    or -1 if it isn't a simple on-off switch.  */
 
 int
-option_enabled (int opt_idx, void *opts)
+option_enabled (int opt_idx, unsigned lang_mask, void *opts)
 {
   const struct cl_option *option = &(cl_options[opt_idx]);
+
+  /* A language-specific option can only be considered enabled when it's
+     valid for the current language.  */
+  if (!(option->flags & CL_COMMON)
+      && (option->flags & CL_LANG_ALL)
+      && !(option->flags & lang_mask))
+    return 0;
+
   struct gcc_options *optsg = (struct gcc_options *) opts;
   void *flag_var = option_flag_var (opt_idx, optsg);
 
@@ -1598,7 +1626,7 @@ get_option_state (struct gcc_options *opts, int option,
 
     case CLVC_BIT_CLEAR:
     case CLVC_BIT_SET:
-      state->ch = option_enabled (option, opts);
+      state->ch = option_enabled (option, -1, opts);
       state->data = &state->ch;
       state->size = 1;
       break;
@@ -1645,7 +1673,7 @@ control_warning_option (unsigned int opt_index, int kind, const char *arg,
 	arg = cl_options[opt_index].alias_arg;
       opt_index = cl_options[opt_index].alias_target;
     }
-  if (opt_index == OPT_SPECIAL_ignore || opt_index == OPT_SPECIAL_deprecated)
+  if (opt_index == OPT_SPECIAL_ignore || opt_index == OPT_SPECIAL_warn_removed)
     return;
   if (dc)
     diagnostic_classify_diagnostic (dc, opt_index, (diagnostic_t) kind, loc);
@@ -1709,5 +1737,71 @@ control_warning_option (unsigned int opt_index, int kind, const char *arg,
 				   opt_index, arg, value, lang_mask,
 				   kind, loc, handlers, false, dc);
 	}
+    }
+}
+
+/* Parse options in COLLECT_GCC_OPTIONS and push them on ARGV_OBSTACK.
+   Store number of arguments into ARGC_P.  */
+
+void
+parse_options_from_collect_gcc_options (const char *collect_gcc_options,
+					obstack *argv_obstack,
+					int *argc_p)
+{
+  char *argv_storage = xstrdup (collect_gcc_options);
+  int j, k;
+
+  for (j = 0, k = 0; argv_storage[j] != '\0'; ++j)
+    {
+      if (argv_storage[j] == '\'')
+	{
+	  obstack_ptr_grow (argv_obstack, &argv_storage[k]);
+	  ++j;
+	  do
+	    {
+	      if (argv_storage[j] == '\0')
+		fatal_error (input_location,
+			     "malformed %<COLLECT_GCC_OPTIONS%>");
+	      else if (strncmp (&argv_storage[j], "'\\''", 4) == 0)
+		{
+		  argv_storage[k++] = '\'';
+		  j += 4;
+		}
+	      else if (argv_storage[j] == '\'')
+		break;
+	      else
+		argv_storage[k++] = argv_storage[j++];
+	    }
+	  while (1);
+	  argv_storage[k++] = '\0';
+	}
+    }
+
+  obstack_ptr_grow (argv_obstack, NULL);
+  *argc_p = obstack_object_size (argv_obstack) / sizeof (void *) - 1;
+}
+
+/* Prepend -Xassembler for each option in COLLECT_AS_OPTIONS,
+   and push on O.  */
+
+void prepend_xassembler_to_collect_as_options (const char *collect_as_options,
+					       obstack *o)
+{
+  obstack opts_obstack;
+  int opts_count;
+
+  obstack_init (&opts_obstack);
+  parse_options_from_collect_gcc_options (collect_as_options,
+					  &opts_obstack, &opts_count);
+  const char **assembler_opts = XOBFINISH (&opts_obstack, const char **);
+
+  for (int i = 0; i < opts_count; i++)
+    {
+      obstack_grow (o, " '-Xassembler' ",
+		    strlen (" '-Xassembler' "));
+      const char *opt = assembler_opts[i];
+      obstack_1grow (o, '\'');
+      obstack_grow (o, opt, strlen (opt));
+      obstack_1grow (o, '\'');
     }
 }

@@ -1,5 +1,5 @@
 /* Target Newlib Definitions for OpenRISC.
-   Copyright (C) 2018-2019 Free Software Foundation, Inc.
+   Copyright (C) 2018-2020 Free Software Foundation, Inc.
    Contributed by Joel Sherrill (joel.sherrill@OARcorp.com).
 
    This file is part of GCC.
@@ -28,3 +28,6 @@
 	builtin_assert ("system=rtems");	\
     }						\
   while (0)
+
+#define RTEMS_STARTFILE_SPEC "crtbegin%O%s"
+#define RTEMS_ENDFILE_SPEC "crtend%O%s"

@@ -1,5 +1,5 @@
 /* Iterator routines for manipulating GENERIC tree statement list.
-   Copyright (C) 2003-2019 Free Software Foundation, Inc.
+   Copyright (C) 2003-2020 Free Software Foundation, Inc.
    Contributed by Andrew MacLeod  <amacleod@redhat.com>
 
 This file is part of GCC.
@@ -119,5 +119,6 @@ extern void append_to_statement_list (tree, tree *);
 extern void append_to_statement_list_force (tree, tree *);
 extern tree expr_first (tree);
 extern tree expr_last (tree);
+extern tree expr_single (tree);
 
 #endif /* GCC_TREE_ITERATOR_H  */

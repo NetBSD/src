@@ -1,5 +1,5 @@
 ;;- Machine description for HP PA-RISC architecture for GCC compiler
-;;   Copyright (C) 1992-2019 Free Software Foundation, Inc.
+;;   Copyright (C) 1992-2020 Free Software Foundation, Inc.
 ;;   Contributed by the Center for Software Science at the University
 ;;   of Utah.
 
@@ -3162,9 +3162,9 @@
 
 ;; The definition of this insn does not really explain what it does,
 ;; but it should suffice that anything generated as this insn will be
-;; recognized as a movmemsi operation, and that it will not successfully
+;; recognized as a cpymemsi operation, and that it will not successfully
 ;; combine with anything.
-(define_expand "movmemsi"
+(define_expand "cpymemsi"
   [(parallel [(set (match_operand:BLK 0 "" "")
 		   (match_operand:BLK 1 "" ""))
 	      (clobber (match_dup 4))
@@ -3244,7 +3244,7 @@
 ;; operands 0 and 1 are both equivalent to symbolic MEMs.  Thus, we are
 ;; forced to internally copy operands 0 and 1 to operands 7 and 8,
 ;; respectively.  We then split or peephole optimize after reload.
-(define_insn "movmemsi_prereload"
+(define_insn "cpymemsi_prereload"
   [(set (mem:BLK (match_operand:SI 0 "register_operand" "r,r"))
 	(mem:BLK (match_operand:SI 1 "register_operand" "r,r")))
    (clobber (match_operand:SI 2 "register_operand" "=&r,&r"))	;loop cnt/tmp
@@ -3337,7 +3337,7 @@
     }
 }")
 
-(define_insn "movmemsi_postreload"
+(define_insn "cpymemsi_postreload"
   [(set (mem:BLK (match_operand:SI 0 "register_operand" "+r,r"))
 	(mem:BLK (match_operand:SI 1 "register_operand" "+r,r")))
    (clobber (match_operand:SI 2 "register_operand" "=&r,&r"))	;loop cnt/tmp
@@ -3352,7 +3352,7 @@
   "* return pa_output_block_move (operands, !which_alternative);"
   [(set_attr "type" "multi,multi")])
 
-(define_expand "movmemdi"
+(define_expand "cpymemdi"
   [(parallel [(set (match_operand:BLK 0 "" "")
 		   (match_operand:BLK 1 "" ""))
 	      (clobber (match_dup 4))
@@ -3432,7 +3432,7 @@
 ;; operands 0 and 1 are both equivalent to symbolic MEMs.  Thus, we are
 ;; forced to internally copy operands 0 and 1 to operands 7 and 8,
 ;; respectively.  We then split or peephole optimize after reload.
-(define_insn "movmemdi_prereload"
+(define_insn "cpymemdi_prereload"
   [(set (mem:BLK (match_operand:DI 0 "register_operand" "r,r"))
 	(mem:BLK (match_operand:DI 1 "register_operand" "r,r")))
    (clobber (match_operand:DI 2 "register_operand" "=&r,&r"))	;loop cnt/tmp
@@ -3525,7 +3525,7 @@
     }
 }")
 
-(define_insn "movmemdi_postreload"
+(define_insn "cpymemdi_postreload"
   [(set (mem:BLK (match_operand:DI 0 "register_operand" "+r,r"))
 	(mem:BLK (match_operand:DI 1 "register_operand" "+r,r")))
    (clobber (match_operand:DI 2 "register_operand" "=&r,&r"))	;loop cnt/tmp
@@ -6416,9 +6416,32 @@
   [(set (match_operand:DI 0 "register_operand" "")
 	(ashift:DI (match_operand:DI 1 "lhs_lshift_operand" "")
 		   (match_operand:DI 2 "arith32_operand" "")))]
-  "TARGET_64BIT"
+  ""
   "
 {
+  if (!TARGET_64BIT)
+    {
+      if (REG_P (operands[0]) && GET_CODE (operands[2]) == CONST_INT)
+	{
+	  unsigned HOST_WIDE_INT shift = UINTVAL (operands[2]);
+	  if (shift >= 1 && shift <= 31)
+	    {
+	      rtx dst = operands[0];
+	      rtx src = force_reg (DImode, operands[1]);
+	      emit_insn (gen_shd_internal (gen_highpart (SImode, dst),
+					   gen_lowpart (SImode, src),
+					   GEN_INT (32-shift),
+					   gen_highpart (SImode, src),
+					   GEN_INT (shift)));
+	      emit_insn (gen_ashlsi3 (gen_lowpart (SImode, dst),
+				      gen_lowpart (SImode, src),
+				      GEN_INT (shift)));
+	      DONE;
+	    }
+	}
+      /* Fallback to using optabs.c's expand_doubleword_shift.  */
+      FAIL;
+    }
   if (GET_CODE (operands[2]) != CONST_INT)
     {
       rtx temp = gen_reg_rtx (DImode);
@@ -6604,32 +6627,82 @@
    (set_attr "length" "4")])
 
 ; Shift right pair word 0 to 31 bits.
-(define_insn "shrpsi4"
-  [(set (match_operand:SI 0 "register_operand" "=r,r")
-	(ior:SI (ashift:SI (match_operand:SI 1 "register_operand" "r,r")
-			   (minus:SI (const_int 32)
-			     (match_operand:SI 3 "shift5_operand" "q,n")))
-		(lshiftrt:SI (match_operand:SI 2 "register_operand" "r,r")
-			     (match_dup 3))))]
+(define_insn "*shrpsi4_1"
+  [(set (match_operand:SI 0 "register_operand" "=r")
+	(match_operator:SI 4 "plus_xor_ior_operator"
+	  [(ashift:SI (match_operand:SI 1 "register_operand" "r")
+		      (minus:SI (const_int 32)
+				(match_operand:SI 3 "register_operand" "q")))
+	   (lshiftrt:SI (match_operand:SI 2 "register_operand" "r")
+			(match_dup 3))]))]
   ""
-  "@
-   {vshd %1,%2,%0|shrpw %1,%2,%%sar,%0}
-   {shd|shrpw} %1,%2,%3,%0"
+  "{vshd %1,%2,%0|shrpw %1,%2,%%sar,%0}"
+  [(set_attr "type" "shift")
+   (set_attr "length" "4")])
+
+(define_insn "*shrpsi4_2"
+  [(set (match_operand:SI 0 "register_operand" "=r")
+	(match_operator:SI 4 "plus_xor_ior_operator"
+	  [(lshiftrt:SI (match_operand:SI 2 "register_operand" "r")
+			(match_operand:SI 3 "register_operand" "q"))
+	   (ashift:SI (match_operand:SI 1 "register_operand" "r")
+		      (minus:SI (const_int 32)
+				(match_dup 3)))]))]
+  ""
+  "{vshd %1,%2,%0|shrpw %1,%2,%%sar,%0}"
   [(set_attr "type" "shift")
    (set_attr "length" "4")])
 
 ; Shift right pair doubleword 0 to 63 bits.
-(define_insn "shrpdi4"
-  [(set (match_operand:DI 0 "register_operand" "=r,r")
-	(ior:DI (ashift:DI (match_operand:SI 1 "register_operand" "r,r")
-			   (minus:DI (const_int 64)
-			     (match_operand:DI 3 "shift6_operand" "q,n")))
-		(lshiftrt:DI (match_operand:DI 2 "register_operand" "r,r")
-			     (match_dup 3))))]
+(define_insn "*shrpdi4_1"
+  [(set (match_operand:DI 0 "register_operand" "=r")
+	(match_operator:DI 4 "plus_xor_ior_operator"
+	  [(ashift:DI (match_operand:DI 1 "register_operand" "r")
+		      (minus:DI (const_int 64)
+				(match_operand:DI 3 "register_operand" "q")))
+	   (lshiftrt:DI (match_operand:DI 2 "register_operand" "r")
+			(match_dup 3))]))]
   "TARGET_64BIT"
-  "@
-   shrpd %1,%2,%%sar,%0
-   shrpd %1,%2,%3,%0"
+  "shrpd %1,%2,%%sar,%0"
+  [(set_attr "type" "shift")
+   (set_attr "length" "4")])
+
+(define_insn "*shrpdi4_2"
+  [(set (match_operand:DI 0 "register_operand" "=r")
+	(match_operator:DI 4 "plus_xor_ior_operator"
+	  [(lshiftrt:DI (match_operand:DI 2 "register_operand" "r")
+			(match_operand:DI 3 "shift6_operand" "q"))
+	   (ashift:DI (match_operand:SI 1 "register_operand" "r")
+		      (minus:DI (const_int 64)
+				(match_dup 3)))]))]
+  "TARGET_64BIT"
+  "shrpd %1,%2,%%sar,%0"
+  [(set_attr "type" "shift")
+   (set_attr "length" "4")])
+
+(define_insn "*shrpdi4_3"
+  [(set (match_operand:DI 0 "register_operand" "=r")
+	(match_operator:DI 5 "plus_xor_ior_operator"
+	  [(ashift:DI (match_operand:DI 1 "register_operand" "r")
+		      (match_operand:DI 3 "const_int_operand" "n"))
+	   (lshiftrt:DI (match_operand:DI 2 "register_operand" "r")
+			(match_operand:DI 4 "const_int_operand" "n"))]))]
+  "TARGET_64BIT
+   && INTVAL (operands[3]) + INTVAL (operands[4]) == 64"
+  "shrpd %1,%2,%4,%0"
+  [(set_attr "type" "shift")
+   (set_attr "length" "4")])
+
+(define_insn "*shrpdi4_4"
+  [(set (match_operand:DI 0 "register_operand" "=r")
+	(match_operator:DI 5 "plus_xor_ior_operator"
+	  [(lshiftrt:DI (match_operand:DI 2 "register_operand" "r")
+			(match_operand:DI 4 "const_int_operand" "n"))
+	   (ashift:DI (match_operand:DI 1 "register_operand" "r")
+		      (match_operand:DI 3 "const_int_operand" "n"))]))]
+  "TARGET_64BIT
+   && INTVAL (operands[3]) + INTVAL (operands[4]) == 64"
+  "shrpd %1,%2,%4,%0"
   [(set_attr "type" "shift")
    (set_attr "length" "4")])
 
@@ -6668,7 +6741,7 @@
   /* Else expand normally.  */
 }")
 
-(define_insn ""
+(define_insn "*rotlsi3_internal"
   [(set (match_operand:SI 0 "register_operand" "=r")
         (rotate:SI (match_operand:SI 1 "register_operand" "r")
                    (match_operand:SI 2 "const_int_operand" "n")))]
@@ -6677,6 +6750,54 @@
 {
   operands[2] = GEN_INT ((32 - INTVAL (operands[2])) & 31);
   return \"{shd|shrpw} %1,%1,%2,%0\";
+}"
+  [(set_attr "type" "shift")
+   (set_attr "length" "4")])
+
+(define_insn "rotrdi3"
+  [(set (match_operand:DI 0 "register_operand" "=r,r")
+	(rotatert:DI (match_operand:DI 1 "register_operand" "r,r")
+		     (match_operand:DI 2 "shift6_operand" "q,n")))]
+  "TARGET_64BIT"
+  "*
+{
+  if (GET_CODE (operands[2]) == CONST_INT)
+    {
+      operands[2] = GEN_INT (INTVAL (operands[2]) & 63);
+      return \"shrpd %1,%1,%2,%0\";
+    }
+  else
+    return \"shrpd %1,%1,%%sar,%0\";
+}"
+  [(set_attr "type" "shift")
+   (set_attr "length" "4")])
+
+(define_expand "rotldi3"
+  [(set (match_operand:DI 0 "register_operand" "")
+        (rotate:DI (match_operand:DI 1 "register_operand" "")
+                   (match_operand:DI 2 "arith32_operand" "")))]
+  "TARGET_64BIT"
+  "
+{
+  if (GET_CODE (operands[2]) != CONST_INT)
+    {
+      rtx temp = gen_reg_rtx (DImode);
+      emit_insn (gen_subdi3 (temp, GEN_INT (64), operands[2]));
+      emit_insn (gen_rotrdi3 (operands[0], operands[1], temp));
+      DONE;
+    }
+  /* Else expand normally.  */
+}")
+
+(define_insn "*rotldi3_internal"
+  [(set (match_operand:DI 0 "register_operand" "=r")
+        (rotate:DI (match_operand:DI 1 "register_operand" "r")
+                   (match_operand:DI 2 "const_int_operand" "n")))]
+  "TARGET_64BIT"
+  "*
+{
+  operands[2] = GEN_INT ((64 - INTVAL (operands[2])) & 63);
+  return \"shrpd %1,%1,%2,%0\";
 }"
   [(set_attr "type" "shift")
    (set_attr "length" "4")])
@@ -6704,6 +6825,15 @@
   "{shd|shrpw} %1,%2,%4,%0"
   [(set_attr "type" "shift")
    (set_attr "length" "4")])
+
+(define_expand "shd_internal"
+  [(set (match_operand:SI 0 "register_operand")
+	(ior:SI
+	  (lshiftrt:SI (match_operand:SI 1 "register_operand")
+		       (match_operand:SI 2 "const_int_operand"))
+	  (ashift:SI (match_operand:SI 3 "register_operand")
+		     (match_operand:SI 4 "const_int_operand"))))]
+  "")
 
 (define_insn ""
   [(set (match_operand:SI 0 "register_operand" "=r")
@@ -6909,10 +7039,7 @@
 
   lab = copy_to_reg (lab);
 
-  /* Restore the stack and frame pointers.  The virtual_stack_vars_rtx
-     is saved instead of the hard_frame_pointer_rtx in the save area.
-     As a result, an extra instruction is needed to adjust for the offset
-     of the virtual stack variables and the hard frame pointer.  */
+  /* Restore the stack and frame pointers.  */
   fp = copy_to_reg (fp);
   emit_stack_restore (SAVE_NONLOCAL, stack);
 
@@ -6920,7 +7047,7 @@
   emit_insn (gen_blockage ());
   emit_clobber (hard_frame_pointer_rtx);
   emit_clobber (frame_pointer_rtx);
-  emit_move_insn (hard_frame_pointer_rtx, plus_constant (Pmode, fp, -8));
+  emit_move_insn (hard_frame_pointer_rtx, fp);
 
   emit_use (hard_frame_pointer_rtx);
   emit_use (stack_pointer_rtx);
@@ -8703,9 +8830,7 @@ add,l %2,%3,%3\;bv,n %%r0(%3)"
      restoring the gp.  */
   emit_move_insn (pv, lab);
 
-  /* Restore the stack and frame pointers.  The virtual_stack_vars_rtx
-     is saved instead of the hard_frame_pointer_rtx in the save area.
-     We need to adjust for the offset between these two values.  */
+  /* Restore the stack and frame pointers.  */
   fp = copy_to_reg (fp);
   emit_stack_restore (SAVE_NONLOCAL, stack);
 
@@ -8713,7 +8838,7 @@ add,l %2,%3,%3\;bv,n %%r0(%3)"
   emit_insn (gen_blockage ());
   emit_clobber (hard_frame_pointer_rtx);
   emit_clobber (frame_pointer_rtx);
-  emit_move_insn (hard_frame_pointer_rtx, plus_constant (Pmode, fp, -8));
+  emit_move_insn (hard_frame_pointer_rtx, fp);
 
   emit_use (hard_frame_pointer_rtx);
   emit_use (stack_pointer_rtx);

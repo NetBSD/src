@@ -1,5 +1,5 @@
 /* Pass manager for Fortran front end.
-   Copyright (C) 2010-2019 Free Software Foundation, Inc.
+   Copyright (C) 2010-2020 Free Software Foundation, Inc.
    Contributed by Thomas König.
 
 This file is part of GCC.
@@ -54,10 +54,8 @@ static gfc_code * create_do_loop (gfc_expr *, gfc_expr *, gfc_expr *,
 static gfc_expr* check_conjg_transpose_variable (gfc_expr *, bool *,
 						 bool *);
 static int call_external_blas (gfc_code **, int *, void *);
-static bool has_dimen_vector_ref (gfc_expr *);
 static int matmul_temp_args (gfc_code **, int *,void *data);
 static int index_interchange (gfc_code **, int*, void *);
-
 static bool is_fe_temp (gfc_expr *e);
 
 #ifdef CHECKING_P
@@ -2617,7 +2615,7 @@ do_subscript (gfc_expr **e)
 		{
 		  sgn = mpz_cmp_ui (dl->ext.iterator->step->value.integer, 0);
 		  /* This can happen, but then the error has been
-		     reported previusly.  */
+		     reported previously.  */
 		  if (sgn == 0)
 		    continue;
 
@@ -2909,7 +2907,7 @@ matmul_temp_args (gfc_code **c, int *walk_subtrees ATTRIBUTE_UNUSED,
     {
       if (matrix_a->expr_type == EXPR_VARIABLE
 	  && (gfc_check_dependency (matrix_a, expr1, true)
-	      || has_dimen_vector_ref (matrix_a)))
+	      || gfc_has_dimen_vector_ref (matrix_a)))
 	a_tmp = true;
     }
   else
@@ -2922,7 +2920,7 @@ matmul_temp_args (gfc_code **c, int *walk_subtrees ATTRIBUTE_UNUSED,
     {
       if (matrix_b->expr_type == EXPR_VARIABLE
 	  && (gfc_check_dependency (matrix_b, expr1, true)
-	      || has_dimen_vector_ref (matrix_b)))
+	      || gfc_has_dimen_vector_ref (matrix_b)))
 	b_tmp = true;
     }
   else
@@ -3192,7 +3190,7 @@ matmul_lhs_realloc (gfc_expr *c, gfc_expr *a, gfc_expr *b,
   gcc_assert (ar && ar->type == AR_FULL);
 
   /* c comes in as a full ref.  Change it into a copy and make it into an
-     element ref so it has the right form for for ALLOCATE.  In the same
+     element ref so it has the right form for ALLOCATE.  In the same
      switch statement, also generate the size comparison for the secod IF
      statement.  */
 
@@ -3722,8 +3720,8 @@ scalarized_expr (gfc_expr *e_in, gfc_expr **index, int count_index)
 
 /* Helper function to check for a dimen vector as subscript.  */
 
-static bool
-has_dimen_vector_ref (gfc_expr *e)
+bool
+gfc_has_dimen_vector_ref (gfc_expr *e)
 {
   gfc_array_ref *ar;
   int i;
@@ -3879,8 +3877,8 @@ inline_matmul_assign (gfc_code **c, int *walk_subtrees,
   if (matrix_b == NULL)
     return 0;
 
-  if (has_dimen_vector_ref (expr1) || has_dimen_vector_ref (matrix_a)
-      || has_dimen_vector_ref (matrix_b))
+  if (gfc_has_dimen_vector_ref (expr1) || gfc_has_dimen_vector_ref (matrix_a)
+      || gfc_has_dimen_vector_ref (matrix_b))
     return 0;
 
   /* We do not handle data dependencies yet.  */
@@ -5387,4 +5385,208 @@ gfc_code_walker (gfc_code **c, walk_code_fn_t codefn, walk_expr_fn_t exprfn,
 	}
     }
   return 0;
+}
+
+/* As a post-resolution step, check that all global symbols which are
+   not declared in the source file match in their call signatures.
+   We do this by looping over the code (and expressions). The first call
+   we happen to find is assumed to be canonical.  */
+
+
+/* Common tests for argument checking for both functions and subroutines.  */
+
+static int
+check_externals_procedure (gfc_symbol *sym, locus *loc,
+			   gfc_actual_arglist *actual)
+{
+  gfc_gsymbol *gsym;
+  gfc_symbol *def_sym = NULL;
+
+ if (sym == NULL || sym->attr.is_bind_c)
+    return 0;
+
+  if (sym->attr.proc != PROC_EXTERNAL && sym->attr.proc != PROC_UNKNOWN)
+    return 0;
+
+  if (sym->attr.if_source == IFSRC_IFBODY || sym->attr.if_source == IFSRC_DECL)
+    return 0;
+
+  gsym = gfc_find_gsymbol (gfc_gsym_root, sym->name);
+  if (gsym == NULL)
+    return 0;
+
+  if (gsym->ns)
+    gfc_find_symbol (sym->name, gsym->ns, 0, &def_sym);
+
+  if (def_sym)
+    {
+      gfc_compare_actual_formal (&actual, def_sym->formal, 0, 0, 0, loc);
+      return 0;
+    }
+
+  /* First time we have seen this procedure called. Let's create an
+     "interface" from the call and put it into a new namespace.  */
+  gfc_namespace *save_ns;
+  gfc_symbol *new_sym;
+
+  gsym->where = *loc;
+  save_ns = gfc_current_ns;
+  gsym->ns = gfc_get_namespace (gfc_current_ns, 0);
+  gsym->ns->proc_name = sym;
+
+  gfc_get_symbol (sym->name, gsym->ns, &new_sym);
+  gcc_assert (new_sym);
+  new_sym->attr = sym->attr;
+  new_sym->attr.if_source = IFSRC_DECL;
+  gfc_current_ns = gsym->ns;
+
+  gfc_get_formal_from_actual_arglist (new_sym, actual);
+  gfc_current_ns = save_ns;
+
+  return 0;
+
+}
+
+/* Callback for calls of external routines.  */
+
+static int
+check_externals_code (gfc_code **c, int *walk_subtrees ATTRIBUTE_UNUSED,
+		      void *data ATTRIBUTE_UNUSED)
+{
+  gfc_code *co = *c;
+  gfc_symbol *sym;
+  locus *loc;
+  gfc_actual_arglist *actual;
+
+  if (co->op != EXEC_CALL)
+    return 0;
+
+  sym = co->resolved_sym;
+  loc = &co->loc;
+  actual = co->ext.actual;
+
+  return check_externals_procedure (sym, loc, actual);
+
+}
+
+/* Callback for external functions.  */
+
+static int
+check_externals_expr (gfc_expr **ep, int *walk_subtrees ATTRIBUTE_UNUSED,
+		      void *data ATTRIBUTE_UNUSED)
+{
+  gfc_expr *e = *ep;
+  gfc_symbol *sym;
+  locus *loc;
+  gfc_actual_arglist *actual;
+
+  if (e->expr_type != EXPR_FUNCTION)
+    return 0;
+
+  sym = e->value.function.esym;
+  if (sym == NULL)
+    return 0;
+
+  loc = &e->where;
+  actual = e->value.function.actual;
+
+  return check_externals_procedure (sym, loc, actual);
+}
+
+/* Called routine.  */
+
+void
+gfc_check_externals (gfc_namespace *ns)
+{
+
+  gfc_clear_error ();
+
+  /* Turn errors into warnings if the user indicated this.  */
+
+  if (!pedantic && flag_allow_argument_mismatch)
+    gfc_errors_to_warnings (true);
+
+  gfc_code_walker (&ns->code, check_externals_code, check_externals_expr, NULL);
+
+  for (ns = ns->contained; ns; ns = ns->sibling)
+    {
+      if (ns->code == NULL || ns->code->op != EXEC_BLOCK)
+	gfc_check_externals (ns);
+    }
+
+  gfc_errors_to_warnings (false);
+}
+
+/* Callback function. If there is a call to a subroutine which is
+   neither pure nor implicit_pure, unset the implicit_pure flag for
+   the caller and return -1.  */
+
+static int
+implicit_pure_call (gfc_code **c, int *walk_subtrees ATTRIBUTE_UNUSED,
+		    void *sym_data)
+{
+  gfc_code *co = *c;
+  gfc_symbol *caller_sym;
+  symbol_attribute *a;
+
+  if (co->op != EXEC_CALL || co->resolved_sym == NULL)
+    return 0;
+
+  a = &co->resolved_sym->attr;
+  if (a->intrinsic || a->pure || a->implicit_pure)
+    return 0;
+
+  caller_sym = (gfc_symbol *) sym_data;
+  gfc_unset_implicit_pure (caller_sym);
+  return 1;
+}
+
+/* Callback function. If there is a call to a function which is
+   neither pure nor implicit_pure, unset the implicit_pure flag for
+   the caller and return 1.  */
+
+static int
+implicit_pure_expr (gfc_expr **e, int *walk ATTRIBUTE_UNUSED, void *sym_data)
+{
+  gfc_expr *expr = *e;
+  gfc_symbol *caller_sym;
+  gfc_symbol *sym;
+  symbol_attribute *a;
+
+  if (expr->expr_type != EXPR_FUNCTION || expr->value.function.isym)
+    return 0;
+
+  sym = expr->symtree->n.sym;
+  a = &sym->attr;
+  if (a->pure || a->implicit_pure)
+    return 0;
+
+  caller_sym = (gfc_symbol *) sym_data;
+  gfc_unset_implicit_pure (caller_sym);
+  return 1;
+}
+
+/* Go through all procedures in the namespace and unset the
+   implicit_pure attribute for any procedure that calls something not
+   pure or implicit pure.  */
+
+bool
+gfc_fix_implicit_pure (gfc_namespace *ns)
+{
+  bool changed = false;
+  gfc_symbol *proc = ns->proc_name;
+
+  if (proc && proc->attr.flavor == FL_PROCEDURE && proc->attr.implicit_pure
+      && ns->code
+      && gfc_code_walker (&ns->code, implicit_pure_call, implicit_pure_expr,
+			  (void *) ns->proc_name))
+    changed = true;
+
+  for (ns = ns->contained; ns; ns = ns->sibling)
+    {
+      if (gfc_fix_implicit_pure (ns))
+	changed = true;
+    }
+
+  return changed;
 }

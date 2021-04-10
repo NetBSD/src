@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler. NEC V850 series
-   Copyright (C) 1996-2019 Free Software Foundation, Inc.
+   Copyright (C) 1996-2020 Free Software Foundation, Inc.
    Contributed by Jeff Law (law@cygnus.com).
 
    This file is part of GCC.
@@ -438,8 +438,9 @@ enum reg_class
 /* Base register for access to arguments of the function.  */
 #define ARG_POINTER_REGNUM 35
 
-/* Register in which static-chain is passed to a function.  */
-#define STATIC_CHAIN_REGNUM 20
+/* Register in which static-chain is passed to a function.
+   This must be a call used register.  */
+#define STATIC_CHAIN_REGNUM 19
 
 /* If defined, this macro specifies a table of register pairs used to
    eliminate unneeded registers that point into the stack frame.  If

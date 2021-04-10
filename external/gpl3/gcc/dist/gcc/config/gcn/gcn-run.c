@@ -1,7 +1,7 @@
 /* Run a stand-alone AMD GCN kernel.
 
    Copyright 2017 Mentor Graphics Corporation
-   Copyright 2018-2019 Free Software Foundation, Inc.
+   Copyright (C) 2018-2020 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -66,10 +66,13 @@ bool debug = false;
 
 hsa_agent_t device = { 0 };
 hsa_queue_t *queue = NULL;
-uint64_t kernel = 0;
+uint64_t init_array_kernel = 0;
+uint64_t fini_array_kernel = 0;
+uint64_t main_kernel = 0;
 hsa_executable_t executable = { 0 };
 
 hsa_region_t kernargs_region = { 0 };
+hsa_region_t heap_region = { 0 };
 uint32_t kernarg_segment_size = 0;
 uint32_t group_segment_size = 0;
 uint32_t private_segment_size = 0;
@@ -133,6 +136,8 @@ struct hsa_runtime_fn_info
 					hsa_signal_t *signal);
   hsa_status_t (*hsa_memory_allocate_fn) (hsa_region_t region, size_t size,
 					  void **ptr);
+  hsa_status_t (*hsa_memory_assign_agent_fn) (void *ptr, hsa_agent_t agent,
+					      hsa_access_permission_t access);
   hsa_status_t (*hsa_memory_copy_fn) (void *dst, const void *src,
 				      size_t size);
   hsa_status_t (*hsa_memory_free_fn) (void *ptr);
@@ -202,6 +207,7 @@ init_hsa_runtime_functions (void)
   DLSYM_FN (hsa_executable_freeze)
   DLSYM_FN (hsa_signal_create)
   DLSYM_FN (hsa_memory_allocate)
+  DLSYM_FN (hsa_memory_assign_agent)
   DLSYM_FN (hsa_memory_copy)
   DLSYM_FN (hsa_memory_free)
   DLSYM_FN (hsa_signal_destroy)
@@ -280,7 +286,8 @@ get_gpu_agent (hsa_agent_t agent, void *data __attribute__ ((unused)))
    suitable one has been found.  */
 
 static hsa_status_t
-get_kernarg_region (hsa_region_t region, void *data __attribute__ ((unused)))
+get_memory_region (hsa_region_t region, hsa_region_t *retval,
+		   hsa_region_global_flag_t kind)
 {
   /* Reject non-global regions.  */
   hsa_region_segment_t segment;
@@ -292,14 +299,28 @@ get_kernarg_region (hsa_region_t region, void *data __attribute__ ((unused)))
   hsa_region_global_flag_t flags;
   hsa_fns.hsa_region_get_info_fn (region, HSA_REGION_INFO_GLOBAL_FLAGS,
 				  &flags);
-  if (flags & HSA_REGION_GLOBAL_FLAG_KERNARG)
+  if (flags & kind)
     {
-      kernargs_region = region;
+      *retval = region;
       return HSA_STATUS_INFO_BREAK;
     }
 
   /* The region was not suitable.  */
   return HSA_STATUS_SUCCESS;
+}
+
+static hsa_status_t
+get_kernarg_region (hsa_region_t region, void *data __attribute__((unused)))
+{
+  return get_memory_region (region, &kernargs_region,
+			    HSA_REGION_GLOBAL_FLAG_KERNARG);
+}
+
+static hsa_status_t
+get_heap_region (hsa_region_t region, void *data __attribute__((unused)))
+{
+  return get_memory_region (region, &heap_region,
+			    HSA_REGION_GLOBAL_FLAG_COARSE_GRAINED);
 }
 
 /* Initialize the HSA Runtime library and GPU device.  */
@@ -336,6 +357,13 @@ init_device ()
 						  NULL),
 	    status == HSA_STATUS_SUCCESS || status == HSA_STATUS_INFO_BREAK,
 	    "Locate kernargs memory");
+
+  /* Select a memory region for the kernel heap.
+     The call-back function, get_heap_region, does the selection.  */
+  XHSA_CMP (hsa_fns.hsa_agent_iterate_regions_fn (device, get_heap_region,
+						  NULL),
+	    status == HSA_STATUS_SUCCESS || status == HSA_STATUS_INFO_BREAK,
+	    "Locate device memory");
 }
 
 
@@ -427,14 +455,30 @@ load_image (const char *filename)
   XHSA (hsa_fns.hsa_executable_freeze_fn (executable, ""),
 	"Freeze GCN executable");
 
-  /* Locate the "main" function, and read the kernel's properties.  */
+  /* Locate the "_init_array" function, and read the kernel's properties.  */
   hsa_executable_symbol_t symbol;
+  XHSA (hsa_fns.hsa_executable_get_symbol_fn (executable, NULL, "_init_array",
+					      device, 0, &symbol),
+	"Find '_init_array' function");
+  XHSA (hsa_fns.hsa_executable_symbol_get_info_fn
+	    (symbol, HSA_EXECUTABLE_SYMBOL_INFO_KERNEL_OBJECT, &init_array_kernel),
+	"Extract '_init_array' kernel object kernel object");
+
+  /* Locate the "_fini_array" function, and read the kernel's properties.  */
+  XHSA (hsa_fns.hsa_executable_get_symbol_fn (executable, NULL, "_fini_array",
+					      device, 0, &symbol),
+	"Find '_fini_array' function");
+  XHSA (hsa_fns.hsa_executable_symbol_get_info_fn
+	    (symbol, HSA_EXECUTABLE_SYMBOL_INFO_KERNEL_OBJECT, &fini_array_kernel),
+	"Extract '_fini_array' kernel object kernel object");
+
+  /* Locate the "main" function, and read the kernel's properties.  */
   XHSA (hsa_fns.hsa_executable_get_symbol_fn (executable, NULL, "main",
 					      device, 0, &symbol),
 	"Find 'main' function");
   XHSA (hsa_fns.hsa_executable_symbol_get_info_fn
-	    (symbol, HSA_EXECUTABLE_SYMBOL_INFO_KERNEL_OBJECT, &kernel),
-	"Extract kernel object");
+	    (symbol, HSA_EXECUTABLE_SYMBOL_INFO_KERNEL_OBJECT, &main_kernel),
+	"Extract 'main' kernel object");
   XHSA (hsa_fns.hsa_executable_symbol_get_info_fn
 	    (symbol, HSA_EXECUTABLE_SYMBOL_INFO_KERNEL_KERNARG_SEGMENT_SIZE,
 	     &kernarg_segment_size),
@@ -531,7 +575,7 @@ found_main:;
 		break;
 	      case R_AMDGPU_REL64:
 		/* FIXME
-		   LLD seems to emit REL64 where the the assembler has ABS64.
+		   LLD seems to emit REL64 where the assembler has ABS64.
 		   This is clearly wrong because it's not what the compiler
 		   is expecting.  Let's assume, for now, that it's a bug.
 		   In any case, GCN kernels are always self contained and
@@ -575,10 +619,10 @@ found_main:;
    __flat_scalar GCN address space).  */
 
 static void *
-device_malloc (size_t size)
+device_malloc (size_t size, hsa_region_t region)
 {
   void *result;
-  XHSA (hsa_fns.hsa_memory_allocate_fn (kernargs_region, size, &result),
+  XHSA (hsa_fns.hsa_memory_allocate_fn (region, size, &result),
 	"Allocate device memory");
   return result;
 }
@@ -616,13 +660,13 @@ struct kernargs
     } queue[1024];
     unsigned int consumed;
   } output_data;
-
-  struct heap
-  {
-    int64_t size;
-    char data[0];
-  } heap;
 };
+
+struct heap
+{
+  int64_t size;
+  char data[0];
+} heap;
 
 /* Print any console output from the kernel.
    We print all entries from "consumed" to the next entry without a "written"
@@ -684,7 +728,7 @@ gomp_print_output (struct kernargs *kernargs, bool final)
 /* Execute an already-loaded kernel on the device.  */
 
 static void
-run (void *kernargs)
+run (uint64_t kernel, void *kernargs)
 {
   /* A "signal" is used to launch and monitor the kernel.  */
   hsa_signal_t signal;
@@ -793,13 +837,19 @@ main (int argc, char *argv[])
 
   /* Allocate device memory for both function parameters and the argv
      data.  */
-  size_t heap_size = 10 * 1024 * 1024;	/* 10MB.  */
-  struct kernargs *kernargs = device_malloc (sizeof (*kernargs) + heap_size);
+  struct kernargs *kernargs = device_malloc (sizeof (*kernargs),
+					     kernargs_region);
   struct argdata
   {
     int64_t argv_data[kernel_argc];
     char strings[args_size];
-  } *args = device_malloc (sizeof (struct argdata));
+  } *args = device_malloc (sizeof (struct argdata), kernargs_region);
+
+  size_t heap_size = 10 * 1024 * 1024;	/* 10MB.  */
+  struct heap *heap = device_malloc (heap_size, heap_region);
+  XHSA (hsa_fns.hsa_memory_assign_agent_fn (heap, device,
+					    HSA_ACCESS_PERMISSION_RW),
+	"Assign heap to device agent");
 
   /* Write the data to the target.  */
   kernargs->argc = kernel_argc;
@@ -819,13 +869,19 @@ main (int argc, char *argv[])
       memcpy (&args->strings[offset], kernel_argv[i], arg_len + 1);
       offset += arg_len;
     }
-  kernargs->heap_ptr = (int64_t) &kernargs->heap;
-  kernargs->heap.size = heap_size;
+  kernargs->heap_ptr = (int64_t) heap;
+  hsa_fns.hsa_memory_copy_fn (&heap->size, &heap_size, sizeof (heap_size));
+
+  /* Run constructors on the GPU.  */
+  run (init_array_kernel, kernargs);
 
   /* Run the kernel on the GPU.  */
-  run (kernargs);
+  run (main_kernel, kernargs);
   unsigned int return_value =
     (unsigned int) kernargs->output_data.return_value;
+
+  /* Run destructors on the GPU.  */
+  run (fini_array_kernel, kernargs);
 
   unsigned int upper = (return_value & ~0xffff) >> 16;
   if (upper == 0xcafe)

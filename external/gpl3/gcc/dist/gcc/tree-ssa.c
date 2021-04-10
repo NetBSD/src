@@ -1,5 +1,5 @@
 /* Miscellaneous SSA utility functions.
-   Copyright (C) 2001-2019 Free Software Foundation, Inc.
+   Copyright (C) 2001-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -358,6 +358,11 @@ insert_debug_temp_for_var_def (gimple_stmt_iterator *gsi, tree var)
       else if (value == error_mark_node)
 	value = NULL;
     }
+  else if (gimple_clobber_p (def_stmt))
+    /* We can end up here when rewriting a decl into SSA and coming
+       along a clobber for the original decl.  Turn that into
+       # DEBUG decl => NULL  */
+    value = NULL;
   else if (is_gimple_assign (def_stmt))
     {
       bool no_value = false;
@@ -627,6 +632,15 @@ release_defs_bitset (bitmap toremove)
     }
   bitmap_list_view (toremove);
 }
+
+/* Disable warnings about missing quoting in GCC diagnostics for
+   the verification errors.  Their format strings don't follow GCC
+   diagnostic conventions and the calls are ultimately followed by
+   one to internal_error.  */
+#if __GNUC__ >= 10
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wformat-diag"
+#endif
 
 /* Verify virtual SSA form.  */
 
@@ -1194,6 +1208,9 @@ err:
   internal_error ("verify_ssa failed");
 }
 
+#if __GNUC__ >= 10
+#  pragma GCC diagnostic pop
+#endif
 
 /* Initialize global DFA and SSA structures.  */
 
@@ -1522,14 +1539,32 @@ non_rewritable_lvalue_p (tree lhs)
       if (DECL_P (decl)
 	  && VECTOR_TYPE_P (TREE_TYPE (decl))
 	  && TYPE_MODE (TREE_TYPE (decl)) != BLKmode
-	  && operand_equal_p (TYPE_SIZE_UNIT (TREE_TYPE (lhs)),
-			      TYPE_SIZE_UNIT (TREE_TYPE (TREE_TYPE (decl))), 0)
 	  && known_ge (mem_ref_offset (lhs), 0)
 	  && known_gt (wi::to_poly_offset (TYPE_SIZE_UNIT (TREE_TYPE (decl))),
 		       mem_ref_offset (lhs))
 	  && multiple_of_p (sizetype, TREE_OPERAND (lhs, 1),
-			    TYPE_SIZE_UNIT (TREE_TYPE (lhs))))
-	return false;
+			    TYPE_SIZE_UNIT (TREE_TYPE (lhs)))
+	  && known_ge (wi::to_poly_offset (TYPE_SIZE (TREE_TYPE (decl))),
+		       wi::to_poly_offset (TYPE_SIZE (TREE_TYPE (lhs)))))
+	{
+	  poly_uint64 lhs_bits, nelts;
+	  if (poly_int_tree_p (TYPE_SIZE (TREE_TYPE (lhs)), &lhs_bits)
+	      && multiple_p (lhs_bits,
+			     tree_to_uhwi
+			       (TYPE_SIZE (TREE_TYPE (TREE_TYPE (decl)))),
+			     &nelts)
+	      && valid_vector_subparts_p (nelts))
+	    {
+	      if (known_eq (nelts, 1u))
+		return false;
+	      /* For sub-vector inserts the insert vector mode has to be
+		 supported.  */
+	      tree vtype = build_vector_type (TREE_TYPE (TREE_TYPE (decl)),
+					      nelts);
+	      if (TYPE_MODE (vtype) != BLKmode)
+		return false;
+	    }
+	}
     }
 
   /* A vector-insert using a BIT_FIELD_REF is rewritable using
@@ -1867,20 +1902,36 @@ execute_update_addresses_taken (void)
 		    && bitmap_bit_p (suitable_for_renaming, DECL_UID (sym))
 		    && VECTOR_TYPE_P (TREE_TYPE (sym))
 		    && TYPE_MODE (TREE_TYPE (sym)) != BLKmode
-		    && operand_equal_p (TYPE_SIZE_UNIT (TREE_TYPE (lhs)),
-					TYPE_SIZE_UNIT
-					  (TREE_TYPE (TREE_TYPE (sym))), 0)
-		    && tree_fits_uhwi_p (TREE_OPERAND (lhs, 1))
-		    && tree_int_cst_lt (TREE_OPERAND (lhs, 1),
-					TYPE_SIZE_UNIT (TREE_TYPE (sym)))
-		    && (tree_to_uhwi (TREE_OPERAND (lhs, 1))
-			% tree_to_uhwi (TYPE_SIZE_UNIT (TREE_TYPE (lhs)))) == 0)
+		    /* If it is a full replacement we can do better below.  */
+		    && maybe_ne (wi::to_poly_offset
+				   (TYPE_SIZE_UNIT (TREE_TYPE (lhs))),
+				 wi::to_poly_offset
+                                   (TYPE_SIZE_UNIT (TREE_TYPE (sym))))
+		    && known_ge (mem_ref_offset (lhs), 0)
+		    && known_gt (wi::to_poly_offset
+				   (TYPE_SIZE_UNIT (TREE_TYPE (sym))),
+				 mem_ref_offset (lhs))
+		    && multiple_of_p (sizetype,
+				      TREE_OPERAND (lhs, 1),
+				      TYPE_SIZE_UNIT (TREE_TYPE (lhs))))
 		  {
 		    tree val = gimple_assign_rhs1 (stmt);
 		    if (! types_compatible_p (TREE_TYPE (val),
 					      TREE_TYPE (TREE_TYPE (sym))))
 		      {
-			tree tem = make_ssa_name (TREE_TYPE (TREE_TYPE (sym)));
+			poly_uint64 lhs_bits, nelts;
+			tree temtype = TREE_TYPE (TREE_TYPE (sym));
+			if (poly_int_tree_p (TYPE_SIZE (TREE_TYPE (lhs)),
+					     &lhs_bits)
+			    && multiple_p (lhs_bits,
+					   tree_to_uhwi
+					     (TYPE_SIZE (TREE_TYPE
+							   (TREE_TYPE (sym)))),
+					   &nelts)
+			    && maybe_ne (nelts, 1u)
+			    && valid_vector_subparts_p (nelts))
+			  temtype = build_vector_type (temtype, nelts);
+			tree tem = make_ssa_name (temtype);
 			gimple *pun
 			  = gimple_build_assign (tem,
 						 build1 (VIEW_CONVERT_EXPR,
@@ -1974,9 +2025,7 @@ execute_update_addresses_taken (void)
 			    /* In ASAN_MARK (UNPOISON, &b, ...) the variable
 			       is uninitialized.  Avoid dependencies on
 			       previous out of scope value.  */
-			    tree clobber
-			      = build_constructor (TREE_TYPE (var), NULL);
-			    TREE_THIS_VOLATILE (clobber) = 1;
+			    tree clobber = build_clobber (TREE_TYPE (var));
 			    gimple *g = gimple_build_assign (var, clobber);
 			    gsi_replace (&gsi, g, GSI_SAME_STMT);
 			  }
