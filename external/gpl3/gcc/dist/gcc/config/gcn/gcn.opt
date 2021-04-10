@@ -1,6 +1,6 @@
 ; Options for the GCN port of the compiler.
 
-; Copyright (C) 2016-2019 Free Software Foundation, Inc.
+; Copyright (C) 2016-2020 Free Software Foundation, Inc.
 ;
 ; This file is part of GCC.
 ;
@@ -26,20 +26,20 @@ Name(gpu_type) Type(enum processor_type)
 GCN GPU type to use:
 
 EnumValue
-Enum(gpu_type) String(carrizo) Value(PROCESSOR_CARRIZO)
-
-EnumValue
 Enum(gpu_type) String(fiji) Value(PROCESSOR_FIJI)
 
 EnumValue
 Enum(gpu_type) String(gfx900) Value(PROCESSOR_VEGA)
 
+EnumValue
+Enum(gpu_type) String(gfx906) Value(PROCESSOR_VEGA)
+
 march=
-Target RejectNegative Joined ToLower Enum(gpu_type) Var(gcn_arch) Init(PROCESSOR_CARRIZO)
+Target RejectNegative Joined ToLower Enum(gpu_type) Var(gcn_arch) Init(PROCESSOR_FIJI)
 Specify the name of the target GPU.
 
 mtune=
-Target RejectNegative Joined ToLower Enum(gpu_type) Var(gcn_tune) Init(PROCESSOR_CARRIZO)
+Target RejectNegative Joined ToLower Enum(gpu_type) Var(gcn_tune) Init(PROCESSOR_FIJI)
 Specify the name of the target GPU.
 
 m32
@@ -62,7 +62,7 @@ Target Report RejectNegative Var(flag_bypass_init_error)
 bool flag_worker_partitioning = false
 
 macc-experimental-workers
-Target Report Var(flag_worker_partitioning) Init(1)
+Target Report Var(flag_worker_partitioning) Init(0)
 
 int stack_size_opt = -1
 

@@ -1,6 +1,6 @@
 /* Build up a list of intrinsic subroutines and functions for the
    name-resolution stage.
-   Copyright (C) 2000-2019 Free Software Foundation, Inc.
+   Copyright (C) 2000-2020 Free Software Foundation, Inc.
    Contributed by Andy Vaught & Katherine Holcomb
 
 This file is part of GCC.
@@ -842,6 +842,39 @@ add_sym_4 (const char *name, gfc_isym_id id, enum klass cl, int actual_ok, bt ty
   cf.f4 = check;
   sf.f4 = simplify;
   rf.f4 = resolve;
+
+  add_sym (name, id, cl, actual_ok, type, kind, standard, cf, sf, rf,
+	   a1, type1, kind1, optional1, INTENT_IN,
+	   a2, type2, kind2, optional2, INTENT_IN,
+	   a3, type3, kind3, optional3, INTENT_IN,
+	   a4, type4, kind4, optional4, INTENT_IN,
+	   (void *) 0);
+}
+
+/* Add a symbol to the function list where the function takes 4
+   arguments and resolution may need to change the number or
+   arrangement of arguments. This is the case for INDEX, which needs
+   its KIND argument removed.  */
+
+static void
+add_sym_4ind (const char *name, gfc_isym_id id, enum klass cl, int actual_ok,
+	      bt type, int kind, int standard,
+	      bool (*check) (gfc_expr *, gfc_expr *, gfc_expr *, gfc_expr *),
+	      gfc_expr *(*simplify) (gfc_expr *, gfc_expr *, gfc_expr *,
+				     gfc_expr *),
+	      void (*resolve) (gfc_expr *, gfc_actual_arglist *),
+	      const char *a1, bt type1, int kind1, int optional1,
+	      const char *a2, bt type2, int kind2, int optional2,
+	      const char *a3, bt type3, int kind3, int optional3,
+	      const char *a4, bt type4, int kind4, int optional4 )
+{
+  gfc_check_f cf;
+  gfc_simplify_f sf;
+  gfc_resolve_f rf;
+
+  cf.f4 = check;
+  sf.f4 = simplify;
+  rf.f1m = resolve;
 
   add_sym (name, id, cl, actual_ok, type, kind, standard, cf, sf, rf,
 	   a1, type1, kind1, optional1, INTENT_IN,
@@ -2153,11 +2186,11 @@ add_functions (void)
 
   /* The resolution function for INDEX is called gfc_resolve_index_func
      because the name gfc_resolve_index is already used in resolve.c.  */
-  add_sym_4 ("index", GFC_ISYM_INDEX, CLASS_ELEMENTAL, ACTUAL_YES,
-	     BT_INTEGER, di, GFC_STD_F77,
-	     gfc_check_index, gfc_simplify_index, gfc_resolve_index_func,
-	     stg, BT_CHARACTER, dc, REQUIRED, ssg, BT_CHARACTER, dc, REQUIRED,
-	     bck, BT_LOGICAL, dl, OPTIONAL, kind, BT_INTEGER, di, OPTIONAL);
+  add_sym_4ind ("index", GFC_ISYM_INDEX, CLASS_ELEMENTAL, ACTUAL_YES,
+		BT_INTEGER, di, GFC_STD_F77,
+		gfc_check_index, gfc_simplify_index, gfc_resolve_index_func,
+		stg, BT_CHARACTER, dc, REQUIRED, ssg, BT_CHARACTER, dc, REQUIRED,
+		bck, BT_LOGICAL, dl, OPTIONAL, kind, BT_INTEGER, di, OPTIONAL);
 
   make_generic ("index", GFC_ISYM_INDEX, GFC_STD_F77);
 
@@ -2700,8 +2733,8 @@ add_functions (void)
 
   make_generic ("null", GFC_ISYM_NULL, GFC_STD_F95);
 
-  add_sym_2 ("num_images", GFC_ISYM_NUM_IMAGES, CLASS_INQUIRY, ACTUAL_NO,
-	     BT_INTEGER, di, GFC_STD_F2008,
+  add_sym_2 ("num_images", GFC_ISYM_NUM_IMAGES, CLASS_TRANSFORMATIONAL,
+	     ACTUAL_NO, BT_INTEGER, di, GFC_STD_F2008,
 	     gfc_check_num_images, gfc_simplify_num_images, NULL,
 	     dist, BT_INTEGER, di, OPTIONAL,
 	     failed, BT_LOGICAL, dl, OPTIONAL);
@@ -2786,12 +2819,16 @@ add_functions (void)
 	     gfc_check_real, gfc_simplify_real, gfc_resolve_real,
 	     a, BT_UNKNOWN, dr, REQUIRED, kind, BT_INTEGER, di, OPTIONAL);
 
+  make_generic ("real", GFC_ISYM_REAL, GFC_STD_F77);
+
   /* This provides compatibility with g77.  */
-  add_sym_1 ("realpart", GFC_ISYM_REAL, CLASS_ELEMENTAL, ACTUAL_NO, BT_REAL, dr, GFC_STD_GNU,
+  add_sym_1 ("realpart", GFC_ISYM_REALPART, CLASS_ELEMENTAL, ACTUAL_NO, BT_REAL, dr, GFC_STD_GNU,
 	     gfc_check_fn_c, gfc_simplify_realpart, gfc_resolve_realpart,
 	     a, BT_UNKNOWN, dr, REQUIRED);
 
-  add_sym_1 ("float", GFC_ISYM_REAL, CLASS_ELEMENTAL, ACTUAL_NO, BT_REAL, dr, GFC_STD_F77,
+  make_generic ("realpart", GFC_ISYM_REALPART, GFC_STD_F77);
+
+  add_sym_1 ("float", GFC_ISYM_FLOAT, CLASS_ELEMENTAL, ACTUAL_NO, BT_REAL, dr, GFC_STD_F77,
 	     gfc_check_float, gfc_simplify_float, NULL,
 	     a, BT_INTEGER, di, REQUIRED);
 
@@ -2802,15 +2839,19 @@ add_functions (void)
       make_alias ("floatk", GFC_STD_GNU);
     }
 
-  add_sym_1 ("dfloat", GFC_ISYM_REAL, CLASS_ELEMENTAL, ACTUAL_NO, BT_REAL, dd, GFC_STD_GNU,
+  make_generic ("float", GFC_ISYM_FLOAT, GFC_STD_F77);
+
+  add_sym_1 ("dfloat", GFC_ISYM_DFLOAT, CLASS_ELEMENTAL, ACTUAL_NO, BT_REAL, dd, GFC_STD_GNU,
 	     gfc_check_float, gfc_simplify_dble, gfc_resolve_dble,
 	     a, BT_REAL, dr, REQUIRED);
 
-  add_sym_1 ("sngl", GFC_ISYM_REAL, CLASS_ELEMENTAL, ACTUAL_NO, BT_REAL, dr, GFC_STD_F77,
+  make_generic ("dfloat", GFC_ISYM_DFLOAT, GFC_STD_F77);
+
+  add_sym_1 ("sngl", GFC_ISYM_SNGL, CLASS_ELEMENTAL, ACTUAL_NO, BT_REAL, dr, GFC_STD_F77,
 	     gfc_check_sngl, gfc_simplify_sngl, NULL,
 	     a, BT_REAL, dd, REQUIRED);
 
-  make_generic ("real", GFC_ISYM_REAL, GFC_STD_F77);
+  make_generic ("sngl", GFC_ISYM_SNGL, GFC_STD_F77);
 
   add_sym_2 ("rename", GFC_ISYM_RENAME, CLASS_IMPURE, ACTUAL_NO, BT_INTEGER, di,
 	     GFC_STD_GNU, gfc_check_rename, NULL, gfc_resolve_rename,
@@ -3133,7 +3174,7 @@ add_functions (void)
   make_generic ("tanh", GFC_ISYM_TANH, GFC_STD_F77);
 
   add_sym_1 ("team_number", GFC_ISYM_TEAM_NUMBER, CLASS_TRANSFORMATIONAL,
-	     ACTUAL_YES, BT_INTEGER, di, GFC_STD_F2018,
+	     ACTUAL_NO, BT_INTEGER, di, GFC_STD_F2018,
 	     gfc_check_team_number, NULL, gfc_resolve_team_number,
 	     team, BT_DERIVED, di, OPTIONAL);
 
@@ -3240,116 +3281,130 @@ add_functions (void)
 
   make_generic ("loc", GFC_ISYM_LOC, GFC_STD_GNU);
 
-  if (flag_dec_math)
-    {
-      add_sym_1 ("acosd", GFC_ISYM_ACOS, CLASS_ELEMENTAL, ACTUAL_YES, BT_REAL,
-		 dr, GFC_STD_GNU,
-		 gfc_check_fn_r, gfc_simplify_atrigd, gfc_resolve_atrigd,
-		 x, BT_REAL, dr, REQUIRED);
 
-      add_sym_1 ("dacosd", GFC_ISYM_ACOS, CLASS_ELEMENTAL, ACTUAL_YES, BT_REAL,
-		 dd, GFC_STD_GNU,
-		 gfc_check_fn_d, gfc_simplify_atrigd, gfc_resolve_atrigd,
-		 x, BT_REAL, dd, REQUIRED);
+  /* The next of intrinsic subprogram are the degree trignometric functions.
+     These were hidden behind the -fdec-math option, but are now simply
+     included as extensions to the set of intrinsic subprograms.  */
 
-      make_generic ("acosd", GFC_ISYM_ACOS, GFC_STD_GNU);
+  add_sym_1 ("acosd", GFC_ISYM_ACOSD, CLASS_ELEMENTAL, ACTUAL_YES,
+	     BT_REAL, dr, GFC_STD_GNU,
+	     gfc_check_fn_r, gfc_simplify_acosd, gfc_resolve_trigd,
+	     x, BT_REAL, dr, REQUIRED);
 
-      add_sym_1 ("asind", GFC_ISYM_ASIN, CLASS_ELEMENTAL, ACTUAL_YES, BT_REAL,
-		 dr, GFC_STD_GNU,
-		 gfc_check_fn_r, gfc_simplify_atrigd, gfc_resolve_atrigd,
-		 x, BT_REAL, dr, REQUIRED);
+  add_sym_1 ("dacosd", GFC_ISYM_ACOSD, CLASS_ELEMENTAL, ACTUAL_YES,
+	     BT_REAL, dd, GFC_STD_GNU,
+	     gfc_check_fn_d, gfc_simplify_acosd, gfc_resolve_trigd,
+	     x, BT_REAL, dd, REQUIRED);
 
-      add_sym_1 ("dasind", GFC_ISYM_ASIN, CLASS_ELEMENTAL, ACTUAL_YES, BT_REAL,
-		 dd, GFC_STD_GNU,
-		 gfc_check_fn_d, gfc_simplify_atrigd, gfc_resolve_atrigd,
-		 x, BT_REAL, dd, REQUIRED);
+  make_generic ("acosd", GFC_ISYM_ACOSD, GFC_STD_GNU);
 
-      make_generic ("asind", GFC_ISYM_ASIN, GFC_STD_GNU);
+  add_sym_1 ("asind", GFC_ISYM_ASIND, CLASS_ELEMENTAL, ACTUAL_YES,
+	     BT_REAL, dr, GFC_STD_GNU,
+	     gfc_check_fn_r, gfc_simplify_asind, gfc_resolve_trigd,
+	     x, BT_REAL, dr, REQUIRED);
 
-      add_sym_1 ("atand", GFC_ISYM_ATAN, CLASS_ELEMENTAL, ACTUAL_YES, BT_REAL,
-		 dr, GFC_STD_GNU,
-		 gfc_check_fn_r, gfc_simplify_atrigd, gfc_resolve_atrigd,
-		 x, BT_REAL, dr, REQUIRED);
+  add_sym_1 ("dasind", GFC_ISYM_ASIND, CLASS_ELEMENTAL, ACTUAL_YES,
+	     BT_REAL, dd, GFC_STD_GNU,
+	     gfc_check_fn_d, gfc_simplify_asind, gfc_resolve_trigd,
+	     x, BT_REAL, dd, REQUIRED);
 
-      add_sym_1 ("datand", GFC_ISYM_ATAN, CLASS_ELEMENTAL, ACTUAL_YES, BT_REAL,
-		 dd, GFC_STD_GNU,
-		 gfc_check_fn_d, gfc_simplify_atrigd, gfc_resolve_atrigd,
-		 x, BT_REAL, dd, REQUIRED);
+  make_generic ("asind", GFC_ISYM_ASIND, GFC_STD_GNU);
 
-      make_generic ("atand", GFC_ISYM_ATAN, GFC_STD_GNU);
+  add_sym_1 ("atand", GFC_ISYM_ATAND, CLASS_ELEMENTAL, ACTUAL_YES,
+	     BT_REAL, dr, GFC_STD_GNU,
+	     gfc_check_fn_r, gfc_simplify_atand, gfc_resolve_trigd,
+	     x, BT_REAL, dr, REQUIRED);
 
-      add_sym_2 ("atan2d",GFC_ISYM_ATAN2,CLASS_ELEMENTAL, ACTUAL_YES, BT_REAL,
-		 dr, GFC_STD_GNU,
-		 gfc_check_atan2, gfc_simplify_atan2d, gfc_resolve_atan2d,
-		 y, BT_REAL, dr, REQUIRED, x, BT_REAL, dr, REQUIRED);
+  add_sym_1 ("datand", GFC_ISYM_ATAND, CLASS_ELEMENTAL, ACTUAL_YES,
+	     BT_REAL, dd, GFC_STD_GNU,
+	     gfc_check_fn_d, gfc_simplify_atand, gfc_resolve_trigd,
+	     x, BT_REAL, dd, REQUIRED);
 
-      add_sym_2 ("datan2d",GFC_ISYM_ATAN2,CLASS_ELEMENTAL, ACTUAL_YES, BT_REAL,
-		 dd, GFC_STD_GNU,
-		 gfc_check_datan2, gfc_simplify_atan2d, gfc_resolve_atan2d,
-		 y, BT_REAL, dd, REQUIRED, x, BT_REAL, dd, REQUIRED);
+  make_generic ("atand", GFC_ISYM_ATAND, GFC_STD_GNU);
 
-      make_generic ("atan2d", GFC_ISYM_ATAN2, GFC_STD_GNU);
+  add_sym_2 ("atan2d", GFC_ISYM_ATAN2D, CLASS_ELEMENTAL, ACTUAL_YES,
+	     BT_REAL, dr, GFC_STD_GNU,
+	     gfc_check_atan2, gfc_simplify_atan2d, gfc_resolve_trigd2,
+	     y, BT_REAL, dr, REQUIRED,
+	     x, BT_REAL, dr, REQUIRED);
 
-      add_sym_1 ("cosd", GFC_ISYM_COS, CLASS_ELEMENTAL, ACTUAL_YES, BT_REAL,
-		 dr, GFC_STD_GNU,
-		 gfc_check_fn_r, gfc_simplify_trigd, gfc_resolve_trigd,
-		 x, BT_REAL, dr, REQUIRED);
+  add_sym_2 ("datan2d", GFC_ISYM_ATAN2D, CLASS_ELEMENTAL, ACTUAL_YES,
+	     BT_REAL, dd, GFC_STD_GNU,
+	     gfc_check_datan2, gfc_simplify_atan2d, gfc_resolve_trigd2,
+	     y, BT_REAL, dd, REQUIRED,
+	     x, BT_REAL, dd, REQUIRED);
 
-      add_sym_1 ("dcosd", GFC_ISYM_COS, CLASS_ELEMENTAL, ACTUAL_YES, BT_REAL,
-		 dd, GFC_STD_GNU,
-		 gfc_check_fn_d, gfc_simplify_trigd, gfc_resolve_trigd,
-		 x, BT_REAL, dd, REQUIRED);
+  make_generic ("atan2d", GFC_ISYM_ATAN2D, GFC_STD_GNU);
 
-      make_generic ("cosd", GFC_ISYM_COS, GFC_STD_GNU);
+  add_sym_1 ("cosd", GFC_ISYM_COSD, CLASS_ELEMENTAL, ACTUAL_YES,
+	     BT_REAL, dr, GFC_STD_GNU,
+	     gfc_check_fn_r, gfc_simplify_cosd, gfc_resolve_trigd,
+	     x, BT_REAL, dr, REQUIRED);
 
-      add_sym_1 ("cotan", GFC_ISYM_COTAN, CLASS_ELEMENTAL, ACTUAL_YES, BT_REAL,
-		 dr, GFC_STD_GNU,
-		 gfc_check_fn_rc2008, gfc_simplify_cotan, gfc_resolve_cotan,
-		 x, BT_REAL, dr, REQUIRED);
+  add_sym_1 ("dcosd", GFC_ISYM_COSD, CLASS_ELEMENTAL, ACTUAL_YES,
+	     BT_REAL, dd, GFC_STD_GNU,
+	     gfc_check_fn_d, gfc_simplify_cosd, gfc_resolve_trigd,
+	     x, BT_REAL, dd, REQUIRED);
 
-      add_sym_1 ("dcotan", GFC_ISYM_COTAN, CLASS_ELEMENTAL, ACTUAL_YES, BT_REAL,
-		 dd, GFC_STD_GNU,
-		 gfc_check_fn_d, gfc_simplify_cotan, gfc_resolve_cotan,
-		 x, BT_REAL, dd, REQUIRED);
+  make_generic ("cosd", GFC_ISYM_COSD, GFC_STD_GNU);
 
-      make_generic ("cotan", GFC_ISYM_COTAN, GFC_STD_GNU);
+  add_sym_1 ("cotan", GFC_ISYM_COTAN, CLASS_ELEMENTAL, ACTUAL_YES,
+	     BT_REAL, dr, GFC_STD_GNU,
+	     gfc_check_fn_rc2008, gfc_simplify_cotan, gfc_resolve_trigd,
+	     x, BT_REAL, dr, REQUIRED);
 
-      add_sym_1 ("cotand", GFC_ISYM_COTAN, CLASS_ELEMENTAL, ACTUAL_YES, BT_REAL,
-		 dr, GFC_STD_GNU,
-		 gfc_check_fn_r, gfc_simplify_trigd, gfc_resolve_trigd,
-		 x, BT_REAL, dr, REQUIRED);
+  add_sym_1 ("dcotan", GFC_ISYM_COTAN, CLASS_ELEMENTAL, ACTUAL_YES,
+	     BT_REAL, dd, GFC_STD_GNU,
+	     gfc_check_fn_d, gfc_simplify_cotan, gfc_resolve_trigd,
+	     x, BT_REAL, dd, REQUIRED);
 
-      add_sym_1 ("dcotand",GFC_ISYM_COTAN, CLASS_ELEMENTAL, ACTUAL_YES, BT_REAL,
-		 dd, GFC_STD_GNU,
-		 gfc_check_fn_d, gfc_simplify_trigd, gfc_resolve_trigd,
-		 x, BT_REAL, dd, REQUIRED);
+  add_sym_1 ("ccotan", GFC_ISYM_COTAN, CLASS_ELEMENTAL, ACTUAL_YES,
+	     BT_COMPLEX, dz, GFC_STD_GNU,
+	     NULL, gfc_simplify_cotan, gfc_resolve_trigd,
+	     x, BT_COMPLEX, dz, REQUIRED);
 
-      make_generic ("cotand", GFC_ISYM_COTAN, GFC_STD_GNU);
+  add_sym_1 ("zcotan", GFC_ISYM_COTAN, CLASS_ELEMENTAL, ACTUAL_YES,
+	     BT_COMPLEX, dd, GFC_STD_GNU,
+	     NULL, gfc_simplify_cotan, gfc_resolve_trigd,
+	     x, BT_COMPLEX, dd, REQUIRED);
 
-      add_sym_1 ("sind", GFC_ISYM_SIN, CLASS_ELEMENTAL, ACTUAL_YES, BT_REAL,
-		 dr, GFC_STD_GNU,
-		 gfc_check_fn_r, gfc_simplify_trigd, gfc_resolve_trigd,
-		 x, BT_REAL, dr, REQUIRED);
+  make_generic ("cotan", GFC_ISYM_COTAN, GFC_STD_GNU);
 
-      add_sym_1 ("dsind", GFC_ISYM_SIN, CLASS_ELEMENTAL, ACTUAL_YES, BT_REAL,
-		 dd, GFC_STD_GNU,
-		 gfc_check_fn_d, gfc_simplify_trigd, gfc_resolve_trigd,
-		 x, BT_REAL, dd, REQUIRED);
+  add_sym_1 ("cotand", GFC_ISYM_COTAND, CLASS_ELEMENTAL, ACTUAL_YES,
+	     BT_REAL, dr, GFC_STD_GNU,
+	     gfc_check_fn_r, gfc_simplify_cotand, gfc_resolve_trigd,
+	     x, BT_REAL, dr, REQUIRED);
 
-      make_generic ("sind", GFC_ISYM_SIN, GFC_STD_GNU);
+  add_sym_1 ("dcotand", GFC_ISYM_COTAND, CLASS_ELEMENTAL, ACTUAL_YES,
+	     BT_REAL, dd, GFC_STD_GNU,
+	     gfc_check_fn_d, gfc_simplify_cotand, gfc_resolve_trigd,
+	     x, BT_REAL, dd, REQUIRED);
 
-      add_sym_1 ("tand", GFC_ISYM_TAN, CLASS_ELEMENTAL, ACTUAL_YES, BT_REAL,
-		 dr, GFC_STD_GNU,
-		 gfc_check_fn_r, gfc_simplify_trigd, gfc_resolve_trigd,
-		 x, BT_REAL, dr, REQUIRED);
+  make_generic ("cotand", GFC_ISYM_COTAND, GFC_STD_GNU);
 
-      add_sym_1 ("dtand", GFC_ISYM_TAN, CLASS_ELEMENTAL, ACTUAL_YES, BT_REAL,
-		 dd, GFC_STD_GNU,
-		 gfc_check_fn_d, gfc_simplify_trigd, gfc_resolve_trigd,
-		 x, BT_REAL, dd, REQUIRED);
+  add_sym_1 ("sind", GFC_ISYM_SIND, CLASS_ELEMENTAL, ACTUAL_YES,
+	     BT_REAL, dr, GFC_STD_GNU,
+	     gfc_check_fn_r, gfc_simplify_sind, gfc_resolve_trigd,
+	     x, BT_REAL, dr, REQUIRED);
 
-      make_generic ("tand", GFC_ISYM_TAN, GFC_STD_GNU);
-    }
+  add_sym_1 ("dsind", GFC_ISYM_SIND, CLASS_ELEMENTAL, ACTUAL_YES,
+	     BT_REAL, dd, GFC_STD_GNU,
+	     gfc_check_fn_d, gfc_simplify_sind, gfc_resolve_trigd,
+	     x, BT_REAL, dd, REQUIRED);
+
+  make_generic ("sind", GFC_ISYM_SIND, GFC_STD_GNU);
+
+  add_sym_1 ("tand", GFC_ISYM_TAND, CLASS_ELEMENTAL, ACTUAL_YES,
+	     BT_REAL, dr, GFC_STD_GNU,
+	     gfc_check_fn_r, gfc_simplify_tand, gfc_resolve_trigd,
+	     x, BT_REAL, dr, REQUIRED);
+
+  add_sym_1 ("dtand", GFC_ISYM_TAND, CLASS_ELEMENTAL, ACTUAL_YES,
+	     BT_REAL, dd, GFC_STD_GNU,
+	     gfc_check_fn_d, gfc_simplify_tand, gfc_resolve_trigd,
+	     x, BT_REAL, dd, REQUIRED);
+
+  make_generic ("tand", GFC_ISYM_TAND, GFC_STD_GNU);
 
   /* The following function is internally used for coarray libray functions.
      "make_from_module" makes it inaccessible for external users.  */
@@ -3683,7 +3738,7 @@ add_subroutines (void)
 	      a, BT_REAL, dr, REQUIRED, INTENT_INOUT,
 	      "source_image", BT_INTEGER, di, REQUIRED, INTENT_IN,
 	      stat, BT_INTEGER, di, OPTIONAL, INTENT_OUT,
-	      errmsg, BT_CHARACTER, dc, OPTIONAL, INTENT_OUT);
+	      errmsg, BT_CHARACTER, dc, OPTIONAL, INTENT_INOUT);
 
   add_sym_4s ("co_max", GFC_ISYM_CO_MAX, CLASS_IMPURE,
 	      BT_UNKNOWN, 0, GFC_STD_F2018,
@@ -3691,7 +3746,7 @@ add_subroutines (void)
 	      a, BT_REAL, dr, REQUIRED, INTENT_INOUT,
 	      result_image, BT_INTEGER, di, OPTIONAL, INTENT_IN,
 	      stat, BT_INTEGER, di, OPTIONAL, INTENT_OUT,
-	      errmsg, BT_CHARACTER, dc, OPTIONAL, INTENT_OUT);
+	      errmsg, BT_CHARACTER, dc, OPTIONAL, INTENT_INOUT);
 
   add_sym_4s ("co_min", GFC_ISYM_CO_MIN, CLASS_IMPURE,
 	      BT_UNKNOWN, 0, GFC_STD_F2018,
@@ -3699,7 +3754,7 @@ add_subroutines (void)
 	      a, BT_REAL, dr, REQUIRED, INTENT_INOUT,
 	      result_image, BT_INTEGER, di, OPTIONAL, INTENT_IN,
 	      stat, BT_INTEGER, di, OPTIONAL, INTENT_OUT,
-	      errmsg, BT_CHARACTER, dc, OPTIONAL, INTENT_OUT);
+	      errmsg, BT_CHARACTER, dc, OPTIONAL, INTENT_INOUT);
 
   add_sym_4s ("co_sum", GFC_ISYM_CO_SUM, CLASS_IMPURE,
 	      BT_UNKNOWN, 0, GFC_STD_F2018,
@@ -3707,7 +3762,7 @@ add_subroutines (void)
 	      a, BT_REAL, dr, REQUIRED, INTENT_INOUT,
 	      result_image, BT_INTEGER, di, OPTIONAL, INTENT_IN,
 	      stat, BT_INTEGER, di, OPTIONAL, INTENT_OUT,
-	      errmsg, BT_CHARACTER, dc, OPTIONAL, INTENT_OUT);
+	      errmsg, BT_CHARACTER, dc, OPTIONAL, INTENT_INOUT);
 
   add_sym_5s ("co_reduce", GFC_ISYM_CO_REDUCE, CLASS_IMPURE,
 	      BT_UNKNOWN, 0, GFC_STD_F2018,
@@ -3716,7 +3771,7 @@ add_subroutines (void)
 	      "operator", BT_INTEGER, di, REQUIRED, INTENT_IN,
 	      result_image, BT_INTEGER, di, OPTIONAL, INTENT_IN,
 	      stat, BT_INTEGER, di, OPTIONAL, INTENT_OUT,
-	      errmsg, BT_CHARACTER, dc, OPTIONAL, INTENT_OUT);
+	      errmsg, BT_CHARACTER, dc, OPTIONAL, INTENT_INOUT);
 
 
   /* The following subroutine is internally used for coarray libray functions.
@@ -4017,6 +4072,29 @@ add_conversions (void)
 	  add_conv (BT_LOGICAL, gfc_logical_kinds[j].kind,
 		    BT_INTEGER, gfc_integer_kinds[i].kind, GFC_STD_LEGACY);
 	}
+
+  /* DEC legacy feature allows character conversions similar to Hollerith
+     conversions - the character data will transferred on a byte by byte
+     basis.  */
+  if (flag_dec_char_conversions)
+    {
+      /* Character-Integer conversions.  */
+      for (i = 0; gfc_integer_kinds[i].kind != 0; i++)
+	add_conv (BT_CHARACTER, gfc_default_character_kind,
+		  BT_INTEGER, gfc_integer_kinds[i].kind, GFC_STD_LEGACY);
+      /* Character-Real conversions.  */
+      for (i = 0; gfc_real_kinds[i].kind != 0; i++)
+	add_conv (BT_CHARACTER, gfc_default_character_kind,
+		  BT_REAL, gfc_real_kinds[i].kind, GFC_STD_LEGACY);
+      /* Character-Complex conversions.  */
+      for (i = 0; gfc_real_kinds[i].kind != 0; i++)
+	add_conv (BT_CHARACTER, gfc_default_character_kind,
+		  BT_COMPLEX, gfc_real_kinds[i].kind, GFC_STD_LEGACY);
+      /* Character-Logical conversions.  */
+      for (i = 0; gfc_logical_kinds[i].kind != 0; i++)
+	add_conv (BT_CHARACTER, gfc_default_character_kind,
+		  BT_LOGICAL, gfc_logical_kinds[i].kind, GFC_STD_LEGACY);
+    }
 }
 
 
@@ -4355,11 +4433,24 @@ check_arglist (gfc_actual_arglist **ap, gfc_intrinsic_sym *sym,
       if (!gfc_compare_types (&ts, &actual->expr->ts))
 	{
 	  if (error_flag)
-	    gfc_error ("Type of argument %qs in call to %qs at %L should "
-		       "be %s, not %s", gfc_current_intrinsic_arg[i]->name,
-		       gfc_current_intrinsic, &actual->expr->where,
-		       gfc_typename (&formal->ts),
-		       gfc_typename (&actual->expr->ts));
+	    gfc_error ("In call to %qs at %L, type mismatch in argument "
+		       "%qs; pass %qs to %qs", gfc_current_intrinsic,
+		       &actual->expr->where,
+		       gfc_current_intrinsic_arg[i]->name,
+		       gfc_typename (actual->expr),
+		       gfc_dummy_typename (&formal->ts));
+	  return false;
+	}
+
+      /* F2018, p. 328: An argument to an intrinsic procedure other than
+	 ASSOCIATED, NULL, or PRESENT shall be a data object.  An EXPR_NULL
+	 is not a data object.  */
+      if (actual->expr->expr_type == EXPR_NULL
+	  && (!(sym->id == GFC_ISYM_ASSOCIATED
+		|| sym->id == GFC_ISYM_NULL
+		|| sym->id == GFC_ISYM_PRESENT)))
+	{
+	  gfc_invalid_null_arg (actual->expr);
 	  return false;
 	}
 
@@ -4402,9 +4493,10 @@ resolve_intrinsic (gfc_intrinsic_sym *specific, gfc_expr *e)
 
   arg = e->value.function.actual;
 
-  /* Special case hacks for MIN and MAX.  */
+  /* Special case hacks for MIN, MAX and INDEX.  */
   if (specific->resolve.f1m == gfc_resolve_max
-      || specific->resolve.f1m == gfc_resolve_min)
+      || specific->resolve.f1m == gfc_resolve_min
+      || specific->resolve.f1m == gfc_resolve_index_func)
     {
       (*specific->resolve.f1m) (e, arg);
       return;
@@ -4497,15 +4589,6 @@ do_simplify (gfc_intrinsic_sym *specific, gfc_expr *e)
   if (specific->simplify.f1 == gfc_simplify_max)
     {
       result = gfc_simplify_max (e);
-      goto finish;
-    }
-
-  /* Some math intrinsics need to wrap the original expression.  */
-  if (specific->simplify.f1 == gfc_simplify_trigd
-      || specific->simplify.f1 == gfc_simplify_atrigd
-      || specific->simplify.f1 == gfc_simplify_cotan)
-    {
-      result = (*specific->simplify.f1) (e);
       goto finish;
     }
 
@@ -4807,9 +4890,9 @@ gfc_check_intrinsic_standard (const gfc_intrinsic_sym* isym,
 match
 gfc_intrinsic_func_interface (gfc_expr *expr, int error_flag)
 {
+  gfc_symbol *sym;
   gfc_intrinsic_sym *isym, *specific;
   gfc_actual_arglist *actual;
-  const char *name;
   int flag;
 
   if (expr->value.function.isym != NULL)
@@ -4825,15 +4908,15 @@ gfc_intrinsic_func_interface (gfc_expr *expr, int error_flag)
       flag |= (actual->expr->ts.type != BT_INTEGER
 	       && actual->expr->ts.type != BT_CHARACTER);
 
-  name = expr->symtree->n.sym->name;
+  sym = expr->symtree->n.sym;
 
-  if (expr->symtree->n.sym->intmod_sym_id)
+  if (sym->intmod_sym_id)
     {
-      gfc_isym_id id = gfc_isym_id_by_intmod_sym (expr->symtree->n.sym);
+      gfc_isym_id id = gfc_isym_id_by_intmod_sym (sym);
       isym = specific = gfc_intrinsic_function_by_id (id);
     }
   else
-    isym = specific = gfc_find_function (name);
+    isym = specific = gfc_find_function (sym->name);
 
   if (isym == NULL)
     {
@@ -4843,10 +4926,11 @@ gfc_intrinsic_func_interface (gfc_expr *expr, int error_flag)
     }
 
   if ((isym->id == GFC_ISYM_REAL || isym->id == GFC_ISYM_DBLE
-       || isym->id == GFC_ISYM_CMPLX)
+       || isym->id == GFC_ISYM_CMPLX || isym->id == GFC_ISYM_FLOAT
+       || isym->id == GFC_ISYM_SNGL || isym->id == GFC_ISYM_DFLOAT)
       && gfc_init_expr_flag
       && !gfc_notify_std (GFC_STD_F2003, "Function %qs as initialization "
-			  "expression at %L", name, &expr->where))
+			  "expression at %L", sym->name, &expr->where))
     {
       if (!error_flag)
 	gfc_pop_suppress_errors ();
@@ -4865,7 +4949,7 @@ gfc_intrinsic_func_interface (gfc_expr *expr, int error_flag)
 	  && id != GFC_ISYM_TRANSFER && id != GFC_ISYM_TRIM
 	  && !gfc_notify_std (GFC_STD_F2003, "Transformational function %qs "
 			      "at %L is invalid in an initialization "
-			      "expression", name, &expr->where))
+			      "expression", sym->name, &expr->where))
 	{
 	  if (!error_flag)
 	    gfc_pop_suppress_errors ();
@@ -4923,9 +5007,6 @@ gfc_intrinsic_func_interface (gfc_expr *expr, int error_flag)
 
 got_specific:
   expr->value.function.isym = specific;
-  if (!expr->symtree->n.sym->module)
-    gfc_intrinsic_symbol (expr->symtree->n.sym);
-
   if (!error_flag)
     gfc_pop_suppress_errors ();
 
@@ -4946,6 +5027,26 @@ got_specific:
 			  "initialization expression with non-integer/non-"
 			  "character arguments at %L", &expr->where))
     return MATCH_ERROR;
+
+  if (sym->attr.flavor == FL_UNKNOWN)
+    {
+      sym->attr.function = 1;
+      sym->attr.intrinsic = 1;
+      sym->attr.flavor = FL_PROCEDURE;
+    }
+  if (sym->attr.flavor == FL_PROCEDURE)
+    {
+      sym->attr.function = 1;
+      sym->attr.proc = PROC_INTRINSIC;
+    }
+
+  if (!sym->module)
+    gfc_intrinsic_symbol (sym);
+
+  /* Have another stab at simplification since elemental intrinsics with array
+     actual arguments would be missed by the calls above to do_simplify.  */
+  if (isym->elemental)
+    gfc_simplify_expr (expr, 1);
 
   return MATCH_YES;
 }
@@ -5056,10 +5157,15 @@ gfc_convert_type (gfc_expr *expr, gfc_typespec *ts, int eflag)
      1 Generate a gfc_error()
      2 Generate a gfc_internal_error().
 
-   'wflag' controls the warning related to conversion.  */
+   'wflag' controls the warning related to conversion.
+
+   'array' indicates whether the conversion is in an array constructor.
+   Non-standard conversion from character to numeric not allowed if true.
+*/
 
 bool
-gfc_convert_type_warn (gfc_expr *expr, gfc_typespec *ts, int eflag, int wflag)
+gfc_convert_type_warn (gfc_expr *expr, gfc_typespec *ts, int eflag, int wflag,
+		       bool array)
 {
   gfc_intrinsic_sym *sym;
   gfc_typespec from_ts;
@@ -5067,6 +5173,8 @@ gfc_convert_type_warn (gfc_expr *expr, gfc_typespec *ts, int eflag, int wflag)
   gfc_expr *new_expr;
   int rank;
   mpz_t *shape;
+  bool is_char_constant = (expr->expr_type == EXPR_CONSTANT)
+			  && (expr->ts.type == BT_CHARACTER);
 
   from_ts = expr->ts;		/* expr->ts gets clobbered */
 
@@ -5100,6 +5208,12 @@ gfc_convert_type_warn (gfc_expr *expr, gfc_typespec *ts, int eflag, int wflag)
       && gfc_compare_types (&expr->ts, ts))
     return true;
 
+  /* If array is true then conversion is in an array constructor where
+     non-standard conversion is not allowed.  */
+  if (array && from_ts.type == BT_CHARACTER
+      && (gfc_numeric_ts (ts) || ts->type == BT_LOGICAL))
+    goto bad;
+
   sym = find_conv (&expr->ts, ts);
   if (sym == NULL)
     goto bad;
@@ -5107,8 +5221,10 @@ gfc_convert_type_warn (gfc_expr *expr, gfc_typespec *ts, int eflag, int wflag)
   /* At this point, a conversion is necessary. A warning may be needed.  */
   if ((gfc_option.warn_std & sym->standard) != 0)
     {
+      const char *type_name = is_char_constant ? gfc_typename (expr)
+					       : gfc_typename (&from_ts);
       gfc_warning_now (0, "Extension: Conversion from %s to %s at %L",
-		       gfc_typename (&from_ts), gfc_typename (ts),
+		       type_name, gfc_dummy_typename (ts),
 		       &expr->where);
     }
   else if (wflag)
@@ -5123,14 +5239,14 @@ gfc_convert_type_warn (gfc_expr *expr, gfc_typespec *ts, int eflag, int wflag)
 	     If range checking was disabled, but -Wconversion enabled,
 	     a non range checked warning is generated below.  */
 	}
-      else if (from_ts.type == BT_LOGICAL || ts->type == BT_LOGICAL)
+      else if (flag_dec_char_conversions && from_ts.type == BT_CHARACTER
+	       && (gfc_numeric_ts (ts) || ts->type == BT_LOGICAL))
 	{
-	  /* Do nothing. This block exists only to simplify the other
-	     else-if expressions.
-	       LOGICAL <> LOGICAL    no warning, independent of kind values
-	       LOGICAL <> INTEGER    extension, warned elsewhere
-	       LOGICAL <> REAL       invalid, error generated elsewhere
-	       LOGICAL <> COMPLEX    invalid, error generated elsewhere  */
+	  const char *type_name = is_char_constant ? gfc_typename (expr)
+						   : gfc_typename (&from_ts);
+	  gfc_warning_now (OPT_Wconversion, "Nonstandard conversion from %s "
+			   "to %s at %L", type_name, gfc_typename (ts),
+			   &expr->where);
 	}
       else if (from_ts.type == ts->type
 	       || (from_ts.type == BT_INTEGER && ts->type == BT_REAL)
@@ -5139,15 +5255,17 @@ gfc_convert_type_warn (gfc_expr *expr, gfc_typespec *ts, int eflag, int wflag)
 	{
 	  /* Larger kinds can hold values of smaller kinds without problems.
 	     Hence, only warn if target kind is smaller than the source
-	     kind - or if -Wconversion-extra is specified.  */
-	  if (expr->expr_type != EXPR_CONSTANT)
+	     kind - or if -Wconversion-extra is specified.  LOGICAL values
+	     will always fit regardless of kind so ignore conversion.  */
+	  if (expr->expr_type != EXPR_CONSTANT
+	      && ts->type != BT_LOGICAL)
 	    {
 	      if (warn_conversion && from_ts.kind > ts->kind)
 		gfc_warning_now (OPT_Wconversion, "Possible change of value in "
 				 "conversion from %s to %s at %L",
 				 gfc_typename (&from_ts), gfc_typename (ts),
 				 &expr->where);
-	      else if (warn_conversion_extra)
+	      else
 		gfc_warning_now (OPT_Wconversion_extra, "Conversion from %s to %s "
 				 "at %L", gfc_typename (&from_ts),
 				 gfc_typename (ts), &expr->where);
@@ -5159,7 +5277,7 @@ gfc_convert_type_warn (gfc_expr *expr, gfc_typespec *ts, int eflag, int wflag)
 	{
 	  /* Conversion from REAL/COMPLEX to INTEGER or COMPLEX to REAL
 	     usually comes with a loss of information, regardless of kinds.  */
-	  if (warn_conversion && expr->expr_type != EXPR_CONSTANT)
+	  if (expr->expr_type != EXPR_CONSTANT)
 	    gfc_warning_now (OPT_Wconversion, "Possible change of value in "
 			     "conversion from %s to %s at %L",
 			     gfc_typename (&from_ts), gfc_typename (ts),
@@ -5168,13 +5286,21 @@ gfc_convert_type_warn (gfc_expr *expr, gfc_typespec *ts, int eflag, int wflag)
       else if (from_ts.type == BT_HOLLERITH || ts->type == BT_HOLLERITH)
 	{
 	  /* If HOLLERITH is involved, all bets are off.  */
-	  if (warn_conversion)
-	    gfc_warning_now (OPT_Wconversion, "Conversion from %s to %s at %L",
-			     gfc_typename (&from_ts), gfc_typename (ts),
-			     &expr->where);
+	  gfc_warning_now (OPT_Wconversion, "Conversion from %s to %s at %L",
+			   gfc_typename (&from_ts), gfc_dummy_typename (ts),
+			   &expr->where);
+	}
+      else if (from_ts.type == BT_LOGICAL || ts->type == BT_LOGICAL)
+	{
+	  /* Do nothing. This block exists only to simplify the other
+	     else-if expressions.
+	       LOGICAL <> LOGICAL    no warning, independent of kind values
+	       LOGICAL <> INTEGER    extension, warned elsewhere
+	       LOGICAL <> REAL       invalid, error generated elsewhere
+	       LOGICAL <> COMPLEX    invalid, error generated elsewhere  */
 	}
       else
-        gcc_unreachable ();
+	gcc_unreachable ();
     }
 
   /* Insert a pre-resolved function call to the right function.  */
@@ -5222,16 +5348,17 @@ gfc_convert_type_warn (gfc_expr *expr, gfc_typespec *ts, int eflag, int wflag)
   return true;
 
 bad:
+  const char *type_name = is_char_constant ? gfc_typename (expr)
+					   : gfc_typename (&from_ts);
   if (eflag == 1)
     {
-      gfc_error ("Cannot convert %s to %s at %L",
-		 gfc_typename (&from_ts), gfc_typename (ts), &expr->where);
+      gfc_error ("Cannot convert %s to %s at %L", type_name, gfc_typename (ts),
+		 &expr->where);
       return false;
     }
 
-  gfc_internal_error ("Cannot convert %qs to %qs at %L",
-		      gfc_typename (&from_ts), gfc_typename (ts),
-		      &expr->where);
+  gfc_internal_error ("Cannot convert %qs to %qs at %L", type_name,
+		      gfc_typename (ts), &expr->where);
   /* Not reached */
 }
 

@@ -1,5 +1,5 @@
 /* dwarf2out.h - Various declarations for functions found in dwarf2out.c
-   Copyright (C) 1998-2019 Free Software Foundation, Inc.
+   Copyright (C) 1998-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -108,6 +108,12 @@ struct GTY(()) dw_fde_node {
   /* True iff dw_fde_second_begin label is in text_section or
      cold_text_section.  */
   unsigned second_in_std_section : 1;
+  /* True if Rule 18 described in dwarf2cfi.c is in action, i.e. for dynamic
+     stack realignment in between pushing of hard frame pointer to stack
+     and setting hard frame pointer to stack pointer.  The register save for
+     hard frame pointer register should be emitted only on the latter
+     instruction.  */
+  unsigned rule18 : 1;
 };
 
 

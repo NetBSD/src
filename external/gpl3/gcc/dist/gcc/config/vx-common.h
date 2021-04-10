@@ -1,5 +1,5 @@
 /* Target-independent configuration for VxWorks and VxWorks AE.   
-   Copyright (C) 2005-2019 Free Software Foundation, Inc.
+   Copyright (C) 2005-2020 Free Software Foundation, Inc.
    Contributed by CodeSourcery, LLC.
 
 This file is part of GCC.
@@ -17,6 +17,8 @@ for more details.
 You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
+
+/* ------------------------- Common SPEC strings -------------------------  */
 
 /* Most of these will probably be overridden by subsequent headers.  We
    undefine them here just in case, and define VXWORKS_ versions of each,
@@ -37,31 +39,56 @@ along with GCC; see the file COPYING3.  If not see
 #define VXWORKS_LIBGCC_SPEC ""
 #define	VXWORKS_STARTFILE_SPEC ""
 #define VXWORKS_ENDFILE_SPEC ""
+#define VXWORKS_CC1_SPEC ""
 
-/* VxWorks cannot have dots in constructor labels, because it uses a
-   mutant variation of collect2 that generates C code instead of
-   assembly.  Thus each constructor label must be a legitimate C
-   symbol.  FIXME: Have VxWorks use real collect2 instead.  */
-#undef NO_DOLLAR_IN_LABEL
-#define NO_DOT_IN_LABEL
+/* ----------------------- Common type descriptions -----------------------  */
 
-/* VxWorks uses wchar_t == unsigned short (UCS2) on all architectures.  */
+/* Regardless of the target architecture, VxWorks uses a signed 32bit
+   integer for wchar_t starting with vx7 SR06xx.  An unsigned short
+   otherwise.  */
+#if TARGET_VXWORKS7
+
+#undef WCHAR_TYPE_SIZE
+#define WCHAR_TYPE_SIZE 32
 #undef WCHAR_TYPE
-#define WCHAR_TYPE "short unsigned int"
+#define WCHAR_TYPE (TARGET_VXWORKS64 ? "int" : "long int")
+
+#else
+
 #undef WCHAR_TYPE_SIZE
 #define WCHAR_TYPE_SIZE 16
+#undef WCHAR_TYPE
+#define WCHAR_TYPE "short unsigned int"
 
-/* Likewise wint_t.  */
-#undef WINT_TYPE
-#define WINT_TYPE "short unsigned int"
+#endif
+
+/* The VxWorks headers base wint_t on the definitions used for wchar_t.
+   Do the same here to make sure they remain in sync, in case WCHAR_TYPE
+   gets redefined for a specific CPU architecture.  */
 #undef WINT_TYPE_SIZE
-#define WINT_TYPE_SIZE 16
+#define WINT_TYPE_SIZE WCHAR_TYPE_SIZE
+#undef WINT_TYPE
+#define WINT_TYPE WCHAR_TYPE
 
-/* Dwarf2 unwind info is supported.  */
+/* ---------------------- Debug and unwind info formats ------------------  */
+
+/* Dwarf2 unwind info is supported, unless overriden by a request for a target
+   specific format.
+
+   Taking care of this here allows using DWARF2_UNWIND_INFO in #if conditions
+   from the common config/vxworks.h files, included before the cpu
+   specializations.  Unlike with conditions used in C expressions, where the
+   definitions which matter are those at the expression expansion point, use
+   in #if constructs requires an accurate definition of the operands at the
+   #if point.  Since <cpu>/vxworks.h. is typically included after
+   config/vxworks.h, #if expressions in the latter can't rely on possible
+   redefinitions in the former.  */
+#if !ARM_UNWIND_INFO
 #undef DWARF2_UNWIND_INFO
 #define DWARF2_UNWIND_INFO 1
+#endif
 
-/* VxWorks uses DWARF2.  */
+/* VxWorks uses DWARF2 debugging info.  */
 #define DWARF2_DEBUGGING_INFO 1
 #define PREFERRED_DEBUGGING_TYPE DWARF2_DEBUG
 
@@ -69,6 +96,17 @@ along with GCC; see the file COPYING3.  If not see
 #undef DBX_DEBUGGING_INFO
 #undef XCOFF_DEBUGGING_INFO
 #undef VMS_DEBUGGING_INFO
+
+/* ------------------------ Misc configuration bits ----------------------  */
+
+#ifndef TARGET_VXWORKS7
+/* VxWorks, prior to version 7, could not have dots in constructor
+   labels, because it used a mutant variation of collect2 that
+   generates C code instead of assembly.  Thus each constructor label
+   had to be a legitimate C symbol.  */
+# undef NO_DOLLAR_IN_LABEL
+# define NO_DOT_IN_LABEL
+#endif
 
 /* Kernel mode doesn't have ctors/dtors, but RTP mode does.  */
 #define TARGET_HAVE_CTORS_DTORS false
@@ -86,10 +124,3 @@ along with GCC; see the file COPYING3.  If not see
 /* We occasionally need to distinguish between the VxWorks variants.  */
 #define VXWORKS_KIND_NORMAL  1
 #define VXWORKS_KIND_AE      2
-
-/*
- * libitm is not supported on VxWorks. Rather than providing stub
- * no-op _ITM_registerTMCloneTable/_ITM_deregisterTMCloneTable
- * functions, simply prevent crtstuff from even referring to those.
- */
-#define USE_TM_CLONE_REGISTRY 0

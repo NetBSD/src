@@ -1,5 +1,5 @@
 /* Subroutines used for code generation on Renesas RX processors.
-   Copyright (C) 2008-2019 Free Software Foundation, Inc.
+   Copyright (C) 2008-2020 Free Software Foundation, Inc.
    Contributed by Red Hat.
 
    This file is part of GCC.
@@ -641,7 +641,6 @@ rx_print_operand (FILE * file, rtx op, int letter)
 	case CTRLREG_PSW:   fprintf (file, "psw"); break;
 	case CTRLREG_USP:   fprintf (file, "usp"); break;
 	case CTRLREG_FPSW:  fprintf (file, "fpsw"); break;
-	case CTRLREG_CPEN:  fprintf (file, "cpen"); break;
 	case CTRLREG_BPSW:  fprintf (file, "bpsw"); break;
 	case CTRLREG_BPC:   fprintf (file, "bpc"); break;
 	case CTRLREG_ISP:   fprintf (file, "isp"); break;
@@ -649,7 +648,7 @@ rx_print_operand (FILE * file, rtx op, int letter)
 	case CTRLREG_INTB:  fprintf (file, "intb"); break;
 	default:
 	  warning (0, "unrecognized control register number: %d"
-		   "- using %<psw%>", (int) INTVAL (op));
+		   " - using %<psw%>", (int) INTVAL (op));
 	  fprintf (file, "psw");
 	  break;
 	}
@@ -1064,24 +1063,19 @@ rx_function_arg_size (machine_mode mode, const_tree type)
 #define NUM_ARG_REGS		4
 #define MAX_NUM_ARG_BYTES	(NUM_ARG_REGS * UNITS_PER_WORD)
 
-/* Return an RTL expression describing the register holding a function
-   parameter of mode MODE and type TYPE or NULL_RTX if the parameter should
-   be passed on the stack.  CUM describes the previous parameters to the
-   function and NAMED is false if the parameter is part of a variable
-   parameter list, or the last named parameter before the start of a
-   variable parameter list.  */
+/* Return an RTL expression describing the register holding function
+   argument ARG or NULL_RTX if the parameter should be passed on the
+   stack.  CUM describes the previous parameters to the function.  */
 
 static rtx
-rx_function_arg (cumulative_args_t cum, machine_mode mode,
-		 const_tree type, bool named)
+rx_function_arg (cumulative_args_t cum, const function_arg_info &arg)
 {
   unsigned int next_reg;
   unsigned int bytes_so_far = *get_cumulative_args (cum);
   unsigned int size;
   unsigned int rounded_size;
 
-  /* An exploded version of rx_function_arg_size.  */
-  size = (mode == BLKmode) ? int_size_in_bytes (type) : GET_MODE_SIZE (mode);
+  size = arg.promoted_size_in_bytes ();
   /* If the size is not known it cannot be passed in registers.  */
   if (size < 1)
     return NULL_RTX;
@@ -1095,25 +1089,25 @@ rx_function_arg (cumulative_args_t cum, machine_mode mode,
 
   /* Unnamed arguments and the last named argument in a
      variadic function are always passed on the stack.  */
-  if (!named)
+  if (!arg.named)
     return NULL_RTX;
 
   /* Structures must occupy an exact number of registers,
      otherwise they are passed on the stack.  */
-  if ((type == NULL || AGGREGATE_TYPE_P (type))
+  if ((arg.type == NULL || AGGREGATE_TYPE_P (arg.type))
       && (size % UNITS_PER_WORD) != 0)
     return NULL_RTX;
 
   next_reg = (bytes_so_far / UNITS_PER_WORD) + 1;
 
-  return gen_rtx_REG (mode, next_reg);
+  return gen_rtx_REG (arg.mode, next_reg);
 }
 
 static void
-rx_function_arg_advance (cumulative_args_t cum, machine_mode mode,
-			 const_tree type, bool named ATTRIBUTE_UNUSED)
+rx_function_arg_advance (cumulative_args_t cum,
+			 const function_arg_info &arg)
 {
-  *get_cumulative_args (cum) += rx_function_arg_size (mode, type);
+  *get_cumulative_args (cum) += rx_function_arg_size (arg.mode, arg.type);
 }
 
 static unsigned int
@@ -1438,10 +1432,14 @@ bit_count (unsigned int x)
   return (x + (x >> 16)) & 0x3f;
 }
 
+#if defined(TARGET_SAVE_ACC_REGISTER)
 #define MUST_SAVE_ACC_REGISTER			\
   (TARGET_SAVE_ACC_REGISTER			\
    && (is_interrupt_func (NULL_TREE)		\
        || is_fast_interrupt_func (NULL_TREE)))
+#else
+#define MUST_SAVE_ACC_REGISTER 0
+#endif
 
 /* Returns either the lowest numbered and highest numbered registers that
    occupy the call-saved area of the stack frame, if the registers are
@@ -1484,10 +1482,10 @@ rx_get_stack_layout (unsigned int * lowest,
 	   /* Always save all call clobbered registers inside non-leaf
 	      interrupt handlers, even if they are not live - they may
 	      be used in (non-interrupt aware) routines called from this one.  */
-	   || (call_used_regs[reg]
+	   || (call_used_or_fixed_reg_p (reg)
 	       && is_interrupt_func (NULL_TREE)
 	       && ! crtl->is_leaf))
-	  && (! call_used_regs[reg]
+	  && (! call_used_or_fixed_reg_p (reg)
 	      /* Even call clobbered registered must
 		 be pushed inside interrupt handlers.  */
 	      || is_interrupt_func (NULL_TREE)
@@ -2612,7 +2610,7 @@ rx_expand_builtin (tree exp,
   tree fndecl = TREE_OPERAND (CALL_EXPR_FN (exp), 0);
   tree arg    = call_expr_nargs (exp) >= 1 ? CALL_EXPR_ARG (exp, 0) : NULL_TREE;
   rtx  op     = arg ? expand_normal (arg) : NULL_RTX;
-  unsigned int fcode = DECL_FUNCTION_CODE (fndecl);
+  unsigned int fcode = DECL_MD_FUNCTION_CODE (fndecl);
 
   switch (fcode)
     {

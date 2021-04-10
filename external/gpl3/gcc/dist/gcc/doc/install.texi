@@ -2,7 +2,6 @@
 @c @ifnothtml
 @c %**start of header
 @setfilename gccinstall.info
-@settitle Installing GCC
 @setchapternewpage odd
 @c %**end of header
 @c @end ifnothtml
@@ -44,7 +43,7 @@
 @settitle Installing GCC: GNU Free Documentation License
 @end ifset
 
-@c Copyright (C) 1988-2019 Free Software Foundation, Inc.
+@c Copyright (C) 1988-2020 Free Software Foundation, Inc.
 @c *** Converted to texinfo by Dean Wakerley, dean@wakerley.com
 
 @c IMPORTANT: whenever you modify this file, run `install.texi2html' to
@@ -69,7 +68,7 @@
 
 @c Part 2 Summary Description and Copyright
 @copying
-Copyright @copyright{} 1988-2019 Free Software Foundation, Inc.
+Copyright @copyright{} 1988-2020 Free Software Foundation, Inc.
 @sp 1
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -271,12 +270,34 @@ name of the package depends on your distro) or you must build GCC as a
 @option{--disable-multilib}.  Otherwise, you may encounter an error such as
 @samp{fatal error: gnu/stubs-32.h: No such file}
 
-@item GNAT
+@item @anchor{GNAT-prerequisite}GNAT
 
-In order to build the Ada compiler (GNAT) you must already have GNAT
-installed because portions of the Ada frontend are written in Ada (with
-GNAT extensions.)  Refer to the Ada installation instructions for more
-specific information.
+In order to build GNAT, the Ada compiler, you need a working GNAT
+compiler (GCC version 4.7 or later).
+
+This includes GNAT tools such as @command{gnatmake} and
+@command{gnatlink}, since the Ada front end is written in Ada and
+uses some GNAT-specific extensions.
+
+In order to build a cross compiler, it is strongly recommended to install
+the new compiler as native first, and then use it to build the cross
+compiler. Other native compiler versions may work but this is not guaranteed and
+will typically fail with hard to understand compilation errors during the
+build.
+
+Similarly, it is strongly recommended to use an older version of GNAT to build
+GNAT. More recent versions of GNAT than the version built are not guaranteed
+to work and will often fail during the build with compilation errors.
+
+Note that @command{configure} does not test whether the GNAT installation works
+and has a sufficiently recent version; if too old a GNAT version is
+installed and @option{--enable-languages=ada} is used, the build will fail.
+
+@env{ADA_INCLUDE_PATH} and @env{ADA_OBJECT_PATH} environment variables
+must not be set when building the Ada compiler, the Ada tools, or the
+Ada runtime libraries. You can check that your build environment is clean
+by verifying that @samp{gnatls -v} lists only one explicit path in each
+section.
 
 @item A ``working'' POSIX compatible shell, or GNU bash
 
@@ -312,7 +333,7 @@ requirements.
 @itemx bzip2 version 1.0.2 (or later)
 
 Necessary to uncompress GCC @command{tar} files when source code is
-obtained via FTP mirror sites.
+obtained via HTTPS mirror sites.
 
 @item GNU make version 3.80 (or later)
 
@@ -328,9 +349,8 @@ systems' @command{tar} programs will also work, only try GNU
 
 Necessary when targeting Darwin, building @samp{libstdc++},
 and not using @option{--disable-symvers}.
-Necessary when targeting Solaris 2 with Sun @command{ld} and not using
-@option{--disable-symvers}.  The bundled @command{perl} in Solaris@tie{}8
-and up works.
+Necessary when targeting Solaris 2 with Solaris @command{ld} and not using
+@option{--disable-symvers}.
 
 Necessary when regenerating @file{Makefile} dependencies in libiberty.
 Necessary when regenerating @file{libiberty/functions.texi}.
@@ -364,7 +384,7 @@ and @option{--with-gmp-include}.
 The in-tree build is only supported with the GMP version that
 download_prerequisites installs.
 
-@item MPFR Library version 2.4.2 (or later)
+@item MPFR Library version 3.1.0 (or later)
 
 Necessary to build GCC@.  It can be downloaded from
 @uref{https://www.mpfr.org}.  If an MPFR source distribution is found
@@ -376,7 +396,7 @@ but it is not in your default library search path, the
 The in-tree build is only supported with the MPFR version that
 download_prerequisites installs.
 
-@item MPC Library version 0.8.1 (or later)
+@item MPC Library version 1.0.1 (or later)
 
 Necessary to build GCC@.  It can be downloaded from
 @uref{http://www.multiprecision.org/mpc/}.  If an MPC source distribution
@@ -391,12 +411,18 @@ download_prerequisites installs.
 @item isl Library version 0.15 or later.
 
 Necessary to build GCC with the Graphite loop optimizations.
-It can be downloaded from @uref{ftp://gcc.gnu.org/pub/gcc/infrastructure/}.
+It can be downloaded from @uref{https://gcc.gnu.org/pub/gcc/infrastructure/}.
 If an isl source distribution is found
 in a subdirectory of your GCC sources named @file{isl}, it will be
 built together with GCC.  Alternatively, the @option{--with-isl} configure
 option should be used if isl is not installed in your default library
 search path.
+
+@item zstd Library.
+
+Necessary to build GCC with zstd compression used for LTO bytecode.
+The library is searched in your default library patch search.
+Alternatively, the @option{--with-zstd} configure option should be used.
 
 @end table
 
@@ -438,10 +464,7 @@ Necessary when modifying @command{gperf} input files, e.g.@:
 @itemx Tcl
 
 Necessary to run the GCC testsuite; see the section on testing for
-details.  Tcl 8.6 has a known regression in RE pattern handling that
-make parts of the testsuite fail.  See
-@uref{http://core.tcl.tk/tcl/tktview/267b7e2334ee2e9de34c4b00d6e72e2f1997085f}
-for more information.  This bug has been fixed in 8.6.1.
+details.
 
 @item autogen version 5.5.4 (or later) and
 @itemx guile version 1.4.1 (or later)
@@ -659,6 +682,19 @@ You are of course welcome to forward bugs reported to you to the FSF,
 if you determine that they are not bugs in your modifications.
 
 The default value refers to the FSF's GCC bug tracker.
+
+@item --with-documentation-root-url=@var{url}
+Specify the URL root that contains GCC option documentation.  The @var{url}
+should end with a @code{/} character.
+
+The default value is @uref{https://gcc.gnu.org/onlinedocs/,,https://gcc.gnu.org/onlinedocs/}.
+
+@item --with-changes-root-url=@var{url}
+Specify the URL root that contains information about changes in GCC
+releases like @code{gcc-@var{version}/changes.html}.
+The @var{url} should end with a @code{/} character.
+
+The default value is @uref{https://gcc.gnu.org/,,https://gcc.gnu.org/}.
 
 @end table
 
@@ -979,7 +1015,7 @@ is the target system triple, such as @samp{sparc-sun-solaris2.7}, and
 @item
 If the target system is the same that you are building on, check
 operating system specific directories (e.g.@: @file{/usr/ccs/bin} on
-Sun Solaris 2).
+Solaris 2).
 
 @item
 Check in the @env{PATH} for a tool whose name is prefixed by the
@@ -1063,6 +1099,9 @@ softfloat, m68881, m68000, m68020.
 
 @item mips*-*-*
 single-float, biendian, softfloat.
+
+@item msp430-*-*
+no-exceptions
 
 @item powerpc*-*-*, rs6000*-*-*
 aix64, pthread, softfloat, powercpu, powerpccpu, powerpcos, biendian,
@@ -1286,6 +1325,11 @@ assumptions made by the configure test are incorrect.
 Specify that the target does not support TLS.
 This is an alias for @option{--enable-tls=no}.
 
+@item --disable-tm-clone-registry
+Disable TM clone registry in libgcc. It is enabled in libgcc by default.
+This option helps to reduce code size for embedded targets which do
+not use transactional memory.
+
 @item --with-cpu=@var{cpu}
 @itemx --with-cpu-32=@var{cpu}
 @itemx --with-cpu-64=@var{cpu}
@@ -1294,7 +1338,7 @@ Specify which cpu variant the compiler should generate code for by default.
 This option is only supported on some targets, including ARC, ARM, i386, M68k,
 PowerPC, and SPARC@.  It is mandatory for ARC@.  The @option{--with-cpu-32} and
 @option{--with-cpu-64} options specify separate default CPUs for
-32-bit and 64-bit modes; these options are only supported for i386,
+32-bit and 64-bit modes; these options are only supported for aarch64, i386,
 x86-64, PowerPC, and SPARC@.
 
 @item --with-schedule=@var{cpu}
@@ -1532,8 +1576,8 @@ addition, @samp{libstdc++}'s include files will be installed into
 @file{@var{libdir}} unless you overruled it by using
 @option{--with-gxx-include-dir=@var{dirname}}.  Using this option is
 particularly useful if you intend to use several versions of GCC in
-parallel.  This is currently supported by @samp{libgfortran},
-@samp{libstdc++}, and @samp{libobjc}.
+parallel.  The default is @samp{yes} for @samp{libada}, and @samp{no} for
+the remaining libraries.
 
 @item @anchor{WithAixSoname}--with-aix-soname=@samp{aix}, @samp{svr4} or @samp{both}
 Traditional AIX shared library versioning (versioned @code{Shared Object}
@@ -2072,10 +2116,19 @@ GLIBC 2.11 or above, otherwise disabled.
 Tells GCC to use @var{choice} as the default for @option{-fdiagnostics-color=}
 option (if not used explicitly on the command line).  @var{choice}
 can be one of @samp{never}, @samp{auto}, @samp{always}, and @samp{auto-if-env}
-where @samp{auto} is the default.  @samp{auto-if-env} means that
-@option{-fdiagnostics-color=auto} will be the default if @code{GCC_COLORS}
-is present and non-empty in the environment, and
+where @samp{auto} is the default.  @samp{auto-if-env} makes
+@option{-fdiagnostics-color=auto} the default if @env{GCC_COLORS}
+is present and non-empty in the environment of the compiler, and
 @option{-fdiagnostics-color=never} otherwise.
+
+@item --with-diagnostics-urls=@var{choice}
+Tells GCC to use @var{choice} as the default for @option{-fdiagnostics-urls=}
+option (if not used explicitly on the command line).  @var{choice}
+can be one of @samp{never}, @samp{auto}, @samp{always}, and @samp{auto-if-env}
+where @samp{auto} is the default.  @samp{auto-if-env} makes
+@option{-fdiagnostics-urls=auto} the default if @env{GCC_URLS}
+or @env{TERM_URLS} is present and non-empty in the environment of the
+compiler, and @option{-fdiagnostics-urls=never} otherwise.
 
 @item --enable-lto
 @itemx --disable-lto
@@ -2184,6 +2237,10 @@ target if target binutils supported.
 The following options only apply to building cross compilers.
 
 @table @code
+@item --with-toolexeclibdir=@var{dir}
+Specify the installation directory for libraries built with a cross compiler.
+The default is @option{$@{gcc_tooldir@}/lib}.
+
 @item --with-sysroot
 @itemx --with-sysroot=@var{dir}
 Tells GCC to consider @var{dir} as the root of a tree that contains
@@ -2257,15 +2314,71 @@ being used as the target C library.  This causes @code{__eprintf} to be
 omitted from @file{libgcc.a} on the assumption that it will be provided by
 @samp{newlib}.
 
+@html
+<a name="avr"></a>
+@end html
 @item --with-avrlibc
-Specifies that @samp{AVR-Libc} is
-being used as the target C library.  This causes float support
+Only supported for the AVR target. Specifies that @samp{AVR-Libc} is
+being used as the target C@tie{} library.  This causes float support
 functions like @code{__addsf3} to be omitted from @file{libgcc.a} on
 the assumption that it will be provided by @file{libm.a}.  For more
 technical details, cf. @uref{http://gcc.gnu.org/PR54461,,PR54461}.
-This option is only supported for the AVR target.  It is not supported for
+It is not supported for
 RTEMS configurations, which currently use newlib.  The option is
 supported since version 4.7.2 and is the default in 4.8.0 and newer.
+
+@item --with-double=@{32|64|32,64|64,32@}
+@itemx --with-long-double=@{32|64|32,64|64,32|double@}
+Only supported for the AVR target since version@tie{}10.
+Specify the default layout available for the C/C++ @samp{double}
+and @samp{long double} type, respectively. The following rules apply:
+@itemize
+@item
+The first value after the @samp{=} specifies the default layout (in bits)
+of the type and also the default for the @option{-mdouble=} resp.
+@option{-mlong-double=} compiler option.
+@item
+If more than one value is specified, respective multilib variants are
+available, and  @option{-mdouble=} resp. @option{-mlong-double=} acts
+as a multilib option.
+@item
+If @option{--with-long-double=double} is specified, @samp{double} and
+@samp{long double} will have the same layout.
+@item
+The defaults are @option{--with-long-double=64,32} and
+@option{--with-double=32,64}.  The default @samp{double} layout imposed by
+the latter is compatible with older versions of the compiler that implement
+@samp{double} as a 32-bit type, which does not comply to the language standard.
+@end itemize
+Not all combinations of @option{--with-double=} and
+@option{--with-long-double=} are valid.  For example, the combination
+@option{--with-double=32,64} @option{--with-long-double=32} will be
+rejected because the first option specifies the availability of
+multilibs for @samp{double}, whereas the second option implies
+that @samp{long double} --- and hence also @samp{double} --- is always
+32@tie{}bits wide.
+
+@item --with-double-comparison=@{tristate|bool|libf7@}
+Only supported for the AVR target since version@tie{}10.
+Specify what result format is returned by library functions that
+compare 64-bit floating point values (@code{DFmode}).
+The GCC default is @samp{tristate}.  If the floating point
+implementation returns a boolean instead, set it to @samp{bool}.
+
+@item --with-libf7=@{libgcc|math|math-symbols|no@}
+Only supported for the AVR target since version@tie{}10.
+Specify to which degree code from LibF7 is included in libgcc.
+LibF7 is an ad-hoc, AVR-specific, 64-bit floating point emulation
+written in C and (inline) assembly. @samp{libgcc} adds support
+for functions that one would usually expect in libgcc like double addition,
+double comparisons and double conversions. @samp{math} also adds routines
+that one would expect in @file{libm.a}, but with @code{__} (two underscores)
+prepended to the symbol names as specified by @file{math.h}.
+@samp{math-symbols} also defines weak aliases for the functions
+declared in @file{math.h}.  However, @code{--with-libf7} won't
+install no @file{math.h} header file whatsoever, this file must come
+from elsewhere.  This option sets @option{--with-double-comparison}
+to @samp{bool}.
 
 @item --with-nds32-lib=@var{library}
 Specifies that @var{library} setting is used for building @file{libgcc.a}.
@@ -2328,7 +2441,7 @@ The following options apply to the build of the Objective-C runtime library.
 @item --enable-objc-gc
 Specify that an additional variant of the GNU Objective-C runtime library
 is built, using an external build of the Boehm-Demers-Weiser garbage
-collector (@uref{http://www.hboehm.info/gc/}).  This library needs to be
+collector (@uref{https://www.hboehm.info/gc/}).  This library needs to be
 available for each multilib variant, unless configured with
 @option{--enable-objc-gc=@samp{auto}} in which case the build of the
 additional runtime library is skipped when not available and the build
@@ -2359,6 +2472,37 @@ default locations.
 The following options apply to the build of the D runtime library.
 
 @table @code
+@item --enable-libphobos-checking
+@itemx --disable-libphobos-checking
+@itemx --enable-libphobos-checking=@var{list}
+This option controls whether run-time checks and contracts are compiled into
+the D runtime library.  When the option is not specified, the library is built
+with @samp{release} checking.  When the option is specified without a
+@var{list}, the result is the same as @samp{--enable-libphobos-checking=yes}.
+Likewise, @samp{--disable-libphobos-checking} is equivalent to
+@samp{--enable-libphobos-checking=no}.
+
+The categories of checks available in @var{list} are @samp{yes} (compiles
+libphobos with @option{-fno-release}), @samp{no} (compiles libphobos with
+@option{-frelease}), @samp{all} (same as @samp{yes}), @samp{none} or
+@samp{release} (same as @samp{no}).
+
+Individual checks available in @var{list} are @samp{assert} (compiles libphobos
+with an extra option @option{-fassert}).
+
+@item --with-libphobos-druntime-only
+@itemx --with-libphobos-druntime-only=@var{choice}
+Specify whether to build only the core D runtime library (druntime), or both
+the core and standard library (phobos) into libphobos.  This is useful for
+targets that have full support in druntime, but no or incomplete support
+in phobos.  @var{choice} can be one of @samp{auto}, @samp{yes}, and @samp{no}
+where @samp{auto} is the default.
+
+When the option is not specified, the default choice @samp{auto} means that it
+is inferred whether the target has support for the phobos standard library.
+When the option is specified without a @var{choice},  the result is the same as
+@samp{--with-libphobos-druntime-only=yes}.
+
 @item --with-target-system-zlib
 Use installed @samp{zlib} rather than that included with GCC@.  This needs
 to be available for each multilib variant, unless configured with
@@ -2535,6 +2679,7 @@ Removes any @option{-O}-started option from @code{BOOT_CFLAGS}, and adds
 @samp{BOOT_CFLAGS='-g -O1'}.
 
 @item @samp{bootstrap-O3}
+@itemx @samp{bootstrap-Og}
 Analogous to @code{bootstrap-O1}.
 
 @item @samp{bootstrap-lto}
@@ -2615,6 +2760,10 @@ assumes that the host supports Intel CET (e.g.@: GNU assembler version
 Arranges for the run time of each program started by the GCC driver,
 built in any stage, to be logged to @file{time.log}, in the top level of
 the build tree.
+
+@item @samp{bootstrap-asan}
+Compiles GCC itself using Address Sanitization in order to catch invalid memory
+accesses within the GCC code.
 
 @end table
 
@@ -2707,26 +2856,12 @@ and network filesystems.
 
 @section Building the Ada compiler
 
-In order to build GNAT, the Ada compiler, you need a working GNAT
-compiler (GCC version 4.0 or later).
-This includes GNAT tools such as @command{gnatmake} and
-@command{gnatlink}, since the Ada front end is written in Ada and
-uses some GNAT-specific extensions.
-
-In order to build a cross compiler, it is suggested to install
-the new compiler as native first, and then use it to build the cross
-compiler.
-
-@command{configure} does not test whether the GNAT installation works
-and has a sufficiently recent version; if too old a GNAT version is
-installed, the build will fail unless @option{--enable-languages} is
-used to disable building the Ada front end.
-
-@env{ADA_INCLUDE_PATH} and @env{ADA_OBJECT_PATH} environment variables
-must not be set when building the Ada compiler, the Ada tools, or the
-Ada runtime libraries. You can check that your build environment is clean
-by verifying that @samp{gnatls -v} lists only one explicit path in each
-section.
+@ifnothtml
+@ref{GNAT-prerequisite}.
+@end ifnothtml
+@ifhtml
+@uref{prerequisites.html#GNAT-prerequisite,,GNAT prerequisites}.
+@end ifhtml
 
 @section Building with profile feedback
 
@@ -3186,7 +3321,7 @@ AIX:
 @itemize
 @item
 @uref{http://www.bullfreeware.com,,Bull's Open Source Software Archive for
-for AIX 5L and AIX 6};
+for AIX 6 and AIX 7};
 
 @item
 @uref{http://www.perzl.org/aix/,,AIX Open Source Packages (AIX5L AIX 6.1
@@ -3208,9 +3343,6 @@ Solaris 2 (SPARC, Intel):
 @itemize
 @item
 @uref{https://www.opencsw.org/,,OpenCSW}
-
-@item
-@uref{http://jupiterrise.com/tgcware/,,TGCware}
 @end itemize
 
 @item
@@ -3280,7 +3412,7 @@ information have to.
 @item
 @uref{#alpha-x-x,,alpha*-*-*}
 @item
-@uref{#amd64-x-solaris210,,amd64-*-solaris2.10}
+@uref{#amd64-x-solaris2,,amd64-*-solaris2*}
 @item
 @uref{#arm-x-eabi,,arm-*-eabi}
 @item
@@ -3304,7 +3436,7 @@ information have to.
 @item
 @uref{#ix86-x-linux,,i?86-*-linux*}
 @item
-@uref{#ix86-x-solaris210,,i?86-*-solaris2.10}
+@uref{#ix86-x-solaris2,,i?86-*-solaris2*}
 @item
 @uref{#ia64-x-linux,,ia64-*-linux}
 @item
@@ -3380,8 +3512,6 @@ information have to.
 @item
 @uref{#sparc-sun-solaris2,,sparc-sun-solaris2*}
 @item
-@uref{#sparc-sun-solaris210,,sparc-sun-solaris2.10}
-@item
 @uref{#sparc-x-linux,,sparc-*-linux*}
 @item
 @uref{#sparc64-x-solaris2,,sparc64-*-solaris2*}
@@ -3402,7 +3532,7 @@ information have to.
 @item
 @uref{#x86-64-x-x,,x86_64-*-*, amd64-*-*}
 @item
-@uref{#x86-64-x-solaris210,,x86_64-*-solaris2.1[0-9]*}
+@uref{#x86-64-x-solaris2,,x86_64-*-solaris2*}
 @item
 @uref{#xtensa-x-elf,,xtensa*-*-elf}
 @item
@@ -3476,37 +3606,32 @@ This section contains general configuration information for all
 Alpha-based platforms using ELF@.  In addition to reading this
 section, please read all other sections that match your target.
 
-We require binutils 2.11.2 or newer.
-Previous binutils releases had a number of problems with DWARF 2
-debugging information, not the least of which is incorrect linking of
-shared libraries.
+@html
+<hr />
+@end html
+@anchor{amd64-x-solaris2}
+@heading amd64-*-solaris2*
+This is a synonym for @samp{x86_64-*-solaris2*}.
 
 @html
 <hr />
 @end html
-@anchor{amd64-x-solaris210}
-@heading amd64-*-solaris2.1[0-9]*
-This is a synonym for @samp{x86_64-*-solaris2.1[0-9]*}.
-
-@html
-<hr />
-@end html
-@anchor{amdgcn-unknown-amdhsa}
-@heading amdgcn-unknown-amdhsa
+@anchor{amdgcn-x-amdhsa}
+@heading amdgcn-*-amdhsa
 AMD GCN GPU target.
 
 Instead of GNU Binutils, you will need to install LLVM 6, or later, and copy
-@file{bin/llvm-mc} to @file{amdgcn-unknown-amdhsa/bin/as},
-@file{bin/lld} to @file{amdgcn-unknown-amdhsa/bin/ld},
-@file{bin/llvm-nm} to @file{amdgcn-unknown-amdhsa/bin/nm}, and
-@file{bin/llvm-ar} to both @file{bin/amdgcn-unknown-amdhsa-ar} and
-@file{bin/amdgcn-unknown-amdhsa-ranlib}.
+@file{bin/llvm-mc} to @file{amdgcn-amdhsa/bin/as},
+@file{bin/lld} to @file{amdgcn-amdhsa/bin/ld},
+@file{bin/llvm-nm} to @file{amdgcn-amdhsa/bin/nm}, and
+@file{bin/llvm-ar} to both @file{bin/amdgcn-amdhsa-ar} and
+@file{bin/amdgcn-amdhsa-ranlib}.
 
 Use Newlib (2019-01-16, or newer).
 
 To run the binaries, install the HSA Runtime from the
 @uref{https://rocm.github.io,,ROCm Platform}, and use
-@file{libexec/gcc/amdhsa-unknown-amdhsa/@var{version}/gcn-run} to launch them
+@file{libexec/gcc/amdhsa-amdhsa/@var{version}/gcn-run} to launch them
 on the GPU.
 
 @html
@@ -3588,7 +3713,7 @@ See ``Blackfin Options'' in the main manual
 @end ifhtml
 
 More information, and a version of binutils with support for this processor,
-is available at @uref{https://blackfin.uclinux.org}
+are available at @uref{https://sourceforge.net/projects/adi-toolchain/}.
 
 @html
 <hr />
@@ -3921,34 +4046,29 @@ found on @uref{http://www.bitwizard.nl/sig11/,,www.bitwizard.nl}.
 @html
 <hr />
 @end html
-@anchor{ix86-x-solaris210}
-@heading i?86-*-solaris2.10
-Use this for Solaris 10 or later on x86 and x86-64 systems.  Starting
-with GCC 4.7, there is also a 64-bit @samp{amd64-*-solaris2.1[0-9]*} or
-@samp{x86_64-*-solaris2.1[0-9]*} configuration that corresponds to
+@anchor{ix86-x-solaris2}
+@heading i?86-*-solaris2*
+Use this for Solaris 11.3 or later on x86 and x86-64 systems.  Starting
+with GCC 4.7, there is also a 64-bit @samp{amd64-*-solaris2*} or
+@samp{x86_64-*-solaris2*} configuration that corresponds to
 @samp{sparcv9-sun-solaris2*}.
 
 It is recommended that you configure GCC to use the GNU assembler.  The
-versions included in Solaris 10, from GNU binutils 2.15 (in
-@file{/usr/sfw/bin/gas}), and Solaris 11, from GNU binutils 2.19 or
-newer (also available as @file{/usr/bin/gas} and
+versions included in Solaris 11.3, from GNU binutils 2.23.1 or
+newer (available as @file{/usr/bin/gas} and
 @file{/usr/gnu/bin/as}), work fine.  The current version, from GNU
-binutils 2.29, is known to work, but the version from GNU binutils 2.26
-must be avoided.  Recent versions of the Solaris assembler in
-@file{/usr/ccs/bin/as} work almost as well, though.
-@c FIXME: as patch requirements?
+binutils 2.34, is known to work.  Recent versions of the Solaris assembler in
+@file{/usr/bin/as} work almost as well, though.
 
-For linking, the Solaris linker, is preferred.  If you want to use the GNU
-linker instead, note that due to a packaging bug the version in Solaris
-10, from GNU binutils 2.15 (in @file{/usr/sfw/bin/gld}), cannot be used,
-while the version in Solaris 11, from GNU binutils 2.19 or newer (also
-in @file{/usr/gnu/bin/ld} and @file{/usr/bin/gld}), works, as does the
-latest version, from GNU binutils 2.29.
+For linking, the Solaris linker is preferred.  If you want to use the GNU
+linker instead, the version in Solaris 11.3, from GNU binutils 2.23.1 or
+newer (in @file{/usr/gnu/bin/ld} and @file{/usr/bin/gld}), works,
+as does the latest version, from GNU binutils 2.34.
 
 To use GNU @command{as}, configure with the options
-@option{--with-gnu-as --with-as=@//usr/@/sfw/@/bin/@/gas}.  It may be necessary
+@option{--with-gnu-as --with-as=@//usr/@/gnu/@/bin/@/as}.  It may be necessary
 to configure with @option{--without-gnu-ld --with-ld=@//usr/@/ccs/@/bin/@/ld} to
-guarantee use of Sun @command{ld}.
+guarantee use of Solaris @command{ld}.
 @c FIXME: why --without-gnu-ld --with-ld?
 
 @html
@@ -4299,9 +4419,23 @@ The moxie processor.
 <hr />
 @end html
 @anchor{msp430-x-elf}
-@heading msp430-*-elf
+@heading msp430-*-elf*
 TI MSP430 processor.
 This configuration is intended for embedded systems.
+
+@samp{msp430-*-elf} is the standard configuration with most GCC
+features enabled by default.
+
+@samp{msp430-*-elfbare} is tuned for a bare-metal environment, and disables
+features related to shared libraries and other functionality not used for
+this device.  This reduces code and data usage of the GCC libraries, resulting
+in a minimal run-time environment by default.
+
+Features disabled by default include:
+@itemize
+@item transactional memory
+@item __cxa_atexit
+@end itemize
 
 @html
 <hr />
@@ -4361,7 +4495,7 @@ The OpenRISC 1000 32-bit processor with delay slots.
 You can specify a default version for the @option{-mcpu=@var{cpu_type}}
 switch by using the configure option @option{--with-cpu-@var{cpu_type}}.
 
-You will need GNU binutils 2.15 or newer.
+You will need GNU binutils 2.20 or newer.
 
 @html
 <hr />
@@ -4453,8 +4587,7 @@ This configuration is intended for embedded systems.
 @heading riscv32-*-elf
 The RISC-V RV32 instruction set.
 This configuration is intended for embedded systems.
-This (and all other RISC-V) targets are supported upstream as of the
-binutils 2.28 release.
+This (and all other RISC-V) targets require the binutils 2.30 release.
 
 @html
 <hr />
@@ -4462,8 +4595,7 @@ binutils 2.28 release.
 @anchor{riscv32-x-linux}
 @heading riscv32-*-linux
 The RISC-V RV32 instruction set running GNU/Linux.
-This (and all other RISC-V) targets are supported upstream as of the
-binutils 2.28 release.
+This (and all other RISC-V) targets require the binutils 2.30 release.
 
 @html
 <hr />
@@ -4472,8 +4604,7 @@ binutils 2.28 release.
 @heading riscv64-*-elf
 The RISC-V RV64 instruction set.
 This configuration is intended for embedded systems.
-This (and all other RISC-V) targets are supported upstream as of the
-binutils 2.28 release.
+This (and all other RISC-V) targets require the binutils 2.30 release.
 
 @html
 <hr />
@@ -4481,8 +4612,7 @@ binutils 2.28 release.
 @anchor{riscv64-x-linux}
 @heading riscv64-*-linux
 The RISC-V RV64 instruction set running GNU/Linux.
-This (and all other RISC-V) targets are supported upstream as of the
-binutils 2.28 release.
+This (and all other RISC-V) targets require the binutils 2.30 release.
 
 @html
 <hr />
@@ -4522,22 +4652,18 @@ supported as cross-compilation target only.
 @c alone is too unspecific and must be avoided.
 @anchor{x-x-solaris2}
 @heading *-*-solaris2*
-Support for Solaris 10 has been obsoleted in GCC 9, but can still be
-enabled by configuring with @option{--enable-obsolete}.  Support will be
-removed in GCC 10.  Support for Solaris 9 has been removed in GCC 5.
-Support for Solaris 8 has been removed in GCC 4.8.  Support for Solaris
-7 has been removed in GCC 4.6.
+Support for Solaris 10 has been removed in GCC 10.  Support for Solaris
+9 has been removed in GCC 5.  Support for Solaris 8 has been removed in
+GCC 4.8.  Support for Solaris 7 has been removed in GCC 4.6.
 
-Sun does not ship a C compiler with Solaris 2 before Solaris 10, though
-you can download the Sun Studio compilers for free.  In Solaris 10 and
-11, GCC 3.4.3 is available as @command{/usr/sfw/bin/gcc}.  Solaris 11
-also provides GCC 4.5.2, 4.7.3, and 4.8.2 as
-@command{/usr/gcc/4.5/bin/gcc} or similar.  Alternatively,
+Solaris 11.3 provides GCC 4.5.2, 4.7.3, and 4.8.2 as
+@command{/usr/gcc/4.5/bin/gcc} or similar.  Newer Solaris versions
+provide one or more of GCC 5, 7, and 9.  Alternatively,
 you can install a pre-built GCC to bootstrap and install GCC.  See the
 @uref{binaries.html,,binaries page} for details.
 
 The Solaris 2 @command{/bin/sh} will often fail to configure
-@samp{libstdc++-v3}or @samp{boehm-gc}.  We therefore recommend using the
+@samp{libstdc++-v3}.  We therefore recommend using the
 following initial sequence of commands
 
 @smallexample
@@ -4550,47 +4676,32 @@ and proceed as described in @uref{configure.html,,the configure instructions}.
 In addition we strongly recommend specifying an absolute path to invoke
 @command{@var{srcdir}/configure}.
 
-Solaris 10 comes with a number of optional OS packages.  Some of these
-are needed to use GCC fully, namely @code{SUNWarc},
-@code{SUNWbtool}, @code{SUNWesu}, @code{SUNWhea}, @code{SUNWlibm},
-@code{SUNWsprot}, and @code{SUNWtoo}.  If you did not install all
-optional packages when installing Solaris 10, you will need to verify that
-the packages that GCC needs are installed.
-To check whether an optional package is installed, use
-the @command{pkginfo} command.  To add an optional package, use the
-@command{pkgadd} command.  For further details, see the Solaris 10
-documentation.
-
-Starting with Solaris 11, the package management has changed, so you
-need to check for @code{system/header}, @code{system/linker}, and
-@code{developer/assembler} packages.  Checking for and installing
-packages is done with the @command{pkg} command now.
+In Solaris 11, you need to check for @code{system/header},
+@code{system/linker}, and @code{developer/assembler} packages.
 
 Trying to use the linker and other tools in
 @file{/usr/ucb} to install GCC has been observed to cause trouble.
 For example, the linker may hang indefinitely.  The fix is to remove
 @file{/usr/ucb} from your @env{PATH}.
 
-The build process works more smoothly with the legacy Sun tools so, if you
+The build process works more smoothly with the legacy Solaris tools so, if you
 have @file{/usr/xpg4/bin} in your @env{PATH}, we recommend that you place
 @file{/usr/bin} before @file{/usr/xpg4/bin} for the duration of the build.
 
 We recommend the use of the Solaris assembler or the GNU assembler, in
 conjunction with the Solaris linker.  The GNU @command{as}
-versions included in Solaris 10, from GNU binutils 2.15 (in
-@file{/usr/sfw/bin/gas}), and Solaris 11,
-from GNU binutils 2.19 or newer (also in @file{/usr/bin/gas} and
+versions included in Solaris 11.3,
+from GNU binutils 2.23.1 or newer (in @file{/usr/bin/gas} and
 @file{/usr/gnu/bin/as}), are known to work.
-The current version, from GNU binutils 2.29,
+The current version, from GNU binutils 2.34,
 is known to work as well.  Note that your mileage may vary
 if you use a combination of the GNU tools and the Solaris tools: while the
-combination GNU @command{as} + Sun @command{ld} should reasonably work,
-the reverse combination Sun @command{as} + GNU @command{ld} may fail to
+combination GNU @command{as} + Solaris @command{ld} should reasonably work,
+the reverse combination Solaris @command{as} + GNU @command{ld} may fail to
 build or cause memory corruption at runtime in some cases for C++ programs.
 @c FIXME: still?
-GNU @command{ld} usually works as well, although the version included in
-Solaris 10 cannot be used due to several bugs.  Again, the current
-version (2.29) is known to work, but generally lacks platform specific
+GNU @command{ld} usually works as well.  Again, the current
+version (2.34) is known to work, but generally lacks platform specific
 features, so better stay with Solaris @command{ld}.  To use the LTO linker
 plugin (@option{-fuse-linker-plugin}) with GNU @command{ld}, GNU
 binutils @emph{must} be configured with @option{--enable-largefile}.
@@ -4601,12 +4712,20 @@ GNU binutils.  @samp{libstdc++} symbol versioning will be disabled if no
 appropriate version is found.  Solaris @command{c++filt} from the Solaris
 Studio compilers does @emph{not} work.
 
-Sun bug 4927647 sometimes causes random spurious testsuite failures
-related to missing diagnostic output.  This bug doesn't affect GCC
-itself, rather it is a kernel bug triggered by the @command{expect}
-program which is used only by the GCC testsuite driver.  When the bug
-causes the @command{expect} program to miss anticipated output, extra
-testsuite failures appear.
+The versions of the GNU Multiple Precision Library (GMP), the MPFR
+library and the MPC library bundled with Solaris 11.3 and later are
+usually recent enough to match GCC's requirements.  There are two
+caveats:
+
+@itemize @bullet
+@item
+While the version of the GMP library in Solaris 11.3 works with GCC, you
+need to configure with @option{--with-gmp-include=/usr/include/gmp}.
+
+@item
+The version of the MPFR libary included in Solaris 11.3 is too old; you
+need to provide a more recent one.
+@end itemize
 
 @html
 <hr />
@@ -4629,7 +4748,7 @@ in @uref{prerequisites.html,,the prerequisites}.
 @anchor{sparc-sun-solaris2}
 @heading sparc-sun-solaris2*
 When GCC is configured to use GNU binutils 2.14 or later, the binaries
-produced are smaller than the ones produced using Sun's native tools;
+produced are smaller than the ones produced using Solaris native tools;
 this difference is quite significant for binaries containing debugging
 information.
 
@@ -4645,27 +4764,11 @@ When configuring the GNU Multiple Precision Library (GMP), the MPFR
 library or the MPC library on a Solaris 7 or later system, the canonical
 target triplet must be specified as the @command{build} parameter on the
 configure line.  This target triplet can be obtained by invoking @command{./config.guess} in the toplevel source directory of GCC (and
-not that of GMP or MPFR or MPC).  For example on a Solaris 9 system:
+not that of GMP or MPFR or MPC).  For example on a Solaris 11 system:
 
 @smallexample
-% ./configure --build=sparc-sun-solaris2.9 --prefix=xxx
+% ./configure --build=sparc-sun-solaris2.11 --prefix=xxx
 @end smallexample
-
-@html
-<hr />
-@end html
-@anchor{sparc-sun-solaris210}
-@heading sparc-sun-solaris2.10
-There is a bug in older versions of the Sun assembler which breaks
-thread-local storage (TLS).  A typical error message is
-
-@smallexample
-ld: fatal: relocation error: R_SPARC_TLS_LE_HIX22: file /var/tmp//ccamPA1v.o:
-  symbol <unknown>: bad symbol type SECT: symbol type must be TLS
-@end smallexample
-
-@noindent
-This bug is fixed in Sun patch 118683-03 or later.
 
 @html
 <hr />
@@ -4678,13 +4781,20 @@ This bug is fixed in Sun patch 118683-03 or later.
 @end html
 @anchor{sparc64-x-solaris2}
 @heading sparc64-*-solaris2*
+When configuring a 64-bit-default GCC on Solaris/SPARC, you must use a
+build compiler that generates 64-bit code, either by default or by
+specifying @samp{CC='gcc -m64' CXX='gcc-m64'} to @command{configure}.
+Additionally, you @emph{must} pass @option{--build=sparc64-sun-solaris2.11}
+or @option{--build=sparcv9-sun-solaris2.11} because @file{config.guess}
+misdetects this situation, which can cause build failures.
+
 When configuring the GNU Multiple Precision Library (GMP), the MPFR
 library or the MPC library, the canonical target triplet must be specified
 as the @command{build} parameter on the configure line.  For example
-on a Solaris 9 system:
+on a Solaris 11 system:
 
 @smallexample
-% ./configure --build=sparc64-sun-solaris2.9 --prefix=xxx
+% ./configure --build=sparc64-sun-solaris2.11 --prefix=xxx
 @end smallexample
 
 @html
@@ -4782,8 +4892,8 @@ both 64-bit x86-64 and 32-bit x86 code (via the @option{-m32} switch).
 @html
 <hr />
 @end html
-@anchor{x86-64-x-solaris210}
-@heading x86_64-*-solaris2.1[0-9]*
+@anchor{x86-64-x-solaris2}
+@heading x86_64-*-solaris2*
 GCC also supports the x86-64 architecture implemented by the AMD64
 processor (@samp{amd64-*-*} is an alias for @samp{x86_64-*-*}) on
 Solaris 10 or later.  Unlike other systems, without special options a
@@ -4792,7 +4902,7 @@ can generate 64-bit x86-64 code with the @option{-m64} switch.  Since
 GCC 4.7, there is also a configuration that defaults to 64-bit code, but
 can generate 32-bit code with @option{-m32}.  To configure and build
 this way, you have to provide all support libraries like @file{libgmp}
-as 64-bit code, configure with @option{--target=x86_64-pc-solaris2.1x}
+as 64-bit code, configure with @option{--target=x86_64-pc-solaris2.11}
 and @samp{CC=gcc -m64}.
 
 @html

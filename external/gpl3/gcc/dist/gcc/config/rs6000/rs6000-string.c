@@ -1,6 +1,6 @@
 /* Subroutines used to expand string and block move, clear,
    compare and other operations for PowerPC.
-   Copyright (C) 1991-2019 Free Software Foundation, Inc.
+   Copyright (C) 1991-2020 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -679,7 +679,7 @@ expand_cmp_vec_sequence (unsigned HOST_WIDE_INT bytes_to_compare,
 	 bnl 6,.Lmismatch
 
 	 For the P8 LE case, we use lxvd2x and compare full 16 bytes
-	 but then use use vgbbd and a shift to get two bytes with the
+	 but then use vgbbd and a shift to get two bytes with the
 	 information we need in the correct order.
 
 	 VEC/VSX compare sequence if TARGET_P9_VECTOR:
@@ -963,6 +963,7 @@ expand_compare_loop (rtx operands[])
 	  max_bytes = 64;
       break;
     case PROCESSOR_POWER9:
+    case PROCESSOR_POWER10:
       if (bytes_is_const)
 	max_bytes = 191;
       else
@@ -2718,7 +2719,7 @@ gen_lvx_v4si_move (rtx dest, rtx src)
 #define MAX_MOVE_REG 4
 
 int
-expand_block_move (rtx operands[])
+expand_block_move (rtx operands[], bool might_overlap)
 {
   rtx orig_dest = operands[0];
   rtx orig_src	= operands[1];
@@ -2729,6 +2730,7 @@ expand_block_move (rtx operands[])
   int bytes;
   int offset;
   int move_bytes;
+  rtx loads[MAX_MOVE_REG];
   rtx stores[MAX_MOVE_REG];
   int num_reg = 0;
 
@@ -2816,47 +2818,35 @@ expand_block_move (rtx operands[])
 	  gen_func.mov = gen_movqi;
 	}
 
+      /* Mode is always set to something other than BLKmode by one of the 
+	 cases of the if statement above.  */
+      gcc_assert (mode != BLKmode);
+
       src = adjust_address (orig_src, mode, offset);
       dest = adjust_address (orig_dest, mode, offset);
 
-      if (mode != BLKmode)
-	{
-	  rtx tmp_reg = gen_reg_rtx (mode);
+      rtx tmp_reg = gen_reg_rtx (mode);
+      
+      loads[num_reg]    = (*gen_func.mov) (tmp_reg, src);
+      stores[num_reg++] = (*gen_func.mov) (dest, tmp_reg);
 
-	  emit_insn ((*gen_func.mov) (tmp_reg, src));
-	  stores[num_reg++] = (*gen_func.mov) (dest, tmp_reg);
-	}
+      /* If we didn't succeed in doing it in one pass, we can't do it in the 
+	 might_overlap case.  Bail out and return failure.  */
+      if (might_overlap && num_reg >= MAX_MOVE_REG
+	  && bytes > move_bytes)
+	return 0;
 
-      if (mode == BLKmode || num_reg >= MAX_MOVE_REG || bytes == move_bytes)
+      /* Emit loads and stores saved up.  */
+      if (num_reg >= MAX_MOVE_REG || bytes == move_bytes)
 	{
 	  int i;
+	  for (i = 0; i < num_reg; i++)
+	    emit_insn (loads[i]);
 	  for (i = 0; i < num_reg; i++)
 	    emit_insn (stores[i]);
 	  num_reg = 0;
 	}
-
-      if (mode == BLKmode)
-	{
-	  /* Move the address into scratch registers.  The movmemsi
-	     patterns require zero offset.  */
-	  if (!REG_P (XEXP (src, 0)))
-	    {
-	      rtx src_reg = copy_addr_to_reg (XEXP (src, 0));
-	      src = replace_equiv_address (src, src_reg);
-	    }
-	  set_mem_size (src, move_bytes);
-
-	  if (!REG_P (XEXP (dest, 0)))
-	    {
-	      rtx dest_reg = copy_addr_to_reg (XEXP (dest, 0));
-	      dest = replace_equiv_address (dest, dest_reg);
-	    }
-	  set_mem_size (dest, move_bytes);
-
-	  emit_insn ((*gen_func.movmemsi) (dest, src,
-					   GEN_INT (move_bytes & 31),
-					   align_rtx));
-	}
+	
     }
 
   return 1;

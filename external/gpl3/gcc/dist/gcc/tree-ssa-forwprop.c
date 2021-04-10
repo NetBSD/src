@@ -1,5 +1,5 @@
 /* Forward propagation of expressions for single use variables.
-   Copyright (C) 2004-2019 Free Software Foundation, Inc.
+   Copyright (C) 2004-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -48,6 +48,9 @@ along with GCC; see the file COPYING3.  If not see
 #include "optabs-tree.h"
 #include "tree-vector-builder.h"
 #include "vec-perm-indices.h"
+#include "internal-fn.h"
+#include "cgraph.h"
+#include "tree-ssa.h"
 
 /* This pass propagates the RHS of assignment statements into use
    sites of the LHS of the assignment.  It's basically a specialized
@@ -347,19 +350,22 @@ rhs_to_tree (tree type, gimple *stmt)
 {
   location_t loc = gimple_location (stmt);
   enum tree_code code = gimple_assign_rhs_code (stmt);
-  if (get_gimple_rhs_class (code) == GIMPLE_TERNARY_RHS)
-    return fold_build3_loc (loc, code, type, gimple_assign_rhs1 (stmt),
-			    gimple_assign_rhs2 (stmt),
-			    gimple_assign_rhs3 (stmt));
-  else if (get_gimple_rhs_class (code) == GIMPLE_BINARY_RHS)
-    return fold_build2_loc (loc, code, type, gimple_assign_rhs1 (stmt),
-			gimple_assign_rhs2 (stmt));
-  else if (get_gimple_rhs_class (code) == GIMPLE_UNARY_RHS)
-    return build1 (code, type, gimple_assign_rhs1 (stmt));
-  else if (get_gimple_rhs_class (code) == GIMPLE_SINGLE_RHS)
-    return gimple_assign_rhs1 (stmt);
-  else
-    gcc_unreachable ();
+  switch (get_gimple_rhs_class (code))
+    {
+    case GIMPLE_TERNARY_RHS:
+      return fold_build3_loc (loc, code, type, gimple_assign_rhs1 (stmt),
+			      gimple_assign_rhs2 (stmt),
+			      gimple_assign_rhs3 (stmt));
+    case GIMPLE_BINARY_RHS:
+      return fold_build2_loc (loc, code, type, gimple_assign_rhs1 (stmt),
+			      gimple_assign_rhs2 (stmt));
+    case GIMPLE_UNARY_RHS:
+      return build1 (code, type, gimple_assign_rhs1 (stmt));
+    case GIMPLE_SINGLE_RHS:
+      return gimple_assign_rhs1 (stmt);
+    default:
+      gcc_unreachable ();
+    }
 }
 
 /* Combine OP0 CODE OP1 in the context of a COND_EXPR.  Returns
@@ -524,9 +530,10 @@ forward_propagate_into_gimple_cond (gcond *stmt)
   tmp = forward_propagate_into_comparison_1 (stmt, code,
 					     boolean_type_node,
 					     rhs1, rhs2);
-  if (tmp)
+  if (tmp
+      && is_gimple_condexpr_for_cond (tmp))
     {
-      if (dump_file && tmp)
+      if (dump_file)
 	{
 	  fprintf (dump_file, "  Replaced '");
 	  print_gimple_expr (dump_file, stmt, 0);
@@ -604,7 +611,7 @@ forward_propagate_into_cond (gimple_stmt_iterator *gsi_p)
   if (tmp
       && is_gimple_condexpr (tmp))
     {
-      if (dump_file && tmp)
+      if (dump_file)
 	{
 	  fprintf (dump_file, "  Replaced '");
 	  print_generic_expr (dump_file, cond);
@@ -726,16 +733,15 @@ forward_propagate_addr_expr_1 (tree name, tree def_rhs,
       if (TREE_CODE (new_def_rhs) == MEM_REF
 	  && !is_gimple_mem_ref_addr (TREE_OPERAND (new_def_rhs, 0)))
 	return false;
-      new_def_rhs = build_fold_addr_expr_with_type (new_def_rhs,
-						    TREE_TYPE (rhs));
+      new_def_rhs = build1 (ADDR_EXPR, TREE_TYPE (rhs), new_def_rhs);
 
       /* Recurse.  If we could propagate into all uses of lhs do not
 	 bother to replace into the current use but just pretend we did.  */
-      if (TREE_CODE (new_def_rhs) == ADDR_EXPR
-	  && forward_propagate_addr_expr (lhs, new_def_rhs, single_use_p))
+      if (forward_propagate_addr_expr (lhs, new_def_rhs, single_use_p))
 	return true;
 
-      if (useless_type_conversion_p (TREE_TYPE (lhs), TREE_TYPE (new_def_rhs)))
+      if (useless_type_conversion_p (TREE_TYPE (lhs),
+				     TREE_TYPE (new_def_rhs)))
 	gimple_assign_set_rhs_with_ops (use_stmt_gsi, TREE_CODE (new_def_rhs),
 					new_def_rhs);
       else if (is_gimple_min_invariant (new_def_rhs))
@@ -1313,6 +1319,7 @@ simplify_builtin_call (gimple_stmt_iterator *gsi_p, tree callee2)
 		  || !tree_fits_shwi_p (src1))
 		break;
 	      ptr1 = build_fold_addr_expr (ptr1);
+	      STRIP_USELESS_TYPE_CONVERSION (ptr1);
 	      callee1 = NULL_TREE;
 	      len1 = size_one_node;
 	      lhs1 = NULL_TREE;
@@ -1403,7 +1410,7 @@ simplify_builtin_call (gimple_stmt_iterator *gsi_p, tree callee2)
 				   build_int_cst (TREE_TYPE (len1), src_len));
 	      update_stmt (stmt1);
 	      unlink_stmt_vdef (stmt2);
-	      gsi_remove (gsi_p, true);
+	      gsi_replace (gsi_p, gimple_build_nop (), false);
 	      fwprop_invalidate_lattice (gimple_get_lhs (stmt2));
 	      release_defs (stmt2);
 	      if (lhs1 && DECL_FUNCTION_CODE (callee1) == BUILT_IN_MEMPCPY)
@@ -1423,8 +1430,10 @@ simplify_builtin_call (gimple_stmt_iterator *gsi_p, tree callee2)
 	      if (!is_gimple_val (ptr1))
 		ptr1 = force_gimple_operand_gsi (gsi_p, ptr1, true, NULL_TREE,
 						 true, GSI_SAME_STMT);
-	      gimple_call_set_fndecl (stmt2,
-				      builtin_decl_explicit (BUILT_IN_MEMCPY));
+	      tree fndecl = builtin_decl_explicit (BUILT_IN_MEMCPY);
+	      gimple_call_set_fndecl (stmt2, fndecl);
+	      gimple_call_set_fntype (as_a <gcall *> (stmt2),
+				      TREE_TYPE (fndecl));
 	      gimple_call_set_arg (stmt2, 0, ptr1);
 	      gimple_call_set_arg (stmt2, 1, new_str_cst);
 	      gimple_call_set_arg (stmt2, 2,
@@ -1553,18 +1562,33 @@ simplify_rotate (gimple_stmt_iterator *gsi)
   for (i = 0; i < 2; i++)
     defcodefor_name (arg[i], &def_code[i], &def_arg1[i], &def_arg2[i]);
 
-  /* Look through narrowing conversions.  */
+  /* Look through narrowing (or same precision) conversions.  */
   if (CONVERT_EXPR_CODE_P (def_code[0])
       && CONVERT_EXPR_CODE_P (def_code[1])
       && INTEGRAL_TYPE_P (TREE_TYPE (def_arg1[0]))
       && INTEGRAL_TYPE_P (TREE_TYPE (def_arg1[1]))
       && TYPE_PRECISION (TREE_TYPE (def_arg1[0]))
 	 == TYPE_PRECISION (TREE_TYPE (def_arg1[1]))
-      && TYPE_PRECISION (TREE_TYPE (def_arg1[0])) > TYPE_PRECISION (rtype)
+      && TYPE_PRECISION (TREE_TYPE (def_arg1[0])) >= TYPE_PRECISION (rtype)
       && has_single_use (arg[0])
       && has_single_use (arg[1]))
     {
       for (i = 0; i < 2; i++)
+	{
+	  arg[i] = def_arg1[i];
+	  defcodefor_name (arg[i], &def_code[i], &def_arg1[i], &def_arg2[i]);
+	}
+    }
+  else
+    {
+      /* Handle signed rotate; the RSHIFT_EXPR has to be done
+	 in unsigned type but LSHIFT_EXPR could be signed.  */
+      i = (def_code[0] == LSHIFT_EXPR || def_code[0] == RSHIFT_EXPR);
+      if (CONVERT_EXPR_CODE_P (def_code[i])
+	  && (def_code[1 - i] == LSHIFT_EXPR || def_code[1 - i] == RSHIFT_EXPR)
+	  && INTEGRAL_TYPE_P (TREE_TYPE (def_arg1[i]))
+	  && TYPE_PRECISION (rtype) == TYPE_PRECISION (TREE_TYPE (def_arg1[i]))
+	  && has_single_use (arg[i]))
 	{
 	  arg[i] = def_arg1[i];
 	  defcodefor_name (arg[i], &def_code[i], &def_arg1[i], &def_arg2[i]);
@@ -1599,8 +1623,33 @@ simplify_rotate (gimple_stmt_iterator *gsi)
   if (!operand_equal_for_phi_arg_p (def_arg1[0], def_arg1[1])
       || !types_compatible_p (TREE_TYPE (def_arg1[0]),
 			      TREE_TYPE (def_arg1[1])))
-    return false;
-  if (!TYPE_UNSIGNED (TREE_TYPE (def_arg1[0])))
+    {
+      if ((TYPE_PRECISION (TREE_TYPE (def_arg1[0]))
+	   != TYPE_PRECISION (TREE_TYPE (def_arg1[1])))
+	  || (TYPE_UNSIGNED (TREE_TYPE (def_arg1[0]))
+	      == TYPE_UNSIGNED (TREE_TYPE (def_arg1[1]))))
+	return false;
+
+      /* Handle signed rotate; the RSHIFT_EXPR has to be done
+	 in unsigned type but LSHIFT_EXPR could be signed.  */
+      i = def_code[0] != RSHIFT_EXPR;
+      if (!TYPE_UNSIGNED (TREE_TYPE (def_arg1[i])))
+	return false;
+
+      tree tem;
+      enum tree_code code;
+      defcodefor_name (def_arg1[i], &code, &tem, NULL);
+      if (!CONVERT_EXPR_CODE_P (code)
+	  || !INTEGRAL_TYPE_P (TREE_TYPE (tem))
+	  || TYPE_PRECISION (TREE_TYPE (tem)) != TYPE_PRECISION (rtype))
+	return false;
+      def_arg1[i] = tem;
+      if (!operand_equal_for_phi_arg_p (def_arg1[0], def_arg1[1])
+	  || !types_compatible_p (TREE_TYPE (def_arg1[0]),
+				  TREE_TYPE (def_arg1[1])))
+	return false;
+    }
+  else if (!TYPE_UNSIGNED (TREE_TYPE (def_arg1[0])))
     return false;
 
   /* CNT1 + CNT2 == B case above.  */
@@ -1772,6 +1821,198 @@ simplify_rotate (gimple_stmt_iterator *gsi)
   return true;
 }
 
+
+/* Check whether an array contains a valid ctz table.  */
+static bool
+check_ctz_array (tree ctor, unsigned HOST_WIDE_INT mulc,
+		 HOST_WIDE_INT &zero_val, unsigned shift, unsigned bits)
+{
+  tree elt, idx;
+  unsigned HOST_WIDE_INT i, mask;
+  unsigned matched = 0;
+
+  mask = ((HOST_WIDE_INT_1U << (bits - shift)) - 1) << shift;
+
+  zero_val = 0;
+
+  FOR_EACH_CONSTRUCTOR_ELT (CONSTRUCTOR_ELTS (ctor), i, idx, elt)
+    {
+      if (TREE_CODE (idx) != INTEGER_CST || TREE_CODE (elt) != INTEGER_CST)
+	return false;
+      if (i > bits * 2)
+	return false;
+
+      unsigned HOST_WIDE_INT index = tree_to_shwi (idx);
+      HOST_WIDE_INT val = tree_to_shwi (elt);
+
+      if (index == 0)
+	{
+	  zero_val = val;
+	  matched++;
+	}
+
+      if (val >= 0 && val < bits && (((mulc << val) & mask) >> shift) == index)
+	matched++;
+
+      if (matched > bits)
+	return true;
+    }
+
+  return false;
+}
+
+/* Check whether a string contains a valid ctz table.  */
+static bool
+check_ctz_string (tree string, unsigned HOST_WIDE_INT mulc,
+		  HOST_WIDE_INT &zero_val, unsigned shift, unsigned bits)
+{
+  unsigned HOST_WIDE_INT len = TREE_STRING_LENGTH (string);
+  unsigned HOST_WIDE_INT mask;
+  unsigned matched = 0;
+  const unsigned char *p = (const unsigned char *) TREE_STRING_POINTER (string);
+
+  if (len < bits || len > bits * 2)
+    return false;
+
+  mask = ((HOST_WIDE_INT_1U << (bits - shift)) - 1) << shift;
+
+  zero_val = p[0];
+
+  for (unsigned i = 0; i < len; i++)
+    if (p[i] < bits && (((mulc << p[i]) & mask) >> shift) == i)
+      matched++;
+
+  return matched == bits;
+}
+
+/* Recognize count trailing zeroes idiom.
+   The canonical form is array[((x & -x) * C) >> SHIFT] where C is a magic
+   constant which when multiplied by a power of 2 creates a unique value
+   in the top 5 or 6 bits.  This is then indexed into a table which maps it
+   to the number of trailing zeroes.  Array[0] is returned so the caller can
+   emit an appropriate sequence depending on whether ctz (0) is defined on
+   the target.  */
+static bool
+optimize_count_trailing_zeroes (tree array_ref, tree x, tree mulc,
+				tree tshift, HOST_WIDE_INT &zero_val)
+{
+  tree type = TREE_TYPE (array_ref);
+  tree array = TREE_OPERAND (array_ref, 0);
+
+  gcc_assert (TREE_CODE (mulc) == INTEGER_CST);
+  gcc_assert (TREE_CODE (tshift) == INTEGER_CST);
+
+  tree input_type = TREE_TYPE (x);
+  unsigned input_bits = tree_to_shwi (TYPE_SIZE (input_type));
+
+  /* Check the array element type is not wider than 32 bits and the input is
+     an unsigned 32-bit or 64-bit type.  */
+  if (TYPE_PRECISION (type) > 32 || !TYPE_UNSIGNED (input_type))
+    return false;
+  if (input_bits != 32 && input_bits != 64)
+    return false;
+
+  if (!direct_internal_fn_supported_p (IFN_CTZ, input_type, OPTIMIZE_FOR_BOTH))
+    return false;
+
+  /* Check the lower bound of the array is zero.  */
+  tree low = array_ref_low_bound (array_ref);
+  if (!low || !integer_zerop (low))
+    return false;
+
+  unsigned shiftval = tree_to_shwi (tshift);
+
+  /* Check the shift extracts the top 5..7 bits.  */
+  if (shiftval < input_bits - 7 || shiftval > input_bits - 5)
+    return false;
+
+  tree ctor = ctor_for_folding (array);
+  if (!ctor)
+    return false;
+
+  unsigned HOST_WIDE_INT val = tree_to_uhwi (mulc);
+
+  if (TREE_CODE (ctor) == CONSTRUCTOR)
+    return check_ctz_array (ctor, val, zero_val, shiftval, input_bits);
+
+  if (TREE_CODE (ctor) == STRING_CST
+      && TYPE_PRECISION (type) == CHAR_TYPE_SIZE)
+    return check_ctz_string (ctor, val, zero_val, shiftval, input_bits);
+
+  return false;
+}
+
+/* Match.pd function to match the ctz expression.  */
+extern bool gimple_ctz_table_index (tree, tree *, tree (*)(tree));
+
+static bool
+simplify_count_trailing_zeroes (gimple_stmt_iterator *gsi)
+{
+  gimple *stmt = gsi_stmt (*gsi);
+  tree array_ref = gimple_assign_rhs1 (stmt);
+  tree res_ops[3];
+  HOST_WIDE_INT zero_val;
+
+  gcc_checking_assert (TREE_CODE (array_ref) == ARRAY_REF);
+
+  if (!gimple_ctz_table_index (TREE_OPERAND (array_ref, 1), &res_ops[0], NULL))
+    return false;
+
+  if (optimize_count_trailing_zeroes (array_ref, res_ops[0],
+				      res_ops[1], res_ops[2], zero_val))
+    {
+      tree type = TREE_TYPE (res_ops[0]);
+      HOST_WIDE_INT ctz_val = 0;
+      HOST_WIDE_INT type_size = tree_to_shwi (TYPE_SIZE (type));
+      bool zero_ok
+	= CTZ_DEFINED_VALUE_AT_ZERO (SCALAR_INT_TYPE_MODE (type), ctz_val) == 2;
+
+      /* If the input value can't be zero, don't special case ctz (0).  */
+      if (tree_expr_nonzero_p (res_ops[0]))
+	{
+	  zero_ok = true;
+	  zero_val = 0;
+	  ctz_val = 0;
+	}
+
+      /* Skip if there is no value defined at zero, or if we can't easily
+	 return the correct value for zero.  */
+      if (!zero_ok)
+	return false;
+      if (zero_val != ctz_val && !(zero_val == 0 && ctz_val == type_size))
+	return false;
+
+      gimple_seq seq = NULL;
+      gimple *g;
+      gcall *call = gimple_build_call_internal (IFN_CTZ, 1, res_ops[0]);
+      gimple_set_location (call, gimple_location (stmt));
+      gimple_set_lhs (call, make_ssa_name (integer_type_node));
+      gimple_seq_add_stmt (&seq, call);
+
+      tree prev_lhs = gimple_call_lhs (call);
+
+      /* Emit ctz (x) & 31 if ctz (0) is 32 but we need to return 0.  */
+      if (zero_val == 0 && ctz_val == type_size)
+	{
+	  g = gimple_build_assign (make_ssa_name (integer_type_node),
+				   BIT_AND_EXPR, prev_lhs,
+				   build_int_cst (integer_type_node,
+						  type_size - 1));
+	  gimple_set_location (g, gimple_location (stmt));
+	  gimple_seq_add_stmt (&seq, g);
+	  prev_lhs = gimple_assign_lhs (g);
+	}
+
+      g = gimple_build_assign (gimple_assign_lhs (stmt), NOP_EXPR, prev_lhs);
+      gimple_seq_add_stmt (&seq, g);
+      gsi_replace_with_seq (gsi, seq, true);
+      return true;
+    }
+
+  return false;
+}
+
+
 /* Combine an element access with a shuffle.  Returns true if there were
    any changes made, else it returns false.  */
  
@@ -1780,7 +2021,7 @@ simplify_bitfield_ref (gimple_stmt_iterator *gsi)
 {
   gimple *stmt = gsi_stmt (*gsi);
   gimple *def_stmt;
-  tree op, op0, op1, op2;
+  tree op, op0, op1;
   tree elem_type;
   unsigned idx, size;
   enum tree_code code;
@@ -1798,20 +2039,7 @@ simplify_bitfield_ref (gimple_stmt_iterator *gsi)
     return false;
 
   op1 = TREE_OPERAND (op, 1);
-  op2 = TREE_OPERAND (op, 2);
   code = gimple_assign_rhs_code (def_stmt);
-
-  if (code == CONSTRUCTOR)
-    {
-      tree tem = fold_ternary (BIT_FIELD_REF, TREE_TYPE (op),
-			       gimple_assign_rhs1 (def_stmt), op1, op2);
-      if (!tem || !valid_gimple_rhs_p (tem))
-	return false;
-      gimple_assign_set_rhs_from_tree (gsi, tem);
-      update_stmt (gsi_stmt (*gsi));
-      return true;
-    }
-
   elem_type = TREE_TYPE (TREE_TYPE (op0));
   if (TREE_TYPE (op) != elem_type)
     return false;
@@ -1997,160 +2225,420 @@ simplify_permutation (gimple_stmt_iterator *gsi)
   return 0;
 }
 
+/* Get the BIT_FIELD_REF definition of VAL, if any, looking through
+   conversions with code CONV_CODE or update it if still ERROR_MARK.
+   Return NULL_TREE if no such matching def was found.  */
+
+static tree
+get_bit_field_ref_def (tree val, enum tree_code &conv_code)
+{
+  if (TREE_CODE (val) != SSA_NAME)
+    return NULL_TREE ;
+  gimple *def_stmt = get_prop_source_stmt (val, false, NULL);
+  if (!def_stmt)
+    return NULL_TREE;
+  enum tree_code code = gimple_assign_rhs_code (def_stmt);
+  if (code == FLOAT_EXPR
+      || code == FIX_TRUNC_EXPR
+      || CONVERT_EXPR_CODE_P (code))
+    {
+      tree op1 = gimple_assign_rhs1 (def_stmt);
+      if (conv_code == ERROR_MARK)
+	conv_code = code;
+      else if (conv_code != code)
+	return NULL_TREE;
+      if (TREE_CODE (op1) != SSA_NAME)
+	return NULL_TREE;
+      def_stmt = SSA_NAME_DEF_STMT (op1);
+      if (! is_gimple_assign (def_stmt))
+	return NULL_TREE;
+      code = gimple_assign_rhs_code (def_stmt);
+    }
+  if (code != BIT_FIELD_REF)
+    return NULL_TREE;
+  return gimple_assign_rhs1 (def_stmt);
+}
+
 /* Recognize a VEC_PERM_EXPR.  Returns true if there were any changes.  */
 
 static bool
 simplify_vector_constructor (gimple_stmt_iterator *gsi)
 {
   gimple *stmt = gsi_stmt (*gsi);
-  gimple *def_stmt;
-  tree op, op2, orig[2], type, elem_type;
+  tree op, orig[2], type, elem_type;
   unsigned elem_size, i;
   unsigned HOST_WIDE_INT nelts;
-  enum tree_code code, conv_code;
+  unsigned HOST_WIDE_INT refnelts;
+  enum tree_code conv_code;
   constructor_elt *elt;
-  bool maybe_ident;
-
-  gcc_checking_assert (gimple_assign_rhs_code (stmt) == CONSTRUCTOR);
 
   op = gimple_assign_rhs1 (stmt);
   type = TREE_TYPE (op);
-  gcc_checking_assert (TREE_CODE (type) == VECTOR_TYPE);
+  gcc_checking_assert (TREE_CODE (op) == CONSTRUCTOR
+		       && TREE_CODE (type) == VECTOR_TYPE);
 
   if (!TYPE_VECTOR_SUBPARTS (type).is_constant (&nelts))
     return false;
   elem_type = TREE_TYPE (type);
   elem_size = TREE_INT_CST_LOW (TYPE_SIZE (elem_type));
 
-  vec_perm_builder sel (nelts, nelts, 1);
   orig[0] = NULL;
   orig[1] = NULL;
   conv_code = ERROR_MARK;
-  maybe_ident = true;
+  bool maybe_ident = true;
+  bool maybe_blend[2] = { true, true };
+  tree one_constant = NULL_TREE;
+  tree one_nonconstant = NULL_TREE;
+  auto_vec<tree> constants;
+  constants.safe_grow_cleared (nelts);
+  auto_vec<std::pair<unsigned, unsigned>, 64> elts;
   FOR_EACH_VEC_SAFE_ELT (CONSTRUCTOR_ELTS (op), i, elt)
     {
       tree ref, op1;
+      unsigned int elem;
 
       if (i >= nelts)
 	return false;
 
-      if (TREE_CODE (elt->value) != SSA_NAME)
-	return false;
-      def_stmt = get_prop_source_stmt (elt->value, false, NULL);
-      if (!def_stmt)
-	return false;
-      code = gimple_assign_rhs_code (def_stmt);
-      if (code == FLOAT_EXPR
-	  || code == FIX_TRUNC_EXPR)
+      /* Look for elements extracted and possibly converted from
+         another vector.  */
+      op1 = get_bit_field_ref_def (elt->value, conv_code);
+      if (op1
+	  && TREE_CODE ((ref = TREE_OPERAND (op1, 0))) == SSA_NAME
+	  && VECTOR_TYPE_P (TREE_TYPE (ref))
+	  && useless_type_conversion_p (TREE_TYPE (op1),
+					TREE_TYPE (TREE_TYPE (ref)))
+	  && constant_multiple_p (bit_field_offset (op1),
+				  bit_field_size (op1), &elem)
+	  && TYPE_VECTOR_SUBPARTS (TREE_TYPE (ref)).is_constant (&refnelts))
 	{
-	  op1 = gimple_assign_rhs1 (def_stmt);
-	  if (conv_code == ERROR_MARK)
+	  unsigned int j;
+	  for (j = 0; j < 2; ++j)
 	    {
-	      if (maybe_ne (GET_MODE_SIZE (TYPE_MODE (TREE_TYPE (elt->value))),
-			    GET_MODE_SIZE (TYPE_MODE (TREE_TYPE (op1)))))
-		return false;
-	      conv_code = code;
+	      if (!orig[j])
+		{
+		  if (j == 0
+		      || useless_type_conversion_p (TREE_TYPE (orig[0]),
+						    TREE_TYPE (ref)))
+		    break;
+		}
+	      else if (ref == orig[j])
+		break;
 	    }
-	  else if (conv_code != code)
-	    return false;
-	  if (TREE_CODE (op1) != SSA_NAME)
-	    return false;
-	  def_stmt = SSA_NAME_DEF_STMT (op1);
-	  if (! is_gimple_assign (def_stmt))
-	    return false;
-	  code = gimple_assign_rhs_code (def_stmt);
-	}
-      if (code != BIT_FIELD_REF)
-	return false;
-      op1 = gimple_assign_rhs1 (def_stmt);
-      ref = TREE_OPERAND (op1, 0);
-      unsigned int j;
-      for (j = 0; j < 2; ++j)
-	{
-	  if (!orig[j])
+	  /* Found a suitable vector element.  */
+	  if (j < 2)
 	    {
-	      if (TREE_CODE (ref) != SSA_NAME)
-		return false;
-	      if (! VECTOR_TYPE_P (TREE_TYPE (ref))
-		  || ! useless_type_conversion_p (TREE_TYPE (op1),
-						  TREE_TYPE (TREE_TYPE (ref))))
-		return false;
-	      if (j && !useless_type_conversion_p (TREE_TYPE (orig[0]),
-						   TREE_TYPE (ref)))
-		return false;
 	      orig[j] = ref;
-	      break;
+	      if (elem != i || j != 0)
+		maybe_ident = false;
+	      if (elem != i)
+		maybe_blend[j] = false;
+	      elts.safe_push (std::make_pair (j, elem));
+	      continue;
 	    }
-	  else if (ref == orig[j])
-	    break;
+	  /* Else fallthru.  */
 	}
-      if (j == 2)
+      /* Handle elements not extracted from a vector.
+          1. constants by permuting with constant vector
+	  2. a unique non-constant element by permuting with a splat vector  */
+      if (orig[1]
+	  && orig[1] != error_mark_node)
 	return false;
-
-      unsigned int elt;
-      if (maybe_ne (bit_field_size (op1), elem_size)
-	  || !constant_multiple_p (bit_field_offset (op1), elem_size, &elt))
-	return false;
-      if (j)
-	elt += nelts;
-      if (elt != i)
-	maybe_ident = false;
-      sel.quick_push (elt);
+      orig[1] = error_mark_node;
+      if (CONSTANT_CLASS_P (elt->value))
+	{
+	  if (one_nonconstant)
+	    return false;
+	  if (!one_constant)
+	    one_constant = elt->value;
+	  constants[i] = elt->value;
+	}
+      else
+	{
+	  if (one_constant)
+	    return false;
+	  if (!one_nonconstant)
+	    one_nonconstant = elt->value;
+	  else if (!operand_equal_p (one_nonconstant, elt->value, 0))
+	    return false;
+	}
+      elts.safe_push (std::make_pair (1, i));
+      maybe_ident = false;
     }
   if (i < nelts)
     return false;
 
-  if (! VECTOR_TYPE_P (TREE_TYPE (orig[0]))
-      || maybe_ne (TYPE_VECTOR_SUBPARTS (type),
-		   TYPE_VECTOR_SUBPARTS (TREE_TYPE (orig[0]))))
+  if (! orig[0]
+      || ! VECTOR_TYPE_P (TREE_TYPE (orig[0])))
     return false;
-
-  tree tem;
-  if (conv_code != ERROR_MARK
-      && (! supportable_convert_operation (conv_code, type,
-					   TREE_TYPE (orig[0]),
-					   &tem, &conv_code)
-	  || conv_code == CALL_EXPR))
+  refnelts = TYPE_VECTOR_SUBPARTS (TREE_TYPE (orig[0])).to_constant ();
+  /* We currently do not handle larger destination vectors.  */
+  if (refnelts < nelts)
     return false;
 
   if (maybe_ident)
     {
+      tree conv_src_type
+	= (nelts != refnelts
+	   ? (conv_code != ERROR_MARK
+	      ? build_vector_type (TREE_TYPE (TREE_TYPE (orig[0])), nelts)
+	      : type)
+	   : TREE_TYPE (orig[0]));
+      if (conv_code != ERROR_MARK
+	  && !supportable_convert_operation (conv_code, type, conv_src_type,
+					     &conv_code))
+	{
+	  /* Only few targets implement direct conversion patterns so try
+	     some simple special cases via VEC_[UN]PACK[_FLOAT]_LO_EXPR.  */
+	  optab optab;
+	  tree halfvectype, dblvectype;
+	  enum tree_code unpack_op;
+
+	  if (!BYTES_BIG_ENDIAN)
+	    unpack_op = (FLOAT_TYPE_P (TREE_TYPE (type))
+			 ? VEC_UNPACK_FLOAT_LO_EXPR
+			 : VEC_UNPACK_LO_EXPR);
+	  else
+	    unpack_op = (FLOAT_TYPE_P (TREE_TYPE (type))
+			 ? VEC_UNPACK_FLOAT_HI_EXPR
+			 : VEC_UNPACK_HI_EXPR);
+
+	  if (CONVERT_EXPR_CODE_P (conv_code)
+	      && (2 * TYPE_PRECISION (TREE_TYPE (TREE_TYPE (orig[0])))
+		  == TYPE_PRECISION (TREE_TYPE (type)))
+	      && mode_for_vector (as_a <scalar_mode>
+				  (TYPE_MODE (TREE_TYPE (TREE_TYPE (orig[0])))),
+				  nelts * 2).exists ()
+	      && (dblvectype
+		  = build_vector_type (TREE_TYPE (TREE_TYPE (orig[0])),
+				       nelts * 2))
+	      /* Only use it for vector modes or for vector booleans
+		 represented as scalar bitmasks.  See PR95528.  */
+	      && (VECTOR_MODE_P (TYPE_MODE (dblvectype))
+		  || VECTOR_BOOLEAN_TYPE_P (dblvectype))
+	      && (optab = optab_for_tree_code (unpack_op,
+					       dblvectype,
+					       optab_default))
+	      && (optab_handler (optab, TYPE_MODE (dblvectype))
+		  != CODE_FOR_nothing))
+	    {
+	      gimple_seq stmts = NULL;
+	      tree dbl;
+	      if (refnelts == nelts)
+		{
+		  /* ???  Paradoxical subregs don't exist, so insert into
+		     the lower half of a wider zero vector.  */
+		  dbl = gimple_build (&stmts, BIT_INSERT_EXPR, dblvectype,
+				      build_zero_cst (dblvectype), orig[0],
+				      bitsize_zero_node);
+		}
+	      else if (refnelts == 2 * nelts)
+		dbl = orig[0];
+	      else
+		dbl = gimple_build (&stmts, BIT_FIELD_REF, dblvectype,
+				    orig[0], TYPE_SIZE (dblvectype),
+				    bitsize_zero_node);
+	      gsi_insert_seq_before (gsi, stmts, GSI_SAME_STMT);
+	      gimple_assign_set_rhs_with_ops (gsi, unpack_op, dbl);
+	    }
+	  else if (CONVERT_EXPR_CODE_P (conv_code)
+		   && (TYPE_PRECISION (TREE_TYPE (TREE_TYPE (orig[0])))
+		       == 2 * TYPE_PRECISION (TREE_TYPE (type)))
+		   && mode_for_vector (as_a <scalar_mode>
+				         (TYPE_MODE
+					   (TREE_TYPE (TREE_TYPE (orig[0])))),
+				       nelts / 2).exists ()
+		   && (halfvectype
+		         = build_vector_type (TREE_TYPE (TREE_TYPE (orig[0])),
+					      nelts / 2))
+		   /* Only use it for vector modes or for vector booleans
+		      represented as scalar bitmasks.  See PR95528.  */
+		   && (VECTOR_MODE_P (TYPE_MODE (halfvectype))
+		       || VECTOR_BOOLEAN_TYPE_P (halfvectype))
+		   && (optab = optab_for_tree_code (VEC_PACK_TRUNC_EXPR,
+						    halfvectype,
+						    optab_default))
+		   && (optab_handler (optab, TYPE_MODE (halfvectype))
+		       != CODE_FOR_nothing))
+	    {
+	      gimple_seq stmts = NULL;
+	      tree low = gimple_build (&stmts, BIT_FIELD_REF, halfvectype,
+				       orig[0], TYPE_SIZE (halfvectype),
+				       bitsize_zero_node);
+	      tree hig = gimple_build (&stmts, BIT_FIELD_REF, halfvectype,
+				       orig[0], TYPE_SIZE (halfvectype),
+				       TYPE_SIZE (halfvectype));
+	      gsi_insert_seq_before (gsi, stmts, GSI_SAME_STMT);
+	      gimple_assign_set_rhs_with_ops (gsi, VEC_PACK_TRUNC_EXPR,
+					      low, hig);
+	    }
+	  else
+	    return false;
+	  update_stmt (gsi_stmt (*gsi));
+	  return true;
+	}
+      if (nelts != refnelts)
+	{
+	  gassign *lowpart
+	    = gimple_build_assign (make_ssa_name (conv_src_type),
+				   build3 (BIT_FIELD_REF, conv_src_type,
+					   orig[0], TYPE_SIZE (conv_src_type),
+					   bitsize_zero_node));
+	  gsi_insert_before (gsi, lowpart, GSI_SAME_STMT);
+	  orig[0] = gimple_assign_lhs (lowpart);
+	}
       if (conv_code == ERROR_MARK)
-	gimple_assign_set_rhs_from_tree (gsi, orig[0]);
+	{
+	  tree src_type = TREE_TYPE (orig[0]);
+	  if (!useless_type_conversion_p (type, src_type))
+	    {
+	      gcc_assert (known_eq (TYPE_VECTOR_SUBPARTS (type),
+				    TYPE_VECTOR_SUBPARTS (src_type))
+			  && useless_type_conversion_p (TREE_TYPE (type),
+							TREE_TYPE (src_type)));
+	      tree rhs = build1 (VIEW_CONVERT_EXPR, type, orig[0]);
+	      orig[0] = make_ssa_name (type);
+	      gassign *assign = gimple_build_assign (orig[0], rhs);
+	      gsi_insert_before (gsi, assign, GSI_SAME_STMT);
+	    }
+	  gimple_assign_set_rhs_from_tree (gsi, orig[0]);
+	}
       else
 	gimple_assign_set_rhs_with_ops (gsi, conv_code, orig[0],
 					NULL_TREE, NULL_TREE);
     }
   else
     {
-      tree mask_type;
+      /* If we combine a vector with a non-vector avoid cases where
+	 we'll obviously end up with more GIMPLE stmts which is when
+	 we'll later not fold this to a single insert into the vector
+	 and we had a single extract originally.  See PR92819.  */
+      if (nelts == 2
+	  && refnelts > 2
+	  && orig[1] == error_mark_node
+	  && !maybe_blend[0])
+	return false;
+      tree mask_type, perm_type, conv_src_type;
+      perm_type = TREE_TYPE (orig[0]);
+      conv_src_type = (nelts == refnelts
+		       ? perm_type
+		       : build_vector_type (TREE_TYPE (perm_type), nelts));
+      if (conv_code != ERROR_MARK
+	  && !supportable_convert_operation (conv_code, type, conv_src_type,
+					     &conv_code))
+	return false;
 
-      vec_perm_indices indices (sel, orig[1] ? 2 : 1, nelts);
-      if (!can_vec_perm_const_p (TYPE_MODE (type), indices))
+      /* Now that we know the number of elements of the source build the
+	 permute vector.
+	 ???  When the second vector has constant values we can shuffle
+	 it and its source indexes to make the permutation supported.
+	 For now it mimics a blend.  */
+      vec_perm_builder sel (refnelts, refnelts, 1);
+      bool all_same_p = true;
+      for (i = 0; i < elts.length (); ++i)
+	{
+	  sel.quick_push (elts[i].second + elts[i].first * refnelts);
+	  all_same_p &= known_eq (sel[i], sel[0]);
+	}
+      /* And fill the tail with "something".  It's really don't care,
+         and ideally we'd allow VEC_PERM to have a smaller destination
+	 vector.  As a heuristic:
+
+	 (a) if what we have so far duplicates a single element, make the
+	     tail do the same
+
+	 (b) otherwise preserve a uniform orig[0].  This facilitates
+	     later pattern-matching of VEC_PERM_EXPR to a BIT_INSERT_EXPR.  */
+      for (; i < refnelts; ++i)
+	sel.quick_push (all_same_p
+			? sel[0]
+			: (elts[0].second == 0 && elts[0].first == 0
+			   ? 0 : refnelts) + i);
+      vec_perm_indices indices (sel, orig[1] ? 2 : 1, refnelts);
+      if (!can_vec_perm_const_p (TYPE_MODE (perm_type), indices))
 	return false;
       mask_type
 	= build_vector_type (build_nonstandard_integer_type (elem_size, 1),
-			     nelts);
+			     refnelts);
       if (GET_MODE_CLASS (TYPE_MODE (mask_type)) != MODE_VECTOR_INT
 	  || maybe_ne (GET_MODE_SIZE (TYPE_MODE (mask_type)),
-		       GET_MODE_SIZE (TYPE_MODE (type))))
+		       GET_MODE_SIZE (TYPE_MODE (perm_type))))
 	return false;
-      op2 = vec_perm_indices_to_tree (mask_type, indices);
+      tree op2 = vec_perm_indices_to_tree (mask_type, indices);
+      bool converted_orig1 = false;
+      gimple_seq stmts = NULL;
       if (!orig[1])
 	orig[1] = orig[0];
-      if (conv_code == ERROR_MARK)
-	gimple_assign_set_rhs_with_ops (gsi, VEC_PERM_EXPR, orig[0],
-					orig[1], op2);
-      else
+      else if (orig[1] == error_mark_node
+	       && one_nonconstant)
 	{
-	  gimple *perm
-	    = gimple_build_assign (make_ssa_name (TREE_TYPE (orig[0])),
-				   VEC_PERM_EXPR, orig[0], orig[1], op2);
-	  orig[0] = gimple_assign_lhs (perm);
-	  gsi_insert_before (gsi, perm, GSI_SAME_STMT);
-	  gimple_assign_set_rhs_with_ops (gsi, conv_code, orig[0],
-					  NULL_TREE, NULL_TREE);
+	  /* ???  We can see if we can safely convert to the original
+	     element type.  */
+	  converted_orig1 = conv_code != ERROR_MARK;
+	  orig[1] = gimple_build_vector_from_val (&stmts, UNKNOWN_LOCATION,
+						  converted_orig1
+						  ? type : perm_type,
+						  one_nonconstant);
 	}
+      else if (orig[1] == error_mark_node)
+	{
+	  /* ???  See if we can convert the vector to the original type.  */
+	  converted_orig1 = conv_code != ERROR_MARK;
+	  unsigned n = converted_orig1 ? nelts : refnelts;
+	  tree_vector_builder vec (converted_orig1
+				   ? type : perm_type, n, 1);
+	  for (unsigned i = 0; i < n; ++i)
+	    if (i < nelts && constants[i])
+	      vec.quick_push (constants[i]);
+	    else
+	      /* ??? Push a don't-care value.  */
+	      vec.quick_push (one_constant);
+	  orig[1] = vec.build ();
+	}
+      tree blend_op2 = NULL_TREE;
+      if (converted_orig1)
+	{
+	  /* Make sure we can do a blend in the target type.  */
+	  vec_perm_builder sel (nelts, nelts, 1);
+	  for (i = 0; i < elts.length (); ++i)
+	    sel.quick_push (elts[i].first
+			    ? elts[i].second + nelts : i);
+	  vec_perm_indices indices (sel, 2, nelts);
+	  if (!can_vec_perm_const_p (TYPE_MODE (type), indices))
+	    return false;
+	  mask_type
+	    = build_vector_type (build_nonstandard_integer_type (elem_size, 1),
+				 nelts);
+	  if (GET_MODE_CLASS (TYPE_MODE (mask_type)) != MODE_VECTOR_INT
+	      || maybe_ne (GET_MODE_SIZE (TYPE_MODE (mask_type)),
+			   GET_MODE_SIZE (TYPE_MODE (type))))
+	    return false;
+	  blend_op2 = vec_perm_indices_to_tree (mask_type, indices);
+	}
+      tree orig1_for_perm
+	= converted_orig1 ? build_zero_cst (perm_type) : orig[1];
+      tree res = gimple_build (&stmts, VEC_PERM_EXPR, perm_type,
+			       orig[0], orig1_for_perm, op2);
+      if (nelts != refnelts)
+	res = gimple_build (&stmts, BIT_FIELD_REF,
+			    conv_code != ERROR_MARK ? conv_src_type : type,
+			    res, TYPE_SIZE (type), bitsize_zero_node);
+      if (conv_code != ERROR_MARK)
+	res = gimple_build (&stmts, conv_code, type, res);
+      else if (!useless_type_conversion_p (type, TREE_TYPE (res)))
+	{
+	  gcc_assert (known_eq (TYPE_VECTOR_SUBPARTS (type),
+				TYPE_VECTOR_SUBPARTS (perm_type))
+		      && useless_type_conversion_p (TREE_TYPE (type),
+						    TREE_TYPE (perm_type)));
+	  res = gimple_build (&stmts, VIEW_CONVERT_EXPR, type, res);
+	}
+      /* Blend in the actual constant.  */
+      if (converted_orig1)
+	res = gimple_build (&stmts, VEC_PERM_EXPR, type,
+			    res, orig[1], blend_op2);
+      gsi_insert_seq_before (gsi, stmts, GSI_SAME_STMT);
+      gimple_assign_set_rhs_with_ops (gsi, SSA_NAME, res);
     }
   update_stmt (gsi_stmt (*gsi));
   return true;
@@ -2223,13 +2711,14 @@ pass_forwprop::execute (function *fun)
   int postorder_num = pre_and_rev_post_order_compute_fn (cfun, NULL,
 							 postorder, false);
   auto_vec<gimple *, 4> to_fixup;
+  auto_vec<gimple *, 32> to_remove;
   to_purge = BITMAP_ALLOC (NULL);
   for (int i = 0; i < postorder_num; ++i)
     {
       gimple_stmt_iterator gsi;
       basic_block bb = BASIC_BLOCK_FOR_FN (fun, postorder[i]);
 
-      /* Propagate into PHIs and record degenerate ones in the lattice.  */
+      /* Record degenerate PHIs in the lattice.  */
       for (gphi_iterator si = gsi_start_phis (bb); !gsi_end_p (si);
 	   gsi_next (&si))
 	{
@@ -2245,17 +2734,20 @@ pass_forwprop::execute (function *fun)
 	  FOR_EACH_PHI_ARG (use_p, phi, it, SSA_OP_USE)
 	    {
 	      tree use = USE_FROM_PTR (use_p);
-	      tree tem = fwprop_ssa_val (use);
 	      if (! first)
-		first = tem;
-	      else if (! operand_equal_p (first, tem, 0))
-		all_same = false;
-	      if (tem != use
-		  && may_propagate_copy (use, tem))
-		propagate_value (use_p, tem);
+		first = use;
+	      else if (! operand_equal_p (first, use, 0))
+		{
+		  all_same = false;
+		  break;
+		}
 	    }
 	  if (all_same)
-	    fwprop_set_lattice_val (res, first);
+	    {
+	      if (may_propagate_copy (res, first))
+		to_remove.safe_push (phi);
+	      fwprop_set_lattice_val (res, first);
+	    }
 	}
 
       /* Apply forward propagation to all stmts in the basic-block.
@@ -2284,12 +2776,13 @@ pass_forwprop::execute (function *fun)
 
 	  /* If this statement sets an SSA_NAME to an address,
 	     try to propagate the address into the uses of the SSA_NAME.  */
-	  if (code == ADDR_EXPR
-	      /* Handle pointer conversions on invariant addresses
-		 as well, as this is valid gimple.  */
-	      || (CONVERT_EXPR_CODE_P (code)
-		  && TREE_CODE (rhs) == ADDR_EXPR
-		  && POINTER_TYPE_P (TREE_TYPE (lhs))))
+	  if ((code == ADDR_EXPR
+	       /* Handle pointer conversions on invariant addresses
+		  as well, as this is valid gimple.  */
+	       || (CONVERT_EXPR_CODE_P (code)
+		   && TREE_CODE (rhs) == ADDR_EXPR
+		   && POINTER_TYPE_P (TREE_TYPE (lhs))))
+	      && TREE_CODE (TREE_OPERAND (rhs, 0)) != TARGET_MEM_REF)
 	    {
 	      tree base = get_base_address (TREE_OPERAND (rhs, 0));
 	      if ((!base
@@ -2357,7 +2850,8 @@ pass_forwprop::execute (function *fun)
 		    continue;
 		  if (!is_gimple_assign (use_stmt)
 		      || (gimple_assign_rhs_code (use_stmt) != REALPART_EXPR
-			  && gimple_assign_rhs_code (use_stmt) != IMAGPART_EXPR))
+			  && gimple_assign_rhs_code (use_stmt) != IMAGPART_EXPR)
+		      || TREE_OPERAND (gimple_assign_rhs1 (use_stmt), 0) != lhs)
 		    {
 		      rewrite = false;
 		      break;
@@ -2400,6 +2894,73 @@ pass_forwprop::execute (function *fun)
 	      else
 		gsi_next (&gsi);
 	    }
+	  else if (TREE_CODE (TREE_TYPE (lhs)) == VECTOR_TYPE
+		   && TYPE_MODE (TREE_TYPE (lhs)) == BLKmode
+		   && gimple_assign_load_p (stmt)
+		   && !gimple_has_volatile_ops (stmt)
+		   && (TREE_CODE (gimple_assign_rhs1 (stmt))
+		       != TARGET_MEM_REF)
+		   && !stmt_can_throw_internal (cfun, stmt))
+	    {
+	      /* Rewrite loads used only in BIT_FIELD_REF extractions to
+	         component-wise loads.  */
+	      use_operand_p use_p;
+	      imm_use_iterator iter;
+	      bool rewrite = true;
+	      FOR_EACH_IMM_USE_FAST (use_p, iter, lhs)
+		{
+		  gimple *use_stmt = USE_STMT (use_p);
+		  if (is_gimple_debug (use_stmt))
+		    continue;
+		  if (!is_gimple_assign (use_stmt)
+		      || gimple_assign_rhs_code (use_stmt) != BIT_FIELD_REF
+		      || TREE_OPERAND (gimple_assign_rhs1 (use_stmt), 0) != lhs)
+		    {
+		      rewrite = false;
+		      break;
+		    }
+		}
+	      if (rewrite)
+		{
+		  gimple *use_stmt;
+		  FOR_EACH_IMM_USE_STMT (use_stmt, iter, lhs)
+		    {
+		      if (is_gimple_debug (use_stmt))
+			{
+			  if (gimple_debug_bind_p (use_stmt))
+			    {
+			      gimple_debug_bind_reset_value (use_stmt);
+			      update_stmt (use_stmt);
+			    }
+			  continue;
+			}
+
+		      tree bfr = gimple_assign_rhs1 (use_stmt);
+		      tree new_rhs = fold_build3 (BIT_FIELD_REF,
+						  TREE_TYPE (bfr),
+						  unshare_expr (rhs),
+						  TREE_OPERAND (bfr, 1),
+						  TREE_OPERAND (bfr, 2));
+		      gimple *new_stmt
+			= gimple_build_assign (gimple_assign_lhs (use_stmt),
+					       new_rhs);
+
+		      location_t loc = gimple_location (use_stmt);
+		      gimple_set_location (new_stmt, loc);
+		      gimple_stmt_iterator gsi2 = gsi_for_stmt (use_stmt);
+		      unlink_stmt_vdef (use_stmt);
+		      gsi_remove (&gsi2, true);
+
+		      gsi_insert_before (&gsi, new_stmt, GSI_SAME_STMT);
+		    }
+
+		  release_defs (stmt);
+		  gsi_remove (&gsi, true);
+		}
+	      else
+		gsi_next (&gsi);
+	    }
+
 	  else if (code == COMPLEX_EXPR)
 	    {
 	      /* Rewrite stores of a single-use complex build expression
@@ -2440,153 +3001,290 @@ pass_forwprop::execute (function *fun)
 	      else
 		gsi_next (&gsi);
 	    }
+	  else if (code == CONSTRUCTOR
+		   && VECTOR_TYPE_P (TREE_TYPE (rhs))
+		   && TYPE_MODE (TREE_TYPE (rhs)) == BLKmode
+		   && CONSTRUCTOR_NELTS (rhs) > 0
+		   && (!VECTOR_TYPE_P (TREE_TYPE (CONSTRUCTOR_ELT (rhs, 0)->value))
+		       || (TYPE_MODE (TREE_TYPE (CONSTRUCTOR_ELT (rhs, 0)->value))
+			   != BLKmode)))
+	    {
+	      /* Rewrite stores of a single-use vector constructors
+	         to component-wise stores if the mode isn't supported.  */
+	      use_operand_p use_p;
+	      gimple *use_stmt;
+	      if (single_imm_use (lhs, &use_p, &use_stmt)
+		  && gimple_store_p (use_stmt)
+		  && !gimple_has_volatile_ops (use_stmt)
+		  && !stmt_can_throw_internal (cfun, use_stmt)
+		  && is_gimple_assign (use_stmt)
+		  && (TREE_CODE (gimple_assign_lhs (use_stmt))
+		      != TARGET_MEM_REF))
+		{
+		  tree elt_t = TREE_TYPE (CONSTRUCTOR_ELT (rhs, 0)->value);
+		  unsigned HOST_WIDE_INT elt_w
+		    = tree_to_uhwi (TYPE_SIZE (elt_t));
+		  unsigned HOST_WIDE_INT n
+		    = tree_to_uhwi (TYPE_SIZE (TREE_TYPE (rhs)));
+		  for (unsigned HOST_WIDE_INT bi = 0; bi < n; bi += elt_w)
+		    {
+		      unsigned HOST_WIDE_INT ci = bi / elt_w;
+		      tree new_rhs;
+		      if (ci < CONSTRUCTOR_NELTS (rhs))
+			new_rhs = CONSTRUCTOR_ELT (rhs, ci)->value;
+		      else
+			new_rhs = build_zero_cst (elt_t);
+		      tree use_lhs = gimple_assign_lhs (use_stmt);
+		      tree new_lhs = build3 (BIT_FIELD_REF,
+					     elt_t,
+					     unshare_expr (use_lhs),
+					     bitsize_int (elt_w),
+					     bitsize_int (bi));
+		      gimple *new_stmt = gimple_build_assign (new_lhs, new_rhs);
+		      location_t loc = gimple_location (use_stmt);
+		      gimple_set_location (new_stmt, loc);
+		      gimple_set_vuse (new_stmt, gimple_vuse (use_stmt));
+		      gimple_set_vdef (new_stmt,
+				       make_ssa_name (gimple_vop (cfun)));
+		      SSA_NAME_DEF_STMT (gimple_vdef (new_stmt)) = new_stmt;
+		      gimple_set_vuse (use_stmt, gimple_vdef (new_stmt));
+		      gimple_stmt_iterator gsi2 = gsi_for_stmt (use_stmt);
+		      gsi_insert_before (&gsi2, new_stmt, GSI_SAME_STMT);
+		    }
+		  gimple_stmt_iterator gsi2 = gsi_for_stmt (use_stmt);
+		  unlink_stmt_vdef (use_stmt);
+		  release_defs (use_stmt);
+		  gsi_remove (&gsi2, true);
+		  release_defs (stmt);
+		  gsi_remove (&gsi, true);
+		}
+	      else
+		gsi_next (&gsi);
+	    }
 	  else
 	    gsi_next (&gsi);
 	}
 
       /* Combine stmts with the stmts defining their operands.
 	 Note we update GSI within the loop as necessary.  */
-      for (gsi = gsi_start_bb (bb); !gsi_end_p (gsi);)
+      for (gsi = gsi_start_bb (bb); !gsi_end_p (gsi); gsi_next (&gsi))
 	{
 	  gimple *stmt = gsi_stmt (gsi);
-	  gimple *orig_stmt = stmt;
-	  bool changed = false;
-	  bool was_noreturn = (is_gimple_call (stmt)
-			       && gimple_call_noreturn_p (stmt));
 
 	  /* Mark stmt as potentially needing revisiting.  */
 	  gimple_set_plf (stmt, GF_PLF_1, false);
 
-	  if (fold_stmt (&gsi, fwprop_ssa_val))
+	  /* Substitute from our lattice.  We need to do so only once.  */
+	  bool substituted_p = false;
+	  use_operand_p usep;
+	  ssa_op_iter iter;
+	  FOR_EACH_SSA_USE_OPERAND (usep, stmt, iter, SSA_OP_USE)
 	    {
-	      changed = true;
-	      stmt = gsi_stmt (gsi);
-	      if (maybe_clean_or_replace_eh_stmt (orig_stmt, stmt))
-		bitmap_set_bit (to_purge, bb->index);
-	      if (!was_noreturn
-		  && is_gimple_call (stmt) && gimple_call_noreturn_p (stmt))
-		to_fixup.safe_push (stmt);
-	      /* Cleanup the CFG if we simplified a condition to
-	         true or false.  */
-	      if (gcond *cond = dyn_cast <gcond *> (stmt))
-		if (gimple_cond_true_p (cond)
-		    || gimple_cond_false_p (cond))
-		  cfg_changed = true;
-	      update_stmt (stmt);
-	    }
-
-	  switch (gimple_code (stmt))
-	    {
-	    case GIMPLE_ASSIGN:
-	      {
-		tree rhs1 = gimple_assign_rhs1 (stmt);
-		enum tree_code code = gimple_assign_rhs_code (stmt);
-
-		if (code == COND_EXPR
-		    || code == VEC_COND_EXPR)
-		  {
-		    /* In this case the entire COND_EXPR is in rhs1. */
-		    if (forward_propagate_into_cond (&gsi))
-		      {
-			changed = true;
-			stmt = gsi_stmt (gsi);
-		      }
-		  }
-		else if (TREE_CODE_CLASS (code) == tcc_comparison)
-		  {
-		    int did_something;
-		    did_something = forward_propagate_into_comparison (&gsi);
-		    if (maybe_clean_or_replace_eh_stmt (stmt, gsi_stmt (gsi)))
-		      bitmap_set_bit (to_purge, bb->index);
-		    if (did_something == 2)
-		      cfg_changed = true;
-		    changed = did_something != 0;
-		  }
-		else if ((code == PLUS_EXPR
-			  || code == BIT_IOR_EXPR
-			  || code == BIT_XOR_EXPR)
-			 && simplify_rotate (&gsi))
-		  changed = true;
-		else if (code == VEC_PERM_EXPR)
-		  {
-		    int did_something = simplify_permutation (&gsi);
-		    if (did_something == 2)
-		      cfg_changed = true;
-		    changed = did_something != 0;
-		  }
-		else if (code == BIT_FIELD_REF)
-		  changed = simplify_bitfield_ref (&gsi);
-                else if (code == CONSTRUCTOR
-                         && TREE_CODE (TREE_TYPE (rhs1)) == VECTOR_TYPE)
-                  changed = simplify_vector_constructor (&gsi);
-		break;
-	      }
-
-	    case GIMPLE_SWITCH:
-	      changed = simplify_gimple_switch (as_a <gswitch *> (stmt));
-	      break;
-
-	    case GIMPLE_COND:
-	      {
-		int did_something
-		  = forward_propagate_into_gimple_cond (as_a <gcond *> (stmt));
-		if (did_something == 2)
-		  cfg_changed = true;
-		changed = did_something != 0;
-		break;
-	      }
-
-	    case GIMPLE_CALL:
-	      {
-		tree callee = gimple_call_fndecl (stmt);
-		if (callee != NULL_TREE
-		    && fndecl_built_in_p (callee, BUILT_IN_NORMAL))
-		  changed = simplify_builtin_call (&gsi, callee);
-		break;
-	      }
-
-	    default:;
-	    }
-
-	  if (changed)
-	    {
-	      /* If the stmt changed then re-visit it and the statements
-		 inserted before it.  */
-	      for (; !gsi_end_p (gsi); gsi_prev (&gsi))
-		if (gimple_plf (gsi_stmt (gsi), GF_PLF_1))
-		  break;
-	      if (gsi_end_p (gsi))
-		gsi = gsi_start_bb (bb);
-	      else
-		gsi_next (&gsi);
-	    }
-	  else
-	    {
-	      /* Stmt no longer needs to be revisited.  */
-	      gimple_set_plf (stmt, GF_PLF_1, true);
-
-	      /* Fill up the lattice.  */
-	      if (gimple_assign_single_p (stmt))
+	      tree use = USE_FROM_PTR (usep);
+	      tree val = fwprop_ssa_val (use);
+	      if (val && val != use && may_propagate_copy (use, val))
 		{
-		  tree lhs = gimple_assign_lhs (stmt);
-		  tree rhs = gimple_assign_rhs1 (stmt);
-		  if (TREE_CODE (lhs) == SSA_NAME)
-		    {
-		      tree val = lhs;
-		      if (TREE_CODE (rhs) == SSA_NAME)
-			val = fwprop_ssa_val (rhs);
-		      else if (is_gimple_min_invariant (rhs))
-			val = rhs;
-		      fwprop_set_lattice_val (lhs, val);
-		    }
+		  propagate_value (usep, val);
+		  substituted_p = true;
+		}
+	    }
+	  if (substituted_p
+	      && is_gimple_assign (stmt)
+	      && gimple_assign_rhs_code (stmt) == ADDR_EXPR)
+	    recompute_tree_invariant_for_addr_expr (gimple_assign_rhs1 (stmt));
+
+	  bool changed;
+	  do
+	    {
+	      gimple *orig_stmt = stmt = gsi_stmt (gsi);
+	      bool was_noreturn = (is_gimple_call (stmt)
+				   && gimple_call_noreturn_p (stmt));
+	      changed = false;
+
+	      if (fold_stmt (&gsi, fwprop_ssa_val))
+		{
+		  changed = true;
+		  stmt = gsi_stmt (gsi);
+		  /* Cleanup the CFG if we simplified a condition to
+		     true or false.  */
+		  if (gcond *cond = dyn_cast <gcond *> (stmt))
+		    if (gimple_cond_true_p (cond)
+			|| gimple_cond_false_p (cond))
+		      cfg_changed = true;
 		}
 
-	      gsi_next (&gsi);
+	      if (changed || substituted_p)
+		{
+		  if (maybe_clean_or_replace_eh_stmt (orig_stmt, stmt))
+		    bitmap_set_bit (to_purge, bb->index);
+		  if (!was_noreturn
+		      && is_gimple_call (stmt) && gimple_call_noreturn_p (stmt))
+		    to_fixup.safe_push (stmt);
+		  update_stmt (stmt);
+		  substituted_p = false;
+		}
+
+	      switch (gimple_code (stmt))
+		{
+		case GIMPLE_ASSIGN:
+		  {
+		    tree rhs1 = gimple_assign_rhs1 (stmt);
+		    enum tree_code code = gimple_assign_rhs_code (stmt);
+
+		    if (code == COND_EXPR
+			|| code == VEC_COND_EXPR)
+		      {
+			/* In this case the entire COND_EXPR is in rhs1. */
+			if (forward_propagate_into_cond (&gsi))
+			  {
+			    changed = true;
+			    stmt = gsi_stmt (gsi);
+			  }
+		      }
+		    else if (TREE_CODE_CLASS (code) == tcc_comparison)
+		      {
+			int did_something;
+			did_something = forward_propagate_into_comparison (&gsi);
+			if (maybe_clean_or_replace_eh_stmt (stmt, gsi_stmt (gsi)))
+			  bitmap_set_bit (to_purge, bb->index);
+			if (did_something == 2)
+			  cfg_changed = true;
+			changed = did_something != 0;
+		      }
+		    else if ((code == PLUS_EXPR
+			      || code == BIT_IOR_EXPR
+			      || code == BIT_XOR_EXPR)
+			     && simplify_rotate (&gsi))
+		      changed = true;
+		    else if (code == VEC_PERM_EXPR)
+		      {
+			int did_something = simplify_permutation (&gsi);
+			if (did_something == 2)
+			  cfg_changed = true;
+			changed = did_something != 0;
+		      }
+		    else if (code == BIT_FIELD_REF)
+		      changed = simplify_bitfield_ref (&gsi);
+		    else if (code == CONSTRUCTOR
+			     && TREE_CODE (TREE_TYPE (rhs1)) == VECTOR_TYPE)
+		      changed = simplify_vector_constructor (&gsi);
+		    else if (code == ARRAY_REF)
+		      changed = simplify_count_trailing_zeroes (&gsi);
+		    break;
+		  }
+
+		case GIMPLE_SWITCH:
+		  changed = simplify_gimple_switch (as_a <gswitch *> (stmt));
+		  break;
+
+		case GIMPLE_COND:
+		  {
+		    int did_something = forward_propagate_into_gimple_cond
+							(as_a <gcond *> (stmt));
+		    if (did_something == 2)
+		      cfg_changed = true;
+		    changed = did_something != 0;
+		    break;
+		  }
+
+		case GIMPLE_CALL:
+		  {
+		    tree callee = gimple_call_fndecl (stmt);
+		    if (callee != NULL_TREE
+			&& fndecl_built_in_p (callee, BUILT_IN_NORMAL))
+		      changed = simplify_builtin_call (&gsi, callee);
+		    break;
+		  }
+
+		default:;
+		}
+
+	      if (changed)
+		{
+		  /* If the stmt changed then re-visit it and the statements
+		     inserted before it.  */
+		  for (; !gsi_end_p (gsi); gsi_prev (&gsi))
+		    if (gimple_plf (gsi_stmt (gsi), GF_PLF_1))
+		      break;
+		  if (gsi_end_p (gsi))
+		    gsi = gsi_start_bb (bb);
+		  else
+		    gsi_next (&gsi);
+		}
 	    }
+	  while (changed);
+
+	  /* Stmt no longer needs to be revisited.  */
+	  stmt = gsi_stmt (gsi);
+	  gcc_checking_assert (!gimple_plf (stmt, GF_PLF_1));
+	  gimple_set_plf (stmt, GF_PLF_1, true);
+
+	  /* Fill up the lattice.  */
+	  if (gimple_assign_single_p (stmt))
+	    {
+	      tree lhs = gimple_assign_lhs (stmt);
+	      tree rhs = gimple_assign_rhs1 (stmt);
+	      if (TREE_CODE (lhs) == SSA_NAME)
+		{
+		  tree val = lhs;
+		  if (TREE_CODE (rhs) == SSA_NAME)
+		    val = fwprop_ssa_val (rhs);
+		  else if (is_gimple_min_invariant (rhs))
+		    val = rhs;
+		  /* If we can propagate the lattice-value mark the
+		     stmt for removal.  */
+		  if (val != lhs
+		      && may_propagate_copy (lhs, val))
+		    to_remove.safe_push (stmt);
+		  fwprop_set_lattice_val (lhs, val);
+		}
+	    }
+	  else if (gimple_nop_p (stmt))
+	    to_remove.safe_push (stmt);
 	}
+
+      /* Substitute in destination PHI arguments.  */
+      edge_iterator ei;
+      edge e;
+      FOR_EACH_EDGE (e, ei, bb->succs)
+	for (gphi_iterator gsi = gsi_start_phis (e->dest);
+	     !gsi_end_p (gsi); gsi_next (&gsi))
+	  {
+	    gphi *phi = gsi.phi ();
+	    use_operand_p use_p = PHI_ARG_DEF_PTR_FROM_EDGE (phi, e);
+	    tree arg = USE_FROM_PTR (use_p);
+	    if (TREE_CODE (arg) != SSA_NAME
+		|| virtual_operand_p (arg))
+	      continue;
+	    tree val = fwprop_ssa_val (arg);
+	    if (val != arg
+		&& may_propagate_copy (arg, val))
+	      propagate_value (use_p, val);
+	  }
     }
   free (postorder);
   lattice.release ();
+
+  /* Remove stmts in reverse order to make debug stmt creation possible.  */
+  while (!to_remove.is_empty())
+    {
+      gimple *stmt = to_remove.pop ();
+      if (dump_file && (dump_flags & TDF_DETAILS))
+	{
+	  fprintf (dump_file, "Removing dead stmt ");
+	  print_gimple_stmt (dump_file, stmt, 0);
+	  fprintf (dump_file, "\n");
+	}
+      gimple_stmt_iterator gsi = gsi_for_stmt (stmt);
+      if (gimple_code (stmt) == GIMPLE_PHI)
+	remove_phi_node (&gsi, true);
+      else
+	{
+	  unlink_stmt_vdef (stmt);
+	  gsi_remove (&gsi, true);
+	  release_defs (stmt);
+	}
+    }
 
   /* Fixup stmts that became noreturn calls.  This may require splitting
      blocks and thus isn't possible during the walk.  Do this

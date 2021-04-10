@@ -1,5 +1,5 @@
 /* Target definitions for x86 running Darwin.
-   Copyright (C) 2001-2019 Free Software Foundation, Inc.
+   Copyright (C) 2001-2020 Free Software Foundation, Inc.
    Contributed by Apple Computer Inc.
 
 This file is part of GCC.
@@ -239,7 +239,18 @@ along with GCC; see the file COPYING3.  If not see
 #undef TARGET_ASM_OUTPUT_IDENT
 #define TARGET_ASM_OUTPUT_IDENT default_asm_output_ident_directive
 
-/* Darwin profiling -- call mcount.  */
+/* We always want jump tables in the text section:
+   * for PIC code, we need the subtracted symbol to be defined at
+     assembly-time.
+   * for mdynamic-no-pic, we cannot support jump tables in the .const
+     section for weak functions, this looks to ld64 like direct access
+     to the weak symbol from an anonymous atom.  */
+
+#undef JUMP_TABLES_IN_TEXT_SECTION
+#define JUMP_TABLES_IN_TEXT_SECTION 1
+
+/* Darwin profiling -- call mcount.
+   If we need a stub, then we unconditionally mark it as used.  */
 #undef FUNCTION_PROFILER
 #define FUNCTION_PROFILER(FILE, LABELNO)				\
   do {									\
@@ -248,7 +259,6 @@ along with GCC; see the file COPYING3.  If not see
       {									\
 	const char *name = machopic_mcount_stub_name ();		\
 	fprintf (FILE, "\tcall %s\n", name+1);  /*  skip '&'  */	\
-	machopic_validate_stub_or_non_lazy_ptr (name);			\
       }									\
     else fprintf (FILE, "\tcall mcount\n");				\
   } while (0)
