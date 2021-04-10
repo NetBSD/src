@@ -81,11 +81,13 @@ class atf_run : public tools::application::app {
 
     size_t count_tps(std::vector< std::string >) const;
 
-    int run_test(const tools::fs::path&, tools::test_program::atf_tps_writer&,
+    int run_test(const tools::fs::path&, const std::string &,
+                 tools::test_program::atf_tps_writer&,
                  const vars_map&);
     int run_test_directory(const tools::fs::path&,
                            tools::test_program::atf_tps_writer&);
     int run_test_program(const tools::fs::path&,
+                         const std::string tc,
                          tools::test_program::atf_tps_writer&,
                          const vars_map&);
 
@@ -179,7 +181,7 @@ std::string
 atf_run::specific_args(void)
     const
 {
-    return "[test-program1 .. test-programN]";
+    return "[test1 .. testN]";
 }
 
 atf_run::options_set
@@ -214,6 +216,7 @@ atf_run::parse_vflag(const std::string& str)
 
 int
 atf_run::run_test(const tools::fs::path& tp,
+                  const std::string &tc,
                   tools::test_program::atf_tps_writer& w,
                   const vars_map& config)
 {
@@ -226,7 +229,7 @@ atf_run::run_test(const tools::fs::path& tp,
         const vars_map effective_config =
             tools::config_file::merge_configs(config, m_cmdline_vars);
 
-        errcode = run_test_program(tp, w, effective_config);
+        errcode = run_test_program(tp, tc, w, effective_config);
     }
     return errcode;
 }
@@ -247,7 +250,7 @@ atf_run::run_test_directory(const tools::fs::path& tp,
     bool ok = true;
     for (std::vector< std::string >::const_iterator iter = af.tps().begin();
          iter != af.tps().end(); iter++) {
-        const bool result = run_test(tp / *iter, w,
+        const bool result = run_test(tp / *iter, "", w,
             tools::config_file::merge_configs(af.conf(), test_suite_vars));
         ok &= (result == EXIT_SUCCESS);
     }
@@ -362,6 +365,7 @@ atf_run::get_test_case_result(const std::string& broken_reason,
 
 int
 atf_run::run_test_program(const tools::fs::path& tp,
+                          const std::string tc,
                           tools::test_program::atf_tps_writer& w,
                           const vars_map& config)
 {
@@ -393,6 +397,9 @@ atf_run::run_test_program(const tools::fs::path& tp,
              = md.test_cases.begin(); iter != md.test_cases.end(); iter++) {
             const std::string& tcname = (*iter).first;
             const vars_map& tcmd = (*iter).second;
+
+            if (! tc.empty() && tcname != tc)
+                continue;
 
             w.start_tc(tcname);
 
@@ -464,6 +471,19 @@ atf_run::run_test_program(const tools::fs::path& tp,
     return errcode;
 }
 
+static void
+colon_split(const std::string &s, std::string &tp, std::string &tc)
+{
+    size_t colon_pos = s.rfind(':');
+    if (colon_pos != std::string::npos && colon_pos < s.size() - 1) {
+        tp = s.substr(0, colon_pos);
+        tc = s.substr(colon_pos + 1);
+    } else {
+        tp = s;
+        tc = "";
+    }
+}
+
 size_t
 atf_run::count_tps(std::vector< std::string > tps)
     const
@@ -472,7 +492,9 @@ atf_run::count_tps(std::vector< std::string > tps)
 
     for (std::vector< std::string >::const_iterator iter = tps.begin();
          iter != tps.end(); iter++) {
-        tools::fs::path tp(*iter);
+        std::string tpname, tcname;
+        colon_split(*iter, tpname, tcname);
+        tools::fs::path tp(tpname);
         tools::fs::file_info fi(tp);
 
         if (fi.get_type() == tools::fs::file_info::dir_type) {
@@ -540,7 +562,9 @@ atf_run::main(void)
     bool ok = true;
     for (std::vector< std::string >::const_iterator iter = tps.begin();
          iter != tps.end(); iter++) {
-        const bool result = run_test(tools::fs::path(*iter), w,
+        std::string tp, tc;
+        colon_split(*iter, tp, tc);
+        const bool result = run_test(tools::fs::path(tp), tc, w,
             tools::config_file::merge_configs(af.conf(), test_suite_vars));
         ok &= (result == EXIT_SUCCESS);
     }

@@ -26,23 +26,22 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 .\" IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 1, 2010
+.Dd April 10, 2021
 .Dt ATF-RUN 1
 .Os
 .Sh NAME
 .Nm atf-run
-.Nd executes a collection of test programs
+.Nd executes a collection of tests
 .Sh SYNOPSIS
 .Nm
 .Op Fl v Ar var1=value1 Op .. Fl v Ar varN=valueN
-.Op Ar test_program1 Op Ar .. test_programN
+.Op Ar test1 Op Ar .. testN
 .Nm
 .Fl h
 .Sh DESCRIPTION
 .Nm
-executes a collection of test programs or, in other words, a complete
-test suite.
-The results of each test program are collected by the tool, and are then
+executes a collection of test cases, test programs, or a complete test suite.
+The results of each test are collected by the tool, and are then
 multiplexed into a single machine-parseable report; see
 .Xr atf-formats 5
 for more details.
@@ -70,8 +69,14 @@ In the first synopsis form,
 parses the
 .Pa Atffile
 in the current directory and runs all the test programs specified in it.
-If any test program names are given as part of the command line, those are
-the ones executed instead of the complete list.
+If any
+.Ar test
+arguments are given as part of the command line, those tests are
+executed instead of the complete list.  Each
+.Ar test
+argument can be either the name of a test program, or a string of the form
+.Ar test_program:test_case
+to execute a single test case.
 .Pp
 In the second synopsis form,
 .Nm
