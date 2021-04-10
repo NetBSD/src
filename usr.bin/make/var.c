@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.914 2021/04/10 22:35:02 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.915 2021/04/10 22:40:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.914 2021/04/10 22:35:02 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.915 2021/04/10 22:40:34 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -4401,7 +4401,8 @@ Var_Parse_FastLane(const char **pp, VarEvalMode emode, FStr *out_value)
 		return false;
 
 	p += 4;
-	while (*p != '$' && *p != '{' && *p != ':' && *p != '\\' && *p != '}')
+	while (*p != '$' && *p != '{' && *p != ':' && *p != '\\' &&
+	       *p != '}' && *p != '\0')
 		p++;
 	if (*p != '}')
 		return false;
