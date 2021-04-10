@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.9 2021/04/10 19:49:59 nia Exp $	*/
+/*	$NetBSD: perform.c,v 1.10 2021/04/10 20:07:57 nia Exp $	*/
 #if HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -6,7 +6,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: perform.c,v 1.9 2021/04/10 19:49:59 nia Exp $");
+__RCSID("$NetBSD: perform.c,v 1.10 2021/04/10 20:07:57 nia Exp $");
 
 /*-
  * Copyright (c) 2003 Grant Beattie <grant@NetBSD.org>
@@ -159,7 +159,7 @@ compatible_platform(const char *opsys, const char *host, const char *package)
 		loc = strchr(host, '.');
 		if (loc != NULL) {
 			majorlen = loc - host;
-			if (majorlen != (strchr(package, '.') - package))
+			if (majorlen != (size_t)(strchr(package, '.') - package))
 				return 0;
 			if (strncmp(host, package, majorlen) == 0)
 				return 1;
