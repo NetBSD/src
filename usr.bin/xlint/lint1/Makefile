@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.66 2021/04/06 13:17:04 rillig Exp $
+#	$NetBSD: Makefile,v 1.67 2021/04/10 18:36:27 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -18,7 +18,8 @@ YHEADER=
 CWARNFLAGS.clang+=	-Wno-error=implicit-int-float-conversion
 LINTFLAGS+=		-T
 
-CPPFLAGS+=	-I${.CURDIR} -I. -DPASS=\"${PROG}.h\"
+CPPFLAGS+=	-DIS_LINT1
+CPPFLAGS+=	-I${.CURDIR}
 CPPFLAGS+=	${DEBUG:D-DDEBUG}
 
 BINDIR=		/usr/libexec
