@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.171 2021/04/09 20:12:00 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.172 2021/04/10 18:06:53 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.171 2021/04/09 20:12:00 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.172 2021/04/10 18:06:53 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -141,6 +141,7 @@ type_t *
 gettyp(tspec_t t)
 {
 
+	/* TODO: make the return type 'const' */
 	return &typetab[t];
 }
 

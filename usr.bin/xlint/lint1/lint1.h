@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.92 2021/04/02 22:05:43 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.93 2021/04/10 18:06:53 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -145,8 +145,8 @@ typedef	struct {
 } enumeration;
 
 /*
- * Types are represented by concatenation of structures of type type_t
- * via t_subt.
+ * The type of an expression or object. Complex types are formed via t_subt
+ * (for arrays, pointers and functions), as well as t_str.
  */
 struct type {
 	tspec_t	t_tspec;	/* type specifier */
@@ -371,7 +371,8 @@ typedef	struct pqinf {
 } pqinf_t;
 
 /*
- * Case values are stored in a list of type case_label_t.
+ * The values of the 'case' labels, linked via cl_next in reverse order of
+ * appearance in the code, that is from bottom to top.
  */
 typedef	struct case_label {
 	val_t	cl_val;

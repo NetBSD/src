@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.102 2021/04/02 15:06:35 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.103 2021/04/10 18:06:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.102 2021/04/02 15:06:35 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.103 2021/04/10 18:06:53 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -519,10 +519,7 @@ check_case_label(tnode_t *tn, cstk_t *ci)
 	} else {
 		check_getopt_case_label(nv.v_quad);
 
-		/*
-		 * append the value to the list of
-		 * case values
-		 */
+		/* append the value to the list of case values */
 		cl = xcalloc(1, sizeof(*cl));
 		cl->cl_val = nv;
 		cl->cl_next = ci->c_case_labels;

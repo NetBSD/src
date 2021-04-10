@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.275 2021/04/09 21:42:12 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.276 2021/04/10 18:06:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.275 2021/04/09 21:42:12 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.276 2021/04/10 18:06:53 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2111,6 +2111,10 @@ convert_constant(op_t op, int arg, const type_t *tp, val_t *nv, val_t *v)
 	int64_t	xmask, xmsk1;
 	int	osz, nsz;
 
+	/*
+	 * TODO: make 'v' const; the name of this function does not suggest
+	 *  that it modifies 'v'.
+	 */
 	ot = v->v_tspec;
 	nt = nv->v_tspec = tp->t_tspec;
 	rchk = false;
