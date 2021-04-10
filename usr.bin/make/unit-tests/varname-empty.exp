@@ -1,6 +1,3 @@
-Var_Parse: ${:U} (eval)
-Evaluating modifier ${:U} on value "" (eval, undefined)
-Result of ${:U} is "" (eval, defined)
 Var_Set("${:U}", "cmdline-u", ...) name expands to empty string - ignored
 Var_Set("", "cmdline-plain", ...) name expands to empty string - ignored
 Global: .CURDIR = <curdir>
@@ -23,23 +20,8 @@ SetVar: variable name is empty - ignored
 Var_Set("", "", ...) name expands to empty string - ignored
 Var_Set("", "subst", ...) name expands to empty string - ignored
 Var_Set("", "shell-output", ...) name expands to empty string - ignored
-Var_Parse: ${:Ufallback} != "fallback" (eval-defined)
-Evaluating modifier ${:U...} on value "" (eval-defined, undefined)
-Result of ${:Ufallback} is "fallback" (eval-defined, defined)
-Var_Parse: ${:U} (eval)
-Evaluating modifier ${:U} on value "" (eval, undefined)
-Result of ${:U} is "" (eval, defined)
 Var_Set("${:U}", "assigned indirectly", ...) name expands to empty string - ignored
-Var_Parse: ${:Ufallback} != "fallback" (eval-defined)
-Evaluating modifier ${:U...} on value "" (eval-defined, undefined)
-Result of ${:Ufallback} is "fallback" (eval-defined, defined)
-Var_Parse: ${:U} (eval)
-Evaluating modifier ${:U} on value "" (eval, undefined)
-Result of ${:U} is "" (eval, defined)
 Var_Append("${:U}", "appended indirectly", ...) name expands to empty string - ignored
-Var_Parse: ${:Ufallback} != "fallback" (eval-defined)
-Evaluating modifier ${:U...} on value "" (eval-defined, undefined)
-Result of ${:Ufallback} is "fallback" (eval-defined, defined)
 Global: .MAKEFLAGS =  -r -d v -d
 Global: .MAKEFLAGS =  -r -d v -d 0
 out: fallback

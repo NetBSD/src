@@ -5,13 +5,7 @@ Global: VAR = added
 Global: VAR = overwritten
 Global:delete VAR
 Global:delete VAR (not found)
-Var_Parse: ${:U} (eval)
-Evaluating modifier ${:U} on value "" (eval, undefined)
-Result of ${:U} is "" (eval, defined)
 Var_Set("${:U}", "empty name", ...) name expands to empty string - ignored
-Var_Parse: ${:U} (eval)
-Evaluating modifier ${:U} on value "" (eval, undefined)
-Result of ${:U} is "" (eval, defined)
 Var_Append("${:U}", "empty name", ...) name expands to empty string - ignored
 Global: FROM_CMDLINE = overwritten ignored!
 Global: VAR = 1
@@ -46,9 +40,6 @@ Result of ${VAR:Q} is "1\ 2\ 3"
 Var_Parse: ${:Uvalue:${:UM*e}:Mvalu[e]} (eval-defined)
 Evaluating modifier ${:U...} on value "" (eval-defined, undefined)
 Result of ${:Uvalue} is "value" (eval-defined, defined)
-Var_Parse: ${:UM*e}:Mvalu[e]} (eval-defined)
-Evaluating modifier ${:U...} on value "" (eval-defined, undefined)
-Result of ${:UM*e} is "M*e" (eval-defined, defined)
 Indirect modifier "M*e" from "${:UM*e}"
 Evaluating modifier ${:M...} on value "value" (eval-defined, defined)
 Pattern for ':M' is "*e"
@@ -58,9 +49,6 @@ Evaluating modifier ${:M...} on value "value" (eval-defined, defined)
 Pattern for ':M' is "valu[e]"
 ModifyWords: split "value" into 1 words
 Result of ${:Mvalu[e]} is "value" (eval-defined, defined)
-Var_Parse: ${:UVAR} (eval)
-Evaluating modifier ${:U...} on value "" (eval, undefined)
-Result of ${:UVAR} is "VAR" (eval, defined)
 Global:delete VAR
 Var_Parse: ${:Uvariable:unknown} (eval-defined)
 Evaluating modifier ${:U...} on value "" (eval-defined, undefined)
