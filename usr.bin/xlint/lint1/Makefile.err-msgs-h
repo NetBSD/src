@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.err-msgs-h,v 1.2 2021/01/03 20:44:54 rillig Exp $
+#	$NetBSD: Makefile.err-msgs-h,v 1.3 2021/04/10 23:51:37 rillig Exp $
 
 err-msgs.h: err.c Makefile.err-msgs-h
 	${_MKTARGET_CREATE}
@@ -9,5 +9,6 @@ err-msgs.h: err.c Makefile.err-msgs-h
 
 CLEANFILES+=	err-msgs.h
 DPSRCS+=	err-msgs.h
+CPPFLAGS+=	-I.
 
 externs1.h: err-msgs.h
