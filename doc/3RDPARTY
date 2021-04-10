@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1791 2021/04/09 19:12:37 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1792 2021/04/10 13:54:25 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -526,11 +526,11 @@ It is not part of the regular build.
 
 Package:	gdtoa
 Version:	2016-02-19
-Current Vers:	$(date)
+Current Vers:	2018-06-18
 Maintainer:	David M. Gay <dmg@acm.org>
 Archive Site:	http://www.netlib.org/fp/
 Home Page:	http://www.netlib.org/fp/
-Date:		2019-01-09
+Date:		2021-04-10
 Mailing List:	none
 Responsible:	kleink
 License:	BSD-like
