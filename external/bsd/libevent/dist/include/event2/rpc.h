@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.h,v 1.5 2021/04/07 03:36:48 christos Exp $	*/
+/*	$NetBSD: rpc.h,v 1.6 2021/04/10 19:18:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 2006-2007 Niels Provos <provos@citi.umich.edu>
@@ -285,7 +285,7 @@ void *evrpc_get_reply(struct evrpc_req_generic *req);
 #define EVRPC_REQUEST_DONE(rpc_req) do { \
   struct evrpc_req_generic *req_ = (struct evrpc_req_generic *)(rpc_req); \
   evrpc_request_done(req_);					\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 
 struct evrpc_base;

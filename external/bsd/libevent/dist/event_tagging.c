@@ -1,4 +1,4 @@
-/*	$NetBSD: event_tagging.c,v 1.5 2021/04/07 03:36:48 christos Exp $	*/
+/*	$NetBSD: event_tagging.c,v 1.6 2021/04/10 19:18:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 2003-2009 Niels Provos <provos@citi.umich.edu>
@@ -29,7 +29,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: event_tagging.c,v 1.5 2021/04/07 03:36:48 christos Exp $");
+__RCSID("$NetBSD: event_tagging.c,v 1.6 2021/04/10 19:18:45 rillig Exp $");
 #include "evconfig-private.h"
 
 #ifdef EVENT__HAVE_SYS_TYPES_H
@@ -143,7 +143,7 @@ evtag_init(void)
 	data[0] = (data[0] & 0x0f) | ((nibbles & 0x0f) << 4);		\
 									\
 	return ((off + 1) / 2);						\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 static inline int
 encode_int_internal(ev_uint8_t *data, ev_uint32_t number)
@@ -355,7 +355,7 @@ do {									\
 	*pnumber = number;						\
 									\
 	return (int)(len);						\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 /* Internal: decode an integer from an evbuffer, without draining it.
  *  Only integers up to 32-bits are supported.
