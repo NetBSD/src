@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2794 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2795 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -350,3 +350,5 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	services(5), protocols(5): Pull iana-generated services and protocols.
 		[christos 20210408]
 	file(1): Upgraded to 5.40. [christos 20210409]
+	pkg_install: Updated to 20210410. This simplifes version checking for
+		NetBSD. [nia 20210410]
