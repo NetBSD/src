@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_http.c,v 1.9 2021/04/10 19:18:45 rillig Exp $	*/
+/*	$NetBSD: regress_http.c,v 1.10 2021/04/10 19:27:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 2003-2007 Niels Provos <provos@citi.umich.edu>
@@ -36,7 +36,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: regress_http.c,v 1.9 2021/04/10 19:18:45 rillig Exp $");
+__RCSID("$NetBSD: regress_http.c,v 1.10 2021/04/10 19:27:16 rillig Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -4580,7 +4580,11 @@ http_request_own_test(void *arg)
 	test_ok = 1;
 }
 
-static void http_run_bev_request(struct event_base *base, int port,
+static void
+#ifdef __GNUC__
+	__attribute__((format(printf, 3, 4)))
+#endif
+http_run_bev_request(struct event_base *base, int port,
 	const char *fmt, ...)
 {
 	struct bufferevent *bev = NULL;
