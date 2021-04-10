@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.912 2021/04/06 01:38:39 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.913 2021/04/10 22:09:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.912 2021/04/06 01:38:39 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.913 2021/04/10 22:09:53 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -437,6 +437,11 @@ VarFind(const char *name, GNode *scope, bool elsewhere)
 	if (var == NULL) {
 		char *env;
 
+		/*
+		 * TODO: try setting an environment variable with the empty
+		 *  name, which should be technically possible, just to see
+		 *  how make reacts.  All .for loops should be broken then.
+		 */
 		if ((env = getenv(name)) != NULL) {
 			char *varname = bmake_strdup(name);
 			return VarNew(FStr_InitOwn(varname), env, true, false);
@@ -4381,6 +4386,34 @@ Expr_Literal(const char *name, FStr value,
 #endif
 
 /*
+ * Expressions of the form ${:U...} with a trivial value are often generated
+ * by .for loops and are boring, therefore parse and evaluate them in a fast
+ * lane without debug logging.
+ */
+static bool
+Var_Parse_FastLane(const char **pp, VarEvalMode emode, FStr *out_value)
+{
+	const char *p;
+
+	p = *pp;
+	if (!(p[0] == '$' && p[1] == '{' && p[2] == ':' && p[3] == 'U'))
+		return false;
+
+	p += 4;
+	while (*p != '$' && *p != '{' && *p != ':' && *p != '\\' && *p != '}')
+		p++;
+	if (*p != '}')
+		return false;
+
+	if (emode == VARE_PARSE_ONLY)
+		*out_value = FStr_InitRefer("");
+	else
+		*out_value = FStr_InitOwn(bmake_strsedup(*pp + 4, p));
+	*pp = p + 1;
+	return true;
+}
+
+/*
  * Given the start of a variable expression (such as $v, $(VAR),
  * ${VAR:Mpattern}), extract the variable name and value, and the modifiers,
  * if any.  While doing that, apply the modifiers to the value of the
@@ -4438,6 +4471,9 @@ Var_Parse(const char **pp, GNode *scope, VarEvalMode emode, FStr *out_val)
 	Var *v;
 	Expr expr = Expr_Literal(NULL, FStr_InitRefer(NULL), emode,
 	    scope, DEF_REGULAR);
+
+	if (Var_Parse_FastLane(pp, emode, out_val))
+		return VPR_OK;
 
 	DEBUG2(VAR, "Var_Parse: %s (%s)\n", start, VarEvalMode_Name[emode]);
 
