@@ -1,5 +1,5 @@
 /* Global constant/copy propagation for RTL.
-   Copyright (C) 1997-2019 Free Software Foundation, Inc.
+   Copyright (C) 1997-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -34,7 +34,6 @@ along with GCC; see the file COPYING3.  If not see
 #include "cfganal.h"
 #include "lcm.h"
 #include "cfgcleanup.h"
-#include "params.h"
 #include "cselib.h"
 #include "intl.h"
 #include "tree-pass.h"

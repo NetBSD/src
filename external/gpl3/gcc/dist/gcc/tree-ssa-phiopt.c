@@ -1,5 +1,5 @@
 /* Optimization of PHI nodes by converting them into straightline code.
-   Copyright (C) 2004-2019 Free Software Foundation, Inc.
+   Copyright (C) 2004-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -44,8 +44,8 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree-data-ref.h"
 #include "tree-scalar-evolution.h"
 #include "tree-inline.h"
-#include "params.h"
 #include "case-cfn-macros.h"
+#include "tree-eh.h"
 
 static unsigned int tree_ssa_phiopt_worker (bool, bool, bool);
 static bool two_value_replacement (basic_block, basic_block, edge, gphi *,
@@ -504,7 +504,24 @@ factor_out_conditional_conversion (edge e0, edge e1, gphi *phi,
 		  gsi = gsi_for_stmt (arg0_def_stmt);
 		  gsi_prev_nondebug (&gsi);
 		  if (!gsi_end_p (gsi))
-		    return NULL;
+		    {
+		      if (gassign *assign
+			    = dyn_cast <gassign *> (gsi_stmt (gsi)))
+			{
+			  tree lhs = gimple_assign_lhs (assign);
+			  enum tree_code ass_code
+			    = gimple_assign_rhs_code (assign);
+			  if (ass_code != MAX_EXPR && ass_code != MIN_EXPR)
+			    return NULL;
+			  if (lhs != gimple_assign_rhs1 (arg0_def_stmt))
+			    return NULL;
+			  gsi_prev_nondebug (&gsi);
+			  if (!gsi_end_p (gsi))
+			    return NULL;
+			}
+		      else
+			return NULL;
+		    }
 		  gsi = gsi_for_stmt (arg0_def_stmt);
 		  gsi_next_nondebug (&gsi);
 		  if (!gsi_end_p (gsi))
@@ -1040,7 +1057,7 @@ value_replacement (basic_block cond_bb, basic_block middle_bb,
   gimple *cond;
   edge true_edge, false_edge;
   enum tree_code code;
-  bool emtpy_or_with_defined_p = true;
+  bool empty_or_with_defined_p = true;
 
   /* If the type says honor signed zeros we cannot do this
      optimization.  */
@@ -1059,7 +1076,7 @@ value_replacement (basic_block cond_bb, basic_block middle_bb,
 	{
 	  if (gimple_code (stmt) != GIMPLE_PREDICT
 	      && gimple_code (stmt) != GIMPLE_NOP)
-	    emtpy_or_with_defined_p = false;
+	    empty_or_with_defined_p = false;
 	  continue;
 	}
       /* Now try to adjust arg0 or arg1 according to the computation
@@ -1069,7 +1086,7 @@ value_replacement (basic_block cond_bb, basic_block middle_bb,
 	     && jump_function_from_stmt (&arg0, stmt))
 	    || (lhs == arg1
 		&& jump_function_from_stmt (&arg1, stmt)))
-	emtpy_or_with_defined_p = false;
+	empty_or_with_defined_p = false;
     }
 
   cond = last_stmt (cond_bb);
@@ -1121,7 +1138,7 @@ value_replacement (basic_block cond_bb, basic_block middle_bb,
       /* If the middle basic block was empty or is defining the
 	 PHI arguments and this is a single phi where the args are different
 	 for the edges e0 and e1 then we can remove the middle basic block. */
-      if (emtpy_or_with_defined_p
+      if (empty_or_with_defined_p
 	  && single_non_singleton_phi_for_edges (phi_nodes (gimple_bb (phi)),
 						 e0, e1) == phi)
 	{
@@ -1239,7 +1256,7 @@ value_replacement (basic_block cond_bb, basic_block middle_bb,
       && profile_status_for_fn (cfun) != PROFILE_ABSENT
       && EDGE_PRED (middle_bb, 0)->probability < profile_probability::even ()
       /* If assign is cheap, there is no point avoiding it.  */
-      && estimate_num_insns (bb_seq (middle_bb), &eni_time_weights)
+      && estimate_num_insns_seq (bb_seq (middle_bb), &eni_time_weights)
 	 >= 3 * estimate_num_insns (cond, &eni_time_weights))
     return 0;
 
@@ -2182,7 +2199,8 @@ get_non_trapping (void)
 
    We check that MIDDLE_BB contains only one store, that that store
    doesn't trap (not via NOTRAP, but via checking if an access to the same
-   memory location dominates us) and that the store has a "simple" RHS.  */
+   memory location dominates us, or the store is to a local addressable
+   object) and that the store has a "simple" RHS.  */
 
 static bool
 cond_store_replacement (basic_block middle_bb, basic_block join_bb,
@@ -2209,8 +2227,9 @@ cond_store_replacement (basic_block middle_bb, basic_block join_bb,
   locus = gimple_location (assign);
   lhs = gimple_assign_lhs (assign);
   rhs = gimple_assign_rhs1 (assign);
-  if (TREE_CODE (lhs) != MEM_REF
-      || TREE_CODE (TREE_OPERAND (lhs, 0)) != SSA_NAME
+  if ((TREE_CODE (lhs) != MEM_REF
+       && TREE_CODE (lhs) != ARRAY_REF
+       && TREE_CODE (lhs) != COMPONENT_REF)
       || !is_gimple_reg_type (TREE_TYPE (lhs)))
     return false;
 
@@ -2218,7 +2237,16 @@ cond_store_replacement (basic_block middle_bb, basic_block join_bb,
      TREE_THIS_NOTRAP here, but in that case we also could move stores,
      whose value is not available readily, which we want to avoid.  */
   if (!nontrap->contains (lhs))
-    return false;
+    {
+      /* If LHS is an access to a local variable without address-taken
+	 (or when we allow data races) and known not to trap, we could
+	 always safely move down the store.  */
+      tree base = get_base_address (lhs);
+      if (!auto_var_p (base)
+	  || (TREE_ADDRESSABLE (base) && !flag_store_data_races)
+	  || tree_could_trap_p (lhs))
+	return false;
+    }
 
   /* Now we've checked the constraints, so do the transformation:
      1) Remove the single store.  */
@@ -2248,6 +2276,10 @@ cond_store_replacement (basic_block middle_bb, basic_block join_bb,
   name = make_temp_ssa_name (TREE_TYPE (lhs), NULL, "cstore");
   new_stmt = gimple_build_assign (name, lhs);
   gimple_set_location (new_stmt, locus);
+  lhs = unshare_expr (lhs);
+  /* Set TREE_NO_WARNING on the rhs of the load to avoid uninit
+     warnings.  */
+  TREE_NO_WARNING (gimple_assign_rhs1 (new_stmt)) = 1;
   gsi_insert_on_edge (e1, new_stmt);
 
   /* 3) Create a PHI node at the join block, with one argument
@@ -2258,7 +2290,6 @@ cond_store_replacement (basic_block middle_bb, basic_block join_bb,
   add_phi_arg (newphi, rhs, e0, locus);
   add_phi_arg (newphi, name, e1, locus);
 
-  lhs = unshare_expr (lhs);
   new_stmt = gimple_build_assign (lhs, PHI_RESULT (newphi));
 
   /* 4) Insert that PHI node.  */
@@ -2270,6 +2301,14 @@ cond_store_replacement (basic_block middle_bb, basic_block join_bb,
     }
   else
     gsi_insert_before (&gsi, new_stmt, GSI_NEW_STMT);
+
+  if (dump_file && (dump_flags & TDF_DETAILS))
+    {
+      fprintf (dump_file, "\nConditional store replacement happened!");
+      fprintf (dump_file, "\nReplaced the store with a load.");
+      fprintf (dump_file, "\nInserted a new PHI statement in joint block:\n");
+      print_gimple_stmt (dump_file, new_stmt, 0, TDF_VOPS|TDF_MEMSYMS);
+    }
 
   return true;
 }
@@ -2437,7 +2476,11 @@ cond_if_else_store_replacement (basic_block then_bb, basic_block else_bb,
 						 then_assign, else_assign);
     }
 
-  if (MAX_STORES_TO_SINK == 0)
+  /* If either vectorization or if-conversion is disabled then do
+     not sink any stores.  */
+  if (param_max_stores_to_sink == 0
+      || (!flag_tree_loop_vectorize && !flag_tree_slp_vectorize)
+      || !flag_tree_loop_if_convert)
     return false;
 
   /* Find data references.  */
@@ -2494,7 +2537,7 @@ cond_if_else_store_replacement (basic_block then_bb, basic_block else_bb,
 
   /* No pairs of stores found.  */
   if (!then_stores.length ()
-      || then_stores.length () > (unsigned) MAX_STORES_TO_SINK)
+      || then_stores.length () > (unsigned) param_max_stores_to_sink)
     {
       free_data_refs (then_datarefs);
       free_data_refs (else_datarefs);
@@ -2624,7 +2667,7 @@ static void
 hoist_adjacent_loads (basic_block bb0, basic_block bb1,
 		      basic_block bb2, basic_block bb3)
 {
-  int param_align = PARAM_VALUE (PARAM_L1_CACHE_LINE_SIZE);
+  int param_align = param_l1_cache_line_size;
   unsigned param_align_bits = (unsigned) (param_align * BITS_PER_UNIT);
   gphi_iterator gsi;
 
@@ -2774,7 +2817,7 @@ static bool
 gate_hoist_loads (void)
 {
   return (flag_hoist_adjacent_loads == 1
-	  && PARAM_VALUE (PARAM_L1_CACHE_LINE_SIZE)
+	  && param_l1_cache_line_size
 	  && HAVE_conditional_move);
 }
 

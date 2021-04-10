@@ -1,5 +1,5 @@
 /* Prototypes.
-   Copyright (C) 2001-2019 Free Software Foundation, Inc.
+   Copyright (C) 2001-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -16,6 +16,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
+
+#ifndef CONFIG_DARWIN_PROTOS_H
+#define CONFIG_DARWIN_PROTOS_H
 
 extern void darwin_init_sections (void);
 extern int name_needs_quotes (const char *);
@@ -66,6 +69,7 @@ extern void darwin_non_lazy_pcrel (FILE *, rtx);
 
 extern void darwin_emit_unwind_label (FILE *, tree, int, int);
 extern void darwin_emit_except_table_label (FILE *);
+extern bool darwin_should_restore_cfa_state (void);
 
 extern void darwin_pragma_ignore (struct cpp_reader *);
 extern void darwin_pragma_options (struct cpp_reader *);
@@ -123,3 +127,5 @@ extern void darwin_override_options (void);
 extern void darwin_patch_builtins (void);
 extern void darwin_rename_builtins (void);
 extern bool darwin_libc_has_function (enum function_class fn_class);
+
+#endif /* CONFIG_DARWIN_PROTOS_H */

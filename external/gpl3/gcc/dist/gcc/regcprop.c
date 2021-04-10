@@ -1,5 +1,5 @@
 /* Copy propagation on hard registers for the GNU compiler.
-   Copyright (C) 2000-2019 Free Software Foundation, Inc.
+   Copyright (C) 2000-2020 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -35,6 +35,7 @@
 #include "rtl-iter.h"
 #include "cfgrtl.h"
 #include "target.h"
+#include "function-abi.h"
 
 /* The following code does forward propagation of hard register copies.
    The object is to eliminate as many dependencies as possible, so that
@@ -237,11 +238,8 @@ static void
 kill_clobbered_value (rtx x, const_rtx set, void *data)
 {
   struct value_data *const vd = (struct value_data *) data;
-  gcc_assert (GET_CODE (set) != CLOBBER_HIGH || REG_P (x));
 
-  if (GET_CODE (set) == CLOBBER
-      || (GET_CODE (set) == CLOBBER_HIGH
-	  && reg_is_clobbered_by_clobber_high (x, XEXP (set, 0))))
+  if (GET_CODE (set) == CLOBBER)
     kill_value (x, vd);
 }
 
@@ -262,8 +260,7 @@ kill_set_value (rtx x, const_rtx set, void *data)
   if (rtx_equal_p (x, ksvd->ignore_set_reg))
     return;
 
-  gcc_assert (GET_CODE (set) != CLOBBER_HIGH || REG_P (x));
-  if (GET_CODE (set) != CLOBBER && GET_CODE (set) != CLOBBER_HIGH)
+  if (GET_CODE (set) != CLOBBER)
     {
       kill_value (x, ksvd->vd);
       if (REG_P (x))
@@ -728,19 +725,7 @@ cprop_find_used_regs (rtx *loc, void *data)
 static void
 kill_clobbered_values (rtx_insn *insn, struct value_data *vd)
 {
-  note_stores (PATTERN (insn), kill_clobbered_value, vd);
-
-  if (CALL_P (insn))
-    {
-      rtx exp;
-
-      for (exp = CALL_INSN_FUNCTION_USAGE (insn); exp; exp = XEXP (exp, 1))
-	{
-	  rtx x = XEXP (exp, 0);
-	  if (GET_CODE (x) == CLOBBER)
-	    kill_value (SET_DEST (x), vd);
-	}
-    }
+  note_stores (insn, kill_clobbered_value, vd);
 }
 
 /* Perform the forward copy propagation on basic block BB.  */
@@ -1047,7 +1032,6 @@ copyprop_hardreg_forward_1 (basic_block bb, struct value_data *vd)
 	  unsigned int set_nregs = 0;
 	  unsigned int regno;
 	  rtx exp;
-	  HARD_REG_SET regs_invalidated_by_this_call;
 
 	  for (exp = CALL_INSN_FUNCTION_USAGE (insn); exp; exp = XEXP (exp, 1))
 	    {
@@ -1065,20 +1049,17 @@ copyprop_hardreg_forward_1 (basic_block bb, struct value_data *vd)
 		}
 	    }
 
-	  get_call_reg_set_usage (insn,
-				  &regs_invalidated_by_this_call,
-				  regs_invalidated_by_call);
+	  function_abi callee_abi = insn_callee_abi (insn);
 	  for (regno = 0; regno < FIRST_PSEUDO_REGISTER; regno++)
-	    if ((TEST_HARD_REG_BIT (regs_invalidated_by_this_call, regno)
-		 || (targetm.hard_regno_call_part_clobbered
-		     (insn, regno, vd->e[regno].mode)))
+	    if (vd->e[regno].mode != VOIDmode
+		&& callee_abi.clobbers_reg_p (vd->e[regno].mode, regno)
 		&& (regno < set_regno || regno >= set_regno + set_nregs))
 	      kill_value_regno (regno, 1, vd);
 
 	  /* If SET was seen in CALL_INSN_FUNCTION_USAGE, and SET_SRC
-	     of the SET isn't in regs_invalidated_by_call hard reg set,
-	     but instead among CLOBBERs on the CALL_INSN, we could wrongly
-	     assume the value in it is still live.  */
+	     of the SET isn't clobbered by CALLEE_ABI, but instead among
+	     CLOBBERs on the CALL_INSN, we could wrongly assume the
+	     value in it is still live.  */
 	  if (ksvd.ignore_set_reg)
 	    kill_clobbered_values (insn, vd);
 	}
@@ -1109,7 +1090,7 @@ copyprop_hardreg_forward_1 (basic_block bb, struct value_data *vd)
       if (!noop_p)
 	{
 	  /* Notice stores.  */
-	  note_stores (PATTERN (insn), kill_set_value, &ksvd);
+	  note_stores (insn, kill_set_value, &ksvd);
 
 	  /* Notice copies.  */
 	  if (copy_p)
@@ -1216,8 +1197,8 @@ validate_value_data (struct value_data *vd)
 	if (vd->e[i].mode == VOIDmode)
 	  {
 	    if (vd->e[i].next_regno != INVALID_REGNUM)
-	      internal_error ("validate_value_data: [%u] Bad next_regno for empty chain (%u)",
-			      i, vd->e[i].next_regno);
+	      internal_error ("%qs: [%u] bad %<next_regno%> for empty chain (%u)",
+			      __func__, i, vd->e[i].next_regno);
 	    continue;
 	  }
 
@@ -1228,11 +1209,11 @@ validate_value_data (struct value_data *vd)
 	     j = vd->e[j].next_regno)
 	  {
 	    if (TEST_HARD_REG_BIT (set, j))
-	      internal_error ("validate_value_data: Loop in regno chain (%u)",
-			      j);
+	      internal_error ("%qs: loop in %<next_regno%> chain (%u)",
+			      __func__, j);
 	    if (vd->e[j].oldest_regno != i)
-	      internal_error ("validate_value_data: [%u] Bad oldest_regno (%u)",
-			      j, vd->e[j].oldest_regno);
+	      internal_error ("%qs: [%u] bad %<oldest_regno%> (%u)",
+			      __func__, j, vd->e[j].oldest_regno);
 
 	    SET_HARD_REG_BIT (set, j);
 	  }
@@ -1243,8 +1224,9 @@ validate_value_data (struct value_data *vd)
 	&& (vd->e[i].mode != VOIDmode
 	    || vd->e[i].oldest_regno != i
 	    || vd->e[i].next_regno != INVALID_REGNUM))
-      internal_error ("validate_value_data: [%u] Non-empty reg in chain (%s %u %i)",
-		      i, GET_MODE_NAME (vd->e[i].mode), vd->e[i].oldest_regno,
+      internal_error ("%qs: [%u] non-empty register in chain (%s %u %i)",
+		      __func__, i,
+		      GET_MODE_NAME (vd->e[i].mode), vd->e[i].oldest_regno,
 		      vd->e[i].next_regno);
 }
 

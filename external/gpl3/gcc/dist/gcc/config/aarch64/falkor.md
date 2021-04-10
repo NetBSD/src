@@ -1,5 +1,5 @@
 ;; Falkor pipeline description
-;; Copyright (C) 2017-2019 Free Software Foundation, Inc.
+;; Copyright (C) 2017-2020 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -648,7 +648,7 @@
 
 (define_insn_reservation "falkor_other_0_nothing" 0
   (and (eq_attr "tune" "falkor")
-       (eq_attr "type" "no_insn,trap,block"))
+       (eq_attr "type" "trap,block"))
   "nothing")
 
 (define_insn_reservation "falkor_other_2_z" 2

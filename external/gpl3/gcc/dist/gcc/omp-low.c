@@ -4,7 +4,7 @@
 
    Contributed by Diego Novillo <dnovillo@redhat.com>
 
-   Copyright (C) 2005-2019 Free Software Foundation, Inc.
+   Copyright (C) 2005-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -52,6 +52,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "omp-low.h"
 #include "omp-grid.h"
 #include "gimple-low.h"
+#include "alloc-pool.h"
 #include "symbol-summary.h"
 #include "tree-nested.h"
 #include "context.h"
@@ -119,9 +120,25 @@ struct omp_context
      and then offsets (if constant, otherwise NULL) for each entry.  */
   vec<tree> task_reductions;
 
-  /* And a hash map from the reduction clauses to the registered array
+  /* A hash map from the reduction clauses to the registered array
      elts.  */
   hash_map<tree, unsigned> *task_reduction_map;
+
+  /* And a hash map from the lastprivate(conditional:) variables to their
+     corresponding tracking loop iteration variables.  */
+  hash_map<tree, tree> *lastprivate_conditional_map;
+
+  /* A tree_list of the reduction clauses in this context. This is
+    only used for checking the consistency of OpenACC reduction
+    clauses in scan_omp_for and is not guaranteed to contain a valid
+    value outside of this function. */
+  tree local_reduction_clauses;
+
+  /* A tree_list of the reduction clauses in outer contexts. This is
+    only used for checking the consistency of OpenACC reduction
+    clauses in scan_omp_for and is not guaranteed to contain a valid
+    value outside of this function. */
+  tree outer_reduction_clauses;
 
   /* Nesting depth of this context.  Used to beautify error messages re
      invalid gotos.  The outermost ctx is depth 1, with depth 0 being
@@ -133,6 +150,25 @@ struct omp_context
 
   /* True if this construct can be cancelled.  */
   bool cancellable;
+
+  /* True if lower_omp_1 should look up lastprivate conditional in parent
+     context.  */
+  bool combined_into_simd_safelen1;
+
+  /* True if there is nested scan context with inclusive clause.  */
+  bool scan_inclusive;
+
+  /* True if there is nested scan context with exclusive clause.  */
+  bool scan_exclusive;
+
+  /* True in the second simd loop of for simd with inscan reductions.  */
+  bool for_simd_scan_phase;
+
+  /* True if there is order(concurrent) clause on the construct.  */
+  bool order_concurrent;
+
+  /* True if there is bind clause on the construct (i.e. a loop construct).  */
+  bool loop_p;
 };
 
 static splay_tree all_contexts;
@@ -155,15 +191,18 @@ static tree scan_omp_1_op (tree *, int *, void *);
       *handled_ops_p = false; \
       break;
 
-/* Return true if CTX corresponds to an oacc parallel region.  */
+/* Return true if CTX corresponds to an OpenACC 'parallel' or 'serial'
+   region.  */
 
 static bool
-is_oacc_parallel (omp_context *ctx)
+is_oacc_parallel_or_serial (omp_context *ctx)
 {
   enum gimple_code outer_type = gimple_code (ctx->stmt);
   return ((outer_type == GIMPLE_OMP_TARGET)
-	  && (gimple_omp_target_kind (ctx->stmt)
-	      == GF_OMP_TARGET_KIND_OACC_PARALLEL));
+	  && ((gimple_omp_target_kind (ctx->stmt)
+	       == GF_OMP_TARGET_KIND_OACC_PARALLEL)
+	      || (gimple_omp_target_kind (ctx->stmt)
+		  == GF_OMP_TARGET_KIND_OACC_SERIAL)));
 }
 
 /* Return true if CTX corresponds to an oacc kernels region.  */
@@ -594,7 +633,8 @@ build_outer_var_ref (tree var, omp_context *ctx,
       x = build_receiver_ref (var, by_ref, ctx);
     }
   else if ((gimple_code (ctx->stmt) == GIMPLE_OMP_FOR
-	    && gimple_omp_for_kind (ctx->stmt) & GF_OMP_FOR_SIMD)
+	    && gimple_omp_for_kind (ctx->stmt) == GF_OMP_FOR_KIND_SIMD)
+	   || ctx->loop_p
 	   || (code == OMP_CLAUSE_PRIVATE
 	       && (gimple_code (ctx->stmt) == GIMPLE_OMP_FOR
 		   || gimple_code (ctx->stmt) == GIMPLE_OMP_SECTIONS
@@ -703,6 +743,11 @@ install_var_field (tree var, bool by_ref, int mask, omp_context *ctx)
   tree field, type, sfield = NULL_TREE;
   splay_tree_key key = (splay_tree_key) var;
 
+  if ((mask & 16) != 0)
+    {
+      key = (splay_tree_key) &DECL_NAME (var);
+      gcc_checking_assert (key != (splay_tree_key) var);
+    }
   if ((mask & 8) != 0)
     {
       key = (splay_tree_key) &DECL_UID (var);
@@ -716,6 +761,9 @@ install_var_field (tree var, bool by_ref, int mask, omp_context *ctx)
 	      || !is_gimple_omp_oacc (ctx->stmt));
 
   type = TREE_TYPE (var);
+  if ((mask & 16) != 0)
+    type = lang_hooks.decls.omp_array_data (var, true);
+
   /* Prevent redeclaring the var in the split-off function with a restrict
      pointer type.  Note that we only clear type itself, restrict qualifiers in
      the pointed-to type will be ignored by points-to analysis.  */
@@ -740,7 +788,7 @@ install_var_field (tree var, bool by_ref, int mask, omp_context *ctx)
      side effect of making dwarf2out ignore this member, so for helpful
      debugging we clear it later in delete_omp_context.  */
   DECL_ABSTRACT_ORIGIN (field) = var;
-  if (type == TREE_TYPE (var))
+  if ((mask & 16) == 0 && type == TREE_TYPE (var))
     {
       SET_DECL_ALIGN (field, DECL_ALIGN (var));
       DECL_USER_ALIGN (field) = DECL_USER_ALIGN (var);
@@ -989,6 +1037,8 @@ delete_omp_context (splay_tree_value value)
       delete ctx->task_reduction_map;
     }
 
+  delete ctx->lastprivate_conditional_map;
+
   XDELETE (ctx);
 }
 
@@ -1116,6 +1166,18 @@ scan_sharing_clauses (tree clauses, omp_context *ctx)
 	  goto do_private;
 
 	case OMP_CLAUSE_REDUCTION:
+	  /* Collect 'reduction' clauses on OpenACC compute construct.  */
+	  if (is_gimple_omp_oacc (ctx->stmt)
+	      && is_gimple_omp_offloaded (ctx->stmt))
+	    {
+	      /* No 'reduction' clauses on OpenACC 'kernels'.  */
+	      gcc_checking_assert (!is_oacc_kernels (ctx));
+
+	      ctx->local_reduction_clauses
+		= tree_cons (NULL, c, ctx->local_reduction_clauses);
+	    }
+	  /* FALLTHRU */
+
 	case OMP_CLAUSE_IN_REDUCTION:
 	  decl = OMP_CLAUSE_DECL (c);
 	  if (TREE_CODE (decl) == MEM_REF)
@@ -1224,11 +1286,19 @@ scan_sharing_clauses (tree clauses, omp_context *ctx)
 	  break;
 
 	case OMP_CLAUSE_USE_DEVICE_PTR:
+	case OMP_CLAUSE_USE_DEVICE_ADDR:
 	  decl = OMP_CLAUSE_DECL (c);
-	  if (TREE_CODE (TREE_TYPE (decl)) == ARRAY_TYPE)
-	    install_var_field (decl, true, 3, ctx);
+
+	  /* Fortran array descriptors.  */
+	  if (lang_hooks.decls.omp_array_data (decl, true))
+	    install_var_field (decl, false, 19, ctx);
+	  else if ((OMP_CLAUSE_CODE (c) == OMP_CLAUSE_USE_DEVICE_ADDR
+		    && !omp_is_reference (decl)
+		    && !omp_is_allocatable_or_ptr (decl))
+		   || TREE_CODE (TREE_TYPE (decl)) == ARRAY_TYPE)
+	    install_var_field (decl, true, 11, ctx);
 	  else
-	    install_var_field (decl, false, 3, ctx);
+	    install_var_field (decl, false, 11, ctx);
 	  if (DECL_SIZE (decl)
 	      && TREE_CODE (DECL_SIZE (decl)) != INTEGER_CST)
 	    {
@@ -1405,6 +1475,14 @@ scan_sharing_clauses (tree clauses, omp_context *ctx)
 	    }
 	  break;
 
+	case OMP_CLAUSE_ORDER:
+	  ctx->order_concurrent = true;
+	  break;
+
+	case OMP_CLAUSE_BIND:
+	  ctx->loop_p = true;
+	  break;
+
 	case OMP_CLAUSE_NOWAIT:
 	case OMP_CLAUSE_ORDERED:
 	case OMP_CLAUSE_COLLAPSE:
@@ -1438,6 +1516,19 @@ scan_sharing_clauses (tree clauses, omp_context *ctx)
 	  decl = OMP_CLAUSE_DECL (c);
 	  if (is_global_var (decl)
 	      && TREE_CODE (TREE_TYPE (decl)) == ARRAY_TYPE)
+	    install_var_local (decl, ctx);
+	  break;
+
+	case OMP_CLAUSE__CONDTEMP_:
+	  decl = OMP_CLAUSE_DECL (c);
+	  if (is_parallel_ctx (ctx))
+	    {
+	      install_var_field (decl, false, 3, ctx);
+	      install_var_local (decl, ctx);
+	    }
+	  else if (gimple_code (ctx->stmt) == GIMPLE_OMP_FOR
+		   && gimple_omp_for_kind (ctx->stmt) == GF_OMP_FOR_KIND_SIMD
+		   && !OMP_CLAUSE__CONDTEMP__ITER (c))
 	    install_var_local (decl, ctx);
 	  break;
 
@@ -1597,7 +1688,10 @@ scan_sharing_clauses (tree clauses, omp_context *ctx)
 	case OMP_CLAUSE_SIMD:
 	case OMP_CLAUSE_NOGROUP:
 	case OMP_CLAUSE_DEFAULTMAP:
+	case OMP_CLAUSE_ORDER:
+	case OMP_CLAUSE_BIND:
 	case OMP_CLAUSE_USE_DEVICE_PTR:
+	case OMP_CLAUSE_USE_DEVICE_ADDR:
 	case OMP_CLAUSE_NONTEMPORAL:
 	case OMP_CLAUSE_ASYNC:
 	case OMP_CLAUSE_WAIT:
@@ -1615,6 +1709,7 @@ scan_sharing_clauses (tree clauses, omp_context *ctx)
 	case OMP_CLAUSE__SIMT_:
 	case OMP_CLAUSE_IF_PRESENT:
 	case OMP_CLAUSE_FINALIZE:
+	case OMP_CLAUSE__CONDTEMP_:
 	  break;
 
 	case OMP_CLAUSE__CACHE_:
@@ -2320,34 +2415,128 @@ scan_omp_for (gomp_for *stmt, omp_context *outer_ctx)
     {
       omp_context *tgt = enclosing_target_ctx (outer_ctx);
 
-      if (!tgt || is_oacc_parallel (tgt))
+      if (!(tgt && is_oacc_kernels (tgt)))
 	for (tree c = clauses; c; c = OMP_CLAUSE_CHAIN (c))
 	  {
-	    char const *check = NULL;
-
+	    tree c_op0;
 	    switch (OMP_CLAUSE_CODE (c))
 	      {
 	      case OMP_CLAUSE_GANG:
-		check = "gang";
+		c_op0 = OMP_CLAUSE_GANG_EXPR (c);
 		break;
 
 	      case OMP_CLAUSE_WORKER:
-		check = "worker";
+		c_op0 = OMP_CLAUSE_WORKER_EXPR (c);
 		break;
 
 	      case OMP_CLAUSE_VECTOR:
-		check = "vector";
+		c_op0 = OMP_CLAUSE_VECTOR_EXPR (c);
 		break;
 
 	      default:
-		break;
+		continue;
 	      }
 
-	    if (check && OMP_CLAUSE_OPERAND (c, 0))
-	      error_at (gimple_location (stmt),
-			"argument not permitted on %qs clause in"
-			" OpenACC %<parallel%>", check);
+	    if (c_op0)
+	      {
+		error_at (OMP_CLAUSE_LOCATION (c),
+			  "argument not permitted on %qs clause",
+			  omp_clause_code_name[OMP_CLAUSE_CODE (c)]);
+		if (tgt)
+		  inform (gimple_location (tgt->stmt),
+			  "enclosing parent compute construct");
+		else if (oacc_get_fn_attrib (current_function_decl))
+		  inform (DECL_SOURCE_LOCATION (current_function_decl),
+			  "enclosing routine");
+		else
+		  gcc_unreachable ();
+	      }
 	  }
+
+      if (tgt && is_oacc_kernels (tgt))
+	check_oacc_kernel_gwv (stmt, ctx);
+
+      /* Collect all variables named in reductions on this loop.  Ensure
+	 that, if this loop has a reduction on some variable v, and there is
+	 a reduction on v somewhere in an outer context, then there is a
+	 reduction on v on all intervening loops as well.  */
+      tree local_reduction_clauses = NULL;
+      for (tree c = gimple_omp_for_clauses (stmt); c; c = OMP_CLAUSE_CHAIN (c))
+	{
+	  if (OMP_CLAUSE_CODE (c) == OMP_CLAUSE_REDUCTION)
+	    local_reduction_clauses
+	      = tree_cons (NULL, c, local_reduction_clauses);
+	}
+      if (ctx->outer_reduction_clauses == NULL && ctx->outer != NULL)
+	ctx->outer_reduction_clauses
+	  = chainon (unshare_expr (ctx->outer->local_reduction_clauses),
+		     ctx->outer->outer_reduction_clauses);
+      tree outer_reduction_clauses = ctx->outer_reduction_clauses;
+      tree local_iter = local_reduction_clauses;
+      for (; local_iter; local_iter = TREE_CHAIN (local_iter))
+	{
+	  tree local_clause = TREE_VALUE (local_iter);
+	  tree local_var = OMP_CLAUSE_DECL (local_clause);
+	  tree_code local_op = OMP_CLAUSE_REDUCTION_CODE (local_clause);
+	  bool have_outer_reduction = false;
+	  tree ctx_iter = outer_reduction_clauses;
+	  for (; ctx_iter; ctx_iter = TREE_CHAIN (ctx_iter))
+	    {
+	      tree outer_clause = TREE_VALUE (ctx_iter);
+	      tree outer_var = OMP_CLAUSE_DECL (outer_clause);
+	      tree_code outer_op = OMP_CLAUSE_REDUCTION_CODE (outer_clause);
+	      if (outer_var == local_var && outer_op != local_op)
+		{
+		  warning_at (OMP_CLAUSE_LOCATION (local_clause), 0,
+			      "conflicting reduction operations for %qE",
+			      local_var);
+		  inform (OMP_CLAUSE_LOCATION (outer_clause),
+			  "location of the previous reduction for %qE",
+			  outer_var);
+		}
+	      if (outer_var == local_var)
+		{
+		  have_outer_reduction = true;
+		  break;
+		}
+	    }
+	  if (have_outer_reduction)
+	    {
+	      /* There is a reduction on outer_var both on this loop and on
+		 some enclosing loop.  Walk up the context tree until such a
+		 loop with a reduction on outer_var is found, and complain
+		 about all intervening loops that do not have such a
+		 reduction.  */
+	      struct omp_context *curr_loop = ctx->outer;
+	      bool found = false;
+	      while (curr_loop != NULL)
+		{
+		  tree curr_iter = curr_loop->local_reduction_clauses;
+		  for (; curr_iter; curr_iter = TREE_CHAIN (curr_iter))
+		    {
+		      tree curr_clause = TREE_VALUE (curr_iter);
+		      tree curr_var = OMP_CLAUSE_DECL (curr_clause);
+		      if (curr_var == local_var)
+			{
+			  found = true;
+			  break;
+			}
+		    }
+		  if (!found)
+		    warning_at (gimple_location (curr_loop->stmt), 0,
+				"nested loop in reduction needs "
+				"reduction clause for %qE",
+				local_var);
+		  else
+		    break;
+		  curr_loop = curr_loop->outer;
+		}
+	    }
+	}
+      ctx->local_reduction_clauses = local_reduction_clauses;
+      ctx->outer_reduction_clauses
+	= chainon (unshare_expr (ctx->local_reduction_clauses),
+		   ctx->outer_reduction_clauses);
 
       if (tgt && is_oacc_kernels (tgt))
 	{
@@ -2357,7 +2546,7 @@ scan_omp_for (gomp_for *stmt, omp_context *outer_ctx)
 	  while (tree probe = *prev_ptr)
 	    {
 	      tree *next_ptr = &OMP_CLAUSE_CHAIN (probe);
-	      
+
 	      if (OMP_CLAUSE_CODE (probe) == OMP_CLAUSE_REDUCTION)
 		*prev_ptr = *next_ptr;
 	      else
@@ -2365,7 +2554,6 @@ scan_omp_for (gomp_for *stmt, omp_context *outer_ctx)
 	    }
 
 	  gimple_omp_for_set_clauses (stmt, clauses);
-	  check_oacc_kernel_gwv (stmt, ctx);
 	}
     }
 
@@ -2423,6 +2611,85 @@ scan_omp_simd (gimple_stmt_iterator *gsi, gomp_for *stmt,
   update_stmt (bind);
   scan_omp_for (new_stmt, outer_ctx);
   scan_omp_for (stmt, outer_ctx)->simt_stmt = new_stmt;
+}
+
+static tree omp_find_scan (gimple_stmt_iterator *, bool *,
+			   struct walk_stmt_info *);
+static omp_context *maybe_lookup_ctx (gimple *);
+
+/* Duplicate #pragma omp simd, one for the scan input phase loop and one
+   for scan phase loop.  */
+
+static void
+scan_omp_simd_scan (gimple_stmt_iterator *gsi, gomp_for *stmt,
+		    omp_context *outer_ctx)
+{
+  /* The only change between inclusive and exclusive scan will be
+     within the first simd loop, so just use inclusive in the
+     worksharing loop.  */
+  outer_ctx->scan_inclusive = true;
+  tree c = build_omp_clause (UNKNOWN_LOCATION, OMP_CLAUSE_INCLUSIVE);
+  OMP_CLAUSE_DECL (c) = integer_zero_node;
+
+  gomp_scan *input_stmt = gimple_build_omp_scan (NULL, NULL_TREE);
+  gomp_scan *scan_stmt = gimple_build_omp_scan (NULL, c);
+  gsi_replace (gsi, input_stmt, false);
+  gimple_seq input_body = NULL;
+  gimple_seq_add_stmt (&input_body, stmt);
+  gsi_insert_after (gsi, scan_stmt, GSI_NEW_STMT);
+
+  gimple_stmt_iterator input1_gsi = gsi_none ();
+  struct walk_stmt_info wi;
+  memset (&wi, 0, sizeof (wi));
+  wi.val_only = true;
+  wi.info = (void *) &input1_gsi;
+  walk_gimple_seq_mod (gimple_omp_body_ptr (stmt), omp_find_scan, NULL, &wi);
+  gcc_assert (!gsi_end_p (input1_gsi));
+
+  gimple *input_stmt1 = gsi_stmt (input1_gsi);
+  gsi_next (&input1_gsi);
+  gimple *scan_stmt1 = gsi_stmt (input1_gsi);
+  gcc_assert (scan_stmt1 && gimple_code (scan_stmt1) == GIMPLE_OMP_SCAN);
+  c = gimple_omp_scan_clauses (as_a <gomp_scan *> (scan_stmt1));
+  if (c && OMP_CLAUSE_CODE (c) == OMP_CLAUSE_EXCLUSIVE)
+    std::swap (input_stmt1, scan_stmt1);
+
+  gimple_seq input_body1 = gimple_omp_body (input_stmt1);
+  gimple_omp_set_body (input_stmt1, NULL);
+
+  gimple_seq scan_body = copy_gimple_seq_and_replace_locals (stmt);
+  gomp_for *new_stmt = as_a <gomp_for *> (scan_body);
+
+  gimple_omp_set_body (input_stmt1, input_body1);
+  gimple_omp_set_body (scan_stmt1, NULL);
+
+  gimple_stmt_iterator input2_gsi = gsi_none ();
+  memset (&wi, 0, sizeof (wi));
+  wi.val_only = true;
+  wi.info = (void *) &input2_gsi;
+  walk_gimple_seq_mod (gimple_omp_body_ptr (new_stmt), omp_find_scan,
+		       NULL, &wi);
+  gcc_assert (!gsi_end_p (input2_gsi));
+
+  gimple *input_stmt2 = gsi_stmt (input2_gsi);
+  gsi_next (&input2_gsi);
+  gimple *scan_stmt2 = gsi_stmt (input2_gsi);
+  gcc_assert (scan_stmt2 && gimple_code (scan_stmt2) == GIMPLE_OMP_SCAN);
+  if (c && OMP_CLAUSE_CODE (c) == OMP_CLAUSE_EXCLUSIVE)
+    std::swap (input_stmt2, scan_stmt2);
+
+  gimple_omp_set_body (input_stmt2, NULL);
+
+  gimple_omp_set_body (input_stmt, input_body);
+  gimple_omp_set_body (scan_stmt, scan_body);
+
+  omp_context *ctx = new_omp_context (input_stmt, outer_ctx);
+  scan_omp (gimple_omp_body_ptr (input_stmt), ctx);
+
+  ctx = new_omp_context (scan_stmt, outer_ctx);
+  scan_omp (gimple_omp_body_ptr (scan_stmt), ctx);
+
+  maybe_lookup_ctx (new_stmt)->for_simd_scan_phase = true;
 }
 
 /* Scan an OpenMP sections directive.  */
@@ -2584,10 +2851,26 @@ check_omp_nesting_restrictions (gimple *stmt, omp_context *ctx)
 
   if (ctx != NULL)
     {
+      if (gimple_code (ctx->stmt) == GIMPLE_OMP_SCAN
+	  && ctx->outer
+	  && gimple_code (ctx->outer->stmt) == GIMPLE_OMP_FOR)
+	ctx = ctx->outer;
       if (gimple_code (ctx->stmt) == GIMPLE_OMP_FOR
-	  && gimple_omp_for_kind (ctx->stmt) & GF_OMP_FOR_SIMD)
+	  && gimple_omp_for_kind (ctx->stmt) == GF_OMP_FOR_KIND_SIMD
+	  && !ctx->loop_p)
 	{
 	  c = NULL_TREE;
+	  if (ctx->order_concurrent
+	      && (gimple_code (stmt) == GIMPLE_OMP_ORDERED
+		  || gimple_code (stmt) == GIMPLE_OMP_ATOMIC_LOAD
+		  || gimple_code (stmt) == GIMPLE_OMP_ATOMIC_STORE))
+	    {
+	      error_at (gimple_location (stmt),
+			"OpenMP constructs other than %<parallel%>, %<loop%>"
+			" or %<simd%> may not be nested inside a region with"
+			" the %<order(concurrent)%> clause");
+	      return false;
+	    }
 	  if (gimple_code (stmt) == GIMPLE_OMP_ORDERED)
 	    {
 	      c = gimple_omp_ordered_clauses (as_a <gomp_ordered *> (stmt));
@@ -2610,33 +2893,56 @@ check_omp_nesting_restrictions (gimple *stmt, omp_context *ctx)
 		}
 	    }
 	  else if (gimple_code (stmt) == GIMPLE_OMP_ATOMIC_LOAD
-		   || gimple_code (stmt) == GIMPLE_OMP_ATOMIC_STORE)
+		   || gimple_code (stmt) == GIMPLE_OMP_ATOMIC_STORE
+		   || gimple_code (stmt) == GIMPLE_OMP_SCAN)
+	    return true;
+	  else if (gimple_code (stmt) == GIMPLE_OMP_FOR
+		   && gimple_omp_for_kind (ctx->stmt) == GF_OMP_FOR_KIND_SIMD)
 	    return true;
 	  error_at (gimple_location (stmt),
-		    "OpenMP constructs other than %<#pragma omp ordered simd%>"
-		    " or %<#pragma omp atomic%> may not be nested inside"
-		    " %<simd%> region");
+		    "OpenMP constructs other than "
+		    "%<ordered simd%>, %<simd%>, %<loop%> or %<atomic%> may "
+		    "not be nested inside %<simd%> region");
 	  return false;
 	}
       else if (gimple_code (ctx->stmt) == GIMPLE_OMP_TEAMS)
 	{
 	  if ((gimple_code (stmt) != GIMPLE_OMP_FOR
-	       || ((gimple_omp_for_kind (stmt) != GF_OMP_FOR_KIND_DISTRIBUTE)
-		   && (gimple_omp_for_kind (stmt) != GF_OMP_FOR_KIND_GRID_LOOP)))
+	       || (gimple_omp_for_kind (stmt) != GF_OMP_FOR_KIND_DISTRIBUTE
+		   && gimple_omp_for_kind (stmt) != GF_OMP_FOR_KIND_GRID_LOOP
+		   && omp_find_clause (gimple_omp_for_clauses (stmt),
+				       OMP_CLAUSE_BIND) == NULL_TREE))
 	      && gimple_code (stmt) != GIMPLE_OMP_PARALLEL)
 	    {
 	      error_at (gimple_location (stmt),
-			"only %<distribute%> or %<parallel%> regions are "
-			"allowed to be strictly nested inside %<teams%> "
-			"region");
+			"only %<distribute%>, %<parallel%> or %<loop%> "
+			"regions are allowed to be strictly nested inside "
+			"%<teams%> region");
 	      return false;
 	    }
+	}
+      else if (ctx->order_concurrent
+	       && gimple_code (stmt) != GIMPLE_OMP_PARALLEL
+	       && (gimple_code (stmt) != GIMPLE_OMP_FOR
+		   || gimple_omp_for_kind (stmt) != GF_OMP_FOR_KIND_SIMD)
+	       && gimple_code (stmt) != GIMPLE_OMP_SCAN)
+	{
+	  if (ctx->loop_p)
+	    error_at (gimple_location (stmt),
+		      "OpenMP constructs other than %<parallel%>, %<loop%> or "
+		      "%<simd%> may not be nested inside a %<loop%> region");
+	  else
+	    error_at (gimple_location (stmt),
+		      "OpenMP constructs other than %<parallel%>, %<loop%> or "
+		      "%<simd%> may not be nested inside a region with "
+		      "the %<order(concurrent)%> clause");
+	  return false;
 	}
     }
   switch (gimple_code (stmt))
     {
     case GIMPLE_OMP_FOR:
-      if (gimple_omp_for_kind (stmt) & GF_OMP_FOR_SIMD)
+      if (gimple_omp_for_kind (stmt) == GF_OMP_FOR_KIND_SIMD)
 	return true;
       if (gimple_omp_for_kind (stmt) == GF_OMP_FOR_KIND_DISTRIBUTE)
 	{
@@ -2651,6 +2957,11 @@ check_omp_nesting_restrictions (gimple *stmt, omp_context *ctx)
 	}
       /* We split taskloop into task and nested taskloop in it.  */
       if (gimple_omp_for_kind (stmt) == GF_OMP_FOR_KIND_TASKLOOP)
+	return true;
+      /* For now, hope this will change and loop bind(parallel) will not
+	 be allowed in lots of contexts.  */
+      if (gimple_omp_for_kind (stmt) == GF_OMP_FOR_KIND_FOR
+	  && omp_find_clause (gimple_omp_for_clauses (stmt), OMP_CLAUSE_BIND))
 	return true;
       if (gimple_omp_for_kind (stmt) == GF_OMP_FOR_KIND_OACC_LOOP)
 	{
@@ -2669,6 +2980,7 @@ check_omp_nesting_restrictions (gimple *stmt, omp_context *ctx)
 		  {
 		  case GF_OMP_TARGET_KIND_OACC_PARALLEL:
 		  case GF_OMP_TARGET_KIND_OACC_KERNELS:
+		  case GF_OMP_TARGET_KIND_OACC_SERIAL:
 		    ok = true;
 		    break;
 
@@ -2702,8 +3014,8 @@ check_omp_nesting_restrictions (gimple *stmt, omp_context *ctx)
 	  const char *construct
 	    = (DECL_FUNCTION_CODE (gimple_call_fndecl (stmt))
 	       == BUILT_IN_GOMP_CANCEL)
-	      ? "#pragma omp cancel"
-	      : "#pragma omp cancellation point";
+	      ? "cancel"
+	      : "cancellation point";
 	  if (ctx == NULL)
 	    {
 	      error_at (gimple_location (stmt), "orphaned %qs construct",
@@ -2716,7 +3028,7 @@ check_omp_nesting_restrictions (gimple *stmt, omp_context *ctx)
 	    {
 	    case 1:
 	      if (gimple_code (ctx->stmt) != GIMPLE_OMP_PARALLEL)
-		bad = "#pragma omp parallel";
+		bad = "parallel";
 	      else if (DECL_FUNCTION_CODE (gimple_call_fndecl (stmt))
 		       == BUILT_IN_GOMP_CANCEL
 		       && !integer_zerop (gimple_call_arg (stmt, 1)))
@@ -2726,7 +3038,7 @@ check_omp_nesting_restrictions (gimple *stmt, omp_context *ctx)
 	    case 2:
 	      if (gimple_code (ctx->stmt) != GIMPLE_OMP_FOR
 		  || gimple_omp_for_kind (ctx->stmt) != GF_OMP_FOR_KIND_FOR)
-		bad = "#pragma omp for";
+		bad = "for";
 	      else if (DECL_FUNCTION_CODE (gimple_call_fndecl (stmt))
 		       == BUILT_IN_GOMP_CANCEL
 		       && !integer_zerop (gimple_call_arg (stmt, 1)))
@@ -2735,12 +3047,12 @@ check_omp_nesting_restrictions (gimple *stmt, omp_context *ctx)
 		  if (omp_find_clause (gimple_omp_for_clauses (ctx->stmt),
 				       OMP_CLAUSE_NOWAIT))
 		    warning_at (gimple_location (stmt), 0,
-				"%<#pragma omp cancel for%> inside "
+				"%<cancel for%> inside "
 				"%<nowait%> for construct");
 		  if (omp_find_clause (gimple_omp_for_clauses (ctx->stmt),
 				       OMP_CLAUSE_ORDERED))
 		    warning_at (gimple_location (stmt), 0,
-				"%<#pragma omp cancel for%> inside "
+				"%<cancel for%> inside "
 				"%<ordered%> for construct");
 		}
 	      kind = "for";
@@ -2748,7 +3060,7 @@ check_omp_nesting_restrictions (gimple *stmt, omp_context *ctx)
 	    case 4:
 	      if (gimple_code (ctx->stmt) != GIMPLE_OMP_SECTIONS
 		  && gimple_code (ctx->stmt) != GIMPLE_OMP_SECTION)
-		bad = "#pragma omp sections";
+		bad = "sections";
 	      else if (DECL_FUNCTION_CODE (gimple_call_fndecl (stmt))
 		       == BUILT_IN_GOMP_CANCEL
 		       && !integer_zerop (gimple_call_arg (stmt, 1)))
@@ -2760,7 +3072,7 @@ check_omp_nesting_restrictions (gimple *stmt, omp_context *ctx)
 								(ctx->stmt),
 					   OMP_CLAUSE_NOWAIT))
 			warning_at (gimple_location (stmt), 0,
-				    "%<#pragma omp cancel sections%> inside "
+				    "%<cancel sections%> inside "
 				    "%<nowait%> sections construct");
 		    }
 		  else
@@ -2773,7 +3085,7 @@ check_omp_nesting_restrictions (gimple *stmt, omp_context *ctx)
 							(ctx->outer->stmt),
 					   OMP_CLAUSE_NOWAIT))
 			warning_at (gimple_location (stmt), 0,
-				    "%<#pragma omp cancel sections%> inside "
+				    "%<cancel sections%> inside "
 				    "%<nowait%> sections construct");
 		    }
 		}
@@ -2784,7 +3096,7 @@ check_omp_nesting_restrictions (gimple *stmt, omp_context *ctx)
 		  && (!is_taskloop_ctx (ctx)
 		      || ctx->outer == NULL
 		      || !is_task_ctx (ctx->outer)))
-		bad = "#pragma omp task";
+		bad = "task";
 	      else
 		{
 		  for (omp_context *octx = ctx->outer;
@@ -2862,14 +3174,14 @@ check_omp_nesting_restrictions (gimple *stmt, omp_context *ctx)
 		  return true;
 		error_at (gimple_location (stmt),
 			  "barrier region may not be closely nested inside "
-			  "of work-sharing, %<critical%>, %<ordered%>, "
-			  "%<master%>, explicit %<task%> or %<taskloop%> "
-			  "region");
+			  "of work-sharing, %<loop%>, %<critical%>, "
+			  "%<ordered%>, %<master%>, explicit %<task%> or "
+			  "%<taskloop%> region");
 		return false;
 	      }
 	    error_at (gimple_location (stmt),
 		      "work-sharing region may not be closely nested inside "
-		      "of work-sharing, %<critical%>, %<ordered%>, "
+		      "of work-sharing, %<loop%>, %<critical%>, %<ordered%>, "
 		      "%<master%>, explicit %<task%> or %<taskloop%> region");
 	    return false;
 	  case GIMPLE_OMP_PARALLEL:
@@ -2898,8 +3210,8 @@ check_omp_nesting_restrictions (gimple *stmt, omp_context *ctx)
 	  case GIMPLE_OMP_TASK:
 	    error_at (gimple_location (stmt),
 		      "%<master%> region may not be closely nested inside "
-		      "of work-sharing, explicit %<task%> or %<taskloop%> "
-		      "region");
+		      "of work-sharing, %<loop%>, explicit %<task%> or "
+		      "%<taskloop%> region");
 	    return false;
 	  case GIMPLE_OMP_PARALLEL:
 	  case GIMPLE_OMP_TEAMS:
@@ -3053,16 +3365,6 @@ check_omp_nesting_restrictions (gimple *stmt, omp_context *ctx)
       }
       break;
     case GIMPLE_OMP_TEAMS:
-      if ((ctx == NULL
-           || gimple_code (ctx->stmt) != GIMPLE_OMP_TARGET
-           || gimple_omp_target_kind (ctx->stmt) != GF_OMP_TARGET_KIND_REGION)
-	  && lang_GNU_Fortran ())
-	{
-	  error_at (gimple_location (stmt),
-		    "%<teams%> construct not closely nested inside of "
-		    "%<target%> construct");
-	  return false;
-	}
       if (ctx == NULL)
 	break;
       else if (gimple_code (ctx->stmt) != GIMPLE_OMP_TARGET
@@ -3127,10 +3429,12 @@ check_omp_nesting_restrictions (gimple *stmt, omp_context *ctx)
 	      stmt_name = "target exit data"; break;
 	    case GF_OMP_TARGET_KIND_OACC_PARALLEL: stmt_name = "parallel"; break;
 	    case GF_OMP_TARGET_KIND_OACC_KERNELS: stmt_name = "kernels"; break;
+	    case GF_OMP_TARGET_KIND_OACC_SERIAL: stmt_name = "serial"; break;
 	    case GF_OMP_TARGET_KIND_OACC_DATA: stmt_name = "data"; break;
 	    case GF_OMP_TARGET_KIND_OACC_UPDATE: stmt_name = "update"; break;
 	    case GF_OMP_TARGET_KIND_OACC_ENTER_EXIT_DATA:
 	      stmt_name = "enter/exit data"; break;
+	    case GF_OMP_TARGET_KIND_OACC_DECLARE: stmt_name = "declare"; break;
 	    case GF_OMP_TARGET_KIND_OACC_HOST_DATA: stmt_name = "host_data";
 	      break;
 	    default: gcc_unreachable ();
@@ -3143,6 +3447,8 @@ check_omp_nesting_restrictions (gimple *stmt, omp_context *ctx)
 	      ctx_stmt_name = "parallel"; break;
 	    case GF_OMP_TARGET_KIND_OACC_KERNELS:
 	      ctx_stmt_name = "kernels"; break;
+	    case GF_OMP_TARGET_KIND_OACC_SERIAL:
+	      ctx_stmt_name = "serial"; break;
 	    case GF_OMP_TARGET_KIND_OACC_DATA: ctx_stmt_name = "data"; break;
 	    case GF_OMP_TARGET_KIND_OACC_HOST_DATA:
 	      ctx_stmt_name = "host_data"; break;
@@ -3247,12 +3553,123 @@ setjmp_or_longjmp_p (const_tree fndecl)
     return true;
 
   tree declname = DECL_NAME (fndecl);
-  if (!declname)
+  if (!declname
+      || (DECL_CONTEXT (fndecl) != NULL_TREE
+          && TREE_CODE (DECL_CONTEXT (fndecl)) != TRANSLATION_UNIT_DECL)
+      || !TREE_PUBLIC (fndecl))
     return false;
+
   const char *name = IDENTIFIER_POINTER (declname);
   return !strcmp (name, "setjmp") || !strcmp (name, "longjmp");
 }
 
+/* Return true if FNDECL is an omp_* runtime API call.  */
+
+static bool
+omp_runtime_api_call (const_tree fndecl)
+{
+  tree declname = DECL_NAME (fndecl);
+  if (!declname
+      || (DECL_CONTEXT (fndecl) != NULL_TREE
+          && TREE_CODE (DECL_CONTEXT (fndecl)) != TRANSLATION_UNIT_DECL)
+      || !TREE_PUBLIC (fndecl))
+    return false;
+
+  const char *name = IDENTIFIER_POINTER (declname);
+  if (strncmp (name, "omp_", 4) != 0)
+    return false;
+
+  static const char *omp_runtime_apis[] =
+    {
+      /* This array has 3 sections.  First omp_* calls that don't
+	 have any suffixes.  */
+      "target_alloc",
+      "target_associate_ptr",
+      "target_disassociate_ptr",
+      "target_free",
+      "target_is_present",
+      "target_memcpy",
+      "target_memcpy_rect",
+      NULL,
+      /* Now omp_* calls that are available as omp_* and omp_*_.  */
+      "capture_affinity",
+      "destroy_lock",
+      "destroy_nest_lock",
+      "display_affinity",
+      "get_active_level",
+      "get_affinity_format",
+      "get_cancellation",
+      "get_default_device",
+      "get_dynamic",
+      "get_initial_device",
+      "get_level",
+      "get_max_active_levels",
+      "get_max_task_priority",
+      "get_max_threads",
+      "get_nested",
+      "get_num_devices",
+      "get_num_places",
+      "get_num_procs",
+      "get_num_teams",
+      "get_num_threads",
+      "get_partition_num_places",
+      "get_place_num",
+      "get_proc_bind",
+      "get_team_num",
+      "get_thread_limit",
+      "get_thread_num",
+      "get_wtick",
+      "get_wtime",
+      "in_final",
+      "in_parallel",
+      "init_lock",
+      "init_nest_lock",
+      "is_initial_device",
+      "pause_resource",
+      "pause_resource_all",
+      "set_affinity_format",
+      "set_lock",
+      "set_nest_lock",
+      "test_lock",
+      "test_nest_lock",
+      "unset_lock",
+      "unset_nest_lock",
+      NULL,
+      /* And finally calls available as omp_*, omp_*_ and omp_*_8_.  */
+      "get_ancestor_thread_num",
+      "get_partition_place_nums",
+      "get_place_num_procs",
+      "get_place_proc_ids",
+      "get_schedule",
+      "get_team_size",
+      "set_default_device",
+      "set_dynamic",
+      "set_max_active_levels",
+      "set_nested",
+      "set_num_threads",
+      "set_schedule"
+    };
+
+  int mode = 0;
+  for (unsigned i = 0; i < ARRAY_SIZE (omp_runtime_apis); i++)
+    {
+      if (omp_runtime_apis[i] == NULL)
+	{
+	  mode++;
+	  continue;
+	}
+      size_t len = strlen (omp_runtime_apis[i]);
+      if (strncmp (name + 4, omp_runtime_apis[i], len) == 0
+	  && (name[4 + len] == '\0'
+	      || (mode > 0
+		  && name[4 + len] == '_'
+		  && (name[4 + len + 1] == '\0'
+		      || (mode > 1
+			  && strcmp (name + 4 + len + 1, "8_") == 0)))))
+	return true;
+    }
+  return false;
+}
 
 /* Helper function for scan_omp.
 
@@ -3278,14 +3695,15 @@ scan_omp_1_stmt (gimple_stmt_iterator *gsi, bool *handled_ops_p,
       tree fndecl = gimple_call_fndecl (stmt);
       if (fndecl)
 	{
-	  if (setjmp_or_longjmp_p (fndecl)
-	      && ctx
+	  if (ctx
 	      && gimple_code (ctx->stmt) == GIMPLE_OMP_FOR
-	      && gimple_omp_for_kind (ctx->stmt) & GF_OMP_FOR_SIMD)
+	      && gimple_omp_for_kind (ctx->stmt) == GF_OMP_FOR_KIND_SIMD
+	      && setjmp_or_longjmp_p (fndecl)
+	      && !ctx->loop_p)
 	    {
 	      remove = true;
 	      error_at (gimple_location (stmt),
-			"setjmp/longjmp inside simd construct");
+			"setjmp/longjmp inside %<simd%> construct");
 	    }
 	  else if (DECL_BUILT_IN_CLASS (fndecl) == BUILT_IN_NORMAL)
 	    switch (DECL_FUNCTION_CODE (fndecl))
@@ -3302,6 +3720,19 @@ scan_omp_1_stmt (gimple_stmt_iterator *gsi, bool *handled_ops_p,
 	      default:
 		break;
 	      }
+	  else if (ctx)
+	    {
+	      omp_context *octx = ctx;
+	      if (gimple_code (ctx->stmt) == GIMPLE_OMP_SCAN && ctx->outer)
+		octx = ctx->outer;
+	      if (octx->order_concurrent && omp_runtime_api_call (fndecl))
+		{
+		  remove = true;
+		  error_at (gimple_location (stmt),
+			    "OpenMP runtime API call %qD in a region with "
+			    "%<order(concurrent)%> clause", fndecl);
+		}
+	    }
 	}
     }
   if (remove)
@@ -3327,8 +3758,21 @@ scan_omp_1_stmt (gimple_stmt_iterator *gsi, bool *handled_ops_p,
       break;
 
     case GIMPLE_OMP_FOR:
-      if (((gimple_omp_for_kind (as_a <gomp_for *> (stmt))
-	    & GF_OMP_FOR_KIND_MASK) == GF_OMP_FOR_KIND_SIMD)
+      if ((gimple_omp_for_kind (as_a <gomp_for *> (stmt))
+	   == GF_OMP_FOR_KIND_SIMD)
+	  && gimple_omp_for_combined_into_p (stmt)
+	  && gimple_code (ctx->stmt) != GIMPLE_OMP_SCAN)
+	{
+	  tree clauses = gimple_omp_for_clauses (as_a <gomp_for *> (stmt));
+	  tree c = omp_find_clause (clauses, OMP_CLAUSE_REDUCTION);
+	  if (c && OMP_CLAUSE_REDUCTION_INSCAN (c) && !seen_error ())
+	    {
+	      scan_omp_simd_scan (gsi, as_a <gomp_for *> (stmt), ctx);
+	      break;
+	    }
+	}
+      if ((gimple_omp_for_kind (as_a <gomp_for *> (stmt))
+	   == GF_OMP_FOR_KIND_SIMD)
 	  && omp_maybe_offloaded_ctx (ctx)
 	  && omp_max_simt_vf ())
 	scan_omp_simd (gsi, as_a <gomp_for *> (stmt), ctx);
@@ -3344,6 +3788,15 @@ scan_omp_1_stmt (gimple_stmt_iterator *gsi, bool *handled_ops_p,
       scan_omp_single (as_a <gomp_single *> (stmt), ctx);
       break;
 
+    case GIMPLE_OMP_SCAN:
+      if (tree clauses = gimple_omp_scan_clauses (as_a <gomp_scan *> (stmt)))
+	{
+	  if (OMP_CLAUSE_CODE (clauses) == OMP_CLAUSE_INCLUSIVE)
+	    ctx->scan_inclusive = true;
+	  else if (OMP_CLAUSE_CODE (clauses) == OMP_CLAUSE_EXCLUSIVE)
+	    ctx->scan_exclusive = true;
+	}
+      /* FALLTHRU */
     case GIMPLE_OMP_SECTION:
     case GIMPLE_OMP_MASTER:
     case GIMPLE_OMP_ORDERED:
@@ -3650,11 +4103,8 @@ omp_clause_aligned_alignment (tree clause)
   /* Otherwise return implementation defined alignment.  */
   unsigned int al = 1;
   opt_scalar_mode mode_iter;
-  auto_vector_sizes sizes;
-  targetm.vectorize.autovectorize_vector_sizes (&sizes);
-  poly_uint64 vs = 0;
-  for (unsigned int i = 0; i < sizes.length (); ++i)
-    vs = ordered_max (vs, sizes[i]);
+  auto_vector_modes modes;
+  targetm.vectorize.autovectorize_vector_modes (&modes, true);
   static enum mode_class classes[]
     = { MODE_INT, MODE_VECTOR_INT, MODE_FLOAT, MODE_VECTOR_FLOAT };
   for (int i = 0; i < 4; i += 2)
@@ -3665,17 +4115,16 @@ omp_clause_aligned_alignment (tree clause)
 	machine_mode vmode = targetm.vectorize.preferred_simd_mode (mode);
 	if (GET_MODE_CLASS (vmode) != classes[i + 1])
 	  continue;
-	while (maybe_ne (vs, 0U)
-	       && known_lt (GET_MODE_SIZE (vmode), vs)
-	       && GET_MODE_2XWIDER_MODE (vmode).exists ())
-	  vmode = GET_MODE_2XWIDER_MODE (vmode).require ();
+	machine_mode alt_vmode;
+	for (unsigned int j = 0; j < modes.length (); ++j)
+	  if (related_vector_mode (modes[j], mode).exists (&alt_vmode)
+	      && known_ge (GET_MODE_SIZE (alt_vmode), GET_MODE_SIZE (vmode)))
+	    vmode = alt_vmode;
 
 	tree type = lang_hooks.types.type_for_mode (mode, 1);
 	if (type == NULL_TREE || TYPE_MODE (type) != mode)
 	  continue;
-	poly_uint64 nelts = exact_div (GET_MODE_SIZE (vmode),
-				       GET_MODE_SIZE (mode));
-	type = build_vector_type (type, nelts);
+	type = build_vector_type_for_mode (type, vmode);
 	if (TYPE_MODE (type) != vmode)
 	  continue;
 	if (TYPE_ALIGN_UNIT (type) > al)
@@ -3688,10 +4137,12 @@ omp_clause_aligned_alignment (tree clause)
 /* This structure is part of the interface between lower_rec_simd_input_clauses
    and lower_rec_input_clauses.  */
 
-struct omplow_simd_context {
+class omplow_simd_context {
+public:
   omplow_simd_context () { memset (this, 0, sizeof (*this)); }
   tree idx;
   tree lane;
+  tree lastlane;
   vec<tree, va_heap> simt_eargs;
   gimple_seq simt_dlist;
   poly_uint64_pod max_vf;
@@ -3703,7 +4154,9 @@ struct omplow_simd_context {
 
 static bool
 lower_rec_simd_input_clauses (tree new_var, omp_context *ctx,
-			      omplow_simd_context *sctx, tree &ivar, tree &lvar)
+			      omplow_simd_context *sctx, tree &ivar,
+			      tree &lvar, tree *rvar = NULL,
+			      tree *rvar2 = NULL)
 {
   if (known_eq (sctx->max_vf, 0U))
     {
@@ -3744,8 +4197,7 @@ lower_rec_simd_input_clauses (tree new_var, omp_context *ctx,
       DECL_ATTRIBUTES (ivar) = tree_cons (get_identifier ("omp simt private"),
 					  NULL, DECL_ATTRIBUTES (ivar));
       sctx->simt_eargs.safe_push (build1 (ADDR_EXPR, ptype, ivar));
-      tree clobber = build_constructor (type, NULL);
-      TREE_THIS_VOLATILE (clobber) = 1;
+      tree clobber = build_clobber (type);
       gimple *g = gimple_build_assign (ivar, clobber);
       gimple_seq_add_stmt (&sctx->simt_dlist, g);
     }
@@ -3759,10 +4211,51 @@ lower_rec_simd_input_clauses (tree new_var, omp_context *ctx,
 	= tree_cons (get_identifier ("omp simd array"), NULL,
 		     DECL_ATTRIBUTES (avar));
       gimple_add_tmp_var (avar);
-      ivar = build4 (ARRAY_REF, TREE_TYPE (new_var), avar, sctx->idx,
+      tree iavar = avar;
+      if (rvar && !ctx->for_simd_scan_phase)
+	{
+	  /* For inscan reductions, create another array temporary,
+	     which will hold the reduced value.  */
+	  iavar = create_tmp_var_raw (atype);
+	  if (TREE_ADDRESSABLE (new_var))
+	    TREE_ADDRESSABLE (iavar) = 1;
+	  DECL_ATTRIBUTES (iavar)
+	    = tree_cons (get_identifier ("omp simd array"), NULL,
+			 tree_cons (get_identifier ("omp simd inscan"), NULL,
+				    DECL_ATTRIBUTES (iavar)));
+	  gimple_add_tmp_var (iavar);
+	  ctx->cb.decl_map->put (avar, iavar);
+	  if (sctx->lastlane == NULL_TREE)
+	    sctx->lastlane = create_tmp_var (unsigned_type_node);
+	  *rvar = build4 (ARRAY_REF, TREE_TYPE (new_var), iavar,
+			  sctx->lastlane, NULL_TREE, NULL_TREE);
+	  TREE_THIS_NOTRAP (*rvar) = 1;
+
+	  if (ctx->scan_exclusive)
+	    {
+	      /* And for exclusive scan yet another one, which will
+		 hold the value during the scan phase.  */
+	      tree savar = create_tmp_var_raw (atype);
+	      if (TREE_ADDRESSABLE (new_var))
+		TREE_ADDRESSABLE (savar) = 1;
+	      DECL_ATTRIBUTES (savar)
+		= tree_cons (get_identifier ("omp simd array"), NULL,
+			     tree_cons (get_identifier ("omp simd inscan "
+							"exclusive"), NULL,
+					DECL_ATTRIBUTES (savar)));
+	      gimple_add_tmp_var (savar);
+	      ctx->cb.decl_map->put (iavar, savar);
+	      *rvar2 = build4 (ARRAY_REF, TREE_TYPE (new_var), savar,
+			       sctx->idx, NULL_TREE, NULL_TREE);
+	      TREE_THIS_NOTRAP (*rvar2) = 1;
+	    }
+	}
+      ivar = build4 (ARRAY_REF, TREE_TYPE (new_var), iavar, sctx->idx,
 		     NULL_TREE, NULL_TREE);
       lvar = build4 (ARRAY_REF, TREE_TYPE (new_var), avar, sctx->lane,
 		     NULL_TREE, NULL_TREE);
+      TREE_THIS_NOTRAP (ivar) = 1;
+      TREE_THIS_NOTRAP (lvar) = 1;
     }
   if (DECL_P (new_var))
     {
@@ -3823,17 +4316,17 @@ static void
 lower_rec_input_clauses (tree clauses, gimple_seq *ilist, gimple_seq *dlist,
 			 omp_context *ctx, struct omp_for_data *fd)
 {
-  tree c, dtor, copyin_seq, x, ptr;
+  tree c, copyin_seq, x, ptr;
   bool copyin_by_ref = false;
   bool lastprivate_firstprivate = false;
   bool reduction_omp_orig_ref = false;
   int pass;
   bool is_simd = (gimple_code (ctx->stmt) == GIMPLE_OMP_FOR
-		  && gimple_omp_for_kind (ctx->stmt) & GF_OMP_FOR_SIMD);
+		  && gimple_omp_for_kind (ctx->stmt) == GF_OMP_FOR_KIND_SIMD);
   omplow_simd_context sctx = omplow_simd_context ();
   tree simt_lane = NULL_TREE, simtrec = NULL_TREE;
   tree ivar = NULL_TREE, lvar = NULL_TREE, uid = NULL_TREE;
-  gimple_seq llist[3] = { };
+  gimple_seq llist[4] = { };
   tree nonconst_simd_if = NULL_TREE;
 
   copyin_seq = NULL;
@@ -3856,12 +4349,24 @@ lower_rec_input_clauses (tree clauses, gimple_seq *ilist, gimple_seq *dlist,
 	case OMP_CLAUSE_LASTPRIVATE:
 	  if (is_variable_sized (OMP_CLAUSE_DECL (c)))
 	    sctx.max_vf = 1;
+	  else if (omp_is_reference (OMP_CLAUSE_DECL (c)))
+	    {
+	      tree rtype = TREE_TYPE (TREE_TYPE (OMP_CLAUSE_DECL (c)));
+	      if (!TREE_CONSTANT (TYPE_SIZE_UNIT (rtype)))
+		sctx.max_vf = 1;
+	    }
 	  break;
 	case OMP_CLAUSE_REDUCTION:
 	case OMP_CLAUSE_IN_REDUCTION:
 	  if (TREE_CODE (OMP_CLAUSE_DECL (c)) == MEM_REF
 	      || is_variable_sized (OMP_CLAUSE_DECL (c)))
 	    sctx.max_vf = 1;
+	  else if (omp_is_reference (OMP_CLAUSE_DECL (c)))
+	    {
+	      tree rtype = TREE_TYPE (TREE_TYPE (OMP_CLAUSE_DECL (c)));
+	      if (!TREE_CONSTANT (TYPE_SIZE_UNIT (rtype)))
+		sctx.max_vf = 1;
+	    }
 	  break;
 	case OMP_CLAUSE_IF:
 	  if (integer_zerop (OMP_CLAUSE_IF_EXPR (c)))
@@ -3871,6 +4376,11 @@ lower_rec_input_clauses (tree clauses, gimple_seq *ilist, gimple_seq *dlist,
 	  break;
         case OMP_CLAUSE_SIMDLEN:
 	  if (integer_onep (OMP_CLAUSE_SIMDLEN_EXPR (c)))
+	    sctx.max_vf = 1;
+	  break;
+	case OMP_CLAUSE__CONDTEMP_:
+	  /* FIXME: lastprivate(conditional:) not handled for SIMT yet.  */
+	  if (sctx.is_simt)
 	    sctx.max_vf = 1;
 	  break;
 	default:
@@ -4085,6 +4595,11 @@ lower_rec_input_clauses (tree clauses, gimple_seq *ilist, gimple_seq *dlist,
 		  SET_DECL_VALUE_EXPR (new_var, t);
 		  DECL_HAS_VALUE_EXPR_P (new_var) = 1;
 		}
+	      continue;
+	    case OMP_CLAUSE__CONDTEMP_:
+	      if (is_parallel_ctx (ctx)
+		  || (is_simd && !OMP_CLAUSE__CONDTEMP__ITER (c)))
+		break;
 	      continue;
 	    default:
 	      continue;
@@ -4488,12 +5003,7 @@ lower_rec_input_clauses (tree clauses, gimple_seq *ilist, gimple_seq *dlist,
 		      x = lang_hooks.decls.omp_clause_dtor
 						(c, build_simple_mem_ref (y2));
 		      if (x)
-			{
-			  gimple_seq tseq = NULL;
-			  dtor = x;
-			  gimplify_stmt (&dtor, &tseq);
-			  gimple_seq_add_seq (dlist, tseq);
-			}
+			gimplify_and_add (x, dlist);
 		    }
 		}
 	      else
@@ -4647,6 +5157,7 @@ lower_rec_input_clauses (tree clauses, gimple_seq *ilist, gimple_seq *dlist,
 		  atmp = builtin_decl_explicit (BUILT_IN_ALLOCA_WITH_ALIGN);
 		  stmt = gimple_build_call (atmp, 2, x,
 					    size_int (DECL_ALIGN (var)));
+		  cfun->calls_alloca = 1;
 		  tmp = create_tmp_var_raw (ptr_type_node);
 		  gimple_add_tmp_var (tmp);
 		  gimple_call_set_lhs (stmt, tmp);
@@ -4680,8 +5191,8 @@ lower_rec_input_clauses (tree clauses, gimple_seq *ilist, gimple_seq *dlist,
 		  /* For reduction in SIMD loop, defer adding the
 		     initialization of the reference, because if we decide
 		     to use SIMD array for it, the initilization could cause
-		     expansion ICE.  */
-		  if (c_kind == OMP_CLAUSE_REDUCTION && is_simd)
+		     expansion ICE.  Ditto for other privatization clauses.  */
+		  if (is_simd)
 		    x = NULL_TREE;
 		  else
 		    {
@@ -4752,6 +5263,20 @@ lower_rec_input_clauses (tree clauses, gimple_seq *ilist, gimple_seq *dlist,
 		TREE_NO_WARNING (var) = 1;
 	      break;
 
+	    case OMP_CLAUSE__CONDTEMP_:
+	      if (is_parallel_ctx (ctx))
+		{
+		  x = build_receiver_ref (var, false, ctx);
+		  SET_DECL_VALUE_EXPR (new_var, x);
+		  DECL_HAS_VALUE_EXPR_P (new_var) = 1;
+		}
+	      else if (is_simd && !OMP_CLAUSE__CONDTEMP__ITER (c))
+		{
+		  x = build_zero_cst (TREE_TYPE (var));
+		  goto do_private;
+		}
+	      break;
+
 	    case OMP_CLAUSE_LASTPRIVATE:
 	      if (OMP_CLAUSE_LASTPRIVATE_FIRSTPRIVATE (c))
 		break;
@@ -4771,50 +5296,153 @@ lower_rec_input_clauses (tree clauses, gimple_seq *ilist, gimple_seq *dlist,
 		x = NULL;
 	    do_private:
 	      tree nx;
-	      nx = lang_hooks.decls.omp_clause_default_ctor
-						(c, unshare_expr (new_var), x);
+	      bool copy_ctor;
+	      copy_ctor = false;
+	      nx = unshare_expr (new_var);
+	      if (is_simd
+		  && OMP_CLAUSE_CODE (c) == OMP_CLAUSE_LASTPRIVATE
+		  && OMP_CLAUSE_LASTPRIVATE_LOOP_IV (c))
+		copy_ctor = true;
+	      if (copy_ctor)
+		nx = lang_hooks.decls.omp_clause_copy_ctor (c, nx, x);
+	      else
+		nx = lang_hooks.decls.omp_clause_default_ctor (c, nx, x);
 	      if (is_simd)
 		{
 		  tree y = lang_hooks.decls.omp_clause_dtor (c, new_var);
 		  if ((TREE_ADDRESSABLE (new_var) || nx || y
-		       || OMP_CLAUSE_CODE (c) == OMP_CLAUSE_LASTPRIVATE)
+		       || (OMP_CLAUSE_CODE (c) == OMP_CLAUSE_LASTPRIVATE
+			   && (gimple_omp_for_collapse (ctx->stmt) != 1
+			       || (gimple_omp_for_index (ctx->stmt, 0)
+				   != new_var)))
+		       || OMP_CLAUSE_CODE (c) == OMP_CLAUSE__CONDTEMP_
+		       || omp_is_reference (var))
 		      && lower_rec_simd_input_clauses (new_var, ctx, &sctx,
 						       ivar, lvar))
 		    {
+		      if (omp_is_reference (var))
+			{
+			  gcc_assert (TREE_CODE (new_var) == MEM_REF);
+			  tree new_vard = TREE_OPERAND (new_var, 0);
+			  gcc_assert (DECL_P (new_vard));
+			  SET_DECL_VALUE_EXPR (new_vard,
+					       build_fold_addr_expr (lvar));
+			  DECL_HAS_VALUE_EXPR_P (new_vard) = 1;
+			}
+
 		      if (nx)
-			x = lang_hooks.decls.omp_clause_default_ctor
-						(c, unshare_expr (ivar), x);
+			{
+			  tree iv = unshare_expr (ivar);
+			  if (copy_ctor)
+			    x = lang_hooks.decls.omp_clause_copy_ctor (c, iv,
+								       x);
+			  else
+			    x = lang_hooks.decls.omp_clause_default_ctor (c,
+									  iv,
+									  x);
+			}
+		      else if (OMP_CLAUSE_CODE (c) == OMP_CLAUSE__CONDTEMP_)
+			{
+			  x = build2 (MODIFY_EXPR, TREE_TYPE (ivar),
+				      unshare_expr (ivar), x);
+			  nx = x;
+			}
 		      if (nx && x)
 			gimplify_and_add (x, &llist[0]);
+		      if (OMP_CLAUSE_CODE (c) == OMP_CLAUSE_LASTPRIVATE
+			  && OMP_CLAUSE_LASTPRIVATE_CONDITIONAL (c))
+			{
+			  tree v = new_var;
+			  if (!DECL_P (v))
+			    {
+			      gcc_assert (TREE_CODE (v) == MEM_REF);
+			      v = TREE_OPERAND (v, 0);
+			      gcc_assert (DECL_P (v));
+			    }
+			  v = *ctx->lastprivate_conditional_map->get (v);
+			  tree t = create_tmp_var (TREE_TYPE (v));
+			  tree z = build_zero_cst (TREE_TYPE (v));
+			  tree orig_v
+			    = build_outer_var_ref (var, ctx,
+						   OMP_CLAUSE_LASTPRIVATE);
+			  gimple_seq_add_stmt (dlist,
+					       gimple_build_assign (t, z));
+			  gcc_assert (DECL_HAS_VALUE_EXPR_P (v));
+			  tree civar = DECL_VALUE_EXPR (v);
+			  gcc_assert (TREE_CODE (civar) == ARRAY_REF);
+			  civar = unshare_expr (civar);
+			  TREE_OPERAND (civar, 1) = sctx.idx;
+			  x = build2 (MODIFY_EXPR, TREE_TYPE (t), t,
+				      unshare_expr (civar));
+			  x = build2 (COMPOUND_EXPR, TREE_TYPE (orig_v), x,
+				      build2 (MODIFY_EXPR, TREE_TYPE (orig_v),
+					      orig_v, unshare_expr (ivar)));
+			  tree cond = build2 (LT_EXPR, boolean_type_node, t,
+					      civar);
+			  x = build3 (COND_EXPR, void_type_node, cond, x,
+				      void_node);
+			  gimple_seq tseq = NULL;
+			  gimplify_and_add (x, &tseq);
+			  if (ctx->outer)
+			    lower_omp (&tseq, ctx->outer);
+			  gimple_seq_add_seq (&llist[1], tseq);
+			}
+		      if (OMP_CLAUSE_CODE (c) == OMP_CLAUSE_LASTPRIVATE
+			  && ctx->for_simd_scan_phase)
+			{
+			  x = unshare_expr (ivar);
+			  tree orig_v
+			    = build_outer_var_ref (var, ctx,
+						   OMP_CLAUSE_LASTPRIVATE);
+			  x = lang_hooks.decls.omp_clause_assign_op (c, x,
+								     orig_v);
+			  gimplify_and_add (x, &llist[0]);
+			}
 		      if (y)
 			{
 			  y = lang_hooks.decls.omp_clause_dtor (c, ivar);
 			  if (y)
-			    {
-			      gimple_seq tseq = NULL;
-
-			      dtor = y;
-			      gimplify_stmt (&dtor, &tseq);
-			      gimple_seq_add_seq (&llist[1], tseq);
-			    }
+			    gimplify_and_add (y, &llist[1]);
 			}
 		      break;
+		    }
+		  if (omp_is_reference (var))
+		    {
+		      gcc_assert (TREE_CODE (new_var) == MEM_REF);
+		      tree new_vard = TREE_OPERAND (new_var, 0);
+		      gcc_assert (DECL_P (new_vard));
+		      tree type = TREE_TYPE (TREE_TYPE (new_vard));
+		      x = TYPE_SIZE_UNIT (type);
+		      if (TREE_CONSTANT (x))
+			{
+			  x = create_tmp_var_raw (type, get_name (var));
+			  gimple_add_tmp_var (x);
+			  TREE_ADDRESSABLE (x) = 1;
+			  x = build_fold_addr_expr_loc (clause_loc, x);
+			  x = fold_convert_loc (clause_loc,
+						TREE_TYPE (new_vard), x);
+			  gimplify_assign (new_vard, x, ilist);
+			}
 		    }
 		}
 	      if (nx)
 		gimplify_and_add (nx, ilist);
+	      if (OMP_CLAUSE_CODE (c) == OMP_CLAUSE_LASTPRIVATE
+		  && is_simd
+		  && ctx->for_simd_scan_phase)
+		{
+		  tree orig_v = build_outer_var_ref (var, ctx,
+						     OMP_CLAUSE_LASTPRIVATE);
+		  x = lang_hooks.decls.omp_clause_assign_op (c, new_var,
+							     orig_v);
+		  gimplify_and_add (x, ilist);
+		}
 	      /* FALLTHRU */
 
 	    do_dtor:
 	      x = lang_hooks.decls.omp_clause_dtor (c, new_var);
 	      if (x)
-		{
-		  gimple_seq tseq = NULL;
-
-		  dtor = x;
-		  gimplify_stmt (&dtor, &tseq);
-		  gimple_seq_add_seq (dlist, tseq);
-		}
+		gimplify_and_add (x, dlist);
 	      break;
 
 	    case OMP_CLAUSE_LINEAR:
@@ -4887,6 +5515,28 @@ lower_rec_input_clauses (tree clauses, gimple_seq *ilist, gimple_seq *dlist,
 
 		      if (OMP_CLAUSE_LINEAR_ARRAY (c))
 			{
+			  if (omp_is_reference (var))
+			    {
+			      gcc_assert (TREE_CODE (new_var) == MEM_REF);
+			      tree new_vard = TREE_OPERAND (new_var, 0);
+			      gcc_assert (DECL_P (new_vard));
+			      tree type = TREE_TYPE (TREE_TYPE (new_vard));
+			      nx = TYPE_SIZE_UNIT (type);
+			      if (TREE_CONSTANT (nx))
+				{
+				  nx = create_tmp_var_raw (type,
+							   get_name (var));
+				  gimple_add_tmp_var (nx);
+				  TREE_ADDRESSABLE (nx) = 1;
+				  nx = build_fold_addr_expr_loc (clause_loc,
+								 nx);
+				  nx = fold_convert_loc (clause_loc,
+							 TREE_TYPE (new_vard),
+							 nx);
+				  gimplify_assign (new_vard, nx, ilist);
+				}
+			    }
+
 			  x = lang_hooks.decls.omp_clause_linear_ctor
 							(c, new_var, x, t);
 			  gimplify_and_add (x, ilist);
@@ -4901,10 +5551,20 @@ lower_rec_input_clauses (tree clauses, gimple_seq *ilist, gimple_seq *dlist,
 		    }
 
 		  if ((OMP_CLAUSE_CODE (c) != OMP_CLAUSE_LINEAR
-		       || TREE_ADDRESSABLE (new_var))
+		       || TREE_ADDRESSABLE (new_var)
+		       || omp_is_reference (var))
 		      && lower_rec_simd_input_clauses (new_var, ctx, &sctx,
 						       ivar, lvar))
 		    {
+		      if (omp_is_reference (var))
+			{
+			  gcc_assert (TREE_CODE (new_var) == MEM_REF);
+			  tree new_vard = TREE_OPERAND (new_var, 0);
+			  gcc_assert (DECL_P (new_vard));
+			  SET_DECL_VALUE_EXPR (new_vard,
+					       build_fold_addr_expr (lvar));
+			  DECL_HAS_VALUE_EXPR_P (new_vard) = 1;
+			}
 		      if (OMP_CLAUSE_CODE (c) == OMP_CLAUSE_LINEAR)
 			{
 			  tree iv = create_tmp_var (TREE_TYPE (new_var));
@@ -4930,14 +5590,26 @@ lower_rec_input_clauses (tree clauses, gimple_seq *ilist, gimple_seq *dlist,
 		      gimplify_and_add (x, &llist[0]);
 		      x = lang_hooks.decls.omp_clause_dtor (c, ivar);
 		      if (x)
-			{
-			  gimple_seq tseq = NULL;
-
-			  dtor = x;
-			  gimplify_stmt (&dtor, &tseq);
-			  gimple_seq_add_seq (&llist[1], tseq);
-			}
+			gimplify_and_add (x, &llist[1]);
 		      break;
+		    }
+		  if (omp_is_reference (var))
+		    {
+		      gcc_assert (TREE_CODE (new_var) == MEM_REF);
+		      tree new_vard = TREE_OPERAND (new_var, 0);
+		      gcc_assert (DECL_P (new_vard));
+		      tree type = TREE_TYPE (TREE_TYPE (new_vard));
+		      nx = TYPE_SIZE_UNIT (type);
+		      if (TREE_CONSTANT (nx))
+			{
+			  nx = create_tmp_var_raw (type, get_name (var));
+			  gimple_add_tmp_var (nx);
+			  TREE_ADDRESSABLE (nx) = 1;
+			  nx = build_fold_addr_expr_loc (clause_loc, nx);
+			  nx = fold_convert_loc (clause_loc,
+						 TREE_TYPE (new_vard), nx);
+			  gimplify_assign (new_vard, nx, ilist);
+			}
 		    }
 		}
 	      x = lang_hooks.decls.omp_clause_copy_ctor
@@ -5014,9 +5686,15 @@ lower_rec_input_clauses (tree clauses, gimple_seq *ilist, gimple_seq *dlist,
 		      new_vard = TREE_OPERAND (new_var, 0);
 		      gcc_assert (DECL_P (new_vard));
 		    }
+		  tree rvar = NULL_TREE, *rvarp = NULL, rvar2 = NULL_TREE;
+		  if (is_simd
+		      && OMP_CLAUSE_CODE (c) == OMP_CLAUSE_REDUCTION
+		      && OMP_CLAUSE_REDUCTION_INSCAN (c))
+		    rvarp = &rvar;
 		  if (is_simd
 		      && lower_rec_simd_input_clauses (new_var, ctx, &sctx,
-						       ivar, lvar))
+						       ivar, lvar, rvarp,
+						       &rvar2))
 		    {
 		      if (new_vard == new_var)
 			{
@@ -5032,6 +5710,107 @@ lower_rec_input_clauses (tree clauses, gimple_seq *ilist, gimple_seq *dlist,
 		      x = lang_hooks.decls.omp_clause_default_ctor
 				(c, unshare_expr (ivar),
 				 build_outer_var_ref (var, ctx));
+		      if (rvarp && ctx->for_simd_scan_phase)
+			{
+			  if (x)
+			    gimplify_and_add (x, &llist[0]);
+			  x = lang_hooks.decls.omp_clause_dtor (c, ivar);
+			  if (x)
+			    gimplify_and_add (x, &llist[1]);
+			  break;
+			}
+		      else if (rvarp)
+			{
+			  if (x)
+			    {
+			      gimplify_and_add (x, &llist[0]);
+
+			      tree ivar2 = unshare_expr (lvar);
+			      TREE_OPERAND (ivar2, 1) = sctx.idx;
+			      x = lang_hooks.decls.omp_clause_default_ctor
+				    (c, ivar2, build_outer_var_ref (var, ctx));
+			      gimplify_and_add (x, &llist[0]);
+
+			      if (rvar2)
+				{
+				  x = lang_hooks.decls.omp_clause_default_ctor
+					(c, unshare_expr (rvar2),
+					 build_outer_var_ref (var, ctx));
+				  gimplify_and_add (x, &llist[0]);
+				}
+
+			      /* For types that need construction, add another
+				 private var which will be default constructed
+				 and optionally initialized with
+				 OMP_CLAUSE_REDUCTION_GIMPLE_INIT, as in the
+				 loop we want to assign this value instead of
+				 constructing and destructing it in each
+				 iteration.  */
+			      tree nv = create_tmp_var_raw (TREE_TYPE (ivar));
+			      gimple_add_tmp_var (nv);
+			      ctx->cb.decl_map->put (TREE_OPERAND (rvar2
+								   ? rvar2
+								   : ivar, 0),
+						     nv);
+			      x = lang_hooks.decls.omp_clause_default_ctor
+				    (c, nv, build_outer_var_ref (var, ctx));
+			      gimplify_and_add (x, ilist);
+
+			      if (OMP_CLAUSE_REDUCTION_GIMPLE_INIT (c))
+				{
+				  tseq = OMP_CLAUSE_REDUCTION_GIMPLE_INIT (c);
+				  x = DECL_VALUE_EXPR (new_vard);
+				  tree vexpr = nv;
+				  if (new_vard != new_var)
+				    vexpr = build_fold_addr_expr (nv);
+				  SET_DECL_VALUE_EXPR (new_vard, vexpr);
+				  lower_omp (&tseq, ctx);
+				  SET_DECL_VALUE_EXPR (new_vard, x);
+				  gimple_seq_add_seq (ilist, tseq);
+				  OMP_CLAUSE_REDUCTION_GIMPLE_INIT (c) = NULL;
+				}
+
+			      x = lang_hooks.decls.omp_clause_dtor (c, nv);
+			      if (x)
+				gimplify_and_add (x, dlist);
+			    }
+
+			  tree ref = build_outer_var_ref (var, ctx);
+			  x = unshare_expr (ivar);
+			  x = lang_hooks.decls.omp_clause_assign_op (c, x,
+								     ref);
+			  gimplify_and_add (x, &llist[0]);
+
+			  ref = build_outer_var_ref (var, ctx);
+			  x = lang_hooks.decls.omp_clause_assign_op (c, ref,
+								     rvar);
+			  gimplify_and_add (x, &llist[3]);
+
+			  DECL_HAS_VALUE_EXPR_P (placeholder) = 0;
+			  if (new_vard == new_var)
+			    SET_DECL_VALUE_EXPR (new_var, lvar);
+			  else
+			    SET_DECL_VALUE_EXPR (new_vard,
+						 build_fold_addr_expr (lvar));
+
+			  x = lang_hooks.decls.omp_clause_dtor (c, ivar);
+			  if (x)
+			    gimplify_and_add (x, &llist[1]);
+
+			  tree ivar2 = unshare_expr (lvar);
+			  TREE_OPERAND (ivar2, 1) = sctx.idx;
+			  x = lang_hooks.decls.omp_clause_dtor (c, ivar2);
+			  if (x)
+			    gimplify_and_add (x, &llist[1]);
+
+			  if (rvar2)
+			    {
+			      x = lang_hooks.decls.omp_clause_dtor (c, rvar2);
+			      if (x)
+				gimplify_and_add (x, &llist[1]);
+			    }
+			  break;
+			}
 		      if (x)
 			gimplify_and_add (x, &llist[0]);
 		      if (OMP_CLAUSE_REDUCTION_GIMPLE_INIT (c))
@@ -5053,12 +5832,7 @@ lower_rec_input_clauses (tree clauses, gimple_seq *ilist, gimple_seq *dlist,
 					     build_fold_addr_expr (lvar));
 		      x = lang_hooks.decls.omp_clause_dtor (c, ivar);
 		      if (x)
-			{
-			  tseq = NULL;
-			  dtor = x;
-			  gimplify_stmt (&dtor, &tseq);
-			  gimple_seq_add_seq (&llist[1], tseq);
-			}
+			gimplify_and_add (x, &llist[1]);
 		      break;
 		    }
 		  /* If this is a reference to constant size reduction var
@@ -5099,6 +5873,68 @@ lower_rec_input_clauses (tree clauses, gimple_seq *ilist, gimple_seq *dlist,
 				 : build_outer_var_ref (var, ctx));
 		  if (x)
 		    gimplify_and_add (x, ilist);
+
+		  if (OMP_CLAUSE_CODE (c) == OMP_CLAUSE_REDUCTION
+		      && OMP_CLAUSE_REDUCTION_INSCAN (c))
+		    {
+		      if (ctx->for_simd_scan_phase)
+			goto do_dtor;
+		      if (x || (!is_simd
+				&& OMP_CLAUSE_REDUCTION_OMP_ORIG_REF (c)))
+			{
+			  tree nv = create_tmp_var_raw (TREE_TYPE (new_var));
+			  gimple_add_tmp_var (nv);
+			  ctx->cb.decl_map->put (new_vard, nv);
+			  x = lang_hooks.decls.omp_clause_default_ctor
+				(c, nv, build_outer_var_ref (var, ctx));
+			  if (x)
+			    gimplify_and_add (x, ilist);
+			  if (OMP_CLAUSE_REDUCTION_GIMPLE_INIT (c))
+			    {
+			      tseq = OMP_CLAUSE_REDUCTION_GIMPLE_INIT (c);
+			      tree vexpr = nv;
+			      if (new_vard != new_var)
+				vexpr = build_fold_addr_expr (nv);
+			      SET_DECL_VALUE_EXPR (new_vard, vexpr);
+			      DECL_HAS_VALUE_EXPR_P (new_vard) = 1;
+			      lower_omp (&tseq, ctx);
+			      SET_DECL_VALUE_EXPR (new_vard, NULL_TREE);
+			      DECL_HAS_VALUE_EXPR_P (new_vard) = 0;
+			      gimple_seq_add_seq (ilist, tseq);
+			    }
+			  OMP_CLAUSE_REDUCTION_GIMPLE_INIT (c) = NULL;
+			  if (is_simd && ctx->scan_exclusive)
+			    {
+			      tree nv2
+				= create_tmp_var_raw (TREE_TYPE (new_var));
+			      gimple_add_tmp_var (nv2);
+			      ctx->cb.decl_map->put (nv, nv2);
+			      x = lang_hooks.decls.omp_clause_default_ctor
+				    (c, nv2, build_outer_var_ref (var, ctx));
+			      gimplify_and_add (x, ilist);
+			      x = lang_hooks.decls.omp_clause_dtor (c, nv2);
+			      if (x)
+				gimplify_and_add (x, dlist);
+			    }
+			  x = lang_hooks.decls.omp_clause_dtor (c, nv);
+			  if (x)
+			    gimplify_and_add (x, dlist);
+			}
+		      else if (is_simd
+			       && ctx->scan_exclusive
+			       && TREE_ADDRESSABLE (TREE_TYPE (new_var)))
+			{
+			  tree nv2 = create_tmp_var_raw (TREE_TYPE (new_var));
+			  gimple_add_tmp_var (nv2);
+			  ctx->cb.decl_map->put (new_vard, nv2);
+			  x = lang_hooks.decls.omp_clause_dtor (c, nv2);
+			  if (x)
+			    gimplify_and_add (x, dlist);
+			}
+		      DECL_HAS_VALUE_EXPR_P (placeholder) = 0;
+		      goto do_dtor;
+		    }
+
 		  if (OMP_CLAUSE_REDUCTION_GIMPLE_INIT (c))
 		    {
 		      tseq = OMP_CLAUSE_REDUCTION_GIMPLE_INIT (c);
@@ -5183,11 +6019,34 @@ lower_rec_input_clauses (tree clauses, gimple_seq *ilist, gimple_seq *dlist,
 		      new_vard = TREE_OPERAND (new_var, 0);
 		      gcc_assert (DECL_P (new_vard));
 		    }
+		  tree rvar = NULL_TREE, *rvarp = NULL, rvar2 = NULL_TREE;
+		  if (is_simd
+		      && OMP_CLAUSE_CODE (c) == OMP_CLAUSE_REDUCTION
+		      && OMP_CLAUSE_REDUCTION_INSCAN (c))
+		    rvarp = &rvar;
 		  if (is_simd
 		      && lower_rec_simd_input_clauses (new_var, ctx, &sctx,
-						       ivar, lvar))
+						       ivar, lvar, rvarp,
+						       &rvar2))
 		    {
+		      if (new_vard != new_var)
+			{
+			  SET_DECL_VALUE_EXPR (new_vard,
+					       build_fold_addr_expr (lvar));
+			  DECL_HAS_VALUE_EXPR_P (new_vard) = 1;
+			}
+
 		      tree ref = build_outer_var_ref (var, ctx);
+
+		      if (rvarp)
+			{
+			  if (ctx->for_simd_scan_phase)
+			    break;
+			  gimplify_assign (ivar, ref, &llist[0]);
+			  ref = build_outer_var_ref (var, ctx);
+			  gimplify_assign (ref, rvar, &llist[3]);
+			  break;
+			}
 
 		      gimplify_assign (unshare_expr (ivar), x, &llist[0]);
 
@@ -5205,17 +6064,14 @@ lower_rec_input_clauses (tree clauses, gimple_seq *ilist, gimple_seq *dlist,
 		      ref = build_outer_var_ref (var, ctx);
 		      gimplify_assign (ref, x, &llist[1]);
 
-		      if (new_vard != new_var)
-			{
-			  SET_DECL_VALUE_EXPR (new_vard,
-					       build_fold_addr_expr (lvar));
-			  DECL_HAS_VALUE_EXPR_P (new_vard) = 1;
-			}
 		    }
 		  else
 		    {
 		      if (omp_is_reference (var) && is_simd)
 			handle_simd_reference (clause_loc, new_vard, ilist);
+		      if (OMP_CLAUSE_CODE (c) == OMP_CLAUSE_REDUCTION
+			  && OMP_CLAUSE_REDUCTION_INSCAN (c))
+			break;
 		      gimplify_assign (new_var, x, ilist);
 		      if (is_simd)
 			{
@@ -5236,13 +6092,43 @@ lower_rec_input_clauses (tree clauses, gimple_seq *ilist, gimple_seq *dlist,
     }
   if (tskred_avar)
     {
-      tree clobber = build_constructor (TREE_TYPE (tskred_avar), NULL);
-      TREE_THIS_VOLATILE (clobber) = 1;
+      tree clobber = build_clobber (TREE_TYPE (tskred_avar));
       gimple_seq_add_stmt (ilist, gimple_build_assign (tskred_avar, clobber));
     }
 
   if (known_eq (sctx.max_vf, 1U))
-    sctx.is_simt = false;
+    {
+      sctx.is_simt = false;
+      if (ctx->lastprivate_conditional_map)
+	{
+	  if (gimple_omp_for_combined_into_p (ctx->stmt))
+	    {
+	      /* Signal to lower_omp_1 that it should use parent context.  */
+	      ctx->combined_into_simd_safelen1 = true;
+	      for (c = clauses; c ; c = OMP_CLAUSE_CHAIN (c))
+		if (OMP_CLAUSE_CODE (c) == OMP_CLAUSE_LASTPRIVATE
+		    && OMP_CLAUSE_LASTPRIVATE_CONDITIONAL (c))
+		  {
+		    tree o = lookup_decl (OMP_CLAUSE_DECL (c), ctx);
+		    omp_context *outer = ctx->outer;
+		    if (gimple_code (outer->stmt) == GIMPLE_OMP_SCAN)
+		      outer = outer->outer;
+		    tree *v = ctx->lastprivate_conditional_map->get (o);
+		    tree po = lookup_decl (OMP_CLAUSE_DECL (c), outer);
+		    tree *pv = outer->lastprivate_conditional_map->get (po);
+		    *v = *pv;
+		  }
+	    }
+	  else
+	    {
+	      /* When not vectorized, treat lastprivate(conditional:) like
+		 normal lastprivate, as there will be just one simd lane
+		 writing the privatized variable.  */
+	      delete ctx->lastprivate_conditional_map;
+	      ctx->lastprivate_conditional_map = NULL;
+	    }
+	}
+    }
 
   if (nonconst_simd_if)
     {
@@ -5285,14 +6171,23 @@ lower_rec_input_clauses (tree clauses, gimple_seq *ilist, gimple_seq *dlist,
   if (sctx.lane)
     {
       gimple *g = gimple_build_call_internal (IFN_GOMP_SIMD_LANE,
-					      1 + (nonconst_simd_if != NULL),
-					      uid, nonconst_simd_if);
+					      2 + (nonconst_simd_if != NULL),
+					      uid, integer_zero_node,
+					      nonconst_simd_if);
       gimple_call_set_lhs (g, sctx.lane);
       gimple_stmt_iterator gsi = gsi_start_1 (gimple_omp_body_ptr (ctx->stmt));
       gsi_insert_before_without_update (&gsi, g, GSI_SAME_STMT);
       g = gimple_build_assign (sctx.lane, INTEGER_CST,
 			       build_int_cst (unsigned_type_node, 0));
       gimple_seq_add_stmt (ilist, g);
+      if (sctx.lastlane)
+	{
+	  g = gimple_build_call_internal (IFN_GOMP_SIMD_LAST_LANE,
+					  2, uid, sctx.lane);
+	  gimple_call_set_lhs (g, sctx.lastlane);
+	  gimple_seq_add_stmt (dlist, g);
+	  gimple_seq_add_seq (dlist, llist[3]);
+	}
       /* Emit reductions across SIMT lanes in log_2(simt_vf) steps.  */
       if (llist[2])
 	{
@@ -5379,7 +6274,10 @@ lower_rec_input_clauses (tree clauses, gimple_seq *ilist, gimple_seq *dlist,
      lastprivate clauses we need to ensure the lastprivate copying
      happens after firstprivate copying in all threads.  And similarly
      for UDRs if initializer expression refers to omp_orig.  */
-  if (copyin_by_ref || lastprivate_firstprivate || reduction_omp_orig_ref)
+  if (copyin_by_ref || lastprivate_firstprivate
+      || (reduction_omp_orig_ref
+	  && !ctx->scan_inclusive
+	  && !ctx->scan_exclusive))
     {
       /* Don't add any barrier for #pragma omp simd or
 	 #pragma omp distribute.  */
@@ -5409,18 +6307,120 @@ lower_rec_input_clauses (tree clauses, gimple_seq *ilist, gimple_seq *dlist,
     }
 }
 
+/* Create temporary variables for lastprivate(conditional:) implementation
+   in context CTX with CLAUSES.  */
+
+static void
+lower_lastprivate_conditional_clauses (tree *clauses, omp_context *ctx)
+{
+  tree iter_type = NULL_TREE;
+  tree cond_ptr = NULL_TREE;
+  tree iter_var = NULL_TREE;
+  bool is_simd = (gimple_code (ctx->stmt) == GIMPLE_OMP_FOR
+		  && gimple_omp_for_kind (ctx->stmt) == GF_OMP_FOR_KIND_SIMD);
+  tree next = *clauses;
+  for (tree c = *clauses; c; c = OMP_CLAUSE_CHAIN (c))
+    if (OMP_CLAUSE_CODE (c) == OMP_CLAUSE_LASTPRIVATE
+	&& OMP_CLAUSE_LASTPRIVATE_CONDITIONAL (c))
+      {
+	if (is_simd)
+	  {
+	    tree cc = omp_find_clause (next, OMP_CLAUSE__CONDTEMP_);
+	    gcc_assert (cc);
+	    if (iter_type == NULL_TREE)
+	      {
+		iter_type = TREE_TYPE (OMP_CLAUSE_DECL (cc));
+		iter_var = create_tmp_var_raw (iter_type);
+		DECL_CONTEXT (iter_var) = current_function_decl;
+		DECL_SEEN_IN_BIND_EXPR_P (iter_var) = 1;
+		DECL_CHAIN (iter_var) = ctx->block_vars;
+		ctx->block_vars = iter_var;
+		tree c3
+		  = build_omp_clause (UNKNOWN_LOCATION, OMP_CLAUSE__CONDTEMP_);
+		OMP_CLAUSE__CONDTEMP__ITER (c3) = 1;
+		OMP_CLAUSE_DECL (c3) = iter_var;
+		OMP_CLAUSE_CHAIN (c3) = *clauses;
+		*clauses = c3;
+		ctx->lastprivate_conditional_map = new hash_map<tree, tree>;
+	      }
+	    next = OMP_CLAUSE_CHAIN (cc);
+	    tree o = lookup_decl (OMP_CLAUSE_DECL (c), ctx);
+	    tree v = lookup_decl (OMP_CLAUSE_DECL (cc), ctx);
+	    ctx->lastprivate_conditional_map->put (o, v);
+	    continue;
+	  }
+	if (iter_type == NULL)
+	  {
+	    if (gimple_code (ctx->stmt) == GIMPLE_OMP_FOR)
+	      {
+		struct omp_for_data fd;
+		omp_extract_for_data (as_a <gomp_for *> (ctx->stmt), &fd,
+				      NULL);
+		iter_type = unsigned_type_for (fd.iter_type);
+	      }
+	    else if (gimple_code (ctx->stmt) == GIMPLE_OMP_SECTIONS)
+	      iter_type = unsigned_type_node;
+	    tree c2 = omp_find_clause (*clauses, OMP_CLAUSE__CONDTEMP_);
+	    if (c2)
+	      {
+		cond_ptr
+		  = lookup_decl_in_outer_ctx (OMP_CLAUSE_DECL (c2), ctx);
+		OMP_CLAUSE_DECL (c2) = cond_ptr;
+	      }
+	    else
+	      {
+		cond_ptr = create_tmp_var_raw (build_pointer_type (iter_type));
+		DECL_CONTEXT (cond_ptr) = current_function_decl;
+		DECL_SEEN_IN_BIND_EXPR_P (cond_ptr) = 1;
+		DECL_CHAIN (cond_ptr) = ctx->block_vars;
+		ctx->block_vars = cond_ptr;
+		c2 = build_omp_clause (UNKNOWN_LOCATION,
+				       OMP_CLAUSE__CONDTEMP_);
+		OMP_CLAUSE_DECL (c2) = cond_ptr;
+		OMP_CLAUSE_CHAIN (c2) = *clauses;
+		*clauses = c2;
+	      }
+	    iter_var = create_tmp_var_raw (iter_type);
+	    DECL_CONTEXT (iter_var) = current_function_decl;
+	    DECL_SEEN_IN_BIND_EXPR_P (iter_var) = 1;
+	    DECL_CHAIN (iter_var) = ctx->block_vars;
+	    ctx->block_vars = iter_var;
+	    tree c3
+	      = build_omp_clause (UNKNOWN_LOCATION, OMP_CLAUSE__CONDTEMP_);
+	    OMP_CLAUSE__CONDTEMP__ITER (c3) = 1;
+	    OMP_CLAUSE_DECL (c3) = iter_var;
+	    OMP_CLAUSE_CHAIN (c3) = OMP_CLAUSE_CHAIN (c2);
+	    OMP_CLAUSE_CHAIN (c2) = c3;
+	    ctx->lastprivate_conditional_map = new hash_map<tree, tree>;
+	  }
+	tree v = create_tmp_var_raw (iter_type);
+	DECL_CONTEXT (v) = current_function_decl;
+	DECL_SEEN_IN_BIND_EXPR_P (v) = 1;
+	DECL_CHAIN (v) = ctx->block_vars;
+	ctx->block_vars = v;
+	tree o = lookup_decl (OMP_CLAUSE_DECL (c), ctx);
+	ctx->lastprivate_conditional_map->put (o, v);
+      }
+}
+
 
 /* Generate code to implement the LASTPRIVATE clauses.  This is used for
    both parallel and workshare constructs.  PREDICATE may be NULL if it's
-   always true.   */
+   always true.  BODY_P is the sequence to insert early initialization
+   if needed, STMT_LIST is where the non-conditional lastprivate handling
+   goes into and CSTMT_LIST is a sequence that needs to be run in a critical
+   section.  */
 
 static void
-lower_lastprivate_clauses (tree clauses, tree predicate, gimple_seq *stmt_list,
+lower_lastprivate_clauses (tree clauses, tree predicate, gimple_seq *body_p,
+			   gimple_seq *stmt_list, gimple_seq *cstmt_list,
 			   omp_context *ctx)
 {
   tree x, c, label = NULL, orig_clauses = clauses;
   bool par_clauses = false;
   tree simduid = NULL, lastlane = NULL, simtcond = NULL, simtlast = NULL;
+  unsigned HOST_WIDE_INT conditional_off = 0;
+  gimple_seq post_stmt_list = NULL;
 
   /* Early exit if there are no lastprivate or linear clauses.  */
   for (; clauses ; clauses = OMP_CLAUSE_CHAIN (clauses))
@@ -5449,7 +6449,7 @@ lower_lastprivate_clauses (tree clauses, tree predicate, gimple_seq *stmt_list,
 
   bool maybe_simt = false;
   if (gimple_code (ctx->stmt) == GIMPLE_OMP_FOR
-      && gimple_omp_for_kind (ctx->stmt) & GF_OMP_FOR_SIMD)
+      && gimple_omp_for_kind (ctx->stmt) == GF_OMP_FOR_KIND_SIMD)
     {
       maybe_simt = omp_find_clause (orig_clauses, OMP_CLAUSE__SIMT_);
       simduid = omp_find_clause (orig_clauses, OMP_CLAUSE__SIMDUID_);
@@ -5499,10 +6499,60 @@ lower_lastprivate_clauses (tree clauses, tree predicate, gimple_seq *stmt_list,
       gimple_seq_add_stmt (stmt_list, gimple_build_label (label_true));
     }
 
+  tree cond_ptr = NULL_TREE;
   for (c = clauses; c ;)
     {
       tree var, new_var;
       location_t clause_loc = OMP_CLAUSE_LOCATION (c);
+      gimple_seq *this_stmt_list = stmt_list;
+      tree lab2 = NULL_TREE;
+
+      if (OMP_CLAUSE_CODE (c) == OMP_CLAUSE_LASTPRIVATE
+	  && OMP_CLAUSE_LASTPRIVATE_CONDITIONAL (c)
+	  && ctx->lastprivate_conditional_map
+	  && !ctx->combined_into_simd_safelen1)
+	{
+	  gcc_assert (body_p);
+	  if (simduid)
+	    goto next;
+	  if (cond_ptr == NULL_TREE)
+	    {
+	      cond_ptr = omp_find_clause (orig_clauses, OMP_CLAUSE__CONDTEMP_);
+	      cond_ptr = OMP_CLAUSE_DECL (cond_ptr);
+	    }
+	  tree type = TREE_TYPE (TREE_TYPE (cond_ptr));
+	  tree o = lookup_decl (OMP_CLAUSE_DECL (c), ctx);
+	  tree v = *ctx->lastprivate_conditional_map->get (o);
+	  gimplify_assign (v, build_zero_cst (type), body_p);
+	  this_stmt_list = cstmt_list;
+	  tree mem;
+	  if (POINTER_TYPE_P (TREE_TYPE (cond_ptr)))
+	    {
+	      mem = build2 (MEM_REF, type, cond_ptr,
+			    build_int_cst (TREE_TYPE (cond_ptr),
+					   conditional_off));
+	      conditional_off += tree_to_uhwi (TYPE_SIZE_UNIT (type));
+	    }
+	  else
+	    mem = build4 (ARRAY_REF, type, cond_ptr,
+			  size_int (conditional_off++), NULL_TREE, NULL_TREE);
+	  tree mem2 = copy_node (mem);
+	  gimple_seq seq = NULL;
+	  mem = force_gimple_operand (mem, &seq, true, NULL_TREE);
+	  gimple_seq_add_seq (this_stmt_list, seq);
+	  tree lab1 = create_artificial_label (UNKNOWN_LOCATION);
+	  lab2 = create_artificial_label (UNKNOWN_LOCATION);
+	  gimple *g = gimple_build_cond (GT_EXPR, v, mem, lab1, lab2);
+	  gimple_seq_add_stmt (this_stmt_list, g);
+	  gimple_seq_add_stmt (this_stmt_list, gimple_build_label (lab1));
+	  gimplify_assign (mem2, v, this_stmt_list);
+	}
+      else if (predicate
+	       && ctx->combined_into_simd_safelen1
+	       && OMP_CLAUSE_CODE (c) == OMP_CLAUSE_LASTPRIVATE
+	       && OMP_CLAUSE_LASTPRIVATE_CONDITIONAL (c)
+	       && ctx->lastprivate_conditional_map)
+	this_stmt_list = &post_stmt_list;
 
       if (OMP_CLAUSE_CODE (c) == OMP_CLAUSE_LASTPRIVATE
 	  || (OMP_CLAUSE_CODE (c) == OMP_CLAUSE_LINEAR
@@ -5544,11 +6594,12 @@ lower_lastprivate_clauses (tree clauses, tree predicate, gimple_seq *stmt_list,
 						      2, simduid,
 						      TREE_OPERAND (val, 1));
 		      gimple_call_set_lhs (g, lastlane);
-		      gimple_seq_add_stmt (stmt_list, g);
+		      gimple_seq_add_stmt (this_stmt_list, g);
 		    }
 		  new_var = build4 (ARRAY_REF, TREE_TYPE (val),
 				    TREE_OPERAND (val, 0), lastlane,
 				    NULL_TREE, NULL_TREE);
+		  TREE_THIS_NOTRAP (new_var) = 1;
 		}
 	    }
 	  else if (maybe_simt)
@@ -5562,13 +6613,13 @@ lower_lastprivate_clauses (tree clauses, tree predicate, gimple_seq *stmt_list,
 		  gcall *g = gimple_build_call_internal
 		    (IFN_GOMP_SIMT_LAST_LANE, 1, simtcond);
 		  gimple_call_set_lhs (g, simtlast);
-		  gimple_seq_add_stmt (stmt_list, g);
+		  gimple_seq_add_stmt (this_stmt_list, g);
 		}
 	      x = build_call_expr_internal_loc
 		(UNKNOWN_LOCATION, IFN_GOMP_SIMT_XCHG_IDX,
 		 TREE_TYPE (val), 2, val, simtlast);
 	      new_var = unshare_expr (new_var);
-	      gimplify_assign (new_var, x, stmt_list);
+	      gimplify_assign (new_var, x, this_stmt_list);
 	      new_var = unshare_expr (new_var);
 	    }
 
@@ -5576,7 +6627,7 @@ lower_lastprivate_clauses (tree clauses, tree predicate, gimple_seq *stmt_list,
 	      && OMP_CLAUSE_LASTPRIVATE_GIMPLE_SEQ (c))
 	    {
 	      lower_omp (&OMP_CLAUSE_LASTPRIVATE_GIMPLE_SEQ (c), ctx);
-	      gimple_seq_add_seq (stmt_list,
+	      gimple_seq_add_seq (this_stmt_list,
 				  OMP_CLAUSE_LASTPRIVATE_GIMPLE_SEQ (c));
 	      OMP_CLAUSE_LASTPRIVATE_GIMPLE_SEQ (c) = NULL;
 	    }
@@ -5584,16 +6635,16 @@ lower_lastprivate_clauses (tree clauses, tree predicate, gimple_seq *stmt_list,
 		   && OMP_CLAUSE_LINEAR_GIMPLE_SEQ (c))
 	    {
 	      lower_omp (&OMP_CLAUSE_LINEAR_GIMPLE_SEQ (c), ctx);
-	      gimple_seq_add_seq (stmt_list,
+	      gimple_seq_add_seq (this_stmt_list,
 				  OMP_CLAUSE_LINEAR_GIMPLE_SEQ (c));
 	      OMP_CLAUSE_LINEAR_GIMPLE_SEQ (c) = NULL;
 	    }
 
 	  x = NULL_TREE;
 	  if (OMP_CLAUSE_CODE (c) == OMP_CLAUSE_LASTPRIVATE
-	      && OMP_CLAUSE_LASTPRIVATE_TASKLOOP_IV (c))
+	      && OMP_CLAUSE_LASTPRIVATE_LOOP_IV (c)
+	      && is_taskloop_ctx (ctx))
 	    {
-	      gcc_checking_assert (is_taskloop_ctx (ctx));
 	      tree ovar = maybe_lookup_decl_in_outer_ctx (var,
 							  ctx->outer->outer);
 	      if (is_global_var (ovar))
@@ -5604,8 +6655,13 @@ lower_lastprivate_clauses (tree clauses, tree predicate, gimple_seq *stmt_list,
 	  if (omp_is_reference (var))
 	    new_var = build_simple_mem_ref_loc (clause_loc, new_var);
 	  x = lang_hooks.decls.omp_clause_assign_op (c, x, new_var);
-	  gimplify_and_add (x, stmt_list);
+	  gimplify_and_add (x, this_stmt_list);
+
+	  if (lab2)
+	    gimple_seq_add_stmt (this_stmt_list, gimple_build_label (lab2));
 	}
+
+     next:
       c = OMP_CLAUSE_CHAIN (c);
       if (c == NULL && !par_clauses)
 	{
@@ -5627,6 +6683,7 @@ lower_lastprivate_clauses (tree clauses, tree predicate, gimple_seq *stmt_list,
 
   if (label)
     gimple_seq_add_stmt (stmt_list, gimple_build_label (label));
+  gimple_seq_add_seq (stmt_list, post_stmt_list);
 }
 
 /* Lower the OpenACC reductions of CLAUSES for compute axis LEVEL
@@ -5660,6 +6717,9 @@ lower_oacc_reductions (location_t loc, tree clauses, tree level, bool inner,
   for (tree c = clauses; c; c = OMP_CLAUSE_CHAIN (c))
     if (OMP_CLAUSE_CODE (c) == OMP_CLAUSE_REDUCTION)
       {
+	/* No 'reduction' clauses on OpenACC 'kernels'.  */
+	gcc_checking_assert (!is_oacc_kernels (ctx));
+
 	tree orig = OMP_CLAUSE_DECL (c);
 	tree var = maybe_lookup_decl (orig, ctx);
 	tree ref_to_res = NULL_TREE;
@@ -5697,8 +6757,11 @@ lower_oacc_reductions (location_t loc, tree clauses, tree level, bool inner,
 		    break;
 
 		  case GIMPLE_OMP_TARGET:
-		    if (gimple_omp_target_kind (probe->stmt)
-			!= GF_OMP_TARGET_KIND_OACC_PARALLEL)
+		    /* No 'reduction' clauses inside OpenACC 'kernels'
+		       regions.  */
+		    gcc_checking_assert (!is_oacc_kernels (probe));
+
+		    if (!is_gimple_omp_offloaded (probe->stmt))
 		      goto do_lookup;
 
 		    cls = gimple_omp_target_clauses (probe->stmt);
@@ -5853,10 +6916,15 @@ lower_oacc_reductions (location_t loc, tree clauses, tree level, bool inner,
   gimple_seq_add_seq (join_seq, after_join);
 }
 
-/* Generate code to implement the REDUCTION clauses.  */
+/* Generate code to implement the REDUCTION clauses, append it
+   to STMT_SEQP.  CLIST if non-NULL is a pointer to a sequence
+   that should be emitted also inside of the critical section,
+   in that case clear *CLIST afterwards, otherwise leave it as is
+   and let the caller emit it itself.  */
 
 static void
-lower_reduction_clauses (tree clauses, gimple_seq *stmt_seqp, omp_context *ctx)
+lower_reduction_clauses (tree clauses, gimple_seq *stmt_seqp,
+			 gimple_seq *clist, omp_context *ctx)
 {
   gimple_seq sub_seq = NULL;
   gimple *stmt;
@@ -5869,7 +6937,11 @@ lower_reduction_clauses (tree clauses, gimple_seq *stmt_seqp, omp_context *ctx)
 
   /* SIMD reductions are handled in lower_rec_input_clauses.  */
   if (gimple_code (ctx->stmt) == GIMPLE_OMP_FOR
-      && gimple_omp_for_kind (ctx->stmt) & GF_OMP_FOR_SIMD)
+      && gimple_omp_for_kind (ctx->stmt) == GF_OMP_FOR_KIND_SIMD)
+    return;
+
+  /* inscan reductions are handled elsewhere.  */
+  if (ctx->scan_inclusive || ctx->scan_exclusive)
     return;
 
   /* First see if there is exactly one reduction clause.  Use OMP_ATOMIC
@@ -6097,6 +7169,12 @@ lower_reduction_clauses (tree clauses, gimple_seq *stmt_seqp, omp_context *ctx)
   gimple_seq_add_stmt (stmt_seqp, stmt);
 
   gimple_seq_add_seq (stmt_seqp, sub_seq);
+
+  if (clist)
+    {
+      gimple_seq_add_seq (stmt_seqp, *clist);
+      *clist = NULL;
+    }
 
   stmt = gimple_build_call (builtin_decl_explicit (BUILT_IN_GOMP_ATOMIC_END),
 			    0);
@@ -6385,7 +7463,16 @@ lower_send_shared_vars (gimple_seq *ilist, gimple_seq *olist, omp_context *ctx)
       if (use_pointer_for_field (ovar, ctx))
 	{
 	  x = build_sender_ref (ovar, ctx);
-	  var = build_fold_addr_expr (var);
+	  if (TREE_CODE (TREE_TYPE (f)) == ARRAY_TYPE
+	      && TREE_TYPE (f) == TREE_TYPE (ovar))
+	    {
+	      gcc_assert (is_parallel_ctx (ctx)
+			  && DECL_ARTIFICIAL (ovar));
+	      /* _condtemp_ clause.  */
+	      var = build_constructor (TREE_TYPE (x), NULL);
+	    }
+	  else
+	    var = build_fold_addr_expr (var);
 	  gimplify_assign (x, var, ilist);
 	}
       else
@@ -6478,9 +7565,17 @@ lower_oacc_head_mark (location_t loc, tree ddvar, tree clauses,
       tag |= OLF_GANG_STATIC;
     }
 
-  /* In a parallel region, loops are implicitly INDEPENDENT.  */
   omp_context *tgt = enclosing_target_ctx (ctx);
-  if (!tgt || is_oacc_parallel (tgt))
+  if (!tgt || is_oacc_parallel_or_serial (tgt))
+    ;
+  else if (is_oacc_kernels (tgt))
+    /* Not using this loops handling inside OpenACC 'kernels' regions.  */
+    gcc_unreachable ();
+  else
+    gcc_unreachable ();
+
+  /* In a parallel region, loops are implicitly INDEPENDENT.  */
+  if (!tgt || is_oacc_parallel_or_serial (tgt))
     tag |= OLF_INDEPENDENT;
 
   if (tag & OLF_TILE)
@@ -6682,7 +7777,7 @@ lower_omp_sections (gimple_stmt_iterator *gsi_p, omp_context *ctx)
   gomp_sections *stmt;
   gimple *t;
   gbind *new_stmt, *bind;
-  gimple_seq ilist, dlist, olist, tred_dlist = NULL, new_body;
+  gimple_seq ilist, dlist, olist, tred_dlist = NULL, clist = NULL, new_body;
 
   stmt = as_a <gomp_sections *> (gsi_stmt (*gsi_p));
 
@@ -6711,8 +7806,14 @@ lower_omp_sections (gimple_stmt_iterator *gsi_p, omp_context *ctx)
       gimple_seq_add_stmt (&ilist, gimple_build_assign (rtmp, temp));
     }
 
+  tree *clauses_ptr = gimple_omp_sections_clauses_ptr (stmt);
+  lower_lastprivate_conditional_clauses (clauses_ptr, ctx);
+
   lower_rec_input_clauses (gimple_omp_sections_clauses (stmt),
       			   &ilist, &dlist, ctx, NULL);
+
+  control = create_tmp_var (unsigned_type_node, ".section");
+  gimple_omp_sections_set_control (stmt, control);
 
   new_body = gimple_omp_body (stmt);
   gimple_omp_set_body (stmt, NULL);
@@ -6735,7 +7836,7 @@ lower_omp_sections (gimple_stmt_iterator *gsi_p, omp_context *ctx)
 	{
 	  gimple_seq l = NULL;
 	  lower_lastprivate_clauses (gimple_omp_sections_clauses (stmt), NULL,
-				     &l, ctx);
+				     &ilist, &l, &clist, ctx);
 	  gsi_insert_seq_after (&tgsi, l, GSI_CONTINUE_LINKING);
 	  gimple_omp_section_set_last (sec_start);
 	}
@@ -6748,7 +7849,18 @@ lower_omp_sections (gimple_stmt_iterator *gsi_p, omp_context *ctx)
   bind = gimple_build_bind (NULL, new_body, block);
 
   olist = NULL;
-  lower_reduction_clauses (gimple_omp_sections_clauses (stmt), &olist, ctx);
+  lower_reduction_clauses (gimple_omp_sections_clauses (stmt), &olist,
+			   &clist, ctx);
+  if (clist)
+    {
+      tree fndecl = builtin_decl_explicit (BUILT_IN_GOMP_ATOMIC_START);
+      gcall *g = gimple_build_call (fndecl, 0);
+      gimple_seq_add_stmt (&olist, g);
+      gimple_seq_add_seq (&olist, clist);
+      fndecl = builtin_decl_explicit (BUILT_IN_GOMP_ATOMIC_END);
+      g = gimple_build_call (fndecl, 0);
+      gimple_seq_add_stmt (&olist, g);
+    }
 
   block = make_node (BLOCK);
   new_stmt = gimple_build_bind (NULL, NULL, block);
@@ -6766,9 +7878,7 @@ lower_omp_sections (gimple_stmt_iterator *gsi_p, omp_context *ctx)
   gimple_seq_add_stmt (&new_body, gimple_build_omp_sections_switch ());
   gimple_seq_add_stmt (&new_body, bind);
 
-  control = create_tmp_var (unsigned_type_node, ".section");
   t = gimple_build_omp_continue (control, control);
-  gimple_omp_sections_set_control (stmt, control);
   gimple_seq_add_stmt (&new_body, t);
 
   gimple_seq_add_seq (&new_body, olist);
@@ -6952,8 +8062,7 @@ lower_omp_single (gimple_stmt_iterator *gsi_p, omp_context *ctx)
   if (ctx->record_type)
     {
       gimple_stmt_iterator gsi = gsi_start (bind_body_tail);
-      tree clobber = build_constructor (ctx->record_type, NULL);
-      TREE_THIS_VOLATILE (clobber) = 1;
+      tree clobber = build_clobber (ctx->record_type);
       gsi_insert_after (&gsi, gimple_build_assign (ctx->sender_decl,
 						   clobber), GSI_SAME_STMT);
     }
@@ -8015,6 +9124,297 @@ lower_omp_ordered (gimple_stmt_iterator *gsi_p, omp_context *ctx)
 }
 
 
+/* Expand code for an OpenMP scan directive and the structured block
+   before the scan directive.  */
+
+static void
+lower_omp_scan (gimple_stmt_iterator *gsi_p, omp_context *ctx)
+{
+  gimple *stmt = gsi_stmt (*gsi_p);
+  bool has_clauses
+    = gimple_omp_scan_clauses (as_a <gomp_scan *> (stmt)) != NULL;
+  tree lane = NULL_TREE;
+  gimple_seq before = NULL;
+  omp_context *octx = ctx->outer;
+  gcc_assert (octx);
+  if (octx->scan_exclusive && !has_clauses)
+    {
+      gimple_stmt_iterator gsi2 = *gsi_p;
+      gsi_next (&gsi2);
+      gimple *stmt2 = gsi_stmt (gsi2);
+      /* For exclusive scan, swap GIMPLE_OMP_SCAN without clauses
+	 with following GIMPLE_OMP_SCAN with clauses, so that input_phase,
+	 the one with exclusive clause(s), comes first.  */
+      if (stmt2
+	  && gimple_code (stmt2) == GIMPLE_OMP_SCAN
+	  && gimple_omp_scan_clauses (as_a <gomp_scan *> (stmt2)) != NULL)
+	{
+	  gsi_remove (gsi_p, false);
+	  gsi_insert_after (gsi_p, stmt, GSI_SAME_STMT);
+	  ctx = maybe_lookup_ctx (stmt2);
+	  gcc_assert (ctx);
+	  lower_omp_scan (gsi_p, ctx);
+	  return;
+	}
+    }
+
+  bool input_phase = has_clauses ^ octx->scan_inclusive;
+  bool is_simd = (gimple_code (octx->stmt) == GIMPLE_OMP_FOR
+		  && gimple_omp_for_kind (octx->stmt) == GF_OMP_FOR_KIND_SIMD);
+  bool is_for = (gimple_code (octx->stmt) == GIMPLE_OMP_FOR
+		 && gimple_omp_for_kind (octx->stmt) == GF_OMP_FOR_KIND_FOR
+		 && !gimple_omp_for_combined_p (octx->stmt));
+  bool is_for_simd = is_simd && gimple_omp_for_combined_into_p (octx->stmt);
+  if (is_for_simd && octx->for_simd_scan_phase)
+    is_simd = false;
+  if (is_simd)
+    if (tree c = omp_find_clause (gimple_omp_for_clauses (octx->stmt),
+				  OMP_CLAUSE__SIMDUID_))
+      {
+	tree uid = OMP_CLAUSE__SIMDUID__DECL (c);
+	lane = create_tmp_var (unsigned_type_node);
+	tree t = build_int_cst (integer_type_node,
+				input_phase ? 1
+				: octx->scan_inclusive ? 2 : 3);
+	gimple *g
+	  = gimple_build_call_internal (IFN_GOMP_SIMD_LANE, 2, uid, t);
+	gimple_call_set_lhs (g, lane);
+	gimple_seq_add_stmt (&before, g);
+      }
+
+  if (is_simd || is_for)
+    {
+      for (tree c = gimple_omp_for_clauses (octx->stmt);
+	   c; c = OMP_CLAUSE_CHAIN (c))
+	if (OMP_CLAUSE_CODE (c) == OMP_CLAUSE_REDUCTION
+	    && OMP_CLAUSE_REDUCTION_INSCAN (c))
+	  {
+	    location_t clause_loc = OMP_CLAUSE_LOCATION (c);
+	    tree var = OMP_CLAUSE_DECL (c);
+	    tree new_var = lookup_decl (var, octx);
+	    tree val = new_var;
+	    tree var2 = NULL_TREE;
+	    tree var3 = NULL_TREE;
+	    tree var4 = NULL_TREE;
+	    tree lane0 = NULL_TREE;
+	    tree new_vard = new_var;
+	    if (omp_is_reference (var))
+	      {
+		new_var = build_simple_mem_ref_loc (clause_loc, new_var);
+		val = new_var;
+	      }
+	    if (DECL_HAS_VALUE_EXPR_P (new_vard))
+	      {
+		val = DECL_VALUE_EXPR (new_vard);
+		if (new_vard != new_var)
+		  {
+		    gcc_assert (TREE_CODE (val) == ADDR_EXPR);
+		    val = TREE_OPERAND (val, 0);
+		  }
+		if (TREE_CODE (val) == ARRAY_REF
+		    && VAR_P (TREE_OPERAND (val, 0)))
+		  {
+		    tree v = TREE_OPERAND (val, 0);
+		    if (lookup_attribute ("omp simd array",
+					  DECL_ATTRIBUTES (v)))
+		      {
+			val = unshare_expr (val);
+			lane0 = TREE_OPERAND (val, 1);
+			TREE_OPERAND (val, 1) = lane;
+			var2 = lookup_decl (v, octx);
+			if (octx->scan_exclusive)
+			  var4 = lookup_decl (var2, octx);
+			if (input_phase
+			    && OMP_CLAUSE_REDUCTION_PLACEHOLDER (c))
+			  var3 = maybe_lookup_decl (var4 ? var4 : var2, octx);
+			if (!input_phase)
+			  {
+			    var2 = build4 (ARRAY_REF, TREE_TYPE (val),
+					   var2, lane, NULL_TREE, NULL_TREE);
+			    TREE_THIS_NOTRAP (var2) = 1;
+			    if (octx->scan_exclusive)
+			      {
+				var4 = build4 (ARRAY_REF, TREE_TYPE (val),
+					       var4, lane, NULL_TREE,
+					       NULL_TREE);
+				TREE_THIS_NOTRAP (var4) = 1;
+			      }
+			  }
+			else
+			  var2 = val;
+		      }
+		  }
+		gcc_assert (var2);
+	      }
+	    else
+	      {
+		var2 = build_outer_var_ref (var, octx);
+		if (OMP_CLAUSE_REDUCTION_PLACEHOLDER (c))
+		  {
+		    var3 = maybe_lookup_decl (new_vard, octx);
+		    if (var3 == new_vard || var3 == NULL_TREE)
+		      var3 = NULL_TREE;
+		    else if (is_simd && octx->scan_exclusive && !input_phase)
+		      {
+			var4 = maybe_lookup_decl (var3, octx);
+			if (var4 == var3 || var4 == NULL_TREE)
+			  {
+			    if (TREE_ADDRESSABLE (TREE_TYPE (new_var)))
+			      {
+				var4 = var3;
+				var3 = NULL_TREE;
+			      }
+			    else
+			      var4 = NULL_TREE;
+			  }
+		      }
+		  }
+		if (is_simd
+		    && octx->scan_exclusive
+		    && !input_phase
+		    && var4 == NULL_TREE)
+		  var4 = create_tmp_var (TREE_TYPE (val));
+	      }
+	    if (OMP_CLAUSE_REDUCTION_PLACEHOLDER (c))
+	      {
+		tree placeholder = OMP_CLAUSE_REDUCTION_PLACEHOLDER (c);
+		if (input_phase)
+		  {
+		    if (var3)
+		      {
+			/* If we've added a separate identity element
+			   variable, copy it over into val.  */
+			tree x = lang_hooks.decls.omp_clause_assign_op (c, val,
+									var3);
+			gimplify_and_add (x, &before);
+		      }
+		    else if (OMP_CLAUSE_REDUCTION_GIMPLE_INIT (c))
+		      {
+			/* Otherwise, assign to it the identity element.  */
+			gimple_seq tseq = OMP_CLAUSE_REDUCTION_GIMPLE_INIT (c);
+			if (is_for)
+			  tseq = copy_gimple_seq_and_replace_locals (tseq);
+			tree ref = build_outer_var_ref (var, octx);
+			tree x = (DECL_HAS_VALUE_EXPR_P (new_vard)
+				  ? DECL_VALUE_EXPR (new_vard) : NULL_TREE);
+			if (x)
+			  {
+			    if (new_vard != new_var)
+			      val = build_fold_addr_expr_loc (clause_loc, val);
+			    SET_DECL_VALUE_EXPR (new_vard, val);
+			  }
+			SET_DECL_VALUE_EXPR (placeholder, ref);
+			DECL_HAS_VALUE_EXPR_P (placeholder) = 1;
+			lower_omp (&tseq, octx);
+			if (x)
+			  SET_DECL_VALUE_EXPR (new_vard, x);
+			SET_DECL_VALUE_EXPR (placeholder, NULL_TREE);
+			DECL_HAS_VALUE_EXPR_P (placeholder) = 0;
+			gimple_seq_add_seq (&before, tseq);
+			if (is_simd)
+			  OMP_CLAUSE_REDUCTION_GIMPLE_INIT (c) = NULL;
+		      }
+		  }
+		else if (is_simd)
+		  {
+		    tree x;
+		    if (octx->scan_exclusive)
+		      {
+			tree v4 = unshare_expr (var4);
+			tree v2 = unshare_expr (var2);
+			x = lang_hooks.decls.omp_clause_assign_op (c, v4, v2);
+			gimplify_and_add (x, &before);
+		      }
+		    gimple_seq tseq = OMP_CLAUSE_REDUCTION_GIMPLE_MERGE (c);
+		    x = (DECL_HAS_VALUE_EXPR_P (new_vard)
+			 ? DECL_VALUE_EXPR (new_vard) : NULL_TREE);
+		    tree vexpr = val;
+		    if (x && new_vard != new_var)
+		      vexpr = build_fold_addr_expr_loc (clause_loc, val);
+		    if (x)
+		      SET_DECL_VALUE_EXPR (new_vard, vexpr);
+		    SET_DECL_VALUE_EXPR (placeholder, var2);
+		    DECL_HAS_VALUE_EXPR_P (placeholder) = 1;
+		    lower_omp (&tseq, octx);
+		    gimple_seq_add_seq (&before, tseq);
+		    OMP_CLAUSE_REDUCTION_GIMPLE_MERGE (c) = NULL;
+		    if (x)
+		      SET_DECL_VALUE_EXPR (new_vard, x);
+		    SET_DECL_VALUE_EXPR (placeholder, NULL_TREE);
+		    DECL_HAS_VALUE_EXPR_P (placeholder) = 0;
+		    if (octx->scan_inclusive)
+		      {
+			x = lang_hooks.decls.omp_clause_assign_op (c, val,
+								   var2);
+			gimplify_and_add (x, &before);
+		      }
+		    else if (lane0 == NULL_TREE)
+		      {
+			x = lang_hooks.decls.omp_clause_assign_op (c, val,
+								   var4);
+			gimplify_and_add (x, &before);
+		      }
+		  }
+	      }
+	    else
+	      {
+		if (input_phase)
+		  {
+		    /* input phase.  Set val to initializer before
+		       the body.  */
+		    tree x = omp_reduction_init (c, TREE_TYPE (new_var));
+		    gimplify_assign (val, x, &before);
+		  }
+		else if (is_simd)
+		  {
+		    /* scan phase.  */
+		    enum tree_code code = OMP_CLAUSE_REDUCTION_CODE (c);
+		    if (code == MINUS_EXPR)
+		      code = PLUS_EXPR;
+
+		    tree x = build2 (code, TREE_TYPE (var2),
+				     unshare_expr (var2), unshare_expr (val));
+		    if (octx->scan_inclusive)
+		      {
+			gimplify_assign (unshare_expr (var2), x, &before);
+			gimplify_assign (val, var2, &before);
+		      }
+		    else
+		      {
+			gimplify_assign (unshare_expr (var4),
+					 unshare_expr (var2), &before);
+			gimplify_assign (var2, x, &before);
+			if (lane0 == NULL_TREE)
+			  gimplify_assign (val, var4, &before);
+		      }
+		  }
+	      }
+	    if (octx->scan_exclusive && !input_phase && lane0)
+	      {
+		tree vexpr = unshare_expr (var4);
+		TREE_OPERAND (vexpr, 1) = lane0;
+		if (new_vard != new_var)
+		  vexpr = build_fold_addr_expr_loc (clause_loc, vexpr);
+		SET_DECL_VALUE_EXPR (new_vard, vexpr);
+	      }
+	  }
+    }
+  if (is_simd && !is_for_simd)
+    {
+      gsi_insert_seq_after (gsi_p, gimple_omp_body (stmt), GSI_SAME_STMT);
+      gsi_insert_seq_after (gsi_p, before, GSI_SAME_STMT);
+      gsi_replace (gsi_p, gimple_build_nop (), true);
+      return;
+    }
+  lower_omp (gimple_omp_body_ptr (stmt), octx);
+  if (before)
+    {
+      gimple_stmt_iterator gsi = gsi_start_1 (gimple_omp_body_ptr (stmt));
+      gsi_insert_seq_before (&gsi, before, GSI_SAME_STMT);
+    }
+}
+
+
 /* Gimplify a GIMPLE_OMP_CRITICAL statement.  This is a relatively simple
    substitution of a couple of function calls.  But in the NAMED case,
    requires that languages coordinate a symbol name.  It is therefore
@@ -8125,11 +9525,13 @@ lower_omp_critical (gimple_stmt_iterator *gsi_p, omp_context *ctx)
    for a lastprivate clause.  Given a loop control predicate of (V
    cond N2), we gate the clause on (!(V cond N2)).  The lowered form
    is appended to *DLIST, iterator initialization is appended to
-   *BODY_P.  */
+   *BODY_P.  *CLIST is for lastprivate(conditional:) code that needs
+   to be emitted in a critical section.  */
 
 static void
 lower_omp_for_lastprivate (struct omp_for_data *fd, gimple_seq *body_p,
-			   gimple_seq *dlist, struct omp_context *ctx)
+			   gimple_seq *dlist, gimple_seq *clist,
+			   struct omp_context *ctx)
 {
   tree clauses, cond, vinit;
   enum tree_code cond_code;
@@ -8209,7 +9611,7 @@ lower_omp_for_lastprivate (struct omp_for_data *fd, gimple_seq *body_p,
 
   clauses = gimple_omp_for_clauses (fd->for_stmt);
   stmts = NULL;
-  lower_lastprivate_clauses (clauses, cond, &stmts, ctx);
+  lower_lastprivate_clauses (clauses, cond, body_p, &stmts, clist, ctx);
   if (!gimple_seq_empty_p (stmts))
     {
       gimple_seq_add_seq (&stmts, *dlist);
@@ -8230,6 +9632,835 @@ lower_omp_for_lastprivate (struct omp_for_data *fd, gimple_seq *body_p,
     }
 }
 
+/* Callback for walk_gimple_seq.  Find #pragma omp scan statement.  */
+
+static tree
+omp_find_scan (gimple_stmt_iterator *gsi_p, bool *handled_ops_p,
+	       struct walk_stmt_info *wi)
+{
+  gimple *stmt = gsi_stmt (*gsi_p);
+
+  *handled_ops_p = true;
+  switch (gimple_code (stmt))
+    {
+    WALK_SUBSTMTS;
+
+    case GIMPLE_OMP_FOR:
+      if (gimple_omp_for_kind (stmt) == GF_OMP_FOR_KIND_SIMD
+	  && gimple_omp_for_combined_into_p (stmt))
+	*handled_ops_p = false;
+      break;
+
+    case GIMPLE_OMP_SCAN:
+      *(gimple_stmt_iterator *) (wi->info) = *gsi_p;
+      return integer_zero_node;
+    default:
+      break;
+    }
+  return NULL;
+}
+
+/* Helper function for lower_omp_for, add transformations for a worksharing
+   loop with scan directives inside of it.
+   For worksharing loop not combined with simd, transform:
+   #pragma omp for reduction(inscan,+:r) private(i)
+   for (i = 0; i < n; i = i + 1)
+     {
+       {
+	 update (r);
+       }
+       #pragma omp scan inclusive(r)
+       {
+	 use (r);
+       }
+     }
+
+   into two worksharing loops + code to merge results:
+
+   num_threads = omp_get_num_threads ();
+   thread_num = omp_get_thread_num ();
+   if (thread_num == 0) goto <D.2099>; else goto <D.2100>;
+   <D.2099>:
+   var2 = r;
+   goto <D.2101>;
+   <D.2100>:
+   // For UDRs this is UDR init, or if ctors are needed, copy from
+   // var3 that has been constructed to contain the neutral element.
+   var2 = 0;
+   <D.2101>:
+   ivar = 0;
+   // The _scantemp_ clauses will arrange for rpriva to be initialized to
+   // a shared array with num_threads elements and rprivb to a local array
+   // number of elements equal to the number of (contiguous) iterations the
+   // current thread will perform.  controlb and controlp variables are
+   // temporaries to handle deallocation of rprivb at the end of second
+   // GOMP_FOR.
+   #pragma omp for _scantemp_(rpriva) _scantemp_(rprivb) _scantemp_(controlb) \
+     _scantemp_(controlp) reduction(inscan,+:r) private(i) nowait
+   for (i = 0; i < n; i = i + 1)
+     {
+       {
+	 // For UDRs this is UDR init or copy from var3.
+	 r = 0;
+	 // This is the input phase from user code.
+	 update (r);
+       }
+       {
+	 // For UDRs this is UDR merge.
+	 var2 = var2 + r;
+	 // Rather than handing it over to the user, save to local thread's
+	 // array.
+	 rprivb[ivar] = var2;
+	 // For exclusive scan, the above two statements are swapped.
+	 ivar = ivar + 1;
+       }
+     }
+   // And remember the final value from this thread's into the shared
+   // rpriva array.
+   rpriva[(sizetype) thread_num] = var2;
+   // If more than one thread, compute using Work-Efficient prefix sum
+   // the inclusive parallel scan of the rpriva array.
+   if (num_threads > 1) goto <D.2102>; else goto <D.2103>;
+   <D.2102>:
+   GOMP_barrier ();
+   down = 0;
+   k = 1;
+   num_threadsu = (unsigned int) num_threads;
+   thread_numup1 = (unsigned int) thread_num + 1;
+   <D.2108>:
+   twok = k << 1;
+   if (twok > num_threadsu) goto <D.2110>; else goto <D.2111>;
+   <D.2110>:
+   down = 4294967295;
+   k = k >> 1;
+   if (k == num_threadsu) goto <D.2112>; else goto <D.2111>;
+   <D.2112>:
+   k = k >> 1;
+   <D.2111>:
+   twok = k << 1;
+   cplx = .MUL_OVERFLOW (thread_nump1, twok);
+   mul = REALPART_EXPR <cplx>;
+   ovf = IMAGPART_EXPR <cplx>;
+   if (ovf == 0) goto <D.2116>; else goto <D.2117>;
+   <D.2116>:
+   andv = k & down;
+   andvm1 = andv + 4294967295;
+   l = mul + andvm1;
+   if (l < num_threadsu) goto <D.2120>; else goto <D.2117>;
+   <D.2120>:
+   // For UDRs this is UDR merge, performed using var2 variable as temporary,
+   // i.e. var2 = rpriva[l - k]; UDR merge (var2, rpriva[l]); rpriva[l] = var2;
+   rpriva[l] = rpriva[l - k] + rpriva[l];
+   <D.2117>:
+   if (down == 0) goto <D.2121>; else goto <D.2122>;
+   <D.2121>:
+   k = k << 1;
+   goto <D.2123>;
+   <D.2122>:
+   k = k >> 1;
+   <D.2123>:
+   GOMP_barrier ();
+   if (k != 0) goto <D.2108>; else goto <D.2103>;
+   <D.2103>:
+   if (thread_num == 0) goto <D.2124>; else goto <D.2125>;
+   <D.2124>:
+   // For UDRs this is UDR init or copy from var3.
+   var2 = 0;
+   goto <D.2126>;
+   <D.2125>:
+   var2 = rpriva[thread_num - 1];
+   <D.2126>:
+   ivar = 0;
+   #pragma omp for _scantemp_(controlb) _scantemp_(controlp) \
+     reduction(inscan,+:r) private(i)
+   for (i = 0; i < n; i = i + 1)
+     {
+       {
+	 // For UDRs, this is r = var2; UDR merge (r, rprivb[ivar]);
+	 r = var2 + rprivb[ivar];
+       }
+       {
+	 // This is the scan phase from user code.
+	 use (r);
+	 // Plus a bump of the iterator.
+	 ivar = ivar + 1;
+       }
+     }  */
+
+static void
+lower_omp_for_scan (gimple_seq *body_p, gimple_seq *dlist, gomp_for *stmt,
+		    struct omp_for_data *fd, omp_context *ctx)
+{
+  bool is_for_simd = gimple_omp_for_combined_p (stmt);
+  gcc_assert (ctx->scan_inclusive || ctx->scan_exclusive);
+
+  gimple_seq body = gimple_omp_body (stmt);
+  gimple_stmt_iterator input1_gsi = gsi_none ();
+  struct walk_stmt_info wi;
+  memset (&wi, 0, sizeof (wi));
+  wi.val_only = true;
+  wi.info = (void *) &input1_gsi;
+  walk_gimple_seq_mod (&body, omp_find_scan, NULL, &wi);
+  gcc_assert (!gsi_end_p (input1_gsi));
+
+  gimple *input_stmt1 = gsi_stmt (input1_gsi);
+  gimple_stmt_iterator gsi = input1_gsi;
+  gsi_next (&gsi);
+  gimple_stmt_iterator scan1_gsi = gsi;
+  gimple *scan_stmt1 = gsi_stmt (gsi);
+  gcc_assert (scan_stmt1 && gimple_code (scan_stmt1) == GIMPLE_OMP_SCAN);
+
+  gimple_seq input_body = gimple_omp_body (input_stmt1);
+  gimple_seq scan_body = gimple_omp_body (scan_stmt1);
+  gimple_omp_set_body (input_stmt1, NULL);
+  gimple_omp_set_body (scan_stmt1, NULL);
+  gimple_omp_set_body (stmt, NULL);
+
+  gomp_for *new_stmt = as_a <gomp_for *> (gimple_copy (stmt));
+  gimple_seq new_body = copy_gimple_seq_and_replace_locals (body);
+  gimple_omp_set_body (stmt, body);
+  gimple_omp_set_body (input_stmt1, input_body);
+
+  gimple_stmt_iterator input2_gsi = gsi_none ();
+  memset (&wi, 0, sizeof (wi));
+  wi.val_only = true;
+  wi.info = (void *) &input2_gsi;
+  walk_gimple_seq_mod (&new_body, omp_find_scan, NULL, &wi);
+  gcc_assert (!gsi_end_p (input2_gsi));
+
+  gimple *input_stmt2 = gsi_stmt (input2_gsi);
+  gsi = input2_gsi;
+  gsi_next (&gsi);
+  gimple_stmt_iterator scan2_gsi = gsi;
+  gimple *scan_stmt2 = gsi_stmt (gsi);
+  gcc_assert (scan_stmt2 && gimple_code (scan_stmt2) == GIMPLE_OMP_SCAN);
+  gimple_omp_set_body (scan_stmt2, scan_body);
+
+  gimple_stmt_iterator input3_gsi = gsi_none ();
+  gimple_stmt_iterator scan3_gsi = gsi_none ();
+  gimple_stmt_iterator input4_gsi = gsi_none ();
+  gimple_stmt_iterator scan4_gsi = gsi_none ();
+  gimple *input_stmt3 = NULL, *scan_stmt3 = NULL;
+  gimple *input_stmt4 = NULL, *scan_stmt4 = NULL;
+  omp_context *input_simd_ctx = NULL, *scan_simd_ctx = NULL;
+  if (is_for_simd)
+    {
+      memset (&wi, 0, sizeof (wi));
+      wi.val_only = true;
+      wi.info = (void *) &input3_gsi;
+      walk_gimple_seq_mod (&input_body, omp_find_scan, NULL, &wi);
+      gcc_assert (!gsi_end_p (input3_gsi));
+
+      input_stmt3 = gsi_stmt (input3_gsi);
+      gsi = input3_gsi;
+      gsi_next (&gsi);
+      scan3_gsi = gsi;
+      scan_stmt3 = gsi_stmt (gsi);
+      gcc_assert (scan_stmt3 && gimple_code (scan_stmt3) == GIMPLE_OMP_SCAN);
+
+      memset (&wi, 0, sizeof (wi));
+      wi.val_only = true;
+      wi.info = (void *) &input4_gsi;
+      walk_gimple_seq_mod (&scan_body, omp_find_scan, NULL, &wi);
+      gcc_assert (!gsi_end_p (input4_gsi));
+
+      input_stmt4 = gsi_stmt (input4_gsi);
+      gsi = input4_gsi;
+      gsi_next (&gsi);
+      scan4_gsi = gsi;
+      scan_stmt4 = gsi_stmt (gsi);
+      gcc_assert (scan_stmt4 && gimple_code (scan_stmt4) == GIMPLE_OMP_SCAN);
+
+      input_simd_ctx = maybe_lookup_ctx (input_stmt3)->outer;
+      scan_simd_ctx = maybe_lookup_ctx (input_stmt4)->outer;
+    }
+
+  tree num_threads = create_tmp_var (integer_type_node);
+  tree thread_num = create_tmp_var (integer_type_node);
+  tree nthreads_decl = builtin_decl_explicit (BUILT_IN_OMP_GET_NUM_THREADS);
+  tree threadnum_decl = builtin_decl_explicit (BUILT_IN_OMP_GET_THREAD_NUM);
+  gimple *g = gimple_build_call (nthreads_decl, 0);
+  gimple_call_set_lhs (g, num_threads);
+  gimple_seq_add_stmt (body_p, g);
+  g = gimple_build_call (threadnum_decl, 0);
+  gimple_call_set_lhs (g, thread_num);
+  gimple_seq_add_stmt (body_p, g);
+
+  tree ivar = create_tmp_var (sizetype);
+  tree new_clauses1 = NULL_TREE, new_clauses2 = NULL_TREE;
+  tree *cp1 = &new_clauses1, *cp2 = &new_clauses2;
+  tree k = create_tmp_var (unsigned_type_node);
+  tree l = create_tmp_var (unsigned_type_node);
+
+  gimple_seq clist = NULL, mdlist = NULL;
+  gimple_seq thr01_list = NULL, thrn1_list = NULL;
+  gimple_seq thr02_list = NULL, thrn2_list = NULL;
+  gimple_seq scan1_list = NULL, input2_list = NULL;
+  gimple_seq last_list = NULL, reduc_list = NULL;
+  for (tree c = gimple_omp_for_clauses (stmt); c; c = OMP_CLAUSE_CHAIN (c))
+    if (OMP_CLAUSE_CODE (c) == OMP_CLAUSE_REDUCTION
+	&& OMP_CLAUSE_REDUCTION_INSCAN (c))
+      {
+	location_t clause_loc = OMP_CLAUSE_LOCATION (c);
+	tree var = OMP_CLAUSE_DECL (c);
+	tree new_var = lookup_decl (var, ctx);
+	tree var3 = NULL_TREE;
+	tree new_vard = new_var;
+	if (omp_is_reference (var))
+	  new_var = build_simple_mem_ref_loc (clause_loc, new_var);
+	if (OMP_CLAUSE_REDUCTION_PLACEHOLDER (c))
+	  {
+	    var3 = maybe_lookup_decl (new_vard, ctx);
+	    if (var3 == new_vard)
+	      var3 = NULL_TREE;
+	  }
+
+	tree ptype = build_pointer_type (TREE_TYPE (new_var));
+	tree rpriva = create_tmp_var (ptype);
+	tree nc = build_omp_clause (clause_loc, OMP_CLAUSE__SCANTEMP_);
+	OMP_CLAUSE_DECL (nc) = rpriva;
+	*cp1 = nc;
+	cp1 = &OMP_CLAUSE_CHAIN (nc);
+
+	tree rprivb = create_tmp_var (ptype);
+	nc = build_omp_clause (clause_loc, OMP_CLAUSE__SCANTEMP_);
+	OMP_CLAUSE_DECL (nc) = rprivb;
+	OMP_CLAUSE__SCANTEMP__ALLOC (nc) = 1;
+	*cp1 = nc;
+	cp1 = &OMP_CLAUSE_CHAIN (nc);
+
+	tree var2 = create_tmp_var_raw (TREE_TYPE (new_var));
+	if (new_vard != new_var)
+	  TREE_ADDRESSABLE (var2) = 1;
+	gimple_add_tmp_var (var2);
+
+	tree x = fold_convert_loc (clause_loc, sizetype, thread_num);
+	x = fold_build2_loc (clause_loc, MULT_EXPR, sizetype, x,
+			     TYPE_SIZE_UNIT (TREE_TYPE (ptype)));
+	x = fold_build2 (POINTER_PLUS_EXPR, TREE_TYPE (rpriva), rpriva, x);
+	tree rpriva_ref = build_simple_mem_ref_loc (clause_loc, x);
+
+	x = fold_build2_loc (clause_loc, PLUS_EXPR, integer_type_node,
+			     thread_num, integer_minus_one_node);
+	x = fold_convert_loc (clause_loc, sizetype, x);
+	x = fold_build2_loc (clause_loc, MULT_EXPR, sizetype, x,
+			     TYPE_SIZE_UNIT (TREE_TYPE (ptype)));
+	x = fold_build2 (POINTER_PLUS_EXPR, TREE_TYPE (rpriva), rpriva, x);
+	tree rprivam1_ref = build_simple_mem_ref_loc (clause_loc, x);
+
+	x = fold_convert_loc (clause_loc, sizetype, l);
+	x = fold_build2_loc (clause_loc, MULT_EXPR, sizetype, x,
+			     TYPE_SIZE_UNIT (TREE_TYPE (ptype)));
+	x = fold_build2 (POINTER_PLUS_EXPR, TREE_TYPE (rpriva), rpriva, x);
+	tree rprival_ref = build_simple_mem_ref_loc (clause_loc, x);
+
+	x = fold_build2_loc (clause_loc, MINUS_EXPR, unsigned_type_node, l, k);
+	x = fold_convert_loc (clause_loc, sizetype, x);
+	x = fold_build2_loc (clause_loc, MULT_EXPR, sizetype, x,
+			     TYPE_SIZE_UNIT (TREE_TYPE (ptype)));
+	x = fold_build2 (POINTER_PLUS_EXPR, TREE_TYPE (rpriva), rpriva, x);
+	tree rprivalmk_ref = build_simple_mem_ref_loc (clause_loc, x);
+
+	x = fold_build2_loc (clause_loc, MULT_EXPR, sizetype, ivar,
+			     TYPE_SIZE_UNIT (TREE_TYPE (ptype)));
+	x = fold_build2 (POINTER_PLUS_EXPR, TREE_TYPE (rprivb), rprivb, x);
+	tree rprivb_ref = build_simple_mem_ref_loc (clause_loc, x);
+
+	tree var4 = is_for_simd ? new_var : var2;
+	tree var5 = NULL_TREE, var6 = NULL_TREE;
+	if (is_for_simd)
+	  {
+	    var5 = lookup_decl (var, input_simd_ctx);
+	    var6 = lookup_decl (var, scan_simd_ctx);
+	    if (new_vard != new_var)
+	      {
+		var5 = build_simple_mem_ref_loc (clause_loc, var5);
+		var6 = build_simple_mem_ref_loc (clause_loc, var6);
+	      }
+	  }
+	if (OMP_CLAUSE_REDUCTION_PLACEHOLDER (c))
+	  {
+	    tree placeholder = OMP_CLAUSE_REDUCTION_PLACEHOLDER (c);
+	    tree val = var2;
+
+	    x = lang_hooks.decls.omp_clause_default_ctor
+		    (c, var2, build_outer_var_ref (var, ctx));
+	    if (x)
+	      gimplify_and_add (x, &clist);
+
+	    x = build_outer_var_ref (var, ctx);
+	    x = lang_hooks.decls.omp_clause_assign_op (c, unshare_expr (var4),
+						       x);
+	    gimplify_and_add (x, &thr01_list);
+
+	    tree y = (DECL_HAS_VALUE_EXPR_P (new_vard)
+		      ? DECL_VALUE_EXPR (new_vard) : NULL_TREE);
+	    if (var3)
+	      {
+		x = unshare_expr (var4);
+		x = lang_hooks.decls.omp_clause_assign_op (c, x, var3);
+		gimplify_and_add (x, &thrn1_list);
+		x = unshare_expr (var4);
+		x = lang_hooks.decls.omp_clause_assign_op (c, x, var3);
+		gimplify_and_add (x, &thr02_list);
+	      }
+	    else if (OMP_CLAUSE_REDUCTION_GIMPLE_INIT (c))
+	      {
+		/* Otherwise, assign to it the identity element.  */
+		gimple_seq tseq = OMP_CLAUSE_REDUCTION_GIMPLE_INIT (c);
+		tseq = copy_gimple_seq_and_replace_locals (tseq);
+		if (!is_for_simd)
+		  {
+		    if (new_vard != new_var)
+		      val = build_fold_addr_expr_loc (clause_loc, val);
+		    SET_DECL_VALUE_EXPR (new_vard, val);
+		    DECL_HAS_VALUE_EXPR_P (new_vard) = 1;
+		  }
+		SET_DECL_VALUE_EXPR (placeholder, error_mark_node);
+		DECL_HAS_VALUE_EXPR_P (placeholder) = 1;
+		lower_omp (&tseq, ctx);
+		gimple_seq_add_seq (&thrn1_list, tseq);
+		tseq = OMP_CLAUSE_REDUCTION_GIMPLE_INIT (c);
+		lower_omp (&tseq, ctx);
+		gimple_seq_add_seq (&thr02_list, tseq);
+		SET_DECL_VALUE_EXPR (placeholder, NULL_TREE);
+		DECL_HAS_VALUE_EXPR_P (placeholder) = 0;
+		OMP_CLAUSE_REDUCTION_GIMPLE_INIT (c) = NULL;
+		if (y)
+		  SET_DECL_VALUE_EXPR (new_vard, y);
+		else
+		  {
+		    DECL_HAS_VALUE_EXPR_P (new_vard) = 0;
+		    SET_DECL_VALUE_EXPR (new_vard, NULL_TREE);
+		  }
+	      }
+
+	    x = unshare_expr (var4);
+	    x = lang_hooks.decls.omp_clause_assign_op (c, x, rprivam1_ref);
+	    gimplify_and_add (x, &thrn2_list);
+
+	    if (is_for_simd)
+	      {
+		x = unshare_expr (rprivb_ref);
+		x = lang_hooks.decls.omp_clause_assign_op (c, x, var5);
+		gimplify_and_add (x, &scan1_list);
+	      }
+	    else
+	      {
+		if (ctx->scan_exclusive)
+		  {
+		    x = unshare_expr (rprivb_ref);
+		    x = lang_hooks.decls.omp_clause_assign_op (c, x, var2);
+		    gimplify_and_add (x, &scan1_list);
+		  }
+
+		gimple_seq tseq = OMP_CLAUSE_REDUCTION_GIMPLE_MERGE (c);
+		tseq = copy_gimple_seq_and_replace_locals (tseq);
+		SET_DECL_VALUE_EXPR (placeholder, var2);
+		DECL_HAS_VALUE_EXPR_P (placeholder) = 1;
+		lower_omp (&tseq, ctx);
+		gimple_seq_add_seq (&scan1_list, tseq);
+
+		if (ctx->scan_inclusive)
+		  {
+		    x = unshare_expr (rprivb_ref);
+		    x = lang_hooks.decls.omp_clause_assign_op (c, x, var2);
+		    gimplify_and_add (x, &scan1_list);
+		  }
+	      }
+
+	    x = unshare_expr (rpriva_ref);
+	    x = lang_hooks.decls.omp_clause_assign_op (c, x,
+						       unshare_expr (var4));
+	    gimplify_and_add (x, &mdlist);
+
+	    x = unshare_expr (is_for_simd ? var6 : new_var);
+	    x = lang_hooks.decls.omp_clause_assign_op (c, x, var4);
+	    gimplify_and_add (x, &input2_list);
+
+	    val = rprivb_ref;
+	    if (new_vard != new_var)
+	      val = build_fold_addr_expr_loc (clause_loc, val);
+
+	    gimple_seq tseq = OMP_CLAUSE_REDUCTION_GIMPLE_MERGE (c);
+	    tseq = copy_gimple_seq_and_replace_locals (tseq);
+	    SET_DECL_VALUE_EXPR (new_vard, val);
+	    DECL_HAS_VALUE_EXPR_P (new_vard) = 1;
+	    if (is_for_simd)
+	      {
+		SET_DECL_VALUE_EXPR (placeholder, var6);
+		DECL_HAS_VALUE_EXPR_P (placeholder) = 1;
+	      }
+	    else
+	      DECL_HAS_VALUE_EXPR_P (placeholder) = 0;
+	    lower_omp (&tseq, ctx);
+	    if (y)
+	      SET_DECL_VALUE_EXPR (new_vard, y);
+	    else
+	      {
+		DECL_HAS_VALUE_EXPR_P (new_vard) = 0;
+		SET_DECL_VALUE_EXPR (new_vard, NULL_TREE);
+	      }
+	    if (!is_for_simd)
+	      {
+		SET_DECL_VALUE_EXPR (placeholder, new_var);
+		DECL_HAS_VALUE_EXPR_P (placeholder) = 1;
+		lower_omp (&tseq, ctx);
+	      }
+	    gimple_seq_add_seq (&input2_list, tseq);
+
+	    x = build_outer_var_ref (var, ctx);
+	    x = lang_hooks.decls.omp_clause_assign_op (c, x, rpriva_ref);
+	    gimplify_and_add (x, &last_list);
+
+	    x = lang_hooks.decls.omp_clause_assign_op (c, var2, rprivalmk_ref);
+	    gimplify_and_add (x, &reduc_list);
+	    tseq = OMP_CLAUSE_REDUCTION_GIMPLE_MERGE (c);
+	    tseq = copy_gimple_seq_and_replace_locals (tseq);
+	    val = rprival_ref;
+	    if (new_vard != new_var)
+	      val = build_fold_addr_expr_loc (clause_loc, val);
+	    SET_DECL_VALUE_EXPR (new_vard, val);
+	    DECL_HAS_VALUE_EXPR_P (new_vard) = 1;
+	    SET_DECL_VALUE_EXPR (placeholder, var2);
+	    lower_omp (&tseq, ctx);
+	    OMP_CLAUSE_REDUCTION_GIMPLE_MERGE (c) = NULL;
+	    SET_DECL_VALUE_EXPR (placeholder, NULL_TREE);
+	    DECL_HAS_VALUE_EXPR_P (placeholder) = 0;
+	    if (y)
+	      SET_DECL_VALUE_EXPR (new_vard, y);
+	    else
+	      {
+		DECL_HAS_VALUE_EXPR_P (new_vard) = 0;
+		SET_DECL_VALUE_EXPR (new_vard, NULL_TREE);
+	      }
+	    gimple_seq_add_seq (&reduc_list, tseq);
+	    x = lang_hooks.decls.omp_clause_assign_op (c, rprival_ref, var2);
+	    gimplify_and_add (x, &reduc_list);
+
+	    x = lang_hooks.decls.omp_clause_dtor (c, var2);
+	    if (x)
+	      gimplify_and_add (x, dlist);
+	  }
+	else
+	  {
+	    x = build_outer_var_ref (var, ctx);
+	    gimplify_assign (unshare_expr (var4), x, &thr01_list);
+
+	    x = omp_reduction_init (c, TREE_TYPE (new_var));
+	    gimplify_assign (unshare_expr (var4), unshare_expr (x),
+			     &thrn1_list);
+	    gimplify_assign (unshare_expr (var4), x, &thr02_list);
+
+	    gimplify_assign (unshare_expr (var4), rprivam1_ref, &thrn2_list);
+
+	    enum tree_code code = OMP_CLAUSE_REDUCTION_CODE (c);
+	    if (code == MINUS_EXPR)
+	      code = PLUS_EXPR;
+
+	    if (is_for_simd)
+	      gimplify_assign (unshare_expr (rprivb_ref), var5, &scan1_list);
+	    else
+	      {
+		if (ctx->scan_exclusive)
+		  gimplify_assign (unshare_expr (rprivb_ref), var2,
+				   &scan1_list);
+		x = build2 (code, TREE_TYPE (new_var), var2, new_var);
+		gimplify_assign (var2, x, &scan1_list);
+		if (ctx->scan_inclusive)
+		  gimplify_assign (unshare_expr (rprivb_ref), var2,
+				   &scan1_list);
+	      }
+
+	    gimplify_assign (unshare_expr (rpriva_ref), unshare_expr (var4),
+			     &mdlist);
+
+	    x = build2 (code, TREE_TYPE (new_var), var4, rprivb_ref);
+	    gimplify_assign (is_for_simd ? var6 : new_var, x, &input2_list);
+
+	    gimplify_assign (build_outer_var_ref (var, ctx), rpriva_ref,
+			     &last_list);
+
+	    x = build2 (code, TREE_TYPE (new_var), rprivalmk_ref,
+			unshare_expr (rprival_ref));
+	    gimplify_assign (rprival_ref, x, &reduc_list);
+	  }
+      }
+
+  g = gimple_build_assign (ivar, PLUS_EXPR, ivar, size_one_node);
+  gimple_seq_add_stmt (&scan1_list, g);
+  g = gimple_build_assign (ivar, PLUS_EXPR, ivar, size_one_node);
+  gimple_seq_add_stmt (gimple_omp_body_ptr (is_for_simd
+					    ? scan_stmt4 : scan_stmt2), g);
+
+  tree controlb = create_tmp_var (boolean_type_node);
+  tree controlp = create_tmp_var (ptr_type_node);
+  tree nc = build_omp_clause (UNKNOWN_LOCATION, OMP_CLAUSE__SCANTEMP_);
+  OMP_CLAUSE_DECL (nc) = controlb;
+  OMP_CLAUSE__SCANTEMP__CONTROL (nc) = 1;
+  *cp1 = nc;
+  cp1 = &OMP_CLAUSE_CHAIN (nc);
+  nc = build_omp_clause (UNKNOWN_LOCATION, OMP_CLAUSE__SCANTEMP_);
+  OMP_CLAUSE_DECL (nc) = controlp;
+  OMP_CLAUSE__SCANTEMP__CONTROL (nc) = 1;
+  *cp1 = nc;
+  cp1 = &OMP_CLAUSE_CHAIN (nc);
+  nc = build_omp_clause (UNKNOWN_LOCATION, OMP_CLAUSE__SCANTEMP_);
+  OMP_CLAUSE_DECL (nc) = controlb;
+  OMP_CLAUSE__SCANTEMP__CONTROL (nc) = 1;
+  *cp2 = nc;
+  cp2 = &OMP_CLAUSE_CHAIN (nc);
+  nc = build_omp_clause (UNKNOWN_LOCATION, OMP_CLAUSE__SCANTEMP_);
+  OMP_CLAUSE_DECL (nc) = controlp;
+  OMP_CLAUSE__SCANTEMP__CONTROL (nc) = 1;
+  *cp2 = nc;
+  cp2 = &OMP_CLAUSE_CHAIN (nc);
+
+  *cp1 = gimple_omp_for_clauses (stmt);
+  gimple_omp_for_set_clauses (stmt, new_clauses1);
+  *cp2 = gimple_omp_for_clauses (new_stmt);
+  gimple_omp_for_set_clauses (new_stmt, new_clauses2);
+
+  if (is_for_simd)
+    {
+      gimple_seq_add_seq (gimple_omp_body_ptr (scan_stmt3), scan1_list);
+      gimple_seq_add_seq (gimple_omp_body_ptr (input_stmt4), input2_list);
+
+      gsi_insert_seq_after (&input3_gsi, gimple_omp_body (input_stmt3),
+			    GSI_SAME_STMT);
+      gsi_remove (&input3_gsi, true);
+      gsi_insert_seq_after (&scan3_gsi, gimple_omp_body (scan_stmt3),
+			    GSI_SAME_STMT);
+      gsi_remove (&scan3_gsi, true);
+      gsi_insert_seq_after (&input4_gsi, gimple_omp_body (input_stmt4),
+			    GSI_SAME_STMT);
+      gsi_remove (&input4_gsi, true);
+      gsi_insert_seq_after (&scan4_gsi, gimple_omp_body (scan_stmt4),
+			    GSI_SAME_STMT);
+      gsi_remove (&scan4_gsi, true);
+    }
+  else
+    {
+      gimple_omp_set_body (scan_stmt1, scan1_list);
+      gimple_omp_set_body (input_stmt2, input2_list);
+    }
+
+  gsi_insert_seq_after (&input1_gsi, gimple_omp_body (input_stmt1),
+			GSI_SAME_STMT);
+  gsi_remove (&input1_gsi, true);
+  gsi_insert_seq_after (&scan1_gsi, gimple_omp_body (scan_stmt1),
+			GSI_SAME_STMT);
+  gsi_remove (&scan1_gsi, true);
+  gsi_insert_seq_after (&input2_gsi, gimple_omp_body (input_stmt2),
+			GSI_SAME_STMT);
+  gsi_remove (&input2_gsi, true);
+  gsi_insert_seq_after (&scan2_gsi, gimple_omp_body (scan_stmt2),
+			GSI_SAME_STMT);
+  gsi_remove (&scan2_gsi, true);
+
+  gimple_seq_add_seq (body_p, clist);
+
+  tree lab1 = create_artificial_label (UNKNOWN_LOCATION);
+  tree lab2 = create_artificial_label (UNKNOWN_LOCATION);
+  tree lab3 = create_artificial_label (UNKNOWN_LOCATION);
+  g = gimple_build_cond (EQ_EXPR, thread_num, integer_zero_node, lab1, lab2);
+  gimple_seq_add_stmt (body_p, g);
+  g = gimple_build_label (lab1);
+  gimple_seq_add_stmt (body_p, g);
+  gimple_seq_add_seq (body_p, thr01_list);
+  g = gimple_build_goto (lab3);
+  gimple_seq_add_stmt (body_p, g);
+  g = gimple_build_label (lab2);
+  gimple_seq_add_stmt (body_p, g);
+  gimple_seq_add_seq (body_p, thrn1_list);
+  g = gimple_build_label (lab3);
+  gimple_seq_add_stmt (body_p, g);
+
+  g = gimple_build_assign (ivar, size_zero_node);
+  gimple_seq_add_stmt (body_p, g);
+
+  gimple_seq_add_stmt (body_p, stmt);
+  gimple_seq_add_seq (body_p, body);
+  gimple_seq_add_stmt (body_p, gimple_build_omp_continue (fd->loop.v,
+							  fd->loop.v));
+
+  g = gimple_build_omp_return (true);
+  gimple_seq_add_stmt (body_p, g);
+  gimple_seq_add_seq (body_p, mdlist);
+
+  lab1 = create_artificial_label (UNKNOWN_LOCATION);
+  lab2 = create_artificial_label (UNKNOWN_LOCATION);
+  g = gimple_build_cond (GT_EXPR, num_threads, integer_one_node, lab1, lab2);
+  gimple_seq_add_stmt (body_p, g);
+  g = gimple_build_label (lab1);
+  gimple_seq_add_stmt (body_p, g);
+
+  g = omp_build_barrier (NULL);
+  gimple_seq_add_stmt (body_p, g);
+
+  tree down = create_tmp_var (unsigned_type_node);
+  g = gimple_build_assign (down, build_zero_cst (unsigned_type_node));
+  gimple_seq_add_stmt (body_p, g);
+
+  g = gimple_build_assign (k, build_one_cst (unsigned_type_node));
+  gimple_seq_add_stmt (body_p, g);
+
+  tree num_threadsu = create_tmp_var (unsigned_type_node);
+  g = gimple_build_assign (num_threadsu, NOP_EXPR, num_threads);
+  gimple_seq_add_stmt (body_p, g);
+
+  tree thread_numu = create_tmp_var (unsigned_type_node);
+  g = gimple_build_assign (thread_numu, NOP_EXPR, thread_num);
+  gimple_seq_add_stmt (body_p, g);
+
+  tree thread_nump1 = create_tmp_var (unsigned_type_node);
+  g = gimple_build_assign (thread_nump1, PLUS_EXPR, thread_numu,
+			   build_int_cst (unsigned_type_node, 1));
+  gimple_seq_add_stmt (body_p, g);
+
+  lab3 = create_artificial_label (UNKNOWN_LOCATION);
+  g = gimple_build_label (lab3);
+  gimple_seq_add_stmt (body_p, g);
+
+  tree twok = create_tmp_var (unsigned_type_node);
+  g = gimple_build_assign (twok, LSHIFT_EXPR, k, integer_one_node);
+  gimple_seq_add_stmt (body_p, g);
+
+  tree lab4 = create_artificial_label (UNKNOWN_LOCATION);
+  tree lab5 = create_artificial_label (UNKNOWN_LOCATION);
+  tree lab6 = create_artificial_label (UNKNOWN_LOCATION);
+  g = gimple_build_cond (GT_EXPR, twok, num_threadsu, lab4, lab5);
+  gimple_seq_add_stmt (body_p, g);
+  g = gimple_build_label (lab4);
+  gimple_seq_add_stmt (body_p, g);
+  g = gimple_build_assign (down, build_all_ones_cst (unsigned_type_node));
+  gimple_seq_add_stmt (body_p, g);
+  g = gimple_build_assign (k, RSHIFT_EXPR, k, integer_one_node);
+  gimple_seq_add_stmt (body_p, g);
+
+  g = gimple_build_cond (EQ_EXPR, k, num_threadsu, lab6, lab5);
+  gimple_seq_add_stmt (body_p, g);
+  g = gimple_build_label (lab6);
+  gimple_seq_add_stmt (body_p, g);
+
+  g = gimple_build_assign (k, RSHIFT_EXPR, k, integer_one_node);
+  gimple_seq_add_stmt (body_p, g);
+
+  g = gimple_build_label (lab5);
+  gimple_seq_add_stmt (body_p, g);
+
+  g = gimple_build_assign (twok, LSHIFT_EXPR, k, integer_one_node);
+  gimple_seq_add_stmt (body_p, g);
+
+  tree cplx = create_tmp_var (build_complex_type (unsigned_type_node, false));
+  DECL_GIMPLE_REG_P (cplx) = 1;
+  g = gimple_build_call_internal (IFN_MUL_OVERFLOW, 2, thread_nump1, twok);
+  gimple_call_set_lhs (g, cplx);
+  gimple_seq_add_stmt (body_p, g);
+  tree mul = create_tmp_var (unsigned_type_node);
+  g = gimple_build_assign (mul, REALPART_EXPR,
+			   build1 (REALPART_EXPR, unsigned_type_node, cplx));
+  gimple_seq_add_stmt (body_p, g);
+  tree ovf = create_tmp_var (unsigned_type_node);
+  g = gimple_build_assign (ovf, IMAGPART_EXPR,
+			   build1 (IMAGPART_EXPR, unsigned_type_node, cplx));
+  gimple_seq_add_stmt (body_p, g);
+
+  tree lab7 = create_artificial_label (UNKNOWN_LOCATION);
+  tree lab8 = create_artificial_label (UNKNOWN_LOCATION);
+  g = gimple_build_cond (EQ_EXPR, ovf, build_zero_cst (unsigned_type_node),
+			 lab7, lab8);
+  gimple_seq_add_stmt (body_p, g);
+  g = gimple_build_label (lab7);
+  gimple_seq_add_stmt (body_p, g);
+
+  tree andv = create_tmp_var (unsigned_type_node);
+  g = gimple_build_assign (andv, BIT_AND_EXPR, k, down);
+  gimple_seq_add_stmt (body_p, g);
+  tree andvm1 = create_tmp_var (unsigned_type_node);
+  g = gimple_build_assign (andvm1, PLUS_EXPR, andv,
+			   build_minus_one_cst (unsigned_type_node));
+  gimple_seq_add_stmt (body_p, g);
+
+  g = gimple_build_assign (l, PLUS_EXPR, mul, andvm1);
+  gimple_seq_add_stmt (body_p, g);
+
+  tree lab9 = create_artificial_label (UNKNOWN_LOCATION);
+  g = gimple_build_cond (LT_EXPR, l, num_threadsu, lab9, lab8);
+  gimple_seq_add_stmt (body_p, g);
+  g = gimple_build_label (lab9);
+  gimple_seq_add_stmt (body_p, g);
+  gimple_seq_add_seq (body_p, reduc_list);
+  g = gimple_build_label (lab8);
+  gimple_seq_add_stmt (body_p, g);
+
+  tree lab10 = create_artificial_label (UNKNOWN_LOCATION);
+  tree lab11 = create_artificial_label (UNKNOWN_LOCATION);
+  tree lab12 = create_artificial_label (UNKNOWN_LOCATION);
+  g = gimple_build_cond (EQ_EXPR, down, build_zero_cst (unsigned_type_node),
+			 lab10, lab11);
+  gimple_seq_add_stmt (body_p, g);
+  g = gimple_build_label (lab10);
+  gimple_seq_add_stmt (body_p, g);
+  g = gimple_build_assign (k, LSHIFT_EXPR, k, integer_one_node);
+  gimple_seq_add_stmt (body_p, g);
+  g = gimple_build_goto (lab12);
+  gimple_seq_add_stmt (body_p, g);
+  g = gimple_build_label (lab11);
+  gimple_seq_add_stmt (body_p, g);
+  g = gimple_build_assign (k, RSHIFT_EXPR, k, integer_one_node);
+  gimple_seq_add_stmt (body_p, g);
+  g = gimple_build_label (lab12);
+  gimple_seq_add_stmt (body_p, g);
+
+  g = omp_build_barrier (NULL);
+  gimple_seq_add_stmt (body_p, g);
+
+  g = gimple_build_cond (NE_EXPR, k, build_zero_cst (unsigned_type_node),
+			 lab3, lab2);
+  gimple_seq_add_stmt (body_p, g);
+
+  g = gimple_build_label (lab2);
+  gimple_seq_add_stmt (body_p, g);
+
+  lab1 = create_artificial_label (UNKNOWN_LOCATION);
+  lab2 = create_artificial_label (UNKNOWN_LOCATION);
+  lab3 = create_artificial_label (UNKNOWN_LOCATION);
+  g = gimple_build_cond (EQ_EXPR, thread_num, integer_zero_node, lab1, lab2);
+  gimple_seq_add_stmt (body_p, g);
+  g = gimple_build_label (lab1);
+  gimple_seq_add_stmt (body_p, g);
+  gimple_seq_add_seq (body_p, thr02_list);
+  g = gimple_build_goto (lab3);
+  gimple_seq_add_stmt (body_p, g);
+  g = gimple_build_label (lab2);
+  gimple_seq_add_stmt (body_p, g);
+  gimple_seq_add_seq (body_p, thrn2_list);
+  g = gimple_build_label (lab3);
+  gimple_seq_add_stmt (body_p, g);
+
+  g = gimple_build_assign (ivar, size_zero_node);
+  gimple_seq_add_stmt (body_p, g);
+  gimple_seq_add_stmt (body_p, new_stmt);
+  gimple_seq_add_seq (body_p, new_body);
+
+  gimple_seq new_dlist = NULL;
+  lab1 = create_artificial_label (UNKNOWN_LOCATION);
+  lab2 = create_artificial_label (UNKNOWN_LOCATION);
+  tree num_threadsm1 = create_tmp_var (integer_type_node);
+  g = gimple_build_assign (num_threadsm1, PLUS_EXPR, num_threads,
+			   integer_minus_one_node);
+  gimple_seq_add_stmt (&new_dlist, g);
+  g = gimple_build_cond (EQ_EXPR, thread_num, num_threadsm1, lab1, lab2);
+  gimple_seq_add_stmt (&new_dlist, g);
+  g = gimple_build_label (lab1);
+  gimple_seq_add_stmt (&new_dlist, g);
+  gimple_seq_add_seq (&new_dlist, last_list);
+  g = gimple_build_label (lab2);
+  gimple_seq_add_stmt (&new_dlist, g);
+  gimple_seq_add_seq (&new_dlist, *dlist);
+  *dlist = new_dlist;
+}
 
 /* Lower code for an OMP loop directive.  */
 
@@ -8241,7 +10472,7 @@ lower_omp_for (gimple_stmt_iterator *gsi_p, omp_context *ctx)
   gomp_for *stmt = as_a <gomp_for *> (gsi_stmt (*gsi_p));
   gbind *new_stmt;
   gimple_seq omp_for_body, body, dlist, tred_ilist = NULL, tred_dlist = NULL;
-  gimple_seq cnt_list = NULL;
+  gimple_seq cnt_list = NULL, clist = NULL;
   gimple_seq oacc_head = NULL, oacc_tail = NULL;
   size_t i;
 
@@ -8354,6 +10585,9 @@ lower_omp_for (gimple_stmt_iterator *gsi_p, omp_context *ctx)
       gimple_seq_add_stmt (&body, gimple_build_assign (rtmp, temp));
     }
 
+  lower_lastprivate_conditional_clauses (gimple_omp_for_clauses_ptr (stmt),
+					 ctx);
+
   lower_rec_input_clauses (gimple_omp_for_clauses (stmt), &body, &dlist, ctx,
 			   fdp);
   gimple_seq_add_seq (rclauses ? &tred_ilist : &body,
@@ -8404,7 +10638,7 @@ lower_omp_for (gimple_stmt_iterator *gsi_p, omp_context *ctx)
   if (oacc_head)
     gimple_seq_add_seq (&body, oacc_head);
 
-  lower_omp_for_lastprivate (&fd, &body, &dlist, ctx);
+  lower_omp_for_lastprivate (&fd, &body, &dlist, &clist, ctx);
 
   if (gimple_omp_for_kind (stmt) == GF_OMP_FOR_KIND_FOR)
     for (tree c = gimple_omp_for_clauses (stmt); c; c = OMP_CLAUSE_CHAIN (c))
@@ -8420,16 +10654,36 @@ lower_omp_for (gimple_stmt_iterator *gsi_p, omp_context *ctx)
 
   bool phony_loop = (gimple_omp_for_kind (stmt) != GF_OMP_FOR_KIND_GRID_LOOP
 		     && gimple_omp_for_grid_phony (stmt));
-  if (!phony_loop)
-    gimple_seq_add_stmt (&body, stmt);
-  gimple_seq_add_seq (&body, gimple_omp_body (stmt));
+  if ((ctx->scan_inclusive || ctx->scan_exclusive)
+      && gimple_omp_for_kind (stmt) == GF_OMP_FOR_KIND_FOR)
+    {
+      gcc_assert (!phony_loop);
+      lower_omp_for_scan (&body, &dlist, stmt, &fd, ctx);
+    }
+  else
+    {
+      if (!phony_loop)
+	gimple_seq_add_stmt (&body, stmt);
+      gimple_seq_add_seq (&body, gimple_omp_body (stmt));
+    }
 
   if (!phony_loop)
     gimple_seq_add_stmt (&body, gimple_build_omp_continue (fd.loop.v,
 							   fd.loop.v));
 
   /* After the loop, add exit clauses.  */
-  lower_reduction_clauses (gimple_omp_for_clauses (stmt), &body, ctx);
+  lower_reduction_clauses (gimple_omp_for_clauses (stmt), &body, &clist, ctx);
+
+  if (clist)
+    {
+      tree fndecl = builtin_decl_explicit (BUILT_IN_GOMP_ATOMIC_START);
+      gcall *g = gimple_build_call (fndecl, 0);
+      gimple_seq_add_stmt (&body, g);
+      gimple_seq_add_seq (&body, clist);
+      fndecl = builtin_decl_explicit (BUILT_IN_GOMP_ATOMIC_END);
+      g = gimple_build_call (fndecl, 0);
+      gimple_seq_add_stmt (&body, g);
+    }
 
   if (ctx->cancellable)
     gimple_seq_add_stmt (&body, gimple_build_label (ctx->cancel_label));
@@ -8940,8 +11194,7 @@ lower_depend_clauses (tree *pclauses, gimple_seq *iseq, gimple_seq *oseq)
   OMP_CLAUSE_DECL (c) = build_fold_addr_expr (array);
   OMP_CLAUSE_CHAIN (c) = *pclauses;
   *pclauses = c;
-  tree clobber = build_constructor (type, NULL);
-  TREE_THIS_VOLATILE (clobber) = 1;
+  tree clobber = build_clobber (type);
   g = gimple_build_assign (array, clobber);
   gimple_seq_add_stmt (oseq, g);
 }
@@ -9050,8 +11303,8 @@ lower_omp_taskreg (gimple_stmt_iterator *gsi_p, omp_context *ctx)
     }
   lower_rec_input_clauses (clauses, &par_ilist, &par_olist, ctx, NULL);
   lower_omp (&par_body, ctx);
-  if (gimple_code (stmt) == GIMPLE_OMP_PARALLEL)
-    lower_reduction_clauses (clauses, &par_rlist, ctx);
+  if (gimple_code (stmt) != GIMPLE_OMP_TASK)
+    lower_reduction_clauses (clauses, &par_rlist, NULL, ctx);
 
   /* Declare all the variables created by mapping and the variables
      declared in the scope of the parallel body.  */
@@ -9076,8 +11329,7 @@ lower_omp_taskreg (gimple_stmt_iterator *gsi_p, omp_context *ctx)
 
   if (ctx->record_type)
     {
-      tree clobber = build_constructor (TREE_TYPE (ctx->sender_decl), NULL);
-      TREE_THIS_VOLATILE (clobber) = 1;
+      tree clobber = build_clobber (TREE_TYPE (ctx->sender_decl));
       gimple_seq_add_stmt (&olist, gimple_build_assign (ctx->sender_decl,
 							clobber));
     }
@@ -9162,6 +11414,7 @@ lower_omp_target (gimple_stmt_iterator *gsi_p, omp_context *ctx)
     case GF_OMP_TARGET_KIND_EXIT_DATA:
     case GF_OMP_TARGET_KIND_OACC_PARALLEL:
     case GF_OMP_TARGET_KIND_OACC_KERNELS:
+    case GF_OMP_TARGET_KIND_OACC_SERIAL:
     case GF_OMP_TARGET_KIND_OACC_UPDATE:
     case GF_OMP_TARGET_KIND_OACC_ENTER_EXIT_DATA:
     case GF_OMP_TARGET_KIND_OACC_DECLARE:
@@ -9230,6 +11483,7 @@ lower_omp_target (gimple_stmt_iterator *gsi_p, omp_context *ctx)
 	  case GOMP_MAP_STRUCT:
 	  case GOMP_MAP_ALWAYS_POINTER:
 	    break;
+	  case GOMP_MAP_IF_PRESENT:
 	  case GOMP_MAP_FORCE_ALLOC:
 	  case GOMP_MAP_FORCE_TO:
 	  case GOMP_MAP_FORCE_FROM:
@@ -9238,6 +11492,9 @@ lower_omp_target (gimple_stmt_iterator *gsi_p, omp_context *ctx)
 	  case GOMP_MAP_FORCE_DEVICEPTR:
 	  case GOMP_MAP_DEVICE_RESIDENT:
 	  case GOMP_MAP_LINK:
+	  case GOMP_MAP_ATTACH:
+	  case GOMP_MAP_DETACH:
+	  case GOMP_MAP_FORCE_DETACH:
 	    gcc_assert (is_gimple_omp_oacc (stmt));
 	    break;
 	  default:
@@ -9294,7 +11551,7 @@ lower_omp_target (gimple_stmt_iterator *gsi_p, omp_context *ctx)
 	if (!maybe_lookup_field (var, ctx))
 	  continue;
 
-	/* Don't remap oacc parallel reduction variables, because the
+	/* Don't remap compute constructs' reduction variables, because the
 	   intermediate result must be local to each gang.  */
 	if (offloaded && !(OMP_CLAUSE_CODE (c) == OMP_CLAUSE_MAP
 			   && OMP_CLAUSE_MAP_IN_REDUCTION (c)))
@@ -9311,7 +11568,8 @@ lower_omp_target (gimple_stmt_iterator *gsi_p, omp_context *ctx)
 	      {
 		gcc_assert (is_gimple_omp_oacc (ctx->stmt));
 		if (omp_is_reference (new_var)
-		    && TREE_CODE (TREE_TYPE (new_var)) != POINTER_TYPE)
+		    && (TREE_CODE (TREE_TYPE (new_var)) != POINTER_TYPE
+		        || DECL_BY_REFERENCE (var)))
 		  {
 		    /* Create a local object to hold the instance
 		       value.  */
@@ -9335,8 +11593,14 @@ lower_omp_target (gimple_stmt_iterator *gsi_p, omp_context *ctx)
 	break;
 
       case OMP_CLAUSE_FIRSTPRIVATE:
-	if (is_oacc_parallel (ctx))
-	  goto oacc_firstprivate;
+	gcc_checking_assert (offloaded);
+	if (is_gimple_omp_oacc (ctx->stmt))
+	  {
+	    /* No 'firstprivate' clauses on OpenACC 'kernels'.  */
+	    gcc_checking_assert (!is_oacc_kernels (ctx));
+
+	    goto oacc_firstprivate;
+	  }
 	map_cnt++;
 	var = OMP_CLAUSE_DECL (c);
 	if (!omp_is_reference (var)
@@ -9361,8 +11625,14 @@ lower_omp_target (gimple_stmt_iterator *gsi_p, omp_context *ctx)
 	break;
 
       case OMP_CLAUSE_PRIVATE:
+	gcc_checking_assert (offloaded);
 	if (is_gimple_omp_oacc (ctx->stmt))
-	  break;
+	  {
+	    /* No 'private' clauses on OpenACC 'kernels'.  */
+	    gcc_checking_assert (!is_oacc_kernels (ctx));
+
+	    break;
+	  }
 	var = OMP_CLAUSE_DECL (c);
 	if (is_variable_sized (var))
 	  {
@@ -9380,6 +11650,7 @@ lower_omp_target (gimple_stmt_iterator *gsi_p, omp_context *ctx)
 	break;
 
       case OMP_CLAUSE_USE_DEVICE_PTR:
+      case OMP_CLAUSE_USE_DEVICE_ADDR:
       case OMP_CLAUSE_IS_DEVICE_PTR:
 	var = OMP_CLAUSE_DECL (c);
 	map_cnt++;
@@ -9396,7 +11667,11 @@ lower_omp_target (gimple_stmt_iterator *gsi_p, omp_context *ctx)
 	    SET_DECL_VALUE_EXPR (new_var, x);
 	    DECL_HAS_VALUE_EXPR_P (new_var) = 1;
 	  }
-	else if (TREE_CODE (TREE_TYPE (var)) == ARRAY_TYPE)
+	else if ((OMP_CLAUSE_CODE (c) == OMP_CLAUSE_USE_DEVICE_ADDR
+		  && !omp_is_reference (var)
+		  && !omp_is_allocatable_or_ptr (var)
+		  && !lang_hooks.decls.omp_array_data (var, true))
+		 || TREE_CODE (TREE_TYPE (var)) == ARRAY_TYPE)
 	  {
 	    tree new_var = lookup_decl (var, ctx);
 	    tree type = build_pointer_type (TREE_TYPE (var));
@@ -9590,7 +11865,18 @@ lower_omp_target (gimple_stmt_iterator *gsi_p, omp_context *ctx)
 		  }
 		else
 		  {
-		    var = build_fold_addr_expr (var);
+		    /* While MAP is handled explicitly by the FE,
+		       for 'target update', only the identified is passed.  */
+		    if ((OMP_CLAUSE_CODE (c) == OMP_CLAUSE_FROM
+			 || OMP_CLAUSE_CODE (c) == OMP_CLAUSE_TO)
+			&& (omp_is_allocatable_or_ptr (var)
+			    && omp_check_optional_argument (var, false)))
+		      var = build_fold_indirect_ref (var);
+		    else if ((OMP_CLAUSE_CODE (c) != OMP_CLAUSE_FROM
+			      && OMP_CLAUSE_CODE (c) != OMP_CLAUSE_TO)
+			     || (!omp_is_allocatable_or_ptr (var)
+				 && !omp_check_optional_argument (var, false)))
+		      var = build_fold_addr_expr (var);
 		    gimplify_assign (x, var, &ilist);
 		  }
 	      }
@@ -9599,7 +11885,8 @@ lower_omp_target (gimple_stmt_iterator *gsi_p, omp_context *ctx)
 	      {
 		gcc_checking_assert (is_gimple_omp_oacc (ctx->stmt));
 		s = TREE_TYPE (ovar);
-		if (TREE_CODE (s) == REFERENCE_TYPE)
+		if (TREE_CODE (s) == REFERENCE_TYPE
+		    || omp_check_optional_argument (ovar, false))
 		  s = TREE_TYPE (s);
 		s = TYPE_SIZE_UNIT (s);
 	      }
@@ -9623,6 +11910,7 @@ lower_omp_target (gimple_stmt_iterator *gsi_p, omp_context *ctx)
 		  switch (tkind)
 		    {
 		    case GOMP_MAP_ALLOC:
+		    case GOMP_MAP_IF_PRESENT:
 		    case GOMP_MAP_TO:
 		    case GOMP_MAP_FROM:
 		    case GOMP_MAP_TOFROM:
@@ -9693,7 +11981,7 @@ lower_omp_target (gimple_stmt_iterator *gsi_p, omp_context *ctx)
 	    break;
 
 	  case OMP_CLAUSE_FIRSTPRIVATE:
-	    if (is_oacc_parallel (ctx))
+	    if (is_gimple_omp_oacc (ctx->stmt))
 	      goto oacc_firstprivate_map;
 	    ovar = OMP_CLAUSE_DECL (c);
 	    if (omp_is_reference (ovar))
@@ -9761,28 +12049,85 @@ lower_omp_target (gimple_stmt_iterator *gsi_p, omp_context *ctx)
 	    break;
 
 	  case OMP_CLAUSE_USE_DEVICE_PTR:
+	  case OMP_CLAUSE_USE_DEVICE_ADDR:
 	  case OMP_CLAUSE_IS_DEVICE_PTR:
 	    ovar = OMP_CLAUSE_DECL (c);
 	    var = lookup_decl_in_outer_ctx (ovar, ctx);
-	    x = build_sender_ref (ovar, ctx);
-	    if (OMP_CLAUSE_CODE (c) == OMP_CLAUSE_USE_DEVICE_PTR)
-	      tkind = GOMP_MAP_USE_DEVICE_PTR;
+
+	    if (lang_hooks.decls.omp_array_data (ovar, true))
+	      {
+		tkind = (OMP_CLAUSE_CODE (c) != OMP_CLAUSE_IS_DEVICE_PTR
+			 ? GOMP_MAP_USE_DEVICE_PTR : GOMP_MAP_FIRSTPRIVATE_INT);
+		x = build_sender_ref ((splay_tree_key) &DECL_NAME (ovar), ctx);
+	      }
+	    else if (OMP_CLAUSE_CODE (c) != OMP_CLAUSE_IS_DEVICE_PTR)
+	      {
+		tkind = GOMP_MAP_USE_DEVICE_PTR;
+		x = build_sender_ref ((splay_tree_key) &DECL_UID (ovar), ctx);
+	      }
 	    else
-	      tkind = GOMP_MAP_FIRSTPRIVATE_INT;
+	      {
+		tkind = GOMP_MAP_FIRSTPRIVATE_INT;
+		x = build_sender_ref (ovar, ctx);
+	      }
+
+	    if (is_gimple_omp_oacc (ctx->stmt))
+	      {
+		gcc_assert (tkind == GOMP_MAP_USE_DEVICE_PTR);
+
+		if (OMP_CLAUSE_USE_DEVICE_PTR_IF_PRESENT (c))
+		  tkind = GOMP_MAP_USE_DEVICE_PTR_IF_PRESENT;
+	      }
+
 	    type = TREE_TYPE (ovar);
-	    if (TREE_CODE (type) == ARRAY_TYPE)
+	    if (lang_hooks.decls.omp_array_data (ovar, true))
+	      var = lang_hooks.decls.omp_array_data (ovar, false);
+	    else if ((OMP_CLAUSE_CODE (c) == OMP_CLAUSE_USE_DEVICE_ADDR
+		      && !omp_is_reference (ovar)
+		      && !omp_is_allocatable_or_ptr (ovar))
+		     || TREE_CODE (type) == ARRAY_TYPE)
 	      var = build_fold_addr_expr (var);
 	    else
 	      {
-		if (omp_is_reference (ovar))
+		if (omp_is_reference (ovar)
+		    || omp_check_optional_argument (ovar, false)
+		    || omp_is_allocatable_or_ptr (ovar))
 		  {
 		    type = TREE_TYPE (type);
-		    if (TREE_CODE (type) != ARRAY_TYPE)
+		    if (TREE_CODE (type) != ARRAY_TYPE
+			&& ((OMP_CLAUSE_CODE (c) != OMP_CLAUSE_USE_DEVICE_ADDR
+			    && !omp_is_allocatable_or_ptr (ovar))
+			   || (omp_is_reference (ovar)
+			       && omp_is_allocatable_or_ptr (ovar))))
 		      var = build_simple_mem_ref (var);
 		    var = fold_convert (TREE_TYPE (x), var);
 		  }
 	      }
-	    gimplify_assign (x, var, &ilist);
+	    tree present;
+	    present = omp_check_optional_argument (ovar, true);
+	    if (present)
+	      {
+		tree null_label = create_artificial_label (UNKNOWN_LOCATION);
+		tree notnull_label = create_artificial_label (UNKNOWN_LOCATION);
+		tree opt_arg_label = create_artificial_label (UNKNOWN_LOCATION);
+		tree new_x = unshare_expr (x);
+		gimplify_expr (&present, &ilist, NULL, is_gimple_val,
+			       fb_rvalue);
+		gcond *cond = gimple_build_cond_from_tree (present,
+							   notnull_label,
+							   null_label);
+		gimple_seq_add_stmt (&ilist, cond);
+		gimple_seq_add_stmt (&ilist, gimple_build_label (null_label));
+		gimplify_assign (new_x, null_pointer_node, &ilist);
+		gimple_seq_add_stmt (&ilist, gimple_build_goto (opt_arg_label));
+		gimple_seq_add_stmt (&ilist,
+				     gimple_build_label (notnull_label));
+		gimplify_assign (x, var, &ilist);
+		gimple_seq_add_stmt (&ilist,
+				     gimple_build_label (opt_arg_label));
+	      }
+	    else
+	      gimplify_assign (x, var, &ilist);
 	    s = size_int (0);
 	    purpose = size_int (map_idx++);
 	    CONSTRUCTOR_APPEND_ELT (vsize, purpose, s);
@@ -9810,16 +12155,13 @@ lower_omp_target (gimple_stmt_iterator *gsi_p, omp_context *ctx)
 				  &initlist, true, NULL_TREE);
 	    gimple_seq_add_seq (&ilist, initlist);
 
-	    tree clobber = build_constructor (TREE_TYPE (TREE_VEC_ELT (t, i)),
-					      NULL);
-	    TREE_THIS_VOLATILE (clobber) = 1;
+	    tree clobber = build_clobber (TREE_TYPE (TREE_VEC_ELT (t, i)));
 	    gimple_seq_add_stmt (&olist,
 				 gimple_build_assign (TREE_VEC_ELT (t, i),
 						      clobber));
 	  }
 
-      tree clobber = build_constructor (ctx->record_type, NULL);
-      TREE_THIS_VOLATILE (clobber) = 1;
+      tree clobber = build_clobber (ctx->record_type);
       gimple_seq_add_stmt (&olist, gimple_build_assign (ctx->sender_decl,
 							clobber));
     }
@@ -9932,60 +12274,143 @@ lower_omp_target (gimple_stmt_iterator *gsi_p, omp_context *ctx)
 	      }
 	    break;
 	  case OMP_CLAUSE_USE_DEVICE_PTR:
+	  case OMP_CLAUSE_USE_DEVICE_ADDR:
 	  case OMP_CLAUSE_IS_DEVICE_PTR:
+	    tree new_var;
+	    gimple_seq assign_body;
+	    bool is_array_data;
+	    bool do_optional_check;
+	    assign_body = NULL;
+	    do_optional_check = false;
 	    var = OMP_CLAUSE_DECL (c);
-	    if (OMP_CLAUSE_CODE (c) == OMP_CLAUSE_USE_DEVICE_PTR)
-	      x = build_sender_ref (var, ctx);
+	    is_array_data = lang_hooks.decls.omp_array_data (var, true) != NULL;
+
+	    if (OMP_CLAUSE_CODE (c) != OMP_CLAUSE_IS_DEVICE_PTR)
+	      x = build_sender_ref (is_array_data
+				    ? (splay_tree_key) &DECL_NAME (var)
+				    : (splay_tree_key) &DECL_UID (var), ctx);
 	    else
 	      x = build_receiver_ref (var, false, ctx);
-	    if (is_variable_sized (var))
+
+	    if (is_array_data)
+	      {
+		bool is_ref = omp_is_reference (var);
+		do_optional_check = true;
+		/* First, we copy the descriptor data from the host; then
+		   we update its data to point to the target address.  */
+		new_var = lookup_decl (var, ctx);
+		new_var = DECL_VALUE_EXPR (new_var);
+		tree v = new_var;
+
+		if (is_ref)
+		  {
+		    var = build_fold_indirect_ref (var);
+		    gimplify_expr (&var, &assign_body, NULL, is_gimple_val,
+				   fb_rvalue);
+		    v = create_tmp_var_raw (TREE_TYPE (var), get_name (var));
+		    gimple_add_tmp_var (v);
+		    TREE_ADDRESSABLE (v) = 1;
+		    gimple_seq_add_stmt (&assign_body,
+					 gimple_build_assign (v, var));
+		    tree rhs = build_fold_addr_expr (v);
+		    gimple_seq_add_stmt (&assign_body,
+					 gimple_build_assign (new_var, rhs));
+		  }
+		else
+		  gimple_seq_add_stmt (&assign_body,
+				       gimple_build_assign (new_var, var));
+
+		tree v2 = lang_hooks.decls.omp_array_data (unshare_expr (v), false);
+		gcc_assert (v2);
+		gimplify_expr (&x, &assign_body, NULL, is_gimple_val, fb_rvalue);
+		gimple_seq_add_stmt (&assign_body,
+				     gimple_build_assign (v2, x));
+	      }
+	    else if (is_variable_sized (var))
 	      {
 		tree pvar = DECL_VALUE_EXPR (var);
 		gcc_assert (TREE_CODE (pvar) == INDIRECT_REF);
 		pvar = TREE_OPERAND (pvar, 0);
 		gcc_assert (DECL_P (pvar));
-		tree new_var = lookup_decl (pvar, ctx);
-		gimplify_expr (&x, &new_body, NULL, is_gimple_val, fb_rvalue);
-		gimple_seq_add_stmt (&new_body,
+		new_var = lookup_decl (pvar, ctx);
+		gimplify_expr (&x, &assign_body, NULL, is_gimple_val, fb_rvalue);
+		gimple_seq_add_stmt (&assign_body,
 				     gimple_build_assign (new_var, x));
 	      }
-	    else if (TREE_CODE (TREE_TYPE (var)) == ARRAY_TYPE)
+	    else if ((OMP_CLAUSE_CODE (c) == OMP_CLAUSE_USE_DEVICE_ADDR
+		      && !omp_is_reference (var)
+		      && !omp_is_allocatable_or_ptr (var))
+		     || TREE_CODE (TREE_TYPE (var)) == ARRAY_TYPE)
 	      {
-		tree new_var = lookup_decl (var, ctx);
+		new_var = lookup_decl (var, ctx);
 		new_var = DECL_VALUE_EXPR (new_var);
 		gcc_assert (TREE_CODE (new_var) == MEM_REF);
 		new_var = TREE_OPERAND (new_var, 0);
 		gcc_assert (DECL_P (new_var));
-		gimplify_expr (&x, &new_body, NULL, is_gimple_val, fb_rvalue);
-		gimple_seq_add_stmt (&new_body,
+		gimplify_expr (&x, &assign_body, NULL, is_gimple_val, fb_rvalue);
+		gimple_seq_add_stmt (&assign_body,
 				     gimple_build_assign (new_var, x));
 	      }
 	    else
 	      {
 		tree type = TREE_TYPE (var);
-		tree new_var = lookup_decl (var, ctx);
+		new_var = lookup_decl (var, ctx);
 		if (omp_is_reference (var))
 		  {
 		    type = TREE_TYPE (type);
-		    if (TREE_CODE (type) != ARRAY_TYPE)
+		    if (TREE_CODE (type) != ARRAY_TYPE
+			&& (OMP_CLAUSE_CODE (c) != OMP_CLAUSE_USE_DEVICE_ADDR
+			    || (omp_is_reference (var)
+				&& omp_is_allocatable_or_ptr (var))))
 		      {
 			tree v = create_tmp_var_raw (type, get_name (var));
 			gimple_add_tmp_var (v);
 			TREE_ADDRESSABLE (v) = 1;
 			x = fold_convert (type, x);
-			gimplify_expr (&x, &new_body, NULL, is_gimple_val,
+			gimplify_expr (&x, &assign_body, NULL, is_gimple_val,
 				       fb_rvalue);
-			gimple_seq_add_stmt (&new_body,
+			gimple_seq_add_stmt (&assign_body,
 					     gimple_build_assign (v, x));
 			x = build_fold_addr_expr (v);
+			do_optional_check = true;
 		      }
 		  }
 		new_var = DECL_VALUE_EXPR (new_var);
 		x = fold_convert (TREE_TYPE (new_var), x);
-		gimplify_expr (&x, &new_body, NULL, is_gimple_val, fb_rvalue);
-		gimple_seq_add_stmt (&new_body,
+		gimplify_expr (&x, &assign_body, NULL, is_gimple_val, fb_rvalue);
+		gimple_seq_add_stmt (&assign_body,
 				     gimple_build_assign (new_var, x));
 	      }
+	    tree present;
+	    present = (do_optional_check
+		       ? omp_check_optional_argument (OMP_CLAUSE_DECL (c), true)
+		       : NULL_TREE);
+	    if (present)
+	      {
+		tree null_label = create_artificial_label (UNKNOWN_LOCATION);
+		tree notnull_label = create_artificial_label (UNKNOWN_LOCATION);
+		tree opt_arg_label = create_artificial_label (UNKNOWN_LOCATION);
+		glabel *null_glabel = gimple_build_label (null_label);
+		glabel *notnull_glabel = gimple_build_label (notnull_label);
+		ggoto *opt_arg_ggoto = gimple_build_goto (opt_arg_label);
+		gimplify_expr (&x, &new_body, NULL, is_gimple_val,
+					   fb_rvalue);
+		gimplify_expr (&present, &new_body, NULL, is_gimple_val,
+			       fb_rvalue);
+		gcond *cond = gimple_build_cond_from_tree (present,
+							   notnull_label,
+							   null_label);
+		gimple_seq_add_stmt (&new_body, cond);
+		gimple_seq_add_stmt (&new_body, null_glabel);
+		gimplify_assign (new_var, null_pointer_node, &new_body);
+		gimple_seq_add_stmt (&new_body, opt_arg_ggoto);
+		gimple_seq_add_stmt (&new_body, notnull_glabel);
+		gimple_seq_add_seq (&new_body, assign_body);
+		gimple_seq_add_stmt (&new_body,
+				     gimple_build_label (opt_arg_label));
+	      }
+	    else
+	      gimple_seq_add_seq (&new_body, assign_body);
 	    break;
 	  }
       /* Handle GOMP_MAP_FIRSTPRIVATE_{POINTER,REFERENCE} in second pass,
@@ -10160,7 +12585,7 @@ lower_omp_target (gimple_stmt_iterator *gsi_p, omp_context *ctx)
       gimple_seq fork_seq = NULL;
       gimple_seq join_seq = NULL;
 
-      if (is_oacc_parallel (ctx))
+      if (offloaded && is_gimple_omp_oacc (ctx->stmt))
 	{
 	  /* If there are reductions on the offloaded region itself, treat
 	     them as a dummy GANG loop.  */
@@ -10175,9 +12600,10 @@ lower_omp_target (gimple_stmt_iterator *gsi_p, omp_context *ctx)
       gimple_seq_add_seq (&new_body, join_seq);
 
       if (offloaded)
-	new_body = maybe_catch_exception (new_body);
-
-      gimple_seq_add_stmt (&new_body, gimple_build_omp_return (false));
+	{
+	  new_body = maybe_catch_exception (new_body);
+	  gimple_seq_add_stmt (&new_body, gimple_build_omp_return (false));
+	}
       gimple_omp_set_body (stmt, new_body);
     }
 
@@ -10240,7 +12666,8 @@ lower_omp_teams (gimple_stmt_iterator *gsi_p, omp_context *ctx)
   lower_rec_input_clauses (gimple_omp_teams_clauses (teams_stmt),
 			   &bind_body, &dlist, ctx, NULL);
   lower_omp (gimple_omp_body_ptr (teams_stmt), ctx);
-  lower_reduction_clauses (gimple_omp_teams_clauses (teams_stmt), &olist, ctx);
+  lower_reduction_clauses (gimple_omp_teams_clauses (teams_stmt), &olist,
+			   NULL, ctx);
   if (!gimple_omp_teams_grid_phony (teams_stmt))
     {
       gimple_seq_add_stmt (&bind_body, teams_stmt);
@@ -10467,6 +12894,11 @@ lower_omp_1 (gimple_stmt_iterator *gsi_p, omp_context *ctx)
       gcc_assert (ctx);
       lower_omp_ordered (gsi_p, ctx);
       break;
+    case GIMPLE_OMP_SCAN:
+      ctx = maybe_lookup_ctx (stmt);
+      gcc_assert (ctx);
+      lower_omp_scan (gsi_p, ctx);
+      break;
     case GIMPLE_OMP_CRITICAL:
       ctx = maybe_lookup_ctx (stmt);
       gcc_assert (ctx);
@@ -10549,8 +12981,55 @@ lower_omp_1 (gimple_stmt_iterator *gsi_p, omp_context *ctx)
 	  default:
 	    break;
 	  }
+      goto regimplify;
+
+    case GIMPLE_ASSIGN:
+      for (omp_context *up = ctx; up; up = up->outer)
+	{
+	  if (gimple_code (up->stmt) == GIMPLE_OMP_ORDERED
+	      || gimple_code (up->stmt) == GIMPLE_OMP_CRITICAL
+	      || gimple_code (up->stmt) == GIMPLE_OMP_TASKGROUP
+	      || gimple_code (up->stmt) == GIMPLE_OMP_SECTION
+	      || gimple_code (up->stmt) == GIMPLE_OMP_SCAN
+	      || (gimple_code (up->stmt) == GIMPLE_OMP_TARGET
+		  && (gimple_omp_target_kind (up->stmt)
+		      == GF_OMP_TARGET_KIND_DATA)))
+	    continue;
+	  else if (!up->lastprivate_conditional_map)
+	    break;
+	  tree lhs = get_base_address (gimple_assign_lhs (stmt));
+	  if (TREE_CODE (lhs) == MEM_REF
+	      && DECL_P (TREE_OPERAND (lhs, 0))
+	      && TREE_CODE (TREE_TYPE (TREE_OPERAND (lhs,
+						     0))) == REFERENCE_TYPE)
+	    lhs = TREE_OPERAND (lhs, 0);
+	  if (DECL_P (lhs))
+	    if (tree *v = up->lastprivate_conditional_map->get (lhs))
+	      {
+		tree clauses;
+		if (up->combined_into_simd_safelen1)
+		  {
+		    up = up->outer;
+		    if (gimple_code (up->stmt) == GIMPLE_OMP_SCAN)
+		      up = up->outer;
+		  }
+		if (gimple_code (up->stmt) == GIMPLE_OMP_FOR)
+		  clauses = gimple_omp_for_clauses (up->stmt);
+		else
+		  clauses = gimple_omp_sections_clauses (up->stmt);
+		tree c = omp_find_clause (clauses, OMP_CLAUSE__CONDTEMP_);
+		if (!OMP_CLAUSE__CONDTEMP__ITER (c))
+		  c = omp_find_clause (OMP_CLAUSE_CHAIN (c),
+				       OMP_CLAUSE__CONDTEMP_);
+		gcc_assert (OMP_CLAUSE__CONDTEMP__ITER (c));
+		gimple *g = gimple_build_assign (*v, OMP_CLAUSE_DECL (c));
+		gsi_insert_after (gsi_p, g, GSI_SAME_STMT);
+	      }
+	}
       /* FALLTHRU */
+
     default:
+    regimplify:
       if ((ctx || task_shared_vars)
 	  && walk_gimple_op (stmt, lower_omp_regimplify_p,
 			     ctx ? NULL : &wi))
@@ -10787,6 +13266,7 @@ diagnose_sb_1 (gimple_stmt_iterator *gsi_p, bool *handled_ops_p,
     case GIMPLE_OMP_SECTION:
     case GIMPLE_OMP_MASTER:
     case GIMPLE_OMP_ORDERED:
+    case GIMPLE_OMP_SCAN:
     case GIMPLE_OMP_CRITICAL:
     case GIMPLE_OMP_TARGET:
     case GIMPLE_OMP_TEAMS:
@@ -10847,6 +13327,7 @@ diagnose_sb_2 (gimple_stmt_iterator *gsi_p, bool *handled_ops_p,
     case GIMPLE_OMP_SECTION:
     case GIMPLE_OMP_MASTER:
     case GIMPLE_OMP_ORDERED:
+    case GIMPLE_OMP_SCAN:
     case GIMPLE_OMP_CRITICAL:
     case GIMPLE_OMP_TARGET:
     case GIMPLE_OMP_TEAMS:
