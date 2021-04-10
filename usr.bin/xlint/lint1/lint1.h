@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.93 2021/04/10 18:06:53 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.94 2021/04/10 18:36:27 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -148,7 +148,7 @@ typedef	struct {
  * The type of an expression or object. Complex types are formed via t_subt
  * (for arrays, pointers and functions), as well as t_str.
  */
-struct type {
+struct lint1_type {
 	tspec_t	t_tspec;	/* type specifier */
 	bool	t_incomplete_array : 1;
 	bool	t_const : 1;	/* const modifier */
@@ -169,8 +169,9 @@ struct type {
 		u_int	_t_flen : 8;	/* length of bit-field */
 		u_int	_t_foffs : 24;	/* offset of bit-field */
 	} t_b;
-	struct	type *t_subt;	/* element type (arrays), return value
-				   (functions), or type pointer points to */
+	struct	lint1_type *t_subt; /* element type (if ARRAY),
+				 * return value (if FUNC),
+				 * target type (if PTR) */
 };
 
 #define	t_dim	t_u._t_dim

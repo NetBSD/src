@@ -1,4 +1,4 @@
-/* $NetBSD: lint2.h,v 1.13 2021/02/19 22:27:49 rillig Exp $ */
+/* $NetBSD: lint2.h,v 1.14 2021/04/10 18:36:27 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -37,7 +37,7 @@
 /*
  * Types are described by structures of type type_t.
  */
-struct type {
+struct lint2_type {
 	tspec_t	t_tspec;	/* type specifier */
 	bool	t_const : 1;	/* constant */
 	bool	t_volatile : 1;	/* volatile */
@@ -61,11 +61,12 @@ struct type {
 		} _t_uniqpos;		/* unique position, for untagged
 					   untyped STRUCTs, UNIONS, and ENUMs,
 					   if t_isuniqpos */
-		struct	type **_t_args;	/* list of argument types if this
-					   is a prototype */
+		struct	lint2_type **_t_args; /* list of argument types if
+					   this is a prototype */
 	} t_u;
-	struct	type *t_subt;	/* indirected type (array element, pointed to
-				   type, type of return value) */
+	struct	lint2_type *t_subt;	/* element type (if ARRAY),
+					   return type (if FUNC),
+					   target type (if PTR) */
 };
 
 #define	t_dim		t_u._t_dim
@@ -181,7 +182,7 @@ typedef	struct hte {
 	usym_t	*h_usyms;	/* usage info */
 	usym_t	**h_lusym;	/* points to u_next of last usage info */
 	struct	hte *h_link;	/* next hte with same hash function */
-	struct  hte *h_hte;	/* pointer to other htes (for renames */
+	struct  hte *h_hte;	/* pointer to other htes (for renames) */
 } hte_t;
 
 /* maps type indices into pointers to type structs */
