@@ -2,17 +2,11 @@ Global: SPECIALS = \: : \\ * \*
 CondParser_Eval: ${SPECIALS:M${:U}\:} != ${SPECIALS:M\:${:U}}
 Var_Parse: ${SPECIALS:M${:U}\:} != ${SPECIALS:M\:${:U}} (eval-defined)
 Evaluating modifier ${SPECIALS:M...} on value "\: : \\ * \*"
-Var_Parse: ${:U}\: (eval-defined)
-Evaluating modifier ${:U} on value "" (eval-defined, undefined)
-Result of ${:U} is "" (eval-defined, defined)
 Pattern for ':M' is "\:"
 ModifyWords: split "\: : \\ * \*" into 5 words
 Result of ${SPECIALS:M${:U}\:} is ":"
 Var_Parse: ${SPECIALS:M\:${:U}} (eval-defined)
 Evaluating modifier ${SPECIALS:M...} on value "\: : \\ * \*"
-Var_Parse: ${:U} (eval-defined)
-Evaluating modifier ${:U} on value "" (eval-defined, undefined)
-Result of ${:U} is "" (eval-defined, defined)
 Pattern for ':M' is ":"
 ModifyWords: split "\: : \\ * \*" into 5 words
 Result of ${SPECIALS:M\:${:U}} is ":"
