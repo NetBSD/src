@@ -1,4 +1,4 @@
-/*	$NetBSD: event-internal.h,v 1.4 2021/04/07 03:36:48 christos Exp $	*/
+/*	$NetBSD: event-internal.h,v 1.5 2021/04/10 19:18:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 2000-2007 Niels Provos <provos@citi.umich.edu>
@@ -397,7 +397,7 @@ struct event_config {
 	(elm)->field.tqe_next = (listelm);				\
 	*(listelm)->field.tqe_prev = (elm);				\
 	(listelm)->field.tqe_prev = &(elm)->field.tqe_next;		\
-} while (/*CONSTCOND*/0)
+} while (0)
 #endif
 
 #define N_ACTIVE_CALLBACKS(base)					\

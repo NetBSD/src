@@ -1,4 +1,4 @@
-/*	$NetBSD: ht-internal.h,v 1.3 2017/01/31 23:17:39 christos Exp $	*/
+/*	$NetBSD: ht-internal.h,v 1.4 2021/04/10 19:18:45 rillig Exp $	*/
 /* Copyright 2002 Christopher Clark */
 /* Copyright 2005-2012 Nick Mathewson */
 /* Copyright 2009-2012 Niels Provos and Nick Mathewson */
@@ -104,9 +104,9 @@ ht_string_hash_(const char *s)
 
 #ifndef HT_NO_CACHE_HASH_VALUES
 #define HT_SET_HASH_(elm, field, hashfn)        \
-	do { (elm)->field.hte_hash = hashfn(elm); } while (/*CONSTCOND*/0)
+	do { (elm)->field.hte_hash = hashfn(elm); } while (0)
 #define HT_SET_HASHVAL_(elm, field, val)	\
-	do { (elm)->field.hte_hash = (val); } while (/*CONSTCOND*/0)
+	do { (elm)->field.hte_hash = (val); } while (0)
 #define HT_ELT_HASH_(elm, field, hashfn)	\
 	((elm)->field.hte_hash)
 #else

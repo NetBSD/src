@@ -1,4 +1,4 @@
-/*	$NetBSD: evmap.c,v 1.5 2021/04/10 19:02:37 rillig Exp $	*/
+/*	$NetBSD: evmap.c,v 1.6 2021/04/10 19:18:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -27,7 +27,7 @@
  */
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: evmap.c,v 1.5 2021/04/10 19:02:37 rillig Exp $");
+__RCSID("$NetBSD: evmap.c,v 1.6 2021/04/10 19:18:45 rillig Exp $");
 #include "evconfig-private.h"
 
 #ifdef _WIN32
@@ -121,7 +121,7 @@ HT_GENERATE(event_io_map, event_map_entry, map_node, hashsocket, eqsocket,
 		key_.fd = slot;						\
 		ent_ = HT_FIND(event_io_map, map, &key_);		\
 		(x) = ent_ ? &ent_->ent.type : NULL;			\
-	} while (/*CONSTCOND*/0);
+	} while (0);
 
 #define GET_IO_SLOT_AND_CTOR(x, map, slot, type, ctor, fdinfo_len)	\
 	do {								\
