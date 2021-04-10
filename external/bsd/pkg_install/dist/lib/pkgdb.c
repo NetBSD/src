@@ -1,4 +1,4 @@
-/*	$NetBSD: pkgdb.c,v 1.5 2020/12/18 17:32:42 maya Exp $	*/
+/*	$NetBSD: pkgdb.c,v 1.6 2021/04/10 19:49:59 nia Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: pkgdb.c,v 1.5 2020/12/18 17:32:42 maya Exp $");
+__RCSID("$NetBSD: pkgdb.c,v 1.6 2021/04/10 19:49:59 nia Exp $");
 
 /*-
  * Copyright (c) 1999-2010 The NetBSD Foundation, Inc.

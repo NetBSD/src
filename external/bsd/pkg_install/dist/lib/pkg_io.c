@@ -1,4 +1,4 @@
-/*	$NetBSD: pkg_io.c,v 1.3 2018/02/04 09:00:51 maya Exp $	*/
+/*	$NetBSD: pkg_io.c,v 1.4 2021/04/10 19:49:59 nia Exp $	*/
 /*-
  * Copyright (c) 2008, 2009 Joerg Sonnenberger <joerg@NetBSD.org>.
  * All rights reserved.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 #endif
 
-__RCSID("$NetBSD: pkg_io.c,v 1.3 2018/02/04 09:00:51 maya Exp $");
+__RCSID("$NetBSD: pkg_io.c,v 1.4 2021/04/10 19:49:59 nia Exp $");
 
 #include <archive.h>
 #include <archive_entry.h>
