@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.913 2021/04/10 22:09:53 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.914 2021/04/10 22:35:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.913 2021/04/10 22:09:53 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.914 2021/04/10 22:35:02 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -1040,8 +1040,9 @@ Var_SetExpandWithFlags(GNode *scope, const char *name, const char *val,
 	}
 
 	if (varname.str[0] == '\0') {
-		DEBUG2(VAR, "Var_Set(\"%s\", \"%s\", ...) "
-			    "name expands to empty string - ignored\n",
+		DEBUG2(VAR,
+		    "Var_SetExpand: variable name \"%s\" expands "
+		    "to empty string, with value \"%s\" - ignored\n",
 		    unexpanded_name, val);
 	} else
 		Var_SetWithFlags(scope, varname.str, val, flags);
@@ -1165,9 +1166,9 @@ Var_AppendExpand(GNode *scope, const char *name, const char *val)
 		/* TODO: handle errors */
 		xname = FStr_InitOwn(expanded);
 		if (expanded[0] == '\0') {
-			/* TODO: update function name in the debug message */
-			DEBUG2(VAR, "Var_Append(\"%s\", \"%s\", ...) "
-				    "name expands to empty string - ignored\n",
+			DEBUG2(VAR,
+			    "Var_AppendExpand: variable name \"%s\" expands "
+			    "to empty string, with value \"%s\" - ignored\n",
 			    name, val);
 			FStr_Done(&xname);
 			return;
