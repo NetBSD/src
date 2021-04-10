@@ -1,6 +1,6 @@
 // Custom pointer adapter and sample storage policies
 
-// Copyright (C) 2008-2019 Free Software Foundation, Inc.
+// Copyright (C) 2008-2020 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -45,6 +45,9 @@
 #if __cplusplus >= 201103L
 # include <bits/move.h>
 # include <bits/ptr_traits.h>
+#endif
+#if __cplusplus > 201703L
+# include <iterator> // for indirectly_readable_traits
 #endif
 
 namespace __gnu_cxx _GLIBCXX_VISIBILITY(default)
@@ -476,7 +479,13 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
         _Storage_policy::set(_Storage_policy::get() - 1);
         return __tmp;
       }
-  
+
+#if __cpp_lib_three_way_comparison
+      friend std::strong_ordering
+      operator<=>(const _Pointer_adapter& __lhs, const _Pointer_adapter& __rhs)
+      noexcept
+      { return __lhs.get() <=> __rhs.get(); }
+#endif
     }; // class _Pointer_adapter
 
 
@@ -594,6 +603,14 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       { return pointer(std::addressof(__r)); }
     };
 
+#if __cpp_lib_concepts
+  template<typename _Policy>
+    struct indirectly_readable_traits<__gnu_cxx::_Pointer_adapter<_Policy>>
+    {
+      using value_type
+	= typename __gnu_cxx::_Pointer_adapter<_Policy>::value_type;
+    };
+#endif
 _GLIBCXX_END_NAMESPACE_VERSION
 } // namespace
 #endif

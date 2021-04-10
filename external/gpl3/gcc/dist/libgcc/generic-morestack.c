@@ -1,5 +1,5 @@
 /* Library support for -fsplit-stack.  */
-/* Copyright (C) 2009-2019 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2020 Free Software Foundation, Inc.
    Contributed by Ian Lance Taylor <iant@google.com>.
 
 This file is part of GCC.
@@ -22,6 +22,8 @@ You should have received a copy of the GNU General Public License and
 a copy of the GCC Runtime Library Exception along with this program;
 see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 <http://www.gnu.org/licenses/>.  */
+
+#pragma GCC optimize ("no-isolate-erroneous-paths-dereference")
 
 /* powerpc 32-bit not supported.  */
 #if !defined __powerpc__ || defined __powerpc64__
@@ -50,6 +52,62 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #include <sys/uio.h>
 
 #include "generic-morestack.h"
+
+/* Some systems use LD_PRELOAD or similar tricks to add hooks to
+   mmap/munmap.  That breaks this code, because when we call mmap
+   there is enough stack space for the system call but there is not,
+   in general, enough stack space to run a hook.  Try to avoid the
+   problem by calling syscall directly.  We only do this on GNU/Linux
+   for now, but it should be easy to add support for more systems with
+   testing.  */
+
+#if defined(__gnu_linux__)
+
+#include <sys/syscall.h>
+
+#if defined(SYS_mmap) || defined(SYS_mmap2)
+
+#ifdef SYS_mmap2
+#define MORESTACK_MMAP SYS_mmap2
+#define MORESTACK_ADJUST_OFFSET(x) ((x) / 4096ULL)
+#else
+#define MORESTACK_MMAP SYS_mmap
+#define MORESTACK_ADJUST_OFFSET(x) (x)
+#endif
+
+static void *
+morestack_mmap (void *addr, size_t length, int prot, int flags, int fd,
+		off_t offset)
+{
+  offset = MORESTACK_ADJUST_OFFSET (offset);
+
+#ifdef __s390__
+  long args[6] = { (long) addr, (long) length, (long) prot, (long) flags,
+		   (long) fd, (long) offset };
+  return (void *) syscall (MORESTACK_MMAP, args);
+#else
+  return (void *) syscall (MORESTACK_MMAP, addr, length, prot, flags, fd,
+			   offset);
+#endif
+}
+
+#define mmap morestack_mmap
+
+#endif /* defined(SYS_MMAP) || defined(SYS_mmap2) */
+
+#if defined(SYS_munmap)
+
+static int
+morestack_munmap (void * addr, size_t length)
+{
+  return (int) syscall (SYS_munmap, addr, length);
+}
+
+#define munmap morestack_munmap
+
+#endif /* defined(SYS_munmap) */
+
+#endif /* defined(__gnu_linux__) */
 
 typedef unsigned uintptr_type __attribute__ ((mode (pointer)));
 

@@ -1,30 +1,70 @@
-2020-03-12  Release Manager
+2021-04-08  Release Manager
 
-	* GCC 9.3.0 released.
+	* GCC 10.3.0 released.
+
+2020-07-23  Release Manager
+
+	* GCC 10.2.0 released.
+
+2020-05-07  Release Manager
+
+	* GCC 10.1.0 released.
+
+2020-03-12  Jakub Jelinek  <jakub@redhat.com>
+
+	* gcc_release (upload_files): Without -l, pass -m 755 to the mkdir
+	command invoked through ssh.
+
+	* update_web_docs_git: Drop SPHINXBUILD=/usr/bin/sphinx-1.0-build.
 
 2020-02-27  Jakub Jelinek  <jakub@redhat.com>
 
 	* gcc_release: Add support for -b local-git-repo argument.
 
+2020-01-13  Jonathan Wakely  <jwakely@redhat.com>
+
+	* update_web_docs_libstdcxx_git: New file.
+	* update_web_docs_libstdcxx_svn: Remove.
+	* crontab: Use update_web_docs_libstdcxx_git.
+
 2020-01-13  Joseph Myers  <joseph@codesourcery.com>
 
-	Backport:
+	* update_web_docs_git: New file.
+	* update_web_docs_svn: Remove.
+	* crontab: Use update_web_docs_svn.
 
-	2020-01-13  Joseph Myers  <joseph@codesourcery.com>
+2020-01-13  Joseph Myers  <joseph@codesourcery.com>
 
 	* gcc_release: Use git instead of SVN.
+	* crontab: Update gcc_release calls.
 
-	2019-11-20  Janne Blomqvist  <jb@gcc.gnu.org>
+2020-01-13  Joseph Myers  <joseph@codesourcery.com>
+
+	* update_version_git: New file.
+	* update_version:svn: Remove.
+	* crontab: Use update_version_git.
+
+2019-11-20  Janne Blomqvist  <jb@gcc.gnu.org>
 
 	* gcc_release: Use https for gcc.gnu.org.
 
-2019-08-12  Release Manager
+2019-11-14  Richard Biener  <rguenther@suse.de>
 
-	* GCC 9.2.0 released.
+	* update_version_svn (IGNORE_BRANCHES): Add 7.
 
-2019-05-03  Release Manager
+2019-10-05  Richard Biener  <rguenther@suse.de>
 
-	* GCC 9.1.0 released.
+	* crontab: Disable snapshots from gcc-7-branch.
+
+2019-08-05  David Malcolm  <dmalcolm@redhat.com>
+
+	* update_web_docs_svn: Proceed even if the invocation of
+	sphinx fails.
+
+2019-05-04  Gerald Pfeifer  <gerald@pfeifer.com>
+
+	* crontab: Snapshots from trunk are now GCC 10 related.
+	Add GCC 9 snapshots from the respective branch.
 
 2019-02-23  Jonathan Wakely  <jwakely@redhat.com>
 

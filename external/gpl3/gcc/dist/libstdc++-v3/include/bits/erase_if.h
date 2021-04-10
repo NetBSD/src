@@ -1,6 +1,6 @@
 // <bits/erase_if.h> -*- C++ -*-
 
-// Copyright (C) 2015-2019 Free Software Foundation, Inc.
+// Copyright (C) 2015-2020 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -39,7 +39,7 @@ namespace std
 _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
 #if __cplusplus > 201703L
-# define __cpp_lib_erase_if 201900L
+# define __cpp_lib_erase_if 202002L
 #endif
 
   namespace __detail

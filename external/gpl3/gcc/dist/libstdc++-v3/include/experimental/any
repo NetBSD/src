@@ -1,6 +1,6 @@
 // <experimental/any> -*- C++ -*-
 
-// Copyright (C) 2014-2019 Free Software Foundation, Inc.
+// Copyright (C) 2014-2020 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -24,6 +24,7 @@
 
 /** @file experimental/any
  *  This is a TS C++ Library header.
+ *  @ingroup libfund-ts
  */
 
 #ifndef _GLIBCXX_EXPERIMENTAL_ANY
@@ -49,7 +50,7 @@ inline namespace fundamentals_v1
 {
   /**
    * @defgroup any Type-safe container of any type
-   * @ingroup experimental
+   * @ingroup libfund-ts
    *
    * A type-safe container for single values of value types, as
    * described in n3804 "Any Library Proposal (Revision 3)".
@@ -69,6 +70,7 @@ inline namespace fundamentals_v1
     virtual const char* what() const noexcept { return "bad any_cast"; }
   };
 
+  /// @cond undocumented
   [[gnu::noreturn]] inline void __throw_bad_any_cast()
   {
 #if __cpp_exceptions
@@ -77,6 +79,7 @@ inline namespace fundamentals_v1
     __builtin_abort();
 #endif
   }
+  /// @endcond
 
   /**
    *  @brief A type-safe container of any type.
