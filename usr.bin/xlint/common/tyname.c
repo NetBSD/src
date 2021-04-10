@@ -1,4 +1,4 @@
-/*	$NetBSD: tyname.c,v 1.38 2021/04/09 19:37:39 rillig Exp $	*/
+/*	$NetBSD: tyname.c,v 1.39 2021/04/10 18:36:27 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tyname.c,v 1.38 2021/04/09 19:37:39 rillig Exp $");
+__RCSID("$NetBSD: tyname.c,v 1.39 2021/04/10 18:36:27 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -43,7 +43,11 @@ __RCSID("$NetBSD: tyname.c,v 1.38 2021/04/09 19:37:39 rillig Exp $");
 #include <stdlib.h>
 #include <err.h>
 
-#include PASS
+#if defined(IS_LINT1)
+#include "lint1.h"
+#else
+#include "lint2.h"
+#endif
 
 #ifndef INTERNAL_ERROR
 #define INTERNAL_ERROR(fmt, args...) \

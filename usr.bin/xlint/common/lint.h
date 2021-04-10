@@ -1,4 +1,4 @@
-/*	$NetBSD: lint.h,v 1.26 2021/02/28 18:51:51 rillig Exp $	*/
+/*	$NetBSD: lint.h,v 1.27 2021/04/10 18:36:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -135,7 +135,11 @@ typedef	struct	ob {
 	char	*o_next;	/* next free byte in buffer */
 } ob_t;
 
-typedef struct type type_t;
+#if defined(IS_LINT1)
+typedef struct lint1_type type_t;
+#else
+typedef struct lint2_type type_t;
+#endif
 
 #include "externs.h"
 
