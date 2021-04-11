@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.917 2021/04/11 13:35:56 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.918 2021/04/11 17:48:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.917 2021/04/11 13:35:56 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.918 2021/04/11 17:48:01 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -1541,13 +1541,24 @@ ModifyWord_SYSVSubst(const char *word, SepBuf *buf, void *data)
 
 
 struct ModifyWord_SubstArgs {
-	const char *lhs;
-	size_t lhsLen;
-	const char *rhs;
-	size_t rhsLen;
+	Substring lhs;
+	Substring rhs;
 	VarPatternFlags pflags;
 	bool matched;
 };
+
+static const char *
+Substring_Find(Substring haystack, Substring needle)
+{
+	size_t len, needleLen, i;
+
+	len = Substring_Length(haystack);
+	needleLen = Substring_Length(needle);
+	for (i = 0; i + needleLen <= len; i++)
+		if (memcmp(haystack.start + i, needle.start, needleLen) == 0)
+			return haystack.start + i;
+	return NULL;
+}
 
 /*
  * Callback for ModifyWords to implement the :S,from,to, modifier.
@@ -1556,61 +1567,59 @@ struct ModifyWord_SubstArgs {
 static void
 ModifyWord_Subst(const char *word, SepBuf *buf, void *data)
 {
-	size_t wordLen = strlen(word);
 	struct ModifyWord_SubstArgs *args = data;
-	const char *match;
+	size_t wordLen, lhsLen;
+	const char *wordEnd, *match;
 
+	wordLen = strlen(word);
+	wordEnd = word + wordLen;
 	if (args->pflags.subOnce && args->matched)
 		goto nosub;
 
+	lhsLen = Substring_Length(args->lhs);
 	if (args->pflags.anchorStart) {
-		if (wordLen < args->lhsLen ||
-		    memcmp(word, args->lhs, args->lhsLen) != 0)
+		if (wordLen < lhsLen ||
+		    memcmp(word, args->lhs.start, lhsLen) != 0)
 			goto nosub;
 
-		if (args->pflags.anchorEnd && wordLen != args->lhsLen)
+		if (args->pflags.anchorEnd && wordLen != lhsLen)
 			goto nosub;
 
 		/* :S,^prefix,replacement, or :S,^whole$,replacement, */
-		SepBuf_AddBytes(buf, args->rhs, args->rhsLen);
-		SepBuf_AddBytesBetween(buf,
-		    word + args->lhsLen, word + wordLen);
+		SepBuf_AddBytesBetween(buf, args->rhs.start, args->rhs.end);
+		SepBuf_AddBytesBetween(buf, word + lhsLen, wordEnd);
 		args->matched = true;
 		return;
 	}
 
 	if (args->pflags.anchorEnd) {
-		const char *start;
-
-		if (wordLen < args->lhsLen)
+		if (wordLen < lhsLen)
 			goto nosub;
-
-		start = word + (wordLen - args->lhsLen);
-		if (memcmp(start, args->lhs, args->lhsLen) != 0)
+		if (memcmp(wordEnd - lhsLen, args->lhs.start, lhsLen) != 0)
 			goto nosub;
 
 		/* :S,suffix$,replacement, */
-		SepBuf_AddBytesBetween(buf, word, start);
-		SepBuf_AddBytes(buf, args->rhs, args->rhsLen);
+		SepBuf_AddBytesBetween(buf, word, wordEnd - lhsLen);
+		SepBuf_AddBytesBetween(buf, args->rhs.start, args->rhs.end);
 		args->matched = true;
 		return;
 	}
 
-	if (args->lhs[0] == '\0')
+	if (args->lhs.start[0] == '\0')
 		goto nosub;
 
 	/* unanchored case, may match more than once */
-	while ((match = strstr(word, args->lhs)) != NULL) {
+	while ((match = Substring_Find(Substring_Init(word, wordEnd),
+	    args->lhs)) != NULL) {
 		SepBuf_AddBytesBetween(buf, word, match);
-		SepBuf_AddBytes(buf, args->rhs, args->rhsLen);
+		SepBuf_AddBytesBetween(buf, args->rhs.start, args->rhs.end);
 		args->matched = true;
-		wordLen -= (size_t)(match - word) + args->lhsLen;
-		word += (size_t)(match - word) + args->lhsLen;
-		if (wordLen == 0 || !args->pflags.subGlobal)
+		word += (size_t)(match - word) + lhsLen;
+		if (word == wordEnd || !args->pflags.subGlobal)
 			break;
 	}
 nosub:
-	SepBuf_AddBytes(buf, word, wordLen);
+	SepBuf_AddBytesBetween(buf, word, wordEnd);
 }
 
 #ifndef NO_REGEX
@@ -2189,9 +2198,9 @@ ParseModifierPartSubst(
     VarEvalMode emode,
     ModChain *ch,
     char **out_part,
-    /* Optionally stores the length of the returned string, just to save
+    /* Optionally stores the end of the returned string, just to save
      * another strlen call. */
-    size_t *out_length,
+    const char **out_part_end,
     /* For the first part of the :S modifier, sets the VARP_ANCHOR_END flag
      * if the last character of the pattern is a $. */
     VarPatternFlags *out_pflags,
@@ -2221,7 +2230,8 @@ ParseModifierPartSubst(
 
 		if (*p != '$') {	/* Unescaped, simple text */
 			if (subst != NULL && *p == '&')
-				Buf_AddBytes(&buf, subst->lhs, subst->lhsLen);
+				Buf_AddBytesBetween(&buf,
+				    subst->lhs.start, subst->lhs.end);
 			else
 				Buf_AddByte(&buf, *p);
 			p++;
@@ -2299,8 +2309,8 @@ ParseModifierPartSubst(
 	}
 
 	*pp = p + 1;
-	if (out_length != NULL)
-		*out_length = buf.len;
+	if (out_part_end != NULL)
+		*out_part_end = buf.data + buf.len;
 
 	*out_part = Buf_DoneData(&buf);
 	DEBUG1(VAR, "Modifier part: \"%s\"\n", *out_part);
@@ -2931,16 +2941,16 @@ ApplyModifier_Subst(const char **pp, ModChain *ch)
 	}
 
 	res = ParseModifierPartSubst(pp, delim, ch->expr->emode, ch, &lhs,
-	    &args.lhsLen, &args.pflags, NULL);
+	    &args.lhs.end, &args.pflags, NULL);
 	if (res != VPR_OK)
 		return AMR_CLEANUP;
-	args.lhs = lhs;
+	args.lhs.start = lhs;
 
 	res = ParseModifierPartSubst(pp, delim, ch->expr->emode, ch, &rhs,
-	    &args.rhsLen, NULL, &args);
+	    &args.rhs.end, NULL, &args);
 	if (res != VPR_OK)
 		return AMR_CLEANUP;
-	args.rhs = rhs;
+	args.rhs.start = rhs;
 
 	oneBigWord = ch->oneBigWord;
 	ParsePatternFlags(pp, &args.pflags, &oneBigWord);
