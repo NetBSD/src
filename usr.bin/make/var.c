@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.915 2021/04/10 22:40:34 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.916 2021/04/11 12:46:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.915 2021/04/10 22:40:34 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.916 2021/04/11 12:46:54 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -345,45 +345,30 @@ VarNew(FStr name, const char *value, bool fromEnv, bool readOnly)
 	return var;
 }
 
-static const char *
-CanonicalVarname(const char *name)
+static Substring
+CanonicalVarname(Substring name)
 {
-	if (*name == '.' && ch_isupper(name[1])) {
-		switch (name[1]) {
-		case 'A':
-			if (strcmp(name, ".ALLSRC") == 0)
-				name = ALLSRC;
-			if (strcmp(name, ".ARCHIVE") == 0)
-				name = ARCHIVE;
-			break;
-		case 'I':
-			if (strcmp(name, ".IMPSRC") == 0)
-				name = IMPSRC;
-			break;
-		case 'M':
-			if (strcmp(name, ".MEMBER") == 0)
-				name = MEMBER;
-			break;
-		case 'O':
-			if (strcmp(name, ".OODATE") == 0)
-				name = OODATE;
-			break;
-		case 'P':
-			if (strcmp(name, ".PREFIX") == 0)
-				name = PREFIX;
-			break;
-		case 'S':
-			if (strcmp(name, ".SHELL") == 0) {
-				if (shellPath == NULL)
-					Shell_Init();
-			}
-			break;
-		case 'T':
-			if (strcmp(name, ".TARGET") == 0)
-				name = TARGET;
-			break;
-		}
-	}
+
+	if (!(Substring_Length(name) > 0 && name.start[0] == '.'))
+		return name;
+
+	if (Substring_Equals(name, ".ALLSRC"))
+		return Substring_InitStr(ALLSRC);
+	if (Substring_Equals(name, ".ARCHIVE"))
+		return Substring_InitStr(ARCHIVE);
+	if (Substring_Equals(name, ".IMPSRC"))
+		return Substring_InitStr(IMPSRC);
+	if (Substring_Equals(name, ".MEMBER"))
+		return Substring_InitStr(MEMBER);
+	if (Substring_Equals(name, ".OODATE"))
+		return Substring_InitStr(OODATE);
+	if (Substring_Equals(name, ".PREFIX"))
+		return Substring_InitStr(PREFIX);
+	if (Substring_Equals(name, ".TARGET"))
+		return Substring_InitStr(TARGET);
+
+	if (Substring_Equals(name, ".SHELL") && shellPath == NULL)
+		Shell_Init();
 
 	/* GNU make has an additional alias $^ == ${.ALLSRC}. */
 
@@ -391,9 +376,9 @@ CanonicalVarname(const char *name)
 }
 
 static Var *
-GNode_FindVar(GNode *scope, const char *varname, unsigned int hash)
+GNode_FindVar(GNode *scope, Substring varname, unsigned int hash)
 {
-	return HashTable_FindValueHash(&scope->vars, varname, hash);
+	return HashTable_FindValueBySubstringHash(&scope->vars, varname, hash);
 }
 
 /*
@@ -410,14 +395,14 @@ GNode_FindVar(GNode *scope, const char *varname, unsigned int hash)
  *	VarFreeEnv after use.
  */
 static Var *
-VarFind(const char *name, GNode *scope, bool elsewhere)
+VarFindSubstring(Substring name, GNode *scope, bool elsewhere)
 {
 	Var *var;
 	unsigned int nameHash;
 
 	/* Replace '.TARGET' with '@', likewise for other local variables. */
 	name = CanonicalVarname(name);
-	nameHash = Hash_Hash(name);
+	nameHash = Hash_Substring(name);
 
 	var = GNode_FindVar(scope, name, nameHash);
 	if (!elsewhere)
@@ -435,17 +420,19 @@ VarFind(const char *name, GNode *scope, bool elsewhere)
 	}
 
 	if (var == NULL) {
-		char *env;
+		FStr envName;
+		const char *envValue;
 
 		/*
 		 * TODO: try setting an environment variable with the empty
 		 *  name, which should be technically possible, just to see
 		 *  how make reacts.  All .for loops should be broken then.
 		 */
-		if ((env = getenv(name)) != NULL) {
-			char *varname = bmake_strdup(name);
-			return VarNew(FStr_InitOwn(varname), env, true, false);
-		}
+		envName = Substring_Str(name);
+		envValue = getenv(envName.str);
+		if (envValue != NULL)
+			return VarNew(envName, envValue, true, false);
+		FStr_Done(&envName);
 
 		if (opts.checkEnvFirst && scope != SCOPE_GLOBAL) {
 			var = GNode_FindVar(SCOPE_GLOBAL, name, nameHash);
@@ -459,6 +446,13 @@ VarFind(const char *name, GNode *scope, bool elsewhere)
 	}
 
 	return var;
+}
+
+/* TODO: Replace these calls with VarFindSubstring, as far as possible. */
+static Var *
+VarFind(const char *name, GNode *scope, bool elsewhere)
+{
+	return VarFindSubstring(Substring_InitStr(name), scope, elsewhere);
 }
 
 /* If the variable is an environment variable, free it, including its value. */
@@ -4006,12 +4000,17 @@ cleanup:
 }
 
 /*
- * Only four of the local variables are treated specially as they are the
- * only four that will be set when dynamic sources are expanded.
+ * Only 4 of the 7 local variables are treated specially as they are the only
+ * ones that will be set when dynamic sources are expanded.
  */
 static bool
-VarnameIsDynamic(const char *name, size_t len)
+VarnameIsDynamic(Substring varname)
 {
+	const char *name;
+	size_t len;
+
+	name = varname.start;
+	len = Substring_Length(varname);
 	if (len == 1 || (len == 2 && (name[1] == 'F' || name[1] == 'D'))) {
 		switch (name[0]) {
 		case '@':
@@ -4024,10 +4023,10 @@ VarnameIsDynamic(const char *name, size_t len)
 	}
 
 	if ((len == 7 || len == 8) && name[0] == '.' && ch_isupper(name[1])) {
-		return strcmp(name, ".TARGET") == 0 ||
-		       strcmp(name, ".ARCHIVE") == 0 ||
-		       strcmp(name, ".PREFIX") == 0 ||
-		       strcmp(name, ".MEMBER") == 0;
+		return Substring_Equals(varname, ".TARGET") ||
+		       Substring_Equals(varname, ".ARCHIVE") ||
+		       Substring_Equals(varname, ".PREFIX") ||
+		       Substring_Equals(varname, ".MEMBER");
 	}
 
 	return false;
@@ -4064,16 +4063,15 @@ UndefinedShortVarValue(char varname, const GNode *scope)
  * Parse a variable name, until the end character or a colon, whichever
  * comes first.
  */
-static char *
+static void
 ParseVarname(const char **pp, char startc, char endc,
 	     GNode *scope, VarEvalMode emode,
-	     size_t *out_varname_len)
+	     LazyBuf *buf)
 {
-	Buffer buf;
 	const char *p = *pp;
 	int depth = 0;		/* Track depth so we can spot parse errors. */
 
-	Buf_Init(&buf);
+	LazyBuf_Init(buf, Substring_InitStr(p));
 
 	while (*p != '\0') {
 		if ((*p == endc || *p == ':') && depth == 0)
@@ -4088,16 +4086,14 @@ ParseVarname(const char **pp, char startc, char endc,
 			FStr nested_val;
 			(void)Var_Parse(&p, scope, emode, &nested_val);
 			/* TODO: handle errors */
-			Buf_AddStr(&buf, nested_val.str);
+			LazyBuf_AddStr(buf, nested_val.str);
 			FStr_Done(&nested_val);
 		} else {
-			Buf_AddByte(&buf, *p);
+			LazyBuf_Add(buf, *p);
 			p++;
 		}
 	}
 	*pp = p;
-	*out_varname_len = buf.len;
-	return Buf_DoneData(&buf);
 }
 
 static VarParseResult
@@ -4186,65 +4182,52 @@ ParseVarnameShort(char varname, const char **pp, GNode *scope,
 
 /* Find variables like @F or <D. */
 static Var *
-FindLocalLegacyVar(const char *varname, size_t namelen, GNode *scope,
+FindLocalLegacyVar(Substring varname, GNode *scope,
 		   const char **out_extraModifiers)
 {
+	Var *v;
+
 	/* Only resolve these variables if scope is a "real" target. */
 	if (scope == SCOPE_CMDLINE || scope == SCOPE_GLOBAL)
 		return NULL;
 
-	if (namelen != 2)
+	if (Substring_Length(varname) != 2)
 		return NULL;
-	if (varname[1] != 'F' && varname[1] != 'D')
+	if (varname.start[1] != 'F' && varname.start[1] != 'D')
 		return NULL;
-	if (strchr("@%?*!<>", varname[0]) == NULL)
+	if (strchr("@%?*!<>", varname.start[0]) == NULL)
 		return NULL;
 
-	{
-		char name[2];
-		Var *v;
+	v = VarFindSubstring(Substring_Sub(varname, 0, 1), scope, false);
+	if (v == NULL)
+		return NULL;
 
-		name[0] = varname[0];
-		name[1] = '\0';
-		v = VarFind(name, scope, false);
-
-		if (v != NULL) {
-			if (varname[1] == 'D') {
-				*out_extraModifiers = "H:";
-			} else { /* F */
-				*out_extraModifiers = "T:";
-			}
-		}
-		return v;
-	}
+	*out_extraModifiers = varname.start[1] == 'D' ? "H:" : "T:";
+	return v;
 }
 
 static VarParseResult
-EvalUndefined(bool dynamic, const char *start, const char *p, char *varname,
-	      VarEvalMode emode,
-	      FStr *out_val)
+EvalUndefined(bool dynamic, const char *start, const char *p,
+	      Substring varname, VarEvalMode emode, FStr *out_val)
 {
 	if (dynamic) {
 		*out_val = FStr_InitOwn(bmake_strsedup(start, p));
-		free(varname);
 		return VPR_OK;
 	}
 
 	if (emode == VARE_UNDEFERR && opts.strict) {
 		Parse_Error(PARSE_FATAL,
-		    "Variable \"%s\" is undefined", varname);
-		free(varname);
+		    "Variable \"%.*s\" is undefined",
+		    (int)Substring_Length(varname), varname.start);
 		*out_val = FStr_InitRefer(var_Error);
 		return VPR_ERR;
 	}
 
 	if (emode == VARE_UNDEFERR) {
-		free(varname);
 		*out_val = FStr_InitRefer(var_Error);
 		return VPR_UNDEF;	/* XXX: Should be VPR_ERR instead. */
 	}
 
-	free(varname);
 	*out_val = FStr_InitRefer(varUndefined);
 	return VPR_OK;
 }
@@ -4275,8 +4258,7 @@ ParseVarnameLong(
 	ExprDefined *out_true_exprDefined
 )
 {
-	size_t namelen;
-	char *varname;
+	LazyBuf varname;
 	Var *v;
 	bool haveModifier;
 	bool dynamic = false;
@@ -4285,28 +4267,30 @@ ParseVarnameLong(
 	char endc = startc == '(' ? ')' : '}';
 
 	p += 2;			/* skip "${" or "$(" or "y(" */
-	varname = ParseVarname(&p, startc, endc, scope, emode, &namelen);
+	ParseVarname(&p, startc, endc, scope, emode, &varname);
 
 	if (*p == ':') {
 		haveModifier = true;
 	} else if (*p == endc) {
 		haveModifier = false;
 	} else {
-		Parse_Error(PARSE_FATAL, "Unclosed variable \"%s\"", varname);
-		free(varname);
+		Substring name = LazyBuf_Get(&varname);
+		Parse_Error(PARSE_FATAL, "Unclosed variable \"%.*s\"",
+		    (int)Substring_Length(name), name.start);
+		LazyBuf_Done(&varname);
 		*out_false_pp = p;
 		*out_false_val = FStr_InitRefer(var_Error);
 		*out_false_res = VPR_ERR;
 		return false;
 	}
 
-	v = VarFind(varname, scope, true);
+	v = VarFindSubstring(LazyBuf_Get(&varname), scope, true);
 
 	/* At this point, p points just after the variable name,
 	 * either at ':' or at endc. */
 
 	if (v == NULL) {
-		v = FindLocalLegacyVar(varname, namelen, scope,
+		v = FindLocalLegacyVar(LazyBuf_Get(&varname), scope,
 		    out_true_extraModifiers);
 	}
 
@@ -4315,14 +4299,14 @@ ParseVarnameLong(
 		 * Defer expansion of dynamic variables if they appear in
 		 * non-local scope since they are not defined there.
 		 */
-		dynamic = VarnameIsDynamic(varname, namelen) &&
+		dynamic = VarnameIsDynamic(LazyBuf_Get(&varname)) &&
 			  (scope == SCOPE_CMDLINE || scope == SCOPE_GLOBAL);
 
 		if (!haveModifier) {
 			p++;	/* skip endc */
 			*out_false_pp = p;
 			*out_false_res = EvalUndefined(dynamic, start, p,
-			    varname, emode, out_false_val);
+			    LazyBuf_Get(&varname), emode, out_false_val);
 			return false;
 		}
 
@@ -4340,10 +4324,10 @@ ParseVarnameLong(
 		 * is still undefined, Var_Parse will return an empty string
 		 * instead of the actually computed value.
 		 */
-		v = VarNew(FStr_InitOwn(varname), "", false, false);
+		v = VarNew(LazyBuf_DoneGet(&varname), "", false, false);
 		*out_true_exprDefined = DEF_UNDEF;
 	} else
-		free(varname);
+		LazyBuf_Done(&varname);
 
 	*out_true_endc = endc;
 	*out_true_p = p;
