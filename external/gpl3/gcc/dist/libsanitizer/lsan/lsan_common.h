@@ -1,7 +1,8 @@
 //=-- lsan_common.h -------------------------------------------------------===//
 //
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 //===----------------------------------------------------------------------===//
 //
@@ -38,6 +39,8 @@
 #define CAN_SANITIZE_LEAKS 1
 #elif defined(__arm__) && \
     ((SANITIZER_LINUX && !SANITIZER_ANDROID) || SANITIZER_NETBSD)
+#define CAN_SANITIZE_LEAKS 1
+#elif SANITIZER_NETBSD
 #define CAN_SANITIZE_LEAKS 1
 #elif SANITIZER_NETBSD
 #define CAN_SANITIZE_LEAKS 1
@@ -128,8 +131,9 @@ struct RootRegion {
 InternalMmapVector<RootRegion> const *GetRootRegions();
 void ScanRootRegion(Frontier *frontier, RootRegion const &region,
                     uptr region_begin, uptr region_end, bool is_readable);
-// Run stoptheworld while holding any platform-specific locks.
-void DoStopTheWorld(StopTheWorldCallback callback, void* argument);
+// Run stoptheworld while holding any platform-specific locks, as well as the
+// allocator and thread registry locks.
+void LockStuffAndStopTheWorld(StopTheWorldCallback callback, void* argument);
 
 void ScanRangeForPointers(uptr begin, uptr end,
                           Frontier *frontier,

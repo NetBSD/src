@@ -3815,41 +3815,6 @@ POST_SYSCALL(clock_getcpuclockid2)
 (long long res, long long idtype_, long long id_, void *clock_id_) {
   /* Nothing to do */
 }
-PRE_SYSCALL(__getvfsstat90)(void *buf_, long long bufsize_, long long flags_) {
-  /* Nothing to do */
-}
-POST_SYSCALL(__getvfsstat90)
-(long long res, void *buf_, long long bufsize_, long long flags_) {
-  /* Nothing to do */
-}
-PRE_SYSCALL(__statvfs190)(void *path_, void *buf_, long long flags_) {
-  const char *path = (const char *)path_;
-  if (path) {
-    PRE_READ(path, __sanitizer::internal_strlen(path) + 1);
-  }
-}
-POST_SYSCALL(__statvfs190)
-(long long res, void *path_, void *buf_, long long flags_) {
-  const char *path = (const char *)path_;
-  if (path) {
-    POST_READ(path, __sanitizer::internal_strlen(path) + 1);
-  }
-}
-PRE_SYSCALL(__fstatvfs190)(long long fd_, void *buf_, long long flags_) {
-  /* Nothing to do */
-}
-POST_SYSCALL(__fstatvfs190)
-(long long res, long long fd_, void *buf_, long long flags_) {
-  /* Nothing to do */
-}
-PRE_SYSCALL(__fhstatvfs190)
-(void *fhp_, long long fh_size_, void *buf_, long long flags_) {
-  if (fhp_) {
-    PRE_READ(fhp_, fh_size_);
-  }
-}
-POST_SYSCALL(__fhstatvfs190)
-(long long res, void *fhp_, long long fh_size_, void *buf_, long long flags_) {}
 PRE_SYSCALL(__acl_get_link)(void *path_, long long type_, void *aclp_) {
   /* TODO */
 }
@@ -3931,6 +3896,41 @@ PRE_SYSCALL(lpathconf)(void *path_, long long name_) { /* TODO */ }
 POST_SYSCALL(lpathconf)(long long res, void *path_, long long name_) {
   /* TODO */
 }
+PRE_SYSCALL(__getvfsstat90)(void *buf_, long long bufsize_, long long flags_) {
+  /* Nothing to do */
+}
+POST_SYSCALL(__getvfsstat90)
+(long long res, void *buf_, long long bufsize_, long long flags_) {
+  /* Nothing to do */
+}
+PRE_SYSCALL(__statvfs190)(void *path_, void *buf_, long long flags_) {
+  const char *path = (const char *)path_;
+  if (path) {
+    PRE_READ(path, __sanitizer::internal_strlen(path) + 1);
+  }
+}
+POST_SYSCALL(__statvfs190)
+(long long res, void *path_, void *buf_, long long flags_) {
+  const char *path = (const char *)path_;
+  if (path) {
+    POST_READ(path, __sanitizer::internal_strlen(path) + 1);
+  }
+}
+PRE_SYSCALL(__fstatvfs190)(long long fd_, void *buf_, long long flags_) {
+  /* Nothing to do */
+}
+POST_SYSCALL(__fstatvfs190)
+(long long res, long long fd_, void *buf_, long long flags_) {
+  /* Nothing to do */
+}
+PRE_SYSCALL(__fhstatvfs190)
+(void *fhp_, long long fh_size_, void *buf_, long long flags_) {
+  if (fhp_) {
+    PRE_READ(fhp_, fh_size_);
+  }
+}
+POST_SYSCALL(__fhstatvfs190)
+(long long res, void *fhp_, long long fh_size_, void *buf_, long long flags_) {}
 #undef SYS_MAXSYSARGS
 } // extern "C"
 

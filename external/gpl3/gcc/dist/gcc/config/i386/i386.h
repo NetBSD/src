@@ -1,5 +1,5 @@
 /* Definitions of target machine for GCC for IA-32.
-   Copyright (C) 1988-2019 Free Software Foundation, Inc.
+   Copyright (C) 1988-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -81,10 +81,10 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #define TARGET_AVX512VBMI_P(x)	TARGET_ISA_AVX512VBMI_P(x)
 #define TARGET_AVX512IFMA	TARGET_ISA_AVX512IFMA
 #define TARGET_AVX512IFMA_P(x)	TARGET_ISA_AVX512IFMA_P(x)
-#define TARGET_AVX5124FMAPS	TARGET_ISA_AVX5124FMAPS
-#define TARGET_AVX5124FMAPS_P(x) TARGET_ISA_AVX5124FMAPS_P(x)
-#define TARGET_AVX5124VNNIW	TARGET_ISA_AVX5124VNNIW
-#define TARGET_AVX5124VNNIW_P(x) TARGET_ISA_AVX5124VNNIW_P(x)
+#define TARGET_AVX5124FMAPS	TARGET_ISA2_AVX5124FMAPS
+#define TARGET_AVX5124FMAPS_P(x) TARGET_ISA2_AVX5124FMAPS_P(x)
+#define TARGET_AVX5124VNNIW	TARGET_ISA2_AVX5124VNNIW
+#define TARGET_AVX5124VNNIW_P(x) TARGET_ISA2_AVX5124VNNIW_P(x)
 #define TARGET_AVX512VBMI2	TARGET_ISA_AVX512VBMI2
 #define TARGET_AVX512VBMI2_P(x) TARGET_ISA_AVX512VBMI2_P(x)
 #define TARGET_AVX512VPOPCNTDQ	TARGET_ISA_AVX512VPOPCNTDQ
@@ -93,6 +93,8 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #define TARGET_AVX512VNNI_P(x) TARGET_ISA_AVX512VNNI_P(x)
 #define TARGET_AVX512BITALG	TARGET_ISA_AVX512BITALG
 #define TARGET_AVX512BITALG_P(x) TARGET_ISA_AVX512BITALG_P(x)
+#define TARGET_AVX512VP2INTERSECT	TARGET_ISA2_AVX512VP2INTERSECT
+#define TARGET_AVX512VP2INTERSECT_P(x) TARGET_ISA2_AVX512VP2INTERSECT_P(x)
 #define TARGET_FMA	TARGET_ISA_FMA
 #define TARGET_FMA_P(x)	TARGET_ISA_FMA_P(x)
 #define TARGET_SSE4A	TARGET_ISA_SSE4A
@@ -105,18 +107,18 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #define TARGET_LWP_P(x)	TARGET_ISA_LWP_P(x)
 #define TARGET_ABM	TARGET_ISA_ABM
 #define TARGET_ABM_P(x)	TARGET_ISA_ABM_P(x)
-#define TARGET_PCONFIG	TARGET_ISA_PCONFIG
-#define TARGET_PCONFIG_P(x)	TARGET_ISA_PCONFIG_P(x)
-#define TARGET_WBNOINVD	TARGET_ISA_WBNOINVD
-#define TARGET_WBNOINVD_P(x)	TARGET_ISA_WBNOINVD_P(x)
-#define TARGET_SGX	TARGET_ISA_SGX
-#define TARGET_SGX_P(x)	TARGET_ISA_SGX_P(x)
-#define TARGET_RDPID	TARGET_ISA_RDPID
-#define TARGET_RDPID_P(x)	TARGET_ISA_RDPID_P(x)
+#define TARGET_PCONFIG	TARGET_ISA2_PCONFIG
+#define TARGET_PCONFIG_P(x)	TARGET_ISA2_PCONFIG_P(x)
+#define TARGET_WBNOINVD	TARGET_ISA2_WBNOINVD
+#define TARGET_WBNOINVD_P(x)	TARGET_ISA2_WBNOINVD_P(x)
+#define TARGET_SGX	TARGET_ISA2_SGX
+#define TARGET_SGX_P(x)	TARGET_ISA2_SGX_P(x)
+#define TARGET_RDPID	TARGET_ISA2_RDPID
+#define TARGET_RDPID_P(x)	TARGET_ISA2_RDPID_P(x)
 #define TARGET_GFNI	TARGET_ISA_GFNI
 #define TARGET_GFNI_P(x)	TARGET_ISA_GFNI_P(x)
-#define TARGET_VAES	TARGET_ISA_VAES
-#define TARGET_VAES_P(x)	TARGET_ISA_VAES_P(x)
+#define TARGET_VAES	TARGET_ISA2_VAES
+#define TARGET_VAES_P(x)	TARGET_ISA2_VAES_P(x)
 #define TARGET_VPCLMULQDQ	TARGET_ISA_VPCLMULQDQ
 #define TARGET_VPCLMULQDQ_P(x)	TARGET_ISA_VPCLMULQDQ_P(x)
 #define TARGET_BMI	TARGET_ISA_BMI
@@ -131,8 +133,8 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #define TARGET_POPCNT_P(x)	TARGET_ISA_POPCNT_P(x)
 #define TARGET_SAHF	TARGET_ISA_SAHF
 #define TARGET_SAHF_P(x)	TARGET_ISA_SAHF_P(x)
-#define TARGET_MOVBE	TARGET_ISA_MOVBE
-#define TARGET_MOVBE_P(x)	TARGET_ISA_MOVBE_P(x)
+#define TARGET_MOVBE	TARGET_ISA2_MOVBE
+#define TARGET_MOVBE_P(x)	TARGET_ISA2_MOVBE_P(x)
 #define TARGET_CRC32	TARGET_ISA_CRC32
 #define TARGET_CRC32_P(x)	TARGET_ISA_CRC32_P(x)
 #define TARGET_AES	TARGET_ISA_AES
@@ -141,16 +143,16 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #define TARGET_SHA_P(x)	TARGET_ISA_SHA_P(x)
 #define TARGET_CLFLUSHOPT	TARGET_ISA_CLFLUSHOPT
 #define TARGET_CLFLUSHOPT_P(x)	TARGET_ISA_CLFLUSHOPT_P(x)
-#define TARGET_CLZERO	TARGET_ISA_CLZERO
-#define TARGET_CLZERO_P(x)	TARGET_ISA_CLZERO_P(x)
+#define TARGET_CLZERO	TARGET_ISA2_CLZERO
+#define TARGET_CLZERO_P(x)	TARGET_ISA2_CLZERO_P(x)
 #define TARGET_XSAVEC	TARGET_ISA_XSAVEC
 #define TARGET_XSAVEC_P(x)	TARGET_ISA_XSAVEC_P(x)
 #define TARGET_XSAVES	TARGET_ISA_XSAVES
 #define TARGET_XSAVES_P(x)	TARGET_ISA_XSAVES_P(x)
 #define TARGET_PCLMUL	TARGET_ISA_PCLMUL
 #define TARGET_PCLMUL_P(x)	TARGET_ISA_PCLMUL_P(x)
-#define TARGET_CMPXCHG16B	TARGET_ISA_CX16
-#define TARGET_CMPXCHG16B_P(x)	TARGET_ISA_CX16_P(x)
+#define TARGET_CMPXCHG16B	TARGET_ISA2_CX16
+#define TARGET_CMPXCHG16B_P(x)	TARGET_ISA2_CX16_P(x)
 #define TARGET_FSGSBASE	TARGET_ISA_FSGSBASE
 #define TARGET_FSGSBASE_P(x)	TARGET_ISA_FSGSBASE_P(x)
 #define TARGET_RDRND	TARGET_ISA_RDRND
@@ -159,8 +161,8 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #define TARGET_F16C_P(x)	TARGET_ISA_F16C_P(x)
 #define TARGET_RTM	TARGET_ISA_RTM
 #define TARGET_RTM_P(x)	TARGET_ISA_RTM_P(x)
-#define TARGET_HLE	TARGET_ISA_HLE
-#define TARGET_HLE_P(x)	TARGET_ISA_HLE_P(x)
+#define TARGET_HLE	TARGET_ISA2_HLE
+#define TARGET_HLE_P(x)	TARGET_ISA2_HLE_P(x)
 #define TARGET_RDSEED	TARGET_ISA_RDSEED
 #define TARGET_RDSEED_P(x)	TARGET_ISA_RDSEED_P(x)
 #define TARGET_PRFCHW	TARGET_ISA_PRFCHW
@@ -177,22 +179,26 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #define TARGET_PREFETCHWT1_P(x)	TARGET_ISA_PREFETCHWT1_P(x)
 #define TARGET_CLWB	TARGET_ISA_CLWB
 #define TARGET_CLWB_P(x)	TARGET_ISA_CLWB_P(x)
-#define TARGET_MWAITX	TARGET_ISA_MWAITX
-#define TARGET_MWAITX_P(x)	TARGET_ISA_MWAITX_P(x)
+#define TARGET_MWAITX	TARGET_ISA2_MWAITX
+#define TARGET_MWAITX_P(x)	TARGET_ISA2_MWAITX_P(x)
 #define TARGET_PKU	TARGET_ISA_PKU
 #define TARGET_PKU_P(x)	TARGET_ISA_PKU_P(x)
 #define TARGET_SHSTK	TARGET_ISA_SHSTK
 #define TARGET_SHSTK_P(x)	TARGET_ISA_SHSTK_P(x)
 #define TARGET_MOVDIRI	TARGET_ISA_MOVDIRI
 #define TARGET_MOVDIRI_P(x) TARGET_ISA_MOVDIRI_P(x)
-#define TARGET_MOVDIR64B	TARGET_ISA_MOVDIR64B
-#define TARGET_MOVDIR64B_P(x) TARGET_ISA_MOVDIR64B_P(x)
-#define TARGET_WAITPKG	TARGET_ISA_WAITPKG
-#define TARGET_WAITPKG_P(x)	TARGET_ISA_WAITPKG_P(x)
-#define TARGET_CLDEMOTE	TARGET_ISA_CLDEMOTE
-#define TARGET_CLDEMOTE_P(x) TARGET_ISA_CLDEMOTE_P(x)
-#define TARGET_PTWRITE	TARGET_ISA_PTWRITE
-#define TARGET_PTWRITE_P(x)	TARGET_ISA_PTWRITE_P(x)
+#define TARGET_MOVDIR64B	TARGET_ISA2_MOVDIR64B
+#define TARGET_MOVDIR64B_P(x) TARGET_ISA2_MOVDIR64B_P(x)
+#define TARGET_WAITPKG	TARGET_ISA2_WAITPKG
+#define TARGET_WAITPKG_P(x)	TARGET_ISA2_WAITPKG_P(x)
+#define TARGET_CLDEMOTE	TARGET_ISA2_CLDEMOTE
+#define TARGET_CLDEMOTE_P(x) TARGET_ISA2_CLDEMOTE_P(x)
+#define TARGET_PTWRITE	TARGET_ISA2_PTWRITE
+#define TARGET_PTWRITE_P(x)	TARGET_ISA2_PTWRITE_P(x)
+#define TARGET_AVX512BF16	TARGET_ISA2_AVX512BF16
+#define TARGET_AVX512BF16_P(x)	TARGET_ISA2_AVX512BF16_P(x)
+#define TARGET_ENQCMD	TARGET_ISA2_ENQCMD
+#define TARGET_ENQCMD_P(x) TARGET_ISA2_ENQCMD_P(x)
 
 #define TARGET_LP64	TARGET_ABI_64
 #define TARGET_LP64_P(x)	TARGET_ABI_64_P(x)
@@ -200,6 +206,8 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #define TARGET_X32_P(x)	TARGET_ABI_X32_P(x)
 #define TARGET_16BIT	TARGET_CODE16
 #define TARGET_16BIT_P(x)	TARGET_CODE16_P(x)
+
+#define TARGET_MMX_WITH_SSE	(TARGET_64BIT && TARGET_SSE2)
 
 #include "config/vxworks-dummy.h"
 
@@ -229,9 +237,46 @@ struct stringop_algs
   } size [MAX_STRINGOP_ALGS];
 };
 
-/* Define the specific costs for a given cpu */
+/* Define the specific costs for a given cpu.  NB: hard_register is used
+   by TARGET_REGISTER_MOVE_COST and TARGET_MEMORY_MOVE_COST to compute
+   hard register move costs by register allocator.  Relative costs of
+   pseudo register load and store versus pseudo register moves in RTL
+   expressions for TARGET_RTX_COSTS can be different from relative
+   costs of hard registers to get the most efficient operations with
+   pseudo registers.  */
 
 struct processor_costs {
+  /* Costs used by register allocator.  integer->integer register move
+     cost is 2.  */
+  struct
+    {
+      const int movzbl_load;	/* cost of loading using movzbl */
+      const int int_load[3];	/* cost of loading integer registers
+				   in QImode, HImode and SImode relative
+				   to reg-reg move (2).  */
+      const int int_store[3];	/* cost of storing integer register
+				   in QImode, HImode and SImode */
+      const int fp_move;	/* cost of reg,reg fld/fst */
+      const int fp_load[3];	/* cost of loading FP register
+				   in SFmode, DFmode and XFmode */
+      const int fp_store[3];	/* cost of storing FP register
+				   in SFmode, DFmode and XFmode */
+      const int mmx_move;	/* cost of moving MMX register.  */
+      const int mmx_load[2];	/* cost of loading MMX register
+				   in SImode and DImode */
+      const int mmx_store[2];	/* cost of storing MMX register
+				   in SImode and DImode */
+      const int xmm_move;	/* cost of moving XMM register.  */
+      const int ymm_move;	/* cost of moving XMM register.  */
+      const int zmm_move;	/* cost of moving XMM register.  */
+      const int sse_load[5];	/* cost of loading SSE register
+				   in 32bit, 64bit, 128bit, 256bit and 512bit */
+      const int sse_store[5];	/* cost of storing SSE register
+				   in SImode, DImode and TImode.  */
+      const int sse_to_integer;	/* cost of moving SSE register to integer.  */
+      const int integer_to_sse;	/* cost of moving integer register to SSE. */
+    } hard_register;
+
   const int add;		/* cost of an add instruction */
   const int lea;		/* cost of a lea instruction */
   const int shift_var;		/* variable shift costs */
@@ -246,33 +291,22 @@ struct processor_costs {
   const int large_insn;		/* insns larger than this cost more */
   const int move_ratio;		/* The threshold of number of scalar
 				   memory-to-memory move insns.  */
-  const int movzbl_load;	/* cost of loading using movzbl */
+  const int clear_ratio;	/* The threshold of number of scalar
+				   memory clearing insns.  */
   const int int_load[3];	/* cost of loading integer registers
 				   in QImode, HImode and SImode relative
 				   to reg-reg move (2).  */
   const int int_store[3];	/* cost of storing integer register
 				   in QImode, HImode and SImode */
-  const int fp_move;		/* cost of reg,reg fld/fst */
-  const int fp_load[3];		/* cost of loading FP register
-				   in SFmode, DFmode and XFmode */
-  const int fp_store[3];	/* cost of storing FP register
-				   in SFmode, DFmode and XFmode */
-  const int mmx_move;		/* cost of moving MMX register.  */
-  const int mmx_load[2];	/* cost of loading MMX register
-				   in SImode and DImode */
-  const int mmx_store[2];	/* cost of storing MMX register
-				   in SImode and DImode */
-  const int xmm_move, ymm_move, /* cost of moving XMM and YMM register.  */
-	    zmm_move;
   const int sse_load[5];	/* cost of loading SSE register
 				   in 32bit, 64bit, 128bit, 256bit and 512bit */
-  const int sse_unaligned_load[5];/* cost of unaligned load.  */
   const int sse_store[5];	/* cost of storing SSE register
-				   in SImode, DImode and TImode.  */
+				   in 32bit, 64bit, 128bit, 256bit and 512bit */
+  const int sse_unaligned_load[5];/* cost of unaligned load.  */
   const int sse_unaligned_store[5];/* cost of unaligned store.  */
-  const int mmxsse_to_integer;	/* cost of moving mmxsse register to
-				   integer.  */
-  const int ssemmx_to_integer;  /* cost of moving integer to mmxsse register. */
+  const int xmm_move, ymm_move, /* cost of moving XMM and YMM register.  */
+	    zmm_move;
+  const int sse_to_integer;	/* cost of moving SSE register to integer.  */
   const int gather_static, gather_per_elt; /* Cost of gather load is computed
 				   as static + per_item * nelts. */
   const int scatter_static, scatter_per_elt; /* Cost of gather store is
@@ -408,6 +442,8 @@ extern const struct processor_costs ix86_size_cost;
 #define TARGET_ICELAKE_CLIENT (ix86_tune == PROCESSOR_ICELAKE_CLIENT)
 #define TARGET_ICELAKE_SERVER (ix86_tune == PROCESSOR_ICELAKE_SERVER)
 #define TARGET_CASCADELAKE (ix86_tune == PROCESSOR_CASCADELAKE)
+#define TARGET_TIGERLAKE (ix86_tune == PROCESSOR_TIGERLAKE)
+#define TARGET_COOPERLAKE (ix86_tune == PROCESSOR_COOPERLAKE)
 #define TARGET_INTEL (ix86_tune == PROCESSOR_INTEL)
 #define TARGET_GENERIC (ix86_tune == PROCESSOR_GENERIC)
 #define TARGET_AMDFAM10 (ix86_tune == PROCESSOR_AMDFAM10)
@@ -419,6 +455,7 @@ extern const struct processor_costs ix86_size_cost;
 #define TARGET_BTVER2 (ix86_tune == PROCESSOR_BTVER2)
 #define TARGET_ZNVER1 (ix86_tune == PROCESSOR_ZNVER1)
 #define TARGET_ZNVER2 (ix86_tune == PROCESSOR_ZNVER2)
+#define TARGET_ZNVER3 (ix86_tune == PROCESSOR_ZNVER3)
 
 /* Feature tests against the various tunings.  */
 enum ix86_tune_indices {
@@ -542,8 +579,8 @@ extern unsigned char ix86_tune_features[X86_TUNE_LAST];
 	ix86_tune_features[X86_TUNE_AVOID_LEA_FOR_ADDR]
 #define TARGET_SOFTWARE_PREFETCHING_BENEFICIAL \
 	ix86_tune_features[X86_TUNE_SOFTWARE_PREFETCHING_BENEFICIAL]
-#define TARGET_AVX128_OPTIMAL \
-	ix86_tune_features[X86_TUNE_AVX128_OPTIMAL]
+#define TARGET_AVX256_SPLIT_REGS \
+	ix86_tune_features[X86_TUNE_AVX256_SPLIT_REGS]
 #define TARGET_GENERAL_REGS_SSE_SPILL \
 	ix86_tune_features[X86_TUNE_GENERAL_REGS_SSE_SPILL]
 #define TARGET_AVOID_MEM_OPND_FOR_CMOVE \
@@ -556,8 +593,11 @@ extern unsigned char ix86_tune_features[X86_TUNE_LAST];
 	ix86_tune_features[X86_TUNE_AVOID_FALSE_DEP_FOR_BMI]
 #define TARGET_ONE_IF_CONV_INSN \
 	ix86_tune_features[X86_TUNE_ONE_IF_CONV_INSN]
+#define TARGET_AVOID_MFENCE ix86_tune_features[X86_TUNE_AVOID_MFENCE]
 #define TARGET_EMIT_VZEROUPPER \
 	ix86_tune_features[X86_TUNE_EMIT_VZEROUPPER]
+#define TARGET_EXPAND_ABS \
+	ix86_tune_features[X86_TUNE_EXPAND_ABS]
 
 /* Feature tests against the various architecture variations.  */
 enum ix86_arch_indices {
@@ -670,6 +710,12 @@ extern tree x86_mfence;
    with the rounding mode forced to 53 bits.  */
 #define TARGET_96_ROUND_53_LONG_DOUBLE 0
 
+#ifndef SUBTARGET_DRIVER_SELF_SPECS
+# define SUBTARGET_DRIVER_SELF_SPECS ""
+#endif
+
+#define DRIVER_SELF_SPECS SUBTARGET_DRIVER_SELF_SPECS
+
 /* -march=native handling only makes sense with compiler running on
    an x86 or x86_64 chip.  If changing this condition, also change
    the condition in driver-i386.c.  */
@@ -754,15 +800,15 @@ extern const char *host_detect_local_cpu (int argc, const char **argv);
    SFmode, DFmode and XFmode) in the current excess precision
    configuration.  */
 #define X87_ENABLE_ARITH(MODE)				\
-  (flag_unsafe_math_optimizations			\
-   || flag_excess_precision == EXCESS_PRECISION_FAST	\
+  (ix86_unsafe_math_optimizations			\
+   || ix86_excess_precision == EXCESS_PRECISION_FAST	\
    || (MODE) == XFmode)
 
 /* Likewise, whether to allow direct conversions from integer mode
    IMODE (HImode, SImode or DImode) to MODE.  */
 #define X87_ENABLE_FLOAT(MODE, IMODE)			\
-  (flag_unsafe_math_optimizations			\
-   || flag_excess_precision == EXCESS_PRECISION_FAST	\
+  (ix86_unsafe_math_optimizations			\
+   || ix86_excess_precision == EXCESS_PRECISION_FAST	\
    || (MODE) == XFmode					\
    || ((MODE) == DFmode && (IMODE) == SImode)		\
    || (IMODE) == HImode)
@@ -1120,6 +1166,8 @@ extern const char *host_detect_local_cpu (int argc, const char **argv);
 
 #define HARD_REGNO_NREGS_WITH_PADDING(REGNO, MODE) ((MODE) == XFmode ? 4 : 8)
 
+#define REGMODE_NATURAL_SIZE(MODE) ix86_regmode_natural_size (MODE)
+
 #define VALID_AVX256_REG_MODE(MODE)					\
   ((MODE) == V32QImode || (MODE) == V16HImode || (MODE) == V8SImode	\
    || (MODE) == V4DImode || (MODE) == V2TImode || (MODE) == V8SFmode	\
@@ -1215,7 +1263,7 @@ extern const char *host_detect_local_cpu (int argc, const char **argv);
   (CC_REGNO_P (REGNO) ? VOIDmode					\
    : MMX_REGNO_P (REGNO) ? V8QImode					\
    : (MODE) == VOIDmode && (NREGS) != 1 ? VOIDmode			\
-   : (MODE) == VOIDmode ? choose_hard_reg_mode ((REGNO), (NREGS), false) \
+   : (MODE) == VOIDmode ? choose_hard_reg_mode ((REGNO), (NREGS), NULL)	\
    : (MODE) == HImode && !((GENERAL_REGNO_P (REGNO)			\
 			    && TARGET_PARTIAL_REG_STALL)		\
 			   || MASK_REGNO_P (REGNO)) ? SImode		\
@@ -1505,6 +1553,7 @@ enum reg_class
 
 #define MASK_REG_P(X) (REG_P (X) && MASK_REGNO_P (REGNO (X)))
 #define MASK_REGNO_P(N) IN_RANGE ((N), FIRST_MASK_REG, LAST_MASK_REG)
+#define MASK_PAIR_REGNO_P(N) ((((N) - FIRST_MASK_REG) & 1) == 0)
 
 #define MMX_REG_P(X) (REG_P (X) && MMX_REGNO_P (REGNO (X)))
 #define MMX_REGNO_P(N) IN_RANGE ((N), FIRST_MMX_REG, LAST_MMX_REG)
@@ -1892,7 +1941,7 @@ typedef struct ix86_args {
    ? GET_MODE_SIZE (TImode) : UNITS_PER_WORD)
 
 /* If a memory-to-memory move would take MOVE_RATIO or more simple
-   move-instruction pairs, we will do a movmem or libcall instead.
+   move-instruction pairs, we will do a cpymem or libcall instead.
    Increasing the value will always make code faster, but eventually
    incurs high cost in increased code size.
 
@@ -1903,7 +1952,7 @@ typedef struct ix86_args {
 /* If a clear memory operation would take CLEAR_RATIO or more simple
    move-instruction sequences, we will do a clrmem or libcall instead.  */
 
-#define CLEAR_RATIO(speed) ((speed) ? MIN (6, ix86_cost->move_ratio) : 2)
+#define CLEAR_RATIO(speed) ((speed) ? ix86_cost->clear_ratio : 2)
 
 /* Define if shifts truncate the shift count which implies one can
    omit a sign-extension or zero-extension of a shift count.
@@ -1943,6 +1992,10 @@ do {							\
  */
 #define STACK_SAVEAREA_MODE(LEVEL)			\
   ((LEVEL) == SAVE_NONLOCAL ? (TARGET_64BIT ? TImode : DImode) : Pmode)
+
+/* Specify the machine_mode of the size increment
+   operand of an 'allocate_stack' named pattern.  */
+#define STACK_SIZE_MODE Pmode
 
 /* A C expression whose value is zero if pointers that need to be extended
    from being `POINTER_SIZE' bits wide to `Pmode' are sign-extended and
@@ -2233,11 +2286,10 @@ extern int const svr4_dbx_register_map[FIRST_PSEUDO_REGISTER];
 
 /* Under some conditions we need jump tables in the text section,
    because the assembler cannot handle label differences between
-   sections.  This is the case for x86_64 on Mach-O for example.  */
+   sections.  */
 
 #define JUMP_TABLES_IN_TEXT_SECTION \
-  (flag_pic && ((TARGET_MACHO && TARGET_64BIT) \
-   || (!TARGET_64BIT && !HAVE_AS_GOTOFF_IN_DATA)))
+  (flag_pic && !(TARGET_64BIT || HAVE_AS_GOTOFF_IN_DATA))
 
 /* Switch to init or fini section via SECTION_OP, emit a call to FUNC,
    and switch back.  For x86 we do this only to save a few bytes that
@@ -2284,6 +2336,8 @@ enum processor_type
   PROCESSOR_ICELAKE_CLIENT,
   PROCESSOR_ICELAKE_SERVER,
   PROCESSOR_CASCADELAKE,
+  PROCESSOR_TIGERLAKE,
+  PROCESSOR_COOPERLAKE,
   PROCESSOR_INTEL,
   PROCESSOR_GEODE,
   PROCESSOR_K6,
@@ -2298,6 +2352,7 @@ enum processor_type
   PROCESSOR_BTVER2,
   PROCESSOR_ZNVER1,
   PROCESSOR_ZNVER2,
+  PROCESSOR_ZNVER3,
   PROCESSOR_max
 };
 
@@ -2379,8 +2434,13 @@ const wide_int_bitmask PTA_AVX512BITALG (0, HOST_WIDE_INT_1U << 5);
 const wide_int_bitmask PTA_RDPID (0, HOST_WIDE_INT_1U << 6);
 const wide_int_bitmask PTA_PCONFIG (0, HOST_WIDE_INT_1U << 7);
 const wide_int_bitmask PTA_WBNOINVD (0, HOST_WIDE_INT_1U << 8);
-const wide_int_bitmask PTA_WAITPKG (0, HOST_WIDE_INT_1U << 9);
+const wide_int_bitmask PTA_AVX512VP2INTERSECT (0, HOST_WIDE_INT_1U << 9);
 const wide_int_bitmask PTA_PTWRITE (0, HOST_WIDE_INT_1U << 10);
+const wide_int_bitmask PTA_AVX512BF16 (0, HOST_WIDE_INT_1U << 11);
+const wide_int_bitmask PTA_WAITPKG (0, HOST_WIDE_INT_1U << 12);
+const wide_int_bitmask PTA_MOVDIRI (0, HOST_WIDE_INT_1U << 13);
+const wide_int_bitmask PTA_MOVDIR64B (0, HOST_WIDE_INT_1U << 14);
+const wide_int_bitmask PTA_CLDEMOTE (0, HOST_WIDE_INT_1U << 16);
 
 const wide_int_bitmask PTA_CORE2 = PTA_64BIT | PTA_MMX | PTA_SSE | PTA_SSE2
   | PTA_SSE3 | PTA_SSSE3 | PTA_CX16 | PTA_FXSR;
@@ -2393,33 +2453,37 @@ const wide_int_bitmask PTA_IVYBRIDGE = PTA_SANDYBRIDGE | PTA_FSGSBASE
   | PTA_RDRND | PTA_F16C;
 const wide_int_bitmask PTA_HASWELL = PTA_IVYBRIDGE | PTA_AVX2 | PTA_BMI
   | PTA_BMI2 | PTA_LZCNT | PTA_FMA | PTA_MOVBE | PTA_HLE;
-const wide_int_bitmask PTA_BROADWELL = PTA_HASWELL | PTA_ADX | PTA_PRFCHW
-  | PTA_RDSEED;
+const wide_int_bitmask PTA_BROADWELL = PTA_HASWELL | PTA_ADX | PTA_RDSEED
+  | PTA_PRFCHW;
 const wide_int_bitmask PTA_SKYLAKE = PTA_BROADWELL | PTA_AES | PTA_CLFLUSHOPT
   | PTA_XSAVEC | PTA_XSAVES | PTA_SGX;
 const wide_int_bitmask PTA_SKYLAKE_AVX512 = PTA_SKYLAKE | PTA_AVX512F
   | PTA_AVX512CD | PTA_AVX512VL | PTA_AVX512BW | PTA_AVX512DQ | PTA_PKU
   | PTA_CLWB;
 const wide_int_bitmask PTA_CASCADELAKE = PTA_SKYLAKE_AVX512 | PTA_AVX512VNNI;
+const wide_int_bitmask PTA_COOPERLAKE = PTA_CASCADELAKE | PTA_AVX512BF16;
 const wide_int_bitmask PTA_CANNONLAKE = PTA_SKYLAKE | PTA_AVX512F
   | PTA_AVX512CD | PTA_AVX512VL | PTA_AVX512BW | PTA_AVX512DQ | PTA_PKU
   | PTA_AVX512VBMI | PTA_AVX512IFMA | PTA_SHA;
 const wide_int_bitmask PTA_ICELAKE_CLIENT = PTA_CANNONLAKE | PTA_AVX512VNNI
   | PTA_GFNI | PTA_VAES | PTA_AVX512VBMI2 | PTA_VPCLMULQDQ | PTA_AVX512BITALG
-  | PTA_RDPID | PTA_CLWB | PTA_AVX512VPOPCNTDQ;
+  | PTA_RDPID | PTA_AVX512VPOPCNTDQ;
 const wide_int_bitmask PTA_ICELAKE_SERVER = PTA_ICELAKE_CLIENT | PTA_PCONFIG
-  | PTA_WBNOINVD;
+  | PTA_WBNOINVD | PTA_CLWB;
+const wide_int_bitmask PTA_TIGERLAKE = PTA_ICELAKE_CLIENT | PTA_MOVDIRI
+  | PTA_MOVDIR64B | PTA_CLWB | PTA_AVX512VP2INTERSECT;
 const wide_int_bitmask PTA_KNL = PTA_BROADWELL | PTA_AVX512PF | PTA_AVX512ER
-  | PTA_AVX512F | PTA_AVX512CD;
+  | PTA_AVX512F | PTA_AVX512CD | PTA_PREFETCHWT1;
 const wide_int_bitmask PTA_BONNELL = PTA_CORE2 | PTA_MOVBE;
-const wide_int_bitmask PTA_SILVERMONT = PTA_WESTMERE | PTA_MOVBE | PTA_RDRND;
+const wide_int_bitmask PTA_SILVERMONT = PTA_WESTMERE | PTA_MOVBE | PTA_RDRND
+  | PTA_PRFCHW;
 const wide_int_bitmask PTA_GOLDMONT = PTA_SILVERMONT | PTA_AES | PTA_SHA | PTA_XSAVE
   | PTA_RDSEED | PTA_XSAVEC | PTA_XSAVES | PTA_CLFLUSHOPT | PTA_XSAVEOPT
   | PTA_FSGSBASE;
 const wide_int_bitmask PTA_GOLDMONT_PLUS = PTA_GOLDMONT | PTA_RDPID
   | PTA_SGX | PTA_PTWRITE;
 const wide_int_bitmask PTA_TREMONT = PTA_GOLDMONT_PLUS | PTA_CLWB
-  | PTA_GFNI;
+  | PTA_GFNI | PTA_MOVDIRI | PTA_MOVDIR64B | PTA_CLDEMOTE | PTA_WAITPKG;
 const wide_int_bitmask PTA_KNM = PTA_KNL | PTA_AVX5124VNNIW
   | PTA_AVX5124FMAPS | PTA_AVX512VPOPCNTDQ;
 
@@ -2427,16 +2491,22 @@ const wide_int_bitmask PTA_KNM = PTA_KNL | PTA_AVX5124VNNIW
 
 #include "insn-attr-common.h"
 
-struct pta
+#include "common/config/i386/i386-cpuinfo.h"
+
+class pta
 {
+public:
   const char *const name;		/* processor name or nickname.  */
   const enum processor_type processor;
   const enum attr_cpu schedule;
   const wide_int_bitmask flags;
+  const int model;
+  const enum feature_priority priority;
 };
 
 extern const pta processor_alias_table[];
 extern int const pta_size;
+extern unsigned int const num_arch_names;
 #endif
 
 #endif
@@ -2480,6 +2550,7 @@ enum ix86_stack_slot
 {
   SLOT_TEMP = 0,
   SLOT_CW_STORED,
+  SLOT_CW_ROUNDEVEN,
   SLOT_CW_TRUNC,
   SLOT_CW_FLOOR,
   SLOT_CW_CEIL,
@@ -2491,6 +2562,7 @@ enum ix86_entity
 {
   X86_DIRFLAG = 0,
   AVX_U128,
+  I387_ROUNDEVEN,
   I387_TRUNC,
   I387_FLOOR,
   I387_CEIL,
@@ -2526,7 +2598,7 @@ enum avx_u128_state
 
 #define NUM_MODES_FOR_MODE_SWITCHING			\
   { X86_DIRFLAG_ANY, AVX_U128_ANY,			\
-    I387_CW_ANY, I387_CW_ANY, I387_CW_ANY }
+    I387_CW_ANY, I387_CW_ANY, I387_CW_ANY, I387_CW_ANY  }
 
 
 /* Avoid renaming of stack registers, as doing so in combination with
@@ -2608,6 +2680,11 @@ struct GTY(()) ix86_frame
   /* When save_regs_using_mov is set, emit prologue using
      move instead of push instructions.  */
   bool save_regs_using_mov;
+
+  /* Assume without checking that:
+       EXPENSIVE_P = expensive_function_p (EXPENSIVE_COUNT).  */
+  bool expensive_p;
+  int expensive_count;
 };
 
 /* Machine specific frame tracking during prologue/epilogue generation.  All
@@ -2775,6 +2852,13 @@ struct GTY(()) machine_function {
   /* If true, ENDBR is queued at function entrance.  */
   BOOL_BITFIELD endbr_queued_at_entrance : 1;
 
+  /* True if the function needs a stack frame.  */
+  BOOL_BITFIELD stack_frame_required : 1;
+
+  /* True if __builtin_ia32_vzeroupper () has been expanded in current
+     function.  */
+  BOOL_BITFIELD has_explicit_vzeroupper : 1;
+
   /* The largest alignment, in bytes, of stack slot actually used.  */
   unsigned int max_used_stack_alignment;
 
@@ -2785,6 +2869,9 @@ struct GTY(()) machine_function {
   /* During SEH output, this is non-null.  */
   struct seh_frame_state * GTY((skip(""))) seh;
 };
+
+extern GTY(()) tree sysv_va_list_type_node;
+extern GTY(()) tree ms_va_list_type_node;
 #endif
 
 #define ix86_stack_locals (cfun->machine->stack_locals)
@@ -2881,6 +2968,12 @@ extern void debug_dispatch_window (int);
 #define SWITCHABLE_TARGET 1
 
 #define TARGET_SUPPORTS_WIDE_INT 1
+
+#if !defined(GENERATOR_FILE) && !defined(IN_LIBGCC2)
+extern enum attr_cpu ix86_schedule;
+
+#define NUM_X86_64_MS_CLOBBERED_REGS 12
+#endif
 
 /*
 Local variables:
