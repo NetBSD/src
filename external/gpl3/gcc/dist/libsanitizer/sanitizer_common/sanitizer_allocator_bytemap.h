@@ -1,8 +1,7 @@
 //===-- sanitizer_allocator_bytemap.h ---------------------------*- C++ -*-===//
 //
-// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
-// See https://llvm.org/LICENSE.txt for license information.
-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
 //
@@ -14,10 +13,9 @@
 #endif
 
 // Maps integers in rage [0, kSize) to u8 values.
-template <u64 kSize, typename AddressSpaceViewTy = LocalAddressSpaceView>
+template<u64 kSize>
 class FlatByteMap {
  public:
-  using AddressSpaceView = AddressSpaceViewTy;
   void Init() {
     internal_memset(map_, 0, sizeof(map_));
   }
@@ -41,12 +39,9 @@ class FlatByteMap {
 // to kSize2-byte arrays. The secondary arrays are mmaped on demand.
 // Each value is initially zero and can be set to something else only once.
 // Setting and getting values from multiple threads is safe w/o extra locking.
-template <u64 kSize1, u64 kSize2,
-          typename AddressSpaceViewTy = LocalAddressSpaceView,
-          class MapUnmapCallback = NoOpMapUnmapCallback>
+template <u64 kSize1, u64 kSize2, class MapUnmapCallback = NoOpMapUnmapCallback>
 class TwoLevelByteMap {
  public:
-  using AddressSpaceView = AddressSpaceViewTy;
   void Init() {
     internal_memset(map1_, 0, sizeof(map1_));
     mu_.Init();
@@ -76,8 +71,7 @@ class TwoLevelByteMap {
     CHECK_LT(idx, kSize1 * kSize2);
     u8 *map2 = Get(idx / kSize2);
     if (!map2) return 0;
-    auto value_ptr = AddressSpaceView::Load(&map2[idx % kSize2]);
-    return *value_ptr;
+    return map2[idx % kSize2];
   }
 
  private:
@@ -104,4 +98,3 @@ class TwoLevelByteMap {
   atomic_uintptr_t map1_[kSize1];
   StaticSpinMutex mu_;
 };
-

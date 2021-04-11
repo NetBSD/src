@@ -1,8 +1,7 @@
 //===-- asan_scariness_score.h ----------------------------------*- C++ -*-===//
 //
-// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
-// See https://llvm.org/LICENSE.txt for license information.
-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
 //
@@ -43,7 +42,7 @@ struct ScarinessScoreBase {
       internal_strlcat(descr, "-", sizeof(descr));
     internal_strlcat(descr, reason, sizeof(descr));
     score += add_to_score;
-  }
+  };
   int GetScore() const { return score; }
   const char *GetDescription() const { return descr; }
   void Print() const {
