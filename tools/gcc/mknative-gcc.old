@@ -1,10 +1,10 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc.old,v 1.9 2020/09/06 02:24:38 mrg Exp $
+#	$NetBSD: mknative-gcc.old,v 1.10 2021/04/11 01:44:14 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of gcc.
 #
-# This version is for GCC 7.5
+# This version is for GCC 9.3
 
 # initialise
 
@@ -226,12 +226,16 @@ get_libstdcxx_v3 () {
 	mkdir -p $_OUTDIR/lib/$_subdir/arch/$_MACHINE_ARCH
 
 	_build_headers="c++config.h cxxabi_tweaks.h"
-	_headers1="c_base_headers_extra_install"
-	_headers1="$_headers1 tr1_headers tr2_headers decimal_headers c_compatibility_headers_install"
+	_headers1="backward_headers c_base_headers_extra"
+	_headers1="$_headers1 c_base_headers_extra_install"
+	_headers1="$_headers1 tr1_headers tr2_headers"
+	_headers1="$_headers1 decimal_headers c_compatibility_headers_install"
 	_headers1="$_headers1 debug_headers parallel_headers"
-	_headers2="host_headers thread_host_headers"
-	_pf_headers="profile_headers profile_impl_headers"
-	_pb_headers="pb_headers1 pb_headers2 pb_headers3 pb_headers4 pb_headers5 pb_headers6 pb_headers7"
+	_headers1="$_headers1 pb_headers1 pb_headers2 pb_headers3 pb_headers4"
+	_headers1="$_headers1 pb_headers5 pb_headers6 pb_headers7"
+	_headers1="$_headers1 bits_headers ext_headers host_headers"
+	_headers1="$_headers1 thread_host_headers pstl_headers"
+	_headers1="$_headers1 profile_headers profile_impl_headers"
 
 	# build files
 	for h in $_build_headers; do
@@ -248,6 +252,7 @@ get_libstdcxx_v3 () {
 		getvars $_PLATFORM/libstdc++-v3/Makefile \
 			port_specific_symbol_files
 		getvars $_PLATFORM/libstdc++-v3/src/Makefile \
+			cxx17_sources \
 			cxx11_sources \
 			cxx98_sources
 
@@ -264,6 +269,9 @@ get_libstdcxx_v3 () {
 		# src
 		getvars $_PLATFORM/libstdc++-v3/src/Makefile \
 			libstdc___la_SOURCES | sed 's/^G_libstdc___la_SOURCES=/G_SRC_SOURCES=/'
+		getvars $_PLATFORM/libstdc++-v3/src/c++17/Makefile \
+			libc__17convenience_la_SOURCES | \
+			sed -e 's/^G_libc__17convenience_la_SOURCES=/G_CPP17_SOURCES=/'
 		getvars $_PLATFORM/libstdc++-v3/src/c++11/Makefile \
 			libc__11convenience_la_SOURCES | \
 			sed -e 's/^G_libc__11convenience_la_SOURCES=/G_CPP11_SOURCES=/' \
@@ -282,15 +290,32 @@ get_libstdcxx_v3 () {
 
 		# includes
 		getvars $_PLATFORM/libstdc++-v3/include/Makefile \
-			backward_headers c_base_headers_extra $_headers1 $_pb_headers | \
-				sed -e 's#\${GNUHOSTDIST}/libstdc++-v3/include/##g'
-		getvars $_PLATFORM/libstdc++-v3/include/Makefile \
-			bits_headers ext_headers $_headers2 | \
-				sed -e 's#\${GNUHOSTDIST}/libstdc++-v3/include/##g' -e 's#\${GNUHOSTDIST}/libstdc++-v3/config/##g'
-		getvars $_PLATFORM/libstdc++-v3/include/Makefile \
-			$_pf_headers | sed -e 's#\${GNUHOSTDIST}/libstdc++-v3/include/profile/##g'
+			$_headers1 | \
+				sed -e 's#\${GNUHOSTDIST}/libstdc++-v3/include/##g' \
+				    -e 's#\${GNUHOSTDIST}/libstdc++-v3/config/##g'
 		getvars $_PLATFORM/libstdc++-v3/include/Makefile \
 			BASIC_FILE_H ALLOCATOR_H CSTDIO_H CLOCALE_H CMESSAGES_H CTIME_H
+	} | sanitise_includes \
+	  | write_mk $_OUTDIRBASE/lib/$_subdir/arch/$_MACHINE_ARCH/defs.mk
+}
+
+##### lib/libsanitizer #####
+
+get_libsanitizer () {
+	_subdir="$1"
+
+	mkdir -p $_OUTDIR/lib/$_subdir/arch/$_MACHINE_ARCH
+
+	{
+		getvars $_PLATFORM/libsanitizer/asan/Makefile \
+			asan_files
+		getvars $_PLATFORM/libsanitizer/lsan/Makefile \
+			lsan_files
+		getvars $_PLATFORM/libsanitizer/tsan/Makefile \
+			tsan_plugin_files
+		getvars $_PLATFORM/libsanitizer/ubsan/Makefile \
+			ubsan_plugin_files
+
 	} | sanitise_includes \
 	  | write_mk $_OUTDIRBASE/lib/$_subdir/arch/$_MACHINE_ARCH/defs.mk
 }
@@ -339,10 +364,10 @@ get_gcc () {
 			GCC_OBJS GCOV_OBJS GCOV_DUMP_OBJS GXX_OBJS GTM_H PROTO_OBJS ${_extravars1} \
 			INCLUDES md_file OBJC_OBJS OBJS out_file version \
 			BUILD_PREFIX RTL_H RTL_BASE_H TREE_H ${_hconfig_h} BASIC_BLOCK_H GCC_H \
-			GGC_H \
+			D_TARGET_DEF \
 			GTFILES_SRCDIR GTFILES_FILES_FILES GTFILES_FILES_LANGS \
-			GTFILES GTFILES_LANG_DIR_NAMES NOEXCEPTION_FLAGS \
-			NATIVE_SYSTEM_HEADER_DIR \
+			GTFILES GTFILES_LANG_DIR_NAMES HASH_TABLE_H \
+			NOEXCEPTION_FLAGS NATIVE_SYSTEM_HEADER_DIR \
 			tm_defines host_xm_file host_xm_defines tm_p_file \
 			target_cpu_default ${_extravars} ${_extravars2} \
 			lang_specs_files ${_extravars3} \
@@ -430,6 +455,15 @@ __EOF__
 	if [ "${_MACHINE_ARCH}" = "i386" -o "${_MACHINE_ARCH}" = "x86_64" ]; then
 		write_c $_OUTDIRBASE/usr.bin/$_subdir/arch/$_MACHINE_ARCH/i386-builtin-types.inc <$_TMPDIR/gcc/i386-builtin-types.inc
 	fi
+
+	case "${_MACHINE_ARCH}" in
+	(*arm*)
+		d=$_OUTDIRBASE/usr.bin/$_subdir/arch/${_MACHINE_ARCH}
+		for f in arm-cpu.h arm-cpu-cdata.h arm-cpu-data.h arm-isa.h; do
+			write_c $d/$f <$_TMPDIR/gcc/$f
+		done
+		;;
+	esac
 }
 
 ##### main #####
@@ -457,6 +491,8 @@ gcc*)
 	get_gcc_libiberty gcc
 	get_libobjc libobjc
 	get_libstdcxx_v3 libstdc++-v3 gcc
+	# XXX not yet
+	# get_libsanitizer libsanitizer
 	get_libdecnumber libdecnumber
 	get_libgomp libgomp
 	get_libbacktrace libbacktrace
