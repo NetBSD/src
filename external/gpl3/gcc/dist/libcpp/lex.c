@@ -1,5 +1,5 @@
 /* CPP Library - lexical analysis.
-   Copyright (C) 2000-2019 Free Software Foundation, Inc.
+   Copyright (C) 2000-2020 Free Software Foundation, Inc.
    Contributed by Per Bothner, 1994-95.
    Based on CCCP program by Paul Rubin, June 1986
    Adapted to ANSI C, Richard Stallman, Jan 1987
@@ -531,11 +531,11 @@ init_vectorized_lexer (void)
   search_line_fast = impl;
 }
 
-#elif defined(_ARCH_PWR8) && defined(__ALTIVEC__)
+#elif (GCC_VERSION >= 4005) && defined(_ARCH_PWR8) && defined(__ALTIVEC__)
 
 /* A vection of the fast scanner using AltiVec vectorized byte compares
    and VSX unaligned loads (when VSX is available).  This is otherwise
-   the same as the pre-GCC 5 version.  */
+   the same as the AltiVec version.  */
 
 ATTRIBUTE_NO_SANITIZE_UNDEFINED
 static const uchar *
@@ -1313,7 +1313,9 @@ warn_about_normalization (cpp_reader *pfile,
     }
 }
 
-/* Returns TRUE if the sequence starting at buffer->cur is invalid in
+static const cppchar_t utf8_signifier = 0xC0;
+
+/* Returns TRUE if the sequence starting at buffer->cur is valid in
    an identifier.  FIRST is TRUE if this starts an identifier.  */
 static bool
 forms_identifier_p (cpp_reader *pfile, int first,
@@ -1336,17 +1338,25 @@ forms_identifier_p (cpp_reader *pfile, int first,
       return true;
     }
 
-  /* Is this a syntactically valid UCN?  */
-  if (CPP_OPTION (pfile, extended_identifiers)
-      && *buffer->cur == '\\'
-      && (buffer->cur[1] == 'u' || buffer->cur[1] == 'U'))
+  /* Is this a syntactically valid UCN or a valid UTF-8 char?  */
+  if (CPP_OPTION (pfile, extended_identifiers))
     {
       cppchar_t s;
-      buffer->cur += 2;
-      if (_cpp_valid_ucn (pfile, &buffer->cur, buffer->rlimit, 1 + !first,
-			  state, &s, NULL, NULL))
-	return true;
-      buffer->cur -= 2;
+      if (*buffer->cur >= utf8_signifier)
+	{
+	  if (_cpp_valid_utf8 (pfile, &buffer->cur, buffer->rlimit, 1 + !first,
+			       state, &s))
+	    return true;
+	}
+      else if (*buffer->cur == '\\'
+	       && (buffer->cur[1] == 'u' || buffer->cur[1] == 'U'))
+	{
+	  buffer->cur += 2;
+	  if (_cpp_valid_ucn (pfile, &buffer->cur, buffer->rlimit, 1 + !first,
+			      state, &s, NULL, NULL))
+	    return true;
+	  buffer->cur -= 2;
+	}
     }
 
   return false;
@@ -1464,7 +1474,8 @@ lex_identifier (cpp_reader *pfile, const uchar *base, bool starts_ucn,
   pfile->buffer->cur = cur;
   if (starts_ucn || forms_identifier_p (pfile, false, nst))
     {
-      /* Slower version for identifiers containing UCNs (or $).  */
+      /* Slower version for identifiers containing UCNs
+	 or extended chars (including $).  */
       do {
 	while (ISIDNUM (*pfile->buffer->cur))
 	  {
@@ -2772,7 +2783,13 @@ _cpp_lex_direct (cpp_reader *pfile)
       goto skipped_white;
 
     case '\n':
-      if (buffer->cur < buffer->rlimit)
+      /* Increment the line, unless this is the last line ...  */
+      if (buffer->cur < buffer->rlimit
+	  /* ... or this is a #include, (where _cpp_stack_file needs to
+	     unwind by one line) ...  */
+	  || (pfile->state.in_directive > 1
+	      /* ... except traditional-cpp increments this elsewhere.  */
+	      && !CPP_OPTION (pfile, traditional)))
 	CPP_INCREMENT_LINE (pfile, 0);
       buffer->need_line = true;
       goto fresh_line;
@@ -2964,7 +2981,13 @@ _cpp_lex_direct (cpp_reader *pfile)
 
       result->type = CPP_LESS;
       if (*buffer->cur == '=')
-	buffer->cur++, result->type = CPP_LESS_EQ;
+	{
+	  buffer->cur++, result->type = CPP_LESS_EQ;
+	  if (*buffer->cur == '>'
+	      && CPP_OPTION (pfile, cplusplus)
+	      && CPP_OPTION (pfile, lang) >= CLK_GNUCXX2A)
+	    buffer->cur++, result->type = CPP_SPACESHIP;
+	}
       else if (*buffer->cur == '<')
 	{
 	  buffer->cur++;
@@ -3088,7 +3111,7 @@ _cpp_lex_direct (cpp_reader *pfile)
 
     case ':':
       result->type = CPP_COLON;
-      if (*buffer->cur == ':' && CPP_OPTION (pfile, cplusplus))
+      if (*buffer->cur == ':' && CPP_OPTION (pfile, scope))
 	buffer->cur++, result->type = CPP_SCOPE;
       else if (*buffer->cur == '>' && CPP_OPTION (pfile, digraphs))
 	{
@@ -3118,12 +3141,12 @@ _cpp_lex_direct (cpp_reader *pfile)
       /* @ is a punctuator in Objective-C.  */
     case '@': result->type = CPP_ATSIGN; break;
 
-    case '$':
-    case '\\':
+    default:
       {
 	const uchar *base = --buffer->cur;
-	struct normalize_state nst = INITIAL_NORMALIZE_STATE;
 
+	/* Check for an extended identifier ($ or UCN or UTF-8).  */
+	struct normalize_state nst = INITIAL_NORMALIZE_STATE;
 	if (forms_identifier_p (pfile, true, &nst))
 	  {
 	    result->type = CPP_NAME;
@@ -3132,13 +3155,21 @@ _cpp_lex_direct (cpp_reader *pfile)
 	    warn_about_normalization (pfile, result, &nst);
 	    break;
 	  }
-	buffer->cur++;
-      }
-      /* FALLTHRU */
 
-    default:
-      create_literal (pfile, result, buffer->cur - 1, 1, CPP_OTHER);
-      break;
+	/* Otherwise this will form a CPP_OTHER token.  Parse valid UTF-8 as a
+	   single token.  */
+	buffer->cur++;
+	if (c >= utf8_signifier)
+	  {
+	    const uchar *pstr = base;
+	    cppchar_t s;
+	    if (_cpp_valid_utf8 (pfile, &pstr, buffer->rlimit, 0, NULL, &s))
+	      buffer->cur = pstr;
+	  }
+	create_literal (pfile, result, base, buffer->cur - base, CPP_OTHER);
+	break;
+      }
+
     }
 
   /* Potentially convert the location of the token to a range.  */
@@ -3467,6 +3498,7 @@ cpp_avoid_paste (cpp_reader *pfile, const cpp_token *token1,
 				|| (CPP_OPTION (pfile, objc)
 				    && token1->val.str.text[0] == '@'
 				    && (b == CPP_NAME || b == CPP_STRING)));
+    case CPP_LESS_EQ:	return c == '>';
     case CPP_STRING:
     case CPP_WSTRING:
     case CPP_UTF8STRING:
@@ -3757,7 +3789,11 @@ cpp_token_val_index (const cpp_token *tok)
     case SPELL_LITERAL:
       return CPP_TOKEN_FLD_STR;
     case SPELL_OPERATOR:
-      if (tok->type == CPP_PASTE)
+      /* Operands which were originally spelled as ident keep around
+         the node for the exact spelling.  */
+      if (tok->flags & NAMED_OP)
+	return CPP_TOKEN_FLD_NODE;
+      else if (tok->type == CPP_PASTE)
 	return CPP_TOKEN_FLD_TOKEN_NO;
       else
 	return CPP_TOKEN_FLD_NONE;

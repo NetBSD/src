@@ -1,6 +1,6 @@
 // The template and inlines for the -*- C++ -*- complex number classes.
 
-// Copyright (C) 1997-2019 Free Software Foundation, Inc.
+// Copyright (C) 1997-2020 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -56,6 +56,10 @@ extern "C" long double __c99_cabsl(_Complex long double);
 
 // Get rid of a macro possibly defined in <complex.h>
 #undef complex
+
+#if __cplusplus > 201703L
+# define __cpp_lib_constexpr_complex 201711L
+#endif
 
 namespace std _GLIBCXX_VISIBILITY(default)
 {
@@ -474,6 +478,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     operator==(const complex<_Tp>& __x, const _Tp& __y)
     { return __x.real() == __y && __x.imag() == _Tp(); }
 
+#if !(__cpp_impl_three_way_comparison >= 201907L)
   template<typename _Tp>
     inline _GLIBCXX_CONSTEXPR bool
     operator==(const _Tp& __x, const complex<_Tp>& __y)
@@ -496,6 +501,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     inline _GLIBCXX_CONSTEXPR bool
     operator!=(const _Tp& __x, const complex<_Tp>& __y)
     { return __x != __y.real() || _Tp() != __y.imag(); }
+#endif
   //@}
 
   ///  Extraction operator for complex values.
