@@ -1,4 +1,4 @@
-# $NetBSD: varmod-ifelse.mk,v 1.10 2021/03/15 12:15:03 rillig Exp $
+# $NetBSD: varmod-ifelse.mk,v 1.11 2021/04/11 13:35:56 rillig Exp $
 #
 # Tests for the ${cond:?then:else} variable modifier, which evaluates either
 # the then-expression or the else-expression, depending on the condition.
@@ -74,7 +74,7 @@ COND:=	${${UNDEF} == "":?bad-assign:bad-assign}
 # conditional expression".
 #
 # XXX: The left-hand side is enclosed in quotes.  This results in Var_Parse
-# being called without VarEvalFlags.undefErr.  When ApplyModifier_IfElse
+# being called without VARE_UNDEFERR.  When ApplyModifier_IfElse
 # returns AMR_CLEANUP as result, Var_Parse returns varUndefined since the
 # value of the variable expression is still undefined.  CondParser_String is
 # then supposed to do proper error handling, but since varUndefined is local

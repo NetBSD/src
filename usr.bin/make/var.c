@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.916 2021/04/11 12:46:54 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.917 2021/04/11 13:35:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.916 2021/04/11 12:46:54 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.917 2021/04/11 13:35:56 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -272,11 +272,11 @@ char var_Error[] = "";
 
 /*
  * Special return value for Var_Parse, indicating an undefined variable in
- * a case where VarEvalFlags.undefErr is not set.  This undefined variable is
+ * a case where VARE_UNDEFERR is not set.  This undefined variable is
  * typically a dynamic variable such as ${.TARGET}, whose expansion needs to
  * be deferred until it is defined in an actual target.
  *
- * See VarEvalFlags.keepUndef.
+ * See VARE_EVAL_KEEP_UNDEF.
  */
 static char varUndefined[] = "";
 
@@ -2253,7 +2253,7 @@ ParseModifierPartSubst(
 
 		/*
 		 * XXX: This whole block is very similar to Var_Parse without
-		 * VarEvalFlags.wantRes.  There may be subtle edge cases
+		 * VARE_WANTRES.  There may be subtle edge cases
 		 * though that are not yet covered in the unit tests and that
 		 * are parsed differently, depending on whether they are
 		 * evaluated or not.
@@ -4352,18 +4352,18 @@ FreeEnvVar(Var *v, FStr *inout_val)
 }
 
 #if __STDC_VERSION__ >= 199901L
-#define Expr_Literal(name, value, eflags, scope, defined) \
-	{ name, value, eflags, scope, defined }
+#define Expr_Literal(name, value, emode, scope, defined) \
+	{ name, value, emode, scope, defined }
 #else
 MAKE_INLINE Expr
 Expr_Literal(const char *name, FStr value,
-	     VarEvalFlags eflags, GNode *scope, ExprDefined defined)
+	     VarEvalMode emode, GNode *scope, ExprDefined defined)
 {
 	Expr expr;
 
 	expr.name = name;
 	expr.value = value;
-	expr.eflags = eflags;
+	expr.emode = emode;
 	expr.scope = scope;
 	expr.defined = defined;
 	return expr;
@@ -4412,7 +4412,7 @@ Var_Parse_FastLane(const char **pp, VarEvalMode emode, FStr *out_value)
  *			point to the "y" of "empty(VARNAME:Modifiers)", which
  *			is syntactically the same.
  *	scope		The scope for finding variables
- *	eflags		Control the exact details of parsing
+ *	emode		Controls the exact details of parsing and evaluation
  *
  * Output:
  *	*pp		The position where to continue parsing.
@@ -4424,13 +4424,13 @@ Var_Parse_FastLane(const char **pp, VarEvalMode emode, FStr *out_value)
  *	*out_val	The value of the variable expression, never NULL.
  *	*out_val	var_Error if there was a parse error.
  *	*out_val	var_Error if the base variable of the expression was
- *			undefined, eflags has undefErr set, and none of
+ *			undefined, emode is VARE_UNDEFERR, and none of
  *			the modifiers turned the undefined expression into a
  *			defined expression.
  *			XXX: It is not guaranteed that an error message has
  *			been printed.
  *	*out_val	varUndefined if the base variable of the expression
- *			was undefined, eflags did not have undefErr set,
+ *			was undefined, emode was not VARE_UNDEFERR,
  *			and none of the modifiers turned the undefined
  *			expression into a defined expression.
  *			XXX: It is not guaranteed that an error message has
@@ -4655,7 +4655,7 @@ VarSubstPlain(const char **pp, Buffer *res)
  *			expanded.
  *	scope		The scope in which to start searching for
  *			variables.  The other scopes are searched as well.
- *	eflags		Special effects during expansion.
+ *	emode		The mode for parsing or evaluating subexpressions.
  */
 VarParseResult
 Var_Subst(const char *str, GNode *scope, VarEvalMode emode, char **out_res)

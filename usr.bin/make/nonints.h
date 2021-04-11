@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.212 2021/04/11 12:06:53 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.213 2021/04/11 13:35:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -292,7 +292,7 @@ typedef enum VarParseResult {
 	 * information to them, for now.
 	 *
 	 * TODO: Instead of having this special return value, rather ensure
-	 *  that VarEvalFlags.keepUndef is processed properly.
+	 *  that VARE_EVAL_KEEP_UNDEF is processed properly.
 	 */
 	VPR_UNDEF
 
