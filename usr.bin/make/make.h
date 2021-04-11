@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.260 2021/04/04 10:05:08 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.261 2021/04/11 12:06:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -149,10 +149,11 @@ typedef unsigned int Boolean;
 
 #include "lst.h"
 #include "enum.h"
+#include "make_malloc.h"
+#include "str.h"
 #include "hash.h"
 #include "config.h"
 #include "buf.h"
-#include "make_malloc.h"
 
 /*
  * The typical flow of states is:
