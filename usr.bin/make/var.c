@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.921 2021/04/11 20:38:43 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.922 2021/04/11 21:29:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.921 2021/04/11 20:38:43 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.922 2021/04/11 21:29:57 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -4305,7 +4305,7 @@ EvalUndefined(bool dynamic, const char *start, const char *p,
  */
 static bool
 ParseVarnameLong(
-	const char *p,
+	const char **pp,
 	char startc,
 	GNode *scope,
 	VarEvalMode emode,
@@ -4315,7 +4315,6 @@ ParseVarnameLong(
 	FStr *out_false_val,
 
 	char *out_true_endc,
-	const char **out_true_p,
 	Var **out_true_v,
 	bool *out_true_haveModifier,
 	const char **out_true_extraModifiers,
@@ -4328,6 +4327,7 @@ ParseVarnameLong(
 	bool haveModifier;
 	bool dynamic = false;
 
+	const char *p = *pp;
 	const char *const start = p;
 	char endc = startc == '(' ? ')' : '}';
 
@@ -4394,8 +4394,8 @@ ParseVarnameLong(
 	} else
 		LazyBuf_Done(&varname);
 
+	*pp = p;
 	*out_true_endc = endc;
-	*out_true_p = p;
 	*out_true_v = v;
 	*out_true_haveModifier = haveModifier;
 	*out_true_dynamic = dynamic;
@@ -4548,9 +4548,9 @@ Var_Parse(const char **pp, GNode *scope, VarEvalMode emode, FStr *out_val)
 		p++;
 	} else {
 		VarParseResult res;
-		if (!ParseVarnameLong(p, startc, scope, emode,
+		if (!ParseVarnameLong(&p, startc, scope, emode,
 		    pp, &res, out_val,
-		    &endc, &p, &v, &haveModifier, &extramodifiers,
+		    &endc, &v, &haveModifier, &extramodifiers,
 		    &dynamic, &expr.defined))
 			return res;
 	}
