@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.279 2021/04/11 18:17:22 mlelstv Exp $	*/
+/*	$NetBSD: vnd.c,v 1.280 2021/04/11 18:18:39 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008, 2020 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.279 2021/04/11 18:17:22 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.280 2021/04/11 18:18:39 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -1432,6 +1432,10 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		error = bdev_ioctl(vattr.va_fsid, DIOCGSECTORSIZE, &vnd->sc_iosize, FKIOCTL, l);
 		if (error)
 			vnd->sc_iosize = vnd->sc_vp->v_mount->mnt_stat.f_frsize;
+
+		/* Default I/O size to DEV_BSIZE */
+		if (vnd->sc_iosize == 0)
+			vnd->sc_iosize = DEV_BSIZE;
 
 		/*
 		 * Use pseudo-geometry specified.  If none was provided,
