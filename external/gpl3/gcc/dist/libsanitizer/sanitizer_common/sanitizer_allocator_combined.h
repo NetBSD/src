@@ -1,8 +1,7 @@
 //===-- sanitizer_allocator_combined.h --------------------------*- C++ -*-===//
 //
-// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
-// See https://llvm.org/LICENSE.txt for license information.
-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
 //
@@ -19,26 +18,20 @@
 //  When allocating 2^x bytes it should return 2^x aligned chunk.
 // PrimaryAllocator is used via a local AllocatorCache.
 // SecondaryAllocator can allocate anything, but is not efficient.
-template <class PrimaryAllocator,
-          class LargeMmapAllocatorPtrArray = DefaultLargeMmapAllocatorPtrArray>
+template <class PrimaryAllocator, class AllocatorCache,
+          class SecondaryAllocator>  // NOLINT
 class CombinedAllocator {
  public:
-  using AllocatorCache = typename PrimaryAllocator::AllocatorCache;
-  using SecondaryAllocator =
-      LargeMmapAllocator<typename PrimaryAllocator::MapUnmapCallback,
-                         LargeMmapAllocatorPtrArray,
-                         typename PrimaryAllocator::AddressSpaceView>;
-
   void InitLinkerInitialized(s32 release_to_os_interval_ms) {
-    stats_.InitLinkerInitialized();
     primary_.Init(release_to_os_interval_ms);
     secondary_.InitLinkerInitialized();
+    stats_.InitLinkerInitialized();
   }
 
   void Init(s32 release_to_os_interval_ms) {
-    stats_.Init();
     primary_.Init(release_to_os_interval_ms);
     secondary_.Init();
+    stats_.Init();
   }
 
   void *Allocate(AllocatorCache *cache, uptr size, uptr alignment) {
