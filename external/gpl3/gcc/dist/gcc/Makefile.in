@@ -1733,7 +1733,7 @@ $(FULL_DRIVER_NAME): ./xgcc
 #
 # SELFTEST_DEPS need to be set before including language makefile fragments.
 # Otherwise $(SELFTEST_DEPS) is empty when used from <LANG>/Make-lang.in.
-SELFTEST_DEPS = $(GCC_PASSES) stmp-int-hdrs $(srcdir)/testsuite/selftests
+SELFTEST_DEPS = $(GCC_PASSES) stmp-int-hdrs
 
 # Language makefile fragments.
 
