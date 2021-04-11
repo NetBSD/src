@@ -1,4 +1,4 @@
-/*	$NetBSD: str.h,v 1.2 2021/04/11 18:44:57 rillig Exp $	*/
+/*	$NetBSD: str.h,v 1.3 2021/04/11 19:05:06 rillig Exp $	*/
 
 /*
  Copyright (c) 2021 Roland Illig <rillig@NetBSD.org>
@@ -69,6 +69,13 @@ typedef struct Words {
 	size_t len;
 	void *freeIt;
 } Words;
+
+/* The result of splitting a string into words. */
+typedef struct SubstringWords {
+	Substring *words;
+	size_t len;
+	void *freeIt;
+} SubstringWords;
 
 
 MAKE_INLINE FStr
@@ -295,6 +302,16 @@ Words Str_Words(const char *, bool);
 
 MAKE_INLINE void
 Words_Free(Words w)
+{
+	free(w.words);
+	free(w.freeIt);
+}
+
+
+SubstringWords Substring_Words(const char *, bool);
+
+MAKE_INLINE void
+SubstringWords_Free(SubstringWords w)
 {
 	free(w.words);
 	free(w.freeIt);
