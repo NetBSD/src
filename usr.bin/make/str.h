@@ -1,4 +1,4 @@
-/*	$NetBSD: str.h,v 1.1 2021/04/11 12:06:53 rillig Exp $	*/
+/*	$NetBSD: str.h,v 1.2 2021/04/11 18:44:57 rillig Exp $	*/
 
 /*
  Copyright (c) 2021 Roland Illig <rillig@NetBSD.org>
@@ -162,6 +162,12 @@ Substring_Length(Substring sub)
 }
 
 MAKE_INLINE bool
+Substring_IsEmpty(Substring sub)
+{
+	return sub.start == sub.end;
+}
+
+MAKE_INLINE bool
 Substring_Equals(Substring sub, const char *str)
 {
 	size_t len = strlen(str);
@@ -181,6 +187,39 @@ MAKE_INLINE FStr
 Substring_Str(Substring sub)
 {
 	return FStr_InitOwn(bmake_strsedup(sub.start, sub.end));
+}
+
+MAKE_INLINE const char *
+Substring_LastIndex(Substring sub, char ch)
+{
+	const char *p;
+
+	for (p = sub.end; p != sub.start; p--)
+		if (p[-1] == ch)
+			return p - 1;
+	return NULL;
+}
+
+MAKE_INLINE Substring
+Substring_Dirname(Substring pathname)
+{
+	const char *p;
+
+	for (p = pathname.end; p != pathname.start; p--)
+		if (p[-1] == '/')
+			return Substring_Init(pathname.start, p - 1);
+	return Substring_InitStr(".");
+}
+
+MAKE_INLINE Substring
+Substring_Basename(Substring pathname)
+{
+	const char *p;
+
+	for (p = pathname.end; p != pathname.start; p--)
+		if (p[-1] == '/')
+			return Substring_Init(p, pathname.end);
+	return pathname;
 }
 
 
