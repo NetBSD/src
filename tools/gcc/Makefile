@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.100 2020/09/06 02:24:38 mrg Exp $
+#	$NetBSD: Makefile,v 1.101 2021/04/11 07:35:45 mrg Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -8,7 +8,7 @@ MODULE=		${EXTERNAL_GCC_SUBDIR}
 GCCDIST=	${.CURDIR}/../../external/gpl3/${EXTERNAL_GCC_SUBDIR}/dist
 GNUHOSTDIST=	${GCCDIST}
 
-.if ${HAVE_GCC} == 7
+.if ${HAVE_GCC} == 9
 MKNATIVE=		${.CURDIR}/mknative-gcc.old
 .endif
 
@@ -233,6 +233,8 @@ MKENV_BUILD_MAKE=cd .native && ${MKNATIVE_ENV} ${BUILD_MAKE}
 	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \
 		(cd .native/gcc && ${MKNATIVE_ENV} ${BUILD_MAKE} -e libgcc.mvars tconfig.h); \
 		(cd .native && touch gcc/cc1obj gcc/cc1plus gcc/f771 gcc/libgcc.a gcc/libgcc_s.so)
+	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \
+		(cd .native/gcc && ${MKNATIVE_ENV} ${BUILD_MAKE} -e omp-device-properties.h)
 .if defined(EXTRA_GCC_TARGETS)
 	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \
 		(cd .native/gcc && ${MKNATIVE_ENV} ${BUILD_MAKE} -e ${EXTRA_GCC_TARGETS})

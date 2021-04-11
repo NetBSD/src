@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.113 2021/04/11 01:44:14 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.114 2021/04/11 07:35:45 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of gcc.
@@ -401,7 +401,7 @@ get_gcc () {
 			| write_mk $_OUTDIRBASE/usr.bin/common-target/arch/$_MACHINE_ARCH.mk
 
 	write_c $_OUTDIRBASE/usr.bin/libcpp/arch/$_MACHINE_ARCH/config.h <$_TMPDIR/libcpp/config.h
-	hfiles='auto-host configargs config bconfig bversion plugin-version multilib tm'
+	hfiles='auto-host configargs config bconfig bversion plugin-version multilib tm omp-device-properties'
 	for f in $hfiles; do
 		write_c $_OUTDIRBASE/usr.bin/$_subdir/arch/$_MACHINE_ARCH/$f.h <$_TMPDIR/gcc/$f.h
 		if [ "${_MACHINE_ARCH}" = "powerpc" -a "${f}" = "configargs" ]
@@ -493,7 +493,8 @@ gcc*)
 	get_gcc_libiberty gcc
 	get_libobjc libobjc
 	get_libstdcxx_v3 libstdc++-v3 gcc
-	get_libsanitizer libsanitizer
+	# wants libstdc++-v3 built
+	# get_libsanitizer libsanitizer
 	get_libdecnumber libdecnumber
 	get_libgomp libgomp
 	get_libbacktrace libbacktrace
