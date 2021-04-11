@@ -1,4 +1,4 @@
-# $NetBSD: varmod-loop.mk,v 1.14 2021/04/04 13:20:52 rillig Exp $
+# $NetBSD: varmod-loop.mk,v 1.15 2021/04/11 13:35:56 rillig Exp $
 #
 # Tests for the :@var@...${var}...@ variable modifier.
 
@@ -67,7 +67,7 @@ mod-loop-dollar:
 # This string literal is written with 8 dollars, and this is saved as the
 # variable value.  But as soon as this value is evaluated, it goes through
 # Var_Subst, which replaces each '$$' with a single '$'.  This could be
-# prevented by VarEvalFlags.keepDollar, but that flag is usually removed
+# prevented by VARE_EVAL_KEEP_DOLLAR, but that flag is usually removed
 # before expanding subexpressions.  See ApplyModifier_Loop and
 # ParseModifierPart for examples.
 #
