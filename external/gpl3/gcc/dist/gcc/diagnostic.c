@@ -1,5 +1,5 @@
 /* Language-independent diagnostic subroutines for the GNU Compiler Collection
-   Copyright (C) 1999-2019 Free Software Foundation, Inc.
+   Copyright (C) 1999-2020 Free Software Foundation, Inc.
    Contributed by Gabriel Dos Reis <gdr@codesourcery.com>
 
 This file is part of GCC.
@@ -31,9 +31,13 @@ along with GCC; see the file COPYING3.  If not see
 #include "backtrace.h"
 #include "diagnostic.h"
 #include "diagnostic-color.h"
+#include "diagnostic-url.h"
+#include "diagnostic-metadata.h"
+#include "diagnostic-path.h"
 #include "edit-context.h"
 #include "selftest.h"
 #include "selftest-diagnostic.h"
+#include "opts.h"
 
 #ifdef HAVE_TERMIOS_H
 # include <termios.h>
@@ -43,17 +47,26 @@ along with GCC; see the file COPYING3.  If not see
 # include <sys/ioctl.h>
 #endif
 
+/* Disable warnings about quoting issues in the pp_xxx calls below
+   that (intentionally) don't follow GCC diagnostic conventions.  */
+#if __GNUC__ >= 10
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wformat-diag"
+#endif
+
 #define pedantic_warning_kind(DC)			\
   ((DC)->pedantic_errors ? DK_ERROR : DK_WARNING)
 #define permissive_error_kind(DC) ((DC)->permissive ? DK_WARNING : DK_ERROR)
 #define permissive_error_option(DC) ((DC)->opt_permissive)
 
 /* Prototypes.  */
-static bool diagnostic_impl (rich_location *, int, const char *,
-			     va_list *, diagnostic_t) ATTRIBUTE_GCC_DIAG(3,0);
-static bool diagnostic_n_impl (rich_location *, int, unsigned HOST_WIDE_INT,
+static bool diagnostic_impl (rich_location *, const diagnostic_metadata *,
+			     int, const char *,
+			     va_list *, diagnostic_t) ATTRIBUTE_GCC_DIAG(4,0);
+static bool diagnostic_n_impl (rich_location *, const diagnostic_metadata *,
+			       int, unsigned HOST_WIDE_INT,
 			       const char *, const char *, va_list *,
-			       diagnostic_t) ATTRIBUTE_GCC_DIAG(5,0);
+			       diagnostic_t) ATTRIBUTE_GCC_DIAG(6,0);
 
 static void error_recursion (diagnostic_context *) ATTRIBUTE_NORETURN;
 static void real_abort (void) ATTRIBUTE_NORETURN;
@@ -174,6 +187,9 @@ diagnostic_initialize (diagnostic_context *context, int n_opts)
   diagnostic_set_caret_max_width (context, pp_line_cutoff (context->printer));
   for (i = 0; i < rich_location::STATICALLY_ALLOCATED_RANGES; i++)
     context->caret_chars[i] = '^';
+  context->show_cwe = false;
+  context->path_format = DPF_NONE;
+  context->show_path_depths = false;
   context->show_option_requested = false;
   context->abort_on_error = false;
   context->show_column = false;
@@ -191,6 +207,7 @@ diagnostic_initialize (diagnostic_context *context, int n_opts)
   context->option_enabled = NULL;
   context->option_state = NULL;
   context->option_name = NULL;
+  context->get_option_url = NULL;
   context->last_location = UNKNOWN_LOCATION;
   context->last_module = 0;
   context->x_data = NULL;
@@ -238,6 +255,33 @@ diagnostic_color_init (diagnostic_context *context, int value /*= -1 */)
     = colorize_init ((diagnostic_color_rule_t) value);
 }
 
+/* Initialize URL support within CONTEXT based on VALUE, handling "auto".  */
+
+void
+diagnostic_urls_init (diagnostic_context *context, int value /*= -1 */)
+{
+  /* value == -1 is the default value.  */
+  if (value < 0)
+    {
+      /* If DIAGNOSTICS_URLS_DEFAULT is -1, default to
+	 -fdiagnostics-urls=auto if GCC_URLS or TERM_URLS is in the
+	 environment, otherwise default to -fdiagnostics-urls=never,
+	 for other values default to that
+	 -fdiagnostics-urls={never,auto,always}.  */
+      if (DIAGNOSTICS_URLS_DEFAULT == -1)
+	{
+	  if (!getenv ("GCC_URLS") && !getenv ("TERM_URLS"))
+	    return;
+	  value = DIAGNOSTICS_URL_AUTO;
+	}
+      else
+	value = DIAGNOSTICS_URLS_DEFAULT;
+    }
+
+  context->printer->url_format
+    = determine_url_format ((diagnostic_url_rule_t) value);
+}
+
 /* Do any cleaning up required after the last diagnostic is emitted.  */
 
 void
@@ -277,6 +321,7 @@ diagnostic_set_info_translated (diagnostic_info *diagnostic, const char *msg,
   diagnostic->message.format_spec = msg;
   diagnostic->message.m_richloc = richloc;
   diagnostic->richloc = richloc;
+  diagnostic->metadata = NULL;
   diagnostic->kind = kind;
   diagnostic->option_index = 0;
 }
@@ -631,6 +676,38 @@ diagnostic_report_current_module (diagnostic_context *context, location_t where)
     }
 }
 
+/* If DIAGNOSTIC has a diagnostic_path and CONTEXT supports printing paths,
+   print the path.  */
+
+void
+diagnostic_show_any_path (diagnostic_context *context,
+			  diagnostic_info *diagnostic)
+{
+  const diagnostic_path *path = diagnostic->richloc->get_path ();
+  if (!path)
+    return;
+
+  if (context->print_path)
+    context->print_path (context, path);
+}
+
+/* Return true if the events in this path involve more than one
+   function, or false if it is purely intraprocedural.  */
+
+bool
+diagnostic_path::interprocedural_p () const
+{
+  const unsigned num = num_events ();
+  for (unsigned i = 0; i < num; i++)
+    {
+      if (get_event (i).get_fndecl () != get_event (0).get_fndecl ())
+	return true;
+      if (get_event (i).get_stack_depth () != get_event (0).get_stack_depth ())
+	return true;
+    }
+  return false;
+}
+
 void
 default_diagnostic_starter (diagnostic_context *context,
 			    diagnostic_info *diagnostic)
@@ -655,8 +732,11 @@ default_diagnostic_finalizer (diagnostic_context *context,
 			      diagnostic_info *diagnostic,
 			      diagnostic_t)
 {
+  char *saved_prefix = pp_take_prefix (context->printer);
+  pp_set_prefix (context->printer, NULL);
+  pp_newline (context->printer);
   diagnostic_show_locus (context, diagnostic->richloc, diagnostic->kind);
-  pp_destroy_prefix (context->printer);
+  pp_set_prefix (context->printer, saved_prefix);
   pp_flush (context->printer);
 }
 
@@ -689,6 +769,7 @@ diagnostic_classify_diagnostic (diagnostic_context *context,
       if (old_kind == DK_UNSPECIFIED)
 	{
 	  old_kind = !context->option_enabled (option_index,
+					       context->lang_mask,
 					       context->option_state)
 	    ? DK_IGNORED : (context->warning_as_error_requested
 			    ? DK_ERROR : DK_WARNING);
@@ -802,6 +883,9 @@ print_parseable_fixits (pretty_printer *pp, rich_location *richloc)
   gcc_assert (pp);
   gcc_assert (richloc);
 
+  char *saved_prefix = pp_take_prefix (pp);
+  pp_set_prefix (pp, NULL);
+
   for (unsigned i = 0; i < richloc->get_num_fixit_hints (); i++)
     {
       const fixit_hint *hint = richloc->get_fixit_hint (i);
@@ -818,6 +902,8 @@ print_parseable_fixits (pretty_printer *pp, rich_location *richloc)
       print_escaped_string (pp, hint->get_string ());
       pp_newline (pp);
     }
+
+  pp_set_prefix (pp, saved_prefix);
 }
 
 /* Update the diag_class of DIAGNOSTIC based on its location
@@ -867,6 +953,51 @@ update_effective_level_from_pragmas (diagnostic_context *context,
   return diag_class;
 }
 
+/* Generate a URL string describing CWE.  The caller is responsible for
+   freeing the string.  */
+
+static char *
+get_cwe_url (int cwe)
+{
+  return xasprintf ("https://cwe.mitre.org/data/definitions/%i.html", cwe);
+}
+
+/* If DIAGNOSTIC has a CWE identifier, print it.
+
+   For example, if the diagnostic metadata associates it with CWE-119,
+   " [CWE-119]" will be printed, suitably colorized, and with a URL of a
+   description of the security issue.  */
+
+static void
+print_any_cwe (diagnostic_context *context,
+		    const diagnostic_info *diagnostic)
+{
+  if (diagnostic->metadata == NULL)
+    return;
+
+  int cwe = diagnostic->metadata->get_cwe ();
+  if (cwe)
+    {
+      pretty_printer *pp = context->printer;
+      char *saved_prefix = pp_take_prefix (context->printer);
+      pp_string (pp, " [");
+      pp_string (pp, colorize_start (pp_show_color (pp),
+				     diagnostic_kind_color[diagnostic->kind]));
+      if (pp->url_format != URL_FORMAT_NONE)
+	{
+	  char *cwe_url = get_cwe_url (cwe);
+	  pp_begin_url (pp, cwe_url);
+	  free (cwe_url);
+	}
+      pp_printf (pp, "CWE-%i", cwe);
+      pp_set_prefix (context->printer, saved_prefix);
+      if (pp->url_format != URL_FORMAT_NONE)
+	pp_end_url (pp);
+      pp_string (pp, colorize_stop (pp_show_color (pp)));
+      pp_character (pp, ']');
+    }
+}
+
 /* Print any metadata about the option used to control DIAGNOSTIC to CONTEXT's
    printer, e.g. " [-Werror=uninitialized]".
    Subroutine of diagnostic_report_diagnostic.  */
@@ -883,11 +1014,23 @@ print_option_information (diagnostic_context *context,
 
   if (option_text)
     {
+      char *option_url = NULL;
+      if (context->get_option_url
+	  && context->printer->url_format != URL_FORMAT_NONE)
+	option_url = context->get_option_url (context,
+					      diagnostic->option_index);
       pretty_printer *pp = context->printer;
       pp_string (pp, " [");
       pp_string (pp, colorize_start (pp_show_color (pp),
 				     diagnostic_kind_color[diagnostic->kind]));
+      if (option_url)
+	pp_begin_url (pp, option_url);
       pp_string (pp, option_text);
+      if (option_url)
+	{
+	  pp_end_url (pp);
+	  free (option_url);
+	}
       pp_string (pp, colorize_stop (pp_show_color (pp)));
       pp_character (pp, ']');
       free (option_text);
@@ -950,6 +1093,7 @@ diagnostic_report_diagnostic (diagnostic_context *context,
       /* This tests if the user provided the appropriate -Wfoo or
 	 -Wno-foo option.  */
       if (! context->option_enabled (diagnostic->option_index,
+				     context->lang_mask,
 				     context->option_state))
 	return false;
 
@@ -1015,6 +1159,8 @@ diagnostic_report_diagnostic (diagnostic_context *context,
   pp_format (context->printer, &diagnostic->message);
   (*diagnostic_starter (context)) (context, diagnostic);
   pp_output_formatted_text (context->printer);
+  if (context->show_cwe)
+    print_any_cwe (context, diagnostic);
   if (context->show_option_requested)
     print_option_information (context, diagnostic, orig_diag_kind);
   (*diagnostic_finalizer (context)) (context, diagnostic, orig_diag_kind);
@@ -1031,6 +1177,8 @@ diagnostic_report_diagnostic (diagnostic_context *context,
       context->edit_context_ptr->add_fixits (diagnostic->richloc);
 
   context->lock--;
+
+  diagnostic_show_any_path (context, diagnostic);
 
   return true;
 }
@@ -1131,6 +1279,7 @@ diagnostic_append_note (diagnostic_context *context,
   pp_output_formatted_text (context->printer);
   pp_destroy_prefix (context->printer);
   pp_set_prefix (context->printer, saved_prefix);
+  pp_newline (context->printer);
   diagnostic_show_locus (context, &richloc, DK_NOTE);
   va_end (ap);
 }
@@ -1139,8 +1288,8 @@ diagnostic_append_note (diagnostic_context *context,
    permerror, error, error_at, error_at, sorry, fatal_error, internal_error,
    and internal_error_no_backtrace, as documented and defined below.  */
 static bool
-diagnostic_impl (rich_location *richloc, int opt,
-		 const char *gmsgid,
+diagnostic_impl (rich_location *richloc, const diagnostic_metadata *metadata,
+		 int opt, const char *gmsgid,
 		 va_list *ap, diagnostic_t kind)
 {
   diagnostic_info diagnostic;
@@ -1156,13 +1305,15 @@ diagnostic_impl (rich_location *richloc, int opt,
       if (kind == DK_WARNING || kind == DK_PEDWARN)
 	diagnostic.option_index = opt;
     }
+  diagnostic.metadata = metadata;
   return diagnostic_report_diagnostic (global_dc, &diagnostic);
 }
 
 /* Implement inform_n, warning_n, and error_n, as documented and
    defined below.  */
 static bool
-diagnostic_n_impl (rich_location *richloc, int opt, unsigned HOST_WIDE_INT n,
+diagnostic_n_impl (rich_location *richloc, const diagnostic_metadata *metadata,
+		   int opt, unsigned HOST_WIDE_INT n,
 		   const char *singular_gmsgid,
 		   const char *plural_gmsgid,
 		   va_list *ap, diagnostic_t kind)
@@ -1182,6 +1333,7 @@ diagnostic_n_impl (rich_location *richloc, int opt, unsigned HOST_WIDE_INT n,
   diagnostic_set_info_translated (&diagnostic, text, ap, richloc, kind);
   if (kind == DK_WARNING)
     diagnostic.option_index = opt;
+  diagnostic.metadata = metadata;
   return diagnostic_report_diagnostic (global_dc, &diagnostic);
 }
 
@@ -1195,7 +1347,7 @@ emit_diagnostic (diagnostic_t kind, location_t location, int opt,
   va_list ap;
   va_start (ap, gmsgid);
   rich_location richloc (line_table, location);
-  bool ret = diagnostic_impl (&richloc, opt, gmsgid, &ap, kind);
+  bool ret = diagnostic_impl (&richloc, NULL, opt, gmsgid, &ap, kind);
   va_end (ap);
   return ret;
 }
@@ -1209,7 +1361,7 @@ emit_diagnostic (diagnostic_t kind, rich_location *richloc, int opt,
   auto_diagnostic_group d;
   va_list ap;
   va_start (ap, gmsgid);
-  bool ret = diagnostic_impl (richloc, opt, gmsgid, &ap, kind);
+  bool ret = diagnostic_impl (richloc, NULL, opt, gmsgid, &ap, kind);
   va_end (ap);
   return ret;
 }
@@ -1221,7 +1373,7 @@ emit_diagnostic_valist (diagnostic_t kind, location_t location, int opt,
 			const char *gmsgid, va_list *ap)
 {
   rich_location richloc (line_table, location);
-  return diagnostic_impl (&richloc, opt, gmsgid, ap, kind);
+  return diagnostic_impl (&richloc, NULL, opt, gmsgid, ap, kind);
 }
 
 /* An informative note at LOCATION.  Use this for additional details on an error
@@ -1233,7 +1385,7 @@ inform (location_t location, const char *gmsgid, ...)
   va_list ap;
   va_start (ap, gmsgid);
   rich_location richloc (line_table, location);
-  diagnostic_impl (&richloc, -1, gmsgid, &ap, DK_NOTE);
+  diagnostic_impl (&richloc, NULL, -1, gmsgid, &ap, DK_NOTE);
   va_end (ap);
 }
 
@@ -1246,7 +1398,7 @@ inform (rich_location *richloc, const char *gmsgid, ...)
   auto_diagnostic_group d;
   va_list ap;
   va_start (ap, gmsgid);
-  diagnostic_impl (richloc, -1, gmsgid, &ap, DK_NOTE);
+  diagnostic_impl (richloc, NULL, -1, gmsgid, &ap, DK_NOTE);
   va_end (ap);
 }
 
@@ -1260,7 +1412,7 @@ inform_n (location_t location, unsigned HOST_WIDE_INT n,
   va_start (ap, plural_gmsgid);
   auto_diagnostic_group d;
   rich_location richloc (line_table, location);
-  diagnostic_n_impl (&richloc, -1, n, singular_gmsgid, plural_gmsgid,
+  diagnostic_n_impl (&richloc, NULL, -1, n, singular_gmsgid, plural_gmsgid,
 		     &ap, DK_NOTE);
   va_end (ap);
 }
@@ -1275,7 +1427,7 @@ warning (int opt, const char *gmsgid, ...)
   va_list ap;
   va_start (ap, gmsgid);
   rich_location richloc (line_table, input_location);
-  bool ret = diagnostic_impl (&richloc, opt, gmsgid, &ap, DK_WARNING);
+  bool ret = diagnostic_impl (&richloc, NULL, opt, gmsgid, &ap, DK_WARNING);
   va_end (ap);
   return ret;
 }
@@ -1291,7 +1443,7 @@ warning_at (location_t location, int opt, const char *gmsgid, ...)
   va_list ap;
   va_start (ap, gmsgid);
   rich_location richloc (line_table, location);
-  bool ret = diagnostic_impl (&richloc, opt, gmsgid, &ap, DK_WARNING);
+  bool ret = diagnostic_impl (&richloc, NULL, opt, gmsgid, &ap, DK_WARNING);
   va_end (ap);
   return ret;
 }
@@ -1306,7 +1458,26 @@ warning_at (rich_location *richloc, int opt, const char *gmsgid, ...)
   auto_diagnostic_group d;
   va_list ap;
   va_start (ap, gmsgid);
-  bool ret = diagnostic_impl (richloc, opt, gmsgid, &ap, DK_WARNING);
+  bool ret = diagnostic_impl (richloc, NULL, opt, gmsgid, &ap, DK_WARNING);
+  va_end (ap);
+  return ret;
+}
+
+/* Same as "warning at" above, but using METADATA.  */
+
+bool
+warning_meta (rich_location *richloc,
+	      const diagnostic_metadata &metadata,
+	      int opt, const char *gmsgid, ...)
+{
+  gcc_assert (richloc);
+
+  auto_diagnostic_group d;
+  va_list ap;
+  va_start (ap, gmsgid);
+  bool ret
+    = diagnostic_impl (richloc, &metadata, opt, gmsgid, &ap,
+		       DK_WARNING);
   va_end (ap);
   return ret;
 }
@@ -1322,7 +1493,7 @@ warning_n (rich_location *richloc, int opt, unsigned HOST_WIDE_INT n,
   auto_diagnostic_group d;
   va_list ap;
   va_start (ap, plural_gmsgid);
-  bool ret = diagnostic_n_impl (richloc, opt, n,
+  bool ret = diagnostic_n_impl (richloc, NULL, opt, n,
 				singular_gmsgid, plural_gmsgid,
 				&ap, DK_WARNING);
   va_end (ap);
@@ -1341,7 +1512,7 @@ warning_n (location_t location, int opt, unsigned HOST_WIDE_INT n,
   va_list ap;
   va_start (ap, plural_gmsgid);
   rich_location richloc (line_table, location);
-  bool ret = diagnostic_n_impl (&richloc, opt, n,
+  bool ret = diagnostic_n_impl (&richloc, NULL, opt, n,
 				singular_gmsgid, plural_gmsgid,
 				&ap, DK_WARNING);
   va_end (ap);
@@ -1368,7 +1539,7 @@ pedwarn (location_t location, int opt, const char *gmsgid, ...)
   va_list ap;
   va_start (ap, gmsgid);
   rich_location richloc (line_table, location);
-  bool ret = diagnostic_impl (&richloc, opt, gmsgid, &ap, DK_PEDWARN);
+  bool ret = diagnostic_impl (&richloc, NULL, opt, gmsgid, &ap, DK_PEDWARN);
   va_end (ap);
   return ret;
 }
@@ -1383,7 +1554,7 @@ pedwarn (rich_location *richloc, int opt, const char *gmsgid, ...)
   auto_diagnostic_group d;
   va_list ap;
   va_start (ap, gmsgid);
-  bool ret = diagnostic_impl (richloc, opt, gmsgid, &ap, DK_PEDWARN);
+  bool ret = diagnostic_impl (richloc, NULL, opt, gmsgid, &ap, DK_PEDWARN);
   va_end (ap);
   return ret;
 }
@@ -1402,7 +1573,7 @@ permerror (location_t location, const char *gmsgid, ...)
   va_list ap;
   va_start (ap, gmsgid);
   rich_location richloc (line_table, location);
-  bool ret = diagnostic_impl (&richloc, -1, gmsgid, &ap, DK_PERMERROR);
+  bool ret = diagnostic_impl (&richloc, NULL, -1, gmsgid, &ap, DK_PERMERROR);
   va_end (ap);
   return ret;
 }
@@ -1417,7 +1588,7 @@ permerror (rich_location *richloc, const char *gmsgid, ...)
   auto_diagnostic_group d;
   va_list ap;
   va_start (ap, gmsgid);
-  bool ret = diagnostic_impl (richloc, -1, gmsgid, &ap, DK_PERMERROR);
+  bool ret = diagnostic_impl (richloc, NULL, -1, gmsgid, &ap, DK_PERMERROR);
   va_end (ap);
   return ret;
 }
@@ -1431,7 +1602,7 @@ error (const char *gmsgid, ...)
   va_list ap;
   va_start (ap, gmsgid);
   rich_location richloc (line_table, input_location);
-  diagnostic_impl (&richloc, -1, gmsgid, &ap, DK_ERROR);
+  diagnostic_impl (&richloc, NULL, -1, gmsgid, &ap, DK_ERROR);
   va_end (ap);
 }
 
@@ -1445,7 +1616,7 @@ error_n (location_t location, unsigned HOST_WIDE_INT n,
   va_list ap;
   va_start (ap, plural_gmsgid);
   rich_location richloc (line_table, location);
-  diagnostic_n_impl (&richloc, -1, n, singular_gmsgid, plural_gmsgid,
+  diagnostic_n_impl (&richloc, NULL, -1, n, singular_gmsgid, plural_gmsgid,
 		     &ap, DK_ERROR);
   va_end (ap);
 }
@@ -1458,7 +1629,7 @@ error_at (location_t loc, const char *gmsgid, ...)
   va_list ap;
   va_start (ap, gmsgid);
   rich_location richloc (line_table, loc);
-  diagnostic_impl (&richloc, -1, gmsgid, &ap, DK_ERROR);
+  diagnostic_impl (&richloc, NULL, -1, gmsgid, &ap, DK_ERROR);
   va_end (ap);
 }
 
@@ -1472,7 +1643,7 @@ error_at (rich_location *richloc, const char *gmsgid, ...)
   auto_diagnostic_group d;
   va_list ap;
   va_start (ap, gmsgid);
-  diagnostic_impl (richloc, -1, gmsgid, &ap, DK_ERROR);
+  diagnostic_impl (richloc, NULL, -1, gmsgid, &ap, DK_ERROR);
   va_end (ap);
 }
 
@@ -1486,7 +1657,7 @@ sorry (const char *gmsgid, ...)
   va_list ap;
   va_start (ap, gmsgid);
   rich_location richloc (line_table, input_location);
-  diagnostic_impl (&richloc, -1, gmsgid, &ap, DK_SORRY);
+  diagnostic_impl (&richloc, NULL, -1, gmsgid, &ap, DK_SORRY);
   va_end (ap);
 }
 
@@ -1498,7 +1669,7 @@ sorry_at (location_t loc, const char *gmsgid, ...)
   va_list ap;
   va_start (ap, gmsgid);
   rich_location richloc (line_table, loc);
-  diagnostic_impl (&richloc, -1, gmsgid, &ap, DK_SORRY);
+  diagnostic_impl (&richloc, NULL, -1, gmsgid, &ap, DK_SORRY);
   va_end (ap);
 }
 
@@ -1520,7 +1691,7 @@ fatal_error (location_t loc, const char *gmsgid, ...)
   va_list ap;
   va_start (ap, gmsgid);
   rich_location richloc (line_table, loc);
-  diagnostic_impl (&richloc, -1, gmsgid, &ap, DK_FATAL);
+  diagnostic_impl (&richloc, NULL, -1, gmsgid, &ap, DK_FATAL);
   va_end (ap);
 
   gcc_unreachable ();
@@ -1537,7 +1708,7 @@ internal_error (const char *gmsgid, ...)
   va_list ap;
   va_start (ap, gmsgid);
   rich_location richloc (line_table, input_location);
-  diagnostic_impl (&richloc, -1, gmsgid, &ap, DK_ICE);
+  diagnostic_impl (&richloc, NULL, -1, gmsgid, &ap, DK_ICE);
   va_end (ap);
 
   gcc_unreachable ();
@@ -1553,7 +1724,7 @@ internal_error_no_backtrace (const char *gmsgid, ...)
   va_list ap;
   va_start (ap, gmsgid);
   rich_location richloc (line_table, input_location);
-  diagnostic_impl (&richloc, -1, gmsgid, &ap, DK_ICE_NOBT);
+  diagnostic_impl (&richloc, NULL, -1, gmsgid, &ap, DK_ICE_NOBT);
   va_end (ap);
 
   gcc_unreachable ();
@@ -1632,6 +1803,95 @@ auto_diagnostic_group::~auto_diagnostic_group ()
 	}
       global_dc->diagnostic_group_emission_count = 0;
     }
+}
+
+/* Implementation of diagnostic_path::num_events vfunc for
+   simple_diagnostic_path: simply get the number of events in the vec.  */
+
+unsigned
+simple_diagnostic_path::num_events () const
+{
+  return m_events.length ();
+}
+
+/* Implementation of diagnostic_path::get_event vfunc for
+   simple_diagnostic_path: simply return the event in the vec.  */
+
+const diagnostic_event &
+simple_diagnostic_path::get_event (int idx) const
+{
+  return *m_events[idx];
+}
+
+/* Add an event to this path at LOC within function FNDECL at
+   stack depth DEPTH.
+
+   Use m_context's printer to format FMT, as the text of the new
+   event.
+
+   Return the id of the new event.  */
+
+diagnostic_event_id_t
+simple_diagnostic_path::add_event (location_t loc, tree fndecl, int depth,
+				   const char *fmt, ...)
+{
+  pretty_printer *pp = m_event_pp;
+  pp_clear_output_area (pp);
+
+  text_info ti;
+  rich_location rich_loc (line_table, UNKNOWN_LOCATION);
+
+  va_list ap;
+
+  va_start (ap, fmt);
+
+  ti.format_spec = _(fmt);
+  ti.args_ptr = &ap;
+  ti.err_no = 0;
+  ti.x_data = NULL;
+  ti.m_richloc = &rich_loc;
+
+  pp_format (pp, &ti);
+  pp_output_formatted_text (pp);
+
+  va_end (ap);
+
+  simple_diagnostic_event *new_event
+    = new simple_diagnostic_event (loc, fndecl, depth, pp_formatted_text (pp));
+  m_events.safe_push (new_event);
+
+  pp_clear_output_area (pp);
+
+  return diagnostic_event_id_t (m_events.length () - 1);
+}
+
+/* struct simple_diagnostic_event.  */
+
+/* simple_diagnostic_event's ctor.  */
+
+simple_diagnostic_event::simple_diagnostic_event (location_t loc,
+						  tree fndecl,
+						  int depth,
+						  const char *desc)
+: m_loc (loc), m_fndecl (fndecl), m_depth (depth), m_desc (xstrdup (desc))
+{
+}
+
+/* simple_diagnostic_event's dtor.  */
+
+simple_diagnostic_event::~simple_diagnostic_event ()
+{
+  free (m_desc);
+}
+
+/* Print PATH by emitting a dummy "note" associated with it.  */
+
+DEBUG_FUNCTION
+void debug (diagnostic_path *path)
+{
+  rich_location richloc (line_table, UNKNOWN_LOCATION);
+  richloc.set_path (path);
+  inform (&richloc, "debug path");
 }
 
 /* Really call the system 'abort'.  This has to go right at the end of
@@ -1861,3 +2121,7 @@ diagnostic_c_tests ()
 } // namespace selftest
 
 #endif /* #if CHECKING_P */
+
+#if __GNUC__ >= 10
+#  pragma GCC diagnostic pop
+#endif
