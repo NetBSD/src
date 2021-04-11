@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.922 2021/04/11 21:29:57 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.923 2021/04/11 22:53:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.922 2021/04/11 21:29:57 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.923 2021/04/11 22:53:45 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2233,7 +2233,7 @@ ParseModifierPartSubst(
 	const char *p;
 
 	p = *pp;
-	LazyBuf_Init(part, Substring_InitStr(p)); /* TODO: O(n^2) */
+	LazyBuf_Init(part, p);
 
 	/*
 	 * Skim through until the matching delimiter is found; pick up
@@ -4136,7 +4136,7 @@ ParseVarname(const char **pp, char startc, char endc,
 	const char *p = *pp;
 	int depth = 0;		/* Track depth so we can spot parse errors. */
 
-	LazyBuf_Init(buf, Substring_InitStr(p));
+	LazyBuf_Init(buf, p);
 
 	while (*p != '\0') {
 		if ((*p == endc || *p == ':') && depth == 0)

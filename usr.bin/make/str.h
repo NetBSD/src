@@ -1,4 +1,4 @@
-/*	$NetBSD: str.h,v 1.4 2021/04/11 20:38:43 rillig Exp $	*/
+/*	$NetBSD: str.h,v 1.5 2021/04/11 22:53:45 rillig Exp $	*/
 
 /*
  Copyright (c) 2021 Roland Illig <rillig@NetBSD.org>
@@ -59,7 +59,7 @@ typedef struct LazyBuf {
 	char *data;
 	size_t len;
 	size_t cap;
-	Substring expected;
+	const char *expected;
 	void *freeIt;
 } LazyBuf;
 
@@ -231,7 +231,7 @@ Substring_Basename(Substring pathname)
 
 
 MAKE_INLINE void
-LazyBuf_Init(LazyBuf *buf, Substring expected)
+LazyBuf_Init(LazyBuf *buf, const char *expected)
 {
 	buf->data = NULL;
 	buf->len = 0;
@@ -257,15 +257,14 @@ LazyBuf_Add(LazyBuf *buf, char ch)
 		}
 		buf->data[buf->len++] = ch;
 
-	} else if (buf->len < Substring_Length(buf->expected) &&
-	    ch == buf->expected.start[buf->len]) {
+	} else if (ch == buf->expected[buf->len]) {
 		buf->len++;
 		return;
 
 	} else {
 		buf->cap = buf->len + 16;
 		buf->data = bmake_malloc(buf->cap);
-		memcpy(buf->data, buf->expected.start, buf->len);
+		memcpy(buf->data, buf->expected, buf->len);
 		buf->data[buf->len++] = ch;
 	}
 }
@@ -297,8 +296,7 @@ LazyBuf_AddSubstring(LazyBuf *buf, Substring sub)
 MAKE_INLINE Substring
 LazyBuf_Get(const LazyBuf *buf)
 {
-	const char *start = buf->data != NULL
-	    ? buf->data : buf->expected.start;
+	const char *start = buf->data != NULL ? buf->data : buf->expected;
 	return Substring_Init(start, start + buf->len);
 }
 
