@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2021/04/11 10:29:50 nia Exp $
+#	$NetBSD: Makefile,v 1.10 2021/04/11 10:52:16 nia Exp $
 
 .include <bsd.own.mk>
 
@@ -15,10 +15,12 @@ SRCS=	add_window.c animate.c captive.c clargs.c clicktofocus.c \
 	session.c util.c vscreen.c win_decorations.c win_decorations_init.c \
 	win_iconify.c win_ops.c win_regions.c win_resize.c win_utils.c \
 	windowbox.c workspace_config.c workspace_manager.c workspace_utils.c \
-	ctwm_atoms.c deftwmrc.c gram.tab.c lex.c version.c \
+	ctwm_atoms.c deftwmrc.c version.c \
 	image_xpm.c parse_m4.c ewmh.c ewmh_atoms.c ctwm_wrap.c
 
 SRCS+=	repl_str.c
+
+SRCS+=	gram.tab.c lex.c
 
 YHEADER=1
 
@@ -27,7 +29,7 @@ CTWMCONFIGDIR=		${X11ETCDIR}/ctwm
 CTWMDIR=		${X11SRCDIR}/external/mit/ctwm/dist
 XPMDIR=			${X11INCDIR}/X11/pixmaps/ctwm
 
-CPPFLAGS+=		-I. -I${CTWMDIR} \
+CPPFLAGS+=		-I. -I${CTWMDIR} -I${CTWMDIR}/gen \
 			-DUSE_XPM -DUSE_M4 -DUSE_EWMH -DUSE_SREGEX \
 			-DPIXMAP_DIRECTORY=\"${XPMDIR}\" \
 			-DSYSTEM_INIT_FILE=\"${CTWMCONFIGDIR}/system.ctwmrc\" \
@@ -58,7 +60,7 @@ FILES=			3D_Expand15.xpm 3D_Iconify15.xpm 3D_Lightning15.xpm \
 LDADD+=	-lXpm  -lXmu -lXt -lSM -lICE -lXext -lX11
 DPADD+=	${LIBXPM} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} ${LIBXEXT} ${LIBX11}
 
-.PATH:	${CTWMDIR} ${CTWMDIR}/xpm ${CTWMDIR}/ext
+.PATH:	${CTWMDIR} ${CTWMDIR}/xpm ${CTWMDIR}/ext ${CTWMDIR}/gen
 
 .include <bsd.files.mk>
 .include <bsd.x11.mk>
