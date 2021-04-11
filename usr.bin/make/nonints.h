@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.211 2021/04/04 11:56:43 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.212 2021/04/11 12:06:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -166,112 +166,6 @@ void Parse_SetInput(const char *, int, int, ReadMoreProc, void *);
 void Parse_MainName(GNodeList *);
 int Parse_GetFatals(void);
 
-/* str.c */
-
-/* A read-only string that may need to be freed after use. */
-typedef struct FStr {
-	const char *str;
-	void *freeIt;
-} FStr;
-
-/* A modifiable string that may need to be freed after use. */
-typedef struct MFStr {
-	char *str;
-	void *freeIt;
-} MFStr;
-
-typedef struct Words {
-	char **words;
-	size_t len;
-	void *freeIt;
-} Words;
-
-#if __STDC_VERSION__ >= 199901L
-#  define FStr_Literal(str, freeIt) (FStr) { str, freeIt }
-#else
-MAKE_INLINE FStr
-FStr_Literal(const char *str, void *freeIt)
-{
-	FStr fstr;
-	fstr.str = str;
-	fstr.freeIt = freeIt;
-	return fstr;
-}
-#endif
-
-/* Return a string that is the sole owner of str. */
-MAKE_INLINE FStr
-FStr_InitOwn(char *str)
-{
-	return FStr_Literal(str, str);
-}
-
-/* Return a string that refers to the shared str. */
-MAKE_INLINE FStr
-FStr_InitRefer(const char *str)
-{
-	return FStr_Literal(str, NULL);
-}
-
-MAKE_INLINE void
-FStr_Done(FStr *fstr)
-{
-	free(fstr->freeIt);
-#ifdef CLEANUP
-	fstr->str = NULL;
-	fstr->freeIt = NULL;
-#endif
-}
-
-#if __STDC_VERSION__ >= 199901L
-#  define MFStr_Literal(str, freeIt) (MFStr) { str, freeIt }
-#else
-MAKE_INLINE MFStr
-MFStr_Literal(char *str, void *freeIt)
-{
-	MFStr mfstr;
-	mfstr.str = str;
-	mfstr.freeIt = freeIt;
-	return mfstr;
-}
-#endif
-
-/* Return a string that is the sole owner of str. */
-MAKE_INLINE MFStr
-MFStr_InitOwn(char *str)
-{
-	return MFStr_Literal(str, str);
-}
-
-/* Return a string that refers to the shared str. */
-MAKE_INLINE MFStr
-MFStr_InitRefer(char *str)
-{
-	return MFStr_Literal(str, NULL);
-}
-
-MAKE_INLINE void
-MFStr_Done(MFStr *mfstr)
-{
-	free(mfstr->freeIt);
-#ifdef CLEANUP
-	mfstr->str = NULL;
-	mfstr->freeIt = NULL;
-#endif
-}
-
-Words Str_Words(const char *, bool);
-MAKE_INLINE void
-Words_Free(Words w)
-{
-	free(w.words);
-	free(w.freeIt);
-}
-
-char *str_concat2(const char *, const char *);
-char *str_concat3(const char *, const char *, const char *);
-char *str_concat4(const char *, const char *, const char *, const char *);
-bool Str_Match(const char *, const char *);
 
 /* suff.c */
 void Suff_Init(void);
