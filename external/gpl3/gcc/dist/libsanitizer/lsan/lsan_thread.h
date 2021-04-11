@@ -1,8 +1,7 @@
 //=-- lsan_thread.h -------------------------------------------------------===//
 //
-// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
-// See https://llvm.org/LICENSE.txt for license information.
-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
 //
@@ -44,8 +43,7 @@ class ThreadContext : public ThreadContextBase {
 
 void InitializeThreadRegistry();
 
-void ThreadStart(u32 tid, tid_t os_id,
-                 ThreadType thread_type = ThreadType::Regular);
+void ThreadStart(u32 tid, tid_t os_id, bool workerthread = false);
 void ThreadFinish();
 u32 ThreadCreate(u32 tid, uptr uid, bool detached);
 void ThreadJoin(u32 tid);

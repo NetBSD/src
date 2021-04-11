@@ -1,8 +1,7 @@
 //===-- tsan_interface_java.h -----------------------------------*- C++ -*-===//
 //
-// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
-// See https://llvm.org/LICENSE.txt for license information.
-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
 //
@@ -18,7 +17,7 @@
 // For volatile memory accesses and atomic operations JVM is intended to use
 // standard atomics API: __tsan_atomicN_load/store/etc.
 //
-// For usage examples see lit_tests/java_*.cpp
+// For usage examples see lit_tests/java_*.cc
 //===----------------------------------------------------------------------===//
 #ifndef TSAN_INTERFACE_JAVA_H
 #define TSAN_INTERFACE_JAVA_H
@@ -31,7 +30,7 @@
 extern "C" {
 #endif
 
-typedef unsigned long jptr;
+typedef unsigned long jptr;  // NOLINT
 
 // Must be called before any other callback from Java.
 void __tsan_java_init(jptr heap_begin, jptr heap_size) INTERFACE_ATTRIBUTE;

@@ -1,8 +1,7 @@
 //===-- sanitizer_ring_buffer.h ---------------------------------*- C++ -*-===//
 //
-// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
-// See https://llvm.org/LICENSE.txt for license information.
-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
 //
@@ -139,7 +138,7 @@ class CompactRingBuffer {
     SetNext(next);
   }
 
-  const T &operator[](uptr Idx) const {
+  T operator[](uptr Idx) const {
     CHECK_LT(Idx, size());
     const T *Begin = (const T *)StartOfStorage();
     sptr StorageIdx = Next() - Begin;

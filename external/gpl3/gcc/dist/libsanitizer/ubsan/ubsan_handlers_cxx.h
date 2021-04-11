@@ -1,8 +1,7 @@
 //===-- ubsan_handlers_cxx.h ------------------------------------*- C++ -*-===//
 //
-// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
-// See https://llvm.org/LICENSE.txt for license information.
-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
 //
@@ -33,22 +32,6 @@ void __ubsan_handle_dynamic_type_cache_miss(
 extern "C" SANITIZER_INTERFACE_ATTRIBUTE
 void __ubsan_handle_dynamic_type_cache_miss_abort(
   DynamicTypeCacheMissData *Data, ValueHandle Pointer, ValueHandle Hash);
-
-struct FunctionTypeMismatchData {
-  SourceLocation Loc;
-  const TypeDescriptor &Type;
-};
-
-extern "C" SANITIZER_INTERFACE_ATTRIBUTE void
-__ubsan_handle_function_type_mismatch_v1(FunctionTypeMismatchData *Data,
-                                         ValueHandle Val,
-                                         ValueHandle calleeRTTI,
-                                         ValueHandle fnRTTI);
-extern "C" SANITIZER_INTERFACE_ATTRIBUTE void
-__ubsan_handle_function_type_mismatch_v1_abort(FunctionTypeMismatchData *Data,
-                                               ValueHandle Val,
-                                               ValueHandle calleeRTTI,
-                                               ValueHandle fnRTTI);
 }
 
 #endif // UBSAN_HANDLERS_H

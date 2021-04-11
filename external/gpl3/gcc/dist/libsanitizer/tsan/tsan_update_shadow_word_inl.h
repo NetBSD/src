@@ -1,8 +1,7 @@
 //===-- tsan_update_shadow_word_inl.h ---------------------------*- C++ -*-===//
 //
-// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
-// See https://llvm.org/LICENSE.txt for license information.
-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
 //
@@ -17,35 +16,31 @@ do {
   const unsigned kAccessSize = 1 << kAccessSizeLog;
   u64 *sp = &shadow_mem[idx];
   old = LoadShadow(sp);
-  if (LIKELY(old.IsZero())) {
+  if (old.IsZero()) {
     StatInc(thr, StatShadowZero);
-    if (!stored) {
+    if (store_word)
       StoreIfNotYetStored(sp, &store_word);
-      stored = true;
-    }
+    // The above StoreIfNotYetStored could be done unconditionally
+    // and it even shows 4% gain on synthetic benchmarks (r4307).
     break;
   }
   // is the memory access equal to the previous?
-  if (LIKELY(Shadow::Addr0AndSizeAreEqual(cur, old))) {
+  if (Shadow::Addr0AndSizeAreEqual(cur, old)) {
     StatInc(thr, StatShadowSameSize);
     // same thread?
-    if (LIKELY(Shadow::TidsAreEqual(old, cur))) {
+    if (Shadow::TidsAreEqual(old, cur)) {
       StatInc(thr, StatShadowSameThread);
-      if (LIKELY(old.IsRWWeakerOrEqual(kAccessIsWrite, kIsAtomic))) {
+      if (old.IsRWWeakerOrEqual(kAccessIsWrite, kIsAtomic))
         StoreIfNotYetStored(sp, &store_word);
-        stored = true;
-      }
       break;
     }
     StatInc(thr, StatShadowAnotherThread);
     if (HappensBefore(old, thr)) {
-      if (old.IsRWWeakerOrEqual(kAccessIsWrite, kIsAtomic)) {
+      if (old.IsRWWeakerOrEqual(kAccessIsWrite, kIsAtomic))
         StoreIfNotYetStored(sp, &store_word);
-        stored = true;
-      }
       break;
     }
-    if (LIKELY(old.IsBothReadsOrAtomic(kAccessIsWrite, kIsAtomic)))
+    if (old.IsBothReadsOrAtomic(kAccessIsWrite, kIsAtomic))
       break;
     goto RACE;
   }
@@ -59,7 +54,7 @@ do {
     StatInc(thr, StatShadowAnotherThread);
     if (old.IsBothReadsOrAtomic(kAccessIsWrite, kIsAtomic))
       break;
-    if (LIKELY(HappensBefore(old, thr)))
+    if (HappensBefore(old, thr))
       break;
     goto RACE;
   }

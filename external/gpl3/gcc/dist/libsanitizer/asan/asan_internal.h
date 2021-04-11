@@ -1,8 +1,7 @@
 //===-- asan_internal.h -----------------------------------------*- C++ -*-===//
 //
-// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
-// See https://llvm.org/LICENSE.txt for license information.
-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
 //
@@ -61,29 +60,29 @@ using __sanitizer::StackTrace;
 
 void AsanInitFromRtl();
 
-// asan_win.cpp
+// asan_win.cc
 void InitializePlatformExceptionHandlers();
 // Returns whether an address is a valid allocated system heap block.
 // 'addr' must point to the beginning of the block.
 bool IsSystemHeapAddress(uptr addr);
 
-// asan_rtl.cpp
+// asan_rtl.cc
 void PrintAddressSpaceLayout();
 void NORETURN ShowStatsAndAbort();
 
-// asan_shadow_setup.cpp
+// asan_shadow_setup.cc
 void InitializeShadowMemory();
 
-// asan_malloc_linux.cpp / asan_malloc_mac.cpp
+// asan_malloc_linux.cc / asan_malloc_mac.cc
 void ReplaceSystemMalloc();
 
-// asan_linux.cpp / asan_mac.cpp / asan_rtems.cpp / asan_win.cpp
+// asan_linux.cc / asan_mac.cc / asan_rtems.cc / asan_win.cc
 uptr FindDynamicShadowStart();
 void *AsanDoesNotSupportStaticLinkage();
 void AsanCheckDynamicRTPrereqs();
 void AsanCheckIncompatibleRT();
 
-// asan_thread.cpp
+// asan_thread.cc
 AsanThread *CreateMainThread();
 
 // Support function for __asan_(un)register_image_globals. Searches for the
@@ -109,11 +108,6 @@ void AppendToErrorMessageBuffer(const char *buffer);
 void *AsanDlSymNext(const char *sym);
 
 void ReserveShadowMemoryRange(uptr beg, uptr end, const char *name);
-
-// Returns `true` iff most of ASan init process should be skipped due to the
-// ASan library being loaded via `dlopen()`. Platforms may perform any
-// `dlopen()` specific initialization inside this function.
-bool HandleDlopenInit();
 
 // Add convenient macro for interface functions that may be represented as
 // weak hooks.

@@ -1,8 +1,7 @@
 //===-- sanitizer_allocator_local_cache.h -----------------------*- C++ -*-===//
 //
-// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
-// See https://llvm.org/LICENSE.txt for license information.
-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
 //
@@ -12,6 +11,13 @@
 #ifndef SANITIZER_ALLOCATOR_H
 #error This file must be included inside sanitizer_allocator.h
 #endif
+
+// Objects of this type should be used as local caches for SizeClassAllocator64
+// or SizeClassAllocator32. Since the typical use of this class is to have one
+// object per thread in TLS, is has to be POD.
+template<class SizeClassAllocator>
+struct SizeClassAllocatorLocalCache
+    : SizeClassAllocator::AllocatorCache {};
 
 // Cache used by SizeClassAllocator64.
 template <class SizeClassAllocator>

@@ -1,8 +1,7 @@
 //===-- sanitizer_common.h --------------------------------------*- C++ -*-===//
 //
-// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
-// See https://llvm.org/LICENSE.txt for license information.
-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
 //
@@ -60,15 +59,6 @@ INLINE int Verbosity() {
   return atomic_load(&current_verbosity, memory_order_relaxed);
 }
 
-#if SANITIZER_ANDROID
-INLINE uptr GetPageSize() {
-// Android post-M sysconf(_SC_PAGESIZE) crashes if called from .preinit_array.
-  return 4096;
-}
-INLINE uptr GetPageSizeCached() {
-  return 4096;
-}
-#else
 uptr GetPageSize();
 extern uptr PageSizeCached;
 INLINE uptr GetPageSizeCached() {
@@ -76,7 +66,6 @@ INLINE uptr GetPageSizeCached() {
     PageSizeCached = GetPageSize();
   return PageSizeCached;
 }
-#endif
 uptr GetMmapGranularity();
 uptr GetMaxVirtualAddress();
 uptr GetMaxUserVirtualAddress();
@@ -100,14 +89,11 @@ void UnmapOrDie(void *addr, uptr size);
 void *MmapOrDieOnFatalError(uptr size, const char *mem_type);
 bool MmapFixedNoReserve(uptr fixed_addr, uptr size, const char *name = nullptr)
      WARN_UNUSED_RESULT;
-bool MmapFixedSuperNoReserve(uptr fixed_addr, uptr size,
-                             const char *name = nullptr) WARN_UNUSED_RESULT;
 void *MmapNoReserveOrDie(uptr size, const char *mem_type);
-void *MmapFixedOrDie(uptr fixed_addr, uptr size, const char *name = nullptr);
+void *MmapFixedOrDie(uptr fixed_addr, uptr size);
 // Behaves just like MmapFixedOrDie, but tolerates out of memory condition, in
 // that case returns nullptr.
-void *MmapFixedOrDieOnFatalError(uptr fixed_addr, uptr size,
-                                 const char *name = nullptr);
+void *MmapFixedOrDieOnFatalError(uptr fixed_addr, uptr size);
 void *MmapFixedNoAccess(uptr fixed_addr, uptr size, const char *name = nullptr);
 void *MmapNoAccess(uptr size);
 // Map aligned chunk of address space; size and alignment are powers of two.
@@ -133,7 +119,7 @@ void ReleaseMemoryPagesToOS(uptr beg, uptr end);
 void IncreaseTotalMmap(uptr size);
 void DecreaseTotalMmap(uptr size);
 uptr GetRSS();
-void SetShadowRegionHugePageMode(uptr addr, uptr length);
+bool NoHugePagesInRegion(uptr addr, uptr length);
 bool DontDumpShadowMemory(uptr addr, uptr length);
 // Check if the built VMA size matches the runtime one.
 void CheckVMASize();
@@ -143,8 +129,8 @@ void RunFreeHooks(const void *ptr);
 class ReservedAddressRange {
  public:
   uptr Init(uptr size, const char *name = nullptr, uptr fixed_addr = 0);
-  uptr Map(uptr fixed_addr, uptr size, const char *name = nullptr);
-  uptr MapOrDie(uptr fixed_addr, uptr size, const char *name = nullptr);
+  uptr Map(uptr fixed_addr, uptr size);
+  uptr MapOrDie(uptr fixed_addr, uptr size);
   void Unmap(uptr addr, uptr size);
   void *base() const { return base_; }
   uptr size() const { return size_; }
@@ -235,11 +221,10 @@ bool SetEnv(const char *name, const char *value);
 u32 GetUid();
 void ReExec();
 void CheckASLR();
-void CheckMPROTECT();
 char **GetArgv();
-char **GetEnviron();
 void PrintCmdline();
 bool StackSizeIsUnlimited();
+uptr GetStackSizeLimitInBytes();
 void SetStackSizeLimitInBytes(uptr limit);
 bool AddressSpaceIsUnlimited();
 void SetAddressSpaceUnlimited();
@@ -339,18 +324,18 @@ void ReportMmapWriteExec(int prot);
 // Math
 #if SANITIZER_WINDOWS && !defined(__clang__) && !defined(__GNUC__)
 extern "C" {
-unsigned char _BitScanForward(unsigned long *index, unsigned long mask);
-unsigned char _BitScanReverse(unsigned long *index, unsigned long mask);
+unsigned char _BitScanForward(unsigned long *index, unsigned long mask);  // NOLINT
+unsigned char _BitScanReverse(unsigned long *index, unsigned long mask);  // NOLINT
 #if defined(_WIN64)
-unsigned char _BitScanForward64(unsigned long *index, unsigned __int64 mask);
-unsigned char _BitScanReverse64(unsigned long *index, unsigned __int64 mask);
+unsigned char _BitScanForward64(unsigned long *index, unsigned __int64 mask);  // NOLINT
+unsigned char _BitScanReverse64(unsigned long *index, unsigned __int64 mask);  // NOLINT
 #endif
 }
 #endif
 
 INLINE uptr MostSignificantSetBitIndex(uptr x) {
   CHECK_NE(x, 0U);
-  unsigned long up;
+  unsigned long up;  // NOLINT
 #if !SANITIZER_WINDOWS || defined(__clang__) || defined(__GNUC__)
 # ifdef _WIN64
   up = SANITIZER_WORDSIZE - 1 - __builtin_clzll(x);
@@ -367,7 +352,7 @@ INLINE uptr MostSignificantSetBitIndex(uptr x) {
 
 INLINE uptr LeastSignificantSetBitIndex(uptr x) {
   CHECK_NE(x, 0U);
-  unsigned long up;
+  unsigned long up;  // NOLINT
 #if !SANITIZER_WINDOWS || defined(__clang__) || defined(__GNUC__)
 # ifdef _WIN64
   up = __builtin_ctzll(x);
@@ -671,7 +656,7 @@ bool ReadFileToBuffer(const char *file_name, char **buff, uptr *buff_size,
                       error_t *errno_p = nullptr);
 
 // When adding a new architecture, don't forget to also update
-// script/asan_symbolize.py and sanitizer_symbolizer_libcdep.cpp.
+// script/asan_symbolize.py and sanitizer_symbolizer_libcdep.cc.
 inline const char *ModuleArchToString(ModuleArch arch) {
   switch (arch) {
     case kModuleArchUnknown:
@@ -805,13 +790,7 @@ enum AndroidApiLevel {
 
 void WriteToSyslog(const char *buffer);
 
-#if defined(SANITIZER_WINDOWS) && defined(_MSC_VER) && !defined(__clang__)
-#define SANITIZER_WIN_TRACE 1
-#else
-#define SANITIZER_WIN_TRACE 0
-#endif
-
-#if SANITIZER_MAC || SANITIZER_WIN_TRACE
+#if SANITIZER_MAC
 void LogFullErrorReport(const char *buffer);
 #else
 INLINE void LogFullErrorReport(const char *buffer) {}
@@ -825,7 +804,7 @@ INLINE void WriteOneLineToSyslog(const char *s) {}
 INLINE void LogMessageOnPrintf(const char *str) {}
 #endif
 
-#if SANITIZER_LINUX || SANITIZER_WIN_TRACE
+#if SANITIZER_LINUX
 // Initialize Android logging. Any writes before this are silently lost.
 void AndroidLogInit();
 void SetAbortMessage(const char *);
@@ -881,11 +860,6 @@ struct SignalContext {
   bool is_memory_access;
   enum WriteFlag { UNKNOWN, READ, WRITE } write_flag;
 
-  // In some cases the kernel cannot provide the true faulting address; `addr`
-  // will be zero then.  This field allows to distinguish between these cases
-  // and dereferences of null.
-  bool is_true_faulting_addr;
-
   // VS2013 doesn't implement unrestricted unions, so we need a trivial default
   // constructor
   SignalContext() = default;
@@ -898,8 +872,7 @@ struct SignalContext {
         context(context),
         addr(GetAddress()),
         is_memory_access(IsMemoryAccess()),
-        write_flag(GetWriteFlag()),
-        is_true_faulting_addr(IsTrueFaultingAddress()) {
+        write_flag(GetWriteFlag()) {
     InitPcSpBp();
   }
 
@@ -920,10 +893,8 @@ struct SignalContext {
   uptr GetAddress() const;
   WriteFlag GetWriteFlag() const;
   bool IsMemoryAccess() const;
-  bool IsTrueFaultingAddress() const;
 };
 
-void InitializePlatformEarly();
 void MaybeReexec();
 
 template <typename Fn>
@@ -980,7 +951,7 @@ INLINE u32 GetNumberOfCPUsCached() {
 }  // namespace __sanitizer
 
 inline void *operator new(__sanitizer::operator_new_size_type size,
-                          __sanitizer::LowLevelAllocator &alloc) {  // NOLINT
+                          __sanitizer::LowLevelAllocator &alloc) {
   return alloc.Allocate(size);
 }
 

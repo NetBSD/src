@@ -8,16 +8,17 @@ VCS=${1:-svn}
 
 get_upstream() {
   rm -rf upstream
-  git clone https://github.com/llvm/llvm-project.git upstream
+  #cp -rf orig upstream
+  svn co http://llvm.org/svn/llvm-project/compiler-rt/trunk upstream
 }
 
 get_current_rev() {
   cd upstream
-  git rev-parse HEAD
+  svn info | grep Revision | grep -o '[0-9]*'
 }
 
 list_files() {
-  (cd $1; ls *.{cc,cpp,h,inc,S} 2> /dev/null)
+  (cd $1; ls *.{cc,h,inc,S} 2> /dev/null)
 
 }
 
@@ -84,6 +85,6 @@ rm -rf upstream
 cat << EOF > MERGE
 $CUR_REV
 
-The first line of this file holds the git revision number of the
+The first line of this file holds the svn revision number of the
 last merge done from the master library sources.
 EOF

@@ -21,7 +21,7 @@
 
 namespace __sanitizer {
 void *__sanitizer_get_link_map_by_dlopen_handle(void *handle);
-#define _GET_LINK_MAP_BY_DLOPEN_HANDLE(handle, shift) \
+#define GET_LINK_MAP_BY_DLOPEN_HANDLE(handle) \
   (link_map *)__sanitizer_get_link_map_by_dlopen_handle(handle)
 
 extern unsigned struct_utsname_sz;
@@ -1023,7 +1023,6 @@ extern unsigned struct_RF_SingleComponent_sz;
 extern unsigned struct_RF_ProgressInfo_sz;
 extern unsigned struct_nvlist_ref_sz;
 extern unsigned struct_StringList_sz;
-
 
 // A special value to mark ioctls that are not present on the target platform,
 // when it can not be determined without including any system headers.
