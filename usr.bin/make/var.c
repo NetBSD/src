@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.918 2021/04/11 17:48:01 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.919 2021/04/11 18:44:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.918 2021/04/11 17:48:01 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.919 2021/04/11 18:44:57 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -1334,6 +1334,12 @@ SepBuf_AddStr(SepBuf *buf, const char *str)
 	SepBuf_AddBytes(buf, str, strlen(str));
 }
 
+static void
+SepBuf_AddSubstring(SepBuf *buf, Substring sub)
+{
+	SepBuf_AddBytesBetween(buf, sub.start, sub.end);
+}
+
 static char *
 SepBuf_DoneData(SepBuf *buf)
 {
@@ -1348,8 +1354,12 @@ SepBuf_DoneData(SepBuf *buf)
  *
  * For example, when evaluating the modifier ':M*b' in ${:Ua b c:M*b}, the
  * callback is called 3 times, once for "a", "b" and "c".
+ *
+ * Some ModifyWord functions assume that they are always passed a
+ * null-terminated substring, which is currently guaranteed but may change in
+ * the future.
  */
-typedef void (*ModifyWordProc)(const char *word, SepBuf *buf, void *data);
+typedef void (*ModifyWordProc)(Substring word, SepBuf *buf, void *data);
 
 
 /*
@@ -1358,13 +1368,9 @@ typedef void (*ModifyWordProc)(const char *word, SepBuf *buf, void *data);
  */
 /*ARGSUSED*/
 static void
-ModifyWord_Head(const char *word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
+ModifyWord_Head(Substring word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
 {
-	const char *slash = strrchr(word, '/');
-	if (slash != NULL)
-		SepBuf_AddBytesBetween(buf, word, slash);
-	else
-		SepBuf_AddStr(buf, ".");
+	SepBuf_AddSubstring(buf, Substring_Dirname(word));
 }
 
 /*
@@ -1373,9 +1379,9 @@ ModifyWord_Head(const char *word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
  */
 /*ARGSUSED*/
 static void
-ModifyWord_Tail(const char *word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
+ModifyWord_Tail(Substring word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
 {
-	SepBuf_AddStr(buf, str_basename(word));
+	SepBuf_AddSubstring(buf, Substring_Basename(word));
 }
 
 /*
@@ -1384,11 +1390,11 @@ ModifyWord_Tail(const char *word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
  */
 /*ARGSUSED*/
 static void
-ModifyWord_Suffix(const char *word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
+ModifyWord_Suffix(Substring word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
 {
-	const char *lastDot = strrchr(word, '.');
+	const char *lastDot = Substring_LastIndex(word, '.');
 	if (lastDot != NULL)
-		SepBuf_AddStr(buf, lastDot + 1);
+		SepBuf_AddBytesBetween(buf, lastDot + 1, word.end);
 }
 
 /*
@@ -1397,11 +1403,13 @@ ModifyWord_Suffix(const char *word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
  */
 /*ARGSUSED*/
 static void
-ModifyWord_Root(const char *word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
+ModifyWord_Root(Substring word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
 {
-	const char *lastDot = strrchr(word, '.');
-	size_t len = lastDot != NULL ? (size_t)(lastDot - word) : strlen(word);
-	SepBuf_AddBytes(buf, word, len);
+	const char *lastDot, *end;
+
+	lastDot = Substring_LastIndex(word, '.');
+	end = lastDot != NULL ? lastDot : word.end;
+	SepBuf_AddBytesBetween(buf, word.start, end);
 }
 
 /*
@@ -1409,12 +1417,13 @@ ModifyWord_Root(const char *word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
  * Place the word in the buffer if it matches the given pattern.
  */
 static void
-ModifyWord_Match(const char *word, SepBuf *buf, void *data)
+ModifyWord_Match(Substring word, SepBuf *buf, void *data)
 {
 	const char *pattern = data;
 
-	if (Str_Match(word, pattern))
-		SepBuf_AddStr(buf, word);
+	assert(word.end[0] == '\0');	/* assume null-terminated word */
+	if (Str_Match(word.start, pattern))
+		SepBuf_AddSubstring(buf, word);
 }
 
 /*
@@ -1422,12 +1431,13 @@ ModifyWord_Match(const char *word, SepBuf *buf, void *data)
  * Place the word in the buffer if it doesn't match the given pattern.
  */
 static void
-ModifyWord_NoMatch(const char *word, SepBuf *buf, void *data)
+ModifyWord_NoMatch(Substring word, SepBuf *buf, void *data)
 {
 	const char *pattern = data;
 
-	if (!Str_Match(word, pattern))
-		SepBuf_AddStr(buf, word);
+	assert(word.end[0] == '\0');	/* assume null-terminated word */
+	if (!Str_Match(word.start, pattern))
+		SepBuf_AddSubstring(buf, word);
 }
 
 #ifdef SYSVVARSUB
@@ -1444,6 +1454,7 @@ ModifyWord_NoMatch(const char *word, SepBuf *buf, void *data)
  *	out_match_len returns the length of the match, if any.
  *	out_hasPercent returns whether the pattern contains a percent.
  */
+/* TODO: migrate to using Substring */
 static const char *
 SysVMatch(const char *word, const char *pattern,
 	  size_t *out_match_len, bool *out_hasPercent)
@@ -1498,18 +1509,20 @@ struct ModifyWord_SYSVSubstArgs {
 
 /* Callback for ModifyWords to implement the :%.from=%.to modifier. */
 static void
-ModifyWord_SYSVSubst(const char *word, SepBuf *buf, void *data)
+ModifyWord_SYSVSubst(Substring word, SepBuf *buf, void *data)
 {
 	const struct ModifyWord_SYSVSubstArgs *args = data;
 	char *rhs_expanded;
 	const char *rhs;
 	const char *percent;
-
 	size_t match_len;
 	bool lhsPercent;
-	const char *match = SysVMatch(word, args->lhs, &match_len, &lhsPercent);
+	const char *match;
+
+	assert(word.end[0] == '\0');	/* assume null-terminated word */
+	match = SysVMatch(word.start, args->lhs, &match_len, &lhsPercent);
 	if (match == NULL) {
-		SepBuf_AddStr(buf, word);
+		SepBuf_AddSubstring(buf, word);
 		return;
 	}
 
@@ -1565,29 +1578,29 @@ Substring_Find(Substring haystack, Substring needle)
  * Perform a string substitution on the given word.
  */
 static void
-ModifyWord_Subst(const char *word, SepBuf *buf, void *data)
+ModifyWord_Subst(Substring word, SepBuf *buf, void *data)
 {
 	struct ModifyWord_SubstArgs *args = data;
 	size_t wordLen, lhsLen;
 	const char *wordEnd, *match;
 
-	wordLen = strlen(word);
-	wordEnd = word + wordLen;
+	wordLen = Substring_Length(word);
+	wordEnd = word.end;
 	if (args->pflags.subOnce && args->matched)
 		goto nosub;
 
 	lhsLen = Substring_Length(args->lhs);
 	if (args->pflags.anchorStart) {
 		if (wordLen < lhsLen ||
-		    memcmp(word, args->lhs.start, lhsLen) != 0)
+		    memcmp(word.start, args->lhs.start, lhsLen) != 0)
 			goto nosub;
 
 		if (args->pflags.anchorEnd && wordLen != lhsLen)
 			goto nosub;
 
 		/* :S,^prefix,replacement, or :S,^whole$,replacement, */
-		SepBuf_AddBytesBetween(buf, args->rhs.start, args->rhs.end);
-		SepBuf_AddBytesBetween(buf, word + lhsLen, wordEnd);
+		SepBuf_AddSubstring(buf, args->rhs);
+		SepBuf_AddBytesBetween(buf, word.start + lhsLen, wordEnd);
 		args->matched = true;
 		return;
 	}
@@ -1599,8 +1612,8 @@ ModifyWord_Subst(const char *word, SepBuf *buf, void *data)
 			goto nosub;
 
 		/* :S,suffix$,replacement, */
-		SepBuf_AddBytesBetween(buf, word, wordEnd - lhsLen);
-		SepBuf_AddBytesBetween(buf, args->rhs.start, args->rhs.end);
+		SepBuf_AddBytesBetween(buf, word.start, wordEnd - lhsLen);
+		SepBuf_AddSubstring(buf, args->rhs);
 		args->matched = true;
 		return;
 	}
@@ -1609,17 +1622,16 @@ ModifyWord_Subst(const char *word, SepBuf *buf, void *data)
 		goto nosub;
 
 	/* unanchored case, may match more than once */
-	while ((match = Substring_Find(Substring_Init(word, wordEnd),
-	    args->lhs)) != NULL) {
-		SepBuf_AddBytesBetween(buf, word, match);
-		SepBuf_AddBytesBetween(buf, args->rhs.start, args->rhs.end);
+	while ((match = Substring_Find(word, args->lhs)) != NULL) {
+		SepBuf_AddBytesBetween(buf, word.start, match);
+		SepBuf_AddSubstring(buf, args->rhs);
 		args->matched = true;
-		word += (size_t)(match - word) + lhsLen;
-		if (word == wordEnd || !args->pflags.subGlobal)
+		word.start += (size_t)(match - word.start) + lhsLen;
+		if (Substring_IsEmpty(word) || !args->pflags.subGlobal)
 			break;
 	}
 nosub:
-	SepBuf_AddBytesBetween(buf, word, wordEnd);
+	SepBuf_AddSubstring(buf, word);
 }
 
 #ifndef NO_REGEX
@@ -1647,15 +1659,17 @@ struct ModifyWord_SubstRegexArgs {
  * Perform a regex substitution on the given word.
  */
 static void
-ModifyWord_SubstRegex(const char *word, SepBuf *buf, void *data)
+ModifyWord_SubstRegex(Substring word, SepBuf *buf, void *data)
 {
 	struct ModifyWord_SubstRegexArgs *args = data;
 	int xrv;
-	const char *wp = word;
+	const char *wp;
 	char *rp;
 	int flags = 0;
 	regmatch_t m[10];
 
+	assert(word.end[0] == '\0');	/* assume null-terminated word */
+	wp = word.start;
 	if (args->pflags.subOnce && args->matched)
 		goto nosub;
 
@@ -1742,22 +1756,25 @@ struct ModifyWord_LoopArgs {
 
 /* Callback for ModifyWords to implement the :@var@...@ modifier of ODE make. */
 static void
-ModifyWord_Loop(const char *word, SepBuf *buf, void *data)
+ModifyWord_Loop(Substring word, SepBuf *buf, void *data)
 {
 	const struct ModifyWord_LoopArgs *args;
 	char *s;
 
-	if (word[0] == '\0')
+	if (Substring_IsEmpty(word))
 		return;
 
 	args = data;
-	Var_SetWithFlags(args->scope, args->tvar, word, VAR_SET_NO_EXPORT);
+	assert(word.end[0] == '\0');	/* assume null-terminated word */
+	Var_SetWithFlags(args->scope, args->tvar, word.start,
+	    VAR_SET_NO_EXPORT);
 	(void)Var_Subst(args->str, args->scope, args->emode, &s);
 	/* TODO: handle errors */
 
+	assert(word.end[0] == '\0');	/* assume null-terminated word */
 	DEBUG4(VAR, "ModifyWord_Loop: "
 		    "in \"%s\", replace \"%s\" with \"%s\" to \"%s\"\n",
-	    word, args->tvar, args->str, s);
+	    word.start, args->tvar, args->str, s);
 
 	if (s[0] == '\n' || Buf_EndsWith(&buf->buf, '\n'))
 		buf->needSep = false;
@@ -1832,16 +1849,18 @@ VarSelectWords(const char *str, int first, int last,
  */
 /*ARGSUSED*/
 static void
-ModifyWord_Realpath(const char *word, SepBuf *buf, void *data MAKE_ATTR_UNUSED)
+ModifyWord_Realpath(Substring word, SepBuf *buf, void *data MAKE_ATTR_UNUSED)
 {
 	struct stat st;
 	char rbuf[MAXPATHLEN];
+	const char *rp;
 
-	const char *rp = cached_realpath(word, rbuf);
+	assert(word.end[0] == '\0');	/* assume null-terminated word */
+	rp = cached_realpath(word.start, rbuf);
 	if (rp != NULL && *rp == '/' && stat(rp, &st) == 0)
-		word = rp;
-
-	SepBuf_AddStr(buf, word);
+		SepBuf_AddStr(buf, rp);
+	else
+		SepBuf_AddSubstring(buf, word);
 }
 
 
@@ -2444,10 +2463,13 @@ ModifyWords(ModChain *ch,
 	SepBuf result;
 	Words words;
 	size_t i;
+	Substring word;
 
 	if (oneBigWord) {
 		SepBuf_Init(&result, ch->sep);
-		modifyWord(val, &result, modifyWord_args);
+		/* XXX: performance: Substring_InitStr calls strlen */
+		word = Substring_InitStr(val);
+		modifyWord(word, &result, modifyWord_args);
 		goto done;
 	}
 
@@ -2458,7 +2480,9 @@ ModifyWords(ModChain *ch,
 
 	SepBuf_Init(&result, ch->sep);
 	for (i = 0; i < words.len; i++) {
-		modifyWord(words.words[i], &result, modifyWord_args);
+		/* XXX: performance: Substring_InitStr calls strlen */
+		word = Substring_InitStr(words.words[i]);
+		modifyWord(word, &result, modifyWord_args);
 		if (result.buf.len > 0)
 			SepBuf_Sep(&result);
 	}
@@ -3043,9 +3067,9 @@ ApplyModifier_Quote(const char **pp, ModChain *ch)
 
 /*ARGSUSED*/
 static void
-ModifyWord_Copy(const char *word, SepBuf *buf, void *data MAKE_ATTR_UNUSED)
+ModifyWord_Copy(Substring word, SepBuf *buf, void *data MAKE_ATTR_UNUSED)
 {
-	SepBuf_AddStr(buf, word);
+	SepBuf_AddSubstring(buf, word);
 }
 
 /* :ts<separator> */
