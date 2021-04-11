@@ -1,12 +1,24 @@
-#	$NetBSD: Makefile,v 1.8 2020/09/28 06:04:08 nia Exp $
+#	$NetBSD: Makefile,v 1.9 2021/04/11 10:29:50 nia Exp $
 
 .include <bsd.own.mk>
 
 PROG=	ctwm
-SRCS=	add_window.c deftwmrc.c  events.c gram.tab.c gc.c \
-	list.c util.c ctwm.c lex.c parse.c menus.c resize.c \
-	version.c iconmgr.c cursor.c icons.c workmgr.c windowbox.c \
-	clicktofocus.c vscreen.c session.c mwmhints.c gnome.c
+SRCS=	add_window.c animate.c captive.c clargs.c clicktofocus.c \
+	colormaps.c ctopts.c ctwm_main.c cursor.c drawing.c \
+	event_core.c event_handlers.c event_names.c event_utils.c \
+	functions.c functions_captive.c functions_icmgr_wsmgr.c \
+	functions_identify.c functions_misc.c functions_warp.c \
+	functions_win.c functions_win_moveresize.c functions_workspaces.c \
+	gc.c iconmgr.c icons.c icons_builtin.c image.c image_bitmap.c \
+	image_bitmap_builtin.c image_xwd.c list.c mask_screen.c menus.c \
+	mwmhints.c occupation.c otp.c parse.c parse_be.c parse_yacc.c \
+	session.c util.c vscreen.c win_decorations.c win_decorations_init.c \
+	win_iconify.c win_ops.c win_regions.c win_resize.c win_utils.c \
+	windowbox.c workspace_config.c workspace_manager.c workspace_utils.c \
+	ctwm_atoms.c deftwmrc.c gram.tab.c lex.c version.c \
+	image_xpm.c parse_m4.c ewmh.c ewmh_atoms.c ctwm_wrap.c
+
+SRCS+=	repl_str.c
 
 YHEADER=1
 
@@ -15,13 +27,10 @@ CTWMCONFIGDIR=		${X11ETCDIR}/ctwm
 CTWMDIR=		${X11SRCDIR}/external/mit/ctwm/dist
 XPMDIR=			${X11INCDIR}/X11/pixmaps/ctwm
 
-CPPFLAGS+=		-I. -I${CTWMDIR}/src -DHAVE_MKSTEMP \
-			-DNO_ALLOCA -DCSRG_BASED -DUSEM4 -DGNOME -DXPM
-
-CPPFLAGS+=		-DPIXMAP_DIRECTORY=\"${XPMDIR}\"
-CPPFLAGS+=		-DCTWM_WELCOME_FILE=\"xpm:${X11INCDIR}/X11/pixmaps/NetBSD-inv.xpm\"
-
-CPPFLAGS.parse.c=	-DSYSTEM_INIT_FILE=\"${CTWMCONFIGDIR}/system.ctwmrc\" \
+CPPFLAGS+=		-I. -I${CTWMDIR} \
+			-DUSE_XPM -DUSE_M4 -DUSE_EWMH -DUSE_SREGEX \
+			-DPIXMAP_DIRECTORY=\"${XPMDIR}\" \
+			-DSYSTEM_INIT_FILE=\"${CTWMCONFIGDIR}/system.ctwmrc\" \
 			-DM4CMD=\"m4\"
 
 FILESDIR=		${XPMDIR}
@@ -49,7 +58,7 @@ FILES=			3D_Expand15.xpm 3D_Iconify15.xpm 3D_Lightning15.xpm \
 LDADD+=	-lXpm  -lXmu -lXt -lSM -lICE -lXext -lX11
 DPADD+=	${LIBXPM} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} ${LIBXEXT} ${LIBX11}
 
-.PATH:	${CTWMDIR} ${CTWMDIR}/xpm
+.PATH:	${CTWMDIR} ${CTWMDIR}/xpm ${CTWMDIR}/ext
 
 .include <bsd.files.mk>
 .include <bsd.x11.mk>
