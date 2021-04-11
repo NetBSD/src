@@ -1,4 +1,4 @@
-/*	$NetBSD: str.h,v 1.3 2021/04/11 19:05:06 rillig Exp $	*/
+/*	$NetBSD: str.h,v 1.4 2021/04/11 20:38:43 rillig Exp $	*/
 
 /*
  Copyright (c) 2021 Roland Illig <rillig@NetBSD.org>
@@ -46,7 +46,7 @@ typedef struct MFStr {
 } MFStr;
 
 /* A read-only range of a character array, NOT null-terminated. */
-typedef struct {
+typedef struct Substring {
 	const char *start;
 	const char *end;
 } Substring;
@@ -277,6 +277,21 @@ LazyBuf_AddStr(LazyBuf *buf, const char *str)
 
 	for (p = str; *p != '\0'; p++)
 		LazyBuf_Add(buf, *p);
+}
+
+MAKE_INLINE void
+LazyBuf_AddBytesBetween(LazyBuf *buf, const char *start, const char *end)
+{
+	const char *p;
+
+	for (p = start; p != end; p++)
+		LazyBuf_Add(buf, *p);
+}
+
+MAKE_INLINE void
+LazyBuf_AddSubstring(LazyBuf *buf, Substring sub)
+{
+	LazyBuf_AddBytesBetween(buf, sub.start, sub.end);
 }
 
 MAKE_INLINE Substring

@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.920 2021/04/11 19:05:06 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.921 2021/04/11 20:38:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.920 2021/04/11 19:05:06 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.921 2021/04/11 20:38:43 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -1618,7 +1618,7 @@ ModifyWord_Subst(Substring word, SepBuf *buf, void *data)
 		return;
 	}
 
-	if (args->lhs.start[0] == '\0')
+	if (Substring_IsEmpty(args->lhs))
 		goto nosub;
 
 	/* unanchored case, may match more than once */
@@ -1626,7 +1626,7 @@ ModifyWord_Subst(Substring word, SepBuf *buf, void *data)
 		SepBuf_AddBytesBetween(buf, word.start, match);
 		SepBuf_AddSubstring(buf, args->rhs);
 		args->matched = true;
-		word.start += (size_t)(match - word.start) + lhsLen;
+		word.start = match + lhsLen;
 		if (Substring_IsEmpty(word) || !args->pflags.subGlobal)
 			break;
 	}
@@ -1649,7 +1649,7 @@ VarREError(int reerr, const regex_t *pat, const char *str)
 struct ModifyWord_SubstRegexArgs {
 	regex_t re;
 	size_t nsub;
-	char *replace;
+	const char *replace;
 	VarPatternFlags pflags;
 	bool matched;
 };
@@ -1664,7 +1664,7 @@ ModifyWord_SubstRegex(Substring word, SepBuf *buf, void *data)
 	struct ModifyWord_SubstRegexArgs *args = data;
 	int xrv;
 	const char *wp;
-	char *rp;
+	const char *rp;
 	int flags = 0;
 	regmatch_t m[10];
 
@@ -1749,8 +1749,8 @@ tryagain:
 
 struct ModifyWord_LoopArgs {
 	GNode *scope;
-	char *tvar;		/* name of temporary variable */
-	char *str;		/* string to expand */
+	const char *tvar;	/* name of temporary variable */
+	const char *str;	/* string to expand */
 	VarEvalMode emode;
 };
 
@@ -2157,17 +2157,22 @@ Expr_Define(Expr *expr)
 }
 
 static void
-Expr_SetValueOwn(Expr *expr, char *value)
+Expr_SetValue(Expr *expr, FStr value)
 {
 	FStr_Done(&expr->value);
-	expr->value = FStr_InitOwn(value);
+	expr->value = value;
+}
+
+static void
+Expr_SetValueOwn(Expr *expr, char *value)
+{
+	Expr_SetValue(expr, FStr_InitOwn(value));
 }
 
 static void
 Expr_SetValueRefer(Expr *expr, const char *value)
 {
-	FStr_Done(&expr->value);
-	expr->value = FStr_InitRefer(value);
+	Expr_SetValue(expr, FStr_InitRefer(value));
 }
 
 static bool
@@ -2216,10 +2221,7 @@ ParseModifierPartSubst(
     char delim,
     VarEvalMode emode,
     ModChain *ch,
-    char **out_part,
-    /* Optionally stores the end of the returned string, just to save
-     * another strlen call. */
-    const char **out_part_end,
+    LazyBuf *part,
     /* For the first part of the :S modifier, sets the VARP_ANCHOR_END flag
      * if the last character of the pattern is a $. */
     VarPatternFlags *out_pflags,
@@ -2228,31 +2230,29 @@ ParseModifierPartSubst(
     struct ModifyWord_SubstArgs *subst
 )
 {
-	Buffer buf;
 	const char *p;
 
-	Buf_Init(&buf);
+	p = *pp;
+	LazyBuf_Init(part, Substring_InitStr(p)); /* TODO: O(n^2) */
 
 	/*
 	 * Skim through until the matching delimiter is found; pick up
 	 * variable expressions on the way.
 	 */
-	p = *pp;
 	while (*p != '\0' && *p != delim) {
 		const char *varstart;
 
 		if (IsEscapedModifierPart(p, delim, subst)) {
-			Buf_AddByte(&buf, p[1]);
+			LazyBuf_Add(part, p[1]);
 			p += 2;
 			continue;
 		}
 
 		if (*p != '$') {	/* Unescaped, simple text */
 			if (subst != NULL && *p == '&')
-				Buf_AddBytesBetween(&buf,
-				    subst->lhs.start, subst->lhs.end);
+				LazyBuf_AddSubstring(part, subst->lhs);
 			else
-				Buf_AddByte(&buf, *p);
+				LazyBuf_Add(part, *p);
 			p++;
 			continue;
 		}
@@ -2261,7 +2261,7 @@ ParseModifierPartSubst(
 			if (out_pflags != NULL)
 				out_pflags->anchorEnd = true;
 			else
-				Buf_AddByte(&buf, *p);
+				LazyBuf_Add(part, *p);
 			p++;
 			continue;
 		}
@@ -2274,7 +2274,7 @@ ParseModifierPartSubst(
 			(void)Var_Parse(&nested_p, ch->expr->scope,
 			    VarEvalMode_WithoutKeepDollar(emode), &nested_val);
 			/* TODO: handle errors */
-			Buf_AddStr(&buf, nested_val.str);
+			LazyBuf_AddStr(part, nested_val.str);
 			FStr_Done(&nested_val);
 			p += nested_p - p;
 			continue;
@@ -2312,9 +2312,9 @@ ParseModifierPartSubst(
 						depth--;
 				}
 			}
-			Buf_AddBytesBetween(&buf, varstart, p);
+			LazyBuf_AddBytesBetween(part, varstart, p);
 		} else {
-			Buf_AddByte(&buf, *varstart);
+			LazyBuf_Add(part, *varstart);
 			p++;
 		}
 	}
@@ -2323,16 +2323,18 @@ ParseModifierPartSubst(
 		*pp = p;
 		Error("Unfinished modifier for \"%s\" ('%c' missing)",
 		    ch->expr->name, delim);
-		*out_part = NULL;
+		LazyBuf_Done(part);
 		return VPR_ERR;
 	}
 
 	*pp = p + 1;
-	if (out_part_end != NULL)
-		*out_part_end = buf.data + buf.len;
 
-	*out_part = Buf_DoneData(&buf);
-	DEBUG1(VAR, "Modifier part: \"%s\"\n", *out_part);
+	{
+		Substring sub = LazyBuf_Get(part);
+		DEBUG2(VAR, "Modifier part: \"%.*s\"\n",
+		    (int)Substring_Length(sub), sub.start);
+	}
+
 	return VPR_OK;
 }
 
@@ -2356,11 +2358,10 @@ ParseModifierPart(
     /* Mode for evaluating nested variables. */
     VarEvalMode emode,
     ModChain *ch,
-    char **out_part
+    LazyBuf *part
 )
 {
-	return ParseModifierPartSubst(pp, delim, emode, ch, out_part,
-	    NULL, NULL, NULL);
+	return ParseModifierPartSubst(pp, delim, emode, ch, part, NULL, NULL);
 }
 
 MAKE_INLINE bool
@@ -2499,13 +2500,17 @@ ApplyModifier_Loop(const char **pp, ModChain *ch)
 	struct ModifyWord_LoopArgs args;
 	char prev_sep;
 	VarParseResult res;
+	LazyBuf tvarBuf, strBuf;
+	FStr tvar, str;
 
 	args.scope = expr->scope;
 
 	(*pp)++;		/* Skip the first '@' */
-	res = ParseModifierPart(pp, '@', VARE_PARSE_ONLY, ch, &args.tvar);
+	res = ParseModifierPart(pp, '@', VARE_PARSE_ONLY, ch, &tvarBuf);
 	if (res != VPR_OK)
 		return AMR_CLEANUP;
+	tvar = LazyBuf_DoneGet(&tvarBuf);
+	args.tvar = tvar.str;
 	if (strchr(args.tvar, '$') != NULL) {
 		Parse_Error(PARSE_FATAL,
 		    "In the :@ modifier of \"%s\", the variable name \"%s\" "
@@ -2514,9 +2519,11 @@ ApplyModifier_Loop(const char **pp, ModChain *ch)
 		return AMR_CLEANUP;
 	}
 
-	res = ParseModifierPart(pp, '@', VARE_PARSE_ONLY, ch, &args.str);
+	res = ParseModifierPart(pp, '@', VARE_PARSE_ONLY, ch, &strBuf);
 	if (res != VPR_OK)
 		return AMR_CLEANUP;
+	str = LazyBuf_DoneGet(&strBuf);
+	args.str = str.str;
 
 	if (!Expr_ShouldEval(expr))
 		goto done;
@@ -2530,8 +2537,8 @@ ApplyModifier_Loop(const char **pp, ModChain *ch)
 	Var_Delete(expr->scope, args.tvar);
 
 done:
-	free(args.tvar);
-	free(args.str);
+	FStr_Done(&tvar);
+	FStr_Done(&str);
 	return AMR_OK;
 }
 
@@ -2740,23 +2747,26 @@ static ApplyModifierResult
 ApplyModifier_ShellCommand(const char **pp, ModChain *ch)
 {
 	Expr *expr = ch->expr;
-	char *cmd;
 	const char *errfmt;
 	VarParseResult res;
+	LazyBuf cmdBuf;
+	FStr cmd;
 
 	(*pp)++;
-	res = ParseModifierPart(pp, '!', expr->emode, ch, &cmd);
+	res = ParseModifierPart(pp, '!', expr->emode, ch, &cmdBuf);
 	if (res != VPR_OK)
 		return AMR_CLEANUP;
+	cmd = LazyBuf_DoneGet(&cmdBuf);
+
 
 	errfmt = NULL;
 	if (Expr_ShouldEval(expr))
-		Expr_SetValueOwn(expr, Cmd_Exec(cmd, &errfmt));
+		Expr_SetValueOwn(expr, Cmd_Exec(cmd.str, &errfmt));
 	else
 		Expr_SetValueRefer(expr, "");
 	if (errfmt != NULL)
-		Error(errfmt, cmd);	/* XXX: why still return AMR_OK? */
-	free(cmd);
+		Error(errfmt, cmd.str); /* XXX: why still return AMR_OK? */
+	FStr_Done(&cmd);
 	Expr_Define(expr);
 
 	return AMR_OK;
@@ -2941,9 +2951,9 @@ static ApplyModifierResult
 ApplyModifier_Subst(const char **pp, ModChain *ch)
 {
 	struct ModifyWord_SubstArgs args;
-	char *lhs, *rhs;
 	bool oneBigWord;
 	VarParseResult res;
+	LazyBuf lhsBuf, rhsBuf;
 
 	char delim = (*pp)[1];
 	if (delim == '\0') {
@@ -2962,25 +2972,27 @@ ApplyModifier_Subst(const char **pp, ModChain *ch)
 		(*pp)++;
 	}
 
-	res = ParseModifierPartSubst(pp, delim, ch->expr->emode, ch, &lhs,
-	    &args.lhs.end, &args.pflags, NULL);
+	res = ParseModifierPartSubst(pp, delim, ch->expr->emode, ch, &lhsBuf,
+	    &args.pflags, NULL);
 	if (res != VPR_OK)
 		return AMR_CLEANUP;
-	args.lhs.start = lhs;
+	args.lhs = LazyBuf_Get(&lhsBuf);
 
-	res = ParseModifierPartSubst(pp, delim, ch->expr->emode, ch, &rhs,
-	    &args.rhs.end, NULL, &args);
-	if (res != VPR_OK)
+	res = ParseModifierPartSubst(pp, delim, ch->expr->emode, ch, &rhsBuf,
+	    NULL, &args);
+	if (res != VPR_OK) {
+		LazyBuf_Done(&lhsBuf);
 		return AMR_CLEANUP;
-	args.rhs.start = rhs;
+	}
+	args.rhs = LazyBuf_Get(&rhsBuf);
 
 	oneBigWord = ch->oneBigWord;
 	ParsePatternFlags(pp, &args.pflags, &oneBigWord);
 
 	ModifyWords(ch, ModifyWord_Subst, &args, oneBigWord);
 
-	free(lhs);
-	free(rhs);
+	LazyBuf_Done(&lhsBuf);
+	LazyBuf_Done(&rhsBuf);
 	return AMR_OK;
 }
 
@@ -2990,11 +3002,12 @@ ApplyModifier_Subst(const char **pp, ModChain *ch)
 static ApplyModifierResult
 ApplyModifier_Regex(const char **pp, ModChain *ch)
 {
-	char *re;
 	struct ModifyWord_SubstRegexArgs args;
 	bool oneBigWord;
 	int error;
 	VarParseResult res;
+	LazyBuf reBuf, replaceBuf;
+	FStr re, replace;
 
 	char delim = (*pp)[1];
 	if (delim == '\0') {
@@ -3005,15 +3018,18 @@ ApplyModifier_Regex(const char **pp, ModChain *ch)
 
 	*pp += 2;
 
-	res = ParseModifierPart(pp, delim, ch->expr->emode, ch, &re);
+	res = ParseModifierPart(pp, delim, ch->expr->emode, ch, &reBuf);
 	if (res != VPR_OK)
 		return AMR_CLEANUP;
+	re = LazyBuf_DoneGet(&reBuf);
 
-	res = ParseModifierPart(pp, delim, ch->expr->emode, ch, &args.replace);
-	if (args.replace == NULL) {
-		free(re);
+	res = ParseModifierPart(pp, delim, ch->expr->emode, ch, &replaceBuf);
+	if (res != VPR_OK) {
+		FStr_Done(&re);
 		return AMR_CLEANUP;
 	}
+	replace = LazyBuf_DoneGet(&replaceBuf);
+	args.replace = replace.str;
 
 	args.pflags = VarPatternFlags_Literal();
 	args.matched = false;
@@ -3021,16 +3037,16 @@ ApplyModifier_Regex(const char **pp, ModChain *ch)
 	ParsePatternFlags(pp, &args.pflags, &oneBigWord);
 
 	if (!ModChain_ShouldEval(ch)) {
-		free(args.replace);
-		free(re);
+		FStr_Done(&replace);
+		FStr_Done(&re);
 		return AMR_OK;
 	}
 
-	error = regcomp(&args.re, re, REG_EXTENDED);
-	free(re);
+	error = regcomp(&args.re, re.str, REG_EXTENDED);
 	if (error != 0) {
 		VarREError(error, &args.re, "Regex compilation error");
-		free(args.replace);
+		FStr_Done(&replace);
+		FStr_Done(&re);
 		return AMR_CLEANUP;
 	}
 
@@ -3041,7 +3057,8 @@ ApplyModifier_Regex(const char **pp, ModChain *ch)
 	ModifyWords(ch, ModifyWord_SubstRegex, &args, oneBigWord);
 
 	regfree(&args.re);
-	free(args.replace);
+	FStr_Done(&replace);
+	FStr_Done(&re);
 	return AMR_OK;
 }
 
@@ -3233,15 +3250,19 @@ static ApplyModifierResult
 ApplyModifier_Words(const char **pp, ModChain *ch)
 {
 	Expr *expr = ch->expr;
-	char *estr;
+	const char *estr;
 	int first, last;
 	VarParseResult res;
 	const char *p;
+	LazyBuf estrBuf;
+	FStr festr;
 
 	(*pp)++;		/* skip the '[' */
-	res = ParseModifierPart(pp, ']', expr->emode, ch, &estr);
+	res = ParseModifierPart(pp, ']', expr->emode, ch, &estrBuf);
 	if (res != VPR_OK)
 		return AMR_CLEANUP;
+	festr = LazyBuf_DoneGet(&estrBuf);
+	estr = festr.str;
 
 	if (!IsDelimiter(**pp, ch))
 		goto bad_modifier;		/* Found junk after ']' */
@@ -3318,11 +3339,11 @@ ApplyModifier_Words(const char **pp, ModChain *ch)
 	        ch->sep, ch->oneBigWord));
 
 ok:
-	free(estr);
+	FStr_Done(&festr);
 	return AMR_OK;
 
 bad_modifier:
-	free(estr);
+	FStr_Done(&festr);
 	return AMR_BAD;
 }
 
@@ -3389,8 +3410,9 @@ static ApplyModifierResult
 ApplyModifier_IfElse(const char **pp, ModChain *ch)
 {
 	Expr *expr = ch->expr;
-	char *then_expr, *else_expr;
 	VarParseResult res;
+	LazyBuf buf;
+	FStr then_expr, else_expr;
 
 	bool value = false;
 	VarEvalMode then_emode = VARE_PARSE_ONLY;
@@ -3406,31 +3428,35 @@ ApplyModifier_IfElse(const char **pp, ModChain *ch)
 	}
 
 	(*pp)++;			/* skip past the '?' */
-	res = ParseModifierPart(pp, ':', then_emode, ch, &then_expr);
+	res = ParseModifierPart(pp, ':', then_emode, ch, &buf);
 	if (res != VPR_OK)
 		return AMR_CLEANUP;
+	then_expr = LazyBuf_DoneGet(&buf);
 
-	res = ParseModifierPart(pp, ch->endc, else_emode, ch, &else_expr);
-	if (res != VPR_OK)
+	res = ParseModifierPart(pp, ch->endc, else_emode, ch, &buf);
+	if (res != VPR_OK) {
+		FStr_Done(&then_expr);
 		return AMR_CLEANUP;
+	}
+	else_expr = LazyBuf_DoneGet(&buf);
 
 	(*pp)--;		/* Go back to the ch->endc. */
 
 	if (cond_rc == COND_INVALID) {
 		Error("Bad conditional expression `%s' in %s?%s:%s",
-		    expr->name, expr->name, then_expr, else_expr);
+		    expr->name, expr->name, then_expr.str, else_expr.str);
 		return AMR_CLEANUP;
 	}
 
 	if (!ModChain_ShouldEval(ch)) {
-		free(then_expr);
-		free(else_expr);
+		FStr_Done(&then_expr);
+		FStr_Done(&else_expr);
 	} else if (value) {
-		Expr_SetValueOwn(expr, then_expr);
-		free(else_expr);
+		Expr_SetValue(expr, then_expr);
+		FStr_Done(&else_expr);
 	} else {
-		Expr_SetValueOwn(expr, else_expr);
-		free(then_expr);
+		FStr_Done(&then_expr);
+		Expr_SetValue(expr, else_expr);
 	}
 	Expr_Define(expr);
 	return AMR_OK;
@@ -3463,8 +3489,9 @@ ApplyModifier_Assign(const char **pp, ModChain *ch)
 {
 	Expr *expr = ch->expr;
 	GNode *scope;
-	char *val;
+	FStr val;
 	VarParseResult res;
+	LazyBuf buf;
 
 	const char *mod = *pp;
 	const char *op = mod + 1;
@@ -3492,9 +3519,10 @@ ok:
 		break;
 	}
 
-	res = ParseModifierPart(pp, ch->endc, expr->emode, ch, &val);
+	res = ParseModifierPart(pp, ch->endc, expr->emode, ch, &buf);
 	if (res != VPR_OK)
 		return AMR_CLEANUP;
+	val = LazyBuf_DoneGet(&buf);
 
 	(*pp)--;		/* Go back to the ch->endc. */
 
@@ -3512,13 +3540,13 @@ ok:
 
 	switch (op[0]) {
 	case '+':
-		Var_Append(scope, expr->name, val);
+		Var_Append(scope, expr->name, val.str);
 		break;
 	case '!': {
 		const char *errfmt;
-		char *cmd_output = Cmd_Exec(val, &errfmt);
+		char *cmd_output = Cmd_Exec(val.str, &errfmt);
 		if (errfmt != NULL)
-			Error(errfmt, val);
+			Error(errfmt, val.str);
 		else
 			Var_Set(scope, expr->name, cmd_output);
 		free(cmd_output);
@@ -3529,13 +3557,13 @@ ok:
 			break;
 		/* FALLTHROUGH */
 	default:
-		Var_Set(scope, expr->name, val);
+		Var_Set(scope, expr->name, val.str);
 		break;
 	}
 	Expr_SetValueRefer(expr, "");
 
 done:
-	free(val);
+	FStr_Done(&val);
 	return AMR_OK;
 }
 
@@ -3611,8 +3639,9 @@ static ApplyModifierResult
 ApplyModifier_SysV(const char **pp, ModChain *ch)
 {
 	Expr *expr = ch->expr;
-	char *lhs, *rhs;
 	VarParseResult res;
+	LazyBuf buf;
+	FStr lhs, rhs;
 
 	const char *mod = *pp;
 	bool eqFound = false;
@@ -3637,29 +3666,33 @@ ApplyModifier_SysV(const char **pp, ModChain *ch)
 	if (*p != ch->endc || !eqFound)
 		return AMR_UNKNOWN;
 
-	res = ParseModifierPart(pp, '=', expr->emode, ch, &lhs);
+	res = ParseModifierPart(pp, '=', expr->emode, ch, &buf);
 	if (res != VPR_OK)
 		return AMR_CLEANUP;
+	lhs = LazyBuf_DoneGet(&buf);
 
 	/* The SysV modifier lasts until the end of the variable expression. */
-	res = ParseModifierPart(pp, ch->endc, expr->emode, ch, &rhs);
-	if (res != VPR_OK)
+	res = ParseModifierPart(pp, ch->endc, expr->emode, ch, &buf);
+	if (res != VPR_OK) {
+		FStr_Done(&lhs);
 		return AMR_CLEANUP;
+	}
+	rhs = LazyBuf_DoneGet(&buf);
 
 	(*pp)--;		/* Go back to the ch->endc. */
 
-	if (lhs[0] == '\0' && expr->value.str[0] == '\0') {
+	if (lhs.str[0] == '\0' && expr->value.str[0] == '\0') {
 		/* Do not turn an empty expression into non-empty. */
 	} else {
 		struct ModifyWord_SYSVSubstArgs args;
 
 		args.scope = expr->scope;
-		args.lhs = lhs;
-		args.rhs = rhs;
+		args.lhs = lhs.str;
+		args.rhs = rhs.str;
 		ModifyWords(ch, ModifyWord_SYSVSubst, &args, ch->oneBigWord);
 	}
-	free(lhs);
-	free(rhs);
+	FStr_Done(&lhs);
+	FStr_Done(&rhs);
 	return AMR_OK;
 }
 #endif
