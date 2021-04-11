@@ -1,5 +1,5 @@
 /* Variable tracking routines for the GNU compiler.
-   Copyright (C) 2002-2019 Free Software Foundation, Inc.
+   Copyright (C) 2002-2020 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -111,11 +111,11 @@
 #include "tree-dfa.h"
 #include "tree-ssa.h"
 #include "cselib.h"
-#include "params.h"
 #include "tree-pretty-print.h"
 #include "rtl-iter.h"
 #include "fibonacci_heap.h"
 #include "print-rtl.h"
+#include "function-abi.h"
 
 typedef fibonacci_heap <long, basic_block_def> bb_heap_t;
 typedef fibonacci_node <long, basic_block_def> bb_heap_node_t;
@@ -929,8 +929,9 @@ static poly_int64 hard_frame_pointer_adjustment = -1;
 
 /* Data for adjust_mems callback.  */
 
-struct adjust_mem_data
+class adjust_mem_data
 {
+public:
   bool store;
   machine_mode mem_mode;
   HOST_WIDE_INT stack_adjust;
@@ -1030,7 +1031,7 @@ use_narrower_mode (rtx x, scalar_int_mode mode, scalar_int_mode wmode)
 static rtx
 adjust_mems (rtx loc, const_rtx old_rtx, void *data)
 {
-  struct adjust_mem_data *amd = (struct adjust_mem_data *) data;
+  class adjust_mem_data *amd = (class adjust_mem_data *) data;
   rtx mem, addr = loc, tem;
   machine_mode mem_mode_save;
   bool store_save;
@@ -1238,7 +1239,7 @@ adjust_insn (basic_block bb, rtx_insn *insn)
   amd.stack_adjust = -VTI (bb)->out.stack_adjust;
 
   amd.store = true;
-  note_stores (PATTERN (insn), adjust_mem_stores, &amd);
+  note_stores (insn, adjust_mem_stores, &amd);
 
   amd.store = false;
   if (GET_CODE (PATTERN (insn)) == PARALLEL
@@ -4899,12 +4900,11 @@ dataflow_set_clear_at_call (dataflow_set *set, rtx_insn *call_insn)
 {
   unsigned int r;
   hard_reg_set_iterator hrsi;
-  HARD_REG_SET invalidated_regs;
 
-  get_call_reg_set_usage (call_insn, &invalidated_regs,
-			  regs_invalidated_by_call);
+  HARD_REG_SET callee_clobbers
+    = insn_callee_abi (call_insn).full_reg_clobbers ();
 
-  EXECUTE_IF_SET_IN_HARD_REG_SET (invalidated_regs, 0, r, hrsi)
+  EXECUTE_IF_SET_IN_HARD_REG_SET (callee_clobbers, 0, r, hrsi)
     var_regno_delete (set, r);
 
   if (MAY_HAVE_DEBUG_BIND_INSNS)
@@ -5843,7 +5843,7 @@ add_uses_1 (rtx *x, void *cui)
    compile time for ridiculously complex expressions, although they're
    seldom useful, and they may often have to be discarded as not
    representable anyway.  */
-#define EXPR_USE_DEPTH (PARAM_VALUE (PARAM_MAX_VARTRACK_EXPR_DEPTH))
+#define EXPR_USE_DEPTH (param_max_vartrack_expr_depth)
 
 /* Attempt to reverse the EXPR operation in the debug info and record
    it in the cselib table.  Say for reg1 = reg2 + 6 even when reg2 is
@@ -5903,7 +5903,7 @@ reverse_op (rtx val, const_rtx expr, rtx_insn *insn)
 	&& (GET_CODE (l->loc) != CONST || !references_value_p (l->loc, 0)))
       return;
     /* Avoid creating too large locs lists.  */
-    else if (count == PARAM_VALUE (PARAM_MAX_VARTRACK_REVERSE_OP_SIZE))
+    else if (count == param_max_vartrack_reverse_op_size)
       return;
 
   switch (GET_CODE (src))
@@ -6112,9 +6112,23 @@ add_stores (rtx loc, const_rtx expr, void *cuip)
     }
 
   if (loc == stack_pointer_rtx
-      && maybe_ne (hard_frame_pointer_adjustment, -1)
+      && (maybe_ne (hard_frame_pointer_adjustment, -1)
+	  || (!frame_pointer_needed && !ACCUMULATE_OUTGOING_ARGS))
       && preserve)
     cselib_set_value_sp_based (v);
+
+  /* Don't record MO_VAL_SET for VALUEs that can be described using
+     cfa_base_rtx or cfa_base_rtx + CONST_INT, cselib already knows
+     all the needed equivalences and they shouldn't change depending
+     on which register holds that VALUE in some instruction.  */
+  if (!frame_pointer_needed
+      && cfa_base_rtx
+      && cselib_sp_derived_value_p (v))
+    {
+      if (preserve)
+	preserve_value (v);
+      return;
+    }
 
   nloc = replace_expr_with_values (oloc);
   if (nloc)
@@ -6292,14 +6306,12 @@ prepare_call_arguments (basic_block bb, rtx_insn *insn)
 		  && targetm.calls.struct_value_rtx (type, 0) == 0)
 		{
 		  tree struct_addr = build_pointer_type (TREE_TYPE (type));
-		  machine_mode mode = TYPE_MODE (struct_addr);
+		  function_arg_info arg (struct_addr, /*named=*/true);
 		  rtx reg;
 		  INIT_CUMULATIVE_ARGS (args_so_far_v, type, NULL_RTX, fndecl,
 					nargs + 1);
-		  reg = targetm.calls.function_arg (args_so_far, mode,
-						    struct_addr, true);
-		  targetm.calls.function_arg_advance (args_so_far, mode,
-						      struct_addr, true);
+		  reg = targetm.calls.function_arg (args_so_far, arg);
+		  targetm.calls.function_arg_advance (args_so_far, arg);
 		  if (reg == NULL_RTX)
 		    {
 		      for (; link; link = XEXP (link, 1))
@@ -6317,11 +6329,9 @@ prepare_call_arguments (basic_block bb, rtx_insn *insn)
 				      nargs);
 	      if (obj_type_ref && TYPE_ARG_TYPES (type) != void_list_node)
 		{
-		  machine_mode mode;
 		  t = TYPE_ARG_TYPES (type);
-		  mode = TYPE_MODE (TREE_VALUE (t));
-		  this_arg = targetm.calls.function_arg (args_so_far, mode,
-							 TREE_VALUE (t), true);
+		  function_arg_info arg (TREE_VALUE (t), /*named=*/true);
+		  this_arg = targetm.calls.function_arg (args_so_far, arg);
 		  if (this_arg && !REG_P (this_arg))
 		    this_arg = NULL_RTX;
 		  else if (this_arg == NULL_RTX)
@@ -6388,7 +6398,7 @@ prepare_call_arguments (basic_block bb, rtx_insn *insn)
 
 	    if (!frame_pointer_needed)
 	      {
-		struct adjust_mem_data amd;
+		class adjust_mem_data amd;
 		amd.mem_mode = VOIDmode;
 		amd.stack_adjust = -VTI (bb)->out.stack_adjust;
 		amd.store = true;
@@ -6429,30 +6439,24 @@ prepare_call_arguments (basic_block bb, rtx_insn *insn)
 	  }
 	if (t && t != void_list_node)
 	  {
-	    tree argtype = TREE_VALUE (t);
-	    machine_mode mode = TYPE_MODE (argtype);
 	    rtx reg;
-	    if (pass_by_reference (&args_so_far_v, mode, argtype, true))
-	      {
-		argtype = build_pointer_type (argtype);
-		mode = TYPE_MODE (argtype);
-	      }
-	    reg = targetm.calls.function_arg (args_so_far, mode,
-					      argtype, true);
-	    if (TREE_CODE (argtype) == REFERENCE_TYPE
-		&& INTEGRAL_TYPE_P (TREE_TYPE (argtype))
+	    function_arg_info arg (TREE_VALUE (t), /*named=*/true);
+	    apply_pass_by_reference_rules (&args_so_far_v, arg);
+	    reg = targetm.calls.function_arg (args_so_far, arg);
+	    if (TREE_CODE (arg.type) == REFERENCE_TYPE
+		&& INTEGRAL_TYPE_P (TREE_TYPE (arg.type))
 		&& reg
 		&& REG_P (reg)
-		&& GET_MODE (reg) == mode
-		&& (GET_MODE_CLASS (mode) == MODE_INT
-		    || GET_MODE_CLASS (mode) == MODE_PARTIAL_INT)
+		&& GET_MODE (reg) == arg.mode
+		&& (GET_MODE_CLASS (arg.mode) == MODE_INT
+		    || GET_MODE_CLASS (arg.mode) == MODE_PARTIAL_INT)
 		&& REG_P (x)
 		&& REGNO (x) == REGNO (reg)
-		&& GET_MODE (x) == mode
+		&& GET_MODE (x) == arg.mode
 		&& item)
 	      {
 		machine_mode indmode
-		  = TYPE_MODE (TREE_TYPE (argtype));
+		  = TYPE_MODE (TREE_TYPE (arg.type));
 		rtx mem = gen_rtx_MEM (indmode, x);
 		cselib_val *val = cselib_lookup (mem, indmode, 0, VOIDmode);
 		if (val && cselib_preserved_value_p (val))
@@ -6492,8 +6496,7 @@ prepare_call_arguments (basic_block bb, rtx_insn *insn)
 			}
 		  }
 	      }
-	    targetm.calls.function_arg_advance (args_so_far, mode,
-						argtype, true);
+	    targetm.calls.function_arg_advance (args_so_far, arg);
 	    t = TREE_CHAIN (t);
 	  }
       }
@@ -6642,7 +6645,7 @@ add_with_sets (rtx_insn *insn, struct cselib_set *sets, int n_sets)
      insert notes before it without worrying about any
      notes that MO_USEs might emit after the insn.  */
   cui.store_p = true;
-  note_stores (PATTERN (insn), add_stores, &cui);
+  note_stores (insn, add_stores, &cui);
   n2 = VTI (bb)->mos.length () - 1;
   mos = VTI (bb)->mos.address ();
 
@@ -7064,7 +7067,7 @@ vt_find_locations (void)
   int *rc_order;
   int i;
   int htabsz = 0;
-  int htabmax = PARAM_VALUE (PARAM_MAX_VARTRACK_SIZE);
+  int htabmax = param_max_vartrack_size;
   bool success = true;
 
   timevar_push (TV_VAR_TRACKING_DATAFLOW);
@@ -7332,7 +7335,7 @@ dump_var (variable *var)
 static void
 dump_vars (variable_table_type *vars)
 {
-  if (vars->elements () > 0)
+  if (!vars->is_empty ())
     {
       fprintf (dump_file, "Variables:\n");
       vars->traverse <void *, dump_var_tracking_slot> (NULL);
@@ -8061,8 +8064,9 @@ delete_variable_part (dataflow_set *set, rtx loc, decl_or_value dv,
 
 /* Structure for passing some other parameters to function
    vt_expand_loc_callback.  */
-struct expand_loc_callback_data
+class expand_loc_callback_data
 {
+public:
   /* The variables and values active at this point.  */
   variable_table_type *vars;
 
@@ -8328,8 +8332,8 @@ static inline rtx
 vt_expand_var_loc_chain (variable *var, bitmap regs, void *data,
 			 bool *pendrecp)
 {
-  struct expand_loc_callback_data *elcd
-    = (struct expand_loc_callback_data *) data;
+  class expand_loc_callback_data *elcd
+    = (class expand_loc_callback_data *) data;
   location_chain *loc, *next;
   rtx result = NULL;
   int first_child, result_first_child, last_child;
@@ -8467,8 +8471,8 @@ vt_expand_loc_callback (rtx x, bitmap regs,
 			int max_depth ATTRIBUTE_UNUSED,
 			void *data)
 {
-  struct expand_loc_callback_data *elcd
-    = (struct expand_loc_callback_data *) data;
+  class expand_loc_callback_data *elcd
+    = (class expand_loc_callback_data *) data;
   decl_or_value dv;
   variable *var;
   rtx result, subreg;
@@ -8625,7 +8629,7 @@ resolve_expansions_pending_recursion (vec<rtx, va_heap> *pending)
 static rtx
 vt_expand_loc (rtx loc, variable_table_type *vars)
 {
-  struct expand_loc_callback_data data;
+  class expand_loc_callback_data data;
   rtx result;
 
   if (!MAY_HAVE_DEBUG_BIND_INSNS)
@@ -8647,7 +8651,7 @@ vt_expand_loc (rtx loc, variable_table_type *vars)
 static rtx
 vt_expand_1pvar (variable *var, variable_table_type *vars)
 {
-  struct expand_loc_callback_data data;
+  class expand_loc_callback_data data;
   rtx loc;
 
   gcc_checking_assert (var->onepart && var->n_var_parts == 1);
@@ -9060,7 +9064,7 @@ emit_notes_for_changes (rtx_insn *insn, enum emit_note_where where,
   emit_note_data data;
   variable_table_type *htab = shared_hash_htab (vars);
 
-  if (!changed_variables->elements ())
+  if (changed_variables->is_empty ())
     return;
 
   if (MAY_HAVE_DEBUG_BIND_INSNS)
@@ -9538,7 +9542,7 @@ vt_emit_notes (void)
   basic_block bb;
   dataflow_set cur;
 
-  gcc_assert (!changed_variables->elements ());
+  gcc_assert (changed_variables->is_empty ());
 
   /* Free memory occupied by the out hash tables, as they aren't used
      anymore.  */
@@ -10054,19 +10058,25 @@ vt_initialize (void)
       preserve_value (val);
       if (reg != hard_frame_pointer_rtx && fixed_regs[REGNO (reg)])
 	cselib_preserve_cfa_base_value (val, REGNO (reg));
+      if (ofst)
+	{
+	  cselib_val *valsp
+	    = cselib_lookup_from_insn (stack_pointer_rtx,
+				       GET_MODE (stack_pointer_rtx), 1,
+				       VOIDmode, get_insns ());
+	  preserve_value (valsp);
+	  expr = plus_constant (GET_MODE (reg), reg, ofst);
+	  /* This cselib_add_permanent_equiv call needs to be done before
+	     the other cselib_add_permanent_equiv a few lines later,
+	     because after that one is done, cselib_lookup on this expr
+	     will due to the cselib SP_DERIVED_VALUE_P optimizations
+	     return valsp and so no permanent equivalency will be added.  */
+	  cselib_add_permanent_equiv (valsp, expr, get_insns ());
+	}
+
       expr = plus_constant (GET_MODE (stack_pointer_rtx),
 			    stack_pointer_rtx, -ofst);
       cselib_add_permanent_equiv (val, expr, get_insns ());
-
-      if (ofst)
-	{
-	  val = cselib_lookup_from_insn (stack_pointer_rtx,
-					 GET_MODE (stack_pointer_rtx), 1,
-					 VOIDmode, get_insns ());
-	  preserve_value (val);
-	  expr = plus_constant (GET_MODE (reg), reg, ofst);
-	  cselib_add_permanent_equiv (val, expr, get_insns ());
-	}
     }
 
   /* In order to factor out the adjustments made to the stack pointer or to
@@ -10157,10 +10167,10 @@ vt_initialize (void)
 
   vt_add_function_parameters ();
 
+  bool record_sp_value = false;
   FOR_EACH_BB_FN (bb, cfun)
     {
       rtx_insn *insn;
-      HOST_WIDE_INT pre, post = 0;
       basic_block first_bb, last_bb;
 
       if (MAY_HAVE_DEBUG_BIND_INSNS)
@@ -10170,6 +10180,15 @@ vt_initialize (void)
 	    fprintf (dump_file, "first value: %i\n",
 		     cselib_get_next_uid ());
 	}
+
+      if (MAY_HAVE_DEBUG_BIND_INSNS
+	  && cfa_base_rtx
+	  && !frame_pointer_needed
+	  && record_sp_value)
+	cselib_record_sp_cfa_base_equiv (-cfa_base_offset
+					 - VTI (bb)->in.stack_adjust,
+					 BB_HEAD (bb));
+      record_sp_value = true;
 
       first_bb = bb;
       for (;;)
@@ -10196,6 +10215,8 @@ vt_initialize (void)
 	    {
 	      if (INSN_P (insn))
 		{
+		  HOST_WIDE_INT pre = 0, post = 0;
+
 		  if (!frame_pointer_needed)
 		    {
 		      insn_stack_adjust_offset_pre_post (insn, &pre, &post);
@@ -10215,7 +10236,7 @@ vt_initialize (void)
 		  cselib_hook_called = false;
 		  adjust_insn (bb, insn);
 
-		  if (!frame_pointer_needed && pre)
+		  if (pre)
 		    VTI (bb)->out.stack_adjust += pre;
 
 		  if (DEBUG_MARKER_INSN_P (insn))
@@ -10242,7 +10263,7 @@ vt_initialize (void)
 		    add_with_sets (insn, 0, 0);
 		  cancel_changes (0);
 
-		  if (!frame_pointer_needed && post)
+		  if (post)
 		    {
 		      micro_operation mo;
 		      mo.type = MO_ADJUST;

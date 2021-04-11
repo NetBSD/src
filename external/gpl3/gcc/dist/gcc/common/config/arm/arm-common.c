@@ -1,5 +1,5 @@
 /* Common hooks for ARM.
-   Copyright (C) 1991-2019 Free Software Foundation, Inc.
+   Copyright (C) 1991-2020 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -1012,7 +1012,8 @@ arm_asm_auto_mfpu (int argc, const char **argv)
 	    }
 	}
 
-      gcc_assert (i != TARGET_FPU_auto);
+      gcc_assert (i != TARGET_FPU_auto
+		  || bitmap_bit_p (target_isa, isa_bit_vfp_base));
     }
 
   auto_fpu = (char *) xmalloc (strlen (fpuname) + sizeof ("-mfpu="));

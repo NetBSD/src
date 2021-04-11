@@ -1,5 +1,5 @@
 /* RTL dead store elimination.
-   Copyright (C) 2005-2019 Free Software Foundation, Inc.
+   Copyright (C) 2005-2020 Free Software Foundation, Inc.
 
    Contributed by Richard Sandiford <rsandifor@codesourcery.com>
    and Kenneth Zadeck <zadeck@naturalbridge.com>
@@ -47,9 +47,9 @@ along with GCC; see the file COPYING3.  If not see
 #include "explow.h"
 #include "expr.h"
 #include "dbgcnt.h"
-#include "params.h"
 #include "rtl-iter.h"
 #include "cfgcleanup.h"
+#include "calls.h"
 
 /* This file contains three techniques for performing Dead Store
    Elimination (dse).
@@ -220,8 +220,9 @@ static bitmap scratch = NULL;
 struct insn_info_type;
 
 /* This structure holds information about a candidate store.  */
-struct store_info
+class store_info
 {
+public:
 
   /* False means this is a clobber.  */
   bool is_set;
@@ -277,7 +278,7 @@ struct store_info
     } positions_needed;
 
   /* The next store info for this insn.  */
-  struct store_info *next;
+  class store_info *next;
 
   /* The right hand side of the store.  This is used if there is a
      subsequent reload of the mems address somewhere later in the
@@ -314,8 +315,9 @@ static object_allocator<store_info> rtx_store_info_pool ("rtx_store_info_pool");
 
 /* This structure holds information about a load.  These are only
    built for rtx bases.  */
-struct read_info_type
+class read_info_type
 {
+public:
   /* The id of the mem group of the base address.  */
   int group_id;
 
@@ -329,9 +331,9 @@ struct read_info_type
   rtx mem;
 
   /* The next read_info for this insn.  */
-  struct read_info_type *next;
+  class read_info_type *next;
 };
-typedef struct read_info_type *read_info_t;
+typedef class read_info_type *read_info_t;
 
 static object_allocator<read_info_type> read_info_type_pool ("read_info_pool");
 
@@ -824,7 +826,7 @@ emit_inc_dec_insn_before (rtx mem ATTRIBUTE_UNUSED,
   for (cur = new_insn; cur; cur = NEXT_INSN (cur))
     {
       info.current = cur;
-      note_stores (PATTERN (cur), note_add_store, &info);
+      note_stores (cur, note_add_store, &info);
     }
 
   /* If a failure was flagged above, return 1 so that for_each_inc_dec will
@@ -849,6 +851,17 @@ check_for_inc_dec_1 (insn_info_t insn_info)
   if (note)
     return for_each_inc_dec (PATTERN (insn), emit_inc_dec_insn_before,
 			     insn_info) == 0;
+
+  /* Punt on stack pushes, those don't have REG_INC notes and we are
+     unprepared to deal with distribution of REG_ARGS_SIZE notes etc.  */
+  subrtx_iterator::array_type array;
+  FOR_EACH_SUBRTX (iter, array, PATTERN (insn), NONCONST)
+    {
+      const_rtx x = *iter;
+      if (GET_RTX_CLASS (GET_CODE (x)) == RTX_AUTOINC)
+	return false;
+    }
+
   return true;
 }
 
@@ -869,6 +882,17 @@ check_for_inc_dec (rtx_insn *insn)
   if (note)
     return for_each_inc_dec (PATTERN (insn), emit_inc_dec_insn_before,
 			     &insn_info) == 0;
+
+  /* Punt on stack pushes, those don't have REG_INC notes and we are
+     unprepared to deal with distribution of REG_ARGS_SIZE notes etc.  */
+  subrtx_iterator::array_type array;
+  FOR_EACH_SUBRTX (iter, array, PATTERN (insn), NONCONST)
+    {
+      const_rtx x = *iter;
+      if (GET_RTX_CLASS (GET_CODE (x)) == RTX_AUTOINC)
+	return false;
+    }
+
   return true;
 }
 
@@ -1512,7 +1536,7 @@ record_store (rtx body, bb_info_t bb_info)
   while (ptr)
     {
       insn_info_t next = ptr->next_local_store;
-      struct store_info *s_info = ptr->store_rec;
+      class store_info *s_info = ptr->store_rec;
       bool del = true;
 
       /* Skip the clobbers. We delete the active insn if this insn
@@ -1543,9 +1567,12 @@ record_store (rtx body, bb_info_t bb_info)
 					 width)
 	      /* We can only remove the later store if the earlier aliases
 		 at least all accesses the later one.  */
-	      && (MEM_ALIAS_SET (mem) == MEM_ALIAS_SET (s_info->mem)
-		  || alias_set_subset_of (MEM_ALIAS_SET (mem),
-					  MEM_ALIAS_SET (s_info->mem))))
+	      && ((MEM_ALIAS_SET (mem) == MEM_ALIAS_SET (s_info->mem)
+		   || alias_set_subset_of (MEM_ALIAS_SET (mem),
+					   MEM_ALIAS_SET (s_info->mem)))
+		  && (!MEM_EXPR (s_info->mem)
+		      || refs_same_for_tbaa_p (MEM_EXPR (s_info->mem),
+					       MEM_EXPR (mem)))))
 	    {
 	      if (GET_MODE (mem) == BLKmode)
 		{
@@ -1706,8 +1733,7 @@ find_shift_sequence (poly_int64 access_size,
      the machine.  */
 
   opt_scalar_int_mode new_mode_iter;
-  FOR_EACH_MODE_FROM (new_mode_iter,
-		      smallest_int_mode_for_size (access_size * BITS_PER_UNIT))
+  FOR_EACH_MODE_IN_CLASS (new_mode_iter, MODE_INT)
     {
       rtx target, new_reg, new_lhs;
       rtx_insn *shift_seq, *insn;
@@ -1716,6 +1742,8 @@ find_shift_sequence (poly_int64 access_size,
       new_mode = new_mode_iter.require ();
       if (GET_MODE_BITSIZE (new_mode) > BITS_PER_WORD)
 	break;
+      if (maybe_lt (GET_MODE_SIZE (new_mode), access_size))
+	continue;
 
       /* If a constant was stored into memory, try to simplify it here,
 	 otherwise the cost of the shift might preclude this optimization
@@ -1980,16 +2008,30 @@ replace_read (store_info *store_info, insn_info_t store_insn,
 	 point.  This does occasionally happen, see PR 37922.  */
       bitmap regs_set = BITMAP_ALLOC (&reg_obstack);
 
-      for (this_insn = insns; this_insn != NULL_RTX; this_insn = NEXT_INSN (this_insn))
-	note_stores (PATTERN (this_insn), look_for_hardregs, regs_set);
+      for (this_insn = insns;
+	   this_insn != NULL_RTX; this_insn = NEXT_INSN (this_insn))
+	{
+	  if (insn_invalid_p (this_insn, false))
+	    {
+	      if (dump_file && (dump_flags & TDF_DETAILS))
+		{
+		  fprintf (dump_file, " -- replacing the loaded MEM with ");
+		  print_simple_rtl (dump_file, read_reg);
+		  fprintf (dump_file, " led to an invalid instruction\n");
+		}
+	      BITMAP_FREE (regs_set);
+	      return false;
+	    }
+	  note_stores (this_insn, look_for_hardregs, regs_set);
+	}
 
       bitmap_and_into (regs_set, regs_live);
       if (!bitmap_empty_p (regs_set))
 	{
 	  if (dump_file && (dump_flags & TDF_DETAILS))
 	    {
-	      fprintf (dump_file,
-		       "abandoning replacement because sequence clobbers live hardregs:");
+	      fprintf (dump_file, "abandoning replacement because sequence "
+				  "clobbers live hardregs:");
 	      df_print_regset (dump_file, regs_set);
 	    }
 
@@ -1997,6 +2039,19 @@ replace_read (store_info *store_info, insn_info_t store_insn,
 	  return false;
 	}
       BITMAP_FREE (regs_set);
+    }
+
+  subrtx_iterator::array_type array;
+  FOR_EACH_SUBRTX (iter, array, *loc, NONCONST)
+    {
+      const_rtx x = *iter;
+      if (GET_RTX_CLASS (GET_CODE (x)) == RTX_AUTOINC)
+	{
+	  if (dump_file && (dump_flags & TDF_DETAILS))
+	    fprintf (dump_file, " -- replacing the MEM failed due to address "
+				"side-effects\n");
+	  return false;
+	}
     }
 
   if (validate_change (read_insn->insn, loc, read_reg, 0))
@@ -2346,7 +2401,8 @@ get_call_args (rtx call_insn, tree fn, rtx *args, int nargs)
       if (!is_int_mode (TYPE_MODE (TREE_VALUE (arg)), &mode))
 	return false;
 
-      reg = targetm.calls.function_arg (args_so_far, mode, NULL_TREE, true);
+      function_arg_info arg (mode, /*named=*/true);
+      reg = targetm.calls.function_arg (args_so_far, arg);
       if (!reg || !REG_P (reg) || GET_MODE (reg) != mode)
 	return false;
 
@@ -2378,7 +2434,7 @@ get_call_args (rtx call_insn, tree fn, rtx *args, int nargs)
       if (tmp)
 	args[idx] = tmp;
 
-      targetm.calls.function_arg_advance (args_so_far, mode, NULL_TREE, true);
+      targetm.calls.function_arg_advance (args_so_far, arg);
     }
   if (arg != void_list_node || idx != nargs)
     return false;
@@ -2393,7 +2449,7 @@ copy_fixed_regs (const_bitmap in)
   bitmap ret;
 
   ret = ALLOC_REG_SET (NULL);
-  bitmap_and (ret, in, fixed_reg_set_regset);
+  bitmap_and (ret, in, bitmap_view<HARD_REG_SET> (fixed_reg_set));
   return ret;
 }
 
@@ -2402,7 +2458,7 @@ copy_fixed_regs (const_bitmap in)
    non-register target.  */
 
 static void
-scan_insn (bb_info_t bb_info, rtx_insn *insn)
+scan_insn (bb_info_t bb_info, rtx_insn *insn, int max_active_local_stores)
 {
   rtx body;
   insn_info_type *insn_info = insn_info_type_pool.allocate ();
@@ -2524,8 +2580,7 @@ scan_insn (bb_info_t bb_info, rtx_insn *insn)
 		    fprintf (dump_file, "handling memset as BLKmode store\n");
 		  if (mems_found == 1)
 		    {
-		      if (active_local_stores_len++
-			  >= PARAM_VALUE (PARAM_MAX_DSE_ACTIVE_LOCAL_STORES))
+		      if (active_local_stores_len++ >= max_active_local_stores)
 			{
 			  active_local_stores_len = 1;
 			  active_local_stores = NULL;
@@ -2585,8 +2640,7 @@ scan_insn (bb_info_t bb_info, rtx_insn *insn)
      it as cannot delete.  This simplifies the processing later.  */
   if (mems_found == 1)
     {
-      if (active_local_stores_len++
-	  >= PARAM_VALUE (PARAM_MAX_DSE_ACTIVE_LOCAL_STORES))
+      if (active_local_stores_len++ >= max_active_local_stores)
 	{
 	  active_local_stores_len = 1;
 	  active_local_stores = NULL;
@@ -2658,6 +2712,12 @@ dse_step1 (void)
   bitmap_set_bit (all_blocks, ENTRY_BLOCK);
   bitmap_set_bit (all_blocks, EXIT_BLOCK);
 
+  /* For -O1 reduce the maximum number of active local stores for RTL DSE
+     since this can consume huge amounts of memory (PR89115).  */
+  int max_active_local_stores = param_max_dse_active_local_stores;
+  if (optimize < 2)
+    max_active_local_stores /= 10;
+
   FOR_ALL_BB_FN (bb, cfun)
     {
       insn_info_t ptr;
@@ -2685,7 +2745,7 @@ dse_step1 (void)
 	  FOR_BB_INSNS (bb, insn)
 	    {
 	      if (INSN_P (insn))
-		scan_insn (bb_info, insn);
+		scan_insn (bb_info, insn, max_active_local_stores);
 	      cselib_process_insn (insn);
 	      if (INSN_P (insn))
 		df_simulate_one_insn_forwards (bb, insn, regs_live);
@@ -3627,7 +3687,10 @@ rest_of_handle_dse (void)
   if ((locally_deleted || globally_deleted)
       && cfun->can_throw_non_call_exceptions
       && purge_all_dead_edges ())
-    cleanup_cfg (0);
+    {
+      free_dominance_info (CDI_DOMINATORS);
+      cleanup_cfg (0);
+    }
 
   return 0;
 }

@@ -604,6 +604,7 @@ vis_hide
 solaris_ld_v2_maps
 real_host_noncanonical
 accel_dir_suffix
+use_tm_clone_registry
 force_explicit_eh_registry
 CET_FLAGS
 fixed_point
@@ -704,6 +705,7 @@ enable_gcov
 enable_vtable_verify
 with_aix_soname
 enable_version_specific_runtime_libs
+with_toolexeclibdir
 with_slibdir
 enable_maintainer_mode
 with_build_libsubdir
@@ -712,6 +714,7 @@ enable_decimal_float
 with_system_libunwind
 enable_cet
 enable_explicit_exception_frame_registration
+enable_tm_clone_registry
 with_glibc_version
 enable_tls
 with_gcc_major_version_only
@@ -1355,6 +1358,7 @@ Optional Features:
                           register exception tables explicitly at module
                           start, for use e.g. for compatibility with
                           installations without PT_GNU_EH_FRAME support
+  --disable-tm-clone-registry    disable TM clone registry
   --enable-tls            Use thread-local storage [default=yes]
 
 Optional Packages:
@@ -1366,6 +1370,9 @@ Optional Packages:
   --with-aix-soname=aix|svr4|both
                           shared library versioning (aka "SONAME") variant to
                           provide on AIX
+  --with-toolexeclibdir=DIR
+                          install libraries built with a cross compiler within
+                          DIR
   --with-slibdir=DIR      shared libraries in DIR LIBDIR
   --with-build-libsubdir=DIR  Directory where to find libraries for build system
   --with-system-libunwind use installed libunwind
@@ -2461,6 +2468,22 @@ fi
 $as_echo "$version_specific_libs" >&6; }
 
 
+# Check whether --with-toolexeclibdir was given.
+if test "${with_toolexeclibdir+set}" = set; then :
+  withval=$with_toolexeclibdir; case ${with_toolexeclibdir} in
+  /)
+    ;;
+  */)
+    with_toolexeclibdir=`echo $with_toolexeclibdir | sed 's,/$,,'`
+    ;;
+esac
+else
+  with_toolexeclibdir=no
+fi
+
+
+
+
 # Check whether --with-slibdir was given.
 if test "${with_slibdir+set}" = set; then :
   withval=$with_slibdir; slibdir="$with_slibdir"
@@ -2468,7 +2491,14 @@ else
   if test "${version_specific_libs}" = yes; then
   slibdir='$(libsubdir)'
 elif test -n "$with_cross_host" && test x"$with_cross_host" != x"no"; then
-  slibdir='$(exec_prefix)/$(host_noncanonical)/lib'
+  case ${with_toolexeclibdir} in
+    no)
+      slibdir='$(exec_prefix)/$(host_noncanonical)/lib'
+      ;;
+    *)
+      slibdir=${with_toolexeclibdir}
+      ;;
+  esac
 else
   slibdir='$(libdir)'
 fi
@@ -2698,7 +2728,14 @@ case ${version_specific_libs} in
        test x"$with_cross_host" != x"no"; then
       # Install a library built with a cross compiler in tooldir, not libdir.
       toolexecdir='$(exec_prefix)/$(target_noncanonical)'
-      toolexeclibdir='$(toolexecdir)/lib'
+      case ${with_toolexeclibdir} in
+	no)
+	  toolexeclibdir='$(toolexecdir)/lib'
+	  ;;
+	*)
+	  toolexeclibdir=${with_toolexeclibdir}
+	  ;;
+      esac
     else
       toolexecdir='$(libdir)/gcc-lib/$(target_noncanonical)'
       toolexeclibdir='$(libdir)'
@@ -3516,11 +3553,11 @@ done
 
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-
+#include <stdio.h>
 int
 main ()
 {
-
+printf ("hello world\n");
   ;
   return 0;
 }
@@ -4421,7 +4458,7 @@ as_fn_arith $ac_cv_sizeof_long_double \* 8 && long_double_type_size=$as_val
 
 for ac_header in inttypes.h stdint.h stdlib.h ftw.h \
 	unistd.h sys/stat.h sys/types.h \
-	string.h strings.h memory.h
+	string.h strings.h memory.h sys/auxv.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_preproc "$LINENO" "$ac_header" "$as_ac_Header"
@@ -4953,6 +4990,27 @@ fi
 
 
 
+# Check whether --enable-tm-clone-registry was given.
+if test "${enable_tm_clone_registry+set}" = set; then :
+  enableval=$enable_tm_clone_registry;
+use_tm_clone_registry=
+if test "$enable_tm_clone_registry" = no; then
+  use_tm_clone_registry=-DUSE_TM_CLONE_REGISTRY=0
+fi
+
+else
+
+use_tm_clone_registry=
+case $target in
+  msp430*elfbare)
+   use_tm_clone_registry=-DUSE_TM_CLONE_REGISTRY=0
+   ;;
+esac
+
+fi
+
+
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking if the linker ($LD) is GNU ld" >&5
 $as_echo_n "checking if the linker ($LD) is GNU ld... " >&6; }
 if ${acl_cv_prog_gnu_ld+:} false; then :
@@ -5225,7 +5283,7 @@ fi
 # Link with -nostartfiles -nodefaultlibs since neither are present while
 # building libgcc.
 case ${host} in
-i?86-*-solaris2* | x86_64-*-solaris2.1[0-9]*)
+i?86-*-solaris2* | x86_64-*-solaris2*)
   cat > conftest.s <<EOF
 	.section	.eh_frame,"a",@unwind
 	.zero	4
@@ -5477,6 +5535,46 @@ $as_echo "#define HAVE_AS_AVX 1" >>confdefs.h
   ;;
 esac
 
+
+
+case "${target}" in
+aarch64*-*-*)
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking if the assembler supports LSE" >&5
+$as_echo_n "checking if the assembler supports LSE... " >&6; }
+if ${libgcc_cv_as_lse+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+			asm(".arch armv8-a+lse\n\tcas w0, w1, [x2]");
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  libgcc_cv_as_lse=yes
+else
+  libgcc_cv_as_lse=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $libgcc_cv_as_lse" >&5
+$as_echo "$libgcc_cv_as_lse" >&6; }
+  if test x$libgcc_cv_as_lse = xyes; then
+
+$as_echo "#define HAVE_AS_LSE 1" >>confdefs.h
+
+  fi
+  ;;
+esac
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for init priority support" >&5
 $as_echo_n "checking for init priority support... " >&6; }
 if ${libgcc_cv_init_priority+:} false; then :
@@ -5547,6 +5645,7 @@ tm_file="${tm_file_}"
 case $target_thread_file in
     aix)	thread_header=config/rs6000/gthr-aix.h ;;
     dce)	thread_header=config/pa/gthr-dce.h ;;
+    gcn)	thread_header=config/gcn/gthr-gcn.h ;;
     lynx)	thread_header=config/gthr-lynx.h ;;
     mipssde)	thread_header=config/mips/gthr-mipssde.h ;;
     posix)	thread_header=gthr-posix.h ;;

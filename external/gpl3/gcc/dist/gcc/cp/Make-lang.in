@@ -1,5 +1,5 @@
 # Top level -*- makefile -*- fragment for GNU C++.
-#   Copyright (C) 1994-2019 Free Software Foundation, Inc.
+#   Copyright (C) 1994-2020 Free Software Foundation, Inc.
 
 #This file is part of GCC.
 
@@ -73,7 +73,7 @@ CXX_C_OBJS = attribs.o incpath.o \
 # Language-specific object files for C++ and Objective C++.
 CXX_AND_OBJCXX_OBJS = \
 	cp/call.o cp/class.o cp/constexpr.o cp/constraint.o \
-	cp/cp-gimplify.o \
+	cp/coroutines.o cp/cp-gimplify.o \
 	cp/cp-objcp-common.o cp/cp-ubsan.o \
 	cp/cvt.o cp/cxx-pretty-print.o \
 	cp/decl.o cp/decl2.o cp/dump.o \
@@ -83,7 +83,7 @@ CXX_AND_OBJCXX_OBJS = \
 	cp/mangle.o cp/method.o \
 	cp/name-lookup.o cp/optimize.o \
 	cp/parser.o cp/pt.o cp/ptree.o \
-	cp/repo.o cp/rtti.o \
+	cp/rtti.o \
 	cp/search.o cp/semantics.o \
 	cp/tree.o cp/typeck.o cp/typeck2.o \
 	cp/vtable-class-hierarchy.o $(CXX_C_OBJS)

@@ -64,6 +64,8 @@ target_alias=${target_alias-$host_alias}
 AM_INIT_AUTOMAKE([1.9.0 foreign no-dist -Wall -Wno-portability -Wno-override])
 AM_ENABLE_MULTILIB(, ..)
 
+GCC_WITH_TOOLEXECLIBDIR
+
 # Calculate toolexeclibdir
 # Also toolexecdir, though it's only used in toolexeclibdir
 case ${enable_version_specific_runtime_libs} in
@@ -79,7 +81,14 @@ case ${enable_version_specific_runtime_libs} in
        test x"$with_cross_host" != x"no"; then
       # Install a library built with a cross compiler in tooldir, not libdir.
       toolexecdir='$(exec_prefix)/$(target_alias)'
-      toolexeclibdir='$(toolexecdir)/lib'
+      case ${with_toolexeclibdir} in
+	no)
+	  toolexeclibdir='$(toolexecdir)/lib'
+	  ;;
+	*)
+	  toolexeclibdir=${with_toolexeclibdir}
+	  ;;
+      esac
     else
       toolexecdir='$(libdir)/gcc-lib/$(target_alias)'
       toolexeclibdir='$(libdir)'
@@ -171,14 +180,12 @@ AC_HEADER_TIME
 ACX_HEADER_STRING
 AC_CHECK_HEADERS(pthread.h unistd.h semaphore.h sys/loadavg.h sys/sysctl.h sys/time.h)
 
-GCC_HEADER_STDINT(gstdint.h)
-
 XPCFLAGS=""
 case "$host" in
   *-*-rtems*)
     # RTEMS supports Pthreads, but the library is not available at GCC build time.
     ;;
-  nvptx*-*-*)
+  nvptx*-*-* | amdgcn*-*-*)
     # NVPTX does not support Pthreads, has its own code replacement.
     libgomp_use_pthreads=no
     # NVPTX is an accelerator-only target
@@ -317,6 +324,10 @@ if test $enable_symvers = gnu; then
   AC_DEFINE(LIBGOMP_GNU_SYMBOL_VERSIONING, 1,
 	    [Define to 1 if GNU symbol versioning is used for libgomp.])
 fi
+
+# Determine cpu count to limit testsuite parallelism.
+AX_COUNT_CPUS
+AC_SUBST(CPU_COUNT)
 
 # Get target configury.
 . ${srcdir}/configure.tgt

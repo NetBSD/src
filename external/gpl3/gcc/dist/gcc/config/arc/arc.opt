@@ -1,6 +1,6 @@
 ; Options for the Synopsys DesignWare ARC port of the compiler
 ;
-; Copyright (C) 2005-2019 Free Software Foundation, Inc.
+; Copyright (C) 2005-2020 Free Software Foundation, Inc.
 ;
 ; This file is part of GCC.
 ;
@@ -59,7 +59,7 @@ Force all calls to be made via a jli instruction.
 
 mmpy-option=
 Target RejectNegative Joined Enum(arc_mpy) Var(arc_mpy_option) Init(DEFAULT_arc_mpy_option)
--mmpy-option=MPY Compile ARCv2 code with a multiplier design option.
+-mmpy-option=MPY	Compile ARCv2 code with a multiplier design option.
 
 Enum
 Name(arc_mpy) Type(int)
@@ -175,7 +175,7 @@ Do not generate mpy instructions for ARC700.
 
 mea
 Target Report Mask(EA_SET)
-Generate Extended arithmetic instructions.  Currently only divaw, adds, subs and sat16 are supported.
+Generate extended arithmetic instructions, only valid for ARC700.
 
 msoft-float
 Target Report Mask(0)
@@ -251,7 +251,7 @@ Cost to assume for a multiply instruction, with 4 being equal to a normal insn.
 
 mtune=
 Target RejectNegative ToLower Joined Var(arc_tune) Enum(arc_tune_attr) Init(ARC_TUNE_NONE)
--mcpu=TUNE Tune code for given ARC variant.
+-mtune=TUNE	Tune code for given ARC variant.
 
 Enum
 Name(arc_tune_attr) Type(int)
@@ -335,7 +335,7 @@ Target Warn(%qs is deprecated)
 Enable compact casesi pattern.
 
 mq-class
-Target Var(TARGET_Q_CLASS)
+Target Warn(%qs is deprecated)
 Enable 'q' instruction alternatives.
 
 mexpand-adddi

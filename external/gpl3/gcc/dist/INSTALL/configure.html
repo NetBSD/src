@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<!-- Copyright (C) 1988-2019 Free Software Foundation, Inc.
+<!-- Copyright (C) 1988-2020 Free Software Foundation, Inc.
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -22,10 +22,10 @@ You have freedom to copy and modify this GNU Manual, like GNU
 <!-- Created by GNU Texinfo 6.5, http://www.gnu.org/software/texinfo/ -->
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<title>Installing GCC</title>
+<title>Installing GCC: Configuration</title>
 
-<meta name="description" content="Installing GCC">
-<meta name="keywords" content="Installing GCC">
+<meta name="description" content="Installing GCC: Configuration">
+<meta name="keywords" content="Installing GCC: Configuration">
 <meta name="resource-type" content="document">
 <meta name="distribution" content="global">
 <meta name="Generator" content="makeinfo">
@@ -61,7 +61,7 @@ ul.no-bullet {list-style: none}
 </head>
 
 <body lang="en">
-<h1 class="settitle" align="center">Installing GCC</h1>
+<h1 class="settitle" align="center">Installing GCC: Configuration</h1>
 
 
 
@@ -157,6 +157,21 @@ You are of course welcome to forward bugs reported to you to the FSF,
 if you determine that they are not bugs in your modifications.
 </p>
 <p>The default value refers to the FSF&rsquo;s GCC bug tracker.
+</p>
+</dd>
+<dt><code>--with-documentation-root-url=<var>url</var></code></dt>
+<dd><p>Specify the URL root that contains GCC option documentation.  The <var>url</var>
+should end with a <code>/</code> character.
+</p>
+<p>The default value is <a href="https://gcc.gnu.org/onlinedocs/">https://gcc.gnu.org/onlinedocs/</a>.
+</p>
+</dd>
+<dt><code>--with-changes-root-url=<var>url</var></code></dt>
+<dd><p>Specify the URL root that contains information about changes in GCC
+releases like <code>gcc-<var>version</var>/changes.html</code>.
+The <var>url</var> should end with a <code>/</code> character.
+</p>
+<p>The default value is <a href="https://gcc.gnu.org/">https://gcc.gnu.org/</a>.
 </p>
 </dd>
 </dl>
@@ -493,7 +508,7 @@ is the target system triple, such as &lsquo;<samp>sparc-sun-solaris2.7</samp>&rs
 
 </li><li> If the target system is the same that you are building on, check
 operating system specific directories (e.g. <samp>/usr/ccs/bin</samp> on
-Sun Solaris 2).
+Solaris 2).
 
 </li><li> Check in the <code>PATH</code> for a tool whose name is prefixed by the
 target system triple.
@@ -586,6 +601,10 @@ predefined set of them.
 </dd>
 <dt><code>mips*-*-*</code></dt>
 <dd><p>single-float, biendian, softfloat.
+</p>
+</dd>
+<dt><code>msp430-*-*</code></dt>
+<dd><p>no-exceptions
 </p>
 </dd>
 <dt><code>powerpc*-*-*, rs6000*-*-*</code></dt>
@@ -825,6 +844,12 @@ assumptions made by the configure test are incorrect.
 This is an alias for <samp>--enable-tls=no</samp>.
 </p>
 </dd>
+<dt><code>--disable-tm-clone-registry</code></dt>
+<dd><p>Disable TM clone registry in libgcc. It is enabled in libgcc by default.
+This option helps to reduce code size for embedded targets which do
+not use transactional memory.
+</p>
+</dd>
 <dt><code>--with-cpu=<var>cpu</var></code></dt>
 <dt><code>--with-cpu-32=<var>cpu</var></code></dt>
 <dt><code>--with-cpu-64=<var>cpu</var></code></dt>
@@ -833,7 +858,7 @@ This is an alias for <samp>--enable-tls=no</samp>.
 This option is only supported on some targets, including ARC, ARM, i386, M68k,
 PowerPC, and SPARC.  It is mandatory for ARC.  The <samp>--with-cpu-32</samp> and
 <samp>--with-cpu-64</samp> options specify separate default CPUs for
-32-bit and 64-bit modes; these options are only supported for i386,
+32-bit and 64-bit modes; these options are only supported for aarch64, i386,
 x86-64, PowerPC, and SPARC.
 </p>
 </dd>
@@ -1107,8 +1132,8 @@ addition, &lsquo;<samp>libstdc++</samp>&rsquo;&rsquo;s include files will be ins
 <samp><var>libdir</var></samp> unless you overruled it by using
 <samp>--with-gxx-include-dir=<var>dirname</var></samp>.  Using this option is
 particularly useful if you intend to use several versions of GCC in
-parallel.  This is currently supported by &lsquo;<samp>libgfortran</samp>&rsquo;,
-&lsquo;<samp>libstdc++</samp>&rsquo;, and &lsquo;<samp>libobjc</samp>&rsquo;.
+parallel.  The default is &lsquo;<samp>yes</samp>&rsquo; for &lsquo;<samp>libada</samp>&rsquo;, and &lsquo;<samp>no</samp>&rsquo; for
+the remaining libraries.
 </p>
 </dd>
 <dt><code><a name="WithAixSoname"></a>--with-aix-soname=&lsquo;<samp>aix</samp>&rsquo;, &lsquo;<samp>svr4</samp>&rsquo; or &lsquo;<samp>both</samp>&rsquo;</code></dt>
@@ -1679,10 +1704,20 @@ GLIBC 2.11 or above, otherwise disabled.
 <dd><p>Tells GCC to use <var>choice</var> as the default for <samp>-fdiagnostics-color=</samp>
 option (if not used explicitly on the command line).  <var>choice</var>
 can be one of &lsquo;<samp>never</samp>&rsquo;, &lsquo;<samp>auto</samp>&rsquo;, &lsquo;<samp>always</samp>&rsquo;, and &lsquo;<samp>auto-if-env</samp>&rsquo;
-where &lsquo;<samp>auto</samp>&rsquo; is the default.  &lsquo;<samp>auto-if-env</samp>&rsquo; means that
-<samp>-fdiagnostics-color=auto</samp> will be the default if <code>GCC_COLORS</code>
-is present and non-empty in the environment, and
+where &lsquo;<samp>auto</samp>&rsquo; is the default.  &lsquo;<samp>auto-if-env</samp>&rsquo; makes
+<samp>-fdiagnostics-color=auto</samp> the default if <code>GCC_COLORS</code>
+is present and non-empty in the environment of the compiler, and
 <samp>-fdiagnostics-color=never</samp> otherwise.
+</p>
+</dd>
+<dt><code>--with-diagnostics-urls=<var>choice</var></code></dt>
+<dd><p>Tells GCC to use <var>choice</var> as the default for <samp>-fdiagnostics-urls=</samp>
+option (if not used explicitly on the command line).  <var>choice</var>
+can be one of &lsquo;<samp>never</samp>&rsquo;, &lsquo;<samp>auto</samp>&rsquo;, &lsquo;<samp>always</samp>&rsquo;, and &lsquo;<samp>auto-if-env</samp>&rsquo;
+where &lsquo;<samp>auto</samp>&rsquo; is the default.  &lsquo;<samp>auto-if-env</samp>&rsquo; makes
+<samp>-fdiagnostics-urls=auto</samp> the default if <code>GCC_URLS</code>
+or <code>TERM_URLS</code> is present and non-empty in the environment of the
+compiler, and <samp>-fdiagnostics-urls=never</samp> otherwise.
 </p>
 </dd>
 <dt><code>--enable-lto</code></dt>
@@ -1803,6 +1838,11 @@ target if target binutils supported.
 <p>The following options only apply to building cross compilers.
 </p>
 <dl compact="compact">
+<dt><code>--with-toolexeclibdir=<var>dir</var></code></dt>
+<dd><p>Specify the installation directory for libraries built with a cross compiler.
+The default is <samp>${gcc_tooldir}/lib</samp>.
+</p>
+</dd>
 <dt><code>--with-sysroot</code></dt>
 <dt><code>--with-sysroot=<var>dir</var></code></dt>
 <dd><p>Tells GCC to consider <var>dir</var> as the root of a tree that contains
@@ -1881,16 +1921,69 @@ being used as the target C library.  This causes <code>__eprintf</code> to be
 omitted from <samp>libgcc.a</samp> on the assumption that it will be provided by
 &lsquo;<samp>newlib</samp>&rsquo;.
 </p>
+<a name="avr"></a>
 </dd>
 <dt><code>--with-avrlibc</code></dt>
-<dd><p>Specifies that &lsquo;<samp>AVR-Libc</samp>&rsquo; is
-being used as the target C library.  This causes float support
+<dd><p>Only supported for the AVR target. Specifies that &lsquo;<samp>AVR-Libc</samp>&rsquo; is
+being used as the target C&nbsp; library.  This causes float support
 functions like <code>__addsf3</code> to be omitted from <samp>libgcc.a</samp> on
 the assumption that it will be provided by <samp>libm.a</samp>.  For more
 technical details, cf. <a href="http://gcc.gnu.org/PR54461">PR54461</a>.
-This option is only supported for the AVR target.  It is not supported for
+It is not supported for
 RTEMS configurations, which currently use newlib.  The option is
 supported since version 4.7.2 and is the default in 4.8.0 and newer.
+</p>
+</dd>
+<dt><code>--with-double={32|64|32,64|64,32}</code></dt>
+<dt><code>--with-long-double={32|64|32,64|64,32|double}</code></dt>
+<dd><p>Only supported for the AVR target since version&nbsp;10.
+Specify the default layout available for the C/C++ &lsquo;<samp>double</samp>&rsquo;
+and &lsquo;<samp>long double</samp>&rsquo; type, respectively. The following rules apply:
+</p><ul>
+<li> The first value after the &lsquo;<samp>=</samp>&rsquo; specifies the default layout (in bits)
+of the type and also the default for the <samp>-mdouble=</samp> resp.
+<samp>-mlong-double=</samp> compiler option.
+</li><li> If more than one value is specified, respective multilib variants are
+available, and  <samp>-mdouble=</samp> resp. <samp>-mlong-double=</samp> acts
+as a multilib option.
+</li><li> If <samp>--with-long-double=double</samp> is specified, &lsquo;<samp>double</samp>&rsquo; and
+&lsquo;<samp>long double</samp>&rsquo; will have the same layout.
+</li><li> The defaults are <samp>--with-long-double=64,32</samp> and
+<samp>--with-double=32,64</samp>.  The default &lsquo;<samp>double</samp>&rsquo; layout imposed by
+the latter is compatible with older versions of the compiler that implement
+&lsquo;<samp>double</samp>&rsquo; as a 32-bit type, which does not comply to the language standard.
+</li></ul>
+<p>Not all combinations of <samp>--with-double=</samp> and
+<samp>--with-long-double=</samp> are valid.  For example, the combination
+<samp>--with-double=32,64</samp> <samp>--with-long-double=32</samp> will be
+rejected because the first option specifies the availability of
+multilibs for &lsquo;<samp>double</samp>&rsquo;, whereas the second option implies
+that &lsquo;<samp>long double</samp>&rsquo; &mdash; and hence also &lsquo;<samp>double</samp>&rsquo; &mdash; is always
+32&nbsp;bits wide.
+</p>
+</dd>
+<dt><code>--with-double-comparison={tristate|bool|libf7}</code></dt>
+<dd><p>Only supported for the AVR target since version&nbsp;10.
+Specify what result format is returned by library functions that
+compare 64-bit floating point values (<code>DFmode</code>).
+The GCC default is &lsquo;<samp>tristate</samp>&rsquo;.  If the floating point
+implementation returns a boolean instead, set it to &lsquo;<samp>bool</samp>&rsquo;.
+</p>
+</dd>
+<dt><code>--with-libf7={libgcc|math|math-symbols|no}</code></dt>
+<dd><p>Only supported for the AVR target since version&nbsp;10.
+Specify to which degree code from LibF7 is included in libgcc.
+LibF7 is an ad-hoc, AVR-specific, 64-bit floating point emulation
+written in C and (inline) assembly. &lsquo;<samp>libgcc</samp>&rsquo; adds support
+for functions that one would usually expect in libgcc like double addition,
+double comparisons and double conversions. &lsquo;<samp>math</samp>&rsquo; also adds routines
+that one would expect in <samp>libm.a</samp>, but with <code>__</code> (two underscores)
+prepended to the symbol names as specified by <samp>math.h</samp>.
+&lsquo;<samp>math-symbols</samp>&rsquo; also defines weak aliases for the functions
+declared in <samp>math.h</samp>.  However, <code>--with-libf7</code> won&rsquo;t
+install no <samp>math.h</samp> header file whatsoever, this file must come
+from elsewhere.  This option sets <samp>--with-double-comparison</samp>
+to &lsquo;<samp>bool</samp>&rsquo;.
 </p>
 </dd>
 <dt><code>--with-nds32-lib=<var>library</var></code></dt>
@@ -1960,7 +2053,7 @@ variables in the site file.
 <dt><code>--enable-objc-gc</code></dt>
 <dd><p>Specify that an additional variant of the GNU Objective-C runtime library
 is built, using an external build of the Boehm-Demers-Weiser garbage
-collector (<a href="http://www.hboehm.info/gc/">http://www.hboehm.info/gc/</a>).  This library needs to be
+collector (<a href="https://www.hboehm.info/gc/">https://www.hboehm.info/gc/</a>).  This library needs to be
 available for each multilib variant, unless configured with
 <samp>--enable-objc-gc=&lsquo;<samp>auto</samp>&rsquo;</samp> in which case the build of the
 additional runtime library is skipped when not available and the build
@@ -1994,6 +2087,39 @@ default locations.
 <p>The following options apply to the build of the D runtime library.
 </p>
 <dl compact="compact">
+<dt><code>--enable-libphobos-checking</code></dt>
+<dt><code>--disable-libphobos-checking</code></dt>
+<dt><code>--enable-libphobos-checking=<var>list</var></code></dt>
+<dd><p>This option controls whether run-time checks and contracts are compiled into
+the D runtime library.  When the option is not specified, the library is built
+with &lsquo;<samp>release</samp>&rsquo; checking.  When the option is specified without a
+<var>list</var>, the result is the same as &lsquo;<samp>--enable-libphobos-checking=yes</samp>&rsquo;.
+Likewise, &lsquo;<samp>--disable-libphobos-checking</samp>&rsquo; is equivalent to
+&lsquo;<samp>--enable-libphobos-checking=no</samp>&rsquo;.
+</p>
+<p>The categories of checks available in <var>list</var> are &lsquo;<samp>yes</samp>&rsquo; (compiles
+libphobos with <samp>-fno-release</samp>), &lsquo;<samp>no</samp>&rsquo; (compiles libphobos with
+<samp>-frelease</samp>), &lsquo;<samp>all</samp>&rsquo; (same as &lsquo;<samp>yes</samp>&rsquo;), &lsquo;<samp>none</samp>&rsquo; or
+&lsquo;<samp>release</samp>&rsquo; (same as &lsquo;<samp>no</samp>&rsquo;).
+</p>
+<p>Individual checks available in <var>list</var> are &lsquo;<samp>assert</samp>&rsquo; (compiles libphobos
+with an extra option <samp>-fassert</samp>).
+</p>
+</dd>
+<dt><code>--with-libphobos-druntime-only</code></dt>
+<dt><code>--with-libphobos-druntime-only=<var>choice</var></code></dt>
+<dd><p>Specify whether to build only the core D runtime library (druntime), or both
+the core and standard library (phobos) into libphobos.  This is useful for
+targets that have full support in druntime, but no or incomplete support
+in phobos.  <var>choice</var> can be one of &lsquo;<samp>auto</samp>&rsquo;, &lsquo;<samp>yes</samp>&rsquo;, and &lsquo;<samp>no</samp>&rsquo;
+where &lsquo;<samp>auto</samp>&rsquo; is the default.
+</p>
+<p>When the option is not specified, the default choice &lsquo;<samp>auto</samp>&rsquo; means that it
+is inferred whether the target has support for the phobos standard library.
+When the option is specified without a <var>choice</var>,  the result is the same as
+&lsquo;<samp>--with-libphobos-druntime-only=yes</samp>&rsquo;.
+</p>
+</dd>
 <dt><code>--with-target-system-zlib</code></dt>
 <dd><p>Use installed &lsquo;<samp>zlib</samp>&rsquo; rather than that included with GCC.  This needs
 to be available for each multilib variant, unless configured with

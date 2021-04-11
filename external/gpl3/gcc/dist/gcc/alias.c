@@ -1,5 +1,5 @@
 /* Alias analysis for GNU C
-   Copyright (C) 1997-2019 Free Software Foundation, Inc.
+   Copyright (C) 1997-2020 Free Software Foundation, Inc.
    Contributed by John Carr (jfc@mit.edu).
 
 This file is part of GCC.
@@ -39,6 +39,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "cfganal.h"
 #include "rtl-iter.h"
 #include "cgraph.h"
+#include "ipa-utils.h"
 
 /* The aliasing API provided here solves related but different problems:
 
@@ -307,18 +308,6 @@ ao_ref_from_mem (ao_ref *ref, const_rtx mem)
 	    && TREE_CODE (TMR_BASE (base)) == SSA_NAME)))
     return false;
 
-  /* If this is a reference based on a partitioned decl replace the
-     base with a MEM_REF of the pointer representative we
-     created during stack slot partitioning.  */
-  if (VAR_P (base)
-      && ! is_global_var (base)
-      && cfun->gimple_df->decls_to_pointers != NULL)
-    {
-      tree *namep = cfun->gimple_df->decls_to_pointers->get (base);
-      if (namep)
-	ref->base = build_simple_mem_ref (*namep);
-    }
-
   ref->ref_alias_set = MEM_ALIAS_SET (mem);
 
   /* If MEM_OFFSET or MEM_SIZE are unknown what we got from MEM_EXPR
@@ -377,6 +366,26 @@ rtx_refs_may_alias_p (const_rtx x, const_rtx mem, bool tbaa_p)
 			     tbaa_p
 			     && MEM_ALIAS_SET (x) != 0
 			     && MEM_ALIAS_SET (mem) != 0);
+}
+
+/* Return true if the ref EARLIER behaves the same as LATER with respect
+   to TBAA for every memory reference that might follow LATER.  */
+
+bool
+refs_same_for_tbaa_p (tree earlier, tree later)
+{
+  ao_ref earlier_ref, later_ref;
+  ao_ref_init (&earlier_ref, earlier);
+  ao_ref_init (&later_ref, later);
+  alias_set_type earlier_set = ao_ref_alias_set (&earlier_ref);
+  alias_set_type later_set = ao_ref_alias_set (&later_ref);
+  if (!(earlier_set == later_set
+	|| alias_set_subset_of (later_set, earlier_set)))
+    return false;
+  alias_set_type later_base_set = ao_ref_base_alias_set (&later_ref);
+  alias_set_type earlier_base_set = ao_ref_base_alias_set (&earlier_ref);
+  return (earlier_base_set == later_base_set
+	  || alias_set_subset_of (later_base_set, earlier_base_set));
 }
 
 /* Returns a pointer to the alias set entry for ALIAS_SET, if there is
@@ -598,6 +607,49 @@ objects_must_conflict_p (tree t1, tree t2)
   return alias_sets_must_conflict_p (set1, set2);
 }
 
+/* Return true if T is an end of the access path which can be used
+   by type based alias oracle.  */
+
+bool
+ends_tbaa_access_path_p (const_tree t)
+{
+  switch (TREE_CODE (t))
+    {
+    case COMPONENT_REF:
+      if (DECL_NONADDRESSABLE_P (TREE_OPERAND (t, 1)))
+	return true;
+      /* Permit type-punning when accessing a union, provided the access
+	 is directly through the union.  For example, this code does not
+	 permit taking the address of a union member and then storing
+	 through it.  Even the type-punning allowed here is a GCC
+	 extension, albeit a common and useful one; the C standard says
+	 that such accesses have implementation-defined behavior.  */
+      else if (TREE_CODE (TREE_TYPE (TREE_OPERAND (t, 0))) == UNION_TYPE)
+	return true;
+      break;
+
+    case ARRAY_REF:
+    case ARRAY_RANGE_REF:
+      if (TYPE_NONALIASED_COMPONENT (TREE_TYPE (TREE_OPERAND (t, 0))))
+	return true;
+      break;
+
+    case REALPART_EXPR:
+    case IMAGPART_EXPR:
+      break;
+
+    case BIT_FIELD_REF:
+    case VIEW_CONVERT_EXPR:
+      /* Bitfields and casts are never addressable.  */
+      return true;
+      break;
+
+    default:
+      gcc_unreachable ();
+    }
+  return false;
+}
+
 /* Return the outermost parent of component present in the chain of
    component references handled by get_inner_reference in T with the
    following property:
@@ -612,40 +664,8 @@ component_uses_parent_alias_set_from (const_tree t)
 
   while (handled_component_p (t))
     {
-      switch (TREE_CODE (t))
-	{
-	case COMPONENT_REF:
-	  if (DECL_NONADDRESSABLE_P (TREE_OPERAND (t, 1)))
-	    found = t;
-	  /* Permit type-punning when accessing a union, provided the access
-	     is directly through the union.  For example, this code does not
-	     permit taking the address of a union member and then storing
-	     through it.  Even the type-punning allowed here is a GCC
-	     extension, albeit a common and useful one; the C standard says
-	     that such accesses have implementation-defined behavior.  */
-	  else if (TREE_CODE (TREE_TYPE (TREE_OPERAND (t, 0))) == UNION_TYPE)
-	    found = t;
-	  break;
-
-	case ARRAY_REF:
-	case ARRAY_RANGE_REF:
-	  if (TYPE_NONALIASED_COMPONENT (TREE_TYPE (TREE_OPERAND (t, 0))))
-	    found = t;
-	  break;
-
-	case REALPART_EXPR:
-	case IMAGPART_EXPR:
-	  break;
-
-	case BIT_FIELD_REF:
-	case VIEW_CONVERT_EXPR:
-	  /* Bitfields and casts are never addressable.  */
-	  found = t;
-	  break;
-
-	default:
-	  gcc_unreachable ();
-	}
+      if (ends_tbaa_access_path_p (t))
+	found = t;
 
       t = TREE_OPERAND (t, 0);
     }
@@ -804,8 +824,16 @@ alias_ptr_types_compatible_p (tree t1, tree t2)
       || ref_all_alias_ptr_type_p (t2))
     return false;
 
-  return (TYPE_MAIN_VARIANT (TREE_TYPE (t1))
-	  == TYPE_MAIN_VARIANT (TREE_TYPE (t2)));
+    /* This function originally abstracts from simply comparing
+       get_deref_alias_set so that we are sure this still computes
+       the same result after LTO type merging is applied.
+       When in LTO type merging is done we can actually do this compare.
+    */
+  if (in_lto_p)
+    return get_deref_alias_set (t1) == get_deref_alias_set (t2);
+  else
+    return (TYPE_MAIN_VARIANT (TREE_TYPE (t1))
+	    == TYPE_MAIN_VARIANT (TREE_TYPE (t2)));
 }
 
 /* Create emptry alias set entry.  */
@@ -833,7 +861,7 @@ get_alias_set (tree t)
   alias_set_type set;
 
   /* We cannot give up with -fno-strict-aliasing because we need to build
-     proper type representation for possible functions which are build with
+     proper type representations for possible functions which are built with
      -fstrict-aliasing.  */
 
   /* return 0 if this or its type is an error.  */
@@ -892,9 +920,9 @@ get_alias_set (tree t)
       if (set != -1)
 	return set;
       /* Handle structure type equality for pointer types, arrays and vectors.
-	 This is easy to do, because the code bellow ignore canonical types on
+	 This is easy to do, because the code below ignores canonical types on
 	 these anyway.  This is important for LTO, where TYPE_CANONICAL for
-	 pointers cannot be meaningfuly computed by the frotnend.  */
+	 pointers cannot be meaningfully computed by the frontend.  */
       if (canonical_type_used_p (t))
 	{
 	  /* In LTO we set canonical types for all types where it makes
@@ -1003,9 +1031,9 @@ get_alias_set (tree t)
 	   || TREE_CODE (p) == VECTOR_TYPE;
 	   p = TREE_TYPE (p))
 	{
-	  /* Ada supports recusive pointers.  Instead of doing recrusion check
-	     just give up once the preallocated space of 8 elements is up.
-	     In this case just punt to void * alias set.  */
+	  /* Ada supports recursive pointers.  Instead of doing recursion
+	     check, just give up once the preallocated space of 8 elements
+	     is up.  In this case just punt to void * alias set.  */
 	  if (reference.length () == 8)
 	    {
 	      p = ptr_type_node;
@@ -1019,6 +1047,14 @@ get_alias_set (tree t)
 	    reference.safe_push (false);
 	}
       p = TYPE_MAIN_VARIANT (p);
+
+      /* In LTO for C++ programs we can turn incomplete types to complete
+	 using ODR name lookup.  */
+      if (in_lto_p && TYPE_STRUCTURAL_EQUALITY_P (p) && odr_type_p (p))
+	{
+	  p = prevailing_odr_type (p);
+	  gcc_checking_assert (TYPE_MAIN_VARIANT (p) == p);
+	}
 
       /* Make void * compatible with char * and also void **.
 	 Programs are commonly violating TBAA by this.
@@ -1159,10 +1195,16 @@ record_alias_subset (alias_set_type superset, alias_set_type subset)
     superset_entry->has_zero_child = 1;
   else
     {
-      subset_entry = get_alias_set_entry (subset);
       if (!superset_entry->children)
 	superset_entry->children
 	  = hash_map<alias_set_hash, int>::create_ggc (64);
+
+      /* Enter the SUBSET itself as a child of the SUPERSET.  If it was
+	 already there we're done.  */
+      if (superset_entry->children->put (subset, 0))
+	return;
+
+      subset_entry = get_alias_set_entry (subset);
       /* If there is an entry for the subset, enter all of its children
 	 (if they are not already present) as children of the SUPERSET.  */
       if (subset_entry)
@@ -1180,9 +1222,6 @@ record_alias_subset (alias_set_type superset, alias_set_type subset)
 		superset_entry->children->put ((*iter).first, (*iter).second);
 	    }
 	}
-
-      /* Enter the SUBSET itself as a child of the SUPERSET.  */
-      superset_entry->children->put (subset, 0);
     }
 }
 
@@ -1204,61 +1243,66 @@ record_component_aliases (tree type, alias_set_type superset)
     case RECORD_TYPE:
     case UNION_TYPE:
     case QUAL_UNION_TYPE:
-      for (field = TYPE_FIELDS (type); field != 0; field = DECL_CHAIN (field))
-	if (TREE_CODE (field) == FIELD_DECL && !DECL_NONADDRESSABLE_P (field))
-	  {
-	    /* LTO type merging does not make any difference between 
-	       component pointer types.  We may have
+      {
+	/* LTO non-ODR type merging does not make any difference between 
+	   component pointer types.  We may have
 
-	       struct foo {int *a;};
+	   struct foo {int *a;};
 
-	       as TYPE_CANONICAL of 
+	   as TYPE_CANONICAL of 
 
-	       struct bar {float *a;};
+	   struct bar {float *a;};
 
-	       Because accesses to int * and float * do not alias, we would get
-	       false negative when accessing the same memory location by
-	       float ** and bar *. We thus record the canonical type as:
+	   Because accesses to int * and float * do not alias, we would get
+	   false negative when accessing the same memory location by
+	   float ** and bar *. We thus record the canonical type as:
 
-	       struct {void *a;};
+	   struct {void *a;};
 
-	       void * is special cased and works as a universal pointer type.
-	       Accesses to it conflicts with accesses to any other pointer
-	       type.  */
-	    tree t = TREE_TYPE (field);
-	    if (in_lto_p)
-	      {
-		/* VECTOR_TYPE and ARRAY_TYPE share the alias set with their
-		   element type and that type has to be normalized to void *,
-		   too, in the case it is a pointer. */
-		while (!canonical_type_used_p (t) && !POINTER_TYPE_P (t))
-		  {
-		    gcc_checking_assert (TYPE_STRUCTURAL_EQUALITY_P (t));
-		    t = TREE_TYPE (t);
-		  }
-		if (POINTER_TYPE_P (t))
-		  t = ptr_type_node;
-		else if (flag_checking)
-		  gcc_checking_assert (get_alias_set (t)
-				       == get_alias_set (TREE_TYPE (field)));
-	      }
+	   void * is special cased and works as a universal pointer type.
+	   Accesses to it conflicts with accesses to any other pointer
+	   type.  */
+	bool void_pointers = in_lto_p
+			     && (!odr_type_p (type)
+				 || !odr_based_tbaa_p (type));
+	for (field = TYPE_FIELDS (type); field != 0; field = DECL_CHAIN (field))
+	  if (TREE_CODE (field) == FIELD_DECL && !DECL_NONADDRESSABLE_P (field))
+	    {
+	      tree t = TREE_TYPE (field);
+	      if (void_pointers)
+		{
+		  /* VECTOR_TYPE and ARRAY_TYPE share the alias set with their
+		     element type and that type has to be normalized to void *,
+		     too, in the case it is a pointer. */
+		  while (!canonical_type_used_p (t) && !POINTER_TYPE_P (t))
+		    {
+		      gcc_checking_assert (TYPE_STRUCTURAL_EQUALITY_P (t));
+		      t = TREE_TYPE (t);
+		    }
+		  if (POINTER_TYPE_P (t))
+		    t = ptr_type_node;
+		  else if (flag_checking)
+		    gcc_checking_assert (get_alias_set (t)
+					 == get_alias_set (TREE_TYPE (field)));
+		}
 
-	    alias_set_type set = get_alias_set (t);
-	    record_alias_subset (superset, set);
-	    /* If the field has alias-set zero make sure to still record
-	       any componets of it.  This makes sure that for
-		 struct A {
-		   struct B {
-		     int i;
-		     char c[4];
-		   } b;
-		 };
-	       in C++ even though 'B' has alias-set zero because
-	       TYPE_TYPELESS_STORAGE is set, 'A' has the alias-set of
-	       'int' as subset.  */
-	    if (set == 0)
-	      record_component_aliases (t, superset);
-	  }
+	      alias_set_type set = get_alias_set (t);
+	      record_alias_subset (superset, set);
+	      /* If the field has alias-set zero make sure to still record
+		 any componets of it.  This makes sure that for
+		   struct A {
+		     struct B {
+		       int i;
+		       char c[4];
+		     } b;
+		   };
+		 in C++ even though 'B' has alias-set zero because
+		 TYPE_TYPELESS_STORAGE is set, 'A' has the alias-set of
+		 'int' as subset.  */
+	      if (set == 0)
+		record_component_aliases (t, superset);
+	    }
+      }
       break;
 
     case COMPLEX_TYPE:
@@ -1480,9 +1524,11 @@ find_base_value (rtx src)
       return find_base_value (XEXP (src, 1));
 
     case AND:
-      /* If the second operand is constant set the base
-	 address to the first operand.  */
-      if (CONST_INT_P (XEXP (src, 1)) && INTVAL (XEXP (src, 1)) != 0)
+      /* Look through aligning ANDs.  And AND with zero or one with
+         the LSB set isn't one (see for example PR92462).  */
+      if (CONST_INT_P (XEXP (src, 1))
+	  && INTVAL (XEXP (src, 1)) != 0
+	  && (INTVAL (XEXP (src, 1)) & 1) == 0)
 	return find_base_value (XEXP (src, 0));
       return 0;
 
@@ -1570,16 +1616,6 @@ record_set (rtx dest, const_rtx set, void *data ATTRIBUTE_UNUSED)
       if (GET_CODE (set) == CLOBBER)
 	{
 	  new_reg_base_value[regno] = 0;
-	  return;
-	}
-      /* A CLOBBER_HIGH only wipes out the old value if the mode of the old
-	 value is greater than that of the clobber.  */
-      else if (GET_CODE (set) == CLOBBER_HIGH)
-	{
-	  if (new_reg_base_value[regno] != 0
-	      && reg_is_clobbered_by_clobber_high (
-		   regno, GET_MODE (new_reg_base_value[regno]), XEXP (set, 0)))
-	    new_reg_base_value[regno] = 0;
 	  return;
 	}
 
@@ -1969,6 +2005,9 @@ find_base_term (rtx x, vec<std::pair<cselib_val *,
       if (cselib_sp_based_value_p (val))
 	return static_reg_base_value[STACK_POINTER_REGNUM];
 
+      if (visited_vals.length () > (unsigned) param_max_find_base_term_values)
+	return ret;
+
       f = val->locs;
       /* Reset val->locs to avoid infinite recursion.  */
       if (f)
@@ -2050,7 +2089,11 @@ find_base_term (rtx x, vec<std::pair<cselib_val *,
       }
 
     case AND:
-      if (CONST_INT_P (XEXP (x, 1)) && INTVAL (XEXP (x, 1)) != 0)
+      /* Look through aligning ANDs.  And AND with zero or one with
+         the LSB set isn't one (see for example PR92462).  */
+      if (CONST_INT_P (XEXP (x, 1))
+	  && INTVAL (XEXP (x, 1)) != 0
+	  && (INTVAL (XEXP (x, 1)) & 1) == 0)
 	return find_base_term (XEXP (x, 0), visited_vals);
       return 0;
 
@@ -3284,7 +3327,8 @@ memory_modified_in_insn_p (const_rtx mem, const_rtx insn)
   if (CALL_P (insn))
     return true;
   memory_modified = false;
-  note_stores (PATTERN (insn), memory_modified_1, CONST_CAST_RTX(mem));
+  note_stores (as_a<const rtx_insn *> (insn), memory_modified_1,
+	       CONST_CAST_RTX(mem));
   return memory_modified;
 }
 
@@ -3412,7 +3456,7 @@ init_alias_analysis (void)
 		      && find_reg_note (insn, REG_NOALIAS, NULL_RTX))
 		    record_set (SET_DEST (PATTERN (insn)), NULL_RTX, NULL);
 		  else
-		    note_stores (PATTERN (insn), record_set, NULL);
+		    note_stores (insn, record_set, NULL);
 
 		  set = single_set (insn);
 

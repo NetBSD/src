@@ -1,5 +1,5 @@
 ;; Predicate definitions for IA-32 and x86-64.
-;; Copyright (C) 2004-2019 Free Software Foundation, Inc.
+;; Copyright (C) 2004-2020 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -49,15 +49,17 @@
   (and (match_code "reg")
        (match_test "MMX_REGNO_P (REGNO (op))")))
 
+;; Match register operands, but include memory operands for
+;; !TARGET_MMX_WITH_SSE.
+(define_predicate "register_mmxmem_operand"
+  (ior (match_operand 0 "register_operand")
+       (and (not (match_test "TARGET_MMX_WITH_SSE"))
+	    (match_operand 0 "memory_operand"))))
+
 ;; True if the operand is an SSE register.
 (define_predicate "sse_reg_operand"
   (and (match_code "reg")
        (match_test "SSE_REGNO_P (REGNO (op))")))
-
-;; True if the operand is an AVX-512 new register.
-(define_predicate "ext_sse_reg_operand"
-  (and (match_code "reg")
-       (match_test "EXT_REX_SSE_REGNO_P (REGNO (op))")))
 
 ;; Return true if op is a QImode register.
 (define_predicate "any_QIreg_operand"
@@ -92,6 +94,15 @@
 		 (match_test "GET_MODE (op) == DImode"))
 	    (match_test "GET_MODE (op) == SImode")
 	    (match_test "GET_MODE (op) == HImode"))))
+
+;; Match a DI, SI, HI or QImode nonimmediate_operand.
+(define_special_predicate "int_nonimmediate_operand"
+  (and (match_operand 0 "nonimmediate_operand")
+       (ior (and (match_test "TARGET_64BIT")
+		 (match_test "GET_MODE (op) == DImode"))
+	    (match_test "GET_MODE (op) == SImode")
+	    (match_test "GET_MODE (op) == HImode")
+	    (match_test "GET_MODE (op) == QImode"))))
 
 ;; Match register operands, but include memory operands for TARGET_SSE_MATH.
 (define_predicate "register_ssemem_operand"
@@ -683,7 +694,7 @@
   if (GET_CODE (op) == PLUS && REG_P (XEXP (op, 0)))
     {
       int regno = REGNO (XEXP (op, 0));
-      if (!HARD_REGISTER_NUM_P (regno) || call_used_regs[regno])
+      if (!HARD_REGISTER_NUM_P (regno) || call_used_or_fixed_reg_p (regno))
 	{
 	  op = XEXP (op, 1);
 	  if (GOT32_symbol_operand (op, VOIDmode))
@@ -1397,9 +1408,6 @@
 (define_predicate "compare_operator"
   (match_code "compare"))
 
-(define_predicate "absneg_operator"
-  (match_code "abs,neg"))
-
 ;; Return true if OP is a memory operand, aligned to
 ;; less than its natural alignment.
 (define_predicate "misaligned_operand"
@@ -1437,8 +1445,9 @@
 
 ;; return true if OP is a vzeroupper pattern.
 (define_predicate "vzeroupper_pattern"
-  (and (match_code "unspec_volatile")
-       (match_test "XINT (op, 1) == UNSPECV_VZEROUPPER")))
+  (and (match_code "parallel")
+       (match_code "unspec_volatile" "a")
+       (match_test "XINT (XVECEXP (op, 0, 0), 1) == UNSPECV_VZEROUPPER")))
 
 ;; Return true if OP is an addsub vec_merge operation
 (define_predicate "addsub_vm_operator"

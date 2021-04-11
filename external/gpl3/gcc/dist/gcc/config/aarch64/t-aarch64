@@ -1,5 +1,5 @@
 # Machine description for AArch64 architecture.
-#  Copyright (C) 2009-2019 Free Software Foundation, Inc.
+#  Copyright (C) 2009-2020 Free Software Foundation, Inc.
 #  Contributed by ARM Ltd.
 #
 #  This file is part of GCC.
@@ -24,13 +24,17 @@ OPTIONS_H_EXTRA += $(srcdir)/config/aarch64/aarch64-cores.def \
 		   $(srcdir)/config/aarch64/aarch64-fusion-pairs.def \
 		   $(srcdir)/config/aarch64/aarch64-tuning-flags.def
 
-$(srcdir)/config/aarch64/aarch64-tune.md: $(srcdir)/config/aarch64/gentune.sh \
+$(srcdir)/config/aarch64/aarch64-tune.md: s-aarch64-tune-md; @true
+s-aarch64-tune-md: $(srcdir)/config/aarch64/gentune.sh \
 	$(srcdir)/config/aarch64/aarch64-cores.def
 	@echo "NOT REBUILDING $@"
 NetBSD_DISABLED_aarch64-tune.md:
 	$(SHELL) $(srcdir)/config/aarch64/gentune.sh \
 		$(srcdir)/config/aarch64/aarch64-cores.def > \
+		tmp-aarch64-tune.md
+	$(SHELL) $(srcdir)/../move-if-change tmp-aarch64-tune.md \
 		$(srcdir)/config/aarch64/aarch64-tune.md
+	$(STAMP) s-aarch64-tune-md
 
 aarch64-builtins.o: $(srcdir)/config/aarch64/aarch64-builtins.c $(CONFIG_H) \
   $(SYSTEM_H) coretypes.h $(TM_H) \
@@ -41,6 +45,60 @@ aarch64-builtins.o: $(srcdir)/config/aarch64/aarch64-builtins.c $(CONFIG_H) \
   aarch64-builtin-iterators.h
 	$(COMPILER) -c $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) \
 		$(srcdir)/config/aarch64/aarch64-builtins.c
+
+aarch64-sve-builtins.o: $(srcdir)/config/aarch64/aarch64-sve-builtins.cc \
+  $(srcdir)/config/aarch64/aarch64-sve-builtins.def \
+  $(srcdir)/config/aarch64/aarch64-sve-builtins-base.def \
+  $(srcdir)/config/aarch64/aarch64-sve-builtins-sve2.def \
+  $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) $(TREE_H) $(RTL_H) \
+  $(TM_P_H) memmodel.h insn-codes.h $(OPTABS_H) $(RECOG_H) $(DIAGNOSTIC_H) \
+  $(EXPR_H) $(BASIC_BLOCK_H) $(FUNCTION_H) fold-const.h $(GIMPLE_H) \
+  gimple-iterator.h gimplify.h explow.h $(EMIT_RTL_H) tree-vector-builder.h \
+  stor-layout.h $(REG_H) alias.h gimple-fold.h langhooks.h \
+  stringpool.h \
+  $(srcdir)/config/aarch64/aarch64-sve-builtins.h \
+  $(srcdir)/config/aarch64/aarch64-sve-builtins-shapes.h \
+  $(srcdir)/config/aarch64/aarch64-sve-builtins-base.h \
+  $(srcdir)/config/aarch64/aarch64-sve-builtins-sve2.h
+	$(COMPILER) -c $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) \
+		$(srcdir)/config/aarch64/aarch64-sve-builtins.cc
+
+aarch64-sve-builtins-shapes.o: \
+  $(srcdir)/config/aarch64/aarch64-sve-builtins-shapes.cc \
+  $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) $(TREE_H) $(RTL_H) \
+  $(TM_P_H) memmodel.h insn-codes.h $(OPTABS_H) \
+  $(srcdir)/config/aarch64/aarch64-sve-builtins.h \
+  $(srcdir)/config/aarch64/aarch64-sve-builtins-shapes.h
+	$(COMPILER) -c $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) \
+		$(srcdir)/config/aarch64/aarch64-sve-builtins-shapes.cc
+
+aarch64-sve-builtins-base.o: \
+  $(srcdir)/config/aarch64/aarch64-sve-builtins-base.cc \
+  $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) $(TREE_H) $(RTL_H) \
+  $(TM_P_H) memmodel.h insn-codes.h $(OPTABS_H) $(RECOG_H) \
+  $(EXPR_H) $(BASIC_BLOCK_H) $(FUNCTION_H) fold-const.h $(GIMPLE_H) \
+  gimple-iterator.h gimplify.h explow.h $(EMIT_RTL_H) tree-vector-builder.h \
+  rtx-vector-builder.h vec-perm-indices.h \
+  $(srcdir)/config/aarch64/aarch64-sve-builtins.h \
+  $(srcdir)/config/aarch64/aarch64-sve-builtins-shapes.h \
+  $(srcdir)/config/aarch64/aarch64-sve-builtins-base.h \
+  $(srcdir)/config/aarch64/aarch64-sve-builtins-functions.h
+	$(COMPILER) -c $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) \
+		$(srcdir)/config/aarch64/aarch64-sve-builtins-base.cc
+
+aarch64-sve-builtins-sve2.o: \
+  $(srcdir)/config/aarch64/aarch64-sve-builtins-sve2.cc \
+  $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) $(TREE_H) $(RTL_H) \
+  $(TM_P_H) memmodel.h insn-codes.h $(OPTABS_H) $(RECOG_H) \
+  $(EXPR_H) $(BASIC_BLOCK_H) $(FUNCTION_H) fold-const.h $(GIMPLE_H) \
+  gimple-iterator.h gimplify.h explow.h $(EMIT_RTL_H) tree-vector-builder.h \
+  rtx-vector-builder.h vec-perm-indices.h \
+  $(srcdir)/config/aarch64/aarch64-sve-builtins.h \
+  $(srcdir)/config/aarch64/aarch64-sve-builtins-shapes.h \
+  $(srcdir)/config/aarch64/aarch64-sve-builtins-sve2.h \
+  $(srcdir)/config/aarch64/aarch64-sve-builtins-functions.h
+	$(COMPILER) -c $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) \
+		$(srcdir)/config/aarch64/aarch64-sve-builtins-sve2.cc
 
 aarch64-builtin-iterators.h: $(srcdir)/config/aarch64/geniterators.sh \
 	$(srcdir)/config/aarch64/iterators.md
@@ -105,3 +163,13 @@ aarch64-bti-insert.o: $(srcdir)/config/aarch64/aarch64-bti-insert.c \
 comma=,
 MULTILIB_OPTIONS    = $(subst $(comma),/, $(patsubst %, mabi=%, $(subst $(comma),$(comma)mabi=,$(TM_MULTILIB_CONFIG))))
 MULTILIB_DIRNAMES   = $(subst $(comma), ,$(TM_MULTILIB_CONFIG))
+
+insn-conditions.md: s-check-sve-md
+s-check-sve-md: $(srcdir)/config/aarch64/check-sve-md.awk \
+		$(srcdir)/config/aarch64/aarch64-sve.md \
+		$(srcdir)/config/aarch64/aarch64-sve2.md
+	$(AWK) -f $(srcdir)/config/aarch64/check-sve-md.awk \
+	  $(srcdir)/config/aarch64/aarch64-sve.md
+	$(AWK) -f $(srcdir)/config/aarch64/check-sve-md.awk \
+	  $(srcdir)/config/aarch64/aarch64-sve2.md
+	$(STAMP) s-check-sve-md

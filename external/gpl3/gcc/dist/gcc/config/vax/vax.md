@@ -1,5 +1,5 @@
 ;; Machine description for GNU compiler, VAX Version
-;; Copyright (C) 1987-2019 Free Software Foundation, Inc.
+;; Copyright (C) 1987-2020 Free Software Foundation, Inc.
 
 ;; This file is part of GCC.
 
@@ -207,8 +207,8 @@
 }")
 
 ;; This is here to accept 4 arguments and pass the first 3 along
-;; to the movmemhi1 pattern that really does the work.
-(define_expand "movmemhi"
+;; to the cpymemhi1 pattern that really does the work.
+(define_expand "cpymemhi"
   [(set (match_operand:BLK 0 "general_operand" "=g")
 	(match_operand:BLK 1 "general_operand" "g"))
    (use (match_operand:HI 2 "general_operand" "g"))
@@ -221,7 +221,7 @@
       emit_insn (gen_movmemsi1_2 (operands[0], operands[1], operands[2]));
       DONE;
     }
-  emit_insn (gen_movmemhi1 (operands[0], operands[1], operands[2]));
+  emit_insn (gen_cpymemhi1 (operands[0], operands[1], operands[2]));
   DONE;
 }")
 
@@ -237,7 +237,7 @@
   "INTVAL (operands[2]) <= 48"
   "* return vax_output_movmemsi (insn, operands);")
 
-(define_insn "movmemhi1"
+(define_insn "cpymemhi1"
   [(set (match_operand:BLK 0 "memory_operand" "=o")
 	(match_operand:BLK 1 "memory_operand" "o"))
    (use (match_operand:HI 2 "general_operand" "g"))

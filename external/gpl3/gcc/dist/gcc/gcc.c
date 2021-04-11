@@ -1,5 +1,5 @@
 /* Compiler driver program that can handle many languages.
-   Copyright (C) 1987-2019 Free Software Foundation, Inc.
+   Copyright (C) 1987-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -41,7 +41,6 @@ compilation is specified by a string called a "spec".  */
 #include "diagnostic.h"
 #include "flags.h"
 #include "opts.h"
-#include "params.h"
 #include "filenames.h"
 #include "spellcheck.h"
 
@@ -57,7 +56,7 @@ compilation is specified by a string called a "spec".  */
      getenv ();
    Hence we need to use "get" for the accessor method, not "getenv".  */
 
-class env_manager
+struct env_manager
 {
  public:
   void init (bool can_restore, bool debug);
@@ -3068,7 +3067,8 @@ execute (void)
   if (!wrapper_string)
     {
       string = find_a_file (&exec_prefixes, commands[0].prog, X_OK, false);
-      commands[0].argv[0] = (string) ? string : commands[0].argv[0];
+      if (string)
+	commands[0].argv[0] = string;
     }
 
   for (n_commands = 1, i = 0; argbuf.iterate (i, &arg); i++)
@@ -3077,8 +3077,7 @@ execute (void)
 #if defined (__MSDOS__) || defined (OS2) || defined (VMS)
 	fatal_error (input_location, "%<-pipe%> not supported");
 #endif
-	argbuf[i] = 0; /* Termination of
-						     command args.  */
+	argbuf[i] = 0; /* Termination of command args.  */
 	commands[n_commands].prog = argbuf[i + 1];
 	commands[n_commands].argv
 	  = &(argbuf.address ())[i + 1];
@@ -3198,7 +3197,7 @@ execute (void)
 				   ? PEX_RECORD_TIMES : 0),
 		  progname, temp_filename);
   if (pex == NULL)
-    fatal_error (input_location, "pex_init failed: %m");
+    fatal_error (input_location, "%<pex_init%> failed: %m");
 
   for (i = 0; i < n_commands; i++)
     {
@@ -3769,7 +3768,7 @@ driver_wrong_lang_callback (const struct cl_decoded_option *decoded,
   const struct cl_option *option = &cl_options[decoded->opt_index];
 
   if (option->cl_reject_driver)
-    error ("unrecognized command line option %qs",
+    error ("unrecognized command-line option %qs",
 	   decoded->orig_option_with_args_text);
   else
     save_switch (decoded->canonical_option[0],
@@ -4039,6 +4038,10 @@ driver_handle_option (struct gcc_options *opts,
 
     case OPT_fdiagnostics_color_:
       diagnostic_color_init (dc, value);
+      break;
+
+    case OPT_fdiagnostics_urls_:
+      diagnostic_urls_init (dc, value);
       break;
 
     case OPT_fdiagnostics_format_:
@@ -4743,7 +4746,7 @@ process_command (unsigned int decoded_options_count,
   /* More prefixes are enabled in main, after we read the specs file
      and determine whether this is cross-compilation or not.  */
 
-  if (n_infiles == last_language_n_infiles && spec_lang != 0)
+  if (n_infiles != 0 && n_infiles == last_language_n_infiles && spec_lang != 0)
     warning (0, "%<-x %s%> after last input file has no effect", spec_lang);
 
   /* Synthesize -fcompare-debug flag from the GCC_COMPARE_DEBUG
@@ -4756,10 +4759,9 @@ process_command (unsigned int decoded_options_count,
     }
 
   /* Ensure we only invoke each subprocess once.  */
-  if (print_subprocess_help || print_help_list || print_version)
+  if (n_infiles == 0
+      && (print_subprocess_help || print_help_list || print_version))
     {
-      n_infiles = 0;
-
       /* Create a dummy input file, so that we can pass
 	 the help option on to the various sub-processes.  */
       add_infile ("help-dummy", "c");
@@ -5243,6 +5245,34 @@ do_specs_vec (vec<char_p> vec)
       /* Make each accumulated option a separate argument.  */
       do_spec_1 (" ", 0, NULL);
     }
+}
+
+/* Add options passed via -Xassembler or -Wa to COLLECT_AS_OPTIONS.  */
+
+static void
+putenv_COLLECT_AS_OPTIONS (vec<char_p> vec)
+{
+  if (vec.is_empty ())
+     return;
+
+  obstack_init (&collect_obstack);
+  obstack_grow (&collect_obstack, "COLLECT_AS_OPTIONS=",
+		strlen ("COLLECT_AS_OPTIONS="));
+
+  char *opt;
+  unsigned ix;
+
+  FOR_EACH_VEC_ELT (vec, ix, opt)
+    {
+      obstack_1grow (&collect_obstack, '\'');
+      obstack_grow (&collect_obstack, opt, strlen (opt));
+      obstack_1grow (&collect_obstack, '\'');
+      if (ix < vec.length () - 1)
+	obstack_1grow(&collect_obstack, ' ');
+    }
+
+  obstack_1grow (&collect_obstack, '\0');
+  xputenv (XOBFINISH (&collect_obstack, char *));
 }
 
 /* Process the sub-spec SPEC as a portion of a larger spec.
@@ -6144,7 +6174,8 @@ eval_spec_function (const char *func, const char *args,
 
   alloc_args ();
   if (do_spec_2 (args, soft_matched_part) < 0)
-    fatal_error (input_location, "error in args to spec function %qs", func);
+    fatal_error (input_location, "error in arguments to spec function %qs",
+		 func);
 
   /* argbuf_index is an index for the next argument to be inserted, and
      so contains the count of the args already inserted.  */
@@ -6796,6 +6827,11 @@ print_configuration (FILE *file)
 #endif
 
   fnotice (file, "Thread model: %s\n", thrmod);
+  fnotice (file, "Supported LTO compression algorithms: zlib");
+#ifdef HAVE_ZSTD_H
+  fnotice (file, " zstd");
+#endif
+  fnotice (file, "\n");
 
   /* compiler_version is truncated at the first space when initialized
   from version string, so truncate version_string at the first space
@@ -6929,11 +6965,11 @@ run_attempt (const char **new_argv, const char *out_temp,
 
   pex = pex_init (PEX_USE_PIPES, new_argv[0], NULL);
   if (!pex)
-    fatal_error (input_location, "pex_init failed: %m");
+    fatal_error (input_location, "%<pex_init%> failed: %m");
 
   errmsg = pex_run (pex, pex_flags, new_argv[0],
-		    CONST_CAST2 (char *const *, const char **, &new_argv[1]), out_temp,
-		    err_temp, &err);
+		    CONST_CAST2 (char *const *, const char **, &new_argv[1]),
+		    out_temp, err_temp, &err);
   if (errmsg != NULL)
     {
       errno = err;
@@ -7360,6 +7396,7 @@ driver::main (int argc, char **argv)
   global_initializations ();
   build_multilib_strings ();
   set_up_specs ();
+  putenv_COLLECT_AS_OPTIONS (assembler_options);
   putenv_COLLECT_GCC (argv[0]);
   maybe_putenv_COLLECT_LTO_WRAPPER ();
   maybe_putenv_OFFLOAD_TARGETS ();
@@ -7419,10 +7456,6 @@ driver::expand_at_files (int *argc, char ***argv) const
 void
 driver::decode_argv (int argc, const char **argv)
 {
-  /* Register the language-independent parameters.  */
-  global_init_params ();
-  finish_params ();
-
   init_opts_obstack ();
   init_options_struct (&global_options, &global_options_set);
 
@@ -7443,6 +7476,7 @@ driver::global_initializations ()
 
   diagnostic_initialize (global_dc, 0);
   diagnostic_color_init (global_dc);
+  diagnostic_urls_init (global_dc);
 
 #ifdef GCC_DRIVER_HOST_INITIALIZATION
   /* Perform host dependent initialization when needed.  */
@@ -7622,7 +7656,8 @@ driver::set_up_specs () const
       && do_spec_2 (sysroot_suffix_spec, NULL) == 0)
     {
       if (argbuf.length () > 1)
-        error ("spec failure: more than one arg to SYSROOT_SUFFIX_SPEC");
+	error ("spec failure: more than one argument to "
+	       "%<SYSROOT_SUFFIX_SPEC%>");
       else if (argbuf.length () == 1)
         target_sysroot_suffix = xstrdup (argbuf.last ());
     }
@@ -7646,7 +7681,8 @@ driver::set_up_specs () const
       && do_spec_2 (sysroot_hdrs_suffix_spec, NULL) == 0)
     {
       if (argbuf.length () > 1)
-        error ("spec failure: more than one arg to SYSROOT_HEADERS_SUFFIX_SPEC");
+	error ("spec failure: more than one argument "
+	       "to %<SYSROOT_HEADERS_SUFFIX_SPEC%>");
       else if (argbuf.length () == 1)
         target_sysroot_hdrs_suffix = xstrdup (argbuf.last ());
     }
@@ -7855,11 +7891,11 @@ driver::handle_unrecognized_options ()
       {
 	const char *hint = m_option_proposer.suggest_option (switches[i].part1);
 	if (hint)
-	  error ("unrecognized command line option %<-%s%>;"
+	  error ("unrecognized command-line option %<-%s%>;"
 		 " did you mean %<-%s%>?",
 		 switches[i].part1, hint);
 	else
-	  error ("unrecognized command line option %<-%s%>",
+	  error ("unrecognized command-line option %<-%s%>",
 		 switches[i].part1);
       }
 }
@@ -8012,7 +8048,7 @@ driver::maybe_print_and_exit () const
     {
       printf (_("%s %s%s\n"), progname, pkgversion_string,
 	      version_string);
-      printf ("Copyright %s 2019 Free Software Foundation, Inc.\n",
+      printf ("Copyright %s 2020 Free Software Foundation, Inc.\n",
 	      _("(C)"));
       fputs (_("This is free software; see the source for copying conditions.  There is NO\n\
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n"),
@@ -8272,6 +8308,8 @@ driver::maybe_run_linker (const char *argv0) const
     {
       int tmp = execution_count;
 
+      detect_jobserver ();
+
       if (! have_c)
 	{
 #if HAVE_LTO_PLUGIN > 0
@@ -8358,6 +8396,46 @@ driver::final_actions () const
     {
       printf (("\nFor bug reporting instructions, please see:\n"));
       printf ("%s\n", bug_report_url);
+    }
+}
+
+/* Detect whether jobserver is active and working.  If not drop
+   --jobserver-auth from MAKEFLAGS.  */
+
+void
+driver::detect_jobserver () const
+{
+  /* Detect jobserver and drop it if it's not working.  */
+  const char *makeflags = env.get ("MAKEFLAGS");
+  if (makeflags != NULL)
+    {
+      const char *needle = "--jobserver-auth=";
+      const char *n = strstr (makeflags, needle);
+      if (n != NULL)
+	{
+	  int rfd = -1;
+	  int wfd = -1;
+
+	  bool jobserver
+	    = (sscanf (n + strlen (needle), "%d,%d", &rfd, &wfd) == 2
+	       && rfd > 0
+	       && wfd > 0
+	       && is_valid_fd (rfd)
+	       && is_valid_fd (wfd));
+
+	  /* Drop the jobserver if it's not working now.  */
+	  if (!jobserver)
+	    {
+	      unsigned offset = n - makeflags;
+	      char *dup = xstrdup (makeflags);
+	      dup[offset] = '\0';
+
+	      const char *space = strchr (makeflags + offset, ' ');
+	      if (space != NULL)
+		strcpy (dup + offset, space);
+	      xputenv (concat ("MAKEFLAGS=", dup, NULL));
+	    }
+	}
     }
 }
 
@@ -8583,7 +8661,7 @@ static int n_mdswitches;
 /* Check whether a particular argument was used.  The first time we
    canonicalize the switches to keep only the ones we care about.  */
 
-class used_arg_t
+struct used_arg_t
 {
  public:
   int operator () (const char *p, int len);
@@ -9809,7 +9887,7 @@ compare_debug_auxbase_opt_spec_function (int arg,
   len = strlen (argv[0]);
   if (len < 3 || strcmp (argv[0] + len - 3, ".gk") != 0)
     fatal_error (input_location, "argument to %%:compare-debug-auxbase-opt "
-		 "does not end in .gk");
+		 "does not end in %<.gk%>");
 
   if (debug_auxbase_opt)
     return debug_auxbase_opt;
@@ -10071,7 +10149,6 @@ void
 driver::finalize ()
 {
   env.restore ();
-  params_c_finalize ();
   diagnostic_finish (global_dc);
 
   is_cpp_driver = 0;
@@ -10091,9 +10168,6 @@ driver::finalize ()
   save_temps_length = 0;
   spec_machine = DEFAULT_TARGET_MACHINE;
   greatest_status = 1;
-
-  finalize_options_struct (&global_options);
-  finalize_options_struct (&global_options_set);
 
   obstack_free (&obstack, NULL);
   obstack_free (&opts_obstack, NULL); /* in opts.c */

@@ -1,7 +1,7 @@
 This is libgomp.info, produced by makeinfo version 6.5 from
 libgomp.texi.
 
-Copyright (C) 2006-2019 Free Software Foundation, Inc.
+Copyright (C) 2006-2020 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -33,7 +33,7 @@ C/C++ and Fortran.
    Published by the Free Software Foundation 51 Franklin Street, Fifth
 Floor Boston, MA 02110-1301 USA
 
-   Copyright (C) 2006-2019 Free Software Foundation, Inc.
+   Copyright (C) 2006-2020 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -91,6 +91,7 @@ name changed to GNU Offloading and Multi Processing Runtime Library.
                                asynchronous operations.
 * OpenACC Library Interoperability:: OpenACC library interoperability with the
                                NVIDIA CUBLAS library.
+* OpenACC Profiling Interface::
 * The libgomp ABI::            Notes on the external ABI presented by libgomp.
 * Reporting Bugs::             How to report bugs in the GNU Offloading and
                                Multi Processing Runtime Library.
@@ -1543,9 +1544,9 @@ _See also_:
 
 _Reference_:
      GCC Patches Mailinglist
-     (http://gcc.gnu.org/ml/gcc-patches/2006-06/msg00493.html), GCC
+     (https://gcc.gnu.org/ml/gcc-patches/2006-06/msg00493.html), GCC
      Patches Mailinglist
-     (http://gcc.gnu.org/ml/gcc-patches/2006-06/msg00496.html)
+     (https://gcc.gnu.org/ml/gcc-patches/2006-06/msg00496.html)
 
 
 File: libgomp.info,  Node: GOMP_SPINCOUNT,  Next: GOMP_RTEMS_THREAD_POOLS,  Prev: GOMP_STACKSIZE,  Up: Environment Variables
@@ -1618,20 +1619,18 @@ File: libgomp.info,  Node: Enabling OpenACC,  Next: OpenACC Runtime Library Rout
 
 To activate the OpenACC extensions for C/C++ and Fortran, the
 compile-time flag '-fopenacc' must be specified.  This enables the
-OpenACC directive '#pragma acc' in C/C++ and '!$accp' directives in free
+OpenACC directive '#pragma acc' in C/C++ and '!$acc' directives in free
 form, 'c$acc', '*$acc' and '!$acc' directives in fixed form, '!$'
 conditional compilation sentinels in free form and 'c$', '*$' and '!$'
 sentinels in fixed form, for Fortran.  The flag also arranges for
 automatic linking of the OpenACC runtime library (*note OpenACC Runtime
 Library Routines::).
 
+   See <https://gcc.gnu.org/wiki/OpenACC> for more information.
+
    A complete description of all OpenACC directives accepted may be
 found in the OpenACC (https://www.openacc.org) Application Programming
-Interface manual, version 2.0.
-
-   Note that this is an experimental feature and subject to change in
-future versions of GCC. See <https://gcc.gnu.org/wiki/OpenACC> for more
-information.
+Interface manual, version 2.6.
 
 
 File: libgomp.info,  Node: OpenACC Runtime Library Routines,  Next: OpenACC Environment Variables,  Prev: Enabling OpenACC,  Up: Top
@@ -1640,7 +1639,7 @@ File: libgomp.info,  Node: OpenACC Runtime Library Routines,  Next: OpenACC Envi
 **********************************
 
 The runtime routines described here are defined by section 3 of the
-OpenACC specifications in version 2.0.  They have C linkage, and do not
+OpenACC specifications in version 2.6.  They have C linkage, and do not
 throw exceptions.  Generally, they are available only for the host, with
 the exception of 'acc_on_device', which is available for both the host
 and the acceleration device.
@@ -1653,13 +1652,14 @@ and the acceleration device.
 * acc_get_device_type::         Get type of device accelerator to be used.
 * acc_set_device_num::          Set device number to use.
 * acc_get_device_num::          Get device number to be used.
+* acc_get_property::            Get device property.
 * acc_async_test::              Tests for completion of a specific asynchronous
                                 operation.
-* acc_async_test_all::          Tests for completion of all asychronous
+* acc_async_test_all::          Tests for completion of all asynchronous
                                 operations.
 * acc_wait::                    Wait for completion of a specific asynchronous
                                 operation.
-* acc_wait_all::                Waits for completion of all asyncrhonous
+* acc_wait_all::                Waits for completion of all asynchronous
                                 operations.
 * acc_wait_all_async::          Wait for completion of all asynchronous
                                 operations.
@@ -1691,10 +1691,12 @@ and the acceleration device.
                                 host address.
 * acc_hostptr::                 Get host pointer associated with specific
                                 device address.
-* acc_is_present::              Indiciate whether host variable / array is
+* acc_is_present::              Indicate whether host variable / array is
                                 present on device.
 * acc_memcpy_to_device::        Copy host memory to device memory.
 * acc_memcpy_from_device::      Copy device memory to host memory.
+* acc_attach::                  Let device pointer point to device-pointer target.
+* acc_detach::                  Let device pointer point to host-pointer target.
 
 API routines for target platforms.
 
@@ -1702,6 +1704,13 @@ API routines for target platforms.
 * acc_get_current_cuda_context::Get CUDA context handle.
 * acc_get_cuda_stream::         Get CUDA stream handle.
 * acc_set_cuda_stream::         Set CUDA stream handle.
+
+API routines for the OpenACC Profiling Interface.
+
+* acc_prof_register::           Register callbacks.
+* acc_prof_unregister::         Unregister callbacks.
+* acc_prof_lookup::             Obtain inquiry functions.
+* acc_register_library::        Library registration.
 
 
 File: libgomp.info,  Node: acc_get_num_devices,  Next: acc_set_device_type,  Up: OpenACC Runtime Library Routines
@@ -1721,7 +1730,7 @@ _Fortran_:
                     'integer(kind=acc_device_kind) devicetype'
 
 _Reference_:
-     OpenACC specification v2.0 (https://www.openacc.org), section
+     OpenACC specification v2.6 (https://www.openacc.org), section
      3.2.1.
 
 
@@ -1731,7 +1740,7 @@ File: libgomp.info,  Node: acc_set_device_type,  Next: acc_get_device_type,  Pre
 ==================================================================
 
 _Description_
-     This function indicates to the runtime library which device typr,
+     This function indicates to the runtime library which device type,
      specified in DEVICETYPE, to use when executing a parallel or
      kernels region.
 
@@ -1743,7 +1752,7 @@ _Fortran_:
                     'integer(kind=acc_device_kind) devicetype'
 
 _Reference_:
-     OpenACC specification v2.0 (https://www.openacc.org), section
+     OpenACC specification v2.6 (https://www.openacc.org), section
      3.2.2.
 
 
@@ -1756,6 +1765,12 @@ _Description_
      This function returns what device type will be used when executing
      a parallel or kernels region.
 
+     This function returns 'acc_device_none' if 'acc_get_device_type' is
+     called from 'acc_ev_device_init_start', 'acc_ev_device_init_end'
+     callbacks of the OpenACC Profiling Interface (*note OpenACC
+     Profiling Interface::), that is, if the device is currently being
+     initialized.
+
 _C/C++_:
      _Prototype_:   'acc_device_t acc_get_device_type(void);'
 
@@ -1764,7 +1779,7 @@ _Fortran_:
                     'integer(kind=acc_device_kind) acc_get_device_type'
 
 _Reference_:
-     OpenACC specification v2.0 (https://www.openacc.org), section
+     OpenACC specification v2.6 (https://www.openacc.org), section
      3.2.3.
 
 
@@ -1775,11 +1790,12 @@ File: libgomp.info,  Node: acc_set_device_num,  Next: acc_get_device_num,  Prev:
 
 _Description_
      This function will indicate to the runtime which device number,
-     specified by NUM, associated with the specifed device type
+     specified by DEVICENUM, associated with the specified device type
      DEVICETYPE.
 
 _C/C++_:
-     _Prototype_:   'acc_set_device_num(int num, acc_device_t devicetype);'
+     _Prototype_:   'acc_set_device_num(int devicenum, acc_device_t
+                    devicetype);'
 
 _Fortran_:
      _Interface_:   'subroutine acc_set_device_num(devicenum, devicetype)'
@@ -1787,11 +1803,11 @@ _Fortran_:
                     'integer(kind=acc_device_kind) devicetype'
 
 _Reference_:
-     OpenACC specification v2.0 (https://www.openacc.org), section
+     OpenACC specification v2.6 (https://www.openacc.org), section
      3.2.4.
 
 
-File: libgomp.info,  Node: acc_get_device_num,  Next: acc_async_test,  Prev: acc_set_device_num,  Up: OpenACC Runtime Library Routines
+File: libgomp.info,  Node: acc_get_device_num,  Next: acc_get_property,  Prev: acc_set_device_num,  Up: OpenACC Runtime Library Routines
 
 5.5 'acc_get_device_num' - Get device number to be used.
 ========================================================
@@ -1810,20 +1826,67 @@ _Fortran_:
                     'integer acc_get_device_num'
 
 _Reference_:
-     OpenACC specification v2.0 (https://www.openacc.org), section
+     OpenACC specification v2.6 (https://www.openacc.org), section
      3.2.5.
 
 
-File: libgomp.info,  Node: acc_async_test,  Next: acc_async_test_all,  Prev: acc_get_device_num,  Up: OpenACC Runtime Library Routines
+File: libgomp.info,  Node: acc_get_property,  Next: acc_async_test,  Prev: acc_get_device_num,  Up: OpenACC Runtime Library Routines
 
-5.6 'acc_async_test' - Test for completion of a specific asynchronous operation.
+5.6 'acc_get_property' - Get device property.
+=============================================
+
+_Description_
+     These routines return the value of the specified PROPERTY for the
+     device being queried according to DEVICENUM and DEVICETYPE.
+     Integer-valued and string-valued properties are returned by
+     'acc_get_property' and 'acc_get_property_string' respectively.  The
+     Fortran 'acc_get_property_string' subroutine returns the string
+     retrieved in its fourth argument while the remaining entry points
+     are functions, which pass the return value as their result.
+
+     Note for Fortran, only: the OpenACC technical committee corrected
+     and, hence, modified the interface introduced in OpenACC 2.6.  The
+     kind-value parameter 'acc_device_property' has been renamed to
+     'acc_device_property_kind' for consistency and the return type of
+     the 'acc_get_property' function is now a 'c_size_t' integer instead
+     of a 'acc_device_property' integer.  The parameter
+     'acc_device_property' will continue to be provided, but might be
+     removed in a future version of GCC.
+
+_C/C++_:
+     _Prototype_:   'size_t acc_get_property(int devicenum, acc_device_t
+                    devicetype, acc_device_property_t property);'
+     _Prototype_:   'const char *acc_get_property_string(int devicenum,
+                    acc_device_t devicetype, acc_device_property_t
+                    property);'
+
+_Fortran_:
+     _Interface_:   'function acc_get_property(devicenum, devicetype,
+                    property)'
+     _Interface_:   'subroutine acc_get_property_string(devicenum,
+                    devicetype, property, string)'
+                    'use ISO_C_Binding, only: c_size_t'
+                    'integer devicenum'
+                    'integer(kind=acc_device_kind) devicetype'
+                    'integer(kind=acc_device_property_kind) property'
+                    'integer(kind=c_size_t) acc_get_property'
+                    'character(*) string'
+
+_Reference_:
+     OpenACC specification v2.6 (https://www.openacc.org), section
+     3.2.6.
+
+
+File: libgomp.info,  Node: acc_async_test,  Next: acc_async_test_all,  Prev: acc_get_property,  Up: OpenACC Runtime Library Routines
+
+5.7 'acc_async_test' - Test for completion of a specific asynchronous operation.
 ================================================================================
 
 _Description_
-     This function tests for completion of the asynchrounous operation
+     This function tests for completion of the asynchronous operation
      specified in ARG.  In C/C++, a non-zero value will be returned to
      indicate the specified asynchronous operation has completed.  While
-     Fortran will return a 'true'.  If the asynchrounous operation has
+     Fortran will return a 'true'.  If the asynchronous operation has
      not completed, C/C++ returns a zero and Fortran returns a 'false'.
 
 _C/C++_:
@@ -1835,17 +1898,17 @@ _Fortran_:
                     'logical acc_async_test'
 
 _Reference_:
-     OpenACC specification v2.0 (https://www.openacc.org), section
-     3.2.6.
+     OpenACC specification v2.6 (https://www.openacc.org), section
+     3.2.9.
 
 
 File: libgomp.info,  Node: acc_async_test_all,  Next: acc_wait,  Prev: acc_async_test,  Up: OpenACC Runtime Library Routines
 
-5.7 'acc_async_test_all' - Tests for completion of all asynchronous operations.
+5.8 'acc_async_test_all' - Tests for completion of all asynchronous operations.
 ===============================================================================
 
 _Description_
-     This function tests for completion of all asynchrounous operations.
+     This function tests for completion of all asynchronous operations.
      In C/C++, a non-zero value will be returned to indicate all
      asynchronous operations have completed.  While Fortran will return
      a 'true'.  If any asynchronous operation has not completed, C/C++
@@ -1859,13 +1922,13 @@ _Fortran_:
                     'logical acc_get_device_num'
 
 _Reference_:
-     OpenACC specification v2.0 (https://www.openacc.org), section
-     3.2.7.
+     OpenACC specification v2.6 (https://www.openacc.org), section
+     3.2.10.
 
 
 File: libgomp.info,  Node: acc_wait,  Next: acc_wait_all,  Prev: acc_async_test_all,  Up: OpenACC Runtime Library Routines
 
-5.8 'acc_wait' - Wait for completion of a specific asynchronous operation.
+5.9 'acc_wait' - Wait for completion of a specific asynchronous operation.
 ==========================================================================
 
 _Description_
@@ -1887,14 +1950,14 @@ _Fortran_:
                     'integer(acc_handle_kind) arg'
 
 _Reference_:
-     OpenACC specification v2.0 (https://www.openacc.org), section
-     3.2.8.
+     OpenACC specification v2.6 (https://www.openacc.org), section
+     3.2.11.
 
 
 File: libgomp.info,  Node: acc_wait_all,  Next: acc_wait_all_async,  Prev: acc_wait,  Up: OpenACC Runtime Library Routines
 
-5.9 'acc_wait_all' - Waits for completion of all asynchronous operations.
-=========================================================================
+5.10 'acc_wait_all' - Waits for completion of all asynchronous operations.
+==========================================================================
 
 _Description_
      This function waits for the completion of all asynchronous
@@ -1913,13 +1976,13 @@ _Fortran_:
      compatibility)_:
 
 _Reference_:
-     OpenACC specification v2.0 (https://www.openacc.org), section
-     3.2.10.
+     OpenACC specification v2.6 (https://www.openacc.org), section
+     3.2.13.
 
 
 File: libgomp.info,  Node: acc_wait_all_async,  Next: acc_wait_async,  Prev: acc_wait_all,  Up: OpenACC Runtime Library Routines
 
-5.10 'acc_wait_all_async' - Wait for completion of all asynchronous operations.
+5.11 'acc_wait_all_async' - Wait for completion of all asynchronous operations.
 ===============================================================================
 
 _Description_
@@ -1935,13 +1998,13 @@ _Fortran_:
                     'integer(acc_handle_kind) async'
 
 _Reference_:
-     OpenACC specification v2.0 (https://www.openacc.org), section
-     3.2.11.
+     OpenACC specification v2.6 (https://www.openacc.org), section
+     3.2.14.
 
 
 File: libgomp.info,  Node: acc_wait_async,  Next: acc_init,  Prev: acc_wait_all_async,  Up: OpenACC Runtime Library Routines
 
-5.11 'acc_wait_async' - Wait for completion of asynchronous operations.
+5.12 'acc_wait_async' - Wait for completion of asynchronous operations.
 =======================================================================
 
 _Description_
@@ -1956,13 +2019,13 @@ _Fortran_:
                     'integer(acc_handle_kind) arg, async'
 
 _Reference_:
-     OpenACC specification v2.0 (https://www.openacc.org), section
-     3.2.9.
+     OpenACC specification v2.6 (https://www.openacc.org), section
+     3.2.12.
 
 
 File: libgomp.info,  Node: acc_init,  Next: acc_shutdown,  Prev: acc_wait_async,  Up: OpenACC Runtime Library Routines
 
-5.12 'acc_init' - Initialize runtime for a specific device type.
+5.13 'acc_init' - Initialize runtime for a specific device type.
 ================================================================
 
 _Description_
@@ -1977,13 +2040,13 @@ _Fortran_:
                     'integer(acc_device_kind) devicetype'
 
 _Reference_:
-     OpenACC specification v2.0 (https://www.openacc.org), section
-     3.2.12.
+     OpenACC specification v2.6 (https://www.openacc.org), section
+     3.2.7.
 
 
 File: libgomp.info,  Node: acc_shutdown,  Next: acc_on_device,  Prev: acc_init,  Up: OpenACC Runtime Library Routines
 
-5.13 'acc_shutdown' - Shuts down the runtime for a specific device type.
+5.14 'acc_shutdown' - Shuts down the runtime for a specific device type.
 ========================================================================
 
 _Description_
@@ -1998,19 +2061,19 @@ _Fortran_:
                     'integer(acc_device_kind) devicetype'
 
 _Reference_:
-     OpenACC specification v2.0 (https://www.openacc.org), section
-     3.2.13.
+     OpenACC specification v2.6 (https://www.openacc.org), section
+     3.2.8.
 
 
 File: libgomp.info,  Node: acc_on_device,  Next: acc_malloc,  Prev: acc_shutdown,  Up: OpenACC Runtime Library Routines
 
-5.14 'acc_on_device' - Whether executing on a particular device
+5.15 'acc_on_device' - Whether executing on a particular device
 ===============================================================
 
 _Description_:
      This function returns whether the program is executing on a
      particular device specified in DEVICETYPE.  In C/C++ a non-zero
-     value is returned to indicate the device is execiting on the
+     value is returned to indicate the device is executing on the
      specified device type.  In Fortran, 'true' will be returned.  If
      the program is not executing on the specified device type C/C++
      will return a zero, while Fortran will return 'false'.
@@ -2024,13 +2087,13 @@ _Fortran_:
                     'logical acc_on_device'
 
 _Reference_:
-     OpenACC specification v2.0 (https://www.openacc.org), section
-     3.2.14.
+     OpenACC specification v2.6 (https://www.openacc.org), section
+     3.2.17.
 
 
 File: libgomp.info,  Node: acc_malloc,  Next: acc_free,  Prev: acc_on_device,  Up: OpenACC Runtime Library Routines
 
-5.15 'acc_malloc' - Allocate device memory.
+5.16 'acc_malloc' - Allocate device memory.
 ===========================================
 
 _Description_
@@ -2041,13 +2104,13 @@ _C/C++_:
      _Prototype_:   'd_void* acc_malloc(size_t len);'
 
 _Reference_:
-     OpenACC specification v2.0 (https://www.openacc.org), section
-     3.2.15.
+     OpenACC specification v2.6 (https://www.openacc.org), section
+     3.2.18.
 
 
 File: libgomp.info,  Node: acc_free,  Next: acc_copyin,  Prev: acc_malloc,  Up: OpenACC Runtime Library Routines
 
-5.16 'acc_free' - Free device memory.
+5.17 'acc_free' - Free device memory.
 =====================================
 
 _Description_
@@ -2057,13 +2120,13 @@ _C/C++_:
      _Prototype_:   'acc_free(d_void *a);'
 
 _Reference_:
-     OpenACC specification v2.0 (https://www.openacc.org), section
-     3.2.16.
+     OpenACC specification v2.6 (https://www.openacc.org), section
+     3.2.19.
 
 
 File: libgomp.info,  Node: acc_copyin,  Next: acc_present_or_copyin,  Prev: acc_free,  Up: OpenACC Runtime Library Routines
 
-5.17 'acc_copyin' - Allocate device memory and copy host memory to it.
+5.18 'acc_copyin' - Allocate device memory and copy host memory to it.
 ======================================================================
 
 _Description_
@@ -2077,6 +2140,8 @@ _Description_
 
 _C/C++_:
      _Prototype_:   'void *acc_copyin(h_void *a, size_t len);'
+     _Prototype_:   'void *acc_copyin_async(h_void *a, size_t len, int
+                    async);'
 
 _Fortran_:
      _Interface_:   'subroutine acc_copyin(a)'
@@ -2084,19 +2149,26 @@ _Fortran_:
      _Interface_:   'subroutine acc_copyin(a, len)'
                     'type, dimension(:[,:]...) :: a'
                     'integer len'
+     _Interface_:   'subroutine acc_copyin_async(a, async)'
+                    'type, dimension(:[,:]...) :: a'
+                    'integer(acc_handle_kind) :: async'
+     _Interface_:   'subroutine acc_copyin_async(a, len, async)'
+                    'type, dimension(:[,:]...) :: a'
+                    'integer len'
+                    'integer(acc_handle_kind) :: async'
 
 _Reference_:
-     OpenACC specification v2.0 (https://www.openacc.org), section
-     3.2.17.
+     OpenACC specification v2.6 (https://www.openacc.org), section
+     3.2.20.
 
 
 File: libgomp.info,  Node: acc_present_or_copyin,  Next: acc_create,  Prev: acc_copyin,  Up: OpenACC Runtime Library Routines
 
-5.18 'acc_present_or_copyin' - If the data is not present on the device, allocate device memory and copy from host memory.
+5.19 'acc_present_or_copyin' - If the data is not present on the device, allocate device memory and copy from host memory.
 ==========================================================================================================================
 
 _Description_
-     This function tests if the host data specifed by A and of length
+     This function tests if the host data specified by A and of length
      LEN is present or not.  If it is not present, then device memory
      will be allocated and the host memory copied.  The device address
      of the newly allocated device memory is returned.
@@ -2104,6 +2176,10 @@ _Description_
      In Fortran, two (2) forms are supported.  In the first form, A
      specifies a contiguous array section.  The second form A specifies
      a variable or array element and LEN specifies the length in bytes.
+
+     Note that 'acc_present_or_copyin' and 'acc_pcopyin' exist for
+     backward compatibility with OpenACC 2.0; use *note acc_copyin::
+     instead.
 
 _C/C++_:
      _Prototype_:   'void *acc_present_or_copyin(h_void *a, size_t len);'
@@ -2122,13 +2198,13 @@ _Fortran_:
                     'integer len'
 
 _Reference_:
-     OpenACC specification v2.0 (https://www.openacc.org), section
-     3.2.18.
+     OpenACC specification v2.6 (https://www.openacc.org), section
+     3.2.20.
 
 
 File: libgomp.info,  Node: acc_create,  Next: acc_present_or_create,  Prev: acc_present_or_copyin,  Up: OpenACC Runtime Library Routines
 
-5.19 'acc_create' - Allocate device memory and map it to host memory.
+5.20 'acc_create' - Allocate device memory and map it to host memory.
 =====================================================================
 
 _Description_
@@ -2143,6 +2219,8 @@ _Description_
 
 _C/C++_:
      _Prototype_:   'void *acc_create(h_void *a, size_t len);'
+     _Prototype_:   'void *acc_create_async(h_void *a, size_t len, int
+                    async);'
 
 _Fortran_:
      _Interface_:   'subroutine acc_create(a)'
@@ -2150,19 +2228,26 @@ _Fortran_:
      _Interface_:   'subroutine acc_create(a, len)'
                     'type, dimension(:[,:]...) :: a'
                     'integer len'
+     _Interface_:   'subroutine acc_create_async(a, async)'
+                    'type, dimension(:[,:]...) :: a'
+                    'integer(acc_handle_kind) :: async'
+     _Interface_:   'subroutine acc_create_async(a, len, async)'
+                    'type, dimension(:[,:]...) :: a'
+                    'integer len'
+                    'integer(acc_handle_kind) :: async'
 
 _Reference_:
-     OpenACC specification v2.0 (https://www.openacc.org), section
-     3.2.19.
+     OpenACC specification v2.6 (https://www.openacc.org), section
+     3.2.21.
 
 
 File: libgomp.info,  Node: acc_present_or_create,  Next: acc_copyout,  Prev: acc_create,  Up: OpenACC Runtime Library Routines
 
-5.20 'acc_present_or_create' - If the data is not present on the device, allocate device memory and map it to host memory.
+5.21 'acc_present_or_create' - If the data is not present on the device, allocate device memory and map it to host memory.
 ==========================================================================================================================
 
 _Description_
-     This function tests if the host data specifed by A and of length
+     This function tests if the host data specified by A and of length
      LEN is present or not.  If it is not present, then device memory
      will be allocated and mapped to host memory.  In C/C++, the device
      address of the newly allocated device memory is returned.
@@ -2170,6 +2255,10 @@ _Description_
      In Fortran, two (2) forms are supported.  In the first form, A
      specifies a contiguous array section.  The second form A specifies
      a variable or array element and LEN specifies the length in bytes.
+
+     Note that 'acc_present_or_create' and 'acc_pcreate' exist for
+     backward compatibility with OpenACC 2.0; use *note acc_create::
+     instead.
 
 _C/C++_:
      _Prototype_:   'void *acc_present_or_create(h_void *a, size_t len)'
@@ -2188,13 +2277,13 @@ _Fortran_:
                     'integer len'
 
 _Reference_:
-     OpenACC specification v2.0 (https://www.openacc.org), section
-     3.2.20.
+     OpenACC specification v2.6 (https://www.openacc.org), section
+     3.2.21.
 
 
 File: libgomp.info,  Node: acc_copyout,  Next: acc_delete,  Prev: acc_present_or_create,  Up: OpenACC Runtime Library Routines
 
-5.21 'acc_copyout' - Copy device memory to host memory.
+5.22 'acc_copyout' - Copy device memory to host memory.
 =======================================================
 
 _Description_
@@ -2207,6 +2296,10 @@ _Description_
 
 _C/C++_:
      _Prototype_:   'acc_copyout(h_void *a, size_t len);'
+     _Prototype_:   'acc_copyout_async(h_void *a, size_t len, int async);'
+     _Prototype_:   'acc_copyout_finalize(h_void *a, size_t len);'
+     _Prototype_:   'acc_copyout_finalize_async(h_void *a, size_t len, int
+                    async);'
 
 _Fortran_:
      _Interface_:   'subroutine acc_copyout(a)'
@@ -2214,15 +2307,34 @@ _Fortran_:
      _Interface_:   'subroutine acc_copyout(a, len)'
                     'type, dimension(:[,:]...) :: a'
                     'integer len'
+     _Interface_:   'subroutine acc_copyout_async(a, async)'
+                    'type, dimension(:[,:]...) :: a'
+                    'integer(acc_handle_kind) :: async'
+     _Interface_:   'subroutine acc_copyout_async(a, len, async)'
+                    'type, dimension(:[,:]...) :: a'
+                    'integer len'
+                    'integer(acc_handle_kind) :: async'
+     _Interface_:   'subroutine acc_copyout_finalize(a)'
+                    'type, dimension(:[,:]...) :: a'
+     _Interface_:   'subroutine acc_copyout_finalize(a, len)'
+                    'type, dimension(:[,:]...) :: a'
+                    'integer len'
+     _Interface_:   'subroutine acc_copyout_finalize_async(a, async)'
+                    'type, dimension(:[,:]...) :: a'
+                    'integer(acc_handle_kind) :: async'
+     _Interface_:   'subroutine acc_copyout_finalize_async(a, len, async)'
+                    'type, dimension(:[,:]...) :: a'
+                    'integer len'
+                    'integer(acc_handle_kind) :: async'
 
 _Reference_:
-     OpenACC specification v2.0 (https://www.openacc.org), section
-     3.2.21.
+     OpenACC specification v2.6 (https://www.openacc.org), section
+     3.2.22.
 
 
 File: libgomp.info,  Node: acc_delete,  Next: acc_update_device,  Prev: acc_copyout,  Up: OpenACC Runtime Library Routines
 
-5.22 'acc_delete' - Free device memory.
+5.23 'acc_delete' - Free device memory.
 =======================================
 
 _Description_
@@ -2235,6 +2347,10 @@ _Description_
 
 _C/C++_:
      _Prototype_:   'acc_delete(h_void *a, size_t len);'
+     _Prototype_:   'acc_delete_async(h_void *a, size_t len, int async);'
+     _Prototype_:   'acc_delete_finalize(h_void *a, size_t len);'
+     _Prototype_:   'acc_delete_finalize_async(h_void *a, size_t len, int
+                    async);'
 
 _Fortran_:
      _Interface_:   'subroutine acc_delete(a)'
@@ -2242,15 +2358,34 @@ _Fortran_:
      _Interface_:   'subroutine acc_delete(a, len)'
                     'type, dimension(:[,:]...) :: a'
                     'integer len'
+     _Interface_:   'subroutine acc_delete_async(a, async)'
+                    'type, dimension(:[,:]...) :: a'
+                    'integer(acc_handle_kind) :: async'
+     _Interface_:   'subroutine acc_delete_async(a, len, async)'
+                    'type, dimension(:[,:]...) :: a'
+                    'integer len'
+                    'integer(acc_handle_kind) :: async'
+     _Interface_:   'subroutine acc_delete_finalize(a)'
+                    'type, dimension(:[,:]...) :: a'
+     _Interface_:   'subroutine acc_delete_finalize(a, len)'
+                    'type, dimension(:[,:]...) :: a'
+                    'integer len'
+     _Interface_:   'subroutine acc_delete_async_finalize(a, async)'
+                    'type, dimension(:[,:]...) :: a'
+                    'integer(acc_handle_kind) :: async'
+     _Interface_:   'subroutine acc_delete_async_finalize(a, len, async)'
+                    'type, dimension(:[,:]...) :: a'
+                    'integer len'
+                    'integer(acc_handle_kind) :: async'
 
 _Reference_:
-     OpenACC specification v2.0 (https://www.openacc.org), section
-     3.2.22.
+     OpenACC specification v2.6 (https://www.openacc.org), section
+     3.2.23.
 
 
 File: libgomp.info,  Node: acc_update_device,  Next: acc_update_self,  Prev: acc_delete,  Up: OpenACC Runtime Library Routines
 
-5.23 'acc_update_device' - Update device memory from mapped host memory.
+5.24 'acc_update_device' - Update device memory from mapped host memory.
 ========================================================================
 
 _Description_
@@ -2264,6 +2399,7 @@ _Description_
 
 _C/C++_:
      _Prototype_:   'acc_update_device(h_void *a, size_t len);'
+     _Prototype_:   'acc_update_device(h_void *a, size_t len, async);'
 
 _Fortran_:
      _Interface_:   'subroutine acc_update_device(a)'
@@ -2271,15 +2407,22 @@ _Fortran_:
      _Interface_:   'subroutine acc_update_device(a, len)'
                     'type, dimension(:[,:]...) :: a'
                     'integer len'
+     _Interface_:   'subroutine acc_update_device_async(a, async)'
+                    'type, dimension(:[,:]...) :: a'
+                    'integer(acc_handle_kind) :: async'
+     _Interface_:   'subroutine acc_update_device_async(a, len, async)'
+                    'type, dimension(:[,:]...) :: a'
+                    'integer len'
+                    'integer(acc_handle_kind) :: async'
 
 _Reference_:
-     OpenACC specification v2.0 (https://www.openacc.org), section
-     3.2.23.
+     OpenACC specification v2.6 (https://www.openacc.org), section
+     3.2.24.
 
 
 File: libgomp.info,  Node: acc_update_self,  Next: acc_map_data,  Prev: acc_update_device,  Up: OpenACC Runtime Library Routines
 
-5.24 'acc_update_self' - Update host memory from mapped device memory.
+5.25 'acc_update_self' - Update host memory from mapped device memory.
 ======================================================================
 
 _Description_
@@ -2293,6 +2436,8 @@ _Description_
 
 _C/C++_:
      _Prototype_:   'acc_update_self(h_void *a, size_t len);'
+     _Prototype_:   'acc_update_self_async(h_void *a, size_t len, int
+                    async);'
 
 _Fortran_:
      _Interface_:   'subroutine acc_update_self(a)'
@@ -2300,15 +2445,22 @@ _Fortran_:
      _Interface_:   'subroutine acc_update_self(a, len)'
                     'type, dimension(:[,:]...) :: a'
                     'integer len'
+     _Interface_:   'subroutine acc_update_self_async(a, async)'
+                    'type, dimension(:[,:]...) :: a'
+                    'integer(acc_handle_kind) :: async'
+     _Interface_:   'subroutine acc_update_self_async(a, len, async)'
+                    'type, dimension(:[,:]...) :: a'
+                    'integer len'
+                    'integer(acc_handle_kind) :: async'
 
 _Reference_:
-     OpenACC specification v2.0 (https://www.openacc.org), section
-     3.2.24.
+     OpenACC specification v2.6 (https://www.openacc.org), section
+     3.2.25.
 
 
 File: libgomp.info,  Node: acc_map_data,  Next: acc_unmap_data,  Prev: acc_update_self,  Up: OpenACC Runtime Library Routines
 
-5.25 'acc_map_data' - Map previously allocated device memory to host memory.
+5.26 'acc_map_data' - Map previously allocated device memory to host memory.
 ============================================================================
 
 _Description_
@@ -2320,13 +2472,13 @@ _C/C++_:
      _Prototype_:   'acc_map_data(h_void *h, d_void *d, size_t len);'
 
 _Reference_:
-     OpenACC specification v2.0 (https://www.openacc.org), section
-     3.2.25.
+     OpenACC specification v2.6 (https://www.openacc.org), section
+     3.2.26.
 
 
 File: libgomp.info,  Node: acc_unmap_data,  Next: acc_deviceptr,  Prev: acc_map_data,  Up: OpenACC Runtime Library Routines
 
-5.26 'acc_unmap_data' - Unmap device memory from host memory.
+5.27 'acc_unmap_data' - Unmap device memory from host memory.
 =============================================================
 
 _Description_
@@ -2337,13 +2489,13 @@ _C/C++_:
      _Prototype_:   'acc_unmap_data(h_void *h);'
 
 _Reference_:
-     OpenACC specification v2.0 (https://www.openacc.org), section
-     3.2.26.
+     OpenACC specification v2.6 (https://www.openacc.org), section
+     3.2.27.
 
 
 File: libgomp.info,  Node: acc_deviceptr,  Next: acc_hostptr,  Prev: acc_unmap_data,  Up: OpenACC Runtime Library Routines
 
-5.27 'acc_deviceptr' - Get device pointer associated with specific host address.
+5.28 'acc_deviceptr' - Get device pointer associated with specific host address.
 ================================================================================
 
 _Description_
@@ -2354,13 +2506,13 @@ _C/C++_:
      _Prototype_:   'void *acc_deviceptr(h_void *h);'
 
 _Reference_:
-     OpenACC specification v2.0 (https://www.openacc.org), section
-     3.2.27.
+     OpenACC specification v2.6 (https://www.openacc.org), section
+     3.2.28.
 
 
 File: libgomp.info,  Node: acc_hostptr,  Next: acc_is_present,  Prev: acc_deviceptr,  Up: OpenACC Runtime Library Routines
 
-5.28 'acc_hostptr' - Get host pointer associated with specific device address.
+5.29 'acc_hostptr' - Get host pointer associated with specific device address.
 ==============================================================================
 
 _Description_
@@ -2371,13 +2523,13 @@ _C/C++_:
      _Prototype_:   'void *acc_hostptr(d_void *d);'
 
 _Reference_:
-     OpenACC specification v2.0 (https://www.openacc.org), section
-     3.2.28.
+     OpenACC specification v2.6 (https://www.openacc.org), section
+     3.2.29.
 
 
 File: libgomp.info,  Node: acc_is_present,  Next: acc_memcpy_to_device,  Prev: acc_hostptr,  Up: OpenACC Runtime Library Routines
 
-5.29 'acc_is_present' - Indicate whether host variable / array is present on device.
+5.30 'acc_is_present' - Indicate whether host variable / array is present on device.
 ====================================================================================
 
 _Description_
@@ -2407,13 +2559,13 @@ _Fortran_:
                     'logical acc_is_present'
 
 _Reference_:
-     OpenACC specification v2.0 (https://www.openacc.org), section
-     3.2.29.
+     OpenACC specification v2.6 (https://www.openacc.org), section
+     3.2.30.
 
 
 File: libgomp.info,  Node: acc_memcpy_to_device,  Next: acc_memcpy_from_device,  Prev: acc_is_present,  Up: OpenACC Runtime Library Routines
 
-5.30 'acc_memcpy_to_device' - Copy host memory to device memory.
+5.31 'acc_memcpy_to_device' - Copy host memory to device memory.
 ================================================================
 
 _Description_
@@ -2426,13 +2578,13 @@ _C/C++_:
                     bytes);'
 
 _Reference_:
-     OpenACC specification v2.0 (https://www.openacc.org), section
-     3.2.30.
+     OpenACC specification v2.6 (https://www.openacc.org), section
+     3.2.31.
 
 
-File: libgomp.info,  Node: acc_memcpy_from_device,  Next: acc_get_current_cuda_device,  Prev: acc_memcpy_to_device,  Up: OpenACC Runtime Library Routines
+File: libgomp.info,  Node: acc_memcpy_from_device,  Next: acc_attach,  Prev: acc_memcpy_to_device,  Up: OpenACC Runtime Library Routines
 
-5.31 'acc_memcpy_from_device' - Copy device memory to host memory.
+5.32 'acc_memcpy_from_device' - Copy device memory to host memory.
 ==================================================================
 
 _Description_
@@ -2445,13 +2597,51 @@ _C/C++_:
                     size_t bytes);'
 
 _Reference_:
-     OpenACC specification v2.0 (https://www.openacc.org), section
-     3.2.31.
+     OpenACC specification v2.6 (https://www.openacc.org), section
+     3.2.32.
 
 
-File: libgomp.info,  Node: acc_get_current_cuda_device,  Next: acc_get_current_cuda_context,  Prev: acc_memcpy_from_device,  Up: OpenACC Runtime Library Routines
+File: libgomp.info,  Node: acc_attach,  Next: acc_detach,  Prev: acc_memcpy_from_device,  Up: OpenACC Runtime Library Routines
 
-5.32 'acc_get_current_cuda_device' - Get CUDA device handle.
+5.33 'acc_attach' - Let device pointer point to device-pointer target.
+======================================================================
+
+_Description_
+     This function updates a pointer on the device from pointing to a
+     host-pointer address to pointing to the corresponding device data.
+
+_C/C++_:
+     _Prototype_:   'acc_attach(h_void **ptr);'
+     _Prototype_:   'acc_attach_async(h_void **ptr, int async);'
+
+_Reference_:
+     OpenACC specification v2.6 (https://www.openacc.org), section
+     3.2.34.
+
+
+File: libgomp.info,  Node: acc_detach,  Next: acc_get_current_cuda_device,  Prev: acc_attach,  Up: OpenACC Runtime Library Routines
+
+5.34 'acc_detach' - Let device pointer point to host-pointer target.
+====================================================================
+
+_Description_
+     This function updates a pointer on the device from pointing to a
+     device-pointer address to pointing to the corresponding host data.
+
+_C/C++_:
+     _Prototype_:   'acc_detach(h_void **ptr);'
+     _Prototype_:   'acc_detach_async(h_void **ptr, int async);'
+     _Prototype_:   'acc_detach_finalize(h_void **ptr);'
+     _Prototype_:   'acc_detach_finalize_async(h_void **ptr, int async);'
+
+_Reference_:
+     OpenACC specification v2.6 (https://www.openacc.org), section
+     3.2.35.
+
+
+File: libgomp.info,  Node: acc_get_current_cuda_device,  Next: acc_get_current_cuda_context,  Prev: acc_detach,  Up: OpenACC Runtime Library Routines
+
+5.35 'acc_get_current_cuda_device' - Get CUDA device handle.
 ============================================================
 
 _Description_
@@ -2462,13 +2652,13 @@ _C/C++_:
      _Prototype_:   'void *acc_get_current_cuda_device(void);'
 
 _Reference_:
-     OpenACC specification v2.0 (https://www.openacc.org), section
+     OpenACC specification v2.6 (https://www.openacc.org), section
      A.2.1.1.
 
 
 File: libgomp.info,  Node: acc_get_current_cuda_context,  Next: acc_get_cuda_stream,  Prev: acc_get_current_cuda_device,  Up: OpenACC Runtime Library Routines
 
-5.33 'acc_get_current_cuda_context' - Get CUDA context handle.
+5.36 'acc_get_current_cuda_context' - Get CUDA context handle.
 ==============================================================
 
 _Description_
@@ -2479,13 +2669,13 @@ _C/C++_:
      _Prototype_:   'void *acc_get_current_cuda_context(void);'
 
 _Reference_:
-     OpenACC specification v2.0 (https://www.openacc.org), section
+     OpenACC specification v2.6 (https://www.openacc.org), section
      A.2.1.2.
 
 
 File: libgomp.info,  Node: acc_get_cuda_stream,  Next: acc_set_cuda_stream,  Prev: acc_get_current_cuda_context,  Up: OpenACC Runtime Library Routines
 
-5.34 'acc_get_cuda_stream' - Get CUDA stream handle.
+5.37 'acc_get_cuda_stream' - Get CUDA stream handle.
 ====================================================
 
 _Description_
@@ -2497,13 +2687,13 @@ _C/C++_:
      _Prototype_:   'void *acc_get_cuda_stream(int async);'
 
 _Reference_:
-     OpenACC specification v2.0 (https://www.openacc.org), section
+     OpenACC specification v2.6 (https://www.openacc.org), section
      A.2.1.3.
 
 
-File: libgomp.info,  Node: acc_set_cuda_stream,  Prev: acc_get_cuda_stream,  Up: OpenACC Runtime Library Routines
+File: libgomp.info,  Node: acc_set_cuda_stream,  Next: acc_prof_register,  Prev: acc_get_cuda_stream,  Up: OpenACC Runtime Library Routines
 
-5.35 'acc_set_cuda_stream' - Set CUDA stream handle.
+5.38 'acc_set_cuda_stream' - Set CUDA stream handle.
 ====================================================
 
 _Description_
@@ -2519,8 +2709,83 @@ _C/C++_:
      _Prototype_:   'int acc_set_cuda_stream(int async, void *stream);'
 
 _Reference_:
-     OpenACC specification v2.0 (https://www.openacc.org), section
+     OpenACC specification v2.6 (https://www.openacc.org), section
      A.2.1.4.
+
+
+File: libgomp.info,  Node: acc_prof_register,  Next: acc_prof_unregister,  Prev: acc_set_cuda_stream,  Up: OpenACC Runtime Library Routines
+
+5.39 'acc_prof_register' - Register callbacks.
+==============================================
+
+_Description_:
+     This function registers callbacks.
+
+_C/C++_:
+     _Prototype_:   'void acc_prof_register (acc_event_t, acc_prof_callback,
+                    acc_register_t);'
+
+_See also_:
+     *note OpenACC Profiling Interface::
+
+_Reference_:
+     OpenACC specification v2.6 (https://www.openacc.org), section 5.3.
+
+
+File: libgomp.info,  Node: acc_prof_unregister,  Next: acc_prof_lookup,  Prev: acc_prof_register,  Up: OpenACC Runtime Library Routines
+
+5.40 'acc_prof_unregister' - Unregister callbacks.
+==================================================
+
+_Description_:
+     This function unregisters callbacks.
+
+_C/C++_:
+     _Prototype_:   'void acc_prof_unregister (acc_event_t,
+                    acc_prof_callback, acc_register_t);'
+
+_See also_:
+     *note OpenACC Profiling Interface::
+
+_Reference_:
+     OpenACC specification v2.6 (https://www.openacc.org), section 5.3.
+
+
+File: libgomp.info,  Node: acc_prof_lookup,  Next: acc_register_library,  Prev: acc_prof_unregister,  Up: OpenACC Runtime Library Routines
+
+5.41 'acc_prof_lookup' - Obtain inquiry functions.
+==================================================
+
+_Description_:
+     Function to obtain inquiry functions.
+
+_C/C++_:
+     _Prototype_:   'acc_query_fn acc_prof_lookup (const char *);'
+
+_See also_:
+     *note OpenACC Profiling Interface::
+
+_Reference_:
+     OpenACC specification v2.6 (https://www.openacc.org), section 5.3.
+
+
+File: libgomp.info,  Node: acc_register_library,  Prev: acc_prof_lookup,  Up: OpenACC Runtime Library Routines
+
+5.42 'acc_register_library' - Library registration.
+===================================================
+
+_Description_:
+     Function for library registration.
+
+_C/C++_:
+     _Prototype_:   'void acc_register_library (acc_prof_reg, acc_prof_reg,
+                    acc_prof_lookup_func);'
+
+_See also_:
+     *note OpenACC Profiling Interface::, *note ACC_PROFLIB::
+
+_Reference_:
+     OpenACC specification v2.6 (https://www.openacc.org), section 5.3.
 
 
 File: libgomp.info,  Node: OpenACC Environment Variables,  Next: CUDA Streams Usage,  Prev: OpenACC Runtime Library Routines,  Up: Top
@@ -2530,12 +2795,15 @@ File: libgomp.info,  Node: OpenACC Environment Variables,  Next: CUDA Streams Us
 
 The variables 'ACC_DEVICE_TYPE' and 'ACC_DEVICE_NUM' are defined by
 section 4 of the OpenACC specification in version 2.0.  The variable
-'GCC_ACC_NOTIFY' is used for diagnostic purposes.
+'ACC_PROFLIB' is defined by section 4 of the OpenACC specification in
+version 2.6.  The variable 'GCC_ACC_NOTIFY' is used for diagnostic
+purposes.
 
 * Menu:
 
 * ACC_DEVICE_TYPE::
 * ACC_DEVICE_NUM::
+* ACC_PROFLIB::
 * GCC_ACC_NOTIFY::
 
 
@@ -2545,21 +2813,33 @@ File: libgomp.info,  Node: ACC_DEVICE_TYPE,  Next: ACC_DEVICE_NUM,  Up: OpenACC 
 =====================
 
 _Reference_:
-     OpenACC specification v2.0 (https://www.openacc.org), section 4.1.
+     OpenACC specification v2.6 (https://www.openacc.org), section 4.1.
 
 
-File: libgomp.info,  Node: ACC_DEVICE_NUM,  Next: GCC_ACC_NOTIFY,  Prev: ACC_DEVICE_TYPE,  Up: OpenACC Environment Variables
+File: libgomp.info,  Node: ACC_DEVICE_NUM,  Next: ACC_PROFLIB,  Prev: ACC_DEVICE_TYPE,  Up: OpenACC Environment Variables
 
 6.2 'ACC_DEVICE_NUM'
 ====================
 
 _Reference_:
-     OpenACC specification v2.0 (https://www.openacc.org), section 4.2.
+     OpenACC specification v2.6 (https://www.openacc.org), section 4.2.
 
 
-File: libgomp.info,  Node: GCC_ACC_NOTIFY,  Prev: ACC_DEVICE_NUM,  Up: OpenACC Environment Variables
+File: libgomp.info,  Node: ACC_PROFLIB,  Next: GCC_ACC_NOTIFY,  Prev: ACC_DEVICE_NUM,  Up: OpenACC Environment Variables
 
-6.3 'GCC_ACC_NOTIFY'
+6.3 'ACC_PROFLIB'
+=================
+
+_See also_:
+     *note acc_register_library::, *note OpenACC Profiling Interface::
+
+_Reference_:
+     OpenACC specification v2.6 (https://www.openacc.org), section 4.3.
+
+
+File: libgomp.info,  Node: GCC_ACC_NOTIFY,  Prev: ACC_PROFLIB,  Up: OpenACC Environment Variables
+
+6.4 'GCC_ACC_NOTIFY'
 ====================
 
 _Description_:
@@ -2578,7 +2858,7 @@ data and asynchronous operation of computing constructs.  This
 asynchronous functionality is implemented by making use of CUDA
 streams(1).
 
-   The primary means by that the asychronous functionality is accessed
+   The primary means by that the asynchronous functionality is accessed
 is through the use of those OpenACC directives which make use of the
 'async' and 'wait' clauses.  When the 'async' clause is first used with
 a directive, it creates a CUDA stream.  If an 'async-argument' is used
@@ -2609,7 +2889,7 @@ to a different CUDA stream.
 Version 5.5, for additional information
 
 
-File: libgomp.info,  Node: OpenACC Library Interoperability,  Next: The libgomp ABI,  Prev: CUDA Streams Usage,  Up: Top
+File: libgomp.info,  Node: OpenACC Library Interoperability,  Next: OpenACC Profiling Interface,  Prev: CUDA Streams Usage,  Up: Top
 
 8 OpenACC Library Interoperability
 **********************************
@@ -2748,8 +3028,8 @@ the first use case.
 
 There are two environment variables associated with the OpenACC library
 that may be used to control the device type and device number:
-'ACC_DEVICE_TYPE' and 'ACC_DEVICE_NUM', respecively.  These two
-environement variables can be used as an alternative to calling
+'ACC_DEVICE_TYPE' and 'ACC_DEVICE_NUM', respectively.  These two
+environment variables can be used as an alternative to calling
 'acc_set_device_num()'.  As seen in the second use case, the device type
 and device number were specified using 'acc_set_device_num()'.  If
 however, the aforementioned environment variables were set, then the
@@ -2770,13 +3050,265 @@ additional information on library interoperability.
    (2) More complete information about 'ACC_DEVICE_TYPE' and
 'ACC_DEVICE_NUM' can be found in sections 4.1 and 4.2 of the OpenACC
 (https://www.openacc.org) Application Programming Interface”, Version
-2.0.
+2.6.
 
 
-File: libgomp.info,  Node: The libgomp ABI,  Next: Reporting Bugs,  Prev: OpenACC Library Interoperability,  Up: Top
+File: libgomp.info,  Node: OpenACC Profiling Interface,  Next: The libgomp ABI,  Prev: OpenACC Library Interoperability,  Up: Top
 
-9 The libgomp ABI
-*****************
+9 OpenACC Profiling Interface
+*****************************
+
+9.1 Implementation Status and Implementation-Defined Behavior
+=============================================================
+
+We're implementing the OpenACC Profiling Interface as defined by the
+OpenACC 2.6 specification.  We're clarifying some aspects here as
+_implementation-defined behavior_, while they're still under discussion
+within the OpenACC Technical Committee.
+
+   This implementation is tuned to keep the performance impact as low as
+possible for the (very common) case that the Profiling Interface is not
+enabled.  This is relevant, as the Profiling Interface affects all the
+_hot_ code paths (in the target code, not in the offloaded code).  Users
+of the OpenACC Profiling Interface can be expected to understand that
+performance will be impacted to some degree once the Profiling Interface
+has gotten enabled: for example, because of the _runtime_ (libgomp)
+calling into a third-party _library_ for every event that has been
+registered.
+
+   We're not yet accounting for the fact that 'OpenACC events may occur
+during event processing'.  We just handle one case specially, as
+required by CUDA 9.0 'nvprof', that 'acc_get_device_type' (*note
+acc_get_device_type::)) may be called from 'acc_ev_device_init_start',
+'acc_ev_device_init_end' callbacks.
+
+   We're not yet implementing initialization via a
+'acc_register_library' function that is either statically linked in, or
+dynamically via 'LD_PRELOAD'.  Initialization via 'acc_register_library'
+functions dynamically loaded via the 'ACC_PROFLIB' environment variable
+does work, as does directly calling 'acc_prof_register',
+'acc_prof_unregister', 'acc_prof_lookup'.
+
+   As currently there are no inquiry functions defined, calls to
+'acc_prof_lookup' will always return 'NULL'.
+
+   There aren't separate _start_, _stop_ events defined for the event
+types 'acc_ev_create', 'acc_ev_delete', 'acc_ev_alloc', 'acc_ev_free'.
+It's not clear if these should be triggered before or after the actual
+device-specific call is made.  We trigger them after.
+
+   Remarks about data provided to callbacks:
+
+'acc_prof_info.event_type'
+     It's not clear if for _nested_ event callbacks (for example,
+     'acc_ev_enqueue_launch_start' as part of a parent compute
+     construct), this should be set for the nested event
+     ('acc_ev_enqueue_launch_start'), or if the value of the parent
+     construct should remain ('acc_ev_compute_construct_start').  In
+     this implementation, the value will generally correspond to the
+     innermost nested event type.
+
+'acc_prof_info.device_type'
+
+        * For 'acc_ev_compute_construct_start', and in presence of an
+          'if' clause with _false_ argument, this will still refer to
+          the offloading device type.  It's not clear if that's the
+          expected behavior.
+
+        * Complementary to the item before, for
+          'acc_ev_compute_construct_end', this is set to
+          'acc_device_host' in presence of an 'if' clause with _false_
+          argument.  It's not clear if that's the expected behavior.
+
+'acc_prof_info.thread_id'
+     Always '-1'; not yet implemented.
+
+'acc_prof_info.async'
+
+        * Not yet implemented correctly for
+          'acc_ev_compute_construct_start'.
+
+        * In a compute construct, for host-fallback
+          execution/'acc_device_host' it will always be
+          'acc_async_sync'.  It's not clear if that's the expected
+          behavior.
+
+        * For 'acc_ev_device_init_start' and 'acc_ev_device_init_end',
+          it will always be 'acc_async_sync'.  It's not clear if that's
+          the expected behavior.
+
+'acc_prof_info.async_queue'
+     There is no 'limited number of asynchronous queues' in libgomp.
+     This will always have the same value as 'acc_prof_info.async'.
+
+'acc_prof_info.src_file'
+     Always 'NULL'; not yet implemented.
+
+'acc_prof_info.func_name'
+     Always 'NULL'; not yet implemented.
+
+'acc_prof_info.line_no'
+     Always '-1'; not yet implemented.
+
+'acc_prof_info.end_line_no'
+     Always '-1'; not yet implemented.
+
+'acc_prof_info.func_line_no'
+     Always '-1'; not yet implemented.
+
+'acc_prof_info.func_end_line_no'
+     Always '-1'; not yet implemented.
+
+'acc_event_info.event_type', 'acc_event_info.*.event_type'
+     Relating to 'acc_prof_info.event_type' discussed above, in this
+     implementation, this will always be the same value as
+     'acc_prof_info.event_type'.
+
+'acc_event_info.*.parent_construct'
+
+        * Will be 'acc_construct_parallel' for all OpenACC compute
+          constructs as well as many OpenACC Runtime API calls; should
+          be the one matching the actual construct, or
+          'acc_construct_runtime_api', respectively.
+
+        * Will be 'acc_construct_enter_data' or
+          'acc_construct_exit_data' when processing variable mappings
+          specified in OpenACC _declare_ directives; should be
+          'acc_construct_declare'.
+
+        * For implicit 'acc_ev_device_init_start',
+          'acc_ev_device_init_end', and explicit as well as implicit
+          'acc_ev_alloc', 'acc_ev_free', 'acc_ev_enqueue_upload_start',
+          'acc_ev_enqueue_upload_end', 'acc_ev_enqueue_download_start',
+          and 'acc_ev_enqueue_download_end', will be
+          'acc_construct_parallel'; should reflect the real parent
+          construct.
+
+'acc_event_info.*.implicit'
+     For 'acc_ev_alloc', 'acc_ev_free', 'acc_ev_enqueue_upload_start',
+     'acc_ev_enqueue_upload_end', 'acc_ev_enqueue_download_start', and
+     'acc_ev_enqueue_download_end', this currently will be '1' also for
+     explicit usage.
+
+'acc_event_info.data_event.var_name'
+     Always 'NULL'; not yet implemented.
+
+'acc_event_info.data_event.host_ptr'
+     For 'acc_ev_alloc', and 'acc_ev_free', this is always 'NULL'.
+
+'typedef union acc_api_info'
+     ... as printed in '5.2.3. Third Argument: API-Specific
+     Information'.  This should obviously be 'typedef _struct_
+     acc_api_info'.
+
+'acc_api_info.device_api'
+     Possibly not yet implemented correctly for
+     'acc_ev_compute_construct_start', 'acc_ev_device_init_start',
+     'acc_ev_device_init_end': will always be 'acc_device_api_none' for
+     these event types.  For 'acc_ev_enter_data_start', it will be
+     'acc_device_api_none' in some cases.
+
+'acc_api_info.device_type'
+     Always the same as 'acc_prof_info.device_type'.
+
+'acc_api_info.vendor'
+     Always '-1'; not yet implemented.
+
+'acc_api_info.device_handle'
+     Always 'NULL'; not yet implemented.
+
+'acc_api_info.context_handle'
+     Always 'NULL'; not yet implemented.
+
+'acc_api_info.async_handle'
+     Always 'NULL'; not yet implemented.
+
+   Remarks about certain event types:
+
+'acc_ev_device_init_start', 'acc_ev_device_init_end'
+
+        * Whan a compute construct triggers implicit
+          'acc_ev_device_init_start' and 'acc_ev_device_init_end'
+          events, they currently aren't _nested within_ the
+          corresponding 'acc_ev_compute_construct_start' and
+          'acc_ev_compute_construct_end', but they're currently observed
+          _before_ 'acc_ev_compute_construct_start'.  It's not clear
+          what to do: the standard asks us provide a lot of details to
+          the 'acc_ev_compute_construct_start' callback, without
+          (implicitly) initializing a device before?
+
+        * Callbacks for these event types will not be invoked for calls
+          to the 'acc_set_device_type' and 'acc_set_device_num'
+          functions.  It's not clear if they should be.
+
+'acc_ev_enter_data_start', 'acc_ev_enter_data_end', 'acc_ev_exit_data_start', 'acc_ev_exit_data_end'
+
+        * Callbacks for these event types will also be invoked for
+          OpenACC _host_data_ constructs.  It's not clear if they should
+          be.
+
+        * Callbacks for these event types will also be invoked when
+          processing variable mappings specified in OpenACC _declare_
+          directives.  It's not clear if they should be.
+
+   Callbacks for the following event types will be invoked, but dispatch
+and information provided therein has not yet been thoroughly reviewed:
+
+   * 'acc_ev_alloc'
+   * 'acc_ev_free'
+   * 'acc_ev_update_start', 'acc_ev_update_end'
+   * 'acc_ev_enqueue_upload_start', 'acc_ev_enqueue_upload_end'
+   * 'acc_ev_enqueue_download_start', 'acc_ev_enqueue_download_end'
+
+   During device initialization, and finalization, respectively,
+callbacks for the following event types will not yet be invoked:
+
+   * 'acc_ev_alloc'
+   * 'acc_ev_free'
+
+   Callbacks for the following event types have not yet been
+implemented, so currently won't be invoked:
+
+   * 'acc_ev_device_shutdown_start', 'acc_ev_device_shutdown_end'
+   * 'acc_ev_runtime_shutdown'
+   * 'acc_ev_create', 'acc_ev_delete'
+   * 'acc_ev_wait_start', 'acc_ev_wait_end'
+
+   For the following runtime library functions, not all expected
+callbacks will be invoked (mostly concerning implicit device
+initialization):
+
+   * 'acc_get_num_devices'
+   * 'acc_set_device_type'
+   * 'acc_get_device_type'
+   * 'acc_set_device_num'
+   * 'acc_get_device_num'
+   * 'acc_init'
+   * 'acc_shutdown'
+
+   Aside from implicit device initialization, for the following runtime
+library functions, no callbacks will be invoked for shared-memory
+offloading devices (it's not clear if they should be):
+
+   * 'acc_malloc'
+   * 'acc_free'
+   * 'acc_copyin', 'acc_present_or_copyin', 'acc_copyin_async'
+   * 'acc_create', 'acc_present_or_create', 'acc_create_async'
+   * 'acc_copyout', 'acc_copyout_async', 'acc_copyout_finalize',
+     'acc_copyout_finalize_async'
+   * 'acc_delete', 'acc_delete_async', 'acc_delete_finalize',
+     'acc_delete_finalize_async'
+   * 'acc_update_device', 'acc_update_device_async'
+   * 'acc_update_self', 'acc_update_self_async'
+   * 'acc_map_data', 'acc_unmap_data'
+   * 'acc_memcpy_to_device', 'acc_memcpy_to_device_async'
+   * 'acc_memcpy_from_device', 'acc_memcpy_from_device_async'
+
+
+File: libgomp.info,  Node: The libgomp ABI,  Next: Reporting Bugs,  Prev: OpenACC Profiling Interface,  Up: Top
+
+10 The libgomp ABI
+******************
 
 The following sections present notes on the external ABI as presented by
 libgomp.  Only maintainers should need them.
@@ -2802,8 +3334,8 @@ libgomp.  Only maintainers should need them.
 
 File: libgomp.info,  Node: Implementing MASTER construct,  Next: Implementing CRITICAL construct,  Up: The libgomp ABI
 
-9.1 Implementing MASTER construct
-=================================
+10.1 Implementing MASTER construct
+==================================
 
      if (omp_get_thread_num () == 0)
        block
@@ -2815,8 +3347,8 @@ is not worthwhile though...
 
 File: libgomp.info,  Node: Implementing CRITICAL construct,  Next: Implementing ATOMIC construct,  Prev: Implementing MASTER construct,  Up: The libgomp ABI
 
-9.2 Implementing CRITICAL construct
-===================================
+10.2 Implementing CRITICAL construct
+====================================
 
 Without a specified name,
 
@@ -2837,8 +3369,8 @@ state, and so we wouldn't need to initialize this at startup.
 
 File: libgomp.info,  Node: Implementing ATOMIC construct,  Next: Implementing FLUSH construct,  Prev: Implementing CRITICAL construct,  Up: The libgomp ABI
 
-9.3 Implementing ATOMIC construct
-=================================
+10.3 Implementing ATOMIC construct
+==================================
 
 The target should implement the '__sync' builtins.
 
@@ -2853,24 +3385,24 @@ private to the library.
 
 File: libgomp.info,  Node: Implementing FLUSH construct,  Next: Implementing BARRIER construct,  Prev: Implementing ATOMIC construct,  Up: The libgomp ABI
 
-9.4 Implementing FLUSH construct
-================================
+10.4 Implementing FLUSH construct
+=================================
 
 Expands to the '__sync_synchronize' builtin.
 
 
 File: libgomp.info,  Node: Implementing BARRIER construct,  Next: Implementing THREADPRIVATE construct,  Prev: Implementing FLUSH construct,  Up: The libgomp ABI
 
-9.5 Implementing BARRIER construct
-==================================
+10.5 Implementing BARRIER construct
+===================================
 
        void GOMP_barrier (void)
 
 
 File: libgomp.info,  Node: Implementing THREADPRIVATE construct,  Next: Implementing PRIVATE clause,  Prev: Implementing BARRIER construct,  Up: The libgomp ABI
 
-9.6 Implementing THREADPRIVATE construct
-========================================
+10.6 Implementing THREADPRIVATE construct
+=========================================
 
 In _most_ cases we can map this directly to '__thread'.  Except that OMP
 allows constructors for C++ objects.  We can either refuse to support
@@ -2884,8 +3416,8 @@ to register ctor functions to be called.
 
 File: libgomp.info,  Node: Implementing PRIVATE clause,  Next: Implementing FIRSTPRIVATE LASTPRIVATE COPYIN and COPYPRIVATE clauses,  Prev: Implementing THREADPRIVATE construct,  Up: The libgomp ABI
 
-9.7 Implementing PRIVATE clause
-===============================
+10.7 Implementing PRIVATE clause
+================================
 
 In association with a PARALLEL, or within the lexical extent of a
 PARALLEL block, the variable becomes a local variable in the parallel
@@ -2898,8 +3430,8 @@ new variable creation.
 
 File: libgomp.info,  Node: Implementing FIRSTPRIVATE LASTPRIVATE COPYIN and COPYPRIVATE clauses,  Next: Implementing REDUCTION clause,  Prev: Implementing PRIVATE clause,  Up: The libgomp ABI
 
-9.8 Implementing FIRSTPRIVATE LASTPRIVATE COPYIN and COPYPRIVATE clauses
-========================================================================
+10.8 Implementing FIRSTPRIVATE LASTPRIVATE COPYIN and COPYPRIVATE clauses
+=========================================================================
 
 This seems simple enough for PARALLEL blocks.  Create a private struct
 for communicating between the parent and subfunction.  In the parent,
@@ -2936,8 +3468,8 @@ would have to happen via SINGLE machinery instead.
 
 File: libgomp.info,  Node: Implementing REDUCTION clause,  Next: Implementing PARALLEL construct,  Prev: Implementing FIRSTPRIVATE LASTPRIVATE COPYIN and COPYPRIVATE clauses,  Up: The libgomp ABI
 
-9.9 Implementing REDUCTION clause
-=================================
+10.9 Implementing REDUCTION clause
+==================================
 
 The private struct mentioned in the previous section should have a
 pointer to an array of the type of the variable, indexed by the thread's
@@ -2948,8 +3480,8 @@ values.
 
 File: libgomp.info,  Node: Implementing PARALLEL construct,  Next: Implementing FOR construct,  Prev: Implementing REDUCTION clause,  Up: The libgomp ABI
 
-9.10 Implementing PARALLEL construct
-====================================
+10.10 Implementing PARALLEL construct
+=====================================
 
        #pragma omp parallel
        {
@@ -2992,8 +3524,8 @@ assign team ids.
 
 File: libgomp.info,  Node: Implementing FOR construct,  Next: Implementing ORDERED construct,  Prev: Implementing PARALLEL construct,  Up: The libgomp ABI
 
-9.11 Implementing FOR construct
-===============================
+10.11 Implementing FOR construct
+================================
 
        #pragma omp parallel for
        for (i = lb; i <= ub; i++)
@@ -3054,8 +3586,8 @@ clause.  Bookkeeping for that is non-trivial...
 
 File: libgomp.info,  Node: Implementing ORDERED construct,  Next: Implementing SECTIONS construct,  Prev: Implementing FOR construct,  Up: The libgomp ABI
 
-9.12 Implementing ORDERED construct
-===================================
+10.12 Implementing ORDERED construct
+====================================
 
        void GOMP_ordered_start (void)
        void GOMP_ordered_end (void)
@@ -3063,8 +3595,8 @@ File: libgomp.info,  Node: Implementing ORDERED construct,  Next: Implementing S
 
 File: libgomp.info,  Node: Implementing SECTIONS construct,  Next: Implementing SINGLE construct,  Prev: Implementing ORDERED construct,  Up: The libgomp ABI
 
-9.13 Implementing SECTIONS construct
-====================================
+10.13 Implementing SECTIONS construct
+=====================================
 
 A block as
 
@@ -3098,8 +3630,8 @@ A block as
 
 File: libgomp.info,  Node: Implementing SINGLE construct,  Next: Implementing OpenACC's PARALLEL construct,  Prev: Implementing SECTIONS construct,  Up: The libgomp ABI
 
-9.14 Implementing SINGLE construct
-==================================
+10.14 Implementing SINGLE construct
+===================================
 
 A block like
 
@@ -3135,19 +3667,19 @@ A block like
 
 File: libgomp.info,  Node: Implementing OpenACC's PARALLEL construct,  Prev: Implementing SINGLE construct,  Up: The libgomp ABI
 
-9.15 Implementing OpenACC's PARALLEL construct
-==============================================
+10.15 Implementing OpenACC's PARALLEL construct
+===============================================
 
        void GOACC_parallel ()
 
 
 File: libgomp.info,  Node: Reporting Bugs,  Next: Copying,  Prev: The libgomp ABI,  Up: Top
 
-10 Reporting Bugs
+11 Reporting Bugs
 *****************
 
 Bugs in the GNU Offloading and Multi Processing Runtime Library should
-be reported via Bugzilla (http://gcc.gnu.org/bugzilla/).  Please add
+be reported via Bugzilla (https://gcc.gnu.org/bugzilla/).  Please add
 "openacc", or "openmp", or both to the keywords field in the bug report,
 as appropriate.
 
@@ -3865,7 +4397,7 @@ program into proprietary programs.  If your program is a subroutine
 library, you may consider it more useful to permit linking proprietary
 applications with the library.  If this is what you want to do, use the
 GNU Lesser General Public License instead of this License.  But first,
-please read <http://www.gnu.org/philosophy/why-not-lgpl.html>.
+please read <https://www.gnu.org/licenses/why-not-lgpl.html>.
 
 
 File: libgomp.info,  Node: GNU Free Documentation License,  Next: Funding,  Prev: Copying,  Up: Top
@@ -4408,6 +4940,8 @@ Library Index
  [index ]
 * Menu:
 
+* acc_get_property:                      acc_get_property.      (line 6)
+* acc_get_property_string:               acc_get_property.      (line 6)
 * Environment Variable:                  OMP_CANCELLATION.      (line 6)
 * Environment Variable <1>:              OMP_DISPLAY_ENV.       (line 6)
 * Environment Variable <2>:              OMP_DEFAULT_DEVICE.    (line 6)
@@ -4443,135 +4977,144 @@ Library Index
 
 Tag Table:
 Node: Top2083
-Node: Enabling OpenMP4613
-Node: Runtime Library Routines5401
-Node: omp_get_active_level8478
-Node: omp_get_ancestor_thread_num9178
-Node: omp_get_cancellation10108
-Node: omp_get_default_device10922
-Node: omp_get_dynamic11598
-Node: omp_get_level12473
-Node: omp_get_max_active_levels13093
-Node: omp_get_max_task_priority13798
-Node: omp_get_max_threads14418
-Node: omp_get_nested15175
-Node: omp_get_num_devices16089
-Node: omp_get_num_procs16610
-Node: omp_get_num_teams17149
-Node: omp_get_num_threads17665
-Node: omp_get_proc_bind18754
-Node: omp_get_schedule19675
-Node: omp_get_team_num20629
-Node: omp_get_team_size21128
-Node: omp_get_thread_limit22088
-Node: omp_get_thread_num22707
-Node: omp_in_parallel23578
-Node: omp_in_final24227
-Node: omp_is_initial_device24901
-Node: omp_set_default_device25594
-Node: omp_set_dynamic26385
-Node: omp_set_max_active_levels27271
-Node: omp_set_nested28048
-Node: omp_set_num_threads28940
-Node: omp_set_schedule29808
-Node: omp_init_lock30889
-Node: omp_set_lock31542
-Node: omp_test_lock32397
-Node: omp_unset_lock33373
-Node: omp_destroy_lock34304
-Node: omp_init_nest_lock34981
-Node: omp_set_nest_lock35716
-Node: omp_test_nest_lock36631
-Node: omp_unset_nest_lock37658
-Node: omp_destroy_nest_lock38673
-Node: omp_get_wtick39424
-Node: omp_get_wtime40016
-Node: Environment Variables40792
-Node: OMP_CANCELLATION42361
-Node: OMP_DISPLAY_ENV42894
-Node: OMP_DEFAULT_DEVICE43597
-Node: OMP_DYNAMIC44377
-Node: OMP_MAX_ACTIVE_LEVELS44973
-Node: OMP_MAX_TASK_PRIORITY45623
-Node: OMP_NESTED46281
-Node: OMP_NUM_THREADS46886
-Node: OMP_PROC_BIND47574
-Node: OMP_PLACES48766
-Node: OMP_STACKSIZE50943
-Node: OMP_SCHEDULE51767
-Node: OMP_THREAD_LIMIT52465
-Node: OMP_WAIT_POLICY53065
-Node: GOMP_CPU_AFFINITY53757
-Node: GOMP_DEBUG55487
-Node: GOMP_STACKSIZE55994
-Node: GOMP_SPINCOUNT56823
-Node: GOMP_RTEMS_THREAD_POOLS58027
-Node: Enabling OpenACC60205
-Node: OpenACC Runtime Library Routines61198
-Node: acc_get_num_devices64992
-Node: acc_set_device_type65718
-Node: acc_get_device_type66482
-Node: acc_set_device_num67197
-Node: acc_get_device_num67981
-Node: acc_async_test68778
-Node: acc_async_test_all69770
-Node: acc_wait70670
-Node: acc_wait_all71532
-Node: acc_wait_all_async72291
-Node: acc_wait_async73043
-Node: acc_init73750
-Node: acc_shutdown74396
-Node: acc_on_device75064
-Node: acc_malloc76068
-Node: acc_free76567
-Node: acc_copyin76994
-Node: acc_present_or_copyin78104
-Node: acc_create79730
-Node: acc_present_or_create80885
-Node: acc_copyout82519
-Node: acc_delete83542
-Node: acc_update_device84517
-Node: acc_update_self85629
-Node: acc_map_data86733
-Node: acc_unmap_data87418
-Node: acc_deviceptr87939
-Node: acc_hostptr88509
-Node: acc_is_present89073
-Node: acc_memcpy_to_device90600
-Node: acc_memcpy_from_device91263
-Node: acc_get_current_cuda_device91947
-Node: acc_get_current_cuda_context92544
-Node: acc_get_cuda_stream93144
-Node: acc_set_cuda_stream93735
-Node: OpenACC Environment Variables94380
-Node: ACC_DEVICE_TYPE94839
-Node: ACC_DEVICE_NUM95075
-Node: GCC_ACC_NOTIFY95332
-Node: CUDA Streams Usage95555
-Ref: CUDA Streams Usage-Footnote-197455
-Node: OpenACC Library Interoperability97564
-Ref: OpenACC Library Interoperability-Footnote-1103920
-Ref: OpenACC Library Interoperability-Footnote-2104172
-Node: The libgomp ABI104380
-Node: Implementing MASTER construct105236
-Node: Implementing CRITICAL construct105650
-Node: Implementing ATOMIC construct106389
-Node: Implementing FLUSH construct106870
-Node: Implementing BARRIER construct107141
-Node: Implementing THREADPRIVATE construct107410
-Node: Implementing PRIVATE clause108063
-Node: Implementing FIRSTPRIVATE LASTPRIVATE COPYIN and COPYPRIVATE clauses108644
-Node: Implementing REDUCTION clause109968
-Node: Implementing PARALLEL construct110525
-Node: Implementing FOR construct111782
-Node: Implementing ORDERED construct113780
-Node: Implementing SECTIONS construct114086
-Node: Implementing SINGLE construct114852
-Node: Implementing OpenACC's PARALLEL construct115564
-Node: Reporting Bugs115822
-Node: Copying116184
-Node: GNU Free Documentation License153731
-Node: Funding178854
-Node: Library Index181380
+Node: Enabling OpenMP4645
+Node: Runtime Library Routines5433
+Node: omp_get_active_level8510
+Node: omp_get_ancestor_thread_num9210
+Node: omp_get_cancellation10140
+Node: omp_get_default_device10954
+Node: omp_get_dynamic11630
+Node: omp_get_level12505
+Node: omp_get_max_active_levels13125
+Node: omp_get_max_task_priority13830
+Node: omp_get_max_threads14450
+Node: omp_get_nested15207
+Node: omp_get_num_devices16121
+Node: omp_get_num_procs16642
+Node: omp_get_num_teams17181
+Node: omp_get_num_threads17697
+Node: omp_get_proc_bind18786
+Node: omp_get_schedule19707
+Node: omp_get_team_num20661
+Node: omp_get_team_size21160
+Node: omp_get_thread_limit22120
+Node: omp_get_thread_num22739
+Node: omp_in_parallel23610
+Node: omp_in_final24259
+Node: omp_is_initial_device24933
+Node: omp_set_default_device25626
+Node: omp_set_dynamic26417
+Node: omp_set_max_active_levels27303
+Node: omp_set_nested28080
+Node: omp_set_num_threads28972
+Node: omp_set_schedule29840
+Node: omp_init_lock30921
+Node: omp_set_lock31574
+Node: omp_test_lock32429
+Node: omp_unset_lock33405
+Node: omp_destroy_lock34336
+Node: omp_init_nest_lock35013
+Node: omp_set_nest_lock35748
+Node: omp_test_nest_lock36663
+Node: omp_unset_nest_lock37690
+Node: omp_destroy_nest_lock38705
+Node: omp_get_wtick39456
+Node: omp_get_wtime40048
+Node: Environment Variables40824
+Node: OMP_CANCELLATION42393
+Node: OMP_DISPLAY_ENV42926
+Node: OMP_DEFAULT_DEVICE43629
+Node: OMP_DYNAMIC44409
+Node: OMP_MAX_ACTIVE_LEVELS45005
+Node: OMP_MAX_TASK_PRIORITY45655
+Node: OMP_NESTED46313
+Node: OMP_NUM_THREADS46918
+Node: OMP_PROC_BIND47606
+Node: OMP_PLACES48798
+Node: OMP_STACKSIZE50975
+Node: OMP_SCHEDULE51799
+Node: OMP_THREAD_LIMIT52497
+Node: OMP_WAIT_POLICY53097
+Node: GOMP_CPU_AFFINITY53789
+Node: GOMP_DEBUG55519
+Node: GOMP_STACKSIZE56026
+Node: GOMP_SPINCOUNT56857
+Node: GOMP_RTEMS_THREAD_POOLS58061
+Node: Enabling OpenACC60239
+Node: OpenACC Runtime Library Routines61140
+Node: acc_get_num_devices65421
+Node: acc_set_device_type66147
+Node: acc_get_device_type66911
+Node: acc_set_device_num67924
+Node: acc_get_device_num68741
+Node: acc_get_property69540
+Node: acc_async_test71763
+Node: acc_async_test_all72751
+Node: acc_wait73651
+Node: acc_wait_all74514
+Node: acc_wait_all_async75275
+Node: acc_wait_async76027
+Node: acc_init76735
+Node: acc_shutdown77380
+Node: acc_on_device78047
+Node: acc_malloc79051
+Node: acc_free79550
+Node: acc_copyin79977
+Node: acc_present_or_copyin81564
+Node: acc_create83342
+Node: acc_present_or_create84974
+Node: acc_copyout86760
+Node: acc_delete89064
+Node: acc_update_device91311
+Node: acc_update_self92885
+Node: acc_map_data94475
+Node: acc_unmap_data95160
+Node: acc_deviceptr95681
+Node: acc_hostptr96251
+Node: acc_is_present96815
+Node: acc_memcpy_to_device98342
+Node: acc_memcpy_from_device99005
+Node: acc_attach99672
+Node: acc_detach100319
+Node: acc_get_current_cuda_device101098
+Node: acc_get_current_cuda_context101683
+Node: acc_get_cuda_stream102283
+Node: acc_set_cuda_stream102874
+Node: acc_prof_register103545
+Node: acc_prof_unregister104104
+Node: acc_prof_lookup104671
+Node: acc_register_library105192
+Node: OpenACC Environment Variables105758
+Node: ACC_DEVICE_TYPE106330
+Node: ACC_DEVICE_NUM106566
+Node: ACC_PROFLIB106820
+Node: GCC_ACC_NOTIFY107151
+Node: CUDA Streams Usage107371
+Ref: CUDA Streams Usage-Footnote-1109272
+Node: OpenACC Library Interoperability109381
+Ref: OpenACC Library Interoperability-Footnote-1115749
+Ref: OpenACC Library Interoperability-Footnote-2116001
+Node: OpenACC Profiling Interface116209
+Node: The libgomp ABI126233
+Node: Implementing MASTER construct127086
+Node: Implementing CRITICAL construct127502
+Node: Implementing ATOMIC construct128243
+Node: Implementing FLUSH construct128726
+Node: Implementing BARRIER construct128999
+Node: Implementing THREADPRIVATE construct129270
+Node: Implementing PRIVATE clause129925
+Node: Implementing FIRSTPRIVATE LASTPRIVATE COPYIN and COPYPRIVATE clauses130508
+Node: Implementing REDUCTION clause131834
+Node: Implementing PARALLEL construct132393
+Node: Implementing FOR construct133652
+Node: Implementing ORDERED construct135652
+Node: Implementing SECTIONS construct135960
+Node: Implementing SINGLE construct136728
+Node: Implementing OpenACC's PARALLEL construct137442
+Node: Reporting Bugs137702
+Node: Copying138065
+Node: GNU Free Documentation License175611
+Node: Funding200734
+Node: Library Index203260
 
 End Tag Table
