@@ -1,10 +1,10 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.112 2020/09/09 07:12:04 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.113 2021/04/11 01:44:14 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of gcc.
 #
-# This version is for GCC 9.3
+# This version is for GCC 10.3
 
 # initialise
 
@@ -312,9 +312,11 @@ get_libsanitizer () {
 		getvars $_PLATFORM/libsanitizer/lsan/Makefile \
 			lsan_files
 		getvars $_PLATFORM/libsanitizer/tsan/Makefile \
-			tsan_plugin_files
+			tsan_files
 		getvars $_PLATFORM/libsanitizer/ubsan/Makefile \
-			ubsan_plugin_files
+			ubsan_files
+		getvars $_PLATFORM/libsanitizer/interception/Makefile \
+			interception_files
 
 	} | sanitise_includes \
 	  | write_mk $_OUTDIRBASE/lib/$_subdir/arch/$_MACHINE_ARCH/defs.mk
@@ -491,8 +493,7 @@ gcc*)
 	get_gcc_libiberty gcc
 	get_libobjc libobjc
 	get_libstdcxx_v3 libstdc++-v3 gcc
-	# XXX not yet
-	# get_libsanitizer libsanitizer
+	get_libsanitizer libsanitizer
 	get_libdecnumber libdecnumber
 	get_libgomp libgomp
 	get_libbacktrace libbacktrace
