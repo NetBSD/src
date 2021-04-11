@@ -1,8 +1,7 @@
 //===-- sanitizer_allocator_primary32.h -------------------------*- C++ -*-===//
 //
-// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
-// See https://llvm.org/LICENSE.txt for license information.
-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
 //
@@ -46,24 +45,14 @@ struct SizeClassAllocator32FlagMasks {  //  Bit masks.
 
 template <class Params>
 class SizeClassAllocator32 {
- private:
-  static const u64 kTwoLevelByteMapSize1 =
-      (Params::kSpaceSize >> Params::kRegionSizeLog) >> 12;
-  static const u64 kMinFirstMapSizeTwoLevelByteMap = 4;
-
  public:
-  using AddressSpaceView = typename Params::AddressSpaceView;
   static const uptr kSpaceBeg = Params::kSpaceBeg;
   static const u64 kSpaceSize = Params::kSpaceSize;
   static const uptr kMetadataSize = Params::kMetadataSize;
   typedef typename Params::SizeClassMap SizeClassMap;
   static const uptr kRegionSizeLog = Params::kRegionSizeLog;
+  typedef typename Params::ByteMap ByteMap;
   typedef typename Params::MapUnmapCallback MapUnmapCallback;
-  using ByteMap = typename conditional<
-      (kTwoLevelByteMapSize1 < kMinFirstMapSizeTwoLevelByteMap),
-      FlatByteMap<(Params::kSpaceSize >> Params::kRegionSizeLog),
-                  AddressSpaceView>,
-      TwoLevelByteMap<kTwoLevelByteMapSize1, 1 << 12, AddressSpaceView>>::type;
 
   COMPILER_CHECK(!SANITIZER_SIGN_EXTENDED_ADDRESSES ||
                  (kSpaceSize & (kSpaceSize - 1)) == 0);
@@ -216,7 +205,7 @@ class SizeClassAllocator32 {
     return ClassIdToSize(GetSizeClass(p));
   }
 
-  static uptr ClassID(uptr size) { return SizeClassMap::ClassID(size); }
+  uptr ClassID(uptr size) { return SizeClassMap::ClassID(size); }
 
   uptr TotalMemoryUsed() {
     // No need to lock here.
@@ -284,7 +273,7 @@ class SizeClassAllocator32 {
   COMPILER_CHECK(sizeof(SizeClassInfo) % kCacheLineSize == 0);
 #endif
 
-  uptr ComputeRegionId(uptr mem) const {
+  uptr ComputeRegionId(uptr mem) {
     if (SANITIZER_SIGN_EXTENDED_ADDRESSES)
       mem &= (kSpaceSize - 1);
     const uptr res = mem >> kRegionSizeLog;

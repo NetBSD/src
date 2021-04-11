@@ -1,8 +1,7 @@
 //===-- sanitizer_flag_parser.h ---------------------------------*- C++ -*-===//
 //
-// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
-// See https://llvm.org/LICENSE.txt for license information.
-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
 //
@@ -22,9 +21,6 @@ namespace __sanitizer {
 class FlagHandlerBase {
  public:
   virtual bool Parse(const char *value) { return false; }
-
- protected:
-  ~FlagHandlerBase() {}
 };
 
 template <typename T>
@@ -99,15 +95,6 @@ inline bool FlagHandler<uptr>::Parse(const char *value) {
   return ok;
 }
 
-template <>
-inline bool FlagHandler<s64>::Parse(const char *value) {
-  const char *value_end;
-  *t_ = internal_simple_strtoll(value, &value_end, 10);
-  bool ok = *value_end == 0;
-  if (!ok) Printf("ERROR: Invalid value for s64 option: '%s'\n", value);
-  return ok;
-}
-
 class FlagParser {
   static const int kMaxFlags = 200;
   struct Flag {
@@ -124,8 +111,7 @@ class FlagParser {
   FlagParser();
   void RegisterHandler(const char *name, FlagHandlerBase *handler,
                        const char *desc);
-  void ParseString(const char *s, const char *env_name = 0);
-  void ParseStringFromEnv(const char *env_name);
+  void ParseString(const char *s);
   bool ParseFile(const char *path, bool ignore_missing);
   void PrintFlagDescriptions();
 
@@ -135,8 +121,8 @@ class FlagParser {
   void fatal_error(const char *err);
   bool is_space(char c);
   void skip_whitespace();
-  void parse_flags(const char *env_option_name);
-  void parse_flag(const char *env_option_name);
+  void parse_flags();
+  void parse_flag();
   bool run_handler(const char *name, const char *value);
   char *ll_strndup(const char *s, uptr n);
 };
@@ -144,7 +130,7 @@ class FlagParser {
 template <typename T>
 static void RegisterFlag(FlagParser *parser, const char *name, const char *desc,
                          T *var) {
-  FlagHandler<T> *fh = new (FlagParser::Alloc) FlagHandler<T>(var);
+  FlagHandler<T> *fh = new (FlagParser::Alloc) FlagHandler<T>(var);  // NOLINT
   parser->RegisterHandler(name, fh, desc);
 }
 

@@ -1,14 +1,13 @@
 //===-- asan_interceptors.h -------------------------------------*- C++ -*-===//
 //
-// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
-// See https://llvm.org/LICENSE.txt for license information.
-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
 //
 // This file is a part of AddressSanitizer, an address sanity checker.
 //
-// ASan-private header for asan_interceptors.cpp
+// ASan-private header for asan_interceptors.cc
 //===----------------------------------------------------------------------===//
 #ifndef ASAN_INTERCEPTORS_H
 #define ASAN_INTERCEPTORS_H
@@ -116,14 +115,6 @@ void InitializePlatformInterceptors();
 # define ASAN_INTERCEPT___STRDUP 0
 #endif
 
-#if SANITIZER_LINUX && (defined(__arm__) || defined(__aarch64__) || \
-                        defined(__i386__) || defined(__x86_64__))
-# define ASAN_INTERCEPT_VFORK 1
-#else
-# define ASAN_INTERCEPT_VFORK 0
-#endif
-
-
 #if SANITIZER_NETBSD
 # define ASAN_INTERCEPT_PTHREAD_ATFORK 1
 #else
@@ -138,16 +129,16 @@ DECLARE_REAL(uptr, strnlen, const char *s, uptr maxlen)
 DECLARE_REAL(char*, strstr, const char *s1, const char *s2)
 
 #if !SANITIZER_MAC
-#define ASAN_INTERCEPT_FUNC(name)                                         \
-  do {                                                                    \
-    if (!INTERCEPT_FUNCTION(name))                                        \
-      VReport(1, "AddressSanitizer: failed to intercept '%s'\n'", #name); \
+#define ASAN_INTERCEPT_FUNC(name)                                        \
+  do {                                                                   \
+    if ((!INTERCEPT_FUNCTION(name) || !REAL(name)))                      \
+      VReport(1, "AddressSanitizer: failed to intercept '" #name "'\n"); \
   } while (0)
-#define ASAN_INTERCEPT_FUNC_VER(name, ver)                                  \
-  do {                                                                      \
-    if (!INTERCEPT_FUNCTION_VER(name, ver))                                 \
-      VReport(1, "AddressSanitizer: failed to intercept '%s@@%s'\n", #name, \
-              #ver);                                                        \
+#define ASAN_INTERCEPT_FUNC_VER(name, ver)                                     \
+  do {                                                                         \
+    if ((!INTERCEPT_FUNCTION_VER(name, ver) || !REAL(name)))                   \
+      VReport(                                                                 \
+          1, "AddressSanitizer: failed to intercept '" #name "@@" #ver "'\n"); \
   } while (0)
 #else
 // OS X interceptors don't need to be initialized with INTERCEPT_FUNCTION.
