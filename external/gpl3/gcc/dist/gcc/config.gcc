@@ -1272,8 +1272,8 @@ arm*-*-freebsd*)                # ARM FreeBSD EABI
 	with_tls=${with_tls:-gnu}
 	;;
 arm*-*-netbsdelf*)
-	tm_file="dbxelf.h elfos.h ${nbsd_tm_file} arm/elf.h"
 	tmake_file="${tmake_file} arm/t-arm"
+	tm_file="dbxelf.h elfos.h ${nbsd_tm_file} arm/elf.h"
 	extra_options="${extra_options} netbsd.opt netbsd-elf.opt"
 	case ${target} in
 	arm*eb-*) tm_defines="${tm_defines} TARGET_BIG_ENDIAN_DEFAULT=1" ;;
