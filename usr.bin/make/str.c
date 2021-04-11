@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.83 2021/04/03 14:39:02 rillig Exp $	*/
+/*	$NetBSD: str.c,v 1.84 2021/04/11 19:05:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -71,7 +71,7 @@
 #include "make.h"
 
 /*	"@(#)str.c	5.8 (Berkeley) 6/1/90"	*/
-MAKE_RCSID("$NetBSD: str.c,v 1.83 2021/04/03 14:39:02 rillig Exp $");
+MAKE_RCSID("$NetBSD: str.c,v 1.84 2021/04/11 19:05:06 rillig Exp $");
 
 /* Return the concatenation of s1 and s2, freshly allocated. */
 char *
@@ -125,13 +125,13 @@ str_concat4(const char *s1, const char *s2, const char *s3, const char *s4)
  * Returns the fractured words, which must be freed later using Words_Free,
  * unless the returned Words.words was NULL.
  */
-Words
-Str_Words(const char *str, bool expand)
+SubstringWords
+Substring_Words(const char *str, bool expand)
 {
 	size_t str_len;
 	char *words_buf;
 	size_t words_cap;
-	char **words;
+	Substring *words;
 	size_t words_len;
 	char inquote;
 	char *word_start;
@@ -146,7 +146,7 @@ Str_Words(const char *str, bool expand)
 	words_buf = bmake_malloc(str_len + 1);
 
 	words_cap = str_len / 5 > 50 ? str_len / 5 : 50;
-	words = bmake_malloc((words_cap + 1) * sizeof(char *));
+	words = bmake_malloc((words_cap + 1) * sizeof(words[0]));
 
 	/*
 	 * copy the string; at the same time, parse backslashes,
@@ -205,15 +205,16 @@ Str_Words(const char *str, bool expand)
 			*word_end++ = '\0';
 			if (words_len == words_cap) {
 				size_t new_size;
-				words_cap *= 2;		/* ramp up fast */
-				new_size = (words_cap + 1) * sizeof(char *);
+				words_cap *= 2;
+				new_size = (words_cap + 1) * sizeof(words[0]);
 				words = bmake_realloc(words, new_size);
 			}
-			words[words_len++] = word_start;
+			words[words_len++] =
+			    Substring_Init(word_start, word_end - 1);
 			word_start = NULL;
 			if (ch == '\n' || ch == '\0') {
 				if (expand && inquote != '\0') {
-					Words res;
+					SubstringWords res;
 
 					free(words);
 					free(words_buf);
@@ -268,16 +269,40 @@ Str_Words(const char *str, bool expand)
 		*word_end++ = ch;
 	}
 done:
-	words[words_len] = NULL;	/* useful for argv */
+	words[words_len] = Substring_Init(NULL, NULL);	/* useful for argv */
 
 	{
-		Words result;
+		SubstringWords result;
 
 		result.words = words;
 		result.len = words_len;
 		result.freeIt = words_buf;
 		return result;
 	}
+}
+
+Words
+Str_Words(const char *str, bool expand)
+{
+	SubstringWords swords;
+	Words words;
+	size_t i;
+
+	swords = Substring_Words(str, expand);
+	if (swords.words == NULL) {
+		words.words = NULL;
+		words.len = 0;
+		words.freeIt = NULL;
+		return words;
+	}
+
+	words.words = bmake_malloc((swords.len + 1) * sizeof(words.words[0]));
+	words.len = swords.len;
+	words.freeIt = swords.freeIt;
+	for (i = 0; i < swords.len + 1; i++)
+		words.words[i] = UNCONST(swords.words[i].start);
+	free(swords.words);
+	return words;
 }
 
 /*

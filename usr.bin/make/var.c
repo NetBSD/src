@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.919 2021/04/11 18:44:57 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.920 2021/04/11 19:05:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.919 2021/04/11 18:44:57 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.920 2021/04/11 19:05:06 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2461,7 +2461,7 @@ ModifyWords(ModChain *ch,
 	Expr *expr = ch->expr;
 	const char *val = expr->value.str;
 	SepBuf result;
-	Words words;
+	SubstringWords words;
 	size_t i;
 	Substring word;
 
@@ -2473,21 +2473,19 @@ ModifyWords(ModChain *ch,
 		goto done;
 	}
 
-	words = Str_Words(val, false);
+	words = Substring_Words(val, false);
 
 	DEBUG2(VAR, "ModifyWords: split \"%s\" into %u words\n",
 	    val, (unsigned)words.len);
 
 	SepBuf_Init(&result, ch->sep);
 	for (i = 0; i < words.len; i++) {
-		/* XXX: performance: Substring_InitStr calls strlen */
-		word = Substring_InitStr(words.words[i]);
-		modifyWord(word, &result, modifyWord_args);
+		modifyWord(words.words[i], &result, modifyWord_args);
 		if (result.buf.len > 0)
 			SepBuf_Sep(&result);
 	}
 
-	Words_Free(words);
+	SubstringWords_Free(words);
 
 done:
 	Expr_SetValueOwn(expr, SepBuf_DoneData(&result));
