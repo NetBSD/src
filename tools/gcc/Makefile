@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.101 2021/04/11 07:35:45 mrg Exp $
+#	$NetBSD: Makefile,v 1.102 2021/04/11 23:55:47 mrg Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -234,7 +234,7 @@ MKENV_BUILD_MAKE=cd .native && ${MKNATIVE_ENV} ${BUILD_MAKE}
 		(cd .native/gcc && ${MKNATIVE_ENV} ${BUILD_MAKE} -e libgcc.mvars tconfig.h); \
 		(cd .native && touch gcc/cc1obj gcc/cc1plus gcc/f771 gcc/libgcc.a gcc/libgcc_s.so)
 	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \
-		(cd .native/gcc && ${MKNATIVE_ENV} ${BUILD_MAKE} -e omp-device-properties.h)
+		(cd .native/gcc && ${MKNATIVE_ENV} ${BUILD_MAKE} -e s-omp-device-properties-h)
 .if defined(EXTRA_GCC_TARGETS)
 	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \
 		(cd .native/gcc && ${MKNATIVE_ENV} ${BUILD_MAKE} -e ${EXTRA_GCC_TARGETS})
