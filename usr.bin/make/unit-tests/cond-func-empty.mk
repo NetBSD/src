@@ -1,4 +1,4 @@
-# $NetBSD: cond-func-empty.mk,v 1.13 2021/03/15 12:15:03 rillig Exp $
+# $NetBSD: cond-func-empty.mk,v 1.14 2021/04/11 13:35:56 rillig Exp $
 #
 # Tests for the empty() function in .if conditions, which tests a variable
 # expression for emptiness.
@@ -93,7 +93,7 @@ WORD=	word
 # neither leading nor trailing spaces are trimmed in the argument of the
 # function.  If the spaces were trimmed, the variable name would be "" and
 # that variable is indeed undefined.  Since ParseEmptyArg calls Var_Parse
-# without VarEvalFlags.undefErr, the value of the undefined variable is
+# without VARE_UNDEFERR, the value of the undefined variable is
 # returned as an empty string.
 ${:U }=	space
 .if empty( )
@@ -168,14 +168,14 @@ ${:U WORD }=	variable name with spaces
 # parsing it, this unrealistic variable name should have done no harm.
 #
 # The variable expression was expanded though, and this was wrong.  The
-# expansion was done without VarEvalFlags.wantRes (called VARF_WANTRES back
+# expansion was done without VARE_WANTRES (called VARF_WANTRES back
 # then) though.  This had the effect that the ${:U1} from the value of VARNAME
 # expanded to an empty string.  This in turn created the seemingly recursive
 # definition VARNAME=${VARNAME}, and that definition was never meant to be
 # expanded.
 #
 # This was fixed by expanding nested variable expressions in the variable name
-# only if the flag VarEvalFlags.wantRes is given.
+# only if the flag VARE_WANTRES is given.
 VARNAME=	${VARNAME${:U1}}
 .if defined(VARNAME${:U2}) && !empty(VARNAME${:U2})
 .endif
