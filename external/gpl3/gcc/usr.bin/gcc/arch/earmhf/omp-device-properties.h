@@ -2,7 +2,9 @@
 /* Generated from: NetBSD: mknative-gcc,v 1.114 2021/04/11 07:35:45 mrg Exp  */
 /* Generated from: NetBSD: mknative.common,v 1.16 2018/04/15 15:13:37 christos Exp  */
 
-/* Generated automatically by the program `build/gcov-iov'
-   from `10.3.0 (10 3) and  (*)'.  */
-
-#define GCOV_VERSION ((gcov_unsigned_t)0x4230332a)  /* B03* */
+const char omp_offload_device_kind[] = 
+"";
+const char omp_offload_device_arch[] = 
+"";
+const char omp_offload_device_isa[] = 
+"";
