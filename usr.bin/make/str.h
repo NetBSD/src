@@ -1,4 +1,4 @@
-/*	$NetBSD: str.h,v 1.5 2021/04/11 22:53:45 rillig Exp $	*/
+/*	$NetBSD: str.h,v 1.6 2021/04/12 18:48:00 rillig Exp $	*/
 
 /*
  Copyright (c) 2021 Roland Illig <rillig@NetBSD.org>
@@ -190,10 +190,36 @@ Substring_Sub(Substring sub, size_t start, size_t end)
 	return Substring_Init(sub.start + start, sub.start + end);
 }
 
+MAKE_INLINE bool
+Substring_HasPrefix(Substring sub, Substring prefix)
+{
+	return Substring_Length(sub) >= Substring_Length(prefix) &&
+	       memcmp(sub.start, prefix.start, Substring_Length(prefix)) == 0;
+}
+
+MAKE_INLINE bool
+Substring_HasSuffix(Substring sub, Substring suffix)
+{
+	size_t suffixLen = Substring_Length(suffix);
+	return Substring_Length(sub) >= suffixLen &&
+	       memcmp(sub.end - suffixLen, suffix.start, suffixLen) == 0;
+}
+
 MAKE_INLINE FStr
 Substring_Str(Substring sub)
 {
 	return FStr_InitOwn(bmake_strsedup(sub.start, sub.end));
+}
+
+MAKE_INLINE const char *
+Substring_SkipFirst(Substring sub, char ch)
+{
+	const char *p;
+
+	for (p = sub.start; p != sub.end; p++)
+		if (*p == ch)
+			return p + 1;
+	return sub.start;
 }
 
 MAKE_INLINE const char *
