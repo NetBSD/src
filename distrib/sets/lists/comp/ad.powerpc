@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.100 2020/09/07 00:19:04 mrg Exp $
+# $NetBSD: ad.powerpc,v 1.101 2021/04/12 02:08:59 mrg Exp $
 ./usr/bin/elf2aout				comp-sysutil-bin
 ./usr/bin/psim					comp-debug-bin		gdb
 ./usr/include/altivec.h				comp-obsolete		obsolete
@@ -78,24 +78,24 @@
 ./usr/include/gcc-7/spu2vmx.h			comp-c-include		obsolete
 ./usr/include/gcc-7/tgmath.h			comp-c-include		obsolete
 ./usr/include/gcc-7/vec_types.h			comp-c-include		obsolete
-./usr/include/gcc-8/altivec.h			comp-c-include		gcc=8
-./usr/include/gcc-8/amo.h			comp-c-include		gcc=8
-./usr/include/gcc-8/bmi2intrin.h		comp-c-include		gcc=8
-./usr/include/gcc-8/bmiintrin.h			comp-c-include		gcc=8
-./usr/include/gcc-8/emmintrin.h			comp-c-include		gcc=8
-./usr/include/gcc-8/htmintrin.h			comp-c-include		gcc=8
-./usr/include/gcc-8/htmxlintrin.h		comp-c-include		gcc=8
-./usr/include/gcc-8/mm_malloc.h			comp-c-include		gcc=8
-./usr/include/gcc-8/mmintrin.h			comp-c-include		gcc=8
-./usr/include/gcc-8/paired.h			comp-c-include		gcc=8
-./usr/include/gcc-8/ppc-asm.h			comp-c-include		gcc=8
-./usr/include/gcc-8/ppu_intrinsics.h		comp-c-include		gcc=8
-./usr/include/gcc-8/si2vmx.h			comp-c-include		gcc=8
-./usr/include/gcc-8/spu2vmx.h			comp-c-include		gcc=8
-./usr/include/gcc-8/tgmath.h			comp-c-include		gcc=8
-./usr/include/gcc-8/vec_types.h			comp-c-include		gcc=8
-./usr/include/gcc-8/x86intrin.h			comp-c-include		gcc=8
-./usr/include/gcc-8/xmmintrin.h			comp-c-include		gcc=8
+./usr/include/gcc-8/altivec.h			comp-c-include		obsolete
+./usr/include/gcc-8/amo.h			comp-c-include		obsolete
+./usr/include/gcc-8/bmi2intrin.h		comp-c-include		obsolete
+./usr/include/gcc-8/bmiintrin.h			comp-c-include		obsolete
+./usr/include/gcc-8/emmintrin.h			comp-c-include		obsolete
+./usr/include/gcc-8/htmintrin.h			comp-c-include		obsolete
+./usr/include/gcc-8/htmxlintrin.h		comp-c-include		obsolete
+./usr/include/gcc-8/mm_malloc.h			comp-c-include		obsolete
+./usr/include/gcc-8/mmintrin.h			comp-c-include		obsolete
+./usr/include/gcc-8/paired.h			comp-c-include		obsolete
+./usr/include/gcc-8/ppc-asm.h			comp-c-include		obsolete
+./usr/include/gcc-8/ppu_intrinsics.h		comp-c-include		obsolete
+./usr/include/gcc-8/si2vmx.h			comp-c-include		obsolete
+./usr/include/gcc-8/spu2vmx.h			comp-c-include		obsolete
+./usr/include/gcc-8/tgmath.h			comp-c-include		obsolete
+./usr/include/gcc-8/vec_types.h			comp-c-include		obsolete
+./usr/include/gcc-8/x86intrin.h			comp-c-include		obsolete
+./usr/include/gcc-8/xmmintrin.h			comp-c-include		obsolete
 ./usr/include/gcc-9/altivec.h			comp-c-include		gcc=9
 ./usr/include/gcc-9/amo.h			comp-c-include		gcc=9
 ./usr/include/gcc-9/bmi2intrin.h		comp-c-include		gcc=9
@@ -116,6 +116,26 @@
 ./usr/include/gcc-9/vec_types.h			comp-c-include		gcc=9
 ./usr/include/gcc-9/x86intrin.h			comp-c-include		gcc=9
 ./usr/include/gcc-9/xmmintrin.h			comp-c-include		gcc=9
+./usr/include/gcc-10/altivec.h			comp-c-include		gcc=10
+./usr/include/gcc-10/amo.h			comp-c-include		gcc=10
+./usr/include/gcc-10/bmi2intrin.h		comp-c-include		gcc=10
+./usr/include/gcc-10/bmiintrin.h		comp-c-include		gcc=10
+./usr/include/gcc-10/emmintrin.h		comp-c-include		gcc=10
+./usr/include/gcc-10/htmintrin.h		comp-c-include		gcc=10
+./usr/include/gcc-10/htmxlintrin.h		comp-c-include		gcc=10
+./usr/include/gcc-10/mm_malloc.h		comp-c-include		gcc=10
+./usr/include/gcc-10/mmintrin.h			comp-c-include		gcc=10
+./usr/include/gcc-10/pmmintrin.h		comp-c-include		gcc=10
+./usr/include/gcc-10/ppc-asm.h			comp-c-include		gcc=10
+./usr/include/gcc-10/ppu_intrinsics.h		comp-c-include		gcc=10
+./usr/include/gcc-10/si2vmx.h			comp-c-include		gcc=10
+./usr/include/gcc-10/smmintrin.h		comp-c-include		gcc=10
+./usr/include/gcc-10/spu2vmx.h			comp-c-include		gcc=10
+./usr/include/gcc-10/tgmath.h			comp-c-include		gcc=10
+./usr/include/gcc-10/tmmintrin.h		comp-c-include		gcc=10
+./usr/include/gcc-10/vec_types.h		comp-c-include		gcc=10
+./usr/include/gcc-10/x86intrin.h		comp-c-include		gcc=10
+./usr/include/gcc-10/xmmintrin.h		comp-c-include		gcc=10
 ./usr/include/powerpc				comp-c-include
 ./usr/include/powerpc/ansi.h			comp-c-include
 ./usr/include/powerpc/aout_machdep.h		comp-c-include

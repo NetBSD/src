@@ -1,10 +1,11 @@
-# $NetBSD: ad.mips,v 1.87 2021/03/29 01:48:29 simonb Exp $
+# $NetBSD: ad.mips,v 1.88 2021/04/12 02:08:59 mrg Exp $
 -./usr/lib/64/libgomp.a
 -./usr/lib/64/libgomp.so
 -./usr/lib/64/libgomp.so.1
 -./usr/lib/64/libgomp.so.1.1
 -./usr/lib/64/libgomp.so.2
 -./usr/lib/64/libgomp.so.2.0
+-./usr/lib/64/libgomp.so.2.1
 -./usr/lib/64/libgomp_p.a
 -./usr/lib/64/libgomp_pic.a
 ./usr/bin/elf2aout				comp-obsolete		obsolete
@@ -30,13 +31,17 @@
 ./usr/include/gcc-7/loongson.h			comp-c-include		obsolete
 ./usr/include/gcc-7/msa.h			comp-c-include		obsolete
 ./usr/include/gcc-7/tgmath.h			comp-c-include		obsolete
-./usr/include/gcc-8/loongson.h			comp-c-include		gcc=8
-./usr/include/gcc-8/msa.h			comp-c-include		gcc=8
-./usr/include/gcc-8/tgmath.h			comp-c-include		gcc=8
+./usr/include/gcc-8/loongson.h			comp-c-include		obsolete
+./usr/include/gcc-8/msa.h			comp-c-include		obsolete
+./usr/include/gcc-8/tgmath.h			comp-c-include		obsolete
 ./usr/include/gcc-9/loongson.h			comp-c-include		gcc=9
 ./usr/include/gcc-9/loongson-mmiintrin.h	comp-c-include		gcc=9
 ./usr/include/gcc-9/msa.h			comp-c-include		gcc=9
 ./usr/include/gcc-9/tgmath.h			comp-c-include		gcc=9
+./usr/include/gcc-10/loongson.h			comp-c-include		gcc=10
+./usr/include/gcc-10/loongson-mmiintrin.h	comp-c-include		gcc=10
+./usr/include/gcc-10/msa.h			comp-c-include		gcc=10
+./usr/include/gcc-10/tgmath.h			comp-c-include		gcc=10
 ./usr/include/mips				comp-c-include
 ./usr/include/mips/ansi.h			comp-c-include
 ./usr/include/mips/aout_machdep.h		comp-obsolete		obsolete

@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.104 2020/09/26 10:06:25 skrll Exp $
+# $NetBSD: ad.arm,v 1.105 2021/04/12 02:08:59 mrg Exp $
 ./usr/bin/elf2aout				comp-sysutil-bin
 ./usr/include/acorn26				comp-obsolete		obsolete
 ./usr/include/acorn26/ansi.h			comp-obsolete		obsolete
@@ -427,18 +427,28 @@
 ./usr/include/gcc-7/mmintrin.h			comp-c-include		obsolete
 ./usr/include/gcc-7/tgmath.h			comp-c-include		obsolete
 ./usr/include/gcc-7/unwind-arm-common.h		comp-c-include		obsolete
-./usr/include/gcc-8/arm_acle.h			comp-c-include		gcc=8
-./usr/include/gcc-8/arm_cmse.h			comp-c-include		gcc=8
-./usr/include/gcc-8/arm_fp16.h			comp-c-include		gcc=8
-./usr/include/gcc-8/arm_neon.h			comp-c-include		gcc=8
-./usr/include/gcc-8/mmintrin.h			comp-c-include		gcc=8
-./usr/include/gcc-8/tgmath.h			comp-c-include		gcc=8
+./usr/include/gcc-8/arm_acle.h			comp-c-include		obsolete
+./usr/include/gcc-8/arm_cmse.h			comp-c-include		obsolete
+./usr/include/gcc-8/arm_fp16.h			comp-c-include		obsolete
+./usr/include/gcc-8/arm_neon.h			comp-c-include		obsolete
+./usr/include/gcc-8/mmintrin.h			comp-c-include		obsolete
+./usr/include/gcc-8/tgmath.h			comp-c-include		obsolete
 ./usr/include/gcc-9/arm_acle.h			comp-c-include		gcc=9
 ./usr/include/gcc-9/arm_cmse.h			comp-c-include		gcc=9
 ./usr/include/gcc-9/arm_fp16.h			comp-c-include		gcc=9
 ./usr/include/gcc-9/arm_neon.h			comp-c-include		gcc=9
 ./usr/include/gcc-9/mmintrin.h			comp-c-include		gcc=9
 ./usr/include/gcc-9/tgmath.h			comp-c-include		gcc=9
+./usr/include/gcc-10/arm_acle.h			comp-c-include		gcc=10
+./usr/include/gcc-10/arm_bf16.h			comp-c-include		gcc=10
+./usr/include/gcc-10/arm_cde.h			comp-c-include		gcc=10
+./usr/include/gcc-10/arm_cmse.h			comp-c-include		gcc=10
+./usr/include/gcc-10/arm_fp16.h			comp-c-include		gcc=10
+./usr/include/gcc-10/arm_mve.h			comp-c-include		gcc=10
+./usr/include/gcc-10/arm_mve_types.h			comp-c-include		gcc=10
+./usr/include/gcc-10/arm_neon.h			comp-c-include		gcc=10
+./usr/include/gcc-10/mmintrin.h			comp-c-include		gcc=10
+./usr/include/gcc-10/tgmath.h			comp-c-include		gcc=10
 ./usr/include/hpcarm				comp-c-include
 ./usr/include/hpcarm/ansi.h			comp-obsolete		obsolete
 ./usr/include/hpcarm/aout_machdep.h		comp-obsolete		obsolete

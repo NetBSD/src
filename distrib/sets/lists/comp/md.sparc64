@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.212 2020/09/06 10:54:26 mrg Exp $
+# $NetBSD: md.sparc64,v 1.213 2021/04/12 02:09:00 mrg Exp $
 ./usr/include/g++/bits/sparc			comp-c-include		compat
 ./usr/include/g++/bits/sparc/c++config.h	comp-c-include		gcc,compat
 ./usr/include/g++/bits/sparc64			comp-c-include		compat
@@ -12,10 +12,12 @@
 ./usr/include/gcc-6/visintrin.h			comp-c-include		obsolete
 ./usr/include/gcc-7/tgmath.h			comp-c-include		obsolete
 ./usr/include/gcc-7/visintrin.h			comp-c-include		obsolete
-./usr/include/gcc-8/tgmath.h			comp-c-include		gcc=8
-./usr/include/gcc-8/visintrin.h			comp-c-include		gcc=8
+./usr/include/gcc-8/tgmath.h			comp-c-include		obsolete
+./usr/include/gcc-8/visintrin.h			comp-c-include		obsolete
 ./usr/include/gcc-9/tgmath.h			comp-c-include		gcc=9
 ./usr/include/gcc-9/visintrin.h			comp-c-include		gcc=9
+./usr/include/gcc-10/tgmath.h			comp-c-include		gcc=10
+./usr/include/gcc-10/visintrin.h		comp-c-include		gcc=10
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
 ./usr/include/sparc/_G_config.h			comp-obsolete		obsolete
