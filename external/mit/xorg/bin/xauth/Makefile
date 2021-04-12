@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2019/01/03 23:39:47 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2021/04/12 06:08:30 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -15,6 +15,7 @@ CPPFLAGS+=      	-DIPv6
 .endif
 
 CWARNFLAGS.clang=	-Wno-empty-body
+COPTS.parsedpy.c+=	${GCC_NO_STRINGOP_OVERFLOW}
 
 LDADD+=	-lXau -lXmuu -lXt -lSM -lICE -lXext -lX11
 DPADD+=	${LIBXAU} ${LIBXMUU} ${LIBXT} ${LIBSM} ${LIBICE} ${LIBXEXT} ${LIBX11}

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2018/02/02 01:02:40 mrg Exp $
+#	$NetBSD: Makefile,v 1.16 2021/04/12 06:08:30 mrg Exp $
 
 LIBISPRIVATE=yes
 
@@ -16,8 +16,10 @@ CPPFLAGS+=-I${DIST}
 
 SRCS=libopts.c
 
-COPTS.libopts.c += -DPOSIX_SHELL="\"/bin/sh\"" -Wno-format-nonliteral
+COPTS.libopts.c+=	 -DPOSIX_SHELL="\"/bin/sh\"" -Wno-format-nonliteral
+
 COPTS.libopts.c+=	${${ACTIVE_CC} == "gcc":? -Wno-format-contains-nul :}
 COPTS.libopts.c+=	${${ACTIVE_CC} == "clang":? -Wno-format :}
+COPTS.libopts.c+=	${GCC_NO_FORMAT_OVERFLOW}
 
 .include <bsd.lib.mk>

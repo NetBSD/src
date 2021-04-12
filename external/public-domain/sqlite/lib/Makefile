@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.13 2020/11/12 17:53:43 nia Exp $
+# $NetBSD: Makefile,v 1.14 2021/04/12 06:08:31 mrg Exp $
 
 LIB=		sqlite3
 INCS=		sqlite3.h sqlite3ext.h
@@ -20,6 +20,7 @@ FILESDIR_sqlite3.pc=	/usr/lib/pkgconfig
 CLEANFILES+=sqlite3.pc
 
 CWARNFLAGS.clang+=	-Wno-error=implicit-int-float-conversion
+COPTS.sqlite3.c+=	${GCC_NO_RETURN_LOCAL_ADDR}
 
 .include <bsd.own.mk>
 
