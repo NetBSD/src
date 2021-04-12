@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1238 2021/04/10 00:35:24 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.1239 2021/04/12 04:18:38 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -859,9 +859,12 @@ NOPROFILE=	# defined
 GCC_NO_FORMAT_TRUNCATION=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 7:? -Wno-format-truncation :}
 GCC_NO_FORMAT_OVERFLOW=		${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 7:? -Wno-format-overflow :}
 GCC_NO_STRINGOP_OVERFLOW=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 7:? -Wno-stringop-overflow :}
+GCC_NO_IMPLICIT_FALLTHRU=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 7:? -Wno-implicit-fallthrough :}         
 GCC_NO_STRINGOP_TRUNCATION=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 8:? -Wno-stringop-truncation :}
 GCC_NO_CAST_FUNCTION_TYPE=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 8:? -Wno-cast-function-type :}
-GCC_NO_ADDR_OF_PACKED_MEMBER=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 9:? -Wno-error=address-of-packed-member :}
+GCC_NO_ADDR_OF_PACKED_MEMBER=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 9:? -Wno-address-of-packed-member :}
+GCC_NO_MAYBE_UNINITIALIZED=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 10:? -Wno-maybe-uninitialized :}
+GCC_NO_RETURN_LOCAL_ADDR=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 10:? -Wno-return-local-addr :}
 
 #
 # Clang warnings
