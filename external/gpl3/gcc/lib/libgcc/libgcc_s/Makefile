@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2016/10/21 23:44:09 christos Exp $
+#	$NetBSD: Makefile,v 1.15 2021/04/12 00:05:55 mrg Exp $
 
 USE_SHLIBDIR=	yes
 REQUIRETOOLS=	yes
@@ -40,7 +40,7 @@ SRCS+=		${LIB2FUNCS} ${LIB2DIVMOD} ${LIB2_EH} ${LIB2_EHASM} \
 		${LIB2ADD_HACK:T:S/.asm/.S/} \
 		${G_LIB2ADD_ST:T} ${LIB1ASMFUNCS}
 
-COPTS.unwind-dw2.c = -Wno-stack-protector
+COPTS.unwind-dw2.c += -Wno-stack-protector
 
 DPADD+=		libgcc.map
 CLEANFILES+=	libgcc.map
