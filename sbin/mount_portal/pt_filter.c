@@ -1,4 +1,4 @@
-/*	$NetBSD: pt_filter.c,v 1.12 2020/05/14 08:34:17 msaitoh Exp $	*/
+/*	$NetBSD: pt_filter.c,v 1.13 2021/04/12 09:18:14 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pt_filter.c,v 1.12 2020/05/14 08:34:17 msaitoh Exp $");
+__RCSID("$NetBSD: pt_filter.c,v 1.13 2021/04/12 09:18:14 mrg Exp $");
 #endif				/* not lint */
 
 #include <stdio.h>
@@ -65,7 +65,8 @@ fill_cmd(char **cmdv, char *path, char *buff, int n)
 	if (tempbuff == NULL)
 		err(1, NULL);
 
-	strncpy(tempbuff, cmdv[0], n);
+	strncpy(tempbuff, cmdv[0], n - 1);
+	tempbuff[n - 1] = '\0';
 	for (i = 1; cmdv[i]; i++) {
 		strncat(tempbuff, " ", n - strlen(tempbuff));
 		strncat(tempbuff, cmdv[i], n - strlen(tempbuff));
