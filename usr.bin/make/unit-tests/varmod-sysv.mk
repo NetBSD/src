@@ -1,4 +1,4 @@
-# $NetBSD: varmod-sysv.mk,v 1.13 2021/04/12 16:04:30 rillig Exp $
+# $NetBSD: varmod-sysv.mk,v 1.14 2021/04/12 16:09:57 rillig Exp $
 #
 # Tests for the variable modifier ':from=to', which replaces the suffix
 # "from" with "to".  It can also use '%' as a wildcard.
@@ -245,7 +245,7 @@ INDIRECT=	1:${VALUE} 2:$${VALUE} 4:$$$${VALUE}
 .  for to in '' NS % %NS NPre% NPre%NS
 .    for word in '' suffix prefix pre-middle-suffix
 .      for mod in ${from:N''}=${to:N''}
-!=1>&2	printf '%-24s %-24s "%s"\n' ''${word:Q} ''${mod:Q} ''${word:${mod}}
+!=1>&2	printf '%-24s %-24s "%s"\n' ''${word:Q} ''${mod:Q} ''${word:N'':${mod}:Q}
 .      endfor
 .    endfor
 .  endfor
