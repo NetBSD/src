@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.c,v 1.42 2021/03/26 15:59:53 reinoud Exp $	*/
+/*	$NetBSD: nvmm.c,v 1.43 2021/04/12 09:22:58 mrg Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.42 2021/03/26 15:59:53 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.43 2021/04/12 09:22:58 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -603,7 +603,7 @@ static int
 nvmm_vcpu_run(struct nvmm_owner *owner, struct nvmm_ioc_vcpu_run *args)
 {
 	struct nvmm_machine *mach;
-	struct nvmm_cpu *vcpu;
+	struct nvmm_cpu *vcpu = NULL;
 	int error;
 
 	error = nvmm_machine_get(owner, args->machid, &mach, false);
@@ -619,7 +619,8 @@ nvmm_vcpu_run(struct nvmm_owner *owner, struct nvmm_ioc_vcpu_run *args)
 
 out:
 	nvmm_machine_put(mach);
-	vcpu->comm->stop = 0;
+	if (vcpu)
+		vcpu->comm->stop = 0;
 	return error;
 }
 
