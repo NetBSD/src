@@ -1,4 +1,4 @@
-#	$NetBSD: libmesa.mk,v 1.13 2020/10/31 13:28:22 nia Exp $
+#	$NetBSD: libmesa.mk,v 1.14 2021/04/12 03:57:06 mrg Exp $
 #
 # Consumer of this Makefile should set MESA_SRC_MODULES.
 
@@ -548,6 +548,6 @@ CPPFLAGS+=	\
 CPPFLAGS+=	\
 	-DYYTEXT_POINTER=1
 
-CFLAGS+=	-fvisibility=hidden -fno-strict-aliasing -fno-builtin-memcmp
+CFLAGS+=	-fvisibility=hidden -fno-strict-aliasing -fno-builtin-memcmp -fcommon
 
 .include "libGL/mesa-ver.mk"

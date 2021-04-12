@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.26 2020/11/12 17:53:43 nia Exp $
+#	$NetBSD: Makefile.inc,v 1.27 2021/04/12 03:57:06 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -8,6 +8,9 @@ CWARNFLAGS.clang+=	-Wno-empty-body -Wno-format-extra-args \
 WARNS?=	0
 
 PFIX_DISTDIR=	${NETBSDSRCDIR}/external/ibm-public/postfix/dist
+
+# Many issues need to be resolved.
+COPTS+=	-fcommon
 
 CPPFLAGS+= -DNETBSD7 -DUSE_SASL_AUTH -DNO_EAI \
 	-I${DIST} \
