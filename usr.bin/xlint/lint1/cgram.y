@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.211 2021/04/02 12:16:50 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.212 2021/04/12 15:55:26 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.211 2021/04/02 12:16:50 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.212 2021/04/12 15:55:26 christos Exp $");
 #endif
 
 #include <limits.h>
@@ -218,6 +218,7 @@ anonymize(sym_t *s)
 %token <y_type>		T_AT_CONSTRUCTOR
 %token <y_type>		T_AT_DEPRECATED
 %token <y_type>		T_AT_DESTRUCTOR
+%token <y_type>		T_AT_FALLTHROUGH
 %token <y_type>		T_AT_FORMAT
 %token <y_type>		T_AT_FORMAT_ARG
 %token <y_type>		T_AT_FORMAT_GNU_PRINTF
@@ -595,6 +596,9 @@ type_attribute_spec:
 	| T_AT_WARN_UNUSED_RESULT
 	| T_AT_WEAK
 	| T_AT_VISIBILITY T_LPAREN constant_expr T_RPAREN
+	| T_AT_FALLTHROUGH {
+		fallthru(1);
+	}
 	| T_QUAL {
 		if ($1 != CONST)
 			yyerror("Bad attribute");
@@ -1490,7 +1494,8 @@ direct_abstract_decl:
 	;
 
 non_expr_statement:
-	  labeled_statement
+	  type_attribute T_SEMI
+	| labeled_statement
 	| compound_statement
 	| selection_statement
 	| iteration_statement
@@ -1498,6 +1503,7 @@ non_expr_statement:
 		seen_fallthrough = false;
 	  }
 	| asm_statement
+	;
 
 statement:			/* C99 6.8 */
 	  expr_statement
