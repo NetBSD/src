@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.131 2020/10/03 14:01:16 christos Exp $	*/
+/*	$NetBSD: pstat.c,v 1.132 2021/04/12 05:11:09 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.131 2020/10/03 14:01:16 christos Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.132 2021/04/12 05:11:09 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -481,7 +481,7 @@ ufs_print(struct vnode *vp, int ovflw)
 	} dip;
 	struct ufsmount ump;
 	char flags[sizeof(ufs_flags) / sizeof(ufs_flags[0])];
-	char dev[4 + 1 + 7 + 1]; /* 12bit marjor + 20bit minor */
+	char dev[4 + 1 + 7 + 1]; /* 12bit major + 20bit minor */
 	char *name;
 	mode_t type;
 	dev_t rdev;
@@ -526,7 +526,7 @@ ext2fs_print(struct vnode *vp, int ovflw)
 	struct inode inode, *ip = &inode;
 	struct ext2fs_dinode dip;
 	char flags[sizeof(ufs_flags) / sizeof(ufs_flags[0])];
-	char dev[4 + 1 + 7 + 1]; /* 12bit marjor + 20bit minor */
+	char dev[4 + 1 + 7 + 1]; /* 12bit major + 20bit minor */
 	char *name;
 	mode_t type;
 
@@ -577,7 +577,7 @@ nfs_print(struct vnode *vp, int ovflw)
 {
 	struct nfsnode nfsnode, *np = &nfsnode;
 	char flags[sizeof(nfs_flags) / sizeof(nfs_flags[0])];
-	char dev[4 + 1 + 7 + 1]; /* 12bit marjor + 20bit minor */
+	char dev[4 + 1 + 7 + 1]; /* 12bit major + 20bit minor */
 	struct vattr va;
 	char *name;
 	mode_t type;
@@ -835,7 +835,7 @@ void
 ttyprt(struct tty *tp)
 {
 	char state[sizeof(ttystates) / sizeof(ttystates[0]) + 1];
-	char dev[2 + 3 + 1 + 5 + 1]; /* 12bit major + 20bit minor */
+	char dev[4 + 1 + 7 + 1]; /* 12bit major + 20bit minor */
 	struct linesw t_linesw;
 	const char *name;
 	char buffer;
