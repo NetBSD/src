@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.924 2021/04/12 13:28:35 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.925 2021/04/12 18:48:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.924 2021/04/12 13:28:35 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.925 2021/04/12 18:48:00 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -1441,69 +1441,11 @@ ModifyWord_NoMatch(Substring word, SepBuf *buf, void *data)
 }
 
 #ifdef SYSVVARSUB
-
-/*
- * Check word against pattern for a match (% is a wildcard).
- *
- * Input:
- *	word		Word to examine
- *	pattern		Pattern to examine against
- *
- * Results:
- *	Returns the start of the match, or NULL.
- *	out_match_len returns the length of the match, if any.
- *	out_hasPercent returns whether the pattern contains a percent.
- */
-/* TODO: migrate to using Substring */
-static const char *
-SysVMatch(const char *word, const char *pattern,
-	  size_t *out_match_len, bool *out_hasPercent)
-{
-	const char *p = pattern;
-	const char *w = word;
-	const char *percent;
-	size_t w_len;
-	size_t p_len;
-	const char *w_tail;
-
-	*out_hasPercent = false;
-	percent = strchr(p, '%');
-	if (percent != NULL) {		/* ${VAR:...%...=...} */
-		*out_hasPercent = true;
-		if (w[0] == '\0')
-			return NULL;	/* empty word does not match pattern */
-
-		/* check that the prefix matches */
-		for (; p != percent && *w != '\0' && *w == *p; w++, p++)
-			continue;
-		if (p != percent)
-			return NULL;	/* No match */
-
-		p++;		/* Skip the percent */
-		if (*p == '\0') {
-			/* No more pattern, return the rest of the string */
-			*out_match_len = strlen(w);
-			return w;
-		}
-	}
-
-	/* Test whether the tail matches */
-	w_len = strlen(w);
-	p_len = strlen(p);
-	if (w_len < p_len)
-		return NULL;
-
-	w_tail = w + w_len - p_len;
-	if (memcmp(p, w_tail, p_len) != 0)
-		return NULL;
-
-	*out_match_len = (size_t)(w_tail - w);
-	return w;
-}
-
 struct ModifyWord_SYSVSubstArgs {
 	GNode *scope;
-	const char *lhs;
+	Substring lhsPrefix;
+	bool lhsPercent;
+	Substring lhsSuffix;
 	const char *rhs;
 };
 
@@ -1512,43 +1454,40 @@ static void
 ModifyWord_SYSVSubst(Substring word, SepBuf *buf, void *data)
 {
 	const struct ModifyWord_SYSVSubstArgs *args = data;
-	char *rhs_expanded;
-	const char *rhs;
+	FStr rhs;
+	char *rhsExp;
 	const char *percent;
-	size_t match_len;
-	bool lhsPercent;
-	const char *match;
 
-	assert(word.end[0] == '\0');	/* assume null-terminated word */
-	match = SysVMatch(word.start, args->lhs, &match_len, &lhsPercent);
-	if (match == NULL) {
-		SepBuf_AddSubstring(buf, word);
+	if (Substring_IsEmpty(word))
 		return;
+
+	if (!Substring_HasPrefix(word, args->lhsPrefix))
+		goto no_match;
+	if (!Substring_HasSuffix(word, args->lhsSuffix))
+		goto no_match;
+
+	rhs = FStr_InitRefer(args->rhs);
+	if (strchr(rhs.str, '$') != NULL) {
+		(void)Var_Subst(args->rhs, args->scope, VARE_WANTRES, &rhsExp);
+		/* TODO: handle errors */
+		rhs = FStr_InitOwn(rhsExp);
 	}
 
-	/*
-	 * Append rhs to the buffer, substituting the first '%' with the
-	 * match, but only if the lhs had a '%' as well.
-	 */
+	percent = args->lhsPercent ? strchr(rhs.str, '%') : NULL;
 
-	(void)Var_Subst(args->rhs, args->scope, VARE_WANTRES, &rhs_expanded);
-	/* TODO: handle errors */
+	if (percent != NULL)
+		SepBuf_AddBytesBetween(buf, rhs.str, percent);
+	if (percent != NULL || !args->lhsPercent)
+		SepBuf_AddBytesBetween(buf,
+		    word.start + Substring_Length(args->lhsPrefix),
+		    word.end - Substring_Length(args->lhsSuffix));
+	SepBuf_AddStr(buf, percent != NULL ? percent + 1 : rhs.str);
 
-	rhs = rhs_expanded;
-	percent = strchr(rhs, '%');
+	FStr_Done(&rhs);
+	return;
 
-	if (percent != NULL && lhsPercent) {
-		/* Copy the prefix of the replacement pattern */
-		SepBuf_AddBytesBetween(buf, rhs, percent);
-		rhs = percent + 1;
-	}
-	if (percent != NULL || !lhsPercent)
-		SepBuf_AddBytes(buf, match, match_len);
-
-	/* Append the suffix of the replacement pattern */
-	SepBuf_AddStr(buf, rhs);
-
-	free(rhs_expanded);
+no_match:
+	SepBuf_AddSubstring(buf, word);
 }
 #endif
 
@@ -3646,8 +3585,11 @@ ApplyModifier_SysV(const char **pp, ModChain *ch)
 {
 	Expr *expr = ch->expr;
 	VarParseResult res;
-	LazyBuf buf;
-	FStr lhs, rhs;
+	LazyBuf lhsBuf, rhsBuf;
+	FStr rhs;
+	struct ModifyWord_SYSVSubstArgs args;
+	Substring lhs;
+	const char *lhsSuffix;
 
 	const char *mod = *pp;
 	bool eqFound = false;
@@ -3672,33 +3614,38 @@ ApplyModifier_SysV(const char **pp, ModChain *ch)
 	if (*p != ch->endc || !eqFound)
 		return AMR_UNKNOWN;
 
-	res = ParseModifierPart(pp, '=', expr->emode, ch, &buf);
+	res = ParseModifierPart(pp, '=', expr->emode, ch, &lhsBuf);
 	if (res != VPR_OK)
 		return AMR_CLEANUP;
-	lhs = LazyBuf_DoneGet(&buf);
 
 	/* The SysV modifier lasts until the end of the variable expression. */
-	res = ParseModifierPart(pp, ch->endc, expr->emode, ch, &buf);
+	res = ParseModifierPart(pp, ch->endc, expr->emode, ch, &rhsBuf);
 	if (res != VPR_OK) {
-		FStr_Done(&lhs);
+		LazyBuf_Done(&lhsBuf);
 		return AMR_CLEANUP;
 	}
-	rhs = LazyBuf_DoneGet(&buf);
+	rhs = LazyBuf_DoneGet(&rhsBuf);
 
 	(*pp)--;		/* Go back to the ch->endc. */
 
-	if (lhs.str[0] == '\0' && expr->value.str[0] == '\0') {
-		/* Do not turn an empty expression into non-empty. */
-	} else {
-		struct ModifyWord_SYSVSubstArgs args;
+	/* Do not turn an empty expression into non-empty. */
+	if (lhsBuf.len == 0 && expr->value.str[0] == '\0')
+		goto done;
 
-		args.scope = expr->scope;
-		args.lhs = lhs.str;
-		args.rhs = rhs.str;
-		ModifyWords(ch, ModifyWord_SYSVSubst, &args, ch->oneBigWord);
-	}
-	FStr_Done(&lhs);
-	FStr_Done(&rhs);
+	lhs = LazyBuf_Get(&lhsBuf);
+	lhsSuffix = Substring_SkipFirst(lhs, '%');
+
+	args.scope = expr->scope;
+	args.lhsPrefix = Substring_Init(lhs.start,
+	    lhsSuffix != lhs.start ? lhsSuffix - 1 : lhs.start);
+	args.lhsPercent = lhsSuffix != lhs.start;
+	args.lhsSuffix = Substring_Init(lhsSuffix, lhs.end);
+	args.rhs = rhs.str;
+
+	ModifyWords(ch, ModifyWord_SYSVSubst, &args, ch->oneBigWord);
+
+done:
+	LazyBuf_Done(&lhsBuf);
 	return AMR_OK;
 }
 #endif
