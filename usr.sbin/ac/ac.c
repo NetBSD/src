@@ -1,4 +1,4 @@
-/* $NetBSD: ac.c,v 1.25 2012/08/31 19:55:23 wiz Exp $ */
+/* $NetBSD: ac.c,v 1.26 2021/04/12 09:29:53 mrg Exp $ */
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ac.c,v 1.25 2012/08/31 19:55:23 wiz Exp $");
+__RCSID("$NetBSD: ac.c,v 1.26 2021/04/12 09:29:53 mrg Exp $");
 #endif
 
 #include <sys/types.h>
@@ -214,7 +214,7 @@ find_login_ttys(void)
 				Con = nCon;
 				Maxcon += 10;
 			}
-			(void)strncpy(Con[Ncon++], tty->ty_name, UT_LINESIZE);
+			strlcpy(Con[Ncon++], tty->ty_name, UT_LINESIZE);
 		}
 	endttyent();
 	qsort(Con, Ncon, sizeof(Con[0]), compare);
