@@ -1,4 +1,4 @@
-/* $NetBSD: OSFpal.c,v 1.9 2009/03/18 10:22:22 cegger Exp $ */
+/* $NetBSD: OSFpal.c,v 1.10 2021/04/12 09:18:45 mrg Exp $ */
 
 /*
  * Copyright (c) 1994, 1996 Carnegie-Mellon University.
@@ -34,7 +34,8 @@
 #include <machine/rpb.h>
 #include <machine/alpha_cpu.h>
 
-paddr_t ptbr_save;
+/* XXX */
+extern paddr_t ptbr_save;
 
 #include "common.h"
 
