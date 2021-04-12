@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_sun.c,v 1.10 2013/11/07 00:42:42 christos Exp $	*/
+/*	$NetBSD: netif_sun.c,v 1.11 2021/04/12 09:19:10 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,14 +52,14 @@
 
 #include <lib/libkern/libkern.h>
 
+#include <lib/libsa/saerrno.h>
+
 #include "libsa.h"
 #include "dvma.h"
 #include "saio.h"
 #include "netif.h"
 
 #define	PKT_BUF_SIZE 2048
-
-int errno;
 
 struct iodesc sockets[SOPEN_MAX];
 
