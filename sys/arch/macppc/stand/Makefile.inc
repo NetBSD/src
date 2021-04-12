@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 2020/09/06 07:20:29 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2021/04/12 03:55:40 mrg Exp $
 
 BINDIR=		/usr/mdec
 
@@ -12,5 +12,3 @@ LINKFLAGS_UNWIND=	--no-ld-generated-unwind-info
 # just use it for type-checking.
 CWARNFLAGS.clang+=	-Wno-error=address-of-packed-member
 CWARNFLAGS.gcc+=	${GCC_NO_ADDR_OF_PACKED_MEMBER}
-
-COPTS+=	-fcommon
