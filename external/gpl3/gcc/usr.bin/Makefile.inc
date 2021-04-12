@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.32 2019/02/01 10:39:48 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.33 2021/04/12 00:05:56 mrg Exp $
 
 .ifndef _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_INC_
 _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_INC_=1
@@ -113,5 +113,8 @@ NOCLANGERROR=	# defined
 
 WARNS=1
 COPTS+=-Wno-narrowing -Wno-unused
+
+# Lots trigger this.
+CFLAGS+=	-Wno-format-diag
 
 .endif

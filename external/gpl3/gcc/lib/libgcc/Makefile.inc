@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.46 2020/09/05 11:40:56 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.47 2021/04/12 00:05:55 mrg Exp $
 
 LIBGCC_MACHINE_ARCH?=${MACHINE_ARCH:S/earmv5/earm/}
 GCC_MACHINE_SUBDIR=${MACHINE_CPU:C/powerpc.*/rs6000/:C/x86_64/i386/}
@@ -209,3 +209,7 @@ EXTRA_FAKEHEADERS=	options.h libgcc_tm.h
 # XXX insn-modes.h
 BINBACKENDOBJ!=	cd ${.CURDIR}/../../../usr.bin/backend && ${PRINTOBJDIR}
 CPPFLAGS+=	-I${BINBACKENDOBJ}
+
+#.if !empty(LIBGCC_MACHINE_ARCH:Mearm*)
+COPTS.unwind-dw2.c+=	-Wno-discarded-qualifiers
+#.endif

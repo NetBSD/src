@@ -67,15 +67,15 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
       // NB: these two are also available in std::numeric_limits as compile
       // time constants, but <limits> is big and we can avoid including it.
-      static const bool __is_signed = (_Value)(-1) < 0;
+      static const bool __is_signed_val = (_Value)(-1) < 0;
       static const int __digits
-	= __is_integer_nonstrict<_Value>::__width - __is_signed;
+	= __is_integer_nonstrict<_Value>::__width - __is_signed_val;
 
       // The initializers must be constants so that __max and __min are too.
-      static const _Value __max = __is_signed
+      static const _Value __max = __is_signed_val
 	? (((((_Value)1 << (__digits - 1)) - 1) << 1) + 1)
 	: ~(_Value)0;
-      static const _Value __min = __is_signed ? -__max - 1 : (_Value)0;
+      static const _Value __min = __is_signed_val ? -__max - 1 : (_Value)0;
     };
 
   template<typename _Value>

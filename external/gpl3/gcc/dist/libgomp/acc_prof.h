@@ -235,7 +235,7 @@ extern void acc_prof_register (acc_event_t, acc_prof_callback,
 			       acc_register_t) __GOACC_NOTHROW;
 extern void acc_prof_unregister (acc_event_t, acc_prof_callback,
 				 acc_register_t) __GOACC_NOTHROW;
-typedef void (*acc_query_fn) ();
+typedef void (*acc_query_fn) (void);
 typedef acc_query_fn (*acc_prof_lookup_func) (const char *);
 extern acc_query_fn acc_prof_lookup (const char *) __GOACC_NOTHROW;
 /* Don't tag 'acc_register_library' as '__GOACC_NOTHROW': this function can be

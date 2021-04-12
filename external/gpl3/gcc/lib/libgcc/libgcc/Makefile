@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2017/08/03 22:01:30 mrg Exp $
+#	$NetBSD: Makefile,v 1.29 2021/04/12 00:05:55 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -46,7 +46,7 @@ CPPFLAGS+=	-DPIC
 # the -fpic/-FPIC present in ${G_LIBGCC2_CFLAGS}.
 MKPIC:= no
 
-COPTS.unwind-dw2.c = -Wno-stack-protector
+COPTS.unwind-dw2.c += -Wno-stack-protector
 
 .include <bsd.lib.mk>
 
