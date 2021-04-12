@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.210 2021/03/10 13:30:34 simonb Exp $
+#	$NetBSD: Makefile.inc,v 1.211 2021/04/12 03:57:07 mrg Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -211,3 +211,4 @@ CLEANFILES+= errlist.c
 # Ownership of globals from crt0.o is shared with libc for historic reasons.
 # __progname is also necessary as global here for the nbcompat case.
 COPTS.getprogname.c+=	-fcommon
+COPTS.setproctitle.c+=	-fcommon
