@@ -1,4 +1,4 @@
-# $NetBSD: t_cpuctl.sh,v 1.5 2020/08/14 05:22:25 martin Exp $
+# $NetBSD: t_cpuctl.sh,v 1.6 2021/04/12 01:18:13 mrg Exp $
 #
 # Copyright (c) 2020 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -167,6 +167,16 @@ identify_body() {
 	atf_pass
 }
 
+#
+# check_cpuctl_ok - only run some tests if
+# is set ATF_USR_SBIN_CPUCTL_OFFLINE_ENABLE.
+check_cpuctl_ok() {
+	if [ -z "$ATF_USR_SBIN_CPUCTL_OFFLINE_ENABLE" ]; then
+		return 1
+	fi
+	return 0
+}
+
 # offline
 #
 atf_test_case offline cleanup
@@ -177,6 +187,11 @@ offline_head() {
 }
 
 offline_body() {
+
+	if ! check_cpuctl_ok; then
+		atf_skip \
+		   "test sometimes hangs or upsets machine"
+	fi
 
 	cpuctl list > $tmp
 	setcpu "offline" atf_fail "error in setting a CPU offline"
@@ -216,6 +231,12 @@ nointr_head() {
 }
 
 nointr_body() {
+
+	if ! check_cpuctl_ok; then
+		atf_skip \
+		   "test sometimes hangs or upsets machine"
+	fi
+
 	cpuctl list > $tmp
 	setcpu "nointr" atf_fail "error in disabling interrupts"
 }
