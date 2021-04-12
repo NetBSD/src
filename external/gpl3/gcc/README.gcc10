@@ -1,4 +1,4 @@
-$NetBSD: README.gcc10,v 1.1 2021/04/12 00:05:54 mrg Exp $
+$NetBSD: README.gcc10,v 1.2 2021/04/12 08:31:30 mrg Exp $
 
 
 new stuff:
@@ -32,7 +32,7 @@ switched:	has port switched?  y (yes), n (no/ready), ? (not ready)
 
 architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf	switched
 ------------	-----	-------	------	----------	------------	----	---	--------
-aarch64		y	n	n	y		n		?	?	?
+aarch64		y	n[3]	y	y		n		?	?	?
 aarch64be	y	n	n	y		n		?	?	?
 alpha		y	n	n	y		n		?	?	?
 earmv4		y	n	n	y		n		?	?	?
@@ -54,12 +54,12 @@ i386		y	n	n	y		n		?	?	?
 ia64		y	n	n	y		n		?	N/A	?
 m68000		y	n	n	y		n		?	?	?
 m68k		y	n	n	y		n		?	?	?
-mipseb		y	n	n	y		n		?	?	?
-mipsel		y	n	n	y		n		?	?	?
-mips64eb	y	n	n	y		n		?	?	?
-mips64el	y	n	n	y		n		?	?	?
-powerpc		n[1]	n	n	n		n		?	?	?
-powerpc64	n[1]	n	n	n		n		N/A	N/A	?
+mipseb		y	n	y	y		y		?	?	?
+mipsel		y	n	y	y		y		?	?	?
+mips64eb	y	n	y	y		y		?	?	?
+mips64el	y	n	y	y		y		?	?	?
+powerpc		y	n	y	y		y		?	?	?
+powerpc64	y	n	y	y		y		N/A	N/A	?
 sh3eb		y	n	n	y		n		?	?	?
 sh3el		y	n	n	y		n		?	?	?
 sparc		y	y	y	y		y		y	?	?
@@ -73,7 +73,7 @@ coldfire	?	N/A	?	?		?		N/A	N/A
 ------------	-----	-------	------	----------	------------	----	---
 architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
 
-[1] - rs6000.c is not yet merged, build issues.
+[3] - missing __aarch64_swp1_acq in kernels.
 
 
 
@@ -96,14 +96,14 @@ earmv7hf:	 		 	 	n		n
 m68k:		n		n	n	n		n		n		n		n		n		n 	n
 
 		evbmips		emips		ews4800mips	mipsco		newsmips	sgimips
-mipseb:		n		n		n		n		n		n
+mipseb:		y		n		n		n		n		n
 
 		evbmips		algor		arc		cobalt		hpcmips		pmax
-mipsel:		n		n		n		n		n		n
+mipsel:		y		n		n		n		n		n
 
 		algor		evbmips		pmax
-mips64eb:	 		n		 
-mips64el:	n		n		n
+mips64eb:	 		y		 
+mips64el:	n		y		n
 
 		amigappc	bebox	evbppc	ibmnws		macppc		mvmeppc		ofppc		prep		rs6000		sandpoint
 powerpc:	n		n	n	n		n		n		n		n		n		n
