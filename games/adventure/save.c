@@ -1,4 +1,4 @@
-/*	$NetBSD: save.c,v 1.14 2014/03/22 22:04:40 dholland Exp $	*/
+/*	$NetBSD: save.c,v 1.15 2021/04/12 09:12:28 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)save.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: save.c,v 1.14 2014/03/22 22:04:40 dholland Exp $");
+__RCSID("$NetBSD: save.c,v 1.15 2021/04/12 09:12:28 mrg Exp $");
 #endif
 #endif				/* not lint */
 
@@ -77,7 +77,7 @@ static const char header[] = "Adventure save file\n";
  * Map 16 plain values into 90 coded values and back.
  */
 
-static const char coding[90] =
+static const char coding[91] =
 	"Db.GOyT]7a6zpF(c*5H9oK~0[WVAg&kR)ml,2^q-1Y3v+"
 	"X/=JirZL$C>_N?:}B{dfnsxU<@MQ%8|P!4h`ESt;euwIj"
 ;
