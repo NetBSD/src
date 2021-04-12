@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.234 2021/03/31 04:58:01 christos Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.235 2021/04/12 02:09:27 mrg Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -201,10 +201,10 @@
 ./usr/include/g++/tr1
 ./usr/include/g++/tr1_impl
 ./usr/include/g++/tr2
-./usr/include/gcc-8
-./usr/include/gcc-8/sanitizer
 ./usr/include/gcc-9
 ./usr/include/gcc-9/sanitizer
+./usr/include/gcc-10
+./usr/include/gcc-10/sanitizer
 ./usr/include/gssapi
 ./usr/include/isofs
 ./usr/include/isofs/cd9660
