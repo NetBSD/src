@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.6 2018/09/30 14:02:06 tsutsui Exp $	*/
+/*	$NetBSD: net.c,v 1.7 2021/04/12 03:55:40 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -60,8 +60,6 @@
 #include <promdev.h>
 
 #include "netif_news.h"
-
-char rootpath[FNAME_SIZE];
 
 int	netdev_sock = -1;
 static	int open_count;

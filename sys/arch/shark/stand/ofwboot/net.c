@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.4 2005/12/11 12:19:05 christos Exp $	*/
+/*	$NetBSD: net.c,v 1.5 2021/04/12 03:55:40 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -67,8 +67,6 @@
 #include "extern.h"
 #include "ofdev.h"
 #include "netif_of.h"
-
-char	rootpath[FNAME_SIZE];
 
 static	int netdev_sock = -1;
 static	int open_count;

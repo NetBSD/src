@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.9 2020/04/23 00:09:26 joerg Exp $	*/
+/*	$NetBSD: net.c,v 1.10 2021/04/12 03:55:41 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -72,8 +72,6 @@
 
 static int net_mountroot_bootparams(void);
 static int net_mountroot_bootp(void);
-
-extern char	rootpath[FNAME_SIZE];
 
 static	int netdev_sock = -1;
 static	int open_count;
