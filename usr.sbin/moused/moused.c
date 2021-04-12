@@ -1,4 +1,4 @@
-/* $NetBSD: moused.c,v 1.25 2014/10/18 08:33:31 snj Exp $ */
+/* $NetBSD: moused.c,v 1.26 2021/04/12 09:30:32 mrg Exp $ */
 /**
  ** Copyright (c) 1995 Michael Smith, All rights reserved.
  **
@@ -48,7 +48,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: moused.c,v 1.25 2014/10/18 08:33:31 snj Exp $");
+__RCSID("$NetBSD: moused.c,v 1.26 2021/04/12 09:30:32 mrg Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -2540,11 +2540,11 @@ pnpparse(pnpid_t *id, char *buf, int len)
     int i, j;
 
     id->revision = 0;
-    id->eisaid = NULL;
+    id->eisaid = "";
     id->serial = NULL;
     id->class = NULL;
-    id->compat = NULL;
-    id->description = NULL;
+    id->compat = "";
+    id->description = "";
     id->neisaid = 0;
     id->nserial = 0;
     id->nclass = 0;
