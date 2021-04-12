@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.4 (Berkeley) 6/24/90
-#	$NetBSD: Makefile,v 1.15 2019/10/13 07:28:06 mrg Exp $
+#	$NetBSD: Makefile,v 1.16 2021/04/12 02:54:07 mrg Exp $
 #
 # By default, flex will be configured to generate 8-bit scanners only if the
 # -8 flag is given.  If you want it to always generate 8-bit scanners, add
@@ -80,5 +80,6 @@ COPTS.scan.c+=        -O1
 
 COPTS.filter.c+=	${GCC_NO_FORMAT_TRUNCATION}
 COPTS.misc.c+=		${GCC_NO_FORMAT_TRUNCATION}
+COPTS.parse.c+=		${GCC_NO_FORMAT_TRUNCATION}
 
 .include <bsd.prog.mk>
