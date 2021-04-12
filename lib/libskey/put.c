@@ -1,4 +1,4 @@
-/*	$NetBSD: put.c,v 1.14 2019/10/03 17:08:26 christos Exp $	*/
+/*	$NetBSD: put.c,v 1.15 2021/04/12 09:17:10 mrg Exp $	*/
 
 /* S/KEY v1.1b (put.c)
  *
@@ -12,7 +12,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: put.c,v 1.14 2019/10/03 17:08:26 christos Exp $");
+__RCSID("$NetBSD: put.c,v 1.15 2021/04/12 09:17:10 mrg Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -2122,7 +2122,7 @@ int etob(char *out, const char *e)
 {
   char *word;
   int i, p, v, l, low, high;
-  char b[9];
+  char b[11];
   char input[36];
   char *last;
 
