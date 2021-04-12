@@ -1,4 +1,4 @@
-/*	$NetBSD: ipnat.c,v 1.3 2018/02/04 08:19:42 mrg Exp $	*/
+/*	$NetBSD: ipnat.c,v 1.4 2021/04/12 04:09:26 mrg Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -75,7 +75,6 @@ static __attribute__((__used__)) const char rcsid[] = "@(#)Id: ipnat.c,v 1.1.1.2
 #define	bzero(a,b)	memset(a,0,b)
 #endif
 int	use_inet6 = 0;
-char	thishost[MAXHOSTNAMELEN];
 
 extern	char	*optarg;
 
