@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.c,v 1.66 2020/03/30 20:45:59 maya Exp $	*/
+/*	$NetBSD: db_sym.c,v 1.67 2021/04/12 02:49:02 mrg Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.66 2020/03/30 20:45:59 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.67 2021/04/12 02:49:02 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddbparam.h"
@@ -224,7 +224,8 @@ db_search_symbol(db_addr_t val, db_strategy_t strategy, db_expr_t *offp)
 		db_expr_t newdiff;
 		db_sym_t ssym;
 
-		newdiff = diff = ~0;
+		diff = ~0u;
+		newdiff = ~0;
 		ssym = (*db_symformat->sym_search)
 		    (NULL, val, strategy, &newdiff);
 		if ((unsigned int) newdiff < diff) {
