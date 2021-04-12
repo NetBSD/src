@@ -1,4 +1,4 @@
-/*	$NetBSD: global.h,v 1.1 2017/04/10 02:28:23 phil Exp $ */
+/*	$NetBSD: global.h,v 1.2 2021/04/12 08:54:11 mrg Exp $ */
 
 /*
  * Copyright (C) 1991-1994, 1997, 2006, 2008, 2012-2017 Free Software Foundation, Inc.
@@ -118,9 +118,9 @@ EXTERN int n_history;
 
 #if defined(LIBEDIT)
 /* LIBEDIT data */
-EditLine *edit INIT(NULL);
-History  *hist;
-HistEvent histev;
+EXTERN EditLine *edit INIT(NULL);
+EXTERN History  *hist;
+EXTERN HistEvent histev;
 #endif
 
 /* "Condition code" -- false (0) or true (1) */
