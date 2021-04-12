@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.h,v 1.6 2010/11/14 15:47:20 uebayasi Exp $	*/
+/*	$NetBSD: firewire.h,v 1.7 2021/04/12 09:22:21 mrg Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -142,7 +142,7 @@ struct fw_asyhdr {
 
 struct fw_pkt {
 	union {
-		uint32_t ld[0];
+		uint32_t ld[3];
 		struct {
 			COMMON_HDR(, , tcode, );
 		} common;
