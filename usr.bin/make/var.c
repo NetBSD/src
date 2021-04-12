@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.923 2021/04/11 22:53:45 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.924 2021/04/12 13:28:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.923 2021/04/11 22:53:45 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.924 2021/04/12 13:28:35 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -1908,28 +1908,26 @@ VarUniq(const char *str)
  * Quote shell meta-characters and space characters in the string.
  * If quoteDollar is set, also quote and double any '$' characters.
  */
-static char *
-VarQuote(const char *str, bool quoteDollar)
+static void
+VarQuote(const char *str, bool quoteDollar, LazyBuf *buf)
 {
-	Buffer buf;
-	Buf_Init(&buf);
+	const char *p;
 
-	for (; *str != '\0'; str++) {
-		if (*str == '\n') {
+	LazyBuf_Init(buf, str);
+	for (p = str; *p != '\0'; p++) {
+		if (*p == '\n') {
 			const char *newline = Shell_GetNewline();
 			if (newline == NULL)
 				newline = "\\\n";
-			Buf_AddStr(&buf, newline);
+			LazyBuf_AddStr(buf, newline);
 			continue;
 		}
-		if (ch_isspace(*str) || is_shell_metachar((unsigned char)*str))
-			Buf_AddByte(&buf, '\\');
-		Buf_AddByte(&buf, *str);
-		if (quoteDollar && *str == '$')
-			Buf_AddStr(&buf, "\\$");
+		if (ch_isspace(*p) || is_shell_metachar((unsigned char)*p))
+			LazyBuf_Add(buf, '\\');
+		LazyBuf_Add(buf, *p);
+		if (quoteDollar && *p == '$')
+			LazyBuf_AddStr(buf, "\\$");
 	}
-
-	return Buf_DoneData(&buf);
 }
 
 /*
@@ -3068,14 +3066,22 @@ ApplyModifier_Regex(const char **pp, ModChain *ch)
 static ApplyModifierResult
 ApplyModifier_Quote(const char **pp, ModChain *ch)
 {
-	bool quoteDollar = **pp == 'q';
+	LazyBuf buf;
+	bool quoteDollar;
+
+	quoteDollar = **pp == 'q';
 	if (!IsDelimiter((*pp)[1], ch))
 		return AMR_UNKNOWN;
 	(*pp)++;
 
-	if (ModChain_ShouldEval(ch))
-		Expr_SetValueOwn(ch->expr,
-		    VarQuote(ch->expr->value.str, quoteDollar));
+	if (!ModChain_ShouldEval(ch))
+		return AMR_OK;
+
+	VarQuote(ch->expr->value.str, quoteDollar, &buf);
+	if (buf.data != NULL)
+		Expr_SetValue(ch->expr, LazyBuf_DoneGet(&buf));
+	else
+		LazyBuf_Done(&buf);
 
 	return AMR_OK;
 }
