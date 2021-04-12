@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile,v 1.13 2017/05/21 15:28:41 riastradh Exp $
+#	$NetBSD: Makefile,v 1.14 2021/04/12 04:19:32 mrg Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
+
+.include <bsd.own.mk>
 
 PRIMES=	${NETBSDSRCDIR}/games/primes
 
