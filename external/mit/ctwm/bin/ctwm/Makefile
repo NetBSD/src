@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2021/04/11 10:52:16 nia Exp $
+#	$NetBSD: Makefile,v 1.11 2021/04/12 03:57:06 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -65,3 +65,5 @@ DPADD+=	${LIBXPM} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} ${LIBXEXT} ${LIBX11}
 .include <bsd.files.mk>
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>
+
+COPTS+=			${${ACTIVE_CC} == "gcc":? -fcommon :}
