@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2019/10/13 07:28:14 mrg Exp $
+# $NetBSD: Makefile,v 1.6 2021/04/12 06:08:31 mrg Exp $
 
 TESTSDIR=	${TESTSBASE}/lib/libevent
 
@@ -27,5 +27,6 @@ DPADD+=		${LIBEVENT} ${LIBEVENT_PTHREADS} ${LIBZ} ${LIBPTHREAD}
 LDADD+=		-levent_pthreads -levent -lz -lpthread
 
 COPTS.regress_rpc.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
+COPTS.regress_dns.c+=	${GCC_NO_MAYBE_UNINITIALIZED}
 
 .include <bsd.test.mk>
