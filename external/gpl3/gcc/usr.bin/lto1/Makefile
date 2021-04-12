@@ -1,12 +1,13 @@
-#	$NetBSD: Makefile,v 1.5 2020/09/05 14:24:26 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2021/04/12 00:05:56 mrg Exp $
 
 PROG=		lto1
-SRCS=		lto-partition.c \
-		lto-object.c \
-		lto.c \
+SRCS=		attribs.c \
+		lto-common.c \
 		lto-lang.c \
+		lto-object.c \
+		lto-partition.c \
 		lto-symtab.c \
-		attribs.c \
+		lto.c \
 		main.c
 
 CPPFLAGS+=	-DPREFIX=\"/usr\"

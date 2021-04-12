@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2020/09/09 07:23:45 mrg Exp $
+#	$NetBSD: Makefile,v 1.12 2021/04/12 00:05:55 mrg Exp $
 
 SUBDIR=		backward ext bits debug decimal parallel pb profile pstl
 SUBDIR+=	tr1 tr2
@@ -13,8 +13,9 @@ SUBDIR+=	tr1 tr2
 DIST=		${GCCDIST}
 GNUHOSTDIST=	${DIST}
 
+# XXXmknative libstdc++-v3/libsupc++/Makefile.am::std_HEADERS
 # libsupc++
-INCS=		exception new typeinfo cxxabi.h initializer_list
+INCS=		compare cxxabi.h exception initializer_list new typeinfo
 
 # others
 INCS+=		cerrno
