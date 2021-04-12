@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.925 2021/04/12 18:48:00 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.926 2021/04/12 18:53:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.925 2021/04/12 18:48:00 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.926 2021/04/12 18:53:51 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -1441,7 +1441,7 @@ ModifyWord_NoMatch(Substring word, SepBuf *buf, void *data)
 }
 
 #ifdef SYSVVARSUB
-struct ModifyWord_SYSVSubstArgs {
+struct ModifyWord_SysVSubstArgs {
 	GNode *scope;
 	Substring lhsPrefix;
 	bool lhsPercent;
@@ -1451,9 +1451,9 @@ struct ModifyWord_SYSVSubstArgs {
 
 /* Callback for ModifyWords to implement the :%.from=%.to modifier. */
 static void
-ModifyWord_SYSVSubst(Substring word, SepBuf *buf, void *data)
+ModifyWord_SysVSubst(Substring word, SepBuf *buf, void *data)
 {
-	const struct ModifyWord_SYSVSubstArgs *args = data;
+	const struct ModifyWord_SysVSubstArgs *args = data;
 	FStr rhs;
 	char *rhsExp;
 	const char *percent;
@@ -3587,7 +3587,7 @@ ApplyModifier_SysV(const char **pp, ModChain *ch)
 	VarParseResult res;
 	LazyBuf lhsBuf, rhsBuf;
 	FStr rhs;
-	struct ModifyWord_SYSVSubstArgs args;
+	struct ModifyWord_SysVSubstArgs args;
 	Substring lhs;
 	const char *lhsSuffix;
 
@@ -3642,7 +3642,7 @@ ApplyModifier_SysV(const char **pp, ModChain *ch)
 	args.lhsSuffix = Substring_Init(lhsSuffix, lhs.end);
 	args.rhs = rhs.str;
 
-	ModifyWords(ch, ModifyWord_SYSVSubst, &args, ch->oneBigWord);
+	ModifyWords(ch, ModifyWord_SysVSubst, &args, ch->oneBigWord);
 
 done:
 	LazyBuf_Done(&lhsBuf);
