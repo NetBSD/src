@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.26 2021/04/09 15:58:43 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.27 2021/04/12 15:55:26 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.26 2021/04/09 15:58:43 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.27 2021/04/12 15:55:26 christos Exp $");
 #endif
 
 #include <ctype.h>
@@ -169,6 +169,7 @@ static	struct	kwtab {
 	kwdef_token(	"enum",		T_ENUM,			0,0,0,0,1),
 	kwdef_token(	"extension",	T_EXTENSION,		0,0,1,0,4),
 	kwdef_sclass(	"extern",	EXTERN,			0,0,0,0,1),
+	kwdef_token(	"fallthrough",	T_AT_FALLTHROUGH,	0,0,1,1,5),
 	kwdef_type(	"float",	FLOAT,			0,0,0,0,1),
 	kwdef_token(	"for",		T_FOR,			0,0,0,0,1),
 	kwdef_token(	"format",	T_AT_FORMAT,		0,0,1,1,5),
