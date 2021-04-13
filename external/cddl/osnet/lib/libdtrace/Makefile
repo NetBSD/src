@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2021/03/29 05:18:02 simonb Exp $
+#	$NetBSD: Makefile,v 1.30 2021/04/13 09:20:55 mrg Exp $
 
 # $FreeBSD: head/cddl/lib/libdtrace/Makefile 314654 2017-03-04 11:30:04Z ngie $
 
@@ -144,5 +144,7 @@ beforedepend:	dt_errtags.c dt_names.c
 
 
 LIBDPLIBS=	proc	${NETBSDSRCDIR}/external/bsd/libproc/lib
+
+COPTS.dt_link.c+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 10:? -Wno-restrict :}
 
 .include <bsd.lib.mk>
