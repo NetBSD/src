@@ -1,4 +1,4 @@
-$NetBSD: README.gcc10,v 1.4 2021/04/13 08:57:39 mrg Exp $
+$NetBSD: README.gcc10,v 1.5 2021/04/13 10:10:25 mrg Exp $
 
 
 new stuff:
@@ -65,7 +65,7 @@ sh3el		y	y	y	y		y		y	?	?
 sparc		y	y	y	y		y		y	y	n
 sparc64		y	y	y	y		y		y	y	n
 vax		y	y	y	y		y		y	n[6]	n
-x86_64		y	y	y	y		y		y	y	n
+x86_64		y	y	y	y		y[7]		y	y	?
 riscv32		y	N/A	y	y		y		N/A	N/A	n
 riscv64		y	N/A	y	y		y		N/A	N/A	n
 --
@@ -101,6 +101,12 @@ architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
 [5] - userland is broken.  some dynamic apps run on old install (ie, old
       ld.elf_so & shlibs) but nothing in chroot runs (static or dynamic).
 [6] - vax vs c++ exceptions issue
+[7] - with ctf/dtrace enabled, this happens:
+      /usr/src2/sys/kern/systrace_args.c:19:13: error: array subscript 8 is above array bounds of 'const union <anonymous>[8]' [-Werror=array-bounds]
+         19 |   iarg[1] = SCARG(p, args[SYS_MAXSYSARGS]); /* register_t */
+            |             ^
+      which makes sense as args[8] is out of bounds.
+
 
 
 
