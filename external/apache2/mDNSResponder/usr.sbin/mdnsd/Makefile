@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2020/09/06 07:20:26 mrg Exp $
+#	$NetBSD: Makefile,v 1.14 2021/04/13 06:25:48 mrg Exp $
 
 PROG=	mdnsd
 
@@ -19,5 +19,7 @@ MAN=	mdnsd.8
 
 CWARNFLAGS.clang+=	-Wno-unused-value -Wno-error=address-of-packed-member
 CWARNFLAGS.gcc+=	${GCC_NO_ADDR_OF_PACKED_MEMBER}
+
+COPTS.DNSCommon.c+=	${GCC_NO_RETURN_LOCAL_ADDR}
 
 .include <bsd.prog.mk>
