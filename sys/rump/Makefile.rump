@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.130 2021/03/14 13:11:59 rin Exp $
+#	$NetBSD: Makefile.rump,v 1.131 2021/04/13 22:23:42 christos Exp $
 #
 
 .if !defined(_RUMP_MK)
@@ -56,9 +56,9 @@ CFLAGS+=	-ffreestanding -fno-strict-aliasing
 
 CWARNFLAGS+=	-Wno-format-zero-length -Wno-pointer-sign
 
-CPPFLAGS+=	-imacros ${RUMPTOP}/include/opt/opt_rumpkernel.h
+CPPIFLAGS+=	-imacros ${RUMPTOP}/include/opt/opt_rumpkernel.h
 .ifdef BUILDRUMP_IMACROS
-CPPFLAGS+=	-imacros ${BUILDRUMP_IMACROS}
+CPPIFLAGS+=	-imacros ${BUILDRUMP_IMACROS}
 .endif
 
 CPPFLAGS+=	-I${.CURDIR} -I.
@@ -70,8 +70,8 @@ SHLIB_MAJOR?=	0
 SHLIB_MINOR?=	0
 
 .ifdef NEED_ISYSTEM
-CPPFLAGS+=	-isystem ${RUMPTOP}/../arch
-CPPFLAGS+=	-isystem ${RUMPTOP}/..
+CPPIFLAGS+=	-isystem ${RUMPTOP}/../arch
+CPPIFLAGS+=	-isystem ${RUMPTOP}/..
 .else
 CPPFLAGS+=	-I${RUMPTOP}/../arch
 CPPFLAGS+=	-I${RUMPTOP}/..
@@ -260,6 +260,9 @@ __archivebuild: .USE
 COMMENT?=	(no description)
 rumpdescribe: .PHONY
 	@printf '%-24s %s\n' '${LIB}' '${COMMENT}'
+
+CPPFLAGS+=	${CPPIFLAGS}
+LINTFLAGS+=	${CPPIFLAGS:S/^/-Z /}
 
 _BSD_IOCONF_MK_USER_=1
 .include <bsd.ioconf.mk>
