@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.10 2021/02/19 16:42:08 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.11 2021/04/13 01:15:57 mrg Exp $
 
 .if !defined(BIND9_MAKEFILE_INC)
 BIND9_MAKEFILE_INC=yes
@@ -141,3 +141,5 @@ CPPFLAGS+=-I${IDIST}/lib/isc/nothreads/include
 .include "${.PARSEDIR}/../Makefile.inc"
 .endif
 .endif
+
+COPTS+=	-fcommon
