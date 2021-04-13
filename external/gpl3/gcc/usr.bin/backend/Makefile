@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.64 2021/04/12 00:05:56 mrg Exp $
+#	$NetBSD: Makefile,v 1.65 2021/04/13 06:30:36 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -552,6 +552,7 @@ COPTS.internal-fn.c+=-O0
 COPTS.lto-streamer-out.c+=-O0
 COPTS.omp-low.c+=-O0
 COPTS.predict.c+=-O0
+COPTS.range-op.cc+=-O0
 COPTS.recog.c+=-O0
 COPTS.sanopt.c+=-O0
 COPTS.stmt.c+=-O0
@@ -591,8 +592,8 @@ COPTS.ubsan.c+=-O0
 COPTS.varasm.c+=-O0
 COPTS.vr-values.c+=-O0
 COPTS.web.c+=-O0
-COPTS.wide-int.cc+=-O0
 COPTS.wide-int-range.cc+=-O0
+COPTS.wide-int.cc+=-O0
 .else
 COPTS.tree.c=	${${ACTIVE_CC} == "clang" :? -O0 :}
 .endif
