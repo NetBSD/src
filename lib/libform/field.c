@@ -1,4 +1,4 @@
-/*	$NetBSD: field.c,v 1.31 2016/03/09 19:47:13 christos Exp $	*/
+/*	$NetBSD: field.c,v 1.32 2021/04/13 13:13:03 christos Exp $	*/
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
  *                         (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: field.c,v 1.31 2016/03/09 19:47:13 christos Exp $");
+__RCSID("$NetBSD: field.c,v 1.32 2021/04/13 13:13:03 christos Exp $");
 
 #include <sys/param.h>
 #include <stdlib.h>
@@ -751,12 +751,12 @@ _formi_create_field(FIELD *prototype, int rows, int cols, int frow,
 	    (nrows < 0) || (nbuf < 0))
 		return NULL;
 	
-	if ((new = (FIELD *)malloc(sizeof(FIELD))) == NULL) {
+	if ((new = malloc(sizeof(*new))) == NULL) {
 		return NULL;
 	}
 
 	  /* copy in the default field info */
-	bcopy(prototype, new, sizeof(FIELD));
+	memcpy(new, prototype, sizeof(*new));
 
 	new->nbuf = nbuf + 1;
 	new->rows = rows;
@@ -775,7 +775,6 @@ FIELD *
 new_field(int rows, int cols, int frow, int fcol, int nrows, int nbuf)
 {
 	FIELD *new;
-	size_t buf_len;
 	int i;
 	
 
@@ -783,31 +782,24 @@ new_field(int rows, int cols, int frow, int fcol, int nrows, int nbuf)
 				       frow, fcol, nrows, nbuf)) == NULL)
 		return NULL;
 	
-	buf_len = (nbuf + 1) * sizeof(FORM_STR);
-	
-	if ((new->buffers = (FORM_STR *)malloc(buf_len)) == NULL) {
+	if ((new->buffers = calloc(nbuf + 1, sizeof(*new->buffers))) == NULL) {
 		free(new);
 		return NULL;
 	}
 
-	  /* Initialise the strings to a zero length string */
+	/* Initialise the strings to a zero length string */
 	for (i = 0; i < nbuf + 1; i++) {
 		if ((new->buffers[i].string =
-		     (char *) malloc(sizeof(char))) == NULL) {
-			free(new->buffers);
-			free(new);
-			return NULL;
+		    malloc(sizeof(*new->buffers[i].string))) == NULL) {
+			goto out;
 		}
 		new->buffers[i].string[0] = '\0';
 		new->buffers[i].length = 0;
 		new->buffers[i].allocated = 1;
 	}
 
-	if ((new->alines = (_FORMI_FIELD_LINES *)
-	     malloc(sizeof(struct _formi_field_lines))) == NULL) {
-		free(new->buffers);
-		free(new);
-		return NULL;
+	if ((new->alines = malloc(sizeof(*new->alines))) == NULL) {
+		goto out;
 	}
 
 	new->alines->prev = NULL;
@@ -822,6 +814,13 @@ new_field(int rows, int cols, int frow, int fcol, int nrows, int nbuf)
 	new->cur_line = new->alines;
 	
 	return new;
+out:
+	while (--i >= 0) {
+		free(new->buffers[i].string);
+	}
+	free(new->buffers);
+	free(new);
+	return NULL;
 }
 
 /*
@@ -836,23 +835,24 @@ dup_field(FIELD *field, int frow, int fcol)
 	if (field == NULL)
 		return NULL;
 
-	  /* XXXX this right???? */
+	/* XXX: this right???? */
 	if ((new = _formi_create_field(field, (int) field->rows,
-				       (int ) field->cols,
+				       (int) field->cols,
 				       frow, fcol, (int) field->nrows,
 				       field->nbuf - 1)) == NULL)
 		return NULL;
 
 	row_len = (field->rows + field->nrows + 1) * field->cols;
-	buf_len = (field->nbuf + 1) * row_len * sizeof(FORM_STR);
+	buf_len = (field->nbuf + 1) * row_len * sizeof(*new->buffers);
 	
-	if ((new->buffers = (FORM_STR *)malloc(buf_len)) == NULL) {
+	/* XXX: dups buffers but not their strings? */
+	if ((new->buffers = malloc(buf_len)) == NULL) {
 		free(new);
 		return NULL;
 	}
 
 	  /* copy the buffers from the source field into the new copy */
-	bcopy(field->buffers, new->buffers, buf_len);
+	memcpy(new->buffers, field->buffers, buf_len);
 
 	return new;
 }

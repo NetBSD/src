@@ -1,4 +1,4 @@
-/*	$NetBSD: type_alnum.c,v 1.11 2021/04/13 00:29:42 mrg Exp $	*/
+/*	$NetBSD: type_alnum.c,v 1.12 2021/04/13 13:13:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -54,12 +54,12 @@ create_alnum_args(va_list *args)
 {
 	alnum_args *new;
 
-	new = (alnum_args *) malloc(sizeof(alnum_args));
+	new = malloc(sizeof(*new));
 
 	if (new != NULL)
 		new->width = va_arg(*args, int);
 
-	return (void *) new;
+	return (void *)new;
 }
 
 /*
@@ -70,12 +70,12 @@ copy_alnum_args(char *args)
 {
 	alnum_args *new;
 
-	new = (alnum_args *) malloc(sizeof(alnum_args));
+	new = malloc(sizeof(*new));
 
 	if (new != NULL)
 		new->width = ((alnum_args *) (void *)args)->width;
 
-	return (char *) (void *) new;
+	return (void *)new;
 }
 
 /*
@@ -133,7 +133,7 @@ alnum_check_field(FIELD *field, char *args)
 	if (buf[cur] != '\0')
 		return FALSE;
 
-	if ((new = (char *) malloc(sizeof(char) * (end - start + 1))) == NULL)
+	if ((new = malloc(sizeof(*new) * (end - start + 1))) == NULL)
 		return FALSE;
 
 	if ((end - start) >= 1) {
