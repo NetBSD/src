@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5212_attach.c,v 1.4 2011/03/07 11:25:43 cegger Exp $
+ * $Id: ar5212_attach.c,v 1.5 2021/04/13 03:27:13 mrg Exp $
  */
 #include "opt_ah.h"
 
@@ -238,7 +238,7 @@ ar5212InitState(struct ath_hal_5212 *ahp, uint16_t devid, HAL_SOFTC sc,
 
 	ahp->ah_antControl = HAL_ANT_VARIABLE;
 	ahp->ah_diversity = AH_TRUE;
-	ahp->ah_bIQCalibration = AH_FALSE;
+	ahp->ah_bIQCalibration = IQ_CAL_INACTIVE;
 	/*
 	 * Enable MIC handling.
 	 */
