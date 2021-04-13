@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2020/10/11 07:07:31 rin Exp $
+#	$NetBSD: Makefile,v 1.8 2021/04/13 04:58:59 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -23,5 +23,7 @@ CPPFLAGS+=-I${IDIST}/include -I${IDIST}/sntp/libopts
 .PATH: ${DIST}
 
 CLEANFILES+=${MAN}
+
+COPTS.ntpdc.c+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 10:? -Wno-array-bounds :}
 
 .include <bsd.prog.mk>

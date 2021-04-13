@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2020/02/23 09:24:12 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2021/04/13 04:59:00 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -114,6 +114,7 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/freetype2
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/freetype2/freetype
 
 CWARNFLAGS.clang+=	-Wno-format
+COPTS.ftfuncs.c+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 10:? -Wno-error=overflow :}
 
 LIBDPLIBS=\
 	Xt	${.CURDIR}/../libXt \

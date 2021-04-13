@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2018/05/09 08:39:54 mrg Exp $
+#	$NetBSD: Makefile,v 1.12 2021/04/13 04:59:00 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -66,6 +66,7 @@ COPTS.register.c+=	-Wno-error
 PKGDIST=	${LIB}
 
 CWARNFLAGS.clang+=	-Wno-tautological-compare -Wno-string-plus-int
+COPTS.ftfuncs.c+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 10:? -Wno-error=overflow :}
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>

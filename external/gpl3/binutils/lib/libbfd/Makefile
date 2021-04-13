@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2020/04/04 00:46:53 christos Exp $
+#	$NetBSD: Makefile,v 1.23 2021/04/13 04:58:59 mrg Exp $
 
 NOLINKLIB=	# defined
 NOLINT=		# defined
@@ -45,8 +45,9 @@ CPPFLAGS+=	-I${.CURDIR}/arch/${BFD_MACHINE_ARCH} -I${DIST}/include -I. \
 CPPFLAGS.elf.c +=	-O0
 .endif
 
-COPTS.pei-x86_64.c += -Wno-stack-protector
-COPTS.elfxx-mips.c += -Wno-stack-protector
+COPTS.pei-x86_64.c+=	-Wno-stack-protector
+COPTS.elfxx-mips.c+=	-Wno-stack-protector
+COPTS.elf.c+=		${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 10:? -Wno-overflow :}
 
 GSRCS=		${G_libbfd_la_OBJECTS:libbfd.lo=lib_bfd.lo} \
 		${G_libbfd_la_DEPENDENCIES:M*.lo}
