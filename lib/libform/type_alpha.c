@@ -1,4 +1,4 @@
-/*	$NetBSD: type_alpha.c,v 1.12 2021/04/13 00:29:42 mrg Exp $	*/
+/*	$NetBSD: type_alpha.c,v 1.13 2021/04/13 13:13:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: type_alpha.c,v 1.12 2021/04/13 00:29:42 mrg Exp $");
+__RCSID("$NetBSD: type_alpha.c,v 1.13 2021/04/13 13:13:04 christos Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -56,7 +56,7 @@ create_alpha_args(va_list *args)
 {
 	alpha_args *new;
 
-	new = (alpha_args *) malloc(sizeof(alpha_args));
+	new = malloc(sizeof(*new));
 
 	if (new != NULL)
 		new->width = va_arg(*args, int);
@@ -72,7 +72,7 @@ copy_alpha_args(char *args)
 {
 	alpha_args *new;
 
-	new = (alpha_args *) malloc(sizeof(alpha_args));
+	new = malloc(sizeof(*new));
 
 	if (new != NULL)
 		new->width = ((alpha_args *) (void *) args)->width;
@@ -136,7 +136,7 @@ alpha_check_field(FIELD *field, char *args)
 		return FALSE;
 
 	  /* set buffer 0 to the new string */
-	if ((new = (char *) malloc(sizeof(char) * (end - start + 1))) == NULL)
+	if ((new = malloc(sizeof(*new) * (end - start + 1))) == NULL)
 		return FALSE;
 
 	if ((end - start) >= 1) {

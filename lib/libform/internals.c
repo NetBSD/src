@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.c,v 1.39 2018/11/08 06:34:40 msaitoh Exp $	*/
+/*	$NetBSD: internals.c,v 1.40 2021/04/13 13:13:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: internals.c,v 1.39 2018/11/08 06:34:40 msaitoh Exp $");
+__RCSID("$NetBSD: internals.c,v 1.40 2021/04/13 13:13:04 christos Exp $");
 
 #include <limits.h>
 #include <ctype.h>
@@ -219,19 +219,18 @@ copy_row(_FORMI_FIELD_LINES *row)
 	_FORMI_FIELD_LINES *new;
 	_formi_tab_t *tp, *newt;
 
-	if ((new = (_FORMI_FIELD_LINES *) malloc(sizeof(_FORMI_FIELD_LINES)))
-	    == NULL) {
+	if ((new = malloc(sizeof(*new))) == NULL) {
 		return NULL;
 	}
 
-	memcpy(new, row, sizeof(_FORMI_FIELD_LINES));
+	memcpy(new, row, sizeof(*new));
 	
 	  /* nuke the pointers from the source row so we don't get confused */
 	new->next = NULL;
 	new->prev = NULL;
 	new->tabs = NULL;
 
-	if ((new->string = (char *) malloc((size_t)new->allocated)) == NULL) {
+	if ((new->string = malloc((size_t)new->allocated)) == NULL) {
 		free(new);
 		return NULL;
 	}
@@ -240,14 +239,13 @@ copy_row(_FORMI_FIELD_LINES *row)
 
 	if (row->tabs != NULL) {
 		tp = row->tabs;
-		if ((new->tabs = (_formi_tab_t *) malloc(sizeof(_formi_tab_t)))
-		    == NULL) {
+		if ((new->tabs = malloc(sizeof(*new->tabs))) == NULL) {
 			free(new->string);
 			free(new);
 			return NULL;
 		}
 
-		memcpy(new->tabs, row->tabs, sizeof(_formi_tab_t));
+		memcpy(new->tabs, row->tabs, sizeof(*new->tabs));
 		new->tabs->back = NULL;
 		new->tabs->fwd = NULL;
 		
@@ -255,9 +253,7 @@ copy_row(_FORMI_FIELD_LINES *row)
 		newt = new->tabs;
 
 		while (tp != NULL) {
-			if ((newt->fwd =
-			     (_formi_tab_t *) malloc(sizeof(_formi_tab_t)))
-			    == NULL) {
+			if ((newt->fwd = malloc(sizeof(*newt->fwd))) == NULL) {
 				/* error... unwind allocations */
 				tp = new->tabs;
 				while (tp != NULL) {
@@ -271,7 +267,7 @@ copy_row(_FORMI_FIELD_LINES *row)
 				return NULL;
 			}
 
-			memcpy(newt->fwd, tp, sizeof(_formi_tab_t));
+			memcpy(newt->fwd, tp, sizeof(*newt->fwd));
 			newt->fwd->back = newt;
 			newt = newt->fwd;
 			newt->fwd = NULL;
@@ -1469,15 +1465,11 @@ _formi_find_pages(FORM *form)
 {
 	int i, cur_page = 0;
 
-	if ((form->page_starts = (_FORMI_PAGE_START *)
-	     malloc((form->max_page + 1) * sizeof(_FORMI_PAGE_START))) == NULL)
+	if ((form->page_starts = calloc((form->max_page + 1),
+	    sizeof(*form->page_starts))) == NULL)
 		return E_SYSTEM_ERROR;
 
-	  /* initialise the page starts array */
-	memset(form->page_starts, 0,
-	       (form->max_page + 1) * sizeof(_FORMI_PAGE_START));
-
-	for (i =0; i < form->field_count; i++) {
+	for (i = 0; i < form->field_count; i++) {
 		if (form->fields[i]->page_break == 1)
 			cur_page++;
 		if (form->page_starts[cur_page].in_use == 0) {
@@ -1762,8 +1754,7 @@ _formi_add_char(FIELD *field, unsigned int pos, char c)
 	   * string.  Everything should flow from there....
 	   */
 	if (row->string == NULL) {
-		if ((row->string = (char *) malloc((size_t)INITIAL_LINE_ALLOC))
-		    == NULL)
+		if ((row->string = malloc((size_t)INITIAL_LINE_ALLOC)) == NULL)
 			return E_SYSTEM_ERROR;
 		row->string[0] = '\0';
 		row->allocated = INITIAL_LINE_ALLOC;
@@ -1827,7 +1818,7 @@ _formi_add_char(FIELD *field, unsigned int pos, char c)
 		if (row->length + 2
 		    >= row->allocated) {
 			new_size = row->allocated + 16 - (row->allocated % 16);
-			if ((new = (char *) realloc(row->string,
+			if ((new = realloc(row->string,
 						  (size_t) new_size )) == NULL)
 				return E_SYSTEM_ERROR;
 			row->allocated = new_size;
@@ -1836,7 +1827,7 @@ _formi_add_char(FIELD *field, unsigned int pos, char c)
 	}
 
 	if ((field->overlay == 0) && (row->length > pos)) {
-		bcopy(&row->string[pos], &row->string[pos + 1],
+		memmove(&row->string[pos + 1], &row->string[pos],
 		      (size_t) (row->length - pos + 1));
 	}
 
@@ -1881,7 +1872,7 @@ _formi_add_char(FIELD *field, unsigned int pos, char c)
 			   * wrap failed for some reason, back out the
 			   * char insert
 			   */
-			bcopy(&row->string[pos + 1], &row->string[pos],
+			memmove(&row->string[pos], &row->string[pos + 1],
 			      (size_t) (row->length - pos));
 			row->length--;
 			if (pos > 0)
@@ -2544,7 +2535,7 @@ _formi_manipulate_field(FORM *form, int c)
 		}
 			
 		saved = row->string[start];
-		bcopy(&row->string[start + 1], &row->string[start],
+		memmove(&row->string[start], &row->string[start + 1],
 		      (size_t) (end - start + 1));
 		row->string[end] = '\0';
 		row->length--;
@@ -2612,8 +2603,8 @@ _formi_manipulate_field(FORM *form, int c)
 		
 		if ((cur->rows + cur->nrows) > 1) {
 			if (_formi_wrap_field(cur, row) != E_OK) {
-				bcopy(&row->string[start],
-				      &row->string[start + 1],
+				memmove(&row->string[start + 1],
+				      &row->string[start],
 				      (size_t) (end - start));
 				row->length++;
 				row->string[start] = saved;
@@ -2675,7 +2666,7 @@ _formi_manipulate_field(FORM *form, int c)
 			   * without losing a char.
 			   */
 			saved = row->string[start - 1];
-			bcopy(&row->string[start], &row->string[start - 1],
+			memmove(&row->string[start - 1], &row->string[start],
 			      (size_t) (end - start + 1));
 			row->length--;
 			row->string[row->length] = '\0';
@@ -2707,8 +2698,8 @@ _formi_manipulate_field(FORM *form, int c)
 			}
 			
 			if ((_formi_wrap_field(cur, row) != E_OK)) {
-				bcopy(&row->string[start - 1],
-				      &row->string[start],
+				memmove(&row->string[start],
+				      &row->string[start - 1],
 				      (size_t) (end - start));
 				row->length++;
 				row->string[start - 1] = saved;
@@ -2797,7 +2788,7 @@ _formi_manipulate_field(FORM *form, int c)
 			start = find_sow(start, &row);
 		str = row->string;
 		  /* XXXX hmmmm what if start and end on diff rows? XXXX */
-		bcopy(&str[end], &str[start],
+		memmove(&str[start], &str[end],
 		      (size_t) (row->length - end + 1));
 		len = end - start;
 		row->length -= len;
@@ -3150,9 +3141,8 @@ field_sort_compare(const void *one, const void *two)
 	const FIELD *a, *b;
 	int tl;
 	
-	  /* LINTED const castaway; we don't modify these! */	
-	a = (const FIELD *) *((const FIELD **) one);
-	b = (const FIELD *) *((const FIELD **) two);
+	a = *(const FIELD **) __UNCONST(one);
+	b = *(const FIELD **) __UNCONST(two);
 
 	if (a == NULL)
 		return 1;
@@ -3191,8 +3181,7 @@ _formi_sort_fields(FORM *form)
 	    == NULL)
 		return;
 
-	bcopy(form->fields, sort_area,
-	      (size_t) (sizeof(FIELD *) * form->field_count));
+	memcpy(sort_area, form->fields, sizeof(*sort_area) * form->field_count);
 	qsort(sort_area, (size_t) form->field_count, sizeof(FIELD *),
 	      field_sort_compare);
 	
@@ -3392,8 +3381,7 @@ _formi_calculate_tabs(_FORMI_FIELD_LINES *row)
 	for (i = 0, j = 0; i < row->length; i++, j++) {
 		if (row->string[i] == '\t') {
 			if (*tsp == NULL) {
-				if ((*tsp = (_formi_tab_t *)
-				     malloc(sizeof(_formi_tab_t))) == NULL)
+				if ((*tsp = malloc(sizeof(*tsp))) == NULL)
 					return;
 				(*tsp)->back = old_ts;
 				(*tsp)->fwd = NULL;
@@ -3552,7 +3540,7 @@ _formi_sync_buffer(FIELD *field)
 	   * init nstr up front, just in case there are no line contents,
 	   * this could happen if the field just contains hard returns.
 	   */
-	if ((nstr = malloc(sizeof(char))) == NULL)
+	if ((nstr = malloc(sizeof(*nstr))) == NULL)
 		return E_SYSTEM_ERROR;
 	nstr[0] = '\0';
 	

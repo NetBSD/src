@@ -1,4 +1,4 @@
-/*	$NetBSD: type_regex.c,v 1.7 2004/11/24 11:57:09 blymn Exp $	*/
+/*	$NetBSD: type_regex.c,v 1.8 2021/04/13 13:13:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: type_regex.c,v 1.7 2004/11/24 11:57:09 blymn Exp $");
+__RCSID("$NetBSD: type_regex.c,v 1.8 2021/04/13 13:13:04 christos Exp $");
 
 #include <stdlib.h>
 #include <sys/types.h>
@@ -58,7 +58,7 @@ create_regex_args(va_list *args)
 	regex_args *new;
 	char *expression;
 
-	new = (regex_args *) malloc(sizeof(regex_args));
+	new = malloc(sizeof(*new));
 
 	if (new != NULL) {
 		new->references = 1;
