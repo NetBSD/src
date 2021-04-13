@@ -1,4 +1,4 @@
-/* $NetBSD: udf_create.c,v 1.28 2020/05/14 08:34:18 msaitoh Exp $ */
+/* $NetBSD: udf_create.c,v 1.29 2021/04/13 06:25:48 mrg Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf_create.c,v 1.28 2020/05/14 08:34:18 msaitoh Exp $");
+__RCSID("$NetBSD: udf_create.c,v 1.29 2021/04/13 06:25:48 mrg Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -2025,7 +2025,7 @@ udf_append_meta_mapping_part_to_efe(struct extfile_entry *efe,
 	uint64_t inf_len, obj_size, logblks_rec;
 	uint32_t l_ad, l_ea;
 	uint16_t crclen;
-	uint8_t *bpos;
+	uintptr_t bpos;
 
 	inf_len     = udf_rw64(efe->inf_len);
 	obj_size    = udf_rw64(efe->obj_size);
@@ -2039,8 +2039,8 @@ udf_append_meta_mapping_part_to_efe(struct extfile_entry *efe,
 	icb->flags = udf_rw16(UDF_ICB_SHORT_ALLOC);
 
 	/* append short_ad */
-	bpos = (uint8_t *) efe->data + l_ea + l_ad;
-	memcpy(bpos, mapping, sizeof(struct short_ad));
+	bpos = (uintptr_t)efe->data + l_ea + l_ad;
+	memcpy((void *)bpos, mapping, sizeof(struct short_ad));
 
 	l_ad   += sizeof(struct short_ad);
 	crclen += sizeof(struct short_ad);

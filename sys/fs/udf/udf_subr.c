@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.152 2021/01/11 22:02:28 skrll Exp $ */
+/* $NetBSD: udf_subr.c,v 1.153 2021/04/13 06:25:49 mrg Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.152 2021/01/11 22:02:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.153 2021/04/13 06:25:49 mrg Exp $");
 #endif /* not lint */
 
 
@@ -2664,7 +2664,8 @@ udf_update_vat_extattr_from_lvid(struct udf_node *vat_node)
 	const char *extstr = "*UDF VAT LVExtension";
 	uint64_t    vat_uniqueid;
 	uint32_t    offset, a_l;
-	uint8_t    *ea_start, *lvextpos;
+	uint8_t    *ea_start;
+	uintptr_t   lvextpos;
 	int         error;
 
 	/* get mountpoint and lvinfo */
@@ -2700,14 +2701,14 @@ udf_update_vat_extattr_from_lvid(struct udf_node *vat_node)
 	 * copy first to avoid panics on some machines (!!)
 	 */
 	DPRINTF(VOLUMES, ("Updating VAT LVExtension attr\n"));
-	lvextpos = implext->data + udf_rw32(implext->iu_l);
+	lvextpos = (uintptr_t)implext->data + udf_rw32(implext->iu_l);
 
 	lvext.unique_id_chk   = vat_uniqueid;
 	lvext.num_files       = lvinfo->num_files;
 	lvext.num_directories = lvinfo->num_directories;
 	memmove(lvext.logvol_id, ump->logical_vol->logvol_id, 128);
 
-	memcpy(lvextpos, &lvext, sizeof(lvext));
+	memcpy((void *)lvextpos, &lvext, sizeof(lvext));
 
 	return 0;
 }
