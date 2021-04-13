@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.161 2021/04/13 05:00:06 yamaguchi Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.162 2021/04/13 05:04:54 yamaguchi Exp $ */
 
 /*
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.161 2021/04/13 05:00:06 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.162 2021/04/13 05:04:54 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -601,6 +601,9 @@ pppoeintr(void)
 			pppoe_data_input(m);
 		}
 	} while (disc_done || data_done);
+
+	if (!IF_IS_EMPTY(&ppoediscinq) || !IF_IS_EMPTY(&ppoeinq))
+		softint_schedule(pppoe_softintr);
 
 	SOFTNET_UNLOCK_UNLESS_NET_MPSAFE();
 }
