@@ -1,4 +1,4 @@
-/*	$NetBSD: type_numeric.c,v 1.9 2016/05/30 17:48:29 dholland Exp $	*/
+/*	$NetBSD: type_numeric.c,v 1.10 2021/04/13 13:13:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: type_numeric.c,v 1.9 2016/05/30 17:48:29 dholland Exp $");
+__RCSID("$NetBSD: type_numeric.c,v 1.10 2021/04/13 13:13:04 christos Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -58,7 +58,7 @@ create_numeric_args(va_list *args)
 {
 	numeric_args *new;
 
-	new = (numeric_args *) malloc(sizeof(numeric_args));
+	new = malloc(sizeof(*new));
 
 	if (new != NULL) {
 		new->precision = va_arg(*args, unsigned);
@@ -77,10 +77,10 @@ copy_numeric_args(char *args)
 {
 	numeric_args *new;
 
-	new = (numeric_args *) malloc(sizeof(numeric_args));
+	new = malloc(sizeof(*new));
 
 	if (new != NULL)
-		bcopy(args, new, sizeof(numeric_args));
+		memcpy(new, args, sizeof(*args));
 
 	return (void *) new;
 }
