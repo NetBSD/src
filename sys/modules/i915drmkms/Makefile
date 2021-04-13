@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.16 2020/10/18 19:56:41 christos Exp $
+# $NetBSD: Makefile,v 1.17 2021/04/13 04:59:00 mrg Exp $
 
 .include "../Makefile.inc"
 .include "../drmkms/Makefile.inc"
@@ -115,11 +115,10 @@ SRCS+=	intel_uncore.c
 
 WARNS=	3
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} >= 7 && ${ACTIVE_CC} == "gcc"
-COPTS.intel_display.c+=	-Wno-error=implicit-fallthrough
-COPTS.intel_ddi.c+=	-Wno-error=implicit-fallthrough
-COPTS.intel_sdvo.c+=	-Wno-error=implicit-fallthrough
-.endif
-COPTS.i915_guc_submission.c += ${NO_ADDR_OF_PACKED_MEMBER}
+COPTS.intel_display.c+=		${GCC_NO_IMPLICIT_FALLTHRU}
+COPTS.intel_ddi.c+=		${GCC_NO_IMPLICIT_FALLTHRU}
+COPTS.intel_sdvo.c+=		${GCC_NO_IMPLICIT_FALLTHRU}
+COPTS.intel_ddi.c+=		${GCC_NO_MAYBE_UNINITIALIZED}
+COPTS.i915_guc_submission.c+=	${NO_ADDR_OF_PACKED_MEMBER}
 
 .include <bsd.kmodule.mk>

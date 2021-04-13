@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.36 2020/01/25 19:05:08 christos Exp $
+# $NetBSD: Makefile,v 1.37 2021/04/13 04:58:59 mrg Exp $
 
 # Link the mesa_dri_drivers mega driver.
 
@@ -487,6 +487,8 @@ CWARNFLAGS.clang+=	-Wno-error=initializer-overrides -Wno-error=switch \
 			-Wno-c99-designator -Wno-xor-used-as-pow
 
 COPTS+= -Wno-error=stack-protector
+
+COPTS.u_atomic.c+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 10:? -Wno-builtin-declaration-mismatch :}
 
 .include <bsd.lib.mk>
 .else

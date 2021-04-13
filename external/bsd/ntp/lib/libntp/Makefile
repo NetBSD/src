@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2020/05/29 20:16:07 christos Exp $
+#	$NetBSD: Makefile,v 1.25 2021/04/13 04:58:59 mrg Exp $
 
 LIBISPRIVATE=yes
 
@@ -102,5 +102,7 @@ CPPFLAGS.ntp_calendar.c += -DMKREPRO_TIME=\"${MKREPRO_TIME:Q}\"
 .endif
 
 COPTS.timetoa.c+=	${GCC_NO_FORMAT_TRUNCATION}
+COPTS.socktoa.c+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 10:? -Wno-restrict :}
+COPTS.socktohost.c+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 10:? -Wno-restrict :}
 
 .include <bsd.lib.mk>
