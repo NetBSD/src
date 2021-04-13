@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.38 2020/12/02 02:21:43 rin Exp $
+# $NetBSD: Makefile,v 1.39 2021/04/13 01:11:05 mrg Exp $
 
 WARNS?=	0	# XXX third-party program, many issues
 NOCLANGERROR=	# defined
@@ -82,5 +82,7 @@ prsa_par.c: ${DIST}/src/racoon/prsa_par.y
 	${YACC} -pprsa -d -o ${.TARGET} ${.ALLSRC}
 
 CWARNFLAGS.gcc+=        ${GCC_NO_ADDR_OF_PACKED_MEMBER}
+
+COPTS+=		-fcommon
 
 .include <bsd.prog.mk>
