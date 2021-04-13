@@ -1,4 +1,4 @@
-/* $NetBSD: bwfm.c,v 1.29 2020/07/22 17:23:52 riastradh Exp $ */
+/* $NetBSD: bwfm.c,v 1.30 2021/04/13 04:13:52 mrg Exp $ */
 /* $OpenBSD: bwfm.c,v 1.5 2017/10/16 22:27:16 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -166,7 +166,6 @@ bwfm_firmware_read_file(struct bwfm_softc * const sc,
 
 	names[1] = kmem_asprintf("%s.%s", fwp->fwsel_basename,
 	    bwfm_firmware_filetypes[which].suffix);
-	if (ctx->ctx_model)
 	names[0] = ctx->ctx_model ? kmem_asprintf("%s.%s.%s",
 	    fwp->fwsel_basename, ctx->ctx_model,
 	    bwfm_firmware_filetypes[which].suffix) : NULL;
