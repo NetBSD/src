@@ -1,4 +1,4 @@
-/*	$NetBSD: checknr.c,v 1.24 2013/08/12 14:03:18 joerg Exp $	*/
+/*	$NetBSD: checknr.c,v 1.25 2021/04/13 01:38:04 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)checknr.c	8.1 (Berkeley) 6/6/93";
 #else 
-__RCSID("$NetBSD: checknr.c,v 1.24 2013/08/12 14:03:18 joerg Exp $");
+__RCSID("$NetBSD: checknr.c,v 1.25 2021/04/13 01:38:04 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -325,6 +325,7 @@ process(FILE *f)
 			 * find and isolate the macro/command name.
 			 */
 			strncpy(mac, line+1, 4);
+			mac[4] = '\0';
 			if (isspace((unsigned char)mac[0])) {
 				pe(lineno);
 				printf("Empty command\n");
