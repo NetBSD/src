@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_execve.c,v 1.42 2020/04/19 20:31:59 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_execve.c,v 1.43 2021/04/13 05:28:16 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.42 2020/04/19 20:31:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.43 2021/04/13 05:28:16 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,7 +130,7 @@ netbsd32_posix_spawn_fa_alloc(struct posix_spawn_file_actions **fap,
 	for (; i < fa->len; i++) {
 		fae = &fa->fae[i];
 		f32 = &fae32[i];
-		fae->fae_action = f32->fae_action;
+		fae->fae_action = (unsigned)f32->fae_action;
 		fae->fae_fildes = f32->fae_fildes;
 		if (fae->fae_action == FAE_DUP2)
 			fae->fae_data.dup2.newfildes =
