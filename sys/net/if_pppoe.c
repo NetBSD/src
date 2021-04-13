@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.158 2020/11/25 10:42:35 yamaguchi Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.159 2021/04/13 04:53:22 yamaguchi Exp $ */
 
 /*
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.158 2020/11/25 10:42:35 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.159 2021/04/13 04:53:22 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -532,10 +532,11 @@ pppoe_find_softc_by_hunique(uint8_t *token, size_t len,
 	memcpy(&t, token, len);
 
 	LIST_FOREACH(sc, &pppoe_softc_list, sc_list) {
+		PPPOE_LOCK(sc, lock);
 		if (sc->sc_id == t) {
-			PPPOE_LOCK(sc, lock);
 			break;
 		}
+		PPPOE_UNLOCK(sc);
 	}
 	rw_exit(&pppoe_softc_list_lock);
 
