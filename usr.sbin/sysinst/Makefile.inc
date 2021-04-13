@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.39 2021/04/13 04:59:00 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.40 2021/04/13 07:53:19 mrg Exp $
 #
 # Makefile for sysinst
 
@@ -253,5 +253,6 @@ check-lang:	msg.def msg_defs.h
 	@rm /tmp/sysinst.en
 
 COPTS.util.c+=	${GCC_NO_STRINGOP_TRUNCATION}
+COPTS+=		-fcommon
 
 .include <bsd.prog.mk>
