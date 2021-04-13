@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_svc_com.c,v 1.24 2021/03/07 00:23:06 christos Exp $	*/
+/*	$NetBSD: rpcb_svc_com.c,v 1.25 2021/04/13 05:58:45 mrg Exp $	*/
 /*	$FreeBSD: head/usr.sbin/rpcbind/rpcb_svc_com.c 301770 2016-06-09 22:25:00Z pfg $ */
 
 /*-
@@ -1274,6 +1274,8 @@ handle_reply(int fd, SVCXPRT *xprt)
 #ifdef SVC_RUN_DEBUG
 	char *uaddr;
 #endif
+
+	reply_msg.rm_xid = 0;
 
 	buffer = malloc(RPC_BUF_MAX);
 	if (buffer == NULL)
