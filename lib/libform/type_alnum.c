@@ -1,4 +1,4 @@
-/*	$NetBSD: type_alnum.c,v 1.10 2004/11/24 11:57:09 blymn Exp $	*/
+/*	$NetBSD: type_alnum.c,v 1.11 2021/04/13 00:29:42 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -133,7 +133,7 @@ alnum_check_field(FIELD *field, char *args)
 	if (buf[cur] != '\0')
 		return FALSE;
 
-	if ((new = (char *) malloc(sizeof(char) * (end - start))) == NULL)
+	if ((new = (char *) malloc(sizeof(char) * (end - start + 1))) == NULL)
 		return FALSE;
 
 	if ((end - start) >= 1) {
