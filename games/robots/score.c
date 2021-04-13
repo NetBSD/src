@@ -1,4 +1,4 @@
-/*	$NetBSD: score.c,v 1.23 2009/08/12 08:30:55 dholland Exp $	*/
+/*	$NetBSD: score.c,v 1.24 2021/04/13 01:50:46 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)score.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: score.c,v 1.23 2009/08/12 08:30:55 dholland Exp $");
+__RCSID("$NetBSD: score.c,v 1.24 2021/04/13 01:50:46 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -198,9 +198,10 @@ set_name(SCORE *scp)
 	struct passwd *pp;
 
 	if ((pp = getpwuid(scp->s_uid)) == NULL)
-		strncpy(scp->s_name, "???", MAXNAME);
+		strncpy(scp->s_name, "???", MAXNAME - 1);
 	else
-		strncpy(scp->s_name, pp->pw_name, MAXNAME);
+		strncpy(scp->s_name, pp->pw_name, MAXNAME - 1);
+	scp->s_name[MAXNAME - 1] = '\0';
 }
 
 /*
