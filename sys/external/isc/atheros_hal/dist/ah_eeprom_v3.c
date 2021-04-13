@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ah_eeprom_v3.c,v 1.4 2013/09/12 11:26:53 martin Exp $
+ * $Id: ah_eeprom_v3.c,v 1.5 2021/04/13 03:27:13 mrg Exp $
  */
 #include "opt_ah.h"
 
@@ -1671,45 +1671,45 @@ legacyEepromSet(struct ath_hal *ah, int param, int v)
 	switch (param) {
 	case AR_EEP_AMODE:
 		ee->ee_Amode = v;
-		return HAL_OK;
+		return AH_TRUE;
 	case AR_EEP_BMODE:
 		ee->ee_Bmode = v;
-		return HAL_OK;
+		return AH_TRUE;
 	case AR_EEP_GMODE:
 		ee->ee_Gmode = v;
-		return HAL_OK;
+		return AH_TRUE;
 	case AR_EEP_TURBO5DISABLE:
 		ee->ee_turbo5Disable = v;
-		return HAL_OK;
+		return AH_TRUE;
 	case AR_EEP_TURBO2DISABLE:
 		ee->ee_turbo2Disable = v;
-		return HAL_OK;
+		return AH_TRUE;
 	case AR_EEP_COMPRESS:
 		if (v)
 			ee->ee_opCap &= ~AR_EEPROM_EEPCAP_COMPRESS_DIS;
 		else
 			ee->ee_opCap |= AR_EEPROM_EEPCAP_COMPRESS_DIS;
-		return HAL_OK;
+		return AH_TRUE;
 	case AR_EEP_FASTFRAME:
 		if (v)
 			ee->ee_opCap &= ~AR_EEPROM_EEPCAP_FASTFRAME_DIS;
 		else
 			ee->ee_opCap |= AR_EEPROM_EEPCAP_FASTFRAME_DIS;
-		return HAL_OK;
+		return AH_TRUE;
 	case AR_EEP_AES:
 		if (v)
 			ee->ee_opCap &= ~AR_EEPROM_EEPCAP_AES_DIS;
 		else
 			ee->ee_opCap |= AR_EEPROM_EEPCAP_AES_DIS;
-		return HAL_OK;
+		return AH_TRUE;
 	case AR_EEP_BURST:
 		if (v)
 			ee->ee_opCap &= ~AR_EEPROM_EEPCAP_BURST_DIS;
 		else
 			ee->ee_opCap |= AR_EEPROM_EEPCAP_BURST_DIS;
-		return HAL_OK;
+		return AH_TRUE;
 	}
-	return HAL_EINVAL;
+	return AH_FALSE;
 }
 
 static HAL_BOOL

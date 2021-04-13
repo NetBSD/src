@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ah_eeprom_v14.c,v 1.6 2012/12/11 09:22:16 msaitoh Exp $
+ * $Id: ah_eeprom_v14.c,v 1.7 2021/04/13 03:27:13 mrg Exp $
  */
 #include "opt_ah.h"
 
@@ -137,12 +137,12 @@ v14EepromSet(struct ath_hal *ah, int param, int v)
 	switch (param) {
 	case AR_EEP_ANTGAINMAX_2:
 		ee->ee_antennaGainMax[1] = (int8_t) v;
-		return HAL_OK;
+		return AH_TRUE;
 	case AR_EEP_ANTGAINMAX_5:
 		ee->ee_antennaGainMax[0] = (int8_t) v;
-		return HAL_OK;
+		return AH_TRUE;
 	}
-	return HAL_EINVAL;
+	return AH_FALSE;
 }
 
 static HAL_BOOL

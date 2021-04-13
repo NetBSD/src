@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5212_xmit.c,v 1.3 2011/03/07 11:25:43 cegger Exp $
+ * $Id: ar5212_xmit.c,v 1.4 2021/04/13 03:27:13 mrg Exp $
  */
 #include "opt_ah.h"
 
@@ -902,7 +902,9 @@ ar5212ProcTxDesc(struct ath_hal *ah,
 	 */
 	switch (ts->ts_finaltsi) {
 	case 3: ts->ts_longretry += MS(ads->ds_ctl2, AR_XmitDataTries2);
+		/* FALLTHRU */
 	case 2: ts->ts_longretry += MS(ads->ds_ctl2, AR_XmitDataTries1);
+		/* FALLTHRU */
 	case 1: ts->ts_longretry += MS(ads->ds_ctl2, AR_XmitDataTries0);
 	}
 	ts->ts_virtcol = MS(ads->ds_txstatus0, AR_VirtCollCnt);

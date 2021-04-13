@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ah_eeprom_v1.c,v 1.4 2008/12/12 21:31:49 alc Exp $
+ * $Id: ah_eeprom_v1.c,v 1.5 2021/04/13 03:27:13 mrg Exp $
  */
 #include "opt_ah.h"
 
@@ -71,7 +71,7 @@ v1EepromGet(struct ath_hal *ah, int param, void *val)
 static HAL_BOOL
 v1EepromSet(struct ath_hal *ah, int param, int v)
 {
-	return HAL_EINVAL;
+	return AH_FALSE;
 }
 
 static HAL_BOOL
