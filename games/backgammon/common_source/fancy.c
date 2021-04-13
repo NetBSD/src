@@ -1,4 +1,4 @@
-/*	$NetBSD: fancy.c,v 1.15 2020/04/22 23:36:26 joerg Exp $	*/
+/*	$NetBSD: fancy.c,v 1.16 2021/04/13 02:11:39 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)fancy.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fancy.c,v 1.15 2020/04/22 23:36:26 joerg Exp $");
+__RCSID("$NetBSD: fancy.c,v 1.16 2021/04/13 02:11:39 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,8 +52,10 @@ static void newline(void);
  *
  * XXX: rewrite this crap using curses.
  */
+#if 0
 char    PC;			/* padding character */
 char   *BC;			/* backspace sequence */
+#endif
 char   *CD;			/* clear to end of screen sequence */
 char   *CE;			/* clear to end of line sequence */
 char   *CL;			/* clear screen sequence */
@@ -62,7 +64,9 @@ char   *HO;			/* home cursor sequence */
 char   *MC;			/* column cursor movement map */
 char   *ML;			/* row cursor movement map */
 char   *ND;			/* forward cursor sequence */
+#if 0
 char   *UP;			/* up cursor sequence */
+#endif
 
 static int lHO;			/* length of HO */
 static int lBC;			/* length of BC */
