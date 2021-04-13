@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.38 2020/11/13 17:39:06 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.39 2021/04/13 04:59:00 mrg Exp $
 #
 # Makefile for sysinst
 
@@ -251,5 +251,7 @@ check-lang:	msg.def msg_defs.h
 	${HOST_SH} ${MSG_XLAT_SH} -i > /tmp/sysinst.en
 	${HOST_SH} ${MSG_CMP_SH} msg_defs.h /tmp/sysinst.en sysinstmsgs.${LANG}
 	@rm /tmp/sysinst.en
+
+COPTS.util.c+=	${GCC_NO_STRINGOP_TRUNCATION}
 
 .include <bsd.prog.mk>

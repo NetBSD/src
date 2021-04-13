@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.25 2020/11/01 15:16:05 christos Exp $
+# $NetBSD: Makefile,v 1.26 2021/04/13 04:58:59 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -227,5 +227,6 @@ DPADD+=		${LIBEVENT} ${LIBTERMINFO} ${LIBUTIL}
 
 COPTS.format.c += -Wno-format-nonliteral
 COPTS.utempter.c+=	${GCC_NO_STRINGOP_TRUNCATION}
+COPTS.window-copy.c+=	${GCC_NO_MAYBE_UNINITIALIZED}
 
 .include <bsd.prog.mk>
