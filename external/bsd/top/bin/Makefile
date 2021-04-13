@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2019/10/13 07:28:07 mrg Exp $
+#	$NetBSD: Makefile,v 1.12 2021/04/13 01:11:05 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -40,5 +40,7 @@ config.h: config.h.in
 COPTS.display.c = -Wno-format-nonliteral
 
 COPTS.commands.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
+
+COPTS+=		-fcommon
 
 .include <bsd.prog.mk>
