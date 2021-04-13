@@ -50,8 +50,8 @@ struct __emutls_array
   void **data[];
 };
 
-void *__emutls_get_address (struct __emutls_object *);
-void __emutls_register_common (struct __emutls_object *, word, word, void *);
+void *__emutls_get_address (void *);
+void __emutls_register_common (void *, word, word, void *);
 
 #ifdef __GTHREADS
 #ifdef __GTHREAD_MUTEX_INIT
@@ -124,8 +124,10 @@ emutls_alloc (struct __emutls_object *obj)
 }
 
 void *
-__emutls_get_address (struct __emutls_object *obj)
+__emutls_get_address (void *vobj)
 {
+  struct __emutls_object *obj = vobj;
+
   if (! __gthread_active_p ())
     {
       if (__builtin_expect (obj->loc.ptr == NULL, 0))
@@ -188,9 +190,11 @@ __emutls_get_address (struct __emutls_object *obj)
 }
 
 void
-__emutls_register_common (struct __emutls_object *obj,
+__emutls_register_common (void *vobj,
 			  word size, word align, void *templ)
 {
+  struct __emutls_object *obj = vobj;
+
   if (obj->size < size)
     {
       obj->size = size;
