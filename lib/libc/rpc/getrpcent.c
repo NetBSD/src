@@ -1,4 +1,4 @@
-/*	$NetBSD: getrpcent.c,v 1.23 2013/03/11 20:19:29 tron Exp $	*/
+/*	$NetBSD: getrpcent.c,v 1.24 2021/04/13 00:29:22 mrg Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -36,7 +36,7 @@
 #if 0
 static char *sccsid = "@(#)getrpcent.c 1.14 91/03/11 Copyr 1984 Sun Micro";
 #else
-__RCSID("$NetBSD: getrpcent.c,v 1.23 2013/03/11 20:19:29 tron Exp $");
+__RCSID("$NetBSD: getrpcent.c,v 1.24 2021/04/13 00:29:22 mrg Exp $");
 #endif
 #endif
 
@@ -185,7 +185,8 @@ interpret(char *val, size_t len)
 
 	if (d == 0)
 		return (0);
-	(void) strncpy(d->line, val, len);
+	strncpy(d->line, val, sizeof(d->line) - 1);
+	d->line[sizeof(d->line) - 1] = '\0';
 	p = d->line;
 	d->line[len] = '\n';
 	if (*p == '#')
