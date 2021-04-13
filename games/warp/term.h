@@ -252,8 +252,10 @@ EXT bool bizarre INIT(false);			/* do we need to restore terminal? */
  */
 
 #ifdef HAVETERMLIB
+#if 0
 EXT char *BC INIT(NULL);		/* backspace character */
 EXT char *UP INIT(NULL);		/* move cursor up one line */
+#endif
 EXT char *myUP;
 EXT char *ND INIT(NULL);		/* non-destructive cursor right */
 EXT char *myND;
@@ -275,8 +277,10 @@ EXT char *UC INIT(NULL);		/* underline a character, if that's how it's done */
 EXT int UG INIT(0);		/* blanks left by US and UE */
 EXT bool AM INIT(false);		/* does terminal have automatic margins? */
 EXT bool XN INIT(false);		/* does it eat 1st newline after automatic wrap? */
+#if 0
 EXT char PC INIT(0);		/* pad character for use by tputs() */
 EXT short ospeed INIT(0);	/* terminal output speed, for use by tputs() */
+#endif
 EXT int LINES INIT(0), COLS INIT(0);	/* size of screen */
 EXT int just_a_sec INIT(960);			/* 1 sec at current baud rate */
 					/* (number of nulls) */
