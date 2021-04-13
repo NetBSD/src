@@ -1,4 +1,4 @@
-/*      $NetBSD: usbhidaction.c,v 1.29 2018/05/15 01:41:29 jmcneill Exp $ */
+/*      $NetBSD: usbhidaction.c,v 1.30 2021/04/13 02:07:35 mrg Exp $ */
 
 /*
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: usbhidaction.c,v 1.29 2018/05/15 01:41:29 jmcneill Exp $");
+__RCSID("$NetBSD: usbhidaction.c,v 1.30 2021/04/13 02:07:35 mrg Exp $");
 #endif
 
 #include <stdio.h>
@@ -240,7 +240,7 @@ parse_conf(const char *conf, report_desc_t repd, int reportid, int ignore)
 	char *p;
 	int line;
 	char buf[SIZE], name[SIZE], value[SIZE], action[SIZE];
-	char usagestr[SIZE], coll[SIZE];
+	char usagestr[SIZE+1], coll[SIZE];
 	struct command *cmd, *cmds;
 	struct hid_data *d;
 	struct hid_item h;
