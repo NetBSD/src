@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.212 2021/04/12 15:55:26 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.213 2021/04/13 22:22:02 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.212 2021/04/12 15:55:26 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.213 2021/04/13 22:22:02 christos Exp $");
 #endif
 
 #include <limits.h>
@@ -123,7 +123,7 @@ anonymize(sym_t *s)
 }
 %}
 
-%expect 165
+%expect 177
 
 %union {
 	val_t	*y_val;
@@ -1257,14 +1257,14 @@ identifier_list:
 	;
 
 abstract_decl_param_list:
-	  abstract_decl_lparen T_RPAREN {
+	  abstract_decl_lparen T_RPAREN opt_type_attribute {
 		$$ = NULL;
 	  }
-	| abstract_decl_lparen vararg_parameter_type_list T_RPAREN {
+	| abstract_decl_lparen vararg_parameter_type_list T_RPAREN opt_type_attribute {
 		dcs->d_proto = true;
 		$$ = $2;
 	  }
-	| abstract_decl_lparen error T_RPAREN {
+	| abstract_decl_lparen error T_RPAREN opt_type_attribute {
 		$$ = NULL;
 	  }
 	;
