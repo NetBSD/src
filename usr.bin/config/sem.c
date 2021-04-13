@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.84 2020/03/07 19:26:13 christos Exp $	*/
+/*	$NetBSD: sem.c,v 1.85 2021/04/13 03:09:42 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sem.c,v 1.84 2020/03/07 19:26:13 christos Exp $");
+__RCSID("$NetBSD: sem.c,v 1.85 2021/04/13 03:09:42 mrg Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -828,10 +828,10 @@ getrefattr(const char *name, struct attr **ra)
 	/*
 	 * Check if the existing attr is only referenced, not really defined.
 	 */
+	*ra = a;
 	if (a->a_deps == NULL &&
 	    a->a_iattr == 0 &&
 	    a->a_devclass == 0) {
-		*ra = a;
 		return (0);
 	}
 	return (1);
