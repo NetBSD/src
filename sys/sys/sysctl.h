@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.232 2021/04/01 06:22:10 simonb Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.233 2021/04/13 01:10:24 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -721,7 +721,7 @@ struct evcnt_sysctl {
 	 * Now the group and name strings follow (both include the trailing
 	 * NUL).  ev_name start at &ev_strings[ev_grouplen+1]
 	 */
-	char		ev_strings[0];
+	char		ev_strings[];
 };
 
 #define	KERN_EVCNT_COUNT_ANY		0
