@@ -1,4 +1,4 @@
-$NetBSD: README.gcc10,v 1.5 2021/04/13 10:10:25 mrg Exp $
+$NetBSD: README.gcc10,v 1.6 2021/04/13 22:24:56 mrg Exp $
 
 
 new stuff:
@@ -50,7 +50,7 @@ earmv7eb	y	b	y	y		n		?	?	?
 earmv7hf	y	y	y	y		y		y	y	n
 earmv7hfeb	y	b	y	y		y		?	?	?
 hppa		y	b	y	y		y		?	?	?
-i386		y	y	y	y		y		y	?	?
+i386		y	y	y	y		y		y	n[8]	?
 ia64		y	y	y	y		n[2]		?	N/A	n
 m68000		y	b	y	y		n[1]		?	?	?
 m68k		y	y	y	y		y		?	?	?
@@ -106,6 +106,9 @@ architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
          19 |   iarg[1] = SCARG(p, args[SYS_MAXSYSARGS]); /* register_t */
             |             ^
       which makes sense as args[8] is out of bounds.
+      -- this issue has been -Wno-'d but should be investigated.
+[8] - i386 seems to have a signal delivery issue.  GCC 9 or 10 kernels are
+      unable to reboot properly, and GCC 10 atf runs hang in signal delivery.
 
 
 
