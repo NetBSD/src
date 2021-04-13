@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.178 2020/07/22 01:24:39 msaitoh Exp $	*/
+/*	$NetBSD: pthread.c,v 1.179 2021/04/13 00:31:54 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008, 2020
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.178 2020/07/22 01:24:39 msaitoh Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.179 2021/04/13 00:31:54 mrg Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -535,6 +535,7 @@ pthread__create_tramp(void *cookie)
 {
 	pthread_t self;
 	void *retval;
+	void *junk __unused;
 
 	self = cookie;
 
@@ -544,7 +545,7 @@ pthread__create_tramp(void *cookie)
 	 * be allocating stacks on fixed 2MB boundaries.  Needs a
 	 * thread register or decent thread local storage.
 	 */
-	(void)alloca(((unsigned)self->pt_lid & 7) << 8);
+	junk = alloca(((unsigned)self->pt_lid & 7) << 8);
 
 	if (self->pt_name != NULL) {
 		pthread_mutex_lock(&self->pt_lock);
