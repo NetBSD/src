@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.zfs,v 1.9 2019/06/22 09:48:39 hannken Exp $
+#	$NetBSD: Makefile.zfs,v 1.10 2021/04/13 04:52:00 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -56,3 +56,5 @@ LIBUUTIL_SRCDIR= ${ZFSDIR}/lib/libuutil
 LIBZFS_SRCDIR= ${ZFSDIR}/lib/libzfs
 LIBZFS_CORE_SRCDIR= ${ZFSDIR}/lib/libzfs_core
 LIBZPOOL_SRCDIR= ${ZFSDIR}/lib/libzpool
+
+COPTS+=	-fcommon
