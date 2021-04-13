@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.9 2021/02/20 01:43:04 christos Exp $
+# $NetBSD: Makefile.inc,v 1.10 2021/04/13 04:14:46 mrg Exp $
 
 WARNS?=	1	# XXX -Wshadow -Wcast-qual -Wsign-compare
 
@@ -61,3 +61,5 @@ LDADD+=-Wl,-Bdynamic
 .endif
 DPADD+= ${COBJDIR}/libdhcp.a
 DPADD+= ${OMOBJDIR}/libomapi.a
+
+COPTS+=	-fcommon
