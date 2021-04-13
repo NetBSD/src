@@ -1,4 +1,4 @@
-/*	$NetBSD: type_integer.c,v 1.8 2004/10/28 21:14:52 dsl Exp $	*/
+/*	$NetBSD: type_integer.c,v 1.9 2021/04/13 13:13:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: type_integer.c,v 1.8 2004/10/28 21:14:52 dsl Exp $");
+__RCSID("$NetBSD: type_integer.c,v 1.9 2021/04/13 13:13:04 christos Exp $");
 
 #include <stdlib.h>
 #include <strings.h>
@@ -58,7 +58,7 @@ create_integer_args(va_list *args)
 {
 	integer_args *new;
 
-	new = (integer_args *) malloc(sizeof(integer_args));
+	new = malloc(sizeof(*new));
 
 	if (new != NULL) {
 		new->precision = va_arg(*args, unsigned);
@@ -77,10 +77,10 @@ copy_integer_args(char *args)
 {
 	integer_args *new;
 
-	new = (integer_args *) malloc(sizeof(integer_args));
+	new = malloc(sizeof(*new));
 
 	if (new != NULL)
-		bcopy(args, new, sizeof(integer_args));
+		memcpy(new, args, sizeof(*new));
 
 	return (void *) new;
 }
