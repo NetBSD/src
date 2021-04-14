@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.217 2021/04/14 21:20:21 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.218 2021/04/14 22:08:28 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.217 2021/04/14 21:20:21 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.218 2021/04/14 22:08:28 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1133,7 +1133,8 @@ param_decl:
 	;
 
 opt_type_qualifier_list:
-	| type_qualifier_list;
+	  /* empty */
+	| type_qualifier_list
 	;
 
 array_size:
