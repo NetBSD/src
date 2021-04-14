@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.110 2021/04/14 20:06:40 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.111 2021/04/14 21:20:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.110 2021/04/14 20:06:40 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.111 2021/04/14 21:20:02 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -617,7 +617,7 @@ void
 {
 	va_list	ap;
 
-	if (c11flag)
+	if (c11flag || gflag)
 		return;
 	va_start(ap, n);
 	verror(n, ap);
