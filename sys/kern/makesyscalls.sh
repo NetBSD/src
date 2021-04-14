@@ -1,4 +1,4 @@
-#	$NetBSD: makesyscalls.sh,v 1.184 2021/04/13 22:45:32 christos Exp $
+#	$NetBSD: makesyscalls.sh,v 1.185 2021/04/14 02:45:40 christos Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -808,9 +808,9 @@ function printrumpsysmap(syscall, wfn, funcalias, rumpentry) {
 function fixarray(arg) {
 	iii = index(arg, "[")
 	if (iii == 0) {
-		return arg
+		return arg 
 	} else {
-		return substr(arg, 1, iii - 1)
+		return substr(arg, 1, iii - 1) "[0]"
 	}
 }
 
@@ -831,7 +831,7 @@ function putsystrace(type, compatwrap_) {
 				     i - 1, \
 				     argname[i], arg) > systrace
 			else if (index(arg, "*") > 0 || arg == "caddr_t" ||
-			    arg ~ /.*_handler_t$/ || index(argname[i], "[") > 0)
+			    arg ~ /.*_handler_t$/)
 				printf("\t\tuarg[%d] = (intptr_t) SCARG(p, %s); /* %s */\n", \
 				     i - 1, \
 				     fixarray(argname[i]), arg) > systrace
@@ -842,7 +842,7 @@ function putsystrace(type, compatwrap_) {
 			else
 				printf("\t\tiarg[%d] = SCARG(p, %s); /* %s */\n", \
 				     i - 1, \
-				     argname[i], arg) > systrace
+				     fixarray(argname[i]), arg) > systrace
 		}
 		printf("\t\tdefault:\n\t\t\tbreak;\n\t\t};\n") > systracetmp
 
