@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.59 2021/04/14 19:25:48 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.60 2021/04/14 20:06:40 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: xlint.c,v 1.59 2021/04/14 19:25:48 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.60 2021/04/14 20:06:40 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -297,7 +297,7 @@ usage(void)
 	    "usage: %s [-abceghprvwxzHFST] [-s|-t] [-i|-nu]\n"
 	    "%*s [-Dname[=def]] [-Uname] [-Idirectory] [-Z <cpparg>]\n"
 	    "%*s [-Ldirectory] [-llibrary] [-ooutputfile]\n"
-	    "%*s [-X <id>[,<id>]...] file...\n",
+	    "%*s [-X <id>[,<id>]...] [-Ac11] file...\n",
 	    name, indent, "", indent, "", indent, "");
 	(void)fprintf(stderr,
 	    "       %s [-abceghprvwzHFST] [-s|-t] -Clibrary\n"
@@ -375,7 +375,7 @@ main(int argc, char *argv[])
 	(void)signal(SIGQUIT, terminate);
 	(void)signal(SIGTERM, terminate);
 	while ((c = getopt(argc, argv,
-	    "abcd:eghil:no:prstuvwxzB:C:D:FHI:L:M:PR:STU:VX:Z:")) != -1) {
+	    "abcd:eghil:no:prstuvwxzA:B:C:D:FHI:L:M:PR:STU:VX:Z:")) != -1) {
 		switch (c) {
 
 		case 'a':
@@ -389,6 +389,11 @@ main(int argc, char *argv[])
 		case 'z':
 			(void)sprintf(flgbuf, "-%c", c);
 			appcstrg(&l1flags, flgbuf);
+			break;
+
+		case 'A':
+			appcstrg(&l1flags, "-A");
+			appcstrg(&l1flags, optarg);
 			break;
 
 		case 'F':

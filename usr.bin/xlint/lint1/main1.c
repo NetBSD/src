@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.42 2021/04/02 12:16:50 rillig Exp $	*/
+/*	$NetBSD: main1.c,v 1.43 2021/04/14 20:06:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: main1.c,v 1.42 2021/04/02 12:16:50 rillig Exp $");
+__RCSID("$NetBSD: main1.c,v 1.43 2021/04/14 20:06:40 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -67,6 +67,9 @@ bool	bflag;
 
 /* Print warnings for pointer casts. */
 bool	cflag;
+
+/* Allow features from C11, C99 and C90. */
+bool	c11flag;
 
 /* Print various debug information. */
 bool	dflag;
@@ -178,7 +181,7 @@ main(int argc, char *argv[])
 	setprogname(argv[0]);
 
 	ERR_ZERO(&msgset);
-	while ((c = getopt(argc, argv, "abcdeghmprstuvwyzFPR:STX:")) != -1) {
+	while ((c = getopt(argc, argv, "abcdeghmprstuvwyzA:FPR:STX:")) != -1) {
 		switch (c) {
 		case 'a':	aflag++;	break;
 		case 'b':	bflag = true;	break;
@@ -200,6 +203,15 @@ main(int argc, char *argv[])
 		case 'v':	vflag = false;	break;
 		case 'y':	yflag = true;	break;
 		case 'z':	zflag = false;	break;
+
+		case 'A':
+			if (strcmp(optarg, "c11") == 0) {
+				c11flag = true;
+				Sflag = true;
+				sflag = true;
+			} else
+				usage();
+			break;
 
 		case 'm':
 			msglist();
@@ -284,7 +296,8 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "Usage: %s [-abcdeghmprstuvwyzFST] [-X <id>[,<id>]... src dest\n",
+	    "usage: %s [-abcdeghmprstuvwyzFST] [-Ac11] [-X <id>[,<id>]... "
+	    "src dest\n",
 	    getprogname());
 	exit(1);
 }
