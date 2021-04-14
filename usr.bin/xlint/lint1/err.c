@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.107 2021/04/14 13:34:08 christos Exp $	*/
+/*	$NetBSD: err.c,v 1.108 2021/04/14 18:35:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.107 2021/04/14 13:34:08 christos Exp $");
+__RCSID("$NetBSD: err.c,v 1.108 2021/04/14 18:35:40 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -397,7 +397,7 @@ const	char *msgs[] = {
 	"initialization with '[a...b]' is a GNU extension",	      /* 340 */
 	"argument to '%s' must be 'unsigned char' or EOF, not '%s'",  /* 341 */
 	"argument to '%s' must be cast to 'unsigned char', not to '%s'", /* 342 */
-	"static array size is a C99 extension",			      /* 343 */
+	"static array size is a C11 extension",			      /* 343 */
 };
 
 static struct include_level {
@@ -599,6 +599,22 @@ void
 */
 void
 (c99ism)(int n, ...)
+{
+	va_list	ap;
+	bool extensions_ok = Sflag || gflag;
+
+	va_start(ap, n);
+	if (sflag && !extensions_ok) {
+		verror(n, ap);
+	} else if (sflag || !extensions_ok) {
+		vwarning(n, ap);
+	}
+	va_end(ap);
+}
+
+/* TODO: add a command line option for allowing C99 but not C11. */
+void
+(c11ism)(int n, ...)
 {
 	va_list	ap;
 	bool extensions_ok = Sflag || gflag;

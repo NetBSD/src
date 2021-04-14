@@ -1,5 +1,5 @@
 #! /usr/bin/lua
--- $NetBSD: check-msgs.lua,v 1.9 2021/02/28 12:45:47 rillig Exp $
+-- $NetBSD: check-msgs.lua,v 1.10 2021/04/14 18:35:40 rillig Exp $
 
 --[[
 
@@ -83,7 +83,8 @@ local function collect_errors(fname, msgs)
 
     local func, id = line:match("^%s+(%w+)%((%d+)[),]")
     id = tonumber(id)
-    if func == "error" or func == "warning" or func == "c99ism" or
+    if func == "error" or func == "warning" or
+       func == "c99ism" or func == "c11ism" or
        func == "gnuism" or func == "message" then
       local comment = prev:match("^%s+/%* (.+) %*/$")
       if comment ~= nil then

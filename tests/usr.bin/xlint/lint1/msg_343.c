@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_343.c,v 1.1 2021/04/14 18:27:11 rillig Exp $	*/
+/*	$NetBSD: msg_343.c,v 1.2 2021/04/14 18:35:40 rillig Exp $	*/
 # 3 "msg_343.c"
 
-/* Test for message: static array size is a C99 extension [343] */
+/* Test for message: static array size is a C11 extension [343] */
 
 /* lint1-flags: -sw */
 

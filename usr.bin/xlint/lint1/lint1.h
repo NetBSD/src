@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.94 2021/04/10 18:36:27 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.95 2021/04/14 18:35:40 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -482,6 +482,7 @@ check_printf(const char *fmt, ...)
 #  define message(id, args...) wrap_check_printf(message, id, ##args)
 #  define gnuism(id, args...) wrap_check_printf(gnuism, id, ##args)
 #  define c99ism(id, args...) wrap_check_printf(c99ism, id, ##args)
+#  define c11ism(id, args...) wrap_check_printf(c11ism, id, ##args)
 #endif
 
 static inline bool
