@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_systrace_args.c,v 1.46 2021/04/13 23:57:23 christos Exp $ */
+/* $NetBSD: netbsd32_systrace_args.c,v 1.47 2021/04/14 02:48:00 christos Exp $ */
 
 /*
  * System call argument to DTrace register array conversion.
@@ -16,7 +16,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	case 0: {
 		const struct netbsd32_syscall_args *p = params;
 		iarg[0] = SCARG(p, code); /* int */
-		uarg[1] = (intptr_t) SCARG(p, args); /* register32_t */
+		iarg[1] = SCARG(p, args[0]); /* register32_t */
 		*n_args = 2;
 		break;
 	}
@@ -1412,7 +1412,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	case 198: {
 		const struct netbsd32____syscall_args *p = params;
 		iarg[0] = SCARG(p, code); /* quad_t */
-		uarg[1] = (intptr_t) SCARG(p, args); /* register32_t */
+		iarg[1] = SCARG(p, args[0]); /* register32_t */
 		*n_args = 2;
 		break;
 	}
