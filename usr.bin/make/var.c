@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.928 2021/04/14 16:12:26 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.929 2021/04/14 16:59:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.928 2021/04/14 16:12:26 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.929 2021/04/14 16:59:34 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2484,7 +2484,7 @@ static ApplyModifierResult
 ApplyModifier_Defined(const char **pp, ModChain *ch)
 {
 	Expr *expr = ch->expr;
-	Buffer buf;
+	LazyBuf buf;
 	const char *p;
 
 	VarEvalMode emode = VARE_PARSE_ONLY;
@@ -2492,8 +2492,8 @@ ApplyModifier_Defined(const char **pp, ModChain *ch)
 		if ((**pp == 'D') == (expr->defined == DEF_REGULAR))
 			emode = expr->emode;
 
-	Buf_Init(&buf);
 	p = *pp + 1;
+	LazyBuf_Init(&buf, p);
 	while (!IsDelimiter(*p, ch) && *p != '\0') {
 
 		/* XXX: This code is similar to the one in Var_Parse.
@@ -2505,7 +2505,7 @@ ApplyModifier_Defined(const char **pp, ModChain *ch)
 		if (*p == '\\') {
 			char c = p[1];
 			if (IsDelimiter(c, ch) || c == '$' || c == '\\') {
-				Buf_AddByte(&buf, c);
+				LazyBuf_Add(&buf, c);
 				p += 2;
 				continue;
 			}
@@ -2518,13 +2518,13 @@ ApplyModifier_Defined(const char **pp, ModChain *ch)
 			(void)Var_Parse(&p, expr->scope, emode, &nested_val);
 			/* TODO: handle errors */
 			if (Expr_ShouldEval(expr))
-				Buf_AddStr(&buf, nested_val.str);
+				LazyBuf_AddStr(&buf, nested_val.str);
 			FStr_Done(&nested_val);
 			continue;
 		}
 
 		/* Ordinary text */
-		Buf_AddByte(&buf, *p);
+		LazyBuf_Add(&buf, *p);
 		p++;
 	}
 	*pp = p;
@@ -2532,9 +2532,9 @@ ApplyModifier_Defined(const char **pp, ModChain *ch)
 	Expr_Define(expr);
 
 	if (VarEvalMode_ShouldEval(emode))
-		Expr_SetValueOwn(expr, Buf_DoneData(&buf));
+		Expr_SetValue(expr, Substring_Str(LazyBuf_Get(&buf)));
 	else
-		Buf_Done(&buf);
+		LazyBuf_Done(&buf);
 
 	return AMR_OK;
 }
