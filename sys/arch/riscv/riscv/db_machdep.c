@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.6 2020/11/04 07:09:46 skrll Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.7 2021/04/14 06:32:20 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: db_machdep.c,v 1.6 2020/11/04 07:09:46 skrll Exp $");
+__RCSID("$NetBSD: db_machdep.c,v 1.7 2021/04/14 06:32:20 dholland Exp $");
 
 #include <sys/param.h>
 
@@ -110,6 +110,11 @@ db_rw_ddbreg(const struct db_variable *vp, db_expr_t *valp, int rw)
 
 // These are for the software implementation of single-stepping.
 //
+// XXX none of this checks for 16-bit instructions; it should all be
+// converted to the newer decoding macros. Also, XXX it does not look
+// like the MI parts in ddb is going to work in the presence of 16-bit
+// instructions anyway.
+//
 // returns true is the instruction might branch
 bool
 inst_branch(uint32_t insn)
@@ -122,7 +127,7 @@ bool
 inst_call(uint32_t insn)
 {
 	const union riscv_insn ri = { .val = insn };
-	return (OPCODE_P(insn, JAL) && ri.type_uj.uj_rd == 1)
+	return (OPCODE_P(insn, JAL) && ri.type_u.u_rd == 1)
 	    || (OPCODE_P(insn, JALR) && ri.type_i.i_rd == 1);
 }
 
@@ -169,21 +174,21 @@ branch_taken(uint32_t insn, db_addr_t pc, db_regs_t *tf)
 		return i.type_i.i_imm11to0 + get_reg_value(tf, i.type_i.i_rs1);
 	}
 	if (OPCODE_P(insn, JAL)) {
-		displacement = i.type_uj.uj_imm20 << 20;
-		displacement |= i.type_uj.uj_imm19to12 << 12;
-		displacement |= i.type_uj.uj_imm11 << 11;
-		displacement |= i.type_uj.uj_imm10to1 << 1;
+		displacement = i.type_j.j_imm20 << 20;
+		displacement |= i.type_j.j_imm19to12 << 12;
+		displacement |= i.type_j.j_imm11 << 11;
+		displacement |= i.type_j.j_imm10to1 << 1;
 	} else {
 		KASSERT(OPCODE_P(insn, BRANCH));
-		register_t rs1 = get_reg_value(tf, i.type_sb.sb_rs1);
-		register_t rs2 = get_reg_value(tf, i.type_sb.sb_rs2);
+		register_t rs1 = get_reg_value(tf, i.type_b.b_rs1);
+		register_t rs2 = get_reg_value(tf, i.type_b.b_rs2);
 		bool branch_p; // = false;
-		switch (i.type_sb.sb_funct3 & 0b110U) {
+		switch (i.type_b.b_funct3 & 0b110U) {
 		case 0b000U:
 			branch_p = (rs1 == rs2);
 			break;
 		case 0b010U:
-			branch_p = ((rs1 & (1 << (i.type_sb.sb_rs2))) != 0);
+			branch_p = ((rs1 & (1 << (i.type_b.b_rs2))) != 0);
 			break;
 		case 0b100U:
 			branch_p = (rs1 < rs2);
@@ -194,16 +199,16 @@ branch_taken(uint32_t insn, db_addr_t pc, db_regs_t *tf)
 			break;
 		}
 
-		if (i.type_sb.sb_funct3 & 1)
+		if (i.type_b.b_funct3 & 1)
 			branch_p = !branch_p;
 
 		if (!branch_p) {
 			displacement = 4;
 		} else {
-			displacement = i.type_sb.sb_imm12 << 12;
-			displacement |= i.type_sb.sb_imm11 << 11;
-			displacement |= i.type_sb.sb_imm10to5 << 5;
-			displacement |= i.type_sb.sb_imm4to1 << 1;
+			displacement = i.type_b.b_imm12 << 12;
+			displacement |= i.type_b.b_imm11 << 11;
+			displacement |= i.type_b.b_imm10to5 << 5;
+			displacement |= i.type_b.b_imm4to1 << 1;
 		}
 	}
 

@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.2 2017/11/06 03:47:48 christos Exp $ */
+/* $NetBSD: db_machdep.h,v 1.3 2021/04/14 06:32:20 dholland Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -61,6 +61,17 @@ extern const uint32_t __cpu_Debugger_insn[1];
 #define BKPT_INST	0x00100073
 #define	BKPT_SIZE	(sizeof(uint32_t))	/* size of breakpoint inst */
 #define	BKPT_SET(inst, addr)	(BKPT_INST)
+
+/*
+ * XXX with the C extension there's also a 16-bit-wide breakpoint
+ * instruction, the idea being that you use it when inserting a
+ * breakpoint into a stream of 16-bit instructions, but it looks like
+ * MI ddb can't cope with having two sizes :-(
+ */
+#if 0
+#define BKPT_INST_2	0x9002
+#define BKPT_SIZE_2	(sizeof(uint16_t))
+#endif
 
 #define	IS_BREAKPOINT_TRAP(type, code)	((type) == CAUSE_BREAKPOINT)
 #define IS_WATCHPOINT_TRAP(type, code)	(0)
