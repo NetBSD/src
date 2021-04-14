@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.215 2021/04/14 18:27:11 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.216 2021/04/14 18:35:40 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.215 2021/04/14 18:27:11 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.216 2021/04/14 18:35:40 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1134,11 +1134,11 @@ param_decl:
 
 array_size:
 	  T_SCLASS constant_expr {
-		/* C99 6.7.6.3 */
+		/* C11 6.7.6.3p7 */
 		if ($1 != STATIC)
 			yyerror("Bad attribute");
-		/* static array size is a C99 extension */
-		c99ism(343);
+		/* static array size is a C11 extension */
+		c11ism(343);
 		$$ = $2;
 	  }
 	| constant_expr {
