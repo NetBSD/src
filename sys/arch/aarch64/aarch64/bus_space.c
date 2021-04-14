@@ -1,4 +1,4 @@
-/* $NetBSD: bus_space.c,v 1.15 2020/12/14 19:32:29 skrll Exp $ */
+/* $NetBSD: bus_space.c,v 1.16 2021/04/14 05:43:09 ryo Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: bus_space.c,v 1.15 2020/12/14 19:32:29 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bus_space.c,v 1.16 2021/04/14 05:43:09 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -702,6 +702,7 @@ generic_bs_pe_1(void *t, bus_space_handle_t bsh, bus_size_t offset,
 
 	if ((error = cpu_set_onfault(&fb)) == 0) {
 		*datap = generic_dsb_bs_r_1(t, bsh, offset);
+		dsb(ld);
 		cpu_unset_onfault();
 	}
 	return error;
@@ -716,6 +717,7 @@ generic_bs_pe_2(void *t, bus_space_handle_t bsh, bus_size_t offset,
 
 	if ((error = cpu_set_onfault(&fb)) == 0) {
 		*datap = NSWAP(generic_dsb_bs_r_2)(t, bsh, offset);
+		dsb(ld);
 		cpu_unset_onfault();
 	}
 	return error;
@@ -730,6 +732,7 @@ generic_bs_pe_4(void *t, bus_space_handle_t bsh, bus_size_t offset,
 
 	if ((error = cpu_set_onfault(&fb)) == 0) {
 		*datap = NSWAP(generic_dsb_bs_r_4)(t, bsh, offset);
+		dsb(ld);
 		cpu_unset_onfault();
 	}
 	return error;
@@ -744,6 +747,7 @@ generic_bs_pe_8(void *t, bus_space_handle_t bsh, bus_size_t offset,
 
 	if ((error = cpu_set_onfault(&fb)) == 0) {
 		*datap = NSWAP(generic_dsb_bs_r_8)(t, bsh, offset);
+		dsb(ld);
 		cpu_unset_onfault();
 	}
 	return error;
