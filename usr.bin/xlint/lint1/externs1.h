@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.104 2021/04/14 18:35:40 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.105 2021/04/14 20:06:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,6 +37,7 @@
 extern	int	aflag;
 extern	bool	bflag;
 extern	bool	cflag;
+extern	bool	c11flag;
 extern	bool	dflag;
 extern	bool	eflag;
 extern	bool	Fflag;
