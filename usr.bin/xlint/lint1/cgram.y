@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.213 2021/04/13 22:22:02 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.214 2021/04/14 13:34:08 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.213 2021/04/13 22:22:02 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.214 2021/04/14 13:34:08 christos Exp $");
 #endif
 
 #include <limits.h>
@@ -296,6 +296,7 @@ anonymize(sym_t *s)
 %type	<y_sym>		notype_member_decl
 %type	<y_sym>		type_member_decl
 %type	<y_tnode>	constant_expr
+%type	<y_tnode>	array_size
 %type	<y_sym>		enum_declaration
 %type	<y_sym>		enums_with_opt_comma
 %type	<y_sym>		enums
@@ -1071,7 +1072,7 @@ notype_direct_decl:
 	| notype_direct_decl T_LBRACK T_RBRACK {
 		$$ = add_array($1, false, 0);
 	  }
-	| notype_direct_decl T_LBRACK constant_expr T_RBRACK {
+	| notype_direct_decl T_LBRACK array_size T_RBRACK {
 		$$ = add_array($1, true, to_int_constant($3, false));
 	  }
 	| notype_direct_decl param_list opt_asm_or_symbolrename {
@@ -1104,7 +1105,7 @@ type_direct_decl:
 	| type_direct_decl T_LBRACK T_RBRACK {
 		$$ = add_array($1, false, 0);
 	  }
-	| type_direct_decl T_LBRACK constant_expr T_RBRACK {
+	| type_direct_decl T_LBRACK array_size T_RBRACK {
 		$$ = add_array($1, true, to_int_constant($3, false));
 	  }
 	| type_direct_decl param_list opt_asm_or_symbolrename {
@@ -1131,6 +1132,19 @@ param_decl:
 	  }
 	;
 
+array_size:
+	  T_SCLASS constant_expr {
+		/* C99 6.7.6.3 */
+		if ($1 != STATIC)
+			yyerror("Bad attribute");
+		c99ism(343);
+		$$ = $2;
+	  } 
+	| constant_expr {
+		$$ = $1;
+	}
+	;
+
 direct_param_decl:
 	  identifier type_attribute_list {
 		$$ = declarator_name(getsym($1));
@@ -1144,7 +1158,7 @@ direct_param_decl:
 	| direct_param_decl T_LBRACK T_RBRACK {
 		$$ = add_array($1, false, 0);
 	  }
-	| direct_param_decl T_LBRACK constant_expr T_RBRACK {
+	| direct_param_decl T_LBRACK array_size T_RBRACK {
 		$$ = add_array($1, true, to_int_constant($3, false));
 	  }
 	| direct_param_decl param_list opt_asm_or_symbolrename {
@@ -1173,7 +1187,7 @@ direct_notype_param_decl:
 	| direct_notype_param_decl T_LBRACK T_RBRACK {
 		$$ = add_array($1, false, 0);
 	  }
-	| direct_notype_param_decl T_LBRACK constant_expr T_RBRACK {
+	| direct_notype_param_decl T_LBRACK array_size T_RBRACK {
 		$$ = add_array($1, true, to_int_constant($3, false));
 	  }
 	| direct_notype_param_decl param_list opt_asm_or_symbolrename {
@@ -1468,7 +1482,7 @@ direct_abstract_decl:
 	| T_LBRACK T_RBRACK {
 		$$ = add_array(abstract_name(), false, 0);
 	  }
-	| T_LBRACK constant_expr T_RBRACK {
+	| T_LBRACK array_size T_RBRACK {
 		$$ = add_array(abstract_name(), true, to_int_constant($2, false));
 	  }
 	| type_attribute direct_abstract_decl {
@@ -1477,7 +1491,7 @@ direct_abstract_decl:
 	| direct_abstract_decl T_LBRACK T_RBRACK {
 		$$ = add_array($1, false, 0);
 	  }
-	| direct_abstract_decl T_LBRACK constant_expr T_RBRACK {
+	| direct_abstract_decl T_LBRACK array_size T_RBRACK {
 		$$ = add_array($1, true, to_int_constant($3, false));
 	  }
 	| abstract_decl_param_list opt_asm_or_symbolrename {
