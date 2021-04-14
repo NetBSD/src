@@ -1,4 +1,4 @@
-/*	$NetBSD: adiantum.c,v 1.5 2020/07/26 04:05:20 riastradh Exp $	*/
+/*	$NetBSD: adiantum.c,v 1.6 2021/04/14 21:29:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: adiantum.c,v 1.5 2020/07/26 04:05:20 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: adiantum.c,v 1.6 2021/04/14 21:29:57 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/endian.h>
@@ -390,10 +390,12 @@ static void
 nh(uint8_t h[static 32], const uint8_t *m, size_t mlen,
     const uint32_t k[static 268 /* u/w + 2s(r - 1) */])
 {
-	const unsigned w = 32;	 /* word size */
-	const unsigned s = 2;	 /* stride */
-	const unsigned r = 4;	 /* rounds */
-	const unsigned u = 8192; /* unit count (bits per msg unit) */
+	enum {
+	    s = 2,	 /* stride */
+	    r = 4,	 /* rounds */
+	    w = 32,	 /* word size */
+	    u = 8192	 /* unit count (bits per msg unit) */
+	};
 	uint64_t h0 = 0, h1 = 0, h2 = 0, h3 = 0;
 	unsigned i;
 
