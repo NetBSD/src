@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.927 2021/04/14 15:41:08 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.928 2021/04/14 16:12:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.927 2021/04/14 15:41:08 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.928 2021/04/14 16:12:26 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -1688,8 +1688,8 @@ tryagain:
 
 struct ModifyWord_LoopArgs {
 	GNode *scope;
-	const char *tvar;	/* name of temporary variable */
-	const char *str;	/* string to expand */
+	const char *var;	/* name of the temporary variable */
+	const char *body;	/* string to expand */
 	VarEvalMode emode;
 };
 
@@ -1705,15 +1705,15 @@ ModifyWord_Loop(Substring word, SepBuf *buf, void *data)
 
 	args = data;
 	assert(word.end[0] == '\0');	/* assume null-terminated word */
-	Var_SetWithFlags(args->scope, args->tvar, word.start,
+	Var_SetWithFlags(args->scope, args->var, word.start,
 	    VAR_SET_NO_EXPORT);
-	(void)Var_Subst(args->str, args->scope, args->emode, &s);
+	(void)Var_Subst(args->body, args->scope, args->emode, &s);
 	/* TODO: handle errors */
 
 	assert(word.end[0] == '\0');	/* assume null-terminated word */
 	DEBUG4(VAR, "ModifyWord_Loop: "
 		    "in \"%s\", replace \"%s\" with \"%s\" to \"%s\"\n",
-	    word.start, args->tvar, args->str, s);
+	    word.start, args->var, args->body, s);
 
 	if (s[0] == '\n' || Buf_EndsWith(&buf->buf, '\n'))
 		buf->needSep = false;
@@ -2447,12 +2447,12 @@ ApplyModifier_Loop(const char **pp, ModChain *ch)
 	if (res != VPR_OK)
 		return AMR_CLEANUP;
 	tvar = LazyBuf_DoneGet(&tvarBuf);
-	args.tvar = tvar.str;
-	if (strchr(args.tvar, '$') != NULL) {
+	args.var = tvar.str;
+	if (strchr(args.var, '$') != NULL) {
 		Parse_Error(PARSE_FATAL,
 		    "In the :@ modifier of \"%s\", the variable name \"%s\" "
 		    "must not contain a dollar.",
-		    expr->name, args.tvar);
+		    expr->name, args.var);
 		return AMR_CLEANUP;
 	}
 
@@ -2460,7 +2460,7 @@ ApplyModifier_Loop(const char **pp, ModChain *ch)
 	if (res != VPR_OK)
 		return AMR_CLEANUP;
 	str = LazyBuf_DoneGet(&strBuf);
-	args.str = str.str;
+	args.body = str.str;
 
 	if (!Expr_ShouldEval(expr))
 		goto done;
@@ -2470,8 +2470,8 @@ ApplyModifier_Loop(const char **pp, ModChain *ch)
 	ch->sep = ' ';		/* XXX: should be ch->sep for consistency */
 	ModifyWords(ch, ModifyWord_Loop, &args, ch->oneBigWord);
 	ch->sep = prev_sep;
-	/* XXX: Consider restoring the previous variable instead of deleting. */
-	Var_Delete(expr->scope, args.tvar);
+	/* XXX: Consider restoring the previous value instead of deleting. */
+	Var_Delete(expr->scope, args.var);
 
 done:
 	FStr_Done(&tvar);
