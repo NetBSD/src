@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	8.1 (Berkeley) 6/4/93
-#	$NetBSD: Makefile.inc,v 1.84 2020/03/25 18:45:42 kre Exp $
+#	$NetBSD: Makefile.inc,v 1.85 2021/04/14 08:07:49 mrg Exp $
 
 # string sources
 .PATH: ${ARCHDIR}/string ${.CURDIR}/string
@@ -33,6 +33,12 @@ SRCS+=	wcscat.c wcschr.c wcscmp.c wcscpy.c wcscspn.c wcslcat.c wcslcpy.c \
 CPPFLAGS.wcscmp.c+=	-I${LIBCDIR}/locale
 CPPFLAGS.wcsncmp.c+=	-I${LIBCDIR}/locale
 CPPFLAGS.wmemcmp.c+=	-I${LIBCDIR}/locale
+
+# Avoid memset() compilation generating calls to memset() via code
+# that appears to implement memset()-like semantics (similar to how
+# printf("foo") may be converted to puts("foo")), since that tends
+# to recurse and blow the stack.
+COPTS.memset.c+=	${${ACTIVE_CC} == "gcc":? -fno-builtin :}
 
 .include "${ARCHDIR}/string/Makefile.inc"
 
