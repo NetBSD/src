@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.926 2021/04/12 18:53:51 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.927 2021/04/14 15:41:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.926 2021/04/12 18:53:51 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.927 2021/04/14 15:41:08 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -241,12 +241,12 @@ typedef enum UnexportWhat {
 } UnexportWhat;
 
 /* Flags for pattern matching in the :S and :C modifiers */
-typedef struct VarPatternFlags {
+typedef struct PatternFlags {
 	bool subGlobal: 1;	/* 'g': replace as often as possible */
 	bool subOnce: 1;	/* '1': replace only once */
 	bool anchorStart: 1;	/* '^': match only at start of word */
 	bool anchorEnd: 1;	/* '$': match only at end of word */
-} VarPatternFlags;
+} PatternFlags;
 
 /* SepBuf builds a string from words interleaved with separators. */
 typedef struct SepBuf {
@@ -1495,7 +1495,7 @@ no_match:
 struct ModifyWord_SubstArgs {
 	Substring lhs;
 	Substring rhs;
-	VarPatternFlags pflags;
+	PatternFlags pflags;
 	bool matched;
 };
 
@@ -1589,7 +1589,7 @@ struct ModifyWord_SubstRegexArgs {
 	regex_t re;
 	size_t nsub;
 	const char *replace;
-	VarPatternFlags pflags;
+	PatternFlags pflags;
 	bool matched;
 };
 
@@ -2161,7 +2161,7 @@ ParseModifierPartSubst(
     LazyBuf *part,
     /* For the first part of the :S modifier, sets the VARP_ANCHOR_END flag
      * if the last character of the pattern is a $. */
-    VarPatternFlags *out_pflags,
+    PatternFlags *out_pflags,
     /* For the second part of the :S modifier, allow ampersands to be
      * escaped and replace unescaped ampersands with subst->lhs. */
     struct ModifyWord_SubstArgs *subst
@@ -2858,7 +2858,7 @@ ApplyModifier_Match(const char **pp, ModChain *ch)
 }
 
 static void
-ParsePatternFlags(const char **pp, VarPatternFlags *pflags, bool *oneBigWord)
+ParsePatternFlags(const char **pp, PatternFlags *pflags, bool *oneBigWord)
 {
 	for (;; (*pp)++) {
 		if (**pp == 'g')
@@ -2872,16 +2872,12 @@ ParsePatternFlags(const char **pp, VarPatternFlags *pflags, bool *oneBigWord)
 	}
 }
 
-#if __STDC_VERSION__ >= 199901L
-#define VarPatternFlags_Literal() (VarPatternFlags) { false, false, false, false }
-#else
-MAKE_INLINE VarPatternFlags
-VarPatternFlags_Literal(void)
+MAKE_INLINE PatternFlags
+PatternFlags_None(void)
 {
-	VarPatternFlags pflags = { false, false, false, false };
+	PatternFlags pflags = { false, false, false, false };
 	return pflags;
 }
-#endif
 
 /* :S,from,to, */
 static ApplyModifierResult
@@ -2901,7 +2897,7 @@ ApplyModifier_Subst(const char **pp, ModChain *ch)
 
 	*pp += 2;
 
-	args.pflags = VarPatternFlags_Literal();
+	args.pflags = PatternFlags_None();
 	args.matched = false;
 
 	if (**pp == '^') {
@@ -2968,7 +2964,7 @@ ApplyModifier_Regex(const char **pp, ModChain *ch)
 	replace = LazyBuf_DoneGet(&replaceBuf);
 	args.replace = replace.str;
 
-	args.pflags = VarPatternFlags_Literal();
+	args.pflags = PatternFlags_None();
 	args.matched = false;
 	oneBigWord = ch->oneBigWord;
 	ParsePatternFlags(pp, &args.pflags, &oneBigWord);
