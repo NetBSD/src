@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.537 2021/04/14 17:20:48 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.538 2021/04/14 17:24:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.537 2021/04/14 17:20:48 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.538 2021/04/14 17:24:48 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -869,9 +869,8 @@ PrintVar(const char *varname, bool expandVars)
  * is false, otherwise true.
  */
 static bool
-GetBooleanVar(const char *varname, bool fallback)
+GetBooleanExpr(const char *expr, bool fallback)
 {
-	char *expr = str_concat3("${", varname, "}");
 	char *value;
 	bool res;
 
@@ -879,7 +878,6 @@ GetBooleanVar(const char *varname, bool fallback)
 	/* TODO: handle errors */
 	res = ParseBoolean(value, fallback);
 	free(value);
-	free(expr);
 	return res;
 }
 
@@ -894,7 +892,8 @@ doPrintVars(void)
 	else if (opts.debugVflag)
 		expandVars = false;
 	else
-		expandVars = GetBooleanVar(".MAKE.EXPAND_VARIABLES", false);
+		expandVars = GetBooleanExpr("${.MAKE.EXPAND_VARIABLES}",
+		    false);
 
 	for (ln = opts.variables.first; ln != NULL; ln = ln->next) {
 		const char *varname = ln->datum;
@@ -1086,7 +1085,7 @@ InitObjdir(const char *machine, const char *machine_arch)
 	bool writable;
 
 	Dir_InitCur(curdir);
-	writable = GetBooleanVar("MAKE_OBJDIR_CHECK_WRITABLE", true);
+	writable = GetBooleanExpr("${MAKE_OBJDIR_CHECK_WRITABLE}", true);
 	(void)Main_SetObjdir(false, "%s", curdir);
 
 	if (!SetVarObjdir(writable, "MAKEOBJDIRPREFIX", curdir) &&
@@ -2086,7 +2085,8 @@ shouldDieQuietly(GNode *gn, int bf)
 	static int quietly = -1;
 
 	if (quietly < 0) {
-		if (DEBUG(JOB) || !GetBooleanVar(".MAKE.DIE_QUIETLY", true))
+		if (DEBUG(JOB) ||
+		    !GetBooleanExpr("${.MAKE.DIE_QUIETLY}", true))
 			quietly = 0;
 		else if (bf >= 0)
 			quietly = bf;
