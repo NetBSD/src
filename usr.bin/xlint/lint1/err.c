@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.106 2021/04/09 20:12:00 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.107 2021/04/14 13:34:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.106 2021/04/09 20:12:00 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.107 2021/04/14 13:34:08 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -397,6 +397,7 @@ const	char *msgs[] = {
 	"initialization with '[a...b]' is a GNU extension",	      /* 340 */
 	"argument to '%s' must be 'unsigned char' or EOF, not '%s'",  /* 341 */
 	"argument to '%s' must be cast to 'unsigned char', not to '%s'", /* 342 */
+	"static array size is a C99 extension",			      /* 343 */
 };
 
 static struct include_level {
