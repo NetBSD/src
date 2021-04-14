@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.108 2021/04/14 18:35:40 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.109 2021/04/14 18:38:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.108 2021/04/14 18:35:40 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.109 2021/04/14 18:38:06 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -423,7 +423,7 @@ update_location(const char *filename, int lineno, bool is_begin, bool is_end)
 		top->by = includes;
 		includes = top;
 	} else {
-		if (is_end && top != NULL) {
+		if (is_end) {
 			includes = top->by;
 			free(top);
 			top = includes;
