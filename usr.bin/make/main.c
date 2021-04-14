@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.536 2021/04/04 10:13:09 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.537 2021/04/14 17:20:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.536 2021/04/04 10:13:09 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.537 2021/04/14 17:20:48 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -871,7 +871,7 @@ PrintVar(const char *varname, bool expandVars)
 static bool
 GetBooleanVar(const char *varname, bool fallback)
 {
-	char *expr = str_concat3("${", varname, ":U}");
+	char *expr = str_concat3("${", varname, "}");
 	char *value;
 	bool res;
 
