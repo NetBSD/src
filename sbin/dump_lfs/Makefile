@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2020/09/07 03:09:53 mrg Exp $
+#	$NetBSD: Makefile,v 1.20 2021/04/14 08:31:24 mrg Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 #	lfs_inode.c		LFS filestore-specific routines
@@ -25,6 +25,10 @@ LDADD+= -lutil
 
 .if ${MACHINE_ARCH} == "m68000"
 COPTS.lfs_inode.c+=	-fno-tree-ter
+.endif
+
+.if ${MACHINE_ARCH} == "ia64"
+COPTS.lfs_inode.c+=	-O3
 .endif
 
 .PATH:  ${NETBSDSRCDIR}/sbin/dump ${NETBSDSRCDIR}/sys/ufs/lfs \
