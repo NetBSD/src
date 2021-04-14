@@ -1,4 +1,4 @@
-/*	$NetBSD: str.h,v 1.7 2021/04/14 16:59:34 rillig Exp $	*/
+/*	$NetBSD: str.h,v 1.8 2021/04/14 17:39:11 rillig Exp $	*/
 
 /*
  Copyright (c) 2021 Roland Illig <rillig@NetBSD.org>
@@ -146,7 +146,7 @@ MFStr_Done(MFStr *mfstr)
 }
 
 
-MAKE_INLINE Substring
+MAKE_STATIC Substring
 Substring_Init(const char *start, const char *end)
 {
 	Substring sub;
@@ -162,13 +162,13 @@ Substring_InitStr(const char *str)
 	return Substring_Init(str, str + strlen(str));
 }
 
-MAKE_INLINE size_t
+MAKE_STATIC size_t
 Substring_Length(Substring sub)
 {
 	return (size_t)(sub.end - sub.start);
 }
 
-MAKE_INLINE bool
+MAKE_STATIC bool
 Substring_IsEmpty(Substring sub)
 {
 	return sub.start == sub.end;
@@ -182,7 +182,7 @@ Substring_Equals(Substring sub, const char *str)
 	       memcmp(sub.start, str, len) == 0;
 }
 
-MAKE_INLINE Substring
+MAKE_STATIC Substring
 Substring_Sub(Substring sub, size_t start, size_t end)
 {
 	assert(start <= Substring_Length(sub));
@@ -190,14 +190,14 @@ Substring_Sub(Substring sub, size_t start, size_t end)
 	return Substring_Init(sub.start + start, sub.start + end);
 }
 
-MAKE_INLINE bool
+MAKE_STATIC bool
 Substring_HasPrefix(Substring sub, Substring prefix)
 {
 	return Substring_Length(sub) >= Substring_Length(prefix) &&
 	       memcmp(sub.start, prefix.start, Substring_Length(prefix)) == 0;
 }
 
-MAKE_INLINE bool
+MAKE_STATIC bool
 Substring_HasSuffix(Substring sub, Substring suffix)
 {
 	size_t suffixLen = Substring_Length(suffix);
@@ -206,7 +206,7 @@ Substring_HasSuffix(Substring sub, Substring suffix)
 }
 
 /* Returns an independent, null-terminated copy of the substring. */
-MAKE_INLINE FStr
+MAKE_STATIC FStr
 Substring_Str(Substring sub)
 {
 	if (Substring_IsEmpty(sub))
@@ -214,7 +214,7 @@ Substring_Str(Substring sub)
 	return FStr_InitOwn(bmake_strsedup(sub.start, sub.end));
 }
 
-MAKE_INLINE const char *
+MAKE_STATIC const char *
 Substring_SkipFirst(Substring sub, char ch)
 {
 	const char *p;
@@ -225,7 +225,7 @@ Substring_SkipFirst(Substring sub, char ch)
 	return sub.start;
 }
 
-MAKE_INLINE const char *
+MAKE_STATIC const char *
 Substring_LastIndex(Substring sub, char ch)
 {
 	const char *p;
@@ -236,7 +236,7 @@ Substring_LastIndex(Substring sub, char ch)
 	return NULL;
 }
 
-MAKE_INLINE Substring
+MAKE_STATIC Substring
 Substring_Dirname(Substring pathname)
 {
 	const char *p;
@@ -247,7 +247,7 @@ Substring_Dirname(Substring pathname)
 	return Substring_InitStr(".");
 }
 
-MAKE_INLINE Substring
+MAKE_STATIC Substring
 Substring_Basename(Substring pathname)
 {
 	const char *p;
@@ -259,7 +259,7 @@ Substring_Basename(Substring pathname)
 }
 
 
-MAKE_INLINE void
+MAKE_STATIC void
 LazyBuf_Init(LazyBuf *buf, const char *expected)
 {
 	buf->data = NULL;
@@ -275,7 +275,7 @@ LazyBuf_Done(LazyBuf *buf)
 	free(buf->freeIt);
 }
 
-MAKE_INLINE void
+MAKE_STATIC void
 LazyBuf_Add(LazyBuf *buf, char ch)
 {
 
@@ -298,7 +298,7 @@ LazyBuf_Add(LazyBuf *buf, char ch)
 	}
 }
 
-MAKE_INLINE void
+MAKE_STATIC void
 LazyBuf_AddStr(LazyBuf *buf, const char *str)
 {
 	const char *p;
@@ -307,7 +307,7 @@ LazyBuf_AddStr(LazyBuf *buf, const char *str)
 		LazyBuf_Add(buf, *p);
 }
 
-MAKE_INLINE void
+MAKE_STATIC void
 LazyBuf_AddBytesBetween(LazyBuf *buf, const char *start, const char *end)
 {
 	const char *p;
@@ -322,14 +322,14 @@ LazyBuf_AddSubstring(LazyBuf *buf, Substring sub)
 	LazyBuf_AddBytesBetween(buf, sub.start, sub.end);
 }
 
-MAKE_INLINE Substring
+MAKE_STATIC Substring
 LazyBuf_Get(const LazyBuf *buf)
 {
 	const char *start = buf->data != NULL ? buf->data : buf->expected;
 	return Substring_Init(start, start + buf->len);
 }
 
-MAKE_INLINE FStr
+MAKE_STATIC FStr
 LazyBuf_DoneGet(LazyBuf *buf)
 {
 	if (buf->data != NULL) {
