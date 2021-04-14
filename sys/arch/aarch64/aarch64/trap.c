@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.45 2021/03/09 16:44:27 ryo Exp $ */
+/* $NetBSD: trap.c,v 1.46 2021/04/14 05:43:09 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.45 2021/03/09 16:44:27 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.46 2021/04/14 05:43:09 ryo Exp $");
 
 #include "opt_arm_intr_impl.h"
 #include "opt_compat_netbsd32.h"
@@ -861,6 +861,26 @@ unknown:
 	}
 }
 
+void
+trap_el1h_error(struct trapframe *tf)
+{
+	/*
+	 * Normally, we should panic unconditionally,
+	 * but SError interrupt may occur when accessing to unmapped(?) I/O
+	 * spaces. bus_space_{peek,poke}_{1,2,4,8}() should trap these case.
+	 */
+	struct faultbuf *fb;
+
+	if (curcpu()->ci_intr_depth == 0) {
+		fb = cpu_disable_onfault();
+		if (fb != NULL) {
+			cpu_jump_onfault(tf, fb, EFAULT);
+			return;
+		}
+	}
+	panic("%s", __func__);
+}
+
 #define bad_trap_panic(trapfunc)	\
 void					\
 trapfunc(struct trapframe *tf)		\
@@ -872,7 +892,6 @@ bad_trap_panic(trap_el1t_irq)
 bad_trap_panic(trap_el1t_fiq)
 bad_trap_panic(trap_el1t_error)
 bad_trap_panic(trap_el1h_fiq)
-bad_trap_panic(trap_el1h_error)
 bad_trap_panic(trap_el0_fiq)
 bad_trap_panic(trap_el0_error)
 bad_trap_panic(trap_el0_32fiq)
