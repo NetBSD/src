@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.261 2021/04/11 12:06:53 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.262 2021/04/14 17:39:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,6 +131,7 @@
 #endif
 
 #define MAKE_INLINE static inline MAKE_ATTR_UNUSED
+#define MAKE_STATIC static MAKE_ATTR_UNUSED
 
 #if __STDC_VERSION__ >= 199901L || defined(lint) || defined(USE_C99_BOOLEAN)
 #include <stdbool.h>
