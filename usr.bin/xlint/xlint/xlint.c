@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.60 2021/04/14 20:06:40 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.61 2021/04/14 20:35:31 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: xlint.c,v 1.60 2021/04/14 20:06:40 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.61 2021/04/14 20:35:31 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -204,6 +204,27 @@ freelst(char ***lstp)
 	}
 }
 
+static void
+pass_to_lint1(const char *opt)
+{
+
+	appcstrg(&l1flags, opt);
+}
+
+static void
+pass_to_lint2(const char *opt)
+{
+
+	appcstrg(&l2flags, opt);
+}
+
+static void
+pass_to_cpp(const char *opt)
+{
+
+	appcstrg(&cflags, opt);
+}
+
 static char *
 concat2(const char *s1, const char *s2)
 {
@@ -345,25 +366,25 @@ main(int argc, char *argv[])
 	libs = xcalloc(1, sizeof(*libs));
 	libsrchpath = xcalloc(1, sizeof(*libsrchpath));
 
-	appcstrg(&cflags, "-E");
-	appcstrg(&cflags, "-x");
-	appcstrg(&cflags, "c");
+	pass_to_cpp("-E");
+	pass_to_cpp("-x");
+	pass_to_cpp("c");
 #if 0
-	appcstrg(&cflags, "-D__attribute__(x)=");
-	appcstrg(&cflags, "-D__extension__(x)=/*NOSTRICT*/0");
+	pass_to_cpp("-D__attribute__(x)=");
+	pass_to_cpp("-D__extension__(x)=/*NOSTRICT*/0");
 #else
-	appcstrg(&cflags, "-U__GNUC__");
-	appcstrg(&cflags, "-U__PCC__");
-	appcstrg(&cflags, "-U__SSE__");
-	appcstrg(&cflags, "-U__SSE4_1__");
+	pass_to_cpp("-U__GNUC__");
+	pass_to_cpp("-U__PCC__");
+	pass_to_cpp("-U__SSE__");
+	pass_to_cpp("-U__SSE4_1__");
 #endif
 #if 0
-	appcstrg(&cflags, "-Wp,-$");
+	pass_to_cpp("-Wp,-$");
 #endif
-	appcstrg(&cflags, "-Wp,-CC");
-	appcstrg(&cflags, "-Wcomment");
-	appcstrg(&cflags, "-D__LINT__");
-	appcstrg(&cflags, "-Dlint");		/* XXX don't def. with -s */
+	pass_to_cpp("-Wp,-CC");
+	pass_to_cpp("-Wcomment");
+	pass_to_cpp("-D__LINT__");
+	pass_to_cpp("-Dlint");		/* XXX don't def. with -s */
 
 	appdef(&cflags, "lint");
 
@@ -388,12 +409,12 @@ main(int argc, char *argv[])
 		case 'w':
 		case 'z':
 			(void)sprintf(flgbuf, "-%c", c);
-			appcstrg(&l1flags, flgbuf);
+			pass_to_lint1(flgbuf);
 			break;
 
 		case 'A':
-			appcstrg(&l1flags, "-A");
-			appcstrg(&l1flags, optarg);
+			pass_to_lint1("-A");
+			pass_to_lint1(optarg);
 			break;
 
 		case 'F':
@@ -402,14 +423,14 @@ main(int argc, char *argv[])
 		case 'u':
 		case 'h':
 			(void)sprintf(flgbuf, "-%c", c);
-			appcstrg(&l1flags, flgbuf);
-			appcstrg(&l2flags, flgbuf);
+			pass_to_lint1(flgbuf);
+			pass_to_lint2(flgbuf);
 			break;
 
 		case 'X':
 			(void)sprintf(flgbuf, "-%c", c);
-			appcstrg(&l1flags, flgbuf);
-			appcstrg(&l1flags, optarg);
+			pass_to_lint1(flgbuf);
+			pass_to_lint1(optarg);
 			break;
 
 		case 'i':
@@ -423,8 +444,8 @@ main(int argc, char *argv[])
 			break;
 
 		case 'p':
-			appcstrg(&l1flags, "-p");
-			appcstrg(&l2flags, "-p");
+			pass_to_lint1("-p");
+			pass_to_lint2("-p");
 			if (*deflibs != NULL) {
 				freelst(&deflibs);
 				appcstrg(&deflibs, "c");
@@ -432,11 +453,11 @@ main(int argc, char *argv[])
 			break;
 
 		case 'P':
-			appcstrg(&l1flags, "-P");
+			pass_to_lint1("-P");
 			break;
 
 		case 'R':
-			appcstrg(&l1flags, concat2("-R", optarg));
+			pass_to_lint1(concat2("-R", optarg));
 			break;
 
 		case 's':
@@ -447,23 +468,23 @@ main(int argc, char *argv[])
 			appcstrg(&lcflags, "-Wtrigraphs");
 			appcstrg(&lcflags, "-pedantic");
 			appcstrg(&lcflags, "-D__STRICT_ANSI__");
-			appcstrg(&l1flags, "-s");
-			appcstrg(&l2flags, "-s");
+			pass_to_lint1("-s");
+			pass_to_lint2("-s");
 			sflag = true;
 			break;
 
 		case 'S':
 			if (tflag)
 				usage();
-			appcstrg(&l1flags, "-S");
+			pass_to_lint1("-S");
 			Sflag = true;
 			break;
 
 		case 'T':
 			(void)sprintf(flgbuf, "-%c", c);
-			appcstrg(&cflags, "-I" PATH_STRICT_BOOL_INCLUDE);
-			appcstrg(&l1flags, flgbuf);
-			appcstrg(&l2flags, flgbuf);
+			pass_to_cpp("-I" PATH_STRICT_BOOL_INCLUDE);
+			pass_to_lint1(flgbuf);
+			pass_to_lint2(flgbuf);
 			break;
 
 #if ! HAVE_NBTOOL_CONFIG_H
@@ -475,14 +496,14 @@ main(int argc, char *argv[])
 			appcstrg(&lcflags, "-Wtraditional");
 			appstrg(&lcflags, concat2("-D", MACHINE));
 			appstrg(&lcflags, concat2("-D", MACHINE_ARCH));
-			appcstrg(&l1flags, "-t");
-			appcstrg(&l2flags, "-t");
+			pass_to_lint1("-t");
+			pass_to_lint2("-t");
 			tflag = true;
 			break;
 #endif
 
 		case 'x':
-			appcstrg(&l2flags, "-x");
+			pass_to_lint2("-x");
 			break;
 
 		case 'C':
@@ -499,9 +520,9 @@ main(int argc, char *argv[])
 			if (dflag)
 				usage();
 			dflag = true;
-			appcstrg(&cflags, "-nostdinc");
-			appcstrg(&cflags, "-isystem");
-			appcstrg(&cflags, optarg);
+			pass_to_cpp("-nostdinc");
+			pass_to_cpp("-isystem");
+			pass_to_cpp(optarg);
 			break;
 
 		case 'D':
@@ -528,7 +549,7 @@ main(int argc, char *argv[])
 			break;
 
 		case 'H':
-			appcstrg(&l2flags, "-H");
+			pass_to_lint2("-H");
 			break;
 
 		case 'B':
@@ -541,7 +562,7 @@ main(int argc, char *argv[])
 			break;
 
 		case 'Z':
-			appcstrg(&cflags, optarg);
+			pass_to_cpp(optarg);
 			break;
 
 		default:
