@@ -1,4 +1,4 @@
-/*	$NetBSD: str.h,v 1.6 2021/04/12 18:48:00 rillig Exp $	*/
+/*	$NetBSD: str.h,v 1.7 2021/04/14 16:59:34 rillig Exp $	*/
 
 /*
  Copyright (c) 2021 Roland Illig <rillig@NetBSD.org>
@@ -205,9 +205,12 @@ Substring_HasSuffix(Substring sub, Substring suffix)
 	       memcmp(sub.end - suffixLen, suffix.start, suffixLen) == 0;
 }
 
+/* Returns an independent, null-terminated copy of the substring. */
 MAKE_INLINE FStr
 Substring_Str(Substring sub)
 {
+	if (Substring_IsEmpty(sub))
+		return FStr_InitRefer("");
 	return FStr_InitOwn(bmake_strsedup(sub.start, sub.end));
 }
 
