@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.99 2020/10/15 01:00:01 thorpej Exp $ */
+/* $NetBSD: cpu.h,v 1.100 2021/04/15 08:23:24 rin Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -205,7 +205,8 @@ struct clockframe {
  * r/m/w cycle is complete, we won't be counted... but it's not
  * like this stastic has to be extremely accurate.
  */
-#define	CLKF_INTR(framep)	(curcpu()->ci_intrdepth)
+#define	CLKF_INTR(framep)						\
+	(curcpu()->ci_intrdepth > 1)	/* one for clock interrupt itself */
 
 /*
  * This is used during profiling to integrate system time.  It can safely
