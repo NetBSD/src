@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.425 2021/04/15 18:21:27 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.426 2021/04/15 18:36:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -142,7 +142,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.425 2021/04/15 18:21:27 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.426 2021/04/15 18:36:17 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -1724,12 +1724,15 @@ JobStart(GNode *gn, bool special)
 }
 
 /*
- * Print the output of the shell command, skipping the noPrint text of the
- * shell, if any.  The default shell does not have noPrint though, which means
- * that in all practical cases, handling the output is left to the caller.
+ * If the shell has an output filter (which only csh and ksh have by default),
+ * print the output of the child process, skipping the noPrint text of the
+ * shell.
+ *
+ * Return the part of the output that the calling function needs to output by
+ * itself.
  */
 static char *
-PrintOutput(char *cp, char *endp)	/* XXX: should all be const */
+PrintFilteredOutput(char *cp, char *endp)	/* XXX: should all be const */
 {
 	char *ecp;		/* XXX: should be const */
 
@@ -1835,8 +1838,8 @@ again:
 		} else if (job->outBuf[i] == '\0') {
 			/*
 			 * FIXME: The null characters are only replaced with
-			 * space in the last line.  Everywhere else they hide
-			 * the rest of the command output.
+			 * space _after_ the last '\n'.  Everywhere else they
+			 * hide the rest of the command output.
 			 */
 			job->outBuf[i] = ' ';
 		}
@@ -1874,10 +1877,10 @@ again:
 			 * do anything in the default shell, this bug has gone
 			 * unnoticed until now.
 			 */
-			cp = PrintOutput(job->outBuf, &job->outBuf[i]);
+			cp = PrintFilteredOutput(job->outBuf, &job->outBuf[i]);
 
 			/*
-			 * There's still more in that thar buffer. This time,
+			 * There's still more in the output buffer. This time,
 			 * though, we know there's no newline at the end, so
 			 * we add one of our own free will.
 			 */
