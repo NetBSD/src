@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_typedep.c,v 1.40 2020/10/11 00:33:30 thorpej Exp $ */
+/* $NetBSD: sgmap_typedep.c,v 1.41 2021/04/15 00:11:09 rin Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: sgmap_typedep.c,v 1.40 2020/10/11 00:33:30 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sgmap_typedep.c,v 1.41 2021/04/15 00:11:09 rin Exp $");
 
 #include "opt_ddb.h"
 
@@ -138,7 +138,7 @@ __C(SGMAP_TYPE,_load_buffer)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 #endif
 
 	const vm_flag_t vmflags = VM_INSTANTFIT |
-	    ((flags & BUS_DMA_NOWAIT) ? VM_SLEEP : VM_NOSLEEP);
+	    ((flags & BUS_DMA_NOWAIT) ? VM_NOSLEEP : VM_SLEEP);
 
 	error = vmem_xalloc(sgmap->aps_arena, sgvalen,
 			    alignment,		/* alignment */
