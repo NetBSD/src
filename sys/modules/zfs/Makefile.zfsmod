@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.zfsmod,v 1.9 2019/02/05 09:54:36 hannken Exp $
+#	$NetBSD: Makefile.zfsmod,v 1.10 2021/04/15 17:26:22 christos Exp $
 
 ZFSDIR=	${S}/../external/cddl/osnet
 
@@ -135,5 +135,3 @@ CPPFLAGS+=	-I${ZFSDIR}/dist/uts/common/zfs
 CPPFLAGS+=	-I${ZFSDIR}/dist/uts/common
 
 CPPFLAGS+=	-D_PROPLIB_ZFS_CONFLICT
-
-NEED_ISYSTEM=	# duplicate headers, depends on -isystem to build
