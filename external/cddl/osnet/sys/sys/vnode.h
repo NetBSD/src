@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.17 2020/05/26 08:39:27 hannken Exp $	*/
+/*	$NetBSD: vnode.h,v 1.18 2021/04/15 06:59:57 christos Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -99,10 +99,7 @@
 
 #ifdef _KERNEL
 
-struct vnode;
 struct vattr;
-
-typedef	struct vnode	vnode_t;
 typedef	struct vattr	vattr_t;
 typedef enum vtype vtype_t;
 
