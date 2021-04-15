@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.426 2021/04/15 18:36:17 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.427 2021/04/15 19:06:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -142,7 +142,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.426 2021/04/15 18:36:17 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.427 2021/04/15 19:06:42 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -247,14 +247,12 @@ typedef struct ShellWriter {
  * error handling variables
  */
 static int job_errors = 0;	/* number of errors reported */
-typedef enum AbortReason {	/* why is the make aborting? */
+static enum {			/* Why is the make aborting? */
 	ABORT_NONE,
-	ABORT_ERROR,		/* Because of an error */
-	ABORT_INTERRUPT,	/* Because it was interrupted */
+	ABORT_ERROR,		/* Aborted because of an error */
+	ABORT_INTERRUPT,	/* Aborted because it was interrupted */
 	ABORT_WAIT		/* Waiting for jobs to finish */
-	/* XXX: "WAIT" is not a _reason_ for aborting, it's rather a status. */
-} AbortReason;
-static AbortReason aborting = ABORT_NONE;
+} aborting = ABORT_NONE;
 #define JOB_TOKENS "+EI+"	/* Token to requeue for each abort state */
 
 /*
