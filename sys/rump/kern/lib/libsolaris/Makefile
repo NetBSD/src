@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.5 2021/04/15 17:28:09 christos Exp $
+#	$NetBSD: Makefile,v 1.6 2021/04/15 17:31:44 christos Exp $
 #
 
-NEED_ISYSTEM=	# Tell rump that we can't use -isystem
+NEED_ISYSTEM=	# Tell rump that we must use -isystem
 
 .include <bsd.init.mk>
 
