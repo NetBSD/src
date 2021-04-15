@@ -1,4 +1,4 @@
-/* $NetBSD: subr_evcnt.c,v 1.15 2021/04/02 10:39:22 simonb Exp $ */
+/* $NetBSD: subr_evcnt.c,v 1.16 2021/04/15 00:37:31 rin Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_evcnt.c,v 1.15 2021/04/02 10:39:22 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_evcnt.c,v 1.16 2021/04/15 00:37:31 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -393,7 +393,7 @@ evcnt_attach_legacy_intrcnt(void)
 	size_t i;
 	const char *cp;
 
-	nintr = ((intptr_t)eintrcnt - (intptr_t)intrcnt) / sizeof(long);
+	nintr = ((intptr_t)eintrcnt - (intptr_t)intrcnt) / sizeof(intrcnt[0]);
 	intr_evcnts = kmem_alloc(sizeof(struct evcnt) * nintr, KM_SLEEP);
 	for (cp = intrnames, i = 0; i < nintr; i++) {
 		evcnt_attach_dynamic(&intr_evcnts[i], EVCNT_TYPE_INTR,
