@@ -36,7 +36,9 @@ typedef id_t		ctid_t;
 
 #define	B_FALSE	0
 #define	B_TRUE	1
+#ifndef _KERNEL
 typedef int		boolean_t;
+#endif
 
 #ifndef __defined_hr_t
 #define __defined_hr_t
