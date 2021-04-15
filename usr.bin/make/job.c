@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.424 2021/04/04 10:05:08 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.425 2021/04/15 18:21:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -142,7 +142,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.424 2021/04/04 10:05:08 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.425 2021/04/15 18:21:27 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -1834,7 +1834,9 @@ again:
 			break;
 		} else if (job->outBuf[i] == '\0') {
 			/*
-			 * Why?
+			 * FIXME: The null characters are only replaced with
+			 * space in the last line.  Everywhere else they hide
+			 * the rest of the command output.
 			 */
 			job->outBuf[i] = ' ';
 		}
@@ -1866,6 +1868,12 @@ again:
 		if (i >= job->curPos) {
 			char *cp;
 
+			/*
+			 * FIXME: SwitchOutputTo should be here, according to
+			 * the comment above.  But since PrintOutput does not
+			 * do anything in the default shell, this bug has gone
+			 * unnoticed until now.
+			 */
 			cp = PrintOutput(job->outBuf, &job->outBuf[i]);
 
 			/*
