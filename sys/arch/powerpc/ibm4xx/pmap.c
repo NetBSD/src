@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.97 2021/04/14 23:45:11 rin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.98 2021/04/15 00:00:46 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.97 2021/04/14 23:45:11 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.98 2021/04/15 00:00:46 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -236,11 +236,15 @@ pte_enter(struct pmap *pm, vaddr_t va, u_int pte)
 	if (!pm->pm_ptbl[seg]) {
 		/* Don't allocate a page to clear a non-existent mapping. */
 		if (!pte)
+			return 1;
+
+		vaddr_t km = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+		    UVM_KMF_WIRED | UVM_KMF_ZERO | UVM_KMF_NOWAIT);
+
+		if (__predict_false(km == 0))
 			return 0;
-		/* Allocate a page XXXX this will sleep! */
-		pm->pm_ptbl[seg] =
-		    (uint *)uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
-		    UVM_KMF_WIRED | UVM_KMF_ZERO);
+
+		pm->pm_ptbl[seg] = (u_int *)km;
 	}
 	oldpte = pm->pm_ptbl[seg][ptn];
 	pm->pm_ptbl[seg][ptn] = pte;
@@ -862,7 +866,7 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 
 		if (!pmap_enter_pv(pm, va, pa, flags)) {
 			/* Could not enter pv on a managed page */
-			return 1;
+			return ENOMEM;
 		}
 
 		/* Now set attributes. */
@@ -880,7 +884,12 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	s = splvm();
 
 	/* Insert page into page table. */
-	pte_enter(pm, va, tte);
+	if (__predict_false(!pte_enter(pm, va, tte))) {
+		if (__predict_false((flags & PMAP_CANFAIL) == 0))
+			panic("%s: pte_enter", __func__);
+		splx(s);
+		return ENOMEM;
+	}
 
 	/* If this is a real fault, enter it in the tlb */
 	if (tte && ((flags & PMAP_WIRED) == 0)) {
@@ -969,7 +978,8 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	s = splvm();
 
 	/* Insert page into page table. */
-	pte_enter(pm, va, tte);
+	if (__predict_false(!pte_enter(pm, va, tte)))
+		panic("%s: pte_enter", __func__);
 	splx(s);
 }
 
@@ -978,7 +988,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
 {
 
 	while (len > 0) {
-		pte_enter(pmap_kernel(), va, 0);
+		(void)pte_enter(pmap_kernel(), va, 0);	/* never fail */
 		va += PAGE_SIZE;
 		len -= PAGE_SIZE;
 	}
