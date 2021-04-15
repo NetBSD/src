@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile.booters,v 1.26 2017/04/08 19:53:21 christos Exp $
+#	$NetBSD: Makefile.booters,v 1.27 2021/04/15 01:54:39 mrg Exp $
 
 S?=		${.CURDIR}/../../../..
 MDEC_DIR?=	/usr/mdec
 RELOC?=		0x3F0000
 COPTS?=		-Os -Wall -Wno-main -Wmissing-prototypes -Wstrict-prototypes \
-		-ffreestanding -fomit-frame-pointer -fno-unwind-tables
+		-ffreestanding -fomit-frame-pointer -fno-unwind-tables \
+		-fcommon
 DEFS?= 
 STRIPFLAG?=
 
