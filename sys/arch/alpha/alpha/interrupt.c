@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.92 2020/10/10 03:05:04 thorpej Exp $ */
+/* $NetBSD: interrupt.c,v 1.93 2021/04/15 00:19:52 rin Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.92 2020/10/10 03:05:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.93 2021/04/15 00:19:52 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,12 +212,7 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 		break;
 		
 	case ALPHA_INTR_CLOCK:	/* clock interrupt */
-		/*
-		 * We don't increment the interrupt depth for the
-		 * clock interrupt, since it is *sampled* from
-		 * the clock interrupt, so if we did, all system
-		 * time would be counted as interrupt time.
-		 */
+		atomic_inc_ulong(&ci->ci_intrdepth);
 		sc->sc_evcnt_clock.ev_count++;
 		ci->ci_data.cpu_nintr++;
 		if (platform.clockintr) {
@@ -242,6 +237,7 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 			    schedhz != 0)
 				schedclock(ci->ci_curlwp);
 		}
+		atomic_dec_ulong(&ci->ci_intrdepth);
 		break;
 
 	case ALPHA_INTR_ERROR:	/* Machine Check or Correctable Error */
