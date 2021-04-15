@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aq.c,v 1.20 2021/02/18 17:56:04 ryo Exp $	*/
+/*	$NetBSD: if_aq.c,v 1.21 2021/04/15 09:04:08 ryo Exp $	*/
 
 /**
  * aQuantia Corporation Network Driver
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.20 2021/02/18 17:56:04 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.21 2021/04/15 09:04:08 ryo Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_aq.h"
@@ -1445,24 +1445,14 @@ aq_attach(device_t parent, device_t self, void *aux)
 	ifp->if_capabilities |= IFCAP_TSOv4 | IFCAP_TSOv6;
 #endif
 
-#if notyet
-	/*
-	 * XXX:
-	 *   Rx L4 CSUM doesn't work well for fragment packet.
-	 *   aq marks 'CHEDKED' and 'BAD' for them.
-	 *   we need to ignore (clear) hw-csum flags if the packet is fragmented
-	 *
-	 *   TODO: test with LRO enabled
-	 */
-	ifp->if_capabilities |= IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_TCPv6_Rx;
-	ifp->if_capabilities |= IFCAP_CSUM_UDPv4_Rx | IFCAP_CSUM_UDPv6_Rx;
-#endif
 	/* TX hardware checksum offloadding */
 	ifp->if_capabilities |= IFCAP_CSUM_IPv4_Tx;
 	ifp->if_capabilities |= IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv6_Tx;
 	ifp->if_capabilities |= IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv6_Tx;
 	/* RX hardware checksum offloadding */
 	ifp->if_capabilities |= IFCAP_CSUM_IPv4_Rx;
+	ifp->if_capabilities |= IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_TCPv6_Rx;
+	ifp->if_capabilities |= IFCAP_CSUM_UDPv4_Rx | IFCAP_CSUM_UDPv6_Rx;
 
 	error = if_initialize(ifp);
 	if (error != 0) {
@@ -4365,11 +4355,11 @@ aq_rx_intr(void *arg)
 					m0->m_pkthdr.csum_flags |=
 					    M_CSUM_IPv4_BAD;
 			}
-#if notyet
+
 			/*
-			 * XXX: aq always marks BAD for fragmented packet.
-			 * we should peek L3 header, and ignore cksum flags
-			 * if the packet is fragmented.
+			 * aq will always mark BAD for fragment packets,
+			 * but this is not a problem because the IP stack
+			 * ignores the CSUM flag in fragment packets.
 			 */
 			if (__SHIFTOUT(rxd_type,
 			    RXDESC_TYPE_TCPUDP_CSUM_CHECKED)) {
@@ -4422,7 +4412,7 @@ aq_rx_intr(void *arg)
 					    M_CSUM_TCP_UDP_BAD;
 				}
 			}
-#endif
+
 			m_set_rcvif(m0, ifp);
 			if_statinc_ref(nsr, if_ipackets);
 			if_statadd_ref(nsr, if_ibytes, m0->m_pkthdr.len);
