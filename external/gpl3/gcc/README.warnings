@@ -1,0 +1,132 @@
+$NetBSD: README.warnings,v 1.1 2021/04/15 05:15:04 mrg Exp $
+
+What to do about GCC warnings and NetBSD.
+
+
+New GCC releases always come with a host of new warnings and
+each new warning can find real bugs, find odd code, or simply
+be a pain of new useless warnings, or all three and more.
+
+As each warning has its own set of issues they each have their
+own section and it is expected that this document will be
+modified for updates to warnings and new warnings.
+
+
+<bsd.own.mk> provides several variables for use in Makefiles:
+   COPTS.foo.c += ${GCC_NO_FORMAT_TRUNCATION}
+   COPTS.foo.c += ${GCC_NO_FORMAT_OVERFLOW}
+   COPTS.foo.c += ${GCC_NO_STRINGOP_OVERFLOW}
+   COPTS.foo.c += ${GCC_NO_STRINGOP_TRUNCATION}
+   COPTS.foo.c += ${GCC_NO_CAST_FUNCTION_TYPE}
+   COPTS.foo.c += ${GCC_NO_IMPLICIT_FALLTHRU}
+   COPTS.foo.c += ${GCC_NO_ADDR_OF_PACKED_MEMBER}
+   COPTS.foo.c += ${GCC_NO_MAYBE_UNINITIALIZED}
+   COPTS.foo.c += ${GCC_NO_RETURN_LOCAL_ADDR}
+
+
+new GCC 10 warnings:
+
+  GCC 10 switched the default from "-fcommon" to "-fno-common",
+  which can cause multiply defined symbol issues.  Ideally we
+  fix all of these, but "-fcommon" can be used otherwise.
+
+  -Wno-maybe-uninitialized
+
+      This warning was introduced in an ancient GCC but was
+      significantly enhanced in GCC 10, unfortunately, many of
+      the new instances are incorrect.
+
+      bsd.own.mk variable: ${GCC_NO_MAYBE_UNINITIALIZED}
+
+  -Wno-return-local-addr
+
+      This warning was introduced in GCC 5 and was enhanced in GCC
+      10.  Unfortunately, the new instances are failing to correctly
+      analyze code flow and miss that most of the are handled.
+
+      bsd.own.mk variable: ${GCC_NO_RETURN_LOCAL_ADDR}
+
+
+new GCC 9 warnings:
+
+  -Wno-address-of-packed-member
+
+      This warning was introduced in GCC 8.
+      This warning is similar to -Wformat-truncation, but for the
+      general family of string functions (str*(), etc.), and has
+      similar issues of false positives.
+
+      bsd.own.mk variable: ${GCC_NO_ADDR_OF_PACKED_MEMBER}
+
+
+new GCC 8 warnings:
+
+  -Wstringop-truncation
+
+      This warning was introduced in GCC 8.
+      This warning is similar to -Wformat-truncation, but for the
+      general family of string functions (str*(), etc.), and has
+      similar issues of false positives.
+
+      bsd.own.mk variable: ${GCC_NO_STRINGOP_TRUNCATION}
+
+
+  -Wcast-function-type
+
+      This warning was introduced in GCC 8.
+      This warning can find real problems.  Most instances are
+      false positives, and hopefully this warning will become
+      more useful in the future.  See __FPTRCAST().
+
+      bsd.own.mk variable: ${GCC_NO_CAST_FUNCTION_TYPE}
+
+
+new GCC 7 warnings:
+
+  -Wstringop-overflow
+
+      This warning was introduced in GCC 7.
+      This warning can find issues where source length is
+      passed as destination length (eg, strncpy() where the
+      length is strlen(src)) that are potential buffer overflow
+      cases and should always be inspected, but false positives
+      are also seen.
+
+      bsd.own.mk variable: ${GCC_NO_STRINGOP_OVERFLOW}
+
+
+  -Wformat-truncation
+
+    This warning was introduced in GCC 7.
+    This warning has many false positives where truncation is
+    either expected or unavoidable, but also finds several real
+    code bugs.
+
+    Code should always be manually inspected for this warning
+    as it does pick up real issues.
+
+    bsd.own.mk variable: ${GCC_NO_FORMAT_TRUNCATION}
+
+
+  -Wformat-overflow
+
+    This warning was introduced in GCC 7.
+    This warning typically identifies a real problem, but it may
+    fail to notice the code handles this case.
+
+    Code should always be manually inspected for this warning
+    as it does pick up real issues.
+
+    bsd.own.mk variable: ${GCC_NO_FORMAT_OVERFLOW}
+
+
+  -Wimplicit-fallthrough
+
+    This warning was introduced in GCC 7.
+    This warning has many false positives in GCC 7, and many are
+    fixed in newer GCC 10.  Old uses should be checked occasionally.
+
+    Code should always be manually inspected for this warning
+    as it does pick up real issues.
+
+    bsd.own.mk variable: ${GCC_NO_IMPLICIT_FALLTHRU}
