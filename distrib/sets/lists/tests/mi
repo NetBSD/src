@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1040 2021/04/14 18:27:11 rillig Exp $
+# $NetBSD: mi,v 1.1041 2021/04/15 19:02:29 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5487,6 +5487,8 @@
 ./usr/tests/usr.bin/make/unit-tests/job-flags.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/job-output-long-lines.exp			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/job-output-long-lines.mk			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/job-output-null.exp				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/job-output-null.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/jobs-empty-commands.exp			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/jobs-empty-commands.mk			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/jobs-error-indirect.exp			tests-usr.bin-tests	compattestfile,atf
