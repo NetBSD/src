@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aq.c,v 1.22 2021/04/15 09:04:42 ryo Exp $	*/
+/*	$NetBSD: if_aq.c,v 1.23 2021/04/15 09:05:24 ryo Exp $	*/
 
 /**
  * aQuantia Corporation Network Driver
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.22 2021/04/15 09:04:42 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.23 2021/04/15 09:05:24 ryo Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_aq.h"
@@ -115,6 +115,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.22 2021/04/15 09:04:42 ryo Exp $");
 #define AQ_TRAFFICCLASS_NUM		8
 #define AQ_RSS_HASHKEY_SIZE		40
 #define AQ_RSS_INDIRECTION_TABLE_MAX	64
+
+#define AQ_JUMBO_MTU_REV_A		9000
+#define AQ_JUMBO_MTU_REV_B		16338
 
 /*
  * TERMINOLOGY
@@ -996,6 +999,7 @@ struct aq_softc {
 #define FEATURES_REV_B0		0x20000000
 #define FEATURES_REV_B1		0x40000000
 #define FEATURES_REV_B		(FEATURES_REV_B0|FEATURES_REV_B1)
+	uint32_t sc_max_mtu;
 	uint32_t sc_mbox_addr;
 
 	bool sc_rbl_enabled;
@@ -2118,6 +2122,7 @@ aq_fw_version_init(struct aq_softc *sc)
 		    fw_vers);
 		sc->sc_features |= FEATURES_REV_A0 |
 		    FEATURES_MPI_AQ | FEATURES_MIPS;
+		sc->sc_max_mtu = AQ_JUMBO_MTU_REV_A;
 		break;
 	case 0x02:
 		aprint_normal_dev(sc->sc_dev, "Atlantic revision B0, %s\n",
@@ -2125,6 +2130,7 @@ aq_fw_version_init(struct aq_softc *sc)
 		sc->sc_features |= FEATURES_REV_B0 |
 		    FEATURES_MPI_AQ | FEATURES_MIPS |
 		    FEATURES_TPO2 | FEATURES_RPF2;
+		sc->sc_max_mtu = AQ_JUMBO_MTU_REV_B;
 		break;
 	case 0x0A:
 		aprint_normal_dev(sc->sc_dev, "Atlantic revision B1, %s\n",
@@ -2132,10 +2138,13 @@ aq_fw_version_init(struct aq_softc *sc)
 		sc->sc_features |= FEATURES_REV_B1 |
 		    FEATURES_MPI_AQ | FEATURES_MIPS |
 		    FEATURES_TPO2 | FEATURES_RPF2;
+		sc->sc_max_mtu = AQ_JUMBO_MTU_REV_B;
 		break;
 	default:
 		aprint_error_dev(sc->sc_dev,
 		    "Unknown revision (0x%08x)\n", hwrev);
+		sc->sc_features = 0;
+		sc->sc_max_mtu = ETHERMTU;
 		error = ENOTSUP;
 		break;
 	}
@@ -4740,7 +4749,19 @@ aq_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 	error = 0;
 
 	s = splnet();
-	error = ether_ioctl(ifp, cmd, data);
+	switch (cmd) {
+	case SIOCSIFMTU:
+		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > sc->sc_max_mtu) {
+			error = EINVAL;
+		} else {
+			ifp->if_mtu = ifr->ifr_mtu;
+			error = 0;	/* no need to reset (no ENETRESET) */
+		}
+		break;
+	default:
+		error = ether_ioctl(ifp, cmd, data);
+		break;
+	}
 	splx(s);
 
 	if (error != ENETRESET)
