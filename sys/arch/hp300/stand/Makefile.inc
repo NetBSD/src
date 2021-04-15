@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.16 2009/03/15 06:10:03 tsutsui Exp $
+#	$NetBSD: Makefile.inc,v 1.17 2021/04/15 01:54:38 mrg Exp $
 
 BINDIR=			/usr/mdec
 
 release:
 
 S?=		${.CURDIR}/../../../..
+
+COPTS+=		-fcommon
