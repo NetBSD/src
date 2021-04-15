@@ -1,4 +1,4 @@
-$NetBSD: README.gcc10,v 1.8 2021/04/15 01:59:51 mrg Exp $
+$NetBSD: README.gcc10,v 1.9 2021/04/15 05:12:57 mrg Exp $
 
 
 new stuff:
@@ -34,7 +34,7 @@ architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf	switched
 ------------	-----	-------	------	----------	------------	----	---	--------
 aarch64		y	n[3]	n[3]	y		n		?	?	?
 aarch64be	y	n[3]	n[3]	y		n		?	?	?
-alpha		y	b	y	y		y		?	?	?
+alpha		y	y	y	y		y		y	y	n
 earmv4		y	y	y	y		y		y	?	n
 earmv4eb	y	b	y	y		y		?	?	?
 earmv5		y	b	y	y		y		?	?	?
@@ -53,12 +53,12 @@ hppa		y	b	y	y		y		?	?	?
 i386		y	y	y	y		y		y	n[8]	?
 ia64		y	y	y	y		y		?	N/A	n
 m68000		y	b	y	y		n[1]		?	?	?
-m68k		y	y	y	y		y[9]		?	?	?
+m68k		y	y	y	y		y[9]		y	?	?
 mipseb		y	y	y	y		y		y	?	?
 mipsel		y	y	y	y		y		y	?	?
 mips64eb	y	y	y	y		y		n[4]	?	?
 mips64el	y	b	y	y		y		y	?	?
-powerpc		y	b	y	y		y		?	?	?
+powerpc		y	b	y	y		y		n[2]	?	?
 powerpc64	y	b	y	y		y		N/A	N/A	?
 sh3eb		y	b	y	y		y		?	?	?
 sh3el		y	y	y	y		y		y	y[7]	?
@@ -74,6 +74,7 @@ coldfire	?	N/A	?	?		?		N/A	N/A
 architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
 
 [1] - ramdisk.fs is too large, needs fixing.
+[2] - powerpc ports have regressions; fixes incoming from rin@
 [3] - missing __aarch64_swp1_acq in kernels.  missing lse.S in libgcc.
 [4] - edgerouter lite3 crashes early in boot:
       [   1.0000000] u-boot bootmem desc @ 0x24108 version 3.0
