@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2021/04/12 02:54:08 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2021/04/15 01:55:21 mrg Exp $
 
 PROG=	huntd
 SRCS=	answer.c draw.c driver.c execute.c expl.c \
@@ -12,5 +12,6 @@ CPPFLAGS+=-I${.CURDIR}/../include
 # Appears wrong - should not exceed bounds of array.
 COPTS.answer.c+=	${GCC_NO_STRINGOP_OVERFLOW}
 COPTS.shots.c+=		${GCC_NO_STRINGOP_OVERFLOW}
+COPTS.driver.c+=	${GCC_NO_STRINGOP_OVERFLOW}
 
 .include <bsd.prog.mk>
