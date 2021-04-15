@@ -1,8 +1,10 @@
-# $NetBSD: Makefile.inc,v 1.3 2019/01/02 03:04:26 tsutsui Exp $
+# $NetBSD: Makefile.inc,v 1.4 2021/04/15 01:54:39 mrg Exp $
 
 NOPIE=	# defined
 
 BINDIR?=	/usr/mdec
+
+COPTS+=		-fcommon
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
