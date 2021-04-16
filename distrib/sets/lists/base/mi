@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1277 2021/04/12 02:08:59 mrg Exp $
+# $NetBSD: mi,v 1.1278 2021/04/16 01:14:38 mrg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1240,6 +1240,8 @@
 ./usr/include/gcc-6/sanitizer			base-obsolete		obsolete
 ./usr/include/gcc-7				base-obsolete		obsolete
 ./usr/include/gcc-7/sanitizer			base-obsolete		obsolete
+./usr/include/gcc-8				base-obsolete		obsolete
+./usr/include/gcc-8/sanitizer			base-obsolete		obsolete
 ./usr/include/gcc-9				base-c-usr
 ./usr/include/gcc-9/sanitizer			base-c-usr
 ./usr/include/gcc-10				base-c-usr
