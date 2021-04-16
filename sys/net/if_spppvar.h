@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppvar.h,v 1.32 2020/11/25 10:30:51 yamaguchi Exp $	*/
+/*	$NetBSD: if_spppvar.h,v 1.33 2021/04/16 02:26:25 yamaguchi Exp $	*/
 
 #ifndef _NET_IF_SPPPVAR_H_
 #define _NET_IF_SPPPVAR_H_
@@ -240,7 +240,7 @@ void sppp_flush (struct ifnet *);
  *     if_spppsubr.c.
  *
  * Locking order:
- *    - spppq_lock => struct sppp->pp_lock
+ *    - IFNET_LOCK => spppq_lock => struct sppp->pp_lock
  *
  * NOTICE
  * - Lower layers must not acquire sppp->pp_lock
