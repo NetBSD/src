@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.308 2020/10/05 14:54:50 nia Exp $
+$NetBSD: acronyms,v 1.309 2021/04/16 15:53:55 pgoyette Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -502,6 +502,7 @@ ROM	rough order of magnitude
 ROI	return on investment
 ROTFL	rolling on the floor laughing
 RP	responsible person
+RPG	rocket-propelled grenade
 RR	railroad
 RSI	repetitive strain injury
 RSN	real soon now
