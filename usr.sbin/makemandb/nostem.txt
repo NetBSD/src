@@ -503,7 +503,6 @@ clrbit
 clri
 clrtobot
 clrtoeol
-cltom
 cmd
 cmdide
 cmos
@@ -2568,7 +2567,6 @@ mtc
 mtd
 mtime
 mtio
-mtocl
 mtod
 mtrace
 mtree
