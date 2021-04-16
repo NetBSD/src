@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.215 2020/11/27 03:37:11 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.216 2021/04/16 02:05:37 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.215 2020/11/27 03:37:11 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.216 2021/04/16 02:05:37 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1933,6 +1933,13 @@ sppp_down_event(struct sppp *sp, void *xcp)
 		sppp_cp_change_state(cp, sp, STATE_STARTING);
 		break;
 	default:
+		/*
+		 * a down event may be caused regardless
+		 * of state just in LCP case.
+		 */
+		if (cp->proto == PPP_LCP)
+			break;
+
 		printf("%s: %s illegal down in state %s\n",
 		       ifp->if_xname, cp->name,
 		       sppp_state_name(sp->scp[cp->protoidx].state));
