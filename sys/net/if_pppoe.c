@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.164 2021/04/16 01:28:51 yamaguchi Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.165 2021/04/16 01:32:04 yamaguchi Exp $ */
 
 /*
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.164 2021/04/16 01:28:51 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.165 2021/04/16 01:32:04 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -341,7 +341,7 @@ pppoe_clone_create(struct if_clone *ifc, int unit)
 	struct pppoe_softc *sc;
 	int rv;
 
-	sc = malloc(sizeof(struct pppoe_softc), M_DEVBUF, M_WAITOK|M_ZERO);
+	sc = kmem_zalloc(sizeof(*sc), KM_SLEEP);
 
 	rw_init(&sc->sc_lock);
 	pppoe_softc_genid(&sc->sc_id);
@@ -408,7 +408,7 @@ destroy_timeout:
 	workqueue_destroy(sc->sc_timeout_wq);
 destroy_sclock:
 	rw_destroy(&sc->sc_lock);
-	free(sc, M_DEVBUF);
+	kmem_free(sc, sizeof(*sc));
 
 	return rv;
 }
@@ -449,7 +449,7 @@ pppoe_clone_destroy(struct ifnet *ifp)
 	PPPOE_UNLOCK(sc);
 	rw_destroy(&sc->sc_lock);
 
-	free(sc, M_DEVBUF);
+	kmem_free(sc, sizeof(*sc));
 
 	return 0;
 }
