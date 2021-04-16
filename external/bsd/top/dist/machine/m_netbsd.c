@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd.c,v 1.24 2021/04/03 19:25:38 christos Exp $	*/
+/*	$NetBSD: m_netbsd.c,v 1.25 2021/04/16 13:02:47 christos Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -37,12 +37,12 @@
  *		Andrew Doran <ad@NetBSD.org>
  *
  *
- * $Id: m_netbsd.c,v 1.24 2021/04/03 19:25:38 christos Exp $
+ * $Id: m_netbsd.c,v 1.25 2021/04/16 13:02:47 christos Exp $
  */
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: m_netbsd.c,v 1.24 2021/04/03 19:25:38 christos Exp $");
+__RCSID("$NetBSD: m_netbsd.c,v 1.25 2021/04/16 13:02:47 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -103,14 +103,14 @@ struct handle {
  */
 
 static char Proc_header[] =
-  "  PID X        PRI NICE   SIZE   RES STATE       TIME  WCPU   CPU   COMMAND";
+  "  PID X        PRI NICE   SIZE   RES STATE       TIME   WCPU    CPU COMMAND";
 /* 0123456   -- field to fill in starts at header+6 */
 #define PROC_UNAME_START 6
 #define Proc_format \
 	"%5d %-8.8s %3d %4d%7s %5s %-9.9s%7s %5.*f%% %5.*f%% %s"
 
 static char Thread_header[] =
-  "  PID   LID X        PRI STATE       TIME  WCPU   CPU   NAME      COMMAND";
+  "  PID   LID X        PRI STATE       TIME   WCPU    CPU NAME      COMMAND";
 /* 0123456   -- field to fill in starts at header+6 */
 #define THREAD_UNAME_START 12
 #define Thread_format \
