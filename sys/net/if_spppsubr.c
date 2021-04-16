@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.216 2021/04/16 02:05:37 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.217 2021/04/16 02:12:00 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.216 2021/04/16 02:05:37 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.217 2021/04/16 02:12:00 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1074,8 +1074,6 @@ sppp_detach(struct ifnet *ifp)
 		spppq_lock = NULL;
 	}
 
-	SPPP_LOCK(sp, RW_WRITER);
-
 	sppp_cp_fini(&lcp, sp);
 	sppp_cp_fini(&ipcp, sp);
 	sppp_cp_fini(&pap, sp);
@@ -1090,7 +1088,6 @@ sppp_detach(struct ifnet *ifp)
 	if (sp->myauth.secret) free(sp->myauth.secret, M_DEVBUF);
 	if (sp->hisauth.name) free(sp->hisauth.name, M_DEVBUF);
 	if (sp->hisauth.secret) free(sp->hisauth.secret, M_DEVBUF);
-	SPPP_UNLOCK(sp);
 	rw_destroy(&sp->pp_lock);
 }
 
