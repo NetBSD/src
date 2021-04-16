@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.322 2021/03/28 17:52:09 nia Exp $
+$NetBSD: acronyms.comp,v 1.323 2021/04/16 15:53:55 pgoyette Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1367,6 +1367,7 @@ RMW	read, modify, write
 RNG	random number generator
 ROM	read only memory
 RPC	remote procedure call
+RPG	Report Program Generator
 RPKI	resource PKI
 RPL	requested privilege level
 RPM	revolutions per minute
