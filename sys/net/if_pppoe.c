@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.168 2021/04/16 02:12:00 yamaguchi Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.169 2021/04/16 02:23:25 yamaguchi Exp $ */
 
 /*
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.168 2021/04/16 02:12:00 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.169 2021/04/16 02:23:25 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -436,13 +436,18 @@ pppoe_clone_destroy(struct ifnet *ifp)
 	}
 	rw_exit(&pppoe_softc_list_lock);
 
-	callout_setfunc(&sc->sc_timeout, pppoe_timeout_co_halt, sc);
-	workqueue_wait(sc->sc_timeout_wq, &sc->sc_timeout_wk);
-	callout_halt(&sc->sc_timeout, NULL);
-
 	bpf_detach(ifp);
 	sppp_detach(&sc->sc_sppp.pp_if);
 	if_detach(ifp);
+
+	callout_setfunc(&sc->sc_timeout, pppoe_timeout_co_halt, sc);
+
+	workqueue_wait(sc->sc_timeout_wq, &sc->sc_timeout_wk);
+	workqueue_destroy(sc->sc_timeout_wq);
+
+	callout_halt(&sc->sc_timeout, NULL);
+	callout_destroy(&sc->sc_timeout);
+
 	if (sc->sc_concentrator_name)
 		free(sc->sc_concentrator_name, M_DEVBUF);
 	if (sc->sc_service_name)
@@ -451,8 +456,6 @@ pppoe_clone_destroy(struct ifnet *ifp)
 		free(sc->sc_ac_cookie, M_DEVBUF);
 	if (sc->sc_relay_sid)
 		free(sc->sc_relay_sid, M_DEVBUF);
-	callout_destroy(&sc->sc_timeout);
-	workqueue_destroy(sc->sc_timeout_wq);
 
 	rw_destroy(&sc->sc_lock);
 
