@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cvar.h,v 1.23 2021/01/25 12:15:32 jmcneill Exp $	*/
+/*	$NetBSD: i2cvar.h,v 1.24 2021/04/16 07:02:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -151,7 +151,7 @@ struct i2c_attach_args {
 	int		ia_ncompat;	/* number of pointers in the
 					   ia_compat array */
 	const char **	ia_compat;	/* chip names */
-	prop_dictionary_t ia_prop;	/* dictionnary for this device */
+	prop_dictionary_t ia_prop;	/* dictionary for this device */
 	/*
 	 * The following is of limited usefulness and should only be used
 	 * in rare cases where we really know what we are doing. Example:
