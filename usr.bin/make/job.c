@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.427 2021/04/15 19:06:42 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.428 2021/04/16 16:10:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -142,7 +142,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.427 2021/04/15 19:06:42 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.428 2021/04/16 16:10:01 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -478,7 +478,7 @@ Job_FlagsToString(const Job *job, char *buf, size_t bufsize)
 }
 
 static void
-job_table_dump(const char *where)
+DumpJobs(const char *where)
 {
 	Job *job;
 	char flags[4];
@@ -710,7 +710,7 @@ JobFindPid(int pid, JobStatus status, bool isJobs)
 			return job;
 	}
 	if (DEBUG(JOB) && isJobs)
-		job_table_dump("no pid");
+		DumpJobs("no pid");
 	return NULL;
 }
 
@@ -1514,7 +1514,7 @@ JobExec(Job *job, char **argv)
 	if (DEBUG(JOB)) {
 		debug_printf("JobExec(%s): pid %d added to jobs table\n",
 		    job->node->name, job->pid);
-		job_table_dump("job started");
+		DumpJobs("job started");
 	}
 	JobSigUnlock(&mask);
 }
