@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.163 2021/04/16 01:24:35 yamaguchi Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.164 2021/04/16 01:28:51 yamaguchi Exp $ */
 
 /*
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.163 2021/04/16 01:24:35 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.164 2021/04/16 01:28:51 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -343,6 +343,7 @@ pppoe_clone_create(struct if_clone *ifc, int unit)
 
 	sc = malloc(sizeof(struct pppoe_softc), M_DEVBUF, M_WAITOK|M_ZERO);
 
+	rw_init(&sc->sc_lock);
 	pppoe_softc_genid(&sc->sc_id);
 
 	if_initname(&sc->sc_sppp.pp_if, "pppoe", unit);
@@ -368,7 +369,7 @@ pppoe_clone_create(struct if_clone *ifc, int unit)
 	    sc->sc_sppp.pp_if.if_xname, pppoe_timeout_wk, sc,
 	    PRI_SOFTNET, IPL_SOFTNET, 0);
 	if (rv != 0)
-		goto free_sc;
+		goto destroy_sclock;
 
 	callout_init(&sc->sc_timeout, CALLOUT_MPSAFE);
 	callout_setfunc(&sc->sc_timeout, pppoe_timeout_co, sc);
@@ -397,8 +398,6 @@ pppoe_clone_create(struct if_clone *ifc, int unit)
 
 	if_register(&sc->sc_sppp.pp_if);
 
-	rw_init(&sc->sc_lock);
-
 	rw_enter(&pppoe_softc_list_lock, RW_WRITER);
 	LIST_INSERT_HEAD(&pppoe_softc_list, sc, sc_list);
 	rw_exit(&pppoe_softc_list_lock);
@@ -407,8 +406,10 @@ pppoe_clone_create(struct if_clone *ifc, int unit)
 destroy_timeout:
 	callout_destroy(&sc->sc_timeout);
 	workqueue_destroy(sc->sc_timeout_wq);
-free_sc:
+destroy_sclock:
+	rw_destroy(&sc->sc_lock);
 	free(sc, M_DEVBUF);
+
 	return rv;
 }
 
