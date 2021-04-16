@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.166 2021/04/16 01:44:35 yamaguchi Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.167 2021/04/16 01:59:50 yamaguchi Exp $ */
 
 /*
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.166 2021/04/16 01:44:35 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.167 2021/04/16 01:59:50 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -188,6 +188,7 @@ struct pppoe_softc {
 	int sc_padi_retried;		/* number of PADI retries already done */
 	int sc_padr_retried;		/* number of PADR retries already done */
 	krwlock_t sc_lock;	/* lock of sc_state, sc_session, and sc_eth_if */
+	bool sc_detaching;
 };
 
 /* incoming traffic will be queued here */
@@ -417,19 +418,28 @@ pppoe_clone_destroy(struct ifnet *ifp)
 {
 	struct pppoe_softc * sc = ifp->if_softc;
 
-	rw_enter(&pppoe_softc_list_lock, RW_WRITER);
-
 	PPPOE_LOCK(sc, RW_WRITER);
-	callout_setfunc(&sc->sc_timeout, pppoe_timeout_co_halt, sc);
-	workqueue_wait(sc->sc_timeout_wq, &sc->sc_timeout_wk);
-	callout_halt(&sc->sc_timeout, NULL);
+	/* stop ioctls */
+	sc->sc_detaching = true;
 
+	if (ifp->if_flags & IFF_RUNNING) {
+		pppoe_clear_softc(sc, "destroy interface");
+		sc->sc_eth_if = NULL;
+	}
+	PPPOE_UNLOCK(sc);
+
+	rw_enter(&pppoe_softc_list_lock, RW_WRITER);
 	LIST_REMOVE(sc, sc_list);
 
 	if (LIST_EMPTY(&pppoe_softc_list)) {
 		pfil_remove_ihook(pppoe_ifattach_hook, NULL, PFIL_IFNET, if_pfil);
 	}
 	rw_exit(&pppoe_softc_list_lock);
+
+	PPPOE_LOCK(sc, RW_WRITER);
+	callout_setfunc(&sc->sc_timeout, pppoe_timeout_co_halt, sc);
+	workqueue_wait(sc->sc_timeout_wq, &sc->sc_timeout_wk);
+	callout_halt(&sc->sc_timeout, NULL);
 
 	bpf_detach(ifp);
 	sppp_detach(&sc->sc_sppp.pp_if);
@@ -1285,6 +1295,10 @@ pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 			struct ifnet *eth_if;
 
 			PPPOE_LOCK(sc, RW_WRITER);
+			if (sc->sc_detaching) {
+				PPPOE_UNLOCK(sc);
+				return ENXIO;
+			}
 			eth_if = ifunit(parms->eth_ifname);
 			if (eth_if == NULL || eth_if->if_dlt != DLT_EN10MB) {
 				sc->sc_eth_if = NULL;
@@ -1343,6 +1357,10 @@ pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 		 * administrators choice.
 		 */
 		PPPOE_LOCK(sc, RW_WRITER);
+		if (sc->sc_detaching) {
+			PPPOE_UNLOCK(sc);
+			return ENXIO;
+		}
 
 		if ((ifr->ifr_flags & IFF_UP) == 0
 		     && sc->sc_state < PPPOE_STATE_SESSION) {
@@ -1506,7 +1524,8 @@ pppoe_timeout(struct pppoe_softc *sc)
 	switch (sc->sc_state) {
 	case PPPOE_STATE_INITIAL:
 		/* delayed connect from pppoe_tls() */
-		pppoe_connect(sc);
+		if (!sc->sc_detaching)
+			pppoe_connect(sc);
 		break;
 	case PPPOE_STATE_PADI_SENT:
 		/*
