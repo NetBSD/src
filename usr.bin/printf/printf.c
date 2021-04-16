@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.50 2019/07/22 17:34:31 kre Exp $	*/
+/*	$NetBSD: printf.c,v 1.51 2021/04/16 15:10:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)printf.c	8.2 (Berkeley) 3/22/95";
 #else
-__RCSID("$NetBSD: printf.c,v 1.50 2019/07/22 17:34:31 kre Exp $");
+__RCSID("$NetBSD: printf.c,v 1.51 2021/04/16 15:10:18 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -118,6 +118,10 @@ static char  **gargv;
 		error = asprintf(cpp, f, func); \
 }
 
+#define isodigit(c)	((c) >= '0' && (c) <= '7')
+#define octtobin(c)	(char)((c) - '0')
+#define check(c, a)	(c) >= (a) && (c) <= (a) + 5 ? (char)((c) - (a) + 10)
+#define hextobin(c)	(check(c, 'a') : check(c, 'A') : (char)((c) - '0'))
 #ifdef main
 int main(int, char *[]);
 #endif
@@ -482,9 +486,9 @@ conv_escape_str(char *str, void (*do_putchar)(int), int quiet)
 static char *
 conv_escape(char *str, char *conv_ch, int quiet)
 {
-	char value;
-	char ch;
-	char num_buf[4], *num_end;
+	char value = 0;
+	char ch, *begin;
+	int c;
 
 	ch = *str++;
 
@@ -499,13 +503,11 @@ conv_escape(char *str, char *conv_ch, int quiet)
 
 	case '0': case '1': case '2': case '3':
 	case '4': case '5': case '6': case '7':
-		num_buf[0] = ch;
-		ch = str[0];
-		num_buf[1] = ch;
-		num_buf[2] = (char)(ch != '\0' ? str[1] : '\0');
-		num_buf[3] = '\0';
-		value = (char)strtoul(num_buf, &num_end, 8);
-		str += num_end  - (num_buf + 1);
+		str--;
+		for (c = 3; c-- && isodigit(*str); str++) {
+			value <<= 3;
+			value += octtobin(*str);
+		}
 		break;
 
 	case 'x':
@@ -515,12 +517,18 @@ conv_escape(char *str, char *conv_ch, int quiet)
 		 * way to detect the end of the constant.
 		 * Supporting 2 byte constants is a compromise.
 		 */
-		ch = str[0];
-		num_buf[0] = ch;
-		num_buf[1] = (char)(ch != '\0' ? str[1] : '\0');
-		num_buf[2] = '\0';
-		value = (char)strtoul(num_buf, &num_end, 16);
-		str += num_end - num_buf;
+		begin = str;
+		for (c = 2; c-- && isxdigit((unsigned char)*str); str++) {
+			value <<= 4;
+			const char d = hextobin(*str);
+			value += d;
+		}
+		if (str == begin) {
+			if (!quiet)
+				warnx("\\x%s: missing hexadecimal number "
+				    "in escape", begin);
+			rval = 1;
+		}
 		break;
 
 	case '\\':	value = '\\';	break;	/* backslash */
