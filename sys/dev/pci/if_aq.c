@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aq.c,v 1.23 2021/04/15 09:05:24 ryo Exp $	*/
+/*	$NetBSD: if_aq.c,v 1.24 2021/04/16 08:07:02 ryo Exp $	*/
 
 /**
  * aQuantia Corporation Network Driver
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.23 2021/04/15 09:05:24 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.24 2021/04/16 08:07:02 ryo Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_aq.h"
@@ -4340,7 +4340,10 @@ aq_rx_intr(void *arg)
 			m->m_len = MCLBYTES;
 		} else {
 			/* last buffer */
-			m->m_len = rxd_pktlen % MCLBYTES;
+			int mlen = rxd_pktlen % MCLBYTES;
+			if (mlen == 0)
+				mlen = MCLBYTES;
+			m->m_len = mlen;
 			m0->m_pkthdr.len = rxd_pktlen;
 			/* VLAN offloading */
 			if ((sc->sc_ethercom.ec_capenable &
