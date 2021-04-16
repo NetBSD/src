@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.428 2021/04/16 16:10:01 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.429 2021/04/16 16:49:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -142,7 +142,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.428 2021/04/16 16:10:01 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.429 2021/04/16 16:49:27 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -223,8 +223,8 @@ typedef struct CommandFlags {
 	bool always;
 
 	/*
-	 * true if we turned error checking off before printing the command
-	 * and need to turn it back on
+	 * true if we turned error checking off before writing the command to
+	 * the commands file and need to turn it back on
 	 */
 	bool ignerr;
 } CommandFlags;
@@ -760,7 +760,7 @@ EscapeShellDblQuot(const char *cmd)
 }
 
 static void
-ShellWriter_PrintFmt(ShellWriter *wr, const char *fmt, const char *arg)
+ShellWriter_WriteFmt(ShellWriter *wr, const char *fmt, const char *arg)
 {
 	DEBUG1(JOB, fmt, arg);
 
@@ -770,36 +770,36 @@ ShellWriter_PrintFmt(ShellWriter *wr, const char *fmt, const char *arg)
 }
 
 static void
-ShellWriter_Println(ShellWriter *wr, const char *line)
+ShellWriter_WriteLine(ShellWriter *wr, const char *line)
 {
-	ShellWriter_PrintFmt(wr, "%s\n", line);
+	ShellWriter_WriteFmt(wr, "%s\n", line);
 }
 
 static void
 ShellWriter_EchoOff(ShellWriter *wr)
 {
 	if (shell->hasEchoCtl)
-		ShellWriter_Println(wr, shell->echoOff);
+		ShellWriter_WriteLine(wr, shell->echoOff);
 }
 
 static void
 ShellWriter_EchoCmd(ShellWriter *wr, const char *escCmd)
 {
-	ShellWriter_PrintFmt(wr, shell->echoTmpl, escCmd);
+	ShellWriter_WriteFmt(wr, shell->echoTmpl, escCmd);
 }
 
 static void
 ShellWriter_EchoOn(ShellWriter *wr)
 {
 	if (shell->hasEchoCtl)
-		ShellWriter_Println(wr, shell->echoOn);
+		ShellWriter_WriteLine(wr, shell->echoOn);
 }
 
 static void
 ShellWriter_TraceOn(ShellWriter *wr)
 {
 	if (!wr->xtraced) {
-		ShellWriter_Println(wr, "set -x");
+		ShellWriter_WriteLine(wr, "set -x");
 		wr->xtraced = true;
 	}
 }
@@ -809,7 +809,7 @@ ShellWriter_ErrOff(ShellWriter *wr, bool echo)
 {
 	if (echo)
 		ShellWriter_EchoOff(wr);
-	ShellWriter_Println(wr, shell->errOff);
+	ShellWriter_WriteLine(wr, shell->errOff);
 	if (echo)
 		ShellWriter_EchoOn(wr);
 }
@@ -819,7 +819,7 @@ ShellWriter_ErrOn(ShellWriter *wr, bool echo)
 {
 	if (echo)
 		ShellWriter_EchoOff(wr);
-	ShellWriter_Println(wr, shell->errOn);
+	ShellWriter_WriteLine(wr, shell->errOn);
 	if (echo)
 		ShellWriter_EchoOn(wr);
 }
@@ -830,7 +830,7 @@ ShellWriter_ErrOn(ShellWriter *wr, bool echo)
  * (configurable per shell).
  */
 static void
-JobPrintSpecialsEchoCtl(Job *job, ShellWriter *wr, CommandFlags *inout_cmdFlags,
+JobWriteSpecialsEchoCtl(Job *job, ShellWriter *wr, CommandFlags *inout_cmdFlags,
 			const char *escCmd, const char **inout_cmdTemplate)
 {
 	/* XXX: Why is the job modified at this point? */
@@ -860,7 +860,7 @@ JobPrintSpecialsEchoCtl(Job *job, ShellWriter *wr, CommandFlags *inout_cmdFlags,
 }
 
 static void
-JobPrintSpecials(Job *job, ShellWriter *wr, const char *escCmd, bool run,
+JobWriteSpecials(Job *job, ShellWriter *wr, const char *escCmd, bool run,
 		 CommandFlags *inout_cmdFlags, const char **inout_cmdTemplate)
 {
 	if (!run) {
@@ -872,34 +872,38 @@ JobPrintSpecials(Job *job, ShellWriter *wr, const char *escCmd, bool run,
 	} else if (shell->hasErrCtl)
 		ShellWriter_ErrOff(wr, job->echo && inout_cmdFlags->echo);
 	else if (shell->runIgnTmpl != NULL && shell->runIgnTmpl[0] != '\0') {
-		JobPrintSpecialsEchoCtl(job, wr, inout_cmdFlags, escCmd,
+		JobWriteSpecialsEchoCtl(job, wr, inout_cmdFlags, escCmd,
 		    inout_cmdTemplate);
 	} else
 		inout_cmdFlags->ignerr = false;
 }
 
 /*
- * Put out another command for the given job.
+ * Write a shell command to the job's commands file, to be run later.
  *
  * If the command starts with '@' and neither the -s nor the -n flag was
- * given to make, we stick a shell-specific echoOff command in the script.
+ * given to make, stick a shell-specific echoOff command in the script.
  *
  * If the command starts with '-' and the shell has no error control (none
- * of the predefined shells has that), we ignore errors for the entire job.
- * XXX: Why ignore errors for the entire job?
- * XXX: Even ignore errors for the commands before this command?
+ * of the predefined shells has that), ignore errors for the entire job.
  *
- * If the command is just "...", all further commands of this job are skipped
- * for now.  They are attached to the .END node and will be run by Job_Finish
- * after all other targets have been made.
+ * XXX: Why ignore errors for the entire job?  This is even documented in the
+ * manual page, but without any rationale since there is no known rationale.
+ *
+ * XXX: The manual page says the '-' "affects the entire job", but that's not
+ * accurate.  The '-' does not affect the commands before the '-'.
+ *
+ * If the command is just "...", skip all further commands of this job.  These
+ * commands are attached to the .END node instead and will be run by
+ * Job_Finish after all other targets have been made.
  */
 static void
-JobPrintCommand(Job *job, ShellWriter *wr, StringListNode *ln, const char *ucmd)
+JobWriteCommand(Job *job, ShellWriter *wr, StringListNode *ln, const char *ucmd)
 {
 	bool run;
 
 	CommandFlags cmdFlags;
-	/* Template for printing a command to the shell file */
+	/* Template for writing a command to the shell file */
 	const char *cmdTemplate;
 	char *xcmd;		/* The expanded command */
 	char *xcmdStart;
@@ -943,7 +947,7 @@ JobPrintCommand(Job *job, ShellWriter *wr, StringListNode *ln, const char *ucmd)
 	}
 
 	if (cmdFlags.ignerr) {
-		JobPrintSpecials(job, wr, escCmd, run, &cmdFlags, &cmdTemplate);
+		JobWriteSpecials(job, wr, escCmd, run, &cmdFlags, &cmdTemplate);
 	} else {
 
 		/*
@@ -974,7 +978,7 @@ JobPrintCommand(Job *job, ShellWriter *wr, StringListNode *ln, const char *ucmd)
 	if (DEBUG(SHELL) && strcmp(shellName, "sh") == 0)
 		ShellWriter_TraceOn(wr);
 
-	ShellWriter_PrintFmt(wr, cmdTemplate, xcmd);
+	ShellWriter_WriteFmt(wr, cmdTemplate, xcmd);
 	free(xcmdStart);
 	free(escCmd);
 
@@ -986,15 +990,15 @@ JobPrintCommand(Job *job, ShellWriter *wr, StringListNode *ln, const char *ucmd)
 }
 
 /*
- * Print all commands to the shell file that is later executed.
+ * Write all commands to the shell file that is later executed.
  *
- * The special command "..." stops printing and saves the remaining commands
+ * The special command "..." stops writing and saves the remaining commands
  * to be executed later, when the target '.END' is made.
  *
  * Return whether at least one command was written to the shell file.
  */
 static bool
-JobPrintCommands(Job *job)
+JobWriteCommands(Job *job)
 {
 	StringListNode *ln;
 	bool seen = false;
@@ -1012,7 +1016,7 @@ JobPrintCommands(Job *job)
 			break;
 		}
 
-		JobPrintCommand(job, &wr, ln, ln->datum);
+		JobWriteCommand(job, &wr, ln, ln->datum);
 		seen = true;
 	}
 
@@ -1600,7 +1604,7 @@ JobWriteShellCommands(Job *job, GNode *gn, bool cmdsOK, bool *out_run)
 	}
 #endif
 
-	*out_run = JobPrintCommands(job);
+	*out_run = JobWriteCommands(job);
 }
 
 /*
@@ -1671,13 +1675,13 @@ JobStart(GNode *gn, bool special)
 		(void)fflush(job->cmdFILE);
 	} else if (!GNode_ShouldExecute(gn)) {
 		/*
-		 * Just print all the commands to stdout in one fell swoop.
+		 * Just write all the commands to stdout in one fell swoop.
 		 * This still sets up job->tailCmds correctly.
 		 */
 		SwitchOutputTo(gn);
 		job->cmdFILE = stdout;
 		if (cmdsOK)
-			JobPrintCommands(job);
+			JobWriteCommands(job);
 		run = false;
 		(void)fflush(job->cmdFILE);
 	} else {
