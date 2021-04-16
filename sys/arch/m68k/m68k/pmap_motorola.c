@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.73 2021/02/01 19:02:27 skrll Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.74 2021/04/16 00:13:48 mrg Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.73 2021/02/01 19:02:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.74 2021/04/16 00:13:48 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1667,7 +1667,11 @@ pmap_collect1(pmap_t pmap, paddr_t startpa, paddr_t endpa)
 		 * ST and Sysptmap entries.
 		 */
 
-		(void) pmap_extract(pmap, pv->pv_va, &kpa);
+		if (!pmap_extract(pmap, pv->pv_va, &kpa)) {
+			printf("collect: freeing KPT page at %lx (ste %x@%p)\n",
+			    pv->pv_va, *pv->pv_ptste, pv->pv_ptste);
+			panic("pmap_collect: mapping not found");
+		}
 		pmap_remove_mapping(pmap, pv->pv_va, NULL,
 		    PRM_TFLUSH|PRM_CFLUSH, NULL);
 
