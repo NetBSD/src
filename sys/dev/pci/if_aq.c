@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aq.c,v 1.24 2021/04/16 08:07:02 ryo Exp $	*/
+/*	$NetBSD: if_aq.c,v 1.25 2021/04/16 08:09:40 ryo Exp $	*/
 
 /**
  * aQuantia Corporation Network Driver
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.24 2021/04/16 08:07:02 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.25 2021/04/16 08:09:40 ryo Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_aq.h"
@@ -1449,11 +1449,11 @@ aq_attach(device_t parent, device_t self, void *aux)
 	ifp->if_capabilities |= IFCAP_TSOv4 | IFCAP_TSOv6;
 #endif
 
-	/* TX hardware checksum offloadding */
+	/* TX hardware checksum offloading */
 	ifp->if_capabilities |= IFCAP_CSUM_IPv4_Tx;
 	ifp->if_capabilities |= IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv6_Tx;
 	ifp->if_capabilities |= IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv6_Tx;
-	/* RX hardware checksum offloadding */
+	/* RX hardware checksum offloading */
 	ifp->if_capabilities |= IFCAP_CSUM_IPv4_Rx;
 	ifp->if_capabilities |= IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_TCPv6_Rx;
 	ifp->if_capabilities |= IFCAP_CSUM_UDPv4_Rx | IFCAP_CSUM_UDPv6_Rx;
