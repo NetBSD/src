@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.162 2021/04/13 05:04:54 yamaguchi Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.163 2021/04/16 01:24:35 yamaguchi Exp $ */
 
 /*
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.162 2021/04/13 05:04:54 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.163 2021/04/16 01:24:35 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -367,10 +367,8 @@ pppoe_clone_create(struct if_clone *ifc, int unit)
 	rv = workqueue_create(&sc->sc_timeout_wq,
 	    sc->sc_sppp.pp_if.if_xname, pppoe_timeout_wk, sc,
 	    PRI_SOFTNET, IPL_SOFTNET, 0);
-	if (rv != 0) {
-		free(sc, M_DEVBUF);
-		return rv;
-	}
+	if (rv != 0)
+		goto free_sc;
 
 	callout_init(&sc->sc_timeout, CALLOUT_MPSAFE);
 	callout_setfunc(&sc->sc_timeout, pppoe_timeout_co, sc);
@@ -384,13 +382,9 @@ pppoe_clone_create(struct if_clone *ifc, int unit)
 	sc->sc_sppp.pp_framebytes = PPPOE_HEADERLEN;	/* framing added to ppp packets */
 
 	rv = if_initialize(&sc->sc_sppp.pp_if);
-	if (rv != 0) {
-		workqueue_destroy(sc->sc_timeout_wq);
-		callout_halt(&sc->sc_timeout, NULL);
-		callout_destroy(&sc->sc_timeout);
-		free(sc, M_DEVBUF);
-		return rv;
-	}
+	if (rv != 0)
+		goto destroy_timeout;
+
 	sc->sc_sppp.pp_if.if_percpuq = if_percpuq_create(&sc->sc_sppp.pp_if);
 	sppp_attach(&sc->sc_sppp.pp_if);
 
@@ -409,6 +403,13 @@ pppoe_clone_create(struct if_clone *ifc, int unit)
 	LIST_INSERT_HEAD(&pppoe_softc_list, sc, sc_list);
 	rw_exit(&pppoe_softc_list_lock);
 	return 0;
+
+destroy_timeout:
+	callout_destroy(&sc->sc_timeout);
+	workqueue_destroy(sc->sc_timeout_wq);
+free_sc:
+	free(sc, M_DEVBUF);
+	return rv;
 }
 
 static int
