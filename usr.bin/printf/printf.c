@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.51 2021/04/16 15:10:18 christos Exp $	*/
+/*	$NetBSD: printf.c,v 1.52 2021/04/16 18:31:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)printf.c	8.2 (Berkeley) 3/22/95";
 #else
-__RCSID("$NetBSD: printf.c,v 1.51 2021/04/16 15:10:18 christos Exp $");
+__RCSID("$NetBSD: printf.c,v 1.52 2021/04/16 18:31:28 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -119,9 +119,9 @@ static char  **gargv;
 }
 
 #define isodigit(c)	((c) >= '0' && (c) <= '7')
-#define octtobin(c)	(char)((c) - '0')
-#define check(c, a)	(c) >= (a) && (c) <= (a) + 5 ? (char)((c) - (a) + 10)
-#define hextobin(c)	(check(c, 'a') : check(c, 'A') : (char)((c) - '0'))
+#define octtobin(c)	((c) - '0')
+#define check(c, a)	(c) >= (a) && (c) <= (a) + 5 ? (c) - (a) + 10
+#define hextobin(c)	(check(c, 'a') : check(c, 'A') : (c) - '0')
 #ifdef main
 int main(int, char *[]);
 #endif
@@ -486,7 +486,7 @@ conv_escape_str(char *str, void (*do_putchar)(int), int quiet)
 static char *
 conv_escape(char *str, char *conv_ch, int quiet)
 {
-	char value = 0;
+	int value = 0;
 	char ch, *begin;
 	int c;
 
@@ -520,8 +520,7 @@ conv_escape(char *str, char *conv_ch, int quiet)
 		begin = str;
 		for (c = 2; c-- && isxdigit((unsigned char)*str); str++) {
 			value <<= 4;
-			const char d = hextobin(*str);
-			value += d;
+			value += hextobin(*str);
 		}
 		if (str == begin) {
 			if (!quiet)
@@ -552,7 +551,7 @@ conv_escape(char *str, char *conv_ch, int quiet)
 		break;
 	}
 
-	*conv_ch = value;
+	*conv_ch = (char)value;
 	return str;
 }
 
