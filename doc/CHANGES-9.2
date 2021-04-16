@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.65 2021/04/08 15:22:30 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.66 2021/04/16 17:04:59 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -2933,4 +2933,9 @@ crypto/external/bsd/openssl/lib/libcrypto/arch/sparc/modes.inc delete
 	Disable the assembly version of GHASH for 32 bit sparc, the code
 	requires a sparcv9 cpu.
 	[christos, ticket #1245]
+
+crypto/external/bsd/openssl/lib/libcrypto/arch/sparc/modes.inc 1.6
+
+	Restore sparcv9 optimization for 32bit builds on sparc64.
+	[mrg, ticket #1246]
 
