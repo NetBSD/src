@@ -1,4 +1,4 @@
-# $NetBSD: t_make.sh,v 1.14 2021/04/17 11:31:25 rillig Exp $
+# $NetBSD: t_make.sh,v 1.15 2021/04/17 11:36:34 rillig Exp $
 #
 # Copyright (c) 2008, 2010, 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -53,13 +53,9 @@ test_case()
 {
 	local atfname="${1}"; shift	# e.g. foo_bar
 	local makename="${1}"; shift	# e.g. foo-bar
-	local descr="${1}"; shift
 
 	atf_test_case "${atfname}"
 	eval "${atfname}_head() { \
-		if [ -n '${descr}' ]; then \
-		    atf_set descr '${descr}'; \
-		fi; \
 		atf_set require.user unprivileged; \
 	}"
 	eval "${atfname}_body() { \
@@ -87,8 +83,7 @@ atf_init_test_cases()
 			(*)	break;;
 			esac
 		done
-		descr='' # XXX
-		test_case "${atfname}" "${basename}" "${descr}"
+		test_case "${atfname}" "${basename}"
 		atf_add_test_case "${atfname}"
 	done
 }
