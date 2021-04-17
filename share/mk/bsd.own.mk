@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1240 2021/04/17 04:07:16 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.1241 2021/04/17 09:39:33 mlelstv Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -64,7 +64,7 @@ TOOLCHAIN_MISSING?=	no
 # What GCC is used?
 #
 .if ${MACHINE} == "alpha" || \
-    ${MACHINE} == "amd64" || \
+    ${MACHINE_ARCH} == "x86_64" || \
     ${MACHINE} == "ia64" || \
     ${MACHINE} == "sparc" || \
     ${MACHINE} == "sparc64" || \
