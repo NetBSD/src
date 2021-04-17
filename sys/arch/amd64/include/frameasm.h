@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.52 2020/07/19 07:35:08 maxv Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.53 2021/04/17 20:12:55 rillig Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
 #define _AMD64_MACHINE_FRAMEASM_H
@@ -39,7 +39,7 @@
 #define POPF \
 	popq %rdi; \
 	call _C_LABEL(xen_write_psl)
-	
+
 
 #else /* XENPV */
 #define	XEN_ONLY2(x,y)
