@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2021/04/12 00:05:55 mrg Exp $
+#	$NetBSD: Makefile,v 1.30 2021/04/17 10:54:46 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -32,7 +32,8 @@ LIB2ADD_EDITED=	${G_LIB2ADD:T:S/.asm/.S/}
 SRCS+=		${LIB2FUNCS} ${LIB2FUNCS_ST} ${LIB2DIVMOD} \
 		${LIB2ADD_EDITED} \
 		${LIB2ADD_HACK:T:S/.asm/.S/} \
-		${G_LIB2ADD_ST:T} ${LIB1ASMFUNCS}
+		${G_LIB2ADD_ST:T} ${LIB1ASMFUNCS} \
+		${LSE_NAMES:=.o}
 .if ${MKPIC} == "no"
 .if empty(LIBGCC_MACHINE_ARCH:Mearm*)
 SRCS+=		${LIB2_EH} ${LIB2_EHASM}
