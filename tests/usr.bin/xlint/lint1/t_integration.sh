@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.41 2021/04/14 18:27:11 rillig Exp $
+# $NetBSD: t_integration.sh,v 1.42 2021/04/17 20:36:17 rillig Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -165,6 +165,8 @@ test_case d_type_conv2
 test_case d_type_conv3
 test_case d_incorrect_array_size
 test_case d_long_double_int
+
+test_case gcc_init_compound_literal
 
 test_case op_colon
 
