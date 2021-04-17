@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.37 2020/07/14 00:45:52 yamaguchi Exp $	*/
+/*	$NetBSD: segments.h,v 1.38 2021/04/17 20:12:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -236,7 +236,7 @@ struct region_descriptor {
 #ifdef XENPV
 typedef struct trap_info idt_descriptor_t;
 #else
-typedef struct gate_descriptor idt_descriptor_t; 
+typedef struct gate_descriptor idt_descriptor_t;
 #endif /* XENPV */
 extern char *gdtstore;
 extern char *ldtstore;
