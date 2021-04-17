@@ -1,4 +1,4 @@
-$NetBSD: README.gcc10,v 1.12 2021/04/17 22:01:02 mrg Exp $
+$NetBSD: README.gcc10,v 1.13 2021/04/17 22:03:57 mrg Exp $
 
 
 new stuff:
@@ -32,7 +32,7 @@ switched:	has port switched?  y (yes), n (no/ready), ? (not ready)
 
 architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf	switched
 ------------	-----	-------	------	----------	------------	----	---	--------
-aarch64		y	n[3]	y	y		n		?	?	?
+aarch64		y	n[3]	y	y		n		?	y	?
 aarch64eb	y	n[3]	y	y		n		?	?	?
 alpha		y	y	y	y		y		y	y	y
 earmv4		y	y	y	y		y		y	?	n
