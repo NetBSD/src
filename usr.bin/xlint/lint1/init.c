@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.194 2021/04/09 23:03:26 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.195 2021/04/17 21:20:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.194 2021/04/09 23:03:26 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.195 2021/04/17 21:20:08 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -994,6 +994,17 @@ done:
 static struct initialization *init;
 
 
+static void
+discard_temporary_objects(void)
+{
+	sym_t   *sym;
+
+	for (sym = dcs->d_dlsyms; sym != NULL; sym = sym->s_dlnxt)
+		if (ch_isdigit(sym->s_name[0]))	/* see mktempsym */
+			rmsym(sym);
+}
+
+
 static struct initialization *
 current_init(void)
 {
@@ -1037,6 +1048,9 @@ end_initialization(void)
 	debug_indentation--;
 #endif
 	debug_step0("end initialization");
+
+	if (init == NULL)
+		discard_temporary_objects();
 }
 
 void
