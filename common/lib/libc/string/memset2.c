@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: memset2.c,v 1.6 2021/04/17 05:57:11 simonb Exp $");
+__RCSID("$NetBSD: memset2.c,v 1.7 2021/04/17 06:02:35 simonb Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -97,7 +97,7 @@ memset(void *addr, int c, size_t len)
 	 * The conditional at the end prevents GCC from complaing about
 	 * shift count >= width of type 
 	 */
-	fill = c;
+	fill = (unsigned char)c;
 	fill |= fill << 8;
 	fill |= fill << 16;
 	fill |= fill << (sizeof(c) < sizeof(fill) ? 32 : 0);
