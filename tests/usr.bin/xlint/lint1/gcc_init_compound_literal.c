@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_init_compound_literal.c,v 1.1 2021/04/17 20:36:17 rillig Exp $	*/
+/*	$NetBSD: gcc_init_compound_literal.c,v 1.2 2021/04/17 20:57:18 rillig Exp $	*/
 # 3 "gcc_init_compound_literal.c"
 
 /*
@@ -7,14 +7,11 @@
  *	All the expressions in an initializer for an object that has static
  *	storage duration shall be constant expressions or string literals.
  *
- * The term "constant expression" is defined in C99 6.6 and is quite
- * restricted, except for a single paragraph, 6.6p10:
- *
- *	An implementation may accept other forms of constant expressions.
- *
- * GCC additionally allows compound expressions, and these can even use the
- * array-to-pointer conversion from C99 6.3.2.1, which allows to initialize a
- * pointer object with a pointer to a direct-value statically allocated array.
+ * The term "constant expression" is defined in C99 6.6, where 6.6p9 allows
+ * "constant expressions" in initializers to also be an "address constant".
+ * Using these address constants, it is possible to reference an unnamed
+ * object created by a compound literal (C99 6.5.2.5), using either an
+ * explicit '&' or the implicit array-to-pointer conversion from C99 6.3.2.1.
  */
 
 // Seen in sys/crypto/aes/aes_ccm.c.
@@ -28,3 +25,33 @@ const struct {
 //	    1, 2, 3, 4
 //	},
 };
+
+struct node {
+	int num;
+	struct node *left;
+	struct node *right;
+};
+
+/*
+ * Initial tree for representing the decisions in the classic number guessing
+ * game often used in teaching the basics of programming.
+ */
+/* TODO: activate after fixing the assertion failure
+static const struct node guess = {
+	50,
+	&(struct node){
+		25,
+		&(struct node){
+			12,
+			(void *)0,
+			(void *)0,
+		},
+		&(struct node){
+			37,
+			(void *)0,
+			(void *)0,
+		},
+	},
+	(void *)0
+};
+*/
