@@ -377,6 +377,7 @@ aarch64*-*-freebsd*)
 aarch64*-*-netbsd*)
 	extra_parts="$extra_parts crtfastmath.o"
 	tmake_file="${tmake_file} ${cpu_type}/t-aarch64"
+	tmake_file="${tmake_file} ${cpu_type}/t-lse t-slibgcc-libgcc"
 	tmake_file="${tmake_file} ${cpu_type}/t-softfp t-softfp t-crtfm"
 	md_unwind_header=aarch64/aarch64-unwind.h
 	;;
@@ -384,12 +385,6 @@ aarch64*-*-fuchsia*)
 	tmake_file="${tmake_file} ${cpu_type}/t-aarch64"
 	tmake_file="${tmake_file} ${cpu_type}/t-lse t-slibgcc-libgcc"
 	tmake_file="${tmake_file} ${cpu_type}/t-softfp t-softfp"
-	;;
-aarch64*-*-netbsd*)
-	extra_parts="$extra_parts crtfastmath.o"
-	tmake_file="${tmake_file} ${cpu_type}/t-aarch64"
-	tmake_file="${tmake_file} ${cpu_type}/t-softfp t-softfp t-crtfm"
-	md_unwind_header=aarch64/aarch64-unwind.h
 	;;
 aarch64*-*-linux*)
 	extra_parts="$extra_parts crtfastmath.o"
