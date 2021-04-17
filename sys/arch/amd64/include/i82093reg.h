@@ -1,4 +1,4 @@
-/*	 $NetBSD: i82093reg.h,v 1.9 2017/11/13 11:45:54 nakayama Exp $ */
+/*	 $NetBSD: i82093reg.h,v 1.10 2021/04/17 20:12:55 rillig Exp $ */
 
 #include <x86/i82093reg.h>
 
@@ -37,7 +37,7 @@
 
 #define ioapic_asm_unlock(num) \
 	movb	$0,PIC_LOCK(%rdi)
-	
+
 #else
 
 #define ioapic_asm_lock(num)
