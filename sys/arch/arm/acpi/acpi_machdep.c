@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.21.2.1 2021/04/02 22:17:37 thorpej Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.21.2.2 2021/04/17 18:03:32 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.21.2.1 2021/04/02 22:17:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.21.2.2 2021/04/17 18:03:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -331,7 +331,7 @@ acpi_md_gtdt_probe(ACPI_GTDT_HEADER *hdrp, void *aux)
 	struct acpi_softc * const sc = aux;
 
 	config_found(sc->sc_dev, hdrp, NULL,
-	    CFARG_IATTR, "acpimadtbus",
+	    CFARG_IATTR, "acpigtdtbus",
 	    CFARG_EOL);
 
 	return AE_OK;
