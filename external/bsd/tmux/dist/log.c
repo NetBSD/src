@@ -110,22 +110,17 @@ log_vwrite(const char *msg, va_list ap)
 		return;
 
 	if (vasprintf(&fmt, msg, ap) == -1)
-		exit(1);
-#ifdef notyet
-	if (stravis(&out, fmt, VIS_OCTAL|VIS_CSTYLE|VIS_TAB|VIS_NL) == -1)
-		exit(1);
-#else
-	size_t len = strlen(fmt) * 4 + 1;
-	out = xmalloc(len);
-	if (strnvis(out, len, fmt, VIS_OCTAL|VIS_CSTYLE|VIS_TAB|VIS_NL) == -1)
-		exit(1);
-#endif
+		return;
+	if (stravis(&out, fmt, VIS_OCTAL|VIS_CSTYLE|VIS_TAB|VIS_NL) == -1) {
+		free(fmt);
+		return;
+	}
 
 	gettimeofday(&tv, NULL);
 	if (fprintf(log_file, "%lld.%06d %s\n", (long long)tv.tv_sec,
-	    (int)tv.tv_usec, out) == -1)
-		exit(1);
-	fflush(log_file);
+	    (int)tv.tv_usec, out) != -1)
+		fflush(log_file);
+
 	free(out);
 	free(fmt);
 }
