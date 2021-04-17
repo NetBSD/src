@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.112 2020/03/01 03:21:54 riastradh Exp $ */
+/* $NetBSD: dksubr.c,v 1.112.8.1 2021/04/17 17:26:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.112 2020/03/01 03:21:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.112.8.1 2021/04/17 17:26:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -428,7 +428,10 @@ dk_start(struct dk_softc *dksc, struct buf *bp)
 			mutex_exit(&dksc->sc_iolock);
 			error = dkd->d_diskstart(dksc->sc_dev, bp);
 			mutex_enter(&dksc->sc_iolock);
-			if (error == EAGAIN) {
+			if (error == EAGAIN || error == ENOMEM) {
+				/*
+				 * Not a disk error. Retry later.
+				 */
 				KASSERT(dksc->sc_deferred == NULL);
 				dksc->sc_deferred = bp;
 				disk_unbusy(&dksc->sc_dkdev, 0, (bp->b_flags & B_READ));

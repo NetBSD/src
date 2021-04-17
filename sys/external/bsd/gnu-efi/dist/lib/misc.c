@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.1.1.2 2018/08/16 18:17:47 jmcneill Exp $	*/
+/*	$NetBSD: misc.c,v 1.1.1.2.14.1 2021/04/17 17:26:20 thorpej Exp $	*/
 
 /*++
 
@@ -256,6 +256,7 @@ LibGetVariableAndSize (
     // Initialize for GrowBuffer loop
     //
 
+    Status = EFI_SUCCESS;
     Buffer = NULL;
     BufferSize = 100;
 

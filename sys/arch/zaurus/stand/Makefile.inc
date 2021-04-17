@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7 2020/09/06 07:20:29 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.7.4.1 2021/04/17 17:26:17 thorpej Exp $
 
 BINDIR=		/usr/mdec
 KLINK_MACHINE=	zaurus
@@ -8,5 +8,3 @@ KLINK_MACHINE=	zaurus
 # just use it for type-checking.
 CWARNFLAGS.clang+=	-Wno-error=address-of-packed-member
 CWARNFLAGS.gcc+=	${GCC_NO_ADDR_OF_PACKED_MEMBER}
-
-COPTS+=	-fcommon

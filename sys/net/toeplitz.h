@@ -19,6 +19,10 @@
 #ifndef _SYS_NET_TOEPLITZ_H_
 #define _SYS_NET_TOEPLITZ_H_
 
+#ifdef _KERNEL_OPT
+#include "opt_inet.h"
+#endif
+
 #include <sys/endian.h>
 
 /*

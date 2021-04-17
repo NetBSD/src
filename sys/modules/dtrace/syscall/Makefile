@@ -16,6 +16,7 @@ WARNS=		4
 CPPFLAGS+=	-Wno-unknown-pragmas
 
 CPPFLAGS+=	${${ACTIVE_CC} == "gcc" :? -Wno-discarded-qualifiers :}
+CPPFLAGS+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 10:? -Wno-error=array-bounds :}
 CPPFLAGS+=	${${ACTIVE_CC} == "clang" :? -Wno-incompatible-pointer-types-discards-qualifiers :}
 
 .include <bsd.kmodule.mk>

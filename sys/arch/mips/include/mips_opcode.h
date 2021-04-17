@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_opcode.h,v 1.24 2020/08/17 03:14:08 mrg Exp $	*/
+/*	$NetBSD: mips_opcode.h,v 1.24.4.1 2021/04/17 17:26:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -169,7 +169,7 @@ typedef union {
 #define	OP_LDL		032		/* MIPS-II, for r4000 port */
 #define	OP_LDR		033		/* MIPS-II, for r4000 port */
 
-#define	OP_SPECIAL2	034		/* QED opcodes */
+#define	OP_SPECIAL2	034		/* QED and MIPS32/MIPS64 opcodes */
 #define	OP_JALX		035
 #define	OP_MDMX		036
 #define	OP_SPECIAL3	037
@@ -292,11 +292,20 @@ typedef union {
 #define	OP_DSRA32	077		/* MIPS-II, for r4000 port */
 
 /*
+ * Subvalues for SLL where the source and destination registers
+ * are both zero.
+ */
+#define	OP_SLL_NOP	0
+#define	OP_SLL_SSNOP	1
+#define	OP_SLL_EHB	3
+#define	OP_SLL_PAUSE	5
+
+/*
  * Values for the 'func' field when 'op' == OP_SPECIAL2.
  */
-#define	OP_MADD		000		/* QED */
-#define	OP_MADDU	001		/* QED */
-#define	OP_MUL		002		/* QED */
+#define	OP_MADD		000		/* QED, MIPS32/64 */
+#define	OP_MADDU	001		/* QED, MIPS32/64 */
+#define	OP_MUL		002		/* QED, MIPS32/64 */
 #define	OP_CVM_DMUL	003		/* OCTEON */
 #define	OP_MSUB		004		/* MIPS32/64 */
 #define	OP_MSUBU	005		/* MIPS32/64 */

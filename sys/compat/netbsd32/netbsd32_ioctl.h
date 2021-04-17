@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.77 2021/01/17 10:50:01 simonb Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.77.2.1 2021/04/17 17:26:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -672,6 +672,7 @@ struct netbsd32_disk_strategy {
 
 #define DIOCGSTRATEGY32		_IOR('d', 125, struct netbsd32_disk_strategy)
 #define DIOCSSTRATEGY32		_IOW('d', 126, struct netbsd32_disk_strategy)
+#define DIOCGDISKINFO32		_IOR('d', 127, struct netbsd32_plistref)
 
 /* from <dev/lockstat.h> */
 struct netbsd32_lsenable {

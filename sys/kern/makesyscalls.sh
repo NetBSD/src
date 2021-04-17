@@ -1,4 +1,4 @@
-#	$NetBSD: makesyscalls.sh,v 1.183 2021/02/17 06:25:10 rillig Exp $
+#	$NetBSD: makesyscalls.sh,v 1.183.2.1 2021/04/17 17:26:20 thorpej Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -805,6 +805,15 @@ function printrumpsysmap(syscall, wfn, funcalias, rumpentry) {
 	    syscall, wfn, funcalias, rumpentry) > rumpsysmap
 }
 
+function fixarray(arg) {
+	iii = index(arg, "[")
+	if (iii == 0) {
+		return arg 
+	} else {
+		return substr(arg, 1, iii - 1) "[0]"
+	}
+}
+
 function putsystrace(type, compatwrap_) {
 	printf("\t/* %s */\n\tcase %d: {\n", funcname, syscall) > systrace
 	printf("\t/* %s */\n\tcase %d:\n", funcname, syscall) > systracetmp
@@ -825,7 +834,7 @@ function putsystrace(type, compatwrap_) {
 			    arg ~ /.*_handler_t$/)
 				printf("\t\tuarg[%d] = (intptr_t) SCARG(p, %s); /* %s */\n", \
 				     i - 1, \
-				     argname[i], arg) > systrace
+				     fixarray(argname[i]), arg) > systrace
 			else if (substr(arg, 1, 1) == "u" || arg == "size_t")
 				printf("\t\tuarg[%d] = SCARG(p, %s); /* %s */\n", \
 				     i - 1, \
@@ -833,7 +842,7 @@ function putsystrace(type, compatwrap_) {
 			else
 				printf("\t\tiarg[%d] = SCARG(p, %s); /* %s */\n", \
 				     i - 1, \
-				     argname[i], arg) > systrace
+				     fixarray(argname[i]), arg) > systrace
 		}
 		printf("\t\tdefault:\n\t\t\tbreak;\n\t\t};\n") > systracetmp
 

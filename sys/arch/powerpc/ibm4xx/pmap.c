@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.95.4.1 2021/04/03 21:44:47 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.95.4.2 2021/04/17 17:26:15 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.95.4.1 2021/04/03 21:44:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.95.4.2 2021/04/17 17:26:15 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -226,7 +226,7 @@ pa_to_attr(paddr_t pa)
 /*
  * Insert PTE into page table.
  */
-int
+static inline int
 pte_enter(struct pmap *pm, vaddr_t va, u_int pte)
 {
 	int seg = STIDX(va);
@@ -236,11 +236,15 @@ pte_enter(struct pmap *pm, vaddr_t va, u_int pte)
 	if (!pm->pm_ptbl[seg]) {
 		/* Don't allocate a page to clear a non-existent mapping. */
 		if (!pte)
-			return (0);
-		/* Allocate a page XXXX this will sleep! */
-		pm->pm_ptbl[seg] =
-		    (uint *)uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
-		    UVM_KMF_WIRED | UVM_KMF_ZERO);
+			return 1;
+
+		vaddr_t km = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+		    UVM_KMF_WIRED | UVM_KMF_ZERO | UVM_KMF_NOWAIT);
+
+		if (__predict_false(km == 0))
+			return 0;
+
+		pm->pm_ptbl[seg] = (u_int *)km;
 	}
 	oldpte = pm->pm_ptbl[seg][ptn];
 	pm->pm_ptbl[seg][ptn] = pte;
@@ -253,7 +257,7 @@ pte_enter(struct pmap *pm, vaddr_t va, u_int pte)
 		else
 			pm->pm_stats.resident_count++;
 	}
-	return (1);
+	return 1;
 }
 
 /*
@@ -266,9 +270,9 @@ pte_find(struct pmap *pm, vaddr_t va)
 	int ptn = PTIDX(va);
 
 	if (pm->pm_ptbl[seg])
-		return (&pm->pm_ptbl[seg][ptn]);
+		return &pm->pm_ptbl[seg][ptn];
 
-	return (NULL);
+	return NULL;
 }
 
 /*
@@ -293,7 +297,7 @@ pmap_bootstrap(u_int kernelstart, u_int kernelend)
 	 * Initialize kernel page table.
 	 */
 	for (i = 0; i < STSZ; i++) {
-		pmap_kernel()->pm_ptbl[i] = 0;
+		pmap_kernel()->pm_ptbl[i] = NULL;
 	}
 	ctxbusy[0] = ctxbusy[1] = pmap_kernel();
 
@@ -565,7 +569,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 		pm->pm_ptbl[seg] = (u_int *)pg;
 	}
 	splx(s);
-	return (kbreak);
+	return kbreak;
 }
 
 /*
@@ -758,7 +762,7 @@ pmap_enter_pv(struct pmap *pm, vaddr_t va, paddr_t pa, int flags)
 		pm->pm_stats.wired_count++;
 	}
 	splx(s);
-	return (1);
+	return 1;
 }
 
 static void
@@ -862,7 +866,7 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 
 		if (!pmap_enter_pv(pm, va, pa, flags)) {
 			/* Could not enter pv on a managed page */
-			return 1;
+			return ENOMEM;
 		}
 
 		/* Now set attributes. */
@@ -880,7 +884,12 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	s = splvm();
 
 	/* Insert page into page table. */
-	pte_enter(pm, va, tte);
+	if (__predict_false(!pte_enter(pm, va, tte))) {
+		if (__predict_false((flags & PMAP_CANFAIL) == 0))
+			panic("%s: pte_enter", __func__);
+		splx(s);
+		return ENOMEM;
+	}
 
 	/* If this is a real fault, enter it in the tlb */
 	if (tte && ((flags & PMAP_WIRED) == 0)) {
@@ -969,7 +978,8 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	s = splvm();
 
 	/* Insert page into page table. */
-	pte_enter(pm, va, tte);
+	if (__predict_false(!pte_enter(pm, va, tte)))
+		panic("%s: pte_enter", __func__);
 	splx(s);
 }
 
@@ -978,7 +988,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
 {
 
 	while (len > 0) {
-		pte_enter(pmap_kernel(), va, 0);
+		(void)pte_enter(pmap_kernel(), va, 0);	/* never fail */
 		va += PAGE_SIZE;
 		len -= PAGE_SIZE;
 	}
@@ -1026,7 +1036,7 @@ pmap_extract(struct pmap *pm, vaddr_t va, paddr_t *pap)
 		*pap = TTE_PA(pa) | (va & PGOFSET);
 	}
 	splx(s);
-	return (pa != 0);
+	return pa != 0;
 }
 
 /*
@@ -1338,7 +1348,7 @@ ppc4xx_tlb_find_victim(void)
 				tlb_info[tlbnext].ti_flags = flags;
 			} else {
 				/* Found it! */
-				return (tlbnext);
+				return tlbnext;
 			}
 		} else {
 			tlb_info[tlbnext].ti_flags = (flags & ~TLBF_REF);
@@ -1428,9 +1438,9 @@ ppc4xx_tlb_size_mask(size_t size, int *mask, int *rsiz)
 		if (size <= tlbsize[i]) {
 			*mask = (i << TLB_SIZE_SHFT);
 			*rsiz = tlbsize[i];
-			return (0);
+			return 0;
 		}
-	return (EINVAL);
+	return EINVAL;
 }
 
 /*
@@ -1470,10 +1480,10 @@ ppc4xx_tlb_mapiodev(paddr_t base, psize_t len)
 			continue;
 
 		va = (hi & TLB_EPN_MASK) + (base & (sz - 1)); 	/* sz = 2^n */
-		return (void *)(va);
+		return (void *)va;
 	}
 
-	return (NULL);
+	return NULL;
 }
 
 /*
@@ -1579,7 +1589,7 @@ ctx_flush(int cnum)
 				Debugger();
 #endif
 #endif
-				return (1);
+				return 1;
 			}
 #ifdef DIAGNOSTIC
 			if (i < tlb_nreserved)
@@ -1592,7 +1602,7 @@ ctx_flush(int cnum)
 			tlb_invalidate_entry(i);
 		}
 	}
-	return (0);
+	return 0;
 }
 
 /*
@@ -1610,7 +1620,7 @@ ctx_alloc(struct pmap *pm)
 #ifdef DIAGNOSTIC
 		printf("ctx_alloc: kernel pmap!\n");
 #endif
-		return (0);
+		return 0;
 	}
 	s = splvm();
 

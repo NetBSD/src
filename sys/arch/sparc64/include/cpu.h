@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.130.6.1 2021/04/03 21:44:49 thorpej Exp $ */
+/*	$NetBSD: cpu.h,v 1.130.6.2 2021/04/17 17:26:16 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -198,7 +198,7 @@ struct cpu_info {
 
 	/* TSB description (sun4v). */
 	struct tsb_desc         *ci_tsb_desc;
-	
+
 	/* MMU Fault Status Area (sun4v).
 	 * Will be initialized to the physical address of the bottom of
 	 * the interrupt stack.
@@ -440,9 +440,6 @@ void	switchtoctx_usiii(int);
 void	next_tick(long);
 void	next_stick(long);
 void	next_stick_init(void);
-#ifdef SUN4V
-void    cpu_idle_sun4v(void);
-#endif
 /* trap.c */
 void	cpu_vmspace_exec(struct lwp *, vaddr_t, vaddr_t);
 int	rwindow_save(struct lwp *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: netio.c,v 1.17 2020/04/28 14:45:23 tsutsui Exp $	*/
+/*	$NetBSD: netio.c,v 1.17.4.1 2021/04/17 17:26:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -92,10 +92,6 @@
 #include <hp300/stand/common/samachdep.h>
 
 extern int nfs_root_node[];	/* XXX - get from nfs_mount() */
-
-struct	in_addr myip, rootip, gateip;
-n_long	netmask;
-char rootpath[FNAME_SIZE];
 
 static int netdev_sock = -1;
 static int open_count;

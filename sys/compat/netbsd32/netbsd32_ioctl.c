@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.118 2021/01/17 10:50:01 simonb Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.118.2.1 2021/04/17 17:26:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.118 2021/01/17 10:50:01 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.118.2.1 2021/04/17 17:26:17 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -1693,6 +1693,8 @@ netbsd32_ioctl(struct lwp *l,
 		IOCTL_STRUCT_CONV_TO(DIOCGSTRATEGY, disk_strategy);
 	case DIOCSSTRATEGY32:
 		IOCTL_STRUCT_CONV_TO(DIOCSSTRATEGY, disk_strategy);
+	case DIOCGDISKINFO32:
+		IOCTL_STRUCT_CONV_TO(DIOCGDISKINFO, plistref);
 	case DIOCLWEDGES32:
 		IOCTL_STRUCT_CONV_TO(DIOCLWEDGES, dkwedge_list);
 
