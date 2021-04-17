@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <wchar.h>
 
 #include "tmux.h"
 
@@ -35,7 +36,6 @@ struct cmd_parse_scope {
 };
 
 struct cmd_parse_command {
-	char				 *name;
 	u_int				  line;
 
 	int				  argc;
@@ -70,10 +70,11 @@ static char	*cmd_parse_get_error(const char *, u_int, const char *);
 static void	 cmd_parse_free_command(struct cmd_parse_command *);
 static struct cmd_parse_commands *cmd_parse_new_commands(void);
 static void	 cmd_parse_free_commands(struct cmd_parse_commands *);
+static char	*cmd_parse_commands_to_string(struct cmd_parse_commands *);
 static void	 cmd_parse_print_commands(struct cmd_parse_input *, u_int,
 		     struct cmd_list *);
 
-#line 85 "cmd-parse.y"
+#line 86 "cmd-parse.y"
 #ifndef YYSTYPE_DEFINED
 #define YYSTYPE_DEFINED
 typedef union
@@ -92,149 +93,153 @@ typedef union
 	struct cmd_parse_command		 *command;
 } YYSTYPE;
 #endif /* YYSTYPE_DEFINED */
-#line 96 "cmd-parse.c"
+#line 97 "cmd-parse.c"
 #define ERROR 257
-#define IF 258
-#define ELSE 259
-#define ELIF 260
-#define ENDIF 261
-#define FORMAT 262
-#define TOKEN 263
-#define EQUALS 264
+#define HIDDEN 258
+#define IF 259
+#define ELSE 260
+#define ELIF 261
+#define ENDIF 262
+#define FORMAT 263
+#define TOKEN 264
+#define EQUALS 265
 #define YYERRCODE 256
 const short yylhs[] =
 	{                                        -1,
-    0,    0,    9,    9,   10,   10,   10,    3,    3,    2,
-   15,   15,   16,    5,   17,    6,   18,   12,   12,   12,
-   12,    7,    7,   11,   11,   11,   11,   11,   14,   14,
-   14,   13,   13,   13,   13,    8,    8,    4,    4,    1,
-    1,
+    0,    0,   10,   10,   11,   11,   11,   11,    3,    3,
+    2,   17,   17,   18,   16,    5,   19,    6,   20,   13,
+   13,   13,   13,    7,    7,   12,   12,   12,   12,   12,
+   15,   15,   15,   14,   14,   14,   14,    8,    8,    4,
+    4,    1,    1,    1,    9,    9,
 };
 const short yylen[] =
 	{                                         2,
     0,    1,    2,    3,    0,    1,    1,    1,    1,    1,
-    0,    1,    1,    2,    1,    2,    1,    4,    7,    5,
-    8,    3,    4,    1,    2,    3,    3,    1,    1,    2,
-    3,    3,    5,    4,    6,    2,    3,    1,    2,    1,
-    1,
+    1,    0,    1,    1,    2,    2,    1,    2,    1,    4,
+    7,    5,    8,    3,    4,    1,    2,    3,    3,    1,
+    1,    2,    3,    3,    5,    4,    6,    2,    3,    1,
+    2,    1,    1,    2,    2,    3,
 };
 const short yydefred[] =
 	{                                      0,
-    0,   13,    0,    0,    0,    0,    0,    6,   28,   24,
-    0,    0,    8,    9,   14,   10,    0,    0,    0,    0,
-    3,    0,    0,    0,   15,    0,   17,    0,    0,    0,
-   32,    4,   26,   27,   40,   41,    0,   31,    0,    0,
-    0,   18,   16,    0,    0,   34,    0,   39,    0,    0,
-   20,    0,   37,    0,   33,    0,    0,    0,   35,   23,
-    0,   19,   21,
+    0,    0,   14,    0,    0,    0,    0,    0,    7,   30,
+   26,    6,    0,    0,   15,    9,   10,   16,   11,    0,
+    0,    0,    0,    3,    0,    0,    0,   17,    0,   19,
+    0,    0,    0,   34,    4,   28,   29,   42,   43,    0,
+    0,   33,    0,    0,    0,   20,   18,    0,    0,   36,
+    0,   44,    0,    0,   41,    0,    0,   22,    0,   39,
+    0,   35,    0,   45,    0,    0,    0,   37,   46,   25,
+    0,   21,   23,
 };
 const short yydgoto[] =
-	{                                       3,
-   37,   15,   16,   38,    4,   28,   40,   29,    5,    6,
-    7,    8,    9,   10,   11,   12,   30,   31,
+	{                                       4,
+   41,   18,   19,   42,    5,   31,   44,   32,   52,    6,
+    7,    8,    9,   10,   11,   12,   13,   14,   33,   34,
 };
 const short yysindex[] =
-	{                                   -245,
- -232,    0,    0,  -10, -245,    8,  -38,    0,    0,    0,
- -228,    0,    0,    0,    0,    0, -245, -245,  -56,   28,
-    0, -245, -204, -183,    0, -232,    0, -245, -215, -245,
-    0,    0,    0,    0,    0,    0, -204,    0,   39, -215,
-   43,    0,    0,  -52, -245,    0,  -55,    0, -245,   52,
-    0, -245,    0,  -55,    0, -178, -245, -238,    0,    0,
- -238,    0,    0,};
+	{                                   -175,
+ -227, -172,    0,    0,  -10, -175,   46,   10,    0,    0,
+    0,    0, -205,    0,    0,    0,    0,    0,    0, -175,
+ -238,  -56,   53,    0, -238, -118, -228,    0, -172,    0,
+ -238, -234, -238,    0,    0,    0,    0,    0,    0, -175,
+ -118,    0,   63, -234,   66,    0,    0,  -52, -238,    0,
+  -55,    0, -175,    3,    0, -175,   68,    0, -175,    0,
+  -55,    0,    4,    0, -208, -175, -219,    0,    0,    0,
+ -219,    0,    0,};
 const short yyrindex[] =
 	{                                      1,
-    0,    0,    0, -200,    2,    0,   58,    0,    0,    0,
-    0,   -4,    0,    0,    0,    0,   -2, -200,    0,    0,
-    0,    7,   12,   -2,    0,    0,    0, -200,    0, -200,
-    0,    0,    0,    0,    0,    0,   15,    0,    0,    0,
-    0,    0,    0, -207, -200,    0,    0,    0,   -2,    0,
-    0,   -2,    0,    0,    0,   -1,   -2,   -2,    0,    0,
-   -2,    0,    0,};
+    0,    0,    0,    0, -184,    2,    0,    5,    0,    0,
+    0,    0,    0,   -4,    0,    0,    0,    0,    0,    6,
+ -184,    0,    0,    0,    7,   12,    6,    0,    0,    0,
+ -184,    0, -184,    0,    0,    0,    0,    0,    0,   -2,
+   15,    0,    0,    0,    0,    0,    0, -215, -184,    0,
+    0,    0,   -2,    0,    0,    6,    0,    0,    6,    0,
+    0,    0,    0,    0,   -1,    6,    6,    0,    0,    0,
+    6,    0,    0,};
 const short yygindex[] =
 	{                                      0,
-    0,   46,    0,   32,    6,   -8,   17,   35,  -12,    9,
-   11,    0,   61,   62,    0,    0,   18,    3,
+    0,   57,    0,   41,   39,  -17,   28,   47,    0,    9,
+   14,   56,    0,   69,   71,    0,    0,    0,   -8,   -9,
 };
-#define YYTABLESIZE 276
+#define YYTABLESIZE 277
 const short yytable[] =
-	{                                      17,
-    1,    2,   22,   22,   24,   29,   22,    5,    5,   18,
-    5,    5,    1,   20,   19,   39,   25,   21,    2,    1,
-   22,   30,   27,   18,   38,    2,   42,   18,   19,   13,
-   14,   46,   20,   18,   23,   18,   56,   32,   44,   58,
-   47,   41,   51,   25,   61,   27,   45,   39,   49,   55,
-   18,   36,   52,   36,   29,   54,   59,   50,   35,   36,
-   62,   57,   11,   63,   20,   25,   20,    7,   48,   20,
-   30,   43,   60,   38,    1,   25,   26,   27,   53,    1,
-    2,   26,   33,   34,    0,    2,    0,    0,    0,    0,
+	{                                      20,
+    1,    2,   25,   25,   40,   31,   25,    5,    5,   43,
+    5,    5,   24,   35,    8,    5,   27,   46,   45,   23,
+    2,   32,   50,   49,   40,   28,    3,   30,   27,    1,
+    2,   28,   29,   30,   58,   57,    3,   15,    1,    2,
+   23,   62,   30,   21,   38,    3,   38,   43,   53,    1,
+    2,   68,   29,   54,   31,   24,    3,   72,   26,   21,
+   22,   73,   35,   21,   65,   27,   63,   67,   25,   21,
+   32,   21,   56,   40,   71,   59,   22,   66,   23,   12,
+   23,   55,    1,    2,   23,   47,   48,   21,   51,    3,
+   16,   17,   70,   36,   60,   37,    0,    0,    0,    0,
+    0,    0,    0,    0,   61,    0,    0,    0,    0,    0,
+    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+   31,    0,    5,    0,    0,    0,    0,   64,   69,    8,
+    0,   27,    0,    0,    0,    0,   32,    0,    0,   40,
+    0,    0,    0,    0,    0,   38,   39,    0,    0,    0,
     0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
     0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
     0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
     0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
     0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+    0,    0,    0,   28,   29,   30,   30,    0,   29,    0,
     0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
     0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
     0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-    0,    0,   25,   26,   27,   27,    0,   26,    0,    0,
-    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-    0,    0,    0,    0,    0,    0,    0,    1,    0,    0,
-    0,    0,    0,    2,   29,   29,   29,   22,   12,   22,
-   11,   11,    0,   11,   11,   25,   25,   25,    0,   11,
-   30,   30,   30,   38,   38,   38,
+    0,    0,    0,    0,    0,    0,    0,    0,    2,    0,
+    0,    0,    0,    0,    3,   31,   31,   31,   24,   13,
+   24,   12,   12,    0,   12,   12,   27,   27,   27,   12,
+   12,   32,   32,   32,   40,   40,   40,
 };
 const short yycheck[] =
 	{                                      10,
-    0,    0,   59,   59,   17,   10,   59,   10,   10,    4,
-   10,   10,  258,    5,    4,   24,   10,   10,  264,  258,
-   59,   10,  261,   18,   10,  264,   24,   22,   18,  262,
-  263,   29,   24,   28,  263,   30,   49,   10,   28,   52,
-   30,   24,   40,  259,   57,  261,   29,   56,   10,   47,
-   45,  259,   10,  261,   59,   45,   54,   40,  263,  264,
-   58,   10,  263,   61,   56,   59,   58,   10,   37,   61,
-   59,   26,   56,   59,  258,  259,  260,  261,   44,  258,
-  264,  260,   22,   22,   -1,  264,   -1,   -1,   -1,   -1,
+    0,    0,   59,   59,  123,   10,   59,   10,   10,   27,
+   10,   10,   10,   10,   10,   10,   10,   27,   27,    6,
+  259,   10,   32,   32,   10,  260,  265,  262,   20,  258,
+  259,  260,  261,  262,   44,   44,  265,  265,  258,  259,
+   27,   51,  262,    5,  260,  265,  262,   65,   40,  258,
+  259,   61,  261,   40,   59,   10,  265,   67,  264,   21,
+    5,   71,   10,   25,   56,   59,   53,   59,   59,   31,
+   59,   33,   10,   59,   66,   10,   21,   10,   65,  264,
+   67,   41,  258,  259,   71,   29,   31,   49,   33,  265,
+  263,  264,   65,   25,   48,   25,   -1,   -1,   -1,   -1,
+   -1,   -1,   -1,   -1,   49,   -1,   -1,   -1,   -1,   -1,
+   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+  125,   -1,  125,   -1,   -1,   -1,   -1,  125,  125,  125,
+   -1,  125,   -1,   -1,   -1,   -1,  125,   -1,   -1,  125,
+   -1,   -1,   -1,   -1,   -1,  264,  265,   -1,   -1,   -1,
    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+   -1,   -1,   -1,  260,  261,  262,  262,   -1,  261,   -1,
    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
    -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
-   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
-   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
-   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
-   -1,   -1,  259,  260,  261,  261,   -1,  260,   -1,   -1,
-   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
-   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
-   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
-   -1,   -1,   -1,   -1,   -1,   -1,   -1,  258,   -1,   -1,
-   -1,   -1,   -1,  264,  259,  260,  261,  259,  263,  261,
-  263,  263,   -1,  263,  263,  259,  260,  261,   -1,  263,
-  259,  260,  261,  259,  260,  261,
+   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  259,   -1,
+   -1,   -1,   -1,   -1,  265,  260,  261,  262,  260,  264,
+  262,  264,  264,   -1,  264,  264,  260,  261,  262,  264,
+  264,  260,  261,  262,  260,  261,  262,
 };
-#define YYFINAL 3
+#define YYFINAL 4
 #ifndef YYDEBUG
 #define YYDEBUG 0
 #endif
-#define YYMAXTOKEN 264
+#define YYMAXTOKEN 265
 #if YYDEBUG
 const char * const yyname[] =
 	{
 "end-of-file",0,0,0,0,0,0,0,0,0,"'\\n'",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,"';'",0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,"'{'",0,"'}'",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,"ERROR","IF","ELSE",
-"ELIF","ENDIF","FORMAT","TOKEN","EQUALS",
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,"ERROR",
+"HIDDEN","IF","ELSE","ELIF","ENDIF","FORMAT","TOKEN","EQUALS",
 };
 const char * const yyrule[] =
 	{"$accept : lines",
@@ -243,6 +248,7 @@ const char * const yyrule[] =
 "statements : statement '\\n'",
 "statements : statements statement '\\n'",
 "statement :",
+"statement : hidden_assignment",
 "statement : condition",
 "statement : commands",
 "format : FORMAT",
@@ -251,6 +257,7 @@ const char * const yyrule[] =
 "optional_assignment :",
 "optional_assignment : assignment",
 "assignment : EQUALS",
+"hidden_assignment : HIDDEN EQUALS",
 "if_open : IF expanded",
 "if_else : ELSE",
 "if_elif : ELIF expanded",
@@ -279,6 +286,9 @@ const char * const yyrule[] =
 "arguments : argument arguments",
 "argument : TOKEN",
 "argument : EQUALS",
+"argument : '{' argument_statements",
+"argument_statements : statement '}'",
+"argument_statements : statements statement '}'",
 };
 #endif
 #ifdef YYSTACKSIZE
@@ -307,7 +317,7 @@ short *yysslim;
 YYSTYPE *yyvs;
 unsigned int yystacksize;
 int yyparse(void);
-#line 511 "cmd-parse.y"
+#line 546 "cmd-parse.y"
 
 static char *
 cmd_parse_get_error(const char *file, u_int line, const char *error)
@@ -340,7 +350,6 @@ cmd_parse_print_commands(struct cmd_parse_input *pi, u_int line,
 static void
 cmd_parse_free_command(struct cmd_parse_command *cmd)
 {
-	free(cmd->name);
 	cmd_free_argv(cmd->argc, cmd->argv);
 	free(cmd);
 }
@@ -365,6 +374,30 @@ cmd_parse_free_commands(struct cmd_parse_commands *cmds)
 		cmd_parse_free_command(cmd);
 	}
 	free(cmds);
+}
+
+static char *
+cmd_parse_commands_to_string(struct cmd_parse_commands *cmds)
+{
+	struct cmd_parse_command	 *cmd;
+	char				 *string = NULL, *s, *line;
+
+	TAILQ_FOREACH(cmd, cmds, entry) {
+		line = cmd_stringify_argv(cmd->argc, cmd->argv);
+		if (string == NULL)
+			s = line;
+		else {
+			xasprintf(&s, "%s ; %s", s, line);
+			free(line);
+		}
+
+		free(string);
+		string = s;
+	}
+	if (string == NULL)
+		string = xstrdup("");
+	log_debug("%s: %s", __func__, string);
+	return (string);
 }
 
 static struct cmd_parse_commands *
@@ -427,7 +460,7 @@ cmd_parse_build_commands(struct cmd_parse_commands *cmds,
 	int				 i;
 	struct cmd_list			*cmdlist = NULL, *result;
 	struct cmd			*add;
-	char				*alias, *cause, *s;
+	char				*name, *alias, *cause, *s;
 
 	/* Check for an empty list. */
 	if (TAILQ_EMPTY(cmds)) {
@@ -443,12 +476,14 @@ cmd_parse_build_commands(struct cmd_parse_commands *cmds,
 	 * command list.
 	 */
 	TAILQ_FOREACH_SAFE(cmd, cmds, entry, next) {
-		alias = cmd_get_alias(cmd->name);
+		name = cmd->argv[0];
+
+		alias = cmd_get_alias(name);
 		if (alias == NULL)
 			continue;
 
 		line = cmd->line;
-		log_debug("%s: %u %s = %s", __func__, line, cmd->name, alias);
+		log_debug("%s: %u %s = %s", __func__, line, name, alias);
 
 		pi->line = line;
 		cmds2 = cmd_parse_do_buffer(alias, strlen(alias), pi, &cause);
@@ -465,7 +500,7 @@ cmd_parse_build_commands(struct cmd_parse_commands *cmds,
 			cmd_parse_free_command(cmd);
 			continue;
 		}
-		for (i = 0; i < cmd->argc; i++)
+		for (i = 1; i < cmd->argc; i++)
 			cmd_append_argv(&cmd2->argc, &cmd2->argv, cmd->argv[i]);
 
 		after = cmd;
@@ -483,15 +518,18 @@ cmd_parse_build_commands(struct cmd_parse_commands *cmds,
 
 	/*
 	 * Parse each command into a command list. Create a new command list
-	 * for each line so they get a new group (so the queue knows which ones
-	 * to remove if a command fails when executed).
+	 * for each line (unless the flag is set) so they get a new group (so
+	 * the queue knows which ones to remove if a command fails when
+	 * executed).
 	 */
 	result = cmd_list_new();
 	TAILQ_FOREACH(cmd, cmds, entry) {
-		log_debug("%s: %u %s", __func__, cmd->line, cmd->name);
+		name = cmd->argv[0];
+		log_debug("%s: %u %s", __func__, cmd->line, name);
 		cmd_log_argv(cmd->argc, cmd->argv, __func__);
 
-		if (cmdlist == NULL || cmd->line != line) {
+		if (cmdlist == NULL ||
+		    ((~pi->flags & CMD_PARSE_ONEGROUP) && cmd->line != line)) {
 			if (cmdlist != NULL) {
 				cmd_parse_print_commands(pi, line, cmdlist);
 				cmd_list_move(result, cmdlist);
@@ -501,7 +539,6 @@ cmd_parse_build_commands(struct cmd_parse_commands *cmds,
 		}
 		line = cmd->line;
 
-		cmd_prepend_argv(&cmd->argc, &cmd->argv, cmd->name);
 		add = cmd_parse(cmd->argc, cmd->argv, pi->file, line, &cause);
 		if (add == NULL) {
 			cmd_list_free(result);
@@ -558,7 +595,72 @@ cmd_parse_from_file(FILE *f, struct cmd_parse_input *pi)
 struct cmd_parse_result *
 cmd_parse_from_string(const char *s, struct cmd_parse_input *pi)
 {
+	struct cmd_parse_input	input;
+
+	if (pi == NULL) {
+		memset(&input, 0, sizeof input);
+		pi = &input;
+	}
+
+	/*
+	 * When parsing a string, put commands in one group even if there are
+	 * multiple lines. This means { a \n b } is identical to "a ; b" when
+	 * given as an argument to another command.
+	 */
+	pi->flags |= CMD_PARSE_ONEGROUP;
 	return (cmd_parse_from_buffer(s, strlen(s), pi));
+}
+
+enum cmd_parse_status
+cmd_parse_and_insert(const char *s, struct cmd_parse_input *pi,
+    struct cmdq_item *after, struct cmdq_state *state, char **error)
+{
+	struct cmd_parse_result	*pr;
+	struct cmdq_item	*item;
+
+	pr = cmd_parse_from_string(s, pi);
+	switch (pr->status) {
+	case CMD_PARSE_EMPTY:
+		break;
+	case CMD_PARSE_ERROR:
+		if (error != NULL)
+			*error = pr->error;
+		else
+			free(pr->error);
+		break;
+	case CMD_PARSE_SUCCESS:
+		item = cmdq_get_command(pr->cmdlist, state);
+		cmdq_insert_after(after, item);
+		cmd_list_free(pr->cmdlist);
+		break;
+	}
+	return (pr->status);
+}
+
+enum cmd_parse_status
+cmd_parse_and_append(const char *s, struct cmd_parse_input *pi,
+    struct client *c, struct cmdq_state *state, char **error)
+{
+	struct cmd_parse_result	*pr;
+	struct cmdq_item	*item;
+
+	pr = cmd_parse_from_string(s, pi);
+	switch (pr->status) {
+	case CMD_PARSE_EMPTY:
+		break;
+	case CMD_PARSE_ERROR:
+		if (error != NULL)
+			*error = pr->error;
+		else
+			free(pr->error);
+		break;
+	case CMD_PARSE_SUCCESS:
+		item = cmdq_get_command(pr->cmdlist, state);
+		cmdq_append(c, item);
+		cmd_list_free(pr->cmdlist);
+		break;
+	}
+	return (pr->status);
 }
 
 struct cmd_parse_result *
@@ -636,11 +738,10 @@ cmd_parse_from_arguments(int argc, char **argv, struct cmd_parse_input *pi)
 			    i);
 
 			cmd = xcalloc(1, sizeof *cmd);
-			cmd->name = xstrdup(new_argv[0]);
 			cmd->line = pi->line;
 
-			cmd->argc = new_argc - 1;
-			cmd->argv = cmd_copy_argv(new_argc - 1, new_argv + 1);
+			cmd->argc = new_argc;
+			cmd->argv = cmd_copy_argv(new_argc, new_argv);
 
 			TAILQ_INSERT_TAIL(cmds, cmd, entry);
 		}
@@ -656,11 +757,10 @@ cmd_parse_from_arguments(int argc, char **argv, struct cmd_parse_input *pi)
 			    last);
 
 			cmd = xcalloc(1, sizeof *cmd);
-			cmd->name = xstrdup(new_argv[0]);
 			cmd->line = pi->line;
 
-			cmd->argc = new_argc - 1;
-			cmd->argv = cmd_copy_argv(new_argc - 1, new_argv + 1);
+			cmd->argc = new_argc;
+			cmd->argv = cmd_copy_argv(new_argc, new_argv);
 
 			TAILQ_INSERT_TAIL(cmds, cmd, entry);
 		}
@@ -838,11 +938,11 @@ yylex(void)
 			return ('\n');
 		}
 
-		if (ch == ';') {
+		if (ch == ';' || ch == '{' || ch == '}') {
 			/*
-			 * A semicolon is itself.
+			 * A semicolon or { or } is itself.
 			 */
-			return (';');
+			return (ch);
 		}
 
 		if (ch == '#') {
@@ -879,6 +979,10 @@ yylex(void)
 			if (*cp == '\0')
 				return (TOKEN);
 			ps->condition = 1;
+			if (strcmp(yylval.token, "%hidden") == 0) {
+				free(yylval.token);
+				return (HIDDEN);
+			}
 			if (strcmp(yylval.token, "%if") == 0) {
 				free(yylval.token);
 				return (IF);
@@ -963,10 +1067,9 @@ error:
 static int
 yylex_token_escape(char **buf, size_t *len)
 {
-	int			 ch, type, o2, o3;
-	u_int			 size, i, tmp;
-	char			 s[9];
-	struct utf8_data	 ud;
+	int	 ch, type, o2, o3, mlen;
+	u_int	 size, i, tmp;
+	char	 s[9], m[MB_LEN_MAX];
 
 	ch = yylex_getc();
 
@@ -1051,11 +1154,12 @@ unicode:
 		yyerror("invalid \\%c argument", type);
 		return (0);
 	}
-	if (utf8_split(tmp, &ud) != UTF8_DONE) {
+	mlen = wctomb(m, tmp);
+	if (mlen <= 0 || mlen > (int)sizeof m) {
 		yyerror("invalid \\%c argument", type);
 		return (0);
 	}
-	yylex_append(buf, len, ud.data, ud.size);
+	yylex_append(buf, len, m, mlen);
 	return (1);
 }
 
@@ -1103,7 +1207,7 @@ yylex_token_variable(char **buf, size_t *len)
 	name[namelen] = '\0';
 
 	envent = environ_find(global_environ, name);
-	if (envent != NULL) {
+	if (envent != NULL && envent->value != NULL) {
 		value = envent->value;
 		log_debug("%s: %s -> %s", __func__, name, value);
 		yylex_append(buf, len, value, strlen(value));
@@ -1153,119 +1257,6 @@ yylex_token_tilde(char **buf, size_t *len)
 	return (1);
 }
 
-static int
-yylex_token_brace(char **buf, size_t *len)
-{
-	struct cmd_parse_state	*ps = &parse_state;
-	int 			 ch, lines = 0, nesting = 1, escape = 0;
-	int			 quote = '\0', token = 0;
-
-	/*
-	 * Extract a string up to the matching unquoted '}', including newlines
-	 * and handling nested braces.
-	 *
-	 * To detect the final and intermediate braces which affect the nesting
-	 * depth, we scan the input as if it was a tmux config file, and ignore
-	 * braces which would be considered quoted, escaped, or in a comment.
-	 *
-	 * We update the token state after every character because '#' begins a
-	 * comment only when it begins a token. For simplicity, we treat an
-	 * unquoted directive format as comment.
-	 *
-	 * The result is verbatim copy of the input excluding the final brace.
-	 */
-
-	for (ch = yylex_getc1(); ch != EOF; ch = yylex_getc1()) {
-		yylex_append1(buf, len, ch);
-		if (ch == '\n')
-			lines++;
-
-		/*
-		 * If the previous character was a backslash (escape is set),
-		 * escape anything if unquoted or in double quotes, otherwise
-		 * escape only '\n' and '\\'.
-		 */
-		if (escape &&
-		    (quote == '\0' ||
-		    quote == '"' ||
-		    ch == '\n' ||
-		    ch == '\\')) {
-			escape = 0;
-			if (ch != '\n')
-				token = 1;
-			continue;
-		}
-
-		/*
-		 * The character is not escaped. If it is a backslash, set the
-		 * escape flag.
-		 */
-		if (ch == '\\') {
-			escape = 1;
-			continue;
-		}
-		escape = 0;
-
-		/* A newline always resets to unquoted. */
-		if (ch == '\n') {
-			quote = token = 0;
-			continue;
-		}
-
-		if (quote) {
-			/*
-			 * Inside quotes or comment. Check if this is the
-			 * closing quote.
-			 */
-			if (ch == quote && quote != '#')
-				quote = 0;
-			token = 1;  /* token continues regardless */
-		} else {
-			/* Not inside quotes or comment. */
-			switch (ch) {
-			case '"':
-			case '\'':
-			case '#':
-				/* Beginning of quote or maybe comment. */
-				if (ch != '#' || !token)
-					quote = ch;
-				token = 1;
-				break;
-			case ' ':
-			case '\t':
-			case ';':
-				/* Delimiter - token resets. */
-				token = 0;
-				break;
-			case '{':
-				nesting++;
-				token = 0; /* new commands set - token resets */
-				break;
-			case '}':
-				nesting--;
-				token = 1;  /* same as after quotes */
-				if (nesting == 0) {
-					(*len)--; /* remove closing } */
-					ps->input->line += lines;
-					return (1);
-				}
-				break;
-			default:
-				token = 1;
-				break;
-			}
-		}
-	}
-
-	/*
-	 * Update line count after error as reporting the opening line is more
-	 * useful than EOF.
-	 */
-	yyerror("unterminated brace string");
-	ps->input->line += lines;
-	return (0);
-}
-
 static char *
 yylex_token(int ch)
 {
@@ -1280,23 +1271,37 @@ yylex_token(int ch)
 	buf = xmalloc(1);
 
 	for (;;) {
-		/*
-		 * EOF or \n are always the end of the token. If inside quotes
-		 * they are an error.
-		 */
-		if (ch == EOF || ch == '\n') {
-			if (state != NONE)
-				goto error;
+		/* EOF or \n are always the end of the token. */
+		if (ch == EOF || (state == NONE && ch == '\n'))
 			break;
+
+		/* Whitespace or ; or } ends a token unless inside quotes. */
+		if ((ch == ' ' || ch == '\t' || ch == ';' || ch == '}') &&
+		    state == NONE)
+			break;
+
+		/*
+		 * Spaces and comments inside quotes after \n are removed but
+		 * the \n is left.
+		 */
+		if (ch == '\n' && state != NONE) {
+			yylex_append1(&buf, &len, '\n');
+			while ((ch = yylex_getc()) == ' ' || ch == '\t')
+				/* nothing */;
+			if (ch != '#')
+				continue;
+			ch = yylex_getc();
+			if (strchr(",#{}:", ch) != NULL) {
+				yylex_ungetc(ch);
+				ch = '#';
+			} else {
+				while ((ch = yylex_getc()) != '\n' && ch != EOF)
+					/* nothing */;
+			}
+			continue;
 		}
 
-		/* Whitespace or ; ends a token unless inside quotes. */
-		if ((ch == ' ' || ch == '\t' || ch == ';') && state == NONE)
-			break;
-
-		/*
-		 * \ ~ and $ are expanded except in single quotes.
-		 */
+		/* \ ~ and $ are expanded except in single quotes. */
 		if (ch == '\\' && state != SINGLE_QUOTES) {
 			if (!yylex_token_escape(&buf, &len))
 				goto error;
@@ -1312,17 +1317,10 @@ yylex_token(int ch)
 				goto error;
 			goto skip;
 		}
-		if (ch == '{' && state == NONE) {
-			if (!yylex_token_brace(&buf, &len))
-				goto error;
-			goto skip;
-		}
 		if (ch == '}' && state == NONE)
 			goto error;  /* unmatched (matched ones were handled) */
 
-		/*
-		 * ' and " starts or end quotes (and is consumed).
-		 */
+		/* ' and " starts or end quotes (and is consumed). */
 		if (ch == '\'') {
 			if (state == NONE) {
 				state = SINGLE_QUOTES;
@@ -1344,9 +1342,7 @@ yylex_token(int ch)
 			}
 		}
 
-		/*
-		 * Otherwise add the character to the buffer.
-		 */
+		/* Otherwise add the character to the buffer. */
 		yylex_append1(&buf, &len, ch);
 
 	skip:
@@ -1365,7 +1361,7 @@ error:
 	free(buf);
 	return (NULL);
 }
-#line 1361 "cmd-parse.c"
+#line 1357 "cmd-parse.c"
 /* allocate initial stack or double stack size, up to YYMAXDEPTH */
 static int yygrowstack(void)
 {
@@ -1388,16 +1384,14 @@ static int yygrowstack(void)
 #endif
     if (newsize && YY_SIZE_MAX / newsize < sizeof *newss)
         goto bail;
-    newss = yyss ? (short *)realloc(yyss, newsize * sizeof *newss) :
-      (short *)malloc(newsize * sizeof *newss); /* overflow check above */
+    newss = (short *)realloc(yyss, newsize * sizeof *newss);
     if (newss == NULL)
         goto bail;
     yyss = newss;
     yyssp = newss + sslen;
     if (newsize && YY_SIZE_MAX / newsize < sizeof *newvs)
         goto bail;
-    newvs = yyvs ? (YYSTYPE *)realloc(yyvs, newsize * sizeof *newvs) :
-      (YYSTYPE *)malloc(newsize * sizeof *newvs); /* overflow check above */
+    newvs = (YYSTYPE *)realloc(yyvs, newsize * sizeof *newvs);
     if (newvs == NULL)
         goto bail;
     yyvs = newvs;
@@ -1560,7 +1554,7 @@ yyreduce:
     switch (yyn)
     {
 case 2:
-#line 119 "cmd-parse.y"
+#line 122 "cmd-parse.y"
 {
 			struct cmd_parse_state	*ps = &parse_state;
 
@@ -1568,13 +1562,13 @@ case 2:
 		}
 break;
 case 3:
-#line 126 "cmd-parse.y"
+#line 129 "cmd-parse.y"
 {
 			yyval.commands = yyvsp[-1].commands;
 		}
 break;
 case 4:
-#line 130 "cmd-parse.y"
+#line 133 "cmd-parse.y"
 {
 			yyval.commands = yyvsp[-2].commands;
 			TAILQ_CONCAT(yyval.commands, yyvsp[-1].commands, entry);
@@ -1582,27 +1576,21 @@ case 4:
 		}
 break;
 case 5:
-#line 137 "cmd-parse.y"
+#line 140 "cmd-parse.y"
 {
 			yyval.commands = xmalloc (sizeof *yyval.commands);
 			TAILQ_INIT(yyval.commands);
 		}
 break;
 case 6:
-#line 142 "cmd-parse.y"
+#line 145 "cmd-parse.y"
 {
-			struct cmd_parse_state	*ps = &parse_state;
-
-			if (ps->scope == NULL || ps->scope->flag)
-				yyval.commands = yyvsp[0].commands;
-			else {
-				yyval.commands = cmd_parse_new_commands();
-				cmd_parse_free_commands(yyvsp[0].commands);
-			}
+			yyval.commands = xmalloc (sizeof *yyval.commands);
+			TAILQ_INIT(yyval.commands);
 		}
 break;
 case 7:
-#line 153 "cmd-parse.y"
+#line 150 "cmd-parse.y"
 {
 			struct cmd_parse_state	*ps = &parse_state;
 
@@ -1615,19 +1603,32 @@ case 7:
 		}
 break;
 case 8:
-#line 165 "cmd-parse.y"
+#line 161 "cmd-parse.y"
 {
-			yyval.token = yyvsp[0].token;
+			struct cmd_parse_state	*ps = &parse_state;
+
+			if (ps->scope == NULL || ps->scope->flag)
+				yyval.commands = yyvsp[0].commands;
+			else {
+				yyval.commands = cmd_parse_new_commands();
+				cmd_parse_free_commands(yyvsp[0].commands);
+			}
 		}
 break;
 case 9:
-#line 169 "cmd-parse.y"
+#line 173 "cmd-parse.y"
 {
 			yyval.token = yyvsp[0].token;
 		}
 break;
 case 10:
-#line 174 "cmd-parse.y"
+#line 177 "cmd-parse.y"
+{
+			yyval.token = yyvsp[0].token;
+		}
+break;
+case 11:
+#line 182 "cmd-parse.y"
 {
 			struct cmd_parse_state	*ps = &parse_state;
 			struct cmd_parse_input	*pi = ps->input;
@@ -1651,20 +1652,32 @@ case 10:
 			free(yyvsp[0].token);
 		}
 break;
-case 13:
-#line 201 "cmd-parse.y"
+case 14:
+#line 209 "cmd-parse.y"
 {
 			struct cmd_parse_state	*ps = &parse_state;
 			int			 flags = ps->input->flags;
 
 			if ((~flags & CMD_PARSE_PARSEONLY) &&
 			    (ps->scope == NULL || ps->scope->flag))
-				environ_put(global_environ, yyvsp[0].token);
+				environ_put(global_environ, yyvsp[0].token, 0);
 			free(yyvsp[0].token);
 		}
 break;
-case 14:
-#line 212 "cmd-parse.y"
+case 15:
+#line 220 "cmd-parse.y"
+{
+			struct cmd_parse_state	*ps = &parse_state;
+			int			 flags = ps->input->flags;
+
+			if ((~flags & CMD_PARSE_PARSEONLY) &&
+			    (ps->scope == NULL || ps->scope->flag))
+				environ_put(global_environ, yyvsp[0].token, ENVIRON_HIDDEN);
+			free(yyvsp[0].token);
+		}
+break;
+case 16:
+#line 231 "cmd-parse.y"
 {
 			struct cmd_parse_state	*ps = &parse_state;
 			struct cmd_parse_scope	*scope;
@@ -1678,8 +1691,8 @@ case 14:
 			ps->scope = scope;
 		}
 break;
-case 15:
-#line 226 "cmd-parse.y"
+case 17:
+#line 245 "cmd-parse.y"
 {
 			struct cmd_parse_state	*ps = &parse_state;
 			struct cmd_parse_scope	*scope;
@@ -1691,8 +1704,8 @@ case 15:
 			ps->scope = scope;
 		}
 break;
-case 16:
-#line 238 "cmd-parse.y"
+case 18:
+#line 257 "cmd-parse.y"
 {
 			struct cmd_parse_state	*ps = &parse_state;
 			struct cmd_parse_scope	*scope;
@@ -1705,8 +1718,8 @@ case 16:
 			ps->scope = scope;
 		}
 break;
-case 17:
-#line 251 "cmd-parse.y"
+case 19:
+#line 270 "cmd-parse.y"
 {
 			struct cmd_parse_state	*ps = &parse_state;
 
@@ -1716,8 +1729,8 @@ case 17:
 				TAILQ_REMOVE(&ps->stack, ps->scope, entry);
 		}
 break;
-case 18:
-#line 261 "cmd-parse.y"
+case 20:
+#line 280 "cmd-parse.y"
 {
 			if (yyvsp[-3].flag)
 				yyval.commands = yyvsp[-1].commands;
@@ -1727,8 +1740,8 @@ case 18:
 			}
 		}
 break;
-case 19:
-#line 270 "cmd-parse.y"
+case 21:
+#line 289 "cmd-parse.y"
 {
 			if (yyvsp[-6].flag) {
 				yyval.commands = yyvsp[-4].commands;
@@ -1739,8 +1752,8 @@ case 19:
 			}
 		}
 break;
-case 20:
-#line 280 "cmd-parse.y"
+case 22:
+#line 299 "cmd-parse.y"
 {
 			if (yyvsp[-4].flag) {
 				yyval.commands = yyvsp[-2].commands;
@@ -1755,8 +1768,8 @@ case 20:
 			}
 		}
 break;
-case 21:
-#line 294 "cmd-parse.y"
+case 23:
+#line 313 "cmd-parse.y"
 {
 			if (yyvsp[-7].flag) {
 				yyval.commands = yyvsp[-5].commands;
@@ -1773,8 +1786,8 @@ case 21:
 			}
 		}
 break;
-case 22:
-#line 311 "cmd-parse.y"
+case 24:
+#line 330 "cmd-parse.y"
 {
 			if (yyvsp[-2].flag) {
 				yyval.elif.flag = 1;
@@ -1786,8 +1799,8 @@ case 22:
 			}
 		}
 break;
-case 23:
-#line 322 "cmd-parse.y"
+case 25:
+#line 341 "cmd-parse.y"
 {
 			if (yyvsp[-3].flag) {
 				yyval.elif.flag = 1;
@@ -1805,39 +1818,39 @@ case 23:
 			}
 		}
 break;
-case 24:
-#line 340 "cmd-parse.y"
+case 26:
+#line 359 "cmd-parse.y"
 {
 			struct cmd_parse_state	*ps = &parse_state;
 
 			yyval.commands = cmd_parse_new_commands();
-			if (yyvsp[0].command->name != NULL &&
+			if (yyvsp[0].command->argc != 0 &&
 			    (ps->scope == NULL || ps->scope->flag))
 				TAILQ_INSERT_TAIL(yyval.commands, yyvsp[0].command, entry);
 			else
 				cmd_parse_free_command(yyvsp[0].command);
 		}
 break;
-case 25:
-#line 351 "cmd-parse.y"
+case 27:
+#line 370 "cmd-parse.y"
 {
 			yyval.commands = yyvsp[-1].commands;
 		}
 break;
-case 26:
-#line 355 "cmd-parse.y"
+case 28:
+#line 374 "cmd-parse.y"
 {
 			yyval.commands = yyvsp[-2].commands;
 			TAILQ_CONCAT(yyval.commands, yyvsp[0].commands, entry);
 			free(yyvsp[0].commands);
 		}
 break;
-case 27:
-#line 361 "cmd-parse.y"
+case 29:
+#line 380 "cmd-parse.y"
 {
 			struct cmd_parse_state	*ps = &parse_state;
 
-			if (yyvsp[0].command->name != NULL &&
+			if (yyvsp[0].command->argc != 0 &&
 			    (ps->scope == NULL || ps->scope->flag)) {
 				yyval.commands = yyvsp[-2].commands;
 				TAILQ_INSERT_TAIL(yyval.commands, yyvsp[0].command, entry);
@@ -1848,48 +1861,48 @@ case 27:
 			}
 		}
 break;
-case 28:
-#line 375 "cmd-parse.y"
+case 30:
+#line 394 "cmd-parse.y"
 {
 			yyval.commands = yyvsp[0].commands;
 		}
 break;
-case 29:
-#line 380 "cmd-parse.y"
-{
-			struct cmd_parse_state	*ps = &parse_state;
-
-			yyval.command = xcalloc(1, sizeof *yyval.command);
-			yyval.command->name = NULL;
-			yyval.command->line = ps->input->line;
-		}
-break;
-case 30:
-#line 388 "cmd-parse.y"
-{
-			struct cmd_parse_state	*ps = &parse_state;
-
-			yyval.command = xcalloc(1, sizeof *yyval.command);
-			yyval.command->name = yyvsp[0].token;
-			yyval.command->line = ps->input->line;
-
-		}
-break;
 case 31:
-#line 397 "cmd-parse.y"
+#line 399 "cmd-parse.y"
 {
 			struct cmd_parse_state	*ps = &parse_state;
 
 			yyval.command = xcalloc(1, sizeof *yyval.command);
-			yyval.command->name = yyvsp[-1].token;
+			yyval.command->line = ps->input->line;
+		}
+break;
+case 32:
+#line 406 "cmd-parse.y"
+{
+			struct cmd_parse_state	*ps = &parse_state;
+
+			yyval.command = xcalloc(1, sizeof *yyval.command);
+			yyval.command->line = ps->input->line;
+
+			cmd_prepend_argv(&yyval.command->argc, &yyval.command->argv, yyvsp[0].token);
+
+		}
+break;
+case 33:
+#line 416 "cmd-parse.y"
+{
+			struct cmd_parse_state	*ps = &parse_state;
+
+			yyval.command = xcalloc(1, sizeof *yyval.command);
 			yyval.command->line = ps->input->line;
 
 			yyval.command->argc = yyvsp[0].arguments.argc;
 			yyval.command->argv = yyvsp[0].arguments.argv;
+			cmd_prepend_argv(&yyval.command->argc, &yyval.command->argv, yyvsp[-1].token);
 		}
 break;
-case 32:
-#line 409 "cmd-parse.y"
+case 34:
+#line 428 "cmd-parse.y"
 {
 			if (yyvsp[-2].flag)
 				yyval.commands = yyvsp[-1].commands;
@@ -1899,8 +1912,8 @@ case 32:
 			}
 		}
 break;
-case 33:
-#line 418 "cmd-parse.y"
+case 35:
+#line 437 "cmd-parse.y"
 {
 			if (yyvsp[-4].flag) {
 				yyval.commands = yyvsp[-3].commands;
@@ -1911,8 +1924,8 @@ case 33:
 			}
 		}
 break;
-case 34:
-#line 428 "cmd-parse.y"
+case 36:
+#line 447 "cmd-parse.y"
 {
 			if (yyvsp[-3].flag) {
 				yyval.commands = yyvsp[-2].commands;
@@ -1927,8 +1940,8 @@ case 34:
 			}
 		}
 break;
-case 35:
-#line 442 "cmd-parse.y"
+case 37:
+#line 461 "cmd-parse.y"
 {
 			if (yyvsp[-5].flag) {
 				yyval.commands = yyvsp[-4].commands;
@@ -1945,8 +1958,8 @@ case 35:
 			}
 		}
 break;
-case 36:
-#line 459 "cmd-parse.y"
+case 38:
+#line 478 "cmd-parse.y"
 {
 			if (yyvsp[-1].flag) {
 				yyval.elif.flag = 1;
@@ -1958,8 +1971,8 @@ case 36:
 			}
 		}
 break;
-case 37:
-#line 470 "cmd-parse.y"
+case 39:
+#line 489 "cmd-parse.y"
 {
 			if (yyvsp[-2].flag) {
 				yyval.elif.flag = 1;
@@ -1977,8 +1990,8 @@ case 37:
 			}
 		}
 break;
-case 38:
-#line 488 "cmd-parse.y"
+case 40:
+#line 507 "cmd-parse.y"
 {
 			yyval.arguments.argc = 1;
 			yyval.arguments.argv = xreallocarray(NULL, 1, sizeof *yyval.arguments.argv);
@@ -1986,27 +1999,48 @@ case 38:
 			yyval.arguments.argv[0] = yyvsp[0].token;
 		}
 break;
-case 39:
-#line 495 "cmd-parse.y"
+case 41:
+#line 514 "cmd-parse.y"
 {
 			cmd_prepend_argv(&yyvsp[0].arguments.argc, &yyvsp[0].arguments.argv, yyvsp[-1].token);
 			free(yyvsp[-1].token);
 			yyval.arguments = yyvsp[0].arguments;
 		}
 break;
-case 40:
-#line 502 "cmd-parse.y"
+case 42:
+#line 521 "cmd-parse.y"
 {
 			yyval.token = yyvsp[0].token;
 		}
 break;
-case 41:
-#line 506 "cmd-parse.y"
+case 43:
+#line 525 "cmd-parse.y"
 {
 			yyval.token = yyvsp[0].token;
 		}
 break;
-#line 2002 "cmd-parse.c"
+case 44:
+#line 529 "cmd-parse.y"
+{
+			yyval.token = cmd_parse_commands_to_string(yyvsp[0].commands);
+			cmd_parse_free_commands(yyvsp[0].commands);
+		}
+break;
+case 45:
+#line 535 "cmd-parse.y"
+{
+				yyval.commands = yyvsp[-1].commands;
+			}
+break;
+case 46:
+#line 539 "cmd-parse.y"
+{
+				yyval.commands = yyvsp[-2].commands;
+				TAILQ_CONCAT(yyval.commands, yyvsp[-1].commands, entry);
+				free(yyvsp[-1].commands);
+			}
+break;
+#line 2036 "cmd-parse.c"
     }
     yyssp -= yym;
     yystate = *yyssp;

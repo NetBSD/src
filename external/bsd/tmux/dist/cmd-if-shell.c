@@ -56,26 +56,23 @@ struct cmd_if_shell_data {
 
 	struct client		*client;
 	struct cmdq_item	*item;
-	struct mouse_event	 mouse;
 };
 
 static enum cmd_retval
 cmd_if_shell_exec(struct cmd *self, struct cmdq_item *item)
 {
-	struct args			*args = self->args;
-	struct mouse_event		*m = &item->shared->mouse;
+	struct args			*args = cmd_get_args(self);
+	struct cmd_find_state		*target = cmdq_get_target(item);
+	struct cmdq_state		*state = cmdq_get_state(item);
 	struct cmd_if_shell_data	*cdata;
-	char				*shellcmd, *cmd;
-	struct cmdq_item		*new_item;
-	struct cmd_find_state		*fs = &item->target;
-	struct client			*c = cmd_find_client(item, NULL, 1);
-	struct session			*s = fs->s;
-	struct winlink			*wl = fs->wl;
-	struct window_pane		*wp = fs->wp;
+	char				*shellcmd, *cmd, *error;
+	const char			*file;
+	struct client			*tc = cmdq_get_target_client(item);
+	struct session			*s = target->s;
 	struct cmd_parse_input		 pi;
-	struct cmd_parse_result		*pr;
+	enum cmd_parse_status		 status;
 
-	shellcmd = format_single(item, args->argv[0], c, s, wl, wp);
+	shellcmd = format_single_from_target(item, args->argv[0]);
 	if (args_has(args, 'F')) {
 		if (*shellcmd != '0' && *shellcmd != '\0')
 			cmd = args->argv[1];
@@ -88,26 +85,16 @@ cmd_if_shell_exec(struct cmd *self, struct cmdq_item *item)
 			return (CMD_RETURN_NORMAL);
 
 		memset(&pi, 0, sizeof pi);
-		if (self->file != NULL)
-			pi.file = self->file;
-		pi.line = self->line;
+		cmd_get_source(self, &pi.file, &pi.line);
 		pi.item = item;
-		pi.c = c;
-		cmd_find_copy_state(&pi.fs, fs);
+		pi.c = tc;
+		cmd_find_copy_state(&pi.fs, target);
 
-		pr = cmd_parse_from_string(cmd, &pi);
-		switch (pr->status) {
-		case CMD_PARSE_EMPTY:
-			break;
-		case CMD_PARSE_ERROR:
-			cmdq_error(item, "%s", pr->error);
-			free(pr->error);
+		status = cmd_parse_and_insert(cmd, &pi, item, state, &error);
+		if (status == CMD_PARSE_ERROR) {
+			cmdq_error(item, "%s", error);
+			free(error);
 			return (CMD_RETURN_ERROR);
-		case CMD_PARSE_SUCCESS:
-			new_item = cmdq_get_command(pr->cmdlist, fs, m, 0);
-			cmdq_insert_after(item, new_item);
-			cmd_list_free(pr->cmdlist);
-			break;
 		}
 		return (CMD_RETURN_NORMAL);
 	}
@@ -119,12 +106,11 @@ cmd_if_shell_exec(struct cmd *self, struct cmdq_item *item)
 		cdata->cmd_else = xstrdup(args->argv[2]);
 	else
 		cdata->cmd_else = NULL;
-	memcpy(&cdata->mouse, m, sizeof cdata->mouse);
 
 	if (!args_has(args, 'b'))
-		cdata->client = item->client;
+		cdata->client = cmdq_get_client(item);
 	else
-		cdata->client = c;
+		cdata->client = tc;
 	if (cdata->client != NULL)
 		cdata->client->references++;
 
@@ -134,17 +120,18 @@ cmd_if_shell_exec(struct cmd *self, struct cmdq_item *item)
 		cdata->item = NULL;
 
 	memset(&cdata->input, 0, sizeof cdata->input);
-	if (self->file != NULL)
-		cdata->input.file = xstrdup(self->file);
-	cdata->input.line = self->line;
-	cdata->input.item = cdata->item;
-	cdata->input.c = c;
+	cmd_get_source(self, &file, &cdata->input.line);
+	if (file != NULL)
+		cdata->input.file = xstrdup(file);
+	cdata->input.c = tc;
 	if (cdata->input.c != NULL)
 		cdata->input.c->references++;
-	cmd_find_copy_state(&cdata->input.fs, fs);
+	cmd_find_copy_state(&cdata->input.fs, target);
 
-	if (job_run(shellcmd, s, server_client_get_cwd(item->client, s), NULL,
-	    cmd_if_shell_callback, cmd_if_shell_free, cdata, 0) == NULL) {
+	if (job_run(shellcmd, 0, NULL, s,
+	    server_client_get_cwd(cmdq_get_client(item), s), NULL,
+	    cmd_if_shell_callback, cmd_if_shell_free, cdata, 0, -1,
+	    -1) == NULL) {
 		cmdq_error(item, "failed to run command: %s", shellcmd);
 		free(shellcmd);
 		free(cdata);
@@ -162,8 +149,8 @@ cmd_if_shell_callback(struct job *job)
 {
 	struct cmd_if_shell_data	*cdata = job_get_data(job);
 	struct client			*c = cdata->client;
-	struct mouse_event		*m = &cdata->mouse;
 	struct cmdq_item		*new_item = NULL;
+	struct cmdq_state		*new_state = NULL;
 	char				*cmd;
 	int				 status;
 	struct cmd_parse_result		*pr;
@@ -186,7 +173,13 @@ cmd_if_shell_callback(struct job *job)
 		free(pr->error);
 		break;
 	case CMD_PARSE_SUCCESS:
-		new_item = cmdq_get_command(pr->cmdlist, NULL, m, 0);
+		if (cdata->item == NULL)
+			new_state = cmdq_new_state(NULL, NULL, 0);
+		else
+			new_state = cmdq_get_state(cdata->item);
+		new_item = cmdq_get_command(pr->cmdlist, new_state);
+		if (cdata->item == NULL)
+			cmdq_free_state(new_state);
 		cmd_list_free(pr->cmdlist);
 		break;
 	}
