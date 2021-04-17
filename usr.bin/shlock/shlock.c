@@ -1,4 +1,4 @@
-/*	$NetBSD: shlock.c,v 1.14 2021/04/16 22:41:12 christos Exp $	*/
+/*	$NetBSD: shlock.c,v 1.15 2021/04/17 00:02:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: shlock.c,v 1.14 2021/04/16 22:41:12 christos Exp $");
+__RCSID("$NetBSD: shlock.c,v 1.15 2021/04/17 00:02:19 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -254,7 +254,7 @@ cklock(const char *file, struct stat *st, int uucpstyle)
 static int
 mklock(const char *file, pid_t pid, int uucpstyle)
 {
-	char	*tmp, tmp2[BUFSIZ];
+	char	*tmp, tmp2[BUFSIZ + 2];
 	int	retcode = FALSE;
 	struct stat stlock, sttmp, stlock2;
 
