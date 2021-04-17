@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.26 2021/04/13 04:58:59 mrg Exp $
+# $NetBSD: Makefile,v 1.27 2021/04/17 20:42:10 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -86,8 +86,9 @@ control-notify.c \
 control.c \
 environ.c \
 file.c \
-format.c \
 format-draw.c \
+format.c \
+grid-reader.c \
 grid-view.c \
 grid.c \
 input-keys.c \
@@ -107,6 +108,7 @@ options-table.c \
 options.c \
 osdep-netbsd.c \
 paste.c \
+popup.c \
 proc.c \
 regsub.c \
 resize.c \
@@ -122,6 +124,7 @@ status.c \
 style.c \
 tmux.c \
 tty-acs.c \
+tty-features.c \
 tty-keys.c \
 tty-term.c \
 tty.c \
@@ -130,10 +133,10 @@ window-buffer.c \
 window-client.c \
 window-clock.c \
 window-copy.c \
+window-customize.c \
 window-tree.c \
 window.c \
-xmalloc.c \
-xterm-keys.c
+xmalloc.c
 
 SRCS+=	utempter.c
 CPPFLAGS+=-DSUPPORT_UTMP -DSUPPORT_UTMPX
@@ -163,19 +166,25 @@ CPPFLAGS+=	\
 -DHAVE_BITSTRING_H=1 \
 -DHAVE_BSD_GETOPT=1 \
 -DHAVE_CFMAKERAW=1 \
+-DHAVE_CLOCK_GETTIME=1 \
 -DHAVE_CLOSEFROM=1 \
 -DHAVE_CURSES_H=1 \
 -DHAVE_DAEMON=1 \
 -DHAVE_DIRENT_H=1 \
+-DHAVE_EVENT2_EVENT_H=1 \
 -DHAVE_FCNTL_CLOSEM=1 \
 -DHAVE_FCNTL_H=1 \
 -DHAVE_FGETLN=1 \
 -DHAVE_FLOCK=1 \
 -DHAVE_FORKPTY=1 \
 -DHAVE_FPARSELN=1 \
+-DHAVE_GETDTABLESIZE=1 \
+-DHAVE_GETLINE=1 \
 -DHAVE_GETOPT=1 \
 -DHAVE_GETPROGNAME=1 \
 -DHAVE_INTTYPES_H=1 \
+-DHAVE_LIBM=1 \
+-DHAVE_LIBPROC_H=1 \
 -DHAVE_MEMMEM=1 \
 -DHAVE_MEMORY_H=1 \
 -DHAVE_PATHS_H=1 \
@@ -196,6 +205,7 @@ CPPFLAGS+=	\
 -DHAVE_STRTONUM=1 \
 -DHAVE_SYSCONF=1 \
 -DHAVE_SYS_DIR_H=1 \
+-DHAVE_SYS_SIGNAME=1 \
 -DHAVE_SYS_STAT_H=1 \
 -DHAVE_SYS_TREE_H=1 \
 -DHAVE_SYS_TYPES_H=1 \
@@ -208,18 +218,21 @@ CPPFLAGS+=	\
 -DPACKAGE=\"tmux\" \
 -DPACKAGE_BUGREPORT=\"\" \
 -DPACKAGE_NAME=\"tmux\" \
--DPACKAGE_STRING=\"tmux\ 3.1c\" \
+-DPACKAGE_STRING=\"tmux\ 3.2\" \
 -DPACKAGE_TARNAME=\"tmux\" \
 -DPACKAGE_URL=\"\" \
--DPACKAGE_VERSION=\"3.1c\" \
+-DPACKAGE_VERSION=\"3.2\" \
 -DSTDC_HEADERS=1 \
 -DTMUX_CONF="\"/etc/tmux.conf:~/.tmux.conf:~/.config/tmux/tmux.conf\"" \
--DTMUX_VERSION=\"3.1c\" \
+-DTMUX_VERSION='"3.2"' \
+-DVERSION=\"3.2\" \
 -D_ALL_SOURCE=1 \
 -D_GNU_SOURCE=1 \
+-D_NETBSD_SOURCE \
 -D_OPENBSD_SOURCE \
 -D_POSIX_PTHREAD_SEMANTICS=1 \
 -D_TANDEM_SOURCE=1 \
+-D_XOPEN_SOURCE=500 \
 -D__EXTENSIONS__=1
 
 LDADD+=		-levent -lterminfo -lutil -lm

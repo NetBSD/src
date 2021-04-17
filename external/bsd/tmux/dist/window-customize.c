@@ -117,7 +117,7 @@ window_customize_get_tag(struct options_entry *o, int idx,
 
 	if (oe == NULL)
 		return ((uint64_t)o);
-	offset = ((char *)oe - (char *)options_table) / sizeof *options_table;
+	offset = ((const char *)oe - (const char *)options_table) / sizeof *options_table;
 	return ((2ULL << 62)|(offset << 32)|((idx + 1) << 1)|1);
 }
 
@@ -1223,7 +1223,7 @@ window_customize_set_note_callback(__unused struct client *c, void *itemdata,
 	if (item == NULL || !window_customize_get_key(item, NULL, &bd))
 		return (0);
 
-	free((void *)bd->note);
+	free(__UNCONST(bd->note));
 	bd->note = xstrdup(s);
 
 	mode_tree_build(data->data);

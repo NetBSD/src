@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <wchar.h>
 
 #include "tmux.h"
 
@@ -42,7 +43,6 @@ struct cmd_parse_scope {
 };
 
 struct cmd_parse_command {
-	char				 *name;
 	u_int				  line;
 
 	int				  argc;
@@ -77,6 +77,7 @@ static char	*cmd_parse_get_error(const char *, u_int, const char *);
 static void	 cmd_parse_free_command(struct cmd_parse_command *);
 static struct cmd_parse_commands *cmd_parse_new_commands(void);
 static void	 cmd_parse_free_commands(struct cmd_parse_commands *);
+static char	*cmd_parse_commands_to_string(struct cmd_parse_commands *);
 static void	 cmd_parse_print_commands(struct cmd_parse_input *, u_int,
 		     struct cmd_list *);
 
@@ -99,6 +100,7 @@ static void	 cmd_parse_print_commands(struct cmd_parse_input *, u_int,
 }
 
 %token ERROR
+%token HIDDEN
 %token IF
 %token ELSE
 %token ELIF
@@ -109,7 +111,8 @@ static void	 cmd_parse_print_commands(struct cmd_parse_input *, u_int,
 %type <arguments> arguments
 %type <flag> if_open if_elif
 %type <elif> elif elif1
-%type <commands> statements statement commands condition condition1
+%type <commands> argument_statements statements statement
+%type <commands> commands condition condition1
 %type <command> command
 
 %%
@@ -134,6 +137,11 @@ statements	: statement '\n'
 		}
 
 statement	: /* empty */
+		{
+			$$ = xmalloc (sizeof *$$);
+			TAILQ_INIT($$);
+		}
+		| hidden_assignment
 		{
 			$$ = xmalloc (sizeof *$$);
 			TAILQ_INIT($$);
@@ -204,8 +212,19 @@ assignment	: EQUALS
 
 			if ((~flags & CMD_PARSE_PARSEONLY) &&
 			    (ps->scope == NULL || ps->scope->flag))
-				environ_put(global_environ, $1);
+				environ_put(global_environ, $1, 0);
 			free($1);
+		}
+
+hidden_assignment : HIDDEN EQUALS
+		{
+			struct cmd_parse_state	*ps = &parse_state;
+			int			 flags = ps->input->flags;
+
+			if ((~flags & CMD_PARSE_PARSEONLY) &&
+			    (ps->scope == NULL || ps->scope->flag))
+				environ_put(global_environ, $2, ENVIRON_HIDDEN);
+			free($2);
 		}
 
 if_open		: IF expanded
@@ -341,7 +360,7 @@ commands	: command
 			struct cmd_parse_state	*ps = &parse_state;
 
 			$$ = cmd_parse_new_commands();
-			if ($1->name != NULL &&
+			if ($1->argc != 0 &&
 			    (ps->scope == NULL || ps->scope->flag))
 				TAILQ_INSERT_TAIL($$, $1, entry);
 			else
@@ -361,7 +380,7 @@ commands	: command
 		{
 			struct cmd_parse_state	*ps = &parse_state;
 
-			if ($3->name != NULL &&
+			if ($3->argc != 0 &&
 			    (ps->scope == NULL || ps->scope->flag)) {
 				$$ = $1;
 				TAILQ_INSERT_TAIL($$, $3, entry);
@@ -381,7 +400,6 @@ command		: assignment
 			struct cmd_parse_state	*ps = &parse_state;
 
 			$$ = xcalloc(1, sizeof *$$);
-			$$->name = NULL;
 			$$->line = ps->input->line;
 		}
 		| optional_assignment TOKEN
@@ -389,8 +407,9 @@ command		: assignment
 			struct cmd_parse_state	*ps = &parse_state;
 
 			$$ = xcalloc(1, sizeof *$$);
-			$$->name = $2;
 			$$->line = ps->input->line;
+
+			cmd_prepend_argv(&$$->argc, &$$->argv, $2);
 
 		}
 		| optional_assignment TOKEN arguments
@@ -398,11 +417,11 @@ command		: assignment
 			struct cmd_parse_state	*ps = &parse_state;
 
 			$$ = xcalloc(1, sizeof *$$);
-			$$->name = $2;
 			$$->line = ps->input->line;
 
 			$$->argc = $3.argc;
 			$$->argv = $3.argv;
+			cmd_prepend_argv(&$$->argc, &$$->argv, $2);
 		}
 
 condition1	: if_open commands if_close
@@ -506,6 +525,22 @@ argument	: TOKEN
 		{
 			$$ = $1;
 		}
+		| '{' argument_statements
+		{
+			$$ = cmd_parse_commands_to_string($2);
+			cmd_parse_free_commands($2);
+		}
+
+argument_statements	: statement '}'
+			{
+				$$ = $1;
+			}
+			| statements statement '}'
+			{
+				$$ = $1;
+				TAILQ_CONCAT($$, $2, entry);
+				free($2);
+			}
 
 %%
 
@@ -540,7 +575,6 @@ cmd_parse_print_commands(struct cmd_parse_input *pi, u_int line,
 static void
 cmd_parse_free_command(struct cmd_parse_command *cmd)
 {
-	free(cmd->name);
 	cmd_free_argv(cmd->argc, cmd->argv);
 	free(cmd);
 }
@@ -565,6 +599,30 @@ cmd_parse_free_commands(struct cmd_parse_commands *cmds)
 		cmd_parse_free_command(cmd);
 	}
 	free(cmds);
+}
+
+static char *
+cmd_parse_commands_to_string(struct cmd_parse_commands *cmds)
+{
+	struct cmd_parse_command	 *cmd;
+	char				 *string = NULL, *s, *line;
+
+	TAILQ_FOREACH(cmd, cmds, entry) {
+		line = cmd_stringify_argv(cmd->argc, cmd->argv);
+		if (string == NULL)
+			s = line;
+		else {
+			xasprintf(&s, "%s ; %s", s, line);
+			free(line);
+		}
+
+		free(string);
+		string = s;
+	}
+	if (string == NULL)
+		string = xstrdup("");
+	log_debug("%s: %s", __func__, string);
+	return (string);
 }
 
 static struct cmd_parse_commands *
@@ -627,7 +685,7 @@ cmd_parse_build_commands(struct cmd_parse_commands *cmds,
 	int				 i;
 	struct cmd_list			*cmdlist = NULL, *result;
 	struct cmd			*add;
-	char				*alias, *cause, *s;
+	char				*name, *alias, *cause, *s;
 
 	/* Check for an empty list. */
 	if (TAILQ_EMPTY(cmds)) {
@@ -643,12 +701,14 @@ cmd_parse_build_commands(struct cmd_parse_commands *cmds,
 	 * command list.
 	 */
 	TAILQ_FOREACH_SAFE(cmd, cmds, entry, next) {
-		alias = cmd_get_alias(cmd->name);
+		name = cmd->argv[0];
+
+		alias = cmd_get_alias(name);
 		if (alias == NULL)
 			continue;
 
 		line = cmd->line;
-		log_debug("%s: %u %s = %s", __func__, line, cmd->name, alias);
+		log_debug("%s: %u %s = %s", __func__, line, name, alias);
 
 		pi->line = line;
 		cmds2 = cmd_parse_do_buffer(alias, strlen(alias), pi, &cause);
@@ -665,7 +725,7 @@ cmd_parse_build_commands(struct cmd_parse_commands *cmds,
 			cmd_parse_free_command(cmd);
 			continue;
 		}
-		for (i = 0; i < cmd->argc; i++)
+		for (i = 1; i < cmd->argc; i++)
 			cmd_append_argv(&cmd2->argc, &cmd2->argv, cmd->argv[i]);
 
 		after = cmd;
@@ -683,15 +743,18 @@ cmd_parse_build_commands(struct cmd_parse_commands *cmds,
 
 	/*
 	 * Parse each command into a command list. Create a new command list
-	 * for each line so they get a new group (so the queue knows which ones
-	 * to remove if a command fails when executed).
+	 * for each line (unless the flag is set) so they get a new group (so
+	 * the queue knows which ones to remove if a command fails when
+	 * executed).
 	 */
 	result = cmd_list_new();
 	TAILQ_FOREACH(cmd, cmds, entry) {
-		log_debug("%s: %u %s", __func__, cmd->line, cmd->name);
+		name = cmd->argv[0];
+		log_debug("%s: %u %s", __func__, cmd->line, name);
 		cmd_log_argv(cmd->argc, cmd->argv, __func__);
 
-		if (cmdlist == NULL || cmd->line != line) {
+		if (cmdlist == NULL ||
+		    ((~pi->flags & CMD_PARSE_ONEGROUP) && cmd->line != line)) {
 			if (cmdlist != NULL) {
 				cmd_parse_print_commands(pi, line, cmdlist);
 				cmd_list_move(result, cmdlist);
@@ -701,7 +764,6 @@ cmd_parse_build_commands(struct cmd_parse_commands *cmds,
 		}
 		line = cmd->line;
 
-		cmd_prepend_argv(&cmd->argc, &cmd->argv, cmd->name);
 		add = cmd_parse(cmd->argc, cmd->argv, pi->file, line, &cause);
 		if (add == NULL) {
 			cmd_list_free(result);
@@ -758,7 +820,72 @@ cmd_parse_from_file(FILE *f, struct cmd_parse_input *pi)
 struct cmd_parse_result *
 cmd_parse_from_string(const char *s, struct cmd_parse_input *pi)
 {
+	struct cmd_parse_input	input;
+
+	if (pi == NULL) {
+		memset(&input, 0, sizeof input);
+		pi = &input;
+	}
+
+	/*
+	 * When parsing a string, put commands in one group even if there are
+	 * multiple lines. This means { a \n b } is identical to "a ; b" when
+	 * given as an argument to another command.
+	 */
+	pi->flags |= CMD_PARSE_ONEGROUP;
 	return (cmd_parse_from_buffer(s, strlen(s), pi));
+}
+
+enum cmd_parse_status
+cmd_parse_and_insert(const char *s, struct cmd_parse_input *pi,
+    struct cmdq_item *after, struct cmdq_state *state, char **error)
+{
+	struct cmd_parse_result	*pr;
+	struct cmdq_item	*item;
+
+	pr = cmd_parse_from_string(s, pi);
+	switch (pr->status) {
+	case CMD_PARSE_EMPTY:
+		break;
+	case CMD_PARSE_ERROR:
+		if (error != NULL)
+			*error = pr->error;
+		else
+			free(pr->error);
+		break;
+	case CMD_PARSE_SUCCESS:
+		item = cmdq_get_command(pr->cmdlist, state);
+		cmdq_insert_after(after, item);
+		cmd_list_free(pr->cmdlist);
+		break;
+	}
+	return (pr->status);
+}
+
+enum cmd_parse_status
+cmd_parse_and_append(const char *s, struct cmd_parse_input *pi,
+    struct client *c, struct cmdq_state *state, char **error)
+{
+	struct cmd_parse_result	*pr;
+	struct cmdq_item	*item;
+
+	pr = cmd_parse_from_string(s, pi);
+	switch (pr->status) {
+	case CMD_PARSE_EMPTY:
+		break;
+	case CMD_PARSE_ERROR:
+		if (error != NULL)
+			*error = pr->error;
+		else
+			free(pr->error);
+		break;
+	case CMD_PARSE_SUCCESS:
+		item = cmdq_get_command(pr->cmdlist, state);
+		cmdq_append(c, item);
+		cmd_list_free(pr->cmdlist);
+		break;
+	}
+	return (pr->status);
 }
 
 struct cmd_parse_result *
@@ -836,11 +963,10 @@ cmd_parse_from_arguments(int argc, char **argv, struct cmd_parse_input *pi)
 			    i);
 
 			cmd = xcalloc(1, sizeof *cmd);
-			cmd->name = xstrdup(new_argv[0]);
 			cmd->line = pi->line;
 
-			cmd->argc = new_argc - 1;
-			cmd->argv = cmd_copy_argv(new_argc - 1, new_argv + 1);
+			cmd->argc = new_argc;
+			cmd->argv = cmd_copy_argv(new_argc, new_argv);
 
 			TAILQ_INSERT_TAIL(cmds, cmd, entry);
 		}
@@ -856,11 +982,10 @@ cmd_parse_from_arguments(int argc, char **argv, struct cmd_parse_input *pi)
 			    last);
 
 			cmd = xcalloc(1, sizeof *cmd);
-			cmd->name = xstrdup(new_argv[0]);
 			cmd->line = pi->line;
 
-			cmd->argc = new_argc - 1;
-			cmd->argv = cmd_copy_argv(new_argc - 1, new_argv + 1);
+			cmd->argc = new_argc;
+			cmd->argv = cmd_copy_argv(new_argc, new_argv);
 
 			TAILQ_INSERT_TAIL(cmds, cmd, entry);
 		}
@@ -1038,11 +1163,11 @@ yylex(void)
 			return ('\n');
 		}
 
-		if (ch == ';') {
+		if (ch == ';' || ch == '{' || ch == '}') {
 			/*
-			 * A semicolon is itself.
+			 * A semicolon or { or } is itself.
 			 */
-			return (';');
+			return (ch);
 		}
 
 		if (ch == '#') {
@@ -1079,6 +1204,10 @@ yylex(void)
 			if (*cp == '\0')
 				return (TOKEN);
 			ps->condition = 1;
+			if (strcmp(yylval.token, "%hidden") == 0) {
+				free(yylval.token);
+				return (HIDDEN);
+			}
 			if (strcmp(yylval.token, "%if") == 0) {
 				free(yylval.token);
 				return (IF);
@@ -1163,10 +1292,9 @@ error:
 static int
 yylex_token_escape(char **buf, size_t *len)
 {
-	int			 ch, type, o2, o3;
-	u_int			 size, i, tmp;
-	char			 s[9];
-	struct utf8_data	 ud;
+	int	 ch, type, o2, o3, mlen;
+	u_int	 size, i, tmp;
+	char	 s[9], m[MB_LEN_MAX];
 
 	ch = yylex_getc();
 
@@ -1251,11 +1379,12 @@ unicode:
 		yyerror("invalid \\%c argument", type);
 		return (0);
 	}
-	if (utf8_split(tmp, &ud) != UTF8_DONE) {
+	mlen = wctomb(m, tmp);
+	if (mlen <= 0 || mlen > (int)sizeof m) {
 		yyerror("invalid \\%c argument", type);
 		return (0);
 	}
-	yylex_append(buf, len, (char *)ud.data, ud.size);
+	yylex_append(buf, len, m, mlen);
 	return (1);
 }
 
@@ -1303,7 +1432,7 @@ yylex_token_variable(char **buf, size_t *len)
 	name[namelen] = '\0';
 
 	envent = environ_find(global_environ, name);
-	if (envent != NULL) {
+	if (envent != NULL && envent->value != NULL) {
 		value = envent->value;
 		log_debug("%s: %s -> %s", __func__, name, value);
 		yylex_append(buf, len, value, strlen(value));
@@ -1353,119 +1482,6 @@ yylex_token_tilde(char **buf, size_t *len)
 	return (1);
 }
 
-static int
-yylex_token_brace(char **buf, size_t *len)
-{
-	struct cmd_parse_state	*ps = &parse_state;
-	int 			 ch, lines = 0, nesting = 1, escape = 0;
-	int			 quote = '\0', token = 0;
-
-	/*
-	 * Extract a string up to the matching unquoted '}', including newlines
-	 * and handling nested braces.
-	 *
-	 * To detect the final and intermediate braces which affect the nesting
-	 * depth, we scan the input as if it was a tmux config file, and ignore
-	 * braces which would be considered quoted, escaped, or in a comment.
-	 *
-	 * We update the token state after every character because '#' begins a
-	 * comment only when it begins a token. For simplicity, we treat an
-	 * unquoted directive format as comment.
-	 *
-	 * The result is verbatim copy of the input excluding the final brace.
-	 */
-
-	for (ch = yylex_getc1(); ch != EOF; ch = yylex_getc1()) {
-		yylex_append1(buf, len, ch);
-		if (ch == '\n')
-			lines++;
-
-		/*
-		 * If the previous character was a backslash (escape is set),
-		 * escape anything if unquoted or in double quotes, otherwise
-		 * escape only '\n' and '\\'.
-		 */
-		if (escape &&
-		    (quote == '\0' ||
-		    quote == '"' ||
-		    ch == '\n' ||
-		    ch == '\\')) {
-			escape = 0;
-			if (ch != '\n')
-				token = 1;
-			continue;
-		}
-
-		/*
-		 * The character is not escaped. If it is a backslash, set the
-		 * escape flag.
-		 */
-		if (ch == '\\') {
-			escape = 1;
-			continue;
-		}
-		escape = 0;
-
-		/* A newline always resets to unquoted. */
-		if (ch == '\n') {
-			quote = token = 0;
-			continue;
-		}
-
-		if (quote) {
-			/*
-			 * Inside quotes or comment. Check if this is the
-			 * closing quote.
-			 */
-			if (ch == quote && quote != '#')
-				quote = 0;
-			token = 1;  /* token continues regardless */
-		} else {
-			/* Not inside quotes or comment. */
-			switch (ch) {
-			case '"':
-			case '\'':
-			case '#':
-				/* Beginning of quote or maybe comment. */
-				if (ch != '#' || !token)
-					quote = ch;
-				token = 1;
-				break;
-			case ' ':
-			case '\t':
-			case ';':
-				/* Delimiter - token resets. */
-				token = 0;
-				break;
-			case '{':
-				nesting++;
-				token = 0; /* new commands set - token resets */
-				break;
-			case '}':
-				nesting--;
-				token = 1;  /* same as after quotes */
-				if (nesting == 0) {
-					(*len)--; /* remove closing } */
-					ps->input->line += lines;
-					return (1);
-				}
-				break;
-			default:
-				token = 1;
-				break;
-			}
-		}
-	}
-
-	/*
-	 * Update line count after error as reporting the opening line is more
-	 * useful than EOF.
-	 */
-	yyerror("unterminated brace string");
-	ps->input->line += lines;
-	return (0);
-}
-
 static char *
 yylex_token(int ch)
 {
@@ -1480,23 +1496,37 @@ yylex_token(int ch)
 	buf = xmalloc(1);
 
 	for (;;) {
-		/*
-		 * EOF or \n are always the end of the token. If inside quotes
-		 * they are an error.
-		 */
-		if (ch == EOF || ch == '\n') {
-			if (state != NONE)
-				goto error;
+		/* EOF or \n are always the end of the token. */
+		if (ch == EOF || (state == NONE && ch == '\n'))
 			break;
+
+		/* Whitespace or ; or } ends a token unless inside quotes. */
+		if ((ch == ' ' || ch == '\t' || ch == ';' || ch == '}') &&
+		    state == NONE)
+			break;
+
+		/*
+		 * Spaces and comments inside quotes after \n are removed but
+		 * the \n is left.
+		 */
+		if (ch == '\n' && state != NONE) {
+			yylex_append1(&buf, &len, '\n');
+			while ((ch = yylex_getc()) == ' ' || ch == '\t')
+				/* nothing */;
+			if (ch != '#')
+				continue;
+			ch = yylex_getc();
+			if (strchr(",#{}:", ch) != NULL) {
+				yylex_ungetc(ch);
+				ch = '#';
+			} else {
+				while ((ch = yylex_getc()) != '\n' && ch != EOF)
+					/* nothing */;
+			}
+			continue;
 		}
 
-		/* Whitespace or ; ends a token unless inside quotes. */
-		if ((ch == ' ' || ch == '\t' || ch == ';') && state == NONE)
-			break;
-
-		/*
-		 * \ ~ and $ are expanded except in single quotes.
-		 */
+		/* \ ~ and $ are expanded except in single quotes. */
 		if (ch == '\\' && state != SINGLE_QUOTES) {
 			if (!yylex_token_escape(&buf, &len))
 				goto error;
@@ -1512,17 +1542,10 @@ yylex_token(int ch)
 				goto error;
 			goto skip;
 		}
-		if (ch == '{' && state == NONE) {
-			if (!yylex_token_brace(&buf, &len))
-				goto error;
-			goto skip;
-		}
 		if (ch == '}' && state == NONE)
 			goto error;  /* unmatched (matched ones were handled) */
 
-		/*
-		 * ' and " starts or end quotes (and is consumed).
-		 */
+		/* ' and " starts or end quotes (and is consumed). */
 		if (ch == '\'') {
 			if (state == NONE) {
 				state = SINGLE_QUOTES;
@@ -1544,9 +1567,7 @@ yylex_token(int ch)
 			}
 		}
 
-		/*
-		 * Otherwise add the character to the buffer.
-		 */
+		/* Otherwise add the character to the buffer. */
 		yylex_append1(&buf, &len, ch);
 
 	skip:

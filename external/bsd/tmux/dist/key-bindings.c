@@ -34,8 +34,8 @@
 	" 'New Session' 's' {new-session}" \
 	" 'New Window' 'w' {new-window}"
 #define DEFAULT_WINDOW_MENU \
-	" 'Swap Left' 'l' {swap-window -t:-1}" \
-	" 'Swap Right' 'r' {swap-window -t:+1}" \
+	" '#{?#{>:#{session_windows},1},,-}Swap Left' 'l' {swap-window -t:-1}" \
+	" '#{?#{>:#{session_windows},1},,-}Swap Right' 'r' {swap-window -t:+1}" \
 	" '#{?pane_marked_set,,-}Swap Marked' 's' {swap-window}" \
 	" ''" \
 	" 'Kill' 'X' {kill-window}" \
@@ -46,22 +46,25 @@
 	" 'New After' 'w' {new-window -a}" \
 	" 'New At End' 'W' {new-window}"
 #define DEFAULT_PANE_MENU \
-	" '#{?mouse_word,Search For #[underscore]#{=/9/...:mouse_word},}' 'C-r' {copy-mode -t=; send -Xt= search-backward \"#{q:mouse_word}\"}" \
-	" '#{?mouse_word,Type #[underscore]#{=/9/...:mouse_word},}' 'C-y' {send-keys -l -- \"#{q:mouse_word}\"}" \
-	" '#{?mouse_word,Copy #[underscore]#{=/9/...:mouse_word},}' 'c' {set-buffer -- \"#{q:mouse_word}\"}" \
-	" '#{?mouse_line,Copy Line,}' 'l' {set-buffer -- \"#{q:mouse_line}\"}" \
+	" '#{?#{m/r:(copy|view)-mode,#{pane_mode}},Go To Top,}' '<' {send -X history-top}" \
+	" '#{?#{m/r:(copy|view)-mode,#{pane_mode}},Go To Bottom,}' '>' {send -X history-bottom}" \
+	" ''" \
+	" '#{?mouse_word,Search For #[underscore]#{=/9/...:mouse_word},}' 'C-r' {if -F '#{?#{m/r:(copy|view)-mode,#{pane_mode}},0,1}' 'copy-mode -t='; send -Xt= search-backward \"#{q:mouse_word}\"}" \
+	" '#{?mouse_word,Type #[underscore]#{=/9/...:mouse_word},}' 'C-y' {copy-mode -q; send-keys -l -- \"#{q:mouse_word}\"}" \
+	" '#{?mouse_word,Copy #[underscore]#{=/9/...:mouse_word},}' 'c' {copy-mode -q; set-buffer -- \"#{q:mouse_word}\"}" \
+	" '#{?mouse_line,Copy Line,}' 'l' {copy-mode -q; set-buffer -- \"#{q:mouse_line}\"}" \
 	" ''" \
 	" 'Horizontal Split' 'h' {split-window -h}" \
 	" 'Vertical Split' 'v' {split-window -v}" \
 	" ''" \
-	" 'Swap Up' 'u' {swap-pane -U}" \
-	" 'Swap Down' 'd' {swap-pane -D}" \
+	" '#{?#{>:#{window_panes},1},,-}Swap Up' 'u' {swap-pane -U}" \
+	" '#{?#{>:#{window_panes},1},,-}Swap Down' 'd' {swap-pane -D}" \
 	" '#{?pane_marked_set,,-}Swap Marked' 's' {swap-pane}" \
 	" ''" \
 	" 'Kill' 'X' {kill-pane}" \
 	" 'Respawn' 'R' {respawn-pane -k}" \
 	" '#{?pane_marked,Unmark,Mark}' 'm' {select-pane -m}" \
-	" '#{?window_zoomed_flag,Unzoom,Zoom}' 'z' {resize-pane -Z}"
+	" '#{?#{>:#{window_panes},1},,-}#{?window_zoomed_flag,Unzoom,Zoom}' 'z' {resize-pane -Z}"
 
 static int key_bindings_cmp(struct key_binding *, struct key_binding *);
 RB_GENERATE_STATIC(key_bindings, key_binding, entry, key_bindings_cmp);
@@ -86,9 +89,8 @@ key_bindings_cmp(struct key_binding *bd1, struct key_binding *bd2)
 }
 
 static void
-key_bindings_free(struct key_table *table, struct key_binding *bd)
+key_bindings_free(struct key_binding *bd)
 {
-	RB_REMOVE(key_bindings, &table->key_bindings, bd);
 	cmd_list_free(bd->cmdlist);
 	free(__UNCONST(bd->note));
 	free(bd);
@@ -107,6 +109,7 @@ key_bindings_get_table(const char *name, int create)
 	table = xmalloc(sizeof *table);
 	table->name = xstrdup(name);
 	RB_INIT(&table->key_bindings);
+	RB_INIT(&table->default_key_bindings);
 
 	table->references = 1; /* one reference in key_tables */
 	RB_INSERT(key_tables, &key_tables, table);
@@ -135,8 +138,14 @@ key_bindings_unref_table(struct key_table *table)
 	if (--table->references != 0)
 		return;
 
-	RB_FOREACH_SAFE(bd, key_bindings, &table->key_bindings, bd1)
-		key_bindings_free(table, bd);
+	RB_FOREACH_SAFE(bd, key_bindings, &table->key_bindings, bd1) {
+		RB_REMOVE(key_bindings, &table->key_bindings, bd);
+		key_bindings_free(bd);
+	}
+	RB_FOREACH_SAFE(bd, key_bindings, &table->default_key_bindings, bd1) {
+		RB_REMOVE(key_bindings, &table->default_key_bindings, bd);
+		key_bindings_free(bd);
+	}
 
 	free(__UNCONST(table->name));
 	free(table);
@@ -149,6 +158,15 @@ key_bindings_get(struct key_table *table, key_code key)
 
 	bd.key = key;
 	return (RB_FIND(key_bindings, &table->key_bindings, &bd));
+}
+
+struct key_binding *
+key_bindings_get_default(struct key_table *table, key_code key)
+{
+	struct key_binding	bd;
+
+	bd.key = key;
+	return (RB_FIND(key_bindings, &table->default_key_bindings, &bd));
 }
 
 struct key_binding *
@@ -172,12 +190,24 @@ key_bindings_add(const char *name, key_code key, const char *note, int repeat,
 
 	table = key_bindings_get_table(name, 1);
 
-	bd = key_bindings_get(table, key & ~KEYC_XTERM);
-	if (bd != NULL)
-		key_bindings_free(table, bd);
+	bd = key_bindings_get(table, key & ~KEYC_MASK_FLAGS);
+	if (cmdlist == NULL) {
+		if (bd != NULL) {
+			free(__UNCONST(bd->note));
+			if (note != NULL)
+				bd->note = xstrdup(note);
+			else
+				bd->note = NULL;
+		}
+		return;
+	}
+	if (bd != NULL) {
+		RB_REMOVE(key_bindings, &table->key_bindings, bd);
+		key_bindings_free(bd);
+	}
 
 	bd = xcalloc(1, sizeof *bd);
-	bd->key = key;
+	bd->key = (key & ~KEYC_MASK_FLAGS);
 	if (note != NULL)
 		bd->note = xstrdup(note);
 	RB_INSERT(key_bindings, &table->key_bindings, bd);
@@ -197,15 +227,50 @@ key_bindings_remove(const char *name, key_code key)
 	if (table == NULL)
 		return;
 
-	bd = key_bindings_get(table, key & ~KEYC_XTERM);
+	bd = key_bindings_get(table, key & ~KEYC_MASK_FLAGS);
 	if (bd == NULL)
 		return;
-	key_bindings_free(table, bd);
 
-	if (RB_EMPTY(&table->key_bindings)) {
+	RB_REMOVE(key_bindings, &table->key_bindings, bd);
+	key_bindings_free(bd);
+
+	if (RB_EMPTY(&table->key_bindings) &&
+	    RB_EMPTY(&table->default_key_bindings)) {
 		RB_REMOVE(key_tables, &key_tables, table);
 		key_bindings_unref_table(table);
 	}
+}
+
+void
+key_bindings_reset(const char *name, key_code key)
+{
+	struct key_table	*table;
+	struct key_binding	*bd, *dd;
+
+	table = key_bindings_get_table(name, 0);
+	if (table == NULL)
+		return;
+
+	bd = key_bindings_get(table, key & ~KEYC_MASK_FLAGS);
+	if (bd == NULL)
+		return;
+
+	dd = key_bindings_get_default(table, bd->key);
+	if (dd == NULL) {
+		key_bindings_remove(name, bd->key);
+		return;
+	}
+
+	cmd_list_free(bd->cmdlist);
+	bd->cmdlist = dd->cmdlist;
+	bd->cmdlist->references++;
+
+	free(__UNCONST(bd->note));
+	if (dd->note != NULL)
+		bd->note = xstrdup(dd->note);
+	else
+		bd->note = NULL;
+	bd->flags = dd->flags;
 }
 
 void
@@ -226,9 +291,49 @@ key_bindings_remove_table(const char *name)
 }
 
 void
+key_bindings_reset_table(const char *name)
+{
+	struct key_table	*table;
+	struct key_binding	*bd, *bd1;
+
+	table = key_bindings_get_table(name, 0);
+	if (table == NULL)
+		return;
+	if (RB_EMPTY(&table->default_key_bindings)) {
+		key_bindings_remove_table(name);
+		return;
+	}
+	RB_FOREACH_SAFE(bd, key_bindings, &table->key_bindings, bd1)
+		key_bindings_reset(name, bd->key);
+}
+
+static enum cmd_retval
+key_bindings_init_done(__unused struct cmdq_item *item, __unused void *data)
+{
+	struct key_table	*table;
+	struct key_binding	*bd, *new_bd;
+
+	RB_FOREACH(table, key_tables, &key_tables) {
+		RB_FOREACH(bd, key_bindings, &table->key_bindings) {
+			new_bd = xcalloc(1, sizeof *bd);
+			new_bd->key = bd->key;
+			if (bd->note != NULL)
+				new_bd->note = xstrdup(bd->note);
+			new_bd->flags = bd->flags;
+			new_bd->cmdlist = bd->cmdlist;
+			new_bd->cmdlist->references++;
+			RB_INSERT(key_bindings, &table->default_key_bindings,
+			    new_bd);
+		}
+	}
+	return (CMD_RETURN_NORMAL);
+}
+
+void
 key_bindings_init(void)
 {
 	static const char *defaults[] = {
+		/* Prefix keys. */
 		"bind -N 'Send the prefix key' C-b send-prefix",
 		"bind -N 'Rotate through the panes' C-o rotate-window",
 		"bind -N 'Suspend the current client' C-z suspend-client",
@@ -239,12 +344,12 @@ key_bindings_init(void)
 		"bind -N 'Rename current session' '$' command-prompt -I'#S' \"rename-session -- '%%'\"",
 		"bind -N 'Split window horizontally' % split-window -h",
 		"bind -N 'Kill current window' & confirm-before -p\"kill-window #W? (y/n)\" kill-window",
-		"bind -N 'Prompt for window index to select' \"'\" command-prompt -pindex \"select-window -t ':%%'\"",
+		"bind -N 'Prompt for window index to select' \"'\" command-prompt -Wpindex \"select-window -t ':%%'\"",
 		"bind -N 'Switch to previous client' ( switch-client -p",
 		"bind -N 'Switch to next client' ) switch-client -n",
 		"bind -N 'Rename current window' , command-prompt -I'#W' \"rename-window -- '%%'\"",
 		"bind -N 'Delete the most recent paste buffer' - delete-buffer",
-		"bind -N 'Move the current window' . command-prompt \"move-window -t '%%'\"",
+		"bind -N 'Move the current window' . command-prompt -T \"move-window -t '%%'\"",
 		"bind -N 'Describe key binding' '/' command-prompt -kpkey 'list-keys -1N \"%%%\"'",
 		"bind -N 'Select window 0' 0 select-window -t:=0",
 		"bind -N 'Select window 1' 1 select-window -t:=1",
@@ -265,7 +370,7 @@ key_bindings_init(void)
 		"bind -N 'Switch to the last client' L switch-client -l",
 		"bind -N 'Clear the marked pane' M select-pane -M",
 		"bind -N 'Enter copy mode' [ copy-mode",
-		"bind -N 'Paste the most recent paste buffer' ] paste-buffer",
+		"bind -N 'Paste the most recent paste buffer' ] paste-buffer -p",
 		"bind -N 'Create a new window' c new-window",
 		"bind -N 'Detach the current client' d detach-client",
 		"bind -N 'Search for a pane' f command-prompt \"find-window -Z -- '%%'\"",
@@ -274,7 +379,8 @@ key_bindings_init(void)
 		"bind -N 'Toggle the marked pane' m select-pane -m",
 		"bind -N 'Select the next window' n next-window",
 		"bind -N 'Select the next pane' o select-pane -t:.+",
-		"bind -N 'Select the previous pane' p previous-window",
+		"bind -N 'Customize options' C customize-mode -Z",
+		"bind -N 'Select the previous window' p previous-window",
 		"bind -N 'Display pane numbers' q display-panes",
 		"bind -N 'Redraw the current client' r refresh-client",
 		"bind -N 'Choose a session from a list' s choose-tree -Zs",
@@ -312,21 +418,51 @@ key_bindings_init(void)
 		"bind -N 'Resize the pane left' -r C-Left resize-pane -L",
 		"bind -N 'Resize the pane right' -r C-Right resize-pane -R",
 
-		"bind -n MouseDown1Pane select-pane -t=\\; send-keys -M",
+		/* Menu keys */
+		"bind < display-menu -xW -yW -T '#[align=centre]#{window_index}:#{window_name}' " DEFAULT_WINDOW_MENU,
+		"bind > display-menu -xP -yP -T '#[align=centre]#{pane_index} (#{pane_id})' " DEFAULT_PANE_MENU,
+
+		/* Mouse button 1 down on pane. */
+		"bind -n MouseDown1Pane select-pane -t=\\; send -M",
+
+		/* Mouse button 1 drag on pane. */
+		"bind -n MouseDrag1Pane if -F '#{||:#{pane_in_mode},#{mouse_any_flag}}' { send -M } { copy-mode -M }",
+
+		/* Mouse wheel up on pane. */
+		"bind -n WheelUpPane if -F '#{||:#{pane_in_mode},#{mouse_any_flag}}' { send -M } { copy-mode -e }",
+
+		/* Mouse button 2 down on pane. */
+		"bind -n MouseDown2Pane select-pane -t=\\; if -F '#{||:#{pane_in_mode},#{mouse_any_flag}}' { send -M } { paste -p }",
+
+		/* Mouse button 1 double click on pane. */
+		"bind -n DoubleClick1Pane select-pane -t=\\; if -F '#{||:#{pane_in_mode},#{mouse_any_flag}}' { send -M } { copy-mode -H; send -X select-word; run -d0.3; send -X copy-pipe-and-cancel }",
+
+		/* Mouse button 1 triple click on pane. */
+		"bind -n TripleClick1Pane select-pane -t=\\; if -F '#{||:#{pane_in_mode},#{mouse_any_flag}}' { send -M } { copy-mode -H; send -X select-line; run -d0.3; send -X copy-pipe-and-cancel }",
+
+		/* Mouse button 1 drag on border. */
 		"bind -n MouseDrag1Border resize-pane -M",
+
+		/* Mouse button 1 down on status line. */
 		"bind -n MouseDown1Status select-window -t=",
+
+		/* Mouse wheel down on status line. */
 		"bind -n WheelDownStatus next-window",
+
+		/* Mouse wheel up on status line. */
 		"bind -n WheelUpStatus previous-window",
-		"bind -n MouseDrag1Pane if -Ft= '#{mouse_any_flag}' 'if -Ft= \"#{pane_in_mode}\" \"copy-mode -M\" \"send-keys -M\"' 'copy-mode -M'",
-		"bind -n WheelUpPane if -Ft= '#{mouse_any_flag}' 'send-keys -M' 'if -Ft= \"#{pane_in_mode}\" \"send-keys -M\" \"copy-mode -et=\"'",
 
-		"bind -n MouseDown3StatusLeft display-menu -t= -xM -yS -T \"#[align=centre]#{session_name}\" " DEFAULT_SESSION_MENU,
-		"bind -n MouseDown3Status display-menu -t= -xW -yS -T \"#[align=centre]#{window_index}:#{window_name}\" " DEFAULT_WINDOW_MENU,
-		"bind < display-menu -xW -yS -T \"#[align=centre]#{window_index}:#{window_name}\" " DEFAULT_WINDOW_MENU,
-		"bind -n MouseDown3Pane if -Ft= '#{||:#{mouse_any_flag},#{pane_in_mode}}' 'select-pane -t=; send-keys -M' {display-menu -t= -xM -yM -T \"#[align=centre]#{pane_index} (#{pane_id})\" " DEFAULT_PANE_MENU "}",
-		"bind -n M-MouseDown3Pane display-menu -t= -xM -yM -T \"#[align=centre]#{pane_index} (#{pane_id})\" " DEFAULT_PANE_MENU,
-		"bind > display-menu -xP -yP -T \"#[align=centre]#{pane_index} (#{pane_id})\" " DEFAULT_PANE_MENU,
+		/* Mouse button 3 down on status left. */
+		"bind -n MouseDown3StatusLeft display-menu -t= -xM -yW -T '#[align=centre]#{session_name}' " DEFAULT_SESSION_MENU,
 
+		/* Mouse button 3 down on status line. */
+		"bind -n MouseDown3Status display-menu -t= -xW -yW -T '#[align=centre]#{window_index}:#{window_name}' " DEFAULT_WINDOW_MENU,
+
+		/* Mouse button 3 down on pane. */
+		"bind -n MouseDown3Pane if -Ft= '#{||:#{mouse_any_flag},#{&&:#{pane_in_mode},#{?#{m/r:(copy|view)-mode,#{pane_mode}},0,1}}}' { select-pane -t=; send -M } { display-menu -t= -xM -yM -T '#[align=centre]#{pane_index} (#{pane_id})' " DEFAULT_PANE_MENU " }",
+		"bind -n M-MouseDown3Pane display-menu -t= -xM -yM -T '#[align=centre]#{pane_index} (#{pane_id})' " DEFAULT_PANE_MENU,
+
+		/* Copy mode (emacs) keys. */
 		"bind -Tcopy-mode C-Space send -X begin-selection",
 		"bind -Tcopy-mode C-a send -X start-of-line",
 		"bind -Tcopy-mode C-c send -X cancel",
@@ -340,7 +476,7 @@ key_bindings_init(void)
 		"bind -Tcopy-mode C-r command-prompt -ip'(search up)' -I'#{pane_search_string}' 'send -X search-backward-incremental \"%%%\"'",
 		"bind -Tcopy-mode C-s command-prompt -ip'(search down)' -I'#{pane_search_string}' 'send -X search-forward-incremental \"%%%\"'",
 		"bind -Tcopy-mode C-v send -X page-down",
-		"bind -Tcopy-mode C-w send -X copy-selection-and-cancel",
+		"bind -Tcopy-mode C-w send -X copy-pipe-and-cancel",
 		"bind -Tcopy-mode Escape send -X cancel",
 		"bind -Tcopy-mode Space send -X page-down",
 		"bind -Tcopy-mode , send -X jump-reverse",
@@ -349,20 +485,22 @@ key_bindings_init(void)
 		"bind -Tcopy-mode N send -X search-reverse",
 		"bind -Tcopy-mode R send -X rectangle-toggle",
 		"bind -Tcopy-mode T command-prompt -1p'(jump to backward)' 'send -X jump-to-backward \"%%%\"'",
+		"bind -Tcopy-mode X send -X set-mark",
 		"bind -Tcopy-mode f command-prompt -1p'(jump forward)' 'send -X jump-forward \"%%%\"'",
 		"bind -Tcopy-mode g command-prompt -p'(goto line)' 'send -X goto-line \"%%%\"'",
 		"bind -Tcopy-mode n send -X search-again",
 		"bind -Tcopy-mode q send -X cancel",
+		"bind -Tcopy-mode r send -X refresh-from-pane",
 		"bind -Tcopy-mode t command-prompt -1p'(jump to forward)' 'send -X jump-to-forward \"%%%\"'",
 		"bind -Tcopy-mode Home send -X start-of-line",
 		"bind -Tcopy-mode End send -X end-of-line",
 		"bind -Tcopy-mode MouseDown1Pane select-pane",
 		"bind -Tcopy-mode MouseDrag1Pane select-pane\\; send -X begin-selection",
-		"bind -Tcopy-mode MouseDragEnd1Pane send -X copy-selection-and-cancel",
+		"bind -Tcopy-mode MouseDragEnd1Pane send -X copy-pipe-and-cancel",
 		"bind -Tcopy-mode WheelUpPane select-pane\\; send -N5 -X scroll-up",
 		"bind -Tcopy-mode WheelDownPane select-pane\\; send -N5 -X scroll-down",
-		"bind -Tcopy-mode DoubleClick1Pane select-pane\\; send -X select-word",
-		"bind -Tcopy-mode TripleClick1Pane select-pane\\; send -X select-line",
+		"bind -Tcopy-mode DoubleClick1Pane select-pane\\; send -X select-word\\; run -d0.3\\; send -X copy-pipe-and-cancel",
+		"bind -Tcopy-mode TripleClick1Pane select-pane\\; send -X select-line\\; run -d0.3\\; send -X copy-pipe-and-cancel",
 		"bind -Tcopy-mode NPage send -X page-down",
 		"bind -Tcopy-mode PPage send -X page-up",
 		"bind -Tcopy-mode Up send -X cursor-up",
@@ -388,7 +526,8 @@ key_bindings_init(void)
 		"bind -Tcopy-mode M-m send -X back-to-indentation",
 		"bind -Tcopy-mode M-r send -X middle-line",
 		"bind -Tcopy-mode M-v send -X page-up",
-		"bind -Tcopy-mode M-w send -X copy-selection-and-cancel",
+		"bind -Tcopy-mode M-w send -X copy-pipe-and-cancel",
+		"bind -Tcopy-mode M-x send -X jump-to-mark",
 		"bind -Tcopy-mode 'M-{' send -X previous-paragraph",
 		"bind -Tcopy-mode 'M-}' send -X next-paragraph",
 		"bind -Tcopy-mode M-Up send -X halfpage-up",
@@ -396,6 +535,7 @@ key_bindings_init(void)
 		"bind -Tcopy-mode C-Up send -X scroll-up",
 		"bind -Tcopy-mode C-Down send -X scroll-down",
 
+		/* Copy mode (vi) keys. */
 		"bind -Tcopy-mode-vi '#' send -FX search-backward '#{copy_cursor_word}'",
 		"bind -Tcopy-mode-vi * send -FX search-forward '#{copy_cursor_word}'",
 		"bind -Tcopy-mode-vi C-c send -X cancel",
@@ -404,8 +544,8 @@ key_bindings_init(void)
 		"bind -Tcopy-mode-vi C-b send -X page-up",
 		"bind -Tcopy-mode-vi C-f send -X page-down",
 		"bind -Tcopy-mode-vi C-h send -X cursor-left",
-		"bind -Tcopy-mode-vi C-j send -X copy-selection-and-cancel",
-		"bind -Tcopy-mode-vi Enter send -X copy-selection-and-cancel",
+		"bind -Tcopy-mode-vi C-j send -X copy-pipe-and-cancel",
+		"bind -Tcopy-mode-vi Enter send -X copy-pipe-and-cancel",
 		"bind -Tcopy-mode-vi C-u send -X halfpage-up",
 		"bind -Tcopy-mode-vi C-v send -X rectangle-toggle",
 		"bind -Tcopy-mode-vi C-y send -X scroll-up",
@@ -442,6 +582,7 @@ key_bindings_init(void)
 		"bind -Tcopy-mode-vi T command-prompt -1p'(jump to backward)' 'send -X jump-to-backward \"%%%\"'",
 		"bind -Tcopy-mode-vi V send -X select-line",
 		"bind -Tcopy-mode-vi W send -X next-space",
+		"bind -Tcopy-mode-vi X send -X set-mark",
 		"bind -Tcopy-mode-vi ^ send -X back-to-indentation",
 		"bind -Tcopy-mode-vi b send -X previous-word",
 		"bind -Tcopy-mode-vi e send -X next-word-end",
@@ -454,6 +595,7 @@ key_bindings_init(void)
 		"bind -Tcopy-mode-vi n send -X search-again",
 		"bind -Tcopy-mode-vi o send -X other-end",
 		"bind -Tcopy-mode-vi q send -X cancel",
+		"bind -Tcopy-mode-vi r send -X refresh-from-pane",
 		"bind -Tcopy-mode-vi t command-prompt -1p'(jump to forward)' 'send -X jump-to-forward \"%%%\"'",
 		"bind -Tcopy-mode-vi v send -X rectangle-toggle",
 		"bind -Tcopy-mode-vi w send -X next-word",
@@ -462,11 +604,11 @@ key_bindings_init(void)
 		"bind -Tcopy-mode-vi % send -X next-matching-bracket",
 		"bind -Tcopy-mode-vi MouseDown1Pane select-pane",
 		"bind -Tcopy-mode-vi MouseDrag1Pane select-pane\\; send -X begin-selection",
-		"bind -Tcopy-mode-vi MouseDragEnd1Pane send -X copy-selection-and-cancel",
+		"bind -Tcopy-mode-vi MouseDragEnd1Pane send -X copy-pipe-and-cancel",
 		"bind -Tcopy-mode-vi WheelUpPane select-pane\\; send -N5 -X scroll-up",
 		"bind -Tcopy-mode-vi WheelDownPane select-pane\\; send -N5 -X scroll-down",
-		"bind -Tcopy-mode-vi DoubleClick1Pane select-pane\\; send -X select-word",
-		"bind -Tcopy-mode-vi TripleClick1Pane select-pane\\; send -X select-line",
+		"bind -Tcopy-mode-vi DoubleClick1Pane select-pane\\; send -X select-word\\; run -d0.3\\; send -X copy-pipe-and-cancel",
+		"bind -Tcopy-mode-vi TripleClick1Pane select-pane\\; send -X select-line\\; run -d0.3\\; send -X copy-pipe-and-cancel",
 		"bind -Tcopy-mode-vi BSpace send -X cursor-left",
 		"bind -Tcopy-mode-vi NPage send -X page-down",
 		"bind -Tcopy-mode-vi PPage send -X page-up",
@@ -474,6 +616,7 @@ key_bindings_init(void)
 		"bind -Tcopy-mode-vi Down send -X cursor-down",
 		"bind -Tcopy-mode-vi Left send -X cursor-left",
 		"bind -Tcopy-mode-vi Right send -X cursor-right",
+		"bind -Tcopy-mode-vi M-x send -X jump-to-mark",
 		"bind -Tcopy-mode-vi C-Up send -X scroll-up",
 		"bind -Tcopy-mode-vi C-Down send -X scroll-down",
 	};
@@ -484,9 +627,10 @@ key_bindings_init(void)
 		pr = cmd_parse_from_string(defaults[i], NULL);
 		if (pr->status != CMD_PARSE_SUCCESS)
 			fatalx("bad default key: %s", defaults[i]);
-		cmdq_append(NULL, cmdq_get_command(pr->cmdlist, NULL, NULL, 0));
+		cmdq_append(NULL, cmdq_get_command(pr->cmdlist, NULL));
 		cmd_list_free(pr->cmdlist);
 	}
+	cmdq_append(NULL, cmdq_get_callback(key_bindings_init_done, NULL));
 }
 
 static enum cmd_retval
@@ -498,27 +642,24 @@ key_bindings_read_only(struct cmdq_item *item, __unused void *data)
 
 struct cmdq_item *
 key_bindings_dispatch(struct key_binding *bd, struct cmdq_item *item,
-    struct client *c, struct mouse_event *m, struct cmd_find_state *fs)
+    struct client *c, struct key_event *event, struct cmd_find_state *fs)
 {
-	struct cmd		*cmd;
 	struct cmdq_item	*new_item;
-	int			 readonly;
+	struct cmdq_state	*new_state;
+	int			 readonly, flags = 0;
 
 	if (c == NULL || (~c->flags & CLIENT_READONLY))
 		readonly = 1;
-	else {
-		readonly = 1;
-		TAILQ_FOREACH(cmd, &bd->cmdlist->list, qentry) {
-			if (~cmd->entry->flags & CMD_READONLY)
-				readonly = 0;
-		}
-	}
+	else
+		readonly = cmd_list_all_have(bd->cmdlist, CMD_READONLY);
 	if (!readonly)
 		new_item = cmdq_get_callback(key_bindings_read_only, NULL);
 	else {
-		new_item = cmdq_get_command(bd->cmdlist, fs, m, 0);
 		if (bd->flags & KEY_BINDING_REPEAT)
-			new_item->shared->flags |= CMDQ_SHARED_REPEAT;
+			flags |= CMDQ_STATE_REPEAT;
+		new_state = cmdq_new_state(fs, event, flags);
+		new_item = cmdq_get_command(bd->cmdlist, new_state);
+		cmdq_free_state(new_state);
 	}
 	if (item != NULL)
 		new_item = cmdq_insert_after(item, new_item);

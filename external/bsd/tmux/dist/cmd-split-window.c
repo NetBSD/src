@@ -39,8 +39,8 @@ const struct cmd_entry cmd_split_window_entry = {
 	.name = "split-window",
 	.alias = "splitw",
 
-	.args = { "bc:de:fF:hIl:p:Pt:v", 0, -1 },
-	.usage = "[-bdefhIPv] [-c start-directory] [-e environment] "
+	.args = { "bc:de:fF:hIl:p:Pt:vZ", 0, -1 },
+	.usage = "[-bdefhIPvZ] [-c start-directory] [-e environment] "
 		 "[-F format] [-l size] " CMD_TARGET_PANE_USAGE " [command]",
 
 	.target = { 't', CMD_FIND_PANE, 0 },
@@ -52,13 +52,14 @@ const struct cmd_entry cmd_split_window_entry = {
 static enum cmd_retval
 cmd_split_window_exec(struct cmd *self, struct cmdq_item *item)
 {
-	struct args		*args = self->args;
-	struct cmd_find_state	*current = &item->shared->current;
+	struct args		*args = cmd_get_args(self);
+	struct cmd_find_state	*current = cmdq_get_current(item);
+	struct cmd_find_state	*target = cmdq_get_target(item);
 	struct spawn_context	 sc;
-	struct client		*c = cmd_find_client(item, NULL, 1);
-	struct session		*s = item->target.s;
-	struct winlink		*wl = item->target.wl;
-	struct window_pane	*wp = item->target.wp, *new_wp;
+	struct client		*tc = cmdq_get_target_client(item);
+	struct session		*s = target->s;
+	struct winlink		*wl = target->wl;
+	struct window_pane	*wp = target->wp, *new_wp;
 	enum layout_type	 type;
 	struct layout_cell	*lc;
 	struct cmd_find_state	 fs;
@@ -109,7 +110,7 @@ cmd_split_window_exec(struct cmd *self, struct cmdq_item *item)
 	} else
 		size = -1;
 
-	server_unzoom_window(wp->window);
+	window_push_zoom(wp->window, 1, args_has(args, 'Z'));
 	input = (args_has(args, 'I') && args->argc == 0);
 
 	flags = 0;
@@ -141,7 +142,7 @@ cmd_split_window_exec(struct cmd *self, struct cmdq_item *item)
 
 	add = args_first_value(args, 'e', &value);
 	while (add != NULL) {
-		environ_put(sc.environ, add);
+		environ_put(sc.environ, add, 0);
 		add = args_next_value(&value);
 	}
 
@@ -151,6 +152,8 @@ cmd_split_window_exec(struct cmd *self, struct cmdq_item *item)
 	sc.flags = flags;
 	if (args_has(args, 'd'))
 		sc.flags |= SPAWN_DETACHED;
+	if (args_has(args, 'Z'))
+		sc.flags |= SPAWN_ZOOM;
 
 	if ((new_wp = spawn_pane(&sc, &cause)) == NULL) {
 		cmdq_error(item, "create pane failed: %s", cause);
@@ -158,6 +161,7 @@ cmd_split_window_exec(struct cmd *self, struct cmdq_item *item)
 		return (CMD_RETURN_ERROR);
 	}
 	if (input && window_pane_start_input(new_wp, item, &cause) != 0) {
+		server_client_remove_pane(new_wp);
 		layout_close_pane(new_wp);
 		window_remove_pane(wp->window, new_wp);
 		cmdq_error(item, "%s", cause);
@@ -166,13 +170,14 @@ cmd_split_window_exec(struct cmd *self, struct cmdq_item *item)
 	}
 	if (!args_has(args, 'd'))
 		cmd_find_from_winlink_pane(current, wl, new_wp, 0);
+	window_pop_zoom(wp->window);
 	server_redraw_window(wp->window);
 	server_status_session(s);
 
 	if (args_has(args, 'P')) {
 		if ((template = args_get(args, 'F')) == NULL)
 			template = SPLIT_WINDOW_TEMPLATE;
-		cp = format_single(item, template, c, s, wl, new_wp);
+		cp = format_single(item, template, tc, s, wl, new_wp);
 		cmdq_print(item, "%s", cp);
 		free(cp);
 	}

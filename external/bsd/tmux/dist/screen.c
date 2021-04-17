@@ -47,9 +47,8 @@ struct screen_title_entry {
 };
 TAILQ_HEAD(screen_titles, screen_title_entry);
 
-static void	screen_resize_y(struct screen *, u_int);
-
-static void	screen_reflow(struct screen *, u_int);
+static void	screen_resize_y(struct screen *, u_int, int, u_int *);
+static void	screen_reflow(struct screen *, u_int, u_int *, u_int *, int);
 
 /* Free titles stack. */
 static void
@@ -75,13 +74,18 @@ void
 screen_init(struct screen *s, u_int sx, u_int sy, u_int hlimit)
 {
 	s->grid = grid_create(sx, sy, hlimit);
+	s->saved_grid = NULL;
+
 	s->title = xstrdup("");
 	s->titles = NULL;
+	s->path = NULL;
 
 	s->cstyle = 0;
 	s->ccolour = xstrdup("");
 	s->tabs = NULL;
 	s->sel = NULL;
+
+	s->write_list = NULL;
 
 	screen_reinit(s);
 }
@@ -98,6 +102,11 @@ screen_reinit(struct screen *s)
 
 	s->mode = MODE_CURSOR | MODE_WRAP;
 
+	if (s->saved_grid != NULL)
+		screen_alternate_off(s, NULL, 0);
+	s->saved_cx = UINT_MAX;
+	s->saved_cy = UINT_MAX;
+
 	screen_reset_tabs(s);
 
 	grid_clear_lines(s->grid, s->grid->hsize, s->grid->sy, 8);
@@ -112,9 +121,15 @@ screen_free(struct screen *s)
 {
 	free(s->sel);
 	free(s->tabs);
+	free(s->path);
 	free(s->title);
 	free(s->ccolour);
 
+	if (s->write_list != NULL)
+		screen_write_free_list(s);
+
+	if (s->saved_grid != NULL)
+		grid_destroy(s->saved_grid);
 	grid_destroy(s->grid);
 
 	screen_free_titles(s);
@@ -138,8 +153,10 @@ screen_reset_tabs(struct screen *s)
 void
 screen_set_cursor_style(struct screen *s, u_int style)
 {
-	if (style <= 6)
+	if (style <= 6) {
 		s->cstyle = style;
+		s->mode &= ~MODE_BLINKING;
+	}
 }
 
 /* Set screen cursor colour. */
@@ -206,10 +223,20 @@ screen_pop_title(struct screen *s)
 	}
 }
 
-/* Resize screen. */
+/* Resize screen with options. */
 void
-screen_resize(struct screen *s, u_int sx, u_int sy, int reflow)
+screen_resize_cursor(struct screen *s, u_int sx, u_int sy, int reflow,
+    int eat_empty, int cursor)
 {
+	u_int	cx = s->cx, cy = s->grid->hsize + s->cy;
+
+	if (s->write_list != NULL)
+		screen_write_free_list(s);
+
+	log_debug("%s: new size %ux%u, now %ux%u (cursor %u,%u = %u,%u)",
+	    __func__, sx, sy, screen_size_x(s), screen_size_y(s), s->cx, s->cy,
+	    cx, cy);
+
 	if (sx < 1)
 		sx = 1;
 	if (sy < 1)
@@ -222,14 +249,35 @@ screen_resize(struct screen *s, u_int sx, u_int sy, int reflow)
 		reflow = 0;
 
 	if (sy != screen_size_y(s))
-		screen_resize_y(s, sy);
+		screen_resize_y(s, sy, eat_empty, &cy);
 
 	if (reflow)
-		screen_reflow(s, sx);
+		screen_reflow(s, sx, &cx, &cy, cursor);
+
+	if (cy >= s->grid->hsize) {
+		s->cx = cx;
+		s->cy = cy - s->grid->hsize;
+	} else {
+		s->cx = 0;
+		s->cy = 0;
+	}
+
+	log_debug("%s: cursor finished at %u,%u = %u,%u", __func__, s->cx,
+	    s->cy, cx, cy);
+
+	if (s->write_list != NULL)
+		screen_write_make_list(s);
+}
+
+/* Resize screen. */
+void
+screen_resize(struct screen *s, u_int sx, u_int sy, int reflow)
+{
+	screen_resize_cursor(s, sx, sy, reflow, 1, 1);
 }
 
 static void
-screen_resize_y(struct screen *s, u_int sy)
+screen_resize_y(struct screen *s, u_int sy, int eat_empty, u_int *cy)
 {
 	struct grid	*gd = s->grid;
 	u_int		 needed, available, oldy, i;
@@ -254,14 +302,16 @@ screen_resize_y(struct screen *s, u_int sy)
 		needed = oldy - sy;
 
 		/* Delete as many lines as possible from the bottom. */
-		available = oldy - 1 - s->cy;
-		if (available > 0) {
-			if (available > needed)
-				available = needed;
-			grid_view_delete_lines(gd, oldy - available, available,
-			    8);
+		if (eat_empty) {
+			available = oldy - 1 - s->cy;
+			if (available > 0) {
+				if (available > needed)
+					available = needed;
+				grid_view_delete_lines(gd, oldy - available,
+				    available, 8);
+			}
+			needed -= available;
 		}
-		needed -= available;
 
 		/*
 		 * Now just increase the history size, if possible, to take
@@ -276,8 +326,8 @@ screen_resize_y(struct screen *s, u_int sy)
 			if (available > needed)
 				available = needed;
 			grid_view_delete_lines(gd, 0, available, 8);
+			(*cy) -= available;
 		}
-		s->cy -= needed;
 	}
 
 	/* Resize line array. */
@@ -297,14 +347,13 @@ screen_resize_y(struct screen *s, u_int sy)
 				available = needed;
 			gd->hscrolled -= available;
 			gd->hsize -= available;
-			s->cy += available;
 		} else
 			available = 0;
 		needed -= available;
 
 		/* Then fill the rest in with blanks. */
 		for (i = gd->hsize + sy - needed; i < gd->hsize + sy; i++)
-			memset(grid_get_line(gd, i), 0, sizeof(struct grid_line));
+			grid_empty_line(gd, i, 8);
 	}
 
 	/* Set the new size, and reset the scroll region. */
@@ -472,32 +521,106 @@ screen_select_cell(struct screen *s, struct grid_cell *dst,
 
 /* Reflow wrapped lines. */
 static void
-screen_reflow(struct screen *s, u_int new_x)
+screen_reflow(struct screen *s, u_int new_x, u_int *cx, u_int *cy, int cursor)
 {
-	u_int		cx = s->cx, cy = s->grid->hsize + s->cy, wx, wy;
-	struct timeval	start, tv;
+	u_int	wx, wy;
 
-	gettimeofday(&start, NULL);
-
-	grid_wrap_position(s->grid, cx, cy, &wx, &wy);
-	log_debug("%s: cursor %u,%u is %u,%u", __func__, cx, cy, wx, wy);
+	if (cursor) {
+		grid_wrap_position(s->grid, *cx, *cy, &wx, &wy);
+		log_debug("%s: cursor %u,%u is %u,%u", __func__, *cx, *cy, wx,
+		    wy);
+	}
 
 	grid_reflow(s->grid, new_x);
 
-	grid_unwrap_position(s->grid, &cx, &cy, wx, wy);
-	log_debug("%s: new cursor is %u,%u", __func__, cx, cy);
+	if (cursor) {
+		grid_unwrap_position(s->grid, cx, cy, wx, wy);
+		log_debug("%s: new cursor is %u,%u", __func__, *cx, *cy);
+	}
+	else {
+		*cx = 0;
+		*cy = s->grid->hsize;
+	}
+}
 
-	if (cy >= s->grid->hsize) {
-		s->cx = cx;
-		s->cy = cy - s->grid->hsize;
-	} else {
-		s->cx = 0;
-		s->cy = 0;
+/*
+ * Enter alternative screen mode. A copy of the visible screen is saved and the
+ * history is not updated.
+ */
+void
+screen_alternate_on(struct screen *s, struct grid_cell *gc, int cursor)
+{
+	u_int	sx, sy;
+
+	if (s->saved_grid != NULL)
+		return;
+	sx = screen_size_x(s);
+	sy = screen_size_y(s);
+
+	s->saved_grid = grid_create(sx, sy, 0);
+	grid_duplicate_lines(s->saved_grid, 0, s->grid, screen_hsize(s), sy);
+	if (cursor) {
+		s->saved_cx = s->cx;
+		s->saved_cy = s->cy;
+	}
+	memcpy(&s->saved_cell, gc, sizeof s->saved_cell);
+
+	grid_view_clear(s->grid, 0, 0, sx, sy, 8);
+
+	s->saved_flags = s->grid->flags;
+	s->grid->flags &= ~GRID_HISTORY;
+}
+
+/* Exit alternate screen mode and restore the copied grid. */
+void
+screen_alternate_off(struct screen *s, struct grid_cell *gc, int cursor)
+{
+	u_int	sx = screen_size_x(s), sy = screen_size_y(s);
+
+	/*
+	 * If the current size is different, temporarily resize to the old size
+	 * before copying back.
+	 */
+	if (s->saved_grid != NULL)
+		screen_resize(s, s->saved_grid->sx, s->saved_grid->sy, 1);
+
+	/*
+	 * Restore the cursor position and cell. This happens even if not
+	 * currently in the alternate screen.
+	 */
+	if (cursor && s->saved_cx != UINT_MAX && s->saved_cy != UINT_MAX) {
+		s->cx = s->saved_cx;
+		s->cy = s->saved_cy;
+		if (gc != NULL)
+			memcpy(gc, &s->saved_cell, sizeof *gc);
 	}
 
-	gettimeofday(&tv, NULL);
-	timersub(&tv, &start, &tv);
+	/* If not in the alternate screen, do nothing more. */
+	if (s->saved_grid == NULL) {
+		if (s->cx > screen_size_x(s) - 1)
+			s->cx = screen_size_x(s) - 1;
+		if (s->cy > screen_size_y(s) - 1)
+			s->cy = screen_size_y(s) - 1;
+		return;
+	}
 
-	log_debug("%s: reflow took %llu.%06u seconds", __func__,
-	    (unsigned long long)tv.tv_sec, (u_int)tv.tv_usec);
+	/* Restore the saved grid. */
+	grid_duplicate_lines(s->grid, screen_hsize(s), s->saved_grid, 0,
+	    s->saved_grid->sy);
+
+	/*
+	 * Turn history back on (so resize can use it) and then resize back to
+	 * the current size.
+	 */
+	if (s->saved_flags & GRID_HISTORY)
+		s->grid->flags |= GRID_HISTORY;
+	screen_resize(s, sx, sy, 1);
+
+	grid_destroy(s->saved_grid);
+	s->saved_grid = NULL;
+
+	if (s->cx > screen_size_x(s) - 1)
+		s->cx = screen_size_x(s) - 1;
+	if (s->cy > screen_size_y(s) - 1)
+		s->cy = screen_size_y(s) - 1;
 }

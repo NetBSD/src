@@ -39,10 +39,10 @@ const struct cmd_entry cmd_new_session_entry = {
 	.name = "new-session",
 	.alias = "new",
 
-	.args = { "Ac:dDEF:n:Ps:t:x:Xy:", 0, -1 },
-	.usage = "[-AdDEPX] [-c start-directory] [-F format] [-n window-name] "
-		 "[-s session-name] " CMD_TARGET_SESSION_USAGE " [-x width] "
-		 "[-y height] [command]",
+	.args = { "Ac:dDe:EF:f:n:Ps:t:x:Xy:", 0, -1 },
+	.usage = "[-AdDEPX] [-c start-directory] [-e environment] [-F format] "
+		 "[-f flags] [-n window-name] [-s session-name] "
+		 CMD_TARGET_SESSION_USAGE " [-x width] [-y height] [command]",
 
 	.target = { 't', CMD_FIND_SESSION, CMD_FIND_CANFAIL },
 
@@ -66,22 +66,26 @@ const struct cmd_entry cmd_has_session_entry = {
 static enum cmd_retval
 cmd_new_session_exec(struct cmd *self, struct cmdq_item *item)
 {
-	struct args		*args = self->args;
-	struct client		*c = item->client;
-	struct session		*s, *as, *groupwith;
+	struct args		*args = cmd_get_args(self);
+	struct cmd_find_state	*current = cmdq_get_current(item);
+	struct cmd_find_state	*target = cmdq_get_target(item);
+	struct client		*c = cmdq_get_client(item);
+	struct session		*s, *as, *groupwith = NULL;
 	struct environ		*env;
 	struct options		*oo;
 	struct termios		 tio, *tiop;
-	struct session_group	*sg;
-	const char		*errstr, *template, *group, *prefix, *tmp;
+	struct session_group	*sg = NULL;
+	const char		*errstr, *template, *group, *tmp, *add;
 	char			*cause, *cwd = NULL, *cp, *newname = NULL;
+	char			*name, *prefix = NULL;
 	int			 detached, already_attached, is_control = 0;
 	u_int			 sx, sy, dsx = 80, dsy = 24;
 	struct spawn_context	 sc;
 	enum cmd_retval		 retval;
 	struct cmd_find_state    fs;
+	struct args_value	*value;
 
-	if (self->entry == &cmd_has_session_entry) {
+	if (cmd_get_entry(self) == &cmd_has_session_entry) {
 		/*
 		 * cmd_find_target() will fail if the session cannot be found,
 		 * so always return success here.
@@ -96,21 +100,19 @@ cmd_new_session_exec(struct cmd *self, struct cmdq_item *item)
 
 	tmp = args_get(args, 's');
 	if (tmp != NULL) {
-		newname = format_single(item, tmp, c, NULL, NULL, NULL);
-		if (!session_check_name(newname)) {
-			cmdq_error(item, "bad session name: %s", newname);
-			goto fail;
-		}
+		name = format_single(item, tmp, c, NULL, NULL, NULL);
+		newname = session_check_name(name);
+		free(name);
 	}
 	if (args_has(args, 'A')) {
 		if (newname != NULL)
 			as = session_find(newname);
 		else
-			as = item->target.s;
+			as = target->s;
 		if (as != NULL) {
 			retval = cmd_attach_session(item, as->name,
 			    args_has(args, 'D'), args_has(args, 'X'), 0, NULL,
-			    args_has(args, 'E'));
+			    args_has(args, 'E'), args_get(args, 'f'));
 			free(newname);
 			return (retval);
 		}
@@ -123,25 +125,17 @@ cmd_new_session_exec(struct cmd *self, struct cmdq_item *item)
 	/* Is this going to be part of a session group? */
 	group = args_get(args, 't');
 	if (group != NULL) {
-		groupwith = item->target.s;
-		if (groupwith == NULL) {
-			if (!session_check_name(group)) {
-				cmdq_error(item, "bad group name: %s", group);
-				goto fail;
-			}
+		groupwith = target->s;
+		if (groupwith == NULL)
 			sg = session_group_find(group);
-		} else
+		else
 			sg = session_group_contains(groupwith);
 		if (sg != NULL)
-			prefix = sg->name;
+			prefix = xstrdup(sg->name);
 		else if (groupwith != NULL)
-			prefix = groupwith->name;
+			prefix = xstrdup(groupwith->name);
 		else
-			prefix = group;
-	} else {
-		groupwith = NULL;
-		sg = NULL;
-		prefix = NULL;
+			prefix = session_check_name(group);
 	}
 
 	/* Set -d if no client. */
@@ -171,13 +165,16 @@ cmd_new_session_exec(struct cmd *self, struct cmdq_item *item)
 	 * the terminal as that calls tcsetattr() to prepare for tmux taking
 	 * over.
 	 */
-	if (!detached && !already_attached && c->tty.fd != -1) {
-		if (server_client_check_nested(item->client)) {
+	if (!detached &&
+	    !already_attached &&
+	    c->fd != -1 &&
+	    (~c->flags & CLIENT_CONTROL)) {
+		if (server_client_check_nested(cmdq_get_client(item))) {
 			cmdq_error(item, "sessions should be nested with care, "
 			    "unset $TMUX to force");
 			goto fail;
 		}
-		if (tcgetattr(c->tty.fd, &tio) != 0)
+		if (tcgetattr(c->fd, &tio) != 0)
 			fatal("tcgetattr failed");
 		tiop = &tio;
 	} else
@@ -207,7 +204,8 @@ cmd_new_session_exec(struct cmd *self, struct cmdq_item *item)
 				goto fail;
 			}
 		}
-	}
+	} else
+		dsx = 80;
 	if (args_has(args, 'y')) {
 		tmp = args_get(args, 'y');
 		if (strcmp(tmp, "-") == 0) {
@@ -222,7 +220,8 @@ cmd_new_session_exec(struct cmd *self, struct cmdq_item *item)
 				goto fail;
 			}
 		}
-	}
+	} else
+		dsy = 24;
 
 	/* Find new session size. */
 	if (!detached && !is_control) {
@@ -233,13 +232,14 @@ cmd_new_session_exec(struct cmd *self, struct cmdq_item *item)
 	} else {
 		tmp = options_get_string(global_s_options, "default-size");
 		if (sscanf(tmp, "%ux%u", &sx, &sy) != 2) {
-			sx = 80;
-			sy = 24;
-		}
-		if (args_has(args, 'x'))
 			sx = dsx;
-		if (args_has(args, 'y'))
 			sy = dsy;
+		} else {
+			if (args_has(args, 'x'))
+				sx = dsx;
+			if (args_has(args, 'y'))
+				sy = dsy;
+		}
 	}
 	if (sx == 0)
 		sx = 1;
@@ -258,13 +258,17 @@ cmd_new_session_exec(struct cmd *self, struct cmdq_item *item)
 	env = environ_create();
 	if (c != NULL && !args_has(args, 'E'))
 		environ_update(global_s_options, c->environ, env);
+	add = args_first_value(args, 'e', &value);
+	while (add != NULL) {
+		environ_put(env, add, 0);
+		add = args_next_value(&value);
+	}
 	s = session_create(prefix, newname, cwd, env, oo, tiop);
 
 	/* Spawn the initial window. */
 	memset(&sc, 0, sizeof sc);
 	sc.item = item;
 	sc.s = s;
-	sc.c = c;
 
 	sc.name = args_get(args, 'n');
 	sc.argc = args->argc;
@@ -305,13 +309,15 @@ cmd_new_session_exec(struct cmd *self, struct cmdq_item *item)
 	 * taking this session and needs to get MSG_READY and stay around.
 	 */
 	if (!detached) {
+		if (args_has(args, 'f'))
+			server_client_set_flags(c, args_get(args, 'f'));
 		if (!already_attached) {
 			if (~c->flags & CLIENT_CONTROL)
 				proc_send(c->peer, MSG_READY, -1, NULL, 0);
 		} else if (c->session != NULL)
 			c->last_session = c->session;
 		c->session = s;
-		if (~item->shared->flags & CMDQ_SHARED_REPEAT)
+		if (~cmdq_get_flags(item) & CMDQ_STATE_REPEAT)
 			server_client_set_key_table(c, NULL);
 		tty_update_client_offset(c);
 		status_timer_start(c);
@@ -339,20 +345,22 @@ cmd_new_session_exec(struct cmd *self, struct cmdq_item *item)
 		free(cp);
 	}
 
-	if (!detached) {
+	if (!detached)
 		c->flags |= CLIENT_ATTACHED;
-		cmd_find_from_session(&item->shared->current, s, 0);
-	}
+	if (!args_has(args, 'd'))
+		cmd_find_from_session(current, s, 0);
 
 	cmd_find_from_session(&fs, s, 0);
 	cmdq_insert_hook(s, item, &fs, "after-new-session");
 
 	free(cwd);
 	free(newname);
+	free(prefix);
 	return (CMD_RETURN_NORMAL);
 
 fail:
 	free(cwd);
 	free(newname);
+	free(prefix);
 	return (CMD_RETURN_ERROR);
 }
