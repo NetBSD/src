@@ -1,4 +1,4 @@
-# $NetBSD: t_make.sh,v 1.13 2021/02/06 19:00:25 martin Exp $
+# $NetBSD: t_make.sh,v 1.14 2021/04/17 11:31:25 rillig Exp $
 #
 # Copyright (c) 2008, 2010, 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -71,25 +71,24 @@ atf_init_test_cases()
 {
 	local filename basename atfname descr
 
-	for filename in "$(atf_get_srcdir)"/unit-tests/*.mk ; do
-	    basename="${filename##*/}"
-	    basename="${basename%.mk}"
+	for filename in "$(atf_get_srcdir)"/unit-tests/*.mk; do
+		basename="${filename##*/}"
+		basename="${basename%.mk}"
 
-	    # skip files that are not test cases on their own
-	    case "${basename}" in
-	    include-sub*) continue;;
-	    esac
-
-	    atfname=${basename}
-	    while :
-	    do
-		case "${atfname}" in
-		(*-*)	atfname=${atfname%-*}_${atfname##*-};;
-		(*)	break;;
+		# skip files that are not test cases on their own
+		case "${basename}" in
+		include-sub*) continue;;
 		esac
-	    done
-	    descr='' # XXX
-	    test_case "${atfname}" "${basename}" "${descr}"
-	    atf_add_test_case "${atfname}"
+
+		atfname=${basename}
+		while :; do
+			case "${atfname}" in
+			(*-*)	atfname=${atfname%-*}_${atfname##*-};;
+			(*)	break;;
+			esac
+		done
+		descr='' # XXX
+		test_case "${atfname}" "${basename}" "${descr}"
+		atf_add_test_case "${atfname}"
 	done
 }
