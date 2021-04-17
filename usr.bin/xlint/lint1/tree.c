@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.276 2021/04/10 18:06:53 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.277 2021/04/17 16:58:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.276 2021/04/10 18:06:53 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.277 2021/04/17 16:58:04 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2081,7 +2081,8 @@ check_pointer_conversion(tnode_t *tn, type_t *ntp)
 		return;
 	}
 
-	if (hflag && alignment_in_bits(nstp) > alignment_in_bits(ostp)) {
+	if (hflag && alignment_in_bits(nstp) > alignment_in_bits(ostp) &&
+	    !is_incomplete(ostp)) {
 		/* converting '%s' to '%s' may cause alignment problem */
 		warning(135, type_name(otp), type_name(ntp));
 	}
