@@ -1072,7 +1072,7 @@ control_add_sub(struct client *c, const char *name, enum control_sub_type type,
 	struct control_sub	*csub, find;
 	struct timeval		 tv = { .tv_sec = 1 };
 
-	find.name = (char *)name;
+	find.name = __UNCONST(name);
 	if ((csub = RB_FIND(control_subs, &cs->subs, &find)) != NULL)
 		control_free_sub(cs, csub);
 
@@ -1099,7 +1099,7 @@ control_remove_sub(struct client *c, const char *name)
 	struct control_state	*cs = c->control_state;
 	struct control_sub	*csub, find;
 
-	find.name = (char *)name;
+	find.name = __UNCONST(name);
 	if ((csub = RB_FIND(control_subs, &cs->subs, &find)) != NULL)
 		control_free_sub(cs, csub);
 	if (RB_EMPTY(&cs->subs))

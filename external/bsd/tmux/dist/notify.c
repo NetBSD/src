@@ -35,19 +35,19 @@ struct notify_entry {
 };
 
 static void
-notify_hook_formats(struct cmdq_item *item, struct session *s, struct window *w,
-    int pane)
+notify_hook_formats(struct cmdq_state *state, struct session *s,
+    struct window *w, int pane)
 {
 	if (s != NULL) {
-		cmdq_format(item, "hook_session", "$%u", s->id);
-		cmdq_format(item, "hook_session_name", "%s", s->name);
+		cmdq_add_format(state, "hook_session", "$%u", s->id);
+		cmdq_add_format(state, "hook_session_name", "%s", s->name);
 	}
 	if (w != NULL) {
-		cmdq_format(item, "hook_window", "@%u", w->id);
-		cmdq_format(item, "hook_window_name", "%s", w->name);
+		cmdq_add_format(state, "hook_window", "@%u", w->id);
+		cmdq_add_format(state, "hook_window_name", "%s", w->name);
 	}
 	if (pane != -1)
-		cmdq_format(item, "hook_pane", "%%%d", pane);
+		cmdq_add_format(state, "hook_pane", "%%%d", pane);
 }
 
 static void
@@ -56,6 +56,7 @@ notify_insert_hook(struct cmdq_item *item, struct notify_entry *ne)
 	struct cmd_find_state		 fs;
 	struct options			*oo;
 	struct cmdq_item		*new_item;
+	struct cmdq_state		*new_state;
 	struct session			*s = ne->session;
 	struct window			*w = ne->window;
 	struct options_entry		*o;
@@ -75,24 +76,32 @@ notify_insert_hook(struct cmdq_item *item, struct notify_entry *ne)
 	else
 		oo = fs.s->options;
 	o = options_get(oo, ne->name);
+	if (o == NULL && fs.wp != NULL) {
+		oo = fs.wp->options;
+		o = options_get(oo, ne->name);
+	}
+	if (o == NULL && fs.wl != NULL) {
+		oo = fs.wl->window->options;
+		o = options_get(oo, ne->name);
+	}
 	if (o == NULL)
 		return;
+
+	new_state = cmdq_new_state(&fs, NULL, CMDQ_STATE_NOHOOKS);
+	cmdq_add_format(new_state, "hook", "%s", ne->name);
+	notify_hook_formats(new_state, s, w, ne->pane);
 
 	a = options_array_first(o);
 	while (a != NULL) {
 		cmdlist = options_array_item_value(a)->cmdlist;
-		if (cmdlist == NULL) {
-			a = options_array_next(a);
-			continue;
+		if (cmdlist != NULL) {
+			new_item = cmdq_get_command(cmdlist, new_state);
+			item = cmdq_insert_after(item, new_item);
 		}
-
-		new_item = cmdq_get_command(cmdlist, &fs, NULL, CMDQ_NOHOOKS);
-		cmdq_format(new_item, "hook", "%s", ne->name);
-		notify_hook_formats(new_item, s, w, ne->pane);
-		item = cmdq_insert_after(item, new_item);
-
 		a = options_array_next(a);
 	}
+
+	cmdq_free_state(new_state);
 }
 
 static enum cmd_retval
@@ -116,6 +125,8 @@ notify_callback(struct cmdq_item *item, void *data)
 		control_notify_window_renamed(ne->window);
 	if (strcmp(ne->name, "client-session-changed") == 0)
 		control_notify_client_session_changed(ne->client);
+	if (strcmp(ne->name, "client-detached") == 0)
+		control_notify_client_detached(ne->client);
 	if (strcmp(ne->name, "session-renamed") == 0)
 		control_notify_session_renamed(ne->session);
 	if (strcmp(ne->name, "session-created") == 0)
@@ -148,7 +159,11 @@ notify_add(const char *name, struct cmd_find_state *fs, struct client *c,
     struct session *s, struct window *w, struct window_pane *wp)
 {
 	struct notify_entry	*ne;
-	struct cmdq_item	*new_item;
+	struct cmdq_item	*item;
+
+	item = cmdq_running(NULL);
+	if (item != NULL && (cmdq_get_flags(item) & CMDQ_STATE_NOHOOKS))
+		return;
 
 	ne = xcalloc(1, sizeof *ne);
 	ne->name = xstrdup(name);
@@ -173,37 +188,26 @@ notify_add(const char *name, struct cmd_find_state *fs, struct client *c,
 	if (ne->fs.s != NULL) /* cmd_find_valid_state needs session */
 		session_add_ref(ne->fs.s, __func__);
 
-	new_item = cmdq_get_callback(notify_callback, ne);
-	cmdq_append(NULL, new_item);
+	cmdq_append(NULL, cmdq_get_callback(notify_callback, ne));
 }
 
 void
 notify_hook(struct cmdq_item *item, const char *name)
 {
-	struct notify_entry	ne;
+	struct cmd_find_state	*target = cmdq_get_target(item);
+	struct notify_entry	 ne;
 
 	memset(&ne, 0, sizeof ne);
 
 	ne.name = name;
-	cmd_find_copy_state(&ne.fs, &item->target);
+	cmd_find_copy_state(&ne.fs, target);
 
-	ne.client = item->client;
-	ne.session = item->target.s;
-	ne.window = item->target.w;
-	ne.pane = item->target.wp->id;
+	ne.client = cmdq_get_client(item);
+	ne.session = target->s;
+	ne.window = target->w;
+	ne.pane = target->wp->id;
 
 	notify_insert_hook(item, &ne);
-}
-
-void
-notify_input(struct window_pane *wp, const u_char *buf, size_t len)
-{
-	struct client	*c;
-
-	TAILQ_FOREACH(c, &clients, entry) {
-		if (c->flags & CLIENT_CONTROL)
-			control_notify_input(c, wp, buf, len);
-	}
 }
 
 void
