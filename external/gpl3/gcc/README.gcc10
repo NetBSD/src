@@ -1,4 +1,4 @@
-$NetBSD: README.gcc10,v 1.10 2021/04/17 01:59:41 mrg Exp $
+$NetBSD: README.gcc10,v 1.11 2021/04/17 04:07:16 mrg Exp $
 
 
 new stuff:
@@ -34,7 +34,7 @@ architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf	switched
 ------------	-----	-------	------	----------	------------	----	---	--------
 aarch64		y	n[3]	n[3]	y		n		?	?	?
 aarch64be	y	n[3]	n[3]	y		n		?	?	?
-alpha		y	y	y	y		y		y	y	n
+alpha		y	y	y	y		y		y	y	y
 earmv4		y	y	y	y		y		y	?	n
 earmv4eb	y	b	y	y		y		?	?	?
 earmv5		y	b	y	y		y		?	?	?
@@ -51,7 +51,7 @@ earmv7hf	y	y	y	y		y		y	y	n
 earmv7hfeb	y	b	y	y		y		?	?	?
 hppa		y	y	y	y		y		y	?	?
 i386		y	y	y	y		y		y	n[8]	?
-ia64		y	y	y	y		y		?	N/A	n
+ia64		y	y	y	y		y		?	N/A	y
 m68000		y	b	y	y		n[1]		?	?	?
 m68k		y	y	y	y		y[9]		y	n	n
 mipseb		y	y	y	y		y		y	?	?
@@ -62,12 +62,12 @@ powerpc		y	b	y	y		y		y	?	n
 powerpc64	y	b	y	y		y		N/A	N/A	n
 sh3eb		y	b	y	y		y		?	?	?
 sh3el		y	y	y	y		y		y	y[7]	?
-sparc		y	y	y	y		y		y	y	n
-sparc64		y	y	y	y		y		y	y	n
-vax		y	y	y	y		y		y	n[6]	n
-x86_64		y	y	y	y		y		y	y	n
-riscv32		y	N/A	y	y		y		N/A	N/A	n
-riscv64		y	N/A	y	y		y		N/A	N/A	n
+sparc		y	y	y	y		y		y	y	y
+sparc64		y	y	y	y		y		y	y	y
+vax		y	y	y	y		y		y	n[6]	y
+x86_64		y	y	y	y		y		y	y	y
+riscv32		y	N/A	y	y		y		N/A	N/A	y
+riscv64		y	N/A	y	y		y		N/A	N/A	y
 --
 coldfire	?	N/A	?	?		?		N/A	N/A
 ------------	-----	-------	------	----------	------------	----	---
