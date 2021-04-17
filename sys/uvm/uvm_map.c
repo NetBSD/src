@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.387 2021/04/17 01:53:58 mrg Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.388 2021/04/17 21:37:21 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.387 2021/04/17 01:53:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.388 2021/04/17 21:37:21 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -104,9 +104,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.387 2021/04/17 01:53:58 mrg Exp $");
 #ifdef UVMHIST
 #ifndef UVMHIST_MAPHIST_SIZE
 #define UVMHIST_MAPHIST_SIZE 100
-#endif
-#ifndef UVMHIST_PDHIST_SIZE
-#define UVMHIST_PDHIST_SIZE 100
 #endif
 static struct kern_history_ent maphistbuf[UVMHIST_MAPHIST_SIZE];
 UVMHIST_DEFINE(maphist) = UVMHIST_INITIALIZER(maphist, maphistbuf);
