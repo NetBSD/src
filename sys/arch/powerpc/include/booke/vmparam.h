@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.8 2021/04/17 13:23:24 rin Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.9 2021/04/17 13:25:57 rin Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -56,11 +56,11 @@
 #endif
 
 #ifndef	MAXTSIZ
-#define	MAXTSIZ		(2*256*1024*1024)	/* maximum text size */
+#define	MAXTSIZ		(128*1024*1024)		/* maximum text size */
 #endif
 
 #ifndef	MAXDSIZ
-#define	MAXDSIZ		(13*256*1024*1024U)	/* maximum data size */
+#define	MAXDSIZ		(1024*1024*1024)	/* maximum data size */
 #endif
 
 #ifndef	MAXSSIZ
