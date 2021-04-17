@@ -1,7 +1,5 @@
-/* $OpenBSD$ */
-
 /*
- * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
+ * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -18,22 +16,14 @@
 
 #include <sys/types.h>
 
-#include "tmux.h"
+#include <unistd.h>
 
-char *
-osdep_get_name(__unused int fd, __unused char *tty)
-{
-	return (NULL);
-}
+#include "compat.h"
 
-char *
-osdep_get_cwd(int fd)
+#ifdef HAVE_SYSCONF
+int
+getdtablesize(void)
 {
-	return (NULL);
+	return (sysconf(_SC_OPEN_MAX));
 }
-
-struct event_base *
-osdep_event_init(void)
-{
-	return (event_init());
-}
+#endif

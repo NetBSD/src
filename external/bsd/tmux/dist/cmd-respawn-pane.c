@@ -47,11 +47,12 @@ const struct cmd_entry cmd_respawn_pane_entry = {
 static enum cmd_retval
 cmd_respawn_pane_exec(struct cmd *self, struct cmdq_item *item)
 {
-	struct args		*args = self->args;
+	struct args		*args = cmd_get_args(self);
+	struct cmd_find_state	*target = cmdq_get_target(item);
 	struct spawn_context	 sc;
-	struct session		*s = item->target.s;
-	struct winlink		*wl = item->target.wl;
-	struct window_pane	*wp = item->target.wp;
+	struct session		*s = target->s;
+	struct winlink		*wl = target->wl;
+	struct window_pane	*wp = target->wp;
 	char			*cause = NULL;
 	const char		*add;
 	struct args_value	*value;
@@ -71,7 +72,7 @@ cmd_respawn_pane_exec(struct cmd *self, struct cmdq_item *item)
 
 	add = args_first_value(args, 'e', &value);
 	while (add != NULL) {
-		environ_put(sc.environ, add);
+		environ_put(sc.environ, add, 0);
 		add = args_next_value(&value);
 	}
 
@@ -89,6 +90,7 @@ cmd_respawn_pane_exec(struct cmd *self, struct cmdq_item *item)
 	}
 
 	wp->flags |= PANE_REDRAW;
+	server_redraw_window_borders(wp->window);
 	server_status_window(wp->window);
 
 	environ_free(sc.environ);
