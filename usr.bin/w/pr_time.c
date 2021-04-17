@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_time.c,v 1.18 2011/08/17 13:48:11 christos Exp $	*/
+/*	$NetBSD: pr_time.c,v 1.19 2021/04/17 06:14:15 maya Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pr_time.c	8.2 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: pr_time.c,v 1.18 2011/08/17 13:48:11 christos Exp $");
+__RCSID("$NetBSD: pr_time.c,v 1.19 2021/04/17 06:14:15 maya Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,9 +51,6 @@ __RCSID("$NetBSD: pr_time.c,v 1.18 2011/08/17 13:48:11 christos Exp $");
 /*
  * pr_attime --
  *	Print the time since the user logged in.
- *
- *	Note: SCCS forces the bizarre string manipulation, things like
- *	%I% get replaced in the source code.
  */
 void
 pr_attime(time_t *started, time_t *now)
@@ -71,11 +68,11 @@ pr_attime(time_t *started, time_t *now)
 		/* If more than a week, use day-month-year. */
 		(void)strftime(buf, sizeof(buf), "%d%b%y", tp);
 	} else if (tp->tm_yday != tnow_yday) {
-		/* If not today, use day-hour-am/pm. Damn SCCS */
-		(void)strftime(buf, sizeof(buf), "%a%" "I%p", tp);
+		/* If not today, use day-hour-am/pm. */
+		(void)strftime(buf, sizeof(buf), "%a%I%p", tp);
 	} else {
-		/* Default is hh:mm{am,pm}. Damn SCCS */
-		(void)strftime(buf, sizeof(buf), "%l:%" "M%p", tp);
+		/* Default is hh:mm{am,pm}. */
+		(void)strftime(buf, sizeof(buf), "%l:%M%p", tp);
 	}
 
 	buf[sizeof(buf) - 1] = '\0';
