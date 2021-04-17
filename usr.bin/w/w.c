@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.90 2020/08/01 17:53:38 kim Exp $	*/
+/*	$NetBSD: w.c,v 1.91 2021/04/17 06:14:15 maya Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.90 2020/08/01 17:53:38 kim Exp $");
+__RCSID("$NetBSD: w.c,v 1.91 2021/04/17 06:14:15 maya Exp $");
 #endif
 #endif /* not lint */
 
@@ -465,11 +465,8 @@ pr_header(time_t *nowp, int nusers)
 
 	/*
 	 * Print time of day.
-	 *
-	 * SCCS forces the string manipulation below, as it replaces
-	 * %, M, and % in a character string with the file name.
 	 */
-	(void)strftime(buf, sizeof(buf), "%l:%" "M%p", localtime(nowp));
+	(void)strftime(buf, sizeof(buf), "%l:%M%p", localtime(nowp));
 	buf[sizeof(buf) - 1] = '\0';
 	(void)printf("%s ", buf);
 
