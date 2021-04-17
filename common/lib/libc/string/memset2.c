@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: memset2.c,v 1.8 2021/04/17 08:06:58 simonb Exp $");
+__RCSID("$NetBSD: memset2.c,v 1.9 2021/04/17 21:43:47 mrg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -47,7 +47,8 @@ __RCSID("$NetBSD: memset2.c,v 1.8 2021/04/17 08:06:58 simonb Exp $");
 #include <sys/endian.h>
 #include <machine/types.h>
 
-#define __OPTIMIZE_SIZE__	/* other code path is very broken */
+#undef __OPTIMIZE_SIZE__
+#define __OPTIMIZE_SIZE__ 1	/* other code path is very broken */
 
 #ifdef TEST
 #include <assert.h>
