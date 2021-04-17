@@ -1,1 +1,2 @@
-gcc_init_compound_literal.c(22): error: too many struct/union initializers [172]
+gcc_init_compound_literal.c(26): error: too many struct/union initializers [172]
+gcc_init_compound_literal.c(43): warning: static variable guess unused [226]
