@@ -71,20 +71,21 @@ const struct cmd_entry cmd_previous_layout_entry = {
 static enum cmd_retval
 cmd_select_layout_exec(struct cmd *self, struct cmdq_item *item)
 {
-	struct args		*args = self->args;
-	struct winlink		*wl = item->target.wl;
+	struct args		*args = cmd_get_args(self);
+	struct cmd_find_state	*target = cmdq_get_target(item);
+	struct winlink		*wl = target->wl;
 	struct window		*w = wl->window;
-	struct window_pane	*wp = item->target.wp;
+	struct window_pane	*wp = target->wp;
 	const char		*layoutname;
 	char			*oldlayout;
 	int			 next, previous, layout;
 
 	server_unzoom_window(w);
 
-	next = self->entry == &cmd_next_layout_entry;
+	next = (cmd_get_entry(self) == &cmd_next_layout_entry);
 	if (args_has(args, 'n'))
 		next = 1;
-	previous = self->entry == &cmd_previous_layout_entry;
+	previous = (cmd_get_entry(self) == &cmd_previous_layout_entry);
 	if (args_has(args, 'p'))
 		previous = 1;
 
