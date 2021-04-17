@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.47 2021/04/12 00:05:55 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.48 2021/04/17 10:54:46 mrg Exp $
 
 LIBGCC_MACHINE_ARCH?=${MACHINE_ARCH:S/earmv5/earm/}
 GCC_MACHINE_SUBDIR=${MACHINE_CPU:C/powerpc.*/rs6000/:C/x86_64/i386/}
@@ -30,9 +30,11 @@ CPPFLAGS+=	${G_INTERNAL_CFLAGS:M-DHAVE_CC_TLS}
 .if ${LIBGCC_MACHINE_ARCH} == "powerpc" || \
     ${LIBGCC_MACHINE_ARCH} == "sh3el" || \
     ${LIBGCC_MACHINE_ARCH} == "sh3eb" || \
-    ${LIBGCC_MACHINE_ARCH} == "m68000"
+    ${LIBGCC_MACHINE_ARCH} == "m68000" || \
+    ${LIBGCC_MACHINE_ARCH} == "aarch64" || \
+    ${LIBGCC_MACHINE_ARCH} == "aarch64eb"
 _TRADITIONAL_CPP=
-COMPILE.S=	${CC} ${AFLAGS} ${CPPFLAGS} -c
+COMPILE.S=	${CC} ${AFLAGS} ${CPPFLAGS} ${CPPFLAGS.${.IMPSRC:T}} -c 
 .endif
 
 .if ${LIBGCC_MACHINE_ARCH} == "powerpc"
@@ -165,6 +167,40 @@ ${LIB1ASMFUNCS}: ${.CURDIR}/Makefile
 	${_MKTARGET_CREATE}
 	printf '#define L${.PREFIX}\n#include <${G_LIB1ASMSRC}>\n' >${.TARGET}
 .endif
+
+.if ${LIB} == "gcc" && \
+    (${LIBGCC_MACHINE_ARCH} == "aarch64" || \
+     ${LIBGCC_MACHINE_ARCH} == "aarch64be") # {
+# XXX lse.S objects are placed directly into "libgcc-objects" for GCC, and
+# are not pulled out by mknative-gcc easily.
+. for s in 1 2 4 8 16
+.  for m in 1 2 3 4
+.   for n in cas
+LSE_NAMES+=			${n}_${s}_${m}
+CPPFLAGS.${n}_${s}_${m}+=	-DL_${n} -DSIZE=${s} -DMODEL=${m}
+.   endfor
+.  endfor
+. endfor
+
+. for s in 1 2 4 8
+.  for m in 1 2 3 4
+.   for n in swp ldadd ldclr ldeor ldset
+LSE_NAMES+=			${n}_${s}_${m}
+CPPFLAGS.${n}_${s}_${m}+=	-DL_${n} -DSIZE=${s} -DMODEL=${m}
+.   endfor
+.  endfor
+. endfor
+
+LSE_SRC=	${GNUHOSTDIST}/libgcc/config/aarch64/lse.S
+
+${LSE_NAMES:=.o}: ${LSE_SRC} Makefile
+	${_MKTARGET_COMPILE}
+	${COMPILE.S} ${CPPFLAGS.${.TARGET:T:.o=}} -o ${.TARGET} ${LSE_SRC}
+
+# lse-init.c currently compiles to nothing for us
+G_LIB2ADD+=	${GNUHOSTDIST}/libgcc/config/aarch64/lse-init.c
+
+.endif # } arm64
 
 # Use dynamic sources to arrange for the C file to be the first dependency
 # so ${.IMPSRC} will work.
