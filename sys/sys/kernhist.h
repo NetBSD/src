@@ -1,4 +1,4 @@
-/*	$NetBSD: kernhist.h,v 1.25 2018/08/14 11:39:10 christos Exp $	*/
+/*	$NetBSD: kernhist.h,v 1.26 2021/04/17 01:53:58 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -132,7 +132,6 @@ LIST_HEAD(kern_history_head, kern_history);
 #define KERNHIST_DECL(NAME)
 #define KERNHIST_DEFINE(NAME)
 #define KERNHIST_INIT(NAME,N)
-#define KERNHIST_INIT_STATIC(NAME,BUF)
 #define KERNHIST_LOG(NAME,FMT,A,B,C,D)
 #define KERNHIST_CALLARGS(NAME,FMT,A,B,C,D)
 #define KERNHIST_CALLED(NAME)
@@ -176,18 +175,6 @@ do { \
 	.s = 0, \
 	/* BUF will inititalized to zeroes by being in .bss */ \
 }
-
-#define KERNHIST_INIT_STATIC(NAME,BUF) \
-do { \
-	(NAME).name = __STRING(NAME); \
-	(NAME).namelen = strlen(__STRING(NAME)); \
-	(NAME).n = sizeof(BUF) / sizeof(struct kern_history_ent); \
-	(NAME).f = 0; \
-	(NAME).e = (struct kern_history_ent *) (BUF); \
-	(NAME).s = 0; \
-	memset((NAME).e, 0, sizeof(struct kern_history_ent) * (NAME).n); \
-	KERNHIST_LINK_STATIC(NAME); \
-} while (/*CONSTCOND*/ 0)
 
 #ifndef KERNHIST_DELAY
 #define KERNHIST_DELAY	100000
