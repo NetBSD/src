@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2795 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2796 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -352,3 +352,11 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	file(1): Upgraded to 5.40. [christos 20210409]
 	pkg_install: Updated to 20210410. This simplifes version checking for
 		NetBSD. [nia 20210410]
+	gcc(1): Import GCC 10.3.  [mrg 20200410]
+	alpha: Switch to GCC 10.  [mrg 20200416]
+	amd64: Switch to GCC 10.  [mrg 20200416]
+	ia64: Switch to GCC 10.  [mrg 20200416]
+	riscv: Switch to GCC 10.  [mrg 20200416]
+	sparc: Switch to GCC 10.  [mrg 20200416]
+	sparc64: Switch to GCC 10.  [mrg 20200416]
+	vax: Switch to GCC 10.  [mrg 20200416]
