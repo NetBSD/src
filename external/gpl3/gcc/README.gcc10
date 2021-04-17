@@ -1,4 +1,4 @@
-$NetBSD: README.gcc10,v 1.9 2021/04/15 05:12:57 mrg Exp $
+$NetBSD: README.gcc10,v 1.10 2021/04/17 01:59:41 mrg Exp $
 
 
 new stuff:
@@ -49,17 +49,17 @@ earmv7		y	b	y	y		y		?	?	?
 earmv7eb	y	b	y	y		y		?	?	?
 earmv7hf	y	y	y	y		y		y	y	n
 earmv7hfeb	y	b	y	y		y		?	?	?
-hppa		y	b	y	y		y		?	?	?
+hppa		y	y	y	y		y		y	?	?
 i386		y	y	y	y		y		y	n[8]	?
 ia64		y	y	y	y		y		?	N/A	n
 m68000		y	b	y	y		n[1]		?	?	?
-m68k		y	y	y	y		y[9]		y	?	?
+m68k		y	y	y	y		y[9]		y	n	n
 mipseb		y	y	y	y		y		y	?	?
 mipsel		y	y	y	y		y		y	?	?
-mips64eb	y	y	y	y		y		n[4]	?	?
+mips64eb	y	y	y	y		y		y	?	?
 mips64el	y	b	y	y		y		y	?	?
-powerpc		y	b	y	y		y		n[2]	?	?
-powerpc64	y	b	y	y		y		N/A	N/A	?
+powerpc		y	b	y	y		y		y	?	n
+powerpc64	y	b	y	y		y		N/A	N/A	n
 sh3eb		y	b	y	y		y		?	?	?
 sh3el		y	y	y	y		y		y	y[7]	?
 sparc		y	y	y	y		y		y	y	n
@@ -74,36 +74,22 @@ coldfire	?	N/A	?	?		?		N/A	N/A
 architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
 
 [1] - ramdisk.fs is too large, needs fixing.
-[2] - powerpc ports have regressions; fixes incoming from rin@
 [3] - missing __aarch64_swp1_acq in kernels.  missing lse.S in libgcc.
-[4] - edgerouter lite3 crashes early in boot:
-      [   1.0000000] u-boot bootmem desc @ 0x24108 version 3.0
-      [   1.0000000] phys segment: 0xfc000 @ 0x102000
-      [   1.0000000] adding 0xfc000 @ 0x102000 to freelist 3
-      [   1.0000000] phys segment: 0x7276000 @ 0xe8a000
-      [   1.0000000] adding 0x7276000 @ 0xe8a000 to freelist 3
-      [   1.0000000] phys segment: 0x7efa000 @ 0x8102000
-      [   1.0000000] adding 0x7efa000 @ 0x8102000 to freelist 3
-      [   1.0000000] phys segment: 0xff00000 @ 0x410000000
-      [   1.0000000] adding 0xff00000 @ 0x410000000 to freelist 0
-      [   1.0000000] pid 0(system): trap: cpu0, TLB miss (load or instr. fetch) in kernel mode
-      [   1.0000000] status=0xa3, cause=0x8, epc=0xffffffff802564d4, vaddr=0
-      [   1.0000000] tf=0x9800000000165bb0 ksp=0x9800000000165cf0 ra=0xffffffff80256470 ppl=0
-      [   1.0000000] kernel: TLB miss (load or instr. fetch) trap
-      Stopped in pid 0.0 (system) at  ffffffff802564d4:       sw      zero,16(s0)
-      0x9800000000165cf0: 0xffffffff802563+0xd8 (0xffffffff80000000,0,0,0xc000000008000000) ra 0xffffffff803edd18 sz 0
-      0x9800000000165cf0: 0xffffffff803edc+0x84 (0xffffffff80000000,0,0,0xc000000008000000) ra 0 sz 0
-    - OCTEON kernel seems OK, something in my private configuration?
 [6] - vax vs c++ exceptions issue, same as it ever was
 [7] - fails just as poorly in gxemul/landisk as GCC 9
-[8] - i386 seems to have a signal delivery issue.  GCC 9 or 10 kernels are
-      unable to reboot properly, and GCC 10 atf runs hang in signal delivery.
-      bisection so far has reduced bug introduction between 2020-05-08 and
-      2020-05-15.  possibly pthread or condvar changes in this period.
+[8] - i386 seems to have a signal delivery issue.  pthread tests hang and then
+      complain with eg:
+	  threads_and_exec: q[ 627.6700846] sorry, pid 3154 was killed: orphaned traced process
+      this problem occurs with GCC 9 as well.
 [9] - x68k/stand fails with:
       link  loadbsd/loadbsd.x
       loadbsd1: program header #1 is not loadable
-      may be due to it pulling in libc sources that get TLS marked?
+      problem is understood (thanks tsutsui@): previously loadbsd was linked
+      against normal userland libc components for m68k, which allows it to
+      detect running on m68000 CPU and sanely fail, instead of an barf error.
+      new gcc built libc includes TLS support, that isn't compatible with this
+      and the conversion process fails.  can be fixed by using libkern instead,
+      and accepting the poor error on m68000.
 
 
 
@@ -114,7 +100,7 @@ CPU		platform list
 ---		-------- ----
 		acorn32		cats	epoc32	evbarm-eb	evbarm-el	hpcarm		iyonix		netwinder	shark 		zaurus
 earmv4:		y		y	y	y		y		y		 		y		y		 
-earm:		 		 	 	r		y		 		y		 		 		y
+earm:		 		 	 	y		y		 		y		 		 		y
 earmhf:		 		 	 	y		y		 		 		 		 		 
 earmv6:		 		 	 	y		y
 earmv6hf:	 		 	 	y		y
