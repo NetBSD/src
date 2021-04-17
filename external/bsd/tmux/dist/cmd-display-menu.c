@@ -383,7 +383,7 @@ cmd_display_popup_exec(struct cmd *self, struct cmdq_item *item)
 		if (!checkshell(shell[0]))
 			shell[0] = _PATH_BSHELL;
 		argc = 1;
-		argv = (char**)shell;
+		argv = __UNCONST(shell);
 	}
 
 	if (args_has(args, 'E') > 1)
