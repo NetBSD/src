@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslot.c,v 1.57 2020/10/04 06:15:54 nat Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.58 2021/04/17 01:19:48 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.57 2020/10/04 06:15:54 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.58 2021/04/17 01:19:48 mrg Exp $");
 
 #include "opt_cardslot.h"
 
@@ -129,6 +129,8 @@ cardslotattach(device_t parent, device_t self, void *aux)
 	sc->sc_16_softc = NULL;
 	SIMPLEQ_INIT(&sc->sc_events);
 	sc->sc_th_enable = 0;
+	mutex_init(&sc->sc_event_lock, MUTEX_DEFAULT, IPL_TTY);
+	cv_init(&sc->sc_event_cv, "evexit");
 
 	aprint_naive("\n");
 	aprint_normal("\n");
@@ -192,13 +194,23 @@ cardslotdetach(device_t self, int flags)
 	if ((rc = config_detach_children(self, flags)) != 0)
 		return rc;
 
-	sc->sc_th_enable = 0;
-	wakeup(&sc->sc_events);
-	while (sc->sc_event_thread != NULL)
-		(void)tsleep(sc, PWAIT, "cardslotthd", 0);
+	mutex_enter(&sc->sc_event_lock);
+
+	if (sc->sc_event_thread != NULL) {
+		sc->sc_th_enable = 0;
+		cv_signal(&sc->sc_event_cv);
+		while (sc->sc_event_thread != NULL) {
+			cv_wait(&sc->sc_event_cv, &sc->sc_event_lock);
+		}
+	}
 
 	if (!SIMPLEQ_EMPTY(&sc->sc_events))
 		aprint_error_dev(self, "events outstanding");
+
+	mutex_exit(&sc->sc_event_lock);
+
+	mutex_destroy(&sc->sc_event_lock);
+	cv_destroy(&sc->sc_event_cv);
 
 	pmf_device_deregister(self);
 	return 0;
@@ -272,13 +284,11 @@ cardslot_event_throw(struct cardslot_softc *sc, int ev)
 
 	ce->ce_type = ev;
 
-	{
-		int s = spltty();
-		SIMPLEQ_INSERT_TAIL(&sc->sc_events, ce, ce_q);
-		splx(s);
-	}
+	mutex_enter(&sc->sc_event_lock);
+	SIMPLEQ_INSERT_TAIL(&sc->sc_events, ce, ce_q);
+	mutex_exit(&sc->sc_event_lock);
 
-	wakeup(&sc->sc_events);
+	cv_signal(&sc->sc_event_cv);
 
 	return;
 }
@@ -296,29 +306,28 @@ cardslot_event_thread(void *arg)
 {
 	struct cardslot_softc *sc = arg;
 	struct cardslot_event *ce;
-	int s, first = 1;
+	int first = 1;
 	static int antonym_ev[4] = {
 		CARDSLOT_EVENT_REMOVAL_16, CARDSLOT_EVENT_INSERTION_16,
 		CARDSLOT_EVENT_REMOVAL_CB, CARDSLOT_EVENT_INSERTION_CB
 	};
 
+	mutex_enter(&sc->sc_event_lock);
 	while (sc->sc_th_enable) {
-		s = spltty();
 		if ((ce = SIMPLEQ_FIRST(&sc->sc_events)) == NULL) {
-			splx(s);
 			if (first) {
 				first = 0;
+				mutex_exit(&sc->sc_event_lock);
 				config_pending_decr(sc->sc_dev);
+				mutex_enter(&sc->sc_event_lock);
 			}
-			(void) tsleep(&sc->sc_events, PWAIT, "cardslotev", 0);
+			cv_wait(&sc->sc_event_cv, &sc->sc_event_lock);
 			continue;
 		}
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_events, ce_q);
-		splx(s);
 
 		if (IS_CARDSLOT_INSERT_REMOVE_EV(ce->ce_type)) {
 			/* Chattering suppression */
-			s = spltty();
 			while (1) {
 				struct cardslot_event *ce1, *ce2;
 
@@ -340,8 +349,8 @@ cardslot_event_thread(void *arg)
 					free(ce2, M_TEMP);
 				}
 			}
-			splx(s);
 		}
+		mutex_exit(&sc->sc_event_lock);
 
 		switch (ce->ce_type) {
 		case CARDSLOT_EVENT_INSERTION_CB:
@@ -371,8 +380,10 @@ cardslot_event_thread(void *arg)
 					    CARDSLOT_STATUS_NOTWORK);
 				}
 			} else {
-				panic("no cardbus on %s",
+				printf("%s: no cardbus on %s\n", __func__,
 				      device_xname(sc->sc_dev));
+				CARDSLOT_SET_WORK(sc->sc_status,
+				    CARDSLOT_STATUS_NOTWORK);
 			}
 
 			break;
@@ -400,8 +411,10 @@ cardslot_event_thread(void *arg)
 					    CARDSLOT_STATUS_WORKING);
 				}
 			} else {
-				panic("no 16-bit pcmcia on %s",
+				printf("%s: no 16-bit pcmcia on %s\n", __func__,
 				      device_xname(sc->sc_dev));
+				CARDSLOT_SET_WORK(sc->sc_status,
+				    CARDSLOT_STATUS_NOTWORK);
 			}
 
 			break;
@@ -451,12 +464,14 @@ cardslot_event_thread(void *arg)
 			panic("cardslot_event_thread: unknown event %d", ce->ce_type);
 		}
 		free(ce, M_TEMP);
+		mutex_enter(&sc->sc_event_lock);
 	}
 
+	/* The parent device is waiting for us to exit. */
 	sc->sc_event_thread = NULL;
 
-	/* In case the parent device is waiting for us to exit. */
-	wakeup(sc);
+	cv_signal(&sc->sc_event_cv);
+	mutex_exit(&sc->sc_event_lock);
 
 	kthread_exit(0);
 }
