@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.134 2021/04/06 13:35:52 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.135 2021/04/17 08:35:33 maya Exp $	*/
 
 /*
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.134 2021/04/06 13:35:52 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.135 2021/04/17 08:35:33 maya Exp $");
 #endif
 #endif /* not lint */
 
@@ -800,11 +800,9 @@ started(struct pinfo *pi, VARENT *ve, enum mode mode)
 	if (now == 0)
 		(void)time(&now);
 	if (now - k->p_ustart_sec < SECSPERDAY)
-		/* I *hate* SCCS... */
-		safe_strftime(buf, sizeof(buf) - 1, "%l:%" "M%p", tp);
+		safe_strftime(buf, sizeof(buf) - 1, "%l:%M%p", tp);
 	else if (now - k->p_ustart_sec < DAYSPERWEEK * SECSPERDAY)
-		/* I *hate* SCCS... */
-		safe_strftime(buf, sizeof(buf) - 1, "%a%" "I%p", tp);
+		safe_strftime(buf, sizeof(buf) - 1, "%a%I%p", tp);
 	else
 		safe_strftime(buf, sizeof(buf) - 1, "%e%b%y", tp);
 	/* %e and %l can start with a space. */
