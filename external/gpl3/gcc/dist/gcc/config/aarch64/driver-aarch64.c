@@ -514,9 +514,6 @@ host_detect_local_cpu (int argc, const char **argv)
 	    }
 #endif
 
-	  strncpy(buf, exts.c_str(), sizeof(buf) - 1);
-	  buf[sizeof(buf) - 1] = '\0';
-
           for (i = 0; i < num_exts; i++)
             {
 	      const char *p = aarch64_extensions[i].feat_string;
@@ -530,13 +527,13 @@ host_detect_local_cpu (int argc, const char **argv)
 
 	      /* This may be a multi-token feature string.  We need
 		 to match all parts, which could be in any order.  */
-	      size_t len = strlen (buf);
+	      size_t len = strlen (exts.c_str());
 	      do
 		{
 		  const char *end = strchr (p, ' ');
 		  if (end == NULL)
 		    end = strchr (p, '\0');
-		  if (memmem (buf, len, p, end - p) == NULL)
+		  if (memmem (exts.c_str(), len, p, end - p) == NULL)
 		    {
 		      /* Failed to match this token.  Turn off the
 			 features we'd otherwise enable.  */
