@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.215 2020/11/27 03:37:11 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.215.2.1 2021/04/17 17:26:21 thorpej Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.215 2020/11/27 03:37:11 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.215.2.1 2021/04/17 17:26:21 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1074,8 +1074,6 @@ sppp_detach(struct ifnet *ifp)
 		spppq_lock = NULL;
 	}
 
-	SPPP_LOCK(sp, RW_WRITER);
-
 	sppp_cp_fini(&lcp, sp);
 	sppp_cp_fini(&ipcp, sp);
 	sppp_cp_fini(&pap, sp);
@@ -1090,7 +1088,6 @@ sppp_detach(struct ifnet *ifp)
 	if (sp->myauth.secret) free(sp->myauth.secret, M_DEVBUF);
 	if (sp->hisauth.name) free(sp->hisauth.name, M_DEVBUF);
 	if (sp->hisauth.secret) free(sp->hisauth.secret, M_DEVBUF);
-	SPPP_UNLOCK(sp);
 	rw_destroy(&sp->pp_lock);
 }
 
@@ -1933,6 +1930,13 @@ sppp_down_event(struct sppp *sp, void *xcp)
 		sppp_cp_change_state(cp, sp, STATE_STARTING);
 		break;
 	default:
+		/*
+		 * a down event may be caused regardless
+		 * of state just in LCP case.
+		 */
+		if (cp->proto == PPP_LCP)
+			break;
+
 		printf("%s: %s illegal down in state %s\n",
 		       ifp->if_xname, cp->name,
 		       sppp_state_name(sp->scp[cp->protoidx].state));

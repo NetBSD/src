@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2020/09/12 10:44:32 roy Exp $
+#	$NetBSD: Makefile,v 1.34.4.1 2021/04/17 17:26:22 thorpej Exp $
 #
 
 
@@ -28,6 +28,9 @@ SRCS+=	rtsock_70.c uipc_usrreq_70.c
 .endif
 
 COPTS.if_ethersubr.c+=		${GCC_NO_CAST_FUNCTION_TYPE}
+# GCC is wrong here.
+COPTS.in_pcb.c+=		${GCC_NO_RETURN_LOCAL_ADDR}
+COPTS.in6_pcb.c+=		${GCC_NO_RETURN_LOCAL_ADDR}
 
 .include "${.CURDIR}/../libnetinet/Makefile.inc"
 .include "${.CURDIR}/../libnetinet6/Makefile.inc"

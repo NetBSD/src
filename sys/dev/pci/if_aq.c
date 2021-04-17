@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aq.c,v 1.20 2021/02/18 17:56:04 ryo Exp $	*/
+/*	$NetBSD: if_aq.c,v 1.20.2.1 2021/04/17 17:26:19 thorpej Exp $	*/
 
 /**
  * aQuantia Corporation Network Driver
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.20 2021/02/18 17:56:04 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.20.2.1 2021/04/17 17:26:19 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_aq.h"
@@ -115,6 +115,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.20 2021/02/18 17:56:04 ryo Exp $");
 #define AQ_TRAFFICCLASS_NUM		8
 #define AQ_RSS_HASHKEY_SIZE		40
 #define AQ_RSS_INDIRECTION_TABLE_MAX	64
+
+#define AQ_JUMBO_MTU_REV_A		9000
+#define AQ_JUMBO_MTU_REV_B		16338
 
 /*
  * TERMINOLOGY
@@ -996,6 +999,7 @@ struct aq_softc {
 #define FEATURES_REV_B0		0x20000000
 #define FEATURES_REV_B1		0x40000000
 #define FEATURES_REV_B		(FEATURES_REV_B0|FEATURES_REV_B1)
+	uint32_t sc_max_mtu;
 	uint32_t sc_mbox_addr;
 
 	bool sc_rbl_enabled;
@@ -1445,24 +1449,14 @@ aq_attach(device_t parent, device_t self, void *aux)
 	ifp->if_capabilities |= IFCAP_TSOv4 | IFCAP_TSOv6;
 #endif
 
-#if notyet
-	/*
-	 * XXX:
-	 *   Rx L4 CSUM doesn't work well for fragment packet.
-	 *   aq marks 'CHEDKED' and 'BAD' for them.
-	 *   we need to ignore (clear) hw-csum flags if the packet is fragmented
-	 *
-	 *   TODO: test with LRO enabled
-	 */
-	ifp->if_capabilities |= IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_TCPv6_Rx;
-	ifp->if_capabilities |= IFCAP_CSUM_UDPv4_Rx | IFCAP_CSUM_UDPv6_Rx;
-#endif
-	/* TX hardware checksum offloadding */
+	/* TX hardware checksum offloading */
 	ifp->if_capabilities |= IFCAP_CSUM_IPv4_Tx;
 	ifp->if_capabilities |= IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv6_Tx;
 	ifp->if_capabilities |= IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv6_Tx;
-	/* RX hardware checksum offloadding */
+	/* RX hardware checksum offloading */
 	ifp->if_capabilities |= IFCAP_CSUM_IPv4_Rx;
+	ifp->if_capabilities |= IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_TCPv6_Rx;
+	ifp->if_capabilities |= IFCAP_CSUM_UDPv4_Rx | IFCAP_CSUM_UDPv6_Rx;
 
 	error = if_initialize(ifp);
 	if (error != 0) {
@@ -2128,6 +2122,7 @@ aq_fw_version_init(struct aq_softc *sc)
 		    fw_vers);
 		sc->sc_features |= FEATURES_REV_A0 |
 		    FEATURES_MPI_AQ | FEATURES_MIPS;
+		sc->sc_max_mtu = AQ_JUMBO_MTU_REV_A;
 		break;
 	case 0x02:
 		aprint_normal_dev(sc->sc_dev, "Atlantic revision B0, %s\n",
@@ -2135,6 +2130,7 @@ aq_fw_version_init(struct aq_softc *sc)
 		sc->sc_features |= FEATURES_REV_B0 |
 		    FEATURES_MPI_AQ | FEATURES_MIPS |
 		    FEATURES_TPO2 | FEATURES_RPF2;
+		sc->sc_max_mtu = AQ_JUMBO_MTU_REV_B;
 		break;
 	case 0x0A:
 		aprint_normal_dev(sc->sc_dev, "Atlantic revision B1, %s\n",
@@ -2142,10 +2138,13 @@ aq_fw_version_init(struct aq_softc *sc)
 		sc->sc_features |= FEATURES_REV_B1 |
 		    FEATURES_MPI_AQ | FEATURES_MIPS |
 		    FEATURES_TPO2 | FEATURES_RPF2;
+		sc->sc_max_mtu = AQ_JUMBO_MTU_REV_B;
 		break;
 	default:
 		aprint_error_dev(sc->sc_dev,
 		    "Unknown revision (0x%08x)\n", hwrev);
+		sc->sc_features = 0;
+		sc->sc_max_mtu = ETHERMTU;
 		error = ENOTSUP;
 		break;
 	}
@@ -4341,7 +4340,10 @@ aq_rx_intr(void *arg)
 			m->m_len = MCLBYTES;
 		} else {
 			/* last buffer */
-			m->m_len = rxd_pktlen % MCLBYTES;
+			int mlen = rxd_pktlen % MCLBYTES;
+			if (mlen == 0)
+				mlen = MCLBYTES;
+			m->m_len = mlen;
 			m0->m_pkthdr.len = rxd_pktlen;
 			/* VLAN offloading */
 			if ((sc->sc_ethercom.ec_capenable &
@@ -4365,11 +4367,11 @@ aq_rx_intr(void *arg)
 					m0->m_pkthdr.csum_flags |=
 					    M_CSUM_IPv4_BAD;
 			}
-#if notyet
+
 			/*
-			 * XXX: aq always marks BAD for fragmented packet.
-			 * we should peek L3 header, and ignore cksum flags
-			 * if the packet is fragmented.
+			 * aq will always mark BAD for fragment packets,
+			 * but this is not a problem because the IP stack
+			 * ignores the CSUM flag in fragment packets.
 			 */
 			if (__SHIFTOUT(rxd_type,
 			    RXDESC_TYPE_TCPUDP_CSUM_CHECKED)) {
@@ -4422,7 +4424,7 @@ aq_rx_intr(void *arg)
 					    M_CSUM_TCP_UDP_BAD;
 				}
 			}
-#endif
+
 			m_set_rcvif(m0, ifp);
 			if_statinc_ref(nsr, if_ipackets);
 			if_statadd_ref(nsr, if_ibytes, m0->m_pkthdr.len);
@@ -4496,6 +4498,8 @@ aq_init(struct ifnet *ifp)
 {
 	struct aq_softc *sc = ifp->if_softc;
 	int i, error = 0;
+
+	aq_stop(ifp, false);
 
 	AQ_LOCK(sc);
 
@@ -4669,6 +4673,9 @@ aq_stop(struct ifnet *ifp, int disable)
 
 	ifp->if_timer = 0;
 
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
+		goto already_stopped;
+
 	/* disable tx/rx interrupts */
 	aq_enable_intr(sc, true, false);
 
@@ -4689,6 +4696,7 @@ aq_stop(struct ifnet *ifp, int disable)
 
 	ifp->if_timer = 0;
 
+ already_stopped:
 	if (!disable) {
 		/* when pmf stop, disable link status intr and callout */
 		aq_enable_intr(sc, false, false);
@@ -4744,7 +4752,19 @@ aq_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 	error = 0;
 
 	s = splnet();
-	error = ether_ioctl(ifp, cmd, data);
+	switch (cmd) {
+	case SIOCSIFMTU:
+		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > sc->sc_max_mtu) {
+			error = EINVAL;
+		} else {
+			ifp->if_mtu = ifr->ifr_mtu;
+			error = 0;	/* no need to reset (no ENETRESET) */
+		}
+		break;
+	default:
+		error = ether_ioctl(ifp, cmd, data);
+		break;
+	}
 	splx(s);
 
 	if (error != ENETRESET)

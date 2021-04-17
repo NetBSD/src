@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslotvar.h,v 1.16 2009/12/15 22:17:12 snj Exp $	*/
+/*	$NetBSD: cardslotvar.h,v 1.16.80.1 2021/04/17 17:26:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -65,6 +65,10 @@ struct cardslot_softc {
 	/* An event queue for the thread which processes slot state events. */
 
 	SIMPLEQ_HEAD(, cardslot_event) sc_events;
+
+	/* Safely handle detach. */
+	kmutex_t sc_event_lock;
+	kcondvar_t sc_event_cv;
 };
 
 #define CARDSLOT_STATUS_CARD_MASK     0x07

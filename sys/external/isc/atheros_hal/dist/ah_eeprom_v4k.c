@@ -124,9 +124,9 @@ v4kEepromSet(struct ath_hal *ah, int param, int v)
 	switch (param) {
 	case AR_EEP_ANTGAINMAX_2:
 		ee->ee_antennaGainMax = (int8_t) v;
-		return HAL_OK;
+		return AH_TRUE;
 	}
-	return HAL_EINVAL;
+	return AH_FALSE;
 }
 
 static HAL_BOOL

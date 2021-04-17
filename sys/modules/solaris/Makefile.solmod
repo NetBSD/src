@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.solmod,v 1.7 2019/06/05 16:28:07 hannken Exp $
+#	$NetBSD: Makefile.solmod,v 1.7.12.1 2021/04/17 17:26:21 thorpej Exp $
 
 ZFSDIR=	${S}/../external/cddl/osnet
 
@@ -82,5 +82,3 @@ CPPFLAGS+=	-I${ZFSDIR}/dist/common
 CPPFLAGS+=	-I${ZFSDIR}/dist/uts/common/zmod
 CPPFLAGS+=	-I${ZFSDIR}/dist/uts/common
 CPPFLAGS+=      -I${ZFSDIR}/sys/sys
-
-NEED_ISYSTEM=   # duplicate headers, depends on -isystem to build

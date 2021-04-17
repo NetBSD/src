@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.61.10.1 2021/03/21 21:09:14 thorpej Exp $	*/
+/*	$NetBSD: magma.c,v 1.61.10.2 2021/04/17 17:26:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 Iain Hibbert
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.61.10.1 2021/03/21 21:09:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.61.10.2 2021/04/17 17:26:19 thorpej Exp $");
 
 #if 0
 #define MAGMA_DEBUG
@@ -1743,7 +1743,10 @@ mbpp_recv(struct mbpp_port *mp, void *ptr, int len)
 		cd1400_write_reg(cd, CD1400_CAR, 0);
 
 		/* input strobe at 100kbaud (10microseconds) */
-		cd1400_compute_baud(100000, cd->cd_clock, &rcor, &rbpr);
+		if (cd1400_compute_baud(100000, cd->cd_clock, &rcor, &rbpr)) {
+			splx(s);
+			return 0;
+		}
 		cd1400_write_reg(cd, CD1400_RCOR, rcor);
 		cd1400_write_reg(cd, CD1400_RBPR, rbpr);
 

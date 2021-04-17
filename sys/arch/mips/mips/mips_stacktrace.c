@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_stacktrace.c,v 1.7.4.1 2021/04/03 21:44:45 thorpej Exp $	*/
+/*	$NetBSD: mips_stacktrace.c,v 1.7.4.2 2021/04/17 17:26:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_stacktrace.c,v 1.7.4.1 2021/04/03 21:44:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_stacktrace.c,v 1.7.4.2 2021/04/17 17:26:14 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -504,10 +504,12 @@ mips3_eret:
 done:
 	if (mask & (1 << _R_RA))
 		ra = regs[_R_RA];
-	(*printfn)("%#"PRIxVADDR": %s+%"PRIxVADDR" (%"PRIxREGISTER",%"PRIxREGISTER",%"PRIxREGISTER",%"PRIxREGISTER") ra %"PRIxVADDR" sz %d\n",
-		sp, fn_name(subr), pc - subr,
-		regs[_R_A0], regs[_R_A1], regs[_R_A2], regs[_R_A3],
-		ra, stksize);
+	(*printfn)("%#"PRIxVADDR": %s+%#"PRIxVADDR" (%#"PRIxREGISTER","
+	    "%#"PRIxREGISTER",%#"PRIxREGISTER",%#"PRIxREGISTER") "
+	    "ra %#"PRIxVADDR" sz %d\n",
+	    sp, fn_name(subr), pc - subr,
+	    regs[_R_A0], regs[_R_A1], regs[_R_A2], regs[_R_A3],
+	    ra, stksize);
 
 	if (ra) {
 		if (pc == ra && stksize == 0)

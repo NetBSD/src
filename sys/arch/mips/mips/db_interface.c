@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.92 2021/02/23 07:13:52 mrg Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.92.2.1 2021/04/17 17:26:14 thorpej Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.92 2021/02/23 07:13:52 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.92.2.1 2021/04/17 17:26:14 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
@@ -74,7 +74,9 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.92 2021/02/23 07:13:52 mrg Exp $"
 volatile u_int ddb_cpu = NOCPU;
 
 int		db_active = 0;
+#ifdef _KERNEL
 db_regs_t	ddb_regs;
+#endif
 
 #if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
 static void db_watch_cmd(db_expr_t, bool, db_expr_t, const char *);
