@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: memset2.c,v 1.7 2021/04/17 06:02:35 simonb Exp $");
+__RCSID("$NetBSD: memset2.c,v 1.8 2021/04/17 08:06:58 simonb Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -60,11 +60,9 @@ __RCSID("$NetBSD: memset2.c,v 1.7 2021/04/17 06:02:35 simonb Exp $");
 #undef memset
 
 /*
- * Assume uregister_t is the widest non-synthetic unsigned type.
+ * Assume __register_t is the widest non-synthetic unsigned type.
  */
-typedef uregister_t memword_t;
-
-__CTASSERT((~(memword_t)0U >> 1) != ~(memword_t)0U);
+typedef __register_t memword_t;
 
 #ifdef BZERO
 static inline
