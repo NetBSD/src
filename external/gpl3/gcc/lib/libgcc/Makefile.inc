@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.48 2021/04/17 10:54:46 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.49 2021/04/17 22:01:02 mrg Exp $
 
 LIBGCC_MACHINE_ARCH?=${MACHINE_ARCH:S/earmv5/earm/}
 GCC_MACHINE_SUBDIR=${MACHINE_CPU:C/powerpc.*/rs6000/:C/x86_64/i386/}
@@ -170,7 +170,7 @@ ${LIB1ASMFUNCS}: ${.CURDIR}/Makefile
 
 .if ${LIB} == "gcc" && \
     (${LIBGCC_MACHINE_ARCH} == "aarch64" || \
-     ${LIBGCC_MACHINE_ARCH} == "aarch64be") # {
+     ${LIBGCC_MACHINE_ARCH} == "aarch64eb") # {
 # XXX lse.S objects are placed directly into "libgcc-objects" for GCC, and
 # are not pulled out by mknative-gcc easily.
 . for s in 1 2 4 8 16

@@ -1,4 +1,4 @@
-$NetBSD: README.gcc10,v 1.11 2021/04/17 04:07:16 mrg Exp $
+$NetBSD: README.gcc10,v 1.12 2021/04/17 22:01:02 mrg Exp $
 
 
 new stuff:
@@ -32,8 +32,8 @@ switched:	has port switched?  y (yes), n (no/ready), ? (not ready)
 
 architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf	switched
 ------------	-----	-------	------	----------	------------	----	---	--------
-aarch64		y	n[3]	n[3]	y		n		?	?	?
-aarch64be	y	n[3]	n[3]	y		n		?	?	?
+aarch64		y	n[3]	y	y		n		?	?	?
+aarch64eb	y	n[3]	y	y		n		?	?	?
 alpha		y	y	y	y		y		y	y	y
 earmv4		y	y	y	y		y		y	?	n
 earmv4eb	y	b	y	y		y		?	?	?
@@ -74,7 +74,7 @@ coldfire	?	N/A	?	?		?		N/A	N/A
 architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
 
 [1] - ramdisk.fs is too large, needs fixing.
-[3] - missing __aarch64_swp1_acq in kernels.  missing lse.S in libgcc.
+[3] - missing __aarch64_swp1_acq in kernels.
 [6] - vax vs c++ exceptions issue, same as it ever was
 [7] - fails just as poorly in gxemul/landisk as GCC 9
 [8] - i386 seems to have a signal delivery issue.  pthread tests hang and then
