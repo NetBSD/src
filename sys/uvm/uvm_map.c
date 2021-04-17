@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.386 2021/03/13 15:29:55 skrll Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.387 2021/04/17 01:53:58 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.386 2021/03/13 15:29:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.387 2021/04/17 01:53:58 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -904,17 +904,13 @@ uvm_map_unreference_amap(struct vm_map_entry *entry, int flags)
 void
 uvm_map_init(void)
 {
-#if defined(UVMHIST)
-	static struct kern_history_ent pdhistbuf[UVMHIST_PDHIST_SIZE];
-#endif
-
 	/*
 	 * first, init logging system.
 	 */
 
 	UVMHIST_FUNC(__func__);
 	UVMHIST_LINK_STATIC(maphist);
-	UVMHIST_INIT_STATIC(pdhist, pdhistbuf);
+	UVMHIST_LINK_STATIC(pdhist);
 	UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist,"<starting uvm map system>", 0, 0, 0, 0);
 

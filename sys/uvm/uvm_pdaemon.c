@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.131 2020/11/04 01:30:19 chs Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.132 2021/04/17 01:53:58 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.131 2020/11/04 01:30:19 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.132 2021/04/17 01:53:58 mrg Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -88,7 +88,8 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.131 2020/11/04 01:30:19 chs Exp $"
 #include <uvm/uvm_pgflcache.h>
 
 #ifdef UVMHIST
-UVMHIST_DEFINE(pdhist);
+static struct kern_history_ent pdhistbuf[UVMHIST_PDHIST_SIZE];
+UVMHIST_DEFINE(pdhist) = UVMHIST_INITIALIZER(pdhisthist, pdhistbuf);
 #endif
 
 /*

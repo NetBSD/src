@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.103 2021/03/09 16:40:59 ryo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.104 2021/04/17 01:53:58 mrg Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.103 2021/03/09 16:40:59 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.104 2021/04/17 01:53:58 mrg Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -68,7 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.103 2021/03/09 16:40:59 ryo Exp $");
 #define VPRINTF(...)	__nothing
 #endif
 
-UVMHIST_DEFINE(pmaphist);
 #ifdef UVMHIST
 
 #ifndef UVMHIST_PMAPHIST_SIZE
@@ -76,13 +75,14 @@ UVMHIST_DEFINE(pmaphist);
 #endif
 
 struct kern_history_ent pmaphistbuf[UVMHIST_PMAPHIST_SIZE];
+UVMHIST_DEFINE(pmaphist) = UVMHIST_INITIALIZER(pmaphist, pmaphistbuf);;
 
 static void
 pmap_hist_init(void)
 {
 	static bool inited = false;
 	if (inited == false) {
-		UVMHIST_INIT_STATIC(pmaphist, pmaphistbuf);
+		UVMHIST_LINK_STATIC(pmaphist);
 		inited = true;
 	}
 }
