@@ -1,4 +1,4 @@
-/*      $NetBSD: ps.c,v 1.39 2020/08/26 10:56:01 simonb Exp $  */
+/*      $NetBSD: ps.c,v 1.40 2021/04/17 08:34:27 maya Exp $  */
 
 /*-
  * Copyright (c) 1999
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ps.c,v 1.39 2020/08/26 10:56:01 simonb Exp $");
+__RCSID("$NetBSD: ps.c,v 1.40 2021/04/17 08:34:27 maya Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -340,11 +340,9 @@ start2str(struct kinfo_proc2 *kp)
 	if (now == 0)
 	        time(&now);
 	if (now - u_start.tv_sec < 24 * SECSPERHOUR) {
-		/* I *hate* SCCS... */
-	        strftime(startstr, sizeof(startstr) - 1, "%l:%" "M%p", tp);
+	        strftime(startstr, sizeof(startstr) - 1, "%l:%M%p", tp);
 	} else if (now - u_start.tv_sec < 7 * SECSPERDAY) {
-	        /* I *hate* SCCS... */
-	        strftime(startstr, sizeof(startstr) - 1, "%a%" "I%p", tp);
+	        strftime(startstr, sizeof(startstr) - 1, "%a%I%p", tp);
 	} else  
 	        strftime(startstr, sizeof(startstr) - 1, "%e%b%y", tp);
 
