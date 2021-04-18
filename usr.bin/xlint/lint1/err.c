@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.112 2021/04/18 08:07:04 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.113 2021/04/18 08:52:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.112 2021/04/18 08:07:04 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.113 2021/04/18 08:52:04 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -484,15 +484,15 @@ lbasename(const char *path)
 }
 
 static void
-verror(int n, va_list ap)
+verror_at(pos_t pos, int n, va_list ap)
 {
 	const	char *fn;
 
 	if (ERR_ISSET(n, &msgset))
 		return;
 
-	fn = lbasename(curr_pos.p_file);
-	(void)printf("%s(%d): error: ", fn, curr_pos.p_line);
+	fn = lbasename(pos.p_file);
+	(void)printf("%s(%d): error: ", fn, pos.p_line);
 	(void)vprintf(msgs[n], ap);
 	(void)printf(" [%d]\n", n);
 	nerr++;
@@ -500,7 +500,7 @@ verror(int n, va_list ap)
 }
 
 static void
-vwarning(int n, va_list ap)
+vwarning_at(pos_t pos, int n, va_list ap)
 {
 	const	char *fn;
 
@@ -514,13 +514,38 @@ vwarning(int n, va_list ap)
 		/* this warning is suppressed by a LINTED comment */
 		return;
 
-	fn = lbasename(curr_pos.p_file);
-	(void)printf("%s(%d): warning: ", fn, curr_pos.p_line);
+	fn = lbasename(pos.p_file);
+	(void)printf("%s(%d): warning: ", fn, pos.p_line);
 	(void)vprintf(msgs[n], ap);
 	(void)printf(" [%d]\n", n);
 	if (wflag)
 		nerr++;
 	print_stack_trace();
+}
+
+static void
+vmessage_at(int n, pos_t pos, va_list ap)
+{
+	const char *fn;
+
+	if (ERR_ISSET(n, &msgset))
+		return;
+
+	fn = lbasename(pos.p_file);
+	(void)printf("%s(%d): ", fn, pos.p_line);
+	(void)vprintf(msgs[n], ap);
+	(void)printf(" [%d]\n", n);
+	print_stack_trace();
+}
+
+void
+(error_at)(int n, pos_t pos, ...)
+{
+	va_list	ap;
+
+	va_start(ap, pos);
+	verror_at(pos, n, ap);
+	va_end(ap);
 }
 
 void
@@ -529,7 +554,7 @@ void
 	va_list	ap;
 
 	va_start(ap, n);
-	verror(n, ap);
+	verror_at(curr_pos, n, ap);
 	va_end(ap);
 }
 
@@ -564,12 +589,32 @@ assert_failed(const char *file, int line, const char *func, const char *cond)
 }
 
 void
+(warning_at)(int n, pos_t pos, ...)
+{
+	va_list	ap;
+
+	va_start(ap, pos);
+	vwarning_at(pos, n, ap);
+	va_end(ap);
+}
+
+void
 (warning)(int n, ...)
 {
 	va_list	ap;
 
 	va_start(ap, n);
-	vwarning(n, ap);
+	vwarning_at(curr_pos, n, ap);
+	va_end(ap);
+}
+
+void
+(message_at)(int n, pos_t pos, ...)
+{
+	va_list ap;
+
+	va_start(ap, pos);
+	vmessage_at(n, pos, ap);
 	va_end(ap);
 }
 
@@ -577,18 +622,10 @@ void
 (message)(int n, ...)
 {
 	va_list	ap;
-	const	char *fn;
-
-	if (ERR_ISSET(n, &msgset))
-		return;
 
 	va_start(ap, n);
-	fn = lbasename(curr_pos.p_file);
-	(void)printf("%s(%d): ", fn, curr_pos.p_line);
-	(void)vprintf(msgs[n], ap);
-	(void)printf(" [%d]\n", n);
+	vmessage_at(n, curr_pos, ap);
 	va_end(ap);
-	print_stack_trace();
 }
 
 /*
@@ -605,9 +642,9 @@ void
 
 	va_start(ap, n);
 	if (sflag && !extensions_ok) {
-		verror(n, ap);
+		verror_at(curr_pos, n, ap);
 	} else if (sflag || !extensions_ok) {
-		vwarning(n, ap);
+		vwarning_at(curr_pos, n, ap);
 	}
 	va_end(ap);
 }
@@ -620,7 +657,7 @@ void
 	if (c11flag || gflag)
 		return;
 	va_start(ap, n);
-	verror(n, ap);
+	verror_at(curr_pos, n, ap);
 	va_end(ap);
 }
 
@@ -631,9 +668,9 @@ void
 
 	va_start(ap, n);
 	if (sflag && !gflag) {
-		verror(n, ap);
+		verror_at(curr_pos, n, ap);
 	} else if (sflag || !gflag) {
-		vwarning(n, ap);
+		vwarning_at(curr_pos, n, ap);
 	}
 	va_end(ap);
 }
