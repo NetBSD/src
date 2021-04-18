@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.105 2021/04/14 20:06:40 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.106 2021/04/18 08:07:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -117,7 +117,7 @@ extern	void	expr_restore_memory(struct memory_block *);
  */
 extern	int	nerr;
 extern	int	sytxerr;
-extern	const	char *msgs[];
+extern	const char *const msgs[];
 
 extern	void	msglist(void);
 extern	void	error(int, ...);
