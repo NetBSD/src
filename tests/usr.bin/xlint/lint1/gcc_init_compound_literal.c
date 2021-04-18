@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_init_compound_literal.c,v 1.3 2021/04/17 21:20:08 rillig Exp $	*/
+/*	$NetBSD: gcc_init_compound_literal.c,v 1.4 2021/04/18 08:03:56 rillig Exp $	*/
 # 3 "gcc_init_compound_literal.c"
 
 /*
@@ -22,8 +22,6 @@
 const struct {
     const unsigned char *ctxt;
 } T = {
-	(void *)0,
-	(void *)0,	/* expect: too many struct/union initializers */
 	.ctxt = (const unsigned char[4]){
 	    1, 2, 3, 4
 	},
