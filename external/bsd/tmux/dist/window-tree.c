@@ -1257,10 +1257,10 @@ window_tree_key(struct window_mode_entry *wme, struct client *c,
 		data->offset++;
 		break;
 	case 'H':
-		mode_tree_expand(data->data, (uint64_t)fsp->s);
-		mode_tree_expand(data->data, (uint64_t)fsp->wl);
-		if (!mode_tree_set_current(data->data, (uint64_t)wme->wp))
-			mode_tree_set_current(data->data, (uint64_t)fsp->wl);
+		mode_tree_expand(data->data, (uintptr_t)fsp->s);
+		mode_tree_expand(data->data, (uintptr_t)fsp->wl);
+		if (!mode_tree_set_current(data->data, (uintptr_t)wme->wp))
+			mode_tree_set_current(data->data, (uintptr_t)fsp->wl);
 		break;
 	case 'm':
 		window_tree_pull_item(item, &ns, &nwl, &nwp);
