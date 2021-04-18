@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.68 2021/04/17 11:01:34 rillig Exp $
+#	$NetBSD: Makefile,v 1.69 2021/04/18 21:53:37 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -10,13 +10,16 @@ SRCS=		cgram.y \
 
 MAN=		lint.7
 YHEADER=
-#DBG=-g
-#CPPFLAGS+=-DYYDEBUG=1
-#YFLAGS+=-v
-#LFLAGS+=-d
+#DBG=		-g
+#CPPFLAGS+=	-DYYDEBUG=1
+#YFLAGS+=	-v
+#LFLAGS+=	-d
 
 CWARNFLAGS.clang+=	-Wno-error=implicit-int-float-conversion
 LINTFLAGS+=		-T
+LOBJS.${PROG}+=		${SRCS:M*.y:.y=.ln}
+#LOBJS.${PROG}+=	${SRCS:M*.l:.l=.ln}
+LINTFLAGS.scan.c=	-X 107,330,331,333
 
 CPPFLAGS+=	-DIS_LINT1
 CPPFLAGS+=	-I${.CURDIR}
