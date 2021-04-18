@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.44 2021/04/18 20:02:56 rillig Exp $
+# $NetBSD: Makefile,v 1.45 2021/04/18 23:02:16 rillig Exp $
 
 NOMAN=		# defined
 MAX_MESSAGE=	343		# see lint1/err.c
@@ -120,7 +120,7 @@ sync-mi: .PHONY
 	cvs update "$$mi";						\
 	fmt="./usr/tests/usr.bin/xlint/lint1/%s\ttests-usr.bin-tests\tcompattestfile,atf\n"; \
 	cat "$$mi" > "$$mi.tmp";					\
-	printf "$$fmt" ${FILES:M*.c} ${FILES:M*.exp} >> "$$mi.tmp";	\
+	printf "$$fmt" ${FILES:M*.c} ${FILES:M*.exp} ${FILES:M*.ln} >> "$$mi.tmp"; \
 	distrib/sets/fmt-list "$$mi.tmp";				\
 	mv "$$mi.tmp" "$$mi";						\
 	cvs diff "$$mi" || true
