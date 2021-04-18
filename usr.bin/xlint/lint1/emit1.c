@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.43 2021/03/27 12:32:19 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.44 2021/04/18 20:02:56 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit1.c,v 1.43 2021/03/27 12:32:19 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.44 2021/04/18 20:02:56 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -76,16 +76,16 @@ static	void	outfstrg(strg_t *);
  *	[n]			A n
  *	()			F
  *	(void)			F 0
- *	(n arguments)		F n arg1 arg2 ... argn
- *	(n arguments, ...)	F n arg1 arg2 ... argn-1 E
- *	(a, b, c, ...)		f n arg1 arg2 ...
+ *	(n parameters)		F n arg1 arg2 ... argn
+ *	(n parameters, ...)	F n arg1 arg2 ... argn-1 E
  *	enum tag		e T tag_or_typename
  *	struct tag		s T tag_or_typename
  *	union tag		u T tag_or_typename
  *
- *	tag_or_typename		0			no tag or type name
- *				1 n tag			Tag
+ *	tag_or_typename		0 (obsolete)		no tag or type name
+ *				1 n tag			tagged type
  *				2 n typename		only type name
+ *				3 line.file.uniq	anonymous types
  *
  * spaces are only for better readability
  * additionally it is possible to prepend the characters 'c' (for const)
@@ -191,17 +191,16 @@ ttos(const type_t *tp)
 /*
  * write the name of a tag or typename
  *
- * if the tag is named, the name of the
- * tag is written, otherwise, if a typename exists which
- * refers to this tag, this typename is written
+ * if the tag is named, the name of the tag is written,
+ * otherwise, if a typename exists which refers to this tag,
+ * this typename is written
  */
 static void
 outtt(sym_t *tag, sym_t *tdef)
 {
 
-	/*
-	 * 0 is no longer used.
-	 */
+	/* 0 is no longer used. */
+
 	if (tag->s_name != unnamed) {
 		outint(1);
 		outname(tag->s_name);
