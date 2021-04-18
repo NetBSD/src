@@ -1,4 +1,4 @@
-/*	$NetBSD: tyname.c,v 1.39 2021/04/10 18:36:27 rillig Exp $	*/
+/*	$NetBSD: tyname.c,v 1.40 2021/04/18 17:47:32 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tyname.c,v 1.39 2021/04/10 18:36:27 rillig Exp $");
+__RCSID("$NetBSD: tyname.c,v 1.40 2021/04/18 17:47:32 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -54,7 +54,7 @@ __RCSID("$NetBSD: tyname.c,v 1.39 2021/04/10 18:36:27 rillig Exp $");
 	do { \
 		(void)warnx("%s, %d: " fmt, __FILE__, __LINE__, ##args); \
 		abort(); \
-	} while (/*CONSTCOND*/false)
+	} while (false)
 #endif
 
 /* A tree of strings. */
