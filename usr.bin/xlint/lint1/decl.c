@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.176 2021/04/18 09:20:43 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.177 2021/04/18 09:37:18 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.176 2021/04/18 09:20:43 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.177 2021/04/18 09:37:18 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -3008,26 +3008,18 @@ check_usage(dinfo_t *di)
 void
 check_usage_sym(bool novar, sym_t *sym)
 {
-	pos_t	cpos;
 
 	if (sym->s_block_level == -1)
 		return;
 
-	cpos = curr_pos;
-
-	if (sym->s_kind == FVFT) {
-		if (sym->s_arg) {
-			check_argument_usage(novar, sym);
-		} else {
-			check_variable_usage(novar, sym);
-		}
-	} else if (sym->s_kind == FLABEL) {
+	if (sym->s_kind == FVFT && sym->s_arg)
+		check_argument_usage(novar, sym);
+	else if (sym->s_kind == FVFT)
+		check_variable_usage(novar, sym);
+	else if (sym->s_kind == FLABEL)
 		check_label_usage(sym);
-	} else if (sym->s_kind == FTAG) {
+	else if (sym->s_kind == FTAG)
 		check_tag_usage(sym);
-	}
-
-	curr_pos = cpos;
 }
 
 static void
@@ -3040,9 +3032,8 @@ check_argument_usage(bool novar, sym_t *arg)
 		return;
 
 	if (!arg->s_used && vflag) {
-		curr_pos = arg->s_def_pos;
 		/* argument '%s' unused in function '%s' */
-		warning(231, arg->s_name, funcsym->s_name);
+		warning_at(231, arg->s_def_pos, arg->s_name, funcsym->s_name);
 	}
 }
 
@@ -3073,19 +3064,19 @@ check_variable_usage(bool novar, sym_t *sym)
 
 	if (sc == EXTERN) {
 		if (!sym->s_used && !sym->s_set) {
-			curr_pos = sym->s_def_pos;
 			/* '%s' unused in function '%s' */
-			warning(192, sym->s_name, funcsym->s_name);
+			warning_at(192, sym->s_def_pos,
+			    sym->s_name, funcsym->s_name);
 		}
 	} else {
 		if (sym->s_set && !sym->s_used) {
-			curr_pos = sym->s_set_pos;
 			/* '%s' set but not used in function '%s' */
-			warning(191, sym->s_name, funcsym->s_name);
+			warning_at(191, sym->s_set_pos,
+			    sym->s_name, funcsym->s_name);
 		} else if (!sym->s_used) {
-			curr_pos = sym->s_def_pos;
 			/* '%s' unused in function '%s' */
-			warning(192, sym->s_name, funcsym->s_name);
+			warning_at(192, sym->s_def_pos,
+			    sym->s_name, funcsym->s_name);
 		}
 	}
 
@@ -3121,13 +3112,11 @@ check_label_usage(sym_t *lab)
 	lint_assert(lab->s_block_level == 1);
 
 	if (lab->s_set && !lab->s_used) {
-		curr_pos = lab->s_set_pos;
 		/* label %s unused in function %s */
-		warning(232, lab->s_name, funcsym->s_name);
+		warning_at(232, lab->s_set_pos, lab->s_name, funcsym->s_name);
 	} else if (!lab->s_set) {
-		curr_pos = lab->s_use_pos;
 		/* undefined label %s */
-		warning(23, lab->s_name);
+		warning_at(23, lab->s_use_pos, lab->s_name);
 	}
 }
 
