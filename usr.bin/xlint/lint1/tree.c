@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.277 2021/04/17 16:58:04 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.278 2021/04/18 09:53:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.277 2021/04/17 16:58:04 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.278 2021/04/18 09:53:03 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4054,6 +4054,9 @@ check_integer_comparison(op_t op, tnode_t *ln, tnode_t *rn)
  * The expression can consist of PLUS, MINUS, ADDR, NAME, STRING and
  * CON. Type conversions are allowed if they do not change binary
  * representation (including width).
+ *
+ * C99 6.6 "Constant expressions"
+ * C99 6.7.8p4 restricts initializers for static storage duration
  */
 bool
 constant_addr(const tnode_t *tn, const sym_t **symp, ptrdiff_t *offsp)
