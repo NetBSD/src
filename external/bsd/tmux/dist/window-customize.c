@@ -116,7 +116,7 @@ window_customize_get_tag(struct options_entry *o, int idx,
 	uint64_t	offset;
 
 	if (oe == NULL)
-		return ((uint64_t)o);
+		return ((uintptr_t)o);
 	offset = ((const char *)oe - (const char *)options_table) / sizeof *options_table;
 	return ((2ULL << 62)|(offset << 32)|((idx + 1) << 1)|1);
 }
@@ -484,7 +484,7 @@ window_customize_build_keys(struct window_customize_modedata *data,
 		item->idx = -1;
 
 		expanded = format_expand(ft, data->format);
-		child = mode_tree_add(data->data, top, item, (uint64_t)bd,
+		child = mode_tree_add(data->data, top, item, (uintptr_t)bd,
 		    expanded, NULL, 0);
 		free(expanded);
 
