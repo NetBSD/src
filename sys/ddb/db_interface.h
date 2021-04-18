@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.h,v 1.38 2021/02/10 07:17:39 simonb Exp $	*/
+/*	$NetBSD: db_interface.h,v 1.39 2021/04/18 01:05:23 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -80,7 +80,6 @@ void		db_show_all_device(db_expr_t, bool, db_expr_t, const char *);
 /* kern/subr_disk.c, dev/dksubr.c */
 void		db_show_disk(db_expr_t, bool, db_expr_t, const char *);
 
-
 /* The db_stacktrace_print macro may be overridden by an MD macro */
 #ifndef db_stacktrace_print
 #define	db_stacktrace_print(prfunc) \
@@ -88,8 +87,20 @@ void		db_show_disk(db_expr_t, bool, db_expr_t, const char *);
 	true, 65535, "", prfunc)
 #endif	/* !db_stacktrace_print */
 
+#include <sys/syslog.h>
+
+static __inline__ void
+_db_log_wrapper(const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	vlog(LOG_INFO, fmt, ap);
+	va_end(ap);
+}
+
 #define	db_stacktrace()		db_stacktrace_print(printf);
 #define	db_ustacktrace()	db_stacktrace_print(uprintf);
-#define	db_lstacktrace()	db_stacktrace_print(log);
+#define	db_lstacktrace()	db_stacktrace_print(_db_log_wrapper);
 
 #endif /* _DDB_DB_INTERFACE_H_ */
