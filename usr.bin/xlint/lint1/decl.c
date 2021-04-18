@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.177 2021/04/18 09:37:18 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.178 2021/04/18 17:36:18 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.177 2021/04/18 09:37:18 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.178 2021/04/18 17:36:18 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -3033,7 +3033,7 @@ check_argument_usage(bool novar, sym_t *arg)
 
 	if (!arg->s_used && vflag) {
 		/* argument '%s' unused in function '%s' */
-		warning_at(231, arg->s_def_pos, arg->s_name, funcsym->s_name);
+		warning_at(231, &arg->s_def_pos, arg->s_name, funcsym->s_name);
 	}
 }
 
@@ -3065,17 +3065,17 @@ check_variable_usage(bool novar, sym_t *sym)
 	if (sc == EXTERN) {
 		if (!sym->s_used && !sym->s_set) {
 			/* '%s' unused in function '%s' */
-			warning_at(192, sym->s_def_pos,
+			warning_at(192, &sym->s_def_pos,
 			    sym->s_name, funcsym->s_name);
 		}
 	} else {
 		if (sym->s_set && !sym->s_used) {
 			/* '%s' set but not used in function '%s' */
-			warning_at(191, sym->s_set_pos,
+			warning_at(191, &sym->s_set_pos,
 			    sym->s_name, funcsym->s_name);
 		} else if (!sym->s_used) {
 			/* '%s' unused in function '%s' */
-			warning_at(192, sym->s_def_pos,
+			warning_at(192, &sym->s_def_pos,
 			    sym->s_name, funcsym->s_name);
 		}
 	}
@@ -3113,10 +3113,10 @@ check_label_usage(sym_t *lab)
 
 	if (lab->s_set && !lab->s_used) {
 		/* label %s unused in function %s */
-		warning_at(232, lab->s_set_pos, lab->s_name, funcsym->s_name);
+		warning_at(232, &lab->s_set_pos, lab->s_name, funcsym->s_name);
 	} else if (!lab->s_set) {
 		/* undefined label %s */
-		warning_at(23, lab->s_use_pos, lab->s_name);
+		warning_at(23, &lab->s_use_pos, lab->s_name);
 	}
 }
 
@@ -3134,15 +3134,15 @@ check_tag_usage(sym_t *sym)
 	switch (sym->s_type->t_tspec) {
 	case STRUCT:
 		/* struct %s never defined */
-		warning_at(233, sym->s_def_pos, sym->s_name);
+		warning_at(233, &sym->s_def_pos, sym->s_name);
 		break;
 	case UNION:
 		/* union %s never defined */
-		warning_at(234, sym->s_def_pos, sym->s_name);
+		warning_at(234, &sym->s_def_pos, sym->s_name);
 		break;
 	case ENUM:
 		/* enum %s never defined */
-		warning_at(235, sym->s_def_pos, sym->s_name);
+		warning_at(235, &sym->s_def_pos, sym->s_name);
 		break;
 	default:
 		lint_assert(/*CONSTCOND*/false);
@@ -3185,17 +3185,17 @@ check_unused_static_global_variable(const sym_t *sym)
 		if (sym->s_def == DEF) {
 			if (!sym->s_inline)
 				/* static function %s unused */
-				warning_at(236, sym->s_def_pos, sym->s_name);
+				warning_at(236, &sym->s_def_pos, sym->s_name);
 		} else {
 			/* static function %s declared but not defined */
-			warning_at(290, sym->s_def_pos, sym->s_name);
+			warning_at(290, &sym->s_def_pos, sym->s_name);
 		}
 	} else if (!sym->s_set) {
 		/* static variable %s unused */
-		warning_at(226, sym->s_def_pos, sym->s_name);
+		warning_at(226, &sym->s_def_pos, sym->s_name);
 	} else {
 		/* static variable %s set but not used */
-		warning_at(307, sym->s_def_pos, sym->s_name);
+		warning_at(307, &sym->s_def_pos, sym->s_name);
 	}
 }
 
@@ -3204,7 +3204,7 @@ check_static_global_variable(const sym_t *sym)
 {
 	if (sym->s_type->t_tspec == FUNC && sym->s_used && sym->s_def != DEF) {
 		/* static function called but not defined: %s() */
-		error_at(225, sym->s_use_pos, sym->s_name);
+		error_at(225, &sym->s_use_pos, sym->s_name);
 	}
 
 	if (!sym->s_used)
@@ -3212,7 +3212,7 @@ check_static_global_variable(const sym_t *sym)
 
 	if (!tflag && sym->s_def == TDEF && sym->s_type->t_const) {
 		/* const object %s should have initializer */
-		warning_at(227, sym->s_def_pos, sym->s_name);
+		warning_at(227, &sym->s_def_pos, sym->s_name);
 	}
 }
 
@@ -3258,10 +3258,10 @@ check_global_variable_size(const sym_t *sym)
 	    sym->s_type->t_tspec == ARRAY && sym->s_type->t_dim == 0) {
 		if (tflag || (sym->s_scl == EXTERN && !sflag)) {
 			/* empty array declaration: %s */
-			warning_at(190, sym->s_def_pos, sym->s_name);
+			warning_at(190, &sym->s_def_pos, sym->s_name);
 		} else {
 			/* empty array declaration: %s */
-			error_at(190, sym->s_def_pos, sym->s_name);
+			error_at(190, &sym->s_def_pos, sym->s_name);
 		}
 	}
 }
@@ -3277,13 +3277,13 @@ print_previous_declaration(int msg, const sym_t *psym)
 		return;
 
 	if (msg != -1) {
-		(message_at)(msg, psym->s_def_pos);
+		(message_at)(msg, &psym->s_def_pos);
 	} else if (psym->s_def == DEF || psym->s_def == TDEF) {
 		/* previous definition of %s */
-		message_at(261, psym->s_def_pos, psym->s_name);
+		message_at(261, &psym->s_def_pos, psym->s_name);
 	} else {
 		/* previous declaration of %s */
-		message_at(260, psym->s_def_pos, psym->s_name);
+		message_at(260, &psym->s_def_pos, psym->s_name);
 	}
 }
 
