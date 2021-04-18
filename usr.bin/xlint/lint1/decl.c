@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.175 2021/04/18 09:15:16 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.176 2021/04/18 09:20:43 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.175 2021/04/18 09:15:16 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.176 2021/04/18 09:20:43 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -3172,12 +3172,9 @@ void
 check_global_symbols(void)
 {
 	sym_t	*sym;
-	pos_t	cpos;
 
 	if (block_level != 0 || dcs->d_next != NULL)
 		norecover();
-
-	cpos = curr_pos;
 
 	for (sym = dcs->d_dlsyms; sym != NULL; sym = sym->s_dlnxt) {
 		if (sym->s_block_level == -1)
@@ -3190,29 +3187,26 @@ check_global_symbols(void)
 			lint_assert(sym->s_kind == FMEMBER);
 		}
 	}
-
-	curr_pos = cpos;
 }
 
 static void
 check_unused_static_global_variable(const sym_t *sym)
 {
-	curr_pos = sym->s_def_pos;
 	if (sym->s_type->t_tspec == FUNC) {
 		if (sym->s_def == DEF) {
 			if (!sym->s_inline)
 				/* static function %s unused */
-				warning(236, sym->s_name);
+				warning_at(236, sym->s_def_pos, sym->s_name);
 		} else {
 			/* static function %s declared but not defined */
-			warning(290, sym->s_name);
+			warning_at(290, sym->s_def_pos, sym->s_name);
 		}
 	} else if (!sym->s_set) {
 		/* static variable %s unused */
-		warning(226, sym->s_name);
+		warning_at(226, sym->s_def_pos, sym->s_name);
 	} else {
 		/* static variable %s set but not used */
-		warning(307, sym->s_name);
+		warning_at(307, sym->s_def_pos, sym->s_name);
 	}
 }
 
@@ -3220,18 +3214,16 @@ static void
 check_static_global_variable(const sym_t *sym)
 {
 	if (sym->s_type->t_tspec == FUNC && sym->s_used && sym->s_def != DEF) {
-		curr_pos = sym->s_use_pos;
 		/* static function called but not defined: %s() */
-		error(225, sym->s_name);
+		error_at(225, sym->s_use_pos, sym->s_name);
 	}
 
 	if (!sym->s_used)
 		check_unused_static_global_variable(sym);
 
 	if (!tflag && sym->s_def == TDEF && sym->s_type->t_const) {
-		curr_pos = sym->s_def_pos;
 		/* const object %s should have initializer */
-		warning(227, sym->s_name);
+		warning_at(227, sym->s_def_pos, sym->s_name);
 	}
 }
 
