@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.95 2021/04/14 18:35:40 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.96 2021/04/18 07:31:47 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -57,6 +57,11 @@
 
 /*
  * Describes the position of a declaration or anything else.
+ *
+ * FIXME: Just a single file:lineno pair is not enough to accurately describe
+ *  the position of a symbol.  The whole inclusion path at that point must be
+ *  stored as well.  This makes a difference for symbols from included
+ *  headers, see print_stack_trace.
  */
 typedef struct {
 	const	char *p_file;
