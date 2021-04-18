@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.98 2021/04/18 10:04:23 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.99 2021/04/18 10:09:49 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -476,31 +476,31 @@ check_printf(const char *fmt, ...)
 {
 }
 
-#  define wrap_check_printf_at(func, id, pos, args...)			\
+#  define wrap_check_printf_at(func, msgid, pos, args...)		\
 	do {								\
-		check_printf(__CONCAT(MSG_, id), ##args);		\
-		(func)(id, pos, ##args);				\
+		check_printf(__CONCAT(MSG_, msgid), ##args);		\
+		(func)(msgid, pos, ##args);				\
 	} while (/*CONSTCOND*/false)
 
-#  define error_at(id, pos, args...) \
-	wrap_check_printf_at(error_at, id, pos, ##args)
-#  define warning_at(id, pos, args...) \
-	wrap_check_printf_at(warning_at, id, pos, ##args)
-#  define message_at(id, pos, args...) \
-	wrap_check_printf_at(message_at, id, pos, ##args)
+#  define error_at(msgid, pos, args...) \
+	wrap_check_printf_at(error_at, msgid, pos, ##args)
+#  define warning_at(msgid, pos, args...) \
+	wrap_check_printf_at(warning_at, msgid, pos, ##args)
+#  define message_at(msgid, pos, args...) \
+	wrap_check_printf_at(message_at, msgid, pos, ##args)
 
-#  define wrap_check_printf(func, id, args...)				\
+#  define wrap_check_printf(func, msgid, args...)			\
 	do {								\
-		check_printf(__CONCAT(MSG_, id), ##args);		\
-		(func)(id, ##args);					\
+		check_printf(__CONCAT(MSG_, msgid), ##args);		\
+		(func)(msgid, ##args);					\
 	} while (/*CONSTCOND*/false)
 
-#  define error(id, args...) wrap_check_printf(error, id, ##args)
-#  define warning(id, args...) wrap_check_printf(warning, id, ##args)
-#  define message(id, args...) wrap_check_printf(message, id, ##args)
-#  define gnuism(id, args...) wrap_check_printf(gnuism, id, ##args)
-#  define c99ism(id, args...) wrap_check_printf(c99ism, id, ##args)
-#  define c11ism(id, args...) wrap_check_printf(c11ism, id, ##args)
+#  define error(msgid, args...) wrap_check_printf(error, msgid, ##args)
+#  define warning(msgid, args...) wrap_check_printf(warning, msgid, ##args)
+#  define message(msgid, args...) wrap_check_printf(message, msgid, ##args)
+#  define gnuism(msgid, args...) wrap_check_printf(gnuism, msgid, ##args)
+#  define c99ism(msgid, args...) wrap_check_printf(c99ism, msgid, ##args)
+#  define c11ism(msgid, args...) wrap_check_printf(c11ism, msgid, ##args)
 #endif
 
 static inline bool
