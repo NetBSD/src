@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.226 2020/09/26 08:21:10 simonb Exp $	*/
+/*	$NetBSD: locore.S,v 1.227 2021/04/18 10:40:34 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,7 +63,7 @@
 #include <mips/trap.h>
 #include <mips/locore.h>
 
-RCSID("$NetBSD: locore.S,v 1.226 2020/09/26 08:21:10 simonb Exp $")
+RCSID("$NetBSD: locore.S,v 1.227 2021/04/18 10:40:34 mrg Exp $")
 
 #include "assym.h"
 
@@ -351,36 +351,6 @@ END(cpu_switchto)
  *
  * called at IPL_HIGH
  *
- */
-softint_cleanup:
-#ifdef PARANOIA
-	mfc0	t1, MIPS_COP_0_STATUS
-	MFC0_HAZARD
-	and	v0, t1, MIPS_SR_INT_IE
-#if __mips >= 32
-	teqi	v0, 0
-#else
-1:	beqz	v0, 1b
-	 nop
-#endif
-#endif /* PARANOIA */
-	PTR_L	t0, L_CPU(MIPS_CURLWP)
-	NOP_L					# load delay
-	INT_L	t1, CPU_INFO_MTX_COUNT(t0)
-	NOP_L					# load delay
-	INT_ADDU t1, 1
-	INT_S	t1, CPU_INFO_MTX_COUNT(t0)
-	REG_L	ra, CALLFRAME_RA(sp)
-	REG_L	v0, CALLFRAME_S0(sp)		# get softint lwp
-	NOP_L					# load delay
-#if IPL_SCHED != IPL_HIGH
-	j	_C_LABEL(splhigh_noprof)
-#else
-	jr	ra
-#endif
-	 PTR_ADDU sp, CALLFRAME_SIZ
-
-/*
  * Arguments:
  *	a0	the LWP to switch to
  *	a1	IPL to execute at
@@ -462,6 +432,34 @@ NESTED(softint_fast_dispatch, CALLFRAME_SIZ, ra)
 	 * Almost everything (all except sp) is restored so we can return.
 	 */
 	jr	ra
+	 PTR_ADDU sp, CALLFRAME_SIZ
+
+softint_cleanup:
+#ifdef PARANOIA
+	mfc0	t1, MIPS_COP_0_STATUS
+	MFC0_HAZARD
+	and	v0, t1, MIPS_SR_INT_IE
+#if __mips >= 32
+	teqi	v0, 0
+#else
+1:	beqz	v0, 1b
+	 nop
+#endif
+#endif /* PARANOIA */
+	PTR_L	t0, L_CPU(MIPS_CURLWP)
+	NOP_L					# load delay
+	INT_L	t1, CPU_INFO_MTX_COUNT(t0)
+	NOP_L					# load delay
+	INT_ADDU t1, 1
+	INT_S	t1, CPU_INFO_MTX_COUNT(t0)
+	REG_L	ra, CALLFRAME_RA(sp)
+	REG_L	v0, CALLFRAME_S0(sp)		# get softint lwp
+	NOP_L					# load delay
+#if IPL_SCHED != IPL_HIGH
+	j	_C_LABEL(splhigh_noprof)
+#else
+	jr	ra
+#endif
 	 PTR_ADDU sp, CALLFRAME_SIZ
 END(softint_fast_dispatch)
 #endif /* __HAVE_FAST_SOFTINTS */
