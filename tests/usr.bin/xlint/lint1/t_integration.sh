@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.42 2021/04/17 20:36:17 rillig Exp $
+# $NetBSD: t_integration.sh,v 1.43 2021/04/18 20:02:56 rillig Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -57,16 +57,27 @@ check_lint1()
 {
 	local src="$(atf_get_srcdir)/$1"
 	local exp="${src%.c}.exp"
+	local src_ln="${src%.c}.ln"
+	local wrk_ln="${1%.c}.ln"
 	local flags="$(extract_flags "${src}")"
+
+	if [ ! -f "${src_ln}" ]; then
+		src_ln="/dev/null"
+		wrk_ln="/dev/null"
+	fi
 
 	if [ -f "${exp}" ]; then
 		# shellcheck disable=SC2086
 		atf_check -s not-exit:0 -o "file:${exp}" -e empty \
-		    ${LINT1} ${flags} "${src}" /dev/null
+		    ${LINT1} ${flags} "${src}" "${wrk_ln}"
 	else
 		# shellcheck disable=SC2086
 		atf_check -s exit:0 \
-		    ${LINT1} ${flags} "${src}" /dev/null
+		    ${LINT1} ${flags} "${src}" "${wrk_ln}"
+	fi
+
+	if [ "${src_ln}" != "/dev/null" ]; then
+		atf_check -o "file:${src_ln}" cat "${wrk_ln}"
 	fi
 }
 
@@ -165,6 +176,8 @@ test_case d_type_conv2
 test_case d_type_conv3
 test_case d_incorrect_array_size
 test_case d_long_double_int
+
+test_case emit
 
 test_case gcc_init_compound_literal
 
