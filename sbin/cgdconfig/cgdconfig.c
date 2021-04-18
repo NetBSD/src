@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.50 2019/04/10 06:11:37 kre Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.51 2021/04/18 19:56:09 maya Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2002, 2003\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.50 2019/04/10 06:11:37 kre Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.51 2021/04/18 19:56:09 maya Exp $");
 #endif
 
 #include <err.h>
@@ -144,7 +144,7 @@ usage(void)
 	    getprogname());
 	(void)fprintf(stderr, "       %s -G [-enpv] [-i ivmeth] [-k kgmeth] "
 	    "[-o outfile] paramsfile\n", getprogname());
-	(void)fprintf(stderr, "       %s -g [-nv] [-i ivmeth] [-k kgmeth] "
+	(void)fprintf(stderr, "       %s -g [-v] [-i ivmeth] [-k kgmeth] "
 	    "[-o outfile] alg [keylen]\n", getprogname());
 	(void)fprintf(stderr, "       %s -l [-v[v]] [cgd]\n", getprogname());
 	(void)fprintf(stderr, "       %s -s [-nv] [-i ivmeth] cgd dev alg "
