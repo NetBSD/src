@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.113 2021/04/18 08:52:04 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.114 2021/04/18 10:02:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.113 2021/04/18 08:52:04 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.114 2021/04/18 10:02:16 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -484,7 +484,7 @@ lbasename(const char *path)
 }
 
 static void
-verror_at(pos_t pos, int n, va_list ap)
+verror_at(int n, pos_t pos, va_list ap)
 {
 	const	char *fn;
 
@@ -500,7 +500,7 @@ verror_at(pos_t pos, int n, va_list ap)
 }
 
 static void
-vwarning_at(pos_t pos, int n, va_list ap)
+vwarning_at(int n, pos_t pos, va_list ap)
 {
 	const	char *fn;
 
@@ -544,7 +544,7 @@ void
 	va_list	ap;
 
 	va_start(ap, pos);
-	verror_at(pos, n, ap);
+	verror_at(n, pos, ap);
 	va_end(ap);
 }
 
@@ -554,7 +554,7 @@ void
 	va_list	ap;
 
 	va_start(ap, n);
-	verror_at(curr_pos, n, ap);
+	verror_at(n, curr_pos, ap);
 	va_end(ap);
 }
 
@@ -594,7 +594,7 @@ void
 	va_list	ap;
 
 	va_start(ap, pos);
-	vwarning_at(pos, n, ap);
+	vwarning_at(n, pos, ap);
 	va_end(ap);
 }
 
@@ -604,7 +604,7 @@ void
 	va_list	ap;
 
 	va_start(ap, n);
-	vwarning_at(curr_pos, n, ap);
+	vwarning_at(n, curr_pos, ap);
 	va_end(ap);
 }
 
@@ -642,9 +642,9 @@ void
 
 	va_start(ap, n);
 	if (sflag && !extensions_ok) {
-		verror_at(curr_pos, n, ap);
+		verror_at(n, curr_pos, ap);
 	} else if (sflag || !extensions_ok) {
-		vwarning_at(curr_pos, n, ap);
+		vwarning_at(n, curr_pos, ap);
 	}
 	va_end(ap);
 }
@@ -657,7 +657,7 @@ void
 	if (c11flag || gflag)
 		return;
 	va_start(ap, n);
-	verror_at(curr_pos, n, ap);
+	verror_at(n, curr_pos, ap);
 	va_end(ap);
 }
 
@@ -668,9 +668,9 @@ void
 
 	va_start(ap, n);
 	if (sflag && !gflag) {
-		verror_at(curr_pos, n, ap);
+		verror_at(n, curr_pos, ap);
 	} else if (sflag || !gflag) {
-		vwarning_at(curr_pos, n, ap);
+		vwarning_at(n, curr_pos, ap);
 	}
 	va_end(ap);
 }
