@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.99 2021/04/18 10:09:49 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.100 2021/04/18 17:47:32 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -76,7 +76,7 @@ typedef struct {
 		curr_pos.p_uniq++;					\
 		if (curr_pos.p_file == csrc_pos.p_file)			\
 			csrc_pos.p_uniq++;				\
-	} while (/*CONSTCOND*/false)
+	} while (false)
 
 /*
  * Strings cannot be referenced to simply by a pointer to its first
@@ -456,7 +456,7 @@ typedef	struct err_set {
 	do {								\
 		if (!(cond))						\
 			assert_failed(__FILE__, __LINE__, __func__, #cond); \
-	} while (/*CONSTCOND*/false)
+	} while (false)
 
 #ifdef BLKDEBUG
 #define ZERO	0xa5
@@ -480,7 +480,7 @@ check_printf(const char *fmt, ...)
 	do {								\
 		check_printf(__CONCAT(MSG_, msgid), ##args);		\
 		(func)(msgid, pos, ##args);				\
-	} while (/*CONSTCOND*/false)
+	} while (false)
 
 #  define error_at(msgid, pos, args...) \
 	wrap_check_printf_at(error_at, msgid, pos, ##args)
@@ -493,7 +493,7 @@ check_printf(const char *fmt, ...)
 	do {								\
 		check_printf(__CONCAT(MSG_, msgid), ##args);		\
 		(func)(msgid, ##args);					\
-	} while (/*CONSTCOND*/false)
+	} while (false)
 
 #  define error(msgid, args...) wrap_check_printf(error, msgid, ##args)
 #  define warning(msgid, args...) wrap_check_printf(warning, msgid, ##args)
