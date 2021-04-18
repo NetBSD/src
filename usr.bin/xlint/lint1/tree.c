@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.278 2021/04/18 09:53:03 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.279 2021/04/18 17:47:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.278 2021/04/18 09:53:03 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.279 2021/04/18 17:47:32 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4154,7 +4154,7 @@ cat_strings(strg_t *strg1, strg_t *strg2)
 	strg1->F = xrealloc(strg1->F, len * sizeof(*strg1->F)); \
 	(void)memcpy(strg1->F + len1, strg2->F, len2 * sizeof(*strg1->F)); \
 	free(strg2->F); \
-    } while (/*CONSTCOND*/false)
+    } while (false)
 
 	if (strg1->st_tspec == CHAR)
 		COPY(st_cp);
