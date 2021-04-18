@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.97 2021/04/18 08:52:04 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.98 2021/04/18 10:04:23 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -307,10 +307,10 @@ typedef	struct tnode {
 	} tn_u;
 } tnode_t;
 
-#define	tn_left	tn_u.tn_s._tn_left
-#define tn_right tn_u.tn_s._tn_right
-#define tn_sym	tn_u._tn_sym
-#define	tn_val	tn_u._tn_val
+#define	tn_left		tn_u.tn_s._tn_left
+#define tn_right	tn_u.tn_s._tn_right
+#define tn_sym		tn_u._tn_sym
+#define	tn_val		tn_u._tn_val
 #define	tn_string	tn_u._tn_string
 
 /*
