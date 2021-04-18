@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.61 2021/04/14 20:35:31 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.62 2021/04/18 22:51:25 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: xlint.c,v 1.61 2021/04/14 20:35:31 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.62 2021/04/18 22:51:25 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -306,7 +306,7 @@ appdef(char ***lstp, const char *def)
 	appstrg(lstp, concat3("-D__", def, "__"));
 }
 
-static void
+static void __attribute__((noreturn))
 usage(void)
 {
 	const char *name;

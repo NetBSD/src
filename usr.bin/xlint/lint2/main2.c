@@ -1,4 +1,4 @@
-/*	$NetBSD: main2.c,v 1.16 2021/04/18 20:15:17 rillig Exp $	*/
+/*	$NetBSD: main2.c,v 1.17 2021/04/18 22:51:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: main2.c,v 1.16 2021/04/18 20:15:17 rillig Exp $");
+__RCSID("$NetBSD: main2.c,v 1.17 2021/04/18 22:51:24 rillig Exp $");
 #endif
 
 #include <stdio.h>
@@ -89,7 +89,7 @@ bool	Fflag;
  */
 const char **libs;
 
-static	void	usage(void);
+static	void	usage(void) __attribute__((noreturn));
 
 int
 main(int argc, char *argv[])
