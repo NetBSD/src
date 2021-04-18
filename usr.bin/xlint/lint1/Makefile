@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.69 2021/04/18 21:53:37 rillig Exp $
+#	$NetBSD: Makefile,v 1.70 2021/04/18 22:51:24 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -24,6 +24,8 @@ LINTFLAGS.scan.c=	-X 107,330,331,333
 CPPFLAGS+=	-DIS_LINT1
 CPPFLAGS+=	-I${.CURDIR}
 CPPFLAGS+=	${DEBUG:D-DDEBUG}
+
+COPTS.err.c+=	${${ACTIVE_CC} == "clang":? -Wno-format-nonliteral :}
 
 BINDIR=		/usr/libexec
 
