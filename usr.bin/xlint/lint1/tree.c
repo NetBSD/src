@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.279 2021/04/18 17:47:32 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.280 2021/04/18 17:54:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.279 2021/04/18 17:47:32 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.280 2021/04/18 17:54:33 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3604,7 +3604,7 @@ is_constcond_false(const tnode_t *tn, tspec_t t)
  * memory which is used for the expression.
  */
 void
-expr(tnode_t *tn, bool vctx, bool tctx, bool dofreeblk, bool constcond_false_ok)
+expr(tnode_t *tn, bool vctx, bool tctx, bool dofreeblk, bool is_do_while)
 {
 
 	lint_assert(tn != NULL || nerr != 0);
@@ -3615,8 +3615,7 @@ expr(tnode_t *tn, bool vctx, bool tctx, bool dofreeblk, bool constcond_false_ok)
 	}
 
 	/* expr() is also called in global initializations */
-	/* TODO: rename constcond_false_ok */
-	if (dcs->d_ctx != EXTERN && !constcond_false_ok)
+	if (dcs->d_ctx != EXTERN && !is_do_while)
 		check_statement_reachable();
 
 	check_expr_misc(tn, vctx, tctx, !tctx, false, false, false);
@@ -3627,7 +3626,7 @@ expr(tnode_t *tn, bool vctx, bool tctx, bool dofreeblk, bool constcond_false_ok)
 	} else if (tn->tn_op == CON) {
 		if (hflag && tctx && !constcond_flag &&
 		    !tn->tn_system_dependent &&
-		    !(constcond_false_ok &&
+		    !(is_do_while &&
 		      is_constcond_false(tn, tn->tn_type->t_tspec)))
 			/* constant in conditional context */
 			warning(161);
