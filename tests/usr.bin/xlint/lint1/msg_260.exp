@@ -1,1 +1,6 @@
-msg_260.c(6): error: syntax error ':' [249]
+header.h(200): error: (struct) tag redeclared [46]
+	included from msg_260.c(14)
+header.h(100): previous declaration of s [260]
+	included from msg_260.c(14)
+msg_160.c(20): error: (union) tag redeclared [46]
+header.h(200): previous declaration of s [260]
