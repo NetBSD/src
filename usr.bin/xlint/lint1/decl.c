@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.173 2021/04/18 08:57:57 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.174 2021/04/18 09:07:36 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.173 2021/04/18 08:57:57 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.174 2021/04/18 09:07:36 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -3142,19 +3142,18 @@ check_tag_usage(sym_t *sym)
 	if (!zflag || dcs->d_ctx != EXTERN)
 		return;
 
-	curr_pos = sym->s_def_pos;
 	switch (sym->s_type->t_tspec) {
 	case STRUCT:
 		/* struct %s never defined */
-		warning(233, sym->s_name);
+		warning_at(233, sym->s_def_pos, sym->s_name);
 		break;
 	case UNION:
 		/* union %s never defined */
-		warning(234, sym->s_name);
+		warning_at(234, sym->s_def_pos, sym->s_name);
 		break;
 	case ENUM:
 		/* enum %s never defined */
-		warning(235, sym->s_name);
+		warning_at(235, sym->s_def_pos, sym->s_name);
 		break;
 	default:
 		lint_assert(/*CONSTCOND*/false);
