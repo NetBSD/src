@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.11 2020/12/29 11:35:11 rillig Exp $	*/
+/*	$NetBSD: mem.c,v 1.12 2021/04/18 22:51:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem.c,v 1.11 2020/12/29 11:35:11 rillig Exp $");
+__RCSID("$NetBSD: mem.c,v 1.12 2021/04/18 22:51:24 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -92,7 +92,7 @@ xstrdup(const char *s)
 	return s2;
 }
 
-void
+void __attribute__((noreturn))
 nomem(void)
 {
 

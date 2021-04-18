@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.44 2021/04/18 21:12:50 rillig Exp $ */
+/* $NetBSD: read.c,v 1.45 2021/04/18 22:51:24 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.44 2021/04/18 21:12:50 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.45 2021/04/18 22:51:24 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -237,7 +237,7 @@ readfile(const char *name)
 }
 
 
-static void
+static void __attribute__((format(printf, 3, 4))) __attribute__((noreturn))
 inperror(const char *file, size_t line, const char *fmt, ...)
 {
 	va_list ap;
