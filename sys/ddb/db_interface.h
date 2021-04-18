@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.h,v 1.39 2021/04/18 01:05:23 mrg Exp $	*/
+/*	$NetBSD: db_interface.h,v 1.40 2021/04/18 01:28:50 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -87,7 +87,12 @@ void		db_show_disk(db_expr_t, bool, db_expr_t, const char *);
 	true, 65535, "", prfunc)
 #endif	/* !db_stacktrace_print */
 
+#define	db_stacktrace()		db_stacktrace_print(printf);
+#define	db_ustacktrace()	db_stacktrace_print(uprintf);
+
 #include <sys/syslog.h>
+
+#ifdef _KERNEL
 
 static __inline__ void
 _db_log_wrapper(const char *fmt, ...)
@@ -99,8 +104,8 @@ _db_log_wrapper(const char *fmt, ...)
 	va_end(ap);
 }
 
-#define	db_stacktrace()		db_stacktrace_print(printf);
-#define	db_ustacktrace()	db_stacktrace_print(uprintf);
 #define	db_lstacktrace()	db_stacktrace_print(_db_log_wrapper);
+
+#endif
 
 #endif /* _DDB_DB_INTERFACE_H_ */
