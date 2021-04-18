@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.43 2021/04/18 20:40:51 rillig Exp $ */
+/* $NetBSD: read.c,v 1.44 2021/04/18 21:12:50 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.43 2021/04/18 20:40:51 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.44 2021/04/18 21:12:50 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -108,13 +108,45 @@ static	char	*inpqstrg(const char *, const char **);
 static	const	char *inpname(const char *, const char **);
 static	int	getfnidx(const char *);
 
+static bool
+try_parse_int(const char **p, int *num)
+{
+	char *end;
+
+	*num = (int)strtol(*p, &end, 10);
+	if (end == *p)
+		return false;
+	*p = end;
+	return true;
+}
+
+static int
+parse_int(const char **p)
+{
+	char *end;
+	int n;
+
+	n = (int)strtol(*p, &end, 10);
+	if (end == *p)
+		inperr("not a number: %s", *p);
+	*p = end;
+	return n;
+}
+
+static short
+parse_short(const char **p)
+{
+
+	return (short)parse_int(p);
+}
+
 void
 readfile(const char *name)
 {
 	FILE	*inp;
 	size_t	len;
 	const	char *cp;
-	char	*line, *eptr, rt = '\0';
+	char	*line, rt = '\0';
 	int	cline, isrc, iline;
 	pos_t	pos;
 
@@ -145,12 +177,8 @@ readfile(const char *name)
 		cp = line;
 
 		/* line number in csrcfile */
-		cline = (int)strtol(cp, &eptr, 10);
-		if (cp == eptr) {
-		        cline = -1;
-		} else {
-			cp = eptr;
-		}
+		if (!try_parse_int(&cp, &cline))
+			cline = -1;
 
 		/* record type */
 		if (*cp == '\0')
@@ -170,19 +198,13 @@ readfile(const char *name)
 		 * different from csrcfile, it refers to an included
 		 * file.
 		 */
-		isrc = (int)strtol(cp, &eptr, 10);
-		if (cp == eptr)
-			inperr("not a number: %s", cp);
-		cp = eptr;
+		isrc = parse_int(&cp);
 		isrc = inpfns[isrc];
 
 		/* line number in isrc */
 		if (*cp++ != '.')
 			inperr("bad line number");
-		iline = (int)strtol(cp, &eptr, 10);
-		if (cp == eptr)
-			inperr("not a number: %s", cp);
-		cp = eptr;
+		iline = parse_int(&cp);
 
 		pos.p_src = (u_short)csrcfile;
 		pos.p_line = (u_short)cline;
@@ -274,7 +296,7 @@ static void
 funccall(pos_t *posp, const char *cp)
 {
 	arginf_t *ai, **lai;
-	char	c, *eptr;
+	char	c;
 	bool	rused, rdisc;
 	hte_t	*hte;
 	fcall_t	*fcall;
@@ -309,10 +331,7 @@ funccall(pos_t *posp, const char *cp)
 		case 'n':
 		case 's':
 			ai = xalloc(sizeof(*ai));
-			ai->a_num = (int)strtol(cp, &eptr, 10);
-			if (cp == eptr)
-				inperr("bad number: %s", cp);
-			cp = eptr;
+			ai->a_num = parse_int(&cp);
 			if (c == 'z') {
 				ai->a_pcon = ai->a_zero = true;
 			} else if (c == 'p') {
@@ -358,7 +377,7 @@ static void
 decldef(pos_t *posp, const char *cp)
 {
 	sym_t	*symp, sym;
-	char	c, *ep, *pos1, *tname;
+	char	c, *pos1, *tname;
 	bool	used, renamed;
 	hte_t	*hte, *renamehte = NULL;
 	const char *name, *newname;
@@ -416,28 +435,19 @@ decldef(pos_t *posp, const char *cp)
 			if (sym.s_va)
 				inperr("va");
 			sym.s_va = true;
-			sym.s_nva = (short)strtol(cp, &ep, 10);
-			if (cp == ep)
-				inperr("bad number: %s", cp);
-			cp = ep;
+			sym.s_nva = parse_short(&cp);
 			break;
 		case 'P':
 			if (sym.s_prfl)
 				inperr("prfl");
 			sym.s_prfl = true;
-			sym.s_nprfl = (short)strtol(cp, &ep, 10);
-			if (cp == ep)
-				inperr("bad number: %s", cp);
-			cp = ep;
+			sym.s_nprfl = parse_short(&cp);
 			break;
 		case 'S':
 			if (sym.s_scfl)
 				inperr("scfl");
 			sym.s_scfl = true;
-			sym.s_nscfl = (short)strtol(cp, &ep, 10);
-			if (cp == ep)
-				inperr("bad number: %s", cp);
-			cp = ep;
+			sym.s_nscfl = parse_short(&cp);
 			break;
 		}
 	}
@@ -552,7 +562,7 @@ usedsym(pos_t *posp, const char *cp)
 static u_short
 inptype(const char *cp, const char **epp)
 {
-	char	c, s, *eptr;
+	char	c, s;
 	const	char *ep;
 	type_t	*tp;
 	int	narg, i;
@@ -645,8 +655,7 @@ inptype(const char *cp, const char **epp)
 
 	switch (tp->t_tspec) {
 	case ARRAY:
-		tp->t_dim = (int)strtol(cp, &eptr, 10);
-		cp = eptr;
+		tp->t_dim = parse_int(&cp);
 		sidx = inptype(cp, &cp); /* force seq. point! (ditto below) */
 		tp->t_subt = TP(sidx);
 		break;
@@ -659,8 +668,7 @@ inptype(const char *cp, const char **epp)
 		if (ch_isdigit(c)) {
 			if (!osdef)
 				tp->t_proto = true;
-			narg = (int)strtol(cp, &eptr, 10);
-			cp = eptr;
+			narg = parse_int(&cp);
 			tp->t_args = xcalloc((size_t)(narg + 1),
 					     sizeof(*tp->t_args));
 			for (i = 0; i < narg; i++) {
@@ -693,16 +701,13 @@ inptype(const char *cp, const char **epp)
 			break;
 		case '3':
 			tp->t_isuniqpos = true;
-			tp->t_uniqpos.p_line = strtol(cp, &eptr, 10);
-			cp = eptr;
+			tp->t_uniqpos.p_line = parse_int(&cp);
 			cp++;
 			/* xlate to 'global' file name. */
 			tp->t_uniqpos.p_file =
-			    addoutfile(inpfns[strtol(cp, &eptr, 10)]);
-			cp = eptr;
+			    addoutfile(inpfns[parse_int(&cp)]);
 			cp++;
-			tp->t_uniqpos.p_uniq = strtol(cp, &eptr, 10);
-			cp = eptr;
+			tp->t_uniqpos.p_uniq = parse_int(&cp);
 			break;
 		}
 		break;
@@ -747,7 +752,7 @@ static int
 gettlen(const char *cp, const char **epp)
 {
 	const	char *cp1;
-	char	c, s, *eptr;
+	char	c, s;
 	tspec_t	t;
 	int	narg, i;
 	bool	cm, vm;
@@ -882,10 +887,7 @@ gettlen(const char *cp, const char **epp)
 
 	switch (t) {
 	case ARRAY:
-		(void)strtol(cp, &eptr, 10);
-		if (cp == eptr)
-			inperr("bad number: %s", cp);
-		cp = eptr;
+		(void)parse_int(&cp);
 		(void)gettlen(cp, &cp);
 		break;
 	case PTR:
@@ -894,8 +896,7 @@ gettlen(const char *cp, const char **epp)
 	case FUNC:
 		c = *cp;
 		if (ch_isdigit(c)) {
-			narg = (int)strtol(cp, &eptr, 10);
-			cp = eptr;
+			narg = parse_int(&cp);
 			for (i = 0; i < narg; i++) {
 				if (i == narg - 1 && *cp == 'E') {
 					cp++;
@@ -918,22 +919,13 @@ gettlen(const char *cp, const char **epp)
 			break;
 		case '3':
 			/* unique position: line.file.uniquifier */
-			(void)strtol(cp, &eptr, 10);
-			if (cp == eptr)
-				inperr("bad number: %s", cp);
-			cp = eptr;
+			(void)parse_int(&cp);
 			if (*cp++ != '.')
 				inperr("not dot: %c", cp[-1]);
-			(void)strtol(cp, &eptr, 10);
-			if (cp == eptr)
-				inperr("bad number: %s", cp);
-			cp = eptr;
+			(void)parse_int(&cp);
 			if (*cp++ != '.')
 				inperr("not dot: %c", cp[-1]);
-			(void)strtol(cp, &eptr, 10);
-			if (cp == eptr)
-				inperr("bad number: %s", cp);
-			cp = eptr;
+			(void)parse_int(&cp);
 			break;
 		default:
 			inperr("bad value: %c\n", cp[-1]);
@@ -1135,12 +1127,9 @@ inpname(const char *cp, const char **epp)
 	static	char	*buf;
 	static	size_t	blen = 0;
 	size_t	len, i;
-	char	*eptr, c;
+	char	c;
 
-	len = (int)strtol(cp, &eptr, 10);
-	if (cp == eptr)
-		inperr("bad number: %s", cp);
-	cp = eptr;
+	len = parse_int(&cp);
 	if (len + 1 > blen)
 		buf = xrealloc(buf, blen = len + 1);
 	for (i = 0; i < len; i++) {
