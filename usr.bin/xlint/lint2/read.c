@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.42 2021/04/02 12:16:50 rillig Exp $ */
+/* $NetBSD: read.c,v 1.43 2021/04/18 20:40:51 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.42 2021/04/02 12:16:50 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.43 2021/04/18 20:40:51 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -153,11 +153,9 @@ readfile(const char *name)
 		}
 
 		/* record type */
-		if (*cp != '\0') {
-			rt = *cp++;
-		} else {
-			inperr("null cp");
-		}
+		if (*cp == '\0')
+			inperr("missing record type");
+		rt = *cp++;
 
 		if (rt == 'S') {
 			setsrc(cp);
