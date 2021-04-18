@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.196 2021/04/18 08:00:13 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.197 2021/04/18 09:50:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.196 2021/04/18 08:00:13 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.197 2021/04/18 09:50:00 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -364,11 +364,10 @@ check_non_constant_initializer(const tnode_t *tn, const sym_t *sym)
 }
 
 static void
-check_no_auto_aggregate(const sym_t *sym)
+check_trad_no_auto_aggregate(const sym_t *sym)
 {
 
-	if (tflag &&
-	    has_automatic_storage_duration(sym) &&
+	if (has_automatic_storage_duration(sym) &&
 	    !is_scalar(sym->s_type->t_tspec)) {
 		/* no automatic aggregate initialization in trad. C */
 		warning(188);
@@ -783,7 +782,7 @@ initialization_begin_brace_level(struct initialization *in)
 	}
 
 	if (tflag && in->in_brace_level == NULL)
-		check_no_auto_aggregate(in->in_sym);
+		check_trad_no_auto_aggregate(in->in_sym);
 
 	if (tflag && tp->t_tspec == UNION) {
 		/* initialization of union is illegal in traditional C */
