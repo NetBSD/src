@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.111 2021/04/14 21:20:02 christos Exp $	*/
+/*	$NetBSD: err.c,v 1.112 2021/04/18 08:07:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.111 2021/04/14 21:20:02 christos Exp $");
+__RCSID("$NetBSD: err.c,v 1.112 2021/04/18 08:07:04 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -53,7 +53,7 @@ int	nerr;
 int	sytxerr;
 
 
-const	char *msgs[] = {
+const char *const msgs[] = {
 	"empty declaration",					      /* 0 */
 	"old style declaration; add 'int'",			      /* 1 */
 	"empty declaration",					      /* 2 */
