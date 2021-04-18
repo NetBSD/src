@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.218 2021/04/14 22:08:28 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.219 2021/04/18 21:53:37 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.218 2021/04/14 22:08:28 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.219 2021/04/18 21:53:37 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -118,7 +118,7 @@ RESTORE_WARN_FLAGS(const char *file, size_t line)
 static void
 anonymize(sym_t *s)
 {
-	for ( ; s; s = s->s_next)
+	for ( ; s != NULL; s = s->s_next)
 		s->s_styp = NULL;
 }
 %}
@@ -138,7 +138,7 @@ anonymize(sym_t *s)
 	range_t	y_range;
 	strg_t	*y_string;
 	pqinf_t	*y_pqinf;
-	int	y_seen_statement;
+	bool	y_seen_statement;
 };
 
 %token			T_LBRACE T_RBRACE T_LBRACK T_RBRACK T_LPAREN T_RPAREN
@@ -2145,7 +2145,7 @@ ignore_up_to_rparen(void)
 static	sym_t *
 symbolrename(sym_t *s, sbuf_t *sb)
 {
-	if (sb)
+	if (sb != NULL)
 		s->s_rename = sb->sb_name;
 	return s;
 }
