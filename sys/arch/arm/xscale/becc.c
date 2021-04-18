@@ -1,4 +1,4 @@
-/*	$NetBSD: becc.c,v 1.16.52.6 2021/04/05 01:01:43 thorpej Exp $	*/
+/*	$NetBSD: becc.c,v 1.16.52.7 2021/04/18 17:12:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: becc.c,v 1.16.52.6 2021/04/05 01:01:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: becc.c,v 1.16.52.7 2021/04/18 17:12:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,7 +212,9 @@ becc_attach(struct becc_softc *sc)
 	pba.pba_intrtag = 0;
 	pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
-	config_found(sc->sc_dev, &pba, pcibusprint, CFARG_EOL);
+	config_found(sc->sc_dev, &pba, pcibusprint,
+	    CFARG_IATTR, "pcibus",
+	    CFARG_EOL);
 }
 
 /*
