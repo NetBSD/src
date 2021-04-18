@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.27 2021/04/12 15:55:26 christos Exp $ */
+/* $NetBSD: lex.c,v 1.28 2021/04/18 08:00:13 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.27 2021/04/12 15:55:26 christos Exp $");
+__RCSID("$NetBSD: lex.c,v 1.28 2021/04/18 08:00:13 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -1486,14 +1486,19 @@ mktempsym(type_t *t)
 	int h;
 	char *s = getlblk(block_level, 64);
 	sym_t *sym = getblk(sizeof(*sym));
+	scl_t scl;
 
 	(void)snprintf(s, 64, "%.8d_tmp", n++);
 	h = hash(s);
 
+	scl = dcs->d_scl;
+	if (scl == NOSCL)
+		scl = block_level > 0 ? AUTO : EXTERN;
+
 	sym->s_name = s;
 	sym->s_type = t;
 	sym->s_block_level = block_level;
-	sym->s_scl = AUTO;
+	sym->s_scl = scl;
 	sym->s_kind = FVFT;
 	sym->s_used = true;
 	sym->s_set = true;
