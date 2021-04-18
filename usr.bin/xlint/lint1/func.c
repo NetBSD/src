@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.103 2021/04/10 18:06:53 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.104 2021/04/18 09:39:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.103 2021/04/10 18:06:53 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.104 2021/04/18 09:39:53 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1084,44 +1084,35 @@ do_return(tnode_t *tn)
 void
 global_clean_up_decl(bool silent)
 {
-	pos_t	cpos;
-
-	cpos = curr_pos;
 
 	if (nargusg != -1) {
 		if (!silent) {
-			curr_pos = argsused_pos;
 			/* must precede function definition: ** %s ** */
-			warning(282, "ARGSUSED");
+			warning_at(282, argsused_pos, "ARGSUSED");
 		}
 		nargusg = -1;
 	}
 	if (nvararg != -1) {
 		if (!silent) {
-			curr_pos = vapos;
 			/* must precede function definition: ** %s ** */
-			warning(282, "VARARGS");
+			warning_at(282, vapos, "VARARGS");
 		}
 		nvararg = -1;
 	}
 	if (printflike_argnum != -1) {
 		if (!silent) {
-			curr_pos = printflike_pos;
 			/* must precede function definition: ** %s ** */
-			warning(282, "PRINTFLIKE");
+			warning_at(282, printflike_pos, "PRINTFLIKE");
 		}
 		printflike_argnum = -1;
 	}
 	if (scanflike_argnum != -1) {
 		if (!silent) {
-			curr_pos = scanflike_pos;
 			/* must precede function definition: ** %s ** */
-			warning(282, "SCANFLIKE");
+			warning_at(282, scanflike_pos, "SCANFLIKE");
 		}
 		scanflike_argnum = -1;
 	}
-
-	curr_pos = cpos;
 
 	dcs->d_asm = false;
 }
