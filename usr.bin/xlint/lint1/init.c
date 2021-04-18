@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.197 2021/04/18 09:50:00 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.198 2021/04/18 09:53:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.197 2021/04/18 09:50:00 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.198 2021/04/18 09:53:03 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -68,7 +68,7 @@ __RCSID("$NetBSD: init.c,v 1.197 2021/04/18 09:50:00 rillig Exp $");
  * array_flat or spelled out like in array_nested.  This is unusual in
  * practice and therefore only supported very basically.
  *
- * During initialization, the grammar parser calls these functions:
+ * During an initialization, the grammar parser calls these functions:
  *
  *	begin_initialization
  *		init_lbrace			for each '{'
@@ -79,7 +79,8 @@ __RCSID("$NetBSD: init.c,v 1.197 2021/04/18 09:50:00 rillig Exp $");
  *	end_initialization
  *
  * Each '{' begins a new brace level, each '}' ends the current brace level.
- * Each brace level has an associated "current object".
+ * Each brace level has an associated "current object", which is the starting
+ * point for resolving the optional designations such as '.member[3]'.
  *
  * See also:
  *	C99 6.7.8 "Initialization"
@@ -131,6 +132,12 @@ struct brace_level {
 	struct brace_level *bl_enclosing;
 };
 
+/*
+ * An ongoing initialization.
+ *
+ * In most cases there is only ever a single initialization going on.  See
+ * pointer_to_compound_literal in msg_171.c for an exception.
+ */
 struct initialization {
 	/* The symbol that is to be initialized. */
 	sym_t		*in_sym;
@@ -210,7 +217,7 @@ debug_leave(const char *func)
 
 #define debug_indent()		do { } while (false)
 #define debug_enter()		do { } while (false)
-#define debug_step0(msg)	do { } while (false)
+#define debug_step0(fmt)	do { } while (false)
 #define debug_step1(fmt, arg0)	do { } while (false)
 #define debug_step2(fmt, arg1, arg2) do { } while (false)
 #define debug_leave()		do { } while (false)
@@ -316,6 +323,10 @@ look_up_member_type(const type_t *tp, const char *name)
 	return sym_type(member);
 }
 
+/*
+ * C99 6.7.8p22 says that the type of an array of unknown size becomes known
+ * at the end of its initializer list.
+ */
 static void
 update_type_of_array_of_unknown_size(sym_t *sym, size_t size)
 {
@@ -514,6 +525,8 @@ designation_add(struct designation *dn, const char *name, size_t subscript)
 /*
  * Starting at the type of the current object, resolve the type of the
  * sub-object by following each designator in the list.
+ *
+ * C99 6.7.8p18
  */
 static const type_t *
 designation_look_up(const struct designation *dn, const type_t *tp)
@@ -815,6 +828,11 @@ initialization_set_size_of_unknown_array(struct initialization *in)
 	    in->in_brace_level->bl_enclosing == NULL)
 		update_type_of_array_of_unknown_size(in->in_sym,
 		    in->in_brace_level->bl_subscript);
+	/*
+	 * XXX: bl_subscript is not entirely correct.
+	 * It should rather be max(actually used subscript) + 1.
+	 * int arr[] = { [100] = 100, [0] = 0 };
+	 */
 }
 
 static void
