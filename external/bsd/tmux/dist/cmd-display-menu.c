@@ -155,7 +155,7 @@ cmd_display_menu_get_position(struct client *tc, struct cmdq_item *item,
 	else
 		format_add(ft, "popup_centre_x", "%ld", n);
 	n = (tty->sy - 1) / 2 + h / 2;
-	if (n >= tty->sy)
+	if ((unsigned long)n >= tty->sy)
 		format_add(ft, "popup_centre_y", "%u", tty->sy - h);
 	else
 		format_add(ft, "popup_centre_y", "%ld", n);
@@ -188,7 +188,7 @@ cmd_display_menu_get_position(struct client *tc, struct cmdq_item *item,
 	/* Position in pane. */
 	tty_window_offset(&tc->tty, &ox, &oy, &sx, &sy);
 	n = top + wp->yoff - oy + h;
-	if (n >= tty->sy)
+	if ((unsigned long)n >= tty->sy)
 		format_add(ft, "popup_pane_top", "%u", tty->sy - h);
 	else
 		format_add(ft, "popup_pane_top", "%ld", n);
@@ -236,7 +236,7 @@ cmd_display_menu_get_position(struct client *tc, struct cmdq_item *item,
 		yp = "#{popup_window_status_line_y}";
 	p = format_expand(ft, yp);
 	n = strtol(p, NULL, 10);
-	if (n < h)
+	if ((unsigned long)n < h)
 		n = 0;
 	else
 		n -= h;
