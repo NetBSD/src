@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.96 2021/04/18 07:31:47 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.97 2021/04/18 08:52:04 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -475,6 +475,19 @@ static inline void __attribute__((format(printf, 1, 2)))
 check_printf(const char *fmt, ...)
 {
 }
+
+#  define wrap_check_printf_at(func, id, pos, args...)			\
+	do {								\
+		check_printf(__CONCAT(MSG_, id), ##args);		\
+		(func)(id, pos, ##args);				\
+	} while (/*CONSTCOND*/false)
+
+#  define error_at(id, pos, args...) \
+	wrap_check_printf_at(error_at, id, pos, ##args)
+#  define warning_at(id, pos, args...) \
+	wrap_check_printf_at(warning_at, id, pos, ##args)
+#  define message_at(id, pos, args...) \
+	wrap_check_printf_at(message_at, id, pos, ##args)
 
 #  define wrap_check_printf(func, id, args...)				\
 	do {								\
