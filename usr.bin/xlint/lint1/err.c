@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.115 2021/04/18 10:09:49 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.116 2021/04/18 17:36:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.115 2021/04/18 10:09:49 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.116 2021/04/18 17:36:18 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -484,15 +484,15 @@ lbasename(const char *path)
 }
 
 static void
-verror_at(int msgid, pos_t pos, va_list ap)
+verror_at(int msgid, const pos_t *pos, va_list ap)
 {
 	const	char *fn;
 
 	if (ERR_ISSET(msgid, &msgset))
 		return;
 
-	fn = lbasename(pos.p_file);
-	(void)printf("%s(%d): error: ", fn, pos.p_line);
+	fn = lbasename(pos->p_file);
+	(void)printf("%s(%d): error: ", fn, pos->p_line);
 	(void)vprintf(msgs[msgid], ap);
 	(void)printf(" [%d]\n", msgid);
 	nerr++;
@@ -500,7 +500,7 @@ verror_at(int msgid, pos_t pos, va_list ap)
 }
 
 static void
-vwarning_at(int msgid, pos_t pos, va_list ap)
+vwarning_at(int msgid, const pos_t *pos, va_list ap)
 {
 	const	char *fn;
 
@@ -514,8 +514,8 @@ vwarning_at(int msgid, pos_t pos, va_list ap)
 		/* this warning is suppressed by a LINTED comment */
 		return;
 
-	fn = lbasename(pos.p_file);
-	(void)printf("%s(%d): warning: ", fn, pos.p_line);
+	fn = lbasename(pos->p_file);
+	(void)printf("%s(%d): warning: ", fn, pos->p_line);
 	(void)vprintf(msgs[msgid], ap);
 	(void)printf(" [%d]\n", msgid);
 	if (wflag)
@@ -524,22 +524,22 @@ vwarning_at(int msgid, pos_t pos, va_list ap)
 }
 
 static void
-vmessage_at(int msgid, pos_t pos, va_list ap)
+vmessage_at(int msgid, const pos_t *pos, va_list ap)
 {
 	const char *fn;
 
 	if (ERR_ISSET(msgid, &msgset))
 		return;
 
-	fn = lbasename(pos.p_file);
-	(void)printf("%s(%d): ", fn, pos.p_line);
+	fn = lbasename(pos->p_file);
+	(void)printf("%s(%d): ", fn, pos->p_line);
 	(void)vprintf(msgs[msgid], ap);
 	(void)printf(" [%d]\n", msgid);
 	print_stack_trace();
 }
 
 void
-(error_at)(int msgid, pos_t pos, ...)
+(error_at)(int msgid, const pos_t *pos, ...)
 {
 	va_list	ap;
 
@@ -554,7 +554,7 @@ void
 	va_list	ap;
 
 	va_start(ap, msgid);
-	verror_at(msgid, curr_pos, ap);
+	verror_at(msgid, &curr_pos, ap);
 	va_end(ap);
 }
 
@@ -589,7 +589,7 @@ assert_failed(const char *file, int line, const char *func, const char *cond)
 }
 
 void
-(warning_at)(int msgid, pos_t pos, ...)
+(warning_at)(int msgid, const pos_t *pos, ...)
 {
 	va_list	ap;
 
@@ -604,12 +604,12 @@ void
 	va_list	ap;
 
 	va_start(ap, msgid);
-	vwarning_at(msgid, curr_pos, ap);
+	vwarning_at(msgid, &curr_pos, ap);
 	va_end(ap);
 }
 
 void
-(message_at)(int msgid, pos_t pos, ...)
+(message_at)(int msgid, const pos_t *pos, ...)
 {
 	va_list ap;
 
@@ -624,7 +624,7 @@ void
 	va_list	ap;
 
 	va_start(ap, msgid);
-	vmessage_at(msgid, curr_pos, ap);
+	vmessage_at(msgid, &curr_pos, ap);
 	va_end(ap);
 }
 
@@ -642,9 +642,9 @@ void
 
 	va_start(ap, msgid);
 	if (sflag && !extensions_ok) {
-		verror_at(msgid, curr_pos, ap);
+		verror_at(msgid, &curr_pos, ap);
 	} else if (sflag || !extensions_ok) {
-		vwarning_at(msgid, curr_pos, ap);
+		vwarning_at(msgid, &curr_pos, ap);
 	}
 	va_end(ap);
 }
@@ -657,7 +657,7 @@ void
 	if (c11flag || gflag)
 		return;
 	va_start(ap, msgid);
-	verror_at(msgid, curr_pos, ap);
+	verror_at(msgid, &curr_pos, ap);
 	va_end(ap);
 }
 
@@ -668,9 +668,9 @@ void
 
 	va_start(ap, msgid);
 	if (sflag && !gflag) {
-		verror_at(msgid, curr_pos, ap);
+		verror_at(msgid, &curr_pos, ap);
 	} else if (sflag || !gflag) {
-		vwarning_at(msgid, curr_pos, ap);
+		vwarning_at(msgid, &curr_pos, ap);
 	}
 	va_end(ap);
 }

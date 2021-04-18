@@ -1,4 +1,4 @@
-/* $NetBSD: ckgetopt.c,v 1.8 2021/04/18 08:53:35 rillig Exp $ */
+/* $NetBSD: ckgetopt.c,v 1.9 2021/04/18 17:36:18 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: ckgetopt.c,v 1.8 2021/04/18 08:53:35 rillig Exp $");
+__RCSID("$NetBSD: ckgetopt.c,v 1.9 2021/04/18 17:36:18 rillig Exp $");
 #endif
 
 #include <stdbool.h>
@@ -135,7 +135,7 @@ check_unhandled_option(void)
 			continue;
 
 		/* option '%c' should be handled in the switch */
-		warning_at(338, ck.options_pos, *opt);
+		warning_at(338, &ck.options_pos, *opt);
 	}
 }
 

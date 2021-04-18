@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.107 2021/04/18 08:52:04 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.108 2021/04/18 17:36:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -120,9 +120,9 @@ extern	int	sytxerr;
 extern	const char *const msgs[];
 
 extern	void	msglist(void);
-extern	void	error_at(int, pos_t, ...);
-extern	void	warning_at(int, pos_t, ...);
-extern	void	message_at(int, pos_t, ...);
+extern	void	error_at(int, const pos_t *, ...);
+extern	void	warning_at(int, const pos_t *, ...);
+extern	void	message_at(int, const pos_t *, ...);
 extern	void	error(int, ...);
 extern	void	warning(int, ...);
 extern	void	message(int, ...);
