@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.172 2021/04/10 18:06:53 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.173 2021/04/18 08:57:57 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.172 2021/04/10 18:06:53 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.173 2021/04/18 08:57:57 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -3286,23 +3286,19 @@ check_global_variable_size(const sym_t *sym)
 void
 print_previous_declaration(int msg, const sym_t *psym)
 {
-	pos_t	cpos;
 
 	if (!rflag)
 		return;
 
-	cpos = curr_pos;
-	curr_pos = psym->s_def_pos;
 	if (msg != -1) {
-		(message)(msg);
+		(message_at)(msg, psym->s_def_pos);
 	} else if (psym->s_def == DEF || psym->s_def == TDEF) {
 		/* previous definition of %s */
-		message(261, psym->s_name);
+		message_at(261, psym->s_def_pos, psym->s_name);
 	} else {
 		/* previous declaration of %s */
-		message(260, psym->s_name);
+		message_at(260, psym->s_def_pos, psym->s_name);
 	}
-	curr_pos = cpos;
 }
 
 /*
