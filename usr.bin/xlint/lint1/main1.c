@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.43 2021/04/14 20:06:40 rillig Exp $	*/
+/*	$NetBSD: main1.c,v 1.44 2021/04/18 20:15:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: main1.c,v 1.43 2021/04/14 20:06:40 rillig Exp $");
+__RCSID("$NetBSD: main1.c,v 1.44 2021/04/18 20:15:17 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -240,10 +240,8 @@ main(int argc, char *argv[])
 				ERR_SET(msg, &msgset);
 			}
 			break;
-		case '?':
 		default:
 			usage();
-			break;
 		}
 	}
 	argc -= optind;
