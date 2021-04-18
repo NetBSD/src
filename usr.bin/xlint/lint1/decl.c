@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.174 2021/04/18 09:07:36 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.175 2021/04/18 09:15:16 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.174 2021/04/18 09:07:36 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.175 2021/04/18 09:15:16 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -3256,6 +3256,8 @@ check_global_variable(const sym_t *sym)
 static void
 check_global_variable_size(const sym_t *sym)
 {
+	pos_t cpos;
+	int length_in_bits;
 
 	if (sym->s_def != TDEF)
 		return;
@@ -3266,15 +3268,19 @@ check_global_variable_size(const sym_t *sym)
 		 */
 		return;
 
+	cpos = curr_pos;
 	curr_pos = sym->s_def_pos;
-	if (length(sym->s_type, sym->s_name) == 0 &&
+	length_in_bits = length(sym->s_type, sym->s_name);
+	curr_pos = cpos;
+
+	if (length_in_bits == 0 &&
 	    sym->s_type->t_tspec == ARRAY && sym->s_type->t_dim == 0) {
 		if (tflag || (sym->s_scl == EXTERN && !sflag)) {
 			/* empty array declaration: %s */
-			warning(190, sym->s_name);
+			warning_at(190, sym->s_def_pos, sym->s_name);
 		} else {
 			/* empty array declaration: %s */
-			error(190, sym->s_name);
+			error_at(190, sym->s_def_pos, sym->s_name);
 		}
 	}
 }
