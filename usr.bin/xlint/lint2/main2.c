@@ -1,4 +1,4 @@
-/*	$NetBSD: main2.c,v 1.15 2021/04/02 12:16:50 rillig Exp $	*/
+/*	$NetBSD: main2.c,v 1.16 2021/04/18 20:15:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: main2.c,v 1.15 2021/04/02 12:16:50 rillig Exp $");
+__RCSID("$NetBSD: main2.c,v 1.16 2021/04/18 20:15:17 rillig Exp $");
 #endif
 
 #include <stdio.h>
@@ -145,7 +145,7 @@ main(int argc, char *argv[])
 			libs[i] = xstrdup(optarg);
 			libs[i + 1] = NULL;
 			break;
-		case '?':
+		default:
 			usage();
 		}
 	}
