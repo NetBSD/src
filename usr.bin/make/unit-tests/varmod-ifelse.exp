@@ -16,7 +16,9 @@ CondParser_Eval: ${VAR} == value
 lhs = "value", rhs = "value", op = ==
 lhs = "ok", rhs = "ok", op = !=
 make: Bad conditional expression 'string == "literal" && no >= 10' in 'string == "literal" && no >= 10?yes:no'
-make: "varmod-ifelse.mk" line 127: .
+make: "varmod-ifelse.mk" line 153: .
+make: Bad conditional expression 'string == "literal" || no >= 10' in 'string == "literal" || no >= 10?yes:no'
+make: "varmod-ifelse.mk" line 154: .
 make: Fatal errors encountered -- cannot continue
 make: stopped in unit-tests
 exit status 1
