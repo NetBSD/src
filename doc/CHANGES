@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2797 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2798 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -361,3 +361,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	sparc64: Switch to GCC 10.  [mrg 20200416]
 	vax: Switch to GCC 10.  [mrg 20200416]
 	tmux(1): Imported 3.2. [christos 20210417]
+	OpenSSH: Import 8.6. [christos 20210419]
