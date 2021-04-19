@@ -1,4 +1,4 @@
-# $NetBSD: varmod-ifelse.mk,v 1.15 2021/04/19 23:43:14 rillig Exp $
+# $NetBSD: varmod-ifelse.mk,v 1.16 2021/04/19 23:51:42 rillig Exp $
 #
 # Tests for the ${cond:?then:else} variable modifier, which evaluates either
 # the then-expression or the else-expression, depending on the condition.
@@ -140,14 +140,14 @@ VAR=	value
 # therefore parsing stopped at the '>', producing the 'Bad conditional
 # expression'.
 #
-# TODO: make should at least describe the part of the condition that is
-#  wrong. In this case it is probably the "no >= 10".  Ideally that should
-#  not matter though since the left-hand side of the '&&' evaluates to false,
-#  thus the right-hand side only needs to be parsed, not evaluated.  Since
-#  this is the modifier ':?', which expands subexpressions before parsing
-#  the condition, the "no >= 10" is probably a parse error since it "can be
-#  seen at compile-time" that the operand types of '>=' don't match.  Only
-#  that the concept of "compile-time" does not really apply here.
+# Ideally, the conditional expression would not be expanded before parsing
+# it.  This would allow to write the conditions exactly as seen below.  That
+# change has a high chance of breaking _some_ existing code and would need
+# to be thoroughly tested.
+#
+# Since cond.c 1.262 from 2021-04-20, make reports a more specific error
+# message in situations like these, pointing directly to the specific problem
+# instead of just saying that the whole condition is bad.
 STRING=		string
 NUMBER=		no		# not really a number
 .info ${${STRING} == "literal" && ${NUMBER} >= 10:?yes:no}.
