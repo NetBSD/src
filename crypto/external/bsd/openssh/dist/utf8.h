@@ -1,5 +1,6 @@
-/*	$NetBSD: utf8.h,v 1.4 2020/05/28 17:05:49 christos Exp $	*/
-/* $OpenBSD: utf8.h,v 1.3 2020/05/01 06:28:52 djm Exp $ */
+/*	$NetBSD: utf8.h,v 1.5 2021/04/19 14:40:15 christos Exp $	*/
+/* $OpenBSD: utf8.h,v 1.4 2021/04/03 06:18:41 djm Exp $ */
+
 /*
  * Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -19,12 +20,12 @@
 int	 vasnmprintf(char **, size_t, int *, const char *, va_list)
 	    __attribute__((format(printf, 4, 0)));
 int	 mprintf(const char *, ...)
-	     __attribute__((format(printf, 1, 2)));
+	    __attribute__((format(printf, 1, 2)));
 int	 fmprintf(FILE *, const char *, ...)
 	     __attribute__((format(printf, 2, 3)));
 int	 vfmprintf(FILE *, const char *, va_list)
 	     __attribute__((format(printf, 2, 0)));
 int	 snmprintf(char *, size_t, int *, const char *, ...)
-	     __attribute__((format(printf, 4, 5)));
+	    __attribute__((format(printf, 4, 5)));
 int	 asmprintf(char **, size_t, int *, const char *, ...)
-	     __attribute__((format(printf, 4, 5)));
+	    __attribute__((format(printf, 4, 5)));

@@ -1,4 +1,4 @@
-/*	$NetBSD: srclimit.c,v 1.2 2021/03/05 17:47:16 christos Exp $	*/
+/*	$NetBSD: srclimit.c,v 1.3 2021/04/19 14:40:15 christos Exp $	*/
 
 /*
  * Copyright (c) 2020 Darren Tucker <dtucker@openbsd.org>
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: srclimit.c,v 1.2 2021/03/05 17:47:16 christos Exp $");
+__RCSID("$NetBSD: srclimit.c,v 1.3 2021/04/19 14:40:15 christos Exp $");
 
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -104,7 +104,7 @@ srclimit_check_allow(int sock, int id)
 		return 1;
 	}
 	debug3("%s: new unauthenticated connection from %s/%d, at %d of %d",
-	     __func__, xas, bits, count, max_persource);
+	    __func__, xas, bits, count, max_persource);
 
 	if (first_unused == max_children) { /* no free slot found */
 		debug3("%s: no free slot", __func__);

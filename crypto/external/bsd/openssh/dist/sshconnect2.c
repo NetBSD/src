@@ -1,5 +1,5 @@
-/*	$NetBSD: sshconnect2.c,v 1.39 2021/03/05 17:47:16 christos Exp $	*/
-/* $OpenBSD: sshconnect2.c,v 1.346 2021/01/27 10:05:28 djm Exp $ */
+/*	$NetBSD: sshconnect2.c,v 1.40 2021/04/19 14:40:15 christos Exp $	*/
+/* $OpenBSD: sshconnect2.c,v 1.347 2021/04/03 06:18:41 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshconnect2.c,v 1.39 2021/03/05 17:47:16 christos Exp $");
+__RCSID("$NetBSD: sshconnect2.c,v 1.40 2021/04/19 14:40:15 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
@@ -703,7 +703,7 @@ format_identity(Identity *id)
 	const char *note = "";
 
 	if (id->key != NULL) {
-	     fp = sshkey_fingerprint(id->key, options.fingerprint_hash,
+		fp = sshkey_fingerprint(id->key, options.fingerprint_hash,
 		    SSH_FP_DEFAULT);
 	}
 	if (id->key) {
@@ -1274,7 +1274,7 @@ identity_sign(struct identity *id, u_char **sigp, size_t *lenp,
 			return SSH_ERR_KEY_NOT_FOUND;
 		if (id->key != NULL && !sshkey_equal_public(prv, id->key)) {
 			error_f("private key %s contents do not match public",
-			   id->filename);
+			    id->filename);
 			r = SSH_ERR_KEY_NOT_FOUND;
 			goto out;
 		}

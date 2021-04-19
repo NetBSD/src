@@ -1,5 +1,5 @@
-/*	$NetBSD: clientloop.c,v 1.31 2021/03/05 17:47:16 christos Exp $	*/
-/* $OpenBSD: clientloop.c,v 1.358 2021/01/27 10:05:28 djm Exp $ */
+/*	$NetBSD: clientloop.c,v 1.32 2021/04/19 14:40:15 christos Exp $	*/
+/* $OpenBSD: clientloop.c,v 1.359 2021/03/19 02:22:34 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -62,7 +62,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: clientloop.c,v 1.31 2021/03/05 17:47:16 christos Exp $");
+__RCSID("$NetBSD: clientloop.c,v 1.32 2021/04/19 14:40:15 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -1423,7 +1423,7 @@ client_loop(struct ssh *ssh, int have_pty, int escape_char_arg,
 
 	if (received_signal) {
 		verbose("Killed by signal %d.", (int) received_signal);
-		cleanup_exit(0);
+		cleanup_exit(255);
 	}
 
 	/*

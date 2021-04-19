@@ -1,5 +1,5 @@
-/*	$NetBSD: dh.h,v 1.12 2019/10/12 18:32:22 christos Exp $	*/
-/* $OpenBSD: dh.h,v 1.18 2019/09/06 05:23:55 djm Exp $ */
+/*	$NetBSD: dh.h,v 1.13 2021/04/19 14:40:15 christos Exp $	*/
+/* $OpenBSD: dh.h,v 1.19 2021/03/12 04:08:19 dtucker Exp $ */
 
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
@@ -48,6 +48,7 @@ int	 dh_gen_key(DH *, int);
 int	 dh_pub_is_valid(const DH *, const BIGNUM *);
 
 u_int	 dh_estimate(int);
+void	 dh_set_moduli_file(const char *);
 
 /*
  * Max value from RFC4419.

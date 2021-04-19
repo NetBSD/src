@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-sk-client.c,v 1.4 2021/03/05 17:47:16 christos Exp $	*/
-/* $OpenBSD: ssh-sk-client.c,v 1.8 2020/10/18 11:32:02 djm Exp $ */
+/*	$NetBSD: ssh-sk-client.c,v 1.5 2021/04/19 14:40:15 christos Exp $	*/
+/* $OpenBSD: ssh-sk-client.c,v 1.9 2021/04/03 06:18:41 djm Exp $ */
 
 /*
  * Copyright (c) 2019 Google LLC
@@ -17,7 +17,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: ssh-sk-client.c,v 1.4 2021/03/05 17:47:16 christos Exp $");
+__RCSID("$NetBSD: ssh-sk-client.c,v 1.5 2021/04/19 14:40:15 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -159,9 +159,9 @@ client_converse(struct sshbuf *msg, struct sshbuf **respp, u_int type)
 	/* Request preamble: type, log_on_stderr, log_level */
 	ll = log_level_get();
 	if ((r = sshbuf_put_u32(req, type)) != 0 ||
-	   (r = sshbuf_put_u8(req, log_is_on_stderr() != 0)) != 0 ||
-	   (r = sshbuf_put_u32(req, (uint32_t)(ll < 0 ? 0 : ll))) != 0 ||
-	   (r = sshbuf_putb(req, msg)) != 0) {
+	    (r = sshbuf_put_u8(req, log_is_on_stderr() != 0)) != 0 ||
+	    (r = sshbuf_put_u32(req, (uint32_t)(ll < 0 ? 0 : ll))) != 0 ||
+	    (r = sshbuf_putb(req, msg)) != 0) {
 		error_fr(r, "compose");
 		goto out;
 	}

@@ -1,4 +1,4 @@
-.\"	$NetBSD: sshd.8,v 1.23 2020/12/04 18:42:50 christos Exp $
+.\"	$NetBSD: sshd.8,v 1.24 2021/04/19 14:40:15 christos Exp $
 .\"  -*- nroff -*-
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -35,8 +35,8 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: sshd.8,v 1.313 2020/08/27 01:07:10 djm Exp $
-.Dd August 27 2020
+.\" $OpenBSD: sshd.8,v 1.314 2021/04/03 05:46:41 djm Exp $
+.Dd April 3 2021
 .Dt SSHD 8
 .Os
 .Sh NAME
@@ -670,7 +670,7 @@ be prepared by the administrator (optional), and the per-user file is
 maintained automatically: whenever the user connects to an unknown host,
 its key is added to the per-user file.
 .Pp
-Each line in these files contains the following fields: markers (optional),
+Each line in these files contains the following fields: marker (optional),
 hostnames, keytype, base64-encoded key, comment.
 The fields are separated by spaces.
 .Pp

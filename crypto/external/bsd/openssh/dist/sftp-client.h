@@ -1,5 +1,5 @@
-/*	$NetBSD: sftp-client.h,v 1.12 2021/03/05 17:47:16 christos Exp $	*/
-/* $OpenBSD: sftp-client.h,v 1.29 2020/12/04 02:41:10 djm Exp $ */
+/*	$NetBSD: sftp-client.h,v 1.13 2021/04/19 14:40:15 christos Exp $	*/
+/* $OpenBSD: sftp-client.h,v 1.30 2021/03/31 22:16:34 djm Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
@@ -48,6 +48,14 @@ struct sftp_statvfs {
 	u_int64_t f_namemax;
 };
 
+/* Used for limits response on the wire from the server */
+struct sftp_limits {
+	u_int64_t packet_length;
+	u_int64_t read_length;
+	u_int64_t write_length;
+	u_int64_t open_handles;
+};
+
 /*
  * Initialise a SSH filexfer connection. Returns NULL on error or
  * a pointer to a initialized sftp_conn struct on success.
@@ -55,6 +63,9 @@ struct sftp_statvfs {
 struct sftp_conn *do_init(int, int, u_int, u_int, u_int64_t);
 
 u_int sftp_proto_version(struct sftp_conn *);
+
+/* Query server limits */
+int do_limits(struct sftp_conn *, struct sftp_limits *);
 
 /* Close file referred to by 'handle' */
 int do_close(struct sftp_conn *, const u_char *, u_int);

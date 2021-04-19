@@ -1,5 +1,5 @@
-/*	$NetBSD: misc.c,v 1.25 2021/03/05 17:47:16 christos Exp $	*/
-/* $OpenBSD: misc.c,v 1.162 2021/02/28 01:50:47 dtucker Exp $ */
+/*	$NetBSD: misc.c,v 1.26 2021/04/19 14:40:15 christos Exp $	*/
+/* $OpenBSD: misc.c,v 1.164 2021/04/03 06:18:40 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -20,7 +20,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: misc.c,v 1.25 2021/03/05 17:47:16 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.26 2021/04/19 14:40:15 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -1167,7 +1167,7 @@ vdollar_percent_expand(int *parseerror, int dollar, int percent,
 			string += 2;  /* skip over '${' */
 			if ((varend = strchr(string, '}')) == NULL) {
 				error_f("environment variable '%s' missing "
-				   "closing '}'", string);
+				    "closing '}'", string);
 				goto out;
 			}
 			len = varend - string;
@@ -1881,11 +1881,6 @@ argv_split(const char *s, int *argcp, char ***argvp)
 
 		/* Start of a token */
 		quote = 0;
-		if (s[i] == '\\' &&
-		    (s[i + 1] == '\'' || s[i + 1] == '\"' || s[i + 1] == '\\'))
-			i++;
-		else if (s[i] == '\'' || s[i] == '"')
-			quote = s[i++];
 
 		argv = xreallocarray(argv, (argc + 2), sizeof(*argv));
 		arg = argv[argc++] = xcalloc(1, strlen(s + i) + 1);
@@ -1905,8 +1900,10 @@ argv_split(const char *s, int *argcp, char ***argvp)
 				}
 			} else if (quote == 0 && (s[i] == ' ' || s[i] == '\t'))
 				break; /* done */
+			else if (quote == 0 && (s[i] == '\"' || s[i] == '\''))
+				quote = s[i]; /* quote start */
 			else if (quote != 0 && s[i] == quote)
-				break; /* done */
+				quote = 0; /* quote end */
 			else
 				arg[j++] = s[i];
 		}

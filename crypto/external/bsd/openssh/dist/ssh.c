@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh.c,v 1.35 2021/03/05 17:47:16 christos Exp $	*/
-/* $OpenBSD: ssh.c,v 1.552 2021/02/23 00:05:31 djm Exp $ */
+/*	$NetBSD: ssh.c,v 1.36 2021/04/19 14:40:15 christos Exp $	*/
+/* $OpenBSD: ssh.c,v 1.553 2021/04/03 05:40:39 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -43,7 +43,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh.c,v 1.35 2021/03/05 17:47:16 christos Exp $");
+__RCSID("$NetBSD: ssh.c,v 1.36 2021/04/19 14:40:15 christos Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -1680,6 +1680,10 @@ main(int ac, char **av)
 		free(options.certificate_files[i]);
 		options.certificate_files[i] = NULL;
 	}
+
+#ifdef ENABLE_PKCS11
+	(void)pkcs11_del_provider(options.pkcs11_provider);
+#endif
 
  skip_connect:
 	exit_status = ssh_session2(ssh, cinfo);

@@ -1,5 +1,5 @@
-/*	$NetBSD: sshd.c,v 1.41 2021/03/05 17:47:16 christos Exp $	*/
-/* $OpenBSD: sshd.c,v 1.570 2021/02/05 02:20:23 dtucker Exp $ */
+/*	$NetBSD: sshd.c,v 1.42 2021/04/19 14:40:15 christos Exp $	*/
+/* $OpenBSD: sshd.c,v 1.572 2021/04/03 06:18:41 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -45,7 +45,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshd.c,v 1.41 2021/03/05 17:47:16 christos Exp $");
+__RCSID("$NetBSD: sshd.c,v 1.42 2021/04/19 14:40:15 christos Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -113,6 +113,7 @@ __RCSID("$NetBSD: sshd.c,v 1.41 2021/03/05 17:47:16 christos Exp $");
 #include "ssherr.h"
 #include "sk-api.h"
 #include "srclimit.h"
+#include "dh.h"
 
 #include "pfilter.h"
 
@@ -1638,7 +1639,7 @@ main(int ac, char **av)
 	 */
 	if (test_flag < 2 && connection_info != NULL)
 		fatal("Config test connection parameter (-C) provided without "
-		   "test mode (-T)");
+		    "test mode (-T)");
 
 	/* Fetch our configuration */
 	if ((cfg = sshbuf_new()) == NULL)
@@ -1660,6 +1661,9 @@ main(int ac, char **av)
 
 	parse_server_config(&options, rexeced_flag ? "rexec" : config_file_name,
 	    cfg, &includes, NULL);
+
+	if (options.moduli_file != NULL)
+		dh_set_moduli_file(options.moduli_file);
 
 	/* Fill in default values for those options not explicitly set. */
 	fill_default_server_options(&options);
@@ -1937,8 +1941,10 @@ main(int ac, char **av)
 	/* Reinitialize the log (because of the fork above). */
 	log_init(__progname, options.log_level, options.log_facility, log_stderr);
 
-	/* Chdir to the root directory so that the current disk can be
-	   unmounted if desired. */
+	/*
+	 * Chdir to the root directory so that the current disk can be
+	 * unmounted if desired.
+	 */
 	if (chdir("/") == -1)
 		error("chdir(\"/\"): %s", strerror(errno));
 

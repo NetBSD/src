@@ -1,5 +1,5 @@
-/*	$NetBSD: sshkey-xmss.c,v 1.7 2021/03/05 17:47:16 christos Exp $	*/
-/* $OpenBSD: sshkey-xmss.c,v 1.9 2020/10/19 22:49:23 dtucker Exp $ */
+/*	$NetBSD: sshkey-xmss.c,v 1.8 2021/04/19 14:40:15 christos Exp $	*/
+/* $OpenBSD: sshkey-xmss.c,v 1.11 2021/04/03 06:18:41 djm Exp $ */
 
 /*
  * Copyright (c) 2017 Markus Friedl.  All rights reserved.
@@ -25,7 +25,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: sshkey-xmss.c,v 1.7 2021/03/05 17:47:16 christos Exp $");
+__RCSID("$NetBSD: sshkey-xmss.c,v 1.8 2021/04/19 14:40:15 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/uio.h>
@@ -87,7 +87,7 @@ int	 sshkey_xmss_serialize_enc_key(const struct sshkey *, struct sshbuf *);
 int	 sshkey_xmss_deserialize_enc_key(struct sshkey *, struct sshbuf *);
 
 #define PRINT(...) do { if (printerror) sshlog(__FILE__, __func__, __LINE__, \
-    0, SYSLOG_LEVEL_ERROR, NULL, __VA_ARGS__); } while (/*CONSTCOND*/0)
+    0, SYSLOG_LEVEL_ERROR, NULL, __VA_ARGS__); } while (0)
 
 int
 sshkey_xmss_init(struct sshkey *key, const char *name)
@@ -588,7 +588,7 @@ sshkey_xmss_update_state(const struct sshkey *k, int printerror)
 		goto done;
 	} else if (idx != state->idx + 1) {
 		PRINT("more than one signature happened: idx %u state %u",
-		      idx, state->idx);
+		    idx, state->idx);
 		goto done;
 	}
 	state->idx = idx;

@@ -1,5 +1,5 @@
-/*	$NetBSD: auth-options.c,v 1.25 2021/03/05 17:47:15 christos Exp $	*/
-/* $OpenBSD: auth-options.c,v 1.94 2020/10/18 11:32:01 djm Exp $ */
+/*	$NetBSD: auth-options.c,v 1.26 2021/04/19 14:40:15 christos Exp $	*/
+/* $OpenBSD: auth-options.c,v 1.95 2021/04/03 06:18:40 djm Exp $ */
 
 /*
  * Copyright (c) 2018 Damien Miller <djm@mindrot.org>
@@ -18,7 +18,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth-options.c,v 1.25 2021/03/05 17:47:15 christos Exp $");
+__RCSID("$NetBSD: auth-options.c,v 1.26 2021/04/19 14:40:15 christos Exp $");
 #include <sys/types.h>
 #include <sys/queue.h>
 
@@ -812,7 +812,7 @@ sshauthopt_serialise(const struct sshauthopt *opts, struct sshbuf *m,
 	    (r = serialise_nullable_string(m,
 	    untrusted ? NULL : opts->required_from_host_cert)) != 0 ||
 	    (r = serialise_nullable_string(m,
-	     untrusted ? NULL : opts->required_from_host_keys)) != 0)
+	    untrusted ? NULL : opts->required_from_host_keys)) != 0)
 		return r;
 
 	/* Array options */

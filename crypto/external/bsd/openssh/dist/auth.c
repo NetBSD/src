@@ -1,5 +1,5 @@
-/*	$NetBSD: auth.c,v 1.29 2021/03/05 17:47:15 christos Exp $	*/
-/* $OpenBSD: auth.c,v 1.151 2020/12/22 00:12:22 djm Exp $ */
+/*	$NetBSD: auth.c,v 1.30 2021/04/19 14:40:15 christos Exp $	*/
+/* $OpenBSD: auth.c,v 1.152 2021/04/03 06:18:40 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth.c,v 1.29 2021/03/05 17:47:15 christos Exp $");
+__RCSID("$NetBSD: auth.c,v 1.30 2021/04/19 14:40:15 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -553,7 +553,7 @@ auth_openfile(const char *file, struct passwd *pw, int strict_modes,
 	if ((fd = open(file, O_RDONLY|O_NONBLOCK)) == -1) {
 		if (log_missing || errno != ENOENT)
 			debug("Could not open %s '%s': %s", file_type, file,
-			   strerror(errno));
+			    strerror(errno));
 		return NULL;
 	}
 

@@ -1,5 +1,5 @@
-/*	$NetBSD: serverloop.c,v 1.29 2021/03/05 17:47:16 christos Exp $	*/
-/* $OpenBSD: serverloop.c,v 1.225 2021/01/27 10:05:28 djm Exp $ */
+/*	$NetBSD: serverloop.c,v 1.30 2021/04/19 14:40:15 christos Exp $	*/
+/* $OpenBSD: serverloop.c,v 1.226 2021/04/03 06:18:41 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -38,7 +38,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: serverloop.c,v 1.29 2021/03/05 17:47:16 christos Exp $");
+__RCSID("$NetBSD: serverloop.c,v 1.30 2021/04/19 14:40:15 christos Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
@@ -862,7 +862,7 @@ server_input_global_request(int type, u_int32_t seq, struct ssh *ssh)
 		    options.disable_forwarding ||
 		    (!want_reply && fwd.listen_port == 0) ||
 		    (fwd.listen_port != 0 &&
-		     !bind_permitted(fwd.listen_port, pw->pw_uid))) {
+		    !bind_permitted(fwd.listen_port, pw->pw_uid))) {
 			success = 0;
 			ssh_packet_send_debug(ssh, "Server has disabled port forwarding.");
 		} else {
