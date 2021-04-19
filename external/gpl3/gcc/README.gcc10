@@ -1,4 +1,4 @@
-$NetBSD: README.gcc10,v 1.13 2021/04/17 22:03:57 mrg Exp $
+$NetBSD: README.gcc10,v 1.14 2021/04/19 08:40:15 mrg Exp $
 
 
 new stuff:
@@ -49,11 +49,11 @@ earmv7		y	b	y	y		y		?	?	?
 earmv7eb	y	b	y	y		y		?	?	?
 earmv7hf	y	y	y	y		y		y	y	n
 earmv7hfeb	y	b	y	y		y		?	?	?
-hppa		y	y	y	y		y		y	?	?
+hppa		y	y	y	y		y		y	y	y
 i386		y	y	y	y		y		y	n[8]	?
 ia64		y	y	y	y		y		?	N/A	y
 m68000		y	b	y	y		n[1]		?	?	?
-m68k		y	y	y	y		y[9]		y	n	n
+m68k		y	y	y	y		y[9]		y	?	n
 mipseb		y	y	y	y		y		y	?	?
 mipsel		y	y	y	y		y		y	?	?
 mips64eb	y	y	y	y		y		y	?	?
@@ -61,7 +61,7 @@ mips64el	y	b	y	y		y		y	?	?
 powerpc		y	b	y	y		y		y	?	n
 powerpc64	y	b	y	y		y		N/A	N/A	n
 sh3eb		y	b	y	y		y		?	?	?
-sh3el		y	y	y	y		y		y	y[7]	?
+sh3el		y	y	y	y		y		y	y[7]	n
 sparc		y	y	y	y		y		y	y	y
 sparc64		y	y	y	y		y		y	y	y
 vax		y	y	y	y		y		y	n[6]	y
