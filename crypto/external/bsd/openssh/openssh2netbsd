@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: openssh2netbsd,v 1.3 2020/12/04 18:42:49 christos Exp $
+#	$NetBSD: openssh2netbsd,v 1.4 2021/04/19 14:07:36 christos Exp $
 #
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -27,6 +27,14 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # openssh2netbsd:  convert a openssh source tree into netbsd openssh tree
+
+if [ -z "$1" ]; then
+	echo "Usage: $0 <dir>" 1>&2
+	exit 1
+fi
+
+set -e
+cd "$1"
 
 ### Remove CVS
 find . -name CVS -print | xargs rm -r
