@@ -1,4 +1,4 @@
-/* $OpenBSD: sftp.c,v 1.206 2021/01/08 02:44:14 djm Exp $ */
+/* $OpenBSD: sftp.c,v 1.209 2021/04/03 06:58:30 djm Exp $ */
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
  *
@@ -50,9 +50,6 @@
 #include "sftp-common.h"
 #include "sftp-client.h"
 
-#define DEFAULT_COPY_BUFLEN	32768	/* Size of buffer for up/download */
-#define DEFAULT_NUM_REQUESTS	64	/* # concurrent outstanding requests */
-
 /* File to read commands from */
 FILE* infile;
 
@@ -62,7 +59,7 @@ int batchmode = 0;
 /* PID of ssh transport process */
 static volatile pid_t sshpid = -1;
 
-/* Suppress diagnositic messages */
+/* Suppress diagnostic messages */
 int quiet = 0;
 
 /* This is set to 0 if the progressmeter is not desired. */
@@ -722,7 +719,7 @@ process_put(struct sftp_conn *conn, const char *src, const char *dst,
 		}
 		free(tmp);
 
-                resume |= global_aflag;
+		resume |= global_aflag;
 		if (!quiet && resume)
 			mprintf("Resuming upload of %s to %s\n",
 			    g.gl_pathv[i], abs_dst);
@@ -2294,8 +2291,8 @@ main(int argc, char **argv)
 	extern int optind;
 	extern char *optarg;
 	struct sftp_conn *conn;
-	size_t copy_buffer_len = DEFAULT_COPY_BUFLEN;
-	size_t num_requests = DEFAULT_NUM_REQUESTS;
+	size_t copy_buffer_len = 0;
+	size_t num_requests = 0;
 	long long limit_kbps = 0;
 
 	/* Ensure that fds 0, 1 and 2 are open or directed to /dev/null */
