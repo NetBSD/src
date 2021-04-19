@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.538 2021/04/14 17:24:48 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.539 2021/04/19 16:35:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.538 2021/04/14 17:24:48 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.539 2021/04/19 16:35:11 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -2198,7 +2198,7 @@ getTmpdir(void)
 		return tmpdir;
 
 	/* Honor $TMPDIR but only if it is valid. Ensure it ends with '/'. */
-	(void)Var_Subst("${TMPDIR:tA:U" _PATH_TMP "}/",
+	(void)Var_Subst("${TMPDIR:tA:U" _PATH_TMP ":S,/$,,W}/",
 	    SCOPE_GLOBAL, VARE_WANTRES, &tmpdir);
 	/* TODO: handle errors */
 
