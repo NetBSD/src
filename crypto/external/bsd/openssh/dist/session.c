@@ -1,5 +1,5 @@
-/*	$NetBSD: session.c,v 1.33 2021/03/05 17:47:16 christos Exp $	*/
-/* $OpenBSD: session.c,v 1.327 2020/12/14 03:13:12 djm Exp $ */
+/*	$NetBSD: session.c,v 1.34 2021/04/19 14:40:15 christos Exp $	*/
+/* $OpenBSD: session.c,v 1.328 2021/04/03 06:18:41 djm Exp $ */
 
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: session.c,v 1.33 2021/03/05 17:47:16 christos Exp $");
+__RCSID("$NetBSD: session.c,v 1.34 2021/04/19 14:40:15 christos Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/un.h>
@@ -1259,7 +1259,7 @@ do_setusercontext(struct passwd *pw)
 #endif
 		if (!in_chroot && options.chroot_directory != NULL &&
 		    strcasecmp(options.chroot_directory, "none") != 0) {
-                        tmp = tilde_expand_filename(options.chroot_directory,
+			tmp = tilde_expand_filename(options.chroot_directory,
 			    pw->pw_uid);
 			snprintf(uidstr, sizeof(uidstr), "%llu",
 			    (unsigned long long)pw->pw_uid);
