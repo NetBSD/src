@@ -1,5 +1,5 @@
-/*	$NetBSD: kex.c,v 1.29 2021/03/05 17:47:16 christos Exp $	*/
-/* $OpenBSD: kex.c,v 1.167 2021/01/31 22:55:29 djm Exp $ */
+/*	$NetBSD: kex.c,v 1.30 2021/04/19 14:40:15 christos Exp $	*/
+/* $OpenBSD: kex.c,v 1.168 2021/04/03 06:18:40 djm Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kex.c,v 1.29 2021/03/05 17:47:16 christos Exp $");
+__RCSID("$NetBSD: kex.c,v 1.30 2021/04/19 14:40:15 christos Exp $");
 
 #include <sys/param.h>	/* MAX roundup */
 #include <sys/types.h>
@@ -1210,7 +1210,7 @@ kex_exchange_identification(struct ssh *ssh, int timeout_ms,
 	if (version_addendum != NULL && *version_addendum == '\0')
 		version_addendum = NULL;
 	if ((r = sshbuf_putf(our_version, "SSH-%d.%d-%.100s%s%s\r\n",
-	   PROTOCOL_MAJOR_2, PROTOCOL_MINOR_2, SSH_VERSION,
+	    PROTOCOL_MAJOR_2, PROTOCOL_MINOR_2, SSH_VERSION,
 	    version_addendum == NULL ? "" : " ",
 	    version_addendum == NULL ? "" : version_addendum)) != 0) {
 		oerrno = errno;

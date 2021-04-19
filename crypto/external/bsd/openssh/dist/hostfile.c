@@ -1,5 +1,5 @@
-/*	$NetBSD: hostfile.c,v 1.19 2021/03/05 17:47:16 christos Exp $	*/
-/* $OpenBSD: hostfile.c,v 1.89 2021/01/26 00:51:30 djm Exp $ */
+/*	$NetBSD: hostfile.c,v 1.20 2021/04/19 14:40:15 christos Exp $	*/
+/* $OpenBSD: hostfile.c,v 1.90 2021/04/03 06:58:30 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: hostfile.c,v 1.19 2021/03/05 17:47:16 christos Exp $");
+__RCSID("$NetBSD: hostfile.c,v 1.20 2021/04/19 14:40:15 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -394,7 +394,7 @@ check_hostkeys_by_key_or_type(struct hostkeys *hostkeys,
 					*found = hostkeys->entries + i;
 				break;
 			}
-			/* A non-maching key exists */
+			/* A non-matching key exists */
 			end_return = HOST_CHANGED;
 			if (found != NULL)
 				*found = hostkeys->entries + i;

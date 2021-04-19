@@ -1,5 +1,5 @@
-/*	$NetBSD: kexgen.c,v 1.5 2021/03/05 17:47:16 christos Exp $	*/
-/* $OpenBSD: kexgen.c,v 1.6 2021/01/31 22:55:29 djm Exp $ */
+/*	$NetBSD: kexgen.c,v 1.6 2021/04/19 14:40:15 christos Exp $	*/
+/* $OpenBSD: kexgen.c,v 1.7 2021/04/03 06:18:40 djm Exp $ */
 
 /*
  * Copyright (c) 2019 Markus Friedl.  All rights reserved.
@@ -323,7 +323,7 @@ input_kex_gen_init(int type, u_int32_t seq, struct ssh *ssh)
 
 	/* sign H */
 	if ((r = kex->sign(ssh, server_host_private, server_host_public,
-	     &signature, &slen, hash, hashlen, kex->hostkey_alg)) != 0)
+	    &signature, &slen, hash, hashlen, kex->hostkey_alg)) != 0)
 		goto out;
 
 	/* send server hostkey, ECDH pubkey 'Q_S' and signed H */
