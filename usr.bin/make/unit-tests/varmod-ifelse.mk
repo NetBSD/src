@@ -1,4 +1,4 @@
-# $NetBSD: varmod-ifelse.mk,v 1.12 2021/04/19 22:05:29 rillig Exp $
+# $NetBSD: varmod-ifelse.mk,v 1.13 2021/04/19 22:22:27 rillig Exp $
 #
 # Tests for the ${cond:?then:else} variable modifier, which evaluates either
 # the then-expression or the else-expression, depending on the condition.
@@ -125,4 +125,3 @@ VAR=	value
 STRING=		string
 NUMBER=		no
 .info ${${STRING} == "literal" && ${NUMBER} >= 10:?yes:no}.
-# XXX: In the diagnostic, the second placeholder is missing the quotes.

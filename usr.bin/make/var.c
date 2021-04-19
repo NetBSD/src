@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.929 2021/04/14 16:59:34 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.930 2021/04/19 22:22:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.929 2021/04/14 16:59:34 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.930 2021/04/19 22:22:27 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -3384,7 +3384,7 @@ ApplyModifier_IfElse(const char **pp, ModChain *ch)
 	(*pp)--;		/* Go back to the ch->endc. */
 
 	if (cond_rc == COND_INVALID) {
-		Error("Bad conditional expression `%s' in %s?%s:%s",
+		Error("Bad conditional expression '%s' in '%s?%s:%s'",
 		    expr->name, expr->name, then_expr.str, else_expr.str);
 		return AMR_CLEANUP;
 	}
