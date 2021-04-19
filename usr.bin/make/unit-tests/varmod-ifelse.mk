@@ -1,4 +1,4 @@
-# $NetBSD: varmod-ifelse.mk,v 1.11 2021/04/11 13:35:56 rillig Exp $
+# $NetBSD: varmod-ifelse.mk,v 1.12 2021/04/19 22:05:29 rillig Exp $
 #
 # Tests for the ${cond:?then:else} variable modifier, which evaluates either
 # the then-expression or the else-expression, depending on the condition.
@@ -111,5 +111,18 @@ VAR=	value
 .endif
 .MAKEFLAGS: -d0
 
-all:
-	@:;
+# Seen on 2021-04-19 when building external/bsd/tmux with HAVE_LLVM=yes
+# and HAVE_GCC=no.
+#
+# TODO: make should at least describe the part of the condition that is
+#  wrong. In this case it is probably the "no >= 10".  Ideally that should
+#  not matter though since the left-hand side of the '&&' evaluates to false,
+#  thus the right-hand side only needs to be parsed, not evaluated.  Since
+#  this is the modifier ':?', which expands subexpressions before parsing
+#  the condition, the "no >= 10" is probably a parse error since it "can be
+#  seen at compile-time" that the operand types of '>=' don't match.  Only
+#  that the concept of "compile-time" does not really apply here.
+STRING=		string
+NUMBER=		no
+.info ${${STRING} == "literal" && ${NUMBER} >= 10:?yes:no}.
+# XXX: In the diagnostic, the second placeholder is missing the quotes.
