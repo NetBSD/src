@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.105 2021/04/18 17:36:18 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.106 2021/04/19 13:18:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.105 2021/04/18 17:36:18 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.106 2021/04/19 13:18:43 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -190,6 +190,11 @@ end_control_statement(control_statement_kind kind)
 static void
 set_reached(bool new_reached)
 {
+#ifdef DEBUG
+	printf("%s:%d: %s -> %s\n", curr_pos.p_file, curr_pos.p_line,
+	    reached ? "reachable" : "unreachable",
+	    new_reached ? "reachable" : "unreachable");
+#endif
 	reached = new_reached;
 	warn_about_unreachable = true;
 }
