@@ -1,4 +1,4 @@
-/*	$NetBSD: format.c,v 1.15 2009/04/11 14:22:32 christos Exp $	*/
+/*	$NetBSD: format.c,v 1.16 2021/04/19 17:49:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: format.c,v 1.15 2009/04/11 14:22:32 christos Exp $");
+__RCSID("$NetBSD: format.c,v 1.16 2021/04/19 17:49:28 christos Exp $");
 #endif /* not __lint__ */
 
 #include <time.h>
@@ -579,10 +579,10 @@ date_to_tm(char *date, struct tm *tm)
 	 */
 
 	/* Check for an optional 'day-of-week' */
-	if ((tail = strptime(date, " %a,", &tmp_tm)) == NULL) {
+	if ((tail = strptime(date, " %a,", &tmp_tm)) == NULL)
 		tail = date;
+	else
 		tm->tm_wday = tmp_tm.tm_wday;
-	}
 
 	/* Get the required 'day' and 'month' */
 	if ((tail = strptime(tail, " %d %b", &tmp_tm)) == NULL)
