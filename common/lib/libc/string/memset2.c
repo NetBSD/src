@@ -1,3 +1,5 @@
+/*	$NetBSD: memset2.c,v 1.10 2021/04/19 01:12:10 simonb Exp $	*/
+
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: memset2.c,v 1.9 2021/04/17 21:43:47 mrg Exp $");
+__RCSID("$NetBSD: memset2.c,v 1.10 2021/04/19 01:12:10 simonb Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
