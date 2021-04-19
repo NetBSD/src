@@ -1,4 +1,4 @@
-/* $NetBSD: insn.h,v 1.3 2021/04/14 06:32:20 dholland Exp $ */
+/* $NetBSD: insn.h,v 1.4 2021/04/19 07:55:59 dholland Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -241,16 +241,16 @@ union riscv_insn {
  * Quadrant 1 goes FUNCT3 -> FUNCT2a -> FUNCT3b,
  * Quadrant 2 goes FUNCT3 -> FUNCT1b.
  */
-#define INSN16_FUNCT3(insn)	(((insn) && 0xe000) >> 13)
-#define INSN16_FUNCT2a(insn)	(((insn) && 0x0c00) >> 10)
-#define INSN16_FUNCT1b(insn)	(((insn) && 0x1000) >> 12)
-#define INSN16_FUNCT2b(insn)	(((insn) && 0x0060) >> 5)
+#define INSN16_FUNCT3(insn)	(((insn) & 0xe000) >> 13)
+#define INSN16_FUNCT2a(insn)	(((insn) & 0x0c00) >> 10)
+#define INSN16_FUNCT1b(insn)	(((insn) & 0x1000) >> 12)
+#define INSN16_FUNCT2b(insn)	(((insn) & 0x0060) >> 5)
 #define INSN16_FUNCT3c(insn)	\
 	((INSN16_FUNCT1b(insn) << 2) | INSN16_FUNCT2b(insn))
 
 /* full-size register fields */
 #define INSN16_RS1(insn)	(((insn) & 0x0f80) >> 7)  /* bits 7-11 */
-#define INSN16_RS2(insn)	(((insn) & 0x007c) >> 7)  /* bits 2-6 */
+#define INSN16_RS2(insn)	(((insn) & 0x007c) >> 2)  /* bits 2-6 */
 
 /* small register fields, for registers 8-15 */
 #define INSN16_RS1x(insn)	((((insn) & 0x0380) >> 7) + 8)	/* bits 7-9 */
@@ -421,6 +421,12 @@ union riscv_insn {
 #define OPFP_S			0b00
 #define OPFP_D			0b01
 #define OPFP_Q			0b11
+
+// in some instructions they're an integer operand size instead
+#define OPFP_W			0b00
+#define OPFP_WU			0b01
+#define OPFP_L			0b10
+#define OPFP_LU			0b11
 
 // primary is AMO (0b01011, 11), top 5 bits
 // (bottom two bits are ACQUIRE and RELEASE flags respectively)
@@ -644,7 +650,7 @@ union riscv_insn {
 
 #define OPCODE16_Q0	0b00	/* quadrant 0 */
 #define OPCODE16_Q1	0b01	/* quadrant 1 */
-#define OPCODE16_Q2	0b11	/* quadrant 2 */
+#define OPCODE16_Q2	0b10	/* quadrant 2 */
 
 /* quadrant 0 */
 #define Q0_ADDI4SPN	0b000

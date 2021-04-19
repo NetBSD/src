@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.3 2021/04/14 06:32:20 dholland Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.4 2021/04/19 07:55:59 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: db_disasm.c,v 1.3 2021/04/14 06:32:20 dholland Exp $");
+__RCSID("$NetBSD: db_disasm.c,v 1.4 2021/04/19 07:55:59 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,6 +64,11 @@ db_print_addr(db_addr_t loc)
 	db_expr_t diff;
 	db_sym_t sym;
 	const char *symname;
+
+/* hack for testing since the test program is ASLR'd */
+#ifndef _KERNEL
+	loc &= 0xfff;
+#endif
 
 	diff = INT_MAX;
 	symname = NULL;
@@ -101,6 +106,30 @@ db_print_addr(db_addr_t loc)
 #define IN_Q1(op) COMBINE(op, OPCODE16_Q1)
 #define IN_Q2(op) COMBINE(op, OPCODE16_Q2)
 
+/*
+ * All the 16-bit immediate bit-wrangling is done in uint32_t, which
+ * is sufficient, but on RV64 the resulting values should be printed
+ * as 64-bit. Continuing the assumption that we're disassembling for
+ * the size we're built on, do nothing for RV32 and sign-extend from
+ * 32 to 64 for RV64. (And bail on RV128 since it's not clear what
+ * the C type sizes are going to be there anyway...)
+ */
+static
+unsigned long
+maybe_signext64(uint32_t x)
+{
+#if __riscv_xlen == 32
+	return x;
+#elif __riscv_xlen == 64
+	uint64_t xx;
+
+	xx = ((x & 0x80000000) ? 0xffffffff00000000 : 0) | x;
+	return xx;
+#else
+#error Oops.
+#endif
+}
+
 static
 int
 db_disasm_16(db_addr_t loc, uint32_t insn, bool altfmt)
@@ -110,10 +139,15 @@ db_disasm_16(db_addr_t loc, uint32_t insn, bool altfmt)
 	uint32_t imm;
 	unsigned rd, rs1, rs2;
 
+	//warnx("toot 0x%x", insn);
 	switch (COMBINE(INSN16_FUNCT3(insn), INSN16_QUADRANT(insn))) {
 	    case IN_Q0(Q0_ADDI4SPN):
 		rd = INSN16_RS2x(insn);
 		imm = INSN16_IMM_CIW(insn);
+		if (imm == 0) {
+			/* reserved (all bits 0 -> invalid) */
+			return EINVAL;
+		}
 		db_printf("c.addi4spn %s, 0x%x\n", riscv_registers[rd], imm);
 		break;
 	    case IN_Q0(Q0_FLD_LQ):
@@ -183,11 +217,10 @@ db_disasm_16(db_addr_t loc, uint32_t insn, bool altfmt)
 #endif
 		break;
 	    case IN_Q1(Q1_NOP_ADDI):
-		rd = INSN16_RS1x(insn);
+		rd = INSN16_RS1(insn);
 		imm = INSN16_IMM_CI_K(insn);
 		if (rd == 0 && imm == 0) {
-			db_printf("c.nop %s, %d(%s)\n", riscv_registers[rs2],
-				  (int32_t)imm, riscv_registers[rs1]);
+			db_printf("c.nop\n");
 		}
 		else if (rd == 0 && imm != 0) {
 			/* undefined hint */
@@ -198,8 +231,10 @@ db_disasm_16(db_addr_t loc, uint32_t insn, bool altfmt)
 			return EINVAL;
 		}
 		else {
-			db_printf("c.addi %s, %s, 0x%x\n", riscv_registers[rd],
-				  riscv_registers[rd], imm);
+			db_printf("c.addi %s, %s, 0x%lx\n",
+				  riscv_registers[rd],
+				  riscv_registers[rd],
+				  maybe_signext64(imm));
 		}
 		break;
 	    case IN_Q1(Q1_JAL_ADDIW):
@@ -209,25 +244,29 @@ db_disasm_16(db_addr_t loc, uint32_t insn, bool altfmt)
 		db_print_addr(loc + (int32_t)imm);
 		db_printf("\n");
 #else
-		db_printf("c.addiw %s, %s, 0x%x\n", riscv_registers[rd],
-			  riscv_registers[rd], imm);
+		rd = INSN16_RS1(insn);
+		imm = INSN16_IMM_CI_K(insn);
+		db_printf("c.addiw %s, %s, 0x%lx\n", riscv_registers[rd],
+			  riscv_registers[rd], maybe_signext64(imm));
 #endif
 		break;
 	    case IN_Q1(Q1_LI):
 		rd = INSN16_RS1(insn);
 		imm = INSN16_IMM_CI_K(insn);
-		db_printf("c.li %s, 0x%x\n", riscv_registers[rd], imm);
+		db_printf("c.li %s, 0x%lx\n", riscv_registers[rd],
+			  maybe_signext64(imm));
 		break;
 	    case IN_Q1(Q1_ADDI16SP_LUI):
 		rd = INSN16_RS1(insn);
 		if (rd == 2/*sp*/) {
 			imm = INSN16_IMM_CI_K4(insn);
-			db_printf("c.add16sp sp, 0x%x\n", imm);
+			db_printf("c.add16sp sp, 0x%lx\n",
+				  maybe_signext64(imm));
 		}
 		else {
 			imm = INSN16_IMM_CI_K12(insn);
-			db_printf("c.lui %s, 0x%x\n", riscv_registers[rd],
-				  imm);
+			db_printf("c.lui %s, 0x%lx\n", riscv_registers[rd],
+				  maybe_signext64(imm));
 		}
 		break;
 	    case IN_Q1(Q1_MISC):
@@ -258,7 +297,8 @@ db_disasm_16(db_addr_t loc, uint32_t insn, bool altfmt)
 				  riscv_registers[rd], imm);
 			break;
 		    case Q1MISC_ANDI:
-			db_printf("c.andi %s, %d\n", riscv_registers[rd], imm);
+			db_printf("c.andi %s, 0x%lx\n", riscv_registers[rd],
+				  maybe_signext64(imm));
 			break;
 		    case Q1MISC_MORE:
 			rs2 = INSN16_RS2x(insn);
@@ -374,10 +414,10 @@ db_disasm_16(db_addr_t loc, uint32_t insn, bool altfmt)
 #endif
 		break;
 	    case IN_Q2(Q2_MISC):
+		rs1 = INSN16_RS1(insn);
+		rs2 = INSN16_RS2(insn);
 		switch (INSN16_FUNCT1b(insn)) {
 		    case Q2MISC_JR_MV:
-			rs1 = INSN16_RS1(insn);
-			rs2 = INSN16_RS2(insn);
 			if (rs1 == 0) {
 				return EINVAL;
 			}
@@ -448,7 +488,7 @@ db_disasm_16(db_addr_t loc, uint32_t insn, bool altfmt)
 /* match flags */
 #define CHECK_F3	0x0001		/* check funct3 field */
 #define CHECK_F7	0x0002		/* check funct7 field */
-#define CHECK_F5	0x0004		/* check top of funct7 field only */
+#define CHECK_F5	0x0004		/* check tpo of funct7 field only */
 #define CHECK_RS2	0x0008		/* check rs2 as quaternary opcode */
 #define SHIFT32		0x0010		/* 32-bit immediate shift */
 #define SHIFT64		0x0020		/* 64-bit immediate shift */
@@ -460,7 +500,8 @@ db_disasm_16(db_addr_t loc, uint32_t insn, bool altfmt)
 #define F3ROUND		0x0800		/* expect fp rounding mode in funct3 */
 #define F7SIZE		0x1000		/* expect fp size in funct7:0-1 */
 #define RS2_FSIZE	0x2000		/* expect fp size in rs2 */
-#define FENCEFM		0x4000		/* fence mode in top 4 bits of imm */
+#define RS2_FSIZE_INT	0x4000		/* expect fp size in rs2 */
+#define FENCEFM		0x8000		/* fence mode in top 4 bits of imm */
 /* do not add more without increasing the field size below */
 
 #ifdef _LP64 /* disassembling ourself so can use our build flags... */
@@ -481,18 +522,20 @@ db_disasm_16(db_addr_t loc, uint32_t insn, bool altfmt)
 #define RD_FREG		0x100		/* rd is a fpu reg */
 #define RS1_FREG	0x200		/* rs1 is a fpu reg */
 #define RS2_FREG	0x400		/* rs2 is a fpu reg */
+#define ISCVT		0x800		/* is an fpu conversion op */
 /* do not add more without increasing the field size below */
 
 #define ALL_FREG (RD_FREG | RS1_FREG | RS2_FREG)
+#define RS12_FREG (RS1_FREG | RS2_FREG)
 
 /* entries for matching within a major opcode */
 struct riscv_disasm_insn {
 	const char *name;
-	unsigned int matchflags: 15,
+	unsigned int matchflags: 16,
 		funct3: 3,
 		funct7: 7,
 		rs2: 5;
-	unsigned int printflags: 11;
+	unsigned int printflags: 12;
 };
 
 /* format codes */
@@ -613,6 +656,7 @@ static const struct riscv_disasm_insn riscv_disasm_loadfp[] = {
 };
 
 static const struct riscv_disasm_insn riscv_disasm_opimm[] = {
+	INSN_F3("nop", OP_ADDSUB, RD_0 | RS1_0 | IMM_0, 0),
 	INSN_F3("addi", OP_ADDSUB, 0, 0),
 	INSN_F3("slti", OP_SLT, 0, 0),
 	INSN_F3("sltiu", OP_SLTU, 0, 0),
@@ -632,16 +676,16 @@ static const struct riscv_disasm_insn riscv_disasm_opimm32[] = {
 };
 
 static const struct riscv_disasm_insn riscv_disasm_store[] = {
-	INSN_F3("sb", STORE_SB, 0, 0),
-	INSN_F3("sh", STORE_SH, 0, 0),
-	INSN_F3("sw", STORE_SW, 0, 0),
-	INSN_F3("sd", STORE_SD, 0, 0),
+	INSN_F3("sb", STORE_SB, 0, MEMORYIMM),
+	INSN_F3("sh", STORE_SH, 0, MEMORYIMM),
+	INSN_F3("sw", STORE_SW, 0, MEMORYIMM),
+	INSN_F3("sd", STORE_SD, 0, MEMORYIMM),
 };
 
 static const struct riscv_disasm_insn riscv_disasm_storefp[] = {
-	INSN_F3("fsw", STOREFP_FSW, 0, RS2_FREG),
-	INSN_F3("fsd", STOREFP_FSD, 0, RS2_FREG),
-	INSN_F3("fsq", STOREFP_FSQ, 0, RS2_FREG),
+	INSN_F3("fsw", STOREFP_FSW, 0, MEMORYIMM | RS2_FREG),
+	INSN_F3("fsd", STOREFP_FSD, 0, MEMORYIMM | RS2_FREG),
+	INSN_F3("fsq", STOREFP_FSQ, 0, MEMORYIMM | RS2_FREG),
 };
 
 static const struct riscv_disasm_insn riscv_disasm_branch[] = {
@@ -659,10 +703,10 @@ static const struct riscv_disasm_insn riscv_disasm_system[] = {
 	INSN_F3("csrr", SYSTEM_CSRRS, RS1_0, CSRIMM),
 	INSN_F3("csrrs", SYSTEM_CSRRS, 0, CSRIMM),
 	INSN_F3("csrrc", SYSTEM_CSRRC, 0, CSRIMM),
-	INSN_F3("csrwi", SYSTEM_CSRRW, RD_0, CSRIIMM),
-	INSN_F3("csrrwi", SYSTEM_CSRRW, 0, CSRIIMM),
-	INSN_F3("csrrsi", SYSTEM_CSRRS, 0, CSRIIMM),
-	INSN_F3("csrrci", SYSTEM_CSRRC, 0, CSRIIMM),
+	INSN_F3("csrwi", SYSTEM_CSRRWI, RD_0, CSRIIMM),
+	INSN_F3("csrrwi", SYSTEM_CSRRWI, 0, CSRIIMM),
+	INSN_F3("csrrsi", SYSTEM_CSRRSI, 0, CSRIIMM),
+	INSN_F3("csrrci", SYSTEM_CSRRCI, 0, CSRIIMM),
 	INSN_F37("sfence.vma", SYSTEM_PRIV, PRIV_SFENCE_VMA, RD_0, 0),
 	INSN_F37("hfence.bvma", SYSTEM_PRIV, PRIV_HFENCE_BVMA, 0, 0),
 	INSN_F37("hfence.gvma", SYSTEM_PRIV, PRIV_HFENCE_GVMA, 0, 0),
@@ -677,7 +721,7 @@ static const struct riscv_disasm_insn riscv_disasm_system[] = {
 static const struct riscv_disasm_insn riscv_disasm_amo[] = {
 	INSN_F5("amoadd",  AMO_ADD,  F3AMO, AMOAQRL),
 	INSN_F5("amoswap", AMO_SWAP, F3AMO, AMOAQRL),
-	INSN_F5("lr",      AMO_LR,   F3AMO, AMOAQRL),
+	INSN_F5("lr",      AMO_LR,   F3AMO | RS2_0, AMOAQRL),
 	INSN_F5("sc",      AMO_SC,   F3AMO, AMOAQRL),
 	INSN_F5("amoxor",  AMO_XOR,  F3AMO, AMOAQRL),
 	INSN_F5("amoor",   AMO_OR,   F3AMO, AMOAQRL),
@@ -699,6 +743,14 @@ static const struct riscv_disasm_insn riscv_disasm_op[] = {
 	INSN_F37("sra", OP_SRX,    OP_NARITH, 0, 0),
 	INSN_F37("or",  OP_OR,     OP_ARITH, 0, 0),
 	INSN_F37("and", OP_AND,    OP_ARITH, 0, 0),
+	INSN_F37("mul", OP_MUL,    OP_MULDIV, 0, 0),
+	INSN_F37("mulh", OP_MULH,  OP_MULDIV, 0, 0),
+	INSN_F37("mulhsu", OP_MULHSU, OP_MULDIV, 0, 0),
+	INSN_F37("mulhu", OP_MULHU, OP_MULDIV, 0, 0),
+	INSN_F37("div", OP_DIV,    OP_MULDIV, 0, 0),
+	INSN_F37("divu", OP_DIVU,  OP_MULDIV, 0, 0),
+	INSN_F37("rem", OP_REM,    OP_MULDIV, 0, 0),
+	INSN_F37("remu", OP_REMU,  OP_MULDIV, 0, 0),
 };
 
 static const struct riscv_disasm_insn riscv_disasm_op32[] = {
@@ -707,6 +759,11 @@ static const struct riscv_disasm_insn riscv_disasm_op32[] = {
 	INSN_F37("sllw", OP_SLL,    OP_ARITH, 0, 0),
 	INSN_F37("srlw", OP_SRX,    OP_ARITH, 0, 0),
 	INSN_F37("sraw", OP_SRX,    OP_NARITH, 0, 0),
+	INSN_F37("mulw", OP_MUL,    OP_MULDIV, 0, 0),
+	INSN_F37("divw", OP_DIV,    OP_MULDIV, 0, 0),
+	INSN_F37("divuw", OP_DIVU,  OP_MULDIV, 0, 0),
+	INSN_F37("remw", OP_REM,    OP_MULDIV, 0, 0),
+	INSN_F37("remuw", OP_REMU,  OP_MULDIV, 0, 0),
 };
 
 static const struct riscv_disasm_insn riscv_disasm_opfp[] = {
@@ -719,24 +776,26 @@ static const struct riscv_disasm_insn riscv_disasm_opfp[] = {
 	INSN_F53("fsgnjx", OPFP_SGNJ, SGN_SGNJX, F7SIZE, ALL_FREG),
 	INSN_F53("fmin", OPFP_MINMAX, MINMAX_MIN, F7SIZE, ALL_FREG),
 	INSN_F53("fmax", OPFP_MINMAX, MINMAX_MAX, F7SIZE, ALL_FREG),
-	INSN_F5("fcvt", OPFP_CVTFF, F7SIZE|F3ROUND|RS2_FSIZE, ALL_FREG),
+	INSN_F5("fcvt", OPFP_CVTFF, F7SIZE|F3ROUND|RS2_FSIZE,
+		ISCVT | ALL_FREG),
 	INSN_F5("fsqrt", OPFP_SQRT, F7SIZE|F3ROUND|RS2_0, ALL_FREG),
-	INSN_F53("fle", OPFP_CMP, CMP_LE, F7SIZE, ALL_FREG),
-	INSN_F53("flt", OPFP_CMP, CMP_LT, F7SIZE, ALL_FREG),
-	INSN_F53("feq", OPFP_CMP, CMP_EQ, F7SIZE, ALL_FREG),
-	INSN_F5("fcvt", OPFP_CVTIF, F7SIZE|F3ROUND|RS2_FSIZE,
-		RS2SIZE_FIRST | RD_FREG),
-	INSN_F5("fcvt", OPFP_CVTFI, F7SIZE|F3ROUND|RS2_FSIZE, RS1_FREG),
+	INSN_F53("fle", OPFP_CMP, CMP_LE, F7SIZE, RS12_FREG),
+	INSN_F53("flt", OPFP_CMP, CMP_LT, F7SIZE, RS12_FREG),
+	INSN_F53("feq", OPFP_CMP, CMP_EQ, F7SIZE, RS12_FREG),
+	INSN_F5("fcvt", OPFP_CVTIF, F7SIZE|F3ROUND|RS2_FSIZE|RS2_FSIZE_INT,
+		ISCVT | RS2SIZE_FIRST | RS1_FREG),
+	INSN_F5("fcvt", OPFP_CVTFI, F7SIZE|F3ROUND|RS2_FSIZE|RS2_FSIZE_INT,
+		ISCVT | RD_FREG),
 	INSN_F53("fclass", OPFP_MVFI_CLASS, MVFI_CLASS_CLASS, F7SIZE|RS2_0,
-		 ALL_FREG),
+		 RS1_FREG),
 	INSN_F73("fmv.x.w", (OPFP_MVFI_CLASS << 2) | OPFP_S, MVFI_CLASS_MVFI,
-		 F7SIZE|RS2_0, RS1_FREG),
+		 RS2_0, RS1_FREG),
 	INSN_F73("fmv.w.x", (OPFP_MVIF << 2) | OPFP_S, 0,
-		 F7SIZE|RS2_0, RD_FREG),
+		 RS2_0, RD_FREG),
 	INSN_F73("fmv.x.d", (OPFP_MVFI_CLASS << 2) | OPFP_D, MVFI_CLASS_MVFI,
-		 F7SIZE|RS2_0, RS1_FREG),
+		 RS2_0, RS1_FREG),
 	INSN_F73("fmv.d.x", (OPFP_MVIF << 2) | OPFP_D, 0,
-		 F7SIZE|RS2_0, RD_FREG),
+		 RS2_0, RD_FREG),
 };
 
 #define TABLE(table) \
@@ -864,7 +923,8 @@ riscv_disasm_match(const struct riscv_disasm_insn *table, unsigned num,
 			}
 		}
 		if (info->matchflags & F7SIZE) {
-			/* fp size bits at bottom of funct7 */
+			/* fpu size bits at bottom of funct7 */
+			/* always floating sizes */
 			switch (f7 & 3) {
 			    case OPFP_S:
 			    case OPFP_D:
@@ -875,14 +935,29 @@ riscv_disasm_match(const struct riscv_disasm_insn *table, unsigned num,
 			}
 		}
 		if (info->matchflags & RS2_FSIZE) {
-			/* fp size bits in rs2 field */
-			switch (INSN_RS2(insn)) {
-			    case OPFP_S:
-			    case OPFP_D:
-			    case OPFP_Q:
-				break;
-			    default:
-				continue;
+			/* fpu size bits in rs2 field */
+			if (info->matchflags & RS2_FSIZE_INT) {
+				/* integer sizes */
+				switch (INSN_RS2(insn)) {
+				    case OPFP_W:
+				    case OPFP_WU:
+				    case OPFP_L:
+				    case OPFP_LU:
+					break;
+				    default:
+					continue;
+				}
+			}
+			else {
+				/* floating sizes */
+				switch (INSN_RS2(insn)) {
+				    case OPFP_S:
+				    case OPFP_D:
+				    case OPFP_Q:
+					break;
+				    default:
+					continue;
+				}
 			}
 		}
 		if (info->matchflags & FENCEFM) {
@@ -933,28 +1008,112 @@ db_print_riscv_reg(unsigned reg, bool isfreg)
 
 static
 const char *
+riscv_int_size(unsigned fpsize)
+{
+	switch (fpsize) {
+	    case OPFP_W: return ".w";
+	    case OPFP_WU: return ".wu";
+	    case OPFP_L: return ".l";
+	    case OPFP_LU: return ".lu";
+	}
+}
+
+static
+const char *
 riscv_fp_size(unsigned fpsize)
 {
 	switch (fpsize) {
 	    case OPFP_S: return ".s";
 	    case OPFP_D: return ".d";
 	    case OPFP_Q: return ".q";
-	    default: KASSERT(0); return ".?";
+	    default:
+		/* matching should prevent it coming here */
+		KASSERT(0);
+		return ".?";
 	}
 }
 
 static
-const char *
-riscv_fp_round(unsigned round)
+bool larger_f_i(unsigned sz1, unsigned sz2)
+{
+	switch (sz1) {
+	    case OPFP_S:
+		break;
+	    case OPFP_D:
+		switch (sz2) {
+		    case OPFP_W:
+		    case OPFP_WU:
+			return true;
+		    default:
+			break;
+		}
+		break;
+	    case OPFP_Q:
+		switch (sz2) {
+		    case OPFP_W:
+		    case OPFP_WU:
+		    case OPFP_L:
+		    case OPFP_LU:
+			return true;
+		    default:
+			break;
+		}
+		break;
+	    default:
+		/* matching should keep it from coming here */
+		KASSERT(0);
+		break;
+	}
+	return false;
+}
+
+static
+bool larger_f_f(unsigned sz1, unsigned sz2)
+{
+	switch (sz1) {
+	    case OPFP_S:
+		break;
+	    case OPFP_D:
+		switch (sz2) {
+		    case OPFP_S:
+			return true;
+		    default:
+			break;
+		}
+		break;
+	    case OPFP_Q:
+		switch (sz2) {
+		    case OPFP_S:
+		    case OPFP_D:
+			return true;
+		    default:
+			break;
+		}
+		break;
+	    default:
+		/* matching should keep it from coming here */
+		KASSERT(0);
+		break;
+	}
+	return false;
+}
+
+static
+void
+db_print_riscv_fpround(const char *sep, unsigned round)
 {
 	switch (round) {
-	    case ROUND_RNE: return ".rne";
-	    case ROUND_RTZ: return ".rtz";
-	    case ROUND_RDN: return ".rdn";
-	    case ROUND_RUP: return ".rup";
-	    case ROUND_RMM: return ".rmm";
-	    case ROUND_DYN: return "";
-	    default: KASSERT(0); return ".?";
+	    case ROUND_RNE: db_printf("%srne", sep); break;
+	    case ROUND_RTZ: db_printf("%srtz", sep); break;
+	    case ROUND_RDN: db_printf("%srdn", sep); break;
+	    case ROUND_RUP: db_printf("%srup", sep); break;
+	    case ROUND_RMM: db_printf("%srmm", sep); break;
+	    case ROUND_DYN: break;
+	    default:
+		/* matching should prevent it coming here */
+		KASSERT(0);
+		db_printf("%s<unknown-rounding-mode>", sep);
+		break;
 	}
 }
 
@@ -971,17 +1130,24 @@ db_print_riscv_insnname(uint32_t insn, const struct riscv_disasm_insn *info)
 	}
 	if ((info->matchflags & RS2_FSIZE) &&
 	    (info->printflags & RS2SIZE_FIRST)) {
-		db_printf("%s", riscv_fp_size(INSN_RS2(insn)));
+		if (info->matchflags & RS2_FSIZE_INT) {
+			db_printf("%s", riscv_int_size(INSN_RS2(insn)));
+		}
+		else {
+			db_printf("%s", riscv_fp_size(INSN_RS2(insn)));
+		}
 	}
 	if (info->matchflags & F7SIZE) {
 		db_printf("%s", riscv_fp_size(INSN_FUNCT7(insn) & 3));
 	}
 	if ((info->matchflags & RS2_FSIZE) &&
 	    (info->printflags & RS2SIZE_FIRST) == 0) {
-		db_printf("%s", riscv_fp_size(INSN_RS2(insn)));
-	}
-	if (info->matchflags & F3ROUND) {
-		db_printf("%s", riscv_fp_round(INSN_FUNCT3(insn)));
+		if (info->matchflags & RS2_FSIZE_INT) {
+			db_printf("%s", riscv_int_size(INSN_RS2(insn)));
+		}
+		else {
+			db_printf("%s", riscv_fp_size(INSN_RS2(insn)));
+		}
 	}
 	if (info->matchflags & FENCEFM) {
 		/*
@@ -1035,32 +1201,100 @@ db_disasm_32(db_addr_t loc, uint32_t insn, bool altfmt)
 			sep = ", ";
 		}
 
-		/* rs1 */
-		if ((info->matchflags & RS1_0) == 0) {
-			db_printf("%s", sep);
+		if (info->printflags & CSRIMM) {
+			/*
+			 * CSR instruction; these appear under a major
+			 * opcode with register format, but they
+			 * actually use the I format. Sigh. The
+			 * immediate field contains the CSR number and
+			 * prints _before_ rs1.
+			 */
+			imm = INSN_IMM_I(insn);
+			db_printf("%s0x%x, ", sep, (int32_t)imm);
 			db_print_riscv_reg(INSN_RS1(insn),
 					   info->printflags & RS1_FREG);
-			sep = ", ";
 		}
+		else if (info->printflags & CSRIIMM) {
+			/*
+			 * CSR instruction with immediate; the CSR
+			 * number is in the immediate fiel and the RS1
+			 * field contains the immediate. Bleck.
+			 */
+			imm = INSN_IMM_I(insn);
+			db_printf("%s0x%x, %d", sep, (int32_t)imm,
+				  INSN_RS1(insn));
+		}
+		else {
+			/* rs1 */
+			if ((info->matchflags & RS1_0) == 0) {
+				db_printf("%s", sep);
+				db_print_riscv_reg(INSN_RS1(insn),
+					   info->printflags & RS1_FREG);
+				sep = ", ";
+			}
 
-		/* rs2 */
-		if ((info->matchflags & RS2_0) == 0 &&
-		    (info->matchflags && CHECK_RS2) == 0) {
-			db_printf("%s", sep);
-			db_print_riscv_reg(INSN_RS2(insn),
+			/* rs2 */
+			if ((info->matchflags & RS2_0) == 0 &&
+			    (info->matchflags & CHECK_RS2) == 0 &&
+			    (info->matchflags & RS2_FSIZE) == 0) {
+				db_printf("%s", sep);
+				db_print_riscv_reg(INSN_RS2(insn),
 					   info->printflags & RS2_FREG);
+			}
 		}
-		db_printf("\n");
 
+		if (info->matchflags & F3ROUND) {
+			/*
+			 * Suppress rounding mode print for insns that
+			 * never round, because gas encodes it as 0
+			 * ("rup") rather than the normal default
+			 * ("dyn").
+			 *
+			 * These are: convert float to larger float,
+			 * convert int to float larger than the float.
+			 */
+			bool suppress;
+
+			if (info->printflags & ISCVT) {
+				KASSERT(info->matchflags & F7SIZE);
+				KASSERT(info->matchflags & RS2_FSIZE);
+				if (info->matchflags & RS2SIZE_FIRST) {
+					/* convert to int */
+					suppress = false;
+				}
+				else if (info->matchflags & RS2_FSIZE_INT) {
+					/* convert from int */
+					suppress = larger_f_i(
+						INSN_FUNCT7(insn) & 3,
+						INSN_RS2(insn));
+				}
+				else {
+					/* convert from float */
+					suppress = larger_f_f(
+						INSN_FUNCT7(insn) & 3,
+						INSN_RS2(insn));
+				}
+			}
+			else {
+				suppress = false;
+			}
+
+			if (!suppress) {
+				db_print_riscv_fpround(sep, INSN_FUNCT3(insn));
+			}
+		}
+
+		db_printf("\n");
 		break;
 	    case FMT_R4:
-		db_printf("%s%s%s f%d, f%d, f%d, f%d", d->u.name,
+		db_printf("%s%s f%d, f%d, f%d, f%d", d->u.name,
 			  riscv_fp_size(INSN_FUNCT7(insn) & 3),
-			  riscv_fp_round(INSN_FUNCT3(insn)),
 			  INSN_RD(insn),
 			  INSN_RS1(insn),
 			  INSN_RS2(insn),
 			  INSN_FUNCT7(insn) >> 2);
+		db_print_riscv_fpround(", ", INSN_FUNCT3(insn));
+		db_printf("\n");
 	        break;
 	    case FMT_I:
 		/* immediates */
@@ -1093,23 +1327,10 @@ db_disasm_32(db_addr_t loc, uint32_t insn, bool altfmt)
 
 		if (info->printflags & MEMORYIMM) {
 			db_printf("%s", sep);
-			db_printf("%d", (int32_t)imm);
+			db_printf("%d(", (int32_t)imm);
 			db_print_riscv_reg(INSN_RS1(insn),
 					   info->printflags & RS1_FREG);
-		}
-		else if (info->printflags & CSRIMM) {
-			db_printf("%s", sep);
-			/* CSR number is the immediate and comes first */
-			db_printf("%d, ", (int32_t)imm);
-			db_print_riscv_reg(INSN_RS1(insn),
-					   info->printflags & RS1_FREG);
-		}
-		else if (info->printflags & CSRIIMM) {
-			db_printf("%s", sep);
-			/* CSR number is the immediate and comes first */
-			db_printf("%d, ", (int32_t)imm);
-			/* the immediate value is in the RS1 field */
-			db_printf("%d", INSN_RS1(insn));
+			db_printf(")");
 		}
 		else {
 			/* rs1 */
@@ -1130,6 +1351,7 @@ db_disasm_32(db_addr_t loc, uint32_t insn, bool altfmt)
 				/* fm is part of the name, doesn't go here */
 				pred = (imm >> 4) & 0xf;
 				succ = imm & 0xf;
+				db_printf("%s", sep);
 				db_print_riscv_fencebits(pred);
 				db_printf(", ");
 				db_print_riscv_fencebits(succ);
@@ -1145,6 +1367,7 @@ db_disasm_32(db_addr_t loc, uint32_t insn, bool altfmt)
 				db_printf("%s0x%x", sep, imm);
 			}
 		}
+		db_printf("\n");
 		break;
 	    case FMT_In:
 		/* same as I but funct3 should be 0 so just one case */
@@ -1173,15 +1396,16 @@ db_disasm_32(db_addr_t loc, uint32_t insn, bool altfmt)
 
 		/* name */
 		db_print_riscv_insnname(insn, info);
+		db_printf(" ");
 
 		db_print_riscv_reg(INSN_RS2(insn),
 				   info->printflags & RS2_FREG);
-		sep = ", ";
+		db_printf(", ", sep);
 
-		db_printf("%s", sep);
-		db_printf("%d", (int32_t)imm);
+		db_printf("%d(", (int32_t)imm);
 		db_print_riscv_reg(INSN_RS1(insn),
 				   info->printflags & RS1_FREG);
+		db_printf(")\n");
 		break;
 	    case FMT_B:
 		/* branches */
@@ -1199,6 +1423,7 @@ db_disasm_32(db_addr_t loc, uint32_t insn, bool altfmt)
 
 		/* name */
 		db_print_riscv_insnname(insn, info);
+		db_printf(" ");
 
 		db_print_riscv_reg(INSN_RS1(insn),
 				   info->printflags & RS1_FREG);
@@ -1259,11 +1484,13 @@ db_disasm(db_addr_t loc, bool altfmt)
 	unsigned n, i;
 	uint32_t insn32;
 
+#ifdef _KERNEL
 	if ((intptr_t) loc >= 0) {
 		db_printf("%s: %#"PRIxVADDR" is not a kernel address\n",
 		    __func__, loc);
 		return loc;
 	}
+#endif
 
 	/*
 	 * Fetch the instruction. The first halfword tells us how many
