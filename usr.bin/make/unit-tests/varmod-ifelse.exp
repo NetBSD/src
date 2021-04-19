@@ -19,6 +19,10 @@ make: Bad conditional expression 'string == "literal" && no >= 10' in 'string ==
 make: "varmod-ifelse.mk" line 153: .
 make: Bad conditional expression 'string == "literal" || no >= 10' in 'string == "literal" || no >= 10?yes:no'
 make: "varmod-ifelse.mk" line 154: .
+make: Bad conditional expression 'string == "literal" &&  >= 10' in 'string == "literal" &&  >= 10?yes:no'
+make: "varmod-ifelse.mk" line 159: .
+make: Bad conditional expression 'string == "literal" ||  >= 10' in 'string == "literal" ||  >= 10?yes:no'
+make: "varmod-ifelse.mk" line 160: .
 make: Fatal errors encountered -- cannot continue
 make: stopped in unit-tests
 exit status 1

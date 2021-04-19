@@ -1,4 +1,4 @@
-# $NetBSD: varmod-ifelse.mk,v 1.14 2021/04/19 23:27:17 rillig Exp $
+# $NetBSD: varmod-ifelse.mk,v 1.15 2021/04/19 23:43:14 rillig Exp $
 #
 # Tests for the ${cond:?then:else} variable modifier, which evaluates either
 # the then-expression or the else-expression, depending on the condition.
@@ -150,5 +150,11 @@ VAR=	value
 #  that the concept of "compile-time" does not really apply here.
 STRING=		string
 NUMBER=		no		# not really a number
+.info ${${STRING} == "literal" && ${NUMBER} >= 10:?yes:no}.
+.info ${${STRING} == "literal" || ${NUMBER} >= 10:?yes:no}.
+
+# The following situation occasionally occurs with MKINET6 or similar
+# variables.
+NUMBER=		# empty, not really a number either
 .info ${${STRING} == "literal" && ${NUMBER} >= 10:?yes:no}.
 .info ${${STRING} == "literal" || ${NUMBER} >= 10:?yes:no}.
