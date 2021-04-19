@@ -1,5 +1,5 @@
-/*	$NetBSD: cipher.c,v 1.19 2021/03/05 17:47:16 christos Exp $	*/
-/* $OpenBSD: cipher.c,v 1.118 2020/12/21 11:09:32 dtucker Exp $ */
+/*	$NetBSD: cipher.c,v 1.20 2021/04/19 14:40:15 christos Exp $	*/
+/* $OpenBSD: cipher.c,v 1.119 2021/04/03 06:18:40 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -38,7 +38,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: cipher.c,v 1.19 2021/03/05 17:47:16 christos Exp $");
+__RCSID("$NetBSD: cipher.c,v 1.20 2021/04/19 14:40:15 christos Exp $");
 #include <sys/types.h>
 
 #include <string.h>
@@ -54,6 +54,37 @@ __RCSID("$NetBSD: cipher.c,v 1.19 2021/03/05 17:47:16 christos Exp $");
 #ifndef WITH_OPENSSL
 #define EVP_CIPHER_CTX void
 #endif
+
+// XXX: from libressl
+#define HAVE_EVP_CIPHER_CTX_IV
+
+static int
+EVP_CIPHER_CTX_get_iv(const EVP_CIPHER_CTX *ctx, unsigned char *iv, size_t len)
+{
+	if (ctx == NULL)
+		return 0;
+	if (EVP_CIPHER_CTX_iv_length(ctx) < 0)
+		return 0;
+	if (len != (size_t)EVP_CIPHER_CTX_iv_length(ctx))
+		return 0;
+	if (len > EVP_MAX_IV_LENGTH)
+		return 0; /* sanity check; shouldn't happen */
+	/*
+	 * Skip the memcpy entirely when the requested IV length is zero,
+	 * since the iv pointer may be NULL or invalid.
+	 */
+	if (len != 0) {
+		if (iv == NULL)
+			return 0;
+# ifdef HAVE_EVP_CIPHER_CTX_IV
+		memcpy(iv, EVP_CIPHER_CTX_iv(ctx), len);
+# else
+		memcpy(iv, ctx->iv, len);
+# endif /* HAVE_EVP_CIPHER_CTX_IV */
+	}
+	return 1;
+}
+// XXX: end
 
 struct sshcipher_ctx {
 	int	plaintext;
@@ -486,11 +517,10 @@ cipher_get_keyiv(struct sshcipher_ctx *cc, u_char *iv, size_t len)
 	if ((size_t)evplen != len)
 		return SSH_ERR_INVALID_ARGUMENT;
 	if (cipher_authlen(c)) {
-		if (!EVP_CIPHER_CTX_ctrl(cc->evp, EVP_CTRL_GCM_IV_GEN,
-		   len, iv))
-		       return SSH_ERR_LIBCRYPTO_ERROR;
-	} else
-		memcpy(iv, EVP_CIPHER_CTX_iv(cc->evp), len);
+		if (!EVP_CIPHER_CTX_ctrl(cc->evp, EVP_CTRL_GCM_IV_GEN, len, iv))
+			return SSH_ERR_LIBCRYPTO_ERROR;
+	} else if (!EVP_CIPHER_CTX_get_iv(cc->evp, iv, len))
+		return SSH_ERR_LIBCRYPTO_ERROR;
 #endif
 	return 0;
 }

@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh_api.c,v 1.12 2021/03/05 17:47:16 christos Exp $	*/
-/* $OpenBSD: ssh_api.c,v 1.26 2021/01/27 10:05:28 djm Exp $ */
+/*	$NetBSD: ssh_api.c,v 1.13 2021/04/19 14:40:15 christos Exp $	*/
+/* $OpenBSD: ssh_api.c,v 1.27 2021/04/03 06:18:41 djm Exp $ */
 
 /*
  * Copyright (c) 2012 Markus Friedl.  All rights reserved.
@@ -18,7 +18,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh_api.c,v 1.12 2021/03/05 17:47:16 christos Exp $");
+__RCSID("$NetBSD: ssh_api.c,v 1.13 2021/04/19 14:40:15 christos Exp $");
 
 #include <sys/types.h>
 
@@ -360,7 +360,7 @@ _ssh_read_banner(struct ssh *ssh, struct sshbuf *banner)
 		if (ssh->kex->server || ++n > SSH_MAX_PRE_BANNER_LINES) {
   bad:
 			if ((r = sshbuf_put(ssh_packet_get_output(ssh),
-			   mismatch, strlen(mismatch))) != 0)
+			    mismatch, strlen(mismatch))) != 0)
 				return r;
 			return SSH_ERR_NO_PROTOCOL_VERSION;
 		}

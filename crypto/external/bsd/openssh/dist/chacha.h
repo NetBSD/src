@@ -1,5 +1,5 @@
-/*	$NetBSD: chacha.h,v 1.2 2018/04/06 18:58:59 christos Exp $	*/
-/* $OpenBSD: chacha.h,v 1.4 2016/08/27 04:04:56 guenther Exp $ */
+/*	$NetBSD: chacha.h,v 1.3 2021/04/19 14:40:15 christos Exp $	*/
+/* $OpenBSD: chacha.h,v 1.5 2021/04/03 05:54:14 djm Exp $ */
 
 /*
 chacha-merged.c version 20080118
@@ -17,7 +17,7 @@ struct chacha_ctx {
 	u_int input[16];
 };
 
-#define CHACHA_MINKEYLEN 	16
+#define CHACHA_MINKEYLEN	16
 #define CHACHA_NONCELEN		8
 #define CHACHA_CTRLEN		8
 #define CHACHA_STATELEN		(CHACHA_NONCELEN+CHACHA_CTRLEN)
