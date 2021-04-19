@@ -1,4 +1,4 @@
-# $NetBSD: varmod-ifelse.mk,v 1.13 2021/04/19 22:22:27 rillig Exp $
+# $NetBSD: varmod-ifelse.mk,v 1.14 2021/04/19 23:27:17 rillig Exp $
 #
 # Tests for the ${cond:?then:else} variable modifier, which evaluates either
 # the then-expression or the else-expression, depending on the condition.
@@ -111,8 +111,34 @@ VAR=	value
 .endif
 .MAKEFLAGS: -d0
 
-# Seen on 2021-04-19 when building external/bsd/tmux with HAVE_LLVM=yes
-# and HAVE_GCC=no.
+# On 2021-04-19, when building external/bsd/tmux with HAVE_LLVM=yes and
+# HAVE_GCC=no, the following conditional generated this error message:
+#
+#	make: Bad conditional expression 'string == "literal" && no >= 10'
+#	    in 'string == "literal" && no >= 10?yes:no'
+#
+# Despite the error message (which was not clearly marked with "error:"),
+# the build continued, for historical reasons, see main_Exit.
+#
+# The tricky detail here is that the condition that looks so obvious in the
+# form written in the makefile becomes tricky when it is actually evaluated.
+# This is because the condition is written in the place of the variable name
+# of the expression, and in an expression, the variable name is always
+# expanded first, before even looking at the modifiers.  This happens for the
+# modifier ':?' as well, so when CondEvalExpression gets to see the
+# expression, it already looks like this:
+#
+#	string == "literal" && no >= 10
+#
+# When parsing such an expression, the parser used to be strict.  It first
+# evaluated the left-hand side of the operator '&&' and then started parsing
+# the right-hand side 'no >= 10'.  The word 'no' is obviously a string
+# literal, not enclosed in quotes, which is ok, even on the left-hand side of
+# the comparison operator, but only because this is a condition in the
+# modifier ':?'.  In an ordinary directive '.if', this would be a parse error.
+# For strings, only the comparison operators '==' and '!=' are defined,
+# therefore parsing stopped at the '>', producing the 'Bad conditional
+# expression'.
 #
 # TODO: make should at least describe the part of the condition that is
 #  wrong. In this case it is probably the "no >= 10".  Ideally that should
@@ -123,5 +149,6 @@ VAR=	value
 #  seen at compile-time" that the operand types of '>=' don't match.  Only
 #  that the concept of "compile-time" does not really apply here.
 STRING=		string
-NUMBER=		no
+NUMBER=		no		# not really a number
 .info ${${STRING} == "literal" && ${NUMBER} >= 10:?yes:no}.
+.info ${${STRING} == "literal" || ${NUMBER} >= 10:?yes:no}.
