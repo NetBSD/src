@@ -1,4 +1,4 @@
-/* $NetBSD: getprogname.c,v 1.4 2011/10/06 20:31:41 christos Exp $ */
+/* $NetBSD: getprogname.c,v 1.5 2021/04/20 21:42:32 christos Exp $ */
 
 /*
  * Copyright (c) 2001 Christopher G. Demetriou
@@ -36,18 +36,17 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getprogname.c,v 1.4 2011/10/06 20:31:41 christos Exp $");
+__RCSID("$NetBSD: getprogname.c,v 1.5 2021/04/20 21:42:32 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 
 #include <stdlib.h>
+#include "csu-common.h"
 
 #ifdef __weak_alias
 __weak_alias(getprogname,_getprogname)
 #endif
-
-const char *__progname;
 
 const char *
 getprogname(void)

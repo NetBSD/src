@@ -1,4 +1,4 @@
-/* $NetBSD: setproctitle.c,v 1.22 2008/01/03 04:26:27 christos Exp $ */
+/* $NetBSD: setproctitle.c,v 1.23 2021/04/20 21:42:32 christos Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: setproctitle.c,v 1.22 2008/01/03 04:26:27 christos Exp $");
+__RCSID("$NetBSD: setproctitle.c,v 1.23 2021/04/20 21:42:32 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -47,18 +47,13 @@ __RCSID("$NetBSD: setproctitle.c,v 1.22 2008/01/03 04:26:27 christos Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "csu-common.h"
 
 #ifdef __weak_alias
 __weak_alias(setproctitle,_setproctitle)
 #endif
 
 #define	MAX_PROCTITLE	2048
-
-/*
- * For compatibility with old versions of crt0 that didn't define __ps_strings,
- * define it as a common here.
- */
-struct ps_strings *__ps_strings;
 
 void
 setproctitle(const char *fmt, ...)

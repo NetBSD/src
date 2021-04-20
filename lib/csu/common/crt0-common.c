@@ -1,4 +1,4 @@
-/* $NetBSD: crt0-common.c,v 1.23 2018/12/28 20:12:35 christos Exp $ */
+/* $NetBSD: crt0-common.c,v 1.24 2021/04/20 21:42:31 christos Exp $ */
 
 /*
  * Copyright (c) 1998 Christos Zoulas
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: crt0-common.c,v 1.23 2018/12/28 20:12:35 christos Exp $");
+__RCSID("$NetBSD: crt0-common.c,v 1.24 2021/04/20 21:42:31 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/exec.h>
@@ -45,6 +45,8 @@ __RCSID("$NetBSD: crt0-common.c,v 1.23 2018/12/28 20:12:35 christos Exp $");
 #include <machine/profile.h>
 #include <stdlib.h>
 #include <unistd.h>
+
+#include "csu-common.h"
 
 extern int main(int, char **, char **);
 
@@ -70,11 +72,11 @@ extern void	_mcleanup(void);
 extern unsigned char __etext, __eprol;
 #endif /* MCRT0 */
 
-char		**environ;
-struct ps_strings *__ps_strings = 0;
-
 static char	 empty_string[] = "";
-char		*__progname = empty_string;
+
+char		**environ __common;
+struct ps_strings *__ps_strings __common = 0;
+char		*__progname __common = empty_string;
 
 __dead __dso_hidden void ___start(void (*)(void), struct ps_strings *);
 

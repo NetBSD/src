@@ -1,4 +1,4 @@
-/* 	$NetBSD: initfini.c,v 1.14 2017/06/17 15:26:44 joerg Exp $	 */
+/* 	$NetBSD: initfini.c,v 1.15 2021/04/20 21:42:32 christos Exp $	 */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: initfini.c,v 1.14 2017/06/17 15:26:44 joerg Exp $");
+__RCSID("$NetBSD: initfini.c,v 1.15 2021/04/20 21:42:32 christos Exp $");
 
 #ifdef _LIBC
 #include "namespace.h"
@@ -40,6 +40,7 @@ __RCSID("$NetBSD: initfini.c,v 1.14 2017/06/17 15:26:44 joerg Exp $");
 #include <sys/exec.h>
 #include <sys/tls.h>
 #include <stdbool.h>
+#include "csu-common.h"
 
 void	_libc_init(void) __attribute__((__constructor__, __used__));
 
@@ -75,7 +76,9 @@ void _libc_init(void);
  * Declare as common symbol to allow new libc with older binaries to
  * not trigger an undefined reference.
  */
-struct ps_strings *__ps_strings;
+struct ps_strings *__ps_strings __common;
+char *__progname __common;
+char **environ __common;
 
 /*
  * _libc_init is called twice.  One call comes explicitly from crt0.o

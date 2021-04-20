@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.19 2018/06/09 22:41:55 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.20 2021/04/20 21:42:31 christos Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -34,6 +34,8 @@ CPPFLAGS+=	-D_DIAGNOSTIC
 .if defined(MLIBDIR)
 CPPFLAGS+=	-DMLIBDIR=\"${MLIBDIR}\"
 .endif
+# needed for csu_common.h
+CPPFLAGS+=	-I${NETBSDSRCDIR}/lib/csu/common
 
 .if (${USE_HESIOD} != "no")
 CPPFLAGS+=	-DHESIOD
