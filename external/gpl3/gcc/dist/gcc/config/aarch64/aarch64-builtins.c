@@ -1206,7 +1206,7 @@ aarch64_init_rng_builtins (void)
 }
 
 /* Initialize the memory tagging extension (MTE) builtins.  */
-struct
+struct aarch64_mte
 {
   tree ftype;
   enum insn_code icode;
