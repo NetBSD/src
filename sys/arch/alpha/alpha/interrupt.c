@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.94 2021/04/20 00:09:45 thorpej Exp $ */
+/* $NetBSD: interrupt.c,v 1.95 2021/04/20 01:29:40 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.94 2021/04/20 00:09:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.95 2021/04/20 01:29:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,7 +193,7 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 	switch (a0) {
 	case ALPHA_INTR_XPROC:	/* interprocessor interrupt */
 #if defined(MULTIPROCESSOR)
-		atomic_inc_ulong(&ci->ci_intrdepth);
+		ci->ci_intrdepth++;
 
 		alpha_ipi_process(ci, framep);
 
@@ -205,7 +205,7 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 		    hwrpb->rpb_txrdy != 0)
 			cpu_iccb_receive();
 
-		atomic_dec_ulong(&ci->ci_intrdepth);
+		ci->ci_intrdepth--;
 #else
 		printf("WARNING: received interprocessor interrupt!\n");
 #endif /* MULTIPROCESSOR */
@@ -226,7 +226,7 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 		 * "was processing interrupts when the clock interrupt
 		 * happened".
 		 */
-		atomic_add_long(&ci->ci_intrdepth, 0x10);
+		ci->ci_intrdepth += 0x10;
 		sc->sc_evcnt_clock.ev_count++;
 		ci->ci_data.cpu_nintr++;
 		if (platform.clockintr) {
@@ -251,18 +251,18 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 			    schedhz != 0)
 				schedclock(ci->ci_curlwp);
 		}
-		atomic_add_long(&ci->ci_intrdepth, -0x10);
+		ci->ci_intrdepth -= 0x10;
 		break;
 
 	case ALPHA_INTR_ERROR:	/* Machine Check or Correctable Error */
-		atomic_inc_ulong(&ci->ci_intrdepth);
+		ci->ci_intrdepth++;
 		a0 = alpha_pal_rdmces();
 		if (platform.mcheck_handler != NULL &&
 		    (void *)framep->tf_regs[FRAME_PC] != XentArith)
 			(*platform.mcheck_handler)(a0, framep, a1, a2);
 		else
 			machine_check(a0, framep, a1, a2);
-		atomic_dec_ulong(&ci->ci_intrdepth);
+		ci->ci_intrdepth--;
 		break;
 
 	case ALPHA_INTR_DEVICE:	/* I/O device interrupt */
@@ -272,14 +272,14 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 		KDASSERT(a1 >= SCB_IOVECBASE && a1 < SCB_SIZE);
 
 		atomic_inc_ulong(&sc->sc_evcnt_device.ev_count);
-		atomic_inc_ulong(&ci->ci_intrdepth);
+		ci->ci_intrdepth++;
 
 		ci->ci_data.cpu_nintr++;
 
 		struct scbvec * const scb = &scb_iovectab[idx];
 		(*scb->scb_func)(scb->scb_arg, a1);
 
-		atomic_dec_ulong(&ci->ci_intrdepth);
+		ci->ci_intrdepth--;
 		break;
 	    }
 
