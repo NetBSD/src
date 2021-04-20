@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.40 2020/04/22 23:32:25 joerg Exp $
+#	$NetBSD: Makefile,v 1.41 2021/04/20 21:42:31 christos Exp $
 
 NOLIBCSANITIZER=	# defined
 NOSANITIZER=		# defined
@@ -17,9 +17,6 @@ ARCHDIR:=	${.CURDIR}/arch/${CSU_MACHINE_CPU}
 .else
 .error Architecture (${CSU_MACHINE_ARCH} or ${CSU_MACHINE_CPU}) unsupported
 .endif
-
-# Ownership of globals from crt0.o is shared with libc for historic reasons
-COPTS+=		-fcommon
 
 .PATH:	${ARCHDIR}
 .include "${ARCHDIR}/Makefile.inc"
