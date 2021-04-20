@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.4 2021/04/19 07:55:59 dholland Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.5 2021/04/20 10:01:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: db_disasm.c,v 1.4 2021/04/19 07:55:59 dholland Exp $");
+__RCSID("$NetBSD: db_disasm.c,v 1.5 2021/04/20 10:01:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1015,6 +1015,10 @@ riscv_int_size(unsigned fpsize)
 	    case OPFP_WU: return ".wu";
 	    case OPFP_L: return ".l";
 	    case OPFP_LU: return ".lu";
+	    default:
+		/* matching should prevent it coming here */
+		KASSERT(0);
+		return ".?";
 	}
 }
 
@@ -1400,7 +1404,7 @@ db_disasm_32(db_addr_t loc, uint32_t insn, bool altfmt)
 
 		db_print_riscv_reg(INSN_RS2(insn),
 				   info->printflags & RS2_FREG);
-		db_printf(", ", sep);
+		db_printf("%s", sep);
 
 		db_printf("%d(", (int32_t)imm);
 		db_print_riscv_reg(INSN_RS1(insn),
