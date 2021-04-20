@@ -1,7 +1,8 @@
-#	$NetBSD: syms.mk,v 1.3 2019/08/30 23:36:40 kamil Exp $
+#	$NetBSD: syms.mk,v 1.4 2021/04/20 23:19:53 rillig Exp $
 
 here := ${.PARSEDIR}
 
+.if !make(install)		# allow both .a and .a.syms to be installed
 .SUFFIXES: .a .a.syms
 .a.a.syms:
 	${_MKTARGET_CREATE}
@@ -10,3 +11,4 @@ here := ${.PARSEDIR}
 		${here}/gen_dynamic_list.sh \
 		--extra ${SYMS_EXTRA:Q} \
 		${.IMPSRC} > ${.TARGET}
+.endif
