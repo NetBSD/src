@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.93 2021/04/15 00:19:52 rin Exp $ */
+/* $NetBSD: interrupt.c,v 1.94 2021/04/20 00:09:45 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.93 2021/04/15 00:19:52 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.94 2021/04/20 00:09:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,7 +212,21 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 		break;
 		
 	case ALPHA_INTR_CLOCK:	/* clock interrupt */
-		atomic_inc_ulong(&ci->ci_intrdepth);
+		/*
+		 * Rather than simply increment the interrupt depth
+		 * for the clock interrupt, we add 0x10.  Why?  Because
+		 * while we only call out a single device interrupt
+		 * level, technically the architecture specification
+		 * suports two, meaning we could have intrdepth > 1
+		 * just for device interrupts.
+		 *
+		 * Adding 0x10 here means that cpu_intr_p() can check
+		 * for "intrdepth != 0" for "in interrupt context" and
+		 * CLKF_INTR() can check "(intrdepth & 0xf) != 0" for
+		 * "was processing interrupts when the clock interrupt
+		 * happened".
+		 */
+		atomic_add_long(&ci->ci_intrdepth, 0x10);
 		sc->sc_evcnt_clock.ev_count++;
 		ci->ci_data.cpu_nintr++;
 		if (platform.clockintr) {
@@ -237,7 +251,7 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 			    schedhz != 0)
 				schedclock(ci->ci_curlwp);
 		}
-		atomic_dec_ulong(&ci->ci_intrdepth);
+		atomic_add_long(&ci->ci_intrdepth, -0x10);
 		break;
 
 	case ALPHA_INTR_ERROR:	/* Machine Check or Correctable Error */
