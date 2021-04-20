@@ -422,7 +422,7 @@ status_redraw(struct client *c)
 }
 
 /* Set a status line message. */
-void __printflike(5, 0)
+void
 status_message_set(struct client *c, int delay, int ignore_styles,
     int ignore_keys, const char *fmt, ...)
 {
