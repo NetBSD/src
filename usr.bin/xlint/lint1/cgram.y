@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.219 2021/04/18 21:53:37 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.220 2021/04/20 21:48:39 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.219 2021/04/18 21:53:37 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.220 2021/04/20 21:48:39 christos Exp $");
 #endif
 
 #include <limits.h>
@@ -215,6 +215,7 @@ anonymize(sym_t *s)
 %token <y_type>		T_AT_BOUNDED
 %token <y_type>		T_AT_BUFFER
 %token <y_type>		T_AT_COLD
+%token <y_type>		T_AT_COMMON
 %token <y_type>		T_AT_CONSTRUCTOR
 %token <y_type>		T_AT_DEPRECATED
 %token <y_type>		T_AT_DESTRUCTOR
@@ -578,6 +579,7 @@ type_attribute_spec:
 	| T_AT_NORETURN
 	| T_AT_NOTHROW
 	| T_AT_COLD
+	| T_AT_COMMON
 	| T_AT_RETURNS_TWICE
 	| T_AT_PACKED {
 		addpacked();

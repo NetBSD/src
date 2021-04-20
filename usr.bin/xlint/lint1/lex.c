@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.28 2021/04/18 08:00:13 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.29 2021/04/20 21:48:39 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.28 2021/04/18 08:00:13 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.29 2021/04/20 21:48:39 christos Exp $");
 #endif
 
 #include <ctype.h>
@@ -157,6 +157,7 @@ static	struct	kwtab {
 	kwdef_token(	"case",		T_CASE,			0,0,0,0,1),
 	kwdef_type(	"char",		CHAR,			0,0,0,0,1),
 	kwdef_token(	"cold",		T_AT_COLD,		0,0,1,1,5),
+	kwdef_token(	"common",	T_AT_COMMON,		0,0,1,1,5),
 	kwdef_tqual(	"const",	CONST,			1,0,0,0,7),
 	kwdef_token(	"constructor",	T_AT_CONSTRUCTOR,	0,0,1,1,5),
 	kwdef_token(	"continue",	T_CONTINUE,		0,0,0,0,1),
