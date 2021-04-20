@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.47 2021/04/20 21:20:24 rillig Exp $
+# $NetBSD: Makefile,v 1.48 2021/04/20 23:30:35 rillig Exp $
 
 NOMAN=		# defined
 MAX_MESSAGE=	343		# see lint1/err.c
@@ -117,7 +117,7 @@ FILES+=		op_colon.exp
 # depend in ${DESTDIR}/emit.c, but these files are not intended to depend on
 # each other, they have these suffixes just for convenience and convention.
 .if make(install)
-${DESTDIR}${FILESDIR}/emit.ln: .PHONY
+${DESTDIR}${FILESDIR}/emit.ln! .PHONY
 .endif
 # ----- end hack -----
 
