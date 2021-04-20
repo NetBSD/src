@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.5 2021/04/20 10:01:37 skrll Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.6 2021/04/20 10:15:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: db_disasm.c,v 1.5 2021/04/20 10:01:37 skrll Exp $");
+__RCSID("$NetBSD: db_disasm.c,v 1.6 2021/04/20 10:15:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,8 +114,7 @@ db_print_addr(db_addr_t loc)
  * 32 to 64 for RV64. (And bail on RV128 since it's not clear what
  * the C type sizes are going to be there anyway...)
  */
-static
-unsigned long
+static unsigned long
 maybe_signext64(uint32_t x)
 {
 #if __riscv_xlen == 32
@@ -130,8 +129,7 @@ maybe_signext64(uint32_t x)
 #endif
 }
 
-static
-int
+static int
 db_disasm_16(db_addr_t loc, uint32_t insn, bool altfmt)
 {
 	/* note: insn needs to be uint32_t for immediate computations */
@@ -221,16 +219,13 @@ db_disasm_16(db_addr_t loc, uint32_t insn, bool altfmt)
 		imm = INSN16_IMM_CI_K(insn);
 		if (rd == 0 && imm == 0) {
 			db_printf("c.nop\n");
-		}
-		else if (rd == 0 && imm != 0) {
+		} else if (rd == 0 && imm != 0) {
 			/* undefined hint */
 			return EINVAL;
-		}
-		else if (rd != 0 && imm == 0) {
+		} else if (rd != 0 && imm == 0) {
 			/* undefined hint */
 			return EINVAL;
-		}
-		else {
+		} else {
 			db_printf("c.addi %s, %s, 0x%lx\n",
 				  riscv_registers[rd],
 				  riscv_registers[rd],
@@ -420,11 +415,9 @@ db_disasm_16(db_addr_t loc, uint32_t insn, bool altfmt)
 		    case Q2MISC_JR_MV:
 			if (rs1 == 0) {
 				return EINVAL;
-			}
-			else if (rs2 == 0) {
+			} else if (rs2 == 0) {
 				db_printf("c.jr %s\n", riscv_registers[rs1]);
-			}
-			else {
+			} else {
 				db_printf("c.mv %s, %s\n",
 					  riscv_registers[rs1],
 					  riscv_registers[rs2]);
@@ -433,14 +426,11 @@ db_disasm_16(db_addr_t loc, uint32_t insn, bool altfmt)
 		    case Q2MISC_EBREAK_JALR_ADD:
 			if (rs1 == 0 && rs2 == 0) {
 				db_printf("c.ebreak\n");
-			}
-			else if (rs2 == 0) {
+			} else if (rs2 == 0) {
 				db_printf("c.jalr %s\n", riscv_registers[rs1]);
-			}
-			else if (rs1 == 0) {
+			} else if (rs1 == 0) {
 				return EINVAL;
-			}
-			else {
+			} else {
 				db_printf("c.add %s, %s, %s\n",
 					  riscv_registers[rs1],
 					  riscv_registers[rs1],
@@ -836,8 +826,7 @@ static const struct riscv_disasm32_entry riscv_disasm32[32] = {
 	[OPCODE_X80] =     { .fmt = FMT_ASSERT },
 };
 
-static
-const struct riscv_disasm_insn *
+static const struct riscv_disasm_insn *
 riscv_disasm_match(const struct riscv_disasm_insn *table, unsigned num,
 		   uint32_t insn, uint32_t imm)
 {
@@ -978,8 +967,7 @@ riscv_disasm_match(const struct riscv_disasm_insn *table, unsigned num,
 	return NULL;
 }
 
-static
-void
+static void
 db_print_riscv_fencebits(unsigned bits)
 {
 	if (bits == 0) {
@@ -994,8 +982,7 @@ db_print_riscv_fencebits(unsigned bits)
 	}
 }
 
-static
-void
+static void
 db_print_riscv_reg(unsigned reg, bool isfreg)
 {
 	if (isfreg) {
@@ -1006,8 +993,7 @@ db_print_riscv_reg(unsigned reg, bool isfreg)
 	}
 }
 
-static
-const char *
+static const char *
 riscv_int_size(unsigned fpsize)
 {
 	switch (fpsize) {
@@ -1022,8 +1008,7 @@ riscv_int_size(unsigned fpsize)
 	}
 }
 
-static
-const char *
+static const char *
 riscv_fp_size(unsigned fpsize)
 {
 	switch (fpsize) {
@@ -1037,8 +1022,8 @@ riscv_fp_size(unsigned fpsize)
 	}
 }
 
-static
-bool larger_f_i(unsigned sz1, unsigned sz2)
+static bool
+larger_f_i(unsigned sz1, unsigned sz2)
 {
 	switch (sz1) {
 	    case OPFP_S:
@@ -1071,8 +1056,8 @@ bool larger_f_i(unsigned sz1, unsigned sz2)
 	return false;
 }
 
-static
-bool larger_f_f(unsigned sz1, unsigned sz2)
+static bool
+larger_f_f(unsigned sz1, unsigned sz2)
 {
 	switch (sz1) {
 	    case OPFP_S:
@@ -1102,8 +1087,7 @@ bool larger_f_f(unsigned sz1, unsigned sz2)
 	return false;
 }
 
-static
-void
+static void
 db_print_riscv_fpround(const char *sep, unsigned round)
 {
 	switch (round) {
@@ -1122,8 +1106,7 @@ db_print_riscv_fpround(const char *sep, unsigned round)
 }
 
 
-static
-void
+static void
 db_print_riscv_insnname(uint32_t insn, const struct riscv_disasm_insn *info)
 {
 	db_printf("%s", info->name);
@@ -1171,8 +1154,7 @@ db_print_riscv_insnname(uint32_t insn, const struct riscv_disasm_insn *info)
 	}
 }
 
-static
-int
+static int
 db_disasm_32(db_addr_t loc, uint32_t insn, bool altfmt)
 {
 	unsigned opcode;
@@ -1217,8 +1199,7 @@ db_disasm_32(db_addr_t loc, uint32_t insn, bool altfmt)
 			db_printf("%s0x%x, ", sep, (int32_t)imm);
 			db_print_riscv_reg(INSN_RS1(insn),
 					   info->printflags & RS1_FREG);
-		}
-		else if (info->printflags & CSRIIMM) {
+		} else if (info->printflags & CSRIIMM) {
 			/*
 			 * CSR instruction with immediate; the CSR
 			 * number is in the immediate fiel and the RS1
@@ -1313,8 +1294,7 @@ db_disasm_32(db_addr_t loc, uint32_t insn, bool altfmt)
 
 		if (info->matchflags & SHIFT32) {
 			imm &= 31;
-		}
-		else if (info->matchflags & SHIFT64) {
+		} else if (info->matchflags & SHIFT64) {
 			imm &= 63;
 		}
 
@@ -1348,8 +1328,7 @@ db_disasm_32(db_addr_t loc, uint32_t insn, bool altfmt)
 			/* imm */
 			if (info->matchflags & IMM_0) {
 				/* nothing */
-			}
-			else if (info->printflags & FENCEIMM) {
+			} else if (info->printflags & FENCEIMM) {
 				unsigned pred, succ;
 
 				/* fm is part of the name, doesn't go here */
@@ -1359,15 +1338,12 @@ db_disasm_32(db_addr_t loc, uint32_t insn, bool altfmt)
 				db_print_riscv_fencebits(pred);
 				db_printf(", ");
 				db_print_riscv_fencebits(succ);
-			}
-			else if (info->printflags & BRANCHIMM) {
+			} else if (info->printflags & BRANCHIMM) {
 				/* should be B format and not come here */
 				KASSERT(0);
-			}
-			else if (info->printflags & DECIMM) {
+			} else if (info->printflags & DECIMM) {
 				db_printf("%s%d", sep, (int32_t)imm);
-			}
-			else {
+			} else {
 				db_printf("%s0x%x", sep, imm);
 			}
 		}
@@ -1467,8 +1443,7 @@ db_disasm_32(db_addr_t loc, uint32_t insn, bool altfmt)
 
 ////////////////////////////////////////////////////////////
 
-static
-void
+static void
 db_disasm_unknown(const uint16_t *insn, unsigned n)
 {
 	unsigned i;
