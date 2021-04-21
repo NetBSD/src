@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.82 2021/04/06 18:10:43 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.83 2021/04/21 17:50:03 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -1840,3 +1840,8 @@ bin/ps/print.c					1.133
 	column header is specified.
 	[simonb, ticket #1669]
 
+external/bsd/file/dist/magic/magdir/python	(apply patch)
+external/bsd/file/dist/magic/magdir/windows	(apply patch)
+
+	Enhance regex portability (by copying over the versions from file 5.40).
+	[mrg, ticket #1671}
