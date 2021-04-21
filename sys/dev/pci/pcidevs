@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1425 2021/04/02 01:07:16 rin Exp $
+$NetBSD: pcidevs,v 1.1426 2021/04/21 13:09:33 jakllsch Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -7560,7 +7560,7 @@ product REALTEK RTL8411		0x5289	RTL8411 PCI-E Card Reader
 product REALTEK RT8029		0x8029	8029 Ethernet
 product REALTEK RT8139D		0x8039	8139D 10/100 Ethernet
 product REALTEK RT8100		0x8100	8100 10/100 Ethernet
-product REALTEK RT8125		0x8125	8129 10/100/1G/2.5G Ethernet
+product REALTEK RT8125		0x8125	8125 10/100/1G/2.5G Ethernet
 product REALTEK RT8129		0x8129	8129 10/100 Ethernet
 product REALTEK RT8101E		0x8136	8100E/8101E/8102E 10/100 Ethernet
 product REALTEK RT8138		0x8138	8138 10/100 Ethernet
