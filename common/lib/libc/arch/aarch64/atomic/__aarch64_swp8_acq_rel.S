@@ -1,4 +1,4 @@
-/* $NetBSD: atomic_swap_acq_16.S,v 1.1 2021/04/21 07:31:37 skrll Exp $ */
+/* $NetBSD: __aarch64_swp8_acq_rel.S,v 1.1 2021/04/21 16:23:47 skrll Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -31,14 +31,11 @@
 
 #include "atomic_op_asm.h"
 
-ENTRY_NP(_atomic_swap_acq_16)
+ENTRY_NP(__aarch64_swp8_acq_rel)
 	mov	x4, x0
-1:	ldaxrh	w0, [x4]
-	stxrh	w3, w1, [x4]
+1:	ldaxr	x0, [x1]
+	stlxr	w3, x4, [x1]
 	cbnz	w3, 2f
 	ret
 2:	b	1b
-END(_atomic_swap_acq_16)
-
-ATOMIC_OP_ALIAS(atomic_swap_acq_16,_atomic_swap_acq_16)
-ATOMIC_OP_ALIAS(__aarch64_swp2_acq,_atomic_swap_acq_16)
+END(__aarch64_swp8_acq_rel)

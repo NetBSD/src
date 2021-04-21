@@ -1,4 +1,4 @@
-/* $NetBSD: atomic_swap_acq_rel_32.S,v 1.1 2021/04/21 07:31:37 skrll Exp $ */
+/* $NetBSD: __aarch64_swp4_relax.S,v 1.1 2021/04/21 16:23:47 skrll Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -31,14 +31,11 @@
 
 #include "atomic_op_asm.h"
 
-ENTRY_NP(_atomic_swap_acq_rel_32)
+ENTRY_NP(__aarch64_swp4_relax)
 	mov	x4, x0
-1:	ldaxr	w0, [x4]
-	stlxr	w3, w1, [x4]
+1:	ldxr	w0, [x1]
+	stxr	w3, w4, [x1]
 	cbnz	w3, 2f
 	ret
 2:	b	1b
-END(_atomic_swap_acq_rel_32)
-
-ATOMIC_OP_ALIAS(atomic_swap_acq_rel_32,_atomic_swap_acq_rel_32)
-ATOMIC_OP_ALIAS(__aarch64_swp4_acq_rel,_atomic_swap_acq_rel_32)
+END(__aarch64_swp4_relax)
