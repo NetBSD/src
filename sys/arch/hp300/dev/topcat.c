@@ -1,4 +1,4 @@
-/*	$NetBSD: topcat.c,v 1.4 2011/02/18 19:15:43 tsutsui Exp $	*/
+/*	$NetBSD: topcat.c,v 1.4.64.1 2021/04/21 17:59:47 martin Exp $	*/
 /*	$OpenBSD: topcat.c,v 1.15 2006/08/11 18:33:13 miod Exp $	*/
 
 /*
@@ -274,7 +274,10 @@ topcat_end_attach(struct topcat_softc *sc, uint8_t id)
 	case GID_TOPCAT:
 		switch (sc->sc_fb->planes) {
 		case 1:
-			fbname = "HP98544 topcat";
+			if (sc->sc_fb->dheight == 400)
+				fbname = "HP98542 topcat";
+			else
+				fbname = "HP98544 topcat";
 			break;
 		case 4:
 			if (sc->sc_fb->dheight == 400)
@@ -413,8 +416,12 @@ topcat_ioctl(void *v, void *vs, u_long cmd, void *data, int flags,
 		*(u_int *)data = fb->ri.ri_stride;
 		return 0;
 	case WSDISPLAYIO_GETCMAP:
+		if (fb->planemask == 1)
+			return EPASSTHROUGH;
 		return diofb_getcmap(fb, (struct wsdisplay_cmap *)data);
 	case WSDISPLAYIO_PUTCMAP:
+		if (fb->planemask == 1)
+			return EPASSTHROUGH;
 		return topcat_setcmap(fb, (struct wsdisplay_cmap *)data);
 	case WSDISPLAYIO_GVIDEO:
 	case WSDISPLAYIO_SVIDEO:
@@ -428,6 +435,10 @@ void
 topcat_setcolor(struct diofb *fb, u_int index)
 {
 	volatile struct tcboxfb *tc = (struct tcboxfb *)fb->regkva;
+
+	/* No color map registers on monochrome framebuffers. */
+	if (fb->planemask == 1)
+		return;
 
 	if (tc->regs.fbid != GID_TOPCAT) {
 		tccm_waitbusy(tc);
