@@ -1,4 +1,4 @@
-/* $NetBSD: atomic_swap_16.S,v 1.2 2020/08/12 12:59:57 skrll Exp $ */
+/* $NetBSD: atomic_swap_16.S,v 1.3 2021/04/21 07:31:37 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@ END(_atomic_swap_16)
 ATOMIC_OP_ALIAS(atomic_swap_16,_atomic_swap_16)
 ATOMIC_OP_ALIAS(atomic_swap_short,_atomic_swap_16)
 ATOMIC_OP_ALIAS(atomic_swap_ushort,_atomic_swap_16)
+ATOMIC_OP_ALIAS(__aarch64_swp2_relax,_atomic_swap_16)
 STRONG_ALIAS(__sync_lock_test_and_set_2,_atomic_swap_16)
 STRONG_ALIAS(_atomic_swap_short,_atomic_swap_16)
 STRONG_ALIAS(_atomic_swap_ushort,_atomic_swap_16)
