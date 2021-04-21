@@ -1,4 +1,4 @@
-/* $NetBSD: w100lcd.c,v 1.2 2012/02/10 11:25:42 tsutsui Exp $ */
+/* $NetBSD: w100lcd.c,v 1.2.56.1 2021/04/21 17:51:34 martin Exp $ */
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
  * Written by Hiroyuki Bessho for Genetec Corporation.
@@ -39,7 +39,9 @@
  * LCD on/off switch and backlight brightness are done in lcdctl.c.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: w100lcd.c,v 1.2 2012/02/10 11:25:42 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: w100lcd.c,v 1.2.56.1 2021/04/21 17:51:34 martin Exp $");
+
+#include "lcdctl.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,6 +60,9 @@ __KERNEL_RCSID(0, "$NetBSD: w100lcd.c,v 1.2 2012/02/10 11:25:42 tsutsui Exp $");
 
 #include <zaurus/zaurus/zaurus_var.h>
 #include <zaurus/dev/w100lcdvar.h>
+#if NLCDCTL > 0
+#include <zaurus/dev/lcdctlvar.h>
+#endif
 
 /*
  * wsdisplay glue
