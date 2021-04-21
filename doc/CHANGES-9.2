@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.66 2021/04/16 17:04:59 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.67 2021/04/21 18:13:02 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -2939,3 +2939,20 @@ crypto/external/bsd/openssl/lib/libcrypto/arch/sparc/modes.inc 1.6
 	Restore sparcv9 optimization for 32bit builds on sparc64.
 	[mrg, ticket #1246]
 
+sys/arch/zaurus/dev/w100lcd.c			1.3
+
+	Make LCD BrightnessUp/BrightnessDown work on C7x0/860.
+	[tsutsui, ticket #1247]
+
+sys/arch/hp300/dev/diofb.c			1.5
+sys/arch/hp300/dev/topcat.c			1.5
+
+	topcat(4) framebuffer:
+	- fix panic on monochrome framebuffers.
+	- fix incorrect framebuffer width of 98542/98544 framebuffers on HP332.
+	[tsutsui, ticket #1248]
+
+sys/arch/sparc/conf/GENERIC			(apply patch)
+
+	PR 56077: remove options DIAGNOSTIC.
+	[tsutsui, ticket #1249]
