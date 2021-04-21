@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.2 2021/04/21 07:31:37 skrll Exp $
+# $NetBSD: Makefile.inc,v 1.3 2021/04/21 16:23:47 skrll Exp $
 
 .if defined(LIB) && (${LIB} == "kern" || ${LIB} == "c" || ${LIB} == "pthread" \
 	|| ${LIB} == "rump")
@@ -12,10 +12,10 @@ SRCS.atomic+=	atomic_dec_32.S atomic_dec_64.S
 SRCS.atomic+=	atomic_inc_32.S atomic_inc_64.S
 SRCS.atomic+=	membar_ops.S
 #and cas nand or sub swap xor
-.for op in swap
-.for sz in 8 16 32 64
-.for ar in acq rel acq_rel
-SRCS.atomic+=	atomic_${op}_${ar}_${sz}.S
+.for op in swp
+.for sz in 1 2 4 8
+.for ar in relax acq rel acq_rel
+SRCS.atomic+=	__aarch64_${op}${sz}_${ar}.S
 .endfor
 .endfor
 .endfor
