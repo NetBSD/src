@@ -1,11 +1,11 @@
-/* $NetBSD: atomic_swap_32.S,v 1.4 2021/04/21 16:23:47 skrll Exp $ */
+/* $NetBSD: __aarch64_swp2_acq.S,v 1.1 2021/04/21 16:23:47 skrll Exp $ */
 
 /*-
- * Copyright (c) 2014 The NetBSD Foundation, Inc.
+ * Copyright (c) 2021 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Matt Thomas of 3am Software Foundry.
+ * by Nick Hudson.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,21 +31,11 @@
 
 #include "atomic_op_asm.h"
 
-ENTRY_NP(_atomic_swap_32)
+ENTRY_NP(__aarch64_swp2_acq)
 	mov	x4, x0
-1:	ldxr	w0, [x4]
-	stxr	w3, w1, [x4]
+1:	ldaxrh	w0, [x1]
+	stxrh	w3, w4, [x1]
 	cbnz	w3, 2f
 	ret
 2:	b	1b
-END(_atomic_swap_32)
-
-ATOMIC_OP_ALIAS(atomic_swap_32,_atomic_swap_32)
-ATOMIC_OP_ALIAS(atomic_swap_uint,_atomic_swap_32)
-STRONG_ALIAS(__sync_lock_test_and_set_4,_atomic_swap_32)
-STRONG_ALIAS(_atomic_swap_uint,_atomic_swap_32)
-
-ENTRY_NP(__sync_lock_release_4)
-	stlr	wzr, [x0]
-	ret
-END(__sync_lock_release_4)
+END(__aarch64_swp2_acq)
