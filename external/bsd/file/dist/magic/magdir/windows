@@ -299,7 +299,7 @@
 # Windows *.INF *.INI files updated by Joerg Jenderek at Apr 2013
 # empty ,comment , section
 # PR/383: remove unicode BOM because it is not portable across regex impls
-0	regex/s		\\`(\\r\\n|;|[[])
+#0	regex/s		\\`(\\r\\n|;|[[])
 # left bracket in section line
 >&0	search/8192	[
 # http://en.wikipedia.org/wiki/Autorun.inf

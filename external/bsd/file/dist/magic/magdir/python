@@ -71,7 +71,8 @@
 !:mime text/x-python
 
 # def name(args, args):
-0	regex	 \^(\ |\\t){0,50}def\ {1,50}[a-zA-Z]{1,100}
->&0	regex	\ {0,50}\\(([a-zA-Z]|,|\ ){1,255}\\):$ Python script text executable
-!:mime text/x-python
+0	search/8192	def\ 
+>0	regex	 \^[[:space:]]{0,50}def\ {1,50}[_a-zA-Z]{1,100}
+>>&0	regex	 \\(([[:alpha:]*_,\ ]){0,255}\\):$ Python script text executable
 !:strength + 15
+!:mime text/x-script.python
