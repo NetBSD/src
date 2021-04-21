@@ -1,11 +1,11 @@
-/* $NetBSD: atomic_swap_32.S,v 1.3 2021/04/21 07:31:37 skrll Exp $ */
+/* $NetBSD: atomic_swap_rel_8.S,v 1.1 2021/04/21 07:31:37 skrll Exp $ */
 
 /*-
- * Copyright (c) 2014 The NetBSD Foundation, Inc.
+ * Copyright (c) 2021 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Matt Thomas of 3am Software Foundry.
+ * by Nick Hudson.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,22 +31,14 @@
 
 #include "atomic_op_asm.h"
 
-ENTRY_NP(_atomic_swap_32)
+ENTRY_NP(_atomic_swap_rel_8)
 	mov	x4, x0
-1:	ldxr	w0, [x4]
-	stxr	w3, w1, [x4]
+1:	ldxrb	w0, [x4]
+	stlxrb	w3, w1, [x4]
 	cbnz	w3, 2f
 	ret
 2:	b	1b
-END(_atomic_swap_32)
+END(_atomic_swap_rel_8)
 
-ATOMIC_OP_ALIAS(atomic_swap_32,_atomic_swap_32)
-ATOMIC_OP_ALIAS(atomic_swap_uint,_atomic_swap_32)
-ATOMIC_OP_ALIAS(__aarch64_swp4_relax,_atomic_swap_32)
-STRONG_ALIAS(__sync_lock_test_and_set_4,_atomic_swap_32)
-STRONG_ALIAS(_atomic_swap_uint,_atomic_swap_32)
-
-ENTRY_NP(__sync_lock_release_4)
-	stlr	wzr, [x0]
-	ret
-END(__sync_lock_release_4)
+ATOMIC_OP_ALIAS(atomic_swap_rel_8,_atomic_swap_rel_8)
+ATOMIC_OP_ALIAS(__aarch64_swp1_rel,_atomic_swap_rel_8)
