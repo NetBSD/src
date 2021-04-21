@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.104 2021/04/17 01:53:58 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.105 2021/04/21 09:52:20 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.104 2021/04/17 01:53:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.105 2021/04/21 09:52:20 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -2778,6 +2778,12 @@ pmap_db_pte_print(pt_entry_t pte, int level,
 			break;
 		case LX_BLKPAG_ATTR_DEVICE_MEM:
 			pr(", DEVICE");
+			break;
+		case LX_BLKPAG_ATTR_DEVICE_MEM_SO:
+			pr(", DEVICE(SO)");
+			break;
+		default:
+			pr(", ATTR(%lu)", __SHIFTOUT(pte, LX_BLKPAG_ATTR_INDX));
 			break;
 		}
 
