@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.67 2021/04/21 18:13:02 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.68 2021/04/22 10:08:46 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -2956,3 +2956,9 @@ sys/arch/sparc/conf/GENERIC			(apply patch)
 
 	PR 56077: remove options DIAGNOSTIC.
 	[tsutsui, ticket #1249]
+
+external/cddl/osnet/dist/uts/common/fs/zfs/arc.c 1.20
+
+	zfs: prevent blocking l2arc_feed_thread() forever.
+	[hannken, ticket #1250]
+
