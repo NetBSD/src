@@ -8391,7 +8391,7 @@ ppc64_elf_inline_plt (struct bfd_link_info *info)
 	      return FALSE;
 
 	    relend = relstart + sec->reloc_count;
-	    for (rel = relstart; rel < relend; )
+	    for (rel = relstart; rel < relend; rel++)
 	      {
 		enum elf_ppc64_reloc_type r_type;
 		unsigned long r_symndx;
