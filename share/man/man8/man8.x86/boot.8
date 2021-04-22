@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.23 2020/08/10 01:10:26 uwe Exp $
+.\"	$NetBSD: boot.8,v 1.24 2021/04/22 01:36:25 rin Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -797,7 +797,7 @@ bootstraps for
 and
 .Nx Ns /amd64 ,
 which should be copied to the
-.Pa /efi/boot
+.Pa /EFI/boot
 directory in a
 .Tn FAT
 formatted partition of type
@@ -812,7 +812,7 @@ section).
 .Nx
 .Tn UEFI
 bootstrap reads its configuration from the
-.Pa /efi/netBSD/boot.cfg
+.Pa /EFI/NetBSD/boot.cfg
 file in the
 .Tn EFI
 partition.
