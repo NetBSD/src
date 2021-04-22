@@ -1,4 +1,4 @@
-/* $NetBSD: cgram.c,v 1.17 2021/02/26 15:18:40 rillig Exp $ */
+/* $NetBSD: cgram.c,v 1.18 2021/04/22 14:57:36 wiz Exp $ */
 
 /*-
  * Copyright (c) 2013, 2021 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.c,v 1.17 2021/02/26 15:18:40 rillig Exp $");
+__RCSID("$NetBSD: cgram.c,v 1.18 2021/04/22 14:57:36 wiz Exp $");
 #endif
 
 #include <assert.h>
@@ -216,13 +216,7 @@ char_at_cursor(void)
 	return lines.v[cursor_y].s[cursor_x];
 }
 
-static void
-readquote(void)
-{
-	FILE *f = popen(_PATH_FORTUNE, "r");
-	if (f == NULL)
-		err(1, "%s", _PATH_FORTUNE);
-
+static void getquote(FILE *f) {
 	struct string line;
 	string_init(&line);
 
@@ -249,6 +243,30 @@ readquote(void)
 	extent_y = (int)lines.num;
 	for (int i = 0; i < extent_y; i++)
 		extent_x = imax(extent_x, (int)lines.v[i].len);
+}
+
+static void
+readfile(const char *name)
+{
+	FILE *f = fopen(name, "r");
+	if (f == NULL)
+		err(1, "%s", name);
+
+	getquote(f);
+
+	if (fclose(f) != 0)
+		exit(1);
+}
+
+
+static void
+readquote(void)
+{
+	FILE *f = popen(_PATH_FORTUNE, "r");
+	if (f == NULL)
+		err(1, "%s", _PATH_FORTUNE);
+
+	getquote(f);
 
 	if (pclose(f) != 0)
 		exit(1); /* error message must come from child process */
@@ -535,12 +553,16 @@ handle_key(void)
 }
 
 static void
-init(void)
+init(const char *filename)
 {
 	stringarray_init(&lines);
 	stringarray_init(&sollines);
 	srandom((unsigned int)time(NULL));
-	readquote();
+	if (filename) {
+	    readfile(filename);
+	} else {
+	    readquote();
+	}
 	encode();
 
 	initscr();
@@ -573,9 +595,9 @@ clean_up(void)
 ////////////////////////////////////////////////////////////
 
 int
-main(void)
+main(int argc, char *argv[])
 {
-	init();
+	init(argc > 1 ? argv[1] : NULL);
 	loop();
 	clean_up();
 }
