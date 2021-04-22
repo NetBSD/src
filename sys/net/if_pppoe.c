@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.169 2021/04/16 02:23:25 yamaguchi Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.170 2021/04/22 10:26:24 yamaguchi Exp $ */
 
 /*
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.169 2021/04/16 02:23:25 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.170 2021/04/22 10:26:24 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -448,6 +448,13 @@ pppoe_clone_destroy(struct ifnet *ifp)
 	callout_halt(&sc->sc_timeout, NULL);
 	callout_destroy(&sc->sc_timeout);
 
+#ifdef PPPOE_SERVER
+	if (sc->sc_hunique) {
+		free(sc->sc_hunique, M_DEVBUF);
+		sc->sc_hunique = NULL;
+		sc->sc_hunique_len = 0;
+	}
+#endif
 	if (sc->sc_concentrator_name)
 		free(sc->sc_concentrator_name, M_DEVBUF);
 	if (sc->sc_service_name)
