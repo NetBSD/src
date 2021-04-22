@@ -7246,8 +7246,15 @@ l2arc_feed_thread(void *dummy __unused)
 
 	while (l2arc_thread_exit == 0) {
 		CALLB_CPR_SAFE_BEGIN(&cpr);
+#ifdef __NetBSD__
+		clock_t now = ddi_get_lbolt();
+		if (next > now)
+			(void) cv_timedwait(&l2arc_feed_thr_cv,
+			    &l2arc_feed_thr_lock, next - now);
+#else
 		(void) cv_timedwait(&l2arc_feed_thr_cv, &l2arc_feed_thr_lock,
 		    next - ddi_get_lbolt());
+#endif
 		CALLB_CPR_SAFE_END(&cpr, &l2arc_feed_thr_lock);
 		next = ddi_get_lbolt() + hz;
 
