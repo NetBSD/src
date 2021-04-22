@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.51 2021/04/21 14:04:26 christos Exp $
+# $NetBSD: Makefile,v 1.52 2021/04/22 22:43:26 rillig Exp $
 
 NOMAN=		# defined
 MAX_MESSAGE=	343		# see lint1/err.c
@@ -107,6 +107,8 @@ FILES+=		feat_stacktrace.c
 FILES+=		feat_stacktrace.exp
 FILES+=		gcc_init_compound_literal.c
 FILES+=		gcc_init_compound_literal.exp
+FILES+=		gcc_typeof_after_statement.c
+FILES+=		gcc_typeof_after_statement.exp
 FILES+=		${:U0 ${:U:${:Urange=${MAX_MESSAGE}}}:C,^.$,0&,:C,^..$,0&,:@i@msg_${i}.c msg_${i}.exp@:Nmsg_176.exp}
 FILES+=		op_colon.c
 FILES+=		op_colon.exp
