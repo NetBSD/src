@@ -1,4 +1,4 @@
-#	$NetBSD: t_pppoe.sh,v 1.27 2021/04/23 03:40:05 yamaguchi Exp $
+#	$NetBSD: t_pppoe.sh,v 1.28 2021/04/23 03:41:55 yamaguchi Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -805,6 +805,74 @@ pppoe_passiveauthproto_chap_cleanup()
 	cleanup
 }
 
+atf_test_case pppoe_mtu cleanup
+pppoe_mtu_head()
+{
+
+	atf_set "descr" "Test for mtu"
+	atf_set "require.progs" "rump_server"
+}
+
+pppoe_mtu_body()
+{
+	local auth=chap
+	local cp="IPCP"
+	setup
+
+	export RUMP_SERVER=$SERVER
+	atf_pppoectl pppoe0 \
+	    "hisauthname=$AUTHNAME" "hisauthsecret=$SECRET" \
+	    "hisauthproto=$auth" "myauthproto=none" \
+	    norechallenge
+	atf_ifconfig pppoe0 mtu 1400
+	atf_ifconfig pppoe0 up
+
+	export RUMP_SERVER=$CLIENT
+	atf_pppoectl pppoe0 \
+	    "myauthname=$AUTHNAME" "myauthsecret=$SECRET" \
+	    "myauthproto=$auth" "hisauthproto=none"
+	atf_ifconfig pppoe0 mtu 1450
+	atf_ifconfig pppoe0 up
+
+	wait_for_opened $cp
+	atf_ifconfig -w 10
+
+	export RUMP_SERVER=$SERVER
+	atf_check -s exit:0 -o match:'mtu 1400' rump.ifconfig pppoe0
+
+	export RUMP_SERVER=$CLIENT
+	atf_check -s exit:0 -o match:'mtu 1400' rump.ifconfig pppoe0
+
+	# mtu can set to 1460 but it is not applied.
+	atf_ifconfig pppoe0 mtu 1460
+	atf_check -s exit:0 -o match:'mtu 1400' rump.ifconfig pppoe0
+
+	export RUMP_SERVER=$SERVER
+	atf_ifconfig pppoe0 mtu 1470
+	atf_ifconfig pppoe0 down
+	atf_ifconfig pppoe0 up
+	wait_for_opened $cp
+	atf_ifconfig -w 10
+
+	# mtu 1460 is applied after LCP negotiation
+	atf_check -s exit:0 -o match:'mtu 1460' rump.ifconfig pppoe0
+
+	export RUMP_SERVER=$CLIENT
+	atf_check -s exit:0 -o match:'mtu 1460' rump.ifconfig pppoe0
+
+	rump.ifconfig pppoe0 mtu 1500
+	atf_check -s exit:0 -o ignore \
+	    -e match:'SIOCSIFMTU: Invalid argument' \
+	    rump.ifconfig pppoe0 mtu 1501
+}
+
+pppoe_mtu_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
+
 atf_init_test_cases()
 {
 
@@ -816,4 +884,5 @@ atf_init_test_cases()
 	atf_add_test_case pppoe6_chap
 	atf_add_test_case pppoe_passiveauthproto_pap
 	atf_add_test_case pppoe_passiveauthproto_chap
+	atf_add_test_case pppoe_mtu
 }
