@@ -1,4 +1,4 @@
-#	$NetBSD: t_pppoe.sh,v 1.24 2020/11/25 10:35:07 yamaguchi Exp $
+#	$NetBSD: t_pppoe.sh,v 1.25 2021/04/23 03:07:19 yamaguchi Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -739,6 +739,82 @@ pppoe_params_cleanup()
 	$DEBUG && dump
 	cleanup
 }
+
+pppoe_passiveauthproto()
+{
+	local auth=$1
+	local cp="IPCP"
+	setup
+
+	local server_optparam=""
+	if [ $auth = "chap" ]; then
+		server_optparam="norechallenge"
+	fi
+
+	export RUMP_SERVER=$SERVER
+	local setup_serverparam="pppoectl pppoe0 hisauthproto=$auth \
+				    'hisauthname=$AUTHNAME' \
+				    'hisauthsecret=$SECRET' \
+				    'myauthproto=none' \
+				    $server_optparam"
+	atf_check -s exit:0 -x "$HIJACKING $setup_serverparam"
+	atf_check -s exit:0 rump.ifconfig pppoe0 up
+
+	export RUMP_SERVER=$CLIENT
+	local setup_clientparam="pppoectl pppoe0 myauthproto=none \
+				    'myauthname=$AUTHNAME' \
+				    'myauthsecret=$SECRET' \
+				    'hisauthproto=none' \
+				    'passiveauthproto'"
+	atf_check -s exit:0 -x "$HIJACKING $setup_clientparam"
+	atf_check -s exit:0 rump.ifconfig pppoe0 up
+	$DEBUG && rump.ifconfig
+	wait_for_opened $cp
+	atf_check -s exit:0 -o ignore rump.ping -c 1 -w $TIMEOUT $SERVER_IP
+}
+
+atf_test_case pppoe_passiveauthproto_pap cleanup
+pppoe_passiveauthproto_pap_head()
+{
+
+	atf_set "descr" "Test for passiveauthproto option on PAP"
+	atf_set "require.progs" "rump_server"
+}
+
+pppoe_passiveauthproto_pap_body()
+{
+
+	pppoe_passiveauthproto "pap"
+}
+
+pppoe_passiveauthproto_pap_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
+
+atf_test_case pppoe_passiveauthproto_chap cleanup
+pppoe_passiveauthproto_chap_head()
+{
+
+	atf_set "descr" "Test for passiveauthproto option on chap"
+	atf_set "require.progs" "rump_server"
+}
+
+pppoe_passiveauthproto_chap_body()
+{
+
+	pppoe_passiveauthproto "chap"
+}
+
+pppoe_passiveauthproto_chap_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
+
 atf_init_test_cases()
 {
 
@@ -748,4 +824,6 @@ atf_init_test_cases()
 	atf_add_test_case pppoe_chap
 	atf_add_test_case pppoe6_pap
 	atf_add_test_case pppoe6_chap
+	atf_add_test_case pppoe_passiveauthproto_pap
+	atf_add_test_case pppoe_passiveauthproto_chap
 }
