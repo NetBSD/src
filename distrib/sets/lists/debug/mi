@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.350 2021/04/23 15:21:49 rin Exp $
+# $NetBSD: mi,v 1.351 2021/04/23 22:50:06 mrg Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -957,6 +957,7 @@
 ./usr/libdata/debug/usr/libexec/bozohttpd.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/libexec/cc1.debug	comp-c-debug		gcccmds,debug
 ./usr/libdata/debug/usr/libexec/cc1obj.debug	comp-objc-debug		gcccmds,debug
+./usr/libdata/debug/usr/libexec/cc1objplus.debug	comp-objc-debug		gcccmds,gcc=10,debug
 ./usr/libdata/debug/usr/libexec/cc1plus.debug	comp-cxx-debug		gcccmds,debug
 ./usr/libdata/debug/usr/libexec/ccom.debug	comp-c-debug		pcc,debug
 ./usr/libdata/debug/usr/libexec/ching/castching.debug	comp-games-debug	debug
