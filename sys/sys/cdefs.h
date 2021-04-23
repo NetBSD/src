@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.156 2021/01/16 23:51:51 chs Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.157 2021/04/23 05:56:43 skrll Exp $	*/
 
 /* * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -114,6 +114,14 @@
 #define	__const		const		/* define reserved names to standard */
 #define	__signed	signed
 #define	__volatile	volatile
+
+#define	__CONCAT3(a,b,c)		a ## b ## c
+#define	__CONCAT4(a,b,c,d)		a ## b ## c ## d
+#define	__CONCAT5(a,b,c,d,e)		a ## b ## c ## d ## e
+#define	__CONCAT6(a,b,c,d,e,f)		a ## b ## c ## d ## e ## f
+#define	__CONCAT7(a,b,c,d,e,f,g)	a ## b ## c ## d ## e ## f ## g
+#define	__CONCAT8(a,b,c,d,e,f,g,h)	a ## b ## c ## d ## e ## f ## g ## h
+
 #if defined(__cplusplus) || defined(__PCC__)
 #define	__inline	inline		/* convert to C++/C99 keyword */
 #else
