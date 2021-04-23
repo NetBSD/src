@@ -1,11 +1,36 @@
-#	$NetBSD: Makefile,v 1.18 2021/04/23 22:50:06 mrg Exp $
+#	$NetBSD: Makefile,v 1.1 2021/04/23 22:50:06 mrg Exp $
 
-MYOBJS=		${G_OBJC_OBJS} ${G_C_AND_OBJC_OBJS} 
-PROG=		cc1obj
-SRCS=		${MYOBJS:S,objc/,,:S,c-family/,,:S,c/,,:S,known-headers.o,known-headers.cc,:S,c-spellcheck.o,c-spellcheck.cc,:Nlibcpp.a:.o=.c}
+# XXX: Pull this (G_OBJCXX_OBJS) out with mknative-gcc.  Needs some
+# minor re-org of cc1plus and perhaps cc1obj.  G_CXX_AND_OBJCXX_OBJS
+# is reverse-derived from G_CXX_OBJS for now - when G_OBJCXX_OBJS is
+# pulled out by mknative-gcc, it will include G_CXX_AND_OBJCXX_OBJS.
+G_CXX_AND_OBJCXX_OBJS=	${G_CXX_OBJS:S,cp-lang.o,,:S,c-family/stub-objc.o,,}
+G_OBJCXX_OBJS= \
+	objcp-act.o \
+	objcp-lang.o \
+	objcp/objcp-decl.o \
+	objcp/objc-runtime-shared-support.o \
+	objcp/objc-gnu-runtime-abi-01.o \
+	objcp/objc-next-runtime-abi-01.o \
+	objcp/objc-next-runtime-abi-02.o \
+	objcp/objc-encoding.o \
+	objcp/objc-map.o \
+	${G_CXX_AND_OBJCXX_OBJS}
+
+BUILDSYMLINKS+= ${DIST}/gcc/objc/objc-act.c objcp-act.c \
+		${DIST}/gcc/objc/objc-lang.c objcp-lang.c
+	
+MYOBJS=		${G_OBJCXX_OBJS}
+MY2OBJS=	${MYOBJS:S,objcp/,,:S,objc/,,:S,cp/,,:S,c-family/,,:S,c/,,}
+PROG=		cc1objplus
+SRCS=		${MY2OBJS:S,known-headers.o,known-headers.cc,:S,c-spellcheck.o,c-spellcheck.cc,:S,constraint.o,constraint.cc,:S,logic.o,logic.cc,:S,coroutines.o,coroutines.cc,:Nlibcpp.a:.o=.c}
 SRCS+=		main.c ${PROG}-checksum.c
 
+
 CPPFLAGS+=	-I${DIST}/gcc/objc
+CPPFLAGS+=	-I${DIST}/gcc/objcp
+CPPFLAGS+=	-I${DIST}/gcc/cp
+CPPFLAGS+=	-DOBJCPLUS
 CPPFLAGS.prefix.c+=	-DPREFIX=\"/usr\"
 
 .include "../Makefile.backend"
@@ -21,13 +46,10 @@ CHECKSUM_OBJS=	${BACKENDOBJ}/libbackend.a \
 		${LIBCPPOBJ}/libcpp.a \
 		${LIBDECNUMBEROBJ}/libdecnumber.a \
 		${LIBIBERTYOBJ}/libiberty.a \
-		${MYOBJS:S,objc/,,:S,c-family/,,:S,c/,,} \
+		${MY2OBJS} \
 		checksum-options
 
 .include "../Makefile.checksum"
-
-# XXX check this out
-# LDFLAGS+=	-rdynamic
 
 COPTS.c-ada-spec.c+=			-Wno-stack-protector
 COPTS.c-attribs.c+=			-Wno-stack-protector
@@ -53,6 +75,7 @@ COPTS.c-ada-spec.c+=-O0
 COPTS.cilk.c+=-O0
 COPTS.c-ubsan.c+=-O0
 COPTS.cc1obj-checksum.c+=-O0
+COPTS.decl.c+=-O0
 .endif
 
 .if ${MACHINE_ARCH} == "mipseb" || ${MACHINE_ARCH} == "mipsel"
@@ -62,6 +85,6 @@ COPTS.c-common.c+=-O3
 LDADD+=	${LIBMPC} ${LIBMPFR} ${LIBGMP} -lintl -lz -lm
 DPADD+=	${LIBMPC} ${LIBMPFR} ${LIBGMP} ${LIBINTL} ${LIBZ} ${LIBM}
 
-.PATH: ${DIST}/gcc/objc ${DIST}/gcc/c ${DIST}/gcc/c-family
-.PATH: ${DIST}/gcc ${DIST}/gcc/config
+.PATH: ${DIST}/gcc/objcp ${DIST}/gcc/objc ${DIST}/gcc/c ${DIST}/gcc/c-family
+.PATH: ${DIST}/gcc/cp ${DIST}/gcc ${DIST}/gcc/config
 .PATH: ${G_out_file:H}

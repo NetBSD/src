@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2020/09/05 14:24:26 mrg Exp $
+#	$NetBSD: Makefile,v 1.20 2021/04/23 22:50:06 mrg Exp $
 
 PROG=		cc1
 SRCS=		${G_C_OBJS:S,c-family/,,:S,c/,,:S,known-headers.o,known-headers.cc,:S,c-spellcheck.o,c-spellcheck.cc,:Nlibcpp.a:.o=.c}
@@ -39,9 +39,6 @@ COPTS.c-opts.c=		-Wno-stack-protector
 COPTS.c-ppoutput.c=	-Wno-stack-protector
 COPTS.c-pragma.c=	-Wno-stack-protector
 COPTS.c-typeck.c=	-Wno-stack-protector
-
-COPTS.c-cppbuiltin.c+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} == 8:? -Wno-error=format-overflow :}
-COPTS.c-typeck.c+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} == 8:? -Wno-error=format-overflow :}
 
 CPPFLAGS.default-c.c+=	-I${BACKENDOBJ}
 
