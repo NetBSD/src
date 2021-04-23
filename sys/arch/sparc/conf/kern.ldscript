@@ -1,4 +1,4 @@
-/*	$NetBSD: kern.ldscript,v 1.12 2015/08/25 02:58:59 uebayasi Exp $	*/
+/*	$NetBSD: kern.ldscript,v 1.13 2021/04/23 08:42:26 simonb Exp $	*/
 
 #undef sparc
 
@@ -20,6 +20,7 @@ SECTIONS
   .text      :
   {
     *(.text)
+    *(.text.*)
     *(.stub)
     /* .gnu.warning sections are handled specially by elf32.em.  */
     *(.gnu.warning)
