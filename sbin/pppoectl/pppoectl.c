@@ -1,4 +1,4 @@
-/*	$NetBSD: pppoectl.c,v 1.26 2020/11/25 10:32:54 yamaguchi Exp $	*/
+/*	$NetBSD: pppoectl.c,v 1.27 2021/04/23 02:28:40 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 1997 Joerg Wunsch
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: pppoectl.c,v 1.26 2020/11/25 10:32:54 yamaguchi Exp $");
+__RCSID("$NetBSD: pppoectl.c,v 1.27 2021/04/23 02:28:40 yamaguchi Exp $");
 #endif
 
 
@@ -433,6 +433,8 @@ pppoectl_argument(char *arg)
 		spr.hisauthflags |= SPPP_AUTHFLAG_NORECHALLENGE;
 	else if (strcmp(arg, "rechallenge") == 0)
 		spr.hisauthflags &= ~SPPP_AUTHFLAG_NORECHALLENGE;
+	else if (strcmp(arg, "passiveauthproto") == 0)
+		spr.myauthflags |= SPPP_AUTHFLAG_PASSIVEAUTHPROTO;
 #ifndef __NetBSD__
 	else if (strcmp(arg, "enable-vj") == 0)
 		spr.defs.enable_vj = 1;
