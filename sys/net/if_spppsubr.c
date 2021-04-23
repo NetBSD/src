@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.217 2021/04/16 02:12:00 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.218 2021/04/23 01:13:25 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.217 2021/04/16 02:12:00 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.218 2021/04/23 01:13:25 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2701,6 +2701,10 @@ sppp_lcp_confreq(struct sppp *sp, struct lcp_header *h, int origlen,
 					addlog(" [invalid chap len]");
 				break;
 			}
+			if (ISSET(sp->myauth.flags, SPPP_AUTHFLAG_PASSIVEAUTHPROTO)) {
+				if (authproto == PPP_PAP || authproto == PPP_CHAP)
+					sp->myauth.proto = authproto;
+			}
 			if (sp->myauth.proto == 0) {
 				/* we are not configured to do auth */
 				if (debug)
@@ -2831,6 +2835,10 @@ sppp_lcp_confreq(struct sppp *sp, struct lcp_header *h, int origlen,
 
 		case LCP_OPT_AUTH_PROTO:
 			authproto = (p[2] << 8) + p[3];
+			if (ISSET(sp->myauth.flags, SPPP_AUTHFLAG_PASSIVEAUTHPROTO)) {
+				if (authproto == PPP_PAP || authproto == PPP_CHAP)
+					sp->myauth.proto = authproto;
+			}
 			if (sp->myauth.proto != authproto) {
 				/* not agreed, nak */
 				if (debug)
