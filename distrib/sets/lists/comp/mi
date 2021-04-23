@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2382 2021/04/23 01:56:14 mrg Exp $
+#	$NetBSD: mi,v 1.2383 2021/04/23 22:50:05 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -4198,6 +4198,7 @@
 ./usr/libdata/lint/strict-bool/stdbool.h	comp-c-bin
 ./usr/libexec/cc1				comp-c-bin		gcccmds
 ./usr/libexec/cc1obj				comp-objc-bin		gcccmds
+./usr/libexec/cc1objplus			comp-objc-bin		gcccmds,gcc=10
 ./usr/libexec/cc1plus				comp-cxx-bin		gcccmds
 ./usr/libexec/ccom				comp-c-bin		pcc
 ./usr/libexec/collect2				comp-obsolete		obsolete
