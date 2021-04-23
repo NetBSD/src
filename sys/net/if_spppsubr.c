@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.219 2021/04/23 03:31:33 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.220 2021/04/23 03:36:13 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.219 2021/04/23 03:31:33 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.220 2021/04/23 03:36:13 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1166,6 +1166,7 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	struct sppp *sp = (struct sppp *) ifp;
 	int s, error=0, going_up, going_down;
 	u_short newmode;
+	u_long lcp_mru;
 
 	s = splnet();
 	switch (cmd) {
@@ -1221,17 +1222,31 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		if (error == ENETRESET)
 			error = 0;
 
-		if (sp->lcp.their_mru > 0 &&
+		SPPP_LOCK(sp, RW_WRITER);
+		lcp_mru = sp->lcp.mru;
+		if (ifp->if_mtu < PP_MTU) {
+			sp->lcp.mru = ifp->if_mtu;
+		} else {
+			sp->lcp.mru = PP_MTU;
+		}
+		if (lcp_mru != sp->lcp.mru)
+			SET(sp->lcp.opts, SPPP_LCP_OPT_MRU);
+
+		if (sp->scp[IDX_LCP].state == STATE_OPENED &&
 		    ifp->if_mtu > sp->lcp.their_mru) {
 			sp->pp_saved_mtu = ifp->if_mtu;
 			ifp->if_mtu = sp->lcp.their_mru;
+
 			if (ifp->if_flags & IFF_DEBUG) {
 				log(LOG_DEBUG,
-				    "%s: setting MTU to "
-				    "%"PRIu64" bytes\n",
-				    ifp->if_xname, ifp->if_mtu);
+				    "%s: setting MTU "
+				    "from %"PRIu64" bytes "
+				    "to %"PRIu64" bytes\n",
+				    ifp->if_xname, sp->pp_saved_mtu,
+				    ifp->if_mtu);
 			}
 		}
+		SPPP_UNLOCK(sp);
 		break;
 
 	case SIOCGIFMTU:
@@ -2582,8 +2597,9 @@ sppp_lcp_open(struct sppp *sp, void *xcp)
 	if (sp->pp_if.if_mtu < PP_MTU) {
 		sp->lcp.mru = sp->pp_if.if_mtu;
 		SET(sp->lcp.opts, SPPP_LCP_OPT_MRU);
-	} else
+	} else {
 		sp->lcp.mru = PP_MTU;
+	}
 	sp->lcp.their_mru = PP_MTU;
 
 	/*
@@ -2596,6 +2612,7 @@ sppp_lcp_open(struct sppp *sp, void *xcp)
 	sp->pp_flags &= ~PP_NEEDAUTH;
 	sppp_open_event(sp, xcp);
 }
+
 
 /*
  * Analyze a configure request.  Return true if it was agreeable, and
@@ -3115,19 +3132,37 @@ end:
 static void
 sppp_lcp_tlu(struct sppp *sp)
 {
-	struct ifnet *ifp = &sp->pp_if;
+	STDDCL;
 	int i;
 
 	KASSERT(SPPP_WLOCKED(sp));
+
+	/* unlock for IFNET_LOCK and if_up() */
+	SPPP_UNLOCK(sp);
 
 	/* XXX ? */
 	if (! (ifp->if_flags & IFF_UP) &&
 	    (ifp->if_flags & IFF_RUNNING)) {
 		/* Coming out of loopback mode. */
-		SPPP_UNLOCK(sp);
 		if_up(ifp);
-		SPPP_LOCK(sp, RW_WRITER);
 	}
+
+	IFNET_LOCK(ifp);
+	SPPP_LOCK(sp, RW_WRITER);
+
+	if (ifp->if_mtu > sp->lcp.their_mru) {
+		sp->pp_saved_mtu = ifp->if_mtu;
+		ifp->if_mtu = sp->lcp.their_mru;
+		if (debug) {
+			log(LOG_DEBUG,
+			    "%s: setting MTU "
+			    "from %"PRIu64" bytes "
+			    "to %"PRIu64" bytes\n",
+			    ifp->if_xname, sp->pp_saved_mtu,
+			    ifp->if_mtu);
+		}
+	}
+	IFNET_UNLOCK(ifp);
 
 	if (ISSET(sp->lcp.opts, SPPP_LCP_OPT_AUTH_PROTO) ||
 	    (sp->pp_flags & PP_NEEDAUTH) != 0)
@@ -3164,6 +3199,7 @@ sppp_lcp_tlu(struct sppp *sp)
 static void
 sppp_lcp_tld(struct sppp *sp)
 {
+	STDDCL;
 	int i, pi, phase;
 
 	KASSERT(SPPP_WLOCKED(sp));
@@ -3171,6 +3207,25 @@ sppp_lcp_tld(struct sppp *sp)
 	phase = sp->pp_phase;
 
 	sppp_change_phase(sp, SPPP_PHASE_TERMINATE);
+
+	if (sp->pp_saved_mtu > 0) {
+		SPPP_UNLOCK(sp);
+		IFNET_LOCK(ifp);
+		SPPP_LOCK(sp, RW_WRITER);
+
+		if (debug) {
+			log(LOG_DEBUG,
+			    "%s: setting MTU "
+			    "from %"PRIu64" bytes "
+			    "to %"PRIu64" bytes\n",
+			    ifp->if_xname, ifp->if_mtu,
+			    sp->pp_saved_mtu);
+		}
+
+		ifp->if_mtu = sp->pp_saved_mtu;
+		sp->pp_saved_mtu = 0;
+		IFNET_UNLOCK(ifp);
+	}
 
 	/*
 	 * Take upper layers down.  We send the Down event first and
@@ -5543,15 +5598,6 @@ sppp_set_ip_addrs(struct sppp *sp)
 		}
 	}
 
-	if (ifp->if_mtu > sp->lcp.their_mru) {
-		sp->pp_saved_mtu = ifp->if_mtu;
-		ifp->if_mtu = sp->lcp.their_mru;
-		if (debug)
-			log(LOG_DEBUG,
-			    "%s: setting MTU to %" PRIu64 " bytes\n",
-			    ifp->if_xname, ifp->if_mtu);
-	}
-
 	IFNET_UNLOCK(ifp);
 
 	sppp_notify_con(sp);
@@ -5609,15 +5655,6 @@ sppp_clear_ip_addrs(struct sppp *sp)
 		if (!error) {
 			pfil_run_addrhooks(if_pfil, SIOCAIFADDR, ifa);
 		}
-	}
-
-	if (sp->pp_saved_mtu > 0) {
-		ifp->if_mtu = sp->pp_saved_mtu;
-		sp->pp_saved_mtu = 0;
-		if (debug)
-			log(LOG_DEBUG,
-			    "%s: resetting MTU to %" PRIu64 " bytes\n",
-			    ifp->if_xname, ifp->if_mtu);
 	}
 
 	IFNET_UNLOCK(ifp);
