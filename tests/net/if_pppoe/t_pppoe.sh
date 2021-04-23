@@ -1,4 +1,4 @@
-#	$NetBSD: t_pppoe.sh,v 1.26 2021/04/23 03:38:19 yamaguchi Exp $
+#	$NetBSD: t_pppoe.sh,v 1.27 2021/04/23 03:40:05 yamaguchi Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -88,6 +88,7 @@ setup_ifaces()
 	    inet $SERVER_IP $CLIENT_IP down
 	atf_ifconfig pppoe0 link0
 
+	$DEBUG && rump.ifconfig pppoe0 debug
 	$DEBUG && rump.ifconfig
 	$DEBUG && $HIJACKING pppoectl -d pppoe0
 	unset RUMP_SERVER
@@ -98,6 +99,7 @@ setup_ifaces()
 	$inet && atf_ifconfig pppoe0 \
 	    inet 0.0.0.0 0.0.0.1 down
 
+	$DEBUG && rump.ifconfig pppoe0 debug
 	$DEBUG && rump.ifconfig
 	$DEBUG && $HIJACKING pppoectl -d pppoe0
 	unset RUMP_SERVER
