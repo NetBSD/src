@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_defs.h,v 1.15 2020/04/13 07:09:51 maxv Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.16 2021/04/23 06:02:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -157,7 +157,7 @@ struct bus_space {
 			    bus_size_t, uint32_t *, bus_size_t);
 	void		(*bs_rm_8)(void *, bus_space_handle_t,
 			    bus_size_t, uint64_t *, bus_size_t);
-					
+
 	/* read region */
 	void		(*bs_rr_1)(void *, bus_space_handle_t,
 			    bus_size_t, uint8_t *, bus_size_t);
