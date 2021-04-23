@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_probe.c,v 1.55.4.2 2021/04/02 22:17:43 thorpej Exp $ */
+/* $NetBSD: xenbus_probe.c,v 1.55.4.3 2021/04/23 15:05:27 thorpej Exp $ */
 /******************************************************************************
  * Talks to Xen Store to figure out what devices we have.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.55.4.2 2021/04/02 22:17:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.55.4.3 2021/04/23 15:05:27 thorpej Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -653,7 +653,6 @@ xenbus_probe(void *unused)
 
 	/* attach balloon. */
 	config_found(xenbus_dev, &balloon_xa, xenbus_print,
-	    CFARG_IATTR, "xenbus",
 	    CFARG_EOL);
 
 	shutdown_xenbus_setup();
