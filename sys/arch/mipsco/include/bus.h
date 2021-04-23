@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.22 2019/09/23 16:17:56 skrll Exp $	*/
+/*	$NetBSD: bus.h,v 1.23 2021/04/23 06:15:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -93,15 +93,6 @@
 #define __BUS_SPACE_ADDRESS_SANITY(p,t,d)	(void) 0
 #define BUS_SPACE_ALIGNED_POINTER(p, t) ALIGNED_POINTER(p, t)
 #endif /* BUS_SPACE_DEBUG */
-
-/*
- * Utility macro; do not use outside this file.
- */
-#ifdef __STDC__
-#define __CONCAT3(a,b,c)	a##b##c
-#else
-#define __CONCAT3(a,b,c)	a/**/b/**/c
-#endif
 
 /*
  * Bus address and size types

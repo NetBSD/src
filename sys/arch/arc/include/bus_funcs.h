@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_funcs.h,v 1.1 2011/07/01 17:09:58 dyoung Exp $	*/
+/*	$NetBSD: bus_funcs.h,v 1.2 2021/04/23 06:13:05 skrll Exp $	*/
 /*	NetBSD: bus.h,v 1.27 2000/03/15 16:44:50 drochner Exp 	*/
 /*	$OpenBSD: bus.h,v 1.15 1999/08/11 23:15:21 niklas Exp $	*/
 
@@ -66,15 +66,6 @@
 #ifndef _ARC_BUS_FUNCS_H_
 #define _ARC_BUS_FUNCS_H_
 #ifdef _KERNEL
-
-/*
- * Utility macro; do not use outside this file.
- */
-#ifdef __STDC__
-#define __CONCAT3(a,b,c)	a##b##c
-#else
-#define __CONCAT3(a,b,c)	a/**/b/**/c
-#endif
 
 /* machine dependent utility function for bus_space users */
 void	arc_bus_space_malloc_set_safe(void);
