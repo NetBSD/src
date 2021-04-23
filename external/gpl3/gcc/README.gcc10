@@ -1,8 +1,7 @@
-$NetBSD: README.gcc10,v 1.16 2021/04/22 20:45:00 mrg Exp $
+$NetBSD: README.gcc10,v 1.17 2021/04/23 22:53:03 mrg Exp $
 
 
 new stuff:
-	cc1objcplus
 	libmpx
 	liboffloadmic
 	libvtv
@@ -10,7 +9,6 @@ new stuff:
 	libphobos
 	d
 	gfortran
-	lto-dump
 	libbacktrace: +dwarf5_CFLAGS = $(libbacktrace_TEST_CFLAGS) -gdwarf-5
 
 
