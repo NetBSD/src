@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sppp.h,v 1.30 2020/12/02 14:20:20 wiz Exp $	*/
+/*	$NetBSD: if_sppp.h,v 1.31 2021/04/23 01:13:25 yamaguchi Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -44,6 +44,7 @@
 #define SPPP_AUTHFLAG_NOCALLOUT		1	/* do not require authentication on */
 						/* callouts */
 #define SPPP_AUTHFLAG_NORECHALLENGE	2	/* do not re-challenge CHAP */
+#define SPPP_AUTHFLAG_PASSIVEAUTHPROTO	4	/* use authproto proposed by peer */
 
 struct spppauthcfg {
 	char	ifname[IFNAMSIZ];	/* pppoe interface name */
