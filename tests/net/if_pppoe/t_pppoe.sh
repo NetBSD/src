@@ -1,4 +1,4 @@
-#	$NetBSD: t_pppoe.sh,v 1.25 2021/04/23 03:07:19 yamaguchi Exp $
+#	$NetBSD: t_pppoe.sh,v 1.26 2021/04/23 03:38:19 yamaguchi Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -39,6 +39,18 @@ TIMEOUT=3
 WAITTIME=10
 DEBUG=${DEBUG:-false}
 
+atf_ifconfig()
+{
+
+	atf_check -s exit:0 rump.ifconfig $*
+}
+
+atf_pppoectl()
+{
+
+	atf_check -s exit:0 -x "$HIJACKING pppoectl $*"
+}
+
 atf_test_case pppoe_create_destroy cleanup
 pppoe_create_destroy_head()
 {
@@ -71,19 +83,19 @@ setup_ifaces()
 	rump_server_add_iface $CLIENT pppoe0
 
 	export RUMP_SERVER=$SERVER
-	atf_check -s exit:0 rump.ifconfig shmif0 up
-	$inet && atf_check -s exit:0 rump.ifconfig pppoe0 \
+	atf_ifconfig shmif0 up
+	$inet && atf_ifconfig pppoe0 \
 	    inet $SERVER_IP $CLIENT_IP down
-	atf_check -s exit:0 rump.ifconfig pppoe0 link0
+	atf_ifconfig pppoe0 link0
 
 	$DEBUG && rump.ifconfig
 	$DEBUG && $HIJACKING pppoectl -d pppoe0
 	unset RUMP_SERVER
 
 	export RUMP_SERVER=$CLIENT
-	atf_check -s exit:0 rump.ifconfig shmif0 up
+	atf_ifconfig shmif0 up
 
-	$inet && atf_check -s exit:0 rump.ifconfig pppoe0 \
+	$inet && atf_ifconfig pppoe0 \
 	    inet 0.0.0.0 0.0.0.1 down
 
 	$DEBUG && rump.ifconfig
@@ -105,11 +117,11 @@ setup()
 	setup_ifaces
 
 	export RUMP_SERVER=$SERVER
-	atf_check -s exit:0 -x "$HIJACKING pppoectl -e shmif0 pppoe0"
+	atf_pppoectl -e shmif0 pppoe0
 	unset RUMP_SERVER
 
 	export RUMP_SERVER=$CLIENT
-	atf_check -s exit:0 -x "$HIJACKING pppoectl -e shmif0 pppoe0"
+	atf_pppoectl -e shmif0 pppoe0
 	unset RUMP_SERVER
 }
 
@@ -166,22 +178,17 @@ run_test()
 	fi
 
 	export RUMP_SERVER=$SERVER
-	local setup_serverparam="pppoectl pppoe0 hisauthproto=$auth \
-				    'hisauthname=$AUTHNAME' \
-				    'hisauthsecret=$SECRET' \
-				    'myauthproto=none' \
-				    $server_optparam"
-	atf_check -s exit:0 -x "$HIJACKING $setup_serverparam"
-	atf_check -s exit:0 rump.ifconfig pppoe0 up
+	atf_pppoectl pppoe0 "hisauthproto=$auth" \
+	    "hisauthname=$AUTHNAME" "hisauthsecret=$SECRET" \
+	    "myauthproto=none" $server_optparam
+	atf_ifconfig pppoe0 up
 	unset RUMP_SERVER
 
 	export RUMP_SERVER=$CLIENT
-	local setup_clientparam="pppoectl pppoe0 myauthproto=$auth \
-				    'myauthname=$AUTHNAME' \
-				    'myauthsecret=$SECRET' \
-				    'hisauthproto=none'"
-	atf_check -s exit:0 -x "$HIJACKING $setup_clientparam"
-	atf_check -s exit:0 rump.ifconfig pppoe0 up
+	atf_pppoectl pppoe0 \
+	    "myauthname=$AUTHNAME" "myauthsecret=$SECRET" \
+	    "myauthproto=$auth" "hisauthproto=none"
+	atf_ifconfig pppoe0 up
 	$DEBUG && rump.ifconfig
 	wait_for_opened $cp
 	atf_check -s exit:0 -o ignore rump.ping -c 1 -w $TIMEOUT $SERVER_IP
@@ -189,7 +196,7 @@ run_test()
 
 	# test for disconnection from server
 	export RUMP_SERVER=$SERVER
-	atf_check -s exit:0 rump.ifconfig pppoe0 down
+	atf_ifconfig pppoe0 down
 	wait_for_disconnected
 	export RUMP_SERVER=$CLIENT
 	wait_for_disconnected
@@ -207,7 +214,7 @@ run_test()
 
 	# test for disconnection from client
 	export RUMP_SERVER=$CLIENT
-	atf_check -s exit:0 -x rump.ifconfig pppoe0 down
+	atf_ifconfig pppoe0 down
 	wait_for_disconnected
 	export RUMP_SERVER=$SERVER
 	wait_for_disconnected
@@ -219,14 +226,14 @@ run_test()
 
 	# test for reconnecting
 	export RUMP_SERVER=$CLIENT
-	atf_check -s exit:0 -x rump.ifconfig pppoe0 up
+	atf_ifconfig pppoe0 up
 	wait_for_opened $cp
 	$DEBUG && rump.ifconfig pppoe0
 	$DEBUG && $HIJACKING pppoectl -d pppoe0
 	unset RUMP_SERVER
 
 	export RUMP_SERVER=$SERVER
-	atf_check -s exit:0 rump.ifconfig -w 10
+	atf_ifconfig -w 10
 	atf_check -s exit:0 -o ignore rump.ping -c 1 -w $TIMEOUT $CLIENT_IP
 	atf_check -s exit:0 -o match:'session' -x "$HIJACKING pppoectl -d pppoe0"
 	$DEBUG && HIJACKING pppoectl -d pppoe0
@@ -234,15 +241,14 @@ run_test()
 
 	# test for invalid password
 	export RUMP_SERVER=$CLIENT
-	atf_check -s exit:0 rump.ifconfig pppoe0 down
+	atf_ifconfig pppoe0 down
 	wait_for_disconnected
-	local setup_clientparam="pppoectl pppoe0 myauthproto=$auth \
-				    'myauthname=$AUTHNAME' \
-				    'myauthsecret=invalidsecret' \
-				    'hisauthproto=none' \
-				    'max-auth-failure=1'"
-	atf_check -s exit:0 -x "$HIJACKING $setup_clientparam"
-	atf_check -s exit:0 rump.ifconfig pppoe0 up
+	atf_pppoectl pppoe0 "myauthproto=$auth" \
+			    "myauthname=$AUTHNAME" \
+			    "myauthsecret=invalidsecret" \
+			    "hisauthproto=none" \
+			    "max-auth-failure=1"
+	atf_ifconfig pppoe0 up
 	wait_for_opened $cp dontfail
 	atf_check -s not-exit:0 -o ignore -e ignore \
 	    rump.ping -c 1 -w $TIMEOUT $SERVER_IP
@@ -303,29 +309,25 @@ run_test6()
 	fi
 
 	export RUMP_SERVER=$SERVER
-	local setup_serverparam="pppoectl pppoe0 hisauthproto=$auth \
-				    'hisauthname=$AUTHNAME' \
-				    'hisauthsecret=$SECRET' \
-				    'myauthproto=none' \
-				    $server_optparam"
-	atf_check -s exit:0 -x "$HIJACKING $setup_serverparam"
-	atf_check -s exit:0 rump.ifconfig pppoe0 inet6 $SERVER_IP6/64 down
-	atf_check -s exit:0 rump.ifconfig pppoe0 up
+	atf_pppoectl pppoe0 \
+	    "hisauthname=$AUTHNAME" "hisauthsecret=$SECRET" \
+	    "hisauthproto=$auth" "myauthproto=none" \
+	    $server_optparam
+	atf_ifconfig pppoe0 inet6 $SERVER_IP6/64 down
+	atf_ifconfig pppoe0 up
 	unset RUMP_SERVER
 
 	export RUMP_SERVER=$CLIENT
-	local setup_clientparam="pppoectl pppoe0 myauthproto=$auth \
-				    'myauthname=$AUTHNAME' \
-				    'myauthsecret=$SECRET' \
-				    'hisauthproto=none'"
-	atf_check -s exit:0 -x "$HIJACKING $setup_clientparam"
-	atf_check -s exit:0 rump.ifconfig pppoe0 inet6 $CLIENT_IP6/64 down
-	atf_check -s exit:0 rump.ifconfig pppoe0 up
+	atf_pppoectl pppoe0 \
+	    "myauthname=$AUTHNAME" "myauthsecret=$SECRET" \
+	    "myauthproto=$auth" "hisauthproto=none"
+	atf_ifconfig pppoe0 inet6 $CLIENT_IP6/64 down
+	atf_ifconfig pppoe0 up
 	$DEBUG && rump.ifconfig
 	wait_for_opened $cp
-	atf_check -s exit:0 -o ignore rump.ifconfig -w 10
+	atf_ifconfig -w 10
 	export RUMP_SERVER=$SERVER
-	atf_check -s exit:0 -o ignore rump.ifconfig -w 10
+	rump.ifconfig -w 10
 	export RUMP_SERVER=$CLIENT
 	atf_check -s exit:0 -o ignore rump.ping6 -c 1 -X $TIMEOUT $SERVER_IP6
 	unset RUMP_SERVER
@@ -333,7 +335,7 @@ run_test6()
 	# test for disconnection from server
 	export RUMP_SERVER=$SERVER
 	session_id=`$HIJACKING pppoectl -d pppoe0 | grep state`
-	atf_check -s exit:0 rump.ifconfig pppoe0 down
+	atf_ifconfig pppoe0 down
 	wait_for_disconnected
 	export RUMP_SERVER=$CLIENT
 	wait_for_disconnected
@@ -344,19 +346,19 @@ run_test6()
 
 	# test for reconnecting
 	export RUMP_SERVER=$SERVER
-	atf_check -s exit:0 rump.ifconfig pppoe0 up
+	atf_ifconfig pppoe0 up
 	wait_for_opened $cp
-	atf_check -s exit:0 rump.ifconfig -w 10
+	atf_ifconfig -w 10
 	$DEBUG && $HIJACKING pppoectl -d pppoe0
 	$DEBUG && rump.ifconfig pppoe0
 	export RUMP_SERVER=$CLIENT
-	atf_check -s exit:0 -o ignore rump.ifconfig -w 10
+	atf_ifconfig -w 10
 	atf_check -s exit:0 -o ignore rump.ping6 -c 1 -X $TIMEOUT $SERVER_IP6
 	unset RUMP_SERVER
 
 	# test for disconnection from client
 	export RUMP_SERVER=$CLIENT
-	atf_check -s exit:0 rump.ifconfig pppoe0 down
+	atf_ifconfig pppoe0 down
 	wait_for_disconnected
 
 	export RUMP_SERVER=$SERVER
@@ -369,16 +371,16 @@ run_test6()
 
 	# test for reconnecting
 	export RUMP_SERVER=$CLIENT
-	atf_check -s exit:0 rump.ifconfig pppoe0 up
+	atf_ifconfig pppoe0 up
 	wait_for_opened $cp
-	atf_check -s exit:0 rump.ifconfig -w 10
+	atf_ifconfig -w 10
 
 	$DEBUG && rump.ifconfig pppoe0
 	$DEBUG && $HIJACKING pppoectl -d pppoe0
 	unset RUMP_SERVER
 
 	export RUMP_SERVER=$SERVER
-	atf_check -s exit:0 rump.ifconfig -w 10
+	atf_ifconfig -w 10
 	atf_check -s exit:0 -o ignore rump.ping6 -c 1 -X $TIMEOUT $CLIENT_IP6
 	atf_check -s exit:0 -o match:'session' -x "$HIJACKING pppoectl -d pppoe0"
 	$DEBUG && HIJACKING pppoectl -d pppoe0
@@ -386,15 +388,13 @@ run_test6()
 
 	# test for invalid password
 	export RUMP_SERVER=$CLIENT
-	atf_check -s exit:0 rump.ifconfig pppoe0 down
+	atf_ifconfig pppoe0 down
 	wait_for_disconnected
-	local setup_clientparam="pppoectl pppoe0 myauthproto=$auth \
-				    'myauthname=$AUTHNAME' \
-				    'myauthsecret=invalidsecret' \
-				    'hisauthproto=none' \
-				    'max-auth-failure=1'"
-	atf_check -s exit:0 -x "$HIJACKING $setup_clientparam"
-	atf_check -s exit:0 rump.ifconfig pppoe0 up
+	atf_pppoectl pppoe0 \
+	    "myauthname=$AUTHNAME" "myauthsecret=invalidsecret" \
+	    "myauthproto=$auth" "hisauthproto=none" \
+	    "max-auth-failure=1"
+	atf_ifconfig pppoe0 up
 	wait_for_opened $cp dontfail
 	atf_check -s not-exit:0 -o ignore -e ignore \
 	    rump.ping6 -c 1 -X $TIMEOUT $SERVER_IP6
@@ -453,27 +453,23 @@ dump_bus()
 setup_auth_conf()
 {
 	local auth=chap
+	local server_optparam="norechallenge"
 
 	export RUMP_SERVER=$SERVER
-	local setup_serverparam="pppoectl pppoe0 hisauthproto=$auth \
-				    'hisauthname=$AUTHNAME' \
-				    'hisauthsecret=$SECRET' \
-				    'myauthproto=none' \
-				    $server_optparam"
-
-	atf_check -s exit:0 rump.ifconfig pppoe0 link0
-	atf_check -s exit:0 -x "$HIJACKING $setup_serverparam"
+	atf_ifconfig pppoe0 link0
+	atf_pppoectl pppoe0 \
+	    "hisauthname=$AUTHNAME" "hisauthsecret=$SECRET" \
+	    "hisauthproto=$auth"  "myauthproto=none" \
+	    $server_optparam
 	unset RUMP_SERVER
 
-	local setup_clientparam="pppoectl pppoe0 myauthproto=$auth \
-				    'myauthname=$AUTHNAME' \
-				    'myauthsecret=$SECRET' \
-				    'hisauthproto=none'"
-
 	export RUMP_SERVER=$CLIENT
-	$inet && atf_check -s exit:0 rump.ifconfig pppoe0 \
+	$inet && atf_ifconfig pppoe0 \
 	    inet 0.0.0.0 0.0.0.1 down
-	atf_check -s exit:0 -x "$HIJACKING $setup_clientparam"
+	atf_pppoectl pppoe0 \
+	    "myauthname=$AUTHNAME" "myauthsecret=$SECRET" \
+	    "myauthproto=$auth" "hisauthproto=none"
+
 	$DEBUG && rump.ifconfig
 	unset RUMP_SERVER
 }
@@ -499,13 +495,13 @@ pppoe_params_body()
 	setup_auth_conf
 
 	export RUMP_SERVER=$SERVER
-	atf_check -s exit:0 -x "$HIJACKING pppoectl -e shmif0 pppoe0"
-	atf_check -s exit:0 rump.ifconfig pppoe0 up
+	atf_pppoectl -e shmif0 pppoe0
+	atf_ifconfig pppoe0 up
 	unset RUMP_SERVER
 
 	export RUMP_SERVER=$CLIENT
-	atf_check -s exit:0 -x "$HIJACKING pppoectl -e shmif0 pppoe0"
-	atf_check -s exit:0 rump.ifconfig pppoe0 up
+	atf_pppoectl -e shmif0 pppoe0
+	atf_ifconfig pppoe0 up
 	$DEBUG && rump.ifconfig
 	wait_for_opened $cp
 	unset RUMP_SERVER
@@ -520,10 +516,10 @@ pppoe_params_body()
 
 	# set Remote access concentrator name (AC-NAME, -a option)
 	export RUMP_SERVER=$CLIENT
-	atf_check -s exit:0 rump.ifconfig pppoe0 down
+	atf_ifconfig pppoe0 down
 	wait_for_disconnected
-	atf_check -s exit:0 -x "$HIJACKING pppoectl -e shmif0 -a ACNAME-TEST0 pppoe0"
-	atf_check -s exit:0 rump.ifconfig pppoe0 up
+	atf_pppoectl -e shmif0 -a ACNAME-TEST0 pppoe0
+	atf_ifconfig pppoe0 up
 	$DEBUG && rump.ifconfig
 	wait_for_opened $cp
 	unset RUMP_SERVER
@@ -534,10 +530,10 @@ pppoe_params_body()
 
 	# change AC-NAME
 	export RUMP_SERVER=$CLIENT
-	atf_check -s exit:0 rump.ifconfig pppoe0 down
+	atf_ifconfig pppoe0 down
 	wait_for_disconnected
-	atf_check -s exit:0 -x "$HIJACKING pppoectl -e shmif0 -a ACNAME-TEST1 pppoe0"
-	atf_check -s exit:0 rump.ifconfig pppoe0 up
+	atf_pppoectl -e shmif0 -a ACNAME-TEST1 pppoe0
+	atf_ifconfig pppoe0 up
 	$DEBUG && rump.ifconfig
 	wait_for_opened $cp
 	unset RUMP_SERVER
@@ -553,16 +549,16 @@ pppoe_params_body()
 	setup_auth_conf
 
 	export RUMP_SERVER=$SERVER
-	atf_check -s exit:0 -x "$HIJACKING pppoectl -e shmif0 pppoe0"
-	atf_check -s exit:0 rump.ifconfig pppoe0 up
+	atf_pppoectl -e shmif0 pppoe0
+	atf_ifconfig pppoe0 up
 	unset RUMP_SERVER
 
 	export RUMP_SERVER=$CLIENT
-	atf_check -s exit:0 rump.ifconfig pppoe0 down
+	atf_ifconfig pppoe0 down
 	wait_for_disconnected
-	atf_check -s exit:0 -x "$HIJACKING pppoectl -a ACNAME-TEST2 -e shmif0 pppoe0"
-	atf_check -s exit:0 -x "$HIJACKING pppoectl -e shmif0 pppoe0"
-	atf_check -s exit:0 rump.ifconfig pppoe0 up
+	atf_pppoectl -a ACNAME-TEST2 -e shmif0 pppoe0
+	atf_pppoectl -e shmif0 pppoe0
+	atf_ifconfig pppoe0 up
 	$DEBUG && rump.ifconfig
 	wait_for_opened $cp
 	unset RUMP_SERVER
@@ -577,10 +573,10 @@ pppoe_params_body()
 
 	# store 0 length string in AC-NAME
 	export RUMP_SERVER=$CLIENT
-	atf_check -s exit:0 rump.ifconfig pppoe0 down
+	atf_ifconfig pppoe0 down
 	wait_for_disconnected
-	atf_check -s exit:0 -x "$HIJACKING pppoectl -a \"\" -e shmif0 pppoe0"
-	atf_check -s exit:0 rump.ifconfig pppoe0 up
+	atf_pppoectl -a \"\" -e shmif0 pppoe0
+	atf_ifconfig pppoe0 up
 	$DEBUG && rump.ifconfig
 	wait_for_opened $cp
 	unset RUMP_SERVER
@@ -595,15 +591,15 @@ pppoe_params_body()
 	setup_auth_conf
 
 	export RUMP_SERVER=$SERVER
-	atf_check -s exit:0 -x "$HIJACKING pppoectl -e shmif0 pppoe0"
-	atf_check -s exit:0 rump.ifconfig pppoe0 up
+	atf_pppoectl -e shmif0 pppoe0
+	atf_ifconfig pppoe0 up
 	unset RUMP_SERVER
 
 	export RUMP_SERVER=$CLIENT
-	atf_check -s exit:0 rump.ifconfig pppoe0 down
+	atf_ifconfig pppoe0 down
 	wait_for_disconnected
-	atf_check -s exit:0 -x "$HIJACKING pppoectl -e shmif0 -s SNAME-TEST0 pppoe0"
-	atf_check -s exit:0 rump.ifconfig pppoe0 up
+	atf_pppoectl -e shmif0 -s SNAME-TEST0 pppoe0
+	atf_ifconfig pppoe0 up
 	$DEBUG && rump.ifconfig
 	wait_for_opened $cp
 	unset RUMP_SERVER
@@ -618,10 +614,10 @@ pppoe_params_body()
 
 	# change Service-Name
 	export RUMP_SERVER=$CLIENT
-	atf_check -s exit:0 rump.ifconfig pppoe0 down
+	atf_ifconfig pppoe0 down
 	wait_for_disconnected
-	atf_check -s exit:0 -x "$HIJACKING pppoectl -e shmif0 -s SNAME-TEST1 pppoe0"
-	atf_check -s exit:0 rump.ifconfig pppoe0 up
+	atf_pppoectl -e shmif0 -s SNAME-TEST1 pppoe0
+	atf_ifconfig pppoe0 up
 	$DEBUG && rump.ifconfig
 	wait_for_opened $cp
 	unset RUMP_SERVER
@@ -639,16 +635,16 @@ pppoe_params_body()
 	setup_auth_conf
 
 	export RUMP_SERVER=$SERVER
-	atf_check -s exit:0 -x "$HIJACKING pppoectl -e shmif0 pppoe0"
-	atf_check -s exit:0 rump.ifconfig pppoe0 up
+	atf_pppoectl -e shmif0 pppoe0
+	atf_ifconfig pppoe0 up
 	unset RUMP_SERVER
 
 	export RUMP_SERVER=$CLIENT
-	atf_check -s exit:0 rump.ifconfig pppoe0 down
+	atf_ifconfig pppoe0 down
 	wait_for_disconnected
-	atf_check -s exit:0 -x "$HIJACKING pppoectl -s SNAME-TEST2 -e shmif0 pppoe0"
-	atf_check -s exit:0 -x "$HIJACKING pppoectl -e shmif0 pppoe0"
-	atf_check -s exit:0 rump.ifconfig pppoe0 up
+	atf_pppoectl -s SNAME-TEST2 -e shmif0 pppoe0
+	atf_pppoectl -e shmif0 pppoe0
+	atf_ifconfig pppoe0 up
 	$DEBUG && rump.ifconfig
 	wait_for_opened $cp
 	unset RUMP_SERVER
@@ -668,16 +664,15 @@ pppoe_params_body()
 	setup_auth_conf
 
 	export RUMP_SERVER=$SERVER
-	atf_check -s exit:0 -x "$HIJACKING pppoectl -e shmif0 pppoe0"
-	atf_check -s exit:0 rump.ifconfig pppoe0 up
+	atf_pppoectl -e shmif0 pppoe0
+	atf_ifconfig pppoe0 up
 	unset RUMP_SERVER
 
 	export RUMP_SERVER=$CLIENT
-	atf_check -s exit:0 rump.ifconfig pppoe0 down
+	atf_ifconfig pppoe0 down
 	wait_for_disconnected
-	atf_check -s exit:0 -x \
-	    "$HIJACKING pppoectl -e shmif0 -a ACNAME-TEST3 -s SNAME-TEST3 pppoe0"
-	atf_check -s exit:0 rump.ifconfig pppoe0 up
+	atf_pppoectl -e shmif0 -a ACNAME-TEST3 -s SNAME-TEST3 pppoe0
+	atf_ifconfig pppoe0 up
 	$DEBUG && rump.ifconfig
 	wait_for_opened $cp
 	unset RUMP_SERVER
@@ -692,11 +687,10 @@ pppoe_params_body()
 
 	# change AC-NAME
 	export RUMP_SERVER=$CLIENT
-	atf_check -s exit:0 rump.ifconfig pppoe0 down
+	atf_ifconfig pppoe0 down
 	wait_for_disconnected
-	atf_check -s exit:0 -x \
-	    "$HIJACKING pppoectl -e shmif0 -a ACNAME-TEST4 pppoe0"
-	atf_check -s exit:0 rump.ifconfig pppoe0 up
+	atf_pppoectl -e shmif0 -a ACNAME-TEST4 pppoe0
+	atf_ifconfig pppoe0 up
 	$DEBUG && rump.ifconfig
 	wait_for_opened $cp
 	unset RUMP_SERVER
@@ -711,13 +705,11 @@ pppoe_params_body()
 
 	# change Service-Name
 	export RUMP_SERVER=$CLIENT
-	atf_check -s exit:0 rump.ifconfig pppoe0 down
+	atf_ifconfig pppoe0 down
 	wait_for_disconnected
-	atf_check -s exit:0 -x \
-	    "$HIJACKING pppoectl -e shmif0 -a ACNAME-TEST5 -s SNAME-TEST5 pppoe0"
-	atf_check -s exit:0 -x \
-	    "$HIJACKING pppoectl -e shmif0 -s SNAME-TEST6 pppoe0"
-	atf_check -s exit:0 rump.ifconfig pppoe0 up
+	atf_pppoectl -e shmif0 -a ACNAME-TEST5 -s SNAME-TEST5 pppoe0
+	atf_pppoectl -e shmif0 -s SNAME-TEST6 pppoe0
+	atf_ifconfig pppoe0 up
 	$DEBUG && rump.ifconfig
 	wait_for_opened $cp
 	unset RUMP_SERVER
@@ -752,22 +744,18 @@ pppoe_passiveauthproto()
 	fi
 
 	export RUMP_SERVER=$SERVER
-	local setup_serverparam="pppoectl pppoe0 hisauthproto=$auth \
-				    'hisauthname=$AUTHNAME' \
-				    'hisauthsecret=$SECRET' \
-				    'myauthproto=none' \
-				    $server_optparam"
-	atf_check -s exit:0 -x "$HIJACKING $setup_serverparam"
-	atf_check -s exit:0 rump.ifconfig pppoe0 up
+	atf_pppoectl pppoe0 \
+	    "hisauthname=$AUTHNAME" "hisauthsecret=$SECRET" \
+	    "hisauthproto=$auth" "myauthproto=none" \
+	    $server_optparam
+	atf_ifconfig pppoe0 up
 
 	export RUMP_SERVER=$CLIENT
-	local setup_clientparam="pppoectl pppoe0 myauthproto=none \
-				    'myauthname=$AUTHNAME' \
-				    'myauthsecret=$SECRET' \
-				    'hisauthproto=none' \
-				    'passiveauthproto'"
-	atf_check -s exit:0 -x "$HIJACKING $setup_clientparam"
-	atf_check -s exit:0 rump.ifconfig pppoe0 up
+	atf_pppoectl pppoe0 \
+	    "myauthname=$AUTHNAME" "myauthsecret=$SECRET" \
+	    "myauthproto=none" "hisauthproto=none" \
+	    "passiveauthproto"
+	atf_ifconfig pppoe0 up
 	$DEBUG && rump.ifconfig
 	wait_for_opened $cp
 	atf_check -s exit:0 -o ignore rump.ping -c 1 -w $TIMEOUT $SERVER_IP
