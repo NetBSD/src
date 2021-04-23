@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2380 2021/04/16 07:45:41 msaitoh Exp $
+#	$NetBSD: mi,v 1.2381 2021/04/23 01:53:55 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -981,8 +981,8 @@
 ./usr/include/g++/backward/tempbuf.h		comp-obsolete		obsolete
 ./usr/include/g++/backward/tree.h		comp-obsolete		obsolete
 ./usr/include/g++/backward/vector.h		comp-obsolete		obsolete
-./usr/include/g++/bit				comp-cxx-include	gcc=9,cxx,libstdcxx
 ./usr/include/g++/bit				comp-cxx-include	gcc=10,cxx,libstdcxx
+./usr/include/g++/bit				comp-cxx-include	gcc=9,cxx,libstdcxx
 ./usr/include/g++/bitdo1.h			comp-obsolete		obsolete
 ./usr/include/g++/bitdo2.h			comp-obsolete		obsolete
 ./usr/include/g++/bitprims.h			comp-obsolete		obsolete
@@ -2127,6 +2127,16 @@
 ./usr/include/g++/vector			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/vector.h			comp-obsolete		obsolete
 ./usr/include/g++/version			comp-cxx-include	gcc,cxx,libstdcxx
+./usr/include/gcc-10/omp.h				comp-gcc-include	gcc=10
+./usr/include/gcc-10/openacc.h				comp-gcc-include	gcc=10
+./usr/include/gcc-10/sanitizer/allocator_interface.h	comp-gcc-include	gcc=10
+./usr/include/gcc-10/sanitizer/asan_interface.h		comp-gcc-include	gcc=10
+./usr/include/gcc-10/sanitizer/common_interface_defs.h	comp-gcc-include	gcc=10
+./usr/include/gcc-10/sanitizer/lsan_interface.h		comp-gcc-include	gcc=10
+./usr/include/gcc-10/sanitizer/netbsd_syscall_hooks.h	comp-gcc-include	gcc=10
+./usr/include/gcc-10/sanitizer/tsan_interface.h		comp-gcc-include	gcc=10
+./usr/include/gcc-10/sanitizer/tsan_interface_atomic.h	comp-gcc-include	gcc=10
+./usr/include/gcc-10/stdatomic.h			comp-gcc-include	gcc=10
 ./usr/include/gcc-4.5/mf-runtime.h		comp-obsolete		obsolete
 ./usr/include/gcc-4.5/omp.h			comp-obsolete		obsolete
 ./usr/include/gcc-4.8/mf-runtime.h		comp-obsolete		obsolete
@@ -2228,16 +2238,6 @@
 ./usr/include/gcc-9/sanitizer/tsan_interface.h		comp-gcc-include	gcc=9
 ./usr/include/gcc-9/sanitizer/tsan_interface_atomic.h	comp-gcc-include	gcc=9
 ./usr/include/gcc-9/stdatomic.h				comp-gcc-include	gcc=9
-./usr/include/gcc-10/omp.h				comp-gcc-include	gcc=10
-./usr/include/gcc-10/openacc.h				comp-gcc-include	gcc=10
-./usr/include/gcc-10/sanitizer/allocator_interface.h	comp-gcc-include	gcc=10
-./usr/include/gcc-10/sanitizer/asan_interface.h		comp-gcc-include	gcc=10
-./usr/include/gcc-10/sanitizer/common_interface_defs.h	comp-gcc-include	gcc=10
-./usr/include/gcc-10/sanitizer/lsan_interface.h		comp-gcc-include	gcc=10
-./usr/include/gcc-10/sanitizer/netbsd_syscall_hooks.h	comp-gcc-include	gcc=10
-./usr/include/gcc-10/sanitizer/tsan_interface.h		comp-gcc-include	gcc=10
-./usr/include/gcc-10/sanitizer/tsan_interface_atomic.h	comp-gcc-include	gcc=10
-./usr/include/gcc-10/stdatomic.h			comp-gcc-include	gcc=10
 ./usr/include/gelf.h				comp-c-include
 ./usr/include/getopt.h				comp-c-include
 ./usr/include/glob.h				comp-c-include
@@ -4014,10 +4014,10 @@
 ./usr/lib/libtpm_unseal_p.a			comp-c-proflib		compatfile,tpm,profile
 ./usr/lib/libtre.a				comp-c-lib		compatfile
 ./usr/lib/libtre_p.a				comp-c-proflib		compatfile,profile
-./usr/lib/libtsan.a				comp-c-lib		arch64,cxx,gcc=9,machine=amd64
-./usr/lib/libtsan_p.a				comp-c-proflib		arch64,profile,cxx,gcc=9,machine=amd64
 ./usr/lib/libtsan.a				comp-c-lib		arch64,cxx,gcc=10,machine=amd64
+./usr/lib/libtsan.a				comp-c-lib		arch64,cxx,gcc=9,machine=amd64
 ./usr/lib/libtsan_p.a				comp-c-proflib		arch64,profile,cxx,gcc=10,machine=amd64
+./usr/lib/libtsan_p.a				comp-c-proflib		arch64,profile,cxx,gcc=9,machine=amd64
 ./usr/lib/libtspi.a				comp-c-lib		compatfile,tpm
 ./usr/lib/libtspi_p.a				comp-c-proflib		compatfile,tpm,profile
 ./usr/lib/libubsan.a				comp-c-lib		compatfile,cxx,gcc
@@ -7574,10 +7574,10 @@
 ./usr/share/man/cat3/getttyent.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getttynam.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getusershell.0		comp-c-catman		.cat
-./usr/share/man/cat3/getutmp.0			comp-c-catman		.cat
-./usr/share/man/cat3/getutmpx.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getutent.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getutline.0		comp-c-catman		.cat
+./usr/share/man/cat3/getutmp.0			comp-c-catman		.cat
+./usr/share/man/cat3/getutmpx.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getutxent.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getutxid.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getutxline.0		comp-c-catman		.cat
@@ -15849,10 +15849,10 @@
 ./usr/share/man/html3/getttyent.html		comp-c-htmlman		html
 ./usr/share/man/html3/getttynam.html		comp-c-htmlman		html
 ./usr/share/man/html3/getusershell.html		comp-c-htmlman		html
-./usr/share/man/html3/getutmp.html		comp-c-htmlman		html
-./usr/share/man/html3/getutmpx.html		comp-c-htmlman		html
 ./usr/share/man/html3/getutent.html		comp-c-htmlman		html
 ./usr/share/man/html3/getutline.html		comp-c-htmlman		html
+./usr/share/man/html3/getutmp.html		comp-c-htmlman		html
+./usr/share/man/html3/getutmpx.html		comp-c-htmlman		html
 ./usr/share/man/html3/getutxent.html		comp-c-htmlman		html
 ./usr/share/man/html3/getutxid.html		comp-c-htmlman		html
 ./usr/share/man/html3/getutxline.html		comp-c-htmlman		html
@@ -24065,10 +24065,10 @@
 ./usr/share/man/man3/getttyent.3		comp-c-man		.man
 ./usr/share/man/man3/getttynam.3		comp-c-man		.man
 ./usr/share/man/man3/getusershell.3		comp-c-man		.man
-./usr/share/man/man3/getutmp.3			comp-c-man		.man
-./usr/share/man/man3/getutmpx.3			comp-c-man		.man
 ./usr/share/man/man3/getutent.3			comp-c-man		.man
 ./usr/share/man/man3/getutline.3		comp-c-man		.man
+./usr/share/man/man3/getutmp.3			comp-c-man		.man
+./usr/share/man/man3/getutmpx.3			comp-c-man		.man
 ./usr/share/man/man3/getutxent.3		comp-c-man		.man
 ./usr/share/man/man3/getutxid.3			comp-c-man		.man
 ./usr/share/man/man3/getutxline.3		comp-c-man		.man
