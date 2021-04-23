@@ -1,11 +1,13 @@
-#	$NetBSD: Makefile.backend,v 1.9 2020/09/05 14:24:25 mrg Exp $
+#	$NetBSD: Makefile.backend,v 1.10 2021/04/23 01:56:14 mrg Exp $
 
 .ifndef _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_BACKEND_
 _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_BACKEND_=1
 
+.if ${PROG} != "lto-dump"
 NOMAN=		# defined
 NOCTF=		# defined
 BINDIR=		/usr/libexec
+.endif
 
 CPPFLAGS+=	-I${GCCARCH} -I${BACKENDOBJ} \
 		${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N-I.*}

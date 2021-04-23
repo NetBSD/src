@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2381 2021/04/23 01:53:55 mrg Exp $
+#	$NetBSD: mi,v 1.2382 2021/04/23 01:56:14 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -55,6 +55,7 @@
 ./usr/bin/llvm-symbolizer			comp-c-bin		llvm
 ./usr/bin/llvm-tblgen				comp-c-bin		llvm
 ./usr/bin/lorder				comp-util-bin
+./usr/bin/lto-dump				comp-c-bin		gcccmds,gcc=10
 ./usr/bin/luac					comp-util-bin
 ./usr/bin/menuc					comp-c-bin
 ./usr/bin/mkstr					comp-c-bin
@@ -4386,6 +4387,7 @@
 ./usr/share/man/cat1/lexdoc.0			comp-obsolete		obsolete
 ./usr/share/man/cat1/lint.0			comp-c-catman		.cat
 ./usr/share/man/cat1/lorder.0			comp-util-catman	.cat
+./usr/share/man/cat1/lto-dump.0			comp-c-catman		gcccmds,.cat,gcc=10
 ./usr/share/man/cat1/luac.0			comp-util-catman	.cat
 ./usr/share/man/cat1/menuc.0			comp-c-catman		.cat
 ./usr/share/man/cat1/mkstr.0			comp-c-catman		.cat
@@ -12726,6 +12728,7 @@
 ./usr/share/man/html1/lex.html			comp-c-htmlman		html
 ./usr/share/man/html1/lint.html			comp-c-htmlman		html
 ./usr/share/man/html1/lorder.html		comp-util-htmlman	html
+./usr/share/man/html1/lto-dump.html		comp-c-htmlman		gcccmds,html,gcc=10
 ./usr/share/man/html1/luac.html			comp-util-htmlman	html
 ./usr/share/man/html1/menuc.html		comp-c-htmlman		html
 ./usr/share/man/html1/mkstr.html		comp-c-htmlman		html
@@ -20855,6 +20858,7 @@
 ./usr/share/man/man1/lex.1			comp-c-man		.man
 ./usr/share/man/man1/lint.1			comp-c-man		.man
 ./usr/share/man/man1/lorder.1			comp-util-man		.man
+./usr/share/man/man1/lto-dump.1			comp-c-man		gcccmds,.man,gcc=10
 ./usr/share/man/man1/luac.1			comp-util-man		.man
 ./usr/share/man/man1/menuc.1			comp-c-man		.man
 ./usr/share/man/man1/mkstr.1			comp-c-man		.man
