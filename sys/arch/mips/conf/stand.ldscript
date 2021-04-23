@@ -1,4 +1,4 @@
-/* $NetBSD: stand.ldscript,v 1.7 2015/08/22 23:49:54 uebayasi Exp $ */
+/* $NetBSD: stand.ldscript,v 1.8 2021/04/23 08:42:25 simonb Exp $ */
 
 /*  ldscript for NetBSD/mips stand-alone programs */
 OUTPUT_ARCH(mips)
@@ -11,6 +11,7 @@ SECTIONS
   {
     _ftext = . ;
     *(.text)
+    *(.text.*)
     *(.gnu.warning)
   } =0
   _etext = .;
