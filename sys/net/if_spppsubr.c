@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.218 2021/04/23 01:13:25 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.219 2021/04/23 03:31:33 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.218 2021/04/23 01:13:25 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.219 2021/04/23 03:31:33 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1212,11 +1212,28 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	case SIOCSIFMTU:
 		if (ifr->ifr_mtu < PPP_MINMRU ||
-		    ifr->ifr_mtu > sp->lcp.their_mru) {
+		    ifr->ifr_mtu > PP_MTU) {
 			error = EINVAL;
 			break;
 		}
-		/*FALLTHROUGH*/
+
+		error = ifioctl_common(ifp, cmd, data);
+		if (error == ENETRESET)
+			error = 0;
+
+		if (sp->lcp.their_mru > 0 &&
+		    ifp->if_mtu > sp->lcp.their_mru) {
+			sp->pp_saved_mtu = ifp->if_mtu;
+			ifp->if_mtu = sp->lcp.their_mru;
+			if (ifp->if_flags & IFF_DEBUG) {
+				log(LOG_DEBUG,
+				    "%s: setting MTU to "
+				    "%"PRIu64" bytes\n",
+				    ifp->if_xname, ifp->if_mtu);
+			}
+		}
+		break;
+
 	case SIOCGIFMTU:
 		if ((error = ifioctl_common(ifp, cmd, data)) == ENETRESET)
 			error = 0;
