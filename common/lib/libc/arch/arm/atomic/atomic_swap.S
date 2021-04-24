@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_swap.S,v 1.14 2015/05/17 20:57:11 justin Exp $	*/
+/*	$NetBSD: atomic_swap.S,v 1.15 2021/04/24 20:29:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007,2012 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@ ENTRY_NP(__sync_lock_release_4)
 #else
 	mcr	p15, 0, r1, c7, c10, 5	/* data memory barrier */
 #endif
-	strb	r1, [r0]
+	str	r1, [r0]
 	RET
 END(__sync_lock_release_4)
 #endif
