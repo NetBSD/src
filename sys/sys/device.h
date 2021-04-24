@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.167.2.9 2021/04/04 19:23:53 thorpej Exp $ */
+/* $NetBSD: device.h,v 1.167.2.10 2021/04/24 18:07:07 thorpej Exp $ */
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -535,7 +535,8 @@ typedef enum {
 	CFARG_LOCATORS		= 3,	/* locators array */
 	CFARG_DEVHANDLE		= 4,	/* devhandle_t (by value) */
 
-	CFARG_EOL		= 0xffffffff
+	/* ...a value not likely to occur randomly in the wild. */
+	CFARG_EOL		= 0xeeeeeeee
 } cfarg_t;
 
 #ifdef _KERNEL
