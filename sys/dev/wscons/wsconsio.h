@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.124 2020/10/29 09:08:35 nia Exp $ */
+/* $NetBSD: wsconsio.h,v 1.125 2021/04/24 00:15:37 macallan Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -683,5 +683,25 @@ struct wsdisplayio_blit {
 
 #define WSDISPLAYIO_DOBLIT   	_IOWR('W', 105, struct wsdisplayio_blit)
 #define WSDISPLAYIO_WAITBLIT 	_IOWR('W', 106, struct wsdisplayio_blit)
+
+struct wsdisplayio_fontdesc {
+		char fd_name[64];
+		uint16_t fd_height;
+		uint16_t fd_width;
+};
+
+struct wsdisplayio_fontinfo {
+	uint32_t fi_buffersize;
+	uint32_t fi_numentries;
+	struct wsdisplayio_fontdesc *fi_fonts;
+};
+
+/*
+ * fill buffer pointed at by fi_fonts with wsdisplayio_fontdesc until either
+ * full or all fonts are listed
+ * just return the number of entries needed if fi_fonts is NULL
+ */
+
+#define WSDISPLAYIO_LISTFONTS	_IOWR('W', 107, struct wsdisplayio_fontinfo)
 
 #endif /* _DEV_WSCONS_WSCONSIO_H_ */

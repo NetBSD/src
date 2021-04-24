@@ -1,4 +1,4 @@
-/* $NetBSD: wsfontdev.c,v 1.18 2017/06/23 01:57:40 macallan Exp $ */
+/* $NetBSD: wsfontdev.c,v 1.19 2021/04/24 00:15:37 macallan Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfontdev.c,v 1.18 2017/06/23 01:57:40 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfontdev.c,v 1.19 2021/04/24 00:15:37 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,7 +41,13 @@ __KERNEL_RCSID(0, "$NetBSD: wsfontdev.c,v 1.18 2017/06/23 01:57:40 macallan Exp 
 
 #include "ioconf.h"
 
+#ifdef WSFONT_DEBUG
+#define DPRINTF printf
+#else
+#define DPRINTF while (0) printf
+#endif
 static int wsfont_isopen;
+
 
 void
 wsfontattach(int n)
@@ -68,6 +74,41 @@ wsfontclose(dev_t dev, int flag, int mode,
 
 	wsfont_isopen = 0;
 	return (0);
+}
+
+static void
+fontmatchfunc(struct wsdisplay_font *f, void *cookie, int fontcookie)
+{
+	struct wsdisplayio_fontinfo *fi = cookie;
+	struct wsdisplayio_fontdesc fd;
+	int offset;
+
+	DPRINTF("%s %dx%d\n", f->name, f->fontwidth, f->fontheight);
+	if (fi->fi_fonts != NULL && fi->fi_buffersize > 0) {
+		memset(&fd, 0, sizeof(fd));
+		strncpy(fd.fd_name, f->name, sizeof(fd.fd_name) - 1);
+		fd.fd_width = f->fontwidth;
+		fd.fd_height = f->fontheight;
+		offset = sizeof(struct wsdisplayio_fontdesc) * (fi->fi_numentries + 1);
+		if (offset > fi->fi_buffersize) {
+			fi->fi_fonts = NULL;
+		} else
+			copyout(&fd, &fi->fi_fonts[fi->fi_numentries],
+			    sizeof(struct wsdisplayio_fontdesc));
+	}
+	fi->fi_numentries++;
+}
+
+static int
+wsdisplayio_listfonts(struct wsdisplayio_fontinfo *f)
+{
+	void *addr = f->fi_fonts;
+	DPRINTF("%s: %d %d\n", __func__, f->fi_buffersize, f->fi_numentries);
+	f->fi_numentries = 0;
+	wsfont_walk(fontmatchfunc, f);
+	/* check if we ran out of buffer space */
+	if (f->fi_fonts == NULL && addr != NULL) return ENOMEM;
+	return 0;
 }
 
 static int
@@ -101,6 +142,8 @@ wsfontioctl(dev_t dev, u_long cmd, void *data, int flag,
 		free(buf, M_DEVBUF);
 #undef d
 		return (res);
+	case WSDISPLAYIO_LISTFONTS:
+		return wsdisplayio_listfonts(data);
 	default:
 		return (EINVAL);
 	}
