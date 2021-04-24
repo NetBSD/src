@@ -1,4 +1,4 @@
-.\"	$NetBSD: wsfontload.8,v 1.28 2021/04/24 07:52:07 wiz Exp $
+.\"	$NetBSD: wsfontload.8,v 1.29 2021/04/24 08:59:09 nia Exp $
 .\"
 .\" Copyright (c) 1999, 2001
 .\" 	Matthias Drochner.  All rights reserved.
@@ -93,7 +93,8 @@ Default is
 Sets the height of a font character in pixels.
 Default is 16.
 .It Fl l
-Print a list of available fonts.
+Print a list of available fonts that are built-in to the kernel
+(as opposed to fonts available to load from the filesystem).
 .It Fl N Ar name
 Specifies a name which can be used later to refer to the font.
 If none is given, the
