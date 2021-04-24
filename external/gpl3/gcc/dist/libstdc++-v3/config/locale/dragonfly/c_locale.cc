@@ -28,6 +28,8 @@
 
 // Written by Benjamin Kosnik <bkoz@redhat.com>
 // Modified for DragonFly by John Marino <gnugcc@marino.st>
+// Modified for NetBSD by Christos Zoulas <christos@zoulas.com> and
+// matthew green <mrg@eterna.com.au>
 
 #include <cstdlib>
 #include <locale>
@@ -190,6 +192,24 @@ namespace std _GLIBCXX_VISIBILITY(default)
 _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   const char* const* const locale::_S_categories = __gnu_cxx::category_names;
+
+#ifdef __NetBSD__
+  int
+  __convert_from_v(const __c_locale& __cloc, char* __out,
+		   const int __size __attribute__ ((__unused__)),
+		   const char* __fmt, ...)
+  {
+    __builtin_va_list __args;
+    __builtin_va_start(__args, __fmt);
+
+    const int __ret = vsnprintf_l(__out, __size, (struct _locale *)__cloc,
+      __fmt, __args);
+
+    __builtin_va_end(__args);
+
+    return __ret;
+  }
+#endif
 
 _GLIBCXX_END_NAMESPACE_VERSION
 } // namespace
