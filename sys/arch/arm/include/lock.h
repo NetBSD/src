@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.35 2021/04/24 06:38:39 skrll Exp $	*/
+/*	$NetBSD: lock.h,v 1.36 2021/04/24 07:58:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -206,10 +206,10 @@ __cpu_simple_unlock(__cpu_simple_lock_t *__alp)
 
 #ifdef _ARM_ARCH_8
 	if (sizeof(*__alp) == 1) {
-		__asm __volatile("stlb\t%0, [%1]"
+		__asm __volatile("stlrb\t%w0, [%1]"
 		    :: "r"(__SIMPLELOCK_UNLOCKED), "r"(__alp) : "memory");
 	} else {
-		__asm __volatile("stl\t%0, [%1]"
+		__asm __volatile("stlr\t%0, [%1]"
 		    :: "r"(__SIMPLELOCK_UNLOCKED), "r"(__alp) : "memory");
 	}
 #else
