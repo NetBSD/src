@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.34 2019/11/29 20:05:19 riastradh Exp $	*/
+/*	$NetBSD: lock.h,v 1.35 2021/04/24 06:38:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -64,11 +64,6 @@ __cpu_simple_lock_set(__cpu_simple_lock_t *__ptr)
 {
 	*__ptr = __SIMPLELOCK_LOCKED;
 }
-
-#ifdef _KERNEL
-/* XXX Formerly included for obsolete mb_* API, maybe no longer needed.  */
-#include <arm/cpufunc.h>
-#endif
 
 #ifdef _ARM_ARCH_6
 static __inline unsigned int
