@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.70.32.2 2021/04/02 22:17:40 thorpej Exp $	*/
+/*	$NetBSD: ofb.c,v 1.70.32.3 2021/04/24 18:23:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.70.32.2 2021/04/02 22:17:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.70.32.3 2021/04/24 18:23:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -217,7 +217,9 @@ ofbattach(device_t parent, device_t self, void *aux)
 	a.accessops = &ofb_accessops;
 	a.accesscookie = &sc->vd;
 
-	config_found(self, &a, wsemuldisplaydevprint, CFARG_EOL);
+	config_found(self, &a, wsemuldisplaydevprint,
+	    CFARG_IATTR, "wsemuldisplaydev",
+	    CFARG_EOL);
 
 	config_found(self, aux, ofb_drm_print,
 	    CFARG_IATTR, "drm",
