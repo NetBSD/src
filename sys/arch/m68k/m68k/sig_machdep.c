@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.50 2018/11/27 14:09:54 maxv Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.51 2021/04/24 16:14:08 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -40,7 +40,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.50 2018/11/27 14:09:54 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.51 2021/04/24 16:14:08 tsutsui Exp $");
 
 #define __M68K_SIGNAL_PRIVATE
 
@@ -236,7 +236,16 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, u_int *flags)
 		(void)memcpy(&mcp->__mc_pad.__mc_frame.__mcf_exframe,
 		    &frame->F_u, (size_t)exframesize[format]);
 
-		/* Leave indicators, see above. */
+		/*
+		 * Leave indicators that we need to clean up the kernel
+		 * stack.  We do this by setting the "pad word" above the
+		 * hardware stack frame to the amount the stack must be
+		 * adjusted by.
+		 *
+		 * N.B. we increment rather than just set f_stackadj in
+		 * case we are called from syscall when processing a
+		 * sigreturn.  In that case, f_stackadj may be non-zero.
+		 */
 		frame->f_stackadj += exframesize[format];
 		frame->f_format = frame->f_vector = 0;
 	}
@@ -303,16 +312,26 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, u_int flags)
 			return (EINVAL);
 
 		if (frame->f_stackadj == 0) {
+			/*
+			 * Extra stack space is required but not allocated.
+			 * Allocate and re-enter syscall().
+			 */
 			reenter_syscall(frame, sz);
 			/* NOTREACHED */
 		}
 
 #ifdef DIAGNOSTIC
+		/* reenter_syscall() should adjust stack for the extra frame. */
 		if (sz != frame->f_stackadj)
 			panic("cpu_setmcontext: %d != %d",
 			    sz, frame->f_stackadj);
 #endif
 
+		/*
+		 * Restore long stack frames.  Note that we do not copy
+		 * back the saved SR or PC, they were picked up below from
+		 * the sigcontext structure.
+		 */
 		frame->f_format = format;
 		frame->f_vector = mcp->__mc_pad.__mc_frame.__mcf_vector;
 		(void)memcpy(&frame->F_u,
