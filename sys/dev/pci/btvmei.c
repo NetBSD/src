@@ -1,4 +1,4 @@
-/* $NetBSD: btvmei.c,v 1.33 2020/08/24 05:37:41 msaitoh Exp $ */
+/* $NetBSD: btvmei.c,v 1.34 2021/04/24 23:36:57 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.33 2020/08/24 05:37:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.34 2021/04/24 23:36:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,7 +177,7 @@ b3_617_attach(device_t parent, device_t self, void *aux)
 	sc->csrwindow.offset = -1;
 	sc->dmawindow24.offset = -1;
 	sc->dmawindow32.offset = -1;
-	config_found(self, &vaa, 0);
+	config_found(self, &vaa, 0, CFARG_EOL);
 }
 
 #ifdef notyet

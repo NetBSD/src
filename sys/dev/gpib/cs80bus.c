@@ -1,4 +1,4 @@
-/*	$NetBSD: cs80bus.c,v 1.17 2016/07/11 11:31:50 msaitoh Exp $	*/
+/*	$NetBSD: cs80bus.c,v 1.18 2021/04/24 23:36:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs80bus.c,v 1.17 2016/07/11 11:31:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs80bus.c,v 1.18 2021/04/24 23:36:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,8 +134,9 @@ cs80busattach(device_t parent, device_t self, void *aux)
 		ca.ca_slave = slave;
 		ca.ca_id = id;
 
-		(void)config_search_ia(cs80bussearch, sc->sc_dev, "cs80bus",
-		    &ca);
+		config_search(sc->sc_dev, &ca,
+		    CFARG_SEARCH, cs80bussearch,
+		    CFARG_EOL);
 	}
 }
 
@@ -159,7 +160,7 @@ cs80bussearch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	DPRINTF(DBG_FOLLOW, ("cs80bussearch: id=0x%x slave=%d punit=%d\n",
 	    ca->ca_id, ca->ca_slave, ca->ca_punit));
 
-	if (config_match(parent, cf, ca) > 0) {
+	if (config_probe(parent, cf, ca)) {
 
 		DPRINTF(DBG_FOLLOW,
 		    ("cs80bussearch: got id=0x%x slave=%d punit %d\n",
@@ -187,7 +188,7 @@ cs80bussearch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 		/*
 		 * This device is allowed; attach it.
 		 */
-		config_attach(parent, cf, ca, cs80busprint);
+		config_attach(parent, cf, ca, cs80busprint, CFARG_EOL);
 	}
 out:
 	return (0);

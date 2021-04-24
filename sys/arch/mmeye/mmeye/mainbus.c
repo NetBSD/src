@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.9 2011/06/05 17:03:18 matt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.10 2021/04/24 23:36:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.9 2011/06/05 17:03:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.10 2021/04/24 23:36:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,12 +64,14 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 
 	/* CPU and SHBus */
 	maa.ma_name = "cpu";
-	config_found_ia(self, "mainbus", &maa, mainbus_print);
+	config_found(self, &maa, mainbus_print, CFARG_EOL);
 	maa.ma_name = "shb";
-	config_found_ia(self, "mainbus", &maa, mainbus_print);
+	config_found(self, &maa, mainbus_print, CFARG_EOL);
 
 	/* Devices */
-	config_search_ia(mainbus_search, self, "mainbus", 0);
+	config_search(self, NULL,
+	    CFARG_SEARCH, mainbus_search,
+	    CFARG_EOL);
 }
 
 static int
@@ -87,8 +89,8 @@ mainbus_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	maa.ma_irq1 = cf->cf_loc[MAINBUSCF_IRQ1];
 	maa.ma_irq2 = cf->cf_loc[MAINBUSCF_IRQ2];
 
-	if (config_match(parent, cf, &maa))
-		config_attach(parent, cf, &maa, mainbus_print);
+	if (config_probe(parent, cf, &maa))
+		config_attach(parent, cf, &maa, mainbus_print, CFARG_EOL);
 
 	return 0;
 }

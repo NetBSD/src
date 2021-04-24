@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.7 2017/05/21 06:49:12 skrll Exp $ */
+/*	$NetBSD: mainbus.c,v 1.8 2021/04/24 23:36:35 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.7 2017/05/21 06:49:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.8 2021/04/24 23:36:35 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -87,7 +87,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 
 	for (md = mainbusdevs; md->md_name != NULL; md++) {
 		struct mainbusdev ma = *md;
-		config_found_ia(self, "mainbus", &ma, mainbus_print);
+		config_found(self, &ma, mainbus_print, CFARG_EOL);
 	}
 
 #ifdef INGENIC_DEBUG

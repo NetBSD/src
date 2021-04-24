@@ -1,4 +1,4 @@
-/* $NetBSD: plb.c,v 1.22 2020/07/06 09:34:17 rin Exp $ */
+/* $NetBSD: plb.c,v 1.23 2021/04/24 23:36:46 thorpej Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plb.c,v 1.22 2020/07/06 09:34:17 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plb.c,v 1.23 2021/04/24 23:36:46 thorpej Exp $");
 
 #include "emac.h"
 #include "locators.h"
@@ -178,7 +178,7 @@ plb_attach(device_t parent, device_t self, void *aux)
 		paa.plb_dmat = &ibm4xx_default_bus_dma_tag;
 		paa.plb_irq = PLBCF_IRQ_DEFAULT;
 
-		(void) config_found_ia(self, "plb", &paa, plb_print);
+		config_found(self, &paa, plb_print, CFARG_EOL);
 	}
 
 	while (local_plb_devs && local_plb_devs->plb_name != NULL) {
@@ -190,7 +190,7 @@ plb_attach(device_t parent, device_t self, void *aux)
 		paa.plb_dmat = &ibm4xx_default_bus_dma_tag;
 		paa.plb_irq = PLBCF_IRQ_DEFAULT;
 
-		(void) config_found_ia(self, "plb", &paa, plb_print);
+		config_found(self, &paa, plb_print, CFARG_EOL);
 		local_plb_devs++;
 	}
 }

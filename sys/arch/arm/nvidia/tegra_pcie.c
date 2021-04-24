@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_pcie.c,v 1.36 2021/01/27 03:10:19 thorpej Exp $ */
+/* $NetBSD: tegra_pcie.c,v 1.37 2021/04/24 23:36:27 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.36 2021/01/27 03:10:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.37 2021/04/24 23:36:27 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -275,7 +275,7 @@ tegra_pcie_attach(device_t parent, device_t self, void *aux)
 	pba.pba_pc = &sc->sc_pc;
 	pba.pba_bus = 0;
 
-	config_found_ia(self, "pcibus", &pba, pcibusprint);
+	config_found(self, &pba, pcibusprint, CFARG_EOL);
 }
 
 static int

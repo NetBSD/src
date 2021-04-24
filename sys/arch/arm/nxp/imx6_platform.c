@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_platform.c,v 1.5 2021/02/05 08:07:14 skrll Exp $	*/
+/*	$NetBSD: imx6_platform.c,v 1.6 2021/04/24 23:36:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_platform.c,v 1.5 2021/02/05 08:07:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_platform.c,v 1.6 2021/04/24 23:36:28 thorpej Exp $");
 
 #include "arml2cc.h"
 #include "opt_console.h"
@@ -118,8 +118,6 @@ static void
 imx_platform_device_register(device_t self, void *aux)
 {
 	prop_dictionary_t prop = device_properties(self);
-
-	fdtbus_device_register(self, aux);
 
 	if (device_is_a(self, "atphy")) {
 		static const struct device_compatible_entry compat_data[] = {

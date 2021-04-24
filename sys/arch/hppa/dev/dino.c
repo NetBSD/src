@@ -1,4 +1,4 @@
-/*	$NetBSD: dino.c,v 1.10 2020/10/23 22:14:47 macallan Exp $ */
+/*	$NetBSD: dino.c,v 1.11 2021/04/24 23:36:39 thorpej Exp $ */
 
 /*	$OpenBSD: dino.c,v 1.5 2004/02/13 20:39:31 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.10 2020/10/23 22:14:47 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.11 2021/04/24 23:36:39 thorpej Exp $");
 
 /* #include "cardbus.h" */
 
@@ -1743,11 +1743,16 @@ dinoattach(device_t parent, device_t self, void *aux)
 	pba.pba_pc = &sc->sc_pc;
 	pba.pba_bus = 0;
 	pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY;
-	config_found_ia(self, "pcibus", &pba, pcibusprint);
+	config_found(self, &pba, pcibusprint,
+	    CFARG_IATTR, "pcibus",
+	    CFARG_EOL);
 }
 
 static device_t
 dino_callback(device_t self, struct confargs *ca)
 {
-	return config_found_sm_loc(self, "gedoens", NULL, ca, mbprint, mbsubmatch);
+	return config_found(self, ca, mbprint,
+	    CFARG_SUBMATCH, mbsubmatch,
+	    CFARG_IATTR, "gedoens",
+	    CFARG_EOL);
 }

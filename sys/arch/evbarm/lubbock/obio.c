@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.10 2011/07/01 20:42:37 dyoung Exp $ */
+/*	$NetBSD: obio.c,v 1.11 2021/04/24 23:36:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.10 2011/07/01 20:42:37 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.11 2021/04/24 23:36:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -283,7 +283,9 @@ obio_attach(device_t parent, device_t self, void *aux)
 	/*
 	 *  Attach each devices
 	 */
-	config_search_ia(obio_search, self, "obio", NULL);
+	config_search(self, NULL,
+	    CFARG_SEARCH, obio_search,
+	    CFARG_EOL);
 }
 
 int
@@ -297,8 +299,8 @@ obio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
         oba.oba_addr = cf->cf_loc[OBIOCF_ADDR];
         oba.oba_intr = cf->cf_loc[OBIOCF_INTR];
 
-        if (config_match(parent, cf, &oba))
-                config_attach(parent, cf, &oba, obio_print);
+        if (config_probe(parent, cf, &oba))
+                config_attach(parent, cf, &oba, obio_print, CFARG_EOL);
 
         return 0;
 }

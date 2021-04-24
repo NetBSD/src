@@ -1,4 +1,4 @@
-/*	$NetBSD: jmide.c,v 1.23 2019/11/10 21:16:36 chs Exp $	*/
+/*	$NetBSD: jmide.c,v 1.24 2021/04/24 23:36:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jmide.c,v 1.23 2019/11/10 21:16:36 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jmide.c,v 1.24 2021/04/24 23:36:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -224,9 +224,11 @@ jmide_attach(device_t parent, device_t self, void *aux)
 				aprint_error("%s: can't map ahci registers\n",
 				    JM_NAME(sc));
 			} else {
-				sc->sc_ahci = config_found_ia(
+				sc->sc_ahci = config_found(
 				    sc->sc_pciide.sc_wdcdev.sc_atac.atac_dev,
-				    "jmide_hl", &jma, jmahci_print);
+				    &jma, jmahci_print,
+				    CFARG_IATTR, "jmide_hl",
+				    CFARG_EOL);
 			}
 			/*
 			 * if we couldn't attach an ahci, try to fall back

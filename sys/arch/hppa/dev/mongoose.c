@@ -1,4 +1,4 @@
-/*	$NetBSD: mongoose.c,v 1.5 2019/04/15 20:40:37 skrll Exp $	*/
+/*	$NetBSD: mongoose.c,v 1.6 2021/04/24 23:36:39 thorpej Exp $	*/
 
 /*	$OpenBSD: mongoose.c,v 1.19 2010/01/01 20:28:42 kettenis Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mongoose.c,v 1.5 2019/04/15 20:40:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mongoose.c,v 1.6 2021/04/24 23:36:39 thorpej Exp $");
 
 #define MONGOOSE_DEBUG 9
 
@@ -688,7 +688,9 @@ mgattach(device_t parent, device_t self, void *aux)
 	ea.mongoose_eisa.eba_memt = &sc->sc_ememt;
 	ea.mongoose_eisa.eba_dmat = NULL /* &sc->sc_edmat */;
 	ea.mongoose_eisa.eba_ec = &sc->sc_ec;
-	config_found_ia(self, "eisabus", &ea.mongoose_eisa, eisabusprint);
+	config_found(self, &ea.mongoose_eisa, eisabusprint,
+	    CFARG_IATTR, "eisabus",
+	    CFARG_EOL);
 
 	sc->sc_ic.ic_v = sc;
 	sc->sc_ic.ic_attach_hook = mg_isa_attach_hook;
@@ -712,7 +714,9 @@ mgattach(device_t parent, device_t self, void *aux)
 	ea.mongoose_isa.iba_dmat = &sc->sc_idmat;
 #endif
 	ea.mongoose_isa.iba_ic = &sc->sc_ic;
-	config_found_ia(self, "isabus", &ea.mongoose_isa, isabusprint);
+	config_found(self, &ea.mongoose_isa, isabusprint,
+	    CFARG_IATTR, "isabus",
+	    CFARG_EOL);
 #undef	R
 
 	/* attach interrupt */

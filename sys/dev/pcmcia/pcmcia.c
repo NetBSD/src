@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.94 2011/07/26 22:24:36 dyoung Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.95 2021/04/24 23:36:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.94 2011/07/26 22:24:36 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.95 2021/04/24 23:36:58 thorpej Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -207,15 +207,14 @@ pcmcia_card_attach(device_t dev)
 		pf->pf_ih = NULL;
 	}
 
-	error = pcmcia_rescan(dev, "pcmcia", wildcard);
+	error = pcmcia_rescan(dev, NULL, wildcard);
 done:
 	pcmcia_socket_disable(dev);
 	return (error);
 }
 
 int
-pcmcia_rescan(device_t self, const char *ifattr,
-    const int *locators)
+pcmcia_rescan(device_t self, const char *ifattr, const int *locators)
 {
 	struct pcmcia_softc *sc = device_private(self);
 	struct pcmcia_function *pf;
@@ -246,9 +245,10 @@ pcmcia_rescan(device_t self, const char *ifattr,
 		paa.card = &sc->card;
 		paa.pf = pf;
 
-		pf->child = config_found_sm_loc(self, "pcmcia", locs, &paa,
-						pcmcia_print,
-						config_stdsubmatch);
+		pf->child = config_found(self, &paa, pcmcia_print,
+		    CFARG_SUBMATCH, config_stdsubmatch,
+		    CFARG_LOCATORS, locs,
+		    CFARG_EOL);
 	}
 
 	return (0);

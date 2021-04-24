@@ -1,4 +1,4 @@
-/*	$NetBSD: vrip.c,v 1.37 2012/10/27 17:17:56 chs Exp $	*/
+/*	$NetBSD: vrip.c,v 1.38 2021/04/24 23:36:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrip.c,v 1.37 2012/10/27 17:17:56 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrip.c,v 1.38 2021/04/24 23:36:38 thorpej Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -245,10 +245,15 @@ vripattach_common(device_t parent, device_t self, void *aux)
 	 *	device. so attach first
 	 */
 	sc->sc_pri = 2;
-	config_search_ia(vrip_search, self, "vripif", vrip_print);
+	config_search(self, NULL,
+	    CFARG_SEARCH, vrip_search,
+	    CFARG_EOL);
+
 	/* Other system devices. */
 	sc->sc_pri = 1;
-	config_search_ia(vrip_search, self, "vripif", vrip_print);
+	config_search(self, NULL,
+	    CFARG_SEARCH, vrip_search,
+	    CFARG_EOL);
 }
 
 int
@@ -298,8 +303,8 @@ vrip_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	va.va_cc = sc->sc_chipset.vc_cc;
 	va.va_ac = sc->sc_chipset.vc_ac;
 	va.va_dc = sc->sc_chipset.vc_dc;
-	if ((config_match(parent, cf, &va) == sc->sc_pri))
-		config_attach(parent, cf, &va, vrip_print);
+	if (/*XXX*/config_probe(parent, cf, &va) == sc->sc_pri)
+		config_attach(parent, cf, &va, vrip_print, CFARG_EOL);
 
 	return (0);
 }

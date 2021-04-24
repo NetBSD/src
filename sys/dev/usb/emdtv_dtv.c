@@ -1,4 +1,4 @@
-/* $NetBSD: emdtv_dtv.c,v 1.14 2020/03/14 02:35:33 christos Exp $ */
+/* $NetBSD: emdtv_dtv.c,v 1.15 2021/04/24 23:36:59 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2008, 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emdtv_dtv.c,v 1.14 2020/03/14 02:35:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emdtv_dtv.c,v 1.15 2021/04/24 23:36:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,8 +171,9 @@ emdtv_dtv_rescan(struct emdtv_softc *sc, const char *ifattr, const int *locs)
 	daa.priv = sc;
 
 	if (ifattr_match(ifattr, "dtvbus") && sc->sc_dtvdev == NULL)
-		sc->sc_dtvdev = config_found_ia(sc->sc_dev, "dtvbus",
-		    &daa, dtv_print);
+		sc->sc_dtvdev = config_found(sc->sc_dev, &daa, dtv_print,
+		    CFARG_IATTR, "dtvbus",
+		    CFARG_EOL);
 }
 
 static void

@@ -1,4 +1,4 @@
-/* $NetBSD: spi.c,v 1.16 2021/01/18 15:28:21 thorpej Exp $ */
+/* $NetBSD: spi.c,v 1.17 2021/04/24 23:36:59 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.16 2021/01/18 15:28:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.17 2021/04/24 23:36:59 thorpej Exp $");
 
 #include "locators.h"
 
@@ -158,9 +158,9 @@ spi_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	if (ISSET(sa.sa_handle->sh_flags, SPIH_ATTACHED))
 		return -1;
 
-	if (config_match(parent, cf, &sa) > 0) {
+	if (config_probe(parent, cf, &sa)) {
 		SET(sa.sa_handle->sh_flags, SPIH_ATTACHED);
-		config_attach(parent, cf, &sa, spi_print);
+		config_attach(parent, cf, &sa, spi_print, CFARG_EOL);
 	}
 
 	return 0;
@@ -249,9 +249,9 @@ spi_direct_attach_child_devices(device_t parent, struct spi_softc *sc,
 		spi_fill_compat(&sa,
 				prop_data_value(cdata),
 				prop_data_size(cdata), &buf);
-		(void) config_found_sm_loc(parent, "spi",
-					   loc, &sa, spi_print,
-					   NULL);
+		config_found(parent, &sa, spi_print,
+		    CFARG_LOCATORS, loc,
+		    CFARG_EOL);
 
 		if (sa.sa_compat)
 			free(sa.sa_compat, M_TEMP);
@@ -314,7 +314,9 @@ spi_attach(device_t parent, device_t self, void *aux)
 		spi_direct_attach_child_devices(self, sc, sba->sba_child_devices);
 	}
 	/* Then do any other devices the user may have manually wired */
-	config_search_ia(spi_search, self, "spi", NULL);
+	config_search(self, NULL,
+	    CFARG_SEARCH, spi_search,
+	    CFARG_EOL);
 }
 
 static int

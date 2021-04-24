@@ -1,4 +1,4 @@
-/*	$NetBSD: flash.c,v 1.15 2019/12/26 04:53:11 msaitoh Exp $	*/
+/*	$NetBSD: flash.c,v 1.16 2021/04/24 23:36:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flash.c,v 1.15 2019/12/26 04:53:11 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash.c,v 1.16 2021/04/24 23:36:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -240,7 +240,9 @@ flash_attach_mi(struct flash_interface * const flash_if, device_t device)
 #endif
 	arg.flash_if = flash_if;
 
-	return config_found_ia(device, "flashbus", &arg, flash_print);
+	return config_found(device, &arg, flash_print,
+	    CFARG_IATTR, "flashbus",
+	    CFARG_EOL);
 }
 
 /**

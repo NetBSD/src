@@ -1,4 +1,4 @@
-#	$NetBSD: files.sandpoint,v 1.31 2012/01/14 19:39:25 phx Exp $
+#	$NetBSD: files.sandpoint,v 1.32 2021/04/24 23:36:47 thorpej Exp $
 #
 # Motorola's "SandPoint" evaluation board and multiplied descendents.
 #
@@ -52,7 +52,7 @@ device	nhpow: sysmon_power, sysmon_taskq, gpiobus
 attach	nhpow at mainbus
 file	arch/sandpoint/sandpoint/nhpow.c	nhpow
 
-device	eumb { [ unit = -1 ] }: mainbus
+device	eumb { [ unit = -1 ] }
 attach	eumb at mainbus
 file	arch/sandpoint/sandpoint/eumb.c		eumb
 

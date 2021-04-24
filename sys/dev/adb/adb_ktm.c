@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_ktm.c,v 1.2 2019/09/15 16:16:36 macallan Exp $	*/
+/*	$NetBSD: adb_ktm.c,v 1.3 2021/04/24 23:36:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2019 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_ktm.c,v 1.2 2019/09/15 16:16:36 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_ktm.c,v 1.3 2021/04/24 23:36:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -136,7 +136,7 @@ ktm_attach(device_t parent, device_t self, void *aux)
 
 	a.accessops = &ktm_accessops;
 	a.accesscookie = sc;
-	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint);
+	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint, CFARG_EOL);
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: pnpbus.c,v 1.13 2020/11/21 15:59:53 thorpej Exp $	*/
+/*	$NetBSD: pnpbus.c,v 1.14 2021/04/24 23:36:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbus.c,v 1.13 2020/11/21 15:59:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbus.c,v 1.14 2021/04/24 23:36:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,9 @@ pnpbus_attach(device_t parent, device_t self, void *aux)
 	isa_dmainit(sc->sc_ic, sc->sc_iot, sc->sc_dmat, self);
 #endif
 
-	(void)config_search_ia(pnpbus_search, self, "pnpbus", aux);
+	config_search(self, aux,
+	    CFARG_SEARCH, pnpbus_search,
+	    CFARG_EOL);
 }
 
 static int
@@ -400,8 +402,9 @@ pnpbus_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 
 	for (i = 0; i < ((ndev > MAX_DEVICES) ? MAX_DEVICES : ndev); i++) {
 		pnp_getpna(&pna, paa, &ppc_dev[i]);
-		if (config_match(parent, cf, &pna) > 0)
-			config_attach(parent, cf, &pna, pnpbus_print);
+		if (config_probe(parent, cf, &pna))
+			config_attach(parent, cf, &pna, pnpbus_print,
+			    CFARG_EOL);
 	}
 
 	return 0;

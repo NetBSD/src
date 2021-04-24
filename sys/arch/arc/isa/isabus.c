@@ -1,4 +1,4 @@
-/*	$NetBSD: isabus.c,v 1.51 2020/11/18 02:14:13 thorpej Exp $	*/
+/*	$NetBSD: isabus.c,v 1.52 2021/04/24 23:36:25 thorpej Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -120,7 +120,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.51 2020/11/18 02:14:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.52 2021/04/24 23:36:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -207,7 +207,9 @@ isabrattach(struct isabr_softc *sc)
 	iba.iba_memt = &arc_bus_mem;
 	iba.iba_dmat = &sc->sc_dmat;
 	iba.iba_ic = &sc->arc_isa_cs;
-	config_found_ia(sc->sc_dev, "isabus", &iba, isabrprint);
+	config_found(sc->sc_dev, &iba, isabrprint,
+	    CFARG_IATTR, "isabus",
+	    CFARG_EOL);
 }
 
 static int

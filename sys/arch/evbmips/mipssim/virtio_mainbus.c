@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_mainbus.c,v 1.1 2021/02/15 22:39:46 reinoud Exp $ */
+/* $NetBSD: virtio_mainbus.c,v 1.2 2021/04/24 23:36:35 thorpej Exp $ */
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_mainbus.c,v 1.1 2021/02/15 22:39:46 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_mainbus.c,v 1.2 2021/04/24 23:36:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,13 +108,13 @@ virtio_mainbus_attach(device_t parent, device_t self, void *aux)
 	if (virtio_mmio_common_probe_present(msc))
 		virtio_mmio_common_attach(msc);
 
-	virtio_mainbus_rescan(self, "virtio", NULL);
+	virtio_mainbus_rescan(self, NULL, NULL);
 }
 
 
 /* ARGSUSED */
 static int
-virtio_mainbus_rescan(device_t self, const char *attr, const int *scan_flags)
+virtio_mainbus_rescan(device_t self, const char *ifattr, const int *locs)
 {
 	struct virtio_mainbus_softc *sc = device_private(self);
 	struct virtio_mmio_softc *msc = &sc->sc_msc;
@@ -127,7 +127,7 @@ virtio_mainbus_rescan(device_t self, const char *attr, const int *scan_flags)
 	memset(&va, 0, sizeof(va));
 	va.sc_childdevid = vsc->sc_childdevid;
 
-	config_found_ia(self, attr, &va, NULL);
+	config_found(self, &va, NULL, CFARG_EOL);
 
 	if (virtio_attach_failed(vsc))
 		return 0;

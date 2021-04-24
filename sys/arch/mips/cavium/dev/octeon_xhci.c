@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_xhci.c,v 1.4 2021/01/27 03:10:21 thorpej Exp $ */
+/*	$NetBSD: octeon_xhci.c,v 1.5 2021/04/24 23:36:42 thorpej Exp $ */
 /*	$OpenBSD: octxhci.c,v 1.4 2019/09/29 04:32:23 visa Exp $	*/
 
 /*
@@ -180,8 +180,9 @@ octxhci_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint);
-	sc->sc_child2 = config_found(self, &sc->sc_bus2, usbctlprint);
+	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint, CFARG_EOL);
+	sc->sc_child2 = config_found(self, &sc->sc_bus2, usbctlprint,
+	    CFARG_EOL);
 }
 
 void

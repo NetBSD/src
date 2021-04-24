@@ -1,4 +1,4 @@
-/*	$NetBSD: maple.c,v 1.53 2019/05/06 17:16:41 ryo Exp $	*/
+/*	$NetBSD: maple.c,v 1.54 2021/04/24 23:36:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: maple.c,v 1.53 2019/05/06 17:16:41 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: maple.c,v 1.54 2021/04/24 23:36:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -700,8 +700,10 @@ maple_attach_unit(struct maple_softc *sc, struct maple_unit *u)
 		u->u_func[f].f_dev = NULL;
 		if (func & MAPLE_FUNC(f)) {
 			ma.ma_function = f;
-			u->u_func[f].f_dev = config_found_sm_loc(sc->sc_dev,
-			    "maple", NULL, &ma, mapleprint, maplesubmatch);
+			u->u_func[f].f_dev =
+			    config_found(sc->sc_dev, &ma, mapleprint,
+			    CFARG_SUBMATCH, maplesubmatch,
+			    CFARG_EOL);
 			u->u_ping_func = f;	/* XXX using largest func */
 		}
 	}

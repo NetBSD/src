@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd.c,v 1.21 2012/10/10 22:00:22 skrll Exp $	*/
+/*	$NetBSD: iomd.c,v 1.22 2021/04/24 23:36:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996-1997 Mark Brinicombe.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iomd.c,v 1.21 2012/10/10 22:00:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iomd.c,v 1.22 2021/04/24 23:36:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -253,7 +253,7 @@ iomdattach(device_t parent, device_t self, void *aux)
 	ia.ia_clk.ca_name = "clk";
 	ia.ia_clk.ca_iot = iot;
 	ia.ia_clk.ca_ioh = ioh;
-	config_found(self, &ia, iomdprint);
+	config_found(self, &ia, iomdprint, CFARG_EOL);
 
 	/* Attach kbd device when configured */
 	if (bus_space_subregion(iot, ioh, IOMD_KBDDAT, 8, &ia.ia_kbd.ka_ioh))
@@ -262,7 +262,7 @@ iomdattach(device_t parent, device_t self, void *aux)
 	ia.ia_kbd.ka_iot = iot;
 	ia.ia_kbd.ka_rxirq = IRQ_KBDRX;
 	ia.ia_kbd.ka_txirq = IRQ_KBDTX;
-	config_found(self, &ia, iomdprint);
+	config_found(self, &ia, iomdprint, CFARG_EOL);
 
 	/* Attach iic device */
 
@@ -271,7 +271,7 @@ iomdattach(device_t parent, device_t self, void *aux)
 	ia.ia_iic.ia_name = "iic";
 	ia.ia_iic.ia_iot = iot;
 	ia.ia_iic.ia_irq = -1;
-	config_found(self, &ia, iomdprint);
+	config_found(self, &ia, iomdprint, CFARG_EOL);
 
 	switch (sc->sc_id) {
 	case ARM7500_IOC_ID:
@@ -284,7 +284,7 @@ iomdattach(device_t parent, device_t self, void *aux)
 		ia.ia_opms.pa_name = "opms";
 		ia.ia_opms.pa_iot = iot;
 		ia.ia_opms.pa_irq = IRQ_MSDRX;
-		config_found(self, &ia, iomdprint);
+		config_found(self, &ia, iomdprint, CFARG_EOL);
 		break;
 	case RPC600_IOMD_ID:
 		/* Attach (ws)qms device */
@@ -298,7 +298,7 @@ iomdattach(device_t parent, device_t self, void *aux)
 		ia.ia_qms.qa_name = "qms";
 		ia.ia_qms.qa_iot = iot;
 		ia.ia_qms.qa_irq = IRQ_VSYNC;
-		config_found(self, &ia, iomdprint);
+		config_found(self, &ia, iomdprint, CFARG_EOL);
 		break;
 	}
 }

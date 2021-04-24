@@ -1,4 +1,4 @@
-/* $NetBSD: tskp.c,v 1.10 2012/11/12 18:00:40 skrll Exp $ */
+/* $NetBSD: tskp.c,v 1.11 2021/04/24 23:36:34 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tskp.c,v 1.10 2012/11/12 18:00:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tskp.c,v 1.11 2021/04/24 23:36:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,7 +150,8 @@ tskp_attach(device_t parent, device_t self, void *aux)
 	wa.keymap = &mxkp_keymapdata;
 	wa.accessops = &mxkp_accessops;
 	wa.accesscookie = &sc->sc_mxkp;
-	sc->sc_mxkp.sc_wskbddev = config_found(self, &wa, wskbddevprint);
+	sc->sc_mxkp.sc_wskbddev = config_found(self, &wa, wskbddevprint,
+	    CFARG_EOL);
 }
 
 static void

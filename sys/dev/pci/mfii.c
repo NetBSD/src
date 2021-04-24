@@ -1,4 +1,4 @@
-/* $NetBSD: mfii.c,v 1.7 2020/05/14 08:34:18 msaitoh Exp $ */
+/* $NetBSD: mfii.c,v 1.8 2021/04/24 23:36:57 thorpej Exp $ */
 /* $OpenBSD: mfii.c,v 1.58 2018/08/14 05:22:21 jmatthew Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfii.c,v 1.7 2020/05/14 08:34:18 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfii.c,v 1.8 2021/04/24 23:36:57 thorpej Exp $");
 
 #include "bio.h"
 
@@ -838,7 +838,7 @@ mfii_attach(device_t parent, device_t self, void *aux)
 	chan->chan_ntargets = sc->sc_info.mci_max_lds;
 	chan->chan_id = sc->sc_info.mci_max_lds;
 
-	mfii_rescan(sc->sc_dev, "scsi", NULL);
+	mfii_rescan(sc->sc_dev, NULL, NULL);
 
 	if (mfii_aen_register(sc) != 0) {
 		/* error printed by mfii_aen_register */
@@ -988,11 +988,11 @@ static int
 mfii_rescan(device_t self, const char *ifattr, const int *locators)
 {
 	struct mfii_softc *sc = device_private(self);
+
 	if (sc->sc_child != NULL)
 		return 0;
 
-	sc->sc_child = config_found_sm_loc(self, ifattr, locators, &sc->sc_chan,
-	    scsiprint, NULL);
+	sc->sc_child = config_found(self, &sc->sc_chan, scsiprint, CFARG_EOL);
 	return 0;
 }
 

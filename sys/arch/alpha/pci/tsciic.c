@@ -1,4 +1,4 @@
-/*	$NetBSD: tsciic.c,v 1.2 2019/12/22 23:23:29 thorpej Exp $	*/
+/*	$NetBSD: tsciic.c,v 1.3 2021/04/24 23:36:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tsciic.c,v 1.2 2019/12/22 23:23:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsciic.c,v 1.3 2021/04/24 23:36:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,8 @@ static const struct i2c_bitbang_ops tsciicbb_ops = {
 };
 
 void
-tsciic_init(device_t self) {
+tsciic_init(device_t self)
+{
 	struct tsciic_softc *sc = device_private(self);
 	struct i2cbus_attach_args iba;
 
@@ -86,8 +87,7 @@ tsciic_init(device_t self) {
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c;
 
-	config_found_ia(self, "i2cbus", &iba, iicbus_print);
-
+	config_found(self, &iba, iicbus_print, CFARG_EOL);
 }
 
 /* I2C bitbanging */

@@ -60,7 +60,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/dev/ismt/ismt.c 266474 2014-05-20 19:55:06Z jimharris $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ismt.c,v 1.7 2019/12/22 23:23:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ismt.c,v 1.8 2021/04/24 23:36:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -787,15 +787,12 @@ ismt_match(device_t parent, cfdata_t match, void *aux)
 }
 
 static int
-ismt_rescan(device_t self, const char *ifattr, const int *flags)
+ismt_rescan(device_t self, const char *ifattr, const int *locators)
 {
 	struct ismt_softc *sc = device_private(self);
 	struct i2cbus_attach_args iba;
 
-	if (!ifattr_match(ifattr, "i2cbus"))
-		return 0;
-
-	if (sc->smbdev)
+	if (sc->smbdev != NULL)
 		return 0;
 
 	/* Attach I2C bus */
@@ -805,7 +802,7 @@ ismt_rescan(device_t self, const char *ifattr, const int *flags)
 
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c_tag;
-	sc->smbdev = config_found_ia(self, ifattr, &iba, iicbus_print);
+	sc->smbdev = config_found(self, &iba, iicbus_print, CFARG_EOL);
 
 	return 0;
 }
@@ -813,9 +810,8 @@ ismt_rescan(device_t self, const char *ifattr, const int *flags)
 static void
 ismt_config_interrupts(device_t self)
 {
-	int flags = 0;
 
-	ismt_rescan(self, "i2cbus", &flags);
+	ismt_rescan(self, NULL, NULL);
 }
 
 static void

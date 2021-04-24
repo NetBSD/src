@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.74 2020/03/14 02:35:33 christos Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.75 2021/04/24 23:36:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.74 2020/03/14 02:35:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.75 2021/04/24 23:36:59 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -331,8 +331,9 @@ uftdi_attach(device_t parent, device_t self, void *aux)
 	DPRINTF(("uftdi: in=%#x out=%#x isize=%#x osize=%#x\n",
 		ucaa.ucaa_bulkin, ucaa.ucaa_bulkout,
 		ucaa.ucaa_ibufsize, ucaa.ucaa_obufsize));
-	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL,
-	    &ucaa, ucomprint, ucomsubmatch);
+	sc->sc_subdev = config_found(self, &ucaa, ucomprint,
+				     CFARG_SUBMATCH, ucomsubmatch,
+				     CFARG_EOL);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
 

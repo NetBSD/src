@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.290 2021/02/05 17:13:40 thorpej Exp $	*/
+/*	$NetBSD: acpi.c,v 1.291 2021/04/24 23:36:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.290 2021/02/05 17:13:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.291 2021/04/24 23:36:52 thorpej Exp $");
 
 #include "pci.h"
 #include "opt_acpi.h"
@@ -360,7 +360,10 @@ acpi_disable(void)
 int
 acpi_check(device_t parent, const char *ifattr)
 {
-	return (config_search_ia(acpi_submatch, parent, ifattr, NULL) != NULL);
+	return config_search(parent, NULL,
+			     CFARG_SUBMATCH, acpi_submatch,
+			     CFARG_IATTR, ifattr,
+			     CFARG_EOL) != NULL;
 }
 
 int
@@ -488,7 +491,9 @@ acpi_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Early initialization of acpiec(4) via ECDT.
 	 */
-	(void)config_found_ia(self, "acpiecdtbus", aa, NULL);
+	config_found(self, aa, NULL,
+	    CFARG_IATTR, "acpiecdtbus",
+	    CFARG_EOL);
 
 	rv = AcpiInitializeObjects(ACPI_FULL_INITIALIZATION);
 
@@ -552,7 +557,9 @@ acpi_attach(device_t parent, device_t self, void *aux)
 		if (ACPI_FAILURE(rv)) {
 			continue;
 		}
-		config_found_ia(sc->sc_dev, "acpisdtbus", hdr, NULL);
+		config_found(sc->sc_dev, hdr, NULL,
+		    CFARG_IATTR, "acpisdtbus",
+		    CFARG_EOL);
 		AcpiPutTable(hdr);
 	}
 
@@ -889,9 +896,11 @@ acpi_rescan(device_t self, const char *ifattr, const int *locators)
 	 */
 	aa.aa_memt = sc->sc_memt;
 
-	if (ifattr_match(ifattr, "acpihpetbus") && sc->sc_hpet == NULL)
-		sc->sc_hpet = config_found_ia(sc->sc_dev,
-		    "acpihpetbus", &aa, NULL);
+	if (ifattr_match(ifattr, "acpihpetbus") && sc->sc_hpet == NULL) {
+		sc->sc_hpet = config_found(sc->sc_dev, &aa, NULL,
+					   CFARG_IATTR, "acpihpetbus",
+					   CFARG_EOL);
+	}
 
 	/*
 	 * A two-pass scan for acpinodebus.
@@ -904,13 +913,17 @@ acpi_rescan(device_t self, const char *ifattr, const int *locators)
 	/*
 	 * Attach APM emulation and acpiwdrt(4).
 	 */
-	if (ifattr_match(ifattr, "acpiapmbus") && sc->sc_apmbus == NULL)
-		sc->sc_apmbus = config_found_ia(sc->sc_dev,
-		    "acpiapmbus", NULL, NULL);
+	if (ifattr_match(ifattr, "acpiapmbus") && sc->sc_apmbus == NULL) {
+		sc->sc_apmbus = config_found(sc->sc_dev, NULL, NULL,
+					     CFARG_IATTR, "acpiapmbus",
+					     CFARG_EOL);
+	}
 
-	if (ifattr_match(ifattr, "acpiwdrtbus") && sc->sc_wdrt == NULL)
-		sc->sc_wdrt = config_found_ia(sc->sc_dev,
-		    "acpiwdrtbus", NULL, NULL);
+	if (ifattr_match(ifattr, "acpiwdrtbus") && sc->sc_wdrt == NULL) {
+		sc->sc_wdrt = config_found(sc->sc_dev, NULL, NULL,
+					   CFARG_IATTR, "acpiwdrtbus",
+					   CFARG_EOL);
+	}
 
 	return 0;
 }
@@ -938,6 +951,8 @@ acpi_rescan_early(struct acpi_softc *sc)
 		if (acpi_match_hid(ad->ad_devinfo, acpi_early_ids) == 0)
 			continue;
 
+		KASSERT(ad->ad_handle != NULL);
+
 		aa.aa_node = ad;
 		aa.aa_iot = sc->sc_iot;
 		aa.aa_memt = sc->sc_memt;
@@ -949,8 +964,10 @@ acpi_rescan_early(struct acpi_softc *sc)
 		aa.aa_dmat = ad->ad_dmat;
 		aa.aa_dmat64 = ad->ad_dmat64;
 
-		ad->ad_device = config_found_ia(sc->sc_dev,
-		    "acpinodebus", &aa, acpi_print);
+		ad->ad_device = config_found(sc->sc_dev, &aa, acpi_print,
+		    CFARG_IATTR, "acpinodebus",
+		    CFARG_DEVHANDLE, devhandle_from_acpi(ad->ad_handle),
+		    CFARG_EOL);
 	}
 }
 
@@ -1002,6 +1019,8 @@ acpi_rescan_nodes(struct acpi_softc *sc)
 		if (acpi_match_hid(di, hpet_ids) != 0 && sc->sc_hpet != NULL)
 			continue;
 
+		KASSERT(ad->ad_handle != NULL);
+
 		aa.aa_node = ad;
 		aa.aa_iot = sc->sc_iot;
 		aa.aa_memt = sc->sc_memt;
@@ -1013,8 +1032,10 @@ acpi_rescan_nodes(struct acpi_softc *sc)
 		aa.aa_dmat = ad->ad_dmat;
 		aa.aa_dmat64 = ad->ad_dmat64;
 
-		ad->ad_device = config_found_ia(sc->sc_dev,
-		    "acpinodebus", &aa, acpi_print);
+		ad->ad_device = config_found(sc->sc_dev, &aa, acpi_print,
+		    CFARG_IATTR, "acpinodebus",
+		    CFARG_DEVHANDLE, devhandle_from_acpi(ad->ad_handle),
+		    CFARG_EOL);
 	}
 }
 
@@ -1136,14 +1157,7 @@ acpi_device_register(device_t dev, void *v)
 	device_t parent = device_parent(dev);
 	ACPI_HANDLE hdl = NULL;
 
-	/*
-	 * aa_node is only valid if we attached to the "acpinodebus"
-	 * interface attribute.
-	 */
-	if (device_attached_to_iattr(dev, "acpinodebus")) {
-		const struct acpi_attach_args *aa = v;
-		hdl = aa->aa_node->ad_handle;
-	} else if (device_is_a(parent, "pci")) {
+	if (device_is_a(parent, "pci")) {
 		const struct pci_attach_args *pa = v;
 		struct acpi_devnode *ad;
 		u_int segment;

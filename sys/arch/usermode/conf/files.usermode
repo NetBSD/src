@@ -1,4 +1,4 @@
-# $NetBSD: files.usermode,v 1.21 2020/10/21 13:31:52 christos Exp $
+# $NetBSD: files.usermode,v 1.22 2021/04/24 23:36:50 thorpej Exp $
 
 maxpartitions 8
 maxusers 8 16 64
@@ -48,7 +48,7 @@ include "dev/scsipi/files.scsipi"
 #attach	vscsi at thunkbus with vscsi_thunkbus
 #file	atch/usermode/dev/vscsi_thunkbus.c	vscsi_thunkbus
 
-device	vatapi { } : atapi, atapibus
+device	vatapi: atapi
 attach	vatapi at thunkbus with vatapi_thunkbus
 file	arch/usermode/dev/vatapi.c		vatapi_thunkbus
 

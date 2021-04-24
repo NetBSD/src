@@ -1,4 +1,4 @@
-/*	$NetBSD: bonito_mainbus.c,v 1.17 2016/05/31 03:51:55 dholland Exp $	*/
+/*	$NetBSD: bonito_mainbus.c,v 1.18 2021/04/24 23:36:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bonito_mainbus.c,v 1.17 2016/05/31 03:51:55 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bonito_mainbus.c,v 1.18 2021/04/24 23:36:23 thorpej Exp $");
 
 #include "opt_algor_p6032.h"
 
@@ -113,5 +113,5 @@ bonito_mainbus_attach(device_t parent, device_t self, void *aux)
 	    }
 #endif /* ALGOR_P6032 */
 
-	(void) config_found_ia(self, "pcibus", &pba, pcibusprint);
+	config_found(self, &pba, pcibusprint, CFARG_EOL);
 }

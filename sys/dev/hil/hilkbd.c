@@ -1,4 +1,4 @@
-/*	$NetBSD: hilkbd.c,v 1.4 2017/04/08 17:04:56 tsutsui Exp $	*/
+/*	$NetBSD: hilkbd.c,v 1.5 2021/04/24 23:36:54 thorpej Exp $	*/
 /*	$OpenBSD: hilkbd.c,v 1.14 2009/01/21 21:53:59 grange Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
@@ -203,7 +203,7 @@ hilkbdattach(device_t parent, device_t self, void *aux)
 		sc->sc_console = sc->sc_enabled = 0;
 	}
 
-	sc->sc_wskbddev = config_found(self, &a, wskbddevprint);
+	sc->sc_wskbddev = config_found(self, &a, wskbddevprint, CFARG_EOL);
 
 	/*
 	 * If this is an old keyboard with a numeric pad but no ``num lock''

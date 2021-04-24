@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mini2440_lcd.c,v 1.4 2014/07/25 08:10:33 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mini2440_lcd.c,v 1.5 2021/04/24 23:36:34 thorpej Exp $");
 
 /*
  * LCD driver for FriendlyARM MINI2440.
@@ -292,7 +292,7 @@ lcd_attach(device_t parent, device_t self, void *aux)
 	aa.accesscookie = sc;
 
 
-	(void) config_found(self, &aa, wsemuldisplaydevprint);
+	(void) config_found(self, &aa, wsemuldisplaydevprint, CFARG_EOL);
 #else
 
 	screen = s3c24x0_lcd_new_screen(sc, 240, 320, 16);

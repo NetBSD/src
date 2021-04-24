@@ -1,4 +1,4 @@
-/* $NetBSD: ipmi_acpi.c,v 1.4 2021/01/29 15:49:55 thorpej Exp $ */
+/* $NetBSD: ipmi_acpi.c,v 1.5 2021/04/24 23:36:52 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi_acpi.c,v 1.4 2021/01/29 15:49:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi_acpi.c,v 1.5 2021/04/24 23:36:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -156,7 +156,7 @@ ipmi_acpi_attach(device_t parent, device_t self, void *opaque)
 		if (reg2 > ia->iaa_if_iobase)
 			ia->iaa_if_iospacing = reg2 - ia->iaa_if_iobase;
 
-		config_found_ia(self, "ipmibus", ia, 0);
+		config_found(self, ia, NULL, CFARG_EOL);
 
 		break;
 	case IPMI_IF_SSIF:

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_atmelgpio.c,v 1.16 2011/07/19 15:37:38 dyoung Exp $	*/
+/*	$NetBSD: ipaq_atmelgpio.c,v 1.17 2021/04/24 23:36:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipaq_atmelgpio.c,v 1.16 2011/07/19 15:37:38 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipaq_atmelgpio.c,v 1.17 2021/04/24 23:36:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,15 +123,17 @@ atmelgpio_attach(device_t parent, device_t self, void *aux)
 	 *  Attach each devices
 	 */
 
-	config_search_ia(atmelgpio_search, self, "atmelgpioif", NULL);
+	config_search(self, NULL,
+	    CFARG_SEARCH, atmelgpio_search,
+	    CFARG_EOL);
 }
 
 static int
 atmelgpio_search(device_t parent, cfdata_t cf, const int *ldesc,
 		 void *aux)
 {
-	if (config_match(parent, cf, NULL) > 0)
-		config_attach(parent, cf, NULL, atmelgpio_print);
+	if (config_probe(parent, cf, NULL))
+		config_attach(parent, cf, NULL, atmelgpio_print, CFARG_EOL);
 	return 0;
 }
 

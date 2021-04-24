@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.113 2021/03/14 03:14:42 rin Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.114 2021/04/24 23:36:57 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.113 2021/03/14 03:14:42 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.114 2021/04/24 23:36:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1013,7 +1013,9 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 		aa.accessops = &radeonfb_accessops;
 		aa.accesscookie = &dp->rd_vd;
 
-		config_found(sc->sc_dev, &aa, wsemuldisplaydevprint);
+		config_found(sc->sc_dev, &aa, wsemuldisplaydevprint,
+		    CFARG_IATTR, "wsemuldisplaydev",
+		    CFARG_EOL);
 		
 		radeonfb_blank(dp, 0);
 
@@ -1053,7 +1055,9 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 	 * screen blanking we only do it if needed
 	 */
 	sc->sc_needs_unmap = 
-	    (config_found_ia(dev, "drm", aux, radeonfb_drm_print) != 0);
+	    (config_found(dev, aux, radeonfb_drm_print,
+			  CFARG_IATTR, "drm",
+			  CFARG_EOL) != 0);
 	DPRINTF(("needs_unmap: %d\n", sc->sc_needs_unmap));
 
 	if (!IS_AVIVO(sc)) {

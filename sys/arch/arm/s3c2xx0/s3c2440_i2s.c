@@ -93,7 +93,9 @@ s3c2440_i2s_attach(device_t parent, device_t self, void *aux)
 
 	printf("\n");
 
-	config_search_ia(s3c2440_i2s_search, self, "ssiis", NULL);
+	config_search(self, NULL,
+	    CFARG_SEARCH, s3c2440_i2s_search,
+	    CFARG_EOL);
 }
 
 static int
@@ -110,8 +112,8 @@ s3c2440_i2s_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 
 	ia.i2sa_handle = device_private(parent);
 
-	if (config_match(parent, cf, &ia))
-		config_attach(parent, cf, &ia, s3c2440_i2s_print);
+	if (config_probe(parent, cf, &ia))
+		config_attach(parent, cf, &ia, s3c2440_i2s_print, CFARG_EOL);
 
 	return 1;
 }

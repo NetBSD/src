@@ -1,4 +1,4 @@
-/*	$NetBSD: usscanner.c,v 1.48 2020/03/14 02:35:33 christos Exp $	*/
+/*	$NetBSD: usscanner.c,v 1.49 2021/04/24 23:36:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.48 2020/03/14 02:35:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.49 2021/04/24 23:36:59 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -331,7 +331,8 @@ usscanner_attach(device_t parent, device_t self, void *aux)
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
 
-	sc->sc_child = config_found(sc->sc_dev, &sc->sc_channel, scsiprint);
+	sc->sc_child = config_found(sc->sc_dev, &sc->sc_channel, scsiprint,
+	    CFARG_EOL);
 
 	DPRINTFN(10, ("usscanner_attach: %p\n", sc->sc_udev));
 

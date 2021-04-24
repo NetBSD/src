@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.74 2020/09/29 03:02:18 msaitoh Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.75 2021/04/24 23:36:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr5380.c,v 1.74 2020/09/29 03:02:18 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr5380.c,v 1.75 2021/04/24 23:36:29 thorpej Exp $");
 
 /*
  * Bit mask of targets you want debugging to be shown
@@ -251,7 +251,7 @@ ncr_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * attach all scsi units on us
 	 */
-	config_found(self, &sc->sc_channel, scsiprint);
+	config_found(self, &sc->sc_channel, scsiprint, CFARG_EOL);
 }
 
 /*

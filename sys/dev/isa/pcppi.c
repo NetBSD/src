@@ -1,4 +1,4 @@
-/* $NetBSD: pcppi.c,v 1.45 2017/06/14 05:01:35 pgoyette Exp $ */
+/* $NetBSD: pcppi.c,v 1.46 2021/04/24 23:36:55 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.45 2017/06/14 05:01:35 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.46 2021/04/24 23:36:55 thorpej Exp $");
 
 #include "attimer.h"
 
@@ -233,21 +233,21 @@ pcppi_attach(struct pcppi_softc *sc)
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
-	pcppi_rescan(self, "pcppi", NULL);
+	pcppi_rescan(self, NULL, NULL);
 }
 
 int
-pcppi_rescan(device_t self, const char *ifattr, const int *flags)
+pcppi_rescan(device_t self, const char *ifattr, const int *locators)
 {
 	struct pcppi_softc *sc = device_private(self);
         struct pcppi_attach_args pa;
 
-	if (!ifattr_match(ifattr, "pcppi"))
-		return 0;
-
 	pa.pa_cookie = sc;
 	pa.pa_bell_func = pcppi_bell;
-	config_search_loc(pcppisearch, sc->sc_dv, "pcppi", NULL, &pa);
+
+	config_search(sc->sc_dv, &pa,
+	    CFARG_SEARCH, pcppisearch,
+	    CFARG_EOL);
 
 	return 0;
 }
@@ -256,8 +256,10 @@ static int
 pcppisearch(device_t parent, cfdata_t cf, const int *locs, void *aux)
 {
 
-	if (config_match(parent, cf, aux))
-		config_attach_loc(parent, cf, locs, aux, NULL);
+	if (config_probe(parent, cf, aux))
+		config_attach(parent, cf, aux, NULL,
+		    CFARG_LOCATORS, locs,
+		    CFARG_EOL);
 
 	return 0;
 }

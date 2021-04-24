@@ -1,4 +1,4 @@
-/* $NetBSD: pl181.c,v 1.7 2019/06/12 10:16:52 skrll Exp $ */
+/* $NetBSD: pl181.c,v 1.8 2021/04/24 23:36:55 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pl181.c,v 1.7 2019/06/12 10:16:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pl181.c,v 1.8 2021/04/24 23:36:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -145,7 +145,7 @@ plmmc_init(struct plmmc_softc *sc)
 	    sc->sc_max_freq / 1000 : sc->sc_clock_freq / 1000;
 	saa.saa_caps = SMC_CAPS_4BIT_MODE;
 
-	sc->sc_sdmmc_dev = config_found(sc->sc_dev, &saa, NULL);
+	sc->sc_sdmmc_dev = config_found(sc->sc_dev, &saa, NULL, CFARG_EOL);
 }
 
 static int

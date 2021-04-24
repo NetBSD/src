@@ -1,4 +1,4 @@
-/*	$NetBSD: mbmem.c,v 1.20 2016/07/07 06:55:39 msaitoh Exp $	*/
+/*	$NetBSD: mbmem.c,v 1.21 2021/04/24 23:36:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mbmem.c,v 1.20 2016/07/07 06:55:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mbmem.c,v 1.21 2021/04/24 23:36:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,12 +143,16 @@ mbmem_attach(device_t parent, device_t self, void *aux)
 	/* Find all `early' mbmem devices */
 	for (cpp = special; *cpp != NULL; cpp++) {
 		mbma.mbma_name = *cpp;
-		config_search_ia(sun68k_bus_search, self, "mbmem", &mbma);
+		config_search(self, &mbma,
+		    CFARG_SEARCH, sun68k_bus_search,
+		    CFARG_EOL);
 	}
 
 	/* Find all other mbmem devices */
 	mbma.mbma_name = NULL;
-	config_search_ia(sun68k_bus_search, self, "mbmem", &mbma);
+	config_search(self, &mbma,
+	    CFARG_SEARCH, sun68k_bus_search,
+	    CFARG_EOL);
 }
 
 int

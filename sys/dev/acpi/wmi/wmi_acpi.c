@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_acpi.c,v 1.17 2021/01/29 15:49:55 thorpej Exp $	*/
+/*	$NetBSD: wmi_acpi.c,v 1.18 2021/04/24 23:36:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.17 2021/01/29 15:49:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.18 2021/04/24 23:36:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -149,9 +149,10 @@ acpi_wmi_rescan(device_t self, const char *ifattr, const int *locators)
 {
 	struct acpi_wmi_softc *sc = device_private(self);
 
-	if (ifattr_match(ifattr, "acpiwmibus") && sc->sc_child == NULL)
-		sc->sc_child = config_found_ia(self, "acpiwmibus",
-		    NULL, acpi_wmi_print);
+	if (sc->sc_child == NULL) {
+		sc->sc_child =
+		    config_found(self, NULL, acpi_wmi_print, CFARG_EOL);
+	}
 
 	return 0;
 }

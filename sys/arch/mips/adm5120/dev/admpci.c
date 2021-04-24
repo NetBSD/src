@@ -1,4 +1,4 @@
-/* $NetBSD: admpci.c,v 1.14 2020/07/07 03:38:47 thorpej Exp $ */
+/* $NetBSD: admpci.c,v 1.15 2021/04/24 23:36:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 David Young.  All rights reserved.
@@ -61,7 +61,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: admpci.c,v 1.14 2020/07/07 03:38:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: admpci.c,v 1.15 2021/04/24 23:36:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -258,7 +258,9 @@ admpciattach(device_t parent, device_t self, void *aux)
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
 
-	config_found_ia(self, "pcibus", &pba, pcibusprint);
+	config_found(self, &pba, pcibusprint,
+	    CFARG_IATTR, "pcibus",
+	    CFARG_EOL);
 #endif	/* NPCI > 0 */
 }
 

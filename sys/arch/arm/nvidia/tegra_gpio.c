@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_gpio.c,v 1.12 2021/01/27 03:10:19 thorpej Exp $ */
+/* $NetBSD: tegra_gpio.c,v 1.13 2021/04/24 23:36:27 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_gpio.c,v 1.12 2021/01/27 03:10:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_gpio.c,v 1.13 2021/04/24 23:36:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -229,8 +229,8 @@ tegra_gpio_attach_bank(struct tegra_gpio_softc *sc, u_int bankno)
 	gba.gba_pins = bank->bank_pins;
 	gba.gba_npins = __arraycount(bank->bank_pins);
 
-	bank->bank_dev = config_found_ia(sc->sc_dev, "gpiobus", &gba,
-	    tegra_gpio_cfprint);
+	bank->bank_dev =
+	    config_found(sc->sc_dev, &gba, tegra_gpio_cfprint, CFARG_EOL);
 }
 
 static int

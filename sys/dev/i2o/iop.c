@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.90 2019/11/10 21:16:35 chs Exp $	*/
+/*	$NetBSD: iop.c,v 1.91 2021/04/24 23:36:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.90 2019/11/10 21:16:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.91 2021/04/24 23:36:55 thorpej Exp $");
 
 #include "iop.h"
 
@@ -583,8 +583,10 @@ iop_config_interrupts(device_t self)
 	ia.ia_class = I2O_CLASS_ANY;
 	ia.ia_tid = I2O_TID_IOP;
 	locs[IOPCF_TID] = I2O_TID_IOP;
-	config_found_sm_loc(self, "iop", locs, &ia, iop_print,
-		config_stdsubmatch);
+	config_found(self, &ia, iop_print,
+	    CFARG_SUBMATCH, config_stdsubmatch,
+	    CFARG_LOCATORS, locs,
+	    CFARG_EOL);
 
 	/*
 	 * Start device configuration.
@@ -814,8 +816,10 @@ iop_configure_devices(struct iop_softc *sc, int mask, int maskval)
 
 		locs[IOPCF_TID] = ia.ia_tid;
 
-		dv = config_found_sm_loc(sc->sc_dev, "iop", locs, &ia,
-					 iop_print, config_stdsubmatch);
+		dv = config_found(sc->sc_dev, &ia, iop_print,
+		    CFARG_SUBMATCH, config_stdsubmatch,
+		    CFARG_LOCATORS, locs,
+		    CFARG_EOL);
 		if (dv != NULL) {
  			sc->sc_tidmap[i].it_flags |= IT_CONFIGURED;
 			strcpy(sc->sc_tidmap[i].it_dvname, device_xname(dv));

@@ -1,4 +1,4 @@
-/* $NetBSD: omap3_ehci.c,v 1.13 2018/04/09 16:21:09 jakllsch Exp $ */
+/* $NetBSD: omap3_ehci.c,v 1.14 2021/04/24 23:36:28 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2010-2012 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_ehci.c,v 1.13 2018/04/09 16:21:09 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_ehci.c,v 1.14 2021/04/24 23:36:28 thorpej Exp $");
 
 #include "locators.h"
 
@@ -336,7 +336,8 @@ omap3_ehci_attach1(device_t self)
 		return;
 	}
 
-	sc->sc.sc_child = config_found(self, &sc->sc.sc_bus, usbctlprint);
+	sc->sc.sc_child = config_found(self, &sc->sc.sc_bus, usbctlprint,
+	    CFARG_EOL);
 }
 
 static int

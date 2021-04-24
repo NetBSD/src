@@ -1,4 +1,4 @@
-/*	$NetBSD: vme.c,v 1.22 2013/09/07 15:56:11 tsutsui Exp $	*/
+/*	$NetBSD: vme.c,v 1.23 2021/04/24 23:36:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.22 2013/09/07 15:56:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.23 2021/04/24 23:36:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,7 +153,9 @@ vme_attach(device_t parent, device_t self, void *aux)
 	vmea.ca_dmatag = &vme_dma_tag;
 
 	/* We know ca_bustype == BUS_VMExx */
-	config_search_ia(bus_scan, self, "vme", &vmea);
+	config_search(self, &vmea,
+	    CFARG_SEARCH, bus_scan,
+	    CFARG_EOL);
 }
 
 int

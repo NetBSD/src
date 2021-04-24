@@ -1,4 +1,4 @@
-/* $NetBSD: ausmbus_psc.c,v 1.13 2019/12/22 23:23:31 thorpej Exp $ */
+/* $NetBSD: ausmbus_psc.c,v 1.14 2021/04/24 23:36:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Shigeyuki Fukushima.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ausmbus_psc.c,v 1.13 2019/12/22 23:23:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ausmbus_psc.c,v 1.14 2021/04/24 23:36:42 thorpej Exp $");
 
 #include "locators.h"
 
@@ -135,7 +135,7 @@ ausmbus_attach(device_t parent, device_t self, void *aux)
 
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c;
-	(void) config_found_ia(self, "i2cbus", &iba, iicbus_print);
+	config_found(self, &iba, iicbus_print, CFARG_EOL);
 }
 
 static int

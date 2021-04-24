@@ -1,4 +1,4 @@
-/*	$NetBSD: iomdiic.c,v 1.9 2019/12/22 23:23:29 thorpej Exp $	*/
+/*	$NetBSD: iomdiic.c,v 1.10 2021/04/24 23:36:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -142,7 +142,7 @@ iomdiic_attach(device_t parent, device_t self, void *aux)
 
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c;
-	(void) config_found_ia(sc->sc_dev, "i2cbus", &iba, iicbus_print);
+	config_found(sc->sc_dev, &iba, iicbus_print, CFARG_EOL);
 }
 
 CFATTACH_DECL_NEW(iomdiic, sizeof(struct iomdiic_softc),

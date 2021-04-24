@@ -1,4 +1,4 @@
-/*	$NetBSD: sunms.c,v 1.33 2017/10/31 10:46:47 martin Exp $	*/
+/*	$NetBSD: sunms.c,v 1.34 2021/04/24 23:36:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.33 2017/10/31 10:46:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.34 2021/04/24 23:36:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,7 +174,7 @@ sunms_attach(device_t parent, device_t self, void *aux)
 	a.accessops = &sunms_accessops;
 	a.accesscookie = ms;
 
-	ms->ms_wsmousedev = config_found(self, &a, wsmousedevprint);
+	ms->ms_wsmousedev = config_found(self, &a, wsmousedevprint, CFARG_EOL);
 #endif
 }
 

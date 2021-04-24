@@ -1,4 +1,4 @@
-/*	$NetBSD: ms_kbc.c,v 1.12 2008/05/14 13:29:28 tsutsui Exp $	*/
+/*	$NetBSD: ms_kbc.c,v 1.13 2021/04/24 23:36:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms_kbc.c,v 1.12 2008/05/14 13:29:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms_kbc.c,v 1.13 2021/04/24 23:36:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -120,7 +120,8 @@ ms_kbc_attach(device_t parent, device_t self, void *aux)
 
 	wsa.accessops = &ms_kbc_accessops;
 	wsa.accesscookie = sc;
-	sc->sc_wsmousedev = config_found(self, &wsa, wsmousedevprint);
+	sc->sc_wsmousedev = config_found(self, &wsa, wsmousedevprint,
+	    CFARG_EOL);
 }
 
 static void

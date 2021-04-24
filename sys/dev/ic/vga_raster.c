@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_raster.c,v 1.48 2020/04/24 22:31:36 ad Exp $	*/
+/*	$NetBSD: vga_raster.c,v 1.49 2021/04/24 23:36:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Bang Jun-Young
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.48 2020/04/24 22:31:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.49 2021/04/24 23:36:55 thorpej Exp $");
 
 #include "opt_vga.h"
 #include "opt_wsmsgattrs.h" /* for WSDISPLAY_CUSTOM_OUTPUT */
@@ -548,7 +548,9 @@ vga_common_attach(struct vga_softc *sc, bus_space_tag_t iot,
 	aa.accessops = &vga_raster_accessops;
 	aa.accesscookie = vc;
 
-	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint);
+	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint,
+	    CFARG_IATTR, "wsemuldisplaydev",
+	    CFARG_EOL);
 }
 
 int

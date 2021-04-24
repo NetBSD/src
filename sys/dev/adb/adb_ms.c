@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_ms.c,v 1.19 2019/09/05 21:29:22 macallan Exp $	*/
+/*	$NetBSD: adb_ms.c,v 1.20 2021/04/24 23:36:52 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_ms.c,v 1.19 2019/09/05 21:29:22 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_ms.c,v 1.20 2021/04/24 23:36:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -247,7 +247,7 @@ adbms_attach(device_t parent, device_t self, void *aux)
 
 	a.accessops = &adbms_accessops;
 	a.accesscookie = sc;
-	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint);
+	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint, CFARG_EOL);
 }
 
 

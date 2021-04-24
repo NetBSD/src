@@ -1,4 +1,4 @@
-/*	$NetBSD: cpc700.c,v 1.21 2020/07/07 03:38:49 thorpej Exp $	*/
+/*	$NetBSD: cpc700.c,v 1.22 2021/04/24 23:36:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpc700.c,v 1.21 2020/07/07 03:38:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpc700.c,v 1.22 2021/04/24 23:36:55 thorpej Exp $");
 
 #include "pci.h"
 #include "opt_pci.h"
@@ -170,8 +170,10 @@ cpc_attach(device_t self, pci_chipset_tag_t pc, bus_space_tag_t mem,
 		aa.cba.cpca_name = devs[i].name;
 		aa.cba.cpca_addr = devs[i].addr;
 		aa.cba.cpca_irq = devs[i].irq;
-		config_found_sm_loc(self, "cpcbus", NULL, &aa.cba,
-				    cpc_print, cpc_submatch);
+		config_found(self, &aa.cba, cpc_print,
+		    CFARG_SUBMATCH, cpc_submatch,
+		    CFARG_IATTR, "cpcbus",
+		    CFARG_EOL);
 	}
 
 	tag = pci_make_tag(pc, 0, 0, 0);
@@ -206,7 +208,9 @@ cpc_attach(device_t self, pci_chipset_tag_t pc, bus_space_tag_t mem,
 	pci_configure_bus(0, pcires, 0, 32);
 #endif
 
-	config_found_ia(self, "pcibus", &aa.pba, pcibusprint);
+	config_found(self, &aa.pba, pcibusprint,
+	    CFARG_IATTR, "pcibus",
+	    CFARG_EOL);
 
 	/* Restore error triggers, and clear errors */
 	pci_conf_write(pc, tag, CPC_PCI_BRDGERR, erren | CPC_PCI_CLEARERR);

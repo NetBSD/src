@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.63 2020/01/14 15:42:03 msaitoh Exp $ */
+/* $NetBSD: piixpm.c,v 1.64 2021/04/24 23:36:57 thorpej Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.39 2013/10/01 20:06:02 sf Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.63 2020/01/14 15:42:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.64 2021/04/24 23:36:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,7 +192,7 @@ piixpm_attach(device_t parent, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	bool usesmi = false;
 	const char *intrstr = NULL;
-	int i, flags;
+	int i;
 	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
@@ -304,8 +304,7 @@ setintr:
 	for (i = 0; i < sc->sc_numbusses; i++)
 		sc->sc_i2c_device[i] = NULL;
 
-	flags = 0;
-	piixpm_rescan(self, "i2cbus", &flags);
+	piixpm_rescan(self, NULL, NULL);
 }
 
 static int
@@ -322,22 +321,20 @@ piixpm_iicbus_print(void *aux, const char *pnp)
 
 	return UNCONF;
 }
+
 static int
-piixpm_rescan(device_t self, const char *ifattr, const int *flags)
+piixpm_rescan(device_t self, const char *ifattr, const int *locators)
 {
 	struct piixpm_softc *sc = device_private(self);
 	struct i2cbus_attach_args iba;
 	int i;
-
-	if (!ifattr_match(ifattr, "i2cbus"))
-		return 0;
 
 	/* Attach I2C bus */
 
 	for (i = 0; i < sc->sc_numbusses; i++) {
 		struct i2c_controller *tag = &sc->sc_i2c_tags[i];
 
-		if (sc->sc_i2c_device[i])
+		if (sc->sc_i2c_device[i] != NULL)
 			continue;
 		sc->sc_busses[i].sda = i;
 		sc->sc_busses[i].softc = sc;
@@ -353,8 +350,8 @@ piixpm_rescan(device_t self, const char *ifattr, const int *flags)
 		tag->ic_exec = piixpm_i2c_exec;
 		memset(&iba, 0, sizeof(iba));
 		iba.iba_tag = tag;
-		sc->sc_i2c_device[i] = config_found_ia(self, ifattr, &iba,
-		    piixpm_iicbus_print);
+		sc->sc_i2c_device[i] =
+		    config_found(self, &iba, piixpm_iicbus_print, CFARG_EOL);
 	}
 
 	return 0;

@@ -1,4 +1,4 @@
-/* $NetBSD: ehci_acpi.c,v 1.5 2021/01/29 15:49:55 thorpej Exp $ */
+/* $NetBSD: ehci_acpi.c,v 1.6 2021/04/24 23:36:52 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_acpi.c,v 1.5 2021/01/29 15:49:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_acpi.c,v 1.6 2021/04/24 23:36:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -146,7 +146,7 @@ ehci_acpi_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint);
+	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint, CFARG_EOL);
 
 done:
 	acpi_resource_cleanup(&res);

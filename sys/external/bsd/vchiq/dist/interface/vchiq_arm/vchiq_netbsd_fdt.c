@@ -1,4 +1,4 @@
-/* $NetBSD: vchiq_netbsd_fdt.c,v 1.5 2021/01/27 03:10:22 thorpej Exp $ */
+/* $NetBSD: vchiq_netbsd_fdt.c,v 1.6 2021/04/24 23:37:00 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vchiq_netbsd_fdt.c,v 1.5 2021/01/27 03:10:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vchiq_netbsd_fdt.c,v 1.6 2021/04/24 23:37:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,5 +146,5 @@ vchiq_fdt_defer(device_t self)
 	vchiq_init();
 
 	vaa.vaa_name = "AUDS";
-	config_found_ia(self, "vchiqbus", &vaa, vchiq_print);
+	config_found(self, &vaa, vchiq_print, CFARG_EOL);
 }

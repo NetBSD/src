@@ -1,4 +1,4 @@
-/* $NetBSD: pckbport.c,v 1.18 2019/11/10 21:16:36 chs Exp $ */
+/* $NetBSD: pckbport.c,v 1.19 2021/04/24 23:36:58 thorpej Exp $ */
 
 /*
  * Copyright (c) 2004 Ben Harris
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbport.c,v 1.18 2019/11/10 21:16:36 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbport.c,v 1.19 2021/04/24 23:36:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,8 +153,11 @@ pckbport_attach_slot(device_t dev, pckbport_tag_t t,
 
 	locs[PCKBPORTCF_SLOT] = slot;
 
-	found = config_found_sm_loc(dev, "pckbport", locs, &pa,
-				    pckbportprint, config_stdsubmatch);
+	found = config_found(dev, &pa, pckbportprint,
+	    CFARG_SUBMATCH, config_stdsubmatch,
+	    CFARG_IATTR, "pckbport",
+	    CFARG_LOCATORS, locs,
+	    CFARG_EOL);
 
 	if (found == NULL && alloced) {
 		free(t->t_slotdata[slot], M_DEVBUF);

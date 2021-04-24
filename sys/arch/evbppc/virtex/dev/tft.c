@@ -1,4 +1,4 @@
-/* 	$NetBSD: tft.c,v 1.5 2012/07/22 14:02:45 matt Exp $ */
+/* 	$NetBSD: tft.c,v 1.6 2021/04/24 23:36:36 thorpej Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tft.c,v 1.5 2012/07/22 14:02:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tft.c,v 1.6 2021/04/24 23:36:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,7 +134,7 @@ tft_attach(device_t self, struct wsdisplay_accessops *accessops)
 	waa.accessops = accessops;
 	waa.accesscookie = &sc->sc_vc_data;
 
-	config_found(self, &waa, wsemuldisplaydevprint);
+	config_found(self, &waa, wsemuldisplaydevprint, CFARG_EOL);
 }
 
 static void

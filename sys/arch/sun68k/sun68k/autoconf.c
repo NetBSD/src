@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.30 2012/10/13 06:38:08 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.31 2021/04/24 23:36:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.30 2012/10/13 06:38:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.31 2021/04/24 23:36:50 thorpej Exp $");
 
 #include "opt_kgdb.h"
 
@@ -145,16 +145,16 @@ mainbus_attach(device_t parent, device_t self, void *args)
 	/* Find all `early' mainbus buses */
 	for (cpp = special; *cpp != NULL; cpp++) {
 		ma.ma_name = *cpp;
-		(void)config_found(self, &ma, NULL);
+		(void)config_found(self, &ma, NULL, CFARG_EOL);
 	}
 
 	/* Find the remaining buses */
 	ma.ma_name = NULL;
-	(void)config_found(self, &ma, NULL);
+	(void)config_found(self, &ma, NULL, CFARG_EOL);
 
 	/* Lastly, find the PROM console */
 	ma.ma_name = "pcons";
-	(void)config_found(self, &ma, NULL);
+	(void)config_found(self, &ma, NULL, CFARG_EOL);
 }
 
 /*
@@ -220,13 +220,13 @@ sun68k_bus_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	CHECK_LOCATOR(ma_pri, cf_loc[MBIOCF_IPL], "ipl");
 
 	/*
-	 * Note that this allows the match function to save
+	 * Note that this allows the probe function to save
 	 * defaulted locators in the _attach_args that will be
 	 * preserved for the related attach call.
 	 * XXX - This is a hack...
 	 */
-	if (config_match(parent, cf, &ma) > 0) {
-		config_attach(parent, cf, &ma, sun68k_bus_print);
+	if (config_probe(parent, cf, &ma)) {
+		config_attach(parent, cf, &ma, sun68k_bus_print, CFARG_EOL);
 	}
 	return 0;
 }

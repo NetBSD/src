@@ -1,4 +1,4 @@
-/*	$NetBSD: dzms.c,v 1.22 2012/10/27 17:18:15 chs Exp $	*/
+/*	$NetBSD: dzms.c,v 1.23 2021/04/24 23:36:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dzms.c,v 1.22 2012/10/27 17:18:15 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dzms.c,v 1.23 2021/04/24 23:36:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,7 +135,8 @@ dzms_attach(device_t parent, device_t self, void *aux)
 
 	dzms->sc_enabled = 0;
 	dzms->sc_selftest = 0;
-	dzms->sc_wsmousedev = config_found(self, &a, wsmousedevprint);
+	dzms->sc_wsmousedev = config_found(self, &a, wsmousedevprint,
+	    CFARG_EOL);
 }
 
 static int

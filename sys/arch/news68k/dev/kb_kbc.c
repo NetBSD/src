@@ -1,4 +1,4 @@
-/*	$NetBSD: kb_kbc.c,v 1.10 2008/05/14 13:29:28 tsutsui Exp $	*/
+/*	$NetBSD: kb_kbc.c,v 1.11 2021/04/24 23:36:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kb_kbc.c,v 1.10 2008/05/14 13:29:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kb_kbc.c,v 1.11 2021/04/24 23:36:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ kb_kbc_attach(device_t parent, device_t self, void *aux)
 	wsa.accessops = &kb_accessops;
 	wsa.accesscookie = sc;
 
-	sc->sc_wskbddev = config_found(self, &wsa, wskbddevprint);
+	sc->sc_wskbddev = config_found(self, &wsa, wskbddevprint, CFARG_EOL);
 }
 
 static void

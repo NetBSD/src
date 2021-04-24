@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.70 2020/07/12 23:52:37 rin Exp $	*/
+/*	$NetBSD: ppb.c,v 1.71 2021/04/24 23:36:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.70 2020/07/12 23:52:37 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.71 2021/04/24 23:36:57 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ppb.h"
@@ -436,7 +436,7 @@ configure:
 	pba.pba_intrswiz = pa->pa_intrswiz;
 	pba.pba_intrtag = pa->pa_intrtag;
 
-	config_found_ia(self, "pcibus", &pba, pcibusprint);
+	config_found(self, &pba, pcibusprint, CFARG_EOL);
 }
 
 static int

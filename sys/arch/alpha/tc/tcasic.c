@@ -1,4 +1,4 @@
-/* $NetBSD: tcasic.c,v 1.49 2020/09/25 03:40:11 thorpej Exp $ */
+/* $NetBSD: tcasic.c,v 1.50 2021/04/24 23:36:24 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.49 2020/09/25 03:40:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.50 2021/04/24 23:36:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,7 +150,7 @@ tcasicattach(device_t parent, device_t self, void *aux)
 	scb_set(0x800, iointr, NULL);
 	mutex_exit(&cpu_lock);
 
-	config_found(self, &tba, tcasicprint);
+	config_found(self, &tba, tcasicprint, CFARG_EOL);
 }
 
 int

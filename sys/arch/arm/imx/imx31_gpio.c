@@ -1,4 +1,4 @@
-/*	$NetBSD: imx31_gpio.c,v 1.8 2019/07/22 01:35:36 hkenken Exp $	*/
+/*	$NetBSD: imx31_gpio.c,v 1.9 2021/04/24 23:36:27 thorpej Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx31_gpio.c,v 1.8 2019/07/22 01:35:36 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx31_gpio.c,v 1.9 2021/04/24 23:36:27 thorpej Exp $");
 
 #define _INTR_PRIVATE
 
@@ -303,7 +303,7 @@ gpio_defer(device_t self)
 		    (value & mask) ? GPIO_PIN_HIGH : GPIO_PIN_LOW;
 	}
 
-	config_found_ia(self, "gpiobus", &gba, gpiobus_print);
+	config_found(self, &gba, gpiobus_print, CFARG_EOL);
 }
 #endif /* NGPIO > 0 */
 

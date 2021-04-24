@@ -1,4 +1,4 @@
-/* $NetBSD: rk_gpio.c,v 1.3 2021/01/27 03:10:19 thorpej Exp $ */
+/* $NetBSD: rk_gpio.c,v 1.4 2021/04/24 23:36:28 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_gpio.c,v 1.3 2021/01/27 03:10:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_gpio.c,v 1.4 2021/04/24 23:36:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -277,7 +277,7 @@ rk_gpio_attach_ports(struct rk_gpio_softc *sc)
 	gba.gba_gc = gp;
 	gba.gba_pins = sc->sc_pins;
 	gba.gba_npins = __arraycount(sc->sc_pins);
-	sc->sc_gpiodev = config_found_ia(sc->sc_dev, "gpiobus", &gba, NULL);
+	sc->sc_gpiodev = config_found(sc->sc_dev, &gba, NULL, CFARG_EOL);
 }
 
 static int

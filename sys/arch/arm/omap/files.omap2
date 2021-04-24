@@ -1,4 +1,4 @@
-#	$NetBSD: files.omap2,v 1.36 2016/10/15 15:11:56 kiyohara Exp $
+#	$NetBSD: files.omap2,v 1.37 2021/04/24 23:36:28 thorpej Exp $
 #
 # Configuration info for Texas Instruments OMAP2/OMAP3 CPU support
 # Based on xscale/files.pxa2x0
@@ -126,7 +126,7 @@ attach	edma at mainbus
 file	arch/arm/omap/omap_edma.c		edma needs-flag
 
 # TI OTG controller
-define  tiotg_port {[port = -1], [mode = -1]}
+define  tiotg_port { [port = -1] }
 device	tiotg: tiotg_port
 attach	tiotg at mainbus
 file	arch/arm/omap/tiotg.c			tiotg

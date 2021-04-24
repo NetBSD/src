@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.138 2010/08/21 17:08:15 jmcneill Exp $	*/
+/*	$NetBSD: isa.c,v 1.139 2021/04/24 23:36:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.138 2010/08/21 17:08:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.139 2021/04/24 23:36:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,9 +86,13 @@ isaattach(device_t parent, device_t self, void *aux)
 	struct isa_softc *sc = device_private(self);
 	struct isabus_attach_args *iba = aux;
 	static const int wildcard[ISACF_NLOCS] = {
-		ISACF_PORT_DEFAULT, ISACF_SIZE_DEFAULT,
-		ISACF_IOMEM_DEFAULT, ISACF_IOSIZ_DEFAULT,
-		ISACF_IRQ_DEFAULT, ISACF_DRQ_DEFAULT, ISACF_DRQ2_DEFAULT
+		[ISACF_PORT]  = ISACF_PORT_DEFAULT,
+		[ISACF_SIZE]  = ISACF_SIZE_DEFAULT,
+		[ISACF_IOMEM] = ISACF_IOMEM_DEFAULT,
+		[ISACF_IOSIZ] = ISACF_IOSIZ_DEFAULT,
+		[ISACF_IRQ]   = ISACF_IRQ_DEFAULT,
+		[ISACF_DRQ]   = ISACF_DRQ_DEFAULT,
+		[ISACF_DRQ2]  = ISACF_DRQ2_DEFAULT,
 	};
 
 	TAILQ_INIT(&sc->sc_knowndevs);
@@ -132,7 +136,7 @@ isaattach(device_t parent, device_t self, void *aux)
 		isa_free_knowndevs(sc);
 
 	/* Attach all indirect-config children. */
-	isarescan(self, "isa", wildcard);
+	isarescan(self, NULL, wildcard);
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
@@ -186,7 +190,10 @@ isarescan(device_t self, const char *ifattr, const int *locators)
 	if (locs[ISACF_IOSIZ] == -1)
 		locs[ISACF_IOSIZ] = ISACF_IOSIZ_DEFAULT;
 
-	config_search_loc(isasearch, self, ifattr, locs, NULL);
+	config_search(self, NULL,
+	    CFARG_SEARCH, isasearch,
+	    CFARG_LOCATORS, locs,
+	    CFARG_EOL);
 	return (0);
 }
 
@@ -239,8 +246,9 @@ isa_attach_knowndevs(struct isa_softc *sc)
 
 		/* XXX should setup locator array */
 
-		ik->ik_claimed = config_found_sm_loc(sc->sc_dev,
-		    "isa", 0, &ia, isaprint, isasubmatch);
+		ik->ik_claimed = config_found(sc->sc_dev, &ia, isaprint,
+		    CFARG_SUBMATCH, isasubmatch,
+		    CFARG_EOL);
 	}
 }
 
@@ -464,7 +472,7 @@ isasearch(device_t parent, cfdata_t cf, const int *slocs, void *aux)
 			return (0);
 
 		tryagain = 0;
-		if (config_match(parent, cf, &ia) > 0) {
+		if (config_probe(parent, cf, &ia)) {
 			/*
 			 * This is not necessary for detach, but might
 			 * still be useful to collect device information.
@@ -476,7 +484,9 @@ isasearch(device_t parent, cfdata_t cf, const int *slocs, void *aux)
 			flocs[ISACF_IRQ] = ia.ia_irq[0].ir_irq;
 			flocs[ISACF_DRQ] = ia.ia_drq[0].ir_drq;
 			flocs[ISACF_DRQ2] = ia.ia_drq[1].ir_drq;
-			config_attach_loc(parent, cf, flocs, &ia, isaprint);
+			config_attach(parent, cf, &ia, isaprint,
+			    CFARG_LOCATORS, flocs,
+			    CFARG_EOL);
 			tryagain = (cf->cf_fstate == FSTATE_STAR);
 		}
 	} while (tryagain);

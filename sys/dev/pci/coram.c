@@ -1,4 +1,4 @@
-/* $NetBSD: coram.c,v 1.18 2019/12/23 15:31:31 thorpej Exp $ */
+/* $NetBSD: coram.c,v 1.19 2021/04/24 23:36:57 thorpej Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coram.c,v 1.18 2019/12/23 15:31:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coram.c,v 1.19 2021/04/24 23:36:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,8 +225,9 @@ coram_attach(device_t parent, device_t self, void *aux)
 		/* attach iic(4) */
 		memset(&iba, 0, sizeof(iba));
 		iba.iba_tag = &cic->cic_i2c;
-		cic->cic_i2cdev = config_found_ia(self, "i2cbus", &iba,
-		    iicbus_print);
+		cic->cic_i2cdev = config_found(self, &iba, iicbus_print,
+		    CFARG_IATTR, "i2cbus",
+		    CFARG_EOL);
 #endif
 	}
 
@@ -324,8 +325,9 @@ coram_rescan(device_t self, const char *ifattr, const int *locs)
 	daa.priv = sc;
 
 	if (ifattr_match(ifattr, "dtvbus") && sc->sc_dtvdev == NULL)
-		sc->sc_dtvdev = config_found_ia(sc->sc_dev, "dtvbus",
-		    &daa, dtv_print);
+		sc->sc_dtvdev = config_found(sc->sc_dev, &daa, dtv_print,
+		    CFARG_IATTR, "dtvbus",
+		    CFARG_EOL);
 
 	return 0;
 }

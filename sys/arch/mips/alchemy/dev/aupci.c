@@ -1,4 +1,4 @@
-/* $NetBSD: aupci.c,v 1.18 2020/07/07 03:38:47 thorpej Exp $ */
+/* $NetBSD: aupci.c,v 1.19 2021/04/24 23:36:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -35,7 +35,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aupci.c,v 1.18 2020/07/07 03:38:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aupci.c,v 1.19 2021/04/24 23:36:42 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -281,7 +281,7 @@ aupciattach(device_t parent, device_t self, void *aux)
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
 
-	config_found_ia(self, "pcibus", &pba, pcibusprint);
+	config_found(self, &pba, pcibusprint, CFARG_EOL);
 #endif	/* NPCI > 0 */
 }
 

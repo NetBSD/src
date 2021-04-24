@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.7 2011/06/05 17:03:18 matt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.8 2021/04/24 23:36:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.7 2011/06/05 17:03:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.8 2021/04/24 23:36:36 thorpej Exp $");
 
 #include "mainbus.h"
 #include "opt_multiprocessor.h"
@@ -86,7 +86,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	mba.mba_name = "cpu";
 	mba.mba_unit = 0;
 	mba.mba_addr = MAINBUSCF_ADDR_DEFAULT;
-	config_found(self, &mba, mainbus_cfprint);
+	config_found(self, &mba, mainbus_cfprint, CFARG_EOL);
 
 #ifdef MULTIPROCESSOR
 	/*
@@ -95,7 +95,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	mba.mba_name = "cpu";
 	mba.mba_unit = 1;
 	mba.mba_addr = MAINBUSCF_ADDR_DEFAULT;
-	config_found(self, &mba, mainbus_cfprint);
+	config_found(self, &mba, mainbus_cfprint, CFARG_EOL);
 #endif
 
 	/*
@@ -104,7 +104,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	mba.mba_name = "gt";
 	mba.mba_unit = -1;
 	mba.mba_addr = gt_base;
-	config_found(self, &mba, mainbus_cfprint);
+	config_found(self, &mba, mainbus_cfprint, CFARG_EOL);
 }
 
 int

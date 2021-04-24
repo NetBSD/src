@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.123 2019/11/10 21:16:33 chs Exp $	*/
+/*	$NetBSD: fd.c,v 1.124 2021/04/24 23:36:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.123 2019/11/10 21:16:33 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.124 2021/04/24 23:36:51 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m68k_arch.h"
@@ -514,7 +514,7 @@ fdcattach(device_t parent, device_t self, void *aux)
 
 	/* physical limit: four drives per controller. */
 	for (fa.fa_drive = 0; fa.fa_drive < 4; fa.fa_drive++) {
-		(void)config_found(self, (void *)&fa, fdprint);
+		(void)config_found(self, (void *)&fa, fdprint, CFARG_EOL);
 	}
 
 	intio_enable_intr(SICILIAN_INTR_FDC);

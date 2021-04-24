@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.117 2014/08/24 12:18:21 mlelstv Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.118 2021/04/24 23:36:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.117 2014/08/24 12:18:21 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.118 2021/04/24 23:36:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,7 +169,7 @@ amiga_config_found(cfdata_t pcfp, device_t parent, void *aux, cfprint_t pfn)
 	const struct cfattach *ca;
 
 	if (amiga_realconfig)
-		return(config_found(parent, aux, pfn) != NULL);
+		return(config_found(parent, aux, pfn, CFARG_EOL) != NULL);
 
 	if (parent == NULL) {
 		memset(&temp, 0, sizeof temp);
@@ -180,7 +180,7 @@ amiga_config_found(cfdata_t pcfp, device_t parent, void *aux, cfprint_t pfn)
 	parent->dv_cfdriver = config_cfdriver_lookup(pcfp->cf_name);
 	parent->dv_unit = pcfp->cf_unit;
 
-	if ((cf = config_search_ia(NULL, parent, NULL, aux)) != NULL) {
+	if ((cf = config_search(parent, aux, CFARG_EOL)) != NULL) {
 		ca = config_cfattach_lookup(cf->cf_name, cf->cf_atname);
 		if (ca != NULL) {
 			(*ca->ca_attach)(parent, NULL, aux);
@@ -263,55 +263,75 @@ void
 mbattach(device_t parent, device_t self, void *aux)
 {
 	printf("\n");
-	config_found(self, __UNCONST("clock"), simple_devprint);
+	config_found(self, __UNCONST("clock"), simple_devprint, CFARG_EOL);
 	if (is_a3000() || is_a4000()) {
-		config_found(self, __UNCONST("a34kbbc"), simple_devprint);
+		config_found(self, __UNCONST("a34kbbc"), simple_devprint,
+		    CFARG_EOL);
 	} else
 #ifdef DRACO
 	if (!is_draco())
 #endif
 	{
-		config_found(self, __UNCONST("a2kbbc"), simple_devprint);
+		config_found(self, __UNCONST("a2kbbc"), simple_devprint,
+		    CFARG_EOL);
 	}
 #ifdef DRACO
 	if (is_draco()) {
-		config_found(self, __UNCONST("drbbc"), simple_devprint);
-		config_found(self, __UNCONST("kbd"), simple_devprint);
-		config_found(self, __UNCONST("drsc"), simple_devprint);
-		config_found(self, __UNCONST("drsupio"), simple_devprint);
+		config_found(self, __UNCONST("drbbc"), simple_devprint,
+		    CFARG_EOL);
+		config_found(self, __UNCONST("kbd"), simple_devprint,
+		    CFARG_EOL);
+		config_found(self, __UNCONST("drsc"), simple_devprint,
+		    CFARG_EOL);
+		config_found(self, __UNCONST("drsupio"), simple_devprint,
+		    CFARG_EOL);
 	} else
 #endif
 	{
-		config_found(self, __UNCONST("ser"), simple_devprint);
-		config_found(self, __UNCONST("par"), simple_devprint);
-		config_found(self, __UNCONST("kbd"), simple_devprint);
-		config_found(self, __UNCONST("ms"), simple_devprint);
-		config_found(self, __UNCONST("grfcc"), simple_devprint);
-		config_found(self, __UNCONST("amidisplaycc"), simple_devprint);
-		config_found(self, __UNCONST("fdc"), simple_devprint);
+		config_found(self, __UNCONST("ser"), simple_devprint,
+		    CFARG_EOL);
+		config_found(self, __UNCONST("par"), simple_devprint,
+		    CFARG_EOL);
+		config_found(self, __UNCONST("kbd"), simple_devprint,
+		    CFARG_EOL);
+		config_found(self, __UNCONST("ms"), simple_devprint,
+		    CFARG_EOL);
+		config_found(self, __UNCONST("grfcc"), simple_devprint,
+		    CFARG_EOL);
+		config_found(self, __UNCONST("amidisplaycc"), simple_devprint,
+		    CFARG_EOL);
+		config_found(self, __UNCONST("fdc"), simple_devprint,
+		    CFARG_EOL);
 	}
 	if (is_a4000() || is_a1200() || is_a600())
-		config_found(self, __UNCONST("wdc"), simple_devprint);
+		config_found(self, __UNCONST("wdc"), simple_devprint,
+		    CFARG_EOL);
 	if (is_a4000())			/* Try to configure A4000T SCSI */
-		config_found(self, __UNCONST("afsc"), simple_devprint);
+		config_found(self, __UNCONST("afsc"), simple_devprint,
+		    CFARG_EOL);
 	if (is_a3000())
-		config_found(self, __UNCONST("ahsc"), simple_devprint);
+		config_found(self, __UNCONST("ahsc"), simple_devprint,
+		    CFARG_EOL);
 	if (is_a600() || is_a1200())
-		config_found(self, __UNCONST("pccard"), simple_devprint);
+		config_found(self, __UNCONST("pccard"), simple_devprint,
+		    CFARG_EOL);
 	if (is_a1200())
-		config_found(self, __UNCONST("a1k2cp"), simple_devprint);
+		config_found(self, __UNCONST("a1k2cp"), simple_devprint,
+		    CFARG_EOL);
 #ifdef DRACO
 	if (!is_draco())
 #endif
-		config_found(self, __UNCONST("aucc"), simple_devprint);
+		config_found(self, __UNCONST("aucc"), simple_devprint,
+		    CFARG_EOL);
 
 #if NACAFH > 0
 	if (!is_a600() && !is_a1200() && !is_a3000() && !is_a4000())
 		if (acafh_mbattach_probe() == true)
-			config_found(self, __UNCONST("acafh"), simple_devprint);
+			config_found(self, __UNCONST("acafh"), simple_devprint,
+			    CFARG_EOL);
 #endif
 
-	config_found(self, __UNCONST("zbus"), simple_devprint);
+	config_found(self, __UNCONST("zbus"), simple_devprint, CFARG_EOL);
 }
 
 int

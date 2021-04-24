@@ -1,4 +1,4 @@
-/* $NetBSD: imcsmb.c,v 1.3 2019/12/22 23:23:31 thorpej Exp $ */
+/* $NetBSD: imcsmb.c,v 1.4 2021/04/24 23:36:51 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imcsmb.c,v 1.3 2019/12/22 23:23:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imcsmb.c,v 1.4 2021/04/24 23:36:51 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -134,17 +134,14 @@ imcsmb_attach(device_t parent, device_t self, void *aux)
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
-	imcsmb_rescan(self, "i2cbus", 0);
+	imcsmb_rescan(self, NULL, NULL);
 }
 
 static int
-imcsmb_rescan(device_t self, const char *ifattr, const int *flags)
+imcsmb_rescan(device_t self, const char *ifattr, const int *locs)
 {
 	struct imcsmb_softc *sc = device_private(self);
 	struct i2cbus_attach_args iba;
-
-	if (!ifattr_match(ifattr, "i2cbus"))
-		return 0;
 
 	/* Create the i2cbus child */
 	if (sc->sc_smbus != NULL)
@@ -158,7 +155,7 @@ imcsmb_rescan(device_t self, const char *ifattr, const int *flags)
 
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c_tag;
-	sc->sc_smbus = config_found_ia(self, ifattr, &iba, iicbus_print);
+	sc->sc_smbus = config_found(self, &iba, iicbus_print, CFARG_EOL);
 
 	if (sc->sc_smbus == NULL) {
 		aprint_normal_dev(self, "no child found\n");

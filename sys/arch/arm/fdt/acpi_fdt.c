@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_fdt.c,v 1.18 2021/01/27 03:10:19 thorpej Exp $ */
+/* $NetBSD: acpi_fdt.c,v 1.19 2021/04/24 23:36:26 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_efi.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_fdt.c,v 1.18 2021/01/27 03:10:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_fdt.c,v 1.19 2021/04/24 23:36:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -115,7 +115,7 @@ acpi_fdt_attach(device_t parent, device_t self, void *aux)
 	aa.aa_memt = faa->faa_bst;
 	aa.aa_dmat = NULL;
 	aa.aa_dmat64 = NULL;
-	config_found_ia(self, "acpibus", &aa, 0);
+	config_found(self, &aa, NULL, CFARG_EOL);
 
 	acpi_fdt_sysctl_init();
 }

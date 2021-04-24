@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_bsc_acpi.c,v 1.2 2021/01/26 00:19:52 jmcneill Exp $ */
+/* $NetBSD: bcm2835_bsc_acpi.c,v 1.3 2021/04/24 23:36:26 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_bsc_acpi.c,v 1.2 2021/01/26 00:19:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_bsc_acpi.c,v 1.3 2021/04/24 23:36:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -161,7 +161,7 @@ bsciic_acpi_attach(device_t parent, device_t self, void *aux)
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c;
 	iba.iba_child_devices = acpi_enter_i2c_devs(self, aa->aa_node);
-	config_found_ia(self, "i2cbus", &iba, iicbus_print);
+	config_found(self, &iba, iicbus_print, CFARG_EOL);
 
 done:
 	acpi_resource_cleanup(&res);

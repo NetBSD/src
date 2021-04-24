@@ -1,4 +1,4 @@
-/* $NetBSD: mcbus.c,v 1.22 2012/02/06 02:14:14 matt Exp $ */
+/* $NetBSD: mcbus.c,v 1.23 2021/04/24 23:36:23 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcbus.c,v 1.22 2012/02/06 02:14:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcbus.c,v 1.23 2021/04/24 23:36:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,8 +146,10 @@ mcbusattach(device_t parent, device_t self, void *aux)
 	ta.ma_type = MCBUS_TYPE_MEM;
 	mbp->mcbus_types[1] = MCBUS_TYPE_MEM;
 	locs[MCBUSCF_MID] = 1;
-	(void) config_found_sm_loc(self, "mcbus", locs, &ta,
-				   mcbusprint, config_stdsubmatch);
+	config_found(self, &ta, mcbusprint,
+	    CFARG_SUBMATCH, config_stdsubmatch,
+	    CFARG_LOCATORS, locs,
+	    CFARG_EOL);
 
 	/*
 	 * Now find PCI busses.
@@ -164,9 +166,10 @@ mcbusattach(device_t parent, device_t self, void *aux)
 		ta.ma_type = MCBUS_TYPE_PCI;
 		locs[MCBUSCF_MID] = mid;
 		if (MCPCIA_EXISTS(ta.ma_mid, ta.ma_gid))
-			(void) config_found_sm_loc(self, "mcbus", locs, &ta,
-						   mcbusprint,
-						   config_stdsubmatch);
+			config_found(self, &ta, mcbusprint,
+			    CFARG_SUBMATCH, config_stdsubmatch,
+			    CFARG_LOCATORS, locs,
+			    CFARG_EOL);
 	}
 
 #if 0
@@ -193,8 +196,10 @@ mcbusattach(device_t parent, device_t self, void *aux)
 		ta.ma_type = MCBUS_TYPE_CPU;
 		mbp->mcbus_types[mid] = MCBUS_TYPE_CPU;
 		locs[MCBUSCF_MID] = mid;
-		(void) config_found_sm_loc(self, "mcbus", locs, &ta,
-					   mcbusprint, config_stdsubmatch);
+		config_found(self, &ta, mcbusprint,
+		    CFARG_SUBMATCH, config_stdsubmatch,
+		    CFARG_LOCATORS, locs,
+		    CFARG_EOL);
 	}
 #endif
 

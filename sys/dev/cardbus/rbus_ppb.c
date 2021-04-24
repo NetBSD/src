@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_ppb.c,v 1.47 2019/03/05 08:16:53 msaitoh Exp $	*/
+/*	$NetBSD: rbus_ppb.c,v 1.48 2021/04/24 23:36:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.47 2019/03/05 08:16:53 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.48 2021/04/24 23:36:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -695,7 +695,7 @@ ppb_cardbus_attach(device_t parent, device_t self, void *aux)
 	/*pba.pba_intrswiz = parent_sc->sc_intrswiz; */
 	pba.pba_intrtag  = psc->sc_pa.pa_intrtag;
 
-	config_found_ia(self, "pcibus", &pba, rppbprint);
+	config_found(self, &pba, rppbprint, CFARG_EOL);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.6 2021/03/29 13:14:13 rin Exp $ */
+/*	$NetBSD: autoconf.c,v 1.7 2021/04/24 23:36:36 thorpej Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6 2021/03/29 13:14:13 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7 2021/04/24 23:36:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -90,7 +90,7 @@ cpu_configure(void)
 	intr_init();
 	calc_delayconst();
 
-	if (config_rootfound("plb", &local_plb_devs) == NULL)
+	if (config_rootfound("plb", __UNCONST(&local_plb_devs)) == NULL)
 		panic("configure: plb not configured");
 
 	(void)spl0();

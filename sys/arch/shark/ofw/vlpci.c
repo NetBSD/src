@@ -1,4 +1,4 @@
-/*	$NetBSD: vlpci.c,v 1.10 2021/01/27 03:10:21 thorpej Exp $	*/
+/*	$NetBSD: vlpci.c,v 1.11 2021/04/24 23:36:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2017 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vlpci.c,v 1.10 2021/01/27 03:10:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vlpci.c,v 1.11 2021/04/24 23:36:48 thorpej Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -202,6 +202,7 @@ vlpci_match(device_t parent, struct cfdata *match, void *aux)
 static void
 vlpci_attach(device_t parent, device_t self, void *aux)
 {
+	struct ofbus_attach_args * const oba = aux;
 	struct vlpci_softc * const sc = device_private(self);
 	pci_chipset_tag_t const pc = &sc->sc_pc;
 	struct pcibus_attach_args pba;
@@ -327,7 +328,9 @@ vlpci_attach(device_t parent, device_t self, void *aux)
 	vlpci_dump_window(sc, VLPCI_PCI_WND_NO_2);
 	vlpci_dump_window(sc, VLPCI_PCI_WND_NO_3);
 
-	config_found_ia(self, "pcibus", &pba, pcibusprint);
+	config_found(self, &pba, pcibusprint,
+	    CFARG_DEVHANDLE, devhandle_from_of(oba->oba_phandle),
+	    CFARG_EOL);
 }
 
 static void

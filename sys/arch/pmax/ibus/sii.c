@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.13 2016/12/12 15:58:44 maya Exp $	*/
+/*	$NetBSD: sii.c,v 1.14 2021/04/24 23:36:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sii.c,v 1.13 2016/12/12 15:58:44 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sii.c,v 1.14 2021/04/24 23:36:45 thorpej Exp $");
 
 #include "sii.h"
 /*
@@ -191,7 +191,7 @@ siiattach(struct siisoftc *sc)
 	/*
 	 * Now try to attach all the sub-devices
 	 */
-	config_found(sc->sc_dev, &sc->sc_channel, scsiprint);
+	config_found(sc->sc_dev, &sc->sc_channel, scsiprint, CFARG_EOL);
 }
 
 /*

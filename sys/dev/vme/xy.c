@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.100 2019/11/10 21:16:38 chs Exp $	*/
+/*	$NetBSD: xy.c,v 1.101 2021/04/24 23:36:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles D. Cranor
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.100 2019/11/10 21:16:38 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.101 2021/04/24 23:36:59 thorpej Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -571,7 +571,7 @@ xycattach(device_t parent, device_t self, void *aux)
 	xa.booting = 1;
 
 	for (xa.driveno = 0; xa.driveno < XYC_MAXDEV; xa.driveno++)
-		(void) config_found(self, (void *) &xa, NULL);
+		(void) config_found(self, (void *) &xa, NULL, CFARG_EOL);
 
 	/* start the watchdog clock */
 	callout_reset(&xyc->sc_tick_ch, XYC_TICKCNT, xyc_tick, xyc);

@@ -1,4 +1,4 @@
-/* $NetBSD: ihidev.c,v 1.18 2021/01/27 02:29:48 thorpej Exp $ */
+/* $NetBSD: ihidev.c,v 1.19 2021/04/24 23:36:54 thorpej Exp $ */
 /* $OpenBSD ihidev.c,v 1.13 2017/04/08 02:57:23 deraadt Exp $ */
 
 /*-
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ihidev.c,v 1.18 2021/01/27 02:29:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ihidev.c,v 1.19 2021/04/24 23:36:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,8 +218,10 @@ ihidev_attach(device_t parent, device_t self, void *aux)
 	/* Look for a driver claiming all report IDs first. */
 	iha.reportid = IHIDEV_CLAIM_ALLREPORTID;
 	locs[IHIDBUSCF_REPORTID] = IHIDEV_CLAIM_ALLREPORTID;
-	dev = config_found_sm_loc(self, "ihidbus", locs, &iha,
-	    ihidev_print, ihidev_submatch);
+	dev = config_found(self, &iha, ihidev_print,
+	    CFARG_SUBMATCH, ihidev_submatch,
+	    CFARG_LOCATORS, locs,
+	    CFARG_EOL);
 	if (dev != NULL) {
 		for (repid = 0; repid < sc->sc_nrepid; repid++)
 			sc->sc_subdevs[repid] = device_private(dev);
@@ -237,8 +239,10 @@ ihidev_attach(device_t parent, device_t self, void *aux)
 
 		iha.reportid = repid;
 		locs[IHIDBUSCF_REPORTID] = repid;
-		dev = config_found_sm_loc(self, "ihidbus", locs,
-		    &iha, ihidev_print, ihidev_submatch);
+		dev = config_found(self, &iha, ihidev_print,
+		    CFARG_SUBMATCH, ihidev_submatch,
+		    CFARG_LOCATORS, locs,
+		    CFARG_EOL);
 		sc->sc_subdevs[repid] = device_private(dev);
 	}
 

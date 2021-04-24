@@ -1,4 +1,4 @@
-/* $NetBSD: cia.c,v 1.74 2015/10/11 08:46:43 martin Exp $ */
+/* $NetBSD: cia.c,v 1.75 2021/04/24 23:36:23 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.74 2015/10/11 08:46:43 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.75 2021/04/24 23:36:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -401,7 +401,7 @@ ciaattach(device_t parent, device_t self, void *aux)
 	if ((ccp->cc_flags & CCF_PYXISBUG) == 0)
 		pba.pba_flags |= PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY |
 		    PCI_FLAGS_MWI_OKAY;
-	config_found_ia(self, "pcibus", &pba, pcibusprint);
+	config_found(self, &pba, pcibusprint, CFARG_EOL);
 }
 
 int

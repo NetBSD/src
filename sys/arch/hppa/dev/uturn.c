@@ -1,4 +1,4 @@
-/*	$NetBSD: uturn.c,v 1.3 2020/06/14 01:40:04 chs Exp $	*/
+/*	$NetBSD: uturn.c,v 1.4 2021/04/24 23:36:39 thorpej Exp $	*/
 
 /*	$OpenBSD: uturn.c,v 1.6 2007/12/29 01:26:14 kettenis Exp $	*/
 
@@ -379,8 +379,9 @@ static device_t
 uturn_callback(device_t self, struct confargs *ca)
 {
 
-	return config_found_sm_loc(self, "gedoens", NULL, ca, mbprint,
-	    mbsubmatch);
+	return config_found(self, ca, mbprint,
+	    CFARG_SUBMATCH, mbsubmatch,
+	    CFARG_EOL);
 }
 
 /*

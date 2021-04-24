@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_spi.c,v 1.1 2019/08/13 16:46:49 tnn Exp $ */
+/* $NetBSD: fdt_spi.c,v 1.2 2021/04/24 23:36:53 thorpej Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_spi.c,v 1.1 2019/08/13 16:46:49 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_spi.c,v 1.2 2021/04/24 23:36:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -104,7 +104,9 @@ fdtbus_attach_spibus(device_t dev, int phandle, cfprint_t print)
 		prop_object_retain(sba.sba_child_devices);
 	prop_object_release(devs);
 
-	ret = config_found_ia(dev, "spibus", &sba, print);
+	ret = config_found(dev, &sba, print,
+	    CFARG_IATTR, "spibus",
+	    CFARG_EOL);
 	if (sba.sba_child_devices)
 		prop_object_release(sba.sba_child_devices);
 

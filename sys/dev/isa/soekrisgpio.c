@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: soekrisgpio.c,v 1.3 2016/07/11 11:31:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: soekrisgpio.c,v 1.4 2021/04/24 23:36:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,8 +176,8 @@ soekris_attach(device_t parent, device_t self, void *aux)
 	gba2.gba_npins = SOEKRIS_NLEDS;
 
 #if NGPIO > 0
-	(void)config_found(sc->sc_dev, &gba1, gpiobus_print);
-	(void)config_found(sc->sc_dev, &gba2, gpiobus_print);
+	(void)config_found(sc->sc_dev, &gba1, gpiobus_print, CFARG_EOL);
+	(void)config_found(sc->sc_dev, &gba2, gpiobus_print, CFARG_EOL);
 #endif
 }
 

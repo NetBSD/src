@@ -1,4 +1,4 @@
-/*	$NetBSD: kbms_sbdio.c,v 1.11 2014/03/26 17:56:18 christos Exp $	*/
+/*	$NetBSD: kbms_sbdio.c,v 1.12 2021/04/24 23:36:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbms_sbdio.c,v 1.11 2014/03/26 17:56:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbms_sbdio.c,v 1.12 2021/04/24 23:36:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,7 +167,7 @@ kbms_sbdio_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_wskbd = config_found(self, &ka, wskbddevprint);
+	sc->sc_wskbd = config_found(self, &ka, wskbddevprint, CFARG_EOL);
 
 	ma.accessops = &mouse_accessops;
 	ma.accesscookie = self;
@@ -179,7 +179,7 @@ kbms_sbdio_attach(device_t parent, device_t self, void *aux)
 		sc->sc_mouse_sig = 0x88;
 
 	mouse_init(sc);
-	sc->sc_wsmouse = config_found(self, &ma, wsmousedevprint);
+	sc->sc_wsmouse = config_found(self, &ma, wsmousedevprint, CFARG_EOL);
 
 	intr_establish(sa->sa_irq, kbms_sbdio_intr, self);
 }

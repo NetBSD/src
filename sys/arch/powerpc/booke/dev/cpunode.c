@@ -1,4 +1,4 @@
-/*	$NetBSD: cpunode.c,v 1.6 2020/07/06 09:34:16 rin Exp $	*/
+/*	$NetBSD: cpunode.c,v 1.7 2021/04/24 23:36:46 thorpej Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpunode.c,v 1.6 2020/07/06 09:34:16 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpunode.c,v 1.7 2021/04/24 23:36:46 thorpej Exp $");
 
 #include "ioconf.h"
 
@@ -153,8 +153,9 @@ cpunode_attach(device_t parent, device_t self, void *aux)
 		cna.cna_childmask = childmask;
 		cna.cna_locs = *cnl;
 
-		(void)config_found_sm_loc(self, "cpunode", NULL, &cna,
-		    cpunode_print, NULL);
+		config_found(self, &cna, cpunode_print,
+		    CFARG_IATTR, "cpunode",
+		    CFARG_EOL);
 		childmask <<= 1;
 	}
 	/*

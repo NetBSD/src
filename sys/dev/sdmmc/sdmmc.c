@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc.c,v 1.40 2020/05/24 17:26:18 riastradh Exp $	*/
+/*	$NetBSD: sdmmc.c,v 1.41 2021/04/24 23:36:59 thorpej Exp $	*/
 /*	$OpenBSD: sdmmc.c,v 1.18 2009/01/09 10:58:38 jsg Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.40 2020/05/24 17:26:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.41 2021/04/24 23:36:59 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -477,7 +477,7 @@ sdmmc_card_attach(struct sdmmc_softc *sc)
 		saa.sf = sf;
 
 		sf->child =
-		    config_found_ia(sc->sc_dev, "sdmmc", &saa, sdmmc_print);
+		    config_found(sc->sc_dev, &saa, sdmmc_print, CFARG_EOL);
 	}
 
 	SET(sc->sc_flags, SMF_CARD_ATTACHED);

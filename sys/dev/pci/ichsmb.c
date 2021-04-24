@@ -1,4 +1,4 @@
-/*	$NetBSD: ichsmb.c,v 1.69 2021/01/15 14:07:15 thorpej Exp $	*/
+/*	$NetBSD: ichsmb.c,v 1.70 2021/04/24 23:36:57 thorpej Exp $	*/
 /*	$OpenBSD: ichiic.c,v 1.44 2020/10/07 11:23:05 jsg Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.69 2021/01/15 14:07:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.70 2021/04/24 23:36:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -163,7 +163,6 @@ ichsmb_attach(device_t parent, device_t self, void *aux)
 	pcireg_t conf;
 	const char *intrstr = NULL;
 	char intrbuf[PCI_INTRSTR_LEN];
-	int flags;
 
 	sc->sc_dev = self;
 	sc->sc_pc = pa->pa_pc;
@@ -218,23 +217,19 @@ ichsmb_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc_i2c_device = NULL;
-	flags = 0;
-	ichsmb_rescan(self, "i2cbus", &flags);
+	ichsmb_rescan(self, NULL, NULL);
 
 out:	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static int
-ichsmb_rescan(device_t self, const char *ifattr, const int *flags)
+ichsmb_rescan(device_t self, const char *ifattr, const int *locators)
 {
 	struct ichsmb_softc *sc = device_private(self);
 	struct i2cbus_attach_args iba;
 
-	if (!ifattr_match(ifattr, "i2cbus"))
-		return 0;
-
-	if (sc->sc_i2c_device)
+	if (sc->sc_i2c_device != NULL)
 		return 0;
 
 	/* Attach I2C bus */
@@ -244,7 +239,7 @@ ichsmb_rescan(device_t self, const char *ifattr, const int *flags)
 
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c_tag;
-	sc->sc_i2c_device = config_found_ia(self, ifattr, &iba, iicbus_print);
+	sc->sc_i2c_device = config_found(self, &iba, iicbus_print, CFARG_EOL);
 
 	return 0;
 }

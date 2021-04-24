@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93.c,v 1.28 2019/02/10 17:13:33 christos Exp $	*/
+/*	$NetBSD: wd33c93.c,v 1.29 2021/04/24 23:36:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.28 2019/02/10 17:13:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.29 2021/04/24 23:36:55 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -233,7 +233,7 @@ wd33c93_attach(struct wd33c93_softc *sc)
 	}
 
 	sc->sc_child = config_found(sc->sc_dev, &sc->sc_channel,
-				     scsiprint);
+				     scsiprint, CFARG_EOL);
 	scsipi_adapter_delref(&sc->sc_adapter);
 }
 

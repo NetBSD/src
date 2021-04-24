@@ -1,4 +1,4 @@
-/*	$NetBSD: hvs.c,v 1.4 2020/05/25 10:14:58 nonaka Exp $	*/
+/*	$NetBSD: hvs.c,v 1.5 2021/04/24 23:36:54 thorpej Exp $	*/
 /*	$OpenBSD: hvs.c,v 1.17 2017/08/10 17:22:48 mikeb Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
 /* #define HVS_DEBUG_IO */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hvs.c,v 1.4 2020/05/25 10:14:58 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hvs.c,v 1.5 2021/04/24 23:36:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -391,7 +391,8 @@ hvs_attach(device_t parent, device_t self, void *aux)
 	chan->chan_flags = SCSIPI_CHAN_NOSETTLE;
 	chan->chan_defquirks |= PQUIRK_ONLYBIG;
 
-	sc->sc_scsibus = config_found(self, &sc->sc_channel, scsiprint);
+	sc->sc_scsibus = config_found(self, &sc->sc_channel, scsiprint,
+	    CFARG_EOL);
 
 	/*
 	 * If the driver has successfully attached to an IDE device,

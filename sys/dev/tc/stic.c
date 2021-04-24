@@ -1,4 +1,4 @@
-/*	$NetBSD: stic.c,v 1.54 2019/11/10 21:16:37 chs Exp $	*/
+/*	$NetBSD: stic.c,v 1.55 2021/04/24 23:36:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.54 2019/11/10 21:16:37 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.55 2021/04/24 23:36:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -433,7 +433,7 @@ stic_attach(device_t self, struct stic_info *si, int console)
 	waa.accessops = &stic_accessops;
 	waa.accesscookie = si;
 
-	config_found(self, &waa, wsemuldisplaydevprint);
+	config_found(self, &waa, wsemuldisplaydevprint, CFARG_EOL);
 }
 
 void

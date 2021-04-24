@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0.c,v 1.22 2012/11/12 18:00:38 skrll Exp $ */
+/*	$NetBSD: pxa2x0.c,v 1.23 2021/04/24 23:36:29 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002, 2005  Genetec Corporation.  All rights reserved.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0.c,v 1.22 2012/11/12 18:00:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0.c,v 1.23 2021/04/24 23:36:29 thorpej Exp $");
 
 #include "pxaintc.h"
 #include "pxagpio.h"
@@ -230,13 +230,15 @@ pxaip_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Attach all other devices
 	 */
-	config_search_ia(pxaip_search, self, "pxaip", sc);
+	config_search(self, NULL,
+	    CFARG_SEARCH, pxaip_search,
+	    CFARG_EOL);
 }
 
 static int
 pxaip_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
-	struct pxaip_softc *sc = aux;
+	struct pxaip_softc *sc = device_private(parent);
 	struct pxaip_attach_args aa;
 
 	aa.pxa_iot = sc->sc_bust;
@@ -247,8 +249,8 @@ pxaip_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	aa.pxa_index = cf->cf_loc[PXAIPCF_INDEX];
 	aa.pxa_intr = cf->cf_loc[PXAIPCF_INTR];
 
-	if (config_match(parent, cf, &aa))
-		config_attach(parent, cf, &aa, pxaip_print);
+	if (config_probe(parent, cf, &aa))
+		config_attach(parent, cf, &aa, pxaip_print, CFARG_EOL);
 
 	return 0;
 }
@@ -264,7 +266,7 @@ pxaip_attach_critical(struct pxaip_softc *sc)
 	aa.pxa_addr = PXA2X0_INTCTL_BASE;
 	aa.pxa_size = PXA2X0_INTCTL_SIZE;
 	aa.pxa_intr = PXAIPCF_INTR_DEFAULT;
-	if (config_found(sc->sc_dev, &aa, pxaip_print) == NULL)
+	if (config_found(sc->sc_dev, &aa, pxaip_print, CFARG_EOL) == NULL)
 		panic("pxaip_attach_critical: failed to attach INTC!");
 
 #if NPXAGPIO > 0
@@ -274,7 +276,7 @@ pxaip_attach_critical(struct pxaip_softc *sc)
 	aa.pxa_addr = PXA2X0_GPIO_BASE;
 	aa.pxa_size = PXA2X0_GPIO_SIZE;
 	aa.pxa_intr = PXAIPCF_INTR_DEFAULT;
-	if (config_found(sc->sc_dev, &aa, pxaip_print) == NULL)
+	if (config_found(sc->sc_dev, &aa, pxaip_print, CFARG_EOL) == NULL)
 		panic("pxaip_attach_critical: failed to attach GPIO!");
 #endif
 
@@ -285,7 +287,7 @@ pxaip_attach_critical(struct pxaip_softc *sc)
 	aa.pxa_addr = PXA2X0_DMAC_BASE;
 	aa.pxa_size = PXA2X0_DMAC_SIZE;
 	aa.pxa_intr = PXA2X0_INT_DMA;
-	if (config_found(sc->sc_dev, &aa, pxaip_print) == NULL)
+	if (config_found(sc->sc_dev, &aa, pxaip_print, CFARG_EOL) == NULL)
 		panic("pxaip_attach_critical: failed to attach DMAC!");
 #endif
 }

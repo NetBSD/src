@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352.c,v 1.58 2021/03/06 05:37:18 tsutsui Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.59 2021/04/24 23:36:55 thorpej Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 /*-
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.58 2021/03/06 05:37:18 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.59 2021/04/24 23:36:55 thorpej Exp $");
 
 #ifdef DDB
 #define	integrate
@@ -305,7 +305,7 @@ spc_attach(struct spc_softc *sc)
 	/*
 	 * ask the adapter what subunits are present
 	 */
-	sc->sc_child = config_found(sc->sc_dev, chan, scsiprint);
+	sc->sc_child = config_found(sc->sc_dev, chan, scsiprint, CFARG_EOL);
 	scsipi_adapter_delref(adapt);
 }
 

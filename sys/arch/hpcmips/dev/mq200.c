@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200.c,v 1.32 2015/06/26 22:15:33 matt Exp $	*/
+/*	$NetBSD: mq200.c,v 1.33 2021/04/24 23:36:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 TAKEMURA Shin
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mq200.c,v 1.32 2015/06/26 22:15:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mq200.c,v 1.33 2021/04/24 23:36:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -236,7 +236,7 @@ mq200_attach(struct mq200_softc *sc)
 	ha.ha_ndspconf = 1;
 	ha.ha_dspconflist = &sc->sc_dspconf;
 
-	config_found(sc->sc_dev, &ha, hpcfbprint);
+	config_found(sc->sc_dev, &ha, hpcfbprint, CFARG_EOL);
 
 #if NBIVIDEO > 0
 	/*

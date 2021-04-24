@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.71 2020/01/18 21:08:42 tsutsui Exp $	*/
+/*	$NetBSD: kbd.c,v 1.72 2021/04/24 23:36:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.71 2020/01/18 21:08:42 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.72 2021/04/24 23:36:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1083,7 +1083,7 @@ kbd_enable(device_t dev)
 	k->k_wsenabled = 0;
 
 	/* Attach the wskbd */
-	k->k_wskbd = config_found(k->k_dev, &a, wskbddevprint);
+	k->k_wskbd = config_found(k->k_dev, &a, wskbddevprint, CFARG_EOL);
 
 	callout_init(&k->k_wsbell, 0);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: smdk2410_kbd.c,v 1.8 2012/10/27 17:17:49 chs Exp $ */
+/* $NetBSD: smdk2410_kbd.c,v 1.9 2021/04/24 23:36:34 thorpej Exp $ */
 
 /*
  * Copyright (c) 2004  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2410_kbd.c,v 1.8 2012/10/27 17:17:49 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2410_kbd.c,v 1.9 2021/04/24 23:36:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -340,7 +340,7 @@ sskbd_attach(device_t parent, device_t self, void *aux)
 	a.accessops = &sskbd_accessops;
 	a.accesscookie = sc;
 
-	sc->wskbddev = config_found(self, &a, wskbddevprint);
+	sc->wskbddev = config_found(self, &a, wskbddevprint, CFARG_EOL);
 }
 
 

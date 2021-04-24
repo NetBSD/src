@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.2 2020/11/04 07:09:46 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.3 2021/04/24 23:36:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: mainbus.c,v 1.2 2020/11/04 07:09:46 skrll Exp $");
+__RCSID("$NetBSD: mainbus.c,v 1.3 2021/04/24 23:36:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,5 +72,5 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	maa.maa_name = "cpu";
 	maa.maa_instance = 0;
 
-	config_found(self, &maa, mainbus_print);
+	config_found(self, &maa, mainbus_print, CFARG_EOL);
 }

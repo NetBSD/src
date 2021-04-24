@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.65 2018/09/03 16:29:28 riastradh Exp $ */
+/*	$NetBSD: vsbus.c,v 1.66 2021/04/24 23:36:51 thorpej Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vsbus.c,v 1.65 2018/09/03 16:29:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vsbus.c,v 1.66 2021/04/24 23:36:51 thorpej Exp $");
 
 #include "opt_cputype.h"
 
@@ -170,7 +170,9 @@ vsbus_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * now check for all possible devices on this "bus"
 	 */
-	config_search_ia(vsbus_search, self, "vsbus", NULL);
+	config_search(self, NULL,
+	    CFARG_SEARCH, vsbus_search,
+	    CFARG_EOL);
 
 	/* Autoconfig finished, enable interrupts */
 	*sc->sc_intmsk = ~sc->sc_mask;
@@ -193,7 +195,7 @@ vsbus_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	*sc->sc_intclr = 0xff;
 	scb_vecref(0, 0); /* Clear vector ref */
 
-	i = config_match(parent, cf, &va);
+	i = config_probe(parent, cf, &va);
 	vax_unmap_physmem(va.va_addr, 1);
 	c = *sc->sc_intreq & ~sc->sc_mask;
 	if (i == 0)
@@ -218,7 +220,7 @@ vsbus_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	va.va_dmaaddr = sc->sc_dmaaddr;
 	va.va_dmasize = sc->sc_dmasize;
 	*sc->sc_intmsk = c; /* Allow interrupts during attach */
-	config_attach(parent, cf, &va, vsbus_print);
+	config_attach(parent, cf, &va, vsbus_print, CFARG_EOL);
 	*sc->sc_intmsk = 0;
 	return 0;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.114 2019/11/10 21:16:35 chs Exp $	*/
+/*	$NetBSD: fd.c,v 1.115 2021/04/24 23:36:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.114 2019/11/10 21:16:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.115 2021/04/24 23:36:55 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -452,7 +452,7 @@ fdcfinishattach(device_t self)
 			if (fdc->sc_present & (1 << fa.fa_drive)) {
 				fa.fa_deftype = fdc->sc_knownfds[fa.fa_drive];
 				config_found(fdc->sc_dev, (void *)&fa,
-				    fdprint);
+				    fdprint, CFARG_EOL);
 			}
 		} else {
 #if defined(atari)
@@ -461,14 +461,18 @@ fdcfinishattach(device_t self)
 			 */
 			fa.fa_deftype = &fd_types[2];
 			 /* Atari also configures ISA fdc(4) as "fdcisa" */
-			(void)config_found_ia(fdc->sc_dev, "fdcisa", (void *)&fa, fdprint);
+			config_found(fdc->sc_dev, &fa, fdprint,
+			    CFARG_IATTR, "fdcisa",
+			    CFARG_EOL);
 #else
 			/*
 			 * Default to 1.44MB on Alpha and BeBox.  How do we tell
 			 * on these platforms?
 			 */
 			fa.fa_deftype = &fd_types[0];
-			(void)config_found_ia(fdc->sc_dev, "fdc", (void *)&fa, fdprint);
+			config_found(fdc->sc_dev, &fa, fdprint,
+			    CFARG_IATTR, "fdc",
+			    CFARG_EOL);
 #endif
 		}
 	}

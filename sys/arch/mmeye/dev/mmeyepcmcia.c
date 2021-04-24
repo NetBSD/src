@@ -1,4 +1,4 @@
-/*	$NetBSD: mmeyepcmcia.c,v 1.23 2020/11/21 18:23:36 thorpej Exp $	*/
+/*	$NetBSD: mmeyepcmcia.c,v 1.24 2021/04/24 23:36:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmeyepcmcia.c,v 1.23 2020/11/21 18:23:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmeyepcmcia.c,v 1.24 2021/04/24 23:36:43 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -362,8 +362,8 @@ mmeyepcmcia_attach_socket(struct mmeyepcmcia_handle *h)
 	paa.pct = (pcmcia_chipset_tag_t) h->sc->pct;
 	paa.pch = (pcmcia_chipset_handle_t) h;
 
-	h->pcmcia = config_found_ia(h->sc->dev, "pcmciabus", &paa,
-				    mmeyepcmcia_print);
+	h->pcmcia =
+	    config_found(h->sc->dev, &paa, mmeyepcmcia_print, CFARG_EOL);
 
 	/* if there's actually a pcmcia device attached, initialize the slot */
 

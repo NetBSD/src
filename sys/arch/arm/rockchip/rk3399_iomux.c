@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399_iomux.c,v 1.10 2021/01/27 03:10:19 thorpej Exp $ */
+/* $NetBSD: rk3399_iomux.c,v 1.11 2021/04/24 23:36:28 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 //#define RK3399_IOMUX_DEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk3399_iomux.c,v 1.10 2021/01/27 03:10:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk3399_iomux.c,v 1.11 2021/04/24 23:36:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -518,7 +518,7 @@ rk3399_iomux_attach(device_t parent, device_t self, void *aux)
 		cfaa.faa_name = fdtbus_get_string(child, "name");
 		cfaa.faa_quiet = false;
 
-		config_found(self, &cfaa, NULL);
+		config_found(self, &cfaa, NULL, CFARG_EOL);
 	}
 
 #ifdef RK3399_IOMUX_FORCE_ENABLE_SWJ_DP

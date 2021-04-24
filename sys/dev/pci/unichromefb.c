@@ -1,4 +1,4 @@
-/* $NetBSD: unichromefb.c,v 1.19 2015/10/25 22:48:23 khorben Exp $ */
+/* $NetBSD: unichromefb.c,v 1.20 2021/04/24 23:36:57 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006, 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: unichromefb.c,v 1.19 2015/10/25 22:48:23 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: unichromefb.c,v 1.20 2021/04/24 23:36:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -351,9 +351,13 @@ unichromefb_attach(device_t parent, device_t self, void *opaque)
 	aa.accessops = &unichromefb_accessops;
 	aa.accesscookie = &sc->sc_vd;
 
-	config_found(self, &aa, wsemuldisplaydevprint);
+	config_found(self, &aa, wsemuldisplaydevprint,
+	    CFARG_IATTR, "wsemuldisplaydev",
+	    CFARG_EOL);
 
-	config_found_ia(self, "drm", opaque, unichromefb_drm_print);
+	config_found(self, opaque, unichromefb_drm_print,
+	    CFARG_IATTR, "drm",
+	    CFARG_EOL);
 
 	return;
 }

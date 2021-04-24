@@ -1,4 +1,4 @@
-/*	$NetBSD: dnkbd.c,v 1.11 2020/12/26 00:16:16 tsutsui Exp $	*/
+/*	$NetBSD: dnkbd.c,v 1.12 2021/04/24 23:36:37 thorpej Exp $	*/
 /*	$OpenBSD: dnkbd.c,v 1.17 2009/07/23 21:05:56 blambert Exp $	*/
 
 /*
@@ -390,15 +390,17 @@ dnkbd_attach_subdevices(struct dnkbd_softc *sc)
 		sc->sc_flags = SF_PLUGGED;
 	}
 
-	sc->sc_wskbddev =
-	    config_found_ia(sc->sc_dev, "wskbddev", &ka, wskbddevprint);
+	sc->sc_wskbddev = config_found(sc->sc_dev, &ka, wskbddevprint,
+	    CFARG_IATTR, "wskbddev",
+	    CFARG_EOL);
 
 #if NWSMOUSE > 0
 	ma.accessops = &dnmouse_accessops;
 	ma.accesscookie = sc;
 
-	sc->sc_wsmousedev =
-	    config_found_ia(sc->sc_dev, "wsmousedev", &ma, wsmousedevprint);
+	sc->sc_wsmousedev = config_found(sc->sc_dev, &ma, wsmousedevprint,
+	    CFARG_IATTR, "wsmousedev",
+	    CFARG_EOL);
 #endif
 
 	SET(sc->sc_flags, SF_ATTACHED);

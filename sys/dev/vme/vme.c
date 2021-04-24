@@ -1,4 +1,4 @@
-/* $NetBSD: vme.c,v 1.27 2020/08/24 05:37:41 msaitoh Exp $ */
+/* $NetBSD: vme.c,v 1.28 2021/04/24 23:36:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.27 2020/08/24 05:37:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.28 2021/04/24 23:36:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,8 +147,8 @@ vmesubmatch(device_t bus, cfdata_t dev, const int *ldesc, void *aux)
 	v.va_vct = sc->sc_vct;
 	v.va_bdt = sc->sc_bdt;
 
-	if (config_match(bus, dev, &v)) {
-		config_attach(bus, dev, &v, (cfprint_t)vmeprint);
+	if (config_probe(bus, dev, &v)) {
+		config_attach(bus, dev, &v, (cfprint_t)vmeprint, CFARG_EOL);
 		return (1);
 	}
 	return (0);
@@ -201,9 +201,13 @@ vmeattach(device_t parent, device_t self, void *aux)
 	if (sc->slaveconfig) {
 		/* first get info about the bus master's slave side,
 		 if present */
-		config_search_ia(vmesubmatch1, self, "vme", 0);
+		config_search(self, NULL,
+		    CFARG_SEARCH, vmesubmatch1,
+		    CFARG_EOL);
 	}
-	config_search_ia(vmesubmatch, self, "vme", 0);
+	config_search(self, NULL,
+	    CFARG_SEARCH, vmesubmatch,
+	    CFARG_EOL);
 
 #ifdef VMEDEBUG
 	if (sc->vme32ext)

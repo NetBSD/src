@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.17 2016/07/19 17:04:25 maya Exp $	*/
+/*	$NetBSD: sbus.c,v 1.18 2021/04/24 23:36:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.17 2016/07/19 17:04:25 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.18 2021/04/24 23:36:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -112,7 +112,9 @@ sbus_attach(device_t parent, device_t self, void *aux)
 	/* Initialize SBUS controller */
 	sbus_init(type);
 
-	config_search_ia(sbus_search, self, "sbus", 0);
+	config_search(self, NULL,
+	    CFARG_SEARCH, sbus_search,
+	    CFARG_EOL);
 }
 
 int
@@ -121,8 +123,8 @@ sbus_search(device_t parent, cfdata_t cf,
 {
 	struct sbus_attach_args sa;
 
-	if (config_match(parent, cf, &sa))
-		config_attach(parent, cf, &sa, sbus_print);
+	if (config_probe(parent, cf, &sa))
+		config_attach(parent, cf, &sa, sbus_print, CFARG_EOL);
 	
 	return (0);
 }

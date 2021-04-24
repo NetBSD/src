@@ -1,4 +1,4 @@
-/*	$NetBSD: g2bus.c,v 1.14 2010/11/21 16:11:32 tsutsui Exp $	*/
+/*	$NetBSD: g2bus.c,v 1.15 2021/04/24 23:36:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: g2bus.c,v 1.14 2010/11/21 16:11:32 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: g2bus.c,v 1.15 2021/04/24 23:36:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,9 @@ g2busattach(device_t parent, device_t self, void *aux)
 
 	ga.ga_memt = &sc->sc_memt;
 
-	config_search_ia(g2bussearch, self, "g2bus", &ga);
+	config_search(self, &ga,
+	    CFARG_SEARCH, g2bussearch,
+	    CFARG_EOL);
 }
 
 int
@@ -91,8 +93,8 @@ int
 g2bussearch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 
-	if (config_match(parent, cf, aux) > 0)
-		config_attach(parent, cf, aux, g2busprint);
+	if (config_probe(parent, cf, aux))
+		config_attach(parent, cf, aux, g2busprint, CFARG_EOL);
 
 	return 0;
 }

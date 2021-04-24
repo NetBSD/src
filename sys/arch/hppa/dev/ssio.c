@@ -1,4 +1,4 @@
-/*	$NetBSD: ssio.c,v 1.2 2014/03/29 19:28:28 christos Exp $	*/
+/*	$NetBSD: ssio.c,v 1.3 2021/04/24 23:36:39 thorpej Exp $	*/
 
 /*	$OpenBSD: ssio.c,v 1.7 2009/03/08 22:19:04 miod Exp $	*/
 
@@ -265,7 +265,7 @@ ssio_attach(device_t parent, device_t self, void *aux)
 	saa.saa_iobase = pci_conf_read(pa->pa_pc, pa->pa_tag, SSIO_PCI_SP1BAR);
 	saa.saa_iobase &= 0xfffffffe;
 	saa.saa_irq = 4;
-	config_found(self, &saa, ssio_print);
+	config_found(self, &saa, ssio_print, CFARG_EOL);
 
 	/* Serial Port 2. */
 	saa.saa_name = "com";
@@ -273,7 +273,7 @@ ssio_attach(device_t parent, device_t self, void *aux)
 	saa.saa_iobase = pci_conf_read(pa->pa_pc, pa->pa_tag, SSIO_PCI_SP2BAR);
 	saa.saa_iobase &= 0xfffffffe;
 	saa.saa_irq = 3;
-	config_found(self, &saa, ssio_print);
+	config_found(self, &saa, ssio_print, CFARG_EOL);
 
 	/* Parallel Port. */
 	saa.saa_name = "lpt";
@@ -281,7 +281,7 @@ ssio_attach(device_t parent, device_t self, void *aux)
 	saa.saa_iobase = pci_conf_read(pa->pa_pc, pa->pa_tag, SSIO_PCI_PPBAR);
 	saa.saa_iobase &= 0xfffffffe;
 	saa.saa_irq = 7;
-	config_found(self, &saa, ssio_print);
+	config_found(self, &saa, ssio_print, CFARG_EOL);
 
 #if NUKBD > 0
 	/*

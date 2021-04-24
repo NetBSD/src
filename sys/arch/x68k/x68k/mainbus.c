@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.5 2012/05/15 12:14:59 tsutsui Exp $ */
+/* $NetBSD: mainbus.c,v 1.6 2021/04/24 23:36:51 thorpej Exp $ */
 
 /*
  * Copyright (c) 2008 Tetsuya Isaki. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.5 2012/05/15 12:14:59 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.6 2021/04/24 23:36:51 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +65,6 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal("\n");
 
-	config_found(self, __UNCONST("intio")  , NULL);
-	config_found(self, __UNCONST("grfbus") , NULL);
+	config_found(self, __UNCONST("intio")  , NULL, CFARG_EOL);
+	config_found(self, __UNCONST("grfbus") , NULL, CFARG_EOL);
 }

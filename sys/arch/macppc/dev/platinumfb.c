@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: platinumfb.c,v 1.4 2019/12/11 21:04:47 scole Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platinumfb.c,v 1.5 2021/04/24 23:36:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -643,7 +643,7 @@ platinumfb_init(device_t self)
 	aa.accessops = &platinumfb_accessops;
 	aa.accesscookie = &sc->vd;
 
-	config_found(self, &aa, wsemuldisplaydevprint);
+	config_found(self, &aa, wsemuldisplaydevprint, CFARG_EOL);
 
 	return 0;
 }

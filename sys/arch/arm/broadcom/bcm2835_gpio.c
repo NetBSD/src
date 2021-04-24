@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_gpio.c,v 1.19 2021/01/29 14:11:14 skrll Exp $	*/
+/*	$NetBSD: bcm2835_gpio.c,v 1.20 2021/04/24 23:36:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2013, 2014, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_gpio.c,v 1.19 2021/01/29 14:11:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_gpio.c,v 1.20 2021/04/24 23:36:26 thorpej Exp $");
 
 /*
  * Driver for BCM2835 GPIO
@@ -383,7 +383,7 @@ bcmgpio_attach(device_t parent, device_t self, void *aux)
 	gba.gba_gc = &sc->sc_gpio_gc;
 	gba.gba_pins = &sc->sc_gpio_pins[0];
 	gba.gba_npins = sc->sc_maxpins;
-	(void) config_found_ia(self, "gpiobus", &gba, gpiobus_print);
+	config_found(self, &gba, gpiobus_print, CFARG_EOL);
 }
 
 /* GPIO interrupt support functions */

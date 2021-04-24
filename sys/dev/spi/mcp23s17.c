@@ -1,4 +1,4 @@
-/*      $NetBSD: mcp23s17.c,v 1.1 2014/04/06 17:59:39 kardel Exp $ */
+/*      $NetBSD: mcp23s17.c,v 1.2 2021/04/24 23:36:59 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcp23s17.c,v 1.1 2014/04/06 17:59:39 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcp23s17.c,v 1.2 2021/04/24 23:36:59 thorpej Exp $");
 
 /* 
  * Driver for Microchip MCP23S17 GPIO
@@ -150,7 +150,7 @@ mcp23s17gpio_attach(device_t parent, device_t self, void *aux)
 	gba.gba_pins = sc->sc_gpio_pins;
 	gba.gba_npins = MCP23x17_GPIO_NPINS;
 
-	config_found_ia(self, "gpiobus", &gba, gpiobus_print);
+	config_found(self, &gba, gpiobus_print, CFARG_EOL);
 #else
 	aprint_normal_dev(sc->sc_dev, "no GPIO configured in kernel");
 #endif

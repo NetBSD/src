@@ -1,4 +1,4 @@
-/*	$NetBSD: btmagic.c,v 1.19 2020/06/11 02:39:31 thorpej Exp $	*/
+/*	$NetBSD: btmagic.c,v 1.20 2021/04/24 23:36:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btmagic.c,v 1.19 2020/06/11 02:39:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btmagic.c,v 1.20 2021/04/24 23:36:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -406,7 +406,7 @@ btmagic_attach(device_t parent, device_t self, void *aux)
 	 */
 	wsma.accessops = &btmagic_wsmouse_accessops;
 	wsma.accesscookie = self;
-	sc->sc_wsmouse = config_found(self, &wsma, wsmousedevprint);
+	sc->sc_wsmouse = config_found(self, &wsma, wsmousedevprint, CFARG_EOL);
 	if (sc->sc_wsmouse == NULL) {
 		aprint_error_dev(self, "failed to attach wsmouse\n");
 		return;

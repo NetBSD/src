@@ -1,4 +1,4 @@
-/*	$NetBSD: mhzc.c,v 1.52 2018/12/08 17:46:14 thorpej Exp $	*/
+/*	$NetBSD: mhzc.c,v 1.53 2021/04/24 23:36:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.52 2018/12/08 17:46:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.53 2021/04/24 23:36:58 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -244,9 +244,11 @@ mhzc_attach(device_t parent, device_t self, void *aux)
 		goto fail;
 
 	/*XXXUNCONST*/
-	sc->sc_modem = config_found(self, __UNCONST("com"), mhzc_print);
+	sc->sc_modem = config_found(self, __UNCONST("com"), mhzc_print,
+	    CFARG_EOL);
 	/*XXXUNCONST*/
-	sc->sc_ethernet = config_found(self, __UNCONST("sm"), mhzc_print);
+	sc->sc_ethernet = config_found(self, __UNCONST("sm"), mhzc_print,
+	    CFARG_EOL);
 
 	mhzc_disable(sc, MHZC_MODEM_ENABLED|MHZC_ETHERNET_ENABLED);
 	return;

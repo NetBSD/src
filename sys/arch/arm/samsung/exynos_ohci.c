@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_ohci.c,v 1.5 2021/03/14 08:16:57 skrll Exp $ */
+/* $NetBSD: exynos_ohci.c,v 1.6 2021/04/24 23:36:28 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_ohci.c,v 1.5 2021/03/14 08:16:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_ohci.c,v 1.6 2021/04/24 23:36:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -137,5 +137,5 @@ exynos_ohci_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint);
+	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint, CFARG_EOL);
 }

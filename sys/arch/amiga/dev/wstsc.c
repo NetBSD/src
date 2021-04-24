@@ -1,4 +1,4 @@
-/*	$NetBSD: wstsc.c,v 1.35 2019/02/06 04:07:31 mrg Exp $ */
+/*	$NetBSD: wstsc.c,v 1.36 2021/04/24 23:36:24 thorpej Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wstsc.c,v 1.35 2019/02/06 04:07:31 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wstsc.c,v 1.36 2021/04/24 23:36:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,7 +197,7 @@ wstscattach(device_t parent, device_t self, void *aux)
 	/*
 	 * attach all scsi units on us
 	 */
-	config_found(self, chan, scsiprint);
+	config_found(self, chan, scsiprint, CFARG_EOL);
 }
 
 int

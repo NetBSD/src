@@ -1,4 +1,4 @@
-/*	$NetBSD: vdsk.c,v 1.5 2019/11/19 20:07:30 palle Exp $	*/
+/*	$NetBSD: vdsk.c,v 1.6 2021/04/24 23:36:49 thorpej Exp $	*/
 /*	$OpenBSD: vdsk.c,v 1.46 2015/01/25 21:42:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
@@ -392,7 +392,7 @@ vdsk_attach(device_t parent, device_t self, void *aux)
 	sc->sc_channel.chan_id = 0;
 	sc->sc_channel.chan_flags = SCSIPI_CHAN_NOSETTLE;
 
-	config_found(self, &sc->sc_channel, scsiprint);
+	config_found(self, &sc->sc_channel, scsiprint, CFARG_EOL);
 
 	return;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lasi.c,v 1.3 2020/05/14 06:13:39 skrll Exp $	*/
+/*	$NetBSD: lasi.c,v 1.4 2021/04/24 23:36:39 thorpej Exp $	*/
 
 /*	$OpenBSD: lasi.c,v 1.4 2001/06/09 03:57:19 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lasi.c,v 1.3 2020/05/14 06:13:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lasi.c,v 1.4 2021/04/24 23:36:39 thorpej Exp $");
 
 #undef LASIDEBUG
 
@@ -214,7 +214,7 @@ lasiattach(device_t parent, device_t self, void *aux)
 	ga.ga_fix_args = lasi_fix_args;
 	ga.ga_fix_args_cookie = sc;
 	ga.ga_scsi_target = 7; /* XXX */
-	config_found(self, &ga, gscprint);
+	config_found(self, &ga, gscprint, CFARG_EOL);
 
 	/* could be already set by power(4) */
 	if (!cold_hook)

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.59 2021/01/03 17:42:10 thorpej Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.60 2021/04/24 23:36:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.59 2021/01/03 17:42:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.60 2021/04/24 23:36:30 thorpej Exp $");
 
 #include "opt_mbtype.h"
 
@@ -199,7 +199,7 @@ pcibusattach(device_t parent, device_t self, void *aux)
 
 	printf("\n");
 
-	config_found_ia(self, "pcibus", &pba, ataripcibusprint);
+	config_found(self, &pba, ataripcibusprint, CFARG_EOL);
 }
 
 int

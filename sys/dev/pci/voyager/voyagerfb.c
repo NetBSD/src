@@ -1,4 +1,4 @@
-/*	$NetBSD: voyagerfb.c,v 1.29 2018/01/19 23:37:36 macallan Exp $	*/
+/*	$NetBSD: voyagerfb.c,v 1.30 2021/04/24 23:36:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2009, 2011 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.29 2018/01/19 23:37:36 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.30 2021/04/24 23:36:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -362,7 +362,7 @@ voyagerfb_attach(device_t parent, device_t self, void *aux)
 	aa.accessops = &voyagerfb_accessops;
 	aa.accesscookie = &sc->vd;
 
-	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint);
+	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint, CFARG_EOL);
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.c,v 1.57 2021/02/05 17:17:59 thorpej Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.58 2021/04/24 23:36:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.57 2021/02/05 17:17:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.58 2021/04/24 23:36:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -515,14 +515,6 @@ of_get_mode_string(char *buffer, int len)
 		return NULL;
 	strncpy(buffer, pos + 2, len);
 	return buffer;
-}
-
-void
-of_device_register(device_t dev, int phandle)
-{
-
-	/* All we do here is set the devhandle in the device_t. */
-	device_set_handle(dev, devhandle_from_of(phandle));
 }
 
 /*

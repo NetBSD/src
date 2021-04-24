@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.61 2017/05/22 17:22:29 ragge Exp $	*/
+/*	$NetBSD: uda.c,v 1.62 2021/04/24 23:36:58 thorpej Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uda.c,v 1.61 2017/05/22 17:22:29 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uda.c,v 1.62 2021/04/24 23:36:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -252,7 +252,7 @@ udaattach(device_t parent, device_t self, void *aux)
 	ma.ma_ivec = sc->sc_uh->uh_lastiv;
 	ma.ma_ctlrnr = (ua->ua_iaddr == 0172150 ? 0 : 1);	/* XXX */
 	ma.ma_adapnr = sc->sc_uh->uh_nr;
-	config_found(sc->sc_dev, &ma, udaprint);
+	config_found(sc->sc_dev, &ma, udaprint, CFARG_EOL);
 }
 
 /*

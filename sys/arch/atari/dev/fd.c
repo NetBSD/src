@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.87 2018/09/03 16:29:24 riastradh Exp $	*/
+/*	$NetBSD: fd.c,v 1.88 2021/04/24 23:36:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.87 2018/09/03 16:29:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.88 2021/04/24 23:36:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -341,7 +341,7 @@ fdcattach(device_t parent, device_t self, void *aux)
 			if (nfound == 0)
 				first_found = i;
 			nfound++;
-			config_found(self, (void *)i, fdcprint);
+			config_found(self, (void *)i, fdcprint, CFARG_EOL);
 		}
 	}
 

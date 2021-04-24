@@ -1,4 +1,4 @@
-/*	$NetBSD: btms.c,v 1.13 2017/12/10 17:03:07 bouyer Exp $	*/
+/*	$NetBSD: btms.c,v 1.14 2021/04/24 23:36:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btms.c,v 1.13 2017/12/10 17:03:07 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btms.c,v 1.14 2021/04/24 23:36:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -327,7 +327,7 @@ btms_attach(device_t parent, device_t self, void *aux)
 	wsma.accessops = &btms_wsmouse_accessops;
 	wsma.accesscookie = sc;
 
-	sc->sc_wsmouse = config_found(self, &wsma, wsmousedevprint);
+	sc->sc_wsmouse = config_found(self, &wsma, wsmousedevprint, CFARG_EOL);
 
 	pmf_device_register(self, NULL, NULL);
 }

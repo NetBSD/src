@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_sbus.c,v 1.14 2020/11/21 17:46:08 thorpej Exp $	*/
+/*	$NetBSD: ohci_sbus.c,v 1.15 2021/04/24 23:36:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_sbus.c,v 1.14 2020/11/21 17:46:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_sbus.c,v 1.15 2021/04/24 23:36:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -150,7 +150,8 @@ ohci_sbus_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Attach usb device. */
-	sc->sc.sc_child = config_found(self, &sc->sc.sc_bus, usbctlprint);
+	sc->sc.sc_child = config_found(self, &sc->sc.sc_bus, usbctlprint,
+	    CFARG_EOL);
 }
 
 void

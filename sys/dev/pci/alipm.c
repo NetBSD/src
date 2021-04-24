@@ -1,4 +1,4 @@
-/*	$NetBSD: alipm.c,v 1.11 2019/12/22 23:23:32 thorpej Exp $ */
+/*	$NetBSD: alipm.c,v 1.12 2021/04/24 23:36:57 thorpej Exp $ */
 /*	$OpenBSD: alipm.c,v 1.13 2007/05/03 12:19:01 dlg Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: alipm.c,v 1.11 2019/12/22 23:23:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: alipm.c,v 1.12 2021/04/24 23:36:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -210,7 +210,7 @@ alipm_attach(device_t parent, device_t self, void *aux)
 
 	memset(&iba, 0, sizeof iba);
 	iba.iba_tag = &sc->sc_smb_tag;
-	(void)config_found_ia(sc->sc_dev, "i2cbus", &iba, iicbus_print);
+	config_found(sc->sc_dev, &iba, iicbus_print, CFARG_EOL);
 
 	return;
 

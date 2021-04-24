@@ -1,7 +1,7 @@
-/*	$Id: omap2_gpmc.c,v 1.10 2016/10/04 15:23:40 kiyohara Exp $	*/
+/*	$Id: omap2_gpmc.c,v 1.11 2021/04/24 23:36:28 thorpej Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: omap2_gpmc.c,v 1.10 2016/10/04 15:23:40 kiyohara Exp $ */
+/*	$NetBSD: omap2_gpmc.c,v 1.11 2021/04/24 23:36:28 thorpej Exp $ */
 
 
 /*
@@ -102,7 +102,7 @@
 
 #include "opt_omap.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_gpmc.c,v 1.10 2016/10/04 15:23:40 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_gpmc.c,v 1.11 2021/04/24 23:36:28 thorpej Exp $");
 
 #include "locators.h"
 
@@ -213,7 +213,9 @@ gpmc_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Attach all our devices
 	 */
-	config_search_ia(gpmc_search, self, "gpmc", NULL);
+	config_search(self, NULL,
+	    CFARG_SEARCH, gpmc_search,
+	    CFARG_EOL);
 }
 
 static void
@@ -305,8 +307,9 @@ gpmc_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 				>= (cs->cs_addr + cs->cs_size)))
 					continue;	/* NG */
 			aa.gpmc_cs = i;
-			if (config_match(parent, cf, &aa)) {
-				config_attach(parent, cf, &aa, gpmc_print);
+			if (config_probe(parent, cf, &aa)) {
+				config_attach(parent, cf, &aa, gpmc_print,
+				    CFARG_EOL);
 				return 0;		/* love it */
 			}
 		}

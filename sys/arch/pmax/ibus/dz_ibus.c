@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_ibus.c,v 1.12 2017/05/18 16:37:06 christos Exp $	*/
+/*	$NetBSD: dz_ibus.c,v 1.13 2021/04/24 23:36:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz_ibus.c,v 1.12 2017/05/18 16:37:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz_ibus.c,v 1.13 2021/04/24 23:36:45 thorpej Exp $");
 
 #include "dzkbd.h"
 #include "dzms.h"
@@ -212,7 +212,7 @@ dz_ibus_attach(device_t parent, device_t self, void *aux)
 			    DZ_LPR_8_BIT_CHAR | DZ_LINE_KBD;
 		daa.daa_line = DZ_LINE_KBD;
 		daa.daa_flags = (dz_ibus_iscn ? 0 : DZKBD_CONSOLE);
-		config_found(self, &daa, dz_ibus_print);
+		config_found(self, &daa, dz_ibus_print, CFARG_EOL);
 #endif
 #if NDZMS > 0
 		dz->rbuf = DZ_LPR_RX_ENABLE | (DZ_LPR_B4800 << 8) |
@@ -220,7 +220,7 @@ dz_ibus_attach(device_t parent, device_t self, void *aux)
 		    DZ_LINE_MOUSE;
 		daa.daa_line = DZ_LINE_MOUSE;
 		daa.daa_flags = 0;
-		config_found(self, &daa, dz_ibus_print);
+		config_found(self, &daa, dz_ibus_print, CFARG_EOL);
 #endif
 	}
 }

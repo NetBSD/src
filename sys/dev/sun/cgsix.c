@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.68 2019/01/19 00:16:43 macallan Exp $ */
+/*	$NetBSD: cgsix.c,v 1.69 2021/04/24 23:36:59 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.68 2019/01/19 00:16:43 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.69 2021/04/24 23:36:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -629,7 +629,7 @@ cg6attach(struct cgsix_softc *sc, const char *name, int isconsole)
 	aa.console = isconsole;
 	aa.accessops = &cgsix_accessops;
 	aa.accesscookie = &sc->vd;
-	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint);
+	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint, CFARG_EOL);
 }
 
 

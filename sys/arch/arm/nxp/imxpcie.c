@@ -1,4 +1,4 @@
-/*	$NetBSD: imxpcie.c,v 1.1 2020/12/23 14:42:38 skrll Exp $	*/
+/*	$NetBSD: imxpcie.c,v 1.2 2021/04/24 23:36:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2019  Genetec Corporation.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxpcie.c,v 1.1 2020/12/23 14:42:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxpcie.c,v 1.2 2021/04/24 23:36:28 thorpej Exp $");
 
 #include "opt_pci.h"
 #include "opt_fdt.h"
@@ -509,7 +509,7 @@ imxpcie_attach_common(struct imxpcie_softc * const sc)
 	pba.pba_pc = &sc->sc_pc;
 	pba.pba_bus = 0;
 
-	config_found_ia(sc->sc_dev, "pcibus", &pba, pcibusprint);
+	config_found(sc->sc_dev, &pba, pcibusprint, CFARG_EOL);
 }
 
 int

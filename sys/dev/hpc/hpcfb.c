@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.60 2015/04/07 01:24:32 ozaki-r Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.61 2021/04/24 23:36:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.60 2015/04/07 01:24:32 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.61 2021/04/24 23:36:54 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_hpcfb.h"
@@ -324,7 +324,8 @@ hpcfbattach(device_t parent, device_t self, void *aux)
 	wa.accessops = &hpcfb_accessops;
 	wa.accesscookie = sc;
 
-	sc->sc_wsdisplay = config_found(self, &wa, wsemuldisplaydevprint);
+	sc->sc_wsdisplay = config_found(self, &wa, wsemuldisplaydevprint,
+	    CFARG_EOL);
 
 #ifdef HPCFB_JUMP
 	/*

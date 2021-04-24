@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_sdhost.c,v 1.8 2021/01/29 14:11:14 skrll Exp $ */
+/* $NetBSD: bcm2835_sdhost.c,v 1.9 2021/04/24 23:36:26 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_sdhost.c,v 1.8 2021/01/29 14:11:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_sdhost.c,v 1.9 2021/04/24 23:36:26 thorpej Exp $");
 
 #include "bcmdmac.h"
 
@@ -313,7 +313,7 @@ sdhost_attach_i(device_t self)
 		       SMC_CAPS_MMC_HIGHSPEED |
 		       SMC_CAPS_4BIT_MODE;
 
-	sc->sc_sdmmc_dev = config_found(self, &saa, NULL);
+	sc->sc_sdmmc_dev = config_found(self, &saa, NULL, CFARG_EOL);
 }
 
 static int

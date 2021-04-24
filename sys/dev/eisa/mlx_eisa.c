@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx_eisa.c,v 1.27 2021/01/27 04:35:15 thorpej Exp $	*/
+/*	$NetBSD: mlx_eisa.c,v 1.28 2021/04/24 23:36:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx_eisa.c,v 1.27 2021/01/27 04:35:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx_eisa.c,v 1.28 2021/04/24 23:36:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,7 +190,7 @@ mlx_eisa_attach(device_t parent, device_t self, void *aux)
 }
 
 static int
-mlx_eisa_rescan(device_t self, const char *attr, const int *flag)
+mlx_eisa_rescan(device_t self, const char *ifattr, const int *locs)
 {
 
 	return mlx_configure(device_private(self), 1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ugenhc.c,v 1.27 2018/09/03 16:29:37 riastradh Exp $	*/
+/*	$NetBSD: ugenhc.c,v 1.28 2021/04/24 23:37:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.27 2018/09/03 16:29:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.28 2021/04/24 23:37:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -959,5 +959,5 @@ ugenhc_attach(device_t parent, device_t self, void *aux)
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 
-	config_found(self, &sc->sc_bus, usbctlprint);
+	config_found(self, &sc->sc_bus, usbctlprint, CFARG_EOL);
 }

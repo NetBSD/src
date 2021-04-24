@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.5 2020/08/01 12:36:35 jdolecek Exp $ */
+/* $NetBSD: mainbus.c,v 1.6 2021/04/24 23:36:51 thorpej Exp $ */
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.5 2020/08/01 12:36:35 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.6 2021/04/24 23:36:51 thorpej Exp $");
 
 #include "opt_acpi.h"
 #include "opt_mpbios.h"
@@ -196,7 +196,9 @@ x86_cpubus_attach(device_t self)
 			caa.cpu_role = CPU_ROLE_SP;
 			caa.cpu_func = 0;
 
-			config_found_ia(self, "cpubus", &caa, mainbus_cpu_print);
+			config_found(self, &caa, mainbus_cpu_print,
+			    CFARG_IATTR, "cpubus",
+			    CFARG_EOL);
 		}
 #if NACPICA > 0
 	}

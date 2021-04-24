@@ -1,4 +1,4 @@
-/*	$NetBSD: aac_pci.c,v 1.40 2018/12/09 11:14:01 jdolecek Exp $	*/
+/*	$NetBSD: aac_pci.c,v 1.41 2021/04/24 23:36:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.40 2018/12/09 11:14:01 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.41 2021/04/24 23:36:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -617,7 +617,7 @@ aac_pci_attach(device_t parent, device_t self, void *aux)
 
 /* ARGSUSED */
 static int
-aac_pci_rescan(device_t self, const char *attr, const int *flags)
+aac_pci_rescan(device_t self, const char *ifattr, const int *locs)
 {
 
 	return aac_devscan(device_private(self));

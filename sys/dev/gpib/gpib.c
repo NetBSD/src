@@ -1,4 +1,4 @@
-/*	$NetBSD: gpib.c,v 1.24 2019/11/10 21:16:34 chs Exp $	*/
+/*	$NetBSD: gpib.c,v 1.25 2021/04/24 23:36:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpib.c,v 1.24 2019/11/10 21:16:34 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpib.c,v 1.25 2021/04/24 23:36:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,13 +140,16 @@ gpibattach(device_t parent, device_t self, void *aux)
 	for (address=0; address<GPIB_NDEVS; address++) {
 		ga.ga_ic = sc->sc_ic;
 		ga.ga_address = address;
-		(void) config_search_ia(gpibsubmatch1, sc->sc_dev, "gpib",
-		    &ga);
+		config_search(sc->sc_dev, &ga,
+		    CFARG_SEARCH, gpibsubmatch1,
+		    CFARG_EOL);
 	}
 
 	/* attach the wild-carded devices - probably protocol busses */
 	ga.ga_ic = sc->sc_ic;
-	(void) config_search_ia(gpibsubmatch2, sc->sc_dev, "gpib", &ga);
+	config_search(sc->sc_dev, &ga,
+	    CFARG_SEARCH, gpibsubmatch2,
+	    CFARG_EOL);
 }
 
 int
@@ -161,10 +164,10 @@ gpibsubmatch1(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	if (cf->cf_loc[GPIBCF_ADDRESS] == sc->sc_myaddr)
 		return (0);
 
-	if (config_match(parent, cf, ga) > 0) {
+	if (config_probe(parent, cf, ga)) {
 		if (gpib_alloc(sc, ga->ga_address))
 			return (0);
-		config_attach(parent, cf, ga, gpibprint);
+		config_attach(parent, cf, ga, gpibprint, CFARG_EOL);
 		return (0);
 	}
 	return (0);
@@ -179,8 +182,8 @@ gpibsubmatch2(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 		return (0);
 
 	ga->ga_address = GPIBCF_ADDRESS_DEFAULT;
-	if (config_match(parent, cf, ga) > 0) {
-		config_attach(parent, cf, ga, gpibdevprint);
+	if (config_probe(parent, cf, ga)) {
+		config_attach(parent, cf, ga, gpibdevprint, CFARG_EOL);
 		return (0);
 	}
 	return (0);

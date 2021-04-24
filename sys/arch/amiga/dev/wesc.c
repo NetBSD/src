@@ -1,4 +1,4 @@
-/*	$NetBSD: wesc.c,v 1.40 2012/10/27 17:17:31 chs Exp $ */
+/*	$NetBSD: wesc.c,v 1.41 2021/04/24 23:36:24 thorpej Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wesc.c,v 1.40 2012/10/27 17:17:31 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wesc.c,v 1.41 2021/04/24 23:36:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,7 +160,7 @@ wescattach(device_t parent, device_t self, void *aux)
 	/*
 	 * attach all scsi units on us
 	 */
-	config_found(self, chan, scsiprint);
+	config_found(self, chan, scsiprint, CFARG_EOL);
 }
 
 int

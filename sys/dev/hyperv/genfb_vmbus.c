@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_vmbus.c,v 1.1 2019/05/24 14:28:48 nonaka Exp $	*/
+/*	$NetBSD: genfb_vmbus.c,v 1.2 2021/04/24 23:36:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_vmbus.c,v 1.1 2019/05/24 14:28:48 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_vmbus.c,v 1.2 2021/04/24 23:36:54 thorpej Exp $");
 
 #include "opt_wsfb.h"
 #include "opt_genfb.h"
@@ -114,7 +114,9 @@ genfb_vmbus_attach(device_t parent, device_t self, void *aux)
 		return;
 
 	/* now try to attach a DRM */
-	config_found_ia(self, "drm", aux, genfb_vmbus_drm_print);
+	config_found(self, aux, genfb_vmbus_drm_print,
+	    CFARG_IATTR, "drm",
+	    CFARG_EOL);
 }
 
 static int

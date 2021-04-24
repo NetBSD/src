@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid.c,v 1.43 2020/08/25 13:42:09 skrll Exp $	*/
+/*	$NetBSD: ata_raid.c,v 1.44 2021/04/24 23:36:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.43 2020/08/25 13:42:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.44 2021/04/24 23:36:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -114,7 +114,7 @@ ataraidattach(int count)
 
 /* ARGSUSED */
 static int
-ataraid_rescan(device_t self, const char *attr, const int *flags)
+ataraid_rescan(device_t self, const char *ifattr, const int *locs)
 {
 
 	finalize_done = 0;
@@ -215,8 +215,10 @@ ataraid_attach(device_t parent, device_t self, void *aux)
 		locs[ATARAIDCF_VENDTYPE] = aai->aai_type;
 		locs[ATARAIDCF_UNIT] = aai->aai_arrayno;
 
-		config_found_sm_loc(self, "ataraid", locs, aai,
-				    ataraid_print, config_stdsubmatch);
+		config_found(self, aai, ataraid_print,
+		    CFARG_SUBMATCH, config_stdsubmatch,
+		    CFARG_LOCATORS, locs,
+		    CFARG_EOL);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: empb.c,v 1.13 2020/07/07 03:38:45 thorpej Exp $ */
+/*	$NetBSD: empb.c,v 1.14 2021/04/24 23:36:25 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -268,7 +268,9 @@ empb_callback(device_t self) {
 
 	empb_intr_enable(sc);
 
-	config_found_ia(self, "pcibus", &pba, pcibusprint);
+	config_found(self, &pba, pcibusprint,
+	    CFARG_IATTR, "pcibus",
+	    CFARG_EOL);
 }
 
 static void
@@ -277,7 +279,9 @@ empb_empm_attach(struct empb_softc *sc)
 	struct empm_attach_args aa;
 	aa.setup_area_t = sc->setup_area_t;
 
-	config_found_ia(sc->sc_dev, "empmdev", &aa, empb_empm_print);
+	config_found(sc->sc_dev, &aa, empb_empm_print,
+	    CFARG_IATTR, "empmdev",
+	    CFARG_EOL);
 }
 
 static int 

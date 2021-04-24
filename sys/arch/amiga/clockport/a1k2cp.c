@@ -1,4 +1,4 @@
-/*      $NetBSD: a1k2cp.c,v 1.3 2012/10/27 17:17:26 chs Exp $ */
+/*      $NetBSD: a1k2cp.c,v 1.4 2021/04/24 23:36:24 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -104,5 +104,5 @@ a1k2cp_attach(device_t parent, device_t self, void *aux)
 	    A1K2CP_BASE, (void*) a1k2cp_bst.base);
 #endif /* A1K2CP_DEBUG */
 
-	config_found(sc->sc_dev, &a1k2cp_aa, 0);
+	config_found(sc->sc_dev, &a1k2cp_aa, 0, CFARG_EOL);
 }

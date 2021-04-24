@@ -1,4 +1,4 @@
-/*	$NetBSD: udsir.c,v 1.12 2020/12/18 01:40:20 thorpej Exp $	*/
+/*	$NetBSD: udsir.c,v 1.13 2021/04/24 23:36:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udsir.c,v 1.12 2020/12/18 01:40:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udsir.c,v 1.13 2021/04/24 23:36:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -230,7 +230,7 @@ udsir_attach(device_t parent, device_t self, void *aux)
 	ia.ia_methods = &udsir_methods;
 	ia.ia_handle = sc;
 
-	sc->sc_child = config_found(self, &ia, ir_print);
+	sc->sc_child = config_found(self, &ia, ir_print, CFARG_EOL);
 	selinit(&sc->sc_rd_sel);
 	selinit(&sc->sc_wr_sel);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: w83l518d_sdmmc.c,v 1.4 2020/05/11 14:55:20 jdc Exp $ */
+/* $NetBSD: w83l518d_sdmmc.c,v 1.5 2021/04/24 23:36:55 thorpej Exp $ */
 
 /*
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: w83l518d_sdmmc.c,v 1.4 2020/05/11 14:55:20 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: w83l518d_sdmmc.c,v 1.5 2021/04/24 23:36:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -185,7 +185,7 @@ wb_sdmmc_attach(struct wb_softc *wb)
 	if (!ISSET(wb->wb_quirks, WB_QUIRK_1BIT))
 		saa.saa_caps = SMC_CAPS_4BIT_MODE;
 
-	wb->wb_sdmmc_dev = config_found(wb->wb_dev, &saa, NULL);
+	wb->wb_sdmmc_dev = config_found(wb->wb_dev, &saa, NULL, CFARG_EOL);
 }
 
 int

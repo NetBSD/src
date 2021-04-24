@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ts.c,v 1.8 2021/01/27 03:10:20 thorpej Exp $ */
+/* $NetBSD: sunxi_ts.c,v 1.9 2021/04/24 23:36:29 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sunxi_ts.c,v 1.8 2021/01/27 03:10:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_ts.c,v 1.9 2021/04/24 23:36:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -418,7 +418,7 @@ sunxi_ts_attach(device_t parent, device_t self, void *aux)
 		memset(&a, 0, sizeof(a));
 		a.accessops = &sunxi_ts_accessops;
 		a.accesscookie = sc;
-		sc->sc_wsmousedev = config_found_ia(self, "wsmousedev",
-		    &a, wsmousedevprint);
+		sc->sc_wsmousedev =
+		    config_found(self, &a, wsmousedevprint, CFARG_EOL);
 	}
 }

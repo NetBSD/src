@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmppc,v 1.7 2017/02/18 05:08:47 rin Exp $
+#	$NetBSD: files.pmppc,v 1.8 2021/04/24 23:36:36 thorpej Exp $
 #
 #
 maxpartitions 16
@@ -32,7 +32,7 @@ file dev/md_root.c	memory_disk_hooks
 # System bus types
 #
 define	mainbus { [addr=-1], [irq=-1] }
-device	mainbus: mainbus, pcibus
+device	mainbus: mainbus
 attach	mainbus at root
 device	cpu
 attach	cpu at mainbus

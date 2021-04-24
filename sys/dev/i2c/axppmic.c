@@ -1,4 +1,4 @@
-/* $NetBSD: axppmic.c,v 1.33 2021/01/27 02:29:48 thorpej Exp $ */
+/* $NetBSD: axppmic.c,v 1.34 2021/04/24 23:36:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.33 2021/01/27 02:29:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.34 2021/04/24 23:36:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1052,7 +1052,7 @@ axppmic_attach(device_t parent, device_t self, void *aux)
 				continue;
 			aaa.reg_ctrl = ctrl;
 			aaa.reg_phandle = child;
-			config_found(sc->sc_dev, &aaa, NULL);
+			config_found(sc->sc_dev, &aaa, NULL, CFARG_EOL);
 		}
 	}
 

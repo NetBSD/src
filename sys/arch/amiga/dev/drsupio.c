@@ -1,4 +1,4 @@
-/*	$NetBSD: drsupio.c,v 1.21 2012/10/27 17:17:28 chs Exp $ */
+/*	$NetBSD: drsupio.c,v 1.22 2021/04/24 23:36:24 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drsupio.c,v 1.21 2012/10/27 17:17:28 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drsupio.c,v 1.22 2021/04/24 23:36:24 thorpej Exp $");
 
 /*
  * DraCo multi-io chip bus space stuff
@@ -113,7 +113,7 @@ drsupioattach(device_t parent, device_t self, void *aux)
 		supa.supio_name = drsd->name;
 		supa.supio_iobase = drsd->off;
 		supa.supio_arg = drsd->arg;
-		config_found(self, &supa, drsupprint); /* XXX */
+		config_found(self, &supa, drsupprint, CFARG_EOL); /* XXX */
 		++drsd;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_netbsd.c,v 1.37 2020/09/15 17:21:39 mlelstv Exp $	*/
+/*	$NetBSD: mpt_netbsd.c,v 1.38 2021/04/24 23:36:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.37 2020/09/15 17:21:39 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.38 2021/04/24 23:36:55 thorpej Exp $");
 
 #include "bio.h"
 
@@ -158,7 +158,7 @@ mpt_scsipi_attach(mpt_softc_t *mpt)
 	* errors
 	*/
 	mpt->sc_scsibus_dv = config_found(mpt->sc_dev, &mpt->sc_channel, 
-	scsiprint);
+	    scsiprint, CFARG_EOL);
 
 #if NBIO > 0
 	if (mpt_is_raid(mpt)) {

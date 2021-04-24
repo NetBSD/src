@@ -1,4 +1,4 @@
-/*	$NetBSD: qvms.c,v 1.1 2015/07/05 03:07:21 matt Exp $	*/
+/*	$NetBSD: qvms.c,v 1.2 2021/04/24 23:36:50 thorpej Exp $	*/
 
 /* Copyright (c) 2015 Charles H. Dickman. All rights reserved.
  * Derived from dzms.c
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qvms.c,v 1.1 2015/07/05 03:07:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qvms.c,v 1.2 2021/04/24 23:36:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,7 +138,8 @@ qvms_attach(device_t parent, device_t self, void *aux)
 
 	qvms->sc_enabled = 0;
 	qvms->sc_selftest = 0;
-	qvms->sc_wsmousedev = config_found(self, &a, wsmousedevprint);
+	qvms->sc_wsmousedev = config_found(self, &a, wsmousedevprint,
+	    CFARG_EOL);
 }
 
 static int

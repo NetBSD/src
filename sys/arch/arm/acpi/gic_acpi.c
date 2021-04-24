@@ -1,4 +1,4 @@
-/* $NetBSD: gic_acpi.c,v 1.5 2020/07/27 18:38:10 jmcneill Exp $ */
+/* $NetBSD: gic_acpi.c,v 1.6 2021/04/24 23:36:25 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic_acpi.c,v 1.5 2020/07/27 18:38:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic_acpi.c,v 1.6 2021/04/24 23:36:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -123,7 +123,7 @@ gic_acpi_attach(device_t parent, device_t self, void *aux)
 		.mpcaa_off2 = gicc->BaseAddress - addr,
 	};
 
-	armgic = config_found(self, &mpcaa, NULL);
+	armgic = config_found(self, &mpcaa, NULL, CFARG_EOL);
 	if (armgic != NULL) {
 		arm_fdt_irq_set_handler(armgic_irq_handler);
 

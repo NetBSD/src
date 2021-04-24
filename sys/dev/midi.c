@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.91 2020/12/19 01:18:58 thorpej Exp $	*/
+/*	$NetBSD: midi.c,v 1.92 2021/04/24 23:36:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.91 2020/12/19 01:18:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.92 2021/04/24 23:36:52 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "midi.h"
@@ -1895,7 +1895,7 @@ midi_attach_mi(const struct midi_hw_if *mhwp, void *hdlp, device_t dev)
 	arg.type = AUDIODEV_TYPE_MIDI;
 	arg.hwif = mhwp;
 	arg.hdl = hdlp;
-	return (config_found(dev, &arg, audioprint));
+	return (config_found(dev, &arg, audioprint, CFARG_EOL));
 }
 
 #endif /* NMIDI > 0 || NMIDIBUS > 0 */

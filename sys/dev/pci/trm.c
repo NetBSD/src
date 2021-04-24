@@ -1,4 +1,4 @@
-/*	$NetBSD: trm.c,v 1.41 2019/11/10 21:16:36 chs Exp $	*/
+/*	$NetBSD: trm.c,v 1.42 2021/04/24 23:36:57 thorpej Exp $	*/
 /*-
  * Copyright (c) 2002 Izumi Tsutsui.  All rights reserved.
  *
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.41 2019/11/10 21:16:36 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.42 2021/04/24 23:36:57 thorpej Exp $");
 
 /* #define TRM_DEBUG */
 #ifdef TRM_DEBUG
@@ -502,7 +502,7 @@ trm_attach(device_t parent, device_t self, void *aux)
 	sc->sc_channel.chan_nluns = 8;
 	sc->sc_channel.chan_id = sc->sc_id;
 
-	config_found(self, &sc->sc_channel, scsiprint);
+	config_found(self, &sc->sc_channel, scsiprint, CFARG_EOL);
 }
 
 /*

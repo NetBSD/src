@@ -1,4 +1,4 @@
-/* $NetBSD: tcakp.c,v 1.15 2021/01/27 02:29:48 thorpej Exp $ */
+/* $NetBSD: tcakp.c,v 1.16 2021/04/24 23:36:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcakp.c,v 1.15 2021/01/27 02:29:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcakp.c,v 1.16 2021/04/24 23:36:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -416,7 +416,7 @@ tcakp_attach(device_t parent, device_t self, void *aux)
 	a.accessops = &tcakp_accessops;
 	a.accesscookie = sc;
 
-	sc->sc_wskbddev = config_found_ia(self, "wskbddev", &a, wskbddevprint);
+	sc->sc_wskbddev = config_found(self, &a, wskbddevprint, CFARG_EOL);
 }
 
 static int

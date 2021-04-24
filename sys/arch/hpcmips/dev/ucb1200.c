@@ -1,4 +1,4 @@
-/*	$NetBSD: ucb1200.c,v 1.19 2012/10/27 17:17:53 chs Exp $ */
+/*	$NetBSD: ucb1200.c,v 1.20 2021/04/24 23:36:38 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucb1200.c,v 1.19 2012/10/27 17:17:53 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucb1200.c,v 1.20 2021/04/24 23:36:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,7 +133,9 @@ ucb1200_attach(device_t parent, device_t self, void *aux)
 	(void)ucb1200_check_id(reg, 1);
 	printf("\n");
 
-	config_search_ia(ucb1200_search, self, "ucbif", ucb1200_print);
+	config_search(self, NULL,
+	    CFARG_SEARCH, ucb1200_search,
+	    CFARG_EOL);
 }
 
 int
@@ -148,8 +150,8 @@ ucb1200_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	ucba.ucba_sib	   = sc->sc_parent;
 	ucba.ucba_ucb	   = parent;
 	
-	if (config_match(parent, cf, &ucba))
-		config_attach(parent, cf, &ucba, ucb1200_print);
+	if (config_probe(parent, cf, &ucba))
+		config_attach(parent, cf, &ucba, ucb1200_print, CFARG_EOL);
 
 	return (0);
 }

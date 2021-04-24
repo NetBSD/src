@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.2 2018/03/08 18:48:25 martin Exp $	*/
+/*	$NetBSD: pcib.c,v 1.3 2021/04/24 23:36:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.2 2018/03/08 18:48:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.3 2021/04/24 23:36:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,6 +148,10 @@ pcibrescan(device_t self, const char *ifattr, const int *loc)
 	struct pcib_softc *sc = device_private(self);
 	struct isabus_attach_args iba;
 
+	/*
+	 * pcib only carries "isabus", but this can also be used
+	 * by other drivers that carry additional interface attributes.
+	 */
 	if (ifattr_match(ifattr, "isabus") && sc->sc_isabus == NULL) {
 		/*
 		 * Attach the ISA bus behind this bridge.
@@ -162,7 +166,9 @@ pcibrescan(device_t self, const char *ifattr, const int *loc)
 
 		if (iba.iba_ic != NULL) 
 			sc->sc_isabus =
-			    config_found_ia(self, "isabus", &iba, isabusprint);
+			    config_found(self, &iba, isabusprint,
+					 CFARG_IATTR, "isabus",
+					 CFARG_EOL);
 	}
 	return 0;
 }

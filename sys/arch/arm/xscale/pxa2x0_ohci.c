@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_ohci.c,v 1.11 2018/04/09 16:21:09 jakllsch Exp $	*/
+/*	$NetBSD: pxa2x0_ohci.c,v 1.12 2021/04/24 23:36:29 thorpej Exp $	*/
 /*	$OpenBSD: pxa2x0_ohci.c,v 1.19 2005/04/08 02:32:54 dlg Exp $ */
 
 /*
@@ -130,7 +130,8 @@ pxaohci_attach(device_t parent, device_t self, void *aux)
 	}
 #endif
 
-	sc->sc.sc_child = config_found(self, &sc->sc.sc_bus, usbctlprint);
+	sc->sc.sc_child = config_found(self, &sc->sc.sc_bus, usbctlprint,
+	    CFARG_EOL);
 
 	return;
 

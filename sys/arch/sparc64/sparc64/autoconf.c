@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.227 2020/10/29 06:47:38 jdc Exp $ */
+/*	$NetBSD: autoconf.c,v 1.228 2021/04/24 23:36:49 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.227 2020/10/29 06:47:38 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.228 2021/04/24 23:36:49 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -634,7 +634,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		ma.ma_dmatag = &mainbus_dma_tag;
 		ma.ma_node = node;
 		ma.ma_name = "cpu";
-		config_found(dev, &ma, mbprint);
+		config_found(dev, &ma, mbprint, CFARG_EOL);
 	}
 
 	node = findroot();	/* re-init root node */
@@ -717,7 +717,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 				printf(" no address\n");
 		}
 #endif
-		(void) config_found(dev, (void *)&ma, mbprint);
+		(void) config_found(dev, (void *)&ma, mbprint, CFARG_EOL);
 		free(ma.ma_reg, M_DEVBUF);
 		if (ma.ma_ninterrupts)
 			free(ma.ma_interrupts, M_DEVBUF);
@@ -727,7 +727,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 	/* Try to attach PROM console */
 	memset(&ma, 0, sizeof ma);
 	ma.ma_name = "pcons";
-	(void) config_found(dev, (void *)&ma, mbprint);
+	(void) config_found(dev, (void *)&ma, mbprint, CFARG_EOL);
 }
 
 CFATTACH_DECL_NEW(mainbus, 0,

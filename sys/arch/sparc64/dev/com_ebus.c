@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ebus.c,v 1.34 2018/12/08 17:46:13 thorpej Exp $	*/
+/*	$NetBSD: com_ebus.c,v 1.35 2021/04/24 23:36:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_ebus.c,v 1.34 2018/12/08 17:46:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_ebus.c,v 1.35 2021/04/24 23:36:49 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -234,13 +234,13 @@ com_ebus_attach(device_t parent, device_t self, void *aux)
 #if (NKBD > 0)
 	kma.kmta_name = "keyboard";
 	if (prom_getproplen(ea->ea_node, kma.kmta_name) == 0) {
-		config_found(self, (void *)&kma, NULL);
+		config_found(self, (void *)&kma, NULL, CFARG_EOL);
 	}
 #endif
 #if (NMS > 0)
 	kma.kmta_name = "mouse";
 	if (prom_getproplen(ea->ea_node, kma.kmta_name) == 0) {
-		config_found(self, (void *)&kma, NULL);
+		config_found(self, (void *)&kma, NULL, CFARG_EOL);
 	}
 #endif
 #endif

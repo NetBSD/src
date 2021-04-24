@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: gemini_ipm.c,v 1.2 2012/10/27 17:17:38 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_ipm.c,v 1.3 2021/04/24 23:36:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,7 +151,7 @@ gemini_ipm_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 
 #if NGPN > 0
-	config_found(self, __UNCONST("gpn"), NULL);
+	config_found(self, __UNCONST("gpn"), NULL, CFARG_EOL);
 #endif
 }
 

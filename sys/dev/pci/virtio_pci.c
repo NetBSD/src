@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_pci.c,v 1.28 2021/02/05 19:18:23 reinoud Exp $ */
+/* $NetBSD: virtio_pci.c,v 1.29 2021/04/24 23:36:57 thorpej Exp $ */
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.28 2021/02/05 19:18:23 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.29 2021/04/24 23:36:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -271,13 +271,13 @@ virtio_pci_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_childdevid = id;
 	sc->sc_child = NULL;
-	virtio_pci_rescan(self, "virtio", 0);
+	virtio_pci_rescan(self, NULL, NULL);
 	return;
 }
 
 /* ARGSUSED */
 static int
-virtio_pci_rescan(device_t self, const char *attr, const int *scan_flags)
+virtio_pci_rescan(device_t self, const char *ifattr, const int *locs)
 {
 	struct virtio_pci_softc * const psc = device_private(self);
 	struct virtio_softc * const sc = &psc->sc_sc;
@@ -289,7 +289,7 @@ virtio_pci_rescan(device_t self, const char *attr, const int *scan_flags)
 	memset(&va, 0, sizeof(va));
 	va.sc_childdevid = sc->sc_childdevid;
 
-	config_found_ia(self, attr, &va, NULL);
+	config_found(self, &va, NULL, CFARG_EOL);
 
 	if (virtio_attach_failed(sc))
 		return 0;

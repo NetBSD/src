@@ -1,4 +1,4 @@
-/* $NetBSD: tiotg.c,v 1.7 2017/10/28 00:37:12 pgoyette Exp $ */
+/* $NetBSD: tiotg.c,v 1.8 2021/04/24 23:36:28 thorpej Exp $ */
 /*
  * Copyright (c) 2013 Manuel Bouyer.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tiotg.c,v 1.7 2017/10/28 00:37:12 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tiotg.c,v 1.8 2021/04/24 23:36:28 thorpej Exp $");
 
 #include "opt_omap.h"
 #include "locators.h"
@@ -191,13 +191,15 @@ tiotg_rescan(device_t self, const char *ifattr, const int *locs)
 {
 	struct tiotg_softc *sc = device_private(self);
 	struct motg_attach_args	aa;
+	int mlocs[TIOTG_PORTCF_NLOCS];
 	int i;
 
 	for (i = 0; i < TI_OTG_NPORTS; i++) {
 		if (sc->sc_motgdev[i] != NULL)
 			continue;
-		if (!ifattr_match(ifattr, "tiotg_port"))
-			continue;
+
+		mlocs[TIOTG_PORTCF_PORT] = i;
+
 		if (bus_space_subregion(sc->sc_iot, sc->sc_ioh,
 		    USB_CTRL_OFFSET(i), USB_PORT_SIZE, &aa.aa_ioh) < 0) {
 			aprint_error_dev(self,
@@ -209,7 +211,10 @@ tiotg_rescan(device_t self, const char *ifattr, const int *locs)
 		aa.aa_port = i;
 		aa.aa_intr = sc->sc_intrbase + 1 + i;
 		sc->sc_motgdev[i] =
-		    config_found_ia(self, "tiotg_port", &aa, ti_motg_print);
+		    config_found(self, &aa, ti_motg_print,
+				 CFARG_SUBMATCH, config_stdsubmatch,
+				 CFARG_LOCATORS, mlocs,
+				 CFARG_EOL);
 	}
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0.c,v 1.27 2012/10/27 17:17:41 chs Exp $	*/
+/*	$NetBSD: sa11x0.c,v 1.28 2021/04/24 23:36:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0.c,v 1.27 2012/10/27 17:17:41 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0.c,v 1.28 2021/04/24 23:36:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,7 +193,9 @@ sa11x0_attach(device_t parent, device_t self, void *aux)
 	/*
 	 *  Attach each devices
 	 */
-	config_search_ia(sa11x0_search, self, "saip", NULL);
+	config_search(self, NULL,
+	    CFARG_SEARCH, sa11x0_search,
+	    CFARG_EOL);
 }
 
 int
@@ -210,8 +212,8 @@ sa11x0_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	sa.sa_intr = cf->cf_loc[SAIPCF_INTR];
 	sa.sa_gpio = cf->cf_loc[SAIPCF_GPIO];
 
-        if (config_match(parent, cf, &sa) > 0)
-                config_attach(parent, cf, &sa, sa11x0_print);
+        if (config_probe(parent, cf, &sa))
+                config_attach(parent, cf, &sa, sa11x0_print, CFARG_EOL);
 
         return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_mace.c,v 1.23 2020/07/07 03:38:48 thorpej Exp $	*/
+/*	$NetBSD: pci_mace.c,v 1.24 2021/04/24 23:36:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001,2003 Christopher Sekiya
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_mace.c,v 1.23 2020/07/07 03:38:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_mace.c,v 1.24 2021/04/24 23:36:48 thorpej Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -205,7 +205,7 @@ macepci_attach(device_t parent, device_t self, void *aux)
 
 	cpu_intr_establish(maa->maa_intr, IPL_NONE, macepci_intr, sc);
 
-	config_found_ia(self, "pcibus", &pba, pcibusprint);
+	config_found(self, &pba, pcibusprint, CFARG_EOL);
 #endif
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2.c,v 1.39 2018/09/03 16:29:31 riastradh Exp $	*/
+/*	$NetBSD: tcic2.c,v 1.40 2021/04/24 23:36:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christoph Badura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.39 2018/09/03 16:29:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.40 2021/04/24 23:36:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -416,8 +416,10 @@ tcic_attach_socket(struct tcic_handle *h)
 	locs[PCMCIABUSCF_CONTROLLER] = 0;
 	locs[PCMCIABUSCF_SOCKET] = h->sock;
 
-	h->pcmcia = config_found_sm_loc(h->sc->sc_dev, "pcmciabus", locs, &paa,
-					tcic_print, config_stdsubmatch);
+	h->pcmcia = config_found(h->sc->sc_dev, &paa, tcic_print,
+	    CFARG_SUBMATCH, config_stdsubmatch,
+	    CFARG_LOCATORS, locs,
+	    CFARG_EOL);
 
 	/* if there's actually a pcmcia device attached, initialize the slot */
 
