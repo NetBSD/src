@@ -1,4 +1,4 @@
-.\"	$NetBSD: wsfontload.8,v 1.30 2021/04/24 09:03:05 nia Exp $
+.\"	$NetBSD: wsfontload.8,v 1.31 2021/04/24 09:18:44 nia Exp $
 .\"
 .\" Copyright (c) 1999, 2001
 .\" 	Matthias Drochner.  All rights reserved.
@@ -117,23 +117,27 @@ configuration file.
 .Pa /etc/wscons.conf
 .Pa /usr/share/wscons/fonts
 .Sh EXAMPLES
-.Dl wsfontload -N myname -h 8 -e ibm /usr/share/wscons/fonts/vt220l.808
+Load the ISO-encoded 16x32 Spleen font and switch the first console
+screen to use it:
+.Pp
+.Bd -offset indent -unfilled
+# wsfontload -w 16 -h 32 -e iso -N spleen32 \\
+	/usr/share/wscons/fonts/spleen-16x32.fnt
+# wsconsctl -dw font=spleen32
+.Ed
 .Pp
 Load the IBM-encoded 8\(mu8-font from the
 .Xr wscons 4
-distribution.
+distribution:
+.Pp
+.Bd -offset indent -unfilled
+# wsfontload -N myname -h 8 -e ibm /usr/share/wscons/fonts/vt220l.808
+.Ed
+.Pp
 This (or another 8\(mu8-font) is necessary to use the
 50-line screen type on
 .Xr vga 4
 displays.
-.Pp
-.Dl wsfontload -N orator -e ibm /usr/share/wscons/fonts/orator.816
-.Dl wsconsctl -dw font=orator
-.Pp
-Load the
-.Dq orator
-IBM-encoded 8\(mu16 font and switch the first console screen
-(ttyE0, wsconsctl's default) to this alternate font.
 .Sh SEE ALSO
 .Xr wscons 4 ,
 .Xr wsconscfg 8 ,
