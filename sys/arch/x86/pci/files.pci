@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.25 2020/10/14 10:19:11 ryo Exp $
+#	$NetBSD: files.pci,v 1.26 2021/04/24 23:36:51 thorpej Exp $
 
 device 	aapic
 attach 	aapic at pci
@@ -8,9 +8,6 @@ file	arch/x86/pci/agp_machdep.c	agp
 
 define	agp_x86: agp_ali, agp_amd, agp_amd64, agp_i810, agp_intel, agp_sis, agp_via
 defflag	AGP_X86
-
-define amdnb_miscbus {}
-define amdsmnbus {}
 
 # PCI-Host bridge chipsets
 device	pchb:	pcibus, agpbus, agp_x86
@@ -32,11 +29,17 @@ attach  hpet at amdpcib with amdpcib_hpet
 file    arch/x86/pci/amdpcib_hpet.c		amdpcib_hpet
 
 # AMD Processors -- Miscellaneous Control
+define	amdnb_miscbus {}
 device	amdnb_misc: amdnb_miscbus
 attach	amdnb_misc at pci
 file	arch/x86/pci/amdnb_misc.c	amdnb_misc
+
+device	amdtemp: sysmon_envsys
+attach	amdtemp at amdnb_miscbus
+file	arch/x86/pci/amdtemp.c		amdtemp
  
 # AMD Family 17h system management network
+define	amdsmnbus {}
 device	amdsmn: amdsmnbus
 attach	amdsmn at pci
 file arch/x86/pci/amdsmn.c		amdsmn
@@ -45,10 +48,6 @@ file arch/x86/pci/amdsmn.c		amdsmn
 device	amdzentemp: sysmon_envsys
 attach	amdzentemp at amdsmnbus
 file	arch/x86/pci/amdzentemp.c		amdzentemp
-
-device	amdtemp: sysmon_envsys
-attach	amdtemp at amdnb_miscbus
-file	arch/x86/pci/amdtemp.c		amdtemp
 
 attach  dwiic at pci with pcidwiic
 file    arch/x86/pci/dwiic_pci.c	pcidwiic
@@ -83,7 +82,7 @@ file	arch/x86/pci/fwhrng.c		fwhrng needs-flag
 # Intel Integrated Memory Controller and associated SMBus
 # (Experimental)
 
-device	imc {}: imcsmb
+device	imc {}
 attach	imc at pci
 file	arch/x86/pci/imcsmb/imc.c		imc
 

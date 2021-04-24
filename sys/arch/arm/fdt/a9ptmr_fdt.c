@@ -1,4 +1,4 @@
-/* $NetBSD: a9ptmr_fdt.c,v 1.3 2021/01/27 03:10:19 thorpej Exp $ */
+/* $NetBSD: a9ptmr_fdt.c,v 1.4 2021/04/24 23:36:26 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a9ptmr_fdt.c,v 1.3 2021/01/27 03:10:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a9ptmr_fdt.c,v 1.4 2021/04/24 23:36:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -129,7 +129,7 @@ a9ptmr_fdt_attach(device_t parent, device_t self, void *aux)
 		.mpcaa_irq = -1,
 	};
 
-	config_found(self, &mpcaa, NULL);
+	config_found(self, &mpcaa, NULL, CFARG_EOL);
 
 	arm_fdt_cpu_hatch_register(self, a9ptmr_fdt_cpu_hatch);
 	arm_fdt_timer_register(a9ptmr_cpu_initclocks);

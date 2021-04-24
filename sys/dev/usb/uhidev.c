@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.79 2020/11/29 22:54:51 riastradh Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.80 2021/04/24 23:36:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.79 2020/11/29 22:54:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.80 2021/04/24 23:36:59 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -361,9 +361,10 @@ uhidev_attach(device_t parent, device_t self, void *aux)
 			uha.reportid = repid;
 			locs[UHIDBUSCF_REPORTID] = repid;
 
-			dev = config_found_sm_loc(self,
-				"uhidbus", locs, &uha,
-				uhidevprint, config_stdsubmatch);
+			dev = config_found(self, &uha, uhidevprint,
+					   CFARG_SUBMATCH, config_stdsubmatch,
+					   CFARG_LOCATORS, locs,
+					   CFARG_EOL);
 			sc->sc_subdevs[repid] = dev;
 			if (dev != NULL) {
 				csc = device_private(dev);

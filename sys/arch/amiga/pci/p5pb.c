@@ -1,4 +1,4 @@
-/*	$NetBSD: p5pb.c,v 1.17 2020/07/07 03:38:45 thorpej Exp $ */
+/*	$NetBSD: p5pb.c,v 1.18 2021/04/24 23:36:25 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2011, 2012 The NetBSD Foundation, Inc.
@@ -219,7 +219,7 @@ p5pb_attach(device_t parent, device_t self, void *aux)
 
 	p5pb_set_props(sc);
 
-	config_found_ia(self, "pcibus", &pba, pcibusprint);
+	config_found(self, &pba, pcibusprint, CFARG_EOL);
 }
 
 /*

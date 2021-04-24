@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpunode.c,v 1.3 2011/07/01 19:01:30 dyoung Exp $	*/
+/*	$NetBSD: rmixl_cpunode.c,v 1.4 2021/04/24 23:36:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpunode.c,v 1.3 2011/07/01 19:01:30 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpunode.c,v 1.4 2021/04/24 23:36:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,14 +125,14 @@ cpunode_rmixl_attach(device_t parent, device_t self, void *aux)
 		na.na_name = "cpucore";
 		na.na_node = ma->ma_node;
 		na.na_core = i;
-		config_found(self, &na, cpunode_rmixl_print);
+		config_found(self, &na, cpunode_rmixl_print, CFARG_EOL);
 	}
 
 	/*
 	 * Attach obio
 	 */
 	na.na_name = "obio";
-	config_found(self, &na, NULL);
+	config_found(self, &na, NULL, CFARG_EOL);
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: fms.c,v 1.47 2019/06/08 08:02:38 isaki Exp $	*/
+/*	$NetBSD: fms.c,v 1.48 2021/04/24 23:36:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.47 2019/06/08 08:02:38 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.48 2021/04/24 23:36:57 thorpej Exp $");
 
 #include "mpu.h"
 
@@ -325,12 +325,12 @@ fms_attach(device_t parent, device_t self, void *aux)
 	aa.type = AUDIODEV_TYPE_OPL;
 	aa.hwif = NULL;
 	aa.hdl = NULL;
-	config_found(sc->sc_dev, &aa, audioprint);
+	config_found(sc->sc_dev, &aa, audioprint, CFARG_EOL);
 
 	aa.type = AUDIODEV_TYPE_MPU;
 	aa.hwif = NULL;
 	aa.hdl = NULL;
-	sc->sc_mpu_dev = config_found(sc->sc_dev, &aa, audioprint);
+	sc->sc_mpu_dev = config_found(sc->sc_dev, &aa, audioprint, CFARG_EOL);
 }
 
 /*

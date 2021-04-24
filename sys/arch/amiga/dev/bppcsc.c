@@ -1,4 +1,4 @@
-/*	$NetBSD: bppcsc.c,v 1.3 2012/10/27 17:17:28 chs Exp $ */
+/*	$NetBSD: bppcsc.c,v 1.4 2021/04/24 23:36:24 thorpej Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bppcsc.c,v 1.3 2012/10/27 17:17:28 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bppcsc.c,v 1.4 2021/04/24 23:36:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,7 +169,7 @@ bppcscattach(device_t parent, device_t self, void *aux)
 	/*
 	 * attach all scsi units on us
 	 */
-	config_found(self, chan, scsiprint);
+	config_found(self, chan, scsiprint, CFARG_EOL);
 }
 
 int

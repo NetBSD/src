@@ -1,4 +1,4 @@
-/*	$NetBSD: astro.c,v 1.2 2020/06/14 01:40:04 chs Exp $	*/
+/*	$NetBSD: astro.c,v 1.3 2021/04/24 23:36:39 thorpej Exp $	*/
 
 /*	$OpenBSD: astro.c,v 1.8 2007/10/06 23:50:54 krw Exp $	*/
 
@@ -344,7 +344,9 @@ static device_t
 astro_callback(device_t self, struct confargs *ca)
 {
 
-	return config_found_sm_loc(self, "gedoens", NULL, ca, mbprint, mbsubmatch);
+	return config_found(self, ca, mbprint,
+	    CFARG_SUBMATCH, mbsubmatch,
+	    CFARG_EOL);
 }
 
 int

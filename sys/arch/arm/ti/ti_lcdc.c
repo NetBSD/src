@@ -1,4 +1,4 @@
-/* $NetBSD: ti_lcdc.c,v 1.5 2021/01/27 03:10:20 thorpej Exp $ */
+/* $NetBSD: ti_lcdc.c,v 1.6 2021/04/24 23:36:29 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_lcdc.c,v 1.5 2021/01/27 03:10:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_lcdc.c,v 1.6 2021/04/24 23:36:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -591,7 +591,9 @@ tilcdc_fb_probe(struct drm_fb_helper *helper, struct drm_fb_helper_surface_size 
 	tfa.tfa_fb_dmat = sc->sc_dmat;
 	tfa.tfa_fb_linebytes = helper->fb->pitches[0];
 
-	helper->fbdev = config_found_ia(ddev->dev, "tilcdcfbbus", &tfa, NULL);
+	helper->fbdev = config_found(ddev->dev, &tfa, NULL,
+	    CFARG_IATTR, "tilcdcfbbus",
+	    CFARG_EOL);
 	if (helper->fbdev == NULL) {
 		DRM_ERROR("unable to attach framebuffer\n");
 		return -ENXIO;

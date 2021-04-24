@@ -1,4 +1,4 @@
-/*	$NetBSD: sti_sgc.c,v 1.4 2020/12/23 08:36:47 tsutsui Exp $	*/
+/*	$NetBSD: sti_sgc.c,v 1.5 2021/04/24 23:36:37 thorpej Exp $	*/
 /*	$OpenBSD: sti_sgc.c,v 1.14 2007/05/26 00:36:03 krw Exp $	*/
 
 /*
@@ -27,7 +27,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.4 2020/12/23 08:36:47 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.5 2021/04/24 23:36:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -211,7 +211,8 @@ sti_sgc_attach(device_t parent, device_t self, void *aux)
 		waa.accessops = &sti_m68k_accessops;
 		waa.accesscookie = scr;
 
-		config_found(ssc->sc_dev, &waa, wsemuldisplaydevprint);
+		config_found(ssc->sc_dev, &waa, wsemuldisplaydevprint,
+		    CFARG_EOL);
 		break;
 
 	case STI_DD_CRX:
@@ -229,7 +230,8 @@ sti_sgc_attach(device_t parent, device_t self, void *aux)
 		waa.accessops = &sti_m68k_accessops;
 		waa.accesscookie = scr;
 
-		config_found(ssc->sc_dev, &waa, wsemuldisplaydevprint);
+		config_found(ssc->sc_dev, &waa, wsemuldisplaydevprint,
+		    CFARG_EOL);
 		break;
 	default:
 		/*

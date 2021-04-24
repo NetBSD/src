@@ -1,4 +1,4 @@
-/*	$NetBSD: cv3dpb.c,v 1.4 2020/06/17 06:37:57 thorpej Exp $ */
+/*	$NetBSD: cv3dpb.c,v 1.5 2021/04/24 23:36:25 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2011, 2012 The NetBSD Foundation, Inc.
@@ -141,7 +141,7 @@ cv3dpb_attach(device_t parent, device_t self, void *aux)
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
 
-	config_found_ia(self, "pcibus", &pba, pcibusprint);
+	config_found(self, &pba, pcibusprint, CFARG_EOL);
 }
 
 pcireg_t

@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_iobus.c,v 1.5 2019/08/21 04:51:41 msaitoh Exp $	*/
+/*	$NetBSD: rmixl_iobus.c,v 1.6 2021/04/24 23:36:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_iobus.c,v 1.5 2019/08/21 04:51:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_iobus.c,v 1.6 2021/04/24 23:36:43 thorpej Exp $");
 
 #include "locators.h"
 
@@ -161,7 +161,9 @@ rmixl_iobus_attach(device_t parent, device_t self, void *aux)
 	rmixl_iobus_csconfig_init(sc);
 
 	/* attach any children */
-	config_search_ia(rmixl_iobus_search, self, "rmixl_iobus", NULL);
+	config_search(self, NULL,
+	    CFARG_SEARCH, rmixl_iobus_search,
+	    CFARG_EOL);
 }
 
 static void
@@ -281,9 +283,9 @@ rmixl_iobus_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 
 	ia.ia_dev_parm = cs->cs_dev_parm;
 
-	if (config_match(parent, cf, &ia) > 0) {
+	if (config_probe(parent, cf, &ia)) {
 		cs->cs_allocated = true;
-		config_attach(parent, cf, &ia, rmixl_iobus_print);
+		config_attach(parent, cf, &ia, rmixl_iobus_print, CFARG_EOL);
 	}
 
 	return 0;

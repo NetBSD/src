@@ -1,4 +1,4 @@
-/*	$NetBSD: clpssoc.c,v 1.1 2013/04/28 11:57:13 kiyohara Exp $	*/
+/*	$NetBSD: clpssoc.c,v 1.2 2021/04/24 23:36:26 thorpej Exp $	*/
 /*
  * Copyright (c) 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clpssoc.c,v 1.1 2013/04/28 11:57:13 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clpssoc.c,v 1.2 2021/04/24 23:36:26 thorpej Exp $");
 
 #include "opt_com.h"
 
@@ -145,8 +145,9 @@ clpssoc_attach(device_t parent, device_t self, void *aux)
 		for (j = 0; j < __arraycount(clpssoc_periphs[i].irq); j++)
 			aa.aa_irq[j] = clpssoc_periphs[i].irq[j];
 
-		config_found_sm_loc(self, "clpssoc", NULL, &aa,
-		    clpssoc_print, clpssoc_submatch);
+		config_found(self, &aa, clpssoc_print,
+		    CFARG_SUBMATCH, clpssoc_submatch,
+		    CFARG_EOL);
 	}
 }
 

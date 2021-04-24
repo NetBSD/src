@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_dwctwo.c,v 1.13 2016/04/23 10:15:30 skrll Exp $ */
+/*	$NetBSD: ingenic_dwctwo.c,v 1.14 2021/04/24 23:36:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ingenic_dwctwo.c,v 1.13 2016/04/23 10:15:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ingenic_dwctwo.c,v 1.14 2021/04/24 23:36:42 thorpej Exp $");
 
 /*
  * adapted from bcm2835_dwctwo.c
@@ -222,5 +222,5 @@ ingenic_dwc2_deferred(device_t self)
 		return;
 	}
 	sc->sc_dwc2.sc_child = config_found(sc->sc_dwc2.sc_dev,
-	    &sc->sc_dwc2.sc_bus, usbctlprint);
+	    &sc->sc_dwc2.sc_bus, usbctlprint, CFARG_EOL);
 }

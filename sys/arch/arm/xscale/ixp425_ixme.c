@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_ixme.c,v 1.5 2012/10/14 14:20:57 msaitoh Exp $	*/
+/*	$NetBSD: ixp425_ixme.c,v 1.6 2021/04/24 23:36:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_ixme.c,v 1.5 2012/10/14 14:20:57 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_ixme.c,v 1.6 2021/04/24 23:36:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +107,9 @@ ixme_attach(device_t parent, device_t self, void *arg)
 	sc->sc_dt._dmatag_subregion = _bus_dmatag_subregion;
 	sc->sc_dt._dmatag_destroy = _bus_dmatag_destroy;
 
-	config_search_ia(ixme_search, self, "ixme", NULL);
+	config_search(self, NULL,
+	    CFARG_SEARCH, ixme_search,
+	    CFARG_EOL);
 }
 
 static int
@@ -123,8 +125,8 @@ ixme_search(device_t parent, cfdata_t cf, const int *ldesc, void *arg)
 	ixa.ixa_dt = &sc->sc_dt;
 	ixa.ixa_npe = cf->cf_loc[IXMECF_NPE];
 
-	if (config_match(parent, cf, &ixa) > 0) {
-		config_attach(parent, cf, &ixa, ixme_print);
+	if (config_probe(parent, cf, &ixa)) {
+		config_attach(parent, cf, &ixa, ixme_print, CFARG_EOL);
 		return (1);
 	}
 

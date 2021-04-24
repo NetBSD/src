@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.80 2020/11/22 03:55:33 thorpej Exp $ */
+/*	$NetBSD: sbus.c,v 1.81 2021/04/24 23:36:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.80 2020/11/22 03:55:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.81 2021/04/24 23:36:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -412,7 +412,8 @@ sbus_attach_common(struct sbus_softc *sc, const char *busname, int busnode,
 					   node, &sa) != 0) {
 			panic("sbus_attach: %s: incomplete", sp);
 		}
-		(void) config_found(sc->sc_dev, (void *)&sa, sbus_print);
+		(void) config_found(sc->sc_dev, (void *)&sa, sbus_print,
+		    CFARG_EOL);
 		sbus_destroy_attach_args(&sa);
 	}
 
@@ -433,7 +434,8 @@ sbus_attach_common(struct sbus_softc *sc, const char *busname, int busnode,
 			printf("sbus_attach: %s: incomplete\n", name);
 			continue;
 		}
-		(void) config_found(sc->sc_dev, (void *)&sa, sbus_print);
+		(void) config_found(sc->sc_dev, (void *)&sa, sbus_print,
+		    CFARG_EOL);
 		sbus_destroy_attach_args(&sa);
 	}
 }

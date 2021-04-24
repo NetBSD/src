@@ -1,4 +1,4 @@
-/*	$NetBSD: fhc.c,v 1.7 2021/01/04 14:48:51 thorpej Exp $	*/
+/*	$NetBSD: fhc.c,v 1.8 2021/04/24 23:36:49 thorpej Exp $	*/
 /*	$OpenBSD: fhc.c,v 1.17 2010/11/11 17:58:23 miod Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fhc.c,v 1.7 2021/01/04 14:48:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fhc.c,v 1.8 2021/04/24 23:36:49 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -116,7 +116,8 @@ fhc_attach(struct fhc_softc *sc)
 		prom_getprop(node, "address", sizeof(*fa.fa_promvaddrs),
 		    &fa.fa_npromvaddrs, (void **)&fa.fa_promvaddrs);
 
-		(void)config_found(sc->sc_dev, (void *)&fa, fhc_print);
+		(void)config_found(sc->sc_dev, (void *)&fa, fhc_print,
+		    CFARG_EOL);
 
 		if (fa.fa_name != NULL)
 			free(fa.fa_name, M_DEVBUF);

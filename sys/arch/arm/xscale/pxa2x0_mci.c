@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_mci.c,v 1.10 2012/01/21 19:44:28 nonaka Exp $	*/
+/*	$NetBSD: pxa2x0_mci.c,v 1.11 2021/04/24 23:36:29 thorpej Exp $	*/
 /*	$OpenBSD: pxa2x0_mmc.c,v 1.5 2009/02/23 18:09:55 miod Exp $	*/
 
 /*
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_mci.c,v 1.10 2012/01/21 19:44:28 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_mci.c,v 1.11 2021/04/24 23:36:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -310,7 +310,7 @@ pxamci_attach_sub(device_t self, struct pxaip_attach_args *pxa)
 	if (CPU_IS_PXA270 && ISSET(sc->sc_caps, PMC_CAPS_4BIT))
 		SET(saa.saa_caps, SMC_CAPS_4BIT_MODE);
 
-	sc->sc_sdmmc = config_found(sc->sc_dev, &saa, NULL);
+	sc->sc_sdmmc = config_found(sc->sc_dev, &saa, NULL, CFARG_EOL);
 	if (sc->sc_sdmmc == NULL) {
 		aprint_error_dev(sc->sc_dev, "couldn't attach bus\n");
 		goto free_xfer;

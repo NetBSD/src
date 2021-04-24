@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4173bcu.c,v 1.24 2017/03/31 08:38:13 msaitoh Exp $	*/
+/*	$NetBSD: vrc4173bcu.c,v 1.25 2021/04/24 23:36:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002 Enami Tsugutomo.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrc4173bcu.c,v 1.24 2017/03/31 08:38:13 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrc4173bcu.c,v 1.25 2021/04/24 23:36:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -424,9 +424,11 @@ vrc4173bcu_attach(device_t parent, device_t self, void *aux)
 	 *  Attach each devices
 	 *  sc->sc_pri = 2~1
 	 */
-	for (sc->sc_pri = 2; 0 < sc->sc_pri; sc->sc_pri--)
-		config_search_ia(vrc4173bcu_search, self, "vripif",
-				 vrc4173bcu_print);
+	for (sc->sc_pri = 2; 0 < sc->sc_pri; sc->sc_pri--) {
+		config_search(self, NULL,
+		    CFARG_SEARCH, vrc4173bcu_search,
+		    CFARG_EOL);
+	}
 }
 
 int
@@ -467,8 +469,8 @@ vrc4173bcu_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	va.va_cc = sc->sc_chipset.vc_cc;
 	va.va_ac = sc->sc_chipset.vc_ac;
 	va.va_dc = sc->sc_chipset.vc_dc;
-	if ((config_match(parent, cf, &va) == sc->sc_pri))
-		config_attach(parent, cf, &va, vrc4173bcu_print);
+	if (/*XXX*/config_probe(parent, cf, &va) == sc->sc_pri)
+		config_attach(parent, cf, &va, vrc4173bcu_print, CFARG_EOL);
 
 	return (0);
 }

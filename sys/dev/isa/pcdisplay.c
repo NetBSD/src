@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay.c,v 1.45 2020/04/24 22:31:35 ad Exp $ */
+/* $NetBSD: pcdisplay.c,v 1.46 2021/04/24 23:36:55 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcdisplay.c,v 1.45 2020/04/24 22:31:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcdisplay.c,v 1.46 2021/04/24 23:36:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -329,7 +329,7 @@ pcdisplay_attach(device_t parent, device_t self, void *aux)
 	aa.accessops = &pcdisplay_accessops;
 	aa.accesscookie = sc;
 
-	config_found(self, &aa, wsemuldisplaydevprint);
+	config_found(self, &aa, wsemuldisplaydevprint, CFARG_EOL);
 }
 
 

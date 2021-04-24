@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.79 2013/09/07 15:56:11 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.80 2021/04/24 23:36:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.79 2013/09/07 15:56:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.80 2021/04/24 23:36:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,13 +116,13 @@ bus_scan(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	ca->ca_intvec = cf->cf_intvec;
 
 	/*
-	 * Note that this allows the match function to save
+	 * Note that this allows the probe function to save
 	 * defaulted locators in the confargs that will be
 	 * preserved for the related attach call.
 	 * XXX - This is a hack...
 	 */
-	if (config_match(parent, cf, ca) > 0) {
-		config_attach(parent, cf, ca, bus_print);
+	if (config_probe(parent, cf, ca)) {
+		config_attach(parent, cf, ca, bus_print, CFARG_EOL);
 	}
 	return 0;
 }

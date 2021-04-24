@@ -1,4 +1,4 @@
-/* $NetBSD: grtwo.c,v 1.16 2020/11/21 17:18:31 thorpej Exp $	 */
+/* $NetBSD: grtwo.c,v 1.17 2021/04/24 23:36:48 thorpej Exp $	 */
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grtwo.c,v 1.16 2020/11/21 17:18:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grtwo.c,v 1.17 2021/04/24 23:36:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -528,7 +528,7 @@ grtwo_attach(device_t parent, device_t self, void *aux)
         if ((cpu_intr_establish(6, IPL_TTY, grtwo_intr6, sc)) == NULL)
                 printf(": unable to establish interrupt!\n");
 
-	config_found(self, &wa, wsemuldisplaydevprint);
+	config_found(self, &wa, wsemuldisplaydevprint, CFARG_EOL);
 }
 
 int

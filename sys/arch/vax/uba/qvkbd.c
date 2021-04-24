@@ -1,4 +1,4 @@
-/*	$NetBSD: qvkbd.c,v 1.3 2020/11/21 22:37:11 thorpej Exp $	*/
+/*	$NetBSD: qvkbd.c,v 1.4 2021/04/24 23:36:50 thorpej Exp $	*/
 
 /* Copyright (c) 2015 Charles H. Dickman. All rights reserved.
  * Derived from dzkbd.c
@@ -198,7 +198,7 @@ qvkbd_attach(device_t parent, device_t self, void *aux)
 	a.accessops = &qvkbd_accessops;
 	a.accesscookie = qvkbd;
 
-	qvkbd->sc_wskbddev = config_found(self, &a, wskbddevprint);
+	qvkbd->sc_wskbddev = config_found(self, &a, wskbddevprint, CFARG_EOL);
 }
 
 int

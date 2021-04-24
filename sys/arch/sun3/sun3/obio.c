@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.57 2013/09/07 15:56:11 tsutsui Exp $	*/
+/*	$NetBSD: obio.c,v 1.58 2021/04/24 23:36:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.57 2013/09/07 15:56:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.58 2021/04/24 23:36:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,8 +147,9 @@ obio_attach(device_t parent, device_t self, void *aux)
 		/* These are filled-in by obio_submatch. */
 		oba.ca_intpri = -1;
 		oba.ca_intvec = -1;
-		(void)config_found_sm_loc(self, "obio", NULL, &oba, obio_print,
-		    obio_submatch);
+		config_found(self, &oba, obio_print,
+		    CFARG_SUBMATCH, obio_submatch,
+		    CFARG_EOL);
 	}
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: spiflash.c,v 1.23 2019/09/14 15:12:12 tnn Exp $ */
+/* $NetBSD: spiflash.c,v 1.24 2021/04/24 23:36:59 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.23 2019/09/14 15:12:12 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.24 2021/04/24 23:36:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -178,7 +178,8 @@ spiflash_attach_mi(const struct spiflash_hw_if *hw, void *cookie,
 	sfa.hw = hw;
 	sfa.cookie = cookie;
 
-	return (spiflash_handle_t)config_found(dev, &sfa, spiflash_print);
+	return (spiflash_handle_t)config_found(dev, &sfa, spiflash_print,
+	    CFARG_EOL);
 }
 
 int

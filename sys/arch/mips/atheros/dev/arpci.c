@@ -1,4 +1,4 @@
-/*	$NetBSD: arpci.c,v 1.5 2015/10/02 05:22:51 msaitoh Exp $	*/
+/*	$NetBSD: arpci.c,v 1.6 2021/04/24 23:36:42 thorpej Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arpci.c,v 1.5 2015/10/02 05:22:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arpci.c,v 1.6 2021/04/24 23:36:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -321,7 +321,7 @@ arpci_attach(device_t parent, device_t self, void *aux)
 	pba.pba_pc = &sc->sc_pc;
 	pba.pba_bus = 0;
 
-	config_found_ia(self, "pcibus", &pba, pcibusprint);
+	config_found(self, &pba, pcibusprint, CFARG_EOL);
 }
 
 CFATTACH_DECL_NEW(arpci, sizeof(struct arpci_softc),

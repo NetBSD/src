@@ -1,4 +1,4 @@
-/* $NetBSD: imc.c,v 1.2 2018/03/15 23:57:17 maya Exp $ */
+/* $NetBSD: imc.c,v 1.3 2021/04/24 23:36:51 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.2 2018/03/15 23:57:17 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.3 2021/04/24 23:36:51 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -206,7 +206,7 @@ imc_attach(device_t parent, device_t self, void *aux)
 {
 	struct imc_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
-	int flags, i;
+	int i;
 
 	sc->sc_dev = self;
 	sc->sc_pci_tag = pa->pa_tag;
@@ -222,22 +222,19 @@ imc_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
-	flags = 0;
-
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
-	imc_rescan(self, "imc", &flags);
+	imc_rescan(self, NULL, NULL);
 }
 
 /* Create the imcsmbX children */
 
 static int
-imc_rescan(device_t self, const char * ifattr, const int *flags)
+imc_rescan(device_t self, const char *ifattr, const int *locs)
 {
 	struct imc_softc *sc = device_private(self);
 	struct imc_attach_args imca;
-	device_t child;
 	int unit;
 
 	for (unit = 0; unit < 2; unit++) {
@@ -248,13 +245,8 @@ imc_rescan(device_t self, const char * ifattr, const int *flags)
 		imca.ia_regs = &imcsmb_regs[unit];
 		imca.ia_pci_tag = sc->sc_pci_tag;
 		imca.ia_pci_chipset_tag = sc->sc_pci_chipset_tag;
-		child = config_found_ia(self, "imc", &imca, NULL);
-
-		if (child == NULL) {
-			aprint_debug_dev(self, "Child %d imcsmb not added\n",
-			    unit);
-		}
-		sc->sc_smbchild[unit] = child;
+		sc->sc_smbchild[unit] =
+		    config_found(self, &imca, NULL, CFARG_EOL);
 	}
 
 	return 0;

@@ -1,4 +1,4 @@
-/* $NetBSD: gbus.c,v 1.22 2011/06/14 15:34:23 matt Exp $ */
+/* $NetBSD: gbus.c,v 1.23 2021/04/24 23:36:24 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: gbus.c,v 1.22 2011/06/14 15:34:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gbus.c,v 1.23 2021/04/24 23:36:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,9 @@ gbusattach(device_t parent, device_t self, void *aux)
 	for (ga = gbus_children; ga->ga_name != NULL; ga++) {
 		struct gbus_attach_args gaa = *ga;
 		locs[GBUSCF_OFFSET] = gaa.ga_offset;
-		(void) config_found_sm_loc(self, "gbus", locs, &gaa,
-			   gbusprint, config_stdsubmatch);
+		config_found(self, &gaa, gbusprint,
+		    CFARG_SUBMATCH, config_stdsubmatch,
+		    CFARG_LOCATORS, locs,
+		    CFARG_EOL);
 	}
 }

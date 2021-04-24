@@ -1,4 +1,4 @@
-/* $NetBSD: auvitek_dtv.c,v 1.7 2016/04/23 10:15:31 skrll Exp $ */
+/* $NetBSD: auvitek_dtv.c,v 1.8 2021/04/24 23:36:59 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvitek_dtv.c,v 1.7 2016/04/23 10:15:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvitek_dtv.c,v 1.8 2021/04/24 23:36:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,8 +116,9 @@ auvitek_dtv_rescan(struct auvitek_softc *sc, const char *ifattr,
 	daa.priv = sc;
 
 	if (ifattr_match(ifattr, "dtvbus") && sc->sc_dtvdev == NULL)
-		sc->sc_dtvdev = config_found_ia(sc->sc_dev, "dtvbus",
-		    &daa, dtv_print);
+		sc->sc_dtvdev = config_found(sc->sc_dev, &daa, dtv_print,
+		    CFARG_IATTR, "dtvbus",
+		    CFARG_EOL);
 }
 
 void

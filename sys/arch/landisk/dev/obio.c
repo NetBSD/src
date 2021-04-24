@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.9 2011/07/01 19:12:53 dyoung Exp $	*/
+/*	$NetBSD: obio.c,v 1.10 2021/04/24 23:36:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.9 2011/07/01 19:12:53 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.10 2021/04/24 23:36:40 thorpej Exp $");
 
 #include "btn_obio.h"
 #include "pwrsw_obio.h"
@@ -105,7 +105,9 @@ obio_attach(device_t parent, device_t self, void *aux)
 	sysmon_task_queue_init();
 #endif
 
-	config_search_ia(obio_search, self, "obio", NULL);
+	config_search(self, NULL,
+	    CFARG_SEARCH, obio_search,
+	    CFARG_EOL);
 }
 
 static int
@@ -140,8 +142,8 @@ obio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 		oa.oa_nirq = 1;
 
 		tryagain = 0;
-		if (config_match(parent, cf, &oa) > 0) {
-			config_attach(parent, cf, &oa, obio_print);
+		if (config_probe(parent, cf, &oa)) {
+			config_attach(parent, cf, &oa, obio_print, CFARG_EOL);
 			tryagain = (cf->cf_fstate == FSTATE_STAR);
 		}
 	} while (tryagain);

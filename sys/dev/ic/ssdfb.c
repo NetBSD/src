@@ -1,4 +1,4 @@
-/* $NetBSD: ssdfb.c,v 1.12 2020/09/05 16:30:11 riastradh Exp $ */
+/* $NetBSD: ssdfb.c,v 1.13 2021/04/24 23:36:55 thorpej Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ssdfb.c,v 1.12 2020/09/05 16:30:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ssdfb.c,v 1.13 2021/04/24 23:36:55 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -364,7 +364,7 @@ ssdfb_attach(struct ssdfb_softc *sc, int flags)
 		.accesscookie =	sc
 	};
 	sc->sc_wsdisplay =
-	    config_found(sc->sc_dev, &aa, wsemuldisplaydevprint);
+	    config_found(sc->sc_dev, &aa, wsemuldisplaydevprint, CFARG_EOL);
 
 	return;
 out:

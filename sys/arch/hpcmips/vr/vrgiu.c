@@ -1,4 +1,4 @@
-/*	$NetBSD: vrgiu.c,v 1.44 2020/11/21 21:23:48 thorpej Exp $	*/
+/*	$NetBSD: vrgiu.c,v 1.45 2021/04/24 23:36:38 thorpej Exp $	*/
 /*-
  * Copyright (c) 1999-2001
  *         Shin Takemura and PocketBSD Project. All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrgiu.c,v 1.44 2020/11/21 21:23:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrgiu.c,v 1.45 2021/04/24 23:36:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -268,7 +268,7 @@ vrgiu_attach(device_t parent, device_t self, void *aux)
 	haa.haa_sc = sc;
 	haa.haa_getchip = vrgiu_getchip;
 	haa.haa_iot = sc->sc_iot;
-	while (config_found(self, &haa, vrgiu_print)) ;
+	while (config_found(self, &haa, vrgiu_print, CFARG_EOL)) ;
 	/*
 	 * GIU-ISA bridge
 	 */
@@ -289,7 +289,7 @@ vrgiu_callback(device_t self)
 	haa.haa_sc = sc;
 	haa.haa_getchip = vrgiu_getchip;
 	haa.haa_iot = sc->sc_iot;
-	config_found(self, &haa, vrgiu_print);
+	config_found(self, &haa, vrgiu_print, CFARG_EOL);
 }
 
 int

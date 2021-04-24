@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425.c,v 1.16 2012/10/14 14:20:57 msaitoh Exp $ */
+/*	$NetBSD: ixp425.c,v 1.17 2021/04/24 23:36:29 thorpej Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -30,7 +30,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425.c,v 1.16 2012/10/14 14:20:57 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425.c,v 1.17 2021/04/24 23:36:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,6 +108,8 @@ ixp425_attach(device_t self)
 	pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY |
 			PCI_FLAGS_MRL_OKAY   | PCI_FLAGS_MRM_OKAY |
 			PCI_FLAGS_MWI_OKAY;
-	(void) config_found_ia(self, "pcibus", &pba, pcibusprint);
+	config_found(self, &pba, pcibusprint,
+	    CFARG_IATTR, "pcibus",
+	    CFARG_EOL);
 #endif
 }

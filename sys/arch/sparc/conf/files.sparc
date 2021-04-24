@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.162 2020/10/21 13:31:52 christos Exp $
+#	$NetBSD: files.sparc,v 1.163 2021/04/24 23:36:48 thorpej Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -24,7 +24,7 @@ attach msiiep at mainbus
 
 include "dev/i2o/files.i2o"
 include "dev/pci/files.pci"
-device mspcic {}: pcibus
+device mspcic: pcibus
 attach mspcic at msiiep
 file	arch/sparc/sparc/msiiep.c		msiiep | mspcic
 file	arch/sparc/sparc/pci_machdep.c		msiiep | mspcic

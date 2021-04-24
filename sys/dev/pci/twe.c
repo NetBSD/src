@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.108 2019/11/10 21:16:36 chs Exp $	*/
+/*	$NetBSD: twe.c,v 1.109 2021/04/24 23:36:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.108 2019/11/10 21:16:36 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.109 2021/04/24 23:36:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -451,7 +451,7 @@ twe_attach(device_t parent, device_t self, void *aux)
 	twe_describe_controller(sc);
 
 	/* Find and attach RAID array units. */
-	twe_rescan(self, "twe", 0);
+	twe_rescan(self, NULL, NULL);
 
 	/* ...and finally, enable interrupts. */
 	twe_outl(sc, TWE_REG_CTL, TWE_CTL_CLEAR_ATTN_INTR |
@@ -482,7 +482,7 @@ twe_attach(device_t parent, device_t self, void *aux)
 }
 
 static int
-twe_rescan(device_t self, const char *attr, const int *flags)
+twe_rescan(device_t self, const char *ifattr, const int *locs)
 {
 	struct twe_softc *sc;
 	int i;
@@ -634,8 +634,10 @@ twe_add_unit(struct twe_softc *sc, int unit)
 
 	locs[TWECF_UNIT] = unit;
 
-	td->td_dev = config_found_sm_loc(sc->sc_dev, "twe", locs, &twea,
-					 twe_print, config_stdsubmatch);
+	td->td_dev = config_found(sc->sc_dev, &twea, twe_print,
+	    CFARG_SUBMATCH, config_stdsubmatch,
+	    CFARG_LOCATORS, locs,
+	    CFARG_EOL);
 
 	rv = 0;
  out:

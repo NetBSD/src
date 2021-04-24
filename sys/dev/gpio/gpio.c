@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.64 2019/10/20 09:35:18 tnn Exp $ */
+/* $NetBSD: gpio.c,v 1.65 2021/04/24 23:36:54 thorpej Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.64 2019/10/20 09:35:18 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.65 2021/04/24 23:36:54 thorpej Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -189,9 +189,10 @@ gpio_childdetached(device_t self, device_t child)
 static int
 gpio_rescan(device_t self, const char *ifattr, const int *locators)
 {
-	struct gpio_softc *sc = device_private(self);
 
-	config_search_loc(gpio_search, self, ifattr, locators, sc);
+	config_search(self, NULL,
+	    CFARG_SEARCH, gpio_search,
+	    CFARG_EOL);
 
 	return 0;
 }
@@ -268,7 +269,7 @@ gpio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	struct gpio_attach_args ga;
 	size_t namlen;
 
-	ga.ga_gpio = aux;
+	ga.ga_gpio = device_private(parent);
 	ga.ga_offset = cf->cf_loc[GPIOCF_OFFSET];
 	ga.ga_mask = cf->cf_loc[GPIOCF_MASK];
 	ga.ga_flags = cf->cf_loc[GPIOCF_FLAG];
@@ -276,8 +277,8 @@ gpio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	ga.ga_dvname = kmem_alloc(namlen, KM_SLEEP);
 	strcpy(ga.ga_dvname, cf->cf_name);
 
-	if (config_match(parent, cf, &ga) > 0)
-		config_attach(parent, cf, &ga, gpio_print);
+	if (config_probe(parent, cf, &ga))
+		config_attach(parent, cf, &ga, gpio_print, CFARG_EOL);
 	kmem_free(ga.ga_dvname, namlen);
 	return 0;
 }
@@ -852,10 +853,14 @@ gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 		locs[GPIOCF_MASK] = ga.ga_mask;
 		locs[GPIOCF_FLAG] = ga.ga_flags;
 
-		cf = config_search_loc(NULL, sc->sc_dev, "gpio", locs, &ga);
+		cf = config_search(sc->sc_dev, &ga,
+		    CFARG_LOCATORS, locs,
+		    CFARG_EOL);
 		if (cf != NULL) {
-			dv = config_attach_loc(sc->sc_dev, cf, locs, &ga,
-			    gpiobus_print);
+			dv = config_attach(sc->sc_dev, cf, &ga,
+			    gpiobus_print,
+			    CFARG_LOCATORS, locs,
+			    CFARG_EOL);
 #ifdef COMPAT_50
 			if (dv != NULL) {
 				gdev = kmem_alloc(sizeof(struct gpio_dev),

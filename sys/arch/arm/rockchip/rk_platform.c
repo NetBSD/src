@@ -1,4 +1,4 @@
-/* $NetBSD: rk_platform.c,v 1.11 2021/02/04 22:36:53 thorpej Exp $ */
+/* $NetBSD: rk_platform.c,v 1.12 2021/04/24 23:36:28 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_platform.c,v 1.11 2021/02/04 22:36:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_platform.c,v 1.12 2021/04/24 23:36:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -70,7 +70,6 @@ rk_platform_init_attach_args(struct fdt_attach_args *faa)
 static void
 rk_platform_device_register(device_t self, void *aux)
 {
-	fdtbus_device_register(self, aux);
 }
 
 static void

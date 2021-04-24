@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_fbdev.c,v 1.13 2020/02/14 14:34:58 maya Exp $	*/
+/*	$NetBSD: intel_fbdev.c,v 1.14 2021/04/24 23:37:00 thorpej Exp $	*/
 
 /*
  * Copyright © 2007 David Airlie
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_fbdev.c,v 1.13 2020/02/14 14:34:58 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_fbdev.c,v 1.14 2021/04/24 23:37:00 thorpej Exp $");
 
 #include <linux/async.h>
 #include <linux/module.h>
@@ -253,7 +253,9 @@ static int intelfb_create(struct drm_fb_helper *helper,
 	 * XXX Should do this asynchronously, since we hold
 	 * dev->struct_mutex.
 	 */
-	helper->fbdev = config_found_ia(dev->dev, "intelfbbus", &ifa, NULL);
+	helper->fbdev = config_found(dev->dev, &ifa, NULL,
+	    CFARG_IATTR, "intelfbbus",
+	    CFARG_EOL);
 	if (helper->fbdev == NULL) {
 		DRM_ERROR("unable to attach intelfb\n");
 		ret = -ENXIO;

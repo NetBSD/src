@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.64 2015/11/12 12:01:53 phx Exp $ */
+/*	$NetBSD: grf.c,v 1.65 2021/04/24 23:36:24 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.64 2015/11/12 12:01:53 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.65 2021/04/24 23:36:24 thorpej Exp $");
 
 /*
  * Graphics display driver for the Amiga
@@ -213,7 +213,7 @@ grfattach(device_t parent, device_t self, void *aux)
 		wa.scrdata = gp->g_scrlist;
 		wa.accessops = gp->g_accessops;
 		wa.accesscookie = &gp->g_vd;
-		config_found(self, &wa, wsemuldisplaydevprint);
+		config_found(self, &wa, wsemuldisplaydevprint, CFARG_EOL);
 #endif  /* NWSDISPLAY > 0 */
 	}
 

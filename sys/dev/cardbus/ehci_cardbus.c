@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_cardbus.c,v 1.35 2018/04/09 16:21:10 jakllsch Exp $	*/
+/*	$NetBSD: ehci_cardbus.c,v 1.36 2021/04/24 23:36:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_cardbus.c,v 1.35 2018/04/09 16:21:10 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_cardbus.c,v 1.36 2021/04/24 23:36:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,7 +202,8 @@ ehci_cardbus_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/* Attach usb device. */
-	sc->sc.sc_child = config_found(self, &sc->sc.sc_bus, usbctlprint);
+	sc->sc.sc_child = config_found(self, &sc->sc.sc_bus, usbctlprint,
+	    CFARG_EOL);
 }
 
 int

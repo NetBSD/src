@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.69 2015/12/01 08:22:30 martin Exp $ */
+/*	$NetBSD: stp4020.c,v 1.70 2021/04/24 23:36:58 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.69 2015/12/01 08:22:30 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.70 2021/04/24 23:36:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -504,7 +504,7 @@ stp4020_attach_socket(struct stp4020_socket *h, int speed)
 	paa.pct = (pcmcia_chipset_tag_t)h->sc->sc_pct;
 	paa.pch = (pcmcia_chipset_handle_t)h;
 
-	h->pcmcia = config_found(h->sc->sc_dev, &paa, stp4020print);
+	h->pcmcia = config_found(h->sc->sc_dev, &paa, stp4020print, CFARG_EOL);
 
 	if (h->pcmcia == NULL)
 		return;

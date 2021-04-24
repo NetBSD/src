@@ -1,4 +1,4 @@
-/*	$NetBSD: sunscpal.c,v 1.27 2017/01/11 07:16:48 skrll Exp $	*/
+/*	$NetBSD: sunscpal.c,v 1.28 2021/04/24 23:36:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunscpal.c,v 1.27 2017/01/11 07:16:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunscpal.c,v 1.28 2021/04/24 23:36:55 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -2087,7 +2087,7 @@ sunscpal_attach(struct sunscpal_softc *sc, int options)
 	/*
 	 * Ask the adapter what subunits are present
 	 */
-	(void)config_found(sc->sc_dev, &sc->sc_channel, scsiprint);
+	(void)config_found(sc->sc_dev, &sc->sc_channel, scsiprint, CFARG_EOL);
 	scsipi_adapter_delref(&sc->sc_adapter);
 }
 

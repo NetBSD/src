@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312.c,v 1.24 2019/03/01 09:25:59 msaitoh Exp $	*/
+/*	$NetBSD: i80312.c,v 1.25 2021/04/24 23:36:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80312.c,v 1.24 2019/03/01 09:25:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80312.c,v 1.25 2021/04/24 23:36:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,7 +296,9 @@ i80312_attach(struct i80312_softc *sc)
 		ia.ia_offset = id->id_offset;
 		ia.ia_size = id->id_size;
 
-		(void) config_found_ia(sc->sc_dev, "iopxs", &ia, i80312_iopxs_print);
+		config_found(sc->sc_dev, &ia, i80312_iopxs_print,
+		    CFARG_IATTR, "iopxs",
+		    CFARG_EOL);
 	}
 
 	/*
@@ -319,7 +321,9 @@ i80312_attach(struct i80312_softc *sc)
 	/* XXX MRL/MRM/MWI seem to have problems, at the moment. */
 	pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY /* |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY */;
-	(void) config_found_ia(sc->sc_dev, "pcibus", &pba, pcibusprint);
+	config_found(sc->sc_dev, &pba, pcibusprint,
+	    CFARG_IATTR, "pcibus",
+	    CFARG_EOL);
 }
 
 /*

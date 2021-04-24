@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.3 2018/09/03 16:29:31 riastradh Exp $	*/
+/*	$NetBSD: hil.c,v 1.4 2021/04/24 23:36:54 thorpej Exp $	*/
 /*	$OpenBSD: hil.c,v 1.24 2010/11/20 16:45:46 miod Exp $	*/
 /*
  * Copyright (c) 2003, 2004, Miodrag Vallat.
@@ -539,8 +539,9 @@ hilconfig(struct hil_softc *sc, u_int knowndevs)
 			memcpy(ha.ha_info, sc->sc_cmdbuf, len);
 
 			sc->sc_devices[id] =
-			    config_found_sm_loc(sc->sc_dev, "hil", NULL,
-			    &ha, hildevprint, hilsubmatch);
+			    config_found(sc->sc_dev, &ha, hildevprint,
+					 CFARG_SUBMATCH, hilsubmatch,
+					 CFARG_EOL);
 
 #if NHILKBD > 0
 			/*

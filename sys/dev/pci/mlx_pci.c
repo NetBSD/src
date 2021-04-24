@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx_pci.c,v 1.27 2018/12/09 11:14:02 jdolecek Exp $	*/
+/*	$NetBSD: mlx_pci.c,v 1.28 2021/04/24 23:36:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx_pci.c,v 1.27 2018/12/09 11:14:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx_pci.c,v 1.28 2021/04/24 23:36:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,7 +145,7 @@ static struct mlx_pci_ident {
 };
 
 static int
-mlx_pci_rescan(device_t self, const char *attr, const int *flag)
+mlx_pci_rescan(device_t self, const char *ifattr, const int *locs)
 {
 
 	return mlx_configure(device_private(self), 1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: xsh.c,v 1.2 2013/08/09 12:56:31 rkujawa Exp $ */
+/*	$NetBSD: xsh.c,v 1.3 2021/04/24 23:36:24 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xsh.c,v 1.2 2013/08/09 12:56:31 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xsh.c,v 1.3 2021/04/24 23:36:24 thorpej Exp $");
 
 /*
  * X-Surf 100 driver. 
@@ -90,7 +90,7 @@ xsh_attach(device_t parent, device_t self, void *aux)
 	/* Add ne(4). */
 	xaa_ne.xaa_base = (bus_addr_t)zap->va + XSURF100_NE_OFFSET;
 	strcpy(xaa_ne.xaa_name, "ne_xsh");
-	config_found_ia(sc->sc_dev, "xshbus", &xaa_ne, xsh_print);
+	config_found(sc->sc_dev, &xaa_ne, xsh_print, CFARG_EOL);
 
 	/* TODO: add USB module... */
 }

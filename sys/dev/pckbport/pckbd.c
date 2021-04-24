@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.34 2019/07/23 12:28:52 jmcneill Exp $ */
+/* $NetBSD: pckbd.c,v 1.35 2021/04/24 23:36:58 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.34 2019/07/23 12:28:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.35 2021/04/24 23:36:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -409,7 +409,7 @@ pckbdattach(device_t parent, device_t self, void *aux)
 	 * Attach the wskbd, saving a handle to it.
 	 * XXX XXX XXX
 	 */
-	sc->sc_wskbddev = config_found_ia(self, "wskbddev", &a, wskbddevprint);
+	sc->sc_wskbddev = config_found(self, &a, wskbddevprint, CFARG_EOL);
 }
 
 int

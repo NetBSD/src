@@ -1,4 +1,4 @@
-/*	$NetBSD: imc.c,v 1.35 2019/04/26 21:02:42 macallan Exp $	*/
+/*	$NetBSD: imc.c,v 1.36 2021/04/24 23:36:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.35 2019/04/26 21:02:42 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.36 2021/04/24 23:36:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -230,13 +230,17 @@ imc_attach(device_t parent, device_t self, void *aux)
 #if notyet
 		memset(&iaa, 0, sizeof(iaa));
 
-		config_found_ia(self, "eisabus", (void*)&iaa, eisabusprint);
+		config_found(self, &iaa, eisabusprint,
+		    CFARG_IATTR, "eisabus",
+		    CFARG_EOL);
 #endif
 	}
 
 	memset(&iaa, 0, sizeof(iaa));
 
-	config_found_ia(self, "giobus", (void*)&iaa, imc_print);
+	config_found(self, &iaa, imc_print,
+	    CFARG_IATTR, "giobus",
+	    CFARG_EOL);
 
 	imc_watchdog_enable();
 }

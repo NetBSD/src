@@ -1,4 +1,4 @@
-/*	$NetBSD: z3rambd.c,v 1.3 2015/06/01 17:09:46 phx Exp $ */
+/*	$NetBSD: z3rambd.c,v 1.4 2021/04/24 23:36:24 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z3rambd.c,v 1.3 2015/06/01 17:09:46 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z3rambd.c,v 1.4 2021/04/24 23:36:24 thorpej Exp $");
 
 /*
  * Z3 RAM virtual block device. Supports ZorRAM, BigRamPlus and FastLane Z3 so 
@@ -114,7 +114,7 @@ z3rambd_attach(device_t parent, device_t self, void *aux)
 
 	aaa.cookie = sc;
 	aaa.memops = &z3rambd_altmem_memops;	
-	config_found_ia(self, "altmemdev", &aaa, z3rambd_altmem_print);
+	config_found(self, &aaa, z3rambd_altmem_print, CFARG_EOL);
 }
 
 static int

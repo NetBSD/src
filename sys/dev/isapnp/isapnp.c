@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.60 2019/11/10 21:16:35 chs Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.61 2021/04/24 23:36:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.60 2019/11/10 21:16:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.61 2021/04/24 23:36:55 thorpej Exp $");
 
 #include "isadma.h"
 
@@ -992,8 +992,9 @@ isapnp_callback(device_t self)
 
 			isapnp_write_reg(sc, ISAPNP_ACTIVATE, 1);
 #ifdef _KERNEL
-			if (config_found_sm_loc(self, "isapnp", NULL, lpa,
-			    isapnp_print, isapnp_submatch) == NULL)
+			if (config_found(self, lpa, isapnp_print,
+					 CFARG_SUBMATCH, isapnp_submatch,
+					 CFARG_EOL) == NULL)
 				isapnp_write_reg(sc, ISAPNP_ACTIVATE, 0);
 #else
 			isapnp_print(lpa, NULL);
