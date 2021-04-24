@@ -1,4 +1,4 @@
-/* $NetBSD: wsfontload.c,v 1.22 2021/04/24 00:49:26 macallan Exp $ */
+/* $NetBSD: wsfontload.c,v 1.23 2021/04/24 07:52:07 wiz Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -76,8 +76,10 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-		"usage: %s [-Bbvl] [-e encoding] [-f wsdev] [-h height]"
-		" [-N name] [-w width] [fontfile]\n",
+		"usage: %s [-Bbv] [-e encoding] [-f wsdev] [-h height]"
+		" [-N name] [-w width] [fontfile]\n"
+		"       %s -l\n",
+		      getprogname(),
 		      getprogname());
 	exit(1);
 }
