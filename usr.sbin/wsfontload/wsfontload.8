@@ -1,4 +1,4 @@
-.\"	$NetBSD: wsfontload.8,v 1.29 2021/04/24 08:59:09 nia Exp $
+.\"	$NetBSD: wsfontload.8,v 1.30 2021/04/24 09:03:05 nia Exp $
 .\"
 .\" Copyright (c) 1999, 2001
 .\" 	Matthias Drochner.  All rights reserved.
@@ -93,8 +93,7 @@ Default is
 Sets the height of a font character in pixels.
 Default is 16.
 .It Fl l
-Print a list of available fonts that are built-in to the kernel
-(as opposed to fonts available to load from the filesystem).
+Print a list of fonts that have been loaded or are built-in to the kernel.
 .It Fl N Ar name
 Specifies a name which can be used later to refer to the font.
 If none is given, the
@@ -143,5 +142,3 @@ IBM-encoded 8\(mu16 font and switch the first console screen
 Many features are missing.
 .Pp
 There is no way to remove a loaded font.
-.Pp
-There is no way to determine which fonts have been loaded.
