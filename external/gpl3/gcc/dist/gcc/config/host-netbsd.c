@@ -81,5 +81,5 @@ netbsd_gt_pch_use_address (void *base, size_t size, int fd, size_t offset)
   return addr == base ? 1 : -1;
 }
 
-
+
 const struct host_hooks host_hooks = HOST_HOOKS_INITIALIZER;
