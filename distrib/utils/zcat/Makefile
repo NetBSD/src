@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.19 2019/09/29 23:44:58 mrg Exp $
+# $NetBSD: Makefile,v 1.20 2021/04/24 04:50:47 mrg Exp $
 # Small zcat (i.e. for install media)
 #
 
@@ -26,9 +26,7 @@ CPPFLAGS+=	-I${LIBC}/include
 CPPFLAGS+=	-Dsnprintf=snprintf_ss -Dsprintf=sprintf_ss
 CPPFLAGS+=	-Dstrerror=strerror_ss
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} >= 7 && ${ACTIVE_CC} == "gcc"
-COPTS.inflate.c+=	-Wno-error=implicit-fallthrough
-.endif
+COPTS.inflate.c+=	${GCC_NO_IMPLICIT_FALLTHRU}
 
 .include <bsd.prog.mk>
 
