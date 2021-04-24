@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.132 2021/01/17 00:18:28 mrg Exp $	*/
+/*	$NetBSD: psycho.c,v 1.133 2021/04/24 23:36:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.132 2021/01/17 00:18:28 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.133 2021/04/24 23:36:49 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -684,7 +684,7 @@ found:
 	pba.pba_memt = sc->sc_psycho_this->pp_memt;
 	pba.pba_pc = pp->pp_pc;
 
-	config_found_ia(self, "pcibus", &pba, psycho_print);
+	config_found(self, &pba, psycho_print, CFARG_EOL);
 }
 
 static	int

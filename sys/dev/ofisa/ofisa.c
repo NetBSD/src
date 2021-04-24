@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisa.c,v 1.30 2021/01/27 03:10:21 thorpej Exp $	*/
+/*	$NetBSD: ofisa.c,v 1.31 2021/04/24 23:36:56 thorpej Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofisa.c,v 1.30 2021/01/27 03:10:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofisa.c,v 1.31 2021/04/24 23:36:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,7 +131,9 @@ ofisaattach(device_t parent, device_t self, void *aux)
 		aa.dmat = iba.iba_dmat;
 		aa.ic = iba.iba_ic;
 
-		config_found(self, &aa, ofisaprint);
+		config_found(self, &aa, ofisaprint,
+		    CFARG_DEVHANDLE, devhandle_from_of(child),
+		    CFARG_EOL);
 	}
 }
 

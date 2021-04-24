@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.87 2021/01/03 17:42:10 thorpej Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.88 2021/04/24 23:36:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.87 2021/01/03 17:42:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.88 2021/04/24 23:36:29 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -464,7 +464,7 @@ fdcattach(device_t parent, device_t self, void *aux)
 		 * XXX: Choose something sensible as a default...
 		 */
 		fa.fa_deftype = &fd_types[2]; /* 1.44MB */
-		(void)config_found(self, (void *)&fa, fdprint);
+		(void)config_found(self, (void *)&fa, fdprint, CFARG_EOL);
 	}
 }
 

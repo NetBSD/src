@@ -1,4 +1,4 @@
-/*	$NetBSD: cac.c,v 1.61 2019/11/10 21:16:35 chs Exp $	*/
+/*	$NetBSD: cac.c,v 1.62 2021/04/24 23:36:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.61 2019/11/10 21:16:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.62 2021/04/24 23:36:55 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bio.h"
@@ -194,7 +194,7 @@ cac_init(struct cac_softc *sc, const char *intrstr, int startfw)
 
 	/* Attach our units */
 	sc->sc_unitmask = 0;
-	cac_rescan(sc->sc_dev, "cac", 0);
+	cac_rescan(sc->sc_dev, NULL, NULL);
 
 	/* Set our `shutdownhook' before we start any device activity. */
 	if (cac_sdh == NULL)
@@ -217,11 +217,11 @@ cac_init(struct cac_softc *sc, const char *intrstr, int startfw)
 }
 
 int
-cac_rescan(device_t self, const char *attr, const int *flags)
+cac_rescan(device_t self, const char *attr, const int *locs)
 {
 	struct cac_softc *sc;
 	struct cac_attach_args caca;
-	int locs[CACCF_NLOCS];
+	int mlocs[CACCF_NLOCS];
 	int i;
 
 	sc = device_private(self);
@@ -230,10 +230,12 @@ cac_rescan(device_t self, const char *attr, const int *flags)
 			continue;
 		caca.caca_unit = i;
 
-		locs[CACCF_UNIT] = i;
+		mlocs[CACCF_UNIT] = i;
 
-		if (config_found_sm_loc(self, attr, locs, &caca, cac_print,
-			    config_stdsubmatch))
+		if (config_found(self, &caca, cac_print,
+				 CFARG_SUBMATCH, config_stdsubmatch,
+				 CFARG_LOCATORS, mlocs,
+				 CFARG_EOL) != NULL)
 			sc->sc_unitmask |= 1 << i;
 	}
 	return 0;

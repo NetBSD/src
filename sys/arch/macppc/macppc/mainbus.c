@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.22 2019/10/24 23:06:25 macallan Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.23 2021/04/24 23:36:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.22 2019/10/24 23:06:25 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.23 2021/04/24 23:36:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -80,7 +80,9 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 			ca.ca_name = "cpu";
 			ca.ca_reg = reg;
 			ca.ca_nreg = OF_getprop(node, "reg", reg, sizeof(reg));
-			config_found(self, &ca, NULL);
+			config_found(self, &ca, NULL,
+			    CFARG_DEVHANDLE, devhandle_from_of(node),
+			    CFARG_EOL);
 			node = OF_peer(node);
 		}			
 	} else {
@@ -88,7 +90,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 			ca.ca_name = "cpu";
 			ca.ca_reg = reg;
 			reg[0] = i;
-			config_found(self, &ca, NULL);
+			config_found(self, &ca, NULL, CFARG_EOL);
 		}
 	}
 
@@ -98,7 +100,9 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	if (node) {
 		oba.oba_busname = "ofw";
 		oba.oba_phandle = node;
-		config_found(self, &oba, NULL);
+		config_found(self, &oba, NULL,
+		    CFARG_DEVHANDLE, devhandle_from_of(node),
+		    CFARG_EOL);
 	}
 
 	for (node = OF_child(OF_finddevice("/")); node; node = OF_peer(node)) {
@@ -110,12 +114,14 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 		ca.ca_node = node;
 		ca.ca_nreg = OF_getprop(node, "reg", reg, sizeof(reg));
 		ca.ca_reg  = reg;
-		config_found(self, &ca, NULL);
+		config_found(self, &ca, NULL,
+		    CFARG_DEVHANDLE, devhandle_from_of(node),
+		    CFARG_EOL);
 	}
 
 #ifdef MAMBO
 	ca.ca_name="com";
-	config_found(self, &ca, NULL);
+	config_found(self, &ca, NULL, CFARG_EOL);
 #endif
 
 }

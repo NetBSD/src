@@ -1,4 +1,4 @@
-/*	$NetBSD: nmi_mainbus.c,v 1.12 2017/05/22 16:53:05 ragge Exp $	   */
+/*	$NetBSD: nmi_mainbus.c,v 1.13 2021/04/24 23:36:50 thorpej Exp $	   */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nmi_mainbus.c,v 1.12 2017/05/22 16:53:05 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nmi_mainbus.c,v 1.13 2021/04/24 23:36:50 thorpej Exp $");
 
 #define _VAX_BUS_DMA_PRIVATE
 
@@ -89,19 +89,19 @@ nmi_mainbus_attach(device_t parent, device_t self, void *aux)
 	/* One CPU is always found */
 	na.na_type = "cpu";
 	na.na_slot = 20;
-	config_found(self, (void *)&na, nmi_mainbus_print);
+	config_found(self, (void *)&na, nmi_mainbus_print, CFARG_EOL);
 
 	/* Check for a second one */
 	if (vax_boardtype == VAX_BTYP_8800) {
 		na.na_type = "cpu";
 		na.na_slot = 21;
-		config_found(self, (void *)&na, nmi_mainbus_print);
+		config_found(self, (void *)&na, nmi_mainbus_print, CFARG_EOL);
 	}
 
 	/* One memory adapter is also present */
 	na.na_type = "mem";
 	na.na_slot = 10;
-	config_found(self, (void *)&na, nmi_mainbus_print);
+	config_found(self, (void *)&na, nmi_mainbus_print, CFARG_EOL);
 
 	/* Enable BI interrupts */
 	mtpr(NICTRL_DEV0|NICTRL_DEV1|NICTRL_MNF, PR_NICTRL);
@@ -116,10 +116,12 @@ nmi_mainbus_attach(device_t parent, device_t self, void *aux)
 			continue;
 		na.na_slot = 2 * nbia;
 		if (r[1] & 2)
-			config_found(self, (void *)&na, nmi_mainbus_print);
+			config_found(self, (void *)&na, nmi_mainbus_print,
+			    CFARG_EOL);
 		na.na_slot++;
 		if (r[1] & 4)
-			config_found(self, (void *)&na, nmi_mainbus_print);
+			config_found(self, (void *)&na, nmi_mainbus_print,
+			    CFARG_EOL);
 	}
 }
 

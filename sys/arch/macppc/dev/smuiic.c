@@ -1,4 +1,4 @@
-/*	$NetBSD: smuiic.c,v 1.6 2021/02/25 20:51:10 macallan Exp $ */
+/*	$NetBSD: smuiic.c,v 1.7 2021/04/24 23:36:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2013 Phileas Fogg
@@ -131,5 +131,5 @@ smuiic_attach(device_t parent, device_t self, void *aux)
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = sc->sc_i2c;
 
-	config_found_ia(sc->sc_dev, "i2cbus", &iba, iicbus_print);
+	config_found(sc->sc_dev, &iba, iicbus_print, CFARG_EOL);
 }

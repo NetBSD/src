@@ -1,4 +1,4 @@
-/* $NetBSD: omap3_i2c.c,v 1.4 2019/12/22 23:23:29 thorpej Exp $ */
+/* $NetBSD: omap3_i2c.c,v 1.5 2021/04/24 23:36:28 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2012 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_i2c.c,v 1.4 2019/12/22 23:23:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_i2c.c,v 1.5 2021/04/24 23:36:28 thorpej Exp $");
 
 #include "opt_omap.h"
 
@@ -145,11 +145,11 @@ omap3_i2c_rescan(device_t self, const char *ifattr, const int *locs)
 	struct omap3_i2c_softc *sc = device_private(self);
 	struct i2cbus_attach_args iba;
 
-	if (ifattr_match(ifattr, "i2cbus") && sc->sc_i2cdev == NULL) {
+	if (sc->sc_i2cdev == NULL) {
 		memset(&iba, 0, sizeof(iba));
 		iba.iba_tag = &sc->sc_ic;
-		sc->sc_i2cdev = config_found_ia(self, "i2cbus",
-		    &iba, iicbus_print);
+		sc->sc_i2cdev =
+		    config_found(self, &iba, iicbus_print, CFARG_EOL);
 	}
 
 	return 0;

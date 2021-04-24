@@ -1,4 +1,4 @@
-/*	$NetBSD: rtciic.c,v 1.3 2019/12/27 08:22:50 msaitoh Exp $	*/
+/*	$NetBSD: rtciic.c,v 1.4 2021/04/24 23:36:43 thorpej Exp $	*/
 /*
  * Copyright (c) 2011 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtciic.c,v 1.3 2019/12/27 08:22:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtciic.c,v 1.4 2021/04/24 23:36:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -143,7 +143,7 @@ rtciic_attach(device_t parent, device_t self, void *aux)
 
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c;
-	(void) config_found_ia(sc->sc_dev, "i2cbus", &iba, iicbus_print);
+	config_found(sc->sc_dev, &iba, iicbus_print, CFARG_EOL);
 }
 
 static int

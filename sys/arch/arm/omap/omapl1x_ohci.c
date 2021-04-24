@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: omapl1x_ohci.c,v 1.3 2018/04/09 16:21:09 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapl1x_ohci.c,v 1.4 2021/04/24 23:36:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,7 +154,8 @@ omapl1xohci_attach (struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Attach usb device. */
-	sc->sc.sc_child = config_found(self, &sc->sc.sc_bus, usbctlprint);
+	sc->sc.sc_child = config_found(self, &sc->sc.sc_bus, usbctlprint,
+	    CFARG_EOL);
 
 	/* Done accessing the syscfg0 registers */
 	bus_space_unmap(syscfg0.syscfg_iot, syscfg0.syscfg_ioh,

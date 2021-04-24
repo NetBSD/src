@@ -1,4 +1,4 @@
-/*	$NetBSD: mgx.c,v 1.14 2018/09/03 16:29:33 riastradh Exp $ */
+/*	$NetBSD: mgx.c,v 1.15 2021/04/24 23:36:58 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -29,7 +29,7 @@
 /* a console driver for the SSB 4096V-MGX graphics card */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mgx.c,v 1.14 2018/09/03 16:29:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mgx.c,v 1.15 2021/04/24 23:36:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -364,7 +364,7 @@ mgx_attach(device_t parent, device_t self, void *args)
 	aa.accessops = &mgx_accessops;
 	aa.accesscookie = &sc->vd;
 
-	config_found(self, &aa, wsemuldisplaydevprint);
+	config_found(self, &aa, wsemuldisplaydevprint, CFARG_EOL);
 
 	/* now the Sun fb goop */
 	fb->fb_driver = &mgx_fbdriver;

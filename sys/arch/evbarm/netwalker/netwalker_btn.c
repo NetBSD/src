@@ -1,4 +1,4 @@
-/*	$NetBSD: netwalker_btn.c,v 1.2 2014/05/06 11:08:51 hkenken Exp $	*/
+/*	$NetBSD: netwalker_btn.c,v 1.3 2021/04/24 23:36:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2014  Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwalker_btn.c,v 1.2 2014/05/06 11:08:51 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwalker_btn.c,v 1.3 2021/04/24 23:36:34 thorpej Exp $");
 
 #include "opt_imxspi.h"
 #include "opt_mousebtn.h"
@@ -180,7 +180,7 @@ mousebtn_attach(device_t parent, device_t self, void *aux)
 	a.accesscookie = sc;
 
 	sc->sc_buttons = 0;
-	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint);
+	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint, CFARG_EOL);
 }
 
 static int

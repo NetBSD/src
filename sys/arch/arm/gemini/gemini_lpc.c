@@ -1,10 +1,10 @@
-/*	$NetBSD: gemini_lpc.c,v 1.4 2012/10/27 17:17:38 chs Exp $	*/
+/*	$NetBSD: gemini_lpc.c,v 1.5 2021/04/24 23:36:27 thorpej Exp $	*/
 
 #include "opt_gemini.h"
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_lpc.c,v 1.4 2012/10/27 17:17:38 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_lpc.c,v 1.5 2021/04/24 23:36:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,9 @@ gemini_lpc_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * attach the rest of our devices
 	 */
-	config_search_ia(gemini_lpc_search, self, "lpc", NULL);
+	config_search(self, NULL,
+	    CFARG_SEARCH, gemini_lpc_search,
+	    CFARG_EOL);
 }
 
 static int
@@ -129,8 +131,8 @@ gemini_lpc_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	lpc.lpc_tag      = sc;
 	lpc.lpc_base     = sc->sc_addr;
 
-	if (config_match(parent, cf, &lpc)) {
-		config_attach(parent, cf, &lpc, gemini_lpc_busprint);
+	if (config_probe(parent, cf, &lpc)) {
+		config_attach(parent, cf, &lpc, gemini_lpc_busprint, CFARG_EOL);
 		return 0;			/* love it */
 	}
 

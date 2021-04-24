@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.77 2021/01/25 12:18:18 jmcneill Exp $	*/
+/*	$NetBSD: i2c.c,v 1.78 2021/04/24 23:36:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.77 2021/01/25 12:18:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.78 2021/04/24 23:36:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -343,7 +343,7 @@ iic_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 		 * us from having to poke at the bus to see if anything
 		 * is there.
 		 */
-		match_result = config_match(parent, cf, &ia);
+		match_result = config_probe(parent, cf, &ia);/*XXX*/
 		if (match_result <= 0)
 			continue;
 
@@ -358,7 +358,7 @@ iic_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 			continue;
 
 		sc->sc_devices[ia.ia_addr] =
-		    config_attach(parent, cf, &ia, iic_print);
+		    config_attach(parent, cf, &ia, iic_print, CFARG_EOL);
 	}
 
 	return 0;
@@ -380,7 +380,10 @@ iic_child_detach(device_t parent, device_t child)
 static int
 iic_rescan(device_t self, const char *ifattr, const int *locators)
 {
-	config_search_ia(iic_search, self, ifattr, NULL);
+	config_search(self, NULL,
+	    CFARG_SEARCH, iic_search,
+	    CFARG_LOCATORS, locators,
+	    CFARG_EOL);
 	return 0;
 }
 
@@ -489,9 +492,10 @@ iic_attach(device_t parent, device_t self, void *aux)
 					    "address @ 0x%02x\n", addr);
 				} else if (sc->sc_devices[addr] == NULL) {
 					sc->sc_devices[addr] =
-					    config_found_sm_loc(self, "iic",
-					        loc, &ia, iic_print_direct,
-						NULL);
+					    config_found(self, &ia,
+					    iic_print_direct,
+					    CFARG_LOCATORS, loc,
+					    CFARG_EOL);
 				}
 			}
 

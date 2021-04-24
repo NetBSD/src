@@ -1,4 +1,4 @@
-/*	$NetBSD: vhci.c,v 1.20 2020/06/05 17:20:56 maxv Exp $ */
+/*	$NetBSD: vhci.c,v 1.21 2021/04/24 23:36:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 2019-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vhci.c,v 1.20 2020/06/05 17:20:56 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vhci.c,v 1.21 2021/04/24 23:36:59 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1319,5 +1319,5 @@ vhci_attach(device_t parent, device_t self, void *aux)
 		    KCOV_REMOTE_VHCI_ID(sc->sc_bus.ub_busnum, i));
 	}
 
-	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint);
+	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint, CFARG_EOL);
 }

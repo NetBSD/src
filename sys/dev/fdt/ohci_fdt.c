@@ -1,4 +1,4 @@
-/* $NetBSD: ohci_fdt.c,v 1.5 2021/01/27 03:10:21 thorpej Exp $ */
+/* $NetBSD: ohci_fdt.c,v 1.6 2021/04/24 23:36:53 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_fdt.c,v 1.5 2021/01/27 03:10:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_fdt.c,v 1.6 2021/04/24 23:36:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -146,5 +146,5 @@ ohci_fdt_attach(device_t parent, device_t self, void *aux)
 
 	pmf_device_register1(self, NULL, NULL, ohci_shutdown);
 
-	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint);
+	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint, CFARG_EOL);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: adm5120_extio.c,v 1.6 2012/10/27 17:18:01 chs Exp $ */
+/* $NetBSD: adm5120_extio.c,v 1.7 2021/04/24 23:36:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 David Young.  All rights reserved.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm5120_extio.c,v 1.6 2012/10/27 17:18:01 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm5120_extio.c,v 1.7 2021/04/24 23:36:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -366,8 +366,10 @@ extio_attach(device_t parent, device_t self, void *aux)
 		extio_attach_args_create(&ea, ed, sc->sc_gpio,
 		    (ed->ed_cfio) ? &sc->sc_cfio : &admc->extio_space);
 		EXTIO_DPRINTF("%s: %d\n", __func__, __LINE__);
-		(void)config_found_sm_loc(self, "extio", NULL, &ea, extio_print,
-		    extio_submatch);
+		config_found(self, &ea, extio_print,
+		    CFARG_SUBMATCH, extio_submatch,
+		    CFARG_IATTR, "extio",
+		    CFARG_EOL);
 	}
 	EXTIO_DPRINTF("%s: %d\n", __func__, __LINE__);
 	extio_mpmc_dump(sc);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ucbtp.c,v 1.21 2012/10/27 17:17:53 chs Exp $ */
+/*	$NetBSD: ucbtp.c,v 1.22 2021/04/24 23:36:38 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucbtp.c,v 1.21 2012/10/27 17:17:53 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucbtp.c,v 1.22 2021/04/24 23:36:38 thorpej Exp $");
 
 #include "opt_use_poll.h"
 
@@ -315,7 +315,8 @@ ucbtp_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * attach the wsmouse
 	 */
-	sc->sc_wsmousedev = config_found(self, &wsmaa, wsmousedevprint);
+	sc->sc_wsmousedev = config_found(self, &wsmaa, wsmousedevprint,
+	    CFARG_EOL);
 }
 
 int

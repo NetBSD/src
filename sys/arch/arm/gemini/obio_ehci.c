@@ -1,4 +1,4 @@
-/*	$NetBSD: obio_ehci.c,v 1.5 2018/04/09 16:21:09 jakllsch Exp $	*/
+/*	$NetBSD: obio_ehci.c,v 1.6 2021/04/24 23:36:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_ehci.c,v 1.5 2018/04/09 16:21:09 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_ehci.c,v 1.6 2021/04/24 23:36:27 thorpej Exp $");
 
 #include "locators.h"
 
@@ -137,7 +137,7 @@ ehci_obio_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Attach usb device. */
-	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint);
+	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint, CFARG_EOL);
 }
 
 CFATTACH_DECL2_NEW(ehci_obio, sizeof(struct ehci_softc),

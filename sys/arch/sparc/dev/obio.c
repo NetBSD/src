@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.74 2013/03/24 17:50:26 jdc Exp $	*/
+/*	$NetBSD: obio.c,v 1.75 2021/04/24 23:36:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997,1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.74 2013/03/24 17:50:26 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.75 2021/04/24 23:36:49 thorpej Exp $");
 
 #include "locators.h"
 
@@ -164,12 +164,16 @@ obioattach(device_t parent, device_t self, void *aux)
 		/* Find all `early' obio devices */
 		for (cpp = special4; *cpp != NULL; cpp++) {
 			oa.name = *cpp;
-			config_search_ia(obiosearch, self, "obio", &oa);
+			config_search(self, &oa,
+			    CFARG_SEARCH, obiosearch,
+			    CFARG_EOL);
 		}
 
 		/* Find all other obio devices */
 		oa.name = NULL;
-		config_search_ia(obiosearch, self, "obio", &oa);
+		config_search(self, &oa,
+		    CFARG_SEARCH, obiosearch,
+		    CFARG_EOL);
 #endif
 		return;
 	} else if (CPU_ISSUN4M) {
@@ -278,10 +282,10 @@ obiosearch(device_t parent, struct cfdata *cf, const int *ldesc,
 	oba->oba_paddr = BUS_ADDR(PMAP_OBIO, addr);
 	oba->oba_pri = cf->cf_loc[OBIOCF_LEVEL];
 
-	if (config_match(parent, cf, &uoba) == 0)
+	if (!config_probe(parent, cf, &uoba))
 		return (0);
 
-	config_attach(parent, cf, &uoba, obioprint);
+	config_attach(parent, cf, &uoba, obioprint, CFARG_EOL);
 	return (1);
 }
 

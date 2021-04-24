@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_at_mainbus.c,v 1.8 2018/06/06 01:49:09 maya Exp $	*/
+/*	$NetBSD: pci_at_mainbus.c,v 1.9 2021/04/24 23:37:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_at_mainbus.c,v 1.8 2018/06/06 01:49:09 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_at_mainbus.c,v 1.9 2021/04/24 23:37:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -98,5 +98,7 @@ RUMP_COMPONENT(RUMP_COMPONENT_DEV_AFTERMAINBUS)
 	mainbus = device_find_by_driver_unit("mainbus", 0);
 	if (!mainbus)
 		panic("no mainbus.  use maintaxi instead?");
-	config_found_ia(mainbus, "pcibus", &pba, pcibusprint);
+	config_found(mainbus, &pba, pcibusprint,
+	    CFARG_IATTR, "pcibus",
+	    CFARG_EOL);
 }

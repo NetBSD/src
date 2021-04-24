@@ -1,4 +1,4 @@
-/*	$NetBSD: oioc.c,v 1.4 2015/02/18 16:47:58 macallan Exp $	*/
+/*	$NetBSD: oioc.c,v 1.5 2021/04/24 23:36:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2009 Stephen M. Rumble
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oioc.c,v 1.4 2015/02/18 16:47:58 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oioc.c,v 1.5 2021/04/24 23:36:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -148,7 +148,7 @@ oioc_attach(device_t parent, device_t self, void *aux)
 		oa.oa_st        = normal_memt;
 		oa.oa_sh        = sc->sc_ioh;
 		oa.oa_dmat      = &sgimips_default_bus_dma_tag;
-		config_found_ia(self, "oioc", &oa, oioc_print);
+		config_found(self, &oa, oioc_print, CFARG_EOL);
 	}
 }
 

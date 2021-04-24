@@ -1,4 +1,4 @@
-/*	$NetBSD: ibus.c,v 1.21 2015/06/09 20:23:53 matt Exp $	*/
+/*	$NetBSD: ibus.c,v 1.22 2021/04/24 23:36:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ibus.c,v 1.21 2015/06/09 20:23:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus.c,v 1.22 2021/04/24 23:36:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -66,8 +66,10 @@ ibusattach(device_t parent, device_t self, void *aux)
 
 		locs[IBUSCF_ADDR] = (int32_t)MIPS_KSEG1_TO_PHYS(ia->ia_addr);
 
-		config_found_sm_loc(self, "ibus", locs, ia,
-				    ibusprint, config_stdsubmatch);
+		config_found(self, ia, ibusprint,
+		    CFARG_SUBMATCH, config_stdsubmatch,
+		    CFARG_LOCATORS, locs,
+		    CFARG_EOL);
 	}
 }
 

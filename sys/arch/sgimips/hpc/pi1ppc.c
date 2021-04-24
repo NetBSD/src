@@ -1,4 +1,4 @@
-/* $NetBSD: pi1ppc.c,v 1.13 2019/12/27 09:41:49 msaitoh Exp $ */
+/* $NetBSD: pi1ppc.c,v 1.14 2021/04/24 23:36:48 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pi1ppc.c,v 1.13 2019/12/27 09:41:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pi1ppc.c,v 1.14 2021/04/24 23:36:48 thorpej Exp $");
 
 #include "opt_pi1ppc.h"
 
@@ -281,7 +281,7 @@ pi1ppc_sc_attach(struct pi1ppc_softc *lsc)
 
 	/* Configure child of the device. */
 	lsc->child = config_found(lsc->sc_dev, &(sc_parport_adapter),
-		pi1ppc_print);
+		pi1ppc_print, CFARG_EOL);
 
 	return;
 }

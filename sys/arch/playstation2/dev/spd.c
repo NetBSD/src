@@ -1,4 +1,4 @@
-/*	$NetBSD: spd.c,v 1.13 2016/07/19 17:04:25 maya Exp $	*/
+/*	$NetBSD: spd.c,v 1.14 2021/04/24 23:36:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spd.c,v 1.13 2016/07/19 17:04:25 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spd.c,v 1.14 2021/04/24 23:36:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -109,11 +109,11 @@ spd_attach(device_t parent, device_t self, void *aux)
 
 	spa.spa_slot = SPD_HDD;
 	spa.spa_product_name = __spd_table[SPD_HDD].name;
-	config_found(self, &spa, spd_print);
+	config_found(self, &spa, spd_print, CFARG_EOL);
 
 	spa.spa_slot = SPD_NIC;
 	spa.spa_product_name = __spd_table[SPD_NIC].name;
-	config_found(self, &spa, spd_print);
+	config_found(self, &spa, spd_print, CFARG_EOL);
 
 	sbus_intr_establish(SBUS_IRQ_PCMCIA, spd_intr, 0);
 }

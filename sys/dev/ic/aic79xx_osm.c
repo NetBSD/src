@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_osm.c,v 1.34 2019/11/10 21:16:35 chs Exp $	*/
+/*	$NetBSD: aic79xx_osm.c,v 1.35 2021/04/24 23:36:55 thorpej Exp $	*/
 
 /*
  * Bus independent NetBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx_osm.c,v 1.34 2019/11/10 21:16:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx_osm.c,v 1.35 2021/04/24 23:36:55 thorpej Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -100,7 +100,8 @@ ahd_attach(struct ahd_softc *ahd)
 	ahd->sc_channel.chan_id = ahd->our_id;
 	ahd->sc_channel.chan_flags |= SCSIPI_CHAN_CANGROW;
 
-	ahd->sc_child = config_found(ahd->sc_dev, &ahd->sc_channel, scsiprint);
+	ahd->sc_child = config_found(ahd->sc_dev, &ahd->sc_channel, scsiprint,
+	    CFARG_EOL);
 
 	ahd_intr_enable(ahd, TRUE);
 

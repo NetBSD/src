@@ -1,4 +1,4 @@
-/*	$NetBSD: ite8181.c,v 1.28 2012/10/27 17:17:52 chs Exp $	*/
+/*	$NetBSD: ite8181.c,v 1.29 2021/04/24 23:36:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000,2001 SATO Kazumi
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite8181.c,v 1.28 2012/10/27 17:17:52 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite8181.c,v 1.29 2021/04/24 23:36:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -312,7 +312,7 @@ ite8181_attach(struct ite8181_softc *sc)
 	ha.ha_ndspconf = 1;
 	ha.ha_dspconflist = &sc->sc_dspconf;
 
-	config_found(sc->sc_dev, &ha, hpcfbprint);
+	config_found(sc->sc_dev, &ha, hpcfbprint, CFARG_EOL);
 
 #if NBIVIDEO > 0
 	/*

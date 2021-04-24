@@ -1,4 +1,4 @@
-/*	$NetBSD: plum.c,v 1.18 2020/11/21 21:23:48 thorpej Exp $ */
+/*	$NetBSD: plum.c,v 1.19 2021/04/24 23:36:38 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plum.c,v 1.18 2020/11/21 21:23:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plum.c,v 1.19 2021/04/24 23:36:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,12 +112,17 @@ plum_attach(device_t parent, device_t self, void *aux)
 	 * attach first.
 	 */
 	sc->sc_pri = 2;
-	config_search_ia(plum_search, self, "plumif", plum_print);
+	config_search(self, NULL,
+	    CFARG_SEARCH, plum_search,
+	    CFARG_EOL);
+
 	/* 
 	 * Other plum module.
 	 */
 	sc->sc_pri = 1;
-	config_search_ia(plum_search, self, "plumif", plum_print);
+	config_search(self, NULL,
+	    CFARG_SEARCH, plum_search,
+	    CFARG_EOL);
 }
 
 plumreg_t
@@ -156,8 +161,8 @@ plum_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	pa.pa_memt	= sc->sc_csmemt;
 	pa.pa_irq	= sc->sc_irq;
 
-	if (config_match(parent, cf, &pa) == sc->sc_pri) {
-		config_attach(parent, cf, &pa, plum_print);
+	if (/*XXX*/config_probe(parent, cf, &pa) == sc->sc_pri) {
+		config_attach(parent, cf, &pa, plum_print, CFARG_EOL);
 	}
 
 	return 0;

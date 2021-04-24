@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_platform.c,v 1.42 2021/02/04 22:36:53 thorpej Exp $ */
+/* $NetBSD: sunxi_platform.c,v 1.43 2021/04/24 23:36:28 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.42 2021/02/04 22:36:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.43 2021/04/24 23:36:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -201,8 +201,6 @@ sunxi_platform_device_register(device_t self, void *aux)
 {
 	prop_dictionary_t prop = device_properties(self);
 	int val;
-
-	fdtbus_device_register(self, aux);
 
 	if (device_is_a(self, "rgephy")) {
 		/* Pine64+ and NanoPi NEO Plus2 gigabit ethernet workaround */

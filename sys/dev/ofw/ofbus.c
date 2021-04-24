@@ -1,4 +1,4 @@
-/*	$NetBSD: ofbus.c,v 1.26 2017/03/10 00:26:43 macallan Exp $	*/
+/*	$NetBSD: ofbus.c,v 1.27 2021/04/24 23:36:57 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofbus.c,v 1.26 2017/03/10 00:26:43 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofbus.c,v 1.27 2021/04/24 23:36:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,9 @@ ofbus_attach(device_t parent, device_t dev, void *aux)
 				strlcpy(oba2.oba_ofname, name,
 				    sizeof(oba2.oba_ofname));
 			}
-			config_found(dev, &oba2, ofbus_print);
+			config_found(dev, &oba2, ofbus_print,
+			    CFARG_DEVHANDLE, devhandle_from_of(child),
+			    CFARG_EOL);
 		}
 	}
 
@@ -141,7 +143,9 @@ ofbus_attach(device_t parent, device_t dev, void *aux)
 				strlcpy(oba2.oba_ofname, name,
 				    sizeof(oba2.oba_ofname));
 			}
-			config_found(dev, &oba2, ofbus_print);
+			config_found(dev, &oba2, ofbus_print,
+			    CFARG_DEVHANDLE, devhandle_from_of(child),
+			    CFARG_EOL);
 		}
 	}
 

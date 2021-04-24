@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.30 2020/11/20 17:38:05 thorpej Exp $ */
+/* $NetBSD: podulebus.c,v 1.31 2021/04/24 23:36:23 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -43,7 +43,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.30 2020/11/20 17:38:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.31 2021/04/24 23:36:23 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -492,8 +492,9 @@ podulebusattach(device_t parent, device_t self, void *aux)
 				pa.pa_ih = pa.pa_podule_number;
 				pa.pa_podule = &podules[loop];
 				pa.pa_iot = &podulebus_bs_tag;
-				config_found_sm_loc(self, "podulebus", NULL, &pa,
-				    podulebusprint, podulebussubmatch);
+				config_found(self, &pa, podulebusprint,
+				    CFARG_SUBMATCH, podulebussubmatch,
+				    CFARG_EOL);
 				continue;
 			}
 			if (value == 0xffff) {
@@ -507,8 +508,9 @@ podulebusattach(device_t parent, device_t self, void *aux)
 			pa.pa_ih = pa.pa_podule_number;
 			pa.pa_podule = &podules[loop];
 			pa.pa_iot = &podulebus_bs_tag;
-			config_found_sm_loc(self, "podulebus", NULL, &pa,
-			    podulebusprint, podulebussubmatch);
+			config_found(self, &pa, podulebusprint,
+			    CFARG_SUBMATCH, podulebussubmatch,
+			    CFARG_EOL);
 		}
 	}
 }

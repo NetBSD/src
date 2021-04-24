@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.20 2018/01/20 13:56:08 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.21 2021/04/24 23:36:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.20 2018/01/20 13:56:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.21 2021/04/24 23:36:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,9 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal("\n");
 
-	config_search_ia(mainbus_search, self, "mainbus", &ma);
+	config_search(self, &ma,
+	    CFARG_SEARCH, mainbus_search,
+	    CFARG_EOL);
 }
 
 static int
@@ -76,8 +78,8 @@ mainbus_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 		ma->ma_iot = &cobalt_bs;
 		ma->ma_level = cf->cf_loc[MAINBUSCF_LEVEL];
 		ma->ma_irq = cf->cf_loc[MAINBUSCF_IRQ];
-		if (config_match(parent, cf, ma) > 0)
-			config_attach(parent, cf, ma, mainbus_print);
+		if (config_probe(parent, cf, ma))
+			config_attach(parent, cf, ma, mainbus_print, CFARG_EOL);
 	} while (cf->cf_fstate == FSTATE_STAR);
 
 	return 0;

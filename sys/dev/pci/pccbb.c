@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.215 2019/11/10 21:16:36 chs Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.216 2021/04/24 23:36:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.215 2019/11/10 21:16:36 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.216 2021/04/24 23:36:57 thorpej Exp $");
 
 /*
 #define CBB_DEBUG
@@ -680,8 +680,9 @@ pccbb_pci_callback(device_t self)
 
 	pccbb_intrinit(sc);
 
-	if (NULL != (csc = config_found_ia(self, "pcmciaslot", &caa,
-					   cbbprint))) {
+	if (NULL != (csc = config_found(self, &caa, cbbprint,
+					CFARG_IATTR, "pcmciaslot",
+					CFARG_EOL))) {
 		DPRINTF(("%s: found cardslot\n", __func__));
 		sc->sc_csc = device_private(csc);
 	}

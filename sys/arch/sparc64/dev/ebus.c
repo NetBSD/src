@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.65 2021/01/04 14:48:51 thorpej Exp $	*/
+/*	$NetBSD: ebus.c,v 1.66 2021/04/24 23:36:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.65 2021/01/04 14:48:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.66 2021/04/24 23:36:49 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -213,7 +213,7 @@ ebus_attach(device_t parent, device_t self, void *aux)
 		} else {
 			DPRINTF(EDB_CHILD, ("- found child `%s', attaching\n",
 			    eba.ea_name));
-			(void)config_found(self, &eba, ebus_print);
+			(void)config_found(self, &eba, ebus_print, CFARG_EOL);
 		}
 		ebus_destroy_attach_args(&eba);
 	}

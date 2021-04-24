@@ -1,4 +1,4 @@
-/*	$NetBSD: gpio_opb.c,v 1.8 2011/06/17 19:03:02 matt Exp $	*/
+/*	$NetBSD: gpio_opb.c,v 1.9 2021/04/24 23:36:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2004 Shigeyuki Fukushima.
@@ -152,7 +152,7 @@ gpio_opb_attach(device_t parent, device_t self, void *aux)
 	gba.gba_npins = GPIO_NPINS;
 
 	/* Attach GPIO framework */
-	(void) config_found(self, &gba, gpiobus_print);
+	(void) config_found(self, &gba, gpiobus_print, CFARG_EOL);
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.88 2019/08/11 06:04:16 macallan Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.89 2021/04/24 23:36:49 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -776,7 +776,7 @@ cg14_setup_wsdisplay(struct cgfourteen_softc *sc, int is_cons)
 	aa.accessops = &cg14_accessops;
 	aa.accesscookie = &sc->sc_vd;
 
-	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint);
+	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint, CFARG_EOL);
 }
 
 static void

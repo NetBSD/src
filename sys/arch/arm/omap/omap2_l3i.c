@@ -1,7 +1,7 @@
-/*	$Id: omap2_l3i.c,v 1.6 2011/07/01 20:30:21 dyoung Exp $	*/
+/*	$Id: omap2_l3i.c,v 1.7 2021/04/24 23:36:28 thorpej Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: omap2_l3i.c,v 1.6 2011/07/01 20:30:21 dyoung Exp $ */
+/*	$NetBSD: omap2_l3i.c,v 1.7 2021/04/24 23:36:28 thorpej Exp $ */
 
 
 /*
@@ -103,7 +103,7 @@
 
 #include "opt_omap.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_l3i.c,v 1.6 2011/07/01 20:30:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_l3i.c,v 1.7 2021/04/24 23:36:28 thorpej Exp $");
 
 #include "locators.h"
 
@@ -220,7 +220,9 @@ L3i_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Attach all our devices
 	 */
-	config_search_ia(L3i_search, self, "L3i", NULL);
+	config_search(self, NULL,
+	    CFARG_SEARCH, L3i_search,
+	    CFARG_EOL);
 #endif
 }
 
@@ -381,8 +383,8 @@ L3i_search(device_t parent, cfdata_t cf,
 		&&  ((aa.L3i_addr + aa.L3i_size)
 			>= (OMAP2_L4_CORE_BASE + OMAP2_L3i_SIZE)))
 				return 1;		/* NG */
-		if (config_match(parent, cf, &aa)) {
-			config_attach(parent, cf, &aa, L3i_print);
+		if (config_probe(parent, cf, &aa)) {
+			config_attach(parent, cf, &aa, L3i_print, CFARG_EOL);
 			return 0;			/* love it */
 		}
 	}

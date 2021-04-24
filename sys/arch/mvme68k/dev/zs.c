@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.42 2009/04/11 11:01:47 scw Exp $	*/
+/*	$NetBSD: zs.c,v 1.43 2021/04/24 23:36:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.42 2009/04/11 11:01:47 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.43 2021/04/24 23:36:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,7 +194,7 @@ zs_config(struct zsc_softc *zsc, struct zsdevice *zs, int vector, int pclk)
 		 * The child attach will setup the hardware.
 		 */
 		if (!config_found(zsc->zsc_dev, (void *)&zsc_args,
-		    zsc_print)) {
+		    zsc_print, CFARG_EOL)) {
 			/* No sub-driver.  Just reset it. */
 			uint8_t reset = (channel == 0) ?
 				ZSWR9_A_RESET : ZSWR9_B_RESET;

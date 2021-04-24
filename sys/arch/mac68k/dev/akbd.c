@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.24 2013/10/25 21:09:25 martin Exp $	*/
+/*	$NetBSD: akbd.c,v 1.25 2021/04/24 23:36:40 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.24 2013/10/25 21:09:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.25 2021/04/24 23:36:40 thorpej Exp $");
 
 #include "opt_adb.h"
 
@@ -262,7 +262,7 @@ akbdattach(device_t parent, device_t self, void *aux)
 	a.accessops = &akbd_accessops;
 	a.accesscookie = sc;
 
-	sc->sc_wskbddev = config_found(self, &a, wskbddevprint);
+	sc->sc_wskbddev = config_found(self, &a, wskbddevprint, CFARG_EOL);
 #endif
 }
 

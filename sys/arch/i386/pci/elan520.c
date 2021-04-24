@@ -1,4 +1,4 @@
-/*	$NetBSD: elan520.c,v 1.50 2013/11/08 03:12:48 christos Exp $	*/
+/*	$NetBSD: elan520.c,v 1.51 2021/04/24 23:36:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.50 2013/11/08 03:12:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.51 2021/04/24 23:36:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1434,13 +1434,15 @@ elansc_rescan(device_t self, const char *ifattr, const int *locators)
 	struct elansc_softc *sc = device_private(self);
 
 	if (ifattr_match(ifattr, "elanparbus") && sc->sc_par == NULL) {
-		sc->sc_par = config_found_ia(sc->sc_dev, "elanparbus", NULL,
-		    NULL);
+		sc->sc_par = config_found(sc->sc_dev, NULL, NULL,
+		    CFARG_IATTR, "elanparbus",
+		    CFARG_EOL);
 	}
 
 	if (ifattr_match(ifattr, "elanpexbus") && sc->sc_pex == NULL) {
-		sc->sc_pex = config_found_ia(sc->sc_dev, "elanpexbus", NULL,
-		    NULL);
+		sc->sc_pex = config_found(sc->sc_dev, NULL, NULL,
+		    CFARG_IATTR, "elanpexbus",
+		    CFARG_EOL);
 	}
 
 	if (ifattr_match(ifattr, "gpiobus") && sc->sc_gpio == NULL) {
@@ -1452,8 +1454,9 @@ elansc_rescan(device_t self, const char *ifattr, const int *locators)
 		gba.gba_gc = &sc->sc_gpio_gc;
 		gba.gba_pins = sc->sc_gpio_pins;
 		gba.gba_npins = ELANSC_PIO_NPINS;
-		sc->sc_gpio = config_found_ia(sc->sc_dev, "gpiobus", &gba,
-		    gpiobus_print);
+		sc->sc_gpio = config_found(sc->sc_dev, &gba, gpiobus_print,
+		    CFARG_IATTR, "gpiobus",
+		    CFARG_EOL);
 #endif
 	}
 
@@ -1469,7 +1472,9 @@ elansc_rescan(device_t self, const char *ifattr, const int *locators)
 		pba.pba_flags = sc->sc_pciflags;
 		pba.pba_bus = 0;
 		pba.pba_bridgetag = NULL;
-		sc->sc_pci = config_found_ia(self, "pcibus", &pba, pcibusprint);
+		sc->sc_pci = config_found(self, &pba, pcibusprint,
+		    CFARG_IATTR, "pcibus",
+		    CFARG_EOL);
 	}
 
 	return 0;

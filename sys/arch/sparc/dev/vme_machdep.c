@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.71 2020/11/22 03:55:33 thorpej Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.72 2021/04/24 23:36:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.71 2020/11/22 03:55:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.72 2021/04/24 23:36:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -318,7 +318,7 @@ vmeattach_mainbus(device_t parent, device_t self, void *aux)
 				    0, 0, EX_WAITOK);
 
 	printf("\n");
-	(void)config_found(self, &vba, 0);
+	(void)config_found(self, &vba, 0, CFARG_EOL);
 
 #endif /* SUN4 */
 	return;
@@ -431,7 +431,7 @@ vmeattach_iommu(device_t parent, device_t self, void *aux)
 	printf(": version 0x%x\n",
 	       sc->sc_reg->vmebus_cr & VMEBUS_CR_IMPL);
 
-	(void)config_found(self, &vba, 0);
+	(void)config_found(self, &vba, 0, CFARG_EOL);
 #endif /* SUN4M */
 }
 

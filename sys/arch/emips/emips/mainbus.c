@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.3 2011/06/12 03:21:21 tsutsui Exp $ */
+/* $NetBSD: mainbus.c,v 1.4 2021/04/24 23:36:31 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.3 2011/06/12 03:21:21 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.4 2021/04/24 23:36:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,11 +71,11 @@ mbattach(device_t parent, device_t self, void *aux)
 
  	ma.ma_name = "cpu";
 	ma.ma_slot = 0;
-	config_found(self, &ma, mbprint);
+	config_found(self, &ma, mbprint, CFARG_EOL);
 
 	ma.ma_name = platform.iobus;
 	ma.ma_slot = 0;
-	config_found(self, &ma, mbprint);
+	config_found(self, &ma, mbprint, CFARG_EOL);
 }
 
 static int

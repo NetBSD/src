@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_obio.c,v 1.10 2011/07/01 19:32:28 dyoung Exp $	*/
+/*	$NetBSD: gemini_obio.c,v 1.11 2021/04/24 23:36:27 thorpej Exp $	*/
 
 /* adapted from:
  *      NetBSD: omap2_obio.c,v 1.5 2008/10/21 18:50:25 matt Exp
@@ -104,7 +104,7 @@
 
 #include "opt_gemini.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_obio.c,v 1.10 2011/07/01 19:32:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_obio.c,v 1.11 2021/04/24 23:36:27 thorpej Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -204,7 +204,10 @@ obio_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * attach the rest of our devices
 	 */
-	config_search_ia(obio_search, self, "obio", NULL);
+	config_search(self, NULL,
+	    CFARG_SEARCH, obio_search,
+	    CFARG_IATTR, "obio",
+	    CFARG_EOL);
 
 #if NPCI > 0
 	/*
@@ -222,7 +225,9 @@ obio_attach(device_t parent, device_t self, void *aux)
 	pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
 
-	(void) config_found_ia(sc->sc_dev, "pcibus", &pba, pcibusprint);
+	config_found(sc->sc_dev, &pba, pcibusprint,
+	    CFARG_IATTR, "pcibus",
+	    CFARG_EOL);
 #endif	/* NPCI */
 	
 }
@@ -267,8 +272,8 @@ obio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	oa.obio_intr = cf->cf_loc[OBIOCF_INTR];
 	oa.obio_intrbase = cf->cf_loc[OBIOCF_INTRBASE];
 
-	if (config_match(parent, cf, &oa)) {
-		config_attach(parent, cf, &oa, obio_print);
+	if (config_probe(parent, cf, &oa)) {
+		config_attach(parent, cf, &oa, obio_print, CFARG_EOL);
 		return 0;			/* love it */
 	}
 
@@ -374,7 +379,10 @@ obio_attach_critical(struct obio_softc *sc)
 			continue;
 #endif
 
-		cf = config_search_ia(obio_find, sc->sc_dev, "obio", &oa);
+		cf = config_search(sc->sc_dev, &oa,
+		    CFARG_SUBMATCH, obio_find,
+		    CFARG_IATTR, "obio",
+		    CFARG_EOL);
 		if (cf == NULL && critical_devs[i].required)
 			panic("obio_attach_critical: failed to find %s!",
 			    critical_devs[i].name);
@@ -383,7 +391,7 @@ obio_attach_critical(struct obio_softc *sc)
 		oa.obio_size = cf->cf_loc[OBIOCF_SIZE];
 		oa.obio_intr = cf->cf_loc[OBIOCF_INTR];
 		oa.obio_intrbase = cf->cf_loc[OBIOCF_INTRBASE];
-		config_attach(sc->sc_dev, cf, &oa, obio_print);
+		config_attach(sc->sc_dev, cf, &oa, obio_print, CFARG_EOL);
 	}
 }
 

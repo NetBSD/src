@@ -1,4 +1,4 @@
-/*	$NetBSD: lebuffer.c,v 1.36 2009/09/17 17:53:35 tsutsui Exp $ */
+/*	$NetBSD: lebuffer.c,v 1.37 2021/04/24 23:36:58 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lebuffer.c,v 1.36 2009/09/17 17:53:35 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lebuffer.c,v 1.37 2021/04/24 23:36:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,7 @@ lebufattach(device_t parent, device_t self, void *aux)
 		struct sbus_attach_args sax;
 		sbus_setup_attach_args(sbsc,
 				       bt, dt, node, &sax);
-		(void)config_found(self, (void *)&sax, lebufprint);
+		(void)config_found(self, (void *)&sax, lebufprint, CFARG_EOL);
 		sbus_destroy_attach_args(&sax);
 	}
 }

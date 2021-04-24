@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.c,v 1.55 2020/03/15 23:04:50 thorpej Exp $	*/
+/*	$NetBSD: mii.c,v 1.56 2021/04/24 23:36:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2020 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.55 2020/03/15 23:04:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.56 2021/04/24 23:36:56 thorpej Exp $");
 
 #define	__IFMEDIA_PRIVATE
 
@@ -172,8 +172,12 @@ mii_attach(device_t parent, struct mii_data *mii, int capmask,
 
 		mii_unlock(mii);
 
-		child = device_private(config_found_sm_loc(parent, "mii",
-			locs, &ma, mii_print, config_stdsubmatch));
+		child = device_private(
+		    config_found(parent, &ma, mii_print,
+				 CFARG_SUBMATCH, config_stdsubmatch,
+				 CFARG_IATTR, "mii",
+				 CFARG_LOCATORS, locs,
+				 CFARG_EOL));
 		if (child) {
 			/* Link it up in the parent's MII data. */
 			callout_init(&child->mii_nway_ch, 0);

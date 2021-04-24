@@ -1,4 +1,4 @@
-/*	$NetBSD: gpiic_opb.c,v 1.10 2019/12/22 23:23:31 thorpej Exp $	*/
+/*	$NetBSD: gpiic_opb.c,v 1.11 2021/04/24 23:36:46 thorpej Exp $	*/
 
 /*
  * Copyright 2002, 2003 Wasabi Systems, Inc.
@@ -132,7 +132,7 @@ gpiic_attach(device_t parent, device_t self, void *args)
 
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c;
-	(void) config_found_ia(self, "i2cbus", &iba, iicbus_print);
+	config_found(self, &iba, iicbus_print, CFARG_EOL);
 }
 
 static int

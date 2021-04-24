@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrdsiu_mouse.c,v 1.12 2012/10/27 17:17:56 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrdsiu_mouse.c,v 1.13 2021/04/24 23:36:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,7 +158,8 @@ vrdsiu_attach(device_t parent, device_t self, void *aux)
 	/* attach the mouse */
 	wsmaa.accessops = &vrdsiu_accessops;
 	wsmaa.accesscookie = sc;
-	sc->sc_wsmousedev = config_found(self, &wsmaa, wsmousedevprint);
+	sc->sc_wsmousedev = config_found(self, &wsmaa, wsmousedevprint,
+	    CFARG_EOL);
 
 	/*
 	 * TODO: Initialize the DSIU ourselves.

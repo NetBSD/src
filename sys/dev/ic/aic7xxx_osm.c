@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_osm.c,v 1.39 2019/11/10 21:16:35 chs Exp $	*/
+/*	$NetBSD: aic7xxx_osm.c,v 1.40 2021/04/24 23:36:55 thorpej Exp $	*/
 
 /*
  * Bus independent FreeBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx_osm.c,v 1.39 2019/11/10 21:16:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx_osm.c,v 1.40 2021/04/24 23:36:55 thorpej Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -110,16 +110,16 @@ ahc_attach(struct ahc_softc *ahc)
 
 	if ((ahc->flags & AHC_PRIMARY_CHANNEL) == 0) {
 		ahc->sc_child = config_found(ahc->sc_dev,
-		    &ahc->sc_channel, scsiprint);
+		    &ahc->sc_channel, scsiprint, CFARG_EOL);
 		if (ahc->features & AHC_TWIN)
 			ahc->sc_child_b = config_found(ahc->sc_dev,
-			    &ahc->sc_channel_b, scsiprint);
+			    &ahc->sc_channel_b, scsiprint, CFARG_EOL);
 	} else {
 		if (ahc->features & AHC_TWIN)
 			ahc->sc_child = config_found(ahc->sc_dev,
-			    &ahc->sc_channel_b, scsiprint);
+			    &ahc->sc_channel_b, scsiprint, CFARG_EOL);
 		ahc->sc_child_b = config_found(ahc->sc_dev,
-		    &ahc->sc_channel, scsiprint);
+		    &ahc->sc_channel, scsiprint, CFARG_EOL);
 	}
 
 	ahc_intr_enable(ahc, TRUE);

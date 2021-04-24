@@ -1,4 +1,4 @@
-/*	$NetBSD: mp.c,v 1.4 2018/12/24 22:05:45 cherry Exp $	*/
+/*	$NetBSD: mp.c,v 1.5 2021/04/24 23:36:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mp.c,v 1.4 2018/12/24 22:05:45 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mp.c,v 1.5 2021/04/24 23:36:51 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_acpi.h"
@@ -93,8 +93,9 @@ mp_pci_scan(device_t self, struct pcibus_attach_args *pba,
 			continue;
 		if (strcmp(mpb->mb_name, "pci") == 0 && mpb->mb_dev == NULL) {
 			pba->pba_bus = i;
-			mpb->mb_dev =
-			    config_found_ia(self, "pcibus", pba, print);
+			mpb->mb_dev = config_found(self, pba, print,
+			    CFARG_IATTR, "pcibus",
+			    CFARG_EOL);
 			cnt++;
 		}
 	}

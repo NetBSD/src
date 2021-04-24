@@ -1,4 +1,4 @@
-/*	$NetBSD: nbppcon.c,v 1.3 2018/06/16 21:22:13 thorpej Exp $ */
+/*	$NetBSD: nbppcon.c,v 1.4 2021/04/24 23:36:37 thorpej Exp $ */
 /*
  * Copyright (c) 2011 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nbppcon.c,v 1.3 2018/06/16 21:22:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nbppcon.c,v 1.4 2021/04/24 23:36:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -107,7 +107,9 @@ nbppcon_attach(device_t parent, device_t self, void *aux)
 	else
 		aprint_error_dev(self, "NVRAM read failed\n");
 
-	config_search_ia(nbppcon_search, self, "nbppcon", NULL);
+	config_search(self, NULL,
+	    CFARG_SEARCH, nbppcon_search,
+	    CFARG_EOL);
 }
 
 /* ARGSUSED */
@@ -119,8 +121,8 @@ nbppcon_search(device_t self, cfdata_t cf, const int *ldesc, void *aux)
 	pcon.aa_name = cf->cf_name;
 	pcon.aa_tag = cf->cf_loc[NBPPCONCF_TAG];
 
-	if (config_match(self, cf, &pcon))
-		config_attach(self, cf, &pcon, nbppcon_print);
+	if (config_probe(self, cf, &pcon))
+		config_attach(self, cf, &pcon, nbppcon_print, CFARG_EOL);
 
 	return 0;
 }

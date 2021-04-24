@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_drm_fb.c,v 1.7 2018/09/24 09:25:14 skrll Exp $ */
+/* $NetBSD: tegra_drm_fb.c,v 1.8 2021/04/24 23:36:27 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_drm_fb.c,v 1.7 2018/09/24 09:25:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_drm_fb.c,v 1.8 2021/04/24 23:36:27 thorpej Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
@@ -106,7 +106,9 @@ tegra_fb_probe(struct drm_fb_helper *helper,
 	tfa.tfa_fb_dmat = sc->sc_dmat;
 	tfa.tfa_fb_linebytes = helper->fb->pitches[0];
 
-	helper->fbdev = config_found_ia(ddev->dev, "tegrafbbus", &tfa, NULL);
+	helper->fbdev = config_found(ddev->dev, &tfa, NULL,
+	    CFARG_IATTR, "tegrafbbus",
+	    CFARG_EOL);
 	if (helper->fbdev == NULL) {
 		DRM_ERROR("unable to attach tegrafb\n");
 		return -ENXIO;

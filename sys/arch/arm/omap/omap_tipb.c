@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_tipb.c,v 1.6 2013/10/02 16:48:26 matt Exp $ */
+/*	$NetBSD: omap_tipb.c,v 1.7 2021/04/24 23:36:28 thorpej Exp $ */
 
 /*
  * Autoconfiguration support for the Texas Instruments OMAP TIPB.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap_tipb.c,v 1.6 2013/10/02 16:48:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap_tipb.c,v 1.7 2021/04/24 23:36:28 thorpej Exp $");
 
 #include "locators.h"
 
@@ -178,20 +178,24 @@ tipb_attach(device_t parent, device_t self, void *aux)
 	 * attach them in the order they appear in the array.
 	 */
 	const char *const *earlyp;
-	for (earlyp = earlies; *earlyp != NULL; earlyp++)
+	for (earlyp = earlies; *earlyp != NULL; earlyp++) {
 		/*
 		 * The bus search function is passed an aux argument that
 		 * "describes the device that has been found".  The type of it
 		 * is void *.  However, I want to pass a constant string, so
 		 * use __UNCONST to convince the compiler that this is ok.
 		 */
-		config_search_ia(tipb_search, self, "tipb",
-				 __UNCONST(*earlyp));
+		config_search(self, __UNCONST(*earlyp),
+		    CFARG_SEARCH, tipb_search,
+		    CFARG_EOL);
+	}
 
 	/*
 	 * Attach all other devices
 	 */
-	config_search_ia(tipb_search, self, "tipb", NULL);
+	config_search(self, NULL,
+	    CFARG_SEARCH, tipb_search,
+	    CFARG_EOL);
 }
 
 static int
@@ -225,8 +229,8 @@ tipb_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	aa.tipb_intr = cf->cf_loc[TIPBCF_INTR];
 	aa.tipb_mult = cf->cf_loc[TIPBCF_MULT];
 
-	if (config_match(parent, cf, &aa))
-		config_attach(parent, cf, &aa, tipb_print);
+	if (config_probe(parent, cf, &aa))
+		config_attach(parent, cf, &aa, tipb_print, CFARG_EOL);
 
 	return 0;
 }

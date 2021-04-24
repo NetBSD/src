@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm283x_platform.c,v 1.47 2021/02/04 22:36:53 thorpej Exp $	*/
+/*	$NetBSD: bcm283x_platform.c,v 1.48 2021/04/24 23:36:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.47 2021/02/04 22:36:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.48 2021/04/24 23:36:26 thorpej Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -1421,8 +1421,6 @@ static void
 bcm283x_platform_device_register(device_t dev, void *aux)
 {
 	prop_dictionary_t dict = device_properties(dev);
-
-	fdtbus_device_register(dev, aux);
 
 	if (device_is_a(dev, "bcmdmac") &&
 	    vcprop_tag_success_p(&vb.vbt_dmachan.tag)) {

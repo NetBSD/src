@@ -1,4 +1,4 @@
-/*	$NetBSD: plumiobus.c,v 1.16 2020/11/21 21:23:48 thorpej Exp $ */
+/*	$NetBSD: plumiobus.c,v 1.17 2021/04/24 23:36:38 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plumiobus.c,v 1.16 2020/11/21 21:23:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plumiobus.c,v 1.17 2021/04/24 23:36:38 thorpej Exp $");
 
 #define PLUMIOBUSDEBUG
 
@@ -163,7 +163,9 @@ plumiobus_attach(device_t parent, device_t self, void *aux)
 	plumiobus_dump(sc);
 #endif
 
-	config_search_ia(plumiobus_search, self, "plumiobusif", plumiobus_print);
+	config_search(self, NULL,
+	    CFARG_SEARCH, plumiobus_search,
+	    CFARG_EOL);
 }
 
 /* XXX something kludge */
@@ -200,8 +202,8 @@ plumiobus_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	pba.pba_busname	= "plumisab";
 	
 	if (!(sc->sc_isa[slot].pr_enabled) && /* not attached slot */
-	    config_match(parent, cf, &pba)) {
-		config_attach(parent, cf, &pba, plumiobus_print);
+	    config_probe(parent, cf, &pba)) {
+		config_attach(parent, cf, &pba, plumiobus_print, CFARG_EOL);
 		sc->sc_isa[slot].pr_enabled = 1;
 	}
 

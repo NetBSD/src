@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.199 2020/10/09 21:14:05 christos Exp $	*/
+/*	$NetBSD: cpu.c,v 1.200 2021/04/24 23:36:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000-2020 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.199 2020/10/09 21:14:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.200 2021/04/24 23:36:51 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -585,26 +585,34 @@ cpu_rescan(device_t self, const char *ifattr, const int *locators)
 	if (ifattr_match(ifattr, "cpufeaturebus")) {
 		if (ci->ci_frequency == NULL) {
 			cfaa.name = "frequency";
-			ci->ci_frequency = config_found_ia(self,
-			    "cpufeaturebus", &cfaa, NULL);
+			ci->ci_frequency =
+			    config_found(self, &cfaa, NULL,
+					 CFARG_IATTR, "cpufeaturebus",
+					 CFARG_EOL);
 		}
 
 		if (ci->ci_padlock == NULL) {
 			cfaa.name = "padlock";
-			ci->ci_padlock = config_found_ia(self,
-			    "cpufeaturebus", &cfaa, NULL);
+			ci->ci_padlock =
+			    config_found(self, &cfaa, NULL,
+					 CFARG_IATTR, "cpufeaturebus",
+					 CFARG_EOL);
 		}
 
 		if (ci->ci_temperature == NULL) {
 			cfaa.name = "temperature";
-			ci->ci_temperature = config_found_ia(self,
-			    "cpufeaturebus", &cfaa, NULL);
+			ci->ci_temperature =
+			    config_found(self, &cfaa, NULL,
+					 CFARG_IATTR, "cpufeaturebus",
+					 CFARG_EOL);
 		}
 
 		if (ci->ci_vm == NULL) {
 			cfaa.name = "vm";
-			ci->ci_vm = config_found_ia(self,
-			    "cpufeaturebus", &cfaa, NULL);
+			ci->ci_vm =
+			    config_found(self, &cfaa, NULL,
+					 CFARG_IATTR, "cpufeaturebus",
+					 CFARG_EOL);
 		}
 	}
 

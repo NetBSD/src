@@ -1,4 +1,4 @@
-/* $NetBSD: emdtv_ir.c,v 1.2 2016/04/23 10:15:31 skrll Exp $ */
+/* $NetBSD: emdtv_ir.c,v 1.3 2021/04/24 23:36:59 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emdtv_ir.c,v 1.2 2016/04/23 10:15:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emdtv_ir.c,v 1.3 2021/04/24 23:36:59 thorpej Exp $");
 
 #include <sys/select.h>
 #include <sys/param.h>
@@ -101,7 +101,9 @@ emdtv_ir_attach(struct emdtv_softc *sc)
 	ia.ia_handle = sc;
 
 	sc->sc_cirdev =
-	    config_found_ia(sc->sc_dev, "irbus", &ia, ir_print);
+	    config_found(sc->sc_dev, &ia, ir_print,
+		CFARG_IATTR, "irbus",
+		CFARG_EOL);
 }
 
 void

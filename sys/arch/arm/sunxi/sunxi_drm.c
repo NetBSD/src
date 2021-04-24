@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_drm.c,v 1.13 2021/01/29 06:24:18 rin Exp $ */
+/* $NetBSD: sunxi_drm.c,v 1.14 2021/04/24 23:36:28 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_drm.c,v 1.13 2021/01/29 06:24:18 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_drm.c,v 1.14 2021/04/24 23:36:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -408,7 +408,9 @@ sunxi_drm_fb_probe(struct drm_fb_helper *helper, struct drm_fb_helper_surface_si
 	sfa.sfa_fb_dmat = sc->sc_dmat;
 	sfa.sfa_fb_linebytes = helper->fb->pitches[0];
 
-	helper->fbdev = config_found_ia(ddev->dev, "sunxifbbus", &sfa, NULL);
+	helper->fbdev = config_found(ddev->dev, &sfa, NULL,
+	    CFARG_IATTR, "sunxifbbus",
+	    CFARG_EOL);
 	if (helper->fbdev == NULL) {
 		DRM_ERROR("unable to attach framebuffer\n");
 		return -ENXIO;

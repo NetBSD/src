@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_mv.c,v 1.8 2019/12/26 04:53:12 msaitoh Exp $	*/
+/*	$NetBSD: ehci_mv.c,v 1.9 2021/04/24 23:36:56 thorpej Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_mv.c,v 1.8 2019/12/26 04:53:12 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_mv.c,v 1.9 2021/04/24 23:36:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -246,7 +246,8 @@ mvusb_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Attach usb device. */
-	sc->sc.sc_child = config_found(self, &sc->sc.sc_bus, usbctlprint);
+	sc->sc.sc_child = config_found(self, &sc->sc.sc_bus, usbctlprint,
+	    CFARG_EOL);
 }
 
 static void

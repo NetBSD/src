@@ -1,4 +1,4 @@
-/*	$NetBSD: fb_elb.c,v 1.18 2021/03/07 10:33:07 rin Exp $	*/
+/*	$NetBSD: fb_elb.c,v 1.19 2021/04/24 23:36:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb_elb.c,v 1.18 2021/03/07 10:33:07 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb_elb.c,v 1.19 2021/04/24 23:36:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -214,7 +214,7 @@ fb_elb_attach(device_t parent, device_t self, void *aux)
 	waa.accessops = &accessops;
 	waa.accesscookie = sc;
 
-	config_found(self, &waa, wsemuldisplaydevprint);
+	config_found(self, &waa, wsemuldisplaydevprint, CFARG_EOL);
 }
 
 static void

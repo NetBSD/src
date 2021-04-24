@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.6 2020/11/21 21:01:16 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.7 2021/04/24 23:36:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.6 2020/11/21 21:01:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.7 2021/04/24 23:36:39 thorpej Exp $");
 
 #include "locators.h"
 #include "power.h"
@@ -1341,7 +1341,9 @@ mb_module_callback(device_t self, struct confargs *ca)
 	    ca->ca_type.iodc_type == HPPA_TYPE_MEMORY)
 		return NULL;
 
-	return config_found_sm_loc(self, "gedoens", NULL, ca, mbprint, mbsubmatch);
+	return config_found(self, ca, mbprint,
+	    CFARG_SUBMATCH, mbsubmatch,
+	    CFARG_EOL);
 }
 
 static device_t
@@ -1351,7 +1353,9 @@ mb_cpu_mem_callback(device_t self, struct confargs *ca)
 	     ca->ca_type.iodc_type != HPPA_TYPE_MEMORY))
 		return NULL;
 
-	return config_found_sm_loc(self, "gedoens", NULL, ca, mbprint, mbsubmatch);
+	return config_found(self, ca, mbprint,
+	    CFARG_SUBMATCH, mbsubmatch,
+	    CFARG_EOL);
 }
 
 void
@@ -1396,7 +1400,7 @@ mbattach(device_t parent, device_t self, void *aux)
 	nca.ca_hpa = 0;
 	nca.ca_iot = &hppa_bustag;
 	nca.ca_dmatag = &hppa_dmatag;
-	config_found(self, &nca, mbprint);
+	config_found(self, &nca, mbprint, CFARG_EOL);
 
 #if NPOWER > 0
 	/* get some power */
@@ -1404,7 +1408,7 @@ mbattach(device_t parent, device_t self, void *aux)
 	nca.ca_name = "power";
 	nca.ca_irq = HPPACF_IRQ_UNDEF;
 	nca.ca_iot = &hppa_bustag;
-	config_found(self, &nca, mbprint);
+	config_found(self, &nca, mbprint, CFARG_EOL);
 #endif
 
 #if NLCD > 0
@@ -1419,7 +1423,7 @@ mbattach(device_t parent, device_t self, void *aux)
 		nca.ca_iot = &hppa_bustag;
 		nca.ca_hpa = nca.ca_pcl.cmd_addr;
 
-		config_found(self, &nca, mbprint);
+		config_found(self, &nca, mbprint, CFARG_EOL);
 	}
 #endif
 
