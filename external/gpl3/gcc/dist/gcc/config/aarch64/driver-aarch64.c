@@ -246,7 +246,7 @@ contains_core_p (unsigned *arr, unsigned core)
    in the spec.  */
 
 #ifdef __NetBSD__
-/* The NetBSD/arm64 platform does not export linux-style cpuinfo,
+/* The NetBSD/arm64 platform may not export linux-style /proc/cpuinfo,
    but the data is available via a sysctl(3) interface.  */
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -440,78 +440,44 @@ host_detect_local_cpu (int argc, const char **argv)
 
 	  /* These are all the extensions from aarch64-option-extensions.def.  */
           if (__SHIFTOUT(id.ac_aa64pfr0, ID_AA64PFR0_EL1_FP) == ID_AA64PFR0_EL1_FP_IMPL)
-	    {
-	      exts += "fp ";
-	    }
+	    exts += "fp ";
           if (__SHIFTOUT(id.ac_aa64pfr0, ID_AA64PFR0_EL1_ADVSIMD) == ID_AA64PFR0_EL1_ADV_SIMD_IMPL)
-	    {
-	      exts += "asimd ";
-	    }
+	    exts += "asimd ";
 #ifdef ID_AA64ISAR0_EL1_RDM
           if (__SHIFTOUT(id.ac_aa64isar0, ID_AA64ISAR0_EL1_RDM) == ID_AA64ISAR0_EL1_RDM_SQRDML)
-	    {
-	      exts += "asimdrdm ";
-	    }
+	    exts += "asimdrdm ";
           if (__SHIFTOUT(id.ac_aa64isar0, ID_AA64ISAR0_EL1_DP) == ID_AA64ISAR0_EL1_DP_UDOT)
-	    {
-	      exts += "asimddp ";
-	    }
+	    exts += "asimddp ";
           if (__SHIFTOUT(id.ac_aa64isar0, ID_AA64ISAR0_EL1_FHM) == ID_AA64ISAR0_EL1_FHM_FMLAL)
-	    {
-	      exts += "asimdfml ";
-	    }
+	    exts += "asimdfml ";
 #endif
           if (__SHIFTOUT(id.ac_aa64isar0, ID_AA64ISAR0_EL1_AES) == ID_AA64ISAR0_EL1_AES_AES)
-	    {
-	      exts += "aes ";
-	    }
+	    exts += "aes ";
           if (__SHIFTOUT(id.ac_aa64isar0, ID_AA64ISAR0_EL1_AES) == ID_AA64ISAR0_EL1_AES_PMUL)
-	    {
-	      exts += "aes pmull ";
-	    }
+	    exts += "aes pmull ";
           if (__SHIFTOUT(id.ac_aa64isar0, ID_AA64ISAR0_EL1_CRC32) == ID_AA64ISAR0_EL1_CRC32_CRC32X)
-	    {
-	      exts += "crc32 ";
-	    }
+	    exts += "crc32 ";
 #ifdef ID_AA64ISAR0_EL1_ATOMIC
           if (__SHIFTOUT(id.ac_aa64isar0, ID_AA64ISAR0_EL1_ATOMIC) == ID_AA64ISAR0_EL1_ATOMIC_SWP)
-	    {
-	      exts += "atomics ";
-	    }
+	    exts += "atomics ";
 #endif
           if ((__SHIFTOUT(id.ac_aa64isar0, ID_AA64ISAR0_EL1_SHA1) & ID_AA64ISAR0_EL1_SHA1_SHA1CPMHSU) != 0)
-	    {
-	      exts += "sha1 ";
-	    }
+	    exts += "sha1 ";
           if ((__SHIFTOUT(id.ac_aa64isar0, ID_AA64ISAR0_EL1_SHA2) & ID_AA64ISAR0_EL1_SHA2_SHA256HSU) != 0)
-	    {
-	      exts += "sha2 ";
-	    }
+	    exts += "sha2 ";
 #ifdef ID_AA64ISAR0_EL1_SHA2_SHA512HSU
           if ((__SHIFTOUT(id.ac_aa64isar0, ID_AA64ISAR0_EL1_SHA2) & ID_AA64ISAR0_EL1_SHA2_SHA512HSU) != 0)
-	    {
-	      exts += "sha512 ";
-	    }
+	    exts += "sha512 ";
           if ((__SHIFTOUT(id.ac_aa64isar0, ID_AA64ISAR0_EL1_SHA3) & ID_AA64ISAR0_EL1_SHA3_EOR3) != 0)
-	    {
-	      exts += "sha3 ";
-	    }
+	    exts += "sha3 ";
           if (__SHIFTOUT(id.ac_aa64isar0, ID_AA64ISAR0_EL1_SM3) == ID_AA64ISAR0_EL1_SM3_SM3)
-	    {
-	      exts += "sm3 ";
-	    }
+	    exts += "sm3 ";
           if (__SHIFTOUT(id.ac_aa64isar0, ID_AA64ISAR0_EL1_SM4) == ID_AA64ISAR0_EL1_SM4_SM4)
-	    {
-	      exts += "sm4 ";
-	    }
+	    exts += "sm4 ";
           if (__SHIFTOUT(id.ac_aa64pfr0, ID_AA64PFR0_EL1_SVE) == ID_AA64PFR0_EL1_SVE_IMPL)
-	    {
-	      exts += "sve ";
-	    }
+	    exts += "sve ";
           if (__SHIFTOUT(id.ac_aa64isar1, ID_AA64ISAR1_EL1_LRCPC) == ID_AA64ISAR1_EL1_LRCPC_PR)
-	    {
-	      exts += "lrcpc ";
-	    }
+	    exts += "lrcpc ";
 #endif
 
           for (i = 0; i < num_exts; i++)
