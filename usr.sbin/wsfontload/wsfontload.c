@@ -1,4 +1,4 @@
-/* $NetBSD: wsfontload.c,v 1.21 2017/06/23 18:40:03 macallan Exp $ */
+/* $NetBSD: wsfontload.c,v 1.22 2021/04/24 00:49:26 macallan Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -76,7 +76,7 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-		"usage: %s [-Bbv] [-e encoding] [-f wsdev] [-h height]"
+		"usage: %s [-Bbvl] [-e encoding] [-f wsdev] [-h height]"
 		" [-N name] [-w width] [fontfile]\n",
 		      getprogname());
 	exit(1);
@@ -136,8 +136,8 @@ main(int argc, char **argv)
 	const char *wsdev;
 	struct wsdisplay_font f;
 	struct stat st;
-	int c, res, wsfd, ffd, verbose = 0;
 	size_t len;
+	int c, res, wsfd, ffd, verbose = 0, listfonts = 0;
 	int use_embedded_name = 1;
 	void *buf;
 	char nbuf[65];
@@ -153,10 +153,13 @@ main(int argc, char **argv)
 	f.bitorder = DEFBITORDER;
 	f.byteorder = DEFBYTEORDER;
 
-	while ((c = getopt(argc, argv, "f:w:h:e:N:bBv")) != -1) {
+	while ((c = getopt(argc, argv, "f:w:h:e:N:bBvl")) != -1) {
 		switch (c) {
 		case 'f':
 			wsdev = optarg;
+			break;
+		case 'l':
+			listfonts = 1;
 			break;
 		case 'w':
 			if (sscanf(optarg, "%d", &f.fontwidth) != 1)
@@ -197,6 +200,25 @@ main(int argc, char **argv)
 	wsfd = open(wsdev, O_RDWR, 0);
 	if (wsfd < 0)
 		err(2, "open ws-device %s", wsdev);
+
+	if (listfonts == 1) {
+		struct wsdisplayio_fontinfo fi;
+		int ret;
+		unsigned int i;
+
+		fi.fi_buffersize = 4096;
+		fi.fi_numentries = 0;
+		fi.fi_fonts = malloc(4096);
+		ret = ioctl(wsfd, WSDISPLAYIO_LISTFONTS, &fi);
+		if (fi.fi_fonts == NULL || ret != 0) {
+			err(1, "error fetching font list\n");
+		}
+		for (i = 0; i < fi.fi_numentries; i++) {
+			printf("%s %dx%d\n", fi.fi_fonts[i].fd_name,
+			    fi.fi_fonts[i].fd_width, fi.fi_fonts[i].fd_height);
+		}
+		return 0;
+	}	
 
 	if (argc > 0) {
 		ffd = open(argv[0], O_RDONLY, 0);
