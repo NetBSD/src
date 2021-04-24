@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.49 2021/04/17 22:01:02 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.50 2021/04/24 06:34:52 rin Exp $
 
 LIBGCC_MACHINE_ARCH?=${MACHINE_ARCH:S/earmv5/earm/}
 GCC_MACHINE_SUBDIR=${MACHINE_CPU:C/powerpc.*/rs6000/:C/x86_64/i386/}
@@ -196,6 +196,11 @@ LSE_SRC=	${GNUHOSTDIST}/libgcc/config/aarch64/lse.S
 ${LSE_NAMES:=.o}: ${LSE_SRC} Makefile
 	${_MKTARGET_COMPILE}
 	${COMPILE.S} ${CPPFLAGS.${.TARGET:T:.o=}} -o ${.TARGET} ${LSE_SRC}
+
+${LSE_NAMES:=.go}: ${LSE_SRC} Makefile
+	${_MKTARGET_COMPILE}
+	${COMPILE.S} ${DEBUGFLAGS} ${CPPFLAGS.${.TARGET:T:.go=}} -o ${.TARGET} \
+		${LSE_SRC}
 
 # lse-init.c currently compiles to nothing for us
 G_LIB2ADD+=	${GNUHOSTDIST}/libgcc/config/aarch64/lse-init.c
