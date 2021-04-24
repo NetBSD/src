@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isa.c,v 1.49 2010/11/13 13:52:03 uebayasi Exp $	*/
+/*	$NetBSD: if_le_isa.c,v 1.50 2021/04/24 23:36:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_isa.c,v 1.49 2010/11/13 13:52:03 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_isa.c,v 1.50 2021/04/24 23:36:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -262,7 +262,7 @@ le_dummyattach(device_t parent, device_t self, void *aux)
 
 	aprint_normal("\n");
 
-	config_found(self, aux, 0);
+	config_found(self, aux, 0, CFARG_EOL);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.66 2016/07/11 11:31:50 msaitoh Exp $	*/
+/*	$NetBSD: ast.c,v 1.67 2021/04/24 23:36:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.66 2016/07/11 11:31:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.67 2021/04/24 23:36:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,7 +178,7 @@ astattach(device_t parent, device_t self, void *aux)
 		ca.ca_iobase = sc->sc_iobase + i * COM_NPORTS;
 		ca.ca_noien = 1;
 
-		slave = config_found(self, &ca, commultiprint);
+		slave = config_found(self, &ca, commultiprint, CFARG_EOL);
 		if (slave != NULL) {
 			sc->sc_alive |= 1 << i;
 			sc->sc_slaves[i] = device_private(slave);

@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2838_pcie.c,v 1.1 2021/03/08 13:49:01 mlelstv Exp $ */
+/*	$NetBSD: bcm2838_pcie.c,v 1.2 2021/04/24 23:36:26 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2838_pcie.c,v 1.1 2021/03/08 13:49:01 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2838_pcie.c,v 1.2 2021/04/24 23:36:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -280,7 +280,7 @@ bcmstb_attach(device_t self, struct bcmstb_softc *sc)
 	pba.pba_pc = pc;
 	pba.pba_bus = sc->sc_bus_min;
 
-	config_found_ia(self, "pcibus", &pba, pcibusprint);
+	config_found(self, &pba, pcibusprint, CFARG_EOL);
 }
 
 static void

@@ -1,4 +1,4 @@
-/* $NetBSD: wss_pnpbios.c,v 1.22 2019/05/08 13:40:15 isaki Exp $ */
+/* $NetBSD: wss_pnpbios.c,v 1.23 2021/04/24 23:36:39 thorpej Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_pnpbios.c,v 1.22 2019/05/08 13:40:15 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_pnpbios.c,v 1.23 2021/04/24 23:36:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,6 +168,6 @@ wss_pnpbios_attach(device_t parent, device_t self, void *aux)
 	arg.type = AUDIODEV_TYPE_OPL;
 	arg.hwif = 0;
 	arg.hdl = 0;
-	(void)config_found(self, &arg, audioprint);
+	(void)config_found(self, &arg, audioprint, CFARG_EOL);
 }
 

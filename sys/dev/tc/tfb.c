@@ -1,4 +1,4 @@
-/* $NetBSD: tfb.c,v 1.63 2019/11/10 21:16:37 chs Exp $ */
+/* $NetBSD: tfb.c,v 1.64 2021/04/24 23:36:59 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.63 2019/11/10 21:16:37 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.64 2021/04/24 23:36:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -316,7 +316,7 @@ tfbattach(device_t parent, device_t self, void *aux)
 	waa.accessops = &tfb_accessops;
 	waa.accesscookie = sc;
 
-	config_found(self, &waa, wsemuldisplaydevprint);
+	config_found(self, &waa, wsemuldisplaydevprint, CFARG_EOL);
 }
 
 static void

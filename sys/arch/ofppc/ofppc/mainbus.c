@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.30 2014/12/31 18:43:18 phx Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.31 2021/04/24 23:36:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.30 2014/12/31 18:43:18 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.31 2021/04/24 23:36:45 thorpej Exp $");
 
 #include "opt_interrupt.h"
 #include "opt_multiprocessor.h"
@@ -245,7 +245,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 			ca.ca_nreg = OF_getprop(rtnode, "reg", reg,
 			    sizeof(reg));
 			ca.ca_reg  = reg;
-			config_found(self, &ca, NULL);
+			config_found(self, &ca, NULL, CFARG_EOL);
 		}
 	}
 
@@ -254,14 +254,14 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 		ca.ca_name = "cpu";
 		ca.ca_reg = reg;
 		reg[0] = i;
-		config_found(self, &ca, NULL);
+		config_found(self, &ca, NULL, CFARG_EOL);
 	}
 
 	node = OF_peer(0);
 	if (node) {
 		oba.oba_busname = "ofw";
 		oba.oba_phandle = node;
-		config_found(self, &oba, NULL);
+		config_found(self, &oba, NULL, CFARG_EOL);
 	}
 
 	if (strcmp(model_name, "Pegasos2") == 0) {
@@ -271,7 +271,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 		 */
 		ca.ca_name = "gt";
 
-		config_found(self, &ca, NULL);
+		config_found(self, &ca, NULL, CFARG_EOL);
 
 		goto config_fin;
 	}
@@ -290,7 +290,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 		ca.ca_nreg = OF_getprop(node, "reg", reg, sizeof(reg));
 		ca.ca_reg  = reg;
 
-		config_found(self, &ca, NULL);
+		config_found(self, &ca, NULL, CFARG_EOL);
 	}
 
 config_fin:

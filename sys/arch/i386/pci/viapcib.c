@@ -1,4 +1,4 @@
-/* $NetBSD: viapcib.c,v 1.17 2019/12/22 23:23:30 thorpej Exp $ */
+/* $NetBSD: viapcib.c,v 1.18 2021/04/24 23:36:39 thorpej Exp $ */
 /* $FreeBSD: src/sys/pci/viapm.c,v 1.10 2005/05/29 04:42:29 nyan Exp $ */
 
 /*-
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viapcib.c,v 1.17 2019/12/22 23:23:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viapcib.c,v 1.18 2021/04/24 23:36:39 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -214,7 +214,9 @@ core_pcib:
 		iba.iba_tag->ic_cookie = (void *)sc;
 		iba.iba_tag->ic_exec = viapcib_exec;
 
-		config_found_ia(self, "i2cbus", &iba, iicbus_print);
+		config_found(self, &iba, iicbus_print,
+		    CFARG_IATTR, "i2cbus",
+		    CFARG_EOL);
 	}
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: lubbock_lcd.c,v 1.15 2014/07/25 08:10:33 dholland Exp $ */
+/* $NetBSD: lubbock_lcd.c,v 1.16 2021/04/24 23:36:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  *   LCD panel geometry
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lubbock_lcd.c,v 1.15 2014/07/25 08:10:33 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lubbock_lcd.c,v 1.16 2021/04/24 23:36:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,7 +213,8 @@ void lcd_attach( device_t parent, device_t self, void *aux )
 		aa.accessops = &lcd_accessops;
 		aa.accesscookie = sc;
 
-		(void) config_found(self, &aa, wsemuldisplaydevprint);
+		(void) config_found(self, &aa, wsemuldisplaydevprint,
+		    CFARG_EOL);
 	}
 #else
 	{

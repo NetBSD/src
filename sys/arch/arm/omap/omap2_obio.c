@@ -1,7 +1,7 @@
-/*	$Id: omap2_obio.c,v 1.24 2016/10/15 15:14:20 kiyohara Exp $	*/
+/*	$Id: omap2_obio.c,v 1.25 2021/04/24 23:36:28 thorpej Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: omap2_obio.c,v 1.24 2016/10/15 15:14:20 kiyohara Exp $ */
+/*	$NetBSD: omap2_obio.c,v 1.25 2021/04/24 23:36:28 thorpej Exp $ */
 
 
 /*
@@ -103,7 +103,7 @@
 
 #include "opt_omap.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_obio.c,v 1.24 2016/10/15 15:14:20 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_obio.c,v 1.25 2021/04/24 23:36:28 thorpej Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -198,7 +198,9 @@ obio_attach1(device_t self)
 	/*
 	 * Attach the rest of our devices
 	 */
-	config_search_ia(obio_search, self, "obio", NULL);
+	config_search(self, NULL,
+	    CFARG_SEARCH, obio_search,
+	    CFARG_EOL);
 }
 
 static void
@@ -297,8 +299,8 @@ obio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 		&&  ((oa.obio_addr + oa.obio_size)
 			>= (sc->sc_base + sc->sc_size)))
 				return 1;		/* NG */
-		if (config_match(parent, cf, &oa)) {
-			config_attach(parent, cf, &oa, obio_print);
+		if (config_probe(parent, cf, &oa)) {
+			config_attach(parent, cf, &oa, obio_print, CFARG_EOL);
 			return 0;			/* love it */
 		}
 	}
@@ -435,7 +437,9 @@ obio_attach_critical(struct obio_softc *sc)
 		        || oa.obio_addr >= sc->sc_base + sc->sc_size))
 			continue;
 
-		cf = config_search_ia(obio_find, sc->sc_dev, "obio", &oa);
+		cf = config_search(sc->sc_dev, &oa,
+		    CFARG_SUBMATCH, obio_find,
+		    CFARG_EOL);
 		if (cf == NULL) {
 			if (critical_devs[i].required)
 				panic(
@@ -450,7 +454,7 @@ obio_attach_critical(struct obio_softc *sc)
 			oa.obio_intr = cf->cf_loc[OBIOCF_INTR];
 		if (oa.obio_intrbase == OBIOCF_INTRBASE_DEFAULT)
 			oa.obio_intrbase = cf->cf_loc[OBIOCF_INTRBASE];
-		config_attach(sc->sc_dev, cf, &oa, obio_print);
+		config_attach(sc->sc_dev, cf, &oa, obio_print, CFARG_EOL);
 	}
 }
 

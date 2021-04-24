@@ -1,4 +1,4 @@
-/*	$NetBSD: ct65550.c,v 1.13 2017/02/03 20:09:49 macallan Exp $	*/
+/*	$NetBSD: ct65550.c,v 1.14 2021/04/24 23:36:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct65550.c,v 1.13 2017/02/03 20:09:49 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct65550.c,v 1.14 2021/04/24 23:36:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -307,7 +307,7 @@ chipsfb_do_attach(struct chipsfb_softc *sc)
 	aa.accessops = &chipsfb_accessops;
 	aa.accesscookie = &sc->vd;
 
-	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint);
+	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint, CFARG_EOL);
 }
 
 static int

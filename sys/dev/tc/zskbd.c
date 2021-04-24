@@ -1,4 +1,4 @@
-/*	$NetBSD: zskbd.c,v 1.19 2019/11/10 21:16:37 chs Exp $	*/
+/*	$NetBSD: zskbd.c,v 1.20 2021/04/24 23:36:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zskbd.c,v 1.19 2019/11/10 21:16:37 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zskbd.c,v 1.20 2021/04/24 23:36:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,7 +234,7 @@ zskbd_attach(device_t parent, device_t self, void *aux)
 	a.accessops = &zskbd_accessops;
 	a.accesscookie = zskbd;
 
-	zskbd->sc_wskbddev = config_found(self, &a, wskbddevprint);
+	zskbd->sc_wskbddev = config_found(self, &a, wskbddevprint, CFARG_EOL);
 }
 
 int

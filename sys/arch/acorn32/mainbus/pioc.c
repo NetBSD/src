@@ -1,4 +1,4 @@
-/*	$NetBSD: pioc.c,v 1.18 2012/10/27 17:17:23 chs Exp $	*/     
+/*	$NetBSD: pioc.c,v 1.19 2021/04/24 23:36:23 thorpej Exp $	*/     
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -41,7 +41,7 @@
 /*#define PIOC_DEBUG*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pioc.c,v 1.18 2012/10/27 17:17:23 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pioc.c,v 1.19 2021/04/24 23:36:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,8 +233,8 @@ piocsearch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 		}
 
 		tryagain = 0;
-		if (config_match(parent, cf, &pa) > 0) {
-			config_attach(parent, cf, &pa, piocprint);
+		if (config_probe(parent, cf, &pa)) {
+			config_attach(parent, cf, &pa, piocprint, CFARG_EOL);
 /*			tryagain = (cf->cf_fstate == FSTATE_STAR);*/
 		}
 	} while (tryagain);
@@ -266,8 +266,8 @@ piocsubmatch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 		if (pa->pa_irq == -1)
 			pa->pa_irq = cf->cf_loc[PIOCCF_IRQ];
 		tryagain = 0;
-		if (config_match(parent, cf, pa) > 0) {
-			config_attach(parent, cf, pa, piocprint);
+		if (config_probe(parent, cf, pa)) {
+			config_attach(parent, cf, pa, piocprint, CFARG_EOL);
 /*			tryagain = (cf->cf_fstate == FSTATE_STAR);*/
 		}
 	} while (tryagain);
@@ -382,8 +382,9 @@ piocattach(device_t parent, device_t self, void *aux)
 			pa.pa_offset = (PIOC_WDC_PRIMARY_OFFSET << 2);
 		pa.pa_drq = -1;
 		pa.pa_irq = -1;
-		config_found_sm_loc(self, "pioc", NULL, &pa, piocprint,
-				    piocsubmatch);
+		config_found(self, &pa, piocprint,
+		    CFARG_SUBMATCH, piocsubmatch,
+		    CFARG_EOL);
 	}
 
 	/*
@@ -401,8 +402,9 @@ piocattach(device_t parent, device_t self, void *aux)
 			pa.pa_offset = (PIOC_FDC_PRIMARY_OFFSET << 2);
 		pa.pa_drq = -1;
 		pa.pa_irq = -1;
-		config_found_sm_loc(self, "pioc", NULL, &pa, piocprint,
-				    piocsubmatch);
+		config_found(self, &pa, piocprint,
+		    CFARG_SUBMATCH, piocsubmatch,
+		    CFARG_EOL);
 	}
 
 	/*
@@ -437,8 +439,9 @@ piocattach(device_t parent, device_t self, void *aux)
 		}
 		pa.pa_drq = -1;
 		pa.pa_irq = -1;
-		config_found_sm_loc(self, "pioc", NULL, &pa, piocprint,
-				    piocsubmatch);
+		config_found(self, &pa, piocprint,
+		    CFARG_SUBMATCH, piocsubmatch,
+		    CFARG_EOL);
 	}
 
 	if (sc->sc_config[PIOC_CM_CR2] & PIOC_UART2_ENABLE) {
@@ -462,8 +465,9 @@ piocattach(device_t parent, device_t self, void *aux)
 		}
 		pa.pa_drq = -1;
 		pa.pa_irq = -1;
-		config_found_sm_loc(self, "pioc", NULL, &pa, piocprint,
-				    piocsubmatch);
+		config_found(self, &pa, piocprint,
+		    CFARG_SUBMATCH, piocsubmatch,
+		    CFARG_EOL);
 	}
 
 	/*
@@ -488,12 +492,15 @@ piocattach(device_t parent, device_t self, void *aux)
 		}
 		pa.pa_drq = -1;
 		pa.pa_irq = -1;
-		config_found_sm_loc(self, "pioc", NULL, &pa, piocprint,
-				    piocsubmatch);
+		config_found(self, &pa, piocprint,
+		    CFARG_SUBMATCH, piocsubmatch,
+		    CFARG_EOL);
 	}
 
 #if 0
-	config_search_ia(piocsearch, self, "pioc", NULL);
+	config_search(self, NULL,
+	    CFARG_SEARCH, piocsearch,
+	    CFARG_EOL);
 #endif
 }
 

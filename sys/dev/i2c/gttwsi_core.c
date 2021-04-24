@@ -1,4 +1,4 @@
-/*	$NetBSD: gttwsi_core.c,v 1.16 2020/02/15 23:42:01 thorpej Exp $	*/
+/*	$NetBSD: gttwsi_core.c,v 1.17 2021/04/24 23:36:54 thorpej Exp $	*/
 /*
  * Copyright (c) 2008 Eiji Kawauchi.
  * All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gttwsi_core.c,v 1.16 2020/02/15 23:42:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gttwsi_core.c,v 1.17 2021/04/24 23:36:54 thorpej Exp $");
 #include "locators.h"
 
 #include <sys/param.h>
@@ -163,7 +163,9 @@ gttwsi_config_children(device_t self)
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c;
 
-	(void) config_found_ia(sc->sc_dev, "i2cbus", &iba, iicbus_print);
+	config_found(sc->sc_dev, &iba, iicbus_print,
+	    CFARG_IATTR, "i2cbus",
+	    CFARG_EOL);
 }
 
 int

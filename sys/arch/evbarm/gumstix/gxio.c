@@ -1,4 +1,4 @@
-/*	$NetBSD: gxio.c,v 1.26 2018/03/13 06:19:30 ryo Exp $ */
+/*	$NetBSD: gxio.c,v 1.27 2021/04/24 23:36:32 thorpej Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.26 2018/03/13 06:19:30 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.27 2021/04/24 23:36:32 thorpej Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_gumstix.h"
@@ -390,7 +390,9 @@ gxioattach(device_t parent, device_t self, void *aux)
 	/*
 	 *  Attach each gumstix(busheader)/overo expansion board devices.
 	 */
-	config_search_ia(gxiosearch, self, "gxio", NULL);
+	config_search(self, NULL,
+	    CFARG_SEARCH, gxiosearch,
+	    CFARG_EOL);
 }
 
 /* ARGSUSED */
@@ -405,8 +407,8 @@ gxiosearch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	gxa.gxa_addr = cf->cf_loc[GXIOCF_ADDR];
 	gxa.gxa_gpirq = cf->cf_loc[GXIOCF_GPIRQ];
 
-	if (config_match(parent, cf, &gxa))
-		config_attach(parent, cf, &gxa, gxioprint);
+	if (config_probe(parent, cf, &gxa))
+		config_attach(parent, cf, &gxa, gxioprint, CFARG_EOL);
 
 	return 0;
 }

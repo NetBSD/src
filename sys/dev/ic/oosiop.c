@@ -1,4 +1,4 @@
-/*	$NetBSD: oosiop.c,v 1.16 2019/11/10 21:16:35 chs Exp $	*/
+/*	$NetBSD: oosiop.c,v 1.17 2021/04/24 23:36:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Shuichiro URATA.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oosiop.c,v 1.16 2019/11/10 21:16:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oosiop.c,v 1.17 2021/04/24 23:36:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,7 +240,7 @@ oosiop_attach(struct oosiop_softc *sc)
 	/*
 	 * Now try to attach all the sub devices.
 	 */
-	config_found(sc->sc_dev, &sc->sc_channel, scsiprint);
+	config_found(sc->sc_dev, &sc->sc_channel, scsiprint, CFARG_EOL);
 }
 
 static int

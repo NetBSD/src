@@ -1,4 +1,4 @@
-/* $Id: pbms.c,v 1.16 2018/09/03 16:29:25 riastradh Exp $ */
+/* $Id: pbms.c,v 1.17 2021/04/24 23:36:41 thorpej Exp $ */
 
 /*
  * Copyright (c) 2005, Johan Wallén
@@ -373,7 +373,7 @@ pbms_attach(device_t parent, device_t self, void *aux)
 	a.accessops = &pbms_accessops;
 	a.accesscookie = sc;
 
-	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint);
+	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint, CFARG_EOL);
 
 	return;
 }

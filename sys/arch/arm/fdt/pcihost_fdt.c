@@ -1,4 +1,4 @@
-/* $NetBSD: pcihost_fdt.c,v 1.23 2021/01/27 03:10:19 thorpej Exp $ */
+/* $NetBSD: pcihost_fdt.c,v 1.24 2021/04/24 23:36:26 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.23 2021/01/27 03:10:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.24 2021/04/24 23:36:26 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -194,7 +194,7 @@ pcihost_init2(struct pcihost_softc *sc)
 	pba.pba_pc = &sc->sc_pc;
 	pba.pba_bus = sc->sc_bus_min;
 
-	config_found_ia(sc->sc_dev, "pcibus", &pba, pcibusprint);
+	config_found(sc->sc_dev, &pba, pcibusprint, CFARG_EOL);
 }
 
 void

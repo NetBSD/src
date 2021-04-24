@@ -1,4 +1,4 @@
-/*	$NetBSD: mfc.c,v 1.57 2014/07/25 08:10:31 dholland Exp $ */
+/*	$NetBSD: mfc.c,v 1.58 2021/04/24 23:36:24 thorpej Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -55,7 +55,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.57 2014/07/25 08:10:31 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.58 2021/04/24 23:36:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -416,14 +416,17 @@ mfcattach(device_t parent, device_t self, void *aux)
 
 	/* configure ports */
 	memcpy(&ma.zargs, zap, sizeof(struct zbus_args));
+
 	ma.subdev = "mfcs";
 	ma.unit = unit * 2;
-	config_found(self, &ma, mfcprint);
+	config_found(self, &ma, mfcprint, CFARG_EOL);
+
 	ma.unit = unit * 2 + 1;
-	config_found(self, &ma, mfcprint);
+	config_found(self, &ma, mfcprint, CFARG_EOL);
+
 	ma.subdev = "mfcp";
 	ma.unit = unit;
-	config_found(self, &ma, mfcprint);
+	config_found(self, &ma, mfcprint, CFARG_EOL);
 }
 
 /*

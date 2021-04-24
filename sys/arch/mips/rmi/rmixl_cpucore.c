@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpucore.c,v 1.5 2011/04/29 22:00:03 matt Exp $	*/
+/*	$NetBSD: rmixl_cpucore.c,v 1.6 2021/04/24 23:36:43 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpucore.c,v 1.5 2011/04/29 22:00:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpucore.c,v 1.6 2021/04/24 23:36:43 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -163,7 +163,8 @@ cpucore_rmixl_attach(device_t parent, device_t self, void *aux)
 		ca.ca_name = "cpu";
 		ca.ca_thread = t;
 		ca.ca_core = sc->sc_core;
-		if (config_found(self, &ca, cpucore_rmixl_print) == NULL) {
+		if (config_found(self, &ca, cpucore_rmixl_print,
+				 CFARG_EOL) == NULL) {
 			/*
 			 * thread did not attach, e.g. not configured
 			 * arrange to have it disabled in THREADEN PCR

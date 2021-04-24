@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.33 2016/11/09 19:54:25 macallan Exp $ */
+/*	$NetBSD: cgthree.c,v 1.34 2021/04/24 23:36:59 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.33 2016/11/09 19:54:25 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.34 2021/04/24 23:36:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -244,7 +244,7 @@ cgthreeattach(struct cgthree_softc *sc, const char *name, int isconsole)
 	aa.console = isconsole;
 	aa.accessops = &cgthree_accessops;
 	aa.accesscookie = &sc->vd;
-	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint);
+	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint, CFARG_EOL);
 }
 
 

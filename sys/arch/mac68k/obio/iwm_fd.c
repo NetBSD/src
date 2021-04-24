@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.58 2020/12/19 21:48:04 thorpej Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.59 2021/04/24 23:36:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.58 2020/12/19 21:48:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.59 2021/04/24 23:36:41 thorpej Exp $");
 
 #include "locators.h"
 
@@ -332,7 +332,7 @@ iwm_attach(device_t parent, device_t self, void *aux)
 			ia.driveType = getFDType(ia.unit);
 			if (NULL != ia.driveType)
 				config_found(self, (void *)&ia,
-				    fd_print);
+				    fd_print, CFARG_EOL);
 		}
 		if (TRACE_CONFIG)
 			printf("iwm: Initialization completed.\n");

@@ -1,4 +1,4 @@
-/* $NetBSD: fdtbus.c,v 1.40 2021/02/05 17:20:32 thorpej Exp $ */
+/* $NetBSD: fdtbus.c,v 1.41 2021/04/24 23:36:53 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.40 2021/02/05 17:20:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.41 2021/04/24 23:36:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -345,7 +345,11 @@ fdt_scan_best(struct fdt_softc *sc, struct fdt_node *node)
 			[FDTCF_PASS] = pass
 		};
 		fdt_init_attach_args(&sc->sc_faa, node, true, &faa);
-		cf = config_search_loc(fdt_scan_submatch, node->n_bus, "fdt", locs, &faa);
+		cf = config_search(node->n_bus, &faa,
+		    CFARG_SUBMATCH, fdt_scan_submatch,
+		    CFARG_IATTR, "fdt",
+		    CFARG_LOCATORS, locs,
+		    CFARG_EOL);
 		if (cf == NULL)
 			continue;
 		match = config_match(node->n_bus, cf, &faa);
@@ -389,14 +393,22 @@ fdt_scan(struct fdt_softc *sc, int pass)
 		fdt_pre_attach(node);
 
 		if (quiet) {
-			node->n_dev = config_attach_loc(node->n_bus, node->n_cf, locs,
-			    &faa, fdtbus_print);
+			node->n_dev = config_attach(node->n_bus, node->n_cf,
+			    &faa, fdtbus_print,
+			    CFARG_LOCATORS, locs,
+			    CFARG_DEVHANDLE, devhandle_from_of(node->n_phandle),
+			    CFARG_EOL);
 		} else {
 			/*
 			 * Default pass.
 			 */
-			node->n_dev = config_found_sm_loc(node->n_bus, "fdt", locs,
-			    &faa, fdtbus_print, fdt_scan_submatch);
+			node->n_dev = config_found(node->n_bus, &faa,
+			    fdtbus_print,
+			    CFARG_SUBMATCH, fdt_scan_submatch,
+			    CFARG_IATTR, "fdt",
+			    CFARG_LOCATORS, locs,
+			    CFARG_DEVHANDLE, devhandle_from_of(node->n_phandle),
+			    CFARG_EOL);
 		}
 
 		if (node->n_dev != NULL)
@@ -549,21 +561,4 @@ fdtbus_print(void *aux, const char *pnp)
 		aprint_debug(" (%s)", name);
 
 	return UNCONF;
-}
-
-void
-fdtbus_device_register(device_t dev, void *aux)
-{
-	/* All we do here is set the devhandle in the device_t. */
-	int phandle = -1;
-
-	if (device_attached_to_iattr(dev, "fdt")) {
-		const struct fdt_attach_args *faa = aux;
-		phandle = faa->faa_phandle;
-	} else {
-		return;
-	}
-	KASSERT(phandle != -1);
-
-	of_device_register(dev, phandle);
 }

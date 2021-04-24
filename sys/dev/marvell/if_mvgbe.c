@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.59 2020/02/03 07:47:53 skrll Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.60 2021/04/24 23:36:56 thorpej Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.59 2020/02/03 07:47:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.60 2021/04/24 23:36:56 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -470,8 +470,9 @@ mvgbec_attach(device_t parent, device_t self, void *aux)
 			gbea.mva_unit = j;
 			gbea.mva_dmat = mva->mva_dmat;
 			gbea.mva_irq = mvgbe_ports[i].irqs[j];
-			child = config_found_sm_loc(csc->sc_dev, "mvgbec", NULL,
-			    &gbea, mvgbec_print, mvgbec_search);
+			child = config_found(csc->sc_dev, &gbea, mvgbec_print,
+			    CFARG_SUBMATCH, mvgbec_search,
+			    CFARG_EOL);
 			if (child) {
 				port = device_private(child);
 				mii  = LIST_FIRST(&port->sc_mii.mii_phys);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.32 2020/07/07 03:38:48 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.33 2021/04/24 23:36:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.32 2020/07/07 03:38:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.33 2021/04/24 23:36:47 thorpej Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -91,23 +91,31 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 
 	mba.ma_name = "cpu";
-	config_found_ia(self, "mainbus", &mba, mainbus_print);
+	config_found(self, &mba, mainbus_print,
+	    CFARG_IATTR, "mainbus",
+	    CFARG_EOL);
 
 	mba.ma_name = "eumb";
 	mba.ma_bst = &sandpoint_eumb_space_tag;
-	config_found_ia(self, "mainbus", &mba, mainbus_print);
+	config_found(self, &mba, mainbus_print,
+	    CFARG_IATTR, "mainbus",
+	    CFARG_EOL);
 
 	pfam = lookup_bootinfo(BTINFO_PRODFAMILY);
 	if (pfam != NULL && strcmp(pfam->name, "nhnas") == 0) {
 		/* attach nhpow(4) for NH230/231 only */
 		mba.ma_name = "nhpow";
 		mba.ma_bst = &sandpoint_nhgpio_space_tag;
-		config_found_ia(self, "mainbus", &mba, mainbus_print);
+		config_found(self, &mba, mainbus_print,
+		    CFARG_IATTR, "mainbus",
+		    CFARG_EOL);
 	}
 
 	mba.ma_name = "cfi";
 	mba.ma_bst = &sandpoint_flash_space_tag;
-	config_found_ia(self, "mainbus", &mba, mainbus_print);
+	config_found(self, &mba, mainbus_print,
+	    CFARG_IATTR, "mainbus",
+	    CFARG_EOL);
 
 	/*
 	 * XXX Note also that the presence of a PCI bus should
@@ -138,7 +146,9 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	pba.pba_bridgetag = NULL;
 	pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY;
 
-	config_found_ia(self, "pcibus", &pba, pcibusprint);
+	config_found(self, &pba, pcibusprint,
+	    CFARG_IATTR, "pcibus",
+	    CFARG_EOL);
 #endif
 }
 

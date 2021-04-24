@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_gio.c,v 1.17 2020/07/07 03:38:48 thorpej Exp $	*/
+/*	$NetBSD: pci_gio.c,v 1.18 2021/04/24 23:36:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_gio.c,v 1.17 2020/07/07 03:38:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_gio.c,v 1.18 2021/04/24 23:36:48 thorpej Exp $");
 
 /*
  * Glue for PCI devices that are connected to the GIO bus by various little
@@ -237,7 +237,7 @@ giopci_attach(device_t parent, device_t self, void *aux)
 	pba.pba_flags	= PCI_FLAGS_MEM_OKAY;
 	/* NB: do not set PCI_FLAGS_{MRL,MRM,MWI}_OKAY  -- true ?! */
 
-	config_found_ia(self, "pcibus", &pba, pcibusprint);
+	config_found(self, &pba, pcibusprint, CFARG_EOL);
 }
 
 static int

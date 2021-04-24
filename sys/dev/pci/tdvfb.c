@@ -1,4 +1,4 @@
-/*	$NetBSD: tdvfb.c,v 1.8 2014/02/28 05:55:23 matt Exp $	*/
+/*	$NetBSD: tdvfb.c,v 1.9 2021/04/24 23:36:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.   
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tdvfb.c,v 1.8 2014/02/28 05:55:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tdvfb.c,v 1.9 2021/04/24 23:36:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -279,7 +279,7 @@ tdvfb_attach(device_t parent, device_t self, void *aux)
 	ws_aa.accessops = &tdvfb_accessops;
 	ws_aa.accesscookie = &sc->vd;
 	
-	config_found(sc->sc_dev, &ws_aa, wsemuldisplaydevprint);
+	config_found(sc->sc_dev, &ws_aa, wsemuldisplaydevprint, CFARG_EOL);
 }
 
 static void

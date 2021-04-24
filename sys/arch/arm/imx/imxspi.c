@@ -1,4 +1,4 @@
-/*	$NetBSD: imxspi.c,v 1.7 2019/11/15 01:10:42 hkenken Exp $	*/
+/*	$NetBSD: imxspi.c,v 1.8 2021/04/24 23:36:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2014  Genetec Corporation.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxspi.c,v 1.7 2019/11/15 01:10:42 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxspi.c,v 1.8 2021/04/24 23:36:27 thorpej Exp $");
 
 #include "opt_imxspi.h"
 #include "opt_fdt.h"
@@ -148,7 +148,7 @@ imxspi_attach_common(device_t self)
 	sba.sba_controller = &sc->sc_spi;
 
 	/* attach slave devices */
-	(void)config_found_ia(sc->sc_dev, "spibus", &sba, spibus_print);
+	config_found(sc->sc_dev, &sba, spibus_print, CFARG_EOL);
 #endif
 
 	return 0;

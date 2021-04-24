@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_platform.c,v 1.24 2021/02/12 12:26:09 jmcneill Exp $ */
+/* $NetBSD: acpi_platform.c,v 1.25 2021/04/24 23:36:25 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.24 2021/02/12 12:26:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.25 2021/04/24 23:36:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -287,9 +287,7 @@ acpi_platform_init_attach_args(struct fdt_attach_args *faa)
 static void
 acpi_platform_device_register(device_t self, void *aux)
 {
-	/* XXX Not ideal, but the only reasonable solution atm. */
 	acpi_device_register(self, aux);
-	fdtbus_device_register(self, aux);
 
 #if NCOM > 0
 	prop_dictionary_t prop = device_properties(self);

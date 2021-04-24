@@ -1,4 +1,4 @@
-/*	$NetBSD: mba.c,v 1.40 2017/05/22 17:13:09 ragge Exp $ */
+/*	$NetBSD: mba.c,v 1.41 2021/04/24 23:36:50 thorpej Exp $ */
 /*
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mba.c,v 1.40 2017/05/22 17:13:09 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mba.c,v 1.41 2021/04/24 23:36:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,7 +154,7 @@ mbaattach(device_t parent, device_t self, void *aux)
 		ma.ma_name = mbaunit[j].name;
 		ma.ma_iot = sc->sc_iot;
 		ma.ma_ioh = sc->sc_ioh + MUREG(i, 0);
-		config_found(sc->sc_dev, &ma, mbaprint);
+		config_found(sc->sc_dev, &ma, mbaprint, CFARG_EOL);
 	}
 }
 

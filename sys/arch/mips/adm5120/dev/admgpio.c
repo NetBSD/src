@@ -1,4 +1,4 @@
-/* $NetBSD: admgpio.c,v 1.4 2011/07/01 18:38:49 dyoung Exp $ */
+/* $NetBSD: admgpio.c,v 1.5 2021/04/24 23:36:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 David Young.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: admgpio.c,v 1.4 2011/07/01 18:38:49 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: admgpio.c,v 1.5 2021/04/24 23:36:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,5 +137,7 @@ admgpio_attach(struct mainbus_softc *sc)
 	gba.gba_npins = __arraycount(sc->sc_pins);
 
 	/* Attach GPIO framework */
-	return config_found_ia(sc->sc_dev, "gpiobus", &gba, gpiobus_print);
+	return config_found(sc->sc_dev, &gba, gpiobus_print,
+	    CFARG_IATTR, "gpiobus",
+	    CFARG_EOL);
 }

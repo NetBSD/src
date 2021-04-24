@@ -1,4 +1,4 @@
-/*	$NetBSD: hpib.c,v 1.41 2020/11/18 02:22:16 thorpej Exp $	*/
+/*	$NetBSD: hpib.c,v 1.42 2021/04/24 23:36:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpib.c,v 1.41 2020/11/18 02:22:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpib.c,v 1.42 2021/04/24 23:36:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,7 +193,9 @@ hpibbus_attach_children(struct hpibbus_softc *sc)
 		/*
 		 * Search though all configured children for this bus.
 		 */
-		config_search_ia(hpibbussearch, sc->sc_dev, "hpibbus", &ha);
+		config_search(sc->sc_dev, &ha,
+		    CFARG_SEARCH, hpibbussearch,
+		    CFARG_EOL);
 	}
 }
 
@@ -206,7 +208,7 @@ hpibbussearch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	/* Make sure this is in a consistent state. */
 	ha->ha_punit = 0;
 
-	if (config_match(parent, cf, ha) > 0) {
+	if (config_probe(parent, cf, ha)) {
 		/*
 		 * The device probe has succeeded, and filled in
 		 * the punit information.  Make sure the configuration
@@ -229,7 +231,7 @@ hpibbussearch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 		/*
 		 * This device is allowed; attach it.
 		 */
-		config_attach(parent, cf, ha, hpibbusprint);
+		config_attach(parent, cf, ha, hpibbusprint, CFARG_EOL);
 	}
  out:
 	return 0;

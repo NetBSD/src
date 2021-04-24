@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.36 2019/01/21 06:23:17 macallan Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.37 2021/04/24 23:36:59 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.36 2019/01/21 06:23:17 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.37 2021/04/24 23:36:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -324,7 +324,7 @@ bwtwoattach(struct bwtwo_softc *sc, const char *name, int isconsole)
 		aa.console = isconsole;
 	aa.accessops = &bwtwo_accessops;
 	aa.accesscookie = &sc->vd;
-	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint);
+	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint, CFARG_EOL);
 #endif
 
 }

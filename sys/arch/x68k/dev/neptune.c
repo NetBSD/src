@@ -1,4 +1,4 @@
-/*	$NetBSD: neptune.c,v 1.21 2019/11/10 21:16:33 chs Exp $	*/
+/*	$NetBSD: neptune.c,v 1.22 2021/04/24 23:36:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: neptune.c,v 1.21 2019/11/10 21:16:33 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: neptune.c,v 1.22 2021/04/24 23:36:51 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,10 +117,12 @@ neptune_attach(device_t parent, device_t self, void *aux)
 	na.na_bst = sc->sc_bst;
 	na.na_intr = ia->ia_intr;
 
-	cf = config_search_ia(neptune_search, self, "neptune", &na);
+	cf = config_search(self, &na,
+	    CFARG_SUBMATCH, neptune_search,
+	    CFARG_EOL);
 	if (cf) {
 		aprint_normal(": Neptune-X ISA bridge\n");
-		config_attach(self, cf, &na, neptune_print);
+		config_attach(self, cf, &na, neptune_print, CFARG_EOL);
 	} else {
 		aprint_normal(": no device found.\n");
 		intio_map_free_region(parent, ia);

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.6 2012/10/27 17:17:34 chs Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.7 2021/04/24 23:36:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6 2012/10/27 17:17:34 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7 2021/04/24 23:36:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,7 @@ amiga_config_found(cfdata_t pcfp, device_t parent, void *aux, cfprint_t pfn)
 	const struct cfattach *ca;
 
 	if (amiga_realconfig)
-		return config_found(parent, aux, pfn) != NULL;
+		return config_found(parent, aux, pfn, CFARG_EOL) != NULL;
 
 	if (parent == NULL) {
 		memset(&temp, 0, sizeof temp);
@@ -140,7 +140,7 @@ amiga_config_found(cfdata_t pcfp, device_t parent, void *aux, cfprint_t pfn)
 	parent->dv_cfdriver = config_cfdriver_lookup(pcfp->cf_name);
 	parent->dv_unit = pcfp->cf_unit;
 
-	if ((cf = config_search_ia(NULL, parent, NULL, aux)) != NULL) {
+	if ((cf = config_search(parent, aux, CFARG_EOL)) != NULL) {
 		ca = config_cfattach_lookup(cf->cf_name, cf->cf_atname);
 		if (ca != NULL) {
 			(*ca->ca_attach)(parent, NULL, aux);

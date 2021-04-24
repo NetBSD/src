@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.17 2015/02/18 16:47:58 macallan Exp $	 */
+/*	$NetBSD: pic.c,v 1.18 2021/04/24 23:36:47 thorpej Exp $	 */
 
 /*
  * Copyright (c) 2002 Steve Rumble
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.17 2015/02/18 16:47:58 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.18 2021/04/24 23:36:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -184,7 +184,7 @@ pic_attach(device_t parent, device_t self, void *aux)
 	 * machines use VME for their expansion bus.
 	 */
 	iaa.iaa_name = "gio";
-	(void)config_found(self, (void *)&iaa, pic_print);
+	(void)config_found(self, (void *)&iaa, pic_print, CFARG_EOL);
 
 	pic_watchdog_enable();
 }

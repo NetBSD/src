@@ -1,4 +1,4 @@
-/*	$NetBSD: apple_smc.c,v 1.6 2014/04/25 23:54:59 riastradh Exp $	*/
+/*	$NetBSD: apple_smc.c,v 1.7 2021/04/24 23:36:55 thorpej Exp $	*/
 
 /*
  * Apple System Management Controller
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apple_smc.c,v 1.6 2014/04/25 23:54:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apple_smc.c,v 1.7 2021/04/24 23:36:55 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -81,7 +81,7 @@ apple_smc_attach(struct apple_smc_tag *smc)
 #endif
 
 	/* Attach any children.  */
-        (void)apple_smc_rescan(smc, APPLE_SMC_BUS, NULL);
+        (void)apple_smc_rescan(smc, NULL, NULL);
 }
 
 int
@@ -108,8 +108,9 @@ apple_smc_rescan(struct apple_smc_tag *smc, const char *ifattr,
 {
 
 	/* Let autoconf(9) do the work of finding new children.  */
-	(void)config_search_loc(&apple_smc_search, smc->smc_dev, APPLE_SMC_BUS,
-	    locators, smc);
+	config_search(smc->smc_dev, smc,
+	    CFARG_SEARCH, apple_smc_search,
+	    CFARG_EOL);
 	return 0;
 }
 
@@ -144,12 +145,14 @@ apple_smc_search(device_t parent, cfdata_t cf, const int *locators, void *aux)
 		return 0;
 
 	/* If this device doesn't match, don't attach it.  */
-	if (!config_match(parent, cf, aux))
+	if (!config_probe(parent, cf, aux))
 		return 0;
 
 	/* Looks hunky-dory.  Attach.  */
 	asa.asa_smc = smc;
-	(void)config_attach_loc(parent, cf, locators, &asa, NULL);
+	config_attach(parent, cf, &asa, NULL,
+	    CFARG_LOCATORS, locators,
+	    CFARG_EOL);
 	return 0;
 }
 

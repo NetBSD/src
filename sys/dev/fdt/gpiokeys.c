@@ -1,4 +1,4 @@
-/* $NetBSD: gpiokeys.c,v 1.9 2021/01/27 03:10:21 thorpej Exp $ */
+/* $NetBSD: gpiokeys.c,v 1.10 2021/04/24 23:36:53 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpiokeys.c,v 1.9 2021/01/27 03:10:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpiokeys.c,v 1.10 2021/04/24 23:36:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -265,8 +265,8 @@ gpiokeys_attach(device_t parent, device_t self, void *aux)
 		a.keymap = &gpiokeys_keymapdata;
 		a.accessops = &gpiokeys_accessops;
 		a.accesscookie = sc;
-		sc->sc_wskbddev = config_found_ia(self, "wskbddev", &a,
-		    wskbddevprint);
+		sc->sc_wskbddev =
+		    config_found(self, &a, wskbddevprint, CFARG_EOL);
 	}
 
 	callout_init(&sc->sc_tick, CALLOUT_MPSAFE);

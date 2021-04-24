@@ -1,4 +1,4 @@
-/*	$NetBSD: uni-n.c,v 1.9 2018/03/16 22:08:53 macallan Exp $	*/
+/*	$NetBSD: uni-n.c,v 1.10 2021/04/24 23:36:41 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz.
@@ -31,7 +31,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uni-n.c,v 1.9 2018/03/16 22:08:53 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uni-n.c,v 1.10 2021/04/24 23:36:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,7 +149,9 @@ uni_n_attach(device_t parent, device_t self, void *aux)
 
 		ca.ca_reg = reg;
 		ca.ca_intr = intr;
-		config_found(self, &ca, uni_n_print);
+		config_found(self, &ca, uni_n_print,
+		    CFARG_DEVHANDLE, devhandle_from_of(child),
+		    CFARG_EOL);
 	}
 }
 

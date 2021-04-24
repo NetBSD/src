@@ -1,4 +1,4 @@
-/*	$NetBSD: mlhsc.c,v 1.32 2014/01/22 00:25:16 christos Exp $ */
+/*	$NetBSD: mlhsc.c,v 1.33 2021/04/24 23:36:24 thorpej Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlhsc.c,v 1.32 2014/01/22 00:25:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlhsc.c,v 1.33 2021/04/24 23:36:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,7 +172,7 @@ mlhscattach(device_t parent, device_t self, void *aux)
 	/*
 	 * attach all scsi units on us
 	 */
-	config_found(self, chan, scsiprint);
+	config_found(self, chan, scsiprint, CFARG_EOL);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmbus.c,v 1.12 2021/01/29 04:38:34 nonaka Exp $	*/
+/*	$NetBSD: vmbus.c,v 1.13 2021/04/24 23:36:54 thorpej Exp $	*/
 /*	$OpenBSD: hyperv.c,v 1.43 2017/06/27 13:56:15 mikeb Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vmbus.c,v 1.12 2021/01/29 04:38:34 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vmbus.c,v 1.13 2021/04/24 23:36:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2202,8 +2202,8 @@ vmbus_process_devq(void *arg)
 			vaa.aa_chan = ch;
 			vaa.aa_iot = sc->sc_iot;
 			vaa.aa_memt = sc->sc_memt;
-			ch->ch_dev = config_found_ia(sc->sc_dev,
-			    "hypervvmbus", &vaa, vmbus_attach_print);
+			ch->ch_dev = config_found(sc->sc_dev,
+			    &vaa, vmbus_attach_print, CFARG_EOL);
 			break;
 
 		case VMBUS_DEV_TYPE_DETACH:

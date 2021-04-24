@@ -1,4 +1,4 @@
-/*	$NetBSD: mppb.c,v 1.10 2020/07/07 03:38:45 thorpej Exp $ */
+/*	$NetBSD: mppb.c,v 1.11 2021/04/24 23:36:25 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -186,7 +186,7 @@ mppb_attach(device_t parent, device_t self, void *aux)
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
 
-	config_found_ia(self, "pcibus", &pba, pcibusprint);
+	config_found(self, &pba, pcibusprint, CFARG_EOL);
 }
 
 pcireg_t

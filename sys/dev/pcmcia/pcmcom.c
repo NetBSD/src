@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcom.c,v 1.41 2018/12/08 17:46:14 thorpej Exp $	*/
+/*	$NetBSD: pcmcom.c,v 1.42 2021/04/24 23:36:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.41 2018/12/08 17:46:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.42 2021/04/24 23:36:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,9 +173,11 @@ pcmcom_attach(device_t parent, device_t self, void *aux)
 
 		locs[PCMCOMCF_SLAVE] = slave;
 
-		sc->sc_slaves[slave] = config_found_sm_loc(sc->sc_dev,
-			"pcmcom", locs,
-			&pca, pcmcom_print, config_stdsubmatch);
+		sc->sc_slaves[slave] =
+		    config_found(sc->sc_dev, &pca, pcmcom_print,
+				 CFARG_SUBMATCH, config_stdsubmatch,
+				 CFARG_LOCATORS, locs,
+				 CFARG_EOL);
 	}
 
 	pcmcom_disable(sc);

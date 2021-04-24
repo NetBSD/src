@@ -1,4 +1,4 @@
-/*	$NetBSD: cmi.c,v 1.14 2017/05/22 16:39:40 ragge Exp $ */
+/*	$NetBSD: cmi.c,v 1.15 2021/04/24 23:36:50 thorpej Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmi.c,v 1.14 2017/05/22 16:39:40 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmi.c,v 1.15 2021/04/24 23:36:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,7 @@ cmi_attach(device_t parent, device_t self, void *aux)
 			vax_unmap_physmem((vaddr_t)sa.sa_ioh, NEXPAGES);
 		} else {
 			sa.sa_type = NEX_MEM16;
-			config_found(self, (void*)&sa, cmi_print);
+			config_found(self, (void*)&sa, cmi_print, CFARG_EOL);
 		}
 	}
 
@@ -99,7 +99,7 @@ cmi_attach(device_t parent, device_t self, void *aux)
 			vax_unmap_physmem((vaddr_t)sa.sa_ioh, NEXPAGES);
 		} else {
 			sa.sa_type = NEX_MBA;
-			config_found(self, (void*)&sa, cmi_print);
+			config_found(self, (void*)&sa, cmi_print, CFARG_EOL);
 		}
 	}
 
@@ -110,7 +110,7 @@ cmi_attach(device_t parent, device_t self, void *aux)
 	sa.sa_ioh = vax_map_physmem(NEX750 +
 	    sizeof(struct nexus) * sa.sa_nexnum, NEXPAGES);
 	sa.sa_type = NEX_UBA0;
-	config_found(self, (void*)&sa, cmi_print);
+	config_found(self, (void*)&sa, cmi_print, CFARG_EOL);
 
 	sa.sa_nexnum = 9;
 	sa.sa_ioh = vax_map_physmem(NEX750 +
@@ -119,5 +119,5 @@ cmi_attach(device_t parent, device_t self, void *aux)
 	if (badaddr((void *)sa.sa_ioh, 4))
 		vax_unmap_physmem((vaddr_t)sa.sa_ioh, NEXPAGES);
 	else
-		config_found(self, (void*)&sa, cmi_print);
+		config_found(self, (void*)&sa, cmi_print, CFARG_EOL);
 }

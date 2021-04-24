@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_s3c24x0.c,v 1.10 2018/04/09 16:21:09 jakllsch Exp $ */
+/*	$NetBSD: ohci_s3c24x0.c,v 1.11 2021/04/24 23:36:28 thorpej Exp $ */
 
 /* derived from ohci_pci.c */
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_s3c24x0.c,v 1.10 2018/04/09 16:21:09 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_s3c24x0.c,v 1.11 2021/04/24 23:36:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,8 @@ ohci_ssio_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Attach usb device. */
-	sc->sc.sc_child = config_found(self, &sc->sc.sc_bus, usbctlprint);
+	sc->sc.sc_child = config_found(self, &sc->sc.sc_bus, usbctlprint,
+	    CFARG_EOL);
 }
 
 int

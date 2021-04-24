@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.20 2020/11/21 17:57:40 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.21 2021/04/24 23:36:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.20 2020/11/21 17:57:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.21 2021/04/24 23:36:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,9 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 
 	/* attach cpu */
-	config_found_ia(self, "mainbus", NULL, mainbus_print);
+	config_found(self, NULL, mainbus_print,
+	    CFARG_IATTR, "mainbus",
+	    CFARG_EOL);
 
 	/*
 	 * XXX Note also that the presence of a PCI bus should
@@ -138,7 +140,9 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
 	pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY;
-	config_found_ia(self, "pcibus", &pba, pcibusprint);
+	config_found(self, &pba, pcibusprint,
+	    CFARG_IATTR, "pcibus",
+	    CFARG_EOL);
 #endif
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwelve.c,v 1.6 2016/04/21 18:24:02 macallan Exp $ */
+/*	$NetBSD: cgtwelve.c,v 1.7 2021/04/24 23:36:58 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2010 Michael Lorenz
@@ -29,7 +29,7 @@
 /* a console driver for the Sun CG12 / Matrox SG3 graphics board */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgtwelve.c,v 1.6 2016/04/21 18:24:02 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgtwelve.c,v 1.7 2021/04/24 23:36:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -256,7 +256,7 @@ cgtwelve_attach(device_t parent, device_t self, void *args)
 	aa.accessops = &cgtwelve_accessops;
 	aa.accesscookie = &sc->vd;
 
-	config_found(self, &aa, wsemuldisplaydevprint);
+	config_found(self, &aa, wsemuldisplaydevprint, CFARG_EOL);
 #ifdef CG12_DEBUG
 	{
 		int i;

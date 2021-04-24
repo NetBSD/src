@@ -1,4 +1,4 @@
-/*	$NetBSD: iopsp.c,v 1.38 2019/11/10 21:16:35 chs Exp $	*/
+/*	$NetBSD: iopsp.c,v 1.39 2021/04/24 23:36:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.38 2019/11/10 21:16:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.39 2021/04/24 23:36:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -199,7 +199,7 @@ iopsp_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(sc->sc_dev, "configure failed\n");
 		goto bad;
 	}
-	config_found(self, &sc->sc_channel, scsiprint);
+	config_found(self, &sc->sc_channel, scsiprint, CFARG_EOL);
 	return;
 
  bad:

@@ -150,7 +150,7 @@ mvspi_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	memset(&sba, 0, sizeof(sba));
 	sba.sba_controller = &sc->sc_spi;
-	(void) config_found_ia(self, "spibus", &sba, spibus_print);
+	config_found(self, &sba, spibus_print, CFARG_EOL);
 }
     
 int

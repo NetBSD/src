@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2410_lcd.c,v 1.10 2014/07/25 08:10:33 dholland Exp $ */
+/*	$NetBSD: smdk2410_lcd.c,v 1.11 2021/04/24 23:36:34 thorpej Exp $ */
 
 /*
  * Copyright (c) 2004  Genetec Corporation.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2410_lcd.c,v 1.10 2014/07/25 08:10:33 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2410_lcd.c,v 1.11 2021/04/24 23:36:34 thorpej Exp $");
 
 /*
  * LCD driver for Samsung SMDK2410.
@@ -255,7 +255,7 @@ lcd_attach(device_t parent, device_t self, void *aux)
 	aa.accesscookie = sc;
 
 
-	(void) config_found(self, &aa, wsemuldisplaydevprint);
+	(void) config_found(self, &aa, wsemuldisplaydevprint, CFARG_EOL);
 #else
 
 	screen = s3c24x0_lcd_new_screen(sc, 240, 320, 16);

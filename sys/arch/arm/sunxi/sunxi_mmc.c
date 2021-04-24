@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mmc.c,v 1.46 2021/01/27 03:10:20 thorpej Exp $ */
+/* $NetBSD: sunxi_mmc.c,v 1.47 2021/04/24 23:36:28 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_sunximmc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.46 2021/01/27 03:10:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.47 2021/04/24 23:36:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -610,7 +610,7 @@ sunxi_mmc_attach_i(device_t self)
 	if (sc->sc_gpio_cd)
 		saa.saa_caps |= SMC_CAPS_POLL_CARD_DET;
 
-	sc->sc_sdmmc_dev = config_found(self, &saa, NULL);
+	sc->sc_sdmmc_dev = config_found(self, &saa, NULL, CFARG_EOL);
 }
 
 static int

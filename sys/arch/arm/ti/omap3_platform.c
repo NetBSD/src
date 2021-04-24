@@ -1,4 +1,4 @@
-/* $NetBSD: omap3_platform.c,v 1.6 2021/02/05 08:07:14 skrll Exp $ */
+/* $NetBSD: omap3_platform.c,v 1.7 2021/04/24 23:36:29 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_platform.c,v 1.6 2021/02/05 08:07:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_platform.c,v 1.7 2021/04/24 23:36:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -146,7 +146,6 @@ omap3_platform_early_putchar(char c)
 static void
 omap3_platform_device_register(device_t self, void *aux)
 {
-	fdtbus_device_register(self, aux);
 }
 
 static u_int

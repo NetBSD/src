@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga.c,v 1.28 2020/07/07 03:38:46 thorpej Exp $ */
+/*	$NetBSD: ifpga.c,v 1.29 2021/04/24 23:36:32 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpga.c,v 1.28 2020/07/07 03:38:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpga.c,v 1.29 2021/04/24 23:36:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -123,8 +123,8 @@ ifpga_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 		ifa.ifa_sc_ioh = sc->sc_sc_ioh;
 
 		tryagain = 0;
-		if (config_match(parent, cf, &ifa) > 0) {
-			config_attach(parent, cf, &ifa, ifpga_print);
+		if (config_probe(parent, cf, &ifa)) {
+			config_attach(parent, cf, &ifa, ifpga_print, CFARG_EOL);
 			tryagain = (cf->cf_fstate == FSTATE_STAR);
 		}
 	} while (tryagain);
@@ -313,7 +313,10 @@ ifpga_attach(device_t parent, device_t self, void *aux)
 #endif /* NPCI > 0 */
 
 	/* Finally, search for children.  */
-	config_search_ia(ifpga_search, self, "ifpga", NULL);
+	config_search(self, NULL,
+	    CFARG_SEARCH, ifpga_search,
+	    CFARG_IATTR, "ifpga",
+	    CFARG_EOL);
 
 #if NPCI > 0
 	integrator_pci_dma_init(&ifpga_pci_bus_dma_tag);
@@ -327,7 +330,9 @@ ifpga_attach(device_t parent, device_t self, void *aux)
 	pci_pba.pba_bus = 0;
 	pci_pba.pba_bridgetag = NULL;
 	
-	config_found_ia(self, "pcibus", &pci_pba, pcibusprint);
+	config_found(self, &pci_pba, pcibusprint,
+	    CFARG_IATTR, "pcibus",
+	    CFARG_EOL);
 #endif
 }
 

@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioplanar.c,v 1.4 2011/07/18 17:26:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioplanar.c,v 1.5 2021/04/24 23:36:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -86,7 +86,9 @@ ioplanar_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dmat = ma->ma_dmat;
 	sc->sc_devid = ma->ma_id;
 
-	(void)config_search_ia(ioplanar_search, self, "ioplanar", aux);
+	config_search(self, aux,
+	    CFARG_SEARCH, ioplanar_search,
+	    CFARG_EOL);
 }
 
 static int
@@ -106,9 +108,9 @@ ioplanar_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	case MCA_PRODUCT_IBM_SIO_RAINBOW:
 		for (i=0; i < RAINBOW_DEVS; i++) {
 			idaa.idaa_device = rainbow_map[i];
-			if (config_match(parent, cf, &idaa) > 0)
+			if (config_probe(parent, cf, &idaa))
 				config_attach(parent, cf, &idaa,
-				    ioplanar_print);
+				    ioplanar_print, CFARG_EOL);
 		}
 		break;
 	default:

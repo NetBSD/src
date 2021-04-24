@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisapc.c,v 1.11 2011/06/06 16:29:15 matt Exp $	*/
+/*	$NetBSD: ofisapc.c,v 1.12 2021/04/24 23:36:48 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofisapc.c,v 1.11 2011/06/06 16:29:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofisapc.c,v 1.12 2021/04/24 23:36:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -120,5 +120,7 @@ ofisapcattach(device_t parent, device_t dev, void *aux)
 
 	ia.ia_aux = (void *)oba->oba_phandle;
 
-	config_found(dev, &ia, NULL);
+	config_found(dev, &ia, NULL,
+	    CFARG_DEVHANDLE, devhandle_from_of(oba->oba_phandle),
+	    CFARG_EOL);
 }

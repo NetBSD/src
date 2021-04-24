@@ -1,4 +1,4 @@
-/*	$NetBSD: mpcore_axi.c,v 1.1 2011/03/10 07:47:15 bsh Exp $ */
+/*	$NetBSD: mpcore_axi.c,v 1.2 2021/04/24 23:36:27 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2010 SHIMIZU Ryo <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpcore_axi.c,v 1.1 2011/03/10 07:47:15 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpcore_axi.c,v 1.2 2021/04/24 23:36:27 thorpej Exp $");
 
 #include "bus_space_a2x.h"
 #include "bus_space_a4x.h"
@@ -99,8 +99,12 @@ axi_attach(device_t parent __unused, device_t self, void *aux __unused)
 	aa.aa_iot_a4x = NULL;
 #endif
 
-	config_search_ia(axi_critical_search, self, "axi", &aa);
-	config_search_ia(axi_search, self, "axi", &aa);
+	config_search(self, &aa,
+	    CFARG_SEARCH, axi_critical_search,
+	    CFARG_EOL);
+	config_search(self, &aa,
+	    CFARG_SEARCH, axi_search,
+	    CFARG_EOL);
 }
 
 /* ARGSUSED */
@@ -132,8 +136,8 @@ axi_critical_search(device_t parent, struct cfdata *cf,
 	aa->aa_irq = cf->cf_loc[AXICF_IRQ];
 	aa->aa_irqbase = cf->cf_loc[AXICF_IRQBASE];
 
-	if (config_match(parent, cf, aux) > 0)
-		config_attach(parent, cf, aux, axi_print);
+	if (config_probe(parent, cf, aux))
+		config_attach(parent, cf, aux, axi_print, CFARG_EOL);
 
 	return 0;
 }
@@ -155,8 +159,8 @@ axi_search(device_t parent, struct cfdata *cf, const int *ldesc __unused,
 	aa->aa_irq = cf->cf_loc[AXICF_IRQ];
 	aa->aa_irqbase = cf->cf_loc[AXICF_IRQBASE];
 
-	if (config_match(parent, cf, aux) > 0)
-		config_attach(parent, cf, aux, axi_print);
+	if (config_probe(parent, cf, aux))
+		config_attach(parent, cf, aux, axi_print, CFARG_EOL);
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: seagate.c,v 1.74 2016/07/14 10:19:06 msaitoh Exp $	*/
+/*	$NetBSD: seagate.c,v 1.75 2021/04/24 23:36:55 thorpej Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seagate.c,v 1.74 2016/07/14 10:19:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seagate.c,v 1.75 2021/04/24 23:36:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -471,7 +471,7 @@ seaattach(device_t parent, device_t self, void *aux)
 	/*
 	 * ask the adapter what subunits are present
 	 */
-	config_found(self, &sea->sc_channel, scsiprint);
+	config_found(self, &sea->sc_channel, scsiprint, CFARG_EOL);
 }
 
 /*

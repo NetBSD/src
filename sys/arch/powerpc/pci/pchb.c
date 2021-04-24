@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.10 2020/07/06 09:34:17 rin Exp $	*/
+/*	$NetBSD: pchb.c,v 1.11 2021/04/24 23:36:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.10 2020/07/06 09:34:17 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.11 2021/04/24 23:36:46 thorpej Exp $");
 
 #include "agp.h"
 
@@ -285,7 +285,9 @@ pchbattach(device_t parent, device_t self, void *aux)
 	if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_AGP,
 			       NULL, NULL) != 0) {
 		apa.apa_pci_args = *pa;
-		config_found_ia(self, "agpbus", &apa, agpbusprint);
+		config_found(self, &apa, agpbusprint,
+		    CFARG_IATTR, "agpbus",
+		    CFARG_EOL);
 	}
 #endif /* NAGP */
 }

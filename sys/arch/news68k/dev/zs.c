@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.31 2011/11/20 15:38:00 tsutsui Exp $	*/
+/*	$NetBSD: zs.c,v 1.32 2021/04/24 23:36:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.31 2011/11/20 15:38:00 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.32 2021/04/24 23:36:44 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -254,7 +254,8 @@ zs_attach(device_t parent, device_t self, void *aux)
 		 * Look for a child driver for this channel.
 		 * The child attach will setup the hardware.
 		 */
-		if (!config_found(self, (void *)&zsc_args, zs_print)) {
+		if (!config_found(self, (void *)&zsc_args, zs_print,
+		    CFARG_EOL)) {
 			/* No sub-driver.  Just reset it. */
 			uint8_t reset = (channel == 0) ?
 				ZSWR9_A_RESET : ZSWR9_B_RESET;

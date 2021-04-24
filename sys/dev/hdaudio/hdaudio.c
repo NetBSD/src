@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio.c,v 1.13 2020/12/28 19:31:43 jmcneill Exp $ */
+/* $NetBSD: hdaudio.c,v 1.14 2021/04/24 23:36:54 thorpej Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.13 2020/12/28 19:31:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.14 2021/04/24 23:36:54 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -689,8 +689,10 @@ hdaudio_attach_fg(struct hdaudio_function_group *fg, prop_array_t config)
 
 	locs[0] = fg->fg_nid;
 
-	fg->fg_device = config_found_sm_loc(sc->sc_dev, "hdaudiobus",
-	    locs, args, hdaudio_config_print, config_stdsubmatch);
+	fg->fg_device = config_found(sc->sc_dev, args, hdaudio_config_print,
+	    CFARG_SUBMATCH, config_stdsubmatch,
+	    CFARG_LOCATORS, locs,
+	    CFARG_EOL);
 
 	prop_object_release(args);
 }
@@ -945,9 +947,6 @@ hdaudio_rescan(struct hdaudio_softc *sc, const char *ifattr, const int *locs)
 	struct hdaudio_codec *co;
 	struct hdaudio_function_group *fg;
 	unsigned int codec;
-
-	if (!ifattr_match(ifattr, "hdaudiobus"))
-		return 0;
 
 	for (codec = 0; codec < HDAUDIO_MAX_CODECS; codec++) {
 		co = &sc->sc_codec[codec];

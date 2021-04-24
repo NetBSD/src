@@ -1,4 +1,4 @@
-/* $NetBSD: macfb.c,v 1.21 2020/12/19 21:48:04 thorpej Exp $ */
+/* $NetBSD: macfb.c,v 1.22 2021/04/24 23:36:40 thorpej Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: macfb.c,v 1.21 2020/12/19 21:48:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: macfb.c,v 1.22 2021/04/24 23:36:40 thorpej Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "grf.h"
@@ -230,7 +230,7 @@ macfb_attach(device_t parent, device_t self, void *aux)
 	waa.accessops = &macfb_accessops;
 	waa.accesscookie = sc;
 
-	config_found(self, &waa, wsemuldisplaydevprint);
+	config_found(self, &waa, wsemuldisplaydevprint, CFARG_EOL);
 
 #if NGRF > 0
 	grf_attach(sc, device_unit(self));

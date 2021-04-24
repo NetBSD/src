@@ -1,4 +1,4 @@
-/*	$NetBSD: ewskbd.c,v 1.11 2020/11/21 17:09:34 thorpej Exp $	*/
+/*	$NetBSD: ewskbd.c,v 1.12 2021/04/24 23:36:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2005 Izumi Tsutsui.  All rights reserved.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ewskbd.c,v 1.11 2020/11/21 17:09:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ewskbd.c,v 1.12 2021/04/24 23:36:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -250,7 +250,8 @@ ewskbd_zsc_attach(device_t parent, device_t self, void *aux)
 	wskaa.keymap = &ews4800kbd_wskbd_keymapdata;
 	wskaa.accessops = &ewskbd_wskbd_accessops;
 	wskaa.accesscookie = cs;
-	sc->sc_dc->wskbddev = config_found(self, &wskaa, wskbddevprint);
+	sc->sc_dc->wskbddev = config_found(self, &wskaa, wskbddevprint,
+	    CFARG_EOL);
 }
 
 static int

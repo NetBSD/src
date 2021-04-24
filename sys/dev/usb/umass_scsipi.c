@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.c,v 1.66 2020/03/14 02:35:33 christos Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.67 2021/04/24 23:36:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.66 2020/03/14 02:35:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.67 2021/04/24 23:36:59 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -141,8 +141,9 @@ umass_scsi_attach(struct umass_softc *sc)
 	sc->sc_refcnt++;
 	mutex_exit(&sc->sc_lock);
 	scbus->base.sc_child =
-	    config_found_ia(sc->sc_dev, "scsi", &scbus->sc_channel,
-		scsiprint);
+	    config_found(sc->sc_dev, &scbus->sc_channel, scsiprint,
+			 CFARG_IATTR, "scsi",
+			 CFARG_EOL);
 	mutex_enter(&sc->sc_lock);
 	if (--sc->sc_refcnt < 0)
 		cv_broadcast(&sc->sc_detach_cv);
@@ -183,8 +184,9 @@ umass_atapi_attach(struct umass_softc *sc)
 	sc->sc_refcnt++;
 	mutex_exit(&sc->sc_lock);
 	scbus->base.sc_child =
-	    config_found_ia(sc->sc_dev, "atapi", &scbus->sc_channel,
-		atapiprint);
+	    config_found(sc->sc_dev, &scbus->sc_channel, atapiprint,
+			 CFARG_IATTR, "atapi",
+			 CFARG_EOL);
 	mutex_enter(&sc->sc_lock);
 	if (--sc->sc_refcnt < 0)
 		cv_broadcast(&sc->sc_detach_cv);

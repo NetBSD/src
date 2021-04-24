@@ -1,4 +1,4 @@
-/*	$NetBSD: mvpex.c,v 1.20 2020/07/07 03:38:49 thorpej Exp $	*/
+/*	$NetBSD: mvpex.c,v 1.21 2021/04/24 23:36:56 thorpej Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvpex.c,v 1.20 2020/07/07 03:38:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvpex.c,v 1.21 2021/04/24 23:36:56 thorpej Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -434,7 +434,7 @@ mvpex_pci_config(struct mvpex_softc *sc, bus_space_tag_t iot,
 	pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY;
 	pba.pba_bus = MVPEX_STAT_PEXBUSNUM(stat);
 	pba.pba_bridgetag = NULL;
-	config_found_ia(sc->sc_dev, "pcibus", &pba, NULL);
+	config_found(sc->sc_dev, &pba, NULL, CFARG_EOL);
 }
 
 

@@ -1,4 +1,4 @@
-/* $NetBSD: augpio.c,v 1.8 2015/06/27 03:33:18 matt Exp $ */
+/* $NetBSD: augpio.c,v 1.9 2021/04/24 23:36:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: augpio.c,v 1.8 2015/06/27 03:33:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: augpio.c,v 1.9 2021/04/24 23:36:42 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -148,7 +148,7 @@ augpio_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal(": Alchemy GPIO, %s\n", sc->sc_name);
 	aprint_naive("\n");
-	config_found_ia(self, "gpiobus", &gba, gpiobus_print);
+	config_found(self, &gba, gpiobus_print, CFARG_EOL);
 }
 
 int
