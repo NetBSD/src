@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.103.4.2 2021/04/02 22:17:44 thorpej Exp $	*/
+/*	$NetBSD: machfb.c,v 1.103.4.3 2021/04/24 18:23:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0,
-	"$NetBSD: machfb.c,v 1.103.4.2 2021/04/02 22:17:44 thorpej Exp $");
+	"$NetBSD: machfb.c,v 1.103.4.3 2021/04/24 18:23:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -785,7 +785,9 @@ mach64_attach(device_t parent, device_t self, void *aux)
 	aa.accessops = &sc->sc_accessops;
 	aa.accesscookie = &sc->vd;
 
-	config_found(self, &aa, wsemuldisplaydevprint, CFARG_EOL);
+	config_found(self, &aa, wsemuldisplaydevprint,
+	    CFARG_IATTR, "wsemuldisplaydev",
+	    CFARG_EOL);
 #if 0
 	/* XXX
 	 * turns out some firmware doesn't turn these back on when needed

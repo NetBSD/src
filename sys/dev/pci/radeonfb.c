@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.113.2.2 2021/04/02 22:17:44 thorpej Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.113.2.3 2021/04/24 18:23:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.113.2.2 2021/04/02 22:17:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.113.2.3 2021/04/24 18:23:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1013,7 +1013,9 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 		aa.accessops = &radeonfb_accessops;
 		aa.accesscookie = &dp->rd_vd;
 
-		config_found(sc->sc_dev, &aa, wsemuldisplaydevprint, CFARG_EOL);
+		config_found(sc->sc_dev, &aa, wsemuldisplaydevprint,
+		    CFARG_IATTR, "wsemuldisplaydev",
+		    CFARG_EOL);
 		
 		radeonfb_blank(dp, 0);
 
