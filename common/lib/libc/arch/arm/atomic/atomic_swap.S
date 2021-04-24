@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_swap.S,v 1.15 2021/04/24 20:29:04 skrll Exp $	*/
+/*	$NetBSD: atomic_swap.S,v 1.16 2021/04/24 20:34:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007,2012 The NetBSD Foundation, Inc.
@@ -15,7 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- *      
+ *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
