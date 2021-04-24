@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i-h5.dtsi,v 1.1 2018/01/28 18:31:15 jmcneill Exp $ */
+/* $NetBSD: sun50i-h5.dtsi,v 1.2 2021/04/24 13:01:35 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,6 +27,19 @@
  */
 
 #include "sun8i-h3.dtsi"
+
+/ {
+	soc {
+		crypto: crypto@1c15000 {
+			compatible = "allwinner,sun50i-h5-crypto";
+			reg = <0x01c15000 0x1000>;
+			interrupts = <GIC_SPI 94 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&ccu CLK_BUS_CE>, <&ccu CLK_CE>;
+			clock-names = "bus", "mod";
+			resets = <&ccu RST_BUS_CE>;
+		};
+	};
+};
 
 &rtp {
 	compatible = "allwinner,sun50i-h5-ts";
