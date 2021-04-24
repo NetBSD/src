@@ -1,5 +1,5 @@
 /* Definitions for AArch64 running NetBSD
-   Copyright (C) 2016-2017 Free Software Foundation, Inc.
+   Copyright (C) 2016-2020 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -38,32 +38,15 @@
 
 #define NETBSD_ENTRY_POINT "__start"
 
-#define NETBSD_TARGET_LINK_SPEC  "%{h*}			\
-   -X %{mbig-endian:-EB -m " TARGET_LINKER_BIG_EMULATION "} \
-   %{mlittle-endian:-EL -m " TARGET_LINKER_LITTLE_EMULATION "} \
-   %(netbsd_link_spec)"
-
-#if TARGET_FIX_ERR_A53_835769_DEFAULT
-#define CA53_ERR_835769_SPEC \
-  " %{!mno-fix-cortex-a53-835769:--fix-cortex-a53-835769}"
-#else
-#define CA53_ERR_835769_SPEC \
-  " %{mfix-cortex-a53-835769:--fix-cortex-a53-835769}"
-#endif
-
-#ifdef TARGET_FIX_ERR_A53_843419_DEFAULT
-#define CA53_ERR_843419_SPEC \
-  " %{!mno-fix-cortex-a53-843419:--fix-cortex-a53-843419}"
-#else
-#define CA53_ERR_843419_SPEC \
-  " %{mfix-cortex-a53-843419:--fix-cortex-a53-843419}"
-#endif
+#define NETBSD_TARGET_LINK_SPEC  "%{h*} "				\
+  "-X %{mbig-endian:-EB -m " TARGET_LINKER_BIG_EMULATION "} "		\
+  "%{mlittle-endian:-EL -m " TARGET_LINKER_LITTLE_EMULATION "} "	\
+  "%(netbsd_link_spec)"
 
 #undef  LINK_SPEC
-#define LINK_SPEC NETBSD_LINK_SPEC_ELF 		\
+#define LINK_SPEC NETBSD_LINK_SPEC_ELF		\
 		  NETBSD_TARGET_LINK_SPEC	\
-                  CA53_ERR_835769_SPEC		\
-                  CA53_ERR_843419_SPEC
+		  AARCH64_ERRATA_LINK_SPEC
 
 #undef TARGET_OS_CPP_BUILTINS
 #define TARGET_OS_CPP_BUILTINS()		\
@@ -75,23 +58,6 @@
 
 #undef SUBTARGET_CPP_SPEC
 #define SUBTARGET_CPP_SPEC NETBSD_CPP_SPEC
-
-#if 0
-#define TARGET_ASM_FILE_END file_end_indicate_exec_stack
-#endif
-
-#if 0
-/* Uninitialized common symbols in non-PIE executables, even with
-   strong definitions in dependent shared libraries, will resolve
-   to COPY relocated symbol in the executable.  See PR65780.  */
-#undef TARGET_BINDS_LOCAL_P
-#define TARGET_BINDS_LOCAL_P default_binds_local_p_2
-#endif
-
-#if 0
-#undef MCOUNT_NAME
-#define MCOUNT_NAME ".mcount"
-#endif
 
 #undef EXTRA_SPECS
 #define EXTRA_SPECS \
