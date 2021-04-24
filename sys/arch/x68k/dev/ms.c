@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.35 2021/02/07 16:13:56 tsutsui Exp $ */
+/*	$NetBSD: ms.c,v 1.36 2021/04/24 16:24:14 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.35 2021/02/07 16:13:56 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.36 2021/04/24 16:24:14 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -85,6 +85,16 @@ __KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.35 2021/02/07 16:13:56 tsutsui Exp $");
  * Mouse serial line is fixed at 4800 bps.
  */
 #define MS_BPS 4800
+
+/*
+ * Send mouse commands per MS_TICK.
+ */
+#ifndef HZ
+#define HZ		100
+#endif
+#define MS_TICK		2
+#define MS_TIMEOUT_SEC	5
+#define MS_TIMEOUT	((MS_TIMEOUT_SEC * HZ) / MS_TICK)
 
 /*
  * Mouse state.  A SHARP X1/X680x0 mouse is a fairly simple device,
@@ -258,7 +268,7 @@ msopen(dev_t dev, int flags, int mode, struct lwp *l)
 	ms->ms_nodata = 0;
 
 	/* start sequencer */
-	ms_modem(ms);
+	callout_reset(&ms->ms_modem_ch, MS_TICK, ms_modem, ms);
 
 	return 0;
 }
@@ -649,9 +659,9 @@ ms_modem(void *arg)
 
 	mutex_enter(&ms->ms_lock);
 
-	if (ms->ms_nodata++ > 250) { /* XXX */
-		log(LOG_ERR, "%s: no data for 5 secs. resetting.\n",
-		    device_xname(ms->ms_dev));
+	if (ms->ms_nodata++ > MS_TIMEOUT) {
+		log(LOG_ERR, "%s: no data for %d secs. resetting.\n",
+		    device_xname(ms->ms_dev), MS_TIMEOUT_SEC);
 		ms->ms_byteno = -1;
 		ms->ms_nodata = 0;
 		ms->ms_rts = 0;
@@ -670,5 +680,5 @@ ms_modem(void *arg)
 	}
 
 	mutex_exit(&ms->ms_lock);
-	callout_reset(&ms->ms_modem_ch, 2, ms_modem, ms);
+	callout_schedule(&ms->ms_modem_ch, MS_TICK);
 }
