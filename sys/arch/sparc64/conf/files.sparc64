@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.164 2021/03/04 20:17:00 palle Exp $
+#	$NetBSD: files.sparc64,v 1.165 2021/04/25 13:22:49 thorpej Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -67,7 +67,7 @@ file	arch/sparc64/dev/iommu.c		sbus | psycho | schizo | pyro | vpci
 
 include "dev/ata/files.ata"
 
-device ebus {[addr = -1]}: pcibus
+device ebus {[addr = -1]}
 attach ebus at pci
 file	arch/sparc64/dev/ebus.c			ebus
 attach ebus at mainbus with ebus_mainbus
