@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2020/04/04 01:34:30 christos Exp $
+#	$NetBSD: Makefile,v 1.34 2021/04/25 23:35:52 christos Exp $
 
 CPPFLAGS+=	-I${.CURDIR}/arch/${BINUTILS_MACHINE_ARCH} \
 		-I${DIST}/ld \
@@ -79,7 +79,8 @@ e${f}.c: ${DIST}/ld/genscripts.sh ${.CURDIR}/Makefile stringify.sed
     !empty(BINUTILS_MACHINE_ARCH:Maarch64*) || \
     !empty(BINUTILS_MACHINE_ARCH:Mearm*) || \
     !empty(BINUTILS_MACHINE_ARCH:Marm*) || \
-    !empty(BINUTILS_MACHINE_ARCH:Mmips64*)
+    !empty(BINUTILS_MACHINE_ARCH:Mmips64*) || \
+    !empty(BINUTILS_MACHINE_ARCH:Mmipsn64*)
 .  for e in x xbn xc xd xdc xdw xn xr xs xsc xsw xu xw
 .   if exists(ldscripts/${f}.${e})
 FILES+= ${f}.${e}
