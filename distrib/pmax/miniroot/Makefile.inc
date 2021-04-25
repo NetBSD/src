@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.25 2017/01/24 18:04:04 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.26 2021/04/25 23:40:05 christos Exp $
 
-.if ${MACHINE_ARCH} == "mips64el"
+.if !empty(MACHINE_ARCH:Mmips*64el)
 SFX=		64
 .endif
 

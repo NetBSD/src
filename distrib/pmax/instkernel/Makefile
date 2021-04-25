@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.44 2020/08/16 11:43:36 mrg Exp $
+#	$NetBSD: Makefile,v 1.45 2021/04/25 23:40:05 christos Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 .include <bsd.kernobj.mk>
 
-.if ${MACHINE_ARCH} == "mips64el"
+.if !empty(MACHINE_ARCH:Mmips*64el)
 SFX=		64
 .endif
 
