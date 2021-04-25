@@ -1,4 +1,4 @@
-/* $NetBSD: cgram.c,v 1.18 2021/04/22 14:57:36 wiz Exp $ */
+/* $NetBSD: cgram.c,v 1.19 2021/04/25 20:14:29 rillig Exp $ */
 
 /*-
  * Copyright (c) 2013, 2021 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.c,v 1.18 2021/04/22 14:57:36 wiz Exp $");
+__RCSID("$NetBSD: cgram.c,v 1.19 2021/04/25 20:14:29 rillig Exp $");
 #endif
 
 #include <assert.h>
@@ -216,7 +216,9 @@ char_at_cursor(void)
 	return lines.v[cursor_y].s[cursor_x];
 }
 
-static void getquote(FILE *f) {
+static void
+getquote(FILE *f)
+{
 	struct string line;
 	string_init(&line);
 
@@ -255,7 +257,7 @@ readfile(const char *name)
 	getquote(f);
 
 	if (fclose(f) != 0)
-		exit(1);
+		err(1, "%s", name);
 }
 
 
@@ -558,7 +560,7 @@ init(const char *filename)
 	stringarray_init(&lines);
 	stringarray_init(&sollines);
 	srandom((unsigned int)time(NULL));
-	if (filename) {
+	if (filename != NULL) {
 	    readfile(filename);
 	} else {
 	    readquote();
