@@ -1,5 +1,0 @@
-# DHCPv6 pool declaration in DHCPv4 config
-
-# DHCPv6 pool declaration must be in DHCPv6 config
-range6 2001::/64;
-

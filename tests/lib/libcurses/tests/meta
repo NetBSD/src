@@ -1,5 +1,0 @@
-include start
-call OK meta STDSCR $TRUE
-compare meta1.chk
-call OK meta STDSCR $FALSE
-compare meta2.chk

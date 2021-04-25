@@ -1,6 +1,0 @@
-# bad domain (label too long) option data
-
-option space foobar;
-option foobar.fmt-d code 1 = domain-name;
-option foobar.fmt-d
-    this-label-is-very-very-very-very-very-very-long-so-it-is-too-long.us;

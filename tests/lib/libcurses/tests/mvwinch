@@ -1,3 +1,0 @@
-include waddchstr
-call `\004a` mvwinch $win1 0 0
-call `\006e` mvwinch $win1 1 2

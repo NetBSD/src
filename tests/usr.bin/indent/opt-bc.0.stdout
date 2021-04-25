@@ -1,7 +1,0 @@
-/* $NetBSD: opt-bc.0.stdout,v 1.2 2021/03/06 19:30:44 rillig Exp $ */
-/* $FreeBSD$ */
-
-int		a,
-		b,
-		c;
-void		function_declaration(int a, int b, int c);

@@ -1,9 +1,0 @@
-# bad (tautology) class declaration config
-
-# superclass declaration
-class "constant" {
-    match "foo";
-}
-
-# subclass declaration
-subclass "constant" "bar";

@@ -1,4 +1,0 @@
-# bad (no hardware address) LLT server duid config
-
-# LLT server duid declaration
-server-duid llt token-ring 213982198;

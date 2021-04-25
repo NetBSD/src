@@ -1,8 +1,0 @@
-/* $NetBSD: token-form_feed.0.stdout,v 1.1 2021/03/12 00:13:06 rillig Exp $ */
-/* $FreeBSD$ */
-
-/*
- * Tests for form feeds, which is a control character (C99 5.2.1p3).
- */
-
-/* TODO: Add some code to be formatted. */

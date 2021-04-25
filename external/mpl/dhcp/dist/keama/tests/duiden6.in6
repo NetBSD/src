@@ -1,4 +1,0 @@
-# EN server duid config
-
-# EN server duid declaration
-server-duid en 2495 "enterprise-specific-identifier-1234";

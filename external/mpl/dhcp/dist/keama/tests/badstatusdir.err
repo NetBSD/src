@@ -1,7 +1,0 @@
-# Bad status directive
-
-option space foobar;
-option foobar.opt1 code 1 = text;
-
-# unknown/unknown does not make sense
-% option foobar.opt1 unknown unknown;

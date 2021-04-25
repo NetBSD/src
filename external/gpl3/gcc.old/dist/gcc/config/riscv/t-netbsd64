@@ -1,3 +1,0 @@
-MULTILIB_OPTIONS = march=rv64i/march=rv64g/march=rv32i/march=rv32g
-MULTILIB_DIRNAMES = 64 64 32 32
-MULTILIB_OSDIRNAMES = . . ../lib/rv32 ../lib/rv32

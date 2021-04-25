@@ -1,9 +1,0 @@
-# DHCPv6 prefix config
-
-# subnet declaration
-subnet6 2001::/64 {
-    # range declaration
-    option dhcp6.domain-search "example.com", "example.org";
-    default-lease-time 1800;
-    prefix6 2001:0:0:10:: 2001:0:0:1f:: / 64;
-}

@@ -1,5 +1,0 @@
-#	$NetBSD: shlib_version,v 1.2 2001/09/10 11:18:43 simonb Exp $
-#	Remember to update distrib/sets/lists/base/ad.m68k when changing
-#
-major=0
-minor=0

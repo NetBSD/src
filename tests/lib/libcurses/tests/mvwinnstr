@@ -1,7 +1,0 @@
-include window
-call OK waddstr $win1 "abcde"
-call2 2 "cd" mvwinnstr $win1 0 2 3
-call OK wmove $win1 2 3
-call OK waddstr $win1 "123"
-call2 4 " 123" mvwinnstr $win1 2 2 10
-call2 OK " 123" mvwinstr $win1 2 2

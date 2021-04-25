@@ -1,9 +1,0 @@
-/* $NetBSD: opt-ci.0,v 1.2 2021/03/06 21:27:39 rillig Exp $ */
-/* $FreeBSD$ */
-
-int
-sum(int a, int b)
-{
-	return a +
-			b;
-}

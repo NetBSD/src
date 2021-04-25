@@ -1,6 +1,0 @@
-include std_defines
-call OK slk_init 0
-call mainscr initscr
-check mainscr NON_NULL
-call OK refresh
-compare slk_init.chk

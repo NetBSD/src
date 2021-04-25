@@ -1,4 +1,0 @@
-syntax(2)
-test_suite('bind9')
-
-include('tests/Kyuafile')

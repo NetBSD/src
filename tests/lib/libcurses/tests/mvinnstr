@@ -1,5 +1,0 @@
-include addchstr
-call2 5 "cdefg" mvinnstr 0 2 6
-call OK mvaddstr 0 76 "123"
-call2 5 " 123 " mvinnstr 0 75 10
-call2 OK " 123 " mvinstr 0 75

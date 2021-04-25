@@ -1,6 +1,0 @@
-# bad (empty name)shared-network declaration config
-
-# shared-network declaration
-shared-network "" {
-
-}
