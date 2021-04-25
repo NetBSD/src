@@ -1,4 +1,4 @@
-/* $NetBSD: cgram.c,v 1.20 2021/04/25 20:19:19 rillig Exp $ */
+/* $NetBSD: cgram.c,v 1.21 2021/04/25 20:38:03 rillig Exp $ */
 
 /*-
  * Copyright (c) 2013, 2021 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.c,v 1.20 2021/04/25 20:19:19 rillig Exp $");
+__RCSID("$NetBSD: cgram.c,v 1.21 2021/04/25 20:38:03 rillig Exp $");
 #endif
 
 #include <assert.h>
@@ -46,31 +46,6 @@ __RCSID("$NetBSD: cgram.c,v 1.20 2021/04/25 20:19:19 rillig Exp $");
 
 #include "pathnames.h"
 
-////////////////////////////////////////////////////////////
-
-static char
-ch_toupper(char ch)
-{
-	return (char)toupper((unsigned char)ch);
-}
-
-static char
-ch_tolower(char ch)
-{
-	return (char)tolower((unsigned char)ch);
-}
-
-static bool
-ch_isalpha(char ch)
-{
-	return isalpha((unsigned char)ch) != 0;
-}
-
-static bool
-ch_islower(char ch)
-{
-	return islower((unsigned char)ch) != 0;
-}
 
 static bool
 ch_isspace(char ch)
@@ -79,9 +54,33 @@ ch_isspace(char ch)
 }
 
 static bool
+ch_islower(char ch)
+{
+	return ch >= 'a' && ch <= 'z';
+}
+
+static bool
 ch_isupper(char ch)
 {
-	return isupper((unsigned char)ch) != 0;
+	return ch >= 'A' && ch <= 'Z';
+}
+
+static bool
+ch_isalpha(char ch)
+{
+	return ch_islower(ch) || ch_isupper(ch);
+}
+
+static char
+ch_toupper(char ch)
+{
+	return ch_islower(ch) ? (char)(ch - 'a' + 'A') : ch;
+}
+
+static char
+ch_tolower(char ch)
+{
+	return ch_isupper(ch) ? (char)(ch - 'A' + 'a') : ch;
 }
 
 static int
