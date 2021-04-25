@@ -2570,6 +2570,13 @@ riscv*-*-netbsd*)			# NetBSD RISC-V
 	gas=yes
 	gcc_cv_initfini_array=yes
 	;;
+mipsn64*-*-netbsd*)			# NetBSD/mips64, either endian.
+	target_cpu_default="MASK_ABICALLS|MASK_FLOAT64|MASK_SOFT_FLOAT_ABI"
+	tm_file="elfos.h ${tm_file} mips/elf.h ${nbsd_tm_file} mips/netbsd.h mips/netbsd64.h"
+	tmake_file="${tmake_file} mips/t-netbsd64"
+	tm_defines="${tm_defines} MIPS_ABI_DEFAULT=ABI_64"
+	extra_options="${extra_options} netbsd.opt netbsd-elf.opt"
+	;;
 mips64*-*-netbsd*)			# NetBSD/mips64, either endian.
 	target_cpu_default="MASK_ABICALLS|MASK_FLOAT64|MASK_SOFT_FLOAT_ABI"
 	tm_file="elfos.h ${tm_file} mips/elf.h ${nbsd_tm_file} mips/netbsd.h mips/netbsd64.h"

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.50 2021/04/24 06:34:52 rin Exp $
+#	$NetBSD: Makefile.inc,v 1.51 2021/04/25 23:12:54 christos Exp $
 
 LIBGCC_MACHINE_ARCH?=${MACHINE_ARCH:S/earmv5/earm/}
 GCC_MACHINE_SUBDIR=${MACHINE_CPU:C/powerpc.*/rs6000/:C/x86_64/i386/}
@@ -69,7 +69,8 @@ LIB2FUNCS_ALL+= \
 .if ${LIBGCC_MACHINE_ARCH} != "coldfire" && \
     empty(LIBGCC_MACHINE_ARCH:Mearm*) && \
     empty(LIBGCC_MACHINE_ARCH:Maarch64*) && \
-    empty(LIBGCC_MACHINE_ARCH:Mmips64*)
+    empty(LIBGCC_MACHINE_ARCH:Mmips64*) && \
+    empty(LIBGCC_MACHINE_ARCH:Mmipsn64*)
 
 EXTRA_FUNC_SIZES=	sf df xf
 
