@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_linux.8,v 1.41 2021/04/24 07:12:17 nia Exp $
+.\"	$NetBSD: compat_linux.8,v 1.42 2021/04/25 05:52:22 nia Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 4, 2021
+.Dd April 25, 2021
 .Dt COMPAT_LINUX 8
 .Os
 .Sh NAME
@@ -193,19 +193,7 @@ but is available as a module.
 It must be added to
 .Xr modules.conf 5
 to be used.
-.Pp
-When using a
-.Dv MODULAR
-kernel (see
-.Xr module 7 ) ,
-binary compatibility is not activated automatically.
-To activate it, set the appropriate
-.Xr sysctl 8
-variables:
-.Bd -literal
-sysctl -w emul.linux.enabled=1
-sysctl -w emul.linux32.enabled=1
-.Ed
+It will not be loaded automatically.
 .Sh BUGS
 The information about Linux distributions will become outdated.
 .Pp
