@@ -1,4 +1,30 @@
-/*	$NetBSD: ofw_i2c_subr.c,v 1.1 2021/02/04 20:19:09 thorpej Exp $	*/
+/*	$NetBSD: ofw_i2c_subr.c,v 1.1.6.1 2021/04/25 22:16:05 thorpej Exp $	*/
+
+/*
+ * Copyright (c) 2021 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright 1998
@@ -34,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_i2c_subr.c,v 1.1 2021/02/04 20:19:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_i2c_subr.c,v 1.1.6.1 2021/04/25 22:16:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -44,66 +70,81 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_i2c_subr.c,v 1.1 2021/02/04 20:19:09 thorpej Exp
 #include <dev/i2c/i2cvar.h>
 
 /*
- * Iterate over the subtree of a i2c controller node.
- * Add all sub-devices into an array as part of the controller's
- * device properties.
- * This is used by the i2c bus attach code to do direct configuration.
+ * Standard routine for fetching an i2c device address, according
+ * to the standard OpenFirmware / Device Tree bindings.
  */
-void
-of_enter_i2c_devs(prop_dictionary_t props, int ofnode, size_t cell_size,
-    int addr_shift)
+static bool
+of_i2c_get_address(int node, uint32_t *addrp)
 {
-	int node, len;
-	char name[32];
-	uint64_t reg64;
-	uint32_t reg32;
-	uint64_t addr;
-	prop_array_t array = NULL;
-	prop_dictionary_t dev;
+	uint32_t reg;
 
-	for (node = OF_child(ofnode); node; node = OF_peer(node)) {
-		if (OF_getprop(node, "name", name, sizeof(name)) <= 0)
-			continue;
-		len = OF_getproplen(node, "reg");
-		addr = 0;
-		if (cell_size == 8 && len >= sizeof(reg64)) {
-			if (OF_getprop(node, "reg", &reg64, sizeof(reg64))
-			    < sizeof(reg64))
-				continue;
-			addr = be64toh(reg64);
-			/*
-			 * The i2c bus number (0 or 1) is encoded in bit 33
-			 * of the register, but we encode it in bit 8 of
-			 * i2c_addr_t.
-			 */
-			if (addr & 0x100000000)
-				addr = (addr & 0xff) | 0x100;
-		} else if (cell_size == 4 && len >= sizeof(reg32)) {
-			if (OF_getprop(node, "reg", &reg32, sizeof(reg32))
-			    < sizeof(reg32))
-				continue;
-			addr = be32toh(reg32);
-		} else {
+	if (of_getprop_uint32(node, "reg", &reg) == -1) {
+		return false;
+	}
+
+	*addrp = reg;
+	return true;
+}
+
+static int
+of_i2c_enumerate_devices(device_t dev, devhandle_t call_handle, void *v)
+{
+	return of_i2c_enumerate_devices_ext(dev, call_handle, v,
+	    of_i2c_get_address);
+}
+OF_DEVICE_CALL_REGISTER("i2c-enumerate-devices", of_i2c_enumerate_devices);
+
+int
+of_i2c_enumerate_devices_ext(device_t dev, devhandle_t call_handle, void *v,
+    bool (*get_address)(int, uint32_t *))
+{
+	struct i2c_enumerate_devices_args *args = v;
+	int i2c_node, node;
+	char name[32], compat_buf[32];
+	prop_dictionary_t props;
+	uint32_t addr;
+	char *clist;
+	int clist_size;
+	bool cbrv;
+
+	i2c_node = devhandle_to_of(call_handle);
+
+	for (node = OF_child(i2c_node); node != 0; node = OF_peer(node)) {
+		if (OF_getprop(node, "name", name, sizeof(name)) <= 0) {
 			continue;
 		}
-		addr >>= addr_shift;
-		if (addr == 0) continue;
+		if (!get_address(node, &addr)) {
+			continue;
+		}
 
-		if (array == NULL)
-			array = prop_array_create();
+		clist_size = OF_getproplen(node, "compatible");
+		clist = kmem_tmpbuf_alloc(clist_size,
+		    compat_buf, sizeof(compat_buf), KM_SLEEP);
+		if (OF_getprop(node, "compatible", clist, clist_size) <
+		    clist_size) {
+			kmem_tmpbuf_free(clist, clist_size, compat_buf);
+			continue;
+		}
+		props = prop_dictionary_create();
 
-		dev = prop_dictionary_create();
-		prop_dictionary_set_string(dev, "name", name);
-		prop_dictionary_set_uint32(dev, "addr", addr);
-		prop_dictionary_set_uint64(dev, "cookie", node);
-		prop_dictionary_set_uint32(dev, "cookietype", I2C_COOKIE_OF);
-		of_to_dataprop(dev, node, "compatible", "compatible");
-		prop_array_add(array, dev);
-		prop_object_release(dev);
+		args->ia->ia_addr = (i2c_addr_t)addr;
+		args->ia->ia_name = name;
+		args->ia->ia_clist = clist;
+		args->ia->ia_clist_size = clist_size;
+		args->ia->ia_prop = props;
+		args->ia->ia_devhandle = devhandle_from_of(node);
+		args->ia->ia_cookie = node;			/* XXX */
+		args->ia->ia_cookietype = I2C_COOKIE_OF;	/* XXX */
+
+		cbrv = args->callback(dev, args);
+
+		prop_object_release(props);
+		kmem_tmpbuf_free(clist, clist_size, compat_buf);
+
+		if (!cbrv) {
+			break;
+		}
 	}
 
-	if (array != NULL) {
-		prop_dictionary_set(props, "i2c-child-devices", array);
-		prop_object_release(array);
-	}
+	return 0;
 }
