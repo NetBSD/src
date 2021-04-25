@@ -1,4 +1,4 @@
-$NetBSD: README.gcc10,v 1.17 2021/04/23 22:53:03 mrg Exp $
+$NetBSD: README.gcc10,v 1.18 2021/04/25 08:01:54 mrg Exp $
 
 
 new stuff:
@@ -30,19 +30,19 @@ switched:	has port switched?  y (yes), n (no/ready), ? (not ready)
 
 architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf	switched
 ------------	-----	-------	------	----------	------------	----	---	--------
-aarch64		y	y	y	y		y		y	y	n
-aarch64eb	y	y	y	y		y		y	y	n
+aarch64		y	y	y	y		y		y	y	y
+aarch64eb	y	y	y	y		y		y	y	y
 alpha		y	y	y	y		y		y	y	y
 earmv4		y	y	y	y		y		y	?	n
 earmv4eb	y	b	y	y		y		?	?	?
 earmv5		y	b	y	y		y		y	y	n
 earmv5eb	y	b	y	y		y		?	?	?
-earmv5hf	y	b	y	y		y		?	?	?
+earmv5hf	y	y	y	y		y		?	?	?
 earmv5hfeb	y	b	y	y		y		?	?	?
-earmv6		y	b	y	y		y		?	?	?
-earmv6eb	y	b	y	y		y		?	?	?
-earmv6hf	y	b	y	y		y		?	?	?
-earmv6hfeb	y	b	y	y		y		?	?	?
+earmv6		y	b	y	y		y		y	?	?
+earmv6eb	y	b	y	y		y		y	?	?
+earmv6hf	y	y	y	y		y		y	?	?
+earmv6hfeb	y	b	y	y		y		y	?	?
 earmv7		y	b	y	y		y		?	?	?
 earmv7eb	y	b	y	y		y		?	?	?
 earmv7hf	y	y	y	y		y		y	y	n
@@ -54,10 +54,10 @@ m68000		y	b	y	y		n[1]		?	?	?
 m68k		y	y	y	y		y[9]		y	?	n
 mipseb		y	y	y	y		y		y	?	?
 mipsel		y	y	y	y		y		y	?	?
-mips64eb	y	y	y	y		y		y	?	?
+mips64eb	y	y	y	y		y		y	y	?
 mips64el	y	b	y	y		y		y	?	?
-powerpc		y	b	y	y		y		y	?	n
-powerpc64	y	b	y	y		y		N/A	N/A	n
+powerpc		y	b	y	y		y		y	y	y
+powerpc64	y	b	y	y		y		N/A	N/A	y
 sh3eb		y	b	y	y		y		?	?	?
 sh3el		y	y	y	y		y		y	y[7]	n
 sparc		y	y	y	y		y		y	y	y
