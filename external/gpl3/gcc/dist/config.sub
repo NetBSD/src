@@ -1191,6 +1191,7 @@ case $cpu-$vendor in
 			| mips | mipsbe | mipseb | mipsel | mipsle \
 			| mips16 \
 			| mips64 | mips64eb | mips64el \
+			| mipsn64 | mipsn64eb | mipsn64el \
 			| mips64octeon | mips64octeonel \
 			| mips64orion | mips64orionel \
 			| mips64r5900 | mips64r5900el \

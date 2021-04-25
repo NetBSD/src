@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2021/04/12 00:05:55 mrg Exp $
+#	$NetBSD: Makefile,v 1.16 2021/04/25 23:12:54 christos Exp $
 
 USE_SHLIBDIR=	yes
 REQUIRETOOLS=	yes
@@ -29,7 +29,7 @@ LIB2ADD_HACK+=	${GNUHOSTDIST}/gcc/config/floatunsidf.c \
 .endif
 
 # XXXGCC5 GCC 5.3 has all these in libgcc and we have them in libc.
-.if ${MACHINE_ARCH} == "mips64el" || ${MACHINE_ARCH} == "mips64eb"
+.if ${MACHINE_MIPS64}
 LIB2ADD_EDITED= ${G_LIB2ADD:T:Nfloatsisf.c:Nfloatunsisf.c:Nfloatsidf.c:Nfloatunsidf.c:Nfixsfsi.c:Nextendsfdf2.c:Naddsf3.c:Nmulsf3.c:Ndivsf3.c:Nadddf3.c:Nsubdf3.c:Nmuldf3.c:Ndivdf3.c:Nfixdfsi.c:S/.asm/.S/}
 .else
 LIB2ADD_EDITED=	${G_LIB2ADD:T:S/.asm/.S/}
