@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1245 2021/04/25 15:33:15 rin Exp $
+#	$NetBSD: bsd.own.mk,v 1.1246 2021/04/25 21:55:58 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -16,10 +16,14 @@ MAKECONF?=	/etc/mk.conf
 #
 MACHINE_CPU=	${MACHINE_ARCH:C/mips.*e[bl]/mips/:C/sh3e[bl]/sh3/:S/coldfire/m68k/:S/m68000/m68k/:C/e?arm.*/arm/:S/powerpc64/powerpc/:S/aarch64eb/aarch64/:S/or1knd/or1k/:C/riscv../riscv/}
 
-MACHINE_MIPS64= (${MACHINE_ARCH} == "mips64el" || \
-		 ${MACHINE_ARCH} == "mips64eb" || \
-		 ${MACHINE_ARCH} == "mipsn64el" || \
-		 ${MACHINE_ARCH} == "mipsn64eb")
+.if (${MACHINE_ARCH} == "mips64el" || \
+     ${MACHINE_ARCH} == "mips64eb" || \
+     ${MACHINE_ARCH} == "mipsn64el" || \
+     ${MACHINE_ARCH} == "mipsn64eb")
+MACHINE_MIPS64= 	1
+.else
+MACHINE_MIPS64= 	0
+.endif
 
 #
 # Subdirectory used below ${RELEASEDIR} when building a release
