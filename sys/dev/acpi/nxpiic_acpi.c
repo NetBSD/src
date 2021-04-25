@@ -1,4 +1,4 @@
-/* $NetBSD: nxpiic_acpi.c,v 1.4 2021/01/29 02:26:58 thorpej Exp $ */
+/* $NetBSD: nxpiic_acpi.c,v 1.4.6.1 2021/04/25 21:52:28 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nxpiic_acpi.c,v 1.4 2021/01/29 02:26:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nxpiic_acpi.c,v 1.4.6.1 2021/04/25 21:52:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -40,7 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: nxpiic_acpi.c,v 1.4 2021/01/29 02:26:58 thorpej Exp 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_intr.h>
-#include <dev/acpi/acpi_i2c.h>
 
 #include <dev/i2c/motoi2cvar.h>
 #include <dev/i2c/motoi2creg.h>

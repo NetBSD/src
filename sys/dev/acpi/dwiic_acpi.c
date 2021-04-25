@@ -1,4 +1,4 @@
-/* $NetBSD: dwiic_acpi.c,v 1.8 2021/04/24 23:36:52 thorpej Exp $ */
+/* $NetBSD: dwiic_acpi.c,v 1.8.2.1 2021/04/25 21:52:28 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwiic_acpi.c,v 1.8 2021/04/24 23:36:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwiic_acpi.c,v 1.8.2.1 2021/04/25 21:52:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -40,7 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: dwiic_acpi.c,v 1.8 2021/04/24 23:36:52 thorpej Exp $
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_intr.h>
-#include <dev/acpi/acpi_i2c.h>
 
 #include <dev/ic/dwiic_var.h>
 
