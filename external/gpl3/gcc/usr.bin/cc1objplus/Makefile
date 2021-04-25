@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2021/04/23 22:50:06 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2021/04/25 22:25:00 christos Exp $
 
 # XXX: Pull this (G_OBJCXX_OBJS) out with mknative-gcc.  Needs some
 # minor re-org of cc1plus and perhaps cc1obj.  G_CXX_AND_OBJCXX_OBJS
@@ -51,6 +51,9 @@ CHECKSUM_OBJS=	${BACKENDOBJ}/libbackend.a \
 
 .include "../Makefile.checksum"
 
+# XXX: like cc1plus
+CFLAGS+=-Wno-error=stack-protector
+
 COPTS.c-ada-spec.c+=			-Wno-stack-protector
 COPTS.c-attribs.c+=			-Wno-stack-protector
 COPTS.c-aux-info.c+=			-Wno-stack-protector
@@ -78,7 +81,7 @@ COPTS.cc1obj-checksum.c+=-O0
 COPTS.decl.c+=-O0
 .endif
 
-.if ${MACHINE_ARCH} == "mipseb" || ${MACHINE_ARCH} == "mipsel"
+.if ${MACHINE_MIPS64}
 COPTS.c-common.c+=-O3
 .endif
 
