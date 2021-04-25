@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.279 2021/01/24 07:36:54 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.280 2021/04/25 21:59:38 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -2662,7 +2662,7 @@ sparc_interrupt4m_bogus:
 	bnz,a	1f			!	splhigh();
 	 or	%l0, 0xf00, %l0		! } else
 
-	call	_C_LABEL(bogusintr)	!	strayintr(&intrframe)
+	call	_C_LABEL(bogusintr)	!	bogusintr(&intrframe)
 	 add	%sp, CCFSZ, %o0
 	/* all done: restore registers and go return */
 1:
