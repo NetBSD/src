@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/11/11 22:45:02 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2021/04/25 15:06:49 christos Exp $
 
 .include <bsd.init.mk>
 
@@ -101,7 +101,7 @@ INCS=	arm_acle.h \
 .  if ${MACHINE_CPU} == "aarch64"
 INCS+=	arm64intr.h
 .  endif
-.elif ${MACHINE_CPU} == "mips" || ${MACHINE_CPU} == "mips64"
+.elif ${MACHINE_CPU} == "mips"
 INCS=	msa.h
 .endif
 INCS+=	stdatomic.h
