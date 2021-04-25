@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.34 2021/04/25 00:29:52 lukem Exp $
+# $NetBSD: postinstall.in,v 1.35 2021/04/25 00:36:47 lukem Exp $
 #
 # Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1599,7 +1599,7 @@ select_obsolete_files()
 {
 	if $SOURCEMODE; then
 		${SED} -n -e "/obsolete/s@\.$1$2[[:space:]].*@\1@p" \
-		    ${SRC_DIR}/distrib/sets/lists/$3/mi
+		    "${SRC_DIR}/distrib/sets/lists/$3/mi"
 		return
 	fi
 
@@ -1610,9 +1610,9 @@ select_obsolete_files()
 	local obsolete_dir
 
 	if [ $3 = "etc" ] ;then
-		obsolete_dir=${SRC_DIR}/var/db/obsolete
+		obsolete_dir="${SRC_DIR}/var/db/obsolete"
 	else
-		obsolete_dir=${DEST_DIR}/var/db/obsolete
+		obsolete_dir="${DEST_DIR}/var/db/obsolete"
 	fi
 	${SED} -n -e "s@\.$1$2\$@\1@p" "${obsolete_dir}/$3"
 }
@@ -2397,7 +2397,7 @@ listarchsubdirs() {
 		echo "@ARCHSUBDIRS@"
 	else
 		${SED} -n -e '/ARCHDIR_SUBDIR/s/[[:space:]]//gp' \
-		    ${SRC_DIR}/compat/archdirs.mk
+		    "${SRC_DIR}/compat/archdirs.mk"
 	fi
 }
 
