@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/02/20 08:26:08 matt Exp $
+#	$NetBSD: Makefile,v 1.3 2021/04/25 23:40:05 christos Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -6,7 +6,7 @@
 RAMDISKDIR!=	cd ${.CURDIR}/../ramdisk && ${PRINTOBJDIR}
 RAMDISK=	${RAMDISKDIR}/ramdisk.fs
 
-.if ${MACHINE_ARCH} == "mips64el"
+.if !empty(MACHINE_ARCH:Mmips*64el)
 SFX=		64
 .endif
 
