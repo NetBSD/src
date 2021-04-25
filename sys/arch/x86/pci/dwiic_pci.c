@@ -1,4 +1,4 @@
-/* $NetBSD: dwiic_pci.c,v 1.4.2.1 2021/04/25 21:52:28 thorpej Exp $ */
+/* $NetBSD: dwiic_pci.c,v 1.4.2.2 2021/04/25 22:02:59 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwiic_pci.c,v 1.4.2.1 2021/04/25 21:52:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwiic_pci.c,v 1.4.2.2 2021/04/25 22:02:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,10 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: dwiic_pci.c,v 1.4.2.1 2021/04/25 21:52:28 thorpej Ex
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
-
-#include <dev/acpi/acpivar.h>
-#include <dev/acpi/acpi_pci.h>
-#include <dev/acpi/acpi_util.h>
 
 #include <dev/ic/dwiic_var.h>
 #include <arch/x86/pci/lpssreg.h>
@@ -61,7 +57,6 @@ struct pci_dwiic_softc {
 	struct dwiic_softc	sc_dwiic;
 	pci_chipset_tag_t	sc_pc;
 	pcitag_t		sc_ptag;
-	struct acpi_devnode	*sc_acpinode;
 };
 
 static uint32_t
@@ -164,19 +159,11 @@ pci_dwiic_attach(device_t parent, device_t self, void *aux)
 	lpss_write(sc, LPSS_REMAP_HI,
 	    pci_conf_read(sc->sc_pc, sc->sc_ptag, PCI_BAR0 + 0x4));
 
-	sc->sc_acpinode = acpi_pcidev_find(0 /*XXX segment*/,
-	    pa->pa_bus, pa->pa_device, pa->pa_function);
-
-	if (sc->sc_acpinode) {
-		sc->sc_dwiic.sc_iba.iba_child_devices = 
-		    acpi_enter_i2c_devs(NULL, sc->sc_acpinode);
-	} else {
-		aprint_verbose_dev(self, "no matching ACPI node\n");
-	}
-
 	dwiic_attach(&sc->sc_dwiic);
 
-	config_found(self, &sc->sc_dwiic.sc_iba, iicbus_print, CFARG_EOL);
+	config_found(self, &sc->sc_dwiic.sc_iba, iicbus_print,
+	    CFARG_DEVHANDLE, device_handle(self),
+	    CFARG_EOL);
 
 	pmf_device_register(self, dwiic_suspend, dwiic_resume);
 
