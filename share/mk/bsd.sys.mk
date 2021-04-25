@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.304 2020/11/09 16:15:05 christos Exp $
+#	$NetBSD: bsd.sys.mk,v 1.305 2021/04/25 14:32:20 christos Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -197,10 +197,12 @@ COPTS+=	${${ACTIVE_CC} == "gcc":? --param ssp-buffer-size=1 :}
 .if ${MACHINE_CPU} != "sh3"
 COPTS+=		${${ACTIVE_CC} == "gcc":? -msoft-float :}
 FOPTS+=		-msoft-float
+AFLAGS+=	-msoft-float
 .endif
 .elif ${MACHINE_ARCH} == "coldfire"
 COPTS+=		-mhard-float
 FOPTS+=		-mhard-float
+AFLAGS+=	-mhard-float
 .endif
 
 #.if !empty(MACHINE_ARCH:Mearmv7*)
@@ -220,7 +222,7 @@ CFLAGS+=	-Wa,-Av8plus
 .endif
 
 .if !defined(NOGCCERROR)
-.if (${MACHINE_ARCH} == "mips64el") || (${MACHINE_ARCH} == "mips64eb")
+.if ${MACHINE_MIPS64}
 CPUFLAGS+=	-Wa,--fatal-warnings
 .endif
 .endif
@@ -229,8 +231,7 @@ CPUFLAGS+=	-Wa,--fatal-warnings
 #CFLAGS+=	-mips64 -mtune=sb1
 #.endif
 
-#.if (${MACHINE_ARCH} == "mips64el" || ${MACHINE_ARCH} == "mips64eb") && \
-#    (defined(MKPIC) && ${MKPIC} == "no")
+#.if ${MACHINE_MIPS64} && defined(MKPIC) && ${MKPIC} == "no"
 #CPUFLAGS+=	-mno-abicalls -fno-PIC
 #.endif
 CFLAGS+=	${CPUFLAGS}
