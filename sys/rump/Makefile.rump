@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.131 2021/04/13 22:23:42 christos Exp $
+#	$NetBSD: Makefile.rump,v 1.132 2021/04/25 15:16:56 christos Exp $
 #
 
 .if !defined(_RUMP_MK)
@@ -33,7 +33,7 @@ CFLAGS+=    ${${ACTIVE_CC} == "clang":? -fno-delete-null-pointer-checks :}
 # Define baseline cpu for mips ports, required for
 # rumpcomp_sync_icache() hypercall.
 .if !empty(MACHINE_ARCH:Mmips*)
-.if !empty(MACHINE_ARCH:Mmips64*)
+.if ${MACHINE_MIPS64}
 CPPFLAGS+=	-DMIPS64=1
 .else
 CPPFLAGS+=	-DMIPS1=1
