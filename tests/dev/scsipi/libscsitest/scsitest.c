@@ -1,4 +1,4 @@
-/*	$NetBSD: scsitest.c,v 1.3 2019/02/06 09:16:49 mrg Exp $	*/
+/*	$NetBSD: scsitest.c,v 1.4 2021/04/25 05:33:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsitest.c,v 1.3 2019/02/06 09:16:49 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsitest.c,v 1.4 2021/04/25 05:33:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -255,5 +255,7 @@ scsitest_attach(device_t parent, device_t self, void *aux)
 	sc->sc_channel.chan_flags = SCSIPI_CHAN_NOSETTLE;
 	sc->sc_channel.chan_adapter = &sc->sc_adapter;
 
-	config_found_ia(self, "scsi", &sc->sc_channel, scsiprint);
+	config_found(self, &sc->sc_channel, scsiprint,
+	    CFARG_IATTR, "scsi",
+	    CFARG_EOL);
 }
