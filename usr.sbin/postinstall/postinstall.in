@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.37 2021/04/25 01:44:55 lukem Exp $
+# $NetBSD: postinstall.in,v 1.38 2021/04/25 06:21:37 lukem Exp $
 #
 # Copyright (c) 2002-2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -2576,18 +2576,18 @@ _USAGE_
 list()
 {
 	echo "Default set of items (to apply if no items are provided by user):"
-	echo "  Item          Description"
-	echo "  ----          -----------"
+	echo " Item                 Description"
+	echo " ----                 -----------"
 	for i in ${defaultitems}; do
 		eval desc=\"\${desc_${i}}\"
-		printf "  %-12s  %s\n" "${i}" "${desc}"
+		printf " %-20s %s\n" "${i}" "${desc}"
 	done
 	echo "Items disabled by default (must be requested explicitly):"
-	echo "  Item          Description"
-	echo "  ----          -----------"
+	echo " Item                 Description"
+	echo " ----                 -----------"
 	for i in ${otheritems}; do
 		eval desc=\"\${desc_${i}}\"
-		printf "  %-12s  %s\n" "${i}" "${desc}"
+		printf " %-20s %s\n" "${i}" "${desc}"
 	done
 
 }
