@@ -1,4 +1,4 @@
-/*	$NetBSD: sun8i_crypto.c,v 1.14.2.2 2020/05/18 18:45:40 martin Exp $	*/
+/*	$NetBSD: sun8i_crypto.c,v 1.14.2.3 2021/04/25 11:13:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.14.2.2 2020/05/18 18:45:40 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.14.2.3 2021/04/25 11:13:03 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -209,6 +209,7 @@ CFATTACH_DECL_NEW(sun8i_crypto, sizeof(struct sun8i_crypto_softc),
 
 static const struct of_compat_data compat_data[] = {
 	{"allwinner,sun50i-a64-crypto", 0},
+	{"allwinner,sun50i-h5-crypto", 0},
 	{NULL}
 };
 
