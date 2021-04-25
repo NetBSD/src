@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.36 2021/04/25 01:15:39 lukem Exp $
+# $NetBSD: postinstall.in,v 1.37 2021/04/25 01:44:55 lukem Exp $
 #
 # Copyright (c) 2002-2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -590,7 +590,8 @@ exclude()
 # find all the target symlinks of shared libaries and exclude them
 # from consideration for removal
 #
-exclude_libs() {
+exclude_libs()
+{
 	local target="$(ls -l -d lib*.so.* 2> /dev/null \
 	    | ${AWK} '{ print $11; }' \
 	    | ${SED} -e 's@.*/@@' | ${SORT} -u)"
@@ -808,9 +809,170 @@ find_makedev()
 #	items
 #	-----
 #
+# NOTE: Keep these items sorted, except for obsolete* which are listed last.
+#
 
 #
-#	Bluetooth
+#	atf
+#
+
+handle_atf_user()
+{
+	local op="$1"
+	local failed=0
+
+	local conf="${DEST_DIR}/etc/atf/common.conf"
+	if grep '[^#]*unprivileged-user[ \t]*=.*_atf' "${conf}" >/dev/null
+	then
+		if [ "$1" = "fix" ]; then
+			${SED} -e \
+			    "/[^#]*unprivileged-user[\ t]*=/s/_atf/_tests/" \
+			    "${conf}" >"${conf}.new"
+			failed=$(( ${failed} + $? ))
+			mv "${conf}.new" "${conf}"
+			failed=$(( ${failed} + $? ))
+			msg "Set unprivileged-user=_tests in ${conf}"
+		else
+			msg "unprivileged-user=_atf in ${conf} should be" \
+			    "unprivileged-user=_tests"
+			failed=1
+		fi
+	fi
+
+	return ${failed}
+}
+
+additem atf "install missing atf configuration files and validate them"
+do_atf()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_atf fix|check"
+	op="$1"
+	failed=0
+
+	# Ensure atf configuration files are in place.
+	if find_file_in_dirlist NetBSD.conf "NetBSD.conf" \
+	    "${SRC_DIR}/external/bsd/atf/etc/atf" \
+	    "${SRC_DIR}/etc/atf"; then
+			# ${dir} is set by find_file_in_dirlist()
+		populate_dir "${op}" true "${dir}" "${DEST_DIR}/etc/atf" 644 \
+		    NetBSD.conf common.conf || failed=1
+	else
+		failed=1
+	fi
+	if find_file_in_dirlist atf-run.hooks "atf-run.hooks" \
+	    "${SRC_DIR}/external/bsd/atf/dist/tools/sample" \
+	    "${SRC_DIR}/etc/atf"; then
+			# ${dir} is set by find_file_in_dirlist()
+		populate_dir "${op}" true "${dir}" "${DEST_DIR}/etc/atf" 644 \
+		    atf-run.hooks || failed=1
+	else
+		failed=1
+	fi
+
+	# Validate the _atf to _tests user/group renaming.
+	if [ -f "${DEST_DIR}/etc/atf/common.conf" ]; then
+		handle_atf_user "${op}" || failed=1
+	else
+		failed=1
+	fi
+
+	return ${failed}
+}
+
+
+#
+#	autofsconfig
+#
+
+additem autofsconfig "automounter configuration files"
+do_autofsconfig()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_autofsconfig fix|check"
+	local autofs_files="
+include_ldap
+include_nis
+special_hosts
+special_media
+special_noauto
+special_null
+"
+	op="$1"
+	failed=0
+	if [ "$op" = "fix" ]; then
+		mkdir -p "${DEST_DIR}/etc/autofs"
+	fi
+	failed=$(( ${failed} + $? ))
+	populate_dir "$op" false "${SRC_DIR}/etc" \
+	    "${DEST_DIR}/etc" \
+	    644 \
+	    auto_master
+	failed=$(( ${failed} + $? ))
+	populate_dir "$op" false "${SRC_DIR}/etc/autofs" \
+	    "${DEST_DIR}/etc/autofs" \
+	    644 \
+	    ${autofs_files}
+	return ${failed}
+}
+
+
+#
+#	blocklist
+#
+
+fixblock()
+{
+	local op="$1"
+	local target="${DEST_DIR}$2"
+
+	if [ ! -f "${target}" ]; then
+		continue
+	fi
+
+	if ${GREP} '[bB]lack' "${target}" > /dev/null; then
+		if [ "$1" = "check" ]; then
+			msg "Fix old configuration file(s)."
+			return 1
+		else
+			local p=$(${STAT} -f %Lp "${target}")
+			chmod u+w "${target}" || return 1
+			if [ "$2" = "/etc/npf.conf" ]; then
+				${SED} -i -e 's/"blacklistd"/"blocklistd"/g' "${target}"
+			else
+				${SED} -i -e 's/\([bB]\)lacklist/\1locklist/g' "${target}"
+			fi
+			chmod "${p}" "${target}"
+		fi
+	fi
+}
+
+additem blocklist "rename old files to blocklist"
+do_blocklist()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_blocklist fix|check"
+	local op="$1"
+
+	# if we are actually using blocklistd
+	for i in /var/db/blacklist.db /etc/blacklistd.conf; do
+		local old="${DEST_DIR}${i}"
+		if [ ! -f "${old}" ]; then
+			continue
+		elif [ "$1" = "check" ]; then
+			msg "Rename old file(s)."
+			return 1
+		fi
+		local new=$(echo "${old}" | ${SED} s/black/block/)
+		mv "${old}" "${new}" || return 1
+	done
+
+	for i in /etc/rc.conf /etc/npf.conf /etc/blocklistd.conf \
+	    /etc/defaults/rc.conf; do
+		fixblock "${op}" "${i}" || return 1
+	done
+}
+
+
+#
+#	bluetooth
 #
 
 additem bluetooth "Bluetooth configuration is up to date"
@@ -844,62 +1006,72 @@ do_bluetooth()
 	return ${failed}
 }
 
-fixblock() {
-	local op="$1"
-	local target="${DEST_DIR}$2"
-
-	if [ ! -f "${target}" ]; then
-		continue
-	fi
-
-	if ${GREP} '[bB]lack' "${target}" > /dev/null; then
-		if [ "$1" = "check" ]; then
-			msg "Fix old configuration file(s)."
-			return 1
-		else
-			local p=$(${STAT} -f %Lp "${target}")
-			chmod u+w "${target}" || return 1
-			if [ "$2" = "/etc/npf.conf" ]; then
-				${SED} -i -e 's/"blacklistd"/"blocklistd"/g' "${target}"
-			else
-				${SED} -i -e 's/\([bB]\)lacklist/\1locklist/g' "${target}"
-			fi
-			chmod "${p}" "${target}"
-		fi
-	fi
-}
 
 #
-#	blocklist update
+#	catpages
 #
-additem blocklist "rename old files to blocklist"
-do_blocklist()
+
+obsolete_catpages()
 {
-	[ -n "$1" ] || err 3 "USAGE: do_blocklist fix|check"
-	local op="$1"
-
-	# if we are actually using blocklistd
-	for i in /var/db/blacklist.db /etc/blacklistd.conf; do
-		local old="${DEST_DIR}${i}"
-		if [ ! -f "${old}" ]; then
-			continue
-		elif [ "$1" = "check" ]; then
-			msg "Rename old file(s)."
-			return 1
+	basedir="$2"
+	section="$3"
+	mandir="${basedir}/man${section}"
+	catdir="${basedir}/cat${section}"
+	test -d "$mandir" || return 0
+	test -d "$catdir" || return 0
+	(cd "$mandir" && find . -type f) | {
+	failed=0
+	while read manpage; do
+		manpage="${manpage#./}"
+		case "$manpage" in
+		*.Z)
+			catname="$catdir/${manpage%.*.Z}.0"
+			;;
+		*.gz)
+			catname="$catdir/${manpage%.*.gz}.0"
+			;;
+		*)
+			catname="$catdir/${manpage%.*}.0"
+			;;
+		esac
+		test -e "$catname" -a "$catname" -ot "$mandir/$manpage" || continue
+		if [ "$1" = "fix" ]; then
+			rm "$catname"
+			failed=$(( ${failed} + $? ))
+			msg "Removed obsolete cat page $catname"
+		else
+			msg "Obsolete cat page $catname"
+			failed=1
 		fi
-		local new=$(echo "${old}" | ${SED} s/black/block/)
-		mv "${old}" "${new}" || return 1
 	done
-
-	for i in /etc/rc.conf /etc/npf.conf /etc/blocklistd.conf \
-	    /etc/defaults/rc.conf; do
-		fixblock "${op}" "${i}" || return 1
-	done
+	exit $failed
+	}
 }
+
+additem catpages "remove outdated cat pages"
+do_catpages()
+{
+	failed=0
+	for manbase in /usr/share/man /usr/X11R6/man /usr/X11R7/man; do
+		for sec in 1 2 3 4 5 6 7 8 9; do
+			obsolete_catpages "$1" "${DEST_DIR}${manbase}" "${sec}"
+			failed=$(( ${failed} + $? ))
+			if [ "$1" = "fix" ]; then
+				rmdir "${DEST_DIR}${manbase}/cat${sec}"/* \
+					2>/dev/null
+				rmdir "${DEST_DIR}${manbase}/cat${sec}" \
+					2>/dev/null
+			fi
+		done
+	done
+	return $failed
+}
+
 
 #
 #	ddbonpanic
 #
+
 additem ddbonpanic "verify ddb.onpanic is configured in sysctl.conf"
 do_ddbonpanic()
 {
@@ -926,9 +1098,11 @@ do_ddbonpanic()
 	return ${result}
 }
 
+
 #
 #	defaults
 #
+
 additem defaults "/etc/defaults/ being up to date"
 do_defaults()
 {
@@ -981,9 +1155,11 @@ do_defaults()
 	return ${failed}
 }
 
+
 #
 #	dhcpcd
 #
+
 additem dhcpcd "dhcpcd configuration is up to date"
 do_dhcpcd()
 {
@@ -1062,9 +1238,11 @@ do_dhcpcd()
 	return ${failed}
 }
 
+
 #
 #	dhcpcdrundir
 #
+
 additem dhcpcdrundir "accidentaly created /@RUNDIR@ does not exist"
 do_dhcpcdrundir()
 {
@@ -1086,9 +1264,11 @@ do_dhcpcdrundir()
 	return ${failed}
 }
 
+
 #
 #	envsys
 #
+
 additem envsys "envsys configuration is up to date"
 do_envsys()
 {
@@ -1113,43 +1293,11 @@ do_envsys()
 	return ${failed}
 }
 
-#
-#	autofs config files
-#
-additem autofsconfig "automounter configuration files"
-do_autofsconfig()
-{
-	[ -n "$1" ] || err 3 "USAGE: do_autofsconfig fix|check"
-	local autofs_files="
-include_ldap
-include_nis
-special_hosts
-special_media
-special_noauto
-special_null
-"
-	op="$1"
-	failed=0
-	if [ "$op" = "fix" ]; then
-		mkdir -p "${DEST_DIR}/etc/autofs"
-	fi
-	failed=$(( ${failed} + $? ))
-	populate_dir "$op" false "${SRC_DIR}/etc" \
-	    "${DEST_DIR}/etc" \
-	    644 \
-	    auto_master
-	failed=$(( ${failed} + $? ))
-	populate_dir "$op" false "${SRC_DIR}/etc/autofs" \
-	    "${DEST_DIR}/etc/autofs" \
-	    644 \
-	    ${autofs_files}
-	return ${failed}
-}
-
 
 #
-#	X11 fontconfig
+#	fontconfig
 #
+
 additem fontconfig "X11 font configuration is up to date"
 do_fontconfig()
 {
@@ -1250,9 +1398,11 @@ do_fontconfig()
 	return ${failed}
 }
 
+
 #
 #	gid
 #
+
 additem gid "required groups in /etc/group"
 do_gid()
 {
@@ -1265,9 +1415,11 @@ do_gid()
 	    _unbound _nsd nvmm _dhcpcd
 }
 
+
 #
 #	gpio
 #
+
 additem gpio "gpio configuration is up to date"
 do_gpio()
 {
@@ -1282,9 +1434,11 @@ do_gpio()
 	return ${failed}
 }
 
+
 #
 #	hosts
 #
+
 additem hosts "/etc/hosts being up to date"
 do_hosts()
 {
@@ -1300,9 +1454,11 @@ do_hosts()
 	return $?
 }
 
+
 #
 #	iscsi
 #
+
 additem iscsi "/etc/iscsi is populated"
 do_iscsi()
 {
@@ -1315,9 +1471,40 @@ do_iscsi()
 	return $?
 }
 
+
+#
+#	mailerconf
+#
+
+adddisableditem mailerconf "update /etc/mailer.conf after sendmail removal"
+do_mailerconf()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_mailterconf fix|check"
+	op="$1"
+
+	failed=0
+	mta_path="$(${AWK} '/^sendmail[ \t]/{print$2}' \
+		"${DEST_DIR}/etc/mailer.conf")"
+	old_sendmail_path="/usr/libexec/sendmail/sendmail"
+	if [ "${mta_path}" = "${old_sendmail_path}" ]; then
+	    if [ "$op" = check ]; then
+		msg "mailer.conf points to obsolete ${old_sendmail_path}"
+		failed=1;
+	    else
+		populate_dir "${op}" false \
+		"${SRC_DIR}/etc" "${DEST_DIR}/etc" 644 mailer.conf
+		failed=$?
+	    fi
+	fi
+
+	return ${failed}
+}
+
+
 #
 #	makedev
 #
+
 additem makedev "/dev/MAKEDEV being up to date"
 do_makedev()
 {
@@ -1351,9 +1538,40 @@ do_makedev()
 	return ${failed}
 }
 
+
+#
+#	man.conf
+#
+
+additem manconf "check for a mandoc usage in /etc/man.conf"
+do_manconf()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_manconf fix|check"
+	op="$1"
+	failed=0
+
+	[ -f "${DEST_DIR}/etc/man.conf" ] || return 0
+	if ${GREP} -w "mandoc" "${DEST_DIR}/etc/man.conf" >/dev/null 2>&1;
+	then
+		failed=0;
+	else
+		failed=1
+		notfixed=""
+		if [ "${op}" = "fix" ]; then
+			notfixed="${NOT_FIXED}"
+		fi
+		msg "The file /etc/man.conf has not been adapted to mandoc usage; you"
+		msg "probably want to copy a new version over. ${notfixed}"
+	fi
+
+	return ${failed}
+}
+
+
 #
 #	motd
 #
+
 additem motd "contents of motd"
 do_motd()
 {
@@ -1391,9 +1609,11 @@ do_motd()
 	return ${result}
 }
 
+
 #
 #	mtree
 #
+
 additem mtree "/etc/mtree/ being up to date"
 do_mtree()
 {
@@ -1420,9 +1640,11 @@ do_mtree()
 	return ${failed}
 }
 
+
 #
 #	named
 #
+
 additem named "named configuration update"
 do_named()
 {
@@ -1438,9 +1660,11 @@ do_named()
 		root.cache
 }
 
+
 #
 #	pam
 #
+
 additem pam "/etc/pam.d is populated"
 do_pam()
 {
@@ -1459,9 +1683,11 @@ do_pam()
 	return ${failed}
 }
 
+
 #
 #	periodic
 #
+
 additem periodic "/etc/{daily,weekly,monthly,security} being up to date"
 do_periodic()
 {
@@ -1471,9 +1697,11 @@ do_periodic()
 		daily weekly monthly security
 }
 
+
 #
 #	pf
 #
+
 additem pf "pf configuration being up to date"
 do_pf()
 {
@@ -1496,9 +1724,103 @@ do_pf()
 	return ${failed}
 }
 
+
+#
+#	ptyfsoldnodes
+#
+
+additem ptyfsoldnodes "remove legacy device nodes when using ptyfs"
+do_ptyfsoldnodes()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_ptyfsoldnodes fix|check"
+	_ptyfs_op="$1"
+
+	# Check whether ptyfs is in use
+	failed=0;
+	if ! ${GREP} -E "^ptyfs" "${DEST_DIR}/etc/fstab" > /dev/null; then
+		msg "ptyfs is not in use"
+		return 0
+	fi
+
+	if [ ! -e "${DEST_DIR}/dev/pts" ]; then
+		msg "ptyfs is not properly configured: missing /dev/pts"
+		return 1
+	fi
+
+	# Find the device major numbers for the pty master and slave
+	# devices, by parsing the output from "MAKEDEV -s pty0".
+	#
+	# Output from MAKEDEV looks like this:
+	# ./ttyp0 type=char device=netbsd,5,0 mode=666 gid=0 uid=0
+	# ./ptyp0 type=char device=netbsd,6,0 mode=666 gid=0 uid=0
+	#
+	# Output from awk, used in the eval statement, looks like this:
+	# maj_ptym=6; maj_ptys=5;
+	#
+	find_makedev
+	eval "$(
+	    ${HOST_SH} "${MAKEDEV_DIR}/MAKEDEV" -s pty0 2>/dev/null \
+	    | ${AWK} '\
+	    BEGIN { before_re = ".*device=[a-zA-Z]*,"; after_re = ",.*"; }
+	    /ptyp0/ { maj_ptym = gensub(before_re, "", 1, $0);
+		      maj_ptym = gensub(after_re, "", 1, maj_ptym); }
+	    /ttyp0/ { maj_ptys = gensub(before_re, "", 1, $0);
+		      maj_ptys = gensub(after_re, "", 1, maj_ptys); }
+	    END { print "maj_ptym=" maj_ptym "; maj_ptys=" maj_ptys ";"; }
+	    '
+	    )"
+	#msg "Major numbers are maj_ptym=${maj_ptym} maj_ptys=${maj_ptys}"
+	if [ -z "$maj_ptym" ] || [ -z "$maj_ptys" ]; then
+		msg "Cannot find device major numbers for pty master and slave"
+		return 1
+	fi
+
+	# look for /dev/[pt]ty[p-zP-T][0-9a-zA-Z], and check that they
+	# have the expected device major numbers.  ttyv* is typically not a
+	# pty device, but we check it anyway.
+	#
+	# The "for d1" loop is intended to avoid overflowing ARG_MAX;
+	# otherwise we could have used a single glob pattern.
+	#
+	# If there are no files that match a particular pattern,
+	# then stat prints something like:
+	#    stat: /dev/[pt]tyx?: lstat: No such file or directory
+	# and we ignore it.  XXX: We also ignore other error messages.
+	#
+	_ptyfs_tmp="$(mktemp /tmp/postinstall.ptyfs.XXXXXXXX)"
+	for d1 in p q r s t u v w x y z P Q R S T; do
+		${STAT} -f "%Hr %N" "${DEST_DIR}/dev/"[pt]ty${d1}? 2>&1
+	done \
+	| while read -r major node ; do
+		case "$major" in
+		${maj_ptym}|${maj_ptys}) echo "$node" ;;
+		esac
+	done >"${_ptyfs_tmp}"
+
+	_desc="legacy device node"
+	while read node; do
+		if [ "${_ptyfs_op}" = "check" ]; then
+			msg "Remove ${_desc} ${node}"
+			failed=1
+		else # "fix"
+			if rm "${node}"; then
+				msg "Removed ${_desc} ${node}"
+			else
+				warn "Failed to remove ${_desc} ${node}"
+				failed=1
+			fi
+		fi
+	done < "${_ptyfs_tmp}"
+	rm "${_ptyfs_tmp}"
+
+	return ${failed}
+}
+
+
 #
 #	pwd_mkdb
 #
+
 additem pwd_mkdb "passwd database version"
 do_pwd_mkdb()
 {
@@ -1534,6 +1856,7 @@ do_pwd_mkdb()
 
 	return ${failed}
 }
+
 
 #
 #	rc
@@ -1716,9 +2039,11 @@ do_rc()
 	return ${failed}
 }
 
+
 #
 #	sendmail
 #
+
 adddisableditem sendmail "remove obsolete sendmail configuration files and scripts"
 do_sendmail()
 {
@@ -1749,36 +2074,11 @@ do_sendmail()
 	return ${failed}
 }
 
-#
-#	mailerconf
-#
-adddisableditem mailerconf "update /etc/mailer.conf after sendmail removal"
-do_mailerconf()
-{
-	[ -n "$1" ] || err 3 "USAGE: do_mailterconf fix|check"
-	op="$1"
-
-	failed=0
-	mta_path="$(${AWK} '/^sendmail[ \t]/{print$2}' \
-		"${DEST_DIR}/etc/mailer.conf")"
-	old_sendmail_path="/usr/libexec/sendmail/sendmail"
-	if [ "${mta_path}" = "${old_sendmail_path}" ]; then
-	    if [ "$op" = check ]; then
-		msg "mailer.conf points to obsolete ${old_sendmail_path}"
-		failed=1;
-	    else
-		populate_dir "${op}" false \
-		"${SRC_DIR}/etc" "${DEST_DIR}/etc" 644 mailer.conf
-		failed=$?
-	    fi
-	fi
-
-	return ${failed}
-}
 
 #
 #	ssh
 #
+
 additem ssh "ssh configuration update"
 do_ssh()
 {
@@ -1870,9 +2170,99 @@ do_ssh()
 	return ${failed}
 }
 
+
+#
+#	tcpdumpchroot
+#
+
+additem tcpdumpchroot "remove /var/chroot/tcpdump/etc/protocols"
+do_tcpdumpchroot()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_tcpdumpchroot fix|check"
+
+	failed=0;
+	if [ -r "${DEST_DIR}/var/chroot/tcpdump/etc/protocols" ]; then
+		if [ "$1" = "fix" ]; then
+			rm "${DEST_DIR}/var/chroot/tcpdump/etc/protocols"
+			failed=$(( ${failed} + $? ))
+			rmdir "${DEST_DIR}/var/chroot/tcpdump/etc"
+			failed=$(( ${failed} + $? ))
+		else
+			failed=1
+		fi
+	fi
+	return ${failed}
+}
+
+
+#
+#	uid
+#
+
+additem uid "required users in /etc/master.passwd"
+do_uid()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_uid fix|check"
+
+	check_ids "$1" users "${DEST_DIR}/etc/master.passwd" \
+	    "${SRC_DIR}/etc/master.passwd" 12 \
+	    postfix SKIP named ntpd sshd SKIP _pflogd _rwhod SKIP _proxy \
+	    _timedc _sdpd _httpd _mdnsd _tests _tcpdump _tss SKIP _rtadvd \
+	    SKIP _unbound _nsd SKIP _dhcpcd
+}
+
+
+#
+#	varrwho
+#
+
+additem varrwho "required ownership of files in /var/rwho"
+do_varrwho()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_varrwho fix|check"
+
+	contents_owner "$1" "${DEST_DIR}/var/rwho" _rwhod _rwhod
+}
+
+
+#
+#	varshm
+#
+
+additem varshm "check for a tmpfs mounted on /var/shm"
+do_varshm()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_varshm fix|check"
+	op="$1"
+	failed=0
+
+	[ -f "${DEST_DIR}/etc/fstab" ] || return 0
+	if ${GREP} -E "^var_shm_symlink" "${DEST_DIR}/etc/rc.conf" >/dev/null 2>&1;
+	then
+		failed=0;
+	elif ${GREP} -w "/var/shm" "${DEST_DIR}/etc/fstab" >/dev/null 2>&1;
+	then
+		failed=0;
+	else
+		if [ "${op}" = "check" ]; then
+			failed=1
+			msg "No /var/shm mount found in ${DEST_DIR}/etc/fstab"
+		elif [ "${op}" = "fix" ]; then
+			printf '\ntmpfs\t/var/shm\ttmpfs\trw,-m1777,-sram%%25\n' \
+				>> "${DEST_DIR}/etc/fstab"
+			msg "Added tmpfs with 25% ram limit as /var/shm"
+
+		fi
+	fi
+
+	return ${failed}
+}
+
+
 #
 #	wscons
 #
+
 additem wscons "wscons configuration file update"
 do_wscons()
 {
@@ -1897,9 +2287,11 @@ do_wscons()
 	return ${failed}
 }
 
+
 #
-#	X11
+#	x11
 #
+
 additem x11 "x11 configuration update"
 do_x11()
 {
@@ -1961,6 +2353,7 @@ do_x11()
 	return ${failed}
 }
 
+
 #
 #	xkb
 #
@@ -1970,6 +2363,7 @@ do_x11()
 # or at least adding that one file (which we may be able to do if X11SRCDIR
 # is available).
 #
+
 additem xkb "clean up for xkbdata to xkeyboard-config upgrade"
 do_xkb()
 {
@@ -2026,336 +2420,12 @@ ${pcpath} was a directory, should be a file.
 	return $failed
 }
 
-#
-#	uid
-#
-additem uid "required users in /etc/master.passwd"
-do_uid()
-{
-	[ -n "$1" ] || err 3 "USAGE: do_uid fix|check"
-
-	check_ids "$1" users "${DEST_DIR}/etc/master.passwd" \
-	    "${SRC_DIR}/etc/master.passwd" 12 \
-	    postfix SKIP named ntpd sshd SKIP _pflogd _rwhod SKIP _proxy \
-	    _timedc _sdpd _httpd _mdnsd _tests _tcpdump _tss SKIP _rtadvd \
-	    SKIP _unbound _nsd SKIP _dhcpcd
-}
-
-
-#
-#	varrwho
-#
-additem varrwho "required ownership of files in /var/rwho"
-do_varrwho()
-{
-	[ -n "$1" ] || err 3 "USAGE: do_varrwho fix|check"
-
-	contents_owner "$1" "${DEST_DIR}/var/rwho" _rwhod _rwhod
-}
-
-
-#
-#	tcpdumpchroot
-#
-additem tcpdumpchroot "remove /var/chroot/tcpdump/etc/protocols"
-do_tcpdumpchroot()
-{
-	[ -n "$1" ] || err 3 "USAGE: do_tcpdumpchroot fix|check"
-
-	failed=0;
-	if [ -r "${DEST_DIR}/var/chroot/tcpdump/etc/protocols" ]; then
-		if [ "$1" = "fix" ]; then
-			rm "${DEST_DIR}/var/chroot/tcpdump/etc/protocols"
-			failed=$(( ${failed} + $? ))
-			rmdir "${DEST_DIR}/var/chroot/tcpdump/etc"
-			failed=$(( ${failed} + $? ))
-		else
-			failed=1
-		fi
-	fi
-	return ${failed}
-}
-
-
-#
-#	atf
-#
-additem atf "install missing atf configuration files and validate them"
-do_atf()
-{
-	[ -n "$1" ] || err 3 "USAGE: do_atf fix|check"
-	op="$1"
-	failed=0
-
-	# Ensure atf configuration files are in place.
-	if find_file_in_dirlist NetBSD.conf "NetBSD.conf" \
-	    "${SRC_DIR}/external/bsd/atf/etc/atf" \
-	    "${SRC_DIR}/etc/atf"; then
-			# ${dir} is set by find_file_in_dirlist()
-		populate_dir "${op}" true "${dir}" "${DEST_DIR}/etc/atf" 644 \
-		    NetBSD.conf common.conf || failed=1
-	else
-		failed=1
-	fi
-	if find_file_in_dirlist atf-run.hooks "atf-run.hooks" \
-	    "${SRC_DIR}/external/bsd/atf/dist/tools/sample" \
-	    "${SRC_DIR}/etc/atf"; then
-			# ${dir} is set by find_file_in_dirlist()
-		populate_dir "${op}" true "${dir}" "${DEST_DIR}/etc/atf" 644 \
-		    atf-run.hooks || failed=1
-	else
-		failed=1
-	fi
-
-	# Validate the _atf to _tests user/group renaming.
-	if [ -f "${DEST_DIR}/etc/atf/common.conf" ]; then
-		handle_atf_user "${op}" || failed=1
-	else
-		failed=1
-	fi
-
-	return ${failed}
-}
-
-handle_atf_user()
-{
-	local op="$1"
-	local failed=0
-
-	local conf="${DEST_DIR}/etc/atf/common.conf"
-	if grep '[^#]*unprivileged-user[ \t]*=.*_atf' "${conf}" >/dev/null
-	then
-		if [ "$1" = "fix" ]; then
-			${SED} -e \
-			    "/[^#]*unprivileged-user[\ t]*=/s/_atf/_tests/" \
-			    "${conf}" >"${conf}.new"
-			failed=$(( ${failed} + $? ))
-			mv "${conf}.new" "${conf}"
-			failed=$(( ${failed} + $? ))
-			msg "Set unprivileged-user=_tests in ${conf}"
-		else
-			msg "unprivileged-user=_atf in ${conf} should be" \
-			    "unprivileged-user=_tests"
-			failed=1
-		fi
-	fi
-
-	return ${failed}
-}
-
-#
-#	catpages
-#
-obsolete_catpages()
-{
-	basedir="$2"
-	section="$3"
-	mandir="${basedir}/man${section}"
-	catdir="${basedir}/cat${section}"
-	test -d "$mandir" || return 0
-	test -d "$catdir" || return 0
-	(cd "$mandir" && find . -type f) | {
-	failed=0
-	while read manpage; do
-		manpage="${manpage#./}"
-		case "$manpage" in
-		*.Z)
-			catname="$catdir/${manpage%.*.Z}.0"
-			;;
-		*.gz)
-			catname="$catdir/${manpage%.*.gz}.0"
-			;;
-		*)
-			catname="$catdir/${manpage%.*}.0"
-			;;
-		esac
-		test -e "$catname" -a "$catname" -ot "$mandir/$manpage" || continue
-		if [ "$1" = "fix" ]; then
-			rm "$catname"
-			failed=$(( ${failed} + $? ))
-			msg "Removed obsolete cat page $catname"
-		else
-			msg "Obsolete cat page $catname"
-			failed=1
-		fi
-	done
-	exit $failed
-	}
-}
-
-additem catpages "remove outdated cat pages"
-do_catpages()
-{
-	failed=0
-	for manbase in /usr/share/man /usr/X11R6/man /usr/X11R7/man; do
-		for sec in 1 2 3 4 5 6 7 8 9; do
-			obsolete_catpages "$1" "${DEST_DIR}${manbase}" "${sec}"
-			failed=$(( ${failed} + $? ))
-			if [ "$1" = "fix" ]; then
-				rmdir "${DEST_DIR}${manbase}/cat${sec}"/* \
-					2>/dev/null
-				rmdir "${DEST_DIR}${manbase}/cat${sec}" \
-					2>/dev/null
-			fi
-		done
-	done
-	return $failed
-}
-
-#
-#	man.conf
-#
-additem manconf "check for a mandoc usage in /etc/man.conf"
-do_manconf()
-{
-	[ -n "$1" ] || err 3 "USAGE: do_manconf fix|check"
-	op="$1"
-	failed=0
-
-	[ -f "${DEST_DIR}/etc/man.conf" ] || return 0
-	if ${GREP} -w "mandoc" "${DEST_DIR}/etc/man.conf" >/dev/null 2>&1;
-	then
-		failed=0;
-	else
-		failed=1
-		notfixed=""
-		if [ "${op}" = "fix" ]; then
-			notfixed="${NOT_FIXED}"
-		fi
-		msg "The file /etc/man.conf has not been adapted to mandoc usage; you"
-		msg "probably want to copy a new version over. ${notfixed}"
-	fi
-
-	return ${failed}
-}
-
-
-#
-#	ptyfsoldnodes
-#
-additem ptyfsoldnodes "remove legacy device nodes when using ptyfs"
-do_ptyfsoldnodes()
-{
-	[ -n "$1" ] || err 3 "USAGE: do_ptyfsoldnodes fix|check"
-	_ptyfs_op="$1"
-
-	# Check whether ptyfs is in use
-	failed=0;
-	if ! ${GREP} -E "^ptyfs" "${DEST_DIR}/etc/fstab" > /dev/null; then
-		msg "ptyfs is not in use"
-		return 0
-	fi
-
-	if [ ! -e "${DEST_DIR}/dev/pts" ]; then
-		msg "ptyfs is not properly configured: missing /dev/pts"
-		return 1
-	fi
-
-	# Find the device major numbers for the pty master and slave
-	# devices, by parsing the output from "MAKEDEV -s pty0".
-	#
-	# Output from MAKEDEV looks like this:
-	# ./ttyp0 type=char device=netbsd,5,0 mode=666 gid=0 uid=0
-	# ./ptyp0 type=char device=netbsd,6,0 mode=666 gid=0 uid=0
-	#
-	# Output from awk, used in the eval statement, looks like this:
-	# maj_ptym=6; maj_ptys=5;
-	#
-	find_makedev
-	eval "$(
-	    ${HOST_SH} "${MAKEDEV_DIR}/MAKEDEV" -s pty0 2>/dev/null \
-	    | ${AWK} '\
-	    BEGIN { before_re = ".*device=[a-zA-Z]*,"; after_re = ",.*"; }
-	    /ptyp0/ { maj_ptym = gensub(before_re, "", 1, $0);
-		      maj_ptym = gensub(after_re, "", 1, maj_ptym); }
-	    /ttyp0/ { maj_ptys = gensub(before_re, "", 1, $0);
-		      maj_ptys = gensub(after_re, "", 1, maj_ptys); }
-	    END { print "maj_ptym=" maj_ptym "; maj_ptys=" maj_ptys ";"; }
-	    '
-	    )"
-	#msg "Major numbers are maj_ptym=${maj_ptym} maj_ptys=${maj_ptys}"
-	if [ -z "$maj_ptym" ] || [ -z "$maj_ptys" ]; then
-		msg "Cannot find device major numbers for pty master and slave"
-		return 1
-	fi
-
-	# look for /dev/[pt]ty[p-zP-T][0-9a-zA-Z], and check that they
-	# have the expected device major numbers.  ttyv* is typically not a
-	# pty device, but we check it anyway.
-	#
-	# The "for d1" loop is intended to avoid overflowing ARG_MAX;
-	# otherwise we could have used a single glob pattern.
-	#
-	# If there are no files that match a particular pattern,
-	# then stat prints something like:
-	#    stat: /dev/[pt]tyx?: lstat: No such file or directory
-	# and we ignore it.  XXX: We also ignore other error messages.
-	#
-	_ptyfs_tmp="$(mktemp /tmp/postinstall.ptyfs.XXXXXXXX)"
-	for d1 in p q r s t u v w x y z P Q R S T; do
-		${STAT} -f "%Hr %N" "${DEST_DIR}/dev/"[pt]ty${d1}? 2>&1
-	done \
-	| while read -r major node ; do
-		case "$major" in
-		${maj_ptym}|${maj_ptys}) echo "$node" ;;
-		esac
-	done >"${_ptyfs_tmp}"
-
-	_desc="legacy device node"
-	while read node; do
-		if [ "${_ptyfs_op}" = "check" ]; then
-			msg "Remove ${_desc} ${node}"
-			failed=1
-		else # "fix"
-			if rm "${node}"; then
-				msg "Removed ${_desc} ${node}"
-			else
-				warn "Failed to remove ${_desc} ${node}"
-				failed=1
-			fi
-		fi
-	done < "${_ptyfs_tmp}"
-	rm "${_ptyfs_tmp}"
-
-	return ${failed}
-}
-
-
-#
-#	varshm
-#
-additem varshm "check for a tmpfs mounted on /var/shm"
-do_varshm()
-{
-	[ -n "$1" ] || err 3 "USAGE: do_varshm fix|check"
-	op="$1"
-	failed=0
-
-	[ -f "${DEST_DIR}/etc/fstab" ] || return 0
-	if ${GREP} -E "^var_shm_symlink" "${DEST_DIR}/etc/rc.conf" >/dev/null 2>&1;
-	then
-		failed=0;
-	elif ${GREP} -w "/var/shm" "${DEST_DIR}/etc/fstab" >/dev/null 2>&1;
-	then
-		failed=0;
-	else
-		if [ "${op}" = "check" ]; then
-			failed=1
-			msg "No /var/shm mount found in ${DEST_DIR}/etc/fstab"
-		elif [ "${op}" = "fix" ]; then
-			printf '\ntmpfs\t/var/shm\ttmpfs\trw,-m1777,-sram%%25\n' \
-				>> "${DEST_DIR}/etc/fstab"
-			msg "Added tmpfs with 25% ram limit as /var/shm"
-
-		fi
-	fi
-
-	return ${failed}
-}
 
 #
 #	obsolete_stand
+#	obsolete_stand_debug
 #
+
 obsolete_stand_internal()
 {
 	local prefix="$1"
@@ -2392,7 +2462,15 @@ do_obsolete_stand_debug()
 	return $?
 }
 
-listarchsubdirs() {
+
+#
+#	obsolete
+#
+# NOTE: This item is last to allow other items to move obsolete files.
+#
+
+listarchsubdirs()
+{
 	if ! $SOURCEMODE; then
 		echo "@ARCHSUBDIRS@"
 	else
@@ -2401,8 +2479,8 @@ listarchsubdirs() {
 	fi
 }
 
-
-getarchsubdirs() {
+getarchsubdirs()
+{
 	local m
 	case ${MACHINE_ARCH} in
 	*arm*|*aarch64*)	m=arm;;
@@ -2415,7 +2493,8 @@ getarchsubdirs() {
 	done | ${SORT} -u | ${SED} -n -e "/=${m}/s@.*=${m}/\(.*\)@\1@p"
 }
 
-getcompatlibdirs() {
+getcompatlibdirs()
+{
 	for i in $(getarchsubdirs); do
 		if [ -d "${DEST_DIR}/usr/lib/$i" ]; then
 			echo /usr/lib/$i
@@ -2423,11 +2502,6 @@ getcompatlibdirs() {
 	done
 }
 
-#
-#	obsolete
-#
-# NOTE: This item is last to allow other items to move obsolete files.
-#
 additem obsolete "remove obsolete file sets and minor libraries"
 do_obsolete()
 {
@@ -2452,6 +2526,7 @@ do_obsolete()
 
 	return ${failed}
 }
+
 
 #
 #	end of items
