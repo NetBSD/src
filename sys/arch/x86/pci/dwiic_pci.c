@@ -1,4 +1,4 @@
-/* $NetBSD: dwiic_pci.c,v 1.4 2021/04/24 23:36:51 thorpej Exp $ */
+/* $NetBSD: dwiic_pci.c,v 1.4.2.1 2021/04/25 21:52:28 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwiic_pci.c,v 1.4 2021/04/24 23:36:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwiic_pci.c,v 1.4.2.1 2021/04/25 21:52:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: dwiic_pci.c,v 1.4 2021/04/24 23:36:51 thorpej Exp $"
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_pci.h>
 #include <dev/acpi/acpi_util.h>
-#include <dev/acpi/acpi_i2c.h>
 
 #include <dev/ic/dwiic_var.h>
 #include <arch/x86/pci/lpssreg.h>
