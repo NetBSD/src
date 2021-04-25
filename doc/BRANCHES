@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.358 2021/04/25 01:01:09 thorpej Exp $
+#	$NetBSD: BRANCHES,v 1.359 2021/04/25 18:16:25 thorpej Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -750,6 +750,16 @@ Notes:		Normal futex operataions pass the test suite, but there are
 		futex operations with respect to Linux compatibility.
 		Also includes implementations of eventfd and timerfd, as
 		well as some additional improvements to COMPAT_LINUX{,32}.
+
+Branch:		thorpej-i2c-spi-conf
+Description:	Improve device tree-based I2C and SPI enumeration.
+Status:		Active
+Start Date:	Sun April 25, 2021
+End Date:
+Base Tag:	thorpej-i2c-spi-conf-base
+Maintainer:	Jason Thorpe <thorpej@netbsd.org>
+Scope:		src/sys
+Notes:
 
 Branch:  	wrstuden-fixsa
 Description:	Fix a number of issues present with Scheduler Activations.
