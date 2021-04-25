@@ -1,6 +1,8 @@
-# $NetBSD: Makefile.inc,v 1.3 2015/04/22 20:10:56 pooka Exp $
+# $NetBSD: Makefile.inc,v 1.4 2021/04/25 15:12:02 christos Exp $
 
+.if empty(MACHINE_ARCH:Mmipsn64*)
 CPPFLAGS+=	-DARCH_ELFSIZE=32
+.endif
 
 .PATH:	${RUMPTOP}/librump/rumpkern/arch/generic
 SRCS+=	rump_generic_abi.c
