@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.25 2020/08/15 05:03:06 simonb Exp $
+#	$NetBSD: Makefile.inc,v 1.26 2021/04/25 23:40:52 christos Exp $
 #
 #	etc.evbmips/Makefile.inc -- evbmips-specific etc Makefile targets
 #
@@ -15,12 +15,12 @@ BUILD_KERNELS=		INSTALL_CI20 INSTALL_OMSAL400 INSTALL_MALTA
 
 KERNEL_SETS+=		P4032 P5064 P6032
 
-.elif ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el"
+.elif ${MACHINE_MIPS64}
 KERNEL_SETS=		MALTA32 MALTA64 XLSATX32 XLSATX64
 BUILD_KERNELS=		INSTALL_MALTA32 INSTALL_MALTA64
 BUILD_KERNELS+=		INSTALL_XLSATX32 INSTALL_XLSATX64
 
-. if ${MACHINE_ARCH} == "mips64el"
+. if !empty(MACHINE_ARCH:Mmips*64el)
 KERNEL_SETS+=		P5064-64
 KERNEL_SETS+=		LOONGSON
 BUILD_KERNELS+=		INSTALL_LOONGSON
@@ -36,7 +36,7 @@ BUILD_KERNELS=		INSTALL_MALTA
 .endif
 
 # SBMIPS has a kernel for all targets
-KERNEL_SETS+=		SBMIPS${MACHINE_ARCH:S/mips//:C/e[lb]//}
+KERNEL_SETS+=		SBMIPS${MACHINE_ARCH:S/mipsn//:S/mips//:C/e[lb]//}
 
 # Support for mkimage
 MKIMAGE= 	${NETBSDSRCDIR}/distrib/utils/embedded/mkimage
@@ -68,7 +68,7 @@ __mkimage: .USE
             -S ${NETBSDSRCDIR} -B ${IMAGEENDIAN} ${MKI_OPTS.${.TARGET}} \
             ${IMAGE.dir}/${.TARGET:S/smp_//}.img.gz
 
-.if ${MACHINE_ARCH} == "mips64eb"
+.if !empty(MACHINE_ARCH:Mmips*64eb)
 smp_octeon: __mkimage
 MKI_OPTS.smp_octeon=	-K ${IMAGE.kern}
 SNAP_MD_POST_DEPS+=	smp_octeon
