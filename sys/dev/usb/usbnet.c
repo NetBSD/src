@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.40 2021/03/01 17:41:44 jakllsch Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.41 2021/04/25 05:15:20 rin Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.40 2021/03/01 17:41:44 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.41 2021/04/25 05:15:20 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -478,7 +478,7 @@ usbnet_start_locked(struct ifnet *ifp)
 	struct mbuf *m;
 	unsigned length;
 	bool done_transmit = false;
-	int idx;
+	int idx, count;
 
 	USBNETHIST_CALLARGS("%jd: tx_cnt %jd list_cnt %jd link %jd",
 	    unp->unp_number, cd->uncd_tx_cnt, un->un_tx_list_cnt,
@@ -500,6 +500,7 @@ usbnet_start_locked(struct ifnet *ifp)
 	}
 
 	idx = cd->uncd_tx_prod;
+	count = 0;
 	while (cd->uncd_tx_cnt < un->un_tx_list_cnt) {
 		IFQ_POLL(&ifp->if_snd, m);
 		if (m == NULL) {
@@ -547,6 +548,7 @@ usbnet_start_locked(struct ifnet *ifp)
 
 		idx = (idx + 1) % un->un_tx_list_cnt;
 		cd->uncd_tx_cnt++;
+		count++;
 	}
 	cd->uncd_tx_prod = idx;
 
@@ -558,6 +560,9 @@ usbnet_start_locked(struct ifnet *ifp)
 	 */
 	if (done_transmit)
 		unp->unp_timer = 5;
+
+	if (count != 0)
+		rnd_add_uint32(&unp->unp_rndsrc, count);
 }
 
 static void
