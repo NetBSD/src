@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.357 2021/04/03 21:36:03 thorpej Exp $
+#	$NetBSD: BRANCHES,v 1.358 2021/04/25 01:01:09 thorpej Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -724,11 +724,11 @@ Notes:		No longer active due to the lack of time. If you plan to
 		More info at: http://www.tahi.org/
 
 Branch:		thorpej-cfargs
-Description:	Clean up hwo arguments are passed to various autoconfiguration
+Description:	Clean up how arguments are passed to various autoconfiguration
 		routines.
-Status:		Active
+Status:		Merged
 Start Date:	Sat March 20 2021
-End Date:
+End Date:	Sat April 24 2021
 Base Tag:	thorpej-cfargs-base
 Maintainer:	Jason Thorpe <thorpej@netbsd.org>
 Scope:		src/sys
