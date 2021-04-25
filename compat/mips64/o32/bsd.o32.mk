@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.o32.mk,v 1.15 2021/04/25 15:18:23 christos Exp $
+#	$NetBSD: bsd.o32.mk,v 1.16 2021/04/25 18:44:04 christos Exp $
 
 .if !empty(MACHINE_ARCH:M*eb)
 LD+=		-m elf32btsmip
@@ -12,6 +12,7 @@ LIBC_MACHINE_ARCH=	${MACHINE_ARCH:S/mipsn/mips/:S/64//}
 LIBGCC_MACHINE_ARCH=	${LIBC_MACHINE_ARCH}
 GOMP_MACHINE_ARCH=	${LIBC_MACHINE_ARCH}
 XORG_MACHINE_ARCH=	${LIBC_MACHINE_ARCH}
+BFD_MACHINE_ARCH=	${LIBC_MACHINE_ARCH}
 
 COPTS+=		-mabi=32 -march=mips3
 CPUFLAGS+=	-mabi=32 -march=mips3
