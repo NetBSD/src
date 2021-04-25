@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.44 2020/06/12 14:12:20 roy Exp $
+#	$NetBSD: Makefile,v 1.45 2021/04/25 23:40:52 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -9,7 +9,7 @@ EXTRA_DIST_FILES+=	NetBSD.dist.Xorg
 .endif
 
 # Derived from MACHINE_CPU, but keeping 32/64bit for most.
-MTREE_MACHINE_ARCH=${MACHINE_ARCH:C/mipse[bl]/mips/:C/mips64e[bl]/mips64/:C/sh3e[bl]/sh3/:S/coldfire/m68k/:S/m68000/m68k/:C/arm.*/arm/:C/earm.*/arm/:S/earm/arm/:S/aarch64eb/aarch64/:S/or1knd/or1k/}
+MTREE_MACHINE_ARCH=${MACHINE_ARCH:C/mipse[bl]/mips/:C/mipsn?64e[bl]/mips64/:C/sh3e[bl]/sh3/:S/coldfire/m68k/:S/m68000/m68k/:C/e?arm.*/arm/:S/aarch64eb/aarch64/:S/or1knd/or1k/}
 
 # The compat specific files
 
