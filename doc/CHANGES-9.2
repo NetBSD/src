@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.68 2021/04/22 10:08:46 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.69 2021/04/25 11:15:14 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -2961,4 +2961,17 @@ external/cddl/osnet/dist/uts/common/fs/zfs/arc.c 1.20
 
 	zfs: prevent blocking l2arc_feed_thread() forever.
 	[hannken, ticket #1250]
+
+usr.sbin/hdaudioctl/hdaudioctl.8		1.8
+
+	hdaudioctl(8): fix documentation for the "show" command,
+	add missing arguments.
+	[nia, ticket #1251]
+
+sys/arch/arm/dts/sun50i-h5.dtsi			1.2 (patch)
+sys/arch/arm/sunxi/sun8i_crypto.c		1.24 (patch)
+sys/arch/arm/sunxi/sun8i_h3_ccu.c		1.18 (patch)
+
+	arm/sunxi: Wire up sun8icrypto(4) on Allwinner H5.
+	[riastradh, ticket #1252]
 
