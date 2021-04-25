@@ -1,4 +1,4 @@
-/*	$NetBSD: it8368.c,v 1.25 2021/04/24 23:36:38 thorpej Exp $ */
+/*	$NetBSD: it8368.c,v 1.26 2021/04/25 18:26:15 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: it8368.c,v 1.25 2021/04/24 23:36:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: it8368.c,v 1.26 2021/04/25 18:26:15 thorpej Exp $");
 
 #undef WINCE_DEFAULT_SETTING /* for debug */
 #undef IT8368DEBUG 
@@ -381,7 +381,8 @@ it8368_attach_socket(struct it8368e_softc *sc)
 	paa.pct = (pcmcia_chipset_tag_t)&it8368_functions;
 	paa.pch = (pcmcia_chipset_handle_t)sc;
 
-	if ((sc->sc_pcmcia = config_found(sc, &paa, it8368_print, CFARG_EOL))) {
+	if ((sc->sc_pcmcia = config_found(sc->sc_dev, &paa, it8368_print,
+					  CFARG_EOL))) {
 		it8368_init_socket(sc);
 	}
 }
