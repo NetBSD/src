@@ -1,5 +1,0 @@
-# bad d (domain-name) option data
-
-option space foobar;
-option foobar.fmt-d code 13 = domain-name;
-option foobar.fmt-d "www.example.com";

@@ -1,5 +1,0 @@
-./test_dns_lookup: lookup nxdomain.porcupine.org type MX flags RES_USE_DNSSEC
-./test_dns_lookup: dns_query: nxdomain.porcupine.org (MX): Host not found
-./test_dns_lookup: lookup nxdomain.porcupine.org type A flags RES_USE_DNSSEC
-./test_dns_lookup: dns_query: nxdomain.porcupine.org (A): Host not found
-./test_dns_lookup: warning: Host or domain name not found. Name service error for name=nxdomain.porcupine.org type=A: Host not found (rcode=3)

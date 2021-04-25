@@ -1,3 +1,0 @@
-config_directory = .
-./postconf: warning: ./main.cf: unused parameter: restriction_classes=foo bar
-./postconf: warning: ./main.cf: unused parameter: foo=yes

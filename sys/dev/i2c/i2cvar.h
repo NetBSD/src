@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cvar.h,v 1.24 2021/04/16 07:02:09 skrll Exp $	*/
+/*	$NetBSD: i2cvar.h,v 1.24.2.1 2021/04/25 21:45:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -131,7 +131,6 @@ typedef struct i2c_controller {
 /* Used to attach the i2c framework to the controller. */
 struct i2cbus_attach_args {
 	i2c_tag_t iba_tag;		/* the controller */
-	prop_array_t iba_child_devices;	/* child devices (direct config) */
 };
 
 /* Type of value stored in "ia_cookie" */
@@ -146,12 +145,14 @@ struct i2c_attach_args {
 	i2c_tag_t	ia_tag;		/* our controller */
 	i2c_addr_t	ia_addr;	/* address of device */
 	int		ia_type;	/* bus type */
+
 	/* only set if using direct config */
 	const char *	ia_name;	/* name of the device */
-	int		ia_ncompat;	/* number of pointers in the
-					   ia_compat array */
-	const char **	ia_compat;	/* chip names */
-	prop_dictionary_t ia_prop;	/* dictionary for this device */
+	const char *	ia_clist;	/* compatible strlist */
+	size_t		ia_clist_size;	/* size of compatible strlist */
+	prop_dictionary_t ia_prop;	/* property dictionary for the device */
+	devhandle_t	ia_devhandle;	/* device handle for the device */
+
 	/*
 	 * The following is of limited usefulness and should only be used
 	 * in rare cases where we really know what we are doing. Example:
@@ -166,6 +167,20 @@ struct i2c_attach_args {
 	 */
 	uintptr_t	ia_cookie;	/* OF node in openfirmware machines */
 	enum i2c_cookie_type ia_cookietype; /* Value type of cookie */
+};
+
+/*
+ * i2c-enumerate-devices device call
+ *
+ *	Enumerate the devices connected to this I2C bus, filling out
+ *	the i2c_attach_args and invoking the callback for each one.
+ *	If the callback returns true, then enumeration continues.  If
+ *	the callback returns false, enumeration is stopped.
+ */
+struct i2c_enumerate_devices_args {
+	struct i2c_attach_args *ia;
+	bool (*callback)(device_t, struct i2c_enumerate_devices_args *);
+	unsigned int count;
 };
 
 /*

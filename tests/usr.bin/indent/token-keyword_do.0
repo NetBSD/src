@@ -1,8 +1,0 @@
-/* $NetBSD: token-keyword_do.0,v 1.1 2021/03/12 00:13:06 rillig Exp $ */
-/* $FreeBSD$ */
-
-/*
- * Tests for the keyword 'do' that begins a do-while statement.
- */
-
-/* TODO: Add some code to be formatted. */

@@ -1,9 +1,0 @@
-# reverse data expression
-
-# empty configs are not accepted by Kea
-default-lease-time 1800;
-
-# reduce literals
-class "literal" {
-    match if option dhcp6.client-data = reverse(2 & 2, "foobar");
-}

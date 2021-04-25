@@ -1,5 +1,0 @@
-rpz.                                    28800 IN SOA      rpz. hostmaster.rpz. 6 10800 3600 2419200 900
-rpz.                                    28800 IN NS       .
-a-only.example.rpz.                     28800 IN CNAME    *.
-no-a-no-aaaa.example.rpz.               28800 IN CNAME    *.
-a-plus-aaaa.example.rpz.                28800 IN CNAME    *.

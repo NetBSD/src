@@ -1,4 +1,0 @@
-LIB2ADD += $(srcdir)/soft-fp/fixtfdi.c \
-	   $(srcdir)/soft-fp/fixunstfdi.c \
-	   $(srcdir)/soft-fp/floatditf.c \
-	   $(srcdir)/soft-fp/floatunditf.c

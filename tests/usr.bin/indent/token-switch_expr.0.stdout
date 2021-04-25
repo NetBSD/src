@@ -1,8 +1,0 @@
-/* $NetBSD: token-switch_expr.0.stdout,v 1.1 2021/03/12 00:13:06 rillig Exp $ */
-/* $FreeBSD$ */
-
-/*
- * Tests for the keyword 'switch' followed by a parenthesized expression.
- */
-
-/* TODO: Add some code to be formatted. */

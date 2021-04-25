@@ -1,7 +1,0 @@
-# DHCPv4 pool declaration in root config
-
-# DHCPv4 pool declaration must be in a shared-network or subnet declaration
-pool {
-    range 204.152.185.135 204.152.185.185;
-}
-

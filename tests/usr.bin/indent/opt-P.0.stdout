@@ -1,7 +1,0 @@
-/* $NetBSD: opt-P.0.stdout,v 1.3 2021/03/14 01:34:13 rillig Exp $ */
-/* $FreeBSD$ */
-
-/*
- * Mentioning another profile via -P has no effect since only a single profile
- * can be specified on the command line, and there is no 'include' option.
- */

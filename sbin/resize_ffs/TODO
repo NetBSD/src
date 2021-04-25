@@ -1,7 +1,0 @@
-resize_ffs(8) TODO list
-
-* Test and likely fix support for disk blocks of size other than 512 bytes
-* Support shrinking UFS2 file systems
-* Make the output a bit more verbose, similar to newfs(8)
-* Expand the testing done in src/tests/sbin/resize_ffs
-* SIGINFO support

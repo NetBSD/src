@@ -1,4 +1,33 @@
-/*	$NetBSD: i2c.c,v 1.78 2021/04/24 23:36:54 thorpej Exp $	*/
+/*	$NetBSD: i2c.c,v 1.78.2.1 2021/04/25 21:45:15 thorpej Exp $	*/
+
+/*-
+ * Copyright (c) 2021 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +69,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.78 2021/04/24 23:36:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.78.2.1 2021/04/25 21:45:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,8 +128,6 @@ const struct cdevsw iic_cdevsw = {
 };
 
 static void	iic_smbus_intr_thread(void *);
-static void	iic_fill_compat(struct i2c_attach_args*, const char*,
-			size_t, char **);
 
 static int
 iic_print_direct(void *aux, const char *pnp)
@@ -287,8 +314,8 @@ iic_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	ia.ia_tag = sc->sc_tag;
 
 	ia.ia_name = NULL;
-	ia.ia_ncompat = 0;
-	ia.ia_compat = NULL;
+	ia.ia_clist = NULL;
+	ia.ia_clist_size = 0;
 	ia.ia_prop = NULL;
 
 	if (cf->cf_loc[IICCF_ADDR] == IICCF_ADDR_DEFAULT) {
@@ -387,6 +414,34 @@ iic_rescan(device_t self, const char *ifattr, const int *locators)
 	return 0;
 }
 
+static bool
+iic_enumerate_devices_callback(device_t self,
+    struct i2c_enumerate_devices_args *args)
+{
+	struct iic_softc *sc = device_private(self);
+	int loc[IICCF_NLOCS] = { 0 };
+
+	args->count++;
+
+	loc[IICCF_ADDR] = args->ia->ia_addr;
+
+	if (args->ia->ia_addr > I2C_MAX_ADDR) {
+		aprint_error_dev(self,
+		    "WARNING: ignoring bad device address @ 0x%02x\n",
+		    args->ia->ia_addr);
+		return true;			/* keep enumerating */
+	}
+	if (sc->sc_devices[args->ia->ia_addr] == NULL) {
+		sc->sc_devices[args->ia->ia_addr] =
+		    config_found(self, args->ia, iic_print_direct,
+			/* CFARG_SUBMATCH, config_stdsubmatch, XXX */
+			CFARG_LOCATORS, loc,
+			CFARG_DEVHANDLE, args->ia->ia_devhandle,
+			CFARG_EOL);
+	}
+	return true;				/* keep enumerating */
+}
+
 static int
 iic_match(device_t parent, cfdata_t cf, void *aux)
 {
@@ -399,18 +454,15 @@ iic_attach(device_t parent, device_t self, void *aux)
 {
 	struct iic_softc *sc = device_private(self);
 	struct i2cbus_attach_args *iba = aux;
-	prop_array_t child_devices;
-	prop_dictionary_t props;
-	char *buf;
 	i2c_tag_t ic;
 	int rv;
-	bool no_indirect_config = false;
 
 	aprint_naive("\n");
 	aprint_normal(": I2C bus\n");
 
 	sc->sc_dev = self;
 	sc->sc_tag = iba->iba_tag;
+
 	ic = sc->sc_tag;
 	ic->ic_devname = device_xname(self);
 
@@ -426,90 +478,30 @@ iic_attach(device_t parent, device_t self, void *aux)
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
-	if (iba->iba_child_devices) {
-		child_devices = iba->iba_child_devices;
-		no_indirect_config = true;
-	} else {
-		props = device_properties(parent);
-		prop_dictionary_get_bool(props, "i2c-no-indirect-config",
-		    &no_indirect_config);
-		child_devices = prop_dictionary_get(props, "i2c-child-devices");
-	}
+	/*
+	 * Attempt to enumerate the devices on the bus.  If
+	 * there is no enumeration method, or no devices are
+	 * found, then we will attempt indirect configuration.
+	 */
+	struct i2c_enumerate_devices_args enumargs;
+	struct i2c_attach_args ia;
 
-	if (child_devices) {
-		unsigned int i, count;
-		prop_dictionary_t dev;
-		prop_data_t cdata;
-		uint32_t addr;
-		uint64_t cookie;
-		uint32_t cookietype;
-		const char *name;
-		struct i2c_attach_args ia;
-		int loc[IICCF_NLOCS];
+	memset(&ia, 0, sizeof(ia));
+	ia.ia_tag = ic;
 
-		memset(loc, 0, sizeof loc);
-		count = prop_array_count(child_devices);
-		for (i = 0; i < count; i++) {
-			dev = prop_array_get(child_devices, i);
-			if (!dev) continue;
- 			if (!prop_dictionary_get_cstring_nocopy(
-			    dev, "name", &name)) {
-				/* "name" property is optional. */
-				name = NULL;
-			}
-			if (!prop_dictionary_get_uint32(dev, "addr", &addr))
-				continue;
-			if (!prop_dictionary_get_uint64(dev, "cookie", &cookie))
-				cookie = 0;
-			if (!prop_dictionary_get_uint32(dev, "cookietype",
-			    &cookietype))
-				cookietype = I2C_COOKIE_NONE;
-			loc[IICCF_ADDR] = addr;
+	memset(&enumargs, 0, sizeof(enumargs));
+	enumargs.ia = &ia;
+	enumargs.callback = iic_enumerate_devices_callback;
 
-			memset(&ia, 0, sizeof ia);
-			ia.ia_addr = addr;
-			ia.ia_tag = ic;
-			ia.ia_name = name;
-			ia.ia_cookie = cookie;
-			ia.ia_cookietype = cookietype;
-			ia.ia_prop = dev;
-
-			buf = NULL;
-			cdata = prop_dictionary_get(dev, "compatible");
-			if (cdata)
-				iic_fill_compat(&ia,
-				    prop_data_value(cdata),
-				    prop_data_size(cdata), &buf);
-
-			if (name == NULL && cdata == NULL) {
-				aprint_error_dev(self,
-				    "WARNING: ignoring bad child device entry "
-				    "for address 0x%02x\n", addr);
-			} else {
-				if (addr > I2C_MAX_ADDR) {
-					aprint_error_dev(self,
-					    "WARNING: ignoring bad device "
-					    "address @ 0x%02x\n", addr);
-				} else if (sc->sc_devices[addr] == NULL) {
-					sc->sc_devices[addr] =
-					    config_found(self, &ia,
-					    iic_print_direct,
-					    CFARG_LOCATORS, loc,
-					    CFARG_EOL);
-				}
-			}
-
-			if (ia.ia_compat)
-				free(ia.ia_compat, M_TEMP);
-			if (buf)
-				free(buf, M_TEMP);
-		}
-	} else if (!no_indirect_config) {
+	rv = device_call(self, "i2c-enumerate-devices", &enumargs);
+	if (rv == ENOTSUP) {
 		/*
-		 * Attach all i2c devices described in the kernel
+		 * Direct configuration is not supported on this
+		 * bus; perform indirect configuration: attempt
+		 * to attach the i2c devices listed in the kernel
 		 * configuration file.
 		 */
-		iic_rescan(self, "iic", NULL);
+		iic_rescan(self, NULL, NULL);
 	}
 }
 
@@ -654,41 +646,6 @@ iic_smbus_intr(i2c_tag_t ic)
 	return 1;
 }
 
-static void
-iic_fill_compat(struct i2c_attach_args *ia, const char *compat, size_t len,
-	char **buffer)
-{
-	int count, i;
-	const char *c, *start, **ptr;
-
-	*buffer = NULL;
-	for (i = count = 0, c = compat; i < len; i++, c++)
-		if (*c == 0)
-			count++;
-	count += 2;
-	ptr = malloc(sizeof(char*)*count, M_TEMP, M_WAITOK);
-	if (!ptr) return;
-
-	for (i = count = 0, start = c = compat; i < len; i++, c++) {
-		if (*c == 0) {
-			ptr[count++] = start;
-			start = c+1;
-		}
-	}
-	if (start < compat+len) {
-		/* last string not 0 terminated */
-		size_t l = c-start;
-		*buffer = malloc(l+1, M_TEMP, M_WAITOK);
-		memcpy(*buffer, start, l);
-		(*buffer)[l] = 0;
-		ptr[count++] = *buffer;
-	}
-	ptr[count] = NULL;
-
-	ia->ia_compat = ptr;
-	ia->ia_ncompat = count;
-}
-
 /*
  * iic_compatible_match --
  *	Match a device's "compatible" property against the list
@@ -696,12 +653,12 @@ iic_fill_compat(struct i2c_attach_args *ia, const char *compat, size_t len,
  */
 int
 iic_compatible_match(const struct i2c_attach_args *ia,
-		     const struct device_compatible_entry *compats)
+		     const struct device_compatible_entry *compat_data)
 {
 	int match_result;
 
-	match_result = device_compatible_match(ia->ia_compat, ia->ia_ncompat,
-					       compats);
+	match_result = device_compatible_match_strlist(ia->ia_clist,
+	    ia->ia_clist_size, compat_data);
 	if (match_result) {
 		match_result =
 		    MIN(I2C_MATCH_DIRECT_COMPATIBLE + match_result - 1,
@@ -718,10 +675,10 @@ iic_compatible_match(const struct i2c_attach_args *ia,
  */
 const struct device_compatible_entry *
 iic_compatible_lookup(const struct i2c_attach_args *ia,
-		      const struct device_compatible_entry *compats)
+		      const struct device_compatible_entry *compat_data)
 {
-	return device_compatible_lookup(ia->ia_compat, ia->ia_ncompat,
-					compats);
+	return device_compatible_lookup_strlist(ia->ia_clist,
+	    ia->ia_clist_size, compat_data);
 }
 
 /*
@@ -733,19 +690,21 @@ iic_compatible_lookup(const struct i2c_attach_args *ia,
  */
 bool
 iic_use_direct_match(const struct i2c_attach_args *ia, const cfdata_t cf,
-		     const struct device_compatible_entry *compats,
+		     const struct device_compatible_entry *compat_data,
 		     int *match_resultp)
 {
 	KASSERT(match_resultp != NULL);
 
+	/* XXX Should not really be using "name". */
 	if (ia->ia_name != NULL &&
 	    strcmp(ia->ia_name, cf->cf_name) == 0) {
 		*match_resultp = I2C_MATCH_DIRECT_SPECIFIC;
 		return true;
 	}
 
-	if (ia->ia_ncompat > 0 && ia->ia_compat != NULL) {
-		*match_resultp = iic_compatible_match(ia, compats);
+	if (ia->ia_clist != NULL) {
+		KASSERT(ia->ia_clist_size != 0);
+		*match_resultp = iic_compatible_match(ia, compat_data);
 		return true;
 	}
 
