@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.212 2019/11/11 22:45:27 joerg Exp $
+#  $NetBSD: Makefile,v 1.213 2021/04/25 23:43:20 christos Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -200,8 +200,7 @@ COMMON_SRCS += fenv.c
 COMMON_SRCS += fenv.c
 .endif
 COMMON_SRCS+= s_rintl.c
-.if (${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el") \
-    && (!defined(CPUFLAGS) || empty(CPUFLAGS:M-mabi=32))
+.if ${MACHINE_MIPS64} && (!defined(CPUFLAGS) || empty(CPUFLAGS:M-mabi=32))
 COMMON_SRCS+= s_nexttoward.c
 .endif
 
