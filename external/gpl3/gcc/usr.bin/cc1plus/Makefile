@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2021/04/12 00:05:56 mrg Exp $
+#	$NetBSD: Makefile,v 1.16 2021/04/25 22:25:55 christos Exp $
 
 PROG=		cc1plus
 SRCS=		${G_CXX_OBJS:S,c-family/,,:S,cp/,,:S,constraint.o,constraint.cc,:S,logic.o,logic.cc,:S,known-headers.o,known-headers.cc,:S,c-spellcheck.o,c-spellcheck.cc,:S,coroutines.o,coroutines.cc,:Nlibcpp.a:.o=.c}
@@ -29,9 +29,7 @@ CHECKSUM_OBJS= ${LIBBACKTRACEOBJ}/libbacktrace.a \
 # XXX check this out
 # LDFLAGS+=   -rdynamic
 
-# YUCK.  but see timevar.h:POP_TIMEVAR_AND_RETURN
-CFLAGS+=	-Wno-error # not good enough: -Wno-return-type
-COPTS+=		-Wno-stack-protector
+CFLAGS+=	-Wno-error=stack-protector
 
 .if ${MACHINE_ARCH} == "vax"
 COPTS.call.c+=-O0
@@ -50,7 +48,7 @@ COPTS.c-ubsan.c+=-O0
 COPTS.cc1plus-checksum.c+=-O0
 .endif
 
-.if ${MACHINE_ARCH} == "mipseb" || ${MACHINE_ARCH} == "mipsel"
+.if ${MACHINE_MIPS64}
 COPTS.c-common.c+=-O3
 .endif
 
