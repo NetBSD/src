@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.69 2020/06/27 13:33:26 jmcneill Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.70 2021/04/25 05:16:26 rin Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.69 2020/06/27 13:33:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.70 2021/04/25 05:16:26 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -918,13 +918,15 @@ smsc_attach(device_t parent, device_t self, void *aux)
 }
 
 static void
-smsc_uno_rx_loop(struct usbnet * un, struct usbnet_chain *c, uint32_t total_len)
+smsc_uno_rx_loop(struct usbnet *un, struct usbnet_chain *c, uint32_t total_len)
 {
 	USMSCHIST_FUNC(); USMSCHIST_CALLED();
 	struct smsc_softc * const sc = usbnet_softc(un);
 	struct ifnet *ifp = usbnet_ifp(un);
 	uint8_t *buf = c->unc_buf;
+	int count;
 
+	count = 0;
 	DPRINTF("total_len %jd/%#jx", total_len, total_len, 0, 0);
 	while (total_len != 0) {
 		uint32_t rxhdr;
@@ -1045,7 +1047,12 @@ smsc_uno_rx_loop(struct usbnet * un, struct usbnet_chain *c, uint32_t total_len)
 		/* push the packet up */
 		usbnet_enqueue(un, pktbuf, buflen, csum_flags, csum_data,
 		    mbuf_flags);
+
+		count++;
 	}
+
+	if (count != 0)
+		rnd_add_uint32(usbnet_rndsrc(un), count);
 }
 
 static unsigned
