@@ -1,4 +1,4 @@
-/* $NetBSD: nxpiic_acpi.c,v 1.4.6.1 2021/04/25 21:52:28 thorpej Exp $ */
+/* $NetBSD: nxpiic_acpi.c,v 1.4.6.2 2021/04/25 22:02:59 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nxpiic_acpi.c,v 1.4.6.1 2021/04/25 21:52:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nxpiic_acpi.c,v 1.4.6.2 2021/04/25 22:02:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -147,7 +147,6 @@ nxpiic_acpi_attach(device_t parent, device_t self, void *aux)
 	msc->sc_flags |= MOTOI2C_F_ENABLE_INV | MOTOI2C_F_STATUS_W1C;
 	msc->sc_iord = nxpiic_acpi_iord;
 	msc->sc_iowr = nxpiic_acpi_iowr;
-	msc->sc_child_devices = acpi_enter_i2c_devs(self, aa->aa_node);
 
 	motoi2c_attach_common(self, msc, &settings);
 

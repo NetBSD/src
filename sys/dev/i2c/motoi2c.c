@@ -1,4 +1,4 @@
-/* $NetBSD: motoi2c.c,v 1.11 2021/04/24 23:36:54 thorpej Exp $ */
+/* $NetBSD: motoi2c.c,v 1.11.2.1 2021/04/25 22:02:59 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007, 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motoi2c.c,v 1.11 2021/04/24 23:36:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motoi2c.c,v 1.11.2.1 2021/04/25 22:02:59 thorpej Exp $");
 
 #if defined(__arm__) || defined(__aarch64__)
 #include "opt_fdt.h"
@@ -107,7 +107,6 @@ motoi2c_attach_common(device_t self, struct motoi2c_softc *sc,
 		sc->sc_iowr = motoi2c_iowr1;
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c;
-	iba.iba_child_devices = sc->sc_child_devices;
 
 	if ((sc->sc_flags & MOTOI2C_F_ENABLE_INV) != 0) {
 		sc->sc_enable_mask = 0;
@@ -136,6 +135,7 @@ motoi2c_attach_common(device_t self, struct motoi2c_softc *sc,
 #endif
 	config_found(self, &iba, iicbus_print,
 	    CFARG_IATTR, "i2cbus",
+	    CFARG_DEVHANDLE, device_handle(self),
 	    CFARG_EOL);
 }
 
