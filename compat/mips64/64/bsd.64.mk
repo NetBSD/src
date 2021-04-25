@@ -1,6 +1,6 @@
-#	$NetBSD: bsd.64.mk,v 1.12 2018/02/06 10:00:00 mrg Exp $
+#	$NetBSD: bsd.64.mk,v 1.13 2021/04/25 15:18:23 christos Exp $
 
-.if ${MACHINE_ARCH} == "mips64eb"
+.if !empty(MACHINE_ARCH:M*eb)
 LD+=		-m elf64btsmip
 .else
 LD+=		-m elf64ltsmip
