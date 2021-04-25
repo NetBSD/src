@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2020/09/26 07:50:41 mrg Exp $
+#	$NetBSD: Makefile,v 1.22 2021/04/25 23:55:55 christos Exp $
 
 .include <bsd.init.mk>
 
@@ -297,14 +297,14 @@ CPPFLAGS+=	-I${MPFRDIST}/src
 CPPFLAGS+=	-DHAVE_LDOUBLE_IEEE_EXT_LITTLE=1
 .endif
 
-.if ${MACHINE_ARCH} == "mips64el"
+.if !empty(MACHINE_ARCH:Mmips*64el)
 CPPFLAGS+=	-DHAVE_LDOUBLE_IEEE_QUAD_LITTLE=1
 .endif
 
 .if ${MACHINE_ARCH} == "sparc64" || \
     ${MACHINE_ARCH} == "powerpc" || \
     ${MACHINE_ARCH} == "powerpc64" || \
-    ${MACHINE_ARCH} == "mips64eb"
+    !empty(MACHINE_ARCH:Mmips*64eb)
 CPPFLAGS+=	-DHAVE_LDOUBLE_IEEE_QUAD_BIG=1
 .endif
 
