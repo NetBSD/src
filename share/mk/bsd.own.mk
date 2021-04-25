@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1243 2021/04/25 08:01:54 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.1244 2021/04/25 14:32:20 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -14,7 +14,12 @@ MAKECONF?=	/etc/mk.conf
 #
 # CPU model, derived from MACHINE_ARCH
 #
-MACHINE_CPU=	${MACHINE_ARCH:C/mipse[bl]/mips/:C/mips64e[bl]/mips/:C/sh3e[bl]/sh3/:S/coldfire/m68k/:S/m68000/m68k/:C/arm.*/arm/:C/earm.*/arm/:S/earm/arm/:S/powerpc64/powerpc/:S/aarch64eb/aarch64/:S/or1knd/or1k/:C/riscv../riscv/}
+MACHINE_CPU=	${MACHINE_ARCH:C/mips.*e[bl]/mips/:C/sh3e[bl]/sh3/:S/coldfire/m68k/:S/m68000/m68k/:C/e?arm.*/arm/:S/powerpc64/powerpc/:S/aarch64eb/aarch64/:S/or1knd/or1k/:C/riscv../riscv/}
+
+MACHINE_MIPS64= (${MACHINE_ARCH} == "mips64el" || \
+		 ${MACHINE_ARCH} == "mips64eb" || \
+		 ${MACHINE_ARCH} == "mipsn64el" || \
+		 ${MACHINE_ARCH} == "mipsn64eb")
 
 #
 # Subdirectory used below ${RELEASEDIR} when building a release
@@ -1039,7 +1044,7 @@ MK${var}:=	yes
 # aarch64eb is not yet supported.
 #
 .if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "sparc64" \
-    || ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el" \
+    || ${MACHINE_MIPS64}
     || ${MACHINE_ARCH} == "powerpc64" || ${MACHINE_ARCH} == "aarch64" \
     || ${MACHINE_ARCH} == "riscv64" || !empty(MACHINE_ARCH:Mearm*)
 MKCOMPAT?=	yes
@@ -1053,7 +1058,7 @@ MKCOMPATTESTS:=	no
 MKCOMPATX11:=	no
 .endif
 
-.if ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el" \
+.if ${MACHINE_MIPS64} \
     || (${MACHINE} == "evbppc" && ${MACHINE_ARCH} == "powerpc")
 MKCOMPATMODULES?=	yes
 .else
@@ -1063,7 +1068,7 @@ MKCOMPATMODULES:=	no
 #
 # These platforms use softfloat by default.
 #
-.if ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el"
+.if ${MACHINE_MIPS64}
 MKSOFTFLOAT?=	yes
 .endif
 
