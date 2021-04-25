@@ -1,8 +1,8 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.35 2021/04/25 00:36:47 lukem Exp $
+# $NetBSD: postinstall.in,v 1.36 2021/04/25 01:15:39 lukem Exp $
 #
-# Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
+# Copyright (c) 2002-2021 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # This code is derived from software contributed to The NetBSD Foundation
@@ -35,7 +35,7 @@
 #
 
 #
-# XXX BE SURE TO USE ${DEST_DIR} PREFIX BEFORE ALL REAL FILE OPERATIONS XXX
+# NOTE: Be sure to use ${DEST_DIR} prefix before all real file operations.
 #
 
 #
@@ -517,7 +517,7 @@ file_exists_exact()
 #
 obsolete_paths()
 {
-	[ -n "$1" ] || err 3 "USAGE: obsolete_paths  fix|check"
+	[ -n "$1" ] || err 3 "USAGE: obsolete_paths fix|check"
 	op="$1"
 
 	failed=0
@@ -875,7 +875,7 @@ fixblock() {
 additem blocklist "rename old files to blocklist"
 do_blocklist()
 {
-	[ -n "$1" ] || err 3 "USAGE: do_blocklist  fix|check"
+	[ -n "$1" ] || err 3 "USAGE: do_blocklist fix|check"
 	local op="$1"
 
 	# if we are actually using blocklistd
@@ -903,7 +903,7 @@ do_blocklist()
 additem ddbonpanic "verify ddb.onpanic is configured in sysctl.conf"
 do_ddbonpanic()
 {
-	[ -n "$1" ] || err 3 "USAGE: do_ddbonpanic  fix|check"
+	[ -n "$1" ] || err 3 "USAGE: do_ddbonpanic fix|check"
 
 	if ${GREP} -E '^#*[[:space:]]*ddb\.onpanic[[:space:]]*\??=[[:space:]]*[[:digit:]]+' \
 		"${DEST_DIR}/etc/sysctl.conf" >/dev/null 2>&1
@@ -932,7 +932,7 @@ do_ddbonpanic()
 additem defaults "/etc/defaults/ being up to date"
 do_defaults()
 {
-	[ -n "$1" ] || err 3 "USAGE: do_defaults  fix|check"
+	[ -n "$1" ] || err 3 "USAGE: do_defaults fix|check"
 	local op="$1"
 	local failed=0
 	local etcsets=$(getetcsets)
@@ -1256,7 +1256,7 @@ do_fontconfig()
 additem gid "required groups in /etc/group"
 do_gid()
 {
-	[ -n "$1" ] || err 3 "USAGE: do_gid  fix|check"
+	[ -n "$1" ] || err 3 "USAGE: do_gid fix|check"
 
 	check_ids "$1" groups "${DEST_DIR}/etc/group" \
 	    "${SRC_DIR}/etc/group" 14 \
@@ -1288,7 +1288,7 @@ do_gpio()
 additem hosts "/etc/hosts being up to date"
 do_hosts()
 {
-	[ -n "$1" ] || err 3 "USAGE: do_hosts  fix|check"
+	[ -n "$1" ] || err 3 "USAGE: do_hosts fix|check"
 
 	modify_file "$1" "${DEST_DIR}/etc/hosts" "${SCRATCHDIR}/hosts" '
 		/^(127\.0\.0\.1|::1)[ 	]+[^\.]*$/ {
@@ -1306,7 +1306,7 @@ do_hosts()
 additem iscsi "/etc/iscsi is populated"
 do_iscsi()
 {
-	[ -n "$1" ] || err 3 "USAGE: do_iscsi  fix|check"
+	[ -n "$1" ] || err 3 "USAGE: do_iscsi fix|check"
 
 	populate_dir "${op}" true \
 	    "${SRC_DIR}/etc/iscsi" "${DEST_DIR}/etc/iscsi" 600 auths
@@ -1321,7 +1321,7 @@ do_iscsi()
 additem makedev "/dev/MAKEDEV being up to date"
 do_makedev()
 {
-	[ -n "$1" ] || err 3 "USAGE: do_makedev   fix|check"
+	[ -n "$1" ] || err 3 "USAGE: do_makedev fix|check"
 	failed=0
 
 	if [ -f "${SRC_DIR}/etc/MAKEDEV.tmpl" ]; then
@@ -1357,7 +1357,7 @@ do_makedev()
 additem motd "contents of motd"
 do_motd()
 {
-	[ -n "$1" ] || err 3 "USAGE: do_motd  fix|check"
+	[ -n "$1" ] || err 3 "USAGE: do_motd fix|check"
 
 	if ${GREP} -i 'http://www.NetBSD.org/Misc/send-pr.html' \
 		"${DEST_DIR}/etc/motd" >/dev/null 2>&1 \
@@ -1397,7 +1397,7 @@ do_motd()
 additem mtree "/etc/mtree/ being up to date"
 do_mtree()
 {
-	[ -n "$1" ] || err 3 "USAGE: do_mtree  fix|check"
+	[ -n "$1" ] || err 3 "USAGE: do_mtree fix|check"
 	failed=0
 
 	compare_dir "$1" "${SRC_DIR}/etc/mtree" "${DEST_DIR}/etc/mtree" 444 special
@@ -1426,7 +1426,7 @@ do_mtree()
 additem named "named configuration update"
 do_named()
 {
-	[ -n "$1" ] || err 3 "USAGE: do_named  fix|check"
+	[ -n "$1" ] || err 3 "USAGE: do_named fix|check"
 	op="$1"
 
 	move_file "${op}" \
@@ -1444,7 +1444,7 @@ do_named()
 additem pam "/etc/pam.d is populated"
 do_pam()
 {
-	[ -n "$1" ] || err 3 "USAGE: do_pam  fix|check"
+	[ -n "$1" ] || err 3 "USAGE: do_pam fix|check"
 	op="$1"
 	failed=0
 
@@ -1465,7 +1465,7 @@ do_pam()
 additem periodic "/etc/{daily,weekly,monthly,security} being up to date"
 do_periodic()
 {
-	[ -n "$1" ] || err 3 "USAGE: do_periodic  fix|check"
+	[ -n "$1" ] || err 3 "USAGE: do_periodic fix|check"
 
 	compare_dir "$1" "${SRC_DIR}/etc" "${DEST_DIR}/etc" 644 \
 		daily weekly monthly security
@@ -1477,7 +1477,7 @@ do_periodic()
 additem pf "pf configuration being up to date"
 do_pf()
 {
-	[ -n "$1" ] || err 3 "USAGE: do_pf  fix|check"
+	[ -n "$1" ] || err 3 "USAGE: do_pf fix|check"
 	op="$1"
 	failed=0
 
@@ -1502,7 +1502,7 @@ do_pf()
 additem pwd_mkdb "passwd database version"
 do_pwd_mkdb()
 {
-	[ -n "$1" ] || err 3 "USAGE: do_pwd_mkdb  fix|check"
+	[ -n "$1" ] || err 3 "USAGE: do_pwd_mkdb fix|check"
 	op="$1"
 	failed=0
 
@@ -1629,7 +1629,7 @@ getetcsets()
 additem rc "/etc/rc* and /etc/rc.d/ being up to date"
 do_rc()
 {
-	[ -n "$1" ] || err 3 "USAGE: do_rc  fix|check"
+	[ -n "$1" ] || err 3 "USAGE: do_rc fix|check"
 	local op="$1"
 	local failed=0
 	local generated_scripts=""
@@ -1722,7 +1722,7 @@ do_rc()
 adddisableditem sendmail "remove obsolete sendmail configuration files and scripts"
 do_sendmail()
 {
-	[ -n "$1" ] || err 3 "USAGE: do_sendmail  fix|check"
+	[ -n "$1" ] || err 3 "USAGE: do_sendmail fix|check"
 	op="$1"
 	failed=0
 
@@ -1755,7 +1755,7 @@ do_sendmail()
 adddisableditem mailerconf "update /etc/mailer.conf after sendmail removal"
 do_mailerconf()
 {
-	[ -n "$1" ] || err 3 "USAGE: do_mailterconf  fix|check"
+	[ -n "$1" ] || err 3 "USAGE: do_mailterconf fix|check"
 	op="$1"
 
 	failed=0
@@ -1782,7 +1782,7 @@ do_mailerconf()
 additem ssh "ssh configuration update"
 do_ssh()
 {
-	[ -n "$1" ] || err 3 "USAGE: do_ssh  fix|check"
+	[ -n "$1" ] || err 3 "USAGE: do_ssh fix|check"
 	op="$1"
 
 	failed=0
@@ -1876,7 +1876,7 @@ do_ssh()
 additem wscons "wscons configuration file update"
 do_wscons()
 {
-	[ -n "$1" ] || err 3 "USAGE: do_wscons  fix|check"
+	[ -n "$1" ] || err 3 "USAGE: do_wscons fix|check"
 	op="$1"
 
 	[ -f "${DEST_DIR}/etc/wscons.conf" ] || return 0
@@ -1903,7 +1903,7 @@ do_wscons()
 additem x11 "x11 configuration update"
 do_x11()
 {
-	[ -n "$1" ] || err 3 "USAGE: do_x11  fix|check"
+	[ -n "$1" ] || err 3 "USAGE: do_x11 fix|check"
 	op="$1"
 
 	failed=0
@@ -1973,7 +1973,7 @@ do_x11()
 additem xkb "clean up for xkbdata to xkeyboard-config upgrade"
 do_xkb()
 {
-	[ -n "$1" ] || err 3 "USAGE: do_xkb  fix|check"
+	[ -n "$1" ] || err 3 "USAGE: do_xkb fix|check"
 	op="$1"
 	failed=0
 
@@ -2032,7 +2032,7 @@ ${pcpath} was a directory, should be a file.
 additem uid "required users in /etc/master.passwd"
 do_uid()
 {
-	[ -n "$1" ] || err 3 "USAGE: do_uid  fix|check"
+	[ -n "$1" ] || err 3 "USAGE: do_uid fix|check"
 
 	check_ids "$1" users "${DEST_DIR}/etc/master.passwd" \
 	    "${SRC_DIR}/etc/master.passwd" 12 \
@@ -2048,7 +2048,7 @@ do_uid()
 additem varrwho "required ownership of files in /var/rwho"
 do_varrwho()
 {
-	[ -n "$1" ] || err 3 "USAGE: do_varrwho  fix|check"
+	[ -n "$1" ] || err 3 "USAGE: do_varrwho fix|check"
 
 	contents_owner "$1" "${DEST_DIR}/var/rwho" _rwhod _rwhod
 }
@@ -2060,7 +2060,7 @@ do_varrwho()
 additem tcpdumpchroot "remove /var/chroot/tcpdump/etc/protocols"
 do_tcpdumpchroot()
 {
-	[ -n "$1" ] || err 3 "USAGE: do_tcpdumpchroot  fix|check"
+	[ -n "$1" ] || err 3 "USAGE: do_tcpdumpchroot fix|check"
 
 	failed=0;
 	if [ -r "${DEST_DIR}/var/chroot/tcpdump/etc/protocols" ]; then
@@ -2083,7 +2083,7 @@ do_tcpdumpchroot()
 additem atf "install missing atf configuration files and validate them"
 do_atf()
 {
-	[ -n "$1" ] || err 3 "USAGE: do_atf  fix|check"
+	[ -n "$1" ] || err 3 "USAGE: do_atf fix|check"
 	op="$1"
 	failed=0
 
@@ -2208,7 +2208,7 @@ do_catpages()
 additem manconf "check for a mandoc usage in /etc/man.conf"
 do_manconf()
 {
-	[ -n "$1" ] || err 3 "USAGE: do_manconf  fix|check"
+	[ -n "$1" ] || err 3 "USAGE: do_manconf fix|check"
 	op="$1"
 	failed=0
 
@@ -2236,7 +2236,7 @@ do_manconf()
 additem ptyfsoldnodes "remove legacy device nodes when using ptyfs"
 do_ptyfsoldnodes()
 {
-	[ -n "$1" ] || err 3 "USAGE: do_ptyfsoldnodes  fix|check"
+	[ -n "$1" ] || err 3 "USAGE: do_ptyfsoldnodes fix|check"
 	_ptyfs_op="$1"
 
 	# Check whether ptyfs is in use
@@ -2327,7 +2327,7 @@ do_ptyfsoldnodes()
 additem varshm "check for a tmpfs mounted on /var/shm"
 do_varshm()
 {
-	[ -n "$1" ] || err 3 "USAGE: do_varshm  fix|check"
+	[ -n "$1" ] || err 3 "USAGE: do_varshm fix|check"
 	op="$1"
 	failed=0
 
@@ -2360,7 +2360,7 @@ obsolete_stand_internal()
 {
 	local prefix="$1"
 	shift
-	[ -n "$1" ] || err 3 "USAGE: do_obsolete_stand  fix|check"
+	[ -n "$1" ] || err 3 "USAGE: do_obsolete_stand fix|check"
 	local op="$1"
 	local failed=0
 
@@ -2425,12 +2425,13 @@ getcompatlibdirs() {
 
 #
 #	obsolete
-#	(this item is last to allow other items to move obsolete files)
+#
+# NOTE: This item is last to allow other items to move obsolete files.
 #
 additem obsolete "remove obsolete file sets and minor libraries"
 do_obsolete()
 {
-	[ -n "$1" ] || err 3 "USAGE: do_obsolete  fix|check"
+	[ -n "$1" ] || err 3 "USAGE: do_obsolete fix|check"
 	op="$1"
 	failed=0
 
