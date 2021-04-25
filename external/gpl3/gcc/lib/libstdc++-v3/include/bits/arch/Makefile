@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.5 2019/02/09 02:36:56 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2021/04/25 15:08:28 christos Exp $
 
 # install multilib c++config.h files
+.include <bsd.init.mk>
 
 .if ${MACHINE_ARCH} == "sparc64"
 SUBDIR=		sparc sparc64
@@ -12,7 +13,7 @@ SUBDIR=		i386 x86_64
 CXXCONFIGARGS=	x86_64 _LP64 i386
 .endif
 
-.if ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el"
+.if ${MACHINE_MIPS64}
 SUBDIR=		mips64 mips32 mipso32
 CXXCONFIGARGS=	mips64 _ABI64 mipso32 _ABIO32 mips32
 .endif
