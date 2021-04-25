@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.207 2021/02/06 16:14:55 dbj Exp $
+#	$NetBSD: Makefile,v 1.208 2021/04/25 15:11:28 christos Exp $
 
 .include <bsd.own.mk>
 .include <bsd.endian.mk>
@@ -180,8 +180,7 @@ SUBDIR+=	arm-elf2aout
 SUBDIR+=	m68k-elf2aout
 .endif
 
-.if (${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb" || \
-     ${MACHINE_ARCH} == "mips64el" || ${MACHINE_ARCH} == "mips64eb")
+.if !empty(MACHINE_ARCH:Mmips*)
 SUBDIR+=	mips-elf2ecoff
 .endif
 
