@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.145 2021/04/25 08:46:19 lukem Exp $
+.\" 	$NetBSD: ftp.1,v 1.146 2021/04/25 09:09:55 lukem Exp $
 .\"
 .\" Copyright (c) 1996-2021 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -184,10 +184,13 @@ Forces
 .Nm
 to only use IPv6 addresses.
 .It Fl A
-Force active mode ftp.
+Force active mode
+.Tn FTP .
 By default,
 .Nm
-will try to use passive mode ftp and fall back to active mode
+will try to use passive mode
+.Tn FTP
+and fall back to active mode
 if passive is not supported by the server.
 This option causes
 .Nm
@@ -300,7 +303,9 @@ Upload files on the command line to
 .Ar url
 where
 .Ar url
-is one of the ftp URL types as supported by auto-fetch
+is one of the
+.Sq Li ftp://
+URL types as supported by auto-fetch
 (with an optional target filename for single file uploads), and
 .Ar file
 is one or more local files to be uploaded.
@@ -542,7 +547,9 @@ A synonym for
 .Ic open .
 .It Ic gate Op Ar host Op Ar port
 Toggle gate-ftp mode, which used to connect through the
-TIS FWTK and Gauntlet ftp proxies.
+TIS FWTK and Gauntlet
+.Tn FTP
+proxies.
 This will not be permitted if the gate-ftp server hasn't been set
 (either explicitly by the user, or from the
 .Ev FTPSERVER
@@ -600,7 +607,9 @@ each remote file name is expanded
 separately on the remote machine and the lists are not merged.
 Expansion of a directory name is likely to be
 different from expansion of the name of an ordinary file:
-the exact result depends on the foreign operating system and ftp server,
+the exact result depends on the foreign operating system and
+.Tn FTP
+server,
 and can be previewed by doing
 .Sq Li mls remote-files \- .
 Note:
@@ -1112,7 +1121,9 @@ Any other response will answer
 .Sq yes
 to the current file.
 .It Ic proxy Ar ftp-command
-Execute an ftp command on a secondary control connection.
+Execute an
+.Tn FTP
+command on a secondary control connection.
 This command allows simultaneous connection to two remote
 .Tn FTP
 servers for transferring files between the two servers.
