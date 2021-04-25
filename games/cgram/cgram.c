@@ -1,4 +1,4 @@
-/* $NetBSD: cgram.c,v 1.19 2021/04/25 20:14:29 rillig Exp $ */
+/* $NetBSD: cgram.c,v 1.20 2021/04/25 20:19:19 rillig Exp $ */
 
 /*-
  * Copyright (c) 2013, 2021 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.c,v 1.19 2021/04/25 20:14:29 rillig Exp $");
+__RCSID("$NetBSD: cgram.c,v 1.20 2021/04/25 20:19:19 rillig Exp $");
 #endif
 
 #include <assert.h>
@@ -594,11 +594,23 @@ clean_up(void)
 	stringarray_cleanup(&lines);
 }
 
-////////////////////////////////////////////////////////////
+
+static void __dead
+usage(void)
+{
+
+	fprintf(stderr, "usage: %s [file]\n", getprogname());
+	exit(1);
+}
 
 int
 main(int argc, char *argv[])
 {
+
+	setprogname(argv[0]);
+	if (argc != 1 && argc != 2)
+		usage();
+
 	init(argc > 1 ? argv[1] : NULL);
 	loop();
 	clean_up();
