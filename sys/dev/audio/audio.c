@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.93 2021/04/26 14:02:49 thorpej Exp $	*/
+/*	$NetBSD: audio.c,v 1.94 2021/04/26 19:59:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.93 2021/04/26 14:02:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.94 2021/04/26 19:59:58 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -8947,6 +8947,9 @@ audioprint(void *aux, const char *pnp)
 			break;
 		case AUDIODEV_TYPE_MPU:
 			type = "mpu";
+			break;
+		case AUDIODEV_TYPE_AUX:
+			type = "aux";
 			break;
 		default:
 			panic("audioprint: unknown type %d", arg->type);
