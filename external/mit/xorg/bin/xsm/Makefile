@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2013/05/31 08:02:00 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2021/04/26 22:04:51 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -25,6 +25,9 @@ DPADD+=	${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} \
 
 .PATH:	${X11SRCDIR.${PROG}}
 .PATH:	${X11SRCDIR.${PROG}}/man
+
+# XXX libXt
+COPTS+=		-Wno-incompatible-pointer-types
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>
