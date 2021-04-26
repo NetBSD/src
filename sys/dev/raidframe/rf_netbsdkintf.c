@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.391 2021/04/11 01:41:12 mrg Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.392 2021/04/26 07:27:24 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.391 2021/04/11 01:41:12 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.392 2021/04/26 07:27:24 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_autoconfig.h"
@@ -581,6 +581,8 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 			booted_device = candidate_root;
 			booted_method = "raidframe/single";
 			booted_partition = 0;	/* XXX assume 'a' */
+			DPRINTF("%s: set booted_device=%s(%p)\n", __func__,
+			    device_xname(booted_device), booted_device);
 		}
 	} else if (num_root > 1) {
 		DPRINTF("%s: many roots=%d, %p\n", __func__, num_root,
