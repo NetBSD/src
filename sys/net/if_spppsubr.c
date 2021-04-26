@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.223 2021/04/26 08:34:22 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.224 2021/04/26 08:37:54 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.223 2021/04/26 08:34:22 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.224 2021/04/26 08:37:54 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2593,6 +2593,7 @@ sppp_lcp_open(struct sppp *sp, void *xcp)
 	KASSERT(!cpu_softintr_p());
 
 	sp->lcp.reestablish = false;
+	sp->scp[IDX_LCP].fail_counter = 0;
 
 	if (sp->pp_if.if_mtu < PP_MTU) {
 		sp->lcp.mru = sp->pp_if.if_mtu;
