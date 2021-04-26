@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2020/01/07 07:27:50 mrg Exp $
+#	$NetBSD: Makefile,v 1.11 2021/04/26 21:53:54 mrg Exp $
 
 NOCHECKVER=	yes	# we want to install an older version ...
 MKLINKLIB=	no
@@ -19,18 +19,9 @@ SRCS=	Actions.c AllWidgets.c AsciiSink.c AsciiSrc.c AsciiText.c \
 	TextSrc.c TextTr.c Toggle.c Tree.c Vendor.c Viewport.c \
 	XawI18n.c XawIm.c XawInit.c
 
-CPPFLAGS+=	-DHAVE_WCHAR_H -DHAVE_WCTYPE_H -DNO_WIDEC_H -DOLDXAW \
-		-DHAVE_GETPAGESIZE \
-		-DHAVE_UNISTD_H \
-		-DHAVE_ISWALNUM -DPROJECT_ROOT=\"${X11ROOTDIR}\"
+.include "../libXaw/Makefile.common"
 
-LIBDPLIBS=\
-	Xmu	${.CURDIR}/../libXmu \
-	Xt	${.CURDIR}/../libXt \
-	SM	${.CURDIR}/../libSM \
-	ICE	${.CURDIR}/../libICE \
-	Xext	${.CURDIR}/../libXext \
-	X11	${.CURDIR}/../libX11/dynamic
+CPPFLAGS+=	-DOLDXAW
 
 PKGCONFIG=	xaw6
 PKGDIST=	${LIBOLD}

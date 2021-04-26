@@ -1,0 +1,21 @@
+#	$NetBSD: Makefile.common,v 1.1 2021/04/26 21:53:53 mrg Exp $
+
+CPPFLAGS+=	-DHAVE_WCHAR_H		\
+		-DHAVE_WCTYPE_H		\
+		-DNO_WIDEC_H		\
+		-DHAVE_ISWALNUM		\
+		-DHAVE_GETPAGESIZE	\
+		-DHAVE_UNISTD_H		\
+		-D_CONST_X_STRING=1	\
+		-DPROJECT_ROOT=\"${X11ROOTDIR}\"
+
+LIBDPLIBS=\
+	Xmu	${.CURDIR}/../libXmu \
+	Xt	${.CURDIR}/../libXt \
+	SM	${.CURDIR}/../libSM \
+	ICE	${.CURDIR}/../libICE \
+	Xext	${.CURDIR}/../libXext \
+	X11	${.CURDIR}/../libX11/dynamic
+
+COPTS.Pixmap.c+=	-Wno-discarded-qualifiers
+COPTS.TextAction.c+=	-Wno-discarded-qualifiers
