@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.225 2021/04/26 08:42:19 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.226 2021/04/26 08:45:57 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.225 2021/04/26 08:42:19 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.226 2021/04/26 08:45:57 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2876,22 +2876,39 @@ sppp_lcp_confreq(struct sppp *sp, struct lcp_header *h, int origlen,
 				if (authproto == PPP_PAP || authproto == PPP_CHAP)
 					sp->myauth.proto = authproto;
 			}
-			if (sp->myauth.proto != authproto) {
-				/* not agreed, nak */
+			if (sp->myauth.proto == authproto) {
+				if (authproto != PPP_CHAP || p[4] == CHAP_MD5) {
+					continue;
+				}
+				if (debug)
+					addlog(" [chap without MD5]");
+			} else {
 				if (debug)
 					addlog(" [mine %s != his %s]",
 					       sppp_proto_name(sp->myauth.proto),
 					       sppp_proto_name(authproto));
-				p[2] = sp->myauth.proto >> 8;
-				p[3] = sp->myauth.proto;
-				break;
 			}
-			if (authproto == PPP_CHAP && p[4] != CHAP_MD5) {
+			/* not agreed, nak */
+			if (sp->myauth.proto == PPP_CHAP) {
+				l = 5;
+			} else {
+				l = 4;
+			}
+
+			if (rlen + l > blen) {
 				if (debug)
-					addlog(" [chap not MD5]");
-				p[4] = CHAP_MD5;
-				break;
+					addlog(" [overflow]");
+				continue;
 			}
+
+			r[0] = LCP_OPT_AUTH_PROTO;
+			r[1] = l;
+			r[2] = sp->myauth.proto >> 8;
+			r[3] = sp->myauth.proto & 0xff;
+			if (sp->myauth.proto == PPP_CHAP)
+				r[4] = CHAP_MD5;
+			rlen += l;
+			r += l;
 			continue;
 		case LCP_OPT_MP_EID:
 			/*
