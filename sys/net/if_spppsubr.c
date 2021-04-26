@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.221 2021/04/26 02:36:45 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.222 2021/04/26 08:31:21 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.221 2021/04/26 02:36:45 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.222 2021/04/26 08:31:21 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -3825,10 +3825,15 @@ sppp_ipcp_confnak(struct sppp *sp, struct lcp_header *h, int len)
 				 * our already existing value.
 				 */
 				if (sp->ipcp.flags & IPCP_MYADDR_DYN) {
-					if (debug)
-						addlog(" [agree]");
-					sp->ipcp.flags |= IPCP_MYADDR_SEEN;
-					sp->ipcp.req_myaddr = wantaddr;
+					if (ntohl(wantaddr) != INADDR_ANY) {
+						if (debug)
+							addlog(" [agree]");
+						sp->ipcp.flags |= IPCP_MYADDR_SEEN;
+						sp->ipcp.req_myaddr = wantaddr;
+					} else {
+						if (debug)
+							addlog(" [not agreed]");
+					}
 				}
 			}
 			break;
@@ -3865,9 +3870,20 @@ static void
 sppp_ipcp_tlu(struct sppp *sp)
 {
 #ifdef INET
+	struct ifnet *ifp;
+
+	ifp = &sp->pp_if;
 	KASSERT(SPPP_WLOCKED(sp));
-	/* we are up. Set addresses and notify anyone interested */
-	sppp_set_ip_addrs(sp);
+	if ((sp->ipcp.flags & IPCP_MYADDR_DYN) &&
+	    ((sp->ipcp.flags & IPCP_MYADDR_SEEN) == 0)) {
+		log(LOG_WARNING, "%s: no IP address, closing IPCP\n",
+		    ifp->if_xname);
+		sppp_wq_add(sp->wq_cp,
+		    &sp->scp[IDX_IPCP].work_close);
+	} else {
+		/* we are up. Set addresses and notify anyone interested */
+		sppp_set_ip_addrs(sp);
+	}
 #endif
 }
 
