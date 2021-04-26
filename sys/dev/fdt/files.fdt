@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.60 2020/12/31 15:12:33 ryo Exp $
+# $NetBSD: files.fdt,v 1.61 2021/04/26 15:02:29 thorpej Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
@@ -9,7 +9,7 @@ defparam opt_fdt.h				FDT_DEFAULT_STDOUT_PATH
 
 define	fdt { [pass = 10] } : clk, pwm
 
-device	simplebus { } : fdt
+device	simplebus: fdt
 attach	simplebus at fdt
 file	dev/fdt/fdtbus.c			fdt
 
@@ -84,7 +84,7 @@ file	dev/fdt/fdt_spi.c			fdt
 file	dev/fdt/fdt_syscon.c			fdt
 file	dev/fdt/fdt_pinctrl.c			fdt
 
-device	cpus { } : fdt
+device	cpus: fdt
 attach	cpus at fdt
 file	dev/fdt/cpus.c				cpus
 
@@ -94,7 +94,7 @@ file	dev/fdt/mmc_pwrseq_simple.c		mmcpwrseq_simple
 attach	mmcpwrseq at fdt with mmcpwrseq_emmc
 file	dev/fdt/mmc_pwrseq_emmc.c		mmcpwrseq_emmc
 
-device	syscon { } : fdt
+device	syscon: fdt
 attach	syscon at fdt
 file	dev/fdt/syscon.c			syscon
 
