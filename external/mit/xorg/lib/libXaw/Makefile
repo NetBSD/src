@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2021/04/26 21:43:19 mrg Exp $
+#	$NetBSD: Makefile,v 1.16 2021/04/26 21:53:53 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -49,23 +49,14 @@ INCS=	AllWidgets.h AsciiSink.h AsciiSinkP.h AsciiSrc.h \
 
 INCSDIR=${X11INCDIR}/X11/Xaw
 
+.include "Makefile.common"
 
-CPPFLAGS+=	-DHAVE_WCHAR_H -DHAVE_WCTYPE_H -DNO_WIDEC_H -DHAVE_ISWALNUM
-CPPFLAGS+=	-DHAVE_GETPAGESIZE
-CPPFLAGS+=	-DHAVE_UNISTD_H
-CPPFLAGS+=	-D_CONST_X_STRING=1
-CPPFLAGS+=	-DPROJECT_ROOT=\"${X11ROOTDIR}\" -DXAW7
-CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/Xaw
-CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/extensions
+CPPFLAGS+=	-DXAW7 \
+		-I${DESTDIR}${X11INCDIR}/X11/Xaw \
+		-I${DESTDIR}${X11INCDIR}/X11/extensions
 
-LIBDPLIBS=\
-	Xmu	${.CURDIR}/../libXmu \
-	Xt	${.CURDIR}/../libXt \
-	SM	${.CURDIR}/../libSM \
-	ICE	${.CURDIR}/../libICE \
-	Xpm	${.CURDIR}/../libXpm \
-	Xext	${.CURDIR}/../libXext \
-	X11	${.CURDIR}/../libX11/dynamic
+LIBDPLIBS+=\
+	Xpm	${.CURDIR}/../libXpm
 
 PKGCONFIG=	xaw7
 PKGDIST=	${LIBOLD}
@@ -77,6 +68,3 @@ X11EXTRAMANTRANSFORMS+= \
 .include <bsd.lib.mk>
 
 CWARNFLAGS.clang+=	-Wno-format
-
-COPTS.Pixmap.c+=	-Wno-discarded-qualifiers
-COPTS.TextAction.c+=	-Wno-discarded-qualifiers
