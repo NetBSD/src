@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.222 2021/04/26 08:31:21 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.223 2021/04/26 08:34:22 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.222 2021/04/26 08:31:21 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.223 2021/04/26 08:34:22 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -6297,6 +6297,8 @@ sppp_ipcp_opt_name(u_char opt)
 	case IPCP_OPT_ADDRESSES:	return "addresses";
 	case IPCP_OPT_COMPRESSION:	return "compression";
 	case IPCP_OPT_ADDRESS:		return "address";
+	case IPCP_OPT_PRIMDNS:		return "primdns";
+	case IPCP_OPT_SECDNS:		return "secdns";
 	}
 	snprintf(buf, sizeof(buf), "0x%x", opt);
 	return buf;
