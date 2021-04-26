@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.176 2020/05/23 13:48:08 jmcneill Exp $
+#	$NetBSD: files.isa,v 1.177 2021/04/26 19:10:38 thorpej Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -318,7 +318,7 @@ attach	opl at wss with opl_wss
 file	dev/isa/opl_wss.c		opl_wss
 
 # ESS Technology ES1887/ES888/ES1888
-device	ess { } : audiobus, isadma, midibus
+device	ess { }: audiobus, isadma
 file	dev/isa/ess.c			ess			needs-flag
 
 attach	ess at isa with ess_isa
