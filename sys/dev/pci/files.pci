@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.436 2021/03/09 10:03:18 msaitoh Exp $
+#	$NetBSD: files.pci,v 1.437 2021/04/26 19:28:24 thorpej Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -516,7 +516,7 @@ attach	esa at pci
 file	dev/pci/esa.c			esa
 
 # ESS Solo-1 PCI AudioDrive
-device	eso { }: audiobus, midibus
+device	eso { }: audiobus
 attach	eso at pci
 file	dev/pci/eso.c			eso
 
