@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.220 2021/04/23 03:36:13 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.221 2021/04/26 02:36:45 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.220 2021/04/23 03:36:13 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.221 2021/04/26 02:36:45 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -5542,7 +5542,10 @@ sppp_set_ip_addrs(struct sppp *sp)
 	uint32_t myaddr = 0, hisaddr = 0;
 	int s;
 
+	KASSERT(SPPP_WLOCKED(sp));
+	SPPP_UNLOCK(sp);
 	IFNET_LOCK(ifp);
+	SPPP_LOCK(sp, RW_WRITER);
 
 	/*
 	 * Pick the first AF_INET address from the list,
@@ -5614,7 +5617,10 @@ sppp_clear_ip_addrs(struct sppp *sp)
 	struct sockaddr_in *si, *dest;
 	int s;
 
+	KASSERT(SPPP_WLOCKED(sp));
+	SPPP_UNLOCK(sp);
 	IFNET_LOCK(ifp);
+	SPPP_LOCK(sp, RW_WRITER);
 
 	/*
 	 * Pick the first AF_INET address from the list,
@@ -5740,7 +5746,10 @@ sppp_set_ip6_addr(struct sppp *sp, const struct in6_addr *src)
 	int s;
 	struct psref psref;
 
+	KASSERT(SPPP_WLOCKED(sp));
+	SPPP_UNLOCK(sp);
 	IFNET_LOCK(ifp);
+	SPPP_LOCK(sp, RW_WRITER);
 
 	/*
 	 * Pick the first link-local AF_INET6 address from the list,
