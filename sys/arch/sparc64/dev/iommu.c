@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.115 2019/02/09 11:27:05 mrg Exp $	*/
+/*	$NetBSD: iommu.c,v 1.116 2021/04/26 07:18:01 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.115 2019/02/09 11:27:05 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.116 2021/04/26 07:18:01 mrg Exp $");
 
 #include "opt_ddb.h"
 
@@ -289,7 +289,7 @@ iommu_reset(struct iommu_state *is)
  * Here are the iommu control routines.
  */
 
-void
+static void
 iommu_enter(struct strbuf_ctl *sb, vaddr_t va, int64_t pa, int flags)
 {
 	DPRINTF(IDB_IOMMU, ("iommu_enter: va %lx pa %lx flags %x\n",
@@ -389,8 +389,7 @@ iommu_extract(struct iommu_state *is, vaddr_t dva)
  * XXX: this function needs better internal error checking.
  */
 
-
-void
+static void
 iommu_remove(struct iommu_state *is, vaddr_t va, size_t len)
 {
 	DPRINTF(IDB_IOMMU, ("iommu_remove: va %lx len %zu\n", va, len));
