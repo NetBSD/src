@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.305 2021/04/25 14:32:20 christos Exp $
+#	$NetBSD: bsd.sys.mk,v 1.306 2021/04/26 00:38:23 christos Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -197,12 +197,10 @@ COPTS+=	${${ACTIVE_CC} == "gcc":? --param ssp-buffer-size=1 :}
 .if ${MACHINE_CPU} != "sh3"
 COPTS+=		${${ACTIVE_CC} == "gcc":? -msoft-float :}
 FOPTS+=		-msoft-float
-AFLAGS+=	-msoft-float
 .endif
 .elif ${MACHINE_ARCH} == "coldfire"
 COPTS+=		-mhard-float
 FOPTS+=		-mhard-float
-AFLAGS+=	-mhard-float
 .endif
 
 #.if !empty(MACHINE_ARCH:Mearmv7*)
