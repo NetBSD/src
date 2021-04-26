@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.87 2021/04/24 23:36:55 thorpej Exp $	*/
+/*	$NetBSD: ess.c,v 1.88 2021/04/26 19:10:38 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -66,7 +66,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.87 2021/04/24 23:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.88 2021/04/26 19:10:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1045,7 +1045,9 @@ skip:
 	arg.type = AUDIODEV_TYPE_OPL;
 	arg.hwif = 0;
 	arg.hdl = 0;
-	(void)config_found(sc->sc_dev, &arg, audioprint, CFARG_EOL);
+	(void)config_found(sc->sc_dev, &arg, audioprint,
+	    CFARG_IATTR, "ess",
+	    CFARG_EOL);
 
 #if NJOY_ESS > 0
 	if (sc->sc_model == ESS_1888 && enablejoy) {
@@ -1056,7 +1058,9 @@ skip:
 		ess_write_mix_reg(sc, 0x40, m40);
 
 		arg.type = AUDIODEV_TYPE_AUX;
-		(void)config_found(sc->sc_dev, &arg, audioprint, CFARG_EOL);
+		(void)config_found(sc->sc_dev, &arg, audioprint,
+		    CFARG_IATTR, "ess",
+		    CFARG_EOL);
 	}
 #endif
 
