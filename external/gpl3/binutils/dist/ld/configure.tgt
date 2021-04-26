@@ -508,7 +508,7 @@ mips64*el-*-netbsd*)	targ_emul=elf32ltsmipn32
 			targ_extra_libpath=$targ_extra_emuls
 			;;
 mipsn64*el-*-netbsd*)	targ_emul=elf64ltsmip
-			targ_extra_emuls="elf64btsmip elf64ltsmip elf32ltsmip elf32btsmip elf32btsmipn32 elf32ltsmip32"
+			targ_extra_emuls="elf64btsmip elf32ltsmip elf32btsmip elf32btsmipn32 elf32ltsmipn32"
 			targ_extra_libpath=$targ_extra_emuls
 			;; 	 
 mips64*-*-netbsd*)	targ_emul=elf32btsmipn32
