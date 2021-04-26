@@ -1,4 +1,4 @@
-/*	$NetBSD: ym.c,v 1.48 2021/04/24 23:36:55 thorpej Exp $	*/
+/*	$NetBSD: ym.c,v 1.49 2021/04/26 19:22:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002, 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.48 2021/04/24 23:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.49 2021/04/26 19:22:14 thorpej Exp $");
 
 #include "mpu_ym.h"
 #include "opt_ym.h"
@@ -258,7 +258,9 @@ ym_attach(struct ym_softc *sc)
 		arg.type = AUDIODEV_TYPE_OPL;
 		arg.hwif = 0;
 		arg.hdl = 0;
-		(void)config_found(ac->sc_dev, &arg, audioprint, CFARG_EOL);
+		(void)config_found(ac->sc_dev, &arg, audioprint,
+		    CFARG_IATTR, "ym",
+		    CFARG_EOL);
 	}
 
 #if NMPU_YM > 0
@@ -268,6 +270,7 @@ ym_attach(struct ym_softc *sc)
 		arg.hwif = 0;
 		arg.hdl = 0;
 		sc->sc_mpudev = config_found(ac->sc_dev, &arg, audioprint,
+		    CFARG_IATTR, "ym",
 		    CFARG_EOL);
 	}
 #endif
