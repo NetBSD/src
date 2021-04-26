@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.47 2020/08/26 10:51:45 simonb Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.48 2021/04/26 13:29:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -29,27 +29,28 @@
  * No reason this can't be common
  */
 #if defined(__MIPSEB__)
-# if defined(__mips_n32) || defined(__mips_n64)
-#  define	_MACHINE_ARCH	mips64eb
-#  define	MACHINE_ARCH	"mips64eb"
-#  define	_MACHINE32_ARCH	mipseb
-#  define	MACHINE32_ARCH	"mipseb"
-# else
-#  define	_MACHINE_ARCH	mipseb
-#  define	MACHINE_ARCH	"mipseb"
-# endif
+# define _MACHINE_SUFFIX eb
+# define MACHINE_SUFFIX "eb"
 #elif defined(__MIPSEL__)
-# if defined(__mips_n32) || defined(__mips_n64)
-#  define	_MACHINE_ARCH	mips64el
-#  define	MACHINE_ARCH	"mips64el"
-#  define	_MACHINE32_ARCH	mipsel
-#  define	MACHINE32_ARCH	"mipsel"
-# else
-#  define	_MACHINE_ARCH	mipsel
-#  define	MACHINE_ARCH	"mipsel"
-#endif
+# define _MACHINE_SUFFIX el
+# define MACHINE_SUFFIX "el"
 #else
-#error neither __MIPSEL__ nor __MIPSEB__ are defined.
+# error neither __MIPSEL__ nor __MIPSEB__ are defined.
+#endif
+
+#if defined(__mips_n32) || defined(__mips_n64)
+# if defined(__mips_n32)
+#  define	_MACHINE_ARCH	mips64##_MACHINE_SUFFIX
+#  define	MACHINE_ARCH	"mips64" MACHINE_SUFFIX
+# else /* __mips_n64 */
+#  define	_MACHINE_ARCH	mipsn64##_MACHINE_SUFFIX
+#  define	MACHINE_ARCH	"mipsn64" MACHINE_SUFFIX
+# endif
+# define	_MACHINE32_ARCH	mips##_MACHINE_SUFFIX
+# define	MACHINE32_ARCH	"mips" MACHINE_SUFFIX
+#else /* o32 */
+# define	_MACHINE_ARCH	mips##_MACHINE_SUFFIX
+# define	MACHINE_ARCH	"mips" MACHINE_SUFFIX
 #endif
 
 /*
