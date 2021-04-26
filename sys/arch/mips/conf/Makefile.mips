@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.71 2021/04/25 23:24:00 christos Exp $
+#	$NetBSD: Makefile.mips,v 1.72 2021/04/26 00:28:01 christos Exp $
 
 # Makefile for NetBSD
 #
@@ -58,7 +58,7 @@ CFLAGS+=	${GP} -mno-abicalls -msoft-float -ffixed-24
 CFLAGS+=	-msym32 -mabi=64
 AFLAGS+=	-msym32 -mabi=64
 .endif
-.if ${MACHINE_ARCH} == "mips64eb"
+.if !empty(MACHINE_ARCH:Mmips*64eb)
 LDFLAGS+=	-Wl,-m,elf64btsmip
 LINKFORMAT+=	-m elf64btsmip
 SYSTEM_LD_TAIL_EXTRA+= \
