@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2019/03/06 12:40:23 nakayama Exp $
+#	$NetBSD: Makefile,v 1.6 2021/04/26 22:04:51 mrg Exp $
 
 NOMAN=	1
 
@@ -6,7 +6,8 @@ NOMAN=	1
 
 PROG=	chooser
 
-CPPFLAGS.chooser.c+=	-DBSD44SOCKETS -DRETSIGTYPE=void
+CPPFLAGS+=	-DBSD44SOCKETS -DRETSIGTYPE=void
+CPPFLAGS+=	-D_CONST_X_STRING=1
 
 APPDEFS=Chooser
 
@@ -21,3 +22,6 @@ BINDIR=	${XDMCHOOSERPATH:H}
 .include <bsd.prog.mk>
 
 .PATH: ${X11SRCDIR.xdm}/app-defaults
+
+# XXX libXt
+COPTS.chooser.c+=	-Wno-incompatible-pointer-types
