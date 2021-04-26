@@ -1,8 +1,8 @@
-# $NetBSD: files.fdt,v 1.32 2020/10/10 15:25:31 jmcneill Exp $
+# $NetBSD: files.fdt,v 1.33 2021/04/26 14:44:16 thorpej Exp $
 
 include	"dev/pckbport/files.pckbport"
 
-device	armfdt { }: bus_space_generic, fdt
+device	armfdt: bus_space_generic, fdt
 attach	armfdt at root with arm_fdt
 file	arch/arm/fdt/arm_fdt.c			arm_fdt
 file	arch/arm/fdt/arm_platform.c		arm_fdt & gtmr_fdt & psci_fdt
