@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.36 2021/04/24 07:58:12 skrll Exp $	*/
+/*	$NetBSD: lock.h,v 1.37 2021/04/26 16:35:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@ __cpu_simple_lock_set(__cpu_simple_lock_t *__ptr)
 	*__ptr = __SIMPLELOCK_LOCKED;
 }
 
-#ifdef _ARM_ARCH_6
+#if defined(_ARM_ARCH_6)
 static __inline unsigned int
 __arm_load_exclusive(__cpu_simple_lock_t *__alp)
 {
@@ -134,7 +134,7 @@ __swp(int __val, __cpu_simple_lock_t *__ptr)
 static __inline void
 __arm_membar_producer(void)
 {
-#ifdef _ARM_ARCH_7
+#if defined(_ARM_ARCH_7)
 	__asm __volatile("dsb" ::: "memory");
 #elif defined(_ARM_ARCH_6)
 	__asm __volatile("mcr\tp15,0,%0,c7,c10,4" :: "r"(0) : "memory");
@@ -144,7 +144,7 @@ __arm_membar_producer(void)
 static __inline void
 __arm_membar_consumer(void)
 {
-#ifdef _ARM_ARCH_7
+#if defined(_ARM_ARCH_7)
 	__asm __volatile("dmb" ::: "memory");
 #elif defined(_ARM_ARCH_6)
 	__asm __volatile("mcr\tp15,0,%0,c7,c10,5" :: "r"(0) : "memory");
@@ -163,7 +163,7 @@ __cpu_simple_lock_init(__cpu_simple_lock_t *__alp)
 static __inline void __unused
 __cpu_simple_lock(__cpu_simple_lock_t *__alp)
 {
-#ifdef _ARM_ARCH_6
+#if defined(_ARM_ARCH_6)
 	__arm_membar_consumer();
 	do {
 		/* spin */
@@ -183,7 +183,7 @@ void __cpu_simple_lock(__cpu_simple_lock_t *);
 static __inline int __unused
 __cpu_simple_lock_try(__cpu_simple_lock_t *__alp)
 {
-#ifdef _ARM_ARCH_6
+#if defined(_ARM_ARCH_6)
 	__arm_membar_consumer();
 	do {
 		if (__arm_load_exclusive(__alp) != __SIMPLELOCK_UNLOCKED) {
@@ -204,7 +204,7 @@ static __inline void __unused
 __cpu_simple_unlock(__cpu_simple_lock_t *__alp)
 {
 
-#ifdef _ARM_ARCH_8
+#if defined(_ARM_ARCH_8)
 	if (sizeof(*__alp) == 1) {
 		__asm __volatile("stlrb\t%w0, [%1]"
 		    :: "r"(__SIMPLELOCK_UNLOCKED), "r"(__alp) : "memory");
