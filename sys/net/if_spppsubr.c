@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.224 2021/04/26 08:37:54 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.225 2021/04/26 08:42:19 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.224 2021/04/26 08:37:54 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.225 2021/04/26 08:42:19 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2153,9 +2153,10 @@ sppp_rcr_event(struct sppp *sp, void *xcp)
 			cp->scr(sp);
 			cp->scan(cp, sp);
 			break;
-		case STATE_ACK_SENT:
 		case STATE_REQ_SENT:
 			sppp_cp_change_state(cp, sp, STATE_ACK_SENT);
+			/* fall through */
+		case STATE_ACK_SENT:
 			cp->scan(cp, sp);
 			break;
 		case STATE_STOPPED:
@@ -2202,8 +2203,9 @@ sppp_rcr_event(struct sppp *sp, void *xcp)
 			cp->scan(cp, sp);
 			break;
 		case STATE_ACK_SENT:
-		case STATE_REQ_SENT:
 			sppp_cp_change_state(cp, sp, STATE_REQ_SENT);
+			/* fall through */
+		case STATE_REQ_SENT:
 			cp->scan(cp, sp);
 			break;
 		case STATE_STOPPED:
