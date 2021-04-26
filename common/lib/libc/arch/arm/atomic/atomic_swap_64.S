@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_swap_64.S,v 1.11 2021/04/24 20:34:34 skrll Exp $	*/
+/*	$NetBSD: atomic_swap_64.S,v 1.12 2021/04/26 21:40:21 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -57,6 +57,11 @@ CRT_ALIAS(__atomic_exchange_8,_atomic_swap_64)
 ENTRY_NP(__sync_lock_release_8)
 	mov	r2, #0
 	mov	r3, #0
+#ifdef _ARM_ARCH_7
+	dmb	ishst
+#else
+	mcr	p15, 0, r2, c7, c10, 5	/* data memory barrier */
+#endif
 	strd	r2, r3, [r0]
 	RET
 END(__sync_lock_release_8)
