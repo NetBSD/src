@@ -1,4 +1,4 @@
-# $NetBSD: mips.inc,v 1.1 2021/04/26 18:06:09 christos Exp $
+# $NetBSD: mips.inc,v 1.2 2021/04/26 20:01:13 christos Exp $
 
 .ifndef MIPS_LE
 
@@ -8,10 +8,11 @@ MIPS_LE=0
 MIPS_LE=1
 .	endif
 
-.	if empty(MACHINE_ARCH:Mmips*64*)
-MIPS_64=
-.	else
+.	if (!empty(MACHINE_ARCH:Mmipsn64*) && empty(COPTS:M-mabi=*32*)) || \
+	   (!empty(MACHINE_ARCH:Mmips64*) && !empty(COPTS:M-mabi=*64*))
 MIPS_64=64
+.	else
+MIPS_64=
 .	endif
 
 .endif
