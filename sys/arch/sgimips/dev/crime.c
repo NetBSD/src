@@ -1,4 +1,4 @@
-/*	$NetBSD: crime.c,v 1.38 2015/02/18 16:47:58 macallan Exp $	*/
+/*	$NetBSD: crime.c,v 1.39 2021/04/26 17:07:17 mrg Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -38,7 +38,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.38 2015/02/18 16:47:58 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.39 2021/04/26 17:07:17 mrg Exp $");
+
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -56,6 +58,10 @@ __KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.38 2015/02/18 16:47:58 macallan Exp $");
 #include <sgimips/dev/crimevar.h>
 #include <sgimips/dev/crimereg.h>
 #include <sgimips/mace/macevar.h>
+
+#if defined(DDB)
+#include <machine/db_machdep.h>
+#endif
 
 #include "locators.h"
 
@@ -106,6 +112,10 @@ crime_attach(device_t parent, device_t self, void *aux)
 	uint64_t crm_id;
 	uint64_t baseline, endline;
 	uint32_t startctr, endctr, cps;
+
+#if defined(DDB)
+	cpu_reset_address = crime_reboot;
+#endif
 
 	sc->sc_dev = self;
 	crm_iot = normal_memt;
