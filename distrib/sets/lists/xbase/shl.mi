@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.92 2020/10/28 08:10:08 nia Exp $
+# $NetBSD: shl.mi,v 1.93 2021/04/27 03:09:15 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -166,7 +166,7 @@
 ./usr/X11R7/lib/libXxf86vm.so.2.0		xbase-libXxf86vm-lib		xorg,compatx11file
 ./usr/X11R7/lib/libdrm.so			xbase-libdrm-lib		xorg,compatx11file
 ./usr/X11R7/lib/libdrm.so.3			xbase-libdrm-lib		xorg,compatx11file
-./usr/X11R7/lib/libdrm.so.3.4			xbase-libdrm-lib		xorg,compatx11file
+./usr/X11R7/lib/libdrm.so.3.5			xbase-libdrm-lib		xorg,compatx11file
 ./usr/X11R7/lib/libdrm_radeon.so		xbase-libdrm_radeon-lib		xorg,compatx11file
 ./usr/X11R7/lib/libdrm_radeon.so.0		xbase-libdrm_radeon-lib		xorg,compatx11file
 ./usr/X11R7/lib/libdrm_radeon.so.0.0		xbase-libdrm_radeon-lib		xorg,compatx11file
