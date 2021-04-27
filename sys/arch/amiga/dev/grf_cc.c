@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cc.c,v 1.41 2012/10/27 17:17:28 chs Exp $ */
+/*	$NetBSD: grf_cc.c,v 1.42 2021/04/27 14:48:28 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cc.c,v 1.41 2012/10/27 17:17:28 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cc.c,v 1.42 2021/04/27 14:48:28 thorpej Exp $");
 
 #include "grfcc.h"
 #include "ite.h"
@@ -151,7 +151,7 @@ grfccattach(device_t parent, device_t self, void *aux)
 	/*
 	 * attach grf
 	 */
-	amiga_config_found(cfdata, gp->g_device, gp, grfccprint);
+	amiga_config_found(cfdata, gp->g_device, gp, grfccprint, CFARG_EOL);
 }
 
 int
