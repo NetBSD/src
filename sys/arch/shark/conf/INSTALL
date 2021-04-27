@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.66 2021/04/27 21:39:40 thorpej Exp $
+#	$NetBSD: INSTALL,v 1.67 2021/04/27 23:37:01 thorpej Exp $
 #
 #	Shark installation kernel
 #
@@ -184,13 +184,6 @@ wd*		at atabus? drive ?
 atapibus*	at atabus?
 cd*		at atapibus? drive?
 sd*		at atapibus? drive?
-
-# PCCONS@OFW
-#ofisapc*	at ofbus?
-#pc*		at ofisapc?
-
-# PS/2 Mouse
-#opms0		at spckbd? irq 12
 
 # wscons
 pckbc*		at ofisa?
