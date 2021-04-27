@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisa.c,v 1.31 2021/04/24 23:36:56 thorpej Exp $	*/
+/*	$NetBSD: ofisa.c,v 1.32 2021/04/27 21:39:39 thorpej Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofisa.c,v 1.31 2021/04/24 23:36:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofisa.c,v 1.32 2021/04/27 21:39:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,7 @@ ofisaattach(device_t parent, device_t self, void *aux)
 
 		memset(&aa, 0, sizeof aa);
 
-		aa.oba.oba_busname = "ofw";			/* XXX */
+		aa.oba.oba_busname = "ofisa";
 		aa.oba.oba_phandle = child;
 		aa.iot = iba.iba_iot;
 		aa.memt = iba.iba_memt;
