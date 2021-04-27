@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.59 2021/04/27 03:09:16 mrg Exp $
+# $NetBSD: shl.mi,v 1.60 2021/04/27 06:50:27 mrg Exp $
 ./usr/libdata/debug/usr/X11R7/lib	base-sys-usr		xorg,debug,compatx11dir
 ./usr/libdata/debug/usr/X11R7/lib/X11/locale/lib/common/libximcp.so.2.0.debug	xorg,obsolete		xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/X11/locale/lib/common/libxlcDef.so.2.0.debug	xorg,obsolete		xorg,obsolete
@@ -21,7 +21,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/libOSMesa.so.7.0.debug	xdebug-obsolete		xorg,obsolete,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libSM.so.7.0.debug	xdebug-libSM-debug		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libX11-xcb.so.1.0.debug	xdebug-libX11-debug		xorg,debug,compatx11file
-./usr/libdata/debug/usr/X11R7/lib/libX11.so.7.0.debug	xdebug-libX11-debug		xorg,debug,compatx11file
+./usr/libdata/debug/usr/X11R7/lib/libX11.so.7.1.debug	xdebug-libX11-debug		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libXRes.so.2.0.debug	xdebug-libXres-debug		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libXTrap.so.7.0.debug	xdebug-obsolete	xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/libXau.so.7.0.debug	xdebug-libXau-debug		xorg,debug,compatx11file

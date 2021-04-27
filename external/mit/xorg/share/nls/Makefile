@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2016/10/04 23:52:02 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2021/04/27 06:50:26 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -19,7 +19,7 @@ SUBDIR=	\
 	pt_BR.UTF-8 \
 	pt_PT.UTF-8 \
 	ru_RU.UTF-8 \
-	sr_CS.UTF-8 \
+	sr_RS.UTF-8 \
 	tatar-cyr th_TH th_TH.UTF-8 tscii-0 \
 	vi_VN.tcvn vi_VN.viscii \
 	zh_CN zh_CN.UTF-8 zh_CN.gb18030 zh_CN.gbk zh_HK.UTF-8 \
@@ -62,6 +62,6 @@ realall: ${FILES}
 build_subdirs:
 .for _dir in ${SUBDIR}
 	mkdir ${.CURDIR}/${_dir}
-	printf '#	$$NetBSD: Makefile,v 1.5 2016/10/04 23:52:02 mrg Exp $$\n\nNLS_SUBDIR=	${_dir}\n\n.include "../Makefile.nls"\n' > ${.CURDIR}/${_dir}/Makefile
+	printf '#	$$NetBSD: Makefile,v 1.6 2021/04/27 06:50:26 mrg Exp $$\n\nNLS_SUBDIR=	${_dir}\n\n.include "../Makefile.nls"\n' > ${.CURDIR}/${_dir}/Makefile
 
 .endfor
