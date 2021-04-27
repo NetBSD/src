@@ -1,4 +1,4 @@
-/*	$NetBSD: membar_ops.S,v 1.6 2014/03/28 21:32:41 skrll Exp $	*/
+/*	$NetBSD: membar_ops.S,v 1.7 2021/04/27 05:40:29 skrll Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,10 +34,10 @@
 
 ENTRY_NP(_membar_producer)
 #ifdef _ARM_ARCH_7
-	dsb
+	dmb	ishst
 #else
 	mov	r0, #0
-	mcr	p15, 0, r0, c7, c10, 4	 /* Data Synchronization Barrier */
+	mcr	p15, 0, r0, c7, c10, 5	/* Data Memory Barrier */
 #endif
 	RET
 END(_membar_producer)
@@ -47,7 +47,7 @@ STRONG_ALIAS(_membar_write,_membar_producer)
 
 ENTRY_NP(_membar_sync)
 #ifdef _ARM_ARCH_7
-	dmb
+	dmb	ish
 #else
 	mov	r0, #0
 	mcr	p15, 0, r0, c7, c10, 5	/* Data Memory Barrier */
