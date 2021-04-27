@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.430 2021/04/27 15:21:42 christos Exp $	*/
+/*	$NetBSD: job.c,v 1.431 2021/04/27 16:23:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -142,7 +142,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.430 2021/04/27 15:21:42 christos Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.431 2021/04/27 16:23:21 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -1068,7 +1068,7 @@ DebugFailedJob(const Job *job)
 	if (!DEBUG(ERROR))
 		return;
 
-	debug_printf("\n*** Failed target:  %s\n*** Failed commands:\n",
+	debug_printf("\n*** Failed target: %s\n*** Failed commands:\n",
 	    job->node->name);
 	for (l = job->node->commands.first; l != NULL; l = l->next) {
 		debug_printf("\t%s\n", (const char *)l->datum);
