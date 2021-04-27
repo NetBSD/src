@@ -1,4 +1,4 @@
-/*	$NetBSD: hvcall.S,v 1.4 2014/06/08 17:33:24 palle Exp $ */
+/*	$NetBSD: hvcall.S,v 1.5 2021/04/27 19:09:56 palle Exp $ */
 /*	$OpenBSD: hvcall.S,v 1.10 2011/06/25 20:45:00 kettenis Exp $	*/
 
 /*
@@ -151,6 +151,13 @@ ENTRY(hv_api_get_version)
 	retl
 	 stx	%o2, [%o4]
 
+ENTRY(hv_api_set_version)
+	mov	%o3, %o4
+	mov	API_SET_VERSION, %o5
+	ta	ST_CORE_TRAP
+	retl
+	 stx	%o1, [%o4]
+	
 ENTRY(hv_mach_desc)
 	mov	%o1, %o2
 	ldx	[%o2], %o1
