@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2021/02/17 03:06:07 mrg Exp $
+#	$NetBSD: Makefile,v 1.22 2021/04/27 02:11:55 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -24,6 +24,7 @@ CPPFLAGS+=	-I. \
 		${X11FLAGS.VERSION}
 
 CWARNFLAGS.clang+=	-Wno-empty-body
+CWARNFLAGS.gcc+=	-Wno-error=attributes
 
 APPDEFS=XTerm.ad XTerm-color.ad
 
