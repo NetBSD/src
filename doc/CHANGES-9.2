@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.71 2021/04/26 18:36:07 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.72 2021/04/27 10:38:32 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -2987,3 +2987,20 @@ sys/arch/arm/include/lock.h			1.36,1.37
 	ARM: lock and atomic fixes.
 	[skrll, ticket #1254]
 
+sys/arch/mac68k/mac68k/locore.s			1.174
+
+	Fix DJMEMCMAX option for Quadra/Centris 650/800.
+	[rin, ticket #1255]
+
+sys/arch/mac68k/conf/GENERIC			1.234
+sys/arch/mac68k/conf/files.mac68k		1.131
+sys/arch/mac68k/mac68k/machdep.c		1.360
+
+	Add MAC68K_MEMSIZE option to hard-code memory size in MB, instead of
+	that given by Booter.
+	[rin, ticket #1256]
+
+xsrc/external/mit/xorg-server/dist/Xi/chgfctl.c		(apply patch)
+
+	Fix CVE-2021-3472 (local privilege escalation).
+	[mrg, ticket #1257]
