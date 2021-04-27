@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.276 2021/04/15 19:02:29 rillig Exp $
+# $NetBSD: Makefile,v 1.277 2021/04/27 16:20:06 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -230,6 +230,7 @@ TESTS+=		opt-debug-curdir
 TESTS+=		opt-debug-cond
 TESTS+=		opt-debug-dir
 TESTS+=		opt-debug-errors
+TESTS+=		opt-debug-errors-jobs
 TESTS+=		opt-debug-file
 TESTS+=		opt-debug-for
 TESTS+=		opt-debug-graph1
