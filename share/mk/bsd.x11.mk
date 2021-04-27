@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.137 2020/12/05 22:44:57 mrg Exp $
+#	$NetBSD: bsd.x11.mk,v 1.138 2021/04/27 04:02:09 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -134,7 +134,7 @@ XORG_SERVER_MINOR=	10
 XORG_SERVER_TEENY=	6
 .else
 XORG_SERVER_MINOR=	20
-XORG_SERVER_TEENY=	10
+XORG_SERVER_TEENY=	11
 .endif
 
 XVENDORNAMESHORT=	'"X.Org"'
