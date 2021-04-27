@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.136 2020/08/16 10:27:47 jdolecek Exp $
+#	$NetBSD: GENERIC,v 1.137 2021/04/27 21:39:39 thorpej Exp $
 #
 # Generic Shark configuration.
 #
@@ -7,7 +7,7 @@ include	"arch/shark/conf/std.shark"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.136 $"
+#ident		"GENERIC-$Revision: 1.137 $"
 
 # estimated number of users
 maxusers	32
@@ -203,11 +203,9 @@ ofbus*		at ofbus?
 #ofdisk* 	at ofbus?
 #ofnet*		at ofbus?	# don't use with cs0
 #ofcons* 	at ofbus?	# don't use with pc0
-ofrtc*		at ofisa?
 ofrom*		at ofbus?
 
 ofisa*		at ofbus?
-ofbus*		at ofisa?
 
 # IDE/ATA disk
 wdc*		at ofisa?
@@ -239,6 +237,9 @@ chipsfb*	at ofbus?	# C&T 65550 in rev. 4 and earlier
 wsdisplay*	at wsemuldisplaydev?
 wskbd*		at pckbd? console ?
 wsmouse*	at pms? mux 0
+
+# mc146818 real time clock
+mcclock*	at ofisa?
 
 # CS8900 Ethernet@OFW
 cs*		at ofisa?
