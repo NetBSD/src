@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.226 2021/04/04 10:05:08 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.227 2021/04/27 15:19:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -96,7 +96,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.226 2021/04/04 10:05:08 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.227 2021/04/27 15:19:25 christos Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
@@ -161,7 +161,7 @@ CompatInterrupt(int signo)
 }
 
 static void
-DebugFailedTarget(const char *cmd, GNode *gn)
+DebugFailedTarget(const char *cmd, const GNode *gn)
 {
 	const char *p = cmd;
 	debug_printf("\n*** Failed target:  %s\n*** Failed command: ",
