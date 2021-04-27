@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.137 2021/04/27 21:39:39 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.138 2021/04/27 23:37:01 thorpej Exp $
 #
 # Generic Shark configuration.
 #
@@ -7,7 +7,7 @@ include	"arch/shark/conf/std.shark"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.137 $"
+#ident		"GENERIC-$Revision: 1.138 $"
 
 # estimated number of users
 maxusers	32
@@ -215,17 +215,6 @@ wd*		at atabus? drive ?
 atapibus*	at atabus?
 cd*		at atapibus? drive?
 sd*		at atapibus? drive?
-
-# PCCONS@OFW
-#ofisapc*	at ofbus?
-#pc*		at ofisapc?
-#options 	FRENCH_KBD
-#options 	FINNISH_KBD
-#options 	GERMAN_KBD
-#options 	NORWEGIAN_KBD
-
-# PS/2 Mouse
-#opms0		at spckbd? irq 12
 
 # wscons
 pckbc*		at ofisa?

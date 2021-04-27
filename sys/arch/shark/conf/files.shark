@@ -1,4 +1,4 @@
-#	$NetBSD: files.shark,v 1.21 2017/12/18 15:53:39 skrll Exp $
+#	$NetBSD: files.shark,v 1.22 2021/04/27 23:37:01 thorpej Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -57,9 +57,6 @@ file	arch/shark/ofw/lpt_ofisa_machdep.c	lpt_ofisa | atppc_ofisa
 file	arch/shark/ofw/wdc_ofisa_machdep.c	wdc_ofisa
 
 # Glue for OFW ISA device attachment
-device	ofisapc {}
-attach	ofisapc at ofbus
-file	arch/shark/ofw/ofisapc.c		ofisapc
 device	ofisascr {}
 attach	ofisascr at ofisa
 file	arch/shark/ofw/ofisascr.c		scr
@@ -70,16 +67,6 @@ file	arch/shark/ofw/ofrom.c			ofrom	needs-flag
 
 # Memory disk driver
 file	dev/md_root.c				md & memory_disk_hooks
-
-# attribute used to represent the "keyboard controller" on the shark
-# XXX should be a real device
-define	spckbd { [irq = -1], [port = -1] }
-
-# PS/2 mouse device
-device	opms: tty
-file	arch/shark/shark/opms.c			opms needs-flag
-
-attach	opms at spckbd with opms
 
 device	todclock
 attach	todclock at todservice
