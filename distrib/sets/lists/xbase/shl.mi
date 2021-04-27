@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.93 2021/04/27 03:09:15 mrg Exp $
+# $NetBSD: shl.mi,v 1.94 2021/04/27 06:50:27 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -49,7 +49,7 @@
 ./usr/X11R7/lib/libX11-xcb.so.1.0		xbase-libX11-lib		xorg,compatx11file
 ./usr/X11R7/lib/libX11.so			xbase-libX11-lib		xorg,compatx11file
 ./usr/X11R7/lib/libX11.so.7			xbase-libX11-lib		xorg,compatx11file
-./usr/X11R7/lib/libX11.so.7.0			xbase-libX11-lib		xorg,compatx11file
+./usr/X11R7/lib/libX11.so.7.1			xbase-libX11-lib		xorg,compatx11file
 ./usr/X11R7/lib/libXRes.so			xbase-libXres-lib		xorg,compatx11file
 ./usr/X11R7/lib/libXRes.so.2			xbase-libXres-lib		xorg,compatx11file
 ./usr/X11R7/lib/libXRes.so.2.0			xbase-libXres-lib		xorg,compatx11file
