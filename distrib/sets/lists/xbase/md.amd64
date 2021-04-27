@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.19 2019/08/12 03:48:32 uki Exp $
+# $NetBSD: md.amd64,v 1.20 2021/04/27 03:09:15 mrg Exp $
 ./usr/X11R7/lib/libI810XvMC.so			xbase-libI810XvMC-lib		xorg,compatx11file
 ./usr/X11R7/lib/libI810XvMC.so.1		xbase-libI810XvMC-lib		xorg,compatx11file
 ./usr/X11R7/lib/libI810XvMC.so.1.0		xbase-libI810XvMC-lib		xorg,compatx11file
@@ -13,7 +13,7 @@
 ./usr/X11R7/lib/libchromeXvMCPro.so.1.0		xbase-libchromeXvMCPro-lib		xorg,compatx11file
 ./usr/X11R7/lib/libdrm_amdgpu.so		xbase-libdrm_amdgpu-lib		xorg,compatx11file
 ./usr/X11R7/lib/libdrm_amdgpu.so.1		xbase-libdrm_amdgpu-lib		xorg,compatx11file
-./usr/X11R7/lib/libdrm_amdgpu.so.1.0		xbase-libdrm_amdgpu-lib		xorg,compatx11file
+./usr/X11R7/lib/libdrm_amdgpu.so.1.1		xbase-libdrm_amdgpu-lib		xorg,compatx11file
 ./usr/X11R7/lib/libdrm_intel.so			xbase-libdrm_intel-lib		xorg,compatx11file
 ./usr/X11R7/lib/libdrm_intel.so.0		xbase-libdrm_intel-lib		xorg,compatx11file
 ./usr/X11R7/lib/libdrm_intel.so.0.2		xbase-libdrm_intel-lib		xorg,compatx11file

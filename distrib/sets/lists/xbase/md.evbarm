@@ -1,7 +1,7 @@
-# $NetBSD: md.evbarm,v 1.7 2021/02/21 02:29:56 christos Exp $
+# $NetBSD: md.evbarm,v 1.8 2021/04/27 03:09:15 mrg Exp $
 ./usr/X11R7/lib/libdrm_amdgpu.so		xbase-libdrm_amdgpu-lib		xorg,compatx11file
 ./usr/X11R7/lib/libdrm_amdgpu.so.1		xbase-libdrm_amdgpu-lib		xorg,compatx11file
-./usr/X11R7/lib/libdrm_amdgpu.so.1.0		xbase-libdrm_amdgpu-lib		xorg,compatx11file
+./usr/X11R7/lib/libdrm_amdgpu.so.1.1		xbase-libdrm_amdgpu-lib		xorg,compatx11file
 ./usr/X11R7/lib/libdrm_nouveau.so		xbase-libdrm_nouveau-lib		xorg,compatx11file
 ./usr/X11R7/lib/libdrm_nouveau.so.3		xbase-libdrm_nouveau-lib		xorg,compatx11file
 ./usr/X11R7/lib/libdrm_nouveau.so.3.0		xbase-libdrm_nouveau-lib		xorg,compatx11file
