@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.228 2019/04/26 21:40:31 sevan Exp $
+# $NetBSD: GENERIC,v 1.228.2.1 2021/04/27 10:31:17 martin Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/mac68k/conf/std.mac68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.228 $"
+#ident 		"GENERIC-$Revision: 1.228.2.1 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -40,6 +40,10 @@ options 	FPU_EMULATE
 # Support for 128 meg SIMMs in Centris / Quadra 610, 650 and 800 machines.
 # You need to set the total memory in the MacOS Booter.
 #options 	DJMEMCMAX
+
+# Use hard-coded memory size in MB, instead of parameter given by Booter.
+# Workaround for Booter bug by which max memory is restricted to 255MB.
+#options 	MAC68K_MEMSIZE=256
 
 # Standard system options
 
