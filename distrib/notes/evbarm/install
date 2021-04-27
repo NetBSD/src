@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.16 2020/08/07 00:27:11 snj Exp $
+.\"	$NetBSD: install,v 1.17 2021/04/27 19:52:06 nia Exp $
 .\"
 .\" Copyright (c) 2001-2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -35,7 +35,7 @@ on Unix.
 .It
 Write the image to disk:
 .Bd -literal
-# dd if=armv7.img of=/dev/rld0d bs=1m conv=sync
+# dd if=armv7.img of=/dev/rld0 bs=1m conv=sync progress=1
 .Ed
 .It
 If you are using Microsoft Windows, you can use
@@ -61,12 +61,12 @@ existing
 Install the board-specific U-Boot to the SD card,
 e.g. for Allwinner devices (PINE H64 in this case):
 .Bd -literal
-# dd if=/usr/pkg/share/u-boot/pine-h64/u-boot-sunxi-with-spl.bin of=/dev/rld0d bs=1k seek=8 conv=sync
+# dd if=/usr/pkg/share/u-boot/pine-h64/u-boot-sunxi-with-spl.bin of=/dev/rld0 bs=1k seek=8 conv=sync progress=1
 .Ed
 .Pp
 Or a Rockchip device (e.g. RockPro64):
 .Bd -literal
-# dd if=/usr/pkg/share/u-boot/rockpro64/rksd_loader.img of=/dev/rld0d seek=64 conv=sync
+# dd if=/usr/pkg/share/u-boot/rockpro64/rksd_loader.img of=/dev/rld0 seek=64 conv=sync progress=1
 .Ed
 .El
 .Pp
