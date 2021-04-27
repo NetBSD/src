@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2021/04/25 22:25:00 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2021/04/27 14:18:25 christos Exp $
 
 # XXX: Pull this (G_OBJCXX_OBJS) out with mknative-gcc.  Needs some
 # minor re-org of cc1plus and perhaps cc1obj.  G_CXX_AND_OBJCXX_OBJS
@@ -81,7 +81,7 @@ COPTS.cc1obj-checksum.c+=-O0
 COPTS.decl.c+=-O0
 .endif
 
-.if ${MACHINE_MIPS64}
+.if ${MACHINE_ARCH} == "mipseb" || ${MACHINE_ARCH} == "mipsel"
 COPTS.c-common.c+=-O3
 .endif
 
