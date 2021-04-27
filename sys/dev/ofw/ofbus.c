@@ -1,4 +1,4 @@
-/*	$NetBSD: ofbus.c,v 1.27 2021/04/24 23:36:57 thorpej Exp $	*/
+/*	$NetBSD: ofbus.c,v 1.28 2021/04/27 20:31:01 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofbus.c,v 1.27 2021/04/24 23:36:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofbus.c,v 1.28 2021/04/27 20:31:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,28 @@ ofbus_attach(device_t parent, device_t dev, void *aux)
 	char name[64], type[64];
 	int child, units;
 
-	printf("\n");
+	/*
+	 * If we are the OFW root, get the banner-name and model
+	 * properties and display them for informational purposes.
+	 */
+	if (oba->oba_phandle == OF_finddevice("/")) {
+		int model_len, banner_len;
+
+		model_len = OF_getprop(oba->oba_phandle, "model",
+		    name, sizeof(name));
+		banner_len = OF_getprop(oba->oba_phandle, "banner-name",
+		    type, sizeof(type));
+
+		if (banner_len > 0 && model_len > 0) {
+			printf(": %s (%s)\n", type, name);
+		} else if (model_len > 0) {
+			printf(": %s\n", name);
+		} else {
+			printf("\n");
+		}
+	} else {
+		printf("\n");
+	}
 
 	/*
 	 * This is a hack to make the probe work on the scsi (and ide) bus.
