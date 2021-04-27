@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.65 2021/04/24 23:36:24 thorpej Exp $ */
+/*	$NetBSD: grf.c,v 1.66 2021/04/27 14:48:28 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.65 2021/04/24 23:36:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.66 2021/04/27 14:48:28 thorpej Exp $");
 
 /*
  * Graphics display driver for the Amiga
@@ -213,7 +213,9 @@ grfattach(device_t parent, device_t self, void *aux)
 		wa.scrdata = gp->g_scrlist;
 		wa.accessops = gp->g_accessops;
 		wa.accesscookie = &gp->g_vd;
-		config_found(self, &wa, wsemuldisplaydevprint, CFARG_EOL);
+		config_found(self, &wa, wsemuldisplaydevprint,
+		    CFARG_IATTR, "wsemuldisplaydev",
+		    CFARG_EOL);
 #endif  /* NWSDISPLAY > 0 */
 	}
 
@@ -221,7 +223,9 @@ grfattach(device_t parent, device_t self, void *aux)
 	/*
 	 * try and attach an ite
 	 */
-	amiga_config_found(cfdata, self, gp, grfprint);
+	amiga_config_found(cfdata, self, gp, grfprint,
+	    CFARG_IATTR, "grf",
+	    CFARG_EOL);
 #endif
 }
 

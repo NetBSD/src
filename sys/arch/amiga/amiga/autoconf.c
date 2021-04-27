@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.118 2021/04/24 23:36:24 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.119 2021/04/27 14:48:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -30,8 +30,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#define	__SUBR_AUTOCONF_PRIVATE		/* XXX amiga_config_found() */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.118 2021/04/24 23:36:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.119 2021/04/27 14:48:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,14 +164,21 @@ matchname(const char *fp, const char *sp)
  * by checking for NULL.
  */
 int
-amiga_config_found(cfdata_t pcfp, device_t parent, void *aux, cfprint_t pfn)
+amiga_config_found(cfdata_t pcfp, device_t parent, void *aux, cfprint_t pfn,
+    cfarg_t tag, ...)
 {
 	struct device temp;
 	cfdata_t cf;
 	const struct cfattach *ca;
+	int rv = 0;
+	va_list ap;
 
-	if (amiga_realconfig)
-		return(config_found(parent, aux, pfn, CFARG_EOL) != NULL);
+	va_start(ap, tag);
+
+	if (amiga_realconfig) {
+		rv = config_vfound(parent, aux, pfn, tag, ap) != NULL;
+		goto out;
+	}
 
 	if (parent == NULL) {
 		memset(&temp, 0, sizeof temp);
@@ -180,16 +189,17 @@ amiga_config_found(cfdata_t pcfp, device_t parent, void *aux, cfprint_t pfn)
 	parent->dv_cfdriver = config_cfdriver_lookup(pcfp->cf_name);
 	parent->dv_unit = pcfp->cf_unit;
 
-	if ((cf = config_search(parent, aux, CFARG_EOL)) != NULL) {
+	if ((cf = config_vsearch(parent, aux, tag, ap)) != NULL) {
 		ca = config_cfattach_lookup(cf->cf_name, cf->cf_atname);
 		if (ca != NULL) {
 			(*ca->ca_attach)(parent, NULL, aux);
-			parent->dv_cfdata = NULL;
-			return(1);
+			rv = 1;
 		}
 	}
 	parent->dv_cfdata = NULL;
-	return(0);
+ out:
+	va_end(ap);
+	return rv;
 }
 
 /*
@@ -215,7 +225,7 @@ config_console(void)
 	/*
 	 * delay clock calibration.
 	 */
-	amiga_config_found(cf, NULL, __UNCONST("clock"), NULL);
+	amiga_config_found(cf, NULL, __UNCONST("clock"), NULL, CFARG_EOL);
 
 	/*
 	 * internal grf.
@@ -223,13 +233,14 @@ config_console(void)
 #ifdef DRACO
 	if (!(is_draco()))
 #endif
-		amiga_config_found(cf, NULL, __UNCONST("grfcc"), NULL);
+		amiga_config_found(cf, NULL, __UNCONST("grfcc"), NULL,
+		    CFARG_EOL);
 
 	/*
 	 * zbus knows when its not for real and will
 	 * only configure the appropriate hardware
 	 */
-	amiga_config_found(cf, NULL, __UNCONST("zbus"), NULL);
+	amiga_config_found(cf, NULL, __UNCONST("zbus"), NULL, CFARG_EOL);
 }
 
 /*

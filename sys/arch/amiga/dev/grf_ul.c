@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_ul.c,v 1.51 2016/11/03 22:08:31 kamil Exp $ */
+/*	$NetBSD: grf_ul.c,v 1.52 2021/04/27 14:48:28 thorpej Exp $ */
 #define UL_DEBUG
 
 /*-
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_ul.c,v 1.51 2016/11/03 22:08:31 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_ul.c,v 1.52 2021/04/27 14:48:28 thorpej Exp $");
 
 #include "grful.h"
 #include "ite.h"
@@ -554,7 +554,7 @@ grfulattach(device_t parent, device_t self, void *aux)
 	/*
 	 * attach grf
 	 */
-	amiga_config_found(cfdata, gp->g_device, gp, grfulprint);
+	amiga_config_found(cfdata, gp->g_device, gp, grfulprint, CFARG_EOL);
 }
 
 int
