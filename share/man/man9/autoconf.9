@@ -1,6 +1,6 @@
-.\"     $NetBSD: autoconf.9,v 1.30 2013/03/13 00:09:21 riastradh Exp $
+.\"     $NetBSD: autoconf.9,v 1.31 2021/04/28 00:49:22 thorpej Exp $
 .\"
-.\" Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2001, 2002, 2021 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -27,18 +27,14 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 17, 2012
+.Dd April 28, 2021
 .Dt AUTOCONF 9
 .Os
 .Sh NAME
 .Nm autoconf ,
-.Nm config_search_loc ,
-.Nm config_search_ia ,
-.Nm config_found_sm_loc ,
-.Nm config_found_ia ,
+.Nm config_search ,
 .Nm config_found ,
 .Nm config_match ,
-.Nm config_attach_loc ,
 .Nm config_attach ,
 .Nm config_attach_pseudo ,
 .Nm config_detach ,
@@ -56,27 +52,17 @@
 .In sys/device.h
 .In sys/errno.h
 .Ft cfdata_t
-.Fn config_search_loc "cfsubmatch_t func" "device_t parent" "const char *ia" \
-"const int *locs" "void *aux"
-.Ft cfdata_t
-.Fn config_search_ia "cfsubmatch_t func" "device_t parent" "const char *ia" \
-"void *aux"
+.Fn config_search "device_t parent" "void *aux" "cfarg_t tag" "..."
 .Ft device_t
-.Fn config_found_sm_loc "device_t parent" "const char *ia" "const int *locs" \
-"void *aux" "cfprint_t print" "cfsubmatch_t submatch"
-.Ft device_t
-.Fn config_found_ia "device_t parent" "const char *ia" "void *aux" \
-"cfprint_t print"
-.Ft device_t
-.Fn config_found "device_t parent" "void *aux" "cfprint_t print"
+.Fn config_found "device_t parent" "void *aux" "cfprint_t print" \
+"cfarg_t tag" "..."
 .Ft int
 .Fn config_match "device_t parent" "cfdata_t cf" "void *aux"
-.Ft device_t
-.Fn config_attach_loc "device_t parent" "cfdata_t cf" "const int *locs" \
-"void *aux" "cfprint_t print"
+.Ft int
+.Fn config_probe "device_t parent" "cfdata_t cf" "void *aux"
 .Ft device_t
 .Fn config_attach "device_t parent" "cfdata_t cf" "void *aux" \
-"cfprint_t print"
+"cfprint_t print" "cfarg_t tag" "..."
 .Ft device_t
 .Fn config_attach_pseudo "cfdata_t cf"
 .Ft int
@@ -132,105 +118,125 @@ ends with a unit number.
 The unit number identifies an instance of the driver.
 Device data structures are allocated dynamically during
 autoconfiguration, giving a unique address for each instance.
+.Pp
+Several of the autoconfiguration functions take a variadic list of
+tag-value arguments to pass information from driver autoconfiguration
+functions to the kernel's autoconfiguration system.
+Each tag is followed by a tag-specific value.
+The end of the argument list must be terminated with the tag
+.Dv CFARG_EOL .
+Passing an invalid tag or an inappropriate value for a tag results
+in undefined behavior and may cause a kernel panic.
+.Bl -tag -width "CFARG_DEVHANDLE"
+.It Dv CFARG_SUBMATCH
+A pointer to a
+.Sq submatch
+function used in direct configuration.
+.It Dv CFARG_SEARCH
+A pointer to a
+.Sq search
+function used in indirect configuration.
+.It Dv CFARG_IATTR
+A pointer to a constant C string
+.Pq const char *
+specifying an interface attribute.
+If a parent device carries only a single interface attribute, then this
+tag-value pair may be omitted.
+If an interface attribute is specified that the parent device does not
+carry, or no interface attribute is specifies and the parent device carries
+more than one, behavior is undefined.
+On kernels built with the
+.Dv DIAGNOSTIC
+option, this may result in an assertion panic.
+.It Dv CFARG_LOCATORS
+A pointer an a constant array of type
+.Sq int
+.Pq const int *
+containing interface attribute-specific locators.
+.It Dv CFARG_DEVHANDLE
+A devhandle_t
+.Pq passed by value
+corresponding to the device being attached.
+.El
 .Sh FUNCTIONS
 .Bl -tag -width compact
-.It Fn config_search_loc "func" "parent" "ia" "locs" "aux"
+.It Fn config_search "parent" "aux" "tag" "..."
 Performs indirect configuration of physical devices.
-.Fn config_search_loc
+Tag-value arguments consumed:
+.Dv CFARG_SEARCH ,
+.Dv CFARG_IATTR ,
+.Dv CFARG_LOCATORS .
+.Fn config_search
 iterates over all potential children, calling the given
-function
-.Fa func
-for each one.
-If
-.Fa func
-is
-.Dv NULL ,
-.Fn config_search_loc
-applies each child's match function instead.
+search function
+If no search function is specified,
+.fn config_search
+applies the potential child's match function instead.
 The argument
 .Fa parent
 is the pointer to the parent's device structure.
-The argument
-.Fa ia
-is the interface attribute on which the potential children should attach.
-It can be
-.Dv NULL ,
-in which case all children attaching to any attribute are considered.
-The
-.Fa locs
-argument lists the locator values for the device and are passed to function
-.Fa func .
+If an interface attribute is specified, only potential children eligible to
+attach to that interface attribute will be consulted.
+If specified,
+the locators argument lists the locator values for the device and are passed
+to the search function.
 The given
 .Fa aux
 argument describes the device that has been found and is simply passed
-on through
-.Fa func
-to the child.
-.Fn config_search_loc
-returns a pointer to the best-matched child or
+on through the search function to the child.
+.Fn config_search
+returns a pointer to the configuration data that indicates the best-matched
+child or
 .Dv NULL
 otherwise.
 .Pp
-The role of
-.Fa func
-is to call
-the match function for each device and call
-.Fn config_attach_loc
+The role of the search function is to call
+.Fn config_probe
+for each potential child and call
+.Fn config_attach
 for any positive matches.
-If
-.Fa func
-is
-.Dv NULL ,
+If no search function is specified,
 then the parent should record the return value from
-.Fn config_search_loc
+.Fn config_search
 and call
-.Fn config_attach_loc
+.Fn config_attach
 itself.
 .Pp
 Note that this function is designed so that it can be used to apply an
 arbitrary function to all potential children.
 In this case callers may choose to ignore the return value.
-.It Fn config_search_ia "func" "parent" "ia" "aux"
-This function is equivalent to calling
-.Fn config_search_loc "func" "parent" "ia" "locs" "aux"
-with
-.Fa locs
-set to
-.Dv NULL .
-.It Fn config_found_sm_loc "parent" "ia" "locs" "aux" "print" "submatch"
+.It Fn config_found "parent" "aux" "print" "tag" "..."
 Performs direct configuration on a physical device.
-.Fn config_found_sm_loc
-is called by the parent and in turn calls the
-.Fa submatch
-function to call the match function as
-determined by the configuration table.
-If
-.Fa submatch
-is
-.Dv NULL ,
-the driver match functions are called directly.
+Tag-value arguments consumed:
+.Dv CFARG_SUBMATCH ,
+.Dv CFARG_IATTR ,
+.Dv CFARG_LOCATORS ,
+.Dv CFARG_DEVHANDLE .
+.Fn config_found
+is called by the parent and in turn calls the specified submatch function
+as determined by the configuration table.
+The submatch function compares user-specified locators from the
+machine description file against those specifying a found device,
+calling
+.Fn config_match
+if they match
+.Pq including wildcard matching .
+If a submatch function is not specified, then driver match functions are
+called directly.
 The argument
 .Fa parent
 is the pointer to the parent's device structure.
-The argument
-.Fa ia
-is the name of the interface attribute on which the child will attach,
-per
-.Xr config 5
-syntax.
-The argument
-.Fa locs
-lists the locator values for the device.
+If an interface attribute is specified, only potential children eligible to
+attach to that interface attribute will be consulted.
+If specified, the locators argument lists the locator values for the found
+device and may be used by the submatch function and will be recorded in the
+device structure of the child device.
 The given
 .Fa aux
 argument describes the device that has been found.
-.Fn config_found_sm_loc
+.Fn config_found
 internally uses
-.Fn config_search_loc ,
-passing on
-.Fa submatch , ia , locs
-and
-.Fa aux .
+.Fn config_search .
 The
 .Em softc
 structure for the matched device will be allocated, and the
@@ -262,66 +268,54 @@ unsupported
 will be appended automatically to non-driver reports if the return
 value is UNCONF or UNSUPP respectively; otherwise the function should
 return the value QUIET.
+If a device handle is specified, that handle will be associated with
+the resulting child device structure if a driver matches.
 .Pp
-.Fn config_found_sm_loc
+.Fn config_found
 returns a pointer to the attached device's
-.Em softc
+.Em device
 structure if the device is attached,
 .Dv NULL
 otherwise.
 Most callers can ignore this value, since the system will already have
 printed a diagnostic.
-.It Fn config_found_ia "parent" "ia" "aux" "print"
-This function is equivalent to calling
-.Fn config_found_sm_loc "parent" "ia" "locs" "aux" "print" "submatch"
-with
-.Fa locs
-and
-.Fa submatch
-set to
-.Dv NULL .
-It is provided for better source code readability with locator-less device
-buses.
-.It Fn config_found "parent" "aux" "print"
-This function is equivalent to calling
-.Fn config_found_sm_loc "parent" "ia" "locs" "aux" "print" "submatch"
-with
-.Fa ia , locs
-and
-.Fa submatch
-set to
-.Dv NULL
-and is provided for compatibility with older drivers.
-New code should either make the interface attribute explicit or prefer an
-indirect method based on
-.Fn config_search_loc .
 .It Fn config_match "parent" "cf" "aux"
-Match a device.
-Invokes the drivers match function according to the
-configuration table.
+Match a device
+.Pq direct configuration .
+Invokes the driver's match function according to the configuration table.
 The
 .Fn config_match
 function returns a nonzero integer indicating the confidence of
 supporting this device and a value of 0 if the driver doesn't support
 the device.
-.It Fn config_attach_loc "parent" "cf" "locs" "aux" "print"
+.It Fn config_probe "parent" "cf" "aux"
+Probe for a device
+.Pq indirect configuration .
+Invokes the driver's match function according to the configuraiton table.
+The
+.Fn config_probe
+function returns a nonzero integer to indicate a successful probe
+and a value of 0 othersize.
+Unlike
+.Fn config_match ,
+the return value of
+.Fn config_probe
+is not intended to reflect a confidence value.
+.It Fn config_attach "parent" "cf" "aux" "print" "tag" "..."
 Attach a found device.
+Tag-value arguments consumed:
+.Dv CFARG_LOCATORS ,
+.Dv CFARG_DEVHANDLE .
 Allocates the memory for the
 .Em softc
 structure and calls the drivers attach function according to the
 configuration table.
 If successful,
-.Fn config_attach_loc
-returns the
-.Em softc .
+.Fn config_attach
+returns a pointer to the
+.Em device
+structure.
 If unsuccessful, it returns
-.Dv NULL .
-.It Fn config_attach "parent" "cf" "aux" "print"
-This function is equivalent to calling
-.Fn config_attach_loc "parent" "cf" "locs" "aux" "print"
-with
-.Fa locs
-set to
 .Dv NULL .
 .It Fn config_attach_pseudo "cf"
 Create an instance of a pseudo-device driver.
@@ -337,7 +331,7 @@ The caller is expected to allocate and fill the
 object and pass it to
 .Fn config_attach_pseudo .
 The content of that object is similar to what is returned by
-.Fn config_search_loc
+.Fn config_search
 for regular devices.
 .It Fn config_detach "dev" "flags"
 Called by the parent to detach the child device.
