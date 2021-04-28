@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.361 2021/04/28 02:00:58 rin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.362 2021/04/28 02:28:05 rin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.361 2021/04/28 02:00:58 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.362 2021/04/28 02:28:05 rin Exp $");
 
 #include "opt_adb.h"
 #include "opt_compat_netbsd.h"
@@ -2121,6 +2121,15 @@ mac68k_set_io_offsets(vaddr_t base)
 			SCSIBase = base + 0xf000;
 			mac68k_machine.scsi96_2 = 1;
 			iop_init(0);	/* For console */
+			break;
+		case MACH_MACQ800:
+			/*
+			 * The H/W partially decode address for sccA; it is
+			 * available at offsets 0xc000, 0xc020, .... Here,
+			 * we choose 0xc020, where Mac toolbox ROM uses.
+			 */
+			sccA = (volatile u_char *)base + 0xc020;
+			SCSIBase = base + 0x10000;
 			break;
 		case MACH_MACQ700:
 			sccA = (volatile u_char *)base + 0xc000;
