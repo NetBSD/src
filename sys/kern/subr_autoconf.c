@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.279 2021/04/27 14:48:28 thorpej Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.280 2021/04/28 03:21:57 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -79,7 +79,7 @@
 #define	__SUBR_AUTOCONF_PRIVATE	/* see <sys/device.h> */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.279 2021/04/27 14:48:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.280 2021/04/28 03:21:57 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1214,7 +1214,11 @@ config_rootsearch(cfsubmatch_t fn, const char *rootname, void *aux)
 	return m.match;
 }
 
-static const char * const msgs[3] = { "", " not configured\n", " unsupported\n" };
+static const char * const msgs[] = {
+[QUIET]		=	"",
+[UNCONF]	=	" not configured\n",
+[UNSUPP]	=	" unsupported\n",
+};
 
 /*
  * The given `aux' argument describes a device that has been found
@@ -1242,7 +1246,12 @@ config_vfound(device_t parent, void *aux, cfprint_t print, cfarg_t tag,
 	if (print) {
 		if (config_do_twiddle && cold)
 			twiddle();
-		aprint_normal("%s", msgs[(*print)(aux, device_xname(parent))]);
+
+		const int pret = (*print)(aux, device_xname(parent));
+		KASSERT(pret >= 0);
+		KASSERT(pret < __arraycount(msgs));
+		KASSERT(msgs[pret] != NULL);
+		aprint_normal("%s", msgs[pret]);
 	}
 
 	/*
