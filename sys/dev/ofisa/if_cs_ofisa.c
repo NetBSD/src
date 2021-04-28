@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_ofisa.c,v 1.31 2021/01/27 03:10:21 thorpej Exp $	*/
+/*	$NetBSD: if_cs_ofisa.c,v 1.32 2021/04/28 03:34:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_ofisa.c,v 1.31 2021/01/27 03:10:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_ofisa.c,v 1.32 2021/04/28 03:34:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -217,9 +217,9 @@ cs_ofisa_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	ofisa_print_model(self, aa->oba.oba_phandle);
+	ofisa_print_model(NULL, aa->oba.oba_phandle);
 	if (message != NULL)
-		aprint_normal(": %s\n", message);
+		aprint_normal_dev(self, "%s\n", message);
 
 	if (defmedia == -1) {
 		aprint_error_dev(self, "unable to get default media\n");
