@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.227 2021/04/28 09:36:24 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.228 2021/04/28 09:39:39 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.227 2021/04/28 09:36:24 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.228 2021/04/28 09:39:39 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1642,11 +1642,14 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 {
 	STDDCL;
 	struct lcp_header *h;
+	struct sppp_cp *scp;
 	int printlen, len = m->m_pkthdr.len;
 	u_char *p;
 	uint32_t u32;
 
 	SPPP_LOCK(sp, RW_WRITER);
+
+	scp = &sp->scp[cp->protoidx];
 
 	if (len < 4) {
 		if (debug)
@@ -1661,7 +1664,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 		log(LOG_DEBUG,
 		    "%s: %s input(%s): <%s id=0x%x len=%d",
 		    ifp->if_xname, cp->name,
-		    sppp_state_name(sp->scp[cp->protoidx].state),
+		    sppp_state_name(scp->state),
 		    sppp_cp_type_name(h->type), h->ident, printlen);
 		if (len < printlen)
 			printlen = len;
@@ -1683,62 +1686,62 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 			break;
 		}
 
-		sp->scp[cp->protoidx].rcr_type = CP_RCR_NONE;
-		sp->scp[cp->protoidx].rconfid = h->ident;
-		if (sp->scp[cp->protoidx].mbuf_confreq != NULL) {
-			m_freem(sp->scp[cp->protoidx].mbuf_confreq);
+		scp->rcr_type = CP_RCR_NONE;
+		scp->rconfid = h->ident;
+		if (scp->mbuf_confreq != NULL) {
+			m_freem(scp->mbuf_confreq);
 		}
-		sp->scp[cp->protoidx].mbuf_confreq = m;
+		scp->mbuf_confreq = m;
 		m = NULL;
-		sppp_wq_add(sp->wq_cp, &sp->scp[cp->protoidx].work_rcr);
+		sppp_wq_add(sp->wq_cp, &scp->work_rcr);
 		break;
 	case CONF_ACK:
-		if (h->ident != sp->scp[cp->protoidx].confid) {
+		if (h->ident != scp->confid) {
 			if (debug)
 				addlog("%s: %s id mismatch 0x%x != 0x%x\n",
 				       ifp->if_xname, cp->name,
-				       h->ident, sp->scp[cp->protoidx].confid);
+				       h->ident, scp->confid);
 			if_statinc(ifp, if_ierrors);
 			break;
 		}
-		sppp_wq_add(sp->wq_cp, &sp->scp[cp->protoidx].work_rca);
+		sppp_wq_add(sp->wq_cp, &scp->work_rca);
 		break;
 	case CONF_NAK:
 	case CONF_REJ:
-		if (h->ident != sp->scp[cp->protoidx].confid) {
+		if (h->ident != scp->confid) {
 			if (debug)
 				addlog("%s: %s id mismatch 0x%x != 0x%x\n",
 				       ifp->if_xname, cp->name,
-				       h->ident, sp->scp[cp->protoidx].confid);
+				       h->ident, scp->confid);
 			if_statinc(ifp, if_ierrors);
 			break;
 		}
 
-		if (sp->scp[cp->protoidx].mbuf_confnak) {
-			m_freem(sp->scp[cp->protoidx].mbuf_confnak);
+		if (scp->mbuf_confnak) {
+			m_freem(scp->mbuf_confnak);
 		}
-		sp->scp[cp->protoidx].mbuf_confnak = m;
+		scp->mbuf_confnak = m;
 		m = NULL;
-		sppp_wq_add(sp->wq_cp, &sp->scp[cp->protoidx].work_rcn);
+		sppp_wq_add(sp->wq_cp, &scp->work_rcn);
 		break;
 	case TERM_REQ:
-		sp->scp[cp->protoidx].rseq = h->ident;
-		sppp_wq_add(sp->wq_cp, &sp->scp[cp->protoidx].work_rtr);
+		scp->rseq = h->ident;
+		sppp_wq_add(sp->wq_cp, &scp->work_rtr);
 		break;
 	case TERM_ACK:
-		if (h->ident != sp->scp[cp->protoidx].confid &&
-		    h->ident != sp->scp[cp->protoidx].seq) {
+		if (h->ident != scp->confid &&
+		    h->ident != scp->seq) {
 			if (debug)
 				addlog("%s: %s id mismatch "
 				    "0x%x != 0x%x and 0x%x != %0lx\n",
 				    ifp->if_xname, cp->name,
-				    h->ident, sp->scp[cp->protoidx].confid,
-				    h->ident, sp->scp[cp->protoidx].seq);
+				    h->ident, scp->confid,
+				    h->ident, scp->seq);
 			if_statinc(ifp, if_ierrors);
 			break;
 		}
 
-		sppp_wq_add(sp->wq_cp, &sp->scp[cp->protoidx].work_rta);
+		sppp_wq_add(sp->wq_cp, &scp->work_rta);
 		break;
 	case CODE_REJ:
 		/* XXX catastrophic rejects (RXJ-) aren't handled yet. */
@@ -1747,7 +1750,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 		    "danger will robinson\n",
 		    ifp->if_xname, cp->name,
 		    sppp_cp_type_name(h->type));
-		sppp_wq_add(sp->wq_cp, &sp->scp[cp->protoidx].work_rxj);
+		sppp_wq_add(sp->wq_cp, &scp->work_rxj);
 		break;
 	case PROTO_REJ:
 	    {
@@ -1787,7 +1790,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 				break;
 			}
 		}
-		sppp_wq_add(sp->wq_cp, &sp->scp[cp->protoidx].work_rxj);
+		sppp_wq_add(sp->wq_cp, &scp->work_rxj);
 		break;
 	    }
 	case DISC_REQ:
@@ -1798,7 +1801,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 	case ECHO_REQ:
 		if (cp->proto != PPP_LCP)
 			goto illegal;
-		if (sp->scp[cp->protoidx].state != STATE_OPENED) {
+		if (scp->state != STATE_OPENED) {
 			if (debug)
 				addlog("%s: lcp echo req but lcp closed\n",
 				       ifp->if_xname);
@@ -1868,7 +1871,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 			addlog("%s: %s send code-rej for 0x%x\n",
 			       ifp->if_xname, cp->name, h->type);
 		sppp_cp_send(sp, cp->proto, CODE_REJ,
-		    ++sp->scp[cp->protoidx].seq, m->m_pkthdr.len, h);
+		    ++scp->seq, m->m_pkthdr.len, h);
 		if_statinc(ifp, if_ierrors);
 	}
 
@@ -2223,6 +2226,7 @@ static void
 sppp_rcr_event(struct sppp *sp, void *xcp)
 {
 	const struct cp *cp = xcp;
+	struct sppp_cp *scp;
 	struct lcp_header *h;
 	struct mbuf *m;
 	enum cp_rcr_type type;
@@ -2233,11 +2237,13 @@ sppp_rcr_event(struct sppp *sp, void *xcp)
 
 	KASSERT(!cpu_softintr_p());
 
+	scp = &sp->scp[cp->protoidx];
+
 	if (cp->parse_confreq != NULL) {
-		m = sp->scp[cp->protoidx].mbuf_confreq;
+		m = scp->mbuf_confreq;
 		if (m == NULL)
 			return;
-		sp->scp[cp->protoidx].mbuf_confreq = NULL;
+		scp->mbuf_confreq = NULL;
 
 		h = mtod(m, struct lcp_header *);
 		if (h->type != CONF_REQ) {
@@ -2253,8 +2259,8 @@ sppp_rcr_event(struct sppp *sp, void *xcp)
 		m_freem(m);
 	} else {
 		/* mbuf_cofreq is already parsed and freed */
-		type = sp->scp[cp->protoidx].rcr_type;
-		ident = sp->scp[cp->protoidx].rconfid;
+		type = scp->rcr_type;
+		ident = scp->rconfid;
 		buf = NULL;
 		blen = rlen = 0;
 	}
@@ -2315,6 +2321,7 @@ static void
 sppp_rcn_event(struct sppp *sp, void *xcp)
 {
 	const struct cp *cp = xcp;
+	struct sppp_cp *scp;
 	struct lcp_header *h;
 	struct mbuf *m;
 	struct ifnet *ifp = &sp->pp_if;
@@ -2322,10 +2329,11 @@ sppp_rcn_event(struct sppp *sp, void *xcp)
 
 	KASSERT(!cpu_softintr_p());
 
-	m = sp->scp[cp->protoidx].mbuf_confnak;
+	scp = &sp->scp[cp->protoidx];
+	m = scp->mbuf_confnak;
 	if (m == NULL)
 		return;
-	sp->scp[cp->protoidx].mbuf_confnak = NULL;
+	scp->mbuf_confnak = NULL;
 
 	h = mtod(m, struct lcp_header *);
 	len = MIN(m->m_pkthdr.len, ntohs(h->len));
@@ -2344,17 +2352,17 @@ sppp_rcn_event(struct sppp *sp, void *xcp)
 
 	m_freem(m);
 
-	switch (sp->scp[cp->protoidx].state) {
+	switch (scp->state) {
 	case STATE_CLOSED:
 	case STATE_STOPPED:
 		if ((cp->flags & CP_AUTH) == 0) {
 			sppp_cp_send(sp, cp->proto, TERM_ACK,
-			    sp->scp[cp->protoidx].rconfid, 0, 0);
+			    scp->rconfid, 0, 0);
 		}
 		break;
 	case STATE_REQ_SENT:
 	case STATE_ACK_SENT:
-		sp->scp[cp->protoidx].rst_counter = sp->lcp.max_configure;
+		scp->rst_counter = sp->lcp.max_configure;
 		(cp->scr)(sp);
 		break;
 	case STATE_OPENED:
@@ -2370,7 +2378,7 @@ sppp_rcn_event(struct sppp *sp, void *xcp)
 	default:
 		printf("%s: %s illegal RCN in state %s\n",
 		       ifp->if_xname, cp->name,
-		       sppp_state_name(sp->scp[cp->protoidx].state));
+		       sppp_state_name(scp->state));
 		if_statinc(ifp, if_ierrors);
 	}
 }
