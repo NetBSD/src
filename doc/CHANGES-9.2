@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.73 2021/04/28 04:54:19 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.74 2021/04/28 09:59:33 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -3005,3 +3005,20 @@ xsrc/external/mit/xorg-server.old/dist/Xi/chgfctl.c	(apply patch)
 
 	Fix CVE-2021-3472 (local privilege escalation).
 	[mrg, ticket #1257]
+
+sys/arch/mac68k/mac68k/machdep.c		1.361,1.362
+
+	mac68k: make mac68k_set_io_offsets() a little bit cleaner.
+	Fix sccA (serial console) address to match the adress used by
+	the ROM (hardware does not fully decode addresses).
+	[rin, ticket #1258]
+
+bin/sh/eval.c					1.182
+bin/sh/jobs.c					1.110
+bin/sh/jobs.h					1.24
+
+	sh(1): fix fallout related to PR 48875: avoid invalid
+	subshell-elimination optimization when there are pending
+	background jobs.
+	[kre, ticket #1259]
+
