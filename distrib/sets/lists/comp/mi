@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2384 2021/04/28 00:49:22 thorpej Exp $
+#	$NetBSD: mi,v 1.2385 2021/04/28 02:15:03 rin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -27833,9 +27833,9 @@
 ./usr/share/man/man9/config_detach_release.9	comp-sys-man		.man
 ./usr/share/man/man9/config_finalize_register.9 comp-sys-man		.man
 ./usr/share/man/man9/config_found.9		comp-sys-man		.man
-./usr/share/man/man9/config_found_ia.9		comp-sys-man		.man
+./usr/share/man/man9/config_found_ia.9		comp-obsolete		obsolete
 ./usr/share/man/man9/config_found_sm.9		comp-obsolete		obsolete
-./usr/share/man/man9/config_found_sm_loc.9	comp-sys-man		.man
+./usr/share/man/man9/config_found_sm_loc.9	comp-sys-man		obsolete
 ./usr/share/man/man9/config_interrupts.9	comp-sys-man		.man
 ./usr/share/man/man9/config_match.9		comp-sys-man		.man
 ./usr/share/man/man9/config_mountroot.9		comp-sys-man		.man
