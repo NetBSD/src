@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2383 2021/04/23 22:50:05 mrg Exp $
+#	$NetBSD: mi,v 1.2384 2021/04/28 00:49:22 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -11309,7 +11309,7 @@
 ./usr/share/man/cat9/config.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/config_activate.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/config_attach.0		comp-sys-catman		.cat
-./usr/share/man/cat9/config_attach_loc.0	comp-sys-catman		.cat
+./usr/share/man/cat9/config_attach_loc.0	comp-obsolete		obsolete
 ./usr/share/man/cat9/config_attach_pseudo.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/config_deactivate.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/config_defer.0		comp-sys-catman		.cat
@@ -11318,17 +11318,18 @@
 ./usr/share/man/cat9/config_detach_release.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/config_finalize_register.0 comp-sys-catman		.cat
 ./usr/share/man/cat9/config_found.0		comp-sys-catman		.cat
-./usr/share/man/cat9/config_found_ia.0		comp-sys-catman		.cat
+./usr/share/man/cat9/config_found_ia.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/config_found_sm.0		comp-obsolete		obsolete
-./usr/share/man/cat9/config_found_sm_loc.0	comp-sys-catman		.cat
+./usr/share/man/cat9/config_found_sm_loc.0	comp-obsolete		obsolete
 ./usr/share/man/cat9/config_interrupts.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/config_match.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/config_mountroot.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/config_pending_decr.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/config_pending_incr.0	comp-sys-catman		.cat
-./usr/share/man/cat9/config_search.0		comp-obsolete		obsolete
-./usr/share/man/cat9/config_search_ia.0		comp-sys-catman		.cat
-./usr/share/man/cat9/config_search_loc.0	comp-sys-catman		.cat
+./usr/share/man/cat9/config_probe.0		comp-sys-catman		.cat
+./usr/share/man/cat9/config_search.0		comp-sys-catman		.cat
+./usr/share/man/cat9/config_search_ia.0		comp-obsolete		obsolete
+./usr/share/man/cat9/config_search_loc.0	comp-obsolete		obsolete
 ./usr/share/man/cat9/cons.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/copy.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/copyin.0			comp-sys-catman		.cat
@@ -19507,9 +19508,9 @@
 ./usr/share/man/html9/cnputc.html		comp-sys-htmlman	html
 ./usr/share/man/html9/condvar.html		comp-sys-htmlman	html
 ./usr/share/man/html9/config.html		comp-sys-htmlman	html
-./usr/share/man/html9/config_activate.html	comp-obsolete	obsolete
+./usr/share/man/html9/config_activate.html	comp-obsolete		obsolete
 ./usr/share/man/html9/config_attach.html	comp-sys-htmlman	html
-./usr/share/man/html9/config_attach_loc.html	comp-sys-htmlman	html
+./usr/share/man/html9/config_attach_loc.html	comp-obsolete		obsolete
 ./usr/share/man/html9/config_attach_pseudo.html comp-sys-htmlman	html
 ./usr/share/man/html9/config_deactivate.html	comp-sys-htmlman	html
 ./usr/share/man/html9/config_defer.html		comp-sys-htmlman	html
@@ -19518,16 +19519,18 @@
 ./usr/share/man/html9/config_detach_release.html	comp-sys-htmlman	html
 ./usr/share/man/html9/config_finalize_register.html	comp-sys-htmlman	html
 ./usr/share/man/html9/config_found.html		comp-sys-htmlman	html
-./usr/share/man/html9/config_found_ia.html	comp-sys-htmlman	html
+./usr/share/man/html9/config_found_ia.html	comp-obsolete		obsolete
 ./usr/share/man/html9/config_found_sm.html	comp-obsolete		obsolete
-./usr/share/man/html9/config_found_sm_loc.html	comp-sys-htmlman	html
+./usr/share/man/html9/config_found_sm_loc.html	comp-obsolete		obsolete
 ./usr/share/man/html9/config_interrupts.html	comp-sys-htmlman	html
 ./usr/share/man/html9/config_match.html		comp-sys-htmlman	html
 ./usr/share/man/html9/config_mountroot.html	comp-sys-htmlman	html
 ./usr/share/man/html9/config_pending_decr.html	comp-sys-htmlman	html
 ./usr/share/man/html9/config_pending_incr.html	comp-sys-htmlman	html
-./usr/share/man/html9/config_search_ia.html	comp-sys-htmlman	html
-./usr/share/man/html9/config_search_loc.html	comp-sys-htmlman	html
+./usr/share/man/html9/config_probe.html		comp-sys-htmlman	html
+./usr/share/man/html9/config_search.html	comp-sys-htmlman	html
+./usr/share/man/html9/config_search_ia.html	comp-obsolete		obsolete
+./usr/share/man/html9/config_search_loc.html	comp-obsolete		obsolete
 ./usr/share/man/html9/cons.html			comp-sys-htmlman	html
 ./usr/share/man/html9/copy.html			comp-sys-htmlman	html
 ./usr/share/man/html9/copyin.html		comp-sys-htmlman	html
@@ -27821,7 +27824,7 @@
 ./usr/share/man/man9/config.9			comp-sys-man		.man
 ./usr/share/man/man9/config_activate.9		comp-obsolete		obsolete
 ./usr/share/man/man9/config_attach.9		comp-sys-man		.man
-./usr/share/man/man9/config_attach_loc.9	comp-sys-man		.man
+./usr/share/man/man9/config_attach_loc.9	comp-obsolete		obsolete
 ./usr/share/man/man9/config_attach_pseudo.9	comp-sys-man		.man
 ./usr/share/man/man9/config_deactivate.9	comp-sys-man		.man
 ./usr/share/man/man9/config_defer.9		comp-sys-man		.man
@@ -27838,9 +27841,10 @@
 ./usr/share/man/man9/config_mountroot.9		comp-sys-man		.man
 ./usr/share/man/man9/config_pending_decr.9	comp-sys-man		.man
 ./usr/share/man/man9/config_pending_incr.9	comp-sys-man		.man
-./usr/share/man/man9/config_search.9		comp-obsolete		obsolete
-./usr/share/man/man9/config_search_ia.9		comp-sys-man		.man
-./usr/share/man/man9/config_search_loc.9	comp-sys-man		.man
+./usr/share/man/man9/config_probe.9		comp-sys-man		.man
+./usr/share/man/man9/config_search.9		comp-sys-man		.man
+./usr/share/man/man9/config_search_ia.9		comp-obsolete		obsolete
+./usr/share/man/man9/config_search_loc.9	comp-obsolete		obsolete
 ./usr/share/man/man9/cons.9			comp-sys-man		.man
 ./usr/share/man/man9/copy.9			comp-sys-man		.man
 ./usr/share/man/man9/copyin.9			comp-sys-man		.man
