@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.h,v 1.23 2018/09/11 03:30:40 kre Exp $	*/
+/*	$NetBSD: jobs.h,v 1.23.2.1 2021/04/28 09:58:42 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -99,6 +99,7 @@ int waitforjob(struct job *);
 int stoppedjobs(void);
 void commandtext(struct procstat *, union node *);
 int getjobpgrp(const char *);
+int anyjobs(void);
 
 #if ! JOBS
 #define setjobctl(on)	/* do nothing */
