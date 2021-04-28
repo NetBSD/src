@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.360 2021/02/26 10:54:12 rin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.361 2021/04/28 02:00:58 rin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.360 2021/02/26 10:54:12 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.361 2021/04/28 02:00:58 rin Exp $");
 
 #include "opt_adb.h"
 #include "opt_compat_netbsd.h"
@@ -2110,24 +2110,24 @@ void
 mac68k_set_io_offsets(vaddr_t base)
 {
 
+	Via1Base = (volatile u_char *)base;
+	Via2Base = Via1Base + 0x2000 * VIA2;
 	switch (current_mac_model->class) {
 	case MACH_CLASSQ:
-		Via1Base = (volatile u_char *)base;
-
-		/* The following two may be overridden. */
-		sccA = (volatile u_char *)base + 0xc000;
-		SCSIBase = base + 0xf000;
-
 		switch (current_mac_model->machineid) {
 		case MACH_MACQ900:
 		case MACH_MACQ950:
-			mac68k_machine.scsi96_2 = 1;
 			sccA = (volatile u_char *)base + 0xc020;
+			SCSIBase = base + 0xf000;
+			mac68k_machine.scsi96_2 = 1;
 			iop_init(0);	/* For console */
 			break;
 		case MACH_MACQ700:
+			sccA = (volatile u_char *)base + 0xc000;
+			SCSIBase = base + 0xf000;
 			break;
 		default:
+			sccA = (volatile u_char *)base + 0xc000;
 			SCSIBase = base + 0x10000;
 			break;
 		}
@@ -2138,7 +2138,6 @@ mac68k_set_io_offsets(vaddr_t base)
 		 * machines.  This seems to be common on many of the
 		 * Quadra-type machines.
 		 */
-		Via1Base = (volatile u_char *)base;
 		sccA = (volatile u_char *)base + 0xc020;
 		SCSIBase = base + 0x10000;
 		break;
@@ -2147,12 +2146,10 @@ mac68k_set_io_offsets(vaddr_t base)
 		 * Here's a queer bird... it seems to be a cross between
 		 * the two different Quadra classes.
 		 */
-		Via1Base = (volatile u_char *) base;
-		sccA = (volatile u_char *) base + 0xc020;
+		sccA = (volatile u_char *)base + 0xc020;
 		SCSIBase = base;
 		break;
 	case MACH_CLASSAV:
-		Via1Base = (volatile u_char *)base;
 		sccA = (volatile u_char *)base + 0x4000;
 		SCSIBase = base + 0x18000;
 		PSCBase = (volatile u_char *)base + 0x31000;
@@ -2164,8 +2161,7 @@ mac68k_set_io_offsets(vaddr_t base)
 	case MACH_CLASSIIsi:
 	case MACH_CLASSIIvx:
 	case MACH_CLASSLC:
-		Via1Base = (volatile u_char *)base;
-		sccA = (volatile u_char *) base + 0x4000;
+		sccA = (volatile u_char *)base + 0x4000;
 		SCSIBase = base;
 		break;
 	case MACH_CLASSIIfx:
@@ -2174,7 +2170,6 @@ mac68k_set_io_offsets(vaddr_t base)
 		 * the serial port in `compatible' mode (set in
 		 * the Serial Switch control panel before booting).
 		 */
-		Via1Base = (volatile u_char *)base;
 		sccA = (volatile u_char *)base + 0x4020;
 		SCSIBase = base;
 		iop_init(0);	/* For console */
@@ -2185,7 +2180,6 @@ mac68k_set_io_offsets(vaddr_t base)
 		    current_mac_model->class);
 		break;
 	}
-	Via2Base = Via1Base + 0x2000 * VIA2;
 }
 
 #if GRAYBARS
