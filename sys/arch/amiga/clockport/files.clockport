@@ -1,8 +1,8 @@
-#	$NetBSD: files.clockport,v 1.5 2013/12/22 23:02:38 rkujawa Exp $
+#	$NetBSD: files.clockport,v 1.6 2021/04/28 00:35:47 rin Exp $
 
 define	clockportbus {}
 
-define	clockport_common {}
+define	clockport_common
 file	arch/amiga/clockport/clockport_common.c clockport_common
 
 # Generic clockport (can be attached on top of Zorro boards)
