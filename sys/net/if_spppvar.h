@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppvar.h,v 1.33 2021/04/16 02:26:25 yamaguchi Exp $	*/
+/*	$NetBSD: if_spppvar.h,v 1.34 2021/04/28 09:36:24 yamaguchi Exp $	*/
 
 #ifndef _NET_IF_SPPPVAR_H_
 #define _NET_IF_SPPPVAR_H_
@@ -117,10 +117,9 @@ struct sppp_cp {
 	int		 rst_counter;	/* restart counter */
 	int		 fail_counter;	/* negotiation failure counter */
 	struct callout	 ch;		/* per-proto and if callouts */
-	u_char		 rcr_type;
-	void		*rcr_buf;
-	size_t		 rcr_blen;
-	int		 rcr_rlen;
+	u_char		 rcr_type;	/* parsing result of conf-req */
+	struct mbuf	*mbuf_confreq;	/* received conf-req */
+	struct mbuf	*mbuf_confnak;	/* received conf-nak or conf-rej */
 
 	struct sppp_work	 work_up;
 	struct sppp_work	 work_down;
