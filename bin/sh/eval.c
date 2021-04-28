@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.175.2.2 2019/12/26 20:16:47 martin Exp $	*/
+/*	$NetBSD: eval.c,v 1.175.2.3 2021/04/28 09:58:42 martin Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.175.2.2 2019/12/26 20:16:47 martin Exp $");
+__RCSID("$NetBSD: eval.c,v 1.175.2.3 2021/04/28 09:58:42 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -548,7 +548,7 @@ evalsubshell(union node *n, int flags)
 		flushout(outx);
 	}
 	INTOFF;
-	if ((!backgnd && flags & EV_EXIT && !have_traps()) ||
+	if ((!backgnd && flags & EV_EXIT && !have_traps() && !anyjobs()) ||
 	    forkshell(jp = makejob(n, 1), n, backgnd?FORK_BG:FORK_FG) == 0) {
 		if (backgnd)
 			flags &=~ EV_TESTED;
