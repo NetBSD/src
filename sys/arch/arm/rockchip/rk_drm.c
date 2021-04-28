@@ -1,4 +1,4 @@
-/* $NetBSD: rk_drm.c,v 1.5 2021/04/24 23:36:28 thorpej Exp $ */
+/* $NetBSD: rk_drm.c,v 1.6 2021/04/28 04:51:41 mrg Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_drm.c,v 1.5 2021/04/24 23:36:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_drm.c,v 1.6 2021/04/28 04:51:41 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -330,7 +330,11 @@ rk_drm_fb_probe(struct drm_fb_helper *helper, struct drm_fb_helper_surface_size 
 	fb->offsets[0] = 0;
 	fb->width = width;
 	fb->height = height;
+#ifdef __ARM_BIG_ENDIAN
+	fb->pixel_format = DRM_FORMAT_BGRX8888;
+#else
 	fb->pixel_format = DRM_FORMAT_XRGB8888;
+#endif
 	drm_fb_get_bpp_depth(fb->pixel_format, &fb->depth, &fb->bits_per_pixel);
 
 	error = drm_framebuffer_init(ddev, fb, &rk_drm_framebuffer_funcs);
