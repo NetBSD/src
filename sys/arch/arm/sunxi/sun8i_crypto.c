@@ -1,4 +1,4 @@
-/*	$NetBSD: sun8i_crypto.c,v 1.24 2021/04/24 13:01:35 riastradh Exp $	*/
+/*	$NetBSD: sun8i_crypto.c,v 1.25 2021/04/28 16:57:05 bad Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.24 2021/04/24 13:01:35 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.25 2021/04/28 16:57:05 bad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -72,6 +72,28 @@ __KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.24 2021/04/24 13:01:35 riastradh 
 #define	SUN8I_CRYPTO_RNGENTROPY	100 /* estimated bits per bit of entropy */
 #define	SUN8I_CRYPTO_RNGBYTES	PAGE_SIZE
 
+struct sun8i_crypto_config {
+	u_int	mod_rate;	/* module clock rate */
+};
+
+/*
+ * The module clock is set to 50 MHz on H3, 300 MHz otherwise.
+ * From Linux drivers/crypto/allwinner/sun8i-ce/sun8i-ce-core.c:
+ * Module clock is lower on H3 than other SoC due to some DMA
+ * timeout occurring with high value.
+ */
+static const struct sun8i_crypto_config sun50i_a64_crypto_config = {
+	.mod_rate = 300*1000*1000,
+};
+
+static const struct sun8i_crypto_config sun50i_h5_crypto_config = {
+	.mod_rate = 300*1000*1000,
+};
+
+static const struct sun8i_crypto_config sun8i_h3_crypto_config = {
+	.mod_rate = 50*1000*1000,
+};
+
 struct sun8i_crypto_task;
 
 struct sun8i_crypto_buf {
@@ -86,6 +108,9 @@ struct sun8i_crypto_softc {
 	bus_space_handle_t		sc_bsh;
 	bus_dma_tag_t			sc_dmat;
 	struct pool_cache		*sc_taskpool;
+
+	const struct sun8i_crypto_config *sc_cfg;
+
 	kmutex_t			sc_lock;
 	struct sun8i_crypto_chan {
 		struct sun8i_crypto_task	*cc_task;
@@ -319,8 +344,12 @@ CFATTACH_DECL_NEW(sun8i_crypto, sizeof(struct sun8i_crypto_softc),
     sun8i_crypto_match, sun8i_crypto_attach, NULL, NULL);
 
 static const struct device_compatible_entry compat_data[] = {
-	{ .compat = "allwinner,sun50i-a64-crypto" },
-	{ .compat = "allwinner,sun50i-h5-crypto" },
+	{ .compat = "allwinner,sun50i-a64-crypto",
+	  .data = &sun50i_a64_crypto_config },
+	{ .compat = "allwinner,sun50i-h5-crypto",
+	  .data = &sun50i_h5_crypto_config },
+	{ .compat = "allwinner,sun8i-h3-crypto",
+	  .data = &sun8i_h3_crypto_config },
 	DEVICE_COMPAT_EOL
 };
 
@@ -343,6 +372,7 @@ sun8i_crypto_attach(device_t parent, device_t self, void *aux)
 	char intrstr[128];
 	struct clk *clk;
 	struct fdtbus_reset *rst;
+	u_int mod_rate;
 
 	sc->sc_dev = self;
 	sc->sc_dmat = faa->faa_dmat;
@@ -350,6 +380,7 @@ sun8i_crypto_attach(device_t parent, device_t self, void *aux)
 	sc->sc_taskpool = pool_cache_init(sizeof(struct sun8i_crypto_task),
 	    0, 0, 0, "sun8icry", NULL, IPL_VM,
 	    &sun8i_crypto_task_ctor, &sun8i_crypto_task_dtor, sc);
+	sc->sc_cfg = of_compatible_lookup(phandle, compat_data)->data;
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_VM);
 	callout_init(&sc->sc_timeout, CALLOUT_MPSAFE);
 	callout_setfunc(&sc->sc_timeout, &sun8i_crypto_timeout, sc);
@@ -388,14 +419,16 @@ sun8i_crypto_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	/* Get the module clock and set it to 300 MHz.  */
+	/* Get the module clock and set it. */
+	mod_rate = sc->sc_cfg->mod_rate;
 	if ((clk = fdtbus_clock_get(phandle, "mod")) != NULL) {
 		if (clk_enable(clk) != 0) {
 			aprint_error(": couldn't enable CE clock\n");
 			return;
 		}
-		if (clk_set_rate(clk, 300*1000*1000) != 0) {
-			aprint_error(": couldn't set CE clock to 300MHz\n");
+		if (clk_set_rate(clk, mod_rate) != 0) {
+			aprint_error(": couldn't set CE clock to %d MHz\n",
+			    mod_rate / (1000 * 1000));
 			return;
 		}
 	}

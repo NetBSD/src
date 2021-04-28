@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.95 2021/03/08 06:31:42 mlelstv Exp $
+#	$NetBSD: GENERIC,v 1.96 2021/04/28 16:57:05 bad Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -399,6 +399,7 @@ m25p* 		at spi? slave ?
 bcmrng* 	at fdt?			# Broadcom BCM283x RNG
 mesonrng* 	at fdt?			# Amlogic Meson RNG
 tirng* 		at fdt?			# TI RNG
+sun8icrypto* 	at fdt?			# Allwinner Crypto Engine
 
 # Security ID EFUSE
 sunxisid* 	at fdt? pass 4		# SID
