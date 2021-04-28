@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.457 2021/04/16 07:45:41 msaitoh Exp $
+#       $NetBSD: Makefile,v 1.458 2021/04/28 00:49:22 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -120,13 +120,9 @@ MLINKS+=accept_filter.9 accept_filt_generic_mod_event.9
 MLINKS+=accept_filter.9 accept_filt_get.9
 
 MLINKS+=arp.9 arp_ifinit.9 arp.9 arpresolve.9 arp.9 arpintr.9
-MLINKS+=autoconf.9 config_search_loc.9 \
-	autoconf.9 config_search_ia.9 \
-	autoconf.9 config_found_sm_loc.9 \
-	autoconf.9 config_found_ia.9 \
+MLINKS+=autoconf.9 config_search.9 \
 	autoconf.9 config_found.9 \
 	autoconf.9 config_match.9 \
-	autoconf.9 config_attach_loc.9 \
 	autoconf.9 config_attach.9 \
 	autoconf.9 config_attach_pseudo.9 \
 	autoconf.9 config_detach.9 \
@@ -138,6 +134,7 @@ MLINKS+=autoconf.9 config_search_loc.9 \
 	autoconf.9 config_mountroot.9 \
 	autoconf.9 config_pending_incr.9 \
 	autoconf.9 config_pending_decr.9 \
+	autoconf.9 config_probe.9 \
 	autoconf.9 config_finalize_register.9
 MLINKS+=bcdtobin.9 bintobcd.9
 MLINKS+=bintime_add.9 bintime_addx.9 \
