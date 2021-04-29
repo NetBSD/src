@@ -1,4 +1,4 @@
-/* $NetBSD: cgram.c,v 1.21 2021/04/25 20:38:03 rillig Exp $ */
+/* $NetBSD: cgram.c,v 1.22 2021/04/29 20:17:20 rillig Exp $ */
 
 /*-
  * Copyright (c) 2013, 2021 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.c,v 1.21 2021/04/25 20:38:03 rillig Exp $");
+__RCSID("$NetBSD: cgram.c,v 1.22 2021/04/29 20:17:20 rillig Exp $");
 #endif
 
 #include <assert.h>
@@ -348,8 +348,7 @@ redraw(void)
 		for (int x = 0; x < max_x; x++) {
 			char ch = line[offset_x + x];
 			bool bold = hinting &&
-			    ch == solline[offset_x + x] &&
-			    ch_isalpha(ch);
+			    (ch == solline[offset_x + x] || !ch_isalpha(ch));
 
 			if (bold)
 				attron(A_BOLD);
