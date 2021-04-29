@@ -1,0 +1,5 @@
+example.	0	SOA	. . 0 0 0 0 0
+example.	0	NS	.
+example.	0	CDS	0 0 0 00
+example.	0	CDNSKEY	0 3 0 AA==
+

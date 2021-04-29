@@ -190,6 +190,7 @@ isc_dir_init
 isc_dir_open
 isc_dir_read
 isc_dir_reset
+isc_enable_constructors
 isc_entropy_get
 isc_errno_toresult
 isc_error_fatal
@@ -372,6 +373,9 @@ isc_md_get_block_size
 isc_md_type_get_size
 isc_md_type_get_block_size
 isc_md
+isc__mem_checkdestroyed
+isc__mem_initialize
+isc__mem_shutdown
 isc_mem_attach
 isc_mem_checkdestroyed
 isc_mem_create
@@ -446,6 +450,7 @@ isc_netaddr_unspec
 isc_netscope_pton
 isc__nmhandle_attach
 isc__nmhandle_detach
+isc_nmhandle_cleartimeout
 isc_nmhandle_getdata
 isc_nmhandle_getextra
 isc_nmhandle_is_stream
@@ -461,7 +466,6 @@ isc_nm_detach
 isc_nm_listentcpdns
 isc_nm_listentlsdns
 isc_nm_listentcp
-isc_nm_listentls
 isc_nm_listenudp
 isc_nm_maxudp
 isc_nm_pauseread
@@ -478,8 +482,6 @@ isc_nm_settimeouts
 isc_nm_tcpdns_keepalive
 isc_nm_tcpdns_sequential
 isc_nm_tid
-isc_nm_tls_create_server_ctx
-isc_nm_tlsconnect
 isc_nm_tlsdnsconnect
 isc_nm_udpconnect
 isc_nmsocket_close
@@ -695,6 +697,7 @@ isc_time_isepoch
 isc_time_microdiff
 isc_time_nanoseconds
 isc_time_now
+isc_time_now_hires
 isc_time_nowplusinterval
 isc_time_parsehttptimestamp
 isc_time_secondsastimet
@@ -712,6 +715,15 @@ isc_timermgr_create
 isc_timermgr_createinctx
 isc_timermgr_destroy
 isc_timermgr_poke
+isc__tls_initialize
+isc__tls_shutdown
+isc_tlsctx_createclient
+isc_tlsctx_createserver
+isc_tlsctx_free
+isc__trampoline_initialize
+isc__trampoline_shutdown
+isc__trampoline_get
+isc__trampoline_run
 isc_tm_timegm
 isc_tm_strptime
 isc_utf8_bom
@@ -794,6 +806,7 @@ isc_commandline_reset		DATA
 isc_dscp_check_value		DATA
 isc_hashctx			DATA
 isc_mem_debugging		DATA
+isc_tid_v			DATA
 @IF PKCS11
 pk11_verbose_init		DATA
 @END PKCS11

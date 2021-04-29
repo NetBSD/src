@@ -19,7 +19,7 @@ copy_setports ns1/named.conf.in ns1/named.conf
 copy_setports ns2/named.conf.in ns2/named.conf
 copy_setports ns3/named.conf.in ns3/named.conf
 
-if ../feature-test --enable-dnstap
+if $FEATURETEST --enable-dnstap
 then
 	cat <<'EOF' > ns3/dnstap.conf
 	dnstap-identity "ns3";

@@ -736,7 +736,7 @@ keys. The following is an example of such a clause:
 
    dnssec-policy standard {
        dnskey-ttl 600;
-       key {
+       keys {
            ksk lifetime 365d algorithm ecdsap256sha256;
            zsk lifetime 60d algorithm ecdsap256sha256;
        };
@@ -753,9 +753,10 @@ keys. The following is an example of such a clause:
 
 The policy has multiple parts:
 
--  The name must be specified. As each zone can use a different policy, ``named`` needs to
-   be able to distinguish between policies. This is done by giving each
-   policy a name, such as ``standard`` in the above example.
+-  The name must be specified. As each zone can use a different policy,
+   ``named`` needs to be able to distinguish between policies. This is
+   done by giving each policy a name, such as ``standard`` in the above
+   example.
 
 -  The ``keys`` clause lists all keys that should be in the zone, along
    with their associated parameters. In this example, we are using the
@@ -782,7 +783,7 @@ The policy has multiple parts:
    long the signatures on the DNSKEY and non-DNSKEY records are valid,
    and how often BIND should re-sign the zone.
 
--  Finally, the parameters ending in ``-safety`` are there to give
+-  The parameters ending in ``-safety`` are there to give
    you a bit of leeway in case a key roll doesn't go to plan. When
    introduced into the zone, the ``publish-safety`` time is the amount
    of additional time, over and above that calculated from the other
@@ -791,6 +792,11 @@ The policy has multiple parts:
    amount of additional time, over and above that calculated from the
    other parameters, during which the old key is retained in the zone before
    being removed.
+
+-  Finally, the ``purge-keys`` option allows you to clean up key files
+   automatically after a period of time. If a key has been removed from the
+   zone, this option will determine how long its key files will be retained
+   on disk.
 
 (You do not have to specify all the items listed above in your policy
 definition. Any that are not set simply take the default value.)

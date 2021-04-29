@@ -32,6 +32,7 @@ dnssec-policy <string> {
         parent-propagation-delay <duration>;
         parent-registration-delay <duration>; // obsolete
         publish-safety <duration>;
+        purge-keys <duration>;
         retire-safety <duration>;
         signatures-refresh <duration>;
         signatures-validity <duration>;

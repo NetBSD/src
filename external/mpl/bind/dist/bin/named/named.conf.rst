@@ -81,6 +81,7 @@ DNSSEC-POLICY
   	parent-ds-ttl duration;
   	parent-propagation-delay duration;
   	publish-safety duration;
+  	purge-keys duration;
   	retire-safety duration;
   	signatures-refresh duration;
   	signatures-validity duration;

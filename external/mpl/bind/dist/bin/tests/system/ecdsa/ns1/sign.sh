@@ -16,14 +16,39 @@ zone=.
 infile=root.db.in
 zonefile=root.db
 
-key1=`$KEYGEN -q -a ECDSAP256SHA256 -n zone $zone`
-key2=`$KEYGEN -q -a ECDSAP384SHA384 -n zone -f KSK $zone`
-$DSFROMKEY -a sha-384 $key2.key > dsset-384
+echo_i "ns1/sign.sh"
 
-cat $infile $key1.key $key2.key > $zonefile
+cp $infile $zonefile
 
-$SIGNER -P -g -o $zone $zonefile > /dev/null 2> signer.err || cat signer.err
+if [ -f ../ecdsa256-supported.file ]; then
+	zsk256=$($KEYGEN -q -a ECDSA256 -n zone "$zone")
+	ksk256=$($KEYGEN -q -a ECDSA256 -n zone -f KSK "$zone")
+	cat "$ksk256.key" "$zsk256.key" >> "$zonefile"
+	$DSFROMKEY -a sha-256 "$ksk256.key" >> dsset-256
+fi
+
+if [ -f ../ecdsa384-supported.file ]; then
+	zsk384=$($KEYGEN -q -a ECDSA384 -n zone "$zone")
+	ksk384=$($KEYGEN -q -a ECDSA384 -n zone -f KSK "$zone")
+	cat "$ksk384.key" "$zsk384.key" >> "$zonefile"
+	$DSFROMKEY -a sha-256 "$ksk384.key" >> dsset-256
+fi
 
 # Configure the resolving server with a static key.
-keyfile_to_static_ds $key1 > trusted.conf
-cp trusted.conf ../ns2/trusted.conf
+if [ -f ../ecdsa256-supported.file ]; then
+	keyfile_to_static_ds $ksk256 > trusted.conf
+	cp trusted.conf ../ns2/trusted.conf
+else
+	keyfile_to_static_ds $ksk384 > trusted.conf
+	cp trusted.conf ../ns2/trusted.conf
+fi
+
+if [ -f ../ecdsa384-supported.file ]; then
+	keyfile_to_static_ds $ksk384 > trusted.conf
+	cp trusted.conf ../ns3/trusted.conf
+else
+	keyfile_to_static_ds $ksk256 > trusted.conf
+	cp trusted.conf ../ns3/trusted.conf
+fi
+
+$SIGNER -P -g -o "$zone" "$zonefile" > /dev/null 2> signer.err || cat signer.err

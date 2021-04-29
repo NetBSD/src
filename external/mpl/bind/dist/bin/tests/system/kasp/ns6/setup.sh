@@ -38,54 +38,6 @@ R="RUMOURED"
 O="OMNIPRESENT"
 U="UNRETENTIVE"
 
-# Set up a zone with auto-dnssec maintain to migrate to dnssec-policy.
-setup migrate.kasp
-echo "$zone" >> zones
-ksktimes="-P now -A now -P sync now"
-zsktimes="-P now -A now"
-KSK=$($KEYGEN -a $DEFAULT_ALGORITHM -L 7200 -f KSK $ksktimes $zone 2> keygen.out.$zone.1)
-ZSK=$($KEYGEN -a $DEFAULT_ALGORITHM -L 7200        $zsktimes $zone 2> keygen.out.$zone.2)
-cat template.db.in "${KSK}.key" "${ZSK}.key" > "$infile"
-private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$KSK" >> "$infile"
-private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$ZSK" >> "$infile"
-$SIGNER -S -x -s now-1h -e now+2w -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
-
-# Set up a zone with auto-dnssec maintain to migrate to dnssec-policy, but this
-# time the existing keys do not match the policy.  The existing keys are
-# RSASHA1 keys, and will be migrated to a dnssec-policy that dictates
-# ECDSAP256SHA256 keys.
-setup migrate-nomatch-algnum.kasp
-echo "$zone" >> zones
-Tds="now-3h"     # Time according to dnssec-policy that DS will be OMNIPRESENT
-Tkey="now-3900s" # DNSKEY TTL + propagation delay
-Tsig="now-12h"   # Zone's maximum TTL + propagation delay
-ksktimes="-P ${Tkey} -A ${Tkey} -P sync ${Tds}"
-zsktimes="-P ${Tsig} -A ${Tsig}"
-KSK=$($KEYGEN -a RSASHA1 -b 2048 -L 300 -f KSK $ksktimes $zone 2> keygen.out.$zone.1)
-ZSK=$($KEYGEN -a RSASHA1 -b 1024 -L 300        $zsktimes $zone 2> keygen.out.$zone.2)
-cat template.db.in "${KSK}.key" "${ZSK}.key" > "$infile"
-private_type_record $zone 5 "$KSK" >> "$infile"
-private_type_record $zone 5 "$ZSK" >> "$infile"
-$SIGNER -S -x -s now-1h -e now+2w -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
-
-# Set up a zone with auto-dnssec maintain to migrate to dnssec-policy, but this
-# time the existing keys do not match the policy.  The existing keys are
-# 1024 bits RSASHA1 keys, and will be migrated to a dnssec-policy that
-# dictates 2048 bits RSASHA1 keys.
-setup migrate-nomatch-alglen.kasp
-echo "$zone" >> zones
-Tds="now-3h"     # Time according to dnssec-policy that DS will be OMNIPRESENT
-Tkey="now-3900s" # DNSKEY TTL + propagation delay
-Tsig="now-12h"   # Zone's maximum TTL + propagation delay
-ksktimes="-P ${Tkey} -A ${Tkey} -P sync ${Tds}"
-zsktimes="-P ${Tsig} -A ${Tsig}"
-KSK=$($KEYGEN -a RSASHA1 -b 1024 -L 300 -f KSK $ksktimes $zone 2> keygen.out.$zone.1)
-ZSK=$($KEYGEN -a RSASHA1 -b 1024 -L 300        $zsktimes $zone 2> keygen.out.$zone.2)
-cat template.db.in "${KSK}.key" "${ZSK}.key" > "$infile"
-private_type_record $zone 5 "$KSK" >> "$infile"
-private_type_record $zone 5 "$ZSK" >> "$infile"
-$SIGNER -S -x -s now-1h -e now+2w -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
-
 # The child zones (step1, step2) beneath these zones represent the various
 # steps of unsigning a zone.
 for zn in going-insecure.kasp going-insecure-dynamic.kasp

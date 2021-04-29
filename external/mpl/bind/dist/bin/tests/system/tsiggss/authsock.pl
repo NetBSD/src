@@ -42,6 +42,11 @@ open(my $pid,">",$pidfile)
 print $pid "$$\n";
 close($pid);
 
+# close gracefully
+sub rmpid { unlink "$pidfile"; exit 1; };
+$SIG{INT} = \&rmpid;
+$SIG{TERM} = \&rmpid;
+
 if ($timeout != 0) {
     # die after the given timeout
     alarm($timeout);

@@ -35,28 +35,6 @@ controls {
 	inet 10.53.0.6 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
 };
 
-/* These are zones that migrate to dnssec-policy. */
-zone "migrate.kasp" {
-	type primary;
-	file "migrate.kasp.db";
-	allow-update { any; };
-	dnssec-policy "migrate";
-};
-
-zone "migrate-nomatch-algnum.kasp" {
-	type primary;
-	file "migrate-nomatch-algnum.kasp.db";
-	allow-update { any; };
-	dnssec-policy "migrate-nomatch-algnum";
-};
-
-zone "migrate-nomatch-alglen.kasp" {
-	type primary;
-	file "migrate-nomatch-alglen.kasp.db";
-	allow-update { any; };
-	dnssec-policy "migrate-nomatch-alglen";
-};
-
 /* Zones for testing going insecure. */
 zone "step1.going-insecure.kasp" {
         type master;

@@ -142,9 +142,7 @@ stop_servers() {
         echoinfo "I:$systest:stopping servers"
         if ! $PERL stop.pl "$systest"; then
             echoinfo "I:$systest:stopping servers failed"
-            echofail "R:$systest:FAIL"
-            echoend  "E:$systest:$(date_with_args)"
-            exit 1
+            return 1
         fi
     fi
 }
@@ -157,14 +155,14 @@ echoinfo  "I:$systest:PORTRANGE:${LOWPORT} - ${HIGHPORT}"
 if [ x${PERL:+set} = x ]
 then
     echowarn "I:$systest:Perl not available.  Skipping test."
-    echowarn "R:$systest:UNTESTED"
+    echowarn "R:$systest:SKIPPED"
     echoend  "E:$systest:$(date_with_args)"
     exit 0;
 fi
 
 $PERL testsock.pl -p $PORT  || {
     echowarn "I:$systest:Network interface aliases not set up.  Skipping test."
-    echowarn "R:$systest:UNTESTED"
+    echowarn "R:$systest:SKIPPED"
     echoend  "E:$systest:$(date_with_args)"
     exit 0;
 }
@@ -177,7 +175,7 @@ if [ $result -eq 0 ]; then
     : prereqs ok
 else
     echowarn "I:$systest:Prerequisites missing, skipping test."
-    [ $result -eq 255 ] && echowarn "R:$systest:SKIPPED" || echowarn "R:$systest:UNTESTED"
+    echowarn "R:$systest:SKIPPED";
     echoend "E:$systest:$(date_with_args)"
     exit 0
 fi
@@ -198,10 +196,10 @@ fi
 if test -f $systest/clean.sh
 then
     if ! ( cd "${systest}" && $SHELL clean.sh "$@" ); then
-    echowarn "I:$systest:clean.sh script failed"
-    echofail "R:$systest:FAIL"
-    echoend  "E:$systest:$(date_with_args)"
-    exit 1
+        echowarn "I:$systest:clean.sh script failed"
+        echofail "R:$systest:FAIL"
+        echoend  "E:$systest:$(date_with_args)"
+        exit 1
     fi
 fi
 
@@ -209,10 +207,10 @@ fi
 if test -f $systest/setup.sh
 then
     if ! ( cd "${systest}" && $SHELL setup.sh "$@" ); then
-    echowarn "I:$systest:setup.sh script failed"
-    echofail "R:$systest:FAIL"
-    echoend  "E:$systest:$(date_with_args)"
-    exit 1
+        echowarn "I:$systest:setup.sh script failed"
+        echofail "R:$systest:FAIL"
+        echoend  "E:$systest:$(date_with_args)"
+        exit 1
     fi
 fi
 
@@ -224,22 +222,22 @@ if [ -r "$systest/tests.sh" ]; then
     ( cd "$systest" && $SHELL tests.sh "$@" )
     status=$?
     run=$((run+1))
-    stop_servers
+    stop_servers || status=1
 fi
 
 if [ -n "$PYTEST" ]; then
     run=$((run+1))
     for test in $(cd "${systest}" && find . -name "tests*.py"); do
-    start_servers
-    rm -f "$systest/$test.status"
-    test_status=0
-    (cd "$systest" && "$PYTEST" -v "$test" "$@" || echo "$?" > "$test.status") | SYSTESTDIR="$systest" cat_d
-    if [ -f "$systest/$test.status" ]; then
-        echo_i "FAILED"
-        test_status=$(cat "$systest/$test.status")
-    fi
-    status=$((status+test_status))
-    stop_servers
+        start_servers
+        rm -f "$systest/$test.status"
+        test_status=0
+        (cd "$systest" && "$PYTEST" -v "$test" "$@" || echo "$?" > "$test.status") | SYSTESTDIR="$systest" cat_d
+        if [ -f "$systest/$test.status" ]; then
+            echo_i "FAILED"
+            test_status=$(cat "$systest/$test.status")
+        fi
+        status=$((status+test_status))
+        stop_servers || status=1
     done
 else
     echoinfo "I:$systest:pytest not installed, skipping python tests"
@@ -312,10 +310,10 @@ else
     if $clean; then
        ( cd $systest && $SHELL clean.sh "$@" )
        if test -d ../../../.git; then
-           git status -su --ignored "${systest}" 2>/dev/null | \
-           sed -n -e 's|^?? \(.*\)|I:file \1 not removed|p' \
-           -e 's|^!! \(.*/named.run\)$|I:file \1 not removed|p' \
-           -e 's|^!! \(.*/named.memstats\)$|I:file \1 not removed|p'
+           git status -su --ignored "${systest}/" 2>/dev/null | \
+           sed -n -e 's|^?? \(.*\)|I:'${systest}':file \1 not removed|p' \
+           -e 's|^!! \(.*/named.run\)$|I:'${systest}':file \1 not removed|p' \
+           -e 's|^!! \(.*/named.memstats\)$|I:'${systest}':file \1 not removed|p'
        fi
     fi
 fi

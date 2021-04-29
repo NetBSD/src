@@ -36,7 +36,6 @@ options {
 	stale-answer-enable yes;
 	stale-cache-enable yes;
 	stale-answer-ttl 3;
-	stale-answer-client-timeout off;
 	stale-refresh-time 0;
 	max-stale-ttl 3600;
 	resolver-query-timeout 10;

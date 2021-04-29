@@ -88,8 +88,10 @@ idna \
 inline \
 integrity \
 ixfr \
+journal \
 kasp \
 keepalive \
+keymgr2kasp \
 legacy \
 limits \
 masterfile \
@@ -128,6 +130,7 @@ statistics \
 statschannel \
 stub \
 synthfromdnssec \
+timeouts \
 tcp \
 tools \
 tsig \

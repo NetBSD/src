@@ -62,11 +62,11 @@
 @IF PKCS11
       <PreprocessorDefinitions>BIND9;@PK11_LIB_LOCATION@WIN32;_DEBUG;_WINDOWS;_USRDLL;LIBISC_EXPORTS;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ForcedIncludeFiles>..\..\..\config.h</ForcedIncludeFiles>
-      <AdditionalIncludeDirectories>.\;..\..\..\;@LIBXML2_INC@@LIBUV_INC@@OPENSSL_INC@@ZLIB_INC@include;..\include;win32;..\..\isccfg\include;..\..\dns\win32\include;..\..\dns\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\;..\..\..\;@LIBXML2_INC@@LIBUV_INC@@OPENSSL_INC@@ZLIB_INC@include;..\include;..\;win32;..\..\isccfg\include;..\..\dns\win32\include;..\..\dns\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
 @ELSE PKCS11
       <PreprocessorDefinitions>BIND9;WIN32;_DEBUG;_WINDOWS;_USRDLL;LIBISC_EXPORTS;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ForcedIncludeFiles>..\..\..\config.h</ForcedIncludeFiles>
-      <AdditionalIncludeDirectories>.\;..\..\..\;@LIBXML2_INC@@LIBUV_INC@@OPENSSL_INC@@ZLIB_INC@include;..\include;win32;..\..\isccfg\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\;..\..\..\;@LIBXML2_INC@@LIBUV_INC@@OPENSSL_INC@@ZLIB_INC@include;..\include;..\;win32;..\..\isccfg\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
 @END PKCS11
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeaderOutputFile>.\$(Configuration)\$(TargetName).pch</PrecompiledHeaderOutputFile>
@@ -163,11 +163,11 @@ copy InstallFiles ..\Build\Debug\
 @IF PKCS11
       <PreprocessorDefinitions>BIND9;@PK11_LIB_LOCATION@WIN32;NDEBUG;_WINDOWS;_USRDLL;LIBISC_EXPORTS;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ForcedIncludeFiles>..\..\..\config.h</ForcedIncludeFiles>
-      <AdditionalIncludeDirectories>.\;..\..\..\;@LIBXML2_INC@@LIBUV_INC@@OPENSSL_INC@@ZLIB_INC@include;..\include;win32;..\..\isccfg\include;..\..\dns\win32\include;..\..\dns\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\;..\..\..\;@LIBXML2_INC@@LIBUV_INC@@OPENSSL_INC@@ZLIB_INC@include;..\include;..\;win32;..\..\isccfg\include;..\..\dns\win32\include;..\..\dns\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
 @ELSE PKCS11
       <PreprocessorDefinitions>BIND9;WIN32;_DEBUG;_WINDOWS;_USRDLL;LIBISC_EXPORTS;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ForcedIncludeFiles>..\..\..\config.h</ForcedIncludeFiles>
-      <AdditionalIncludeDirectories>.\;..\..\..\;@LIBXML2_INC@@LIBUV_INC@@OPENSSL_INC@@ZLIB_INC@include;..\include;win32;..\..\isccfg\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\;..\..\..\;@LIBXML2_INC@@LIBUV_INC@@OPENSSL_INC@@ZLIB_INC@include;..\include;..\;win32;..\..\isccfg\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
 @END PKCS11
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <WholeProgramOptimization>false</WholeProgramOptimization>
@@ -335,6 +335,7 @@ copy InstallFiles ..\Build\Release\
     <ClInclude Include="..\include\isc\task.h" />
     <ClInclude Include="..\include\isc\taskpool.h" />
     <ClInclude Include="..\include\isc\timer.h" />
+    <ClInclude Include="..\include\isc\tls.h" />
     <ClInclude Include="..\include\isc\tm.h" />
     <ClInclude Include="..\include\isc\types.h" />
     <ClInclude Include="..\include\isc\utf8.h" />
@@ -371,6 +372,7 @@ copy InstallFiles ..\Build\Release\
     <ClInclude Include="include\isc\win32os.h" />
     <ClInclude Include="..\entropy_private.h" />
     <ClInclude Include="..\openssl_shim.h" />
+    <ClInclude Include="..\trampoline_p.h" />
     <ClInclude Include="syslog.h" />
     <ClInclude Include="unistd.h" />
     <ClInclude Include="..\..\versions.h" />
@@ -415,7 +417,6 @@ copy InstallFiles ..\Build\Release\
     <ClCompile Include="..\netmgr\uverr2result.c" />
     <ClCompile Include="..\netmgr\uv-compat.c" />
     <ClCompile Include="..\netmgr\tcpdns.c" />
-    <ClCompile Include="..\netmgr\tls.c" />
     <ClCompile Include="..\netmgr\tlsdns.c" />
     <ClCompile Include="..\netscope.c" />
     <ClCompile Include="..\nonce.c" />
@@ -442,6 +443,8 @@ copy InstallFiles ..\Build\Release\
     <ClCompile Include="..\task.c" />
     <ClCompile Include="..\taskpool.c" />
     <ClCompile Include="..\timer.c" />
+    <ClCompile Include="..\trampoline.c" />
+    <ClCompile Include="..\tls.c" />
     <ClCompile Include="..\tm.c" />
     <ClCompile Include="..\utf8.c" />
 @IF PKCS11

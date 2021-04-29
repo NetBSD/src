@@ -195,11 +195,6 @@ my @substdefh = ("CONFIGARGS",
                  "DNS_RDATASET_FIXED",
                  "HAVE_GEOIP2",
                  "HAVE_LIBXML2",
-                 "HAVE_OPENSSL_ED25519",
-                 "HAVE_OPENSSL_ED448",
-                 "HAVE_DH_GET0_KEY",
-                 "HAVE_ECDSA_SIG_GET0",
-                 "HAVE_RSA_SET0_KEY",
                  "USE_BACKTRACE",
                  "USE_OPENSSL",
                  "USE_PKCS11",
@@ -211,16 +206,6 @@ my @substdefh = ("CONFIGARGS",
                  "WITH_IDN",
                  "CPU_RELAX",
                  "VALIDATION_DEFAULT",
-                 "HAVE_CRYPTO_ZALLOC",
-                 "HAVE_EVP_CIPHER_CTX_FREE",
-                 "HAVE_EVP_CIPHER_CTX_NEW",
-                 "HAVE_EVP_MD_CTX_FREE",
-                 "HAVE_EVP_MD_CTX_NEW",
-                 "HAVE_EVP_MD_CTX_RESET",
-                 "HAVE_HMAC_CTX_FREE",
-                 "HAVE_HMAC_CTX_GET_MD",
-                 "HAVE_HMAC_CTX_NEW",
-                 "HAVE_HMAC_CTX_RESET",
                  "HAVE_UV_HANDLE_GET_DATA",
                  "HAVE_UV_HANDLE_SET_DATA",
                  "HAVE_UV_IMPORT",
@@ -330,8 +315,7 @@ my %configdefd;
 
 my @substdefd = ("PK11_LIB_LOCATION",
                  "USE_GSSAPI",
-                 "USE_PYTHON",
-                 "USE_ISC_SPNEGO");
+                 "USE_PYTHON");
 
 # conditions
 
@@ -360,7 +344,6 @@ my @allcond = (@substcond, "NOTYET", "NOLONGER");
 my @enablelist = ("developer",
                   "fixed-rrset",
                   "intrinsics",
-                  "isc-spnego",
                   "native-pkcs11",
                   "openssl-hash",
                   "querytrace");
@@ -414,7 +397,6 @@ my @help = (
 "  enable-intrinsics     enable intrinsic/atomic functions [default=yes]\n",
 "  enable-native-pkcs11  use native PKCS#11 for all crypto [default=no]\n",
 "  enable-openssl-hash   use OpenSSL for hash functions [default=yes]\n",
-"  enable-isc-spnego     use SPNEGO from lib/dns [default=yes]\n",
 "  enable-fixed-rrset    enable fixed rrset ordering [default=no]\n",
 "  enable-developer      enable developer build settings [default=no]\n",
 "  enable-querytrace     enable very verbose query trace [default=no]\n",
@@ -457,7 +439,6 @@ my $enable_intrinsics = "yes";
 my $cryptolib = "";
 my $enable_native_pkcs11 = "no";
 my $enable_crypto_rand = "yes";
-my $enable_isc_spnego = "yes";
 my $enable_fixed_rrset = "no";
 my $enable_developer = "no";
 my $enable_querytrace = "no";
@@ -667,10 +648,6 @@ sub myenable {
     } elsif ($key =~ /^native-pkcs11$/i) {
         if ($val =~ /^yes$/i) {
             $enable_native_pkcs11 = "yes";
-        }
-    } elsif ($key =~ /^isc-spnego$/i) {
-        if ($val =~ /^no$/i) {
-            $enable_isc_spnego = "no";
         }
     } elsif ($key =~ /^fixed-rrset$/i) {
         if ($val =~ /^yes$/i) {
@@ -922,11 +899,6 @@ if ($verbose) {
         print "native-pkcs11: disabled\n";
     }
     print "openssl-hash: enabled\n";
-    if ($enable_isc_spnego eq "yes") {
-        print "isc-spnego: enabled\n";
-    } else {
-        print "isc-spnego: disabled\n";
-    }
     if ($enable_fixed_rrset eq "yes") {
         print "fixed-rrset: enabled\n";
     } else {
@@ -1515,12 +1487,12 @@ EOF
 #include <openssl/opensslv.h>
 
 int main() {
-        if (OPENSSL_VERSION_NUMBER >= 0x10000000L) {
+        if (OPENSSL_VERSION_NUMBER >= 0x10101000L) {
                 return (0);
         }
         printf("\n\nFound   OPENSSL_VERSION_NUMBER %#010x\n",
                OPENSSL_VERSION_NUMBER);
-        printf("Require OPENSSL_VERSION_NUMBER 0x10000000L or greater (1.0.0)\n\n");
+        printf("Require OPENSSL_VERSION_NUMBER 0x10101000L or greater (1.1.1)\n\n");
         return (1);
 }
 EOF
@@ -1534,47 +1506,6 @@ EOF
         }
     } else {
         die "can't compile OpenSSL version test: $compret\n";
-    }
-
-# check OpenSSL built-in support for DH/ECDSA/RSA/CRYPTO_ZALLOC/EVP_CIPHER_CTX/EVP_MD_CTX/HMAC_CTX functions
-    if ($verbose) {
-        printf "checking OpenSSL built-in support for DH/ECDSA/RSA/CRYPTO_ZALLOC/EVP_CIPHER_CTX/EVP_MD_CTX/HMAC_CTX functions\n";
-    }
-    open F, ">testosslfunc.c" || die $!;
-    print F << 'EOF';
-#include <stdio.h>
-#include <openssl/opensslv.h>
-
-int main() {
-        if (OPENSSL_VERSION_NUMBER >= 0x10100000L) {
-                return (0);
-        }
-        printf("\n\nFound   OPENSSL_VERSION_NUMBER %#010x\n",
-               OPENSSL_VERSION_NUMBER);
-        printf("This version has no built-in support for DH/ECDSA/RSA/CRYPTO_ZALLOC/EVP_CIPHER_CTX/EVP_MD_CTX/HMAC_CTX functions.\n\n");
-        return (1);
-}
-EOF
-    close F;
-
-    $compret = `cl /nologo /MD /I "$include" testosslfunc.c "$libcrypto"`;
-    if (grep { -f and -x } "./testosslfunc.exe") {
-        `./testosslfunc.exe`;
-        if ($? == 0) {
-            $configdefh{"HAVE_DH_GET0_KEY"} = 1;
-            $configdefh{"HAVE_ECDSA_SIG_GET0"} = 1;
-            $configdefh{"HAVE_RSA_SET0_KEY"} = 1;
-            $configdefh{"HAVE_CRYPTO_ZALLOC"} = 1;
-            $configdefh{"HAVE_EVP_CIPHER_CTX_FREE"} = 1;
-            $configdefh{"HAVE_EVP_CIPHER_CTX_NEW"} = 1;
-            $configdefh{"HAVE_EVP_MD_CTX_FREE"} = 1;
-            $configdefh{"HAVE_EVP_MD_CTX_NEW"} = 1;
-            $configdefh{"HAVE_EVP_MD_CTX_RESET"} = 1;
-            $configdefh{"HAVE_HMAC_CTX_FREE"} = 1;
-            $configdefh{"HAVE_HMAC_CTX_GET_MD"} = 1;
-            $configdefh{"HAVE_HMAC_CTX_NEW"} = 1;
-            $configdefh{"HAVE_HMAC_CTX_RESET"} = 1;
-        }
     }
 
     if ($verbose) {
@@ -1765,16 +1696,6 @@ if ($use_gssapi eq "no") {
     my $wshelp_dll = File::Spec->catfile($gssapi_path, "bin",
                                          "wshelp${bits}.dll");
     $configdll{"WSHELP_DLL"} = "$wshelp_dll";
-}
-
-# enable-isc-spnego
-if ($use_gssapi ne "yes") {
-    $enable_isc_spnego = "no";
-} elsif ($enable_isc_spnego eq "yes") {
-    if ($use_gssapi eq "no") {
-        die "No GSSAPI for SPNEGO\n";
-    }
-    $configdefd{"USE_ISC_SPNEGO"} = "USE_ISC_SPNEGO";
 }
 
 # disable-auto-validation
@@ -2852,7 +2773,6 @@ exit 0;
 #  --enable-symtable incompatible with DLLs (or libtool)
 #  --enable-ipv6 included without a way to disable it
 #  --enable-atomic supported (renamed to intrinsic)
-#  --enable-isc-spnego supported (part of GSSAPI)
 #  --enable-fixed-rrset supported
 #  --enable-querytrace supported
 #  --enable-full-report supported by verbose

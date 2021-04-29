@@ -52,6 +52,7 @@ dnssec-policy "zsk-prepub" {
 	dnskey-ttl 3600;
 	publish-safety P1D;
 	retire-safety P2D;
+	purge-keys PT1H;
 
 	keys {
 		ksk key-directory lifetime P2Y  algorithm @DEFAULT_ALGORITHM@;
@@ -71,6 +72,7 @@ dnssec-policy "ksk-doubleksk" {
 	dnskey-ttl 2h;
 	publish-safety P1D;
 	retire-safety P2D;
+	purge-keys PT1H;
 
 	keys {
 		ksk key-directory lifetime P60D algorithm @DEFAULT_ALGORITHM@;
@@ -93,6 +95,7 @@ dnssec-policy "csk-roll" {
 	dnskey-ttl 1h;
 	publish-safety PT1H;
 	retire-safety 2h;
+	purge-keys PT1H;
 
 	keys {
 		csk key-directory lifetime P6M algorithm @DEFAULT_ALGORITHM@;
@@ -114,6 +117,7 @@ dnssec-policy "csk-roll2" {
 	dnskey-ttl 1h;
 	publish-safety PT1H;
 	retire-safety 1h;
+	purge-keys 0;
 
 	keys {
 		csk key-directory lifetime P6M algorithm @DEFAULT_ALGORITHM@;

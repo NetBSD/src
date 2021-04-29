@@ -29,13 +29,14 @@ named-journalprint - print zone journal in human-readable form
 Synopsis
 ~~~~~~~~
 
-:program:`named-journalprint` {journal}
+:program:`named-journalprint` [**-dux**] {journal}
 
 Description
 ~~~~~~~~~~~
 
-``named-journalprint`` prints the contents of a zone journal file in a
-human-readable form.
+``named-journalprint`` scans the contents of a zone journal file,
+printing it in a human-readable form, or, optionally, converting it
+to a different journal file format.
 
 Journal files are automatically created by ``named`` when changes are
 made to dynamic zones (e.g., by ``nsupdate``). They record each addition
@@ -49,6 +50,17 @@ file.
 into a human-readable text format. Each line begins with ``add`` or ``del``,
 to indicate whether the record was added or deleted, and continues with
 the resource record in master-file format.
+
+The ``-x`` option causes additional data about the journal file to be
+printed at the beginning of the output and before each group of changes.
+
+The ``-u`` (upgrade) and ``-d`` (downgrade) options recreate the journal
+file with a modified format version.  The existing journal file is
+replaced.  ``-d`` writes out the journal in the format used by
+versions of BIND up to 9.16.11; ``-u`` writes it out in the format used
+by versions since 9.16.13. (9.16.12 is omitted due to a journal-formatting
+bug in that release.) Note that these options *must not* be used while
+``named`` is running.
 
 See Also
 ~~~~~~~~

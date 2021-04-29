@@ -1,3 +1,166 @@
+	--- 9.16.15 released ---
+
+5621.	[bug]		Due to a backporting mistake in change 5609, named
+			binaries built against a Kerberos/GSSAPI library whose
+			header files did not define the GSS_SPNEGO_MECHANISM
+			preprocessor macro were not able to start if their
+			configuration included the "tkey-gssapi-credential"
+			option. This has been fixed. [GL #2634]
+
+5620.	[bug]		If zone journal files written by BIND 9.16.11 or earlier
+			were present when BIND was upgraded, the zone file for
+			that zone could have been inadvertently rewritten with
+			the current zone contents. This caused the original zone
+			file structure (e.g. comments, $INCLUDE directives) to
+			be lost, although the zone data itself was preserved.
+			This has been fixed. [GL #2623]
+
+	--- 9.16.14 released ---
+
+5617.	[security]	A specially crafted GSS-TSIG query could cause a buffer
+			overflow in the ISC implementation of SPNEGO.
+			(CVE-2021-25216) [GL #2604]
+
+5616.	[security]	named crashed when a DNAME record placed in the ANSWER
+			section during DNAME chasing turned out to be the final
+			answer to a client query. (CVE-2021-25215) [GL #2540]
+
+5615.	[security]	Insufficient IXFR checks could result in named serving a
+			zone without an SOA record at the apex, leading to a
+			RUNTIME_CHECK assertion failure when the zone was
+			subsequently refreshed. This has been fixed by adding an
+			owner name check for all SOA records which are included
+			in a zone transfer. (CVE-2021-25214) [GL #2467]
+
+5614.	[bug]		Ensure all resources are properly cleaned up when a call
+			to gss_accept_sec_context() fails. [GL #2620]
+
+5613.	[bug]		It was possible to write an invalid transaction header
+			in the journal file for a managed-keys database after
+			upgrading. This has been fixed. Invalid headers in
+			existing journal files are detected and named is able
+			to recover from them. [GL #2600]
+
+5611.	[func]		Set "stale-answer-client-timeout" to "off" by default.
+			[GL #2608]
+
+5610.	[bug]		Prevent a crash which could happen when a lookup
+			triggered by "stale-answer-client-timeout" was attempted
+			right after recursion for a client query finished.
+			[GL #2594]
+
+5609.	[func]		The ISC implementation of SPNEGO was removed from BIND 9
+			source code. It was no longer necessary as all major
+			contemporary Kerberos/GSSAPI libraries include support
+			for SPNEGO. [GL #2607]
+
+5608.	[bug]		When sending queries over TCP, dig now properly handles
+			"+tries=1 +retry=0" by not retrying the connection when
+			the remote server closes the connection prematurely.
+			[GL #2490]
+
+5607.	[bug]		As "rndc dnssec -checkds" and "rndc dnssec -rollover"
+			commands may affect the next scheduled key event,
+			reconfiguration of zone keys is now triggered after
+			receiving either of these commands to prevent
+			unnecessary key rollover delays. [GL #2488]
+
+5606.	[bug]		CDS/CDNSKEY DELETE records are now removed when a zone
+			transitions from a secure to an insecure state.
+			named-checkzone also no longer reports an error when
+			such records are found in an unsigned zone. [GL #2517]
+
+5605.	[bug]		"dig -u" now uses the CLOCK_REALTIME clock source for
+			more accurate time reporting. [GL #2592]
+
+5603.	[bug]		Fix a memory leak that occurred when named failed to
+			bind a UDP socket to a network interface. [GL #2575]
+
+5602.	[bug]		Fix TCPDNS and TLSDNS timers in Network Manager. This
+			makes the "tcp-initial-timeout" and "tcp-idle-timeout"
+			options work correctly again. [GL #2583]
+
+5601.	[bug]		Zones using KASP could not be thawed after they were
+			frozen using "rndc freeze". This has been fixed.
+			[GL #2523]
+
+	--- 9.16.13 released ---
+
+5597.	[bug]		When serve-stale was enabled and starting the recursive
+			resolution process for a query failed, a named instance
+			could crash if it was configured as both a recursive and
+			authoritative server. This problem was introduced by
+			change 5573 and has now been fixed. [GL #2565]
+
+5595.	[cleanup]	Public header files for BIND 9 libraries no longer
+			directly include third-party library headers. This
+			prevents the need to include paths to third-party header
+			files in CFLAGS whenever BIND 9 public header files are
+			used, which could cause build-time issues on hosts with
+			older versions of BIND 9 installed. [GL #2357]
+
+5594.	[bug]		Building with --enable-dnsrps --enable-dnsrps-dl failed.
+			[GL #2298]
+
+5593.	[bug]		Journal files written by older versions of named can now
+			be read when loading zones, so that journal
+			incompatibility does not cause problems on upgrade.
+			Outdated journals are updated to the new format after
+			loading. [GL #2505]
+
+5592.	[bug]		Prevent hazard pointer table overflows on machines with
+			many cores, by allowing the thread IDs (serving as
+			indices into hazard pointer tables) of finished threads
+			to be reused by those created later. [GL #2396]
+
+5591.	[bug]		Fix a crash that occurred when
+			"stale-answer-client-timeout" was triggered without any
+			(stale) data available in the cache to answer the query.
+			[GL #2503]
+
+5590.	[bug]		NSEC3 records were not immediately created for dynamic
+			zones using NSEC3 with "dnssec-policy", resulting in
+			such zones going bogus. Add code to process the
+			NSEC3PARAM queue at zone load time so that NSEC3 records
+			for such zones are created immediately. [GL #2498]
+
+5588.	[func]		Add a new "purge-keys" option for "dnssec-policy". This
+			option determines the period of time for which key files
+			are retained after they become obsolete. [GL #2408]
+
+5586.	[bug]		An invalid direction field in a LOC record resulted in
+			an INSIST failure when a zone file containing such a
+			record was loaded. [GL #2499]
+
+5584.	[bug]		No longer set the IP_DONTFRAG option on UDP sockets, to
+			prevent dropping outgoing packets exceeding
+			"max-udp-size". [GL #2466]
+
+5582.	[bug]		BIND 9 failed to build when static OpenSSL libraries
+			were used and the pkg-config files for libssl and/or
+			libcrypto were unavailable. This has been fixed by
+			ensuring that the correct linking order for libssl and
+			libcrypto is always used. [GL #2402]
+
+5581.	[bug]		Fix a memory leak that occurred when inline-signed zones
+			were added to the configuration, followed by a
+			reconfiguration of named. [GL #2041]
+
+5580.	[test]		The system test framework no longer differentiates
+			between SKIPPED and UNTESTED system test results. Any
+			system test which is not run is now marked as SKIPPED.
+			[GL !4517]
+
+5573.	[func]		When serve-stale is enabled and stale data is available,
+			named now returns stale answers upon encountering any
+			unexpected error in the query resolution process.
+			However, the "stale-refresh-time" window is still only
+			started upon a timeout. [GL #2434]
+
+5564.	[cleanup]	Network manager's TLSDNS module was refactored to use
+			libuv and libssl directly instead of a stack of TCP/TLS
+			sockets. [GL #2335]
+
 	--- 9.16.12 released ---
 
 5578.	[protocol]	Make "check-names" accept A records below "_spf",
