@@ -1,4 +1,4 @@
-/*	$NetBSD: dnstap.h,v 1.6 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: dnstap.h,v 1.7 2021/04/29 17:26:11 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -28,13 +28,7 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
-#ifdef HAVE_DNSTAP
-#include <fstrm.h>
-
-#include <protobuf-c/protobuf-c.h>
-#else  /* ifdef HAVE_DNSTAP */
 struct fstrm_iothr_options;
-#endif /* HAVE_DNSTAP */
 
 #include <isc/log.h>
 #include <isc/refcount.h>

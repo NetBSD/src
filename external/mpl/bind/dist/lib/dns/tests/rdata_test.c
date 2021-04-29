@@ -1,4 +1,4 @@
-/*	$NetBSD: rdata_test.c,v 1.8 2021/02/19 16:42:18 christos Exp $	*/
+/*	$NetBSD: rdata_test.c,v 1.9 2021/04/29 17:26:11 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -2019,6 +2019,7 @@ loc(void **state) {
 		TEXT_INVALID("90 0 1 S 180 W 0"),
 		TEXT_INVALID("90 S 180 1 W 0"),
 		TEXT_INVALID("90 S 180 0 1 W 0"),
+		TEXT_INVALID("0 0 0.000 E 0 0 0.000 E -0.95m 1m 10000m 10m"),
 		TEXT_VALID("0 0 0.000 N 0 0 0.000 E -0.95m 1m 10000m 10m"),
 		TEXT_VALID("0 0 0.000 N 0 0 0.000 E -0.05m 1m 10000m 10m"),
 		TEXT_VALID("0 0 0.000 N 0 0 0.000 E -100000.00m 1m 10000m 10m"),
@@ -2706,7 +2707,7 @@ main(int argc, char **argv) {
 int
 main(void) {
 	printf("1..0 # Skipped: cmocka not available\n");
-	return (0);
+	return (SKIPPED_TEST_EXIT_CODE);
 }
 
 #endif /* if HAVE_CMOCKA */

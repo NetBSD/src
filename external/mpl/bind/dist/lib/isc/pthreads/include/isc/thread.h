@@ -1,4 +1,4 @@
-/*	$NetBSD: thread.h,v 1.5 2021/02/19 16:42:20 christos Exp $	*/
+/*	$NetBSD: thread.h,v 1.6 2021/04/29 17:26:12 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -25,6 +25,13 @@
 #include <isc/lang.h>
 #include <isc/result.h>
 
+#if defined(HAVE_THREAD_LOCAL)
+#include <threads.h>
+extern thread_local size_t isc_tid_v;
+#elif defined(HAVE___THREAD)
+extern __thread size_t isc_tid_v;
+#endif /* if defined(HAVE_THREAD_LOCAL) */
+
 ISC_LANG_BEGINDECLS
 
 typedef pthread_t isc_thread_t;
@@ -50,7 +57,7 @@ isc_thread_setname(isc_thread_t thread, const char *name);
 isc_result_t
 isc_thread_setaffinity(int cpu);
 
-#define isc_thread_self (unsigned long)pthread_self
+#define isc_thread_self (uintptr_t) pthread_self
 
 /***
  *** Thread-Local Storage
@@ -58,7 +65,6 @@ isc_thread_setaffinity(int cpu);
 
 #if defined(HAVE_TLS)
 #if defined(HAVE_THREAD_LOCAL)
-#include <threads.h>
 #define ISC_THREAD_LOCAL static thread_local
 #elif defined(HAVE___THREAD)
 #define ISC_THREAD_LOCAL static __thread

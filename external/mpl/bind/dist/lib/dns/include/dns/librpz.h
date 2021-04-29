@@ -1,4 +1,4 @@
-/*	$NetBSD: librpz.h,v 1.5 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: librpz.h,v 1.6 2021/04/29 17:26:11 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -783,7 +783,7 @@ LIBDEF_F(su2str)
 /**
  * default path to dnsrpzd
  */
-const char *librpz_dnsrpzd_path;
+LIBDEF(const char *, librpz_dnsrpzd_path)
 
 #undef LIBDEF
 

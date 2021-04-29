@@ -1,4 +1,4 @@
-/*	$NetBSD: check.c,v 1.11 2021/04/05 11:27:01 rillig Exp $	*/
+/*	$NetBSD: check.c,v 1.12 2021/04/29 17:26:10 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -16,6 +16,10 @@
 #include <inttypes.h>
 #include <stdbool.h>
 #include <stdlib.h>
+
+#ifdef HAVE_DNSTAP
+#include <fstrm.h>
+#endif
 
 #include <isc/aes.h>
 #include <isc/base64.h>

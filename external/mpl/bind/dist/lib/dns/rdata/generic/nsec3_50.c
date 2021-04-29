@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec3_50.c,v 1.6 2021/02/19 16:42:17 christos Exp $	*/
+/*	$NetBSD: nsec3_50.c,v 1.7 2021/04/29 17:26:11 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -304,6 +304,7 @@ tostruct_nsec3(ARGS_TOSTRUCT) {
 	nsec3->iterations = uint16_consume_fromregion(&region);
 
 	nsec3->salt_length = uint8_consume_fromregion(&region);
+	INSIST(nsec3->salt_length <= region.length);
 	nsec3->salt = mem_maybedup(mctx, region.base, nsec3->salt_length);
 	if (nsec3->salt == NULL) {
 		return (ISC_R_NOMEMORY);
@@ -311,6 +312,7 @@ tostruct_nsec3(ARGS_TOSTRUCT) {
 	isc_region_consume(&region, nsec3->salt_length);
 
 	nsec3->next_length = uint8_consume_fromregion(&region);
+	INSIST(nsec3->next_length <= region.length);
 	nsec3->next = mem_maybedup(mctx, region.base, nsec3->next_length);
 	if (nsec3->next == NULL) {
 		goto cleanup;

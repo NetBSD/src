@@ -1,4 +1,4 @@
-/*	$NetBSD: kasp.h,v 1.3 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: kasp.h,v 1.4 2021/04/29 17:26:11 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -91,6 +91,7 @@ struct dns_kasp {
 	/* Configuration: Timings */
 	uint32_t publish_safety;
 	uint32_t retire_safety;
+	uint32_t purge_keys;
 
 	/* Zone settings */
 	dns_ttl_t zone_max_ttl;
@@ -111,6 +112,7 @@ struct dns_kasp {
 #define DNS_KASP_KEY_TTL	     (3600)
 #define DNS_KASP_DS_TTL		     (86400)
 #define DNS_KASP_PUBLISH_SAFETY	     (3600)
+#define DNS_KASP_PURGE_KEYS	     (86400 * 90)
 #define DNS_KASP_RETIRE_SAFETY	     (3600)
 #define DNS_KASP_ZONE_MAXTTL	     (86400)
 #define DNS_KASP_ZONE_PROPDELAY	     (300)
@@ -302,6 +304,30 @@ void
 dns_kasp_setdnskeyttl(dns_kasp_t *kasp, dns_ttl_t ttl);
 /*%<
  * Set DNSKEY TTL.
+ *
+ * Requires:
+ *
+ *\li   'kasp' is a valid, thawed kasp.
+ */
+
+uint32_t
+dns_kasp_purgekeys(dns_kasp_t *kasp);
+/*%<
+ * Get purge keys interval.
+ *
+ * Requires:
+ *
+ *\li   'kasp' is a valid, frozen kasp.
+ *
+ * Returns:
+ *
+ *\li   Purge keys interval.
+ */
+
+void
+dns_kasp_setpurgekeys(dns_kasp_t *kasp, uint32_t value);
+/*%<
+ * Set purge keys interval.
  *
  * Requires:
  *

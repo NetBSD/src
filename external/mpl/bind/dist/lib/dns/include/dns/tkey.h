@@ -1,4 +1,4 @@
-/*	$NetBSD: tkey.h,v 1.5 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: tkey.h,v 1.6 2021/04/29 17:26:11 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -36,11 +36,11 @@ ISC_LANG_BEGINDECLS
 #define DNS_TKEYMODE_DELETE	      5
 
 struct dns_tkeyctx {
-	dst_key_t *   dhkey;
-	dns_name_t *  domain;
-	gss_cred_id_t gsscred;
-	isc_mem_t *   mctx;
-	char *	      gssapi_keytab;
+	dst_key_t *	  dhkey;
+	dns_name_t *	  domain;
+	dns_gss_cred_id_t gsscred;
+	isc_mem_t *	  mctx;
+	char *		  gssapi_keytab;
 };
 
 isc_result_t
@@ -119,7 +119,7 @@ dns_tkey_builddhquery(dns_message_t *msg, dst_key_t *key,
 isc_result_t
 dns_tkey_buildgssquery(dns_message_t *msg, const dns_name_t *name,
 		       const dns_name_t *gname, isc_buffer_t *intoken,
-		       uint32_t lifetime, gss_ctx_id_t *context, bool win2k,
+		       uint32_t lifetime, dns_gss_ctx_id_t *context, bool win2k,
 		       isc_mem_t *mctx, char **err_message);
 /*%<
  *	Builds a query containing a TKEY that will generate a GSSAPI context.
@@ -182,7 +182,7 @@ dns_tkey_processdhresponse(dns_message_t *qmsg, dns_message_t *rmsg,
 
 isc_result_t
 dns_tkey_processgssresponse(dns_message_t *qmsg, dns_message_t *rmsg,
-			    const dns_name_t *gname, gss_ctx_id_t *context,
+			    const dns_name_t *gname, dns_gss_ctx_id_t *context,
 			    isc_buffer_t *outtoken, dns_tsigkey_t **outkey,
 			    dns_tsig_keyring_t *ring, char **err_message);
 /*%<
@@ -210,7 +210,7 @@ dns_tkey_processdeleteresponse(dns_message_t *qmsg, dns_message_t *rmsg,
 
 isc_result_t
 dns_tkey_gssnegotiate(dns_message_t *qmsg, dns_message_t *rmsg,
-		      const dns_name_t *server, gss_ctx_id_t *context,
+		      const dns_name_t *server, dns_gss_ctx_id_t *context,
 		      dns_tsigkey_t **outkey, dns_tsig_keyring_t *ring,
 		      bool win2k, char **err_message);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-signzone.c,v 1.6 2021/02/19 16:42:10 christos Exp $	*/
+/*	$NetBSD: dnssec-signzone.c,v 1.7 2021/04/29 17:26:09 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -3807,11 +3807,7 @@ main(int argc, char *argv[]) {
 	 * of keys rather early.
 	 */
 	ISC_LIST_INIT(keylist);
-	result = isc_rwlock_init(&keylist_lock, 0, 0);
-	if (result != ISC_R_SUCCESS) {
-		fatal("could not initialize keylist_lock: %s",
-		      isc_result_totext(result));
-	}
+	isc_rwlock_init(&keylist_lock, 0, 0);
 
 	/*
 	 * Fill keylist with:

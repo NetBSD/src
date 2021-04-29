@@ -1,4 +1,4 @@
-/*	$NetBSD: kaspconf.c,v 1.3 2021/02/19 16:42:21 christos Exp $	*/
+/*	$NetBSD: kaspconf.c,v 1.4 2021/04/29 17:26:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -317,6 +317,8 @@ cfg_kasp_fromconfig(const cfg_obj_t *config, const char *name, isc_mem_t *mctx,
 						     DNS_KASP_PUBLISH_SAFETY));
 	dns_kasp_setretiresafety(kasp, get_duration(maps, "retire-safety",
 						    DNS_KASP_RETIRE_SAFETY));
+	dns_kasp_setpurgekeys(
+		kasp, get_duration(maps, "purge-keys", DNS_KASP_PURGE_KEYS));
 
 	(void)confget(maps, "keys", &keys);
 	if (keys != NULL) {

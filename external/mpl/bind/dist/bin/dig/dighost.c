@@ -1,4 +1,4 @@
-/*	$NetBSD: dighost.c,v 1.10 2021/02/19 16:42:09 christos Exp $	*/
+/*	$NetBSD: dighost.c,v 1.11 2021/04/29 17:26:09 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -2937,7 +2937,11 @@ send_udp(dig_query_t *query) {
 	}
 	isc_buffer_usedregion(&query->sendbuf, &r);
 	debug("sending a request");
-	TIME_NOW(&query->time_sent);
+	if (query->lookup->use_usec) {
+		TIME_NOW_HIRES(&query->time_sent);
+	} else {
+		TIME_NOW(&query->time_sent);
+	}
 	INSIST(query->sock != NULL);
 	query->waiting_senddone = true;
 	sevent = isc_socket_socketevent(
@@ -3077,7 +3081,8 @@ connect_timeout(isc_task_t *task, isc_event_t *event) {
  */
 static void
 requeue_or_update_exitcode(dig_lookup_t *lookup) {
-	if (lookup->eoferr == 0U) {
+	if (lookup->eoferr == 0U && lookup->retries > 1) {
+		--lookup->retries;
 		/*
 		 * Peer closed the connection prematurely for the first time
 		 * for this lookup.  Try again, keeping track of this failure.
@@ -3219,7 +3224,11 @@ launch_next_query(dig_query_t *query, bool include_question) {
 	debug("recvcount=%d", recvcount);
 	if (!query->first_soa_rcvd) {
 		debug("sending a request in launch_next_query");
-		TIME_NOW(&query->time_sent);
+		if (query->lookup->use_usec) {
+			TIME_NOW_HIRES(&query->time_sent);
+		} else {
+			TIME_NOW(&query->time_sent);
+		}
 		query->waiting_senddone = true;
 		isc_buffer_clear(&query->tmpsendbuf);
 		isc_buffer_putuint16(&query->tmpsendbuf,
@@ -3625,7 +3634,11 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 	INSIST(recvcount >= 0);
 
 	query = event->ev_arg;
-	TIME_NOW(&query->time_recv);
+	if (query->lookup->use_usec) {
+		TIME_NOW_HIRES(&query->time_recv);
+	} else {
+		TIME_NOW(&query->time_recv);
+	}
 
 	l = query->lookup;
 

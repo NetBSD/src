@@ -1,4 +1,4 @@
-/*	$NetBSD: named-nzd2nzf.c,v 1.6 2021/02/19 16:42:14 christos Exp $	*/
+/*	$NetBSD: named-nzd2nzf.c,v 1.7 2021/04/29 17:26:10 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,6 +15,7 @@
 #error This program requires the LMDB library.
 #endif /* ifndef HAVE_LMDB */
 
+#include <lmdb.h>
 #include <stdio.h>
 #include <stdlib.h>
 

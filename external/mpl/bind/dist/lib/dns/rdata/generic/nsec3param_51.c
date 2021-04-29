@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec3param_51.c,v 1.6 2021/02/19 16:42:17 christos Exp $	*/
+/*	$NetBSD: nsec3param_51.c,v 1.7 2021/04/29 17:26:11 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -240,6 +240,7 @@ tostruct_nsec3param(ARGS_TOSTRUCT) {
 	nsec3param->iterations = uint16_consume_fromregion(&region);
 
 	nsec3param->salt_length = uint8_consume_fromregion(&region);
+	INSIST(nsec3param->salt_length == region.length);
 	nsec3param->salt = mem_maybedup(mctx, region.base,
 					nsec3param->salt_length);
 	if (nsec3param->salt == NULL) {

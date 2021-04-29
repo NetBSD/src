@@ -1,4 +1,4 @@
-/*	$NetBSD: dst.h,v 1.6 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: dst.h,v 1.7 2021/04/29 17:26:11 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -565,7 +565,7 @@ dst_key_privatefrombuffer(dst_key_t *key, isc_buffer_t *buffer);
  *\li	If successful, key will contain a valid private key.
  */
 
-gss_ctx_id_t
+dns_gss_ctx_id_t
 dst_key_getgssctx(const dst_key_t *key);
 /*%<
  * Returns the opaque key data.
@@ -579,8 +579,8 @@ dst_key_getgssctx(const dst_key_t *key);
  */
 
 isc_result_t
-dst_key_fromgssapi(const dns_name_t *name, gss_ctx_id_t gssctx, isc_mem_t *mctx,
-		   dst_key_t **keyp, isc_region_t *intoken);
+dst_key_fromgssapi(const dns_name_t *name, dns_gss_ctx_id_t gssctx,
+		   isc_mem_t *mctx, dst_key_t **keyp, isc_region_t *intoken);
 /*%<
  * Converts a GSSAPI opaque context id into a DST key.
  *

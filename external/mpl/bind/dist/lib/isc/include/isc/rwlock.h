@@ -1,4 +1,4 @@
-/*	$NetBSD: rwlock.h,v 1.5 2021/02/19 16:42:19 christos Exp $	*/
+/*	$NetBSD: rwlock.h,v 1.6 2021/04/29 17:26:12 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -80,7 +80,7 @@ struct isc_rwlock {
 
 #endif /* USE_PTHREAD_RWLOCK */
 
-isc_result_t
+void
 isc_rwlock_init(isc_rwlock_t *rwl, unsigned int read_quota,
 		unsigned int write_quota);
 

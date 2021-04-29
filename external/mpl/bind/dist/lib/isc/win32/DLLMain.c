@@ -1,4 +1,4 @@
-/*	$NetBSD: DLLMain.c,v 1.5 2021/02/19 16:42:21 christos Exp $	*/
+/*	$NetBSD: DLLMain.c,v 1.6 2021/04/29 17:26:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -14,6 +14,12 @@
 #include <stdio.h>
 #include <windows.h>
 
+#include <isc/mem.h>
+#include <isc/tls.h>
+#include <isc/util.h>
+
+#include "lib_p.h"
+
 /*
  * Called when we enter the DLL
  */
@@ -21,25 +27,23 @@ __declspec(dllexport) BOOL WINAPI
 	DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
 	switch (fdwReason) {
 	/*
-	 * The DLL is loading due to process
-	 * initialization or a call to LoadLibrary.
+	 * The DLL is loading due to process initialization or a call to
+	 * LoadLibrary.
 	 */
 	case DLL_PROCESS_ATTACH:
-		break;
-
-	/* The attached process creates a new thread.  */
-	case DLL_THREAD_ATTACH:
-		break;
-
-	/* The thread of the attached process terminates. */
-	case DLL_THREAD_DETACH:
+		isc__initialize();
 		break;
 
 	/*
-	 * The DLL is unloading from a process due to
-	 * process termination or a call to FreeLibrary.
+	 * The DLL is unloading from a process due to process
+	 * termination or a call to FreeLibrary.
 	 */
 	case DLL_PROCESS_DETACH:
+		isc__shutdown();
+		break;
+
+	case DLL_THREAD_ATTACH:
+	case DLL_THREAD_DETACH:
 		break;
 
 	default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec.h,v 1.6 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: dnssec.h,v 1.7 2021/04/29 17:26:11 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -61,6 +61,7 @@ struct dns_dnsseckey {
 	bool		hint_remove; /*% metadata says *don't* publish */
 	bool		is_active;   /*% key is already active */
 	bool		first_sign;  /*% key is newly becoming active */
+	bool		purge;	     /*% remove key files */
 	unsigned int	prepublish;  /*% how long until active? */
 	dns_keysource_t source;	     /*% how the key was found */
 	bool		ksk;	     /*% this is a key-signing key */

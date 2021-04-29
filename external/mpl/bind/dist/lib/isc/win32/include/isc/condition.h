@@ -1,4 +1,4 @@
-/*	$NetBSD: condition.h,v 1.5 2021/02/19 16:42:21 christos Exp $	*/
+/*	$NetBSD: condition.h,v 1.6 2021/04/29 17:26:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -24,8 +24,8 @@
 typedef struct isc_condition_thread isc_condition_thread_t;
 
 struct isc_condition_thread {
-	unsigned long th;
-	HANDLE	      handle[2];
+	uintptr_t th;
+	HANDLE	  handle[2];
 	ISC_LINK(isc_condition_thread_t) link;
 };
 
