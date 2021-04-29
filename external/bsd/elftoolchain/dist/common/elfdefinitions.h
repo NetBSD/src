@@ -1,3 +1,5 @@
+/*	$NetBSD: elfdefinitions.h,v 1.7 2021/04/29 17:38:08 jkoshy Exp $	*/
+
 /*-
  * Copyright (c) 2010,2021 Joseph Koshy
  * All rights reserved.
