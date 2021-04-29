@@ -449,8 +449,8 @@ abbreviation is unambiguous; for example, ``+cd`` is equivalent to
    ``+nssearch`` or ``+trace`` query option is used.
 
 ``+retry=T``
-   This option sets the number of times to retry UDP queries to server to ``T``
-   instead of the default, 2. Unlike ``+tries``, this does not include
+   This option sets the number of times to retry UDP and TCP queries to server to ``T``
+   instead of the default, 2.  Unlike ``+tries``, this does not include
    the initial query.
 
 ``+[no]rrcomments``
@@ -532,7 +532,7 @@ abbreviation is unambiguous; for example, ``+cd`` is equivalent to
    default queries from a name server.
 
 ``+tries=T``
-   This option sets the number of times to try UDP queries to server to ``T``
+   This option sets the number of times to try UDP and TCP queries to server to ``T``
    instead of the default, 3. If ``T`` is less than or equal to zero,
    the number of tries is silently rounded up to 1.
 

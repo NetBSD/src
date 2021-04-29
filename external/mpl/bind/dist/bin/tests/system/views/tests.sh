@@ -133,5 +133,46 @@ test "$int" != "$ext" || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
+echo_i "verifying adding of multiple inline zones followed by reconfiguration works"
+
+[ ! -f ns2/zones.conf ] && touch ns2/zones.conf
+copy_setports ns2/named3.conf.in ns2/named.conf
+
+for i in `seq 1 50`; do
+	ret=0
+	zone_name=`printf "example%03d.com" $i`
+
+# Add a new zone to the configuration.
+	cat >> ns2/zones.conf << EOF
+zone "${zone_name}" {
+    type master;
+    file "db.${zone_name}";
+    dnssec-dnskey-kskonly yes;
+    auto-dnssec maintain;
+    inline-signing yes;
+};
+EOF
+
+# Create a master file for the zone.
+	cat > "ns2/db.${zone_name}" <<EOF
+\$TTL   86400
+@      IN  SOA localhost. hostmaster.localhost (
+                1612542642  ; serial
+                12H ; refresh
+                1H  ; retry
+                2w  ; expiry
+                1h  ; minimum
+        )
+
+        IN      NS      localhost
+localhost       IN      A       127.0.0.1
+EOF
+
+    $KEYGEN -q -Kns2 -fk -aecdsa256 ${zone_name} > /dev/null
+    $RNDCCMD 10.53.0.2 reconfig || ret=1
+    if [ $ret != 0 ]; then echo_i "failed"; break; fi
+done # end for #
+status=`expr $status + $ret`
+
 echo_i "exit status: $status"
 [ $status -eq 0 ] || exit 1

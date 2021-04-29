@@ -22,8 +22,6 @@ VERSION=@BIND9_VERSION@
 
 @BIND9_MAKE_INCLUDES@
 
-USE_ISC_SPNEGO = @USE_ISC_SPNEGO@
-
 CINCLUDES =	-I. -I${top_srcdir}/lib/dns -Iinclude ${DNS_INCLUDES} \
 		${ISC_INCLUDES} \
 		${FSTRM_CFLAGS} \
@@ -34,7 +32,7 @@ CINCLUDES =	-I. -I${top_srcdir}/lib/dns -Iinclude ${DNS_INCLUDES} \
 		${LMDB_CFLAGS} \
 		${MAXMINDDB_CFLAGS}
 
-CDEFINES =	@USE_GSSAPI@ ${USE_ISC_SPNEGO}
+CDEFINES =	@USE_GSSAPI@
 
 CWARNINGS =
 
@@ -213,5 +211,3 @@ dnstap.pb-c.c dnstap.pb-c.h: dnstap.proto
 	$(PROTOC_C) --c_out=. --proto_path ${srcdir} dnstap.proto
 
 dnstap.pb-c.@O@: dnstap.pb-c.c
-
-spnego.@O@: spnego_asn1.c spnego.h

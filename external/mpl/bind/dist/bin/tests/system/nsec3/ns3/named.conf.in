@@ -56,11 +56,18 @@ zone "nsec-to-nsec3.kasp" {
 	dnssec-policy "nsec";
 };
 
-/* This zone uses the default NSEC3 settings. */
+/* These zones use the default NSEC3 settings. */
 zone "nsec3.kasp" {
 	type primary;
 	file "nsec3.kasp.db";
 	dnssec-policy "nsec3";
+};
+
+zone "nsec3-dynamic.kasp" {
+	type primary;
+	file "nsec3-dynamic.kasp.db";
+	dnssec-policy "nsec3";
+	allow-update { any; };
 };
 
 /* This zone uses non-default NSEC3 settings. */
@@ -70,11 +77,18 @@ zone "nsec3-other.kasp" {
 	dnssec-policy "nsec3-other";
 };
 
-/* The zone will be reconfigured to use other NSEC3 settings. */
+/* These zones will be reconfigured to use other NSEC3 settings. */
 zone "nsec3-change.kasp" {
 	type primary;
 	file "nsec3-change.kasp.db";
 	dnssec-policy "nsec3";
+};
+
+zone "nsec3-dynamic-change.kasp" {
+	type primary;
+	file "nsec3-dynamic-change.kasp.db";
+	dnssec-policy "nsec3";
+	allow-update { any; };
 };
 
 /* The zone will be reconfigured to use opt-out. */
