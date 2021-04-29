@@ -315,6 +315,11 @@ zone "step5.zsk-prepub.autosign" {
 	file "step5.zsk-prepub.autosign.db";
 	dnssec-policy "zsk-prepub";
 };
+zone "step6.zsk-prepub.autosign" {
+	type primary;
+	file "step6.zsk-prepub.autosign.db";
+	dnssec-policy "zsk-prepub";
+};
 
 /*
  * Zones for testing KSK Double-KSK steps.
@@ -342,6 +347,11 @@ zone "step4.ksk-doubleksk.autosign" {
 zone "step5.ksk-doubleksk.autosign" {
 	type primary;
 	file "step5.ksk-doubleksk.autosign.db";
+	dnssec-policy "ksk-doubleksk";
+};
+zone "step6.ksk-doubleksk.autosign" {
+	type primary;
+	file "step6.ksk-doubleksk.autosign.db";
 	dnssec-policy "ksk-doubleksk";
 };
 
@@ -383,6 +393,11 @@ zone "step7.csk-roll.autosign" {
 	file "step7.csk-roll.autosign.db";
 	dnssec-policy "csk-roll";
 };
+zone "step8.csk-roll.autosign" {
+	type primary;
+	file "step8.csk-roll.autosign.db";
+	dnssec-policy "csk-roll";
+};
 
 zone "step1.csk-roll2.autosign" {
 	type primary;
@@ -412,5 +427,10 @@ zone "step5.csk-roll2.autosign" {
 zone "step6.csk-roll2.autosign" {
 	type primary;
 	file "step6.csk-roll2.autosign.db";
+	dnssec-policy "csk-roll2";
+};
+zone "step7.csk-roll2.autosign" {
+	type primary;
+	file "step7.csk-roll2.autosign.db";
 	dnssec-policy "csk-roll2";
 };

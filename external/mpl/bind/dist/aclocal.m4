@@ -376,6 +376,7 @@ AC_DEFUN([AM_SUBST_NOTMAKE], [_AM_SUBST_NOTMAKE($@)])
 
 m4_include([m4/ax_check_compile_flag.m4])
 m4_include([m4/ax_check_openssl.m4])
+m4_include([m4/ax_gcc_func_attribute.m4])
 m4_include([m4/ax_posix_shell.m4])
 m4_include([m4/ax_pthread.m4])
 m4_include([m4/ax_restore_flags.m4])

@@ -145,7 +145,7 @@ sub reply_handler {
 	$rcode = "NXDOMAIN";
     }
 
-    # mark the answer as authoritative (by setting the 'aa' flag
+    # mark the answer as authoritative (by setting the 'aa' flag)
     return ($rcode, \@ans, \@auth, \@add, { aa => 1 });
 }
 

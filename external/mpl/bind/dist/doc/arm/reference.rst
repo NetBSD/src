@@ -1125,10 +1125,13 @@ default is used.
    used instead of the new format.)
 
 ``max-ixfr-ratio``
-   This sets the size threshold (expressed as a percentage of the size of the full
-   zone) beyond which ``named`` chooses to use an AXFR response rather than
-   IXFR when answering zone transfer requests.  See
+   This sets the size threshold (expressed as a percentage of the size
+   of the full zone) beyond which ``named`` chooses to use an AXFR
+   response rather than IXFR when answering zone transfer requests. See
    :ref:`incremental_zone_transfers`.
+
+   The minimum value is ``1%``. The keyword ``unlimited`` disables ratio
+   checking and allows IXFRs of any size. The default is ``100%``.
 
 ``new-zones-directory``
    This specifies the directory in which to store the configuration
@@ -1844,18 +1847,21 @@ Boolean Options
    log category.
 
 ``stale-answer-client-timeout``
-   This option defines the amount of time ``named`` waits before attempting to
-   answer the query with a stale RRset from cache. If a stale answer is found,
-   ``named`` continues the ongoing fetches, attempting to refresh the RRset in
-   cache until the ``resolver-query-timeout`` interval is reached.
+   This option defines the amount of time (in milliseconds) that ``named``
+   waits before attempting to answer the query with a stale RRset from cache.
+   If a stale answer is found, ``named`` continues the ongoing fetches,
+   attempting to refresh the RRset in cache until the
+   ``resolver-query-timeout`` interval is reached.
 
-   The default value is ``1800`` (in milliseconds) and the maximum value is
-   bounded to ``resolver-query-timeout`` minus one second. A value of ``0``
-   immediately returns a cached RRset if available, and still attempts a refresh
-   of the data in cache.
+   This option is off by default, which is equivalent to setting it to
+   ``off`` or ``disabled``. It also has no effect if ``stale-answer-enable``
+   is disabled.
 
-   The option can be disabled by setting the value to ``off`` or ``disabled``.
-   It also has no effect if ``stale-answer-enable`` is disabled.
+   The maximum value for this option is ``resolver-query-timeout`` minus
+   one second. The minimum value, ``0``, causes a cached RRset to be
+   immediately returned if it is available while still attempting to
+   refresh the data in cache. :rfc:`8767` recommends a value of ``1800``
+   (milliseconds).
 
 ``stale-cache-enable``
    If ``yes``, enable the retaining of "stale" cached answers.  Default ``yes``.
@@ -4880,6 +4886,15 @@ The following options can be specified in a ``dnssec-policy`` statement:
     number.  An optional second parameter specifies the key's size in
     bits.  If it is omitted, as shown in the example for the second and
     third keys, an appropriate default size for the algorithm is used.
+
+  ``purge-keys``
+    This is the time after when DNSSEC keys that have been deleted from
+    the zone can be removed from disk. If a key still determined to have
+    presence (for example in some resolver cache), ``named`` will not
+    remove the key files.
+
+    The default is ``P90D`` (90 days). Set this option to ``0`` to never
+    purge deleted keys.
 
   ``publish-safety``
     This is a margin that is added to the pre-publication interval in

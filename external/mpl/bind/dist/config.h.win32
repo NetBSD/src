@@ -269,28 +269,25 @@ typedef __int64 off_t;
 @DNS_RDATASET_FIXED@
 
 /* Define if OpenSSL includes Ed25519 support */
-@HAVE_OPENSSL_ED25519@
+#define HAVE_OPENSSL_ED25519 1
 
 /* Define if OpenSSL includes Ed448 support */
-@HAVE_OPENSSL_ED448@
+#define HAVE_OPENSSL_ED448 1
 
 /* Define if your OpenSSL version supports DH functions. */
-@HAVE_DH_GET0_KEY@
+#define HAVE_DH_GET0_KEY 1
 
 /* Define if your OpenSSL version supports ECDSA functions. */
-@HAVE_ECDSA_SIG_GET0@
+#define HAVE_ECDSA_SIG_GET0 1
 
 /* Define if your OpenSSL version supports RSA functions. */
-@HAVE_RSA_SET0_KEY@
+#define HAVE_RSA_SET0_KEY 1
 
 /* define if OpenSSL is used for Public-Key Cryptography */
 @USE_OPENSSL@
 
 /* Define if native PKCS#11 is used as cryptographic library provider */
 @USE_PKCS11@
-
-/* HMAC_*() return ints */
-@HMAC_RETURN_INT@
 
 /* Define to 1 if you have the `readline' function. */
 @HAVE_READLINE@
@@ -320,34 +317,64 @@ typedef __int64 off_t;
 @WANT_QUERYTRACE@
 
 /* Define to 1 if you have the `CRYPTO_zalloc' function. */
-@HAVE_CRYPTO_ZALLOC@
+#define HAVE_CRYPTO_ZALLOC 1
 
 /* Define to 1 if you have the `EVP_CIPHER_CTX_free' function. */
-@HAVE_EVP_CIPHER_CTX_FREE@
+#define HAVE_EVP_CIPHER_CTX_FREE 1
 
 /* Define to 1 if you have the `EVP_CIPHER_CTX_new' function. */
-@HAVE_EVP_CIPHER_CTX_NEW@
+#define HAVE_EVP_CIPHER_CTX_NEW 1
 
 /* Define to 1 if you have the `EVP_MD_CTX_free' function. */
-@HAVE_EVP_MD_CTX_FREE@
+#define HAVE_EVP_MD_CTX_FREE 1
 
 /* Define to 1 if you have the `EVP_MD_CTX_new' function. */
-@HAVE_EVP_MD_CTX_NEW@
+#define HAVE_EVP_MD_CTX_NEW 1
 
 /* Define to 1 if you have the `EVP_MD_CTX_reset' function. */
-@HAVE_EVP_MD_CTX_RESET@
+#define HAVE_EVP_MD_CTX_RESET 1
 
 /* Define to 1 if you have the `HMAC_CTX_free' function. */
-@HAVE_HMAC_CTX_FREE@
+#define HAVE_HMAC_CTX_FREE 1
 
 /* Define to 1 if you have the `HMAC_CTX_get_md' function. */
-@HAVE_HMAC_CTX_GET_MD@
+#define HAVE_HMAC_CTX_GET_MD 1
 
 /* Define to 1 if you have the `HMAC_CTX_new' function. */
-@HAVE_HMAC_CTX_NEW@
+#define HAVE_HMAC_CTX_NEW 1
 
 /* Define to 1 if you have the `HMAC_CTX_reset' function. */
-@HAVE_HMAC_CTX_RESET@
+#define HAVE_HMAC_CTX_RESET 1
+
+/* Define to 1 if you have the `SSL_read_ex' function. */
+#define HAVE_SSL_READ_EX 1
+
+/* Define to 1 if you have the `SSL_peek_ex' function. */
+#define HAVE_SSL_PEEK_EX 1
+
+/* Define to 1 if you have the `SSL_write_ex' function. */
+#define HAVE_SSL_WRITE_EX 1
+
+/* Define to 1 if you have the `BIO_read_ex' function. */
+#define HAVE_BIO_READ_EX 1
+
+/* Define to 1 if you have the `BIO_write_ex' function. */
+#define HAVE_BIO_WRITE_EX 1
+
+/* Define to 1 if you have the `OPENSSL_init_crypto' function. */
+#define HAVE_OPENSSL_INIT_CRYPTO 1
+
+/* Define to 1 if you have the `OPENSSL_init_ssl' function. */
+#define HAVE_OPENSSL_INIT_SSL 1
+
+/* Define to 1 if you have the `TLS_client_method' function. */
+#define HAVE_TLS_CLIENT_METHOD 1
+
+/* Define to 1 if you have the `TLS_server_method' function. */
+#define HAVE_TLS_SERVER_METHOD 1
+
+/* Define to 1 if you have the `SSL_CTX_up_ref' function. */
+#define SSL_CTX_UP_REF 1
 
 /* Define to 1 if you have the `uv_handle_get_data' function. */
 @HAVE_UV_HANDLE_GET_DATA@

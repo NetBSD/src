@@ -23,7 +23,6 @@ copy_setports ns3/named.conf.in ns3/named.conf
 copy_setports ns4/named.conf.in ns4/named.conf
 copy_setports ns5/named.conf.in ns5/named.conf
 copy_setports ns6/named.conf.in ns6/named.conf
-copy_setports ns7/named.conf.in ns7/named.conf
 
 if $SHELL ../testcrypto.sh ed25519; then
 	echo "yes" > ed25519-supported.file
@@ -59,9 +58,5 @@ copy_setports ns6/policies/kasp.conf.in ns6/policies/kasp.conf
 )
 (
 	cd ns6
-	$SHELL setup.sh
-)
-(
-	cd ns7
 	$SHELL setup.sh
 )

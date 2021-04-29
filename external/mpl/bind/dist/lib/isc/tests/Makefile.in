@@ -18,6 +18,7 @@ VERSION=@BIND9_VERSION@
 CINCLUDES =	-I. -Iinclude ${ISC_INCLUDES} \
 		${OPENSSL_CFLAGS} @CMOCKA_CFLAGS@ \
 		${JSON_C_CFLAGS} \
+		${LIBUV_CFLAGS} \
 		${LIBXML2_CFLAGS}
 CDEFINES =	-DTESTS="\"${top_builddir}/lib/isc/tests/\""
 
@@ -39,6 +40,7 @@ SRCS =		isctest.c aes_test.c buffer_test.c \
 		tcp_test.c \
 		tcp_quota_test.c \
 		tcpdns_test.c \
+		tlsdns_test.c \
 		udp_test.c
 
 SUBDIRS =
@@ -57,6 +59,7 @@ TARGETS =	aes_test@EXEEXT@ buffer_test@EXEEXT@ \
 		tcp_test@EXEEXT@ \
 		tcp_quota_test@EXEEXT@ \
 		tcpdns_test@EXEEXT@ \
+		tlsdns_test@EXEEXT@ \
 		udp_test@EXEEXT@
 
 @BIND9_MAKE_RULES@
@@ -204,17 +207,22 @@ taskpool_test@EXEEXT@: taskpool_test.@O@ isctest.@O@ ${ISCDEPLIBS}
 tcp_test@EXEEXT@: tcp_test.@O@ isctest.@O@ ${ISCDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} \
 		${LDFLAGS} -o $@ tcp_test.@O@ isctest.@O@ \
-		${ISCLIBS} ${LIBS} -luv
+		${ISCLIBS} ${LIBS} ${LIBUV_LIBS}
 
 tcp_quota_test@EXEEXT@: tcp_quota_test.@O@ isctest.@O@ ${ISCDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} \
 		${LDFLAGS} -o $@ tcp_quota_test.@O@ isctest.@O@ \
-		${ISCLIBS} ${LIBS} -luv
+		${ISCLIBS} ${LIBS} ${LIBUV_LIBS}
 
 tcpdns_test@EXEEXT@: tcpdns_test.@O@ isctest.@O@ ${ISCDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} \
 		${LDFLAGS} -o $@ tcpdns_test.@O@ isctest.@O@ \
-		${ISCLIBS} ${LIBS} -luv
+		${ISCLIBS} ${LIBS} ${LIBUV_LIBS}
+
+tlsdns_test@EXEEXT@: tlsdns_test.@O@ isctest.@O@ ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} \
+		${LDFLAGS} -o $@ tlsdns_test.@O@ isctest.@O@ \
+		${ISCLIBS} ${LIBS} ${LIBUV_LIBS} ${OPENSSL_LIBS}
 
 time_test@EXEEXT@: time_test.@O@ ${ISCDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} \
@@ -229,7 +237,7 @@ timer_test@EXEEXT@: timer_test.@O@ isctest.@O@ ${ISCDEPLIBS}
 udp_test@EXEEXT@: udp_test.@O@ isctest.@O@ ${ISCDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} \
 		${LDFLAGS} -o $@ udp_test.@O@ isctest.@O@ \
-		${ISCLIBS} ${LIBS} -luv
+		${ISCLIBS} ${LIBS} ${LIBUV_LIBS}
 
 unit::
 	sh ${top_builddir}/unit/unittest.sh
