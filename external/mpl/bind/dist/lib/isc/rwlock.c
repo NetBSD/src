@@ -1,4 +1,4 @@
-/*	$NetBSD: rwlock.c,v 1.1.1.6 2021/02/19 16:37:16 christos Exp $	*/
+/*	$NetBSD: rwlock.c,v 1.1.1.7 2021/04/29 16:46:32 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -33,14 +33,13 @@
 #include <errno.h>
 #include <pthread.h>
 
-isc_result_t
+void
 isc_rwlock_init(isc_rwlock_t *rwl, unsigned int read_quota,
 		unsigned int write_quota) {
 	UNUSED(read_quota);
 	UNUSED(write_quota);
 	REQUIRE(pthread_rwlock_init(&rwl->rwlock, NULL) == 0);
 	atomic_init(&rwl->downgrade, false);
-	return (ISC_R_SUCCESS);
 }
 
 isc_result_t
@@ -178,7 +177,7 @@ isc__rwlock_lock(isc_rwlock_t *rwl, isc_rwlocktype_t type);
 static void
 print_lock(const char *operation, isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 	fprintf(stderr,
-		"rwlock %p thread %lu %s(%s): "
+		"rwlock %p thread %" PRIuPTR " %s(%s): "
 		"write_requests=%u, write_completions=%u, "
 		"cnt_and_flag=0x%x, readers_waiting=%u, "
 		"write_granted=%u, write_quota=%u\n",
@@ -191,7 +190,7 @@ print_lock(const char *operation, isc_rwlock_t *rwl, isc_rwlocktype_t type) {
 }
 #endif			/* ISC_RWLOCK_TRACE */
 
-isc_result_t
+void
 isc_rwlock_init(isc_rwlock_t *rwl, unsigned int read_quota,
 		unsigned int write_quota) {
 	REQUIRE(rwl != NULL);
@@ -223,8 +222,6 @@ isc_rwlock_init(isc_rwlock_t *rwl, unsigned int read_quota,
 	isc_condition_init(&rwl->writeable);
 
 	rwl->magic = RWLOCK_MAGIC;
-
-	return (ISC_R_SUCCESS);
 }
 
 void

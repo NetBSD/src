@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.1.1.5 2021/02/19 16:37:11 christos Exp $	*/
+/*	$NetBSD: db.c,v 1.1.1.6 2021/04/29 16:46:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -68,7 +68,7 @@ static dns_dbimplementation_t rbtimp;
 
 static void
 initialize(void) {
-	RUNTIME_CHECK(isc_rwlock_init(&implock, 0, 0) == ISC_R_SUCCESS);
+	isc_rwlock_init(&implock, 0, 0);
 
 	rbtimp.name = "rbt";
 	rbtimp.create = dns_rbtdb_create;

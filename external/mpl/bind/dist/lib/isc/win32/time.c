@@ -1,4 +1,4 @@
-/*	$NetBSD: time.c,v 1.1.1.5 2021/02/19 16:37:17 christos Exp $	*/
+/*	$NetBSD: time.c,v 1.1.1.6 2021/04/29 16:46:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -122,6 +122,15 @@ isc_time_now(isc_time_t *t) {
 	REQUIRE(t != NULL);
 
 	GetSystemTimeAsFileTime(&t->absolute);
+
+	return (ISC_R_SUCCESS);
+}
+
+isc_result_t
+isc_time_now_hires(isc_time_t *t) {
+	REQUIRE(t != NULL);
+
+	GetSystemTimePreciseAsFileTime(&t->absolute);
 
 	return (ISC_R_SUCCESS);
 }

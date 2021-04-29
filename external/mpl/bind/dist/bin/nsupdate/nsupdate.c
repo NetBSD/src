@@ -1,4 +1,4 @@
-/*	$NetBSD: nsupdate.c,v 1.1.1.7 2021/02/19 16:37:04 christos Exp $	*/
+/*	$NetBSD: nsupdate.c,v 1.1.1.8 2021/04/29 16:46:20 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -79,8 +79,14 @@
 #ifdef GSSAPI
 #include <dst/gssapi.h>
 #ifdef WIN32
+#include <gssapi/gssapi.h>
+#include <gssapi/gssapi_krb5.h>
 #include <krb5/krb5.h>
 #else /* ifdef WIN32 */
+#include ISC_PLATFORM_GSSAPIHEADER
+#ifdef ISC_PLATFORM_GSSAPI_KRB5_HEADER
+#include ISC_PLATFORM_GSSAPI_KRB5_HEADER
+#endif /* ifdef ISC_PLATFORM_GSSAPI_KRB5_HEADER */
 #include ISC_PLATFORM_KRB5HEADER
 #endif /* ifdef WIN32 */
 #endif /* ifdef GSSAPI */
@@ -216,7 +222,7 @@ static dns_name_t *keyname;
 typedef struct nsu_gssinfo {
 	dns_message_t *msg;
 	isc_sockaddr_t *addr;
-	gss_ctx_id_t context;
+	dns_gss_ctx_id_t context;
 } nsu_gssinfo_t;
 
 static void
@@ -225,7 +231,7 @@ static void
 start_gssrequest(dns_name_t *master);
 static void
 send_gssrequest(isc_sockaddr_t *destaddr, dns_message_t *msg,
-		dns_request_t **request, gss_ctx_id_t context);
+		dns_request_t **request, dns_gss_ctx_id_t context);
 static void
 recvgss(isc_task_t *task, isc_event_t *event);
 #endif /* GSSAPI */
@@ -2918,7 +2924,7 @@ failed_gssrequest() {
 
 static void
 start_gssrequest(dns_name_t *master) {
-	gss_ctx_id_t context;
+	dns_gss_ctx_id_t context;
 	isc_buffer_t buf;
 	isc_result_t result;
 	uint32_t val = 0;
@@ -3021,7 +3027,7 @@ failure:
 
 static void
 send_gssrequest(isc_sockaddr_t *destaddr, dns_message_t *msg,
-		dns_request_t **request, gss_ctx_id_t context) {
+		dns_request_t **request, dns_gss_ctx_id_t context) {
 	isc_result_t result;
 	nsu_gssinfo_t *reqinfo;
 	unsigned int options = 0;
@@ -3063,7 +3069,7 @@ recvgss(isc_task_t *task, isc_event_t *event) {
 	nsu_gssinfo_t *reqinfo;
 	dns_message_t *tsigquery = NULL;
 	isc_sockaddr_t *addr;
-	gss_ctx_id_t context;
+	dns_gss_ctx_id_t context;
 	isc_buffer_t buf;
 	dns_name_t *servname;
 	dns_fixedname_t fname;

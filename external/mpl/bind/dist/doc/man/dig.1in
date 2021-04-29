@@ -461,8 +461,8 @@ recursive queries. Recursion is automatically disabled when the
 \fB+nssearch\fP or \fB+trace\fP query option is used.
 .TP
 .B \fB+retry=T\fP
-This option sets the number of times to retry UDP queries to server to \fBT\fP
-instead of the default, 2. Unlike \fB+tries\fP, this does not include
+This option sets the number of times to retry UDP and TCP queries to server to \fBT\fP
+instead of the default, 2.  Unlike \fB+tries\fP, this does not include
 the initial query.
 .TP
 .B \fB+[no]rrcomments\fP
@@ -544,7 +544,7 @@ the root zone name servers.
 default queries from a name server.
 .TP
 .B \fB+tries=T\fP
-This option sets the number of times to try UDP queries to server to \fBT\fP
+This option sets the number of times to try UDP and TCP queries to server to \fBT\fP
 instead of the default, 3. If \fBT\fP is less than or equal to zero,
 the number of tries is silently rounded up to 1.
 .TP

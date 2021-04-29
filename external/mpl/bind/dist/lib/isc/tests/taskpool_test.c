@@ -1,4 +1,4 @@
-/*	$NetBSD: taskpool_test.c,v 1.1.1.5 2021/02/19 16:37:17 christos Exp $	*/
+/*	$NetBSD: taskpool_test.c,v 1.1.1.6 2021/04/29 16:46:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -203,7 +203,7 @@ main(void) {
 int
 main(void) {
 	printf("1..0 # Skipped: cmocka not available\n");
-	return (0);
+	return (SKIPPED_TEST_EXIT_CODE);
 }
 
 #endif /* if HAVE_CMOCKA */

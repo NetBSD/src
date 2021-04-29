@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec.c,v 1.1.1.6 2021/02/19 16:37:12 christos Exp $	*/
+/*	$NetBSD: dnssec.c,v 1.1.1.7 2021/04/29 16:46:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1292,6 +1292,7 @@ dns_dnsseckey_create(isc_mem_t *mctx, dst_key_t **dstkey,
 	dk->hint_remove = false;
 	dk->first_sign = false;
 	dk->is_active = false;
+	dk->purge = false;
 	dk->prepublish = 0;
 	dk->source = dns_keysource_unknown;
 	dk->index = 0;

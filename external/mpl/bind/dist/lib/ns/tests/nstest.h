@@ -1,4 +1,4 @@
-/*	$NetBSD: nstest.h,v 1.1.1.4 2021/02/19 16:37:18 christos Exp $	*/
+/*	$NetBSD: nstest.h,v 1.1.1.5 2021/04/29 16:46:34 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -63,6 +63,15 @@ extern ns_server_t *sctx;
 extern bool app_running;
 extern int ncpus;
 extern bool debug_mem_record;
+
+#ifdef NETMGR_TRACE
+#define FLARG                                              \
+	, const char *file __attribute__((unused)),        \
+		unsigned int line __attribute__((unused)), \
+		const char *func __attribute__((unused))
+#else
+#define FLARG
+#endif
 
 isc_result_t
 ns_test_begin(FILE *logfile, bool create_managers);

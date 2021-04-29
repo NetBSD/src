@@ -1,4 +1,4 @@
-/*	$NetBSD: lmdb.h,v 1.1.1.2 2021/02/19 16:37:14 christos Exp $	*/
+/*	$NetBSD: lmdb.h,v 1.1.1.3 2021/04/29 16:46:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,7 +13,6 @@
 
 #pragma once
 
-#include <lmdb.h>
 #define DNS_LMDB_COMMON_FLAGS (MDB_CREATE | MDB_NOSUBDIR | MDB_NOLOCK)
 #ifndef __OpenBSD__
 #define DNS_LMDB_FLAGS (DNS_LMDB_COMMON_FLAGS)

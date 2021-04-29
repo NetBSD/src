@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.1.1.7 2021/02/19 16:37:13 christos Exp $	*/
+/*	$NetBSD: view.c,v 1.1.1.8 2021/04/29 16:46:29 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -18,6 +18,8 @@
 #include <stdbool.h>
 
 #ifdef HAVE_LMDB
+#include <lmdb.h>
+
 #include <dns/lmdb.h>
 #endif /* HAVE_LMDB */
 
@@ -190,6 +192,7 @@ dns_view_create(isc_mem_t *mctx, dns_rdataclass_t rdclass, const char *name,
 	view->transfer_format = dns_one_answer;
 	view->cacheacl = NULL;
 	view->cacheonacl = NULL;
+	view->checknames = false;
 	view->queryacl = NULL;
 	view->queryonacl = NULL;
 	view->recursionacl = NULL;

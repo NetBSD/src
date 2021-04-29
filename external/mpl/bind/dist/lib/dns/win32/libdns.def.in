@@ -429,6 +429,7 @@ dns_journal_last_serial
 dns_journal_next_rr
 dns_journal_open
 dns_journal_print
+dns_journal_recovered
 dns_journal_rollforward
 dns_journal_set_sourceserial
 dns_journal_write_transaction
@@ -456,6 +457,7 @@ dns_kasp_nsec3iter
 dns_kasp_nsec3saltlen
 dns_kasp_parentpropagationdelay
 dns_kasp_publishsafety
+dns_kasp_purgekeys
 dns_kasp_retiresafety
 dns_kasp_setdnskeyttl
 dns_kasp_setdsttl
@@ -463,6 +465,7 @@ dns_kasp_setnsec3
 dns_kasp_setnsec3param
 dns_kasp_setparentpropagationdelay
 dns_kasp_setpublishsafety
+dns_kasp_setpurgekeys
 dns_kasp_setretiresafety
 dns_kasp_setsigrefresh
 dns_kasp_setsigvalidity

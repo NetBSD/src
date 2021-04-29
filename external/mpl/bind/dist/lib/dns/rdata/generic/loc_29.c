@@ -1,4 +1,4 @@
-/*	$NetBSD: loc_29.c,v 1.1.1.5 2021/02/19 16:37:15 christos Exp $	*/
+/*	$NetBSD: loc_29.c,v 1.1.1.6 2021/04/29 16:46:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -244,7 +244,7 @@ loc_getcoordinate(isc_lex_t *lexer, unsigned long *dp, unsigned long *mp,
 	 * Direction.
 	 */
 	RETERR(get_direction(lexer, &token, directions, &direction));
-	if (direction == -1) {
+	if (direction == 0) {
 		RETERR(DNS_R_SYNTAX);
 	}
 done:

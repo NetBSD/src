@@ -35,6 +35,7 @@ rm -f ./ns*/managed-keys.bind* ./ns*/*.mkeys*
 rm -f ./ns*/named.lock
 rm -f ./ns1/managed.key.id
 rm -f ./ns1/root.db ./ns2/example.db ./ns2/managed.db ./ns2/trusted.db
+rm -f ./ns1/trusted.keys
 rm -f ./ns2/algroll.db
 rm -f ./ns2/badparam.db ./ns2/badparam.db.bad
 rm -f ./ns2/cdnskey-kskonly.secure.db

@@ -1,4 +1,4 @@
-/*	$NetBSD: task.c,v 1.1.1.8 2021/02/19 16:37:16 christos Exp $	*/
+/*	$NetBSD: task.c,v 1.1.1.9 2021/04/29 16:46:32 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -63,13 +63,14 @@
  */
 
 #ifdef ISC_TASK_TRACE
-#define XTRACE(m)                                                            \
-	fprintf(stderr, "task %p thread %lu: %s\n", task, isc_thread_self(), \
-		(m))
-#define XTTRACE(t, m) \
-	fprintf(stderr, "task %p thread %lu: %s\n", (t), isc_thread_self(), (m))
+#define XTRACE(m)                                                  \
+	fprintf(stderr, "task %p thread %" PRIuPTR ": %s\n", task, \
+		isc_thread_self(), (m))
+#define XTTRACE(t, m)                                             \
+	fprintf(stderr, "task %p thread %" PRIuPTR ": %s\n", (t), \
+		isc_thread_self(), (m))
 #define XTHREADTRACE(m) \
-	fprintf(stderr, "thread %lu: %s\n", isc_thread_self(), (m))
+	fprintf(stderr, "thread %" PRIuPTR ": %s\n", isc_thread_self(), (m))
 #else /* ifdef ISC_TASK_TRACE */
 #define XTRACE(m)
 #define XTTRACE(t, m)

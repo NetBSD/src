@@ -51,7 +51,7 @@ following systems:
 * Red Hat Enterprise Linux / CentOS 7, 8
 * FreeBSD 11.4, 12.2
 * OpenBSD 6.8
-* Alpine Linux 3.12
+* Alpine Linux 3.13
 
 The amd64, i386, armhf and arm64 CPU architectures are all fully supported.
 

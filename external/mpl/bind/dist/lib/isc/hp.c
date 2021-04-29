@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.1.1.2 2021/02/19 16:37:16 christos Exp $	*/
+/*	$NetBSD: hp.c,v 1.1.1.3 2021/04/29 16:46:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -64,12 +64,6 @@ static int isc__hp_max_threads = HP_MAX_THREADS;
 /* Maximum number of retired objects per thread */
 static int isc__hp_max_retired = HP_MAX_THREADS * HP_MAX_HPS;
 
-#define TID_UNKNOWN -1
-
-static atomic_int_fast32_t tid_v_base = ATOMIC_VAR_INIT(0);
-
-ISC_THREAD_LOCAL int tid_v = TID_UNKNOWN;
-
 typedef struct retirelist {
 	int size;
 	uintptr_t *list;
@@ -84,13 +78,8 @@ struct isc_hp {
 };
 
 static inline int
-tid() {
-	if (tid_v == TID_UNKNOWN) {
-		tid_v = atomic_fetch_add(&tid_v_base, 1);
-		REQUIRE(tid_v < isc__hp_max_threads);
-	}
-
-	return (tid_v);
+tid(void) {
+	return (isc_tid_v);
 }
 
 void

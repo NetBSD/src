@@ -214,9 +214,6 @@ This indicates the type of message.  This is one of:
             FAIL        The test failed
             SKIPPED     The test was not run, usually because some
                         prerequisites required to run the test are missing.
-            UNTESTED    The test was not run for some other reason, e.g. a
-                        prerequisite is available but is not compatible with
-                        the platform on which the test is run.
 
 <test-name>
 This is the name of the test from which the message emanated, which is also the
@@ -270,9 +267,9 @@ As noted above, each test is in a separate directory.  To interact with the
 test framework, the directories contain the following standard files:
 
 prereq.sh   Run at the beginning to determine whether the test can be run at
-            all; if not, we see a result of R:SKIPPED or R:UNTESTED.  This file
-            is optional: if not present, the test is assumed to have all its
-            prerequisites met.
+            all; if not, we see a R:SKIPPED result.  This file is optional:
+            if not present, the test is assumed to have all its prerequisites
+            met.
 
 setup.sh    Run after prereq.sh, this sets up the preconditions for the tests.
             Although optional, virtually all tests will require such a file to

@@ -1,4 +1,4 @@
-/*	$NetBSD: gssapi_link.c,v 1.1.1.5 2021/02/19 16:37:12 christos Exp $	*/
+/*	$NetBSD: gssapi_link.c,v 1.1.1.6 2021/04/29 16:46:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -281,7 +281,7 @@ gssapi_restore(dst_key_t *key, const char *keystr) {
 	isc_buffer_remainingregion(b, &r);
 	REGION_TO_GBUFFER(r, gssbuffer);
 	major = gss_import_sec_context(&minor, &gssbuffer,
-				       &key->keydata.gssctx);
+				       (gss_ctx_id_t *)&key->keydata.gssctx);
 	if (major != GSS_S_COMPLETE) {
 		isc_buffer_free(&b);
 		return (ISC_R_FAILURE);
@@ -301,8 +301,8 @@ gssapi_dump(dst_key_t *key, isc_mem_t *mctx, char **buffer, int *length) {
 	isc_region_t r;
 	isc_result_t result;
 
-	major = gss_export_sec_context(&minor, &key->keydata.gssctx,
-				       &gssbuffer);
+	major = gss_export_sec_context(
+		&minor, (gss_ctx_id_t *)&key->keydata.gssctx, &gssbuffer);
 	if (major != GSS_S_COMPLETE) {
 		fprintf(stderr, "gss_export_sec_context -> %u, %u\n", major,
 			minor);

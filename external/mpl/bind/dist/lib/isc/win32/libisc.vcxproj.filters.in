@@ -257,6 +257,9 @@
     <ClInclude Include="..\include\isc\timer.h">
       <Filter>Library Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\isc\tls.h">
+      <Filter>Library Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\include\isc\tm.h">
       <Filter>Library Header Files</Filter>
     </ClInclude>
@@ -356,6 +359,9 @@
       <Filter>Win32 Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\openssl_shim.h">
+      <Filter>Win32 Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\trampoline_p.h">
       <Filter>Win32 Header Files</Filter>
     </ClInclude>
     <ClInclude Include="errno2result.h">
@@ -618,6 +624,12 @@
       <Filter>Library Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\timer.c">
+      <Filter>Library Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tls.c">
+      <Filter>Library Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\trampoline.c">
       <Filter>Library Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\tm.c">

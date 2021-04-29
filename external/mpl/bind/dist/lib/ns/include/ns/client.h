@@ -1,4 +1,4 @@
-/*	$NetBSD: client.h,v 1.1.1.9 2021/02/19 16:37:18 christos Exp $	*/
+/*	$NetBSD: client.h,v 1.1.1.10 2021/04/29 16:46:34 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -180,6 +180,7 @@ struct ns_client {
 	ns_clientmgr_t * manager;
 	ns_clientstate_t state;
 	int		 nupdates;
+	bool		 nodetach;
 	bool		 shuttingdown;
 	unsigned int	 attributes;
 	isc_task_t *	 task;
