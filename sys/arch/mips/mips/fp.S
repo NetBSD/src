@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.53 2021/04/29 08:14:08 simonb Exp $	*/
+/*	$NetBSD: fp.S,v 1.54 2021/04/29 08:45:29 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1754,17 +1754,18 @@ cvt_s_d:
  */
 cvt_s_w:
 	jal	_C_LABEL(get_fs_int)
-	bne	t2, zero, 1f			# check for zero
+	bne	t2, zero, .Lcvtswnot0		# check for zero
 	move	t1, zero
 	b	result_fs_s
 /*
  * Find out how many leading zero bits are in t2 and put in v1.
  */
+.Lcvtswnot0:
 #if __mips == 32 || __mips == 64
 	clz	v1, t2
 #else
 	.set	noat
-1:
+
 	move	v0, t2
 	move	v1, zero
 	srl	AT, v0, 16
@@ -1843,18 +1844,19 @@ cvt_d_s:
  */
 cvt_d_w:
 	jal	_C_LABEL(get_fs_int)
-	bne	t2, zero, 1f			# check for zero
+	bne	t2, zero, .Lcvtdwnot0		# check for zero
 	move	t1, zero			# result=0
 	move	t3, zero
 	b	result_fs_d
 /*
  * Find out how many leading zero bits are in t2 and put in v1.
  */
-1:
+.Lcvtdwnot0:
 #if __mips == 32 || __mips == 64
 	clz	v1, t2
 #else /* __mips == 32 || __mips == 64 */
 	.set	noat
+
 	move	v0, t2
 	move	v1, zero
 	srl	AT, v0, 16
