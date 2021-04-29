@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.52 2021/04/29 08:11:38 simonb Exp $	*/
+/*	$NetBSD: fp.S,v 1.53 2021/04/29 08:14:08 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -4411,13 +4411,14 @@ END(renorm_fs_d)
  *----------------------------------------------------------------------------
  */
 STATIC_LEAF(renorm_ft_s)
+/*
+ * Find out how many leading zero bits are in ta2 and put in v1.
+ */
 #if __mips == 32 || __mips == 64
 	clz	v1, ta2
 #else
 	.set	noat
-/*
- * Find out how many leading zero bits are in ta2 and put in v1.
- */
+
 	move	v0, ta2
 	move	v1, zero
 	srl	AT, v0, 16
