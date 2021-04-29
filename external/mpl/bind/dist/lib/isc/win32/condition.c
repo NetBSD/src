@@ -1,4 +1,4 @@
-/*	$NetBSD: condition.c,v 1.5 2021/02/19 16:42:21 christos Exp $	*/
+/*	$NetBSD: condition.c,v 1.6 2021/04/29 17:26:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -94,7 +94,7 @@ register_thread(unsigned long thrd, isc_condition_t *gblcond,
 }
 
 static isc_result_t
-find_thread_condition(unsigned long thrd, isc_condition_t *cond,
+find_thread_condition(uintptr_t thrd, isc_condition_t *cond,
 		      isc_condition_thread_t **threadcondp) {
 	isc_condition_thread_t *threadcond;
 

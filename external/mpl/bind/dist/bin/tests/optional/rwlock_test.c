@@ -1,4 +1,4 @@
-/*	$NetBSD: rwlock_test.c,v 1.5 2021/02/19 16:42:12 christos Exp $	*/
+/*	$NetBSD: rwlock_test.c,v 1.6 2021/04/29 17:26:10 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -107,7 +107,7 @@ main(int argc, char *argv[]) {
 	}
 	printf("%u workers\n", nworkers);
 
-	RUNTIME_CHECK(isc_rwlock_init(&lock, 5, 10) == ISC_R_SUCCESS);
+	isc_rwlock_init(&lock, 5, 10);
 
 	for (i = 0; i < nworkers; i++) {
 		snprintf(name, sizeof(name), "%02u", i);

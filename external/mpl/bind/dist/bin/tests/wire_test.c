@@ -1,4 +1,4 @@
-/*	$NetBSD: wire_test.c,v 1.5 2021/02/19 16:42:11 christos Exp $	*/
+/*	$NetBSD: wire_test.c,v 1.6 2021/04/29 17:26:10 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -260,9 +260,7 @@ main(int argc, char *argv[]) {
 		process_message(input);
 	}
 
-	if (input != NULL) {
-		isc_buffer_free(&input);
-	}
+	isc_buffer_free(&input);
 
 	if (printmemstats) {
 		isc_mem_stats(mctx, stdout);

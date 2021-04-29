@@ -1,4 +1,4 @@
-/*	$NetBSD: interfacemgr.c,v 1.11 2021/04/05 10:19:34 rillig Exp $	*/
+/*	$NetBSD: interfacemgr.c,v 1.12 2021/04/29 17:26:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -552,6 +552,7 @@ cleanup_interface:
 	LOCK(&ifp->mgr->lock);
 	ISC_LIST_UNLINK(ifp->mgr->interfaces, ifp, link);
 	UNLOCK(&ifp->mgr->lock);
+	ns_interface_shutdown(ifp);
 	ns_interface_detach(&ifp);
 	return (result);
 }

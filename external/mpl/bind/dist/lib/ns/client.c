@@ -1,4 +1,4 @@
-/*	$NetBSD: client.c,v 1.14 2021/04/05 10:19:34 rillig Exp $	*/
+/*	$NetBSD: client.c,v 1.15 2021/04/29 17:26:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1039,6 +1039,7 @@ no_nsid:
 
 		isc_nm_gettimeouts(isc_nmhandle_netmgr(client->handle), NULL,
 				   NULL, NULL, &adv);
+		adv /= 100; /* units of 100 milliseconds */
 		isc_buffer_init(&buf, advtimo, sizeof(advtimo));
 		isc_buffer_putuint16(&buf, (uint16_t)adv);
 		ednsopts[count].code = DNS_OPT_TCP_KEEPALIVE;
@@ -2510,7 +2511,7 @@ cleanup_reclock:
 	isc_mutex_destroy(&manager->reclock);
 	isc_mutex_destroy(&manager->lock);
 
-	isc_mem_put(manager->mctx, manager, sizeof(*manager));
+	isc_mem_put(mctx, manager, sizeof(*manager));
 
 	return (result);
 }

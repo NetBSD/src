@@ -1,4 +1,4 @@
-/*	$NetBSD: openssl_shim.c,v 1.4 2021/02/19 16:42:19 christos Exp $	*/
+/*	$NetBSD: openssl_shim.c,v 1.5 2021/04/29 17:26:12 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,7 +11,7 @@
  * information regarding copyright ownership.
  */
 
-#include "openssl_shim.h"
+#include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -20,13 +20,16 @@
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
 #include <openssl/opensslv.h>
+#include <openssl/ssl.h>
+
+#include "openssl_shim.h"
 
 #if !HAVE_CRYPTO_ZALLOC
 void *
-CRYPTO_zalloc(size_t size) {
-	void *ret = OPENSSL_malloc(size);
+CRYPTO_zalloc(size_t num, const char *file, int line) {
+	void *ret = CRYPTO_malloc(num, file, line);
 	if (ret != NULL) {
-		memset(ret, 0, size);
+		memset(ret, 0, num);
 	}
 	return (ret);
 }
@@ -116,3 +119,106 @@ HMAC_CTX_get_md(const HMAC_CTX *ctx) {
 	return (ctx->md);
 }
 #endif /* if !HAVE_HMAC_CTX_GET_MD */
+
+#if !HAVE_SSL_READ_EX
+int
+SSL_read_ex(SSL *ssl, void *buf, size_t num, size_t *readbytes) {
+	int rv = SSL_read(ssl, buf, num);
+	if (rv > 0) {
+		*readbytes = rv;
+		rv = 1;
+	}
+
+	return (rv);
+}
+#endif
+
+#if !HAVE_SSL_PEEK_EX
+int
+SSL_peek_ex(SSL *ssl, void *buf, size_t num, size_t *readbytes) {
+	int rv = SSL_peek(ssl, buf, num);
+	if (rv > 0) {
+		*readbytes = rv;
+		rv = 1;
+	}
+
+	return (rv);
+}
+#endif
+
+#if !HAVE_SSL_WRITE_EX
+int
+SSL_write_ex(SSL *ssl, const void *buf, size_t num, size_t *written) {
+	int rv = SSL_write(ssl, buf, num);
+	if (rv > 0) {
+		*written = rv;
+		rv = 1;
+	}
+
+	return (rv);
+}
+#endif
+
+#if !HAVE_BIO_READ_EX
+int
+BIO_read_ex(BIO *b, void *data, size_t dlen, size_t *readbytes) {
+	int rv = BIO_read(b, data, dlen);
+	if (rv > 0) {
+		*readbytes = rv;
+		rv = 1;
+	}
+
+	return (rv);
+}
+#endif
+
+#if !HAVE_BIO_WRITE_EX
+int
+BIO_write_ex(BIO *b, const void *data, size_t dlen, size_t *written) {
+	int rv = BIO_write(b, data, dlen);
+	if (rv > 0) {
+		*written = rv;
+		rv = 1;
+	}
+
+	return (rv);
+}
+#endif
+
+#if !HAVE_OPENSSL_INIT_CRYPTO
+int
+OPENSSL_init_crypto(uint64_t opts, const void *settings) {
+	(void)settings;
+
+	if ((opts & OPENSSL_INIT_NO_LOAD_CRYPTO_STRINGS) == 0) {
+		ERR_load_crypto_strings();
+	}
+
+	if ((opts & (OPENSSL_INIT_NO_ADD_ALL_CIPHERS |
+		     OPENSSL_INIT_NO_ADD_ALL_CIPHERS)) == 0)
+	{
+		OpenSSL_add_all_algorithms();
+	} else if ((opts & OPENSSL_INIT_NO_ADD_ALL_CIPHERS) == 0) {
+		OpenSSL_add_all_digests();
+	} else if ((opts & OPENSSL_INIT_NO_ADD_ALL_CIPHERS) == 0) {
+		OpenSSL_add_all_ciphers();
+	}
+
+	return (1);
+}
+#endif
+
+#if !HAVE_OPENSSL_INIT_SSL
+int
+OPENSSL_init_ssl(uint64_t opts, const void *settings) {
+	OPENSSL_init_crypto(opts, settings);
+
+	SSL_library_init();
+
+	if ((opts & OPENSSL_INIT_NO_LOAD_SSL_STRINGS) == 0) {
+		SSL_load_error_strings();
+	}
+
+	return (1);
+}
+#endif

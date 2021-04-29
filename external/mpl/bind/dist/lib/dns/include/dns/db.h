@@ -1,4 +1,4 @@
-/*	$NetBSD: db.h,v 1.5 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: db.h,v 1.6 2021/04/29 17:26:11 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -243,33 +243,36 @@ struct dns_dbonupdatelistener {
 #define DNS_DBFIND_NOZONECUT	0x0200
 
 /*
- * DNS_DBFIND_STALEOK: This flag is set when BIND fails to refresh a
- * RRset due to timeout (resolver-query-timeout), its intent is to
- * try to look for stale data in cache as a fallback, but only if
- * stale answers are enabled in configuration.
- *
- * This flag is also used to activate stale-refresh-time window, since it
- * is the only way the database knows that a resolution has failed.
+ * DNS_DBFIND_STALEOK: This flag is set when BIND fails to refresh a RRset due
+ * to timeout (resolver-query-timeout). Its intent is to try to look for stale
+ * data in cache as a fallback, but only if stale answers are enabled in
+ * configuration.
  */
 #define DNS_DBFIND_STALEOK 0x0400
 
 /*
- * DNS_DBFIND_STALEENABLED: This flag is used as a hint to the database
- * that it may use stale data. It is always set during query lookup if
- * stale answers are enabled, but only effectively used during
- * stale-refresh-time window. Also during this window, the resolver will
- * not try to resolve the query, in other words no attempt to refresh the
- * data in cache is made when the stale-refresh-time window is active.
+ * DNS_DBFIND_STALEENABLED: This flag is used as a hint to the database that
+ * it may use stale data. It is always set during query lookup if stale
+ * answers are enabled, but only effectively used during stale-refresh-time
+ * window. Also during this window, the resolver will not try to resolve the
+ * query, in other words no attempt to refresh the data in cache is made when
+ * the stale-refresh-time window is active.
  */
 #define DNS_DBFIND_STALEENABLED 0x0800
 
 /*
- * DNS_DBFIND_STALEONLY: This new introduced flag is used when we want
- * stale data from the database, but not due to a failure in resolution,
- * it also doesn't require stale-refresh-time window timer to be active.
- * As long as there is a stale RRset available, it should be returned.
+ * DNS_DBFIND_STALETIMEOUT: This flag is used when we want stale data from the
+ * database, but not due to a failure in resolution, it also doesn't require
+ * stale-refresh-time window timer to be active. As long as there is stale
+ * data available, it should be returned.
  */
-#define DNS_DBFIND_STALEONLY 0x1000
+#define DNS_DBFIND_STALETIMEOUT 0x1000
+
+/*
+ * DNS_DBFIND_STALESTART: This flag is used to activate stale-refresh-time
+ * window.
+ */
+#define DNS_DBFIND_STALESTART 0x2000
 /*@}*/
 
 /*@{*/

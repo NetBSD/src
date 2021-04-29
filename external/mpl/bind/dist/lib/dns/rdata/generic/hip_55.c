@@ -1,4 +1,4 @@
-/*	$NetBSD: hip_55.c,v 1.6 2021/02/19 16:42:17 christos Exp $	*/
+/*	$NetBSD: hip_55.c,v 1.7 2021/04/29 17:26:11 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -196,6 +196,7 @@ fromwire_hip(ARGS_FROMWIRE) {
 	dns_name_t name;
 	uint8_t hit_len;
 	uint16_t key_len;
+	size_t len;
 
 	REQUIRE(type == dns_rdatatype_hip);
 
@@ -218,12 +219,13 @@ fromwire_hip(ARGS_FROMWIRE) {
 		RETERR(DNS_R_FORMERR);
 	}
 	isc_region_consume(&region, 2);
-	if (region.length < (unsigned)(hit_len + key_len)) {
+	len = hit_len + key_len;
+	if (len > region.length) {
 		RETERR(DNS_R_FORMERR);
 	}
 
-	RETERR(mem_tobuffer(target, rr.base, 4 + hit_len + key_len));
-	isc_buffer_forward(source, 4 + hit_len + key_len);
+	RETERR(mem_tobuffer(target, rr.base, 4 + len));
+	isc_buffer_forward(source, 4 + len);
 
 	dns_decompress_setmethods(dctx, DNS_COMPRESS_NONE);
 	while (isc_buffer_activelength(source) > 0) {
