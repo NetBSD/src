@@ -1,4 +1,4 @@
-# Id: Makefile 3938 2021-04-04 18:16:18Z jkoshy
+# Id: Makefile 3948 2021-04-24 19:21:00Z jkoshy
 
 TOP=	..
 
@@ -10,9 +10,6 @@ INCSDIR=	/usr/include
 .PHONY:	all clean clobber depend obj
 
 all depend:
-
-clean clobber:
-	rm -f ${CLEANFILES}
 
 cleandepend:
 	rm -f ${.OBJDIR}/.depend
