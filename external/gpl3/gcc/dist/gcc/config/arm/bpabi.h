@@ -28,12 +28,9 @@
 #define ARM_DEFAULT_ABI ARM_ABI_AAPCS
 
 /* Assume that AAPCS ABIs should adhere to the full BPABI.  */
-//#undef TARGET_BPABI
 #define TARGET_BPABI (TARGET_AAPCS_BASED)
 
 /* BPABI targets use EABI frame unwinding tables.  */
-#undef ARM_EABI_UNWIND_TABLES
-#define ARM_EABI_UNWIND_TABLES 1
 #undef ARM_UNWIND_INFO
 #define ARM_UNWIND_INFO 1
 
