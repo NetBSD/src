@@ -49,6 +49,7 @@ CINCLUDES =	-I${srcdir}/include -I${srcdir}/unix/include -I. \
 		${DBDRIVER_INCLUDES} \
 		${LIBUV_CFLAGS} \
 		${FSTRM_CFLAGS} \
+		${LMDB_CFLAGS} \
 		${OPENSSL_CFLAGS} \
 		${PROTOBUF_C_CFLAGS} \
 		${JSON_C_CFLAGS} \

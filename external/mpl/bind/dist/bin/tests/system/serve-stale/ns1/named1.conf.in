@@ -30,7 +30,6 @@ options {
 	max-stale-ttl 3600;
 	stale-answer-ttl 4;
 	stale-answer-enable yes;
-	stale-answer-client-timeout disabled;
 	stale-cache-enable yes;
 	stale-refresh-time 30;
 	servfail-ttl 0;
