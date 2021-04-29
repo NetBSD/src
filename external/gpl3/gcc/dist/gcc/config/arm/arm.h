@@ -963,8 +963,8 @@ extern const int arm_arch_cde_coproc_bits[];
 /* ttype entries (the only interesting data references used)
    use TARGET2 relocations.  */
 #define ASM_PREFERRED_EH_DATA_FORMAT(code, data) \
-    (((code) == 0 && (data) == 1 && ARM_UNWIND_INFO) ? ARM_TARGET2_DWARF_FORMAT \
-     : DW_EH_PE_absptr)
+  (((code) == 0 && (data) == 1 && ARM_UNWIND_INFO) ? ARM_TARGET2_DWARF_FORMAT \
+			       : DW_EH_PE_absptr)
 #endif
 
 /* The native (Norcroft) Pascal compiler for the ARM passes the static chain

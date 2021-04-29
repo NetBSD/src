@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler, NetBSD/arm ELF version.
-   Copyright (C) 2002, 2003, 2004, 2005, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2002-2020 Free Software Foundation, Inc.
    Contributed by Wasabi Systems, Inc.
 
    This file is part of GCC.
@@ -22,10 +22,16 @@
 #undef MULTILIB_DEFAULTS
 #define MULTILIB_DEFAULTS { "mabi=aapcs-linux" }
 
-#define TARGET_LINKER_EABI_SUFFIX \
-    (TARGET_DEFAULT_FLOAT_ABI == ARM_FLOAT_ABI_SOFT \
-     ? "%{!mabi=apcs-gnu:%{!mabi=atpcs:%{mfloat-abi=hard:_eabihf;:_eabi}}}" \
-     : "%{!mabi=apcs-gnu:%{!mabi=atpcs:%{mfloat-abi=soft:_eabi;:_eabihf}}}")
+#define TARGET_LINKER_EABI_SUFFIX_SOFT \
+  "%{!mabi=apcs-gnu:%{!mabi=atpcs:%{mfloat-abi=hard:_eabihf;:_eabi}}}"
+#define TARGET_LINKER_EABI_SUFFIX_HARD \
+  "%{!mabi=apcs-gnu:%{!mabi=atpcs:%{mfloat-abi=soft:_eabi;:_eabihf}}}"
+
+#define TARGET_LINKER_EABI_SUFFIX			\
+  (TARGET_DEFAULT_FLOAT_ABI == ARM_FLOAT_ABI_SOFT	\
+   ? TARGET_LINKER_EABI_SUFFIX_SOFT			\
+   : TARGET_LINKER_EABI_SUFFIX_HARD)
+
 #define TARGET_LINKER_BIG_EMULATION "armelfb_nbsd%(linker_eabi_suffix)"
 #define TARGET_LINKER_LITTLE_EMULATION "armelf_nbsd%(linker_eabi_suffix)"
 
@@ -41,8 +47,6 @@
 #undef ARM_DEFAULT_ABI
 #define ARM_DEFAULT_ABI ARM_ABI_AAPCS_LINUX
 
-#undef ARM_EABI_UNWIND_TABLES
-#define ARM_EABI_UNWIND_TABLES 0
 #undef ARM_UNWIND_INFO
 #define ARM_UNWIND_INFO 0
 #undef ARM_DWARF_UNWIND_TABLES
@@ -57,8 +61,6 @@
       NETBSD_OS_CPP_BUILTINS_ELF();		\
       if (ARM_DWARF_UNWIND_TABLES)		\
 	builtin_define ("__ARM_DWARF_EH__");	\
-      if (ARM_EABI_UNWIND_TABLES)		\
-	builtin_define ("__UNWIND_TABLES__");	\
     }						\
   while (0)
 
@@ -73,13 +75,15 @@
 
 #undef SIZE_TYPE
 #define SIZE_TYPE "long unsigned int"
- 
+
 #undef PTRDIFF_TYPE
 #define PTRDIFF_TYPE "long int"
 
 #undef SUBTARGET_EXTRA_ASM_SPEC
-#define SUBTARGET_EXTRA_ASM_SPEC	\
-  "-matpcs %{mabi=apcs-gnu|mabi=atpcs:-meabi=gnu} %{fpic|fpie:-k} %{fPIC|fPIE:-k}"
+#define SUBTARGET_EXTRA_ASM_SPEC		\
+  "-matpcs %{mabi=apcs-gnu|mabi=atpcs:-meabi=gnu} "	\
+  "%{fpic|fpie:-k} "				\
+  "%{fPIC|fPIE:-k}"
 
 /* Default to full VFP if -mhard-float is specified.  */
 #undef SUBTARGET_ASM_FLOAT_SPEC
@@ -88,23 +92,23 @@
    %{mfloat-abi=hard:%{!mfpu=*:-mfpu=vfp}}"
 
 #undef SUBTARGET_EXTRA_SPECS
-#define SUBTARGET_EXTRA_SPECS				\
-  { "subtarget_extra_asm_spec",	SUBTARGET_EXTRA_ASM_SPEC }, \
-  { "subtarget_asm_float_spec", SUBTARGET_ASM_FLOAT_SPEC }, \
-  { "linker_eabi_suffix",	TARGET_LINKER_EABI_SUFFIX }, \
-  { "linker_emulation",		TARGET_LINKER_EMULATION }, \
-  { "linker_big_emulation",	TARGET_LINKER_BIG_EMULATION }, \
-  { "linker_little_emulation",	TARGET_LINKER_LITTLE_EMULATION }, \
-  { "be8_link_spec",		BE8_LINK_SPEC }, \
-  { "target_fix_v4bx_spec",	TARGET_FIX_V4BX_SPEC }, \
+#define SUBTARGET_EXTRA_SPECS						\
+  { "subtarget_extra_asm_spec",	SUBTARGET_EXTRA_ASM_SPEC },		\
+  { "subtarget_asm_float_spec", SUBTARGET_ASM_FLOAT_SPEC }, 		\
+  { "linker_eabi_suffix",	TARGET_LINKER_EABI_SUFFIX },		\
+  { "linker_emulation",		TARGET_LINKER_EMULATION },		\
+  { "linker_big_emulation",	TARGET_LINKER_BIG_EMULATION },		\
+  { "linker_little_emulation",	TARGET_LINKER_LITTLE_EMULATION },	\
+  { "be8_link_spec",		BE8_LINK_SPEC }, 			\
+  { "target_fix_v4bx_spec",	TARGET_FIX_V4BX_SPEC },			\
   NETBSD_SUBTARGET_EXTRA_SPECS
 
 #define NETBSD_ENTRY_POINT "__start"
 
 #undef LINK_SPEC
-#define LINK_SPEC \
-  "-X %{mbig-endian:-EB -m %(linker_big_emulation)} \
-   %{mlittle-endian:-EL -m %(linker_liitle_emulation)} \
-   %{!mbig-endian:%{!mlittle-endian:-m %(linker_emulation)}} \
-   %(be8_link_spec) %(target_fix_v4bx_spec) \
-   %(netbsd_link_spec)"
+#define LINK_SPEC						\
+  "-X %{mbig-endian:-EB -m %(linker_big_emulation)} "		\
+  "%{mlittle-endian:-EL -m %(linker_liitle_emulation)} "	\
+  "%{!mbig-endian:%{!mlittle-endian:-m %(linker_emulation)}} "	\
+  "%(be8_link_spec) "						\
+  "%(target_fix_v4bx_spec) %(netbsd_link_spec)"
