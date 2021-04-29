@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.105 2021/04/21 09:52:20 ryo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.106 2021/04/29 09:27:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.105 2021/04/21 09:52:20 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.106 2021/04/29 09:27:29 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -756,7 +756,6 @@ pmap_growkernel(vaddr_t maxkvaddr)
 			    __func__, error);
 		}
 	}
-	aarch64_tlbi_by_asid(pm->pm_asid);
 	kasan_shadow_map((void *)pmap_maxkvaddr,
 	    (size_t)(va - pmap_maxkvaddr));
 	pmap_maxkvaddr = va;

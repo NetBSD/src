@@ -1,4 +1,4 @@
-/*	$NetBSD: asan.h,v 1.17 2021/03/21 07:32:44 skrll Exp $	*/
+/*	$NetBSD: asan.h,v 1.18 2021/04/29 09:27:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -189,8 +189,9 @@ kasan_md_shadow_map_page(vaddr_t va)
 		atomic_swap_64(&l3[idx], pa | L3_PAGE | LX_BLKPAG_UXN |
 		    LX_BLKPAG_PXN | LX_BLKPAG_AF | LX_BLKPAG_SH_IS |
 		    LX_BLKPAG_AP_RW | LX_BLKPAG_ATTR_NORMAL_WB);
-		aarch64_tlbi_by_va(va);
 	}
+	dsb(ishst);
+	isb();
 }
 
 static void
