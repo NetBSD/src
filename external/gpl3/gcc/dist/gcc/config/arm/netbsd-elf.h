@@ -70,10 +70,16 @@
   "-matpcs %{mabi=aapcs*:-meabi=5} "	\
   "%{" FPIE_OR_FPIC_SPEC ":-k}"
 
+#undef SUBTARGET_EXTRA_SPECS
+#define SUBTARGET_EXTRA_SPECS					\
+  { "subtarget_extra_asm_spec",	SUBTARGET_EXTRA_ASM_SPEC },	\
+  { "subtarget_asm_float_spec", SUBTARGET_ASM_FLOAT_SPEC },	\
+  NETBSD_SUBTARGET_EXTRA_SPECS
+
 /* Default to full VFP if -mfloat-abi=hard is specified.  */
 #undef SUBTARGET_ASM_FLOAT_SPEC
-#define SUBTARGET_ASM_FLOAT_SPEC	\
-  "%{mhard-float:%{!mfpu=*:-mfpu=vfp}}   \
+#define SUBTARGET_ASM_FLOAT_SPEC		\
+  "%{mhard-float:%{!mfpu=*:-mfpu=vfp}}		\
    %{mfloat-abi=hard:%{!mfpu=*:-mfpu=vfp}}"
 
 #define NETBSD_ENTRY_POINT "__start"
@@ -170,5 +176,3 @@ do									\
     (void) sysarch (SYSARCH_ARM_SYNC_ICACHE, &s);			\
   }									\
 while (0)
-//#undef FPUTYPE_DEFAULT
-//#define FPUTYPE_DEFAULT "vfp"
