@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.221 2021/04/23 20:26:43 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.222 2021/04/29 17:11:30 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.221 2021/04/23 20:26:43 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.222 2021/04/29 17:11:30 christos Exp $");
 #endif
 
 #include <limits.h>
@@ -570,7 +570,9 @@ type_attribute_spec:
 	| T_AT_SECTION T_LPAREN string T_RPAREN
 	| T_AT_TLS_MODEL T_LPAREN string T_RPAREN
 	| T_AT_ALIGNED
+	| T_AT_CONSTRUCTOR T_LPAREN constant_expr T_RPAREN
 	| T_AT_CONSTRUCTOR
+	| T_AT_DESTRUCTOR T_LPAREN constant_expr T_RPAREN
 	| T_AT_DESTRUCTOR
 	| T_AT_MALLOC
 	| T_AT_MAY_ALIAS
