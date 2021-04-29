@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.62 2020/11/11 18:08:34 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.63 2021/04/29 17:55:51 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.62 2020/11/11 18:08:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.63 2021/04/29 17:55:51 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -1075,7 +1075,7 @@ wg_algo_kdf(uint8_t out1[WG_KDF_OUTPUT_LEN], uint8_t out2[WG_KDF_OUTPUT_LEN],
 	WG_DUMP_HASH("out3", out3);
 }
 
-static void
+static void __noinline
 wg_algo_dh_kdf(uint8_t ckey[WG_CHAINING_KEY_LEN],
     uint8_t cipher_key[WG_CIPHER_KEY_LEN],
     const uint8_t local_key[WG_STATIC_KEY_LEN],
@@ -1407,7 +1407,7 @@ wg_fill_msg_init(struct wg_softc *wg, struct wg_peer *wgp,
 	WG_DLOG("%s: sender=%x\n", __func__, wgs->wgs_local_index);
 }
 
-static void
+static void __noinline
 wg_handle_msg_init(struct wg_softc *wg, const struct wg_msg_init *wgmi,
     const struct sockaddr *src)
 {
@@ -1838,7 +1838,7 @@ wg_swap_sessions(struct wg_peer *wgp)
 	wgp->wgp_session_unstable = wgs_prev;
 }
 
-static void
+static void __noinline
 wg_handle_msg_resp(struct wg_softc *wg, const struct wg_msg_resp *wgmr,
     const struct sockaddr *src)
 {
@@ -2497,7 +2497,7 @@ wg_update_endpoint_if_necessary(struct wg_peer *wgp,
 	wg_put_sa(wgp, wgsa, &psref);
 }
 
-static void
+static void __noinline
 wg_handle_msg_data(struct wg_softc *wg, struct mbuf *m,
     const struct sockaddr *src)
 {
@@ -2714,7 +2714,7 @@ out:
 		kmem_intr_free(encrypted_buf, encrypted_len);
 }
 
-static void
+static void __noinline
 wg_handle_msg_cookie(struct wg_softc *wg, const struct wg_msg_cookie *wgmc)
 {
 	struct wg_session *wgs;
