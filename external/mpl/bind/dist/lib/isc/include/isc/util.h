@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.11 2021/04/05 11:27:03 rillig Exp $	*/
+/*	$NetBSD: util.h,v 1.12 2021/04/29 17:26:12 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -49,6 +49,14 @@
 #else /* if __GNUC__ >= 8 && !defined(__clang__) */
 #define ISC_NONSTRING
 #endif /* __GNUC__ */
+
+#if HAVE_FUNC_ATTRIBUTE_CONSTRUCTOR && HAVE_FUNC_ATTRIBUTE_DESTRUCTOR
+#define ISC_CONSTRUCTOR(priority) __attribute__((constructor(priority)))
+#define ISC_DESTRUCTOR(priority)  __attribute__((destructor(priority)))
+#elif WIN32
+#define ISC_CONSTRUCTOR(priority)
+#define ISC_DESTRUCTOR(priority)
+#endif
 
 /*%
  * The opposite: silent warnings about stored values which are never read.
@@ -332,6 +340,8 @@ mock_assert(const int result, const char *const expression,
  * Time
  */
 #define TIME_NOW(tp) RUNTIME_CHECK(isc_time_now((tp)) == ISC_R_SUCCESS)
+#define TIME_NOW_HIRES(tp) \
+	RUNTIME_CHECK(isc_time_now_hires((tp)) == ISC_R_SUCCESS)
 
 /*%
  * Alignment

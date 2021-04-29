@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.h,v 1.6 2021/04/05 11:27:03 rillig Exp $	*/
+/*	$NetBSD: mem.h,v 1.7 2021/04/29 17:26:12 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -23,6 +23,7 @@
 #include <isc/mutex.h>
 #include <isc/platform.h>
 #include <isc/types.h>
+#include <isc/util.h>
 
 ISC_LANG_BEGINDECLS
 
@@ -117,7 +118,7 @@ LIBISC_EXTERNAL_DATA extern unsigned int isc_mem_defaultflags;
  * by carefully separating memory contexts.
  */
 
-#ifndef ISC_MEM_USE_INTERNAL_MALLOC
+#if !defined(ISC_MEM_USE_INTERNAL_MALLOC) && !__SANITIZE_ADDRESS__
 #define ISC_MEM_USE_INTERNAL_MALLOC 1
 #endif /* ifndef ISC_MEM_USE_INTERNAL_MALLOC */
 

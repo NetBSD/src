@@ -1,4 +1,4 @@
-/*	$NetBSD: keymgr.c,v 1.5 2021/04/05 11:27:02 rillig Exp $	*/
+/*	$NetBSD: keymgr.c,v 1.6 2021/04/29 17:26:11 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -16,6 +16,7 @@
 #include <inttypes.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include <isc/buffer.h>
 #include <isc/dir.h>
@@ -1550,23 +1551,23 @@ keymgr_key_init(dns_dnsseckey_t *key, dns_kasp_t *kasp, isc_stdtime_t now) {
 	/* Get time metadata. */
 	ret = dst_key_gettime(key->key, DST_TIME_ACTIVATE, &active);
 	if (active <= now && ret == ISC_R_SUCCESS) {
-		dns_ttl_t key_ttl = dst_key_getttl(key->key);
-		key_ttl += dns_kasp_zonepropagationdelay(kasp);
-		if ((active + key_ttl) <= now) {
-			dnskey_state = OMNIPRESENT;
+		dns_ttl_t zone_ttl = dns_kasp_zonemaxttl(kasp);
+		zone_ttl += dns_kasp_zonepropagationdelay(kasp);
+		if ((active + zone_ttl) <= now) {
+			zrrsig_state = OMNIPRESENT;
 		} else {
-			dnskey_state = RUMOURED;
+			zrrsig_state = RUMOURED;
 		}
 		goal_state = OMNIPRESENT;
 	}
 	ret = dst_key_gettime(key->key, DST_TIME_PUBLISH, &pub);
 	if (pub <= now && ret == ISC_R_SUCCESS) {
-		dns_ttl_t zone_ttl = dns_kasp_zonemaxttl(kasp);
-		zone_ttl += dns_kasp_zonepropagationdelay(kasp);
-		if ((pub + zone_ttl) <= now) {
-			zrrsig_state = OMNIPRESENT;
+		dns_ttl_t key_ttl = dst_key_getttl(key->key);
+		key_ttl += dns_kasp_zonepropagationdelay(kasp);
+		if ((pub + key_ttl) <= now) {
+			dnskey_state = OMNIPRESENT;
 		} else {
-			zrrsig_state = RUMOURED;
+			dnskey_state = RUMOURED;
 		}
 		goal_state = OMNIPRESENT;
 	}
@@ -1825,6 +1826,94 @@ keymgr_key_rollover(dns_kasp_key_t *kaspkey, dns_dnsseckey_t *active_key,
 	return (ISC_R_SUCCESS);
 }
 
+static bool
+keymgr_key_may_be_purged(dst_key_t *key, uint32_t after, isc_stdtime_t now) {
+	bool ksk = false;
+	bool zsk = false;
+	dst_key_state_t hidden[NUM_KEYSTATES] = { HIDDEN, NA, NA, NA };
+	isc_stdtime_t lastchange = 0;
+
+	char keystr[DST_KEY_FORMATSIZE];
+	dst_key_format(key, keystr, sizeof(keystr));
+
+	/* If 'purge-keys' is disabled, always retain keys. */
+	if (after == 0) {
+		return (false);
+	}
+
+	/* Don't purge keys with goal OMNIPRESENT */
+	if (dst_key_goal(key) == OMNIPRESENT) {
+		return (false);
+	}
+
+	/* Don't purge unused keys. */
+	if (dst_key_is_unused(key)) {
+		return (false);
+	}
+
+	/* If this key is completely HIDDEN it may be purged. */
+	(void)dst_key_getbool(key, DST_BOOL_KSK, &ksk);
+	(void)dst_key_getbool(key, DST_BOOL_ZSK, &zsk);
+	if (ksk) {
+		hidden[DST_KEY_KRRSIG] = HIDDEN;
+		hidden[DST_KEY_DS] = HIDDEN;
+	}
+	if (zsk) {
+		hidden[DST_KEY_ZRRSIG] = HIDDEN;
+	}
+	if (!keymgr_key_match_state(key, key, 0, NA, hidden)) {
+		return (false);
+	}
+
+	/*
+	 * Check 'purge-keys' interval. If the interval has passed since
+	 * the last key change, it may be purged.
+	 */
+	for (int i = 0; i < NUM_KEYSTATES; i++) {
+		isc_stdtime_t change = 0;
+		(void)dst_key_gettime(key, keystatetimes[i], &change);
+		if (change > lastchange) {
+			lastchange = change;
+		}
+	}
+
+	return ((lastchange + after) < now);
+}
+
+static void
+keymgr_purge_keyfile(dst_key_t *key, const char *dir, int type) {
+	isc_result_t ret;
+	isc_buffer_t fileb;
+	char filename[NAME_MAX];
+
+	/*
+	 * Make the filename.
+	 */
+	isc_buffer_init(&fileb, filename, sizeof(filename));
+	ret = dst_key_buildfilename(key, type, dir, &fileb);
+	if (ret != ISC_R_SUCCESS) {
+		char keystr[DST_KEY_FORMATSIZE];
+		dst_key_format(key, keystr, sizeof(keystr));
+		isc_log_write(dns_lctx, DNS_LOGCATEGORY_DNSSEC,
+			      DNS_LOGMODULE_DNSSEC, ISC_LOG_WARNING,
+			      "keymgr: failed to purge DNSKEY %s (%s): cannot "
+			      "build filename (%s)",
+			      keystr, keymgr_keyrole(key),
+			      isc_result_totext(ret));
+		return;
+	}
+
+	if (unlink(filename) < 0) {
+		char keystr[DST_KEY_FORMATSIZE];
+		dst_key_format(key, keystr, sizeof(keystr));
+		isc_log_write(dns_lctx, DNS_LOGCATEGORY_DNSSEC,
+			      DNS_LOGMODULE_DNSSEC, ISC_LOG_WARNING,
+			      "keymgr: failed to purge DNSKEY %s (%s): unlink "
+			      "'%s' failed",
+			      keystr, keymgr_keyrole(key), filename);
+	}
+}
+
 /*
  * Examine 'keys' and match 'kasp' policy.
  *
@@ -1902,6 +1991,27 @@ dns_keymgr_run(const dns_name_t *origin, dns_rdataclass_t rdclass,
 		/* No match, so retire unwanted retire key. */
 		if (!found_match) {
 			keymgr_key_retire(dkey, kasp, now);
+		}
+
+		/* Check purge-keys interval. */
+		if (keymgr_key_may_be_purged(dkey->key,
+					     dns_kasp_purgekeys(kasp), now)) {
+			dst_key_format(dkey->key, keystr, sizeof(keystr));
+			isc_log_write(dns_lctx, DNS_LOGCATEGORY_DNSSEC,
+				      DNS_LOGMODULE_DNSSEC, ISC_LOG_INFO,
+				      "keymgr: purge DNSKEY %s (%s) according "
+				      "to policy %s",
+				      keystr, keymgr_keyrole(dkey->key),
+				      dns_kasp_getname(kasp));
+
+			keymgr_purge_keyfile(dkey->key, directory,
+					     DST_TYPE_PUBLIC);
+			keymgr_purge_keyfile(dkey->key, directory,
+					     DST_TYPE_PRIVATE);
+			keymgr_purge_keyfile(dkey->key, directory,
+					     DST_TYPE_STATE);
+
+			dkey->purge = true;
 		}
 	}
 
@@ -1995,8 +2105,10 @@ dns_keymgr_run(const dns_name_t *origin, dns_rdataclass_t rdclass,
 	for (dns_dnsseckey_t *dkey = ISC_LIST_HEAD(*keyring); dkey != NULL;
 	     dkey = ISC_LIST_NEXT(dkey, link))
 	{
-		dns_dnssec_get_hints(dkey, now);
-		RETERR(dst_key_tofile(dkey->key, options, directory));
+		if (!dkey->purge) {
+			dns_dnssec_get_hints(dkey, now);
+			RETERR(dst_key_tofile(dkey->key, options, directory));
+		}
 	}
 
 	result = ISC_R_SUCCESS;

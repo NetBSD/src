@@ -1,4 +1,4 @@
-/*	$NetBSD: tcpdns_test.c,v 1.2 2021/02/19 16:42:20 christos Exp $	*/
+/*	$NetBSD: tcpdns_test.c,v 1.3 2021/04/29 17:26:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -244,7 +244,6 @@ nm_setup(void **state) {
 	for (size_t i = 0; i < MAX_NM; i++) {
 		nm[i] = isc_nm_start(test_mctx, nworkers);
 		assert_non_null(nm[i]);
-		isc_nm_settimeouts(nm[i], 1000, 1000, 1000, 1000);
 	}
 
 	*state = nm;
@@ -327,7 +326,7 @@ tcpdns_connect_read_cb(isc_nmhandle_t *handle, isc_result_t eresult,
 
 	atomic_fetch_add(&creads, 1);
 
-	magic = *(uint64_t *)region->base;
+	memmove(&magic, region->base, sizeof(magic));
 
 	assert_true(magic == stop_magic || magic == send_magic);
 
@@ -477,7 +476,7 @@ tcpdns_listen_read_cb(isc_nmhandle_t *handle, isc_result_t eresult,
 
 	assert_int_equal(region->length, sizeof(magic));
 
-	magic = *(uint64_t *)region->base;
+	memmove(&magic, region->base, sizeof(magic));
 	assert_true(magic == stop_magic || magic == send_magic);
 
 	if (magic == send_magic) {
@@ -872,7 +871,7 @@ main(void) {
 int
 main(void) {
 	printf("1..0 # Skipped: cmocka not available\n");
-	return (0);
+	return (SKIPPED_TEST_EXIT_CODE);
 }
 
 #endif /* if HAVE_CMOCKA */

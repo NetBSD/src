@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz.c,v 1.5 2021/02/19 16:42:15 christos Exp $	*/
+/*	$NetBSD: dlz.c,v 1.6 2021/04/29 17:26:11 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -81,7 +81,7 @@ static isc_once_t once = ISC_ONCE_INIT;
 
 static void
 dlz_initialize(void) {
-	RUNTIME_CHECK(isc_rwlock_init(&dlz_implock, 0, 0) == ISC_R_SUCCESS);
+	isc_rwlock_init(&dlz_implock, 0, 0);
 	ISC_LIST_INIT(dlz_implementations);
 }
 

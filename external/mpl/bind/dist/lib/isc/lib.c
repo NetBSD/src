@@ -1,4 +1,4 @@
-/*	$NetBSD: lib.c,v 1.6 2021/02/19 16:42:19 christos Exp $	*/
+/*	$NetBSD: lib.c,v 1.7 2021/04/29 17:26:12 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,6 +15,18 @@
 
 #include <isc/bind9.h>
 #include <isc/lib.h>
+#include <isc/mem.h>
+#include <isc/tls.h>
+#include <isc/util.h>
+
+#include "config.h"
+#include "mem_p.h"
+#include "tls_p.h"
+#include "trampoline_p.h"
+
+#ifndef ISC_CONSTRUCTOR
+#error Either __attribute__((constructor|destructor))__ or DllMain support needed to compile BIND 9.
+#endif
 
 /***
  *** Functions
@@ -23,4 +35,34 @@
 void
 isc_lib_register(void) {
 	isc_bind9 = false;
+}
+
+void
+isc__initialize(void) ISC_CONSTRUCTOR(101);
+void
+isc__shutdown(void) ISC_DESTRUCTOR(101);
+
+void
+isc__initialize(void) {
+	isc__mem_initialize();
+	isc__tls_initialize();
+	isc__trampoline_initialize();
+}
+
+void
+isc__shutdown(void) {
+	isc__trampoline_shutdown();
+	isc__tls_shutdown();
+	isc__mem_shutdown();
+}
+
+/*
+ * This is a workaround for situation when libisc is statically linked.  Under
+ * normal situation, the linker throws out all symbols from compilation unit
+ * when no symbols are used in the final binary.  This empty function must be
+ * called at least once from different compilation unit (mem.c in this case).
+ */
+void
+isc_enable_constructors() {
+	/* do nothing */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.15 2021/04/05 11:36:55 rillig Exp $	*/
+/*	$NetBSD: server.c,v 1.16 2021/04/29 17:26:09 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -21,6 +21,10 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+
+#ifdef HAVE_DNSTAP
+#include <fstrm.h>
+#endif
 
 #include <isc/aes.h>
 #include <isc/app.h>
@@ -134,6 +138,8 @@
 #endif /* ifdef HAVE_LIBSCF */
 
 #ifdef HAVE_LMDB
+#include <lmdb.h>
+
 #include <dns/lmdb.h>
 #define count_newzones	   count_newzones_db
 #define configure_newzones configure_newzones_db
@@ -162,7 +168,18 @@
 #define EXCLBUFFERS	       4096
 #endif /* TUNE_LARGE */
 
-#define MAX_TCP_TIMEOUT 65535
+/* RFC7828 defines timeout as 16-bit value specified in units of 100
+ * milliseconds, so the maximum and minimum advertised and keepalive
+ * timeouts are capped by the data type (it's ~109 minutes)
+ */
+#define MIN_INITIAL_TIMEOUT    UINT32_C(2500)	/* 2.5 seconds */
+#define MAX_INITIAL_TIMEOUT    UINT32_C(120000) /* 2 minutes */
+#define MIN_IDLE_TIMEOUT       UINT32_C(100)	/* 0.1 seconds */
+#define MAX_IDLE_TIMEOUT       UINT32_C(120000) /* 2 minutes */
+#define MIN_KEEPALIVE_TIMEOUT  UINT32_C(100)	/* 0.1 seconds */
+#define MAX_KEEPALIVE_TIMEOUT  UINT32_C(UINT16_MAX * 100)
+#define MIN_ADVERTISED_TIMEOUT UINT32_C(0) /* No minimum */
+#define MAX_ADVERTISED_TIMEOUT UINT32_C(UINT16_MAX * 100)
 
 /*%
  * Check an operation for failure.  Assumes that the function
@@ -7793,7 +7810,6 @@ configure_zone_setviewcommit(isc_result_t result, const cfg_obj_t *zconfig,
 	isc_result_t result2;
 	dns_view_t *pview = NULL;
 	dns_zone_t *zone = NULL;
-	dns_zone_t *raw = NULL;
 
 	zname = cfg_obj_asstring(cfg_tuple_get(zconfig, "name"));
 	origin = dns_fixedname_initname(&fixorigin);
@@ -7815,22 +7831,10 @@ configure_zone_setviewcommit(isc_result_t result, const cfg_obj_t *zconfig,
 		return;
 	}
 
-	dns_zone_getraw(zone, &raw);
-
 	if (result == ISC_R_SUCCESS) {
 		dns_zone_setviewcommit(zone);
-		if (raw != NULL) {
-			dns_zone_setviewcommit(raw);
-		}
 	} else {
 		dns_zone_setviewrevert(zone);
-		if (raw != NULL) {
-			dns_zone_setviewrevert(raw);
-		}
-	}
-
-	if (raw != NULL) {
-		dns_zone_detach(&raw);
 	}
 
 	dns_zone_detach(&zone);
@@ -8326,7 +8330,7 @@ load_configuration(const char *filename, named_server_t *server,
 	unsigned int maxsocks;
 	uint32_t softquota = 0;
 	uint32_t max;
-	unsigned int initial, idle, keepalive, advertised;
+	uint64_t initial, idle, keepalive, advertised;
 	dns_aclenv_t *env =
 		ns_interfacemgr_getaclenv(named_g_server->interfacemgr);
 
@@ -8583,62 +8587,67 @@ load_configuration(const char *filename, named_server_t *server,
 	obj = NULL;
 	result = named_config_get(maps, "tcp-initial-timeout", &obj);
 	INSIST(result == ISC_R_SUCCESS);
-	initial = cfg_obj_asuint32(obj);
-	if (initial > 1200) {
+	initial = cfg_obj_asuint32(obj) * 100;
+	if (initial > MAX_INITIAL_TIMEOUT) {
 		cfg_obj_log(obj, named_g_lctx, ISC_LOG_WARNING,
 			    "tcp-initial-timeout value is out of range: "
-			    "lowering to 1200");
-		initial = 1200;
-	} else if (initial < 25) {
+			    "lowering to %" PRIu32,
+			    MAX_INITIAL_TIMEOUT / 100);
+		initial = MAX_INITIAL_TIMEOUT;
+	} else if (initial < MIN_INITIAL_TIMEOUT) {
 		cfg_obj_log(obj, named_g_lctx, ISC_LOG_WARNING,
 			    "tcp-initial-timeout value is out of range: "
-			    "raising to 25");
-		initial = 25;
+			    "raising to %" PRIu32,
+			    MIN_INITIAL_TIMEOUT / 100);
+		initial = MIN_INITIAL_TIMEOUT;
 	}
 
 	obj = NULL;
 	result = named_config_get(maps, "tcp-idle-timeout", &obj);
 	INSIST(result == ISC_R_SUCCESS);
-	idle = cfg_obj_asuint32(obj);
-	if (idle > 1200) {
+	idle = cfg_obj_asuint32(obj) * 100;
+	if (idle > MAX_IDLE_TIMEOUT) {
 		cfg_obj_log(obj, named_g_lctx, ISC_LOG_WARNING,
 			    "tcp-idle-timeout value is out of range: "
-			    "lowering to 1200");
-		idle = 1200;
-	} else if (idle < 1) {
+			    "lowering to %" PRIu32,
+			    MAX_IDLE_TIMEOUT / 100);
+		idle = MAX_IDLE_TIMEOUT;
+	} else if (idle < MIN_IDLE_TIMEOUT) {
 		cfg_obj_log(obj, named_g_lctx, ISC_LOG_WARNING,
 			    "tcp-idle-timeout value is out of range: "
-			    "raising to 1");
-		idle = 1;
+			    "raising to %" PRIu32,
+			    MIN_IDLE_TIMEOUT / 100);
+		idle = MIN_IDLE_TIMEOUT;
 	}
 
 	obj = NULL;
 	result = named_config_get(maps, "tcp-keepalive-timeout", &obj);
 	INSIST(result == ISC_R_SUCCESS);
-	keepalive = cfg_obj_asuint32(obj);
-	if (keepalive > MAX_TCP_TIMEOUT) {
+	keepalive = cfg_obj_asuint32(obj) * 100;
+	if (keepalive > MAX_KEEPALIVE_TIMEOUT) {
 		cfg_obj_log(obj, named_g_lctx, ISC_LOG_WARNING,
 			    "tcp-keepalive-timeout value is out of range: "
-			    "lowering to %u",
-			    MAX_TCP_TIMEOUT);
-		keepalive = MAX_TCP_TIMEOUT;
-	} else if (keepalive < 1) {
+			    "lowering to %" PRIu32,
+			    MAX_KEEPALIVE_TIMEOUT / 100);
+		keepalive = MAX_KEEPALIVE_TIMEOUT;
+	} else if (keepalive < MIN_KEEPALIVE_TIMEOUT) {
 		cfg_obj_log(obj, named_g_lctx, ISC_LOG_WARNING,
 			    "tcp-keepalive-timeout value is out of range: "
-			    "raising to 1");
-		keepalive = 1;
+			    "raising to %" PRIu32,
+			    MIN_KEEPALIVE_TIMEOUT / 100);
+		keepalive = MIN_KEEPALIVE_TIMEOUT;
 	}
 
 	obj = NULL;
 	result = named_config_get(maps, "tcp-advertised-timeout", &obj);
 	INSIST(result == ISC_R_SUCCESS);
-	advertised = cfg_obj_asuint32(obj);
-	if (advertised > MAX_TCP_TIMEOUT) {
+	advertised = cfg_obj_asuint32(obj) * 100;
+	if (advertised > MAX_ADVERTISED_TIMEOUT) {
 		cfg_obj_log(obj, named_g_lctx, ISC_LOG_WARNING,
 			    "tcp-advertized-timeout value is out of range: "
-			    "lowering to %u",
-			    MAX_TCP_TIMEOUT);
-		advertised = MAX_TCP_TIMEOUT;
+			    "lowering to %" PRIu32,
+			    MAX_ADVERTISED_TIMEOUT / 100);
+		advertised = MAX_ADVERTISED_TIMEOUT;
 	}
 
 	isc_nm_settimeouts(named_g_nm, initial, idle, keepalive, advertised);
@@ -14768,6 +14777,12 @@ named_server_dnssec(named_server_t *server, isc_lex_t *lex,
 
 		switch (result) {
 		case ISC_R_SUCCESS:
+			/*
+			 * Rekey after checkds command because the next key
+			 * event may have changed.
+			 */
+			dns_zone_rekey(zone, false);
+
 			if (use_keyid) {
 				char tagbuf[6];
 				snprintf(tagbuf, sizeof(tagbuf), "%u", keyid);
@@ -14812,6 +14827,12 @@ named_server_dnssec(named_server_t *server, isc_lex_t *lex,
 
 		switch (result) {
 		case ISC_R_SUCCESS:
+			/*
+			 * Rekey after rollover command because the next key
+			 * event may have changed.
+			 */
+			dns_zone_rekey(zone, false);
+
 			if (use_keyid) {
 				char tagbuf[6];
 				snprintf(tagbuf, sizeof(tagbuf), "%u", keyid);
@@ -15908,7 +15929,7 @@ isc_result_t
 named_server_tcptimeouts(isc_lex_t *lex, isc_buffer_t **text) {
 	char *ptr;
 	isc_result_t result = ISC_R_SUCCESS;
-	unsigned int initial, idle, keepalive, advertised;
+	uint32_t initial, idle, keepalive, advertised;
 	char msg[128];
 
 	/* Skip the command name. */
@@ -15924,10 +15945,11 @@ named_server_tcptimeouts(isc_lex_t *lex, isc_buffer_t **text) {
 	ptr = next_token(lex, NULL);
 	if (ptr != NULL) {
 		CHECK(isc_parse_uint32(&initial, ptr, 10));
-		if (initial > 1200) {
+		initial *= 100;
+		if (initial > MAX_INITIAL_TIMEOUT) {
 			CHECK(ISC_R_RANGE);
 		}
-		if (initial < 25) {
+		if (initial < MIN_INITIAL_TIMEOUT) {
 			CHECK(ISC_R_RANGE);
 		}
 
@@ -15936,10 +15958,11 @@ named_server_tcptimeouts(isc_lex_t *lex, isc_buffer_t **text) {
 			return (ISC_R_UNEXPECTEDEND);
 		}
 		CHECK(isc_parse_uint32(&idle, ptr, 10));
-		if (idle > 1200) {
+		idle *= 100;
+		if (idle > MAX_IDLE_TIMEOUT) {
 			CHECK(ISC_R_RANGE);
 		}
-		if (idle < 1) {
+		if (idle < MIN_IDLE_TIMEOUT) {
 			CHECK(ISC_R_RANGE);
 		}
 
@@ -15948,10 +15971,11 @@ named_server_tcptimeouts(isc_lex_t *lex, isc_buffer_t **text) {
 			return (ISC_R_UNEXPECTEDEND);
 		}
 		CHECK(isc_parse_uint32(&keepalive, ptr, 10));
-		if (keepalive > MAX_TCP_TIMEOUT) {
+		keepalive *= 100;
+		if (keepalive > MAX_KEEPALIVE_TIMEOUT) {
 			CHECK(ISC_R_RANGE);
 		}
-		if (keepalive < 1) {
+		if (keepalive < MIN_KEEPALIVE_TIMEOUT) {
 			CHECK(ISC_R_RANGE);
 		}
 
@@ -15960,7 +15984,8 @@ named_server_tcptimeouts(isc_lex_t *lex, isc_buffer_t **text) {
 			return (ISC_R_UNEXPECTEDEND);
 		}
 		CHECK(isc_parse_uint32(&advertised, ptr, 10));
-		if (advertised > MAX_TCP_TIMEOUT) {
+		advertised *= 100;
+		if (advertised > MAX_ADVERTISED_TIMEOUT) {
 			CHECK(ISC_R_RANGE);
 		}
 
@@ -15973,13 +15998,15 @@ named_server_tcptimeouts(isc_lex_t *lex, isc_buffer_t **text) {
 		isc_task_endexclusive(named_g_server->task);
 	}
 
-	snprintf(msg, sizeof(msg), "tcp-initial-timeout=%u\n", initial);
+	snprintf(msg, sizeof(msg), "tcp-initial-timeout=%u\n", initial / 100);
 	CHECK(putstr(text, msg));
-	snprintf(msg, sizeof(msg), "tcp-idle-timeout=%u\n", idle);
+	snprintf(msg, sizeof(msg), "tcp-idle-timeout=%u\n", idle / 100);
 	CHECK(putstr(text, msg));
-	snprintf(msg, sizeof(msg), "tcp-keepalive-timeout=%u\n", keepalive);
+	snprintf(msg, sizeof(msg), "tcp-keepalive-timeout=%u\n",
+		 keepalive / 100);
 	CHECK(putstr(text, msg));
-	snprintf(msg, sizeof(msg), "tcp-advertised-timeout=%u", advertised);
+	snprintf(msg, sizeof(msg), "tcp-advertised-timeout=%u",
+		 advertised / 100);
 	CHECK(putstr(text, msg));
 
 cleanup:

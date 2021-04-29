@@ -45,6 +45,12 @@
 /* define if the ARM yield instruction is available */
 #undef HAVE_ARM_YIELD
 
+/* Define to 1 if you have the `BIO_read_ex' function. */
+#undef HAVE_BIO_READ_EX
+
+/* Define to 1 if you have the `BIO_write_ex' function. */
+#undef HAVE_BIO_WRITE_EX
+
 /* Define to 1 if the compiler supports __builtin_clz. */
 #undef HAVE_BUILTIN_CLZ
 
@@ -165,6 +171,12 @@
 /* Define to 1 if fseeko (and presumably ftello) exists and is declared. */
 #undef HAVE_FSEEKO
 
+/* Define to 1 if the system has the `constructor' function attribute */
+#undef HAVE_FUNC_ATTRIBUTE_CONSTRUCTOR
+
+/* Define to 1 if the system has the `destructor' function attribute */
+#undef HAVE_FUNC_ATTRIBUTE_DESTRUCTOR
+
 /* Build with GeoIP2 support */
 #undef HAVE_GEOIP2
 
@@ -279,6 +291,12 @@
 /* define if OpenSSL supports Ed448 */
 #undef HAVE_OPENSSL_ED448
 
+/* Define to 1 if you have the `OPENSSL_init_crypto' function. */
+#undef HAVE_OPENSSL_INIT_CRYPTO
+
+/* Define to 1 if you have the `OPENSSL_init_ssl' function. */
+#undef HAVE_OPENSSL_INIT_SSL
+
 /* Define to 1 if you have the `processor_bind' function. */
 #undef HAVE_PROCESSOR_BIND
 
@@ -359,6 +377,21 @@
 
 /* define if the SPARC pause instruction is available */
 #undef HAVE_SPARC_PAUSE
+
+/* Define to 1 if you have the `SSL_CTX_set_min_proto_version' function. */
+#undef HAVE_SSL_CTX_SET_MIN_PROTO_VERSION
+
+/* Define to 1 if you have the `SSL_CTX_up_ref' function. */
+#undef HAVE_SSL_CTX_UP_REF
+
+/* Define to 1 if you have the `SSL_peek_ex' function. */
+#undef HAVE_SSL_PEEK_EX
+
+/* Define to 1 if you have the `SSL_read_ex' function. */
+#undef HAVE_SSL_READ_EX
+
+/* Define to 1 if you have the `SSL_write_ex' function. */
+#undef HAVE_SSL_WRITE_EX
 
 /* define if struct stat has st_mtim.tv_nsec field */
 #undef HAVE_STAT_NSEC
@@ -443,6 +476,9 @@
 
 /* Define if Thread-Local Storage is available */
 #undef HAVE_TLS
+
+/* Define to 1 if you have the `TLS_client_method' function. */
+#undef HAVE_TLS_CLIENT_METHOD
 
 /* Define to 1 if you have the `TLS_server_method' function. */
 #undef HAVE_TLS_SERVER_METHOD
@@ -545,6 +581,9 @@
 /* Define to necessary symbol if this constant uses a non-standard name on
    your system. */
 #undef PTHREAD_CREATE_JOINABLE
+
+/* Exit code for skipped tests */
+#undef SKIPPED_TEST_EXIT_CODE
 
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS

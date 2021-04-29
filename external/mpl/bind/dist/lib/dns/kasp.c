@@ -1,4 +1,4 @@
-/*	$NetBSD: kasp.c,v 1.3 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: kasp.c,v 1.4 2021/04/29 17:26:11 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -55,6 +55,7 @@ dns_kasp_create(isc_mem_t *mctx, const char *name, dns_kasp_t **kaspp) {
 	kasp->dnskey_ttl = DNS_KASP_KEY_TTL;
 	kasp->publish_safety = DNS_KASP_PUBLISH_SAFETY;
 	kasp->retire_safety = DNS_KASP_RETIRE_SAFETY;
+	kasp->purge_keys = DNS_KASP_PURGE_KEYS;
 
 	kasp->zone_max_ttl = DNS_KASP_ZONE_MAXTTL;
 	kasp->zone_propagation_delay = DNS_KASP_ZONE_PROPDELAY;
@@ -203,6 +204,22 @@ dns_kasp_setdnskeyttl(dns_kasp_t *kasp, dns_ttl_t ttl) {
 	REQUIRE(!kasp->frozen);
 
 	kasp->dnskey_ttl = ttl;
+}
+
+uint32_t
+dns_kasp_purgekeys(dns_kasp_t *kasp) {
+	REQUIRE(DNS_KASP_VALID(kasp));
+	REQUIRE(kasp->frozen);
+
+	return (kasp->purge_keys);
+}
+
+void
+dns_kasp_setpurgekeys(dns_kasp_t *kasp, uint32_t value) {
+	REQUIRE(DNS_KASP_VALID(kasp));
+	REQUIRE(!kasp->frozen);
+
+	kasp->purge_keys = value;
 }
 
 uint32_t

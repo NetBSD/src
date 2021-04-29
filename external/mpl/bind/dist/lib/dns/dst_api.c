@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_api.c,v 1.9 2021/04/05 11:27:02 rillig Exp $	*/
+/*	$NetBSD: dst_api.c,v 1.10 2021/04/29 17:26:11 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -203,7 +203,7 @@ dst_lib_init(isc_mem_t *mctx, const char *engine) {
 	RETERR(dst__hmacsha256_init(&dst_t_func[DST_ALG_HMACSHA256]));
 	RETERR(dst__hmacsha384_init(&dst_t_func[DST_ALG_HMACSHA384]));
 	RETERR(dst__hmacsha512_init(&dst_t_func[DST_ALG_HMACSHA512]));
-	RETERR(dst__openssl_init(mctx, engine));
+	RETERR(dst__openssl_init(engine));
 	RETERR(dst__openssldh_init(&dst_t_func[DST_ALG_DH]));
 #if USE_OPENSSL
 	RETERR(dst__opensslrsa_init(&dst_t_func[DST_ALG_RSASHA1],
@@ -848,7 +848,7 @@ out:
 	return (result);
 }
 
-gss_ctx_id_t
+dns_gss_ctx_id_t
 dst_key_getgssctx(const dst_key_t *key) {
 	REQUIRE(key != NULL);
 
@@ -856,8 +856,8 @@ dst_key_getgssctx(const dst_key_t *key) {
 }
 
 isc_result_t
-dst_key_fromgssapi(const dns_name_t *name, gss_ctx_id_t gssctx, isc_mem_t *mctx,
-		   dst_key_t **keyp, isc_region_t *intoken) {
+dst_key_fromgssapi(const dns_name_t *name, dns_gss_ctx_id_t gssctx,
+		   isc_mem_t *mctx, dst_key_t **keyp, isc_region_t *intoken) {
 	dst_key_t *key;
 	isc_result_t result;
 

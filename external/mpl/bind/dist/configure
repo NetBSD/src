@@ -705,7 +705,6 @@ ISC_PLATFORM_HAVESYSUNH
 LIBCAP_LIBS
 DST_EXTRA_SRCS
 DST_EXTRA_OBJS
-USE_ISC_SPNEGO
 READLINE_LIB
 BIND9_CO_RULE
 LIBTOOL_MODE_UNINSTALL
@@ -928,7 +927,6 @@ enable_backtrace
 enable_symtable
 enable_tcp_fastopen
 with_readline
-enable_isc_spnego
 enable_chroot
 enable_linux_caps
 enable_fixed_rrset
@@ -1634,7 +1632,6 @@ Optional Features:
   --enable-symtable       use internal symbol table for backtrace
                           [all|minimal(default)|none]
   --disable-tcp-fastopen  disable TCP Fast Open support [default=yes]
-  --disable-isc-spnego    use SPNEGO from GSSAPI library
   --disable-chroot        disable chroot
   --disable-linux-caps    disable Linux capabilities
   --enable-fixed-rrset    enable fixed rrset ordering [default=no]
@@ -16518,7 +16515,7 @@ $as_echo_n "checking for openssl/ssl.h in $ssldir... " >&6; }
 	    if test -f "$ssldir/include/openssl/ssl.h"; then :
 
 		    OPENSSL_CFLAGS="-I$ssldir/include"
-                    OPENSSL_LIBS="-L$ssldir/lib -lcrypto -lssl"
+                    OPENSSL_LIBS="-L$ssldir/lib -lssl -lcrypto"
                     found=true
                     { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
@@ -16703,7 +16700,7 @@ $as_echo_n "checking for openssl/ssl.h in $ssldir... " >&6; }
 	    if test -f "$ssldir/include/openssl/ssl.h"; then :
 
 		    OPENSSL_CFLAGS="-I$ssldir/include"
-                    OPENSSL_LIBS="-L$ssldir/lib -lcrypto -lssl"
+                    OPENSSL_LIBS="-L$ssldir/lib -lssl -lcrypto"
                     found=true
                     { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
@@ -16854,16 +16851,17 @@ fi
 CFLAGS="$CFLAGS $OPENSSL_CFLAGS"
 LIBS="$LIBS $OPENSSL_LIBS"
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for OpenSSL >= 1.0.0 or LibreSSL" >&5
-$as_echo_n "checking for OpenSSL >= 1.0.0 or LibreSSL... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for OpenSSL >= 1.0.0 or LibreSSL >= 2.7.0" >&5
+$as_echo_n "checking for OpenSSL >= 1.0.0 or LibreSSL >= 2.7.0... " >&6; }
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <openssl/opensslv.h>
 int
 main ()
 {
-#if !defined(LIBRESSL_VERSION_NUMBER) && (OPENSSL_VERSION_NUMBER < 0x1000000fL)
-		       #error OpenSSL >= 1.0.0 or LibreSSL required
+#if (!defined(LIBRESSL_VERSION_NUMBER) && (OPENSSL_VERSION_NUMBER < 0x1000000fL)) || \\
+			   (defined(LIBRESSL_VERSION_NUMBER) && (LIBRESSL_VERSION_NUMBER < 0x02070000fL))
+		       #error OpenSSL >= 1.0.0 or LibreSSL >= 2.7.0 required
 		       #endif
 
   ;
@@ -16884,6 +16882,18 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 #
 # Check for functions added in OpenSSL or LibreSSL
 #
+
+for ac_func in OPENSSL_init_ssl OPENSSL_init_crypto
+do :
+  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
+ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
+if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  cat >>confdefs.h <<_ACEOF
+#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+_ACEOF
+
+fi
+done
 
 for ac_func in CRYPTO_zalloc
 do :
@@ -16927,6 +16937,52 @@ ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
 if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
   cat >>confdefs.h <<_ACEOF
 #define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+_ACEOF
+
+fi
+done
+
+for ac_func in SSL_read_ex SSL_peek_ex SSL_write_ex
+do :
+  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
+ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
+if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  cat >>confdefs.h <<_ACEOF
+#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+_ACEOF
+
+fi
+done
+
+for ac_func in BIO_read_ex BIO_write_ex
+do :
+  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
+ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
+if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  cat >>confdefs.h <<_ACEOF
+#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+_ACEOF
+
+fi
+done
+
+for ac_func in SSL_CTX_up_ref
+do :
+  ac_fn_c_check_func "$LINENO" "SSL_CTX_up_ref" "ac_cv_func_SSL_CTX_up_ref"
+if test "x$ac_cv_func_SSL_CTX_up_ref" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_SSL_CTX_UP_REF 1
+_ACEOF
+
+fi
+done
+
+for ac_func in SSL_CTX_set_min_proto_version
+do :
+  ac_fn_c_check_func "$LINENO" "SSL_CTX_set_min_proto_version" "ac_cv_func_SSL_CTX_set_min_proto_version"
+if test "x$ac_cv_func_SSL_CTX_set_min_proto_version" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_SSL_CTX_SET_MIN_PROTO_VERSION 1
 _ACEOF
 
 fi
@@ -17135,12 +17191,13 @@ fi
 done
 
 
-for ac_func in TLS_server_method
+for ac_func in TLS_server_method TLS_client_method
 do :
-  ac_fn_c_check_func "$LINENO" "TLS_server_method" "ac_cv_func_TLS_server_method"
-if test "x$ac_cv_func_TLS_server_method" = xyes; then :
+  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
+ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
+if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
   cat >>confdefs.h <<_ACEOF
-#define HAVE_TLS_SERVER_METHOD 1
+#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
 _ACEOF
 
 fi
@@ -17467,8 +17524,8 @@ fi
     else
 	KRB5_CONFIG="$use_gssapi"
     fi
-    gssapi_cflags=`$KRB5_CONFIG --cflags gssapi`
-    gssapi_libs=`$KRB5_CONFIG --libs gssapi`
+    gssapi_cflags=`$KRB5_CONFIG --cflags gssapi krb5`
+    gssapi_libs=`$KRB5_CONFIG --libs gssapi krb5`
     saved_cppflags="$CPPFLAGS"
     CPPFLAGS="$gssapi_cflags $CPPFLAGS"
     for ac_header in gssapi.h gssapi/gssapi.h
@@ -19487,35 +19544,6 @@ fi
 done
 
 fi
-
-#
-# Use our own SPNEGO implementation?
-#
-# [pairwise: --enable-isc-spnego, --disable-isc-spnego]
-# Check whether --enable-isc-spnego was given.
-if test "${enable_isc_spnego+set}" = set; then :
-  enableval=$enable_isc_spnego;
-fi
-
-
-if test -n "$USE_GSSAPI"
-then
-	case "$enable_isc_spnego" in
-		yes|'')
-			USE_ISC_SPNEGO='-DUSE_ISC_SPNEGO'
-			DST_EXTRA_OBJS="$DST_EXTRA_OBJS spnego.$O"
-			DST_EXTRA_SRCS="$DST_EXTRA_SRCS spnego.c"
-			{ $as_echo "$as_me:${as_lineno-$LINENO}: result: using SPNEGO from lib/dns" >&5
-$as_echo "using SPNEGO from lib/dns" >&6; }
-			;;
-		no)
-			{ $as_echo "$as_me:${as_lineno-$LINENO}: result: using SPNEGO from GSSAPI library" >&5
-$as_echo "using SPNEGO from GSSAPI library" >&6; }
-			;;
-	esac
-fi
-
-
 
 
 
@@ -21931,6 +21959,10 @@ esac
 
 
 
+
+$as_echo "#define SKIPPED_TEST_EXIT_CODE 0" >>confdefs.h
+
+
 #
 # Check for kyua execution engine if CMocka was requested
 # and bail out if execution engine was not found
@@ -23639,6 +23671,110 @@ fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking contributed DLZ drivers" >&5
 $as_echo_n "checking contributed DLZ drivers... " >&6; }
+
+#
+# Support for constructor and destructor attributes
+#
+
+
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __attribute__((constructor))" >&5
+$as_echo_n "checking for __attribute__((constructor))... " >&6; }
+if ${ax_cv_have_func_attribute_constructor+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+                    int foo( void ) __attribute__((constructor));
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+                                      if test -s conftest.err; then :
+  ax_cv_have_func_attribute_constructor=no
+else
+  ax_cv_have_func_attribute_constructor=yes
+fi
+else
+  ax_cv_have_func_attribute_constructor=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_have_func_attribute_constructor" >&5
+$as_echo "$ax_cv_have_func_attribute_constructor" >&6; }
+
+    if test yes = $ax_cv_have_func_attribute_constructor; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_FUNC_ATTRIBUTE_CONSTRUCTOR 1
+_ACEOF
+
+fi
+
+
+
+
+
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __attribute__((destructor))" >&5
+$as_echo_n "checking for __attribute__((destructor))... " >&6; }
+if ${ax_cv_have_func_attribute_destructor+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+                    int foo( void ) __attribute__((destructor));
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+                                      if test -s conftest.err; then :
+  ax_cv_have_func_attribute_destructor=no
+else
+  ax_cv_have_func_attribute_destructor=yes
+fi
+else
+  ax_cv_have_func_attribute_destructor=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_have_func_attribute_destructor" >&5
+$as_echo "$ax_cv_have_func_attribute_destructor" >&6; }
+
+    if test yes = $ax_cv_have_func_attribute_destructor; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_FUNC_ATTRIBUTE_DESTRUCTOR 1
+_ACEOF
+
+fi
+
+
+
 
 if test -n "$CONTRIB_DLZ"
 then

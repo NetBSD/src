@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.10 2021/02/19 16:42:10 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.11 2021/04/29 17:26:09 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,6 +19,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <uv.h>
+
+#ifdef HAVE_DNSTAP
+#include <protobuf-c/protobuf-c.h>
+#endif
 
 #include <isc/app.h>
 #include <isc/backtrace.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: thread.c,v 1.5 2021/02/19 16:42:20 christos Exp $	*/
+/*	$NetBSD: thread.c,v 1.6 2021/04/29 17:26:12 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -32,6 +32,8 @@
 #include <isc/thread.h>
 #include <isc/util.h>
 
+#include "trampoline_p.h"
+
 #ifndef THREAD_MINSTACKSIZE
 #define THREAD_MINSTACKSIZE (1024U * 1024)
 #endif /* ifndef THREAD_MINSTACKSIZE */
@@ -47,6 +49,10 @@ void
 isc_thread_create(isc_threadfunc_t func, isc_threadarg_t arg,
 		  isc_thread_t *thread) {
 	pthread_attr_t attr;
+	isc__trampoline_t *trampoline_arg;
+
+	trampoline_arg = isc__trampoline_get(func, arg);
+
 #if defined(HAVE_PTHREAD_ATTR_GETSTACKSIZE) && \
 	defined(HAVE_PTHREAD_ATTR_SETSTACKSIZE)
 	size_t stacksize;
@@ -72,7 +78,8 @@ isc_thread_create(isc_threadfunc_t func, isc_threadarg_t arg,
 #endif /* if defined(HAVE_PTHREAD_ATTR_GETSTACKSIZE) && \
 	* defined(HAVE_PTHREAD_ATTR_SETSTACKSIZE) */
 
-	ret = pthread_create(thread, &attr, func, arg);
+	ret = pthread_create(thread, &attr, isc__trampoline_run,
+			     trampoline_arg);
 	if (ret != 0) {
 		_FATAL(ret, "pthread_create()");
 	}

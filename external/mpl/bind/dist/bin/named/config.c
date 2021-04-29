@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.10 2021/02/19 16:42:10 christos Exp $	*/
+/*	$NetBSD: config.c,v 1.11 2021/04/29 17:26:09 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -197,7 +197,7 @@ options {\n\
 	servfail-ttl 1;\n\
 #	sortlist <none>\n\
 	stale-answer-enable false;\n\
-	stale-answer-client-timeout 1800; /* in milliseconds */\n\
+	stale-answer-client-timeout off;\n\
 	stale-answer-ttl 30; /* 30 seconds */\n\
 	stale-cache-enable true;\n\
 	stale-refresh-time 30; /* 30 seconds */\n\

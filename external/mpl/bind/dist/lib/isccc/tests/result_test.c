@@ -1,4 +1,4 @@
-/*	$NetBSD: result_test.c,v 1.7 2021/02/19 16:42:21 christos Exp $	*/
+/*	$NetBSD: result_test.c,v 1.8 2021/04/29 17:26:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -78,7 +78,7 @@ main(void) {
 int
 main(void) {
 	printf("1..0 # Skipped: cmocka not available\n");
-	return (0);
+	return (SKIPPED_TEST_EXIT_CODE);
 }
 
 #endif /* if HAVE_CMOCKA */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem_test.c,v 1.7 2021/02/19 16:42:20 christos Exp $	*/
+/*	$NetBSD: mem_test.c,v 1.8 2021/04/29 17:26:12 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -108,8 +108,10 @@ isc_mem_test(void **state) {
 		items1[i] = NULL;
 	}
 
+#if !__SANITIZE_ADDRESS__
 	rval = isc_mempool_getfreecount(mp1);
 	assert_int_equal(rval, 10);
+#endif /* !__SANITIZE_ADDRESS__ */
 
 	rval = isc_mempool_getallocated(mp1);
 	assert_int_equal(rval, 19);
@@ -535,7 +537,7 @@ main(void) {
 int
 main(void) {
 	printf("1..0 # Skipped: cmocka not available\n");
-	return (0);
+	return (SKIPPED_TEST_EXIT_CODE);
 }
 
 #endif /* if HAVE_CMOCKA */

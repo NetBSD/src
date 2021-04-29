@@ -1,4 +1,4 @@
-/*	$NetBSD: journal.h,v 1.5 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: journal.h,v 1.6 2021/04/29 17:26:11 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -49,6 +49,13 @@
 
 #define DNS_JOURNAL_SIZE_MAX INT32_MAX
 #define DNS_JOURNAL_SIZE_MIN 4096
+
+/*% Print transaction header data */
+#define DNS_JOURNAL_PRINTXHDR 0x0001
+
+/*% Rewrite whole journal file instead of compacting */
+#define DNS_JOURNAL_COMPACTALL 0x0001
+#define DNS_JOURNAL_VERSION1   0x0002
 
 /***
  *** Types
@@ -182,6 +189,12 @@ dns_journal_empty(dns_journal_t *j);
  * Find out if a journal is empty.
  */
 
+bool
+dns_journal_recovered(dns_journal_t *j);
+/*<
+ * Find out if the journal could be opened using old journal format
+ */
+
 uint32_t
 dns_journal_first_serial(dns_journal_t *j);
 uint32_t
@@ -243,29 +256,30 @@ dns_journal_current_rr(dns_journal_t *j, dns_name_t **name, uint32_t *ttl,
  */
 
 isc_result_t
-dns_journal_rollforward(isc_mem_t *mctx, dns_db_t *db, unsigned int options,
-			const char *filename);
+dns_journal_rollforward(dns_journal_t *j, dns_db_t *db, unsigned int options);
 /*%<
  * Roll forward (play back) the journal file "filename" into the
  * database "db".  This should be called when the server starts
  * after a shutdown or crash.
  *
  * Requires:
- *\li   'mctx' is a valid memory context.
+ *\li   'journal' is a valid journal
  *\li	'db' is a valid database which does not have a version
  *           open for writing.
- *\li   'filename' is the name of the journal file belonging to 'db'.
  *
  * Returns:
- *\li	DNS_R_NOJOURNAL when journal does not exist.
  *\li	ISC_R_NOTFOUND when current serial in not in journal.
  *\li	ISC_R_RANGE when current serial in not in journals range.
- *\li	ISC_R_SUCCESS journal has been applied successfully to database.
+ *\li	DNS_R_UPTODATE when the database was already up to date.
+ *\li	ISC_R_SUCCESS journal has been applied successfully to the
+ *      database without any issues.
+ *
  *	others
  */
 
 isc_result_t
-dns_journal_print(isc_mem_t *mctx, const char *filename, FILE *file);
+dns_journal_print(isc_mem_t *mctx, uint32_t flags, const char *filename,
+		  FILE *file);
 /* For debugging not general use */
 
 isc_result_t
@@ -288,11 +302,27 @@ dns_db_diffx(dns_diff_t *diff, dns_db_t *dba, dns_dbversion_t *dbvera,
 
 isc_result_t
 dns_journal_compact(isc_mem_t *mctx, char *filename, uint32_t serial,
-		    uint32_t target_size);
+		    uint32_t flags, uint32_t target_size);
 /*%<
  * Attempt to compact the journal if it is greater that 'target_size'.
- * Changes from 'serial' onwards will be preserved.  If the journal
- * exists and is non-empty 'serial' must exist in the journal.
+ * Changes from 'serial' onwards will be preserved. Changes prior than
+ * that may be dropped in order to get the journal below `target_size`.
+ *
+ * If 'flags' includes DNS_JOURNAL_COMPACTALL, the entire journal is copied.
+ * In this case, `serial` is ignored. This flag is used when upgrading or
+ * downgrading the format version of the journal. If 'flags' also includes
+ * DNS_JOURNAL_VERSION1, then the journal is copied out in the original
+ * format used prior to BIND 9.16.12; otherwise it is copied in the
+ * current format.
+ *
+ * If _COMPACTALL is not in use, and the journal file exists and is
+ * non-empty, then 'serial' must exist in the journal.
+ *
+ * Returns:
+ *\li	ISC_R_SUCCESS
+ *\li	ISC_R_RANGE	serial is outside the range existing in the journal
+ *
+ * Other errors may be returned from file operations.
  */
 
 bool
@@ -303,7 +333,7 @@ dns_journal_set_sourceserial(dns_journal_t *j, uint32_t sourceserial);
  * Get and set source serial.
  *
  * Returns:
- *	 true if sourceserial has previously been set.
+ *      true if sourceserial has previously been set.
  */
 
 ISC_LANG_ENDDECLS

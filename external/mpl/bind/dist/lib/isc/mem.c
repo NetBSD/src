@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.9 2021/04/05 11:27:02 rillig Exp $	*/
+/*	$NetBSD: mem.c,v 1.10 2021/04/29 17:26:12 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -23,6 +23,7 @@
 
 #include <isc/bind9.h>
 #include <isc/hash.h>
+#include <isc/lib.h>
 #include <isc/magic.h>
 #include <isc/mem.h>
 #include <isc/mutex.h>
@@ -119,7 +120,8 @@ struct stats {
 
 static ISC_LIST(isc__mem_t) contexts;
 
-static isc_once_t once = ISC_ONCE_INIT;
+static isc_once_t init_once = ISC_ONCE_INIT;
+static isc_once_t shut_once = ISC_ONCE_INIT;
 static isc_mutex_t contextslock;
 
 /*%
@@ -745,22 +747,42 @@ default_memfree(void *ptr) {
 }
 
 static void
-initialize_action(void) {
+mem_initialize(void) {
 	isc_mutex_init(&contextslock);
 	ISC_LIST_INIT(contexts);
 	totallost = 0;
 }
 
+void
+isc__mem_initialize(void) {
+	RUNTIME_CHECK(isc_once_do(&init_once, mem_initialize) == ISC_R_SUCCESS);
+}
+
+static void
+mem_shutdown(void) {
+	isc__mem_checkdestroyed();
+
+	isc_mutex_destroy(&contextslock);
+}
+
+void
+isc__mem_shutdown(void) {
+	RUNTIME_CHECK(isc_once_do(&shut_once, mem_shutdown) == ISC_R_SUCCESS);
+}
+
 static void
 mem_create(isc_mem_t **ctxp, unsigned int flags) {
 	REQUIRE(ctxp != NULL && *ctxp == NULL);
+#if __SANITIZE_ADDRESS__
+	REQUIRE((flags & ISC_MEMFLAG_INTERNAL) == 0);
+#endif
 
 	isc__mem_t *ctx;
 
+	isc_enable_constructors();
+
 	STATIC_ASSERT((ALIGNMENT_SIZE & (ALIGNMENT_SIZE - 1)) == 0,
 		      "wrong alignment size");
-
-	RUNTIME_CHECK(isc_once_do(&once, initialize_action) == ISC_R_SUCCESS);
 
 	ctx = (default_memalloc)(sizeof(*ctx));
 
@@ -1741,6 +1763,63 @@ isc_mempool_associatelock(isc_mempool_t *mpctx0, isc_mutex_t *lock) {
 	mpctx->lock = lock;
 }
 
+#if __SANITIZE_ADDRESS__
+void *
+isc__mempool_get(isc_mempool_t *mpctx0 FLARG) {
+	void *item = NULL;
+
+	REQUIRE(VALID_MEMPOOL(mpctx0));
+
+	isc__mempool_t *mpctx = (isc__mempool_t *)mpctx0;
+	isc_mem_t *mctx = (isc_mem_t *)mpctx->mctx;
+
+	if (mpctx->lock != NULL) {
+		LOCK(mpctx->lock);
+	}
+
+	/*
+	 * Don't let the caller go over quota
+	 */
+	if (ISC_UNLIKELY(mpctx->allocated >= mpctx->maxalloc)) {
+		goto out;
+	}
+
+	item = isc__mem_get(mctx, mpctx->size FLARG_PASS);
+	mpctx->gets++;
+	mpctx->allocated++;
+
+out:
+	if (mpctx->lock != NULL) {
+		UNLOCK(mpctx->lock);
+	}
+
+	return (item);
+}
+
+void
+isc__mempool_put(isc_mempool_t *mpctx0, void *mem FLARG) {
+	REQUIRE(VALID_MEMPOOL(mpctx0));
+
+	isc__mempool_t *mpctx = (isc__mempool_t *)mpctx0;
+	isc_mem_t *mctx = (isc_mem_t *)mpctx->mctx;
+
+	REQUIRE(mem != NULL);
+
+	if (mpctx->lock != NULL) {
+		LOCK(mpctx->lock);
+	}
+
+	INSIST(mpctx->allocated > 0);
+	mpctx->allocated--;
+
+	isc__mem_put(mctx, mem, mpctx->size FLARG_PASS);
+
+	if (mpctx->lock != NULL) {
+		UNLOCK(mpctx->lock);
+	}
+}
+
+#else /* __SANITIZE_ADDRESS__ */
 void *
 isc__mempool_get(isc_mempool_t *mpctx0 FLARG) {
 	REQUIRE(VALID_MEMPOOL(mpctx0));
@@ -1875,6 +1954,8 @@ isc__mempool_put(isc_mempool_t *mpctx0, void *mem FLARG) {
 		UNLOCK(mpctx->lock);
 	}
 }
+
+#endif /* __SANITIZE_ADDRESS__ */
 
 /*
  * Quotas
@@ -2051,13 +2132,20 @@ print_contexts(FILE *file) {
 	fflush(file);
 }
 
+static atomic_uintptr_t checkdestroyed = ATOMIC_VAR_INIT(0);
+
 void
 isc_mem_checkdestroyed(FILE *file) {
-#if !ISC_MEM_TRACKLINES
-	UNUSED(file);
-#endif /* if !ISC_MEM_TRACKLINES */
+	atomic_store_release(&checkdestroyed, (uintptr_t)file);
+}
 
-	RUNTIME_CHECK(isc_once_do(&once, initialize_action) == ISC_R_SUCCESS);
+void
+isc__mem_checkdestroyed(void) {
+	FILE *file = (FILE *)atomic_load_acquire(&checkdestroyed);
+
+	if (file == NULL) {
+		return;
+	}
 
 	LOCK(&contextslock);
 	if (!ISC_LIST_EMPTY(contexts)) {
@@ -2206,8 +2294,6 @@ isc_mem_renderxml(void *writer0) {
 	memset(&summary, 0, sizeof(summary));
 
 	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "contexts"));
-
-	RUNTIME_CHECK(isc_once_do(&once, initialize_action) == ISC_R_SUCCESS);
 
 	LOCK(&contextslock);
 	lost = totallost;
@@ -2370,7 +2456,6 @@ isc_mem_renderjson(void *memobj0) {
 	json_object *memobj = (json_object *)memobj0;
 
 	memset(&summary, 0, sizeof(summary));
-	RUNTIME_CHECK(isc_once_do(&once, initialize_action) == ISC_R_SUCCESS);
 
 	ctxarray = json_object_new_array();
 	CHECKMEM(ctxarray);
