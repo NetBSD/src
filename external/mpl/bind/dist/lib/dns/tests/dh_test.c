@@ -1,4 +1,4 @@
-/*	$NetBSD: dh_test.c,v 1.6 2021/02/19 16:42:18 christos Exp $	*/
+/*	$NetBSD: dh_test.c,v 1.7 2021/04/29 17:26:11 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -36,7 +36,6 @@
 #include "../dst_internal.h"
 #include "dnstest.h"
 
-#if USE_OPENSSL
 static int
 _setup(void **state) {
 	isc_result_t result;
@@ -89,20 +88,15 @@ dh_computesecret(void **state) {
 
 	dst_key_free(&key);
 }
-#endif /* USE_OPENSSL */
 
 int
 main(void) {
-#if USE_OPENSSL
 	const struct CMUnitTest tests[] = {
 		cmocka_unit_test_setup_teardown(dh_computesecret, _setup,
 						_teardown),
 	};
 
 	return (cmocka_run_group_tests(tests, NULL, NULL));
-#else  /* if USE_OPENSSL */
-	print_message("1..0 # Skipped: dh test broken with PKCS11");
-#endif /* if USE_OPENSSL */
 }
 
 #else /* HAVE_CMOCKA */
@@ -112,7 +106,7 @@ main(void) {
 int
 main(void) {
 	printf("1..0 # Skipped: cmocka not available\n");
-	return (0);
+	return (SKIPPED_TEST_EXIT_CODE);
 }
 
 #endif /* if HAVE_CMOCKA */

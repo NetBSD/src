@@ -1,4 +1,4 @@
-/*	$NetBSD: rdataset.h,v 1.6 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: rdataset.h,v 1.7 2021/04/29 17:26:11 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -192,6 +192,7 @@ struct dns_rdataset {
 #define DNS_RDATASETATTR_STALE	      0x01000000
 #define DNS_RDATASETATTR_ANCIENT      0x02000000
 #define DNS_RDATASETATTR_STALE_WINDOW 0x04000000
+#define DNS_RDATASETATTR_STALE_ADDED  0x08000000
 
 /*%
  * _OMITDNSSEC:

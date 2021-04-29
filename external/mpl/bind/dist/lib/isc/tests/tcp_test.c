@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_test.c,v 1.2 2021/02/19 16:42:20 christos Exp $	*/
+/*	$NetBSD: tcp_test.c,v 1.3 2021/04/29 17:26:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -289,7 +289,7 @@ tcp_connect_read_cb(isc_nmhandle_t *handle, isc_result_t eresult,
 	while (tcp_buffer_length >= sizeof(magic)) {
 		atomic_fetch_add(&creads, 1);
 
-		magic = *(uint64_t *)tcp_buffer_storage;
+		memmove(&magic, tcp_buffer_storage, sizeof(magic));
 		assert_true(magic == stop_magic || magic == send_magic);
 
 		tcp_buffer_length -= sizeof(magic);
@@ -959,7 +959,7 @@ tcp_listen_read_cb(isc_nmhandle_t *handle, isc_result_t eresult,
 	tcp_buffer_length += region->length;
 
 	while (tcp_buffer_length >= sizeof(magic)) {
-		magic = *(uint64_t *)tcp_buffer_storage;
+		memmove(&magic, tcp_buffer_storage, sizeof(magic));
 		assert_true(magic == stop_magic || magic == send_magic);
 
 		tcp_buffer_length -= sizeof(magic);
@@ -1044,7 +1044,7 @@ main(void) {
 int
 main(void) {
 	printf("1..0 # Skipped: cmocka not available\n");
-	return (0);
+	return (SKIPPED_TEST_EXIT_CODE);
 }
 
 #endif /* if HAVE_CMOCKA */

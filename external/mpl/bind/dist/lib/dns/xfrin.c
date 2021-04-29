@@ -1,4 +1,4 @@
-/*	$NetBSD: xfrin.c,v 1.8 2021/04/05 11:27:02 rillig Exp $	*/
+/*	$NetBSD: xfrin.c,v 1.9 2021/04/29 17:26:11 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -498,6 +498,20 @@ xfr_rr(dns_xfrin_ctx_t *xfr, dns_name_t *name, uint32_t ttl,
 	if (rdata->type == dns_rdatatype_none ||
 	    dns_rdatatype_ismeta(rdata->type)) {
 		FAIL(DNS_R_FORMERR);
+	}
+
+	/*
+	 * Immediately reject the entire transfer if the RR that is currently
+	 * being processed is an SOA record that is not placed at the zone
+	 * apex.
+	 */
+	if (rdata->type == dns_rdatatype_soa &&
+	    !dns_name_equal(&xfr->name, name)) {
+		char namebuf[DNS_NAME_FORMATSIZE];
+		dns_name_format(name, namebuf, sizeof(namebuf));
+		xfrin_log(xfr, ISC_LOG_DEBUG(3), "SOA name mismatch: '%s'",
+			  namebuf);
+		FAIL(DNS_R_NOTZONETOP);
 	}
 
 redo:

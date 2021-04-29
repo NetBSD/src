@@ -1,4 +1,4 @@
-/*	$NetBSD: mdig.c,v 1.7 2021/02/19 16:42:14 christos Exp $	*/
+/*	$NetBSD: mdig.c,v 1.8 2021/04/29 17:26:10 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -2213,6 +2213,25 @@ main(int argc, char *argv[]) {
 
 	(void)isc_app_run();
 
+	dns_view_detach(&view);
+
+	dns_requestmgr_shutdown(requestmgr);
+	dns_requestmgr_detach(&requestmgr);
+
+	dns_dispatch_detach(&dispatchvx);
+	dns_dispatchmgr_destroy(&dispatchmgr);
+
+	isc_socketmgr_destroy(&socketmgr);
+	isc_timermgr_destroy(&timermgr);
+
+	isc_task_shutdown(task);
+	isc_task_detach(&task);
+	isc_taskmgr_destroy(&taskmgr);
+
+	dst_lib_destroy();
+
+	isc_log_destroy(&lctx);
+
 	query = ISC_LIST_HEAD(queries);
 	while (query != NULL) {
 		struct query *next = ISC_LIST_NEXT(query, link);
@@ -2237,25 +2256,6 @@ main(int argc, char *argv[]) {
 	if (default_query.ecs_addr != NULL) {
 		isc_mem_free(mctx, default_query.ecs_addr);
 	}
-
-	dns_view_detach(&view);
-
-	dns_requestmgr_shutdown(requestmgr);
-	dns_requestmgr_detach(&requestmgr);
-
-	dns_dispatch_detach(&dispatchvx);
-	dns_dispatchmgr_destroy(&dispatchmgr);
-
-	isc_socketmgr_destroy(&socketmgr);
-	isc_timermgr_destroy(&timermgr);
-
-	isc_task_shutdown(task);
-	isc_task_detach(&task);
-	isc_taskmgr_destroy(&taskmgr);
-
-	dst_lib_destroy();
-
-	isc_log_destroy(&lctx);
 
 	isc_mem_destroy(&mctx);
 

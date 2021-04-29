@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.5 2021/02/19 16:42:21 christos Exp $	*/
+/*	$NetBSD: time.h,v 1.6 2021/04/29 17:26:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -162,6 +162,26 @@ isc_time_now(isc_time_t *t);
  *	Unexpected error
  *		Getting the time from the system failed.
  *	Out of range
+ *		The time from the system is too large to be represented
+ *		in the current definition of isc_time_t.
+ */
+
+isc_result_t
+isc_time_now_hires(isc_time_t *t);
+/*%<
+ * Set 't' to the current absolute time. Uses higher resolution clocks
+ * recommended when microsecond accuracy is required.
+ *
+ * Requires:
+ *
+ *\li	't' is a valid pointer.
+ *
+ * Returns:
+ *
+ *\li	Success
+ *\li	Unexpected error
+ *		Getting the time from the system failed.
+ *\li	Out of range
  *		The time from the system is too large to be represented
  *		in the current definition of isc_time_t.
  */

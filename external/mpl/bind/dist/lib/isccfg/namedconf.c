@@ -1,4 +1,4 @@
-/*	$NetBSD: namedconf.c,v 1.10 2021/04/05 11:27:04 rillig Exp $	*/
+/*	$NetBSD: namedconf.c,v 1.11 2021/04/29 17:26:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -2156,6 +2156,7 @@ static cfg_clausedef_t dnssecpolicy_clauses[] = {
 	{ "parent-registration-delay", &cfg_type_duration,
 	  CFG_CLAUSEFLAG_OBSOLETE },
 	{ "publish-safety", &cfg_type_duration, 0 },
+	{ "purge-keys", &cfg_type_duration, 0 },
 	{ "retire-safety", &cfg_type_duration, 0 },
 	{ "signatures-refresh", &cfg_type_duration, 0 },
 	{ "signatures-validity", &cfg_type_duration, 0 },

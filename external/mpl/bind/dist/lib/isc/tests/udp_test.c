@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_test.c,v 1.2 2021/02/19 16:42:20 christos Exp $	*/
+/*	$NetBSD: udp_test.c,v 1.3 2021/04/29 17:26:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -287,7 +287,7 @@ udp_listen_recv_cb(isc_nmhandle_t *handle, isc_result_t eresult,
 
 	assert_int_equal(region->length, sizeof(send_magic));
 	atomic_fetch_add(&sreads, 1);
-	magic = *(uint64_t *)region->base;
+	memmove(&magic, region->base, sizeof(magic));
 
 	assert_true(magic == stop_magic || magic == send_magic);
 	isc_nm_send(handle, region, udp_listen_send_cb, NULL);
@@ -554,7 +554,7 @@ udp_connect_recv_cb(isc_nmhandle_t *handle, isc_result_t eresult,
 
 	atomic_fetch_add(&creads, 1);
 
-	magic = *(uint64_t *)region->base;
+	memmove(&magic, region->base, sizeof(magic));
 
 	assert_true(magic == stop_magic || magic == send_magic);
 
@@ -888,7 +888,7 @@ main(void) {
 int
 main(void) {
 	printf("1..0 # Skipped: cmocka not available\n");
-	return (0);
+	return (SKIPPED_TEST_EXIT_CODE);
 }
 
 #endif /* if HAVE_CMOCKA */

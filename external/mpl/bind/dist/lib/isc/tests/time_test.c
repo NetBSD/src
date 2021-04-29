@@ -1,4 +1,4 @@
-/*	$NetBSD: time_test.c,v 1.6 2021/02/19 16:42:20 christos Exp $	*/
+/*	$NetBSD: time_test.c,v 1.7 2021/04/29 17:26:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -130,7 +130,7 @@ isc_time_formatISO8601us_test(void **state) {
 	UNUSED(state);
 
 	setenv("TZ", "America/Los_Angeles", 1);
-	result = isc_time_now(&t);
+	result = isc_time_now_hires(&t);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	/* check formatting: yyyy-mm-ddThh:mm:ss.ssssssZ */
@@ -238,7 +238,7 @@ isc_time_formatISO8601Lus_test(void **state) {
 	UNUSED(state);
 
 	setenv("TZ", "America/Los_Angeles", 1);
-	result = isc_time_now(&t);
+	result = isc_time_now_hires(&t);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	/* check formatting: yyyy-mm-ddThh:mm:ss.ssssss */
@@ -317,7 +317,7 @@ main(void) {
 int
 main(void) {
 	printf("1..0 # Skipped: cmocka not available\n");
-	return (0);
+	return (SKIPPED_TEST_EXIT_CODE);
 }
 
 #endif /* if HAVE_CMOCKA */

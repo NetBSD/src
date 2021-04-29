@@ -1,4 +1,4 @@
-/*	$NetBSD: gsstest.c,v 1.5 2021/02/19 16:42:11 christos Exp $	*/
+/*	$NetBSD: gsstest.c,v 1.6 2021/04/29 17:26:10 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -66,8 +66,8 @@ static isc_sockaddr_t address;
 
 static dns_tsig_keyring_t *ring;
 static dns_tsigkey_t *tsigkey = NULL;
-static gss_ctx_id_t gssctx;
-static gss_ctx_id_t *gssctxp = &gssctx;
+static dns_gss_ctx_id_t gssctx;
+static dns_gss_ctx_id_t *gssctxp = &gssctx;
 
 #define RUNCHECK(x) RUNTIME_CHECK((x) == ISC_R_SUCCESS)
 
