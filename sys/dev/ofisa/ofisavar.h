@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisavar.h,v 1.7 2016/12/09 17:18:35 christos Exp $	*/
+/*	$NetBSD: ofisavar.h,v 1.8 2021/04/30 02:13:15 thorpej Exp $	*/
 
 /*
  * Copyright 1998
@@ -35,6 +35,9 @@
 
 #ifndef _DEV_OFISA_OFISAVAR_H_
 #define	_DEV_OFISA_OFISAVAR_H_
+
+#include <dev/ofw/openfirm.h>
+#include <dev/isa/isavar.h>
 
 struct ofisa_attach_args {
 	struct ofbus_attach_args oba;	/* common */
@@ -99,5 +102,6 @@ int	ofisa_dma_count(int);
 int	ofisa_dma_get(int, struct ofisa_dma_desc *, int);
 void	ofisa_dma_print(struct ofisa_dma_desc *, int);
 void	ofisa_print_model(device_t, int);
+int	ofisaprint(void *, const char *);
 
 #endif /* _DEV_OFISA_OFISAVAR_H_ */
