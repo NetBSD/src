@@ -1,4 +1,4 @@
-.\"	$NetBSD: netboot,v 1.36 2015/05/19 19:30:27 snj Exp $
+.\"	$NetBSD: netboot,v 1.36.8.1 2021/04/30 13:59:23 martin Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -345,16 +345,15 @@ group {
 .\}
 
                 #
-                # If your DHCP server is not your NFS server, supply the
-                # address of the NFS server. Since we assume you run everything
-                # on one server, this is not needed.
+                # The host address of the NFS server. This is mandatory for
+                # NetBSD kernels even it's the same host as the DHCP server.
 .if \n[macppc] \{\
                 #
                 # macppc machines will look for their bootloader, 
                 # ofwboot.xcf, on the next-server as well.
 .\}
                 #
-                # next-server server.test.net;
+                next-server server.test.net;
         }
  #you may paste another "host" entry here for additional 
  #clients on this network
