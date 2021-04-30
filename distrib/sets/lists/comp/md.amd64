@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.285 2021/04/12 02:08:59 mrg Exp $
+# $NetBSD: md.amd64,v 1.286 2021/04/30 13:55:18 christos Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -1144,6 +1144,7 @@
 ./usr/include/x86/dbregs.h			comp-obsolete		obsolete
 ./usr/include/x86/float.h			comp-c-include
 ./usr/include/x86/fpu.h				comp-c-include
+./usr/include/x86/gdt.h				comp-c-include
 ./usr/include/x86/ieee.h			comp-c-include
 ./usr/include/x86/ieeefp.h			comp-c-include
 ./usr/include/x86/intr.h			comp-c-include

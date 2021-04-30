@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.201 2021/04/12 02:09:00 mrg Exp $
+# $NetBSD: md.i386,v 1.202 2021/04/30 13:55:18 christos Exp $
 ./usr/include/clang-3.4/__wmmintrin_aes.h	comp-obsolete		obsolete
 ./usr/include/clang-3.4/__wmmintrin_pclmul.h	comp-obsolete		obsolete
 ./usr/include/clang-3.4/ammintrin.h		comp-obsolete		obsolete
@@ -1017,6 +1017,7 @@
 ./usr/include/x86/dbregs.h			comp-obsolete		obsolete
 ./usr/include/x86/float.h			comp-c-include
 ./usr/include/x86/fpu.h				comp-c-include
+./usr/include/x86/gdt.h				comp-c-include
 ./usr/include/x86/ieee.h			comp-c-include
 ./usr/include/x86/ieeefp.h			comp-c-include
 ./usr/include/x86/intr.h			comp-c-include
