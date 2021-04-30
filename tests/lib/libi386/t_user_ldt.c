@@ -1,4 +1,4 @@
-/*	$NetBSD: t_user_ldt.c,v 1.5 2020/07/19 14:31:31 maxv Exp $	*/
+/*	$NetBSD: t_user_ldt.c,v 1.6 2021/04/30 13:53:30 christos Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -41,10 +41,7 @@
 #include <machine/segments.h>
 #include <machine/sysarch.h>
 #include <machine/vmparam.h>
-
-#define _LOCORE /* XXX a bit of a hack, but whatever */
 #include <machine/gdt.h>
-#undef _LOCORE
 
 #include <atf-c.h>
 
