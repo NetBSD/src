@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.85 2021/04/27 19:03:02 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.86 2021/04/30 14:28:35 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -1858,3 +1858,38 @@ xsrc/external/mit/xorg-server.old/dist/Xi/chgfctl.c	(apply patch)
 
 	Fix CVE-2021-3472 (local privilege escalation).
 	[mrg, ticket #1673]
+
+distrib/notes/common/netboot			1.39
+
+	For netboot via DHCP, "next-server" in dhcpd.conf(5) is mandatory.
+	[tsutsui, ticket #1674]
+
+sys/arch/xen/x86/xen_ipi.c			1.24 (patch)
+
+	PR 50282: fix build for XEN kernels without DDB.
+	[kre, ticket #1675]
+
+external/public-domain/tz/dist/Makefile         up to 1.1.1.30
+external/public-domain/tz/dist/NEWS             up to 1.1.1.34
+external/public-domain/tz/dist/TZDATA_VERSION   up to 1.24
+external/public-domain/tz/dist/africa           up to 1.1.1.25
+external/public-domain/tz/dist/asia             up to 1.1.1.28
+external/public-domain/tz/dist/australasia      up to 1.1.1.21
+external/public-domain/tz/dist/backward         up to 1.1.1.12
+external/public-domain/tz/dist/backzone         up to 1.1.1.20
+external/public-domain/tz/dist/etcetera         up to 1.1.1.5
+external/public-domain/tz/dist/europe           up to 1.1.1.30
+external/public-domain/tz/dist/leap-seconds.list up to 1.1.1.15
+external/public-domain/tz/dist/leapseconds      up to 1.1.1.18
+external/public-domain/tz/dist/leapseconds.awk  up to 1.1.1.12
+external/public-domain/tz/dist/northamerica     up to 1.1.1.27
+external/public-domain/tz/dist/theory.html      up to 1.1.1.12
+external/public-domain/tz/dist/version          up to 1.1.1.21
+external/public-domain/tz/dist/ziguard.awk      up to 1.1.1.6
+external/public-domain/tz/dist/zone.tab         up to 1.1.1.19
+external/public-domain/tz/dist/zone1970.tab     up to 1.1.1.21
+doc/3RDPARTY					(apply patch)
+
+	Update tzdata to 2021a.
+	[kre, ticket #1676]
+
