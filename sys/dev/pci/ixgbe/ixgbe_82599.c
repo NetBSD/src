@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_82599.c,v 1.22 2019/12/23 09:36:17 msaitoh Exp $ */
+/* $NetBSD: ixgbe_82599.c,v 1.23 2021/04/30 06:55:32 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -34,6 +34,9 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_82599.c 331224 2018-03-19 20:55:05Z erj $*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_82599.c,v 1.23 2021/04/30 06:55:32 msaitoh Exp $");
 
 #include "ixgbe_type.h"
 #include "ixgbe_82599.h"

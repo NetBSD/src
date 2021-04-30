@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_mbx.c,v 1.11 2019/06/27 05:55:40 msaitoh Exp $ */
+/* $NetBSD: ixgbe_mbx.c,v 1.12 2021/04/30 06:55:32 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -34,6 +34,9 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_mbx.c 326022 2017-11-20 19:36:21Z pfg $*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_mbx.c,v 1.12 2021/04/30 06:55:32 msaitoh Exp $");
 
 #include "ixgbe_type.h"
 #include "ixgbe_mbx.h"

@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.70 2021/03/31 07:53:53 msaitoh Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.71 2021/04/30 06:55:32 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -62,6 +62,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.71 2021/04/30 06:55:32 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
