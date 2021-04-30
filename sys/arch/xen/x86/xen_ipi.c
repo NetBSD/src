@@ -1,4 +1,4 @@
-/* $NetBSD: xen_ipi.c,v 1.20 2016/07/07 06:55:40 msaitoh Exp $ */
+/* $NetBSD: xen_ipi.c,v 1.20.10.1 2021/04/30 14:22:24 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -33,10 +33,12 @@
 
 /* 
  * Based on: x86/ipi.c
- * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.20 2016/07/07 06:55:40 msaitoh Exp $");
+ * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.20.10.1 2021/04/30 14:22:24 martin Exp $");
  */
 
-__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.20 2016/07/07 06:55:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.20.10.1 2021/04/30 14:22:24 martin Exp $");
+
+#include "opt_ddb.h"
 
 #include <sys/types.h>
 
@@ -59,15 +61,17 @@ __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.20 2016/07/07 06:55:40 msaitoh Exp $")
 #include <xen/hypervisor.h>
 #include <xen/xen-public/vcpu.h>
 
+#ifdef DDB
 #ifdef __x86_64__
 extern void ddb_ipi(struct trapframe);
 #else
 extern void ddb_ipi(int, struct trapframe);
 #endif /* __x86_64__ */
+static void xen_ipi_ddb(struct cpu_info *, struct intrframe *);
+#endif
 
 static void xen_ipi_halt(struct cpu_info *, struct intrframe *);
 static void xen_ipi_synch_fpu(struct cpu_info *, struct intrframe *);
-static void xen_ipi_ddb(struct cpu_info *, struct intrframe *);
 static void xen_ipi_xcall(struct cpu_info *, struct intrframe *);
 static void xen_ipi_hvcb(struct cpu_info *, struct intrframe *);
 static void xen_ipi_generic(struct cpu_info *, struct intrframe *);
@@ -76,7 +80,11 @@ static void (*ipifunc[XEN_NIPIS])(struct cpu_info *, struct intrframe *) =
 {	/* In order of priority (see: xen/include/intrdefs.h */
 	xen_ipi_halt,
 	xen_ipi_synch_fpu,
+#ifdef DDB
 	xen_ipi_ddb,
+#else
+	NULL,
+#endif
 	xen_ipi_xcall,
 	xen_ipi_hvcb,
 	xen_ipi_generic,
@@ -226,6 +234,7 @@ xen_ipi_synch_fpu(struct cpu_info *ci, struct intrframe *intrf)
 	fpusave_cpu(true);
 }
 
+#ifdef DDB
 static void
 xen_ipi_ddb(struct cpu_info *ci, struct intrframe *intrf)
 {
@@ -264,6 +273,7 @@ xen_ipi_ddb(struct cpu_info *ci, struct intrframe *intrf)
 	ddb_ipi(SEL_KPL, tf);
 #endif
 }
+#endif /* DDB */
 
 static void
 xen_ipi_xcall(struct cpu_info *ci, struct intrframe *intrf)
