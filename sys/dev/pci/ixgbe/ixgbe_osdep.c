@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_osdep.c,v 1.6 2019/12/17 05:49:01 msaitoh Exp $ */
+/* $NetBSD: ixgbe_osdep.c,v 1.7 2021/04/30 06:55:32 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -33,6 +33,9 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_osdep.c 327031 2017-12-20 18:15:06Z erj $*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_osdep.c,v 1.7 2021/04/30 06:55:32 msaitoh Exp $");
 
 #include "ixgbe_osdep.h"
 #include "ixgbe.h"

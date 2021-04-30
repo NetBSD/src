@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.280 2021/03/31 07:53:53 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.281 2021/04/30 06:55:32 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -62,6 +62,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.281 2021/04/30 06:55:32 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"

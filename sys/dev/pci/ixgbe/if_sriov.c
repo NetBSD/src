@@ -1,4 +1,4 @@
-/* $NetBSD: if_sriov.c,v 1.10 2021/04/30 06:41:36 msaitoh Exp $ */
+/* $NetBSD: if_sriov.c,v 1.11 2021/04/30 06:55:32 msaitoh Exp $ */
 /******************************************************************************
 
   Copyright (c) 2001-2017, Intel Corporation
@@ -32,6 +32,9 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/if_sriov.c 327031 2017-12-20 18:15:06Z erj $*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_sriov.c,v 1.11 2021/04/30 06:55:32 msaitoh Exp $");
 
 #include "ixgbe.h"
 #include "ixgbe_sriov.h"
