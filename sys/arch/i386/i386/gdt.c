@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.71 2019/10/30 07:40:05 maxv Exp $	*/
+/*	$NetBSD: gdt.c,v 1.72 2021/04/30 13:54:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.71 2019/10/30 07:40:05 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.72 2021/04/30 13:54:26 christos Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -279,7 +279,7 @@ tss_free(int sel)
 }
 
 int
-ldt_alloc(union descriptor *ldtp, size_t len)
+ldt_alloc(void *ldtp, size_t len)
 {
 	int slot;
 
