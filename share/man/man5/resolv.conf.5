@@ -1,4 +1,4 @@
-.\"	$NetBSD: resolv.conf.5,v 1.30 2012/09/09 18:09:24 christos Exp $
+.\"	$NetBSD: resolv.conf.5,v 1.31 2021/04/30 16:12:18 christos Exp $
 .\"
 .\" Copyright (c) 1986, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)resolver.5	5.12 (Berkeley) 5/10/91
 .\"
-.Dd September 9, 2012
+.Dd Arril 30, 2021
 .Dt RESOLV.CONF 5
 .Os
 .Sh NAME
@@ -179,7 +179,6 @@ which disables the modern BIND checking of incoming host names and mail names
 for invalid characters such as underscore
 .Pq Sq _ ,
 non-ASCII, or control characters.
-This is the default.
 .It Sy check-names
 clears
 .Dv RES_NOCHECKNAME
@@ -187,6 +186,7 @@ in
 .Ft _res.options ,
 which enables the modern BIND checking of incoming host names and mail names
 as described above.
+This is the default.
 .It Sy edns0
 attach OPT pseudo-RR for ENDS0 extension specified in RFC 2671,
 to inform DNS server of our receive buffer size.
