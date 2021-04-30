@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2019/08/30 23:36:41 kamil Exp $
+#	$NetBSD: Makefile,v 1.5 2021/04/30 22:48:38 rillig Exp $
 
 NOSANITIZER=    # defined
 
@@ -36,7 +36,7 @@ CPPFLAGS+=	-I${TOPDIR}/lib
 SYMS=		libclang_rt.ubsan_standalone_cxx-x86_64.a.syms
 SYMS_EXTRA=	${TOPDIR}/lib/ubsan/ubsan.syms.extra
 
-beforeinstall: ${SYMS}
+all:		${SYMS}
 
 CLEANFILES+=	${SYMS}
 FILES=		${SYMS}
