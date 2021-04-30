@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisa.c,v 1.32 2021/04/27 21:39:39 thorpej Exp $	*/
+/*	$NetBSD: ofisa.c,v 1.33 2021/04/30 02:13:15 thorpej Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofisa.c,v 1.32 2021/04/27 21:39:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofisa.c,v 1.33 2021/04/30 02:13:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,14 +54,17 @@ __KERNEL_RCSID(0, "$NetBSD: ofisa.c,v 1.32 2021/04/27 21:39:39 thorpej Exp $");
 static int	ofisamatch(device_t, cfdata_t, void *);
 static void	ofisaattach(device_t, device_t, void *);
 
+static int	ofisa_subclass_match(device_t, cfdata_t, void *);
+
 CFATTACH_DECL_NEW(ofisa, 0,
     ofisamatch, ofisaattach, NULL, NULL);
 
+CFATTACH_DECL_NEW(ofisa_subclass, 0,
+    ofisa_subclass_match, ofisaattach, NULL, NULL);
+
 extern struct cfdriver ofisa_cd;
 
-static int	ofisaprint(void *, const char *);
-
-static int
+int
 ofisaprint(void *aux, const char *pnp)
 {
 	struct ofbus_attach_args *oba = aux;
@@ -93,6 +96,13 @@ ofisamatch(device_t parent, cfdata_t cf, void *aux)
 #endif
 
 	return (rv);
+}
+
+int
+ofisa_subclass_match(device_t parent, cfdata_t cf, void *aux)
+{
+	/* We're attaching "ofisa" to something that knows what it's doing. */
+	return 5;
 }
 
 void
