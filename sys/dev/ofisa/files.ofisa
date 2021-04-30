@@ -1,4 +1,4 @@
-#	$NetBSD: files.ofisa,v 1.15 2021/04/27 21:39:39 thorpej Exp $
+#	$NetBSD: files.ofisa,v 1.16 2021/04/30 02:13:15 thorpej Exp $
 
 # OFW ISA bus support
 # XXX eventually we should do something with these locators
@@ -6,6 +6,9 @@ define	ofisa { [i = -1], [it = -1], [iv = -1], [m = -1] }
 device	ofisa: ofisa
 attach	ofisa at ofbus
 file	dev/ofisa/ofisa.c		ofisa
+
+define	ofisa_subclass { }
+attach	ofisa at ofisa_subclass with ofisa_subclass
 
 # attachment for MI pckbc driver
 attach	pckbc at ofisa with pckbc_ofisa
