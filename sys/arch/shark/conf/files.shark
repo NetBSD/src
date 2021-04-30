@@ -1,4 +1,4 @@
-#	$NetBSD: files.shark,v 1.22 2021/04/27 23:37:01 thorpej Exp $
+#	$NetBSD: files.shark,v 1.23 2021/04/30 02:11:37 thorpej Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -55,6 +55,10 @@ file	arch/shark/ofw/com_ofisa_machdep.c	com_ofisa
 file	arch/shark/ofw/if_cs_ofisa_machdep.c	cs_ofisa
 file	arch/shark/ofw/lpt_ofisa_machdep.c	lpt_ofisa | atppc_ofisa
 file	arch/shark/ofw/wdc_ofisa_machdep.c	wdc_ofisa
+
+# Sequoia core logic chipset (ofisa attaches to this)
+device	sequoia { }: ofisa_subclass
+attach	sequoia at ofbus
 
 # Glue for OFW ISA device attachment
 device	ofisascr {}
