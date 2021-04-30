@@ -1,4 +1,4 @@
-/*	$NetBSD: pmapboot.c,v 1.16 2021/03/20 14:30:50 skrll Exp $	*/
+/*	$NetBSD: pmapboot.c,v 1.17 2021/04/30 20:07:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmapboot.c,v 1.16 2021/03/20 14:30:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmapboot.c,v 1.17 2021/04/30 20:07:22 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -162,7 +162,7 @@ pmapboot_pte_print(pt_entry_t pte, int level,
     void (*pr)(const char *, ...) __printflike(1, 2))
 {
 #ifdef DDB
-	pmap_db_pte_print(pte, level, pr);
+	db_pmap_pte_print(pte, level, pr);
 #else
 	__USE(level);
 	pr(" %s PA=%016lx\n",

@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.13 2021/03/11 09:48:40 ryo Exp $ */
+/* $NetBSD: db_machdep.h,v 1.14 2021/04/30 20:07:23 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -67,7 +67,12 @@
 #ifdef __aarch64__
 
 #include <sys/types.h>
+
+#include <uvm/uvm.h>
+
 #include <aarch64/frame.h>
+#include <aarch64/pmap.h>
+
 #include <ddb/db_user.h>
 
 typedef long long int db_expr_t;
@@ -211,8 +216,16 @@ db_addr_t db_branch_taken(db_expr_t, db_addr_t, db_regs_t *);
 #endif /* SOFTWARE_SSTEP */
 
 #define DB_MACHINE_COMMANDS
-void dump_trapframe(struct trapframe *, void (*)(const char *, ...));
-void dump_switchframe(struct trapframe *, void (*)(const char *, ...));
+
+#ifdef _KERNEL
+void db_pteinfo(vaddr_t, void (*)(const char *, ...) __printflike(1, 2));
+void db_pte_print(pt_entry_t, int, void (*)(const char *, ...) __printflike(1, 2));
+void db_ttbrdump(bool, vaddr_t, void (*pr)(const char *, ...) __printflike(1, 2));
+#endif
+
+void dump_trapframe(struct trapframe *, void (*)(const char *, ...) __printflike(1, 2));
+
+void dump_switchframe(struct trapframe *, void (*)(const char *, ...) __printflike(1, 2));
 const char *strdisasm(vaddr_t, uint64_t);
 void db_machdep_init(void);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.c,v 1.39 2021/03/11 10:34:34 ryo Exp $ */
+/* $NetBSD: db_machdep.c,v 1.40 2021/04/30 20:07:22 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.39 2021/03/11 10:34:34 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.40 2021/04/30 20:07:22 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd32.h"
@@ -492,7 +492,7 @@ db_md_pte_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 	db_printf("Stage1 EL1 translation %016llx -> PAR_EL1 = ", addr);
 	db_par_print(par, addr);
 
-	pmap_db_pteinfo(addr, db_printf);
+	db_pteinfo(addr, db_printf);
 }
 
 void
@@ -553,7 +553,7 @@ db_md_ttbr_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		addr = (db_addr_t)p->p_vmspace->vm_map.pmap;
 	}
 
-	pmap_db_ttbrdump(countmode, addr, db_printf);
+	db_ttbrdump(countmode, addr, db_printf);
 }
 
 void
