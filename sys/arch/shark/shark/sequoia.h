@@ -1,4 +1,4 @@
-/*	$NetBSD: sequoia.h,v 1.4 2017/08/22 21:23:58 kre Exp $	*/
+/*	$NetBSD: sequoia.h,v 1.5 2021/04/30 02:11:37 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -5064,6 +5064,9 @@
 #ifndef _LOCORE
 
 void sequoiaInit(void);
+void sequoiaLock(void);
+void sequoiaUnlock(void);
+bool sequoiaIsLocked(void);		/* for DIAGNOSTIC checks only */
 void sequoiaWrite(int reg,u_int16_t value);     
 void sequoiaRead(int reg,u_int16_t * value_ptr);     
 
@@ -5084,7 +5087,6 @@ int     scrGetData(void);
 
 /* just used to debug scr - remove when done - ejg */		
 void    scrToggleTestPin(void);
-void sequoiaOneAccess(void);
 
 
 /* biled functions */
@@ -5112,19 +5114,7 @@ int  hwGetRev(void);
 
 void ledSetDebug(int command);
 
-
-
-
-
 #endif /* _LOCORE */
 #endif /* __LANGUAGE_ASM__ */
 
 #endif /* SEQUOIAH */
-
-
-
-
-
-
-
-

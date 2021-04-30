@@ -1,4 +1,4 @@
-/*	$NetBSD: sequoia.c,v 1.14 2016/10/20 09:53:08 skrll Exp $	*/
+/*	$NetBSD: sequoia.c,v 1.15 2021/04/30 02:11:37 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -40,27 +40,28 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequoia.c,v 1.14 2016/10/20 09:53:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequoia.c,v 1.15 2021/04/30 02:11:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
+#include <sys/device.h>
 #include <sys/syslog.h>
 #include <sys/types.h>
 #include <sys/bus.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
 
-
 #include <dev/isa/isareg.h>
+#include <dev/ofisa/ofisavar.h>
 #include <machine/isa_machdep.h>
 #include <shark/shark/sequoia.h>
 #include <shark/shark/shark_fiq.h>
 #include <arm/cpufunc.h>
 
+#include <dev/ofw/openfirm.h>
+
 
-
-
 
 /*
 ** 
@@ -135,6 +136,9 @@ int sequoia_index_cache = -1;       /* set to silly value so that we dont cache 
 
 static callout_t led_timo_ch;
 
+static u_int sequoiaLock_savedints;
+static bool sequoiaLock_held;
+
 /*
 **
 ** FUNCITONAL PROTOTYPES
@@ -152,13 +156,13 @@ void sequoiaInit(void)
 {
     u_int16_t  seqReg;
 
-    callout_init(&led_timo_ch, 0);
-
-    /* map the sequoi registers */
+    /* map the sequoia registers */
     if (bus_space_map(&isa_io_bs_tag, SEQUOIA_BASE, SEQUOIA_NPORTS, 0,  &sequoia_ioh))
     {
         panic("SequoiaInit: io mapping failed");
     }
+
+    sequoiaLock();
 
     /*
     **
@@ -191,13 +195,7 @@ void sequoiaInit(void)
     CLR(seqReg,LED_DEBUG_GREEN_BIT);
     sequoiaWrite(PMC_FOMPCR_REG, seqReg);
 
-    
-    /* setup the biled info */
-    ledColor = LED_BILED_GREEN;
-    ledLastActive.tv_usec = 0;
-    ledLastActive.tv_sec = 0;
-    ledBlockCount = 0;
-    callout_reset(&led_timo_ch, LED_TIMEOUT, ledTimeout, NULL);
+
     /* 
     ** 
     ** setup the pins associated with the smart card reader *
@@ -262,11 +260,38 @@ void sequoiaInit(void)
     sequoiaRead(PMC_SCCR_REG, &seqReg);
     sequoiaWrite(PMC_SCCR_REG, seqReg | SCCR_M_PCSTGDIS);
 
+    sequoiaUnlock();
+
+    /* setup the biled info */
+    ledColor = LED_BILED_GREEN;
+    ledLastActive.tv_usec = 0;
+    ledLastActive.tv_sec = 0;
+    ledBlockCount = 0;
+    callout_init(&led_timo_ch, 0);
+    callout_reset(&led_timo_ch, LED_TIMEOUT, ledTimeout, NULL);
 }
 
+void
+sequoiaLock(void)
+{
+    sequoiaLock_savedints = disable_interrupts(I32_bit | F32_bit);
+    KASSERT(!sequoiaLock_held);
+    sequoiaLock_held = true;
+}
 
+void
+sequoiaUnlock(void)
+{
+    KASSERT(sequoiaLock_held);
+    sequoiaLock_held = false;
+    restore_interrupts(sequoiaLock_savedints);
+}
 
-
+bool
+sequoiaIsLocked(void)
+{
+	return sequoiaLock_held;
+}
 
 /* X console functions */
 void consXTvOn(void)
@@ -278,12 +303,15 @@ void consXTvOn(void)
     ** but we are currently hardwired to NTSC, so ignore it.
     */
 
+    sequoiaLock();
+
     sequoiaRead (SEQR_SEQPSR3_REG, &savedPSR3);
     sequoiaWrite(SEQR_SEQPSR3_REG, (savedPSR3 | SEQPSR3_M_PC3PINEN));
 
     sequoiaRead (PMC_FOMPCR_REG, &savedFMPCR);
     sequoiaWrite(PMC_FOMPCR_REG, (savedFMPCR | FOMPCR_M_PCON3));
 
+    sequoiaUnlock();
 }
 
 void consXTvOff(void)
@@ -293,12 +321,16 @@ void consXTvOff(void)
     /* 
     ** Switch off TV output on the Seqoia 
     */
+
+    sequoiaLock();
+
     sequoiaRead (SEQR_SEQPSR3_REG, &savedPSR3);
     sequoiaWrite(SEQR_SEQPSR3_REG, (savedPSR3 & ~SEQPSR3_M_PC3PINEN));
 
     sequoiaRead (PMC_FOMPCR_REG, &savedFMPCR);
     sequoiaWrite(PMC_FOMPCR_REG, (savedFMPCR & ~FOMPCR_M_PCON3));
 
+    sequoiaUnlock();
 }
 
 
@@ -311,7 +343,9 @@ int scrGetDetect (void)
     int r;
     u_int16_t  seqReg;
 
+    sequoiaLock();
     sequoiaRead(PMC_GPIOCR2_REG,&seqReg);
+    sequoiaUnlock();
 
     /* inverse logic, so invert */
     if (ISSET(seqReg,SCR_DETECT))
@@ -329,11 +363,8 @@ int scrGetDetect (void)
 void scrSetPower (int value)
 {
     u_int16_t  seqReg;
-#ifdef SHARK
-    u_int savedints;
 
-    savedints = disable_interrupts(I32_bit | F32_bit);
-#endif
+    sequoiaLock();
 
     sequoiaRead(SEQUOIA_1GPIO,&seqReg);
 
@@ -346,19 +377,14 @@ void scrSetPower (int value)
     }
     sequoiaWrite(SEQUOIA_1GPIO,seqReg);
 
-#ifdef SHARK
-    restore_interrupts(savedints);
-#endif
+    sequoiaUnlock();
 }
 
 void scrSetClock (int value)
 {
     u_int16_t  seqReg;
-#ifdef SHARK
-    u_int savedints;
 
-    savedints = disable_interrupts(I32_bit | F32_bit);
-#endif
+    sequoiaLock();
 
     sequoiaRead(SEQUOIA_2GPIO,&seqReg);
 
@@ -370,19 +396,15 @@ void scrSetClock (int value)
         CLR(seqReg,SCR_CLOCK);
     }
     sequoiaWrite(SEQUOIA_2GPIO,seqReg);
-#ifdef SHARK
-    restore_interrupts(savedints);
-#endif
+
+    sequoiaUnlock();
 }
 
 void scrSetReset (int value)
 {
     u_int16_t  seqReg;
-#ifdef SHARK
-    u_int savedints;
 
-    savedints = disable_interrupts(I32_bit | F32_bit);
-#endif
+    sequoiaLock();
 
     sequoiaRead(SEQUOIA_1GPIO,&seqReg);
 
@@ -395,20 +417,15 @@ void scrSetReset (int value)
     }
     sequoiaWrite(SEQUOIA_1GPIO,seqReg);
 
-#ifdef SHARK
-    restore_interrupts(savedints);
-#endif
+    sequoiaUnlock();
 }
 
 
 void scrSetDataHighZ (void)
 {
     u_int16_t  seqReg;
-#ifdef SHARK
-    u_int savedints;
 
-    savedints = disable_interrupts(I32_bit | F32_bit);
-#endif
+    sequoiaLock();
 
     sequoiaRead(SEQUOIA_2GPIO,&seqReg);
 
@@ -416,19 +433,15 @@ void scrSetDataHighZ (void)
     CLR(seqReg,SCR_DATA_OUT);
 
     sequoiaWrite(SEQUOIA_2GPIO,seqReg);
-#ifdef SHARK
-    restore_interrupts(savedints);
-#endif
+
+    sequoiaUnlock();
 }
 
 void scrSetData (int value) 
 {
     u_int16_t  seqReg;
-#ifdef SHARK
-    u_int savedints;
 
-    savedints = disable_interrupts(I32_bit | F32_bit);
-#endif
+    sequoiaLock();
 
     sequoiaRead(SEQUOIA_2GPIO,&seqReg);
     /* inverse logic */
@@ -440,9 +453,8 @@ void scrSetData (int value)
         SET(seqReg,SCR_DATA_OUT);
     }
     sequoiaWrite(SEQUOIA_2GPIO,seqReg);
-#ifdef SHARK
-    restore_interrupts(savedints);
-#endif
+
+    sequoiaUnlock();
 }
 
 int  scrGetData (void)
@@ -450,7 +462,9 @@ int  scrGetData (void)
     int r;
     u_int16_t  seqReg;
 
+    sequoiaLock();
     sequoiaRead(SEQUOIA_1GPIO,&seqReg);
+    sequoiaUnlock();
 
     if (ISSET(seqReg,SCR_DATA_IN))
     {
@@ -558,13 +572,10 @@ static void   ledTimeout(void *arg)
 static void ledSetBiled(int color)
 {
     u_int16_t  seqReg;
-#ifdef SHARK
-    u_int savedints;
 
-    savedints = disable_interrupts(I32_bit | F32_bit);
-#endif
+    sequoiaLock();
+
     ledColor = color;
-
 
     sequoiaRead (PMC_FOMPCR_REG, &seqReg);
     switch(color)
@@ -594,9 +605,8 @@ static void ledSetBiled(int color)
             break;
     }
     sequoiaWrite(PMC_FOMPCR_REG, seqReg);
-#ifdef SHARK
-    restore_interrupts(savedints);
-#endif
+
+    sequoiaUnlock();
 }
 
 
@@ -604,7 +614,9 @@ int hwGetRev(void)
 {
     u_int16_t  seqReg;
 
+    sequoiaLock();
     sequoiaRead(SR_POR_REG,&seqReg);
+    sequoiaUnlock();
     
     seqReg = seqReg >> POR_V_MISCCF0;
     seqReg = seqReg & 0x7;
@@ -619,11 +631,8 @@ int hwGetRev(void)
 /* routines to read/write to sequoia registers */
 void sequoiaWrite(int reg,u_int16_t  seqReg)     
 {   
-#ifdef SHARK
-    u_int savedints;
 
-    savedints = disable_interrupts(I32_bit | F32_bit);
-#endif
+    KASSERT(sequoiaLock_held);
 
     /*
        On SHARK, the fiq comes from the pmi/smi.  After receiving
@@ -648,38 +657,27 @@ void sequoiaWrite(int reg,u_int16_t  seqReg)
       }
       bus_space_write_2(&isa_io_bs_tag,sequoia_ioh,SEQUOIA_DATA_OFFSET,seqReg);
     }
-#ifdef SHARK
-    restore_interrupts(savedints);
-#endif
 }
 
 void sequoiaRead (int reg,u_int16_t * seqReg_ptr)     
 {
-#ifdef SHARK
-    u_int savedints;
 
-    savedints = disable_interrupts(I32_bit | F32_bit);
-#endif
+    KASSERT(sequoiaLock_held);
+
     if(sequoia_index_cache != reg)
     {
         sequoia_index_cache = reg;
         bus_space_write_2(&isa_io_bs_tag,sequoia_ioh,SEQUOIA_INDEX_OFFSET,reg);
     }
     *seqReg_ptr = bus_space_read_2(&isa_io_bs_tag,sequoia_ioh,SEQUOIA_DATA_OFFSET);
-#ifdef SHARK
-    restore_interrupts(savedints);
-#endif
 }
-
 
 void ledSetDebug(int command)
 {
     u_int16_t  seqReg;
-#ifdef SHARK
-    u_int savedints;
 
-    savedints = disable_interrupts(I32_bit | F32_bit);
-#endif
+    sequoiaLock();
+
     sequoiaRead (PMC_FOMPCR_REG, &seqReg);
 
 
@@ -726,37 +724,17 @@ void ledSetDebug(int command)
             break;
     }
     sequoiaWrite(PMC_FOMPCR_REG, seqReg);
-#ifdef SHARK
-    restore_interrupts(savedints);
-#endif
+
+    sequoiaUnlock();
 }
 
-
-#ifdef USEFULL_DEBUG  
-void sequoiaOneAccess(void)
-{
-u_int16_t reg;
-#ifdef SHARK
-    u_int savedints;
-
-    savedints = disable_interrupts(I32_bit | F32_bit);
-#endif
-    reg = bus_space_read_2(&isa_io_bs_tag,sequoia_ioh,SEQUOIA_DATA_OFFSET);
-#ifdef SHARK
-    restore_interrupts(savedints);
-#endif
-}
-#endif
 
 int testPin=0;
 void scrToggleTestPin (void)
 {
     u_int16_t  seqReg;
-#ifdef SHARK
-    u_int savedints;
 
-    savedints = disable_interrupts(I32_bit | F32_bit);
-#endif
+    sequoiaLock();
 
     sequoiaRead(SEQUOIA_2GPIO,&seqReg);
 
@@ -771,8 +749,57 @@ void scrToggleTestPin (void)
         testPin = 1;
     }
     sequoiaWrite(SEQUOIA_2GPIO,seqReg);
-#ifdef SHARK
-    restore_interrupts(savedints);
-#endif
+
+    sequoiaUnlock();
 }
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "sequoia" },
+	DEVICE_COMPAT_EOL
+};
+
+static int
+sequoia_cfprint(void *aux, const char *pnp)
+{
+	struct ofbus_attach_args *oba = aux;
+
+	if (pnp != NULL) {
+		aprint_normal("%s at %s", oba->oba_ofname, pnp);
+	}
+	return UNCONF;
+}
+
+static int
+sequoia_match(device_t parent, cfdata_t cf, void *aux)
+{
+	struct ofbus_attach_args *oba = aux;
+
+	/* beat ofisa */
+	return of_compatible_match(oba->oba_phandle, compat_data) ? 100 : 0;
+}
+
+static void
+sequoia_attach(device_t parent, device_t self, void *aux)
+{
+	const struct ofbus_attach_args *oba = aux;
+	struct ofbus_attach_args noba = *oba;
+
+	aprint_naive("\n");
+	aprint_normal("\n");
+
+	noba.oba_busname = "sequoia";
+
+	/* attach the i2c bus connected to the DRAM banks slots */
+	strlcpy(noba.oba_ofname, "dec,dnard-i2c", sizeof(noba.oba_ofname));
+	config_found(self, &noba, sequoia_cfprint,
+	    CFARG_IATTR, "sequoia",
+	    CFARG_EOL);
+
+	/* attach the ofisa instance at the same OFW node */
+	config_found(self, aux, ofisaprint,
+	    CFARG_IATTR, "ofisa_subclass",
+	    CFARG_EOL);
+}
+
+CFATTACH_DECL_NEW(sequoia, 0,
+    sequoia_match, sequoia_attach, NULL, NULL);
