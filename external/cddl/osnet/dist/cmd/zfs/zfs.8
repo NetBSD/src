@@ -285,12 +285,6 @@
 .Op Fl FHt
 .Ar snapshot
 .Op Ar snapshot Ns | Ns Ar filesystem
-.Nm
-.Cm jail
-.Ar jailid Ns | Ns Ar jailname filesystem
-.Nm
-.Cm unjail
-.Ar jailid Ns | Ns Ar jailname filesystem
 .Sh DESCRIPTION
 The
 .Nm
@@ -445,32 +439,6 @@ If a file system's mount point is set to
 .Tn ZFS
 makes no attempt to manage the file system, and the administrator is
 responsible for mounting and unmounting the file system.
-.Ss Jails
-.No A Tn ZFS
-dataset can be attached to a jail by using the
-.Qq Nm Cm jail
-subcommand. You cannot attach a dataset to one jail and the children of the
-same dataset to another jails. To allow management of the dataset from within
-a jail, the
-.Sy jailed
-property has to be set and the jail needs access to the
-.Pa /dev/zfs
-device. The
-.Sy quota
-property cannot be changed from within a jail. See
-.Xr jail 8
-for information on how to allow mounting
-.Tn ZFS
-datasets from within a jail.
-.Pp
-.No A Tn ZFS
-dataset can be detached from a jail using the
-.Qq Nm Cm unjail
-subcommand.
-.Pp
-After a dataset is attached to a jail and the jailed property is set, a jailed
-file system cannot be mounted outside the jail, since the jail administrator
-might have set the mount point to an unacceptable value.
 .Ss Deduplication
 Deduplication is the process for removing redundant data at the block-level,
 reducing the total amount of data stored. If a file system has the
@@ -1070,7 +1038,7 @@ signature to make sure the block contents are identical.
 The
 .Sy devices
 property is currently not supported on
-.Fx .
+.Nx .
 .It Sy exec Ns = Ns Cm on | off
 Controls whether processes can be executed from within this file system. The
 default value is
@@ -1079,7 +1047,7 @@ default value is
 The
 .Sy mlslabel
 property is currently not supported on
-.Fx .
+.Nx .
 .It Sy filesystem_limit Ns = Ns Ar count | Cm none
 Limits the number of filesystems and volumes that can exist under this point in
 the dataset tree.
@@ -1118,7 +1086,7 @@ shared file systems are unshared and shared in the new location.
 The
 .Sy nbmand
 property is currently not supported on
-.Fx .
+.Nx .
 .It Sy primarycache Ns = Ns Cm all | none | metadata
 Controls what is cached in the primary cache (ARC). If this property is set to
 .Cm all ,
@@ -1343,7 +1311,7 @@ bit is respected for the file system. The default value is
 The
 .Sy sharesmb
 property currently has no effect on
-.Fx .
+.Nx .
 .It Sy sharenfs Ns = Ns Cm on | off | Ar opts
 Controls whether the file system is shared via
 .Tn NFS ,
@@ -1493,17 +1461,12 @@ during volume creation and pool import.
 The
 .Sy vscan
 property is currently not supported on
-.Fx .
+.Nx .
 .It Sy xattr Ns = Ns Cm off | on
 The
 .Sy xattr
 property is currently not supported on
-.Fx .
-.It Sy jailed Ns = Ns Cm off | on
-Controls whether the dataset is managed from a jail. See the
-.Qq Sx Jails
-section for more information. The default value is
-.Cm off .
+.Nx .
 .El
 .Pp
 The following three properties cannot be changed after the file system is
@@ -2360,7 +2323,7 @@ The default is
 The default can be changed to include group types.
 .It Fl i
 Translate SID to POSIX ID. This flag currently has no effect on
-.Fx .
+.Nx .
 .El
 .It Xo
 .Nm
@@ -2405,7 +2368,7 @@ file systems.
 Report mount progress.
 .It Fl O
 Perform an overlay mount. Overlay mounts are not supported on
-.Fx .
+.Nx .
 .It Fl o Ar property Ns Oo , Ns Ar property Oc Ns ...
 An optional, comma-separated list of mount options to use temporarily for the
 duration of the mount. See the
@@ -2416,7 +2379,7 @@ Mount all available
 .Tn ZFS
 file systems.
 This command may be executed on
-.Fx
+.Nx
 system startup by
 .Pa /etc/rc.d/zfs .
 For more information, see variable
@@ -2467,7 +2430,7 @@ file systems that have the
 .Sy sharenfs
 property set.
 This command may be executed on
-.Fx
+.Nx
 system startup by
 .Pa /etc/rc.d/zfs .
 For more information, see variable
@@ -2500,7 +2463,7 @@ file systems that have the
 .Sy sharenfs
 property set.
 This command may be executed on
-.Fx
+.Nx
 system shutdown by
 .Pa /etc/rc.d/zfs .
 For more information, see variable
@@ -3034,7 +2997,6 @@ protocol
 .It exec Ta property
 .It filesystem_limit Ta property
 .It logbias Ta property
-.It jailed Ta property
 .It mlslabel Ta property
 .It mountpoint Ta property
 .It nbmand Ta property
@@ -3246,49 +3208,15 @@ option of
 .It \&/ Ta directory
 .It \&@ Ta symbolic link
 .It \&= Ta socket
-.It \&> Ta door (not supported on Fx )
-.It \&| Ta named pipe (not supported on Fx )
-.It \&P Ta event port (not supported on Fx )
+.It \&> Ta door (not supported on Nx )
+.It \&| Ta named pipe (not supported on Nx )
+.It \&P Ta event port (not supported on Nx )
 .El
 .It Fl H
 Give more parsable tab-separated output, without header lines and without
 arrows.
 .It Fl t
 Display the path's inode change time as the first column of output.
-.El
-.It Xo
-.Nm
-.Cm jail
-.Ar jailid filesystem
-.Xc
-.Pp
-Attaches the specified
-.Ar filesystem
-to the jail identified by JID
-.Ar jailid .
-From now on this file system tree can be managed from within a jail if the
-.Sy jailed
-property has been set. To use this functionality, the jail needs the
-.Va allow.mount
-and
-.Va allow.mount.zfs
-parameters set to 1 and the
-.Va enforce_statfs
-parameter set to a value lower than 2.
-.Pp
-See
-.Xr jail 8
-for more information on managing jails and configuring the parameters above.
-.It Xo
-.Nm
-.Cm unjail
-.Ar jailid filesystem
-.Xc
-.Pp
-Detaches the specified
-.Ar filesystem
-from the jail identified by JID
-.Ar jailid .
 .El
 .Sh EXIT STATUS
 The following exit values are returned:
@@ -3412,7 +3340,6 @@ pool/home/bob  exec                  on                     default
 pool/home/bob  filesystem_limit      none                   default
 pool/home/bob  setuid                on                     default
 pool/home/bob  readonly              off                    default
-pool/home/bob  jailed                off                    default
 pool/home/bob  snapdir               hidden                 default
 pool/home/bob  snapshot_limit        none                   default
 pool/home/bob  aclmode               discard                default
@@ -3731,7 +3658,6 @@ M       F       /tank/test/modified
 .Xr exports 5 ,
 .Xr fstab 5 ,
 .Xr rc.conf 5 ,
-.Xr jail 8 ,
 .Xr mount 8 ,
 .Xr umount 8 ,
 .Xr zpool 8
