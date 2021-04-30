@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_swap_16.S,v 1.4 2015/05/17 20:57:11 justin Exp $ */
+/*	$NetBSD: atomic_swap_16.S,v 1.4.18.1 2021/04/30 13:54:00 martin Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -58,6 +58,11 @@ STRONG_ALIAS(_atomic_swap_ushort,_atomic_swap_16)
 #if (!defined(_KERNEL) || !defined(_RUMPKERNEL)) && !defined(_STANDALONE)
 ENTRY_NP(__sync_lock_release_2)
 	mov	r1, #0
+#ifdef _ARM_ARCH_7
+	dmb	ishst
+#else
+	mcr	p15, 0, r1, c7, c10, 5	/* data memory barrier */
+#endif
 	strh	r1, [r0]
 	RET
 END(__sync_lock_release_2)
