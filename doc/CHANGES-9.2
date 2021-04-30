@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.74 2021/04/28 09:59:33 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.75 2021/04/30 14:08:16 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -3021,4 +3021,38 @@ bin/sh/jobs.h					1.24
 	subshell-elimination optimization when there are pending
 	background jobs.
 	[kre, ticket #1259]
+
+distrib/sets/lists/man/mi			1.1718 (patch)
+share/man/man4/man4.evbarm/Makefile		1.12 (patch)
+share/man/man4/man4.evbarm/sun8icrypto.4	1.1
+
+	sun8icrypto(4): add a man page.
+	[nia, ticket #1260]
+
+common/lib/libc/arch/arm/atomic/atomic_swap.S	1.17
+common/lib/libc/arch/arm/atomic/atomic_swap_16.S 1.5
+common/lib/libc/arch/arm/atomic/atomic_swap_64.S 1.12
+common/lib/libc/arch/arm/atomic/membar_ops.S	1.7
+sys/arch/arm/include/lock.h			1.38
+
+	ARM lock and atomic fixes.
+	[skrll, ticket #1261]
+
+distrib/notes/common/netboot			1.39
+
+	For netboot via DHCP, "next-server" in dhcpd.conf(5) is mandatory.
+	[tsutsui, ticket #1262]
+
+bin/pax/extern.h				1.60
+bin/pax/options.c				1.119
+sbin/newfs_udf/newfs_udf.h			1.7 (patch)
+sbin/newfs_udf/udf_create.c			1.27 (patch)
+usr.bin/config/defs.h				1.106
+usr.bin/config/main.c				1.100
+usr.bin/config/scan.l				1.32
+usr.bin/make/main.c				1.274
+usr.bin/make/make.h				1.105
+
+	Avoid depending on common symbols.
+	[mrg, ticket #1263]
 
