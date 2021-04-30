@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1649.2.7 2020/07/07 10:29:06 martin Exp $
+# $NetBSD: mi,v 1.1649.2.8 2021/04/30 13:49:55 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1090,6 +1090,7 @@
 ./usr/share/man/cat4/evbarm/iopaau.0		man-sys-catman		.cat
 ./usr/share/man/cat4/evbarm/iopwdog.0		man-sys-catman		.cat
 ./usr/share/man/cat4/evbarm/rktsadc.0		man-sys-catman		.cat
+./usr/share/man/cat4/evbarm/sun8icrypto.0	man-sys-catman		.cat
 ./usr/share/man/cat4/evbmips/aupci.0		man-sys-catman		.cat
 ./usr/share/man/cat4/evbmips/intro.0		man-sys-catman		.cat
 ./usr/share/man/cat4/evbppc/cpc.0		man-sys-catman		.cat
@@ -4267,6 +4268,7 @@
 ./usr/share/man/html4/evbarm/iopaau.html	man-sys-htmlman		html
 ./usr/share/man/html4/evbarm/iopwdog.html	man-sys-htmlman		html
 ./usr/share/man/html4/evbarm/rktsadc.html	man-sys-htmlman		html
+./usr/share/man/html4/evbarm/sun8icrypto.html	man-sys-htmlman		html
 ./usr/share/man/html4/evbmips/aupci.html	man-sys-htmlman		html
 ./usr/share/man/html4/evbmips/intro.html	man-sys-htmlman		html
 ./usr/share/man/html4/evbppc/cpc.html		man-sys-htmlman		html
@@ -7216,6 +7218,7 @@
 ./usr/share/man/man4/evbarm/iopaau.4		man-sys-man		.man
 ./usr/share/man/man4/evbarm/iopwdog.4		man-sys-man		.man
 ./usr/share/man/man4/evbarm/rktsadc.4		man-sys-man		.man
+./usr/share/man/man4/evbarm/sun8icrypto.4	man-sys-man		.man
 ./usr/share/man/man4/evbmips/aupci.4		man-sys-man		.man
 ./usr/share/man/man4/evbmips/intro.4		man-sys-man		.man
 ./usr/share/man/man4/evbppc/cpc.4		man-sys-man		.man
