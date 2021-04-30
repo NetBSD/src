@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.138 2021/04/27 23:37:01 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.139 2021/04/30 02:11:37 thorpej Exp $
 #
 # Generic Shark configuration.
 #
@@ -7,7 +7,7 @@ include	"arch/shark/conf/std.shark"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.138 $"
+#ident		"GENERIC-$Revision: 1.139 $"
 
 # estimated number of users
 maxusers	32
@@ -206,6 +206,10 @@ ofbus*		at ofbus?
 ofrom*		at ofbus?
 
 ofisa*		at ofbus?
+
+# Sequoia core logic chipset
+sequoia*	at ofbus?
+ofisa*		at sequoia?
 
 # IDE/ATA disk
 wdc*		at ofisa?

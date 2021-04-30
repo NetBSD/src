@@ -1,4 +1,4 @@
-/*	$NetBSD: hat.c,v 1.6 2007/10/17 19:57:10 garbled Exp $	*/
+/*	$NetBSD: hat.c,v 1.7 2021/04/30 02:11:37 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hat.c,v 1.6 2007/10/17 19:57:10 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hat.c,v 1.7 2021/04/30 02:11:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,11 +88,15 @@ hatClkOff(void)
 	hatOn = 0;
 	hatWedgeFn = NULL;
 
+	sequoiaLock();
+
         /* disable the SWTCH pin */
 
 	sequoiaRead(PMC_PMCMCR2_REG, &seqReg);
         sequoiaWrite(PMC_PMCMCR2_REG, seqReg  | (PMCMCR2_M_SWTCHEN));
-        
+
+	sequoiaUnlock();
+
         /* turn off timer 2 */
         outb(ATSR_REG1_REG, 
 	     inb(ATSR_REG1_REG) & ~((REG1_M_TMR2EN) | (REG1_M_SPKREN)));
@@ -135,6 +139,8 @@ hatClkOn(int count, void (*hatFn)(int), int arg,
 
 	fiq_setregs(&shark_fiqregs);
 
+	sequoiaLock();
+
 	/* no debounce on SWTCH */
 	sequoiaRead(PMC_DBCR_REG, &seqReg);
 	sequoiaWrite(PMC_DBCR_REG, seqReg | DBCR_M_DBDIS0);
@@ -152,6 +158,8 @@ hatClkOn(int count, void (*hatFn)(int), int arg,
 	sequoiaRead(PMC_PMCMCR2_REG, &seqReg);
         sequoiaWrite(PMC_PMCMCR2_REG, seqReg | (PMCMCR2_M_SWTCHEN));
 
+	sequoiaUnlock();
+
 	hatOn = 1;
 	return 0;
 }
@@ -164,7 +172,9 @@ hatClkAdjust(int count)
 		return -1;
 
 	hatClkCount(count);
+	sequoiaLock();
 	hatEnableSWTCH();
+	sequoiaUnlock();
 
 	return 0;
 }
@@ -173,6 +183,8 @@ static void
 hatEnableSWTCH(void)
 {
 	u_int16_t    seqReg;
+
+	KASSERT(sequoiaIsLocked());
 
 	/* SWTCH input causes PMI, not automatic switch to standby mode! */
 	/* clearing bit 9 is bad news.  seems to enable PMI from secondary
@@ -195,7 +207,9 @@ hatUnwedge(void)
 		return;
 
 	if (lastFiqsHappened == fiqs_happened) {
+		sequoiaLock();
 		hatEnableSWTCH();
+		sequoiaUnlock();
 		if (hatWedgeFn)
 			(*hatWedgeFn)(fiqs_happened);
 	} else {
@@ -216,4 +230,3 @@ hatClkCount(int count)
 
 	restore_interrupts(savedints);
 }
-
