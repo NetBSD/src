@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.h,v 1.12 2020/04/25 15:26:16 bouyer Exp $	*/
+/*	$NetBSD: gdt.h,v 1.13 2021/04/30 01:09:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -45,6 +45,6 @@ int ldt_alloc(void *, size_t);
 void ldt_free(int);
 #endif
 
-#define MAXGDTSIZ		65536
-#define MAX_USERLDT_SIZE	PAGE_SIZE
+#define MAXGDTSIZ		65536	/* XXX: see <x86/pmap.h> */
+#define MAX_USERLDT_SIZE	65536	/* XXX: see <x86/pmap.h> */
 #define MAX_USERLDT_SLOTS	(int)(MAX_USERLDT_SIZE / sizeof(union descriptor))

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.125 2020/07/19 07:35:08 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.126 2021/04/30 01:09:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -188,11 +188,11 @@ struct slotspace {
 extern struct slotspace slotspace;
 
 #ifndef MAXGDTSIZ
-#define MAXGDTSIZ 65536 /* XXX */
+#define MAXGDTSIZ 65536 /* XXX: dup in <machine/gdt.h> */
 #endif
 
 #ifndef MAX_USERLDT_SIZE
-#define MAX_USERLDT_SIZE PAGE_SIZE /* XXX */
+#define MAX_USERLDT_SIZE 65536 /* XXX: dup in <machine/gdt.h> */
 #endif
 
 struct pcpu_entry {
