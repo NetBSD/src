@@ -1,3 +1,4 @@
+/* $NetBSD: ixgbe_dcb.h,v 1.7 2021/04/30 06:41:36 msaitoh Exp $ */
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
 
