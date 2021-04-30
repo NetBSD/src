@@ -1,4 +1,4 @@
-.\" $NetBSD: cgdconfig.8,v 1.49 2021/04/18 19:56:09 maya Exp $
+.\" $NetBSD: cgdconfig.8,v 1.50 2021/04/30 21:07:34 nia Exp $
 .\"
 .\" Copyright (c) 2002, The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -387,14 +387,14 @@ when we configure the first time to set up the disk.
 Here is the
 sequence of commands that is recommended:
 .Bd -literal
-	# cgdconfig -g -o /etc/cgd/wd0e -V disklabel adiantum
-	# cgdconfig -V re-enter cgd0 /dev/wd0e
-	/dev/wd0e's passphrase:
+	# cgdconfig -g -o /etc/cgd/dk3 -V gpt adiantum
+	# cgdconfig -V re-enter cgd0 /dev/dk3
+	/dev/dk3's passphrase:
 	re-enter device's passphrase:
-	# disklabel -e -I cgd0
+	# gpt create cgd0
 	# cgdconfig -u cgd0
-	# cgdconfig cgd0 /dev/wd0e
-	/dev/wd0e's passphrase:
+	# cgdconfig cgd0 /dev/dk3
+	/dev/dk3's passphrase:
 .Ed
 .Pp
 To scrub data from a disk before setting up a cgd:
