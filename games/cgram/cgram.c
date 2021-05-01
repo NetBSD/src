@@ -1,4 +1,4 @@
-/* $NetBSD: cgram.c,v 1.22 2021/04/29 20:17:20 rillig Exp $ */
+/* $NetBSD: cgram.c,v 1.23 2021/05/01 20:29:23 rillig Exp $ */
 
 /*-
  * Copyright (c) 2013, 2021 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.c,v 1.22 2021/04/29 20:17:20 rillig Exp $");
+__RCSID("$NetBSD: cgram.c,v 1.23 2021/05/01 20:29:23 rillig Exp $");
 #endif
 
 #include <assert.h>
@@ -143,7 +143,7 @@ stringarray_init(struct stringarray *a)
 }
 
 static void
-stringarray_cleanup(struct stringarray *a)
+stringarray_done(struct stringarray *a)
 {
 	for (size_t i = 0; i < a->num; i++)
 		free(a->v[i].s);
@@ -584,12 +584,12 @@ loop(void)
 }
 
 static void
-clean_up(void)
+done(void)
 {
 	endwin();
 
-	stringarray_cleanup(&sollines);
-	stringarray_cleanup(&lines);
+	stringarray_done(&sollines);
+	stringarray_done(&lines);
 }
 
 
@@ -611,5 +611,5 @@ main(int argc, char *argv[])
 
 	init(argc > 1 ? argv[1] : NULL);
 	loop();
-	clean_up();
+	done();
 }
