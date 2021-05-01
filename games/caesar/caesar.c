@@ -1,4 +1,4 @@
-/*	$NetBSD: caesar.c,v 1.22 2008/07/20 01:03:21 lukem Exp $	*/
+/*	$NetBSD: caesar.c,v 1.23 2021/05/01 20:21:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -48,7 +48,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)caesar.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: caesar.c,v 1.22 2008/07/20 01:03:21 lukem Exp $");
+__RCSID("$NetBSD: caesar.c,v 1.23 2021/05/01 20:21:25 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,7 +79,7 @@ static unsigned char rottbl[NCHARS];
 
 
 static void
-init_rottbl(int rot)
+init_rottbl(unsigned int rot)
 {
 	size_t i;
 
@@ -121,7 +121,7 @@ print_array(const unsigned char *a, size_t len)
 	}
 }
 
-static int
+static unsigned int
 get_rotation(const char *arg)
 {
 	long rot;
@@ -135,7 +135,7 @@ get_rotation(const char *arg)
 		errno = ERANGE;
 	if (errno)
 		err(EXIT_FAILURE, "Bad rotation value `%s'", arg);
-	return (int)rot;
+	return (unsigned int)rot;
 }
 
 static void
@@ -145,7 +145,7 @@ guess_and_rotate(void)
 	unsigned int obs[NCHARS];
 	size_t i, nread;
 	double dot, winnerdot;
-	int try, winner;
+	unsigned int try, winner;
 	int ch;
 
 	/* adjust frequency table to weight low probs REAL low */
