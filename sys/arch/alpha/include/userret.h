@@ -1,4 +1,4 @@
-/* $NetBSD: userret.h,v 1.10 2012/02/06 02:14:13 matt Exp $ */
+/* $NetBSD: userret.h,v 1.11 2021/05/01 13:23:07 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,9 @@ userret(struct lwp *l)
 	struct proc *p = l->l_proc;
 
 	/* Do any deferred user pmap operations. */
+	KPREEMPT_DISABLE(l);
 	PMAP_USERRET(vm_map_pmap(&p->p_vmspace->vm_map));
+	KPREEMPT_ENABLE(l);
 
 	/* Invoke MI userret code */
 	mi_userret(l);
