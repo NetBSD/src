@@ -1,4 +1,4 @@
-/*	$NetBSD: fish.c,v 1.23 2018/03/05 04:59:54 eadler Exp $	*/
+/*	$NetBSD: fish.c,v 1.24 2021/05/01 21:10:57 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)fish.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fish.c,v 1.23 2018/03/05 04:59:54 eadler Exp $");
+__RCSID("$NetBSD: fish.c,v 1.24 2021/05/01 21:10:57 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -435,8 +435,13 @@ init(void)
 static int
 nrandom(int n)
 {
+	long r;
 
-	return((int)random() % n);
+	for (;;) {
+		r = random();
+		if (r < RANDOM_MAX - RANDOM_MAX % n)
+			return (int)(r % n);
+	}
 }
 
 static void
