@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.6 2021/04/20 10:15:34 skrll Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.7 2021/05/01 06:48:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: db_disasm.c,v 1.6 2021/04/20 10:15:34 skrll Exp $");
+__RCSID("$NetBSD: db_disasm.c,v 1.7 2021/05/01 06:48:51 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,7 @@ db_print_addr(db_addr_t loc)
  * size. I've used the #defines for that to conditionalize it, on the
  * grounds that ddb is disassembling itself so the build machine
  * version is the target machine version. This is not true for crash
- * necessarily but I don't think 
+ * necessarily but I don't think
  */
 
 #define COMBINE(op, q) (((op) << 2) | (q))
@@ -153,7 +153,7 @@ db_disasm_16(db_addr_t loc, uint32_t insn, bool altfmt)
 		rd = INSN16_RS2x(insn);
 #if __riscv_xlen < 128
 		imm = INSN16_IMM_CL_D(insn);
-		db_printf("c.fld f%d, %d(%s)\n", rd, (int32_t)imm, 
+		db_printf("c.fld f%d, %d(%s)\n", rd, (int32_t)imm,
 			  riscv_registers[rs1]);
 #else
 		imm = INSN16_IMM_CL_Q(insn);
@@ -173,7 +173,7 @@ db_disasm_16(db_addr_t loc, uint32_t insn, bool altfmt)
 		rd = INSN16_RS2x(insn);
 #if __riscv_xlen == 32
 		imm = INSN16_IMM_CL_W(insn);
-		db_printf("c.flw f%d, %d(%s)\n", rd, (int32_t)imm, 
+		db_printf("c.flw f%d, %d(%s)\n", rd, (int32_t)imm,
 			  riscv_registers[rs1]);
 #else
 		imm = INSN16_IMM_CL_D(insn);
@@ -186,7 +186,7 @@ db_disasm_16(db_addr_t loc, uint32_t insn, bool altfmt)
 		rs2 = INSN16_RS2x(insn);
 #if __riscv_xlen < 128
 		imm = INSN16_IMM_CS_D(insn);
-		db_printf("c.fsd f%d, %d(%s)\n", rs2, (int32_t)imm, 
+		db_printf("c.fsd f%d, %d(%s)\n", rs2, (int32_t)imm,
 			  riscv_registers[rs1]);
 #else
 		imm = INSN16_IMM_CS_Q(insn);
@@ -206,7 +206,7 @@ db_disasm_16(db_addr_t loc, uint32_t insn, bool altfmt)
 		rs2 = INSN16_RS2x(insn);
 #if __riscv_xlen == 32
 		imm = INSN16_IMM_CS_W(insn);
-		db_printf("c.fsw f%d, %d(%s)\n", rs2, (int32_t)imm, 
+		db_printf("c.fsw f%d, %d(%s)\n", rs2, (int32_t)imm,
 			  riscv_registers[rs1]);
 #else
 		imm = INSN16_IMM_CS_D(insn);
