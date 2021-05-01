@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.7 2020/11/04 07:09:45 skrll Exp $ */
+/* $NetBSD: locore.h,v 1.8 2021/05/01 06:53:08 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -118,7 +118,10 @@ struct mainbus_attach_args {
 
 #ifdef _KERNEL
 extern int cpu_printfataltraps;
+
+#ifdef FPE
 extern const pcu_ops_t pcu_fpu_ops;
+#endif
 
 static inline vaddr_t
 stack_align(vaddr_t sp)
@@ -135,31 +138,43 @@ userret(struct lwp *l)
 static inline void
 fpu_load(void)
 {
+#ifdef FPE
 	pcu_load(&pcu_fpu_ops);
+#endif
 }
 
 static inline void
 fpu_save(lwp_t *l)
 {
+#ifdef FPE
 	pcu_save(&pcu_fpu_ops, l);
+#endif
 }
 
 static inline void
 fpu_discard(lwp_t *l)
 {
+#ifdef FPE
 	pcu_discard(&pcu_fpu_ops, l, false);
+#endif
 }
 
 static inline void
 fpu_replace(lwp_t *l)
 {
+#ifdef FPE
 	pcu_discard(&pcu_fpu_ops, l, true);
+#endif
 }
 
 static inline bool
 fpu_valid_p(lwp_t *l)
 {
+#ifdef FPE
 	return pcu_valid_p(&pcu_fpu_ops, l);
+#else
+	return false;
+#endif
 }
 
 void	__syncicache(const void *, size_t);
