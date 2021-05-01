@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_attribute.c,v 1.1 2021/04/30 23:49:36 rillig Exp $	*/
+/*	$NetBSD: gcc_attribute.c,v 1.2 2021/05/01 07:25:07 rillig Exp $	*/
 # 3 "gcc_attribute.c"
 
 /*
@@ -19,9 +19,13 @@ do_not_inline(void)
 {
 }
 
-/* expect+1: syntax error 'nonnull' */
+/* All pointer arguments must be nonnull. */
+void __attribute__((nonnull))
+function_nonnull(void *, const void *, int);
+
+/* Arguments 1 and 2 must be nonnull. */
 void __attribute__((nonnull(1, 2)))
-my_memcpy(void *dest, const void *src, unsigned long len);
+function_nonnull_list(void *, const void *, int);
 
 /* expect+1: syntax error 'unknown_attribute' */
 void __attribute__((unknown_attribute))

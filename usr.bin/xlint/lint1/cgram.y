@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.223 2021/04/30 19:46:24 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.224 2021/05/01 07:25:07 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.223 2021/04/30 19:46:24 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.224 2021/05/01 07:25:07 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -563,7 +563,8 @@ type_attribute_spec:
 	| T_AT_SENTINEL T_LPAREN constant_expr T_RPAREN
 	| T_AT_SENTINEL
 	| T_AT_FORMAT_ARG T_LPAREN constant_expr T_RPAREN
-	| T_AT_NONNULL T_LPAREN constant_expr T_RPAREN
+	| T_AT_NONNULL
+	| T_AT_NONNULL T_LPAREN constant_expr_list_opt T_RPAREN
 	| T_AT_NONSTRING
 	| T_AT_MODE T_LPAREN T_NAME T_RPAREN
 	| T_AT_ALIAS T_LPAREN string T_RPAREN
@@ -1842,6 +1843,16 @@ declaration_list:
 	| declaration_list declaration {
 		clear_warning_flags();
 	  }
+	;
+
+constant_expr_list_opt:
+	  /* empty */
+	| constant_expr_list
+	;
+
+constant_expr_list:
+	  constant_expr
+	| constant_expr_list T_COMMA constant_expr
 	;
 
 constant_expr:			/* C99 6.6 */
