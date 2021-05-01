@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.134 2020/06/27 17:29:19 christos Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.135 2021/05/01 15:08:14 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.134 2020/06/27 17:29:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.135 2021/05/01 15:08:14 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -295,9 +295,20 @@ bad:
 good:
 	KASSERT(ix != -1);
 	error = vcache_get(dvp->v_mount, &ix, sizeof(ix), vpp);
-	if (error == 0 && ix == FD_CTTY)
+	if (error)
+		return error;
+
+	/*
+	 * Prevent returning VNON nodes.
+	 * Operation fdesc_inactive() will reset the type to VNON.
+	 */
+	if (ix == FD_CTTY)
 		(*vpp)->v_type = VCHR;
-	return error;
+	else if (ix >= FD_DESC)
+		(*vpp)->v_type = VREG;
+	KASSERT((*vpp)->v_type != VNON);
+
+	return 0;
 }
 
 int
