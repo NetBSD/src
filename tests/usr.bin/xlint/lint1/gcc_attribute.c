@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_attribute.c,v 1.2 2021/05/01 07:25:07 rillig Exp $	*/
+/*	$NetBSD: gcc_attribute.c,v 1.3 2021/05/01 07:56:20 rillig Exp $	*/
 # 3 "gcc_attribute.c"
 
 /*
@@ -22,6 +22,14 @@ do_not_inline(void)
 /* All pointer arguments must be nonnull. */
 void __attribute__((nonnull))
 function_nonnull(void *, const void *, int);
+
+/*
+ * The documentation suggests that the argument list of nonnull be nonempty,
+ * but GCC 9.3.0 accepts an empty list as well, treating all parameters as
+ * nonnull.
+ */
+void __attribute__((nonnull()))
+function_nonnull_list(void *, const void *, int);
 
 /* Arguments 1 and 2 must be nonnull. */
 void __attribute__((nonnull(1, 2)))
