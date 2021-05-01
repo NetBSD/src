@@ -1,4 +1,4 @@
-/* $NetBSD: sysreg.h,v 1.11 2020/12/16 19:49:04 christos Exp $ */
+/* $NetBSD: sysreg.h,v 1.12 2021/05/01 07:09:04 skrll Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -38,12 +38,12 @@
 
 #define FCSR_FMASK	0	// no exception bits
 #define FCSR_FRM	__BITS(7,5)
-#define FCSR_FRM_RNE	0b000	// Round Nearest, ties to Even
-#define FCSR_FRM_RTZ	0b001	// Round Towards Zero
-#define FCSR_FRM_RDN	0b010	// Round DowN (-infinity)
-#define FCSR_FRM_RUP	0b011	// Round UP (+infinity)
-#define FCSR_FRM_RMM	0b100	// Round to nearest, ties to Max Magnitude
-#define FCSR_FRM_DYN	0b111	// Dynamic rounding
+#define  FCSR_FRM_RNE	0b000	// Round Nearest, ties to Even
+#define  FCSR_FRM_RTZ	0b001	// Round Towards Zero
+#define  FCSR_FRM_RDN	0b010	// Round DowN (-infinity)
+#define  FCSR_FRM_RUP	0b011	// Round UP (+infinity)
+#define  FCSR_FRM_RMM	0b100	// Round to nearest, ties to Max Magnitude
+#define  FCSR_FRM_DYN	0b111	// Dynamic rounding
 #define FCSR_FFLAGS	__BITS(4,0)	// Sticky bits
 #define FCSR_NV		__BIT(4)	// iNValid operation
 #define FCSR_DZ		__BIT(3)	// Divide by Zero
