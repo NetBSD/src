@@ -1,4 +1,4 @@
-.\"	$NetBSD: intro.7,v 1.28 2020/02/26 10:06:08 wiz Exp $
+.\"	$NetBSD: intro.7,v 1.29 2021/05/01 07:41:14 nia Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)intro.7	8.1 (Berkeley) 6/5/93
 .\"
-.Dd May 15, 2018
+.Dd May 1, 2021
 .Dt INTRO 7
 .Os
 .Sh NAME
@@ -37,11 +37,13 @@
 .Nd miscellaneous information pages
 .Sh DESCRIPTION
 This section contains miscellaneous documentation, including:
-.Bl -tag -width "mdoc.samples(7)" -offset indent
+.Bl -tag -width "kernel_sanitizers(7)" -offset indent
 .It Xr ascii 7
 map of ASCII character set
 .It Xr c 7
 the C programming language
+.It Xr entropy 7
+random unpredictable secrets needed for security
 .It Xr environ 7
 user environment
 .It Xr glob 7
@@ -57,6 +59,10 @@ file system hierarchy in
 .Nx
 .It Xr hostname 7
 host name resolution description
+.It Xr kernel_sanitizers 7
+bug detection features in the
+.Nx
+kernel
 .It Xr mailaddr 7
 mail addressing description
 .\" .It Sy man
@@ -76,6 +82,9 @@ tutorial for writing BSD manuals with
 kernel modules
 .It Xr nls 7
 overview of national language support
+.It Xr npf 7
+.Nx
+Packet Filter
 .It Xr operator 7
 C operator precedence and order of evaluation
 .It Xr orders 7
@@ -100,6 +109,10 @@ checklist for security and setuid programs
 .It Xr signal 7
 available signals under
 .Nx
+.It Xr src 7
+layout of the
+.Nx
+source tree
 .It Xr sticky 7
 sticky bit
 .Pq Dv S_ISVTX
