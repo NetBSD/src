@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2 2020/11/04 07:09:46 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.3 2021/05/01 07:11:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: autoconf.c,v 1.2 2020/11/04 07:09:46 skrll Exp $");
+__RCSID("$NetBSD: autoconf.c,v 1.3 2021/05/01 07:11:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +47,8 @@ cpu_configure(void)
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("no mainbus found");
+
+	spl0();
 }
 
 void
