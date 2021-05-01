@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.3 2019/06/01 12:42:28 maxv Exp $ */
+/* $NetBSD: param.h,v 1.4 2021/05/01 07:06:54 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -87,6 +87,15 @@
 #endif	/* MCLSHIFT */
 
 #define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
+
+#ifndef MSGBUFSIZE
+#define MSGBUFSIZE		65536	/* default message buffer size */
+#endif
+
+#define COHERENCY_UNIT		64
+#define CACHE_LINE_SIZE		64
+
+#define MAXCPUS			32
 
 #ifdef _KERNEL
 void delay(unsigned long);
