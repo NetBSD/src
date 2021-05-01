@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2801 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2802 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -367,5 +367,5 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	aarch64: Switch to GCC 10.  [mrg 20210425]
 	bind: Import version 9.16.15. [christos 20210429]
 	resolver: The default has been changed to check-names
-	    (see resolv.conf(5)), which means that hostnames that
-	    contain invalid characters will not resolve. [christos 20210430]
+		(see resolv.conf(5)), which means that hostnames that
+		contain invalid characters will not resolve. [christos 20210430]
