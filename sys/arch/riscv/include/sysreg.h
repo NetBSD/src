@@ -1,4 +1,4 @@
-/* $NetBSD: sysreg.h,v 1.12 2021/05/01 07:09:04 skrll Exp $ */
+/* $NetBSD: sysreg.h,v 1.13 2021/05/01 07:09:55 skrll Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -35,6 +35,8 @@
 #ifndef _KERNEL
 #include <sys/param.h>
 #endif
+
+#include <riscv/reg.h>
 
 #define FCSR_FMASK	0	// no exception bits
 #define FCSR_FRM	__BITS(7,5)
@@ -261,6 +263,20 @@ riscvreg_cycle_read(void)
 #define SATP_ASID		__BITS(30,22)
 #define SATP_PPN		__BITS(21,0)
 #endif
+
+static inline uintptr_t
+riscvreg_satp_read(void)
+{
+	uintptr_t satp;
+	__asm __volatile("csrr	%0, satp" : "=r" (satp));
+	return satp;
+}
+
+static inline void
+riscvreg_satp_write(uintptr_t satp)
+{
+	__asm __volatile("csrw	satp, %0" :: "r" (satp));
+}
 
 static inline uint32_t
 riscvreg_asid_read(void)
