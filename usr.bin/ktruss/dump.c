@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.c,v 1.47 2020/01/14 11:28:35 kamil Exp $	*/
+/*	$NetBSD: dump.c,v 1.48 2021/05/01 18:07:52 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: dump.c,v 1.47 2020/01/14 11:28:35 kamil Exp $");
+__RCSID("$NetBSD: dump.c,v 1.48 2021/05/01 18:07:52 rillig Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -673,7 +673,7 @@ ktrsysret(struct ktr_entry *kte)
 	syscall_ent = getpendq(kth, KTR_SYSCALL, NULL);
 	if (syscall_ent == NULL) {
 		/*
-		 * Possibilly a child of fork/vfork, or tracing of
+		 * Possibly a child of fork/vfork, or tracing of
 		 * process started during system call.
 		 */
 		syscallnameprint(ktr->ktr_code);
