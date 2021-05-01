@@ -1,11 +1,11 @@
-/*	$NetBSD: vmparam.h,v 1.8 2021/02/26 02:18:29 simonb Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.9 2021/05/01 07:41:24 skrll Exp $	*/
 
 /*-
- * Copyright (c) 2014 The NetBSD Foundation, Inc.
+ * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Matt Thomas of 3am Software Foundry.
+ * by Matt Thomas of 3am Software Foundry, and Nick Hudson.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -42,6 +42,10 @@
  * Machine dependent VM constants for RISCV.
  */
 
+/*
+ * We use a 4K page on both RV64 and RV32 systems.
+ * Override PAGE_* definitions to compile-time constants.
+ */
 #define	PAGE_SHIFT	PGSHIFT
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
 #define	PAGE_MASK	(PAGE_SIZE - 1)
@@ -105,16 +109,42 @@
  */
 #define VM_MIN_ADDRESS		((vaddr_t)0x00000000)
 #ifdef _LP64	/* Sv39 */
+/*
+ * kernel virtual space layout:
+ *   0xffff_ffc0_0000_0000  -   64GiB  KERNEL VM Space (inc. text/data/bss)
+ *  (0xffff_ffc0_4000_0000      +1GiB) KERNEL VM start of KVA
+ *  (0xffff_ffd0_0000_0000      64GiB) reserved
+ *   0xffff_ffe0_0000_0000  -  128GiB  direct mapping
+ */
 #define VM_MAXUSER_ADDRESS	((vaddr_t)0x0000004000000000 - 16 * PAGE_SIZE)
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0xffffffc000000000)
-#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xffffffd000000000) /* MIN + 64GB */
+#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xffffffd000000000)
+
 #else		/* Sv32 */
 #define VM_MAXUSER_ADDRESS	((vaddr_t)-0x7fffffff-1)/* 0xffffffff80000000 */
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t)-0x7fffffff-1)/* 0xffffffff80000000 */
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)-0x40000000)	/* 0xffffffffc0000000 */
+
 #endif
+#define VM_KERNEL_VM_BASE	VM_MIN_KERNEL_ADDRESS
+#define VM_KERNEL_VM_SIZE	0x2000000	 /* 32 MiB (8 / 16 megapages) */
+
 #define VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
 #define VM_MAXUSER_ADDRESS32	((vaddr_t)(1UL << 31))/* 0x0000000080000000 */
+
+#ifdef _LP64
+/*
+ * Since we have the address space, we map all of physical memory (RAM)
+ * using block page table entries.
+ */
+#define RISCV_DIRECTMAP_MASK	((vaddr_t) 0xffffffe000000000L)
+#define RISCV_DIRECTMAP_SIZE	(-RISCV_DIRECTMAP_MASK)	/* 128GiB */
+#define RISCV_DIRECTMAP_START	RISCV_DIRECTMAP_MASK
+#define RISCV_DIRECTMAP_END	(RISCV_DIRECTMAP_START + RISCV_DIRECTMAP_SIZE)
+#define RISCV_KVA_P(va)	(((vaddr_t) (va) & RISCV_DIRECTMAP_MASK) != 0)
+#define RISCV_PA_TO_KVA(pa)	((vaddr_t) ((pa) | RISCV_DIRECTMAP_START))
+#define RISCV_KVA_TO_PA(va)	((paddr_t) ((va) & ~RISCV_DIRECTMAP_MASK))
+#endif
 
 /*
  * The address to which unspecified mapping requests default
@@ -139,7 +169,7 @@
 #define VM_PHYSSEG_MAX		1
 #endif
 #if VM_PHYSSEG_MAX == 1
-#define	VM_PHYSSEG_STRAT	VM_PSTRAT_LINEAR
+#define	VM_PHYSSEG_STRAT	VM_PSTRAT_BIGFIRST
 #else
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
 #endif
