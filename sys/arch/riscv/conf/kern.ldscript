@@ -1,4 +1,6 @@
-/*	$NetBSD: kern.ldscript,v 1.7 2020/11/04 07:09:45 skrll Exp $	*/
+/*	$NetBSD: kern.ldscript,v 1.8 2021/05/01 07:13:21 skrll Exp $	*/
+
+#include "assym.h"
 
 OUTPUT_ARCH(riscv)
 ENTRY(start)
@@ -8,8 +10,10 @@ __LARGE_PAGE_SIZE = 0x200000 ;
 
 SECTIONS
 {
-	.text : AT (ADDR(.text) & 0x0fffffff)
+
+	.text : AT (KERNEL_PHYS)
 	{
+		PROVIDE(__kernel_text = .);
 		*(.text)
 		*(.text.*)
 		*(.stub)
@@ -19,7 +23,7 @@ SECTIONS
 
 	. = ALIGN(__LARGE_PAGE_SIZE);
 
-	__rodata_start = . ;
+	PROVIDE(__rodata_start = .);
 	.rodata :
 	{
 		*(.rodata)
@@ -28,17 +32,36 @@ SECTIONS
 		*(.srodata.*)
 	}
 
+	PROVIDE(_etext = .);
+	PROVIDE(etext = .);
 	. = ALIGN(__LARGE_PAGE_SIZE);
 
-	__data_start = . ;
 	.data :
 	{
+		PROVIDE(__data_start = .);
 		*(.data)
+	}
+
+	. = ALIGN(COHERENCY_UNIT);
+	.data.cacheline_aligned :
+	{
+		*(.data.cacheline_aligned)
+	}
+	. = ALIGN(COHERENCY_UNIT);
+	.data.read_mostly :
+	{
+		*(.data.read_mostly)
+	}
+	. = ALIGN(COHERENCY_UNIT);
+
+	.sdata :
+	{
+		__global_pointer$ = . + 0x800;
 		*(.sdata)
 		*(.sdata.*)
 	}
-	_edata = . ;
-	PROVIDE (edata = .) ;
+	_edata = .;
+	PROVIDE (edata = .);
 
 	__bss_start = .;
 	.bss :
@@ -50,14 +73,13 @@ SECTIONS
 		*(COMMON)
 		. = ALIGN(__LARGE_PAGE_SIZE);
 	}
-
+	_bss_end__ = . ;
+	__bss_end__ = . ;
 	. = ALIGN(__PAGE_SIZE);
 
-	/* End of the kernel image */
-	__kernel_end = . ;
-
-	_end = . ;
-	PROVIDE (end = .) ;
+	__end__ = . ;
+	_end = .;
+	PROVIDE(end = .);
 	.note.netbsd.ident :
 	{
 		KEEP(*(.note.netbsd.ident));
