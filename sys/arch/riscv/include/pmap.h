@@ -1,11 +1,12 @@
-/* $NetBSD: pmap.h,v 1.8 2020/12/20 16:38:25 skrll Exp $ */
+/* $NetBSD: pmap.h,v 1.9 2021/05/01 07:41:24 skrll Exp $ */
 
 /*
- * Copyright (c) 2014, 2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Matt Thomas (of 3am Software Foundry) and Maxime Villard.
+ * by Matt Thomas (of 3am Software Foundry), Maxime Villard, and
+ * Nick Hudson.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,6 +39,7 @@
 
 #if !defined(_MODULE)
 
+#include <sys/cdefs.h>
 #include <sys/types.h>
 #include <sys/pool.h>
 #include <sys/evcnt.h>
@@ -46,26 +48,35 @@
 #include <uvm/pmap/vmpagemd.h>
 
 #include <riscv/pte.h>
+#include <riscv/sysreg.h>
 
 #define PMAP_SEGTABSIZE	NPTEPG
-
-#define NBSEG		(PAGE_SIZE * NPTEPG)
+#define PMAP_PDETABSIZE	NPTEPG
 
 #ifdef _LP64
-#define NBXSEG		(NBSEG * NSEGPG)
-#define XSEGSHIFT	(SEGSHIFT + PGSHIFT - 3)
-#define XSEGOFSET	(PTE_PPN1 | SEGOFSET)
-#define SEGSHIFT	(PGSHIFT + PGSHIFT - 3)
+#define PTPSHIFT	3
+/* This is SV48. */
+//#define SEGLENGTH + SEGSHIFT + SEGSHIFT */
+
+/* This is SV39. */
+#define XSEGSHIFT	(SEGSHIFT + SEGLENGTH)
+#define NBXSEG		(1ULL << XSEGSHIFT)
+#define XSEGOFSET	(NBXSEG - 1)		/* byte offset into xsegment */
+#define XSEGLENGTH	(PGSHIFT - 3)
+#define NXSEGPG		(1 << XSEGLENGTH)
 #else
-#define SEGSHIFT	(PGSHIFT + PGSHIFT - 2)
+#define PTPSHIFT	2
+#define XSEGSHIFT	SEGLENGTH
 #endif
 
-#define SEGOFSET	(PTE_PPN0|PAGE_MASK)
+#define SEGLENGTH	(PGSHIFT - PTPSHIFT)
+#define SEGSHIFT	(SEGLENGTH + PGSHIFT)
+#define NBSEG		(1 << SEGSHIFT)		/* bytes/segment */
+#define SEGOFSET	(NBSEG - 1)		/* byte offset into segment */
 
 #define KERNEL_PID	0
 
 #define PMAP_HWPAGEWALKER		1
-#define PMAP_TLB_NUM_PIDS		256
 #define PMAP_TLB_MAX			1
 #ifdef _LP64
 #define PMAP_INVALID_PDETAB_ADDRESS	((pmap_pdetab_t *)(VM_MIN_KERNEL_ADDRESS - PAGE_SIZE))
@@ -74,6 +85,8 @@
 #define PMAP_INVALID_PDETAB_ADDRESS	((pmap_pdetab_t *)0xdeadbeef)
 #define PMAP_INVALID_SEGTAB_ADDRESS	((pmap_segtab_t *)0xdeadbeef)
 #endif
+#define PMAP_TLB_NUM_PIDS		(__SHIFTOUT_MASK(SATP_ASID) + 1)
+#define PMAP_TLB_BITMAP_LENGTH          PMAP_TLB_NUM_PIDS
 #define PMAP_TLB_FLUSH_ASID_ON_RESET	false
 
 #define pmap_phys_address(x)		(x)
@@ -120,9 +133,9 @@ paddr_t	pmap_md_direct_mapped_vaddr_to_paddr(vaddr_t);
 vaddr_t	pmap_md_direct_map_paddr(paddr_t);
 void	pmap_md_init(void);
 bool	pmap_md_tlb_check_entry(void *, vaddr_t, tlb_asid_t, pt_entry_t);
-void    pmap_md_page_syncicache(struct vm_page_md *, const kcpuset_t *);
 
-void	pmap_md_pdetab_activate(struct pmap *);
+void	pmap_md_xtab_activate(struct pmap *, struct lwp *);
+void	pmap_md_xtab_deactivate(struct pmap *);
 void	pmap_md_pdetab_init(struct pmap *);
 bool	pmap_md_ok_to_steal_p(const uvm_physseg_t, size_t);
 
@@ -130,6 +143,9 @@ extern vaddr_t pmap_direct_base;
 extern vaddr_t pmap_direct_end;
 #define PMAP_DIRECT_MAP(pa)	(pmap_direct_base + (pa))
 #define PMAP_DIRECT_UNMAP(va)	((paddr_t)(va) - pmap_direct_base)
+
+#define MEGAPAGE_TRUNC(x)	((x) & ~SEGOFSET)
+#define MEGAPAGE_ROUND(x)	MEGAPAGE_TRUNC((x) + SEGOFSET)
 
 #ifdef __PMAP_PRIVATE
 static inline void
@@ -150,7 +166,6 @@ pmap_md_vca_add(struct vm_page_md *mdpg, vaddr_t va, pt_entry_t *nptep)
 static inline void
 pmap_md_vca_remove(struct vm_page_md *mdpg, vaddr_t va)
 {
-
 }
 
 static inline void
@@ -162,20 +177,6 @@ static inline size_t
 pmap_md_tlb_asid_max(void)
 {
 	return PMAP_TLB_NUM_PIDS - 1;
-}
-
-static inline void
-pmap_md_xtab_activate(struct pmap *pm, struct lwp *l)
-{
-
-	/* nothing */
-}
-
-static inline void
-pmap_md_xtab_deactivate(struct pmap *pm)
-{
-
-	/* nothing */
 }
 
 #endif /* __PMAP_PRIVATE */
