@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.30 2021/04/30 19:46:24 christos Exp $ */
+/* $NetBSD: lex.c,v 1.31 2021/05/01 00:08:44 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.30 2021/04/30 19:46:24 christos Exp $");
+__RCSID("$NetBSD: lex.c,v 1.31 2021/05/01 00:08:44 christos Exp $");
 #endif
 
 #include <ctype.h>
@@ -190,6 +190,7 @@ static	struct	kwtab {
 	kwdef_token(	"no_instrument_function",
 				T_AT_NO_INSTRUMENT_FUNCTION,	0,0,1,1,5),
 	kwdef_token(	"noinline",	T_AT_NOINLINE,		0,0,1,1,5),
+	kwdef_token(	"nonnull",	T_AT_NONNULL,		0,0,1,1,5),
 	kwdef_token(	"nonstring",	T_AT_NONSTRING,		0,0,1,1,5),
 	kwdef_token(	"noreturn",	T_AT_NORETURN,		0,0,1,1,5),
 	kwdef_token(	"nothrow",	T_AT_NOTHROW,		0,0,1,1,5),
