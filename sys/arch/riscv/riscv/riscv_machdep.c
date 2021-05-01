@@ -1,4 +1,4 @@
-/*	$NetBSD: riscv_machdep.c,v 1.13 2020/11/04 20:05:47 skrll Exp $	*/
+/*	$NetBSD: riscv_machdep.c,v 1.14 2021/05/01 06:53:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2019 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 #include "opt_modular.h"
 
-__RCSID("$NetBSD: riscv_machdep.c,v 1.13 2020/11/04 20:05:47 skrll Exp $");
+__RCSID("$NetBSD: riscv_machdep.c,v 1.14 2021/05/01 06:53:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,9 @@ struct cpu_info cpu_info_store = {
 };
 
 const pcu_ops_t * const pcu_ops_md_defs[PCU_UNIT_COUNT] = {
+#ifdef FPE
 	[PCU_FPU] = &pcu_fpu_ops,
+#endif
 };
 
 void
