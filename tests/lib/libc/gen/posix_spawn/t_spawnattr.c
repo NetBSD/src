@@ -1,4 +1,4 @@
-/* $NetBSD: t_spawnattr.c,v 1.3 2017/12/21 03:31:43 christos Exp $ */
+/* $NetBSD: t_spawnattr.c,v 1.4 2021/05/02 11:18:11 martin Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -165,9 +165,43 @@ ATF_TC_BODY(t_spawnattr, tc)
 	posix_spawnattr_destroy(&attr);
 }
 
+ATF_TC(t_spawn_resetids);
+
+ATF_TC_HEAD(t_spawn_resetids, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "posix_spawn a child and with POSIX_SPAWN_RESETIDS flag");
+}
+
+ATF_TC_BODY(t_spawn_resetids, tc)
+{
+	char buf[FILENAME_MAX];
+	char * const args[] = {
+	     __UNCONST("h_spawn"), __UNCONST("--resetids"), NULL
+	};
+	posix_spawnattr_t attr;
+	int err, status;
+	pid_t pid;
+
+	posix_spawnattr_init(&attr);
+	posix_spawnattr_setflags(&attr, POSIX_SPAWN_RESETIDS);
+
+	snprintf(buf, sizeof buf, "%s/h_spawn",
+	    atf_tc_get_config_var(tc, "srcdir"));
+
+	err = posix_spawn(&pid, buf, NULL, &attr, args, NULL);
+	ATF_REQUIRE(err == 0);
+	ATF_REQUIRE(pid > 0);
+	waitpid(pid, &status, 0);
+	ATF_REQUIRE(WIFEXITED(status) && WEXITSTATUS(status) == 0);
+
+	posix_spawnattr_destroy(&attr);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, t_spawnattr);
+	ATF_TP_ADD_TC(tp, t_spawn_resetids);
 
 	return atf_no_error();
 }
