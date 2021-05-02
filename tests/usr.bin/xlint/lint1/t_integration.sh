@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.46 2021/05/02 20:44:46 rillig Exp $
+# $NetBSD: t_integration.sh,v 1.47 2021/05/02 21:22:09 rillig Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -181,6 +181,7 @@ test_case emit
 
 test_case gcc_attribute
 test_case gcc_attribute_aligned
+test_case gcc_bit_field_types
 test_case gcc_init_compound_literal
 test_case gcc_typeof_after_statement
 
