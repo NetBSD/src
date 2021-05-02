@@ -467,13 +467,6 @@ pools.
 Spares cannot replace log devices.
 .Pp
 This feature requires a userland helper.
-FreeBSD provides
-.Xr zfsd 8
-for this purpose.
-It must be manually enabled by adding
-.Va zfsd_enable="YES"
-to
-.Pa /etc/rc.conf .
 .Ss Intent Log
 The
 .Tn ZFS
