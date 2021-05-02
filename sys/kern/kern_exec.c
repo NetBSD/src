@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.504 2020/12/05 18:17:01 thorpej Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.505 2021/05/02 10:23:55 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.504 2020/12/05 18:17:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.505 2021/05/02 10:23:55 martin Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -2172,7 +2172,7 @@ handle_posix_spawn_attrs(struct posix_spawnattr *attrs, struct proc *parent)
 
 	/* Reset user ID's */
 	if (attrs->sa_flags & POSIX_SPAWN_RESETIDS) {
-		error = do_setresuid(l, -1, kauth_cred_getgid(l->l_cred), -1,
+		error = do_setresgid(l, -1, kauth_cred_getgid(l->l_cred), -1,
 		     ID_E_EQ_R | ID_E_EQ_S);
 		if (error)
 			return error;
