@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.179 2021/05/02 21:48:53 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.180 2021/05/02 22:07:49 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.179 2021/05/02 21:48:53 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.180 2021/05/02 22:07:49 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1121,7 +1121,7 @@ check_bit_field_type(sym_t *dsym,  type_t **const inout_tp, tspec_t *inout_t)
 		 * regardless of BITFIELDTYPE. Integer types not dealt with
 		 * above are okay only if BITFIELDTYPE is in effect.
 		 */
-		if (!bitfieldtype_ok || !is_integer(t)) {
+		if (!(bitfieldtype_ok || gflag) || !is_integer(t)) {
 			/* illegal bit-field type '%s' */
 			warning(35, type_name(tp));
 			int sz = tp->t_flen;
