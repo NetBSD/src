@@ -1,4 +1,4 @@
-.\" $NetBSD: lint.1,v 1.43 2021/04/14 20:06:40 rillig Exp $
+.\" $NetBSD: lint.1,v 1.44 2021/05/02 21:05:42 rillig Exp $
 .\"
 .\" Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
 .\" Copyright (c) 1994, 1995 Jochen Pohl
@@ -579,6 +579,11 @@ option must exist.
 If this environment variable is undefined, then the default path
 .Pa /usr/libdata/lint
 will be used to search for the libraries.
+.It Ev LINT_KEEP_CPPOUT_ON_ERROR
+If
+.Nm
+exits unsuccessfully, do no delete the output from the C preprocessor,
+allowing for manual inspection.
 .It Ev TMPDIR
 Usually the path for temporary files can be redefined by setting
 this environment variable.
