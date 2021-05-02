@@ -1,5 +1,1 @@
-gcc_bit_field_types.c(16): warning: illegal bit-field type 'long' [35]
-gcc_bit_field_types.c(17): warning: illegal bit-field type 'unsigned long' [35]
-gcc_bit_field_types.c(18): warning: illegal bit-field type 'long long' [35]
-gcc_bit_field_types.c(19): warning: illegal bit-field type 'unsigned long long' [35]
 gcc_bit_field_types.c(20): warning: illegal bit-field type 'double' [35]
