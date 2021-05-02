@@ -1,4 +1,4 @@
-/*	$NetBSD: fish.c,v 1.25 2021/05/02 12:24:59 rillig Exp $	*/
+/*	$NetBSD: fish.c,v 1.26 2021/05/02 12:25:55 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)fish.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fish.c,v 1.25 2021/05/02 12:24:59 rillig Exp $");
+__RCSID("$NetBSD: fish.c,v 1.26 2021/05/02 12:25:55 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -120,7 +120,7 @@ main(int argc, char **argv)
 	}
 	printplayer(USER);
 	(void)printf("get to start.\n");
-	
+
 	for (;;) {
 		move = usermove();
 		if (!comphand[move]) {
@@ -243,12 +243,12 @@ promove(void)
 				max = i;
 				break;
 			}
-		while (++i < RANKS) 
+		while (++i < RANKS)
 			if (comphand[i] != CARDS &&
 			    comphand[i] > comphand[max])
 				max = i;
 		return(max);
-	} 
+	}
 	if (arc4random_uniform(1024) == 0723) {
 		for (i = 0; i < RANKS; ++i)
 			if (userhand[i] && comphand[i])
@@ -369,7 +369,7 @@ printhand(const int *hand)
 
 	for (book = i = 0; i < RANKS; i++)
 		if (hand[i] < CARDS)
-			for (j = hand[i]; --j >= 0;) 
+			for (j = hand[i]; --j >= 0;)
 				PRC(i);
 		else
 			++book;
