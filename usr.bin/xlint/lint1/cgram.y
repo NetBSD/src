@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.224 2021/05/01 07:25:07 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.225 2021/05/02 20:53:13 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.224 2021/05/01 07:25:07 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.225 2021/05/02 20:53:13 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -553,60 +553,60 @@ type_attribute_bounded_type:
 
 type_attribute_spec:
 	  /* empty */
-	| T_AT_DEPRECATED T_LPAREN string T_RPAREN
-	| T_AT_DEPRECATED
+	| T_AT_ALWAYS_INLINE
+	| T_AT_ALIAS T_LPAREN string T_RPAREN
 	| T_AT_ALIGNED T_LPAREN constant_expr T_RPAREN
+	| T_AT_ALIGNED
 	| T_AT_ALLOC_SIZE T_LPAREN constant_expr T_COMMA constant_expr T_RPAREN
 	| T_AT_ALLOC_SIZE T_LPAREN constant_expr T_RPAREN
 	| T_AT_BOUNDED T_LPAREN type_attribute_bounded_type
 	  T_COMMA constant_expr T_COMMA constant_expr T_RPAREN
-	| T_AT_SENTINEL T_LPAREN constant_expr T_RPAREN
-	| T_AT_SENTINEL
-	| T_AT_FORMAT_ARG T_LPAREN constant_expr T_RPAREN
-	| T_AT_NONNULL
-	| T_AT_NONNULL T_LPAREN constant_expr_list_opt T_RPAREN
-	| T_AT_NONSTRING
-	| T_AT_MODE T_LPAREN T_NAME T_RPAREN
-	| T_AT_ALIAS T_LPAREN string T_RPAREN
-	| T_AT_OPTIMIZE T_LPAREN string T_RPAREN
-	| T_AT_PCS T_LPAREN string T_RPAREN
-	| T_AT_SECTION T_LPAREN string T_RPAREN
-	| T_AT_TLS_MODEL T_LPAREN string T_RPAREN
-	| T_AT_ALIGNED
-	| T_AT_CONSTRUCTOR T_LPAREN constant_expr T_RPAREN
-	| T_AT_CONSTRUCTOR
-	| T_AT_DESTRUCTOR T_LPAREN constant_expr T_RPAREN
-	| T_AT_DESTRUCTOR
-	| T_AT_MALLOC
-	| T_AT_MAY_ALIAS
-	| T_AT_NO_INSTRUMENT_FUNCTION
-	| T_AT_NOINLINE
-	| T_AT_NORETURN
-	| T_AT_NOTHROW
 	| T_AT_COLD
 	| T_AT_COMMON
-	| T_AT_RETURNS_TWICE
-	| T_AT_PACKED {
-		addpacked();
-	  }
-	| T_AT_PURE
-	| T_AT_TUNION
-	| T_AT_GNU_INLINE
-	| T_AT_ALWAYS_INLINE
-	| T_AT_FORMAT T_LPAREN type_attribute_format_type T_COMMA
-	    constant_expr T_COMMA constant_expr T_RPAREN
-	| T_AT_USED {
-		add_attr_used();
-	  }
-	| T_AT_UNUSED {
-		add_attr_used();
-	  }
-	| T_AT_WARN_UNUSED_RESULT
-	| T_AT_WEAK
-	| T_AT_VISIBILITY T_LPAREN constant_expr T_RPAREN
+	| T_AT_CONSTRUCTOR T_LPAREN constant_expr T_RPAREN
+	| T_AT_CONSTRUCTOR
+	| T_AT_DEPRECATED T_LPAREN string T_RPAREN
+	| T_AT_DEPRECATED
+	| T_AT_DESTRUCTOR T_LPAREN constant_expr T_RPAREN
+	| T_AT_DESTRUCTOR
 	| T_AT_FALLTHROUGH {
 		fallthru(1);
 	}
+	| T_AT_FORMAT T_LPAREN type_attribute_format_type T_COMMA
+	    constant_expr T_COMMA constant_expr T_RPAREN
+	| T_AT_FORMAT_ARG T_LPAREN constant_expr T_RPAREN
+	| T_AT_GNU_INLINE
+	| T_AT_MALLOC
+	| T_AT_MAY_ALIAS
+	| T_AT_MODE T_LPAREN T_NAME T_RPAREN
+	| T_AT_NOINLINE
+	| T_AT_NONNULL T_LPAREN constant_expr_list_opt T_RPAREN
+	| T_AT_NONNULL
+	| T_AT_NONSTRING
+	| T_AT_NORETURN
+	| T_AT_NOTHROW
+	| T_AT_NO_INSTRUMENT_FUNCTION
+	| T_AT_OPTIMIZE T_LPAREN string T_RPAREN
+	| T_AT_PACKED {
+		addpacked();
+	  }
+	| T_AT_PCS T_LPAREN string T_RPAREN
+	| T_AT_PURE
+	| T_AT_RETURNS_TWICE
+	| T_AT_SECTION T_LPAREN string T_RPAREN
+	| T_AT_SENTINEL T_LPAREN constant_expr T_RPAREN
+	| T_AT_SENTINEL
+	| T_AT_TLS_MODEL T_LPAREN string T_RPAREN
+	| T_AT_TUNION
+	| T_AT_UNUSED {
+		add_attr_used();
+	  }
+	| T_AT_USED {
+		add_attr_used();
+	  }
+	| T_AT_VISIBILITY T_LPAREN constant_expr T_RPAREN
+	| T_AT_WARN_UNUSED_RESULT
+	| T_AT_WEAK
 	| T_QUAL {
 		if ($1 != CONST)
 			yyerror("Bad attribute");
