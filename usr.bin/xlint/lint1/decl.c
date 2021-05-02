@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.178 2021/04/18 17:36:18 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.179 2021/05/02 21:48:53 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.178 2021/04/18 17:36:18 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.179 2021/05/02 21:48:53 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1094,10 +1094,10 @@ check_type(sym_t *sym)
  * implementation-defined type".
  */
 static void
-declare_bit_field(sym_t *dsym, tspec_t *inout_t, type_t **const inout_tp)
+check_bit_field_type(sym_t *dsym,  type_t **const inout_tp, tspec_t *inout_t)
 {
-	tspec_t t = *inout_t;
 	type_t *tp = *inout_tp;
+	tspec_t t = *inout_t;
 
 	if (t == CHAR || t == UCHAR || t == SCHAR ||
 	    t == SHORT || t == USHORT || t == ENUM) {
@@ -1128,9 +1128,20 @@ declare_bit_field(sym_t *dsym, tspec_t *inout_t, type_t **const inout_tp)
 			dsym->s_type = tp = dup_type(gettyp(t = INT));
 			if ((tp->t_flen = sz) > size_in_bits(t))
 				tp->t_flen = size_in_bits(t);
+			*inout_t = t;
+			*inout_tp = tp;
 		}
 	}
+}
 
+static void
+declare_bit_field(sym_t *dsym, tspec_t *inout_t, type_t **const inout_tp)
+{
+
+	check_bit_field_type(dsym, inout_tp, inout_t);
+
+	type_t *const tp = *inout_tp;
+	tspec_t const t = *inout_t;
 	if (tp->t_flen < 0 || tp->t_flen > (ssize_t)size_in_bits(t)) {
 		/* illegal bit-field size: %d */
 		error(36, tp->t_flen);
@@ -1146,9 +1157,6 @@ declare_bit_field(sym_t *dsym, tspec_t *inout_t, type_t **const inout_tp)
 		dsym->s_type->t_bitfield = false;
 		dsym->s_bitfield = false;
 	}
-
-	*inout_t = t;
-	*inout_tp = tp;
 }
 
 /*
