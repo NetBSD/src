@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.117 2021/01/27 06:59:08 skrll Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.118 2021/05/02 19:13:43 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.117 2021/01/27 06:59:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.118 2021/05/02 19:13:43 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,6 +90,7 @@ static int	kqueue_poll(file_t *, int);
 static int	kqueue_kqfilter(file_t *, struct knote *);
 static int	kqueue_stat(file_t *, struct stat *);
 static int	kqueue_close(file_t *);
+static void	kqueue_restart(file_t *);
 static int	kqueue_register(struct kqueue *, struct kevent *);
 static void	kqueue_doclose(struct kqueue *, struct klist *, int);
 
@@ -125,7 +126,7 @@ static const struct fileops kqueueops = {
 	.fo_stat = kqueue_stat,
 	.fo_close = kqueue_close,
 	.fo_kqfilter = kqueue_kqfilter,
-	.fo_restart = fnullop_restart,
+	.fo_restart = kqueue_restart,
 };
 
 static const struct filterops kqread_filtops = {
@@ -501,7 +502,7 @@ filt_kqueue(struct knote *kn, long hint)
 
 	if (hint != NOTE_SUBMIT)
 		mutex_spin_enter(&kq->kq_lock);
-	kn->kn_data = kq->kq_count;
+	kn->kn_data = KQ_COUNT(kq);
 	rv = (kn->kn_data > 0);
 	if (hint != NOTE_SUBMIT)
 		mutex_spin_exit(&kq->kq_lock);
@@ -1328,12 +1329,12 @@ static void
 kqueue_check(const char *func, size_t line, const struct kqueue *kq)
 {
 	const struct knote *kn;
-	int count;
+	u_int count;
 	int nmarker;
 	char buf[128];
 
 	KASSERT(mutex_owned(&kq->kq_lock));
-	KASSERT(kq->kq_count >= 0);
+	KASSERT(KQ_COUNT(kq) < UINT_MAX / 2);
 
 	count = 0;
 	nmarker = 0;
@@ -1353,22 +1354,14 @@ kqueue_check(const char *func, size_t line, const struct kqueue *kq)
 				    func, line, kq, kn, KN_FMT(buf, kn));
 			}
 			count++;
-			if (count > kq->kq_count) {
+			if (count > KQ_COUNT(kq)) {
 				panic("%s,%zu: kq=%p kq->kq_count(%d) != "
 				    "count(%d), nmarker=%d",
-		    		    func, line, kq, kq->kq_count, count,
+		    		    func, line, kq, KQ_COUNT(kq), count,
 				    nmarker);
 			}
 		} else {
 			nmarker++;
-#if 0
-			if (nmarker > 10000) {
-				panic("%s,%zu: kq=%p too many markers: "
-				    "%d != %d, nmarker=%d",
-				    func, line, kq, kq->kq_count, count,
-				    nmarker);
-			}
-#endif
 		}
 	}
 }
@@ -1376,6 +1369,18 @@ kqueue_check(const char *func, size_t line, const struct kqueue *kq)
 #else /* defined(DEBUG) */
 #define	kq_check(a)	/* nothing */
 #endif /* defined(DEBUG) */
+
+static void
+kqueue_restart(file_t *fp)
+{
+	struct kqueue *kq = fp->f_kqueue;
+	KASSERT(kq != NULL);
+
+	mutex_spin_enter(&kq->kq_lock);
+	kq->kq_count |= KQ_RESTART;
+	cv_broadcast(&kq->kq_cv);
+	mutex_spin_exit(&kq->kq_lock);
+}
 
 /*
  * Scan through the list of events on fp (for a maximum of maxevents),
@@ -1426,14 +1431,19 @@ kqueue_scan(file_t *fp, size_t maxevents, struct kevent *ulistp,
 	mutex_spin_enter(&kq->kq_lock);
  retry:
 	kevp = kevbuf;
-	if (kq->kq_count == 0) {
+	if (KQ_COUNT(kq) == 0) {
 		if (timeout >= 0) {
 			error = cv_timedwait_sig(&kq->kq_cv,
 			    &kq->kq_lock, timeout);
 			if (error == 0) {
-				 if (tsp == NULL || (timeout =
-				     gettimeleft(&ats, &sleepts)) > 0)
+				if (KQ_COUNT(kq) == 0 &&
+				    (kq->kq_count & KQ_RESTART)) {
+					/* return to clear file reference */
+					error = ERESTART;
+				} else if (tsp == NULL || (timeout =
+				    gettimeleft(&ats, &sleepts)) > 0) {
 					goto retry;
+				}
 			} else {
 				/* don't restart after signals... */
 				if (error == ERESTART)
@@ -1689,7 +1699,7 @@ kqueue_poll(file_t *fp, int events)
 	revents = 0;
 	if (events & (POLLIN | POLLRDNORM)) {
 		mutex_spin_enter(&kq->kq_lock);
-		if (kq->kq_count != 0) {
+		if (KQ_COUNT(kq) != 0) {
 			revents |= events & (POLLIN | POLLRDNORM);
 		} else {
 			selrecord(curlwp, &kq->kq_sel);
@@ -1713,7 +1723,7 @@ kqueue_stat(file_t *fp, struct stat *st)
 	kq = fp->f_kqueue;
 
 	memset(st, 0, sizeof(*st));
-	st->st_size = kq->kq_count;
+	st->st_size = KQ_COUNT(kq);
 	st->st_blksize = sizeof(struct kevent);
 	st->st_mode = S_IFIFO;
 
@@ -1771,7 +1781,7 @@ kqueue_close(file_t *fp)
 	}
 	mutex_exit(&fdp->fd_lock);
 
-	KASSERT(kq->kq_count == 0);
+	KASSERT(KQ_COUNT(kq) == 0);
 	mutex_destroy(&kq->kq_lock);
 	cv_destroy(&kq->kq_cv);
 	seldestroy(&kq->kq_sel);
