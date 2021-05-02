@@ -1,4 +1,4 @@
-/* $NetBSD: mkindex.c,v 1.11 2009/08/12 05:29:40 dholland Exp $ */
+/* $NetBSD: mkindex.c,v 1.12 2021/05/02 12:50:44 rillig Exp $ */
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@ static char copyright[] = "@(#) Copyright (c) 1993\n\
 static char sccsid[] = "@(#)mkindex.c	8.1 (Berkeley) 6/11/93";
 #else
 static char rcsid[] =
-    "$NetBSD: mkindex.c,v 1.11 2009/08/12 05:29:40 dholland Exp $";
+    "$NetBSD: mkindex.c,v 1.12 2021/05/02 12:50:44 rillig Exp $";
 #endif
 #endif /* not lint */
 
@@ -112,7 +112,7 @@ nextword(FILE *fp, char *buffer, int *clen, int *rlen)
 		return (NULL);
 
 	p = buf + (*clen = pcount);
- 
+
 	while ((ch = getc(fp)) != EOF && ch >= 'a')
 			*p++ = ch;
 		lastch = ch;

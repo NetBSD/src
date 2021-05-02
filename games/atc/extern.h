@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.19 2015/06/25 05:33:02 dholland Exp $	*/
+/*	$NetBSD: extern.h,v 1.20 2021/05/02 12:50:43 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -54,7 +54,7 @@ extern time_t		start_time;
 
 #if 0
 extern FILE		*filein, *fileout;
-#endif 
+#endif
 
 extern C_SCREEN		*sp;
 

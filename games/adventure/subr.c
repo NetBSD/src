@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.13 2009/08/25 06:56:52 dholland Exp $	*/
+/*	$NetBSD: subr.c,v 1.14 2021/05/02 12:50:43 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)subr.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: subr.c,v 1.13 2009/08/25 06:56:52 dholland Exp $");
+__RCSID("$NetBSD: subr.c,v 1.14 2021/05/02 12:50:43 rillig Exp $");
 #endif
 #endif				/* not lint */
 
@@ -210,7 +210,7 @@ fdwarf(void)
 		j = 1 + ran(j);
 		odloc[i] = dloc[i];
 		dloc[i] = tk[j];
-		dseen[i] = (dseen[i] && loc >= 15) || 
+		dseen[i] = (dseen[i] && loc >= 15) ||
 		    (dloc[i] == loc || odloc[i] == loc);
 		if (!dseen[i])
 			continue;	/* i.e. goto 6030 */
@@ -298,7 +298,7 @@ l82:		if (stick <= 1) {	/* 82 */
 /* label 8              */
 int
 march(void)
-{	
+{
 	int     ll1, ll2;
 
 	if ((tkk = travel[newloc = loc]) == 0)
@@ -383,7 +383,7 @@ l12:				/* alternative to probability move      */
 /* 20                   */
 static int
 mback(void)
-{	
+{
 	struct travlist *tk2, *j;
 	int     ll;
 	if (forced(k = oldloc))
@@ -421,7 +421,7 @@ mback(void)
 /* 30000                */
 static int
 specials(void)
-{	
+{
 	switch (newloc -= 300) {
 		case 1:		/* 30100                */
 		newloc = 99 + 100 - loc;
@@ -504,7 +504,7 @@ bug(int n)
 /* 2600 &c              */
 void
 checkhints(void)
-{	
+{
 	int     hint;
 	for (hint = 4; hint <= hintmax; hint++) {
 		if (hinted[hint])
@@ -571,7 +571,7 @@ trsay(void)
 /* 9010                 */
 int
 trtake(void)
-{	
+{
 	if (toting(obj))
 		return (2011);	/* 9010 */
 	spk = 25;
@@ -626,7 +626,7 @@ l9014:	if ((obj == bird || obj == cage) && prop[bird] != 0)
 /* 9021                 */
 static int
 dropper(void)
-{	
+{
 	k = liq();
 	if (k == obj)
 		obj = bottle;
@@ -774,7 +774,7 @@ tropen(void)
 /* 9120                         */
 int
 trkill(void)
-{	
+{
 	int     i;
 	for (i = 1; i <= 5; i++)
 		if (dloc[i] == loc && dflag >= 2)
@@ -856,7 +856,7 @@ trkill(void)
 /* 9170: throw                  */
 int
 trtoss(void)
-{	
+{
 	int     i;
 	if (toting(rod2) && obj == rod && !toting(rod))
 		obj = rod2;
@@ -918,7 +918,7 @@ trtoss(void)
 /* 9210                 */
 int
 trfeed(void)
-{	
+{
 	if (obj == bird) {
 		spk = 100;
 		return (2011);
@@ -1000,7 +1000,7 @@ trfill(void)
 /* 10000 */
 void
 closing(void)
-{	
+{
 	int     i;
 
 	prop[grate] = prop[fissure] = 0;
@@ -1027,7 +1027,7 @@ closing(void)
 /* 11000 */
 void
 caveclose(void)
-{	
+{
 	int     i;
 	prop[bottle] = put(bottle, 115, 1);
 	prop[plant] = put(plant, 115, 0);

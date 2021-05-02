@@ -3,13 +3,13 @@
 /* Log:	term.c,v
  * Revision 7.0.1.2  86/12/12  17:04:09  lwall
  * Baseline for net release.
- * 
+ *
  * Revision 7.0.1.1  86/10/16  10:53:20  lwall
  * Added Damage.  Fixed random bugs.
- * 
+ *
  * Revision 7.0  86/10/08  15:14:02  lwall
  * Split into separate files.  Added amoebas and pirates.
- * 
+ *
  */
 
 #include "EXTERN.h"
@@ -133,7 +133,7 @@ term_set(char *tcbuf) /* temp area for "uncompiled" termcap entry */
 #endif
 #endif
 #endif
-    
+
     /* get all that good termcap stuff */
 
     retval = tgetent(tcbuf,getenv("TERM"));	/* get termcap entry */
@@ -507,7 +507,7 @@ helper(void)
 	getcmd(spbuf);
     } while (*spbuf != ' ');
     rewrite();
-    
+
 }
 
 void
@@ -704,7 +704,7 @@ getcmd(char *wbuf)
 #ifdef PUSHBACK
     KEYMAP *curmap;
     int i;
-    bool no_macros; 
+    bool no_macros;
     int times = 0;			/* loop detector */
     char scrchar;
     unsigned char *whatbuf = (void *)wbuf;
@@ -786,7 +786,7 @@ pushstring(char *str)
     assert(str != NULL);
     interp(s,PUSHSIZE,str);
     for (i = strlen(s)-1; i >= 0; --i) {
-	s[i] ^= 0200; 
+	s[i] ^= 0200;
 	pushchar(s[i]);
     }
 }

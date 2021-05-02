@@ -1,4 +1,4 @@
-/*	$NetBSD: room.c,v 1.14 2019/10/05 23:34:14 mrg Exp $	*/
+/*	$NetBSD: room.c,v 1.15 2021/05/02 12:50:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)room.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: room.c,v 1.14 2019/10/05 23:34:14 mrg Exp $");
+__RCSID("$NetBSD: room.c,v 1.15 2021/05/02 12:50:43 rillig Exp $");
 #endif
 #endif				/* not lint */
 
@@ -174,7 +174,7 @@ truedirec(int way, int option)
 		break;
 	}
 
-	printf("Error: room %d.  More than four directions wanted.", 
+	printf("Error: room %d.  More than four directions wanted.",
 	    position);
 	return ("!!");
 }

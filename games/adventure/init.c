@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.21 2014/03/22 20:07:05 dholland Exp $	*/
+/*	$NetBSD: init.c,v 1.22 2021/05/02 12:50:43 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 6/2/93";
 #else
-__RCSID("$NetBSD: init.c,v 1.21 2014/03/22 20:07:05 dholland Exp $");
+__RCSID("$NetBSD: init.c,v 1.22 2021/05/02 12:50:43 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,7 @@ static void linkdata(void);
 
 int     blklin = TRUE;
 
-int     setbit[16] = {1, 2, 4, 010, 020, 040, 0100, 0200, 0400, 01000, 02000, 
+int     setbit[16] = {1, 2, 4, 010, 020, 040, 0100, 0200, 0400, 01000, 02000,
 		      04000, 010000, 020000, 040000, 0100000};
 
 volatile sig_atomic_t delhit;

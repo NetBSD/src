@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.21 2009/08/25 06:56:52 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.22 2021/05/02 12:50:43 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/2/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.21 2009/08/25 06:56:52 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.22 2021/05/02 12:50:43 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -407,7 +407,7 @@ l4080:
 			if (place[eggs] == plac[eggs]
 			    || (toting(eggs) && loc == plac[eggs]))
 				goto l2011;
-			if (place[eggs] == 0 && place[troll] == 0 && 
+			if (place[eggs] == 0 && place[troll] == 0 &&
 			    prop[troll] == 0)
 				prop[troll] = 1;
 			k = 2;
@@ -593,7 +593,7 @@ l4090:
 			if (obj == food)
 				goto l8142;
 			if (obj == bird || obj == snake || obj == clam
-			    || obj == oyster || obj == dwarf || obj == dragon 
+			    || obj == oyster || obj == dwarf || obj == dragon
 			    || obj == troll || obj == bear)
 				spk = 71;
 			goto l2011;
@@ -634,7 +634,7 @@ l4090:
 			    || k == liqloc(loc))
 				spk = 94;
 			for (i = 1; i <= 5; i++)
-				if (dloc[i] == loc && dflag >= 2 
+				if (dloc[i] == loc && dflag >= 2
 				    && obj == dwarf)
 					spk = 94;
 			if (closed)

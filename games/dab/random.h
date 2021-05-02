@@ -1,4 +1,4 @@
-/*	$NetBSD: random.h,v 1.3 2008/04/28 20:22:54 martin Exp $	*/
+/*	$NetBSD: random.h,v 1.4 2021/05/02 12:50:44 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 /*
- * random.h: Randomizer; returns a random sequence of values from [0..fx) 
+ * random.h: Randomizer; returns a random sequence of values from [0..fx)
  *	     returning each value exactly once. After fx calls it returns fx.
  */
 

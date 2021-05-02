@@ -1,4 +1,4 @@
-/*	$NetBSD: command6.c,v 1.8 2010/04/24 00:38:30 dholland Exp $	*/
+/*	$NetBSD: command6.c,v 1.9 2021/05/02 12:50:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)com6.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: command6.c,v 1.8 2010/04/24 00:38:30 dholland Exp $");
+__RCSID("$NetBSD: command6.c,v 1.9 2021/05/02 12:50:43 rillig Exp $");
 #endif
 #endif				/* not lint */
 
@@ -127,7 +127,7 @@ post(int ch)
 	sigprocmask(SIG_BLOCK, &isigset, &osigset);
 	tv = time(NULL);
 	if (score_fp != NULL) {
-		fprintf(score_fp, "%24.24s  %8s  %c%20s", ctime(&tv), username, 
+		fprintf(score_fp, "%24.24s  %8s  %c%20s", ctime(&tv), username,
 		    ch, rate());
 		if (wiz)
 			fprintf(score_fp, "   wizard\n");
@@ -206,7 +206,7 @@ ride(void)
 		printf("forward through bush and fern.  You are thrown and ");
 		puts("the horse gallops off.");
 		clearbit(location[position].objects, HORSE);
-		while (!(position = rnd(NUMOFROOMS + 1)) || !OUTSIDE || 
+		while (!(position = rnd(NUMOFROOMS + 1)) || !OUTSIDE ||
 		    !beenthere[position] || location[position].flyhere)
 			continue;
 		setbit(location[position].objects, HORSE);

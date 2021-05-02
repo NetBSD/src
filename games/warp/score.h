@@ -3,7 +3,7 @@
 /* Log:	score.h,v
  * Revision 7.0  86/10/08  15:13:21  lwall
  * Split into separate files.  Added amoebas and pirates.
- * 
+ *
  */
 
 #define ENTBOUNDARY 100000	/*  point boundary across which a new E is

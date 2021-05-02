@@ -1,4 +1,4 @@
-/*	$NetBSD: number.c,v 1.16 2014/03/23 00:03:04 dholland Exp $	*/
+/*	$NetBSD: number.c,v 1.17 2021/05/02 12:50:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)number.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: number.c,v 1.16 2014/03/23 00:03:04 dholland Exp $");
+__RCSID("$NetBSD: number.c,v 1.17 2021/05/02 12:50:45 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,7 +71,7 @@ static const char	*const name1[] = {
 	"trillion",	"quadrillion",	"quintillion",	"sextillion",
 	"septillion",	"octillion",	"nonillion",	"decillion",
 	"undecillion",	"duodecillion",	"tredecillion",	"quattuordecillion",
-	"quindecillion",		"sexdecillion",	
+	"quindecillion",		"sexdecillion",
 	"septendecillion",		"octodecillion",
 	"novemdecillion",		"vigintillion",
 };

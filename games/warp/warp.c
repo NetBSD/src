@@ -7,10 +7,10 @@ char rcsid[] = "@(#)Header: warp.c,v 7.0.1.3 86/12/12 17:07:44 lwall Exp";
  *
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
- * 
+ *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Larry Wall.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -19,7 +19,7 @@ char rcsid[] = "@(#)Header: warp.c,v 7.0.1.3 86/12/12 17:07:44 lwall Exp";
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -31,7 +31,7 @@ char rcsid[] = "@(#)Header: warp.c,v 7.0.1.3 86/12/12 17:07:44 lwall Exp";
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  * version 5.0  04/20/83
  *         5.1  05/05/83	various tidbits
  *	   5.2  05/12/83	VAX -> vax, ifdef'ed a SIGCONT
@@ -40,28 +40,28 @@ char rcsid[] = "@(#)Header: warp.c,v 7.0.1.3 86/12/12 17:07:44 lwall Exp";
  * Log:	warp.c,v
  * Revision 7.0.1.3  86/12/12  17:07:44  lwall
  * Baseline for net release.
- * 
+ *
  * Revision 7.0.1.2  86/10/20  12:08:00  lwall
  * Made all exits reset tty.
- * 
+ *
  * Revision 7.0.1.1  86/10/16  10:54:13  lwall
  * Added Damage.  Fixed random bugs.
- * 
+ *
  * Revision 7.0  86/10/08  15:14:47  lwall
  * Split into separate files.  Added amoebas and pirates.
- * 
+ *
  * Revision 6.4  83/12/16  13:11:45  lwall
  * Handled 15 bit random number generators.
- * 
+ *
  * Fixed array overflow bug on multiple zaps.
- * 
+ *
  * Multiple zaps now consolidated to minimize output.
- * 
+ *
  * Tholian jackpot games outlawed under difficulty 15.
- * 
+ *
  * Revision 6.3  83/08/24  11:17:49  lwall
  * Fixed array overflow bug on multiple zap.
- * 
+ *
  * Revision 6.2  83/08/23  18:06:37  lwall
  * Added zap command.
  * Warp -s should now work on dumb terminals
@@ -70,14 +70,14 @@ char rcsid[] = "@(#)Header: warp.c,v 7.0.1.3 86/12/12 17:07:44 lwall Exp";
  * No-delay read provided as alternative to FIONREAD.
  * Warp won't report "-1 obsolete" when there are no Enterprises left.
  * Some high-difficulty tuning.
- * 
+ *
  * Revision 6.1  83/08/17  08:49:03  lwall
  * Fixed obscure bug in storing UP that caused a %. in CM to occasionally
  * foist garbage onto the screen.
- * 
+ *
  * Revision 6.0  83/08/08  17:09:26  lwall
  * New baseline version for net release.
- * 
+ *
  * Revision 5.5  83/08/01  10:59:56  lwall
  * Cloaking for the Enterprise.
  * Difficulty now goes to 99, and many activities depending on difficulty
@@ -115,7 +115,7 @@ char rcsid[] = "@(#)Header: warp.c,v 7.0.1.3 86/12/12 17:07:44 lwall Exp";
  * Catch ^D on fgets.
  * Version number printer.
  * Less signal catching during debugging.
- * 
+ *
  * Revision 5.4  83/06/24  09:28:38  lwall
  * 16 bit random number generators are now supported.
  * Made warp not blow up on a null save file.
@@ -124,10 +124,10 @@ char rcsid[] = "@(#)Header: warp.c,v 7.0.1.3 86/12/12 17:07:44 lwall Exp";
  *     was launched because of an obstacle.
  * Put %<n>ld formats where appropriate.
  * Fixed E: 0  0 bug on refresh.
- * 
+ *
  * Revision 5.3  83/05/24  14:03:10  lwall
  * Starting RCS
- * 
+ *
  */
 
 #include "INTERN.h"

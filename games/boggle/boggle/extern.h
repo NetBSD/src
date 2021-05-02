@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.11 2009/08/12 05:29:40 dholland Exp $	*/
+/*	$NetBSD: extern.h,v 1.12 2021/05/02 12:50:43 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -50,7 +50,7 @@ char	*nextword(FILE *);
 FILE	*opendict(const char *);
 void	 prompt(const char *);
 void	 prtable(const char *const [],
-	    int, int, int, void (*)(const char *const [], int), 
+	    int, int, int, void (*)(const char *const [], int),
 	    int (*)(const char *const [], int));
 void	 redraw(void);
 void	 results(void);

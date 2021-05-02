@@ -1,4 +1,4 @@
-/* $NetBSD: setup.c,v 1.11 2005/07/01 00:03:36 jmc Exp $ */
+/* $NetBSD: setup.c,v 1.12 2021/05/02 12:50:43 rillig Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@ static char copyright[] = "@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)setup.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: setup.c,v 1.11 2005/07/01 00:03:36 jmc Exp $";
+static char rcsid[] = "$NetBSD: setup.c,v 1.12 2021/05/02 12:50:43 rillig Exp $";
 #endif
 #endif				/* not lint */
 
@@ -98,7 +98,7 @@ main(int argc, char *argv[])
 
 	while ((c = getc(infile)) != EOF) {
 		if (linestart && c == ' ') { /* Convert first spaces to tab */
-			printf("0x%02x,", 
+			printf("0x%02x,",
 			    (unsigned int)('\t' ^ random()) & 0xFF);
 			while ((c = getc(infile)) == ' ' && c != EOF);
 			/* Drop the non-whitespace character through */

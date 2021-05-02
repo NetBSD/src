@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.22 2019/02/03 03:19:25 mrg Exp $	*/
+/*	$NetBSD: misc.c,v 1.23 2021/05/02 12:50:46 rillig Exp $	*/
 
 /*
  * misc.c  Phantasia miscellaneous support routines
@@ -120,7 +120,7 @@ descrlocation(struct player *playerp, phbool shortflag)
 									label = "The Lord's Chamber";
 								else {
 									/* this
-									 * 
+									 *
 									 * expr
 									 * essi
 									 * on
@@ -132,13 +132,13 @@ descrlocation(struct player *playerp, phbool shortflag)
 									 * ent
 									 * comp
 									 * iler
-									 * 
+									 *
 									 * loop
-									 * 
+									 *
 									 * with
-									 * 
+									 *
 									 * some
-									 * 
+									 *
 									 * comp
 									 * iler
 									 * s */
@@ -151,7 +151,7 @@ descrlocation(struct player *playerp, phbool shortflag)
 	if (shortflag)
 		snprintf(Databuf, SZ_DATABUF, "%.29s", label);
 	else
-		snprintf(Databuf, SZ_DATABUF, 
+		snprintf(Databuf, SZ_DATABUF,
 			" is in %s  (%.0f,%.0f)",
 			label, playerp->p_x, playerp->p_y);
 

@@ -3,13 +3,13 @@
 /* Log:	weapon.c,v
  * Revision 7.0.1.2  86/10/20  14:36:33  lwall
  * Picked some lint.
- * 
+ *
  * Revision 7.0.1.1  86/10/16  10:54:42  lwall
  * Added Damage.  Fixed random bugs.
- * 
+ *
  * Revision 7.0  86/10/08  15:18:08  lwall
  * Split into separate files.  Added amoebas and pirates.
- * 
+ *
  */
 
 #include "EXTERN.h"
@@ -162,7 +162,7 @@ attack(OBJECT *attackee)
 				    case 3: {
 					int newspeed =
 					    rand_mod(prob<5&&smarts>70?4:3)-1;
-					
+
 					obj->vely = -dy * newspeed;
 					obj->velx = -dx * newspeed;
 					if (newspeed >= 0 &&
@@ -418,7 +418,7 @@ attack(OBJECT *attackee)
 			else {
 			    if (thru_stars)
 				goto bombout;
-			}	
+			}
 		    }
 bombout:            ; /* end of loop */
 		}

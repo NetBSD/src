@@ -3,7 +3,7 @@
 /* Log:	play.h,v
  * Revision 7.0  86/10/08  15:13:12  lwall
  * Split into separate files.  Added amoebas and pirates.
- * 
+ *
  */
 
 EXT int finish INIT(0);

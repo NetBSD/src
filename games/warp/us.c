@@ -3,16 +3,16 @@
 /* Log:	us.c,v
  * Revision 7.0.1.3  87/01/13  17:13:21  lwall
  * Partially fixed ^S behavior.  It now just ignores ^S.
- * 
+ *
  * Revision 7.0.1.2  86/12/12  17:06:09  lwall
  * Baseline for net release.
- * 
+ *
  * Revision 7.0.1.1  86/10/16  10:53:50  lwall
  * Added Damage.  Fixed random bugs.
- * 
+ *
  * Revision 7.0  86/10/08  15:14:21  lwall
  * Split into separate files.  Added amoebas and pirates.
- * 
+ *
  */
 
 #include "EXTERN.h"
@@ -42,7 +42,7 @@ do_direction(int dy, int dx)
     if (status < 2) {
 	if (cloaking) {
 	    char ch;
-	    
+
 	    cloaked = false;
 	    ch = (ent->energy >= 500?'E':'e');
 	    if (ch != ent->image) {
@@ -111,7 +111,7 @@ ctrl_direction(int dy, int dx)
     if (status < 2) {
 	if (cloaking) {
 	    char ch;
-	    
+
 	    cloaked = false;
 	    ch = (ent->energy >= 500?'E':'e');
 	    if (ch != ent->image) {
@@ -136,7 +136,7 @@ shift_direction(int dy, int dx)
     if (status < 2) {
 	if (cloaking) {
 	    char ch;
-	    
+
 	    cloaked = false;
 	    ch = (ent->energy >= 500?'E':'e');
 	    if (ch != ent->image) {

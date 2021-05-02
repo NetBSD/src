@@ -4,13 +4,13 @@
  * Revision 7.0.1.1a  87/07/03  01:47:11  games
  * Changed sigsetmask to use sigmask instead of calculating it (incorrectly)
  * by hand.
- * 
+ *
  * Revision 7.0.1.1  86/12/12  17:02:44  lwall
  * Baseline for net release.
- * 
+ *
  * Revision 7.0  86/10/08  15:13:24  lwall
  * Split into separate files.  Added amoebas and pirates.
- * 
+ *
  */
 
 #include "EXTERN.h"

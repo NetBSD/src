@@ -3,10 +3,10 @@
  * Log:	intrp.h,v
  * Revision 7.0.1.1  86/12/12  16:59:45  lwall
  * Baseline for net release.
- * 
+ *
  * Revision 7.0  86/10/08  15:12:27  lwall
  * Split into separate files.  Added amoebas and pirates.
- * 
+ *
  */
 
 EXT char *origdir INIT(NULL);		/* cwd when warp invoked */

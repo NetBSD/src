@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.27 2016/06/12 02:15:26 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.28 2021/05/02 12:50:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.27 2016/06/12 02:15:26 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.28 2021/05/02 12:50:44 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -322,7 +322,7 @@ again:
 		if (i != RESIGN) {
 		replay:
 			ask("Play again? ");
-			ch = get_key("YyNnQqSs"); 
+			ch = get_key("YyNnQqSs");
 			if (ch == 'Y' || ch == 'y')
 				goto again;
 			if (ch == 'S') {

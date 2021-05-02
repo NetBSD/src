@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.c,v 1.11 2011/08/16 11:14:04 christos Exp $	*/
+/*	$NetBSD: extern.c,v 1.12 2021/05/02 12:50:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)extern.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: extern.c,v 1.11 2011/08/16 11:14:04 christos Exp $");
+__RCSID("$NetBSD: extern.c,v 1.12 2021/05/02 12:50:45 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,7 +64,7 @@ static const char *const _cn[NUM_CARDS] = {/* Card name buffer		*/
 		"Flat Tire",
 		"Accident",
 		"Stop",
-		"Speed Limit", 
+		"Speed Limit",
 		"Gasoline",
 		"Spare Tire",
 		"Repairs",

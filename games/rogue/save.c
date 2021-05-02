@@ -1,4 +1,4 @@
-/*	$NetBSD: save.c,v 1.13 2008/01/14 03:50:02 dholland Exp $	*/
+/*	$NetBSD: save.c,v 1.14 2021/05/02 12:50:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)save.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: save.c,v 1.13 2008/01/14 03:50:02 dholland Exp $");
+__RCSID("$NetBSD: save.c,v 1.14 2021/05/02 12:50:46 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,7 +56,7 @@ __RCSID("$NetBSD: save.c,v 1.13 2008/01/14 03:50:02 dholland Exp $");
 #include <stdio.h>
 #include "rogue.h"
 
-static boolean	has_been_touched(const struct rogue_time *, 
+static boolean	has_been_touched(const struct rogue_time *,
 			const struct rogue_time *);
 static void	r_read(FILE *, void *, size_t);
 static void	r_write(FILE *, const void *, size_t);

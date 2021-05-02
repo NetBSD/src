@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.terminfo.c,v 1.2 2011/10/03 12:32:28 roy Exp $	*/
+/*	$NetBSD: hack.terminfo.c,v 1.3 2021/05/02 12:50:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.terminfo.c,v 1.2 2011/10/03 12:32:28 roy Exp $");
+__RCSID("$NetBSD: hack.terminfo.c,v 1.3 2021/05/02 12:50:44 rillig Exp $");
 #endif				/* not lint */
 
 #include <string.h>
@@ -124,7 +124,7 @@ xputs(const char *s)
 static void
 cmov(int x, int y)
 {
-	char *p; 
+	char *p;
 
 	p = tiparm(cursor_address, y - 1, x - 1);
 	if (p) {
@@ -243,7 +243,7 @@ void
 home(void)
 {
 	char *out;
-	
+
 	if (cursor_home)
 		xputs(cursor_home);
 	else if ((cursor_address) && (out = tiparm(cursor_address, 0, 0)))
@@ -287,7 +287,7 @@ sound_bell(void)
 void
 delay_output(void)
 {
-	
+
 	/* delay 50 ms - could also use a 'nap'-system call */
 	  /* or the usleep call like this :-) */
 	usleep(50000);

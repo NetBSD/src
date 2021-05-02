@@ -1,15 +1,15 @@
-/*	$NetBSD: action.c,v 1.1 2008/02/19 06:05:26 dholland Exp $	*/
+/*	$NetBSD: action.c,v 1.2 2021/05/02 12:50:45 rillig Exp $	*/
 
 /*
  * action.c 		Larn is copyrighted 1986 by Noah Morgan.
- * 
+ *
  * Routines in this file:
- * 
+ *
  * ...
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: action.c,v 1.1 2008/02/19 06:05:26 dholland Exp $");
+__RCSID("$NetBSD: action.c,v 1.2 2021/05/02 12:50:45 rillig Exp $");
 #endif				/* not lint */
 #include <stdlib.h>
 #include <unistd.h>
@@ -256,7 +256,7 @@ act_ignore_altar(void)
 }
 
 /*
- * Performs the act of opening a chest.  
+ * Performs the act of opening a chest.
  *
  * Parameters:   x,y location of the chest to open.
  * Assumptions:  cursors() has been called previously

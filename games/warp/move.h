@@ -3,7 +3,7 @@
 /* Log:	move.h,v
  * Revision 7.0  86/10/08  15:12:46  lwall
  * Split into separate files.  Added amoebas and pirates.
- * 
+ *
  */
 
 void move_init(void);

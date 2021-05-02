@@ -1,4 +1,4 @@
-/*	$NetBSD: command1.c,v 1.5 2012/06/19 05:46:08 dholland Exp $	*/
+/*	$NetBSD: command1.c,v 1.6 2021/05/02 12:50:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)com1.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: command1.c,v 1.5 2012/06/19 05:46:08 dholland Exp $");
+__RCSID("$NetBSD: command1.c,v 1.6 2021/05/02 12:50:43 rillig Exp $");
 #endif
 #endif				/* not lint */
 
@@ -143,8 +143,8 @@ news(void)
 		rythmn = ourtime - ourtime % CYCLE;
 	}
 	if (!wiz && !tempwiz)
-		if ((testbit(inven, TALISMAN) || testbit(wear, TALISMAN)) && 
-		    (testbit(inven, MEDALION) || testbit(wear, MEDALION)) && 
+		if ((testbit(inven, TALISMAN) || testbit(wear, TALISMAN)) &&
+		    (testbit(inven, MEDALION) || testbit(wear, MEDALION)) &&
 		    (testbit(inven, AMULET) || testbit(wear, AMULET))) {
 			tempwiz = 1;
 			printf("The three amulets glow and reenforce each ");
@@ -208,7 +208,7 @@ news(void)
 			printf("Laser blasts sear the cockpit, and the alien ");
 			puts("veers off in a victory roll.");
 			puts("The viper shudders under a terrible explosion.");
-			printf("I'm afraid you have suffered %s.\n", 
+			printf("I'm afraid you have suffered %s.\n",
 			    ouch[hurt]);
 		} else
 			clearbit(location[position].objects, CYLON);

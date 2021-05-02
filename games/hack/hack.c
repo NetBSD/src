@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.c,v 1.11 2011/08/07 06:03:45 dholland Exp $	*/
+/*	$NetBSD: hack.c,v 1.12 2021/05/02 12:50:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.c,v 1.11 2011/08/07 06:03:45 dholland Exp $");
+__RCSID("$NetBSD: hack.c,v 1.12 2021/05/02 12:50:44 rillig Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
@@ -877,7 +877,7 @@ dbon(void)
 /* may kill you; cause may be poison or */
 /* monster like 'A' */
 void
-losestr(int num)		
+losestr(int num)
 {
 	u.ustr -= num;
 	while (u.ustr < 3) {

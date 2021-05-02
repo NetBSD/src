@@ -3,7 +3,7 @@
 /* Log:	sm.c,v
  * Revision 7.0  86/10/08  15:13:35  lwall
  * Split into separate files.  Added amoebas and pirates.
- * 
+ *
  */
 
 #include <stdio.h>
@@ -22,7 +22,7 @@ main(void)
     for (x=0; x<79; x++)
 	screen[0][x] = ' ';
     screen[0][79] = '\0';
-    
+
     fgets(screen[0],90,stdin);
     if (isdigit(screen[0][0])) {
 	int numstars = atoi(screen[0]);
@@ -32,7 +32,7 @@ main(void)
 		screen[y][x] = ' ';
 	    screen[y][79] = '\0';
 	}
-	
+
 	for ( ; numstars; numstars--) {
 	    scanf("%d %d\n",&tmpy,&tmpx);
 	    y = tmpy;
@@ -52,7 +52,7 @@ main(void)
 		screen[y][x] = ' ';
 	    screen[y][79] = '\0';
 	}
-	
+
 	for (y=1; y<23; y++) {
 	    fgets(screen[y],90,stdin);
 	}

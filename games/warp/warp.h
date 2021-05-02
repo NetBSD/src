@@ -3,13 +3,13 @@
 /* Log:	warp.h,v
  * Revision 7.0.1.2  86/12/12  17:08:42  lwall
  * Baseline for net release.
- * 
+ *
  * Revision 7.0.1.1  86/10/16  10:54:26  lwall
  * Added Damage.  Fixed random bugs.
- * 
+ *
  * Revision 7.0  86/10/08  15:17:55  lwall
  * Split into separate files.  Added amoebas and pirates.
- * 
+ *
  */
 
 #ifndef WARP_H
@@ -28,7 +28,7 @@
 #include <signal.h>
 #include <fcntl.h>
 #include <ctype.h>
-#include <errno.h> 
+#include <errno.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
@@ -314,7 +314,7 @@ EXT char *cwd INIT(NULL);		/* current working directory */
 
 #ifdef DEBUGGING
     EXT int debug INIT(0);				/* -D */
-#   define DEB_FILEXP 64 
+#   define DEB_FILEXP 64
 #endif
 
 #ifdef VERBOSE

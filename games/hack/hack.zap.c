@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.zap.c,v 1.9 2009/08/12 07:28:41 dholland Exp $	*/
+/*	$NetBSD: hack.zap.c,v 1.10 2021/05/02 12:50:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.zap.c,v 1.9 2009/08/12 07:28:41 dholland Exp $");
+__RCSID("$NetBSD: hack.zap.c,v 1.10 2021/05/02 12:50:44 rillig Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
@@ -723,7 +723,7 @@ rloco(struct obj *obj)
 /* fractured by pick-axe or wand of striking */
 /* no texts here! */
 void
-fracture_rock(struct obj *obj)	
+fracture_rock(struct obj *obj)
 {
 	/* unpobj(obj); */
 	obj->otyp = ROCK;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fly.c,v 1.15 2012/10/13 19:58:53 dholland Exp $	*/
+/*	$NetBSD: fly.c,v 1.16 2021/05/02 12:50:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)fly.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: fly.c,v 1.15 2012/10/13 19:58:53 dholland Exp $");
+__RCSID("$NetBSD: fly.c,v 1.16 2021/05/02 12:50:43 rillig Exp $");
 #endif
 #endif				/* not lint */
 
@@ -151,7 +151,7 @@ visual(void)
 			if (torps) {
 				torps -= 2;
 				blast();
-				if (row == MIDR && column < MIDC + 2 && 
+				if (row == MIDR && column < MIDC + 2 &&
 				    column > MIDC - 2) {
 					destroyed = 1;
 					alarm(0);
@@ -265,7 +265,7 @@ moveenemy(int dummy __unused)
 			fuel = 0;
 			mvaddstr(0, 60, "*** Out of fuel ***");
 		}
-	d = (double) ((row - MIDR) * (row - MIDR) + (column - MIDC) * 
+	d = (double) ((row - MIDR) * (row - MIDR) + (column - MIDC) *
 	    (column - MIDC));
 	if (d < 16) {
 		row += (rnd(9) - 4) % (4 - abs(row - MIDR));

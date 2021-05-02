@@ -1,4 +1,4 @@
-/*	$NetBSD: message.c,v 1.14 2009/08/12 08:44:45 dholland Exp $	*/
+/*	$NetBSD: message.c,v 1.15 2021/05/02 12:50:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)message.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: message.c,v 1.14 2009/08/12 08:44:45 dholland Exp $");
+__RCSID("$NetBSD: message.c,v 1.15 2021/05/02 12:50:46 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -149,9 +149,9 @@ check_message(void)
 }
 
 int
-get_input_line(const char *prompt, const char *insert, 
-	       char *buf, size_t buflen, 
-	       const char *if_cancelled, 
+get_input_line(const char *prompt, const char *insert,
+	       char *buf, size_t buflen,
+	       const char *if_cancelled,
 	       boolean add_blank, boolean do_echo)
 {
 	short ch;

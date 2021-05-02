@@ -1,4 +1,4 @@
-/*	$NetBSD: command5.c,v 1.5 2014/03/22 23:31:28 dholland Exp $	*/
+/*	$NetBSD: command5.c,v 1.6 2021/05/02 12:50:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)com5.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: command5.c,v 1.5 2014/03/22 23:31:28 dholland Exp $");
+__RCSID("$NetBSD: command5.c,v 1.6 2021/05/02 12:50:43 rillig Exp $");
 #endif
 #endif				/* not lint */
 
@@ -53,7 +53,7 @@ kiss(void)
 		return;
 	}
 	if (wordtype[wordnumber] == NOUNS) {
-		if (testbit(location[position].objects, 
+		if (testbit(location[position].objects,
 		    wordvalue[wordnumber])) {
 			pleasure++;
 			printf("Kissed.\n");
@@ -144,7 +144,7 @@ love(void)
 				}
 				printf("Goddess:\n");
 				if (!loved)
-					setbit(location[position].objects, 
+					setbit(location[position].objects,
 					    MEDALION);
 				loved = 1;
 				ourtime += 10;
@@ -156,7 +156,7 @@ love(void)
 				return;
 			}
 		}
-		if (testbit(location[position].objects, 
+		if (testbit(location[position].objects,
 		    wordvalue[wordnumber])) {
 			if (wordvalue[wordnumber] == NATIVE) {
 				printf("The girl is easy prey.  She peels ");
@@ -216,7 +216,7 @@ zzz(void)
 					while (!testbit(inven, n))
 						n = rnd(NUMOFOBJECTS);
 					clearbit(inven, n);
-					if (n != AMULET && n != MEDALION && 
+					if (n != AMULET && n != MEDALION &&
 					    n != TALISMAN)
 						setbit(
 						    location[position].objects,
@@ -305,9 +305,9 @@ give(void)
 
 	last1 = last2 = 0;
 	firstnumber = wordnumber;
-	while (wordtype[++wordnumber] != OBJECT && 
-	    wordvalue[wordnumber] != AMULET && 
-	    wordvalue[wordnumber] != MEDALION && 
+	while (wordtype[++wordnumber] != OBJECT &&
+	    wordvalue[wordnumber] != AMULET &&
+	    wordvalue[wordnumber] != MEDALION &&
 	    wordvalue[wordnumber] != TALISMAN && wordnumber <= wordcount)
 		continue;
 	if (wordnumber <= wordcount) {
@@ -317,7 +317,7 @@ give(void)
 		last1 = wordnumber;
 	}
 	wordnumber = firstnumber;
-	while ((wordtype[++wordnumber] != NOUNS || 
+	while ((wordtype[++wordnumber] != NOUNS ||
 	    wordvalue[wordnumber] == obj) && wordnumber <= wordcount);
 	if (wordtype[wordnumber] == NOUNS) {
 		person = wordvalue[wordnumber];
@@ -338,7 +338,7 @@ give(void)
 	 * the same place.  */
 	wordnumber = last1 - 1;
 	if (person && testbit(location[position].objects, person)) {
-		if (person == NORMGOD && godready < 2 && 
+		if (person == NORMGOD && godready < 2 &&
 		    !(obj == RING || obj == BRACELET))
 			puts("The goddess won't look at you.");
 		else
@@ -348,7 +348,7 @@ give(void)
 		wordnumber = max(last1, last2) + 1;
 		return (0);
 	}
-	if (result != -1 && (testbit(location[position].objects, obj) || 
+	if (result != -1 && (testbit(location[position].objects, obj) ||
 	    obj == AMULET || obj == MEDALION || obj == TALISMAN)) {
 		clearbit(location[position].objects, obj);
 		ourtime++;
@@ -366,7 +366,7 @@ give(void)
 				ego += 5;
 				godready += 3;
 			}
-			if (obj == AMULET || obj == MEDALION || 
+			if (obj == AMULET || obj == MEDALION ||
 			    obj == TALISMAN) {
 				win++;
 				ego += 5;
@@ -400,7 +400,7 @@ give(void)
 					printf("you want to win this game, ");
 					printf("you're going to have to\n");
 					puts("shoot her!)");
-					clearbit(location[position].objects, 
+					clearbit(location[position].objects,
 					    MEDALION);
 					wintime = ourtime;
 				}

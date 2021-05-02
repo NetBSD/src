@@ -3,13 +3,13 @@
 /* Log:	move.c,v
  * Revision 7.0.1.2  86/10/20  14:37:06  lwall
  * Picked some lint.
- * 
+ *
  * Revision 7.0.1.1  86/10/16  10:52:09  lwall
  * Added Damage.  Fixed random bugs.
- * 
+ *
  * Revision 7.0  86/10/08  15:12:40  lwall
  * Split into separate files.  Added amoebas and pirates.
- * 
+ *
  */
 
 #include "EXTERN.h"

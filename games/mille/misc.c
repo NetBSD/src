@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.12 2009/05/25 23:24:54 dholland Exp $	*/
+/*	$NetBSD: misc.c,v 1.13 2021/05/02 12:50:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: misc.c,v 1.12 2009/05/25 23:24:54 dholland Exp $");
+__RCSID("$NetBSD: misc.c,v 1.13 2021/05/02 12:50:45 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -161,7 +161,7 @@ done:
 				goto extend;
 			for (miles = 0, i = 0; i < HAND_SZ; i++)
 				if ((safe = pp->hand[i]) <= C_200)
-					miles += Value[safe]; 
+					miles += Value[safe];
 			if (miles + (Topcard - Deck) * 3 > 1000)
 				goto extend;
 			goto done;

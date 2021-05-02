@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.24 2019/03/19 00:11:34 pgoyette Exp $	*/
+/*	$NetBSD: log.c,v 1.25 2021/05/02 12:50:43 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)log.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: log.c,v 1.24 2019/03/19 00:11:34 pgoyette Exp $");
+__RCSID("$NetBSD: log.c,v 1.25 2021/05/02 12:50:43 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -141,7 +141,7 @@ open_score_file(void)
 	if (fcntl(score_fd, F_SETFD, flags) == -1)
 		err(1, "fcntl F_SETFD");
 	/*
-	 * This is done to take advantage of stdio, while still 
+	 * This is done to take advantage of stdio, while still
 	 * allowing a O_CREAT during the open(2) of the log file.
 	 */
 	score_fp = fdopen(score_fd, "r+");
@@ -184,10 +184,10 @@ log_score(int list_em)
 	}
 	for (;;) {
 		good = fscanf(score_fp, SCORE_SCANF_FMT,
-			   score[num_scores].name, 
-			   score[num_scores].host, 
+			   score[num_scores].name,
+			   score[num_scores].host,
 			   score[num_scores].game,
-			   &score[num_scores].planes, 
+			   &score[num_scores].planes,
 			   &score[num_scores].time,
 			   &score[num_scores].real_time);
 		if (good != 6 || ++num_scores >= NUM_SCORES)
@@ -195,19 +195,19 @@ log_score(int list_em)
 	}
 	if (!test_mode && !list_em) {
 		if ((pw = (struct passwd *) getpwuid(getuid())) == NULL) {
-			(void)fprintf(stderr, 
+			(void)fprintf(stderr,
 				"getpwuid failed for uid %d.  Who are you?\n",
 				(int)getuid());
 			return (-1);
 		}
 		(void)strlcpy(thisscore.name, pw->pw_name, SCORE_NAME_LEN);
 		(void)uname(&lname);
-		(void)strlcpy(thisscore.host, lname.nodename, 
+		(void)strlcpy(thisscore.host, lname.nodename,
 		    sizeof(thisscore.host));
 
 		cp = strrchr(filename, '/');
 		if (cp == NULL) {
-			(void)fprintf(stderr, "log: where's the '/' in %s?\n", 
+			(void)fprintf(stderr, "log: where's the '/' in %s?\n",
 			    filename);
 			return (-1);
 		}
@@ -264,7 +264,7 @@ log_score(int list_em)
 			rewind(score_fp);
 			for (i = 0; i < num_scores; i++)
 				(void)fprintf(score_fp, "%s %s %s %d %d %d\n",
-				    score[i].name, score[i].host, 
+				    score[i].name, score[i].host,
 				    score[i].game, score[i].planes,
 				    score[i].time, score[i].real_time);
 			(void)fflush(score_fp);

@@ -3,10 +3,10 @@
 /* Log:	us.h,v
  * Revision 7.0.1.1  86/10/16  10:53:58  lwall
  * Added Damage.  Fixed random bugs.
- * 
+ *
  * Revision 7.0  86/10/08  15:14:27  lwall
  * Split into separate files.  Added amoebas and pirates.
- * 
+ *
  */
 
 EXT bool cloaking;

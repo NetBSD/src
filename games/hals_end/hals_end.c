@@ -1,4 +1,4 @@
-/*	$NetBSD: hals_end.c,v 1.1 2013/11/12 17:46:21 mbalmer Exp $ */
+/*	$NetBSD: hals_end.c,v 1.2 2021/05/02 12:50:45 rillig Exp $ */
 
 /*
  * hals_end Copyright (C) 2003-2007 marc balmer.  BSD license applies.
@@ -68,7 +68,7 @@ void
 stutter(const char *s)
 {
 	int sdelay = (100000 + (50000 * emotion)) / speed;
-	
+
 	while (*s) {
 		putchar(*s);
 		if (*s == ' ') {

@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.33 2017/03/20 22:05:27 christos Exp $	*/
+/*	$NetBSD: screen.c,v 1.34 2021/05/02 12:50:46 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -318,10 +318,10 @@ scr_update(void)
 	/* draw preview of nextpattern */
 	if (showpreview && (nextshape != lastshape)) {
 		static int r=5, c=2;
-		int tr, tc, t; 
+		int tr, tc, t;
 
 		lastshape = nextshape;
-		
+
 		/* clean */
 		putpad(exit_standout_mode);
 		moveto(r-1, c-1); putstr("          ");
@@ -331,7 +331,7 @@ scr_update(void)
 
 		moveto(r-3, c-2);
 		putstr("Next shape:");
-						
+
 		/* draw */
 		setcolor(nextshape->color);
 		putpad(enter_standout_mode);
@@ -349,7 +349,7 @@ scr_update(void)
 		}
 		putpad(exit_standout_mode);
 	}
-	
+
 	bp = &board[D_FIRST * B_COLS];
 	sp = &curscreen[D_FIRST * B_COLS];
 	for (j = D_FIRST; j < D_LAST; j++) {
@@ -415,7 +415,7 @@ scr_update(void)
 void
 scr_msg(char *s, int set)
 {
-	
+
 	if (set || clr_eol == NULL) {
 		int l = strlen(s);
 

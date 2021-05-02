@@ -1,4 +1,4 @@
-/*	$NetBSD: command2.c,v 1.4 2019/02/03 03:19:25 mrg Exp $	*/
+/*	$NetBSD: command2.c,v 1.5 2021/05/02 12:50:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)com2.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: command2.c,v 1.4 2019/02/03 03:19:25 mrg Exp $");
+__RCSID("$NetBSD: command2.c,v 1.5 2021/05/02 12:50:43 rillig Exp $");
 #endif
 #endif				/* not lint */
 
@@ -180,10 +180,10 @@ murder(void)
 {
 	int     n;
 
-	for (n = 0; 
-	    !((n == SWORD || n == KNIFE || n == TWO_HANDED || n == MACE || 
-	        n == CLEAVER || n == BROAD || n == CHAIN || n == SHOVEL || 
-	        n == HALBERD) && testbit(inven, n)) && n < NUMOFOBJECTS; 
+	for (n = 0;
+	    !((n == SWORD || n == KNIFE || n == TWO_HANDED || n == MACE ||
+	        n == CLEAVER || n == BROAD || n == CHAIN || n == SHOVEL ||
+	        n == HALBERD) && testbit(inven, n)) && n < NUMOFOBJECTS;
 	    n++);
 	if (n == NUMOFOBJECTS) {
 		if (testbit(inven, LASER)) {
@@ -226,15 +226,15 @@ murder(void)
 				power += 5;
 				notes[JINXED]++;
 			} else
-				if (testbit(location[position].objects, 
+				if (testbit(location[position].objects,
 				    NORMGOD)) {
 					printf("The goddess pleads but you ");
 					printf("strike her mercilessly.  Her ");
 					printf("broken body lies in a\n");
 					puts("pool of blood.");
-					clearbit(location[position].objects, 
+					clearbit(location[position].objects,
 					    NORMGOD);
-					setbit(location[position].objects, 
+					setbit(location[position].objects,
 					    DEADGOD);
 					power += 5;
 					notes[JINXED]++;
@@ -292,9 +292,9 @@ ravage(void)
 {
 	while (wordtype[++wordnumber] != NOUNS && wordnumber <= wordcount)
 		continue;
-	if (wordtype[wordnumber] == NOUNS && 
+	if (wordtype[wordnumber] == NOUNS &&
 	    (testbit(location[position].objects, wordvalue[wordnumber])
-	    || (wordvalue[wordnumber] == NORMGOD && 
+	    || (wordvalue[wordnumber] == NORMGOD &&
 	        testbit(location[position].objects, BATHGOD)))) {
 		ourtime++;
 		switch (wordvalue[wordnumber]) {

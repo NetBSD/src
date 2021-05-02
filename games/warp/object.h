@@ -3,13 +3,13 @@
 /* Log:	object.h,v
  * Revision 7.0.1.2  86/12/12  17:01:38  lwall
  * Baseline for net release.
- * 
+ *
  * Revision 7.0.1.1  86/10/16  10:52:30  lwall
  * Added Damage.  Fixed random bugs.
- * 
+ *
  * Revision 7.0  86/10/08  15:13:04  lwall
  * Split into separate files.  Added amoebas and pirates.
- * 
+ *
  */
 
 #define Root 0

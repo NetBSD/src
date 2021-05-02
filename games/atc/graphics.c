@@ -1,4 +1,4 @@
-/*	$NetBSD: graphics.c,v 1.20 2015/06/25 05:33:02 dholland Exp $	*/
+/*	$NetBSD: graphics.c,v 1.21 2021/05/02 12:50:43 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)graphics.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: graphics.c,v 1.20 2015/06/25 05:33:02 dholland Exp $");
+__RCSID("$NetBSD: graphics.c,v 1.21 2021/05/02 12:50:43 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -130,7 +130,7 @@ init_gr(void)
 		errx(0, "couldn't initialize screen");
 	setbuf(stdout, buffer);
 	input = newwin(INPUT_LINES, COLS - PLANE_COLS, LINES - INPUT_LINES, 0);
-	credit = newwin(INPUT_LINES, PLANE_COLS, LINES - INPUT_LINES, 
+	credit = newwin(INPUT_LINES, PLANE_COLS, LINES - INPUT_LINES,
 		COLS - PLANE_COLS);
 	planes = newwin(LINES - INPUT_LINES, PLANE_COLS, 0, COLS - PLANE_COLS);
 }
@@ -230,7 +230,7 @@ setup_screen(const C_SCREEN *scp)
 		(void)wmove(radar, scp->airport[iu].y, scp->airport[iu].x * 2);
 		(void)waddstr(radar, str);
 	}
-	
+
 	(void)overwrite(radar, cleanradar);
 	(void)wrefresh(radar);
 	(void)wrefresh(credit);

@@ -1,10 +1,10 @@
-/*	$NetBSD: scores.c,v 1.21 2012/06/19 05:30:44 dholland Exp $	*/
+/*	$NetBSD: scores.c,v 1.22 2021/05/02 12:50:45 rillig Exp $	*/
 
 /*
  * scores.c			 Larn is copyrighted 1986 by Noah Morgan.
- * 
+ *
  * Functions in this file are:
- * 
+ *
  * readboard() 	Function to read in the scoreboard into a static buffer
  * writeboard()	Function to write the scoreboard from readboard()'s buffer
  * makeboard() 	Function to create a new scoreboard (wipe out old one)
@@ -22,11 +22,11 @@
  * line showing player when he is killed diedlog() 	Subroutine to read a
  * log file and print it out in ascii format getplid(name)
  * on to get players id # from id file
- * 
+ *
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: scores.c,v 1.21 2012/06/19 05:30:44 dholland Exp $");
+__RCSID("$NetBSD: scores.c,v 1.22 2021/05/02 12:50:45 rillig Exp $");
 #endif				/* not lint */
 #include <sys/types.h>
 #include <sys/times.h>
@@ -222,7 +222,7 @@ hashewon(void)
  * Enter with the amount (in gp) to pay on the taxes.
  * Returns amount actually paid.
  */
-long 
+long
 paytaxes(long x)
 {
 	int    i;

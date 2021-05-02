@@ -1,4 +1,4 @@
-/*	$NetBSD: pattern.c,v 1.7 2014/10/02 21:36:37 ast Exp $	*/
+/*	$NetBSD: pattern.c,v 1.8 2021/05/02 12:50:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pattern.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pattern.c,v 1.7 2014/10/02 21:36:37 ast Exp $");
+__RCSID("$NetBSD: pattern.c,v 1.8 2021/05/02 12:50:46 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -47,8 +47,8 @@ __RCSID("$NetBSD: pattern.c,v 1.7 2014/10/02 21:36:37 ast Exp $");
  *
  * By Landon Curt Noll, http://www.isthe.com/chongo/index.html /\oo/\
  *
- * To avoid excessive sieves for small factors, we use the table below to 
- * setup our sieve blocks.  Each element represents a odd number starting 
+ * To avoid excessive sieves for small factors, we use the table below to
+ * setup our sieve blocks.  Each element represents a odd number starting
  * with 1.  All non-zero elements are factors of 3, 5, 7, 11 and 13.
  */
 

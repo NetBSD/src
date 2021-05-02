@@ -3,7 +3,7 @@
 /* Log:	bang.h,v
  * Revision 7.0  86/10/08  15:12:03  lwall
  * Split into separate files.  Added amoebas and pirates.
- * 
+ *
  */
 
 EXT long blast[YSIZE][XSIZE];

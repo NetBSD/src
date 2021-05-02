@@ -3,16 +3,16 @@
 /* Log:	bang.c,v
  * Revision 7.0.1.3  86/12/12  16:57:00  lwall
  * Made circular explosions.
- * 
+ *
  * Revision 7.0.1.2  86/10/20  14:36:02  lwall
  * Picked some lint.
- * 
+ *
  * Revision 7.0.1.1  86/10/16  10:49:45  lwall
  * Added Damage.  Fixed random bugs.
- * 
+ *
  * Revision 7.0  86/10/08  15:11:57  lwall
  * Split into separate files.  Added amoebas and pirates.
- * 
+ *
  */
 
 #include "EXTERN.h"

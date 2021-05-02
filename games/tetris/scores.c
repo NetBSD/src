@@ -1,4 +1,4 @@
-/*	$NetBSD: scores.c,v 1.25 2020/09/07 00:31:11 mrg Exp $	*/
+/*	$NetBSD: scores.c,v 1.26 2021/05/02 12:50:46 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -548,7 +548,7 @@ getscores(int *fdp)
 			}
 		}
 	}
-	
+
 
 	if (fdp)
 		*fdp = sd;
