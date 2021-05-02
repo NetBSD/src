@@ -1,10 +1,11 @@
-# $NetBSD: lint.mk,v 1.1 2015/08/29 16:27:07 uebayasi Exp $
+# $NetBSD: lint.mk,v 1.2 2021/05/02 19:29:30 rillig Exp $
 
 ##
 ## lint
 ##
 
 .if !target(lint)
+.PATH: $S
 ALLSFILES?=	${MD_SFILES} ${SFILES}
 LINTSTUBS?=	${ALLSFILES:T:R:C/^.*$/LintStub_&.c/g}
 KERNLINTFLAGS?=	-bcehnxzFS
