@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_bit_field_types.c,v 1.1 2021/05/02 21:22:09 rillig Exp $	*/
+/*	$NetBSD: gcc_bit_field_types.c,v 1.2 2021/05/02 21:47:28 rillig Exp $	*/
 # 3 "gcc_bit_field_types.c"
 
 /*
@@ -10,12 +10,6 @@
  * See msg_035.c.
  */
 
-// Test for message: illegal bit-field type '%s' [35]
-
-/* Omit -g, see gcc_bit_field_types.c. */
-/* lint1-flags: -Sw */
-
-/* Try all types from tspec_t. */
 struct example {
 	int int_flag: 1;
 	unsigned int unsigned_int_flag: 1;
