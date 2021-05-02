@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.62 2021/04/18 22:51:25 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.63 2021/05/02 21:05:42 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: xlint.c,v 1.62 2021/04/18 22:51:25 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.63 2021/05/02 21:05:42 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -260,8 +260,13 @@ terminate(int signo)
 
 	if (cppoutfd != -1)
 		(void)close(cppoutfd);
-	if (cppout != NULL)
-		(void)remove(cppout);
+	if (cppout != NULL) {
+		if (signo != 0 && getenv("LINT_KEEP_CPPOUT_ON_ERROR") != NULL)
+			printf("lint: preprocessor output kept in %s\n",
+			    cppout);
+		else
+			(void)remove(cppout);
+	}
 
 	if (p1out != NULL) {
 		for (i = 0; p1out[i] != NULL; i++)
