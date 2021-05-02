@@ -3,7 +3,7 @@
 /* Log:	weapon.h,v
  * Revision 7.0  86/10/08  15:18:20  lwall
  * Split into separate files.  Added amoebas and pirates.
- * 
+ *
  */
 
 EXT int tractor INIT(0);

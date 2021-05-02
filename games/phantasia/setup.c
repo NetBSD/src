@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.22 2017/10/02 22:03:10 joerg Exp $	*/
+/*	$NetBSD: setup.c,v 1.23 2021/05/02 12:50:46 rillig Exp $	*/
 
 /*
  * setup.c - set up all files for Phantasia
@@ -43,15 +43,15 @@ double drandom(void);
 /
 / RETURN VALUE: none
 /
-/ MODULES CALLED: time(), exit(), stat(), Error(), creat(), close(), fopen(), 
-/	fgets(), floor(), srandom(), umask(), drandom(), strcpy(), getuid(), 
+/ MODULES CALLED: time(), exit(), stat(), Error(), creat(), close(), fopen(),
+/	fgets(), floor(), srandom(), umask(), drandom(), strcpy(), getuid(),
 /	unlink(), fwrite(), fclose(), sscanf(), printf(), strlen(), fprintf()
 /
 / GLOBAL INPUTS: Curmonster, _iob[], Databuf[], *Monstfp, Enrgyvoid
 /
 / GLOBAL OUTPUTS: Curmonster, Databuf[], *Monstfp, Enrgyvoid
 /
-/ DESCRIPTION: 
+/ DESCRIPTION:
 /
 /	This program tries to verify the parameters specified in
 /	the Makefile.
@@ -263,7 +263,7 @@ Error(const char *str, const char *file)
 /
 / GLOBAL OUTPUTS: none
 /
-/ DESCRIPTION: 
+/ DESCRIPTION:
 /
 / ************************************************************************/
 

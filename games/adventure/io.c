@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.22 2009/08/25 06:56:52 dholland Exp $	*/
+/*	$NetBSD: io.c,v 1.23 2021/05/02 12:50:43 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: io.c,v 1.22 2009/08/25 06:56:52 dholland Exp $");
+__RCSID("$NetBSD: io.c,v 1.23 2021/05/02 12:50:43 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -178,7 +178,7 @@ static const char   *tape = iotape;	/* pointer to encryption tape   */
 /* next virtual char, bump adr  */
 static int
 next(void)
-{	
+{
 	int     ch;
 
 	ch = (*inptr ^ random()) & 0xFF;	/* Decrypt input data  */
@@ -196,7 +196,7 @@ static char breakch;		/* tell which char ended rnum   */
 /* "read" data from virtual file */
 void
 rdata(void)
-{	
+{
 	int     sect;
 	char    ch;
 
@@ -273,7 +273,7 @@ static char nbf[12];
 /* read initial location num    */
 static int
 rnum(void)
-{	
+{
 	char   *s;
 	tape = iotape;		/* restart encryption tape      */
 	for (s = nbf, *s = 0;; s++)
@@ -316,7 +316,7 @@ rdesc(int sect)
 				ptext[oldloc].txtlen = maystart - seekstart;
 				break;
 			case 6:/* random messages              */
-				if (oldloc >= RTXSIZE) 
+				if (oldloc >= RTXSIZE)
 					errx(1,"Too many random msgs");
 				rtext[oldloc].seekadr = seekhere;
 				rtext[oldloc].txtlen = maystart - seekstart;
@@ -354,7 +354,7 @@ rdesc(int sect)
 /* read travel table            */
 static void
 rtrav(void)
-{	
+{
 	int     locc;
 	struct travlist *t = NULL;
 	char   *s;
@@ -362,7 +362,7 @@ rtrav(void)
 	int     len, m, n, entries = 0;
 
 	for (oldloc = -1;;) {	/* get another line             */
-		/* end of entry */		
+		/* end of entry */
 		if ((locc = rnum()) != oldloc && oldloc >= 0 && t) {
 			t->next = 0;	/* terminate the old entry      */
 			/* printf("%d:%d entries\n",oldloc,entries);       */
@@ -460,7 +460,7 @@ rvoc(void)
 /* initial object locations     */
 static void
 rlocs(void)
-{	
+{
 	for (;;) {
 		if ((obj = rnum()) < 0)
 			break;
@@ -475,7 +475,7 @@ rlocs(void)
 /* default verb messages        */
 static void
 rdefault(void)
-{	
+{
 	for (;;) {
 		if ((verb = rnum()) < 0)
 			break;
@@ -486,7 +486,7 @@ rdefault(void)
 /* liquid assets &c: cond bits  */
 static void
 rliq(void)
-{	
+{
 	int     bitnum;
 	for (;;) {		/* read new bit list            */
 		if ((bitnum = rnum()) < 0)

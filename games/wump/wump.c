@@ -1,4 +1,4 @@
-/*	$NetBSD: wump.c,v 1.30 2012/06/19 05:46:09 dholland Exp $	*/
+/*	$NetBSD: wump.c,v 1.31 2021/05/02 12:50:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)wump.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: wump.c,v 1.30 2012/06/19 05:46:09 dholland Exp $");
+__RCSID("$NetBSD: wump.c,v 1.31 2021/05/02 12:50:47 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -689,7 +689,7 @@ getans(const char *prompt)
 
 static int
 bats_nearby(void)
-{ 
+{
 	int i;
 
 	/* check for bats in the immediate vicinity */
@@ -701,7 +701,7 @@ bats_nearby(void)
 
 static int
 pit_nearby(void)
-{ 
+{
 	int i;
 
 	/* check for pits in the immediate vicinity */

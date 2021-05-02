@@ -1,4 +1,4 @@
-/*	$NetBSD: dm.c,v 1.29 2009/08/27 00:22:28 dholland Exp $	*/
+/*	$NetBSD: dm.c,v 1.30 2021/05/02 12:50:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 #if 0
 static char sccsid[] = "@(#)dm.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dm.c,v 1.29 2009/08/27 00:22:28 dholland Exp $");
+__RCSID("$NetBSD: dm.c,v 1.30 2021/05/02 12:50:44 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -172,7 +172,7 @@ c_day(const char *s_day, const char *s_start, const char *s_stop)
 		ct = localtime(&now);
 	if (strcasecmp(s_day, days[ct->tm_wday]))
 		return;
-	if (!isdigit((unsigned char)*s_start) || 
+	if (!isdigit((unsigned char)*s_start) ||
 	    !isdigit((unsigned char)*s_stop))
 		return;
 	start = atoi(s_start);
@@ -210,7 +210,7 @@ c_tty(const char *tty)
  *	see if game can be played now.
  */
 static void
-c_game(const char *s_game, const char *s_load, const char *s_users, 
+c_game(const char *s_game, const char *s_load, const char *s_users,
        const char *s_priority)
 {
 	static int found;

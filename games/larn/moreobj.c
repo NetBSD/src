@@ -1,15 +1,15 @@
-/*	$NetBSD: moreobj.c,v 1.12 2012/06/19 05:30:43 dholland Exp $	*/
+/*	$NetBSD: moreobj.c,v 1.13 2021/05/02 12:50:45 rillig Exp $	*/
 
 /*
  * moreobj.c 		Larn is copyrighted 1986 by Noah Morgan.
- * 
+ *
  * Routines in this file:
- * 
+ *
  * oaltar() othrone() ochest() ofountain()
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: moreobj.c,v 1.12 2012/06/19 05:30:43 dholland Exp $");
+__RCSID("$NetBSD: moreobj.c,v 1.13 2021/05/02 12:50:45 rillig Exp $");
 #endif				/* not lint */
 #include <stdlib.h>
 #include <unistd.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.15 2020/07/26 15:24:00 nia Exp $	*/
+/*	$NetBSD: random.c,v 1.16 2021/05/02 12:50:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1994\
 #if 0
 static char sccsid[] = "@(#)random.c	8.6 (Berkeley) 6/1/94";
 #else
-__RCSID("$NetBSD: random.c,v 1.15 2020/07/26 15:24:00 nia Exp $");
+__RCSID("$NetBSD: random.c,v 1.16 2021/05/02 12:50:46 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,7 +98,7 @@ main(int argc, char *argv[])
 			errx(1, "denominator is not valid.");
 		break;
 	default:
-		usage(); 
+		usage();
 		/* NOTREACHED */
 	}
 
@@ -112,7 +112,7 @@ main(int argc, char *argv[])
 	 */
 	if (unbuffer_output)
 		setbuf(stdout, NULL);
-	
+
 	/*
 	 * Select whether to print the first line.  (Prime the pump.)
 	 * We find a random number between 0 and denom - 1 and, if it's

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.24 2015/06/25 05:33:02 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.25 2021/05/02 12:50:43 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.24 2015/06/25 05:33:02 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.25 2021/05/02 12:50:43 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -101,7 +101,7 @@ main(int argc, char *argv[])
 		switch (ch) {
 		case '?':
 		case 'u':
-		default: 
+		default:
 			f_usage = 1;
 			break;
 		case 'l':
@@ -128,7 +128,7 @@ main(int argc, char *argv[])
 	srandom(seed);
 
 	if (f_usage)
-		(void)fprintf(stderr, 
+		(void)fprintf(stderr,
 		    "Usage: %s -[u?lstp] [-[gf] game_name] [-r random seed]\n",
 		    argv[0]);
 	if (f_showscore)
@@ -141,7 +141,7 @@ main(int argc, char *argv[])
 		(void)strlcpy(buf, _PATH_GAMES, 100);
 		(void)puts(buf);
 	}
-		
+
 	if (f_usage || f_showscore || f_list || f_printpath)
 		exit(0);
 

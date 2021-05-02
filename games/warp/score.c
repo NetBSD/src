@@ -3,16 +3,16 @@
 /* Log:	score.c,v
  * Revision 7.0.1.2a  87/07/03  02:13:26  games
  * Fixed numerous long vs. int bugs in printfs, etc.
- * 
+ *
  * Revision 7.0.1.2  86/10/20  12:06:56  lwall
  * Made all exits reset tty.
- * 
+ *
  * Revision 7.0.1.1  86/10/16  10:52:47  lwall
  * Added Damage.  Fixed random bugs.
- * 
+ *
  * Revision 7.0  86/10/08  15:13:14  lwall
  * Split into separate files.  Added amoebas and pirates.
- * 
+ *
  */
 
 #include "EXTERN.h"
@@ -47,7 +47,7 @@ score_init(void)
 	printf("%s is not protected correctly (must be u+rw o+rx).\r\n",SAVEDIR);
 	finalize(1);
     }
-    
+
 #ifdef SCOREFULL
     interp(longlognam, sizeof longlognam, "%N");
     for (i=strlen(longlognam); i<24; i++)
@@ -59,7 +59,7 @@ score_init(void)
 	longlognam[i] = ' ';	/* make sure it is 8 long for strncmp */
     longlognam[8] = '\0';
 #endif
-    
+
     if (scorespec)
 	wscore();
 

@@ -3,7 +3,7 @@
 /* Log:	sig.h,v
  * Revision 7.0  86/10/08  15:13:32  lwall
  * Split into separate files.  Added amoebas and pirates.
- * 
+ *
  */
 
 void sig_init(void);

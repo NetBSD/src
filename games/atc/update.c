@@ -1,4 +1,4 @@
-/*	$NetBSD: update.c,v 1.27 2015/06/25 05:33:02 dholland Exp $	*/
+/*	$NetBSD: update.c,v 1.28 2021/05/02 12:50:43 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)update.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: update.c,v 1.27 2015/06/25 05:33:02 dholland Exp $");
+__RCSID("$NetBSD: update.c,v 1.28 2021/05/02 12:50:43 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -172,10 +172,10 @@ update(int dummy __unused)
 				if (pp->xpos == sp->airport[i].x &&
 				    pp->ypos == sp->airport[i].y) {
 					if (pp->dest_type == T_AIRPORT)
-					    loser(pp, 
+					    loser(pp,
 						"landed at the wrong airport.");
 					else
-					    loser(pp, 
+					    loser(pp,
 						"landed instead of exited.");
 				}
 			loser(pp, "crashed on the ground.");
@@ -186,10 +186,10 @@ update(int dummy __unused)
 				if (pp->xpos == sp->exit[i].x &&
 				    pp->ypos == sp->exit[i].y) {
 					if (pp->dest_type == T_EXIT)
-					    loser(pp, 
+					    loser(pp,
 						"exited via the wrong exit.");
 					else
-					    loser(pp, 
+					    loser(pp,
 						"exited instead of landed.");
 				}
 			loser(pp, "illegally left the flight arena.");
@@ -267,7 +267,7 @@ command(const PLANE *pp)
 	buf[0] = '\0';
 	bp = buf;
 	bpsize = sizeof(buf);
-	(void)snprintf(bp, bpsize, "%c%d%c%c%u: ", name(pp), pp->altitude, 
+	(void)snprintf(bp, bpsize, "%c%d%c%c%u: ", name(pp), pp->altitude,
 		(pp->fuel < LOWFUEL) ? '*' : ' ',
 		(pp->dest_type == T_AIRPORT) ? 'A' : 'E', pp->dest_no);
 
@@ -287,7 +287,7 @@ command(const PLANE *pp)
 
 	bp = strchr(buf, '\0');
 	bpsize = buf + sizeof(buf) - bp;
-	if (*comm_start == '\0' && 
+	if (*comm_start == '\0' &&
 	    (pp->status == S_UNMARKED || pp->status == S_IGNORED))
 		(void)snprintf(bp, bpsize, "---------");
 	return (buf);
@@ -432,7 +432,7 @@ static int
 too_close(const PLANE *p1, const PLANE *p2, int dist)
 {
 	if (ABS(p1->altitude - p2->altitude) <= dist &&
-	    ABS(p1->xpos - p2->xpos) <= dist && 
+	    ABS(p1->xpos - p2->xpos) <= dist &&
 	    ABS(p1->ypos - p2->ypos) <= dist)
 		return (1);
 	else

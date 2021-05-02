@@ -2,13 +2,13 @@
  *
  * Revision 7.0.1.2  86/12/12  16:59:04  lwall
  * Baseline for net release.
- * 
+ *
  * Revision 7.0.1.1  86/10/16  10:51:43  lwall
  * Added Damage.  Fixed random bugs.
- * 
+ *
  * Revision 7.0  86/10/08  15:12:19  lwall
  * Split into separate files.  Added amoebas and pirates.
- * 
+ *
  */
 
 #include "EXTERN.h"
@@ -56,7 +56,7 @@ intrp_init(char *tcbuf)
     if (logname == NULL)
 	logname = savestr(getlogin());
 #endif
-    
+
     /* get the real name of the person (%N) */
     /* Must be done after logname is read in because BERKNAMES uses that */
 
@@ -304,7 +304,7 @@ dointerp(char *dest, size_t destsize, const char *pattern, const char *stoppers)
 		case '(': {
 		    char rch;
 		    bool matched;
-		    
+
 		    pattern = dointerp(dest,destsize,pattern+1,"!=");
 		    rch = *pattern;
 		    if (rch == '!')
@@ -470,9 +470,9 @@ dointerp(char *dest, size_t destsize, const char *pattern, const char *stoppers)
 	    else if (*pattern == '\\' && pattern[1]) {
 		++pattern;			/* skip backslash */
 		i = *pattern;		/* get char into a register */
-    
+
 		/* this used to be a switch but the if may save space */
-		
+
 		if (i >= '0' && i <= '7') {
 		    i = 1;
 		    while (i < 01000 && *pattern >= '0' && *pattern <= '7') {
@@ -525,7 +525,7 @@ getrealname(uid_t uid)
 
 #ifdef PASSNAMES
     struct passwd *pwd = getpwuid(uid);
-    
+
     s = pwd->pw_gecos;
 #ifdef BERKNAMES
 #ifdef BERKJUNK

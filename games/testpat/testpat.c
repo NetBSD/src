@@ -1,4 +1,4 @@
-/* $NetBSD: testpat.c,v 1.4 2021/01/08 15:16:04 christos Exp $ */
+/* $NetBSD: testpat.c,v 1.5 2021/05/02 12:50:46 rillig Exp $ */
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: testpat.c,v 1.4 2021/01/08 15:16:04 christos Exp $");
+__RCSID("$NetBSD: testpat.c,v 1.5 2021/05/02 12:50:46 rillig Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -115,7 +115,7 @@ int main(int argc, char *argv[]) {
 	grid_y = grid_unit;
 	grid_x = grid_unit * 2;
 
-	
+
 	ncpos = y_limit * sizeof(*circle_pos)
 	    + y_limit * 2 * sizeof(**circle_pos);
 	circle_pos = malloc(ncpos);

@@ -1,4 +1,4 @@
-/*	$NetBSD: morse.c,v 1.18 2018/01/16 06:20:24 maya Exp $	*/
+/*	$NetBSD: morse.c,v 1.19 2021/05/02 12:50:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)morse.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: morse.c,v 1.18 2018/01/16 06:20:24 maya Exp $");
+__RCSID("$NetBSD: morse.c,v 1.19 2021/05/02 12:50:45 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -195,7 +195,7 @@ main(int argc, char **argv)
 			morse(ch);
 		show("...-.-");	/* SK */
 	}
-	
+
 	return 0;
 }
 
@@ -203,13 +203,13 @@ void
 decode(const char *s)
 {
 	int i;
-	
+
 	for (i = 0; i < 10; i++)
 		if (strcmp(digit[i], s) == 0) {
 			putchar('0' + i);
 			return;
 		}
-	
+
 	for (i = 0; i < 26; i++)
 		if (strcmp(alph[i], s) == 0) {
 			putchar('A' + i);

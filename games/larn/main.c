@@ -1,9 +1,9 @@
-/*	$NetBSD: main.c,v 1.26 2019/02/03 03:19:25 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.27 2021/05/02 12:50:45 rillig Exp $	*/
 
 /* main.c		 */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.26 2019/02/03 03:19:25 mrg Exp $");
+__RCSID("$NetBSD: main.c,v 1.27 2021/05/02 12:50:45 rillig Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -1300,7 +1300,7 @@ whatitem(const char *str)
 	subroutine to get a number from the player
 	and allow * to mean return amt, else return the number entered
  */
-unsigned long 
+unsigned long
 readnum(long mx)
 {
 	int    i;

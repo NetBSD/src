@@ -3,19 +3,19 @@
 /* Log:	init.c,v
  * Revision 7.0.1.4  86/12/12  16:58:03  lwall
  * Baseline for net release.
- * 
+ *
  * Revision 7.0.1.3  86/10/20  14:35:31  lwall
  * Picked some lint.
- * 
+ *
  * Revision 7.0.1.2  86/10/17  15:53:30  lwall
  * Added random walk star fields.
- * 
+ *
  * Revision 7.0.1.1  86/10/16  10:51:19  lwall
  * Added Damage.  Fixed random bugs.
- * 
+ *
  * Revision 7.0  86/10/08  15:12:10  lwall
  * Split into separate files.  Added amoebas and pirates.
- * 
+ *
  */
 
 #include "EXTERN.h"
@@ -519,7 +519,7 @@ stars_again:
 	}
     }
 
-    for (i=0;i<2;i++) for (y=0;y<3;y++) for (x=0;x<3;x++) 
+    for (i=0;i<2;i++) for (y=0;y<3;y++) for (x=0;x<3;x++)
     isatorp[i][y][x]=0;
 
     whenok = 0;

@@ -3,10 +3,10 @@
 /* Log:	play.c,v
  * Revision 7.0.1.1  86/10/16  10:52:39  lwall
  * Added Damage.  Fixed random bugs.
- * 
+ *
  * Revision 7.0  86/10/08  15:13:09  lwall
  * Split into separate files.  Added amoebas and pirates.
- * 
+ *
  */
 
 #include "EXTERN.h"
