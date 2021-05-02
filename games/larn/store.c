@@ -1,4 +1,4 @@
-/*	$NetBSD: store.c,v 1.16 2012/06/19 05:30:44 dholland Exp $	 */
+/*	$NetBSD: store.c,v 1.17 2021/05/02 12:50:45 rillig Exp $	 */
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char     sccsid[] = "@(#)store.c	5.4 (Berkeley) 5/13/91";
 #else
-__RCSID("$NetBSD: store.c,v 1.16 2012/06/19 05:30:44 dholland Exp $");
+__RCSID("$NetBSD: store.c,v 1.17 2021/05/02 12:50:45 rillig Exp $");
 #endif
 #endif				/* not lint */
 
@@ -225,7 +225,7 @@ outofstock(void)
 	nap(2200);
 }
 
-static void 
+static void
 nogold(void)
 {
 	lprcat("\nYou don't have enough gold to pay for that!");

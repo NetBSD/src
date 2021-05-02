@@ -1,4 +1,4 @@
-/*	$NetBSD: stoc.c,v 1.12 2009/08/12 06:19:17 dholland Exp $	*/
+/*	$NetBSD: stoc.c,v 1.13 2021/05/02 12:50:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)stoc.c	8.1 (Berkeley) 7/24/94";
 #else
-__RCSID("$NetBSD: stoc.c,v 1.12 2009/08/12 06:19:17 dholland Exp $");
+__RCSID("$NetBSD: stoc.c,v 1.13 2021/05/02 12:50:44 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,7 +53,7 @@ struct mvstr {
 	const char	*m_text;
 };
 static	const struct	mvstr	mv[] = {
-	{ RESIGN,	"resign" }, 
+	{ RESIGN,	"resign" },
 	{ RESIGN,	"quit" },
 	{ SAVE,		"save" },
 	{ -1,		0 }

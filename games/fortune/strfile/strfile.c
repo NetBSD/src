@@ -1,4 +1,4 @@
-/*	$NetBSD: strfile.c,v 1.42 2020/07/26 15:14:09 nia Exp $	*/
+/*	$NetBSD: strfile.c,v 1.43 2021/05/02 12:50:44 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)strfile.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: strfile.c,v 1.42 2020/07/26 15:14:09 nia Exp $");
+__RCSID("$NetBSD: strfile.c,v 1.43 2021/05/02 12:50:44 rillig Exp $");
 #endif
 #endif /* not lint */
 #endif /* __NetBSD__ */
@@ -84,7 +84,7 @@ __RCSID("$NetBSD: strfile.c,v 1.42 2020/07/26 15:14:09 nia Exp $");
  *	s - Silent.  Give no summary of data processed at the end of
  *	    the run.
  *	o - order the strings in alphabetic order
- *	i - if ordering, ignore case 
+ *	i - if ordering, ignore case
  *	r - randomize the order of the strings
  *	x - set rotated bit
  *

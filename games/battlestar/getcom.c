@@ -1,4 +1,4 @@
-/*	$NetBSD: getcom.c,v 1.14 2012/01/16 17:38:16 christos Exp $	*/
+/*	$NetBSD: getcom.c,v 1.15 2021/05/02 12:50:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getcom.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: getcom.c,v 1.14 2012/01/16 17:38:16 christos Exp $");
+__RCSID("$NetBSD: getcom.c,v 1.15 2021/05/02 12:50:43 rillig Exp $");
 #endif
 #endif				/* not lint */
 
@@ -85,11 +85,11 @@ getword(char *buf1, char *buf2, int flag)
 			*buf2 = 0;
 			return (0);
 		}
-		while (cnt < WORDLEN && *buf1 && 
+		while (cnt < WORDLEN && *buf1 &&
 		    !isspace((unsigned char)*buf1) && *buf1 != ',')
 			if (flag < 0) {
 				if (isupper((unsigned char)*buf1)) {
-					*buf2++ = 
+					*buf2++ =
 					    tolower((unsigned char)*buf1++);
 					cnt++;
 				} else {
@@ -98,7 +98,7 @@ getword(char *buf1, char *buf2, int flag)
 				}
 			} else if (flag > 0) {
 				if (islower((unsigned char)*buf1)) {
-					*buf2++ = 
+					*buf2++ =
 					    toupper((unsigned char)*buf1++);
 					cnt++;
 				} else {

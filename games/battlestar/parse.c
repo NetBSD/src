@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.17 2020/02/06 22:09:43 fox Exp $	*/
+/*	$NetBSD: parse.c,v 1.18 2021/05/02 12:50:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: parse.c,v 1.17 2020/02/06 22:09:43 fox Exp $");
+__RCSID("$NetBSD: parse.c,v 1.18 2021/05/02 12:50:43 rillig Exp $");
 #endif
 #endif				/* not lint */
 
@@ -154,9 +154,9 @@ parse(void)
 	while (flag) {
 		flag = 0;
 		for (n = 1; n < wordcount; n++)
-			if ((wordtype[n - 1] == NOUNS || 
+			if ((wordtype[n - 1] == NOUNS ||
 			    wordtype[n - 1] == OBJECT) &&
-			    wordvalue[n] == AND && 
+			    wordvalue[n] == AND &&
 			    wordvalue[n + 1] == EVERYTHING) {
 				char tmpword[WORDLEN];
 				wordvalue[n + 1] = wordvalue[n - 1];
@@ -171,7 +171,7 @@ parse(void)
 		/* And trim EVERYTHING AND EVERYTHING. */
 		for (n = 1; n < wordcount; n++)
 			if (wordvalue[n - 1] == EVERYTHING &&
-			    wordvalue[n] == AND && 
+			    wordvalue[n] == AND &&
 			    wordvalue[n + 1] == EVERYTHING) {
 				int i;
 				for (i = n + 1; i < wordcount; i++) {

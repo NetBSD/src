@@ -1,4 +1,4 @@
-/*	$NetBSD: bdisp.c,v 1.17 2014/03/22 18:58:57 dholland Exp $	*/
+/*	$NetBSD: bdisp.c,v 1.18 2021/05/02 12:50:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)bdisp.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: bdisp.c,v 1.17 2014/03/22 18:58:57 dholland Exp $");
+__RCSID("$NetBSD: bdisp.c,v 1.18 2021/05/02 12:50:44 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -336,7 +336,7 @@ get_coord(void)
 	nx = curx;
 	ny = cury;
 	for (;;) {
-		mvprintw(BSZ3, (BSZ -6)/2, "(%c %d) ", 
+		mvprintw(BSZ3, (BSZ -6)/2, "(%c %d) ",
 				'A'+ ((curx > 7) ? (curx+1) : curx), cury + 1);
 		BGOTO(cury, curx);
 

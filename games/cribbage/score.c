@@ -1,4 +1,4 @@
-/*	$NetBSD: score.c,v 1.17 2019/02/03 10:48:46 mrg Exp $	*/
+/*	$NetBSD: score.c,v 1.18 2021/05/02 12:50:44 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)score.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: score.c,v 1.17 2019/02/03 10:48:46 mrg Exp $");
+__RCSID("$NetBSD: score.c,v 1.18 2021/05/02 12:50:44 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -108,7 +108,7 @@ static int pairpoints, runpoints;		/* Globals from pairuns. */
  *	n must be <= 4
  */
 int
-scorehand(const CARD hand[], CARD starter, int n, BOOLEAN crb, 
+scorehand(const CARD hand[], CARD starter, int n, BOOLEAN crb,
           BOOLEAN do_explain)
 {
 	int i, k;

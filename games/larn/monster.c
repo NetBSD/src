@@ -1,4 +1,4 @@
-/*	$NetBSD: monster.c,v 1.19 2019/02/03 03:19:25 mrg Exp $	*/
+/*	$NetBSD: monster.c,v 1.20 2021/05/02 12:50:45 rillig Exp $	*/
 
 /*
  * monster.c	Larn is copyrighted 1986 by Noah Morgan.
@@ -100,7 +100,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: monster.c,v 1.19 2019/02/03 03:19:25 mrg Exp $");
+__RCSID("$NetBSD: monster.c,v 1.20 2021/05/02 12:50:45 rillig Exp $");
 #endif				/* not lint */
 
 #include <string.h>
@@ -185,7 +185,7 @@ createmonster(int mon)
  * 		  if monst==TRUE check for no monster at this location
  * This routine will return FALSE if at a wall or the dungeon exit on level 1
  */
-static int 
+static int
 cgood(int x, int y, int theitem, int monst)
 {
 #define itm __lose

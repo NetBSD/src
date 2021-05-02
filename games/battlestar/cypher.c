@@ -1,4 +1,4 @@
-/*	$NetBSD: cypher.c,v 1.23 2005/07/01 06:04:54 jmc Exp $	*/
+/*	$NetBSD: cypher.c,v 1.24 2021/05/02 12:50:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cypher.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: cypher.c,v 1.23 2005/07/01 06:04:54 jmc Exp $");
+__RCSID("$NetBSD: cypher.c,v 1.24 2021/05/02 12:50:43 rillig Exp $");
 #endif
 #endif				/* not lint */
 
@@ -52,10 +52,10 @@ cypher(void)
 
 	while (wordnumber <= wordcount) {
 		if (wordtype[wordnumber] != VERB &&
-		    !(wordtype[wordnumber] == OBJECT && 
+		    !(wordtype[wordnumber] == OBJECT &&
 		    wordvalue[wordnumber] == KNIFE)) {
 			printf("%s: How's that?\n",
-			    (wordnumber == wordcount) ? words[0] : 
+			    (wordnumber == wordcount) ? words[0] :
 			    words[wordnumber]);
 			return (-1);
 		}
@@ -116,7 +116,7 @@ cypher(void)
 			break;
 
 		case SHOOT:
-			if (wordnumber < wordcount && 
+			if (wordnumber < wordcount &&
 			    wordvalue[wordnumber + 1] == EVERYTHING) {
 				int things;
 				things = 0;
@@ -136,7 +136,7 @@ cypher(void)
 			break;
 
 		case TAKE:
-			if (wordnumber < wordcount && 
+			if (wordnumber < wordcount &&
 			    wordvalue[wordnumber + 1] == EVERYTHING) {
 				int things;
 				things = 0;
@@ -187,7 +187,7 @@ cypher(void)
 			break;
 
 		case DROP:
-			if (wordnumber < wordcount && 
+			if (wordnumber < wordcount &&
 			    wordvalue[wordnumber + 1] == EVERYTHING) {
 				int things;
 				things = 0;
@@ -207,7 +207,7 @@ cypher(void)
 
 		case KICK:
 		case THROW:
-			if (wordnumber < wordcount && 
+			if (wordnumber < wordcount &&
 			    wordvalue[wordnumber + 1] == EVERYTHING) {
 				int things, wv;
 				things = 0;
@@ -221,15 +221,15 @@ cypher(void)
 					}
 				wordnumber += 2;
 				if (!things)
-					printf("Nothing to %s!\n", 
+					printf("Nothing to %s!\n",
 					    wv == KICK ? "kick" : "throw");
 			} else
-				throw(wordvalue[wordnumber] == 
+				throw(wordvalue[wordnumber] ==
 				    KICK ? "Kicked" : "Thrown");
 			break;
 
 		case TAKEOFF:
-			if (wordnumber < wordcount && 
+			if (wordnumber < wordcount &&
 			    wordvalue[wordnumber + 1] == EVERYTHING) {
 				int things;
 				things = 0;
@@ -247,7 +247,7 @@ cypher(void)
 			break;
 
 		case DRAW:
-			if (wordnumber < wordcount && 
+			if (wordnumber < wordcount &&
 			    wordvalue[wordnumber + 1] == EVERYTHING) {
 				int things;
 				things = 0;
@@ -265,7 +265,7 @@ cypher(void)
 			break;
 
 		case PUTON:
-			if (wordnumber < wordcount && 
+			if (wordnumber < wordcount &&
 			    wordvalue[wordnumber + 1] == EVERYTHING) {
 				int things;
 				things = 0;
@@ -284,7 +284,7 @@ cypher(void)
 			break;
 
 		case WEARIT:
-			if (wordnumber < wordcount && 
+			if (wordnumber < wordcount &&
 			    wordvalue[wordnumber + 1] == EVERYTHING) {
 				int things;
 				things = 0;
@@ -302,7 +302,7 @@ cypher(void)
 			break;
 
 		case EAT:
-			if (wordnumber < wordcount && 
+			if (wordnumber < wordcount &&
 			    wordvalue[wordnumber + 1] == EVERYTHING) {
 				int things;
 				things = 0;
@@ -334,8 +334,8 @@ cypher(void)
 					    carrying,
 					    (carrying == 1 ? "." : "s."));
 					printf(" (can't lift any weight%s)\n",
-					    (carrying ? 
-					    " or move with what you have" : 
+					    (carrying ?
+					    " or move with what you have" :
 					    ""));
 				} else
 					printf("\n= %d kilogram%s (%d%%)\n",
@@ -364,7 +364,7 @@ cypher(void)
 					if (injuries[n])
 						printf("\t%s\n", ouch[n]);
 				printf("\nYou can still carry up to ");
-				printf("%d kilogram%s\n", WEIGHT, 
+				printf("%d kilogram%s\n", WEIGHT,
 				    (WEIGHT == 1 ? "." : "s."));
 			} else
 				puts("\nYou are in perfect health.");
@@ -376,7 +376,7 @@ cypher(void)
 			break;
 
 		case OPEN:
-			if (wordnumber < wordcount && 
+			if (wordnumber < wordcount &&
 			    wordvalue[wordnumber + 1] == EVERYTHING) {
 				int things;
 				things = 0;
@@ -459,7 +459,7 @@ cypher(void)
 			printf("%s in %d turns.\n", rate(), ourtime);
 			printf("You have visited %d out of %d rooms ",
 			    card(beenthere, NUMOFROOMS), NUMOFROOMS);
-			printf("this run (%d%%).\n", 
+			printf("this run (%d%%).\n",
 			    card(beenthere, NUMOFROOMS) * 100 / NUMOFROOMS);
 			break;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.33 2019/02/03 10:45:58 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.34 2021/05/02 12:50:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.33 2019/02/03 10:45:58 mrg Exp $");
+__RCSID("$NetBSD: main.c,v 1.34 2021/05/02 12:50:43 rillig Exp $");
 #endif
 #endif				/* not lint */
 
@@ -417,7 +417,7 @@ main(int argc __unused, char **argv)
 						writec('\n');
 					wrtext(helpm);
 					if (tflag)
-						curmove(cturn == -1 ? 
+						curmove(cturn == -1 ?
 						    18 : 19, 0);
 					else
 						writec('\n');

@@ -3,7 +3,7 @@
 /* Log:	util.h,v
  * Revision 7.0  86/10/08  15:14:37  lwall
  * Split into separate files.  Added amoebas and pirates.
- * 
+ *
  */
 
 #define RANDRAND 1152921504606846976.0 /* that's 2**60 */

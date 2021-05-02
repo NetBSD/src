@@ -1,4 +1,4 @@
-/*	$NetBSD: wizard.c,v 1.16 2012/10/12 15:41:10 dholland Exp $	*/
+/*	$NetBSD: wizard.c,v 1.17 2021/05/02 12:50:43 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)wizard.c	8.1 (Berkeley) 6/2/93";
 #else
-__RCSID("$NetBSD: wizard.c,v 1.16 2012/10/12 15:41:10 dholland Exp $");
+__RCSID("$NetBSD: wizard.c,v 1.17 2021/05/02 12:50:43 rillig Exp $");
 #endif
 #endif				/* not lint */
 
@@ -113,7 +113,7 @@ Start(void)
 /* not as complex as advent/10 (for now)        */
 static int
 wizard(void)
-{	
+{
 	char   *word, *x;
 	if (!yesm(16, 0, 7))
 		return (FALSE);

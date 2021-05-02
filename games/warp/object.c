@@ -3,7 +3,7 @@
 /* Log:	object.c,v
  * Revision 7.0  86/10/08  15:12:55  lwall
  * Split into separate files.  Added amoebas and pirates.
- * 
+ *
  */
 
 #include "EXTERN.h"

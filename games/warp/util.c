@@ -3,13 +3,13 @@
 /* Log:	util.c,v
  * Revision 7.0.1.2  86/10/20  12:07:46  lwall
  * Made all exits reset tty.
- * 
+ *
  * Revision 7.0.1.1  86/10/16  10:54:02  lwall
  * Added Damage.  Fixed random bugs.
- * 
+ *
  * Revision 7.0  86/10/08  15:14:31  lwall
  * Split into separate files.  Added amoebas and pirates.
- * 
+ *
  */
 
 #include "EXTERN.h"
@@ -102,8 +102,8 @@ safecpy(char *to, const char *from, size_t len)
 {
     char *dest = to;
 
-    if (from != NULL) 
-	for (len--; len && (*dest++ = *from++); len--) 
+    if (from != NULL)
+	for (len--; len && (*dest++ = *from++); len--)
 	    continue;
     *dest = '\0';
     return to;
@@ -156,7 +156,7 @@ eaccess(const char *filename, mode_t mod)
 {
     mode_t protection;
     uid_t euid;
-    
+
     mod &= 7;				/* remove extraneous garbage */
     if (stat(filename, &filestat) < 0)
 	return -1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: command7.c,v 1.4 2018/02/04 08:48:05 mrg Exp $	*/
+/*	$NetBSD: command7.c,v 1.5 2021/05/02 12:50:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)com7.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: command7.c,v 1.4 2018/02/04 08:48:05 mrg Exp $");
+__RCSID("$NetBSD: command7.c,v 1.5 2021/05/02 12:50:43 rillig Exp $");
 #endif
 #endif				/* not lint */
 
@@ -71,16 +71,16 @@ fighton:
 	case KILL:
 	case SMITE:
 		if (testbit(inven, TWO_HANDED))
-			hurt = rnd(70) - 2 * card(injuries, NUMOFINJURIES) - 
+			hurt = rnd(70) - 2 * card(injuries, NUMOFINJURIES) -
 			    ucard(wear) - exhaustion;
 		else if (testbit(inven, SWORD) || testbit(inven, BROAD))
-			hurt = rnd(50) % (WEIGHT - carrying) - 
-			    card(injuries, NUMOFINJURIES) - encumber - 
+			hurt = rnd(50) % (WEIGHT - carrying) -
+			    card(injuries, NUMOFINJURIES) - encumber -
 			    exhaustion;
-		else if (testbit(inven, KNIFE) || testbit(inven, MALLET) || 
-		    testbit(inven, CHAIN) || testbit(inven, MACE) || 
+		else if (testbit(inven, KNIFE) || testbit(inven, MALLET) ||
+		    testbit(inven, CHAIN) || testbit(inven, MACE) ||
 		    testbit(inven, HALBERD))
-			hurt = rnd(15) - card(injuries, NUMOFINJURIES) - 
+			hurt = rnd(15) - card(injuries, NUMOFINJURIES) -
 			    exhaustion;
 		else
 			hurt = rnd(7) - encumber;
@@ -130,7 +130,7 @@ fighton:
 		} else if (hurt < 30) {
 			switch (rnd(3)) {
 			case 0:
-				printf("A bloody gash opens up on his %s ", 
+				printf("A bloody gash opens up on his %s ",
 				    (rnd(2) ? "left" : "right"));
 				printf("side.\n");
 				break;
@@ -195,7 +195,7 @@ fighton:
 			puts("pummels your face.");
 			if (testbit(inven, AMULET) || testbit(wear, AMULET)) {
 				printf("Lifting the amulet from you, ");
-				if (testbit(inven, MEDALION) || 
+				if (testbit(inven, MEDALION) ||
 				    testbit(wear, MEDALION)) {
 					printf("his power grows and the ");
 					printf("walls of\nthe earth ");
@@ -244,7 +244,7 @@ fighton:
 	case SHOOT:
 		if (testbit(inven, LASER)) {
 			if (strength - lifeline <= 50) {
-				printf("The %s took a direct hit!\n", 
+				printf("The %s took a direct hit!\n",
 				    objsht[enemy]);
 				lifeline += 50;
 			} else {
@@ -284,9 +284,9 @@ fighton:
 	}
 	puts("He attacks...");
 	/* Some embellishments. */
-	hurt = rnd(NUMOFINJURIES) - (testbit(inven, SHIELD) != 0) - 
+	hurt = rnd(NUMOFINJURIES) - (testbit(inven, SHIELD) != 0) -
 	    (testbit(wear, MAIL) != 0) - (testbit(wear, HELM) != 0);
-	hurt += (testbit(wear, AMULET) != 0) + 
+	hurt += (testbit(wear, AMULET) != 0) +
 	    (testbit(wear, MEDALION) != 0) + (testbit(wear, TALISMAN) != 0);
 	hurt = hurt < 0 ? 0 : hurt;
 	hurt = hurt >= NUMOFINJURIES ? NUMOFINJURIES - 1 : hurt;

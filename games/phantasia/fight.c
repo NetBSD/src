@@ -1,4 +1,4 @@
-/*	$NetBSD: fight.c,v 1.14 2019/02/03 03:19:25 mrg Exp $	*/
+/*	$NetBSD: fight.c,v 1.15 2021/05/02 12:50:46 rillig Exp $	*/
 
 /*
  * fight.c   Phantasia monster fighting routines
@@ -1272,7 +1272,7 @@ awardtreasure(void)
 										 * l
 										 * a
 										 * r
-										 * 
+										 *
 										 * ri
 										 * n
 										 * g
@@ -1290,7 +1290,7 @@ awardtreasure(void)
 										/* b
 										 * a
 										 * d
-										 * 
+										 *
 										 * ri
 										 * n
 										 * g

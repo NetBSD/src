@@ -1,4 +1,4 @@
-/*	$NetBSD: word.c,v 1.9 2006/03/18 09:40:46 rtr Exp $	*/
+/*	$NetBSD: word.c,v 1.10 2021/05/02 12:50:43 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)word.c	8.1 (Berkeley) 6/11/93";
 #else
-__RCSID("$NetBSD: word.c,v 1.9 2006/03/18 09:40:46 rtr Exp $");
+__RCSID("$NetBSD: word.c,v 1.10 2021/05/02 12:50:43 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,7 +74,7 @@ nextword(FILE *fp)
 	if (fp == NULL) {
 		if (sp == dictend)
 			return (NULL);
-	
+
 		p = buf + (int) *sp++;
 
 		/*
@@ -92,7 +92,7 @@ nextword(FILE *fp)
 			return (NULL);
 
 		p = buf + pcount;
- 
+
 		while ((ch = getc(fp)) != EOF && ch >= 'a')
 			if ((*p++ = ch) == 'q')
 				*p++ = 'u';
@@ -102,7 +102,7 @@ nextword(FILE *fp)
 	*p = '\0';
 	return (buf);
 }
- 
+
 /*
  * Reset the state of nextword() and do the fseek()
  */
@@ -184,7 +184,7 @@ loadindex(const char *indexfile)
 	int i, j;
 	char buf[BUFSIZ];
 	FILE *fp;
- 
+
 	if ((fp = fopen(indexfile, "r")) == NULL) {
 		warn("Can't open '%s'", indexfile);
 		return (-1);
@@ -212,4 +212,4 @@ loadindex(const char *indexfile)
 		return(-1);
 	}
 	return(0);
-} 
+}

@@ -1,8 +1,8 @@
-/*	$NetBSD: global.c,v 1.14 2012/06/19 05:30:43 dholland Exp $	*/
+/*	$NetBSD: global.c,v 1.15 2021/05/02 12:50:45 rillig Exp $	*/
 
 /*
  * global.c 		Larn is copyrighted 1986 by Noah Morgan.
- * 
+ *
  * raiselevel()		subroutine to raise the player one level
  * loselevel()		subroutine to lower the player by one level
  * raiseexperience(x)	subroutine to increase experience points
@@ -21,7 +21,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: global.c,v 1.14 2012/06/19 05:30:43 dholland Exp $");
+__RCSID("$NetBSD: global.c,v 1.15 2021/05/02 12:50:45 rillig Exp $");
 #endif /* not lint */
 
 #include <string.h>

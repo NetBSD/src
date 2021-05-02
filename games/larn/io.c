@@ -1,49 +1,49 @@
-/*	$NetBSD: io.c,v 1.28 2017/01/10 20:41:40 christos Exp $	*/
+/*	$NetBSD: io.c,v 1.29 2021/05/02 12:50:45 rillig Exp $	*/
 
 /*
  * io.c			 Larn is copyrighted 1986 by Noah Morgan.
- * 
+ *
  * Below are the functions in this file:
- * 
+ *
  * setupvt100() 	Subroutine to set up terminal in correct mode for game
  * clearvt100()  	Subroutine to clean up terminal when the game is over
  * ttgetch() 		Routine to read in one character from the terminal
  * scbr()			Function to set cbreak -echo for the terminal
  * sncbr()			Function to set -cbreak echo for the terminal
  * newgame() 		Subroutine to save the initial time and seed rnd()
- * 
+ *
  * FILE OUTPUT ROUTINES
- * 
+ *
  * lprintf(format,args . . .)	printf to the output buffer lprint(integer)
  * end binary integer to output buffer lwrite(buf,len)
  * rite a buffer to the output buffer lprcat(str)
  * ent string to output buffer
- * 
+ *
  * FILE OUTPUT MACROS (in header.h)
- * 
+ *
  * lprc(character)				put the character into the output
  * buffer
- * 
+ *
  * FILE INPUT ROUTINES
- * 
+ *
  * long lgetc()				read one character from input buffer
  * long larn_lrint()			read one integer from input buffer
  * lrfill(address,number)		put input bytes into a buffer char
  * *lgetw()				get a whitespace ended word from
  * input char *lgetl()				get a \n or EOF ended line
  * from input
- * 
+ *
  * FILE OPEN / CLOSE ROUTINES
- * 
+ *
  * lcreat(filename)			create a new file for write
  * lopen(filename)				open a file for read
  * lappend(filename)			open for append to an existing file
  * lrclose()					close the input file
  * lwclose()					close output file lflush()
  * lush the output buffer
- * 
+ *
  * Other Routines
- * 
+ *
  * cursor(x,y)					position cursor at [x,y]
  * cursors()					position cursor at [1,24]
  * (saves memory) cl_line(x,y)         		Clear line at [1,y] and leave
@@ -57,12 +57,12 @@
  * erminal initialization -- setup termcap info *	char *tmcapcnv(sd,ss)
  * outine to convert VT100 \33's to termcap format beep()
  * e to emit a beep if enabled (see no-beep in .larnopts)
- * 
+ *
  * Note: ** entries are available only in termcap mode.
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: io.c,v 1.28 2017/01/10 20:41:40 christos Exp $");
+__RCSID("$NetBSD: io.c,v 1.29 2021/05/02 12:50:45 rillig Exp $");
 #endif /* not lint */
 
 #include "header.h"
@@ -324,7 +324,7 @@ lwrite(char *buf, int len)
  *
  *  Returns 0 if EOF, otherwise the character
  */
-long 
+long
 lgetc(void)
 {
 	int    i;
@@ -356,7 +356,7 @@ lgetc(void)
  *	The save order is low order first, to high order (4 bytes total)
  *	Returns the int read
  */
-long 
+long
 larn_lrint(void)
 {
 	unsigned long i;
@@ -907,7 +907,7 @@ static int      vindex = 0;
 /*
  * ttputch(ch)		Print one character in decoded output buffer.
  */
-static int 
+static int
 ttputch(int ch)
 {
 	outbuf[vindex++] = ch;
