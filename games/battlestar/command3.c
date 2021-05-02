@@ -1,4 +1,4 @@
-/*	$NetBSD: command3.c,v 1.5 2019/02/03 03:19:25 mrg Exp $	*/
+/*	$NetBSD: command3.c,v 1.6 2021/05/02 12:50:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)com3.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: command3.c,v 1.5 2019/02/03 03:19:25 mrg Exp $");
+__RCSID("$NetBSD: command3.c,v 1.6 2021/05/02 12:50:43 rillig Exp $");
 #endif
 #endif				/* not lint */
 
@@ -110,33 +110,33 @@ bury(void)
 	int     value;
 
 	if (testbit(inven, SHOVEL)) {
-		while (wordtype[++wordnumber] != OBJECT && 
+		while (wordtype[++wordnumber] != OBJECT &&
 		    wordtype[wordnumber] != NOUNS && wordnumber < wordcount)
 			continue;
 		value = wordvalue[wordnumber];
-		if (wordtype[wordnumber] == NOUNS && 
-		    (testbit(location[position].objects, value) || 
+		if (wordtype[wordnumber] == NOUNS &&
+		    (testbit(location[position].objects, value) ||
 		    value == BODY))
 			switch (value) {
 			case BODY:
 				wordtype[wordnumber] = OBJECT;
-				if (testbit(inven, MAID) || 
+				if (testbit(inven, MAID) ||
 				    testbit(location[position].objects, MAID))
 					value = MAID;
-				if (testbit(inven, DEADWOOD) || 
-				    testbit(location[position].objects, 
+				if (testbit(inven, DEADWOOD) ||
+				    testbit(location[position].objects,
 					DEADWOOD))
 					value = DEADWOOD;
-				if (testbit(inven, DEADGOD) || 
-				    testbit(location[position].objects, 
+				if (testbit(inven, DEADGOD) ||
+				    testbit(location[position].objects,
 					DEADGOD))
 					value = DEADGOD;
-				if (testbit(inven, DEADTIME) || 
-				    testbit(location[position].objects, 
+				if (testbit(inven, DEADTIME) ||
+				    testbit(location[position].objects,
 					DEADTIME))
 					value = DEADTIME;
-				if (testbit(inven, DEADNATIVE) || 
-				    testbit(location[position].objects, 
+				if (testbit(inven, DEADNATIVE) ||
+				    testbit(location[position].objects,
 					DEADNATIVE))
 					value = DEADNATIVE;
 				break;
@@ -159,8 +159,8 @@ bury(void)
 			default:
 				puts("Wha..?");
 			}
-		if (wordtype[wordnumber] == OBJECT && position > 88 && 
-		    (testbit(inven, value) || 
+		if (wordtype[wordnumber] == OBJECT && position > 88 &&
+		    (testbit(inven, value) ||
 		    testbit(location[position].objects, value))) {
 			puts("Buried.");
 			if (testbit(inven, value)) {
@@ -176,7 +176,7 @@ bury(void)
 			case DEADTIME:
 			case DEADGOD:
 				ego += 2;
-				printf("The %s should rest easier now.\n", 
+				printf("The %s should rest easier now.\n",
 				    objsht[value]);
 			}
 		} else
@@ -217,7 +217,7 @@ shoot(void)
 		puts("You aren't holding a blaster.");
 	else {
 		wordnumber++;
-		while (wordnumber <= wordcount && 
+		while (wordnumber <= wordcount &&
 		    wordtype[wordnumber] == OBJECT) {
 			value = wordvalue[wordnumber];
 			printf("%s:\n", objsht[value]);
@@ -229,9 +229,9 @@ shoot(void)
 				if (value == BOMB)
 					die();
 			} else
-				printf("I don't see any %s around here.\n", 
+				printf("I don't see any %s around here.\n",
 				    objsht[value]);
-			if (wordnumber < wordcount - 1 && 
+			if (wordnumber < wordcount - 1 &&
 			    wordvalue[++wordnumber] == AND)
 				wordnumber++;
 			else
@@ -274,7 +274,7 @@ shoot(void)
 				break;
 
 			case NORMGOD:
-				if (testbit(location[position].objects, 
+				if (testbit(location[position].objects,
 				    BATHGOD)) {
 					printf("The goddess is hit in the ");
 					printf("chest and splashes back ");
@@ -283,7 +283,7 @@ shoot(void)
 					printf("charred blast hole.  Her ");
 					puts("naked body floats in the");
 					puts("pools and then off downstream.");
-					clearbit(location[position].objects, 
+					clearbit(location[position].objects,
 					    BATHGOD);
 					setbit(location[180].objects, DEADGOD);
 					power += 5;
@@ -315,16 +315,16 @@ shoot(void)
 				break;
 
 			case TIMER:
-				if (testbit(location[position].objects, 
+				if (testbit(location[position].objects,
 				    TIMER)) {
 					printf("The old man slumps over ");
 					puts("the bar.");
 					power++;
 					ego -= 2;
 					notes[JINXED]++;
-					clearbit(location[position].objects, 
+					clearbit(location[position].objects,
 					    TIMER);
-					setbit(location[position].objects, 
+					setbit(location[position].objects,
 					    DEADTIME);
 				} else
 					puts("What old-timer?");
@@ -340,14 +340,14 @@ shoot(void)
 					puts("What man?");
 				break;
 			case NATIVE:
-				if (testbit(location[position].objects, 
+				if (testbit(location[position].objects,
 				    NATIVE)) {
 					printf("The girl is blown backwards ");
 					printf("several feet and lies in a ");
 					puts("pool of blood.");
-					clearbit(location[position].objects, 
+					clearbit(location[position].objects,
 					    NATIVE);
-					setbit(location[position].objects, 
+					setbit(location[position].objects,
 					    DEADNATIVE);
 					power += 5;
 					ego -= 2;
@@ -360,7 +360,7 @@ shoot(void)
 				break;
 
 			default:
-				printf("You can't shoot the %s.\n", 
+				printf("You can't shoot the %s.\n",
 				    objsht[wordvalue[wordnumber]]);
 			}
 		} else

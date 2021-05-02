@@ -3,22 +3,22 @@
 /* Log:	them.c,v
  * Revision 7.0.1.5  86/12/12  17:05:41  lwall
  * Baseline for net release.
- * 
+ *
  * Revision 7.0.1.4  86/10/20  12:32:38  lwall
  * Wasn't clearing FRIENDLY flag on pirate creation.
- * 
+ *
  * Revision 7.0.1.3  86/10/20  12:15:33  lwall
  * Was trying to create pirates from cloaked pirates.
- * 
+ *
  * Revision 7.0.1.2  86/10/17  10:03:44  lwall
  * Fixed Romulan writing spaces while cloaked.
- * 
+ *
  * Revision 7.0.1.1  86/10/16  10:53:39  lwall
  * Added Damage.  Fixed random bugs.
- * 
+ *
  * Revision 7.0  86/10/08  15:14:15  lwall
  * Split into separate files.  Added amoebas and pirates.
- * 
+ *
  */
 
 #include "EXTERN.h"

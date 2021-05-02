@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.10 2011/08/06 19:53:24 dholland Exp $	*/
+/*	$NetBSD: config.h,v 1.11 2021/05/02 12:50:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -113,7 +113,7 @@
  */
 /* #define	MAIL */
 #define	DEF_MAILREADER	_PATH_MAIL		/* or e.g. /bin/mail */
-#define	MAILCKFREQ	100	
+#define	MAILCKFREQ	100
 
 
 #define SHELL		/* do not delete the '!' command */

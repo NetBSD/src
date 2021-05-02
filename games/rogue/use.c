@@ -1,4 +1,4 @@
-/*	$NetBSD: use.c,v 1.10 2009/08/12 08:44:45 dholland Exp $	*/
+/*	$NetBSD: use.c,v 1.11 2021/05/02 12:50:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)use.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: use.c,v 1.10 2009/08/12 08:44:45 dholland Exp $");
+__RCSID("$NetBSD: use.c,v 1.11 2021/05/02 12:50:46 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,7 +65,7 @@ short extra_hp = 0;
 boolean detect_monster = 0;
 boolean con_mon = 0;
 
-static const char strange_feeling[] = 
+static const char strange_feeling[] =
 	"you have a strange feeling for a moment, then it passes";
 
 static const char *get_ench_color(void);

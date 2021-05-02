@@ -1,4 +1,4 @@
-/* $NetBSD: mkdict.c,v 1.11 2005/07/01 16:38:24 jmc Exp $ */
+/* $NetBSD: mkdict.c,v 1.12 2021/05/02 12:50:44 rillig Exp $ */
 
 /*-
  * Copyright (c) 1993
@@ -39,8 +39,8 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mkdict.c	8.1 (Berkeley) 6/11/93";
 #else
-static const char rcsid[] = 
-    "$NetBSD: mkdict.c,v 1.11 2005/07/01 16:38:24 jmc Exp $";
+static const char rcsid[] =
+    "$NetBSD: mkdict.c,v 1.12 2021/05/02 12:50:44 rillig Exp $";
 #endif
 #endif /* not lint */
 

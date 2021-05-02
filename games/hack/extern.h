@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.18 2011/08/27 23:42:33 joerg Exp $	*/
+/*	$NetBSD: extern.h,v 1.19 2021/05/02 12:50:44 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -178,7 +178,7 @@ struct trap *t_at(int, int);
 struct gold *g_at(int, int);
 struct obj *getobj(const char *, const char *);
 int ggetobj(const char *, int (*fn)(struct obj *), int);
-int askchain(struct obj *, char *, int, int (*)(struct obj *), 
+int askchain(struct obj *, char *, int, int (*)(struct obj *),
     int (*)(struct obj *), int);
 void prinv(struct obj *);
 int ddoinv(void);

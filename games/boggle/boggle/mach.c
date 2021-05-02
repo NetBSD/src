@@ -1,4 +1,4 @@
-/*	$NetBSD: mach.c,v 1.21 2011/08/31 16:24:55 plunky Exp $	*/
+/*	$NetBSD: mach.c,v 1.22 2021/05/02 12:50:43 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)mach.c	8.1 (Berkeley) 6/11/93";
 #else
-__RCSID("$NetBSD: mach.c,v 1.21 2011/08/31 16:24:55 plunky Exp $");
+__RCSID("$NetBSD: mach.c,v 1.22 2021/05/02 12:50:43 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -141,7 +141,7 @@ results(void)
 
 	denom1 = npwords + nmwords;
 	denom2 = tnpwords + tnmwords;
- 
+
 	move(SCORE_LINE, SCORE_COL);
 	printw("Percentage: %0.2f%% (%0.2f%% over %d game%s)\n",
         denom1 ? (100.0 * npwords) / (double) (npwords + nmwords) : 0.0,
@@ -441,7 +441,7 @@ findword(void)
 		if (board[wordpath[i]] == 'q')
 			printw("Qu");
 		else
-			printw("%c", 
+			printw("%c",
 			    toupper((unsigned char)board[wordpath[i]]));
 		move(r, c);
 		refresh();
@@ -457,7 +457,7 @@ findword(void)
 		if (board[wordpath[i]] == 'q')
 			printw("Qu");
 		else
-			printw("%c", 
+			printw("%c",
 			    toupper((unsigned char)board[wordpath[i]]));
 	}
 	move(r, c);
@@ -597,7 +597,7 @@ stop_catcher(int signo __unused)
 	sigprocmask(SIG_SETMASK, &osigset, (sigset_t *)0);
 	signal(SIGTSTP, stop_catcher);
 }
- 
+
 static void
 cont_catcher(int signo __unused)
 {
@@ -608,7 +608,7 @@ cont_catcher(int signo __unused)
 	refresh();
 	starttime();
 }
- 
+
 /*
  * The signal is caught but nothing is done about it...
  * It would mean reformatting the entire display

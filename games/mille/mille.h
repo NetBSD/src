@@ -1,4 +1,4 @@
-/*	$NetBSD: mille.h,v 1.20 2019/12/27 09:17:59 msaitoh Exp $	*/
+/*	$NetBSD: mille.h,v 1.21 2021/05/02 12:50:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -132,7 +132,7 @@
 #define C_100		3
 #define C_200		4
 #define C_EMPTY		5
-#define C_FLAT		6	
+#define C_FLAT		6
 #define C_CRASH		7
 #define C_STOP		8
 #define C_LIMIT		9

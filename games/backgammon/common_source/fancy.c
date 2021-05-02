@@ -1,4 +1,4 @@
-/*	$NetBSD: fancy.c,v 1.16 2021/04/13 02:11:39 mrg Exp $	*/
+/*	$NetBSD: fancy.c,v 1.17 2021/05/02 12:50:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)fancy.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fancy.c,v 1.16 2021/04/13 02:11:39 mrg Exp $");
+__RCSID("$NetBSD: fancy.c,v 1.17 2021/05/02 12:50:43 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,7 +84,7 @@ static char **tstr[] = {&BC, &CD, &CE, &CL, &CM, &HO, &MC, &ML, &ND, &UP};
 
 static char tbuf[1024];		/* buffer for decoded termcap entries */
 
-static int oldb[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+static int oldb[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		     0, 0, 0, 0, 0, 0};
 
 static int oldr;
@@ -251,7 +251,7 @@ bsect(int b, int rpos, int cpos, int cnext)
 						bct = 3;
 				}
 			}
-			/* reposition cursor */			
+			/* reposition cursor */
 			curmove(curr + cnext, curc - bct);
 		}
 	}
@@ -330,27 +330,27 @@ fixpos(int cur, int new, int r, int c, int inc)
 			if (o == 0)
 				nc = c < 54 ? c + 1 : c;
 			if (ov > nv)
-				fixcol(r + inc * (nv - n * 5), nc, 
+				fixcol(r + inc * (nv - n * 5), nc,
 				    abs(ov - nv), ' ', inc);
 			else
-				fixcol(r + inc * (ov - o * 5), nc, 
+				fixcol(r + inc * (ov - o * 5), nc,
 				    abs(ov - nv), col, inc);
 			return;
 		} else {
 			if (c < 54) {
 				if (o + n == 1) {
 					if (n) {
-						fixcol(r, c, abs(nv - 5), col, 
+						fixcol(r, c, abs(nv - 5), col,
 						    inc);
 						if (ov != 5)
-							fixcol(r + inc * ov, 
+							fixcol(r + inc * ov,
 							    c + 1, abs(ov - 5),
 							    col, inc);
 					} else {
-						fixcol(r, c, abs(ov - 5), ' ', 
+						fixcol(r, c, abs(ov - 5), ' ',
 						    inc);
 						if (nv != 5)
-							fixcol(r + inc * nv, 
+							fixcol(r + inc * nv,
 							    c + 1, abs(nv - 5),
 							    ' ', inc);
 					}
@@ -360,28 +360,28 @@ fixpos(int cur, int new, int r, int c, int inc)
 					if (ov != 10)
 						fixcol(r + inc * (ov - 5), c,
 						    abs(ov - 10), col, inc);
-					fixcol(r, c + 2, abs(nv - 10), col, 
+					fixcol(r, c + 2, abs(nv - 10), col,
 					    inc);
 				} else {
 					if (nv != 10)
 						fixcol(r + inc * (nv - 5), c,
 						    abs(nv - 10), ' ', inc);
-					fixcol(r, c + 2, abs(ov - 10), ' ', 
+					fixcol(r, c + 2, abs(ov - 10), ' ',
 					    inc);
 				}
 				return;
 			}
 			if (n > o) {
-				fixcol(r + inc * (ov % 5), c + o, 
+				fixcol(r + inc * (ov % 5), c + o,
 				    abs(5 * n - ov), col, inc);
 				if (nv != 5 * n)
-					fixcol(r, c + n, abs(5 * n - nv), 
+					fixcol(r, c + n, abs(5 * n - nv),
 					    col, inc);
 			} else {
-				fixcol(r + inc * (nv % 5), c + n, 
+				fixcol(r + inc * (nv % 5), c + n,
 				    abs(5 * n - nv), ' ', inc);
 				if (ov != 5 * o)
-					fixcol(r, c + o, abs(5 * o - ov), 
+					fixcol(r, c + o, abs(5 * o - ov),
 					    ' ', inc);
 			}
 			return;
@@ -483,13 +483,13 @@ newpos(void)
 			ccount = n;
 		}
 		/* UP and ND */
-		if (c >= curc && 
+		if (c >= curc &&
 		    (n = (curr - r) * lUP + (c - curc) * lND) < ccount) {
 			mode = 6;
 			ccount = n;
 		}
 		/* UP and BS */
-		if (c < curc && 
+		if (c < curc &&
 		    (n = (curr - r) * lUP + (curc - c) * lBC) < ccount) {
 			mode = 7;
 			ccount = n;

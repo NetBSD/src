@@ -118,7 +118,7 @@ array_add(struct array *a, void *val, unsigned *index_ret)
  * in array.c.
  *
  * Example usage in e.g. item.h of some game:
- * 
+ *
  * DECLARRAY_BYTYPE(stringarray, char);
  * DECLARRAY(potion);
  * DECLARRAY(sword);
