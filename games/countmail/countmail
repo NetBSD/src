@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: countmail,v 1.7 2008/04/28 20:22:53 martin Exp $
+#	$NetBSD: countmail,v 1.8 2021/05/02 13:10:36 rillig Exp $
 
 #
 # Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -30,29 +30,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-# Count the messages in your mailbox, using only POSIX shell builtins.
+# Count the messages in your mailbox.
 #
-# Caveats:
-#
-# The read loop is horrendously slow on every implementation I've
-# tried.  I suggest using from(1) and wc(1) instead, though these are
-# not shell builtins.
-
-# for krb.
-#set -- `from -t`
-#v=$3
-set -- `from 2>/dev/null |wc -l`
+set -- `from 2>/dev/null | wc -l`
 v=$1
-#v=`from | wc -l`
-
-#v=0
-#exec 0</var/mail/$USER
-#while read line; do
-#  case "$line" in
-#    "From "*) v=$(($v + 1)) ;;
-#  esac
-#done
-#exec 0<&-
 
 set --
 g=0
