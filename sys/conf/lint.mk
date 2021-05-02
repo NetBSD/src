@@ -1,4 +1,4 @@
-# $NetBSD: lint.mk,v 1.3 2021/05/02 19:51:57 rillig Exp $
+# $NetBSD: lint.mk,v 1.4 2021/05/02 20:11:43 rillig Exp $
 
 ##
 ## lint
@@ -9,7 +9,7 @@
 ALLSFILES?=	${MD_SFILES} ${SFILES}
 LINTSTUBS?=	${ALLSFILES:T:R:C/^.*$/LintStub_&.c/g}
 KERNLINTFLAGS?=	-bceghnxzFS
-NORMAL_LN?=	${LINT} ${KERNLINTFLAGS} ${CPPFLAGS:M-[IDU]*} -i $< -o $@
+NORMAL_LN?=	${LINT} ${KERNLINTFLAGS} ${CPPFLAGS:M-[IDU]*} -o $@ -i $<
 
 _lsrc=${CFILES} ${LINTSTUBS} ${MI_CFILES} ${MD_CFILES}
 LOBJS?= ${_lsrc:T:S/.c$/.ln/g} ${LIBKERNLN} ${SYSLIBCOMPATLN}
