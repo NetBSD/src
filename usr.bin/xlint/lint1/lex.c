@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.32 2021/05/03 03:46:55 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.33 2021/05/03 07:08:54 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.32 2021/05/03 03:46:55 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.33 2021/05/03 07:08:54 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -197,7 +197,7 @@ static	struct	kwtab {
 	kwdef_token(	"optimize",	T_AT_OPTIMIZE,		0,0,1,1,5),
 	kwdef_token(	"packed",	T_AT_PACKED,		0,0,1,1,5),
 	kwdef_token(	"packed",	T_PACKED,		0,0,0,0,2),
-	kwdef_token(	"pcs",		T_AT_PCS,		0,0,0,0,5),
+	kwdef_token(	"pcs",		T_AT_PCS,		0,0,1,1,5),
 	kwdef_token(	"printf",	T_AT_FORMAT_PRINTF,	0,0,1,1,5),
 	kwdef_token(	"pure",		T_AT_PURE,		0,0,1,1,5),
 	kwdef_token(	"real",		T_REAL,			0,1,0,0,4),
