@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.213 2021/05/03 08:30:30 simonb Exp $
+#	$NetBSD: Makefile.inc,v 1.214 2021/05/03 11:07:55 simonb Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -87,6 +87,8 @@ MAN+=	alarm.3 arc4random.3 basename.3 bsd_signal.3 bswap.3 \
 	ualarm.3 ulimit.3 uname.3 unvis.3 usleep.3 utime.3 valloc.3 vis.3 \
 	wordexp.3
 
+MLINKS+=arc4random.3 arc4random_addrandom.3 arc4random.3 arc4random_buf.3 \
+	arc4random.3 arc4random_stir.3 arc4random.3 arc4random_uniform.3
 MLINKS+=bswap.3 bswap16.3 bswap.3 bswap32.3 bswap.3 bswap64.3
 MLINKS+=cpuset.3 cpuset_create.3 cpuset.3 cpuset_destroy.3 \
 	cpuset.3 cpuset_zero.3 cpuset.3 cpuset_set.3 cpuset.3 cpuset_clr.3 \
