@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_attribute.c,v 1.3 2021/05/01 07:56:20 rillig Exp $	*/
+/*	$NetBSD: gcc_attribute.c,v 1.4 2021/05/03 06:24:18 rillig Exp $	*/
 # 3 "gcc_attribute.c"
 
 /*
@@ -38,3 +38,16 @@ function_nonnull_list(void *, const void *, int);
 /* expect+1: syntax error 'unknown_attribute' */
 void __attribute__((unknown_attribute))
 function_with_unknown_attribute(void);
+
+/*
+ * There is an attribute called 'pcs', but that attribute must not prevent an
+ * ordinary variable from being named the same.
+ *
+ * Seen in yds.c, function yds_allocate_slots.
+ */
+void
+local_variable_pcs(void)
+{
+	int pcs = 3;		/* expect: syntax error 'pcs' *//*FIXME*/
+	return pcs;
+}
