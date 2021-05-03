@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.35 2021/05/03 07:30:19 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.36 2021/05/03 08:03:45 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.35 2021/05/03 07:30:19 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.36 2021/05/03 08:03:45 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -243,6 +243,8 @@ static	struct	kwtab {
 #undef kwdef_sclass
 #undef kwdef_type
 #undef kwdef_tqual
+#undef kwdef_keyword
+#undef kwdef_gcc_attr
 };
 
 /* Symbol table */
