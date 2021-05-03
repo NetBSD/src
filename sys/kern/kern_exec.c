@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.442.4.7 2019/08/05 14:47:49 martin Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.442.4.8 2021/05/03 09:15:30 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.442.4.7 2019/08/05 14:47:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.442.4.8 2021/05/03 09:15:30 bouyer Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -2143,7 +2143,7 @@ spawn_return(void *arg)
 
 		/* Reset user ID's */
 		if (spawn_data->sed_attrs->sa_flags & POSIX_SPAWN_RESETIDS) {
-			error = do_setresuid(l, -1,
+			error = do_setresgid(l, -1,
 			     kauth_cred_getgid(l->l_cred), -1,
 			     ID_E_EQ_R | ID_E_EQ_S);
 			if (error)
