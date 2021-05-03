@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.86 2021/04/30 14:28:35 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.87 2021/05/03 09:16:00 bouyer Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -1892,4 +1892,9 @@ doc/3RDPARTY					(apply patch)
 
 	Update tzdata to 2021a.
 	[kre, ticket #1676]
+
+sys/kern/kern_exec.c				1.505 via patch
+
+	Fix copy&pasto in handling of POSIX_SPAWN_RESETIDS in posix_spawn(3)
+	[martin, ticket #1677]
 
