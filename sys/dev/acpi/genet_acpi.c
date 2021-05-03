@@ -1,4 +1,4 @@
-/* $NetBSD: genet_acpi.c,v 1.4 2021/01/29 15:49:55 thorpej Exp $ */
+/* $NetBSD: genet_acpi.c,v 1.5 2021/05/03 10:28:26 rin Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -29,12 +29,14 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genet_acpi.c,v 1.4 2021/01/29 15:49:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genet_acpi.c,v 1.5 2021/05/03 10:28:26 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/cpu.h>
 #include <sys/device.h>
+
+#include <sys/rndsource.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>

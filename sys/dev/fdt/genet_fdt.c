@@ -1,4 +1,4 @@
-/* $NetBSD: genet_fdt.c,v 1.5 2021/03/08 13:15:06 mlelstv Exp $ */
+/* $NetBSD: genet_fdt.c,v 1.6 2021/05/03 10:28:26 rin Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genet_fdt.c,v 1.5 2021/03/08 13:15:06 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genet_fdt.c,v 1.6 2021/05/03 10:28:26 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -37,6 +37,8 @@ __KERNEL_RCSID(0, "$NetBSD: genet_fdt.c,v 1.5 2021/03/08 13:15:06 mlelstv Exp $"
 #include <sys/intr.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+
+#include <sys/rndsource.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>

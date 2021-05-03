@@ -1,4 +1,4 @@
-/* $NetBSD: bcmgenet.c,v 1.8 2021/03/08 13:14:44 mlelstv Exp $ */
+/* $NetBSD: bcmgenet.c,v 1.9 2021/05/03 10:28:26 rin Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcmgenet.c,v 1.8 2021/03/08 13:14:44 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcmgenet.c,v 1.9 2021/05/03 10:28:26 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -45,6 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: bcmgenet.c,v 1.8 2021/03/08 13:14:44 mlelstv Exp $")
 #include <sys/mutex.h>
 #include <sys/callout.h>
 #include <sys/cprng.h>
+
+#include <sys/rndsource.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -681,6 +683,7 @@ genet_rxintr(struct genet_softc *sc, int qid)
 	int error, index, len, n;
 	struct mbuf *m, *m0;
 	uint32_t status, pidx, total;
+	int pkts = 0;
 
 	pidx = RD4(sc, GENET_RX_DMA_PROD_INDEX(qid)) & 0xffff;
 	total = (pidx - sc->sc_rx.cidx) & 0xffff;
@@ -749,6 +752,7 @@ genet_rxintr(struct genet_softc *sc, int qid)
 		m_adj(m, ETHER_ALIGN);
 
 		if_percpuq_enqueue(ifp->if_percpuq, m);
+		++pkts;
 
 next:
 		index = RX_NEXT(index);
@@ -756,6 +760,9 @@ next:
 		sc->sc_rx.cidx = (sc->sc_rx.cidx + 1) & 0xffff;
 		WR4(sc, GENET_RX_DMA_CONS_INDEX(qid), sc->sc_rx.cidx);
 	}
+
+	if (pkts != 0)
+		rnd_add_uint32(&sc->sc_rndsource, pkts);
 }
 
 static void
@@ -785,6 +792,9 @@ genet_txintr(struct genet_softc *sc, int qid)
 	}
 
 	if_statadd(ifp, if_opackets, pkts);
+
+	if (pkts != 0)
+		rnd_add_uint32(&sc->sc_rndsource, pkts);
 }
 
 static void
@@ -1099,6 +1109,9 @@ genet_attach(struct genet_softc *sc)
 
 	/* Attach ethernet interface */
 	ether_ifattach(ifp, eaddr);
+
+	rnd_attach_source(&sc->sc_rndsource, ifp->if_xname, RND_TYPE_NET,
+	    RND_FLAG_DEFAULT);
 
 	return 0;
 }
