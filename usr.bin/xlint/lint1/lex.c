@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.31 2021/05/01 00:08:44 christos Exp $ */
+/* $NetBSD: lex.c,v 1.32 2021/05/03 03:46:55 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.31 2021/05/01 00:08:44 christos Exp $");
+__RCSID("$NetBSD: lex.c,v 1.32 2021/05/03 03:46:55 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -261,7 +261,7 @@ symt_t	symtyp;
 
 
 static void
-add_keyword(struct kwtab *kw, int deco)
+add_keyword(struct kwtab *kw, u_int deco)
 {
 	sym_t *sym;
 	size_t h;
