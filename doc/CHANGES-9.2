@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.76 2021/05/02 10:44:31 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.77 2021/05/03 09:04:21 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -3061,4 +3061,16 @@ external/cddl/osnet/dist/cmd/zpool/zpool.8	1.2
 
 	zfs: Fix references to FreeBSD in manual pages.
 	[nia, ticket #1264]
+
+external/gpl3/binutils/dist/bfd/elf32-ppc.c	1.16
+external/gpl3/binutils/dist/bfd/elf64-ppc.c	1.16
+
+	ld(1): fix regression when linking binaries with large text
+	section.
+	[rin, ticket #1266]
+
+sys/miscfs/fdesc/fdesc_vnops.c			1.135
+
+	PR 56130: make sure fdesc_lookup() never returns VNON vnodes.
+	[hannken, ticket #1267]
 
