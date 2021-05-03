@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2838_pcie.c,v 1.2 2021/04/24 23:36:26 thorpej Exp $ */
+/*	$NetBSD: bcm2838_pcie.c,v 1.3 2021/05/03 18:56:38 tnn Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2838_pcie.c,v 1.2 2021/04/24 23:36:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2838_pcie.c,v 1.3 2021/05/03 18:56:38 tnn Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -156,6 +156,7 @@ stb_setbits(struct bcmstb_softc *sc, int r, uint32_t clr, uint32_t set)
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "brcm,pci-plat-dev" },
+	{ .compat = "brcm,bcm2711-pcie" },
 	DEVICE_COMPAT_EOL
 };
 
