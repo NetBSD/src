@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.212 2021/04/20 21:42:32 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.213 2021/05/03 08:30:30 simonb Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -102,7 +102,7 @@ MLINKS+=endutxent.3 getutxent.3 endutxent.3 getutxid.3 \
 MLINKS+=endutent.3 getutent.3 endutent.3 getutline.3 endutent.3 pututline.3 \
 	endutent.3 setutent.3
 MLINKS+=err.3 verr.3 err.3 errx.3 err.3 verrx.3 err.3 warn.3 err.3 vwarn.3 \
-        err.3 warnx.3 err.3 vwarnx.3 err.3 errc.3 err.3 verrc.3 err.3 warnc.3 \
+	err.3 warnx.3 err.3 vwarnx.3 err.3 errc.3 err.3 verrc.3 err.3 warnc.3 \
 	err.3 vwarnc.3
 MLINKS+=exec.3 execl.3 exec.3 execle.3 exec.3 execlp.3 exec.3 execlpe.3 \
 	exec.3 execv.3 exec.3 execvp.3 exec.3 execvpe.3 exec.3 exect.3 
@@ -113,7 +113,7 @@ MLINKS+=extattr_namespace_to_string.3 extattr_string_to_namespace.3 \
 	extattr_copy_file.3 fcpxattr.3 \
 	extattr_copy_file.3 lcpxattr.3
 MLINKS+=fpgetmask.3 fpgetround.3 fpgetmask.3 fpgetsticky.3 \
-	fpgetmask.3 fpsetmask.3  fpgetmask.3 fpsetround.3 \
+	fpgetmask.3 fpsetmask.3 fpgetmask.3 fpsetround.3 \
 	fpgetmask.3 fpsetsticky.3 fpgetmask.3 fpgetprec.3 \
 	fpgetmask.3 fpsetprec.3
 MLINKS+=fts.3 fts_open.3 fts.3 fts_read.3 fts.3 fts_children.3 \
