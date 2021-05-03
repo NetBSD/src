@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.702 2021/03/11 01:23:33 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.703 2021/05/03 07:43:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.702 2021/03/11 01:23:33 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.703 2021/05/03 07:43:31 rillig Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -14549,7 +14549,7 @@ wm_put_phy_82575(struct wm_softc *sc)
 
 	DPRINTF(sc, WM_DEBUG_LOCK, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
-	return wm_put_swfw_semaphore(sc, swfwphysem[sc->sc_funcid]);
+	wm_put_swfw_semaphore(sc, swfwphysem[sc->sc_funcid]);
 }
 
 static int
