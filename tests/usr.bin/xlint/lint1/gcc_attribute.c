@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_attribute.c,v 1.4 2021/05/03 06:24:18 rillig Exp $	*/
+/*	$NetBSD: gcc_attribute.c,v 1.5 2021/05/03 07:08:54 rillig Exp $	*/
 # 3 "gcc_attribute.c"
 
 /*
@@ -41,13 +41,15 @@ function_with_unknown_attribute(void);
 
 /*
  * There is an attribute called 'pcs', but that attribute must not prevent an
- * ordinary variable from being named the same.
+ * ordinary variable from being named the same.  Starting with scan.l 1.77
+ * from 2017-01-07, that variable name generated a syntax error.  Fixed in
+ * lex.c 1.33 from 2021-05-03.
  *
  * Seen in yds.c, function yds_allocate_slots.
  */
-void
+int
 local_variable_pcs(void)
 {
-	int pcs = 3;		/* expect: syntax error 'pcs' *//*FIXME*/
+	int pcs = 3;
 	return pcs;
 }
