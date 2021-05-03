@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.77 2021/05/03 09:04:21 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.78 2021/05/03 09:13:22 bouyer Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -3073,4 +3073,9 @@ sys/miscfs/fdesc/fdesc_vnops.c			1.135
 
 	PR 56130: make sure fdesc_lookup() never returns VNON vnodes.
 	[hannken, ticket #1267]
+
+sys/kern/kern_exec.c				1.505 via patch
+
+	Fix copy&pasto in handling of POSIX_SPAWN_RESETIDS in posix_spawn(3)
+	[martin, ticket #1265]
 
