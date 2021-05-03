@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.13 2021/04/30 20:07:22 skrll Exp $ */
+/* $NetBSD: db_interface.c,v 1.14 2021/05/03 19:33:09 skrll Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.13 2021/04/30 20:07:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.14 2021/05/03 19:33:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -93,17 +93,17 @@ db_read_bytes(vaddr_t addr, size_t size, char *data)
 			reg_pan_write(0); /* disable PAN */
 
 		tmp = (uintptr_t)src | (uintptr_t)data;
-		if ((size >= 8) && ((tmp & 7) == 0)) {
+		if (size >= 8 && (tmp & 7) == 0) {
 			*(uint64_t *)data = *(const uint64_t *)src;
 			src += 8;
 			data += 8;
 			size -= 8;
-		} else if ((size >= 4) && ((tmp & 3) == 0)) {
+		} else if (size >= 4 && (tmp & 3) == 0) {
 			*(uint32_t *)data = *(const uint32_t *)src;
 			src += 4;
 			data += 4;
 			size -= 4;
-		} else if ((size >= 2) && ((tmp & 1) == 0)) {
+		} else if (size >= 2 && (tmp & 1) == 0) {
 			*(uint16_t *)data = *(const uint16_t *)src;
 			src += 2;
 			data += 2;
@@ -202,17 +202,17 @@ db_write_bytes(vaddr_t addr, size_t size, const char *data)
 		lastpage = atop(va);
 
 		tmp = (uintptr_t)dst | (uintptr_t)data;
-		if ((size >= 8) && ((tmp & 7) == 0)) {
+		if (size >= 8 && (tmp & 7) == 0) {
 			*(uint64_t *)dst = *(const uint64_t *)data;
 			dst += 8;
 			data += 8;
 			size -= 8;
-		} else if ((size >= 4) && ((tmp & 3) == 0)) {
+		} else if (size >= 4 && (tmp & 3) == 0) {
 			*(uint32_t *)dst = *(const uint32_t *)data;
 			dst += 4;
 			data += 4;
 			size -= 4;
-		} else if ((size >= 2) && ((tmp & 1) == 0)) {
+		} else if (size >= 2 && (tmp & 1) == 0) {
 			*(uint16_t *)dst = *(const uint16_t *)data;
 			dst += 2;
 			data += 2;
@@ -261,25 +261,25 @@ db_branch_taken(db_expr_t inst, db_addr_t pc, db_regs_t *regs)
 #define INSN_FMT_IMM19(insn)	(((insn) >> 5) & 0x7ffff)
 #define INSN_FMT_IMM14(insn)	(((insn) >> 5) & 0x3fff)
 
-	if (((inst & 0xfffffc1f) == 0xd65f0000) ||	/* ret xN */
-	    ((inst & 0xfffffc1f) == 0xd63f0000) ||	/* blr xN */
-	    ((inst & 0xfffffc1f) == 0xd61f0000)) {	/* br xN */
+	if ((inst & 0xfffffc1f) == 0xd65f0000 ||	/* ret xN */
+	    (inst & 0xfffffc1f) == 0xd63f0000 ||	/* blr xN */
+	    (inst & 0xfffffc1f) == 0xd61f0000) {	/* br xN */
 		return db_fetch_reg(INSN_FMT_RN(inst), regs, false);
 	}
 
-	if (((inst & 0xfc000000) == 0x94000000) ||	/* bl imm */
-	    ((inst & 0xfc000000) == 0x14000000)) {	/* b imm */
+	if ((inst & 0xfc000000) == 0x94000000 ||	/* bl imm */
+	    (inst & 0xfc000000) == 0x14000000) {	/* b imm */
 		return SignExtend(26, INSN_FMT_IMM26(inst), 4) + pc;
 	}
 
-	if (((inst & 0xff000010) == 0x54000000) ||	/* b.cond */
-	    ((inst & 0x7f000000) == 0x35000000) ||	/* cbnz */
-	    ((inst & 0x7f000000) == 0x34000000)) {	/* cbz */
+	if ((inst & 0xff000010) == 0x54000000 ||	/* b.cond */
+	    (inst & 0x7f000000) == 0x35000000 ||	/* cbnz */
+	    (inst & 0x7f000000) == 0x34000000) {	/* cbz */
 		return SignExtend(19, INSN_FMT_IMM19(inst), 4) + pc;
 	}
 
-	if (((inst & 0x7f000000) == 0x37000000) ||	/* tbnz */
-	    ((inst & 0x7f000000) == 0x36000000)) {	/* tbz */
+	if ((inst & 0x7f000000) == 0x37000000 ||	/* tbnz */
+	    (inst & 0x7f000000) == 0x36000000) {	/* tbz */
 		return SignExtend(14, INSN_FMT_IMM14(inst), 4) + pc;
 	}
 
@@ -291,18 +291,18 @@ db_inst_unconditional_flow_transfer(db_expr_t inst)
 {
 	LE32TOH(inst);
 
-	if (((inst & 0xfffffc1f) == 0xd65f0000) ||	/* ret xN */
-	    ((inst & 0xfc000000) == 0x94000000) ||	/* bl */
-	    ((inst & 0xfffffc1f) == 0xd63f0000) ||	/* blr */
-	    ((inst & 0xfc000000) == 0x14000000) ||	/* b imm */
-	    ((inst & 0xfffffc1f) == 0xd61f0000))	/* br */
+	if ((inst & 0xfffffc1f) == 0xd65f0000 ||	/* ret xN */
+	    (inst & 0xfc000000) == 0x94000000 ||	/* bl */
+	    (inst & 0xfffffc1f) == 0xd63f0000 ||	/* blr */
+	    (inst & 0xfc000000) == 0x14000000 ||	/* b imm */
+	    (inst & 0xfffffc1f) == 0xd61f0000)		/* br */
 		return true;
 
 #define INSN_FMT_COND(insn)	((insn) & 0xf)
 #define CONDITION_AL	14
 
-	if (((inst & 0xff000010) == 0x54000000) &&	/* b.cond */
-	    (INSN_FMT_COND(inst) == CONDITION_AL))	/* always? */
+	if ((inst & 0xff000010) == 0x54000000 &&	/* b.cond */
+	    INSN_FMT_COND(inst) == CONDITION_AL)	/* always? */
 		return true;
 
 	return false;
@@ -319,12 +319,12 @@ db_pte_print(pt_entry_t pte, int level,
 
 	pr(" %s", (pte & LX_VALID) ? "VALID" : "**INVALID**");
 
-	if ((level == 0) ||
-	    ((level == 1) && l1pde_is_table(pte)) ||
-	    ((level == 2) && l2pde_is_table(pte))) {
+	if (level == 0 ||
+	    (level == 1 && l1pde_is_table(pte)) ||
+	    (level == 2 && l2pde_is_table(pte))) {
 
 		/* L0/L1/L2 TABLE */
-		if ((level == 0) && ((pte & LX_TYPE) != LX_TYPE_TBL))
+		if (level == 0 && (pte & LX_TYPE) != LX_TYPE_TBL)
 			pr(" **ILLEGAL TYPE**"); /* L0 doesn't support block */
 		else
 			pr(" L%d-TABLE", level);
@@ -340,9 +340,9 @@ db_pte_print(pt_entry_t pte, int level,
 		if (pte & LX_TBL_PXNTABLE)
 			pr(", PXNTABLE");
 
-	} else if (((level == 1) && l1pde_is_block(pte)) ||
-	    ((level == 2) && l2pde_is_block(pte)) ||
-	    (level == 3)) {
+	} else if ((level == 1 && l1pde_is_block(pte)) ||
+	    (level == 2 && l2pde_is_block(pte)) ||
+	    level == 3) {
 
 		/* L1/L2 BLOCK or L3 PAGE */
 		switch (level) {
@@ -554,12 +554,11 @@ dump_ln_table(bool countmode, pd_entry_t *pdp, int level, int lnindex,
 				    spc, level, i, n, va, pde);
 			n++;
 
-			if (((level != 0) && (level != 3) &&
-			    l1pde_is_block(pde)) ||
-			    ((level == 3) && l3pte_is_page(pde))) {
+			if ((level != 0 && level != 3 && l1pde_is_block(pde)) ||
+			    (level == 3 && l3pte_is_page(pde))) {
 				if (!countmode)
 					db_pte_print(pde, level, pr);
-			} else if ((level != 3) && l1pde_is_table(pde)) {
+			} else if (level != 3 && l1pde_is_table(pde)) {
 				if (!countmode)
 					db_pte_print(pde, level, pr);
 				pa = l0pde_pa(pde);
