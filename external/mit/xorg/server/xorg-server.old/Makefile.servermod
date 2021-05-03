@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.servermod,v 1.3 2021/04/13 07:53:59 mrg Exp $
+#	$NetBSD: Makefile.servermod,v 1.4 2021/05/03 08:44:05 nakayama Exp $
 
 .include <bsd.own.mk>	# For /etc/mk.conf processing
 
@@ -25,7 +25,4 @@ CPPFLAGS+=	${X11FLAGS.LOADABLE}
 .endif
 
 # IOPortBase is particularly annoying to fix
-
-# IOPortBase is particularly annoying to fix
-COPTS+=         ${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 10:? -fcommon :}
 COPTS+=         ${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 10:? -fcommon :}

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.serverlib,v 1.3 2021/04/13 07:53:59 mrg Exp $
+#	$NetBSD: Makefile.serverlib,v 1.4 2021/05/03 08:44:05 nakayama Exp $
 
 .include <bsd.own.mk>		# for NETBSDSRCDIR and mk.conf processing
 
@@ -24,9 +24,6 @@ CPPFLAGS+=	-DXORG_VERSION_CURRENT=${XORG_VERSION_CURRENT}
 .if (${MACHINE_ARCH} == "sparc") || (${MACHINE_ARCH} == "sparc64")
 CPPFLAGS+=	-D__GLX_ALIGN64
 .endif
-
-# IOPortBase is particularly annoying to fix
-COPTS+=         ${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 10:? -fcommon :}
 
 # IOPortBase is particularly annoying to fix
 COPTS+=         ${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 10:? -fcommon :}
