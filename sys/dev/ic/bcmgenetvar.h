@@ -1,4 +1,4 @@
-/* $NetBSD: bcmgenetvar.h,v 1.3 2021/03/08 13:14:44 mlelstv Exp $ */
+/* $NetBSD: bcmgenetvar.h,v 1.4 2021/05/03 10:28:26 rin Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -70,6 +70,8 @@ struct genet_softc {
 
 	struct genet_ring	sc_tx;
 	struct genet_ring	sc_rx;
+
+	krndsource_t		sc_rndsource;
 };
 
 int	genet_attach(struct genet_softc *);
