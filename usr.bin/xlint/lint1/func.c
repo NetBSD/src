@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.106 2021/04/19 13:18:43 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.107 2021/05/03 07:08:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.106 2021/04/19 13:18:43 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.107 2021/05/03 07:08:54 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1120,6 +1120,12 @@ global_clean_up_decl(bool silent)
 	}
 
 	dcs->d_asm = false;
+
+	/*
+	 * Needed for BSD yacc in case of parse errors; GNU Bison 3.0.4 is
+	 * fine.  See gcc_attribute.c, function_with_unknown_attribute.
+	 */
+	attron = false;
 }
 
 /*
