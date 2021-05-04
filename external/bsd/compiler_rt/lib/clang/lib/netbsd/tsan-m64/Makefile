@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2021/04/30 22:48:37 rillig Exp $
+#	$NetBSD: Makefile,v 1.6 2021/05/04 17:23:54 rillig Exp $
 
 NOSANITIZER=    # defined
 
@@ -52,7 +52,7 @@ CPPFLAGS+=	-I${TOPDIR}/lib
 SYMS=		libclang_rt.tsan-x86_64.a.syms
 SYMS_EXTRA=	${TOPDIR}/lib/tsan/rtl/tsan.syms.extra
 
-all:		${SYMS}
+realall:	${SYMS}
 
 CLEANFILES+=	${SYMS}
 FILES=		${SYMS}
