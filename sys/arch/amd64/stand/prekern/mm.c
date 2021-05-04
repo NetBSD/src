@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.c,v 1.27 2020/05/07 17:58:26 maxv Exp $	*/
+/*	$NetBSD: mm.c,v 1.28 2021/05/04 21:09:16 khorben Exp $	*/
 
 /*
  * Copyright (c) 2017-2020 The NetBSD Foundation, Inc. All rights reserved.
@@ -148,7 +148,7 @@ mm_bootspace_mprotect(void)
 		mm_mprotect(bootspace.segs[i].va, bootspace.segs[i].sz, prot);
 	}
 
-	print_state(true, "Segments protection updated");
+	print_state(STATE_NORMAL, "Segments protection updated");
 }
 
 static size_t
@@ -493,9 +493,9 @@ mm_map_kernel(void)
 {
 	memset(&bootspace, 0, sizeof(bootspace));
 	mm_map_head();
-	print_state(true, "Head region mapped");
+	print_state(STATE_NORMAL, "Head region mapped");
 	elf_map_sections();
-	print_state(true, "Segments mapped");
+	print_state(STATE_NORMAL, "Segments mapped");
 	mm_map_boot();
-	print_state(true, "Boot region mapped");
+	print_state(STATE_NORMAL, "Boot region mapped");
 }

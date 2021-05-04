@@ -1,4 +1,4 @@
-/*	$NetBSD: prekern.c,v 1.13 2020/05/23 08:25:32 maxv Exp $	*/
+/*	$NetBSD: prekern.c,v 1.14 2021/05/04 21:09:16 khorben Exp $	*/
 
 /*
  * Copyright (c) 2017-2020 The NetBSD Foundation, Inc. All rights reserved.
@@ -286,7 +286,7 @@ init_prekern(paddr_t pa_start)
 	 */
 	init_idt();
 
-	print_state(true, "Prekern loaded");
+	print_state(STATE_NORMAL, "Prekern loaded");
 
 	/*
 	 * Init the PRNG.
@@ -309,7 +309,7 @@ init_prekern(paddr_t pa_start)
 	/*
 	 * Finally, jump into the kernel.
 	 */
-	print_state(true, "Jumping into the kernel");
+	print_state(STATE_NORMAL, "Jumping into the kernel");
 	jump_kernel(ent);
 
 	fatal("init_prekern: unreachable!");

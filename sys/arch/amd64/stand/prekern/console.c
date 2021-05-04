@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.6 2020/05/23 08:25:32 maxv Exp $	*/
+/*	$NetBSD: console.c,v 1.7 2021/05/04 21:09:16 khorben Exp $	*/
 
 /*
  * Copyright (c) 2017-2020 The NetBSD Foundation, Inc. All rights reserved.
@@ -100,13 +100,24 @@ void print(char *buf)
 	print_ext(WHITE_ON_BLACK, buf);
 }
 
-void print_state(bool ok, char *buf)
+void print_state(state_t state, char *buf)
 {
 	print("[");
-	if (ok)
-		print_ext(GREEN_ON_BLACK, "+");
-	else
-		print_ext(RED_ON_BLACK, "!");
+	switch (state)
+	{
+		case STATE_NORMAL:
+			print_ext(GREEN_ON_BLACK, "+");
+			break;
+		case STATE_ERROR:
+			print_ext(RED_ON_BLACK, "!");
+			break;
+		case STATE_WARNING:
+			print_ext(YELLOW_ON_BLACK, "*");
+			break;
+		default:
+			print_ext(WHITE_ON_BLACK, "?");
+			break;
+	}
 	print("] ");
 	print(buf);
 	print("\n");

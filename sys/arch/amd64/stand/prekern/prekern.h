@@ -1,4 +1,4 @@
-/*	$NetBSD: prekern.h,v 1.23 2020/05/23 08:25:32 maxv Exp $	*/
+/*	$NetBSD: prekern.h,v 1.24 2021/05/04 21:09:16 khorben Exp $	*/
 
 /*
  * Copyright (c) 2017-2020 The NetBSD Foundation, Inc. All rights reserved.
@@ -42,12 +42,20 @@ typedef uint64_t pte_prot_t;
 #define WHITE_ON_BLACK 0x07
 #define RED_ON_BLACK 0x04
 #define GREEN_ON_BLACK 0x02
+#define YELLOW_ON_BLACK 0x0e
 
 #define HEAD_WINDOW_BASE	(KERNBASE - NBPD_L3)
 #define HEAD_WINDOW_SIZE	NBPD_L3
 
 #define KASLR_WINDOW_BASE	KERNBASE		/* max - 2GB */
 #define KASLR_WINDOW_SIZE	(2LLU * (1 << 30))	/* 2GB */
+
+typedef enum
+{
+	STATE_NORMAL = 0,
+	STATE_ERROR,
+	STATE_WARNING
+} state_t;
 
 /* -------------------------------------------------------------------------- */
 
@@ -83,7 +91,7 @@ struct bootspace {
 void init_cons(void);
 void print_ext(int, char *);
 void print(char *);
-void print_state(bool, char *);
+void print_state(state_t, char *);
 void print_banner(void);
 
 /* elf.c */
