@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.21 2020/05/07 17:58:26 maxv Exp $	*/
+/*	$NetBSD: elf.c,v 1.22 2021/05/04 21:09:16 khorben Exp $	*/
 
 /*
  * Copyright (c) 2017-2020 The NetBSD Foundation, Inc. All rights reserved.
@@ -426,7 +426,7 @@ elf_kernel_reloc(void)
 	Elf_Sym *sym;
 	size_t i, j;
 
-	print_state(true, "ELF info created");
+	print_state(STATE_NORMAL, "ELF info created");
 
 	/*
 	 * Update all symbol values with the appropriate offset.
@@ -447,7 +447,7 @@ elf_kernel_reloc(void)
 		}
 	}
 
-	print_state(true, "Symbol values updated");
+	print_state(STATE_NORMAL, "Symbol values updated");
 
 	/*
 	 * Perform relocations without addend if there are any.
@@ -482,7 +482,7 @@ elf_kernel_reloc(void)
 		}
 	}
 
-	print_state(true, "REL relocations applied");
+	print_state(STATE_NORMAL, "REL relocations applied");
 
 	/*
 	 * Perform relocations with addend if there are any.
@@ -517,7 +517,7 @@ elf_kernel_reloc(void)
 		}
 	}
 
-	print_state(true, "RELA relocations applied");
+	print_state(STATE_NORMAL, "RELA relocations applied");
 
 	/*
 	 * Get the entry point.
@@ -527,7 +527,7 @@ elf_kernel_reloc(void)
 		fatal("elf_kernel_reloc: entry point not found");
 	}
 
-	print_state(true, "Entry point found");
+	print_state(STATE_NORMAL, "Entry point found");
 
 	return ent;
 }
