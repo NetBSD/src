@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.280 2021/04/18 17:54:33 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.281 2021/05/04 05:40:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.280 2021/04/18 17:54:33 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.281 2021/05/04 05:40:10 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1686,21 +1686,18 @@ promote(op_t op, bool farg, tnode_t *tn)
 
 	if (!tflag) {
 		/*
-		 * ANSI C requires that the result is always of type INT
-		 * if INT can represent all possible values of the previous
-		 * type.
+		 * C99 6.3.1.1p2 requires for types with lower rank than int
+		 * that "If an int can represent all the values of the
+		 * original type, the value is converted to an int; otherwise
+		 * it is converted to an unsigned int", and that "All other
+		 * types are unchanged by the integer promotions".
 		 */
 		if (tn->tn_type->t_bitfield) {
 			len = tn->tn_type->t_flen;
-			if (size_in_bits(INT) > len) {
+			if (len < size_in_bits(INT)) {
 				t = INT;
-			} else {
-				lint_assert(len == size_in_bits(INT));
-				if (is_uinteger(t)) {
-					t = UINT;
-				} else {
-					t = INT;
-				}
+			} else if (len == size_in_bits(INT)) {
+				t = is_uinteger(t) ? UINT : INT;
 			}
 		} else if (t == CHAR || t == UCHAR || t == SCHAR) {
 			t = (size_in_bits(CHAR) < size_in_bits(INT)
