@@ -1,4 +1,4 @@
-.\" $NetBSD: gpio.4,v 1.35 2020/02/13 22:48:11 sevan Exp $
+.\" $NetBSD: gpio.4,v 1.36 2021/05/04 17:47:51 christos Exp $
 .\"	$OpenBSD: gpio.4,v 1.5 2004/11/23 09:39:29 reyk Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd February 13, 2020
+.Dd May 4, 2021
 .Dt GPIO 4
 .Os
 .Sh NAME
@@ -85,7 +85,7 @@ struct gpio_info {
 .Pp
 .It Dv GPIOREAD ( struct gpio_req )
 Returns the input pin value in the
-.Fa gpio_pin_op
+.Fa gpio_req
 structure:
 .Bd -literal
 #define GPIOMAXNAME		64
