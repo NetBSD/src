@@ -1,1 +1,1 @@
-msg_118.c(17): warning: semantics of '<<' change in ANSI C; use explicit cast [118]
+msg_118.c(18): warning: semantics of '>>' change in ANSI C; use explicit cast [118]
