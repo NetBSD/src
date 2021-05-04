@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_bit_field_types.c,v 1.4 2021/05/04 05:32:52 rillig Exp $	*/
+/*	$NetBSD: gcc_bit_field_types.c,v 1.5 2021/05/04 05:40:10 rillig Exp $	*/
 # 3 "gcc_bit_field_types.c"
 
 /*
@@ -32,6 +32,5 @@ promote_large_bit_field(struct large_bit_field lbf)
 	 * lint: assertion "len == size_in_bits(INT)" failed
 	 *     in promote at tree.c:1698
 	 */
-	/* TODO: remove the cast since it hides an assertion failure */
-	return (unsigned long long)lbf.member & 0xf;
+	return lbf.member & 0xf;
 }
