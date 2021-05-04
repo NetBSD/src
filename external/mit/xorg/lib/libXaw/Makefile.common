@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.common,v 1.1 2021/04/26 21:53:53 mrg Exp $
+#	$NetBSD: Makefile.common,v 1.2 2021/05/04 17:47:05 rillig Exp $
 
 CPPFLAGS+=	-DHAVE_WCHAR_H		\
 		-DHAVE_WCTYPE_H		\
@@ -17,5 +17,5 @@ LIBDPLIBS=\
 	Xext	${.CURDIR}/../libXext \
 	X11	${.CURDIR}/../libX11/dynamic
 
-COPTS.Pixmap.c+=	-Wno-discarded-qualifiers
-COPTS.TextAction.c+=	-Wno-discarded-qualifiers
+COPTS.Pixmap.c+=	${${ACTIVE_CC} == "gcc":? -Wno-discarded-qualifiers :}
+COPTS.TextAction.c+=	${${ACTIVE_CC} == "gcc":? -Wno-discarded-qualifiers :}
