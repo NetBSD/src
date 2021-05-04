@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.h,v 1.6 2021/04/05 11:29:49 rillig Exp $	*/
+/*	$NetBSD: radix.h,v 1.7 2021/05/04 13:40:34 rillig Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -219,6 +219,6 @@ isc_radix_process(isc_radix_tree_t *radix, isc_radix_processfunc_t func);
 	}                                    \
 	}                                    \
 	}                                    \
-	while (/*CONSTCOND*/0)
+	while (0)
 
 #endif /* _RADIX_H */
