@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.efiboot,v 1.19 2020/10/11 14:03:33 jmcneill Exp $
+# $NetBSD: Makefile.efiboot,v 1.20 2021/05/04 19:07:19 jmcneill Exp $
 
 S=		${.CURDIR}/../../..
 
@@ -137,7 +137,7 @@ cleanlibdir:
 
 LIBLIST= ${LIBGNUEFI} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBSA}
 
-VERSIONMACHINE=evbarm
+VERSIONMACHINE=${MACHINE}
 .include "${S}/conf/newvers_stand.mk"
 
 CLEANFILES+=	${PROG}.so ${PROG}.tmp
