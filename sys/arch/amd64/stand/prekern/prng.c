@@ -1,4 +1,4 @@
-/*	$NetBSD: prng.c,v 1.4 2021/05/04 21:10:25 khorben Exp $	*/
+/*	$NetBSD: prng.c,v 1.5 2021/05/04 21:13:38 khorben Exp $	*/
 
 /*
  * Copyright (c) 2017-2020 The NetBSD Foundation, Inc. All rights reserved.
@@ -84,6 +84,7 @@ prng_get_entropy_file(SHA512_CTX *ctx)
 	uint8_t digest[SHA1_DIGEST_LENGTH];
 	rndsave_t *rndsave;
 	SHA1_CTX sig;
+	size_t count = 0;
 
 	biml =
 	    (struct btinfo_modulelist *)prng_lookup_bootinfo(BTINFO_MODULELIST);
@@ -117,7 +118,10 @@ prng_get_entropy_file(SHA512_CTX *ctx)
 		}
 
 		SHA512_Update(ctx, rndsave->data, sizeof(rndsave->data));
+		count++;
 	}
+	if (count == 0)
+		print_state(STATE_WARNING, "No entropy file could be loaded");
 }
 
 /*
@@ -168,6 +172,8 @@ prng_init(void)
 		cpuid(0x01, 0x00, descs);
 		has_rdrand = (descs[2] & CPUID2_RDRAND) != 0;
 	}
+	if (!has_rdseed && !has_rdrand)
+		print_state(STATE_WARNING, "No CPU entropy feature detected");
 
 	SHA512_Init(&ctx);
 	prng_get_entropy_file(&ctx);
