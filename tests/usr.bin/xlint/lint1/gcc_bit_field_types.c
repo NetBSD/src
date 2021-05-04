@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_bit_field_types.c,v 1.3 2021/05/02 22:07:49 rillig Exp $	*/
+/*	$NetBSD: gcc_bit_field_types.c,v 1.4 2021/05/04 05:32:52 rillig Exp $	*/
 # 3 "gcc_bit_field_types.c"
 
 /*
@@ -19,3 +19,19 @@ struct example {
 	unsigned long long unsigned_long_long_flag: 1;
 	double double_flag: 1;	/* expect: illegal bit-field type 'double' */
 };
+
+struct large_bit_field {
+	unsigned long long member: 48;
+};
+
+unsigned long long
+promote_large_bit_field(struct large_bit_field lbf)
+{
+	/*
+	 * Before tree.c 1.281 from 2021-05-04:
+	 * lint: assertion "len == size_in_bits(INT)" failed
+	 *     in promote at tree.c:1698
+	 */
+	/* TODO: remove the cast since it hides an assertion failure */
+	return (unsigned long long)lbf.member & 0xf;
+}
