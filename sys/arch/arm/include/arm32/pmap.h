@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.169 2020/10/30 18:54:36 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.170 2021/05/04 09:02:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -626,6 +626,20 @@ l2pte_reset(pt_entry_t *ptep)
 
 #define	pmap_pte_v(pte)		l2pte_valid_p(*(pte))
 #define	pmap_pte_pa(pte)	l2pte_pa(*(pte))
+
+static inline uint32_t
+pte_value(pt_entry_t pte)
+{
+	return pte;
+}
+
+static inline bool
+pte_valid_p(pt_entry_t pte)
+{
+
+	return l2pte_valid_p(pte);
+}
+
 
 /* Size of the kernel part of the L1 page table */
 #define	KERNEL_PD_SIZE	\
