@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.103 2020/10/15 01:00:01 thorpej Exp $ */
+/* $NetBSD: cpu.c,v 1.104 2021/05/05 03:54:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2020 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.103 2020/10/15 01:00:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.104 2021/05/05 03:54:16 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -84,7 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.103 2020/10/15 01:00:01 thorpej Exp $");
 struct cpu_info cpu_info_primary __cacheline_aligned = {
 	.ci_curlwp = &lwp0
 };
-struct cpu_info *cpu_info_list = &cpu_info_primary;
+struct cpu_info *cpu_info_list __read_mostly = &cpu_info_primary;
 
 #if defined(MULTIPROCESSOR)
 /*
