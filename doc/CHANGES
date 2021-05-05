@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2802 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2803 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -369,3 +369,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	resolver: The default has been changed to check-names
 		(see resolv.conf(5)), which means that hostnames that
 		contain invalid characters will not resolve. [christos 20210430]
+	evbarm: Add support for Allwinner V3s SoCs. [jmcneill 20210505]
