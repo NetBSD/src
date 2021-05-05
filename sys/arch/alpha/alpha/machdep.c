@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.370 2021/05/05 15:34:54 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.371 2021/05/05 15:36:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2019, 2020 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.370 2021/05/05 15:34:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.371 2021/05/05 15:36:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1808,27 +1808,6 @@ mm_md_direct_mapped_phys(paddr_t paddr, vaddr_t *vaddr)
 
 	*vaddr = ALPHA_PHYS_TO_K0SEG(paddr);
 	return true;
-}
-
-char *
-dot_conv(unsigned long x)
-{
-	int i;
-	char *xc;
-	static int next;
-	static char space[2][20];
-
-	xc = space[next ^= 1] + sizeof space[0];
-	*--xc = '\0';
-	for (i = 0;; ++i) {
-		if (i && (i & 3) == 0)
-			*--xc = '.';
-		*--xc = hexdigits[x & 0xf];
-		x >>= 4;
-		if (x == 0)
-			break;
-	}
-	return xc;
 }
 
 void

@@ -1,4 +1,4 @@
-/* $NetBSD: alpha.h,v 1.44 2020/10/14 00:59:50 thorpej Exp $ */
+/* $NetBSD: alpha.h,v 1.45 2021/05/05 15:36:17 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -108,7 +108,6 @@ void	trap(unsigned long, unsigned long, unsigned long, unsigned long,
 	    struct trapframe *);
 void	trap_init(void);
 void	enable_nsio_ide(bus_space_tag_t);
-char *	dot_conv(unsigned long);
 
 extern const pcu_ops_t fpu_ops;
 
