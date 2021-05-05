@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.h,v 1.68 2021/02/27 12:36:46 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.69 2021/05/05 07:41:48 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.h,v 1.39 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -226,6 +226,8 @@ typedef struct bozoprefs_t {
 
 /* only allow this many total headers bytes */
 #define BOZO_HEADERS_MAX_SIZE (16 * 1024)
+
+#define BOZO_MINBUFSIZE (4 * 1024)
 
 /* debug flags */
 #define DEBUG_NORMAL	1
