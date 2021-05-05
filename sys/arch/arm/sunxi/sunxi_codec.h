@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_codec.h,v 1.7 2021/05/05 10:24:04 jmcneill Exp $ */
+/* $NetBSD: sunxi_codec.h,v 1.8 2021/05/05 20:58:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -121,7 +121,7 @@ struct sunxi_codec_softc {
 extern const struct sunxi_codec_conf sun8i_h3_codecconf;
 #define	H3_CODEC_COMPATDATA						\
 	{ .compat = "allwinner,sun8i-h3-codec",				\
-	  .data = &sun8i_h3_codecconf }
+	  .data = &sun8i_h3_codecconf },
 #else
 #define	H3_CODEC_COMPATDATA
 #endif
@@ -130,7 +130,7 @@ extern const struct sunxi_codec_conf sun8i_h3_codecconf;
 extern const struct sunxi_codec_conf sun8i_v3s_codecconf;
 #define V3S_CODEC_COMPATDATA						\
 	{ .compat = "allwinner,sun8i-v3s-codec",			\
-	  .data = &sun8i_v3s_codecconf }
+	  .data = &sun8i_v3s_codecconf },
 #else
 #define V3S_CODEC_COMPATDATA
 #endif
@@ -140,11 +140,11 @@ extern const struct sunxi_codec_conf sun4i_a10_codecconf;
 	{ .compat = "allwinner,sun4i-a10-codec",			\
 	  .data = &sun4i_a10_codecconf }, 				\
 	{ .compat = "allwinner,sun7i-a20-codec",			\
-	  .data = &sun4i_a10_codecconf }
+	  .data = &sun4i_a10_codecconf },
 
 extern const struct sunxi_codec_conf sun6i_a31_codecconf;
 #define	A31_CODEC_COMPATDATA						\
 	{ .compat = "allwinner,sun6i-a31-codec",			\
-	  .data = &sun6i_a31_codecconf }
+	  .data = &sun6i_a31_codecconf },
 
 #endif /* !_ARM_SUNXI_CODEC_H */
