@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.alpha,v 1.86 2021/05/05 01:35:35 thorpej Exp $
+#	$NetBSD: Makefile.alpha,v 1.87 2021/05/05 15:39:39 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -70,9 +70,6 @@ STRIPFLAGS=	-g -X
 ##
 ## (6) port specific target dependencies
 ##
-
-# depend on CPU configuration
-clock.o apecs.o cia.o lca.o ioasic.o icasic.o: Makefile
 
 ##
 ## (7) misc settings
