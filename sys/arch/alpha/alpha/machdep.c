@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.369 2020/10/15 01:00:01 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.370 2021/05/05 15:34:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2019, 2020 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.369 2020/10/15 01:00:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.370 2021/05/05 15:34:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1706,6 +1706,9 @@ delay(unsigned long n)
 		return;
 	}
 
+	lwp_t * const l = curlwp;
+	KPREEMPT_DISABLE(l);
+
 	pcc0 = alpha_rpcc() & 0xffffffffUL;
 	cycles = 0;
 	usec = 0;
@@ -1734,6 +1737,8 @@ delay(unsigned long n)
 		}
 		pcc0 = pcc1;
 	}
+
+	KPREEMPT_ENABLE(l);
 }
 
 #ifdef EXEC_ECOFF
