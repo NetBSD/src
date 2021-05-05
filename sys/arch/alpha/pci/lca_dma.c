@@ -1,4 +1,4 @@
-/* $NetBSD: lca_dma.c,v 1.25 2020/10/11 00:33:31 thorpej Exp $ */
+/* $NetBSD: lca_dma.c,v 1.26 2021/05/05 02:15:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lca_dma.c,v 1.25 2020/10/11 00:33:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lca_dma.c,v 1.26 2021/05/05 02:15:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,21 +48,21 @@ __KERNEL_RCSID(0, "$NetBSD: lca_dma.c,v 1.25 2020/10/11 00:33:31 thorpej Exp $")
 #include <alpha/pci/lcareg.h>
 #include <alpha/pci/lcavar.h>
 
-bus_dma_tag_t lca_dma_get_tag(bus_dma_tag_t, alpha_bus_t);
+static bus_dma_tag_t lca_dma_get_tag(bus_dma_tag_t, alpha_bus_t);
 
-int	lca_bus_dmamap_load_sgmap(bus_dma_tag_t, bus_dmamap_t, void *,
-	    bus_size_t, struct proc *, int);
+static int	lca_bus_dmamap_load_sgmap(bus_dma_tag_t, bus_dmamap_t, void *,
+		    bus_size_t, struct proc *, int);
 
-int	lca_bus_dmamap_load_mbuf_sgmap(bus_dma_tag_t, bus_dmamap_t,
-	    struct mbuf *, int);
+static int	lca_bus_dmamap_load_mbuf_sgmap(bus_dma_tag_t, bus_dmamap_t,
+		    struct mbuf *, int);
 
-int	lca_bus_dmamap_load_uio_sgmap(bus_dma_tag_t, bus_dmamap_t,
-	    struct uio *, int);
+static int	lca_bus_dmamap_load_uio_sgmap(bus_dma_tag_t, bus_dmamap_t,
+		    struct uio *, int);
 
-int	lca_bus_dmamap_load_raw_sgmap(bus_dma_tag_t, bus_dmamap_t,
-	    bus_dma_segment_t *, int, bus_size_t, int);
+static int	lca_bus_dmamap_load_raw_sgmap(bus_dma_tag_t, bus_dmamap_t,
+		    bus_dma_segment_t *, int, bus_size_t, int);
 
-void	lca_bus_dmamap_unload_sgmap(bus_dma_tag_t, bus_dmamap_t);
+static void	lca_bus_dmamap_unload_sgmap(bus_dma_tag_t, bus_dmamap_t);
 
 /*
  * Direct-mapped window: 1G at 1G
@@ -192,7 +192,7 @@ lca_dma_init(struct lca_config *lcp)
  * Return the bus dma tag to be used for the specified bus type.
  * INTERNAL USE ONLY!
  */
-bus_dma_tag_t
+static bus_dma_tag_t
 lca_dma_get_tag(bus_dma_tag_t t, alpha_bus_t bustype)
 {
 	struct lca_config *lcp = t->_cookie;
@@ -223,7 +223,7 @@ lca_dma_get_tag(bus_dma_tag_t t, alpha_bus_t bustype)
 /*
  * Load an LCA SGMAP-mapped DMA map with a linear buffer.
  */
-int
+static int
 lca_bus_dmamap_load_sgmap(bus_dma_tag_t t, bus_dmamap_t map, void *buf, bus_size_t buflen, struct proc *p, int flags)
 {
 	int error;
@@ -239,7 +239,7 @@ lca_bus_dmamap_load_sgmap(bus_dma_tag_t t, bus_dmamap_t map, void *buf, bus_size
 /*
  * Load an LCA SGMAP-mapped DMA map with an mbuf chain.
  */
-int
+static int
 lca_bus_dmamap_load_mbuf_sgmap(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m, int flags)
 {
 	int error;
@@ -254,7 +254,7 @@ lca_bus_dmamap_load_mbuf_sgmap(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m
 /*
  * Load an LCA SGMAP-mapped DMA map with a uio.
  */
-int
+static int
 lca_bus_dmamap_load_uio_sgmap(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio, int flags)
 {
 	int error;
@@ -269,7 +269,7 @@ lca_bus_dmamap_load_uio_sgmap(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio
 /*
  * Load an LCA SGMAP-mapped DMA map with raw memory.
  */
-int
+static int
 lca_bus_dmamap_load_raw_sgmap(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment_t *segs, int nsegs, bus_size_t size, int flags)
 {
 	int error;
@@ -285,7 +285,7 @@ lca_bus_dmamap_load_raw_sgmap(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment
 /*
  * Unload an LCA DMA map.
  */
-void
+static void
 lca_bus_dmamap_unload_sgmap(bus_dma_tag_t t, bus_dmamap_t map)
 {
 

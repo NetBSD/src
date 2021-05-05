@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx_dma.c,v 1.28 2020/11/18 02:04:29 thorpej Exp $ */
+/* $NetBSD: dwlpx_dma.c,v 1.29 2021/05/05 02:15:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx_dma.c,v 1.28 2020/11/18 02:04:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx_dma.c,v 1.29 2021/05/05 02:15:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,21 +52,21 @@ __KERNEL_RCSID(0, "$NetBSD: dwlpx_dma.c,v 1.28 2020/11/18 02:04:29 thorpej Exp $
 #include <alpha/pci/dwlpxvar.h>
 #include <alpha/pci/pci_kn8ae.h>
 
-bus_dma_tag_t dwlpx_dma_get_tag(bus_dma_tag_t, alpha_bus_t);
+static bus_dma_tag_t dwlpx_dma_get_tag(bus_dma_tag_t, alpha_bus_t);
 
-int	dwlpx_bus_dmamap_load_sgmap(bus_dma_tag_t, bus_dmamap_t, void *,
-	    bus_size_t, struct proc *, int);
+static int	dwlpx_bus_dmamap_load_sgmap(bus_dma_tag_t, bus_dmamap_t, void *,
+		    bus_size_t, struct proc *, int);
 
-int	dwlpx_bus_dmamap_load_mbuf_sgmap(bus_dma_tag_t, bus_dmamap_t,
-	    struct mbuf *, int);
+static int	dwlpx_bus_dmamap_load_mbuf_sgmap(bus_dma_tag_t, bus_dmamap_t,
+		    struct mbuf *, int);
 
-int	dwlpx_bus_dmamap_load_uio_sgmap(bus_dma_tag_t, bus_dmamap_t,
-	    struct uio *, int);
+static int	dwlpx_bus_dmamap_load_uio_sgmap(bus_dma_tag_t, bus_dmamap_t,
+		    struct uio *, int);
 
-int	dwlpx_bus_dmamap_load_raw_sgmap(bus_dma_tag_t, bus_dmamap_t,
-	    bus_dma_segment_t *, int, bus_size_t, int);
+static int	dwlpx_bus_dmamap_load_raw_sgmap(bus_dma_tag_t, bus_dmamap_t,
+		    bus_dma_segment_t *, int, bus_size_t, int);
 
-void	dwlpx_bus_dmamap_unload_sgmap(bus_dma_tag_t, bus_dmamap_t);
+static void	dwlpx_bus_dmamap_unload_sgmap(bus_dma_tag_t, bus_dmamap_t);
 
 /*
  * Direct-mapped window: 2G at 2G
@@ -243,7 +243,7 @@ dwlpx_dma_init(struct dwlpx_config *ccp)
  * Return the bus dma tag to be used for the specified bus type.
  * INTERNAL USE ONLY!
  */
-bus_dma_tag_t
+static bus_dma_tag_t
 dwlpx_dma_get_tag(bus_dma_tag_t t, alpha_bus_t bustype)
 {
 	struct dwlpx_config *ccp = t->_cookie;
@@ -281,7 +281,7 @@ dwlpx_dma_get_tag(bus_dma_tag_t t, alpha_bus_t bustype)
 /*
  * Load a DWLPx SGMAP-mapped DMA map with a linear buffer.
  */
-int
+static int
 dwlpx_bus_dmamap_load_sgmap(bus_dma_tag_t t, bus_dmamap_t map, void *buf, bus_size_t buflen, struct proc *p, int flags)
 {
 
@@ -292,7 +292,7 @@ dwlpx_bus_dmamap_load_sgmap(bus_dma_tag_t t, bus_dmamap_t map, void *buf, bus_si
 /*
  * Load a DWLPx SGMAP-mapped DMA map with an mbuf chain.
  */
-int
+static int
 dwlpx_bus_dmamap_load_mbuf_sgmap(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m, int flags)
 {
 
@@ -302,7 +302,7 @@ dwlpx_bus_dmamap_load_mbuf_sgmap(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf 
 /*
  * Load a DWLPx SGMAP-mapped DMA map with a uio.
  */
-int
+static int
 dwlpx_bus_dmamap_load_uio_sgmap(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio, int flags)
 {
 
@@ -312,7 +312,7 @@ dwlpx_bus_dmamap_load_uio_sgmap(bus_dma_tag_t t, bus_dmamap_t map, struct uio *u
 /*
  * Load a DWLPx SGMAP-mapped DMA map with raw memory.
  */
-int
+static int
 dwlpx_bus_dmamap_load_raw_sgmap(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment_t *segs, int nsegs, bus_size_t size, int flags)
 {
 
@@ -323,7 +323,7 @@ dwlpx_bus_dmamap_load_raw_sgmap(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segme
 /*
  * Unload a DWLPx DMA map.
  */
-void
+static void
 dwlpx_bus_dmamap_unload_sgmap(bus_dma_tag_t t, bus_dmamap_t map)
 {
 
