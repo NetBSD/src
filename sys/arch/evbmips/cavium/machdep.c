@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.23 2020/08/17 07:50:42 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.24 2021/05/05 06:46:37 simonb Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -114,7 +114,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23 2020/08/17 07:50:42 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.24 2021/05/05 06:46:37 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,7 +186,9 @@ struct octeon_config octeon_configuration;
 struct octeon_btdesc octeon_btdesc;
 struct octeon_btinfo octeon_btinfo;
 
-char octeon_nmi_stack[PAGE_SIZE] __section(".data1") __aligned(PAGE_SIZE);
+#ifdef notyet
+static char octeon_nmi_stack[PAGE_SIZE] __section(".data1") __aligned(PAGE_SIZE);
+#endif
 
 /* Currently the OCTEON kernels only support big endian boards */
 CTASSERT(_BYTE_ORDER == _BIG_ENDIAN);
@@ -264,7 +266,7 @@ mach_init(uint64_t arg0, uint64_t arg1, uint64_t arg2, uint64_t arg3)
 	 */
 	mips_init_lwp0_uarea();
 
-#if 0
+#ifdef notyet
 	curcpu()->ci_nmi_stack = octeon_nmi_stack + sizeof(octeon_nmi_stack) - sizeof(struct kernframe);
 	*(uint64_t *)MIPS_PHYS_TO_KSEG0(0x800) = (intptr_t)octeon_reset_vector;
 	const uint64_t wdog_reg = MIPS_PHYS_TO_XKPHYS_UNCACHED(CIU_WDOG0);
@@ -274,7 +276,7 @@ mach_init(uint64_t arg0, uint64_t arg1, uint64_t arg2, uint64_t arg3)
 	wdog |= CIU_WDOGX_LEN;		// max period
 	mips64_sd_a64(wdog_reg, wdog);
 	printf("Watchdog enabled!\n");
-#endif
+#endif /* notyet */
 
 #if defined(DDB)
 	if (boothowto & RB_KDB)
