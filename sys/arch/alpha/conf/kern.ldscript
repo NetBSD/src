@@ -1,0 +1,86 @@
+/*	$NetBSD: kern.ldscript,v 1.1 2021/05/05 01:35:35 thorpej Exp $	*/
+
+/*
+ * Linker script for the NetBSD/alpha kernel.
+ *
+ * This largely behaves the same as the standard elf64-alpha linker
+ * script for "ld -N"; the kernel is loaded into K0SEG, so there is
+ * no reason to page-align the .data segment.
+ */
+
+#include "assym.h"	/* for COHERENCY_UNIT */
+
+OUTPUT_FORMAT("elf64-alpha", "elf64-alpha",
+	      "elf64-alpha")
+OUTPUT_ARCH(alpha)
+SECTIONS
+{
+	.text	:
+	{
+		*(.text)
+		*(.text.*)
+		*(.stub)
+	} =0x47ff041f
+	_etext = . ;
+	PROVIDE (etext = .);
+
+	.rodata	:
+	{
+		*(.rodata .rodata.*)
+	}
+
+	.data	:
+	{
+		*(.data)
+
+		. = ALIGN(COHERENCY_UNIT);
+		*(.data.cacheline_aligned)
+
+		. = ALIGN(COHERENCY_UNIT);
+		*(.data.read_mostly)
+
+		. = ALIGN(COHERENCY_UNIT);
+		*(.data.*)
+	}
+
+	/*
+	 * Small-data located along side GOT and small-bss for
+	 * GP-relative addressing.
+	 */
+
+	.got	:
+	{
+		*(.got)
+	}
+
+	.sdata	:
+	{
+		*(.sdata .sdata.*)
+	}
+	_edata = . ;
+	PROVIDE (edata = .) ;
+
+	. = .;
+	__bss_start = .;
+	.sbss	:
+	{
+		*(.sbss .sbss.*)
+		*(.scommon)
+	}
+
+	.bss	:
+	{
+		*(.bss .bss.*)
+		*(COMMON)
+	}
+
+	/* End of the kernel image */
+	__kernel_end = . ;
+	_end = . ;
+	PROVIDE (end = .) ;
+
+	.note.netbsd.ident :
+	{
+		KEEP(*(.note.netbsd.ident));
+	}
+}
