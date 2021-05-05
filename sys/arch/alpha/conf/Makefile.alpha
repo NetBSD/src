@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.alpha,v 1.85 2018/09/22 12:24:01 rin Exp $
+#	$NetBSD: Makefile.alpha,v 1.86 2021/05/05 01:35:35 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -61,9 +61,9 @@ lock_stubs.o: assym.h
 ##
 ## (5) link settings
 ##
-LINKFORMAT=	-N
 TEXTADDR?=	fffffc0000a00000
 ENTRYPOINT=	__transfer
+KERNLDSCRIPT?=	${ALPHA}/conf/kern.ldscript
 EXTRA_LINKFLAGS=	-G 4
 STRIPFLAGS=	-g -X
 
