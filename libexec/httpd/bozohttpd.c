@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.131 2021/05/05 07:09:19 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.132 2021/05/05 07:41:48 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -108,7 +108,7 @@
 #define INDEX_HTML		"index.html"
 #endif
 #ifndef SERVER_SOFTWARE
-#define SERVER_SOFTWARE		"bozohttpd/20210403"
+#define SERVER_SOFTWARE		"bozohttpd/20210504"
 #endif
 #ifndef PUBLIC_HTML
 #define PUBLIC_HTML		"public_html"
@@ -2275,7 +2275,7 @@ bozo_http_error(bozohttpd_t *httpd, int code, bozo_httpreq_t *request,
 		}
 #endif /* !NO_USER_SUPPORT */
 
-		size = snprintf(httpd->errorbuf, BUFSIZ,
+		size = snprintf(httpd->errorbuf, BOZO_MINBUFSIZE,
 		    "<html><head><title>%s</title></head>\n"
 		    "<body><h1>%s</h1>\n"
 		    "%s%s: <pre>%s</pre>\n"
@@ -2285,10 +2285,10 @@ bozo_http_error(bozohttpd_t *httpd, int code, bozo_httpreq_t *request,
 		    user ? user : "", file,
 		    reason, hostname, portbuf, hostname, portbuf);
 		free(user);
-		if (size >= (int)BUFSIZ) {
+		if (size >= (int)BOZO_MINBUFSIZE) {
 			bozowarn(httpd,
 				"bozo_http_error buffer too small, truncated");
-			size = (int)BUFSIZ;
+			size = (int)BOZO_MINBUFSIZE;
 		}
 
 		if (file_alloc)
@@ -2515,7 +2515,7 @@ bozo_init_httpd(bozohttpd_t *httpd)
 	httpd->mmapsz = BOZO_MMAPSZ;
 
 	/* error buffer for bozo_http_error() */
-	if ((httpd->errorbuf = malloc(BUFSIZ)) == NULL) {
+	if ((httpd->errorbuf = malloc(BOZO_MINBUFSIZE)) == NULL) {
 		fprintf(stderr,
 			"bozohttpd: memory_allocation failure\n");
 		return 0;

@@ -1,9 +1,9 @@
-/*	$NetBSD: auth-bozo.c,v 1.26 2020/10/15 02:19:23 mrg Exp $	*/
+/*	$NetBSD: auth-bozo.c,v 1.27 2021/05/05 07:41:48 mrg Exp $	*/
 
 /*	$eterna: auth-bozo.c,v 1.17 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2020 Matthew R. Green
+ * Copyright (c) 1997-2021 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -54,7 +54,7 @@ bozo_auth_check(bozo_httpreq_t *request, const char *file)
 	bozohttpd_t *httpd = request->hr_httpd;
 	struct stat sb;
 	char dir[MAXPATHLEN], authfile[MAXPATHLEN], *basename;
-	char user[BUFSIZ], *pass;
+	char user[BOZO_MINBUFSIZE], *pass;
 	FILE *fp;
 	int len;
 
@@ -144,7 +144,7 @@ bozo_auth_check_headers(bozo_httpreq_t *request, char *val, char *str,
 
 	if (strcasecmp(val, "authorization") == 0 &&
 	    strncasecmp(str, "Basic ", 6) == 0) {
-		char	authbuf[BUFSIZ];
+		char	authbuf[BOZO_MINBUFSIZE];
 		char	*pass = NULL;
 		ssize_t	alen;
 
