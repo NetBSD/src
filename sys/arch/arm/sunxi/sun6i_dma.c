@@ -1,4 +1,4 @@
-/* $NetBSD: sun6i_dma.c,v 1.14 2021/01/27 03:10:20 thorpej Exp $ */
+/* $NetBSD: sun6i_dma.c,v 1.15 2021/05/05 10:24:04 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun6i_dma.c,v 1.14 2021/01/27 03:10:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun6i_dma.c,v 1.15 2021/05/05 10:24:04 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -141,6 +141,16 @@ static const struct sun6idma_config sun8i_h3_dma_config = {
 	.widths = WIDTHS_1_2_4_8,
 };
 
+static const struct sun6idma_config sun8i_v3s_dma_config = {
+	.num_channels = 8,
+	.autogate = true,
+	.autogate_reg = 0x20,
+	.autogate_mask = 0x4,
+	.burst_mask = __BITS(8,7),
+	.bursts = BURSTS_1_8,
+	.widths = WIDTHS_1_2_4,
+};
+
 static const struct sun6idma_config sun50i_a64_dma_config = {
 	.num_channels = 8,
 	.autogate = true,
@@ -158,6 +168,8 @@ static const struct device_compatible_entry compat_data[] = {
 	  .data = &sun8i_a83t_dma_config },
 	{ .compat = "allwinner,sun8i-h3-dma",
 	  .data = &sun8i_h3_dma_config },
+	{ .compat = "allwinner,sun8i-v3s-dma",
+	  .data = &sun8i_v3s_dma_config },
 	{ .compat = "allwinner,sun50i-a64-dma",
 	  .data = &sun50i_a64_dma_config },
 
