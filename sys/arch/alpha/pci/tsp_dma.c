@@ -1,4 +1,4 @@
-/* $NetBSD: tsp_dma.c,v 1.15 2020/10/11 00:33:31 thorpej Exp $ */
+/* $NetBSD: tsp_dma.c,v 1.16 2021/05/05 02:15:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsp_dma.c,v 1.15 2020/10/11 00:33:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsp_dma.c,v 1.16 2021/05/05 02:15:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,23 +84,23 @@ __KERNEL_RCSID(0, "$NetBSD: tsp_dma.c,v 1.15 2020/10/11 00:33:31 thorpej Exp $")
 
 #define	EDIFF(a, b) (((a) | WSBA_ENA | WSBA_SG)	!= ((b) | WSBA_ENA | WSBA_SG))
 
-bus_dma_tag_t tsp_dma_get_tag(bus_dma_tag_t, alpha_bus_t);
+static bus_dma_tag_t tsp_dma_get_tag(bus_dma_tag_t, alpha_bus_t);
 
-int	tsp_bus_dmamap_load_sgmap(bus_dma_tag_t, bus_dmamap_t, void *,
-	    bus_size_t, struct proc *, int);
+static int	tsp_bus_dmamap_load_sgmap(bus_dma_tag_t, bus_dmamap_t, void *,
+		    bus_size_t, struct proc *, int);
 
-int	tsp_bus_dmamap_load_mbuf_sgmap(bus_dma_tag_t, bus_dmamap_t,
-	    struct mbuf *, int);
+static int	tsp_bus_dmamap_load_mbuf_sgmap(bus_dma_tag_t, bus_dmamap_t,
+		    struct mbuf *, int);
 
-int	tsp_bus_dmamap_load_uio_sgmap(bus_dma_tag_t, bus_dmamap_t,
-	    struct uio *, int);
+static int	tsp_bus_dmamap_load_uio_sgmap(bus_dma_tag_t, bus_dmamap_t,
+		    struct uio *, int);
 
-int	tsp_bus_dmamap_load_raw_sgmap(bus_dma_tag_t, bus_dmamap_t,
-	    bus_dma_segment_t *, int, bus_size_t, int);
+static int	tsp_bus_dmamap_load_raw_sgmap(bus_dma_tag_t, bus_dmamap_t,
+		    bus_dma_segment_t *, int, bus_size_t, int);
 
-void	tsp_bus_dmamap_unload_sgmap(bus_dma_tag_t, bus_dmamap_t);
+static void	tsp_bus_dmamap_unload_sgmap(bus_dma_tag_t, bus_dmamap_t);
 
-void	tsp_tlb_invalidate(struct tsp_config *);
+static void	tsp_tlb_invalidate(struct tsp_config *);
 
 /*
  * XXX Need to figure out what this is, if any.  Initialize it to
@@ -237,7 +237,7 @@ tsp_dma_init(struct tsp_config *pcp)
  * Return the bus dma tag to be used for the specified bus type.
  * INTERNAL USE ONLY!
  */
-bus_dma_tag_t
+static bus_dma_tag_t
 tsp_dma_get_tag(bus_dma_tag_t t, alpha_bus_t bustype)
 {
 	struct tsp_config *pcp = t->_cookie;
@@ -268,7 +268,7 @@ tsp_dma_get_tag(bus_dma_tag_t t, alpha_bus_t bustype)
 /*
  * Load a TSP SGMAP-mapped DMA map with a linear buffer.
  */
-int
+static int
 tsp_bus_dmamap_load_sgmap(bus_dma_tag_t t, bus_dmamap_t map, void *buf, bus_size_t buflen, struct proc *p, int flags)
 {
 	int error;
@@ -284,7 +284,7 @@ tsp_bus_dmamap_load_sgmap(bus_dma_tag_t t, bus_dmamap_t map, void *buf, bus_size
 /*
  * Load a TSP SGMAP-mapped DMA map with an mbuf chain.
  */
-int
+static int
 tsp_bus_dmamap_load_mbuf_sgmap(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m, int flags)
 {
 	int error;
@@ -299,7 +299,7 @@ tsp_bus_dmamap_load_mbuf_sgmap(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m
 /*
  * Load a TSP SGMAP-mapped DMA map with a uio.
  */
-int
+static int
 tsp_bus_dmamap_load_uio_sgmap(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio, int flags)
 {
 	int error;
@@ -314,7 +314,7 @@ tsp_bus_dmamap_load_uio_sgmap(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio
 /*
  * Load a TSP SGMAP-mapped DMA map with raw memory.
  */
-int
+static int
 tsp_bus_dmamap_load_raw_sgmap(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment_t *segs, int nsegs, bus_size_t size, int flags)
 {
 	int error;
@@ -330,7 +330,7 @@ tsp_bus_dmamap_load_raw_sgmap(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment
 /*
  * Unload a TSP DMA map.
  */
-void
+static void
 tsp_bus_dmamap_unload_sgmap(bus_dma_tag_t t, bus_dmamap_t map)
 {
 
@@ -350,7 +350,7 @@ tsp_bus_dmamap_unload_sgmap(bus_dma_tag_t t, bus_dmamap_t map)
 /*
  * Flush the TSP scatter/gather TLB.
  */
-void
+static void
 tsp_tlb_invalidate(struct tsp_config *pcp)
 {
 

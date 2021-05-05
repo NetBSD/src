@@ -1,4 +1,4 @@
-/* $NetBSD: irongate_dma.c,v 1.8 2020/10/14 00:59:50 thorpej Exp $ */
+/* $NetBSD: irongate_dma.c,v 1.9 2021/05/05 02:15:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2020 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: irongate_dma.c,v 1.8 2020/10/14 00:59:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irongate_dma.c,v 1.9 2021/05/05 02:15:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: irongate_dma.c,v 1.8 2020/10/14 00:59:50 thorpej Exp
 
 #include <machine/alpha.h>
 
-bus_dma_tag_t irongate_dma_get_tag(bus_dma_tag_t, alpha_bus_t);
+static bus_dma_tag_t irongate_dma_get_tag(bus_dma_tag_t, alpha_bus_t);
 
 void
 irongate_page_physload(unsigned long const start_pfn,
@@ -143,7 +143,7 @@ irongate_dma_init(struct irongate_config *icp)
  * Return the bus dma tag to be used for the specified bus type.
  * INTERNAL USE ONLY!
  */
-bus_dma_tag_t
+static bus_dma_tag_t
 irongate_dma_get_tag(bus_dma_tag_t t, alpha_bus_t bustype)
 {
 	struct irongate_config *icp = t->_cookie;

@@ -1,4 +1,4 @@
-/* $NetBSD: cia_dma.c,v 1.31 2020/10/11 00:33:31 thorpej Exp $ */
+/* $NetBSD: cia_dma.c,v 1.32 2021/05/05 02:15:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia_dma.c,v 1.31 2020/10/11 00:33:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia_dma.c,v 1.32 2021/05/05 02:15:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,24 +48,24 @@ __KERNEL_RCSID(0, "$NetBSD: cia_dma.c,v 1.31 2020/10/11 00:33:31 thorpej Exp $")
 #include <alpha/pci/ciareg.h>
 #include <alpha/pci/ciavar.h>
 
-bus_dma_tag_t cia_dma_get_tag(bus_dma_tag_t, alpha_bus_t);
+static bus_dma_tag_t cia_dma_get_tag(bus_dma_tag_t, alpha_bus_t);
 
-int	cia_bus_dmamap_create_direct(bus_dma_tag_t, bus_size_t, int,
-	    bus_size_t, bus_size_t, int, bus_dmamap_t *);
+static int	cia_bus_dmamap_create_direct(bus_dma_tag_t, bus_size_t, int,
+		    bus_size_t, bus_size_t, int, bus_dmamap_t *);
 
-int	cia_bus_dmamap_load_sgmap(bus_dma_tag_t, bus_dmamap_t, void *,
-	    bus_size_t, struct proc *, int);
+static int	cia_bus_dmamap_load_sgmap(bus_dma_tag_t, bus_dmamap_t, void *,
+		    bus_size_t, struct proc *, int);
 
-int	cia_bus_dmamap_load_mbuf_sgmap(bus_dma_tag_t, bus_dmamap_t,
-	    struct mbuf *, int);
+static int	cia_bus_dmamap_load_mbuf_sgmap(bus_dma_tag_t, bus_dmamap_t,
+		    struct mbuf *, int);
 
-int	cia_bus_dmamap_load_uio_sgmap(bus_dma_tag_t, bus_dmamap_t,
-	    struct uio *, int);
+static int	cia_bus_dmamap_load_uio_sgmap(bus_dma_tag_t, bus_dmamap_t,
+		    struct uio *, int);
 
-int	cia_bus_dmamap_load_raw_sgmap(bus_dma_tag_t, bus_dmamap_t,
-	    bus_dma_segment_t *, int, bus_size_t, int);
+static int	cia_bus_dmamap_load_raw_sgmap(bus_dma_tag_t, bus_dmamap_t,
+		    bus_dma_segment_t *, int, bus_size_t, int);
 
-void	cia_bus_dmamap_unload_sgmap(bus_dma_tag_t, bus_dmamap_t);
+static void	cia_bus_dmamap_unload_sgmap(bus_dma_tag_t, bus_dmamap_t);
 
 /*
  * Direct-mapped window: 1G at 1G
@@ -82,10 +82,10 @@ void	cia_bus_dmamap_unload_sgmap(bus_dma_tag_t, bus_dmamap_t);
 /* ALCOR/ALGOR2/PYXIS have a 256-byte out-bound DMA prefetch threshold. */
 #define	CIA_SGMAP_PFTHRESH	256
 
-void	cia_tlb_invalidate(void);
-void	cia_broken_pyxis_tlb_invalidate(void);
+static void	cia_tlb_invalidate(void);
+static void	cia_broken_pyxis_tlb_invalidate(void);
 
-void	(*cia_tlb_invalidate_fn)(void);
+static void	(*cia_tlb_invalidate_fn)(void);
 
 #define	CIA_TLB_INVALIDATE()	(*cia_tlb_invalidate_fn)()
 
@@ -240,7 +240,7 @@ cia_dma_init(struct cia_config *ccp)
  * Return the bus dma tag to be used for the specified bus type.
  * INTERNAL USE ONLY!
  */
-bus_dma_tag_t
+static bus_dma_tag_t
 cia_dma_get_tag(bus_dma_tag_t t, alpha_bus_t bustype)
 {
 	struct cia_config *ccp = t->_cookie;
@@ -277,7 +277,7 @@ cia_dma_get_tag(bus_dma_tag_t t, alpha_bus_t bustype)
 /*
  * Create a CIA direct-mapped DMA map.
  */
-int
+static int
 cia_bus_dmamap_create_direct(
 	bus_dma_tag_t t,
 	bus_size_t size,
@@ -320,7 +320,7 @@ cia_bus_dmamap_create_direct(
 /*
  * Load a CIA SGMAP-mapped DMA map with a linear buffer.
  */
-int
+static int
 cia_bus_dmamap_load_sgmap(bus_dma_tag_t t, bus_dmamap_t map, void *buf, bus_size_t buflen, struct proc *p, int flags)
 {
 	int error;
@@ -336,7 +336,7 @@ cia_bus_dmamap_load_sgmap(bus_dma_tag_t t, bus_dmamap_t map, void *buf, bus_size
 /*
  * Load a CIA SGMAP-mapped DMA map with an mbuf chain.
  */
-int
+static int
 cia_bus_dmamap_load_mbuf_sgmap(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m, int flags)
 {
 	int error;
@@ -351,7 +351,7 @@ cia_bus_dmamap_load_mbuf_sgmap(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m
 /*
  * Load a CIA SGMAP-mapped DMA map with a uio.
  */
-int
+static int
 cia_bus_dmamap_load_uio_sgmap(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio, int flags)
 {
 	int error;
@@ -366,7 +366,7 @@ cia_bus_dmamap_load_uio_sgmap(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio
 /*
  * Load a CIA SGMAP-mapped DMA map with raw memory.
  */
-int
+static int
 cia_bus_dmamap_load_raw_sgmap(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment_t *segs, int nsegs, bus_size_t size, int flags)
 {
 	int error;
@@ -382,7 +382,7 @@ cia_bus_dmamap_load_raw_sgmap(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment
 /*
  * Unload a CIA DMA map.
  */
-void
+static void
 cia_bus_dmamap_unload_sgmap(bus_dma_tag_t t, bus_dmamap_t map)
 {
 
@@ -402,7 +402,7 @@ cia_bus_dmamap_unload_sgmap(bus_dma_tag_t t, bus_dmamap_t map)
 /*
  * Flush the CIA scatter/gather TLB.
  */
-void
+static void
 cia_tlb_invalidate(void)
 {
 
@@ -414,7 +414,7 @@ cia_tlb_invalidate(void)
 /*
  * Flush the scatter/gather TLB on broken Pyxis chips.
  */
-void
+static void
 cia_broken_pyxis_tlb_invalidate(void)
 {
 	uint32_t ctrl;
