@@ -1,4 +1,4 @@
-/* $NetBSD: octeon_cib.c,v 1.6 2021/01/27 03:10:21 thorpej Exp $ */
+/* $NetBSD: octeon_cib.c,v 1.7 2021/05/05 06:47:29 simonb Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_cib.c,v 1.6 2021/01/27 03:10:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_cib.c,v 1.7 2021/05/05 06:47:29 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -53,7 +53,7 @@ static bool	octeon_cib_intrstr(device_t, u_int *, char *, size_t);
 
 static int	octeon_cib_intr(void *);
 
-struct fdtbus_interrupt_controller_func octeon_cib_funcs = {
+static struct fdtbus_interrupt_controller_func octeon_cib_funcs = {
 	.establish = octeon_cib_establish,
 	.disestablish = octeon_cib_disestablish,
 	.intrstr = octeon_cib_intrstr

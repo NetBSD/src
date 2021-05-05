@@ -1,4 +1,4 @@
-/* $NetBSD: octeon_intc.c,v 1.6 2021/01/27 03:10:21 thorpej Exp $ */
+/* $NetBSD: octeon_intc.c,v 1.7 2021/05/05 06:47:29 simonb Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_intc.c,v 1.6 2021/01/27 03:10:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_intc.c,v 1.7 2021/05/05 06:47:29 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -49,7 +49,7 @@ static void *	octeon_intc_establish(device_t, u_int *, int, int,
 static void	octeon_intc_disestablish(device_t, void *);
 static bool	octeon_intc_intrstr(device_t, u_int *, char *, size_t);
 
-struct fdtbus_interrupt_controller_func octeon_intc_funcs = {
+static struct fdtbus_interrupt_controller_func octeon_intc_funcs = {
 	.establish = octeon_intc_establish,
 	.disestablish = octeon_intc_disestablish,
 	.intrstr = octeon_intc_intrstr
