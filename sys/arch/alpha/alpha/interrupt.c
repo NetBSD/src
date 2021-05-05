@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.95 2021/04/20 01:29:40 thorpej Exp $ */
+/* $NetBSD: interrupt.c,v 1.96 2021/05/05 14:58:57 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.95 2021/04/20 01:29:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.96 2021/05/05 14:58:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.95 2021/04/20 01:29:40 thorpej Exp $
 struct scbvec scb_iovectab[SCB_VECTOIDX(SCB_SIZE - SCB_IOVECBASE)]
 							__read_mostly;
 
-void	scb_stray(void *, u_long);
+static void	scb_stray(void *, u_long);
 
 void
 scb_init(void)
@@ -105,7 +105,7 @@ scb_init(void)
 	}
 }
 
-void
+static void
 scb_stray(void *arg, u_long vec)
 {
 
