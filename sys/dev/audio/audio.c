@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.28.2.21 2021/03/01 16:00:08 martin Exp $	*/
+/*	$NetBSD: audio.c,v 1.28.2.22 2021/05/05 17:01:41 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.28.2.21 2021/03/01 16:00:08 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.28.2.22 2021/05/05 17:01:41 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -6566,7 +6566,10 @@ audio_hw_probe(struct audio_softc *sc, audio_format2_t *cand, int mode)
 		    query.fmt.precision == AUDIO_INTERNAL_BITS) {
 			score += 0x10;
 		}
-		score += query.fmt.channels;
+
+		/* Do not prefer surround formats */
+		if (query.fmt.channels <= 2)
+			score += query.fmt.channels;
 
 		if (score < cand_score) {
 			DPRINTF(1, "fmt[%d] skip; score 0x%x < 0x%x\n", i,
