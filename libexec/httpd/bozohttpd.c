@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.130 2021/04/08 07:02:11 rillig Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.131 2021/05/05 07:09:19 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -138,6 +138,7 @@
 #include <grp.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <strings.h>
 #include <string.h>
 #include <syslog.h>
