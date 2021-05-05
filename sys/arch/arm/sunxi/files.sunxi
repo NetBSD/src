@@ -1,4 +1,4 @@
-#	$NetBSD: files.sunxi,v 1.68 2020/03/24 22:09:50 tnn Exp $
+#	$NetBSD: files.sunxi,v 1.69 2021/05/05 10:24:04 jmcneill Exp $
 #
 # Configuration info for Allwinner sunxi family SoCs
 #
@@ -51,6 +51,11 @@ file	arch/arm/sunxi/sun8i_h3_ccu.c		sunxi_h3_ccu
 device	sun8ih3rccu: sunxi_ccu
 attach	sun8ih3rccu at fdt with sunxi_h3_r_ccu
 file	arch/arm/sunxi/sun8i_h3_r_ccu.c		sunxi_h3_r_ccu
+
+# CCU (V3s)
+device	sun8iv3sccu: sunxi_ccu
+attach	sun8iv3sccu at fdt with sunxi_v3s_ccu
+file	arch/arm/sunxi/sun8i_v3s_ccu.c		sunxi_v3s_ccu
 
 # CCU (A80)
 device	sun9ia80ccu: sunxi_ccu
@@ -233,6 +238,11 @@ device	h3codec
 attach	h3codec at fdt with h3_codec
 file	arch/arm/sunxi/sun8i_h3_codec.c		h3_codec needs-flag
 
+# V3s Audio codec (analog part)
+device	v3scodec
+attach	v3scodec at fdt with v3s_codec
+file	arch/arm/sunxi/sun8i_v3s_codec.c	v3s_codec needs-flag
+
 # A64 Audio codec (analog part)
 device	a64acodec
 attach	a64acodec at fdt with a64_acodec
@@ -375,6 +385,7 @@ defflag	opt_soc.h			SOC_SUN7I_A20: SOC_SUN7I
 defflag	opt_soc.h			SOC_SUN8I: SOC_SUNXI
 defflag	opt_soc.h			SOC_SUN8I_A83T: SOC_SUN8I, SOC_SUNXI_MC
 defflag	opt_soc.h			SOC_SUN8I_H3: SOC_SUN8I
+defflag	opt_soc.h			SOC_SUN8I_V3S: SOC_SUN8I
 defflag	opt_soc.h			SOC_SUN9I: SOC_SUNXI
 defflag	opt_soc.h			SOC_SUN9I_A80: SOC_SUN9I, SOC_SUNXI_MC
 defflag	opt_soc.h			SOC_SUN50I: SOC_SUNXI
