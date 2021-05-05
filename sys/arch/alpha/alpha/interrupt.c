@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.96 2021/05/05 14:58:57 thorpej Exp $ */
+/* $NetBSD: interrupt.c,v 1.97 2021/05/05 15:34:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.96 2021/05/05 14:58:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.97 2021/05/05 15:34:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -383,6 +383,9 @@ badaddr(void *addr, size_t size)
 int
 badaddr_read(void *addr, size_t size, void *rptr)
 {
+	lwp_t * const l = curlwp;
+	KPREEMPT_DISABLE(l);
+
 	struct mchkinfo *mcp = &curcpu()->ci_mcinfo;
 	long rcpt;
 	int rv;
@@ -450,6 +453,9 @@ badaddr_read(void *addr, size_t size, void *rptr)
 			break;
 		}
 	}
+
+	KPREEMPT_ENABLE(l);
+
 	/* Return non-zero (i.e. true) if it's a bad address. */
 	return (rv);
 }
