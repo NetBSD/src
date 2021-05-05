@@ -1,4 +1,4 @@
-/* $NetBSD: ttwoga_dma.c,v 1.9 2020/10/11 00:33:31 thorpej Exp $ */
+/* $NetBSD: ttwoga_dma.c,v 1.10 2021/05/05 02:15:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ttwoga_dma.c,v 1.9 2020/10/11 00:33:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttwoga_dma.c,v 1.10 2021/05/05 02:15:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,21 +47,21 @@ __KERNEL_RCSID(0, "$NetBSD: ttwoga_dma.c,v 1.9 2020/10/11 00:33:31 thorpej Exp $
 #include <alpha/pci/ttwogareg.h>
 #include <alpha/pci/ttwogavar.h>
 
-bus_dma_tag_t ttwoga_dma_get_tag(bus_dma_tag_t, alpha_bus_t);
+static bus_dma_tag_t ttwoga_dma_get_tag(bus_dma_tag_t, alpha_bus_t);
 
-int	ttwoga_bus_dmamap_load_sgmap(bus_dma_tag_t, bus_dmamap_t, void *,
-	    bus_size_t, struct proc *, int);
+static int	ttwoga_bus_dmamap_load_sgmap(bus_dma_tag_t, bus_dmamap_t,
+		    void *, bus_size_t, struct proc *, int);
 
-int	ttwoga_bus_dmamap_load_mbuf_sgmap(bus_dma_tag_t, bus_dmamap_t,
-	    struct mbuf *, int);
+static int	ttwoga_bus_dmamap_load_mbuf_sgmap(bus_dma_tag_t, bus_dmamap_t,
+		    struct mbuf *, int);
 
-int	ttwoga_bus_dmamap_load_uio_sgmap(bus_dma_tag_t, bus_dmamap_t,
-	    struct uio *, int);
+static int	ttwoga_bus_dmamap_load_uio_sgmap(bus_dma_tag_t, bus_dmamap_t,
+		    struct uio *, int);
 
-int	ttwoga_bus_dmamap_load_raw_sgmap(bus_dma_tag_t, bus_dmamap_t,
-	    bus_dma_segment_t *, int, bus_size_t, int);
+static int	ttwoga_bus_dmamap_load_raw_sgmap(bus_dma_tag_t, bus_dmamap_t,
+		    bus_dma_segment_t *, int, bus_size_t, int);
 
-void	ttwoga_bus_dmamap_unload_sgmap(bus_dma_tag_t, bus_dmamap_t);
+static void	ttwoga_bus_dmamap_unload_sgmap(bus_dma_tag_t, bus_dmamap_t);
 
 /*
  * Direct-mapped window: 1G at 1G
@@ -236,7 +236,7 @@ ttwoga_dma_init(struct ttwoga_config *tcp)
  * Return the bus dma tag to be used for the specified bus type.
  * INTERNAL USE ONLY!
  */
-bus_dma_tag_t
+static bus_dma_tag_t
 ttwoga_dma_get_tag(bus_dma_tag_t t, alpha_bus_t bustype)
 {
 	struct ttwoga_config *tcp = t->_cookie;
@@ -269,7 +269,7 @@ ttwoga_dma_get_tag(bus_dma_tag_t t, alpha_bus_t bustype)
 /*
  * Load a T2 SGMAP-mapped DMA map with a liner buffer.
  */
-int
+static int
 ttwoga_bus_dmamap_load_sgmap(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
     bus_size_t buflen, struct proc *p, int flags)
 {
@@ -287,7 +287,7 @@ ttwoga_bus_dmamap_load_sgmap(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 /*
  * Load a T2 SGMAP-mapped DMA map with an mbuf chain.
  */
-int
+static int
 ttwoga_bus_dmamap_load_mbuf_sgmap(bus_dma_tag_t t, bus_dmamap_t map,
     struct mbuf *m, int flags)
 {
@@ -304,7 +304,7 @@ ttwoga_bus_dmamap_load_mbuf_sgmap(bus_dma_tag_t t, bus_dmamap_t map,
 /*
  * Load a T2 SGMAP-mapped DMA map with a uio.
  */
-int
+static int
 ttwoga_bus_dmamap_load_uio_sgmap(bus_dma_tag_t t, bus_dmamap_t map,
     struct uio *uio, int flags)
 {
@@ -321,7 +321,7 @@ ttwoga_bus_dmamap_load_uio_sgmap(bus_dma_tag_t t, bus_dmamap_t map,
 /*
  * Load a T2 SGMAP-mapped DMA map with raw memory.
  */
-int
+static int
 ttwoga_bus_dmamap_load_raw_sgmap(bus_dma_tag_t t, bus_dmamap_t map,
     bus_dma_segment_t *segs, int nsegs, bus_size_t size, int flags)
 {
