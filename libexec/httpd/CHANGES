@@ -1,4 +1,9 @@
-$NetBSD: CHANGES,v 1.48 2021/04/04 18:14:26 mrg Exp $
+$NetBSD: CHANGES,v 1.49 2021/05/05 07:41:48 mrg Exp $
+
+changes in bozohttpd 20210504:
+	o  don't assume host BUFSIZ is sufficent.  small BUFSIZ leads to
+	   always happens errors in the testsuite.  switch all these buffers
+	   to be 4KiB sized.  reported by embr <git@liclac.eu>
 
 changes in bozohttpd 20210403:
 	o  fix a denial of service attack against initial request contents,
