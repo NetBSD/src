@@ -1,4 +1,4 @@
-/*	$NetBSD: wrtvid.c,v 1.9 2019/01/08 00:00:53 rin Exp $	*/
+/*	$NetBSD: wrtvid.c,v 1.10 2021/05/06 13:23:36 rin Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -28,6 +28,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
 
 #include <sys/types.h>
 #include <sys/stat.h>
