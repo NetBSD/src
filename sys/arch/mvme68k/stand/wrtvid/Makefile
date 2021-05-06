@@ -1,12 +1,8 @@
-#	$NetBSD: Makefile,v 1.12 2018/05/01 19:59:45 christos Exp $
+#	$NetBSD: Makefile,v 1.13 2021/05/06 13:23:36 rin Exp $
 
-S=${.CURDIR}/../../../../
+.include <bsd.init.mk>
 
-.include <bsd.hostinit.mk>
+PROG=	wrtvid
+MKMAN=	no
 
-HOSTPROG=	wrtvid
-
-# only needed during build
-proginstall::
-
-.include <bsd.hostprog.mk>
+.include <bsd.prog.mk>

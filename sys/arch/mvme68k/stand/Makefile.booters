@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.27 2021/04/15 01:54:39 mrg Exp $
+#	$NetBSD: Makefile.booters,v 1.28 2021/05/06 13:23:36 rin Exp $
 
 S?=		${.CURDIR}/../../../..
 MDEC_DIR?=	/usr/mdec
@@ -73,13 +73,6 @@ $(BUGCRT):
 	@echo making sure the bugcrt is up to date...
 	@(cd ${LIB_BUG_DIR}; ${MAKE} bugstart.o)
 
-WRTVID_BOOT_DIR=  ${.CURDIR}/../wrtvid
-WRTVID_DIR!=	cd ${WRTVID_BOOT_DIR} && ${PRINTOBJDIR}
-WRTVID=${WRTVID_DIR}/wrtvid
-
-.PHONY: ${WRTVID}
-${WRTVID}:
-	@echo making sure the wrtvid is up to date...
-	@(cd ${WRTVID_BOOT_DIR}; ${MAKE} dependall)
+WRTVID=	${TOOL_MVME68KWRTVID}
 
 .endif

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.208 2021/04/25 15:11:28 christos Exp $
+#	$NetBSD: Makefile,v 1.209 2021/05/06 13:23:36 rin Exp $
 
 .include <bsd.own.mk>
 .include <bsd.endian.mk>
@@ -217,6 +217,10 @@ SUBDIR+=	elftosb
 SUBDIR+=	mkubootimage
 SUBDIR+=	libfdt .WAIT
 SUBDIR+=	dtc
+.endif
+
+.if ${MACHINE} == "mvme68k"
+SUBDIR+=	mvme68k-wrtvid
 .endif
 
 .if ${MKX11} != "no"
