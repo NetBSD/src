@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2020/10/09 23:55:48 rin Exp $
+#	$NetBSD: Makefile,v 1.10 2021/05/06 06:52:18 mrg Exp $
 
 .include <bsd.own.mk>
 .include "../Makefile.inc"
@@ -30,6 +30,7 @@ CLEANFILES+=	elf32-target.h elf64-target.h targmatch.h \
 .include <bsd.lib.mk>
 
 COPTS+=         -Wno-stack-protector
+COPTS+=         -Wno-overflow
 
 ${OBJS} ${SOBJS}: elf32-target.h elf64-target.h
 targets.o targets.pico: targmatch.h Makefile
