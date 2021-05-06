@@ -1,4 +1,4 @@
-#	$NetBSD: t_pppoe.sh,v 1.28 2021/04/23 03:41:55 yamaguchi Exp $
+#	$NetBSD: t_pppoe.sh,v 1.29 2021/05/06 01:09:43 yamaguchi Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -760,6 +760,7 @@ pppoe_passiveauthproto()
 	atf_ifconfig pppoe0 up
 	$DEBUG && rump.ifconfig
 	wait_for_opened $cp
+	atf_ifconfig -w 10
 	atf_check -s exit:0 -o ignore rump.ping -c 1 -w $TIMEOUT $SERVER_IP
 }
 
