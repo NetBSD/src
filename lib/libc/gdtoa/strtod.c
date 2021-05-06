@@ -1,4 +1,4 @@
-/* $NetBSD: strtod.c,v 1.17 2020/09/18 14:19:34 christos Exp $ */
+/* $NetBSD: strtod.c,v 1.18 2021/05/06 16:15:33 christos Exp $ */
 
 /****************************************************************
 
@@ -712,6 +712,8 @@ _int_strtod_l(CONST char *s00, char **se, locale_t loc)
 #endif
 						  {
 						  delta = lshift(delta,Log2P);
+						  if (delta == NULL)
+							goto ovfl;
 						  if (cmp(delta, bs) <= 0)
 							dval(&adj) = -0.5;
 						  }
@@ -804,6 +806,8 @@ _int_strtod_l(CONST char *s00, char **se, locale_t loc)
 				break;
 				}
 			delta = lshift(delta,Log2P);
+			if (delta == NULL)
+				goto ovfl;
 			if (cmp(delta, bs) > 0)
 				goto drop_down;
 			break;

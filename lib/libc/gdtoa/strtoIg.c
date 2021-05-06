@@ -1,4 +1,4 @@
-/* $NetBSD: strtoIg.c,v 1.4 2019/08/01 02:27:43 riastradh Exp $ */
+/* $NetBSD: strtoIg.c,v 1.5 2021/05/06 16:15:33 christos Exp $ */
 
 /****************************************************************
 
@@ -119,6 +119,8 @@ strtoIg(CONST char *s00, char **se, CONST FPI *fpi, Long *exp, Bigint **B, int *
 				}
 			else {
 				b1 = lshift(b1, 1);
+				if (b1 == NULL)
+					return STRTOG_NoMemory;
 				b1->x[0] |= 1;
 				--e1;
 				}

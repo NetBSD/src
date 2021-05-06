@@ -1,4 +1,4 @@
-/* $NetBSD: gdtoa.c,v 1.7 2019/08/01 02:27:43 riastradh Exp $ */
+/* $NetBSD: gdtoa.c,v 1.8 2021/05/06 16:15:33 christos Exp $ */
 
 /****************************************************************
 
@@ -601,10 +601,16 @@ gdtoa
 	 */
 	i = ((s5 ? hi0bits(S->x[S->wds-1]) : ULbits - 1) - s2 - 4) & kmask;
 	m2 += i;
-	if ((b2 += i) > 0)
+	if ((b2 += i) > 0) {
 		b = lshift(b, b2);
-	if ((s2 += i) > 0)
+		if (b == NULL)
+			return NULL;
+		}
+	if ((s2 += i) > 0) {
 		S = lshift(S, s2);
+		if (S == NULL)
+			return NULL;
+		}
 	if (k_check) {
 		if (cmp(b,S) < 0) {
 			k--;

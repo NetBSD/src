@@ -1,4 +1,4 @@
-/* $NetBSD: dtoa.c,v 1.10 2012/05/16 17:48:59 alnsn Exp $ */
+/* $NetBSD: dtoa.c,v 1.11 2021/05/06 16:15:33 christos Exp $ */
 
 /****************************************************************
 
@@ -787,6 +787,8 @@ dtoa
 	  }
 #endif
 	b = lshift(b, 1);
+	if (b == NULL)
+		return NULL;
 	j = cmp(b, S);
 #ifdef ROUND_BIASED
 	if (j >= 0)

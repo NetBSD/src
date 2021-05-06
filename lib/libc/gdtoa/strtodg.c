@@ -1,4 +1,4 @@
-/* $NetBSD: strtodg.c,v 1.12 2013/04/19 10:41:53 joerg Exp $ */
+/* $NetBSD: strtodg.c,v 1.13 2021/05/06 16:15:33 christos Exp $ */
 
 /****************************************************************
 
@@ -248,8 +248,11 @@ rvOK
 				}
 			}
 		}
-	else if (bdif < 0)
+	else if (bdif < 0) {
 		b = lshift(b, -bdif);
+		if (b == NULL)
+			return STRTOG_NoMemory;
+		}
 	if (e < fpi->emin) {
 		k = fpi->emin - e;
 		e = fpi->emin;
@@ -679,6 +682,8 @@ strtodg(CONST char *s00, char **se, CONST FPI *fpi, Long *expt, ULong *bits,
 		j = rve - emin;
 		if (j > 0) {
 			rvb = lshift(rvb, j);
+			if (rvb == NULL)
+				return STRTOG_NoMemory;
 			rvbits += j;
 			}
 		else if (j < 0) {
@@ -950,8 +955,11 @@ strtodg(CONST char *s00, char **se, CONST FPI *fpi, Long *expt, ULong *bits,
 			return STRTOG_NoMemory;
 		if (abe < 0)
 			rshift(ab, -abe);
-		else if (abe > 0)
+		else if (abe > 0) {
 			ab = lshift(ab, abe);
+			if (ab == NULL)
+				return STRTOG_NoMemory;
+			}
 		rvb0 = rvb;
 		if (asub) {
 			/* rv -= adj; */
@@ -1027,8 +1035,11 @@ strtodg(CONST char *s00, char **se, CONST FPI *fpi, Long *expt, ULong *bits,
 		Bfree(delta);
 		}
 	if (!denorm && (j = nbits - rvbits)) {
-		if (j > 0)
+		if (j > 0) {
 			rvb = lshift(rvb, j);
+			if (rvb == NULL)
+				return STRTOG_NoMemory;
+			}
 		else
 			rshift(rvb, -j);
 		rve -= j;
