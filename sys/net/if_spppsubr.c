@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.228 2021/04/28 09:39:39 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.229 2021/05/06 02:05:09 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.228 2021/04/28 09:39:39 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.229 2021/05/06 02:05:09 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1632,6 +1632,15 @@ sppp_cp_fini(const struct cp *cp, struct sppp *sp)
 
 	callout_halt(&scp->ch, NULL);
 	callout_destroy(&scp->ch);
+
+	if (scp->mbuf_confreq != NULL) {
+		m_freem(scp->mbuf_confreq);
+		scp->mbuf_confreq = NULL;
+	}
+	if (scp->mbuf_confnak != NULL) {
+		m_freem(scp->mbuf_confnak);
+		scp->mbuf_confnak = NULL;
+	}
 }
 
 /*
