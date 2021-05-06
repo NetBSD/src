@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.13 2018/09/09 19:17:21 palle Exp $
+$NetBSD: README,v 1.14 2021/05/06 07:32:15 cjep Exp $
 
 Special notes for cross-hosting a NetBSD build on certain platforms.  
 Only those platforms which have been tested to complete a "build.sh" run
@@ -8,62 +8,57 @@ All hosts must have a POSIX compatible sh. /bin/sh is assumed unless
 otherwise set. This can be overridden by setting HOST_SH in the environment.
 
 In addition all hosts must provide the following local tools:
+  gzip
+  gcc
+  g++
+  zlib and headers (this requirement may be dropped in future)
 
-gzip
+FreeBSD
+=======
 
+build.sh was recently tested on FreeBSD 13 with the compiler tools installed.
+
+Linux
 =====
 
-NetBSD:
+build.sh has been tested on:
+* Amazon Linux 2 (x86)
+* Debian 10 (x86)
+* Red Hat Enterprise Linux 8 (x86)
+* SUSE Enterprise Server 15 (x86)
+* Ubuntu Server 20.04 (x86)
 
-* _NETBSD_SOURCE is *not* to be defined/pulled in during compat/tools builds.
-  compat_defs.h will error out if it finds it defined. 
-
-HP-UX:
-
-* zlib must be available.
-  This will be fixed in the future to include zlib in libnbcompat.
-
-=====
-
-LINUX:
-
-* Tested on RedHat Linux 7.1 (i386).
-  Tested on RedHat Linux 7.3 (i686) on 16 Sep 2002.  Requires "LANG=C"
-  in the environment.
-
-* Tested on Redhat Linux 8.0 (i686) in Fall 2003. Requires no special settings.
-
-* Tested on Redhat ES3 and AS3 in spring of 2004. Requires no special settings.
-
-* The gcc (and libstdc++, if needed) package must be installed, along
-  with the typical system development packages (glibc-devel, etc.).
+* The gcc and g++ package must be installed, along with the typical system 
+  development packages (glibc-devel, etc.). The g++ package is sometimes 
+  called gcc-c++.
 
 * The ncurses-devel package must be installed (for nbinfo).
 
-* The zlib and zlib-devel packages must be installed.  This will be
-  fixed in the future to include zlib in libnbcompat.
+* The zlib and zlib-devel packages must be installed (these are
+  called zlib1g and zlib1g-dev on Debian and Ubuntu Linux)
 
+macOS/Darwin
+============
+
+build.sh was recently tested on macOS Big Sur with an APFS filesystem
+and the Xcode command line tools. (Previously, there have been issues
+building on case-insensitive HFS filesystems.)
+
+HP-UX
 =====
 
-MACOS
-  Requires a case sensitive filesystem such as UFS
+* zlib must be available.
 
-* Tested on 10.2.8 with Dec 2002 Developer Tools
-    - may require a fix to /usr/bin/join, netbsd's join should work fine
-* Tested on 10.3 with xcode 1.5
-    - compiles fine out of the box
-
-=====
-
-NETBSD (earlier releases):
+NetBSD (earlier releases)
+=========================
 
 * Tested on NetBSD 1.5.2 (machine-independently).
-
 * Should need no special setup.
+* _NETBSD_SOURCE is *not* to be defined/pulled in during compat/tools builds.
+  compat_defs.h will error out if it finds it defined. 
 
-=====
-
-SOLARIS:
+Solaris
+=======
 
 (updated instruction for Solaris 11 further below)
 
