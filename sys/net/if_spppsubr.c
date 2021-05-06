@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.229 2021/05/06 02:05:09 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.230 2021/05/06 06:18:16 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.229 2021/05/06 02:05:09 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.230 2021/05/06 06:18:16 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -3531,6 +3531,7 @@ sppp_ipcp_open(struct sppp *sp, void *xcp)
 		 * remote has no valid address, we need to get one assigned.
 		 */
 		sp->ipcp.flags |= IPCP_HISADDR_DYN;
+		sp->ipcp.saved_hisaddr = htonl(hisaddr);
 	}
 
 	if (sp->query_dns & 1) {
@@ -5744,7 +5745,8 @@ sppp_clear_ip_addrs(struct sppp *sp)
 
 		if (sp->ipcp.flags & IPCP_MYADDR_DYN)
 			new_sin.sin_addr.s_addr = 0;
-		if (sp->ipcp.flags & IPCP_HISADDR_DYN)
+		if (sp->ipcp.flags & IPCP_HISADDR_DYN &&
+		    ntohl(sp->ipcp.saved_hisaddr) != 0)
 			new_dst.sin_addr.s_addr = sp->ipcp.saved_hisaddr;
 
 		in_addrhash_remove(ifatoia(ifa));
