@@ -1,4 +1,4 @@
-/* $NetBSD: draw.c,v 1.2 2021/05/07 17:47:30 nia Exp $ */
+/* $NetBSD: draw.c,v 1.3 2021/05/07 19:37:03 nia Exp $ */
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -93,7 +93,11 @@ draw_control(struct aiomixer *aio,
 	wclear(control->widgetpad);
 	if (selected)
 		wattron(control->widgetpad, A_STANDOUT);
-	wprintw(control->widgetpad, "%s\n", control->info.label.name);
+	if (value.type == AUDIO_MIXER_VALUE)
+		wprintw(control->widgetpad, "%s (%s)\n",
+		    control->info.label.name, control->info.un.v.units.name);
+	else
+		wprintw(control->widgetpad, "%s\n", control->info.label.name);
 	if (selected)
 		wattroff(control->widgetpad, A_STANDOUT);
 
