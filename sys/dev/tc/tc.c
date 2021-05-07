@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.57 2021/04/24 23:36:59 thorpej Exp $	*/
+/*	$NetBSD: tc.c,v 1.58 2021/05/07 16:55:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.57 2021/04/24 23:36:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.58 2021/05/07 16:55:58 thorpej Exp $");
 
 #include "opt_tcverbose.h"
 
@@ -73,7 +73,7 @@ tcattach(device_t parent, device_t self, void *aux)
 	struct tcbus_attach_args *tba = aux;
 	struct tc_attach_args ta;
 	const struct tc_builtin *builtin;
-	struct tc_slotdesc *slot;
+	const struct tc_slotdesc *slot;
 	tc_addr_t tcaddr;
 	int i;
 	int locs[TCCF_NLOCS];
@@ -129,7 +129,8 @@ tcattach(device_t parent, device_t self, void *aux)
 		/*
 		 * Mark the slot as used, so we don't check it later.
 		 */
-		sc->sc_slots[builtin->tcb_slot].tcs_used = 1;
+		KASSERT(builtin->tcb_slot >=0 && builtin->tcb_slot <= 31);
+		sc->sc_slots_used |= __BIT(builtin->tcb_slot);
 
 		locs[TCCF_SLOT] = builtin->tcb_slot;
 		locs[TCCF_OFFSET] = builtin->tcb_offset;
@@ -149,7 +150,7 @@ tcattach(device_t parent, device_t self, void *aux)
 		slot = &sc->sc_slots[i];
 
 		/* If already checked above, don't look again now. */
-		if (slot->tcs_used)
+		if (sc->sc_slots_used & __BIT(i))
 			continue;
 
 		/*
@@ -175,7 +176,7 @@ tcattach(device_t parent, device_t self, void *aux)
 		/*
 		 * Mark the slot as used.
 		 */
-		slot->tcs_used = 1;
+		sc->sc_slots_used |= __BIT(i);
 
 		locs[TCCF_SLOT] = i;
 		locs[TCCF_OFFSET] = 0;

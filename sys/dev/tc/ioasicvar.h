@@ -1,4 +1,4 @@
-/*	$NetBSD: ioasicvar.h,v 1.22 2011/06/04 01:49:44 tsutsui Exp $	*/
+/*	$NetBSD: ioasicvar.h,v 1.23 2021/05/07 16:55:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -67,6 +67,6 @@ void    ioasic_intr_establish(device_t, void *,
 	    int, int (*)(void *), void *);
 void    ioasic_intr_disestablish(device_t, void *);
 void	ioasic_attach_devs(struct ioasic_softc *,
-	    struct ioasic_dev *, int);
+	    const struct ioasic_dev *, int);
 
 #endif /* _DEV_TC_IOASICVAR_ */
