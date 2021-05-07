@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.26 2016/08/07 10:37:24 christos Exp $	*/
+/*	$NetBSD: scan.l,v 1.26.6.1 2021/05/07 17:40:31 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: scan.l,v 1.26 2016/08/07 10:37:24 christos Exp $");
+__RCSID("$NetBSD: scan.l,v 1.26.6.1 2021/05/07 17:40:31 martin Exp $");
 
 #include <sys/param.h>
 #include <errno.h>
@@ -108,6 +108,7 @@ static int endinclude(void);
 static int getincludepath(void);
 static int getcurifdef(void);
 
+SLIST_HEAD(, prefix)	curdirs;	/* curdir stack */
 
 %}
 

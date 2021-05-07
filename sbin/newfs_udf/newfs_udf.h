@@ -52,10 +52,6 @@ extern int	 meta_perc;
 extern float	 meta_fract;
 
 
-/* shared structure between udf_create.c users */
-struct udf_create_context context;
-struct udf_disclayout     layout;
-
 /* prototypes */
 int udf_write_sector(void *sector, uint64_t location);
 int udf_update_trackinfo(struct mmc_discinfo *di, struct mmc_trackinfo *ti);
