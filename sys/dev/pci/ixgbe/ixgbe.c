@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.281 2021/04/30 06:55:32 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.282 2021/05/07 09:15:52 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.281 2021/04/30 06:55:32 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.282 2021/05/07 09:15:52 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1004,7 +1004,8 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 		unsupported_sfp = true;
 		error = IXGBE_SUCCESS;
 	} else if (error) {
-		aprint_error_dev(dev, "Hardware initialization failed\n");
+		aprint_error_dev(dev,
+		    "Hardware initialization failed(error = %d)\n", error);
 		error = EIO;
 		goto err_late;
 	}
