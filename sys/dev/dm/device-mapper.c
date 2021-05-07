@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.61 2020/07/08 15:07:13 thorpej Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.62 2021/05/07 09:54:43 hannken Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -260,7 +260,16 @@ dm_attach(device_t parent, device_t self, void *aux)
 static int
 dm_detach(device_t self, int flags)
 {
+	bool busy;
 	dm_dev_t *dmv;
+
+	dmv = dm_dev_lookup(NULL, NULL, device_unit(self));
+	mutex_enter(&dmv->diskp->dk_openlock);
+	busy = (dmv->diskp->dk_openmask != 0 && (flags & DETACH_FORCE) == 0);
+	mutex_exit(&dmv->diskp->dk_openlock);
+	dm_dev_unbusy(dmv);
+	if (busy)
+		return EBUSY;
 
 	pmf_device_deregister(self);
 
@@ -334,6 +343,25 @@ dmdestroy(void)
 static int
 dmopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
+	dm_dev_t *dmv;
+	struct disk *dk;
+
+	dmv = dm_dev_lookup(NULL, NULL, minor(dev));
+	if (dmv) {
+		dk = dmv->diskp;
+		mutex_enter(&dk->dk_openlock);
+		switch (mode) {
+		case S_IFCHR:
+			dk->dk_copenmask |= 1;
+			break;
+		case S_IFBLK:
+			dk->dk_bopenmask |= 1;
+			break;
+		}
+		dk->dk_openmask = dk->dk_copenmask | dk->dk_bopenmask;
+		mutex_exit(&dk->dk_openlock);
+		dm_dev_unbusy(dmv);
+	}
 
 	aprint_debug("dm open routine called %" PRIu32 "\n", minor(dev));
 	return 0;
@@ -342,8 +370,27 @@ dmopen(dev_t dev, int flags, int mode, struct lwp *l)
 static int
 dmclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
+	dm_dev_t *dmv;
+	struct disk *dk;
 
 	aprint_debug("dm close routine called %" PRIu32 "\n", minor(dev));
+
+	dmv = dm_dev_lookup(NULL, NULL, minor(dev));
+	if (dmv) {
+		dk = dmv->diskp;
+		mutex_enter(&dk->dk_openlock);
+		switch (mode) {
+		case S_IFCHR:
+			dk->dk_copenmask &= ~1;
+			break;
+		case S_IFBLK:
+			dk->dk_bopenmask &= ~1;
+			break;
+		}
+		dk->dk_openmask = dk->dk_copenmask | dk->dk_bopenmask;
+		mutex_exit(&dk->dk_openlock);
+		dm_dev_unbusy(dmv);
+	}
 	return 0;
 }
 
