@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.87 2021/05/03 09:16:00 bouyer Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.88 2021/05/07 17:48:47 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -1897,4 +1897,20 @@ sys/kern/kern_exec.c				1.505 via patch
 
 	Fix copy&pasto in handling of POSIX_SPAWN_RESETIDS in posix_spawn(3)
 	[martin, ticket #1677]
+
+bin/pax/extern.h				1.60
+bin/pax/options.c				1.119
+sbin/newfs_udf/newfs_udf.h			1.7 (patch)
+sbin/newfs_udf/udf_create.c			1.27 (patch)
+usr.bin/config/defs.h				1.106
+usr.bin/config/main.c				1.100
+usr.bin/config/scan.l				1.32
+usr.bin/make/main.c				1.274
+usr.bin/make/make.h				1.105
+usr.sbin/installboot/Makefile			1.53,1.54
+usr.sbin/installboot/installboot.h		1.41
+usr.sbin/installboot/machines.c			1.41,1.42
+
+	Avoid depending on common symbols.
+	[mrg, ticket #1678]
 
