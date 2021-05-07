@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock_tlsb.c,v 1.17 2011/07/01 19:19:51 dyoung Exp $ */
+/* $NetBSD: mcclock_tlsb.c,v 1.18 2021/05/07 22:46:11 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_tlsb.c,v 1.17 2011/07/01 19:19:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_tlsb.c,v 1.18 2021/05/07 22:46:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -65,8 +65,8 @@ struct mcclock_tlsb_softc {
 	unsigned long regbase;
 };
 
-int	mcclock_tlsb_match(device_t, cfdata_t, void *);
-void	mcclock_tlsb_attach(device_t, device_t, void *);
+static int	mcclock_tlsb_match(device_t, cfdata_t, void *);
+static void	mcclock_tlsb_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(mcclock_tlsb, sizeof(struct mcclock_tlsb_softc),
     mcclock_tlsb_match, mcclock_tlsb_attach, NULL, NULL);
@@ -75,7 +75,7 @@ static void	mcclock_tlsb_write(struct mc146818_softc *, u_int, u_int);
 static u_int	mcclock_tlsb_read(struct mc146818_softc *, u_int);
 
 
-int
+static int
 mcclock_tlsb_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct gbus_attach_args *ga = aux;
@@ -85,7 +85,7 @@ mcclock_tlsb_match(device_t parent, cfdata_t cf, void *aux)
 	return (1);
 }
 
-void
+static void
 mcclock_tlsb_attach(device_t parent, device_t self, void *aux)
 {
 	struct mcclock_tlsb_softc *tsc = device_private(self);
