@@ -1,4 +1,4 @@
-/* $NetBSD: com_sableio.c,v 1.15 2020/09/22 15:24:02 thorpej Exp $ */
+/* $NetBSD: com_sableio.c,v 1.16 2021/05/07 16:58:34 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: com_sableio.c,v 1.15 2020/09/22 15:24:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_sableio.c,v 1.16 2021/05/07 16:58:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,13 +65,13 @@ struct com_sableio_softc {
 	void	*sc_ih;			/* interrupt handler */
 };
 
-int	com_sableio_match(device_t, cfdata_t , void *);
-void	com_sableio_attach(device_t, device_t, void *);
+static int	com_sableio_match(device_t, cfdata_t , void *);
+static void	com_sableio_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(com_sableio, sizeof(struct com_sableio_softc),
     com_sableio_match, com_sableio_attach, NULL, NULL);
 
-int
+static int
 com_sableio_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct sableio_attach_args *sa = aux;
@@ -83,7 +83,7 @@ com_sableio_match(device_t parent, cfdata_t match, void *aux)
 	return (0);
 }
 
-void
+static void
 com_sableio_attach(device_t parent, device_t self, void *aux)
 {
 	struct com_sableio_softc *ssc = device_private(self);

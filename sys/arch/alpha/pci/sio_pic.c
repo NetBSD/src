@@ -1,4 +1,4 @@
-/* $NetBSD: sio_pic.c,v 1.46 2020/09/29 01:19:52 thorpej Exp $ */
+/* $NetBSD: sio_pic.c,v 1.47 2021/05/07 16:58:34 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2020 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.46 2020/09/29 01:19:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.47 2021/05/07 16:58:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,28 +119,27 @@ static struct alpha_shared_intr *sio_intr;
  * If prom console is broken, must remember the initial interrupt
  * settings and enforce them.  WHEE!
  */
-uint8_t initial_ocw1[2];
-uint8_t initial_elcr[2];
+static uint8_t initial_ocw1[2];
+static uint8_t initial_elcr[2];
 #endif
 
-void		sio_setirqstat(int, int, int);
+static void	sio_setirqstat(int, int, int);
 
-uint8_t	(*sio_read_elcr)(int);
-void		(*sio_write_elcr)(int, uint8_t);
+static uint8_t	(*sio_read_elcr)(int);
+static void	(*sio_write_elcr)(int, uint8_t);
 static void	specific_eoi(int);
 #ifdef BROKEN_PROM_CONSOLE
-void		sio_intr_shutdown(void *);
+static void	sio_intr_shutdown(void *);
 #endif
 
 /******************** i82378 SIO ELCR functions ********************/
 
-int		i82378_setup_elcr(void);
-uint8_t	i82378_read_elcr(int);
-void		i82378_write_elcr(int, uint8_t);
+static bus_space_handle_t sio_ioh_elcr;
 
-bus_space_handle_t sio_ioh_elcr;
+static uint8_t	i82378_read_elcr(int);
+static void	i82378_write_elcr(int, uint8_t);
 
-int
+static int
 i82378_setup_elcr(void)
 {
 	int rv;
@@ -161,14 +160,14 @@ i82378_setup_elcr(void)
 	return (rv);
 }
 
-uint8_t
+static uint8_t
 i82378_read_elcr(int elcr)
 {
 
 	return (bus_space_read_1(sio_iot, sio_ioh_elcr, elcr));
 }
 
-void
+static void
 i82378_write_elcr(int elcr, uint8_t val)
 {
 
@@ -177,13 +176,12 @@ i82378_write_elcr(int elcr, uint8_t val)
 
 /******************** Cypress CY82C693 ELCR functions ********************/
 
-int		cy82c693_setup_elcr(void);
-uint8_t	cy82c693_read_elcr(int);
-void		cy82c693_write_elcr(int, uint8_t);
+static const struct cy82c693_handle *sio_cy82c693_handle;
 
-const struct cy82c693_handle *sio_cy82c693_handle;
+static uint8_t	cy82c693_read_elcr(int);
+static void	cy82c693_write_elcr(int, uint8_t);
 
-int
+static int
 cy82c693_setup_elcr(void)
 {
 	int device, maxndevs;
@@ -241,14 +239,14 @@ cy82c693_setup_elcr(void)
 	return (ENODEV);
 }
 
-uint8_t
+static uint8_t
 cy82c693_read_elcr(int elcr)
 {
 
 	return (cy82c693_read(sio_cy82c693_handle, CONFIG_ELCR1 + elcr));
 }
 
-void
+static void
 cy82c693_write_elcr(int elcr, uint8_t val)
 {
 
@@ -272,7 +270,7 @@ int (*const sio_elcr_setup_funcs[])(void) = {
 
 /******************** Shared SIO/Cypress functions ********************/
 
-void
+static void
 sio_setirqstat(int irq, int enabled, int type)
 {
 	uint8_t ocw1[2], elcr[2];
@@ -404,7 +402,7 @@ sio_intr_setup(pci_chipset_tag_t pc, bus_space_tag_t iot)
 }
 
 #ifdef BROKEN_PROM_CONSOLE
-void
+static void
 sio_intr_shutdown(void *arg)
 {
 	/*

@@ -1,4 +1,4 @@
-/* $NetBSD: ioasic.c,v 1.48 2020/11/18 02:04:30 thorpej Exp $ */
+/* $NetBSD: ioasic.c,v 1.49 2021/05/07 16:58:34 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.48 2020/11/18 02:04:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.49 2021/05/07 16:58:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -79,14 +79,14 @@ __KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.48 2020/11/18 02:04:30 thorpej Exp $");
 #include <dev/tc/ioasicvar.h>
 
 /* Definition of the driver for autoconfig. */
-int	ioasicmatch(device_t, cfdata_t, void *);
-void	ioasicattach(device_t, device_t, void *);
+static int	ioasicmatch(device_t, cfdata_t, void *);
+static void	ioasicattach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(ioasic, sizeof(struct ioasic_softc),
     ioasicmatch, ioasicattach, NULL, NULL);
 
-int	ioasic_intr(void *);
-int	ioasic_intrnull(void *);
+static int	ioasic_intr(void *);
+static int	ioasic_intrnull(void *);
 
 #define	C(x)	((void *)(x))
 
@@ -99,7 +99,7 @@ int	ioasic_intrnull(void *);
 
 #define	IOASIC_NCOOKIES		4
 
-struct ioasic_dev ioasic_devs[] = {
+static const struct ioasic_dev ioasic_devs[] = {
 	{ "PMAD-BA ", IOASIC_SLOT_3_START, C(IOASIC_DEV_LANCE),
 	  IOASIC_INTR_LANCE, },
 	{ "z8530   ", IOASIC_SLOT_4_START, C(IOASIC_DEV_SCC0),
@@ -111,9 +111,9 @@ struct ioasic_dev ioasic_devs[] = {
 	{ "AMD79c30", IOASIC_SLOT_9_START, C(IOASIC_DEV_ISDN),
 	  IOASIC_INTR_ISDN_TXLOAD | IOASIC_INTR_ISDN_RXLOAD,  },
 };
-int ioasic_ndevs = sizeof(ioasic_devs) / sizeof(ioasic_devs[0]);
+static const int ioasic_ndevs = __arraycount(ioasic_devs);
 
-struct ioasicintr {
+static struct ioasicintr {
 	int	(*iai_func)(void *);
 	void	*iai_arg;
 	struct evcnt iai_evcnt;
@@ -122,9 +122,9 @@ struct ioasicintr {
 tc_addr_t ioasic_base;		/* XXX XXX XXX */
 
 /* There can be only one. */
-int ioasicfound;
+static int ioasicfound;
 
-int
+static int
 ioasicmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct tc_attach_args *ta = aux;
@@ -143,7 +143,7 @@ ioasicmatch(device_t parent, cfdata_t cf, void *aux)
 	return (1);
 }
 
-void
+static void
 ioasicattach(device_t parent, device_t self, void *aux)
 {
 	struct ioasic_softc *sc = device_private(self);
@@ -266,7 +266,7 @@ ioasic_intr_disestablish(device_t ioa, void *cookie)
 	ioasicintrs[dev].iai_arg = (void *)dev;
 }
 
-int
+static int
 ioasic_intrnull(void *val)
 {
 
@@ -277,7 +277,7 @@ ioasic_intrnull(void *val)
 /*
  * ASIC interrupt handler.
  */
-int
+static int
 ioasic_intr(void *val)
 {
 	register struct ioasic_softc *sc = val;

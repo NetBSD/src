@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock_ioasic.c,v 1.17 2012/02/06 02:14:16 matt Exp $ */
+/* $NetBSD: mcclock_ioasic.c,v 1.18 2021/05/07 16:58:34 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_ioasic.c,v 1.17 2012/02/06 02:14:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_ioasic.c,v 1.18 2021/05/07 16:58:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -58,16 +58,16 @@ struct mcclock_ioasic_softc {
 	struct mcclock_ioasic_clockdatum *sc_dp;
 };
 
-int	mcclock_ioasic_match(device_t, cfdata_t, void *);
-void	mcclock_ioasic_attach(device_t, device_t, void *);
+static int	mcclock_ioasic_match(device_t, cfdata_t, void *);
+static void	mcclock_ioasic_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(mcclock_ioasic, sizeof(struct mcclock_ioasic_softc),
     mcclock_ioasic_match, mcclock_ioasic_attach, NULL, NULL);
 
-void	mcclock_ioasic_write(struct mc146818_softc *, u_int, u_int);
-u_int	mcclock_ioasic_read(struct mc146818_softc *, u_int);
+static void	mcclock_ioasic_write(struct mc146818_softc *, u_int, u_int);
+static u_int	mcclock_ioasic_read(struct mc146818_softc *, u_int);
 
-int
+static int
 mcclock_ioasic_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct ioasicdev_attach_args *d = aux;
@@ -78,7 +78,7 @@ mcclock_ioasic_match(device_t parent, cfdata_t cf, void *aux)
 	return (1);
 }
 
-void
+static void
 mcclock_ioasic_attach(device_t parent, device_t self, void *aux)
 {
 	struct mcclock_ioasic_softc *isc = device_private(self);
@@ -96,7 +96,7 @@ mcclock_ioasic_attach(device_t parent, device_t self, void *aux)
 	mcclock_attach(sc);
 }
 
-void
+static void
 mcclock_ioasic_write(struct mc146818_softc *sc, u_int reg, u_int datum)
 {
 	struct mcclock_ioasic_softc *isc = (void *)sc;
@@ -104,7 +104,7 @@ mcclock_ioasic_write(struct mc146818_softc *sc, u_int reg, u_int datum)
 	isc->sc_dp[reg].datum = datum;
 }
 
-u_int
+static u_int
 mcclock_ioasic_read(struct mc146818_softc *sc, u_int reg)
 {
 	struct mcclock_ioasic_softc *isc = (void *)sc;

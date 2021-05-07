@@ -1,4 +1,4 @@
-/* $NetBSD: lpt_sableio.c,v 1.11 2020/09/22 15:24:02 thorpej Exp $ */
+/* $NetBSD: lpt_sableio.c,v 1.12 2021/05/07 16:58:34 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lpt_sableio.c,v 1.11 2020/09/22 15:24:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_sableio.c,v 1.12 2021/05/07 16:58:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,13 +65,13 @@ struct lpt_sableio_softc {
 	void	*sc_ih;			/* interrupt handler */
 };
 
-int	lpt_sableio_match(device_t, cfdata_t , void *);
-void	lpt_sableio_attach(device_t, device_t, void *);
+static int	lpt_sableio_match(device_t, cfdata_t , void *);
+static void	lpt_sableio_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(lpt_sableio, sizeof(struct lpt_sableio_softc),
     lpt_sableio_match, lpt_sableio_attach, NULL, NULL);
 
-int
+static int
 lpt_sableio_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct sableio_attach_args *sa = aux;
@@ -83,7 +83,7 @@ lpt_sableio_match(device_t parent, cfdata_t match, void *aux)
 	return (0);
 }
 
-void
+static void
 lpt_sableio_attach(device_t parent, device_t self, void *aux)
 {
 	struct lpt_sableio_softc *ssc = device_private(self);

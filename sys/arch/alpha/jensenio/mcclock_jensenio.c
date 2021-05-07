@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock_jensenio.c,v 1.10 2011/07/01 19:22:35 dyoung Exp $ */
+/* $NetBSD: mcclock_jensenio.c,v 1.11 2021/05/07 16:58:34 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_jensenio.c,v 1.10 2011/07/01 19:22:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_jensenio.c,v 1.11 2021/05/07 16:58:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -82,17 +82,17 @@ struct mcclock_jensenio_softc {
 	bus_space_handle_t	sc_std_rtc_ioh;
 };
 
-int	mcclock_jensenio_match(device_t, cfdata_t, void *);
-void	mcclock_jensenio_attach(device_t, device_t, void *);
+static int	mcclock_jensenio_match(device_t, cfdata_t, void *);
+static void	mcclock_jensenio_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(mcclock_jensenio, sizeof(struct mcclock_jensenio_softc),
     mcclock_jensenio_match, mcclock_jensenio_attach, NULL, NULL);
 
-void	mcclock_jensenio_write(struct mc146818_softc *, u_int, u_int);
-u_int	mcclock_jensenio_read(struct mc146818_softc *, u_int);
+static void	mcclock_jensenio_write(struct mc146818_softc *, u_int, u_int);
+static u_int	mcclock_jensenio_read(struct mc146818_softc *, u_int);
 
 
-int
+static int
 mcclock_jensenio_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct jensenio_attach_args *ja = aux;
@@ -104,7 +104,7 @@ mcclock_jensenio_match(device_t parent, cfdata_t cf, void *aux)
 	return (0);
 }
 
-void
+static void
 mcclock_jensenio_attach(device_t parent, device_t self, void *aux)
 {
 	struct mcclock_jensenio_softc *jsc = device_private(self);
@@ -130,7 +130,7 @@ mcclock_jensenio_attach(device_t parent, device_t self, void *aux)
 	mcclock_attach(sc);
 }
 
-void
+static void
 mcclock_jensenio_write(struct mc146818_softc *sc, u_int reg, u_int datum)
 {
 	bus_space_tag_t iot = sc->sc_bst;
@@ -140,7 +140,7 @@ mcclock_jensenio_write(struct mc146818_softc *sc, u_int reg, u_int datum)
 	bus_space_write_1(iot, ioh, 1, datum);
 }
 
-u_int
+static u_int
 mcclock_jensenio_read(struct mc146818_softc *sc, u_int reg)
 {
 	bus_space_tag_t iot = sc->sc_bst;
