@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.51 2017/01/11 12:19:44 joerg Exp $
+#	$NetBSD: Makefile,v 1.51.6.1 2021/05/07 17:40:31 martin Exp $
 #
 
 .include <bsd.own.mk>
@@ -19,6 +19,7 @@ ARCH_FILES?= ${ARCH_XLAT:M${MACHINE}-*:S/${MACHINE}-//}
 .if empty(ARCH_FILES)
 ARCH_FILES= ${MACHINE}.c
 .endif
+COPTS.machines.c+=	-DSINGLE_ARCH=ib_mach_${MACHINE}
 .endif
 
 SRCS+=${ARCH_FILES}
