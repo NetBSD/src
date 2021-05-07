@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1278 2021/04/16 01:14:38 mrg Exp $
+# $NetBSD: mi,v 1.1279 2021/05/07 21:51:21 nia Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -675,6 +675,7 @@
 ./usr/bin					base-sys-usr
 ./usr/bin/Mail					base-obsolete		obsolete
 ./usr/bin/agrep					base-util-bin
+./usr/bin/aiomixer				base-audio-bin
 ./usr/bin/apply					base-util-bin
 ./usr/bin/apropos				base-man-bin
 ./usr/bin/arpaname				base-bind-bin

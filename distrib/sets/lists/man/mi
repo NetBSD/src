@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1718 2021/04/27 21:13:38 nia Exp $
+# $NetBSD: mi,v 1.1719 2021/05/07 21:51:21 nia Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -41,6 +41,7 @@
 ./usr/share/man/cat1/Mail.0			man-obsolete		obsolete
 ./usr/share/man/cat1/[.0			man-util-catman		.cat
 ./usr/share/man/cat1/agrep.0			man-util-catman		.cat
+./usr/share/man/cat1/aiomixer.0			man-audio-catman	.cat
 ./usr/share/man/cat1/alias.0			man-util-catman		.cat
 ./usr/share/man/cat1/altqstat.0			man-router-catman	.cat
 ./usr/share/man/cat1/amq.0			man-obsolete		obsolete
@@ -3353,6 +3354,7 @@
 ./usr/share/man/html1/Mail.html			man-obsolete		obsolete
 ./usr/share/man/html1/[.html			man-util-htmlman	html
 ./usr/share/man/html1/agrep.html		man-util-htmlman	html
+./usr/share/man/html1/aiomixer.html		man-audio-htmlman	html
 ./usr/share/man/html1/alias.html		man-util-htmlman	html
 ./usr/share/man/html1/altqstat.html		man-router-htmlman	html
 ./usr/share/man/html1/apply.html		man-util-htmlman	html
@@ -6274,6 +6276,7 @@
 ./usr/share/man/man1/Mail.1			man-obsolete		obsolete
 ./usr/share/man/man1/[.1			man-util-man		.man
 ./usr/share/man/man1/agrep.1			man-util-man		.man
+./usr/share/man/man1/aiomixer.1			man-audio-man		.man
 ./usr/share/man/man1/alias.1			man-util-man		.man
 ./usr/share/man/man1/altqstat.1			man-router-man		.man
 ./usr/share/man/man1/amq.1			man-obsolete		obsolete
