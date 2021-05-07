@@ -1,4 +1,4 @@
-/*	$NetBSD: ioasic_subr.c,v 1.14 2021/04/24 23:36:59 thorpej Exp $	*/
+/*	$NetBSD: ioasic_subr.c,v 1.15 2021/05/07 16:55:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioasic_subr.c,v 1.14 2021/04/24 23:36:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic_subr.c,v 1.15 2021/05/07 16:55:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,8 +53,8 @@ ioasicprint(void *aux, const char *pnp)
 }
 
 void
-ioasic_attach_devs(struct ioasic_softc *sc, struct ioasic_dev *ioasic_devs,
-    int ioasic_ndevs)
+ioasic_attach_devs(struct ioasic_softc *sc,
+    const struct ioasic_dev *ioasic_devs, int ioasic_ndevs)
 {
 	struct ioasicdev_attach_args idev;
 	int i;
