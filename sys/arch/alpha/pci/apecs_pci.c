@@ -1,4 +1,4 @@
-/* $NetBSD: apecs_pci.c,v 1.26 2015/10/02 05:22:49 msaitoh Exp $ */
+/* $NetBSD: apecs_pci.c,v 1.27 2021/05/07 16:58:34 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: apecs_pci.c,v 1.26 2015/10/02 05:22:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apecs_pci.c,v 1.27 2021/05/07 16:58:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,13 +41,13 @@ __KERNEL_RCSID(0, "$NetBSD: apecs_pci.c,v 1.26 2015/10/02 05:22:49 msaitoh Exp $
 #include <alpha/pci/apecsreg.h>
 #include <alpha/pci/apecsvar.h>
 
-void		apecs_attach_hook(device_t, device_t,
+static void	apecs_attach_hook(device_t, device_t,
 		    struct pcibus_attach_args *);
-int		apecs_bus_maxdevs(void *, int);
-pcitag_t	apecs_make_tag(void *, int, int, int);
-void		apecs_decompose_tag(void *, pcitag_t, int *, int *, int *);
-pcireg_t	apecs_conf_read(void *, pcitag_t, int);
-void		apecs_conf_write(void *, pcitag_t, int, pcireg_t);
+static int	apecs_bus_maxdevs(void *, int);
+static pcitag_t	apecs_make_tag(void *, int, int, int);
+static void	apecs_decompose_tag(void *, pcitag_t, int *, int *, int *);
+static pcireg_t	apecs_conf_read(void *, pcitag_t, int);
+static void	apecs_conf_write(void *, pcitag_t, int, pcireg_t);
 
 void
 apecs_pci_init(pci_chipset_tag_t pc, void *v)
@@ -62,26 +62,26 @@ apecs_pci_init(pci_chipset_tag_t pc, void *v)
 	pc->pc_conf_write = apecs_conf_write;
 }
 
-void
+static void
 apecs_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
 {
 }
 
-int
+static int
 apecs_bus_maxdevs(void *cpv, int busno)
 {
 
 	return 32;
 }
 
-pcitag_t
+static pcitag_t
 apecs_make_tag(void *cpv, int b, int d, int f)
 {
 
 	return (b << 16) | (d << 11) | (f << 8);
 }
 
-void
+static void
 apecs_decompose_tag(void *cpv, pcitag_t tag, int *bp, int *dp, int *fp)
 {
 
@@ -93,7 +93,7 @@ apecs_decompose_tag(void *cpv, pcitag_t tag, int *bp, int *dp, int *fp)
 		*fp = (tag >> 8) & 0x7;
 }
 
-pcireg_t
+static pcireg_t
 apecs_conf_read(void *cpv, pcitag_t tag, int offset)
 {
 	struct apecs_config *acp = cpv;
@@ -141,7 +141,7 @@ apecs_conf_read(void *cpv, pcitag_t tag, int offset)
 	return data;
 }
 
-void
+static void
 apecs_conf_write(void *cpv, pcitag_t tag, int offset, pcireg_t data)
 {
 	struct apecs_config *acp = cpv;

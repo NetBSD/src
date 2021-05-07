@@ -1,4 +1,4 @@
-/* $NetBSD: tc_conf.h,v 1.14 2017/06/22 16:46:52 flxd Exp $ */
+/* $NetBSD: tc_conf.h,v 1.15 2021/05/07 16:58:34 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -46,12 +46,12 @@ extern void	tc_3000_500_intr_establish(device_t, void *,
 		    tc_intrlevel_t, int (*)(void *), void *);
 extern void	tc_3000_500_intr_disestablish(device_t, void *);
 
-extern int	tc_3000_500_nslots;
-extern struct tc_slotdesc tc_3000_500_slots[];
-extern int	tc_3000_500_graphics_nbuiltins;
-extern struct tc_builtin tc_3000_500_graphics_builtins[];
-extern int	tc_3000_500_nographics_nbuiltins;
-extern struct tc_builtin tc_3000_500_nographics_builtins[];
+extern const int	tc_3000_500_nslots;
+extern const struct tc_slotdesc tc_3000_500_slots[];
+extern const int	tc_3000_500_graphics_nbuiltins;
+extern const struct tc_builtin tc_3000_500_graphics_builtins[];
+extern const int	tc_3000_500_nographics_nbuiltins;
+extern const struct tc_builtin tc_3000_500_nographics_builtins[];
 #endif /* DEC_3000_500 */
 
 #ifdef DEC_3000_300
@@ -66,10 +66,10 @@ extern void	tc_3000_300_intr_establish(device_t, void *,
 		    tc_intrlevel_t, int (*)(void *), void *);
 extern void	tc_3000_300_intr_disestablish(device_t, void *);
 
-extern int	tc_3000_300_nslots;
-extern struct tc_slotdesc tc_3000_300_slots[];
-extern int	tc_3000_300_nbuiltins;
-extern struct tc_builtin tc_3000_300_builtins[];
+extern const int	tc_3000_300_nslots;
+extern const struct tc_slotdesc tc_3000_300_slots[];
+extern const int	tc_3000_300_nbuiltins;
+extern const struct tc_builtin tc_3000_300_builtins[];
 #endif /* DEC_3000_300 */
 
 extern int	tc_fb_cnattach(tc_addr_t);

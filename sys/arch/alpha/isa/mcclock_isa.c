@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock_isa.c,v 1.20 2011/07/01 19:22:35 dyoung Exp $ */
+/* $NetBSD: mcclock_isa.c,v 1.21 2021/05/07 16:58:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.20 2011/07/01 19:22:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.21 2021/05/07 16:58:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -46,16 +46,16 @@ __KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.20 2011/07/01 19:22:35 dyoung Exp 
 
 #include <alpha/alpha/mcclockvar.h>
 
-int	mcclock_isa_match(device_t, cfdata_t, void *);
-void	mcclock_isa_attach(device_t, device_t, void *);
+static int	mcclock_isa_match(device_t, cfdata_t, void *);
+static void	mcclock_isa_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(mcclock_isa, sizeof(struct mc146818_softc),
     mcclock_isa_match, mcclock_isa_attach, NULL, NULL);
 
-void	mcclock_isa_write(struct mc146818_softc *, u_int, u_int);
-u_int	mcclock_isa_read(struct mc146818_softc *, u_int);
+static void	mcclock_isa_write(struct mc146818_softc *, u_int, u_int);
+static u_int	mcclock_isa_read(struct mc146818_softc *, u_int);
 
-int
+static int
 mcclock_isa_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct isa_attach_args *ia = aux;
@@ -94,7 +94,7 @@ mcclock_isa_match(device_t parent, cfdata_t cf, void *aux)
 	return (1);
 }
 
-void
+static void
 mcclock_isa_attach(device_t parent, device_t self, void *aux)
 {
 	struct mc146818_softc *sc = device_private(self);
@@ -112,7 +112,7 @@ mcclock_isa_attach(device_t parent, device_t self, void *aux)
 	mcclock_attach(sc);
 }
 
-void
+static void
 mcclock_isa_write(struct mc146818_softc *sc, u_int reg, u_int datum)
 {
 	bus_space_tag_t iot = sc->sc_bst;
@@ -122,7 +122,7 @@ mcclock_isa_write(struct mc146818_softc *sc, u_int reg, u_int datum)
 	bus_space_write_1(iot, ioh, 1, datum);
 }
 
-u_int
+static u_int
 mcclock_isa_read(struct mc146818_softc *sc, u_int reg)
 {
 	bus_space_tag_t iot = sc->sc_bst;

@@ -1,4 +1,4 @@
-/* $NetBSD: tc_3000_300.c,v 1.38 2020/11/18 02:04:30 thorpej Exp $ */
+/* $NetBSD: tc_3000_300.c,v 1.39 2021/05/07 16:58:34 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_3000_300.c,v 1.38 2020/11/18 02:04:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_3000_300.c,v 1.39 2021/05/07 16:58:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: tc_3000_300.c,v 1.38 2020/11/18 02:04:30 thorpej Exp
 extern int	sfb_cnattach(tc_addr_t);
 #endif
 
-int	tc_3000_300_intrnull(void *);
+static int	tc_3000_300_intrnull(void *);
 
 #define	C(x)	((void *)(u_long)x)
 #define	KV(x)	(ALPHA_PHYS_TO_K0SEG(x))
@@ -65,7 +65,7 @@ int	tc_3000_300_intrnull(void *);
  */
 #define	DEC_3000_300_IOASIC_ADDR	KV(0x1a0000000)
 
-struct tc_slotdesc tc_3000_300_slots[] = {
+const struct tc_slotdesc tc_3000_300_slots[] = {
 	{ KV(0x100000000), C(TC_3000_300_DEV_OPT0), },	/* 0 - opt slot 0 */
 	{ KV(0x120000000), C(TC_3000_300_DEV_OPT1), },	/* 1 - opt slot 1 */
 	{ KV(0x140000000), C(TC_3000_300_DEV_BOGUS), }, /* 2 - unused */
@@ -74,18 +74,16 @@ struct tc_slotdesc tc_3000_300_slots[] = {
 	{ KV(0x1a0000000), C(TC_3000_300_DEV_BOGUS), }, /* 5 - IOCTL ASIC */
 	{ KV(0x1c0000000), C(TC_3000_300_DEV_BOGUS), }, /* 6 - CXTurbo */
 };
-int tc_3000_300_nslots =
-    sizeof(tc_3000_300_slots) / sizeof(tc_3000_300_slots[0]);
+const int tc_3000_300_nslots = __arraycount(tc_3000_300_slots);
 
-struct tc_builtin tc_3000_300_builtins[] = {
+const struct tc_builtin tc_3000_300_builtins[] = {
 	{ "PMAGB-BA",	6, 0x02000000, C(TC_3000_300_DEV_CXTURBO),	},
 	{ "FLAMG-IO",	5, 0x00000000, C(TC_3000_300_DEV_IOASIC),	},
 	{ "PMAZ-DS ",	4, 0x00000000, C(TC_3000_300_DEV_TCDS),		},
 };
-int tc_3000_300_nbuiltins =
-    sizeof(tc_3000_300_builtins) / sizeof(tc_3000_300_builtins[0]);
+const int tc_3000_300_nbuiltins = __arraycount(tc_3000_300_builtins);
 
-struct tcintr {
+static struct tcintr {
 	int	(*tci_func)(void *);
 	void	*tci_arg;
 	struct evcnt tci_evcnt;
@@ -205,7 +203,7 @@ tc_3000_300_intr_disestablish(device_t tcadev, void *cookie)
 	splx(s);
 }
 
-int
+static int
 tc_3000_300_intrnull(void *val)
 {
 
