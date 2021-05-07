@@ -1,4 +1,4 @@
-/* $NetBSD: draw.c,v 1.1 2021/05/07 16:29:24 nia Exp $ */
+/* $NetBSD: draw.c,v 1.2 2021/05/07 17:47:30 nia Exp $ */
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,37 +36,11 @@
 #include <stdlib.h>
 #include "draw.h"
 
-static void bold_on(WINDOW *);
-static void bold_off(WINDOW *);
 static int get_enum_color(const char *);
 static void draw_enum(struct aiomixer_control *, int, bool);
 static void draw_set(struct aiomixer_control *, int);
 static void draw_levels(struct aiomixer_control *,
     const struct mixer_level *, bool, bool);
-
-static void
-bold_on(WINDOW *w)
-{
-	/*
-	 * Some (XXX: which?) legacy terminals do not support a Bold
-	 * attribute.  In this case, we fall back to standout.
-	 */
-	if (termattrs() & A_BOLD)
-		wattron(w, A_BOLD);
-	else
-		wattron(w, A_STANDOUT);
-}
-
-static void
-bold_off(WINDOW *w)
-{
-	chtype attrs = getattrs(w);
-
-	if (attrs & A_BOLD)
-		wattroff(w, A_BOLD);
-	if (attrs & A_STANDOUT)
-		wattroff(w, A_STANDOUT);
-}
 
 void
 draw_mixer_select(unsigned int num_mixers, unsigned int selected_mixer)
@@ -90,7 +64,7 @@ draw_mixer_select(unsigned int num_mixers, unsigned int selected_mixer)
 		}
 		close(fd);
 		if (selected_mixer == i) {
-			bold_on(stdscr);
+			attron(A_STANDOUT);
 			addstr("[*] ");
 		} else {
 			addstr("[ ] ");
@@ -98,7 +72,7 @@ draw_mixer_select(unsigned int num_mixers, unsigned int selected_mixer)
 		printw("%s: %s %s %s\n", mixer_path,
 		    dev.name, dev.version, dev.config);
 		if (selected_mixer == i)
-			bold_off(stdscr);
+			attroff(A_STANDOUT);
 	}
 }
 
@@ -117,21 +91,11 @@ draw_control(struct aiomixer *aio,
 		err(EXIT_FAILURE, "failed to read from mixer device");
 
 	wclear(control->widgetpad);
-	if (selected) {
-		bold_on(control->widgetpad);
-		if (has_colors()) {
-			wattron(control->widgetpad,
-			    COLOR_PAIR(COLOR_CONTROL_SELECTED));
-		}
-		waddch(control->widgetpad, '*');
-		if (has_colors()) {
-			wattroff(control->widgetpad,
-			    COLOR_PAIR(COLOR_CONTROL_SELECTED));
-		}
-	}
+	if (selected)
+		wattron(control->widgetpad, A_STANDOUT);
 	wprintw(control->widgetpad, "%s\n", control->info.label.name);
 	if (selected)
-		bold_off(control->widgetpad);
+		wattroff(control->widgetpad, A_STANDOUT);
 
 	switch (value.type) {
 	case AUDIO_MIXER_ENUM:
@@ -193,8 +157,12 @@ draw_enum(struct aiomixer_control *control, int ord, bool selected)
 
 	for (i = 0; i < control->info.un.e.num_mem; ++i) {
 		e = &control->info.un.e;
-		if (ord == e->member[i].ord && selected)
-			bold_on(control->widgetpad);
+		if (ord == e->member[i].ord && selected) {
+			if (termattrs() & A_BOLD)
+				wattron(control->widgetpad, A_BOLD);
+			else
+				wattron(control->widgetpad, A_STANDOUT);
+		}
 		waddch(control->widgetpad, '[');
 		if (ord == e->member[i].ord) {
 			if (has_colors()) {
@@ -213,8 +181,12 @@ draw_enum(struct aiomixer_control *control, int ord, bool selected)
 			}
 		}
 		waddch(control->widgetpad, ']');
-		if (ord == e->member[i].ord && selected)
-			bold_off(control->widgetpad);
+		if (ord == e->member[i].ord && selected) {
+			if (termattrs() & A_BOLD)
+				wattroff(control->widgetpad, A_BOLD);
+			else
+				wattroff(control->widgetpad, A_STANDOUT);
+		}
 		if (i != (e->num_mem - 1))
 			waddstr(control->widgetpad, ", ");
 	}
@@ -243,13 +215,19 @@ draw_set(struct aiomixer_control *control, int mask)
 		}
 		waddstr(control->widgetpad, "] ");
 		if (control->setindex == i) {
-			bold_on(control->widgetpad);
-			waddch(control->widgetpad, '*');
+			if (termattrs() & A_BOLD)
+				wattron(control->widgetpad, A_BOLD);
+			else
+				wattron(control->widgetpad, A_STANDOUT);
 		}
 		wprintw(control->widgetpad, "%s",
 		    control->info.un.s.member[i].label.name);
-		if (control->setindex == i)
-			bold_off(control->widgetpad);
+		if (control->setindex == i) {
+			if (termattrs() & A_BOLD)
+				wattroff(control->widgetpad, A_BOLD);
+			else
+				wattroff(control->widgetpad, A_STANDOUT);
+		}
 		if (i != (control->info.un.s.num_mem - 1))
 			waddstr(control->widgetpad, ", ");
 	}
@@ -265,7 +243,10 @@ draw_levels(struct aiomixer_control *control,
 	for (i = 0; i < control->info.un.v.num_channels; ++i) {
 		if ((selected && !channels_unlocked) ||
 		    (control->setindex == i && channels_unlocked)) {
-			bold_on(control->widgetpad);
+			if (termattrs() & A_BOLD)
+				wattron(control->widgetpad, A_BOLD);
+			else
+				wattron(control->widgetpad, A_STANDOUT);
 		}
 		wprintw(control->widgetpad, "[%3u/%3u ",
 		    levels->level[i], AUDIO_MAX_GAIN);
@@ -287,7 +268,10 @@ draw_levels(struct aiomixer_control *control,
 		wprintw(control->widgetpad, "]\n");
 		if ((selected && !channels_unlocked) ||
 		    (control->setindex == i && channels_unlocked)) {
-			bold_off(control->widgetpad);
+			if (termattrs() & A_BOLD)
+				wattroff(control->widgetpad, A_BOLD);
+			else
+				wattroff(control->widgetpad, A_STANDOUT);
 		}
 	}
 }
@@ -301,23 +285,12 @@ draw_classbar(struct aiomixer *aio)
 
 	for (i = 0; i < aio->numclasses; ++i) {
 		if (aio->curclass == i)
-			bold_on(aio->classbar);
-		wprintw(aio->classbar, "[%u:", i + 1);
-		if (aio->curclass == i) {
-			if (has_colors()) {
-				wattron(aio->classbar,
-					COLOR_PAIR(COLOR_CONTROL_SELECTED));
-			}
-			waddch(aio->classbar, '*');
-			if (has_colors()) {
-				wattroff(aio->classbar,
-					COLOR_PAIR(COLOR_CONTROL_SELECTED));
-			}
-		}
-		waddstr(aio->classbar, aio->classes[i].name);
+			wattron(aio->classbar, A_STANDOUT);
+		wprintw(aio->classbar, "[%u:%s]",
+		    i + 1, aio->classes[i].name);
 		if (aio->curclass == i)
-			bold_off(aio->classbar);
-		waddstr(aio->classbar, "] ");
+			wattroff(aio->classbar, A_STANDOUT);
+		waddch(aio->classbar, ' ');
 	}
 
 	wprintw(aio->classbar, "\n\n");
@@ -326,15 +299,16 @@ draw_classbar(struct aiomixer *aio)
 void
 draw_header(struct aiomixer *aio)
 {
+	wprintw(aio->header, "\n");
 	mvwaddstr(aio->header, 0,
 	    getmaxx(aio->header) - (int)sizeof("NetBSD audio mixer") + 1,
 	    "NetBSD audio mixer");
 
 	if (aio->mixerdev.version[0] != '\0') {
-		wprintw(aio->header, "%s %s",
+		mvwprintw(aio->header, 0, 0, "%s %s",
 		    aio->mixerdev.name, aio->mixerdev.version);
 	} else {
-		wprintw(aio->header, "%s", aio->mixerdev.name);
+		mvwprintw(aio->header, 0, 0, "%s", aio->mixerdev.name);
 	}
 }
 
