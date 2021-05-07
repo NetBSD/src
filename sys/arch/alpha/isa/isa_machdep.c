@@ -1,4 +1,4 @@
-/* $NetBSD: isa_machdep.c,v 1.21 2012/02/06 02:14:13 matt Exp $ */
+/* $NetBSD: isa_machdep.c,v 1.22 2021/05/07 16:58:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.21 2012/02/06 02:14:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.22 2021/05/07 16:58:33 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -55,8 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.21 2012/02/06 02:14:13 matt Exp $"
 #if (NPCPPI > 0)
 #include <dev/isa/pcppivar.h>
 
-int isabeepmatch(device_t, cfdata_t, void *);
-void isabeepattach(device_t, device_t, void *);
+static int	isabeepmatch(device_t, cfdata_t, void *);
+static void	isabeepattach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(isabeep, 0,
     isabeepmatch, isabeepattach, NULL, NULL);
@@ -78,13 +78,13 @@ isa_display_console(bus_space_tag_t iot, bus_space_tag_t memt)
 }
 
 #if (NPCPPI > 0)
-int
+static int
 isabeepmatch(device_t parent, cfdata_t match, void *aux)
 {
 	return (!ppi_attached);
 }
 
-void
+static void
 isabeepattach(device_t parent, device_t self, void *aux)
 {
 	printf("\n");

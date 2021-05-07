@@ -1,4 +1,4 @@
-/* $NetBSD: isadma_bounce.c,v 1.14 2020/11/18 02:04:29 thorpej Exp $ */
+/* $NetBSD: isadma_bounce.c,v 1.15 2021/05/07 16:58:33 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: isadma_bounce.c,v 1.14 2020/11/18 02:04:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma_bounce.c,v 1.15 2021/05/07 16:58:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,9 +86,9 @@ struct isadma_bounce_cookie {
 #define	ID_BUFTYPE_UIO		3
 #define	ID_BUFTYPE_RAW		4
 
-int	isadma_bounce_alloc_bouncebuf(bus_dma_tag_t, bus_dmamap_t,
-	    bus_size_t, int);
-void	isadma_bounce_free_bouncebuf(bus_dma_tag_t, bus_dmamap_t);
+static int	isadma_bounce_alloc_bouncebuf(bus_dma_tag_t, bus_dmamap_t,
+		    bus_size_t, int);
+static void	isadma_bounce_free_bouncebuf(bus_dma_tag_t, bus_dmamap_t);
 
 /*
  * Returns true if the system memory configuration exceeds the
@@ -577,7 +577,7 @@ isadma_bounce_dmamem_alloc(bus_dma_tag_t t, bus_size_t size,
  * ISA DMA utility functions
  **********************************************************************/
 
-int
+static int
 isadma_bounce_alloc_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map,
     bus_size_t size, int flags)
 {
@@ -606,7 +606,7 @@ isadma_bounce_alloc_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map,
 	return (error);
 }
 
-void
+static void
 isadma_bounce_free_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map)
 {
 	struct isadma_bounce_cookie *cookie = map->_dm_cookie;

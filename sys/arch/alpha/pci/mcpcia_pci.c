@@ -1,4 +1,4 @@
-/* $NetBSD: mcpcia_pci.c,v 1.12 2015/10/02 05:22:49 msaitoh Exp $ */
+/* $NetBSD: mcpcia_pci.c,v 1.13 2021/05/07 16:58:34 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcpcia_pci.c,v 1.12 2015/10/02 05:22:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcpcia_pci.c,v 1.13 2021/05/07 16:58:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,18 +46,13 @@ __KERNEL_RCSID(0, "$NetBSD: mcpcia_pci.c,v 1.12 2015/10/02 05:22:49 msaitoh Exp 
 
 #define	KV(_addr)	((void *)ALPHA_PHYS_TO_K0SEG((_addr)))
 
-static void mcpcia_attach_hook(device_t, device_t,
-	struct pcibus_attach_args *);
-static int
-mcpcia_bus_maxdevs(void *, int);
-static pcitag_t
-mcpcia_make_tag(void *, int, int, int);
-static void
-mcpcia_decompose_tag(void *, pcitag_t, int *, int *, int *);
-static pcireg_t
-mcpcia_conf_read(void *, pcitag_t, int);
-static void
-mcpcia_conf_write(void *, pcitag_t, int, pcireg_t);
+static void	mcpcia_attach_hook(device_t, device_t,
+		    struct pcibus_attach_args *);
+static int	mcpcia_bus_maxdevs(void *, int);
+static pcitag_t	mcpcia_make_tag(void *, int, int, int);
+static void	mcpcia_decompose_tag(void *, pcitag_t, int *, int *, int *);
+static pcireg_t	mcpcia_conf_read(void *, pcitag_t, int);
+static void	mcpcia_conf_write(void *, pcitag_t, int, pcireg_t);
 
 void
 mcpcia_pci_init(pci_chipset_tag_t pc, void *v)

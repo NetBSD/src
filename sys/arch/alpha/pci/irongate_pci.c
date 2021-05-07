@@ -1,4 +1,4 @@
-/* $NetBSD: irongate_pci.c,v 1.10 2015/10/02 05:22:49 msaitoh Exp $ */
+/* $NetBSD: irongate_pci.c,v 1.11 2021/05/07 16:58:34 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: irongate_pci.c,v 1.10 2015/10/02 05:22:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irongate_pci.c,v 1.11 2021/05/07 16:58:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,14 +48,14 @@ __KERNEL_RCSID(0, "$NetBSD: irongate_pci.c,v 1.10 2015/10/02 05:22:49 msaitoh Ex
 #include <alpha/pci/irongatereg.h>
 #include <alpha/pci/irongatevar.h>
 
-void		irongate_attach_hook(device_t, device_t,
+static void	irongate_attach_hook(device_t, device_t,
 		    struct pcibus_attach_args *);
-int		irongate_bus_maxdevs(void *, int);
-pcitag_t	irongate_make_tag(void *, int, int, int);
-void		irongate_decompose_tag(void *, pcitag_t, int *, int *,
+static int	irongate_bus_maxdevs(void *, int);
+static pcitag_t	irongate_make_tag(void *, int, int, int);
+static void	irongate_decompose_tag(void *, pcitag_t, int *, int *,
 		    int *);
-pcireg_t	irongate_conf_read(void *, pcitag_t, int);
-void		irongate_conf_write(void *, pcitag_t, int, pcireg_t);
+static pcireg_t	irongate_conf_read(void *, pcitag_t, int);
+static void	irongate_conf_write(void *, pcitag_t, int, pcireg_t);
 
 /* AMD 751 systems are always single-processor, so this is easy. */
 #define	PCI_CONF_LOCK(s)	(s) = splhigh()
@@ -79,27 +79,27 @@ irongate_pci_init(pci_chipset_tag_t pc, void *v)
 	pc->pc_conf_write = irongate_conf_write;
 }
 
-void
+static void
 irongate_attach_hook(device_t parent, device_t self,
     struct pcibus_attach_args *pba)
 {
 }
 
-int
+static int
 irongate_bus_maxdevs(void *ipv, int busno)
 {
 
 	return 32;
 }
 
-pcitag_t
+static pcitag_t
 irongate_make_tag(void *ipv, int b, int d, int f)
 {
 
 	return (b << 16) | (d << 11) | (f << 8);
 }
 
-void
+static void
 irongate_decompose_tag(void *ipv, pcitag_t tag, int *bp, int *dp, int *fp)
 {
 
@@ -111,7 +111,7 @@ irongate_decompose_tag(void *ipv, pcitag_t tag, int *bp, int *dp, int *fp)
 		*fp = (tag >> 8) & 0x7;
 }
 
-pcireg_t
+static pcireg_t
 irongate_conf_read(void *ipv, pcitag_t tag, int offset)
 {
 	int d;
@@ -153,7 +153,7 @@ irongate_conf_read0(void *ipv, pcitag_t tag, int offset)
 	return (data);
 }
 
-void
+static void
 irongate_conf_write(void *ipv, pcitag_t tag, int offset, pcireg_t data)
 {
 	int s;

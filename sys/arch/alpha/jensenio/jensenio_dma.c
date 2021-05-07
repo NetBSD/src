@@ -1,4 +1,4 @@
-/* $NetBSD: jensenio_dma.c,v 1.7 2020/10/14 00:59:50 thorpej Exp $ */
+/* $NetBSD: jensenio_dma.c,v 1.8 2021/05/07 16:58:34 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2020 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: jensenio_dma.c,v 1.7 2020/10/14 00:59:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jensenio_dma.c,v 1.8 2021/05/07 16:58:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: jensenio_dma.c,v 1.7 2020/10/14 00:59:50 thorpej Exp
 
 #include <machine/alpha.h>
 
-bus_dma_tag_t jensenio_dma_get_tag(bus_dma_tag_t, alpha_bus_t);
+static bus_dma_tag_t jensenio_dma_get_tag(bus_dma_tag_t, alpha_bus_t);
 
 void
 jensenio_page_physload(unsigned long const start_pfn,
@@ -144,7 +144,7 @@ jensenio_dma_init(struct jensenio_config *jcp)
  * Return the bus dma tag to be used for the specified bus type.
  * INTERNAL USE ONLY!
  */
-bus_dma_tag_t
+static bus_dma_tag_t
 jensenio_dma_get_tag(bus_dma_tag_t t, alpha_bus_t bustype)
 {
 	struct jensenio_config *jcp = t->_cookie;

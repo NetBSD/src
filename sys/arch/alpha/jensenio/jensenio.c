@@ -1,4 +1,4 @@
-/* $NetBSD: jensenio.c,v 1.20 2021/04/24 23:36:23 thorpej Exp $ */
+/* $NetBSD: jensenio.c,v 1.21 2021/05/07 16:58:34 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: jensenio.c,v 1.20 2021/04/24 23:36:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jensenio.c,v 1.21 2021/05/07 16:58:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,11 +91,11 @@ static int	jensenio_attached;
 struct jensenio_config jensenio_configuration;
 
 static void	jensenio_eisa_attach_hook(device_t, device_t,
-	    struct eisabus_attach_args *);
+		    struct eisabus_attach_args *);
 static int	jensenio_eisa_maxslots(void *);
 
 static void	jensenio_isa_attach_hook(device_t, device_t,
-	    struct isabus_attach_args *);
+		    struct isabus_attach_args *);
 
 static void	jensenio_isa_detach_hook(isa_chipset_tag_t, device_t);
 

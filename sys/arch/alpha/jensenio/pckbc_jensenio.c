@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_jensenio.c,v 1.15 2020/11/18 02:04:29 thorpej Exp $ */
+/* $NetBSD: pckbc_jensenio.c,v 1.16 2021/05/07 16:58:34 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pckbc_jensenio.c,v 1.15 2020/11/18 02:04:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_jensenio.c,v 1.16 2021/05/07 16:58:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,15 +61,16 @@ struct pckbc_jensenio_softc {
 	struct jensenio_scb_intrhand sc_jih[PCKBC_NSLOTS];
 };
 
-int	pckbc_jensenio_match(device_t, cfdata_t, void *);
-void	pckbc_jensenio_attach(device_t, device_t, void *);
+static int	pckbc_jensenio_match(device_t, cfdata_t, void *);
+static void	pckbc_jensenio_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(pckbc_jensenio, sizeof(struct pckbc_jensenio_softc),
     pckbc_jensenio_match, pckbc_jensenio_attach, NULL, NULL);
 
-void	pckbc_jensenio_intr_establish(struct pckbc_softc *, pckbc_slot_t);
+static void	pckbc_jensenio_intr_establish(struct pckbc_softc *,
+		    pckbc_slot_t);
 
-int
+static int
 pckbc_jensenio_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct jensenio_attach_args *ja = aux;
@@ -81,7 +82,7 @@ pckbc_jensenio_match(device_t parent, cfdata_t match, void *aux)
 	return (0);
 }
 
-void
+static void
 pckbc_jensenio_attach(device_t parent, device_t self, void *aux)
 {
 	struct pckbc_jensenio_softc *jsc = device_private(self);
@@ -128,7 +129,7 @@ pckbc_jensenio_attach(device_t parent, device_t self, void *aux)
 	pckbc_attach(sc);
 }
 
-void
+static void
 pckbc_jensenio_intr_establish(struct pckbc_softc *sc, pckbc_slot_t slot)
 {
 	struct pckbc_jensenio_softc *jsc = (void *) sc;

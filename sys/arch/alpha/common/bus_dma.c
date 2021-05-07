@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.71 2020/11/18 02:04:29 thorpej Exp $ */
+/* $NetBSD: bus_dma.c,v 1.72 2021/05/07 16:58:33 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.71 2020/11/18 02:04:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.72 2021/05/07 16:58:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,9 +50,9 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.71 2020/11/18 02:04:29 thorpej Exp $")
 
 #include <dev/bus_dma/bus_dmamem_common.h>
 
-int	_bus_dmamap_load_buffer_direct(bus_dma_tag_t,
-	    bus_dmamap_t, void *, bus_size_t, struct vmspace *, int,
-	    paddr_t *, int *, int);
+static int	_bus_dmamap_load_buffer_direct(bus_dma_tag_t,
+		    bus_dmamap_t, void *, bus_size_t, struct vmspace *, int,
+		    paddr_t *, int *, int);
 
 extern paddr_t avail_start, avail_end;	/* from pmap.c */
 
@@ -129,7 +129,7 @@ _bus_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
  * the starting segment on entrance, and the ending segment on exit.
  * first indicates if this is the first invocation of this function.
  */
-int
+static int
 _bus_dmamap_load_buffer_direct(bus_dma_tag_t t, bus_dmamap_t map,
     void *buf, size_t buflen, struct vmspace *vm, int flags, paddr_t *lastaddrp,
     int *segp, int first)

@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx_pci.c,v 1.19 2015/10/02 05:22:49 msaitoh Exp $ */
+/* $NetBSD: dwlpx_pci.c,v 1.20 2021/05/07 16:58:34 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx_pci.c,v 1.19 2015/10/02 05:22:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx_pci.c,v 1.20 2021/05/07 16:58:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,14 +47,14 @@ __KERNEL_RCSID(0, "$NetBSD: dwlpx_pci.c,v 1.19 2015/10/02 05:22:49 msaitoh Exp $
 
 #define	KV(_addr)	((void *)ALPHA_PHYS_TO_K0SEG((_addr)))
 
-void		dwlpx_attach_hook(device_t, device_t,
+static void	dwlpx_attach_hook(device_t, device_t,
 		    struct pcibus_attach_args *);
-int		dwlpx_bus_maxdevs(void *, int);
-pcitag_t	dwlpx_make_tag(void *, int, int, int);
-void		dwlpx_decompose_tag(void *, pcitag_t, int *, int *,
+static int	dwlpx_bus_maxdevs(void *, int);
+static pcitag_t	dwlpx_make_tag(void *, int, int, int);
+static void	dwlpx_decompose_tag(void *, pcitag_t, int *, int *,
 		    int *);
-pcireg_t	dwlpx_conf_read(void *, pcitag_t, int);
-void		dwlpx_conf_write(void *, pcitag_t, int, pcireg_t);
+static pcireg_t	dwlpx_conf_read(void *, pcitag_t, int);
+static void	dwlpx_conf_write(void *, pcitag_t, int, pcireg_t);
 
 void
 dwlpx_pci_init(pci_chipset_tag_t pc, void *v)
@@ -68,22 +68,18 @@ dwlpx_pci_init(pci_chipset_tag_t pc, void *v)
 	pc->pc_conf_write = dwlpx_conf_write;
 }
 
-void
+static void
 dwlpx_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
 {
-#if	0
-	struct dwlpx_config *ccp = pba->pba_pc->pc_conf_v;
-	printf("dwlpx_attach_hook for %s\n", device_xname(ccp->cc_sc->dwlpx_dev));
-#endif
 }
 
-int
+static int
 dwlpx_bus_maxdevs(void *cpv, int busno)
 {
 	return DWLPX_MAXDEV;
 }
 
-pcitag_t
+static pcitag_t
 dwlpx_make_tag(void *cpv, int b, int d, int f)
 {
 	pcitag_t tag;
@@ -95,7 +91,7 @@ dwlpx_make_tag(void *cpv, int b, int d, int f)
 	return (tag);
 }
 
-void
+static void
 dwlpx_decompose_tag(void *cpv, pcitag_t tag, int *bp, int *dp, int *fp)
 {
 
@@ -115,7 +111,7 @@ dwlpx_decompose_tag(void *cpv, pcitag_t tag, int *bp, int *dp, int *fp)
 		*fp = (tag >> 13) & 0x7;
 }
 
-pcireg_t
+static pcireg_t
 dwlpx_conf_read(void *cpv, pcitag_t tag, int offset)
 {
 	struct dwlpx_config *ccp = cpv;
@@ -184,7 +180,7 @@ dwlpx_conf_read(void *cpv, pcitag_t tag, int offset)
 	return (data);
 }
 
-void
+static void
 dwlpx_conf_write(void *cpv, pcitag_t tag, int offset, pcireg_t data)
 {
 	struct dwlpx_config *ccp = cpv;

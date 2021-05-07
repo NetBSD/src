@@ -1,4 +1,4 @@
-/* $NetBSD: shared_intr.c,v 1.26 2020/09/26 02:35:31 thorpej Exp $ */
+/* $NetBSD: shared_intr.c,v 1.27 2021/05/07 16:58:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.26 2020/09/26 02:35:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.27 2021/05/07 16:58:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -75,8 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.26 2020/09/26 02:35:31 thorpej Exp
 #include <sys/atomic.h>
 #include <sys/intr.h>
 #include <sys/xcall.h>
-
-static const char *intr_typename(int);
 
 static const char *
 intr_typename(int type)

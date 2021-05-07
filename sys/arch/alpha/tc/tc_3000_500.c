@@ -1,4 +1,4 @@
-/* $NetBSD: tc_3000_500.c,v 1.37 2020/11/18 02:04:30 thorpej Exp $ */
+/* $NetBSD: tc_3000_500.c,v 1.38 2021/05/07 16:58:34 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_3000_500.c,v 1.37 2020/11/18 02:04:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_3000_500.c,v 1.38 2021/05/07 16:58:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,19 +52,12 @@ __KERNEL_RCSID(0, "$NetBSD: tc_3000_500.c,v 1.37 2020/11/18 02:04:30 thorpej Exp
 extern int	sfb_cnattach(tc_addr_t);
 #endif
 
-void	tc_3000_500_intr_setup(void);
-void	tc_3000_500_intr_establish(device_t, void *,
-	    tc_intrlevel_t, int (*)(void *), void *);
-void	tc_3000_500_intr_disestablish(device_t, void *);
-void	tc_3000_500_iointr(void *, unsigned long);
-
-int	tc_3000_500_intrnull(void *);
-int	tc_3000_500_fb_cnattach(uint64_t);
+static int	tc_3000_500_intrnull(void *);
 
 #define C(x)	((void *)(u_long)x)
 #define	KV(x)	(ALPHA_PHYS_TO_K0SEG(x))
 
-struct tc_slotdesc tc_3000_500_slots[] = {
+const struct tc_slotdesc tc_3000_500_slots[] = {
 	{ KV(0x100000000), C(TC_3000_500_DEV_OPT0), },	/* 0 - opt slot 0 */
 	{ KV(0x120000000), C(TC_3000_500_DEV_OPT1), },	/* 1 - opt slot 1 */
 	{ KV(0x140000000), C(TC_3000_500_DEV_OPT2), },	/* 2 - opt slot 2 */
@@ -74,25 +67,24 @@ struct tc_slotdesc tc_3000_500_slots[] = {
 	{ KV(0x1c0000000), C(TC_3000_500_DEV_BOGUS), },	/* 6 - TCDS ASIC */
 	{ KV(0x1e0000000), C(TC_3000_500_DEV_BOGUS), },	/* 7 - IOCTL ASIC */
 };
-int tc_3000_500_nslots =
-    sizeof(tc_3000_500_slots) / sizeof(tc_3000_500_slots[0]);
+const int tc_3000_500_nslots = __arraycount(tc_3000_500_slots);
 
-struct tc_builtin tc_3000_500_graphics_builtins[] = {
+const struct tc_builtin tc_3000_500_graphics_builtins[] = {
 	{ "FLAMG-IO",	7, 0x00000000, C(TC_3000_500_DEV_IOASIC),	},
 	{ "PMAGB-BA",	7, 0x02000000, C(TC_3000_500_DEV_CXTURBO),	},
 	{ "PMAZ-DS ",	6, 0x00000000, C(TC_3000_500_DEV_TCDS),		},
 };
-int tc_3000_500_graphics_nbuiltins = sizeof(tc_3000_500_graphics_builtins) /
-    sizeof(tc_3000_500_graphics_builtins[0]);
+const int tc_3000_500_graphics_nbuiltins =
+    __arraycount(tc_3000_500_graphics_builtins);
 
-struct tc_builtin tc_3000_500_nographics_builtins[] = {
+const struct tc_builtin tc_3000_500_nographics_builtins[] = {
 	{ "FLAMG-IO",	7, 0x00000000, C(TC_3000_500_DEV_IOASIC),	},
 	{ "PMAZ-DS ",	6, 0x00000000, C(TC_3000_500_DEV_TCDS),		},
 };
-int tc_3000_500_nographics_nbuiltins = sizeof(tc_3000_500_nographics_builtins) /
-    sizeof(tc_3000_500_nographics_builtins[0]);
+const int tc_3000_500_nographics_nbuiltins =
+    __arraycount(tc_3000_500_nographics_builtins);
 
-uint32_t tc_3000_500_intrbits[TC_3000_500_NCOOKIES] = {
+static const uint32_t tc_3000_500_intrbits[TC_3000_500_NCOOKIES] = {
 	TC_3000_500_IR_OPT0,
 	TC_3000_500_IR_OPT1,
 	TC_3000_500_IR_OPT2,
@@ -104,13 +96,13 @@ uint32_t tc_3000_500_intrbits[TC_3000_500_NCOOKIES] = {
 	TC_3000_500_IR_CXTURBO,
 };
 
-struct tcintr {
+static struct tcintr {
 	int	(*tci_func)(void *);
 	void	*tci_arg;
 	struct evcnt tci_evcnt;
 } tc_3000_500_intr[TC_3000_500_NCOOKIES];
 
-uint32_t tc_3000_500_imask;	/* intrs we want to ignore; mirrors IMR. */
+static uint32_t tc_3000_500_imask; /* intrs we want to ignore; mirrors IMR. */
 
 void
 tc_3000_500_intr_setup(void)
@@ -209,7 +201,7 @@ tc_3000_500_intr_disestablish(device_t tcadev, void *cookie)
 	splx(s);
 }
 
-int
+static int
 tc_3000_500_intrnull(void *val)
 {
 
