@@ -139,7 +139,7 @@ mode_tree_free_item(struct mode_tree_item *mti)
 	mode_tree_free_items(&mti->children);
 
 	free(__UNCONST(mti->name));
-	free(__UNCONST(mti->name));
+	free(__UNCONST(mti->text));
 	free(__UNCONST(mti->keystr));
 
 	free(mti);
