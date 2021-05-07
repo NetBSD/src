@@ -1,4 +1,4 @@
-/* $NetBSD: com_jensenio.c,v 1.18 2020/09/25 03:40:11 thorpej Exp $ */
+/* $NetBSD: com_jensenio.c,v 1.19 2021/05/07 16:58:34 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: com_jensenio.c,v 1.18 2020/09/25 03:40:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_jensenio.c,v 1.19 2021/05/07 16:58:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,13 +67,13 @@ struct com_jensenio_softc {
 	struct jensenio_scb_intrhand sc_jih;
 };
 
-int	com_jensenio_match(device_t, cfdata_t , void *);
-void	com_jensenio_attach(device_t, device_t, void *);
+static int	com_jensenio_match(device_t, cfdata_t , void *);
+static void	com_jensenio_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(com_jensenio, sizeof(struct com_jensenio_softc),
     com_jensenio_match, com_jensenio_attach, NULL, NULL);
 
-int
+static int
 com_jensenio_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct jensenio_attach_args *ja = aux;
@@ -85,7 +85,7 @@ com_jensenio_match(device_t parent, cfdata_t match, void *aux)
 	return (0);
 }
 
-void
+static void
 com_jensenio_attach(device_t parent, device_t self, void *aux)
 {
 	struct com_jensenio_softc *jsc = device_private(self);

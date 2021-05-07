@@ -1,4 +1,4 @@
-/* $NetBSD: tsp_pci.c,v 1.10 2015/10/02 05:22:49 msaitoh Exp $ */
+/* $NetBSD: tsp_pci.c,v 1.11 2021/05/07 16:58:34 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -28,12 +28,11 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
  */
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tsp_pci.c,v 1.10 2015/10/02 05:22:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsp_pci.c,v 1.11 2021/05/07 16:58:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,14 +50,14 @@ __KERNEL_RCSID(0, "$NetBSD: tsp_pci.c,v 1.10 2015/10/02 05:22:49 msaitoh Exp $")
 
 #define tsp_pci() { Generate ctags(1) key. }
 
-void		tsp_attach_hook(device_t, device_t,
+static void	tsp_attach_hook(device_t, device_t,
 		    struct pcibus_attach_args *);
-int		tsp_bus_maxdevs(void *, int);
-pcitag_t	tsp_make_tag(void *, int, int, int);
-void		tsp_decompose_tag(void *, pcitag_t, int *, int *,
+static int	tsp_bus_maxdevs(void *, int);
+static pcitag_t	tsp_make_tag(void *, int, int, int);
+static void	tsp_decompose_tag(void *, pcitag_t, int *, int *,
 		    int *);
-pcireg_t	tsp_conf_read(void *, pcitag_t, int);
-void		tsp_conf_write(void *, pcitag_t, int, pcireg_t);
+static pcireg_t	tsp_conf_read(void *, pcitag_t, int);
+static void	tsp_conf_write(void *, pcitag_t, int, pcireg_t);
 
 void
 tsp_pci_init(pci_chipset_tag_t pc, void *v)
@@ -72,24 +71,24 @@ tsp_pci_init(pci_chipset_tag_t pc, void *v)
 	pc->pc_conf_write = tsp_conf_write;
 }
 
-void
+static void
 tsp_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
 {
 }
 
-int
+static int
 tsp_bus_maxdevs(void *cpv, int busno)
 {
 	return 32;
 }
 
-pcitag_t
+static pcitag_t
 tsp_make_tag(void *cpv, int b, int d, int f)
 {
 	return b << 16 | d << 11 | f << 8;
 }
 
-void
+static void
 tsp_decompose_tag(void *cpv, pcitag_t tag, int *bp, int *dp, int *fp)
 {
 	if (bp != NULL)
@@ -99,12 +98,13 @@ tsp_decompose_tag(void *cpv, pcitag_t tag, int *bp, int *dp, int *fp)
 	if (fp != NULL)
 		*fp = (tag >> 8) & 0x7;
 }
+
 /*
  * Tsunami makes this a lot easier than it used to be, automatically
  * generating type 0 or type 1 cycles, and quietly returning -1 with
  * no errors on unanswered probes.
  */
-pcireg_t
+static pcireg_t
 tsp_conf_read(void *cpv, pcitag_t tag, int offset)
 {
 	pcireg_t *datap, data;
@@ -120,7 +120,7 @@ tsp_conf_read(void *cpv, pcitag_t tag, int offset)
 	return data;
 }
 
-void
+static void
 tsp_conf_write(void *cpv, pcitag_t tag, int offset, pcireg_t data)
 {
 	pcireg_t *datap;

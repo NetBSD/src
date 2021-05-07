@@ -1,4 +1,4 @@
-/* $NetBSD: sableio.c,v 1.14 2021/04/24 23:36:24 thorpej Exp $ */
+/* $NetBSD: sableio.c,v 1.15 2021/05/07 16:58:34 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sableio.c,v 1.14 2021/04/24 23:36:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sableio.c,v 1.15 2021/05/07 16:58:34 thorpej Exp $");
 
 #include "isadma.h"
 
@@ -69,7 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: sableio.c,v 1.14 2021/04/24 23:36:24 thorpej Exp $")
 /*
  * The devices built-in to the Sable STDIO module.
  */
-const struct sableio_dev {
+static const struct sableio_dev {
 	const char *sd_name;		/* device name */
 	bus_addr_t sd_ioaddr;		/* I/O space address */
 	int sd_sableirq[2];		/* Sable IRQs */
@@ -97,17 +97,17 @@ struct sableio_softc {
 	struct alpha_isa_chipset sc_isa_chipset;
 };
 
-int	sableio_match(device_t, cfdata_t, void *);
-void	sableio_attach(device_t, device_t, void *);
+static int	sableio_match(device_t, cfdata_t, void *);
+static void	sableio_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(sableio, sizeof(struct sableio_softc),
     sableio_match, sableio_attach, NULL, NULL);
 
-int	sableio_print(void *, const char *);
+static int	sableio_print(void *, const char *);
 
-struct sableio_softc *sableio_attached;
+static struct sableio_softc *sableio_attached;
 
-int
+static int
 sableio_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pcibus_attach_args *pba = aux;
@@ -131,7 +131,7 @@ sableio_match(device_t parent, cfdata_t cf, void *aux)
 	return (1);
 }
 
-void
+static void
 sableio_attach(device_t parent, device_t self, void *aux)
 {
 	struct sableio_softc *sc = device_private(self);
@@ -176,7 +176,7 @@ sableio_attach(device_t parent, device_t self, void *aux)
 	}
 }
 
-int
+static int
 sableio_print(void *aux, const char *pnp)
 {
 	struct sableio_attach_args *sa = aux;
