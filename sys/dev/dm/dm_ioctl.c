@@ -1,4 +1,4 @@
-/* $NetBSD: dm_ioctl.c,v 1.50 2020/07/08 15:07:13 thorpej Exp $      */
+/* $NetBSD: dm_ioctl.c,v 1.51 2021/05/07 09:53:39 hannken Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.50 2020/07/08 15:07:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.51 2021/05/07 09:53:39 hannken Exp $");
 
 /*
  * Locking is used to synchronise between ioctl calls and between dm_table's
@@ -92,17 +92,11 @@ __KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.50 2020/07/08 15:07:13 thorpej Exp $"
 
 #include "netbsd-dm.h"
 #include "dm.h"
+#include "ioconf.h"
 
+extern struct cfattach dm_ca;
 static uint32_t sc_minor_num;
 uint32_t dm_dev_counter;
-
-/* Generic cf_data for device-mapper driver */
-static struct cfdata dm_cfdata = {
-	.cf_name = "dm",
-	.cf_atname = "dm",
-	.cf_fstate = FSTATE_STAR,
-	.cf_unit = 0
-};
 
 #define DM_REMOVE_FLAG(flag, name) do {					\
 	prop_dictionary_get_uint32(dm_dict,DM_IOCTL_FLAGS,&flag);	\
@@ -196,6 +190,7 @@ dm_dev_create_ioctl(prop_dictionary_t dm_dict)
 	int r;
 	uint32_t flags;
 	device_t devt;
+	cfdata_t cf;
 
 	flags = 0;
 	name = NULL;
@@ -214,7 +209,13 @@ dm_dev_create_ioctl(prop_dictionary_t dm_dict)
 		dm_dev_unbusy(dmv);
 		return EEXIST;
 	}
-	if ((devt = config_attach_pseudo(&dm_cfdata)) == NULL) {
+	cf = kmem_alloc(sizeof(*cf), KM_SLEEP);
+	cf->cf_name = dm_cd.cd_name;
+	cf->cf_atname = dm_ca.ca_name;
+	cf->cf_unit = atomic_inc_32_nv(&sc_minor_num);
+	cf->cf_fstate = FSTATE_NOTFOUND;
+	if ((devt = config_attach_pseudo(cf)) == NULL) {
+		kmem_free(cf, sizeof(*cf));
 		aprint_error("Unable to attach pseudo device dm/%s\n", name);
 		return (ENOMEM);
 	}
@@ -229,7 +230,7 @@ dm_dev_create_ioctl(prop_dictionary_t dm_dict)
 	if (name)
 		strlcpy(dmv->name, name, DM_NAME_LEN);
 
-	dmv->minor = (uint64_t)atomic_inc_32_nv(&sc_minor_num);
+	dmv->minor = cf->cf_unit;
 	dmv->flags = 0;		/* device flags are set when needed */
 	dmv->ref_cnt = 0;
 	dmv->event_nr = 0;
@@ -365,6 +366,8 @@ dm_dev_rename_ioctl(prop_dictionary_t dm_dict)
 int
 dm_dev_remove_ioctl(prop_dictionary_t dm_dict)
 {
+	int error;
+	cfdata_t cf;
 	dm_dev_t *dmv;
 	const char *name, *uuid;
 	uint32_t flags, minor;
@@ -398,7 +401,11 @@ dm_dev_remove_ioctl(prop_dictionary_t dm_dict)
 	 * This will call dm_detach routine which will actually removes
 	 * device.
 	 */
-	return config_detach(devt, DETACH_QUIET);
+	cf = device_cfdata(devt);
+	error = config_detach(devt, DETACH_QUIET);
+	if (error == 0)
+		kmem_free(cf, sizeof(*cf));
+	return error;
 }
 
 /*
