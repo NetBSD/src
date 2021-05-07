@@ -1,4 +1,4 @@
-/* $NetBSD: gbus.c,v 1.23 2021/04/24 23:36:24 thorpej Exp $ */
+/* $NetBSD: gbus.c,v 1.24 2021/05/07 22:46:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: gbus.c,v 1.23 2021/04/24 23:36:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gbus.c,v 1.24 2021/05/07 22:46:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ CFATTACH_DECL_NEW(gbus, sizeof(struct gbus_softc),
 
 static int	gbusprint(void *, const char *);
 
-const struct gbus_attach_args gbus_children[] = {
+static const struct gbus_attach_args gbus_children[] = {
 	{ "zsc",	GBUS_DUART0_OFFSET },
 	{ "zsc",	GBUS_DUART1_OFFSET },
 	{ "mcclock",	GBUS_CLOCK_OFFSET },
