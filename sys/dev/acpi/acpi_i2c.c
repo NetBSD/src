@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_i2c.c,v 1.11.4.1 2021/04/25 21:49:56 thorpej Exp $ */
+/* $NetBSD: acpi_i2c.c,v 1.11.4.2 2021/05/08 15:51:30 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017, 2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_i2c.c,v 1.11.4.1 2021/04/25 21:49:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_i2c.c,v 1.11.4.2 2021/05/08 15:51:30 thorpej Exp $");
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
@@ -105,8 +105,6 @@ acpi_i2c_enumerate_device(device_t dev, struct acpi_devnode *ad,
 	args->ia->ia_clist_size = clist_size;
 	args->ia->ia_prop = props;
 	args->ia->ia_devhandle = devhandle_from_acpi(ad->ad_handle);
-	args->ia->ia_cookie = (uint64_t)ad->ad_handle;	/* XXX */
-	args->ia->ia_cookietype = I2C_COOKIE_ACPI;	/* XXX */
 
 	cbrv = args->callback(dev, args);
 

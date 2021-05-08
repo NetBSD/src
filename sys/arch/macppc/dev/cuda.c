@@ -1,4 +1,4 @@
-/*	$NetBSD: cuda.c,v 1.28.2.1 2021/05/08 11:40:02 thorpej Exp $ */
+/*	$NetBSD: cuda.c,v 1.28.2.2 2021/05/08 15:51:30 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.28.2.1 2021/05/08 11:40:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.28.2.2 2021/05/08 15:51:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,8 +195,6 @@ cuda_i2c_enumerate_devices(device_t dev, devhandle_t call_handle, void *v)
 		args->ia->ia_prop = props;
 		/* Child gets no handle. */
 		devhandle_invalidate(&args->ia->ia_devhandle);
-		args->ia->ia_cookie = 0;			/* XXX */
-		args->ia->ia_cookietype = I2C_COOKIE_NONE;	/* XXX */
 
 		cbrv = args->callback(dev, args);
 
