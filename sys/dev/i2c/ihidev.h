@@ -1,4 +1,4 @@
-/* $NetBSD: ihidev.h,v 1.4 2020/01/09 04:04:01 thorpej Exp $ */
+/* $NetBSD: ihidev.h,v 1.4.10.1 2021/05/08 15:44:12 thorpej Exp $ */
 /* $OpenBSD ihidev.h,v 1.4 2016/01/31 18:24:35 jcs Exp $ */
 
 /*-
@@ -97,7 +97,6 @@ struct ihidev_softc {
 	device_t	sc_dev;
 	i2c_tag_t	sc_tag;
 	i2c_addr_t	sc_addr;
-	uint64_t	sc_phandle;
 
 	void *		sc_ih;
 	void *		sc_sih;
