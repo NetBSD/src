@@ -1,4 +1,4 @@
-/* $NetBSD: parse.c,v 1.1 2021/05/07 16:29:24 nia Exp $ */
+/* $NetBSD: parse.c,v 1.2 2021/05/08 12:53:15 nia Exp $ */
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -56,14 +56,16 @@ compare_control(const void *pa, const void *pb)
 	const struct aiomixer_control *a = (const struct aiomixer_control *)pa;
 	const struct aiomixer_control *b = (const struct aiomixer_control *)pb;
 
-	if (a->info.prev != AUDIO_MIXER_LAST &&
+	if (a->info.prev != AUDIO_MIXER_LAST ||
 	    b->info.prev != AUDIO_MIXER_LAST) {
 		if (b->info.prev == a->info.index)
 			return -1;
 		if (a->info.prev == b->info.index)
 			return 1;
+	} else {
+		return strcmp(a->info.label.name, b->info.label.name);
 	}
-	return strcmp(a->info.label.name, b->info.label.name);
+	return 0;
 }
 
 int
