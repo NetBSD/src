@@ -1,4 +1,4 @@
-/* $NetBSD: ttwogavar.h,v 1.6 2020/09/22 15:24:02 thorpej Exp $ */
+/* $NetBSD: ttwogavar.h,v 1.7 2021/05/08 00:08:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -96,7 +96,6 @@ struct ttwoga_config {
 };
 
 extern cpuid_t ttwoga_conf_cpu;
-extern struct ttwoga_config ttwoga_configuration[];
 
 struct ttwoga_config *ttwoga_init(int, int);
 void	ttwoga_pci_init(pci_chipset_tag_t, void *);
