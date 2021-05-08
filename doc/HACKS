@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.216 2020/12/16 01:35:39 rin Exp $
+# $NetBSD: HACKS,v 1.217 2021/05/08 12:27:21 christos Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -999,4 +999,15 @@ descr	GCC 9.4 and 8.3 miscompile aes_ccm_tag() for m68k with optimization
 	For 9.4, -O0 and -O1 work but -O2 fails for amiga (A1200, 68060) and
 	mac68k (Quadra 840AV, 68040). Whereas -O0 and -O2 work but -O1 fails
 	for sun3 (TME, 68020 emulator) and sun2 (TME, 68010 emulator).
+kcah
+
+port	alpha
+hack	compile __realpath in gdb/gnulib/canonicalize-lgpl.c with -O0 (PR/56153)
+cdate	Sat May  8 08:24:49 EDT 2021
+mdate	Sat May  8 08:24:49 EDT 2021
+who	christos
+file	src/external/gpl3/gdb/dist/gnulib/import/canonicalize-lgpl.c: 1.2
+descr	For alpha gcc-9 and gcc-10 miscompile the malloca macro leading to
+        allocation from the stack and freeing with regular free which causes
+	a crash.
 kcah
