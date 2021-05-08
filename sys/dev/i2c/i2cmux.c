@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cmux.c,v 1.5.2.1 2021/05/08 02:44:22 thorpej Exp $	*/
+/*	$NetBSD: i2cmux.c,v 1.5.2.2 2021/05/08 14:23:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2cmux.c,v 1.5.2.1 2021/05/08 02:44:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2cmux.c,v 1.5.2.2 2021/05/08 14:23:15 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -39,6 +39,8 @@ __KERNEL_RCSID(0, "$NetBSD: i2cmux.c,v 1.5.2.1 2021/05/08 02:44:22 thorpej Exp $
 
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/i2cmuxvar.h>
+
+#include "locators.h"
 
 /*
  * i2c mux
@@ -110,20 +112,6 @@ iicmux_exec(void * const v, i2c_op_t const op, i2c_addr_t const addr,
 
 /*****************************************************************************/
 
-/* XXX iicbus_print() should be able to do this. */
-static int
-iicmux_print(void * const aux, const char * const pnp)
-{
-	i2c_tag_t const tag = aux;
-	struct iicmux_bus * const bus = tag->ic_cookie;
-	int rv;
-
-	rv = iicbus_print(aux, pnp);
-	aprint_normal(" bus %d", bus->busidx);
-
-	return rv;
-}
-
 static void
 iicmux_attach_bus(struct iicmux_softc * const sc, devhandle_t devhandle,
     int const busidx)
@@ -147,31 +135,26 @@ iicmux_attach_bus(struct iicmux_softc * const sc, devhandle_t devhandle,
 	bus->controller.ic_release_bus = iicmux_release_bus;
 	bus->controller.ic_exec = iicmux_exec;
 
-	switch (devhandle_type(devhandle)) {
 #if defined(I2CMUX_USE_FDT)
-	case DEVHANDLE_TYPE_OF:
+	if (devhandle_type(devhandle) == DEVHANDLE_TYPE_OF) {
 		fdtbus_register_i2c_controller(&bus->controller,
 		    devhandle_to_of(devhandle));
-
-		fdtbus_attach_i2cbus(sc->sc_dev, devhandle_to_of(devhandle),
-		    &bus->controller, iicmux_print);
-		break;
+	}
 #endif /* I2CMUX_USE_FDT */
 
-	case DEVHANDLE_TYPE_INVALID:
-		aprint_error_dev(sc->sc_dev, "invalid bus device handle\n");
-		return;
+	struct i2cbus_attach_args iba = {
+		.iba_tag = &bus->controller,
+		.iba_bus = bus->busidx,
+	};
 
-	default: {
-		struct i2cbus_attach_args iba = {
-			.iba_tag = &bus->controller,
-		};
-		config_found(sc->sc_dev, &iba, iicmux_print,
-		    CFARG_DEVHANDLE, devhandle,
-		    CFARG_EOL);
-		break;
-	    }
-	}
+	int locs[I2CBUSCF_NLOCS];
+	locs[I2CBUSCF_BUS] = bus->busidx;
+
+	config_found(sc->sc_dev, &iba, iicbus_print_multi,
+	    CFARG_SUBMATCH, config_stdsubmatch,
+	    CFARG_LOCATORS, locs,
+	    CFARG_DEVHANDLE, devhandle,
+	    CFARG_EOL);
 }
 
 #if defined(I2CMUX_USE_FDT)
