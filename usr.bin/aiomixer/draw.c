@@ -1,4 +1,4 @@
-/* $NetBSD: draw.c,v 1.5 2021/05/08 14:38:26 nia Exp $ */
+/* $NetBSD: draw.c,v 1.6 2021/05/08 14:49:13 nia Exp $ */
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -134,10 +134,14 @@ draw_screen(struct aiomixer *aio)
 	wnoutrefresh(stdscr);
 	wnoutrefresh(aio->header);
 	wnoutrefresh(aio->classbar);
+	max_y = aio->classes[aio->curclass].height + 1;
+	max_y -= aio->class_scroll_y;
+	if (max_y > (getmaxy(stdscr) - 3))
+		max_y = getmaxy(stdscr) - 3;
 	pnoutrefresh(aio->classes[aio->curclass].widgetpad,
 	    aio->class_scroll_y, 0,
 	    3, 0,
-	    getmaxy(stdscr) - 3, getmaxx(stdscr));
+	    max_y, getmaxx(stdscr));
 	doupdate();
 }
 
