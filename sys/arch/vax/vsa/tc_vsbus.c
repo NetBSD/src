@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_vsbus.c,v 1.9 2017/06/09 18:02:40 flxd Exp $	*/
+/*	$NetBSD: tc_vsbus.c,v 1.10 2021/05/08 09:03:30 rin Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tc_vsbus.c,v 1.9 2017/06/09 18:02:40 flxd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_vsbus.c,v 1.10 2021/05/08 09:03:30 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -252,7 +252,6 @@ tc_vsbus_attach(device_t parent, device_t self, void *aux)
 	/* Pass pre-mapped space for TC drivers not bus_space'ified yet. */
 	sc->sc_slots[0].tcs_addr = (tc_addr_t)bus_space_vaddr(bst, bsh_slot);
 	sc->sc_slots[0].tcs_cookie = sc;
-	sc->sc_slots[0].tcs_used = 0;
 
 	tba.tba_busname = "tc";
 	/* Tag with custom methods for pre-mapped bus_space. */
