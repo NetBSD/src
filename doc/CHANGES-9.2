@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.79 2021/05/05 17:03:08 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.80 2021/05/08 10:29:10 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -3083,4 +3083,10 @@ sys/dev/audio/audio.c				1.95
 
 	audio: do not prefer surround formats.
 	[nia, ticket #1268]
+
+etc/etc.mac68k/ttys				1.21
+
+	mac68k: turn on constty instead of ttyE0 and change default TERM
+	to vt100 for console and constty.
+	[rin, ticket #1269]
 
