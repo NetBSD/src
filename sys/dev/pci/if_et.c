@@ -1,4 +1,4 @@
-/*	$NetBSD: if_et.c,v 1.32 2020/03/01 15:15:49 thorpej Exp $	*/
+/*	$NetBSD: if_et.c,v 1.33 2021/05/08 00:27:02 thorpej Exp $	*/
 /*	$OpenBSD: if_et.c,v 1.12 2008/07/11 09:29:02 kevlo $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.32 2020/03/01 15:15:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.33 2021/05/08 00:27:02 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "vlan.h"
@@ -152,12 +152,15 @@ static const struct et_bsize	et_bufsize[ET_RX_NRING] = {
 	{ .bufsize = 0,	.newbuf = et_newbuf_cluster },
 };
 
-static const struct et_product {
-	pci_vendor_id_t		vendor;
-	pci_product_id_t	product;
-} et_devices[] = {
-	{ PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_ET1310 },
-	{ PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_ET1301 }
+static const struct device_compatible_entry compat_data[] = {
+	{ .id = PCI_ID_CODE(PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_ET1310),
+	  .value = 0 },
+
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_ET1301),
+	  .value = ET_FLAG_FASTETHER },
+
+	PCI_COMPAT_EOL
 };
 
 CFATTACH_DECL_NEW(et, sizeof(struct et_softc), et_match, et_attach, et_detach,
@@ -167,16 +170,8 @@ static int
 et_match(device_t dev, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	const struct et_product *ep;
-	int i;
 
-	for (i = 0; i < __arraycount(et_devices); i++) {
-		ep = &et_devices[i];
-		if (PCI_VENDOR(pa->pa_id) == ep->vendor &&
-		    PCI_PRODUCT(pa->pa_id) == ep->product)
-			return 1;
-	}
-	return 0;
+	return pci_compatible_match(pa, compat_data);
 }
 
 static void
@@ -184,6 +179,7 @@ et_attach(device_t parent, device_t self, void *aux)
 {
 	struct et_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
+	const struct device_compatible_entry *dce;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
 	const char *intrstr;
@@ -238,8 +234,9 @@ et_attach(device_t parent, device_t self, void *aux)
 	else
 		sc->sc_dmat = pa->pa_dmat;
 
-	if (pa->pa_id == PCI_PRODUCT_LUCENT_ET1301)
-		sc->sc_flags |= ET_FLAG_FASTETHER;
+	dce = pci_compatible_lookup(pa, compat_data);
+	KASSERT(dce != NULL);
+	sc->sc_flags = (uint32_t)dce->value;
 
 	error = et_bus_config(sc);
 	if (error)

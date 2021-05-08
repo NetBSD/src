@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.58 2020/03/01 15:11:31 thorpej Exp $ */
+/*	$NetBSD: if_dge.c,v 1.59 2021/05/08 00:27:02 thorpej Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.58 2020/03/01 15:11:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.59 2021/05/08 00:27:02 thorpej Exp $");
 
 
 
@@ -647,49 +647,41 @@ static char (*dge_txseg_evcnt_names)[DGE_NTXSEGS][8 /* "txseg00" + \0 */];
 /*
  * Devices supported by this driver.
  */
-static const struct dge_product {
-	pci_vendor_id_t dgep_vendor;
-	pci_product_id_t dgep_product;
-	const char *dgep_name;
-	int dgep_flags;
+struct dge_product {
+	const char *name;
+	int flags;
 #define DGEP_F_10G_LR	  0x01
 #define DGEP_F_10G_SR	  0x02
-} dge_products[] = {
-	{ PCI_VENDOR_INTEL,  PCI_PRODUCT_INTEL_82597EX,
-	  "Intel i82597EX 10GbE-LR Ethernet",
-	  DGEP_F_10G_LR },
-
-	{ PCI_VENDOR_INTEL,  PCI_PRODUCT_INTEL_82597EX_SR,
-	  "Intel i82597EX 10GbE-SR Ethernet",
-	  DGEP_F_10G_SR },
-
-	{ 0,	    0,
-	  NULL,
-	  0 },
 };
 
-static const struct dge_product *
-dge_lookup(const struct pci_attach_args *pa)
-{
-	const struct dge_product *dgep;
+static const struct dge_product i82597EX_lr = {
+	.name = "Intel i82597EX 10GbE-LR Ethernet",
+	.flags = DGEP_F_10G_LR
+};
 
-	for (dgep = dge_products; dgep->dgep_name != NULL; dgep++) {
-		if (PCI_VENDOR(pa->pa_id) == dgep->dgep_vendor &&
-		    PCI_PRODUCT(pa->pa_id) == dgep->dgep_product)
-			return dgep;
-		}
-	return NULL;
-}
+static const struct dge_product i82597EX_sr = {
+	.name = "Intel i82597EX 10GbE-SR Ethernet",
+	.flags = DGEP_F_10G_SR
+};
+
+static const struct device_compatible_entry compat_data[] = {
+	{ .id = PCI_ID_CODE(PCI_VENDOR_INTEL,
+		PCI_PRODUCT_INTEL_82597EX),
+	  .data = &i82597EX_lr },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_INTEL,
+		PCI_PRODUCT_INTEL_82597EX_SR),
+	  .data = &i82597EX_sr },
+
+	PCI_COMPAT_EOL
+};
 
 static int
 dge_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
-	if (dge_lookup(pa) != NULL)
-		return 1;
-
-	return 0;
+	return pci_compatible_match(pa, compat_data);
 }
 
 static void
@@ -707,13 +699,12 @@ dge_attach(device_t parent, device_t self, void *aux)
 	pcireg_t preg, memtype;
 	uint32_t reg;
 	char intrbuf[PCI_INTRSTR_LEN];
+	const struct device_compatible_entry *dce;
 	const struct dge_product *dgep;
 
-	sc->sc_dgep = dgep = dge_lookup(pa);
-	if (dgep == NULL) {
-		printf("\n");
-		panic("dge_attach: impossible");
-	}
+	dce = pci_compatible_lookup(pa, compat_data);
+	KASSERT(dce != NULL);
+	sc->sc_dgep = dgep = dce->data;
 
 	sc->sc_dev = self;
 	sc->sc_pc = pa->pa_pc;
@@ -725,7 +716,7 @@ dge_attach(device_t parent, device_t self, void *aux)
 		sc->sc_dmat = pa->pa_dmat;
 
 	pci_aprint_devinfo_fancy(pa, "Ethernet controller",
-		dgep->dgep_name, 1);
+		dgep->name, 1);
 
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, DGE_PCI_BAR);
 	if (pci_mapreg_map(pa, DGE_PCI_BAR, memtype, 0,
@@ -914,7 +905,7 @@ dge_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ethercom.ec_ifmedia = &sc->sc_media;
 	ifmedia_init(&sc->sc_media, IFM_IMASK, dge_xgmii_mediachange,
 	    dge_xgmii_mediastatus);
-	if (dgep->dgep_flags & DGEP_F_10G_SR) {
+	if (dgep->flags & DGEP_F_10G_SR) {
 		ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_10G_SR, 0, NULL);
 		ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_10G_SR);
 	} else { /* XXX default is LR */
@@ -2406,7 +2397,7 @@ dge_xgmii_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 	struct dge_softc *sc = ifp->if_softc;
 
 	ifmr->ifm_status = IFM_AVALID;
-	if (sc->sc_dgep->dgep_flags & DGEP_F_10G_SR ) {
+	if (sc->sc_dgep->flags & DGEP_F_10G_SR ) {
 		ifmr->ifm_active = IFM_ETHER | IFM_10G_SR;
 	} else {
 		ifmr->ifm_active = IFM_ETHER | IFM_10G_LR;
