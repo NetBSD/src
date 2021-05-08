@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.103 2021/05/07 23:00:04 christos Exp $
+#	$NetBSD: Makefile,v 1.104 2021/05/08 19:36:28 christos Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -37,7 +37,6 @@ COMMON_CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} \
 			--with-system-zlib \
 			--without-isl \
 			--enable-__cxa_atexit \
-			--enable-initfini-array=yes \
 			--enable-libstdcxx-time=rt \
 			--enable-libstdcxx-threads \
 			--with-diagnostics-color=auto-if-env
