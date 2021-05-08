@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cvar.h,v 1.24.2.1 2021/04/25 21:45:15 thorpej Exp $	*/
+/*	$NetBSD: i2cvar.h,v 1.24.2.2 2021/05/08 14:23:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -131,6 +131,7 @@ typedef struct i2c_controller {
 /* Used to attach the i2c framework to the controller. */
 struct i2cbus_attach_args {
 	i2c_tag_t iba_tag;		/* the controller */
+	int iba_bus;			/* bus number (optional) */
 };
 
 /* Type of value stored in "ia_cookie" */
@@ -187,6 +188,7 @@ struct i2c_enumerate_devices_args {
  * API presented to i2c controllers.
  */
 int	iicbus_print(void *, const char *);
+int	iicbus_print_multi(void *, const char *);
 void	iic_tag_init(i2c_tag_t);
 void	iic_tag_fini(i2c_tag_t);
 
