@@ -1,4 +1,4 @@
-/* $NetBSD: parse.c,v 1.2 2021/05/08 12:53:15 nia Exp $ */
+/* $NetBSD: parse.c,v 1.3 2021/05/08 13:03:40 nia Exp $ */
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,6 +36,7 @@
 
 static struct aiomixer_class *get_class(struct aiomixer *, int);
 static int compare_control(const void *, const void *);
+static int compare_class(const void *, const void *);
 
 static struct aiomixer_class *
 get_class(struct aiomixer *aio, int class)
@@ -66,6 +67,20 @@ compare_control(const void *pa, const void *pb)
 		return strcmp(a->info.label.name, b->info.label.name);
 	}
 	return 0;
+}
+
+static int
+compare_class(const void *pa, const void *pb)
+{
+	const struct aiomixer_class *a = (const struct aiomixer_class *)pa;
+	const struct aiomixer_class *b = (const struct aiomixer_class *)pb;
+
+	if (strcmp(a->name, AudioCoutputs) == 0)
+		return -1;
+	if (strcmp(b->name, AudioCoutputs) == 0)
+		return 1;
+
+	return strcmp(a->name, b->name);
 }
 
 int
@@ -106,6 +121,9 @@ aiomixer_parse(struct aiomixer *aio)
 		control = &class->controls[class->numcontrols++];
 		control->info = info;
 	}
+	qsort(aio->classes, aio->numclasses,
+	    sizeof(struct aiomixer_class),
+	    compare_class);
 	for (i = 0; i < aio->numclasses; ++i) {
 		class = &aio->classes[i];
 		qsort(class->controls, class->numcontrols,
