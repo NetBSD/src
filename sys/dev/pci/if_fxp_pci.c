@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.85 2019/01/23 06:56:19 msaitoh Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.86 2021/05/08 00:27:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.85 2019/01/23 06:56:19 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.86 2021/05/08 00:27:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,124 +90,145 @@ CFATTACH_DECL3_NEW(fxp_pci, sizeof(struct fxp_pci_softc),
     fxp_pci_match, fxp_pci_attach, fxp_pci_detach, NULL, NULL,
     null_childdetached, DVF_DETACH_SHUTDOWN);
 
-static const struct fxp_pci_product {
-	uint32_t	fpp_prodid;	/* PCI product ID */
-	const char	*fpp_name;	/* device name */
-} fxp_pci_products[] = {
-	{ PCI_PRODUCT_INTEL_82552,
-	  "Intel i82552 10/100 Network Connection" },
-	{ PCI_PRODUCT_INTEL_8255X,
-	  "Intel i8255x Ethernet" },
-	{ PCI_PRODUCT_INTEL_82559ER,
-	  "Intel i82559ER Ethernet" },
-	{ PCI_PRODUCT_INTEL_IN_BUSINESS,
-	  "Intel InBusiness Ethernet" },
-	{ PCI_PRODUCT_INTEL_PRO_100,
-	  "Intel PRO/100 Ethernet" },
-	{ PCI_PRODUCT_INTEL_PRO_100_VE_0,
-	  "Intel PRO/100 VE Network Controller" },
-	{ PCI_PRODUCT_INTEL_PRO_100_VE_1,
-	  "Intel PRO/100 VE Network Controller" },
-	{ PCI_PRODUCT_INTEL_PRO_100_VE_2,
-	  "Intel PRO/100 VE Network Controller with 82562ET/EZ PHY" },
-	{ PCI_PRODUCT_INTEL_PRO_100_VE_3,
-	  "Intel PRO/100 VE Network Controller with 82562ET/EZ (CNR) PHY" },
-	{ PCI_PRODUCT_INTEL_PRO_100_VE_4,
-	  "Intel PRO/100 VE (MOB) Network Controller" },
-	{ PCI_PRODUCT_INTEL_PRO_100_VE_5,
-	  "Intel PRO/100 VE (LOM) Network Controller" },
-	{ PCI_PRODUCT_INTEL_PRO_100_VE_6,
-	  "Intel PRO/100 VE Network Controller" },
-	{ PCI_PRODUCT_INTEL_PRO_100_VE_7,
-	  "Intel PRO/100 VE Network Controller" },
-	{ PCI_PRODUCT_INTEL_PRO_100_VE_8,
-	  "Intel PRO/100 VE Network Controller" },
-	{ PCI_PRODUCT_INTEL_PRO_100_VE_9,
-	  "Intel PRO/100 VE Network Controller" },
-	{ PCI_PRODUCT_INTEL_PRO_100_VE_10,
-	  "Intel PRO/100 VE Network Controller" },
-	{ PCI_PRODUCT_INTEL_PRO_100_VE_11,
-	  "Intel PRO/100 VE Network Controller" },
-	{ PCI_PRODUCT_INTEL_PRO_100_VM_0,
-	  "Intel PRO/100 VM Network Controller" },
-	{ PCI_PRODUCT_INTEL_PRO_100_VM_1,
-	  "Intel PRO/100 VM Network Controller" },
-	{ PCI_PRODUCT_INTEL_PRO_100_VM_2,
-	  "Intel PRO/100 VM Network Controller" },
-	{ PCI_PRODUCT_INTEL_PRO_100_VM_3,
-	  "Intel PRO/100 VM Network Controller with 82562EM/EX PHY" },
-	{ PCI_PRODUCT_INTEL_PRO_100_VM_4,
-	  "Intel PRO/100 VM Network Controller with 82562EM/EX (CNR) PHY" },
-	{ PCI_PRODUCT_INTEL_PRO_100_VM_5,
-	  "Intel PRO/100 VM (MOB) Network Controller" },
-	{ PCI_PRODUCT_INTEL_PRO_100_VM_6,
-	  "Intel PRO/100 VM Network Controller with 82562ET/EZ PHY" },
-	{ PCI_PRODUCT_INTEL_PRO_100_VM_7,
-	  "Intel PRO/100 VM Network Connection" },
-	{ PCI_PRODUCT_INTEL_PRO_100_VM_8,
-	  "Intel PRO/100 VM Network Connection" },
-	{ PCI_PRODUCT_INTEL_PRO_100_VM_9,
-	  "Intel PRO/100 VM Network Connection" },
-	{ PCI_PRODUCT_INTEL_PRO_100_VM_10,
-	  "Intel PRO/100 VM Network Connection" },
-	{ PCI_PRODUCT_INTEL_PRO_100_VM_11,
-	  "Intel PRO/100 VM Network Connection" },
-	{ PCI_PRODUCT_INTEL_PRO_100_VM_12,
-	  "Intel PRO/100 VM Network Connection" },
-	{ PCI_PRODUCT_INTEL_PRO_100_VM_13,
-	  "Intel PRO/100 VM Network Connection" },
-	{ PCI_PRODUCT_INTEL_PRO_100_VM_14,
-	  "Intel PRO/100 VM Network Connection" },
-	{ PCI_PRODUCT_INTEL_PRO_100_VM_15,
-	  "Intel PRO/100 VM Network Connection" },
-	{ PCI_PRODUCT_INTEL_PRO_100_VM_16,
-	  "Intel PRO/100 VM Network Connection" },
-	{ PCI_PRODUCT_INTEL_PRO_100_M,
-	  "Intel PRO/100 M Network Controller" },
-	{ PCI_PRODUCT_INTEL_82801BA_LAN,
-	  "Intel i82562 Ethernet" },
-	{ PCI_PRODUCT_INTEL_82801E_LAN_1,
-	  "Intel i82801E Ethernet" },
-	{ PCI_PRODUCT_INTEL_82801E_LAN_2,
-	  "Intel i82801E Ethernet" },
-	{ PCI_PRODUCT_INTEL_82801EB_LAN,
-	  "Intel 82801EB/ER (ICH5) Network Controller" },
-	{ PCI_PRODUCT_INTEL_82801FB_LAN,
-	  "Intel i82801FB LAN Controller" },
-	{ PCI_PRODUCT_INTEL_82801FB_LAN_2,
-	  "Intel i82801FB LAN Controller" },
-	{ PCI_PRODUCT_INTEL_82801G_LAN,
-	  "Intel 82801GB/GR (ICH7) Network Controller" },
-	{ PCI_PRODUCT_INTEL_82801GB_LAN,
-	  "Intel 82801GB 10/100 Network Controller" },
-	{ 0,
-	  NULL },
+static const struct device_compatible_entry compat_data[] = {
+	{ .id = PCI_ID_CODE(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82552),
+	  .data = "Intel i82552 10/100 Network Connection" },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_8255X),
+	  .data = "Intel i8255x Ethernet" },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82559ER),
+	  .data = "Intel i82559ER Ethernet" },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IN_BUSINESS),
+	  .data = "Intel InBusiness Ethernet" },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100),
+	  .data = "Intel PRO/100 Ethernet" },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VE_0),
+	  .data = "Intel PRO/100 VE Network Controller" },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VE_1),
+	  .data = "Intel PRO/100 VE Network Controller" },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VE_2),
+	  .data = "Intel PRO/100 VE Network Controller with 82562ET/EZ PHY" },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VE_3),
+	  .data = "Intel PRO/100 VE Network Controller with 82562ET/EZ (CNR) PHY" },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VE_4),
+	  .data = "Intel PRO/100 VE (MOB) Network Controller" },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VE_5),
+	  .data = "Intel PRO/100 VE (LOM) Network Controller" },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VE_6),
+	  .data = "Intel PRO/100 VE Network Controller" },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VE_7),
+	  .data = "Intel PRO/100 VE Network Controller" },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VE_8),
+	  .data = "Intel PRO/100 VE Network Controller" },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VE_9),
+	  .data = "Intel PRO/100 VE Network Controller" },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VE_10),
+	  .data = "Intel PRO/100 VE Network Controller" },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VE_11),
+	  .data = "Intel PRO/100 VE Network Controller" },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VM_0),
+	  .data = "Intel PRO/100 VM Network Controller" },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VM_1),
+	  .data = "Intel PRO/100 VM Network Controller" },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VM_2),
+	  .data = "Intel PRO/100 VM Network Controller" },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VM_3),
+	  .data = "Intel PRO/100 VM Network Controller with 82562EM/EX PHY" },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VM_4),
+	  .data = "Intel PRO/100 VM Network Controller with 82562EM/EX (CNR) PHY" },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VM_5),
+	  .data = "Intel PRO/100 VM (MOB) Network Controller" },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VM_6),
+	  .data = "Intel PRO/100 VM Network Controller with 82562ET/EZ PHY" },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VM_7),
+	  .data = "Intel PRO/100 VM Network Connection" },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VM_8),
+	  .data = "Intel PRO/100 VM Network Connection" },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VM_9),
+	  .data = "Intel PRO/100 VM Network Connection" },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VM_10),
+	  .data = "Intel PRO/100 VM Network Connection" },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VM_11),
+	  .data = "Intel PRO/100 VM Network Connection" },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VM_12),
+	  .data = "Intel PRO/100 VM Network Connection" },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VM_13),
+	  .data = "Intel PRO/100 VM Network Connection" },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VM_14),
+	  .data = "Intel PRO/100 VM Network Connection" },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VM_15),
+	  .data = "Intel PRO/100 VM Network Connection" },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VM_16),
+	  .data = "Intel PRO/100 VM Network Connection" },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_M),
+	  .data = "Intel PRO/100 M Network Controller" },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_LAN),
+	  .data = "Intel i82562 Ethernet" },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801E_LAN_1),
+	  .data = "Intel i82801E Ethernet" },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801E_LAN_2),
+	  .data = "Intel i82801E Ethernet" },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_LAN),
+	  .data = "Intel 82801EB/ER (ICH5) Network Controller" },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_LAN),
+	  .data = "Intel i82801FB LAN Controller" },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_LAN_2),
+	  .data = "Intel i82801FB LAN Controller" },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_LAN),
+	  .data = "Intel 82801GB/GR (ICH7) Network Controller" },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801GB_LAN),
+	  .data = "Intel 82801GB 10/100 Network Controller" },
+
+	PCI_COMPAT_EOL
 };
-
-static const struct fxp_pci_product *
-fxp_pci_lookup(const struct pci_attach_args *pa)
-{
-	const struct fxp_pci_product *fpp;
-
-	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_INTEL)
-		return NULL;
-
-	for (fpp = fxp_pci_products; fpp->fpp_name != NULL; fpp++)
-		if (PCI_PRODUCT(pa->pa_id) == fpp->fpp_prodid)
-			return fpp;
-
-	return NULL;
-}
 
 static int
 fxp_pci_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
-	if (fxp_pci_lookup(pa) != NULL)
-		return 1;
-
-	return 0;
+	return pci_compatible_match(pa, compat_data);
 }
 
 /*
@@ -295,7 +316,7 @@ fxp_pci_attach(device_t parent, device_t self, void *aux)
 	const struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
-	const struct fxp_pci_product *fpp;
+	const struct device_compatible_entry *dce;
 	const char *chipname = NULL;
 	const char *intrstr = NULL;
 	bus_space_tag_t iot, memt;
@@ -370,15 +391,12 @@ fxp_pci_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dmat = pa->pa_dmat;
 
-	fpp = fxp_pci_lookup(pa);
-	if (fpp == NULL) {
-		printf("\n");
-		panic("fxp_pci_attach: impossible");
-	}
+	dce = pci_compatible_lookup(pa, compat_data);
+	KASSERT(dce != NULL);
 
 	sc->sc_rev = PCI_REVISION(pa->pa_class);
 
-	switch (fpp->fpp_prodid) {
+	switch (PCI_PRODUCT(dce->id)) {
 	case PCI_PRODUCT_INTEL_8255X:
 	case PCI_PRODUCT_INTEL_IN_BUSINESS:
 
@@ -459,7 +477,7 @@ fxp_pci_attach(device_t parent, device_t self, void *aux)
 	}
 
 	pci_aprint_devinfo_fancy(pa, "Ethernet controller",
-		(chipname ? chipname : fpp->fpp_name), 1);
+		(chipname != NULL ? chipname : dce->data), 1);
 
 	/* Make sure bus-mastering is enabled. */
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,

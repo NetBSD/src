@@ -1,4 +1,4 @@
-/*	$NetBSD: if_jme.c,v 1.49 2020/02/08 07:20:41 maxv Exp $	*/
+/*	$NetBSD: if_jme.c,v 1.50 2021/05/08 00:27:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2008 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.49 2020/02/08 07:20:41 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.50 2021/05/08 00:27:02 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -110,11 +110,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.49 2020/02/08 07:20:41 maxv Exp $");
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
-
-struct jme_product_desc {
-	uint32_t jme_product;
-	const char *jme_desc;
-};
 
 /* number of entries in transmit and receive rings */
 #define JME_NBUFS (PAGE_SIZE / sizeof(struct jme_desc))
@@ -222,40 +217,24 @@ static int jme_root_num;
 CFATTACH_DECL_NEW(jme, sizeof(jme_softc_t),
     jme_pci_match, jme_pci_attach, NULL, NULL);
 
-static const struct jme_product_desc jme_products[] = {
-	{ PCI_PRODUCT_JMICRON_JMC250,
-	  "JMicron JMC250 Gigabit Ethernet Controller" },
-	{ PCI_PRODUCT_JMICRON_JMC260,
-	  "JMicron JMC260 Gigabit Ethernet Controller" },
-	{ 0, NULL },
+static const struct device_compatible_entry compat_data[] = {
+	{ .id = PCI_ID_CODE(PCI_VENDOR_JMICRON,
+		PCI_PRODUCT_JMICRON_JMC250),
+	  .data = "JMicron JMC250 Gigabit Ethernet Controller" },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_JMICRON,
+		PCI_PRODUCT_JMICRON_JMC260),
+	  .data = "JMicron JMC260 Gigabit Ethernet Controller" },
+
+	PCI_COMPAT_EOL
 };
-
-static const struct jme_product_desc *jme_lookup_product(uint32_t);
-
-static const struct jme_product_desc *
-jme_lookup_product(uint32_t id)
-{
-	const struct jme_product_desc *jp;
-
-	for (jp = jme_products ; jp->jme_desc != NULL; jp++)
-		if (PCI_PRODUCT(id) == jp->jme_product)
-			return jp;
-
-	return NULL;
-}
 
 static int
 jme_pci_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 
-	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_JMICRON)
-		return 0;
-
-	if (jme_lookup_product(pa->pa_id) != NULL)
-		return 1;
-
-	return 0;
+	return pci_compatible_match(pa, compat_data);
 }
 
 static void
@@ -263,7 +242,7 @@ jme_pci_attach(device_t parent, device_t self, void *aux)
 {
 	jme_softc_t *sc = device_private(self);
 	struct pci_attach_args * const pa = (struct pci_attach_args *)aux;
-	const struct jme_product_desc *jp;
+	const struct device_compatible_entry *dce;
 	struct ifnet * const ifp = &sc->jme_if;
 	struct mii_data * const mii = &sc->jme_mii;
 	bus_space_tag_t iot1, iot2, memt;
@@ -282,11 +261,10 @@ jme_pci_attach(device_t parent, device_t self, void *aux)
 	callout_init(&sc->jme_tick_ch, 0);
 	callout_setfunc(&sc->jme_tick_ch, jme_ticks, sc);
 
-	jp = jme_lookup_product(pa->pa_id);
-	if (jp == NULL)
-		panic("jme_pci_attach: impossible");
+	dce = pci_compatible_lookup(pa, compat_data);
+	KASSERT(dce != NULL);
 
-	if (jp->jme_product == PCI_PRODUCT_JMICRON_JMC250)
+	if (PCI_PRODUCT(dce->id) == PCI_PRODUCT_JMICRON_JMC250)
 		sc->jme_flags = JME_FLAG_GIGA;
 
 	/*
@@ -347,7 +325,7 @@ jme_pci_attach(device_t parent, device_t self, void *aux)
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
 	    csr | PCI_COMMAND_MASTER_ENABLE);
 
-	aprint_normal_dev(self, "%s\n", jp->jme_desc);
+	aprint_normal_dev(self, "%s\n", (const char *)dce->data);
 
 	sc->jme_rev = PCI_REVISION(pa->pa_class);
 

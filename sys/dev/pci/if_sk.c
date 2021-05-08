@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.107 2021/04/24 23:36:57 thorpej Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.108 2021/05/08 00:27:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.107 2021/04/24 23:36:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.108 2021/05/08 00:27:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,19 +225,32 @@ static int sk_root_num;
 
 /* supported device vendors */
 /* PCI_PRODUCT_DLINK_DGE560T_2 might belong in if_msk instead */
-static const struct sk_product {
-	pci_vendor_id_t		sk_vendor;
-	pci_product_id_t	sk_product;
-} sk_products[] = {
-	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C940, },
-	{ PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE530T, },
-	{ PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE560T_2, },
-	{ PCI_VENDOR_LINKSYS, PCI_PRODUCT_LINKSYS_EG1064, },
-	{ PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SKNET_GE, },
-	{ PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SK9821v2, },
-	{ PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_SKNET, },
-	{ PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_BELKIN, },
-	{ 0, 0, }
+static const struct device_compatible_entry compat_data[] = {
+	{ .id = PCI_ID_CODE(PCI_VENDOR_3COM,
+		PCI_PRODUCT_3COM_3C940) },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_DLINK,
+		PCI_PRODUCT_DLINK_DGE530T) },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_DLINK,
+		PCI_PRODUCT_DLINK_DGE560T_2) },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_LINKSYS,
+		PCI_PRODUCT_LINKSYS_EG1064) },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_SCHNEIDERKOCH,
+		PCI_PRODUCT_SCHNEIDERKOCH_SKNET_GE) },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_SCHNEIDERKOCH,
+		PCI_PRODUCT_SCHNEIDERKOCH_SK9821v2) },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_MARVELL,
+		PCI_PRODUCT_MARVELL_SKNET) },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_MARVELL,
+		PCI_PRODUCT_MARVELL_BELKIN) },
+
+	PCI_COMPAT_EOL
 };
 
 #define SK_LINKSYS_EG1032_SUBID	0x00151737
@@ -1108,19 +1121,6 @@ sk_update_int_mod(struct sk_softc *sc)
  * The structure if the IDs match against our list.
  */
 
-static const struct sk_product *
-sk_lookup(const struct pci_attach_args *pa)
-{
-	const struct sk_product *psk;
-
-	for ( psk = &sk_products[0]; psk->sk_vendor != 0; psk++ ) {
-		if (PCI_VENDOR(pa->pa_id) == psk->sk_vendor &&
-		    PCI_PRODUCT(pa->pa_id) == psk->sk_product)
-			return psk;
-	}
-	return NULL;
-}
-
 /*
  * Probe for a SysKonnect GEnesis chip.
  */
@@ -1129,7 +1129,6 @@ static int
 skc_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
-	const struct sk_product *psk;
 	pcireg_t subid;
 
 	subid = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
@@ -1140,10 +1139,7 @@ skc_probe(device_t parent, cfdata_t match, void *aux)
 	    subid == SK_LINKSYS_EG1032_SUBID)
 		return 1;
 
-	if ((psk = sk_lookup(pa))) {
-		return 1;
-	}
-	return 0;
+	return pci_compatible_match(pa, compat_data);
 }
 
 /*

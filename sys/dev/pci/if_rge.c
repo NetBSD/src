@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rge.c,v 1.18 2021/03/02 07:55:16 knakahara Exp $	*/
+/*	$NetBSD: if_rge.c,v 1.19 2021/05/08 00:27:02 thorpej Exp $	*/
 /*	$OpenBSD: if_rge.c,v 1.9 2020/12/12 11:48:53 jan Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.18 2021/03/02 07:55:16 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.19 2021/05/08 00:27:02 thorpej Exp $");
 
 #include <sys/types.h>
 
@@ -164,27 +164,19 @@ static const struct {
 CFATTACH_DECL_NEW(rge, sizeof(struct rge_softc), rge_match, rge_attach,
 		NULL, NULL); /* Sevan - detach function? */
 
-static const struct {
-	pci_vendor_id_t 	vendor;
-	pci_product_id_t 	product;
-}rge_devices[] = {
-	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_E3000 },
-	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8125 },
+static const struct device_compatible_entry compat_data[] = {
+	{ .id = PCI_ID_CODE(PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_E3000) },
+	{ .id = PCI_ID_CODE(PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8125) },
+
+	PCI_COMPAT_EOL
 };
 
 static int
 rge_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa =aux;
-	int n;
 
-	for (n =0; n < __arraycount(rge_devices); n++) {
-		if (PCI_VENDOR(pa->pa_id) == rge_devices[n].vendor &&
-		    PCI_PRODUCT(pa->pa_id) == rge_devices[n].product)
-			return 3;
-	}
-
-	return 0;
+	return pci_compatible_match(pa, compat_data);
 }
 
 void

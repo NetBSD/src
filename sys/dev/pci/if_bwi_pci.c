@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bwi_pci.c,v 1.16 2018/12/09 11:14:02 jdolecek Exp $	*/
+/*	$NetBSD: if_bwi_pci.c,v 1.17 2021/05/08 00:27:02 thorpej Exp $	*/
 /*	$OpenBSD: if_bwi_pci.c,v 1.6 2008/02/14 22:10:02 brad Exp $ */
 
 /*
@@ -24,7 +24,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bwi_pci.c,v 1.16 2018/12/09 11:14:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bwi_pci.c,v 1.17 2021/05/08 00:27:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -74,31 +74,52 @@ struct bwi_pci_softc {
 CFATTACH_DECL_NEW(bwi_pci, sizeof(struct bwi_pci_softc),
     bwi_pci_match, bwi_pci_attach, bwi_pci_detach, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .id = PCI_ID_CODE(PCI_VENDOR_BROADCOM,
+		PCI_PRODUCT_BROADCOM_BCM4303), },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_BROADCOM,
+		PCI_PRODUCT_BROADCOM_BCM4306), },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_BROADCOM,
+		PCI_PRODUCT_BROADCOM_BCM4306_2), },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_BROADCOM,
+		PCI_PRODUCT_BROADCOM_BCM4307), },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_BROADCOM,
+		PCI_PRODUCT_BROADCOM_BCM4309), },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_BROADCOM,
+		PCI_PRODUCT_BROADCOM_BCM4311), },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_BROADCOM,
+		PCI_PRODUCT_BROADCOM_BCM4312), },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_BROADCOM,
+		PCI_PRODUCT_BROADCOM_BCM4318), },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_BROADCOM,
+		PCI_PRODUCT_BROADCOM_BCM4319), },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_BROADCOM,
+		PCI_PRODUCT_BROADCOM_BCM4322), },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_BROADCOM,
+		PCI_PRODUCT_BROADCOM_BCM43XG), },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_BROADCOM,
+		PCI_PRODUCT_BROADCOM_BCM4328), },
+
+	PCI_COMPAT_EOL
+};
+
 static int
 bwi_pci_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
-	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_BROADCOM)
-		return (0);
-
-	switch (PCI_PRODUCT(pa->pa_id)) {
-	case PCI_PRODUCT_BROADCOM_BCM4303:
-	case PCI_PRODUCT_BROADCOM_BCM4306:
-	case PCI_PRODUCT_BROADCOM_BCM4306_2:
-	case PCI_PRODUCT_BROADCOM_BCM4307:
-	case PCI_PRODUCT_BROADCOM_BCM4309:
-	case PCI_PRODUCT_BROADCOM_BCM4311:
-	case PCI_PRODUCT_BROADCOM_BCM4312:
-	case PCI_PRODUCT_BROADCOM_BCM4318:
-	case PCI_PRODUCT_BROADCOM_BCM4319:
-	case PCI_PRODUCT_BROADCOM_BCM4322:
-	case PCI_PRODUCT_BROADCOM_BCM43XG:
-	case PCI_PRODUCT_BROADCOM_BCM4328:
-		return (1);
-	}
-
-	return (0);
+	return pci_compatible_match(pa, compat_data);
 }
 
 static void

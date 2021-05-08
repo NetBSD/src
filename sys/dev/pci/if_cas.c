@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cas.c,v 1.44 2020/09/15 08:33:40 mrg Exp $	*/
+/*	$NetBSD: if_cas.c,v 1.45 2021/05/08 00:27:02 thorpej Exp $	*/
 /*	$OpenBSD: if_cas.c,v 1.29 2009/11/29 16:19:38 kettenis Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.44 2020/09/15 08:33:40 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.45 2021/05/08 00:27:02 thorpej Exp $");
 
 #ifndef _MODULE
 #include "opt_inet.h"
@@ -163,14 +163,16 @@ int		cas_intr(void *);
 #define	DPRINTF(sc, x)	/* nothing */
 #endif
 
-static const struct cas_pci_dev {
-	uint16_t cpd_vendor;
-	uint16_t cpd_device;
-	int cpd_variant;
-} cas_pci_devlist[] = {
-	{ PCI_VENDOR_SUN, PCI_PRODUCT_SUN_CASSINI, CAS_CAS },
-	{ PCI_VENDOR_NS, PCI_PRODUCT_NS_SATURN, CAS_SATURN },
-	{ 0, 0, 0 }
+static const struct device_compatible_entry compat_data[] = {
+	{ .id = PCI_ID_CODE(PCI_VENDOR_SUN,
+		PCI_PRODUCT_SUN_CASSINI),
+	  .value = CAS_CAS },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_NS,
+		PCI_PRODUCT_NS_SATURN),
+	  .value = CAS_SATURN },
+
+	PCI_COMPAT_EOL
 };
 
 #define	CAS_LOCAL_MAC_ADDRESS	"local-mac-address"
@@ -182,15 +184,8 @@ int
 cas_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	int i;
 
-	for (i = 0; cas_pci_devlist[i].cpd_vendor != 0; i++) {
-		if ((PCI_VENDOR(pa->pa_id) == cas_pci_devlist[i].cpd_vendor) &&
-		    (PCI_PRODUCT(pa->pa_id) == cas_pci_devlist[i].cpd_device))
-			return 1;
-	}
-
-	return 0;
+	return pci_compatible_match(pa, compat_data);
 }
 
 #define	PROMHDR_PTR_DATA	0x18
@@ -403,8 +398,8 @@ void
 cas_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
+	const struct device_compatible_entry *dce;
 	struct cas_softc *sc = device_private(self);
-	int i;
 	prop_data_t data;
 	uint8_t enaddr[ETHER_ADDR_LEN];
 
@@ -417,19 +412,11 @@ cas_attach(device_t parent, device_t self, void *aux)
 	else
 		sc->sc_dmatag = pa->pa_dmat;
 
-	sc->sc_variant = CAS_UNKNOWN;
-	for (i = 0; cas_pci_devlist[i].cpd_vendor != 0; i++) {
-		if ((PCI_VENDOR(pa->pa_id) == cas_pci_devlist[i].cpd_vendor) &&
-		    (PCI_PRODUCT(pa->pa_id) == cas_pci_devlist[i].cpd_device)) {
-			sc->sc_variant = cas_pci_devlist[i].cpd_variant;
-			break;
-		}
-	}
+	dce = pci_compatible_lookup(pa, compat_data);
+	KASSERT(dce != NULL);
+	sc->sc_variant = (u_int)dce->value;
+
 	aprint_debug_dev(sc->sc_dev, "variant = %d\n", sc->sc_variant);
-	if (sc->sc_variant == CAS_UNKNOWN) {
-		aprint_error_dev(sc->sc_dev, "unknown adaptor\n");
-		return;
-	}
 
 #define PCI_CAS_BASEADDR	0x10
 	if (pci_mapreg_map(pa, PCI_CAS_BASEADDR, PCI_MAPREG_TYPE_MEM, 0,

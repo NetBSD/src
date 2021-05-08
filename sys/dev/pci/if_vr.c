@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.133 2020/02/07 00:04:28 thorpej Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.134 2021/05/08 00:27:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.133 2020/02/07 00:04:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.134 2021/05/08 00:27:02 thorpej Exp $");
 
 
 
@@ -140,15 +140,23 @@ __KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.133 2020/02/07 00:04:28 thorpej Exp $");
 /*
  * Various supported device vendors/types and their names.
  */
-static const struct vr_type {
-	pci_vendor_id_t		vr_vid;
-	pci_product_id_t	vr_did;
-} vr_devs[] = {
-	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3043 },
-	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6102 },
-	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6105 },
-	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6105M },
-	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT86C100A }
+static const struct device_compatible_entry compat_data[] = {
+	{ .id = PCI_ID_CODE(PCI_VENDOR_VIATECH,
+		PCI_PRODUCT_VIATECH_VT3043) },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_VIATECH,
+		PCI_PRODUCT_VIATECH_VT6102) },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_VIATECH,
+		PCI_PRODUCT_VIATECH_VT6105) },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_VIATECH,
+		PCI_PRODUCT_VIATECH_VT6105M) },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_VIATECH,
+		PCI_PRODUCT_VIATECH_VT86C100A) },
+
+	PCI_COMPAT_EOL
 };
 
 /*
@@ -1433,30 +1441,12 @@ static bool	vr_shutdown(device_t, int);
 CFATTACH_DECL_NEW(vr, sizeof (struct vr_softc),
     vr_probe, vr_attach, NULL, NULL);
 
-static const struct vr_type *
-vr_lookup(struct pci_attach_args *pa)
-{
-	const struct vr_type *vrt;
-	int i;
-
-	for (i = 0; i < __arraycount(vr_devs); i++) {
-		vrt = &vr_devs[i];
-		if (PCI_VENDOR(pa->pa_id) == vrt->vr_vid &&
-		    PCI_PRODUCT(pa->pa_id) == vrt->vr_did)
-			return (vrt);
-	}
-	return (NULL);
-}
-
 static int
 vr_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 
-	if (vr_lookup(pa) != NULL)
-		return (1);
-
-	return (0);
+	return pci_compatible_match(pa, compat_data);
 }
 
 /*

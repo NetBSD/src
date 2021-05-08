@@ -1,4 +1,4 @@
-/* $NetBSD: if_mtd_pci.c,v 1.21 2018/12/09 11:14:02 jdolecek Exp $ */
+/* $NetBSD: if_mtd_pci.c,v 1.22 2021/05/08 00:27:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 /* TODO: Check why in IO space, the MII won't work. Memory mapped works */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mtd_pci.c,v 1.21 2018/12/09 11:14:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mtd_pci.c,v 1.22 2021/05/08 00:27:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -57,14 +57,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_mtd_pci.c,v 1.21 2018/12/09 11:14:02 jdolecek Exp
 #define PCI_IO_MAP_REG PCI_BAR(0)
 #define PCI_MEM_MAP_REG PCI_BAR(1)
 
-struct mtd_pci_device_id {
-	pci_vendor_id_t		vendor;		/* PCI vendor ID */
-	pci_product_id_t	product;	/* PCI product ID */
-};
+static const struct device_compatible_entry compat_data[] = {
+	{ .id = PCI_ID_CODE(PCI_VENDOR_MYSON, PCI_PRODUCT_MYSON_MTD803) },
 
-static struct mtd_pci_device_id mtd_ids[] = {
-	{ PCI_VENDOR_MYSON, PCI_PRODUCT_MYSON_MTD803 },
-	{ 0, 0 }
+	PCI_COMPAT_EOL
 };
 
 static int	mtd_pci_match(device_t, cfdata_t, void *);
@@ -77,14 +73,8 @@ static int
 mtd_pci_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	struct mtd_pci_device_id *id;
 
-	for (id = mtd_ids; id->vendor != 0; ++id) {
-		if (PCI_VENDOR(pa->pa_id) == id->vendor &&
-		    PCI_PRODUCT(pa->pa_id) == id->product)
-			return (1);
-	}
-	return (0);
+	return pci_compatible_match(pa, compat_data);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bwfm_pci.c,v 1.9 2020/05/30 15:55:47 jdolecek Exp $	*/
+/*	$NetBSD: if_bwfm_pci.c,v 1.10 2021/05/08 00:27:02 thorpej Exp $	*/
 /*	$OpenBSD: if_bwfm_pci.c,v 1.18 2018/02/08 05:00:38 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -366,12 +366,14 @@ static const struct bwfm_firmware_selector bwfm_pci_fwtab[] = {
 	BWFM_FW_ENTRY_END
 };
 
-static const struct bwfm_pci_matchid {
-	pci_vendor_id_t		bwfm_vendor;
-	pci_product_id_t	bwfm_product;
-} bwfm_pci_devices[] = {
-	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM43602 },
-	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4350 },
+static const struct device_compatible_entry compat_data[] = {
+	{ .id = PCI_ID_CODE(PCI_VENDOR_BROADCOM,
+		PCI_PRODUCT_BROADCOM_BCM43602), },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_BROADCOM,
+		PCI_PRODUCT_BROADCOM_BCM4350), },
+
+	PCI_COMPAT_EOL
 };
 
 static struct mbuf *
@@ -397,14 +399,7 @@ bwfm_pci_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
-	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_BROADCOM)
-		return 0;
-
-	for (size_t i = 0; i < __arraycount(bwfm_pci_devices); i++)
-		if (PCI_PRODUCT(pa->pa_id) == bwfm_pci_devices[i].bwfm_product)
-			return 1;
-
-	return 0;
+	return pci_compatible_match(pa, compat_data);
 }
 
 void

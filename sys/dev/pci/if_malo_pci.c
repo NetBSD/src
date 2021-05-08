@@ -1,4 +1,4 @@
-/*	$NetBSD: if_malo_pci.c,v 1.7 2018/12/09 11:14:02 jdolecek Exp $	*/
+/*	$NetBSD: if_malo_pci.c,v 1.8 2021/05/08 00:27:02 thorpej Exp $	*/
 /*	$OpenBSD: if_malo_pci.c,v 1.6 2010/08/28 23:19:29 deraadt Exp $ */
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_malo_pci.c,v 1.7 2018/12/09 11:14:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_malo_pci.c,v 1.8 2021/05/08 00:27:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -75,22 +75,23 @@ struct malo_pci_softc {
 CFATTACH_DECL_NEW(malo_pci, sizeof(struct malo_pci_softc),
     malo_pci_match, malo_pci_attach, malo_pci_detach, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .id = PCI_ID_CODE(PCI_VENDOR_MARVELL,
+		PCI_PRODUCT_MARVELL_88W8310) },
+	{ .id = PCI_ID_CODE(PCI_VENDOR_MARVELL,
+		PCI_PRODUCT_MARVELL_88W8335_1) },
+	{ .id = PCI_ID_CODE(PCI_VENDOR_MARVELL,
+		PCI_PRODUCT_MARVELL_88W8335_2) },
+
+	PCI_COMPAT_EOL
+};
+
 static int
 malo_pci_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
-	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_MARVELL)
-		return (0);
-
-	switch (PCI_PRODUCT(pa->pa_id)) {
-	case PCI_PRODUCT_MARVELL_88W8310:
-	case PCI_PRODUCT_MARVELL_88W8335_1:
-	case PCI_PRODUCT_MARVELL_88W8335_2:
-		return (1);
-	}
-
-	return (0);
+	return pci_compatible_match(pa, compat_data);
 }
 
 static void
