@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.48 2021/04/26 13:29:51 christos Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.49 2021/05/08 13:09:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
 
 #define	SEGSHIFT	(PGSHIFT + PTPLENGTH)	/* LOG2(NBSEG) */
 #define	NBSEG		(1 << SEGSHIFT)	/* bytes/segment */
-#define	SEGOFSET	(NBSEG-1)	/* byte offset into segment */
+#define	SEGOFSET	(NBSEG - 1)	/* byte offset into segment */
 
 #ifdef _LP64
 #define	SEGLENGTH	(PGSHIFT - 3)
