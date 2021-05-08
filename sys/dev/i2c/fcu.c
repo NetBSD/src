@@ -1,4 +1,4 @@
-/* $NetBSD: fcu.c,v 1.12 2021/01/27 02:29:48 thorpej Exp $ */
+/* $NetBSD: fcu.c,v 1.12.4.1 2021/05/08 16:56:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fcu.c,v 1.12 2021/01/27 02:29:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fcu.c,v 1.12.4.1 2021/05/08 16:56:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,6 +141,7 @@ fcu_attach(device_t parent, device_t self, void *aux)
 	struct fcu_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = aux;
 	int have_eeprom1 = 1;
+	int phandle;
 
 	sc->sc_dev = self;
 	sc->sc_i2c = ia->ia_tag;
@@ -185,11 +186,11 @@ fcu_attach(device_t parent, device_t self, void *aux)
 	sc->sc_nfans = 0;
 
 	/* round up sensors */
+	phandle = devhandle_to_of(device_handle(self));
 	int ch;
 
 	sc->sc_nsensors = 0;
-	ch = OF_child(ia->ia_cookie);
-	while (ch != 0) {
+	for (ch = OF_child(phandle); ch != 0; ch = OF_peer(ch)) {
 		char type[32], descr[32];
 		uint32_t reg;
 
@@ -198,7 +199,7 @@ fcu_attach(device_t parent, device_t self, void *aux)
 		s->state = ENVSYS_SINVALID;
 
 		if (OF_getprop(ch, "device_type", type, 32) <= 0)
-			goto next;
+			continue;
 
 		if (strcmp(type, "fan-rpm-control") == 0) {
 			s->units = ENVSYS_SFANRPM;
@@ -214,15 +215,15 @@ fcu_attach(device_t parent, device_t self, void *aux)
 			s->units = ENVSYS_INDICATOR;
 		} else {
 			/* ignore other types for now */
-			goto next;
+			continue;
 		}
 
 		if (OF_getprop(ch, "reg", &reg, sizeof(reg)) <= 0)
-			goto next;
+			continue;
 		s->private = reg;
 
 		if (OF_getprop(ch, "location", descr, 32) <= 0)
-			goto next;
+			continue;
 		strcpy(s->desc, descr);
 
 		if (s->units == ENVSYS_SFANRPM) {
@@ -304,8 +305,6 @@ fcu_attach(device_t parent, device_t self, void *aux)
 		}
 		sysmon_envsys_sensor_attach(sc->sc_sme, s);
 		sc->sc_nsensors++;
-next:
-		ch = OF_peer(ch);
 	}		
 	sysmon_envsys_register(sc->sc_sme);
 
