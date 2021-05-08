@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.29.6.1 2021/04/25 23:19:16 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.29.6.2 2021/05/08 15:51:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.29.6.1 2021/04/25 23:19:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.29.6.2 2021/05/08 15:51:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,8 +190,6 @@ sandpoint_i2c_enumerate_devices(device_t dev, devhandle_t call_handle, void *v)
 		args->ia->ia_prop = props;
 		/* no devhandle for child devices. */
 		devhandle_invalidate(&args->ia->ia_devhandle);
-		args->ia->ia_cookie = 0;			/* XXX */
-		args->ia->ia_cookietype = I2C_COOKIE_NONE;	/* XXX */
 
 		cbrv = args->callback(dev, args);
 

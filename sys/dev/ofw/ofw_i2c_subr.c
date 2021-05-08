@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_i2c_subr.c,v 1.1.6.1 2021/04/25 22:16:05 thorpej Exp $	*/
+/*	$NetBSD: ofw_i2c_subr.c,v 1.1.6.2 2021/05/08 15:51:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_i2c_subr.c,v 1.1.6.1 2021/04/25 22:16:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_i2c_subr.c,v 1.1.6.2 2021/05/08 15:51:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -133,8 +133,6 @@ of_i2c_enumerate_devices_ext(device_t dev, devhandle_t call_handle, void *v,
 		args->ia->ia_clist_size = clist_size;
 		args->ia->ia_prop = props;
 		args->ia->ia_devhandle = devhandle_from_of(node);
-		args->ia->ia_cookie = node;			/* XXX */
-		args->ia->ia_cookietype = I2C_COOKIE_OF;	/* XXX */
 
 		cbrv = args->callback(dev, args);
 
