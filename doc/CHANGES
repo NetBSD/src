@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2803 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2804 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -370,3 +370,5 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		(see resolv.conf(5)), which means that hostnames that
 		contain invalid characters will not resolve. [christos 20210430]
 	evbarm: Add support for Allwinner V3s SoCs. [jmcneill 20210505]
+	aiomixer(1): Added aiomixer, a curses-based mixer for NetBSD's
+		audio API.
