@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kse.c,v 1.56 2020/09/20 23:48:09 nisimura Exp $	*/
+/*	$NetBSD: if_kse.c,v 1.57 2021/05/08 00:27:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.56 2020/09/20 23:48:09 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.57 2021/05/08 00:27:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -353,18 +353,22 @@ static void stat_tick(void *);
 static void zerostats(struct kse_softc *);
 #endif
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .id = PCI_ID_CODE(PCI_VENDOR_MICREL,
+		PCI_PRODUCT_MICREL_KSZ8842) },
+	{ .id = PCI_ID_CODE(PCI_VENDOR_MICREL,
+		PCI_PRODUCT_MICREL_KSZ8841) },
+
+	PCI_COMPAT_EOL
+};
+
 static int
 kse_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_MICREL &&
-	     (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_MICREL_KSZ8842 ||
-	      PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_MICREL_KSZ8841) &&
-	    PCI_CLASS(pa->pa_class) == PCI_CLASS_NETWORK)
-		return 1;
-
-	return 0;
+	return PCI_CLASS(pa->pa_class) == PCI_CLASS_NETWORK &&
+	       pci_compatible_match(pa, compat_data);
 }
 
 static void

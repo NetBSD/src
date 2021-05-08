@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.129 2020/07/07 06:27:37 msaitoh Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.130 2021/05/08 00:27:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.129 2020/07/07 06:27:37 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.130 2021/05/08 00:27:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,69 +111,89 @@ CFATTACH_DECL3_NEW(tlp_pci, sizeof(struct tulip_pci_softc),
     tlp_pci_match, tlp_pci_attach, tlp_pci_detach, NULL, NULL, NULL,
     DVF_DETACH_SHUTDOWN);
 
-static const struct tulip_pci_product {
-	uint32_t	tpp_vendor;	/* PCI vendor ID */
-	uint32_t	tpp_product;	/* PCI product ID */
-	tulip_chip_t	tpp_chip;	/* base Tulip chip type */
-} tlp_pci_products[] = {
-	{ PCI_VENDOR_DEC,		PCI_PRODUCT_DEC_21040,
-	  TULIP_CHIP_21040 },
-	{ PCI_VENDOR_DEC,		PCI_PRODUCT_DEC_21041,
-	  TULIP_CHIP_21041 },
-	{ PCI_VENDOR_DEC,		PCI_PRODUCT_DEC_21140,
-	  TULIP_CHIP_21140 },
-	{ PCI_VENDOR_DEC,		PCI_PRODUCT_DEC_21142,
-	  TULIP_CHIP_21142 },
+static const struct device_compatible_entry compat_data[] = {
+	{ .id = PCI_ID_CODE(PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21040),
+	  .value = TULIP_CHIP_21040 },
 
-	{ PCI_VENDOR_LITEON,		PCI_PRODUCT_LITEON_82C168,
-	  TULIP_CHIP_82C168 },
+	{ .id = PCI_ID_CODE(PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21041),
+	  .value = TULIP_CHIP_21041 },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21140),
+	  .value = TULIP_CHIP_21140 },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21142),
+	  .value = TULIP_CHIP_21142 },
+
+
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_LITEON, PCI_PRODUCT_LITEON_82C168),
+	  .value = TULIP_CHIP_82C168 },
 
 	/*
 	 * Note: This is like a MX98725 with Wake-On-LAN and a
 	 * 128-bit multicast hash table.
 	 */
-	{ PCI_VENDOR_LITEON,		PCI_PRODUCT_LITEON_82C115,
-	  TULIP_CHIP_82C115 },
+	{ .id = PCI_ID_CODE(PCI_VENDOR_LITEON, PCI_PRODUCT_LITEON_82C115),
+	  .value = TULIP_CHIP_82C115 },
 
-	{ PCI_VENDOR_MACRONIX,		PCI_PRODUCT_MACRONIX_MX98713,
-	  TULIP_CHIP_MX98713 },
-	{ PCI_VENDOR_MACRONIX,		PCI_PRODUCT_MACRONIX_MX987x5,
-	  TULIP_CHIP_MX98715 },
 
-	{ PCI_VENDOR_COMPEX,		PCI_PRODUCT_COMPEX_RL100TX,
-	  TULIP_CHIP_MX98713 },
 
-	{ PCI_VENDOR_WINBOND,		PCI_PRODUCT_WINBOND_W89C840F,
-	  TULIP_CHIP_WB89C840F },
-	{ PCI_VENDOR_COMPEX,		PCI_PRODUCT_COMPEX_RL100ATX,
-	  TULIP_CHIP_WB89C840F },
+	{ .id = PCI_ID_CODE(PCI_VENDOR_MACRONIX, PCI_PRODUCT_MACRONIX_MX98713),
+	  .value = TULIP_CHIP_MX98713 },
 
-	{ PCI_VENDOR_DAVICOM,		PCI_PRODUCT_DAVICOM_DM9102,
-	  TULIP_CHIP_DM9102 },
+	{ .id = PCI_ID_CODE(PCI_VENDOR_MACRONIX, PCI_PRODUCT_MACRONIX_MX987x5),
+	  .value = TULIP_CHIP_MX98715 },
 
-	{ PCI_VENDOR_ADMTEK,		PCI_PRODUCT_ADMTEK_AL981,
-	  TULIP_CHIP_AL981 },
+	{ .id = PCI_ID_CODE(PCI_VENDOR_COMPEX, PCI_PRODUCT_COMPEX_RL100TX),
+	  .value = TULIP_CHIP_MX98713 },
 
-	{ PCI_VENDOR_ADMTEK,		PCI_PRODUCT_ADMTEK_AN983,
-	  TULIP_CHIP_AN985 },
-	{ PCI_VENDOR_ADMTEK,		PCI_PRODUCT_ADMTEK_ADM9511,
-	  TULIP_CHIP_AN985 },
-	{ PCI_VENDOR_ADMTEK,		PCI_PRODUCT_ADMTEK_ADM9513,
-	  TULIP_CHIP_AN985 },
-	{ PCI_VENDOR_ACCTON,		PCI_PRODUCT_ACCTON_EN2242,
-	  TULIP_CHIP_AN985 },
 
-	{ PCI_VENDOR_3COM,		PCI_PRODUCT_3COM_3C910SOHOB,
-	  TULIP_CHIP_AN985 },
 
-	{ PCI_VENDOR_ASIX,		PCI_PRODUCT_ASIX_AX88140A,
-	  TULIP_CHIP_AX88140 },
+	{ .id = PCI_ID_CODE(PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W89C840F),
+	  .value = TULIP_CHIP_WB89C840F },
 
-	{ PCI_VENDOR_CONEXANT,		PCI_PRODUCT_CONEXANT_LANFINITY,
-	  TULIP_CHIP_RS7112 },
+	{ .id = PCI_ID_CODE(PCI_VENDOR_COMPEX, PCI_PRODUCT_COMPEX_RL100ATX),
+	  .value = TULIP_CHIP_WB89C840F },
 
-	{ 0,				0,
-	  TULIP_CHIP_INVALID },
+
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_DAVICOM, PCI_PRODUCT_DAVICOM_DM9102),
+	  .value = TULIP_CHIP_DM9102 },
+
+
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_AL981),
+	  .value = TULIP_CHIP_AL981 },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_AN983),
+	  .value = TULIP_CHIP_AN985 },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_ADM9511),
+	  .value = TULIP_CHIP_AN985 },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_ADM9513),
+	  .value = TULIP_CHIP_AN985 },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_ACCTON, PCI_PRODUCT_ACCTON_EN2242),
+	  .value = TULIP_CHIP_AN985 },
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C910SOHOB),
+	  .value = TULIP_CHIP_AN985 },
+
+
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_ASIX, PCI_PRODUCT_ASIX_AX88140A),
+	  .value = TULIP_CHIP_AX88140 },
+
+
+
+	{ .id = PCI_ID_CODE(PCI_VENDOR_CONEXANT,
+		PCI_PRODUCT_CONEXANT_LANFINITY),
+	  .value = TULIP_CHIP_RS7112 },
+
+
+
+	PCI_COMPAT_EOL
 };
 
 struct tlp_pci_quirks {
@@ -260,25 +280,6 @@ static const struct tlp_pci_quirks tlp_pci_21142_quirks[] = {
 
 static int	tlp_pci_shared_intr(void *);
 
-static const struct tulip_pci_product *
-tlp_pci_lookup(const struct pci_attach_args *pa)
-{
-	const struct tulip_pci_product *tpp;
-
-	/* Don't match lmc cards */
-	if (PCI_VENDOR(pci_conf_read(pa->pa_pc, pa->pa_tag,
-	    PCI_SUBSYS_ID_REG)) == PCI_VENDOR_LMC)
-		return NULL;
-
-	for (tpp = tlp_pci_products; tpp->tpp_chip != TULIP_CHIP_INVALID;
-	    tpp++) {
-		if (PCI_VENDOR(pa->pa_id) == tpp->tpp_vendor &&
-		    PCI_PRODUCT(pa->pa_id) == tpp->tpp_product)
-			return tpp;
-	}
-	return NULL;
-}
-
 static void
 tlp_pci_get_quirks(struct tulip_pci_softc *psc, const uint8_t *enaddr,
     const struct tlp_pci_quirks *tpq)
@@ -332,9 +333,15 @@ tlp_pci_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
-	if (tlp_pci_lookup(pa) != NULL)
+	if (pci_compatible_match(pa, compat_data)) {
+		/* Don't match lmc cards */
+		const pcireg_t subsys = pci_conf_read(pa->pa_pc, pa->pa_tag,
+		    PCI_SUBSYS_ID_REG);
+		if (PCI_VENDOR(subsys) == PCI_VENDOR_LMC) {
+			return 0;
+		}
 		return 10;	/* beat if_de.c */
-
+	}
 	return 0;
 }
 
@@ -350,7 +357,7 @@ tlp_pci_attach(device_t parent, device_t self, void *aux)
 	bus_space_tag_t iot, memt;
 	bus_space_handle_t ioh, memh;
 	int ioh_valid, memh_valid, i, j;
-	const struct tulip_pci_product *tpp;
+	const struct device_compatible_entry *dce;
 	prop_data_t ea;
 	uint8_t enaddr[ETHER_ADDR_LEN];
 	uint32_t val = 0;
@@ -366,12 +373,9 @@ tlp_pci_attach(device_t parent, device_t self, void *aux)
 
 	LIST_INIT(&psc->sc_intrslaves);
 
-	tpp = tlp_pci_lookup(pa);
-	if (tpp == NULL) {
-		printf("\n");
-		panic("tlp_pci_attach: impossible");
-	}
-	sc->sc_chip = tpp->tpp_chip;
+	dce = pci_compatible_lookup(pa, compat_data);
+	KASSERT(dce != NULL);
+	sc->sc_chip = (tulip_chip_t)dce->value;
 
 	/*
 	 * By default, Tulip registers are 8 bytes long (4 bytes
