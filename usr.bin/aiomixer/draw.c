@@ -1,4 +1,4 @@
-/* $NetBSD: draw.c,v 1.3 2021/05/07 19:37:03 nia Exp $ */
+/* $NetBSD: draw.c,v 1.4 2021/05/08 13:28:45 nia Exp $ */
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -113,6 +113,8 @@ draw_control(struct aiomixer *aio,
 		    aio->channels_unlocked, selected);
 		break;
 	}
+
+	wprintw(control->widgetpad, "\n");
 }
 
 void
