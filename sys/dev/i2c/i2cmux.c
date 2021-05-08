@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cmux.c,v 1.5.2.2 2021/05/08 14:23:15 thorpej Exp $	*/
+/*	$NetBSD: i2cmux.c,v 1.5.2.3 2021/05/08 15:10:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2cmux.c,v 1.5.2.2 2021/05/08 14:23:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2cmux.c,v 1.5.2.3 2021/05/08 15:10:44 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -157,98 +157,53 @@ iicmux_attach_bus(struct iicmux_softc * const sc, devhandle_t devhandle,
 	    CFARG_EOL);
 }
 
-#if defined(I2CMUX_USE_FDT)
-static int
-iicmux_fdt_count_children(struct iicmux_softc * const sc)
+static bool
+iicmux_count_busses_callback(device_t self, devhandle_t devhandle,
+    void *v __unused)
 {
-	int phandle = devhandle_to_of(sc->sc_i2c_mux_devhandle);
-	char name[32];
-	int child, count;
+	struct iicmux_softc *sc = device_private(self);
 
- restart:
-	for (child = OF_child(phandle), count = 0; child;
-	     child = OF_peer(child)) {
-		if (OF_getprop(child, "name", name, sizeof(name)) <= 0) {
-			continue;
+#if defined(I2CMUX_USE_FDT)
+	if (devhandle_type(devhandle) == DEVHANDLE_TYPE_OF) {
+		char name[32];
+
+		if (OF_getprop(devhandle_to_of(devhandle), "name", name,
+			       sizeof(name)) <= 0) {
+			/* Skip this DT node (shouldn't happen). */
+			return true;	/* keep enumerating */
 		}
 		if (strcmp(name, "i2c-mux") == 0) {
-			phandle = child;
-			goto restart;
+			/*
+			 * This DT node is the actual mux node; reset the
+			 * our devhandle and restart enumeration.
+			 */
+			device_set_handle(self, devhandle);
+			sc->sc_nbusses = -1;
+			return false;	/* stop enumerating */
 		}
-		count++;
 	}
-
-	/* phandle may have changed. */
-	sc->sc_i2c_mux_devhandle = devhandle_from_of(phandle);
-	return count;
-}
-
-static void
-iicmux_attach_fdt(struct iicmux_softc * const sc)
-{
-	int phandle = devhandle_to_of(sc->sc_i2c_mux_devhandle);
-
-	sc->sc_nbusses = iicmux_fdt_count_children(sc);
-	if (sc->sc_nbusses == 0) {
-		return;
-	}
-
-	/* sc_i2c_mux_devhandle may have changed. */
-	phandle = devhandle_to_of(sc->sc_i2c_mux_devhandle);
-
-	sc->sc_busses = kmem_zalloc(sizeof(*sc->sc_busses) * sc->sc_nbusses,
-	    KM_SLEEP);
-
-	int child, idx;
-	for (child = OF_child(phandle), idx = 0; child;
-	     child = OF_peer(child), idx++) {
-		KASSERT(idx < sc->sc_nbusses);
-		iicmux_attach_bus(sc, devhandle_from_of(child), idx);
-	}
-}
 #endif /* I2CMUX_USE_FDT */
 
-#if defined(I2CMUX_USE_ACPI)
-static void
-iicmux_attach_acpi(struct iicmux_softc * const sc)
-{
-	ACPI_HANDLE hdl = devhandle_to_acpi(sc->sc_i2c_mux_devhandle);
-	struct acpi_devnode *devnode, *ad;
-	int idx;
-
-	devnode = acpi_match_node(hdl);
-	KASSERT(devnode != NULL);
-
-	/* Count child busses */
-	sc->sc_nbusses = 0;
-	SIMPLEQ_FOREACH(ad, &devnode->ad_child_head, ad_child_list) {
-		if (ad->ad_devinfo->Type != ACPI_TYPE_DEVICE ||
-		    !acpi_device_present(ad->ad_handle)) {
-			continue;
-		}
-		sc->sc_nbusses++;
-	}
-
-	sc->sc_busses = kmem_zalloc(sizeof(*sc->sc_busses) * sc->sc_nbusses,
-	    KM_SLEEP);
-
-	/* Attach child busses */
-	idx = 0;
-	SIMPLEQ_FOREACH(ad, &devnode->ad_child_head, ad_child_list) {
-		if (ad->ad_devinfo->Type != ACPI_TYPE_DEVICE ||
-		    !acpi_device_present(ad->ad_handle)) {
-			continue;
-		}
-		iicmux_attach_bus(sc, devhandle_from_acpi(ad->ad_handle), idx);
-		idx++;
-	}
+	sc->sc_nbusses++;
+	return true;			/* keep enumerating */
 }
-#endif /* I2CMUX_USE_ACPI */
+
+static bool
+iicmux_attach_busses_callback(device_t self, devhandle_t devhandle, void *v)
+{
+	struct iicmux_softc *sc = device_private(self);
+	int * const idxp = v;
+
+	KASSERT(*idxp < sc->sc_nbusses);
+	iicmux_attach_bus(sc, devhandle, (*idxp)++);
+
+	return true;			/* keep enumerating */
+}
 
 void
 iicmux_attach(struct iicmux_softc * const sc)
 {
-	devhandle_t devhandle = device_handle(sc->sc_dev);
+	int error, idx;
 
 	/*
 	 * We expect sc->sc_config and sc->sc_i2c_parent to be initialized
@@ -256,14 +211,6 @@ iicmux_attach(struct iicmux_softc * const sc)
 	 */
 	KASSERT(sc->sc_config != NULL);
 	KASSERT(sc->sc_i2c_parent != NULL);
-
-	/*
-	 * We start out assuming that the i2c bus nodes are children of
-	 * our own node.  We'll adjust later if we encounter a subnode
-	 * while enumerating our child busses that itself is defined as
-	 * the mux node according to our device tree bindings.
-	 */
-	sc->sc_i2c_mux_devhandle = devhandle;
 
 	/*
 	 * Gather up all of the various bits of information needed
@@ -276,25 +223,39 @@ iicmux_attach(struct iicmux_softc * const sc)
 	}
 
 	/*
-	 * Do configuration method (OF, ACPI) specific setup.
+	 * Count the number of busses behind this mux.
 	 */
-	switch (devhandle_type(devhandle)) {
-#if defined(I2CMUX_USE_FDT)
-	case DEVHANDLE_TYPE_OF:
-		iicmux_attach_fdt(sc);
-		break;
-#endif /* I2CMUX_USE_FDT */
+ count_again:
+	error = device_enumerate_children(sc->sc_dev,
+	    iicmux_count_busses_callback, NULL);
+	if (error) {
+		aprint_error_dev(sc->sc_dev,
+		    "unable to enumerate busses to count, error = %d\n", error);
+		return;
+	}
+	if (sc->sc_nbusses == -1) {
+		/*
+		 * We had to reset our devhandle to a different device
+		 * tree node.  We need to try counting again.
+		 */
+		sc->sc_nbusses = 0;
+		goto count_again;
+	}
+	if (sc->sc_nbusses == 0) {
+		/* No busses; no more work to do. */
+		return;
+	}
 
-#if defined(I2CMUX_USE_ACPI)
-	case DEVHANDLE_TYPE_ACPI:
-		iicmux_attach_acpi(sc);
-		break;
-#endif /* I2CMUX_USE_ACPI */
+	sc->sc_busses = kmem_zalloc(sizeof(*sc->sc_busses) * sc->sc_nbusses,
+	    KM_SLEEP);
 
-	default:
-		aprint_error_dev(sc->sc_dev, "could not configure mux: "
-		    "handle type %d not supported\n",
-		    devhandle_type(devhandle));
-		break;
+	/* Now attach them. */
+	idx = 0;
+	error = device_enumerate_children(sc->sc_dev,
+	    iicmux_attach_busses_callback, &idx);
+	if (error) {
+		aprint_error_dev(sc->sc_dev,
+		    "unable to enumerate busses to attach, error = %d\n",
+		    error);
 	}
 }
