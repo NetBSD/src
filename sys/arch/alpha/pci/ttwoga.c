@@ -1,4 +1,4 @@
-/* $NetBSD: ttwoga.c,v 1.16 2021/04/24 23:36:23 thorpej Exp $ */
+/* $NetBSD: ttwoga.c,v 1.17 2021/05/08 00:08:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ttwoga.c,v 1.16 2021/04/24 23:36:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttwoga.c,v 1.17 2021/05/08 00:08:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,27 +62,27 @@ __KERNEL_RCSID(0, "$NetBSD: ttwoga.c,v 1.16 2021/04/24 23:36:23 thorpej Exp $");
 
 #include "locators.h"
 
-int	ttwogamatch(device_t, cfdata_t, void *);
-void	ttwogaattach(device_t, device_t, void *);
+static int	ttwogamatch(device_t, cfdata_t, void *);
+static void	ttwogaattach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(ttwoga, 0,
     ttwogamatch, ttwogaattach, NULL, NULL);
 
-int	ttwogaprint(void *, const char *);
+static int	ttwogaprint(void *, const char *);
 
-int	ttwopcimatch(device_t, cfdata_t, void *);
-void	ttwopciattach(device_t, device_t, void *);
+static int	ttwopcimatch(device_t, cfdata_t, void *);
+static void	ttwopciattach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(ttwopci, 0,
     ttwopcimatch, ttwopciattach, NULL, NULL);
 
-int	ttwosableioprint(void *, const char *);
+static int	ttwosableioprint(void *, const char *);
 
 /*
  * There can be only one, but it might have 2 primary PCI busses.
  */
-int ttwogafound;
-struct ttwoga_config ttwoga_configuration[2];
+static int ttwogafound;
+static struct ttwoga_config ttwoga_configuration[2];
 
 /* CBUS address bias for Gamma systems. */
 bus_addr_t ttwoga_gamma_cbus_bias;
@@ -90,7 +90,7 @@ bus_addr_t ttwoga_gamma_cbus_bias;
 #define	GIGABYTE	(1024UL * 1024UL * 1024UL)
 #define	MEGABYTE	(1024UL * 1024UL)
 
-const struct ttwoga_sysmap ttwoga_sysmap[2] = {
+static const struct ttwoga_sysmap ttwoga_sysmap[2] = {
 /*	  Base			System size	Bus size	*/
 	{ T2_PCI0_SIO_BASE,	256UL * MEGABYTE, 8UL * MEGABYTE,
 	  T2_PCI0_SMEM_BASE,	4UL * GIGABYTE,	128UL * MEGABYTE,
@@ -107,7 +107,7 @@ const struct ttwoga_sysmap ttwoga_sysmap[2] = {
 #undef GIGABYTE
 #undef MEGABYTE
 
-int
+static int
 ttwogamatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
@@ -122,7 +122,7 @@ ttwogamatch(device_t parent, cfdata_t match, void *aux)
 	return (1);
 }
 
-void
+static void
 ttwogaattach(device_t parent, device_t self, void *aux)
 {
 	struct pcibus_attach_args pba;
@@ -149,7 +149,7 @@ ttwogaattach(device_t parent, device_t self, void *aux)
 	}
 }
 
-int
+static int
 ttwogaprint(void *aux, const char *pnp)
 {
 	struct pcibus_attach_args *pba = aux;
@@ -204,7 +204,7 @@ ttwoga_init(int hose, int mallocsafe)
 	return (tcp);
 }
 
-int
+static int
 ttwopcimatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct pcibus_attach_args *pba = aux;
@@ -216,7 +216,7 @@ ttwopcimatch(device_t parent, cfdata_t match, void *aux)
 	return (1);
 }
 
-void
+static void
 ttwopciattach(device_t parent, device_t self, void *aux)
 {
 	struct pcibus_attach_args *pba = aux, npba;
@@ -273,7 +273,7 @@ ttwopciattach(device_t parent, device_t self, void *aux)
 	    CFARG_EOL);
 }
 
-int
+static int
 ttwosableioprint(void *aux, const char *pnp)
 {
 	struct pcibus_attach_args *pba = aux;

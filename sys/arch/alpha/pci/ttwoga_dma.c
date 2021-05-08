@@ -1,4 +1,4 @@
-/* $NetBSD: ttwoga_dma.c,v 1.10 2021/05/05 02:15:18 thorpej Exp $ */
+/* $NetBSD: ttwoga_dma.c,v 1.11 2021/05/08 00:08:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ttwoga_dma.c,v 1.10 2021/05/05 02:15:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttwoga_dma.c,v 1.11 2021/05/08 00:08:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -339,7 +339,7 @@ ttwoga_bus_dmamap_load_raw_sgmap(bus_dma_tag_t t, bus_dmamap_t map,
 /*
  * Unload an T2 DMA map.
  */
-void
+static void
 ttwoga_bus_dmamap_unload_sgmap(bus_dma_tag_t t, bus_dmamap_t map)
 {
 	struct ttwoga_config *tcp = t->_cookie;

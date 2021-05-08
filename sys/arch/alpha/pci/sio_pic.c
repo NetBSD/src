@@ -1,4 +1,4 @@
-/* $NetBSD: sio_pic.c,v 1.47 2021/05/07 16:58:34 thorpej Exp $ */
+/* $NetBSD: sio_pic.c,v 1.48 2021/05/08 00:08:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2020 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.47 2021/05/07 16:58:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.48 2021/05/08 00:08:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,9 +102,9 @@ __KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.47 2021/05/07 16:58:34 thorpej Exp $")
  * Private functions and variables.
  */
 
-bus_space_tag_t sio_iot;
-pci_chipset_tag_t sio_pc;
-bus_space_handle_t sio_ioh_icu1, sio_ioh_icu2;
+static bus_space_tag_t sio_iot;
+static pci_chipset_tag_t sio_pc;
+static bus_space_handle_t sio_ioh_icu1, sio_ioh_icu2;
 
 #define	ICU_LEN		16		/* number of ISA IRQs */
 
@@ -262,7 +262,7 @@ cy82c693_write_elcr(int elcr, uint8_t val)
  * they should panic.
  */
 
-int (*const sio_elcr_setup_funcs[])(void) = {
+static int (*const sio_elcr_setup_funcs[])(void) = {
 	cy82c693_setup_elcr,
 	i82378_setup_elcr,
 	NULL,
