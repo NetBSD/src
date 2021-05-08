@@ -1,4 +1,4 @@
-/* $NetBSD: draw.c,v 1.4 2021/05/08 13:28:45 nia Exp $ */
+/* $NetBSD: draw.c,v 1.5 2021/05/08 14:38:26 nia Exp $ */
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -137,7 +137,7 @@ draw_screen(struct aiomixer *aio)
 	pnoutrefresh(aio->classes[aio->curclass].widgetpad,
 	    aio->class_scroll_y, 0,
 	    3, 0,
-	    1 + aio->classes[aio->curclass].height, getmaxx(stdscr));
+	    getmaxy(stdscr) - 3, getmaxx(stdscr));
 	doupdate();
 }
 
@@ -360,7 +360,13 @@ create_widgets(struct aiomixer *aio)
 			control->widget_y = class->height;
 			class->height += control->height;
 		}
+#ifdef notyet
+		/*
+		 * NetBSD curses wresize() bounds the pad to the height of
+		 * the screen even though it's already taller. Probably a bug.
+		 */
 		wresize(class->widgetpad, class->height, getmaxx(stdscr));
+#endif
 	}
 
 	aio->last_max_x = getmaxx(stdscr);
