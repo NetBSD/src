@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cmux.c,v 1.5 2021/04/24 23:36:54 thorpej Exp $	*/
+/*	$NetBSD: i2cmux.c,v 1.5.2.1 2021/05/08 02:44:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -29,26 +29,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if defined(__i386__) || defined(__amd64__) || defined(__aarch64__)
-#include "acpica.h"
-#endif
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2cmux.c,v 1.5 2021/04/24 23:36:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2cmux.c,v 1.5.2.1 2021/05/08 02:44:22 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/kmem.h>
 
-#include <dev/fdt/fdtvar.h>
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/i2cmuxvar.h>
-
-#if NACPICA > 0
-#include <dev/acpi/acpivar.h>
-#include <dev/acpi/acpi_i2c.h>
-#endif
 
 /*
  * i2c mux
@@ -120,33 +110,6 @@ iicmux_exec(void * const v, i2c_op_t const op, i2c_addr_t const addr,
 
 /*****************************************************************************/
 
-static int
-iicmux_count_children(struct iicmux_softc * const sc)
-{
-	char name[32];
-	int child, count;
-
- restart:
-	for (child = OF_child(sc->sc_i2c_mux_phandle), count = 0; child;
-	     child = OF_peer(child)) {
-		if (OF_getprop(child, "name", name, sizeof(name)) <= 0) {
-			continue;
-		}
-		if (strcmp(name, "i2c-mux") == 0) {
-			/*
-			 * The node we encountered is the acutal parent
-			 * of the i2c bus children.  Stash its phandle
-			 * and restart the enumeration.
-			 */
-			sc->sc_i2c_mux_phandle = child;
-			goto restart;
-		}
-		count++;
-	}
-
-	return count;
-}
-
 /* XXX iicbus_print() should be able to do this. */
 static int
 iicmux_print(void * const aux, const char * const pnp)
@@ -162,15 +125,14 @@ iicmux_print(void * const aux, const char * const pnp)
 }
 
 static void
-iicmux_attach_bus(struct iicmux_softc * const sc,
-    uintptr_t const handle, enum i2c_cookie_type handletype, int const busidx)
+iicmux_attach_bus(struct iicmux_softc * const sc, devhandle_t devhandle,
+    int const busidx)
 {
 	struct iicmux_bus * const bus = &sc->sc_busses[busidx];
 
 	bus->mux = sc;
 	bus->busidx = busidx;
-	bus->handle = handle;
-	bus->handletype = handletype;
+	bus->devhandle = devhandle;
 
 	bus->bus_data = sc->sc_config->get_bus_info(bus);
 	if (bus->bus_data == NULL) {
@@ -185,63 +147,89 @@ iicmux_attach_bus(struct iicmux_softc * const sc,
 	bus->controller.ic_release_bus = iicmux_release_bus;
 	bus->controller.ic_exec = iicmux_exec;
 
-	switch (handletype) {
-	case I2C_COOKIE_OF:
+	switch (devhandle_type(devhandle)) {
+#if defined(I2CMUX_USE_FDT)
+	case DEVHANDLE_TYPE_OF:
 		fdtbus_register_i2c_controller(&bus->controller,
-		    (int)bus->handle);
+		    devhandle_to_of(devhandle));
 
-		fdtbus_attach_i2cbus(sc->sc_dev, (int)bus->handle,
+		fdtbus_attach_i2cbus(sc->sc_dev, devhandle_to_of(devhandle),
 		    &bus->controller, iicmux_print);
 		break;
-#if NACPICA > 0
-	case I2C_COOKIE_ACPI: {
-		struct acpi_devnode *ad = acpi_match_node((ACPI_HANDLE)handle);
-		KASSERT(ad != NULL);
+#endif /* I2CMUX_USE_FDT */
+
+	case DEVHANDLE_TYPE_INVALID:
+		aprint_error_dev(sc->sc_dev, "invalid bus device handle\n");
+		return;
+
+	default: {
 		struct i2cbus_attach_args iba = {
 			.iba_tag = &bus->controller,
-			.iba_child_devices = acpi_enter_i2c_devs(NULL, ad)
 		};
-		config_found(sc->sc_dev, &iba, iicbus_print, CFARG_EOL);
-	}	break;
-#endif
-	default:
-		aprint_error_dev(sc->sc_dev, "unknown handle type\n");
+		config_found(sc->sc_dev, &iba, iicmux_print,
+		    CFARG_DEVHANDLE, devhandle,
+		    CFARG_EOL);
 		break;
+	    }
 	}
+}
+
+#if defined(I2CMUX_USE_FDT)
+static int
+iicmux_fdt_count_children(struct iicmux_softc * const sc)
+{
+	int phandle = devhandle_to_of(sc->sc_i2c_mux_devhandle);
+	char name[32];
+	int child, count;
+
+ restart:
+	for (child = OF_child(phandle), count = 0; child;
+	     child = OF_peer(child)) {
+		if (OF_getprop(child, "name", name, sizeof(name)) <= 0) {
+			continue;
+		}
+		if (strcmp(name, "i2c-mux") == 0) {
+			phandle = child;
+			goto restart;
+		}
+		count++;
+	}
+
+	/* phandle may have changed. */
+	sc->sc_i2c_mux_devhandle = devhandle_from_of(phandle);
+	return count;
 }
 
 static void
 iicmux_attach_fdt(struct iicmux_softc * const sc)
 {
-	/*
-	 * We start out assuming that the i2c bus nodes are children of
-	 * our own node.  We'll adjust later if we encounter an "i2c-mux"
-	 * node when counting our children.  If we encounter such a node,
-	 * then it's that node that is the parent of the i2c bus children.
-	 */
-	sc->sc_i2c_mux_phandle = (int)sc->sc_handle;
+	int phandle = devhandle_to_of(sc->sc_i2c_mux_devhandle);
 
-	sc->sc_nbusses = iicmux_count_children(sc);
+	sc->sc_nbusses = iicmux_fdt_count_children(sc);
 	if (sc->sc_nbusses == 0) {
 		return;
 	}
+
+	/* sc_i2c_mux_devhandle may have changed. */
+	phandle = devhandle_to_of(sc->sc_i2c_mux_devhandle);
 
 	sc->sc_busses = kmem_zalloc(sizeof(*sc->sc_busses) * sc->sc_nbusses,
 	    KM_SLEEP);
 
 	int child, idx;
-	for (child = OF_child(sc->sc_i2c_mux_phandle), idx = 0; child;
+	for (child = OF_child(phandle), idx = 0; child;
 	     child = OF_peer(child), idx++) {
 		KASSERT(idx < sc->sc_nbusses);
-		iicmux_attach_bus(sc, child, I2C_COOKIE_OF, idx);
+		iicmux_attach_bus(sc, devhandle_from_of(child), idx);
 	}
 }
+#endif /* I2CMUX_USE_FDT */
 
-#if NACPICA > 0
+#if defined(I2CMUX_USE_ACPI)
 static void
 iicmux_attach_acpi(struct iicmux_softc * const sc)
 {
-	ACPI_HANDLE hdl = (ACPI_HANDLE)sc->sc_handle;
+	ACPI_HANDLE hdl = devhandle_to_acpi(sc->sc_i2c_mux_devhandle);
 	struct acpi_devnode *devnode, *ad;
 	int idx;
 
@@ -268,23 +256,31 @@ iicmux_attach_acpi(struct iicmux_softc * const sc)
 		    !acpi_device_present(ad->ad_handle)) {
 			continue;
 		}
-		iicmux_attach_bus(sc, (uintptr_t)ad->ad_handle,
-		    I2C_COOKIE_ACPI, idx);
+		iicmux_attach_bus(sc, devhandle_from_acpi(ad->ad_handle), idx);
 		idx++;
 	}
 }
-#endif
+#endif /* I2CMUX_USE_ACPI */
 
 void
 iicmux_attach(struct iicmux_softc * const sc)
 {
+	devhandle_t devhandle = device_handle(sc->sc_dev);
+
 	/*
-	 * We expect sc->sc_handle, sc->sc_config, and sc->sc_i2c_parent
-	 * to be initialized by the front-end.
+	 * We expect sc->sc_config and sc->sc_i2c_parent to be initialized
+	 * by the front-end.
 	 */
-	KASSERT(sc->sc_handle > 0);
 	KASSERT(sc->sc_config != NULL);
 	KASSERT(sc->sc_i2c_parent != NULL);
+
+	/*
+	 * We start out assuming that the i2c bus nodes are children of
+	 * our own node.  We'll adjust later if we encounter a subnode
+	 * while enumerating our child busses that itself is defined as
+	 * the mux node according to our device tree bindings.
+	 */
+	sc->sc_i2c_mux_devhandle = devhandle;
 
 	/*
 	 * Gather up all of the various bits of information needed
@@ -299,18 +295,23 @@ iicmux_attach(struct iicmux_softc * const sc)
 	/*
 	 * Do configuration method (OF, ACPI) specific setup.
 	 */
-	switch (sc->sc_handletype) {
-	case I2C_COOKIE_OF:
+	switch (devhandle_type(devhandle)) {
+#if defined(I2CMUX_USE_FDT)
+	case DEVHANDLE_TYPE_OF:
 		iicmux_attach_fdt(sc);
 		break;
-#if NACPICA > 0
-	case I2C_COOKIE_ACPI:
+#endif /* I2CMUX_USE_FDT */
+
+#if defined(I2CMUX_USE_ACPI)
+	case DEVHANDLE_TYPE_ACPI:
 		iicmux_attach_acpi(sc);
 		break;
-#endif
+#endif /* I2CMUX_USE_ACPI */
+
 	default:
 		aprint_error_dev(sc->sc_dev, "could not configure mux: "
-		    "handle type %u not supported\n", sc->sc_handletype);
+		    "handle type %d not supported\n",
+		    devhandle_type(devhandle));
 		break;
 	}
 }
