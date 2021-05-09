@@ -1,4 +1,4 @@
-/* $NetBSD: siisata_pci.c,v 1.20 2018/10/25 21:03:19 jdolecek Exp $ */
+/* $NetBSD: siisata_pci.c,v 1.20.4.1 2021/05/09 07:09:27 martin Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata_pci.c,v 1.20 2018/10/25 21:03:19 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata_pci.c,v 1.20.4.1 2021/05/09 07:09:27 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -82,7 +82,10 @@ struct siisata_pci_board {
 	pci_product_id_t	spb_prod;
 	uint16_t		spb_port;
 	uint16_t		spb_chip;
+	uint8_t			sbp_flags;
 };
+
+#define SIISATA_BROKEN_MSI		0x01
 
 static const struct siisata_pci_board siisata_pci_boards[] = {
 	{
@@ -90,6 +93,11 @@ static const struct siisata_pci_board siisata_pci_boards[] = {
 		.spb_prod = PCI_PRODUCT_CMDTECH_3124,
 		.spb_port = 4,
 		.spb_chip = 3124,
+		/*
+		 * SiI3124 seems to be PCI/PCI-X chip behind PCI-e bridge,
+		 * claims MSI support but interrups don't work with MSI on.
+		 */
+		.sbp_flags = SIISATA_BROKEN_MSI,
 	},
 	{
 		.spb_vend = PCI_VENDOR_CMDTECH,
@@ -157,6 +165,9 @@ siisata_pci_attach(device_t parent, device_t self, void *aux)
 	bus_size_t grsize, prsize;
 	char intrbuf[PCI_INTRSTR_LEN];
 
+	spbp = siisata_pci_lookup(pa);
+	KASSERT(spbp != NULL);
+
 	sc->sc_atac.atac_dev = self;
 
 	psc->sc_pc = pa->pa_pc;
@@ -210,8 +221,19 @@ siisata_pci_attach(device_t parent, device_t self, void *aux)
 	else
 		sc->sc_dmat = pa->pa_dmat;
 
+	int counts[PCI_INTR_TYPE_SIZE] = {
+ 		[PCI_INTR_TYPE_INTX] = 1,
+ 		[PCI_INTR_TYPE_MSI] = 1,
+ 		[PCI_INTR_TYPE_MSIX] = 1,
+ 	};
+	int max_type = PCI_INTR_TYPE_MSIX;
+
+	if (spbp->sbp_flags & SIISATA_BROKEN_MSI) {
+		max_type = PCI_INTR_TYPE_INTX;
+	}
+
 	/* map interrupt */
-	if (pci_intr_alloc(pa, &psc->sc_pihp, NULL, 0) != 0) {
+	if (pci_intr_alloc(pa, &psc->sc_pihp, counts, max_type) != 0) {
 		bus_space_unmap(sc->sc_grt, sc->sc_grh, grsize);
 		bus_space_unmap(sc->sc_prt, sc->sc_prh, prsize);
 		aprint_error_dev(self, "couldn't map interrupt\n");
@@ -235,8 +257,6 @@ siisata_pci_attach(device_t parent, device_t self, void *aux)
 		intrstr ? intrstr : "unknown interrupt");
 
 	/* fill in number of ports on this device */
-	spbp = siisata_pci_lookup(pa);
-	KASSERT(spbp != NULL);
 	sc->sc_atac.atac_nchannels = spbp->spb_port;
 
 	/* set the necessary bits in case the firmware didn't */
