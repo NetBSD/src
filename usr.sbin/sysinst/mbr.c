@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.38 2021/01/31 22:45:46 rillig Exp $ */
+/*	$NetBSD: mbr.c,v 1.39 2021/05/09 10:37:49 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1400,6 +1400,7 @@ mbr_do_get_part_info(const struct disk_partitions *arg, part_id id,
 		case MBR_PTYPE_SPEEDSTOR_16S:
 		case MBR_PTYPE_EFI:
 			info->fs_type = FS_MSDOS;
+			info->fs_sub_type = mp->mbrp_type;
 			break;
 		case MBR_PTYPE_LNXEXT2:
 			info->fs_type = FS_EX2FS;
