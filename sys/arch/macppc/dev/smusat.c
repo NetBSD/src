@@ -41,8 +41,6 @@
 #include <dev/sysmon/sysmonvar.h>
 #include <dev/sysmon/sysmon_taskq.h>
 
-#include <macppc/dev/smuiicvar.h>
-
 #include "opt_smusat.h"
 
 extern int smu_get_datablock(int, uint8_t *, size_t);
