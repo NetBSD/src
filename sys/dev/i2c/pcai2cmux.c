@@ -1,4 +1,4 @@
-/*	$NetBSD: pcai2cmux.c,v 1.8.4.1 2021/05/08 02:44:22 thorpej Exp $	*/
+/*	$NetBSD: pcai2cmux.c,v 1.8.4.2 2021/05/09 23:26:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcai2cmux.c,v 1.8.4.1 2021/05/08 02:44:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcai2cmux.c,v 1.8.4.2 2021/05/09 23:26:53 thorpej Exp $");
 
 /*
  * Driver for NXP PCA954x / PCA984x I2C switches and multiplexers.
@@ -56,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: pcai2cmux.c,v 1.8.4.1 2021/05/08 02:44:22 thorpej Ex
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <dev/fdt/fdtvar.h>
 #include <dev/i2c/i2cmuxvar.h>
 
 /* There are a maximum of 8 busses supported. */
