@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.20 2020/11/28 13:05:58 jmcneill Exp $ */
+/*	$NetBSD: md.c,v 1.21 2021/05/09 10:39:00 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -333,10 +333,12 @@ bool
 md_parts_use_wholedisk(struct disk_partitions *parts)
 {
 	struct disk_part_info boot_part = {
-		.size = boardtype == BOARD_TYPE_NORMAL ? 
+		.size = boardtype == BOARD_TYPE_NORMAL ?
 		    PART_BOOT_LARGE/parts->bytes_per_sector :
 		    PART_BOOT/parts->bytes_per_sector,
-		.fs_type = PART_BOOT_TYPE, .fs_sub_type = MBR_PTYPE_FAT16L,
+		.fs_type = PART_BOOT_TYPE,
+		.fs_sub_type = boardtype == BOARD_TYPE_NORMAL ?
+		    MBR_PTYPE_FAT32L : MBR_PTYPE_FAT16L,
 	};
 
 	return parts_use_wholedisk(parts, 1, &boot_part);
@@ -368,15 +370,15 @@ evbarm_part_defaults(struct pm_devs *my_pm, struct part_usage_info *infos,
 {
 	size_t i;
 
-	if (boardtype != BOARD_TYPE_NORMAL)
-		return;
-
 	for (i = 0; i < num_usage_infos; i++) {
 		if (infos[i].fs_type == PART_BOOT_TYPE &&
 		    infos[i].mount[0] != 0 &&
 		    strcmp(infos[i].mount, PART_BOOT_MOUNT) == 0) {
-			infos[i].size = PART_BOOT_LARGE /
-			    my_pm->parts->bytes_per_sector;
+			infos[i].size = boardtype == BOARD_TYPE_NORMAL ?
+			    PART_BOOT_LARGE/my_pm->parts->bytes_per_sector :
+			    PART_BOOT/my_pm->parts->bytes_per_sector;
+			infos[i].fs_version = boardtype == BOARD_TYPE_NORMAL ?
+			    MBR_PTYPE_FAT32L : MBR_PTYPE_FAT16L; 
 			return;
 		}
 	}
