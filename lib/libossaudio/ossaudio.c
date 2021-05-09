@@ -1,7 +1,7 @@
-/*	$NetBSD: ossaudio.c,v 1.66 2021/03/15 10:58:05 nia Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.67 2021/05/09 11:28:25 nia Exp $	*/
 
 /*-
- * Copyright (c) 1997, 2020 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2021 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ossaudio.c,v 1.66 2021/03/15 10:58:05 nia Exp $");
+__RCSID("$NetBSD: ossaudio.c,v 1.67 2021/05/09 11:28:25 nia Exp $");
 
 /*
  * This is an Open Sound System compatibility layer, which provides
@@ -127,6 +127,7 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 	int perrors, rerrors;
 	static int totalperrors = 0;
 	static int totalrerrors = 0;
+	oss_mixer_enuminfo *ei;
 	oss_count_t osscount;
 	int idat;
 	int retval;
@@ -134,6 +135,8 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 	idat = 0;
 
 	switch (com) {
+	case SNDCTL_DSP_HALT_INPUT:
+	case SNDCTL_DSP_HALT_OUTPUT:
 	case SNDCTL_DSP_RESET:
 		retval = ioctl(fd, AUDIO_FLUSH, 0);
 		if (retval < 0)
@@ -293,6 +296,7 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		 * the 24-bit formats should be handled properly instead
 		 * of falling back to 32 bits.
 		 */
+		case AFMT_S24_PACKED:
 		case AFMT_S24_LE:
 		case AFMT_S32_LE:
 			tmpinfo.play.precision =
@@ -434,10 +438,6 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 	case SNDCTL_DSP_SETFRAGMENT:
 		AUDIO_INITINFO(&tmpinfo);
 		idat = INTARG;
-		if ((idat & 0xffff) < 4 || (idat & 0xffff) > 17) {
-			errno = EINVAL;
-			return -1;
-		}
 		tmpinfo.blocksize = 1 << (idat & 0xffff);
 		tmpinfo.hiwat = ((unsigned)idat >> 16) & 0x7fff;
 		if (tmpinfo.hiwat == 0)	/* 0 means set to max */
@@ -662,6 +662,21 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 	case SNDCTL_DSP_SETSYNCRO:
 		errno = EINVAL;
 		return -1; /* XXX unimplemented */
+	case SNDCTL_DSP_GET_PLAYTGT_NAMES:
+	case SNDCTL_DSP_GET_RECSRC_NAMES:
+		ei = (oss_mixer_enuminfo *)argp;
+		ei->nvalues = 1;
+		ei->version = 0;
+		ei->strindex[0] = 0;
+		strlcpy(ei->strings, "primary", OSS_ENUM_STRINGSIZE);
+		break;
+	case SNDCTL_DSP_SET_PLAYTGT:
+	case SNDCTL_DSP_SET_RECSRC:
+	case SNDCTL_DSP_GET_PLAYTGT:
+	case SNDCTL_DSP_GET_RECSRC:
+		/* We have one recording source and play target. */
+		INTARG = 0;
+		break;
 	default:
 		errno = EINVAL;
 		return -1;
@@ -1114,7 +1129,7 @@ mixer_oss4_ioctl(int fd, unsigned long com, void *argp)
 		    "%s %s", dev.name, dev.version);
 		tmpai->busy = 0;
 		tmpai->pid = -1;
-		ioctl(newfd, SNDCTL_DSP_GETFMTS, &tmpai->iformats);
+		audio_ioctl(newfd, SNDCTL_DSP_GETFMTS, &tmpai->iformats);
 		tmpai->oformats = tmpai->iformats;
 		tmpai->magic = -1; /* reserved for "internal use" */
 		memset(tmpai->cmd, 0, sizeof(tmpai->cmd));
@@ -1603,17 +1618,40 @@ global_oss4_ioctl(int fd, unsigned long com, void *argp)
 static int
 getcaps(int fd, int *out)
 {
+	struct audio_info info;
 	int props, caps;
+	int nchannels;
 
 	if (ioctl(fd, AUDIO_GETPROPS, &props) < 0)
 		return -1;
 
-	caps = DSP_CAP_TRIGGER;
+	if (ioctl(fd, AUDIO_GETFORMAT, &info) < 0)
+		return -1;
+
+	caps = 0;
+	caps |= PCM_CAP_TRIGGER;
+	caps |= PCM_CAP_MULTI;
+	caps |= PCM_CAP_FREERATE;
+
+	nchannels = (props & AUDIO_PROP_PLAYBACK) ?
+	    info.play.channels : info.record.channels;
+
+	switch (nchannels) {
+	case 2:
+		caps |= DSP_CH_STEREO;
+		break;
+	case 1:
+		caps |= DSP_CH_MONO;
+		break;
+	default:
+		caps |= DSP_CH_MULTI;
+		break;
+	}
 
 	if (props & AUDIO_PROP_FULLDUPLEX)
-		caps |= DSP_CAP_DUPLEX;
+		caps |= PCM_CAP_DUPLEX;
 	if (props & AUDIO_PROP_MMAP)
-		caps |= DSP_CAP_MMAP;
+		caps |= PCM_CAP_MMAP;
 	if (props & AUDIO_PROP_CAPTURE)
 		caps |= PCM_CAP_INPUT;
 	if (props & AUDIO_PROP_PLAYBACK)
