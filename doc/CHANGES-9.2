@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.80 2021/05/08 10:29:10 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.81 2021/05/09 07:10:08 martin Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -3089,4 +3089,9 @@ etc/etc.mac68k/ttys				1.21
 	mac68k: turn on constty instead of ttyE0 and change default TERM
 	to vt100 for console and constty.
 	[rin, ticket #1269]
+
+sys/dev/pci/siisata_pci.c			1.21
+
+	siisata(4): PR 55115 - disable MSI for SiI3124.
+	[dolecek, ticket #1270]
 
