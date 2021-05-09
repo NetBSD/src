@@ -1,4 +1,4 @@
-/*	$NetBSD: soundcard.h,v 1.33 2020/12/03 22:10:21 nia Exp $	*/
+/*	$NetBSD: soundcard.h,v 1.34 2021/05/09 11:28:25 nia Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2020 The NetBSD Foundation, Inc.
@@ -60,12 +60,16 @@
 #define	 AFMT_S8			0x00000040
 #define	 AFMT_U16_LE			0x00000080
 #define	 AFMT_U16_BE			0x00000100
-#define	 AFMT_MPEG			0x00000200
+#define	 AFMT_MPEG			0x00000200	/* Not supported */
 #define	 AFMT_AC3			0x00000400
-#define	 AFMT_S24_LE			0x00000800
-#define	 AFMT_S24_BE			0x00001000
+#define	 AFMT_S24_LE			0x00000800	/* Not supported */
+#define	 AFMT_S24_BE			0x00001000	/* Not supported */
 #define	 AFMT_S32_LE			0x00002000
 #define	 AFMT_S32_BE			0x00004000
+#define  AFMT_FLOAT			0x00010000	/* Not supported */
+#define  AFMT_SPDIF_RAW			0x00020000	/* Not supported */
+#define  AFMT_S24_PACKED		0x00040000	/* Not supported */
+#define  AFMT_VORBIS			0x00080000	/* Not supported */
 #define SNDCTL_DSP_SAMPLESIZE		SNDCTL_DSP_SETFMT
 #define	SOUND_PCM_READ_BITS		_IOR ('P', 5, int)
 #define	SNDCTL_DSP_CHANNELS		_IOWR('P', 6, int)
@@ -99,6 +103,10 @@
 # define DSP_CAP_DIGITALOUT		PCM_CAP_DIGITALOUT
 # define DSP_CAP_DIGITALIN		PCM_CAP_DIGITALIN
 # define DSP_CAP_ADMASK			PCM_CAP_ADMASK
+# define DSP_CAP_FREERATE		PCM_CAP_FREERATE
+# define DSP_CAP_MULTI			PCM_CAP_MULTI
+# define DSP_CAP_BIND			PCM_CAP_BIND
+# define DSP_CAP_SHADOW			PCM_CAP_SHADOW
 # define PCM_CAP_REVISION		0x000000ff	/* Unused in NetBSD */
 # define PCM_CAP_DUPLEX			0x00000100	/* Full duplex */
 # define PCM_CAP_REALTIME		0x00000200	/* Unused in NetBSD */
@@ -111,12 +119,21 @@
 # define PCM_CAP_MODEM			0x00010000	/* Unused in NetBSD */
 # define PCM_CAP_HIDDEN			0x00020000	/* Unused in NetBSD */
 # define PCM_CAP_VIRTUAL		0x00040000	/* Unused in NetBSD */
+# define PCM_CAP_MULTI			0x00080000	/* Simultaneous open() */
 # define PCM_CAP_ANALOGOUT		0x00100000	/* Unused in NetBSD */
 # define PCM_CAP_ANALOGIN		0x00200000	/* Unused in NetBSD */
 # define PCM_CAP_DIGITALOUT		0x00400000	/* Unused in NetBSD */
 # define PCM_CAP_DIGITALIN		0x00800000	/* Unused in NetBSD */
 # define PCM_CAP_ADMASK			0x00f00000	/* Unused in NetBSD */
 # define PCM_CAP_SPECIAL		0x01000000	/* Unused in NetBSD */
+# define PCM_CAP_FREERATE		0x10000000	/* Freely set rate */
+# define PCM_CAP_SHADOW			0x40000000	/* Unused in NetBSD */
+# define PCM_CAP_BIND			0x80000000	/* Unused in NetBSD */
+# define DSP_CH_ANY			0x00000000	/* No preferred mode */
+# define DSP_CH_MONO			0x02000000
+# define DSP_CH_STEREO			0x04000000
+# define DSP_CH_MULTI			0x06000000
+# define DSP_CH_MASK			0x06000000
 #define SNDCTL_DSP_GETTRIGGER		_IOR ('P', 16, int)
 #define SNDCTL_DSP_SETTRIGGER		_IOW ('P', 16, int)
 # define PCM_ENABLE_INPUT		0x00000001
@@ -342,6 +359,11 @@ typedef struct buffmem_desc {
 
 /* Some OSSv4 calls. */
 
+/* Why is yet more duplication necessary? Sigh. */
+#define OSS_OPEN_READ		PCM_ENABLE_INPUT
+#define OSS_OPEN_WRITE		PCM_ENABLE_OUTPUT
+#define OSS_OPEN_READWRITE	(OSS_OPEN_READ|OSS_OPEN_WRITE)
+
 #define OSS_DEVNODE_SIZE		32
 #define OSS_LABEL_SIZE			16
 #define OSS_LONGNAME_SIZE		64
@@ -357,9 +379,20 @@ typedef struct buffmem_desc {
 #define SNDCTL_DSP_GETERROR		_IOR ('P',34, struct audio_errinfo)
 #define SNDCTL_DSP_CURRENT_IPTR		_IOR ('P',35, oss_count_t)
 #define SNDCTL_DSP_CURRENT_OPTR		_IOR ('P',36, oss_count_t)
+#define SNDCTL_DSP_GET_RECSRC_NAMES	_IOR ('P',37, oss_mixer_enuminfo)
+#define SNDCTL_DSP_GET_RECSRC		_IOR ('P',38, int)
+#define SNDCTL_DSP_SET_RECSRC		_IOWR ('P',38, int)
+#define SNDCTL_DSP_GET_PLAYTGT_NAMES	_IOR ('P',39, oss_mixer_enuminfo)
+#define SNDCTL_DSP_GET_PLAYTGT		_IOR ('P',40, int)
+#define SNDCTL_DSP_SET_PLAYTGT		_IOWR ('P',40, int)
 
 #define SNDCTL_DSP_GET_CHNORDER		_IOR ('P',42, unsigned long long)
 #define SNDCTL_DSP_SET_CHNORDER		_IOWR ('P',42, unsigned long long)
+
+#define SNDCTL_DSP_HALT_OUTPUT		_IO ('P',70)
+#define SNDCTL_DSP_RESET_OUTPUT		SNDCTL_DSP_HALT_OUTPUT	/* Old name */
+#define SNDCTL_DSP_HALT_INPUT		_IO ('P',71)
+#define SNDCTL_DSP_RESET_INPUT		SNDCTL_DSP_HALT_INPUT	/* Old name */
 
 #define CHID_UNDEF	0
 #define CHID_L		1
