@@ -1,3 +1,5 @@
+/*	$NetBSD: smu.c,v 1.13.2.1 2021/05/09 21:37:04 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 2013 Phileas Fogg
  * All rights reserved.
@@ -30,6 +32,7 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/proc.h>
+#include <sys/kmem.h>
 #include <sys/mutex.h>
 #include <sys/time.h>
 #include <sys/reboot.h>
@@ -72,14 +75,15 @@ struct smu_fan {
 };
 
 struct smu_iicbus {
-	struct smu_softc* sc;
+	struct smu_softc *sc;
 
 	int reg;
 	struct i2c_controller i2c;
+
+	LIST_ENTRY(smu_iicbus) buslist;
 };
 
 #define SMU_MAX_FANS		8
-#define SMU_MAX_IICBUS		3
 #define SMU_MAX_SME_SENSORS	(SMU_MAX_FANS + 8)
 
 struct smu_zone {
@@ -113,8 +117,12 @@ struct smu_softc {
 	int sc_num_fans;
 	struct smu_fan sc_fans[SMU_MAX_FANS];
 
-	int sc_num_iicbus;
-	struct smu_iicbus sc_iicbus[SMU_MAX_IICBUS];
+	/*
+	 * We provide our own i2c device enumeration method, so we
+	 * need to provide our own devhandle_impl.
+	 */
+	struct devhandle_impl sc_devhandle_impl;
+	LIST_HEAD(, smu_iicbus) sc_iic_busses;
 
 	struct todr_chip_handle sc_todr;
 
@@ -158,7 +166,6 @@ static int smu_setup_doorbell(struct smu_softc *);
 static void smu_setup_fans(struct smu_softc *);
 static void smu_setup_iicbus(struct smu_softc *);
 static void smu_setup_sme(struct smu_softc *);
-static int smu_iicbus_print(void *, const char *);
 static void smu_sme_refresh(struct sysmon_envsys *, envsys_data_t *);
 static int smu_do_cmd(struct smu_softc *, struct smu_cmd *, int);
 static int smu_dbell_gpio_intr(void *);
@@ -441,47 +448,98 @@ smu_setup_fans(struct smu_softc *sc)
 	}
 }
 
+static bool
+smu_i2c_get_address(int node, uint32_t *addrp)
+{
+	uint32_t reg;
+
+	if (of_getprop_uint32(node, "reg", &reg) == -1) {
+		return false;
+	}
+
+	*addrp = (reg & 0xff) >> 1;
+	return true;
+}
+
+static int
+smu_i2c_enumerate_devices(device_t dev, devhandle_t call_handle, void *v)
+{
+	/*
+	 * This follows the OpenFirmware I2C binding for the most
+	 * part, but has the address shifted left for the READ bit.
+	 */
+	return of_i2c_enumerate_devices_ext(dev, call_handle, v,
+	    smu_i2c_get_address);
+}
+
+static device_call_t
+smu_devhandle_lookup_device_call(devhandle_t handle, const char *name,
+    devhandle_t *call_handlep)
+{
+	if (strcmp(name, "i2c-enumerate-devices") == 0) {
+		return smu_i2c_enumerate_devices;
+	}
+
+	/* Defer everything else to the "super". */
+	return NULL;
+}
+
 static void
 smu_setup_iicbus(struct smu_softc *sc)
 {
 	struct smu_iicbus *iicbus;
-	struct i2c_controller *i2c;
-	struct smu_iicbus_confargs ca;
+	struct i2cbus_attach_args iba;
+	devhandle_t devhandle;
 	int node;
 	char name[32];
 
 	node = of_getnode_byname(sc->sc_node, "smu-i2c-control");
-	if (node == 0) node = sc->sc_node;
-	for (node = OF_child(node);
-	    (node != 0) && (sc->sc_num_iicbus < SMU_MAX_IICBUS);
-	    node = OF_peer(node)) {
+	if (node == 0)
+		node = sc->sc_node;
+
+	/*
+	 * Set up our devhandle impl; we provide our own i2c device
+	 * enumeration method.
+	 */
+	devhandle = devhandle_from_of(node);
+	devhandle_impl_inherit(&sc->sc_devhandle_impl,
+	    devhandle.impl);
+	sc->sc_devhandle_impl.lookup_device_call =
+	    smu_devhandle_lookup_device_call;
+
+	for (node = OF_child(node); node != 0; node = OF_peer(node)) {
+
 		memset(name, 0, sizeof(name));
 		OF_getprop(node, "name", name, sizeof(name));
-		if ((strcmp(name, "i2c-bus") != 0) &&
-		    (strcmp(name, "i2c") != 0))
+		if (strcmp(name, "i2c-bus") != 0 && strcmp(name, "i2c") != 0)
 			continue;
 
-		iicbus = &sc->sc_iicbus[sc->sc_num_iicbus];
+		iicbus = kmem_zalloc(sizeof(*iicbus), KM_SLEEP);
 		iicbus->sc = sc;
-		i2c = &iicbus->i2c;
 
-		if (OF_getprop(node, "reg", &iicbus->reg, sizeof(iicbus->reg)) <= 0)
+		if (OF_getprop(node, "reg", &iicbus->reg,
+			       sizeof(iicbus->reg)) <= 0) {
+			kmem_free(iicbus, sizeof(*iicbus));
 			continue;
+		}
+		LIST_INSERT_HEAD(&sc->sc_iic_busses, iicbus, buslist);
 
 		DPRINTF("iicbus: reg %x\n", iicbus->reg);
 
-		iic_tag_init(i2c);
-		i2c->ic_cookie = iicbus;
-		i2c->ic_exec = smu_iicbus_exec;
+		iic_tag_init(&iicbus->i2c);
+		iicbus->i2c.ic_cookie = iicbus;
+		iicbus->i2c.ic_exec = smu_iicbus_exec;
 
-		ca.ca_name = name;
-		ca.ca_node = node;
-		ca.ca_tag = i2c;
-		config_found(sc->sc_dev, &ca, smu_iicbus_print,
-		    CFARG_DEVHANDLE, devhandle_from_of(node),
+		devhandle = devhandle_from_of(node);
+		devhandle.impl = &sc->sc_devhandle_impl;
+
+		memset(&iba, 0, sizeof(iba));
+		iba.iba_tag = &iicbus->i2c;
+		iba.iba_bus = iicbus->reg;
+
+		config_found(sc->sc_dev, &iba, iicbus_print_multi,
+		    CFARG_DEVHANDLE, devhandle,
 		    CFARG_EOL);
-
-		sc->sc_num_iicbus++;
 	}
 }
 
@@ -538,17 +596,6 @@ next:
 		    "unable to register with sysmon\n");
 		sysmon_envsys_destroy(sc->sc_sme);
 	}
-}
-
-static int
-smu_iicbus_print(void *aux, const char *smu)
-{
-	struct smu_iicbus_confargs *ca = aux;
-
-	if (smu)
-		aprint_normal("%s at %s", ca->ca_name, smu);
-
-	return UNCONF;
 }
 
 static void
