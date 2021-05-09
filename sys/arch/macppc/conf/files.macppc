@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.116 2021/04/24 23:36:41 thorpej Exp $
+#	$NetBSD: files.macppc,v 1.116.2.1 2021/05/09 21:37:04 thorpej Exp $
 #
 # macppc-specific configuration info
 
@@ -175,15 +175,10 @@ device zstty: tty
 attach zstty at zsc
 file dev/ic/z8530tty.c				zstty needs-flag
 
-define smu {}
-device smu: smu, obio
+device smu: i2cbus
 attach smu at mainbus
 file arch/macppc/dev/smu.c			smu needs-flag
 defflag	opt_smu.h	SMU_DEBUG
-
-device smuiic: i2cbus
-attach smuiic at smu
-file arch/macppc/dev/smuiic.c			smuiic
 
 device smusat
 attach smusat at iic
