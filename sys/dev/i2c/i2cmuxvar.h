@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cmuxvar.h,v 1.3.4.2 2021/05/08 15:10:44 thorpej Exp $	*/
+/*	$NetBSD: i2cmuxvar.h,v 1.3.4.3 2021/05/09 23:19:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -36,6 +36,23 @@
 
 /* XXX This is not ideal, but... XXX */
 
+#if defined(__i386__) || defined(__amd64__) || defined(__aarch64__)
+
+#ifdef _KERNEL_OPT
+#include "acpica.h"
+
+#if NACPICA > 0
+#define	I2CMUX_USE_ACPI
+#endif
+
+#else /* ! _KERNEL_OPT */
+
+#define	I2CMUX_USE_ACPI
+
+#endif /* _KERNEL_OPT */
+
+#endif /* __i386__ || __amd64__ || __aarch64__ */
+
 #if defined(__arm__) || defined(__aarch64__)
 
 #ifdef _KERNEL_OPT
@@ -54,6 +71,10 @@
 #endif /* __arm__ || __aarch64__ */
 
 /* XXX ^^^ XXX */
+
+#if defined(I2CMUX_USE_ACPI)
+#include <dev/acpi/acpivar.h>
+#endif
 
 #if defined(I2CMUX_USE_FDT)
 #include <dev/fdt/fdtvar.h>
