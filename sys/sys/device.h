@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.169 2021/04/27 14:48:28 thorpej Exp $ */
+/* $NetBSD: device.h,v 1.170 2021/05/10 13:59:30 thorpej Exp $ */
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -218,6 +218,9 @@ typedef enum {
 
 	/* OpenFirmware, FDT */
 	DEVHANDLE_TYPE_OF		=	0x4f504657,	/* 'OPFW' */
+
+	/* Sun OpenBoot */
+	DEVHANDLE_TYPE_OPENBOOT		=	0x4f504254,	/* 'OPBT' */
 
 	/* Private (opaque data) */
 	DEVHANDLE_TYPE_PRIVATE		=	0x50525654,	/* 'PRVT' */
