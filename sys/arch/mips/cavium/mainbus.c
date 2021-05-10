@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.7 2021/04/24 23:36:42 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.8 2021/05/10 23:58:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2007
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.7 2021/04/24 23:36:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.8 2021/05/10 23:58:52 thorpej Exp $");
 
 #define	_MIPS_BUS_DMA_PRIVATE
 
@@ -149,7 +149,9 @@ mainbus_attach_devicetree(device_t self)
 	}
 
 	faa.faa_phandle = OF_peer(0);
-	config_found(self, &faa, NULL, CFARG_EOL);
+	config_found(self, &faa, NULL,
+	    CFARG_IATTR, "fdt",
+	    CFARG_EOL);
 }
 
 static int
