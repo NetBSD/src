@@ -1,4 +1,4 @@
-/*	$NetBSD: vpci.c,v 1.10 2021/04/24 23:36:49 thorpej Exp $	*/
+/*	$NetBSD: vpci.c,v 1.11 2021/05/10 23:53:44 thorpej Exp $	*/
 /*
  * Copyright (c) 2015 Palle Lyckegaard
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vpci.c,v 1.10 2021/04/24 23:36:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vpci.c,v 1.11 2021/05/10 23:53:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -267,7 +267,9 @@ FIXME
 
 	free(busranges, M_DEVBUF);
 
-	config_found(sc->sc_dev, &pba, vpci_print, CFARG_EOL);
+	config_found(sc->sc_dev, &pba, vpci_print,
+	    CFARG_DEVHANDLE, prom_node_to_devhandle(sc->sc_node),
+	    CFARG_EOL);
 }
 
 void
