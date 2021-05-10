@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.101 2021/04/24 23:36:49 thorpej Exp $ */
+/*	$NetBSD: sbus.c,v 1.102 2021/05/10 23:53:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999-2002 Eduardo Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.101 2021/04/24 23:36:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.102 2021/05/10 23:53:44 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -293,7 +293,9 @@ sbus_attach(device_t parent, device_t self, void *aux)
 			printf("sbus_attach: %s: incomplete\n", name1);
 			continue;
 		}
-		(void) config_found(self, &sa, sbus_print, CFARG_EOL);
+		(void) config_found(self, &sa, sbus_print,
+		    CFARG_DEVHANDLE, prom_node_to_devhandle(node),
+		    CFARG_EOL);
 		sbus_destroy_attach_args(&sa);
 	}
 }
