@@ -1,3 +1,4 @@
+/*	$NetBSD: upa.c,v 1.22 2021/05/10 23:53:44 thorpej Exp $	*/
 /*	$OpenBSD: upa.c,v 1.8 2008/01/17 22:53:18 kettenis Exp $	*/
 
 /*
@@ -28,11 +29,10 @@
  * Effort sponsored in part by the Defense Advanced Research Projects
  * Agency (DARPA) and Air Force Research Laboratory, Air Force
  * Materiel Command, USAF, under agreement number F30602-01-2-0537.
- *
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: upa.c,v 1.21 2021/04/24 23:36:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: upa.c,v 1.22 2021/05/10 23:53:44 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -132,7 +132,9 @@ upa_attach(device_t parent, device_t self, void *aux)
 		map.ma_name = buf;
 		map.ma_bustag = sc->sc_cbt;
 		map.ma_dmatag = ma->ma_dmatag;
-		config_found(sc->sc_dev, &map, upa_print, CFARG_EOL);
+		config_found(sc->sc_dev, &map, upa_print,
+		    CFARG_DEVHANDLE, prom_node_to_devhandle(node),
+		    CFARG_EOL);
 	}
 }
 

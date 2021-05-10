@@ -1,4 +1,4 @@
-/*	$NetBSD: cbus.c,v 1.5 2021/04/24 23:36:49 thorpej Exp $	*/
+/*	$NetBSD: cbus.c,v 1.6 2021/05/10 23:53:44 thorpej Exp $	*/
 /*	$OpenBSD: cbus.c,v 1.15 2015/09/27 11:29:20 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -118,11 +118,12 @@ cbus_attach(device_t parent, device_t self, void *aux)
 		int rc = cbus_get_channel_endpoint(sc, &ca);
 		DPRINTF(CBUSDB_AC, ("cbus_attach() - cbus_get_channel_endpoint() %d\n", rc));
 		if ( rc != 0) {
-		  continue;
+			continue;
 		}
 
-		config_found(self, &ca, cbus_print, CFARG_EOL);
-
+		config_found(self, &ca, cbus_print,
+		    CFARG_DEVHANDLE, devhandle_from_of(ca.ca_node),
+		    CFARG_EOL);
 	}
 }
 

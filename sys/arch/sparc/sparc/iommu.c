@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.97 2021/04/24 23:36:49 thorpej Exp $ */
+/*	$NetBSD: iommu.c,v 1.98 2021/05/10 23:53:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.97 2021/04/24 23:36:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.98 2021/05/10 23:53:44 thorpej Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -298,7 +298,9 @@ iommu_attach(device_t parent, device_t self, void *aux)
 		ia.iom_reg = &sbus_iommu_reg;
 		ia.iom_nreg = 1;
 
-		(void) config_found(self, (void *)&ia, iommu_print, CFARG_EOL);
+		config_found(self, (void *)&ia, iommu_print,
+		    CFARG_DEVHANDLE, prom_node_to_devhandle(node),
+		    CFARG_EOL);
 		return;
 	}
 
@@ -321,7 +323,9 @@ iommu_attach(device_t parent, device_t self, void *aux)
 		prom_getprop(node, "reg", sizeof(struct openprom_addr),
 			&ia.iom_nreg, &ia.iom_reg);
 
-		(void) config_found(self, (void *)&ia, iommu_print, CFARG_EOL);
+		config_found(self, (void *)&ia, iommu_print,
+		    CFARG_DEVHANDLE, prom_node_to_devhandle(node),
+		    CFARG_EOL);
 		if (ia.iom_reg != NULL)
 			free(ia.iom_reg, M_DEVBUF);
 	}

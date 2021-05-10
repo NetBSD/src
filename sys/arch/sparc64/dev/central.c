@@ -1,4 +1,4 @@
-/*	$NetBSD: central.c,v 1.6 2021/04/24 23:36:49 thorpej Exp $	*/
+/*	$NetBSD: central.c,v 1.7 2021/05/10 23:53:44 thorpej Exp $	*/
 /*	$OpenBSD: central.c,v 1.7 2010/11/11 17:58:23 miod Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: central.c,v 1.6 2021/04/24 23:36:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: central.c,v 1.7 2021/05/10 23:53:44 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -112,7 +112,9 @@ central_attach(device_t parent, device_t self, void *aux)
 		prom_getprop(node, "reg", sizeof(struct central_reg),
 		    &ca.ca_nreg, (void **)&ca.ca_reg);
 
-		(void)config_found(self, (void *)&ca, central_print, CFARG_EOL);
+		(void)config_found(self, (void *)&ca, central_print,
+		    CFARG_DEVHANDLE, prom_node_to_devhandle(ca.ca_node),
+		    CFARG_EOL);
 
 		if (ca.ca_name != NULL)
 			free(ca.ca_name, M_DEVBUF);

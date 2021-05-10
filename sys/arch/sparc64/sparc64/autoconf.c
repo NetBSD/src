@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.228 2021/04/24 23:36:49 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.229 2021/05/10 23:53:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.228 2021/04/24 23:36:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.229 2021/05/10 23:53:44 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -634,7 +634,9 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		ma.ma_dmatag = &mainbus_dma_tag;
 		ma.ma_node = node;
 		ma.ma_name = "cpu";
-		config_found(dev, &ma, mbprint, CFARG_EOL);
+		config_found(dev, &ma, mbprint,
+		    CFARG_DEVHANDLE, devhandle_from_of(ma.ma_node),
+		    CFARG_EOL);
 	}
 
 	node = findroot();	/* re-init root node */
@@ -717,7 +719,9 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 				printf(" no address\n");
 		}
 #endif
-		(void) config_found(dev, (void *)&ma, mbprint, CFARG_EOL);
+		(void) config_found(dev, (void *)&ma, mbprint,
+		    CFARG_DEVHANDLE, prom_node_to_devhandle(ma.ma_node),
+		    CFARG_EOL);
 		free(ma.ma_reg, M_DEVBUF);
 		if (ma.ma_ninterrupts)
 			free(ma.ma_interrupts, M_DEVBUF);
