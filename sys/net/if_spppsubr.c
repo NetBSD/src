@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.233 2021/05/11 01:27:45 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.234 2021/05/11 06:21:28 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.233 2021/05/11 01:27:45 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.234 2021/05/11 06:21:28 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -4876,11 +4876,6 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 
 			if (memcmp(digest, value, value_len) == 0) {
 				sp->scp[IDX_CHAP].rcr_type = CP_RCR_ACK;
-				if (!ISSET(sppp_auth_role(&chap, sp), SPPP_AUTH_PEER) ||
-				    sp->chap.rechallenging) {
-					/* generate a dummy RCA event*/
-					sppp_wq_add(sp->wq_cp, &sp->scp[IDX_CHAP].work_rca);
-				}
 			} else {
 				sp->scp[IDX_CHAP].rcr_type = CP_RCR_NAK;
 			}
@@ -4896,6 +4891,13 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 		}
 
 		sppp_wq_add(sp->wq_cp, &sp->scp[IDX_CHAP].work_rcr);
+
+		/* generate a dummy RCA event */
+		if (sp->scp[IDX_CHAP].rcr_type == CP_RCR_ACK &&
+		    (!ISSET(sppp_auth_role(&chap, sp), SPPP_AUTH_PEER) ||
+		    sp->chap.rechallenging)) {
+			sppp_wq_add(sp->wq_cp, &sp->scp[IDX_CHAP].work_rca);
+		}
 		break;
 
 	default:
@@ -5149,15 +5151,17 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 		    secret_len == sp->hisauth.secret_len &&
 		    memcmp(secret, sp->hisauth.secret, secret_len) == 0) {
 			sp->scp[IDX_PAP].rcr_type = CP_RCR_ACK;
-			if (!ISSET(sppp_auth_role(&pap, sp), SPPP_AUTH_PEER)) {
-				/* generate a dummy RCA event*/
-				sppp_wq_add(sp->wq_cp, &sp->scp[IDX_PAP].work_rca);
-			}
 		} else {
 			sp->scp[IDX_PAP].rcr_type = CP_RCR_NAK;
 		}
 
 		sppp_wq_add(sp->wq_cp, &sp->scp[IDX_PAP].work_rcr);
+
+		/* generate a dummy RCA event */
+		if (sp->scp[IDX_PAP].rcr_type == CP_RCR_ACK &&
+		    !ISSET(sppp_auth_role(&pap, sp), SPPP_AUTH_PEER)) {
+			sppp_wq_add(sp->wq_cp, &sp->scp[IDX_PAP].work_rca);
+		}
 		break;
 
 	/* ack and nak are his authproto */
