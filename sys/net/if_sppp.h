@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sppp.h,v 1.34 2021/05/11 01:27:45 yamaguchi Exp $	*/
+/*	$NetBSD: if_sppp.h,v 1.35 2021/05/11 06:42:42 yamaguchi Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 #define	SPPP_AUTHPROTO_NONE	0
 #define SPPP_AUTHPROTO_PAP	1
 #define SPPP_AUTHPROTO_CHAP	2
+#define SPPP_AUTHPROTO_NOCHG	3
 
 #define SPPP_AUTHFLAG_NOCALLOUT		1	/* do not require authentication on */
 						/* callouts */
