@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.235 2021/05/11 06:27:18 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.236 2021/05/11 06:33:17 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.235 2021/05/11 06:27:18 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.236 2021/05/11 06:33:17 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -809,6 +809,18 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 	}
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_AUTO)) == IFF_AUTO) {
+		/* ignore packets that have no enabled NCP */
+		if ((dst->sa_family == AF_INET &&
+		    !ISSET(sp->pp_ncpflags, SPPP_NCP_IPCP)) ||
+		    (dst->sa_family == AF_INET6 &&
+		    !ISSET(sp->pp_ncpflags, SPPP_NCP_IPV6CP))) {
+			SPPP_UNLOCK(sp);
+			splx(s);
+
+			m_freem(m);
+			if_statinc(ifp, if_oerrors);
+			return (ENETDOWN);
+		}
 		/*
 		 * Interface is not yet running, but auto-dial.  Need
 		 * to start LCP for it.
