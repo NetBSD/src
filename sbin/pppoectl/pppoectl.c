@@ -1,4 +1,4 @@
-/*	$NetBSD: pppoectl.c,v 1.27 2021/04/23 02:28:40 yamaguchi Exp $	*/
+/*	$NetBSD: pppoectl.c,v 1.28 2021/05/11 05:51:42 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 1997 Joerg Wunsch
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: pppoectl.c,v 1.27 2021/04/23 02:28:40 yamaguchi Exp $");
+__RCSID("$NetBSD: pppoectl.c,v 1.28 2021/05/11 05:51:42 yamaguchi Exp $");
 #endif
 
 
@@ -55,8 +55,9 @@ __RCSID("$NetBSD: pppoectl.c,v 1.27 2021/04/23 02:28:40 yamaguchi Exp $");
 __dead static void usage(void);
 __dead static void print_error(const char *ifname, int error, const char * str);
 static void print_vals(const char *ifname, int phase, struct spppauthcfg *sp,
-	int lcp_timeout, time_t idle_timeout, int authfailures, 
-	int max_auth_failures, u_int maxalive, time_t max_noreceive);
+	int lcp_timeout, time_t idle_timeout, int authfailures,
+	int max_auth_failures, u_int maxalive, time_t max_noreceive,
+	int ncp_flags);
 static void print_dns(const char *ifname, int dns1, int dns2, int s, int tabs);
 static void print_stats(const char *ifname, int s, int dump);
 static const char *phase_name(int phase);
@@ -81,10 +82,12 @@ static int hz = 0;
 
 static int set_auth, set_lcp, set_idle_to, set_auth_failure, set_dns,
     clear_auth_failure_count, set_keepalive;
+static u_int set_ncpflags, clr_ncpflags;
 static int maxalive = -1;
 static int max_noreceive = -1;
 static struct spppauthcfg spr;
 static struct sppplcpcfg lcp;
+static struct spppncpcfg ncp;
 static struct spppstatus status;
 static struct spppidletimeout timeout;
 static struct spppauthfailurestats authfailstats;
@@ -202,6 +205,8 @@ main(int argc, char **argv)
 	strncpy(spr.ifname, ifname, sizeof spr.ifname);
 	memset(&lcp, 0, sizeof lcp);
 	strncpy(lcp.ifname, ifname, sizeof lcp.ifname);
+	memset(&ncp, 0, sizeof ncp);
+	strncpy(ncp.ifname, ifname, sizeof ncp.ifname);
 	memset(&status, 0, sizeof status);
 	strncpy(status.ifname, ifname, sizeof status.ifname);
 	memset(&timeout, 0, sizeof timeout);
@@ -245,6 +250,8 @@ main(int argc, char **argv)
 
 		if (ioctl(s, SPPPGETLCPCFG, &lcp) == -1)
 			err(EX_OSERR, "SPPPGETLCPCFG");
+		if (ioctl(s, SPPPGETNCPCFG, &ncp) == -1)
+			err(EX_OSERR, "SPPPGETNCPCFG");
 		if (ioctl(s, SPPPGETSTATUS, &status) == -1)
 			err(EX_OSERR, "SPPPGETSTATUS");
 		if (ioctl(s, SPPPGETIDLETO, &timeout) == -1)
@@ -258,7 +265,8 @@ main(int argc, char **argv)
 		    timeout.idle_seconds, authfailstats.auth_failures,
 		    authfailstats.max_failures,
 		    keepalivesettings.maxalive,
-		    keepalivesettings.max_noreceive);
+		    keepalivesettings.max_noreceive,
+		    ncp.ncp_flags);
 
 		if (spr.hisname) free(spr.hisname);
 		if (spr.myname) free(spr.myname);
@@ -299,6 +307,16 @@ main(int argc, char **argv)
 	if (set_lcp) {
 		if (ioctl(s, SPPPSETLCPCFG, &lcp) == -1)
 			err(EX_OSERR, "SPPPSETLCPCFG");
+	}
+	if (set_ncpflags != 0 || clr_ncpflags != 0) {
+		if (ioctl(s, SPPPGETNCPCFG, &ncp) == -1)
+			err(EX_OSERR, "SPPPGETNCPCFG");
+
+		ncp.ncp_flags |= set_ncpflags;
+		ncp.ncp_flags &= ~clr_ncpflags;
+
+		if (ioctl(s, SPPPSETNCPCFG, &ncp) == -1)
+			err(EX_OSERR, "SPPPSETNCPCFG");
 	}
 	if (set_idle_to) {
 		if (ioctl(s, SPPPSETIDLETO, &timeout) == -1)
@@ -344,7 +362,8 @@ main(int argc, char **argv)
 		    timeout.idle_seconds, authfailstats.auth_failures,
 		    authfailstats.max_failures,
 		    keepalivesettings.maxalive,
-		    keepalivesettings.max_noreceive);
+		    keepalivesettings.max_noreceive,
+		    ncp.ncp_flags);
 	}
 
 	return 0;
@@ -459,6 +478,18 @@ pppoectl_argument(char *arg)
 	} else if (startswith(arg, "query-dns=")) {
 		dnssettings.query_dns = atoi(arg+off);
 		set_dns = 1;
+	} else if (strcmp(arg, "ipcp") == 0) {
+		set_ncpflags |= SPPP_NCP_IPCP;
+		clr_ncpflags &= ~SPPP_NCP_IPCP;
+	} else if (strcmp(arg, "noipcp") == 0) {
+		set_ncpflags &= ~SPPP_NCP_IPCP;
+		clr_ncpflags |= SPPP_NCP_IPCP;
+	} else if (strcmp(arg, "ipv6cp") == 0) {
+		set_ncpflags |= SPPP_NCP_IPV6CP;
+		clr_ncpflags &= ~SPPP_NCP_IPV6CP;
+	} else if (strcmp(arg, "noipv6cp") == 0) {
+		set_ncpflags &= ~SPPP_NCP_IPV6CP;
+		clr_ncpflags |= SPPP_NCP_IPV6CP;
 	} else
 		errx(EX_DATAERR, "bad parameter: \"%s\"", arg);
 }
@@ -472,7 +503,7 @@ usage(void)
 	    "       %s [-f config] ifname [...]\n"
 	    "       %s [-v] ifname [{my|his}auth{proto|name|secret}=...] \\\n"
             "                      [callin] [always] [{no}rechallenge]\n"
-            "                      [query-dns=3]\n"
+            "                      [query-dns=3] [{no}ipcp] [{no}ipv6cp]\n"
 	    "           to set authentication names, passwords\n"
 	    "           and (optional) paramaters\n"
 	    "       %s [-v] ifname lcp-timeout=ms|idle-timeout=s|\n"
@@ -495,7 +526,7 @@ usage(void)
 static void
 print_vals(const char *ifname, int phase, struct spppauthcfg *sp, int lcp_timeout,
 	time_t idle_timeout, int authfailures, int max_auth_failures,
-	u_int maxalive_cnt, time_t max_noreceive_time)
+	u_int maxalive_cnt, time_t max_noreceive_time, int ncp_flags)
 {
 #ifndef __NetBSD__
 	time_t send, recv;
@@ -540,6 +571,11 @@ print_vals(const char *ifname, int phase, struct spppauthcfg *sp, int lcp_timeou
 	printf("\tenable_vj: %s\n",
 	       sp->defs.enable_vj ? "on" : "off");
 #endif
+
+	printf("\tipcp: %s\n",
+	    ncp_flags & SPPP_NCP_IPCP ? "enable" : "disable");
+	printf("\tipv6cp: %s\n",
+	    ncp_flags & SPPP_NCP_IPV6CP ? "enable" : "disable");
 }
 
 static void
