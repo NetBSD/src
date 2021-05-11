@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.234 2021/05/11 06:21:28 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.235 2021/05/11 06:27:18 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.234 2021/05/11 06:21:28 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.235 2021/05/11 06:27:18 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -804,7 +804,7 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 		splx(s);
 
 		m_freem(m);
-
+		if_statinc(ifp, if_oerrors);
 		return (ENETDOWN);
 	}
 
@@ -930,8 +930,19 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 			 * ENETDOWN, as opposed to ENOBUFS.
 			 */
 			protocol = htons(PPP_IP);
-			if (sp->scp[IDX_IPCP].state != STATE_OPENED)
-				error = ENETDOWN;
+			if (sp->scp[IDX_IPCP].state != STATE_OPENED) {
+				if (ifp->if_flags & IFF_AUTO) {
+					error = ENETDOWN;
+				} else {
+					IF_DROP(&ifp->if_snd);
+					SPPP_UNLOCK(sp);
+					splx(s);
+
+					m_freem(m);
+					if_statinc(ifp, if_oerrors);
+					return (ENETDOWN);
+				}
+			}
 		}
 		break;
 #endif
@@ -950,8 +961,19 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 			 * ENETDOWN, as opposed to ENOBUFS.
 			 */
 			protocol = htons(PPP_IPV6);
-			if (sp->scp[IDX_IPV6CP].state != STATE_OPENED)
-				error = ENETDOWN;
+			if (sp->scp[IDX_IPV6CP].state != STATE_OPENED) {
+				if (ifp->if_flags & IFF_AUTO) {
+					error = ENETDOWN;
+				} else {
+					IF_DROP(&ifp->if_snd);
+					SPPP_UNLOCK(sp);
+					splx(s);
+
+					m_freem(m);
+					if_statinc(ifp, if_oerrors);
+					return (ENETDOWN);
+				}
+			}
 		}
 		break;
 #endif
