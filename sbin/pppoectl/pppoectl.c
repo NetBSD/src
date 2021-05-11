@@ -1,4 +1,4 @@
-/*	$NetBSD: pppoectl.c,v 1.28 2021/05/11 05:51:42 yamaguchi Exp $	*/
+/*	$NetBSD: pppoectl.c,v 1.29 2021/05/11 06:58:03 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 1997 Joerg Wunsch
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: pppoectl.c,v 1.28 2021/05/11 05:51:42 yamaguchi Exp $");
+__RCSID("$NetBSD: pppoectl.c,v 1.29 2021/05/11 06:58:03 yamaguchi Exp $");
 #endif
 
 
@@ -203,6 +203,8 @@ main(int argc, char **argv)
 
 	memset(&spr, 0, sizeof spr);
 	strncpy(spr.ifname, ifname, sizeof spr.ifname);
+	spr.myauth = SPPP_AUTHPROTO_NOCHG;
+	spr.hisauth = SPPP_AUTHPROTO_NOCHG;
 	memset(&lcp, 0, sizeof lcp);
 	strncpy(lcp.ifname, ifname, sizeof lcp.ifname);
 	memset(&ncp, 0, sizeof ncp);
