@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_fpu.c,v 1.15 2017/05/07 05:45:07 skrll Exp $	*/
+/*	$NetBSD: mips_fpu.c,v 1.16 2021/05/11 14:41:08 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_fpu.c,v 1.15 2017/05/07 05:45:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_fpu.c,v 1.16 2021/05/11 14:41:08 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/mutex.h>
@@ -79,7 +79,7 @@ fpu_used_p(const lwp_t *l)
 	return pcu_valid_p(&mips_fpu_ops, l);
 }
 
-void
+static void
 mips_fpu_state_save(lwp_t *l)
 {
 	struct trapframe * const tf = l->l_md.md_utf;
@@ -206,7 +206,7 @@ mips_fpu_state_save(lwp_t *l)
 	__asm volatile ("mtc0 %0, $%1" :: "r"(status), "n"(MIPS_COP_0_STATUS));
 }
 
-void
+static void
 mips_fpu_state_load(lwp_t *l, u_int flags)
 {
 	struct trapframe * const tf = l->l_md.md_utf;
@@ -350,7 +350,7 @@ mips_fpu_state_load(lwp_t *l, u_int flags)
 		"n"(MIPS_COP_0_STATUS));
 }
 
-void
+static void
 mips_fpu_state_release(lwp_t *l)
 {
 	l->l_md.md_utf->tf_regs[_R_SR] &= ~MIPS_SR_COP_1_BIT;
