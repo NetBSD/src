@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.71 2021/04/30 06:55:32 msaitoh Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.72 2021/05/11 01:30:30 rin Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.71 2021/04/30 06:55:32 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.72 2021/05/11 01:30:30 rin Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1766,16 +1766,17 @@ ixgbe_rx_discard(struct rx_ring *rxr, int i)
 	if (rbuf->fmp != NULL) {/* Partial chain ? */
 		bus_dmamap_sync(rxr->ptag->dt_dmat, rbuf->pmap, 0,
 		    rbuf->buf->m_pkthdr.len, BUS_DMASYNC_POSTREAD);
+		ixgbe_dmamap_unload(rxr->ptag, rbuf->pmap);
 		m_freem(rbuf->fmp);
 		rbuf->fmp = NULL;
 		rbuf->buf = NULL; /* rbuf->buf is part of fmp's chain */
 	} else if (rbuf->buf) {
 		bus_dmamap_sync(rxr->ptag->dt_dmat, rbuf->pmap, 0,
 		    rbuf->buf->m_pkthdr.len, BUS_DMASYNC_POSTREAD);
+		ixgbe_dmamap_unload(rxr->ptag, rbuf->pmap);
 		m_free(rbuf->buf);
 		rbuf->buf = NULL;
 	}
-	ixgbe_dmamap_unload(rxr->ptag, rbuf->pmap);
 
 	rbuf->flags = 0;
 
