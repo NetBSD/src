@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.229 2021/05/10 23:53:44 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.230 2021/05/11 03:43:30 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.229 2021/05/10 23:53:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.230 2021/05/11 03:43:30 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -144,7 +144,6 @@ int kgdb_break_at_attach;
 #endif
 
 #define	OFPATHLEN	128
-#define	OFNODEKEY	"OFpnode"
 
 char	machine_banner[100];
 char	machine_model[100];
@@ -997,60 +996,23 @@ dev_bi_unit_drive_match(device_t dev, int ctrlnode, int target,
 }
 
 /*
- * Get the firmware package handle from a device_t.
- * Assuming we have previously stored it in the device properties
- * dictionary.
- */
-static int
-device_ofnode(device_t dev)
-{
-	prop_dictionary_t props;
-	prop_object_t obj;
-
-	if (dev == NULL)
-		return 0;
-	props = device_properties(dev);
-	if (props == NULL)
-		return 0;
-	obj = prop_dictionary_get(props, OFNODEKEY);
-	if (obj == NULL)
-		return 0;
-
-	return prop_number_signed_value(obj);
-}
-
-/*
- * Save the firmware package handle inside the properties dictionary
- * of a device_t.
- */
-static void
-device_setofnode(device_t dev, int node)
-{
-	prop_dictionary_t props;
-	prop_object_t obj;
-
-	if (dev == NULL)
-		return;
-	props = device_properties(dev);
-	if (props == NULL)
-		return;
-	obj = prop_number_create_signed(node);
-	if (obj == NULL)
-		return;
-	prop_dictionary_set(props, OFNODEKEY, obj);
-	prop_object_release(obj);
-	DPRINTF(ACDB_BOOTDEV, (" [device %s has node %x] ",
-	    device_xname(dev), node));
-}
-
-/*
  * Called back during autoconfiguration for each device found
  */
 void
 device_register(device_t dev, void *aux)
 {
 	device_t busdev = device_parent(dev);
+	devhandle_t devhandle;
 	int ofnode = 0;
+
+	/*
+	 * If the device has a valid OpenFirmware node association,
+	 * grab it now.
+	 */
+	devhandle = device_handle(dev);
+	if (devhandle_type(devhandle) == DEVHANDLE_TYPE_OF) {
+		ofnode = devhandle_to_of(devhandle);
+	}
 
 	/*
 	 * We don't know the type of 'aux' - it depends on the
@@ -1063,23 +1025,18 @@ device_register(device_t dev, void *aux)
 		 * Ignore mainbus0 itself, it certainly is not a boot
 		 * device.
 		 */
-	} else if (device_is_a(busdev, "mainbus")) {
-		struct mainbus_attach_args *ma = aux;
-
-		ofnode = ma->ma_node;
 	} else if (device_is_a(busdev, "pci")) {
 		struct pci_attach_args *pa = aux;
 
-		ofnode = PCITAG_NODE(pa->pa_tag);
-	} else if (device_is_a(busdev, "sbus") || device_is_a(busdev, "dma")
-	    || device_is_a(busdev, "ledma")) {
-		struct sbus_attach_args *sa = aux;
-
-		ofnode = sa->sa_node;
-	} else if (device_is_a(busdev, "ebus")) {
-		struct ebus_attach_args *ea = aux;
-
-		ofnode = ea->ea_node;
+		/*
+		 * XXX PCI devices don't currently get their devhandles
+		 * set when the PCI layer attaches them, so we need to
+		 * do it here.  (It's not just us; ACPI has the same
+		 * problem...)
+		 */
+		ofnode = (int)PCITAG_NODE(pa->pa_tag);
+		devhandle = devhandle_from_of(ofnode);
+		device_set_handle(dev, devhandle);
 	} else if (device_is_a(busdev, "iic")) {
 		struct i2c_attach_args *ia = aux;
 
@@ -1098,6 +1055,7 @@ device_register(device_t dev, void *aux)
 				add_gpio_props_e250(dev, aux);
 			}
 		} 
+		return;
 	} else if (device_is_a(dev, "sd") || device_is_a(dev, "cd")) {
 		struct scsipibus_attach_args *sa = aux;
 		struct scsipi_periph *periph = sa->sa_periph;
@@ -1121,9 +1079,37 @@ device_register(device_t dev, void *aux)
 			if (periph->periph_channel->chan_channel == 1)
 				off = 2;
 		}
-		ofnode = device_ofnode(device_parent(busdev));
-		dev_bi_unit_drive_match(dev, ofnode, periph->periph_target + off,
-		    0, periph->periph_lun);
+
+		/*
+		 * busdev now points to the direct descendent of the
+		 * controller ("atabus" or "scsibus").  Get the
+		 * controller's devhandle.  Hoist it up one more so
+		 * that busdev points at the the controller.
+		 */
+		busdev = device_parent(busdev);
+		devhandle = device_handle(busdev);
+		KASSERT(devhandle_type(devhandle) == DEVHANDLE_TYPE_OF);
+		ofnode = devhandle_to_of(devhandle);
+
+		/*
+		 * Special sun4v handling in case the kernel is running in a 
+		 * secondary logical domain
+		 *
+		 * The bootpath looks something like this:
+		 *   /virtual-devices@100/channel-devices@200/disk@1:a
+		 *
+		 * The device hierarchy constructed during autoconfiguration
+		 * is:
+		 *   /mainbus/vbus/cbus/vdsk/scsibus/sd
+		 */
+		if (CPU_ISSUN4V && device_is_a(dev, "sd") &&
+		    device_is_a(busdev, "vdsk")) {
+			dev_path_exact_match(dev, ofnode);
+		} else {
+			dev_bi_unit_drive_match(dev, ofnode,
+			    periph->periph_target + off, 0, periph->periph_lun);
+		}
+
 		if (device_is_a(busdev, "scsibus")) {
 			/* see if we're in a known SCA drivebay */
 			add_drivebay_props(dev, ofnode, aux);
@@ -1132,17 +1118,23 @@ device_register(device_t dev, void *aux)
 	} else if (device_is_a(dev, "wd")) {
 		struct ata_device *adev = aux;
 
-		ofnode = device_ofnode(device_parent(busdev));
+		/*
+		 * busdev points to the direct descendent of the controller,
+		 * e.g. "atabus".  Get the controller's devhandle.
+		 */
+		devhandle = device_handle(device_parent(busdev));
+		KASSERT(devhandle_type(devhandle) == DEVHANDLE_TYPE_OF);
+		ofnode = devhandle_to_of(devhandle);
+
 		dev_bi_unit_drive_match(dev, ofnode, adev->adev_channel*2+
 		    adev->adev_drv_data->drive, 0, 0);
 		return;
 	} else if (device_is_a(dev, "ld")) {
-		ofnode = device_ofnode(busdev);
-	} else if (device_is_a(dev, "vdsk")) {
-		struct cbus_attach_args *ca = aux;
-		ofnode = ca->ca_node;
-		/* Ensure that the devices ofnode is stored for later use */
-		device_setofnode(dev, ofnode);
+		/*
+		 * Get the devhandle of the RAID (or whatever) controller.
+		 */
+		devhandle = device_handle(busdev);
+		ofnode = devhandle_to_of(devhandle);
 	}
 
 	if (busdev == NULL)
@@ -1160,7 +1152,6 @@ device_register(device_t dev, void *aux)
 		prop_number_t pwwnd = NULL, nwwnd = NULL;
 		prop_number_t idd = NULL;
 
-		device_setofnode(dev, ofnode);
 		dev_path_exact_match(dev, ofnode);
 
 		if (OF_getprop(ofnode, "name", tmpstr, sizeof(tmpstr)) <= 0)
@@ -1249,7 +1240,10 @@ noether:
 	 * Check for I2C busses and add data for their direct configuration.
 	 */
 	if (device_is_a(dev, "iic")) {
-		int busnode = device_ofnode(busdev);
+		devhandle_t bushandle = device_handle(busdev);
+		int busnode =
+		    devhandle_type(bushandle) == DEVHANDLE_TYPE_OF ?
+		    devhandle_to_of(bushandle) : 0;
 
 		if (busnode) {
 			prop_dictionary_t props = device_properties(busdev);
@@ -1293,11 +1287,11 @@ noether:
 		if (device_is_a(busdev, "pcfiic") &&
 		    (!strcmp(machine_model, "SUNW,Ultra-4")))
 			add_i2c_props_e450(busdev, busnode);
+
 		/* E250 SUNW,envctrltwo */
 		if (device_is_a(busdev, "pcfiic") &&
 		    (!strcmp(machine_model, "SUNW,Ultra-250")))
 			add_i2c_props_e250(busdev, busnode);
-
 	}
 
 	/* set properties for PCI framebuffers */
@@ -1378,7 +1372,6 @@ device_register_post_config(device_t dev, void *aux)
 		struct scsipibus_attach_args *sa = aux;
 		struct scsipi_periph *periph = sa->sa_periph;
 		uint64_t wwn = 0;
-		int ofnode;
 
 		/*
 		 * If this is a FC-AL drive it will have
@@ -1394,60 +1387,21 @@ device_register_post_config(device_t dev, void *aux)
 			 * E.g.: /pci/SUNW,qlc@4/fp@0,0/disk
 			 * and we need the parent of "disk" here.
 			 */
-			ofnode = device_ofnode(
+			devhandle_t ctlr_devhandle = device_handle(
 			    device_parent(device_parent(dev)));
+			KASSERT(devhandle_type(ctlr_devhandle) ==
+			    DEVHANDLE_TYPE_OF);
+			int ofnode = devhandle_to_of(ctlr_devhandle);
+
 			for (ofnode = OF_child(ofnode);
-			    ofnode != 0 && booted_device == NULL;
-			    ofnode = OF_peer(ofnode)) {
+			     ofnode != 0 && booted_device == NULL;
+			     ofnode = OF_peer(ofnode)) {
 				dev_bi_unit_drive_match(dev, ofnode,
 				    periph->periph_target,
 				    wwn, periph->periph_lun);
 			}
 		}
 	}
-
-	if (CPU_ISSUN4V) {
-
-	  /*
-	   * Special sun4v handling in case the kernel is running in a 
-	   * secondary logical domain
-	   *
-	   * The bootpath looks something like this:
-	   *   /virtual-devices@100/channel-devices@200/disk@1:a
-	   *
-	   * The device hierarchy constructed during autoconfiguration is:
-	   *   mainbus/vbus/vdsk/scsibus/sd
-	   *
-	   * The logic to figure out the boot device is to look at the
-	   * grandparent to the 'sd' device and if this is a 'vdsk' device
-	   * and the ofnode matches the bootpaths ofnode then we have located
-	   * the boot device.
-	   */
-
-	  int ofnode;
-
-	  /* Cache the vdsk ofnode for later use later/below with sd device */  
-	  if (device_is_a(dev, "vdsk")) {
-	    ofnode = device_ofnode(dev);
-	    device_setofnode(dev, ofnode);
-	  }
-
-	  /* Examine if this is a sd device */  
-	  if (device_is_a(dev, "sd")) {
-	    device_t parent = device_parent(dev);
-	    device_t parent_parent = device_parent(parent);
-	    if (device_is_a(parent_parent, "vdsk")) {
-	      ofnode = device_ofnode(parent_parent);
-	      if (ofnode == ofbootpackage) {
-		booted_device = dev;
-		DPRINTF(ACDB_BOOTDEV, ("booted_device: %s\n", 
-				       device_xname(dev)));
-		return;
-	      }
-	    }
-	  }
-	}
-
 }
 
 static void
