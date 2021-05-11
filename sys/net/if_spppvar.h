@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppvar.h,v 1.34 2021/04/28 09:36:24 yamaguchi Exp $	*/
+/*	$NetBSD: if_spppvar.h,v 1.35 2021/05/11 01:00:49 yamaguchi Exp $	*/
 
 #ifndef _NET_IF_SPPPVAR_H_
 #define _NET_IF_SPPPVAR_H_
@@ -141,6 +141,7 @@ struct sppp {
 	struct	ifqueue pp_cpq;	/* PPP control protocol queue */
 	struct  sppp *pp_next;  /* next interface in keepalive list */
 	u_int   pp_flags;       /* use Cisco protocol instead of PPP */
+	u_int	pp_ncpflags;	/* enable or disable each NCP */
 	u_int	pp_framebytes;	/* number of bytes added by (hardware) framing */
 	u_int   pp_alivecnt;    /* keepalive packets counter */
 	u_int   pp_loopcnt;     /* loopback detection counter */
