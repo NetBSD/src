@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_mfii.c,v 1.33 2020/07/13 09:44:48 nia Exp $	*/
+/*	$NetBSD: wskbdmap_mfii.c,v 1.34 2021/05/11 10:16:48 nia Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbdmap_mfii.c,v 1.33 2020/07/13 09:44:48 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbdmap_mfii.c,v 1.34 2021/05/11 10:16:48 nia Exp $");
 
 #include "opt_wskbdmap.h"
 #include <sys/types.h>
@@ -278,6 +278,62 @@ static const keysym_t pckbd_keydesc_de_nodead[] = {
     KC(13),  KS_apostrophe,	KS_grave,
     KC(27),  KS_plus,		KS_asterisk,	KS_asciitilde,
     KC(41),  KS_asciicircum,	KS_degree,
+};
+
+static const keysym_t pckbd_keydesc_de_neo[] = {
+/*  pos     normal		shifted 	layer 3		layer 4 */
+    KC(41),  KS_dead_circumflex,	KS_dead_caron,
+    KC(2),   KS_1,		KS_degree,	KS_onesuperior,	KS_ordfeminine,
+    KC(3),   KS_2,		KS_section,	KS_twosuperior,	KS_masculine,
+    KC(4),   KS_3,		KS_l,		KS_threesuperior,KS_numbersign,
+    KC(5),   KS_4,		KS_guillemotright,KS_greater,
+    KC(6),   KS_5,		KS_guillemotleft,KS_less,	KS_periodcentered,
+    KC(7),   KS_6,		KS_dollar,	KS_cent,	KS_sterling,
+    KC(8),   KS_7,		KS_currency,	KS_yen,		KS_currency,
+    KC(9),   KS_8,		KS_quotedbl,	KS_quotedbl,	KS_Tab,
+    KC(10),  KS_9,		KS_quotedbl,	KS_quotedbl,	KS_KP_Divide,
+    KC(11),  KS_0,		KS_quotedbl,	KS_quotedbl,	KS_KP_Multiply,
+    KC(12),  KS_minus,		KS_hyphen,	KS_minus,	KS_minus,
+    KC(13),  KS_dead_grave,	KS_dead_cedilla,KS_dead_abovering,
+    KC(16),  KS_x,		KS_X,		KS_period,	KS_Prior,
+    KC(17),  KS_v,		KS_V,		KS_underscore,	KS_BackSpace,
+    KC(18),  KS_l,		KS_L,		KS_bracketleft,	KS_Up,
+    KC(19),  KS_c,		KS_C,		KS_bracketright,KS_Delete,
+    KC(20),  KS_w,		KS_W,		KS_asciicircum,	KS_Next,
+    KC(21),  KS_k,		KS_K,		KS_exclam,	KS_exclamdown,
+    KC(22),  KS_h,		KS_H,		KS_less,	KS_KP_7,
+    KC(23),  KS_g,		KS_G,		KS_greater,	KS_KP_8,
+    KC(24),  KS_f,		KS_F,		KS_equal,	KS_KP_9,
+    KC(25),  KS_q,		KS_Q,		KS_ampersand,	KS_KP_Add,
+    KC(26),  KS_ssharp,		KS_ssharp,	KS_f,		KS_KP_Subtract,
+    KC(27),  KS_dead_acute,	KS_dead_tilde,
+    KC(29),  KS_Control_L,	KS_Control_L,	KS_Control_L,	KS_Control_L,
+    KC(30),  KS_u,		KS_U,		KS_backslash,	KS_Home,
+    KC(31),  KS_i,		KS_I,		KS_slash,	KS_Left,
+    KC(32),  KS_a,		KS_A,		KS_braceleft,	KS_Down,
+    KC(33),  KS_e,		KS_E,		KS_braceright,	KS_Right,
+    KC(34),  KS_o,		KS_O,		KS_asterisk,	KS_End,
+    KC(35),  KS_s,		KS_S,		KS_question,	KS_questiondown,
+    KC(36),  KS_n,		KS_N,		KS_parenleft,	KS_KP_4,
+    KC(37),  KS_r,		KS_R,		KS_parenright,	KS_KP_5,
+    KC(38),  KS_t,		KS_T,		KS_minus,	KS_KP_6,
+    KC(39),  KS_d,		KS_D,		KS_colon,	KS_KP_Separator,
+    KC(40),  KS_y,		KS_Y,		KS_at,		KS_KP_Decimal,
+    KC(44),  KS_udiaeresis,	KS_Udiaeresis,	KS_numbersign,	KS_Escape,
+    KC(45),  KS_odiaeresis,	KS_Odiaeresis,	KS_dollar,	KS_Tab,
+    KC(46),  KS_adiaeresis,	KS_Adiaeresis,	KS_bar,		KS_Insert,
+    KC(47),  KS_p,		KS_P,		KS_asciitilde,	KS_Return,
+    KC(48),  KS_z,		KS_Z,		KS_grave,	KS_Undo,
+    KC(49),  KS_b,		KS_B,		KS_plus,	KS_colon,
+    KC(50),  KS_m,		KS_M,		KS_percent,	KS_KP_1,
+    KC(51),  KS_comma,		KS_minus,	KS_quotedbl,	KS_KP_2,
+    KC(52),  KS_period,		KS_period,	KS_apostrophe,	KS_KP_3,
+    KC(53),  KS_j,		KS_J,		KS_semicolon,	KS_semicolon,
+    KC(56),  KS_Alt_L,		KS_Alt_L,	KS_Alt_L,	KS_Alt_L,
+    KC(43),  KS_Mode_switch,	KS_Multi_key,
+    KC(58),  KS_Mode_switch,	KS_Multi_key,
+    KC(86),  KS_Mode_switch,	KS_Multi_key,
+    KC(184), KS_Mode_switch,	KS_Multi_key,
 };
 
 static const keysym_t pckbd_keydesc_sg[] = {
@@ -982,6 +1038,7 @@ const struct wscons_keydesc pckbd_keydesctab[] = {
 #ifndef WSKBD_USONLY
 	KBD_MAP(KB_DE,			KB_US,	pckbd_keydesc_de),
 	KBD_MAP(KB_DE | KB_NODEAD,	KB_DE,	pckbd_keydesc_de_nodead),
+	KBD_MAP(KB_NEO,			KB_US,	pckbd_keydesc_de_neo),
 	KBD_MAP(KB_SG,			KB_US,	pckbd_keydesc_sg),
 	KBD_MAP(KB_SG | KB_NODEAD,	KB_SG,	pckbd_keydesc_sg_nodead),
 	KBD_MAP(KB_SF,			KB_SG,	pckbd_keydesc_sf),
