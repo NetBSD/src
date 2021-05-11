@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.232 2021/05/11 01:15:11 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.233 2021/05/11 01:27:45 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.232 2021/05/11 01:15:11 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.233 2021/05/11 01:27:45 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -585,11 +585,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 			log(LOG_DEBUG,
 			    "%s: input packet is too small, %d bytes\n",
 			    ifp->if_xname, m->m_pkthdr.len);
-	  drop:
-		if_statadd2(ifp, if_ierrors, 1, if_iqdrops, 1);
-		m_freem(m);
-		SPPP_UNLOCK(sp);
-		return;
+		goto drop;
 	}
 
 	if (sp->pp_flags & PP_NOFRAMING) {
@@ -663,7 +659,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 	}
 
 	switch (protocol) {
-	default:
+	reject_protocol:
 		if (sp->scp[IDX_LCP].state == STATE_OPENED) {
 			uint16_t prot = htons(protocol);
 
@@ -679,6 +675,8 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 			    "<proto=0x%x>\n", ifp->if_xname, ntohs(protocol));
 		if_statinc(ifp, if_noproto);
 		goto drop;
+	default:
+		goto reject_protocol;
 	case PPP_LCP:
 		SPPP_UNLOCK(sp);
 		sppp_cp_input(&lcp, sp, m);
@@ -700,6 +698,8 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		return;
 #ifdef INET
 	case PPP_IPCP:
+		if (!ISSET(sp->pp_ncpflags, SPPP_NCP_IPCP))
+			goto reject_protocol;
 		SPPP_UNLOCK(sp);
 		if (sp->pp_phase == SPPP_PHASE_NETWORK) {
 			sppp_cp_input(&ipcp, sp, m);
@@ -717,6 +717,8 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 #endif
 #ifdef INET6
 	case PPP_IPV6CP:
+		if (!ISSET(sp->pp_ncpflags, SPPP_NCP_IPV6CP))
+			goto reject_protocol;
 		SPPP_UNLOCK(sp);
 		if (sp->pp_phase == SPPP_PHASE_NETWORK) {
 			sppp_cp_input(&ipv6cp, sp, m);
@@ -766,6 +768,13 @@ queue_pkt:
 	IF_ENQUEUE(inq, m);
 	IFQ_UNLOCK(inq);
 	schednetisr(isr);
+	return;
+
+drop:
+	if_statadd2(ifp, if_ierrors, 1, if_iqdrops, 1);
+	m_freem(m);
+	SPPP_UNLOCK(sp);
+	return;
 }
 
 /*
@@ -1029,6 +1038,7 @@ sppp_attach(struct ifnet *ifp)
 	sp->pp_phase = SPPP_PHASE_DEAD;
 	sp->pp_up = sppp_notify_up;
 	sp->pp_down = sppp_notify_down;
+	sp->pp_ncpflags = SPPP_NCP_IPCP | SPPP_NCP_IPV6CP;
 	sppp_wq_set(&sp->work_ifdown, sppp_ifdown, NULL);
 	memset(sp->scp, 0, sizeof(sp->scp));
 	rw_init(&sp->pp_lock);
@@ -1265,6 +1275,7 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	case SPPPSETAUTHCFG:
 	case SPPPSETLCPCFG:
+	case SPPPSETNCPCFG:
 	case SPPPSETIDLETO:
 	case SPPPSETAUTHFAILURE:
 	case SPPPSETDNSOPTS:
@@ -1284,6 +1295,7 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	case SPPPGETAUTHCFG:
 	case SPPPGETLCPCFG:
+	case SPPPGETNCPCFG:
 	case SPPPGETAUTHFAILURES:
 		error = kauth_authorize_network(l->l_cred,
 		    KAUTH_NETWORK_INTERFACE,
@@ -3491,6 +3503,9 @@ sppp_ipcp_open(struct sppp *sp, void *xcp)
 	KASSERT(SPPP_WLOCKED(sp));
 	KASSERT(!cpu_softintr_p());
 
+	if (!ISSET(sp->pp_ncpflags, SPPP_NCP_IPCP))
+		return;
+
 	sp->ipcp.flags &= ~(IPCP_HISADDR_SEEN|IPCP_MYADDR_SEEN|IPCP_MYADDR_DYN|IPCP_HISADDR_DYN);
 	sp->ipcp.req_myaddr = 0;
 	sp->ipcp.req_hisaddr = 0;
@@ -4064,6 +4079,9 @@ sppp_ipv6cp_open(struct sppp *sp, void *xcp)
 
 	KASSERT(SPPP_WLOCKED(sp));
 	KASSERT(!cpu_softintr_p());
+
+	if (!ISSET(sp->pp_ncpflags, SPPP_NCP_IPV6CP))
+		return;
 
 #ifdef IPV6CP_MYIFID_DYN
 	sp->ipv6cp.flags &= ~(IPV6CP_MYIFID_SEEN|IPV6CP_MYIFID_DYN);
@@ -6113,6 +6131,24 @@ sppp_params(struct sppp *sp, u_long cmd, void *data)
 		SPPP_UNLOCK(sp);
 	    }
 	    break;
+	case SPPPGETNCPCFG:
+	    {
+		struct spppncpcfg *ncpp = (struct spppncpcfg *) data;
+
+		SPPP_LOCK(sp, RW_READER);
+		ncpp->ncp_flags = sp->pp_ncpflags;
+		SPPP_UNLOCK(sp);
+	    }
+		break;
+	case SPPPSETNCPCFG:
+	    {
+		struct spppncpcfg *ncpp = (struct spppncpcfg *) data;
+
+		SPPP_LOCK(sp, RW_WRITER);
+		sp->pp_ncpflags = ncpp->ncp_flags;
+		SPPP_UNLOCK(sp);
+	    }
+		break;
 	case SPPPGETSTATUS:
 	    {
 		struct spppstatus *status = (struct spppstatus *)data;
