@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.236 2021/05/11 06:33:17 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.237 2021/05/11 06:42:42 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.236 2021/05/11 06:33:17 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.237 2021/05/11 06:42:42 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -184,6 +184,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.236 2021/05/11 06:33:17 yamaguchi 
 #define CISCO_ADDR_REQ		0	/* Cisco address request */
 #define CISCO_ADDR_REPLY	1	/* Cisco address reply */
 #define CISCO_KEEPALIVE_REQ	2	/* Cisco keepalive request */
+
+#define PPP_NOPROTO		0	/* no authentication protocol */
 
 enum {
 	STATE_INITIAL = SPPP_STATE_INITIAL,
@@ -527,6 +529,34 @@ static const struct cp *cps[IDX_COUNT] = {
 	&pap,			/* IDX_PAP */
 	&chap,			/* IDX_CHAP */
 };
+
+static inline u_int
+sppp_proto2authproto(u_short proto)
+{
+
+	switch (proto) {
+	case PPP_PAP:
+		return SPPP_AUTHPROTO_PAP;
+	case PPP_CHAP:
+		return SPPP_AUTHPROTO_CHAP;
+	}
+
+	return SPPP_AUTHPROTO_NONE;
+}
+
+static inline u_short
+sppp_authproto2proto(u_int authproto)
+{
+
+	switch (authproto) {
+	case SPPP_AUTHPROTO_PAP:
+		return PPP_PAP;
+	case SPPP_AUTHPROTO_CHAP:
+		return PPP_CHAP;
+	}
+
+	return PPP_NOPROTO;
+}
 
 static void
 sppp_change_phase(struct sppp *sp, int phase)
@@ -2720,7 +2750,7 @@ sppp_lcp_open(struct sppp *sp, void *xcp)
 	/*
 	 * If we are authenticator, negotiate LCP_AUTH
 	 */
-	if (sp->hisauth.proto != 0)
+	if (sp->hisauth.proto != PPP_NOPROTO)
 		SET(sp->lcp.opts, SPPP_LCP_OPT_AUTH_PROTO);
 	else
 		CLR(sp->lcp.opts, SPPP_LCP_OPT_AUTH_PROTO);
@@ -2854,7 +2884,7 @@ sppp_lcp_confreq(struct sppp *sp, struct lcp_header *h, int origlen,
 				if (authproto == PPP_PAP || authproto == PPP_CHAP)
 					sp->myauth.proto = authproto;
 			}
-			if (sp->myauth.proto == 0) {
+			if (sp->myauth.proto == PPP_NOPROTO) {
 				/* we are not configured to do auth */
 				if (debug)
 					addlog(" [not configured]");
@@ -5995,12 +6025,8 @@ sppp_params(struct sppp *sp, u_long cmd, void *data)
 		cfg->myauthflags = sp->myauth.flags;
 		cfg->hisauthflags = sp->hisauth.flags;
 		strlcpy(cfg->ifname, sp->pp_if.if_xname, sizeof(cfg->ifname));
-		cfg->hisauth = 0;
-		if (sp->hisauth.proto)
-		    cfg->hisauth = (sp->hisauth.proto == PPP_PAP) ? SPPP_AUTHPROTO_PAP : SPPP_AUTHPROTO_CHAP;
-		cfg->myauth = 0;
-		if (sp->myauth.proto)
-		    cfg->myauth = (sp->myauth.proto == PPP_PAP) ? SPPP_AUTHPROTO_PAP : SPPP_AUTHPROTO_CHAP;
+		cfg->hisauth = sppp_proto2authproto(sp->hisauth.proto);
+		cfg->myauth = sppp_proto2authproto(sp->myauth.proto);
 		if (cfg->myname_length == 0) {
 		    if (sp->myauth.name != NULL)
 			cfg->myname_length = sp->myauth.name_len + 1;
@@ -6137,13 +6163,15 @@ sppp_params(struct sppp *sp, u_long cmd, void *data)
 			sp->myauth.secret[sp->myauth.secret_len] = 0;
 		}
 		sp->myauth.flags = cfg->myauthflags;
-		if (cfg->myauth)
-		    sp->myauth.proto = (cfg->myauth == SPPP_AUTHPROTO_PAP) ? PPP_PAP : PPP_CHAP;
+		if (cfg->myauth != SPPP_AUTHPROTO_NOCHG) {
+			sp->myauth.proto = sppp_authproto2proto(cfg->myauth);
+		}
 		sp->hisauth.flags = cfg->hisauthflags;
-		if (cfg->hisauth)
-		    sp->hisauth.proto = (cfg->hisauth == SPPP_AUTHPROTO_PAP) ? PPP_PAP : PPP_CHAP;
+		if (cfg->hisauth != SPPP_AUTHPROTO_NOCHG) {
+			sp->hisauth.proto = sppp_authproto2proto(cfg->hisauth);
+		}
 		sp->pp_auth_failures = 0;
-		if (sp->hisauth.proto != 0)
+		if (sp->hisauth.proto != PPP_NOPROTO)
 			SET(sp->lcp.opts, SPPP_LCP_OPT_AUTH_PROTO);
 		else
 			CLR(sp->lcp.opts, SPPP_LCP_OPT_AUTH_PROTO);
