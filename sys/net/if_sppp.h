@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sppp.h,v 1.32 2021/05/11 01:00:49 yamaguchi Exp $	*/
+/*	$NetBSD: if_sppp.h,v 1.33 2021/05/11 01:15:11 yamaguchi Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -232,16 +232,6 @@ struct spppipv6cpstatus {
 };
 
 #define SPPPGETIPV6CPSTATUS	_IOWR('i', 137, struct spppipv6cpstatus)
-
-#define SPPP_NCP_IPCP		__BIT(0)
-#define SPPP_NCP_IPV6CP		__BIT(1)
-struct spppncpcfg {
-	char		ifname[IFNAMSIZ];
-	u_int		ncp_flags;
-};
-
-#define SPPPGETNCPCFG		_IOWR('i', 138, struct spppncpcfg)
-#define SPPPSETNCPCFG		_IOW('i', 139, struct spppncpcfg)
 
 #endif /* !_NET_IF_SPPP_H_ */
 
