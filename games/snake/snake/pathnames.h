@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.4 2003/08/07 09:37:45 agc Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.5 2021/05/12 11:08:31 nia Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -31,5 +31,5 @@
  *	@(#)pathnames.h	8.1 (Berkeley) 5/31/93
  */
 
-#define	_PATH_RAWSCORES	"/var/games/snakerawscores"
-#define	_PATH_LOGFILE	"/var/games/snake.log"
+#define	SNAKE_PATH_RAWSCORES	"/var/games/snakerawscores"
+#define	SNAKE_PATH_LOGFILE	"/var/games/snake.log"
