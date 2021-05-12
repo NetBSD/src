@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.165 2021/04/25 13:22:49 thorpej Exp $
+#	$NetBSD: files.sparc64,v 1.166 2021/05/12 23:22:33 thorpej Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -44,6 +44,7 @@ file	arch/sparc64/dev/schizo.c		schizo
 file	arch/sparc64/dev/pyro.c			pyro
 file	arch/sparc64/dev/vpci.c			vpci
 file	arch/sparc64/dev/pci_machdep.c		psycho | schizo | pyro | vpci
+file	dev/ofw/ofw_pci_subr.c			pci
 
 device jbusi2c: i2cexec, i2c_bitbang, i2cbus
 attach jbusi2c at mainbus

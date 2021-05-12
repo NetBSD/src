@@ -1,4 +1,4 @@
-#	$NetBSD: files.ofppc,v 1.47 2017/12/18 15:53:39 skrll Exp $
+#	$NetBSD: files.ofppc,v 1.48 2021/05/12 23:22:33 thorpej Exp $
 #
 # NetBSD/ofppc configuration info
 #
@@ -77,6 +77,7 @@ file	arch/powerpc/pci/pciconf_ofmethod.c	pci
 file	arch/powerpc/pci/pci_machdep_common.c	pci
 file	arch/powerpc/pci/pci_machdep_ofw.c	pci
 file    arch/powerpc/pci/pci_module.c		pci & modular
+file	dev/ofw/ofw_pci_subr.c			pci
 
 device ofwpci: pcibus
 attach ofwpci at mainbus
