@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.10.2.6 2020/10/15 19:36:51 bouyer Exp $	*/
+/*	$NetBSD: label.c,v 1.10.2.7 2021/05/12 06:53:55 msaitoh Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.10.2.6 2020/10/15 19:36:51 bouyer Exp $");
+__RCSID("$NetBSD: label.c,v 1.10.2.7 2021/05/12 06:53:55 msaitoh Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1070,9 +1070,23 @@ update_edit_ptn_menu(menudesc *m, void *arg)
 			    edit->pset->parts, edit->id, attr_no))
 				continue;
 		}
+		/*
+		 * Do not allow editing of size/start/type when partition
+		 * is defined in some outer partition table already
+		 */
+		if ((edit->pset->infos[edit->index].flags & PUIFLG_IS_OUTER)
+		    && (m->opts[i].opt_action == edit_fs_type
+			|| m->opts[i].opt_action == edit_fs_start
+			|| m->opts[i].opt_action == edit_fs_size))
+				continue;
 		/* Ok: we want this one */
 		m->opts[i].opt_flags &= ~OPT_IGNORE;
 	}
+
+	/* Avoid starting at a (now) disabled menu item */
+	while (m->cursel >= 0 && m->cursel < m->numopts
+	    && (m->opts[m->cursel].opt_flags & OPT_IGNORE))
+		m->cursel++;
 }
 
 static void
@@ -1123,7 +1137,10 @@ draw_edit_ptn_line(menudesc *m, int opt, void *arg)
 
 	if (m->opts[opt].opt_flags & OPT_IGNORE
 	    && (opt != 3 || edit->info.fs_type == FS_UNUSED)
-	    && m->opts[opt].opt_action != edit_ptn_custom_type) {
+	    && m->opts[opt].opt_action != edit_ptn_custom_type
+	    && m->opts[opt].opt_action != edit_fs_type
+	    && m->opts[opt].opt_action != edit_fs_start
+	    && m->opts[opt].opt_action != edit_fs_size) {
 		wprintw(m->mw, "%*s -", col_width, "");
 		return;
 	}
