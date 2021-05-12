@@ -1,4 +1,4 @@
-#	$NetBSD: files.shark,v 1.24 2021/04/30 02:24:05 thorpej Exp $
+#	$NetBSD: files.shark,v 1.25 2021/05/12 23:48:41 thorpej Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -136,6 +136,7 @@ file	arch/shark/ofw/chipsfb_ofbus.c		chipsfb_ofbus needs-flag
 device	vlpci: pcibus
 file	arch/shark/ofw/vlpci.c			vlpci needs-flag
 attach	vlpci at ofbus
+file	dev/ofw/ofw_pci_subr.c			pci
 
 # Smart Card Reader
 device	scr: tty
