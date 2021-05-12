@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.291 2021/04/24 23:36:52 thorpej Exp $	*/
+/*	$NetBSD: acpi.c,v 1.292 2021/05/12 23:22:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.291 2021/04/24 23:36:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.292 2021/05/12 23:22:33 thorpej Exp $");
 
 #include "pci.h"
 #include "opt_acpi.h"
@@ -1143,43 +1143,6 @@ acpi_print(void *aux, const char *pnp)
 	aprint_normal(")");
 
 	return UNCONF;
-}
-
-/*
- * acpi_device_register --
- *	Called by the platform device_register() routine when
- *	attaching devices.
- */
-void
-acpi_device_register(device_t dev, void *v)
-{
-	/* All we do here is set the devhandle in the device_t. */
-	device_t parent = device_parent(dev);
-	ACPI_HANDLE hdl = NULL;
-
-	if (device_is_a(parent, "pci")) {
-		const struct pci_attach_args *pa = v;
-		struct acpi_devnode *ad;
-		u_int segment;
-
-#ifdef __HAVE_PCI_GET_SEGMENT
-		segment = pci_get_segment(pa->pa_pc);
-#else
-		segment = 0;
-#endif /* __HAVE_PCI_GET_SEGMENT */
-
-		ad = acpi_pcidev_find(segment,
-		    pa->pa_bus, pa->pa_device, pa->pa_function);
-		if (ad == NULL || (hdl = ad->ad_handle) == NULL) {
-			aprint_debug_dev(dev, "no matching ACPI node\n");
-			return;
-		}
-	} else {
-		return;
-	}
-	KASSERT(hdl != NULL);
-
-	device_set_handle(dev, devhandle_from_acpi(hdl));
 }
 
 /*
