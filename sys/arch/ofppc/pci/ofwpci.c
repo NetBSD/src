@@ -1,4 +1,4 @@
-/* $NetBSD: ofwpci.c,v 1.19 2021/04/24 23:36:45 thorpej Exp $ */
+/* $NetBSD: ofwpci.c,v 1.20 2021/05/12 04:07:34 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwpci.c,v 1.19 2021/04/24 23:36:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwpci.c,v 1.20 2021/05/12 04:07:34 thorpej Exp $");
 
 #include "opt_pci.h"
 
@@ -228,5 +228,7 @@ ofwpci_attach(device_t parent, device_t self, void *aux)
 	pba.pba_bridgetag = NULL;
 	pba.pba_pc = pc;
 	pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY;
-	config_found(self, &pba, pcibusprint, CFARG_EOL);
+	config_found(self, &pba, pcibusprint,
+	    CFARG_DEVHANDLE, device_handle(self),
+	    CFARG_EOL);
 }
