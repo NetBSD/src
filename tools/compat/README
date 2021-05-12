@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.15 2021/05/07 14:52:59 cjep Exp $
+$NetBSD: README,v 1.16 2021/05/12 06:39:28 cjep Exp $
 
 Special notes for cross-hosting a NetBSD build on certain platforms.  
 Only those platforms which have been tested to complete a "build.sh" run
@@ -50,6 +50,7 @@ macOS/Darwin
 build.sh was recently tested on:
 * macOS Big Sur
 * macOS Catalina
+* macOS High Sierra
 
 with up to date Xcode command line tools and APFS filesystems.
 (Previously, there have been issues building on case-insensitive 
