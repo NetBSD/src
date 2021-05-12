@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.7.4.2 2019/11/25 05:50:18 msaitoh Exp $
+.\"	$NetBSD: contents,v 1.7.4.3 2021/05/12 13:06:23 martin Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -245,7 +245,7 @@ This includes the modular X.Org server.
 .\"
 .
 .Pp
-The \*M binary distribution sets are distributed as gzipped tar files
+The \*M binary distribution sets are distributed as compressed tar files
 named with the extension
 .Sy .\*[setsuffix]
 .Pq e.g., Pa base.\*[setsuffix] .
