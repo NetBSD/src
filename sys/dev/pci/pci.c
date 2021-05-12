@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.159 2021/04/24 23:36:57 thorpej Exp $	*/
+/*	$NetBSD: pci.c,v 1.160 2021/05/12 23:22:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.159 2021/04/24 23:36:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.160 2021/05/12 23:22:33 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -267,6 +267,27 @@ pciprint(void *aux, const char *pnp)
 	return UNCONF;
 }
 
+static devhandle_t
+pci_bus_get_child_devhandle(struct pci_softc *sc, pcitag_t tag)
+{
+	struct pci_bus_get_child_devhandle_args args = {
+		.pc = sc->sc_pc,
+		.tag = tag,
+	};
+
+	if (device_call(sc->sc_dev, "pci-bus-get-child-devhandle",
+			&args) != 0) {
+		/*
+		 * The call is either not supported or the requested
+		 * device was not found in the platform device tree.
+		 * Return an invalid handle.
+		 */
+		devhandle_invalidate(&args.devhandle);
+	}
+
+	return args.devhandle;
+}
+
 int
 pci_probe_device(struct pci_softc *sc, pcitag_t tag,
     int (*match)(const struct pci_attach_args *),
@@ -415,6 +436,8 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 	}
 	pa.pa_intrline = PCI_INTERRUPT_LINE(intr);
 
+	devhandle_t devhandle = pci_bus_get_child_devhandle(sc, pa.pa_tag);
+
 #ifdef __HAVE_PCI_MSI_MSIX
 	if (pci_get_ht_capability(pc, tag, PCI_HT_CAP_MSIMAP, &off, &cap)) {
 		/*
@@ -464,6 +487,7 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 		c->c_dev = config_found(sc->sc_dev, &pa, pciprint,
 		    CFARG_SUBMATCH, config_stdsubmatch,
 		    CFARG_LOCATORS, locs,
+		    CFARG_DEVHANDLE, devhandle,
 		    CFARG_EOL);
 
 		ret = (c->c_dev != NULL);
