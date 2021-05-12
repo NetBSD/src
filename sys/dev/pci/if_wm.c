@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.703 2021/05/03 07:43:31 rillig Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.704 2021/05/12 10:16:12 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.703 2021/05/03 07:43:31 rillig Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.704 2021/05/12 10:16:12 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -107,6 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.703 2021/05/03 07:43:31 rillig Exp $");
 #include <sys/pcq.h>
 #include <sys/sysctl.h>
 #include <sys/workqueue.h>
+#include <sys/atomic.h>
 
 #include <sys/rndsource.h>
 
@@ -667,12 +668,19 @@ do {									\
 } while (/*CONSTCOND*/0)
 
 #ifdef WM_EVENT_COUNTERS
+#ifdef __HAVE_ATOMIC64_LOADSTORE
 #define	WM_EVCNT_INCR(ev)						\
 	atomic_store_relaxed(&((ev)->ev_count),				\
 	    atomic_load_relaxed(&(ev)->ev_count) + 1)
 #define	WM_EVCNT_ADD(ev, val)						\
 	atomic_store_relaxed(&((ev)->ev_count),				\
 	    atomic_load_relaxed(&(ev)->ev_count) + (val))
+#else
+#define	WM_EVCNT_INCR(ev)						\
+	((ev)->ev_count)++
+#define	WM_EVCNT_ADD(ev, val)						\
+	(ev)->ev_count += (val)
+#endif
 
 #define WM_Q_EVCNT_INCR(qname, evname)			\
 	WM_EVCNT_INCR(&(qname)->qname##_ev_##evname)
