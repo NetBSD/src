@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.2,v 1.1.2.81 2021/05/09 07:10:08 martin Exp $
+# $NetBSD: CHANGES-9.2,v 1.1.2.82 2021/05/12 06:55:12 msaitoh Exp $
 
 A complete list of changes from the NetBSD 9.1 release to the NetBSD 9.2
 release:
@@ -3095,3 +3095,14 @@ sys/dev/pci/siisata_pci.c			1.21
 	siisata(4): PR 55115 - disable MSI for SiI3124.
 	[dolecek, ticket #1270]
 
+usr.sbin/sysinst/arch/evbarm/md.c		1.21
+usr.sbin/sysinst/label.c			1.33
+usr.sbin/sysinst/mbr.c				1.39
+
+	sysinst:
+	 - fix a few inconsistencies around MSDOS file system handling,
+	   especially visible on evbarm installations.
+	 - do not allow editing some properties of partitions
+	   when the partition can not be changed (e.g. because it needs to
+	   match the same partition defined in the MBR)
+	[martin, ticket #1271]
