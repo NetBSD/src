@@ -1,4 +1,4 @@
-/*	$NetBSD: snake.c,v 1.30 2020/05/14 08:34:18 msaitoh Exp $	*/
+/*	$NetBSD: snake.c,v 1.31 2021/05/12 11:08:31 nia Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)snake.c	8.2 (Berkeley) 1/7/94";
 #else
-__RCSID("$NetBSD: snake.c,v 1.30 2020/05/14 08:34:18 msaitoh Exp $");
+__RCSID("$NetBSD: snake.c,v 1.31 2021/05/12 11:08:31 nia Exp $");
 #endif
 #endif				/* not lint */
 
@@ -143,15 +143,15 @@ main(int argc, char **argv)
 	time_t tv;
 
 	/* Open score files then revoke setgid privileges */
-	rawscores = open(_PATH_RAWSCORES, O_RDWR|O_CREAT, 0664);
+	rawscores = open(SNAKE_PATH_RAWSCORES, O_RDWR|O_CREAT, 0664);
 	if (rawscores < 0) {
-		warn("open %s", _PATH_RAWSCORES);
+		warn("open %s", SNAKE_PATH_RAWSCORES);
 		sleep(2);
 	} else if (rawscores < 3)
 		exit(1);
-	logfile = fopen(_PATH_LOGFILE, "a");
+	logfile = fopen(SNAKE_PATH_LOGFILE, "a");
 	if (logfile == NULL) {
-		warn("fopen %s", _PATH_LOGFILE);
+		warn("fopen %s", SNAKE_PATH_LOGFILE);
 		sleep(2);
 	}
 	setgid(getgid());
