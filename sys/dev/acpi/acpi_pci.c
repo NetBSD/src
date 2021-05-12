@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci.c,v 1.30 2021/01/14 14:37:17 thorpej Exp $ */
+/* $NetBSD: acpi_pci.c,v 1.31 2021/05/12 23:22:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.30 2021/01/14 14:37:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.31 2021/05/12 23:22:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -542,3 +542,39 @@ acpi_pci_ignore_boot_config(ACPI_HANDLE handle)
 
 	return ret;
 }
+
+/*
+ * acpi_pci_bus_get_child_devhandle:
+ *
+ *	Implements the "pci-bus-get-child-devhandle" device call for
+ *	ACPI device handles
+ */
+static int
+acpi_pci_bus_get_child_devhandle(device_t dev, devhandle_t call_handle, void *v)
+{
+	struct pci_bus_get_child_devhandle_args *args = v;
+	struct acpi_devnode *ad;
+	ACPI_HANDLE hdl;
+	int b, d, f;
+	u_int segment;
+
+#ifdef __HAVE_PCI_GET_SEGMENT
+	segment = pci_get_segment(args->pc);
+#else
+	segment = 0;
+#endif /* __HAVE_PCI_GET_SEGMENT */
+
+	pci_decompose_tag(args->pc, args->tag, &b, &d, &f);
+
+	ad = acpi_pcidev_find(segment, b, d, f);
+
+	if (ad != NULL && (hdl = ad->ad_handle) != NULL) {
+		/* Found it! */
+		args->devhandle = devhandle_from_acpi(hdl);
+		return 0;
+	}
+
+	return ENODEV;
+}
+ACPI_DEVICE_CALL_REGISTER("pci-bus-get-child-devhandle",
+			  acpi_pci_bus_get_child_devhandle)

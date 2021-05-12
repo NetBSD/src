@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_platform.c,v 1.25 2021/04/24 23:36:25 thorpej Exp $ */
+/* $NetBSD: acpi_platform.c,v 1.26 2021/05/12 23:22:32 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.25 2021/04/24 23:36:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.26 2021/05/12 23:22:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -287,8 +287,6 @@ acpi_platform_init_attach_args(struct fdt_attach_args *faa)
 static void
 acpi_platform_device_register(device_t self, void *aux)
 {
-	acpi_device_register(self, aux);
-
 #if NCOM > 0
 	prop_dictionary_t prop = device_properties(self);
 	ACPI_STATUS rv;

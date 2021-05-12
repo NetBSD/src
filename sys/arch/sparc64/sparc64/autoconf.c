@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.230 2021/05/11 03:43:30 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.231 2021/05/12 23:22:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.230 2021/05/11 03:43:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.231 2021/05/12 23:22:33 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1025,18 +1025,6 @@ device_register(device_t dev, void *aux)
 		 * Ignore mainbus0 itself, it certainly is not a boot
 		 * device.
 		 */
-	} else if (device_is_a(busdev, "pci")) {
-		struct pci_attach_args *pa = aux;
-
-		/*
-		 * XXX PCI devices don't currently get their devhandles
-		 * set when the PCI layer attaches them, so we need to
-		 * do it here.  (It's not just us; ACPI has the same
-		 * problem...)
-		 */
-		ofnode = (int)PCITAG_NODE(pa->pa_tag);
-		devhandle = devhandle_from_of(ofnode);
-		device_set_handle(dev, devhandle);
 	} else if (device_is_a(busdev, "iic")) {
 		struct i2c_attach_args *ia = aux;
 
