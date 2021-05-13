@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.63 2020/01/17 20:08:08 ad Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.64 2021/05/13 08:57:29 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.63 2020/01/17 20:08:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.64 2021/05/13 08:57:29 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -267,7 +267,8 @@ ntfs_loadntnode(struct ntfsmount *ntmp, struct ntnode *ip)
 
 	mfrp = malloc(ntfs_bntob(ntmp->ntm_bpmftrec), M_TEMP, M_WAITOK);
 
-	if (ip->i_number < NTFS_SYSNODESNUM) {
+	if (ip->i_number < NTFS_SYSNODESNUM ||
+	    ntmp->ntm_sysvn[NTFS_MFTINO] == NULL) {
 		struct buf *bp;
 		daddr_t bn;
 		off_t boff;
