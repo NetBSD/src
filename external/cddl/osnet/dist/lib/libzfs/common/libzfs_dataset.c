@@ -1135,7 +1135,7 @@ badlabel:
 			m_label_free(new_sl);	/* OK if null */
 #else	/* !illumos */
 			zfs_error_aux(hdl, dgettext(TEXT_DOMAIN,
-			    "mlslabel is not supported on FreeBSD"));
+			    "mlslabel is not supported on NetBSD"));
 			(void) zfs_error(hdl, EZFS_BADPROP, errbuf);
 #endif	/* illumos */
 			goto error;
@@ -1644,7 +1644,7 @@ zfs_prop_set_list(zfs_handle_t *zhp, nvlist_t *props)
 		case ZFS_PROP_NBMAND:
 		case ZFS_PROP_MLSLABEL:
 			(void) snprintf(errbuf, sizeof (errbuf),
-			    "property '%s' not supported on FreeBSD",
+			    "property '%s' not supported on NetBSD",
 			    nvpair_name(elem));
 			ret = zfs_error(hdl, EZFS_PERM, errbuf);
 			goto error;
