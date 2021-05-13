@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.65 2020/04/18 11:00:42 skrll Exp $
+#	$NetBSD: INSTALL,v 1.65.6.1 2021/05/13 00:47:27 thorpej Exp $
 #
 #	Shark installation kernel
 #
@@ -172,11 +172,9 @@ ofbus*		at ofbus?
 #ofdisk* 	at ofbus?
 #ofnet*		at ofbus?	# don't use with cs0
 #ofcons* 	at ofbus?	# don't use with pc0
-ofrtc*		at ofisa?
 ofrom*		at ofbus?
 
 ofisa*		at ofbus?
-ofbus*		at ofisa?
 
 # IDE/ATA disk
 wdc*		at ofisa?
@@ -187,13 +185,6 @@ atapibus*	at atabus?
 cd*		at atapibus? drive?
 sd*		at atapibus? drive?
 
-# PCCONS@OFW
-#ofisapc*	at ofbus?
-#pc*		at ofisapc?
-
-# PS/2 Mouse
-#opms0		at spckbd? irq 12
-
 # wscons
 pckbc*		at ofisa?
 pckbd*		at pckbc?
@@ -203,6 +194,9 @@ vga*		at ofbus?
 wsdisplay*	at wsemuldisplaydev?
 wskbd*		at pckbd? console ?
 #wsmouse*	at pms? mux 0
+
+# mc146818 real time clock
+mcclock*	at ofisa?
 
 # CS8900 Ethernet@OFW
 cs*		at ofisa?

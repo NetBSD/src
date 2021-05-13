@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.5 2020/04/17 14:19:44 joerg Exp $	*/
+/*	$NetBSD: asm.h,v 1.5.6.1 2021/05/13 00:47:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,6 +33,11 @@
 #define	_RISCV_ASM_H
 
 #define	_C_LABEL(x)	x
+
+#define	__CONCAT(x,y)	x ## y
+#define	__STRING(x)	#x
+
+#define	___CONCAT(x,y)	__CONCAT(x,y)
 
 /*
  * Define -pg profile entry code.

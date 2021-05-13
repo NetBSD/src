@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.51 2020/06/25 11:48:39 simonb Exp $	*/
+/*	$NetBSD: fp.S,v 1.51.6.1 2021/05/13 00:47:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1754,17 +1754,18 @@ cvt_s_d:
  */
 cvt_s_w:
 	jal	_C_LABEL(get_fs_int)
-	bne	t2, zero, 1f			# check for zero
+	bne	t2, zero, .Lcvtswnot0		# check for zero
 	move	t1, zero
 	b	result_fs_s
 /*
  * Find out how many leading zero bits are in t2 and put in v1.
  */
+.Lcvtswnot0:
 #if __mips == 32 || __mips == 64
 	clz	v1, t2
 #else
 	.set	noat
-1:
+
 	move	v0, t2
 	move	v1, zero
 	srl	AT, v0, 16
@@ -1843,18 +1844,19 @@ cvt_d_s:
  */
 cvt_d_w:
 	jal	_C_LABEL(get_fs_int)
-	bne	t2, zero, 1f			# check for zero
+	bne	t2, zero, .Lcvtdwnot0		# check for zero
 	move	t1, zero			# result=0
 	move	t3, zero
 	b	result_fs_d
 /*
  * Find out how many leading zero bits are in t2 and put in v1.
  */
+.Lcvtdwnot0:
 #if __mips == 32 || __mips == 64
 	clz	v1, t2
 #else /* __mips == 32 || __mips == 64 */
 	.set	noat
-1:
+
 	move	v0, t2
 	move	v1, zero
 	srl	AT, v0, 16
@@ -4411,13 +4413,14 @@ END(renorm_fs_d)
  *----------------------------------------------------------------------------
  */
 STATIC_LEAF(renorm_ft_s)
+/*
+ * Find out how many leading zero bits are in ta2 and put in v1.
+ */
 #if __mips == 32 || __mips == 64
 	clz	v1, ta2
 #else
 	.set	noat
-/*
- * Find out how many leading zero bits are in ta2 and put in v1.
- */
+
 	move	v0, ta2
 	move	v1, zero
 	srl	AT, v0, 16

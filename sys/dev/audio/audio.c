@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.92 2021/04/24 23:36:52 thorpej Exp $	*/
+/*	$NetBSD: audio.c,v 1.92.2.1 2021/05/13 00:47:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.92 2021/04/24 23:36:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.92.2.1 2021/05/13 00:47:30 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -1440,7 +1440,9 @@ audio_attach_mi(const struct audio_hw_if *ahwp, void *hdlp, device_t dev)
 	arg.type = AUDIODEV_TYPE_AUDIO;
 	arg.hwif = ahwp;
 	arg.hdl = hdlp;
-	return config_found(dev, &arg, audioprint, CFARG_EOL);
+	return config_found(dev, &arg, audioprint,
+	    CFARG_IATTR, "audiobus",
+	    CFARG_EOL);
 }
 
 /*
@@ -6572,7 +6574,10 @@ audio_hw_probe(struct audio_softc *sc, audio_format2_t *cand, int mode)
 		    query.fmt.precision == AUDIO_INTERNAL_BITS) {
 			score += 0x10;
 		}
-		score += query.fmt.channels;
+
+		/* Do not prefer surround formats */
+		if (query.fmt.channels <= 2)
+			score += query.fmt.channels;
 
 		if (score < cand_score) {
 			DPRINTF(1, "fmt[%d] skip; score 0x%x < 0x%x\n", i,
@@ -8945,6 +8950,9 @@ audioprint(void *aux, const char *pnp)
 			break;
 		case AUDIODEV_TYPE_MPU:
 			type = "mpu";
+			break;
+		case AUDIODEV_TYPE_AUX:
+			type = "aux";
 			break;
 		default:
 			panic("audioprint: unknown type %d", arg->type);

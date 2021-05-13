@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_et.c,v 1.32 2021/04/24 23:36:29 thorpej Exp $	*/
+/*	$NetBSD: ite_et.c,v 1.32.2.1 2021/05/13 00:47:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_et.c,v 1.32 2021/04/24 23:36:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_et.c,v 1.32.2.1 2021/05/13 00:47:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,7 +204,8 @@ grfetattach(device_t parent, device_t self, void *aux)
 		grf_viewsync(&congrf);
 
 		/* Attach console ite */
-		atari_config_found(cfdata_grf, &itedev, &congrf, grfetprint);
+		atari_config_found(cfdata_grf, &itedev, &congrf, grfetprint,
+		    CFARG_EOL);
 		return;
 	}
 

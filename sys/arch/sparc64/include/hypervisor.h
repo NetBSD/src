@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.6 2017/02/10 23:26:23 palle Exp $ */
+/*	$NetBSD: hypervisor.h,v 1.6.30.1 2021/05/13 00:47:28 thorpej Exp $ */
 /*	$OpenBSD: hypervisor.h,v 1.14 2011/06/26 17:23:46 kettenis Exp $	*/
 
 /*
@@ -36,7 +36,13 @@
 
 #ifndef _LOCORE
 int64_t	hv_api_get_version(uint64_t api_group,
-	    uint64_t *major_number, uint64_t *minor_number);
+						   uint64_t *major_number,
+						   uint64_t *minor_number);
+int64_t	hv_api_set_version(uint64_t api_group,
+						   uint64_t major_number,
+						   uint64_t req_minor_number,
+						   uint64_t* actual_minor_number);
+#define HV_API_GROUP_INTERRUPT 0x002
 #endif
 /*
  * Domain services

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.95 2021/03/08 06:31:42 mlelstv Exp $
+#	$NetBSD: GENERIC,v 1.95.4.1 2021/05/13 00:47:24 thorpej Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -140,6 +140,7 @@ sun6ia31ccu* 	at fdt? pass 2		# Allwinner A31 CCU
 sun8ia83tccu* 	at fdt? pass 2		# Allwinner A83T CCU
 sun8ih3ccu* 	at fdt? pass 2		# Allwinner H3 CCU
 sun8ih3rccu* 	at fdt? pass 2		# Allwinner H3 CCU (PRCM)
+sun8iv3sccu* 	at fdt? pass 2		# Allwinner V3s CCU
 sun9ia80ccu* 	at fdt? pass 2		# Allwinner A80 CCU
 sunxiresets* 	at fdt? pass 1		# Allwinner Misc. clock resets
 sunxigates* 	at fdt? pass 1		# Allwinner Misc. clock gates
@@ -399,6 +400,7 @@ m25p* 		at spi? slave ?
 bcmrng* 	at fdt?			# Broadcom BCM283x RNG
 mesonrng* 	at fdt?			# Amlogic Meson RNG
 tirng* 		at fdt?			# TI RNG
+sun8icrypto* 	at fdt?			# Allwinner Crypto Engine
 
 # Security ID EFUSE
 sunxisid* 	at fdt? pass 4		# SID
@@ -425,6 +427,7 @@ a64acodec* 	at fdt?			# Allwinner A64 audio codec (analog part)
 aaci* 		at fdt?			# ARM PrimeCell AACI
 ausoc* 		at fdt?			# Simple SoC audio card
 h3codec* 	at fdt?			# Allwinner H3 audio codec (analog part)
+v3scodec* 	at fdt?			# Allwinner V3s audio codec (analog part)
 hdaudio* 	at fdt?			# Intel HDA
 hdafg* 		at hdaudiobus?
 options 	HDAUDIOVERBOSE
