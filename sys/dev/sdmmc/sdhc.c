@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.109 2021/04/24 23:36:59 thorpej Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.110 2021/05/13 05:54:14 msaitoh Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.109 2021/04/24 23:36:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.110 2021/05/13 05:54:14 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -138,7 +138,7 @@ hwrite1(struct sdhc_host *hp, bus_size_t o, uint8_t val)
 		const size_t shift = 8 * (o & 3);
 		o &= -4;
 		uint32_t tmp = bus_space_read_4(hp->iot, hp->ioh, o);
-		tmp = (val << shift) | (tmp & ~(0xff << shift));
+		tmp = (val << shift) | (tmp & ~(0xffU << shift));
 		bus_space_write_4(hp->iot, hp->ioh, o, tmp);
 	}
 }
@@ -153,7 +153,7 @@ hwrite2(struct sdhc_host *hp, bus_size_t o, uint16_t val)
 		const size_t shift = 8 * (o & 2);
 		o &= -4;
 		uint32_t tmp = bus_space_read_4(hp->iot, hp->ioh, o);
-		tmp = (val << shift) | (tmp & ~(0xffff << shift));
+		tmp = (val << shift) | (tmp & ~(0xffffU << shift));
 		bus_space_write_4(hp->iot, hp->ioh, o, tmp);
 	}
 }
