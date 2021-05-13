@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.20 2020/11/08 10:08:28 skrll Exp $ */
+/* $NetBSD: locore.S,v 1.20.4.1 2021/05/13 00:47:27 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -120,8 +120,7 @@ ENTRY_NP(start)
 #endif
 
 	// We should have a VM so let's start using our real addresses
-	lui	t0, %hi(.Lmmu_on)	// load hi part of absolute address
-	jr	t0, %lo(.Lmmu_on)	// jump to absolute address
+	PTR_LA	t0, .Lmmu_on
 
 .Lmmu_on:
 	// MMU is on!

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.70 2019/01/01 19:41:04 christos Exp $
+#	$NetBSD: Makefile.mips,v 1.70.16.1 2021/05/13 00:47:26 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -54,18 +54,18 @@ AFLAGS.fp.S+=		-Wa,-mhard-float
 
 CFLAGS+=	${GP} -mno-abicalls -msoft-float -ffixed-24
 .if defined(LP64) && ${LP64} == "yes"
-.if ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el"
+.if ${MACHINE_MIPS64}
 CFLAGS+=	-msym32 -mabi=64
 AFLAGS+=	-msym32 -mabi=64
 .endif
-.if ${MACHINE_ARCH} == "mips64eb"
+.if !empty(MACHINE_ARCH:Mmips*64eb)
 LDFLAGS+=	-Wl,-m,elf64btsmip
 LINKFORMAT+=	-m elf64btsmip
 SYSTEM_LD_TAIL_EXTRA+= \
 		;echo ${OBJCOPY} -O elf32-ntradbigmips $@ $@.elf32; \
 		${OBJCOPY} -O elf32-ntradbigmips $@ $@.elf32
 .endif
-.if ${MACHINE_ARCH} == "mips64el"
+.if !empty(MACHINE_ARCH:Mmips*64el)
 LDFLAGS+=	-Wl,-m,elf64ltsmip
 LINKFORMAT+=	-m elf64ltsmip
 SYSTEM_LD_TAIL_EXTRA+= \
@@ -96,7 +96,7 @@ locore_machdep.o: ${THISMIPS}/${MACHINE}/locore_machdep.S assym.h
 ##
 ## (5) link settings
 ##
-.if ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el"
+.if ${MACHINE_MIPS64}
 TEXTADDR?=              ${DEFTEXTADDR:C/0x8/0xFFFFFFFF8/}
 .else   
 TEXTADDR?=		${DEFTEXTADDR}

@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.278 2021/04/24 23:37:00 thorpej Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.278.2.1 2021/05/13 00:47:32 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -76,8 +76,10 @@
  *	@(#)subr_autoconf.c	8.3 (Berkeley) 5/17/94
  */
 
+#define	__SUBR_AUTOCONF_PRIVATE	/* see <sys/device.h> */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.278 2021/04/24 23:37:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.278.2.1 2021/05/13 00:47:32 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -168,8 +170,6 @@ struct alldevs_foray {
 
 static char *number(char *, int);
 static void mapply(struct matchinfo *, cfdata_t);
-static device_t config_vattach(device_t, cfdata_t, void *, cfprint_t, cfarg_t,
-			       va_list);
 static void config_devdelete(device_t);
 static void config_devunlink(device_t, struct devicelist *);
 static void config_makeroom(int, struct cfdriver *);
@@ -1113,7 +1113,7 @@ config_get_cfargs(cfarg_t tag,
  * an arbitrary function to all potential children (its return value
  * can be ignored).
  */
-static cfdata_t
+cfdata_t
 config_vsearch(device_t parent, void *aux, cfarg_t tag, va_list ap)
 {
 	cfsubmatch_t fn;
@@ -1214,7 +1214,11 @@ config_rootsearch(cfsubmatch_t fn, const char *rootname, void *aux)
 	return m.match;
 }
 
-static const char * const msgs[3] = { "", " not configured\n", " unsupported\n" };
+static const char * const msgs[] = {
+[QUIET]		=	"",
+[UNCONF]	=	" not configured\n",
+[UNSUPP]	=	" unsupported\n",
+};
 
 /*
  * The given `aux' argument describes a device that has been found
@@ -1224,7 +1228,7 @@ static const char * const msgs[3] = { "", " not configured\n", " unsupported\n" 
  * functions) and attach it, and return its device_t.  If the device was
  * not configured, call the given `print' function and return NULL.
  */
-static device_t
+device_t
 config_vfound(device_t parent, void *aux, cfprint_t print, cfarg_t tag,
     va_list ap)
 {
@@ -1242,7 +1246,12 @@ config_vfound(device_t parent, void *aux, cfprint_t print, cfarg_t tag,
 	if (print) {
 		if (config_do_twiddle && cold)
 			twiddle();
-		aprint_normal("%s", msgs[(*print)(aux, device_xname(parent))]);
+
+		const int pret = (*print)(aux, device_xname(parent));
+		KASSERT(pret >= 0);
+		KASSERT(pret < __arraycount(msgs));
+		KASSERT(msgs[pret] != NULL);
+		aprint_normal("%s", msgs[pret]);
 	}
 
 	/*
@@ -1689,7 +1698,7 @@ config_add_attrib_dict(device_t dev)
 /*
  * Attach a found device.
  */
-static device_t
+device_t
 config_vattach(device_t parent, cfdata_t cf, void *aux, cfprint_t print,
     cfarg_t tag, va_list ap)
 {

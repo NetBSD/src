@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.95 2021/04/20 01:29:40 thorpej Exp $ */
+/* $NetBSD: interrupt.c,v 1.95.2.1 2021/05/13 00:47:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.95 2021/04/20 01:29:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.95.2.1 2021/05/13 00:47:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.95 2021/04/20 01:29:40 thorpej Exp $
 struct scbvec scb_iovectab[SCB_VECTOIDX(SCB_SIZE - SCB_IOVECBASE)]
 							__read_mostly;
 
-void	scb_stray(void *, u_long);
+static void	scb_stray(void *, u_long);
 
 void
 scb_init(void)
@@ -105,7 +105,7 @@ scb_init(void)
 	}
 }
 
-void
+static void
 scb_stray(void *arg, u_long vec)
 {
 
@@ -383,6 +383,9 @@ badaddr(void *addr, size_t size)
 int
 badaddr_read(void *addr, size_t size, void *rptr)
 {
+	lwp_t * const l = curlwp;
+	KPREEMPT_DISABLE(l);
+
 	struct mchkinfo *mcp = &curcpu()->ci_mcinfo;
 	long rcpt;
 	int rv;
@@ -450,6 +453,9 @@ badaddr_read(void *addr, size_t size, void *rptr)
 			break;
 		}
 	}
+
+	KPREEMPT_ENABLE(l);
+
 	/* Return non-zero (i.e. true) if it's a bad address. */
 	return (rv);
 }

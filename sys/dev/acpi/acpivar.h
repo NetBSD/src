@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.85 2021/02/04 21:39:00 thorpej Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.85.4.1 2021/05/13 00:47:29 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -319,7 +319,6 @@ const struct device_compatible_entry *
 		    const struct device_compatible_entry *);
 
 bool    	acpi_device_present(ACPI_HANDLE);
-void		acpi_device_register(device_t, void *);
 
 int		acpi_reset(void);
 

@@ -32,6 +32,9 @@
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_x550.c 331224 2018-03-19 20:55:05Z erj $*/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_x550.c,v 1.18.10.1 2021/05/13 00:47:31 thorpej Exp $");
+
 #include "ixgbe_x550.h"
 #include "ixgbe_x540.h"
 #include "ixgbe_type.h"

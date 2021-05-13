@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.168 2021/04/24 23:37:01 thorpej Exp $ */
+/* $NetBSD: device.h,v 1.168.2.1 2021/05/13 00:47:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -218,6 +218,9 @@ typedef enum {
 
 	/* OpenFirmware, FDT */
 	DEVHANDLE_TYPE_OF		=	0x4f504657,	/* 'OPFW' */
+
+	/* Sun OpenBoot */
+	DEVHANDLE_TYPE_OPENBOOT		=	0x4f504254,	/* 'OPBT' */
 
 	/* Private (opaque data) */
 	DEVHANDLE_TYPE_PRIVATE		=	0x50525654,	/* 'PRVT' */
@@ -589,6 +592,17 @@ device_t config_rootfound(const char *, void *);
 device_t config_attach(device_t, cfdata_t, void *, cfprint_t, cfarg_t, ...);
 int	config_match(device_t, cfdata_t, void *);
 int	config_probe(device_t, cfdata_t, void *);
+
+#if defined(__SUBR_AUTOCONF_PRIVATE)
+/*
+ * XXX Some ports abuse the internals of autoconfiguration, so we need
+ * XXX provide these symbols to them for the time being.
+ */
+cfdata_t config_vsearch(device_t, void *, cfarg_t, va_list);
+device_t config_vfound(device_t, void *, cfprint_t, cfarg_t, va_list);
+device_t config_vattach(device_t, cfdata_t, void *, cfprint_t, cfarg_t,
+			va_list);
+#endif /* __SUBR_AUTOCONF_PRIVATE */
 
 bool	ifattr_match(const char *, const char *);
 

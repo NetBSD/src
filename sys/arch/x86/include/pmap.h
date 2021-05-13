@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.125 2020/07/19 07:35:08 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.125.6.1 2021/05/13 00:47:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -187,13 +187,7 @@ struct slotspace {
 
 extern struct slotspace slotspace;
 
-#ifndef MAXGDTSIZ
-#define MAXGDTSIZ 65536 /* XXX */
-#endif
-
-#ifndef MAX_USERLDT_SIZE
-#define MAX_USERLDT_SIZE PAGE_SIZE /* XXX */
-#endif
+#include <x86/gdt.h>
 
 struct pcpu_entry {
 	uint8_t gdt[MAXGDTSIZ];

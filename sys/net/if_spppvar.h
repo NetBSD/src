@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppvar.h,v 1.33 2021/04/16 02:26:25 yamaguchi Exp $	*/
+/*	$NetBSD: if_spppvar.h,v 1.33.2.1 2021/05/13 00:47:33 thorpej Exp $	*/
 
 #ifndef _NET_IF_SPPPVAR_H_
 #define _NET_IF_SPPPVAR_H_
@@ -117,10 +117,9 @@ struct sppp_cp {
 	int		 rst_counter;	/* restart counter */
 	int		 fail_counter;	/* negotiation failure counter */
 	struct callout	 ch;		/* per-proto and if callouts */
-	u_char		 rcr_type;
-	void		*rcr_buf;
-	size_t		 rcr_blen;
-	int		 rcr_rlen;
+	u_char		 rcr_type;	/* parsing result of conf-req */
+	struct mbuf	*mbuf_confreq;	/* received conf-req */
+	struct mbuf	*mbuf_confnak;	/* received conf-nak or conf-rej */
 
 	struct sppp_work	 work_up;
 	struct sppp_work	 work_down;
@@ -142,6 +141,7 @@ struct sppp {
 	struct	ifqueue pp_cpq;	/* PPP control protocol queue */
 	struct  sppp *pp_next;  /* next interface in keepalive list */
 	u_int   pp_flags;       /* use Cisco protocol instead of PPP */
+	u_int	pp_ncpflags;	/* enable or disable each NCP */
 	u_int	pp_framebytes;	/* number of bytes added by (hardware) framing */
 	u_int   pp_alivecnt;    /* keepalive packets counter */
 	u_int   pp_loopcnt;     /* loopback detection counter */

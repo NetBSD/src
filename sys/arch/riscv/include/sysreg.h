@@ -1,4 +1,4 @@
-/* $NetBSD: sysreg.h,v 1.11 2020/12/16 19:49:04 christos Exp $ */
+/* $NetBSD: sysreg.h,v 1.11.4.1 2021/05/13 00:47:27 thorpej Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,14 +36,16 @@
 #include <sys/param.h>
 #endif
 
+#include <riscv/reg.h>
+
 #define FCSR_FMASK	0	// no exception bits
 #define FCSR_FRM	__BITS(7,5)
-#define FCSR_FRM_RNE	0b000	// Round Nearest, ties to Even
-#define FCSR_FRM_RTZ	0b001	// Round Towards Zero
-#define FCSR_FRM_RDN	0b010	// Round DowN (-infinity)
-#define FCSR_FRM_RUP	0b011	// Round UP (+infinity)
-#define FCSR_FRM_RMM	0b100	// Round to nearest, ties to Max Magnitude
-#define FCSR_FRM_DYN	0b111	// Dynamic rounding
+#define  FCSR_FRM_RNE	0b000	// Round Nearest, ties to Even
+#define  FCSR_FRM_RTZ	0b001	// Round Towards Zero
+#define  FCSR_FRM_RDN	0b010	// Round DowN (-infinity)
+#define  FCSR_FRM_RUP	0b011	// Round UP (+infinity)
+#define  FCSR_FRM_RMM	0b100	// Round to nearest, ties to Max Magnitude
+#define  FCSR_FRM_DYN	0b111	// Dynamic rounding
 #define FCSR_FFLAGS	__BITS(4,0)	// Sticky bits
 #define FCSR_NV		__BIT(4)	// iNValid operation
 #define FCSR_DZ		__BIT(3)	// Divide by Zero
@@ -261,6 +263,20 @@ riscvreg_cycle_read(void)
 #define SATP_ASID		__BITS(30,22)
 #define SATP_PPN		__BITS(21,0)
 #endif
+
+static inline uintptr_t
+riscvreg_satp_read(void)
+{
+	uintptr_t satp;
+	__asm __volatile("csrr	%0, satp" : "=r" (satp));
+	return satp;
+}
+
+static inline void
+riscvreg_satp_write(uintptr_t satp)
+{
+	__asm __volatile("csrw	satp, %0" :: "r" (satp));
+}
 
 static inline uint32_t
 riscvreg_asid_read(void)

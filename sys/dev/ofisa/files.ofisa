@@ -1,11 +1,14 @@
-#	$NetBSD: files.ofisa,v 1.14 2005/12/11 12:22:48 christos Exp $
+#	$NetBSD: files.ofisa,v 1.14.182.1 2021/05/13 00:47:30 thorpej Exp $
 
 # OFW ISA bus support
 # XXX eventually we should do something with these locators
 define	ofisa { [i = -1], [it = -1], [iv = -1], [m = -1] }
-device	ofisa: ofisa, ofbus
+device	ofisa: ofisa
 attach	ofisa at ofbus
 file	dev/ofisa/ofisa.c		ofisa
+
+define	ofisa_subclass { }
+attach	ofisa at ofisa_subclass with ofisa_subclass
 
 # attachment for MI pckbc driver
 attach	pckbc at ofisa with pckbc_ofisa
@@ -41,3 +44,8 @@ file	dev/ofisa/if_cs_ofisa.c		cs_ofisa
 # attachment of ISA Game port driver
 attach	joy at ofisa with joy_ofisa
 file	dev/ofisa/joy_ofisa.c		joy_ofisa
+
+# ISA mc146818 RTC driver
+device	mcclock: mc146818
+attach	mcclock at ofisa with mcclock_ofisa
+file	dev/ofisa/mcclock_ofisa.c	mcclock_ofisa

@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_netbsd.c,v 1.15 2020/06/25 07:53:02 msaitoh Exp $ */
+/* $NetBSD: ixgbe_netbsd.c,v 1.15.6.1 2021/05/13 00:47:31 thorpej Exp $ */
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -27,6 +27,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_netbsd.c,v 1.15.6.1 2021/05/13 00:47:31 thorpej Exp $");
+
 #include <sys/param.h>
 
 #include <sys/atomic.h>

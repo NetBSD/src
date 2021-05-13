@@ -1,14 +1,15 @@
-# $NetBSD: lint.mk,v 1.1 2015/08/29 16:27:07 uebayasi Exp $
+# $NetBSD: lint.mk,v 1.1.38.1 2021/05/13 00:47:29 thorpej Exp $
 
 ##
 ## lint
 ##
 
 .if !target(lint)
+.PATH: $S
 ALLSFILES?=	${MD_SFILES} ${SFILES}
 LINTSTUBS?=	${ALLSFILES:T:R:C/^.*$/LintStub_&.c/g}
-KERNLINTFLAGS?=	-bcehnxzFS
-NORMAL_LN?=	${LINT} ${KERNLINTFLAGS} ${CPPFLAGS:M-[IDU]*} -i $< -o $@
+KERNLINTFLAGS?=	-bceghnxzFS
+NORMAL_LN?=	${LINT} ${KERNLINTFLAGS} ${CPPFLAGS:M-[IDU]*} -o $@ -i $<
 
 _lsrc=${CFILES} ${LINTSTUBS} ${MI_CFILES} ${MD_CFILES}
 LOBJS?= ${_lsrc:T:S/.c$/.ln/g} ${LIBKERNLN} ${SYSLIBCOMPATLN}
