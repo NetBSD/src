@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.55 2021/05/13 04:55:12 simonb Exp $	*/
+/*	$NetBSD: fp.S,v 1.56 2021/05/13 06:15:29 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -350,7 +350,7 @@ func_single_tbl:
 	PTR_WORD ill		# func 34 42
 	PTR_WORD ill		# func 35 43
 	PTR_WORD cvt_w_s	# func 36 44	CVT.W.S
-	PTR_WORD cvt_l_s	# func 37 45	CVT.L.S		MIPS64r2
+	PTR_WORD cvt_l_s	# func 37 45	CVT.L.S		MIPS3/MIPS64
 	PTR_WORD cvt_ps_s	# func 38 46	CVT.PS.S	MIPS32r2
 	PTR_WORD ill		# func 39 47
 	PTR_WORD ill		# func 40 50
@@ -387,10 +387,10 @@ func_double_tbl:
 	PTR_WORD abs_d		# func  5 05	ABS.D
 	PTR_WORD mov_d		# func  6 06	MOV.D
 	PTR_WORD neg_d		# func  7 07	NEG.D 
-	PTR_WORD round_l_d	# func  8 10	ROUND.L.D	MIPS64r2
-	PTR_WORD trunc_l_d	# func  9 11	TRUNC.L.D	MIPS64r2
-	PTR_WORD ceil_l_d	# func 10 12	CEIL.L.D	MIPS64r2
-	PTR_WORD floor_l_d	# func 11 13	FLOOR.L.D	MIPS64r2
+	PTR_WORD round_l_d	# func  8 10	ROUND.L.D	MIPS3/MIPS64
+	PTR_WORD trunc_l_d	# func  9 11	TRUNC.L.D	MIPS3/MIPS64
+	PTR_WORD ceil_l_d	# func 10 12	CEIL.L.D	MIPS3/MIPS64
+	PTR_WORD floor_l_d	# func 11 13	FLOOR.L.D	MIPS3/MIPS64
 	PTR_WORD round_w_d	# func 12 14	ROUND.W.D
 	PTR_WORD trunc_w_d	# func 13 15	TRUNC.W.D
 	PTR_WORD ceil_w_d	# func 14 16	CEIL.W.D
@@ -416,7 +416,7 @@ func_double_tbl:
 	PTR_WORD ill		# func 34 42
 	PTR_WORD ill		# func 35 43
 	PTR_WORD cvt_w_d	# func 36 44	CVT.W.D
-	PTR_WORD cvt_l_d	# func 37 45	CVT.L.D		MIPS64r2
+	PTR_WORD cvt_l_d	# func 37 45	CVT.L.D		MIPS3/MIPS64
 	PTR_WORD ill		# func 38 46
 	PTR_WORD ill		# func 39 47
 	PTR_WORD ill		# func 40 50
@@ -543,8 +543,8 @@ func_long_fixed_tbl:
 	PTR_WORD ill		# func 29 35
 	PTR_WORD ill		# func 30 36
 	PTR_WORD ill		# func 31 37
-	PTR_WORD cvt_s_l	# func 32 40	CVT.S.L		MIPS32r2
-	PTR_WORD cvt_d_l	# func 33 41	CVT.D.L		MIPS32r2
+	PTR_WORD cvt_s_l	# func 32 40	CVT.S.L		MIPS3/MIPS64
+	PTR_WORD cvt_d_l	# func 33 41	CVT.D.L		MIPS3/MIPS64
 	PTR_WORD ill		# func 34 42
 	PTR_WORD ill		# func 35 43
 	PTR_WORD ill		# func 36 44
