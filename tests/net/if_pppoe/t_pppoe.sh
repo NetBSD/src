@@ -1,4 +1,4 @@
-#	$NetBSD: t_pppoe.sh,v 1.31 2021/05/11 05:57:02 yamaguchi Exp $
+#	$NetBSD: t_pppoe.sh,v 1.32 2021/05/13 03:37:58 yamaguchi Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -204,7 +204,8 @@ run_test()
 	wait_for_disconnected
 	atf_check -s not-exit:0 -o ignore -e ignore \
 	    rump.ping -c 1 -w $TIMEOUT $SERVER_IP
-	atf_check -s exit:0 -o match:'PADI sent' -x "$HIJACKING pppoectl -d pppoe0"
+	atf_check -s exit:0 -o match:'(PADI sent)|(initial)' \
+	    -x "$HIJACKING pppoectl -d pppoe0"
 	unset RUMP_SERVER
 
 	# test for reconnecting
