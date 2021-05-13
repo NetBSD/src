@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.72 2020/12/31 15:09:12 ryo Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.73 2021/05/13 05:56:39 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.72 2020/12/31 15:09:12 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.73 2021/05/13 05:56:39 msaitoh Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -398,7 +398,7 @@ dwc_gmac_write_hwaddr(struct dwc_gmac_softc *sc,
 
 	hi = enaddr[4] | (enaddr[5] << 8);
 	lo = enaddr[0] | (enaddr[1] << 8) | (enaddr[2] << 16)
-	    | (enaddr[3] << 24);
+	    | ((uint32_t)enaddr[3] << 24);
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_ADDR0HI, hi);
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_ADDR0LO, lo);
 }
