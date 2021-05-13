@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.170 2021/04/22 10:26:24 yamaguchi Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.171 2021/05/13 01:01:10 yamaguchi Exp $ */
 
 /*
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.170 2021/04/22 10:26:24 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.171 2021/05/13 01:01:10 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -659,7 +659,7 @@ pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 	eh = mtod(m, struct ether_header *);
 	off += sizeof(*eh);
 
-	if (m->m_pkthdr.len - off <= PPPOE_HEADERLEN) {
+	if (m->m_pkthdr.len - off < PPPOE_HEADERLEN) {
 		goto done;
 	}
 
