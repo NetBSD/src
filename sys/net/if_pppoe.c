@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.172 2021/05/13 03:28:36 yamaguchi Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.173 2021/05/13 03:48:55 yamaguchi Exp $ */
 
 /*
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.172 2021/05/13 03:28:36 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.173 2021/05/13 03:48:55 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -1007,6 +1007,11 @@ breakbreak:;
 		if (sc == NULL)
 			goto done;
 
+		if (memcmp(&sc->sc_dest, eh->ether_shost,
+		    sizeof sc->sc_dest) != 0) {
+			goto done;
+		}
+
 		sc->sc_session = session;
 		callout_stop(&sc->sc_timeout);
 		pppoe_printf(sc, "session 0x%x connected\n", session);
@@ -1028,6 +1033,11 @@ breakbreak:;
 
 		if (sc == NULL)
 			goto done;
+
+		if (memcmp(&sc->sc_dest, eh->ether_shost,
+		    sizeof sc->sc_dest) != 0) {
+			goto done;
+		}
 
 		pppoe_clear_softc(sc, "received PADT");
 		if (sc->sc_sppp.pp_if.if_flags & IFF_RUNNING) {
