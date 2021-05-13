@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.54 2021/04/29 08:45:29 simonb Exp $	*/
+/*	$NetBSD: fp.S,v 1.55 2021/05/13 04:55:12 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -282,14 +282,14 @@ fmt_tbl:
 	PTR_WORD mfromc1	# sub 0		mfc1
 	PTR_WORD dmfromc1	# sub 1		dmfc1
 	PTR_WORD cfromc1	# sub 2		cfc1
-	PTR_WORD ill		# sub 3		mfhc1
+	PTR_WORD ill		# sub 3		mfhc1		MIPS32r2
 	PTR_WORD mtoc1		# sub 4		mtc1
 	PTR_WORD dmtoc1		# sub 5		dmtc1
 	PTR_WORD ctoc1		# sub 6		ctc1
-	PTR_WORD ill		# sub 7		mthc1
+	PTR_WORD ill		# sub 7		mthc1		MIPS32r2
 	PTR_WORD branchc1	# sub 8		bc1
-	PTR_WORD branchc1any2	# sub 9		bc1any2
-	PTR_WORD branchc1any4	# sub 10	bc1any4
+	PTR_WORD branchc1any2	# sub 9		bc1any2		MIPS-3D ASE
+	PTR_WORD branchc1any4	# sub 10	bc1any4		MIPS-3D ASE
 	PTR_WORD ill		# sub 11
 	PTR_WORD ill		# sub 12
 	PTR_WORD ill		# sub 13
@@ -321,37 +321,37 @@ func_single_tbl:
 	PTR_WORD abs_s		# func  5 05	ABS.S
 	PTR_WORD mov_s		# func  6 06	MOV.S
 	PTR_WORD neg_s		# func  7 07	NEG.S 
-	PTR_WORD round_l_s	# func  8 10	ROUND.L.S
-	PTR_WORD trunc_l_s	# func  9 11	TRUNC.L.S
-	PTR_WORD ceil_l_s	# func 10 12	CEIL.L.S
-	PTR_WORD floor_l_s	# func 11 13	FLOOR.L.S
+	PTR_WORD round_l_s	# func  8 10	ROUND.L.S	MIPS3/MIPS64
+	PTR_WORD trunc_l_s	# func  9 11	TRUNC.L.S	MIPS3/MIPS64
+	PTR_WORD ceil_l_s	# func 10 12	CEIL.L.S	MIPS3/MIPS64
+	PTR_WORD floor_l_s	# func 11 13	FLOOR.L.S	MIPS3/MIPS64
 	PTR_WORD round_w_s	# func 12 14	ROUND.W.S
 	PTR_WORD trunc_w_s	# func 13 15	TRUNC.W.S
 	PTR_WORD ceil_w_s	# func 14 16	CEIL.W.S
 	PTR_WORD floor_w_s	# func 15 17	FLOOR.W.S
 	PTR_WORD ill		# func 16 20
-	PTR_WORD movcf_s	# func 17 21	MOVCF.S
-	PTR_WORD movz_s		# func 18 22	MOVZ.S
-	PTR_WORD movn_s		# func 19 23	MOVN.S
+	PTR_WORD movcf_s	# func 17 21	MOVCF.S		MIPS32
+	PTR_WORD movz_s		# func 18 22	MOVZ.S		MIPS32
+	PTR_WORD movn_s		# func 19 23	MOVN.S		MIPS32
 	PTR_WORD ill		# func 20 24
-	PTR_WORD recip_s	# func 21 25	RECIP.S
-	PTR_WORD rsqrt_s	# func 22 26	RSQRT.S
+	PTR_WORD recip_s	# func 21 25	RECIP.S		MIPS32r2
+	PTR_WORD rsqrt_s	# func 22 26	RSQRT.S		MIPS32r2
 	PTR_WORD ill		# func 23 27
 	PTR_WORD ill		# func 24 30
 	PTR_WORD ill		# func 25 31
 	PTR_WORD ill		# func 26 32
 	PTR_WORD ill		# func 27 33
-	PTR_WORD recip2_s	# func 28 34	RECIP2.S
-	PTR_WORD recip1_s	# func 29 35	RECIP1.S
-	PTR_WORD rsqrt1_s	# func 30 36	RSQRT1.S
-	PTR_WORD rsqrt2_s	# func 31 37	RSQRT2.S
+	PTR_WORD recip2_s	# func 28 34	RECIP2.S	MIPS-3D ASE
+	PTR_WORD recip1_s	# func 29 35	RECIP1.S	MIPS-3D ASE
+	PTR_WORD rsqrt1_s	# func 30 36	RSQRT1.S	MIPS-3D ASE
+	PTR_WORD rsqrt2_s	# func 31 37	RSQRT2.S	MIPS-3D ASE
 	PTR_WORD ill		# func 32 40
 	PTR_WORD cvt_d_s	# func 33 41	CVT.D.S
 	PTR_WORD ill		# func 34 42
 	PTR_WORD ill		# func 35 43
 	PTR_WORD cvt_w_s	# func 36 44	CVT.W.S
-	PTR_WORD cvt_l_s	# func 37 45	CVT.L.S
-	PTR_WORD cvt_ps_s	# func 38 46	CVT.PS.S
+	PTR_WORD cvt_l_s	# func 37 45	CVT.L.S		MIPS64r2
+	PTR_WORD cvt_ps_s	# func 38 46	CVT.PS.S	MIPS32r2
 	PTR_WORD ill		# func 39 47
 	PTR_WORD ill		# func 40 50
 	PTR_WORD ill		# func 41 51
@@ -387,36 +387,36 @@ func_double_tbl:
 	PTR_WORD abs_d		# func  5 05	ABS.D
 	PTR_WORD mov_d		# func  6 06	MOV.D
 	PTR_WORD neg_d		# func  7 07	NEG.D 
-	PTR_WORD round_l_d	# func  8 10	ROUND.L.D
-	PTR_WORD trunc_l_d	# func  9 11	TRUNC.L.D
-	PTR_WORD ceil_l_d	# func 10 12	CEIL.L.D
-	PTR_WORD floor_l_d	# func 11 13	FLOOR.L.D
+	PTR_WORD round_l_d	# func  8 10	ROUND.L.D	MIPS64r2
+	PTR_WORD trunc_l_d	# func  9 11	TRUNC.L.D	MIPS64r2
+	PTR_WORD ceil_l_d	# func 10 12	CEIL.L.D	MIPS64r2
+	PTR_WORD floor_l_d	# func 11 13	FLOOR.L.D	MIPS64r2
 	PTR_WORD round_w_d	# func 12 14	ROUND.W.D
 	PTR_WORD trunc_w_d	# func 13 15	TRUNC.W.D
 	PTR_WORD ceil_w_d	# func 14 16	CEIL.W.D
 	PTR_WORD floor_w_d	# func 15 17	FLOOR.W.D
 	PTR_WORD ill		# func 16 20
-	PTR_WORD movcf_d	# func 17 21	MOVCF.D
-	PTR_WORD movz_d		# func 18 22	MOVZ.D
-	PTR_WORD movn_d		# func 19 23	MOVN.D
+	PTR_WORD movcf_d	# func 17 21	MOVCF.D		MIPS32
+	PTR_WORD movz_d		# func 18 22	MOVZ.D		MIPS32
+	PTR_WORD movn_d		# func 19 23	MOVN.D		MIPS32
 	PTR_WORD ill		# func 20 24
-	PTR_WORD recip_d	# func 21 25	RECIP.D
-	PTR_WORD rsqrt_d	# func 22 26	RSQRT.D
+	PTR_WORD recip_d	# func 21 25	RECIP.D		MIPS32r2
+	PTR_WORD rsqrt_d	# func 22 26	RSQRT.D		MIPS32r2
 	PTR_WORD ill		# func 23 27
 	PTR_WORD ill		# func 24 30
 	PTR_WORD ill		# func 25 31
 	PTR_WORD ill		# func 26 32
 	PTR_WORD ill		# func 27 33
-	PTR_WORD recip2_d	# func 28 34	RECIP2.D
-	PTR_WORD recip2_d	# func 29 35	RECIP1.D
-	PTR_WORD rsqrt1_d	# func 30 36	RSQRT1.D
-	PTR_WORD rsqrt2_d	# func 31 37	RSQRT2.D
+	PTR_WORD recip2_d	# func 28 34	RECIP2.D	MIPS-3D ASE
+	PTR_WORD recip2_d	# func 29 35	RECIP1.D	MIPS-3D ASE
+	PTR_WORD rsqrt1_d	# func 30 36	RSQRT1.D	MIPS-3D ASE
+	PTR_WORD rsqrt2_d	# func 31 37	RSQRT2.D	MIPS-3D ASE
 	PTR_WORD cvt_s_d	# func 32 40	CVT.S.D
 	PTR_WORD ill		# func 33 41
 	PTR_WORD ill		# func 34 42
 	PTR_WORD ill		# func 35 43
 	PTR_WORD cvt_w_d	# func 36 44	CVT.W.D
-	PTR_WORD cvt_l_d	# func 37 45	CVT.L.D
+	PTR_WORD cvt_l_d	# func 37 45	CVT.L.D		MIPS64r2
 	PTR_WORD ill		# func 38 46
 	PTR_WORD ill		# func 39 47
 	PTR_WORD ill		# func 40 50
@@ -483,7 +483,7 @@ func_single_fixed_tbl:
 	PTR_WORD ill		# func 35 43
 	PTR_WORD ill		# func 36 44
 	PTR_WORD ill		# func 37 45
-	PTR_WORD cvt_ps_pw	# func 38 46	CVT.PS.PW
+	PTR_WORD cvt_ps_pw	# func 38 46	CVT.PS.PW	MIPS-3D ASE
 	PTR_WORD ill		# func 39 47
 	PTR_WORD ill		# func 40 50
 	PTR_WORD ill		# func 41 51
@@ -543,13 +543,13 @@ func_long_fixed_tbl:
 	PTR_WORD ill		# func 29 35
 	PTR_WORD ill		# func 30 36
 	PTR_WORD ill		# func 31 37
-	PTR_WORD cvt_s_l	# func 32 40	CVT.S.L
-	PTR_WORD cvt_d_l	# func 33 41	CVT.D.L
+	PTR_WORD cvt_s_l	# func 32 40	CVT.S.L		MIPS32r2
+	PTR_WORD cvt_d_l	# func 33 41	CVT.D.L		MIPS32r2
 	PTR_WORD ill		# func 34 42
 	PTR_WORD ill		# func 35 43
 	PTR_WORD ill		# func 36 44
 	PTR_WORD ill		# func 37 45
-	PTR_WORD cvt_ps_pl	# func 38 46	CVT.PS.PW
+	PTR_WORD cvt_ps_pl	# func 38 46	CVT.PS.PL	MIPS-3D ASE
 	PTR_WORD ill		# func 39 47
 	PTR_WORD ill		# func 40 50
 	PTR_WORD ill		# func 41 51
@@ -595,21 +595,21 @@ func_paired_single_tbl:
 	PTR_WORD ill		# func 14 16
 	PTR_WORD ill		# func 15 17
 	PTR_WORD ill		# func 16 20
-	PTR_WORD movcf_ps	# func 17 21	MOVCF.PS
-	PTR_WORD movz_ps	# func 18 22	MOVZ.PS
-	PTR_WORD movn_ps	# func 19 23	MOVN.PS
+	PTR_WORD movcf_ps	# func 17 21	MOVCF.PS	MIPS32
+	PTR_WORD movz_ps	# func 18 22	MOVZ.PS		MIPS32
+	PTR_WORD movn_ps	# func 19 23	MOVN.PS		MIPS32
 	PTR_WORD ill		# func 20 24
 	PTR_WORD ill		# func 21 25
 	PTR_WORD ill		# func 22 26
 	PTR_WORD ill		# func 23 27
-	PTR_WORD addr_ps	# func 24 30	ADDR.PS
+	PTR_WORD addr_ps	# func 24 30	ADDR.PS		MIPS-3D ASE
 	PTR_WORD ill		# func 25 31
-	PTR_WORD mulr_ps	# func 26 32	MULR.PS
+	PTR_WORD mulr_ps	# func 26 32	MULR.PS		MIPS-3D ASE
 	PTR_WORD ill		# func 27 33
-	PTR_WORD recip2_ps	# func 28 34	RECIP2.PS
-	PTR_WORD recip1_ps	# func 29 35	RECIP1.PS
-	PTR_WORD rsqrt1_ps	# func 30 36	RSQRT1.PS
-	PTR_WORD rsqrt2_ps	# func 31 37	RSQRT2.PS
+	PTR_WORD recip2_ps	# func 28 34	RECIP2.PS	MIPS-3D ASE
+	PTR_WORD recip1_ps	# func 29 35	RECIP1.PS	MIPS-3D ASE
+	PTR_WORD rsqrt1_ps	# func 30 36	RSQRT1.PS	MIPS-3D ASE
+	PTR_WORD rsqrt2_ps	# func 31 37	RSQRT2.PS	MIPS-3D ASE
 	PTR_WORD cvt_s_pu	# func 32 40	CVT.S.PU
 	PTR_WORD ill		# func 33 41
 	PTR_WORD ill		# func 34 42
