@@ -1,4 +1,4 @@
-/* $NetBSD: mips_fputrap.c,v 1.10 2011/02/26 15:41:32 tsutsui Exp $ */
+/* $NetBSD: mips_fputrap.c,v 1.11 2021/05/13 03:41:46 simonb Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -47,7 +47,7 @@ mips_fpuexcept(struct lwp *l, uint32_t fpustat)
 	ksiginfo_t ksi;
 
 #ifdef FPEMUL_DEBUG
-	printf("%s(%x,%#"PRIxREGISTER")\n",
+	printf("%s(%#x,%#"PRIxREGISTER")\n",
 	   __func__, fpustat, l->l_md.md_utf->tf_regs[_R_PC]);
 #endif
 
@@ -64,7 +64,7 @@ mips_fpuillinst(struct lwp *l, uint32_t opcode)
 	ksiginfo_t ksi;
 
 #ifdef FPEMUL_DEBUG
-	printf("%s(%x,%#"PRIxREGISTER")\n",
+	printf("%s(%#x,%#"PRIxREGISTER")\n",
 	   __func__, opcode, l->l_md.md_utf->tf_regs[_R_PC]);
 #endif
 
