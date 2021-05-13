@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399_iomux.c,v 1.11 2021/04/24 23:36:28 thorpej Exp $ */
+/* $NetBSD: rk3399_iomux.c,v 1.12 2021/05/13 06:15:41 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 //#define RK3399_IOMUX_DEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk3399_iomux.c,v 1.11 2021/04/24 23:36:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk3399_iomux.c,v 1.12 2021/05/13 06:15:41 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -45,8 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: rk3399_iomux.c,v 1.11 2021/04/24 23:36:28 thorpej Ex
 #include <dev/fdt/syscon.h>
 
 /* PU/PD control */
-#define	 GRF_GPIO_P_CTL(_idx)		(0x3 << (((_idx) & 7) * 2))
-#define	 GRF_GPIO_P_WRITE_EN(_idx)	(0x3 << (((_idx) & 7) * 2 + 16))
+#define	 GRF_GPIO_P_CTL(_idx)		(0x3U << (((_idx) & 7) * 2))
+#define	 GRF_GPIO_P_WRITE_EN(_idx)	(0x3U << (((_idx) & 7) * 2 + 16))
 /* Different bias value mapping based on pull type of pin */
 #define	  IO_DEF_GPIO_P_CTL_Z		0
 #define	  IO_DEF_GPIO_P_CTL_PULLUP	1
