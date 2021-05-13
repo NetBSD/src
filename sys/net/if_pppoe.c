@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.171 2021/05/13 01:01:10 yamaguchi Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.172 2021/05/13 03:28:36 yamaguchi Exp $ */
 
 /*
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.171 2021/05/13 01:01:10 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.172 2021/05/13 03:28:36 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -129,6 +129,7 @@ struct pppoetag {
 #define	PPPOE_SLOW_RETRY	(hz*60)	/* persistent retry interval */
 #define	PPPOE_RECON_FAST	(hz*15)	/* first retry after auth failure */
 #define	PPPOE_RECON_IMMEDIATE	(hz/10)	/* "no delay" reconnect */
+#define	PPPOE_RECON_PADTRCVD	(hz*5)	/* reconnect delay after PADT received */
 #define	PPPOE_DISC_MAXPADI	4	/* retry PADI four times (quickly) */
 #define	PPPOE_DISC_MAXPADR	2	/* retry PADR twice */
 
@@ -1029,8 +1030,11 @@ breakbreak:;
 			goto done;
 
 		pppoe_clear_softc(sc, "received PADT");
-		if (sc->sc_sppp.pp_if.if_flags & IFF_RUNNING)
-			callout_schedule(&sc->sc_timeout, PPPOE_RECON_FAST);
+		if (sc->sc_sppp.pp_if.if_flags & IFF_RUNNING) {
+			pppoe_printf(sc, "wait for reconnect\n");
+			callout_schedule(&sc->sc_timeout,
+			    PPPOE_RECON_PADTRCVD);
+		}
 		PPPOE_UNLOCK(sc);
 		break;
 
