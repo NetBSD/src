@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1280 2021/05/14 08:06:32 yamaguchi Exp $
+#	$NetBSD: files,v 1.1281 2021/05/14 08:31:14 yamaguchi Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -291,6 +291,7 @@ defflag	opt_ppp.h		PPP_DEFLATE PPP_BSDCOMP PPP_FILTER
 defflag opt_pppoe.h		PPPOE_SERVER PPPOE_DEBUG
 
 defparam opt_sppp.h		SPPP_KEEPALIVE_INTERVAL
+				SPPP_NORECV_TIME
 
 # networking options
 #

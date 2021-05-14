@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.239 2021/05/14 08:11:08 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.240 2021/05/14 08:31:14 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.239 2021/05/14 08:11:08 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.240 2021/05/14 08:31:14 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -105,6 +105,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.239 2021/05/14 08:11:08 yamaguchi 
 
 #ifndef SPPP_KEEPALIVE_INTERVAL
 #define SPPP_KEEPALIVE_INTERVAL		DEFAULT_KEEPALIVE_INTERVAL
+#endif
+
+#ifndef SPPP_NORECV_TIME
+#define SPPP_NORECV_TIME	DEFAULT_NORECV_TIME
 #endif
 
 /*
@@ -1101,7 +1105,7 @@ sppp_attach(struct ifnet *ifp)
 	sp->pp_last_activity = 0;
 	sp->pp_last_receive = 0;
 	sp->pp_maxalive = DEFAULT_MAXALIVECNT;
-	sp->pp_max_noreceive = DEFAULT_NORECV_TIME;
+	sp->pp_max_noreceive = SPPP_NORECV_TIME;
 	sp->pp_idle_timeout = 0;
 	sp->pp_max_auth_fail = DEFAULT_MAX_AUTH_FAILURES;
 	sp->pp_phase = SPPP_PHASE_DEAD;
