@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_i2c_subr.c,v 1.1.6.3 2021/05/14 00:44:13 thorpej Exp $	*/
+/*	$NetBSD: ofw_i2c_subr.c,v 1.1.6.4 2021/05/14 01:52:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_i2c_subr.c,v 1.1.6.3 2021/05/14 00:44:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_i2c_subr.c,v 1.1.6.4 2021/05/14 01:52:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -70,27 +70,80 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_i2c_subr.c,v 1.1.6.3 2021/05/14 00:44:13 thorpej
 #include <dev/ofw/openfirm.h>
 #include <dev/i2c/i2cvar.h>
 
-static bool
-of_i2c_get_address(int node, uint32_t *addrp)
-{
-	uint32_t reg;
+#ifdef __HAVE_OPENFIRMWARE_VARIANT_AAPL
+/*
+ * Apple OpenFirmware implementations have the i2c device
+ * address shifted left 1 bit to account for the r/w bit
+ * on the wire.  We also want to look at only the least-
+ * significant 8 bits of the address cell.
+ */
+#define	OFW_I2C_ADDRESS_MASK	__BITS(0,7)
+#define	OFW_I2C_ADDRESS_SHIFT	1
+#endif /* __HAVE_OPENFIRMWARE_VARIANT_AAPL */
 
-	if (OF_getprop(node, "reg", &reg, sizeof(reg)) != sizeof(reg)) {
+#ifdef __HAVE_OPENFIRMWARE_VARIANT_SUNW
+/*
+ * Sun OpenFirmware implementations use 2 cells for the
+ * i2c device "reg" property, the first containing the
+ * channel number, the second containing the i2c device
+ * address shifted left 1 bit to account for the r/w bit
+ * on the wire.
+ */
+#define	OFW_I2C_REG_NCELLS	2
+#define	OFW_I2C_REG_CHANNEL	0
+#define	OFW_I2C_REG_ADDRESS	1
+#define	OFW_I2C_ADDRESS_SHIFT	1
+#endif /* __HAVE_OPENFIRMWARE_VARIANT_SUNW */
+
+#ifndef OFW_I2C_REG_NCELLS
+#define	OFW_I2C_REG_NCELLS	1
+#endif
+
+#ifndef OFW_I2C_REG_ADDRESS
+#define	OFW_I2C_REG_ADDRESS	0
+#endif
+
+/* No default for OFW_I2C_REG_CHANNEL. */
+
+#ifndef OFW_I2C_ADDRESS_MASK
+#define	OFW_I2C_ADDRESS_MASK	__BITS(0,31)
+#endif
+
+#ifndef OFW_I2C_ADDRESS_SHIFT
+#define	OFW_I2C_ADDRESS_SHIFT	0
+#endif
+
+static bool
+of_i2c_get_address(i2c_tag_t tag, int node, uint32_t *addrp)
+{
+	uint32_t reg[OFW_I2C_REG_NCELLS];
+	uint32_t addr;
+#ifdef OFW_I2C_REG_CHANNEL
+	uint32_t channel;
+#endif
+
+	if (OF_getprop(node, "reg", reg, sizeof(reg)) != sizeof(reg)) {
+		/*
+		 * "reg" property is malformed; reject the device.
+		 */
 		return false;
 	}
 
-	reg = be32toh(reg);
+	addr = be32toh(reg[OFW_I2C_REG_ADDRESS]);
+	addr = (addr & OFW_I2C_ADDRESS_MASK) >> OFW_I2C_ADDRESS_SHIFT;
 
-#ifdef __HAVE_OPENFIRMWARE_VARIANT_AAPL
+#ifdef OFW_I2C_REG_CHANNEL
 	/*
-	 * Apple OpenFirmware implementations have the i2c device
-	 * address shifted left 1 bit to account for the r/w bit
-	 * on the wire.
+	 * If the channel in the "reg" property does not match,
+	 * reject the device.
 	 */
-	reg = (reg & 0xff) >> 1;
-#endif /* __HAVE_OPENFIRMWARE_VARIANT_AAPL */
+	channel = be32toh(reg[OFW_I2C_REG_CHANNEL]);
+	if (channel != tag->ic_channel) {
+		return false;
+	}
+#endif
 
-	*addrp = reg;
+	*addrp = addr;
 	return true;
 }
 
@@ -118,7 +171,7 @@ of_i2c_enumerate_devices(device_t dev, devhandle_t call_handle, void *v)
 		if (OF_getprop(node, "name", name, sizeof(name)) <= 0) {
 			continue;
 		}
-		if (!of_i2c_get_address(node, &addr)) {
+		if (!of_i2c_get_address(args->ia->ia_tag, node, &addr)) {
 			continue;
 		}
 
