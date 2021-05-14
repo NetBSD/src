@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.347 2021/04/25 22:29:22 christos Exp $
+#	$NetBSD: build.sh,v 1.348 2021/05/14 22:06:34 christos Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1973,7 +1973,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.347 2021/04/25 22:29:22 christos Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.348 2021/05/14 22:06:34 christos Exp $
 # with these arguments: ${_args}
 #
 
@@ -2312,7 +2312,11 @@ setup_mkrepro()
 	if [ ! -x "${cvslatest}" ]; then
 		buildtools
 	fi
-	MKREPRO_TIMESTAMP=$("${cvslatest}" ${dirs})
+	local cvslatestflags=
+	if ${do_expertmode}; then
+		cvslatestflags=-i
+	fi
+	MKREPRO_TIMESTAMP=$("${cvslatest}" ${cvslatestflags} ${dirs})
 	[ -n "${MKREPRO_TIMESTAMP}" ] || bomb "Failed to compute timestamp"
 	statusmsg2 "MKREPRO_TIMESTAMP" "$(TZ=UTC date -r ${MKREPRO_TIMESTAMP})"
 	export MKREPRO MKREPRO_TIMESTAMP
