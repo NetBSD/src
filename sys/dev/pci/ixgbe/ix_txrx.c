@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.72 2021/05/11 01:30:30 rin Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.73 2021/05/14 01:30:06 knakahara Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.72 2021/05/11 01:30:30 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.73 2021/05/14 01:30:06 knakahara Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -485,6 +485,7 @@ retry:
 		return (error);
 	}
 
+#ifdef IXGBE_FDIR
 	/* Do the flow director magic */
 	if ((adapter->feat_en & IXGBE_FEATURE_FDIR) &&
 	    (txr->atr_sample) && (!adapter->fdir_reinit)) {
@@ -494,6 +495,7 @@ retry:
 			txr->atr_count = 0;
 		}
 	}
+#endif
 
 	olinfo_status |= IXGBE_ADVTXD_CC;
 	i = txr->next_avail_desc;
