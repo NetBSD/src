@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.238 2021/05/14 08:06:32 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.239 2021/05/14 08:11:08 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.238 2021/05/14 08:06:32 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.239 2021/05/14 08:11:08 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -5626,7 +5626,8 @@ sppp_keepalive(void *dummy)
 		}
 
 		/* No echo reply, but maybe user data passed through? */
-		if ((now - sp->pp_last_receive) < sp->pp_max_noreceive) {
+		if (sp->pp_max_noreceive != 0 &&
+		    (now - sp->pp_last_receive) < sp->pp_max_noreceive) {
 			sp->pp_alivecnt = 0;
 			SPPP_UNLOCK(sp);
 			continue;
