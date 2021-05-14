@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_i2c_subr.c,v 1.1.6.6 2021/05/14 02:51:43 thorpej Exp $	*/
+/*	$NetBSD: ofw_i2c_subr.c,v 1.1.6.7 2021/05/14 03:05:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_i2c_subr.c,v 1.1.6.6 2021/05/14 02:51:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_i2c_subr.c,v 1.1.6.7 2021/05/14 03:05:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -79,6 +79,12 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_i2c_subr.c,v 1.1.6.6 2021/05/14 02:51:43 thorpej
  */
 #define	OFW_I2C_ADDRESS_MASK	__BITS(0,7)
 #define	OFW_I2C_ADDRESS_SHIFT	1
+
+/*
+ * Some of Apple's older OpenFirmware implementations are rife with
+ * nodes lacking "compatible" properties.
+ */
+#define	OFW_I2C_ALLOW_MISSING_COMPATIBLE_PROPERTY
 #endif /* __HAVE_OPENFIRMWARE_VARIANT_AAPL */
 
 #ifdef __HAVE_OPENFIRMWARE_VARIANT_SUNW
@@ -176,6 +182,11 @@ of_i2c_enumerate_devices(device_t dev, devhandle_t call_handle, void *v)
 		}
 
 		clist_size = OF_getproplen(node, "compatible");
+#ifndef OFW_I2C_ALLOW_MISSING_COMPATIBLE_PROPERTY
+		if (clist_size <= 0) {
+			continue;
+		}
+#endif
 		clist = kmem_tmpbuf_alloc(clist_size,
 		    compat_buf, sizeof(compat_buf), KM_SLEEP);
 		if (OF_getprop(node, "compatible", clist, clist_size) <
