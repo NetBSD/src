@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.48 2021/05/03 03:50:43 rillig Exp $
+# $NetBSD: t_integration.sh,v 1.49 2021/05/14 21:14:55 rillig Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -175,6 +175,7 @@ test_case d_incorrect_array_size
 test_case d_long_double_int
 
 test_case emit
+test_case expr_range
 
 test_case gcc_attribute
 test_case gcc_attribute_aligned
