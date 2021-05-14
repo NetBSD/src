@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.240 2021/05/14 08:31:14 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.241 2021/05/14 08:41:25 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.240 2021/05/14 08:31:14 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.241 2021/05/14 08:41:25 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -98,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.240 2021/05/14 08:31:14 yamaguchi 
 #endif
 
 #define DEFAULT_KEEPALIVE_INTERVAL	10	/* seconds between checks */
+#define DEFAULT_ALIVE_INTERVAL		1	/* count of sppp_keepalive */
 #define LOOPALIVECNT     		3	/* loopback detection tries */
 #define DEFAULT_MAXALIVECNT    		3	/* max. missed alive packets */
 #define	DEFAULT_NORECV_TIME		15	/* before we get worried */
@@ -109,6 +110,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.240 2021/05/14 08:31:14 yamaguchi 
 
 #ifndef SPPP_NORECV_TIME
 #define SPPP_NORECV_TIME	DEFAULT_NORECV_TIME
+#endif
+
+#ifndef SPPP_ALIVE_INTERVAL
+#define SPPP_ALIVE_INTERVAL		DEFAULT_ALIVE_INTERVAL
 #endif
 
 /*
@@ -289,6 +294,7 @@ enum auth_role {
 static struct sppp *spppq;
 static kmutex_t *spppq_lock = NULL;
 static callout_t keepalive_ch;
+static unsigned int sppp_keepalive_cnt = 0;
 
 #define SPPPQ_LOCK()	if (spppq_lock) \
 				mutex_enter(spppq_lock);
@@ -1102,6 +1108,7 @@ sppp_attach(struct ifnet *ifp)
 	sp->pp_cpq.ifq_maxlen = 20;
 	sp->pp_loopcnt = 0;
 	sp->pp_alivecnt = 0;
+	sp->pp_alive_interval = SPPP_ALIVE_INTERVAL;
 	sp->pp_last_activity = 0;
 	sp->pp_last_receive = 0;
 	sp->pp_maxalive = DEFAULT_MAXALIVECNT;
@@ -5637,6 +5644,18 @@ sppp_keepalive(void *dummy)
 			continue;
 		}
 
+		/* No echo request */
+		if (sp->pp_alive_interval == 0) {
+			SPPP_UNLOCK(sp);
+			continue;
+		}
+
+		/* send a ECHO_REQ once in sp->pp_alive_interval times */
+		if ((sppp_keepalive_cnt % sp->pp_alive_interval) != 0) {
+			SPPP_UNLOCK(sp);
+			continue;
+		}
+
 		if (sp->pp_alivecnt >= sp->pp_maxalive) {
 			/* No keepalive packets got.  Stop the interface. */
 			sppp_wq_add(sp->wq_cp, &sp->work_ifdown);
@@ -5671,6 +5690,7 @@ sppp_keepalive(void *dummy)
 		SPPP_UNLOCK(sp);
 	}
 	splx(s);
+	sppp_keepalive_cnt++;
 	callout_reset(&keepalive_ch, hz * SPPP_KEEPALIVE_INTERVAL, sppp_keepalive, NULL);
 
 	SPPPQ_UNLOCK();
@@ -6318,6 +6338,7 @@ sppp_params(struct sppp *sp, u_long cmd, void *data)
 		SPPP_LOCK(sp, RW_READER);
 		settings->maxalive = sp->pp_maxalive;
 		settings->max_noreceive = sp->pp_max_noreceive;
+		settings->alive_interval = sp->pp_alive_interval;
 		SPPP_UNLOCK(sp);
 	    }
 	    break;
@@ -6329,6 +6350,7 @@ sppp_params(struct sppp *sp, u_long cmd, void *data)
 		SPPP_LOCK(sp, RW_WRITER);
 		sp->pp_maxalive = settings->maxalive;
 		sp->pp_max_noreceive = settings->max_noreceive;
+		sp->pp_alive_interval = settings->alive_interval;
 		SPPP_UNLOCK(sp);
 	    }
 	    break;
