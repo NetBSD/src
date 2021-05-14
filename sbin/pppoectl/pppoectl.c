@@ -1,4 +1,4 @@
-/*	$NetBSD: pppoectl.c,v 1.29 2021/05/11 06:58:03 yamaguchi Exp $	*/
+/*	$NetBSD: pppoectl.c,v 1.30 2021/05/14 09:08:59 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 1997 Joerg Wunsch
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: pppoectl.c,v 1.29 2021/05/11 06:58:03 yamaguchi Exp $");
+__RCSID("$NetBSD: pppoectl.c,v 1.30 2021/05/14 09:08:59 yamaguchi Exp $");
 #endif
 
 
@@ -57,7 +57,7 @@ __dead static void print_error(const char *ifname, int error, const char * str);
 static void print_vals(const char *ifname, int phase, struct spppauthcfg *sp,
 	int lcp_timeout, time_t idle_timeout, int authfailures,
 	int max_auth_failures, u_int maxalive, time_t max_noreceive,
-	int ncp_flags);
+	u_int alive_interval, int ncp_flags);
 static void print_dns(const char *ifname, int dns1, int dns2, int s, int tabs);
 static void print_stats(const char *ifname, int s, int dump);
 static const char *phase_name(int phase);
@@ -85,6 +85,7 @@ static int set_auth, set_lcp, set_idle_to, set_auth_failure, set_dns,
 static u_int set_ncpflags, clr_ncpflags;
 static int maxalive = -1;
 static int max_noreceive = -1;
+static int alive_intval = -1;
 static struct spppauthcfg spr;
 static struct sppplcpcfg lcp;
 static struct spppncpcfg ncp;
@@ -268,6 +269,7 @@ main(int argc, char **argv)
 		    authfailstats.max_failures,
 		    keepalivesettings.maxalive,
 		    keepalivesettings.max_noreceive,
+		    keepalivesettings.alive_interval,
 		    ncp.ncp_flags);
 
 		if (spr.hisname) free(spr.hisname);
@@ -351,6 +353,8 @@ main(int argc, char **argv)
 			keepalivesettings.max_noreceive = max_noreceive;
 		if (maxalive >= 0)
 			keepalivesettings.maxalive = maxalive;
+		if (alive_intval >= 0)
+			keepalivesettings.alive_interval = alive_intval;
 		if (ioctl(s, SPPPSETKEEPALIVE, &keepalivesettings) == -1)
 			err(EX_OSERR, "SPPPSETKEEPALIVE");
 	}
@@ -365,6 +369,7 @@ main(int argc, char **argv)
 		    authfailstats.max_failures,
 		    keepalivesettings.maxalive,
 		    keepalivesettings.max_noreceive,
+		    keepalivesettings.alive_interval,
 		    ncp.ncp_flags);
 	}
 
@@ -443,6 +448,15 @@ pppoectl_argument(char *arg)
 			fprintf(stderr, 
 			    "max-alive-missed value must be at least 0\n");
 			maxalive = -1;
+		} else {
+			set_keepalive = 1;
+		}
+	} else if (startswith(arg, "alive-interval=")) {
+		alive_intval = atoi(arg+off);
+		if (alive_intval < 0) {
+			fprintf(stderr,
+			    "alive-interval value must be at least 0\n");
+			alive_intval = -1;
 		} else {
 			set_keepalive = 1;
 		}
@@ -528,7 +542,8 @@ usage(void)
 static void
 print_vals(const char *ifname, int phase, struct spppauthcfg *sp, int lcp_timeout,
 	time_t idle_timeout, int authfailures, int max_auth_failures,
-	u_int maxalive_cnt, time_t max_noreceive_time, int ncp_flags)
+	u_int maxalive_cnt, time_t max_noreceive_time, u_int alive_interval,
+	int ncp_flags)
 {
 #ifndef __NetBSD__
 	time_t send, recv;
@@ -568,6 +583,7 @@ print_vals(const char *ifname, int phase, struct spppauthcfg *sp, int lcp_timeou
 
 	printf("\tmax-noreceive = %ld seconds\n", (long)max_noreceive_time);
 	printf("\tmax-alive-missed = %u unanswered echo requests\n", maxalive_cnt);
+	printf("\talive-interval = %u\n", alive_interval);
 
 #ifndef __NetBSD__
 	printf("\tenable_vj: %s\n",
