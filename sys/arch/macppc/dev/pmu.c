@@ -1,4 +1,4 @@
-/*	$NetBSD: pmu.c,v 1.37.2.1 2021/05/08 22:39:41 thorpej Exp $ */
+/*	$NetBSD: pmu.c,v 1.37.2.2 2021/05/14 00:44:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.37.2.1 2021/05/08 22:39:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.37.2.2 2021/05/14 00:44:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,12 +90,6 @@ struct pmu_softc {
 	struct sysmon_pswitch sc_powerbutton;
 	bus_space_tag_t sc_memt;
 	bus_space_handle_t sc_memh;
-
-	/*
-	 * We provide our own i2c device enumeration method, so we
-	 * need to provide our own devhandle_impl.
-	 */
-	struct devhandle_impl sc_devhandle_impl;
 
 	uint32_t sc_flags;
 #define PMU_HAS_BACKLIGHT_CONTROL	1
@@ -242,42 +236,6 @@ static const char *has_two_smart_batteries[] = {
 	"PowerBook1,1",
 	NULL };
 
-static bool
-pmu_i2c_get_address(int node, uint32_t *addrp)
-{
-	uint32_t reg;
-
-	if (of_getprop_uint32(node, "reg", &reg) == -1) {
-		return false;
-	}
-
-	*addrp = (reg & 0xff) >> 1;
-	return true;
-}
-
-static int
-pmu_i2c_enumerate_devices(device_t dev, devhandle_t call_handle, void *v)
-{
-	/*
-	 * This follows the OpenFirmware I2C binding for the most
-	 * part, but has the address shifted left for the READ bit.
-	 */
-	return of_i2c_enumerate_devices_ext(dev, call_handle, v,
-	    pmu_i2c_get_address);
-}
-
-static device_call_t
-pmu_devhandle_lookup_device_call(devhandle_t handle, const char *name,
-    devhandle_t *call_handlep)
-{
-	if (strcmp(name, "i2c-enumerate-devices") == 0) {
-		return pmu_i2c_enumerate_devices;
-	}
-
-	/* Defer everything else to the "super". */
-	return NULL;
-}
-
 static int
 pmu_match(device_t parent, cfdata_t cf, void *aux)
 {
@@ -382,18 +340,6 @@ pmu_attach(device_t parent, device_t self, void *aux)
 			goto next;
 
 		if (strncmp(name, "pmu-i2c", 8) == 0) {
-			/*
-			 * Give the OFW node to the i2c bus instance,
-			 * but provide our own devhandle_impl, because
-			 * we have our own device enumeration method.
-			 */
-			devhandle_t devhandle = devhandle_from_of(node);
-			devhandle_impl_inherit(&sc->sc_devhandle_impl,
-			    devhandle.impl);
-			sc->sc_devhandle_impl.lookup_device_call =
-			    pmu_devhandle_lookup_device_call;
-			devhandle.impl = &sc->sc_devhandle_impl;
-
 			/* fill in the i2c tag */
 			iic_tag_init(&sc->sc_i2c);
 			sc->sc_i2c.ic_cookie = sc;
@@ -403,7 +349,7 @@ pmu_attach(device_t parent, device_t self, void *aux)
 			iba.iba_tag = &sc->sc_i2c;
 			config_found(sc->sc_dev, &iba, iicbus_print,
 			    CFARG_IATTR, "i2cbus",
-			    CFARG_DEVHANDLE, devhandle,
+			    CFARG_DEVHANDLE, devhandle_from_of(node),
 			    CFARG_EOL);
 			goto next;
 		}
