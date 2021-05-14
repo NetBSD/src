@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.73 2021/05/14 01:30:06 knakahara Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.74 2021/05/14 05:15:17 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.73 2021/05/14 01:30:06 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.74 2021/05/14 05:15:17 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1949,7 +1949,6 @@ ixgbe_rxeof(struct ix_queue *que)
 		 * buffer struct and pass this along from one
 		 * descriptor to the next, until we get EOP.
 		 */
-		mp->m_len = len;
 		/*
 		 * See if there is a stored head
 		 * that determines what we are
@@ -1958,6 +1957,7 @@ ixgbe_rxeof(struct ix_queue *que)
 		if (sendmp != NULL) {  /* secondary frag */
 			rbuf->buf = newmp;
 			rbuf->fmp = NULL;
+			mp->m_len = len;
 			mp->m_flags &= ~M_PKTHDR;
 			sendmp->m_pkthdr.len += mp->m_len;
 		} else {
@@ -1983,12 +1983,13 @@ ixgbe_rxeof(struct ix_queue *que)
 			if (sendmp == NULL) {
 				rbuf->buf = newmp;
 				rbuf->fmp = NULL;
+				mp->m_len = len;
 				sendmp = mp;
 			}
 
 			/* first desc of a non-ps chain */
 			sendmp->m_flags |= M_PKTHDR;
-			sendmp->m_pkthdr.len = mp->m_len;
+			sendmp->m_pkthdr.len = len;
 		}
 		++processed;
 
