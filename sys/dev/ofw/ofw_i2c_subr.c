@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_i2c_subr.c,v 1.1.6.2 2021/05/08 15:51:30 thorpej Exp $	*/
+/*	$NetBSD: ofw_i2c_subr.c,v 1.1.6.3 2021/05/14 00:44:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -60,43 +60,48 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_i2c_subr.c,v 1.1.6.2 2021/05/08 15:51:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_i2c_subr.c,v 1.1.6.3 2021/05/14 00:44:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/endian.h>
 #include <sys/kmem.h>
 #include <sys/systm.h>
 #include <dev/ofw/openfirm.h>
 #include <dev/i2c/i2cvar.h>
 
-/*
- * Standard routine for fetching an i2c device address, according
- * to the standard OpenFirmware / Device Tree bindings.
- */
 static bool
 of_i2c_get_address(int node, uint32_t *addrp)
 {
 	uint32_t reg;
 
-	if (of_getprop_uint32(node, "reg", &reg) == -1) {
+	if (OF_getprop(node, "reg", &reg, sizeof(reg)) != sizeof(reg)) {
 		return false;
 	}
+
+	reg = be32toh(reg);
+
+#ifdef __HAVE_OPENFIRMWARE_VARIANT_AAPL
+	/*
+	 * Apple OpenFirmware implementations have the i2c device
+	 * address shifted left 1 bit to account for the r/w bit
+	 * on the wire.
+	 */
+	reg = (reg & 0xff) >> 1;
+#endif /* __HAVE_OPENFIRMWARE_VARIANT_AAPL */
 
 	*addrp = reg;
 	return true;
 }
 
+/*
+ * This follows the Device Tree bindings for i2c, which for the most part
+ * work for the classical OpenFirmware implementations, as well.  There are
+ * some quirks do deal with for different OpenFirmware implementations, which
+ * are mainly in how the "reg" property is interpreted.
+ */
 static int
 of_i2c_enumerate_devices(device_t dev, devhandle_t call_handle, void *v)
-{
-	return of_i2c_enumerate_devices_ext(dev, call_handle, v,
-	    of_i2c_get_address);
-}
-OF_DEVICE_CALL_REGISTER("i2c-enumerate-devices", of_i2c_enumerate_devices);
-
-int
-of_i2c_enumerate_devices_ext(device_t dev, devhandle_t call_handle, void *v,
-    bool (*get_address)(int, uint32_t *))
 {
 	struct i2c_enumerate_devices_args *args = v;
 	int i2c_node, node;
@@ -113,7 +118,7 @@ of_i2c_enumerate_devices_ext(device_t dev, devhandle_t call_handle, void *v,
 		if (OF_getprop(node, "name", name, sizeof(name)) <= 0) {
 			continue;
 		}
-		if (!get_address(node, &addr)) {
+		if (!of_i2c_get_address(node, &addr)) {
 			continue;
 		}
 
@@ -146,3 +151,4 @@ of_i2c_enumerate_devices_ext(device_t dev, devhandle_t call_handle, void *v,
 
 	return 0;
 }
+OF_DEVICE_CALL_REGISTER("i2c-enumerate-devices", of_i2c_enumerate_devices);

@@ -1,4 +1,4 @@
-/*	$NetBSD: smu.c,v 1.13.2.1 2021/05/09 21:37:04 thorpej Exp $	*/
+/*	$NetBSD: smu.c,v 1.13.2.2 2021/05/14 00:44:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2013 Phileas Fogg
@@ -117,11 +117,6 @@ struct smu_softc {
 	int sc_num_fans;
 	struct smu_fan sc_fans[SMU_MAX_FANS];
 
-	/*
-	 * We provide our own i2c device enumeration method, so we
-	 * need to provide our own devhandle_impl.
-	 */
-	struct devhandle_impl sc_devhandle_impl;
 	LIST_HEAD(, smu_iicbus) sc_iic_busses;
 
 	struct todr_chip_handle sc_todr;
@@ -448,64 +443,17 @@ smu_setup_fans(struct smu_softc *sc)
 	}
 }
 
-static bool
-smu_i2c_get_address(int node, uint32_t *addrp)
-{
-	uint32_t reg;
-
-	if (of_getprop_uint32(node, "reg", &reg) == -1) {
-		return false;
-	}
-
-	*addrp = (reg & 0xff) >> 1;
-	return true;
-}
-
-static int
-smu_i2c_enumerate_devices(device_t dev, devhandle_t call_handle, void *v)
-{
-	/*
-	 * This follows the OpenFirmware I2C binding for the most
-	 * part, but has the address shifted left for the READ bit.
-	 */
-	return of_i2c_enumerate_devices_ext(dev, call_handle, v,
-	    smu_i2c_get_address);
-}
-
-static device_call_t
-smu_devhandle_lookup_device_call(devhandle_t handle, const char *name,
-    devhandle_t *call_handlep)
-{
-	if (strcmp(name, "i2c-enumerate-devices") == 0) {
-		return smu_i2c_enumerate_devices;
-	}
-
-	/* Defer everything else to the "super". */
-	return NULL;
-}
-
 static void
 smu_setup_iicbus(struct smu_softc *sc)
 {
 	struct smu_iicbus *iicbus;
 	struct i2cbus_attach_args iba;
-	devhandle_t devhandle;
 	int node;
 	char name[32];
 
 	node = of_getnode_byname(sc->sc_node, "smu-i2c-control");
 	if (node == 0)
 		node = sc->sc_node;
-
-	/*
-	 * Set up our devhandle impl; we provide our own i2c device
-	 * enumeration method.
-	 */
-	devhandle = devhandle_from_of(node);
-	devhandle_impl_inherit(&sc->sc_devhandle_impl,
-	    devhandle.impl);
-	sc->sc_devhandle_impl.lookup_device_call =
-	    smu_devhandle_lookup_device_call;
 
 	for (node = OF_child(node); node != 0; node = OF_peer(node)) {
 
@@ -530,15 +478,12 @@ smu_setup_iicbus(struct smu_softc *sc)
 		iicbus->i2c.ic_cookie = iicbus;
 		iicbus->i2c.ic_exec = smu_iicbus_exec;
 
-		devhandle = devhandle_from_of(node);
-		devhandle.impl = &sc->sc_devhandle_impl;
-
 		memset(&iba, 0, sizeof(iba));
 		iba.iba_tag = &iicbus->i2c;
 		iba.iba_bus = iicbus->reg;
 
 		config_found(sc->sc_dev, &iba, iicbus_print_multi,
-		    CFARG_DEVHANDLE, devhandle,
+		    CFARG_DEVHANDLE, devhandle_from_of(node),
 		    CFARG_EOL);
 	}
 }
