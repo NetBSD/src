@@ -1,4 +1,4 @@
-/*	$NetBSD: smu.c,v 1.13.2.2 2021/05/14 00:44:13 thorpej Exp $	*/
+/*	$NetBSD: smu.c,v 1.13.2.3 2021/05/14 01:08:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2013 Phileas Fogg
@@ -476,11 +476,11 @@ smu_setup_iicbus(struct smu_softc *sc)
 
 		iic_tag_init(&iicbus->i2c);
 		iicbus->i2c.ic_cookie = iicbus;
+		iicbus->i2c.ic_channel = iicbus->reg;
 		iicbus->i2c.ic_exec = smu_iicbus_exec;
 
 		memset(&iba, 0, sizeof(iba));
 		iba.iba_tag = &iicbus->i2c;
-		iba.iba_bus = iicbus->reg;
 
 		config_found(sc->sc_dev, &iba, iicbus_print_multi,
 		    CFARG_DEVHANDLE, devhandle_from_of(node),
