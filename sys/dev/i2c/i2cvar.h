@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cvar.h,v 1.24.2.3 2021/05/08 15:51:31 thorpej Exp $	*/
+/*	$NetBSD: i2cvar.h,v 1.24.2.4 2021/05/14 01:08:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -90,6 +90,18 @@ typedef struct i2c_controller {
 	void	*ic_cookie;		/* controller private */
 
 	/*
+	 * Multi-channel i2c controllers and i2c muxes allow
+	 * for multiple busses to be driven by a single block
+	 * of controller logic.  Different platform device
+	 * tree representations may find it useful to know
+	 * which physical channel a given logical controller
+	 * (represented by the i2c_tag_t) is associated with.
+	 * We allow this to be stashed away here as a convenience.
+	 * This is not used for anything else by the i2c layer.
+	 */
+	int	ic_channel;
+
+	/*
 	 * These provide synchronization in the presence of
 	 * multiple users of the i2c bus.  When a device
 	 * driver wishes to perform transfers on the i2c
@@ -131,7 +143,6 @@ typedef struct i2c_controller {
 /* Used to attach the i2c framework to the controller. */
 struct i2cbus_attach_args {
 	i2c_tag_t iba_tag;		/* the controller */
-	int iba_bus;			/* bus number (optional) */
 };
 
 /* Used to attach devices on the i2c bus. */

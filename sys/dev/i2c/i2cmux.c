@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cmux.c,v 1.5.2.3 2021/05/08 15:10:44 thorpej Exp $	*/
+/*	$NetBSD: i2cmux.c,v 1.5.2.4 2021/05/14 01:08:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2cmux.c,v 1.5.2.3 2021/05/08 15:10:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2cmux.c,v 1.5.2.4 2021/05/14 01:08:53 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -131,6 +131,7 @@ iicmux_attach_bus(struct iicmux_softc * const sc, devhandle_t devhandle,
 
 	iic_tag_init(&bus->controller);
 	bus->controller.ic_cookie = bus;
+	bus->controller.ic_channel = bus->busidx;
 	bus->controller.ic_acquire_bus = iicmux_acquire_bus;
 	bus->controller.ic_release_bus = iicmux_release_bus;
 	bus->controller.ic_exec = iicmux_exec;
@@ -144,7 +145,6 @@ iicmux_attach_bus(struct iicmux_softc * const sc, devhandle_t devhandle,
 
 	struct i2cbus_attach_args iba = {
 		.iba_tag = &bus->controller,
-		.iba_bus = bus->busidx,
 	};
 
 	int locs[I2CBUSCF_NLOCS];

@@ -1,4 +1,4 @@
-/*	$NetBSD: ki2c.c,v 1.31.2.1 2021/05/08 21:58:12 thorpej Exp $	*/
+/*	$NetBSD: ki2c.c,v 1.31.2.2 2021/05/14 01:08:53 thorpej Exp $	*/
 /*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
 
 /*-
@@ -326,13 +326,13 @@ ki2c_attach(device_t parent, device_t self, void *aux)
 		ch = &sc->sc_channels[i];
 
 		iic_tag_init(&ch->ch_i2c);
+		ch->ch_i2c.ic_channel = ch->ch_channel = i;
 		ch->ch_i2c.ic_cookie = ch;
 		ch->ch_i2c.ic_acquire_bus = ki2c_i2c_acquire_bus;
 		ch->ch_i2c.ic_release_bus = ki2c_i2c_release_bus;
 		ch->ch_i2c.ic_exec = ki2c_i2c_exec;
 
 		ch->ch_ki2c = sc;
-		ch->ch_channel = i;
 	}
 
 	/*
@@ -409,11 +409,10 @@ ki2c_attach(device_t parent, device_t self, void *aux)
 		}
 		devhandle.impl = &sc->sc_devhandle_impl;
 
-		locs[I2CBUSCF_BUS] = ch->ch_channel;
+		locs[I2CBUSCF_BUS] = ch->ch_i2c.ic_channel;
 
 		memset(&iba, 0, sizeof(iba));
 		iba.iba_tag = &ch->ch_i2c;
-		iba.iba_bus = ch->ch_channel;
 		config_found(sc->sc_dev, &iba, iicbus_print_multi,
 		    CFARG_SUBMATCH, config_stdsubmatch,
 		    CFARG_LOCATORS, locs,
