@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.237 2021/05/11 06:42:42 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.238 2021/05/14 08:06:32 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,13 +41,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.237 2021/05/11 06:42:42 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.238 2021/05/14 08:06:32 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
 #include "opt_modular.h"
 #include "opt_compat_netbsd.h"
 #include "opt_net_mpsafe.h"
+#include "opt_sppp.h"
 #endif
 
 #include <sys/param.h>
@@ -96,11 +97,15 @@ __KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.237 2021/05/11 06:42:42 yamaguchi 
 #define SPPPSUBR_MPSAFE	1
 #endif
 
-#define	LCP_KEEPALIVE_INTERVAL		10	/* seconds between checks */
+#define DEFAULT_KEEPALIVE_INTERVAL	10	/* seconds between checks */
 #define LOOPALIVECNT     		3	/* loopback detection tries */
 #define DEFAULT_MAXALIVECNT    		3	/* max. missed alive packets */
 #define	DEFAULT_NORECV_TIME		15	/* before we get worried */
 #define DEFAULT_MAX_AUTH_FAILURES	5	/* max. auth. failures */
+
+#ifndef SPPP_KEEPALIVE_INTERVAL
+#define SPPP_KEEPALIVE_INTERVAL		DEFAULT_KEEPALIVE_INTERVAL
+#endif
 
 /*
  * Interface flags that can be set in an ifconfig command.
@@ -1081,7 +1086,7 @@ sppp_attach(struct ifnet *ifp)
 	/* Initialize keepalive handler. */
 	if (! spppq) {
 		callout_init(&keepalive_ch, CALLOUT_MPSAFE);
-		callout_reset(&keepalive_ch, hz * LCP_KEEPALIVE_INTERVAL, sppp_keepalive, NULL);
+		callout_reset(&keepalive_ch, hz * SPPP_KEEPALIVE_INTERVAL, sppp_keepalive, NULL);
 	}
 
 	if (! spppq_lock)
@@ -5661,7 +5666,7 @@ sppp_keepalive(void *dummy)
 		SPPP_UNLOCK(sp);
 	}
 	splx(s);
-	callout_reset(&keepalive_ch, hz * LCP_KEEPALIVE_INTERVAL, sppp_keepalive, NULL);
+	callout_reset(&keepalive_ch, hz * SPPP_KEEPALIVE_INTERVAL, sppp_keepalive, NULL);
 
 	SPPPQ_UNLOCK();
 }
