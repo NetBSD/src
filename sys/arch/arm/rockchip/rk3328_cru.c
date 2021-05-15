@@ -1,4 +1,4 @@
-/* $NetBSD: rk3328_cru.c,v 1.7 2021/01/27 03:10:19 thorpej Exp $ */
+/* $NetBSD: rk3328_cru.c,v 1.8 2021/05/15 08:46:00 mrg Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3328_cru.c,v 1.7 2021/01/27 03:10:19 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3328_cru.c,v 1.8 2021/05/15 08:46:00 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -218,6 +218,20 @@ static struct rk_cru_clk rk3328_cru_clks[] = {
 		     CLKGATE_CON(8),	/* gate_reg */
 		     __BIT(2),		/* gate_mask */
 		     0),
+	RK_COMPOSITE(RK3328_SCLK_SPI, "clk_spi", mux_2plls_parents,
+		     CLKSEL_CON(24),	/* muxdiv_reg */
+		     __BIT(7),		/* mux_mask */
+		     __BITS(6,0),	/* div_mask */
+		     CLKGATE_CON(2),	/* gate_reg */
+		     __BIT(7),		/* gate_mask */
+		     0),
+	RK_COMPOSITE(RK3328_SCLK_PWM, "clk_pwm", mux_2plls_parents,
+		     CLKSEL_CON(24),	/* muxdiv_reg */
+		     __BIT(15),		/* mux_mask */
+		     __BITS(14,8),	/* div_mask */
+		     CLKGATE_CON(2),	/* gate_reg */
+		     __BIT(8),		/* gate_mask */
+		     0),
 	RK_COMPOSITE(RK3328_ACLK_PERI_PRE, "aclk_peri_pre", aclk_peri_pre_parents,
 		     CLKSEL_CON(28),	/* muxdiv_reg */
 		     __BITS(7,6),	/* mux_mask */
@@ -239,7 +253,7 @@ static struct rk_cru_clk rk3328_cru_clks[] = {
 		     __BIT(1),		/* gate_mask */
 		     0),
 	RK_COMPOSITE(RK3328_SCLK_SDMMC, "clk_sdmmc", mmc_parents,
-		     CLKSEL_CON(30),		/* muxdiv_reg */
+		     CLKSEL_CON(30),	/* muxdiv_reg */
 		     __BITS(9,8),	/* mux_mask */
 		     __BITS(7,0),	/* div_mask */
 		     CLKGATE_CON(4),	/* gate_reg */
@@ -360,6 +374,8 @@ static struct rk_cru_clk rk3328_cru_clks[] = {
 	RK_GATE(RK3328_PCLK_I2C1, "pclk_i2c1", "pclk_bus", CLKGATE_CON(16), 0),
 	RK_GATE(RK3328_PCLK_I2C2, "pclk_i2c2", "pclk_bus", CLKGATE_CON(16), 1),
 	RK_GATE(RK3328_PCLK_I2C3, "pclk_i2c3", "pclk_bus", CLKGATE_CON(16), 2),
+	RK_GATE(RK3328_PCLK_SPI, "pclk_spi", "pclk_bus", CLKGATE_CON(16), 5),
+	RK_GATE(RK3328_PCLK_PWM, "pclk_rk_pwm", "pclk_bus", CLKGATE_CON(16), 6),
 	RK_GATE(RK3328_PCLK_GPIO0, "pclk_gpio0", "pclk_bus", CLKGATE_CON(16), 7),
 	RK_GATE(RK3328_PCLK_GPIO1, "pclk_gpio1", "pclk_bus", CLKGATE_CON(16), 8),
 	RK_GATE(RK3328_PCLK_GPIO2, "pclk_gpio2", "pclk_bus", CLKGATE_CON(16), 9),
