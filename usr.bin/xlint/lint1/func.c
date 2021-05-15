@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.107 2021/05/03 07:08:54 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.108 2021/05/15 19:12:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.107 2021/05/03 07:08:54 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.108 2021/05/15 19:12:14 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -440,6 +440,25 @@ named_label(sym_t *sym)
 }
 
 static void
+check_case_label_bitand(const tnode_t *case_expr, const tnode_t *switch_expr)
+{
+	uint64_t case_value, mask;
+
+	if (switch_expr->tn_op != BITAND ||
+	    switch_expr->tn_right->tn_op != CON)
+		return;
+
+	lint_assert(case_expr->tn_op == CON);
+	case_value = case_expr->tn_val->v_quad;
+	mask = switch_expr->tn_right->tn_val->v_quad;
+
+	if ((case_value & ~mask) != 0) {
+		/* statement not reached */
+		warning(193);
+	}
+}
+
+static void
 check_case_label_enum(const tnode_t *tn, const cstk_t *ci)
 {
 	/* similar to typeok_enum in tree.c */
@@ -483,6 +502,7 @@ check_case_label(tnode_t *tn, cstk_t *ci)
 		return;
 	}
 
+	check_case_label_bitand(tn, ci->c_switch_expr);
 	check_case_label_enum(tn, ci);
 
 	lint_assert(ci->c_switch_type != NULL);
@@ -694,12 +714,16 @@ switch1(tnode_t *tn)
 		tp->t_tspec = INT;
 	}
 
+	/* leak the memory, for check_case_label_bitand */
+	expr_save_memory();
+
 	check_getopt_begin_switch();
-	expr(tn, true, false, true, false);
+	expr(tn, true, false, false, false);
 
 	begin_control_statement(CS_SWITCH);
 	cstmt->c_switch = true;
 	cstmt->c_switch_type = tp;
+	cstmt->c_switch_expr = tn;
 
 	set_reached(false);
 	seen_fallthrough = true;

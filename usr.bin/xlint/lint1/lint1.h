@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.100 2021/04/18 17:47:32 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.101 2021/05/15 19:12:14 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -416,6 +416,7 @@ typedef struct control_statement {
 	bool	c_had_return_value : 1;	/* had "return expr;" */
 
 	type_t	*c_switch_type;		/* type of switch expression */
+	tnode_t	*c_switch_expr;
 	case_label_t *c_case_labels;	/* list of case values */
 
 	struct	memory_block *c_for_expr3_mem; /* saved memory for end of loop
