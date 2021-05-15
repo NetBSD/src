@@ -5373,8 +5373,9 @@ int dpp_key_expired(const char *timestamp, os_time_t *expiry)
 	}
 
 	if (now.sec > utime) {
-		wpa_printf(MSG_DEBUG, "DPP: Key has expired (%lu < %lu)",
-			   utime, now.sec);
+		wpa_printf(MSG_DEBUG, "DPP: Key has expired (%llu < %llu)",
+			   (unsigned long long)utime,
+			   (unsigned long long)now.sec);
 		return 1;
 	}
 
