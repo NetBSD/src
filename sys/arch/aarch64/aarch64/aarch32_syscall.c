@@ -1,4 +1,4 @@
-/*	$NetBSD: aarch32_syscall.c,v 1.4 2021/05/15 11:38:26 rin Exp $	*/
+/*	$NetBSD: aarch32_syscall.c,v 1.5 2021/05/15 11:39:20 rin Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aarch32_syscall.c,v 1.4 2021/05/15 11:38:26 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aarch32_syscall.c,v 1.5 2021/05/15 11:39:20 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/ktrace.h>
@@ -151,7 +151,8 @@ EMULNAME(syscall)(struct trapframe *tf)
 	do_trace = p->p_trace_enabled &&
 	    ((callp->sy_flags & SYCALL_INDIRECT) == 0);
 	if (__predict_false(do_trace ||
-	    KDTRACE_ENTRY(callp->sy_entry) || KDTRACE_ENTRY(callp->sy_return))) {
+	    KDTRACE_ENTRY(callp->sy_entry) ||
+	    KDTRACE_ENTRY(callp->sy_return))) {
 		/* build 64bit args for trace_enter()/trace_exit() */
 		int nargs = callp->sy_narg;
 		for (i = 0; i < nargs; i++)
