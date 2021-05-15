@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_patch.c,v 1.7.4.1 2021/05/15 03:22:17 thorpej Exp $ */
+/*	$NetBSD: ofw_patch.c,v 1.7.4.2 2021/05/15 21:19:46 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020, 2021 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.7.4.1 2021/05/15 03:22:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.7.4.2 2021/05/15 21:19:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -679,8 +679,7 @@ e450_envctrl_fixup(device_t dev, void *aux)
 }
 
 static const struct device_compatible_entry dtnode_fixup_table_e450[] = {
-	/* XXX Could make this into a special fixup, but dtnode is nicer. */
-	{ .compat = "/XXX/need/the/OFW/path",
+	{ .compat = "/pci/ebus@1/SUNW,envctrl@14,600000",
 	  .data = e450_envctrl_fixup },
 
 	DEVICE_COMPAT_EOL
