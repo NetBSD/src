@@ -1,4 +1,4 @@
-/*	$NetBSD: aarch32_syscall.c,v 1.3 2019/04/12 09:29:26 ryo Exp $	*/
+/*	$NetBSD: aarch32_syscall.c,v 1.4 2021/05/15 11:38:26 rin Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aarch32_syscall.c,v 1.3 2019/04/12 09:29:26 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aarch32_syscall.c,v 1.4 2021/05/15 11:38:26 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/ktrace.h>
@@ -91,9 +91,24 @@ EMULNAME(syscall)(struct trapframe *tf)
 	code %= EMULNAMEU(SYS_NSYSENT);
 	callp = p->p_emul->e_sysent + code;
 	if (__predict_false(callp->sy_flags & SYCALL_INDIRECT)) {
-		nargs_reg -= 1;
-		regstart = 1;	/* args start from r1 */
-		code = tf->tf_reg[0] % EMULNAMEU(SYS_NSYSENT);
+		int off = 1;
+#ifdef NETBSD32_SYS_netbsd32____syscall /* XXX ugly: apply only for NETBSD32 */
+		/*
+		 * For __syscall(2), 1st argument is quad_t, which is
+		 * stored in r0 and r1.
+		 */
+		if (code == NETBSD32_SYS_netbsd32____syscall)
+			off = 2;
+#endif
+		nargs_reg -= off;
+		regstart = off;	/* args start from r1 or r2 */
+#ifdef __AARCH64EB__
+		if (off == 2)
+			code = tf->tf_reg[1];
+		else
+#endif
+			code = tf->tf_reg[0];
+		code %= EMULNAMEU(SYS_NSYSENT);
 		callp = p->p_emul->e_sysent + code;
 
 		/* don't allow nested syscall */
