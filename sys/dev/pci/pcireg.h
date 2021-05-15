@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.153 2020/12/28 13:12:24 skrll Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.154 2021/05/15 13:00:45 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -54,12 +54,12 @@ typedef u_int16_t pci_vendor_id_t;
 typedef u_int16_t pci_product_id_t;
 
 #define	PCI_VENDOR_SHIFT		0
-#define	PCI_VENDOR_MASK			0xffff
+#define	PCI_VENDOR_MASK			0xffffU
 #define	PCI_VENDOR(id) \
 	    (((id) >> PCI_VENDOR_SHIFT) & PCI_VENDOR_MASK)
 
 #define	PCI_PRODUCT_SHIFT		16
-#define	PCI_PRODUCT_MASK		0xffff
+#define	PCI_PRODUCT_MASK		0xffffU
 #define	PCI_PRODUCT(id) \
 	    (((id) >> PCI_PRODUCT_SHIFT) & PCI_PRODUCT_MASK)
 
