@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.78.2.4 2021/05/16 21:03:38 thorpej Exp $	*/
+/*	$NetBSD: i2c.c,v 1.78.2.5 2021/05/16 21:04:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.78.2.4 2021/05/16 21:03:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.78.2.5 2021/05/16 21:04:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1005,7 +1005,9 @@ iic_ioctl_exec(struct iic_softc *sc, i2c_ioctl_exec_t *iie, int flag)
 			goto out;
 	}
 
-	iic_acquire_bus(ic, 0);
+	if ((error = iic_acquire_bus(ic, 0)) != 0) {
+		goto out;
+	}
 	error = iic_exec(ic, iie->iie_op, iie->iie_addr, cmd, iie->iie_cmdlen,
 	    buf, iie->iie_buflen, 0);
 	iic_release_bus(ic, 0);
