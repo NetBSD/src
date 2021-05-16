@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.59 2020/08/10 19:27:27 rjs Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.60 2021/05/16 09:17:23 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.59 2020/08/10 19:27:27 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.60 2021/05/16 09:17:23 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1659,7 +1659,15 @@ uvideo_stream_stop_xfer(struct uvideo_stream *vs)
 				usbd_destroy_xfer(isoc->i_xfer);
 				isoc->i_xfer = NULL;
 			}
+		}
 
+		if (ix->ix_pipe != NULL) {
+			usbd_close_pipe(ix->ix_pipe);
+			ix->ix_pipe = NULL;
+		}
+
+		for (i = 0; i < UVIDEO_NXFERS; i++) {
+			struct uvideo_isoc *isoc = &ix->ix_i[i];
 			if (isoc->i_frlengths != NULL) {
 				kmem_free(isoc->i_frlengths,
 				  sizeof(isoc->i_frlengths[0]) *
@@ -1668,10 +1676,6 @@ uvideo_stream_stop_xfer(struct uvideo_stream *vs)
 			}
 		}
 
-		if (ix->ix_pipe != NULL) {
-			usbd_close_pipe(ix->ix_pipe);
-			ix->ix_pipe = NULL;
-		}
 		/* Give it some time to settle */
 		usbd_delay_ms(vs->vs_parent->sc_udev, 1000);
 
