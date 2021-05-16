@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.78.2.3 2021/05/16 04:40:08 thorpej Exp $	*/
+/*	$NetBSD: i2c.c,v 1.78.2.4 2021/05/16 21:03:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.78.2.3 2021/05/16 04:40:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.78.2.4 2021/05/16 21:03:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,13 +115,6 @@ static dev_type_open(iic_open);
 static dev_type_close(iic_close);
 static dev_type_ioctl(iic_ioctl);
 
-int iic_init(void);
-
-kmutex_t iic_mtx;
-int iic_refcnt;
-
-ONCE_DECL(iic_once);
-
 const struct cdevsw iic_cdevsw = {
 	.d_open = iic_open,
 	.d_close = iic_close,
@@ -134,10 +127,15 @@ const struct cdevsw iic_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
 	.d_discard = nodiscard,
-	.d_flag = D_OTHER
+	.d_flag = D_OTHER | D_MCLOSE,
 };
 
 static void	iic_smbus_intr_thread(void *);
+
+static kmutex_t iic_mtx;
+static int iic_refcnt;
+static bool iic_unloading;
+static ONCE_DECL(iic_once);
 
 static struct i2c_device_link *
 iic_devslot_lookup(struct iic_softc *sc, i2c_addr_t addr)
@@ -928,15 +926,32 @@ iic_use_direct_match(const struct i2c_attach_args *ia, const cfdata_t cf,
 static int
 iic_open(dev_t dev, int flag, int fmt, lwp_t *l)
 {
-	struct iic_softc *sc = device_lookup_private(&iic_cd, minor(dev));
+	struct iic_softc *sc;
 
 	mutex_enter(&iic_mtx);
-	if (sc == NULL) {
+
+	if (iic_unloading) {
 		mutex_exit(&iic_mtx);
 		return ENXIO;
 	}
+
+	/* Hold a refrence while we look up the softc. */
+	if (iic_refcnt == INT_MAX) {
+		mutex_exit(&iic_mtx);
+		return EBUSY;
+	}
 	iic_refcnt++;
+
 	mutex_exit(&iic_mtx);
+
+	sc = device_lookup_private(&iic_cd, minor(dev));
+
+	if (sc == NULL) {
+		mutex_enter(&iic_mtx);
+		iic_refcnt--;
+		mutex_exit(&iic_mtx);
+		return ENXIO;
+	}
 
 	return 0;
 }
@@ -944,6 +959,10 @@ iic_open(dev_t dev, int flag, int fmt, lwp_t *l)
 static int
 iic_close(dev_t dev, int flag, int fmt, lwp_t *l)
 {
+	struct iic_softc *sc = device_lookup_private(&iic_cd, minor(dev));;
+
+	KASSERT(iic_refcnt != 0);
+	KASSERT(sc != NULL);
 
 	mutex_enter(&iic_mtx);
 	iic_refcnt--;
@@ -1037,7 +1056,7 @@ MODULE(MODULE_CLASS_DRIVER, iic, "i2cexec,i2c_bitbang");
 #include "ioconf.c"
 #endif
 
-int
+static int
 iic_init(void)
 {
 
@@ -1084,19 +1103,26 @@ iic_modcmd(modcmd_t cmd, void *opaque)
 			mutex_exit(&iic_mtx);
 			return EBUSY;
 		}
+		iic_unloading = true;
+		mutex_exit(&iic_mtx);
 #ifdef _MODULE
 		error = config_fini_component(cfdriver_ioconf_iic,
 		    cfattach_ioconf_iic, cfdata_ioconf_iic);
 		if (error != 0) {
+			mutex_enter(&iic_mtx);
+			iic_unloading = false;
 			mutex_exit(&iic_mtx);
 			break;
 		}
 		error = devsw_detach(NULL, &iic_cdevsw);
-		if (error != 0)
+		if (error != 0) {
 			config_init_component(cfdriver_ioconf_iic,
 			    cfattach_ioconf_iic, cfdata_ioconf_iic);
+			mutex_enter(&iic_mtx);
+			iic_unloading = false;
+			mutex_exit(&iic_mtx);
+		}
 #endif
-		mutex_exit(&iic_mtx);
 		break;
 	default:
 		error = ENOTTY;
