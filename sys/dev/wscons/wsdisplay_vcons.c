@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.52 2021/05/16 08:44:26 mlelstv Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.53 2021/05/16 08:46:38 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.52 2021/05/16 08:44:26 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.53 2021/05/16 08:46:38 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1404,6 +1404,7 @@ vcons_getwschar(struct vcons_screen *scr, struct wsdisplay_char *wsc)
 	int offset;
 	long attr;
 	struct rasops_info *ri;
+	int fg, bg, ul;
 
 	KASSERT(scr != NULL && wsc != NULL);
 
@@ -1433,18 +1434,38 @@ vcons_getwschar(struct vcons_screen *scr, struct wsdisplay_char *wsc)
 	wsc->letter = scr->scr_chars[offset];
 	attr = scr->scr_attrs[offset];
 
+#ifdef VCONS_DEBUG
+	printf("vcons_getwschar: %d, %d, %x, %lx\n", wsc->row,
+	    wsc->col, wsc->letter, attr);
+#endif
+
 	/* 
 	 * this is ugly. We need to break up an attribute into colours and
 	 * flags but there's no rasops method to do that so we must rely on
 	 * the 'canonical' encoding.
 	 */
-#ifdef VCONS_DEBUG
-	printf("vcons_getwschar: %d, %d, %x, %lx\n", wsc->row,
-	    wsc->col, wsc->letter, attr);
-#endif
-	wsc->foreground = (attr >> 24) & 0xff;
-	wsc->background = (attr >> 16) & 0xff;
-	wsc->flags      = attr & 0xff;
+
+	/* only fetches underline attribute */
+	/* rasops_unpack_attr(attr, &fg, &bg, &ul); */
+	fg = (attr >> 24) & 0xf;
+	bg = (attr >> 16) & 0xf;
+	ul = (attr & 1);
+
+	wsc->foreground = fg;
+	wsc->background = bg;
+
+	/* clear trashed bits and restore underline flag */
+	attr &= ~(WSATTR_HILIT | WSATTR_BLINK | WSATTR_UNDERLINE);
+	if (ul)
+		attr |= WSATTR_UNDERLINE;
+
+	/* restore highlight boost */
+	if (attr & WSATTR_HILIT)
+		if (wsc->foreground >= 8)
+			wsc->foreground -= 8;
+
+	/* we always use colors, even when not stored */
+	attr |= WSATTR_WSCOLORS;
 	return 0;
 }
 
