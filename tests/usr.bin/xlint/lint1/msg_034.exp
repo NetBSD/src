@@ -1,1 +1,1 @@
-msg_034.c(9): warning: nonportable bit-field type [34]
+msg_034.c(9): warning: nonportable bit-field type 'int' [34]

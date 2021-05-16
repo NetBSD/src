@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_034.c,v 1.3 2021/01/31 11:12:07 rillig Exp $	*/
+/*	$NetBSD: msg_034.c,v 1.4 2021/05/16 10:34:19 rillig Exp $	*/
 # 3 "msg_034.c"
 
-// Test for message: nonportable bit-field type [34]
+// Test for message: nonportable bit-field type '%s' [34]
 
 /* lint1-flags: -S -g -p -w */
 
