@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem_i2c.c,v 1.21.4.4 2021/05/16 22:53:57 thorpej Exp $ */
+/* $NetBSD: spdmem_i2c.c,v 1.21.4.5 2021/05/16 22:56:47 thorpej Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem_i2c.c,v 1.21.4.4 2021/05/16 22:53:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem_i2c.c,v 1.21.4.5 2021/05/16 22:56:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -243,7 +243,7 @@ spdmem_i2c_match(device_t parent, cfdata_t match, void *aux)
 	sc.sc_page0 = SPDCTL_SPA0;
 	sc.sc_page1 = SPDCTL_SPA1;
 	sc.sc_base.sc_read = spdmem_i2c_read;
-	match_result = SPDMEM_HIGH_CONFIDENCE_MATCH;
+	match_result = 0;
 
  do_probe:
 	/* Check the bank and reset to the page 0 */
@@ -254,8 +254,6 @@ spdmem_i2c_match(device_t parent, cfdata_t match, void *aux)
 		if (match_result < SPDMEM_HIGH_CONFIDENCE_MATCH) {
 			match_result = SPDMEM_HIGH_CONFIDENCE_MATCH;
 		}
-	} else {
-		match_result = 0;
 	}
 
 	return match_result;
