@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_309.c,v 1.3 2021/05/16 10:08:01 rillig Exp $	*/
+/*	$NetBSD: msg_309.c,v 1.4 2021/05/16 10:18:25 rillig Exp $	*/
 # 3 "msg_309.c"
 
-// Test for message: extra bits set to 0 in conversion of '%s' to '%s', op %s [309]
+// Test for message: extra bits set to 0 in conversion of '%s' to '%s', op '%s' [309]
 
 int
 scale(unsigned long long x) {
