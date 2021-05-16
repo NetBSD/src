@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.78.2.2 2021/05/08 11:34:38 thorpej Exp $	*/
+/*	$NetBSD: i2c.c,v 1.78.2.3 2021/05/16 04:40:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.78.2.2 2021/05/08 11:34:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.78.2.3 2021/05/16 04:40:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,10 +95,20 @@ __KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.78.2.2 2021/05/08 11:34:38 thorpej Exp $")
 #define I2C_MAX_ADDR	0x3ff	/* 10-bit address, max */
 #endif
 
+struct i2c_device_link {
+	TAILQ_ENTRY(i2c_device_link) l_list;
+	device_t		l_device;
+	i2c_addr_t		l_addr;
+};
+
+TAILQ_HEAD(i2c_devlist_head, i2c_device_link);
+
 struct iic_softc {
 	device_t sc_dev;
 	i2c_tag_t sc_tag;
-	device_t sc_devices[I2C_MAX_ADDR + 1];
+
+	kmutex_t sc_devlist_lock;
+	struct i2c_devlist_head sc_devlist;
 };
 
 static dev_type_open(iic_open);
@@ -128,6 +138,179 @@ const struct cdevsw iic_cdevsw = {
 };
 
 static void	iic_smbus_intr_thread(void *);
+
+static struct i2c_device_link *
+iic_devslot_lookup(struct iic_softc *sc, i2c_addr_t addr)
+{
+	struct i2c_device_link *link;
+
+	KASSERT(mutex_owned(&sc->sc_devlist_lock));
+
+	/*
+	 * A common pattern is "reserve then insert or delete", and
+	 * this is often done in increasing address order.  So check
+	 * if the last entry is the one we're looking for before we
+	 * search the list from the front.
+	 */
+	link = TAILQ_LAST(&sc->sc_devlist, i2c_devlist_head);
+	if (link == NULL) {
+		/* List is empty. */
+		return NULL;
+	}
+	if (link->l_addr == addr) {
+		return link;
+	}
+
+	TAILQ_FOREACH(link, &sc->sc_devlist, l_list) {
+		/*
+		 * The list is sorted, so if the current list element
+		 * has an address larger than the one we're looking
+		 * for, then it's not in the list.
+		 */
+		if (link->l_addr > addr) {
+			break;
+		}
+		if (link->l_addr == addr) {
+			return link;
+		}
+	}
+	return NULL;
+}
+
+static bool
+iic_devslot_reserve(struct iic_softc *sc, i2c_addr_t addr)
+{
+	struct i2c_device_link *link, *new_link;
+
+	new_link = kmem_zalloc(sizeof(*new_link), KM_SLEEP);
+	new_link->l_addr = addr;
+
+	mutex_enter(&sc->sc_devlist_lock);
+
+	/* Optimize for reserving in increasing i2c address order. */
+	link = TAILQ_LAST(&sc->sc_devlist, i2c_devlist_head);
+	if (link == NULL || link->l_addr < new_link->l_addr) {
+		TAILQ_INSERT_TAIL(&sc->sc_devlist, new_link, l_list);
+		new_link = NULL;
+		goto done;
+	}
+	KASSERT(!TAILQ_EMPTY(&sc->sc_devlist));
+
+	/* Sort the new entry into the list. */
+	TAILQ_FOREACH(link, &sc->sc_devlist, l_list) {
+		if (link->l_addr < new_link->l_addr) {
+			continue;
+		}
+		if (link->l_addr == new_link->l_addr) {
+			/* Address is already reserved / in-use. */
+			goto done;
+		}
+		/*
+		 * If we get here, we know we should be inserted
+		 * before this element, because we checked to see
+		 * if we should be the last entry before entering
+		 * the loop.
+		 */
+		KASSERT(link->l_addr > new_link->l_addr);
+		TAILQ_INSERT_BEFORE(link, new_link, l_list);
+		new_link = NULL;
+		break;
+	}
+	/*
+	 * Because we checked for an empty list early, if we got
+	 * here it means we inserted before "link".
+	 */
+	KASSERT(link != NULL);
+	KASSERT(TAILQ_NEXT(new_link, l_list) == link);
+
+ done:
+	mutex_exit(&sc->sc_devlist_lock);
+
+	if (new_link != NULL) {
+		kmem_free(new_link, sizeof(*new_link));
+		return false;
+	}
+	return true;
+}
+
+static bool
+iic_devslot_insert(struct iic_softc *sc, device_t dev, i2c_addr_t addr)
+{
+	struct i2c_device_link *link;
+	bool rv = false;
+
+	mutex_enter(&sc->sc_devlist_lock);
+
+	link = iic_devslot_lookup(sc, addr);
+	if (link != NULL) {
+		if (link->l_device == NULL) {
+			link->l_device = dev;
+			rv = true;
+		}
+	}
+
+	mutex_exit(&sc->sc_devlist_lock);
+
+	return rv;
+}
+
+static bool
+iic_devslot_remove(struct iic_softc *sc, device_t dev, i2c_addr_t addr)
+{
+	struct i2c_device_link *link;
+	bool rv = false;
+
+	mutex_enter(&sc->sc_devlist_lock);
+
+	link = iic_devslot_lookup(sc, addr);
+	if (link != NULL) {
+		if (link->l_device == dev) {
+			TAILQ_REMOVE(&sc->sc_devlist, link, l_list);
+			rv = true;
+		} else {
+			link = NULL;
+		}
+	}
+
+	mutex_exit(&sc->sc_devlist_lock);
+
+	if (link != NULL) {
+		kmem_free(link, sizeof(*link));
+		return false;
+	}
+	return rv;
+}
+
+static bool
+iic_devslot_set(struct iic_softc *sc, device_t dev, i2c_addr_t addr)
+{
+	return dev != NULL ? iic_devslot_insert(sc, dev, addr)
+			   : iic_devslot_remove(sc, dev, addr);
+}
+
+static bool
+iic_devslot_lookup_addr(struct iic_softc *sc, device_t dev, i2c_addr_t *addrp)
+{
+	struct i2c_device_link *link;
+	bool rv = false;
+
+	KASSERT(dev != NULL);
+	KASSERT(addrp != NULL);
+
+	mutex_enter(&sc->sc_devlist_lock);
+
+	TAILQ_FOREACH(link, &sc->sc_devlist, l_list) {
+		if (link->l_device == dev) {
+			*addrp = link->l_addr;
+			rv = true;
+			break;
+		}
+	}
+
+	mutex_exit(&sc->sc_devlist_lock);
+
+	return rv;
+}
 
 static int
 iic_print_direct(void *aux, const char *pnp)
@@ -346,6 +529,8 @@ iic_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 
 	for (ia.ia_addr = first_addr; ia.ia_addr <= last_addr; ia.ia_addr++) {
 		int error, match_result;
+		device_t newdev;
+		bool rv __diagused;
 
 		/*
 		 * Skip I2C addresses that are reserved for
@@ -357,7 +542,7 @@ iic_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 		/*
 		 * Skip addresses where a device is already attached.
 		 */
-		if (sc->sc_devices[ia.ia_addr] != NULL)
+		if (! iic_devslot_reserve(sc, ia.ia_addr))
 			continue;
 
 		/*
@@ -374,8 +559,11 @@ iic_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 		 * is there.
 		 */
 		match_result = config_probe(parent, cf, &ia);/*XXX*/
-		if (match_result <= 0)
+		if (match_result <= 0) {
+			rv = iic_devslot_remove(sc, NULL, ia.ia_addr);
+			KASSERT(rv);
 			continue;
+		}
 
 		/*
 		 * If the quality of the match by the driver was low
@@ -384,11 +572,15 @@ iic_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 		 * to see if it looks like something is really there.
 		 */
 		if (match_result == I2C_MATCH_ADDRESS_ONLY &&
-		    (error = (*probe_func)(sc, &ia, 0)) != 0)
+		    (error = (*probe_func)(sc, &ia, 0)) != 0) {
+			rv = iic_devslot_remove(sc, NULL, ia.ia_addr);
+			KASSERT(rv);
 			continue;
+		}
 
-		sc->sc_devices[ia.ia_addr] =
-		    config_attach(parent, cf, &ia, iic_print, CFARG_EOL);
+		newdev = config_attach(parent, cf, &ia, iic_print, CFARG_EOL);
+		rv = iic_devslot_set(sc, newdev, ia.ia_addr);
+		KASSERT(rv);
 	}
 
 	return 0;
@@ -398,13 +590,15 @@ static void
 iic_child_detach(device_t parent, device_t child)
 {
 	struct iic_softc *sc = device_private(parent);
-	int i;
+	i2c_addr_t addr;
+	bool rv __diagused;
 
-	for (i = 0; i <= I2C_MAX_ADDR; i++)
-		if (sc->sc_devices[i] == child) {
-			sc->sc_devices[i] = NULL;
-			break;
-		}
+	if (! iic_devslot_lookup_addr(sc, child, &addr)) {
+		return;
+	}
+
+	rv = iic_devslot_remove(sc, child, addr);
+	KASSERT(rv);
 }
 
 static int
@@ -423,6 +617,8 @@ iic_enumerate_devices_callback(device_t self,
 {
 	struct iic_softc *sc = device_private(self);
 	int loc[IICCF_NLOCS] = { 0 };
+	device_t newdev;
+	bool rv __diagused;
 
 	args->count++;
 
@@ -434,13 +630,14 @@ iic_enumerate_devices_callback(device_t self,
 		    args->ia->ia_addr);
 		return true;			/* keep enumerating */
 	}
-	if (sc->sc_devices[args->ia->ia_addr] == NULL) {
-		sc->sc_devices[args->ia->ia_addr] =
-		    config_found(self, args->ia, iic_print_direct,
-			/* CFARG_SUBMATCH, config_stdsubmatch, XXX */
-			CFARG_LOCATORS, loc,
-			CFARG_DEVHANDLE, args->ia->ia_devhandle,
-			CFARG_EOL);
+	if (iic_devslot_reserve(sc, args->ia->ia_addr)) {
+		newdev = config_found(self, args->ia, iic_print_direct,
+		    /* CFARG_SUBMATCH, config_stdsubmatch, XXX */
+		    CFARG_LOCATORS, loc,
+		    CFARG_DEVHANDLE, args->ia->ia_devhandle,
+		    CFARG_EOL);
+		rv = iic_devslot_set(sc, newdev, args->ia->ia_addr);
+		KASSERT(rv);
 	}
 	return true;				/* keep enumerating */
 }
@@ -468,6 +665,9 @@ iic_attach(device_t parent, device_t self, void *aux)
 
 	ic = sc->sc_tag;
 	ic->ic_devname = device_xname(self);
+
+	TAILQ_INIT(&sc->sc_devlist);
+	mutex_init(&sc->sc_devlist_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	LIST_INIT(&(sc->sc_tag->ic_list));
 	LIST_INIT(&(sc->sc_tag->ic_proc_list));
@@ -513,14 +713,25 @@ iic_detach(device_t self, int flags)
 {
 	struct iic_softc *sc = device_private(self);
 	i2c_tag_t ic = sc->sc_tag;
-	int i, error;
+	struct i2c_device_link *link;
+	device_t child;
+	int error;
 	void *hdl;
 
-	for (i = 0; i <= I2C_MAX_ADDR; i++) {
-		if (sc->sc_devices[i]) {
-			error = config_detach(sc->sc_devices[i], flags);
-			if (error)
-				return error;
+	/* Detach all children in address order. */
+	for (;;) {
+		mutex_enter(&sc->sc_devlist_lock);
+		link = TAILQ_FIRST(&sc->sc_devlist);
+		if (link == NULL) {
+			mutex_exit(&sc->sc_devlist_lock);
+			break;
+		}
+		child = link->l_device;
+		mutex_exit(&sc->sc_devlist_lock);
+
+		error = config_detach(child, flags);
+		if (error) {
+			return error;
 		}
 	}
 
@@ -761,12 +972,6 @@ iic_ioctl_exec(struct iic_softc *sc, i2c_ioctl_exec_t *iie, int flag)
 		return EINVAL;
 	if (I2C_OP_WRITE_P(iie->iie_op) && (flag & FWRITE) == 0)
 		return EBADF;
-
-#if 0
-	/* Disallow userspace access to devices that have drivers attached. */
-	if (sc->sc_devices[iie->iie_addr] != NULL)
-		return EBUSY;
-#endif
 
 	if (iie->iie_cmd != NULL) {
 		cmd = kmem_alloc(iie->iie_cmdlen, KM_SLEEP);
