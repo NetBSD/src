@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.51 2021/01/28 17:40:00 macallan Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.52 2021/05/16 08:44:26 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.51 2021/01/28 17:40:00 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.52 2021/05/16 08:44:26 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1629,9 +1629,6 @@ void
 vcons_invalidate_cache(struct vcons_data *vd)
 {
 	int i;
-
-	if (vd->cells == 0)
-		return;
 
 	for (i = 0; i < vd->cells; i++) {
 		vd->chars[i] = -1;
