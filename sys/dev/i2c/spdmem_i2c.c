@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem_i2c.c,v 1.21.4.2 2021/05/16 15:27:12 thorpej Exp $ */
+/* $NetBSD: spdmem_i2c.c,v 1.21.4.3 2021/05/16 15:40:20 thorpej Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem_i2c.c,v 1.21.4.2 2021/05/16 15:27:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem_i2c.c,v 1.21.4.3 2021/05/16 15:40:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -107,7 +107,9 @@ spdmem_reset_page(struct spdmem_i2c_softc *sc)
 
 	reg = 0;
 
-	iic_acquire_bus(sc->sc_tag, 0);
+	if ((rv = iic_acquire_bus(sc->sc_tag, 0)) != 0) {
+		return rv;
+	}
 
 	/*
 	 * Try to read byte 0 and 2. If it failed, it's not spdmem or a device
@@ -306,7 +308,8 @@ spdmem_i2c_read(struct spdmem_softc *softc, uint16_t addr, uint8_t *val)
 
 	reg = addr & 0xff;
 
-	iic_acquire_bus(sc->sc_tag, 0);
+	if ((rv = iic_acquire_bus(sc->sc_tag, 0)) != 0)
+		return rv;
 
 	if (addr & 0x100) {
 		rv = iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP, sc->sc_page1,
