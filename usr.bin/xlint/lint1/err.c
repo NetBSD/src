@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.116 2021/04/18 17:36:18 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.117 2021/05/16 10:18:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.116 2021/04/18 17:36:18 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.117 2021/05/16 10:18:24 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -363,7 +363,7 @@ const char *const msgs[] = {
 	"constant truncated by conversion, op %s",		      /* 306 */
 	"static variable %s set but not used",			      /* 307 */
 	"invalid type for _Complex",				      /* 308 */
-	"extra bits set to 0 in conversion of '%s' to '%s', op %s",   /* 309 */
+	"extra bits set to 0 in conversion of '%s' to '%s', op '%s'", /* 309 */
 	"symbol renaming can't be used on function arguments",	      /* 310 */
 	"symbol renaming can't be used on automatic variables",	      /* 311 */
 	"%s C does not support // comments",			      /* 312 */
