@@ -25,7 +25,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/lib/libc/string/memmem.c 315468 2017-03-18 00:53:24Z emaste $");
 #else
-__RCSID("$NetBSD: memmem.c,v 1.3 2018/10/15 19:32:48 christos Exp $");
+__RCSID("$NetBSD: memmem.c,v 1.4 2021/05/16 09:43:39 rillig Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -63,7 +63,6 @@ static char *fourbyte_memmem(const unsigned char *h, size_t k,
 	for (h += 4, k -= 4; k; k--, hw = hw << 8 | *h++)
 		if (hw == nw) return __UNCONST(h - 4);
 	return hw == nw ? __UNCONST(h - 4) : 0;
-	return 0;
 }
 
 #define MAX(a,b) ((a)>(b)?(a):(b))
