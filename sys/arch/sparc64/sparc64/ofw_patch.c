@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_patch.c,v 1.7.4.2 2021/05/15 21:19:46 thorpej Exp $ */
+/*	$NetBSD: ofw_patch.c,v 1.7.4.3 2021/05/16 23:45:12 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020, 2021 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.7.4.2 2021/05/15 21:19:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.7.4.3 2021/05/16 23:45:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -153,7 +153,9 @@ i2c_fixup_enumerate_devices(device_t dev, devhandle_t call_handle, void *v)
 		args->ia->ia_addr = i2c_adds[i].addr;
 		args->ia->ia_name = i2c_adds[i].name;
 		args->ia->ia_clist = i2c_adds[i].compat;
-		args->ia->ia_clist_size = strlen(i2c_adds[i].compat) + 1;
+		args->ia->ia_clist_size = args->ia->ia_clist != NULL
+		    ? strlen(i2c_adds[i].compat) + 1
+		    : 0;
 		args->ia->ia_prop = props;
 		if (fixup->i2c_phandle != 0) {
 			args->ia->ia_devhandle =
@@ -697,10 +699,8 @@ static void
 sparcle_smbus_fixup(device_t dev, void *aux)
 {
 	static const struct i2c_addition i2c_adds[] = {
-		{ .name = "dimm-spd",
-		  .compat = "netbsd,dimm-spd", .addr = 0x50 },
-		{ .name = "dimm-spd",
-		  .compat = "netbsd,dimm-spd", .addr = 0x51 },
+		{ .name = "dimm-spd",	.addr = 0x50 },
+		{ .name = "dimm-spd",	.addr = 0x51 },
 	};
 	devhandle_t devhandle = device_handle(dev);
 	KASSERT(devhandle_type(devhandle) == DEVHANDLE_TYPE_OF);
