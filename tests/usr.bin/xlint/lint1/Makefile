@@ -1,7 +1,7 @@
-# $NetBSD: Makefile,v 1.57 2021/05/15 19:12:14 rillig Exp $
+# $NetBSD: Makefile,v 1.58 2021/05/16 11:11:37 rillig Exp $
 
 NOMAN=		# defined
-MAX_MESSAGE=	343		# see lint1/err.c
+MAX_MESSAGE=	344		# see lint1/err.c
 
 .include <bsd.own.mk>
 

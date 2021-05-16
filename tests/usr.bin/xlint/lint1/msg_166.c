@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_166.c,v 1.2 2021/01/31 13:11:08 rillig Exp $	*/
+/*	$NetBSD: msg_166.c,v 1.3 2021/05/16 11:11:37 rillig Exp $	*/
 # 3 "msg_166.c"
 
 // Test for message: precision lost in bit-field assignment [166]
@@ -22,8 +22,8 @@ struct bit_set {
 	 * https://bugs.llvm.org/show_bug.cgi?id=11272.
 	 */
 
-	int minus_1_to_0: 1;		/* expect: 34 */
-	int minus_8_to_7: 4;		/* expect: 34 */
+	int minus_1_to_0: 1;		/* expect: 344 */
+	int minus_8_to_7: 4;		/* expect: 344 */
 	unsigned zero_to_1: 1;
 	unsigned zero_to_15: 4;
 };
