@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem_i2c.c,v 1.21.4.3 2021/05/16 15:40:20 thorpej Exp $ */
+/* $NetBSD: spdmem_i2c.c,v 1.21.4.4 2021/05/16 22:53:57 thorpej Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem_i2c.c,v 1.21.4.3 2021/05/16 15:40:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem_i2c.c,v 1.21.4.4 2021/05/16 22:53:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -190,6 +190,8 @@ static const struct device_compatible_entry name_data[] = {
 	DEVICE_COMPAT_EOL
 };
 
+#define	SPDMEM_HIGH_CONFIDENCE_MATCH	(I2C_MATCH_DIRECT_COMPATIBLE + 20)
+
 static bool
 spdmem_i2c_use_name_match(const struct i2c_attach_args *ia, int *match_resultp)
 {
@@ -197,7 +199,7 @@ spdmem_i2c_use_name_match(const struct i2c_attach_args *ia, int *match_resultp)
 
 	if (name != NULL) {
 		*match_resultp = device_compatible_match(&name, 1, name_data)
-		    ? I2C_MATCH_DIRECT_COMPATIBLE
+		    ? SPDMEM_HIGH_CONFIDENCE_MATCH
 		    : 0;
 		return true;
 	}
@@ -209,14 +211,14 @@ spdmem_i2c_use_direct_match(const struct i2c_attach_args *ia, const cfdata_t cf,
 			    const struct device_compatible_entry *cdata,
 			    int *match_resultp)
 {
-	if (iic_use_direct_match(ia, cf, cdata, match_resultp))
-		return true;
-
 	/*
 	 * Matching by name is not ideal, but some device trees only
 	 * have a name and no "compatible" property.
 	 */
 	if (spdmem_i2c_use_name_match(ia, match_resultp))
+		return true;
+
+	if (iic_use_direct_match(ia, cf, cdata, match_resultp))
 		return true;
 
 	return false;
@@ -230,7 +232,7 @@ spdmem_i2c_match(device_t parent, cfdata_t match, void *aux)
 	int match_result;
 
 	if (spdmem_i2c_use_direct_match(ia, match, compat_data, &match_result))
-		return match_result;
+		goto do_probe;
 
 	/* Filter out by address when not using direct config. */
 	if ((ia->ia_addr & SPDMEM_I2C_ADDRMASK) != SPDMEM_I2C_ADDR)
@@ -241,14 +243,22 @@ spdmem_i2c_match(device_t parent, cfdata_t match, void *aux)
 	sc.sc_page0 = SPDCTL_SPA0;
 	sc.sc_page1 = SPDCTL_SPA1;
 	sc.sc_base.sc_read = spdmem_i2c_read;
+	match_result = SPDMEM_HIGH_CONFIDENCE_MATCH;
 
+ do_probe:
 	/* Check the bank and reset to the page 0 */
 	if (spdmem_reset_page(&sc) != 0)
 		return 0;
 
-	return spdmem_common_probe(&sc.sc_base)
-	    ? I2C_MATCH_ADDRESS_AND_PROBE
-	    : 0;
+	if (spdmem_common_probe(&sc.sc_base)) {
+		if (match_result < SPDMEM_HIGH_CONFIDENCE_MATCH) {
+			match_result = SPDMEM_HIGH_CONFIDENCE_MATCH;
+		}
+	} else {
+		match_result = 0;
+	}
+
+	return match_result;
 }
 
 static void
