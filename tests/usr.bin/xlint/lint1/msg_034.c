@@ -1,11 +1,28 @@
-/*	$NetBSD: msg_034.c,v 1.4 2021/05/16 10:34:19 rillig Exp $	*/
+/*	$NetBSD: msg_034.c,v 1.5 2021/05/16 11:11:37 rillig Exp $	*/
 # 3 "msg_034.c"
 
 // Test for message: nonportable bit-field type '%s' [34]
 
-/* lint1-flags: -S -g -p -w */
+/* No -g since GCC allows all integer types as bit-fields. */
+/* lint1-flags: -S -p -w */
 
+/*
+ * C90 3.5.2.1 allows 'int', 'signed int', 'unsigned int' as bit-field types.
+ *
+ * C99 6.7.2.1 significantly changed the wording of the allowable types for
+ * bit-fields.  For example, 6.7.2.1p4 does not mention plain 'int' at all.
+ * The rationale for C99 6.7.2.1 mentions plain int though, and it would have
+ * broken a lot of existing code to disallow plain 'int' as a bit-field type.
+ * Footnote 104 explicitly mentions plain 'int' as well and it even allows
+ * typedef-types for bit-fields.
+ */
 struct example {
-	int nonportable: 1;		/* expect: 34 */
+	/* expect+1: 34 */
+	unsigned short ushort: 1;
+
+	/* expect+1: 344 */
+	int plain_int: 1;
+
+	signed int signed_int: 1;
 	unsigned int portable: 1;
 };

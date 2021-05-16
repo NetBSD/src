@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.181 2021/05/16 10:34:19 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.182 2021/05/16 11:11:36 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.181 2021/05/16 10:34:19 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.182 2021/05/16 11:11:36 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1112,8 +1112,8 @@ check_bit_field_type(sym_t *dsym,  type_t **const inout_tp, tspec_t *inout_t)
 		}
 	} else if (t == INT && dcs->d_sign_mod == NOTSPEC) {
 		if (pflag && !bitfieldtype_ok) {
-			/* nonportable bit-field type '%s' */
-			warning(34, type_name(tp));
+			/* bit-field of type plain 'int' has ... */
+			warning(344);
 		}
 	} else if (t != INT && t != UINT && t != BOOL) {
 		/*
