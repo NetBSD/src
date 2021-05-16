@@ -1,4 +1,4 @@
-/* $NetBSD: spi.c,v 1.17 2021/04/24 23:36:59 thorpej Exp $ */
+/* $NetBSD: spi.c,v 1.18 2021/05/16 08:48:20 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.17 2021/04/24 23:36:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.18 2021/05/16 08:48:20 mlelstv Exp $");
 
 #include "locators.h"
 
@@ -70,6 +70,7 @@ struct spi_softc {
 	struct spi_handle	*sc_slaves;
 	kmutex_t		sc_lock;
 	kcondvar_t		sc_cv;
+	kmutex_t		sc_dev_lock;
 	int			sc_flags;
 #define SPIC_BUSY		1
 };
@@ -90,7 +91,7 @@ const struct cdevsw spi_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
 	.d_discard = nodiscard,
-	.d_flag = D_OTHER
+	.d_flag = D_OTHER | D_MPSAFE
 };
 
 /*
@@ -287,6 +288,7 @@ spi_attach(device_t parent, device_t self, void *aux)
 	aprint_naive(": SPI bus\n");
 	aprint_normal(": SPI bus\n");
 
+	mutex_init(&sc->sc_dev_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_VM);
 	cv_init(&sc->sc_cv, "spictl");
 
@@ -350,6 +352,8 @@ spi_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 	if (sc == NULL)
 		return ENXIO;
 
+	mutex_enter(&sc->sc_dev_lock);
+
 	switch (cmd) {
 	case SPI_IOCTL_CONFIGURE:
 		sic = (spi_ioctl_configure_t *)data;
@@ -407,6 +411,8 @@ spi_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 		error = ENODEV;
 		break;
 	}
+
+	mutex_exit(&sc->sc_dev_lock);
 
 	return error;
 }
