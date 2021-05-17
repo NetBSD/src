@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.24 2017/04/08 19:53:21 christos Exp $
+#	$NetBSD: Makefile.booters,v 1.25 2021/05/17 22:36:31 mrg Exp $
 
 NOMAN=		# defined
 NOPIE=		# defined
@@ -26,8 +26,6 @@ AFLAGS+=	-D_LOCORE -D_KERNEL -DASSEMBLER -mno-abicalls
 # -I${.CURDIR}/../.. done by Makefile.inc
 CPPFLAGS+=	-nostdinc -D_STANDALONE -DNO_ABICALLS -D_NO_PROM_DEFINES
 CPPFLAGS+=	-I${.OBJDIR} -I${S}
-# compiler flags for smallest code size
-#CFLAGS=		-Os -mmemcpy -mno-abicalls -G 128
 CFLAGS=		-Os -mmemcpy -ffreestanding -mno-abicalls -msoft-float -G 128
 CFLAGS+=	-Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 
@@ -68,7 +66,7 @@ CPPFLAGS+=	-DPRIMARY_BOOTBLOCK \
 CHECKSIZE_CMD?=	SIZE=${SIZE} ${HOST_SH} ${.CURDIR}/../common/checksize.sh
 
 STRIPSECTIONS?= -R .reginfo -R .mdebug.abi32 -R .comment -R .pdr \
-	-R .MIPS.abiflags  -R .gnu.attributes
+	-R .MIPS.abiflags  -R .gnu.attributes -R .eh_frame
 
 .elif defined(SECONDARY_PROG)
 PROG=		${SECONDARY_PROG}
