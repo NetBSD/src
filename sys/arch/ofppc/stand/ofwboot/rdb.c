@@ -1,4 +1,4 @@
-/*	$NetBSD: rdb.c,v 1.2 2010/06/19 08:48:33 kiyohara Exp $	*/
+/*	$NetBSD: rdb.c,v 1.3 2021/05/17 20:21:05 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2009 Frank Wille.
@@ -31,6 +31,7 @@
 #include <sys/param.h>
 #include <sys/disklabel_rdb.h>
 
+#include <lib/libkern/libkern.h>
 #include <lib/libsa/stand.h>
 
 #include "rdb.h"
