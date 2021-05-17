@@ -1,4 +1,4 @@
-/*	$NetBSD: regcomp.c,v 1.7 2017/11/12 16:33:31 christos Exp $ */
+/*	$NetBSD: regcomp.c,v 1.8 2021/05/17 04:01:57 rin Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
  * Copyright (c) 1992, 1993, 1994
@@ -44,7 +44,7 @@
 static char sccsid[] = "@(#)regcomp.c	8.4 (Berkeley) 3/19/94";
 #endif /* LIBC_SCCS and not lint */
 #else
-__RCSID("$NetBSD: regcomp.c,v 1.7 2017/11/12 16:33:31 christos Exp $");
+__RCSID("$NetBSD: regcomp.c,v 1.8 2021/05/17 04:01:57 rin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -934,7 +934,7 @@ p_b_coll_elem(struct parse *p, int endc)
 	}
 	len = p->next - sp;
 	for (cp = cnames; cp->name != NULL; cp++)
-		if (STRLEN(cp->name) == len && MEMCMP(cp->name, sp, len))
+		if (STRLEN(cp->name) == len && !MEMCMP(cp->name, sp, len))
 			return(cp->code);	/* known name */
 	if (len == 1)
 		return(*sp);	/* single character */
