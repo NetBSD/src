@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1052 2021/05/16 11:11:36 rillig Exp $
+# $NetBSD: mi,v 1.1053 2021/05/17 04:07:42 yamaguchi Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4106,6 +4106,10 @@
 ./usr/tests/net/if_l2tp/Atffile				tests-net-tests		atf,rump
 ./usr/tests/net/if_l2tp/Kyuafile			tests-net-tests		atf,rump,kyua
 ./usr/tests/net/if_l2tp/t_l2tp				tests-net-tests		atf,rump
+./usr/tests/net/if_lagg					tests-net-tests		compattestfile,atf
+./usr/tests/net/if_lagg/Atffile				tests-net-tests		atf,rump
+./usr/tests/net/if_lagg/Kyuafile			tests-net-tests		atf,rump,kyua
+./usr/tests/net/if_lagg/t_lagg				tests-net-tests		atf,rump
 ./usr/tests/net/if_loop					tests-net-tests		compattestfile,atf
 ./usr/tests/net/if_loop/Atffile				tests-net-tests		atf,rump
 ./usr/tests/net/if_loop/Kyuafile			tests-net-tests		atf,rump,kyua

@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.919 2021/04/29 17:27:54 christos Exp $
+# $NetBSD: shl.mi,v 1.920 2021/05/17 04:07:41 yamaguchi Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -780,6 +780,9 @@
 ./usr/lib/librumpnet_l2tp.so			base-rump-shlib		rump
 ./usr/lib/librumpnet_l2tp.so.0			base-rump-shlib		rump
 ./usr/lib/librumpnet_l2tp.so.0.0		base-rump-shlib		rump
+./usr/lib/librumpnet_lagg.so			base-rump-shlib		rump
+./usr/lib/librumpnet_lagg.so.0			base-rump-shlib		rump
+./usr/lib/librumpnet_lagg.so.0.0		base-rump-shlib		rump
 ./usr/lib/librumpnet_local.so			base-rump-shlib		rump
 ./usr/lib/librumpnet_local.so.0			base-rump-shlib		rump
 ./usr/lib/librumpnet_local.so.0.0		base-rump-shlib		rump

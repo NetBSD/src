@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.352 2021/05/08 09:23:37 rin Exp $
+# $NetBSD: mi,v 1.353 2021/05/17 04:07:41 yamaguchi Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -221,6 +221,7 @@
 ./usr/lib/librumpnet_gif_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpnet_ipsec_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpnet_l2tp_g.a			comp-c-debuglib		debuglib,rump
+./usr/lib/librumpnet_lagg_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpnet_local_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpnet_net80211_g.a		comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpnet_net_g.a			comp-c-debuglib		debuglib,rump
