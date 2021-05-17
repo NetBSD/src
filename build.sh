@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.349 2021/05/17 13:50:39 christos Exp $
+#	$NetBSD: build.sh,v 1.350 2021/05/17 17:12:12 christos Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1973,7 +1973,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.349 2021/05/17 13:50:39 christos Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.350 2021/05/17 17:12:12 christos Exp $
 # with these arguments: ${_args}
 #
 
@@ -2333,7 +2333,7 @@ setup_mkrepro()
 			vcs=git
 		elif [ -d "${d}.hg" ]; then
 			t=$(cd "${d}" &&
-			    hg log -l1 --template '{date(date, "%s")}\n')
+			    hg log -r . --template '{date(date, "%s")}\n')
 			vcs=hg
 		else
 			bomb "Cannot determine VCS for '$d'"
