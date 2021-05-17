@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.1 2021/05/17 15:46:21 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.2 2021/05/17 15:51:29 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -9,4 +9,14 @@ doc/CHANGES-9.3					added
 
 	Welcome to 9.2_STABLE.
 	[martin]
+
+sys/fs/ntfs/ntfs_subr.c				1.64
+
+	PR 56160: fix a kernel crash for some NTFS file systems.
+	[hannken, ticket #1272]
+
+sys/dev/pci/xhci_pci.c				1.26
+
+	PR 55855: avoid potential double free of interrupt handles.
+	[jakllsch, ticket #1273]
 
