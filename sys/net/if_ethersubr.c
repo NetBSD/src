@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.292 2021/02/14 19:35:37 roy Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.293 2021/05/17 04:07:43 yamaguchi Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.292 2021/02/14 19:35:37 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.293 2021/05/17 04:07:43 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.292 2021/02/14 19:35:37 roy Exp $
 #include "bridge.h"
 #include "arp.h"
 #include "agr.h"
+#include "lagg.h"
 
 #include <sys/sysctl.h>
 #include <sys/mbuf.h>
@@ -123,6 +124,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.292 2021/02/14 19:35:37 roy Exp $
 #include <net/agr/ieee8023ad.h>
 #include <net/agr/if_agrvar.h>
 #endif
+
+#include <net/lagg/if_laggvar.h>
 
 #if NBRIDGE > 0
 #include <net/if_bridgevar.h>
@@ -179,6 +182,9 @@ const uint8_t etherbroadcastaddr[ETHER_ADDR_LEN] =
 const uint8_t ethermulticastaddr_slowprotocols[ETHER_ADDR_LEN] =
     { 0x01, 0x80, 0xc2, 0x00, 0x00, 0x02 };
 #define senderr(e) { error = (e); goto bad;}
+
+/* if_lagg(4) support */
+struct mbuf *(*lagg_input_ethernet_p)(struct ifnet *, struct mbuf *);
 
 static int ether_output(struct ifnet *, struct mbuf *,
     const struct sockaddr *, const struct rtentry *);
@@ -755,6 +761,14 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	}
 #endif
 
+	/* Handle input from a lagg(4) port */
+	if (ifp->if_type == IFT_IEEE8023ADLAG) {
+		KASSERT(lagg_input_ethernet_p != NULL);
+		m = (*lagg_input_ethernet_p)(ifp, m);
+		if (m == NULL)
+			return;
+	}
+
 	/*
 	 * If VLANs are configured on the interface, check to
 	 * see if the device performed the decapsulation and
@@ -1055,6 +1069,11 @@ ether_ifdetach(struct ifnet *ifp)
 #if NVLAN > 0
 	if (ec->ec_nvlans)
 		vlan_ifdetach(ifp);
+#endif
+
+#if NLAGG > 0
+	if (ifp->if_lagg)
+		lagg_ifdetach(ifp);
 #endif
 
 	ETHER_LOCK(ec);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.289 2020/10/15 10:20:44 roy Exp $	*/
+/*	$NetBSD: if.h,v 1.290 2021/05/17 04:07:43 yamaguchi Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -381,6 +381,7 @@ typedef struct ifnet {
 	struct mowner	*if_mowner;	/* ?: who owns mbufs for this interface */
 
 	void		*if_agrprivate;	/* ?: used only when #if NAGR > 0 */
+	void		*if_lagg;	/* ?: used only when #if NLAGG > 0 */
 	void		*if_npf_private;/* ?: associated NPF context */
 
 	/*

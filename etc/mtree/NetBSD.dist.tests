@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.183 2020/12/12 02:50:26 pgoyette Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.184 2021/05/17 04:07:42 yamaguchi Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -358,6 +358,7 @@
 ./usr/tests/net/if_gif
 ./usr/tests/net/if_ipsec
 ./usr/tests/net/if_l2tp
+./usr/tests/net/if_lagg
 ./usr/tests/net/if_loop
 ./usr/tests/net/if_pppoe
 ./usr/tests/net/if_tap

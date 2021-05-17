@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.common,v 1.6 2021/03/01 16:47:48 martin Exp $
+#	$NetBSD: Makefile.common,v 1.7 2021/05/17 04:07:42 yamaguchi Exp $
 
 # shared stuff with src/distrib/utils/x_ifconfig for install media.
 # stuff not required by install media should be into Makefile.
@@ -17,5 +17,5 @@ SRCS+=		af_inet.c af_inetany.c env.c ether.c \
 SRCS+=		ieee80211.c
 .endif
 .ifndef SMALLPROG
-SRCS+=		agr.c l2tp.c
+SRCS+=		agr.c l2tp.c lagg.c
 .endif

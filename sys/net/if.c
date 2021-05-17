@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.484 2020/10/15 10:20:44 roy Exp $	*/
+/*	$NetBSD: if.c,v 1.485 2021/05/17 04:07:43 yamaguchi Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.484 2020/10/15 10:20:44 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.485 2021/05/17 04:07:43 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -158,6 +158,11 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.484 2020/10/15 10:20:44 roy Exp $");
 #include "carp.h"
 #if NCARP > 0
 #include <netinet/ip_carp.h>
+#endif
+
+#include "lagg.h"
+#if NLAGG > 0
+#include <net/lagg/if_laggvar.h>
 #endif
 
 #include <compat/sys/sockio.h>
@@ -2419,6 +2424,11 @@ if_link_state_change_process(struct ifnet *ifp, int link_state)
 #if NBRIDGE > 0
 	if (ifp->if_bridge != NULL)
 		bridge_calc_link_state(ifp->if_bridge);
+#endif
+
+#if NLAGG > 0
+	if (ifp->if_lagg != NULL)
+		lagg_linkstate_changed(ifp);
 #endif
 
 	DOMAIN_FOREACH(dp) {

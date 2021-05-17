@@ -1,4 +1,4 @@
-#	$NetBSD: files.net,v 1.30 2021/01/30 21:23:08 jmcneill Exp $
+#	$NetBSD: files.net,v 1.31 2021/05/17 04:07:43 yamaguchi Exp $
 
 # XXX CLEANUP
 define	net
@@ -67,3 +67,4 @@ file	netinet6/in6_gif.c		gif & inet6
 file	netinet6/in6_l2tp.c		l2tp & inet6
 
 include	"net/agr/files.agr"
+include	"net/lagg/files.lagg"

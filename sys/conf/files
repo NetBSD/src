@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1282 2021/05/14 08:41:25 yamaguchi Exp $
+#	$NetBSD: files,v 1.1283 2021/05/17 04:07:43 yamaguchi Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -1439,6 +1439,7 @@ defpseudodev l2tp:	ifnet, ether, arp
 defpseudo canloop:	ifnet
 defpseudo ipsecif:	ifnet		# avoid to confuse ipsec itself option
 defpseudo wg:		ifnet, blake2s, libsodium
+defpseudo lagg:		ifnet, ether
 
 defpseudo sequencer
 defpseudo clockctl
