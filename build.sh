@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.348 2021/05/14 22:06:34 christos Exp $
+#	$NetBSD: build.sh,v 1.349 2021/05/17 13:50:39 christos Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1973,7 +1973,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.348 2021/05/14 22:06:34 christos Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.349 2021/05/17 13:50:39 christos Exp $
 # with these arguments: ${_args}
 #
 
@@ -2304,20 +2304,52 @@ setup_mkrepro()
 	if [ ${MKREPRO-no} != "yes" ]; then
 		return
 	fi
+
 	local dirs=${NETBSDSRCDIR-/usr/src}/
 	if [ ${MKX11-no} = "yes" ]; then
 		dirs="$dirs ${X11SRCDIR-/usr/xsrc}/"
 	fi
+
 	local cvslatest=$(print_tooldir_program cvslatest)
 	if [ ! -x "${cvslatest}" ]; then
 		buildtools
 	fi
+
 	local cvslatestflags=
 	if ${do_expertmode}; then
 		cvslatestflags=-i
 	fi
-	MKREPRO_TIMESTAMP=$("${cvslatest}" ${cvslatestflags} ${dirs})
-	[ -n "${MKREPRO_TIMESTAMP}" ] || bomb "Failed to compute timestamp"
+
+	MKREPRO_TIMESTAMP=0
+	local d
+	local t
+	local vcs
+	for d in ${dirs}; do
+		if [ -d "${d}CVS" ]; then
+			t=$("${cvslatest}" ${cvslatestflags} "${d}")
+			vcs=cvs
+		elif [ -d "${d}.git" ]; then
+			t=$(cd "${d}" && git log -1 --format=%ct)
+			vcs=git
+		elif [ -d "${d}.hg" ]; then
+			t=$(cd "${d}" &&
+			    hg log -l1 --template '{date(date, "%s")}\n')
+			vcs=hg
+		else
+			bomb "Cannot determine VCS for '$d'"
+		fi
+
+		if [ -z "$t" ]; then
+			bomb "Failed to get timestamp for vcs=$vcs in '$d'"
+		fi
+
+		#echo "latest $d $vcs $t"
+		if [ "$t" -gt "$MKREPRO_TIMESTAMP" ]; then
+			MKREPRO_TIMESTAMP="$t"
+		fi
+	done
+
+	[ "${MKREPRO_TIMESTAMP}" != "0" ] || bomb "Failed to compute timestamp"
 	statusmsg2 "MKREPRO_TIMESTAMP" "$(TZ=UTC date -r ${MKREPRO_TIMESTAMP})"
 	export MKREPRO MKREPRO_TIMESTAMP
 }
