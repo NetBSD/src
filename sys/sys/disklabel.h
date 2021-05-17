@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.124 2020/03/30 09:32:46 wiz Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.125 2021/05/17 08:50:36 mrg Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -498,8 +498,6 @@ int disk_read_sectors(void (*)(struct buf *), const struct disklabel *,
     struct buf *, unsigned int, int);
 void	 diskerr(const struct buf *, const char *, const char *, int,
 	    int, const struct disklabel *);
-u_int	 dkcksum(struct disklabel *);
-u_int	 dkcksum_sized(struct disklabel *, size_t);
 int	 setdisklabel(struct disklabel *, struct disklabel *, u_long,
 	    struct cpu_disklabel *);
 const char *readdisklabel(dev_t, void (*)(struct buf *),
