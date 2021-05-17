@@ -1,4 +1,4 @@
-/*	$NetBSD: aarch64.c,v 1.14 2021/01/16 15:34:37 jmcneill Exp $	*/
+/*	$NetBSD: aarch64.c,v 1.15 2021/05/17 18:43:18 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: aarch64.c,v 1.14 2021/01/16 15:34:37 jmcneill Exp $");
+__RCSID("$NetBSD: aarch64.c,v 1.15 2021/05/17 18:43:18 riastradh Exp $");
 #endif /* no lint */
 
 #include <sys/types.h>
@@ -168,6 +168,66 @@ struct fieldinfo id_aa64pfr0_fieldinfo[] = {
 			[1] = "GIC CPU interface sysregs v3.0/4.0 supported",
 			[3] = "GIC CPU interface sysregs v4.1 supported"
 		}
+	},
+	{
+		.bitpos = 28, .bitwidth = 4, .name = "RAS",
+		.info = (const char *[16]) { /* 16=4bit */
+			[0] = "Reliability/Availability/Serviceability not supported",
+			[1] = "Reliability/Availability/Serviceability supported",
+			[2] = "Reliability/Availability/Serviceability ARMv8.4 supported",
+		},
+	},
+	{
+		.bitpos = 32, .bitwidth = 4, .name = "SVE",
+		.info = (const char *[16]) { /* 16=4bit */
+			[0] = "Scalable Vector Extensions not implemented",
+			[1] = "Scalable Vector Extensions implemented",
+		},
+	},
+	{
+		.bitpos = 36, .bitwidth = 4, .name = "SEL2",
+		.info = (const char *[16]) { /* 16=4bit */
+			[0] = "Secure EL2 not implemented",
+			[1] = "Secure EL2 implemented",
+		},
+	},
+	{
+		.bitpos = 40, .bitwidth = 4, .name = "MPAM",
+		.info = (const char *[16]) { /* 16=4bit */
+			[0] = "Memory Partitioning and Monitoring not implemented",
+			[1] = "Memory Partitioning and Monitoring implemented",
+		},
+	},
+	{
+		.bitpos = 44, .bitwidth = 4, .name = "AMU",
+		.info = (const char *[16]) { /* 16=4bit */
+			[0] = "Activity Monitors Extension not implemented",
+			[1] = "Activity Monitors Extension v1 ARMv8.4",
+			[2] = "Activity Monitors Extension v1 ARMv8.6",
+		},
+	},
+	{
+		.bitpos = 48, .bitwidth = 4, .name = "DIT",
+		.info = (const char *[16]) { /* 16=4bit */
+			[0] = "No Data-Independent Timing guarantees",
+			[1] = "Data-Independent Timing guaranteed by PSTATE.DIT",
+		},
+	},
+	{
+		.bitpos = 56, .bitwidth = 4, .name = "CSV2",
+		.info = (const char *[16]) { /* 16=4bit */
+			[0] = "Branch prediction might be Spectred",
+			[1] = "Branch prediction maybe not Spectred",
+			[2] = "Branch prediction probably not Spectred",
+		},
+	},
+	{
+		.bitpos = 60, .bitwidth = 4, .name = "CSV3",
+		.info = (const char *[16]) { /* 16=4bit */
+			[0] = "Faults might be Spectred",
+			[1] = "Faults maybe not Spectred",
+			[2] = "Faults probably not Spectred",
+		},
 	},
 	{ .bitwidth = 0 }	/* end of table */
 };
