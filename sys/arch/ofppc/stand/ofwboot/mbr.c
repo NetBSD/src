@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.5 2016/03/30 21:14:54 christos Exp $	*/
+/*	$NetBSD: mbr.c,v 1.6 2021/05/17 20:21:05 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,6 +34,7 @@
 #include <sys/param.h>
 #include <sys/bootblock.h>
 
+#include <lib/libkern/libkern.h>
 #include <lib/libsa/byteorder.h>
 #include <lib/libsa/stand.h>
 
