@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.588 2021/03/10 07:23:42 wiz Exp $
+# $NetBSD: GENERIC,v 1.589 2021/05/17 04:07:42 yamaguchi Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.588 $"
+#ident		"GENERIC-$Revision: 1.589 $"
 
 maxusers	64		# estimated number of users
 
@@ -1176,6 +1176,7 @@ pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	vether			# Virtual Ethernet for bridge
 pseudo-device	agr			# IEEE 802.3ad link aggregation
 pseudo-device	l2tp			# L2TPv3 interface
+pseudo-device	lagg			# Link aggregation interface
 pseudo-device	npf			# NPF packet filter
 
 #pseudo-device	canloop			# CAN loopback interface
