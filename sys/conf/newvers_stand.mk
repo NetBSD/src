@@ -1,4 +1,4 @@
-#	$NetBSD: newvers_stand.mk,v 1.2 2017/04/09 14:52:14 christos Exp $
+#	$NetBSD: newvers_stand.mk,v 1.3 2021/05/17 20:10:27 nakayama Exp $
 
 VERSIONFILE?=version
 VERSIONMACHINE?=${MACHINE}
@@ -17,9 +17,9 @@ VERSIONFLAGS+=-d
 .	endif
 .endif
 
-vers.c:	${VERSIONFILE}
+vers.c:	${VERSIONFILE} ${_NETBSD_VERSION_DEPENDS}
 	${_MKTARGET_CREATE}
 	${HOST_SH} ${S}/conf/newvers_stand.sh \
-	    -m ${VERSIONMACHINE} ${VERSIONFLAGS} ${.ALLSRC} ${NEWVERSWHAT}
+	    -m ${VERSIONMACHINE} ${VERSIONFLAGS} ${VERSIONFILE} ${NEWVERSWHAT}
 
 .endif
