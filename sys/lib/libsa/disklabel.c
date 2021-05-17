@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.10 2007/11/24 13:20:54 isaki Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.11 2021/05/17 08:50:36 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -33,6 +33,7 @@
 
 #include <sys/param.h>
 #include <sys/disklabel.h>
+#include <lib/libkern/libkern.h>
 #include "stand.h"
 
 

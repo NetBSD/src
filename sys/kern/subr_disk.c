@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.132 2020/10/17 09:42:35 mlelstv Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.133 2021/05/17 08:50:36 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000, 2009 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.132 2020/10/17 09:42:35 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.133 2021/05/17 08:50:36 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -79,29 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.132 2020/10/17 09:42:35 mlelstv Exp 
 #include <sys/disk.h>
 #include <sys/sysctl.h>
 #include <lib/libkern/libkern.h>
-
-/*
- * Compute checksum for disk label.
- */
-u_int
-dkcksum(struct disklabel *lp)
-{
-
-	return dkcksum_sized(lp, lp->d_npartitions);
-}
-
-u_int
-dkcksum_sized(struct disklabel *lp, size_t npartitions)
-{
-	uint16_t *start, *end;
-	uint16_t sum = 0;
-
-	start = (uint16_t *)lp;
-	end = (uint16_t *)&lp->d_partitions[npartitions];
-	while (start < end)
-		sum ^= *start++;
-	return sum;
-}
 
 /*
  * Disk error is the preface to plaintive error messages
