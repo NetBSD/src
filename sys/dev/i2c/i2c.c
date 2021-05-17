@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.78.2.5 2021/05/16 21:04:59 thorpej Exp $	*/
+/*	$NetBSD: i2c.c,v 1.78.2.6 2021/05/17 00:05:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.78.2.5 2021/05/16 21:04:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.78.2.6 2021/05/17 00:05:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -617,8 +617,6 @@ iic_enumerate_devices_callback(device_t self,
 	int loc[IICCF_NLOCS] = { 0 };
 	device_t newdev;
 	bool rv __diagused;
-
-	args->count++;
 
 	loc[IICCF_ADDR] = args->ia->ia_addr;
 

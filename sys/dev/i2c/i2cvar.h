@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cvar.h,v 1.24.2.4 2021/05/14 01:08:53 thorpej Exp $	*/
+/*	$NetBSD: i2cvar.h,v 1.24.2.5 2021/05/17 00:05:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -170,7 +170,6 @@ struct i2c_attach_args {
 struct i2c_enumerate_devices_args {
 	struct i2c_attach_args *ia;
 	bool (*callback)(device_t, struct i2c_enumerate_devices_args *);
-	unsigned int count;
 };
 
 /*
