@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_disksubr.c,v 1.5 2015/02/14 05:03:09 tsutsui Exp $	*/
+/*	$NetBSD: ufs_disksubr.c,v 1.6 2021/05/17 19:31:38 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -77,6 +77,9 @@
 
 #include <sys/param.h>
 #include <sys/disklabel.h>
+
+#include <lib/libkern/libkern.h>
+
 #include <luna68k/stand/boot/samachdep.h>
 #include <luna68k/stand/boot/scsireg.h>
 

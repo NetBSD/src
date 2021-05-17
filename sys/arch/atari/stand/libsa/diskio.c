@@ -1,4 +1,4 @@
-/*	$NetBSD: diskio.c,v 1.8 2009/03/17 00:18:40 he Exp $	*/
+/*	$NetBSD: diskio.c,v 1.9 2021/05/17 19:31:38 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
@@ -33,6 +33,8 @@
 #include <lib/libsa/stand.h>
 #include "atari_stand.h"
 #include <sys/disklabel.h>
+
+#include <lib/libkern/libkern.h>
 
 typedef int (*rdsec_f)(void *buffer, u_int offset, u_int count);
 typedef	struct { rdsec_f rds; u_int rst; u_int rend; } bdevd_t;
