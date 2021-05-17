@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_mbr.c,v 1.56 2019/11/07 20:34:29 kamil Exp $	*/
+/*	$NetBSD: subr_disk_mbr.c,v 1.57 2021/05/17 08:50:36 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -54,7 +54,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.56 2019/11/07 20:34:29 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.57 2021/05/17 08:50:36 mrg Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_mbr.h"
+#include "opt_disklabel.h"
+#endif /* _KERNEL_OPT */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,10 +76,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.56 2019/11/07 20:34:29 kamil Exp
 #include <fs/udf/ecma167-udf.h>
 
 #include <sys/kauth.h>
-
-#ifdef _KERNEL_OPT
-#include "opt_mbr.h"
-#endif /* _KERNEL_OPT */
 
 typedef struct mbr_partition mbr_partition_t;
 
@@ -116,10 +117,6 @@ typedef struct mbr_args {
 static int validate_label(mbr_args_t *, uint);
 static int look_netbsd_part(mbr_args_t *, mbr_partition_t *, int, uint);
 static int write_netbsd_label(mbr_args_t *, mbr_partition_t *, int, uint);
-
-#ifdef DISKLABEL_EI
-static void swap_disklabel(struct disklabel *, struct disklabel *);
-#endif
 
 static int
 read_sector(mbr_args_t *a, uint sector, int count)
@@ -659,7 +656,7 @@ corrupted:
 	case READ_LABEL:
 #ifdef DISKLABEL_EI
 		if (swapped)
-			swap_disklabel(a->lp, dlp);
+			disklabel_swap(a->lp, dlp);
 		else
 			*a->lp = *dlp;
 #else
@@ -675,7 +672,7 @@ corrupted:
 #ifdef DISKLABEL_EI
 		/* DO NOT swap a->lp itself for later references. */
 		if (swapped)
-			swap_disklabel(dlp, a->lp);
+			disklabel_swap(dlp, a->lp);
 		else
 			*dlp = *a->lp;
 #else
@@ -744,83 +741,3 @@ write_netbsd_label(mbr_args_t *a, mbr_partition_t *dp, int slot, uint ext_base)
 
 	return validate_label(a, ptn_base);
 }
-
-#ifdef DISKLABEL_EI
-/*
- * from sh3/disksubr.c with modifications:
- *	- update d_checksum properly
- *	- replace memcpy(9) by memmove(9) as a precaution
- */
-static void
-swap_disklabel(struct disklabel *nlp, struct disklabel *olp)
-{
-	int i;
-	uint16_t npartitions;
-
-#define	SWAP16(x)	nlp->x = bswap16(olp->x)
-#define	SWAP32(x)	nlp->x = bswap32(olp->x)
-
-	SWAP32(d_magic);
-	SWAP16(d_type);
-	SWAP16(d_subtype);
-	/* Do not need to swap char strings. */
-	memmove(nlp->d_typename, olp->d_typename, sizeof(nlp->d_typename));
-
-	/* XXX What should we do for d_un (an union of char and pointers) ? */
-	memmove(nlp->d_packname, olp->d_packname, sizeof(nlp->d_packname));
-
-	SWAP32(d_secsize);
-	SWAP32(d_nsectors);
-	SWAP32(d_ntracks);
-	SWAP32(d_ncylinders);
-	SWAP32(d_secpercyl);
-	SWAP32(d_secperunit);
-
-	SWAP16(d_sparespertrack);
-	SWAP16(d_sparespercyl);
-
-	SWAP32(d_acylinders);
-
-	SWAP16(d_rpm);
-	SWAP16(d_interleave);
-	SWAP16(d_trackskew);
-	SWAP16(d_cylskew);
-	SWAP32(d_headswitch);
-	SWAP32(d_trkseek);
-	SWAP32(d_flags);
-	for (i = 0; i < NDDATA; i++)
-		SWAP32(d_drivedata[i]);
-	for (i = 0; i < NSPARE; i++)
-		SWAP32(d_spare[i]);
-	SWAP32(d_magic2);
-	/* d_checksum is updated later. */
-
-	SWAP16(d_npartitions);
-	SWAP32(d_bbsize);
-	SWAP32(d_sbsize);
-	for (i = 0; i < MAXPARTITIONS; i++) {
-		SWAP32(d_partitions[i].p_size);
-		SWAP32(d_partitions[i].p_offset);
-		SWAP32(d_partitions[i].p_fsize);
-		/* p_fstype and p_frag is uint8_t, so no need to swap. */
-		nlp->d_partitions[i].p_fstype = olp->d_partitions[i].p_fstype;
-		nlp->d_partitions[i].p_frag = olp->d_partitions[i].p_frag;
-		SWAP16(d_partitions[i].p_cpg);
-	}
-
-#undef SWAP16
-#undef SWAP32
-
-	/* Update checksum in the target endian. */
-	nlp->d_checksum = 0;
-	npartitions = nlp->d_magic == DISKMAGIC ?
-	    nlp->d_npartitions : olp->d_npartitions;
-	/*
-	 * npartitions can be larger than MAXPARTITIONS when the label was not
-	 * validated by setdisklabel. If so, the label is intentionally(?)
-	 * corrupted and checksum should be meaningless.
-	 */
-	if (npartitions <= MAXPARTITIONS)
-		nlp->d_checksum = dkcksum_sized(nlp, npartitions);
-}
-#endif /* DISKLABEL_EI */

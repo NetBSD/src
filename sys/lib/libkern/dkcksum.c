@@ -1,7 +1,7 @@
-/*	$NetBSD: dkcksum.c,v 1.5 2005/12/11 12:24:46 christos Exp $	*/
+/*	$NetBSD: dkcksum.c,v 1.1 2021/05/17 08:50:36 mrg Exp $	*/
 
 /*-
- * Copyright (c) 1993
+ * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,25 +28,40 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)disklabel.c	8.1 (Berkeley) 6/11/93
+ * from: NetBSD: dkcksum.c,v 1.14 2013/05/03 16:05:12 matt Exp
  */
 
-#include <sys/param.h>
+#include <sys/cdefs.h>
+#ifndef lint
+#if 0
+static char sccsid[] = "@(#)dkcksum.c	8.1 (Berkeley) 6/5/93";
+#else
+__RCSID("$NetBSD: dkcksum.c,v 1.1 2021/05/17 08:50:36 mrg Exp $");
+#endif
+#endif /* not lint */
+
+#include <sys/types.h>
 #include <sys/disklabel.h>
-#include "stand.h"
+#include <lib/libkern/libkern.h>
 
-/*
- * Compute checksum for disk label.
- */
-int
+uint16_t
 dkcksum(const struct disklabel *lp)
 {
-	const u_short *start, *end;
-	u_short sum = 0;
 
-	start = (const void *)lp;
-	end = (const void *)&lp->d_partitions[lp->d_npartitions];
-	while (start < end)
+	return dkcksum_sized(lp, lp->d_npartitions);
+}
+
+uint16_t
+dkcksum_sized(const struct disklabel *lp, size_t npartitions)
+{
+	const uint16_t *start, *end;
+	uint16_t sum;
+
+	sum = 0;
+	start = (const uint16_t *)lp;
+	end = (const uint16_t *)&lp->d_partitions[npartitions];
+	while (start < end) {
 		sum ^= *start++;
+	}
 	return sum;
 }

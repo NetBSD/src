@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.libkern,v 1.50 2021/01/25 12:45:49 thorpej Exp $
+#	$NetBSD: Makefile.libkern,v 1.51 2021/05/17 08:50:36 mrg Exp $
 
 #
 # Variable definitions for libkern.
@@ -98,6 +98,9 @@ SRCS+=	hexdump.c
 SRCS+=	explicit_memset.c consttime_memequal.c
 
 SRCS+=	entpool.c
+
+SRCS+=	dkcksum.c
+SRCS+=	disklabel_swap.c
 
 .PATH:	${NETBSDSRCDIR}/common/lib/libc/cdb
 SRCS+=	cdbr.c

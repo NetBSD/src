@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.142 2021/01/21 15:43:37 thorpej Exp $	*/
+/*	$NetBSD: libkern.h,v 1.143 2021/05/17 08:50:36 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -541,5 +541,10 @@ int	strnvisx(char *, size_t, const char *, size_t, int);
 #define VIS_OCTAL	0x01
 #define VIS_SAFE	0x20
 #define VIS_TRIM	0x40
+
+struct disklabel;
+void	disklabel_swap(struct disklabel *, struct disklabel *);
+uint16_t dkcksum(const struct disklabel *);
+uint16_t dkcksum_sized(const struct disklabel *, size_t);
 
 #endif /* !_LIB_LIBKERN_LIBKERN_H_ */
