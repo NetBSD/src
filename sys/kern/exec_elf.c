@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.101 2020/01/12 18:30:58 ad Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.102 2021/05/18 08:59:44 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005, 2015, 2020 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.101 2020/01/12 18:30:58 ad Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.102 2021/05/18 08:59:44 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -421,7 +421,6 @@ elf_load_interp(struct lwp *l, struct exec_package *epp, char *path,
 {
 	int error, i;
 	struct vnode *vp;
-	struct vattr attr;
 	Elf_Ehdr eh;
 	Elf_Phdr *ph = NULL;
 	const Elf_Phdr *base_ph;
@@ -456,7 +455,7 @@ elf_load_interp(struct lwp *l, struct exec_package *epp, char *path,
 	}
 	/* We'll tidy this ourselves - otherwise we have locking issues */
 	epp->ep_interp = NULL;
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	vn_lock(vp, LK_SHARED | LK_RETRY);
 
 	/*
 	 * Similarly, if it's not marked as executable, or it's not a regular
@@ -467,11 +466,6 @@ elf_load_interp(struct lwp *l, struct exec_package *epp, char *path,
 		goto bad;
 	}
 	if ((error = VOP_ACCESS(vp, VEXEC, l->l_cred)) != 0)
-		goto bad;
-
-	/* get attributes */
-	/* XXX VOP_GETATTR() is the only thing that needs LK_EXCLUSIVE ^ */
-	if ((error = VOP_GETATTR(vp, &attr, l->l_cred)) != 0)
 		goto bad;
 
 	/*
