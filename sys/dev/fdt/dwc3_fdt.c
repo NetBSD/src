@@ -1,4 +1,4 @@
-/* $NetBSD: dwc3_fdt.c,v 1.14 2021/04/24 23:36:53 thorpej Exp $ */
+/* $NetBSD: dwc3_fdt.c,v 1.15 2021/05/18 11:13:31 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc3_fdt.c,v 1.14 2021/04/24 23:36:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc3_fdt.c,v 1.15 2021/05/18 11:13:31 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -203,14 +203,18 @@ dwc3_fdt_set_mode(struct xhci_softc *sc, u_int mode)
 }
 
 static const struct device_compatible_entry compat_data[] = {
-						/* 1 = parent of dwc3 subnode */
-	{ .compat = "allwinner,sun50i-h6-dwc3",		.value = 1 },
-	{ .compat = "amlogic,meson-gxl-dwc3",		.value = 1 },
-	{ .compat = "fsl,imx8mq-dwc3",			.value = 1 },
-	{ .compat = "rockchip,rk3328-dwc3",		.value = 1 },
-	{ .compat = "rockchip,rk3399-dwc3",		.value = 1 },
-	{ .compat = "samsung,exynos5250-dwusb3",	.value = 1 },
-	{ .compat = "snps,dwc3",			.value = 0 },
+	{ .compat = "allwinner,sun50i-h6-dwc3" },
+	{ .compat = "amlogic,meson-gxl-dwc3" },
+	{ .compat = "fsl,imx8mq-dwc3" },
+	{ .compat = "rockchip,rk3328-dwc3" },
+	{ .compat = "rockchip,rk3399-dwc3" },
+	{ .compat = "samsung,exynos5250-dwusb3" },
+	{ .compat = "snps,dwc3" },
+	DEVICE_COMPAT_EOL
+};
+
+static const struct device_compatible_entry compat_data_dwc3[] = {
+	{ .compat = "snps,dwc3" },
 	DEVICE_COMPAT_EOL
 };
 
@@ -228,7 +232,6 @@ dwc3_fdt_attach(device_t parent, device_t self, void *aux)
 	struct xhci_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
-	const struct device_compatible_entry *dce;
 	struct fdtbus_reset *rst;
 	struct fdtbus_phy *phy;
 	struct clk *clk;
@@ -239,11 +242,8 @@ dwc3_fdt_attach(device_t parent, device_t self, void *aux)
 	void *ih;
 	u_int n;
 
-	dce = of_compatible_lookup(phandle, compat_data);
-	KASSERT(dce != NULL);
-
 	/* Find dwc3 sub-node */
-	if (dce->value != 0) {
+	if (of_compatible_lookup(phandle, compat_data_dwc3) == NULL) {
 		dwc3_phandle = of_find_firstchild_byname(phandle, "dwc3");
 	} else {
 		dwc3_phandle = phandle;
