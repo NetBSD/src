@@ -1,4 +1,4 @@
-/* $NetBSD: arspi.c,v 1.14 2021/04/24 23:36:42 thorpej Exp $ */
+/* $NetBSD: arspi.c,v 1.14.2.1 2021/05/18 23:30:56 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arspi.c,v 1.14 2021/04/24 23:36:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arspi.c,v 1.14.2.1 2021/05/18 23:30:56 thorpej Exp $");
 
 #include "locators.h"
 
@@ -146,7 +146,6 @@ void
 arspi_attach(device_t parent, device_t self, void *aux)
 {
 	struct arspi_softc *sc = device_private(self);
-	struct spibus_attach_args sba;
 	struct arbus_attach_args *aa = aux;
 
 	/*
@@ -191,9 +190,12 @@ arspi_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Initialize and attach bus attach.
 	 */
-	memset(&sba, 0, sizeof(sba));
-	sba.sba_controller = &sc->sc_spi;
-	config_found(self, &sba, spibus_print, CFARG_EOL);
+	struct spibus_attach_args sba = {
+		.sba_controller = &sc->sc_spi,
+	};
+	config_found(self, &sba, spibus_print,
+	    CFARG_DEVHANDLE, device_handle(self),
+	    CFARG_EOL);
 }
 
 void

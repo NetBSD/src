@@ -1,4 +1,4 @@
-/*	$NetBSD: imxspi.c,v 1.8 2021/04/24 23:36:27 thorpej Exp $	*/
+/*	$NetBSD: imxspi.c,v 1.8.2.1 2021/05/18 23:30:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2014  Genetec Corporation.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxspi.c,v 1.8 2021/04/24 23:36:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxspi.c,v 1.8.2.1 2021/05/18 23:30:55 thorpej Exp $");
 
 #include "opt_imxspi.h"
 #include "opt_fdt.h"
@@ -141,14 +141,14 @@ imxspi_attach_common(device_t self)
 	KASSERT(sc->sc_phandle != 0);
 
 	fdtbus_register_spi_controller(self, sc->sc_phandle, &imxspi_funcs);
-	(void) fdtbus_attach_spibus(self, sc->sc_phandle, spibus_print);
+	fdtbus_attach_spibus(self, sc->sc_phandle, spibus_print);
 #else
-	struct spibus_attach_args sba;
-	memset(&sba, 0, sizeof(sba));
-	sba.sba_controller = &sc->sc_spi;
-
-	/* attach slave devices */
-	config_found(sc->sc_dev, &sba, spibus_print, CFARG_EOL);
+	struct spibus_attach_args sba = {
+		.sba_controller = &sc->sc_spi,
+	};
+	config_found(sc->sc_dev, &sba, spibus_print,
+	    CFARG_DEVHANDLE, device_handle(self),
+	    CFARG_EOL);
 #endif
 
 	return 0;

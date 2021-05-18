@@ -1,4 +1,4 @@
-/*	$NetBSD: sun6i_spi.c,v 1.9 2021/04/24 23:36:28 thorpej Exp $	*/
+/*	$NetBSD: sun6i_spi.c,v 1.9.2.1 2021/05/18 23:30:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Nygren
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun6i_spi.c,v 1.9 2021/04/24 23:36:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun6i_spi.c,v 1.9.2.1 2021/05/18 23:30:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -102,7 +102,6 @@ sun6ispi_attach(device_t parent, device_t self, void *aux)
 {
 	struct sun6ispi_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
-	struct spibus_attach_args sba;
 	const int phandle = faa->faa_phandle;
 	bus_addr_t addr;
 	bus_size_t size;
@@ -185,10 +184,12 @@ sun6ispi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_spi.sct_transfer = sun6ispi_transfer;
 	sc->sc_spi.sct_nslaves = 4;
 
-	memset(&sba, 0, sizeof(sba));
-	sba.sba_controller = &sc->sc_spi;
-
-	(void) config_found(self, &sba, spibus_print, CFARG_EOL);
+	struct spibus_attach_args sba = {
+		.sba_controller = &sc->sc_spi,
+	};
+	config_found(self, &sba, spibus_print,
+	    CFARG_DEVHANDLE, device_handle(self),
+	    CFARG_EOL);
 }
 
 static int

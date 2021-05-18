@@ -1,4 +1,4 @@
-/* $NetBSD: auspi.c,v 1.10 2021/04/24 23:36:42 thorpej Exp $ */
+/* $NetBSD: auspi.c,v 1.10.2.1 2021/05/18 23:30:56 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auspi.c,v 1.10 2021/04/24 23:36:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auspi.c,v 1.10.2.1 2021/05/18 23:30:56 thorpej Exp $");
 
 #include "locators.h"
 
@@ -124,7 +124,6 @@ auspi_attach(device_t parent, device_t self, void *aux)
 {
 	struct auspi_softc *sc = device_private(self);
 	struct aupsc_attach_args *aa = aux;
-	struct spibus_attach_args sba;
 	const struct auspi_machdep *md;
 
 	sc->sc_dev = self;
@@ -147,9 +146,6 @@ auspi_attach(device_t parent, device_t self, void *aux)
 	/* fix this! */
 	sc->sc_spi.sct_nslaves = sc->sc_md.am_nslaves;
 
-	memset(&sba, 0, sizeof(sba));
-	sba.sba_controller = &sc->sc_spi;
-
 	/* enable SPI mode */
 	sc->sc_psc.psc_enable(sc, AUPSC_SEL_SPI);
 
@@ -163,7 +159,12 @@ auspi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ih = au_intr_establish(aa->aupsc_irq, 0, IPL_BIO, IST_LEVEL,
 	    auspi_intr, sc);
 
-	config_found(self, &sba, spibus_print, CFARG_EOL);
+	struct spibus_attach_args sba = {
+		.sba_controller = &sc->sc_spi,
+	};
+	config_found(self, &sba, spibus_print,
+	    CFARG_DEVHANDLE, device_handle(self),
+	    CFARG_EOL);
 }
 
 int
