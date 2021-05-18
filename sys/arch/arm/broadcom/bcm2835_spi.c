@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_spi.c,v 1.10 2021/04/24 23:36:26 thorpej Exp $	*/
+/*	$NetBSD: bcm2835_spi.c,v 1.10.2.1 2021/05/18 23:30:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2012 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_spi.c,v 1.10 2021/04/24 23:36:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_spi.c,v 1.10.2.1 2021/05/18 23:30:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -95,7 +95,6 @@ bcmspi_attach(device_t parent, device_t self, void *aux)
 {
 	struct bcmspi_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
-	struct spibus_attach_args sba;
 
 	aprint_naive("\n");
 	aprint_normal(": SPI\n");
@@ -138,10 +137,12 @@ bcmspi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_spi.sct_transfer = bcmspi_transfer;
 	sc->sc_spi.sct_nslaves = 3;
 
-	memset(&sba, 0, sizeof(sba));
-	sba.sba_controller = &sc->sc_spi;
-
-	config_found(self, &sba, spibus_print, CFARG_EOL);
+	struct spibus_attach_args sba = {
+		.sba_controller = &sc->sc_spi,
+	};
+	config_found(self, &sba, spibus_print,
+	    CFARG_DEVHANDLE, device_handle(self),
+	    CFARG_EOL);
 }
 
 static int
