@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg_lacp.c,v 1.1 2021/05/17 04:07:43 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg_lacp.c,v 1.2 2021/05/18 11:02:58 hannken Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-NetBSD
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.1 2021/05/17 04:07:43 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.2 2021/05/18 11:02:58 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lagg.h"
@@ -504,7 +504,7 @@ void
 lacp_detach(struct lagg_proto_softc *xlsc)
 {
 	struct lacp_softc *lsc = (struct lacp_softc *)xlsc;
-	struct lagg_softc *sc = lsc->lsc_softc;
+	struct lagg_softc *sc __diagused = lsc->lsc_softc;
 
 	KASSERT(LAGG_LOCKED(lsc->lsc_softc));
 	KASSERT(TAILQ_EMPTY(&lsc->lsc_aggregators));
@@ -2149,7 +2149,7 @@ lacp_set_mux(struct lacp_softc *lsc, struct lacp_port *lacpp,
 static void
 lacp_sm_mux(struct lacp_softc *lsc, struct lacp_port *lacpp)
 {
-	struct lacp_aggregator *la;
+	struct lacp_aggregator *la __diagused;
 	enum lacp_mux_state  next_state;
 	enum lacp_selected selected;
 	bool p_sync, p_collecting;
