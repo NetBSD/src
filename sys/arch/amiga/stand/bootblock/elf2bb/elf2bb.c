@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2bb.c,v 1.18 2021/02/25 03:40:27 rin Exp $	*/
+/*	$NetBSD: elf2bb.c,v 1.19 2021/05/18 20:32:18 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1996,2006 The NetBSD Foundation, Inc.
@@ -421,7 +421,7 @@ retry:
 	*rpo = 0; rpo += delta;
 	*rpo = 0; rpo += delta;
 
-	printf("using %d bytes, %d bytes remaining.\n", delta > 0 ?
+	printf("using %td bytes, %td bytes remaining.\n", delta > 0 ?
 	    rpo-buffer-tsz-dsz : buffer+bbsize-rpo, delta > 0 ?
 	    buffer + bbsize - rpo : rpo - buffer - tsz - dsz);
 	/*
