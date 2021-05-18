@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2bb.c,v 1.19 2021/05/18 20:32:18 dholland Exp $	*/
+/*	$NetBSD: elf2bb.c,v 1.20 2021/05/18 20:34:20 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1996,2006 The NetBSD Foundation, Inc.
@@ -92,7 +92,6 @@ int
 main(int argc, char *argv[])
 {
 	int ifd, ofd;
-	u_int mid, flags, magic;
 	void *image;
 	Elf32_Ehdr *eh;
 	Elf32_Shdr *sh;
@@ -104,7 +103,7 @@ main(int argc, char *argv[])
 	int i, l, delta;
 	u_int8_t *rpo;
 	u_int32_t oldaddr, addrdiff;
-	u_int32_t tsz, dsz, bsz, trsz, drsz, entry, relver;
+	u_int32_t tsz, dsz, bsz, trsz, relver;
 	u_int32_t pcrelsz, r32sz;
 	int sumsize = 16;
 	int c;
