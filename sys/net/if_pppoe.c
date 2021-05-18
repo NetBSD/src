@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.173 2021/05/13 03:48:55 yamaguchi Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.174 2021/05/18 01:46:29 yamaguchi Exp $ */
 
 /*
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.173 2021/05/13 03:48:55 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.174 2021/05/18 01:46:29 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -1009,6 +1009,7 @@ breakbreak:;
 
 		if (memcmp(&sc->sc_dest, eh->ether_shost,
 		    sizeof sc->sc_dest) != 0) {
+			PPPOE_UNLOCK(sc);
 			goto done;
 		}
 
@@ -1036,6 +1037,7 @@ breakbreak:;
 
 		if (memcmp(&sc->sc_dest, eh->ether_shost,
 		    sizeof sc->sc_dest) != 0) {
+			PPPOE_UNLOCK(sc);
 			goto done;
 		}
 
