@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.37 2021/03/29 03:09:41 simonb Exp $ */
+/* $NetBSD: db_machdep.h,v 1.38 2021/05/18 06:38:24 skrll Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -91,7 +91,7 @@ db_addr_t	db_disasm_insn(int insn, db_addr_t loc, bool altfmt);
  * Entrypoints to DDB for kernel, keyboard drivers, init hook
  */
 void 	kdb_kbd_trap(db_regs_t *);
-int 	kdb_trap(int type, struct reg *);
+int 	kdb_trap(int, struct reg *);
 
 static inline void
 db_set_ddb_regs(int type, struct reg *regs)
@@ -103,7 +103,7 @@ db_set_ddb_regs(int type, struct reg *regs)
  * Helper functions for fetching 32-bit and 64-bit kernel memory.
  */
 bool		kdbpeek(vaddr_t, unsigned *);
-mips_reg_t	kdbrpeek(vaddr_t addr, size_t n);
+mips_reg_t	kdbrpeek(vaddr_t, size_t);
 
 
 /*
