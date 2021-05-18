@@ -1,4 +1,4 @@
-/*	$NetBSD: bltin.h,v 1.15 2017/06/26 22:09:16 kre Exp $	*/
+/*	$NetBSD: bltin.h,v 1.16 2021/05/18 21:39:06 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -58,6 +58,7 @@
 #undef putchar
 #undef fileno
 #undef ferror
+#undef clearerr
 #define FILE struct output
 #define stdout out1
 #define stderr out2
@@ -74,6 +75,7 @@
 #define fflush(f)	_RETURN_INT(flushout(f))
 #define fileno(f) ((f)->fd)
 #define ferror(f) ((f)->flags & OUTPUT_ERR)
+#define clearerr(f) ((f)->flags &= ~OUTPUT_ERR)
 #define INITARGS(argv)
 #define	err sh_err
 #define	verr sh_verr

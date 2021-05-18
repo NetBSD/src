@@ -1,4 +1,4 @@
-/*	$NetBSD: echo.c,v 1.14 2008/10/12 01:40:37 dholland Exp $	*/
+/*	$NetBSD: echo.c,v 1.15 2021/05/18 21:39:06 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: echo.c,v 1.14 2008/10/12 01:40:37 dholland Exp $");
+__RCSID("$NetBSD: echo.c,v 1.15 2021/05/18 21:39:06 kre Exp $");
 
 #define main echocmd
 
@@ -67,6 +67,8 @@ main(int argc, char **argv)
 	int count;
 	int nflag = 0;
 	int eflag = 0;
+
+	clearerr(stdout);
 
 	ap = argv;
 	if (argc)
@@ -116,7 +118,9 @@ main(int argc, char **argv)
 	if (! nflag)
 		putchar('\n');
 	fflush(stdout);
-	if (ferror(stdout))
-		return 1;
+	if (ferror(stdout)) {
+		clearerr(stdout);
+		err(1, "write error");
+	}
 	return 0;
 }
