@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_spi.c,v 1.2 2021/04/24 23:36:53 thorpej Exp $ */
+/* $NetBSD: fdt_spi.c,v 1.2.2.1 2021/05/18 23:48:16 thorpej Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_spi.c,v 1.2 2021/04/24 23:36:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_spi.c,v 1.2.2.1 2021/05/18 23:48:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -84,33 +84,17 @@ device_t
 fdtbus_attach_spibus(device_t dev, int phandle, cfprint_t print)
 {
 	struct spi_controller *spi;
-	struct spibus_attach_args sba;
-	prop_dictionary_t devs;
-	device_t ret;
-	u_int address_cells;
-
-	devs = prop_dictionary_create();
-	if (of_getprop_uint32(phandle, "#address-cells", &address_cells))
-		address_cells = 1;
-	of_enter_spi_devs(devs, phandle, address_cells * 4);
 
 	spi = fdtbus_get_spi_controller(phandle);
 	KASSERT(spi != NULL);
-	memset(&sba, 0, sizeof(sba));
-	sba.sba_controller = spi;
 
-	sba.sba_child_devices = prop_dictionary_get(devs, "spi-child-devices");
-	if (sba.sba_child_devices)
-		prop_object_retain(sba.sba_child_devices);
-	prop_object_release(devs);
-
-	ret = config_found(dev, &sba, print,
+	struct spibus_attach_args sba = {
+		.sba_controller = spi,
+	};
+	return config_found(dev, &sba, print,
 	    CFARG_IATTR, "spibus",
+	    CFARG_DEVHANDLE, device_handle(dev),
 	    CFARG_EOL);
-	if (sba.sba_child_devices)
-		prop_object_release(sba.sba_child_devices);
-
-	return ret;
 }
 
 
