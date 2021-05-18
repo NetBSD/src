@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.3 2021/04/14 06:32:20 dholland Exp $ */
+/* $NetBSD: db_machdep.h,v 1.4 2021/05/18 06:40:16 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -28,6 +28,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
 #ifndef	_RISCV_DB_MACHDEP_H_
 #define	_RISCV_DB_MACHDEP_H_
 
@@ -57,9 +58,9 @@ extern const uint32_t __cpu_Debugger_insn[1];
 		(tf)->tf_pc += BKPT_SIZE;			\
 } while(0)
 
-#define	BKPT_ADDR(addr)	(addr)		/* breakpoint address */
-#define BKPT_INST	0x00100073
-#define	BKPT_SIZE	(sizeof(uint32_t))	/* size of breakpoint inst */
+#define	BKPT_ADDR(addr)		(addr)			/* breakpoint address */
+#define BKPT_INST		0x00100073
+#define	BKPT_SIZE		(sizeof(uint32_t))	/* size of bkpt inst */
 #define	BKPT_SET(inst, addr)	(BKPT_INST)
 
 /*
@@ -79,14 +80,14 @@ extern const uint32_t __cpu_Debugger_insn[1];
 /*
  * Interface to disassembly
  */
-db_addr_t	db_disasm_insn(uint32_t insn, db_addr_t loc, bool altfmt);
+db_addr_t	db_disasm_insn(uint32_t, db_addr_t, bool);
 
 
 /*
  * Entrypoints to DDB for kernel, keyboard drivers, init hook
  */
 void 	kdb_kbd_trap(db_regs_t *);
-int 	kdb_trap(int type, struct trapframe *);
+int 	kdb_trap(int, struct trapframe *);
 
 static inline void
 db_set_ddb_regs(int type, struct trapframe *tf)
