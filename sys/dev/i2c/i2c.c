@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.78.2.6 2021/05/17 00:05:56 thorpej Exp $	*/
+/*	$NetBSD: i2c.c,v 1.78.2.7 2021/05/18 23:26:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.78.2.6 2021/05/17 00:05:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.78.2.7 2021/05/18 23:26:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -678,9 +678,8 @@ iic_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/*
-	 * Attempt to enumerate the devices on the bus.  If
-	 * there is no enumeration method, or no devices are
-	 * found, then we will attempt indirect configuration.
+	 * Attempt to enumerate the devices on the bus.  If there is no
+	 * enumeration method, then we will attempt indirect configuration.
 	 */
 	struct i2c_enumerate_devices_args enumargs;
 	struct i2c_attach_args ia;
