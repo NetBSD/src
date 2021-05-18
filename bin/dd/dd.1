@@ -1,4 +1,4 @@
-.\"	$NetBSD: dd.1,v 1.36 2019/01/30 10:28:50 wiz Exp $
+.\"	$NetBSD: dd.1,v 1.37 2021/05/18 07:17:09 nia Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)dd.1	8.2 (Berkeley) 1/13/94
 .\"
-.Dd January 29, 2019
+.Dd May 18, 2021
 .Dt DD 1
 .Os
 .Sh NAME
@@ -546,6 +546,18 @@ for more details.
 .Sh EXIT STATUS
 .Ex -std dd
 .Sh EXAMPLES
+To write a
+.Xr gzip 1
+compressed
+.Nx
+image to a removable drive, with
+.Xr progress 1
+output:
+.Bd -literal -unfilled -offset indent
+zcat NetBSD-9.2-amd64-install.img.gz | \\
+    progress dd of=/dev/rsd0 bs=1m
+.Ed
+.Pp
 To print summary information in human-readable form:
 .Pp
 .Dl dd if=/dev/zero of=/dev/null count=1 msgfmt=human
