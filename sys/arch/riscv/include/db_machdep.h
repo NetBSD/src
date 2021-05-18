@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.4 2021/05/18 06:40:16 skrll Exp $ */
+/* $NetBSD: db_machdep.h,v 1.5 2021/05/18 06:42:11 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -47,19 +47,19 @@ extern const uint32_t __cpu_Debugger_insn[1];
 
 #define	PC_REGS(tf)	((tf)->tf_pc)
 
-#define PC_ADVANCE(tf) do {						\
+#define	PC_ADVANCE(tf) do {						\
 	if (db_get_value((tf)->tf_pc, sizeof(uint32_t), false) == BKPT_INST) \
 		(tf)->tf_pc += BKPT_SIZE;			\
 } while(0)
 
 /* Similar to PC_ADVANCE(), except only advance on cpu_Debugger()'s bpt */
-#define PC_BREAK_ADVANCE(tf) do {				\
+#define	PC_BREAK_ADVANCE(tf) do {				\
 	if ((tf)->tf_pc == (register_t) __cpu_Debugger_insn)	\
 		(tf)->tf_pc += BKPT_SIZE;			\
 } while(0)
 
 #define	BKPT_ADDR(addr)		(addr)			/* breakpoint address */
-#define BKPT_INST		0x00100073
+#define	BKPT_INST		0x00100073
 #define	BKPT_SIZE		(sizeof(uint32_t))	/* size of bkpt inst */
 #define	BKPT_SET(inst, addr)	(BKPT_INST)
 
@@ -70,12 +70,12 @@ extern const uint32_t __cpu_Debugger_insn[1];
  * MI ddb can't cope with having two sizes :-(
  */
 #if 0
-#define BKPT_INST_2	0x9002
-#define BKPT_SIZE_2	(sizeof(uint16_t))
+#define	BKPT_INST_2	0x9002
+#define	BKPT_SIZE_2	(sizeof(uint16_t))
 #endif
 
 #define	IS_BREAKPOINT_TRAP(type, code)	((type) == CAUSE_BREAKPOINT)
-#define IS_WATCHPOINT_TRAP(type, code)	(0)
+#define	IS_WATCHPOINT_TRAP(type, code)	(0)
 
 /*
  * Interface to disassembly
@@ -106,9 +106,9 @@ typedef	register_t	kgdb_reg_t;
 /*
  * RISCV cpus have no hardware single-step.
  */
-#define SOFTWARE_SSTEP
+#define	SOFTWARE_SSTEP
 
-#define inst_trap_return(ins)	((ins)&0)
+#define	inst_trap_return(ins)	((ins)&0)
 
 bool	inst_branch(uint32_t inst);
 bool	inst_call(uint32_t inst);
@@ -127,7 +127,7 @@ void db_resume_others(void);
 /*
  * We have machine-dependent commands.
  */
-#define DB_MACHINE_COMMANDS
+#define	DB_MACHINE_COMMANDS
 #endif
 
 #endif	/* _RISCV_DB_MACHDEP_H_ */
