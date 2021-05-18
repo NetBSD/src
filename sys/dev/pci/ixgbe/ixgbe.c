@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.282 2021/05/07 09:15:52 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.283 2021/05/18 05:29:16 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.282 2021/05/07 09:15:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.283 2021/05/18 05:29:16 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -3984,7 +3984,7 @@ ixgbe_init_locked(struct adapter *adapter)
 	u32		rxdctl, rxctrl;
 	u32		ctrl_ext;
 	bool		unsupported_sfp = false;
-	int		i, j, err;
+	int		i, j, error;
 
 	/* XXX check IFF_UP and IFF_RUNNING, power-saving state! */
 
@@ -4042,8 +4042,10 @@ ixgbe_init_locked(struct adapter *adapter)
 		adapter->rx_mbuf_sz = MJUMPAGESIZE;
 
 	/* Prepare receive descriptors and buffers */
-	if (ixgbe_setup_receive_structures(adapter)) {
-		device_printf(dev, "Could not setup receive structures\n");
+	error = ixgbe_setup_receive_structures(adapter);
+	if (error) {
+		device_printf(dev,
+		    "Could not setup receive structures (err = %d)\n", error);
 		ixgbe_stop_locked(adapter);
 		return;
 	}
@@ -4173,8 +4175,8 @@ ixgbe_init_locked(struct adapter *adapter)
 	 * need to be kick-started
 	 */
 	if (hw->phy.type == ixgbe_phy_none) {
-		err = hw->phy.ops.identify(hw);
-		if (err == IXGBE_ERR_SFP_NOT_SUPPORTED)
+		error = hw->phy.ops.identify(hw);
+		if (error == IXGBE_ERR_SFP_NOT_SUPPORTED)
 			unsupported_sfp = true;
 	} else if (hw->phy.type == ixgbe_phy_sfp_unsupported)
 		unsupported_sfp = true;
