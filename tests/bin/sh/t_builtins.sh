@@ -1,4 +1,4 @@
-# $NetBSD: t_builtins.sh,v 1.5 2019/01/09 10:51:23 kre Exp $
+# $NetBSD: t_builtins.sh,v 1.6 2021/05/18 21:37:56 kre Exp $
 #
 # Copyright (c) 2018 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -290,6 +290,9 @@ echo_body() {
 			check "echo $E '${S}'" "${R}" 0
 		done
 	done
+
+	check 'echo foo >&-' "" 1
+	check 'echo foo >&- 2>&-; echo $?; echo $?' "1${nl}0${nl}" 0
 
 	results
 }
