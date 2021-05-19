@@ -1,4 +1,4 @@
-/*      $NetBSD: mcp48x1.c,v 1.1.54.1 2021/05/19 03:33:33 thorpej Exp $ */
+/*      $NetBSD: mcp48x1.c,v 1.1.54.2 2021/05/19 03:46:26 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcp48x1.c,v 1.1.54.1 2021/05/19 03:33:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcp48x1.c,v 1.1.54.2 2021/05/19 03:46:26 thorpej Exp $");
 
 /* 
  * Driver for Microchip MCP4801/MCP4811/MCP4821 DAC. 
@@ -158,10 +158,6 @@ mcp48x1dac_match(device_t parent, cfdata_t cf, void *aux)
 		if (sa->sa_clist == NULL && mcp48x1dac_lookup(sa, cf) == NULL) {
 			return 0;
 		}
-
-		/* configure for 20MHz */
-		if (spi_configure(sa->sa_handle, SPI_MODE_0, 20000000))
-			return 0;
 	}
 
 	return rv;
@@ -173,6 +169,7 @@ mcp48x1dac_attach(device_t parent, device_t self, void *aux)
 	struct mcp48x1dac_softc *sc = device_private(self);
 	struct spi_attach_args *sa = aux;
 	const struct mcp48x1dac_model *model;
+	int error;
 
 	sc->sc_dev = self;
 	sc->sc_sh = sa->sa_handle;
@@ -184,6 +181,14 @@ mcp48x1dac_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive(": Digital to Analog converter\n");	
 	aprint_normal(": MCP%u DAC\n", model->name);
+
+	/* configure for 20MHz */
+	error = spi_configure(sa->sa_handle, SPI_MODE_0, 20000000);
+	if (error) {
+		aprint_error_dev(self, "spi_configure failed (error = %d)\n",
+		    error);
+		return;
+	}
 
 	if(!mcp48x1dac_envsys_attach(sc)) {
 		aprint_error_dev(sc->sc_dev, "failed to attach envsys\n");

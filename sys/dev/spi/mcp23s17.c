@@ -1,4 +1,4 @@
-/*      $NetBSD: mcp23s17.c,v 1.2.2.1 2021/05/19 03:32:27 thorpej Exp $ */
+/*      $NetBSD: mcp23s17.c,v 1.2.2.2 2021/05/19 03:46:26 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcp23s17.c,v 1.2.2.1 2021/05/19 03:32:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcp23s17.c,v 1.2.2.2 2021/05/19 03:46:26 thorpej Exp $");
 
 /* 
  * Driver for Microchip MCP23S17 GPIO
@@ -105,16 +105,8 @@ static int
 mcp23s17gpio_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct spi_attach_args *sa = aux;
-	int rv;
 
-	rv = spi_compatible_match(sa, cf, compat_data);
-	if (rv != 0) {
-		/* run at 10MHz */
-		if (spi_configure(sa->sa_handle, SPI_MODE_0, 10000000))
-			return 0;
-	}
-
-	return rv;
+	return spi_compatible_match(sa, cf, compat_data);
 }
 
 static void
@@ -122,6 +114,7 @@ mcp23s17gpio_attach(device_t parent, device_t self, void *aux)
 {
 	struct mcp23s17gpio_softc *sc;
 	struct spi_attach_args *sa;
+	int error;
 #if NGPIO > 0
 	int i;
 	struct gpiobus_attach_args gba;
@@ -141,6 +134,14 @@ mcp23s17gpio_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive(": GPIO\n");	
 	aprint_normal(": MCP23S17 GPIO (ha=%d)\n", sc->sc_ha);
+
+	/* run at 10MHz */
+	error = spi_configure(sa->sa_handle, SPI_MODE_0, 10000000);
+	if (error) {
+		aprint_error_dev(self, "spi_configure failed (error = %d)\n",
+		    error);
+		return;
+	}
 
 	DPRINTF(1, ("%s: initialize (HAEN|SEQOP)\n", device_xname(sc->sc_dev)));
 
