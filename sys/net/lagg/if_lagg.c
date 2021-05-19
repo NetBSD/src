@@ -1,7 +1,7 @@
-/*	$NetBSD: if_lagg.c,v 1.1 2021/05/17 04:07:43 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.2 2021/05/19 10:20:50 rillig Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.1 2021/05/17 04:07:43 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.2 2021/05/19 10:20:50 rillig Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -689,7 +689,8 @@ lagg_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			if (error != 0) {
 				lagg_log(sc, LOG_ERR,
 				    "failed to change MTU to %d on port %s, "
-				    "reverting all ports to original MTU(%d)\n",
+				    "reverting all ports to original "
+				    "MTU(%" PRIu64 ")\n",
 				    ifr->ifr_mtu, lp->lp_ifp->if_xname,
 				    ifp->if_mtu);
 				break;
