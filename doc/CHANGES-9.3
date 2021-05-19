@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.2 2021/05/17 15:51:29 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.3 2021/05/19 17:07:57 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -20,3 +20,27 @@ sys/dev/pci/xhci_pci.c				1.26
 	PR 55855: avoid potential double free of interrupt handles.
 	[jakllsch, ticket #1273]
 
+external/cddl/osnet/dist/cmd/zfs/zfs_main.c	1.8
+external/cddl/osnet/dist/lib/libzfs/common/libzfs_dataset.c 1.5
+
+	zfs: this is not FreeBSD.
+	[nia, ticket #1274]
+
+xsrc/external/mit/libX11/dist/src/Font.c		(apply patch)
+xsrc/external/mit/libX11/dist/src/FontInfo.c		(apply patch)
+xsrc/external/mit/libX11/dist/src/FontNames.c		(apply patch)
+xsrc/external/mit/libX11/dist/src/GetColor.c		(apply patch)
+xsrc/external/mit/libX11/dist/src/LoadFont.c		(apply patch)
+xsrc/external/mit/libX11/dist/src/LookupCol.c		(apply patch)
+xsrc/external/mit/libX11/dist/src/ParseCol.c		(apply patch)
+xsrc/external/mit/libX11/dist/src/QuExt.c		(apply patch)
+xsrc/external/mit/libX11/dist/src/SetFPath.c		(apply patch)
+xsrc/external/mit/libX11/dist/src/SetHints.c		(apply patch)
+xsrc/external/mit/libX11/dist/src/StNColor.c		(apply patch)
+xsrc/external/mit/libX11/dist/src/StName.c		(apply patch)
+xsrc/external/mit/libX11/dist/src/xlibi18n/imKStoUCS.c	(apply patch)
+
+	Apply upstream fixes for CVE-2021-31535 (and one other bug).
+	Reject string longer than USHRT_MAX before sending them on the wire.
+	Fix out-of-bound access in KeySymToUcs4().
+	[mrg, ticket #1275]
