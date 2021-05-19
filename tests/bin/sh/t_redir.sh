@@ -1,4 +1,4 @@
-# $NetBSD: t_redir.sh,v 1.10 2018/11/27 09:55:32 kre Exp $
+# $NetBSD: t_redir.sh,v 1.11 2021/05/19 22:43:18 kre Exp $
 #
 # Copyright (c) 2016 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -866,11 +866,11 @@ validate_fn_redirects_body()
 		${TEST_SH} -c ". ./f-def; f ; printf '%s\n' success1"
 	atf_check -s exit:0 -o inline:'success2\n' -e empty \
 		${TEST_SH} -c ". ./f-def; f >/dev/null; printf '%s\n' success2"
-	atf_check -s exit:0 -o inline:'success3\n' -e empty \
+	atf_check -s exit:0 -o inline:'success3\n' -e not-empty \
 		${TEST_SH} -c ". ./f-def; f >&- ; printf '%s\n' success3"
 	atf_check -s exit:0 -o inline:'In-Func\nsuccess4\n' -e empty \
 		${TEST_SH} -c ". ./f-def; f & wait; printf '%s\n' success4"
-	atf_check -s exit:0 -o inline:'success5\n' -e empty \
+	atf_check -s exit:0 -o inline:'success5\n' -e not-empty \
 		${TEST_SH} -c ". ./f-def; f >&- & wait; printf '%s\n' success5"
 	atf_check -s exit:0 -o inline:'In-Func\nIn-Func\nsuccess6\n' -e empty \
 		${TEST_SH} -c ". ./f-def; f;f; printf '%s\n' success6"
