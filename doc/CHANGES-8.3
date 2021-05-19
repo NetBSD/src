@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.88 2021/05/07 17:48:47 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.89 2021/05/19 17:21:13 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -1914,3 +1914,21 @@ usr.sbin/installboot/machines.c			1.41,1.42
 	Avoid depending on common symbols.
 	[mrg, ticket #1678]
 
+xsrc/external/mit/libX11/dist/src/Font.c		(apply patch)
+xsrc/external/mit/libX11/dist/src/FontInfo.c		(apply patch)
+xsrc/external/mit/libX11/dist/src/FontNames.c		(apply patch)
+xsrc/external/mit/libX11/dist/src/GetColor.c		(apply patch)
+xsrc/external/mit/libX11/dist/src/LoadFont.c		(apply patch)
+xsrc/external/mit/libX11/dist/src/LookupCol.c		(apply patch)
+xsrc/external/mit/libX11/dist/src/ParseCol.c		(apply patch)
+xsrc/external/mit/libX11/dist/src/QuExt.c		(apply patch)
+xsrc/external/mit/libX11/dist/src/SetFPath.c		(apply patch)
+xsrc/external/mit/libX11/dist/src/SetHints.c		(apply patch)
+xsrc/external/mit/libX11/dist/src/StNColor.c		(apply patch)
+xsrc/external/mit/libX11/dist/src/StName.c		(apply patch)
+xsrc/external/mit/libX11/dist/src/xlibi18n/imKStoUCS.c	(apply patch)
+
+	Apply upstream fixes for CVE-2021-31535 (and one other bug).
+	Reject string longer than USHRT_MAX before sending them on the wire.
+	Fix out-of-bound access in KeySymToUcs4().
+	[mrg, ticket #1679]
