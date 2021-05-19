@@ -1,4 +1,4 @@
-/* $NetBSD: ssdfb_spi.c,v 1.5 2021/01/27 02:32:31 thorpej Exp $ */
+/* $NetBSD: ssdfb_spi.c,v 1.5.4.1 2021/05/19 03:46:26 thorpej Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ssdfb_spi.c,v 1.5 2021/01/27 02:32:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ssdfb_spi.c,v 1.5.4.1 2021/05/19 03:46:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -82,19 +82,8 @@ static int
 ssdfb_spi_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct spi_attach_args *sa = aux;
-	int res;
 
-	res = spi_compatible_match(sa, match, compat_data);
-	if (!res)
-		return res;
-
-	/*
-	 * SSD1306 and SSD1322 data sheets specify 100ns cycle time.
-	 */
-	if (spi_configure(sa->sa_handle, SPI_MODE_0, 10000000))
-		res = 0;
-
-	return res;
+	return spi_compatible_match(sa, match, compat_data);
 }
 
 static void
@@ -104,12 +93,24 @@ ssdfb_spi_attach(device_t parent, device_t self, void *aux)
 	struct cfdata *cf = device_cfdata(self);
 	struct spi_attach_args *sa = aux;
 	int flags = cf->cf_flags;
+	int error;
 
 	sc->sc.sc_dev = self;
 	sc->sc_sh = sa->sa_handle;
 	sc->sc.sc_cookie = (void *)sc;
 	if ((flags & SSDFB_ATTACH_FLAG_PRODUCT_MASK) == SSDFB_PRODUCT_UNKNOWN)
 		flags |= SSDFB_PRODUCT_SSD1322_GENERIC;
+
+	/*
+	 * SSD1306 and SSD1322 data sheets specify 100ns cycle time.
+	 */
+	error = spi_configure(sa->sa_handle, SPI_MODE_0, 10000000);
+	if (error) {
+		aprint_error(": spi_configure failed (error = %d)\n",
+		    error);
+		return;
+	}
+
 	/*
 	 * Note on interface modes.
 	 *

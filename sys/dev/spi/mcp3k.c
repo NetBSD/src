@@ -1,4 +1,4 @@
-/*	$NetBSD: mcp3k.c,v 1.2.36.1 2021/05/19 03:33:05 thorpej Exp $ */
+/*	$NetBSD: mcp3k.c,v 1.2.36.2 2021/05/19 03:46:26 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -242,10 +242,6 @@ mcp3kadc_match(device_t parent, cfdata_t cf, void *aux)
 		if (sa->sa_clist == NULL && mcp3kadc_lookup(sa, cf) == NULL) {
 			return 0;
 		}
-
-		/* configure for 1MHz */
-		if (spi_configure(sa->sa_handle, SPI_MODE_0, 1000000))
-			return 0;
 	}
 
 	return rv;
@@ -258,7 +254,7 @@ mcp3kadc_attach(device_t parent, device_t self, void *aux)
 	struct spi_attach_args *sa = aux;
 	struct mcp3kadc_softc *sc = device_private(self);
 	const struct mcp3kadc_model *model;
-	int ch, i;
+	int ch, i, error;
 
 	sc->sc_dev = self;
 	sc->sc_sh = sa->sa_handle;
@@ -272,6 +268,14 @@ mcp3kadc_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": MCP%u %u-channel %u-bit ADC\n",
 	    (unsigned)model->name, (unsigned)model->channels,
 	    (unsigned)model->bits);
+
+	/* configure for 1MHz */
+	error = spi_configure(sa->sa_handle, SPI_MODE_0, 1000000);
+	if (error) {
+		aprint_error_dev(self, "spi_configure failed (error = %d)\n",
+		    error);
+		return;
+	}
 
 	/*
 	 * XXX Get vref-supply from device tree and make the sysctl
