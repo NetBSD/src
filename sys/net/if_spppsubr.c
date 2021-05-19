@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.241 2021/05/14 08:41:25 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.242 2021/05/19 01:42:35 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.241 2021/05/14 08:41:25 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.242 2021/05/19 01:42:35 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -3929,6 +3929,11 @@ sppp_ipcp_confrej(struct sppp *sp, struct lcp_header *h, int len)
 			 * Peer doesn't grok address option.  This is
 			 * bad.  XXX  Should we better give up here?
 			 */
+			if (!debug) {
+				log(LOG_ERR, "%s: "
+				    "IPCP address option rejected\n",
+				    ifp->if_xname);
+			}
 			CLR(sp->ipcp.opts, SPPP_IPCP_OPT_ADDRESS);
 			break;
 #ifdef notyet
