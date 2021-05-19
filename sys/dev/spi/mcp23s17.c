@@ -1,4 +1,4 @@
-/*      $NetBSD: mcp23s17.c,v 1.2.2.2 2021/05/19 03:46:26 thorpej Exp $ */
+/*      $NetBSD: mcp23s17.c,v 1.2.2.3 2021/05/19 12:35:28 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcp23s17.c,v 1.2.2.2 2021/05/19 03:46:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcp23s17.c,v 1.2.2.3 2021/05/19 12:35:28 thorpej Exp $");
 
 /* 
  * Driver for Microchip MCP23S17 GPIO
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: mcp23s17.c,v 1.2.2.2 2021/05/19 03:46:26 thorpej Exp
  */
 
 #include "gpio.h"
+#include "opt_fdt.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,8 +52,11 @@ __KERNEL_RCSID(0, "$NetBSD: mcp23s17.c,v 1.2.2.2 2021/05/19 03:46:26 thorpej Exp
 #include <dev/gpio/gpiovar.h>
 
 #include <dev/spi/spivar.h>
-
 #include <dev/spi/mcp23s17.h>
+
+#ifdef FDT
+#include <dev/ofw/openfirm.h>
+#endif /* FDT */
 
 /* #define MCP23S17_DEBUG */
 #ifdef MCP23S17_DEBUG
@@ -109,6 +113,60 @@ mcp23s17gpio_match(device_t parent, cfdata_t cf, void *aux)
 	return spi_compatible_match(sa, cf, compat_data);
 }
 
+#ifdef FDT
+static bool
+mcp23s17gpio_ha_fdt(struct mcp23s17gpio_softc *sc)
+{
+	devhandle_t devhandle = device_handle(sc->sc_dev);
+	int phandle = devhandle_to_of(devhandle);
+	uint32_t mask;
+	int count;
+
+	/*
+	 * The number of devices sharing this chip select,
+	 * along with their assigned addresses, is encoded
+	 * in the "microchip,spi-present-mask" property.
+	 *
+	 * N.B. we also check for "mcp,spi-present-mask" if
+	 * the first one isn't present (it's a deprecated
+	 * property that may be present in older device trees).
+	 */
+	if (of_getprop_uint32(phandle, "microchip,spi-present-mask",
+			      &mask) != 0 ||
+	    of_getprop_uint32(phandle, "mcp,spi-present-mask",
+			      &mask) != 0) {
+		aprint_error(
+		    ": missing \"microchip,spi-present-mask\" property\n");
+		return false;
+	}
+
+	/*
+	 * If we ever support the mcp23s08, then only bits 0-3 are valid
+	 * on that device.
+	 */
+	if (mask == 0 || mask > __BITS(0,7)) {
+		aprint_error(
+		    ": invalid \"microchip,spi-present-mask\" property\n");
+		return false;
+	}
+
+	count = popcount32(mask);
+	if (count > 1) {
+		/*
+		 * XXX We only support a single chip on this chip
+		 * select for now.
+		 */
+		aprint_error(": unsupported %d-chip configuration\n", count);
+		return false;
+	}
+
+	sc->sc_ha = ffs(mask) - 1;
+	KASSERT(sc->sc_ha >= 0 && sc->sc_ha <= 7);
+
+	return true;
+}
+#endif /* FDT */
+
 static void
 mcp23s17gpio_attach(device_t parent, device_t self, void *aux)
 {
@@ -125,6 +183,34 @@ mcp23s17gpio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_sh = sa->sa_handle;
 	sc->sc_bank = 0;
+
+	/*
+	 * The MCP23S17 can multiplex multiple chips on the same
+	 * chip select.
+	 *
+	 * If we got here using indirect configuration, our kernel
+	 * config file directive has our address.  Otherwise, we need
+	 * to consult the device tree used for direct configuration.
+	 */
+	if (sa->sa_name == NULL) {
+		sc->sc_ha = device_cfdata(sc->sc_dev)->cf_flags & 0x7;
+	} else {
+		devhandle_t devhandle = device_handle(self);
+
+		switch (devhandle_type(devhandle)) {
+#ifdef FDT
+		case DEVHANDLE_TYPE_OF:
+			if (! mcp23s17gpio_ha_fdt(sc)) {
+				/* Error alredy displayed. */
+				return;
+			}
+			return;
+#endif /* FDT */
+		default:
+			aprint_error(": unsupported device handle type\n");
+			return;
+		}
+	}
 
 	/*
 	 * XXX Initialize sc_ha from microchip,spi-present-mask
