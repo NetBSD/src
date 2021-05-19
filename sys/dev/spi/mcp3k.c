@@ -1,4 +1,4 @@
-/*	$NetBSD: mcp3k.c,v 1.2.36.2 2021/05/19 03:46:26 thorpej Exp $ */
+/*	$NetBSD: mcp3k.c,v 1.2.36.3 2021/05/19 13:40:56 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -45,6 +45,8 @@
  * MPC3302/3304: http://ww1.microchip.com/downloads/en/DeviceDoc/21697F.pdf
  */
 
+#include "opt_fdt.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -54,6 +56,10 @@
 
 #include <dev/sysmon/sysmonvar.h>
 #include <dev/spi/spivar.h>
+
+#ifdef FDT
+#include <dev/fdt/fdtvar.h>
+#endif /* FDT */
 
 #define M3K_MAX_SENSORS		16		/* 8 single-ended & 8 diff. */
 
@@ -77,6 +83,9 @@ struct mcp3kadc_softc {
 	const struct mcp3kadc_model	*sc_model;
 	uint32_t			sc_adc_max;
 	int32_t				sc_vref_mv;
+#ifdef FDT
+	struct fdtbus_regulator		*sc_vref_supply;
+#endif
 
 	struct sysmon_envsys 		*sc_sme;
 	envsys_data_t 			sc_sensors[M3K_MAX_SENSORS];
@@ -247,14 +256,58 @@ mcp3kadc_match(device_t parent, cfdata_t cf, void *aux)
 	return rv;
 }
 
+#ifdef FDT
+static bool
+mcp3kadc_vref_fdt(struct mcp3kadc_softc *sc)
+{
+	devhandle_t devhandle = device_handle(sc->sc_dev);
+	int phandle = devhandle_to_of(devhandle);
+	int error;
+	u_int uvolts;
+
+	sc->sc_vref_supply = fdtbus_regulator_acquire(phandle, "vref-supply");
+	if (sc->sc_vref_supply == NULL) {
+		aprint_error_dev(sc->sc_dev,
+		    "unable to acquire \"vref-supply\"\n");
+		return false;
+	}
+
+	error = fdtbus_regulator_enable(sc->sc_vref_supply);
+	if (error) {
+		aprint_error_dev(sc->sc_dev,
+		    "failed to enable \"vref-supply\" (error = %d)\n",
+		    error);
+		return false;
+	}
+
+	error = fdtbus_regulator_get_voltage(sc->sc_vref_supply, &uvolts);
+	if (error) {
+		aprint_error_dev(sc->sc_dev,
+		    "unable to get \"vref-supply\" voltage (error = %d)\n",
+		    error);
+		(void) fdtbus_regulator_disable(sc->sc_vref_supply);
+		return false;
+	}
+
+	/*
+	 * Device tree property is uV, convert to mV that we use
+	 * internally.
+	 */
+	sc->sc_vref_mv = uvolts / 1000;
+	return true;
+}
+#endif /* FDT */
+
 static void
 mcp3kadc_attach(device_t parent, device_t self, void *aux)
 {
 	const struct sysctlnode *rnode, *node;
 	struct spi_attach_args *sa = aux;
 	struct mcp3kadc_softc *sc = device_private(self);
+	devhandle_t devhandle = device_handle(self);
 	const struct mcp3kadc_model *model;
 	int ch, i, error;
+	bool vref_read_only;
 
 	sc->sc_dev = self;
 	sc->sc_sh = sa->sa_handle;
@@ -277,13 +330,27 @@ mcp3kadc_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	/*
-	 * XXX Get vref-supply from device tree and make the sysctl
-	 * XXX read-only in that case.
-	 */
-	/* set a default Vref in mV according to the chip's ADC resolution */
-	sc->sc_vref_mv = 1 << ((model->flags & M3K_SIGNED) ?
-	    model->bits - 1 : model->bits);
+	vref_read_only = false;
+	switch (devhandle_type(devhandle)) {
+#ifdef FDT
+	case DEVHANDLE_TYPE_OF:
+		vref_read_only = mcp3kadc_vref_fdt(sc);
+		if (! vref_read_only) {
+			/* Error already displayed. */
+			return;
+		}
+		break;
+#endif /* FDT */
+	default:
+		/*
+		 * set a default Vref in mV according to the chip's ADC
+		 * resolution
+		 */
+		sc->sc_vref_mv = 1 << ((model->flags & M3K_SIGNED) ?
+		    model->bits - 1 : model->bits);
+		break;
+	}
+
 
 	/* remember maximum value for this ADC - also used for masking */
 	sc->sc_adc_max = (1 << model->bits) - 1;
@@ -338,9 +405,11 @@ mcp3kadc_attach(device_t parent, device_t self, void *aux)
 	    NULL, 0, NULL, 0,
 	    CTL_HW, CTL_CREATE, CTL_EOL);
 
+	const int ctlflag = vref_read_only ? CTLFLAG_READONLY
+					   : CTLFLAG_READWRITE;
 	if (rnode != NULL)
 		sysctl_createv(NULL, 0, NULL, &node,
-		    CTLFLAG_READWRITE | CTLFLAG_OWNDESC,
+		    ctlflag | CTLFLAG_OWNDESC,
 		    CTLTYPE_INT, "vref",
 		    SYSCTL_DESCR("ADC reference voltage"),
 		    sysctl_mcp3kadc_vref, 0, (void *)sc, 0,
