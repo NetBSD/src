@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.174 2021/05/18 01:46:29 yamaguchi Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.175 2021/05/19 03:35:27 yamaguchi Exp $ */
 
 /*
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.174 2021/05/18 01:46:29 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.175 2021/05/19 03:35:27 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -594,36 +594,27 @@ static void
 pppoeintr(void)
 {
 	struct mbuf *m;
-	int disc_done, data_done;
+	int i;
 
 	SOFTNET_LOCK_UNLESS_NET_MPSAFE();
 
-	do {
-		disc_done = 0;
-		data_done = 0;
-		for (;;) {
-			IFQ_LOCK(&ppoediscinq);
-			IF_DEQUEUE(&ppoediscinq, m);
-			IFQ_UNLOCK(&ppoediscinq);
-			if (m == NULL)
-				break;
-			disc_done = 1;
-			pppoe_disc_input(m);
-		}
+	for (i = 0; i < IFQ_MAXLEN; i++) {
+		IFQ_LOCK(&ppoediscinq);
+		IF_DEQUEUE(&ppoediscinq, m);
+		IFQ_UNLOCK(&ppoediscinq);
+		if (m == NULL)
+			break;
+		pppoe_disc_input(m);
+	}
 
-		for (;;) {
-			IFQ_LOCK(&ppoeinq);
-			IF_DEQUEUE(&ppoeinq, m);
-			IFQ_UNLOCK(&ppoeinq);
-			if (m == NULL)
-				break;
-			data_done = 1;
-			pppoe_data_input(m);
-		}
-	} while (disc_done || data_done);
-
-	if (!IF_IS_EMPTY(&ppoediscinq) || !IF_IS_EMPTY(&ppoeinq))
-		softint_schedule(pppoe_softintr);
+	for (i = 0; i < IFQ_MAXLEN; i++) {
+		IFQ_LOCK(&ppoeinq);
+		IF_DEQUEUE(&ppoeinq, m);
+		IFQ_UNLOCK(&ppoeinq);
+		if (m == NULL)
+			break;
+		pppoe_data_input(m);
+	}
 
 	SOFTNET_UNLOCK_UNLESS_NET_MPSAFE();
 }
