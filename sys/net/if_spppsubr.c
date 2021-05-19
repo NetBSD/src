@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.242 2021/05/19 01:42:35 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.243 2021/05/19 01:54:09 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.242 2021/05/19 01:42:35 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.243 2021/05/19 01:54:09 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -717,7 +717,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		if (debug)
 			log(LOG_DEBUG,
 			    "%s: invalid input protocol "
-			    "<proto=0x%x>\n", ifp->if_xname, ntohs(protocol));
+			    "<proto=0x%x>\n", ifp->if_xname, protocol);
 		if_statinc(ifp, if_noproto);
 		goto drop;
 	default:
