@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2807 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2808 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -371,7 +371,7 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		contain invalid characters will not resolve. [christos 20210430]
 	evbarm: Add support for Allwinner V3s SoCs. [jmcneill 20210505]
 	aiomixer(1): Added aiomixer, a curses-based mixer for NetBSD's
-		audio API.
+		audio API. [nia 20210507]
 	wskbd(4): Added German Neo 2 layout. [nia 20210511]
 	spiflash(4): Add support for Rockchip RK3328. [mrg 20210514]
 	lagg(4): Added a link-aggregation interface. [yamaguchi 20210517]
