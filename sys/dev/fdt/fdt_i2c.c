@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_i2c.c,v 1.10.2.1 2021/04/25 22:20:08 thorpej Exp $ */
+/* $NetBSD: fdt_i2c.c,v 1.10.2.2 2021/05/19 03:14:25 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_i2c.c,v 1.10.2.1 2021/04/25 22:20:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_i2c.c,v 1.10.2.2 2021/05/19 03:14:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -96,18 +96,4 @@ fdtbus_i2c_acquire(int phandle, const char *prop)
 		return NULL;
 
 	return fdtbus_get_i2c_tag(i2c_phandle);
-}
-
-device_t
-fdtbus_attach_i2cbus(device_t dev, int phandle, i2c_tag_t tag, cfprint_t print)
-{
-	struct i2cbus_attach_args iba;
-
-	memset(&iba, 0, sizeof(iba));
-	iba.iba_tag = tag;
-
-	return config_found(dev, &iba, print,
-	    CFARG_IATTR, "i2cbus",
-	    CFARG_DEVHANDLE, devhandle_from_of(phandle),
-	    CFARG_EOL);
 }

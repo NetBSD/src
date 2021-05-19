@@ -1,4 +1,4 @@
-/* $NetBSD: motoi2c.c,v 1.11.2.1 2021/04/25 22:02:59 thorpej Exp $ */
+/* $NetBSD: motoi2c.c,v 1.11.2.2 2021/05/19 03:14:25 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007, 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motoi2c.c,v 1.11.2.1 2021/04/25 22:02:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motoi2c.c,v 1.11.2.2 2021/05/19 03:14:25 thorpej Exp $");
 
 #if defined(__arm__) || defined(__aarch64__)
 #include "opt_fdt.h"
@@ -129,9 +129,7 @@ motoi2c_attach_common(device_t self, struct motoi2c_softc *sc,
 #ifdef FDT
 	if (sc->sc_phandle != 0) {
 		fdtbus_register_i2c_controller(&sc->sc_i2c, sc->sc_phandle);
-		fdtbus_attach_i2cbus(self, sc->sc_phandle, &sc->sc_i2c,
-		    iicbus_print);
-	} else
+	}
 #endif
 	config_found(self, &iba, iicbus_print,
 	    CFARG_IATTR, "i2cbus",
