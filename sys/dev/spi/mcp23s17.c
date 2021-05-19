@@ -1,4 +1,4 @@
-/*      $NetBSD: mcp23s17.c,v 1.2.2.3 2021/05/19 12:35:28 thorpej Exp $ */
+/*      $NetBSD: mcp23s17.c,v 1.2.2.4 2021/05/19 12:37:46 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcp23s17.c,v 1.2.2.3 2021/05/19 12:35:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcp23s17.c,v 1.2.2.4 2021/05/19 12:37:46 thorpej Exp $");
 
 /* 
  * Driver for Microchip MCP23S17 GPIO
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: mcp23s17.c,v 1.2.2.3 2021/05/19 12:35:28 thorpej Exp
 #include <dev/spi/mcp23s17.h>
 
 #ifdef FDT
-#include <dev/ofw/openfirm.h>
+#include <dev/fdt/fdtvar.h>
 #endif /* FDT */
 
 /* #define MCP23S17_DEBUG */
