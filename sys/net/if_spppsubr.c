@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.243 2021/05/19 01:54:09 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.244 2021/05/19 02:02:46 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.243 2021/05/19 01:54:09 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.244 2021/05/19 02:02:46 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -714,13 +714,14 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 			    &prot);
 			SPPP_DOWNGRADE(sp);
 		}
-		if (debug)
-			log(LOG_DEBUG,
-			    "%s: invalid input protocol "
-			    "<proto=0x%x>\n", ifp->if_xname, protocol);
 		if_statinc(ifp, if_noproto);
 		goto drop;
 	default:
+		if (debug) {
+			log(LOG_DEBUG,
+			    "%s: invalid input protocol "
+			    "<proto=0x%x>\n", ifp->if_xname, protocol);
+		}
 		goto reject_protocol;
 	case PPP_LCP:
 		SPPP_UNLOCK(sp);
@@ -743,8 +744,12 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		return;
 #ifdef INET
 	case PPP_IPCP:
-		if (!ISSET(sp->pp_ncpflags, SPPP_NCP_IPCP))
+		if (!ISSET(sp->pp_ncpflags, SPPP_NCP_IPCP)) {
+			log(LOG_INFO, "%s: reject IPCP packet "
+			    "because IPCP is disabled\n",
+			    ifp->if_xname);
 			goto reject_protocol;
+		}
 		SPPP_UNLOCK(sp);
 		if (sp->pp_phase == SPPP_PHASE_NETWORK) {
 			sppp_cp_input(&ipcp, sp, m);
@@ -762,8 +767,12 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 #endif
 #ifdef INET6
 	case PPP_IPV6CP:
-		if (!ISSET(sp->pp_ncpflags, SPPP_NCP_IPV6CP))
+		if (!ISSET(sp->pp_ncpflags, SPPP_NCP_IPV6CP)) {
+			log(LOG_INFO, "%s: reject IPv6CP packet "
+			    "because IPv6CP is disabled\n",
+			    ifp->if_xname);
 			goto reject_protocol;
+		}
 		SPPP_UNLOCK(sp);
 		if (sp->pp_phase == SPPP_PHASE_NETWORK) {
 			sppp_cp_input(&ipv6cp, sp, m);
