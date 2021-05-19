@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.15 2021/05/19 11:54:17 skrll Exp $ */
+/* $NetBSD: db_interface.c,v 1.16 2021/05/19 12:16:01 skrll Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.15 2021/05/19 11:54:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.16 2021/05/19 12:16:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -411,14 +411,14 @@ db_pte_print(pt_entry_t pte, int level,
 			break;
 		}
 
-		if (pte & LX_BLKPAG_OS_BOOT)
-			pr(", boot");
-		if (pte & LX_BLKPAG_OS_READ)
-			pr(", pmap_read");
-		if (pte & LX_BLKPAG_OS_WRITE)
-			pr(", pmap_write");
-		if (pte & LX_BLKPAG_OS_WIRED)
-			pr(", wired");
+		if (pte & LX_BLKPAG_OS_0)
+			pr(", " PMAP_PTE_OS0);
+		if (pte & LX_BLKPAG_OS_1)
+			pr(", " PMAP_PTE_OS1);
+		if (pte & LX_BLKPAG_OS_2)
+			pr(", " PMAP_PTE_OS2);
+		if (pte & LX_BLKPAG_OS_3)
+			pr(", " PMAP_PTE_OS3);
 	} else {
 		pr(" **ILLEGAL TYPE**");
 	}
@@ -526,7 +526,6 @@ dump_ln_table(bool countmode, pd_entry_t *pdp, int level, int lnindex,
     vaddr_t va, void (*pr)(const char *, ...) __printflike(1, 2))
 {
 	struct vm_page *pg;
-	struct vm_page_md *md;
 	pd_entry_t pde;
 	paddr_t pa;
 	int i, n;
@@ -535,13 +534,11 @@ dump_ln_table(bool countmode, pd_entry_t *pdp, int level, int lnindex,
 
 	pa = AARCH64_KVA_TO_PA((vaddr_t)pdp);
 	pg = PHYS_TO_VM_PAGE(pa);
-	md = VM_PAGE_TO_MD(pg);
 
 	if (pg == NULL) {
 		pr("%sL%d: pa=%lx pg=NULL\n", spc, level, pa);
 	} else {
-		pr("%sL%d: pa=%lx pg=%p, wire_count=%d, mdpg_ptep_parent=%p\n",
-		    spc, level, pa, pg, pg->wire_count, md->mdpg_ptep_parent);
+		pr("%sL%d: pa=%lx pg=%p", spc, level, pa, pg);
 	}
 
 	for (i = n = 0; i < Ln_ENTRIES; i++) {
