@@ -1,4 +1,4 @@
-/*      $NetBSD: mcp23s17.c,v 1.2.2.4 2021/05/19 12:37:46 thorpej Exp $ */
+/*      $NetBSD: mcp23s17.c,v 1.2.2.5 2021/05/19 13:23:23 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcp23s17.c,v 1.2.2.4 2021/05/19 12:37:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcp23s17.c,v 1.2.2.5 2021/05/19 13:23:23 thorpej Exp $");
 
 /* 
  * Driver for Microchip MCP23S17 GPIO
@@ -204,19 +204,13 @@ mcp23s17gpio_attach(device_t parent, device_t self, void *aux)
 				/* Error alredy displayed. */
 				return;
 			}
-			return;
+			break;
 #endif /* FDT */
 		default:
 			aprint_error(": unsupported device handle type\n");
 			return;
 		}
 	}
-
-	/*
-	 * XXX Initialize sc_ha from microchip,spi-present-mask
-	 * XXX property for FDT.  Only consult cf_flags for indirect.
-	 */
-	sc->sc_ha = device_cfdata(sc->sc_dev)->cf_flags & 0x7;
 
 	aprint_naive(": GPIO\n");	
 	aprint_normal(": MCP23S17 GPIO (ha=%d)\n", sc->sc_ha);
