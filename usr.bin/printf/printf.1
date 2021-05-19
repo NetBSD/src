@@ -1,4 +1,4 @@
-.\"	$NetBSD: printf.1,v 1.35 2020/06/29 22:50:11 uwe Exp $
+.\"	$NetBSD: printf.1,v 1.36 2021/05/19 22:29:18 kre Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)printf.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd August 31, 2018
+.Dd May 19, 2021
 .Dt PRINTF 1
 .Os
 .Sh NAME
@@ -136,6 +136,11 @@ value is the 1- or 2-digit hexadecimal number
 .Pp
 Each format specification is introduced by the percent character
 .Pq Ql \&% .
+To produce a literal percent
+.Pq Ql \&% 
+in the output, write the percent chracter twice:
+.Pq Ql \&%% .
+This is not a format conversion.
 The remainder of the format specification includes,
 in the following order:
 .Bl -tag -width 5n
@@ -397,10 +402,6 @@ Characters from the string
 are printed until the end is reached or until the number of characters
 indicated by the precision specification is reached; if the
 precision is omitted, all characters in the string are printed.
-.It Cm \&%
-Print a literal percent character
-.Pq Ql % ;
-no argument is used.
 .El
 .Pp
 In no case does a non-existent or small field width cause truncation of
