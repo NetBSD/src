@@ -1,4 +1,4 @@
-/*	$NetBSD: if_laggproto.h,v 1.1 2021/05/17 04:07:43 yamaguchi Exp $	*/
+/*	$NetBSD: if_laggproto.h,v 1.2 2021/05/19 06:13:08 rillig Exp $	*/
 
 #ifndef	_NET_LAGG_IF_LAGGPROTO_H_
 #define _NET_LAGG_IF_LAGGPROTO_H_
@@ -226,7 +226,8 @@ lagg_portactive(struct lagg_port *lp)
 	return false;
 }
 
-void		lagg_log(struct lagg_softc *, int, const char *, ...);
+void		lagg_log(struct lagg_softc *, int, const char *, ...)
+		    __printflike(3, 4);
 void		lagg_port_getref(struct lagg_port *, struct psref *);
 void		lagg_port_putref(struct lagg_port *, struct psref *);
 void		lagg_enqueue(struct lagg_softc *,
