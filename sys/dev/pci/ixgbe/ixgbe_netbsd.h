@@ -1,4 +1,4 @@
-/*$NetBSD: ixgbe_netbsd.h,v 1.12 2021/03/09 10:03:18 msaitoh Exp $*/
+/* $NetBSD: ixgbe_netbsd.h,v 1.13 2021/05/19 08:19:20 msaitoh Exp $ */
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -96,8 +96,8 @@ struct ixgbe_extmem_head {
 	bool				eh_initialized;
 };
 
-int ixgbe_dma_tag_create(bus_dma_tag_t, bus_size_t, bus_size_t, bus_size_t, int,
-    bus_size_t, int, ixgbe_dma_tag_t **);
+int ixgbe_dma_tag_create(bus_dma_tag_t, bus_size_t, bus_size_t, bus_size_t,
+    int, bus_size_t, int, ixgbe_dma_tag_t **);
 void ixgbe_dma_tag_destroy(ixgbe_dma_tag_t *);
 int ixgbe_dmamap_create(ixgbe_dma_tag_t *, int, bus_dmamap_t *);
 void ixgbe_dmamap_destroy(ixgbe_dma_tag_t *, bus_dmamap_t);
