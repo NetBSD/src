@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.244 2021/05/19 02:02:46 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.245 2021/05/19 02:07:20 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.244 2021/05/19 02:02:46 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.245 2021/05/19 02:07:20 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -3662,12 +3662,14 @@ sppp_ipcp_close(struct sppp *sp, void *xcp)
 	sppp_close_event(sp, xcp);
 
 #ifdef INET
-	if (sp->ipcp.flags & (IPCP_MYADDR_DYN|IPCP_HISADDR_DYN))
+	if (sp->ipcp.flags & (IPCP_MYADDR_DYN|IPCP_HISADDR_DYN)) {
 		/*
 		 * Some address was dynamic, clear it again.
 		 */
 		sppp_clear_ip_addrs(sp);
+	}
 #endif
+	memset(&sp->dns_addrs, 0, sizeof sp->dns_addrs);
 }
 
 /*
