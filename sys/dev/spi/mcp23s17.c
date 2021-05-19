@@ -1,4 +1,4 @@
-/*      $NetBSD: mcp23s17.c,v 1.2 2021/04/24 23:36:59 thorpej Exp $ */
+/*      $NetBSD: mcp23s17.c,v 1.2.2.1 2021/05/19 03:32:27 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcp23s17.c,v 1.2 2021/04/24 23:36:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcp23s17.c,v 1.2.2.1 2021/05/19 03:32:27 thorpej Exp $");
 
 /* 
  * Driver for Microchip MCP23S17 GPIO
@@ -87,18 +87,34 @@ static void     mcp23s17gpio_gpio_pin_ctl(void *, int, int);
 CFATTACH_DECL_NEW(mcp23s17gpio, sizeof(struct mcp23s17gpio_softc),
 		  mcp23s17gpio_match, mcp23s17gpio_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "mcp,mcp23s17" },
+	{ .compat = "microchip,mcp23s17" },
+
+#if 0	/* We should also add support for these: */
+	{ .compat = "mcp,mcp23s08" },
+	{ .compat = "microchip,mcp23s08" },
+
+	{ .compat = "microchip,mcp23s18" },
+#endif
+
+	DEVICE_COMPAT_EOL
+};
+
 static int
 mcp23s17gpio_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct spi_attach_args *sa = aux;
+	int rv;
 
-	/* MCP23S17 has no way to detect it! */
+	rv = spi_compatible_match(sa, cf, compat_data);
+	if (rv != 0) {
+		/* run at 10MHz */
+		if (spi_configure(sa->sa_handle, SPI_MODE_0, 10000000))
+			return 0;
+	}
 
-	/* run at 10MHz */
-	if (spi_configure(sa->sa_handle, SPI_MODE_0, 10000000))
-		return 0;
-
-	return 1;
+	return rv;
 }
 
 static void
@@ -116,6 +132,11 @@ mcp23s17gpio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_sh = sa->sa_handle;
 	sc->sc_bank = 0;
+
+	/*
+	 * XXX Initialize sc_ha from microchip,spi-present-mask
+	 * XXX property for FDT.  Only consult cf_flags for indirect.
+	 */
 	sc->sc_ha = device_cfdata(sc->sc_dev)->cf_flags & 0x7;
 
 	aprint_naive(": GPIO\n");	
@@ -124,7 +145,10 @@ mcp23s17gpio_attach(device_t parent, device_t self, void *aux)
 	DPRINTF(1, ("%s: initialize (HAEN|SEQOP)\n", device_xname(sc->sc_dev)));
 
 	/* basic setup */
-	mcp23s17gpio_write(sc, MCP23x17_IOCONA(sc->sc_bank), MCP23x17_IOCON_HAEN|MCP23x17_IOCON_SEQOP);
+	mcp23s17gpio_write(sc, MCP23x17_IOCONA(sc->sc_bank),
+	    MCP23x17_IOCON_HAEN|MCP23x17_IOCON_SEQOP);
+
+	/* XXX Hook up to FDT GPIO. */
 
 #if NGPIO > 0
 	for (i = 0; i < MCP23x17_GPIO_NPINS; i++) {
