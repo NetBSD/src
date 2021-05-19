@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_spi.c,v 1.2.2.1 2021/05/18 23:48:16 thorpej Exp $ */
+/* $NetBSD: fdt_spi.c,v 1.2.2.2 2021/05/19 02:58:26 thorpej Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_spi.c,v 1.2.2.1 2021/05/18 23:48:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_spi.c,v 1.2.2.2 2021/05/19 02:58:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -42,9 +42,9 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_spi.c,v 1.2.2.1 2021/05/18 23:48:16 thorpej Exp 
 #include <dev/fdt/fdtvar.h>
 
 struct fdtbus_spi_controller {
-	device_t spi_dev;
+	struct spi_controller *spi_ctlr;
 	int spi_phandle;
-	const struct fdtbus_spi_controller_func *spi_funcs;
+
 	LIST_ENTRY(fdtbus_spi_controller) spi_next;
 };
 
@@ -52,21 +52,20 @@ static LIST_HEAD(, fdtbus_spi_controller) fdtbus_spi_controllers =
     LIST_HEAD_INITIALIZER(fdtbus_spi_controllers);
 
 int
-fdtbus_register_spi_controller(device_t dev, int phandle,
-    const struct fdtbus_spi_controller_func *funcs)
+fdtbus_register_spi_controller(struct spi_controller *ctlr, int phandle)
 {
 	struct fdtbus_spi_controller *spi;
 
 	spi = kmem_alloc(sizeof(*spi), KM_SLEEP);
-	spi->spi_dev = dev;
+	spi->spi_ctlr = ctlr;
 	spi->spi_phandle = phandle;
-	spi->spi_funcs = funcs;
 
 	LIST_INSERT_HEAD(&fdtbus_spi_controllers, spi, spi_next);
 
 	return 0;
 }
 
+#if 0
 static struct spi_controller *
 fdtbus_get_spi_controller(int phandle)
 {
@@ -74,27 +73,9 @@ fdtbus_get_spi_controller(int phandle)
 
 	LIST_FOREACH(spi, &fdtbus_spi_controllers, spi_next) {
 		if (spi->spi_phandle == phandle) {
-			return spi->spi_funcs->get_controller(spi->spi_dev);
+			return spi->spi_ctlr;
 		}
 	}
 	return NULL;
 }
-
-device_t
-fdtbus_attach_spibus(device_t dev, int phandle, cfprint_t print)
-{
-	struct spi_controller *spi;
-
-	spi = fdtbus_get_spi_controller(phandle);
-	KASSERT(spi != NULL);
-
-	struct spibus_attach_args sba = {
-		.sba_controller = spi,
-	};
-	return config_found(dev, &sba, print,
-	    CFARG_IATTR, "spibus",
-	    CFARG_DEVHANDLE, device_handle(dev),
-	    CFARG_EOL);
-}
-
-
+#endif
