@@ -1,4 +1,4 @@
-# $NetBSD: printf.sh,v 1.6 2020/04/24 14:29:19 kre Exp $
+# $NetBSD: printf.sh,v 1.7 2021/05/19 22:20:34 kre Exp $
 #
 # Copyright (c) 2018 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1071,13 +1071,13 @@ g_floats()
 	expect 1.00000		%#g	1		# p = 6, x = 0 :  %.5f
 	expect -0.500000	%#g	-0.5		# p = 6, x = -1:  %.6f
 
-	expect 0.001234		%#.4g	0.001234	# p= 4, x = -3:  %.6f
+	expect 0.001234		%#.4g	0.001234	# p= 4, x = -3 :  %.6f
 
 	expect 9999.		%#.4g	9999		# p = 4, x = 3 :  %.0f
 	expect 9999.0		%#.5g	9999		# p = 5, x = 3 :  %.1f
 
 	expect 4.4?e+03		%.3g	4444		# p = 3, x = 3 :  %.2e
-	expect 1.2e-05		%.2g	0.000012	# p = 2, x = -5:  $.1e
+	expect 1.2e-05		%.2g	0.000012	# p = 2, x = -5:  %.1e
 
 	expect 1e+10		%g	10000000000
 	expect 1e+10		%g	1e10
@@ -1558,8 +1558,8 @@ NetBSD_extensions()
 	expect 5e+01		'%.0e'		"'1"
 	expect 4.50e+01		'%.2e'		"'-1"
 	expect 4.300e+01	'%.3e'		"'+1"
-	expect 99.000000	'%f'		'"c"
-	expect 97		'%g'		'"a"
+	expect 99.000000	'%f'		'"c'
+	expect 97		'%g'		'"a'
 
 	# NetBSD (non-POSIX) format excape extensions
 	expect ''		'\e'
