@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.52 2021/04/16 18:31:28 christos Exp $	*/
+/*	$NetBSD: printf.c,v 1.53 2021/05/19 22:41:19 kre Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)printf.c	8.2 (Berkeley) 3/22/95";
 #else
-__RCSID("$NetBSD: printf.c,v 1.52 2021/04/16 18:31:28 christos Exp $");
+__RCSID("$NetBSD: printf.c,v 1.53 2021/05/19 22:41:19 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,6 +74,7 @@ static int	 getwidth(void);
 static intmax_t	 getintmax(void);
 static char	*getstr(void);
 static char	*mklong(const char *, char);
+static intmax_t	 wide_char(const char *);
 static void      check_conversion(const char *, const char *);
 static void	 usage(void);
 
@@ -141,6 +142,7 @@ main(int argc, char *argv[])
 #endif
 
 	rval = 0;	/* clear for builtin versions (avoid holdover) */
+	clearerr(stdout);	/* for the builtin version */
 
 	/*
 	 * printf does not comply with Posix XBD 12.2 - there are no opts,
@@ -372,10 +374,16 @@ main(int argc, char *argv[])
 			*fmt = nextch;
 			/* escape if a \c was encountered */
 			if (rval & 0x100)
-				return rval & ~0x100;
+				goto done;
 		}
 	} while (gargv != argv && *gargv);
 
+  done:
+	(void)fflush(stdout);
+	if (ferror(stdout)) {
+		clearerr(stdout);
+		err(1, "write error");
+	}
 	return rval & ~0x100;
   out:
 	warn("print failed");
@@ -628,8 +636,9 @@ mklong(const char *str, char ch)
 
 	len = strlen(str) + 2;
 	if (len > sizeof copy) {
-		warnx("format %s too complex", str);
+		warnx("format \"%s\" too complex", str);
 		len = 4;
+		rval = 1;
 	}
 	(void)memmove(copy, str, len - 3);
 	copy[len - 3] = 'j';
@@ -691,7 +700,7 @@ getintmax(void)
 	gargv++;
 
 	if (*cp == '\"' || *cp == '\'')
-		return *(cp + 1);
+		return wide_char(cp);
 
 	errno = 0;
 	val = strtoimax(cp, &ep, 0);
@@ -708,13 +717,38 @@ getdouble(void)
 	if (!*gargv)
 		return 0.0;
 
-	if (**gargv == '\"' || **gargv == '\'')
-		return (double) *((*gargv++)+1);
+	/* This is a NetBSD extension, not required by POSIX (it is useless) */
+	if (*(ep = *gargv) == '\"' || *ep == '\'')
+		return (double)wide_char(ep);
 
 	errno = 0;
 	val = strtod(*gargv, &ep);
 	check_conversion(*gargv++, ep);
 	return val;
+}
+
+/*
+ * XXX This is just a placeholder for a later version which
+ *     will do mbtowc() on p+1 (and after checking that all of the
+ *     string has been consumed) return that value.
+ *
+ * This (mbtowc) behaviour is required by POSIX (as is the check
+ * that the whole arg is consumed).
+ *
+ * What follows is actually correct if we assume that LC_CTYPE=C
+ * (or something else similar that is a single byte charset).
+ */
+static intmax_t
+wide_char(const char *p)
+{
+	intmax_t ch = (intmax_t)(unsigned char)p[1];
+
+	if (ch != 0 && p[2] != '\0') {
+		warnx("%s: not completelty converted", p);
+		rval = 1;
+	}
+
+	return ch;
 }
 
 static void
