@@ -1,4 +1,4 @@
-/* $NetBSD: rk_cru_composite.c,v 1.5 2019/11/16 13:23:13 jmcneill Exp $ */
+/* $NetBSD: rk_cru_composite.c,v 1.6 2021/05/20 01:41:55 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_cru_composite.c,v 1.5 2019/11/16 13:23:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_cru_composite.c,v 1.6 2021/05/20 01:41:55 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -83,7 +83,8 @@ rk_cru_composite_get_rate(struct rk_cru_softc *sc,
 		return (u_int)((uint64_t)prate * num / den);
 	} else {
 		const uint32_t val = CRU_READ(sc, composite->muxdiv_reg);
-		const u_int div = __SHIFTOUT(val, composite->div_mask) + 1;
+		const u_int div = (composite->div_mask != 0)
+		    ? __SHIFTOUT(val, composite->div_mask) + 1 : 1;
 
 		return prate / div;
 	}
