@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399_cru.c,v 1.21 2021/01/27 03:10:19 thorpej Exp $ */
+/* $NetBSD: rk3399_cru.c,v 1.22 2021/05/20 01:07:24 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3399_cru.c,v 1.21 2021/01/27 03:10:19 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3399_cru.c,v 1.22 2021/05/20 01:07:24 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -281,10 +281,15 @@ rk3399_cru_pll_set_rate(struct rk_cru_softc *sc,
 
 	best_diff = INT_MAX;
 	for (int i = 0; i < pll->nrates; i++) {
-		const int diff = (int)rate - (int)pll->rates[i].rate;
-		if (abs(diff) < best_diff) {
+		int diff;
+
+		if (rate > pll->rates[i].rate)
+			diff = rate - pll->rates[i].rate;
+		else
+			diff = pll->rates[i].rate - rate;
+		if (diff < best_diff) {
 			pll_rate = &pll->rates[i];
-			best_diff = abs(diff);
+			best_diff = diff;
 		}
 	}
 
