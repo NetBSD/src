@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.75 2021/05/18 05:29:15 msaitoh Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.76 2021/05/20 01:02:42 ryo Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.75 2021/05/18 05:29:15 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.76 2021/05/20 01:02:42 ryo Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -2208,7 +2208,7 @@ ixgbe_dma_malloc(struct adapter *adapter, const bus_size_t size,
 	}
 
 	r = bus_dmamem_map(dma->dma_tag->dt_dmat, &dma->dma_seg, rsegs,
-	    size, &dma->dma_vaddr, BUS_DMA_NOWAIT);
+	    size, &dma->dma_vaddr, BUS_DMA_NOWAIT | BUS_DMA_COHERENT);
 	if (r != 0) {
 		aprint_error_dev(dev, "%s: bus_dmamem_map failed; error %d\n",
 		    __func__, r);
