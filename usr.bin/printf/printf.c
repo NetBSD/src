@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.53 2021/05/19 22:41:19 kre Exp $	*/
+/*	$NetBSD: printf.c,v 1.54 2021/05/20 02:01:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)printf.c	8.2 (Berkeley) 3/22/95";
 #else
-__RCSID("$NetBSD: printf.c,v 1.53 2021/05/19 22:41:19 kre Exp $");
+__RCSID("$NetBSD: printf.c,v 1.54 2021/05/20 02:01:07 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -744,7 +744,7 @@ wide_char(const char *p)
 	intmax_t ch = (intmax_t)(unsigned char)p[1];
 
 	if (ch != 0 && p[2] != '\0') {
-		warnx("%s: not completelty converted", p);
+		warnx("%s: not completely converted", p);
 		rval = 1;
 	}
 
