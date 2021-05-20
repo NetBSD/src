@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.76 2021/05/20 01:02:42 ryo Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.77 2021/05/20 10:39:32 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.76 2021/05/20 01:02:42 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.77 2021/05/20 10:39:32 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -501,7 +501,7 @@ retry:
 	i = txr->next_avail_desc;
 	for (j = 0; j < map->dm_nsegs; j++) {
 		bus_size_t seglen;
-		bus_addr_t segaddr;
+		uint64_t segaddr;
 
 		txbuf = &txr->tx_buffers[i];
 		txd = &txr->tx_base[i];
