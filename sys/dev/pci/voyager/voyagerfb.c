@@ -1,4 +1,4 @@
-/*	$NetBSD: voyagerfb.c,v 1.30 2021/04/24 23:36:58 thorpej Exp $	*/
+/*	$NetBSD: voyagerfb.c,v 1.31 2021/05/21 20:22:15 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009, 2011 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.30 2021/04/24 23:36:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.31 2021/05/21 20:22:15 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -328,7 +328,8 @@ voyagerfb_attach(device_t parent, device_t self, void *aux)
 			(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
 	}
 	glyphcache_init(&sc->sc_gc, sc->sc_height,
-			(sc->sc_fbsize / sc->sc_stride) - sc->sc_height,
+			((sc->sc_fbsize - 16 * 64) / sc->sc_stride) - 
+			    sc->sc_height,
 			sc->sc_width,
 			ri->ri_font->fontwidth,
 			ri->ri_font->fontheight,
@@ -780,7 +781,7 @@ voyagerfb_init(struct voyagerfb_softc *sc)
 	    reg);
 
 	/* put the cursor at the end of video memory */
-	sc->sc_cursor_addr = 16 * 1024 * 1024 - 16 * 64;	/* XXX */
+	sc->sc_cursor_addr = sc->sc_fbsize - 16 * 64;	/* XXX */
 	DPRINTF("%s: %08x\n", __func__, sc->sc_cursor_addr); 
 	sc->sc_cursor = (uint32_t *)((uint8_t *)bus_space_vaddr(sc->sc_memt,
 			 sc->sc_fbh) + sc->sc_cursor_addr);
