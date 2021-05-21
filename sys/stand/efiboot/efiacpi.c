@@ -1,4 +1,4 @@
-/* $NetBSD: efiacpi.c,v 1.8 2020/10/10 19:17:39 jmcneill Exp $ */
+/* $NetBSD: efiacpi.c,v 1.9 2021/05/21 21:53:15 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -53,6 +53,7 @@ struct acpi_rdsp {
 static EFI_GUID Acpi20TableGuid = ACPI_20_TABLE_GUID;
 static EFI_GUID Smbios3TableGuid = SMBIOS3_TABLE_GUID;
 
+static int acpi_enable = 1;
 static void *acpi_root = NULL;
 static void *smbios3_table = NULL;
 
@@ -76,6 +77,18 @@ int
 efi_acpi_available(void)
 {
 	return acpi_root != NULL;
+}
+
+int
+efi_acpi_enabled(void)
+{
+	return acpi_enable;
+}
+
+void
+efi_acpi_enable(int enable)
+{
+	acpi_enable = enable;
 }
 
 static char model_buf[128];
