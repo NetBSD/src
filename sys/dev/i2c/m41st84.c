@@ -1,4 +1,4 @@
-/*	$NetBSD: m41st84.c,v 1.31 2021/01/27 02:29:48 thorpej Exp $	*/
+/*	$NetBSD: m41st84.c,v 1.32 2021/05/21 21:21:01 macallan Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m41st84.c,v 1.31 2021/01/27 02:29:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m41st84.c,v 1.32 2021/05/21 21:21:01 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,7 +194,7 @@ strtc_attach(device_t parent, device_t self, void *arg)
 
 	aprint_naive(": Real-time Clock%s\n",
 	    sm->sm_nvram_size ? "/NVRAM" : "");
-	aprint_normal(": M41T%d Real-time Clock%s", sm->sm_model,
+	aprint_normal(": M41T%d Real-time Clock%s\n", sm->sm_model,
 	    sm->sm_nvram_size ? "/NVRAM" : "");
 
 	sc->sc_tag = ia->ia_tag;
