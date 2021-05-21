@@ -1,4 +1,4 @@
-/* $NetBSD: rk_fb.c,v 1.1 2019/11/09 23:30:14 jmcneill Exp $ */
+/* $NetBSD: rk_fb.c,v 1.2 2021/05/21 09:33:27 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2019 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_wsdisplay_compat.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_fb.c,v 1.1 2019/11/09 23:30:14 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_fb.c,v 1.2 2021/05/21 09:33:27 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -61,7 +61,6 @@ static int	rk_fb_ioctl(struct drmfb_softc *, u_long, void *, int,
 static const struct drmfb_params rkfb_drmfb_params = {
 	.dp_mmapfb = rk_fb_mmapfb,
 	.dp_ioctl = rk_fb_ioctl,
-	
 };
 
 CFATTACH_DECL_NEW(rk_fb, sizeof(struct rk_fb_softc),
