@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.22 2020/10/18 18:09:32 tnn Exp $
+$NetBSD: version,v 1.23 2021/05/21 21:53:15 jmcneill Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE EFI BOOTLOADER HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -26,3 +26,4 @@ is taken as the current.
 2.3:	EFI RT and GOP support for devicetree mode.
 2.4:	Add ISO9660 support.
 2.5:	Recognize the EFI system partion as fstype MSDOS.
+2.6:	Disable ACPI support when booting big endian kernels.
