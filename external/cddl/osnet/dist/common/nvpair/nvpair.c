@@ -2255,11 +2255,11 @@ nvlist_common(nvlist_t *nvl, char *buf, size_t *buflen, int encoding,
 	int err = 0;
 	nvstream_t nvs;
 	int nvl_endian;
-#ifdef	_LITTLE_ENDIAN
-	int host_endian = 1;
-#else
+#if BYTE_ORDER == BIG_ENDIAN
 	int host_endian = 0;
-#endif	/* _LITTLE_ENDIAN */
+#else
+	int host_endian = 1;
+#endif	/* BYTE_ORDER */
 	nvs_header_t *nvh = (void *)buf;
 
 	if (buflen == NULL || nvl == NULL ||
