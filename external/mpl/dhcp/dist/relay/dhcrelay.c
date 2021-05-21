@@ -1,4 +1,4 @@
-/*	$NetBSD: dhcrelay.c,v 1.3 2020/08/03 21:10:57 christos Exp $	*/
+/*	$NetBSD: dhcrelay.c,v 1.4 2021/05/21 21:07:37 christos Exp $	*/
 
 /* dhcrelay.c
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhcrelay.c,v 1.3 2020/08/03 21:10:57 christos Exp $");
+__RCSID("$NetBSD: dhcrelay.c,v 1.4 2021/05/21 21:07:37 christos Exp $");
 
 #include "dhcpd.h"
 #include <syslog.h>
@@ -264,7 +264,7 @@ char *progname;
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhcrelay.c,v 1.3 2020/08/03 21:10:57 christos Exp $");
+__RCSID("$NetBSD: dhcrelay.c,v 1.4 2021/05/21 21:07:37 christos Exp $");
 static const char use_noarg[] = "No argument for command: %s";
 #ifdef RELAY_PORT
 static const char use_port_defined[] = "Port already set, %s inappropriate";
@@ -316,6 +316,8 @@ main(int argc, char **argv) {
 	struct stream_list *sl = NULL;
 	int local_family_set = 0;
 #endif
+
+	libdhcp_callbacks_register(&dhcrelay_callbacks);
 
 #ifdef OLD_LOG_NAME
 	progname = "dhcrelay";
