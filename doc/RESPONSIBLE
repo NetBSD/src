@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.127 2021/05/22 17:18:57 nia Exp $
+#	$NetBSD: RESPONSIBLE,v 1.128 2021/05/22 17:20:01 nia Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -85,6 +85,7 @@ curses		blymn, jdc
 edit		christos, jdolecek
 kerberos	lha*, joda*
 openssl		thorpej*, christos
+ossaudio	nia
 pcap		core
 pthread		nathanw*
 quota		dholland
