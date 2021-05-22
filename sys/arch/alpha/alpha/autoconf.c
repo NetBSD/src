@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.56 2021/05/22 15:04:33 thorpej Exp $ */
+/* $NetBSD: autoconf.c,v 1.57 2021/05/22 15:05:36 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.56 2021/05/22 15:04:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.57 2021/05/22 15:05:36 thorpej Exp $");
 
 #include "pci.h"
 
@@ -114,13 +114,6 @@ qemu_find_rootdev(void)
 			       "provided by Qemu\n");
 			return;
 		}
-	}
-
-	if (prom_qemu_getenv("rootdev", buf, sizeof(buf))) {
-		snprintf(bootinfo.booted_dev, sizeof(bootinfo.booted_dev),
-		    "rootdev=%s", buf);
-		booted_device = device_find_by_xname(buf);
-		return;
 	}
 
 	const size_t devlen = strlen("/dev/");
