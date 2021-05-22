@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.102 2020/10/06 15:05:54 mlelstv Exp $	*/
+/*	$NetBSD: dk.c,v 1.103 2021/05/22 13:43:50 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.102 2020/10/06 15:05:54 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.103 2021/05/22 13:43:50 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -90,6 +90,7 @@ struct dkwedge_softc {
 	kcondvar_t	sc_dkdrn;
 	u_int		sc_iopend;	/* I/Os pending */
 	int		sc_flags;	/* flags (sc_iolock) */
+	int		sc_mode;	/* parent open mode */
 };
 
 #define	DK_F_WAIT_DRAIN		0x0001	/* waiting for I/O to drain */
@@ -1138,6 +1139,7 @@ dkopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	struct dkwedge_softc *sc = dkwedge_lookup(dev);
 	struct vnode *vp;
 	int error = 0;
+	int mode;
 
 	if (sc == NULL)
 		return (ENODEV);
@@ -1155,12 +1157,27 @@ dkopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	if (sc->sc_dk.dk_openmask == 0) {
 		if (sc->sc_parent->dk_rawopens == 0) {
 			KASSERT(sc->sc_parent->dk_rawvp == NULL);
-			error = dk_open_parent(sc->sc_pdev, FREAD | FWRITE, &vp);
+			/*
+			 * Try open read-write. If this fails for EROFS
+			 * and wedge is read-only, retry to open read-only.
+			 */
+			mode = FREAD | FWRITE;
+			error = dk_open_parent(sc->sc_pdev, mode, &vp);
+			if (error == EROFS && (flags & FWRITE) == 0) {
+				mode &= ~FWRITE;
+				error = dk_open_parent(sc->sc_pdev, mode, &vp);
+			}
 			if (error)
 				goto popen_fail;
+			/* remember open mode */
+			sc->sc_mode = mode;
 			sc->sc_parent->dk_rawvp = vp;
 		}
 		sc->sc_parent->dk_rawopens++;
+	} else if (flags & ~sc->sc_mode & FWRITE) {
+		/* parent is opened read-only, cannot open read-write */
+		error = EROFS;
+		goto popen_fail;
 	}
 	if (fmt == S_IFCHR)
 		sc->sc_dk.dk_copenmask |= 1;
@@ -1197,7 +1214,7 @@ dklastclose(struct dkwedge_softc *sc)
 	mutex_exit(&sc->sc_dk.dk_openlock);
 
 	if (vp) {
-		dk_close_parent(vp, FREAD | FWRITE);
+		dk_close_parent(vp, sc->sc_mode);
 	}
 
 	return error;
