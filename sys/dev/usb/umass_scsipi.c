@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.c,v 1.67 2021/04/24 23:36:59 thorpej Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.68 2021/05/23 08:42:32 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.67 2021/04/24 23:36:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.68 2021/05/23 08:42:32 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -101,6 +101,8 @@ Static int umass_scsipi_ioctl(struct scsipi_channel *, u_long,
 Static int umass_scsipi_getgeom(struct scsipi_periph *,
 				struct disk_parms *, u_long);
 
+Static void umass_null_cb(struct umass_softc *, void *,
+			  int, int);
 Static void umass_scsipi_cb(struct umass_softc *, void *,
 			    int, int);
 Static void umass_scsipi_sense_cb(struct umass_softc *, void *,
@@ -321,7 +323,7 @@ umass_scsipi_request(struct scsipi_channel *chan,
 						  cmdlen, xs->data,
 						  xs->datalen, dir,
 						  xs->timeout, USBD_SYNCHRONOUS,
-						  0, xs);
+						  umass_null_cb, xs);
 			DPRINTFM(UDMASS_SCSI, "done err=%jd",
 			    scbus->sc_sync_status, 0, 0, 0);
 			switch (scbus->sc_sync_status) {
@@ -418,6 +420,12 @@ umass_scsipi_getgeom(struct scsipi_periph *periph, struct disk_parms *dp,
 	default:
 		return 0;
 	}
+}
+
+Static void
+umass_null_cb(struct umass_softc *sc, void *priv, int residue, int status)
+{
+	UMASSHIST_FUNC(); UMASSHIST_CALLED();
 }
 
 Static void
