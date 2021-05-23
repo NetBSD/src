@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.203 2021/03/13 15:29:55 skrll Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.204 2021/05/23 00:36:36 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.203 2021/03/13 15:29:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.204 2021/05/23 00:36:36 mrg Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -202,6 +202,7 @@ static struct swap_priority swap_priority;
 /* locks */
 static kmutex_t uvm_swap_data_lock __cacheline_aligned;
 static krwlock_t swap_syscall_lock;
+bool uvm_swap_init_done = false;
 
 /* workqueue and use counter for swap to regular files */
 static int sw_reg_count = 0;
@@ -295,6 +296,8 @@ uvm_swap_init(void)
 	    NULL, IPL_BIO);
 	pool_init(&vndbuf_pool, sizeof(struct vndbuf), 0, 0, 0, "swp vnd",
 	    NULL, IPL_BIO);
+
+	uvm_swap_init_done = true;
 
 	UVMHIST_LOG(pdhist, "<- done", 0, 0, 0, 0);
 }
@@ -1141,6 +1144,8 @@ uvm_swap_shutdown(struct lwp *l)
 	struct vnode *vp;
 	int error;
 
+	if (!uvm_swap_init_done)
+		return;
 	printf("turning off swap...");
 	rw_enter(&swap_syscall_lock, RW_WRITER);
 	mutex_enter(&uvm_swap_data_lock);
