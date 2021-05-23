@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.136 2020/09/19 01:32:16 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.137 2021/05/23 01:00:53 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2019 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.136 2020/09/19 01:32:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.137 2021/05/23 01:00:53 thorpej Exp $");
 
 #include "assym.h"
 
@@ -987,6 +987,11 @@ NESTED(copyoutstr, 4, 16, ra, IM_RA|IM_S0, 0)
  * kcopy() _must_ save and restore the old fault handler since it is
  * called by uiomove(), which may be in the path of servicing a non-fatal
  * page fault.
+ *
+ * N.B. This implementation is a wrapper around memcpy(), which is
+ * implemented in src/common/lib/libc/arch/alpha/string/bcopy.S.
+ * This is safe ONLY because we know that, as implemented, it is
+ * a LEAF function (and thus does not use any callee-saved registers).
  */
 NESTED(kcopy, 3, 32, ra, IM_RA|IM_S0|IM_S1, 0)
 	LDGP(pv)
@@ -1016,10 +1021,7 @@ NESTED(kcopy, 3, 32, ra, IM_RA|IM_S0|IM_S1, 0)
 
 LEAF(kcopyerr, 0)
 	LDGP(pv)
-	.set noat
-	ldq	at_reg, L_PCB(s1)		/* restore the old handler.  */
-	stq	s0, PCB_ONFAULT(at_reg)
-	.set at
+	stq	s0, PCB_ONFAULT(s1)		/* s1 == pcb (from above)    */
 	ldq	ra, (32-8)(sp)			/* restore ra.		     */
 	ldq	s0, (32-16)(sp)			/* restore s0.		     */
 	ldq	s1, (32-24)(sp)			/* restore s1.		     */
