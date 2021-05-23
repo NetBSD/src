@@ -1,0 +1,10 @@
+# $NetBSD: GENERIC.QEMU,v 1.1 2021/05/23 01:34:17 thorpej Exp $
+#
+# Generic Alpha kernel specifically configured for Qemu.
+
+include	"arch/alpha/conf/GENERIC"
+
+# reserve symbol space and copy the symbol table into it.  Needed
+# because Qemu does not load the symbol table when loading the
+# kernel.
+makeoptions	COPY_SYMTAB=1
