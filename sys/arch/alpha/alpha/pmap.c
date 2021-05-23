@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.276 2021/04/03 15:29:02 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.277 2021/05/23 19:13:27 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008, 2020
@@ -135,7 +135,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.276 2021/04/03 15:29:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.277 2021/05/23 19:13:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -742,6 +742,9 @@ pmap_tlb_shootdown_all_user(pmap_t const pmap, pt_entry_t const pte_bits,
 		TLB_COUNT(shootdown_all_user_imb);
 		TLB_CTX_SET_FLAG(tlbctx, TLB_CTX_F_IMB);
 	}
+
+	KASSERT(tlbctx->t_pmap == NULL || tlbctx->t_pmap == pmap);
+	tlbctx->t_pmap = pmap;
 
 	TLB_CTX_SET_ALLVA(tlbctx);
 }
