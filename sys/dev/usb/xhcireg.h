@@ -1,4 +1,4 @@
-/* $NetBSD: xhcireg.h,v 1.18 2020/06/06 08:56:30 skrll Exp $ */
+/* $NetBSD: xhcireg.h,v 1.19 2021/05/23 11:49:45 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2010 Hans Petter Selasky. All rights reserved.
@@ -132,6 +132,10 @@
 
 #define	XHCI_WAIT_CNR		100		/* in 1ms */
 #define	XHCI_WAIT_HCRST		100		/* in 1ms */
+#define	XHCI_WAIT_RSS		100		/* in 1ms */
+#define	XHCI_WAIT_SSS		100		/* in 1ms */
+#define	XHCI_WAIT_PLS_U0	100		/* in 1ms */
+#define	XHCI_WAIT_PLS_U3	10		/* in 1ms */
 
 #define	XHCI_USBSTS		0x04	/* XHCI status */
 #define	 XHCI_STS_HCH		__BIT(0)	/* RO - Host Controller Halted */
