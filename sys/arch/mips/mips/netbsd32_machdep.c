@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.20 2019/12/12 02:15:42 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.21 2021/05/23 23:24:45 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.20 2019/12/12 02:15:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.21 2021/05/23 23:24:45 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -67,7 +67,10 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.20 2019/12/12 02:15:42 pgoyet
 #include <uvm/uvm_extern.h>
 
 const char machine32[] = MACHINE;
-const char machine_arch32[] = MACHINE32_ARCH;
+const char machine_archo32[] = MACHINE32_OARCH;
+#ifdef MACHINE32_NARCH
+const char machine_archn32[] = MACHINE32_NARCH;
+#endif
 
 #if 0
 cpu_coredump32
@@ -321,7 +324,7 @@ static const char *
 netbsd32_machine32(void)
 {
 
-	return machine32;
+	return PROC_MACHINE_ARCH32(curproc);
 }
 
 void 
