@@ -1,4 +1,4 @@
-/*	$NetBSD: xhcivar.h,v 1.17 2020/08/21 20:46:03 jakllsch Exp $	*/
+/*	$NetBSD: xhcivar.h,v 1.18 2021/05/23 11:49:45 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -137,6 +137,18 @@ struct xhci_softc {
 #define XHCI_DEFERRED_START	__BIT(1)
 	uint32_t sc_hcc;		/* copy of HCCPARAMS1 */
 	uint32_t sc_hcc2;		/* copy of HCCPARAMS2 */
+
+	struct xhci_registers {
+		uint32_t	usbcmd;
+		uint32_t	dnctrl;
+		uint64_t	dcbaap;
+		uint32_t	config;
+		uint32_t	erstsz0;
+		uint64_t	erstba0;
+		uint64_t	erdp0;
+		uint32_t	iman0;
+		uint32_t	imod0;
+	} sc_regs;
 };
 
 int	xhci_init(struct xhci_softc *);
