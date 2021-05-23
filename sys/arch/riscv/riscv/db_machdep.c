@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.7 2021/04/14 06:32:20 dholland Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.8 2021/05/23 23:22:55 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: db_machdep.c,v 1.7 2021/04/14 06:32:20 dholland Exp $");
+__RCSID("$NetBSD: db_machdep.c,v 1.8 2021/05/23 23:22:55 dholland Exp $");
 
 #include <sys/param.h>
 
@@ -42,6 +42,7 @@ __RCSID("$NetBSD: db_machdep.c,v 1.7 2021/04/14 06:32:20 dholland Exp $");
 #include <ddb/db_interface.h>
 #include <ddb/db_extern.h>
 #include <ddb/db_variables.h>
+#include <ddb/db_output.h>
 
 int db_active = 0;
 
@@ -225,6 +226,19 @@ void
 db_read_bytes(db_addr_t addr, size_t len, char *data)
 {
 	const char *src = (char *)addr;
+	int err;
+
+	/* If asked to fetch from userspace, do it safely */
+	if ((intptr_t)addr >= 0) {
+		err = copyin(src, data, len);
+		if (err) {
+#ifdef DDB
+			db_printf("address %p is invalid\n", src);
+#endif
+			memset(data, 0, len);
+		}
+		return;
+	}
 
 	while (len--) {
 		*data++ = *src++;
@@ -237,6 +251,19 @@ db_read_bytes(db_addr_t addr, size_t len, char *data)
 void
 db_write_bytes(vaddr_t addr, size_t len, const char *data)
 {
+	int err;
+
+	/* If asked to fetch from userspace, do it safely */
+	if ((intptr_t)addr >= 0) {
+		err = copyout(data, (char *)addr, len);
+		if (err) {
+#ifdef DDB
+			db_printf("address %p is invalid\n", (char *)addr);
+#endif
+		}
+		return;
+	}
+
 	if (len == 8) {
 		*(uint64_t *)addr = *(const uint64_t *) data;
 	} else if (len == 4) {
@@ -244,6 +271,7 @@ db_write_bytes(vaddr_t addr, size_t len, const char *data)
 	} else if (len == 2) {
 		*(uint16_t *)addr = *(const uint16_t *) data;
 	} else {
+		KASSERT(len == 1);
 		*(uint8_t *)addr = *(const uint8_t *) data;
 	}
 	__asm("fence rw,rw; fence.i");
