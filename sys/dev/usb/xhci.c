@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.139 2021/05/23 11:49:45 riastradh Exp $	*/
+/*	$NetBSD: xhci.c,v 1.140 2021/05/23 21:12:28 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.139 2021/05/23 11:49:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.140 2021/05/23 21:12:28 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -157,6 +157,8 @@ static int xhci_roothub_ctrl(struct usbd_bus *, usb_device_request_t *,
 static usbd_status xhci_configure_endpoint(struct usbd_pipe *);
 //static usbd_status xhci_unconfigure_endpoint(struct usbd_pipe *);
 static usbd_status xhci_reset_endpoint(struct usbd_pipe *);
+static usbd_status xhci_stop_endpoint_cmd(struct xhci_softc *,
+    struct xhci_slot *, u_int, uint32_t);
 static usbd_status xhci_stop_endpoint(struct usbd_pipe *);
 
 static void xhci_host_dequeue(struct xhci_ring * const);
@@ -699,14 +701,70 @@ bool
 xhci_suspend(device_t self, const pmf_qual_t *qual)
 {
 	struct xhci_softc * const sc = device_private(self);
-	size_t i, j, bn;
+	size_t i, j, bn, dci;
 	int port;
 	uint32_t v;
+	usbd_status err;
+	bool ok = false;
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 
+	mutex_enter(&sc->sc_lock);
+
 	/*
-	 * First, suspend all the ports:
+	 * Block issuance of new commands, and wait for all pending
+	 * commands to complete.
+	 */
+	KASSERT(sc->sc_suspender == NULL);
+	sc->sc_suspender = curlwp;
+	while (sc->sc_command_addr != 0)
+		cv_wait(&sc->sc_cmdbusy_cv, &sc->sc_lock);
+
+	/*
+	 * xHCI Requirements Specification 1.2, May 2019, Sec. 4.23.2:
+	 * xHCI Power Management, p. 342
+	 * https://www.intel.com/content/dam/www/public/us/en/documents/technical-specifications/extensible-host-controler-interface-usb-xhci.pdf#page=342
+	 */
+
+	/*
+	 * `1. Stop all USB activity by issuing Stop Endpoint Commands
+	 *     for Busy endpoints in the Running state.  If the Force
+	 *     Save Context Capability (FSC = ``0'') is not supported,
+	 *     then Stop Endpoint Commands shall be issued for all idle
+	 *     endpoints in the Running state as well.  The Stop
+	 *     Endpoint Command causes the xHC to update the respective
+	 *     Endpoint or Stream Contexts in system memory, e.g. the
+	 *     TR Dequeue Pointer, DCS, etc. fields.  Refer to
+	 *     Implementation Note "0".'
+	 */
+	for (i = 0; i < sc->sc_maxslots; i++) {
+		struct xhci_slot *xs = &sc->sc_slots[i];
+
+		/* Skip if the slot is not in use.  */
+		if (xs->xs_idx == 0)
+			continue;
+
+		for (dci = XHCI_DCI_SLOT; dci <= XHCI_MAX_DCI; dci++) {
+			/* Skip if the endpoint is not Running.  */
+			/* XXX What about Busy?  */
+			if (xhci_get_epstate(sc, xs, dci) !=
+			    XHCI_EPSTATE_RUNNING)
+				continue;
+
+			/* Stop endpoint.  */
+			err = xhci_stop_endpoint_cmd(sc, xs, dci,
+			    XHCI_TRB_3_SUSP_EP_BIT);
+			if (err) {
+				device_printf(self, "failed to stop endpoint"
+				    " slot %zu dci %zu err %d\n",
+				    i, dci, err);
+				goto out;
+			}
+		}
+	}
+
+	/*
+	 * Next, suspend all the ports:
 	 *
 	 * xHCI Requirements Specification 1.2, May 2019, Sec. 4.15:
 	 * Suspend-Resume, pp. 276-283
@@ -767,31 +825,10 @@ xhci_suspend(device_t self, const pmf_qual_t *qual)
 				device_printf(self,
 				    "suspend timeout on bus %zu port %zu\n",
 				    bn, i);
-				return false;
+				goto out;
 			}
 		}
 	}
-
-	/*
-	 * xHCI Requirements Specification 1.2, May 2019, Sec. 4.23.2:
-	 * xHCI Power Management, p. 342
-	 * https://www.intel.com/content/dam/www/public/us/en/documents/technical-specifications/extensible-host-controler-interface-usb-xhci.pdf#page=342
-	 */
-
-	/*
-	 * `1. Stop all USB activity by issuing Stop Endpoint Commands
-	 *     for Busy endpoints in the Running state.  If the Force
-	 *     Save Context Capability (FSC = ``0'') is not supported,
-	 *     then Stop Endpoint Commands shall be issued for all Idle
-	 *     endpoints in the Running state as well.  The Stop
-	 *     Endpoint Command causes the xHC to update the respective
-	 *     Endpoint or Stream Contexts in system memory, e.g. the
-	 *     TR Dequeue Pointer, DCS, etc. fields.  Refer to
-	 *     Implementation Note "0".'
-	 *
-	 * XXX Not entirely sure if this is necessary for us; also it
-	 * probably has to happen before suspending the ports.
-	 */
 
 	/*
 	 * `2. Ensure that the Command Ring is in the Stopped state
@@ -856,10 +893,14 @@ xhci_suspend(device_t self, const pmf_qual_t *qual)
 	 */
 	if (xhci_op_read_4(sc, XHCI_USBSTS) & XHCI_STS_SRE) {
 		device_printf(self, "suspend error, USBSTS.SRE\n");
-		return false;
+		goto out;
 	}
 
-	return true;
+	/* Success!  */
+	ok = true;
+
+out:	mutex_exit(&sc->sc_lock);
+	return ok;
 }
 
 bool
@@ -869,8 +910,12 @@ xhci_resume(device_t self, const pmf_qual_t *qual)
 	size_t i, j, bn, dci;
 	int port;
 	uint32_t v;
+	bool ok = false;
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
+
+	mutex_enter(&sc->sc_lock);
+	KASSERT(sc->sc_suspender);
 
 	/*
 	 * xHCI Requirements Specification 1.2, May 2019, Sec. 4.23.2:
@@ -916,7 +961,7 @@ xhci_resume(device_t self, const pmf_qual_t *qual)
 	}
 	if (i >= XHCI_WAIT_RSS) {
 		device_printf(self, "suspend timeout, USBSTS.RSS\n");
-		return false;
+		goto out;
 	}
 
 	/*
@@ -1008,7 +1053,7 @@ xhci_resume(device_t self, const pmf_qual_t *qual)
 				device_printf(self,
 				    "resume timeout on bus %zu port %zu\n",
 				    bn, i);
-				return false;
+				goto out;
 			}
 		}
 	}
@@ -1043,10 +1088,18 @@ xhci_resume(device_t self, const pmf_qual_t *qual)
 	 */
 	if (xhci_op_read_4(sc, XHCI_USBSTS) & XHCI_STS_SRE) {
 		device_printf(self, "resume error, USBSTS.SRE\n");
-		return false;
+		goto out;
 	}
 
-	return true;
+	/* Resume command issuance.  */
+	sc->sc_suspender = NULL;
+	cv_broadcast(&sc->sc_cmdbusy_cv);
+
+	/* Success!  */
+	ok = true;
+
+out:	mutex_exit(&sc->sc_lock);
+	return ok;
 }
 
 bool
@@ -1863,13 +1916,11 @@ xhci_reset_endpoint(struct usbd_pipe *pipe)
  * Should be called with sc_lock held.
  */
 static usbd_status
-xhci_stop_endpoint(struct usbd_pipe *pipe)
+xhci_stop_endpoint_cmd(struct xhci_softc *sc, struct xhci_slot *xs, u_int dci,
+    uint32_t trb3flags)
 {
-	struct xhci_softc * const sc = XHCI_PIPE2SC(pipe);
-	struct xhci_slot * const xs = pipe->up_dev->ud_hcpriv;
 	struct xhci_soft_trb trb;
 	usbd_status err;
-	const u_int dci = xhci_ep_get_dci(pipe->up_endpoint->ue_edesc);
 
 	XHCIHIST_FUNC();
 	XHCIHIST_CALLARGS("slot %ju dci %ju", xs->xs_idx, dci, 0, 0);
@@ -1880,11 +1931,27 @@ xhci_stop_endpoint(struct usbd_pipe *pipe)
 	trb.trb_2 = 0;
 	trb.trb_3 = XHCI_TRB_3_SLOT_SET(xs->xs_idx) |
 	    XHCI_TRB_3_EP_SET(dci) |
-	    XHCI_TRB_3_TYPE_SET(XHCI_TRB_TYPE_STOP_EP);
+	    XHCI_TRB_3_TYPE_SET(XHCI_TRB_TYPE_STOP_EP) |
+	    trb3flags;
 
 	err = xhci_do_command_locked(sc, &trb, USBD_DEFAULT_TIMEOUT);
 
 	return err;
+}
+
+static usbd_status
+xhci_stop_endpoint(struct usbd_pipe *pipe)
+{
+	struct xhci_softc * const sc = XHCI_PIPE2SC(pipe);
+	struct xhci_slot * const xs = pipe->up_dev->ud_hcpriv;
+	const u_int dci = xhci_ep_get_dci(pipe->up_endpoint->ue_edesc);
+
+	XHCIHIST_FUNC();
+	XHCIHIST_CALLARGS("slot %ju dci %ju", xs->xs_idx, dci, 0, 0);
+
+	KASSERT(mutex_owned(&sc->sc_lock));
+
+	return xhci_stop_endpoint_cmd(sc, xs, dci, 0);
 }
 
 /*
@@ -3127,7 +3194,9 @@ xhci_do_command_locked(struct xhci_softc * const sc,
 	KASSERTMSG(!cpu_intr_p() && !cpu_softintr_p(), "called from intr ctx");
 	KASSERT(mutex_owned(&sc->sc_lock));
 
-	while (sc->sc_command_addr != 0)
+	while (sc->sc_command_addr != 0 &&
+	    sc->sc_suspender != NULL &&
+	    sc->sc_suspender != curlwp)
 		cv_wait(&sc->sc_cmdbusy_cv, &sc->sc_lock);
 
 	/*
