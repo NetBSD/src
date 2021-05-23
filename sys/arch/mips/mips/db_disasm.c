@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.42 2021/04/12 11:35:22 simonb Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.43 2021/05/23 23:22:55 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.42 2021/04/12 11:35:22 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.43 2021/05/23 23:22:55 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.42 2021/04/12 11:35:22 simonb Exp $"
 
 #include <machine/db_machdep.h>
 
+#include <ddb/db_access.h>
 #include <ddb/db_user.h>
 #include <ddb/db_interface.h>
 #include <ddb/db_output.h>
@@ -218,11 +219,6 @@ static void print_addr(db_addr_t);
  * "next instruction" does NOT mean the next instruction to
  * be executed but the 'linear' next instruction.
  */
-#ifdef _LP64
-#define	DISASM_KERN_START	MIPS_XKSEG_START
-#else
-#define	DISASM_KERN_START	MIPS_KSEG0_START
-#endif
 db_addr_t
 db_disasm(db_addr_t loc, bool altfmt)
 {
@@ -232,19 +228,14 @@ db_disasm(db_addr_t loc, bool altfmt)
 	 * Take some care with addresses to not UTLB here as it
 	 * loses the current debugging context.  KSEG2 and XKSEG
 	 * are not checked.
+	 * Update: db_read_bytes is supposed to do that, and now
+	 * does, so we can use that.
+	 *
+	 * XXX db_read_bytes_can't return failure but instead zeros
+	 * the output. That's ok here, but if ever improved the
+	 * proper thing here on error is to return the original loc.
 	 */
-	if (loc < (db_addr_t)DISASM_KERN_START) {
-#ifdef _KERNEL
-		if (ufetch_32((void *)loc, &instr) != 0) {
-			db_printf("invalid address.\n");
-			return loc;
-		}
-#else
-		return loc;
-#endif
-	} else {
-		instr =  *(uint32_t *)loc;
-	}
+	db_read_bytes(loc, sizeof(instr), (void *)&instr);
 
 	return (db_disasm_insn(instr, loc, altfmt));
 }

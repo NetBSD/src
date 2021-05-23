@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.93 2021/04/12 02:23:41 mrg Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.94 2021/05/23 23:22:55 dholland Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.93 2021/04/12 02:23:41 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.94 2021/05/23 23:22:55 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
@@ -180,6 +180,23 @@ void
 db_read_bytes(vaddr_t addr, size_t size, char *data)
 {
 	const char *src = (char *)addr;
+	int err;
+
+	/*
+	 * If asked to fetch from userspace, do it safely.
+	 * Note that MIPS_KSEG0_START is the proper address for
+	 * both 32-bit and 64-bit kernels.
+	 */
+	if (addr < (vaddr_t)MIPS_KSEG0_START) {
+		err = copyin(src, data, size);
+		if (err) {
+#ifdef DDB
+			db_printf("address %p is invalid\n", src);
+#endif
+			memset(data, 0, size);
+		}
+		return;
+	}
 
 	if (size <= 8 && (size & (size-1)) == 0 && (addr & (size-1)) == 0
 	    && ((uintptr_t)data & (size-1)) == 0) {
@@ -205,6 +222,18 @@ db_write_bytes(vaddr_t addr, size_t size, const char *data)
 {
 	char *p = (char *)addr;
 	size_t n = size;
+	int err;
+
+	/* If asked to fetch from userspace, do it safely */
+	if (addr < (vaddr_t)MIPS_KSEG0_START) {
+		err = copyout(data, p, size);
+		if (err) {
+#ifdef DDB
+			db_printf("address %p is invalid\n", p);
+#endif
+		}
+		return;
+	}
 
 	if (size <= 8 && (size & (size-1)) == 0 && (addr & (size-1)) == 0
 	    && ((uintptr_t)data & (size-1)) == 0) {
