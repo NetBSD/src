@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.84 2020/09/03 02:09:09 thorpej Exp $ */
+/* $NetBSD: pmap.h,v 1.85 2021/05/24 03:43:24 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -144,7 +144,8 @@ struct pmap {	/* pmaps are aligned to COHERENCY_UNIT boundaries */
 	unsigned long		pm_cpus;	/* [ 8] CPUs using pmap */
 	unsigned long		pm_needisync;	/* [16] CPUs needing isync */
 	struct pmap_statistics	pm_stats;	/* [32] statistics */
-	long			pm_count;	/* [40] reference count */
+	unsigned int		pm_count;	/* [40] reference count */
+	unsigned int		__pm_spare;	/* [44] spare field */
 	TAILQ_ENTRY(pmap)	pm_list;	/* [48] list of all pmaps */
 	/* -- COHERENCY_UNIT boundary -- */
 	struct pmap_asn_info	pm_asni[];	/* [64] ASN information */
@@ -273,11 +274,12 @@ do {									\
 
 #define	pmap_pte_prot_chg(pte, np) ((np) ^ pmap_pte_prot(pte))
 
-static __inline pt_entry_t *pmap_l2pte(pmap_t, vaddr_t, pt_entry_t *);
-static __inline pt_entry_t *pmap_l3pte(pmap_t, vaddr_t, pt_entry_t *);
-
-#define	pmap_l1pte(pmap, v)						\
-	(&(pmap)->pm_lev1map[l1pte_index((vaddr_t)(v))])
+static __inline pt_entry_t *
+pmap_l1pte(pmap_t pmap, vaddr_t v)
+{
+	KASSERT(pmap->pm_lev1map != NULL);
+	return &pmap->pm_lev1map[l1pte_index(v)];
+}
 
 static __inline pt_entry_t *
 pmap_l2pte(pmap_t pmap, vaddr_t v, pt_entry_t *l1pte)
@@ -287,11 +289,11 @@ pmap_l2pte(pmap_t pmap, vaddr_t v, pt_entry_t *l1pte)
 	if (l1pte == NULL) {
 		l1pte = pmap_l1pte(pmap, v);
 		if (pmap_pte_v(l1pte) == 0)
-			return (NULL);
+			return NULL;
 	}
 
 	lev2map = (pt_entry_t *)ALPHA_PHYS_TO_K0SEG(pmap_pte_pa(l1pte));
-	return (&lev2map[l2pte_index(v)]);
+	return &lev2map[l2pte_index(v)];
 }
 
 static __inline pt_entry_t *
@@ -302,16 +304,16 @@ pmap_l3pte(pmap_t pmap, vaddr_t v, pt_entry_t *l2pte)
 	if (l2pte == NULL) {
 		l1pte = pmap_l1pte(pmap, v);
 		if (pmap_pte_v(l1pte) == 0)
-			return (NULL);
+			return NULL;
 
 		lev2map = (pt_entry_t *)ALPHA_PHYS_TO_K0SEG(pmap_pte_pa(l1pte));
 		l2pte = &lev2map[l2pte_index(v)];
 		if (pmap_pte_v(l2pte) == 0)
-			return (NULL);
+			return NULL;
 	}
 
 	lev3map = (pt_entry_t *)ALPHA_PHYS_TO_K0SEG(pmap_pte_pa(l2pte));
-	return (&lev3map[l3pte_index(v)]);
+	return &lev3map[l3pte_index(v)];
 }
 
 /*
