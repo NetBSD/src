@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.56 2021/05/13 06:15:29 simonb Exp $	*/
+/*	$NetBSD: fp.S,v 1.57 2021/05/24 07:27:39 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -773,7 +773,7 @@ branchc1:
 
 	.rdata
 branchc1_tbl:
-	PTR_WORD bcfalse		# br 0
+	PTR_WORD bcfalse	# br 0
 	PTR_WORD bctrue		# br 1
 	PTR_WORD bcfalse_l	# br 2
 	PTR_WORD bctrue_l	# br 3
