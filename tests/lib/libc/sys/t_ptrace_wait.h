@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.h,v 1.32 2020/06/22 12:21:02 rin Exp $	*/
+/*	$NetBSD: t_ptrace_wait.h,v 1.33 2021/05/24 10:44:06 gson Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -648,7 +648,9 @@ trigger_ill(void)
 
 	/* Illegal instruction causes CPU trap, translated to SIGILL */
 #ifdef PTRACE_ILLEGAL_ASM
+#ifndef __mips__ /* To avoid GXemul crash */
 	PTRACE_ILLEGAL_ASM;
+#endif
 #else
 	/* port me */
 #endif
