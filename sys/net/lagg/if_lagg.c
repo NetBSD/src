@@ -1,7 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.3 2021/05/24 06:08:28 yamaguchi Exp $	*/
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.3 2021/05/24 06:08:28 yamaguchi Exp $");
+/*	$NetBSD: if_lagg.c,v 1.4 2021/05/24 13:42:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -21,6 +18,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.3 2021/05/24 06:08:28 yamaguchi Exp $"
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.4 2021/05/24 13:42:58 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
