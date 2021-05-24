@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.277 2021/05/23 19:13:27 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.278 2021/05/24 03:43:24 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008, 2020
@@ -135,7 +135,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.277 2021/05/23 19:13:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.278 2021/05/24 03:43:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -667,17 +667,17 @@ pmap_tlb_init(void)
 }
 
 static inline void
-pmap_tlb_context_init(struct pmap_tlb_context * const tlbctx)
+pmap_tlb_context_init(struct pmap_tlb_context * const tlbctx, uintptr_t flags)
 {
 	/* Initialize the minimum number of fields. */
 	tlbctx->t_addrdata[0] = 0;
-	tlbctx->t_addrdata[1] = 0;
+	tlbctx->t_addrdata[1] = flags;
 	tlbctx->t_pmap = NULL;
 	LIST_INIT(&tlbctx->t_freeptq);
 }
 
 static void
-pmap_tlb_shootdown(pmap_t const pmap, vaddr_t const va,
+pmap_tlb_shootdown_internal(pmap_t const pmap, vaddr_t const va,
     pt_entry_t const pte_bits, struct pmap_tlb_context * const tlbctx)
 {
 	KASSERT(pmap != NULL);
@@ -730,6 +730,14 @@ pmap_tlb_shootdown(pmap_t const pmap, vaddr_t const va,
 }
 
 static void
+pmap_tlb_shootdown(pmap_t const pmap, vaddr_t const va,
+    pt_entry_t const pte_bits, struct pmap_tlb_context * const tlbctx)
+{
+	KASSERT((TLB_CTX_FLAGS(tlbctx) & TLB_CTX_F_PV) == 0);
+	pmap_tlb_shootdown_internal(pmap, va, pte_bits, tlbctx);
+}
+
+static void
 pmap_tlb_shootdown_all_user(pmap_t const pmap, pt_entry_t const pte_bits,
     struct pmap_tlb_context * const tlbctx)
 {
@@ -743,29 +751,42 @@ pmap_tlb_shootdown_all_user(pmap_t const pmap, pt_entry_t const pte_bits,
 		TLB_CTX_SET_FLAG(tlbctx, TLB_CTX_F_IMB);
 	}
 
-	KASSERT(tlbctx->t_pmap == NULL || tlbctx->t_pmap == pmap);
-	tlbctx->t_pmap = pmap;
+	if (TLB_CTX_FLAGS(tlbctx) & TLB_CTX_F_PV) {
+		if (tlbctx->t_pmap == NULL || tlbctx->t_pmap == pmap) {
+			if (tlbctx->t_pmap == NULL) {
+				pmap_reference(pmap);
+				tlbctx->t_pmap = pmap;
+			}
+		} else {
+			TLB_CTX_SET_FLAG(tlbctx, TLB_CTX_F_MULTI);
+		}
+	} else {
+		KASSERT(tlbctx->t_pmap == NULL || tlbctx->t_pmap == pmap);
+		tlbctx->t_pmap = pmap;
+	}
 
 	TLB_CTX_SET_ALLVA(tlbctx);
 }
 
 static void
-pmap_tlb_shootdown_pv(const pv_entry_t pv, pt_entry_t const pte_bits,
-    struct pmap_tlb_context * const tlbctx)
+pmap_tlb_shootdown_pv(pmap_t const pmap, vaddr_t const va,
+    pt_entry_t const pte_bits, struct pmap_tlb_context * const tlbctx)
 {
-	uintptr_t flags = TLB_CTX_F_PV;
+
+	KASSERT(TLB_CTX_FLAGS(tlbctx) & TLB_CTX_F_PV);
 
 	TLB_COUNT(shootdown_pv);
 
-	if (tlbctx->t_pmap == NULL || tlbctx->t_pmap == pv->pv_pmap) {
+	if (tlbctx->t_pmap == NULL || tlbctx->t_pmap == pmap) {
 		if (tlbctx->t_pmap == NULL) {
-			pmap_reference(pv->pv_pmap);
+			pmap_reference(pmap);
+			tlbctx->t_pmap = pmap;
 		}
-		pmap_tlb_shootdown(pv->pv_pmap, pv->pv_va, pte_bits, tlbctx);
+		pmap_tlb_shootdown_internal(pmap, va, pte_bits, tlbctx);
 	} else {
 		TLB_COUNT(shootdown_pv_multi);
-		flags |= TLB_CTX_F_MULTI;
-		if (pv->pv_pmap == pmap_kernel()) {
+		uintptr_t flags = TLB_CTX_F_MULTI;
+		if (pmap == pmap_kernel()) {
 			KASSERT(pte_bits & PG_ASM);
 			flags |= TLB_CTX_F_ASM;
 		} else {
@@ -780,8 +801,8 @@ pmap_tlb_shootdown_pv(const pv_entry_t pv, pt_entry_t const pte_bits,
 			flags |= TLB_CTX_F_IMB;
 		}
 		TLB_CTX_SET_ALLVA(tlbctx);
+		TLB_CTX_SET_FLAG(tlbctx, flags);
 	}
-	TLB_CTX_SET_FLAG(tlbctx, flags);
 }
 
 static void
@@ -1034,6 +1055,7 @@ pmap_tlb_shootnow(const struct pmap_tlb_context * const tlbctx)
 #if defined(MULTIPROCESSOR)
 void
 pmap_tlb_shootdown_ipi(struct cpu_info * const ci,
+
     struct trapframe * const tf __unused)
 {
 	KASSERT(tlb_context != NULL);
@@ -1367,7 +1389,7 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	 */
 	memset(pmap_kernel(), 0, sizeof(struct pmap));
 	pmap_kernel()->pm_lev1map = kernel_lev1map;
-	pmap_kernel()->pm_count = 1;
+	atomic_store_relaxed(&pmap_kernel()->pm_count, 1);
 	/* Kernel pmap does not have ASN info. */
 	TAILQ_INSERT_TAIL(&pmap_all_pmaps, pmap_kernel(), pm_list);
 
@@ -1550,7 +1572,7 @@ pmap_create(void)
 	pmap = pool_cache_get(&pmap_pmap_cache, PR_WAITOK);
 	memset(pmap, 0, sizeof(*pmap));
 
-	pmap->pm_count = 1;
+	atomic_store_relaxed(&pmap->pm_count, 1);
 
 	/*
 	 * There are only kernel mappings at this point; give the pmap
@@ -1597,7 +1619,8 @@ pmap_destroy(pmap_t pmap)
 #endif
 
 	PMAP_MP(membar_exit());
-	if (atomic_dec_ulong_nv(&pmap->pm_count) > 0)
+	KASSERT(atomic_load_relaxed(&pmap->pm_count) > 0);
+	if (atomic_dec_uint_nv(&pmap->pm_count) > 0)
 		return;
 
 	rw_enter(&pmap_growkernel_lock, RW_READER);
@@ -1610,7 +1633,7 @@ pmap_destroy(pmap_t pmap)
 	mutex_exit(&pmap_all_pmaps_lock);
 
 	pool_cache_put(&pmap_l1pt_cache, pmap->pm_lev1map);
-	pmap->pm_lev1map = NULL;
+	pmap->pm_lev1map = (pt_entry_t *)0xdeadbeefUL;
 
 	rw_exit(&pmap_growkernel_lock);
 
@@ -1625,13 +1648,15 @@ pmap_destroy(pmap_t pmap)
 void
 pmap_reference(pmap_t pmap)
 {
+	unsigned int newcount __diagused;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_reference(%p)\n", pmap);
 #endif
 
-	atomic_inc_ulong(&pmap->pm_count);
+	newcount = atomic_inc_uint_nv(&pmap->pm_count);
+	KASSERT(newcount != 0);
 	PMAP_MP(membar_enter());
 }
 
@@ -1773,7 +1798,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 {
 	struct pmap_tlb_context tlbctx;
 
-	pmap_tlb_context_init(&tlbctx);
+	pmap_tlb_context_init(&tlbctx, 0);
 	pmap_remove_internal(pmap, sva, eva, &tlbctx);
 }
 
@@ -1801,7 +1826,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		printf("pmap_page_protect(%p, %x)\n", pg, prot);
 #endif
 
-	pmap_tlb_context_init(&tlbctx);
+	pmap_tlb_context_init(&tlbctx, TLB_CTX_F_PV);
 
 	switch (prot) {
 	case VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE:
@@ -1820,7 +1845,8 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 			if (opte & (PG_KWE | PG_UWE)) {
 				atomic_store_relaxed(pv->pv_pte,
 				    opte & ~(PG_KWE | PG_UWE));
-				pmap_tlb_shootdown_pv(pv, opte, &tlbctx);
+				pmap_tlb_shootdown_pv(pv->pv_pmap, pv->pv_va,
+				    opte, &tlbctx);
 			}
 			PMAP_UNLOCK(pv->pv_pmap);
 		}
@@ -1840,13 +1866,17 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	mutex_enter(lock);
 	for (pv = md->pvh_list; pv != NULL; pv = nextpv) {
 		pt_entry_t pte_bits;
+		pmap_t pmap;
+		vaddr_t va;
 
 		nextpv = pv->pv_next;
 
 		PMAP_LOCK(pv->pv_pmap);
-		pte_bits = pmap_remove_mapping(pv->pv_pmap, pv->pv_va,
-		    pv->pv_pte, false, NULL, &tlbctx);
-		pmap_tlb_shootdown_pv(pv, pte_bits, &tlbctx);
+		pmap = pv->pv_pmap;
+		va = pv->pv_va;
+		pte_bits = pmap_remove_mapping(pmap, va, pv->pv_pte,
+		    false, NULL, &tlbctx);
+		pmap_tlb_shootdown_pv(pmap, va, pte_bits, &tlbctx);
 		PMAP_UNLOCK(pv->pv_pmap);
 	}
 	mutex_exit(lock);
@@ -1875,7 +1905,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		    pmap, sva, eva, prot);
 #endif
 
-	pmap_tlb_context_init(&tlbctx);
+	pmap_tlb_context_init(&tlbctx, 0);
 
 	if ((prot & VM_PROT_READ) == VM_PROT_NONE) {
 		pmap_remove_internal(pmap, sva, eva, &tlbctx);
@@ -1931,7 +1961,7 @@ pmap_enter_tlb_shootdown(pmap_t const pmap, vaddr_t const va,
 {
 	struct pmap_tlb_context tlbctx;
 
-	pmap_tlb_context_init(&tlbctx);
+	pmap_tlb_context_init(&tlbctx, 0);
 	pmap_tlb_shootdown(pmap, va, pte_bits, &tlbctx);
 	if (locked) {
 		PMAP_UNLOCK(pmap);
@@ -1959,7 +1989,7 @@ pmap_enter_l2pt_delref(pmap_t const pmap, pt_entry_t * const l1pte,
 	 * for this VPT index.
 	 */
 
-	pmap_tlb_context_init(&tlbctx);
+	pmap_tlb_context_init(&tlbctx, 0);
 	pmap_l2pt_delref(pmap, l1pte, l2pte, &tlbctx);
 	PMAP_UNLOCK(pmap);
 	pmap_tlb_shootnow(&tlbctx);
@@ -1987,7 +2017,7 @@ pmap_enter_l3pt_delref(pmap_t const pmap, vaddr_t const va,
 	 * for this VPT index.
 	 */
 
-	pmap_tlb_context_init(&tlbctx);
+	pmap_tlb_context_init(&tlbctx, 0);
 	pmap_l3pt_delref(pmap, va, pte, &tlbctx);
 	PMAP_UNLOCK(pmap);
 	pmap_tlb_shootnow(&tlbctx);
@@ -2332,7 +2362,7 @@ pmap_kremove(vaddr_t va, vsize_t size)
 		    va, size);
 #endif
 
-	pmap_tlb_context_init(&tlbctx);
+	pmap_tlb_context_init(&tlbctx, 0);
 
 	KASSERT(va >= VM_MIN_KERNEL_ADDRESS);
 
@@ -2728,7 +2758,7 @@ pmap_clear_modify(struct vm_page *pg)
 		printf("pmap_clear_modify(%p)\n", pg);
 #endif
 
-	pmap_tlb_context_init(&tlbctx);
+	pmap_tlb_context_init(&tlbctx, TLB_CTX_F_PV);
 
 	PMAP_HEAD_TO_MAP_LOCK();
 	lock = pmap_pvh_lock(pg);
@@ -2767,7 +2797,7 @@ pmap_clear_reference(struct vm_page *pg)
 		printf("pmap_clear_reference(%p)\n", pg);
 #endif
 
-	pmap_tlb_context_init(&tlbctx);
+	pmap_tlb_context_init(&tlbctx, TLB_CTX_F_PV);
 
 	PMAP_HEAD_TO_MAP_LOCK();
 	lock = pmap_pvh_lock(pg);
@@ -2983,7 +3013,8 @@ pmap_changebit(struct vm_page *pg, pt_entry_t set, pt_entry_t mask,
 		npte = (opte | set) & mask;
 		if (npte != opte) {
 			atomic_store_relaxed(pte, npte);
-			pmap_tlb_shootdown_pv(pv, opte, tlbctx);
+			pmap_tlb_shootdown_pv(pv->pv_pmap, pv->pv_va,
+			    opte, tlbctx);
 		}
 		PMAP_UNLOCK(pv->pv_pmap);
 	}
@@ -3081,7 +3112,7 @@ pmap_emulate_reference(struct lwp *l, vaddr_t v, int user, int type)
 	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
 	struct pmap_tlb_context tlbctx;
 
-	pmap_tlb_context_init(&tlbctx);
+	pmap_tlb_context_init(&tlbctx, TLB_CTX_F_PV);
 
 	PMAP_HEAD_TO_MAP_LOCK();
 	lock = pmap_pvh_lock(pg);
@@ -3267,10 +3298,7 @@ pmap_pv_remove(pmap_t pmap, struct vm_page *pg, vaddr_t va, bool dolock,
 		if (pmap == pv->pv_pmap && va == pv->pv_va)
 			break;
 
-#ifdef DEBUG
-	if (pv == NULL)
-		panic("pmap_pv_remove: not in pv table");
-#endif
+	KASSERT(pv != NULL);
 
 	*pvp = pv->pv_next;
 
