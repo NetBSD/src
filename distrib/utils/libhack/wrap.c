@@ -28,9 +28,10 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: wrap.c,v 1.1 2021/03/09 00:06:44 christos Exp $");
+__RCSID("$NetBSD: wrap.c,v 1.2 2021/05/24 21:34:06 christos Exp $");
 
 #include <tcpd.h>
+#include <stdlib.h>
 
 struct request_info *
 request_init(struct request_info *ri, ...)
@@ -53,4 +54,6 @@ hosts_access(struct request_info *ri)
 void
 refuse(struct request_info *ri)
 {
+	/* We don't need to wait for inetd, or eat the connection data here */
+	exit(EXIT_FAILURE);
 }
