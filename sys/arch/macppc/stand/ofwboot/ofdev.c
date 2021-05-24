@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.28 2021/02/28 20:27:40 thorpej Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.29 2021/05/24 11:13:44 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -103,7 +103,7 @@ devclose(struct open_file *of)
 	uint32_t cells[2];
 	struct of_dev *op = of->f_devdata;
 
-	cells[0] = (uint32_t)op->dmabuf;
+	cells[0] = (uintptr_t)op->dmabuf;
 	cells[1] = MAXPHYS;
 
 	if (op->type == OFDEV_NET)
@@ -439,7 +439,7 @@ devopen(struct open_file *of, const char *name, char **file)
 	ofdev.dmabuf = NULL;
 	cells[0] = MAXPHYS;
 	OF_call_method("dma-alloc", handle, 1, 1, (int *)cells);
-	ofdev.dmabuf = (void *)cells[1];
+	ofdev.dmabuf = (void*)(uintptr_t)cells[1];
 	if (!strcmp(buf, "block")) {
 		ofdev.type = OFDEV_DISK;
 		ofdev.bsize = DEV_BSIZE;
