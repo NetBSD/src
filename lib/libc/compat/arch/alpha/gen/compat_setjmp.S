@@ -1,4 +1,4 @@
-/* $NetBSD: compat_setjmp.S,v 1.2 2014/01/23 03:08:50 christos Exp $ */
+/* $NetBSD: compat_setjmp.S,v 1.3 2021/05/25 00:14:41 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -114,7 +114,9 @@ END(setjmp)
 
 LEAF(longjmp, 2)
 	LDGP(pv)
-	stq	a1, (( 0 + 4) * 8)(a0)		/* save return value */
+	bne	a1, 1f				/* val != 0, just go */
+	ldiq	a1, 1				/* val = 1 otherwise */
+1:	stq	a1, (( 0 + 4) * 8)(a0)		/* save return value */
 	CALL(sigreturn)				/* use sigreturn to return */
 
 botch:
