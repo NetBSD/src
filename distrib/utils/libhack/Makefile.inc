@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.38 2021/03/09 00:06:44 christos Exp $
+# $NetBSD: Makefile.inc,v 1.39 2021/05/25 10:58:41 martin Exp $
 #
 # Include this fragment to build libhack.o
 # It is .o and not .a to make sure these are the
@@ -70,7 +70,7 @@ CPPFLAGS.gethost.c+= -I${HACKSRC}/../../../lib/libc/net
 
 .if !defined(LIB)
 libhack.o: ${HACKOBJS}
-	${LD} -r -o $@ ${.ALLSRC}
+	${LD} -r ${HACK_LD_FLAGS} -o $@ ${.ALLSRC}
 .endif
 
 .if 1
