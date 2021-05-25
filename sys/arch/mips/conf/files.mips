@@ -1,4 +1,4 @@
-#	$NetBSD: files.mips,v 1.83 2021/03/23 13:22:40 simonb Exp $
+#	$NetBSD: files.mips,v 1.84 2021/05/25 09:19:28 simonb Exp $
 #
 
 defflag	opt_cputype.h		NOFPU FPEMUL
@@ -75,7 +75,7 @@ file	arch/mips/mips/cache_ls2.c		mips3_loongson2
 file	arch/mips/mips/cache_r4k.c		mips3 | mips4
 file	arch/mips/mips/cache_r5k.c		mips3 | mips4
 file	arch/mips/mips/cache_r5k_subr.S		mips3 | mips4
-file	arch/mips/mips/cache_r10k.c	(mips3|mips4) & enable_mips4_cache_r10k
+file	arch/mips/mips/cache_r10k.c		(mips3|mips4) & enable_mips4_cache_r10k
 file	arch/mips/mips/cache_octeon.c		mips64_octeon
 file	arch/mips/mips/cache_mipsNN.c		mips32|mips32r2|mips64|mips64r2
 file	arch/mips/mips/cache_r4k_pcache16.S	mips3|mips4|mips32|mips32r2|mips64|mips64r2
