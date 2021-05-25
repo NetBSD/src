@@ -1,4 +1,4 @@
-/* $NetBSD: compat__setjmp.S,v 1.4 2014/01/24 10:19:18 skrll Exp $ */
+/* $NetBSD: compat__setjmp.S,v 1.5 2021/05/25 00:14:41 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -115,7 +115,9 @@ LEAF(_longjmp, 2)
 	ldt	ft0, (69 * 8)(a0)		/* get sc_fpcr */
 	mt_fpcr	ft0				/* and restore it. */
 
-	mov	a1, v0				/* return second arg */
+	bne	a1, 1f				/* val != 0, just go */
+	ldiq	a1, 1				/* val = 1 otherwise */
+1:	mov	a1, v0				/* return second arg */
 	RET
 
 botch:
