@@ -1,7 +1,7 @@
 /*
  * $OpenBSD: common.h,v 1.26 2006/03/11 19:41:30 otto Exp $
  * $DragonFly: src/usr.bin/patch/common.h,v 1.5 2008/08/10 23:50:12 joerg Exp $
- * $NetBSD: common.h,v 1.21 2015/07/24 18:56:44 christos Exp $
+ * $NetBSD: common.h,v 1.22 2021/05/25 11:25:59 cjep Exp $
  */
 
 /*
@@ -41,7 +41,7 @@
 
 #define MAXHUNKSIZE 100000	/* is this enough lines? */
 #define INITHUNKMAX 125		/* initial dynamic allocation size */
-#define MAXLINELEN 8192
+#define INITLINELEN 8192
 #define BUFFERSIZE 1024
 #define LINENUM_MAX LONG_MAX
 
@@ -71,8 +71,8 @@ typedef long    LINENUM;	/* must be signed */
 
 extern mode_t	filemode;
 
-extern char	buf[MAXLINELEN];/* general purpose buffer */
-extern size_t	buf_len;
+extern char	*buf;		/* general purpose buffer */
+extern size_t	bufsz;		/* general purpose buffer size */
 
 extern bool	using_plan_a;	/* try to keep everything in memory */
 extern bool	out_of_mem;	/* ran out of memory in plan a */

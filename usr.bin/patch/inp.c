@@ -1,7 +1,7 @@
 /*
  * $OpenBSD: inp.c,v 1.34 2006/03/11 19:41:30 otto Exp $
  * $DragonFly: src/usr.bin/patch/inp.c,v 1.6 2007/09/29 23:11:10 swildner Exp $
- * $NetBSD: inp.c,v 1.26 2018/06/18 18:33:31 christos Exp $
+ * $NetBSD: inp.c,v 1.27 2021/05/25 11:25:59 cjep Exp $
  */
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: inp.c,v 1.26 2018/06/18 18:33:31 christos Exp $");
+__RCSID("$NetBSD: inp.c,v 1.27 2021/05/25 11:25:59 cjep Exp $");
 
 #include <sys/types.h>
 #include <sys/file.h>
@@ -142,11 +142,11 @@ static bool
 plan_a(const char *filename)
 {
 	int		ifd, statfailed, devnull, pstat;
-	char		*p, *s, lbuf[MAXLINELEN];
+	char		*p, *s, *lbuf; 
 	struct stat	filestat;
 	off_t		i;
 	ptrdiff_t	sz;
-	size_t		iline, lines_allocated;
+	size_t		iline, lines_allocated, lbufsz;
 	pid_t		pid;
 	char		*argp[4] = {NULL};
 
@@ -193,9 +193,14 @@ plan_a(const char *filename)
  
  		filebase = basename(tmp_filename1);
  		filedir = dirname(tmp_filename2);
+
+	lbufsz = INITLINELEN;
+	if ((lbuf = malloc(bufsz)) == NULL)
+		pfatal("allocating line buffer");
+	lbuf[0] = '\0';
  
 #define try(f, a1, a2, a3) \
-	(snprintf(lbuf, sizeof lbuf, f, a1, a2, a3), stat(lbuf, &cstat) == 0)
+	(snprintf(lbuf, lbufsz, f, a1, a2, a3), stat(lbuf, &cstat) == 0)
 
 		/*
 		 * else we can't write to it but it's not under a version
@@ -391,7 +396,7 @@ plan_b(const char *filename)
 	unlink(TMPINNAME);
 	if ((tifd = open(TMPINNAME, O_EXCL | O_CREAT | O_WRONLY, 0666)) < 0)
 		pfatal("can't open file %s", TMPINNAME);
-	while (fgets(buf, buf_len, ifp) != NULL) {
+	while (getline(&buf, &bufsz, ifp) != -1) {
 		if (revision != NULL && !found_revision && rev_in_string(buf))
 			found_revision = true;
 		if ((i = strlen(buf)) > maxlen)

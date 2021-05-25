@@ -1,7 +1,7 @@
 /*
  * $OpenBSD: patch.c,v 1.45 2007/04/18 21:52:24 sobrado Exp $
  * $DragonFly: src/usr.bin/patch/patch.c,v 1.10 2008/08/10 23:39:56 joerg Exp $
- * $NetBSD: patch.c,v 1.31 2021/02/20 09:17:13 nia Exp $
+ * $NetBSD: patch.c,v 1.32 2021/05/25 11:25:59 cjep Exp $
  */
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: patch.c,v 1.31 2021/02/20 09:17:13 nia Exp $");
+__RCSID("$NetBSD: patch.c,v 1.32 2021/05/25 11:25:59 cjep Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -53,8 +53,8 @@ __RCSID("$NetBSD: patch.c,v 1.31 2021/02/20 09:17:13 nia Exp $");
 
 mode_t		filemode = 0644;
 
-char		buf[MAXLINELEN];	/* general purpose buffer */
-size_t		buf_len = sizeof(buf);
+char		*buf;			/* general purpose buffer */
+size_t		bufsz;			/* general purpose buffer size */
 
 bool		using_plan_a = true;	/* try to keep everything in memory */
 bool		out_of_mem = false;	/* ran out of memory in plan a */
@@ -156,6 +156,11 @@ main(int argc, char *argv[])
 	LINENUM	where = 0, newwhere, fuzz, mymaxfuzz;
 	const	char *tmpdir;
 	char	*v;
+
+	bufsz = INITLINELEN;
+	if ((buf = malloc(bufsz)) == NULL)
+		pfatal("allocating input buffer");
+	buf[0] = '\0';
 
 	setbuf(stderr, serrbuf);
 	for (i = 0; i < MAXFILEC; i++)
