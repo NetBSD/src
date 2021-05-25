@@ -1,7 +1,7 @@
 /*
  * $OpenBSD: util.c,v 1.32 2006/03/11 19:41:30 otto Exp $
  * $DragonFly: src/usr.bin/patch/util.c,v 1.9 2007/09/29 23:11:10 swildner Exp $
- * $NetBSD: util.c,v 1.29 2020/11/17 20:49:12 rhialto Exp $
+ * $NetBSD: util.c,v 1.30 2021/05/25 11:25:59 cjep Exp $
  */
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: util.c,v 1.29 2020/11/17 20:49:12 rhialto Exp $");
+__RCSID("$NetBSD: util.c,v 1.30 2021/05/25 11:25:59 cjep Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -70,7 +70,7 @@ move_file(const char *from, const char *to)
 		fromfd = open(from, O_RDONLY);
 		if (fromfd < 0)
 			pfatal("internal error, can't reopen %s", from);
-		while ((i = read(fromfd, buf, buf_len)) > 0)
+		while ((i = read(fromfd, buf, bufsz)) > 0)
 			if (write(STDOUT_FILENO, buf, i) != i)
 				pfatal("write failed");
 		close(fromfd);
@@ -178,7 +178,7 @@ copy_file(const char *from, const char *to)
 	fromfd = open(from, O_RDONLY, 0);
 	if (fromfd < 0)
 		pfatal("internal error, can't reopen %s", from);
-	while ((i = read(fromfd, buf, buf_len)) > 0)
+	while ((i = read(fromfd, buf, bufsz)) > 0)
 		if (write(tofd, buf, i) != i)
 			pfatal("write to %s failed", to);
 	close(fromfd);
@@ -269,7 +269,7 @@ ask(const char *fmt, ...)
 	if (ttyfd < 0)
 		ttyfd = open(_PATH_TTY, O_RDONLY);
 	if (ttyfd >= 0) {
-		if ((nr = read(ttyfd, buf, buf_len)) > 0 &&
+		if ((nr = read(ttyfd, buf, bufsz)) > 0 &&
 		    buf[nr - 1] == '\n')
 			buf[nr - 1] = '\0';
 	}
