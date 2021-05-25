@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.58 2021/05/16 11:11:37 rillig Exp $
+# $NetBSD: Makefile,v 1.59 2021/05/25 19:22:18 rillig Exp $
 
 NOMAN=		# defined
 MAX_MESSAGE=	344		# see lint1/err.c
@@ -67,7 +67,6 @@ FILES+=		d_gcc_compound_statements1.c
 FILES+=		d_gcc_compound_statements2.c
 FILES+=		d_gcc_compound_statements3.c
 FILES+=		d_gcc_extension.c
-FILES+=		d_gcc_extension.exp
 FILES+=		d_gcc_func.c
 FILES+=		d_gcc_variable_array_init.c
 FILES+=		d_incorrect_array_size.c
