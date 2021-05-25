@@ -1,4 +1,4 @@
-#	$NetBSD: t_lagg.sh,v 1.1 2021/05/17 04:07:44 yamaguchi Exp $
+#	$NetBSD: t_lagg.sh,v 1.2 2021/05/25 00:38:30 yamaguchi Exp $
 #
 # Copyright (c) 2021 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -500,7 +500,7 @@ lagg_lacp_ipv4_cleanup()
 	cleanup
 }
 
-atf_test_case lagg_lacp_ipv6
+atf_test_case lagg_lacp_ipv6 cleanup
 lagg_lacp_ipv6_head()
 {
 
