@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.52 2020/04/05 14:36:43 sevan Exp $
+#	$NetBSD: Makefile,v 1.53 2021/05/25 10:58:41 martin Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -12,9 +12,15 @@ IMAGESIZE=	2880k
 MAKEFS_FLAGS+=	-f 15
 
 WARNS=		1
-DBG=		-Os
+
+# No point in using 64bit binaries (if building for MACHINE_ARCH=powerpc64)
+# on the ramdisk, keep it small
+DBG=		-Os -m32
+HACK_LD_FLAGS=	-m elf32ppc_nbsd
+LDFLAGS+=	-m32 -Wl,-melf32ppc_nbsd
 
 CRUNCHBIN=	ramdiskbin
+CRUNCHENV+=	LDFLAGS=${LDFLAGS:Q}
 LISTS=		${.CURDIR}/list ${DISTRIBDIR}/common/list.sysinst
 MTREECONF=	${DISTRIBDIR}/common/mtree.common
 IMAGEENDIAN=	be
