@@ -1,4 +1,4 @@
-# $NetBSD: t_patch.sh,v 1.2 2021/02/20 08:59:24 nia Exp $
+# $NetBSD: t_patch.sh,v 1.3 2021/05/25 11:55:42 cjep Exp $
 #
 # Copyright (c) 2020, 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -67,7 +67,6 @@ long_lines_head()
 
 long_lines_body()
 {
-	atf_expect_fail "PR bin/54620"
 	patch_lines 10000
 }
 
