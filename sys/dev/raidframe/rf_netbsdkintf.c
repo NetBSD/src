@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.393 2021/05/24 07:43:15 mrg Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.394 2021/05/26 06:11:50 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.393 2021/05/24 07:43:15 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.394 2021/05/26 06:11:50 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_autoconfig.h"
@@ -2264,6 +2264,7 @@ int
 raidfetch_component_label(RF_Raid_t *raidPtr, RF_RowCol_t col)
 {
 	KASSERT(raidPtr->bytesPerSector);
+
 	return raidread_component_label(raidPtr->bytesPerSector,
 	    raidPtr->Disks[col].dev,
 	    raidPtr->raid_cinfo[col].ci_vp,
@@ -2291,15 +2292,54 @@ raidflush_component_label(RF_Raid_t *raidPtr, RF_RowCol_t col)
 	    raidPtr->raid_cinfo[col].ci_vp, label);
 }
 
+/*
+ * Swap the label endianness.
+ *
+ * Everything in the component label is 4-byte-swapped except the version,
+ * which is kept in the byte-swapped version at all times, and indicates
+ * for the writer that a swap is necessary.
+ *
+ * For reads it is expected that out_label == clabel, but writes expect
+ * separate labels so only the re-swapped label is written out to disk,
+ * leaving the swapped-except-version internally.
+ *
+ * Only support swapping label version 2.
+ */
+static void
+rf_swap_label(RF_ComponentLabel_t *clabel, RF_ComponentLabel_t *out_label)
+{
+	int	*in, *out, *in_last;
+
+	KASSERT(clabel->version == bswap32(RF_COMPONENT_LABEL_VERSION));
+
+	/* Don't swap the label, but do copy it. */
+	out_label->version = clabel->version;
+
+	in = &clabel->serial_number;
+	in_last = &clabel->future_use2[42];
+	out = &out_label->serial_number;
+
+	for (; in < in_last; in++, out++)
+		*out = bswap32(*in);
+}
 
 static int
 raidread_component_label(unsigned secsize, dev_t dev, struct vnode *b_vp,
     RF_ComponentLabel_t *clabel)
 {
-	return raidread_component_area(dev, b_vp, clabel,
+	int error;
+
+	error = raidread_component_area(dev, b_vp, clabel,
 	    sizeof(RF_ComponentLabel_t),
 	    rf_component_info_offset(),
 	    rf_component_info_size(secsize));
+
+	if (error == 0 &&
+	    clabel->version == bswap32(RF_COMPONENT_LABEL_VERSION)) {
+		rf_swap_label(clabel, clabel);
+	}
+
+	return error;
 }
 
 /* ARGSUSED */
@@ -2340,15 +2380,24 @@ raidread_component_area(dev_t dev, struct vnode *b_vp, void *data,
 	return(error);
 }
 
-
 static int
 raidwrite_component_label(unsigned secsize, dev_t dev, struct vnode *b_vp,
     RF_ComponentLabel_t *clabel)
 {
-	return raidwrite_component_area(dev, b_vp, clabel,
+	RF_ComponentLabel_t *clabel_write = clabel;
+	RF_ComponentLabel_t lclabel;
+	int error;
+
+	if (clabel->version == bswap32(RF_COMPONENT_LABEL_VERSION)) {
+		clabel_write = &lclabel;
+		rf_swap_label(clabel, clabel_write);
+	}
+	error = raidwrite_component_area(dev, b_vp, clabel_write,
 	    sizeof(RF_ComponentLabel_t),
 	    rf_component_info_offset(),
 	    rf_component_info_size(secsize), 0);
+
+	return error;
 }
 
 /* ARGSUSED */
@@ -2962,7 +3011,8 @@ rf_reasonable_label(RF_ComponentLabel_t *clabel, uint64_t numsecs)
 {
 
 	if ((clabel->version==RF_COMPONENT_LABEL_VERSION_1 ||
-	     clabel->version==RF_COMPONENT_LABEL_VERSION) &&
+	     clabel->version==RF_COMPONENT_LABEL_VERSION ||
+	     clabel->version == bswap32(RF_COMPONENT_LABEL_VERSION)) &&
 	    (clabel->clean == RF_RAID_CLEAN ||
 	     clabel->clean == RF_RAID_DIRTY) &&
 	    clabel->row >=0 &&
@@ -3404,8 +3454,9 @@ rf_cleanup_config_set(RF_ConfigSet_t *cset)
 void
 raid_init_component_label(RF_Raid_t *raidPtr, RF_ComponentLabel_t *clabel)
 {
-	/* current version number */
-	clabel->version = RF_COMPONENT_LABEL_VERSION;
+	/* avoid over-writing byteswapped version. */
+	if (clabel->version != bswap32(RF_COMPONENT_LABEL_VERSION))
+		clabel->version = RF_COMPONENT_LABEL_VERSION;
 	clabel->serial_number = raidPtr->serial_number;
 	clabel->mod_counter = raidPtr->mod_counter;
 
@@ -3795,6 +3846,9 @@ rf_get_component_label(RF_Raid_t *raidPtr, void *data)
 		return EINVAL;
 	raid_clabel = raidget_component_label(raidPtr, column);
 	memcpy(clabel, raid_clabel, sizeof *clabel);
+	/* Fix-up for userland. */
+	if (clabel->version == bswap32(RF_COMPONENT_LABEL_VERSION))
+		clabel->version = RF_COMPONENT_LABEL_VERSION;
 
 	return 0;
 }
