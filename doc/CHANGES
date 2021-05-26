@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2808 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2809 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -375,3 +375,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	wskbd(4): Added German Neo 2 layout. [nia 20210511]
 	spiflash(4): Add support for Rockchip RK3328. [mrg 20210514]
 	lagg(4): Added a link-aggregation interface. [yamaguchi 20210517]
+	dhcp: Import version 4.4.2-P1. [christos 20210526]
