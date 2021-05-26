@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.350 2021/05/17 17:12:12 christos Exp $
+#	$NetBSD: build.sh,v 1.351 2021/05/26 21:58:58 christos Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1973,7 +1973,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.350 2021/05/17 17:12:12 christos Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.351 2021/05/26 21:58:58 christos Exp $
 # with these arguments: ${_args}
 #
 
@@ -2299,6 +2299,11 @@ dorump()
 	statusmsg "Rump build&link tests successful"
 }
 
+repro_date() {
+	# try the bsd date fail back the the linux one
+	(date -u -r "$1" 2> /dev/null) || date -u -d "@$1"
+}
+
 setup_mkrepro()
 {
 	if [ ${MKREPRO-no} != "yes" ]; then
@@ -2350,7 +2355,7 @@ setup_mkrepro()
 	done
 
 	[ "${MKREPRO_TIMESTAMP}" != "0" ] || bomb "Failed to compute timestamp"
-	statusmsg2 "MKREPRO_TIMESTAMP" "$(TZ=UTC date -r ${MKREPRO_TIMESTAMP})"
+	statusmsg2 "MKREPRO_TIMESTAMP" "$(repro_date "${MKREPRO_TIMESTAMP}")"
 	export MKREPRO MKREPRO_TIMESTAMP
 }
 
