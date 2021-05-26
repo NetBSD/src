@@ -1,4 +1,4 @@
-/* $NetBSD: efiblock.c,v 1.10 2020/11/28 15:24:05 jmcneill Exp $ */
+/* $NetBSD: efiblock.c,v 1.11 2021/05/26 09:42:36 mrg Exp $ */
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -37,6 +37,13 @@
 
 #include "efiboot.h"
 #include "efiblock.h"
+
+/*
+ * The raidframe support is basic.  Ideally, it should be expanded to
+ * consider raid volumes a first-class citizen like the x86 efiboot does,
+ * but for now, we simply assume each RAID is potentially bootable.
+ */
+#define	RF_PROTECTED_SECTORS	64	/* XXX refer to <.../rf_optnames.h> */
 
 static EFI_HANDLE *efi_block;
 static UINTN efi_nblock;
@@ -217,6 +224,10 @@ efi_block_find_partitions_disklabel(struct efi_block_dev *bdev, struct mbr_secto
 		case FS_MSDOS:
 		case FS_BSDLFS:
 			break;
+		case FS_RAID:
+			p->p_size -= RF_PROTECTED_SECTORS;
+			p->p_offset += RF_PROTECTED_SECTORS;
+			break;
 		default:
 			continue;
 		}
@@ -225,7 +236,7 @@ efi_block_find_partitions_disklabel(struct efi_block_dev *bdev, struct mbr_secto
 		bpart->index = n;
 		bpart->bdev = bdev;
 		bpart->type = EFI_BLOCK_PART_DISKLABEL;
-		bpart->disklabel.secsize = le32toh(d.d_secsize);
+		bpart->disklabel.secsize = d.d_secsize;
 		bpart->disklabel.part = *p;
 		efi_block_generate_hash_mbr(bpart, mbr);
 		TAILQ_INSERT_TAIL(&bdev->partitions, bpart, entries);
@@ -310,6 +321,10 @@ efi_block_find_partitions_gpt_entry(struct efi_block_dev *bdev, struct gpt_hdr *
 	bpart->type = EFI_BLOCK_PART_GPT;
 	bpart->gpt.fstype = fstype;
 	bpart->gpt.ent = *ent;
+	if (fstype == FS_RAID) {
+		bpart->gpt.ent.ent_lba_start += RF_PROTECTED_SECTORS;
+		bpart->gpt.ent.ent_lba_end -= RF_PROTECTED_SECTORS;
+	}
 	memcpy(bpart->hash, ent->ent_guid, sizeof(bpart->hash));
 	TAILQ_INSERT_TAIL(&bdev->partitions, bpart, entries);
 
@@ -436,7 +451,7 @@ efi_block_probe(void)
 					fstype = FS_ISO9660;
 					break;
 				}
-				if (fstype == FS_BSDFFS || fstype == FS_ISO9660) {
+				if (fstype == FS_BSDFFS || fstype == FS_ISO9660 || fstype == FS_RAID) {
 					char devname[9];
 					snprintf(devname, sizeof(devname), "hd%u%c", bdev->index, bpart->index + 'a');
 					set_default_device(devname);
