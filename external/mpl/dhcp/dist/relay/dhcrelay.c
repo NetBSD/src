@@ -1,11 +1,11 @@
-/*	$NetBSD: dhcrelay.c,v 1.4 2021/05/21 21:07:37 christos Exp $	*/
+/*	$NetBSD: dhcrelay.c,v 1.5 2021/05/26 22:52:32 christos Exp $	*/
 
 /* dhcrelay.c
 
    DHCP/BOOTP Relay Agent. */
 
 /*
- * Copyright(c) 2004-2020 by Internet Systems Consortium, Inc.("ISC")
+ * Copyright(c) 2004-2021 by Internet Systems Consortium, Inc.("ISC")
  * Copyright(c) 1997-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhcrelay.c,v 1.4 2021/05/21 21:07:37 christos Exp $");
+__RCSID("$NetBSD: dhcrelay.c,v 1.5 2021/05/26 22:52:32 christos Exp $");
 
 #include "dhcpd.h"
 #include <syslog.h>
@@ -169,7 +169,7 @@ extern int strip_relay_agent_options(struct interface_info *,
 static void request_v4_interface(const char* name, int flags);
 
 static const char copyright[] =
-"Copyright 2004-2020 Internet Systems Consortium.";
+"Copyright 2004-2021 Internet Systems Consortium.";
 static const char arr[] = "All rights reserved.";
 static const char message[] =
 "Internet Systems Consortium DHCP Relay Agent";
@@ -264,7 +264,7 @@ char *progname;
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhcrelay.c,v 1.4 2021/05/21 21:07:37 christos Exp $");
+__RCSID("$NetBSD: dhcrelay.c,v 1.5 2021/05/26 22:52:32 christos Exp $");
 static const char use_noarg[] = "No argument for command: %s";
 #ifdef RELAY_PORT
 static const char use_port_defined[] = "Port already set, %s inappropriate";
@@ -1465,8 +1465,9 @@ add_relay_agent_options(struct interface_info *ip, struct dhcp_packet *packet,
 	return (length);
 }
 
-#ifdef DHCPv6
 #ifndef UNIT_TEST
+
+#ifdef DHCPv6
 /*
  * Parse a downstream argument: [address%]interface[#index].
  */
@@ -2051,14 +2052,12 @@ process_down6(struct packet *packet) {
 	if (if_id.data != NULL)
 		data_string_forget(&if_id, MDL);
 }
-#endif /* UNIT_TEST */
 
 /*
  * Called by the dispatch packet handler with a decoded packet.
  */
 void
 dhcpv6(struct packet *packet) {
-#ifndef UNIT_TEST
 	struct stream_list *dp;
 
 	/* Try all relay-replies downwards. */
@@ -2081,9 +2080,8 @@ dhcpv6(struct packet *packet) {
 
 	log_info("Can't process packet from interface '%s'.",
 		 packet->interface->name);
-#endif /* UNIT_TEST */
 }
-#endif /* DHCPv6 */
+#endif
 
 /* Stub routines needed for linking with DHCP libraries. */
 void
@@ -2181,3 +2179,4 @@ void request_v4_interface(const char* name, int flags) {
         interface_snorf(tmp, (INTERFACE_REQUESTED | flags));
         interface_dereference(&tmp, MDL);
 }
+#endif /* UNIT_TEST */

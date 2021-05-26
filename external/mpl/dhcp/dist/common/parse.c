@@ -1,11 +1,11 @@
-/*	$NetBSD: parse.c,v 1.3 2020/08/03 21:10:56 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.4 2021/05/26 22:52:31 christos Exp $	*/
 
 /* parse.c
 
    Common parser code for dhcpd and dhclient. */
 
 /*
- * Copyright (c) 2004-2019 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2021 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse.c,v 1.3 2020/08/03 21:10:56 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.4 2021/05/26 22:52:31 christos Exp $");
 
 #include "dhcpd.h"
 #include <isc/util.h>
@@ -5561,13 +5561,14 @@ int parse_X (cfile, buf, max)
 				skip_to_semi (cfile);
 				return 0;
 			}
-			convert_num (cfile, &buf [len], val, 16, 8);
-			if (len++ > max) {
+			if (len >= max) {
 				parse_warn (cfile,
 					    "hexadecimal constant too long.");
 				skip_to_semi (cfile);
 				return 0;
 			}
+			convert_num (cfile, &buf [len], val, 16, 8);
+			len++;
 			token = peek_token (&val, (unsigned *)0, cfile);
 			if (token == COLON)
 				token = next_token (&val,
