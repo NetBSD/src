@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.209 2021/05/06 13:23:36 rin Exp $
+#	$NetBSD: Makefile,v 1.210 2021/05/26 20:19:15 christos Exp $
 
 .include <bsd.own.mk>
 .include <bsd.endian.mk>
@@ -91,7 +91,7 @@ dependall-binstall: dependall-compat
 # Dependencies in SUBDIR below ordered to maximize parallel ability.
 # See above for special treatment for host-mkdep, compat, and binstall.
 #
-SUBDIR=	host-mkdep compat binstall \
+SUBDIR=	host-mkdep compat binstall date \
 	.WAIT mktemp .WAIT sed .WAIT genassym
 .if ${TOOLS_BUILDRUMP} == "no"
 SUBDIR+= cap_mkdb crunchgen ctags gencat hexdump \
