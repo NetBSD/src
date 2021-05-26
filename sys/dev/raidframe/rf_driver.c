@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.136 2019/10/10 03:43:59 christos Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.137 2021/05/26 06:11:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,7 +66,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.136 2019/10/10 03:43:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.137 2021/05/26 06:11:50 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_diagnostic.h"
@@ -300,6 +300,8 @@ rf_Configure(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, RF_AutoConfig_t *ac)
 {
 	RF_RowCol_t col;
 	int rc;
+	bool swapped = false;
+	bool first = true;
 
 	rf_lock_mutex2(configureMutex);
 	configureCount++;
@@ -430,10 +432,21 @@ rf_Configure(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, RF_AutoConfig_t *ac)
 	printf("raid%d: Components:", raidPtr->raidid);
 
 	for (col = 0; col < raidPtr->numCol; col++) {
+		RF_ComponentLabel_t *clabel;
+		bool compswapped;
+
 		printf(" %s", raidPtr->Disks[col].devname);
 		if (RF_DEAD_DISK(raidPtr->Disks[col].status)) {
 			printf("[**FAILED**]");
 		}
+		clabel = raidget_component_label(raidPtr, col);
+		compswapped = clabel->version ==
+			      bswap32(RF_COMPONENT_LABEL_VERSION);
+		if (first)
+			swapped = compswapped;
+		else if (swapped != compswapped)
+			printf("raid%d: Component %d has different endian "
+			       "than first component.", raidPtr->raidid, col);
 	}
 	printf("\n");
 	printf("raid%d: Total Sectors: %" PRIu64 " (%" PRIu64 " MB)\n",
@@ -441,6 +454,9 @@ rf_Configure(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, RF_AutoConfig_t *ac)
 	       raidPtr->totalSectors,
 	       (raidPtr->totalSectors / 1024 *
 				(1 << raidPtr->logBytesPerSector) / 1024));
+	if (swapped)
+		printf("raid%d: Using swapped-endian component labels.\n",
+		    raidPtr->raidid);
 
 	return (0);
 }
