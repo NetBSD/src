@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_compat80.c,v 1.14 2019/12/12 02:15:43 pgoyette Exp $	*/
+/*	$NetBSD: rf_compat80.c,v 1.15 2021/05/26 06:11:50 mrg Exp $	*/
 
 /*
  * Copyright (c) 2017 Matthew R. Green
@@ -215,6 +215,10 @@ rf_get_component_label80(RF_Raid_t *raidPtr, void *data)
 	}
 
 	rf_get_component_label(raidPtr, clabel);
+	/* Fix-up for userland. */
+	if (clabel->version == bswap32(RF_COMPONENT_LABEL_VERSION))
+		clabel->version = RF_COMPONENT_LABEL_VERSION;
+
 	retcode = copyout(clabel, *clabel_ptr, sizeof(**clabel_ptr));
 	RF_Free(clabel, sizeof(*clabel));
 
