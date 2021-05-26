@@ -1,7 +1,7 @@
 /*
  * $OpenBSD: inp.c,v 1.34 2006/03/11 19:41:30 otto Exp $
  * $DragonFly: src/usr.bin/patch/inp.c,v 1.6 2007/09/29 23:11:10 swildner Exp $
- * $NetBSD: inp.c,v 1.27 2021/05/25 11:25:59 cjep Exp $
+ * $NetBSD: inp.c,v 1.28 2021/05/26 07:57:05 cjep Exp $
  */
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: inp.c,v 1.27 2021/05/25 11:25:59 cjep Exp $");
+__RCSID("$NetBSD: inp.c,v 1.28 2021/05/26 07:57:05 cjep Exp $");
 
 #include <sys/types.h>
 #include <sys/file.h>
@@ -194,10 +194,10 @@ plan_a(const char *filename)
  		filebase = basename(tmp_filename1);
  		filedir = dirname(tmp_filename2);
 
-	lbufsz = INITLINELEN;
-	if ((lbuf = malloc(bufsz)) == NULL)
-		pfatal("allocating line buffer");
-	lbuf[0] = '\0';
+		lbufsz = INITLINELEN;
+		if ((lbuf = malloc(bufsz)) == NULL)
+			pfatal("allocating line buffer");
+		lbuf[0] = '\0';
  
 #define try(f, a1, a2, a3) \
 	(snprintf(lbuf, lbufsz, f, a1, a2, a3), stat(lbuf, &cstat) == 0)
