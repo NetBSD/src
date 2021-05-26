@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.115 2018/10/28 18:13:47 kre Exp $
+#	$NetBSD: Makefile,v 1.116 2021/05/26 20:21:52 christos Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 .include <bsd.own.mk>
@@ -33,7 +33,7 @@ CPPFLAGS+= -DUSE_LRAND48
 
 # Reproducible build parameters ... export into sh for NETBSD_SHELL setting
 .if ${MKREPRO_TIMESTAMP:Uno} != "no"
-BUILD_DATE!=	date -u -r "${MKREPRO_TIMESTAMP}" "+%Y%m%d%H%M%S"
+BUILD_DATE!=	${TOOL_DATE} -u -r "${MKREPRO_TIMESTAMP}" "+%Y%m%d%H%M%S"
 # These are (should be) equivalent, but the 2nd is easier to understand
 #CPPFLAGS+= -DBUILD_DATE='"${BUILD_DATE:C/([^0]0?)(00)*$/\1/}Z"'
 CPPFLAGS+= -DBUILD_DATE='"${BUILD_DATE:S/00$//:S/00$//:S/00$//}Z"'
