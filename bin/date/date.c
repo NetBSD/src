@@ -1,4 +1,4 @@
-/* $NetBSD: date.c,v 1.61 2014/09/01 21:42:21 dholland Exp $ */
+/* $NetBSD: date.c,v 1.62 2021/05/26 20:19:51 christos Exp $ */
 
 /*
  * Copyright (c) 1985, 1987, 1988, 1993
@@ -29,6 +29,10 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT(
@@ -40,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: date.c,v 1.61 2014/09/01 21:42:21 dholland Exp $");
+__RCSID("$NetBSD: date.c,v 1.62 2021/05/26 20:19:51 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -90,6 +94,7 @@ main(int argc, char *argv[])
 			nflag = 1;
 			break;
 		case 'd':
+#ifndef HAVE_NBTOOL_CONFIG_H
 			rflag = 1;
 			tval = parsedate(optarg, NULL, NULL);
 			if (tval == -1) {
@@ -97,6 +102,10 @@ main(int argc, char *argv[])
 				    "%s: Unrecognized date format", optarg);
 			}
 			break;
+#else
+			errx(EXIT_FAILURE,
+			    "-d not supported in the tool version");
+#endif
 		case 'j':		/* don't set time */
 			jflag = 1;
 			break;
@@ -330,6 +339,7 @@ setthetime(const char *p)
 	}
 
 	/* set the time */
+#ifndef HAVE_NBTOOL_CONFIG_H
 	if (nflag || netsettime(new_time)) {
 		logwtmp("|", "date", "");
 		if (aflag) {
@@ -346,6 +356,9 @@ setthetime(const char *p)
 		}
 		logwtmp("{", "date", "");
 	}
+#else
+	errx(EXIT_FAILURE, "Can't set the time in the tools version");
+#endif
 
 	if ((p = getlogin()) == NULL)
 		p = "???";
