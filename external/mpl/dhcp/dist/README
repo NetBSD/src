@@ -1,6 +1,6 @@
 	      Internet Systems Consortium DHCP Distribution
-			     Version 4.4.2
-			    22 January 2020
+			     Version 4.4.2-P1
+			       26 May 2021
 
 			      README FILE
 
@@ -97,12 +97,12 @@ directory, it may not have up-to-date information).
 To build the DHCP Distribution, unpack the compressed tar file using
 the tar utility and the gzip command - type something like:
 
-	gunzip dhcp-4.4.2.tar.gz
-	tar xvf dhcp-4.4.2.tar
+	gunzip dhcp-4.4.2-P1.tar.gz
+	tar xvf dhcp-4.4.2-P1.tar
 
 			    CONFIGURING IT
 
-Now, cd to the dhcp-4.4.2 subdirectory that you've just created and
+Now, cd to the dhcp-4.4.2-P1 subdirectory that you've just created and
 configure the source tree by typing:
 
 	./configure
