@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.449 2020/12/29 16:46:44 martin Exp $
+#	$NetBSD: Makefile,v 1.450 2021/05/26 20:22:28 christos Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -77,7 +77,7 @@ PAX_TIMESTAMP=
 BUILD_DATE!=	date -u
 .else
 PAX_TIMESTAMP=--timestamp "${MKREPRO_TIMESTAMP}"
-BUILD_DATE!=	date -u -r "${MKREPRO_TIMESTAMP}"
+BUILD_DATE!=	${TOOL_DATE} -u -r "${MKREPRO_TIMESTAMP}"
 .endif
 
 # MD Makefile.inc may append MD targets to BIN[123].  Make sure all
