@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.140 2021/05/23 21:12:28 riastradh Exp $	*/
+/*	$NetBSD: xhci.c,v 1.141 2021/05/26 22:37:21 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.140 2021/05/23 21:12:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.141 2021/05/26 22:37:21 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -3194,9 +3194,8 @@ xhci_do_command_locked(struct xhci_softc * const sc,
 	KASSERTMSG(!cpu_intr_p() && !cpu_softintr_p(), "called from intr ctx");
 	KASSERT(mutex_owned(&sc->sc_lock));
 
-	while (sc->sc_command_addr != 0 &&
-	    sc->sc_suspender != NULL &&
-	    sc->sc_suspender != curlwp)
+	while (sc->sc_command_addr != 0 ||
+	    (sc->sc_suspender != NULL && sc->sc_suspender != curlwp))
 		cv_wait(&sc->sc_cmdbusy_cv, &sc->sc_lock);
 
 	/*
