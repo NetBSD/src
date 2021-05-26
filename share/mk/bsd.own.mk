@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1247 2021/05/06 13:23:36 rin Exp $
+#	$NetBSD: bsd.own.mk,v 1.1248 2021/05/26 20:21:25 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -423,6 +423,7 @@ MKDEPCXX=	CC=${CXX:Q} ${TOOLDIR}/bin/${_TOOL_PREFIX}mkdep
 PAXCTL=		${TOOLDIR}/bin/${_TOOL_PREFIX}paxctl
 TSORT=		${TOOLDIR}/bin/${_TOOL_PREFIX}tsort -q
 YACC=		${TOOLDIR}/bin/${_TOOL_PREFIX}yacc
+YACC=		${TOOLDIR}/bin/${_TOOL_PREFIX}yacc
 
 TOOL_AMIGAAOUT2BB=	${TOOLDIR}/bin/${_TOOL_PREFIX}amiga-aout2bb
 TOOL_AMIGAELF2BB=	${TOOLDIR}/bin/${_TOOL_PREFIX}amiga-elf2bb
@@ -440,6 +441,7 @@ TOOL_CTAGS=		${TOOLDIR}/bin/${_TOOL_PREFIX}ctags
 TOOL_CTFCONVERT=	${TOOLDIR}/bin/${_TOOL_PREFIX}ctfconvert
 TOOL_CTFMERGE=		${TOOLDIR}/bin/${_TOOL_PREFIX}ctfmerge
 TOOL_CVSLATEST=		${TOOLDIR}/bin/${_TOOL_PREFIX}cvslatest
+TOOL_DATE=		${TOOLDIR}/bin/${_TOOL_PREFIX}date
 TOOL_DB=		${TOOLDIR}/bin/${_TOOL_PREFIX}db
 TOOL_DISKLABEL=		${TOOLDIR}/bin/${_TOOL_PREFIX}disklabel
 TOOL_DTC=		${TOOLDIR}/bin/${_TOOL_PREFIX}dtc
@@ -562,6 +564,7 @@ TOOL_CTAGS=		ctags
 TOOL_CTFCONVERT=	ctfconvert
 TOOL_CTFMERGE=		ctfmerge
 TOOL_CVSLATEST=		cvslatest
+TOOL_DATE=		date
 TOOL_DB=		db
 TOOL_DISKLABEL=		disklabel
 TOOL_DTC=		dtc
