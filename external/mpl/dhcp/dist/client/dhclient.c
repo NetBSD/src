@@ -1,11 +1,11 @@
-/*	$NetBSD: dhclient.c,v 1.3 2020/08/03 21:10:56 christos Exp $	*/
+/*	$NetBSD: dhclient.c,v 1.4 2021/05/26 22:52:31 christos Exp $	*/
 
 /* dhclient.c
 
    DHCP Client. */
 
 /*
- * Copyright (c) 2004-2020 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2021 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhclient.c,v 1.3 2020/08/03 21:10:56 christos Exp $");
+__RCSID("$NetBSD: dhclient.c,v 1.4 2021/05/26 22:52:31 christos Exp $");
 
 #include "dhcpd.h"
 #include <isc/util.h>
@@ -84,7 +84,7 @@ int decline_wait_time = 10; /* Default to 10 secs per, RFC 2131, 3.1.5 */
 #define ASSERT_STATE(state_is, state_shouldbe) {}
 
 #ifndef UNIT_TEST
-static const char copyright[] = "Copyright 2004-2020 Internet Systems Consortium.";
+static const char copyright[] = "Copyright 2004-2021 Internet Systems Consortium.";
 static const char arr [] = "All rights reserved.";
 static const char message [] = "Internet Systems Consortium DHCP Client";
 static const char url [] = "For info, please visit https://www.isc.org/software/dhcp/";
@@ -241,7 +241,7 @@ add_interfaces(char **ifaces, int nifaces)
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhclient.c,v 1.3 2020/08/03 21:10:56 christos Exp $");
+__RCSID("$NetBSD: dhclient.c,v 1.4 2021/05/26 22:52:31 christos Exp $");
 
 #if defined(DHCPv6) && defined(DHCP4o6)
 static void dhcp4o6_poll(void *dummy);
@@ -1230,7 +1230,7 @@ int find_subnet (struct subnet **sp,
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhclient.c,v 1.3 2020/08/03 21:10:56 christos Exp $");
+__RCSID("$NetBSD: dhclient.c,v 1.4 2021/05/26 22:52:31 christos Exp $");
 
 void state_reboot (cpp)
 	void *cpp;

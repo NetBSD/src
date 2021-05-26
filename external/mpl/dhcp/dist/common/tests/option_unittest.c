@@ -1,7 +1,7 @@
-/*	$NetBSD: option_unittest.c,v 1.2 2018/04/07 22:37:29 christos Exp $	*/
+/*	$NetBSD: option_unittest.c,v 1.3 2021/05/26 22:52:31 christos Exp $	*/
 
 /*
- * Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -131,6 +131,89 @@ ATF_TC_BODY(pretty_print_option, tc)
     }
 }
 
+ATF_TC(parse_X);
+
+ATF_TC_HEAD(parse_X, tc)
+{
+    atf_tc_set_md_var(tc, "descr",
+		      "Verify parse_X survices option too big.");
+}
+
+/* Initializes a parse struct from an input buffer of data. */
+static void init_parse(struct parse *cfile, char* name, char *input) {
+    memset(cfile, 0, sizeof(struct parse));
+    cfile->tlname = name;
+    cfile->lpos = cfile->line = 1;
+    cfile->cur_line = cfile->line1;
+    cfile->prev_line = cfile->line2;
+    cfile->token_line = cfile->cur_line;
+    cfile->cur_line[0] = cfile->prev_line[0] = 0;
+    cfile->file = -1;
+    cfile->eol_token = 0;
+
+    cfile->inbuf = input;
+    cfile->buflen = strlen(input);
+    cfile->bufsiz = 0;
+}
+
+/*
+ * This test verifies that parse_X does not overwrite the output
+ * buffer when given input data that exceeds the output buffer
+ * capacity.
+*/
+ATF_TC_BODY(parse_X, tc)
+{
+    struct parse cfile;
+    u_int8_t output[10];
+    unsigned len;
+
+    /* Input hex literal */
+    char *input = "01:02:03:04:05:06:07:08";
+    unsigned expected_len = 8;
+
+    /* Normal output plus two filler bytes */
+    u_int8_t expected_plus_two[] = {
+        0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0xff, 0xff
+    };
+
+    /* Safe output when option is too long */
+    unsigned short_buf_len = 4;
+    u_int8_t expected_too_long[] = {
+        0x01, 0x02, 0x03, 0x04, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
+    };
+
+    /* First we'll run one that works normally */
+    memset(output, 0xff, sizeof(output));
+    init_parse(&cfile, "hex_fits", input);
+
+    len = parse_X(&cfile, output, expected_len);
+
+    // Len should match the expected len.
+    if (len != expected_len) {
+	    atf_tc_fail("parse_X failed, output len: %d", len);
+    }
+
+    // We should not have written anything past the end of the buffer.
+    if (memcmp(output, expected_plus_two, sizeof(output))) {
+	    atf_tc_fail("parse_X failed, output does not match expected");
+    }
+
+    // Now we'll try it with a buffer that's too small.
+    init_parse(&cfile, "hex_too_long", input);
+    memset(output, 0xff, sizeof(output));
+
+    len = parse_X(&cfile, output, short_buf_len);
+
+    // On errors, len should be zero.
+    if (len != 0) {
+	    atf_tc_fail("parse_X failed, we should have had an error");
+    }
+
+    // We should not have written anything past the end of the buffer.
+    if (memcmp(output, expected_too_long, sizeof(output))) {
+        atf_tc_fail("parse_X overwrote buffer!");
+    }
+}
 
 /* This macro defines main() method that will call specified
    test cases. tp and simple_test_case names can be whatever you want
@@ -139,6 +222,7 @@ ATF_TP_ADD_TCS(tp)
 {
     ATF_TP_ADD_TC(tp, option_refcnt);
     ATF_TP_ADD_TC(tp, pretty_print_option);
+    ATF_TP_ADD_TC(tp, parse_X);
 
     return (atf_no_error());
 }
