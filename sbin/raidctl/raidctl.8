@@ -1,4 +1,4 @@
-.\"     $NetBSD: raidctl.8,v 1.74 2018/01/18 00:32:49 mrg Exp $
+.\"     $NetBSD: raidctl.8,v 1.75 2021/05/26 08:23:18 mrg Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,7 @@
 .\" any improvements or extensions that they make and grant Carnegie the
 .\" rights to redistribute these changes.
 .\"
-.Dd January 6, 2016
+.Dd May 26, 2021
 .Dt RAIDCTL 8
 .Os
 .Sh NAME
@@ -166,7 +166,8 @@ All components of the set must be of type
 .Dv RAID
 in the disklabel.
 Note that only certain architectures
-.Pq currently alpha, amd64, i386, pmax, sandpoint, sparc, sparc64, and vax
+.Pq currently arc, alpha, amd64, bebox, cobalt, emips, i386, landisk,
+ofppc, pmax, sandpoint, sgimips, sparc, sparc64, and vax
 support booting a kernel directly from a RAID set.
 Please note that
 .Ic forceroot
@@ -501,6 +502,12 @@ For more details on this the reader is referred to
 the RAIDframe documentation discussed in the
 .Sx HISTORY
 section.
+.Pp
+Since
+.Nx 10
+RAIDframe has been been capable of autoconfiguration of components
+originally configured on opposite endian systems.  The current label
+endianness will be retained.
 .Pp
 See
 .Sx EXAMPLES
@@ -1562,6 +1569,26 @@ RAIDframe is found in the paper "RAIDframe: A Rapid Prototyping Tool
 for RAID Systems", by William V. Courtright II, Garth Gibson, Mark
 Holland, LeAnn Neal Reilly, and Jim Zelenka, and published by the
 Parallel Data Laboratory of Carnegie Mellon University.
+.Pp
+RAIDframe was ported to
+.Nx
+by Greg Oster in 1998, who has maintained it since.
+In 1999, component labels, spares, automatic rebuilding of parity, and
+autoconfiguration of volumes were added.
+In 2000, root on RAID support was added (initially, with no support for
+loading kernels from RAID volumes, which has been added to many ports since.)
+In 2009, support for parity bimap was added, reducing parity resync time
+after a crash.
+In 2010, support for larger the 2TiB and non-512 sector devices was added.
+In 2018, support for 32-bit userland compatibility was added.
+In 2021, support for autoconfiguration from other-endian raid sets was added.
+.Pp
+Support for loading kernels from RAID 1 partitions was added for the
+alpha, pmax and vax ports in 2000, the the sgimips port in 2001,
+the x86 ports in 2003, the arc port in 2005, the landisk, sparc, and
+sparc64 ports in 2006, the cobalt port in 2007, the ofppc port in 2008,
+the bebox port in 2010, the emips port in 2011, and the sandpoint port
+in 2012.
 .Pp
 The
 .Nm
