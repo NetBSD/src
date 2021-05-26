@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.11 2021/05/17 08:50:36 mrg Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.12 2021/05/26 04:28:15 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -54,6 +54,12 @@ getdisklabel(const char *buf, struct disklabel *lp)
 	elp = (const void *)(buf + DEV_BSIZE - sizeof(*dlp));
 	for (dlp = (const void *)buf; dlp <= elp;
 	    dlp = (const void *)((const char *)dlp + sizeof(long))) {
+#if defined(LIBSA_DISKLABEL_EI)
+		if (dlp->d_magic == bswap32(DISKMAGIC) &&
+		    dlp->d_magic2 == bswap32(DISKMAGIC)) {
+			disklabel_swap(__UNCONST(dlp), __UNCONST(dlp));
+		}
+#endif
 		if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC) {
 			if (msg == NULL)
 				msg = nolabel;
