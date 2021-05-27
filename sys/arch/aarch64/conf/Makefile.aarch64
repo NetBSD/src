@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.aarch64,v 1.22 2021/02/10 08:25:01 ryo Exp $
+#	$NetBSD: Makefile.aarch64,v 1.23 2021/05/27 06:19:38 ryo Exp $
 
 # Makefile for NetBSD
 #
@@ -44,7 +44,6 @@ CFLAGS+=	-mno-omit-leaf-frame-pointer
 CFLAGS+=	-fno-optimize-sibling-calls
 .endif
 
-.if ${HAVE_LLVM:Uno} == "yes"
 .if ${ARMV83_PAC:U0} > 0 && ${ARMV85_BTI:U0} > 0
 CFLAGS+=	-mbranch-protection=pac-ret+bti
 .else
@@ -53,16 +52,6 @@ CFLAGS+=	-mbranch-protection=pac-ret
 .endif
 .if ${ARMV85_BTI:U0} > 0
 CFLAGS+=	-mbranch-protection=bti
-.endif
-.endif
-.endif
-
-.if ${HAVE_GCC:U0} > 0
-.if ${ARMV83_PAC:U0} > 0
-CFLAGS+=	-msign-return-address=all
-.endif
-.if ${ARMV85_BTI:U0} > 0
-# XXX: notyet for gcc
 .endif
 .endif
 
