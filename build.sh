@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.351 2021/05/26 21:58:58 christos Exp $
+#	$NetBSD: build.sh,v 1.352 2021/05/27 21:03:26 christos Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1973,7 +1973,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.351 2021/05/26 21:58:58 christos Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.352 2021/05/27 21:03:26 christos Exp $
 # with these arguments: ${_args}
 #
 
@@ -2301,7 +2301,7 @@ dorump()
 
 repro_date() {
 	# try the bsd date fail back the the linux one
-	(date -u -r "$1" 2> /dev/null) || date -u -d "@$1"
+	date -u -r "$1" 2> /dev/null || date -u -d "@$1"
 }
 
 setup_mkrepro()
