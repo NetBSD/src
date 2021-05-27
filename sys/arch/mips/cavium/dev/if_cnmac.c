@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnmac.c,v 1.24 2020/06/23 05:17:13 simonb Exp $	*/
+/*	$NetBSD: if_cnmac.c,v 1.25 2021/05/27 01:43:32 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cnmac.c,v 1.24 2020/06/23 05:17:13 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnmac.c,v 1.25 2021/05/27 01:43:32 simonb Exp $");
 
 /*
  * If no free send buffer is available, free all the sent buffers and bail out.
@@ -278,7 +278,10 @@ cnmac_attach(device_t parent, device_t self, void *aux)
 	octgmx_stats_init(sc->sc_gmx_port);
 
 	callout_init(&sc->sc_tick_misc_ch, 0);
+	callout_setfunc(&sc->sc_tick_misc_ch, cnmac_tick_misc, sc);
+
 	callout_init(&sc->sc_tick_free_ch, 0);
+	callout_setfunc(&sc->sc_tick_free_ch, cnmac_tick_free, sc);
 
 	const int dv_unit = device_unit(self);
 	octfau_op_init(&sc->sc_fau_done,
@@ -998,6 +1001,7 @@ cnmac_start(struct ifnet *ifp)
 			if (wdc > 0)
 				octpko_op_doorbell_write(sc->sc_port,
 				    sc->sc_port, wdc);
+			callout_schedule(&sc->sc_tick_free_ch, 1);
 			return;
 		}
 		/* XXX XXX XXX */
@@ -1031,6 +1035,7 @@ cnmac_start(struct ifnet *ifp)
 
 last:
 	cnmac_send_queue_flush_fetch(sc);
+	callout_schedule(&sc->sc_tick_free_ch, 1);
 }
 
 static void
@@ -1073,8 +1078,8 @@ cnmac_init(struct ifnet *ifp)
 
 	octgmx_set_filter(sc->sc_gmx_port);
 
-	callout_reset(&sc->sc_tick_misc_ch, hz, cnmac_tick_misc, sc);
-	callout_reset(&sc->sc_tick_free_ch, hz, cnmac_tick_free, sc);
+	callout_schedule(&sc->sc_tick_misc_ch, hz);
+	callout_schedule(&sc->sc_tick_free_ch, hz);
 
 	SET(ifp->if_flags, IFF_RUNNING);
 	CLR(ifp->if_flags, IFF_OACTIVE);
@@ -1097,7 +1102,6 @@ cnmac_stop(struct ifnet *ifp, int disable)
 	/* Mark the interface as down and cancel the watchdog timer. */
 	CLR(ifp->if_flags, IFF_RUNNING | IFF_OACTIVE);
 	ifp->if_timer = 0;
-
 }
 
 /* ---- misc */
@@ -1334,13 +1338,8 @@ cnmac_tick_free(void *arg)
 	}
 	/* XXX XXX XXX */
 
-	/* XXX XXX XXX */
-	/* ??? */
-	timo = hz - (100 * sc->sc_ext_callback_cnt);
-	if (timo < 10)
-		 timo = 10;
+	timo = (sc->sc_ext_callback_cnt > 0) ? 1 : hz;
 	callout_schedule(&sc->sc_tick_free_ch, timo);
-	/* XXX XXX XXX */
 	splx(s);
 }
 
