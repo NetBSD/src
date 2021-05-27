@@ -1,4 +1,4 @@
-$NetBSD: README.gcc10,v 1.20 2021/04/25 15:32:24 rin Exp $
+$NetBSD: README.gcc10,v 1.21 2021/05/27 06:58:27 mrg Exp $
 
 
 new stuff:
@@ -48,14 +48,14 @@ earmv7eb	y	b	y	y		y		?	?	?
 earmv7hf	y	y	y	y		y		y	y	n
 earmv7hfeb	y	b	y	y		y		y	y	n
 hppa		y	y	y	y		y		y	y	y
-i386		y	y	y	y		y		y	n[8]	?
+i386		y	y	y	y		y		y	n[8]	y
 ia64		y	y	y	y		y		?	N/A	y
 m68000		y	b	y	y		n[1]		?	?	?
 m68k		y	y	y	y		y[9]		y	?	n
-mipseb		y	y	y	y		y		y	?	?
-mipsel		y	y	y	y		y		y	?	?
-mips64eb	y	y	y	y		y		y	y	?
-mips64el	y	b	y	y		y		y	?	?
+mipseb		y	y	y	y		y		y	?	y
+mipsel		y	y	y	y		y		y	?	y
+mips64eb	y	y	y	y		y		y	y	y
+mips64el	y	b	y	y		y		y	?	y
 powerpc		y	b	y	y		y		y	y	y
 powerpc64	y	b	y	y		y		N/A	N/A	y
 sh3eb		y	b	y	y		y		?	?	?
@@ -85,7 +85,7 @@ architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
 [8] - i386 seems to have a signal delivery issue.  pthread tests hang and then
       complain with eg:
 	  threads_and_exec: q[ 627.6700846] sorry, pid 3154 was killed: orphaned traced process
-      this problem occurs with GCC 9 as well.
+      this problem occurs with GCC 9 as well.  works in qemu?
 [9] - x68k/stand fails with:
       link  loadbsd/loadbsd.x
       loadbsd1: program header #1 is not loadable
