@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.78 2021/05/20 22:36:08 ryo Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.79 2021/05/27 06:11:34 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.78 2021/05/20 22:36:08 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.79 2021/05/27 06:11:34 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1548,6 +1548,7 @@ ixgbe_setup_receive_ring(struct rx_ring *rxr)
 		rxbuf->buf = ixgbe_getjcl(&rxr->jcl_head, M_NOWAIT,
 		    MT_DATA, M_PKTHDR, adapter->rx_mbuf_sz);
 		if (rxbuf->buf == NULL) {
+			rxr->no_jmbuf.ev_count++;
 			error = ENOBUFS;
 			goto fail;
 		}
