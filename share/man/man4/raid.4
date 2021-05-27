@@ -1,4 +1,4 @@
-.\"     $NetBSD: raid.4,v 1.37 2013/12/01 00:17:14 christos Exp $
+.\"     $NetBSD: raid.4,v 1.38 2021/05/27 06:53:37 mrg Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,7 @@
 .\" any improvements or extensions that they make and grant Carnegie the
 .\" rights to redistribute these changes.
 .\"
-.Dd August 6, 2007
+.Dd May 26, 2021
 .Dt RAID 4
 .Os
 .Sh NAME
@@ -449,6 +449,27 @@ The
 .Nm
 driver first appeared in
 .Nx 1.4 .
+.Pp
+RAIDframe was ported to
+.Nx
+by Greg Oster in 1998, who has maintained it since.
+In 1999, component labels, spares, automatic rebuilding of parity, and
+autoconfiguration of volumes were added.
+In 2000, root on RAID support was added (initially, with no support for
+loading kernels from RAID volumes, which has been added to many ports since.)
+In 2009, support for parity bimap was added, reducing parity resync time
+after a crash.
+In 2010, support for larger than 2TiB and non-512 sector devices was added.
+In 2018, support for 32-bit userland compatibility was added.
+In 2021, support for autoconfiguration from other-endian raid sets was added.
+.Pp
+Support for loading kernels from RAID 1 partitions was added for the
+pmax, alpha, i386, and vax ports in 2000, the the sgimips port in 2001,
+the sparc, sparc64 and amd64 ports in 2002, the arc port in 2005, the
+landisk port in 2006, the cobalt port in 2007, the ofppc port in 2008,
+the bebox port in 2010, the emips port in 2011, and the sandpoint port
+in 2012.
+.Pp
 .Sh COPYRIGHT
 .Bd -unfilled
 The RAIDframe Copyright is as follows:
