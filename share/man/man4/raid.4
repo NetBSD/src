@@ -1,4 +1,4 @@
-.\"     $NetBSD: raid.4,v 1.38 2021/05/27 06:53:37 mrg Exp $
+.\"     $NetBSD: raid.4,v 1.39 2021/05/27 07:05:26 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -405,7 +405,7 @@ compromised.
 This includes after system crashes, or before a RAID
 device has been used for the first time.
 Failure to keep parity
-correct will be catastrophic should a component ever fail -- it is
+correct will be catastrophic should a component ever fail \(em it is
 better to use RAID 0 and get the additional space and speed, than it
 is to use parity, but not keep the parity correct.
 At least with RAID
@@ -469,7 +469,6 @@ the sparc, sparc64 and amd64 ports in 2002, the arc port in 2005, the
 landisk port in 2006, the cobalt port in 2007, the ofppc port in 2008,
 the bebox port in 2010, the emips port in 2011, and the sandpoint port
 in 2012.
-.Pp
 .Sh COPYRIGHT
 .Bd -unfilled
 The RAIDframe Copyright is as follows:
