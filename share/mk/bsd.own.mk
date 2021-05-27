@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1251 2021/05/27 17:13:20 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.1252 2021/05/27 17:41:28 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -74,12 +74,11 @@ TOOLCHAIN_MISSING?=	no
 #
 .if ${MACHINE} == "alpha" || \
     ${MACHINE} == "hppa" || \
-    ${MACHINE} == "i386" || \
-    ${MACHINE} == "xen" || \
     ${MACHINE} == "ia64" || \
     ${MACHINE} == "sparc" || \
     ${MACHINE} == "sparc64" || \
     ${MACHINE} == "vax" || \
+    ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "x86_64" || \
     ${MACHINE_CPU} == "aarch64" || \
     ${MACHINE_CPU} == "mips" || \
