@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.141 2021/05/26 22:37:21 riastradh Exp $	*/
+/*	$NetBSD: xhci.c,v 1.142 2021/05/27 11:09:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.141 2021/05/26 22:37:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.142 2021/05/27 11:09:15 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -3437,7 +3437,7 @@ xhci_init_slot(struct usbd_device *dev, uint32_t slot)
 	if (err) {
 		DPRINTFN(1, "failed to allocmem input device context %jd",
 		    err, 0, 0, 0);
-		return USBD_NOMEM;
+		goto bad1;
 	}
 
 	memset(&xs->xs_xr[0], 0, sizeof(xs->xs_xr));
@@ -3445,6 +3445,7 @@ xhci_init_slot(struct usbd_device *dev, uint32_t slot)
 
 	return USBD_NORMAL_COMPLETION;
 
+bad1:
 	usb_freemem(&sc->sc_bus, &xs->xs_dc_dma);
 	xs->xs_idx = 0;
 	return USBD_NOMEM;
