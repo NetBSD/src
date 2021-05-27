@@ -1,4 +1,4 @@
-.\"     $NetBSD: raidctl.8,v 1.76 2021/05/27 06:53:37 mrg Exp $
+.\"     $NetBSD: raidctl.8,v 1.77 2021/05/27 07:03:27 wiz Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -166,8 +166,8 @@ All components of the set must be of type
 .Dv RAID
 in the disklabel.
 Note that only certain architectures
-.Pq currently arc, alpha, amd64, bebox, cobalt, emips, evbarm, i386, landisk,
-ofppc, pmax, riscv, sandpoint, sgimips, sparc, sparc64, and vax
+(currently arc, alpha, amd64, bebox, cobalt, emips, evbarm, i386, landisk,
+ofppc, pmax, riscv, sandpoint, sgimips, sparc, sparc64, and vax)
 support booting a kernel directly from a RAID set.
 Please note that
 .Ic forceroot
@@ -1305,7 +1305,7 @@ arguments.
 .Pp
 Note that kernels can only be directly read from RAID 1 components on
 architectures that support that
-.Pq currently alpha, i386, pmax, sandpoint, sparc, sparc64, and vax .
+(currently alpha, i386, pmax, sandpoint, sparc, sparc64, and vax).
 On those architectures, the
 .Dv FS_RAID
 file system is recognized by the bootblocks, and will properly load the
