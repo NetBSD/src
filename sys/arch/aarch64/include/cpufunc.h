@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.19 2020/12/04 08:29:11 skrll Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.20 2021/05/27 06:11:20 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -63,6 +63,7 @@ extern u_int aarch64_cache_vindexsize;	/* cachesize/way (VIVT/VIPT) */
 extern u_int aarch64_cache_prefer_mask;
 extern u_int cputype;			/* compat arm */
 
+extern int aarch64_bti_enabled;
 extern int aarch64_pan_enabled;
 extern int aarch64_pac_enabled;
 
