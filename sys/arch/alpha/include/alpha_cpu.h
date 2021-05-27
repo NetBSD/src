@@ -1,4 +1,4 @@
-/* $NetBSD: alpha_cpu.h,v 1.53 2020/10/15 00:55:09 thorpej Exp $ */
+/* $NetBSD: alpha_cpu.h,v 1.54 2021/05/27 22:05:24 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -44,6 +44,7 @@
  *	Virtual Memory Management
  *	Kernel Entry Vectors
  *	MMCSR Fault Type Codes
+ *	AESR Fault Code bits
  *	Translation Buffer Invalidation
  *
  * and miscellaneous PALcode operations.
@@ -263,6 +264,18 @@ typedef unsigned long alpha_pt_entry_t;
 #define	ALPHA_KENTRY_IF		3
 #define	ALPHA_KENTRY_UNA	4
 #define	ALPHA_KENTRY_SYS	5
+
+/*
+ * Arithmetic Exception Summary Register.  [OSF/1 PALcode Specific]
+ */
+
+#define	ALPHA_AESR_SWC		__BIT(0)	/* software completion */
+#define	ALPHA_AESR_INV		__BIT(1)	/* invalid operation */
+#define	ALPHA_AESR_DZE		__BIT(2)	/* division by zero */
+#define	ALPHA_AESR_OVF		__BIT(3)	/* overflow */
+#define	ALPHA_AESR_UNF		__BIT(4)	/* underflow */
+#define	ALPHA_AESR_INE		__BIT(5)	/* inexact result */
+#define	ALPHA_AESR_IOV		__BIT(6)	/* integer overflow */
 
 /*
  * MMCSR Fault Type Codes.  [OSF/1 PALcode Specific]
