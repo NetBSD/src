@@ -1,4 +1,4 @@
-/* $NetBSD: tsreg.h,v 1.8 2020/09/23 00:46:17 thorpej Exp $ */
+/* $NetBSD: tsreg.h,v 1.9 2021/05/27 22:11:31 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -167,6 +167,29 @@
 #define P_TBA3		0x02c0
 
 #define P_PCTL		0x0300
+
+#define	PCTL_FDSC	__BIT(0)	/* fast discard enable */
+#define	PCTL_FBTB	__BIT(1)	/* fast back-to-back enable */
+#define	PCTL_THDIS	__BIT(2)	/* disable TLB anti-thrash (debug) */
+#define	PCTL_CHAINDIS	__BIT(3)	/* disable chaining */
+#define	PCTL_TGTLAT	__BIT(4)	/* target latency timers enable */
+#define	PCTL_HOLE	__BIT(5)	/* 512KB->1M hole enable */
+#define	PCTL_MWIN	__BIT(6)	/* monster window enable */
+#define	PCTL_PRIGRP	__BITS(8,14)	/* arbiter priority group */
+#define	PCTL_PPRI	__BIT(15)	/* arbiter priority group for Pchip */
+#define	PCTL_ECCEN	__BIT(18)	/* ECC enable for DMA and SGTE */
+#define	PCTL_PADM	__BIT(19)	/* PADbus mode */
+#define	PCTL_CDQMAX	__BITS(20,23)	/* see manual */
+#define	PCTL_REV	__BITS(24,31)	/* Pchip revision */
+#define	PCTL_CRQMAX	__BITS(32,35)	/* see manual */
+#define	PCTL_PTPMAX	__BITS(36,39)	/* see manual */
+#define	PCTL_PCLKX	__BITS(40,41)	/* PCI clock freq multipler */
+#define	PCTL_FDSDIS	__BIT(42)	/* fast DMA start and SGTE disable */
+#define	PCTL_FDWDIS	__BIT(43)	/* fast DMA read cache block disable */
+#define	PCTL_PTEVRFY	__BIT(44)	/* PTE verify for DMA read */
+#define	PCTL_RPP	__BIT(45)	/* remote Pchip present */
+#define	PCTL_PID	__BITS(46,47)	/* Pchip ID */
+
 #define P_PLAT		0x0340
 	/* reserved	0x0380 */
 #define P_PERROR	0x03c0
