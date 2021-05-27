@@ -1,4 +1,4 @@
-/* $NetBSD: tsvar.h,v 1.14 2020/06/17 03:50:04 thorpej Exp $ */
+/* $NetBSD: tsvar.h,v 1.15 2021/05/27 22:11:31 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -51,6 +51,7 @@ struct tsp_config {
 	struct	alpha_bus_space pc_iot, pc_memt;
 	struct	alpha_pci_chipset pc_pc;
 
+	struct	alpha_bus_dma_tag pc_dmat64_direct;
 	struct	alpha_bus_dma_tag pc_dmat_direct;
 	struct	alpha_bus_dma_tag pc_dmat_sgmap;
 

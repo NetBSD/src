@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.21 2020/09/26 21:07:48 thorpej Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.22 2021/05/27 22:11:31 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -36,6 +36,7 @@
  * Machine-specific definitions for PCI autoconfiguration.
  */
 #define	__HAVE_PCIIDE_MACHDEP_COMPAT_INTR_ESTABLISH
+#define	_PCI_HAVE_DMA64
 
 /*
  * Types provided to machine-independent PCI code

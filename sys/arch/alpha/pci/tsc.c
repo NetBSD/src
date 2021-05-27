@@ -1,4 +1,4 @@
-/* $NetBSD: tsc.c,v 1.25 2021/04/24 23:36:23 thorpej Exp $ */
+/* $NetBSD: tsc.c,v 1.26 2021/05/27 22:11:31 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.25 2021/04/24 23:36:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.26 2021/05/27 22:11:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,7 +231,7 @@ tspattach(device_t parent, device_t self, void *aux)
 	pba.pba_memt = &pcp->pc_memt;
 	pba.pba_dmat =
 	    alphabus_dma_get_tag(&pcp->pc_dmat_direct, ALPHA_BUS_PCI);
-	pba.pba_dmat64 = NULL;
+	pba.pba_dmat64 = &pcp->pc_dmat64_direct;
 	pba.pba_pc = &pcp->pc_pc;
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
