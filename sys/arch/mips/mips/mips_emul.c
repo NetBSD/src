@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_emul.c,v 1.28 2021/05/27 13:32:54 simonb Exp $ */
+/*	$NetBSD: mips_emul.c,v 1.29 2021/05/27 15:00:02 simonb Exp $ */
 
 /*
  * Copyright (c) 1999 Shuichiro URATA.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.28 2021/05/27 13:32:54 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.29 2021/05/27 15:00:02 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,9 @@ __KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.28 2021/05/27 13:32:54 simonb Exp $"
 static inline void	send_sigsegv(intptr_t, uint32_t, struct trapframe *,
 			    uint32_t);
 static inline void	update_pc(struct trapframe *, uint32_t);
+
+static void	mips_emul_ll(uint32_t, struct trapframe *, uint32_t);
+static void	mips_emul_sc(uint32_t, struct trapframe *, uint32_t);
 
 /*
  * MIPS2 LL instruction emulation state
@@ -198,11 +201,11 @@ mips_emul_inst(uint32_t status, uint32_t cause, vaddr_t opc,
 		inst = mips_ufetch32((uint32_t *)opc);
 
 	switch (((InstFmt)inst).FRType.op) {
-	case OP_LWC0:
-		mips_emul_lwc0(inst, tf, cause);
+	case OP_LL:
+		mips_emul_ll(inst, tf, cause);
 		break;
-	case OP_SWC0:
-		mips_emul_swc0(inst, tf, cause);
+	case OP_SC:
+		mips_emul_sc(inst, tf, cause);
 		break;
 	case OP_SPECIAL:
 		mips_emul_special(inst, tf, cause);
@@ -289,7 +292,7 @@ update_pc(struct trapframe *tf, uint32_t cause)
  * MIPS2 LL instruction
  */
 void
-mips_emul_lwc0(uint32_t inst, struct trapframe *tf, uint32_t cause)
+mips_emul_ll(uint32_t inst, struct trapframe *tf, uint32_t cause)
 {
 	intptr_t	vaddr;
 	int16_t		offset;
@@ -322,7 +325,7 @@ mips_emul_lwc0(uint32_t inst, struct trapframe *tf, uint32_t cause)
  * MIPS2 SC instruction
  */
 void
-mips_emul_swc0(uint32_t inst, struct trapframe *tf, uint32_t cause)
+mips_emul_sc(uint32_t inst, struct trapframe *tf, uint32_t cause)
 {
 	intptr_t	vaddr;
 	uint32_t	value;
