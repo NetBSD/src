@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnmac.c,v 1.25 2021/05/27 01:43:32 simonb Exp $	*/
+/*	$NetBSD: if_cnmac.c,v 1.26 2021/05/27 03:23:29 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cnmac.c,v 1.25 2021/05/27 01:43:32 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnmac.c,v 1.26 2021/05/27 03:23:29 simonb Exp $");
 
 /*
  * If no free send buffer is available, free all the sent buffers and bail out.
@@ -122,6 +122,7 @@ static inline void cnmac_send_queue_flush_prefetch(struct cnmac_softc *);
 static inline void cnmac_send_queue_flush_fetch(struct cnmac_softc *);
 static inline void cnmac_send_queue_flush(struct cnmac_softc *);
 static inline void cnmac_send_queue_flush_sync(struct cnmac_softc *);
+static void cnmac_send_queue_check_and_flush(struct cnmac_softc *);
 static inline int cnmac_send_queue_is_full(struct cnmac_softc *);
 static inline void cnmac_send_queue_add(struct cnmac_softc *, struct mbuf *,
     uint64_t *);
@@ -602,6 +603,23 @@ cnmac_send_queue_is_full(struct cnmac_softc *sc)
 
 #endif
 	return 0;
+}
+
+static void
+cnmac_send_queue_check_and_flush(struct cnmac_softc *sc)
+{
+	int s;
+
+	/* XXX XXX XXX */
+	s = splnet();
+	if (sc->sc_soft_req_cnt > 0) {
+		cnmac_send_queue_flush_prefetch(sc);
+		cnmac_send_queue_flush_fetch(sc);
+		cnmac_send_queue_flush(sc);
+		cnmac_send_queue_flush_sync(sc);
+	}
+	splx(s);
+	/* XXX XXX XXX */
 }
 
 /*
@@ -1299,6 +1317,8 @@ cnmac_intr(void *arg)
 		}
 
 		(void)cnmac_recv(sc, work);
+
+		cnmac_send_queue_check_and_flush(sc);
 	}
 
 	_POW_WR8(sc->sc_pow, POW_WQ_INT_OFFSET, wqmask);
@@ -1326,21 +1346,11 @@ cnmac_tick_free(void *arg)
 {
 	struct cnmac_softc *sc = arg;
 	int timo;
-	int s;
 
-	s = splnet();
-	/* XXX XXX XXX */
-	if (sc->sc_soft_req_cnt > 0) {
-		cnmac_send_queue_flush_prefetch(sc);
-		cnmac_send_queue_flush_fetch(sc);
-		cnmac_send_queue_flush(sc);
-		cnmac_send_queue_flush_sync(sc);
-	}
-	/* XXX XXX XXX */
+	cnmac_send_queue_check_and_flush(sc);
 
 	timo = (sc->sc_ext_callback_cnt > 0) ? 1 : hz;
 	callout_schedule(&sc->sc_tick_free_ch, timo);
-	splx(s);
 }
 
 /*
