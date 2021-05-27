@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1249 2021/05/27 06:58:27 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.1250 2021/05/27 11:24:58 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -424,7 +424,6 @@ MKDEP=		CC=${CC:Q} ${TOOLDIR}/bin/${_TOOL_PREFIX}mkdep
 MKDEPCXX=	CC=${CXX:Q} ${TOOLDIR}/bin/${_TOOL_PREFIX}mkdep
 PAXCTL=		${TOOLDIR}/bin/${_TOOL_PREFIX}paxctl
 TSORT=		${TOOLDIR}/bin/${_TOOL_PREFIX}tsort -q
-YACC=		${TOOLDIR}/bin/${_TOOL_PREFIX}yacc
 YACC=		${TOOLDIR}/bin/${_TOOL_PREFIX}yacc
 
 TOOL_AMIGAAOUT2BB=	${TOOLDIR}/bin/${_TOOL_PREFIX}amiga-aout2bb
