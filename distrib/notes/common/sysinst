@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.110 2019/11/27 09:29:25 martin Exp $
+.\"	$NetBSD: sysinst,v 1.111 2021/05/27 15:47:42 martin Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -149,7 +149,7 @@ installing
 .Nx
 on your hard disk.
 .Ic sysinst
-is a menu driven program that guides you through the installation process.
+is a menu-driven program that guides you through the installation process.
 Sometimes questions will be asked, and in many cases
 the default answer will be displayed in brackets
 .Pq Dq \&[\ ]
@@ -171,7 +171,7 @@ detail, but you may find that you do not need this.
 If you want detailed instructions, skip to the next section.
 This section describes a basic installation, using a CD / DVD
 .if \n[i386]:\n[amd64] (or USB stick)
-as the install media.
+as the install medium.
 .Pp
 .(bullet
 What you need.
@@ -402,7 +402,7 @@ The main menu will be displayed.
 .ie \n[alpha]:\n[amd64]:\n[i386] \{\
 Insert the CD into the drive
 .if \n[amd64]:\n[i386] \{\
-or the USB memstick into an available USB port
+or the USB stick into an available USB port
 .\}
 and boot the computer from it.
 .if \n[alpha] \{\
@@ -1381,7 +1381,7 @@ but this is historical practice and not a fixed value.
 .
 .Pp
 You will then be asked to name your disk's disklabel.
-The default response will be ok for most purposes.
+The default response will be OK for most purposes.
 If you choose to name it something different, make sure the name
 is a single word and contains no special characters.
 You don't need to remember this name.
@@ -1473,7 +1473,7 @@ specified location and proceed to the extraction of the sets.
 .To 2 "Installation using FTP"
 .Em Installation using FTP
 .Pp
-To install using ftp, you first need to configure
+To install using FTP, you first need to configure
 your network setup if you haven't already done so.
 .Ic sysinst
 will help you with this, asking if you want to use DHCP.
@@ -1487,9 +1487,9 @@ in answer to this question, and DNS will not be used.
 You will also be asked to specify the host that you want
 to transfer the sets from, the directory on that host,
 the account name and password used to log into that
-host using ftp, and optionally a proxy server to use.
+host using FTP, and optionally a proxy server to use.
 If you did not set up DNS, you will need to
-specify an IP address instead of a hostname for the ftp
+specify an IP address instead of a hostname for the FTP
 server.
 .Pp
 .Ic sysinst

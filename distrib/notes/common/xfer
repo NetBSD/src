@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.76 2019/11/21 19:23:17 martin Exp $
+.\"	$NetBSD: xfer,v 1.77 2021/05/27 15:47:42 martin Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -39,7 +39,7 @@ Installation is supported from several media types, including:
 .It
 .\} \" \n[amiga]
 .
-CD-ROM / DVD / USB-stick
+CD-ROM / DVD / USB stick
 .
 .It
 FTP
@@ -83,7 +83,7 @@ kernel for 32-bit sparc computers which does not boot on \*M systems.
 .Note)
 .\}
 .
-.(tag CD-ROM\ /\ DVD\ /\ USB-stick
+.(tag CD-ROM\ /\ DVD\ /\ USB\ stick
 .
 .if \n[amiga] \{\
 .It Em AmigaDOS partition
@@ -103,7 +103,7 @@ Once you have done this, you can proceed to the next
 step in the installation process, preparing your hard disk.
 .\} \" \n[amiga]
 .
-.It Em CD-ROM / DVD / USB-stick
+.It Em CD-ROM / DVD / USB stick
 .if \n[amiga] \{\
 To install
 .Nx

@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.88 2020/10/21 07:46:22 nia Exp $
+.\"	$NetBSD: postinstall,v 1.89 2021/05/27 15:47:42 martin Exp $
 .\"
 .\" Copyright (c) 1999-2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -308,7 +308,7 @@ modified to match the resolution depth.
 .\}
 .\}
 .It
-Installing third party packages
+Installing third-party packages
 .Pp
 If you wish to install any of the software freely available for
 .Ul
