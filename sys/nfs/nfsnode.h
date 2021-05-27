@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.73 2014/05/30 08:47:45 hannken Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.74 2021/05/27 08:58:29 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -280,7 +280,6 @@ int	nfs_print(void *);
 int	nfs_pathconf(void *);
 int	nfs_advlock(void *);
 int	nfs_getpages(void *);
-int	nfs_putpages(void *);
 int	nfs_kqfilter(void *);
 
 extern int (**nfsv2_vnodeop_p)(void *);
