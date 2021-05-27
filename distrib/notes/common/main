@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.563 2020/07/26 11:05:39 jmcneill Exp $
+.\"	$NetBSD: main,v 1.564 2021/05/27 15:47:42 martin Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -469,7 +469,7 @@ For third-party programs which are not part of the base
 .Nx
 distribution, you will want to explore the
 .Ic pkgsrc
-package management system, which contains thousands of third party software
+package management system, which contains thousands of third-party software
 applications.
 .El
 .\}
@@ -478,11 +478,9 @@ applications.
 .
 The
 .Nx
-Operating System is a fully functional
-.Tn Open Source
-.Ul
-operating system derived from the University of California, Berkeley
-Networking Release 2 (Net/2), 4.4BSD-Lite, and 4.4BSD-Lite2 sources.
+Operating System is a fully functional open-source operating system derived
+from the University of California, Berkeley Networking Release 2 (Net/2),
+4.4BSD-Lite, and 4.4BSD-Lite2 sources.
 .Nx
 runs on many different different system architectures (ports)
 across a variety of distinct CPU families, and is being ported to more.
@@ -589,7 +587,7 @@ can still be found in pkgsrc as
 The
 .Nx
 Foundation is a tax exempt, not-for-profit 501(c)(3) corporation
-that devotes itself to the traditional goals and Spirit of the
+that devotes itself to the traditional goals and spirit of the
 .Nx
 Project and owns the trademark of the word
 .Dq NetBSD .
