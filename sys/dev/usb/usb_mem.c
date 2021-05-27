@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.80 2021/01/05 18:00:21 skrll Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.81 2021/05/27 10:44:29 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.80 2021/01/05 18:00:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.81 2021/05/27 10:44:29 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -118,8 +118,13 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
 	KASSERT(size != 0);
 	KASSERT(mutex_owned(&usb_blk_lock));
 
+#ifdef USB_FRAG_DMA_WORKAROUND
+	flags |= USBMALLOC_ZERO;
+#endif
+
 	bool multiseg = (flags & USBMALLOC_MULTISEG) != 0;
 	bool coherent = (flags & USBMALLOC_COHERENT) != 0;
+	bool zero = (flags & USBMALLOC_ZERO) != 0;
 	u_int dmaflags = coherent ? USB_DMA_COHERENT : 0;
 
 	/* First check the free list. */
@@ -134,6 +139,11 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
 			LIST_REMOVE(b, next);
 			usb_blk_nfree--;
 			*dmap = b;
+			if (zero) {
+				memset(b->kaddr, 0, b->size);
+				bus_dmamap_sync(b->tag, b->map, 0, b->size,
+				    BUS_DMASYNC_PREWRITE);
+			}
 			DPRINTFN(6, "free list size=%ju", b->size, 0, 0, 0);
 			return 0;
 		}
@@ -180,10 +190,7 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
 
 	*dmap = b;
 
-#ifdef USB_FRAG_DMA_WORKAROUND
-	flags |= USBMALLOC_ZERO;
-#endif
-	if ((flags & USBMALLOC_ZERO) != 0) {
+	if (zero) {
 		memset(b->kaddr, 0, b->size);
 		bus_dmamap_sync(b->tag, b->map, 0, b->size,
 		    BUS_DMASYNC_PREWRITE);
