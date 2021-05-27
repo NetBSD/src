@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.122 2020/12/01 04:20:21 rin Exp $
+#	$NetBSD: Makefile.inc,v 1.123 2021/05/27 08:43:02 rin Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -12,12 +12,7 @@ EVBARM_BOARDS=
 EVBARM_BOARDS.${i}=
 .endfor
 
-.if ${MACHINE_ARCH} == "aarch64eb"
-# For AArch64 BE images, we need a LE image for efiboot to be able to
-# read the target file-system (no libsa FFS EI support).
-IMAGEENDIAN=	le
-KERNEL_SETS.arm64+=		GENERIC64
-.elif !empty(MACHINE_ARCH:M*eb)
+.if !empty(MACHINE_ARCH:M*eb)
 IMAGEENDIAN=	be
 # big endian boards
 KERNEL_SETS.armv4+=		IXM1200
@@ -32,6 +27,7 @@ KERNEL_SETS.armv6hf+=	 	RPI2
 
 KERNEL_SETS.armv7+=		GENERIC
 KERNEL_SETS.armv7hf+=		GENERIC
+KERNEL_SETS.arm64+=		GENERIC64
 .else
 IMAGEENDIAN=	le
 # little endian boards
