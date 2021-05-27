@@ -1,4 +1,4 @@
-/*	$NetBSD: dl_print.c,v 1.7 2021/05/27 13:36:33 christos Exp $	*/
+/*	$NetBSD: dl_print.c,v 1.8 2021/05/27 13:40:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,10 +29,10 @@
 #include <sys/types.h>
 
 #ifdef _KERNEL
-__KERNEL_RCSID(0, "$NetBSD: dl_print.c,v 1.7 2021/05/27 13:36:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dl_print.c,v 1.8 2021/05/27 13:40:38 christos Exp $");
 #include <sys/systm.h>
 #else
-__RCSID("$NetBSD: dl_print.c,v 1.7 2021/05/27 13:36:33 christos Exp $");
+__RCSID("$NetBSD: dl_print.c,v 1.8 2021/05/27 13:40:38 christos Exp $");
 #include <stdio.h>
 static const char hexdigits[] = "0123456789abcdef";
 #endif
@@ -43,12 +43,6 @@ lla_snprintf1(char *dst, size_t dst_len, const void *src, size_t src_len)
 {
 	char *dp;
 	const uint8_t *sp, *ep;
-
-	if (src_len == 0 || dst_len < 3) {
-		if (dst_len != 0)
-			dst[0] = '\0';
-		return src_len ? (int)(src_len * 3) - 1 : 0;
-	}
 
 	dp = dst;
 	sp = (const uint8_t *)src;
@@ -64,16 +58,16 @@ lla_snprintf1(char *dst, size_t dst_len, const void *src, size_t src_len)
 			break;
 		*dp++ = ':';
 	}
-	*--dp = '\0';
+	if (dp != dst)
+		*--dp = '\0';
 
-	return (int)(src_len * 3) - 1;
+	return src_len ? (int)(src_len * 3) - 1 : 0;
 }
 
 char *
 lla_snprintf(char *dst, size_t dst_len, const void *src, size_t src_len)
 {
-	if (lla_snprintf1(dst, dst_len, src, src_len) == -1)
-		return NULL;
+	(void)lla_snprintf1(dst, dst_len, src, src_len);
 	return dst;
 }
 
