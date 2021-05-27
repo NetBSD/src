@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.101 2021/03/07 10:42:27 rin Exp $
+#	$NetBSD: Makefile,v 1.102 2021/05/27 04:54:21 jdc Exp $
 
 .include <bsd.own.mk>
 
@@ -335,6 +335,7 @@ SUBDIR+= \
 
 .if ${MACHINE} == "sparc"
 SUBDIR+= \
+	xf86-video-pnozz \
 	xf86-video-suncg14 \
 	xf86-video-suntcx
 
