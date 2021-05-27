@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.94 2021/05/17 08:50:36 mrg Exp $
+#	$NetBSD: Makefile,v 1.95 2021/05/27 06:54:44 mrg Exp $
 
 LIB=	sa
 LIBISPRIVATE?= yes
@@ -80,7 +80,7 @@ CPPFLAGS+=	-DLIBSA_BIENDIAN_SUPPORT
 SRCS+=		byteorder.c
 .endif
 
-SRCS+=	ffsv1.c ffsv2.c
+SRCS+=	ffsv1.c ffsv2.c ffs_bswap.c
 SRCS+=	lfsv1.c lfsv2.c
 SRCS+=	cd9660.c
 SRCS+=	ustarfs.c

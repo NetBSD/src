@@ -1,4 +1,4 @@
-/* $NetBSD: lfsv2.c,v 1.14 2015/08/12 18:28:01 dholland Exp $ */
+/* $NetBSD: lfsv2.c,v 1.15 2021/05/27 06:54:44 mrg Exp $ */
 
 #define	LIBSA_LFS
 #define	REQUIRED_LFS_VERSION	2
@@ -28,6 +28,8 @@
 #define ufs_lblkno(a, b)	lfs_lblkno((a), (b))
 #define dblksize(a, b, c)	lfs_dblksize((a), (b), (c))
 #define FSBTODB(a, b)		LFS_FSBTODB((a), (b))
+
+#define FS_MAGIC		LFS_MAGIC
 
 #define	FSMOD			"lfs"
 
