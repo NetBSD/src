@@ -1,4 +1,4 @@
-# $NetBSD: README.models,v 1.6 2020/08/15 05:41:57 mrg Exp $
+# $NetBSD: README.models,v 1.7 2021/05/28 00:18:27 simonb Exp $
 
 MIPS models and architecture levels
 -----------------------------------
@@ -51,7 +51,7 @@ which have model numbers with fewer zeros.)
 	R4400		MIPS-III (64-bit)	[idt96 A-197]
 	R4600		MIPS-III (64-bit)	[idt96 A-197]
 	R5000		MIPS-IV (64-bit)	[idt96 1-5]
-	R6000		MIPS-II ??
+	R6000		MIPS-II (32-bit) with 64-bit FPU regs
 	R8000		MIPS-IV (64-bit)	[idt96 1-5]
 	R10000		MIPS-IV (64-bit)	[idt96 1-5]
 	R1x000		MIPS-IV (64-bit)
