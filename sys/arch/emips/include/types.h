@@ -1,11 +1,9 @@
-/*	$NetBSD: types.h,v 1.3 2021/04/01 04:35:45 simonb Exp $	*/
+/*	$NetBSD: types.h,v 1.4 2021/05/28 05:42:06 skrll Exp $	*/
 
 #include <mips/types.h>
 
 #define	__HAVE_DEVICE_REGISTER
 #define	__HAVE_GENERIC_SOFT_INTERRUPTS
-/* We'll use the FreeRunning counter everywhere */
-#define	__HAVE_TIMECOUNTER
 
 /* MIPS specific options */
 #define	__HAVE_BOOTINFO_H
