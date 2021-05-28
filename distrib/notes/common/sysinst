@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.111 2021/05/27 15:47:42 martin Exp $
+.\"	$NetBSD: sysinst,v 1.112 2021/05/28 13:55:24 martin Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -509,7 +509,7 @@ See the section on
 When prompted, choose
 .Me CD-ROM
 as the install medium if booted from CD-ROM.
-The default values for the path and device should be ok.
+The default values for the path and device should be OK.
 .if \n[amd64]:\n[i386] \{\
 If you booted using a USB image, choose
 .Me Local directory .
@@ -745,7 +745,7 @@ It will also include instructions for using the menus.
 .Pp
 If you do not intend to use networking during the installation,
 but you do want your machine to be configured for networking once
-it is installed, you should first go to the
+the system is installed, you should first go to the
 .Me Utility menu
 and select the
 .Me Configure network
@@ -1287,7 +1287,7 @@ the option to install a bootselector, which will allow you
 to pick the operating system to start up when your computer
 is (re-)started.
 .Pp
-If everything is ok, you can go on to the next step,
+If everything is OK, you can go on to the next step,
 editing the
 .Nx
 disklabel.
