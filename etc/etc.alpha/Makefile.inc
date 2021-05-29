@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.10 2020/09/19 03:29:57 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.11 2021/05/29 18:48:45 thorpej Exp $
 #
 #	etc.alpha/Makefile.inc -- alpha-specific etc Makefile targets
 #
@@ -8,6 +8,7 @@
 
 KERNEL_SETS=		GENERIC
 
+EXTRA_KERNELS+=		GENERIC.QEMU
 BUILD_KERNELS+=		INSTALL
 
 INSTALLATION_DIRS+=	installation/floppy	\
