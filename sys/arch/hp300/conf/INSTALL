@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.67 2021/05/29 21:06:20 tsutsui Exp $
+# $NetBSD: INSTALL,v 1.68 2021/05/29 21:08:44 tsutsui Exp $
 #
 # INSTALL machine description file
 #
@@ -40,7 +40,7 @@ options 	HP433
 options 	FPSP		# floating point interface for 68040
 
 # Need to set locally
-maxusers	32
+maxusers	8
 
 # Standard system options
 #include 	"conf/compat_netbsd09.config"
