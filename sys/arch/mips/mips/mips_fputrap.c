@@ -1,4 +1,4 @@
-/* $NetBSD: mips_fputrap.c,v 1.11 2021/05/13 03:41:46 simonb Exp $ */
+/* $NetBSD: mips_fputrap.c,v 1.12 2021/05/29 12:35:27 simonb Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -80,12 +80,12 @@ static const struct {
 	unsigned int bit;
 	int code;
 } fpecodes[] = {
-	{ MIPS_FPU_EXCEPTION_UNDERFLOW, FPE_FLTUND },
-	{ MIPS_FPU_EXCEPTION_OVERFLOW, FPE_FLTOVF },
-	{ MIPS_FPU_EXCEPTION_INEXACT, FPE_FLTRES },
-	{ MIPS_FPU_EXCEPTION_DIV0, FPE_FLTDIV },
-	{ MIPS_FPU_EXCEPTION_INVALID, FPE_FLTINV },
-	{ MIPS_FPU_EXCEPTION_UNIMPL, FPE_FLTINV }
+	{ MIPS_FCSR_CAUSE_I, FPE_FLTRES },
+	{ MIPS_FCSR_CAUSE_U, FPE_FLTUND },
+	{ MIPS_FCSR_CAUSE_O, FPE_FLTOVF },
+	{ MIPS_FCSR_CAUSE_Z, FPE_FLTDIV },
+	{ MIPS_FCSR_CAUSE_V, FPE_FLTINV },
+	{ MIPS_FCSR_CAUSE_E, FPE_FLTINV }
 };
 
 static int
