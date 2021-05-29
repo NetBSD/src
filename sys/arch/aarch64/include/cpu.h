@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.35 2021/05/29 06:37:21 skrll Exp $ */
+/* $NetBSD: cpu.h,v 1.36 2021/05/29 06:54:20 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -149,7 +149,22 @@ static __inline struct cpu_info *lwp_getcpu(struct lwp *);
 #undef curlwp
 #define	curlwp			(aarch64_curlwp())
 
-int	cpu_maxproc(void);
+static inline int
+cpu_maxproc(void)
+{
+	/*
+	 * the pmap uses PID for ASID.
+	 */
+	switch (__SHIFTOUT(reg_id_aa64mmfr0_el1_read(), ID_AA64MMFR0_EL1_ASIDBITS)) {
+	case ID_AA64MMFR0_EL1_ASIDBITS_8BIT:
+		return (1U << 8) - 1;
+	case ID_AA64MMFR0_EL1_ASIDBITS_16BIT:
+		return (1U << 16) - 1;
+	default:
+		return 0;
+	}
+}
+
 void	cpu_signotify(struct lwp *l);
 void	cpu_need_proftick(struct lwp *l);
 
