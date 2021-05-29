@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_fpu.c,v 1.16 2021/05/11 14:41:08 simonb Exp $	*/
+/*	$NetBSD: mips_fpu.c,v 1.17 2021/05/29 12:35:27 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_fpu.c,v 1.16 2021/05/11 14:41:08 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_fpu.c,v 1.17 2021/05/29 12:35:27 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/mutex.h>
@@ -336,8 +336,10 @@ mips_fpu_state_load(lwp_t *l, u_int flags)
 #endif
 
 	/*
-	 * load FPCSR and stop COP1 again
+	 * Mask off the exception bits in the FPCSR, load the FPCSR
+	 * and stop COP1 again
 	 */
+	fpcsr &= ~MIPS_FCSR_CAUSE;
 	__asm volatile(
 		".set noreorder"	"\n\t"
 		".set noat"		"\n\t"
@@ -346,7 +348,7 @@ mips_fpu_state_load(lwp_t *l, u_int flags)
 		"mtc0	%1, $%2"	"\n\t"
 		".set at"		"\n\t"
 		".set reorder"		"\n\t"
-	    ::	"r"(fpcsr &~ MIPS_FPU_EXCEPTION_BITS), "r"(status),
+	    ::	"r"(fpcsr), "r"(status),
 		"n"(MIPS_COP_0_STATUS));
 }
 

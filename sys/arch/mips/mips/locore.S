@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.227 2021/04/18 10:40:34 mrg Exp $	*/
+/*	$NetBSD: locore.S,v 1.228 2021/05/29 12:35:27 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,7 +63,7 @@
 #include <mips/trap.h>
 #include <mips/locore.h>
 
-RCSID("$NetBSD: locore.S,v 1.227 2021/04/18 10:40:34 mrg Exp $")
+RCSID("$NetBSD: locore.S,v 1.228 2021/05/29 12:35:27 simonb Exp $")
 
 #include "assym.h"
 
@@ -162,7 +162,7 @@ EXPORT_OBJECT(kernel_text)			# libkvm refers this
 	mtc0	k0, MIPS_COP_0_STATUS
 	COP0_HAZARD_FPUENABLE
 
-	cfc1	t1, MIPS_FPU_ID
+	cfc1	t1, MIPS_FIR
 
 	/* Disable again, we don't want it on in the kernel */
 	and	k0, ~MIPS_SR_COP_1_BIT
@@ -665,8 +665,8 @@ XNESTED(mips_fpu_trap)
 	REG_L		a2, TF_REG_CAUSE(a1)
 	REG_EPILOGUE
 
-	cfc1		t0, MIPS_FPU_CSR	# stall til FP done
-	cfc1		t0, MIPS_FPU_CSR	# now get status
+	cfc1		t0, MIPS_FCSR		# stall til FP done
+	cfc1		t0, MIPS_FCSR		# now get status
 	nop
 	sll		t2, t0, (31 - 17)	# unimplemented operation?
 	bgez		t2, 3f			# no, normal trap
@@ -703,8 +703,8 @@ XNESTED(mips_fpu_trap)
 	REG_S		a2, TF_REG_CAUSE(a1)
 	REG_EPILOGUE
 
-	and		t2, t0, ~MIPS_FPU_EXCEPTION_BITS
-	ctc1		t2, MIPS_FPU_CSR
+	and		t2, t0, ~MIPS_FCSR_CAUSE
+	ctc1		t2, MIPS_FCSR
 
 	move		a1, a0				# code = instruction
 	jal		_C_LABEL(mips_fpuillinst)
@@ -722,8 +722,8 @@ XNESTED(mips_fpu_trap)
 	REG_S		a2, TF_REG_CAUSE(a1)
 	REG_EPILOGUE
 
-	and		a0, t0, ~MIPS_FPU_EXCEPTION_BITS
-	ctc1		a0, MIPS_FPU_CSR
+	and		a0, t0, ~MIPS_FCSR_CAUSE
+	ctc1		a0, MIPS_FCSR
 
 	move		a1, t0			# FPU status
 	jal		_C_LABEL(mips_fpuexcept)

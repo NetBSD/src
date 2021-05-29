@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.57 2021/05/24 07:27:39 simonb Exp $	*/
+/*	$NetBSD: fp.S,v 1.58 2021/05/29 12:35:27 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -143,10 +143,10 @@ NESTED(mips_emul_fp, CALLFRAME_SIZ, ra)
 	PTR_L	a3, fmt_tbl(v0)			# switch on FUNC & FMT
 	INT_L	a2, PCB_FPREGS+FRAME_FSR(t0)
 #else
-	cfc1	a2, MIPS_FPU_CSR		# get exception register
+	cfc1	a2, MIPS_FCSR			# get exception register
 	PTR_L	a3, fmt_tbl(v0)			# switch on FUNC & FMT
-	and	a2, a2, ~MIPS_FPU_EXCEPTION_BITS	# clear exception
-	ctc1	a2, MIPS_FPU_CSR
+	and	a2, a2, ~MIPS_FCSR_CAUSE	# clear exception
+	ctc1	a2, MIPS_FCSR
 #endif
 	j	a3
 
@@ -809,17 +809,17 @@ branchc1_tbl:
 	.text
 
 bcfalse:
-	li	v0, MIPS_FPU_COND_BIT
+	li	v0, MIPS_FCSR_FCC0
 	and	v0, v0, a2
 	beq	v0, zero, bcemul_branch
 	b	done
 bctrue:
-	li	v0, MIPS_FPU_COND_BIT
+	li	v0, MIPS_FCSR_FCC0
 	and	v0, v0, a2
 	bne	v0, zero, bcemul_branch
 	b	done
 bcfalse_l:
-	li	v0, MIPS_FPU_COND_BIT
+	li	v0, MIPS_FCSR_FCC0
 	and	v0, v0, a2
 	beq	v0, zero, bcemul_branch
 	REG_PROLOGUE
@@ -829,7 +829,7 @@ bcfalse_l:
 	REG_EPILOGUE
 	b	done
 bctrue_l:
-	li	v0, MIPS_FPU_COND_BIT
+	li	v0, MIPS_FCSR_FCC0
 	and	v0, v0, a2
 	bne	v0, zero, bcemul_branch
 	REG_PROLOGUE
@@ -899,8 +899,8 @@ add_sub_s:
 3:
 	bne	ta1, zero, result_ft_s		# if FT != 0, result=FT
 	bne	ta2, zero, result_ft_s
-	and	v0, a2, MIPS_FPU_ROUNDING_BITS	# get rounding mode
-	bne	v0, MIPS_FPU_ROUND_RM, 1f	# round to -infinity?
+	and	v0, a2, MIPS_FCSR_RM		# get rounding mode
+	bne	v0, MIPS_FCSR_RM_RM, 1f		# round to -infinity?
 	or	t0, t0, ta0			# compute result sign
 	b	result_fs_s
 1:
@@ -958,8 +958,8 @@ add_sub_s:
 	bne	t2, ta2, 2f			# if same, result=0
 	move	t1, zero			# result=0
 	move	t2, zero
-	and	v0, a2, MIPS_FPU_ROUNDING_BITS	# get rounding mode
-	bne	v0, MIPS_FPU_ROUND_RM, 1f	# round to -infinity?
+	and	v0, a2, MIPS_FCSR_RM		# get rounding mode
+	bne	v0, MIPS_FCSR_RM_RM, 1f		# round to -infinity?
 	or	t0, t0, ta0			# compute result sign
 	b	result_fs_s
 1:
@@ -1022,8 +1022,8 @@ add_sub_d:
 	bne	ta1, zero, result_ft_d		# if FT != 0, result=FT
 	bne	ta2, zero, result_ft_d
 	bne	ta3, zero, result_ft_d
-	and	v0, a2, MIPS_FPU_ROUNDING_BITS	# get rounding mode
-	bne	v0, MIPS_FPU_ROUND_RM, 1f	# round to -infinity?
+	and	v0, a2, MIPS_FCSR_RM		# get rounding mode
+	bne	v0, MIPS_FCSR_RM_RM, 1f		# round to -infinity?
 	or	t0, t0, ta0			# compute result sign
 	b	result_fs_d
 1:
@@ -1116,8 +1116,8 @@ add_sub_d:
 	move	t1, zero			# result=0
 	move	t2, zero
 	move	t3, zero
-	and	v0, a2, MIPS_FPU_ROUNDING_BITS	# get rounding mode
-	bne	v0, MIPS_FPU_ROUND_RM, 1f	# round to -infinity?
+	and	v0, a2, MIPS_FCSR_RM		# get rounding mode
+	bne	v0, MIPS_FCSR_RM_RM, 1f		# round to -infinity?
 	or	t0, t0, ta0			# compute result sign
 	b	result_fs_d
 1:
@@ -1312,15 +1312,15 @@ div_s:
 3:
 	bne	ta1, zero, 2f			# is FT zero?
 	bne	ta2, zero, 1f
-	or	a2, a2, MIPS_FPU_EXCEPTION_DIV0 | MIPS_FPU_STICKY_DIV0
-	and	v0, a2, MIPS_FPU_ENABLE_DIV0	# trap enabled?
+	or	a2, a2, MIPS_FCSR_CAUSE_Z | MIPS_FCSR_FLAGS_Z
+	and	v0, a2, MIPS_FCSR_ENABLES_Z	# trap enabled?
 	bne	v0, zero, fpe_trap
 #ifdef FPEMUL
 	PTR_L	t1, L_PCB(MIPS_CURLWP)		# get pcb of current lwp
 	#nop
 	INT_S	a2, PCB_FPREGS+FRAME_FSR(t1)
 #else
-	ctc1	a2, MIPS_FPU_CSR		# save exceptions
+	ctc1	a2, MIPS_FCSR			# save exceptions
 #endif
 	li	t1, SEXP_INF			# result is infinity
 	move	t2, zero
@@ -1392,15 +1392,15 @@ div_d:
 	bne	ta1, zero, 2f			# is FT zero?
 	bne	ta2, zero, 1f
 	bne	ta3, zero, 1f
-	or	a2, a2, MIPS_FPU_EXCEPTION_DIV0 | MIPS_FPU_STICKY_DIV0
-	and	v0, a2, MIPS_FPU_ENABLE_DIV0	# trap enabled?
+	or	a2, a2, MIPS_FCSR_CAUSE_Z | MIPS_FCSR_FLAGS_Z
+	and	v0, a2, MIPS_FCSR_ENABLES_Z	# trap enabled?
 	bne	v0, zero, fpe_trap
 #ifdef FPEMUL
 	PTR_L	t1, L_PCB(MIPS_CURLWP)		# get pcb of current lwp
 	#nop
 	INT_S	a2, PCB_FPREGS+FRAME_FSR(t1)
 #else
-	ctc1	a2, MIPS_FPU_CSR		# save exceptions
+	ctc1	a2, MIPS_FCSR			# save exceptions
 #endif
 	li	t1, DEXP_INF			# result is infinity
 	move	t2, zero
@@ -1912,7 +1912,7 @@ cvt_d_w:
  * Convert single to integer.
  */
 cvt_w_s:
-	and	v1, a2, MIPS_FPU_ROUNDING_BITS	# get rounding mode
+	and	v1, a2, MIPS_FCSR_RM		# get rounding mode
 _cvt_w_s:
 	jal	_C_LABEL(get_fs_s)
 	bne	t1, SEXP_INF, 1f		# is FS an infinity?
@@ -1933,7 +1933,7 @@ _cvt_w_s:
  * Convert double to integer.
  */
 cvt_w_d:
-	and	v1, a2, MIPS_FPU_ROUNDING_BITS	# get rounding mode
+	and	v1, a2, MIPS_FCSR_RM		# get rounding mode
 _cvt_w_d:
 	jal	_C_LABEL(get_fs_d)
 	bne	t1, DEXP_INF, 1f		# is FS an infinity?
@@ -1954,8 +1954,8 @@ cvt_w:
 	blt	t1, WEXP_MIN, underflow_w	# is exponent too small?
 #else
 	bge	t1, WEXP_MIN, 3f		# is exponent too small?
-	beq	v1, MIPS_FPU_ROUND_RP, 1f	# round to +infinity
-	beq	v1, MIPS_FPU_ROUND_RM, 2f	# round to -infinity
+	beq	v1, MIPS_FCSR_RM_RP, 1f		# round to +infinity
+	beq	v1, MIPS_FCSR_RM_RM, 2f		# round to -infinity
 
 	move	t2, zero
 	b	result_fs_w
@@ -2002,10 +2002,10 @@ cvt_w:
  * round result (t0 is sign, t2 is integer part, t3 is fractional part).
  */
 2:
-	and	v0, a2, MIPS_FPU_ROUNDING_BITS	# get rounding mode
-	beq	v0, MIPS_FPU_ROUND_RN, 3f	# round to nearest
-	beq	v0, MIPS_FPU_ROUND_RZ, 5f	# round to zero (truncate)
-	beq	v0, MIPS_FPU_ROUND_RP, 1f	# round to +infinity
+	and	v0, a2, MIPS_FCSR_RM		# get rounding mode
+	beq	v0, MIPS_FCSR_RM_RN, 3f		# round to nearest
+	beq	v0, MIPS_FCSR_RM_RZ, 5f		# round to zero (truncate)
+	beq	v0, MIPS_FCSR_RM_RP, 1f		# round to +infinity
 	beq	t0, zero, 5f			# if sign is positive, truncate
 	b	2f
 1:
@@ -2034,15 +2034,15 @@ cvt_w:
  * Handle inexact exception.
  */
 inexact_w:
-	or	a2, a2, MIPS_FPU_EXCEPTION_INEXACT | MIPS_FPU_STICKY_INEXACT
-	and	v0, a2, MIPS_FPU_ENABLE_INEXACT
+	or	a2, a2, MIPS_FCSR_CAUSE_I | MIPS_FCSR_FLAGS_I
+	and	v0, a2, MIPS_FCSR_ENABLES_I
 	bne	v0, zero, fpe_trap
 #ifdef FPEMUL
 	PTR_L	v0, L_PCB(MIPS_CURLWP)		# get pcb of current lwp
 	#nop
 	INT_S	a2, PCB_FPREGS+FRAME_FSR(v0)
 #else
-	ctc1	a2, MIPS_FPU_CSR		# save exceptions
+	ctc1	a2, MIPS_FCSR			# save exceptions
 #endif
 	b	result_fs_w
 
@@ -2052,10 +2052,10 @@ inexact_w:
  * or generate an invalid exception.
  */
 overflow_w:
-	or	a2, a2, MIPS_FPU_EXCEPTION_OVERFLOW | MIPS_FPU_STICKY_OVERFLOW
-	and	v0, a2, MIPS_FPU_ENABLE_OVERFLOW
+	or	a2, a2, MIPS_FCSR_CAUSE_O | MIPS_FCSR_FLAGS_O
+	and	v0, a2, MIPS_FCSR_ENABLES_O
 	bne	v0, zero, fpe_trap
-	and	v0, a2, MIPS_FPU_ENABLE_INEXACT
+	and	v0, a2, MIPS_FCSR_ENABLES_I
 	bne	v0, zero, inexact_w		# inexact traps enabled?
 	b	invalid_w
 
@@ -2065,10 +2065,10 @@ overflow_w:
  * or generate an invalid exception.
  */
 underflow_w:
-	or	a2, a2, MIPS_FPU_EXCEPTION_UNDERFLOW | MIPS_FPU_STICKY_UNDERFLOW
-	and	v0, a2, MIPS_FPU_ENABLE_UNDERFLOW
+	or	a2, a2, MIPS_FCSR_CAUSE_U | MIPS_FCSR_FLAGS_U
+	and	v0, a2, MIPS_FCSR_ENABLES_U
 	bne	v0, zero, fpe_trap
-	and	v0, a2, MIPS_FPU_ENABLE_INEXACT
+	and	v0, a2, MIPS_FCSR_ENABLES_I
 	bne	v0, zero, inexact_w		# inexact traps enabled?
 	b	invalid_w
 
@@ -2144,32 +2144,32 @@ test_cond:
 	and	v0, v0, a0			# condition match instruction?
 set_cond:
 	bne	v0, zero, 1f
-	and	a2, a2, ~MIPS_FPU_COND_BIT	# clear condition bit
+	and	a2, a2, ~MIPS_FCSR_FCC0		# clear condition bit
 	b	2f
 1:
-	or	a2, a2, MIPS_FPU_COND_BIT	# set condition bit
+	or	a2, a2, MIPS_FCSR_FCC0		# set condition bit
 2:
 #ifdef FPEMUL
 	PTR_L	v0, L_PCB(MIPS_CURLWP)		# get pcb of current lwp
 	#nop
 	INT_S	a2, PCB_FPREGS+FRAME_FSR(v0)
 #else
-	ctc1	a2, MIPS_FPU_CSR		# save condition bit
+	ctc1	a2, MIPS_FCSR			# save condition bit
 #endif
 	b	done
 
 unordered:
 	and	v0, a0, COND_UNORDERED		# this cmp match unordered?
 	bne	v0, zero, 1f
-	and	a2, a2, ~MIPS_FPU_COND_BIT	# clear condition bit
+	and	a2, a2, ~MIPS_FCSR_FCC0		# clear condition bit
 	b	2f
 1:
-	or	a2, a2, MIPS_FPU_COND_BIT	# set condition bit
+	or	a2, a2, MIPS_FCSR_FCC0		# set condition bit
 2:
 	and	v0, a0, COND_SIGNAL
 	beq	v0, zero, 1f			# is this a signaling cmp?
-	or	a2, a2, MIPS_FPU_EXCEPTION_INVALID | MIPS_FPU_STICKY_INVALID
-	and	v0, a2, MIPS_FPU_ENABLE_INVALID
+	or	a2, a2, MIPS_FCSR_CAUSE_V | MIPS_FCSR_FLAGS_V
+	and	v0, a2, MIPS_FCSR_ENABLES_V
 	bne	v0, zero, fpe_trap
 1:
 #ifdef FPEMUL
@@ -2177,7 +2177,7 @@ unordered:
 	#nop
 	INT_S	a2, PCB_FPREGS+FRAME_FSR(v0)
 #else
-	ctc1	a2, MIPS_FPU_CSR		# save condition bit
+	ctc1	a2, MIPS_FCSR			# save condition bit
 #endif
 	b	done
 
@@ -2267,10 +2267,10 @@ norm_s:
 norm_noshift_s:
 	move	ta1, t1				# save unrounded exponent
 	move	ta2, t2				# save unrounded fraction
-	and	v0, a2, MIPS_FPU_ROUNDING_BITS	# get rounding mode
-	beq	v0, MIPS_FPU_ROUND_RN, 3f	# round to nearest
-	beq	v0, MIPS_FPU_ROUND_RZ, 5f	# round to zero (truncate)
-	beq	v0, MIPS_FPU_ROUND_RP, 1f	# round to +infinity
+	and	v0, a2, MIPS_FCSR_RM		# get rounding mode
+	beq	v0, MIPS_FCSR_RM_RN, 3f		# round to nearest
+	beq	v0, MIPS_FCSR_RM_RZ, 5f		# round to zero (truncate)
+	beq	v0, MIPS_FCSR_RM_RP, 1f		# round to +infinity
 	beq	t0, zero, 5f			# if sign is positive, truncate
 	b	2f
 1:
@@ -2310,15 +2310,15 @@ inexact_s:
 	and	t2, t2, ~SIMPL_ONE		# clear implied one bit
 inexact_nobias_s:
 	jal	_C_LABEL(set_fd_s)		# save result
-	or	a2, a2, MIPS_FPU_EXCEPTION_INEXACT | MIPS_FPU_STICKY_INEXACT
-	and	v0, a2, MIPS_FPU_ENABLE_INEXACT
+	or	a2, a2, MIPS_FCSR_CAUSE_I | MIPS_FCSR_FLAGS_I
+	and	v0, a2, MIPS_FCSR_ENABLES_I
 	bne	v0, zero, fpe_trap
 #ifdef FPEMUL
 	PTR_L	v0, L_PCB(MIPS_CURLWP)		# get pcb of current lwp
 	#nop
 	INT_S	a2, PCB_FPREGS+FRAME_FSR(v0)
 #else
-	ctc1	a2, MIPS_FPU_CSR		# save exceptions
+	ctc1	a2, MIPS_FCSR			# save exceptions
 #endif
 	b	done
 
@@ -2328,18 +2328,18 @@ inexact_nobias_s:
  * or generate an infinity.
  */
 overflow_s:
-	or	a2, a2, MIPS_FPU_EXCEPTION_OVERFLOW | MIPS_FPU_STICKY_OVERFLOW
-	and	v0, a2, MIPS_FPU_ENABLE_OVERFLOW
+	or	a2, a2, MIPS_FCSR_CAUSE_O | MIPS_FCSR_FLAGS_O
+	and	v0, a2, MIPS_FCSR_ENABLES_O
 	beq	v0, zero, 1f
 	subu	t1, t1, 192			# bias exponent
 	and	t2, t2, ~SIMPL_ONE		# clear implied one bit
 	jal	_C_LABEL(set_fd_s)		# save result
 	b	fpe_trap
 1:
-	and	v0, a2, MIPS_FPU_ROUNDING_BITS	# get rounding mode
-	beq	v0, MIPS_FPU_ROUND_RN, 3f	# round to nearest
-	beq	v0, MIPS_FPU_ROUND_RZ, 1f	# round to zero (truncate)
-	beq	v0, MIPS_FPU_ROUND_RP, 2f	# round to +infinity
+	and	v0, a2, MIPS_FCSR_RM		# get rounding mode
+	beq	v0, MIPS_FCSR_RM_RN, 3f		# round to nearest
+	beq	v0, MIPS_FCSR_RM_RZ, 1f		# round to zero (truncate)
+	beq	v0, MIPS_FCSR_RM_RP, 2f		# round to +infinity
 	bne	t0, zero, 3f
 1:
 	li	t1, SEXP_MAX			# result is max finite
@@ -2357,7 +2357,7 @@ overflow_s:
  * "loss of accuracy" is detected as "an inexact result".
  */
 underflow_s:
-	and	v0, a2, MIPS_FPU_ENABLE_UNDERFLOW
+	and	v0, a2, MIPS_FCSR_ENABLES_U
 	beq	v0, zero, 1f
 /*
  * Underflow is enabled so compute the result and trap.
@@ -2365,7 +2365,7 @@ underflow_s:
 	addu	t1, t1, 192			# bias exponent
 	and	t2, t2, ~SIMPL_ONE		# clear implied one bit
 	jal	_C_LABEL(set_fd_s)		# save result
-	or	a2, a2, MIPS_FPU_EXCEPTION_UNDERFLOW | MIPS_FPU_STICKY_UNDERFLOW
+	or	a2, a2, MIPS_FCSR_CAUSE_U | MIPS_FCSR_FLAGS_U
 	b	fpe_trap
 /*
  * Underflow is not enabled so compute the result,
@@ -2379,15 +2379,15 @@ underflow_s:
 	blt	v0, SFRAC_BITS+2, 3f		# shift all the bits out?
 	move	t1, zero			# result is inexact zero
 	move	t2, zero
-	or	a2, a2, MIPS_FPU_EXCEPTION_UNDERFLOW | MIPS_FPU_STICKY_UNDERFLOW
+	or	a2, a2, MIPS_FCSR_CAUSE_U | MIPS_FCSR_FLAGS_U
 /*
  * Now round the zero result.
  * Only need to worry about rounding to +- infinity when the sign matches.
  */
-	and	v0, a2, MIPS_FPU_ROUNDING_BITS	# get rounding mode
-	beq	v0, MIPS_FPU_ROUND_RN, inexact_nobias_s	# round to nearest
-	beq	v0, MIPS_FPU_ROUND_RZ, inexact_nobias_s	# round to zero
-	beq	v0, MIPS_FPU_ROUND_RP, 1f	# round to +infinity
+	and	v0, a2, MIPS_FCSR_RM		# get rounding mode
+	beq	v0, MIPS_FCSR_RM_RN, inexact_nobias_s	# round to nearest
+	beq	v0, MIPS_FCSR_RM_RZ, inexact_nobias_s	# round to zero
+	beq	v0, MIPS_FCSR_RM_RP, 1f		# round to +infinity
 	beq	t0, zero, inexact_nobias_s	# if sign is positive, truncate
 	b	2f
 1:
@@ -2407,10 +2407,10 @@ underflow_s:
 /*
  * Now round the denormalized result.
  */
-	and	v0, a2, MIPS_FPU_ROUNDING_BITS	# get rounding mode
-	beq	v0, MIPS_FPU_ROUND_RN, 3f	# round to nearest
-	beq	v0, MIPS_FPU_ROUND_RZ, 5f	# round to zero (truncate)
-	beq	v0, MIPS_FPU_ROUND_RP, 1f	# round to +infinity
+	and	v0, a2, MIPS_FCSR_RM		# get rounding mode
+	beq	v0, MIPS_FCSR_RM_RN, 3f		# round to nearest
+	beq	v0, MIPS_FCSR_RM_RZ, 5f		# round to zero (truncate)
+	beq	v0, MIPS_FCSR_RM_RP, 1f		# round to +infinity
 	beq	t0, zero, 5f			# if sign is positive, truncate
 	b	2f
 1:
@@ -2432,16 +2432,16 @@ underflow_s:
 	move	t1, zero			# denorm or zero exponent
 	jal	_C_LABEL(set_fd_s)		# save result
 	beq	t9, zero, done			# check for exact result
-	or	a2, a2, MIPS_FPU_EXCEPTION_UNDERFLOW | MIPS_FPU_STICKY_UNDERFLOW
-	or	a2, a2, MIPS_FPU_EXCEPTION_INEXACT | MIPS_FPU_STICKY_INEXACT
-	and	v0, a2, MIPS_FPU_ENABLE_INEXACT
+	or	a2, a2, MIPS_FCSR_CAUSE_U | MIPS_FCSR_FLAGS_U
+	or	a2, a2, MIPS_FCSR_CAUSE_I | MIPS_FCSR_FLAGS_I
+	and	v0, a2, MIPS_FCSR_ENABLES_I
 	bne	v0, zero, fpe_trap
 #ifdef FPEMUL
 	PTR_L	v0, L_PCB(MIPS_CURLWP)		# get pcb of current lwp
 	#nop
 	INT_S	a2, PCB_FPREGS+FRAME_FSR(v0)
 #else
-	ctc1	a2, MIPS_FPU_CSR		# save exceptions
+	ctc1	a2, MIPS_FCSR			# save exceptions
 #endif
 	b	done
 
@@ -2545,10 +2545,10 @@ norm_noshift_d:
 	move	ta1, t1				# save unrounded exponent
 	move	ta2, t2				# save unrounded fraction (MS)
 	move	ta3, t3				# save unrounded fraction (LS)
-	and	v0, a2, MIPS_FPU_ROUNDING_BITS	# get rounding mode
-	beq	v0, MIPS_FPU_ROUND_RN, 3f	# round to nearest
-	beq	v0, MIPS_FPU_ROUND_RZ, 5f	# round to zero (truncate)
-	beq	v0, MIPS_FPU_ROUND_RP, 1f	# round to +infinity
+	and	v0, a2, MIPS_FCSR_RM		# get rounding mode
+	beq	v0, MIPS_FCSR_RM_RN, 3f		# round to nearest
+	beq	v0, MIPS_FCSR_RM_RZ, 5f		# round to zero (truncate)
+	beq	v0, MIPS_FCSR_RM_RP, 1f		# round to +infinity
 	beq	t0, zero, 5f			# if sign is positive, truncate
 	b	2f
 1:
@@ -2592,15 +2592,15 @@ inexact_d:
 	and	t2, t2, ~DIMPL_ONE		# clear implied one bit
 inexact_nobias_d:
 	jal	_C_LABEL(set_fd_d)		# save result
-	or	a2, a2, MIPS_FPU_EXCEPTION_INEXACT | MIPS_FPU_STICKY_INEXACT
-	and	v0, a2, MIPS_FPU_ENABLE_INEXACT
+	or	a2, a2, MIPS_FCSR_CAUSE_I | MIPS_FCSR_FLAGS_I
+	and	v0, a2, MIPS_FCSR_ENABLES_I
 	bne	v0, zero, fpe_trap
 #ifdef FPEMUL
 	PTR_L	v0, L_PCB(MIPS_CURLWP)		# get pcb of current lwp
 	#nop
 	INT_S	a2, PCB_FPREGS+FRAME_FSR(v0)
 #else
-	ctc1	a2, MIPS_FPU_CSR		# save exceptions
+	ctc1	a2, MIPS_FCSR			# save exceptions
 #endif
 	b	done
 
@@ -2610,18 +2610,18 @@ inexact_nobias_d:
  * or generate an infinity.
  */
 overflow_d:
-	or	a2, a2, MIPS_FPU_EXCEPTION_OVERFLOW | MIPS_FPU_STICKY_OVERFLOW
-	and	v0, a2, MIPS_FPU_ENABLE_OVERFLOW
+	or	a2, a2, MIPS_FCSR_CAUSE_O | MIPS_FCSR_FLAGS_O
+	and	v0, a2, MIPS_FCSR_ENABLES_O
 	beq	v0, zero, 1f
 	subu	t1, t1, 1536			# bias exponent
 	and	t2, t2, ~DIMPL_ONE		# clear implied one bit
 	jal	_C_LABEL(set_fd_d)		# save result
 	b	fpe_trap
 1:
-	and	v0, a2, MIPS_FPU_ROUNDING_BITS	# get rounding mode
-	beq	v0, MIPS_FPU_ROUND_RN, 3f	# round to nearest
-	beq	v0, MIPS_FPU_ROUND_RZ, 1f	# round to zero (truncate)
-	beq	v0, MIPS_FPU_ROUND_RP, 2f	# round to +infinity
+	and	v0, a2, MIPS_FCSR_RM		# get rounding mode
+	beq	v0, MIPS_FCSR_RM_RN, 3f		# round to nearest
+	beq	v0, MIPS_FCSR_RM_RZ, 1f		# round to zero (truncate)
+	beq	v0, MIPS_FCSR_RM_RP, 2f		# round to +infinity
 	bne	t0, zero, 3f
 1:
 	li	t1, DEXP_MAX			# result is max finite
@@ -2641,7 +2641,7 @@ overflow_d:
  * "loss of accuracy" is detected as "an inexact result".
  */
 underflow_d:
-	and	v0, a2, MIPS_FPU_ENABLE_UNDERFLOW
+	and	v0, a2, MIPS_FCSR_ENABLES_U
 	beq	v0, zero, 1f
 /*
  * Underflow is enabled so compute the result and trap.
@@ -2649,7 +2649,7 @@ underflow_d:
 	addu	t1, t1, 1536			# bias exponent
 	and	t2, t2, ~DIMPL_ONE		# clear implied one bit
 	jal	_C_LABEL(set_fd_d)		# save result
-	or	a2, a2, MIPS_FPU_EXCEPTION_UNDERFLOW | MIPS_FPU_STICKY_UNDERFLOW
+	or	a2, a2, MIPS_FCSR_CAUSE_U | MIPS_FCSR_FLAGS_U
 	b	fpe_trap
 /*
  * Underflow is not enabled so compute the result,
@@ -2665,15 +2665,15 @@ underflow_d:
 	move	t1, zero			# result is inexact zero
 	move	t2, zero
 	move	t3, zero
-	or	a2, a2, MIPS_FPU_EXCEPTION_UNDERFLOW | MIPS_FPU_STICKY_UNDERFLOW
+	or	a2, a2, MIPS_FCSR_CAUSE_U | MIPS_FCSR_FLAGS_U
 /*
  * Now round the zero result.
  * Only need to worry about rounding to +- infinity when the sign matches.
  */
-	and	v0, a2, MIPS_FPU_ROUNDING_BITS	# get rounding mode
-	beq	v0, MIPS_FPU_ROUND_RN, inexact_nobias_d	# round to nearest
-	beq	v0, MIPS_FPU_ROUND_RZ, inexact_nobias_d	# round to zero
-	beq	v0, MIPS_FPU_ROUND_RP, 1f	# round to +infinity
+	and	v0, a2, MIPS_FCSR_RM		# get rounding mode
+	beq	v0, MIPS_FCSR_RM_RN, inexact_nobias_d	# round to nearest
+	beq	v0, MIPS_FCSR_RM_RZ, inexact_nobias_d	# round to zero
+	beq	v0, MIPS_FCSR_RM_RP, 1f		# round to +infinity
 	beq	t0, zero, inexact_nobias_d	# if sign is positive, truncate
 	b	2f
 1:
@@ -2709,10 +2709,10 @@ underflow_d:
  * Now round the denormalized result.
  */
 2:
-	and	v0, a2, MIPS_FPU_ROUNDING_BITS	# get rounding mode
-	beq	v0, MIPS_FPU_ROUND_RN, 3f	# round to nearest
-	beq	v0, MIPS_FPU_ROUND_RZ, 5f	# round to zero (truncate)
-	beq	v0, MIPS_FPU_ROUND_RP, 1f	# round to +infinity
+	and	v0, a2, MIPS_FCSR_RM		# get rounding mode
+	beq	v0, MIPS_FCSR_RM_RN, 3f		# round to nearest
+	beq	v0, MIPS_FCSR_RM_RZ, 5f		# round to zero (truncate)
+	beq	v0, MIPS_FCSR_RM_RP, 1f		# round to +infinity
 	beq	t0, zero, 5f			# if sign is positive, truncate
 	b	2f
 1:
@@ -2738,16 +2738,16 @@ underflow_d:
 	move	t1, zero			# denorm or zero exponent
 	jal	_C_LABEL(set_fd_d)		# save result
 	beq	t9, zero, done			# check for exact result
-	or	a2, a2, MIPS_FPU_EXCEPTION_UNDERFLOW | MIPS_FPU_STICKY_UNDERFLOW
-	or	a2, a2, MIPS_FPU_EXCEPTION_INEXACT | MIPS_FPU_STICKY_INEXACT
-	and	v0, a2, MIPS_FPU_ENABLE_INEXACT
+	or	a2, a2, MIPS_FCSR_CAUSE_U | MIPS_FCSR_FLAGS_U
+	or	a2, a2, MIPS_FCSR_CAUSE_I | MIPS_FCSR_FLAGS_I
+	and	v0, a2, MIPS_FCSR_ENABLES_I
 	bne	v0, zero, fpe_trap
 #ifdef FPEMUL
 	PTR_L	v0, L_PCB(MIPS_CURLWP)		# get pcb of current lwp
 	#nop
 	INT_S	a2, PCB_FPREGS+FRAME_FSR(v0)
 #else
-	ctc1	a2, MIPS_FPU_CSR		# save exceptions
+	ctc1	a2, MIPS_FCSR			# save exceptions
 #endif
 	b	done
 
@@ -2756,15 +2756,15 @@ underflow_d:
  * the result is a quiet NAN.
  */
 invalid_s:					# trap invalid operation
-	or	a2, a2, MIPS_FPU_EXCEPTION_INVALID | MIPS_FPU_STICKY_INVALID
-	and	v0, a2, MIPS_FPU_ENABLE_INVALID
+	or	a2, a2, MIPS_FCSR_CAUSE_V | MIPS_FCSR_FLAGS_V
+	and	v0, a2, MIPS_FCSR_ENABLES_V
 	bne	v0, zero, fpe_trap
 #ifdef FPEMUL
 	PTR_L	v0, L_PCB(MIPS_CURLWP)		# get pcb of current lwp
 	#nop
 	INT_S	a2, PCB_FPREGS+FRAME_FSR(v0)
 #else
-	ctc1	a2, MIPS_FPU_CSR		# save exceptions
+	ctc1	a2, MIPS_FCSR			# save exceptions
 #endif
 	move	t0, zero			# result is a quiet NAN
 	li	t1, SEXP_INF
@@ -2777,15 +2777,15 @@ invalid_s:					# trap invalid operation
  * the result is a quiet NAN.
  */
 invalid_d:					# trap invalid operation
-	or	a2, a2, MIPS_FPU_EXCEPTION_INVALID | MIPS_FPU_STICKY_INVALID
-	and	v0, a2, MIPS_FPU_ENABLE_INVALID
+	or	a2, a2, MIPS_FCSR_CAUSE_V | MIPS_FCSR_FLAGS_V
+	and	v0, a2, MIPS_FCSR_ENABLES_V
 	bne	v0, zero, fpe_trap
 #ifdef FPEMUL
 	PTR_L	v0, L_PCB(MIPS_CURLWP)		# get pcb of current lwp
 	#nop
 	INT_S	a2, PCB_FPREGS+FRAME_FSR(v0)
 #else
-	ctc1	a2, MIPS_FPU_CSR		# save exceptions
+	ctc1	a2, MIPS_FCSR			# save exceptions
 #endif
 	move	t0, zero			# result is a quiet NAN
 	li	t1, DEXP_INF
@@ -2799,15 +2799,15 @@ invalid_d:					# trap invalid operation
  * the result is INT_MAX or INT_MIN.
  */
 invalid_w:					# trap invalid operation
-	or	a2, a2, MIPS_FPU_EXCEPTION_INVALID | MIPS_FPU_STICKY_INVALID
-	and	v0, a2, MIPS_FPU_ENABLE_INVALID
+	or	a2, a2, MIPS_FCSR_CAUSE_V | MIPS_FCSR_FLAGS_V
+	and	v0, a2, MIPS_FCSR_ENABLES_V
 	bne	v0, zero, fpe_trap
 #ifdef FPEMUL
 	PTR_L	v0, L_PCB(MIPS_CURLWP)		# get pcb of current lwp
 	#nop
 	INT_S	a2, PCB_FPREGS+FRAME_FSR(v0)
 #else
-	ctc1	a2, MIPS_FPU_CSR		# save exceptions
+	ctc1	a2, MIPS_FCSR			# save exceptions
 #endif
 	bne	t0, zero, 1f
 	li	t2, INT_MAX			# result is INT_MAX
@@ -2854,7 +2854,7 @@ ill:
 	#nop
 	INT_S	a2, PCB_FPREGS+FRAME_FSR(v0)
 #else
-	ctc1	a2, MIPS_FPU_CSR		# save exceptions
+	ctc1	a2, MIPS_FCSR			# save exceptions
 #endif
 	REG_L	a1, CALLFRAME_FRAME(sp)		# frame
 	REG_L	a2, CALLFRAME_CAUSE(sp)		# cause
