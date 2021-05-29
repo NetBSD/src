@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1254 2021/05/27 21:02:56 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.1255 2021/05/29 12:25:08 rin Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1581,7 +1581,6 @@ X11SRCDIR.${_proto}proto?=		${X11SRCDIRMIT}/${_proto}proto/dist
 .if \
     ${MACHINE} == "alpha"	|| \
     ${MACHINE} == "amiga"	|| \
-    ${MACHINE} == "mac68k"	|| \
     ${MACHINE} == "netwinder"	|| \
     ${MACHINE} == "sgimips"	|| \
     ${MACHINE} == "vax"
