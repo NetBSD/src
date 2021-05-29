@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.68 2021/05/29 21:08:44 tsutsui Exp $
+# $NetBSD: INSTALL,v 1.69 2021/05/29 22:52:35 tsutsui Exp $
 #
 # INSTALL machine description file
 #
@@ -9,17 +9,18 @@ include 	"arch/hp300/conf/std.hp300"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-# optimise for smaller kernels
-makeoptions 	COPTS="-Os -fno-unwind-tables"
+# Optimize for space.
+makeoptions	COPTS="-Os -fno-unwind-tables"
+
+maxusers	8		# estimated number of users
+
+# Special options for smaller kernels
 #options 	NVNODE=50
 #options 	NBUF=16
 #options 	BUFPAGES=16
 options 	BUFCACHE=5
 options 	NFS_V2_ONLY
 options 	NFS_DEFAULT_NIOTHREADS=1
-options 	USERCONF		# userconf(4) support
-options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
-#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Support for various CPU types
 options 	HP320
@@ -38,42 +39,77 @@ options 	HP400
 options 	HP425
 options 	HP433
 options 	FPSP		# floating point interface for 68040
-
-# Need to set locally
-maxusers	8
+#options 	FPU_EMULATE	# software fpu emulation for MC68030
 
 # Standard system options
+#options 	KTRACE		# system call tracing support
+#options 	INSECURE	# disable kernel security level
+options 	USERCONF	# userconf(4) support
+options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
+#options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
+#options 	NTP		# NTP phase/frequency locked loop
+#options 	SYSVMSG		# System V-style message queues
+#options 	SYSVSEM		# System V-style semaphores
+#options 	SYSVSHM		# System V-style shared memory
+
+#options 	MODULAR		# new style module(7) framework
+#options 	MODULAR_DEFAULT_AUTOLOAD
+
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
+#options 	BUFQ_READPRIO
+#options 	BUFQ_PRIOCSCAN
+
+# Debugging options
+#options 	DIAGNOSTIC	# Extra kernel sanity checks
+#options 	DEBUG		# Enable misc. kernel debugging code
+#options 	DDB		# Kernel Dynamic Debugger
+#options 	DDB_HISTORY_SIZE=512	# Enable history editing in DDB
+#options 	KGDB		# remote debugger
+#makeoptions	DEBUG="-g"	# netbsd.gdb with full debugging symbols
+
+# Compatibility options
 #include 	"conf/compat_netbsd09.config"
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
-#options 	SYSVSHM		# System V-style shared memory
-#options 	SYSVSEM		# System V-style semaphores
-#options 	SEMMNI=10	# number of semaphore identifiers
-#options 	SEMMNS=60	# number of semaphores in system
-#options 	SEMUME=10	# max number of undo entries per process
-#options 	SEMMNU=30	# number of undo structures in system
-#options 	SYSVMSG		# System V-style message queues
-#options 	KTRACE		# system call tracing support
-#options 	SCSIVERBOSE	# Verbose SCSI errors
+
+# Binary compatibility.
+#options 	COMPAT_AOUT_M68K	# NetBSD/m68k a.out binary compatibility
+#options 	COMPAT_M68K4K	# NetBSD/m68k4k binary compatibility
+#options 	COMPAT_SUNOS	# SunOS4 m68k binary compatibility
+#options 	COMPAT_LINUX	# Linux/m68k binary compatibility
+#options 	COMPAT_OSSAUDIO	# Linux/m68k binary compatibility
 
 # Filesystems
-file-system	FFS		# fast filesystem
 file-system	CD9660		# CD-ROM ISO-9660 filesystem
-file-system	NFS		# Network filesystem client
-#file-system	UNION		# Union filesystem (req. for FDESC)
-#file-system	KERNFS		# kernel data-structure filesystem
+#file-system	EXT2FS		# second extended file system (linux)
 #file-system	FDESC		# user file descriptor filesystem
-#file-system	PROCFS		# /proc filesystem
+file-system	FFS		# fast filesystem
+#file-system	KERNFS		# kernel data-structure filesystem
+#file-system	LFS		# log-structured file system
 file-system	MFS		# Memory-based filesystem
+file-system	NFS		# Network filesystem client
+#file-system	NULLFS		# loopback file system
+#file-system	OVERLAY		# overlay file system
+#file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
+#file-system	PROCFS		# /proc filesystem
+#file-system	UMAPFS		# NULLFS + uid and gid remapping
+#file-system	UNION		# Union filesystem (req. for FDESC)
+#file-system	CODA		# Coda File System; also needs vcoda (below)
 #file-system	PTYFS		# /dev/pts/N support
+#file-system	TMPFS		# Efficient memory file-system
+#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # Filesystem options
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support
+#options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	NFSSERVER	# Network filesystem server
-#options 	NFS_BOOT_BOOTP	# use bootp for NFS boot
+#options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+#options 	UFS_EXTATTR	# Extended attribute support for UFS1
 
 # Networking options
 options 	INET		# Internet protocols
@@ -83,26 +119,40 @@ options 	INET		# Internet protocols
 #options 	GATEWAY		# IP forwarding
 #options 	MROUTING	# Multicast routing
 #options 	PIM		# Protocol Independent Multicast
+#options 	NETATALK	# AppleTalk networking protocols
+#options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
+#options 	PPP_DEFLATE	# Deflate compression support for PPP
+#options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
+
+#options 	ALTQ		# Manipulate network interfaces' output queues
+#options 	ALTQ_BLUE	# Stochastic Fair Blue
+#options 	ALTQ_CBQ	# Class-Based Queueing
+#options 	ALTQ_CDNR	# Diffserv Traffic Conditioner
+#options 	ALTQ_FIFOQ	# First-In First-Out Queue
+#options 	ALTQ_FLOWVALVE	# RED/flow-valve (red-penalty-box)
+#options 	ALTQ_HFSC	# Hierarchical Fair Service Curve
+#options 	ALTQ_LOCALQ	# Local queueing discipline
+#options 	ALTQ_PRIQ	# Priority Queueing
+#options 	ALTQ_RED	# Random Early Detection
+#options 	ALTQ_RIO	# RED with IN/OUT
+#options 	ALTQ_WFQ	# Weighted Fair Queueing
+
+#options 	NFS_BOOT_BOOTP	# use bootp for NFS boot
+#options 	NFS_BOOT_DHCP	# use dhcp for NFS boot
 
 # Options for HP hardware
 #options 	USELEDS		# make the lights twinkle
 #options 	PANICBUTTON	# two fast <reset>s on HIL dump kernel
 #options 	CONSCODE=9	# force console at this select code
 
-# Debugging options
-#options 	DIAGNOSTIC	# Extra kernel sanity checks
-#options 	DEBUG		# Enable misc. kernel debugging code
-#options 	DDB		# Kernel Dynamic Debugger
-#options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
-#makeoptions	DEBUG="-g"	# netbsd.gdb with full debugging symbols
-
-# Verbose descriptions of unconfigured DIO devices
-# (Warning: this compiles in a large string table)
+# These options enable verbose messages for several subsystems.
+# Warning, these may compile large string tables into the kernel!
+#options 	SCSIVERBOSE	# Verbose SCSI errors
 #options 	DIOVERBOSE	# recognize "unknown" DIO devices
 
 # workstation console options
-options 	WSEMUL_VT100		# VT100 / VT220 emulation
+options 	WSEMUL_VT100			# VT100 / VT220 emulation
 options 	WSDISPLAY_DEFAULTSCREENS=1
 #options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 #options 	WSDISPLAY_COMPAT_RAWKBD
@@ -114,11 +164,15 @@ options 	FONT_VT220ISO8x16
 
 config		netbsd root on ? type ?
 
-mainbus0	at root		# root "bus"
+#
+# Device configuration
+#
 
-intio0		at mainbus0	# internal i/o space
-dio0		at mainbus0	# DIO/DIO-II bus
-sgc0		at mainbus0	# SGC bus
+mainbus0	at root			# root "bus"
+
+intio0		at mainbus0		# internal i/o space
+dio0		at mainbus0		# DIO/DIO-II bus
+sgc0		at mainbus0		# SGC bus
 
 # Real-time clock (not optional)
 rtc*		at intio?
@@ -126,17 +180,21 @@ rtc*		at intio?
 # DMA controller
 dma* 		at intio?
 
-# Human Interface Loop
+# Human Interface Loop devices
 hil0		at intio?		# HIL controller
-hilkbd*		at hil?			# keyboards
+hilkbd* 	at hil?			# keyboards
 wskbd*		at hilkbd? mux 1
+#hilms*		at hil?			# mice, buttons and tablets
+#wsmouse*	at hilms? mux 0
+#hilid*		at hil?			# ID module
 
-# Frodo utility chip found on 4xx's
+# Frodo utility chip found on 382, 4xx's
 frodo*		at intio?
 
 # 8250-like serial ports found on Frodo ASIC
 #dnkbd0		at frodo? offset 0x0	# Domain keyboard flavor
 #wskbd*		at dnkbd? mux 1
+#wsmouse*	at dnkbd? mux 0
 com*		at frodo? offset ?	# tty flavor
 
 # mc146818-like real time clock found on 425e
@@ -170,10 +228,12 @@ wsdisplay*	at topcat?
 tvrx*		at dio? scode ?
 wsdisplay*	at tvrx?
 
+# dumb framebuffer support for 362/382
 gendiofb*	at dio? scode ?
 wsdisplay*	at gendiofb?
 
-sti*		at sgc?	slot ?		# SGC EVRX framebuffers
+# STI framebuffers
+sti*		at sgc?	slot ?
 wsdisplay*	at sti?
 
 com*		at dio0 scode 9		# DCA serial interfaces
@@ -183,6 +243,7 @@ dcm*		at dio? scode ?	flags 0xe # DCM 4- or 8-port serial interfaces
 
 le*		at dio? scode ?		# LANCE ethernet interfaces
 
+# HP-IB devices
 nhpib*		at intio?		# internal HP-IB
 nhpib0		at dio? scode 7		# 98624A HP-IB
 nhpib*		at dio? scode ?
@@ -198,6 +259,7 @@ ct*		at hpibbus? slave ? punit ?	# HP-IB cartridge tapes
 mt*		at hpibbus? slave ? punit ?	# HP-IB 9-track tape
 #ppi0		at hpibbus0 slave 5 punit 0	# HP-IB plotter
 
+# SCSI devices
 spc*		at dio? scode ?			# HP 98265A SCSI
 scsibus*	at spc?
 
@@ -208,13 +270,19 @@ cd*		at scsibus? target ? lun ?	# SCSI CD-ROMs
 #ss*		at scsibus? target ? lun ?	# SCSI scanners
 #uk*		at scsibus? target ? lun ?	# unknown SCSI devices
 
-pseudo-device	pty			# pseudo-terminals
-#pseudo-device	sl			# SLIP network interfaces
-#pseudo-device	ppp			# PPP network interfaces
-#pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
-pseudo-device	bpfilter		# Berkeley packet filter
-#pseudo-device	vnd			# vnode pseudo-disks
+# 425e digital audio
+#arcofi* 	at dio? scode ?
+#audio*		at arcofi?
+
+#spkr*		at audio?		# PC speaker (synthesized)
+
+#
+# Pseudo-devices
+#
+
+# disk pseudo-devices
 #pseudo-device	ccd			# concatenated disk devices
+#pseudo-device	cgd			# cryptographic disk devices
 #pseudo-device	raid			# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
@@ -226,13 +294,43 @@ pseudo-device	bpfilter		# Berkeley packet filter
 #options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 #pseudo-device	fss			# file system snapshot device
-pseudo-device	loop			# loopback network interface
-#pseudo-device	npf			# NPF packet filter
-#pseudo-device	gre			# generic L3 over IP tunnel
-#pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
-#pseudo-device	faith			# IPv[46] tcp relay translation i/f
-#pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
-#pseudo-device	vlan			# IEEE 802.1q encapsulation
+#pseudo-device	md			# memory disk device (ramdisk)
+#pseudo-device	vnd			# vnode pseudo-disks
+#options 	VND_COMPRESSION		# compressed vnd(4)
+
+# network pseudo-devices
 #pseudo-device	bridge			# simple inter-network bridging
 #pseudo-device	vether			# Virtual Ethernet for bridge
+#pseudo-device	agr			# IEEE 802.3ad link aggregation
+pseudo-device	bpfilter		# Berkeley packet filter
+#pseudo-device	carp			# Common Address Redundancy Protocol
+#pseudo-device	faith			# IPv[46] tcp relay translation i/f
+#pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	gre			# generic L3 over IP tunnel
+pseudo-device	loop			# loopback network interface
+#pseudo-device	npf			# NPF packet filter
+#pseudo-device	ppp			# PPP network interfaces
+#pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
+#pseudo-device	sl			# SLIP network interfaces
+#pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
+#pseudo-device	tun			# network tunneling over tty
+#pseudo-device	tap			# virtual Ethernet
+#pseudo-device	vlan			# IEEE 802.1q encapsulation
+
+# accept filters
+#pseudo-device   accf_data		# "dataready" accept filter
+#pseudo-device   accf_http		# "httpready" accept filter
+
+# miscellaneous pseudo-devices
+#pseudo-device	clockctl		# user control of clock subsystem
+#pseudo-device	drvctl			# user control of drive subsystem
+pseudo-device	pty			# pseudo-terminals
+#pseudo-device	vcoda			# coda minicache <-> venus comm.
+#pseudo-device	ksyms			# /dev/ksyms
+#pseudo-device	putter			# for puffs and pud
+
+# wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
+#pseudo-device	wsfont
+
+#include "dev/veriexec.config"
