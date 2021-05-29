@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.117 2020/09/18 00:06:35 thorpej Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.118 2021/05/29 23:27:22 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.117 2020/09/18 00:06:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.118 2021/05/29 23:27:22 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 * through pmap_activate().
 	 */
 	pcb2->pcb_hw.apcb_ptbr =
-	    ALPHA_K0SEG_TO_PHYS((vaddr_t)pmap_kernel()->pm_lev1map) >> PGSHIFT;
+	    ALPHA_K0SEG_TO_PHYS((vaddr_t)kernel_lev1map) >> PGSHIFT;
 	pcb2->pcb_hw.apcb_asn = PMAP_ASN_KERNEL;
 
 #ifdef DIAGNOSTIC

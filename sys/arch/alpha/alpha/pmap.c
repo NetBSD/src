@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.280 2021/05/29 22:14:09 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.281 2021/05/29 23:27:22 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008, 2020
@@ -135,7 +135,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.280 2021/05/29 22:14:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.281 2021/05/29 23:27:22 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1173,19 +1173,19 @@ static bool	vtophys_internal(vaddr_t, paddr_t *p);
 ({									\
 	pt_entry_t *l1pte_, *l2pte_;					\
 									\
-	l1pte_ = pmap_l1pte(pmap_kernel(), va);				\
+	l1pte_ = pmap_l1pte(kernel_lev1map, va);			\
 	if (pmap_pte_v(l1pte_) == 0) {					\
 		printf("kernel level 1 PTE not valid, va 0x%lx "	\
 		    "(line %d)\n", (va), __LINE__);			\
 		panic("PMAP_KERNEL_PTE");				\
 	}								\
-	l2pte_ = pmap_l2pte(pmap_kernel(), va, l1pte_);			\
+	l2pte_ = pmap_l2pte(kernel_lev1map, va, l1pte_);		\
 	if (pmap_pte_v(l2pte_) == 0) {					\
 		printf("kernel level 2 PTE not valid, va 0x%lx "	\
 		    "(line %d)\n", (va), __LINE__);			\
 		panic("PMAP_KERNEL_PTE");				\
 	}								\
-	pmap_l3pte(pmap_kernel(), va, l2pte_);				\
+	pmap_l3pte(kernel_lev1map, va, l2pte_);				\
 })
 #else
 #define	PMAP_KERNEL_PTE(va)	(&VPT[VPT_INDEX((va))])
@@ -1388,9 +1388,8 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	 * generation.
 	 */
 	memset(pmap_kernel(), 0, sizeof(struct pmap));
-	pmap_kernel()->pm_lev1map = kernel_lev1map;
 	atomic_store_relaxed(&pmap_kernel()->pm_count, 1);
-	/* Kernel pmap does not have ASN info. */
+	/* Kernel pmap does not have per-CPU info. */
 	TAILQ_INSERT_TAIL(&pmap_all_pmaps, pmap_kernel(), pm_list);
 
 	/*
@@ -1562,6 +1561,7 @@ pmap_t
 pmap_create(void)
 {
 	pmap_t pmap;
+	pt_entry_t *lev1map;
 	int i;
 
 #ifdef DEBUG
@@ -1574,24 +1574,29 @@ pmap_create(void)
 
 	atomic_store_relaxed(&pmap->pm_count, 1);
 
+ try_again:
+	rw_enter(&pmap_growkernel_lock, RW_READER);
+
+	lev1map = pool_cache_get(&pmap_l1pt_cache, PR_NOWAIT);
+	if (__predict_false(lev1map == NULL)) {
+		rw_exit(&pmap_growkernel_lock);
+		(void) kpause("pmap_create", false, hz >> 2, NULL);
+		goto try_again;
+	}
+
 	/*
 	 * There are only kernel mappings at this point; give the pmap
 	 * the kernel ASN.  This will be initialized to correct values
 	 * when the pmap is activated.
+	 *
+	 * We stash a pointer to the pmap's lev1map in each CPU's
+	 * private data.  It remains constant for the life of the
+	 * pmap, and gives us more room in the shared pmap structure.
 	 */
 	for (i = 0; i < pmap_ncpuids; i++) {
 		pmap->pm_percpu[i].pmc_asn = PMAP_ASN_KERNEL;
 		pmap->pm_percpu[i].pmc_asngen = PMAP_ASNGEN_INVALID;
-	}
-
- try_again:
-	rw_enter(&pmap_growkernel_lock, RW_READER);
-
-	pmap->pm_lev1map = pool_cache_get(&pmap_l1pt_cache, PR_NOWAIT);
-	if (__predict_false(pmap->pm_lev1map == NULL)) {
-		rw_exit(&pmap_growkernel_lock);
-		(void) kpause("pmap_create", false, hz >> 2, NULL);
-		goto try_again;
+		pmap->pm_percpu[i].pmc_lev1map = lev1map;
 	}
 
 	mutex_enter(&pmap_all_pmaps_lock);
@@ -1623,6 +1628,9 @@ pmap_destroy(pmap_t pmap)
 	if (atomic_dec_uint_nv(&pmap->pm_count) > 0)
 		return;
 
+	pt_entry_t *lev1map = pmap_lev1map(pmap);
+	int i;
+
 	rw_enter(&pmap_growkernel_lock, RW_READER);
 
 	/*
@@ -1632,8 +1640,12 @@ pmap_destroy(pmap_t pmap)
 	TAILQ_REMOVE(&pmap_all_pmaps, pmap, pm_list);
 	mutex_exit(&pmap_all_pmaps_lock);
 
-	pool_cache_put(&pmap_l1pt_cache, pmap->pm_lev1map);
-	pmap->pm_lev1map = (pt_entry_t *)0xdeadbeefUL;
+	pool_cache_put(&pmap_l1pt_cache, lev1map);
+#ifdef DIAGNOSTIC
+	for (i = 0; i < pmap_ncpuids; i++) {
+		pmap->pm_percpu[i].pmc_lev1map = (pt_entry_t *)0xdeadbeefUL;
+	}
+#endif /* DIAGNOSTIC */
 
 	rw_exit(&pmap_growkernel_lock);
 
@@ -1714,19 +1726,21 @@ pmap_remove_internal(pmap_t pmap, vaddr_t sva, vaddr_t eva,
 		return;
 	}
 
+	pt_entry_t * const lev1map = pmap_lev1map(pmap);
+
 	KASSERT(sva < VM_MAXUSER_ADDRESS);
 	KASSERT(eva <= VM_MAXUSER_ADDRESS);
-	KASSERT(pmap->pm_lev1map != kernel_lev1map);
+	KASSERT(lev1map != kernel_lev1map);
 
 	PMAP_MAP_TO_HEAD_LOCK();
 	PMAP_LOCK(pmap);
 
-	l1pte = pmap_l1pte(pmap, sva);
+	l1pte = pmap_l1pte(lev1map, sva);
 
 	for (; sva < eva; sva = l1eva, l1pte++) {
 		l1eva = alpha_trunc_l1seg(sva) + ALPHA_L1SEG_SIZE;
 		if (pmap_pte_v(l1pte)) {
-			saved_l2pte = l2pte = pmap_l2pte(pmap, sva, l1pte);
+			saved_l2pte = l2pte = pmap_l2pte(lev1map, sva, l1pte);
 
 			/*
 			 * Add a reference to the L2 table so it won't
@@ -1739,7 +1753,7 @@ pmap_remove_internal(pmap_t pmap, vaddr_t sva, vaddr_t eva,
 				    alpha_trunc_l2seg(sva) + ALPHA_L2SEG_SIZE;
 				if (pmap_pte_v(l2pte)) {
 					saved_l3pte = l3pte =
-					    pmap_l3pte(pmap, sva, l2pte);
+					    pmap_l3pte(lev1map, sva, l2pte);
 
 					/*
 					 * Add a reference to the L3 table so
@@ -1913,19 +1927,20 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	}
 
 	const pt_entry_t bits = pte_prot(pmap, prot);
+	pt_entry_t * const lev1map = pmap_lev1map(pmap);
 
 	PMAP_LOCK(pmap);
 
-	l1pte = pmap_l1pte(pmap, sva);
+	l1pte = pmap_l1pte(lev1map, sva);
 	for (; sva < eva; sva = l1eva, l1pte++) {
 		l1eva = alpha_trunc_l1seg(sva) + ALPHA_L1SEG_SIZE;
 		if (pmap_pte_v(l1pte)) {
-			l2pte = pmap_l2pte(pmap, sva, l1pte);
+			l2pte = pmap_l2pte(lev1map, sva, l1pte);
 			for (; sva < l1eva && sva < eva; sva = l2eva, l2pte++) {
 				l2eva =
 				    alpha_trunc_l2seg(sva) + ALPHA_L2SEG_SIZE;
 				if (pmap_pte_v(l2pte)) {
-					l3pte = pmap_l3pte(pmap, sva, l2pte);
+					l3pte = pmap_l3pte(lev1map, sva, l2pte);
 					for (; sva < l2eva && sva < eva;
 					     sva += PAGE_SIZE, l3pte++) {
 						if (pmap_pte_v(l3pte) &&
@@ -2065,9 +2080,10 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		pte = PMAP_KERNEL_PTE(va);
 	} else {
 		pt_entry_t *l1pte, *l2pte;
+		pt_entry_t * const lev1map = pmap_lev1map(pmap);
 
 		KASSERT(va < VM_MAXUSER_ADDRESS);
-		KASSERT(pmap->pm_lev1map != kernel_lev1map);
+		KASSERT(lev1map != kernel_lev1map);
 
 		/*
 		 * Check to see if the level 1 PTE is valid, and
@@ -2075,7 +2091,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		 * A reference will be added to the level 2 table when
 		 * the level 3 table is created.
 		 */
-		l1pte = pmap_l1pte(pmap, va);
+		l1pte = pmap_l1pte(lev1map, va);
 		if (pmap_pte_v(l1pte) == 0) {
 			pmap_physpage_addref(l1pte);
 			error = pmap_ptpage_alloc(l1pte, PGU_L2PT);
@@ -2099,7 +2115,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		 * A reference will be added to the level 3 table when
 		 * the mapping is validated.
 		 */
-		l2pte = pmap_l2pte(pmap, va, l1pte);
+		l2pte = pmap_l2pte(lev1map, va, l1pte);
 		if (pmap_pte_v(l2pte) == 0) {
 			pmap_physpage_addref(l2pte);
 			error = pmap_ptpage_alloc(l2pte, PGU_L3PT);
@@ -2123,7 +2139,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		/*
 		 * Get the PTE that will map the page.
 		 */
-		pte = pmap_l3pte(pmap, va, l2pte);
+		pte = pmap_l3pte(lev1map, va, l2pte);
 	}
 
 	/* Remember all of the old PTE; used for TBI check later. */
@@ -2409,7 +2425,7 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
 
 	PMAP_LOCK(pmap);
 
-	pte = pmap_l3pte(pmap, va, NULL);
+	pte = pmap_l3pte(pmap_lev1map(pmap), va, NULL);
 
 	KASSERT(pte != NULL);
 	KASSERT(pmap_pte_v(pte));
@@ -2469,17 +2485,19 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 		return false;
 	}
 
+	pt_entry_t * const lev1map = pmap_lev1map(pmap);
+
 	PMAP_LOCK(pmap);
 
-	l1pte = pmap_l1pte(pmap, va);
+	l1pte = pmap_l1pte(lev1map, va);
 	if (pmap_pte_v(l1pte) == 0)
 		goto out;
 
-	l2pte = pmap_l2pte(pmap, va, l1pte);
+	l2pte = pmap_l2pte(lev1map, va, l1pte);
 	if (pmap_pte_v(l2pte) == 0)
 		goto out;
 
-	l3pte = pmap_l3pte(pmap, va, l2pte);
+	l3pte = pmap_l3pte(lev1map, va, l2pte);
 	if (pmap_pte_v(l3pte) == 0)
 		goto out;
 
@@ -2562,7 +2580,7 @@ pmap_activate(struct lwp *l)
 		pcb->pcb_hw.apcb_asn = PMAP_ASN_KERNEL;
 	}
 	pcb->pcb_hw.apcb_ptbr =
-	    ALPHA_K0SEG_TO_PHYS((vaddr_t)pmap->pm_lev1map) >> PGSHIFT;
+	    ALPHA_K0SEG_TO_PHYS((vaddr_t)pmap_lev1map(pmap)) >> PGSHIFT;
 
 	/*
 	 * Check to see if the ASN or page table base has changed; if
@@ -2926,7 +2944,7 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *pte,
 	 * PTE not provided, compute it from pmap and va.
 	 */
 	if (pte == NULL) {
-		pte = pmap_l3pte(pmap, va, NULL);
+		pte = pmap_l3pte(pmap_lev1map(pmap), va, NULL);
 		if (pmap_pte_v(pte) == 0)
 			return 0;
 	}
@@ -3063,7 +3081,7 @@ pmap_emulate_reference(struct lwp *l, vaddr_t v, int user, int type)
 #endif
 		PMAP_LOCK(pmap);
 		didlock = true;
-		pte = pmap_l3pte(pmap, v, NULL);
+		pte = pmap_l3pte(pmap_lev1map(pmap), v, NULL);
 		/*
 		 * We'll unlock below where we're done with the PTE.
 		 */
@@ -3468,9 +3486,10 @@ pmap_kptpage_alloc(paddr_t *pap)
 vaddr_t
 pmap_growkernel(vaddr_t maxkvaddr)
 {
-	struct pmap *kpm = pmap_kernel(), *pm;
+	struct pmap *pm;
 	paddr_t ptaddr;
 	pt_entry_t *l1pte, *l2pte, pte;
+	pt_entry_t *lev1map;
 	vaddr_t va;
 	int l1idx;
 
@@ -3487,7 +3506,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 		 * allocate a new L2 PT page and insert it into the
 		 * L1 map.
 		 */
-		l1pte = pmap_l1pte(kpm, va);
+		l1pte = pmap_l1pte(kernel_lev1map, va);
 		if (pmap_pte_v(l1pte) == 0) {
 			if (!pmap_kptpage_alloc(&ptaddr))
 				goto die;
@@ -3509,10 +3528,11 @@ pmap_growkernel(vaddr_t maxkvaddr)
 				 * Any pmaps published on the global list
 				 * should never be referencing kernel_lev1map.
 				 */
-				KASSERT(pm->pm_lev1map != kernel_lev1map);
+				lev1map = pmap_lev1map(pm);
+				KASSERT(lev1map != kernel_lev1map);
 
 				PMAP_LOCK(pm);
-				pm->pm_lev1map[l1idx] = pte;
+				lev1map[l1idx] = pte;
 				PMAP_UNLOCK(pm);
 			}
 			mutex_exit(&pmap_all_pmaps_lock);
@@ -3521,7 +3541,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 		/*
 		 * Have an L2 PT page now, add the L3 PT page.
 		 */
-		l2pte = pmap_l2pte(kpm, va, l1pte);
+		l2pte = pmap_l2pte(kernel_lev1map, va, l1pte);
 		KASSERT(pmap_pte_v(l2pte) == 0);
 		if (!pmap_kptpage_alloc(&ptaddr))
 			goto die;
@@ -3680,9 +3700,10 @@ pmap_l3pt_delref(pmap_t pmap, vaddr_t va, pt_entry_t *l3pte,
     struct pmap_tlb_context * const tlbctx)
 {
 	pt_entry_t *l1pte, *l2pte;
+	pt_entry_t * const lev1map = pmap_lev1map(pmap);
 
-	l1pte = pmap_l1pte(pmap, va);
-	l2pte = pmap_l2pte(pmap, va, l1pte);
+	l1pte = pmap_l1pte(lev1map, va);
+	l2pte = pmap_l2pte(lev1map, va, l1pte);
 
 #ifdef DIAGNOSTIC
 	if (pmap == pmap_kernel())
@@ -3807,7 +3828,7 @@ pmap_asn_alloc(pmap_t const pmap, struct cpu_info * const ci)
 #endif
 
 	KASSERT(pmap != pmap_kernel());
-	KASSERT(pmap->pm_lev1map != kernel_lev1map);
+	KASSERT(pmap->pm_percpu[ci->ci_cpuid].pmc_lev1map != kernel_lev1map);
 	KASSERT(kpreempt_disabled());
 
 	/* No work to do if the the CPU does not implement ASNs. */

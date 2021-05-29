@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.87 2021/05/29 22:14:09 thorpej Exp $ */
+/* $NetBSD: pmap.h,v 1.88 2021/05/29 23:27:22 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -137,17 +137,18 @@ struct pmap_percpu {
 	unsigned long		pmc_asngen;	/* ASN generation number */
 	unsigned int		pmc_needisync;	/* CPU needes isync */
 	unsigned int		pmc_pad1;
-	unsigned long		pmc_padN[(COHERENCY_UNIT / 8) - 3];
+	pt_entry_t		*pmc_lev1map;	/* level 1 map */
+	unsigned long		pmc_padN[(COHERENCY_UNIT / 8) - 4];
 };
 
 struct pmap {	/* pmaps are aligned to COHERENCY_UNIT boundaries */
 		/* pmaps are locked by hashed mutexes */
-	pt_entry_t		*pm_lev1map;	/* [ 0] level 1 map */
-	unsigned long		pm_cpus;	/* [ 8] CPUs using pmap */
-	unsigned long		__pm_spare0;	/* [16] spare field */
-	struct pmap_statistics	pm_stats;	/* [32] statistics */
-	unsigned int		pm_count;	/* [40] reference count */
-	unsigned int		__pm_spare1;	/* [44] spare field */
+	unsigned long		pm_cpus;	/* [ 0] CPUs using pmap */
+	struct pmap_statistics	pm_stats;	/* [ 8] statistics */
+	unsigned int		pm_count;	/* [24] reference count */
+	unsigned int		__pm_spare0;	/* [28] spare field */
+	unsigned long		__pm_spare1;	/* [32] spare field */
+	unsigned long		__pm_spare2;	/* [40] spare field */
 	TAILQ_ENTRY(pmap)	pm_list;	/* [48] list of all pmaps */
 	/* -- COHERENCY_UNIT boundary -- */
 	struct pmap_percpu	pm_percpu[];	/* [64] per-CPU data */
@@ -277,19 +278,33 @@ do {									\
 #define	pmap_pte_prot_chg(pte, np) ((np) ^ pmap_pte_prot(pte))
 
 static __inline pt_entry_t *
-pmap_l1pte(pmap_t pmap, vaddr_t v)
+pmap_lev1map(pmap_t pmap)
 {
-	KASSERT(pmap->pm_lev1map != NULL);
-	return &pmap->pm_lev1map[l1pte_index(v)];
+	if (__predict_false(pmap == pmap_kernel())) {
+		return kernel_lev1map;
+	}
+	/*
+	 * We're just reading a per-CPU field that's the same on
+	 * all CPUs, so don't bother disabling preemption around
+	 * this.
+	 */
+	return pmap->pm_percpu[cpu_number()].pmc_lev1map;
 }
 
 static __inline pt_entry_t *
-pmap_l2pte(pmap_t pmap, vaddr_t v, pt_entry_t *l1pte)
+pmap_l1pte(pt_entry_t *lev1map, vaddr_t v)
+{
+	KASSERT(lev1map != NULL);
+	return &lev1map[l1pte_index(v)];
+}
+
+static __inline pt_entry_t *
+pmap_l2pte(pt_entry_t *lev1map, vaddr_t v, pt_entry_t *l1pte)
 {
 	pt_entry_t *lev2map;
 
 	if (l1pte == NULL) {
-		l1pte = pmap_l1pte(pmap, v);
+		l1pte = pmap_l1pte(lev1map, v);
 		if (pmap_pte_v(l1pte) == 0)
 			return NULL;
 	}
@@ -299,12 +314,12 @@ pmap_l2pte(pmap_t pmap, vaddr_t v, pt_entry_t *l1pte)
 }
 
 static __inline pt_entry_t *
-pmap_l3pte(pmap_t pmap, vaddr_t v, pt_entry_t *l2pte)
+pmap_l3pte(pt_entry_t *lev1map, vaddr_t v, pt_entry_t *l2pte)
 {
 	pt_entry_t *l1pte, *lev2map, *lev3map;
 
 	if (l2pte == NULL) {
-		l1pte = pmap_l1pte(pmap, v);
+		l1pte = pmap_l1pte(lev1map, v);
 		if (pmap_pte_v(l1pte) == 0)
 			return NULL;
 
