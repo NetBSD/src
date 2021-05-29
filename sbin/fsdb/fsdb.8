@@ -1,4 +1,4 @@
-.\"	$NetBSD: fsdb.8,v 1.26 2017/08/05 20:25:41 wiz Exp $
+.\"	$NetBSD: fsdb.8,v 1.27 2021/05/29 16:51:25 christos Exp $
 .\"
 .\" Copyright (c) 1996, 2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 3, 2017
+.Dd May 29, 2021
 .Dt FSDB 8
 .Os
 .Sh NAME
@@ -207,7 +207,8 @@ Change the generation number of the current inode to
 .It Cm mtime Ar time
 .It Cm ctime Ar time
 .It Cm atime Ar time
-Change the modification, change, or access time (respectively) on the
+.It Cm birthtime Ar time
+Change the modification, change, access time, or birthtime (respectively) on the
 current inode to
 .Ar time .
 .Ar Time
@@ -219,9 +220,11 @@ is an optional nanosecond specification.
 If no nanoseconds are specified, the
 .Va mtimensec ,
 .Va ctimensec ,
+.Va atimensec ,
 or
-.Va atimensec
+.Va birthtimensec
 field will be set to zero.
+The birthtime field is only available on ufs2 filesystems.
 .Pp
 .It Cm quit , Cm q , Cm exit , Aq Em EOF
 Exit the program.
