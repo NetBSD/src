@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdbutil.c,v 1.22 2009/04/11 06:53:53 lukem Exp $	*/
+/*	$NetBSD: fsdbutil.c,v 1.23 2021/05/29 16:51:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsdbutil.c,v 1.22 2009/04/11 06:53:53 lukem Exp $");
+__RCSID("$NetBSD: fsdbutil.c,v 1.23 2021/05/29 16:51:25 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -143,16 +143,24 @@ printstat(const char *cp, ino_t inum, union dinode *dp)
 	    (unsigned long long)size);
 	t = is_ufs2 ? iswap64(dp->dp2.di_mtime) : iswap32(dp->dp1.di_mtime);
 	p = ctime(&t);
-	printf("\n\tMTIME=%15.15s %4.4s [%d nsec]", &p[4], &p[20],
+	printf("\n\t    MTIME=%15.15s %4.4s [%d nsec]", &p[4], &p[20],
 	    iswap32(DIP(dp, mtimensec)));
 	t = is_ufs2 ? iswap64(dp->dp2.di_ctime) : iswap32(dp->dp1.di_ctime);
 	p = ctime(&t);
-	printf("\n\tCTIME=%15.15s %4.4s [%d nsec]", &p[4], &p[20],
+	printf("\n\t    CTIME=%15.15s %4.4s [%d nsec]", &p[4], &p[20],
 	    iswap32(DIP(dp, ctimensec)));
 	t = is_ufs2 ? iswap64(dp->dp2.di_atime) : iswap32(dp->dp1.di_atime);
 	p = ctime(&t);
-	printf("\n\tATIME=%15.15s %4.4s [%d nsec]\n", &p[4], &p[20],
+	printf("\n\t    ATIME=%15.15s %4.4s [%d nsec]", &p[4], &p[20],
 	    iswap32(DIP(dp,atimensec)));
+	if (is_ufs2) {
+		t = iswap64(dp->dp2.di_birthtime);
+		p = ctime(&t);
+		printf("\n\tBIRTHTIME=%15.15s %4.4s [%d nsec]\n", &p[4], &p[20],
+		    iswap32(dp->dp2.di_birthnsec));
+	} else {
+		printf("\n");
+	}
 
 	if (!is_ufs2 && sblock->fs_old_inodefmt < FS_44INODEFMT)
 		uid = iswap16(dp->dp1.di_ouid);

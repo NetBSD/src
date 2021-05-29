@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdb.c,v 1.51 2020/04/05 15:25:40 joerg Exp $	*/
+/*	$NetBSD: fsdb.c,v 1.52 2021/05/29 16:51:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2017 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsdb.c,v 1.51 2020/04/05 15:25:40 joerg Exp $");
+__RCSID("$NetBSD: fsdb.c,v 1.52 2021/05/29 16:51:25 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -137,7 +137,7 @@ static int scannames(struct inodesc *);
 static int dolookup(char *);
 static int chinumfunc(struct inodesc *);
 static int chnamefunc(struct inodesc *);
-static int dotime(char *, int32_t *, int32_t *);
+static int dotime(char *, int64_t *, int32_t *);
 static void print_blks32(int32_t *buf, int size, uint64_t *blknum, struct wrinfo *wrp);
 static void print_blks64(int64_t *buf, int size, uint64_t *blknum, struct wrinfo *wrp);
 static void print_indirblks32(uint32_t blk, int ind_level,
@@ -242,6 +242,7 @@ CMDFUNC(back);			/* pop back to last ino */
 CMDFUNC(chmtime);		/* Change mtime */
 CMDFUNC(chctime);		/* Change ctime */
 CMDFUNC(chatime);		/* Change atime */
+CMDFUNC(chbirthtime);		/* Change birthtime */
 CMDFUNC(chinum);		/* Change inode # of dirent */
 CMDFUNC(chname);		/* Change dirname of dirent */
 
@@ -278,6 +279,8 @@ static struct cmdtable cmds[] = {
 	{"mtime", "Change mtime of current inode to MTIME", 2, 2, chmtime},
 	{"ctime", "Change ctime of current inode to CTIME", 2, 2, chctime},
 	{"atime", "Change atime of current inode to ATIME", 2, 2, chatime},
+	{"birthtime", "Change atime of current inode to BIRTHTIME", 2, 2,
+	    chbirthtime},
 	{"quit", "Exit", 1, 1, quit},
 	{"q", "Exit", 1, 1, quit},
 	{"exit", "Exit", 1, 1, quit},
@@ -1357,11 +1360,11 @@ CMDFUNC(chgroup)
 }
 
 static int
-dotime(char *name, int32_t *rsec, int32_t *rnsec)
+dotime(char *name, int64_t *rsec, int32_t *rnsec)
 {
 	char   *p, *val;
 	struct tm t;
-	int32_t sec;
+	int64_t sec;
 	int32_t nsec;
 	p = strchr(name, '.');
 	if (p) {
@@ -1405,14 +1408,15 @@ badformat:
 		warnx("date/time out of range");
 		return 1;
 	}
-	*rsec = iswap32(sec);
+	*rsec = iswap64(sec);
 	*rnsec = iswap32(nsec);
 	return 0;
 }
 
 CMDFUNC(chmtime)
 {
-	int32_t rsec, nsec;
+	int64_t rsec;
+	int32_t nsec;
 
 	if (dotime(argv[1], &rsec, &nsec))
 		return 1;
@@ -1425,7 +1429,8 @@ CMDFUNC(chmtime)
 
 CMDFUNC(chatime)
 {
-	int32_t rsec, nsec;
+	int64_t rsec;
+	int32_t nsec;
 
 	if (dotime(argv[1], &rsec, &nsec))
 		return 1;
@@ -1438,12 +1443,32 @@ CMDFUNC(chatime)
 
 CMDFUNC(chctime)
 {
-	int32_t rsec, nsec;
+	int64_t rsec;
+	int32_t nsec;
 
 	if (dotime(argv[1], &rsec, &nsec))
 		return 1;
 	DIP_SET(curinode, ctime, rsec);
 	DIP_SET(curinode, ctimensec, nsec);
+	inodirty();
+	printactive();
+	return 0;
+}
+
+CMDFUNC(chbirthtime)
+{
+	int64_t rsec;
+	int32_t nsec;
+
+	if (!is_ufs2) {
+		warnx("birthtime can only be set in ufs2");
+		return 1;
+	}
+
+	if (dotime(argv[1], &rsec, &nsec))
+		return 1;
+	curinode->dp2.di_birthtime = rsec;
+	curinode->dp2.di_birthnsec = nsec;
 	inodirty();
 	printactive();
 	return 0;
