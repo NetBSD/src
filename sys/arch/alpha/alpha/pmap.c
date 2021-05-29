@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.279 2021/05/29 21:54:50 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.280 2021/05/29 22:14:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008, 2020
@@ -135,7 +135,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.279 2021/05/29 21:54:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.280 2021/05/29 22:14:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -862,8 +862,6 @@ pmap_tlb_invalidate(const struct pmap_tlb_context * const tlbctx,
 	pmap_t const pmap = tlbctx->t_pmap;
 	KASSERT(pmap != NULL);
 
-	const u_long cpu_mask = 1UL << ci->ci_cpuid;
-
 	if (__predict_false(pmap != ci->ci_pmap)) {
 		TLB_COUNT(invalidate_user_not_current);
 
@@ -874,6 +872,8 @@ pmap_tlb_invalidate(const struct pmap_tlb_context * const tlbctx,
 		if (__predict_false(pmap_max_asn == 0)) {
 			return;
 		}
+
+		const u_long cpu_mask = 1UL << ci->ci_cpuid;
 
 		/*
 		 * We cannot directly invalidate the TLB in this case,
@@ -890,14 +890,14 @@ pmap_tlb_invalidate(const struct pmap_tlb_context * const tlbctx,
 		 * of accounting for internal consistency.
 		 */
 		if (TLB_CTX_FLAGS(tlbctx) & TLB_CTX_F_IMB) {
-			atomic_or_ulong(&pmap->pm_needisync, cpu_mask);
+			pmap->pm_percpu[ci->ci_cpuid].pmc_needisync = 1;
 		}
 		return;
 	}
 
 	if (TLB_CTX_FLAGS(tlbctx) & TLB_CTX_F_IMB) {
 		TLB_COUNT(invalidate_user_lazy_imb);
-		atomic_or_ulong(&pmap->pm_needisync, cpu_mask);
+		pmap->pm_percpu[ci->ci_cpuid].pmc_needisync = 1;
 	}
 
 	if (count == TLB_CTX_ALLVA) {
@@ -3882,7 +3882,7 @@ pmap_asn_alloc(pmap_t const pmap, struct cpu_info * const ci)
 	 * We have a new ASN, so we can skip any pending I-stream sync
 	 * on the way back out to user space.
 	 */
-	atomic_and_ulong(&pmap->pm_needisync, ~(1UL << ci->ci_cpuid));
+	pmc->pmc_needisync = 0;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_ASN)
