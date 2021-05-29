@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.85 2021/05/24 03:43:24 thorpej Exp $ */
+/* $NetBSD: pmap.h,v 1.86 2021/05/29 21:54:51 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -131,11 +131,11 @@
  * allocate any ASN info for the kernel pmap at all.
  * arrays which hold enough for ALPHA_MAXPROCS.
  */
-struct pmap_asn_info {
-	unsigned int		pma_asn;	/* address space number */
-	unsigned int		pma_pad0;
-	unsigned long		pma_asngen;	/* ASN generation number */
-	unsigned long		pma_padN[(COHERENCY_UNIT / 8) - 2];
+struct pmap_percpu {
+	unsigned int		pmc_asn;	/* address space number */
+	unsigned int		pmc_pad0;
+	unsigned long		pmc_asngen;	/* ASN generation number */
+	unsigned long		pmc_padN[(COHERENCY_UNIT / 8) - 2];
 };
 
 struct pmap {	/* pmaps are aligned to COHERENCY_UNIT boundaries */
@@ -148,12 +148,12 @@ struct pmap {	/* pmaps are aligned to COHERENCY_UNIT boundaries */
 	unsigned int		__pm_spare;	/* [44] spare field */
 	TAILQ_ENTRY(pmap)	pm_list;	/* [48] list of all pmaps */
 	/* -- COHERENCY_UNIT boundary -- */
-	struct pmap_asn_info	pm_asni[];	/* [64] ASN information */
+	struct pmap_percpu	pm_percpu[];	/* [64] per-CPU data */
 			/*	variable length		*/
 };
 
 #define	PMAP_SIZEOF(x)							\
-	(ALIGN(offsetof(struct pmap, pm_asni[(x)])))
+	(ALIGN(offsetof(struct pmap, pm_percpu[(x)])))
 
 #define	PMAP_ASN_KERNEL		0	/* kernel-reserved ASN */
 #define	PMAP_ASN_FIRST_USER	1	/* first user ASN */
