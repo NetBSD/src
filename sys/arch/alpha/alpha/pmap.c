@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.278 2021/05/24 03:43:24 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.279 2021/05/29 21:54:50 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008, 2020
@@ -135,7 +135,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.278 2021/05/24 03:43:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.279 2021/05/29 21:54:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -265,9 +265,9 @@ static struct pool_cache pmap_pmap_cache __read_mostly;
 static struct pool_cache pmap_l1pt_cache __read_mostly;
 static struct pool_cache pmap_pv_cache __read_mostly;
 
-CTASSERT(offsetof(struct pmap, pm_asni[0]) == COHERENCY_UNIT);
+CTASSERT(offsetof(struct pmap, pm_percpu[0]) == COHERENCY_UNIT);
 CTASSERT(PMAP_SIZEOF(ALPHA_MAXPROCS) < ALPHA_PGBYTES);
-CTASSERT(sizeof(struct pmap_asn_info) == COHERENCY_UNIT);
+CTASSERT(sizeof(struct pmap_percpu) == COHERENCY_UNIT);
 
 /*
  * Address Space Numbers.
@@ -880,7 +880,7 @@ pmap_tlb_invalidate(const struct pmap_tlb_context * const tlbctx,
 		 * so force allocation of a new ASN when the pmap becomes
 		 * active again.
 		 */
-		pmap->pm_asni[ci->ci_cpuid].pma_asngen = PMAP_ASNGEN_INVALID;
+		pmap->pm_percpu[ci->ci_cpuid].pmc_asngen = PMAP_ASNGEN_INVALID;
 		atomic_and_ulong(&pmap->pm_cpus, ~cpu_mask);
 
 		/*
@@ -1580,8 +1580,8 @@ pmap_create(void)
 	 * when the pmap is activated.
 	 */
 	for (i = 0; i < pmap_ncpuids; i++) {
-		pmap->pm_asni[i].pma_asn = PMAP_ASN_KERNEL;
-		pmap->pm_asni[i].pma_asngen = PMAP_ASNGEN_INVALID;
+		pmap->pm_percpu[i].pmc_asn = PMAP_ASN_KERNEL;
+		pmap->pm_percpu[i].pmc_asngen = PMAP_ASNGEN_INVALID;
 	}
 
  try_again:
@@ -3814,7 +3814,7 @@ pmap_asn_alloc(pmap_t const pmap, struct cpu_info * const ci)
 	if (pmap_max_asn == 0)
 		return 0;
 
-	struct pmap_asn_info * const pma = &pmap->pm_asni[ci->ci_cpuid];
+	struct pmap_percpu * const pmc = &pmap->pm_percpu[ci->ci_cpuid];
 
 	/*
 	 * Hopefully, we can continue using the one we have...
@@ -3824,14 +3824,14 @@ pmap_asn_alloc(pmap_t const pmap, struct cpu_info * const ci)
 	 * the generation counter at 1, but initialize pmaps with
 	 * 0; this forces the first ASN allocation to occur.
 	 */
-	if (pma->pma_asngen == ci->ci_asn_gen) {
+	if (pmc->pmc_asngen == ci->ci_asn_gen) {
 #ifdef DEBUG
 		if (pmapdebug & PDB_ASN)
 			printf("pmap_asn_alloc: same generation, keeping %u\n",
-			    pma->pma_asn);
+			    pmc->pmc_asn);
 #endif
 		TLB_COUNT(asn_reuse);
-		return pma->pma_asn;
+		return pmc->pmc_asn;
 	}
 
 	/*
@@ -3874,8 +3874,8 @@ pmap_asn_alloc(pmap_t const pmap, struct cpu_info * const ci)
 	/*
 	 * Assign the new ASN and validate the generation number.
 	 */
-	pma->pma_asn = ci->ci_next_asn++;
-	pma->pma_asngen = ci->ci_asn_gen;
+	pmc->pmc_asn = ci->ci_next_asn++;
+	pmc->pmc_asngen = ci->ci_asn_gen;
 	TLB_COUNT(asn_assign);
 
 	/*
@@ -3887,7 +3887,7 @@ pmap_asn_alloc(pmap_t const pmap, struct cpu_info * const ci)
 #ifdef DEBUG
 	if (pmapdebug & PDB_ASN)
 		printf("pmap_asn_alloc: assigning %u to pmap %p\n",
-		    pma->pma_asn, pmap);
+		    pmc->pmc_asn, pmap);
 #endif
-	return pma->pma_asn;
+	return pmc->pmc_asn;
 }
