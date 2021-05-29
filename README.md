@@ -35,7 +35,7 @@ Troubleshooting
 - Send bugs and patches [via web form](https://www.NetBSD.org/cgi-bin/sendpr.cgi?gndb=netbsd).
 - Subscribe to the [mailing lists](https://www.NetBSD.org/mailinglists/).
   The [netbsd-users](https://www.NetBSD.org/mailinglists/#netbsd-users) list is a good choice for many problems; watch [current-users](https://www.NetBSD.org/mailinglists/#current-users) if you follow the bleeding edge of NetBSD-current.
-- Join the community IRC channel [#netbsd @ libera.chat](https://kiwiirc.com/nextclient/irc.libera.chat/netbsd).
+- Join the community IRC channel [#netbsd @ libera.chat](https://web.libera.chat/#netbsd).
 
 Latest sources
 --------------
