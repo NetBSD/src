@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.86 2021/05/29 21:54:51 thorpej Exp $ */
+/* $NetBSD: pmap.h,v 1.87 2021/05/29 22:14:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -135,17 +135,19 @@ struct pmap_percpu {
 	unsigned int		pmc_asn;	/* address space number */
 	unsigned int		pmc_pad0;
 	unsigned long		pmc_asngen;	/* ASN generation number */
-	unsigned long		pmc_padN[(COHERENCY_UNIT / 8) - 2];
+	unsigned int		pmc_needisync;	/* CPU needes isync */
+	unsigned int		pmc_pad1;
+	unsigned long		pmc_padN[(COHERENCY_UNIT / 8) - 3];
 };
 
 struct pmap {	/* pmaps are aligned to COHERENCY_UNIT boundaries */
 		/* pmaps are locked by hashed mutexes */
 	pt_entry_t		*pm_lev1map;	/* [ 0] level 1 map */
 	unsigned long		pm_cpus;	/* [ 8] CPUs using pmap */
-	unsigned long		pm_needisync;	/* [16] CPUs needing isync */
+	unsigned long		__pm_spare0;	/* [16] spare field */
 	struct pmap_statistics	pm_stats;	/* [32] statistics */
 	unsigned int		pm_count;	/* [40] reference count */
-	unsigned int		__pm_spare;	/* [44] spare field */
+	unsigned int		__pm_spare1;	/* [44] spare field */
 	TAILQ_ENTRY(pmap)	pm_list;	/* [48] list of all pmaps */
 	/* -- COHERENCY_UNIT boundary -- */
 	struct pmap_percpu	pm_percpu[];	/* [64] per-CPU data */
@@ -326,10 +328,10 @@ pmap_l3pte(pmap_t pmap, vaddr_t v, pt_entry_t *l2pte)
  */
 #define	PMAP_USERRET(pmap)						\
 do {									\
-	u_long cpu_mask = (1UL << cpu_number());			\
+	const unsigned long cpu_id = cpu_number();			\
 									\
-	if ((pmap)->pm_needisync & cpu_mask) {				\
-		atomic_and_ulong(&(pmap)->pm_needisync,	~cpu_mask);	\
+	if ((pmap)->pm_percpu[cpu_id].pmc_needisync) {			\
+		(pmap)->pm_percpu[cpu_id].pmc_needisync = 0;		\
 		alpha_pal_imb();					\
 	}								\
 } while (0)
