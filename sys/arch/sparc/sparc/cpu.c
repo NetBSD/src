@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.259 2021/01/24 07:36:54 mrg Exp $ */
+/*	$NetBSD: cpu.c,v 1.260 2021/05/29 02:58:37 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.259 2021/01/24 07:36:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.260 2021/05/29 02:58:37 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -520,6 +520,19 @@ cpu_attach(struct cpu_softc *sc, int node, int mid)
 	 */
 	if (bootmid == 0)
 		bootmid = mid;
+
+	/*
+	 * Set speeds now we've attached all CPUs.
+	 */
+	if (sparc_ncpus > 1 && sparc_ncpus == cpu_attach_count) {
+		CPU_INFO_ITERATOR n;
+		unsigned best_hz = 0;
+
+		for (CPU_INFO_FOREACH(n, cpi))
+			best_hz = MAX(cpi->hz, best_hz);
+		for (CPU_INFO_FOREACH(n, cpi))
+			cpu_topology_setspeed(cpi, cpi->hz < best_hz);
+	}
 }
 
 /*
