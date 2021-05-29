@@ -1,4 +1,4 @@
-/*	$NetBSD: power.h,v 1.21 2018/08/01 20:09:34 kre Exp $	*/
+/*	$NetBSD: power.h,v 1.22 2021/05/29 16:49:57 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -114,6 +114,10 @@
 #define		PSWITCH_HK_VOLUME_UP		"volume-up"
 #define		PSWITCH_HK_VOLUME_DOWN		"volume-down"
 #define		PSWITCH_HK_VOLUME_MUTE		"volume-mute"
+#define		PSWITCH_HK_STAR_BUTTON		"star-button"
+#define		PSWITCH_HK_SCISSORS_BUTTON	"scissors-button"
+#define		PSWITCH_HK_BLUETOOTH_BUTTON	"bluetooth-button"
+#define		PSWITCH_HK_KEYBOARD_BUTTON	"keyboard-button"
 #endif /* THINKPAD_NORMAL_HOTKEYS */
 #define	PSWITCH_TYPE_RADIO	6	/* radio switch */
 
