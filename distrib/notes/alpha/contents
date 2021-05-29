@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.24 2020/09/22 02:53:52 snj Exp $
+.\"	$NetBSD: contents,v 1.25 2021/05/29 19:03:08 thorpej Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -61,6 +61,14 @@ conventions for indicating italic and bold display.
 A gzipped
 .Nx
 kernel containing code for everything supported in this release.
+.
+.			It Pa netbsd-GENERIC.QEMU.gz
+.
+A gzipped
+.Nx
+kernel, identical to netbsd-GENERIC, except that it contains a static
+copy of the kernel symbol table for convenience when running under Qemu,
+which loads the kernel directly but does not load the kernel symbols.
 .
 .		tag) \" binary/kernel/
 .
