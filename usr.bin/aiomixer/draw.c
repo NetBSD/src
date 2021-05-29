@@ -1,4 +1,4 @@
-/* $NetBSD: draw.c,v 1.6 2021/05/08 14:49:13 nia Exp $ */
+/* $NetBSD: draw.c,v 1.7 2021/05/29 09:11:41 nia Exp $ */
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -364,13 +364,7 @@ create_widgets(struct aiomixer *aio)
 			control->widget_y = class->height;
 			class->height += control->height;
 		}
-#ifdef notyet
-		/*
-		 * NetBSD curses wresize() bounds the pad to the height of
-		 * the screen even though it's already taller. Probably a bug.
-		 */
 		wresize(class->widgetpad, class->height, getmaxx(stdscr));
-#endif
 	}
 
 	aio->last_max_x = getmaxx(stdscr);
