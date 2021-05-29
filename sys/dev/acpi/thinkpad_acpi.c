@@ -1,4 +1,4 @@
-/* $NetBSD: thinkpad_acpi.c,v 1.49 2021/01/29 15:49:55 thorpej Exp $ */
+/* $NetBSD: thinkpad_acpi.c,v 1.50 2021/05/29 16:49:39 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.49 2021/01/29 15:49:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.50 2021/05/29 16:49:39 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -111,7 +111,8 @@ typedef struct thinkpad_softc {
 #define	THINKPAD_CMOS_BRIGHTNESS_UP	0x04
 #define	THINKPAD_CMOS_BRIGHTNESS_DOWN	0x05
 
-#define	THINKPAD_HKEY_VERSION		0x0100
+#define	THINKPAD_HKEY_VERSION_1		0x0100
+#define	THINKPAD_HKEY_VERSION_2		0x0200
 
 #define	THINKPAD_DISPLAY_LCD		0x01
 #define	THINKPAD_DISPLAY_CRT		0x02
@@ -164,6 +165,7 @@ CFATTACH_DECL3_NEW(thinkpad, sizeof(thinkpad_softc_t),
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "IBM0068" },
 	{ .compat = "LEN0068" },
+	{ .compat = "LEN0268" },
 	DEVICE_COMPAT_EOL
 };
 
@@ -178,13 +180,18 @@ thinkpad_match(device_t parent, cfdata_t match, void *opaque)
 	if (ret == 0)
 		return 0;
 
-	/* We only support hotkey version 0x0100 */
+	/* We only support hotkey versions 0x0100 and 0x0200 */
 	if (ACPI_FAILURE(acpi_eval_integer(aa->aa_node->ad_handle, "MHKV",
 	    &ver)))
 		return 0;
 
-	if (ver != THINKPAD_HKEY_VERSION)
+	switch (ver) {
+	case THINKPAD_HKEY_VERSION_1:
+	case THINKPAD_HKEY_VERSION_2:
+		break;
+	default:
 		return 0;
+	}
 
 	/* Cool, looks like we're good to go */
 	return ret;
