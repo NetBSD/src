@@ -1,4 +1,4 @@
-/*	$NetBSD: resize.c,v 1.30 2018/11/02 04:17:39 blymn Exp $	*/
+/*	$NetBSD: resize.c,v 1.31 2021/05/29 09:11:14 nia Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -33,7 +33,7 @@
 #if 0
 static char sccsid[] = "@(#)resize.c   blymn 2001/08/26";
 #else
-__RCSID("$NetBSD: resize.c,v 1.30 2018/11/02 04:17:39 blymn Exp $");
+__RCSID("$NetBSD: resize.c,v 1.31 2021/05/29 09:11:14 nia Exp $");
 #endif
 #endif				/* not lint */
 
@@ -62,7 +62,25 @@ wresize(WINDOW *win, int req_nlines, int req_ncols)
 	__CTRACE(__CTRACE_WINDOW, "wresize: (%p, %d, %d)\n",
 	    win, nlines, ncols);
 #endif
-	if (win->orig == NULL) {
+	if (win->orig != NULL) {
+		/* subwins must fit inside the parent - check this */
+		if (win->begy > win->orig->begy + win->orig->maxy)
+			win->begy = win->orig->begy + win->orig->maxy - 1;
+		if (win->begy + nlines > win->orig->begy + win->orig->maxy)
+			nlines = 0;
+		if (nlines <= 0)
+			nlines += win->orig->begy + win->orig->maxy - win->begy;
+		if (nlines < 1)
+			nlines = 1;
+		if (win->begx > win->orig->begx + win->orig->maxx)
+			win->begx = win->orig->begx + win->orig->maxx - 1;
+		if (win->begx + ncols > win->orig->begx + win->orig->maxx)
+			ncols = 0;
+		if (ncols <= 0)
+			ncols += win->orig->begx + win->orig->maxx - win->begx;
+		if (ncols < 1)
+			ncols = 1;
+	} else if (!(win->flags & __ISPAD)) {
 		/* bound "our" windows by the screen size */
 		if (win == curscr || win == __virtscr || win == stdscr) {
 			if (nlines > LINES)
@@ -91,24 +109,6 @@ wresize(WINDOW *win, int req_nlines, int req_ncols)
 			if (ncols < 1)
 				ncols = 1;
 		}
-	} else {
-		/* subwins must fit inside the parent - check this */
-		if (win->begy > win->orig->begy + win->orig->maxy)
-			win->begy = win->orig->begy + win->orig->maxy - 1;
-		if (win->begy + nlines > win->orig->begy + win->orig->maxy)
-			nlines = 0;
-		if (nlines <= 0)
-			nlines += win->orig->begy + win->orig->maxy - win->begy;
-		if (nlines < 1)
-			nlines = 1;
-		if (win->begx > win->orig->begx + win->orig->maxx)
-			win->begx = win->orig->begx + win->orig->maxx - 1;
-		if (win->begx + ncols > win->orig->begx + win->orig->maxx)
-			ncols = 0;
-		if (ncols <= 0)
-			ncols += win->orig->begx + win->orig->maxx - win->begx;
-		if (ncols < 1)
-			ncols = 1;
 	}
 
 	if ((__resizewin(win, nlines, ncols)) == ERR)
