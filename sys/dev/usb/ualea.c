@@ -1,4 +1,4 @@
-/*	$NetBSD: ualea.c,v 1.12 2020/07/13 13:53:04 simonb Exp $	*/
+/*	$NetBSD: ualea.c,v 1.13 2021/05/29 08:45:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ualea.c,v 1.12 2020/07/13 13:53:04 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ualea.c,v 1.13 2021/05/29 08:45:19 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -138,6 +138,10 @@ ualea_attach(device_t parent, device_t self, void *aux)
 		    status);
 		return;
 	}
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(sc->sc_dev, "failed to register power handler"
+		    "\n");
 
 	/* Success!  We are ready to run.  */
 	sc->sc_attached = true;
