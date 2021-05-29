@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.55 2020/09/29 02:58:52 msaitoh Exp $	*/
+/*	$NetBSD: main.c,v 1.56 2021/05/29 17:41:51 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: main.c,v 1.55 2020/09/29 02:58:52 msaitoh Exp $");
+__RCSID("$NetBSD: main.c,v 1.56 2021/05/29 17:41:51 christos Exp $");
 #endif
 #endif	/* not lint */
 
@@ -1238,9 +1238,9 @@ find_label(int f, u_int sector)
 		if (i == LABEL_OFFSET)
 			continue;
 		disk_lp = (void *)(bootarea + offset);
-		memcpy(&tlp, disk_lp, sizeof(tlp));
 		if ((char *)(disk_lp + 1) > bootarea + bootarea_len)
 			break;
+		memcpy(&tlp, disk_lp, sizeof(tlp));
 		if (tlp.d_magic2 != tlp.d_magic)
 			continue;
 		if (read_all && (tlp.d_magic == DISKMAGIC_DELETED ||
