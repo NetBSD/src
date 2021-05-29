@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.207 2021/01/21 06:51:54 nia Exp $
+# $NetBSD: GENERIC,v 1.208 2021/05/29 22:50:18 tsutsui Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.207 $"
+#ident 		"GENERIC-$Revision: 1.208 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks -fno-omit-frame-pointer"
 	# See share/mk/sys.mk. -fno-omit-frame-pointer is necessary for
@@ -57,9 +57,9 @@ options 	USERCONF	# userconf(4) support
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 #options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	NTP		# NTP phase/frequency locked loop
-options 	SYSVSHM		# System V-style shared memory
 options 	SYSVMSG		# System V-style message queues
 options 	SYSVSEM		# System V-style semaphores
+options 	SYSVSHM		# System V-style shared memory
 
 options 	MODULAR		# new style module(7) framework
 options 	MODULAR_DEFAULT_AUTOLOAD
@@ -159,7 +159,8 @@ options 	USELEDS		# make the lights twinkle
 options 	DIOVERBOSE	# recognize "unknown" DIO devices
 
 # workstation console options
-options 	WSEMUL_VT100            # VT100 / VT220 emulation
+options 	WSEMUL_VT100			# VT100 / VT220 emulation
+#options 	WSDISPLAY_DEFAULTSCREENS=1
 options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD
 options 	WS_KERNEL_FG=WSCOL_GREEN
@@ -180,6 +181,12 @@ intio0		at mainbus0		# internal i/o space
 dio0		at mainbus0		# DIO/DIO-II bus
 sgc0		at mainbus0		# SGC bus
 
+# Real-time clock (not optional)
+rtc*		at intio?
+
+# DMA controller
+dma* 		at intio?
+
 # Human Interface Loop devices
 hil0		at intio?		# HIL controller
 hilkbd* 	at hil?			# keyboards
@@ -188,10 +195,8 @@ hilms*		at hil?			# mice, buttons and tablets
 wsmouse*	at hilms? mux 0
 hilid*		at hil?			# ID module
 
-rtc*		at intio?		# real-time clock (not optional)
-dma* 		at intio?		# DMA controller
-frodo*		at intio?		# Frodo utility chip found on 382, 4xx
-nhpib*		at intio?		# slow internal HP-IB
+# Frodo utility chip found on 382, 4xx's
+frodo*		at intio?
 
 # 8250-like serial ports found on Frodo ASIC
 dnkbd0		at frodo? offset 0x0	# Domain keyboard flavor
@@ -202,32 +207,40 @@ com*		at frodo? offset ?	# tty flavor
 # mc146818-like real time clock found on 425e
 mcclock0	at frodo? offset 0x80
 
-dvbox*		at intio?		# Davinci framebuffer
+# Davinci framebuffer
+dvbox*		at intio?
 dvbox*		at dio? scode ?
 wsdisplay*	at dvbox?
 
-gbox*		at intio?		# Gatorbox framebuffer
+# Gatorbox framebuffer
+gbox*		at intio?
 gbox*		at dio? scode ?
 wsdisplay*	at gbox?
 
-hyper*		at dio? scode ?		# Hyperion framebuffer
+# Hyperion framebuffer
+hyper*		at dio? scode ?
 wsdisplay*	at hyper?
 
-rbox*		at intio?		# Renaissance framebuffer
+# Renaissance framebuffer
+rbox*		at intio?
 rbox*		at dio? scode ?
 wsdisplay*	at rbox?
 
-topcat*		at intio?		# Topcat/catseye framebuffers
+# Topcat/catseye framebuffers
+topcat*		at intio?
 topcat*		at dio? scode ?
 wsdisplay*	at topcat?
 
-tvrx*		at dio? scode ?		# TurboVRX framebuffer
+# TurboVRX framebuffer
+tvrx*		at dio? scode ?
 wsdisplay*	at tvrx?
 
-gendiofb*	at dio? scode ?		# dumb framebuffer support for 362/382
+# dumb framebuffer support for 362/382
+gendiofb*	at dio? scode ?
 wsdisplay*	at gendiofb?
 
-sti*		at sgc?	slot ?		# SGC EVRX framebuffers
+# STI framebuffers
+sti*		at sgc?	slot ?
 wsdisplay*	at sti?
 
 com0		at dio0 scode 9		# DCA serial interfaces
@@ -237,10 +250,12 @@ dcm*		at dio? scode ?	flags 0xe # DCM 4- or 8-port serial interfaces
 
 le*		at dio? scode ?		# LANCE ethernet interfaces
 
-nhpib0		at dio? scode 7		# slow internal HP-IB
+# HP-IB devices
+nhpib*		at intio?		# internal HP-IB
+nhpib0		at dio? scode 7		# 98624A HP-IB
 nhpib*		at dio? scode ?
 
-fhpib*		at dio? scode ?		# `fast' HP-IB
+fhpib*		at dio? scode ?		# 98625A/98625B HP-IB
 
 hpibbus0	at nhpib0
 hpibbus*	at nhpib?
@@ -251,6 +266,7 @@ ct*		at hpibbus? slave ? punit ?	# HP-IB cartridge tapes
 mt*		at hpibbus? slave ? punit ?	# HP-IB 9-track tape
 ppi0		at hpibbus0 slave 5 punit 0	# HP-IB plotter
 
+# SCSI devices
 spc*		at dio? scode ?			# HP 98265A SCSI
 scsibus*	at spc?
 
@@ -296,10 +312,10 @@ pseudo-device	agr			# IEEE 802.3ad link aggregation
 pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	carp			# Common Address Redundancy Protocol
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
-#pseudo-device	gre			# generic L3 over IP tunnel
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
-pseudo-device	npf			# NPF packet filter
+#pseudo-device	gre			# generic L3 over IP tunnel
 pseudo-device	loop			# loopback network interface
+pseudo-device	npf			# NPF packet filter
 pseudo-device	ppp			# PPP network interfaces
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	sl			# SLIP network interfaces
@@ -308,7 +324,6 @@ pseudo-device	tun			# network tunneling over tty
 pseudo-device	tap			# virtual Ethernet
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 
-#
 # accept filters
 #pseudo-device   accf_data		# "dataready" accept filter
 #pseudo-device   accf_http		# "httpready" accept filter
