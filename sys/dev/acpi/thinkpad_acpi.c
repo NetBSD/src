@@ -1,4 +1,4 @@
-/* $NetBSD: thinkpad_acpi.c,v 1.51 2021/05/29 16:49:49 riastradh Exp $ */
+/* $NetBSD: thinkpad_acpi.c,v 1.52 2021/05/29 16:49:57 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.51 2021/05/29 16:49:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.52 2021/05/29 16:49:57 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -76,7 +76,11 @@ typedef struct thinkpad_softc {
 #define	TP_PSW_VOLUME_UP	17
 #define	TP_PSW_VOLUME_DOWN	18
 #define	TP_PSW_VOLUME_MUTE	19
-#define	TP_PSW_LAST		20
+#define	TP_PSW_STAR_BUTTON	20
+#define	TP_PSW_SCISSORS_BUTTON	21
+#define	TP_PSW_BLUETOOTH_BUTTON	22
+#define	TP_PSW_KEYBOARD_BUTTON	23
+#define	TP_PSW_LAST		24
 
 	struct sysmon_pswitch	sc_smpsw[TP_PSW_LAST];
 	bool			sc_smpsw_valid;
@@ -108,6 +112,10 @@ typedef struct thinkpad_softc {
 #define	THINKPAD_NOTIFY_VolumeDown	0x016	/* XXX: Not seen on T61 */
 #define	THINKPAD_NOTIFY_VolumeMute	0x017	/* XXX: Not seen on T61 */
 #define	THINKPAD_NOTIFY_ThinkVantage	0x018
+#define	THINKPAD_NOTIFY_Star		0x311
+#define	THINKPAD_NOTIFY_Scissors	0x312
+#define	THINKPAD_NOTIFY_Bluetooth	0x314
+#define	THINKPAD_NOTIFY_Keyboard	0x315
 
 #define	THINKPAD_CMOS_BRIGHTNESS_UP	0x04
 #define	THINKPAD_CMOS_BRIGHTNESS_DOWN	0x05
@@ -295,6 +303,10 @@ thinkpad_attach(device_t parent, device_t self, void *opaque)
 	psw[TP_PSW_VOLUME_UP].smpsw_name       = PSWITCH_HK_VOLUME_UP;
 	psw[TP_PSW_VOLUME_DOWN].smpsw_name     = PSWITCH_HK_VOLUME_DOWN;
 	psw[TP_PSW_VOLUME_MUTE].smpsw_name     = PSWITCH_HK_VOLUME_MUTE;
+	psw[TP_PSW_STAR_BUTTON].smpsw_name     = PSWITCH_HK_STAR_BUTTON;
+	psw[TP_PSW_SCISSORS_BUTTON].smpsw_name = PSWITCH_HK_SCISSORS_BUTTON;
+	psw[TP_PSW_BLUETOOTH_BUTTON].smpsw_name = PSWITCH_HK_BLUETOOTH_BUTTON;
+	psw[TP_PSW_KEYBOARD_BUTTON].smpsw_name = PSWITCH_HK_KEYBOARD_BUTTON;
 #endif /* THINKPAD_NORMAL_HOTKEYS */
 
 	for (i = 0; i < TP_PSW_LAST; i++) {
@@ -426,6 +438,15 @@ thinkpad_get_hotkeys(void *opaque)
 			    PSWITCH_EVENT_PRESSED);
 #endif
 			break;
+		case THINKPAD_NOTIFY_Bluetooth:
+			thinkpad_bluetooth_toggle(sc);
+#ifndef THINKPAD_NORMAL_HOTKEYS
+			if (sc->sc_smpsw_valid == false)
+				break;
+			sysmon_pswitch_event(&sc->sc_smpsw[TP_PSW_BLUETOOTH_BUTTON],
+			    PSWITCH_EVENT_PRESSED);
+#endif
+			break;
 		case THINKPAD_NOTIFY_wWANSwitch:
 			thinkpad_wwan_toggle(sc);
 #ifndef THINKPAD_NORMAL_HOTKEYS
@@ -543,6 +564,24 @@ thinkpad_get_hotkeys(void *opaque)
 			sysmon_pswitch_event(&sc->sc_smpsw[TP_PSW_VOLUME_MUTE],
 			    PSWITCH_EVENT_PRESSED);
 			break;
+		case THINKPAD_NOTIFY_Star:
+			if (sc->sc_smpsw_valid == false)
+				break;
+			sysmon_pswitch_event(&sc->sc_smpsw[TP_PSW_STAR_BUTTON],
+			    PSWITCH_EVENT_PRESSED);
+			break;
+		case THINKPAD_NOTIFY_Scissors:
+			if (sc->sc_smpsw_valid == false)
+				break;
+			sysmon_pswitch_event(&sc->sc_smpsw[TP_PSW_SCISSORS_BUTTON],
+			    PSWITCH_EVENT_PRESSED);
+			break;
+		case THINKPAD_NOTIFY_Keyboard:
+			if (sc->sc_smpsw_valid == false)
+				break;
+			sysmon_pswitch_event(&sc->sc_smpsw[TP_PSW_KEYBOARD_BUTTON],
+			    PSWITCH_EVENT_PRESSED);
+			break;
 #else
 		case THINKPAD_NOTIFY_FnF1:
 		case THINKPAD_NOTIFY_PointerSwitch:
@@ -552,6 +591,9 @@ thinkpad_get_hotkeys(void *opaque)
 		case THINKPAD_NOTIFY_VolumeUp:
 		case THINKPAD_NOTIFY_VolumeDown:
 		case THINKPAD_NOTIFY_VolumeMute:
+		case THINKPAD_NOTIFY_Star:
+		case THINKPAD_NOTIFY_Scissors:
+		case THINKPAD_NOTIFY_Keyboard:
 			/* XXXJDM we should deliver hotkeys as keycodes */
 			break;
 #endif /* THINKPAD_NORMAL_HOTKEYS */
