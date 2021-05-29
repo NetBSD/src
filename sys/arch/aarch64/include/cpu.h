@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.34 2021/03/27 12:15:09 jmcneill Exp $ */
+/* $NetBSD: cpu.h,v 1.35 2021/05/29 06:37:21 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -45,8 +45,8 @@
 #if defined(_KERNEL) || defined(_KMEMUSER)
 #include <sys/evcnt.h>
 
-#include <aarch64/frame.h>
 #include <aarch64/armreg.h>
+#include <aarch64/frame.h>
 
 struct clockframe {
 	struct trapframe cf_tf;
