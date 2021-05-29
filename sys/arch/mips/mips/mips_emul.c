@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_emul.c,v 1.29 2021/05/27 15:00:02 simonb Exp $ */
+/*	$NetBSD: mips_emul.c,v 1.30 2021/05/29 12:35:27 simonb Exp $ */
 
 /*
  * Copyright (c) 1999 Shuichiro URATA.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.29 2021/05/27 15:00:02 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.30 2021/05/29 12:35:27 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,7 +155,7 @@ mips_emul_branch(struct trapframe *tf, vaddr_t instpc, uint32_t fpuCSR,
 
 	case OP_COP1:
 		if (inst.RType.rs == OP_BCx || inst.RType.rs == OP_BCy) {
-			int condition = (fpuCSR & MIPS_FPU_COND_BIT) != 0;
+			int condition = (fpuCSR & MIPS_FCSR_FCC0) != 0;
 			if ((inst.RType.rt & COPz_BC_TF_MASK) != COPz_BC_TRUE)
 				condition = !condition;
 			if (condition)

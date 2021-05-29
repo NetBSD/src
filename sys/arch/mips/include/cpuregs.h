@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.110 2021/03/17 11:05:37 simonb Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.111 2021/05/29 12:35:27 simonb Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -704,40 +704,41 @@
 /*
  * The floating point version and status registers.
  */
-#define	MIPS_FPU_ID	$0
-#define	MIPS_FPU_CSR	$31
+#define	MIPS_FIR	$0	/* FP Implementation and Revision Register */
+#define	MIPS_FCSR	$31	/* FP Control/Status Register */
 
 /*
  * The floating point coprocessor status register bits.
  */
-#define	MIPS_FPU_ROUNDING_BITS		0x00000003
-#define	MIPS_FPU_ROUND_RN		0x00000000
-#define	MIPS_FPU_ROUND_RZ		0x00000001
-#define	MIPS_FPU_ROUND_RP		0x00000002
-#define	MIPS_FPU_ROUND_RM		0x00000003
-#define	MIPS_FPU_STICKY_BITS		0x0000007c
-#define	MIPS_FPU_STICKY_INEXACT		0x00000004
-#define	MIPS_FPU_STICKY_UNDERFLOW	0x00000008
-#define	MIPS_FPU_STICKY_OVERFLOW	0x00000010
-#define	MIPS_FPU_STICKY_DIV0		0x00000020
-#define	MIPS_FPU_STICKY_INVALID		0x00000040
-#define	MIPS_FPU_ENABLE_BITS		0x00000f80
-#define	MIPS_FPU_ENABLE_INEXACT		0x00000080
-#define	MIPS_FPU_ENABLE_UNDERFLOW	0x00000100
-#define	MIPS_FPU_ENABLE_OVERFLOW	0x00000200
-#define	MIPS_FPU_ENABLE_DIV0		0x00000400
-#define	MIPS_FPU_ENABLE_INVALID		0x00000800
-#define	MIPS_FPU_EXCEPTION_BITS		0x0003f000
-#define	MIPS_FPU_EXCEPTION_INEXACT	0x00001000
-#define	MIPS_FPU_EXCEPTION_UNDERFLOW	0x00002000
-#define	MIPS_FPU_EXCEPTION_OVERFLOW	0x00004000
-#define	MIPS_FPU_EXCEPTION_DIV0		0x00008000
-#define	MIPS_FPU_EXCEPTION_INVALID	0x00010000
-#define	MIPS_FPU_EXCEPTION_UNIMPL	0x00020000
-#define	MIPS_FPU_COND_BIT		0x00800000
-#define	MIPS_FPU_FLUSH_BIT		0x01000000	/* r4k,	 MBZ on r3k */
-#define	MIPS1_FPC_MBZ_BITS		0xff7c0000
-#define	MIPS3_FPC_MBZ_BITS		0xfe7c0000
+#define	MIPS_FCSR_RM		__BITS(1,0)
+#define	  MIPS_FCSR_RM_RN	  0	/* round to nearest */
+#define	  MIPS_FCSR_RM_RZ	  1	/* round toward zerO */
+#define	  MIPS_FCSR_RM_RP	  2	/* round towards +infinity */
+#define	  MIPS_FCSR_RM_RM	  3	/* round towards -infinity */
+#define	MIPS_FCSR_FLAGS		__BITS(6,2)
+#define	  MIPS_FCSR_FLAGS_I	  __BIT(2)	/* inexact */
+#define	  MIPS_FCSR_FLAGS_U	  __BIT(3)	/* underflow */
+#define	  MIPS_FCSR_FLAGS_O	  __BIT(4)	/* overflow */
+#define	  MIPS_FCSR_FLAGS_Z	  __BIT(5)	/* divide by zero */
+#define	  MIPS_FCSR_FLAGS_V	  __BIT(6)	/* invalid operation */
+#define	MIPS_FCSR_ENABLES	__BITS(11,7)
+#define	  MIPS_FCSR_ENABLES_I	  __BIT(7)	/* inexact */
+#define	  MIPS_FCSR_ENABLES_U	  __BIT(8)	/* underflow */
+#define	  MIPS_FCSR_ENABLES_O	  __BIT(9)	/* overflow */
+#define	  MIPS_FCSR_ENABLES_Z	  __BIT(10)	/* divide by zero */
+#define	  MIPS_FCSR_ENABLES_V	  __BIT(11)	/* invalid operation */
+#define	MIPS_FCSR_CAUSE		__BITS(17,12)
+#define	  MIPS_FCSR_CAUSE_I	  __BIT(12)	/* inexact */
+#define	  MIPS_FCSR_CAUSE_U	  __BIT(13)	/* underflow */
+#define	  MIPS_FCSR_CAUSE_O	  __BIT(14)	/* overflow */
+#define	  MIPS_FCSR_CAUSE_Z	  __BIT(15)	/* divide by zero */
+#define	  MIPS_FCSR_CAUSE_V	  __BIT(16)	/* invalid operation */
+#define	  MIPS_FCSR_CAUSE_E	  __BIT(17)	/* unimplemented operation */
+#define	MIPS_FCSR_NAN_2008	__BIT(18)
+#define	MIPS_FCSR_ABS_2008	__BIT(19)
+#define	MIPS_FCSR_FCC0		__BIT(23)
+#define	MIPS_FCSR_FCC		(MIPS_FPU_COND_BIT | __BITS(31,25))
+#define	MIPS_FCSR_FS		__BIT(24)	/* r4k+ */
 
 
 /*
