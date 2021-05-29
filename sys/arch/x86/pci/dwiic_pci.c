@@ -1,4 +1,4 @@
-/* $NetBSD: dwiic_pci.c,v 1.4 2021/04/24 23:36:51 thorpej Exp $ */
+/* $NetBSD: dwiic_pci.c,v 1.5 2021/05/29 09:47:28 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwiic_pci.c,v 1.4 2021/04/24 23:36:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwiic_pci.c,v 1.5 2021/05/29 09:47:28 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,9 +68,8 @@ struct pci_dwiic_softc {
 static uint32_t
 lpss_read(struct pci_dwiic_softc *sc, int offset)
 {
-	u_int32_t b = bus_space_read_4(sc->sc_dwiic.sc_iot, sc->sc_dwiic.sc_ioh,
-	     offset);
-	return b;
+	return bus_space_read_4(sc->sc_dwiic.sc_iot, sc->sc_dwiic.sc_ioh,
+	    offset);
 }
 
 static void
@@ -169,7 +168,7 @@ pci_dwiic_attach(device_t parent, device_t self, void *aux)
 	    pa->pa_bus, pa->pa_device, pa->pa_function);
 
 	if (sc->sc_acpinode) {
-		sc->sc_dwiic.sc_iba.iba_child_devices = 
+		sc->sc_dwiic.sc_iba.iba_child_devices =
 		    acpi_enter_i2c_devs(NULL, sc->sc_acpinode);
 	} else {
 		aprint_verbose_dev(self, "no matching ACPI node\n");
@@ -188,13 +187,18 @@ out:
 static bool
 dwiic_pci_power(struct dwiic_softc *dwsc, bool power)
 {
-	struct pci_dwiic_softc *sc = (void *)dwsc;
-	pcireg_t pmreg;
+	struct pci_dwiic_softc *sc = container_of(dwsc, struct pci_dwiic_softc,
+	    sc_dwiic);
+	pcireg_t pmreg, csr;
+	uint32_t reset, rlo, rhi;
 
-	printf("status 0x%x\n", pci_conf_read(sc->sc_pc, sc->sc_ptag, PCI_COMMAND_STATUS_REG));
-	printf("reset 0x%x\n", lpss_read(sc, LPSS_RESET));
-	printf("rlo 0x%x\n", lpss_read(sc, LPSS_REMAP_LO));
-	printf("rho 0x%x\n", lpss_read(sc, LPSS_REMAP_HI));
+	csr = pci_conf_read(sc->sc_pc, sc->sc_ptag, PCI_COMMAND_STATUS_REG);
+	reset = lpss_read(sc, LPSS_RESET);
+	rlo = lpss_read(sc, LPSS_REMAP_LO);
+	rhi = lpss_read(sc, LPSS_REMAP_HI);
+	aprint_debug_dev(dwsc->sc_dev,
+	    "status 0x%x reset 0x%x rlo 0x%x rhi 0x%x\n",
+	    csr, reset, rlo, rhi);
 
 	if (!power)
 		lpss_write(sc, LPSS_CLKGATE, LPSS_CLKGATE_CTRL_OFF);
@@ -205,7 +209,7 @@ dwiic_pci_power(struct dwiic_softc *dwsc, bool power)
 		pci_conf_write(sc->sc_pc, sc->sc_ptag, pmreg + PCI_PMCSR,
 		    power ? PCI_PMCSR_STATE_D0 : PCI_PMCSR_STATE_D3);
 		DELAY(10000); /* 10 milliseconds */
-		DPRINTF((" -> 0x%x\n", 
+		DPRINTF((" -> 0x%x\n",
 		    pci_conf_read(sc->sc_pc, sc->sc_ptag, pmreg + PCI_PMCSR)));
 	}
 	if (power) {
