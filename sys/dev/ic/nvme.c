@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.56 2021/05/29 08:46:38 riastradh Exp $	*/
+/*	$NetBSD: nvme.c,v 1.57 2021/05/29 10:48:23 riastradh Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.56 2021/05/29 08:46:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.57 2021/05/29 10:48:23 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -558,6 +558,7 @@ nvme_detach(struct nvme_softc *sc, int flags)
 		return error;
 
 	/* from now on we are committed to detach, following will never fail */
+	sc->sc_intr_disestablish(sc, NVME_ADMIN_Q);
 	for (i = 0; i < sc->sc_nq; i++)
 		nvme_q_free(sc, sc->sc_q[i]);
 	kmem_free(sc->sc_q, sizeof(*sc->sc_q) * sc->sc_nq);
@@ -628,7 +629,7 @@ disable:
 	return error;
 }
 
-int
+static int
 nvme_shutdown(struct nvme_softc *sc)
 {
 	uint32_t cc, csts;
@@ -645,7 +646,6 @@ nvme_shutdown(struct nvme_softc *sc)
 			disabled = true;
 		}
 	}
-	sc->sc_intr_disestablish(sc, NVME_ADMIN_Q);
 	if (disabled)
 		goto disable;
 
