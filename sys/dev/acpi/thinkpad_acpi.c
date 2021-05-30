@@ -1,4 +1,4 @@
-/* $NetBSD: thinkpad_acpi.c,v 1.52 2021/05/29 16:49:57 riastradh Exp $ */
+/* $NetBSD: thinkpad_acpi.c,v 1.53 2021/05/30 11:24:10 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.52 2021/05/29 16:49:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.53 2021/05/30 11:24:10 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -55,6 +55,7 @@ typedef struct thinkpad_softc {
 	struct acpi_devnode	*sc_node;
 	ACPI_HANDLE		sc_powhdl;
 	ACPI_HANDLE		sc_cmoshdl;
+	ACPI_INTEGER		sc_ver;
 
 #define	TP_PSW_SLEEP		0	/* FnF4 */
 #define	TP_PSW_HIBERNATE	1	/* FnF12 */
@@ -241,12 +242,57 @@ thinkpad_attach(device_t parent, device_t self, void *opaque)
 		aprint_debug_dev(self, "using EC at %s\n",
 		    device_xname(sc->sc_ecdev));
 
-	/* Get the supported event mask */
-	rv = acpi_eval_integer(sc->sc_node->ad_handle, "MHKA", &val);
+	/* Query the version number */
+	rv = acpi_eval_integer(aa->aa_node->ad_handle, "MHKV", &sc->sc_ver);
 	if (ACPI_FAILURE(rv)) {
-		aprint_error_dev(self, "couldn't evaluate MHKA: %s\n",
+		aprint_error_dev(self, "couldn't evaluate MHKV: %s\n",
 		    AcpiFormatException(rv));
 		goto fail;
+	}
+	aprint_normal_dev(self, "version %04x\n", (unsigned)sc->sc_ver);
+
+	/* Get the supported event mask */
+	switch (sc->sc_ver) {
+	case THINKPAD_HKEY_VERSION_1:
+		rv = acpi_eval_integer(sc->sc_node->ad_handle, "MHKA", &val);
+		if (ACPI_FAILURE(rv)) {
+			aprint_error_dev(self, "couldn't evaluate MHKA: %s\n",
+			    AcpiFormatException(rv));
+			goto fail;
+		}
+		break;
+	case THINKPAD_HKEY_VERSION_2: {
+		ACPI_OBJECT args[1] = {
+			[0] = { .Integer = {
+				.Type = ACPI_TYPE_INTEGER,
+				.Value = 1, /* hotkey events */
+			} },
+		};
+		ACPI_OBJECT_LIST arglist = {
+			.Count = __arraycount(args),
+			.Pointer = args,
+		};
+		ACPI_OBJECT ret;
+		ACPI_BUFFER buf = { .Pointer = &ret, .Length = sizeof(ret) };
+
+		rv = AcpiEvaluateObject(sc->sc_node->ad_handle, "MHKA",
+		    &arglist, &buf);
+		if (ACPI_FAILURE(rv)) {
+			aprint_error_dev(self, "couldn't evaluate MHKA(1):"
+			    " %s\n",
+			    AcpiFormatException(rv));
+			goto fail;
+		}
+		if (buf.Length == 0 || ret.Type != ACPI_TYPE_INTEGER) {
+			aprint_error_dev(self, "failed to evaluate MHKA(1)\n");
+			goto fail;
+		}
+		val = ret.Integer.Value;
+		break;
+	}
+	default:
+		panic("%s: invalid version %jd", device_xname(self),
+		    (intmax_t)sc->sc_ver);
 	}
 
 	/* Enable all supported events */
