@@ -202,8 +202,8 @@ void SwiftErrorValueTracking::propagateVRegs() {
       // downward defs.
       bool needPHI =
           VRegs.size() >= 1 &&
-          std::find_if(
-              VRegs.begin(), VRegs.end(),
+          llvm::find_if(
+              VRegs,
               [&](const std::pair<const MachineBasicBlock *, Register> &V)
                   -> bool { return V.second != VRegs[0].second; }) !=
               VRegs.end();
@@ -264,11 +264,10 @@ void SwiftErrorValueTracking::preassignVRegs(
 
   // Iterator over instructions and assign vregs to swifterror defs and uses.
   for (auto It = Begin; It != End; ++It) {
-    ImmutableCallSite CS(&*It);
-    if (CS) {
+    if (auto *CB = dyn_cast<CallBase>(&*It)) {
       // A call-site with a swifterror argument is both use and def.
       const Value *SwiftErrorAddr = nullptr;
-      for (auto &Arg : CS.args()) {
+      for (auto &Arg : CB->args()) {
         if (!Arg->isSwiftError())
           continue;
         // Use of swifterror.

@@ -2,6 +2,7 @@ static_library("MC") {
   output_name = "LLVMMC"
   deps = [
     "//llvm/include/llvm/Config:config",
+    "//llvm/lib/BinaryFormat",
     "//llvm/lib/DebugInfo/CodeView",
     "//llvm/lib/Support",
   ]
@@ -23,7 +24,6 @@ static_library("MC") {
     "MCAsmStreamer.cpp",
     "MCAssembler.cpp",
     "MCCodeEmitter.cpp",
-    "MCCodePadder.cpp",
     "MCCodeView.cpp",
     "MCContext.cpp",
     "MCDwarf.cpp",
@@ -35,6 +35,7 @@ static_library("MC") {
     "MCInstPrinter.cpp",
     "MCInstrAnalysis.cpp",
     "MCInstrDesc.cpp",
+    "MCInstrInfo.cpp",
     "MCLabel.cpp",
     "MCLinkerOptimizationHint.cpp",
     "MCMachOStreamer.cpp",
@@ -43,6 +44,7 @@ static_library("MC") {
     "MCObjectFileInfo.cpp",
     "MCObjectStreamer.cpp",
     "MCObjectWriter.cpp",
+    "MCPseudoProbe.cpp",
     "MCRegisterInfo.cpp",
     "MCSchedule.cpp",
     "MCSection.cpp",
@@ -55,7 +57,9 @@ static_library("MC") {
     "MCSubtargetInfo.cpp",
     "MCSymbol.cpp",
     "MCSymbolELF.cpp",
+    "MCSymbolXCOFF.cpp",
     "MCTargetOptions.cpp",
+    "MCTargetOptionsCommandFlags.cpp",
     "MCValue.cpp",
     "MCWasmObjectTargetWriter.cpp",
     "MCWasmStreamer.cpp",

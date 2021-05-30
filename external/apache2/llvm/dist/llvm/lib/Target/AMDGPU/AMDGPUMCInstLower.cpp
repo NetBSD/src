@@ -13,12 +13,10 @@
 //
 
 #include "AMDGPUAsmPrinter.h"
-#include "AMDGPUSubtarget.h"
 #include "AMDGPUTargetMachine.h"
 #include "MCTargetDesc/AMDGPUInstPrinter.h"
 #include "MCTargetDesc/AMDGPUMCTargetDesc.h"
 #include "R600AsmPrinter.h"
-#include "SIInstrInfo.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/IR/Constants.h"
@@ -254,7 +252,7 @@ const MCExpr *AMDGPUAsmPrinter::lowerConstant(const Constant *CV) {
   return AsmPrinter::lowerConstant(CV);
 }
 
-void AMDGPUAsmPrinter::EmitInstruction(const MachineInstr *MI) {
+void AMDGPUAsmPrinter::emitInstruction(const MachineInstr *MI) {
   if (emitPseudoExpansionLowering(*OutStreamer, MI))
     return;
 
@@ -272,28 +270,13 @@ void AMDGPUAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     const MachineBasicBlock *MBB = MI->getParent();
     MachineBasicBlock::const_instr_iterator I = ++MI->getIterator();
     while (I != MBB->instr_end() && I->isInsideBundle()) {
-      EmitInstruction(&*I);
+      emitInstruction(&*I);
       ++I;
     }
   } else {
-    // We don't want SI_MASK_BRANCH/SI_RETURN_TO_EPILOG encoded. They are
+    // We don't want these pseudo instructions encoded. They are
     // placeholder terminator instructions and should only be printed as
     // comments.
-    if (MI->getOpcode() == AMDGPU::SI_MASK_BRANCH) {
-      if (isVerbose()) {
-        SmallVector<char, 16> BBStr;
-        raw_svector_ostream Str(BBStr);
-
-        const MachineBasicBlock *MBB = MI->getOperand(0).getMBB();
-        const MCSymbolRefExpr *Expr
-          = MCSymbolRefExpr::create(MBB->getSymbol(), OutContext);
-        Expr->print(Str, MAI);
-        OutStreamer->emitRawComment(Twine(" mask branch ") + BBStr);
-      }
-
-      return;
-    }
-
     if (MI->getOpcode() == AMDGPU::SI_RETURN_TO_EPILOG) {
       if (isVerbose())
         OutStreamer->emitRawComment(" return to shader part epilog");
@@ -323,7 +306,10 @@ void AMDGPUAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     // The isPseudo check really shouldn't be here, but unfortunately there are
     // some negative lit tests that depend on being able to continue through
     // here even when pseudo instructions haven't been lowered.
-    if (!MI->isPseudo() && STI.isCPUStringValid(STI.getCPU())) {
+    //
+    // We also overestimate branch sizes with the offset bug.
+    if (!MI->isPseudo() && STI.isCPUStringValid(STI.getCPU()) &&
+        (!STI.hasOffset3fBug() || !MI->isBranch())) {
       SmallVector<MCFixup, 4> Fixups;
       SmallVector<char, 16> CodeBytes;
       raw_svector_ostream CodeStream(CodeBytes);
@@ -344,7 +330,7 @@ void AMDGPUAsmPrinter::EmitInstruction(const MachineInstr *MI) {
 
       AMDGPUInstPrinter InstPrinter(*TM.getMCAsmInfo(), *STI.getInstrInfo(),
                                     *STI.getRegisterInfo());
-      InstPrinter.printInst(&TmpInst, DisasmStream, StringRef(), STI);
+      InstPrinter.printInst(&TmpInst, 0, StringRef(), STI, DisasmStream);
 
       // Disassemble instruction/operands to hex representation.
       SmallVector<MCFixup, 4> Fixups;
@@ -381,7 +367,7 @@ void R600MCInstLower::lower(const MachineInstr *MI, MCInst &OutMI) const {
   }
 }
 
-void R600AsmPrinter::EmitInstruction(const MachineInstr *MI) {
+void R600AsmPrinter::emitInstruction(const MachineInstr *MI) {
   const R600Subtarget &STI = MF->getSubtarget<R600Subtarget>();
   R600MCInstLower MCInstLowering(OutContext, STI, *this);
 
@@ -396,7 +382,7 @@ void R600AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     const MachineBasicBlock *MBB = MI->getParent();
     MachineBasicBlock::const_instr_iterator I = ++MI->getIterator();
     while (I != MBB->instr_end() && I->isInsideBundle()) {
-      EmitInstruction(&*I);
+      emitInstruction(&*I);
       ++I;
     }
   } else {

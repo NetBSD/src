@@ -30,7 +30,7 @@ namespace llvm {
 class raw_ostream;
 class Triple;
 
-const unsigned MAX_SUBTARGET_WORDS = 3;
+const unsigned MAX_SUBTARGET_WORDS = 4;
 const unsigned MAX_SUBTARGET_FEATURES = MAX_SUBTARGET_WORDS * 64;
 
 /// Container class for subtarget features.
@@ -214,7 +214,7 @@ public:
   }
 
   /// Return string stripped of flag.
-  static std::string StripFlag(StringRef Feature) {
+  static StringRef StripFlag(StringRef Feature) {
     return hasFlag(Feature) ? Feature.substr(1) : Feature;
   }
 

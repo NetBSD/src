@@ -22,8 +22,10 @@
 #include "llvm/Support/raw_ostream.h"
 
 #include <atomic>
+#include <cassert>
 #include <cstdarg>
 #include <cstdio>
+#include <cstring>
 #include <tuple>
 
 #ifdef HAVE_CRASHREPORTERCLIENT_H
@@ -31,6 +33,10 @@
 #endif
 
 using namespace llvm;
+
+static const char *BugReportMsg =
+    "PLEASE submit a bug report to " BUG_REPORT_URL
+    " and include the crash backtrace.\n";
 
 // If backtrace support is not enabled, compile out support for pretty stack
 // traces.  This has the secondary effect of not requiring thread local storage
@@ -67,7 +73,7 @@ PrettyStackTraceEntry *ReverseStackTrace(PrettyStackTraceEntry *Head) {
         std::make_tuple(Head, Head->NextEntry, Prev);
   return Prev;
 }
-}
+} // namespace llvm
 
 static void PrintStack(raw_ostream &OS) {
   // Print out the stack in reverse order. To avoid recursion (which is likely
@@ -144,6 +150,8 @@ static CrashHandlerStringStorage crashHandlerStringStorage;
 /// This callback is run if a fatal signal is delivered to the process, it
 /// prints the pretty stack trace.
 static void CrashHandler(void *) {
+  errs() << BugReportMsg ;
+
 #ifndef __APPLE__
   // On non-apple systems, just emit the crash stack trace to stderr.
   PrintCurStackTrace(errs());
@@ -195,6 +203,14 @@ static void printForSigInfoIfNeeded() {
 
 #endif // ENABLE_BACKTRACES
 
+void llvm::setBugReportMsg(const char *Msg) {
+  BugReportMsg = Msg;
+}
+
+const char *llvm::getBugReportMsg() {
+  return BugReportMsg;
+}
+
 PrettyStackTraceEntry::PrettyStackTraceEntry() {
 #if ENABLE_BACKTRACES
   // Handle SIGINFO first, because we haven't finished constructing yet.
@@ -238,8 +254,16 @@ void PrettyStackTraceFormat::print(raw_ostream &OS) const { OS << Str << "\n"; }
 void PrettyStackTraceProgram::print(raw_ostream &OS) const {
   OS << "Program arguments: ";
   // Print the argument list.
-  for (unsigned i = 0, e = ArgC; i != e; ++i)
-    OS << ArgV[i] << ' ';
+  for (int I = 0; I < ArgC; ++I) {
+    const bool HaveSpace = ::strchr(ArgV[I], ' ');
+    if (I)
+      OS << ' ';
+    if (HaveSpace)
+      OS << '"';
+    OS.write_escaped(ArgV[I]);
+    if (HaveSpace)
+      OS << '"';
+  }
   OS << '\n';
 }
 

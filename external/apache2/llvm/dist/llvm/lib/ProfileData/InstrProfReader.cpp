@@ -15,6 +15,7 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/IR/ProfileSummary.h"
 #include "llvm/ProfileData/InstrProf.h"
@@ -40,7 +41,7 @@ using namespace llvm;
 static Expected<std::unique_ptr<MemoryBuffer>>
 setupMemoryBuffer(const Twine &Path) {
   ErrorOr<std::unique_ptr<MemoryBuffer>> BufferOrErr =
-      MemoryBuffer::getFileOrSTDIN(Path);
+      MemoryBuffer::getFileOrSTDIN(Path, /*IsText=*/true);
   if (std::error_code EC = BufferOrErr.getError())
     return errorCodeToError(EC);
   return std::move(BufferOrErr.get());
@@ -144,7 +145,7 @@ bool TextInstrProfReader::hasFormat(const MemoryBuffer &Buffer) {
   StringRef buffer = Buffer.getBufferStart();
   return count == 0 ||
          std::all_of(buffer.begin(), buffer.begin() + count,
-                     [](char c) { return isPrint(c) || ::isspace(c); });
+                     [](char c) { return isPrint(c) || isSpace(c); });
 }
 
 // Read the profile variant flag from the header: ":FE" means this is a FE
@@ -153,23 +154,29 @@ bool TextInstrProfReader::hasFormat(const MemoryBuffer &Buffer) {
 Error TextInstrProfReader::readHeader() {
   Symtab.reset(new InstrProfSymtab());
   bool IsIRInstr = false;
-  if (!Line->startswith(":")) {
-    IsIRLevelProfile = false;
-    return success();
-  }
-  StringRef Str = (Line)->substr(1);
-  if (Str.equals_lower("ir"))
-    IsIRInstr = true;
-  else if (Str.equals_lower("fe"))
-    IsIRInstr = false;
-  else if (Str.equals_lower("csir")) {
-    IsIRInstr = true;
-    HasCSIRLevelProfile = true;
-  } else
-    return error(instrprof_error::bad_header);
+  bool IsEntryFirst = false;
+  bool IsCS = false;
 
-  ++Line;
+  while (Line->startswith(":")) {
+    StringRef Str = Line->substr(1);
+    if (Str.equals_lower("ir"))
+      IsIRInstr = true;
+    else if (Str.equals_lower("fe"))
+      IsIRInstr = false;
+    else if (Str.equals_lower("csir")) {
+      IsIRInstr = true;
+      IsCS = true;
+    } else if (Str.equals_lower("entry_first"))
+      IsEntryFirst = true;
+    else if (Str.equals_lower("not_entry_first"))
+      IsEntryFirst = false;
+    else
+      return error(instrprof_error::bad_header);
+    ++Line;
+  }
   IsIRLevelProfile = IsIRInstr;
+  InstrEntryBBEnabled = IsEntryFirst;
+  HasCSIRLevelProfile = IsCS;
   return success();
 }
 
@@ -362,7 +369,9 @@ Error RawInstrProfReader<IntPtrT>::readHeader(
   CountersDelta = swap(Header.CountersDelta);
   NamesDelta = swap(Header.NamesDelta);
   auto DataSize = swap(Header.DataSize);
+  auto PaddingBytesBeforeCounters = swap(Header.PaddingBytesBeforeCounters);
   auto CountersSize = swap(Header.CountersSize);
+  auto PaddingBytesAfterCounters = swap(Header.PaddingBytesAfterCounters);
   NamesSize = swap(Header.NamesSize);
   ValueKindLast = swap(Header.ValueKindLast);
 
@@ -370,8 +379,10 @@ Error RawInstrProfReader<IntPtrT>::readHeader(
   auto PaddingSize = getNumPaddingBytes(NamesSize);
 
   ptrdiff_t DataOffset = sizeof(RawInstrProf::Header);
-  ptrdiff_t CountersOffset = DataOffset + DataSizeInBytes;
-  ptrdiff_t NamesOffset = CountersOffset + sizeof(uint64_t) * CountersSize;
+  ptrdiff_t CountersOffset =
+      DataOffset + DataSizeInBytes + PaddingBytesBeforeCounters;
+  ptrdiff_t NamesOffset = CountersOffset + (sizeof(uint64_t) * CountersSize) +
+                          PaddingBytesAfterCounters;
   ptrdiff_t ValueDataOffset = NamesOffset + NamesSize + PaddingSize;
 
   auto *Start = reinterpret_cast<const char *>(&Header);
@@ -418,11 +429,11 @@ Error RawInstrProfReader<IntPtrT>::readRawCounts(
 
   // Check bounds. Note that the counter pointer embedded in the data record
   // may itself be corrupt.
-  if (NumCounters > MaxNumCounters)
+  if (MaxNumCounters < 0 || NumCounters > (uint32_t)MaxNumCounters)
     return error(instrprof_error::malformed);
   ptrdiff_t CounterOffset = getCounterOffset(CounterPtr);
   if (CounterOffset < 0 || CounterOffset > MaxNumCounters ||
-      (CounterOffset + NumCounters) > MaxNumCounters)
+      ((uint32_t)CounterOffset + NumCounters) > (uint32_t)MaxNumCounters)
     return error(instrprof_error::malformed);
 
   auto RawCounts = makeArrayRef(getCounter(CounterOffset), NumCounters);

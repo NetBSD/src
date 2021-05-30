@@ -5,7 +5,5 @@ static_library("YAML") {
     "//lld/lib/Core",
     "//llvm/lib/Support",
   ]
-  sources = [
-    "ReaderWriterYAML.cpp",
-  ]
+  sources = [ "ReaderWriterYAML.cpp" ]
 }

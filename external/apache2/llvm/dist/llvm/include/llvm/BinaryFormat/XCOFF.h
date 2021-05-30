@@ -13,15 +13,25 @@
 #ifndef LLVM_BINARYFORMAT_XCOFF_H
 #define LLVM_BINARYFORMAT_XCOFF_H
 
-#include <cstdint>
+#include <stddef.h>
+#include <stdint.h>
 
 namespace llvm {
+class StringRef;
+template <unsigned> class SmallString;
+
 namespace XCOFF {
 
 // Constants used in the XCOFF definition.
-enum { FileNamePadSize = 6, NameSize = 8, SymbolTableEntrySize = 18 };
 
-enum ReservedSectionNum { N_DEBUG = -2, N_ABS = -1, N_UNDEF = 0 };
+constexpr size_t FileNamePadSize = 6;
+constexpr size_t NameSize = 8;
+constexpr size_t SymbolTableEntrySize = 18;
+constexpr size_t RelocationSerializationSize32 = 10;
+constexpr uint16_t RelocOverflow = 65535;
+constexpr uint8_t AllocRegNo = 31;
+
+enum ReservedSectionNum : int16_t { N_DEBUG = -2, N_ABS = -1, N_UNDEF = 0 };
 
 // x_smclas field of x_csect from system header: /usr/include/syms.h
 /// Storage Mapping Class definitions.
@@ -53,9 +63,10 @@ enum StorageMappingClass : uint8_t {
   XMC_TE = 22  ///< Symbol mapped at the end of TOC
 };
 
-// Flags for defining the section type. Used for the s_flags field of
-// the section header structure. Defined in the system header `scnhdr.h`.
-enum SectionTypeFlags {
+// Flags for defining the section type. Masks for use with the (signed, 32-bit)
+// s_flags field of the section header structure, selecting for values in the
+// lower 16 bits. Defined in the system header `scnhdr.h`.
+enum SectionTypeFlags : int32_t {
   STYP_PAD = 0x0008,
   STYP_DWARF = 0x0010,
   STYP_TEXT = 0x0020,
@@ -69,6 +80,24 @@ enum SectionTypeFlags {
   STYP_DEBUG = 0x2000,
   STYP_TYPCHK = 0x4000,
   STYP_OVRFLO = 0x8000
+};
+
+/// Values for defining the section subtype of sections of type STYP_DWARF as
+/// they would appear in the (signed, 32-bit) s_flags field of the section
+/// header structure, contributing to the 16 most significant bits. Defined in
+/// the system header `scnhdr.h`.
+enum DwarfSectionSubtypeFlags : int32_t {
+  SSUBTYP_DWINFO = 0x1'0000,  ///< DWARF info section
+  SSUBTYP_DWLINE = 0x2'0000,  ///< DWARF line section
+  SSUBTYP_DWPBNMS = 0x3'0000, ///< DWARF pubnames section
+  SSUBTYP_DWPBTYP = 0x4'0000, ///< DWARF pubtypes section
+  SSUBTYP_DWARNGE = 0x5'0000, ///< DWARF aranges section
+  SSUBTYP_DWABREV = 0x6'0000, ///< DWARF abbrev section
+  SSUBTYP_DWSTR = 0x7'0000,   ///< DWARF str section
+  SSUBTYP_DWRNGES = 0x8'0000, ///< DWARF ranges section
+  SSUBTYP_DWLOC = 0x9'0000,   ///< DWARF loc section
+  SSUBTYP_DWFRAME = 0xA'0000, ///< DWARF frame section
+  SSUBTYP_DWMAC = 0xB'0000    ///< DWARF macinfo section
 };
 
 // STORAGE CLASSES, n_sclass field of syment.
@@ -140,12 +169,26 @@ enum StorageClass : uint8_t {
   C_TCSYM = 134 // Reserved
 };
 
-enum SymbolType {
+// Flags for defining the symbol type. Values to be encoded into the lower 3
+// bits of the (unsigned, 8-bit) x_smtyp field of csect auxiliary symbol table
+// entries. Defined in the system header `syms.h`.
+enum SymbolType : uint8_t {
   XTY_ER = 0, ///< External reference.
   XTY_SD = 1, ///< Csect definition for initialized storage.
   XTY_LD = 2, ///< Label definition.
               ///< Defines an entry point to an initialized csect.
   XTY_CM = 3  ///< Common csect definition. For uninitialized storage.
+};
+
+/// Values for visibility as they would appear when encoded in the high 4 bits
+/// of the 16-bit unsigned n_type field of symbol table entries. Valid for
+/// 32-bit XCOFF only when the vstamp in the auxiliary header is greater than 1.
+enum VisibilityType : uint16_t {
+  SYM_V_UNSPECIFIED = 0x0000,
+  SYM_V_INTERNAL = 0x1000,
+  SYM_V_HIDDEN = 0x2000,
+  SYM_V_PROTECTED = 0x3000,
+  SYM_V_EXPORTED = 0x4000
 };
 
 // Relocation types, defined in `/usr/include/reloc.h`.
@@ -249,6 +292,125 @@ enum CFileCpuId : uint8_t {
   TCPU_PPC64 = 2, ///< PowerPC common architecture 64-bit mode.
   TCPU_COM = 3,   ///< POWER and PowerPC architecture common.
   TCPU_970 = 19   ///< PPC970 - PowerPC 64-bit architecture.
+};
+
+StringRef getMappingClassString(XCOFF::StorageMappingClass SMC);
+StringRef getRelocationTypeString(XCOFF::RelocationType Type);
+SmallString<32> parseParmsType(uint32_t Value, unsigned ParmsNum);
+
+struct TracebackTable {
+  enum LanguageID : uint8_t {
+    C,
+    Fortran,
+    Pascal,
+    Ada,
+    PL1,
+    Basic,
+    Lisp,
+    Cobol,
+    Modula2,
+    CPlusPlus,
+    Rpg,
+    PL8,
+    PLIX = PL8,
+    Assembly,
+    Java,
+    ObjectiveC
+  };
+  // Byte 1
+  static constexpr uint32_t VersionMask = 0xFF00'0000;
+  static constexpr uint8_t VersionShift = 24;
+
+  // Byte 2
+  static constexpr uint32_t LanguageIdMask = 0x00FF'0000;
+  static constexpr uint8_t LanguageIdShift = 16;
+
+  // Byte 3
+  static constexpr uint32_t IsGlobaLinkageMask = 0x0000'8000;
+  static constexpr uint32_t IsOutOfLineEpilogOrPrologueMask = 0x0000'4000;
+  static constexpr uint32_t HasTraceBackTableOffsetMask = 0x0000'2000;
+  static constexpr uint32_t IsInternalProcedureMask = 0x0000'1000;
+  static constexpr uint32_t HasControlledStorageMask = 0x0000'0800;
+  static constexpr uint32_t IsTOClessMask = 0x0000'0400;
+  static constexpr uint32_t IsFloatingPointPresentMask = 0x0000'0200;
+  static constexpr uint32_t IsFloatingPointOperationLogOrAbortEnabledMask =
+      0x0000'0100;
+
+  // Byte 4
+  static constexpr uint32_t IsInterruptHandlerMask = 0x0000'0080;
+  static constexpr uint32_t IsFunctionNamePresentMask = 0x0000'0040;
+  static constexpr uint32_t IsAllocaUsedMask = 0x0000'0020;
+  static constexpr uint32_t OnConditionDirectiveMask = 0x0000'001C;
+  static constexpr uint32_t IsCRSavedMask = 0x0000'0002;
+  static constexpr uint32_t IsLRSavedMask = 0x0000'0001;
+  static constexpr uint8_t OnConditionDirectiveShift = 2;
+
+  // Byte 5
+  static constexpr uint32_t IsBackChainStoredMask = 0x8000'0000;
+  static constexpr uint32_t IsFixupMask = 0x4000'0000;
+  static constexpr uint32_t FPRSavedMask = 0x3F00'0000;
+  static constexpr uint32_t FPRSavedShift = 24;
+
+  // Byte 6
+  static constexpr uint32_t HasVectorInfoMask = 0x0080'0000;
+  static constexpr uint32_t HasExtensionTableMask = 0x0040'0000;
+  static constexpr uint32_t GPRSavedMask = 0x003F'0000;
+  static constexpr uint32_t GPRSavedShift = 16;
+
+  // Byte 7
+  static constexpr uint32_t NumberOfFixedParmsMask = 0x0000'FF00;
+  static constexpr uint8_t NumberOfFixedParmsShift = 8;
+
+  // Byte 8
+  static constexpr uint32_t NumberOfFloatingPointParmsMask = 0x0000'00FE;
+  static constexpr uint32_t HasParmsOnStackMask = 0x0000'0001;
+  static constexpr uint8_t NumberOfFloatingPointParmsShift = 1;
+
+  // Masks to select leftmost bits for decoding parameter type information.
+  // Bit to use when vector info is not presented.
+  static constexpr uint32_t ParmTypeIsFloatingBit = 0x8000'0000;
+  static constexpr uint32_t ParmTypeFloatingIsDoubleBit = 0x4000'0000;
+  // Bits to use when vector info is presented.
+  static constexpr uint32_t ParmTypeIsFixedBits = 0x0000'0000;
+  static constexpr uint32_t ParmTypeIsVectorBits = 0x4000'0000;
+  static constexpr uint32_t ParmTypeIsFloatingBits = 0x8000'0000;
+  static constexpr uint32_t ParmTypeIsDoubleBits = 0xC000'0000;
+  static constexpr uint32_t ParmTypeMask = 0xC000'0000;
+
+  // Vector extension
+  static constexpr uint16_t NumberOfVRSavedMask = 0xFC00;
+  static constexpr uint16_t IsVRSavedOnStackMask = 0x0200;
+  static constexpr uint16_t HasVarArgsMask = 0x0100;
+  static constexpr uint8_t NumberOfVRSavedShift = 10;
+
+  static constexpr uint16_t NumberOfVectorParmsMask = 0x00FE;
+  static constexpr uint16_t HasVMXInstructionMask = 0x0001;
+  static constexpr uint8_t NumberOfVectorParmsShift = 1;
+
+  static constexpr uint32_t ParmTypeIsVectorCharBit = 0x0000'0000;
+  static constexpr uint32_t ParmTypeIsVectorShortBit = 0x4000'0000;
+  static constexpr uint32_t ParmTypeIsVectorIntBit = 0x8000'0000;
+  static constexpr uint32_t ParmTypeIsVectorFloatBit = 0xC000'0000;
+};
+
+// Extended Traceback table flags.
+enum ExtendedTBTableFlag : uint8_t {
+  TB_OS1 = 0x80,         ///< Reserved for OS use.
+  TB_RESERVED = 0x40,    ///< Reserved for compiler.
+  TB_SSP_CANARY = 0x20,  ///< stack smasher canary present on stack.
+  TB_OS2 = 0x10,         ///< Reserved for OS use.
+  TB_EH_INFO = 0x08,     ///< Exception handling info present.
+  TB_LONGTBTABLE2 = 0x01 ///< Additional tbtable extension exists.
+};
+
+StringRef getNameForTracebackTableLanguageId(TracebackTable::LanguageID LangId);
+SmallString<32> getExtendedTBTableFlagString(uint8_t Flag);
+
+struct CsectProperties {
+  CsectProperties(StorageMappingClass SMC, SymbolType ST)
+      : MappingClass(SMC), Type(ST) {}
+  StorageMappingClass MappingClass;
+  SymbolType Type;
 };
 
 } // end namespace XCOFF

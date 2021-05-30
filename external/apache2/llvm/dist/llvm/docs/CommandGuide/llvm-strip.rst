@@ -39,7 +39,7 @@ multiple file formats.
 
  Remove most local symbols from the output. Different file formats may limit
  this to a subset of the local symbols. For example, file and section symbols in
- ELF objects will not be discarded.
+ ELF objects will not be discarded. Additionally, remove all debug sections.
 
 .. option::  --enable-deterministic-archives, -D
 
@@ -77,7 +77,8 @@ multiple file formats.
 .. option:: --strip-all, -S
 
  For ELF objects, remove from the output all symbols and non-alloc sections not
- within segments, except for .gnu.warning sections and the section name table.
+ within segments, except for .gnu.warning, .ARM.attribute sections and the
+ section name table.
 
  For COFF objects, remove all symbols, debug sections, and relocations from the
  output.
@@ -99,10 +100,6 @@ multiple file formats.
 .. option:: --version, -V
 
  Display the version of the :program:`llvm-strip` executable.
-
-.. option:: @<FILE>
-
- Read command-line options and commands from response file `<FILE>`.
 
 .. option:: --wildcard, -w
 
@@ -127,6 +124,10 @@ multiple file formats.
 
   The order of wildcards does not matter. For example, ``-w -N '*' -N '!x'`` is
   the same as ``-w -N '!x' -N '*'``.
+
+.. option:: @<FILE>
+
+ Read command-line options and commands from response file `<FILE>`.
 
 COFF-SPECIFIC OPTIONS
 ---------------------
@@ -180,6 +181,10 @@ them.
  segments. Note that many tools will not be able to use an object without
  section headers.
 
+.. option:: -T
+
+ Remove Swift symbols.
+
 EXIT STATUS
 -----------
 
@@ -189,7 +194,7 @@ Otherwise, it exits with code 0.
 BUGS
 ----
 
-To report bugs, please visit <http://llvm.org/bugs/>.
+To report bugs, please visit <https://bugs.llvm.org/>.
 
 SEE ALSO
 --------

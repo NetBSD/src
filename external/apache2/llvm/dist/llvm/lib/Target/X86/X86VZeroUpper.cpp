@@ -39,6 +39,11 @@ using namespace llvm;
 
 #define DEBUG_TYPE "x86-vzeroupper"
 
+static cl::opt<bool>
+UseVZeroUpper("x86-use-vzeroupper", cl::Hidden,
+  cl::desc("Minimize AVX to SSE transition penalty"),
+  cl::init(true));
+
 STATISTIC(NumVZU, "Number of vzeroupper instructions inserted");
 
 namespace {
@@ -177,8 +182,7 @@ static bool callHasRegMask(MachineInstr &MI) {
 /// Insert a vzeroupper instruction before I.
 void VZeroUpperInserter::insertVZeroUpper(MachineBasicBlock::iterator I,
                                           MachineBasicBlock &MBB) {
-  DebugLoc dl = I->getDebugLoc();
-  BuildMI(MBB, I, dl, TII->get(X86::VZEROUPPER));
+  BuildMI(MBB, I, I->getDebugLoc(), TII->get(X86::VZEROUPPER));
   ++NumVZU;
   EverMadeChange = true;
 }
@@ -278,8 +282,11 @@ void VZeroUpperInserter::processBasicBlock(MachineBasicBlock &MBB) {
 /// Loop over all of the basic blocks, inserting vzeroupper instructions before
 /// function calls.
 bool VZeroUpperInserter::runOnMachineFunction(MachineFunction &MF) {
+  if (!UseVZeroUpper)
+    return false;
+
   const X86Subtarget &ST = MF.getSubtarget<X86Subtarget>();
-  if (!ST.hasAVX() || ST.hasFastPartialYMMorZMMWrite())
+  if (!ST.hasAVX() || !ST.insertVZEROUPPER())
     return false;
   TII = ST.getInstrInfo();
   MachineRegisterInfo &MRI = MF.getRegInfo();

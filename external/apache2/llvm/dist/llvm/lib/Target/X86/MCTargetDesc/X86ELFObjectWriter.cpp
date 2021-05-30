@@ -94,6 +94,12 @@ static void checkIs32(MCContext &Ctx, SMLoc Loc, X86_64RelType Type) {
                     "32 bit reloc applied to a field with a different size");
 }
 
+static void checkIs64(MCContext &Ctx, SMLoc Loc, X86_64RelType Type) {
+  if (Type != RT64_64)
+    Ctx.reportError(Loc,
+                    "64 bit reloc applied to a field with a different size");
+}
+
 static unsigned getRelocType64(MCContext &Ctx, SMLoc Loc,
                                MCSymbolRefExpr::VariantKind Modifier,
                                X86_64RelType Type, bool IsPCRel,
@@ -212,6 +218,9 @@ static unsigned getRelocType64(MCContext &Ctx, SMLoc Loc,
       return ELF::R_X86_64_REX_GOTPCRELX;
     }
     llvm_unreachable("unexpected relocation type!");
+  case MCSymbolRefExpr::VK_X86_PLTOFF:
+    checkIs64(Ctx, Loc, Type);
+    return ELF::R_X86_64_PLTOFF64;
   }
 }
 
@@ -317,8 +326,10 @@ static unsigned getRelocType32(MCContext &Ctx,
 unsigned X86ELFObjectWriter::getRelocType(MCContext &Ctx, const MCValue &Target,
                                           const MCFixup &Fixup,
                                           bool IsPCRel) const {
-  MCSymbolRefExpr::VariantKind Modifier = Target.getAccessVariant();
   MCFixupKind Kind = Fixup.getKind();
+  if (Kind >= FirstLiteralRelocationKind)
+    return Kind - FirstLiteralRelocationKind;
+  MCSymbolRefExpr::VariantKind Modifier = Target.getAccessVariant();
   X86_64RelType Type = getType64(Kind, Modifier, IsPCRel);
   if (getEMachine() == ELF::EM_X86_64)
     return getRelocType64(Ctx, Fixup.getLoc(), Modifier, Type, IsPCRel, Kind);

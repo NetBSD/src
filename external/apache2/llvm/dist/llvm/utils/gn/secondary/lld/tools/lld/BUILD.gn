@@ -4,13 +4,13 @@ symlinks = [
   "lld-link",
   "ld.lld",
   "ld64.lld",
+  "ld64.lld.darwinnew",
+  "ld64.lld.darwinold",
   "wasm-ld",
 ]
 foreach(target, symlinks) {
   symlink_or_copy(target) {
-    deps = [
-      ":lld",
-    ]
+    deps = [ ":lld" ]
     source = "lld"
     output = "$root_out_dir/bin/$target"
   }
@@ -29,12 +29,12 @@ executable("lld") {
   deps = [
     "//lld/COFF",
     "//lld/ELF",
+    "//lld/MachO:MachO2",
     "//lld/MinGW",
     "//lld/lib/Driver",
     "//lld/wasm",
     "//llvm/lib/Support",
+    "//llvm/utils/gn/build/libs/xar",
   ]
-  sources = [
-    "lld.cpp",
-  ]
+  sources = [ "lld.cpp" ]
 }

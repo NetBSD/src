@@ -97,7 +97,7 @@ namespace {
     bool isFixedInstr(const MachineInstr *MI) const;
     void partitionRegisters(UUSetMap &P2Rs);
     int32_t profit(const MachineInstr *MI) const;
-    int32_t profit(unsigned Reg) const;
+    int32_t profit(Register Reg) const;
     bool isProfitable(const USet &Part, LoopRegMap &IRM) const;
 
     void collectIndRegsForLoop(const MachineLoop *L, USet &Rs);
@@ -159,7 +159,7 @@ bool HexagonSplitDoubleRegs::isVolatileInstr(const MachineInstr *MI) const {
 }
 
 bool HexagonSplitDoubleRegs::isFixedInstr(const MachineInstr *MI) const {
-  if (MI->mayLoad() || MI->mayStore())
+  if (MI->mayLoadOrStore())
     if (MemRefsFixed || isVolatileInstr(MI))
       return true;
   if (MI->isDebugInstr())
@@ -211,7 +211,7 @@ bool HexagonSplitDoubleRegs::isFixedInstr(const MachineInstr *MI) const {
     if (!Op.isReg())
       continue;
     Register R = Op.getReg();
-    if (!Register::isVirtualRegister(R))
+    if (!R.isVirtual())
       return true;
   }
   return false;
@@ -259,7 +259,7 @@ void HexagonSplitDoubleRegs::partitionRegisters(UUSetMap &P2Rs) {
         if (&MO == &Op || !MO.isReg() || MO.getSubReg())
           continue;
         Register T = MO.getReg();
-        if (!Register::isVirtualRegister(T)) {
+        if (!T.isVirtual()) {
           FixedRegs.set(x);
           continue;
         }
@@ -296,8 +296,7 @@ void HexagonSplitDoubleRegs::partitionRegisters(UUSetMap &P2Rs) {
       Visited.insert(T);
       // Add all registers associated with T.
       USet &Asc = AssocMap[T];
-      for (USet::iterator J = Asc.begin(), F = Asc.end(); J != F; ++J)
-        WorkQ.push_back(*J);
+      append_range(WorkQ, Asc);
     }
   }
 
@@ -399,8 +398,8 @@ int32_t HexagonSplitDoubleRegs::profit(const MachineInstr *MI) const {
   return 0;
 }
 
-int32_t HexagonSplitDoubleRegs::profit(unsigned Reg) const {
-  assert(Register::isVirtualRegister(Reg));
+int32_t HexagonSplitDoubleRegs::profit(Register Reg) const {
+  assert(Reg.isVirtual());
 
   const MachineInstr *DefI = MRI->getVRegDef(Reg);
   switch (DefI->getOpcode()) {
@@ -504,7 +503,7 @@ void HexagonSplitDoubleRegs::collectIndRegsForLoop(const MachineLoop *L,
 
   // Get the registers on which the loop controlling compare instruction
   // depends.
-  unsigned CmpR1 = 0, CmpR2 = 0;
+  Register CmpR1, CmpR2;
   const MachineInstr *CmpI = MRI->getVRegDef(PR);
   while (CmpI->getOpcode() == Hexagon::C2_not)
     CmpI = MRI->getVRegDef(CmpI->getOperand(1).getReg());
@@ -574,12 +573,9 @@ void HexagonSplitDoubleRegs::collectIndRegs(LoopRegMap &IRM) {
 
   LoopVector WorkQ;
 
-  for (auto I : *MLI)
-    WorkQ.push_back(I);
-  for (unsigned i = 0; i < WorkQ.size(); ++i) {
-    for (auto I : *WorkQ[i])
-      WorkQ.push_back(I);
-  }
+  append_range(WorkQ, *MLI);
+  for (unsigned i = 0; i < WorkQ.size(); ++i)
+    append_range(WorkQ, *WorkQ[i]);
 
   USet Rs;
   for (unsigned i = 0, n = WorkQ.size(); i < n; ++i) {
@@ -605,7 +601,7 @@ void HexagonSplitDoubleRegs::createHalfInstr(unsigned Opc, MachineInstr *MI,
     // For register operands, set the subregister.
     Register R = Op.getReg();
     unsigned SR = Op.getSubReg();
-    bool isVirtReg = Register::isVirtualRegister(R);
+    bool isVirtReg = R.isVirtual();
     bool isKill = Op.isKill();
     if (isVirtReg && MRI->getRegClass(R) == DoubleRC) {
       isKill = false;
@@ -688,11 +684,12 @@ void HexagonSplitDoubleRegs::splitMemRef(MachineInstr *MI,
   for (auto &MO : MI->memoperands()) {
     const MachinePointerInfo &Ptr = MO->getPointerInfo();
     MachineMemOperand::Flags F = MO->getFlags();
-    int A = MO->getAlignment();
+    Align A = MO->getAlign();
 
-    auto *Tmp1 = MF.getMachineMemOperand(Ptr, F, 4/*size*/, A);
+    auto *Tmp1 = MF.getMachineMemOperand(Ptr, F, 4 /*size*/, A);
     LowI->addMemOperand(MF, Tmp1);
-    auto *Tmp2 = MF.getMachineMemOperand(Ptr, F, 4/*size*/, std::min(A, 4));
+    auto *Tmp2 =
+        MF.getMachineMemOperand(Ptr, F, 4 /*size*/, std::min(A, Align(4)));
     HighI->addMemOperand(MF, Tmp2);
   }
 }
@@ -1105,7 +1102,7 @@ void HexagonSplitDoubleRegs::collapseRegPairs(MachineInstr *MI,
     if (!Op.isReg() || !Op.isUse())
       continue;
     Register R = Op.getReg();
-    if (!Register::isVirtualRegister(R))
+    if (!R.isVirtual())
       continue;
     if (MRI->getRegClass(R) != DoubleRC || Op.getSubReg())
       continue;

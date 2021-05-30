@@ -6,10 +6,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_LIB_CODEGEN_MACHINELOOPUTILS_H
-#define LLVM_LIB_CODEGEN_MACHINELOOPUTILS_H
+#ifndef LLVM_CODEGEN_MACHINELOOPUTILS_H
+#define LLVM_CODEGEN_MACHINELOOPUTILS_H
 
 namespace llvm {
+class MachineLoop;
 class MachineBasicBlock;
 class MachineRegisterInfo;
 class TargetInstrInfo;
@@ -38,4 +39,4 @@ MachineBasicBlock *PeelSingleBlockLoop(LoopPeelDirection Direction,
 
 } // namespace llvm
 
-#endif // LLVM_LIB_CODEGEN_MACHINELOOPUTILS_H
+#endif // LLVM_CODEGEN_MACHINELOOPUTILS_H

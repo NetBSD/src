@@ -24,11 +24,13 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Config/config.h"
 #include "llvm/Support/ConvertUTF.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Error.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Host.h"
@@ -37,9 +39,11 @@
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Process.h"
 #include "llvm/Support/StringSaver.h"
+#include "llvm/Support/VirtualFileSystem.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cstdlib>
 #include <map>
+#include <string>
 using namespace llvm;
 using namespace cl;
 
@@ -53,6 +57,8 @@ namespace cl {
 template class basic_parser<bool>;
 template class basic_parser<boolOrDefault>;
 template class basic_parser<int>;
+template class basic_parser<long>;
+template class basic_parser<long long>;
 template class basic_parser<unsigned>;
 template class basic_parser<unsigned long>;
 template class basic_parser<unsigned long long>;
@@ -66,8 +72,8 @@ template class opt<int>;
 template class opt<std::string>;
 template class opt<char>;
 template class opt<bool>;
-}
-} // end namespace llvm::cl
+} // namespace cl
+} // namespace llvm
 
 // Pin the vtables to this file.
 void GenericOptionValue::anchor() {}
@@ -78,6 +84,8 @@ void basic_parser_impl::anchor() {}
 void parser<bool>::anchor() {}
 void parser<boolOrDefault>::anchor() {}
 void parser<int>::anchor() {}
+void parser<long>::anchor() {}
+void parser<long long>::anchor() {}
 void parser<unsigned>::anchor() {}
 void parser<unsigned long>::anchor() {}
 void parser<unsigned long long>::anchor() {}
@@ -88,21 +96,26 @@ void parser<char>::anchor() {}
 
 //===----------------------------------------------------------------------===//
 
-static StringRef ArgPrefix = "  -";
-static StringRef ArgPrefixLong = "  --";
+const static size_t DefaultPad = 2;
+
+static StringRef ArgPrefix = "-";
+static StringRef ArgPrefixLong = "--";
 static StringRef ArgHelpPrefix = " - ";
 
-static size_t argPlusPrefixesSize(StringRef ArgName) {
+static size_t argPlusPrefixesSize(StringRef ArgName, size_t Pad = DefaultPad) {
   size_t Len = ArgName.size();
   if (Len == 1)
-    return Len + ArgPrefix.size() + ArgHelpPrefix.size();
-  return Len + ArgPrefixLong.size() + ArgHelpPrefix.size();
+    return Len + Pad + ArgPrefix.size() + ArgHelpPrefix.size();
+  return Len + Pad + ArgPrefixLong.size() + ArgHelpPrefix.size();
 }
 
-static StringRef argPrefix(StringRef ArgName) {
-  if (ArgName.size() == 1)
-    return ArgPrefix;
-  return ArgPrefixLong;
+static SmallString<8> argPrefix(StringRef ArgName, size_t Pad = DefaultPad) {
+  SmallString<8> Prefix;
+  for (size_t I = 0; I < Pad; ++I) {
+    Prefix.push_back(' ');
+  }
+  Prefix.append(ArgName.size() > 1 ? ArgPrefixLong : ArgPrefix);
+  return Prefix;
 }
 
 // Option predicates...
@@ -119,13 +132,14 @@ namespace {
 
 class PrintArg {
   StringRef ArgName;
+  size_t Pad;
 public:
-  PrintArg(StringRef ArgName) : ArgName(ArgName) {}
-  friend raw_ostream &operator<<(raw_ostream &OS, const PrintArg&);
+  PrintArg(StringRef ArgName, size_t Pad = DefaultPad) : ArgName(ArgName), Pad(Pad) {}
+  friend raw_ostream &operator<<(raw_ostream &OS, const PrintArg &);
 };
 
 raw_ostream &operator<<(raw_ostream &OS, const PrintArg& Arg) {
-  OS << argPrefix(Arg.ArgName) << Arg.ArgName;
+  OS << argPrefix(Arg.ArgName, Arg.Pad) << Arg.ArgName;
   return OS;
 }
 
@@ -173,7 +187,7 @@ public:
     // If we're adding this to all sub-commands, add it to the ones that have
     // already been registered.
     if (SC == &*AllSubCommands) {
-      for (const auto &Sub : RegisteredSubCommands) {
+      for (auto *Sub : RegisteredSubCommands) {
         if (SC == Sub)
           continue;
         addLiteralOption(Opt, Sub, Name);
@@ -185,7 +199,7 @@ public:
     if (Opt.Subs.empty())
       addLiteralOption(Opt, &*TopLevelSubCommand, Name);
     else {
-      for (auto SC : Opt.Subs)
+      for (auto *SC : Opt.Subs)
         addLiteralOption(Opt, SC, Name);
     }
   }
@@ -229,7 +243,7 @@ public:
     // If we're adding this to all sub-commands, add it to the ones that have
     // already been registered.
     if (SC == &*AllSubCommands) {
-      for (const auto &Sub : RegisteredSubCommands) {
+      for (auto *Sub : RegisteredSubCommands) {
         if (SC == Sub)
           continue;
         addOption(O, Sub);
@@ -246,7 +260,7 @@ public:
     if (O->Subs.empty()) {
       addOption(O, &*TopLevelSubCommand);
     } else {
-      for (auto SC : O->Subs)
+      for (auto *SC : O->Subs)
         addOption(O, SC);
     }
   }
@@ -263,10 +277,10 @@ public:
       auto I = Sub.OptionsMap.find(Name);
       if (I != End && I->getValue() == O)
         Sub.OptionsMap.erase(I);
-      }
+    }
 
     if (O->getFormattingFlag() == cl::Positional)
-      for (auto Opt = Sub.PositionalOpts.begin();
+      for (auto *Opt = Sub.PositionalOpts.begin();
            Opt != Sub.PositionalOpts.end(); ++Opt) {
         if (*Opt == O) {
           Sub.PositionalOpts.erase(Opt);
@@ -274,7 +288,7 @@ public:
         }
       }
     else if (O->getMiscFlags() & cl::Sink)
-      for (auto Opt = Sub.SinkOpts.begin(); Opt != Sub.SinkOpts.end(); ++Opt) {
+      for (auto *Opt = Sub.SinkOpts.begin(); Opt != Sub.SinkOpts.end(); ++Opt) {
         if (*Opt == O) {
           Sub.SinkOpts.erase(Opt);
           break;
@@ -289,10 +303,10 @@ public:
       removeOption(O, &*TopLevelSubCommand);
     else {
       if (O->isInAllSubCommands()) {
-        for (auto SC : RegisteredSubCommands)
+        for (auto *SC : RegisteredSubCommands)
           removeOption(O, SC);
       } else {
-        for (auto SC : O->Subs)
+        for (auto *SC : O->Subs)
           removeOption(O, SC);
       }
     }
@@ -304,7 +318,7 @@ public:
   }
 
   bool hasOptions() const {
-    for (const auto &S : RegisteredSubCommands) {
+    for (const auto *S : RegisteredSubCommands) {
       if (hasOptions(*S))
         return true;
     }
@@ -328,10 +342,10 @@ public:
       updateArgStr(O, NewName, &*TopLevelSubCommand);
     else {
       if (O->isInAllSubCommands()) {
-        for (auto SC : RegisteredSubCommands)
+        for (auto *SC : RegisteredSubCommands)
           updateArgStr(O, NewName, SC);
       } else {
-        for (auto SC : O->Subs)
+        for (auto *SC : O->Subs)
           updateArgStr(O, NewName, SC);
       }
     }
@@ -450,7 +464,7 @@ void Option::addCategory(OptionCategory &C) {
   // must be explicitly added if you want multiple categories that include it.
   if (&C != &GeneralCategory && Categories[0] == &GeneralCategory)
     Categories[0] = &C;
-  else if (find(Categories, &C) == Categories.end())
+  else if (!is_contained(Categories, &C))
     Categories.push_back(&C);
 }
 
@@ -517,11 +531,7 @@ Option *CommandLineParser::LookupOption(SubCommand &Sub, StringRef &Arg,
   // If we have an equals sign, remember the value.
   if (EqualPos == StringRef::npos) {
     // Look up the option.
-    auto I = Sub.OptionsMap.find(Arg);
-    if (I == Sub.OptionsMap.end())
-      return nullptr;
-
-    return I != Sub.OptionsMap.end() ? I->second : nullptr;
+    return Sub.OptionsMap.lookup(Arg);
   }
 
   // If the argument before the = is a valid option name and the option allows
@@ -531,7 +541,7 @@ Option *CommandLineParser::LookupOption(SubCommand &Sub, StringRef &Arg,
   if (I == Sub.OptionsMap.end())
     return nullptr;
 
-  auto O = I->second;
+  auto *O = I->second;
   if (O->getFormattingFlag() == cl::AlwaysPrefix)
     return nullptr;
 
@@ -543,7 +553,7 @@ Option *CommandLineParser::LookupOption(SubCommand &Sub, StringRef &Arg,
 SubCommand *CommandLineParser::LookupSubCommand(StringRef Name) {
   if (Name.empty())
     return &*TopLevelSubCommand;
-  for (auto S : RegisteredSubCommands) {
+  for (auto *S : RegisteredSubCommands) {
     if (S == &*AllSubCommands)
       continue;
     if (S->getName().empty())
@@ -578,6 +588,10 @@ static Option *LookupNearestOption(StringRef Arg,
                                            ie = OptionsMap.end();
        it != ie; ++it) {
     Option *O = it->second;
+    // Do not suggest really hidden options (not shown in any help).
+    if (O->getOptionHiddenFlag() == ReallyHidden)
+      continue;
+
     SmallVector<StringRef, 16> OptionNames;
     O->getExtraOptionNames(OptionNames);
     if (O->hasArgStr())
@@ -585,14 +599,14 @@ static Option *LookupNearestOption(StringRef Arg,
 
     bool PermitValue = O->getValueExpectedFlag() != cl::ValueDisallowed;
     StringRef Flag = PermitValue ? LHS : Arg;
-    for (auto Name : OptionNames) {
+    for (const auto &Name : OptionNames) {
       unsigned Distance = StringRef(Name).edit_distance(
           Flag, /*AllowReplacements=*/true, /*MaxEditDistance=*/BestDistance);
       if (!Best || Distance < BestDistance) {
         Best = O;
         BestDistance = Distance;
         if (RHS.empty() || !PermitValue)
-          NearestString = Name;
+          NearestString = std::string(Name);
         else
           NearestString = (Twine(Name) + "=" + RHS).str();
       }
@@ -814,7 +828,7 @@ void cl::TokenizeGNUCommandLine(StringRef Src, StringSaver &Saver,
     // Consume runs of whitespace.
     if (Token.empty()) {
       while (I != E && isWhitespace(Src[I])) {
-        // Mark the end of lines in response files
+        // Mark the end of lines in response files.
         if (MarkEOLs && Src[I] == '\n')
           NewArgv.push_back(nullptr);
         ++I;
@@ -851,6 +865,9 @@ void cl::TokenizeGNUCommandLine(StringRef Src, StringSaver &Saver,
     if (isWhitespace(C)) {
       if (!Token.empty())
         NewArgv.push_back(Saver.save(StringRef(Token)).data());
+      // Mark the end of lines in response files.
+      if (MarkEOLs && C == '\n')
+        NewArgv.push_back(nullptr);
       Token.clear();
       continue;
     }
@@ -862,9 +879,6 @@ void cl::TokenizeGNUCommandLine(StringRef Src, StringSaver &Saver,
   // Append the last token after hitting EOF with no whitespace.
   if (!Token.empty())
     NewArgv.push_back(Saver.save(StringRef(Token)).data());
-  // Mark the end of response files
-  if (MarkEOLs)
-    NewArgv.push_back(nullptr);
 }
 
 /// Backslashes are interpreted in a rather complicated way in the Windows-style
@@ -905,91 +919,118 @@ static size_t parseBackslash(StringRef Src, size_t I, SmallString<128> &Token) {
   return I - 1;
 }
 
-void cl::TokenizeWindowsCommandLine(StringRef Src, StringSaver &Saver,
-                                    SmallVectorImpl<const char *> &NewArgv,
-                                    bool MarkEOLs) {
+// Windows treats whitespace, double quotes, and backslashes specially.
+static bool isWindowsSpecialChar(char C) {
+  return isWhitespaceOrNull(C) || C == '\\' || C == '\"';
+}
+
+// Windows tokenization implementation. The implementation is designed to be
+// inlined and specialized for the two user entry points.
+static inline void
+tokenizeWindowsCommandLineImpl(StringRef Src, StringSaver &Saver,
+                               function_ref<void(StringRef)> AddToken,
+                               bool AlwaysCopy, function_ref<void()> MarkEOL) {
   SmallString<128> Token;
 
-  // This is a small state machine to consume characters until it reaches the
-  // end of the source string.
+  // Try to do as much work inside the state machine as possible.
   enum { INIT, UNQUOTED, QUOTED } State = INIT;
-  for (size_t I = 0, E = Src.size(); I != E; ++I) {
-    char C = Src[I];
-
-    // INIT state indicates that the current input index is at the start of
-    // the string or between tokens.
-    if (State == INIT) {
-      if (isWhitespaceOrNull(C)) {
-        // Mark the end of lines in response files
-        if (MarkEOLs && C == '\n')
-          NewArgv.push_back(nullptr);
-        continue;
+  for (size_t I = 0, E = Src.size(); I < E; ++I) {
+    switch (State) {
+    case INIT: {
+      assert(Token.empty() && "token should be empty in initial state");
+      // Eat whitespace before a token.
+      while (I < E && isWhitespaceOrNull(Src[I])) {
+        if (Src[I] == '\n')
+          MarkEOL();
+        ++I;
       }
-      if (C == '"') {
+      // Stop if this was trailing whitespace.
+      if (I >= E)
+        break;
+      size_t Start = I;
+      while (I < E && !isWindowsSpecialChar(Src[I]))
+        ++I;
+      StringRef NormalChars = Src.slice(Start, I);
+      if (I >= E || isWhitespaceOrNull(Src[I])) {
+        // No special characters: slice out the substring and start the next
+        // token. Copy the string if the caller asks us to.
+        AddToken(AlwaysCopy ? Saver.save(NormalChars) : NormalChars);
+        if (I < E && Src[I] == '\n')
+          MarkEOL();
+      } else if (Src[I] == '\"') {
+        Token += NormalChars;
         State = QUOTED;
-        continue;
-      }
-      if (C == '\\') {
+      } else if (Src[I] == '\\') {
+        Token += NormalChars;
         I = parseBackslash(Src, I, Token);
         State = UNQUOTED;
-        continue;
+      } else {
+        llvm_unreachable("unexpected special character");
       }
-      Token.push_back(C);
-      State = UNQUOTED;
-      continue;
+      break;
     }
 
-    // UNQUOTED state means that it's reading a token not quoted by double
-    // quotes.
-    if (State == UNQUOTED) {
-      // Whitespace means the end of the token.
-      if (isWhitespaceOrNull(C)) {
-        NewArgv.push_back(Saver.save(StringRef(Token)).data());
+    case UNQUOTED:
+      if (isWhitespaceOrNull(Src[I])) {
+        // Whitespace means the end of the token. If we are in this state, the
+        // token must have contained a special character, so we must copy the
+        // token.
+        AddToken(Saver.save(Token.str()));
         Token.clear();
+        if (Src[I] == '\n')
+          MarkEOL();
         State = INIT;
-        // Mark the end of lines in response files
-        if (MarkEOLs && C == '\n')
-          NewArgv.push_back(nullptr);
-        continue;
-      }
-      if (C == '"') {
+      } else if (Src[I] == '\"') {
         State = QUOTED;
-        continue;
-      }
-      if (C == '\\') {
+      } else if (Src[I] == '\\') {
         I = parseBackslash(Src, I, Token);
-        continue;
+      } else {
+        Token.push_back(Src[I]);
       }
-      Token.push_back(C);
-      continue;
-    }
+      break;
 
-    // QUOTED state means that it's reading a token quoted by double quotes.
-    if (State == QUOTED) {
-      if (C == '"') {
+    case QUOTED:
+      if (Src[I] == '\"') {
         if (I < (E - 1) && Src[I + 1] == '"') {
           // Consecutive double-quotes inside a quoted string implies one
           // double-quote.
           Token.push_back('"');
-          I = I + 1;
-          continue;
+          ++I;
+        } else {
+          // Otherwise, end the quoted portion and return to the unquoted state.
+          State = UNQUOTED;
         }
-        State = UNQUOTED;
-        continue;
-      }
-      if (C == '\\') {
+      } else if (Src[I] == '\\') {
         I = parseBackslash(Src, I, Token);
-        continue;
+      } else {
+        Token.push_back(Src[I]);
       }
-      Token.push_back(C);
+      break;
     }
   }
-  // Append the last token after hitting EOF with no whitespace.
-  if (!Token.empty())
-    NewArgv.push_back(Saver.save(StringRef(Token)).data());
-  // Mark the end of response files
-  if (MarkEOLs)
-    NewArgv.push_back(nullptr);
+
+  if (State == UNQUOTED)
+    AddToken(Saver.save(Token.str()));
+}
+
+void cl::TokenizeWindowsCommandLine(StringRef Src, StringSaver &Saver,
+                                    SmallVectorImpl<const char *> &NewArgv,
+                                    bool MarkEOLs) {
+  auto AddToken = [&](StringRef Tok) { NewArgv.push_back(Tok.data()); };
+  auto OnEOL = [&]() {
+    if (MarkEOLs)
+      NewArgv.push_back(nullptr);
+  };
+  tokenizeWindowsCommandLineImpl(Src, Saver, AddToken,
+                                 /*AlwaysCopy=*/true, OnEOL);
+}
+
+void cl::TokenizeWindowsCommandLineNoCopy(StringRef Src, StringSaver &Saver,
+                                          SmallVectorImpl<StringRef> &NewArgv) {
+  auto AddToken = [&](StringRef Tok) { NewArgv.push_back(Tok); };
+  auto OnEOL = []() {};
+  tokenizeWindowsCommandLineImpl(Src, Saver, AddToken, /*AlwaysCopy=*/false,
+                                 OnEOL);
 }
 
 void cl::tokenizeConfigFile(StringRef Source, StringSaver &Saver,
@@ -1037,14 +1078,16 @@ static bool hasUTF8ByteOrderMark(ArrayRef<char> S) {
   return (S.size() >= 3 && S[0] == '\xef' && S[1] == '\xbb' && S[2] == '\xbf');
 }
 
-static bool ExpandResponseFile(StringRef FName, StringSaver &Saver,
-                               TokenizerCallback Tokenizer,
-                               SmallVectorImpl<const char *> &NewArgv,
-                               bool MarkEOLs, bool RelativeNames) {
-  ErrorOr<std::unique_ptr<MemoryBuffer>> MemBufOrErr =
-      MemoryBuffer::getFile(FName);
+// FName must be an absolute path.
+static llvm::Error ExpandResponseFile(
+    StringRef FName, StringSaver &Saver, TokenizerCallback Tokenizer,
+    SmallVectorImpl<const char *> &NewArgv, bool MarkEOLs, bool RelativeNames,
+    llvm::vfs::FileSystem &FS) {
+  assert(sys::path::is_absolute(FName));
+  llvm::ErrorOr<std::unique_ptr<MemoryBuffer>> MemBufOrErr =
+      FS.getBufferForFile(FName);
   if (!MemBufOrErr)
-    return false;
+    return llvm::errorCodeToError(MemBufOrErr.getError());
   MemoryBuffer &MemBuf = *MemBufOrErr.get();
   StringRef Str(MemBuf.getBufferStart(), MemBuf.getBufferSize());
 
@@ -1053,7 +1096,8 @@ static bool ExpandResponseFile(StringRef FName, StringSaver &Saver,
   std::string UTF8Buf;
   if (hasUTF16ByteOrderMark(BufRef)) {
     if (!convertUTF16ToUTF8String(BufRef, UTF8Buf))
-      return false;
+      return llvm::createStringError(std::errc::illegal_byte_sequence,
+                                     "Could not convert UTF16 to UTF8");
     Str = StringRef(UTF8Buf);
   }
   // If we see UTF-8 BOM sequence at the beginning of a file, we shall remove
@@ -1065,41 +1109,41 @@ static bool ExpandResponseFile(StringRef FName, StringSaver &Saver,
   // Tokenize the contents into NewArgv.
   Tokenizer(Str, Saver, NewArgv, MarkEOLs);
 
+  if (!RelativeNames)
+    return Error::success();
+  llvm::StringRef BasePath = llvm::sys::path::parent_path(FName);
   // If names of nested response files should be resolved relative to including
   // file, replace the included response file names with their full paths
   // obtained by required resolution.
-  if (RelativeNames)
-    for (unsigned I = 0; I < NewArgv.size(); ++I)
-      if (NewArgv[I]) {
-        StringRef Arg = NewArgv[I];
-        if (Arg.front() == '@') {
-          StringRef FileName = Arg.drop_front();
-          if (llvm::sys::path::is_relative(FileName)) {
-            SmallString<128> ResponseFile;
-            ResponseFile.append(1, '@');
-            if (llvm::sys::path::is_relative(FName)) {
-              SmallString<128> curr_dir;
-              llvm::sys::fs::current_path(curr_dir);
-              ResponseFile.append(curr_dir.str());
-            }
-            llvm::sys::path::append(
-                ResponseFile, llvm::sys::path::parent_path(FName), FileName);
-            NewArgv[I] = Saver.save(ResponseFile.c_str()).data();
-          }
-        }
-      }
+  for (auto &Arg : NewArgv) {
+    // Skip non-rsp file arguments.
+    if (!Arg || Arg[0] != '@')
+      continue;
 
-  return true;
+    StringRef FileName(Arg + 1);
+    // Skip if non-relative.
+    if (!llvm::sys::path::is_relative(FileName))
+      continue;
+
+    SmallString<128> ResponseFile;
+    ResponseFile.push_back('@');
+    ResponseFile.append(BasePath);
+    llvm::sys::path::append(ResponseFile, FileName);
+    Arg = Saver.save(ResponseFile.c_str()).data();
+  }
+  return Error::success();
 }
 
 /// Expand response files on a command line recursively using the given
 /// StringSaver and tokenization strategy.
 bool cl::ExpandResponseFiles(StringSaver &Saver, TokenizerCallback Tokenizer,
-                             SmallVectorImpl<const char *> &Argv,
-                             bool MarkEOLs, bool RelativeNames) {
+                             SmallVectorImpl<const char *> &Argv, bool MarkEOLs,
+                             bool RelativeNames,
+                             llvm::Optional<llvm::StringRef> CurrentDir,
+                             llvm::vfs::FileSystem &FS) {
   bool AllExpanded = true;
   struct ResponseFileRecord {
-    const char *File;
+    std::string File;
     size_t End;
   };
 
@@ -1133,12 +1177,35 @@ bool cl::ExpandResponseFiles(StringSaver &Saver, TokenizerCallback Tokenizer,
     }
 
     const char *FName = Arg + 1;
-    auto IsEquivalent = [FName](const ResponseFileRecord &RFile) {
-      return sys::fs::equivalent(RFile.File, FName);
+    // Note that CurrentDir is only used for top-level rsp files, the rest will
+    // always have an absolute path deduced from the containing file.
+    SmallString<128> CurrDir;
+    if (llvm::sys::path::is_relative(FName)) {
+      if (!CurrentDir)
+        llvm::sys::fs::current_path(CurrDir);
+      else
+        CurrDir = *CurrentDir;
+      llvm::sys::path::append(CurrDir, FName);
+      FName = CurrDir.c_str();
+    }
+    auto IsEquivalent = [FName, &FS](const ResponseFileRecord &RFile) {
+      llvm::ErrorOr<llvm::vfs::Status> LHS = FS.status(FName);
+      if (!LHS) {
+        // TODO: The error should be propagated up the stack.
+        llvm::consumeError(llvm::errorCodeToError(LHS.getError()));
+        return false;
+      }
+      llvm::ErrorOr<llvm::vfs::Status> RHS = FS.status(RFile.File);
+      if (!RHS) {
+        // TODO: The error should be propagated up the stack.
+        llvm::consumeError(llvm::errorCodeToError(RHS.getError()));
+        return false;
+      }
+      return LHS->equivalent(*RHS);
     };
 
     // Check for recursive response files.
-    if (std::any_of(FileStack.begin() + 1, FileStack.end(), IsEquivalent)) {
+    if (any_of(drop_begin(FileStack), IsEquivalent)) {
       // This file is recursive, so we leave it in the argument stream and
       // move on.
       AllExpanded = false;
@@ -1149,10 +1216,13 @@ bool cl::ExpandResponseFiles(StringSaver &Saver, TokenizerCallback Tokenizer,
     // Replace this response file argument with the tokenization of its
     // contents.  Nested response files are expanded in subsequent iterations.
     SmallVector<const char *, 0> ExpandedArgv;
-    if (!ExpandResponseFile(FName, Saver, Tokenizer, ExpandedArgv, MarkEOLs,
-                            RelativeNames)) {
+    if (llvm::Error Err =
+            ExpandResponseFile(FName, Saver, Tokenizer, ExpandedArgv, MarkEOLs,
+                               RelativeNames, FS)) {
       // We couldn't read this file, so we leave it in the argument stream and
       // move on.
+      // TODO: The error should be propagated up the stack.
+      llvm::consumeError(std::move(Err));
       AllExpanded = false;
       ++I;
       continue;
@@ -1178,43 +1248,49 @@ bool cl::ExpandResponseFiles(StringSaver &Saver, TokenizerCallback Tokenizer,
   return AllExpanded;
 }
 
-bool cl::readConfigFile(StringRef CfgFile, StringSaver &Saver,
-                        SmallVectorImpl<const char *> &Argv) {
-  if (!ExpandResponseFile(CfgFile, Saver, cl::tokenizeConfigFile, Argv,
-                          /*MarkEOLs*/ false, /*RelativeNames*/ true))
-    return false;
-  return ExpandResponseFiles(Saver, cl::tokenizeConfigFile, Argv,
-                             /*MarkEOLs*/ false, /*RelativeNames*/ true);
+bool cl::ExpandResponseFiles(StringSaver &Saver, TokenizerCallback Tokenizer,
+                             SmallVectorImpl<const char *> &Argv, bool MarkEOLs,
+                             bool RelativeNames,
+                             llvm::Optional<StringRef> CurrentDir) {
+  return ExpandResponseFiles(Saver, std::move(Tokenizer), Argv, MarkEOLs,
+                             RelativeNames, std::move(CurrentDir),
+                             *vfs::getRealFileSystem());
 }
 
-/// ParseEnvironmentOptions - An alternative entry point to the
-/// CommandLine library, which allows you to read the program's name
-/// from the caller (as PROGNAME) and its command-line arguments from
-/// an environment variable (whose name is given in ENVVAR).
-///
-void cl::ParseEnvironmentOptions(const char *progName, const char *envVar,
-                                 const char *Overview) {
-  // Check args.
-  assert(progName && "Program name not specified");
-  assert(envVar && "Environment variable name missing");
+bool cl::expandResponseFiles(int Argc, const char *const *Argv,
+                             const char *EnvVar, StringSaver &Saver,
+                             SmallVectorImpl<const char *> &NewArgv) {
+  auto Tokenize = Triple(sys::getProcessTriple()).isOSWindows()
+                      ? cl::TokenizeWindowsCommandLine
+                      : cl::TokenizeGNUCommandLine;
+  // The environment variable specifies initial options.
+  if (EnvVar)
+    if (llvm::Optional<std::string> EnvValue = sys::Process::GetEnv(EnvVar))
+      Tokenize(*EnvValue, Saver, NewArgv, /*MarkEOLs=*/false);
 
-  // Get the environment variable they want us to parse options out of.
-  llvm::Optional<std::string> envValue = sys::Process::GetEnv(StringRef(envVar));
-  if (!envValue)
-    return;
+  // Command line options can override the environment variable.
+  NewArgv.append(Argv + 1, Argv + Argc);
+  return ExpandResponseFiles(Saver, Tokenize, NewArgv);
+}
 
-  // Get program's "name", which we wouldn't know without the caller
-  // telling us.
-  SmallVector<const char *, 20> newArgv;
-  BumpPtrAllocator A;
-  StringSaver Saver(A);
-  newArgv.push_back(Saver.save(progName).data());
-
-  // Parse the value of the environment variable into a "command line"
-  // and hand it off to ParseCommandLineOptions().
-  TokenizeGNUCommandLine(*envValue, Saver, newArgv);
-  int newArgc = static_cast<int>(newArgv.size());
-  ParseCommandLineOptions(newArgc, &newArgv[0], StringRef(Overview));
+bool cl::readConfigFile(StringRef CfgFile, StringSaver &Saver,
+                        SmallVectorImpl<const char *> &Argv) {
+  SmallString<128> AbsPath;
+  if (sys::path::is_relative(CfgFile)) {
+    llvm::sys::fs::current_path(AbsPath);
+    llvm::sys::path::append(AbsPath, CfgFile);
+    CfgFile = AbsPath.str();
+  }
+  if (llvm::Error Err =
+          ExpandResponseFile(CfgFile, Saver, cl::tokenizeConfigFile, Argv,
+                             /*MarkEOLs=*/false, /*RelativeNames=*/true,
+                             *llvm::vfs::getRealFileSystem())) {
+    // TODO: The error should be propagated up the stack.
+    llvm::consumeError(std::move(Err));
+    return false;
+  }
+  return ExpandResponseFiles(Saver, cl::tokenizeConfigFile, Argv,
+                             /*MarkEOLs=*/false, /*RelativeNames=*/true);
 }
 
 bool cl::ParseCommandLineOptions(int argc, const char *const *argv,
@@ -1246,7 +1322,7 @@ bool cl::ParseCommandLineOptions(int argc, const char *const *argv,
 void CommandLineParser::ResetAllOptionOccurrences() {
   // So that we can parse different command lines multiple times in succession
   // we reset all option values to look like they have never been seen before.
-  for (auto SC : RegisteredSubCommands) {
+  for (auto *SC : RegisteredSubCommands) {
     for (auto &O : SC->OptionsMap)
       O.second->reset();
   }
@@ -1271,7 +1347,7 @@ bool CommandLineParser::ParseCommandLineOptions(int argc,
   argc = static_cast<int>(newArgv.size());
 
   // Copy the program name into ProgName, making sure not to overflow it.
-  ProgramName = sys::path::filename(StringRef(argv[0]));
+  ProgramName = std::string(sys::path::filename(StringRef(argv[0])));
 
   ProgramOverview = Overview;
   bool IgnoreErrors = Errs;
@@ -1302,7 +1378,7 @@ bool CommandLineParser::ParseCommandLineOptions(int argc,
   auto &SinkOpts = ChosenSubCommand->SinkOpts;
   auto &OptionsMap = ChosenSubCommand->OptionsMap;
 
-  for (auto O: DefaultOptions) {
+  for (auto *O: DefaultOptions) {
     addOption(O, true);
   }
 
@@ -1447,7 +1523,7 @@ bool CommandLineParser::ParseCommandLineOptions(int argc,
         if (NearestHandler) {
           // If we know a near match, report it as well.
           *Errs << ProgramName << ": Did you mean '"
-                << PrintArg(NearestHandlerString) << "'?\n";
+                << PrintArg(NearestHandlerString, 0) << "'?\n";
         }
 
         ErrorParsing = true;
@@ -1528,9 +1604,9 @@ bool CommandLineParser::ParseCommandLineOptions(int argc,
   } else {
     assert(ConsumeAfterOpt && NumPositionalRequired <= PositionalVals.size());
     unsigned ValNo = 0;
-    for (size_t j = 1, e = PositionalOpts.size(); j != e; ++j)
-      if (RequiresValue(PositionalOpts[j])) {
-        ErrorParsing |= ProvidePositionalOption(PositionalOpts[j],
+    for (size_t J = 0, E = PositionalOpts.size(); J != E; ++J)
+      if (RequiresValue(PositionalOpts[J])) {
+        ErrorParsing |= ProvidePositionalOption(PositionalOpts[J],
                                                 PositionalVals[ValNo].first,
                                                 PositionalVals[ValNo].second);
         ValNo++;
@@ -1601,7 +1677,7 @@ bool Option::error(const Twine &Message, StringRef ArgName, raw_ostream &Errs) {
   if (ArgName.empty())
     Errs << HelpStr; // Be nice for positional arguments
   else
-    Errs << GlobalParser->ProgramName << ": for the " << PrintArg(ArgName);
+    Errs << GlobalParser->ProgramName << ": for the " << PrintArg(ArgName, 0);
 
   Errs << " option: " << Message << "\n";
   return true;
@@ -1660,6 +1736,19 @@ void Option::printHelpStr(StringRef HelpStr, size_t Indent,
   }
 }
 
+void Option::printEnumValHelpStr(StringRef HelpStr, size_t BaseIndent,
+                                 size_t FirstLineIndentedBy) {
+  const StringRef ValHelpPrefix = "  ";
+  assert(BaseIndent >= FirstLineIndentedBy);
+  std::pair<StringRef, StringRef> Split = HelpStr.split('\n');
+  outs().indent(BaseIndent - FirstLineIndentedBy)
+      << ArgHelpPrefix << ValHelpPrefix << Split.first << "\n";
+  while (!Split.second.empty()) {
+    Split = Split.second.split('\n');
+    outs().indent(BaseIndent + ValHelpPrefix.size()) << Split.first << "\n";
+  }
+}
+
 // Print out the option for the alias.
 void alias::printOptionInfo(size_t GlobalWidth) const {
   outs() << PrintArg(ArgStr);
@@ -1698,9 +1787,10 @@ void basic_parser_impl::printOptionInfo(const Option &O,
   if (!ValName.empty()) {
     if (O.getMiscFlags() & PositionalEatsArgs) {
       outs() << " <" << getValueStr(O, ValName) << ">...";
-    } else {
+    } else if (O.getValueExpectedFlag() == ValueOptional)
+      outs() << "[=<" << getValueStr(O, ValName) << ">]";
+    else
       outs() << "=<" << getValueStr(O, ValName) << '>';
-    }
   }
 
   Option::printHelpStr(O.HelpStr, GlobalWidth, getOptionWidth(O));
@@ -1754,6 +1844,24 @@ bool parser<int>::parse(Option &O, StringRef ArgName, StringRef Arg,
                         int &Value) {
   if (Arg.getAsInteger(0, Value))
     return O.error("'" + Arg + "' value invalid for integer argument!");
+  return false;
+}
+
+// parser<long> implementation
+//
+bool parser<long>::parse(Option &O, StringRef ArgName, StringRef Arg,
+                         long &Value) {
+  if (Arg.getAsInteger(0, Value))
+    return O.error("'" + Arg + "' value invalid for long argument!");
+  return false;
+}
+
+// parser<long long> implementation
+//
+bool parser<long long>::parse(Option &O, StringRef ArgName, StringRef Arg,
+                              long long &Value) {
+  if (Arg.getAsInteger(0, Value))
+    return O.error("'" + Arg + "' value invalid for llong argument!");
   return false;
 }
 
@@ -1886,17 +1994,17 @@ void generic_parser_base::printOptionInfo(const Option &O,
       StringRef Description = getDescription(i);
       if (!shouldPrintOption(OptionName, Description, O))
         continue;
-      assert(GlobalWidth >= OptionName.size() + OptionPrefixesSize);
-      size_t NumSpaces = GlobalWidth - OptionName.size() - OptionPrefixesSize;
+      size_t FirstLineIndent = OptionName.size() + OptionPrefixesSize;
       outs() << OptionPrefix << OptionName;
       if (OptionName.empty()) {
         outs() << EmptyOption;
-        assert(NumSpaces >= EmptyOption.size());
-        NumSpaces -= EmptyOption.size();
+        assert(FirstLineIndent >= EmptyOption.size());
+        FirstLineIndent += EmptyOption.size();
       }
       if (!Description.empty())
-        outs().indent(NumSpaces) << ArgHelpPrefix << "  " << Description;
-      outs() << '\n';
+        Option::printEnumValHelpStr(Description, GlobalWidth, FirstLineIndent);
+      else
+        outs() << '\n';
     }
   } else {
     if (!O.HelpStr.empty())
@@ -1966,6 +2074,8 @@ void generic_parser_base::printGenericOptionDiff(
 PRINT_OPT_DIFF(bool)
 PRINT_OPT_DIFF(boolOrDefault)
 PRINT_OPT_DIFF(int)
+PRINT_OPT_DIFF(long)
+PRINT_OPT_DIFF(long long)
 PRINT_OPT_DIFF(unsigned)
 PRINT_OPT_DIFF(unsigned long)
 PRINT_OPT_DIFF(unsigned long long)
@@ -2039,7 +2149,7 @@ static void sortOpts(StringMap<Option *> &OptMap,
 static void
 sortSubCommands(const SmallPtrSetImpl<SubCommand *> &SubMap,
                 SmallVectorImpl<std::pair<const char *, SubCommand *>> &Subs) {
-  for (const auto &S : SubMap) {
+  for (auto *S : SubMap) {
     if (S->getName().empty())
       continue;
     Subs.push_back(std::make_pair(S->getName().data(), S));
@@ -2116,7 +2226,7 @@ public:
              << " [options]";
     }
 
-    for (auto Opt : PositionalOpts) {
+    for (auto *Opt : PositionalOpts) {
       if (Opt->hasArgStr())
         outs() << " --" << Opt->ArgStr;
       outs() << " " << Opt->HelpStr;
@@ -2152,7 +2262,7 @@ public:
     printOptions(Opts, MaxArgLen);
 
     // Print any extra help the user has declared.
-    for (auto I : GlobalParser->MoreHelp)
+    for (const auto &I : GlobalParser->MoreHelp)
       outs() << I;
     GlobalParser->MoreHelp.clear();
   }
@@ -2363,6 +2473,28 @@ static VersionPrinterTy OverrideVersionPrinter = nullptr;
 
 static std::vector<VersionPrinterTy> *ExtraVersionPrinters = nullptr;
 
+#if defined(__GNUC__)
+// GCC and GCC-compatible compilers define __OPTIMIZE__ when optimizations are
+// enabled.
+# if defined(__OPTIMIZE__)
+#  define LLVM_IS_DEBUG_BUILD 0
+# else
+#  define LLVM_IS_DEBUG_BUILD 1
+# endif
+#elif defined(_MSC_VER)
+// MSVC doesn't have a predefined macro indicating if optimizations are enabled.
+// Use _DEBUG instead. This macro actually corresponds to the choice between
+// debug and release CRTs, but it is a reasonable proxy.
+# if defined(_DEBUG)
+#  define LLVM_IS_DEBUG_BUILD 1
+# else
+#  define LLVM_IS_DEBUG_BUILD 0
+# endif
+#else
+// Otherwise, for an unknown compiler, assume this is an optimized build.
+# define LLVM_IS_DEBUG_BUILD 0
+#endif
+
 namespace {
 class VersionPrinter {
 public:
@@ -2378,7 +2510,7 @@ public:
     OS << " " << LLVM_VERSION_INFO;
 #endif
     OS << "\n  ";
-#ifndef __OPTIMIZE__
+#if LLVM_IS_DEBUG_BUILD
     OS << "DEBUG build";
 #else
     OS << "Optimized build";
@@ -2387,7 +2519,7 @@ public:
     OS << " with assertions";
 #endif
 #if LLVM_VERSION_PRINTER_SHOW_HOST_TARGET_INFO
-    std::string CPU = sys::getHostCPUName();
+    std::string CPU = std::string(sys::getHostCPUName());
     if (CPU == "generic")
       CPU = "(unknown)";
     OS << ".\n"
@@ -2410,7 +2542,7 @@ public:
     // information.
     if (ExtraVersionPrinters != nullptr) {
       outs() << '\n';
-      for (auto I : *ExtraVersionPrinters)
+      for (const auto &I : *ExtraVersionPrinters)
         I(outs());
     }
 
@@ -2477,7 +2609,7 @@ void cl::HideUnrelatedOptions(ArrayRef<const cl::OptionCategory *> Categories,
                               SubCommand &Sub) {
   for (auto &I : Sub.OptionsMap) {
     for (auto &Cat : I.second->Categories) {
-      if (find(Categories, Cat) == Categories.end() && Cat != &GenericCategory)
+      if (!is_contained(Categories, Cat) && Cat != &GenericCategory)
         I.second->setHiddenFlag(cl::ReallyHidden);
     }
   }
