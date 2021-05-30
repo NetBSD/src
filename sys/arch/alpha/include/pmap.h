@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.92 2021/05/30 05:26:09 thorpej Exp $ */
+/* $NetBSD: pmap.h,v 1.93 2021/05/30 06:41:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -177,9 +177,10 @@ typedef struct pv_entry {
 	pt_entry_t	*pv_pte;	/* PTE that maps the VA */
 } *pv_entry_t;
 
-/* pvh_attrs */
-#define	PGA_MODIFIED		0x01		/* modified */
-#define	PGA_REFERENCED		0x02		/* referenced */
+/* attrs in pvh_listx */
+#define	PGA_MODIFIED		0x01UL		/* modified */
+#define	PGA_REFERENCED		0x02UL		/* referenced */
+#define	PGA_ATTRS		(PGA_MODIFIED | PGA_REFERENCED)
 
 /* pvh_usage */
 #define	PGU_NORMAL		0		/* free or normal use */
@@ -214,9 +215,9 @@ pmap_remove_all(struct pmap *pmap)
 }
 
 #define	pmap_is_referenced(pg)						\
-	(((pg)->mdpage.pvh_attrs & PGA_REFERENCED) != 0)
+	(((pg)->mdpage.pvh_listx & PGA_REFERENCED) != 0)
 #define	pmap_is_modified(pg)						\
-	(((pg)->mdpage.pvh_attrs & PGA_MODIFIED) != 0)
+	(((pg)->mdpage.pvh_listx & PGA_MODIFIED) != 0)
 
 #define	PMAP_STEAL_MEMORY		/* enable pmap_steal_memory() */
 #define	PMAP_GROWKERNEL			/* enable pmap_growkernel() */
@@ -359,17 +360,15 @@ do {									\
  */
 #define	__HAVE_VM_PAGE_MD
 struct vm_page_md {
-	struct pv_entry *pvh_list;		/* pv_entry list */
-	int pvh_attrs;				/* page attributes */
+	uintptr_t pvh_listx;			/* pv_entry list + attrs */
 };
 
 #define	VM_MDPAGE_PVS(pg)						\
-	((pg)->mdpage.pvh_list)
+	((struct pv_entry *)((pg)->mdpage.pvh_listx & ~3UL))
 
 #define	VM_MDPAGE_INIT(pg)						\
 do {									\
-	(pg)->mdpage.pvh_list = NULL;					\
-	(pg)->mdpage.pvh_attrs = 0;					\
+	(pg)->mdpage.pvh_listx = 0UL;					\
 } while (/*CONSTCOND*/0)
 
 #endif /* _KERNEL */
