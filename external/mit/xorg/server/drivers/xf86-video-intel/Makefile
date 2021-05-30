@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2020/09/07 00:24:37 mrg Exp $
+#	$NetBSD: Makefile,v 1.34 2021/05/30 22:24:35 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -217,6 +217,8 @@ SRCS+=		i810_xaa.c
 
 CWARNFLAGS.clang+=	-Wno-parentheses -Wno-tautological-compare \
 			-Wno-empty-body -Wno-error
+
+COPTS+=	-fcommon
 
 COPTS.sna_display.c+=	-Wno-stack-protector
 COPTS.sna_threads.c+=	-Wno-stack-protector
