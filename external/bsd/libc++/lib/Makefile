@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2019/05/06 23:20:51 christos Exp $
+#	$NetBSD: Makefile,v 1.14 2021/05/30 01:57:00 joerg Exp $
 
 LIB=		c++
 WARNS=		4
@@ -8,12 +8,18 @@ NOLINT=		# defined
 
 .PATH: ${LIBCXX_SRCDIR}/src
 
-SRCS=	algorithm.cpp bind.cpp chrono.cpp condition_variable.cpp debug.cpp \
-	exception.cpp future.cpp hash.cpp ios.cpp iostream.cpp locale.cpp \
-	memory.cpp mutex.cpp new.cpp optional.cpp random.cpp regex.cpp \
-	shared_mutex.cpp stdexcept.cpp \
-	string.cpp strstream.cpp system_error.cpp thread.cpp \
-	utility.cpp valarray.cpp
+SRCS=	algorithm.cpp bind.cpp charconv.cpp chrono.cpp condition_variable.cpp \
+	condition_variable_destructor.cpp debug.cpp exception.cpp format.cpp \
+	functional.cpp future.cpp hash.cpp ios.cpp ios.instantiations.cpp \
+	iostream.cpp locale.cpp memory.cpp mutex.cpp mutex_destructor.cpp \
+	new.cpp optional.cpp random.cpp random_shuffle.cpp regex.cpp \
+	shared_mutex.cpp stdexcept.cpp string.cpp strstream.cpp \
+	system_error.cpp thread.cpp utility.cpp valarray.cpp variant.cpp \
+	vector.cpp
+
+.PATH: ${LIBCXX_SRCDIR}/src/filesystem
+SRCS+=	directory_iterator.cpp operations.cpp
+
 # typeinfo.cc: prefer libcxxrt's version
 
 LIBCXXRT_SRCS+= \
@@ -33,19 +39,17 @@ CLEANFILES+=	rt_${src}
 
 .include <bsd.own.mk>
 
-CPPFLAGS+=	-nostdinc++ -cxx-isystem ${LIBCXX_SRCDIR}/include -I${LIBCXXRT_SRCDIR}/src
-CPPFLAGS+=	-DLIBCXXRT
-CXXFLAGS+=	-std=c++11
+CPPFLAGS+=	-nostdinc++ -cxx-isystem ${LIBCXX_SRCDIR}/include
+CPPFLAGS+=	-cxx-isystem ${.CURDIR}/../include -I${LIBCXXRT_SRCDIR}/src
+CPPFLAGS+=	-DLIBCXXRT -D_LIBCPP_BUILDING_LIBRARY
+CXXFLAGS+=	-std=gnu++17
 
 CWARNFLAGS.gcc+=	-Wno-error
 
 CWARNFLAGS.clang+=	-Wno-error=unused-variable -Wno-error=missing-noreturn
 CWARNFLAGS.clang+=	-Wno-error=missing-prototypes -Wno-error=sometimes-uninitialized
 CWARNFLAGS.clang+=	-Wno-error=missing-field-initializers -Wno-error=switch
-CWARNFLAGS.clang+=	-Wno-error=implicit-exception-spec-mismatch
-
-# with SSP and FORTIFY, on earm...
-COPTS.rt_libelftc_dem_gnu3.c += ${${ACTIVE_CC} == "clang":? -Wno-error=builtin-memcpy-chk-size :}
+CWARNFLAGS.clang+=	-Wno-error=implicit-exception-spec-mismatch -Wno-error=format-nonliteral -Wno-error=format-security
 
 .if ${MKSANITIZER} != "yes"
 LDFLAGS+=	-Wl,-z,defs

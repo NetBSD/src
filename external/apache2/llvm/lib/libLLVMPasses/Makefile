@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/11/11 22:45:10 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2021/05/30 01:56:54 joerg Exp $
 
 LIB=	LLVMPasses
 
@@ -7,6 +7,7 @@ LIB=	LLVMPasses
 .PATH: ${LLVM_SRCDIR}/lib/Passes
 
 SRCS+=	PassBuilder.cpp \
+	PassBuilderBindings.cpp \
 	PassPlugin.cpp \
 	StandardInstrumentations.cpp
 

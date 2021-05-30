@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/11/11 22:45:15 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2021/05/30 01:56:56 joerg Exp $
 
 LIB=	clangCodeGen
 
@@ -10,22 +10,22 @@ SRCS+=	BackendUtil.cpp \
 	CGAtomic.cpp \
 	CGBlocks.cpp \
 	CGBuiltin.cpp \
-	CGCUDANV.cpp \
-	CGCUDARuntime.cpp \
-	CGCXX.cpp \
-	CGCXXABI.cpp \
 	CGCall.cpp \
 	CGClass.cpp \
 	CGCleanup.cpp \
 	CGCoroutine.cpp \
+	CGCUDANV.cpp \
+	CGCUDARuntime.cpp \
+	CGCXXABI.cpp \
+	CGCXX.cpp \
 	CGDebugInfo.cpp \
 	CGDecl.cpp \
 	CGDeclCXX.cpp \
 	CGException.cpp \
-	CGExpr.cpp \
 	CGExprAgg.cpp \
 	CGExprComplex.cpp \
 	CGExprConstant.cpp \
+	CGExpr.cpp \
 	CGExprCXX.cpp \
 	CGExprScalar.cpp \
 	CGGPUBuiltin.cpp \
@@ -36,7 +36,9 @@ SRCS+=	BackendUtil.cpp \
 	CGObjCMac.cpp \
 	CGObjCRuntime.cpp \
 	CGOpenCLRuntime.cpp \
+	CGOpenMPRuntimeAMDGCN.cpp \
 	CGOpenMPRuntime.cpp \
+	CGOpenMPRuntimeGPU.cpp \
 	CGOpenMPRuntimeNVPTX.cpp \
 	CGRecordLayoutBuilder.cpp \
 	CGStmt.cpp \

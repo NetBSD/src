@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/11/11 22:45:04 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2021/05/30 01:56:50 joerg Exp $
 
 LIB=	LLVMARMCodeGen
 
@@ -10,12 +10,12 @@ CPPFLAGS+=	-I${LLVM_SRCDIR}/lib/Target/ARM
 
 SRCS+=	A15SDOptimizer.cpp \
 	ARMAsmPrinter.cpp \
-	ARMBasicBlockInfo.cpp \
 	ARMBaseInstrInfo.cpp \
 	ARMBaseRegisterInfo.cpp \
+	ARMBasicBlockInfo.cpp \
+	ARMBlockPlacement.cpp \
 	ARMCallingConv.cpp \
 	ARMCallLowering.cpp \
-	ARMCodeGenPrepare.cpp \
 	ARMConstantIslandPass.cpp \
 	ARMConstantPoolValue.cpp \
 	ARMExpandPseudoInsts.cpp \
@@ -37,12 +37,16 @@ SRCS+=	A15SDOptimizer.cpp \
 	ARMRegisterBankInfo.cpp \
 	ARMRegisterInfo.cpp \
 	ARMSelectionDAGInfo.cpp \
+	ARMSLSHardening.cpp \
 	ARMSubtarget.cpp \
 	ARMTargetMachine.cpp \
 	ARMTargetObjectFile.cpp \
 	ARMTargetTransformInfo.cpp \
 	MLxExpansionPass.cpp \
+	MVEGatherScatterLowering.cpp \
+	MVELaneInterleavingPass.cpp \
 	MVETailPredication.cpp \
+	MVETPAndVPTOptimisationsPass.cpp \
 	MVEVPTBlockPass.cpp \
 	Thumb1FrameLowering.cpp \
 	Thumb1InstrInfo.cpp \

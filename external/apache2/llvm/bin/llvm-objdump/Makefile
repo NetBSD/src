@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/11/11 22:45:00 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2021/05/30 01:56:48 joerg Exp $
 
 PROG_CXX=	llvm-objdump
 NOMAN=		yes
@@ -11,7 +11,19 @@ SRCS=	llvm-objdump.cpp \
 	COFFDump.cpp \
 	ELFDump.cpp \
 	MachODump.cpp \
-	WasmDump.cpp
+	SourcePrinter.cpp \
+	WasmDump.cpp \
+	XCOFFDump.cpp
+
+TABLEGEN_SRC=	ObjdumpOpts.td OtoolOpts.td
+
+TABLEGEN_OUTPUT.ObjdumpOpts.td= \
+	ObjdumpOpts.inc|-gen-opt-parser-defs
+
+TABLEGEN_OUTPUT.OtoolOpts.td= \
+	OtoolOpts.inc|-gen-opt-parser-defs
+
+.include "${.PARSEDIR}/../../tablegen.mk"
 
 LLVM_LIBS+= \
 	AArch64Disassembler \
@@ -46,20 +58,21 @@ LLVM_LIBS+= \
 	X86CodeGen \
 	X86MCTargetDesc \
 	X86TargetInfo \
-	X86Utils \
 	CodeGen \
 	MCDisassembler \
 	DebugInfoDWARF \
 	DebugInfoSymbolize \
 	DebugInfoPDB \
-	DebugInfoPDBNative \
 	Object \
+	TextAPI \
 	BitReader \
 	BitstreamReader \
 	MCParser \
 	MC \
 	IR \
+	Remarks \
 	BinaryFormat \
+	Option \
 	Support \
 	Demangle
 

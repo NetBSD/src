@@ -1,27 +1,29 @@
-#	$NetBSD: Makefile,v 1.1 2019/11/11 22:45:05 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2021/05/30 01:56:51 joerg Exp $
 
 LIB=	LLVMCodeGen
 
 .include <bsd.init.mk>
 
 .PATH: ${LLVM_SRCDIR}/lib/CodeGen
-
+.PATH: ${LLVM_SRCDIR}/lib/CodeGen/LiveDebugValues
 
 SRCS+=	AggressiveAntiDepBreaker.cpp \
 	AllocationOrder.cpp \
 	Analysis.cpp \
 	AtomicExpandPass.cpp \
+	BasicBlockSections.cpp \
 	BasicTargetTransformInfo.cpp \
 	BranchFolding.cpp \
 	BranchRelaxation.cpp \
 	BreakFalseDeps.cpp \
-	BuiltinGCs.cpp \
 	CalcSpillWeights.cpp \
 	CallingConvLower.cpp \
 	CFGuardLongjmp.cpp \
 	CFIInstrInserter.cpp \
 	CodeGen.cpp \
+	CodeGenPassBuilder.cpp \
 	CodeGenPrepare.cpp \
+	CommandFlags.cpp \
 	CriticalAntiDepBreaker.cpp \
 	DeadMachineInstructionElim.cpp \
 	DetectDeadLanes.cpp \
@@ -29,24 +31,27 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	DwarfEHPrepare.cpp \
 	EarlyIfConversion.cpp \
 	EdgeBundles.cpp \
+	EHContGuardCatchret.cpp \
 	ExecutionDomainFix.cpp \
 	ExpandMemCmp.cpp \
 	ExpandPostRAPseudos.cpp \
 	ExpandReductions.cpp \
+	ExpandVectorPredication.cpp \
 	FaultMaps.cpp \
 	FEntryInserter.cpp \
 	FinalizeISel.cpp \
+	FixupStatepointCallerSaved.cpp \
 	FuncletLayout.cpp \
 	GCMetadata.cpp \
 	GCMetadataPrinter.cpp \
 	GCRootLowering.cpp \
-	GCStrategy.cpp \
 	GlobalMerge.cpp \
 	HardwareLoops.cpp \
 	IfConversion.cpp \
 	ImplicitNullChecks.cpp \
 	IndirectBrExpandPass.cpp \
 	InlineSpiller.cpp \
+	InstrRefBasedImpl.cpp \
 	InterferenceCache.cpp \
 	InterleavedAccessPass.cpp \
 	InterleavedLoadCombinePass.cpp \
@@ -56,6 +61,7 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	LexicalScopes.cpp \
 	LiveDebugValues.cpp \
 	LiveDebugVariables.cpp \
+	LiveIntervalCalc.cpp \
 	LiveInterval.cpp \
 	LiveIntervals.cpp \
 	LiveIntervalUnion.cpp \
@@ -76,15 +82,18 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	MachineBlockFrequencyInfo.cpp \
 	MachineBlockPlacement.cpp \
 	MachineBranchProbabilityInfo.cpp \
+	MachineCheckDebugify.cpp \
 	MachineCombiner.cpp \
 	MachineCopyPropagation.cpp \
 	MachineCSE.cpp \
+	MachineDebugify.cpp \
 	MachineDominanceFrontier.cpp \
 	MachineDominators.cpp \
 	MachineFrameInfo.cpp \
 	MachineFunction.cpp \
 	MachineFunctionPass.cpp \
 	MachineFunctionPrinterPass.cpp \
+	MachineFunctionSplitter.cpp \
 	MachineInstrBundle.cpp \
 	MachineInstr.cpp \
 	MachineLICM.cpp \
@@ -95,6 +104,7 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	MachineOperand.cpp \
 	MachineOptimizationRemarkEmitter.cpp \
 	MachineOutliner.cpp \
+	MachinePassManager.cpp \
 	MachinePipeliner.cpp \
 	MachinePostDominators.cpp \
 	MachineRegionInfo.cpp \
@@ -103,15 +113,22 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	MachineSink.cpp \
 	MachineSizeOpts.cpp \
 	MachineSSAUpdater.cpp \
+	MachineStableHash.cpp \
+	MachineStripDebug.cpp \
 	MachineTraceMetrics.cpp \
 	MachineVerifier.cpp \
 	MacroFusion.cpp \
+	MBFIWrapper.cpp \
 	MIRCanonicalizerPass.cpp \
+	MIRFSDiscriminator.cpp \
 	MIRNamerPass.cpp \
 	MIRPrinter.cpp \
 	MIRPrintingPass.cpp \
 	MIRVRegNamerUtils.cpp \
+	MIRYamlMapping.cpp \
 	ModuloSchedule.cpp \
+	MultiHazardRecognizer.cpp \
+	NonRelocatableStringpool.cpp \
 	OptimizePHIs.cpp \
 	ParallelCG.cpp \
 	PatchableFunction.cpp \
@@ -123,7 +140,11 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	PreISelIntrinsicLowering.cpp \
 	ProcessImplicitDefs.cpp \
 	PrologEpilogInserter.cpp \
+	PseudoProbeInserter.cpp \
 	PseudoSourceValue.cpp \
+	RDFGraph.cpp \
+	RDFLiveness.cpp \
+	RDFRegisters.cpp \
 	ReachingDefAnalysis.cpp \
 	RegAllocBase.cpp \
 	RegAllocBasic.cpp \
@@ -138,11 +159,10 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	RegUsageInfoCollector.cpp \
 	RegUsageInfoPropagate.cpp \
 	RenameIndependentSubregs.cpp \
+	ReplaceWithVeclib.cpp \
 	ResetMachineFunctionPass.cpp \
-	SafeStackColoring.cpp \
 	SafeStack.cpp \
 	SafeStackLayout.cpp \
-	ScalarizeMaskedMemIntrin.cpp \
 	ScheduleDAG.cpp \
 	ScheduleDAGInstrs.cpp \
 	ScheduleDAGPrinter.cpp \
@@ -172,8 +192,10 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	TargetSchedule.cpp \
 	TargetSubtargetInfo.cpp \
 	TwoAddressInstructionPass.cpp \
+	TypePromotion.cpp \
 	UnreachableBlockElim.cpp \
 	ValueTypes.cpp \
+	VarLocBasedImpl.cpp \
 	VirtRegMap.cpp \
 	WasmEHPrepare.cpp \
 	WinEHPrepare.cpp \
