@@ -13,6 +13,7 @@
 #ifndef LLVM_TRANSFORMS_UTILS_MODULEUTILS_H
 #define LLVM_TRANSFORMS_UTILS_MODULEUTILS_H
 
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include <utility> // for std::pair
 
@@ -23,9 +24,7 @@ class Module;
 class Function;
 class FunctionCallee;
 class GlobalValue;
-class GlobalVariable;
 class Constant;
-class StringRef;
 class Value;
 class Type;
 
@@ -42,6 +41,10 @@ void appendToGlobalDtors(Module &M, Function *F, int Priority,
 
 FunctionCallee declareSanitizerInitFunction(Module &M, StringRef InitName,
                                             ArrayRef<Type *> InitArgTypes);
+
+/// Creates sanitizer constructor function.
+/// \return Returns pointer to constructor.
+Function *createSanitizerCtor(Module &M, StringRef CtorName);
 
 /// Creates sanitizer constructor function, and calls sanitizer's init
 /// function from it.
@@ -108,6 +111,13 @@ void filterDeadComdatFunctions(
 /// unique identifier for this module, so we return the empty string.
 std::string getUniqueModuleId(Module *M);
 
+class CallInst;
+namespace VFABI {
+/// Overwrite the Vector Function ABI variants attribute with the names provide
+/// in \p VariantMappings.
+void setVectorVariantNames(CallInst *CI,
+                           const SmallVector<std::string, 8> &VariantMappings);
+} // End VFABI namespace
 } // End llvm namespace
 
-#endif //  LLVM_TRANSFORMS_UTILS_MODULEUTILS_H
+#endif // LLVM_TRANSFORMS_UTILS_MODULEUTILS_H

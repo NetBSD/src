@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "LLVMContextImpl.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/OptBisect.h"
 #include "llvm/IR/Type.h"
@@ -25,6 +26,7 @@ LLVMContextImpl::LLVMContextImpl(LLVMContext &C)
     VoidTy(C, Type::VoidTyID),
     LabelTy(C, Type::LabelTyID),
     HalfTy(C, Type::HalfTyID),
+    BFloatTy(C, Type::BFloatTyID),
     FloatTy(C, Type::FloatTyID),
     DoubleTy(C, Type::DoubleTyID),
     MetadataTy(C, Type::MetadataTyID),
@@ -33,6 +35,7 @@ LLVMContextImpl::LLVMContextImpl(LLVMContext &C)
     FP128Ty(C, Type::FP128TyID),
     PPC_FP128Ty(C, Type::PPC_FP128TyID),
     X86_MMXTy(C, Type::X86_MMXTyID),
+    X86_AMXTy(C, Type::X86_AMXTyID),
     Int1Ty(C, 1),
     Int8Ty(C, 8),
     Int16Ty(C, 16),
@@ -48,11 +51,10 @@ LLVMContextImpl::~LLVMContextImpl() {
     delete *OwnedModules.begin();
 
 #ifndef NDEBUG
-  // Check for metadata references from leaked Instructions.
-  for (auto &Pair : InstructionMetadata)
+  // Check for metadata references from leaked Values.
+  for (auto &Pair : ValueMetadata)
     Pair.first->dump();
-  assert(InstructionMetadata.empty() &&
-         "Instructions with metadata have been leaked");
+  assert(ValueMetadata.empty() && "Values with metadata have been leaked");
 #endif
 
   // Drop references for MDNodes.  Do this before Values get deleted to avoid
@@ -96,27 +98,10 @@ LLVMContextImpl::~LLVMContextImpl() {
   CAZConstants.clear();
   CPNConstants.clear();
   UVConstants.clear();
+  PVConstants.clear();
   IntConstants.clear();
   FPConstants.clear();
-
-  for (auto &CDSConstant : CDSConstants)
-    delete CDSConstant.second;
   CDSConstants.clear();
-
-  // Destroy attributes.
-  for (FoldingSetIterator<AttributeImpl> I = AttrsSet.begin(),
-         E = AttrsSet.end(); I != E; ) {
-    FoldingSetIterator<AttributeImpl> Elem = I++;
-    delete &*Elem;
-  }
-
-  // Destroy attribute lists.
-  for (FoldingSetIterator<AttributeListImpl> I = AttrsLists.begin(),
-                                             E = AttrsLists.end();
-       I != E;) {
-    FoldingSetIterator<AttributeListImpl> Elem = I++;
-    delete &*Elem;
-  }
 
   // Destroy attribute node lists.
   for (FoldingSetIterator<AttributeSetNode> I = AttrsSetNodes.begin(),
@@ -142,18 +127,26 @@ LLVMContextImpl::~LLVMContextImpl() {
 }
 
 void LLVMContextImpl::dropTriviallyDeadConstantArrays() {
-  bool Changed;
-  do {
-    Changed = false;
+  SmallSetVector<ConstantArray *, 4> WorkList;
 
-    for (auto I = ArrayConstants.begin(), E = ArrayConstants.end(); I != E;) {
-      auto *C = *I++;
-      if (C->use_empty()) {
-        Changed = true;
-        C->destroyConstant();
+  // When ArrayConstants are of substantial size and only a few in them are
+  // dead, starting WorkList with all elements of ArrayConstants can be
+  // wasteful. Instead, starting WorkList with only elements that have empty
+  // uses.
+  for (ConstantArray *C : ArrayConstants)
+    if (C->use_empty())
+      WorkList.insert(C);
+
+  while (!WorkList.empty()) {
+    ConstantArray *C = WorkList.pop_back_val();
+    if (C->use_empty()) {
+      for (const Use &Op : C->operands()) {
+        if (auto *COp = dyn_cast<ConstantArray>(Op))
+          WorkList.insert(COp);
       }
+      C->destroyConstant();
     }
-  } while (Changed);
+  }
 }
 
 void Module::dropTriviallyDeadConstantArrays() {
@@ -183,7 +176,7 @@ unsigned MDNodeOpsKey::calculateHash(MDNode *N, unsigned Offset) {
   unsigned Hash = hash_combine_range(N->op_begin() + Offset, N->op_end());
 #ifndef NDEBUG
   {
-    SmallVector<Metadata *, 8> MDs(N->op_begin() + Offset, N->op_end());
+    SmallVector<Metadata *, 8> MDs(drop_begin(N->operands(), Offset));
     unsigned RawHash = calculateHash(MDs);
     assert(Hash == RawHash &&
            "Expected hash of MDOperand to equal hash of Metadata*");
@@ -227,19 +220,8 @@ void LLVMContextImpl::getSyncScopeNames(
     SSNs[SSE.second] = SSE.first();
 }
 
-/// Singleton instance of the OptBisect class.
-///
-/// This singleton is accessed via the LLVMContext::getOptPassGate() function.
-/// It provides a mechanism to disable passes and individual optimizations at
-/// compile time based on a command line option (-opt-bisect-limit) in order to
-/// perform a bisecting search for optimization-related problems.
-///
-/// Even if multiple LLVMContext objects are created, they will all return the
-/// same instance of OptBisect in order to provide a single bisect count.  Any
-/// code that uses the OptBisect object should be serialized when bisection is
-/// enabled in order to enable a consistent bisect count.
-static ManagedStatic<OptBisect> OptBisector;
-
+/// Gets the OptPassGate for this LLVMContextImpl, which defaults to the
+/// singleton OptBisect if not explicitly set.
 OptPassGate &LLVMContextImpl::getOptPassGate() const {
   if (!OPG)
     OPG = &(*OptBisector);

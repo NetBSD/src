@@ -16,7 +16,7 @@ namespace llvm {
 class R600FrameLowering : public AMDGPUFrameLowering {
 public:
   R600FrameLowering(StackDirection D, Align StackAl, int LAO,
-                    Align TransAl = Align::None())
+                    Align TransAl = Align(1))
       : AMDGPUFrameLowering(D, StackAl, LAO, TransAl) {}
   ~R600FrameLowering() override;
 
@@ -24,8 +24,8 @@ public:
                     MachineBasicBlock &MBB) const override {}
   void emitEpilogue(MachineFunction &MF,
                     MachineBasicBlock &MBB) const override {}
-  int getFrameIndexReference(const MachineFunction &MF, int FI,
-                             unsigned &FrameReg) const override;
+  StackOffset getFrameIndexReference(const MachineFunction &MF, int FI,
+                                     Register &FrameReg) const override;
 
   bool hasFP(const MachineFunction &MF) const override {
     return false;

@@ -14,6 +14,7 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
+#include "llvm/InitializePasses.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -142,18 +143,16 @@ bool ProcessImplicitDefs::runOnMachineFunction(MachineFunction &MF) {
   assert(MRI->isSSA() && "ProcessImplicitDefs only works on SSA form.");
   assert(WorkList.empty() && "Inconsistent worklist state");
 
-  for (MachineFunction::iterator MFI = MF.begin(), MFE = MF.end();
-       MFI != MFE; ++MFI) {
+  for (MachineBasicBlock &MBB : MF) {
     // Scan the basic block for implicit defs.
-    for (MachineBasicBlock::instr_iterator MBBI = MFI->instr_begin(),
-         MBBE = MFI->instr_end(); MBBI != MBBE; ++MBBI)
-      if (MBBI->isImplicitDef())
-        WorkList.insert(&*MBBI);
+    for (MachineInstr &MI : MBB)
+      if (MI.isImplicitDef())
+        WorkList.insert(&MI);
 
     if (WorkList.empty())
       continue;
 
-    LLVM_DEBUG(dbgs() << printMBBReference(*MFI) << " has " << WorkList.size()
+    LLVM_DEBUG(dbgs() << printMBBReference(MBB) << " has " << WorkList.size()
                       << " implicit defs.\n");
     Changed = true;
 

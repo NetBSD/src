@@ -32,7 +32,7 @@ class GCNSubtarget;
 
 class GCNHazardRecognizer final : public ScheduleHazardRecognizer {
 public:
-  typedef function_ref<bool(MachineInstr *)> IsHazardFn;
+  typedef function_ref<bool(const MachineInstr &)> IsHazardFn;
 
 private:
   // Distinguish if we are called from scheduler or hazard recognizer
@@ -83,7 +83,6 @@ private:
   int checkRWLaneHazards(MachineInstr *RWLane);
   int checkRFEHazards(MachineInstr *RFE);
   int checkInlineAsmHazards(MachineInstr *IA);
-  int checkAnyInstHazards(MachineInstr *MI);
   int checkReadM0Hazards(MachineInstr *SMovRel);
   int checkNSAtoVMEMHazard(MachineInstr *MI);
   int checkFPAtomicToDenormModeHazard(MachineInstr *MI);
@@ -95,6 +94,9 @@ private:
   bool fixLdsBranchVmemWARHazard(MachineInstr *MI);
 
   int checkMAIHazards(MachineInstr *MI);
+  int checkMAIHazards908(MachineInstr *MI);
+  int checkMAIHazards90A(MachineInstr *MI);
+  int checkMAIVALUHazards(MachineInstr *MI);
   int checkMAILdStHazards(MachineInstr *MI);
 
 public:
@@ -105,11 +107,12 @@ public:
   void EmitInstruction(MachineInstr *MI) override;
   HazardType getHazardType(SUnit *SU, int Stalls) override;
   void EmitNoop() override;
-  unsigned PreEmitNoops(SUnit *SU) override;
   unsigned PreEmitNoops(MachineInstr *) override;
   unsigned PreEmitNoopsCommon(MachineInstr *);
   void AdvanceCycle() override;
   void RecedeCycle() override;
+  bool ShouldPreferAnother(SUnit *SU) override;
+  void Reset() override;
 };
 
 } // end namespace llvm

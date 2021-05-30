@@ -32,6 +32,13 @@
 using namespace llvm;
 using namespace object;
 
+raw_ostream &object::operator<<(raw_ostream &OS, const SectionedAddress &Addr) {
+  OS << "SectionedAddress{" << format_hex(Addr.Address, 10);
+  if (Addr.SectionIndex != SectionedAddress::UndefSection)
+    OS << ", " << Addr.SectionIndex;
+  return OS << "}";
+}
+
 void ObjectFile::anchor() {}
 
 ObjectFile::ObjectFile(unsigned int Type, MemoryBufferRef Source)
@@ -47,12 +54,15 @@ bool SectionRef::containsSymbol(SymbolRef S) const {
   return *this == **SymSec;
 }
 
-uint64_t ObjectFile::getSymbolValue(DataRefImpl Ref) const {
-  uint32_t Flags = getSymbolFlags(Ref);
-  if (Flags & SymbolRef::SF_Undefined)
-    return 0;
-  if (Flags & SymbolRef::SF_Common)
-    return getCommonSymbolSize(Ref);
+Expected<uint64_t> ObjectFile::getSymbolValue(DataRefImpl Ref) const {
+  if (Expected<uint32_t> FlagsOrErr = getSymbolFlags(Ref)) {
+    if (*FlagsOrErr & SymbolRef::SF_Undefined)
+      return 0;
+    if (*FlagsOrErr & SymbolRef::SF_Common)
+      return getCommonSymbolSize(Ref);
+  } else
+    // TODO: Test this error.
+    return FlagsOrErr.takeError();
   return getSymbolValueImpl(Ref);
 }
 
@@ -84,6 +94,10 @@ bool ObjectFile::isBerkeleyData(DataRefImpl Sec) const {
   return isSectionData(Sec);
 }
 
+bool ObjectFile::isDebugSection(StringRef SectionName) const {
+  return false;
+}
+
 Expected<section_iterator>
 ObjectFile::getRelocatedSection(DataRefImpl Sec) const {
   return section_iterator(SectionRef(Sec, this));
@@ -101,21 +115,25 @@ Triple ObjectFile::makeTriple() const {
     setARMSubArch(TheTriple);
 
   // TheTriple defaults to ELF, and COFF doesn't have an environment:
-  // the best we can do here is indicate that it is mach-o.
-  if (isMachO())
+  // something we can do here is indicate that it is mach-o.
+  if (isMachO()) {
     TheTriple.setObjectFormat(Triple::MachO);
-
-  if (isCOFF()) {
+  } else if (isCOFF()) {
     const auto COFFObj = cast<COFFObjectFile>(this);
     if (COFFObj->getArch() == Triple::thumb)
       TheTriple.setTriple("thumbv7-windows");
+  } else if (isXCOFF()) {
+    // XCOFF implies AIX.
+    TheTriple.setOS(Triple::AIX);
+    TheTriple.setObjectFormat(Triple::XCOFF);
   }
 
   return TheTriple;
 }
 
 Expected<std::unique_ptr<ObjectFile>>
-ObjectFile::createObjectFile(MemoryBufferRef Object, file_magic Type) {
+ObjectFile::createObjectFile(MemoryBufferRef Object, file_magic Type,
+                             bool InitContent) {
   StringRef Data = Object.getBuffer();
   if (Type == file_magic::unknown)
     Type = identify_magic(Data);
@@ -137,7 +155,7 @@ ObjectFile::createObjectFile(MemoryBufferRef Object, file_magic Type) {
   case file_magic::elf_executable:
   case file_magic::elf_shared_object:
   case file_magic::elf_core:
-    return createELFObjectFile(Object);
+    return createELFObjectFile(Object, InitContent);
   case file_magic::macho_object:
   case file_magic::macho_executable:
   case file_magic::macho_fixed_virtual_memory_shared_lib:

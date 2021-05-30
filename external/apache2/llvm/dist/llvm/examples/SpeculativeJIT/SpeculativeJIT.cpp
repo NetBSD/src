@@ -8,6 +8,7 @@
 #include "llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h"
 #include "llvm/ExecutionEngine/Orc/SpeculateAnalyses.h"
 #include "llvm/ExecutionEngine/Orc/Speculation.h"
+#include "llvm/ExecutionEngine/Orc/TargetProcess/TargetExecutionUtils.h"
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
 #include "llvm/IRReader/IRReader.h"
 #include "llvm/Support/CommandLine.h"
@@ -76,12 +77,12 @@ public:
 
   ExecutionSession &getES() { return *ES; }
 
-  Error addModule(JITDylib &JD, ThreadSafeModule TSM) {
-    return CODLayer.add(JD, std::move(TSM));
+  Error addModule(ThreadSafeModule TSM) {
+    return CODLayer.add(MainJD, std::move(TSM));
   }
 
   Expected<JITEvaluatedSymbol> lookup(StringRef UnmangledName) {
-    return ES->lookup({&ES->getMainJITDylib()}, Mangle(UnmangledName));
+    return ES->lookup({&MainJD}, Mangle(UnmangledName));
   }
 
   ~SpeculativeJIT() { CompileThreads.wait(); }
@@ -101,27 +102,27 @@ private:
       std::unique_ptr<LazyCallThroughManager> LCTMgr,
       IndirectStubsManagerBuilderFunction ISMBuilder,
       std::unique_ptr<DynamicLibrarySearchGenerator> ProcessSymbolsGenerator)
-      : ES(std::move(ES)), DL(std::move(DL)), LCTMgr(std::move(LCTMgr)),
+      : ES(std::move(ES)), DL(std::move(DL)),
+        MainJD(this->ES->createBareJITDylib("<main>")), LCTMgr(std::move(LCTMgr)),
         CompileLayer(*this->ES, ObjLayer,
-                     ConcurrentIRCompiler(std::move(JTMB))),
+                     std::make_unique<ConcurrentIRCompiler>(std::move(JTMB))),
         S(Imps, *this->ES),
         SpeculateLayer(*this->ES, CompileLayer, S, Mangle, BlockFreqQuery()),
         CODLayer(*this->ES, SpeculateLayer, *this->LCTMgr,
                  std::move(ISMBuilder)) {
-    this->ES->getMainJITDylib().addGenerator(
-        std::move(ProcessSymbolsGenerator));
+    MainJD.addGenerator(std::move(ProcessSymbolsGenerator));
     this->CODLayer.setImplMap(&Imps);
-    this->ES->setDispatchMaterialization(
-
-        [this](JITDylib &JD, std::unique_ptr<MaterializationUnit> MU) {
-          // FIXME: Switch to move capture once we have C++14.
-          auto SharedMU = std::shared_ptr<MaterializationUnit>(std::move(MU));
-          auto Work = [SharedMU, &JD]() { SharedMU->doMaterialize(JD); };
-          CompileThreads.async(std::move(Work));
+    this->ES->setDispatchTask(
+        [this](std::unique_ptr<Task> T) {
+          CompileThreads.async(
+              [UnownedT = T.release()]() {
+                std::unique_ptr<Task> T(UnownedT);
+                T->run();
+              });
         });
-    ExitOnErr(S.addSpeculationRuntime(this->ES->getMainJITDylib(), Mangle));
+    ExitOnErr(S.addSpeculationRuntime(MainJD, Mangle));
     LocalCXXRuntimeOverrides CXXRuntimeoverrides;
-    ExitOnErr(CXXRuntimeoverrides.enable(this->ES->getMainJITDylib(), Mangle));
+    ExitOnErr(CXXRuntimeoverrides.enable(MainJD, Mangle));
   }
 
   static std::unique_ptr<SectionMemoryManager> createMemMgr() {
@@ -131,7 +132,9 @@ private:
   std::unique_ptr<ExecutionSession> ES;
   DataLayout DL;
   MangleAndInterner Mangle{*ES, DL};
-  ThreadPool CompileThreads{NumThreads};
+  ThreadPool CompileThreads{llvm::hardware_concurrency(NumThreads)};
+
+  JITDylib &MainJD;
 
   Triple TT;
   std::unique_ptr<LazyCallThroughManager> LCTMgr;
@@ -172,24 +175,14 @@ int main(int argc, char *argv[]) {
       return 1;
     }
 
-    ExitOnErr(SJ->addModule(SJ->getES().getMainJITDylib(),
-                            ThreadSafeModule(std::move(M), std::move(Ctx))));
+    ExitOnErr(SJ->addModule(ThreadSafeModule(std::move(M), std::move(Ctx))));
   }
 
-  // Build an argv array for the JIT'd main.
-  std::vector<const char *> ArgV;
-  ArgV.push_back(argv[0]);
-  for (const auto &InputArg : InputArgv)
-    ArgV.push_back(InputArg.data());
-  ArgV.push_back(nullptr);
-
-  // Look up the JIT'd main, cast it to a function pointer, then call it.
-
   auto MainSym = ExitOnErr(SJ->lookup("main"));
-  int (*Main)(int, const char *[]) =
-      (int (*)(int, const char *[]))MainSym.getAddress();
+  auto Main =
+      jitTargetAddressToFunction<int (*)(int, char *[])>(MainSym.getAddress());
 
-  Main(ArgV.size() - 1, ArgV.data());
+  return runAsMain(Main, InputArgv, StringRef(InputFiles.front()));
 
   return 0;
 }

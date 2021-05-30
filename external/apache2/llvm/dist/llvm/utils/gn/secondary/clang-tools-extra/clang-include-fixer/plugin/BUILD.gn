@@ -12,7 +12,5 @@ static_library("plugin") {
     "//llvm/utils/gn/build/libs/pthread",
   ]
 
-  sources = [
-    "IncludeFixerPlugin.cpp",
-  ]
+  sources = [ "IncludeFixerPlugin.cpp" ]
 }

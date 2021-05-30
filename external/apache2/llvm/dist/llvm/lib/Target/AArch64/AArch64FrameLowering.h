@@ -13,10 +13,12 @@
 #ifndef LLVM_LIB_TARGET_AARCH64_AARCH64FRAMELOWERING_H
 #define LLVM_LIB_TARGET_AARCH64_AARCH64FRAMELOWERING_H
 
-#include "AArch64StackOffset.h"
+#include "llvm/Support/TypeSize.h"
 #include "llvm/CodeGen/TargetFrameLowering.h"
 
 namespace llvm {
+
+class MCCFIInstruction;
 
 class AArch64FrameLowering : public TargetFrameLowering {
 public:
@@ -24,8 +26,9 @@ public:
       : TargetFrameLowering(StackGrowsDown, Align(16), 0, Align(16),
                             true /*StackRealignable*/) {}
 
-  void emitCalleeSavedFrameMoves(MachineBasicBlock &MBB,
-                                 MachineBasicBlock::iterator MBBI) const;
+  void
+  emitCalleeSavedFrameMoves(MachineBasicBlock &MBB,
+                            MachineBasicBlock::iterator MBBI) const override;
 
   MachineBasicBlock::iterator
   eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
@@ -38,30 +41,39 @@ public:
 
   bool canUseAsPrologue(const MachineBasicBlock &MBB) const override;
 
-  int getFrameIndexReference(const MachineFunction &MF, int FI,
-                             unsigned &FrameReg) const override;
+  StackOffset getFrameIndexReference(const MachineFunction &MF, int FI,
+                                     Register &FrameReg) const override;
   StackOffset resolveFrameIndexReference(const MachineFunction &MF, int FI,
-                                         unsigned &FrameReg, bool PreferFP,
+                                         Register &FrameReg, bool PreferFP,
                                          bool ForSimm) const;
   StackOffset resolveFrameOffsetReference(const MachineFunction &MF,
-                                          int ObjectOffset, bool isFixed,
-                                          bool isSVE, unsigned &FrameReg,
+                                          int64_t ObjectOffset, bool isFixed,
+                                          bool isSVE, Register &FrameReg,
                                           bool PreferFP, bool ForSimm) const;
   bool spillCalleeSavedRegisters(MachineBasicBlock &MBB,
                                  MachineBasicBlock::iterator MI,
-                                 const std::vector<CalleeSavedInfo> &CSI,
+                                 ArrayRef<CalleeSavedInfo> CSI,
                                  const TargetRegisterInfo *TRI) const override;
 
-  bool restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
-                                  MachineBasicBlock::iterator MI,
-                                  std::vector<CalleeSavedInfo> &CSI,
-                                  const TargetRegisterInfo *TRI) const override;
+  bool
+  restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
+                              MachineBasicBlock::iterator MI,
+                              MutableArrayRef<CalleeSavedInfo> CSI,
+                              const TargetRegisterInfo *TRI) const override;
 
   /// Can this function use the red zone for local allocations.
   bool canUseRedZone(const MachineFunction &MF) const;
 
   bool hasFP(const MachineFunction &MF) const override;
   bool hasReservedCallFrame(const MachineFunction &MF) const override;
+
+  bool hasSwiftExtendedFrame(const MachineFunction &MF) const;
+
+  bool assignCalleeSavedSpillSlots(MachineFunction &MF,
+                                   const TargetRegisterInfo *TRI,
+                                   std::vector<CalleeSavedInfo> &CSI,
+                                   unsigned &MinCSFrameIndex,
+                                   unsigned &MaxCSFrameIndex) const override;
 
   void determineCalleeSaves(MachineFunction &MF, BitVector &SavedRegs,
                             RegScavenger *RS) const override;
@@ -72,19 +84,25 @@ public:
   }
 
   bool enableStackSlotScavenging(const MachineFunction &MF) const override;
+  TargetStackID::Value getStackIDForScalableVectors() const override;
 
   void processFunctionBeforeFrameFinalized(MachineFunction &MF,
                                              RegScavenger *RS) const override;
+
+  void
+  processFunctionBeforeFrameIndicesReplaced(MachineFunction &MF,
+                                            RegScavenger *RS) const override;
 
   unsigned getWinEHParentFrameOffset(const MachineFunction &MF) const override;
 
   unsigned getWinEHFuncletFrameSize(const MachineFunction &MF) const;
 
-  int getFrameIndexReferencePreferSP(const MachineFunction &MF, int FI,
-                                     unsigned &FrameReg,
-                                     bool IgnoreSPUpdates) const override;
-  int getNonLocalFrameIndexReference(const MachineFunction &MF,
-                               int FI) const override;
+  StackOffset
+  getFrameIndexReferencePreferSP(const MachineFunction &MF, int FI,
+                                 Register &FrameReg,
+                                 bool IgnoreSPUpdates) const override;
+  StackOffset getNonLocalFrameIndexReference(const MachineFunction &MF,
+                                             int FI) const override;
   int getSEHFrameIndexOffset(const MachineFunction &MF, int FI) const;
 
   bool isSupportedStackID(TargetStackID::Value ID) const override {
@@ -92,16 +110,47 @@ public:
     default:
       return false;
     case TargetStackID::Default:
-    case TargetStackID::SVEVector:
+    case TargetStackID::ScalableVector:
     case TargetStackID::NoAlloc:
       return true;
     }
   }
 
+  bool isStackIdSafeForLocalArea(unsigned StackId) const override {
+    // We don't support putting SVE objects into the pre-allocated local
+    // frame block at the moment.
+    return StackId != TargetStackID::ScalableVector;
+  }
+
+  void
+  orderFrameObjects(const MachineFunction &MF,
+                    SmallVectorImpl<int> &ObjectsToAllocate) const override;
+
 private:
+  /// Returns true if a homogeneous prolog or epilog code can be emitted
+  /// for the size optimization. If so, HOM_Prolog/HOM_Epilog pseudo
+  /// instructions are emitted in place. When Exit block is given, this check is
+  /// for epilog.
+  bool homogeneousPrologEpilog(MachineFunction &MF,
+                               MachineBasicBlock *Exit = nullptr) const;
+
+  /// Returns true if CSRs should be paired.
+  bool producePairRegisters(MachineFunction &MF) const;
+
   bool shouldCombineCSRLocalStackBump(MachineFunction &MF,
-                                      unsigned StackBumpBytes) const;
-  int64_t determineSVEStackSize(MachineFrameInfo &MF, unsigned &MaxAlign) const;
+                                      uint64_t StackBumpBytes) const;
+
+  int64_t estimateSVEStackObjectOffsets(MachineFrameInfo &MF) const;
+  int64_t assignSVEStackObjectOffsets(MachineFrameInfo &MF,
+                                      int &MinCSFrameIndex,
+                                      int &MaxCSFrameIndex) const;
+  MCCFIInstruction
+  createDefCFAExpressionFromSP(const TargetRegisterInfo &TRI,
+                               const StackOffset &OffsetFromSP) const;
+  MCCFIInstruction createCfaOffset(const TargetRegisterInfo &MRI, unsigned DwarfReg,
+                                   const StackOffset &OffsetFromDefCFA) const;
+  bool shouldCombineCSRLocalStackBumpInEpilogue(MachineBasicBlock &MBB,
+                                                unsigned StackBumpBytes) const;
 };
 
 } // End llvm namespace

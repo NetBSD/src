@@ -12,7 +12,7 @@ static_library("profile") {
   configs -= [ "//llvm/utils/gn/build:thin_archive" ]
 
   cflags = []
-  if (target_os != "win") {
+  if (current_os != "win") {
     cflags = [
       "-fPIC",
       "-Wno-pedantic",
@@ -25,12 +25,19 @@ static_library("profile") {
     cflags += [ "/wd4221" ]
   }
 
+  include_dirs = [
+    "..",
+    "../../include",
+  ]
+
   sources = [
     "GCDAProfiling.c",
     "InstrProfiling.c",
     "InstrProfiling.h",
+    "InstrProfilingBiasVar.c",
     "InstrProfilingBuffer.c",
     "InstrProfilingFile.c",
+    "InstrProfilingInternal.c",
     "InstrProfilingInternal.h",
     "InstrProfilingMerge.c",
     "InstrProfilingMergeFile.c",
@@ -45,20 +52,21 @@ static_library("profile") {
     "InstrProfilingUtil.c",
     "InstrProfilingUtil.h",
     "InstrProfilingValue.c",
+    "InstrProfilingVersionVar.c",
     "InstrProfilingWriter.c",
   ]
-  if (target_os == "win") {
+  if (current_os == "win") {
     sources += [
       "WindowsMMap.c",
       "WindowsMMap.h",
     ]
   }
 
-  if (target_os != "win") {
+  if (current_os != "win") {
     defines = [
-      "COMPILER_RT_TARGET_HAS_ATOMICS",
-      "COMPILER_RT_TARGET_HAS_FCNTL_LCK",
-      "COMPILER_RT_TARGET_HAS_UNAME",
+      "COMPILER_RT_HAS_UNAME",
+      "COMPILER_RT_HAS_ATOMICS",
+      "COMPILER_RT_HAS_FCNTL_LCK",
     ]
   }
 }

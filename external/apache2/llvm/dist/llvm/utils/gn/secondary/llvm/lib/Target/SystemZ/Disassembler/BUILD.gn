@@ -17,7 +17,5 @@ static_library("Disassembler") {
     "//llvm/lib/Target/SystemZ/TargetInfo",
   ]
   include_dirs = [ ".." ]
-  sources = [
-    "SystemZDisassembler.cpp",
-  ]
+  sources = [ "SystemZDisassembler.cpp" ]
 }

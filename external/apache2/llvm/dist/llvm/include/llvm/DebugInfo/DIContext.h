@@ -16,6 +16,7 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Object/ObjectFile.h"
+#include "llvm/Support/WithColor.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cassert>
 #include <cstdint>
@@ -34,20 +35,25 @@ struct DILineInfo {
   static constexpr const char *const Addr2LineBadString = "??";
   std::string FileName;
   std::string FunctionName;
+  std::string StartFileName;
   Optional<StringRef> Source;
   uint32_t Line = 0;
   uint32_t Column = 0;
   uint32_t StartLine = 0;
+  Optional<uint64_t> StartAddress;
 
   // DWARF-specific.
   uint32_t Discriminator = 0;
 
-  DILineInfo() : FileName(BadString), FunctionName(BadString) {}
+  DILineInfo()
+      : FileName(BadString), FunctionName(BadString), StartFileName(BadString) {
+  }
 
   bool operator==(const DILineInfo &RHS) const {
     return Line == RHS.Line && Column == RHS.Column &&
            FileName == RHS.FileName && FunctionName == RHS.FunctionName &&
-           StartLine == RHS.StartLine && Discriminator == RHS.Discriminator;
+           StartFileName == RHS.StartFileName && StartLine == RHS.StartLine &&
+           Discriminator == RHS.Discriminator;
   }
 
   bool operator!=(const DILineInfo &RHS) const {
@@ -55,10 +61,10 @@ struct DILineInfo {
   }
 
   bool operator<(const DILineInfo &RHS) const {
-    return std::tie(FileName, FunctionName, Line, Column, StartLine,
-                    Discriminator) <
-           std::tie(RHS.FileName, RHS.FunctionName, RHS.Line, RHS.Column,
-                    RHS.StartLine, RHS.Discriminator);
+    return std::tie(FileName, FunctionName, StartFileName, Line, Column,
+                    StartLine, Discriminator) <
+           std::tie(RHS.FileName, RHS.FunctionName, RHS.StartFileName, RHS.Line,
+                    RHS.Column, RHS.StartLine, RHS.Discriminator);
   }
 
   explicit operator bool() const { return *this != DILineInfo(); }
@@ -71,6 +77,8 @@ struct DILineInfo {
       OS << "function '" << FunctionName << "', ";
     OS << "line " << Line << ", ";
     OS << "column " << Column << ", ";
+    if (StartFileName != BadString)
+      OS << "start file '" << StartFileName << "', ";
     OS << "start line " << StartLine << '\n';
   }
 };
@@ -133,20 +141,29 @@ enum class DINameKind { None, ShortName, LinkageName };
 /// Controls which fields of DILineInfo container should be filled
 /// with data.
 struct DILineInfoSpecifier {
-  enum class FileLineInfoKind { None, Default, AbsoluteFilePath };
+  enum class FileLineInfoKind {
+    None,
+    // RawValue is whatever the compiler stored in the filename table.  Could be
+    // a full path, could be something else.
+    RawValue,
+    BaseNameOnly,
+    // Relative to the compilation directory.
+    RelativeFilePath,
+    AbsoluteFilePath
+  };
   using FunctionNameKind = DINameKind;
 
   FileLineInfoKind FLIKind;
   FunctionNameKind FNKind;
 
-  DILineInfoSpecifier(FileLineInfoKind FLIKind = FileLineInfoKind::Default,
+  DILineInfoSpecifier(FileLineInfoKind FLIKind = FileLineInfoKind::RawValue,
                       FunctionNameKind FNKind = FunctionNameKind::None)
       : FLIKind(FLIKind), FNKind(FNKind) {}
 };
 
 /// This is just a helper to programmatically construct DIDumpType.
 enum DIDumpTypeCounter {
-#define HANDLE_DWARF_SECTION(ENUM_NAME, ELF_NAME, CMDLINE_NAME) \
+#define HANDLE_DWARF_SECTION(ENUM_NAME, ELF_NAME, CMDLINE_NAME, OPTION)        \
   DIDT_ID_##ENUM_NAME,
 #include "llvm/BinaryFormat/Dwarf.def"
 #undef HANDLE_DWARF_SECTION
@@ -159,7 +176,7 @@ static_assert(DIDT_ID_Count <= 32, "section types overflow storage");
 enum DIDumpType : unsigned {
   DIDT_Null,
   DIDT_All             = ~0U,
-#define HANDLE_DWARF_SECTION(ENUM_NAME, ELF_NAME, CMDLINE_NAME) \
+#define HANDLE_DWARF_SECTION(ENUM_NAME, ELF_NAME, CMDLINE_NAME, OPTION)        \
   DIDT_##ENUM_NAME = 1U << DIDT_ID_##ENUM_NAME,
 #include "llvm/BinaryFormat/Dwarf.def"
 #undef HANDLE_DWARF_SECTION
@@ -199,6 +216,10 @@ struct DIDumpOptions {
       Opts.ParentRecurseDepth = 0;
     return Opts;
   }
+
+  std::function<void(Error)> RecoverableErrorHandler =
+      WithColor::defaultErrorHandler;
+  std::function<void(Error)> WarningHandler = WithColor::defaultWarningHandler;
 };
 
 class DIContext {

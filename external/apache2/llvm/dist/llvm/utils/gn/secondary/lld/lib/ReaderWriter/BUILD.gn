@@ -6,9 +6,7 @@ static_library("ReaderWriter") {
     "//llvm/lib/Object",
     "//llvm/lib/Support",
   ]
-  sources = [
-    "FileArchive.cpp",
-  ]
+  sources = [ "FileArchive.cpp" ]
 
   # FIXME:
   # if (is_msvc) {

@@ -149,7 +149,8 @@ OPTIONS
 
 .. option:: --format=<format>, -f
 
- Select an output format; *format* may be *sysv*, *posix*, *darwin*, or *bsd*.
+ Select an output format; *format* may be *sysv*, *posix*, *darwin*, *bsd* or
+ *just-symbols*.
  The default is *bsd*.
 
 .. option:: --help, -h
@@ -162,7 +163,7 @@ OPTIONS
 
 .. option:: --just-symbol-name, -j
 
- Print just the symbol names.
+ Print just the symbol names. Alias for `--format=just-symbols``.
 
 .. option:: -m
 
@@ -204,6 +205,10 @@ OPTIONS
 
  Show symbol size as well as address (not applicable for Mach-O).
 
+.. option:: --quiet
+
+ Suppress 'no symbols' diagnostic.
+
 .. option:: --radix=<RADIX>, -t
 
  Specify the radix of the symbol address(es). Values accepted are *d* (decimal),
@@ -219,16 +224,16 @@ OPTIONS
 
 .. option:: --special-syms
 
- Ignored. For GNU compatibility only.
+ Do not filter special symbols from the output.
 
 .. option:: --undefined-only, -u
 
  Print only undefined symbols.
 
-.. option:: --version
+.. option:: --version, -V
 
- Display the version of the :program:`llvm-nm` executable. Does not stack with
- other commands.
+ Display the version of the :program:`llvm-nm` executable, then exit. Does not
+ stack with other commands.
 
 .. option:: --without-aliases
 
@@ -245,6 +250,10 @@ MACH-O SPECIFIC OPTIONS
 
  Add symbols from the dyldinfo, if they are not already in the symbol table.
  This is the default.
+
+.. option:: --add-inlinedinfo
+
+ Add symbols from the inlined libraries, TBD file inputs only.
 
 .. option:: --arch=<arch1[,arch2,...]>
 

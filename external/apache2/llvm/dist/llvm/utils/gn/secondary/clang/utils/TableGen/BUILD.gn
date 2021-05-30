@@ -4,7 +4,9 @@ executable("clang-tblgen") {
     "//llvm/lib/TableGen",
   ]
   sources = [
+    "ASTTableGen.cpp",
     "ClangASTNodesEmitter.cpp",
+    "ClangASTPropertiesEmitter.cpp",
     "ClangAttrEmitter.cpp",
     "ClangCommentCommandInfoEmitter.cpp",
     "ClangCommentHTMLNamedCharacterReferenceEmitter.cpp",
@@ -15,9 +17,12 @@ executable("clang-tblgen") {
     "ClangOpenCLBuiltinEmitter.cpp",
     "ClangOptionDocEmitter.cpp",
     "ClangSACheckersEmitter.cpp",
+    "ClangSyntaxEmitter.cpp",
     "ClangTypeNodesEmitter.cpp",
     "MveEmitter.cpp",
     "NeonEmitter.cpp",
+    "RISCVVEmitter.cpp",
+    "SveEmitter.cpp",
     "TableGen.cpp",
   ]
 }

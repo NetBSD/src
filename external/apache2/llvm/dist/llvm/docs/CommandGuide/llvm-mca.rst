@@ -16,8 +16,8 @@ available in LLVM (e.g. scheduling models) to statically measure the performance
 of machine code in a specific CPU.
 
 Performance is measured in terms of throughput as well as processor resource
-consumption. The tool currently works for processors with an out-of-order
-backend, for which there is a scheduling model available in LLVM.
+consumption. The tool currently works for processors with a backend for which
+there is a scheduling model available in LLVM.
 
 The main goal of this tool is not just to predict the performance of the code
 when run on the target, but also help with diagnosing potential performance
@@ -39,6 +39,10 @@ Or for Intel syntax:
 .. code-block:: bash
 
   $ clang foo.c -O2 -target x86_64-unknown-unknown -mllvm -x86-asm-syntax=intel -S -o - | llvm-mca -mcpu=btver2
+
+(:program:`llvm-mca` detects Intel syntax by the presence of an `.intel_syntax`
+directive at the beginning of the input.  By default its output syntax matches
+that of its input.)
 
 Scheduling models are not just used to compute instruction latencies and
 throughput, but also to understand what processor resources are available
@@ -200,7 +204,14 @@ option specifies "``-``", then the output will also be sent to standard output.
 
   Print information about bottlenecks that affect the throughput. This analysis
   can be expensive, and it is disabled by default.  Bottlenecks are highlighted
-  in the summary view.
+  in the summary view. Bottleneck analysis is currently not supported for
+  processors with an in-order backend.
+
+.. option:: -json
+
+  Print the requested views in JSON format. The instructions and the processor
+  resources are printed as members of special top level JSON objects.  The
+  individual views refer to them by index.
 
 
 EXIT STATUS
@@ -378,16 +389,18 @@ overview of the performance throughput. Important performance indicators are
 Throughput).
 
 Field *DispatchWidth* is the maximum number of micro opcodes that are dispatched
-to the out-of-order backend every simulated cycle.
+to the out-of-order backend every simulated cycle. For processors with an
+in-order backend, *DispatchWidth* is the maximum number of micro opcodes issued
+to the backend every simulated cycle.
 
 IPC is computed dividing the total number of simulated instructions by the total
 number of cycles.
 
 Field *Block RThroughput* is the reciprocal of the block throughput. Block
-throuhgput is a theoretical quantity computed as the maximum number of blocks
+throughput is a theoretical quantity computed as the maximum number of blocks
 (i.e. iterations) that can be executed per simulated clock cycle in the absence
-of loop carried dependencies. Block throughput is is superiorly
-limited by the dispatch rate, and the availability of hardware resources.
+of loop carried dependencies. Block throughput is superiorly limited by the
+dispatch rate, and the availability of hardware resources.
 
 In the absence of loop-carried data dependencies, the observed IPC tends to a
 theoretical maximum which can be computed by dividing the number of instructions
@@ -643,6 +656,8 @@ performance. By construction, the accuracy of this analysis is strongly
 dependent on the simulation and (as always) by the quality of the processor
 model in llvm.
 
+Bottleneck analysis is currently not supported for processors with an in-order
+backend.
 
 Extra Statistics to Further Diagnose Performance Issues
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -787,11 +802,14 @@ process instructions.
 * Write Back (Instruction is executed, and results are written back).
 * Retire (Instruction is retired; writes are architecturally committed).
 
-The default pipeline only models the out-of-order portion of a processor.
-Therefore, the instruction fetch and decode stages are not modeled. Performance
-bottlenecks in the frontend are not diagnosed. :program:`llvm-mca` assumes that
-instructions have all been decoded and placed into a queue before the simulation
-start.  Also, :program:`llvm-mca` does not model branch prediction.
+The in-order pipeline implements the following sequence of stages:
+* InOrderIssue (Instruction is issued to the processor pipelines).
+* Retire (Instruction is retired; writes are architecturally committed).
+
+:program:`llvm-mca` assumes that instructions have all been decoded and placed
+into a queue before the simulation start. Therefore, the instruction fetch and
+decode stages are not modeled. Performance bottlenecks in the frontend are not
+diagnosed. Also, :program:`llvm-mca` does not model branch prediction.
 
 Instruction Dispatch
 """"""""""""""""""""
@@ -947,3 +965,16 @@ In conclusion, the full set of load/store consistency rules are:
 #. A load may pass a previous load.
 #. A load may not pass a previous store unless ``-noalias`` is set.
 #. A load has to wait until an older load barrier is fully executed.
+
+In-order Issue and Execute
+""""""""""""""""""""""""""""""""""""
+In-order processors are modelled as a single ``InOrderIssueStage`` stage. It
+bypasses Dispatch, Scheduler and Load/Store unit. Instructions are issued as
+soon as their operand registers are available and resource requirements are
+met. Multiple instructions can be issued in one cycle according to the value of
+the ``IssueWidth`` parameter in LLVM's scheduling model.
+
+Once issued, an instruction is moved to ``IssuedInst`` set until it is ready to
+retire. :program:`llvm-mca` ensures that writes are committed in-order. However,
+an instruction is allowed to commit writes and retire out-of-order if
+``RetireOOO`` property is true for at least one of its writes.

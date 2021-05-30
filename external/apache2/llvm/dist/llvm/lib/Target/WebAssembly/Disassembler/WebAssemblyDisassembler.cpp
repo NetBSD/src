@@ -14,9 +14,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#include "MCTargetDesc/WebAssemblyInstPrinter.h"
-#include "MCTargetDesc/WebAssemblyMCTargetDesc.h"
 #include "TargetInfo/WebAssemblyTargetInfo.h"
+#include "Utils/WebAssemblyTypeUtilities.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCDisassembler/MCDisassembler.h"
 #include "llvm/MC/MCFixedLenDisassembler.h"
@@ -45,12 +44,11 @@ class WebAssemblyDisassembler final : public MCDisassembler {
 
   DecodeStatus getInstruction(MCInst &Instr, uint64_t &Size,
                               ArrayRef<uint8_t> Bytes, uint64_t Address,
-                              raw_ostream &VStream,
                               raw_ostream &CStream) const override;
-  DecodeStatus onSymbolStart(StringRef Name, uint64_t &Size,
-                             ArrayRef<uint8_t> Bytes, uint64_t Address,
-                             raw_ostream &VStream,
-                             raw_ostream &CStream) const override;
+  Optional<DecodeStatus> onSymbolStart(SymbolInfoTy &Symbol, uint64_t &Size,
+                                       ArrayRef<uint8_t> Bytes,
+                                       uint64_t Address,
+                                       raw_ostream &CStream) const override;
 
 public:
   WebAssemblyDisassembler(const MCSubtargetInfo &STI, MCContext &Ctx,
@@ -66,7 +64,8 @@ static MCDisassembler *createWebAssemblyDisassembler(const Target &T,
   return new WebAssemblyDisassembler(STI, Ctx, std::move(MCII));
 }
 
-extern "C" void LLVMInitializeWebAssemblyDisassembler() {
+extern "C" LLVM_EXTERNAL_VISIBILITY void
+LLVMInitializeWebAssemblyDisassembler() {
   // Register the disassembler for each target.
   TargetRegistry::RegisterMCDisassembler(getTheWebAssemblyTarget32(),
                                          createWebAssemblyDisassembler);
@@ -114,36 +113,37 @@ bool parseImmediate(MCInst &MI, uint64_t &Size, ArrayRef<uint8_t> Bytes) {
       Bytes.data() + Size);
   Size += sizeof(T);
   if (std::is_floating_point<T>::value) {
-    MI.addOperand(MCOperand::createFPImm(static_cast<double>(Val)));
+    MI.addOperand(
+        MCOperand::createDFPImm(bit_cast<uint64_t>(static_cast<double>(Val))));
   } else {
     MI.addOperand(MCOperand::createImm(static_cast<int64_t>(Val)));
   }
   return true;
 }
 
-MCDisassembler::DecodeStatus WebAssemblyDisassembler::onSymbolStart(
-    StringRef Name, uint64_t &Size, ArrayRef<uint8_t> Bytes, uint64_t Address,
-    raw_ostream &VStream, raw_ostream &CStream) const {
+Optional<MCDisassembler::DecodeStatus> WebAssemblyDisassembler::onSymbolStart(
+    SymbolInfoTy &Symbol, uint64_t &Size, ArrayRef<uint8_t> Bytes,
+    uint64_t Address, raw_ostream &CStream) const {
   Size = 0;
   if (Address == 0) {
     // Start of a code section: we're parsing only the function count.
     int64_t FunctionCount;
     if (!nextLEB(FunctionCount, Bytes, Size, false))
-      return MCDisassembler::Fail;
+      return None;
     outs() << "        # " << FunctionCount << " functions in section.";
   } else {
     // Parse the start of a single function.
     int64_t BodySize, LocalEntryCount;
     if (!nextLEB(BodySize, Bytes, Size, false) ||
         !nextLEB(LocalEntryCount, Bytes, Size, false))
-      return MCDisassembler::Fail;
+      return None;
     if (LocalEntryCount) {
       outs() << "        .local ";
       for (int64_t I = 0; I < LocalEntryCount; I++) {
         int64_t Count, Type;
         if (!nextLEB(Count, Bytes, Size, false) ||
             !nextLEB(Type, Bytes, Size, false))
-          return MCDisassembler::Fail;
+          return None;
         for (int64_t J = 0; J < Count; J++) {
           if (I || J)
             outs() << ", ";
@@ -158,7 +158,7 @@ MCDisassembler::DecodeStatus WebAssemblyDisassembler::onSymbolStart(
 
 MCDisassembler::DecodeStatus WebAssemblyDisassembler::getInstruction(
     MCInst &MI, uint64_t &Size, ArrayRef<uint8_t> Bytes, uint64_t /*Address*/,
-    raw_ostream & /*OS*/, raw_ostream &CS) const {
+    raw_ostream &CS) const {
   CommentStream = &CS;
   Size = 0;
   int Opc = nextByte(Bytes, Size);
@@ -198,7 +198,9 @@ MCDisassembler::DecodeStatus WebAssemblyDisassembler::getInstruction(
     case WebAssembly::OPERAND_LOCAL:
     case WebAssembly::OPERAND_GLOBAL:
     case WebAssembly::OPERAND_FUNCTION32:
+    case WebAssembly::OPERAND_TABLE:
     case WebAssembly::OPERAND_OFFSET32:
+    case WebAssembly::OPERAND_OFFSET64:
     case WebAssembly::OPERAND_P2ALIGN:
     case WebAssembly::OPERAND_TYPEINDEX:
     case WebAssembly::OPERAND_EVENT:
@@ -236,6 +238,28 @@ MCDisassembler::DecodeStatus WebAssemblyDisassembler::getInstruction(
         const MCExpr *Expr = MCSymbolRefExpr::create(
             WasmSym, MCSymbolRefExpr::VK_WASM_TYPEINDEX, getContext());
         MI.addOperand(MCOperand::createExpr(Expr));
+      }
+      break;
+    }
+    // heap_type operands, for e.g. ref.null:
+    case WebAssembly::OPERAND_HEAPTYPE: {
+      int64_t Val;
+      uint64_t PrevSize = Size;
+      if (!nextLEB(Val, Bytes, Size, true))
+        return MCDisassembler::Fail;
+      if (Val < 0 && Size == PrevSize + 1) {
+        // The HeapType encoding is like BlockType, in that encodings that
+        // decode as negative values indicate ValTypes.  In practice we expect
+        // either wasm::ValType::EXTERNREF or wasm::ValType::FUNCREF here.
+        //
+        // The positive SLEB values are reserved for future expansion and are
+        // expected to be type indices in the typed function references
+        // proposal, and should disassemble as MCSymbolRefExpr as in BlockType
+        // above.
+        MI.addOperand(MCOperand::createImm(Val & 0x7f));
+      } else {
+        MI.addOperand(
+            MCOperand::createImm(int64_t(WebAssembly::HeapType::Invalid)));
       }
       break;
     }

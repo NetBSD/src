@@ -16,7 +16,5 @@ static_library("Disassembler") {
     "//llvm/lib/Target/Mips/TargetInfo",
   ]
   include_dirs = [ ".." ]
-  sources = [
-    "MipsDisassembler.cpp",
-  ]
+  sources = [ "MipsDisassembler.cpp" ]
 }

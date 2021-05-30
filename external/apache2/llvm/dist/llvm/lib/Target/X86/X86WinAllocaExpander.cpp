@@ -19,6 +19,7 @@
 #include "X86InstrInfo.h"
 #include "X86MachineFunctionInfo.h"
 #include "X86Subtarget.h"
+#include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -54,14 +55,14 @@ private:
   /// Lower a WinAlloca instruction.
   void lower(MachineInstr* MI, Lowering L);
 
-  MachineRegisterInfo *MRI;
-  const X86Subtarget *STI;
-  const TargetInstrInfo *TII;
-  const X86RegisterInfo *TRI;
-  unsigned StackPtr;
-  unsigned SlotSize;
-  int64_t StackProbeSize;
-  bool NoStackArgProbe;
+  MachineRegisterInfo *MRI = nullptr;
+  const X86Subtarget *STI = nullptr;
+  const TargetInstrInfo *TII = nullptr;
+  const X86RegisterInfo *TRI = nullptr;
+  unsigned StackPtr = 0;
+  unsigned SlotSize = 0;
+  int64_t StackProbeSize = 0;
+  bool NoStackArgProbe = false;
 
   StringRef getPassName() const override { return "X86 WinAlloca Expander"; }
   static char ID;
@@ -195,7 +196,7 @@ static unsigned getSubOpcode(bool Is64Bit, int64_t Amount) {
 }
 
 void X86WinAllocaExpander::lower(MachineInstr* MI, Lowering L) {
-  DebugLoc DL = MI->getDebugLoc();
+  const DebugLoc &DL = MI->getDebugLoc();
   MachineBasicBlock *MBB = MI->getParent();
   MachineBasicBlock::iterator I = *MI;
 

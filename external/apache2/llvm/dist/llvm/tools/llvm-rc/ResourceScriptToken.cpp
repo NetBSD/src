@@ -12,6 +12,7 @@
 //===---------------------------------------------------------------------===//
 
 #include "ResourceScriptToken.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/raw_ostream.h"
 
 #include <algorithm>
@@ -84,7 +85,7 @@ namespace {
 
 class Tokenizer {
 public:
-  Tokenizer(StringRef Input) : Data(Input), DataLength(Input.size()) {}
+  Tokenizer(StringRef Input) : Data(Input), DataLength(Input.size()), Pos(0) {}
 
   Expected<std::vector<RCToken>> run();
 
@@ -201,7 +202,7 @@ bool Tokenizer::advance(size_t Amount) {
 }
 
 bool Tokenizer::skipWhitespaces() {
-  while (!streamEof() && std::isspace(Data[Pos]))
+  while (!streamEof() && isSpace(Data[Pos]))
     advance();
   return !streamEof();
 }

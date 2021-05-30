@@ -15,11 +15,10 @@
 #ifndef LLVM_C_TRANSFORMS_IPO_H
 #define LLVM_C_TRANSFORMS_IPO_H
 
+#include "llvm-c/ExternC.h"
 #include "llvm-c/Types.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+LLVM_C_EXTERN_C_BEGIN
 
 /**
  * @defgroup LLVMCTransformsIPO Interprocedural transformations
@@ -58,9 +57,6 @@ void LLVMAddGlobalDCEPass(LLVMPassManagerRef PM);
 /** See llvm::createGlobalOptimizerPass function. */
 void LLVMAddGlobalOptimizerPass(LLVMPassManagerRef PM);
 
-/** See llvm::createIPConstantPropagationPass function. */
-void LLVMAddIPConstantPropagationPass(LLVMPassManagerRef PM);
-
 /** See llvm::createPruneEHPass function. */
 void LLVMAddPruneEHPass(LLVMPassManagerRef PM);
 
@@ -95,8 +91,6 @@ void LLVMAddStripSymbolsPass(LLVMPassManagerRef PM);
  * @}
  */
 
-#ifdef __cplusplus
-}
-#endif /* defined(__cplusplus) */
+LLVM_C_EXTERN_C_END
 
 #endif

@@ -22,9 +22,10 @@ class ImmediateTLSAsmOperand<string name>
 }
 
 class ImmediateOp<ValueType vt, string asmop> : Operand<vt> {
-  let PrintMethod = "print"##asmop##"Operand";
-  let DecoderMethod = "decode"##asmop##"Operand";
+  let PrintMethod = "print"#asmop#"Operand";
+  let DecoderMethod = "decode"#asmop#"Operand";
   let ParserMatchClass = !cast<AsmOperandClass>(asmop);
+  let OperandType = "OPERAND_IMMEDIATE";
 }
 
 class ImmOpWithPattern<ValueType vt, string asmop, code pred, SDNodeXForm xform,
@@ -51,25 +52,27 @@ multiclass Immediate<ValueType vt, code pred, SDNodeXForm xform, string asmop> {
 
 // Constructs an asm operand for a PC-relative address.  SIZE says how
 // many bits there are.
-class PCRelAsmOperand<string size> : ImmediateAsmOperand<"PCRel"##size> {
+class PCRelAsmOperand<string size> : ImmediateAsmOperand<"PCRel"#size> {
   let PredicateMethod = "isImm";
-  let ParserMethod = "parsePCRel"##size;
+  let ParserMethod = "parsePCRel"#size;
 }
 class PCRelTLSAsmOperand<string size>
-  : ImmediateTLSAsmOperand<"PCRelTLS"##size> {
+  : ImmediateTLSAsmOperand<"PCRelTLS"#size> {
   let PredicateMethod = "isImmTLS";
-  let ParserMethod = "parsePCRelTLS"##size;
+  let ParserMethod = "parsePCRelTLS"#size;
 }
 
 // Constructs an operand for a PC-relative address with address type VT.
 // ASMOP is the associated asm operand.
-class PCRelOperand<ValueType vt, AsmOperandClass asmop> : Operand<vt> {
-  let PrintMethod = "printPCRelOperand";
-  let ParserMatchClass = asmop;
-}
-class PCRelTLSOperand<ValueType vt, AsmOperandClass asmop> : Operand<vt> {
-  let PrintMethod = "printPCRelTLSOperand";
-  let ParserMatchClass = asmop;
+let OperandType = "OPERAND_PCREL" in {
+  class PCRelOperand<ValueType vt, AsmOperandClass asmop> : Operand<vt> {
+    let PrintMethod = "printPCRelOperand";
+    let ParserMatchClass = asmop;
+  }
+  class PCRelTLSOperand<ValueType vt, AsmOperandClass asmop> : Operand<vt> {
+    let PrintMethod = "printPCRelTLSOperand";
+    let ParserMatchClass = asmop;
+  }
 }
 
 // Constructs both a DAG pattern and instruction operand for a PC-relative
@@ -89,9 +92,9 @@ class PCRelAddress<ValueType vt, string self, AsmOperandClass asmop>
 class AddressAsmOperand<string format, string bitsize, string dispsize,
                         string length = "">
   : AsmOperandClass {
-  let Name = format##bitsize##"Disp"##dispsize##length;
-  let ParserMethod = "parse"##format##bitsize;
-  let RenderMethod = "add"##format##"Operands";
+  let Name = format#bitsize#"Disp"#dispsize#length;
+  let ParserMethod = "parse"#format#bitsize;
+  let RenderMethod = "add"#format#"Operands";
 }
 
 // Constructs an instruction operand for an addressing mode.  FORMAT,
@@ -100,14 +103,15 @@ class AddressAsmOperand<string format, string bitsize, string dispsize,
 // (base register, displacement, etc.).
 class AddressOperand<string bitsize, string dispsize, string length,
                      string format, dag operands>
-  : Operand<!cast<ValueType>("i"##bitsize)> {
-  let PrintMethod = "print"##format##"Operand";
-  let EncoderMethod = "get"##format##dispsize##length##"Encoding";
+  : Operand<!cast<ValueType>("i"#bitsize)> {
+  let PrintMethod = "print"#format#"Operand";
+  let EncoderMethod = "get"#format#dispsize#length#"Encoding";
   let DecoderMethod =
-    "decode"##format##bitsize##"Disp"##dispsize##length##"Operand";
+    "decode"#format#bitsize#"Disp"#dispsize#length#"Operand";
+  let OperandType = "OPERAND_MEMORY";
   let MIOperandInfo = operands;
   let ParserMatchClass =
-    !cast<AddressAsmOperand>(format##bitsize##"Disp"##dispsize##length);
+    !cast<AddressAsmOperand>(format#bitsize#"Disp"#dispsize#length);
 }
 
 // Constructs both a DAG pattern and instruction operand for an addressing mode.
@@ -122,45 +126,45 @@ class AddressOperand<string bitsize, string dispsize, string length,
 class AddressingMode<string seltype, string bitsize, string dispsize,
                      string suffix, string length, int numops, string format,
                      dag operands>
-  : ComplexPattern<!cast<ValueType>("i"##bitsize), numops,
-                   "select"##seltype##dispsize##suffix##length,
+  : ComplexPattern<!cast<ValueType>("i"#bitsize), numops,
+                   "select"#seltype#dispsize#suffix#length,
                    [add, sub, or, frameindex, z_adjdynalloc]>,
     AddressOperand<bitsize, dispsize, length, format, operands>;
 
 // An addressing mode with a base and displacement but no index.
 class BDMode<string type, string bitsize, string dispsize, string suffix>
   : AddressingMode<type, bitsize, dispsize, suffix, "", 2, "BDAddr",
-                   (ops !cast<RegisterOperand>("ADDR"##bitsize),
-                        !cast<Operand>("disp"##dispsize##"imm"##bitsize))>;
+                   (ops !cast<RegisterOperand>("ADDR"#bitsize),
+                        !cast<Operand>("disp"#dispsize#"imm"#bitsize))>;
 
 // An addressing mode with a base, displacement and index.
 class BDXMode<string type, string bitsize, string dispsize, string suffix>
   : AddressingMode<type, bitsize, dispsize, suffix, "", 3, "BDXAddr",
-                   (ops !cast<RegisterOperand>("ADDR"##bitsize),
-                        !cast<Operand>("disp"##dispsize##"imm"##bitsize),
-                        !cast<RegisterOperand>("ADDR"##bitsize))>;
+                   (ops !cast<RegisterOperand>("ADDR"#bitsize),
+                        !cast<Operand>("disp"#dispsize#"imm"#bitsize),
+                        !cast<RegisterOperand>("ADDR"#bitsize))>;
 
 // A BDMode paired with an immediate length operand of LENSIZE bits.
 class BDLMode<string type, string bitsize, string dispsize, string suffix,
               string lensize>
-  : AddressingMode<type, bitsize, dispsize, suffix, "Len"##lensize, 3,
+  : AddressingMode<type, bitsize, dispsize, suffix, "Len"#lensize, 3,
                    "BDLAddr",
-                   (ops !cast<RegisterOperand>("ADDR"##bitsize),
-                        !cast<Operand>("disp"##dispsize##"imm"##bitsize),
-                        !cast<Operand>("imm"##bitsize))>;
+                   (ops !cast<RegisterOperand>("ADDR"#bitsize),
+                        !cast<Operand>("disp"#dispsize#"imm"#bitsize),
+                        !cast<Operand>("imm"#bitsize))>;
 
 // A BDMode paired with a register length operand.
 class BDRMode<string type, string bitsize, string dispsize, string suffix>
   : AddressingMode<type, bitsize, dispsize, suffix, "", 3, "BDRAddr",
-                   (ops !cast<RegisterOperand>("ADDR"##bitsize),
-                        !cast<Operand>("disp"##dispsize##"imm"##bitsize),
-                        !cast<RegisterOperand>("GR"##bitsize))>;
+                   (ops !cast<RegisterOperand>("ADDR"#bitsize),
+                        !cast<Operand>("disp"#dispsize#"imm"#bitsize),
+                        !cast<RegisterOperand>("GR"#bitsize))>;
 
 // An addressing mode with a base, displacement and a vector index.
 class BDVMode<string bitsize, string dispsize>
   : AddressOperand<bitsize, dispsize, "", "BDVAddr",
-                   (ops !cast<RegisterOperand>("ADDR"##bitsize),
-                        !cast<Operand>("disp"##dispsize##"imm"##bitsize),
+                   (ops !cast<RegisterOperand>("ADDR"#bitsize),
+                        !cast<Operand>("disp"#dispsize#"imm"#bitsize),
                         !cast<RegisterOperand>("VR128"))>;
 
 //===----------------------------------------------------------------------===//
@@ -508,7 +512,8 @@ defm imm64zx48 : Immediate<i64, [{
   return isUInt<64>(N->getZExtValue());
 }], UIMM48, "U48Imm">;
 
-def imm64 : ImmLeaf<i64, [{}]>, Operand<i64>;
+let OperandType = "OPERAND_IMMEDIATE" in
+  def imm64 : ImmLeaf<i64, [{}]>, Operand<i64>;
 
 //===----------------------------------------------------------------------===//
 // Floating-point immediates
@@ -657,4 +662,5 @@ def bdvaddr12only     : BDVMode<            "64", "12">;
 def cond4 : PatLeaf<(i32 timm), [{ return (N->getZExtValue() < 16); }]>,
             Operand<i32> {
   let PrintMethod = "printCond4Operand";
+  let OperandType = "OPERAND_IMMEDIATE";
 }

@@ -16,12 +16,10 @@
 #include "EHStreamer.h"
 
 namespace llvm {
-class Function;
 class GlobalValue;
 class MachineFunction;
 class MCExpr;
 class MCSection;
-class Value;
 struct WinEHFuncInfo;
 
 class LLVM_LIBRARY_VISIBILITY WinException : public EHStreamer {
@@ -45,6 +43,9 @@ class LLVM_LIBRARY_VISIBILITY WinException : public EHStreamer {
 
   /// The section of the last funclet start.
   MCSection *CurrentFuncletTextSection = nullptr;
+
+  /// The list of symbols to add to the ehcont section
+  std::vector<const MCSymbol *> EHContTargets;
 
   void emitCSpecificHandlerTable(const MachineFunction *MF);
 

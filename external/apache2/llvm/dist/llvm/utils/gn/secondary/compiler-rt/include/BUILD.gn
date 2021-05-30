@@ -3,6 +3,7 @@ import("//clang/resource_dir.gni")
 copy("include") {
   sources = [
     "fuzzer/FuzzedDataProvider.h",
+    "profile/InstrProfData.inc",
     "sanitizer/allocator_interface.h",
     "sanitizer/asan_interface.h",
     "sanitizer/common_interface_defs.h",
@@ -11,6 +12,7 @@ copy("include") {
     "sanitizer/hwasan_interface.h",
     "sanitizer/linux_syscall_hooks.h",
     "sanitizer/lsan_interface.h",
+    "sanitizer/memprof_interface.h",
     "sanitizer/msan_interface.h",
     "sanitizer/netbsd_syscall_hooks.h",
     "sanitizer/scudo_interface.h",
@@ -21,7 +23,5 @@ copy("include") {
     "xray/xray_log_interface.h",
     "xray/xray_records.h",
   ]
-  outputs = [
-    "$clang_resource_dir/include/{{source_target_relative}}",
-  ]
+  outputs = [ "$clang_resource_dir/include/{{source_target_relative}}" ]
 }

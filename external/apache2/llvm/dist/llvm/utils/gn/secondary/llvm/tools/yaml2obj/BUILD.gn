@@ -3,7 +3,5 @@ executable("yaml2obj") {
     "//llvm/lib/ObjectYAML",
     "//llvm/lib/Support",
   ]
-  sources = [
-    "yaml2obj.cpp",
-  ]
+  sources = [ "yaml2obj.cpp" ]
 }

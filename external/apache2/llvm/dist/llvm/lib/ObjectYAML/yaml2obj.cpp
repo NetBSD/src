@@ -19,7 +19,7 @@ namespace llvm {
 namespace yaml {
 
 bool convertYAML(yaml::Input &YIn, raw_ostream &Out, ErrorHandler ErrHandler,
-                 unsigned DocNum) {
+                 unsigned DocNum, uint64_t MaxSize) {
   unsigned CurDocNum = 0;
   do {
     if (++CurDocNum != DocNum)
@@ -32,8 +32,10 @@ bool convertYAML(yaml::Input &YIn, raw_ostream &Out, ErrorHandler ErrHandler,
       return false;
     }
 
+    if (Doc.Arch)
+      return yaml2archive(*Doc.Arch, Out, ErrHandler);
     if (Doc.Elf)
-      return yaml2elf(*Doc.Elf, Out, ErrHandler);
+      return yaml2elf(*Doc.Elf, Out, ErrHandler, MaxSize);
     if (Doc.Coff)
       return yaml2coff(*Doc.Coff, Out, ErrHandler);
     if (Doc.MachO || Doc.FatMachO)

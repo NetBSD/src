@@ -13,12 +13,17 @@
 #include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/MC/MCParser/MCParsedAsmOperand.h"
 #include "llvm/MC/MCParser/MCTargetAsmParser.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/SMLoc.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cassert>
 
 using namespace llvm;
+
+cl::opt<unsigned> AsmMacroMaxNestingDepth(
+    "asm-macro-max-nesting-depth", cl::init(20), cl::Hidden,
+    cl::desc("The maximum nesting depth allowed for assembly macros."));
 
 MCAsmParser::MCAsmParser() {}
 
@@ -36,6 +41,13 @@ const AsmToken &MCAsmParser::getTok() const {
 
 bool MCAsmParser::parseTokenLoc(SMLoc &Loc) {
   Loc = getTok().getLoc();
+  return false;
+}
+
+bool MCAsmParser::parseEOL() {
+  if (getTok().getKind() != AsmToken::EndOfStatement)
+    return Error(getTok().getLoc(), "expected newline");
+  Lex();
   return false;
 }
 

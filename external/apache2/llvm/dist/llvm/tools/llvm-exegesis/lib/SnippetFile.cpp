@@ -9,6 +9,7 @@
 #include "SnippetFile.h"
 #include "Error.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCInstPrinter.h"
 #include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/MC/MCParser/MCAsmParser.h"
 #include "llvm/MC/MCParser/MCTargetAsmParser.h"
@@ -34,7 +35,7 @@ public:
 
   // Implementation of the MCStreamer interface. We only care about
   // instructions.
-  void EmitInstruction(const MCInst &Instruction,
+  void emitInstruction(const MCInst &Instruction,
                        const MCSubtargetInfo &STI) override {
     Result->Key.Instructions.push_back(Instruction);
   }
@@ -86,15 +87,15 @@ public:
 
 private:
   // We only care about instructions, we don't implement this part of the API.
-  void EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
+  void emitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                         unsigned ByteAlignment) override {}
-  bool EmitSymbolAttribute(MCSymbol *Symbol, MCSymbolAttr Attribute) override {
+  bool emitSymbolAttribute(MCSymbol *Symbol, MCSymbolAttr Attribute) override {
     return false;
   }
-  void EmitValueToAlignment(unsigned ByteAlignment, int64_t Value,
+  void emitValueToAlignment(unsigned ByteAlignment, int64_t Value,
                             unsigned ValueSize,
                             unsigned MaxBytesToEmit) override {}
-  void EmitZerofill(MCSection *Section, MCSymbol *Symbol, uint64_t Size,
+  void emitZerofill(MCSection *Section, MCSymbol *Symbol, uint64_t Size,
                     unsigned ByteAlignment, SMLoc Loc) override {}
 
   unsigned findRegisterByName(const StringRef RegName) const {
@@ -129,12 +130,29 @@ Expected<std::vector<BenchmarkCode>> readSnippets(const LLVMState &State,
 
   BenchmarkCode Result;
 
-  MCObjectFileInfo ObjectFileInfo;
   const TargetMachine &TM = State.getTargetMachine();
-  MCContext Context(TM.getMCAsmInfo(), TM.getMCRegisterInfo(), &ObjectFileInfo);
-  ObjectFileInfo.InitMCObjectFileInfo(TM.getTargetTriple(), /*PIC*/ false,
-                                      Context);
+  MCContext Context(TM.getTargetTriple(), TM.getMCAsmInfo(),
+                    TM.getMCRegisterInfo(), TM.getMCSubtargetInfo());
+  std::unique_ptr<MCObjectFileInfo> ObjectFileInfo(
+      TM.getTarget().createMCObjectFileInfo(Context, /*PIC=*/false));
+  Context.setObjectFileInfo(ObjectFileInfo.get());
+  Context.initInlineSourceManager();
   BenchmarkCodeStreamer Streamer(&Context, TM.getMCRegisterInfo(), &Result);
+
+  std::string Error;
+  raw_string_ostream ErrorStream(Error);
+  formatted_raw_ostream InstPrinterOStream(ErrorStream);
+  const std::unique_ptr<MCInstPrinter> InstPrinter(
+      TM.getTarget().createMCInstPrinter(
+          TM.getTargetTriple(), TM.getMCAsmInfo()->getAssemblerDialect(),
+          *TM.getMCAsmInfo(), *TM.getMCInstrInfo(), *TM.getMCRegisterInfo()));
+  // The following call will take care of calling Streamer.setTargetStreamer.
+  TM.getTarget().createAsmTargetStreamer(Streamer, InstPrinterOStream,
+                                         InstPrinter.get(),
+                                         TM.Options.MCOptions.AsmVerbose);
+  if (!Streamer.getTargetStreamer())
+    return make_error<Failure>("cannot create target asm streamer");
+
   const std::unique_ptr<MCAsmParser> AsmParser(
       createMCAsmParser(SM, Context, Streamer, *TM.getMCAsmInfo()));
   if (!AsmParser)
