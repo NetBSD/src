@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.287 2021/05/30 06:41:19 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.288 2021/05/30 13:34:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008, 2020
@@ -135,7 +135,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.287 2021/05/30 06:41:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.288 2021/05/30 13:34:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1384,6 +1384,7 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	 */
 	memset(pmap_kernel(), 0, sizeof(struct pmap));
 	LIST_INIT(&pmap_kernel()->pm_ptpages);
+	LIST_INIT(&pmap_kernel()->pm_pvents);
 	atomic_store_relaxed(&pmap_kernel()->pm_count, 1);
 	/* Kernel pmap does not have per-CPU info. */
 	TAILQ_INSERT_TAIL(&pmap_all_pmaps, pmap_kernel(), pm_list);
@@ -1568,6 +1569,7 @@ pmap_create(void)
 	pmap = pool_cache_get(&pmap_pmap_cache, PR_WAITOK);
 	memset(pmap, 0, sizeof(*pmap));
 	LIST_INIT(&pmap->pm_ptpages);
+	LIST_INIT(&pmap->pm_pvents);
 
 	atomic_store_relaxed(&pmap->pm_count, 1);
 
@@ -3278,6 +3280,7 @@ pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t va, pt_entry_t *pte,
 	uintptr_t const attrs = md->pvh_listx & PGA_ATTRS;
 	newpv->pv_next = (struct pv_entry *)(md->pvh_listx & ~PGA_ATTRS);
 	md->pvh_listx = (uintptr_t)newpv | attrs;
+	LIST_INSERT_HEAD(&pmap->pm_pvents, newpv, pv_link);
 
 	if (dolock) {
 		mutex_exit(lock);
@@ -3316,8 +3319,15 @@ pmap_pv_remove(pmap_t pmap, struct vm_page *pg, vaddr_t va, bool dolock,
 
 	KASSERT(pv != NULL);
 
+	/*
+	 * The page attributes are in the lower 2 bits of the first
+	 * PV entry pointer.  Rather than comparing the pointer address
+	 * and branching, we just always preserve what might be there
+	 * (either attribute bits or zero bits).
+	 */
 	*pvp = (pv_entry_t)((uintptr_t)pv->pv_next |
 			    (((uintptr_t)*pvp) & PGA_ATTRS));
+	LIST_REMOVE(pv, pv_link);
 
 	if (dolock) {
 		mutex_exit(lock);
