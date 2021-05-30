@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.288 2021/05/30 13:34:21 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.289 2021/05/30 14:06:37 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008, 2020
@@ -135,7 +135,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.288 2021/05/30 13:34:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.289 2021/05/30 14:06:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -432,6 +432,71 @@ pmap_activation_lock(pmap_t const pmap)
 #endif /* MULTIPROCESSOR */
 
 /*
+ * TLB context structure; see description in "TLB management" section
+ * below.
+ */
+#define	TLB_CTX_MAXVA		8
+#define	TLB_CTX_ALLVA		PAGE_MASK
+struct pmap_tlb_context {
+	uintptr_t		t_addrdata[TLB_CTX_MAXVA];
+	pmap_t			t_pmap;
+	struct pmap_pagelist	t_freeptq;
+	struct pmap_pvlist	t_freepvq;
+};
+
+/*
+ * Internal routines
+ */
+static void	alpha_protection_init(void);
+static pt_entry_t pmap_remove_mapping(pmap_t, vaddr_t, pt_entry_t *, bool,
+				      pv_entry_t *,
+				      struct pmap_tlb_context *);
+static void	pmap_changebit(struct vm_page *, pt_entry_t, pt_entry_t,
+			       struct pmap_tlb_context *);
+
+/*
+ * PT page management functions.
+ */
+static int	pmap_ptpage_alloc(pmap_t, pt_entry_t *, int);
+static void	pmap_ptpage_free(pmap_t, pt_entry_t *,
+				 struct pmap_tlb_context *);
+static void	pmap_l3pt_delref(pmap_t, vaddr_t, pt_entry_t *,
+		     struct pmap_tlb_context *);
+static void	pmap_l2pt_delref(pmap_t, pt_entry_t *, pt_entry_t *,
+		     struct pmap_tlb_context *);
+static void	pmap_l1pt_delref(pmap_t, pt_entry_t *);
+
+static void	*pmap_l1pt_alloc(struct pool *, int);
+static void	pmap_l1pt_free(struct pool *, void *);
+
+static struct pool_allocator pmap_l1pt_allocator = {
+	pmap_l1pt_alloc, pmap_l1pt_free, 0,
+};
+
+static int	pmap_l1pt_ctor(void *, void *, int);
+
+/*
+ * PV table management functions.
+ */
+static int	pmap_pv_enter(pmap_t, struct vm_page *, vaddr_t, pt_entry_t *,
+			      bool, pv_entry_t);
+static void	pmap_pv_remove(pmap_t, struct vm_page *, vaddr_t, bool,
+			       pv_entry_t *, struct pmap_tlb_context *);
+static void	*pmap_pv_page_alloc(struct pool *, int);
+static void	pmap_pv_page_free(struct pool *, void *);
+
+static struct pool_allocator pmap_pv_page_allocator = {
+	pmap_pv_page_alloc, pmap_pv_page_free, 0,
+};
+
+#ifdef DEBUG
+void	pmap_pv_dump(paddr_t);
+#endif
+
+#define	pmap_pv_alloc()		pool_cache_get(&pmap_pv_cache, PR_NOWAIT)
+#define	pmap_pv_free(pv)	pool_cache_put(&pmap_pv_cache, (pv))
+
+/*
  * Generic routine for freeing pages on a pmap_pagelist back to
  * the system.
  */
@@ -443,6 +508,21 @@ pmap_pagelist_free(struct pmap_pagelist * const list)
 	while ((pg = LIST_FIRST(list)) != NULL) {
 		LIST_REMOVE(pg, pageq.list);
 		uvm_pagefree(pg);
+	}
+}
+
+/*
+ * Generic routine for freeing a list of PV entries back to the
+ * system.
+ */
+static void
+pmap_pvlist_free(struct pmap_pvlist * const list)
+{
+	pv_entry_t pv;
+
+	while ((pv = LIST_FIRST(list)) != NULL) {
+		LIST_REMOVE(pv, pv_link);
+		pmap_pv_free(pv);
 	}
 }
 
@@ -518,9 +598,6 @@ pmap_pagelist_free(struct pmap_pagelist * const list)
  * window size (defined as 64KB on alpha in <machine/vmparam.h>).
  */
 
-#define	TLB_CTX_MAXVA		8
-#define	TLB_CTX_ALLVA		PAGE_MASK
-
 #define	TLB_CTX_F_ASM		__BIT(0)
 #define	TLB_CTX_F_IMB		__BIT(1)
 #define	TLB_CTX_F_KIMB		__BIT(2)
@@ -537,12 +614,6 @@ pmap_pagelist_free(struct pmap_pagelist * const list)
 #define	TLB_CTX_VA(ctx, i)	((ctx)->t_addrdata[(i)] & ~PAGE_MASK)
 #define	TLB_CTX_SETVA(ctx, i, va)					\
 	(ctx)->t_addrdata[(i)] = (va) | ((ctx)->t_addrdata[(i)] & PAGE_MASK)
-
-struct pmap_tlb_context {
-	uintptr_t	t_addrdata[TLB_CTX_MAXVA];
-	pmap_t		t_pmap;
-	struct pmap_pagelist t_freeptq;
-};
 
 static struct {
 	kmutex_t	lock;
@@ -689,6 +760,7 @@ pmap_tlb_context_init(struct pmap_tlb_context * const tlbctx, uintptr_t flags)
 	tlbctx->t_addrdata[1] = flags;
 	tlbctx->t_pmap = NULL;
 	LIST_INIT(&tlbctx->t_freeptq);
+	LIST_INIT(&tlbctx->t_freepvq);
 }
 
 static void
@@ -1081,63 +1153,16 @@ pmap_tlb_shootdown_ipi(struct cpu_info * const ci,
 }
 #endif /* MULTIPROCESSOR */
 
-static __inline void
-pmap_tlb_ptpage_drain(struct pmap_tlb_context * const tlbctx)
+static inline void
+pmap_tlb_context_drain(struct pmap_tlb_context * const tlbctx)
 {
-	pmap_pagelist_free(&tlbctx->t_freeptq);
+	if (! LIST_EMPTY(&tlbctx->t_freeptq)) {
+		pmap_pagelist_free(&tlbctx->t_freeptq);
+	}
+	if (! LIST_EMPTY(&tlbctx->t_freepvq)) {
+		pmap_pvlist_free(&tlbctx->t_freepvq);
+	}
 }
-
-/*
- * Internal routines
- */
-static void	alpha_protection_init(void);
-static pt_entry_t pmap_remove_mapping(pmap_t, vaddr_t, pt_entry_t *, bool,
-				      pv_entry_t *,
-				      struct pmap_tlb_context *);
-static void	pmap_changebit(struct vm_page *, pt_entry_t, pt_entry_t,
-			       struct pmap_tlb_context *);
-
-/*
- * PT page management functions.
- */
-static int	pmap_ptpage_alloc(pmap_t, pt_entry_t *, int);
-static void	pmap_ptpage_free(pmap_t, pt_entry_t *,
-				 struct pmap_tlb_context *);
-static void	pmap_l3pt_delref(pmap_t, vaddr_t, pt_entry_t *,
-		     struct pmap_tlb_context *);
-static void	pmap_l2pt_delref(pmap_t, pt_entry_t *, pt_entry_t *,
-		     struct pmap_tlb_context *);
-static void	pmap_l1pt_delref(pmap_t, pt_entry_t *);
-
-static void	*pmap_l1pt_alloc(struct pool *, int);
-static void	pmap_l1pt_free(struct pool *, void *);
-
-static struct pool_allocator pmap_l1pt_allocator = {
-	pmap_l1pt_alloc, pmap_l1pt_free, 0,
-};
-
-static int	pmap_l1pt_ctor(void *, void *, int);
-
-/*
- * PV table management functions.
- */
-static int	pmap_pv_enter(pmap_t, struct vm_page *, vaddr_t, pt_entry_t *,
-			      bool, pv_entry_t);
-static void	pmap_pv_remove(pmap_t, struct vm_page *, vaddr_t, bool,
-			       pv_entry_t *);
-static void	*pmap_pv_page_alloc(struct pool *, int);
-static void	pmap_pv_page_free(struct pool *, void *);
-
-static struct pool_allocator pmap_pv_page_allocator = {
-	pmap_pv_page_alloc, pmap_pv_page_free, 0,
-};
-
-#ifdef DEBUG
-void	pmap_pv_dump(paddr_t);
-#endif
-
-#define	pmap_pv_alloc()		pool_cache_get(&pmap_pv_cache, PR_NOWAIT)
-#define	pmap_pv_free(pv)	pool_cache_put(&pmap_pv_cache, (pv))
 
 /*
  * ASN management functions.
@@ -1721,6 +1746,8 @@ pmap_remove_internal(pmap_t pmap, vaddr_t sva, vaddr_t eva,
 		pmap_tlb_shootnow(tlbctx);
 		/* kernel PT pages are never freed. */
 		KASSERT(LIST_EMPTY(&tlbctx->t_freeptq));
+		/* ...but we might have freed PV entries. */
+		pmap_tlb_context_drain(tlbctx);
 		TLB_COUNT(reason_remove_kernel);
 
 		return;
@@ -1803,7 +1830,7 @@ pmap_remove_internal(pmap_t pmap, vaddr_t sva, vaddr_t eva,
 	PMAP_MAP_TO_HEAD_UNLOCK();
 	PMAP_UNLOCK(pmap);
 	pmap_tlb_shootnow(tlbctx);
-	pmap_tlb_ptpage_drain(tlbctx);
+	pmap_tlb_context_drain(tlbctx);
 	TLB_COUNT(reason_remove_user);
 }
 
@@ -1895,7 +1922,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	mutex_exit(lock);
 	PMAP_HEAD_TO_MAP_UNLOCK();
 	pmap_tlb_shootnow(&tlbctx);
-	pmap_tlb_ptpage_drain(&tlbctx);
+	pmap_tlb_context_drain(&tlbctx);
 	TLB_COUNT(reason_page_protect_none);
 }
 
@@ -2007,7 +2034,7 @@ pmap_enter_l2pt_delref(pmap_t const pmap, pt_entry_t * const l1pte,
 	pmap_l2pt_delref(pmap, l1pte, l2pte, &tlbctx);
 	PMAP_UNLOCK(pmap);
 	pmap_tlb_shootnow(&tlbctx);
-	pmap_tlb_ptpage_drain(&tlbctx);
+	pmap_tlb_context_drain(&tlbctx);
 	TLB_COUNT(reason_enter_l2pt_delref);
 }
 
@@ -2035,7 +2062,7 @@ pmap_enter_l3pt_delref(pmap_t const pmap, vaddr_t const va,
 	pmap_l3pt_delref(pmap, va, pte, &tlbctx);
 	PMAP_UNLOCK(pmap);
 	pmap_tlb_shootnow(&tlbctx);
-	pmap_tlb_ptpage_drain(&tlbctx);
+	pmap_tlb_context_drain(&tlbctx);
 	TLB_COUNT(reason_enter_l3pt_delref);
 }
 
@@ -2936,8 +2963,8 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *pte,
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT))
-		printf("pmap_remove_mapping(%p, %lx, %p, %d, %p)\n",
-		       pmap, va, pte, dolock, opvp);
+		printf("pmap_remove_mapping(%p, %lx, %p, %d, %p, %p)\n",
+		       pmap, va, pte, dolock, opvp, tlbctx);
 #endif
 
 	/*
@@ -2988,7 +3015,7 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *pte,
 		 */
 		pg = PHYS_TO_VM_PAGE(pa);
 		KASSERT(pg != NULL);
-		pmap_pv_remove(pmap, pg, va, dolock, opvp);
+		pmap_pv_remove(pmap, pg, va, dolock, opvp, tlbctx);
 		KASSERT(opvp == NULL || *opvp != NULL);
 	}
 
@@ -3296,7 +3323,7 @@ pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t va, pt_entry_t *pte,
  */
 static void
 pmap_pv_remove(pmap_t pmap, struct vm_page *pg, vaddr_t va, bool dolock,
-	pv_entry_t *opvp)
+    pv_entry_t *opvp, struct pmap_tlb_context * const tlbctx)
 {
 	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
 	pv_entry_t pv, *pvp;
@@ -3333,10 +3360,12 @@ pmap_pv_remove(pmap_t pmap, struct vm_page *pg, vaddr_t va, bool dolock,
 		mutex_exit(lock);
 	}
 
-	if (opvp != NULL)
+	if (opvp != NULL) {
 		*opvp = pv;
-	else
-		pmap_pv_free(pv);
+	} else {
+		KASSERT(tlbctx != NULL);
+		LIST_INSERT_HEAD(&tlbctx->t_freepvq, pv, pv_link);
+	}
 }
 
 /*
