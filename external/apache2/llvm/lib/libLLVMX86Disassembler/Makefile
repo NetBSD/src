@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/11/11 22:45:13 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2021/05/30 01:56:55 joerg Exp $
 
 LIB=	LLVMX86Disassembler
 
@@ -9,12 +9,7 @@ CPPFLAGS+=	-I${X86_OBJDIR} -I${LLVM_SRCDIR}/lib/Target/X86
 
 .PATH: ${LLVM_SRCDIR}/lib/Target/X86/Disassembler
 
-SRCS+=	X86Disassembler.cpp \
-	X86DisassemblerDecoder.cpp
-
-.for src in ${SRCS:M*.c}
-CPPFLAGS.${src}+=	-std=gnu99
-.endfor
+SRCS+=	X86Disassembler.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

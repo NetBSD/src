@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/11/11 22:45:03 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2021/05/30 01:56:50 joerg Exp $
 
 LIB=	LLVMAMDGPUCodeGen
 
@@ -17,32 +17,39 @@ SRCS+=	AMDGPUAliasAnalysis.cpp \
 	AMDGPUAtomicOptimizer.cpp \
 	AMDGPUCallLowering.cpp \
 	AMDGPUCodeGenPrepare.cpp \
+	AMDGPUExportClustering.cpp \
 	AMDGPUFixFunctionBitcasts.cpp \
 	AMDGPUFrameLowering.cpp \
+	AMDGPUGlobalISelUtils.cpp \
 	AMDGPUHSAMetadataStreamer.cpp \
-	AMDGPUInline.cpp \
+	AMDGPUInstCombineIntrinsic.cpp \
 	AMDGPUInstrInfo.cpp \
 	AMDGPUInstructionSelector.cpp \
 	AMDGPUISelDAGToDAG.cpp \
 	AMDGPUISelLowering.cpp \
+	AMDGPULateCodeGenPrepare.cpp \
 	AMDGPULegalizerInfo.cpp \
 	AMDGPULibCalls.cpp \
 	AMDGPULibFunc.cpp \
 	AMDGPULowerIntrinsics.cpp \
 	AMDGPULowerKernelArguments.cpp \
 	AMDGPULowerKernelAttributes.cpp \
+	AMDGPULowerModuleLDSPass.cpp \
 	AMDGPUMachineCFGStructurizer.cpp \
 	AMDGPUMachineFunction.cpp \
 	AMDGPUMachineModuleInfo.cpp \
 	AMDGPUMacroFusion.cpp \
 	AMDGPUMCInstLower.cpp \
+	AMDGPUMIRFormatter.cpp \
 	AMDGPUOpenCLEnqueuedBlockLowering.cpp \
 	AMDGPUPerfHintAnalysis.cpp \
+	AMDGPUPostLegalizerCombiner.cpp \
+	AMDGPUPreLegalizerCombiner.cpp \
 	AMDGPUPrintfRuntimeBinding.cpp \
 	AMDGPUPromoteAlloca.cpp \
 	AMDGPUPropagateAttributes.cpp \
+	AMDGPURegBankCombiner.cpp \
 	AMDGPURegisterBankInfo.cpp \
-	AMDGPURegisterInfo.cpp \
 	AMDGPURewriteOutArguments.cpp \
 	AMDGPUSubtarget.cpp \
 	AMDGPUTargetMachine.cpp \
@@ -57,7 +64,6 @@ SRCS+=	AMDGPUAliasAnalysis.cpp \
 	GCNIterativeScheduler.cpp \
 	GCNMinRegStrategy.cpp \
 	GCNNSAReassign.cpp \
-	GCNRegBankReassign.cpp \
 	GCNRegPressure.cpp \
 	GCNSchedStrategy.cpp \
 	R600AsmPrinter.cpp \
@@ -74,18 +80,17 @@ SRCS+=	AMDGPUAliasAnalysis.cpp \
 	R600OptimizeVectorRegisters.cpp \
 	R600Packetizer.cpp \
 	R600RegisterInfo.cpp \
-	SIAddIMGInit.cpp \
 	SIAnnotateControlFlow.cpp \
 	SIFixSGPRCopies.cpp \
-	SIFixupVectorISel.cpp \
 	SIFixVGPRCopies.cpp \
 	SIFoldOperands.cpp \
 	SIFormMemoryClauses.cpp \
 	SIFrameLowering.cpp \
-	SIInsertSkips.cpp \
+	SIInsertHardClauses.cpp \
 	SIInsertWaitcnts.cpp \
 	SIInstrInfo.cpp \
 	SIISelLowering.cpp \
+	SILateBranchLowering.cpp \
 	SILoadStoreOptimizer.cpp \
 	SILowerControlFlow.cpp \
 	SILowerI1Copies.cpp \
@@ -97,12 +102,15 @@ SRCS+=	AMDGPUAliasAnalysis.cpp \
 	SIOptimizeExecMasking.cpp \
 	SIOptimizeExecMaskingPreRA.cpp \
 	SIPeepholeSDWA.cpp \
+	SIPostRABundler.cpp \
 	SIPreAllocateWWMRegs.cpp \
+	SIPreEmitPeephole.cpp \
+	SIProgramInfo.cpp \
 	SIRegisterInfo.cpp \
 	SIShrinkInstructions.cpp \
 	SIWholeQuadMode.cpp
 
-TABLEGEN_SRC=		AMDGPU.td AMDGPUGISel.td R600.td
+TABLEGEN_SRC=		AMDGPU.td AMDGPUGISel.td InstCombineTables.td R600.td
 TABLEGEN_INCLUDES=	-I${LLVM_SRCDIR}/lib/Target/AMDGPU
 TABLEGEN_OUTPUT.AMDGPU.td= \
 	AMDGPUGenAsmMatcher.inc|-gen-asm-matcher \
@@ -111,8 +119,6 @@ TABLEGEN_OUTPUT.AMDGPU.td= \
 	AMDGPUGenDAGISel.inc|-gen-dag-isel \
 	AMDGPUGenDisassemblerTables.inc|-gen-disassembler \
 	AMDGPUGenInstrInfo.inc|-gen-instr-info \
-	AMDGPUGenIntrinsicEnums.inc|-gen-tgt-intrinsic-enums \
-	AMDGPUGenIntrinsicImpl.inc|-gen-tgt-intrinsic-impl \
 	AMDGPUGenMCCodeEmitter.inc|-gen-emitter \
 	AMDGPUGenMCPseudoLowering.inc|-gen-pseudo-lowering \
 	AMDGPUGenRegisterBank.inc|-gen-register-bank \
@@ -120,8 +126,15 @@ TABLEGEN_OUTPUT.AMDGPU.td= \
 	AMDGPUGenSearchableTables.inc|-gen-searchable-tables \
 	AMDGPUGenSubtargetInfo.inc|-gen-subtarget
 
+TABLEGEN_OUTPUT.InstCombineTables.td= \
+	InstCombineTables.inc|-gen-searchable-tables
+
 TABLEGEN_OUTPUT.AMDGPUGISel.td= \
-	AMDGPUGenGlobalISel.inc|-gen-global-isel
+	AMDGPUGenGICombiner.inc|-gen-global-isel-combiner^-combiners=AMDGPUPreLegalizerCombinerHelper \
+	AMDGPUGenGlobalISel.inc|-gen-global-isel \
+	AMDGPUGenPostLegalizeGICombiner.inc|-gen-global-isel-combiner^-combiners=AMDGPUPostLegalizerCombinerHelper \
+	AMDGPUGenPreLegalizeGICombiner.inc|-gen-global-isel-combiner^-combiners=AMDGPUPreLegalizerCombinerHelper \
+        AMDGPUGenRegBankGICombiner.inc|-gen-global-isel-combiner^-combiners=AMDGPURegBankCombinerHelper
 
 TABLEGEN_OUTPUT.R600.td= \
 	R600GenAsmWriter.inc|-gen-asm-writer \

@@ -1,4 +1,4 @@
-#	$NetBSD: link.mk,v 1.1 2019/11/11 22:44:57 joerg Exp $
+#	$NetBSD: link.mk,v 1.2 2021/05/30 01:56:45 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -29,8 +29,8 @@ DPADD+=	${LLVMRT_OBJDIR.${l}}/libLLVM${l}_pic.a
 .endfor
 
 .if defined(HOSTPROG)
-LDADD_NEED_DL=		cat ${LLVM_TOOLCONF_OBJDIR}/need-dl 2> /dev/null
-LDADD_NEED_TERMINFO=	cat ${LLVM_TOOLCONF_OBJDIR}/need-terminfo 2> /dev/null
+LDADD_NEED_DL=		cat ${LLVM_TOOLCONF_OBJDIR}/need-dl 2> /dev/null || true
+LDADD_NEED_TERMINFO=	cat ${LLVM_TOOLCONF_OBJDIR}/need-terminfo 2> /dev/null || true
 LDADD+=	${LDADD_NEED_DL:sh} ${LDADD_NEED_TERMINFO:sh}
 .else
 LDADD+=	-lterminfo

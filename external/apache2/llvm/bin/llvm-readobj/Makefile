@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/11/11 22:45:01 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2021/05/30 01:56:48 joerg Exp $
 
 PROG_CXX=	llvm-readobj
 NOMAN=		yes
@@ -12,7 +12,6 @@ SRCS=	llvm-readobj.cpp \
 	COFFDumper.cpp \
 	COFFImportDumper.cpp \
 	ELFDumper.cpp \
-	Error.cpp \
 	MachODumper.cpp \
 	ObjDumper.cpp \
 	WasmDumper.cpp \
@@ -31,14 +30,19 @@ LLVM_LIBS+= \
 	DebugInfoCodeView \
 	DebugInfoMSF \
 	Object \
+	TextAPI \
 	MCParser \
 	MC \
 	BitReader \
 	BitstreamReader \
 	IR \
+	Remarks \
 	BinaryFormat \
 	Support \
 	Demangle
+
+LDADD+=	-lz
+DPADD+=	${LIBZ}
 
 .include "${.PARSEDIR}/../../link.mk"
 

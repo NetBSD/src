@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2020/06/09 21:50:32 kamil Exp $
+# $NetBSD: Makefile,v 1.4 2021/05/30 01:56:50 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -15,6 +15,7 @@ SUBDIR=	\
 	libLLVMDebugInfoDWARF \
 	libLLVMDebugInfoMSF \
 	libLLVMDemangle \
+	libLLVMFrontendOpenMP \
 	libLLVMGlobalISel \
 	libLLVMIR \
 	libLLVMIRReader \
@@ -103,14 +104,17 @@ SUBDIR+= \
 	libLLVMX86AsmParser \
 	libLLVMX86Disassembler \
 	libLLVMX86MCTargetDesc \
-	libLLVMX86TargetInfo \
-	libLLVMX86Utils
+	libLLVMX86TargetInfo
 
 .if ${NO_LLVM_DEVELOPER:Uno} == "no" && ${LLVM_DEVELOPER:U} == "yes"
 SUBDIR+= \
 	libLLVMAMDGPUDisassembler \
 	libLLVMExecutionEngine \
 	libLLVMExecutionEngineJITLink \
+	libLLVMExecutionEngineOrcShared \
+	libLLVMExecutionEngineOrcTargetProcess \
+	libLLVMFileCheck \
+	libLLVMInterfaceStub \
 	libLLVMMCJIT \
 	libLLVMOrc \
 	libLLVMRuntimeDyld
@@ -119,7 +123,6 @@ SUBDIR+= \
 .if !defined(HOSTLIB) && !defined(_BSD_HOSTINIT_MK_)
 SUBDIR+= \
 	libLLVMDebugInfoPDB \
-	libLLVMDebugInfoPDBNative \
 	libLLVMDebugInfoSymbolize \
 	libLLVMObjectYAML
 .endif
@@ -156,15 +159,19 @@ SUBDIR+= \
 	libclangSerialization \
 	libclangStaticAnalyzerCheckers \
 	libclangStaticAnalyzerCore \
+	libclangToolingCore \
 	.WAIT \
 	libclangStaticAnalyzerFrontend
 
 .if ${NO_LLVM_DEVELOPER:Uno} == "no" && ${LLVM_DEVELOPER:U} == "yes"
 SUBDIR+= \
+	libclangAPINotes \
 	libclangASTMatchersDynamic \
 	libclangFormat \
+	libclangIndexSerialization \
+	libclangInterpreter \
+	libclangTesting \
 	libclangTooling \
-	libclangToolingCore \
 	libclangToolingDependencyScanning \
 	libclangToolingInclusions \
 	libclangToolingRefactoring \

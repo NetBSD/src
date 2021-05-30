@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2020/06/09 21:50:32 kamil Exp $
+#	$NetBSD: Makefile,v 1.3 2021/05/30 01:56:49 joerg Exp $
 
 PROG_CXX=	llvm-symbolizer
 NOMAN=		yes
@@ -13,22 +13,31 @@ LLVM_LIBS+= \
 	DebugInfoSymbolize \
 	DebugInfoDWARF \
 	DebugInfoPDB \
-	DebugInfoPDBNative \
+	DebugInfoMSF \
+	DebugInfoCodeView \
 	Object \
+	TextAPI \
 	MCParser \
 	MC \
 	BitReader \
 	BitstreamReader \
 	IR \
+	Remarks \
 	BinaryFormat \
 	ObjectYAML \
 	TextAPI \
+	Option \
 	Support \
 	Demangle
 
 LDADD+=	-lz
 DPADD+=	${LIBZ}
 
+TABLEGEN_SRC=	Opts.td
+TABLEGEN_OUTPUT.Opts.td= \
+	Opts.inc|-gen-opt-parser-defs
+
+.include "${.PARSEDIR}/../../tablegen.mk"
 .include "${.PARSEDIR}/../../link.mk"
 
 .include <bsd.prog.mk>

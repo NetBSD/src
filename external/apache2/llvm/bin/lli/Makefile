@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/11/11 22:44:59 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2021/05/30 01:56:46 joerg Exp $
 
 PROG_CXX=	lli
 NOMAN=		yes
@@ -7,15 +7,19 @@ NOMAN=		yes
 
 .PATH: ${LLVM_SRCDIR}/tools/lli
 
-SRCS=	lli.cpp
+SRCS=	lli.cpp \
+	ExecutionUtils.cpp
 
 LLVM_LIBS+= \
 	Orc \
+	ExecutionEngineJITLink \
+	ExecutionEngineOrcTargetProcess \
+	ExecutionEngineOrcShared \
 	X86CodeGen \
 	X86TargetInfo \
 	X86MCTargetDesc \
 	X86AsmParser \
-	X86Utils \
+	TransformsCFGuard \
 	AsmPrinter \
 	GlobalISel \
 	IRReader \
@@ -23,6 +27,7 @@ LLVM_LIBS+= \
 	DebugInfoCodeView \
 	DebugInfoDWARF \
 	Object \
+	TextAPI \
 	MCParser \
 	BitWriter \
 	BitReader \
@@ -42,6 +47,7 @@ LLVM_LIBS+= \
 	Target \
 	MC \
 	IR \
+	Remarks \
 	BinaryFormat \
 	Support \
 	Demangle
