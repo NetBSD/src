@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.290 2021/05/30 19:41:59 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.291 2021/05/30 19:46:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008, 2020
@@ -135,7 +135,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.290 2021/05/30 19:41:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.291 2021/05/30 19:46:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1657,7 +1657,6 @@ pmap_destroy(pmap_t pmap)
 		return;
 
 	pt_entry_t *lev1map = pmap_lev1map(pmap);
-	int i;
 
 	rw_enter(&pmap_growkernel_lock, RW_READER);
 
@@ -1670,6 +1669,7 @@ pmap_destroy(pmap_t pmap)
 
 	pool_cache_put(&pmap_l1pt_cache, lev1map);
 #ifdef DIAGNOSTIC
+	int i;
 	for (i = 0; i < pmap_ncpuids; i++) {
 		pmap->pm_percpu[i].pmc_lev1map = (pt_entry_t *)0xdeadbeefUL;
 	}
