@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.114 2021/04/11 11:41:27 rillig Exp $
+#	$NetBSD: Makefile,v 1.115 2021/05/30 21:03:08 rillig Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -35,8 +35,11 @@ GCOV_PERL+=	} elsif (/^Function '(\S+)'/) {
 GCOV_PERL+=		$$func = $$1;
 GCOV_PERL+=	} elsif (/^Lines executed:(\d+\.\d+)% of (\d+)/ && defined($$file)) {
 GCOV_PERL+=		my ($$percent, $$lines) = ($$1, $$2);
-GCOV_PERL+=		my $$uncovered = `grep -c '\#\#\#\#\#:' < \$$(basename $$file.gcov)`;
-GCOV_PERL+=		printf("%7.2f  %4d/%4d  %s%s\n",
+GCOV_PERL+=		my $$uncovered = $$file =~ /\.h$$/
+GCOV_PERL+=		    ? '?'
+GCOV_PERL+=		    : `grep -c '\#\#\#\#\#:' < \$$(basename $$file.gcov)`;
+GCOV_PERL+=		chomp($$uncovered);
+GCOV_PERL+=		printf("%7.2f  %4s/%4d  %s%s\n",
 GCOV_PERL+=		    $$percent, $$uncovered, $$lines, $$file, $$func);
 GCOV_PERL+=		$$file = undef;
 GCOV_PERL+=	}
