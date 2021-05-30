@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.h,v 1.12 2019/09/13 02:19:46 manu Exp $	*/
+/*	$NetBSD: biosdisk.h,v 1.13 2021/05/30 05:59:23 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -43,6 +43,7 @@ struct biosdisk_partition {
 
 extern struct btinfo_bootdisk bi_disk; 
 extern struct btinfo_bootwedge bi_wedge;
+extern struct btinfo_rootdevice bi_root;
 
 int biosdisk_strategy(void *, int, daddr_t, size_t, void *, size_t *);
 int biosdisk_open(struct open_file *, ...);

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.76 2020/04/04 19:50:54 christos Exp $	 */
+/*	$NetBSD: exec.c,v 1.77 2021/05/30 05:59:23 mlelstv Exp $	 */
 
 /*
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -122,6 +122,7 @@
 #define MAXMODNAME	32	/* from <sys/module.h> */
 
 extern struct btinfo_console btinfo_console;
+extern struct btinfo_rootdevice bi_root;
 
 boot_module_t *boot_modules;
 bool boot_modules_enabled = true;
@@ -477,6 +478,8 @@ exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto, int floppy,
 	BI_ALLOC(BTINFO_MAX);
 
 	BI_ADD(&btinfo_console, BTINFO_CONSOLE, sizeof(struct btinfo_console));
+	if (bi_root.devname[0])
+		BI_ADD(&bi_root, BTINFO_ROOTDEVICE, sizeof(struct btinfo_rootdevice));
 
 	howto = boothowto;
 
