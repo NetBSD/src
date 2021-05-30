@@ -25,11 +25,9 @@
 #include "llvm/Analysis/MemoryBuiltins.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
-#include "llvm/Transforms/Utils/Local.h"
 #include "llvm/BinaryFormat/Dwarf.h"
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/BasicBlock.h"
-#include "llvm/IR/CallSite.h"
 #include "llvm/IR/CallingConv.h"
 #include "llvm/IR/Constant.h"
 #include "llvm/IR/Constants.h"
@@ -42,6 +40,7 @@
 #include "llvm/IR/GlobalAlias.h"
 #include "llvm/IR/GlobalValue.h"
 #include "llvm/IR/GlobalVariable.h"
+#include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
@@ -53,6 +52,7 @@
 #include "llvm/IR/User.h"
 #include "llvm/IR/Value.h"
 #include "llvm/IR/ValueHandle.h"
+#include "llvm/InitializePasses.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/AtomicOrdering.h"
 #include "llvm/Support/Casting.h"
@@ -65,6 +65,7 @@
 #include "llvm/Transforms/Utils/CtorUtils.h"
 #include "llvm/Transforms/Utils/Evaluator.h"
 #include "llvm/Transforms/Utils/GlobalStatus.h"
+#include "llvm/Transforms/Utils/Local.h"
 #include <cassert>
 #include <cstdint>
 #include <utility>
@@ -77,7 +78,6 @@ using namespace llvm;
 STATISTIC(NumMarked    , "Number of globals marked constant");
 STATISTIC(NumUnnamed   , "Number of globals marked unnamed_addr");
 STATISTIC(NumSRA       , "Number of aggregate globals broken into scalars");
-STATISTIC(NumHeapSRA   , "Number of heap objects SRA'd");
 STATISTIC(NumSubstitute,"Number of globals with initializers stored into them");
 STATISTIC(NumDeleted   , "Number of globals deleted");
 STATISTIC(NumGlobUses  , "Number of global uses devirtualized");
@@ -127,13 +127,16 @@ static bool isLeakCheckerRoot(GlobalVariable *GV) {
     Type *Ty = Types.pop_back_val();
     switch (Ty->getTypeID()) {
       default: break;
-      case Type::PointerTyID: return true;
-      case Type::ArrayTyID:
-      case Type::VectorTyID: {
-        SequentialType *STy = cast<SequentialType>(Ty);
-        Types.push_back(STy->getElementType());
+      case Type::PointerTyID:
+        return true;
+      case Type::FixedVectorTyID:
+      case Type::ScalableVectorTyID:
+        if (cast<VectorType>(Ty)->getElementType()->isPointerTy())
+          return true;
         break;
-      }
+      case Type::ArrayTyID:
+        Types.push_back(cast<ArrayType>(Ty)->getElementType());
+        break;
       case Type::StructTyID: {
         StructType *STy = cast<StructType>(Ty);
         if (STy->isOpaque()) return true;
@@ -141,7 +144,8 @@ static bool isLeakCheckerRoot(GlobalVariable *GV) {
                  E = STy->element_end(); I != E; ++I) {
           Type *InnerTy = *I;
           if (isa<PointerType>(InnerTy)) return true;
-          if (isa<CompositeType>(InnerTy))
+          if (isa<StructType>(InnerTy) || isa<ArrayType>(InnerTy) ||
+              isa<VectorType>(InnerTy))
             Types.push_back(InnerTy);
         }
         break;
@@ -190,10 +194,10 @@ CleanupPointerRootUsers(GlobalVariable *GV,
                         function_ref<TargetLibraryInfo &(Function &)> GetTLI) {
   // A brief explanation of leak checkers.  The goal is to find bugs where
   // pointers are forgotten, causing an accumulating growth in memory
-  // usage over time.  The common strategy for leak checkers is to whitelist the
-  // memory pointed to by globals at exit.  This is popular because it also
-  // solves another problem where the main thread of a C++ program may shut down
-  // before other threads that are still expecting to use those globals.  To
+  // usage over time.  The common strategy for leak checkers is to explicitly
+  // allow the memory pointed to by globals at exit.  This is popular because it
+  // also solves another problem where the main thread of a C++ program may shut
+  // down before other threads that are still expecting to use those globals. To
   // handle that case, we expect the program may create a singleton and never
   // destroy it.
 
@@ -263,6 +267,7 @@ CleanupPointerRootUsers(GlobalVariable *GV,
         I = J;
       } while (true);
       I->eraseFromParent();
+      Changed = true;
     }
   }
 
@@ -280,7 +285,7 @@ static bool CleanupConstantGlobalUsers(
   // we delete a constant array, we may also be holding pointer to one of its
   // elements (or an element of one of its elements if we're dealing with an
   // array of arrays) in the worklist.
-  SmallVector<WeakTrackingVH, 8> WorkList(V->user_begin(), V->user_end());
+  SmallVector<WeakTrackingVH, 8> WorkList(V->users());
   while (!WorkList.empty()) {
     Value *UV = WorkList.pop_back_val();
     if (!UV)
@@ -290,10 +295,13 @@ static bool CleanupConstantGlobalUsers(
 
     if (LoadInst *LI = dyn_cast<LoadInst>(U)) {
       if (Init) {
-        // Replace the load with the initializer.
-        LI->replaceAllUsesWith(Init);
-        LI->eraseFromParent();
-        Changed = true;
+        if (auto *Casted =
+                ConstantFoldLoadThroughBitcast(Init, LI->getType(), DL)) {
+          // Replace the load with the initializer.
+          LI->replaceAllUsesWith(Casted);
+          LI->eraseFromParent();
+          Changed = true;
+        }
       }
     } else if (StoreInst *SI = dyn_cast<StoreInst>(U)) {
       // Store must be unreachable or storing Init into the global.
@@ -303,7 +311,8 @@ static bool CleanupConstantGlobalUsers(
       if (CE->getOpcode() == Instruction::GetElementPtr) {
         Constant *SubInit = nullptr;
         if (Init)
-          SubInit = ConstantFoldLoadThroughGEPConstantExpr(Init, CE);
+          SubInit = ConstantFoldLoadThroughGEPConstantExpr(
+              Init, CE, V->getType()->getPointerElementType(), DL);
         Changed |= CleanupConstantGlobalUsers(CE, SubInit, DL, GetTLI);
       } else if ((CE->getOpcode() == Instruction::BitCast &&
                   CE->getType()->isPointerTy()) ||
@@ -325,7 +334,8 @@ static bool CleanupConstantGlobalUsers(
         ConstantExpr *CE = dyn_cast_or_null<ConstantExpr>(
             ConstantFoldInstruction(GEP, DL, &GetTLI(*GEP->getFunction())));
         if (Init && CE && CE->getOpcode() == Instruction::GetElementPtr)
-          SubInit = ConstantFoldLoadThroughGEPConstantExpr(Init, CE);
+          SubInit = ConstantFoldLoadThroughGEPConstantExpr(
+              Init, CE, V->getType()->getPointerElementType(), DL);
 
         // If the initializer is an all-null value and we have an inbounds GEP,
         // we already know what the result of any load from that GEP is.
@@ -432,17 +442,47 @@ static bool GlobalUsersSafeToSRA(GlobalValue *GV) {
   return true;
 }
 
+static bool IsSRASequential(Type *T) {
+  return isa<ArrayType>(T) || isa<VectorType>(T);
+}
+static uint64_t GetSRASequentialNumElements(Type *T) {
+  if (ArrayType *AT = dyn_cast<ArrayType>(T))
+    return AT->getNumElements();
+  return cast<FixedVectorType>(T)->getNumElements();
+}
+static Type *GetSRASequentialElementType(Type *T) {
+  if (ArrayType *AT = dyn_cast<ArrayType>(T))
+    return AT->getElementType();
+  return cast<VectorType>(T)->getElementType();
+}
+static bool CanDoGlobalSRA(GlobalVariable *GV) {
+  Constant *Init = GV->getInitializer();
+
+  if (isa<StructType>(Init->getType())) {
+    // nothing to check
+  } else if (IsSRASequential(Init->getType())) {
+    if (GetSRASequentialNumElements(Init->getType()) > 16 &&
+        GV->hasNUsesOrMore(16))
+      return false; // It's not worth it.
+  } else
+    return false;
+
+  return GlobalUsersSafeToSRA(GV);
+}
+
 /// Copy over the debug info for a variable to its SRA replacements.
 static void transferSRADebugInfo(GlobalVariable *GV, GlobalVariable *NGV,
                                  uint64_t FragmentOffsetInBits,
                                  uint64_t FragmentSizeInBits,
-                                 unsigned NumElements) {
+                                 uint64_t VarSize) {
   SmallVector<DIGlobalVariableExpression *, 1> GVs;
   GV->getDebugInfo(GVs);
   for (auto *GVE : GVs) {
     DIVariable *Var = GVE->getVariable();
     DIExpression *Expr = GVE->getExpression();
-    if (NumElements > 1) {
+    // If the FragmentSize is smaller than the variable,
+    // emit a fragment expression.
+    if (FragmentSizeInBits < VarSize) {
       if (auto E = DIExpression::createFragmentExpression(
               Expr, FragmentOffsetInBits, FragmentSizeInBits))
         Expr = *E;
@@ -461,87 +501,91 @@ static void transferSRADebugInfo(GlobalVariable *GV, GlobalVariable *NGV,
 /// insert so that the caller can reprocess it.
 static GlobalVariable *SRAGlobal(GlobalVariable *GV, const DataLayout &DL) {
   // Make sure this global only has simple uses that we can SRA.
-  if (!GlobalUsersSafeToSRA(GV))
+  if (!CanDoGlobalSRA(GV))
     return nullptr;
 
   assert(GV->hasLocalLinkage());
   Constant *Init = GV->getInitializer();
   Type *Ty = Init->getType();
+  uint64_t VarSize = DL.getTypeSizeInBits(Ty);
 
-  std::vector<GlobalVariable *> NewGlobals;
-  Module::GlobalListType &Globals = GV->getParent()->getGlobalList();
+  std::map<unsigned, GlobalVariable *> NewGlobals;
 
   // Get the alignment of the global, either explicit or target-specific.
-  unsigned StartAlignment = GV->getAlignment();
-  if (StartAlignment == 0)
-    StartAlignment = DL.getABITypeAlignment(GV->getType());
+  Align StartAlignment =
+      DL.getValueOrABITypeAlignment(GV->getAlign(), GV->getType());
 
-  if (StructType *STy = dyn_cast<StructType>(Ty)) {
-    unsigned NumElements = STy->getNumElements();
-    NewGlobals.reserve(NumElements);
-    const StructLayout &Layout = *DL.getStructLayout(STy);
-    for (unsigned i = 0, e = NumElements; i != e; ++i) {
-      Constant *In = Init->getAggregateElement(i);
-      assert(In && "Couldn't get element of initializer?");
-      GlobalVariable *NGV = new GlobalVariable(STy->getElementType(i), false,
-                                               GlobalVariable::InternalLinkage,
-                                               In, GV->getName()+"."+Twine(i),
-                                               GV->getThreadLocalMode(),
-                                              GV->getType()->getAddressSpace());
-      NGV->setExternallyInitialized(GV->isExternallyInitialized());
-      NGV->copyAttributesFrom(GV);
-      Globals.push_back(NGV);
-      NewGlobals.push_back(NGV);
+  // Loop over all users and create replacement variables for used aggregate
+  // elements.
+  for (User *GEP : GV->users()) {
+    assert(((isa<ConstantExpr>(GEP) && cast<ConstantExpr>(GEP)->getOpcode() ==
+                                           Instruction::GetElementPtr) ||
+            isa<GetElementPtrInst>(GEP)) &&
+           "NonGEP CE's are not SRAable!");
+
+    // Ignore the 1th operand, which has to be zero or else the program is quite
+    // broken (undefined).  Get the 2nd operand, which is the structure or array
+    // index.
+    unsigned ElementIdx = cast<ConstantInt>(GEP->getOperand(2))->getZExtValue();
+    if (NewGlobals.count(ElementIdx) == 1)
+      continue; // we`ve already created replacement variable
+    assert(NewGlobals.count(ElementIdx) == 0);
+
+    Type *ElTy = nullptr;
+    if (StructType *STy = dyn_cast<StructType>(Ty))
+      ElTy = STy->getElementType(ElementIdx);
+    else
+      ElTy = GetSRASequentialElementType(Ty);
+    assert(ElTy);
+
+    Constant *In = Init->getAggregateElement(ElementIdx);
+    assert(In && "Couldn't get element of initializer?");
+
+    GlobalVariable *NGV = new GlobalVariable(
+        ElTy, false, GlobalVariable::InternalLinkage, In,
+        GV->getName() + "." + Twine(ElementIdx), GV->getThreadLocalMode(),
+        GV->getType()->getAddressSpace());
+    NGV->setExternallyInitialized(GV->isExternallyInitialized());
+    NGV->copyAttributesFrom(GV);
+    NewGlobals.insert(std::make_pair(ElementIdx, NGV));
+
+    if (StructType *STy = dyn_cast<StructType>(Ty)) {
+      const StructLayout &Layout = *DL.getStructLayout(STy);
 
       // Calculate the known alignment of the field.  If the original aggregate
       // had 256 byte alignment for example, something might depend on that:
       // propagate info to each field.
-      uint64_t FieldOffset = Layout.getElementOffset(i);
-      Align NewAlign(MinAlign(StartAlignment, FieldOffset));
-      if (NewAlign > Align(DL.getABITypeAlignment(STy->getElementType(i))))
+      uint64_t FieldOffset = Layout.getElementOffset(ElementIdx);
+      Align NewAlign = commonAlignment(StartAlignment, FieldOffset);
+      if (NewAlign > DL.getABITypeAlign(STy->getElementType(ElementIdx)))
         NGV->setAlignment(NewAlign);
 
       // Copy over the debug info for the variable.
       uint64_t Size = DL.getTypeAllocSizeInBits(NGV->getValueType());
-      uint64_t FragmentOffsetInBits = Layout.getElementOffsetInBits(i);
-      transferSRADebugInfo(GV, NGV, FragmentOffsetInBits, Size, NumElements);
-    }
-  } else if (SequentialType *STy = dyn_cast<SequentialType>(Ty)) {
-    unsigned NumElements = STy->getNumElements();
-    if (NumElements > 16 && GV->hasNUsesOrMore(16))
-      return nullptr; // It's not worth it.
-    NewGlobals.reserve(NumElements);
-    auto ElTy = STy->getElementType();
-    uint64_t EltSize = DL.getTypeAllocSize(ElTy);
-    Align EltAlign(DL.getABITypeAlignment(ElTy));
-    uint64_t FragmentSizeInBits = DL.getTypeAllocSizeInBits(ElTy);
-    for (unsigned i = 0, e = NumElements; i != e; ++i) {
-      Constant *In = Init->getAggregateElement(i);
-      assert(In && "Couldn't get element of initializer?");
-
-      GlobalVariable *NGV = new GlobalVariable(STy->getElementType(), false,
-                                               GlobalVariable::InternalLinkage,
-                                               In, GV->getName()+"."+Twine(i),
-                                               GV->getThreadLocalMode(),
-                                              GV->getType()->getAddressSpace());
-      NGV->setExternallyInitialized(GV->isExternallyInitialized());
-      NGV->copyAttributesFrom(GV);
-      Globals.push_back(NGV);
-      NewGlobals.push_back(NGV);
+      uint64_t FragmentOffsetInBits = Layout.getElementOffsetInBits(ElementIdx);
+      transferSRADebugInfo(GV, NGV, FragmentOffsetInBits, Size, VarSize);
+    } else {
+      uint64_t EltSize = DL.getTypeAllocSize(ElTy);
+      Align EltAlign = DL.getABITypeAlign(ElTy);
+      uint64_t FragmentSizeInBits = DL.getTypeAllocSizeInBits(ElTy);
 
       // Calculate the known alignment of the field.  If the original aggregate
       // had 256 byte alignment for example, something might depend on that:
       // propagate info to each field.
-      Align NewAlign(MinAlign(StartAlignment, EltSize * i));
+      Align NewAlign = commonAlignment(StartAlignment, EltSize * ElementIdx);
       if (NewAlign > EltAlign)
         NGV->setAlignment(NewAlign);
-      transferSRADebugInfo(GV, NGV, FragmentSizeInBits * i, FragmentSizeInBits,
-                           NumElements);
+      transferSRADebugInfo(GV, NGV, FragmentSizeInBits * ElementIdx,
+                           FragmentSizeInBits, VarSize);
     }
   }
 
   if (NewGlobals.empty())
     return nullptr;
+
+  Module::GlobalListType &Globals = GV->getParent()->getGlobalList();
+  for (auto NewGlobalVar : NewGlobals)
+    Globals.push_back(NewGlobalVar.second);
 
   LLVM_DEBUG(dbgs() << "PERFORMING GLOBAL SRA ON: " << *GV << "\n");
 
@@ -558,11 +602,11 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV, const DataLayout &DL) {
     // Ignore the 1th operand, which has to be zero or else the program is quite
     // broken (undefined).  Get the 2nd operand, which is the structure or array
     // index.
-    unsigned Val = cast<ConstantInt>(GEP->getOperand(2))->getZExtValue();
-    if (Val >= NewGlobals.size()) Val = 0; // Out of bound array access.
+    unsigned ElementIdx = cast<ConstantInt>(GEP->getOperand(2))->getZExtValue();
+    assert(NewGlobals.count(ElementIdx) == 1);
 
-    Value *NewPtr = NewGlobals[Val];
-    Type *NewTy = NewGlobals[Val]->getValueType();
+    Value *NewPtr = NewGlobals[ElementIdx];
+    Type *NewTy = NewGlobals[ElementIdx]->getValueType();
 
     // Form a shorter GEP if needed.
     if (GEP->getNumOperands() > 3) {
@@ -580,10 +624,28 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV, const DataLayout &DL) {
         for (unsigned i = 3, e = GEPI->getNumOperands(); i != e; ++i)
           Idxs.push_back(GEPI->getOperand(i));
         NewPtr = GetElementPtrInst::Create(
-            NewTy, NewPtr, Idxs, GEPI->getName() + "." + Twine(Val), GEPI);
+            NewTy, NewPtr, Idxs, GEPI->getName() + "." + Twine(ElementIdx),
+            GEPI);
       }
     }
     GEP->replaceAllUsesWith(NewPtr);
+
+    // We changed the pointer of any memory access user. Recalculate alignments.
+    for (User *U : NewPtr->users()) {
+      if (auto *Load = dyn_cast<LoadInst>(U)) {
+        Align PrefAlign = DL.getPrefTypeAlign(Load->getType());
+        Align NewAlign = getOrEnforceKnownAlignment(Load->getPointerOperand(),
+                                                    PrefAlign, DL, Load);
+        Load->setAlignment(NewAlign);
+      }
+      if (auto *Store = dyn_cast<StoreInst>(U)) {
+        Align PrefAlign =
+            DL.getPrefTypeAlign(Store->getValueOperand()->getType());
+        Align NewAlign = getOrEnforceKnownAlignment(Store->getPointerOperand(),
+                                                    PrefAlign, DL, Store);
+        Store->setAlignment(NewAlign);
+      }
+    }
 
     if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(GEP))
       GEPI->eraseFromParent();
@@ -595,17 +657,8 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV, const DataLayout &DL) {
   Globals.erase(GV);
   ++NumSRA;
 
-  // Loop over the new globals array deleting any globals that are obviously
-  // dead.  This can arise due to scalarization of a structure or an array that
-  // has elements that are dead.
-  unsigned FirstGlobal = 0;
-  for (unsigned i = 0, e = NewGlobals.size(); i != e; ++i)
-    if (NewGlobals[i]->use_empty()) {
-      Globals.erase(NewGlobals[i]);
-      if (FirstGlobal == i) ++FirstGlobal;
-    }
-
-  return FirstGlobal != NewGlobals.size() ? NewGlobals[FirstGlobal] : nullptr;
+  assert(NewGlobals.size() > 0);
+  return NewGlobals.begin()->second;
 }
 
 /// Return true if all users of the specified value will trap if the value is
@@ -628,12 +681,12 @@ static bool AllUsesOfValueWillTrapIfNull(const Value *V,
         return false;  // Storing the value.
       }
     } else if (const CallInst *CI = dyn_cast<CallInst>(U)) {
-      if (CI->getCalledValue() != V) {
+      if (CI->getCalledOperand() != V) {
         //cerr << "NONTRAPPING USE: " << *U;
         return false;  // Not calling the ptr
       }
     } else if (const InvokeInst *II = dyn_cast<InvokeInst>(U)) {
-      if (II->getCalledValue() != V) {
+      if (II->getCalledOperand() != V) {
         //cerr << "NONTRAPPING USE: " << *U;
         return false;  // Not calling the ptr
       }
@@ -646,9 +699,6 @@ static bool AllUsesOfValueWillTrapIfNull(const Value *V,
       // checked.
       if (PHIs.insert(PN).second && !AllUsesOfValueWillTrapIfNull(PN, PHIs))
         return false;
-    } else if (isa<ICmpInst>(U) &&
-               isa<ConstantPointerNull>(U->getOperand(1))) {
-      // Ignore icmp X, null
     } else {
       //cerr << "NONTRAPPING USE: " << *U;
       return false;
@@ -693,17 +743,17 @@ static bool OptimizeAwayTrappingUsesOfValue(Value *V, Constant *NewV) {
         Changed = true;
       }
     } else if (isa<CallInst>(I) || isa<InvokeInst>(I)) {
-      CallSite CS(I);
-      if (CS.getCalledValue() == V) {
+      CallBase *CB = cast<CallBase>(I);
+      if (CB->getCalledOperand() == V) {
         // Calling through the pointer!  Turn into a direct call, but be careful
         // that the pointer is not also being passed as an argument.
-        CS.setCalledFunction(NewV);
+        CB->setCalledOperand(NewV);
         Changed = true;
         bool PassedAsArg = false;
-        for (unsigned i = 0, e = CS.arg_size(); i != e; ++i)
-          if (CS.getArgument(i) == V) {
+        for (unsigned i = 0, e = CB->arg_size(); i != e; ++i)
+          if (CB->getArgOperand(i) == V) {
             PassedAsArg = true;
-            CS.setArgument(i, NewV);
+            CB->setArgOperand(i, NewV);
           }
 
         if (PassedAsArg) {
@@ -892,7 +942,7 @@ OptimizeGlobalAddressOfMalloc(GlobalVariable *GV, CallInst *CI, Type *AllocTy,
     if (StoreInst *SI = dyn_cast<StoreInst>(GV->user_back())) {
       // The global is initialized when the store to it occurs.
       new StoreInst(ConstantInt::getTrue(GV->getContext()), InitBool, false,
-                    None, SI->getOrdering(), SI->getSyncScopeID(), SI);
+                    Align(1), SI->getOrdering(), SI->getSyncScopeID(), SI);
       SI->eraseFromParent();
       continue;
     }
@@ -909,7 +959,7 @@ OptimizeGlobalAddressOfMalloc(GlobalVariable *GV, CallInst *CI, Type *AllocTy,
       // Replace the cmp X, 0 with a use of the bool value.
       // Sink the load to where the compare was, if atomic rules allow us to.
       Value *LV = new LoadInst(InitBool->getValueType(), InitBool,
-                               InitBool->getName() + ".val", false, None,
+                               InitBool->getName() + ".val", false, Align(1),
                                LI->getOrdering(), LI->getSyncScopeID(),
                                LI->isUnordered() ? (Instruction *)ICI : LI);
       InitBoolUsed = true;
@@ -962,9 +1012,9 @@ OptimizeGlobalAddressOfMalloc(GlobalVariable *GV, CallInst *CI, Type *AllocTy,
 /// Scan the use-list of V checking to make sure that there are no complex uses
 /// of V.  We permit simple things like dereferencing the pointer, but not
 /// storing through the address, unless it is to the specified global.
-static bool ValueIsOnlyUsedLocallyOrStoredToOneGlobal(const Instruction *V,
-                                                      const GlobalVariable *GV,
-                                        SmallPtrSetImpl<const PHINode*> &PHIs) {
+static bool
+valueIsOnlyUsedLocallyOrStoredToOneGlobal(const Instruction *V,
+                                          const GlobalVariable *GV) {
   for (const User *U : V->users()) {
     const Instruction *Inst = cast<Instruction>(U);
 
@@ -978,24 +1028,8 @@ static bool ValueIsOnlyUsedLocallyOrStoredToOneGlobal(const Instruction *V,
       continue; // Otherwise, storing through it, or storing into GV... fine.
     }
 
-    // Must index into the array and into the struct.
-    if (isa<GetElementPtrInst>(Inst) && Inst->getNumOperands() >= 3) {
-      if (!ValueIsOnlyUsedLocallyOrStoredToOneGlobal(Inst, GV, PHIs))
-        return false;
-      continue;
-    }
-
-    if (const PHINode *PN = dyn_cast<PHINode>(Inst)) {
-      // PHIs are ok if all uses are ok.  Don't infinitely recurse through PHI
-      // cycles.
-      if (PHIs.insert(PN).second)
-        if (!ValueIsOnlyUsedLocallyOrStoredToOneGlobal(PN, GV, PHIs))
-          return false;
-      continue;
-    }
-
     if (const BitCastInst *BCI = dyn_cast<BitCastInst>(Inst)) {
-      if (!ValueIsOnlyUsedLocallyOrStoredToOneGlobal(BCI, GV, PHIs))
+      if (!valueIsOnlyUsedLocallyOrStoredToOneGlobal(BCI, GV))
         return false;
       continue;
     }
@@ -1003,465 +1037,6 @@ static bool ValueIsOnlyUsedLocallyOrStoredToOneGlobal(const Instruction *V,
     return false;
   }
   return true;
-}
-
-/// The Alloc pointer is stored into GV somewhere.  Transform all uses of the
-/// allocation into loads from the global and uses of the resultant pointer.
-/// Further, delete the store into GV.  This assumes that these value pass the
-/// 'ValueIsOnlyUsedLocallyOrStoredToOneGlobal' predicate.
-static void ReplaceUsesOfMallocWithGlobal(Instruction *Alloc,
-                                          GlobalVariable *GV) {
-  while (!Alloc->use_empty()) {
-    Instruction *U = cast<Instruction>(*Alloc->user_begin());
-    Instruction *InsertPt = U;
-    if (StoreInst *SI = dyn_cast<StoreInst>(U)) {
-      // If this is the store of the allocation into the global, remove it.
-      if (SI->getOperand(1) == GV) {
-        SI->eraseFromParent();
-        continue;
-      }
-    } else if (PHINode *PN = dyn_cast<PHINode>(U)) {
-      // Insert the load in the corresponding predecessor, not right before the
-      // PHI.
-      InsertPt = PN->getIncomingBlock(*Alloc->use_begin())->getTerminator();
-    } else if (isa<BitCastInst>(U)) {
-      // Must be bitcast between the malloc and store to initialize the global.
-      ReplaceUsesOfMallocWithGlobal(U, GV);
-      U->eraseFromParent();
-      continue;
-    } else if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(U)) {
-      // If this is a "GEP bitcast" and the user is a store to the global, then
-      // just process it as a bitcast.
-      if (GEPI->hasAllZeroIndices() && GEPI->hasOneUse())
-        if (StoreInst *SI = dyn_cast<StoreInst>(GEPI->user_back()))
-          if (SI->getOperand(1) == GV) {
-            // Must be bitcast GEP between the malloc and store to initialize
-            // the global.
-            ReplaceUsesOfMallocWithGlobal(GEPI, GV);
-            GEPI->eraseFromParent();
-            continue;
-          }
-    }
-
-    // Insert a load from the global, and use it instead of the malloc.
-    Value *NL =
-        new LoadInst(GV->getValueType(), GV, GV->getName() + ".val", InsertPt);
-    U->replaceUsesOfWith(Alloc, NL);
-  }
-}
-
-/// Verify that all uses of V (a load, or a phi of a load) are simple enough to
-/// perform heap SRA on.  This permits GEP's that index through the array and
-/// struct field, icmps of null, and PHIs.
-static bool LoadUsesSimpleEnoughForHeapSRA(const Value *V,
-                        SmallPtrSetImpl<const PHINode*> &LoadUsingPHIs,
-                        SmallPtrSetImpl<const PHINode*> &LoadUsingPHIsPerLoad) {
-  // We permit two users of the load: setcc comparing against the null
-  // pointer, and a getelementptr of a specific form.
-  for (const User *U : V->users()) {
-    const Instruction *UI = cast<Instruction>(U);
-
-    // Comparison against null is ok.
-    if (const ICmpInst *ICI = dyn_cast<ICmpInst>(UI)) {
-      if (!isa<ConstantPointerNull>(ICI->getOperand(1)))
-        return false;
-      continue;
-    }
-
-    // getelementptr is also ok, but only a simple form.
-    if (const GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(UI)) {
-      // Must index into the array and into the struct.
-      if (GEPI->getNumOperands() < 3)
-        return false;
-
-      // Otherwise the GEP is ok.
-      continue;
-    }
-
-    if (const PHINode *PN = dyn_cast<PHINode>(UI)) {
-      if (!LoadUsingPHIsPerLoad.insert(PN).second)
-        // This means some phi nodes are dependent on each other.
-        // Avoid infinite looping!
-        return false;
-      if (!LoadUsingPHIs.insert(PN).second)
-        // If we have already analyzed this PHI, then it is safe.
-        continue;
-
-      // Make sure all uses of the PHI are simple enough to transform.
-      if (!LoadUsesSimpleEnoughForHeapSRA(PN,
-                                          LoadUsingPHIs, LoadUsingPHIsPerLoad))
-        return false;
-
-      continue;
-    }
-
-    // Otherwise we don't know what this is, not ok.
-    return false;
-  }
-
-  return true;
-}
-
-/// If all users of values loaded from GV are simple enough to perform HeapSRA,
-/// return true.
-static bool AllGlobalLoadUsesSimpleEnoughForHeapSRA(const GlobalVariable *GV,
-                                                    Instruction *StoredVal) {
-  SmallPtrSet<const PHINode*, 32> LoadUsingPHIs;
-  SmallPtrSet<const PHINode*, 32> LoadUsingPHIsPerLoad;
-  for (const User *U : GV->users())
-    if (const LoadInst *LI = dyn_cast<LoadInst>(U)) {
-      if (!LoadUsesSimpleEnoughForHeapSRA(LI, LoadUsingPHIs,
-                                          LoadUsingPHIsPerLoad))
-        return false;
-      LoadUsingPHIsPerLoad.clear();
-    }
-
-  // If we reach here, we know that all uses of the loads and transitive uses
-  // (through PHI nodes) are simple enough to transform.  However, we don't know
-  // that all inputs the to the PHI nodes are in the same equivalence sets.
-  // Check to verify that all operands of the PHIs are either PHIS that can be
-  // transformed, loads from GV, or MI itself.
-  for (const PHINode *PN : LoadUsingPHIs) {
-    for (unsigned op = 0, e = PN->getNumIncomingValues(); op != e; ++op) {
-      Value *InVal = PN->getIncomingValue(op);
-
-      // PHI of the stored value itself is ok.
-      if (InVal == StoredVal) continue;
-
-      if (const PHINode *InPN = dyn_cast<PHINode>(InVal)) {
-        // One of the PHIs in our set is (optimistically) ok.
-        if (LoadUsingPHIs.count(InPN))
-          continue;
-        return false;
-      }
-
-      // Load from GV is ok.
-      if (const LoadInst *LI = dyn_cast<LoadInst>(InVal))
-        if (LI->getOperand(0) == GV)
-          continue;
-
-      // UNDEF? NULL?
-
-      // Anything else is rejected.
-      return false;
-    }
-  }
-
-  return true;
-}
-
-static Value *GetHeapSROAValue(Value *V, unsigned FieldNo,
-              DenseMap<Value *, std::vector<Value *>> &InsertedScalarizedValues,
-                   std::vector<std::pair<PHINode *, unsigned>> &PHIsToRewrite) {
-  std::vector<Value *> &FieldVals = InsertedScalarizedValues[V];
-
-  if (FieldNo >= FieldVals.size())
-    FieldVals.resize(FieldNo+1);
-
-  // If we already have this value, just reuse the previously scalarized
-  // version.
-  if (Value *FieldVal = FieldVals[FieldNo])
-    return FieldVal;
-
-  // Depending on what instruction this is, we have several cases.
-  Value *Result;
-  if (LoadInst *LI = dyn_cast<LoadInst>(V)) {
-    // This is a scalarized version of the load from the global.  Just create
-    // a new Load of the scalarized global.
-    Value *V = GetHeapSROAValue(LI->getOperand(0), FieldNo,
-                                InsertedScalarizedValues, PHIsToRewrite);
-    Result = new LoadInst(V->getType()->getPointerElementType(), V,
-                          LI->getName() + ".f" + Twine(FieldNo), LI);
-  } else {
-    PHINode *PN = cast<PHINode>(V);
-    // PN's type is pointer to struct.  Make a new PHI of pointer to struct
-    // field.
-
-    PointerType *PTy = cast<PointerType>(PN->getType());
-    StructType *ST = cast<StructType>(PTy->getElementType());
-
-    unsigned AS = PTy->getAddressSpace();
-    PHINode *NewPN =
-      PHINode::Create(PointerType::get(ST->getElementType(FieldNo), AS),
-                     PN->getNumIncomingValues(),
-                     PN->getName()+".f"+Twine(FieldNo), PN);
-    Result = NewPN;
-    PHIsToRewrite.push_back(std::make_pair(PN, FieldNo));
-  }
-
-  return FieldVals[FieldNo] = Result;
-}
-
-/// Given a load instruction and a value derived from the load, rewrite the
-/// derived value to use the HeapSRoA'd load.
-static void RewriteHeapSROALoadUser(Instruction *LoadUser,
-              DenseMap<Value *, std::vector<Value *>> &InsertedScalarizedValues,
-                   std::vector<std::pair<PHINode *, unsigned>> &PHIsToRewrite) {
-  // If this is a comparison against null, handle it.
-  if (ICmpInst *SCI = dyn_cast<ICmpInst>(LoadUser)) {
-    assert(isa<ConstantPointerNull>(SCI->getOperand(1)));
-    // If we have a setcc of the loaded pointer, we can use a setcc of any
-    // field.
-    Value *NPtr = GetHeapSROAValue(SCI->getOperand(0), 0,
-                                   InsertedScalarizedValues, PHIsToRewrite);
-
-    Value *New = new ICmpInst(SCI, SCI->getPredicate(), NPtr,
-                              Constant::getNullValue(NPtr->getType()),
-                              SCI->getName());
-    SCI->replaceAllUsesWith(New);
-    SCI->eraseFromParent();
-    return;
-  }
-
-  // Handle 'getelementptr Ptr, Idx, i32 FieldNo ...'
-  if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(LoadUser)) {
-    assert(GEPI->getNumOperands() >= 3 && isa<ConstantInt>(GEPI->getOperand(2))
-           && "Unexpected GEPI!");
-
-    // Load the pointer for this field.
-    unsigned FieldNo = cast<ConstantInt>(GEPI->getOperand(2))->getZExtValue();
-    Value *NewPtr = GetHeapSROAValue(GEPI->getOperand(0), FieldNo,
-                                     InsertedScalarizedValues, PHIsToRewrite);
-
-    // Create the new GEP idx vector.
-    SmallVector<Value*, 8> GEPIdx;
-    GEPIdx.push_back(GEPI->getOperand(1));
-    GEPIdx.append(GEPI->op_begin()+3, GEPI->op_end());
-
-    Value *NGEPI = GetElementPtrInst::Create(GEPI->getResultElementType(), NewPtr, GEPIdx,
-                                             GEPI->getName(), GEPI);
-    GEPI->replaceAllUsesWith(NGEPI);
-    GEPI->eraseFromParent();
-    return;
-  }
-
-  // Recursively transform the users of PHI nodes.  This will lazily create the
-  // PHIs that are needed for individual elements.  Keep track of what PHIs we
-  // see in InsertedScalarizedValues so that we don't get infinite loops (very
-  // antisocial).  If the PHI is already in InsertedScalarizedValues, it has
-  // already been seen first by another load, so its uses have already been
-  // processed.
-  PHINode *PN = cast<PHINode>(LoadUser);
-  if (!InsertedScalarizedValues.insert(std::make_pair(PN,
-                                              std::vector<Value *>())).second)
-    return;
-
-  // If this is the first time we've seen this PHI, recursively process all
-  // users.
-  for (auto UI = PN->user_begin(), E = PN->user_end(); UI != E;) {
-    Instruction *User = cast<Instruction>(*UI++);
-    RewriteHeapSROALoadUser(User, InsertedScalarizedValues, PHIsToRewrite);
-  }
-}
-
-/// We are performing Heap SRoA on a global.  Ptr is a value loaded from the
-/// global.  Eliminate all uses of Ptr, making them use FieldGlobals instead.
-/// All uses of loaded values satisfy AllGlobalLoadUsesSimpleEnoughForHeapSRA.
-static void RewriteUsesOfLoadForHeapSRoA(LoadInst *Load,
-              DenseMap<Value *, std::vector<Value *>> &InsertedScalarizedValues,
-                  std::vector<std::pair<PHINode *, unsigned> > &PHIsToRewrite) {
-  for (auto UI = Load->user_begin(), E = Load->user_end(); UI != E;) {
-    Instruction *User = cast<Instruction>(*UI++);
-    RewriteHeapSROALoadUser(User, InsertedScalarizedValues, PHIsToRewrite);
-  }
-
-  if (Load->use_empty()) {
-    Load->eraseFromParent();
-    InsertedScalarizedValues.erase(Load);
-  }
-}
-
-/// CI is an allocation of an array of structures.  Break it up into multiple
-/// allocations of arrays of the fields.
-static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, CallInst *CI,
-                                            Value *NElems, const DataLayout &DL,
-                                            const TargetLibraryInfo *TLI) {
-  LLVM_DEBUG(dbgs() << "SROA HEAP ALLOC: " << *GV << "  MALLOC = " << *CI
-                    << '\n');
-  Type *MAT = getMallocAllocatedType(CI, TLI);
-  StructType *STy = cast<StructType>(MAT);
-
-  // There is guaranteed to be at least one use of the malloc (storing
-  // it into GV).  If there are other uses, change them to be uses of
-  // the global to simplify later code.  This also deletes the store
-  // into GV.
-  ReplaceUsesOfMallocWithGlobal(CI, GV);
-
-  // Okay, at this point, there are no users of the malloc.  Insert N
-  // new mallocs at the same place as CI, and N globals.
-  std::vector<Value *> FieldGlobals;
-  std::vector<Value *> FieldMallocs;
-
-  SmallVector<OperandBundleDef, 1> OpBundles;
-  CI->getOperandBundlesAsDefs(OpBundles);
-
-  unsigned AS = GV->getType()->getPointerAddressSpace();
-  for (unsigned FieldNo = 0, e = STy->getNumElements(); FieldNo != e;++FieldNo){
-    Type *FieldTy = STy->getElementType(FieldNo);
-    PointerType *PFieldTy = PointerType::get(FieldTy, AS);
-
-    GlobalVariable *NGV = new GlobalVariable(
-        *GV->getParent(), PFieldTy, false, GlobalValue::InternalLinkage,
-        Constant::getNullValue(PFieldTy), GV->getName() + ".f" + Twine(FieldNo),
-        nullptr, GV->getThreadLocalMode());
-    NGV->copyAttributesFrom(GV);
-    FieldGlobals.push_back(NGV);
-
-    unsigned TypeSize = DL.getTypeAllocSize(FieldTy);
-    if (StructType *ST = dyn_cast<StructType>(FieldTy))
-      TypeSize = DL.getStructLayout(ST)->getSizeInBytes();
-    Type *IntPtrTy = DL.getIntPtrType(CI->getType());
-    Value *NMI = CallInst::CreateMalloc(CI, IntPtrTy, FieldTy,
-                                        ConstantInt::get(IntPtrTy, TypeSize),
-                                        NElems, OpBundles, nullptr,
-                                        CI->getName() + ".f" + Twine(FieldNo));
-    FieldMallocs.push_back(NMI);
-    new StoreInst(NMI, NGV, CI);
-  }
-
-  // The tricky aspect of this transformation is handling the case when malloc
-  // fails.  In the original code, malloc failing would set the result pointer
-  // of malloc to null.  In this case, some mallocs could succeed and others
-  // could fail.  As such, we emit code that looks like this:
-  //    F0 = malloc(field0)
-  //    F1 = malloc(field1)
-  //    F2 = malloc(field2)
-  //    if (F0 == 0 || F1 == 0 || F2 == 0) {
-  //      if (F0) { free(F0); F0 = 0; }
-  //      if (F1) { free(F1); F1 = 0; }
-  //      if (F2) { free(F2); F2 = 0; }
-  //    }
-  // The malloc can also fail if its argument is too large.
-  Constant *ConstantZero = ConstantInt::get(CI->getArgOperand(0)->getType(), 0);
-  Value *RunningOr = new ICmpInst(CI, ICmpInst::ICMP_SLT, CI->getArgOperand(0),
-                                  ConstantZero, "isneg");
-  for (unsigned i = 0, e = FieldMallocs.size(); i != e; ++i) {
-    Value *Cond = new ICmpInst(CI, ICmpInst::ICMP_EQ, FieldMallocs[i],
-                             Constant::getNullValue(FieldMallocs[i]->getType()),
-                               "isnull");
-    RunningOr = BinaryOperator::CreateOr(RunningOr, Cond, "tmp", CI);
-  }
-
-  // Split the basic block at the old malloc.
-  BasicBlock *OrigBB = CI->getParent();
-  BasicBlock *ContBB =
-      OrigBB->splitBasicBlock(CI->getIterator(), "malloc_cont");
-
-  // Create the block to check the first condition.  Put all these blocks at the
-  // end of the function as they are unlikely to be executed.
-  BasicBlock *NullPtrBlock = BasicBlock::Create(OrigBB->getContext(),
-                                                "malloc_ret_null",
-                                                OrigBB->getParent());
-
-  // Remove the uncond branch from OrigBB to ContBB, turning it into a cond
-  // branch on RunningOr.
-  OrigBB->getTerminator()->eraseFromParent();
-  BranchInst::Create(NullPtrBlock, ContBB, RunningOr, OrigBB);
-
-  // Within the NullPtrBlock, we need to emit a comparison and branch for each
-  // pointer, because some may be null while others are not.
-  for (unsigned i = 0, e = FieldGlobals.size(); i != e; ++i) {
-    Value *GVVal =
-        new LoadInst(cast<GlobalVariable>(FieldGlobals[i])->getValueType(),
-                     FieldGlobals[i], "tmp", NullPtrBlock);
-    Value *Cmp = new ICmpInst(*NullPtrBlock, ICmpInst::ICMP_NE, GVVal,
-                              Constant::getNullValue(GVVal->getType()));
-    BasicBlock *FreeBlock = BasicBlock::Create(Cmp->getContext(), "free_it",
-                                               OrigBB->getParent());
-    BasicBlock *NextBlock = BasicBlock::Create(Cmp->getContext(), "next",
-                                               OrigBB->getParent());
-    Instruction *BI = BranchInst::Create(FreeBlock, NextBlock,
-                                         Cmp, NullPtrBlock);
-
-    // Fill in FreeBlock.
-    CallInst::CreateFree(GVVal, OpBundles, BI);
-    new StoreInst(Constant::getNullValue(GVVal->getType()), FieldGlobals[i],
-                  FreeBlock);
-    BranchInst::Create(NextBlock, FreeBlock);
-
-    NullPtrBlock = NextBlock;
-  }
-
-  BranchInst::Create(ContBB, NullPtrBlock);
-
-  // CI is no longer needed, remove it.
-  CI->eraseFromParent();
-
-  /// As we process loads, if we can't immediately update all uses of the load,
-  /// keep track of what scalarized loads are inserted for a given load.
-  DenseMap<Value *, std::vector<Value *>> InsertedScalarizedValues;
-  InsertedScalarizedValues[GV] = FieldGlobals;
-
-  std::vector<std::pair<PHINode *, unsigned>> PHIsToRewrite;
-
-  // Okay, the malloc site is completely handled.  All of the uses of GV are now
-  // loads, and all uses of those loads are simple.  Rewrite them to use loads
-  // of the per-field globals instead.
-  for (auto UI = GV->user_begin(), E = GV->user_end(); UI != E;) {
-    Instruction *User = cast<Instruction>(*UI++);
-
-    if (LoadInst *LI = dyn_cast<LoadInst>(User)) {
-      RewriteUsesOfLoadForHeapSRoA(LI, InsertedScalarizedValues, PHIsToRewrite);
-      continue;
-    }
-
-    // Must be a store of null.
-    StoreInst *SI = cast<StoreInst>(User);
-    assert(isa<ConstantPointerNull>(SI->getOperand(0)) &&
-           "Unexpected heap-sra user!");
-
-    // Insert a store of null into each global.
-    for (unsigned i = 0, e = FieldGlobals.size(); i != e; ++i) {
-      Type *ValTy = cast<GlobalValue>(FieldGlobals[i])->getValueType();
-      Constant *Null = Constant::getNullValue(ValTy);
-      new StoreInst(Null, FieldGlobals[i], SI);
-    }
-    // Erase the original store.
-    SI->eraseFromParent();
-  }
-
-  // While we have PHIs that are interesting to rewrite, do it.
-  while (!PHIsToRewrite.empty()) {
-    PHINode *PN = PHIsToRewrite.back().first;
-    unsigned FieldNo = PHIsToRewrite.back().second;
-    PHIsToRewrite.pop_back();
-    PHINode *FieldPN = cast<PHINode>(InsertedScalarizedValues[PN][FieldNo]);
-    assert(FieldPN->getNumIncomingValues() == 0 &&"Already processed this phi");
-
-    // Add all the incoming values.  This can materialize more phis.
-    for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
-      Value *InVal = PN->getIncomingValue(i);
-      InVal = GetHeapSROAValue(InVal, FieldNo, InsertedScalarizedValues,
-                               PHIsToRewrite);
-      FieldPN->addIncoming(InVal, PN->getIncomingBlock(i));
-    }
-  }
-
-  // Drop all inter-phi links and any loads that made it this far.
-  for (DenseMap<Value *, std::vector<Value *>>::iterator
-       I = InsertedScalarizedValues.begin(), E = InsertedScalarizedValues.end();
-       I != E; ++I) {
-    if (PHINode *PN = dyn_cast<PHINode>(I->first))
-      PN->dropAllReferences();
-    else if (LoadInst *LI = dyn_cast<LoadInst>(I->first))
-      LI->dropAllReferences();
-  }
-
-  // Delete all the phis and loads now that inter-references are dead.
-  for (DenseMap<Value *, std::vector<Value *>>::iterator
-       I = InsertedScalarizedValues.begin(), E = InsertedScalarizedValues.end();
-       I != E; ++I) {
-    if (PHINode *PN = dyn_cast<PHINode>(I->first))
-      PN->eraseFromParent();
-    else if (LoadInst *LI = dyn_cast<LoadInst>(I->first))
-      LI->eraseFromParent();
-  }
-
-  // The old global is now dead, remove it.
-  GV->eraseFromParent();
-
-  ++NumHeapSRA;
-  return cast<GlobalVariable>(FieldGlobals[0]);
 }
 
 /// This function is called when we see a pointer global variable with a single
@@ -1486,11 +1061,9 @@ static bool tryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV, CallInst *CI,
 
   // We can't optimize this if the malloc itself is used in a complex way,
   // for example, being stored into multiple globals.  This allows the
-  // malloc to be stored into the specified global, loaded icmp'd, and
-  // GEP'd.  These are all things we could transform to using the global
-  // for.
-  SmallPtrSet<const PHINode*, 8> PHIs;
-  if (!ValueIsOnlyUsedLocallyOrStoredToOneGlobal(CI, GV, PHIs))
+  // malloc to be stored into the specified global, loaded icmp'd.
+  // These are all things we could transform to using the global for.
+  if (!valueIsOnlyUsedLocallyOrStoredToOneGlobal(CI, GV))
     return false;
 
   // If we have a global that is only initialized with a fixed size malloc,
@@ -1510,54 +1083,6 @@ static bool tryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV, CallInst *CI,
       OptimizeGlobalAddressOfMalloc(GV, CI, AllocTy, NElements, DL, TLI);
       return true;
     }
-
-  // If the allocation is an array of structures, consider transforming this
-  // into multiple malloc'd arrays, one for each field.  This is basically
-  // SRoA for malloc'd memory.
-
-  if (Ordering != AtomicOrdering::NotAtomic)
-    return false;
-
-  // If this is an allocation of a fixed size array of structs, analyze as a
-  // variable size array.  malloc [100 x struct],1 -> malloc struct, 100
-  if (NElems == ConstantInt::get(CI->getArgOperand(0)->getType(), 1))
-    if (ArrayType *AT = dyn_cast<ArrayType>(AllocTy))
-      AllocTy = AT->getElementType();
-
-  StructType *AllocSTy = dyn_cast<StructType>(AllocTy);
-  if (!AllocSTy)
-    return false;
-
-  // This the structure has an unreasonable number of fields, leave it
-  // alone.
-  if (AllocSTy->getNumElements() <= 16 && AllocSTy->getNumElements() != 0 &&
-      AllGlobalLoadUsesSimpleEnoughForHeapSRA(GV, CI)) {
-
-    // If this is a fixed size array, transform the Malloc to be an alloc of
-    // structs.  malloc [100 x struct],1 -> malloc struct, 100
-    if (ArrayType *AT = dyn_cast<ArrayType>(getMallocAllocatedType(CI, TLI))) {
-      Type *IntPtrTy = DL.getIntPtrType(CI->getType());
-      unsigned TypeSize = DL.getStructLayout(AllocSTy)->getSizeInBytes();
-      Value *AllocSize = ConstantInt::get(IntPtrTy, TypeSize);
-      Value *NumElements = ConstantInt::get(IntPtrTy, AT->getNumElements());
-      SmallVector<OperandBundleDef, 1> OpBundles;
-      CI->getOperandBundlesAsDefs(OpBundles);
-      Instruction *Malloc =
-          CallInst::CreateMalloc(CI, IntPtrTy, AllocSTy, AllocSize, NumElements,
-                                 OpBundles, nullptr, CI->getName());
-      Instruction *Cast = new BitCastInst(Malloc, CI->getType(), "tmp", CI);
-      CI->replaceAllUsesWith(Cast);
-      CI->eraseFromParent();
-      if (BitCastInst *BCI = dyn_cast<BitCastInst>(Malloc))
-        CI = cast<CallInst>(BCI->getOperand(0));
-      else
-        CI = cast<CallInst>(Malloc);
-    }
-
-    PerformHeapAllocSRoA(GV, CI, getMallocArraySize(CI, DL, TLI, true), DL,
-                         TLI);
-    return true;
-  }
 
   return false;
 }
@@ -1716,7 +1241,7 @@ static bool TryToShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal) {
           assert(LI->getOperand(0) == GV && "Not a copy!");
           // Insert a new load, to preserve the saved value.
           StoreVal = new LoadInst(NewGV->getValueType(), NewGV,
-                                  LI->getName() + ".b", false, None,
+                                  LI->getName() + ".b", false, Align(1),
                                   LI->getOrdering(), LI->getSyncScopeID(), LI);
         } else {
           assert((isa<CastInst>(StoredVal) || isa<SelectInst>(StoredVal)) &&
@@ -1726,14 +1251,14 @@ static bool TryToShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal) {
         }
       }
       StoreInst *NSI =
-          new StoreInst(StoreVal, NewGV, false, None, SI->getOrdering(),
+          new StoreInst(StoreVal, NewGV, false, Align(1), SI->getOrdering(),
                         SI->getSyncScopeID(), SI);
       NSI->setDebugLoc(SI->getDebugLoc());
     } else {
       // Change the load into a load of bool then a select.
       LoadInst *LI = cast<LoadInst>(UI);
       LoadInst *NLI = new LoadInst(NewGV->getValueType(), NewGV,
-                                   LI->getName() + ".b", false, None,
+                                   LI->getName() + ".b", false, Align(1),
                                    LI->getOrdering(), LI->getSyncScopeID(), LI);
       Instruction *NSI;
       if (IsOneZero)
@@ -1851,7 +1376,8 @@ static bool isPointerValueDeadOnEntryToFunction(
           // and the number of bits loaded in L is less than or equal to
           // the number of bits stored in S.
           return DT.dominates(S, L) &&
-                 DL.getTypeStoreSize(LTy) <= DL.getTypeStoreSize(STy);
+                 DL.getTypeStoreSize(LTy).getFixedSize() <=
+                     DL.getTypeStoreSize(STy).getFixedSize();
         }))
       return false;
   }
@@ -1903,8 +1429,7 @@ static void makeAllConstantUsesInstructions(Constant *C) {
   SmallVector<Value*,4> UUsers;
   for (auto *U : Users) {
     UUsers.clear();
-    for (auto *UU : U->users())
-      UUsers.push_back(UU);
+    append_range(UUsers, U->users());
     for (auto *UU : UUsers) {
       Instruction *UI = cast<Instruction>(UU);
       Instruction *NewU = U->getAsInstruction();
@@ -1961,12 +1486,13 @@ processInternalGlobal(GlobalVariable *GV, const GlobalStatus &GS,
     return true;
   }
 
+  bool Changed = false;
+
   // If the global is never loaded (but may be stored to), it is dead.
   // Delete it now.
   if (!GS.IsLoaded) {
     LLVM_DEBUG(dbgs() << "GLOBAL NEVER LOADED: " << *GV << "\n");
 
-    bool Changed;
     if (isLeakCheckerRoot(GV)) {
       // Delete any constant stores to the global.
       Changed = CleanupPointerRootUsers(GV, GetTLI);
@@ -1992,11 +1518,14 @@ processInternalGlobal(GlobalVariable *GV, const GlobalStatus &GS,
     // Don't actually mark a global constant if it's atomic because atomic loads
     // are implemented by a trivial cmpxchg in some edge-cases and that usually
     // requires write access to the variable even if it's not actually changed.
-    if (GS.Ordering == AtomicOrdering::NotAtomic)
+    if (GS.Ordering == AtomicOrdering::NotAtomic) {
+      assert(!GV->isConstant() && "Expected a non-constant global");
       GV->setConstant(true);
+      Changed = true;
+    }
 
     // Clean up any obviously simplifiable users now.
-    CleanupConstantGlobalUsers(GV, GV->getInitializer(), DL, GetTLI);
+    Changed |= CleanupConstantGlobalUsers(GV, GV->getInitializer(), DL, GetTLI);
 
     // If the global is dead now, just nuke it.
     if (GV->use_empty()) {
@@ -2056,7 +1585,7 @@ processInternalGlobal(GlobalVariable *GV, const GlobalStatus &GS,
     }
   }
 
-  return false;
+  return Changed;
 }
 
 /// Analyze the specified global variable and optimize it if possible.  If we
@@ -2104,8 +1633,7 @@ static void ChangeCalleesToFastCall(Function *F) {
   for (User *U : F->users()) {
     if (isa<BlockAddress>(U))
       continue;
-    CallSite CS(cast<Instruction>(U));
-    CS.setCallingConv(CallingConv::Fast);
+    cast<CallBase>(U)->setCallingConv(CallingConv::Fast);
   }
 }
 
@@ -2122,8 +1650,8 @@ static void RemoveAttribute(Function *F, Attribute::AttrKind A) {
   for (User *U : F->users()) {
     if (isa<BlockAddress>(U))
       continue;
-    CallSite CS(cast<Instruction>(U));
-    CS.setAttributes(StripAttr(F->getContext(), CS.getAttributes(), A));
+    CallBase *CB = cast<CallBase>(U);
+    CB->setAttributes(StripAttr(F->getContext(), CB->getAttributes(), A));
   }
 }
 
@@ -2162,12 +1690,12 @@ static bool hasChangeableCC(Function *F) {
 
 /// Return true if the block containing the call site has a BlockFrequency of
 /// less than ColdCCRelFreq% of the entry block.
-static bool isColdCallSite(CallSite CS, BlockFrequencyInfo &CallerBFI) {
+static bool isColdCallSite(CallBase &CB, BlockFrequencyInfo &CallerBFI) {
   const BranchProbability ColdProb(ColdCCRelFreq, 100);
-  auto CallSiteBB = CS.getInstruction()->getParent();
+  auto *CallSiteBB = CB.getParent();
   auto CallSiteFreq = CallerBFI.getBlockFreq(CallSiteBB);
   auto CallerEntryFreq =
-      CallerBFI.getBlockFreq(&(CS.getCaller()->getEntryBlock()));
+      CallerBFI.getBlockFreq(&(CB.getCaller()->getEntryBlock()));
   return CallSiteFreq < CallerEntryFreq * ColdProb;
 }
 
@@ -2187,13 +1715,12 @@ isValidCandidateForColdCC(Function &F,
     if (isa<BlockAddress>(U))
       continue;
 
-    CallSite CS(cast<Instruction>(U));
-    Function *CallerFunc = CS.getInstruction()->getParent()->getParent();
+    CallBase &CB = cast<CallBase>(*U);
+    Function *CallerFunc = CB.getParent()->getParent();
     BlockFrequencyInfo &CallerBFI = GetBFI(*CallerFunc);
-    if (!isColdCallSite(CS, CallerBFI))
+    if (!isColdCallSite(CB, CallerBFI))
       return false;
-    auto It = std::find(AllCallsCold.begin(), AllCallsCold.end(), CallerFunc);
-    if (It == AllCallsCold.end())
+    if (!llvm::is_contained(AllCallsCold, CallerFunc))
       return false;
   }
   return true;
@@ -2203,8 +1730,7 @@ static void changeCallSitesToColdCC(Function *F) {
   for (User *U : F->users()) {
     if (isa<BlockAddress>(U))
       continue;
-    CallSite CS(cast<Instruction>(U));
-    CS.setCallingConv(CallingConv::Cold);
+    cast<CallBase>(U)->setCallingConv(CallingConv::Cold);
   }
 }
 
@@ -2217,7 +1743,6 @@ hasOnlyColdCalls(Function &F,
   for (BasicBlock &BB : F) {
     for (Instruction &I : BB) {
       if (CallInst *CI = dyn_cast<CallInst>(&I)) {
-        CallSite CS(cast<Instruction>(CI));
         // Skip over isline asm instructions since they aren't function calls.
         if (CI->isInlineAsm())
           continue;
@@ -2234,12 +1759,121 @@ hasOnlyColdCalls(Function &F,
             CalledFn->hasAddressTaken())
           return false;
         BlockFrequencyInfo &CallerBFI = GetBFI(F);
-        if (!isColdCallSite(CS, CallerBFI))
+        if (!isColdCallSite(*CI, CallerBFI))
           return false;
       }
     }
   }
   return true;
+}
+
+static bool hasMustTailCallers(Function *F) {
+  for (User *U : F->users()) {
+    CallBase *CB = dyn_cast<CallBase>(U);
+    if (!CB) {
+      assert(isa<BlockAddress>(U) &&
+             "Expected either CallBase or BlockAddress");
+      continue;
+    }
+    if (CB->isMustTailCall())
+      return true;
+  }
+  return false;
+}
+
+static bool hasInvokeCallers(Function *F) {
+  for (User *U : F->users())
+    if (isa<InvokeInst>(U))
+      return true;
+  return false;
+}
+
+static void RemovePreallocated(Function *F) {
+  RemoveAttribute(F, Attribute::Preallocated);
+
+  auto *M = F->getParent();
+
+  IRBuilder<> Builder(M->getContext());
+
+  // Cannot modify users() while iterating over it, so make a copy.
+  SmallVector<User *, 4> PreallocatedCalls(F->users());
+  for (User *U : PreallocatedCalls) {
+    CallBase *CB = dyn_cast<CallBase>(U);
+    if (!CB)
+      continue;
+
+    assert(
+        !CB->isMustTailCall() &&
+        "Shouldn't call RemotePreallocated() on a musttail preallocated call");
+    // Create copy of call without "preallocated" operand bundle.
+    SmallVector<OperandBundleDef, 1> OpBundles;
+    CB->getOperandBundlesAsDefs(OpBundles);
+    CallBase *PreallocatedSetup = nullptr;
+    for (auto *It = OpBundles.begin(); It != OpBundles.end(); ++It) {
+      if (It->getTag() == "preallocated") {
+        PreallocatedSetup = cast<CallBase>(*It->input_begin());
+        OpBundles.erase(It);
+        break;
+      }
+    }
+    assert(PreallocatedSetup && "Did not find preallocated bundle");
+    uint64_t ArgCount =
+        cast<ConstantInt>(PreallocatedSetup->getArgOperand(0))->getZExtValue();
+
+    assert((isa<CallInst>(CB) || isa<InvokeInst>(CB)) &&
+           "Unknown indirect call type");
+    CallBase *NewCB = CallBase::Create(CB, OpBundles, CB);
+    CB->replaceAllUsesWith(NewCB);
+    NewCB->takeName(CB);
+    CB->eraseFromParent();
+
+    Builder.SetInsertPoint(PreallocatedSetup);
+    auto *StackSave =
+        Builder.CreateCall(Intrinsic::getDeclaration(M, Intrinsic::stacksave));
+
+    Builder.SetInsertPoint(NewCB->getNextNonDebugInstruction());
+    Builder.CreateCall(Intrinsic::getDeclaration(M, Intrinsic::stackrestore),
+                       StackSave);
+
+    // Replace @llvm.call.preallocated.arg() with alloca.
+    // Cannot modify users() while iterating over it, so make a copy.
+    // @llvm.call.preallocated.arg() can be called with the same index multiple
+    // times. So for each @llvm.call.preallocated.arg(), we see if we have
+    // already created a Value* for the index, and if not, create an alloca and
+    // bitcast right after the @llvm.call.preallocated.setup() so that it
+    // dominates all uses.
+    SmallVector<Value *, 2> ArgAllocas(ArgCount);
+    SmallVector<User *, 2> PreallocatedArgs(PreallocatedSetup->users());
+    for (auto *User : PreallocatedArgs) {
+      auto *UseCall = cast<CallBase>(User);
+      assert(UseCall->getCalledFunction()->getIntrinsicID() ==
+                 Intrinsic::call_preallocated_arg &&
+             "preallocated token use was not a llvm.call.preallocated.arg");
+      uint64_t AllocArgIndex =
+          cast<ConstantInt>(UseCall->getArgOperand(1))->getZExtValue();
+      Value *AllocaReplacement = ArgAllocas[AllocArgIndex];
+      if (!AllocaReplacement) {
+        auto AddressSpace = UseCall->getType()->getPointerAddressSpace();
+        auto *ArgType = UseCall
+                            ->getAttribute(AttributeList::FunctionIndex,
+                                           Attribute::Preallocated)
+                            .getValueAsType();
+        auto *InsertBefore = PreallocatedSetup->getNextNonDebugInstruction();
+        Builder.SetInsertPoint(InsertBefore);
+        auto *Alloca =
+            Builder.CreateAlloca(ArgType, AddressSpace, nullptr, "paarg");
+        auto *BitCast = Builder.CreateBitCast(
+            Alloca, Type::getInt8PtrTy(M->getContext()), UseCall->getName());
+        ArgAllocas[AllocArgIndex] = BitCast;
+        AllocaReplacement = BitCast;
+      }
+
+      UseCall->replaceAllUsesWith(AllocaReplacement);
+      UseCall->eraseFromParent();
+    }
+    // Remove @llvm.call.preallocated.setup().
+    cast<Instruction>(PreallocatedSetup)->eraseFromParent();
+  }
 }
 
 static bool
@@ -2285,10 +1919,14 @@ OptimizeFunctions(Module &M,
     // So, remove unreachable blocks from the function, because a) there's
     // no point in analyzing them and b) GlobalOpt should otherwise grow
     // some more complicated logic to break these cycles.
+    // Removing unreachable blocks might invalidate the dominator so we
+    // recalculate it.
     if (!F->isDeclaration()) {
-      auto &DT = LookupDomTree(*F);
-      DomTreeUpdater DTU(DT, DomTreeUpdater::UpdateStrategy::Lazy);
-      Changed |= removeUnreachableBlocks(*F, &DTU);
+      if (removeUnreachableBlocks(*F)) {
+        auto &DT = LookupDomTree(*F);
+        DT.recalculate(*F);
+        Changed = true;
+      }
     }
 
     Changed |= processGlobal(*F, GetTLI, LookupDomTree);
@@ -2302,9 +1940,20 @@ OptimizeFunctions(Module &M,
     // FIXME: We should also hoist alloca affected by this to the entry
     // block if possible.
     if (F->getAttributes().hasAttrSomewhere(Attribute::InAlloca) &&
-        !F->hasAddressTaken()) {
+        !F->hasAddressTaken() && !hasMustTailCallers(F)) {
       RemoveAttribute(F, Attribute::InAlloca);
       Changed = true;
+    }
+
+    // FIXME: handle invokes
+    // FIXME: handle musttail
+    if (F->getAttributes().hasAttrSomewhere(Attribute::Preallocated)) {
+      if (!F->hasAddressTaken() && !hasMustTailCallers(F) &&
+          !hasInvokeCallers(F)) {
+        RemovePreallocated(F);
+        Changed = true;
+      }
+      continue;
     }
 
     if (hasChangeableCC(F) && !F->isVarArg() && !F->hasAddressTaken()) {
@@ -2368,7 +2017,7 @@ OptimizeGlobalVars(Module &M,
         // for that optional parameter, since we don't have a Function to
         // provide GetTLI anyway.
         Constant *New = ConstantFoldConstant(C, DL, /*TLI*/ nullptr);
-        if (New && New != C)
+        if (New != C)
           GV->setInitializer(New);
       }
 
@@ -2410,8 +2059,11 @@ static Constant *EvaluateStoreInto(Constant *Init, Constant *Val,
   }
 
   ConstantInt *CI = cast<ConstantInt>(Addr->getOperand(OpNo));
-  SequentialType *InitTy = cast<SequentialType>(Init->getType());
-  uint64_t NumElts = InitTy->getNumElements();
+  uint64_t NumElts;
+  if (ArrayType *ATy = dyn_cast<ArrayType>(Init->getType()))
+    NumElts = ATy->getNumElements();
+  else
+    NumElts = cast<FixedVectorType>(Init->getType())->getNumElements();
 
   // Break up the array into elements.
   for (uint64_t i = 0, e = NumElts; i != e; ++i)
@@ -2422,7 +2074,7 @@ static Constant *EvaluateStoreInto(Constant *Init, Constant *Val,
     EvaluateStoreInto(Elts[CI->getZExtValue()], Val, Addr, OpNo+1);
 
   if (Init->getType()->isArrayTy())
-    return ConstantArray::get(cast<ArrayType>(InitTy), Elts);
+    return ConstantArray::get(cast<ArrayType>(Init->getType()), Elts);
   return ConstantVector::get(Elts);
 }
 
@@ -2544,8 +2196,10 @@ static void BatchCommitValueTo(const DenseMap<Constant*, Constant*> &Mem) {
       unsigned NumElts;
       if (auto *STy = dyn_cast<StructType>(Ty))
         NumElts = STy->getNumElements();
+      else if (auto *ATy = dyn_cast<ArrayType>(Ty))
+        NumElts = ATy->getNumElements();
       else
-        NumElts = cast<SequentialType>(Ty)->getNumElements();
+        NumElts = cast<FixedVectorType>(Ty)->getNumElements();
       for (unsigned i = 0, e = NumElts; i != e; ++i)
         Elts.push_back(Init->getAggregateElement(i));
     }
@@ -2630,18 +2284,22 @@ namespace {
 
 /// An easy to access representation of llvm.used and llvm.compiler.used.
 class LLVMUsed {
-  SmallPtrSet<GlobalValue *, 8> Used;
-  SmallPtrSet<GlobalValue *, 8> CompilerUsed;
+  SmallPtrSet<GlobalValue *, 4> Used;
+  SmallPtrSet<GlobalValue *, 4> CompilerUsed;
   GlobalVariable *UsedV;
   GlobalVariable *CompilerUsedV;
 
 public:
   LLVMUsed(Module &M) {
-    UsedV = collectUsedGlobalVariables(M, Used, false);
-    CompilerUsedV = collectUsedGlobalVariables(M, CompilerUsed, true);
+    SmallVector<GlobalValue *, 4> Vec;
+    UsedV = collectUsedGlobalVariables(M, Vec, false);
+    Used = {Vec.begin(), Vec.end()};
+    Vec.clear();
+    CompilerUsedV = collectUsedGlobalVariables(M, Vec, true);
+    CompilerUsed = {Vec.begin(), Vec.end()};
   }
 
-  using iterator = SmallPtrSet<GlobalValue *, 8>::iterator;
+  using iterator = SmallPtrSet<GlobalValue *, 4>::iterator;
   using used_iterator_range = iterator_range<iterator>;
 
   iterator usedBegin() { return Used.begin(); }
@@ -2777,9 +2435,11 @@ OptimizeGlobalAliases(Module &M,
     Constant *Aliasee = J->getAliasee();
     GlobalValue *Target = dyn_cast<GlobalValue>(Aliasee->stripPointerCasts());
     // We can't trivially replace the alias with the aliasee if the aliasee is
-    // non-trivial in some way.
+    // non-trivial in some way. We also can't replace the alias with the aliasee
+    // if the aliasee is interposable because aliases point to the local
+    // definition.
     // TODO: Try to handle non-zero GEPs of local aliasees.
-    if (!Target)
+    if (!Target || Target->isInterposable())
       continue;
     Target->removeDeadConstantUsers();
 

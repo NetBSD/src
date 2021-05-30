@@ -24,14 +24,21 @@ namespace WebAssemblyISD {
 enum NodeType : unsigned {
   FIRST_NUMBER = ISD::BUILTIN_OP_END,
 #define HANDLE_NODETYPE(NODE) NODE,
+#define HANDLE_MEM_NODETYPE(NODE)
+#include "WebAssemblyISD.def"
+  FIRST_MEM_OPCODE = ISD::FIRST_TARGET_MEMORY_OPCODE,
+#undef HANDLE_NODETYPE
+#undef HANDLE_MEM_NODETYPE
+#define HANDLE_NODETYPE(NODE)
+#define HANDLE_MEM_NODETYPE(NODE) NODE,
 #include "WebAssemblyISD.def"
 #undef HANDLE_NODETYPE
+#undef HANDLE_MEM_NODETYPE
 };
 
 } // end namespace WebAssemblyISD
 
 class WebAssemblySubtarget;
-class WebAssemblyTargetMachine;
 
 class WebAssemblyTargetLowering final : public TargetLowering {
 public:
@@ -59,7 +66,7 @@ private:
   bool isLegalAddressingMode(const DataLayout &DL, const AddrMode &AM, Type *Ty,
                              unsigned AS,
                              Instruction *I = nullptr) const override;
-  bool allowsMisalignedMemoryAccesses(EVT, unsigned AddrSpace, unsigned Align,
+  bool allowsMisalignedMemoryAccesses(EVT, unsigned AddrSpace, Align Alignment,
                                       MachineMemOperand::Flags Flags,
                                       bool *Fast) const override;
   bool isIntDivCheap(EVT VT, AttributeList Attr) const override;
@@ -99,6 +106,7 @@ private:
   SDValue LowerRETURNADDR(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerExternalSymbol(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerBR_JT(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerJumpTable(SDValue Op, SelectionDAG &DAG) const;
@@ -108,8 +116,17 @@ private:
   SDValue LowerSIGN_EXTEND_INREG(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerSETCC(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerAccessVectorElement(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerShift(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerFP_TO_INT_SAT(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerLoad(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerStore(SDValue Op, SelectionDAG &DAG) const;
+
+  // Custom DAG combine hooks
+  SDValue
+  PerformDAGCombine(SDNode *N,
+                    TargetLowering::DAGCombinerInfo &DCI) const override;
 };
 
 namespace WebAssembly {

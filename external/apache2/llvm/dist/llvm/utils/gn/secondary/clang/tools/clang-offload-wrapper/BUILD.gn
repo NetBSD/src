@@ -7,7 +7,5 @@ executable("clang-offload-wrapper") {
     "//llvm/lib/Support",
     "//llvm/lib/Transforms/Utils",
   ]
-  sources = [
-    "ClangOffloadWrapper.cpp",
-  ]
+  sources = [ "ClangOffloadWrapper.cpp" ]
 }

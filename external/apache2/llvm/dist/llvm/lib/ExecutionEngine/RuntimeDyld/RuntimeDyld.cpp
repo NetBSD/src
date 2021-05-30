@@ -146,8 +146,8 @@ void RuntimeDyldImpl::resolveLocalRelocations() {
     // The Section here (Sections[i]) refers to the section in which the
     // symbol for the relocation is located.  The SectionID in the relocation
     // entry provides the section to which the relocation will be applied.
-    int Idx = it->first;
-    uint64_t Addr = Sections[Idx].getLoadAddress();
+    unsigned Idx = it->first;
+    uint64_t Addr = getSectionLoadAddress(Idx);
     LLVM_DEBUG(dbgs() << "Resolving relocations Section #" << Idx << "\t"
                       << format("%p", (uintptr_t)Addr) << "\n");
     resolveRelocationList(it->second, Addr);
@@ -214,8 +214,12 @@ RuntimeDyldImpl::loadObjectImpl(const object::ObjectFile &Obj) {
   {
     JITSymbolResolver::LookupSet Symbols;
     for (auto &Sym : Obj.symbols()) {
-      uint32_t Flags = Sym.getFlags();
-      if ((Flags & SymbolRef::SF_Common) || (Flags & SymbolRef::SF_Weak)) {
+      Expected<uint32_t> FlagsOrErr = Sym.getFlags();
+      if (!FlagsOrErr)
+        // TODO: Test this error.
+        return FlagsOrErr.takeError();
+      if ((*FlagsOrErr & SymbolRef::SF_Common) ||
+          (*FlagsOrErr & SymbolRef::SF_Weak)) {
         // Get symbol name.
         if (auto NameOrErr = Sym.getName())
           Symbols.insert(*NameOrErr);
@@ -234,10 +238,13 @@ RuntimeDyldImpl::loadObjectImpl(const object::ObjectFile &Obj) {
   LLVM_DEBUG(dbgs() << "Parse symbols:\n");
   for (symbol_iterator I = Obj.symbol_begin(), E = Obj.symbol_end(); I != E;
        ++I) {
-    uint32_t Flags = I->getFlags();
+    Expected<uint32_t> FlagsOrErr = I->getFlags();
+    if (!FlagsOrErr)
+      // TODO: Test this error.
+      return FlagsOrErr.takeError();
 
     // Skip undefined symbols.
-    if (Flags & SymbolRef::SF_Undefined)
+    if (*FlagsOrErr & SymbolRef::SF_Undefined)
       continue;
 
     // Get the symbol type.
@@ -287,7 +294,7 @@ RuntimeDyldImpl::loadObjectImpl(const object::ObjectFile &Obj) {
       }
     }
 
-    if (Flags & SymbolRef::SF_Absolute &&
+    if (*FlagsOrErr & SymbolRef::SF_Absolute &&
         SymType != object::SymbolRef::ST_File) {
       uint64_t Addr = 0;
       if (auto AddrOrErr = I->getAddress())
@@ -300,8 +307,10 @@ RuntimeDyldImpl::loadObjectImpl(const object::ObjectFile &Obj) {
       LLVM_DEBUG(dbgs() << "\tType: " << SymType << " (absolute) Name: " << Name
                         << " SID: " << SectionID
                         << " Offset: " << format("%p", (uintptr_t)Addr)
-                        << " flags: " << Flags << "\n");
-      GlobalSymbolTable[Name] = SymbolTableEntry(SectionID, Addr, *JITSymFlags);
+                        << " flags: " << *FlagsOrErr << "\n");
+      if (!Name.empty()) // Skip absolute symbol relocations.
+        GlobalSymbolTable[Name] =
+            SymbolTableEntry(SectionID, Addr, *JITSymFlags);
     } else if (SymType == object::SymbolRef::ST_Function ||
                SymType == object::SymbolRef::ST_Data ||
                SymType == object::SymbolRef::ST_Unknown ||
@@ -332,9 +341,10 @@ RuntimeDyldImpl::loadObjectImpl(const object::ObjectFile &Obj) {
       LLVM_DEBUG(dbgs() << "\tType: " << SymType << " Name: " << Name
                         << " SID: " << SectionID
                         << " Offset: " << format("%p", (uintptr_t)SectOffset)
-                        << " flags: " << Flags << "\n");
-      GlobalSymbolTable[Name] =
-          SymbolTableEntry(SectionID, SectOffset, *JITSymFlags);
+                        << " flags: " << *FlagsOrErr << "\n");
+      if (!Name.empty()) // Skip absolute symbol relocations
+        GlobalSymbolTable[Name] =
+            SymbolTableEntry(SectionID, SectOffset, *JITSymFlags);
     }
   }
 
@@ -592,8 +602,11 @@ Error RuntimeDyldImpl::computeTotalAllocSize(const ObjectFile &Obj,
   uint32_t CommonAlign = 1;
   for (symbol_iterator I = Obj.symbol_begin(), E = Obj.symbol_end(); I != E;
        ++I) {
-    uint32_t Flags = I->getFlags();
-    if (Flags & SymbolRef::SF_Common) {
+    Expected<uint32_t> FlagsOrErr = I->getFlags();
+    if (!FlagsOrErr)
+      // TODO: Test this error.
+      return FlagsOrErr.takeError();
+    if (*FlagsOrErr & SymbolRef::SF_Common) {
       // Add the common symbols to a list.  We'll allocate them all below.
       uint64_t Size = I->getCommonSize();
       uint32_t Align = I->getAlignment();
@@ -642,6 +655,10 @@ unsigned RuntimeDyldImpl::computeGOTSize(const ObjectFile &Obj) {
 // compute stub buffer size for the given section
 unsigned RuntimeDyldImpl::computeSectionStubBufSize(const ObjectFile &Obj,
                                                     const SectionRef &Section) {
+  if (!MemMgr.allowStubAllocation()) {
+    return 0;
+  }
+
   unsigned StubSize = getMaxStubSize();
   if (StubSize == 0) {
     return 0;
@@ -759,8 +776,9 @@ Error RuntimeDyldImpl::emitCommonSymbols(const ObjectFile &Obj,
 
     LLVM_DEBUG(dbgs() << "Allocating common symbol " << Name << " address "
                       << format("%p", Addr) << "\n");
-    GlobalSymbolTable[Name] =
-        SymbolTableEntry(SectionID, Offset, std::move(*JITSymFlags));
+    if (!Name.empty()) // Skip absolute symbol relocations.
+      GlobalSymbolTable[Name] =
+          SymbolTableEntry(SectionID, Offset, std::move(*JITSymFlags));
     Offset += Size;
     Addr += Size;
   }
@@ -920,6 +938,8 @@ void RuntimeDyldImpl::addRelocationForSymbol(const RelocationEntry &RE,
   if (Loc == GlobalSymbolTable.end()) {
     ExternalSymbolRelocations[SymbolName].push_back(RE);
   } else {
+    assert(!SymbolName.empty() &&
+           "Empty symbol should not be in GlobalSymbolTable");
     // Copy the RE since we want to modify its addend.
     RelocationEntry RECopy = RE;
     const auto &SymInfo = Loc->second;
@@ -1061,7 +1081,8 @@ void RuntimeDyldImpl::resolveRelocationList(const RelocationList &Relocs,
   for (unsigned i = 0, e = Relocs.size(); i != e; ++i) {
     const RelocationEntry &RE = Relocs[i];
     // Ignore relocations for sections that were not loaded
-    if (Sections[RE.SectionID].getAddress() == nullptr)
+    if (RE.SectionID != AbsoluteSymbolSection &&
+        Sections[RE.SectionID].getAddress() == nullptr)
       continue;
     resolveRelocation(RE, Value);
   }
@@ -1069,16 +1090,13 @@ void RuntimeDyldImpl::resolveRelocationList(const RelocationList &Relocs,
 
 void RuntimeDyldImpl::applyExternalSymbolRelocations(
     const StringMap<JITEvaluatedSymbol> ExternalSymbolMap) {
-  while (!ExternalSymbolRelocations.empty()) {
-
-    StringMap<RelocationList>::iterator i = ExternalSymbolRelocations.begin();
-
-    StringRef Name = i->first();
+  for (auto &RelocKV : ExternalSymbolRelocations) {
+    StringRef Name = RelocKV.first();
+    RelocationList &Relocs = RelocKV.second;
     if (Name.size() == 0) {
       // This is an absolute symbol, use an address of zero.
       LLVM_DEBUG(dbgs() << "Resolving absolute relocations."
                         << "\n");
-      RelocationList &Relocs = i->second;
       resolveRelocationList(Relocs, 0);
     } else {
       uint64_t Addr = 0;
@@ -1089,13 +1107,6 @@ void RuntimeDyldImpl::applyExternalSymbolRelocations(
         assert(RRI != ExternalSymbolMap.end() && "No result for symbol");
         Addr = RRI->second.getAddress();
         Flags = RRI->second.getFlags();
-        // The call to getSymbolAddress may have caused additional modules to
-        // be loaded, which may have added new entries to the
-        // ExternalSymbolRelocations map.  Consquently, we need to update our
-        // iterator.  This is also why retrieval of the relocation list
-        // associated with this symbol is deferred until below this point.
-        // New entries may have been added to the relocation list.
-        i = ExternalSymbolRelocations.find(Name);
       } else {
         // We found the symbol in our global table.  It was probably in a
         // Module that we loaded previously.
@@ -1106,7 +1117,7 @@ void RuntimeDyldImpl::applyExternalSymbolRelocations(
       }
 
       // FIXME: Implement error handling that doesn't kill the host program!
-      if (!Addr)
+      if (!Addr && !Resolver.allowsZeroSymbols())
         report_fatal_error("Program used external function '" + Name +
                            "' which could not be resolved!");
 
@@ -1121,15 +1132,11 @@ void RuntimeDyldImpl::applyExternalSymbolRelocations(
 
         LLVM_DEBUG(dbgs() << "Resolving relocations Name: " << Name << "\t"
                           << format("0x%lx", Addr) << "\n");
-        // This list may have been updated when we called getSymbolAddress, so
-        // don't change this code to get the list earlier.
-        RelocationList &Relocs = i->second;
         resolveRelocationList(Relocs, Addr);
       }
     }
-
-    ExternalSymbolRelocations.erase(i);
   }
+  ExternalSymbolRelocations.clear();
 }
 
 Error RuntimeDyldImpl::resolveExternalSymbols() {
@@ -1190,16 +1197,19 @@ Error RuntimeDyldImpl::resolveExternalSymbols() {
 
 void RuntimeDyldImpl::finalizeAsync(
     std::unique_ptr<RuntimeDyldImpl> This,
-    unique_function<void(Error)> OnEmitted,
-    std::unique_ptr<MemoryBuffer> UnderlyingBuffer) {
+    unique_function<void(object::OwningBinary<object::ObjectFile>,
+                         std::unique_ptr<RuntimeDyld::LoadedObjectInfo>, Error)>
+        OnEmitted,
+    object::OwningBinary<object::ObjectFile> O,
+    std::unique_ptr<RuntimeDyld::LoadedObjectInfo> Info) {
 
   auto SharedThis = std::shared_ptr<RuntimeDyldImpl>(std::move(This));
   auto PostResolveContinuation =
-      [SharedThis, OnEmitted = std::move(OnEmitted),
-       UnderlyingBuffer = std::move(UnderlyingBuffer)](
+      [SharedThis, OnEmitted = std::move(OnEmitted), O = std::move(O),
+       Info = std::move(Info)](
           Expected<JITSymbolResolver::LookupResult> Result) mutable {
         if (!Result) {
-          OnEmitted(Result.takeError());
+          OnEmitted(std::move(O), std::move(Info), Result.takeError());
           return;
         }
 
@@ -1213,17 +1223,19 @@ void RuntimeDyldImpl::finalizeAsync(
         SharedThis->registerEHFrames();
         std::string ErrMsg;
         if (SharedThis->MemMgr.finalizeMemory(&ErrMsg))
-          OnEmitted(make_error<StringError>(std::move(ErrMsg),
+          OnEmitted(std::move(O), std::move(Info),
+                    make_error<StringError>(std::move(ErrMsg),
                                             inconvertibleErrorCode()));
         else
-          OnEmitted(Error::success());
+          OnEmitted(std::move(O), std::move(Info), Error::success());
       };
 
   JITSymbolResolver::LookupSet Symbols;
 
   for (auto &RelocKV : SharedThis->ExternalSymbolRelocations) {
     StringRef Name = RelocKV.first();
-    assert(!Name.empty() && "Symbol has no name?");
+    if (Name.empty()) // Skip absolute symbol relocations.
+      continue;
     assert(!SharedThis->GlobalSymbolTable.count(Name) &&
            "Name already processed. RuntimeDyld instances can not be re-used "
            "when finalizing with finalizeAsync.");
@@ -1403,32 +1415,35 @@ void RuntimeDyld::deregisterEHFrames() {
 // FIXME: Kill this with fire once we have a new JIT linker: this is only here
 // so that we can re-use RuntimeDyld's implementation without twisting the
 // interface any further for ORC's purposes.
-void jitLinkForORC(object::ObjectFile &Obj,
-                   std::unique_ptr<MemoryBuffer> UnderlyingBuffer,
-                   RuntimeDyld::MemoryManager &MemMgr,
-                   JITSymbolResolver &Resolver, bool ProcessAllSections,
-                   unique_function<Error(
-                       std::unique_ptr<RuntimeDyld::LoadedObjectInfo> LoadedObj,
-                       std::map<StringRef, JITEvaluatedSymbol>)>
-                       OnLoaded,
-                   unique_function<void(Error)> OnEmitted) {
+void jitLinkForORC(
+    object::OwningBinary<object::ObjectFile> O,
+    RuntimeDyld::MemoryManager &MemMgr, JITSymbolResolver &Resolver,
+    bool ProcessAllSections,
+    unique_function<Error(const object::ObjectFile &Obj,
+                          RuntimeDyld::LoadedObjectInfo &LoadedObj,
+                          std::map<StringRef, JITEvaluatedSymbol>)>
+        OnLoaded,
+    unique_function<void(object::OwningBinary<object::ObjectFile>,
+                         std::unique_ptr<RuntimeDyld::LoadedObjectInfo>, Error)>
+        OnEmitted) {
 
   RuntimeDyld RTDyld(MemMgr, Resolver);
   RTDyld.setProcessAllSections(ProcessAllSections);
 
-  auto Info = RTDyld.loadObject(Obj);
+  auto Info = RTDyld.loadObject(*O.getBinary());
 
   if (RTDyld.hasError()) {
-    OnEmitted(make_error<StringError>(RTDyld.getErrorString(),
+    OnEmitted(std::move(O), std::move(Info),
+              make_error<StringError>(RTDyld.getErrorString(),
                                       inconvertibleErrorCode()));
     return;
   }
 
-  if (auto Err = OnLoaded(std::move(Info), RTDyld.getSymbolTable()))
-    OnEmitted(std::move(Err));
+  if (auto Err = OnLoaded(*O.getBinary(), *Info, RTDyld.getSymbolTable()))
+    OnEmitted(std::move(O), std::move(Info), std::move(Err));
 
   RuntimeDyldImpl::finalizeAsync(std::move(RTDyld.Dyld), std::move(OnEmitted),
-                                 std::move(UnderlyingBuffer));
+                                 std::move(O), std::move(Info));
 }
 
 } // end namespace llvm

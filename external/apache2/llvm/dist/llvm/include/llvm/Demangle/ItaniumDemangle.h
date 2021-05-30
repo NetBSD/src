@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef DEMANGLE_ITANIUMDEMANGLE_H
-#define DEMANGLE_ITANIUMDEMANGLE_H
+#ifndef LLVM_DEMANGLE_ITANIUMDEMANGLE_H
+#define LLVM_DEMANGLE_ITANIUMDEMANGLE_H
 
 // FIXME: (possibly) incomplete list of features that clang mangles that this
 // file does not yet support:
@@ -82,6 +82,7 @@
     X(PostfixExpr) \
     X(ConditionalExpr) \
     X(MemberExpr) \
+    X(SubobjectExpr) \
     X(EnclosingExpr) \
     X(CastExpr) \
     X(SizeofParamPackExpr) \
@@ -91,14 +92,14 @@
     X(PrefixExpr) \
     X(FunctionParam) \
     X(ConversionExpr) \
+    X(PointerToMemberConversionExpr) \
     X(InitListExpr) \
     X(FoldExpr) \
     X(ThrowExpr) \
-    X(UUIDOfExpr) \
     X(BoolExpr) \
     X(StringLiteral) \
     X(LambdaExpr) \
-    X(IntegerCastExpr) \
+    X(EnumLiteral)    \
     X(IntegerLiteral) \
     X(FloatLiteral) \
     X(DoubleLiteral) \
@@ -279,17 +280,20 @@ public:
 class VendorExtQualType final : public Node {
   const Node *Ty;
   StringView Ext;
+  const Node *TA;
 
 public:
-  VendorExtQualType(const Node *Ty_, StringView Ext_)
-      : Node(KVendorExtQualType), Ty(Ty_), Ext(Ext_) {}
+  VendorExtQualType(const Node *Ty_, StringView Ext_, const Node *TA_)
+      : Node(KVendorExtQualType), Ty(Ty_), Ext(Ext_), TA(TA_) {}
 
-  template<typename Fn> void match(Fn F) const { F(Ty, Ext); }
+  template <typename Fn> void match(Fn F) const { F(Ty, Ext, TA); }
 
   void printLeft(OutputStream &S) const override {
     Ty->print(S);
     S += " ";
     S += Ext;
+    if (TA != nullptr)
+      TA->print(S);
   }
 };
 
@@ -607,48 +611,12 @@ public:
   }
 };
 
-class NodeOrString {
-  const void *First;
-  const void *Second;
-
-public:
-  /* implicit */ NodeOrString(StringView Str) {
-    const char *FirstChar = Str.begin();
-    const char *SecondChar = Str.end();
-    if (SecondChar == nullptr) {
-      assert(FirstChar == SecondChar);
-      ++FirstChar, ++SecondChar;
-    }
-    First = static_cast<const void *>(FirstChar);
-    Second = static_cast<const void *>(SecondChar);
-  }
-
-  /* implicit */ NodeOrString(Node *N)
-      : First(static_cast<const void *>(N)), Second(nullptr) {}
-  NodeOrString() : First(nullptr), Second(nullptr) {}
-
-  bool isString() const { return Second && First; }
-  bool isNode() const { return First && !Second; }
-  bool isEmpty() const { return !First && !Second; }
-
-  StringView asString() const {
-    assert(isString());
-    return StringView(static_cast<const char *>(First),
-                      static_cast<const char *>(Second));
-  }
-
-  const Node *asNode() const {
-    assert(isNode());
-    return static_cast<const Node *>(First);
-  }
-};
-
 class ArrayType final : public Node {
   const Node *Base;
-  NodeOrString Dimension;
+  Node *Dimension;
 
 public:
-  ArrayType(const Node *Base_, NodeOrString Dimension_)
+  ArrayType(const Node *Base_, Node *Dimension_)
       : Node(KArrayType,
              /*RHSComponentCache=*/Cache::Yes,
              /*ArrayCache=*/Cache::Yes),
@@ -665,10 +633,8 @@ public:
     if (S.back() != ']')
       S += " ";
     S += "[";
-    if (Dimension.isString())
-      S += Dimension.asString();
-    else if (Dimension.isNode())
-      Dimension.asNode()->print(S);
+    if (Dimension)
+      Dimension->print(S);
     S += "]";
     Base->printRight(S);
   }
@@ -934,10 +900,10 @@ public:
 
 class VectorType final : public Node {
   const Node *BaseType;
-  const NodeOrString Dimension;
+  const Node *Dimension;
 
 public:
-  VectorType(const Node *BaseType_, NodeOrString Dimension_)
+  VectorType(const Node *BaseType_, Node *Dimension_)
       : Node(KVectorType), BaseType(BaseType_),
         Dimension(Dimension_) {}
 
@@ -946,19 +912,17 @@ public:
   void printLeft(OutputStream &S) const override {
     BaseType->print(S);
     S += " vector[";
-    if (Dimension.isNode())
-      Dimension.asNode()->print(S);
-    else if (Dimension.isString())
-      S += Dimension.asString();
+    if (Dimension)
+      Dimension->print(S);
     S += "]";
   }
 };
 
 class PixelVectorType final : public Node {
-  const NodeOrString Dimension;
+  const Node *Dimension;
 
 public:
-  PixelVectorType(NodeOrString Dimension_)
+  PixelVectorType(const Node *Dimension_)
       : Node(KPixelVectorType), Dimension(Dimension_) {}
 
   template<typename Fn> void match(Fn F) const { F(Dimension); }
@@ -966,7 +930,7 @@ public:
   void printLeft(OutputStream &S) const override {
     // FIXME: This should demangle as "vector pixel".
     S += "pixel vector[";
-    S += Dimension.asString();
+    Dimension->print(S);
     S += "]";
   }
 };
@@ -1696,6 +1660,40 @@ public:
   }
 };
 
+class SubobjectExpr : public Node {
+  const Node *Type;
+  const Node *SubExpr;
+  StringView Offset;
+  NodeArray UnionSelectors;
+  bool OnePastTheEnd;
+
+public:
+  SubobjectExpr(const Node *Type_, const Node *SubExpr_, StringView Offset_,
+                NodeArray UnionSelectors_, bool OnePastTheEnd_)
+      : Node(KSubobjectExpr), Type(Type_), SubExpr(SubExpr_), Offset(Offset_),
+        UnionSelectors(UnionSelectors_), OnePastTheEnd(OnePastTheEnd_) {}
+
+  template<typename Fn> void match(Fn F) const {
+    F(Type, SubExpr, Offset, UnionSelectors, OnePastTheEnd);
+  }
+
+  void printLeft(OutputStream &S) const override {
+    SubExpr->print(S);
+    S += ".<";
+    Type->print(S);
+    S += " at offset ";
+    if (Offset.empty()) {
+      S += "0";
+    } else if (Offset[0] == 'n') {
+      S += "-";
+      S += Offset.dropFront();
+    } else {
+      S += Offset;
+    }
+    S += ">";
+  }
+};
+
 class EnclosingExpr : public Node {
   const StringView Prefix;
   const Node *Infix;
@@ -1883,6 +1881,28 @@ public:
   }
 };
 
+class PointerToMemberConversionExpr : public Node {
+  const Node *Type;
+  const Node *SubExpr;
+  StringView Offset;
+
+public:
+  PointerToMemberConversionExpr(const Node *Type_, const Node *SubExpr_,
+                                StringView Offset_)
+      : Node(KPointerToMemberConversionExpr), Type(Type_), SubExpr(SubExpr_),
+        Offset(Offset_) {}
+
+  template<typename Fn> void match(Fn F) const { F(Type, SubExpr, Offset); }
+
+  void printLeft(OutputStream &S) const override {
+    S += "(";
+    Type->print(S);
+    S += ")(";
+    SubExpr->print(S);
+    S += ")";
+  }
+};
+
 class InitListExpr : public Node {
   const Node *Ty;
   NodeArray Inits;
@@ -2017,21 +2037,6 @@ public:
   }
 };
 
-// MSVC __uuidof extension, generated by clang in -fms-extensions mode.
-class UUIDOfExpr : public Node {
-  Node *Operand;
-public:
-  UUIDOfExpr(Node *Operand_) : Node(KUUIDOfExpr), Operand(Operand_) {}
-
-  template<typename Fn> void match(Fn F) const { F(Operand); }
-
-  void printLeft(OutputStream &S) const override {
-    S << "__uuidof(";
-    Operand->print(S);
-    S << ")";
-  }
-};
-
 class BoolExpr : public Node {
   bool Value;
 
@@ -2076,22 +2081,26 @@ public:
   }
 };
 
-class IntegerCastExpr : public Node {
+class EnumLiteral : public Node {
   // ty(integer)
   const Node *Ty;
   StringView Integer;
 
 public:
-  IntegerCastExpr(const Node *Ty_, StringView Integer_)
-      : Node(KIntegerCastExpr), Ty(Ty_), Integer(Integer_) {}
+  EnumLiteral(const Node *Ty_, StringView Integer_)
+      : Node(KEnumLiteral), Ty(Ty_), Integer(Integer_) {}
 
   template<typename Fn> void match(Fn F) const { F(Ty, Integer); }
 
   void printLeft(OutputStream &S) const override {
-    S += "(";
+    S << "(";
     Ty->print(S);
-    S += ")";
-    S += Integer;
+    S << ")";
+
+    if (Integer[0] == 'n')
+      S << "-" << Integer.dropFront(1);
+    else
+      S << Integer;
   }
 };
 
@@ -2213,10 +2222,10 @@ class PODSmallVector {
   static_assert(std::is_pod<T>::value,
                 "T is required to be a plain old data type");
 
-  T* First;
-  T* Last;
-  T* Cap;
-  T Inline[N];
+  T* First = nullptr;
+  T* Last = nullptr;
+  T* Cap = nullptr;
+  T Inline[N] = {0};
 
   bool isInline() const { return First == Inline; }
 
@@ -2349,9 +2358,9 @@ template <typename Derived, typename Alloc> struct AbstractManglingParser {
     TemplateParamList Params;
 
   public:
-    ScopedTemplateParamList(AbstractManglingParser *Parser)
-        : Parser(Parser),
-          OldNumTemplateParamLists(Parser->TemplateParams.size()) {
+    ScopedTemplateParamList(AbstractManglingParser *TheParser)
+        : Parser(TheParser),
+          OldNumTemplateParamLists(TheParser->TemplateParams.size()) {
       Parser->TemplateParams.push_back(&Params);
     }
     ~ScopedTemplateParamList() {
@@ -2473,6 +2482,8 @@ template <typename Derived, typename Alloc> struct AbstractManglingParser {
   Node *parseConversionExpr();
   Node *parseBracedExpr();
   Node *parseFoldExpr();
+  Node *parsePointerToMemberConversionExpr();
+  Node *parseSubobjectExpr();
 
   /// Parse the <type> production.
   Node *parseType();
@@ -3548,7 +3559,9 @@ Node *AbstractManglingParser<Derived, Alloc>::parseVectorType() {
   if (!consumeIf("Dv"))
     return nullptr;
   if (look() >= '1' && look() <= '9') {
-    StringView DimensionNumber = parseNumber();
+    Node *DimensionNumber = make<NameType>(parseNumber());
+    if (!DimensionNumber)
+      return nullptr;
     if (!consumeIf('_'))
       return nullptr;
     if (consumeIf('p'))
@@ -3573,7 +3586,7 @@ Node *AbstractManglingParser<Derived, Alloc>::parseVectorType() {
   Node *ElemType = getDerived().parseType();
   if (!ElemType)
     return nullptr;
-  return make<VectorType>(ElemType, StringView());
+  return make<VectorType>(ElemType, /*Dimension=*/nullptr);
 }
 
 // <decltype>  ::= Dt <expression> E  # decltype of an id-expression or class member access (C++0x)
@@ -3599,10 +3612,12 @@ Node *AbstractManglingParser<Derived, Alloc>::parseArrayType() {
   if (!consumeIf('A'))
     return nullptr;
 
-  NodeOrString Dimension;
+  Node *Dimension = nullptr;
 
   if (std::isdigit(look())) {
-    Dimension = parseNumber();
+    Dimension = make<NameType>(parseNumber());
+    if (!Dimension)
+      return nullptr;
     if (!consumeIf('_'))
       return nullptr;
   } else if (!consumeIf('_')) {
@@ -3668,8 +3683,6 @@ Node *AbstractManglingParser<Derived, Alloc>::parseQualifiedType() {
     if (Qual.empty())
       return nullptr;
 
-    // FIXME parse the optional <template-args> here!
-
     // extension            ::= U <objc-name> <objc-type>  # objc-type<identifier>
     if (Qual.startsWith("objcproto")) {
       StringView ProtoSourceName = Qual.dropFront(std::strlen("objcproto"));
@@ -3687,10 +3700,17 @@ Node *AbstractManglingParser<Derived, Alloc>::parseQualifiedType() {
       return make<ObjCProtoName>(Child, Proto);
     }
 
+    Node *TA = nullptr;
+    if (look() == 'I') {
+      TA = getDerived().parseTemplateArgs();
+      if (TA == nullptr)
+        return nullptr;
+    }
+
     Node *Child = getDerived().parseQualifiedType();
     if (Child == nullptr)
       return nullptr;
-    return make<VendorExtQualType>(Child, Qual);
+    return make<VendorExtQualType>(Child, Qual, TA);
   }
 
   Qualifiers Quals = parseCVQualifiers();
@@ -4100,8 +4120,11 @@ Qualifiers AbstractManglingParser<Alloc, Derived>::parseCVQualifiers() {
 //                  ::= fp <top-level CV-Qualifiers> <parameter-2 non-negative number> _   # L == 0, second and later parameters
 //                  ::= fL <L-1 non-negative number> p <top-level CV-Qualifiers> _         # L > 0, first parameter
 //                  ::= fL <L-1 non-negative number> p <top-level CV-Qualifiers> <parameter-2 non-negative number> _   # L > 0, second and later parameters
+//                  ::= fpT      # 'this' expression (not part of standard?)
 template <typename Derived, typename Alloc>
 Node *AbstractManglingParser<Derived, Alloc>::parseFunctionParam() {
+  if (consumeIf("fpT"))
+    return make<NameType>("this");
   if (consumeIf("fp")) {
     parseCVQualifiers();
     StringView Num = parseNumber();
@@ -4261,7 +4284,13 @@ Node *AbstractManglingParser<Derived, Alloc>::parseExprPrimary() {
     return getDerived().template parseFloatingLiteral<double>();
   case 'e':
     ++First;
+#if defined(__powerpc__) || defined(__s390__)
+    // Handle cases where long doubles encoded with e have the same size
+    // and representation as doubles.
+    return getDerived().template parseFloatingLiteral<double>();
+#else
     return getDerived().template parseFloatingLiteral<long double>();
+#endif
   case '_':
     if (consumeIf("_Z")) {
       Node *R = getDerived().parseEncoding();
@@ -4300,12 +4329,12 @@ Node *AbstractManglingParser<Derived, Alloc>::parseExprPrimary() {
     Node *T = getDerived().parseType();
     if (T == nullptr)
       return nullptr;
-    StringView N = parseNumber();
+    StringView N = parseNumber(/*AllowNegative=*/true);
     if (N.empty())
       return nullptr;
     if (!consumeIf('E'))
       return nullptr;
-    return make<IntegerCastExpr>(T, N);
+    return make<EnumLiteral>(T, N);
   }
   }
 }
@@ -4425,6 +4454,50 @@ Node *AbstractManglingParser<Derived, Alloc>::parseFoldExpr() {
     std::swap(Pack, Init);
 
   return make<FoldExpr>(IsLeftFold, OperatorName, Pack, Init);
+}
+
+// <expression> ::= mc <parameter type> <expr> [<offset number>] E
+//
+// Not yet in the spec: https://github.com/itanium-cxx-abi/cxx-abi/issues/47
+template <typename Derived, typename Alloc>
+Node *AbstractManglingParser<Derived, Alloc>::parsePointerToMemberConversionExpr() {
+  Node *Ty = getDerived().parseType();
+  if (!Ty)
+    return nullptr;
+  Node *Expr = getDerived().parseExpr();
+  if (!Expr)
+    return nullptr;
+  StringView Offset = getDerived().parseNumber(true);
+  if (!consumeIf('E'))
+    return nullptr;
+  return make<PointerToMemberConversionExpr>(Ty, Expr, Offset);
+}
+
+// <expression> ::= so <referent type> <expr> [<offset number>] <union-selector>* [p] E
+// <union-selector> ::= _ [<number>]
+//
+// Not yet in the spec: https://github.com/itanium-cxx-abi/cxx-abi/issues/47
+template <typename Derived, typename Alloc>
+Node *AbstractManglingParser<Derived, Alloc>::parseSubobjectExpr() {
+  Node *Ty = getDerived().parseType();
+  if (!Ty)
+    return nullptr;
+  Node *Expr = getDerived().parseExpr();
+  if (!Expr)
+    return nullptr;
+  StringView Offset = getDerived().parseNumber(true);
+  size_t SelectorsBegin = Names.size();
+  while (consumeIf('_')) {
+    Node *Selector = make<NameType>(parseNumber());
+    if (!Selector)
+      return nullptr;
+    Names.push_back(Selector);
+  }
+  bool OnePastTheEnd = consumeIf('p');
+  if (!consumeIf('E'))
+    return nullptr;
+  return make<SubobjectExpr>(
+      Ty, Expr, Offset, popTrailingNodeArray(SelectorsBegin), OnePastTheEnd);
 }
 
 // <expression> ::= <unary operator-name> <expression>
@@ -4684,6 +4757,9 @@ Node *AbstractManglingParser<Derived, Alloc>::parseExpr() {
     return nullptr;
   case 'm':
     switch (First[1]) {
+    case 'c':
+      First += 2;
+      return parsePointerToMemberConversionExpr();
     case 'i':
       First += 2;
       return getDerived().parseBinaryExpr("-");
@@ -4831,6 +4907,9 @@ Node *AbstractManglingParser<Derived, Alloc>::parseExpr() {
         return Ex;
       return make<CastExpr>("static_cast", T, Ex);
     }
+    case 'o':
+      First += 2;
+      return parseSubobjectExpr();
     case 'p': {
       First += 2;
       Node *Child = getDerived().parseExpr();
@@ -4926,6 +5005,43 @@ Node *AbstractManglingParser<Derived, Alloc>::parseExpr() {
     }
     }
     return nullptr;
+  case 'u': {
+    ++First;
+    Node *Name = getDerived().parseSourceName(/*NameState=*/nullptr);
+    if (!Name)
+      return nullptr;
+    // Special case legacy __uuidof mangling. The 't' and 'z' appear where the
+    // standard encoding expects a <template-arg>, and would be otherwise be
+    // interpreted as <type> node 'short' or 'ellipsis'. However, neither
+    // __uuidof(short) nor __uuidof(...) can actually appear, so there is no
+    // actual conflict here.
+    if (Name->getBaseName() == "__uuidof") {
+      if (numLeft() < 2)
+        return nullptr;
+      if (*First == 't') {
+        ++First;
+        Node *Ty = getDerived().parseType();
+        if (!Ty)
+          return nullptr;
+        return make<CallExpr>(Name, makeNodeArray(&Ty, &Ty + 1));
+      }
+      if (*First == 'z') {
+        ++First;
+        Node *Ex = getDerived().parseExpr();
+        if (!Ex)
+          return nullptr;
+        return make<CallExpr>(Name, makeNodeArray(&Ex, &Ex + 1));
+      }
+    }
+    size_t ExprsBegin = Names.size();
+    while (!consumeIf('E')) {
+      Node *E = getDerived().parseTemplateArg();
+      if (E == nullptr)
+        return E;
+      Names.push_back(E);
+    }
+    return make<CallExpr>(Name, popTrailingNodeArray(ExprsBegin));
+  }
   case '1':
   case '2':
   case '3':
@@ -4937,21 +5053,6 @@ Node *AbstractManglingParser<Derived, Alloc>::parseExpr() {
   case '9':
     return getDerived().parseUnresolvedName();
   }
-
-  if (consumeIf("u8__uuidoft")) {
-    Node *Ty = getDerived().parseType();
-    if (!Ty)
-      return nullptr;
-    return make<UUIDOfExpr>(Ty);
-  }
-
-  if (consumeIf("u8__uuidofz")) {
-    Node *Ex = getDerived().parseExpr();
-    if (!Ex)
-      return nullptr;
-    return make<UUIDOfExpr>(Ex);
-  }
-
   return nullptr;
 }
 
@@ -4998,6 +5099,16 @@ Node *AbstractManglingParser<Derived, Alloc>::parseSpecialName() {
   switch (look()) {
   case 'T':
     switch (look(1)) {
+    // TA <template-arg>    # template parameter object
+    //
+    // Not yet in the spec: https://github.com/itanium-cxx-abi/cxx-abi/issues/63
+    case 'A': {
+      First += 2;
+      Node *Arg = getDerived().parseTemplateArg();
+      if (Arg == nullptr)
+        return nullptr;
+      return make<SpecialName>("template parameter object for ", Arg);
+    }
     // TV <type>    # virtual table
     case 'V': {
       First += 2;
@@ -5119,6 +5230,22 @@ Node *AbstractManglingParser<Derived, Alloc>::parseSpecialName() {
 //            ::= <special-name>
 template <typename Derived, typename Alloc>
 Node *AbstractManglingParser<Derived, Alloc>::parseEncoding() {
+  // The template parameters of an encoding are unrelated to those of the
+  // enclosing context.
+  class SaveTemplateParams {
+    AbstractManglingParser *Parser;
+    decltype(TemplateParams) OldParams;
+
+  public:
+    SaveTemplateParams(AbstractManglingParser *TheParser) : Parser(TheParser) {
+      OldParams = std::move(Parser->TemplateParams);
+      Parser->TemplateParams.clear();
+    }
+    ~SaveTemplateParams() {
+      Parser->TemplateParams = std::move(OldParams);
+    }
+  } SaveTemplateParams(this);
+
   if (look() == 'G' || look() == 'T')
     return getDerived().parseSpecialName();
 
@@ -5210,7 +5337,12 @@ struct FloatData<long double>
 #else
     static const size_t mangled_size = 20;  // May need to be adjusted to 16 or 24 on other platforms
 #endif
-    static const size_t max_demangled_size = 40;
+    // `-0x1.ffffffffffffffffffffffffffffp+16383` + 'L' + '\0' == 42 bytes.
+    // 28 'f's * 4 bits == 112 bits, which is the number of mantissa bits.
+    // Negatives are one character longer than positives.
+    // `0x1.` and `p` are constant, and exponents `+16383` and `-16382` are the
+    // same length. 1 sign bit, 112 mantissa bits, and 15 exponent bits == 128.
+    static const size_t max_demangled_size = 42;
     static constexpr const char *spec = "%LaL";
 };
 
@@ -5578,4 +5710,4 @@ struct ManglingParser : AbstractManglingParser<ManglingParser<Alloc>, Alloc> {
 
 DEMANGLE_NAMESPACE_END
 
-#endif // DEMANGLE_ITANIUMDEMANGLE_H
+#endif // LLVM_DEMANGLE_ITANIUMDEMANGLE_H

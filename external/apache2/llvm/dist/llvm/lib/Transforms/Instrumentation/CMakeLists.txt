@@ -1,10 +1,11 @@
-add_llvm_library(LLVMInstrumentation
+add_llvm_component_library(LLVMInstrumentation
   AddressSanitizer.cpp
   BoundsChecking.cpp
   CGProfile.cpp
   ControlHeightReduction.cpp
   DataFlowSanitizer.cpp
   GCOVProfiling.cpp
+  MemProfiler.cpp
   MemorySanitizer.cpp
   IndirectCallPromotion.cpp
   Instrumentation.cpp
@@ -23,4 +24,12 @@ add_llvm_library(LLVMInstrumentation
 
   DEPENDS
   intrinsics_gen
+
+  LINK_COMPONENTS
+  Analysis
+  Core
+  MC
+  Support
+  TransformUtils
+  ProfileData
   )

@@ -53,6 +53,16 @@ bool AddressRanges::contains(AddressRange Range) const {
   return Range.End <= It[-1].End;
 }
 
+Optional<AddressRange>
+AddressRanges::getRangeThatContains(uint64_t Addr) const {
+  auto It = std::partition_point(
+      Ranges.begin(), Ranges.end(),
+      [=](const AddressRange &R) { return R.Start <= Addr; });
+  if (It != Ranges.begin() && Addr < It[-1].End)
+    return It[-1];
+  return llvm::None;
+}
+
 raw_ostream &llvm::gsym::operator<<(raw_ostream &OS, const AddressRange &R) {
   return OS << '[' << HEX64(R.Start) << " - " << HEX64(R.End) << ")";
 }
@@ -99,4 +109,16 @@ void AddressRanges::decode(DataExtractor &Data, uint64_t BaseAddr,
   Ranges.resize(NumRanges);
   for (auto &Range : Ranges)
     Range.decode(Data, BaseAddr, Offset);
+}
+
+void AddressRange::skip(DataExtractor &Data, uint64_t &Offset) {
+  Data.getULEB128(&Offset);
+  Data.getULEB128(&Offset);
+}
+
+uint64_t AddressRanges::skip(DataExtractor &Data, uint64_t &Offset) {
+  uint64_t NumRanges = Data.getULEB128(&Offset);
+  for (uint64_t I=0; I<NumRanges; ++I)
+    AddressRange::skip(Data, Offset);
+  return NumRanges;
 }

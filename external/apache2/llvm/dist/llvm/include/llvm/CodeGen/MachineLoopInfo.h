@@ -67,6 +67,12 @@ public:
   /// it returns an unknown location.
   DebugLoc getStartLoc() const;
 
+  /// Returns true if the instruction is loop invariant.
+  /// I.e., all virtual register operands are defined outside of the loop,
+  /// physical registers aren't accessed explicitly, and there are no side
+  /// effects that aren't captured by the operands or other flags.
+  bool isLoopInvariant(MachineInstr &I) const;
+
   void dump() const;
 
 private:
@@ -89,9 +95,7 @@ class MachineLoopInfo : public MachineFunctionPass {
 public:
   static char ID; // Pass identification, replacement for typeid
 
-  MachineLoopInfo() : MachineFunctionPass(ID) {
-    initializeMachineLoopInfoPass(*PassRegistry::getPassRegistry());
-  }
+  MachineLoopInfo();
   explicit MachineLoopInfo(MachineDominatorTree &MDT)
       : MachineFunctionPass(ID) {
     calculate(MDT);

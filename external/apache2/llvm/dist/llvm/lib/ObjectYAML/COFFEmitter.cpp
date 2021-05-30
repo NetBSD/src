@@ -14,7 +14,6 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringMap.h"
-#include "llvm/ADT/StringSwitch.h"
 #include "llvm/DebugInfo/CodeView/DebugStringTableSubsection.h"
 #include "llvm/DebugInfo/CodeView/StringsAndChecksums.h"
 #include "llvm/Object/COFF.h"
@@ -187,7 +186,7 @@ toDebugS(ArrayRef<CodeViewYAML::YAMLDebugSubsection> Subsections,
   std::vector<DebugSubsectionRecordBuilder> Builders;
   uint32_t Size = sizeof(uint32_t);
   for (auto &SS : CVSS) {
-    DebugSubsectionRecordBuilder B(SS, CodeViewContainer::ObjectFile);
+    DebugSubsectionRecordBuilder B(SS);
     Size += B.calculateSerializedLength();
     Builders.push_back(std::move(B));
   }
@@ -197,7 +196,7 @@ toDebugS(ArrayRef<CodeViewYAML::YAMLDebugSubsection> Subsections,
 
   Err(Writer.writeInteger<uint32_t>(COFF::DEBUG_SECTION_MAGIC));
   for (const auto &B : Builders) {
-    Err(B.commit(Writer));
+    Err(B.commit(Writer, CodeViewContainer::ObjectFile));
   }
   return {Output};
 }
@@ -260,9 +259,12 @@ static bool layoutCOFF(COFFParser &CP) {
       CurrentSectionDataOffset += S.Header.SizeOfRawData;
       if (!S.Relocations.empty()) {
         S.Header.PointerToRelocations = CurrentSectionDataOffset;
-        S.Header.NumberOfRelocations = S.Relocations.size();
-        CurrentSectionDataOffset +=
-            S.Header.NumberOfRelocations * COFF::RelocationSize;
+        if (S.Header.Characteristics & COFF::IMAGE_SCN_LNK_NRELOC_OVFL) {
+          S.Header.NumberOfRelocations = 0xffff;
+          CurrentSectionDataOffset += COFF::RelocationSize;
+        } else
+          S.Header.NumberOfRelocations = S.Relocations.size();
+        CurrentSectionDataOffset += S.Relocations.size() * COFF::RelocationSize;
       }
     } else {
       // Leave SizeOfRawData unaltered. For .bss sections in object files, it
@@ -506,6 +508,10 @@ static bool writeCOFF(COFFParser &CP, raw_ostream &OS) {
     S.SectionData.writeAsBinary(OS);
     assert(S.Header.SizeOfRawData >= S.SectionData.binary_size());
     OS.write_zeros(S.Header.SizeOfRawData - S.SectionData.binary_size());
+    if (S.Header.Characteristics & COFF::IMAGE_SCN_LNK_NRELOC_OVFL)
+      OS << binary_le<uint32_t>(/*VirtualAddress=*/ S.Relocations.size() + 1)
+         << binary_le<uint32_t>(/*SymbolTableIndex=*/ 0)
+         << binary_le<uint16_t>(/*Type=*/ 0);
     for (const COFFYAML::Relocation &R : S.Relocations) {
       uint32_t SymbolTableIndex;
       if (R.SymbolTableIndex) {

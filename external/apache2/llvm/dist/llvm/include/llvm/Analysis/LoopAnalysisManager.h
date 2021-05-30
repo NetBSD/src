@@ -30,25 +30,24 @@
 #define LLVM_ANALYSIS_LOOPANALYSISMANAGER_H
 
 #include "llvm/ADT/PostOrderIterator.h"
-#include "llvm/ADT/PriorityWorklist.h"
-#include "llvm/ADT/STLExtras.h"
-#include "llvm/Analysis/AliasAnalysis.h"
-#include "llvm/Analysis/BasicAliasAnalysis.h"
-#include "llvm/Analysis/GlobalsModRef.h"
-#include "llvm/Analysis/LoopInfo.h"
-#include "llvm/Analysis/MemorySSA.h"
-#include "llvm/Analysis/ScalarEvolution.h"
-#include "llvm/Analysis/ScalarEvolutionAliasAnalysis.h"
-#include "llvm/Analysis/TargetLibraryInfo.h"
-#include "llvm/Analysis/TargetTransformInfo.h"
-#include "llvm/IR/Dominators.h"
 #include "llvm/IR/PassManager.h"
 
 namespace llvm {
 
+class AAResults;
+class AssumptionCache;
+class DominatorTree;
+class Function;
+class Loop;
+class LoopInfo;
+class MemorySSA;
+class ScalarEvolution;
+class TargetLibraryInfo;
+class TargetTransformInfo;
+
 /// The adaptor from a function pass to a loop pass computes these analyses and
 /// makes them available to the loop passes "for free". Each loop pass is
-/// expected expected to update these analyses if necessary to ensure they're
+/// expected to update these analyses if necessary to ensure they're
 /// valid after it runs.
 struct LoopStandardAnalysisResults {
   AAResults &AA;
@@ -58,6 +57,7 @@ struct LoopStandardAnalysisResults {
   ScalarEvolution &SE;
   TargetLibraryInfo &TLI;
   TargetTransformInfo &TTI;
+  BlockFrequencyInfo *BFI;
   MemorySSA *MSSA;
 };
 

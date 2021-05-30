@@ -119,8 +119,25 @@ class LineTable {
   typedef std::vector<gsym::LineEntry> Collection;
   Collection Lines; ///< All line entries in the line table.
 public:
-  static LineEntry lookup(DataExtractor &Data, uint64_t BaseAddr,
-                          uint64_t Addr);
+  /// Lookup a single address within a line table's data.
+  ///
+  /// Clients have the option to decode an entire line table using
+  /// LineTable::decode() or just find a single matching entry using this
+  /// function. The benefit of using this function is that parsed LineEntry
+  /// objects that do not match will not be stored in an array. This will avoid
+  /// memory allocation costs and parsing can stop once a match has been found.
+  ///
+  /// \param Data The binary stream to read the data from. This object must
+  /// have the data for the LineTable object starting at offset zero. The data
+  /// can contain more data than needed.
+  ///
+  /// \param BaseAddr The base address to use when decoding the line table.
+  /// This will be the FunctionInfo's start address and will be used to
+  /// initialize the line table row prior to parsing any opcodes.
+  ///
+  /// \returns An LineEntry object if a match is found, error otherwise.
+  static Expected<LineEntry> lookup(DataExtractor &Data, uint64_t BaseAddr,
+                                    uint64_t Addr);
 
   /// Decode an LineTable object from a binary data stream.
   ///
@@ -149,6 +166,24 @@ public:
   llvm::Error encode(FileWriter &O, uint64_t BaseAddr) const;
   bool empty() const { return Lines.empty(); }
   void clear() { Lines.clear(); }
+  /// Return the first line entry if the line table isn't empty.
+  ///
+  /// \returns An optional line entry with the first line entry if the line
+  /// table isn't empty, or llvm::None if the line table is emtpy.
+  Optional<LineEntry> first() const {
+    if (Lines.empty())
+      return llvm::None;
+    return Lines.front();
+  }
+  /// Return the last line entry if the line table isn't empty.
+  ///
+  /// \returns An optional line entry with the last line entry if the line
+  /// table isn't empty, or llvm::None if the line table is emtpy.
+  Optional<LineEntry> last() const {
+    if (Lines.empty())
+      return llvm::None;
+    return Lines.back();
+  }
   void push(const LineEntry &LE) {
     Lines.push_back(LE);
   }
@@ -195,4 +230,4 @@ raw_ostream &operator<<(raw_ostream &OS, const gsym::LineTable &LT);
 } // namespace gsym
 } // namespace llvm
 
-#endif // #ifndef LLVM_DEBUGINFO_GSYM_LINETABLE_H
+#endif // LLVM_DEBUGINFO_GSYM_LINETABLE_H

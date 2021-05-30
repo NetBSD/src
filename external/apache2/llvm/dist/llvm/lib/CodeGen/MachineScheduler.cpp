@@ -18,6 +18,7 @@
 #include "llvm/ADT/PriorityQueue.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/CodeGen/LiveInterval.h"
@@ -48,6 +49,7 @@
 #include "llvm/CodeGen/TargetSchedule.h"
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include "llvm/Config/llvm-config.h"
+#include "llvm/InitializePasses.h"
 #include "llvm/MC/LaneBitmask.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
@@ -71,6 +73,8 @@
 using namespace llvm;
 
 #define DEBUG_TYPE "machine-scheduler"
+
+STATISTIC(NumClustered, "Number of load/store pairs clustered");
 
 namespace llvm {
 
@@ -125,6 +129,15 @@ static cl::opt<bool> EnableCyclicPath("misched-cyclicpath", cl::Hidden,
 static cl::opt<bool> EnableMemOpCluster("misched-cluster", cl::Hidden,
                                         cl::desc("Enable memop clustering."),
                                         cl::init(true));
+static cl::opt<bool>
+    ForceFastCluster("force-fast-cluster", cl::Hidden,
+                     cl::desc("Switch to fast cluster algorithm with the lost "
+                              "of some fusion opportunities"),
+                     cl::init(false));
+static cl::opt<unsigned>
+    FastClusterThreshold("fast-cluster-threshold", cl::Hidden,
+                         cl::desc("The threshold for fast cluster"),
+                         cl::init(1000));
 
 // DAG subtrees must have at least this many nodes.
 static const unsigned MinSubtreeSize = 8;
@@ -227,8 +240,13 @@ char PostMachineScheduler::ID = 0;
 
 char &llvm::PostMachineSchedulerID = PostMachineScheduler::ID;
 
-INITIALIZE_PASS(PostMachineScheduler, "postmisched",
-                "PostRA Machine Instruction Scheduler", false, false)
+INITIALIZE_PASS_BEGIN(PostMachineScheduler, "postmisched",
+                      "PostRA Machine Instruction Scheduler", false, false)
+INITIALIZE_PASS_DEPENDENCY(MachineDominatorTree)
+INITIALIZE_PASS_DEPENDENCY(MachineLoopInfo)
+INITIALIZE_PASS_DEPENDENCY(AAResultsWrapperPass)
+INITIALIZE_PASS_END(PostMachineScheduler, "postmisched",
+                    "PostRA Machine Instruction Scheduler", false, false)
 
 PostMachineScheduler::PostMachineScheduler() : MachineSchedulerBase(ID) {
   initializePostMachineSchedulerPass(*PassRegistry::getPassRegistry());
@@ -238,6 +256,7 @@ void PostMachineScheduler::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesCFG();
   AU.addRequired<MachineDominatorTree>();
   AU.addRequired<MachineLoopInfo>();
+  AU.addRequired<AAResultsWrapperPass>();
   AU.addRequired<TargetPassConfig>();
   MachineFunctionPass::getAnalysisUsage(AU);
 }
@@ -278,7 +297,7 @@ priorNonDebug(MachineBasicBlock::const_iterator I,
               MachineBasicBlock::const_iterator Beg) {
   assert(I != Beg && "reached the top of the region, cannot decrement");
   while (--I != Beg) {
-    if (!I->isDebugInstr())
+    if (!I->isDebugOrPseudoInstr())
       break;
   }
   return I;
@@ -298,7 +317,7 @@ static MachineBasicBlock::const_iterator
 nextIfDebug(MachineBasicBlock::const_iterator I,
             MachineBasicBlock::const_iterator End) {
   for(; I != End; ++I) {
-    if (!I->isDebugInstr())
+    if (!I->isDebugOrPseudoInstr())
       break;
   }
   return I;
@@ -402,7 +421,7 @@ bool PostMachineScheduler::runOnMachineFunction(MachineFunction &mf) {
   if (EnablePostRAMachineSched.getNumOccurrences()) {
     if (!EnablePostRAMachineSched)
       return false;
-  } else if (!mf.getSubtarget().enablePostRAScheduler()) {
+  } else if (!mf.getSubtarget().enablePostRAMachineScheduler()) {
     LLVM_DEBUG(dbgs() << "Subtarget disables post-MI-sched.\n");
     return false;
   }
@@ -412,6 +431,7 @@ bool PostMachineScheduler::runOnMachineFunction(MachineFunction &mf) {
   MF = &mf;
   MLI = &getAnalysis<MachineLoopInfo>();
   PassConfig = &getAnalysis<TargetPassConfig>();
+  AA = &getAnalysis<AAResultsWrapperPass>().getAAResults();
 
   if (VerifyScheduling)
     MF->verify(this, "Before post machine scheduling.");
@@ -488,7 +508,7 @@ getSchedRegions(MachineBasicBlock *MBB,
       MachineInstr &MI = *std::prev(I);
       if (isSchedBoundary(&MI, &*MBB, MF, TII))
         break;
-      if (!MI.isDebugInstr()) {
+      if (!MI.isDebugOrPseudoInstr()) {
         // MBB::size() uses instr_iterator to count. Here we need a bundle to
         // count as a single instruction.
         ++NumRegionInstrs;
@@ -907,8 +927,8 @@ void ScheduleDAGMI::placeDebugValues() {
 
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
 LLVM_DUMP_METHOD void ScheduleDAGMI::dumpSchedule() const {
-  for (MachineBasicBlock::iterator MI = begin(), ME = end(); MI != ME; ++MI) {
-    if (SUnit *SU = getSUnit(&(*MI)))
+  for (MachineInstr &MI : *this) {
+    if (SUnit *SU = getSUnit(&MI))
       dumpNode(*SU);
     else
       dbgs() << "Missing SUnit\n";
@@ -1095,7 +1115,7 @@ updateScheduledPressure(const SUnit *SU,
 void ScheduleDAGMILive::updatePressureDiffs(
     ArrayRef<RegisterMaskPair> LiveUses) {
   for (const RegisterMaskPair &P : LiveUses) {
-    unsigned Reg = P.RegUnit;
+    Register Reg = P.RegUnit;
     /// FIXME: Currently assuming single-use physregs.
     if (!Register::isVirtualRegister(Reg))
       continue;
@@ -1295,7 +1315,7 @@ void ScheduleDAGMILive::computeDFSResult() {
 /// The cyclic path estimation identifies a def-use pair that crosses the back
 /// edge and considers the depth and height of the nodes. For example, consider
 /// the following instruction sequence where each instruction has unit latency
-/// and defines an epomymous virtual register:
+/// and defines an eponymous virtual register:
 ///
 /// a->b(a,c)->c(b)->d(c)->exit
 ///
@@ -1320,7 +1340,7 @@ unsigned ScheduleDAGMILive::computeCyclicCriticalPath() {
   unsigned MaxCyclicLatency = 0;
   // Visit each live out vreg def to find def/use pairs that cross iterations.
   for (const RegisterMaskPair &P : RPTracker.getPressure().LiveOutRegs) {
-    unsigned Reg = P.RegUnit;
+    Register Reg = P.RegUnit;
     if (!Register::isVirtualRegister(Reg))
       continue;
     const LiveInterval &LI = LIS->getInterval(Reg);
@@ -1468,40 +1488,47 @@ namespace {
 class BaseMemOpClusterMutation : public ScheduleDAGMutation {
   struct MemOpInfo {
     SUnit *SU;
-    const MachineOperand *BaseOp;
+    SmallVector<const MachineOperand *, 4> BaseOps;
     int64_t Offset;
+    unsigned Width;
 
-    MemOpInfo(SUnit *su, const MachineOperand *Op, int64_t ofs)
-        : SU(su), BaseOp(Op), Offset(ofs) {}
+    MemOpInfo(SUnit *SU, ArrayRef<const MachineOperand *> BaseOps,
+              int64_t Offset, unsigned Width)
+        : SU(SU), BaseOps(BaseOps.begin(), BaseOps.end()), Offset(Offset),
+          Width(Width) {}
 
-    bool operator<(const MemOpInfo &RHS) const {
-      if (BaseOp->getType() != RHS.BaseOp->getType())
-        return BaseOp->getType() < RHS.BaseOp->getType();
-
-      if (BaseOp->isReg())
-        return std::make_tuple(BaseOp->getReg(), Offset, SU->NodeNum) <
-               std::make_tuple(RHS.BaseOp->getReg(), RHS.Offset,
-                               RHS.SU->NodeNum);
-      if (BaseOp->isFI()) {
-        const MachineFunction &MF =
-            *BaseOp->getParent()->getParent()->getParent();
+    static bool Compare(const MachineOperand *const &A,
+                        const MachineOperand *const &B) {
+      if (A->getType() != B->getType())
+        return A->getType() < B->getType();
+      if (A->isReg())
+        return A->getReg() < B->getReg();
+      if (A->isFI()) {
+        const MachineFunction &MF = *A->getParent()->getParent()->getParent();
         const TargetFrameLowering &TFI = *MF.getSubtarget().getFrameLowering();
         bool StackGrowsDown = TFI.getStackGrowthDirection() ==
                               TargetFrameLowering::StackGrowsDown;
-        // Can't use tuple comparison here since we might need to use a
-        // different order when the stack grows down.
-        if (BaseOp->getIndex() != RHS.BaseOp->getIndex())
-          return StackGrowsDown ? BaseOp->getIndex() > RHS.BaseOp->getIndex()
-                                : BaseOp->getIndex() < RHS.BaseOp->getIndex();
-
-        if (Offset != RHS.Offset)
-          return StackGrowsDown ? Offset > RHS.Offset : Offset < RHS.Offset;
-
-        return SU->NodeNum < RHS.SU->NodeNum;
+        return StackGrowsDown ? A->getIndex() > B->getIndex()
+                              : A->getIndex() < B->getIndex();
       }
 
       llvm_unreachable("MemOpClusterMutation only supports register or frame "
                        "index bases.");
+    }
+
+    bool operator<(const MemOpInfo &RHS) const {
+      // FIXME: Don't compare everything twice. Maybe use C++20 three way
+      // comparison instead when it's available.
+      if (std::lexicographical_compare(BaseOps.begin(), BaseOps.end(),
+                                       RHS.BaseOps.begin(), RHS.BaseOps.end(),
+                                       Compare))
+        return true;
+      if (std::lexicographical_compare(RHS.BaseOps.begin(), RHS.BaseOps.end(),
+                                       BaseOps.begin(), BaseOps.end(), Compare))
+        return false;
+      if (Offset != RHS.Offset)
+        return Offset < RHS.Offset;
+      return SU->NodeNum < RHS.SU->NodeNum;
     }
   };
 
@@ -1517,7 +1544,12 @@ public:
   void apply(ScheduleDAGInstrs *DAGInstrs) override;
 
 protected:
-  void clusterNeighboringMemOps(ArrayRef<SUnit *> MemOps, ScheduleDAGInstrs *DAG);
+  void clusterNeighboringMemOps(ArrayRef<MemOpInfo> MemOps, bool FastCluster,
+                                ScheduleDAGInstrs *DAG);
+  void collectMemOpRecords(std::vector<SUnit> &SUnits,
+                           SmallVectorImpl<MemOpInfo> &MemOpRecords);
+  bool groupMemOps(ArrayRef<MemOpInfo> MemOps, ScheduleDAGInstrs *DAG,
+                   DenseMap<unsigned, SmallVector<MemOpInfo, 32>> &Groups);
 };
 
 class StoreClusterMutation : public BaseMemOpClusterMutation {
@@ -1553,33 +1585,67 @@ createStoreClusterDAGMutation(const TargetInstrInfo *TII,
 
 } // end namespace llvm
 
+// Sorting all the loads/stores first, then for each load/store, checking the
+// following load/store one by one, until reach the first non-dependent one and
+// call target hook to see if they can cluster.
+// If FastCluster is enabled, we assume that, all the loads/stores have been
+// preprocessed and now, they didn't have dependencies on each other.
 void BaseMemOpClusterMutation::clusterNeighboringMemOps(
-    ArrayRef<SUnit *> MemOps, ScheduleDAGInstrs *DAG) {
-  SmallVector<MemOpInfo, 32> MemOpRecords;
-  for (SUnit *SU : MemOps) {
-    const MachineOperand *BaseOp;
-    int64_t Offset;
-    if (TII->getMemOperandWithOffset(*SU->getInstr(), BaseOp, Offset, TRI))
-      MemOpRecords.push_back(MemOpInfo(SU, BaseOp, Offset));
-  }
-  if (MemOpRecords.size() < 2)
-    return;
+    ArrayRef<MemOpInfo> MemOpRecords, bool FastCluster,
+    ScheduleDAGInstrs *DAG) {
+  // Keep track of the current cluster length and bytes for each SUnit.
+  DenseMap<unsigned, std::pair<unsigned, unsigned>> SUnit2ClusterInfo;
 
-  llvm::sort(MemOpRecords);
-  unsigned ClusterLength = 1;
+  // At this point, `MemOpRecords` array must hold atleast two mem ops. Try to
+  // cluster mem ops collected within `MemOpRecords` array.
   for (unsigned Idx = 0, End = MemOpRecords.size(); Idx < (End - 1); ++Idx) {
-    SUnit *SUa = MemOpRecords[Idx].SU;
-    SUnit *SUb = MemOpRecords[Idx+1].SU;
-    if (TII->shouldClusterMemOps(*MemOpRecords[Idx].BaseOp,
-                                 *MemOpRecords[Idx + 1].BaseOp,
-                                 ClusterLength) &&
-        DAG->addEdge(SUb, SDep(SUa, SDep::Cluster))) {
-      LLVM_DEBUG(dbgs() << "Cluster ld/st SU(" << SUa->NodeNum << ") - SU("
-                        << SUb->NodeNum << ")\n");
+    // Decision to cluster mem ops is taken based on target dependent logic
+    auto MemOpa = MemOpRecords[Idx];
+
+    // Seek for the next load/store to do the cluster.
+    unsigned NextIdx = Idx + 1;
+    for (; NextIdx < End; ++NextIdx)
+      // Skip if MemOpb has been clustered already or has dependency with
+      // MemOpa.
+      if (!SUnit2ClusterInfo.count(MemOpRecords[NextIdx].SU->NodeNum) &&
+          (FastCluster ||
+           (!DAG->IsReachable(MemOpRecords[NextIdx].SU, MemOpa.SU) &&
+            !DAG->IsReachable(MemOpa.SU, MemOpRecords[NextIdx].SU))))
+        break;
+    if (NextIdx == End)
+      continue;
+
+    auto MemOpb = MemOpRecords[NextIdx];
+    unsigned ClusterLength = 2;
+    unsigned CurrentClusterBytes = MemOpa.Width + MemOpb.Width;
+    if (SUnit2ClusterInfo.count(MemOpa.SU->NodeNum)) {
+      ClusterLength = SUnit2ClusterInfo[MemOpa.SU->NodeNum].first + 1;
+      CurrentClusterBytes =
+          SUnit2ClusterInfo[MemOpa.SU->NodeNum].second + MemOpb.Width;
+    }
+
+    if (!TII->shouldClusterMemOps(MemOpa.BaseOps, MemOpb.BaseOps, ClusterLength,
+                                  CurrentClusterBytes))
+      continue;
+
+    SUnit *SUa = MemOpa.SU;
+    SUnit *SUb = MemOpb.SU;
+    if (SUa->NodeNum > SUb->NodeNum)
+      std::swap(SUa, SUb);
+
+    // FIXME: Is this check really required?
+    if (!DAG->addEdge(SUb, SDep(SUa, SDep::Cluster)))
+      continue;
+
+    LLVM_DEBUG(dbgs() << "Cluster ld/st SU(" << SUa->NodeNum << ") - SU("
+                      << SUb->NodeNum << ")\n");
+    ++NumClustered;
+
+    if (IsLoad) {
       // Copy successor edges from SUa to SUb. Interleaving computation
       // dependent on SUa can prevent load combining due to register reuse.
-      // Predecessor edges do not need to be copied from SUb to SUa since nearby
-      // loads should have effectively the same inputs.
+      // Predecessor edges do not need to be copied from SUb to SUa since
+      // nearby loads should have effectively the same inputs.
       for (const SDep &Succ : SUa->Succs) {
         if (Succ.getSUnit() == SUb)
           continue;
@@ -1587,43 +1653,111 @@ void BaseMemOpClusterMutation::clusterNeighboringMemOps(
                           << ")\n");
         DAG->addEdge(Succ.getSUnit(), SDep(SUb, SDep::Artificial));
       }
-      ++ClusterLength;
-    } else
-      ClusterLength = 1;
+    } else {
+      // Copy predecessor edges from SUb to SUa to avoid the SUnits that
+      // SUb dependent on scheduled in-between SUb and SUa. Successor edges
+      // do not need to be copied from SUa to SUb since no one will depend
+      // on stores.
+      // Notice that, we don't need to care about the memory dependency as
+      // we won't try to cluster them if they have any memory dependency.
+      for (const SDep &Pred : SUb->Preds) {
+        if (Pred.getSUnit() == SUa)
+          continue;
+        LLVM_DEBUG(dbgs() << "  Copy Pred SU(" << Pred.getSUnit()->NodeNum
+                          << ")\n");
+        DAG->addEdge(SUa, SDep(Pred.getSUnit(), SDep::Artificial));
+      }
+    }
+
+    SUnit2ClusterInfo[MemOpb.SU->NodeNum] = {ClusterLength,
+                                             CurrentClusterBytes};
+
+    LLVM_DEBUG(dbgs() << "  Curr cluster length: " << ClusterLength
+                      << ", Curr cluster bytes: " << CurrentClusterBytes
+                      << "\n");
   }
 }
 
-/// Callback from DAG postProcessing to create cluster edges for loads.
-void BaseMemOpClusterMutation::apply(ScheduleDAGInstrs *DAG) {
-  // Map DAG NodeNum to store chain ID.
-  DenseMap<unsigned, unsigned> StoreChainIDs;
-  // Map each store chain to a set of dependent MemOps.
-  SmallVector<SmallVector<SUnit*,4>, 32> StoreChainDependents;
-  for (SUnit &SU : DAG->SUnits) {
+void BaseMemOpClusterMutation::collectMemOpRecords(
+    std::vector<SUnit> &SUnits, SmallVectorImpl<MemOpInfo> &MemOpRecords) {
+  for (auto &SU : SUnits) {
     if ((IsLoad && !SU.getInstr()->mayLoad()) ||
         (!IsLoad && !SU.getInstr()->mayStore()))
       continue;
 
-    unsigned ChainPredID = DAG->SUnits.size();
-    for (const SDep &Pred : SU.Preds) {
-      if (Pred.isCtrl()) {
-        ChainPredID = Pred.getSUnit()->NodeNum;
-        break;
-      }
-    }
-    // Check if this chain-like pred has been seen
-    // before. ChainPredID==MaxNodeID at the top of the schedule.
-    unsigned NumChains = StoreChainDependents.size();
-    std::pair<DenseMap<unsigned, unsigned>::iterator, bool> Result =
-      StoreChainIDs.insert(std::make_pair(ChainPredID, NumChains));
-    if (Result.second)
-      StoreChainDependents.resize(NumChains + 1);
-    StoreChainDependents[Result.first->second].push_back(&SU);
-  }
+    const MachineInstr &MI = *SU.getInstr();
+    SmallVector<const MachineOperand *, 4> BaseOps;
+    int64_t Offset;
+    bool OffsetIsScalable;
+    unsigned Width;
+    if (TII->getMemOperandsWithOffsetWidth(MI, BaseOps, Offset,
+                                           OffsetIsScalable, Width, TRI)) {
+      MemOpRecords.push_back(MemOpInfo(&SU, BaseOps, Offset, Width));
 
-  // Iterate over the store chains.
-  for (auto &SCD : StoreChainDependents)
-    clusterNeighboringMemOps(SCD, DAG);
+      LLVM_DEBUG(dbgs() << "Num BaseOps: " << BaseOps.size() << ", Offset: "
+                        << Offset << ", OffsetIsScalable: " << OffsetIsScalable
+                        << ", Width: " << Width << "\n");
+    }
+#ifndef NDEBUG
+    for (auto *Op : BaseOps)
+      assert(Op);
+#endif
+  }
+}
+
+bool BaseMemOpClusterMutation::groupMemOps(
+    ArrayRef<MemOpInfo> MemOps, ScheduleDAGInstrs *DAG,
+    DenseMap<unsigned, SmallVector<MemOpInfo, 32>> &Groups) {
+  bool FastCluster =
+      ForceFastCluster ||
+      MemOps.size() * DAG->SUnits.size() / 1000 > FastClusterThreshold;
+
+  for (const auto &MemOp : MemOps) {
+    unsigned ChainPredID = DAG->SUnits.size();
+    if (FastCluster) {
+      for (const SDep &Pred : MemOp.SU->Preds) {
+        // We only want to cluster the mem ops that have the same ctrl(non-data)
+        // pred so that they didn't have ctrl dependency for each other. But for
+        // store instrs, we can still cluster them if the pred is load instr.
+        if ((Pred.isCtrl() &&
+             (IsLoad ||
+              (Pred.getSUnit() && Pred.getSUnit()->getInstr()->mayStore()))) &&
+            !Pred.isArtificial()) {
+          ChainPredID = Pred.getSUnit()->NodeNum;
+          break;
+        }
+      }
+    } else
+      ChainPredID = 0;
+
+    Groups[ChainPredID].push_back(MemOp);
+  }
+  return FastCluster;
+}
+
+/// Callback from DAG postProcessing to create cluster edges for loads/stores.
+void BaseMemOpClusterMutation::apply(ScheduleDAGInstrs *DAG) {
+  // Collect all the clusterable loads/stores
+  SmallVector<MemOpInfo, 32> MemOpRecords;
+  collectMemOpRecords(DAG->SUnits, MemOpRecords);
+
+  if (MemOpRecords.size() < 2)
+    return;
+
+  // Put the loads/stores without dependency into the same group with some
+  // heuristic if the DAG is too complex to avoid compiling time blow up.
+  // Notice that, some fusion pair could be lost with this.
+  DenseMap<unsigned, SmallVector<MemOpInfo, 32>> Groups;
+  bool FastCluster = groupMemOps(MemOpRecords, DAG, Groups);
+
+  for (auto &Group : Groups) {
+    // Sorting the loads/stores, so that, we can stop the cluster as early as
+    // possible.
+    llvm::sort(Group.second);
+
+    // Trying to cluster all the neighboring loads/stores.
+    clusterNeighboringMemOps(Group.second, FastCluster, DAG);
+  }
 }
 
 //===----------------------------------------------------------------------===//
@@ -1793,17 +1927,15 @@ void CopyConstrain::constrainLocalCopy(SUnit *CopySU, ScheduleDAGMILive *DAG) {
   }
   LLVM_DEBUG(dbgs() << "Constraining copy SU(" << CopySU->NodeNum << ")\n");
   // Add the weak edges.
-  for (SmallVectorImpl<SUnit*>::const_iterator
-         I = LocalUses.begin(), E = LocalUses.end(); I != E; ++I) {
-    LLVM_DEBUG(dbgs() << "  Local use SU(" << (*I)->NodeNum << ") -> SU("
+  for (SUnit *LU : LocalUses) {
+    LLVM_DEBUG(dbgs() << "  Local use SU(" << LU->NodeNum << ") -> SU("
                       << GlobalSU->NodeNum << ")\n");
-    DAG->addEdge(GlobalSU, SDep(*I, SDep::Weak));
+    DAG->addEdge(GlobalSU, SDep(LU, SDep::Weak));
   }
-  for (SmallVectorImpl<SUnit*>::const_iterator
-         I = GlobalUses.begin(), E = GlobalUses.end(); I != E; ++I) {
-    LLVM_DEBUG(dbgs() << "  Global use SU(" << (*I)->NodeNum << ") -> SU("
+  for (SUnit *GU : GlobalUses) {
+    LLVM_DEBUG(dbgs() << "  Global use SU(" << GU->NodeNum << ") -> SU("
                       << FirstLocalSU->NodeNum << ")\n");
-    DAG->addEdge(FirstLocalSU, SDep(*I, SDep::Weak));
+    DAG->addEdge(FirstLocalSU, SDep(GU, SDep::Weak));
   }
 }
 
@@ -1872,6 +2004,7 @@ void SchedBoundary::reset() {
   IsResourceLimited = false;
   ReservedCycles.clear();
   ReservedCyclesIndex.clear();
+  ResourceGroupSubUnitMasks.clear();
 #ifndef NDEBUG
   // Track the maximum number of stall cycles that could arise either from the
   // latency of a DAG edge or the number of cycles that a processor resource is
@@ -1913,11 +2046,18 @@ init(ScheduleDAGMI *dag, const TargetSchedModel *smodel, SchedRemainder *rem) {
     unsigned ResourceCount = SchedModel->getNumProcResourceKinds();
     ReservedCyclesIndex.resize(ResourceCount);
     ExecutedResCounts.resize(ResourceCount);
+    ResourceGroupSubUnitMasks.resize(ResourceCount, APInt(ResourceCount, 0));
     unsigned NumUnits = 0;
 
     for (unsigned i = 0; i < ResourceCount; ++i) {
       ReservedCyclesIndex[i] = NumUnits;
       NumUnits += SchedModel->getProcResource(i)->NumUnits;
+      if (isUnbufferedGroup(i)) {
+        auto SubUnits = SchedModel->getProcResource(i)->SubUnitsIdxBegin;
+        for (unsigned U = 0, UE = SchedModel->getProcResource(i)->NumUnits;
+             U != UE; ++U)
+          ResourceGroupSubUnitMasks[i].setBit(SubUnits[U]);
+      }
     }
 
     ReservedCycles.resize(NumUnits, InvalidCycle);
@@ -1959,13 +2099,44 @@ unsigned SchedBoundary::getNextResourceCycleByInstance(unsigned InstanceIdx,
 /// scheduled.  Returns the next cycle and the index of the processor resource
 /// instance in the reserved cycles vector.
 std::pair<unsigned, unsigned>
-SchedBoundary::getNextResourceCycle(unsigned PIdx, unsigned Cycles) {
+SchedBoundary::getNextResourceCycle(const MCSchedClassDesc *SC, unsigned PIdx,
+                                    unsigned Cycles) {
+
   unsigned MinNextUnreserved = InvalidCycle;
   unsigned InstanceIdx = 0;
   unsigned StartIndex = ReservedCyclesIndex[PIdx];
   unsigned NumberOfInstances = SchedModel->getProcResource(PIdx)->NumUnits;
   assert(NumberOfInstances > 0 &&
          "Cannot have zero instances of a ProcResource");
+
+  if (isUnbufferedGroup(PIdx)) {
+    // If any subunits are used by the instruction, report that the resource
+    // group is available at 0, effectively removing the group record from
+    // hazarding and basing the hazarding decisions on the subunit records.
+    // Otherwise, choose the first available instance from among the subunits.
+    // Specifications which assign cycles to both the subunits and the group or
+    // which use an unbuffered group with buffered subunits will appear to
+    // schedule strangely. In the first case, the additional cycles for the
+    // group will be ignored.  In the second, the group will be ignored
+    // entirely.
+    for (const MCWriteProcResEntry &PE :
+         make_range(SchedModel->getWriteProcResBegin(SC),
+                    SchedModel->getWriteProcResEnd(SC)))
+      if (ResourceGroupSubUnitMasks[PIdx][PE.ProcResourceIdx])
+        return std::make_pair(0u, StartIndex);
+
+    auto SubUnits = SchedModel->getProcResource(PIdx)->SubUnitsIdxBegin;
+    for (unsigned I = 0, End = NumberOfInstances; I < End; ++I) {
+      unsigned NextUnreserved, NextInstanceIdx;
+      std::tie(NextUnreserved, NextInstanceIdx) =
+          getNextResourceCycle(SC, SubUnits[I], Cycles);
+      if (MinNextUnreserved > NextUnreserved) {
+        InstanceIdx = NextInstanceIdx;
+        MinNextUnreserved = NextUnreserved;
+      }
+    }
+    return std::make_pair(MinNextUnreserved, InstanceIdx);
+  }
 
   for (unsigned I = StartIndex, End = StartIndex + NumberOfInstances; I < End;
        ++I) {
@@ -2020,7 +2191,7 @@ bool SchedBoundary::checkHazard(SUnit *SU) {
       unsigned ResIdx = PE.ProcResourceIdx;
       unsigned Cycles = PE.Cycles;
       unsigned NRCycle, InstanceIdx;
-      std::tie(NRCycle, InstanceIdx) = getNextResourceCycle(ResIdx, Cycles);
+      std::tie(NRCycle, InstanceIdx) = getNextResourceCycle(SC, ResIdx, Cycles);
       if (NRCycle > CurrCycle) {
 #ifndef NDEBUG
         MaxObservedStall = std::max(Cycles, MaxObservedStall);
@@ -2085,7 +2256,8 @@ getOtherResourceCount(unsigned &OtherCritIdx) {
   return OtherCritCount;
 }
 
-void SchedBoundary::releaseNode(SUnit *SU, unsigned ReadyCycle) {
+void SchedBoundary::releaseNode(SUnit *SU, unsigned ReadyCycle, bool InPQueue,
+                                unsigned Idx) {
   assert(SU->getInstr() && "Scheduled SUnit must have instr");
 
 #ifndef NDEBUG
@@ -2102,11 +2274,19 @@ void SchedBoundary::releaseNode(SUnit *SU, unsigned ReadyCycle) {
   // Check for interlocks first. For the purpose of other heuristics, an
   // instruction that cannot issue appears as if it's not in the ReadyQueue.
   bool IsBuffered = SchedModel->getMicroOpBufferSize() != 0;
-  if ((!IsBuffered && ReadyCycle > CurrCycle) || checkHazard(SU) ||
-      Available.size() >= ReadyListLimit)
-    Pending.push(SU);
-  else
+  bool HazardDetected = (!IsBuffered && ReadyCycle > CurrCycle) ||
+                        checkHazard(SU) || (Available.size() >= ReadyListLimit);
+
+  if (!HazardDetected) {
     Available.push(SU);
+
+    if (InPQueue)
+      Pending.remove(Pending.begin() + Idx);
+    return;
+  }
+
+  if (!InPQueue)
+    Pending.push(SU);
 }
 
 /// Move the boundary of scheduled code by one cycle.
@@ -2161,8 +2341,8 @@ void SchedBoundary::incExecutedResources(unsigned PIdx, unsigned Count) {
 ///
 /// \return the next cycle at which the instruction may execute without
 /// oversubscribing resources.
-unsigned SchedBoundary::
-countResource(unsigned PIdx, unsigned Cycles, unsigned NextCycle) {
+unsigned SchedBoundary::countResource(const MCSchedClassDesc *SC, unsigned PIdx,
+                                      unsigned Cycles, unsigned NextCycle) {
   unsigned Factor = SchedModel->getResourceFactor(PIdx);
   unsigned Count = Factor * Cycles;
   LLVM_DEBUG(dbgs() << "  " << SchedModel->getResourceName(PIdx) << " +"
@@ -2184,7 +2364,7 @@ countResource(unsigned PIdx, unsigned Cycles, unsigned NextCycle) {
   }
   // For reserved resources, record the highest cycle using the resource.
   unsigned NextAvailable, InstanceIdx;
-  std::tie(NextAvailable, InstanceIdx) = getNextResourceCycle(PIdx, Cycles);
+  std::tie(NextAvailable, InstanceIdx) = getNextResourceCycle(SC, PIdx, Cycles);
   if (NextAvailable > CurrCycle) {
     LLVM_DEBUG(dbgs() << "  Resource conflict: "
                       << SchedModel->getResourceName(PIdx)
@@ -2264,7 +2444,7 @@ void SchedBoundary::bumpNode(SUnit *SU) {
            PI = SchedModel->getWriteProcResBegin(SC),
            PE = SchedModel->getWriteProcResEnd(SC); PI != PE; ++PI) {
       unsigned RCycle =
-        countResource(PI->ProcResourceIdx, PI->Cycles, NextCycle);
+        countResource(SC, PI->ProcResourceIdx, PI->Cycles, NextCycle);
       if (RCycle > NextCycle)
         NextCycle = RCycle;
     }
@@ -2279,7 +2459,8 @@ void SchedBoundary::bumpNode(SUnit *SU) {
         unsigned PIdx = PI->ProcResourceIdx;
         if (SchedModel->getProcResource(PIdx)->BufferSize == 0) {
           unsigned ReservedUntil, InstanceIdx;
-          std::tie(ReservedUntil, InstanceIdx) = getNextResourceCycle(PIdx, 0);
+          std::tie(ReservedUntil, InstanceIdx) =
+              getNextResourceCycle(SC, PIdx, 0);
           if (isTop()) {
             ReservedCycles[InstanceIdx] =
                 std::max(ReservedUntil, NextCycle + PI->Cycles);
@@ -2346,26 +2527,21 @@ void SchedBoundary::releasePending() {
 
   // Check to see if any of the pending instructions are ready to issue.  If
   // so, add them to the available queue.
-  bool IsBuffered = SchedModel->getMicroOpBufferSize() != 0;
-  for (unsigned i = 0, e = Pending.size(); i != e; ++i) {
-    SUnit *SU = *(Pending.begin()+i);
+  for (unsigned I = 0, E = Pending.size(); I < E; ++I) {
+    SUnit *SU = *(Pending.begin() + I);
     unsigned ReadyCycle = isTop() ? SU->TopReadyCycle : SU->BotReadyCycle;
 
     if (ReadyCycle < MinReadyCycle)
       MinReadyCycle = ReadyCycle;
 
-    if (!IsBuffered && ReadyCycle > CurrCycle)
-      continue;
-
-    if (checkHazard(SU))
-      continue;
-
     if (Available.size() >= ReadyListLimit)
       break;
 
-    Available.push(SU);
-    Pending.remove(Pending.begin()+i);
-    --i; --e;
+    releaseNode(SU, ReadyCycle, true, I);
+    if (E != Pending.size()) {
+      --I;
+      --E;
+    }
   }
   CheckPending = false;
 }
@@ -2387,16 +2563,14 @@ SUnit *SchedBoundary::pickOnlyChoice() {
   if (CheckPending)
     releasePending();
 
-  if (CurrMOps > 0) {
-    // Defer any ready instrs that now have a hazard.
-    for (ReadyQueue::iterator I = Available.begin(); I != Available.end();) {
-      if (checkHazard(*I)) {
-        Pending.push(*I);
-        I = Available.remove(I);
-        continue;
-      }
-      ++I;
+  // Defer any ready instrs that now have a hazard.
+  for (ReadyQueue::iterator I = Available.begin(); I != Available.end();) {
+    if (checkHazard(*I)) {
+      Pending.push(*I);
+      I = Available.remove(I);
+      continue;
     }
+    ++I;
   }
   for (unsigned i = 0; Available.empty(); ++i) {
 //  FIXME: Re-enable assert once PR20057 is resolved.
@@ -2680,7 +2854,11 @@ bool tryLatency(GenericSchedulerBase::SchedCandidate &TryCand,
                 GenericSchedulerBase::SchedCandidate &Cand,
                 SchedBoundary &Zone) {
   if (Zone.isTop()) {
-    if (Cand.SU->getDepth() > Zone.getScheduledLatency()) {
+    // Prefer the candidate with the lesser depth, but only if one of them has
+    // depth greater than the total latency scheduled so far, otherwise either
+    // of them could be scheduled now with no stall.
+    if (std::max(TryCand.SU->getDepth(), Cand.SU->getDepth()) >
+        Zone.getScheduledLatency()) {
       if (tryLess(TryCand.SU->getDepth(), Cand.SU->getDepth(),
                   TryCand, Cand, GenericSchedulerBase::TopDepthReduce))
         return true;
@@ -2689,7 +2867,11 @@ bool tryLatency(GenericSchedulerBase::SchedCandidate &TryCand,
                    TryCand, Cand, GenericSchedulerBase::TopPathReduce))
       return true;
   } else {
-    if (Cand.SU->getHeight() > Zone.getScheduledLatency()) {
+    // Prefer the candidate with the lesser height, but only if one of them has
+    // height greater than the total latency scheduled so far, otherwise either
+    // of them could be scheduled now with no stall.
+    if (std::max(TryCand.SU->getHeight(), Cand.SU->getHeight()) >
+        Zone.getScheduledLatency()) {
       if (tryLess(TryCand.SU->getHeight(), Cand.SU->getHeight(),
                   TryCand, Cand, GenericSchedulerBase::BotHeightReduce))
         return true;
@@ -2717,6 +2899,9 @@ void GenericScheduler::initialize(ScheduleDAGMI *dag) {
   DAG = static_cast<ScheduleDAGMILive*>(dag);
   SchedModel = DAG->getSchedModel();
   TRI = DAG->TRI;
+
+  if (RegionPolicy.ComputeDFSResult)
+    DAG->computeDFSResult();
 
   Rem.init(DAG, SchedModel);
   Top.init(DAG, SchedModel, &Rem);
@@ -3309,13 +3494,13 @@ ScheduleDAGMILive *llvm::createGenericSchedLive(MachineSchedContext *C) {
   return DAG;
 }
 
-static ScheduleDAGInstrs *createConveringSched(MachineSchedContext *C) {
+static ScheduleDAGInstrs *createConvergingSched(MachineSchedContext *C) {
   return createGenericSchedLive(C);
 }
 
 static MachineSchedRegistry
 GenericSchedRegistry("converge", "Standard converging scheduler.",
-                     createConveringSched);
+                     createConvergingSched);
 
 //===----------------------------------------------------------------------===//
 // PostGenericScheduler - Generic PostRA implementation of MachineSchedStrategy.
@@ -3682,14 +3867,14 @@ struct DOTGraphTraits<ScheduleDAGMI*> : public DefaultDOTGraphTraits {
   DOTGraphTraits(bool isSimple = false) : DefaultDOTGraphTraits(isSimple) {}
 
   static std::string getGraphName(const ScheduleDAG *G) {
-    return G->MF.getName();
+    return std::string(G->MF.getName());
   }
 
   static bool renderGraphFromBottomUp() {
     return true;
   }
 
-  static bool isNodeHidden(const SUnit *Node) {
+  static bool isNodeHidden(const SUnit *Node, const ScheduleDAG *G) {
     if (ViewMISchedCutoff == 0)
       return false;
     return (Node->Preds.size() > ViewMISchedCutoff

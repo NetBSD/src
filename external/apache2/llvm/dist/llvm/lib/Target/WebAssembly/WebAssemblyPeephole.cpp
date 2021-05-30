@@ -66,7 +66,7 @@ static bool maybeRewriteToDrop(unsigned OldReg, unsigned NewReg,
     Register NewReg = MRI.createVirtualRegister(MRI.getRegClass(OldReg));
     MO.setReg(NewReg);
     MO.setIsDead();
-    MFI.stackifyVReg(NewReg);
+    MFI.stackifyVReg(MRI, NewReg);
   }
   return Changed;
 }
@@ -111,8 +111,11 @@ static bool maybeRewriteToFallthrough(MachineInstr &MI, MachineBasicBlock &MBB,
       case WebAssembly::V128RegClassID:
         CopyLocalOpc = WebAssembly::COPY_V128;
         break;
-      case WebAssembly::EXNREFRegClassID:
-        CopyLocalOpc = WebAssembly::COPY_EXNREF;
+      case WebAssembly::FUNCREFRegClassID:
+        CopyLocalOpc = WebAssembly::COPY_FUNCREF;
+        break;
+      case WebAssembly::EXTERNREFRegClassID:
+        CopyLocalOpc = WebAssembly::COPY_EXTERNREF;
         break;
       default:
         llvm_unreachable("Unexpected register class for return operand");
@@ -121,7 +124,7 @@ static bool maybeRewriteToFallthrough(MachineInstr &MI, MachineBasicBlock &MBB,
       BuildMI(MBB, MI, MI.getDebugLoc(), TII.get(CopyLocalOpc), NewReg)
           .addReg(Reg);
       MO.setReg(NewReg);
-      MFI.stackifyVReg(NewReg);
+      MFI.stackifyVReg(MRI, NewReg);
     }
   }
 
@@ -149,8 +152,7 @@ bool WebAssemblyPeephole::runOnMachineFunction(MachineFunction &MF) {
       switch (MI.getOpcode()) {
       default:
         break;
-      case WebAssembly::CALL_i32:
-      case WebAssembly::CALL_i64: {
+      case WebAssembly::CALL: {
         MachineOperand &Op1 = MI.getOperand(1);
         if (Op1.isSymbol()) {
           StringRef Name(Op1.getSymbolName());

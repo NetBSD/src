@@ -198,12 +198,19 @@ bool isJumpTableCanonical(Function *F);
 } // end namespace lowertypetests
 
 class LowerTypeTestsPass : public PassInfoMixin<LowerTypeTestsPass> {
+  bool UseCommandLine = false;
+
+  ModuleSummaryIndex *ExportSummary = nullptr;
+  const ModuleSummaryIndex *ImportSummary = nullptr;
+  bool DropTypeTests = true;
+
 public:
-  ModuleSummaryIndex *ExportSummary;
-  const ModuleSummaryIndex *ImportSummary;
+  LowerTypeTestsPass() : UseCommandLine(true) {}
   LowerTypeTestsPass(ModuleSummaryIndex *ExportSummary,
-                     const ModuleSummaryIndex *ImportSummary)
-      : ExportSummary(ExportSummary), ImportSummary(ImportSummary) {}
+                     const ModuleSummaryIndex *ImportSummary,
+                     bool DropTypeTests = false)
+      : ExportSummary(ExportSummary), ImportSummary(ImportSummary),
+        DropTypeTests(DropTypeTests) {}
   PreservedAnalyses run(Module &M, ModuleAnalysisManager &AM);
 };
 

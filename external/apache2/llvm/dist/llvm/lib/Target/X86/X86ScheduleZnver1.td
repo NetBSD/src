@@ -295,6 +295,7 @@ defm : ZnWriteResFpuPair<WriteFCmp64X,   [ZnFPU0],  3>;
 defm : ZnWriteResFpuPair<WriteFCmp64Y,   [ZnFPU0],  3>;
 defm : X86WriteResPairUnsupported<WriteFCmp64Z>;
 defm : ZnWriteResFpuPair<WriteFCom,      [ZnFPU0],  3>;
+defm : ZnWriteResFpuPair<WriteFComX,     [ZnFPU0],  3>;
 defm : ZnWriteResFpuPair<WriteFBlend,    [ZnFPU01], 1>;
 defm : ZnWriteResFpuPair<WriteFBlendY,   [ZnFPU01], 1>;
 defm : X86WriteResPairUnsupported<WriteFBlendZ>;
@@ -387,8 +388,10 @@ defm : X86WriteRes<WriteVecStoreX,       [ZnAGU], 1, [1], 1>;
 defm : X86WriteRes<WriteVecStoreY,       [ZnAGU], 1, [1], 1>;
 defm : X86WriteRes<WriteVecStoreNT,      [ZnAGU], 1, [1], 1>;
 defm : X86WriteRes<WriteVecStoreNTY,     [ZnAGU], 1, [1], 1>;
-defm : X86WriteRes<WriteVecMaskedStore,  [ZnAGU,ZnFPU01], 4, [1,1], 1>;
-defm : X86WriteRes<WriteVecMaskedStoreY, [ZnAGU,ZnFPU01], 5, [1,2], 2>;
+defm : X86WriteRes<WriteVecMaskedStore32,  [ZnAGU,ZnFPU01], 4, [1,1], 1>;
+defm : X86WriteRes<WriteVecMaskedStore32Y, [ZnAGU,ZnFPU01], 5, [1,2], 2>;
+defm : X86WriteRes<WriteVecMaskedStore64,  [ZnAGU,ZnFPU01], 4, [1,1], 1>;
+defm : X86WriteRes<WriteVecMaskedStore64Y, [ZnAGU,ZnFPU01], 5, [1,2], 2>;
 defm : X86WriteRes<WriteVecMove,         [ZnFPU], 1, [1], 1>;
 defm : X86WriteRes<WriteVecMoveX,        [ZnFPU], 1, [1], 1>;
 defm : X86WriteRes<WriteVecMoveY,        [ZnFPU], 2, [1], 2>;
@@ -434,6 +437,7 @@ defm : ZnWriteResFpuPair<WriteBlend,      [ZnFPU01], 1>;
 defm : ZnWriteResFpuPair<WriteBlendY,     [ZnFPU01], 1>;
 defm : X86WriteResPairUnsupported<WriteBlendZ>;
 defm : ZnWriteResFpuPair<WriteShuffle256, [ZnFPU],   2>;
+defm : ZnWriteResFpuPair<WriteVPMOV256,   [ZnFPU12],  1, [1], 2>;
 defm : ZnWriteResFpuPair<WriteVarShuffle256, [ZnFPU],   2>;
 defm : ZnWriteResFpuPair<WritePSADBW,     [ZnFPU0],  3>;
 defm : ZnWriteResFpuPair<WritePSADBWX,    [ZnFPU0],  3>;
@@ -1015,11 +1019,6 @@ def : InstRW<[ZnWriteFPU12], (instrs MMX_PACKSSDWirr,
 def : InstRW<[ZnWriteFPU12m], (instrs MMX_PACKSSDWirm,
                                       MMX_PACKSSWBirm,
                                       MMX_PACKUSWBirm)>;
-
-// VPMOVSX/ZX BW BD BQ WD WQ DQ.
-// y <- x.
-def : InstRW<[ZnWriteFPU12Y], (instregex "VPMOV(SX|ZX)(BW|BD|BQ|WD|WQ|DQ)Yrr")>;
-def : InstRW<[ZnWriteFPU12Ym], (instregex "VPMOV(SX|ZX)(BW|BD|BQ|WD|WQ|DQ)Yrm")>;
 
 def ZnWriteFPU013 : SchedWriteRes<[ZnFPU013]> ;
 def ZnWriteFPU013Y : SchedWriteRes<[ZnFPU013]> {
