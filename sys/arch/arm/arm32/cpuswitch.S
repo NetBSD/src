@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.104 2020/11/21 19:44:52 skrll Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.105 2021/05/30 06:53:15 dholland Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -87,7 +87,7 @@
 #include <arm/asm.h>
 #include <arm/locore.h>
 
-	RCSID("$NetBSD: cpuswitch.S,v 1.104 2020/11/21 19:44:52 skrll Exp $")
+	RCSID("$NetBSD: cpuswitch.S,v 1.105 2021/05/30 06:53:15 dholland Exp $")
 
 /* LINTSTUB: include <sys/param.h> */
 
@@ -136,7 +136,7 @@ ENTRY(cpu_switchto)
 	mov	ip, sp
 	push	{r4-r7, ip, lr}
 
-	/* move lwps into caller saved registers */
+	/* move lwps into callee saved registers */
 	mov	r6, r1
 	mov	r4, r0
 
