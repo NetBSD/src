@@ -248,8 +248,9 @@ public:
       FieldInfo RetVal;
       RetVal.Field = FD;
       auto &Ctx = FD->getASTContext();
-      std::tie(RetVal.Size, RetVal.Align) =
-          Ctx.getTypeInfoInChars(FD->getType());
+      auto Info = Ctx.getTypeInfoInChars(FD->getType());
+      RetVal.Size = Info.Width;
+      RetVal.Align = Info.Align;
       assert(llvm::isPowerOf2_64(RetVal.Align.getQuantity()));
       if (auto Max = FD->getMaxAlignment())
         RetVal.Align = std::max(Ctx.toCharUnitsFromBits(Max), RetVal.Align);
@@ -353,6 +354,6 @@ void ento::registerPaddingChecker(CheckerManager &Mgr) {
         Checker, "AllowedPad", "a non-negative value");
 }
 
-bool ento::shouldRegisterPaddingChecker(const LangOptions &LO) {
+bool ento::shouldRegisterPaddingChecker(const CheckerManager &mgr) {
   return true;
 }

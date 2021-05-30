@@ -7,6 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Index/IndexSymbol.h"
+#include "clang/AST/Attr.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclTemplate.h"
@@ -356,6 +357,15 @@ SymbolInfo index::getSymbolInfo(const Decl *D) {
     case Decl::VarTemplate:
       llvm_unreachable("variables handled before");
       break;
+    case Decl::TemplateTypeParm:
+      Info.Kind = SymbolKind::TemplateTypeParm;
+      break;
+    case Decl::TemplateTemplateParm:
+      Info.Kind = SymbolKind::TemplateTemplateParm;
+      break;
+    case Decl::NonTypeTemplateParm:
+      Info.Kind = SymbolKind::NonTypeTemplateParm;
+      break;
     // Other decls get the 'unknown' kind.
     default:
       break;
@@ -516,6 +526,9 @@ StringRef index::getSymbolKindString(SymbolKind K) {
   case SymbolKind::ConversionFunction: return "conversion-func";
   case SymbolKind::Parameter: return "param";
   case SymbolKind::Using: return "using";
+  case SymbolKind::TemplateTypeParm: return "template-type-param";
+  case SymbolKind::TemplateTemplateParm: return "template-template-param";
+  case SymbolKind::NonTypeTemplateParm: return "non-type-template-param";
   }
   llvm_unreachable("invalid symbol kind");
 }

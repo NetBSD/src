@@ -67,7 +67,7 @@ public:
 
   std::vector<std::string> Find() {
     // Fill OverriddenMethods and PartialSpecs storages.
-    TraverseDecl(Context.getTranslationUnitDecl());
+    TraverseAST(Context);
     if (const auto *MethodDecl = dyn_cast<CXXMethodDecl>(FoundDecl)) {
       addUSRsOfOverridenFunctions(MethodDecl);
       for (const auto &OverriddenMethod : OverriddenMethods) {
@@ -80,6 +80,22 @@ public:
     } else if (const auto *TemplateDecl =
                    dyn_cast<ClassTemplateDecl>(FoundDecl)) {
       handleClassTemplateDecl(TemplateDecl);
+    } else if (const auto *FD = dyn_cast<FunctionDecl>(FoundDecl)) {
+      USRSet.insert(getUSRForDecl(FD));
+      if (const auto *FTD = FD->getPrimaryTemplate())
+        handleFunctionTemplateDecl(FTD);
+    } else if (const auto *FD = dyn_cast<FunctionTemplateDecl>(FoundDecl)) {
+      handleFunctionTemplateDecl(FD);
+    } else if (const auto *VTD = dyn_cast<VarTemplateDecl>(FoundDecl)) {
+      handleVarTemplateDecl(VTD);
+    } else if (const auto *VD =
+                   dyn_cast<VarTemplateSpecializationDecl>(FoundDecl)) {
+      // FIXME: figure out why FoundDecl can be a VarTemplateSpecializationDecl.
+      handleVarTemplateDecl(VD->getSpecializedTemplate());
+    } else if (const auto *VD = dyn_cast<VarDecl>(FoundDecl)) {
+      USRSet.insert(getUSRForDecl(VD));
+      if (const auto *VTD = VD->getDescribedVarTemplate())
+        handleVarTemplateDecl(VTD);
     } else {
       USRSet.insert(getUSRForDecl(FoundDecl));
     }
@@ -93,12 +109,6 @@ public:
       OverriddenMethods.push_back(MethodDecl);
     if (MethodDecl->getInstantiatedFromMemberFunction())
       InstantiatedMethods.push_back(MethodDecl);
-    return true;
-  }
-
-  bool VisitClassTemplatePartialSpecializationDecl(
-      const ClassTemplatePartialSpecializationDecl *PartialSpec) {
-    PartialSpecs.push_back(PartialSpec);
     return true;
   }
 
@@ -118,23 +128,51 @@ private:
   void handleClassTemplateDecl(const ClassTemplateDecl *TemplateDecl) {
     for (const auto *Specialization : TemplateDecl->specializations())
       addUSRsOfCtorDtors(Specialization);
-
-    for (const auto *PartialSpec : PartialSpecs) {
-      if (PartialSpec->getSpecializedTemplate() == TemplateDecl)
-        addUSRsOfCtorDtors(PartialSpec);
-    }
+    SmallVector<ClassTemplatePartialSpecializationDecl *, 4> PartialSpecs;
+    TemplateDecl->getPartialSpecializations(PartialSpecs);
+    for (const auto *Spec : PartialSpecs)
+      addUSRsOfCtorDtors(Spec);
     addUSRsOfCtorDtors(TemplateDecl->getTemplatedDecl());
   }
 
-  void addUSRsOfCtorDtors(const CXXRecordDecl *RecordDecl) {
-    RecordDecl = RecordDecl->getDefinition();
+  void handleFunctionTemplateDecl(const FunctionTemplateDecl *FTD) {
+    USRSet.insert(getUSRForDecl(FTD));
+    USRSet.insert(getUSRForDecl(FTD->getTemplatedDecl()));
+    for (const auto *S : FTD->specializations())
+      USRSet.insert(getUSRForDecl(S));
+  }
+
+  void handleVarTemplateDecl(const VarTemplateDecl *VTD) {
+    USRSet.insert(getUSRForDecl(VTD));
+    USRSet.insert(getUSRForDecl(VTD->getTemplatedDecl()));
+    llvm::for_each(VTD->specializations(), [&](const auto *Spec) {
+      USRSet.insert(getUSRForDecl(Spec));
+    });
+    SmallVector<VarTemplatePartialSpecializationDecl *, 4> PartialSpecs;
+    VTD->getPartialSpecializations(PartialSpecs);
+    llvm::for_each(PartialSpecs, [&](const auto *Spec) {
+      USRSet.insert(getUSRForDecl(Spec));
+    });
+  }
+
+  void addUSRsOfCtorDtors(const CXXRecordDecl *RD) {
+    const auto* RecordDecl = RD->getDefinition();
 
     // Skip if the CXXRecordDecl doesn't have definition.
-    if (!RecordDecl)
+    if (!RecordDecl) {
+      USRSet.insert(getUSRForDecl(RD));
       return;
+    }
 
     for (const auto *CtorDecl : RecordDecl->ctors())
       USRSet.insert(getUSRForDecl(CtorDecl));
+    // Add template constructor decls, they are not in ctors() unfortunately.
+    if (RecordDecl->hasUserDeclaredConstructor())
+      for (const auto *D : RecordDecl->decls())
+        if (const auto *FTD = dyn_cast<FunctionTemplateDecl>(D))
+          if (const auto *Ctor =
+                  dyn_cast<CXXConstructorDecl>(FTD->getTemplatedDecl()))
+            USRSet.insert(getUSRForDecl(Ctor));
 
     USRSet.insert(getUSRForDecl(RecordDecl->getDestructor()));
     USRSet.insert(getUSRForDecl(RecordDecl));
@@ -175,7 +213,6 @@ private:
   std::set<std::string> USRSet;
   std::vector<const CXXMethodDecl *> OverriddenMethods;
   std::vector<const CXXMethodDecl *> InstantiatedMethods;
-  std::vector<const ClassTemplatePartialSpecializationDecl *> PartialSpecs;
 };
 } // namespace
 

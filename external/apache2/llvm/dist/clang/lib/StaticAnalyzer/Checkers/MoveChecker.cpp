@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/AST/Attr.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/Driver/DriverDiagnostic.h"
 #include "clang/StaticAnalyzer/Checkers/BuiltinCheckerRegistration.h"
@@ -103,7 +104,7 @@ private:
       "basic_ios",
       "future",
       "optional",
-      "packaged_task"
+      "packaged_task",
       "promise",
       "shared_future",
       "shared_lock",
@@ -201,7 +202,7 @@ public:
   };
 
 private:
-  mutable std::unique_ptr<BugType> BT;
+  BugType BT{this, "Use-after-move", categories::CXXMoveSemantics};
 
   // Check if the given form of potential misuse of a given object
   // should be reported. If so, get it reported. The callback from which
@@ -392,11 +393,6 @@ ExplodedNode *MoveChecker::reportBug(const MemRegion *Region,
                                      MisuseKind MK) const {
   if (ExplodedNode *N = misuseCausesCrash(MK) ? C.generateErrorNode()
                                               : C.generateNonFatalErrorNode()) {
-
-    if (!BT)
-      BT.reset(new BugType(this, "Use-after-move",
-                           "C++ move semantics"));
-
     // Uniqueing report to the same object.
     PathDiagnosticLocation LocUsedForUniqueing;
     const ExplodedNode *MoveNode = getMoveLocation(N, Region, C);
@@ -430,7 +426,7 @@ ExplodedNode *MoveChecker::reportBug(const MemRegion *Region,
     }
 
     auto R = std::make_unique<PathSensitiveBugReport>(
-        *BT, OS.str(), N, LocUsedForUniqueing,
+        BT, OS.str(), N, LocUsedForUniqueing,
         MoveNode->getLocationContext()->getDecl());
     R->addVisitor(std::make_unique<MovedBugVisitor>(*this, Region, RD, MK));
     C.emitReport(std::move(R));
@@ -579,7 +575,7 @@ void MoveChecker::explainObject(llvm::raw_ostream &OS, const MemRegion *MR,
   if (const auto DR =
           dyn_cast_or_null<DeclRegion>(unwrapRValueReferenceIndirection(MR))) {
     const auto *RegionDecl = cast<NamedDecl>(DR->getDecl());
-    OS << " '" << RegionDecl->getNameAsString() << "'";
+    OS << " '" << RegionDecl->getDeclName() << "'";
   }
 
   ObjectKind OK = classifyObject(MR, RD);
@@ -685,7 +681,7 @@ void MoveChecker::checkDeadSymbols(SymbolReaper &SymReaper,
                                    CheckerContext &C) const {
   ProgramStateRef State = C.getState();
   TrackedRegionMapTy TrackedRegions = State->get<TrackedRegionMap>();
-  for (TrackedRegionMapTy::value_type E : TrackedRegions) {
+  for (auto E : TrackedRegions) {
     const MemRegion *Region = E.first;
     bool IsRegDead = !SymReaper.isLiveRegion(Region);
 
@@ -756,6 +752,6 @@ void ento::registerMoveChecker(CheckerManager &mgr) {
       mgr.getAnalyzerOptions().getCheckerStringOption(chk, "WarnOn"), mgr);
 }
 
-bool ento::shouldRegisterMoveChecker(const LangOptions &LO) {
+bool ento::shouldRegisterMoveChecker(const CheckerManager &mgr) {
   return true;
 }
