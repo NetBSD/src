@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.24 2021/04/22 01:36:25 rin Exp $
+.\"	$NetBSD: boot.8,v 1.25 2021/05/30 06:05:24 mlelstv Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -617,6 +617,9 @@ See the foreign operating system's documentation for the available
 .El
 .It Ic quit
 Reboot the system.
+.It Ic root Ar spec
+Pass an explicit root specification to the kernel.
+See BTINFO_ROOTDEVICE for details.
 .It Ic rndseed Ar file
 Load the specified
 .Ar file
@@ -713,8 +716,10 @@ This will be automatically substituted by a
 .Xr dk 4
 wedge if one is discovered.
 .Pp
-The bootloader passes a wedge name as
+If the bootloader passes a wedge name as
 .Dq Li wedge:
+or
+.Dq Li NAME=
 followed by the name.
 The kernel will search for a
 .Xr dk 4
