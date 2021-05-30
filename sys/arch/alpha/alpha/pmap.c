@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.286 2021/05/30 05:26:09 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.287 2021/05/30 06:41:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008, 2020
@@ -135,7 +135,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.286 2021/05/30 05:26:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.287 2021/05/30 06:41:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2233,17 +2233,18 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	npte = ((pa >> PGSHIFT) << PG_SHIFT) | pte_prot(pmap, prot) | PG_V;
 	if (pg != NULL) {
 		struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
-		int attrs;
+		uintptr_t attrs = 0;
 
 		KASSERT(((flags & VM_PROT_ALL) & ~prot) == 0);
 
+		if (flags & VM_PROT_WRITE)
+			attrs |= (PGA_REFERENCED|PGA_MODIFIED);
+		else if (flags & VM_PROT_ALL)
+			attrs |= PGA_REFERENCED;
+
 		lock = pmap_pvh_lock(pg);
 		mutex_enter(lock);
-		if (flags & VM_PROT_WRITE)
-			md->pvh_attrs |= (PGA_REFERENCED|PGA_MODIFIED);
-		else if (flags & VM_PROT_ALL)
-			md->pvh_attrs |= PGA_REFERENCED;
-		attrs = md->pvh_attrs;
+		md->pvh_listx |= attrs;
 		mutex_exit(lock);
 
 		/* Set up referenced/modified emulation for new mapping. */
@@ -2779,10 +2780,10 @@ pmap_clear_modify(struct vm_page *pg)
 	lock = pmap_pvh_lock(pg);
 	mutex_enter(lock);
 
-	if (md->pvh_attrs & PGA_MODIFIED) {
+	if (md->pvh_listx & PGA_MODIFIED) {
 		rv = true;
 		pmap_changebit(pg, PG_FOW, ~0UL, &tlbctx);
-		md->pvh_attrs &= ~PGA_MODIFIED;
+		md->pvh_listx &= ~PGA_MODIFIED;
 	}
 
 	mutex_exit(lock);
@@ -2818,10 +2819,10 @@ pmap_clear_reference(struct vm_page *pg)
 	lock = pmap_pvh_lock(pg);
 	mutex_enter(lock);
 
-	if (md->pvh_attrs & PGA_REFERENCED) {
+	if (md->pvh_listx & PGA_REFERENCED) {
 		rv = true;
 		pmap_changebit(pg, PG_FOR | PG_FOW | PG_FOE, ~0UL, &tlbctx);
-		md->pvh_attrs &= ~PGA_REFERENCED;
+		md->pvh_listx &= ~PGA_REFERENCED;
 	}
 
 	mutex_exit(lock);
@@ -3133,10 +3134,10 @@ pmap_emulate_reference(struct lwp *l, vaddr_t v, int user, int type)
 	mutex_enter(lock);
 
 	if (type == ALPHA_MMCSR_FOW) {
-		md->pvh_attrs |= (PGA_REFERENCED|PGA_MODIFIED);
+		md->pvh_listx |= (PGA_REFERENCED|PGA_MODIFIED);
 		faultoff = PG_FOR | PG_FOW;
 	} else {
-		md->pvh_attrs |= PGA_REFERENCED;
+		md->pvh_listx |= PGA_REFERENCED;
 		faultoff = PG_FOR;
 		if (exec) {
 			faultoff |= PG_FOE;
@@ -3173,7 +3174,7 @@ pmap_pv_dump(paddr_t pa)
 	lock = pmap_pvh_lock(pg);
 	mutex_enter(lock);
 
-	printf("pa 0x%lx (attrs = 0x%x):\n", pa, md->pvh_attrs);
+	printf("pa 0x%lx (attrs = 0x%x):\n", pa, md->pvh_listx & PGA_ATTRS);
 	for (pv = VM_MDPAGE_PVS(pg); pv != NULL; pv = pv->pv_next)
 		printf("     pmap %p, va 0x%lx\n",
 		    pv->pv_pmap, pv->pv_va);
@@ -3274,8 +3275,9 @@ pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t va, pt_entry_t *pte,
 	/*
 	 * ...and put it in the list.
 	 */
-	newpv->pv_next = md->pvh_list;
-	md->pvh_list = newpv;
+	uintptr_t const attrs = md->pvh_listx & PGA_ATTRS;
+	newpv->pv_next = (struct pv_entry *)(md->pvh_listx & ~PGA_ATTRS);
+	md->pvh_listx = (uintptr_t)newpv | attrs;
 
 	if (dolock) {
 		mutex_exit(lock);
@@ -3307,14 +3309,15 @@ pmap_pv_remove(pmap_t pmap, struct vm_page *pg, vaddr_t va, bool dolock,
 	/*
 	 * Find the entry to remove.
 	 */
-	for (pvp = &md->pvh_list, pv = *pvp;
+	for (pvp = (struct pv_entry **)&md->pvh_listx, pv = VM_MDPAGE_PVS(pg);
 	     pv != NULL; pvp = &pv->pv_next, pv = *pvp)
 		if (pmap == pv->pv_pmap && va == pv->pv_va)
 			break;
 
 	KASSERT(pv != NULL);
 
-	*pvp = pv->pv_next;
+	*pvp = (pv_entry_t)((uintptr_t)pv->pv_next |
+			    (((uintptr_t)*pvp) & PGA_ATTRS));
 
 	if (dolock) {
 		mutex_exit(lock);
