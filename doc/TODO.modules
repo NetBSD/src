@@ -1,4 +1,4 @@
-/* $NetBSD: TODO.modules,v 1.22 2020/07/05 02:04:25 pgoyette Exp $ */
+/* $NetBSD: TODO.modules,v 1.23 2021/05/30 02:37:42 pgoyette Exp $ */
 
 Some notes on the limitations of our current (as of 7.99.35) module
 subsystem.  This list was triggered by an Email exchange between
@@ -239,3 +239,5 @@ christos and pgoyette.
 
     This is likely to be fixed by Chuck Silvers on 2020-07-04 which
     removed the differences between the xen and non-xen module ABIs.
+    As of 2021-05-28 the cpu-microcode functionality has once again
+    been enabled for i386 and amd64 compat_60 modules.
