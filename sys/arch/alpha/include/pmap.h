@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.90 2021/05/30 01:41:45 thorpej Exp $ */
+/* $NetBSD: pmap.h,v 1.91 2021/05/30 04:04:26 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -361,13 +361,12 @@ do {									\
 struct vm_page_md {
 	struct pv_entry *pvh_list;		/* pv_entry list */
 	int pvh_attrs;				/* page attributes */
-	unsigned pvh_refcnt;
 };
 
 #define	VM_MDPAGE_INIT(pg)						\
 do {									\
 	(pg)->mdpage.pvh_list = NULL;					\
-	(pg)->mdpage.pvh_refcnt = 0;					\
+	(pg)->mdpage.pvh_attrs = 0;					\
 } while (/*CONSTCOND*/0)
 
 #endif /* _KERNEL */
