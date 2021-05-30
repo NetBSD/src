@@ -21,7 +21,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-icmp6.c,v 1.13 2020/02/24 18:39:47 kamil Exp $");
+__RCSID("$NetBSD: print-icmp6.c,v 1.14 2021/05/30 21:48:42 thorpej Exp $");
 #endif
 
 /* \summary: IPv6 Internet Control Message Protocol (ICMPv6) printer */
@@ -91,7 +91,7 @@ struct icmp6_hdr {
 		uint16_t	icmp6_un_data16[2]; /* type-specific field */
 		uint8_t		icmp6_un_data8[4];  /* type-specific field */
 	} icmp6_dataun;
-};
+} UNALIGNED;
 
 #define icmp6_data32	icmp6_dataun.icmp6_un_data32
 #define icmp6_data16	icmp6_dataun.icmp6_un_data16
@@ -183,7 +183,7 @@ struct icmp6_hdr {
 struct mld6_hdr {
 	struct icmp6_hdr	mld6_hdr;
 	struct in6_addr		mld6_addr; /* multicast address */
-};
+} UNALIGNED;
 
 #define mld6_type	mld6_hdr.icmp6_type
 #define mld6_code	mld6_hdr.icmp6_code
@@ -201,7 +201,7 @@ struct mld6_hdr {
 struct nd_router_solicit {	/* router solicitation */
 	struct icmp6_hdr 	nd_rs_hdr;
 	/* could be followed by options */
-};
+} UNALIGNED;
 
 #define nd_rs_type	nd_rs_hdr.icmp6_type
 #define nd_rs_code	nd_rs_hdr.icmp6_code
@@ -213,7 +213,7 @@ struct nd_router_advert {	/* router advertisement */
 	uint32_t		nd_ra_reachable;	/* reachable time */
 	uint32_t		nd_ra_retransmit;	/* retransmit timer */
 	/* could be followed by options */
-};
+} UNALIGNED;
 
 #define nd_ra_type		nd_ra_hdr.icmp6_type
 #define nd_ra_code		nd_ra_hdr.icmp6_code
@@ -241,7 +241,7 @@ struct nd_neighbor_solicit {	/* neighbor solicitation */
 	struct icmp6_hdr	nd_ns_hdr;
 	struct in6_addr		nd_ns_target;	/*target address */
 	/* could be followed by options */
-};
+} UNALIGNED;
 
 #define nd_ns_type		nd_ns_hdr.icmp6_type
 #define nd_ns_code		nd_ns_hdr.icmp6_code
@@ -252,7 +252,7 @@ struct nd_neighbor_advert {	/* neighbor advertisement */
 	struct icmp6_hdr	nd_na_hdr;
 	struct in6_addr		nd_na_target;	/* target address */
 	/* could be followed by options */
-};
+} UNALIGNED;
 
 #define nd_na_type		nd_na_hdr.icmp6_type
 #define nd_na_code		nd_na_hdr.icmp6_code
@@ -268,7 +268,7 @@ struct nd_redirect {		/* redirect */
 	struct in6_addr		nd_rd_target;	/* target address */
 	struct in6_addr		nd_rd_dst;	/* destination address */
 	/* could be followed by options */
-};
+} UNALIGNED;
 
 #define nd_rd_type		nd_rd_hdr.icmp6_type
 #define nd_rd_code		nd_rd_hdr.icmp6_code
@@ -301,7 +301,7 @@ struct nd_opt_prefix_info {	/* prefix information */
 	nd_uint32_t		nd_opt_pi_preferred_time;
 	nd_uint32_t		nd_opt_pi_reserved2;
 	struct in6_addr	nd_opt_pi_prefix;
-};
+} UNALIGNED;
 
 #define ND_OPT_PI_FLAG_ONLINK		0x80
 #define ND_OPT_PI_FLAG_AUTO		0x40
@@ -313,14 +313,14 @@ struct nd_opt_rd_hdr {         /* redirected header */
 	uint16_t	nd_opt_rh_reserved1;
 	uint32_t	nd_opt_rh_reserved2;
 	/* followed by IP header and data */
-};
+} UNALIGNED;
 
 struct nd_opt_mtu {		/* MTU option */
 	uint8_t		nd_opt_mtu_type;
 	uint8_t		nd_opt_mtu_len;
 	uint16_t	nd_opt_mtu_reserved;
 	uint32_t	nd_opt_mtu_mtu;
-};
+} UNALIGNED;
 
 struct nd_opt_rdnss {		/* RDNSS RFC 6106 5.1 */
 	uint8_t		nd_opt_rdnss_type;
@@ -328,7 +328,7 @@ struct nd_opt_rdnss {		/* RDNSS RFC 6106 5.1 */
 	uint16_t	nd_opt_rdnss_reserved;
 	uint32_t	nd_opt_rdnss_lifetime;
 	struct in6_addr nd_opt_rdnss_addr[1];	/* variable-length */
-};
+} UNALIGNED;
 
 struct nd_opt_dnssl {		/* DNSSL RFC 6106 5.2 */
 	uint8_t  nd_opt_dnssl_type;
@@ -336,14 +336,14 @@ struct nd_opt_dnssl {		/* DNSSL RFC 6106 5.2 */
 	uint16_t nd_opt_dnssl_reserved;
 	uint32_t nd_opt_dnssl_lifetime;
 	/* followed by list of DNS search domains, variable-length */
-};
+} UNALIGNED;
 
 struct nd_opt_advinterval {	/* Advertisement interval option */
 	uint8_t		nd_opt_adv_type;
 	uint8_t		nd_opt_adv_len;
 	uint16_t	nd_opt_adv_reserved;
 	uint32_t	nd_opt_adv_interval;
-};
+} UNALIGNED;
 
 struct nd_opt_homeagent_info {	/* Home Agent info */
 	uint8_t		nd_opt_hai_type;
@@ -351,7 +351,7 @@ struct nd_opt_homeagent_info {	/* Home Agent info */
 	uint16_t	nd_opt_hai_reserved;
 	int16_t		nd_opt_hai_preference;
 	uint16_t	nd_opt_hai_lifetime;
-};
+} UNALIGNED;
 
 struct nd_opt_route_info {	/* route info */
 	uint8_t		nd_opt_rti_type;
@@ -360,7 +360,7 @@ struct nd_opt_route_info {	/* route info */
 	uint8_t		nd_opt_rti_flags;
 	uint32_t	nd_opt_rti_lifetime;
 	/* prefix follows */
-};
+} UNALIGNED;
 
 /*
  * icmp6 namelookup
@@ -375,7 +375,7 @@ struct icmp6_namelookup {
 	uint8_t		icmp6_nl_name[3];
 #endif
 	/* could be followed by options */
-};
+} UNALIGNED;
 
 /*
  * icmp6 node information
@@ -384,7 +384,7 @@ struct icmp6_nodeinfo {
 	struct icmp6_hdr icmp6_ni_hdr;
 	uint8_t icmp6_ni_nonce[8];
 	/* could be followed by reply data */
-};
+} UNALIGNED;
 
 #define ni_type		icmp6_ni_hdr.icmp6_type
 #define ni_code		icmp6_ni_hdr.icmp6_code
@@ -416,7 +416,7 @@ struct ni_reply_fqdn {
 	uint32_t ni_fqdn_ttl;	/* TTL */
 	uint8_t ni_fqdn_namelen; /* length in octets of the FQDN */
 	uint8_t ni_fqdn_name[3]; /* XXX: alignment */
-};
+} UNALIGNED;
 
 /*
  * Router Renumbering. as router-renum-08.txt
@@ -427,7 +427,7 @@ struct icmp6_router_renum {	/* router renumbering header */
 	uint8_t		rr_flags;
 	uint16_t	rr_maxdelay;
 	uint32_t	rr_reserved;
-};
+} UNALIGNED;
 #define ICMP6_RR_FLAGS_TEST		0x80
 #define ICMP6_RR_FLAGS_REQRESULT	0x40
 #define ICMP6_RR_FLAGS_FORCEAPPLY	0x20
@@ -448,7 +448,7 @@ struct rr_pco_match {		/* match prefix part */
 	uint8_t		rpm_maxlen;
 	uint16_t	rpm_reserved;
 	struct	in6_addr	rpm_prefix;
-};
+} UNALIGNED;
 
 #define RPM_PCO_ADD		1
 #define RPM_PCO_CHANGE		2
@@ -464,7 +464,7 @@ struct rr_pco_use {		/* use prefix part */
 	uint32_t	rpu_pltime;
 	uint32_t	rpu_flags;
 	struct	in6_addr rpu_prefix;
-};
+} UNALIGNED;
 #define ICMP6_RR_PCOUSE_RAFLAGS_ONLINK	0x80
 #define ICMP6_RR_PCOUSE_RAFLAGS_AUTO	0x40
 
@@ -478,7 +478,7 @@ struct rr_result {		/* router renumbering result message */
 	uint8_t		rrr_matchedlen;
 	uint32_t	rrr_ifid;
 	struct	in6_addr rrr_prefix;
-};
+} UNALIGNED;
 /* network endian */
 #define ICMP6_RR_RESULT_FLAGS_OOB		((uint16_t)htons(0x0002))
 #define ICMP6_RR_RESULT_FLAGS_FORBIDDEN		((uint16_t)htons(0x0001))
