@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.283 2021/05/30 01:24:19 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.284 2021/05/30 01:41:45 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008, 2020
@@ -135,7 +135,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.283 2021/05/30 01:24:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.284 2021/05/30 01:41:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1081,22 +1081,6 @@ pmap_tlb_shootdown_ipi(struct cpu_info * const ci,
 }
 #endif /* MULTIPROCESSOR */
 
-static void
-pmap_tlb_physpage_free(paddr_t const ptpa,
-    struct pmap_tlb_context * const tlbctx)
-{
-	struct vm_page * const pg = PHYS_TO_VM_PAGE(ptpa);
-
-	KASSERT(pg != NULL);
-
-#ifdef DEBUG
-	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
-	KDASSERT(md->pvh_refcnt == 0);
-#endif
-
-	LIST_INSERT_HEAD(&tlbctx->t_freeptq, pg, pageq.list);
-}
-
 static __inline void
 pmap_tlb_ptpage_drain(struct pmap_tlb_context * const tlbctx)
 {
@@ -1116,8 +1100,9 @@ static void	pmap_changebit(struct vm_page *, pt_entry_t, pt_entry_t,
 /*
  * PT page management functions.
  */
-static int	pmap_ptpage_alloc(pt_entry_t *, int);
-static void	pmap_ptpage_free(pt_entry_t *, struct pmap_tlb_context *);
+static int	pmap_ptpage_alloc(pmap_t, pt_entry_t *, int);
+static void	pmap_ptpage_free(pmap_t, pt_entry_t *,
+				 struct pmap_tlb_context *);
 static void	pmap_l3pt_delref(pmap_t, vaddr_t, pt_entry_t *,
 		     struct pmap_tlb_context *);
 static void	pmap_l2pt_delref(pmap_t, pt_entry_t *, pt_entry_t *,
@@ -1398,6 +1383,7 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	 * generation.
 	 */
 	memset(pmap_kernel(), 0, sizeof(struct pmap));
+	LIST_INIT(&pmap_kernel()->pm_ptpages);
 	atomic_store_relaxed(&pmap_kernel()->pm_count, 1);
 	/* Kernel pmap does not have per-CPU info. */
 	TAILQ_INSERT_TAIL(&pmap_all_pmaps, pmap_kernel(), pm_list);
@@ -1581,6 +1567,7 @@ pmap_create(void)
 
 	pmap = pool_cache_get(&pmap_pmap_cache, PR_WAITOK);
 	memset(pmap, 0, sizeof(*pmap));
+	LIST_INIT(&pmap->pm_ptpages);
 
 	atomic_store_relaxed(&pmap->pm_count, 1);
 
@@ -2105,7 +2092,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		l1pte = pmap_l1pte(lev1map, va);
 		if (pmap_pte_v(l1pte) == 0) {
 			pmap_physpage_addref(l1pte);
-			error = pmap_ptpage_alloc(l1pte, PGU_L2PT);
+			error = pmap_ptpage_alloc(pmap, l1pte, PGU_L2PT);
 			if (error) {
 				pmap_l1pt_delref(pmap, l1pte);
 				if (flags & PMAP_CANFAIL)
@@ -2129,7 +2116,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		l2pte = pmap_l2pte(lev1map, va, l1pte);
 		if (pmap_pte_v(l2pte) == 0) {
 			pmap_physpage_addref(l2pte);
-			error = pmap_ptpage_alloc(l2pte, PGU_L3PT);
+			error = pmap_ptpage_alloc(pmap, l2pte, PGU_L3PT);
 			if (error) {
 				/* unlocks pmap */
 				pmap_enter_l2pt_delref(pmap, l1pte, l2pte);
@@ -3652,7 +3639,7 @@ pmap_l1pt_free(struct pool *pp, void *v)
  *	Note: the pmap must already be locked.
  */
 static int
-pmap_ptpage_alloc(pt_entry_t * const pte, int const usage)
+pmap_ptpage_alloc(pmap_t pmap, pt_entry_t * const pte, int const usage)
 {
 	/*
 	 * Allocate the page table page.
@@ -3661,6 +3648,8 @@ pmap_ptpage_alloc(pt_entry_t * const pte, int const usage)
 	if (__predict_false(pg == NULL)) {
 		return ENOMEM;
 	}
+
+	LIST_INSERT_HEAD(&pmap->pm_ptpages, pg, pageq.list);
 
 	/*
 	 * Initialize the referencing PTE.
@@ -3682,7 +3671,8 @@ pmap_ptpage_alloc(pt_entry_t * const pte, int const usage)
  *	Note: the pmap must already be locked.
  */
 static void
-pmap_ptpage_free(pt_entry_t * const pte, struct pmap_tlb_context * const tlbctx)
+pmap_ptpage_free(pmap_t pmap, pt_entry_t * const pte,
+    struct pmap_tlb_context * const tlbctx)
 {
 
 	/*
@@ -3692,10 +3682,18 @@ pmap_ptpage_free(pt_entry_t * const pte, struct pmap_tlb_context * const tlbctx)
 	const paddr_t ptpa = pmap_pte_pa(pte);
 	atomic_store_relaxed(pte, PG_NV);
 
+	struct vm_page * const pg = PHYS_TO_VM_PAGE(ptpa);
+	KASSERT(pg != NULL);
+
 #ifdef DEBUG
+	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
+	KDASSERT(md->pvh_refcnt == 0);
+
 	pmap_zero_page(ptpa);
 #endif
-	pmap_tlb_physpage_free(ptpa, tlbctx);
+
+	LIST_REMOVE(pg, pageq.list);
+	LIST_INSERT_HEAD(&tlbctx->t_freeptq, pg, pageq.list);
 }
 
 /*
@@ -3735,7 +3733,7 @@ pmap_l3pt_delref(pmap_t pmap, vaddr_t va, pt_entry_t *l3pte,
 		 * be dropped.
 		 */
 		KASSERT(tlbctx != NULL);
-		pmap_ptpage_free(l2pte, tlbctx);
+		pmap_ptpage_free(pmap, l2pte, tlbctx);
 
 		/*
 		 * We've freed a level 3 table, so we must invalidate
@@ -3786,7 +3784,7 @@ pmap_l2pt_delref(pmap_t pmap, pt_entry_t *l1pte, pt_entry_t *l2pte,
 		 * be dropped.
 		 */
 		KASSERT(tlbctx != NULL);
-		pmap_ptpage_free(l1pte, tlbctx);
+		pmap_ptpage_free(pmap, l1pte, tlbctx);
 
 		/*
 		 * We've freed a level 2 table, so we must invalidate
