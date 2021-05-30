@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.282 2021/05/30 00:34:27 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.283 2021/05/30 01:24:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008, 2020
@@ -135,7 +135,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.282 2021/05/30 00:34:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.283 2021/05/30 01:24:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1162,7 +1162,7 @@ static u_int	pmap_asn_alloc(pmap_t, struct cpu_info *);
 /*
  * Misc. functions.
  */
-static bool	pmap_physpage_alloc(int, paddr_t *);
+static struct vm_page *pmap_physpage_alloc(int);
 static void	pmap_physpage_free(paddr_t);
 static int	pmap_physpage_addref(void *);
 static int	pmap_physpage_delref(void *);
@@ -3349,11 +3349,11 @@ pmap_pv_remove(pmap_t pmap, struct vm_page *pg, vaddr_t va, bool dolock,
 static void *
 pmap_pv_page_alloc(struct pool *pp, int flags)
 {
-	paddr_t pg;
-
-	if (pmap_physpage_alloc(PGU_PVENT, &pg))
-		return ((void *)ALPHA_PHYS_TO_K0SEG(pg));
-	return (NULL);
+	struct vm_page * const pg = pmap_physpage_alloc(PGU_PVENT);
+	if (__predict_false(pg == NULL)) {
+		return NULL;
+	}
+	return (void *)ALPHA_PHYS_TO_K0SEG(VM_PAGE_TO_PHYS(pg));
 }
 
 /*
@@ -3376,11 +3376,10 @@ pmap_pv_page_free(struct pool *pp, void *v)
  *	Allocate a single page from the VM system and return the
  *	physical address for that page.
  */
-static bool
-pmap_physpage_alloc(int usage, paddr_t *pap)
+static struct vm_page *
+pmap_physpage_alloc(int usage)
 {
 	struct vm_page *pg;
-	paddr_t pa;
 
 	/*
 	 * Don't ask for a zero'd page in the L1PT case -- we will
@@ -3390,7 +3389,6 @@ pmap_physpage_alloc(int usage, paddr_t *pap)
 	pg = uvm_pagealloc(NULL, 0, NULL, usage == PGU_L1PT ?
 	    UVM_PGA_USERESERVE : UVM_PGA_USERESERVE|UVM_PGA_ZERO);
 	if (pg != NULL) {
-		pa = VM_PAGE_TO_PHYS(pg);
 #ifdef DEBUG
 		struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
 		if (md->pvh_refcnt != 0) {
@@ -3399,10 +3397,8 @@ pmap_physpage_alloc(int usage, paddr_t *pap)
 			panic("pmap_physpage_alloc");
 		}
 #endif
-		*pap = pa;
-		return (true);
 	}
-	return (false);
+	return pg;
 }
 
 /*
@@ -3485,7 +3481,12 @@ pmap_kptpage_alloc(paddr_t *pap)
 		return true;
 	}
 
-	return pmap_physpage_alloc(PGU_NORMAL, pap);
+	struct vm_page * const pg = pmap_physpage_alloc(PGU_NORMAL);
+	if (__predict_true(pg != NULL)) {
+		*pap = VM_PAGE_TO_PHYS(pg);
+		return true;
+	}
+	return false;
 }
 
 /*
@@ -3620,15 +3621,14 @@ pmap_l1pt_ctor(void *arg, void *object, int flags)
 static void *
 pmap_l1pt_alloc(struct pool *pp, int flags)
 {
-	paddr_t ptpa;
-
 	/*
 	 * Attempt to allocate a free page.
 	 */
-	if (pmap_physpage_alloc(PGU_L1PT, &ptpa) == false)
-		return (NULL);
-
-	return ((void *) ALPHA_PHYS_TO_K0SEG(ptpa));
+	struct vm_page * const pg = pmap_physpage_alloc(PGU_L1PT);
+	if (__predict_false(pg == NULL)) {
+		return NULL;
+	}
+	return (void *)ALPHA_PHYS_TO_K0SEG(VM_PAGE_TO_PHYS(pg));
 }
 
 /*
@@ -3654,18 +3654,18 @@ pmap_l1pt_free(struct pool *pp, void *v)
 static int
 pmap_ptpage_alloc(pt_entry_t * const pte, int const usage)
 {
-	paddr_t ptpa;
-
 	/*
 	 * Allocate the page table page.
 	 */
-	if (pmap_physpage_alloc(usage, &ptpa) == false)
-		return (ENOMEM);
+	struct vm_page * const pg = pmap_physpage_alloc(usage);
+	if (__predict_false(pg == NULL)) {
+		return ENOMEM;
+	}
 
 	/*
 	 * Initialize the referencing PTE.
 	 */
-	const pt_entry_t npte = ((ptpa >> PGSHIFT) << PG_SHIFT) |
+	const pt_entry_t npte = ((VM_PAGE_TO_PHYS(pg) >> PGSHIFT) << PG_SHIFT) |
 	    PG_V | PG_KRE | PG_KWE | PG_WIRED;
 
 	atomic_store_relaxed(pte, npte);
