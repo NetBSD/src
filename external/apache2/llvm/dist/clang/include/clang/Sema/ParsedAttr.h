@@ -18,12 +18,12 @@
 #include "clang/Basic/AttributeCommonInfo.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceLocation.h"
-#include "clang/Basic/TargetInfo.h"
 #include "clang/Sema/Ownership.h"
 #include "llvm/ADT/PointerUnion.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/TinyPtrVector.h"
 #include "llvm/Support/Allocator.h"
+#include "llvm/Support/Registry.h"
 #include "llvm/Support/VersionTuple.h"
 #include <cassert>
 #include <cstddef>
@@ -37,6 +37,97 @@ class Decl;
 class Expr;
 class IdentifierInfo;
 class LangOptions;
+class ParsedAttr;
+class Sema;
+class Stmt;
+class TargetInfo;
+
+struct ParsedAttrInfo {
+  /// Corresponds to the Kind enum.
+  unsigned AttrKind : 16;
+  /// The number of required arguments of this attribute.
+  unsigned NumArgs : 4;
+  /// The number of optional arguments of this attributes.
+  unsigned OptArgs : 4;
+  /// True if the parsing does not match the semantic content.
+  unsigned HasCustomParsing : 1;
+  /// True if this attribute is only available for certain targets.
+  unsigned IsTargetSpecific : 1;
+  /// True if this attribute applies to types.
+  unsigned IsType : 1;
+  /// True if this attribute applies to statements.
+  unsigned IsStmt : 1;
+  /// True if this attribute has any spellings that are known to gcc.
+  unsigned IsKnownToGCC : 1;
+  /// True if this attribute is supported by #pragma clang attribute.
+  unsigned IsSupportedByPragmaAttribute : 1;
+  /// The syntaxes supported by this attribute and how they're spelled.
+  struct Spelling {
+    AttributeCommonInfo::Syntax Syntax;
+    const char *NormalizedFullName;
+  };
+  ArrayRef<Spelling> Spellings;
+
+  ParsedAttrInfo(AttributeCommonInfo::Kind AttrKind =
+                     AttributeCommonInfo::NoSemaHandlerAttribute)
+      : AttrKind(AttrKind), NumArgs(0), OptArgs(0), HasCustomParsing(0),
+        IsTargetSpecific(0), IsType(0), IsStmt(0), IsKnownToGCC(0),
+        IsSupportedByPragmaAttribute(0) {}
+
+  virtual ~ParsedAttrInfo() = default;
+
+  /// Check if this attribute appertains to D, and issue a diagnostic if not.
+  virtual bool diagAppertainsToDecl(Sema &S, const ParsedAttr &Attr,
+                                    const Decl *D) const {
+    return true;
+  }
+  /// Check if this attribute appertains to St, and issue a diagnostic if not.
+  virtual bool diagAppertainsToStmt(Sema &S, const ParsedAttr &Attr,
+                                    const Stmt *St) const {
+    return true;
+  }
+  /// Check if the given attribute is mutually exclusive with other attributes
+  /// already applied to the given declaration.
+  virtual bool diagMutualExclusion(Sema &S, const ParsedAttr &A,
+                                   const Decl *D) const {
+    return true;
+  }
+  /// Check if this attribute is allowed by the language we are compiling, and
+  /// issue a diagnostic if not.
+  virtual bool diagLangOpts(Sema &S, const ParsedAttr &Attr) const {
+    return true;
+  }
+  /// Check if this attribute is allowed when compiling for the given target.
+  virtual bool existsInTarget(const TargetInfo &Target) const {
+    return true;
+  }
+  /// Convert the spelling index of Attr to a semantic spelling enum value.
+  virtual unsigned
+  spellingIndexToSemanticSpelling(const ParsedAttr &Attr) const {
+    return UINT_MAX;
+  }
+  /// Populate Rules with the match rules of this attribute.
+  virtual void getPragmaAttributeMatchRules(
+      llvm::SmallVectorImpl<std::pair<attr::SubjectMatchRule, bool>> &Rules,
+      const LangOptions &LangOpts) const {
+  }
+  enum AttrHandling {
+    NotHandled,
+    AttributeApplied,
+    AttributeNotApplied
+  };
+  /// If this ParsedAttrInfo knows how to handle this ParsedAttr applied to this
+  /// Decl then do so and return either AttributeApplied if it was applied or
+  /// AttributeNotApplied if it wasn't. Otherwise return NotHandled.
+  virtual AttrHandling handleDeclAttribute(Sema &S, Decl *D,
+                                           const ParsedAttr &Attr) const {
+    return NotHandled;
+  }
+
+  static const ParsedAttrInfo &get(const AttributeCommonInfo &A);
+};
+
+typedef llvm::Registry<ParsedAttrInfo> ParsedAttrInfoRegistry;
 
 /// Represents information about a change in availability for
 /// an entity, which is part of the encoding of the 'availability'
@@ -181,6 +272,8 @@ private:
 
   const Expr *MessageExpr;
 
+  const ParsedAttrInfo &Info;
+
   ArgsUnion *getArgsBuffer() { return getTrailingObjects<ArgsUnion>(); }
   ArgsUnion const *getArgsBuffer() const {
     return getTrailingObjects<ArgsUnion>();
@@ -207,7 +300,8 @@ private:
         EllipsisLoc(ellipsisLoc), NumArgs(numArgs), Invalid(false),
         UsedAsTypeAttr(false), IsAvailability(false),
         IsTypeTagForDatatype(false), IsProperty(false), HasParsedType(false),
-        HasProcessingCache(false), IsPragmaClangAttribute(false) {
+        HasProcessingCache(false), IsPragmaClangAttribute(false),
+        Info(ParsedAttrInfo::get(*this)) {
     if (numArgs)
       memcpy(getArgsBuffer(), args, numArgs * sizeof(ArgsUnion));
   }
@@ -225,7 +319,8 @@ private:
         NumArgs(1), Invalid(false), UsedAsTypeAttr(false), IsAvailability(true),
         IsTypeTagForDatatype(false), IsProperty(false), HasParsedType(false),
         HasProcessingCache(false), IsPragmaClangAttribute(false),
-        UnavailableLoc(unavailable), MessageExpr(messageExpr) {
+        UnavailableLoc(unavailable), MessageExpr(messageExpr),
+        Info(ParsedAttrInfo::get(*this)) {
     ArgsUnion PVal(Parm);
     memcpy(getArgsBuffer(), &PVal, sizeof(ArgsUnion));
     new (getAvailabilityData()) detail::AvailabilityData(
@@ -242,7 +337,7 @@ private:
         NumArgs(3), Invalid(false), UsedAsTypeAttr(false),
         IsAvailability(false), IsTypeTagForDatatype(false), IsProperty(false),
         HasParsedType(false), HasProcessingCache(false),
-        IsPragmaClangAttribute(false) {
+        IsPragmaClangAttribute(false), Info(ParsedAttrInfo::get(*this)) {
     ArgsUnion *Args = getArgsBuffer();
     Args[0] = Parm1;
     Args[1] = Parm2;
@@ -259,7 +354,7 @@ private:
         NumArgs(1), Invalid(false), UsedAsTypeAttr(false),
         IsAvailability(false), IsTypeTagForDatatype(true), IsProperty(false),
         HasParsedType(false), HasProcessingCache(false),
-        IsPragmaClangAttribute(false) {
+        IsPragmaClangAttribute(false), Info(ParsedAttrInfo::get(*this)) {
     ArgsUnion PVal(ArgKind);
     memcpy(getArgsBuffer(), &PVal, sizeof(ArgsUnion));
     detail::TypeTagForDatatypeData &ExtraData = getTypeTagForDatatypeDataSlot();
@@ -277,7 +372,7 @@ private:
         NumArgs(0), Invalid(false), UsedAsTypeAttr(false),
         IsAvailability(false), IsTypeTagForDatatype(false), IsProperty(false),
         HasParsedType(true), HasProcessingCache(false),
-        IsPragmaClangAttribute(false) {
+        IsPragmaClangAttribute(false), Info(ParsedAttrInfo::get(*this)) {
     new (&getTypeBuffer()) ParsedType(typeArg);
   }
 
@@ -291,7 +386,7 @@ private:
         NumArgs(0), Invalid(false), UsedAsTypeAttr(false),
         IsAvailability(false), IsTypeTagForDatatype(false), IsProperty(true),
         HasParsedType(false), HasProcessingCache(false),
-        IsPragmaClangAttribute(false) {
+        IsPragmaClangAttribute(false), Info(ParsedAttrInfo::get(*this)) {
     new (&getPropertyDataBuffer()) detail::PropertyData(getterId, setterId);
   }
 
@@ -490,6 +585,16 @@ public:
     return MacroExpansionLoc;
   }
 
+  /// Check if the attribute has exactly as many args as Num. May output an
+  /// error. Returns false if a diagnostic is produced.
+  bool checkExactlyNumArgs(class Sema &S, unsigned Num) const;
+  /// Check if the attribute has at least as many args as Num. May output an
+  /// error. Returns false if a diagnostic is produced.
+  bool checkAtLeastNumArgs(class Sema &S, unsigned Num) const;
+  /// Check if the attribute has at most as many args as Num. May output an
+  /// error. Returns false if a diagnostic is produced.
+  bool checkAtMostNumArgs(class Sema &S, unsigned Num) const;
+
   bool isTargetSpecificAttr() const;
   bool isTypeAttr() const;
   bool isStmtAttr() const;
@@ -499,6 +604,14 @@ public:
   unsigned getMaxArgs() const;
   bool hasVariadicArg() const;
   bool diagnoseAppertainsTo(class Sema &S, const Decl *D) const;
+  bool diagnoseAppertainsTo(class Sema &S, const Stmt *St) const;
+  bool diagnoseMutualExclusion(class Sema &S, const Decl *D) const;
+  // This function stub exists for parity with the declaration checking code so
+  // that checkCommonAttributeFeatures() can work generically on declarations
+  // or statements.
+  bool diagnoseMutualExclusion(class Sema &S, const Stmt *St) const {
+    return true;
+  }
   bool appliesToDecl(const Decl *D, attr::SubjectMatchRule MatchRule) const;
   void getMatchRules(const LangOptions &LangOpts,
                      SmallVectorImpl<std::pair<attr::SubjectMatchRule, bool>>
@@ -515,14 +628,18 @@ public:
   /// a Spelling enumeration, the value UINT_MAX is returned.
   unsigned getSemanticSpelling() const;
 
-  /// If this is an OpenCL addr space attribute returns its representation
-  /// in LangAS, otherwise returns default addr space.
+  /// If this is an OpenCL address space attribute returns its representation
+  /// in LangAS, otherwise returns default address space.
   LangAS asOpenCLLangAS() const {
     switch (getParsedKind()) {
     case ParsedAttr::AT_OpenCLConstantAddressSpace:
       return LangAS::opencl_constant;
     case ParsedAttr::AT_OpenCLGlobalAddressSpace:
       return LangAS::opencl_global;
+    case ParsedAttr::AT_OpenCLGlobalDeviceAddressSpace:
+      return LangAS::opencl_global_device;
+    case ParsedAttr::AT_OpenCLGlobalHostAddressSpace:
+      return LangAS::opencl_global_host;
     case ParsedAttr::AT_OpenCLLocalAddressSpace:
       return LangAS::opencl_local;
     case ParsedAttr::AT_OpenCLPrivateAddressSpace:
@@ -534,7 +651,30 @@ public:
     }
   }
 
-  AttributeCommonInfo::Kind getKind() const { return getParsedKind(); }
+  /// If this is an OpenCL address space attribute returns its SYCL
+  /// representation in LangAS, otherwise returns default address space.
+  LangAS asSYCLLangAS() const {
+    switch (getKind()) {
+    case ParsedAttr::AT_OpenCLGlobalAddressSpace:
+      return LangAS::sycl_global;
+    case ParsedAttr::AT_OpenCLGlobalDeviceAddressSpace:
+      return LangAS::sycl_global_device;
+    case ParsedAttr::AT_OpenCLGlobalHostAddressSpace:
+      return LangAS::sycl_global_host;
+    case ParsedAttr::AT_OpenCLLocalAddressSpace:
+      return LangAS::sycl_local;
+    case ParsedAttr::AT_OpenCLPrivateAddressSpace:
+      return LangAS::sycl_private;
+    case ParsedAttr::AT_OpenCLGenericAddressSpace:
+    default:
+      return LangAS::Default;
+    }
+  }
+
+  AttributeCommonInfo::Kind getKind() const {
+    return AttributeCommonInfo::Kind(Info.AttrKind);
+  }
+  const ParsedAttrInfo &getInfo() const { return Info; }
 };
 
 class AttributePool;
@@ -927,13 +1067,35 @@ private:
   mutable AttributePool pool;
 };
 
+struct ParsedAttributesWithRange : ParsedAttributes {
+  ParsedAttributesWithRange(AttributeFactory &factory)
+      : ParsedAttributes(factory) {}
+
+  void clear() {
+    ParsedAttributes::clear();
+    Range = SourceRange();
+  }
+
+  SourceRange Range;
+};
+struct ParsedAttributesViewWithRange : ParsedAttributesView {
+  ParsedAttributesViewWithRange() : ParsedAttributesView() {}
+  void clearListOnly() {
+    ParsedAttributesView::clearListOnly();
+    Range = SourceRange();
+  }
+
+  SourceRange Range;
+};
+
 /// These constants match the enumerated choices of
 /// err_attribute_argument_n_type and err_attribute_argument_type.
 enum AttributeArgumentNType {
   AANT_ArgumentIntOrBool,
   AANT_ArgumentIntegerConstant,
   AANT_ArgumentString,
-  AANT_ArgumentIdentifier
+  AANT_ArgumentIdentifier,
+  AANT_ArgumentConstantExpr,
 };
 
 /// These constants match the enumerated choices of
@@ -954,32 +1116,43 @@ enum AttributeDeclKind {
   ExpectedFunctionWithProtoType,
 };
 
-inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
-                                           const ParsedAttr &At) {
+inline const StreamingDiagnostic &operator<<(const StreamingDiagnostic &DB,
+                                             const ParsedAttr &At) {
   DB.AddTaggedVal(reinterpret_cast<intptr_t>(At.getAttrName()),
                   DiagnosticsEngine::ak_identifierinfo);
   return DB;
 }
 
-inline const PartialDiagnostic &operator<<(const PartialDiagnostic &PD,
-                                           const ParsedAttr &At) {
-  PD.AddTaggedVal(reinterpret_cast<intptr_t>(At.getAttrName()),
-                  DiagnosticsEngine::ak_identifierinfo);
-  return PD;
-}
-
-inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
-                                           const ParsedAttr *At) {
+inline const StreamingDiagnostic &operator<<(const StreamingDiagnostic &DB,
+                                             const ParsedAttr *At) {
   DB.AddTaggedVal(reinterpret_cast<intptr_t>(At->getAttrName()),
                   DiagnosticsEngine::ak_identifierinfo);
   return DB;
 }
 
-inline const PartialDiagnostic &operator<<(const PartialDiagnostic &PD,
-                                           const ParsedAttr *At) {
-  PD.AddTaggedVal(reinterpret_cast<intptr_t>(At->getAttrName()),
+/// AttributeCommonInfo has a non-explicit constructor which takes an
+/// SourceRange as its only argument, this constructor has many uses so making
+/// it explicit is hard. This constructor causes ambiguity with
+/// DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB, SourceRange R).
+/// We use SFINAE to disable any conversion and remove any ambiguity.
+template <typename ACI,
+          typename std::enable_if_t<
+              std::is_same<ACI, AttributeCommonInfo>::value, int> = 0>
+inline const StreamingDiagnostic &operator<<(const StreamingDiagnostic &DB,
+                                           const ACI &CI) {
+  DB.AddTaggedVal(reinterpret_cast<intptr_t>(CI.getAttrName()),
                   DiagnosticsEngine::ak_identifierinfo);
-  return PD;
+  return DB;
+}
+
+template <typename ACI,
+          typename std::enable_if_t<
+              std::is_same<ACI, AttributeCommonInfo>::value, int> = 0>
+inline const StreamingDiagnostic &operator<<(const StreamingDiagnostic &DB,
+                                           const ACI* CI) {
+  DB.AddTaggedVal(reinterpret_cast<intptr_t>(CI->getAttrName()),
+                  DiagnosticsEngine::ak_identifierinfo);
+  return DB;
 }
 
 } // namespace clang

@@ -224,7 +224,9 @@ std::unique_ptr<ASTUnit> buildASTFromCodeWithArgs(
     StringRef FileName = "input.cc", StringRef ToolName = "clang-tool",
     std::shared_ptr<PCHContainerOperations> PCHContainerOps =
         std::make_shared<PCHContainerOperations>(),
-    ArgumentsAdjuster Adjuster = getClangStripDependencyFileAdjuster());
+    ArgumentsAdjuster Adjuster = getClangStripDependencyFileAdjuster(),
+    const FileContentMappings &VirtualMappedFiles = FileContentMappings(),
+    DiagnosticConsumer *DiagConsumer = nullptr);
 
 /// Utility to run a FrontendAction in a single clang invocation.
 class ToolInvocation {
@@ -263,21 +265,12 @@ public:
     this->DiagConsumer = DiagConsumer;
   }
 
-  /// Map a virtual file to be used while running the tool.
-  ///
-  /// \param FilePath The path at which the content will be mapped.
-  /// \param Content A null terminated buffer of the file's content.
-  // FIXME: remove this when all users have migrated!
-  void mapVirtualFile(StringRef FilePath, StringRef Content);
-
   /// Run the clang invocation.
   ///
   /// \returns True if there were no errors during execution.
   bool run();
 
  private:
-  void addFileMappingsTo(SourceManager &SourceManager);
-
   bool runInvocation(const char *BinaryName,
                      driver::Compilation *Compilation,
                      std::shared_ptr<CompilerInvocation> Invocation,
@@ -288,8 +281,6 @@ public:
   bool OwnsAction;
   FileManager *Files;
   std::shared_ptr<PCHContainerOperations> PCHContainerOps;
-  // Maps <file name> -> <file content>.
-  llvm::StringMap<StringRef> MappedFileContents;
   DiagnosticConsumer *DiagConsumer = nullptr;
 };
 
@@ -503,7 +494,8 @@ void addTargetAndModeForProgramName(std::vector<std::string> &CommandLine,
 
 /// Creates a \c CompilerInvocation.
 CompilerInvocation *newInvocation(DiagnosticsEngine *Diagnostics,
-                                  const llvm::opt::ArgStringList &CC1Args);
+                                  const llvm::opt::ArgStringList &CC1Args,
+                                  const char *const BinaryName);
 
 } // namespace tooling
 

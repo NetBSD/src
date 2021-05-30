@@ -14,8 +14,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/StaticAnalyzer/Checkers/BuiltinCheckerRegistration.h"
+#include "clang/AST/Attr.h"
 #include "clang/Basic/TargetInfo.h"
+#include "clang/StaticAnalyzer/Checkers/BuiltinCheckerRegistration.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
 #include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
@@ -175,6 +176,6 @@ void ento::registerMacOSXAPIChecker(CheckerManager &mgr) {
   mgr.registerChecker<MacOSXAPIChecker>();
 }
 
-bool ento::shouldRegisterMacOSXAPIChecker(const LangOptions &LO) {
+bool ento::shouldRegisterMacOSXAPIChecker(const CheckerManager &mgr) {
   return true;
 }

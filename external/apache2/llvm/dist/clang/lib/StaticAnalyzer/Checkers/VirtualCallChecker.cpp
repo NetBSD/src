@@ -11,8 +11,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/StaticAnalyzer/Checkers/BuiltinCheckerRegistration.h"
+#include "clang/AST/Attr.h"
 #include "clang/AST/DeclCXX.h"
+#include "clang/StaticAnalyzer/Checkers/BuiltinCheckerRegistration.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
 #include "clang/StaticAnalyzer/Core/Checker.h"
@@ -124,8 +125,8 @@ void VirtualCallChecker::checkPreCall(const CallEvent &Call,
   OS << "Call to ";
   if (IsPure)
     OS << "pure ";
-  OS << "virtual method '" << MD->getParent()->getNameAsString()
-     << "::" << MD->getNameAsString() << "' during ";
+  OS << "virtual method '" << MD->getParent()->getDeclName()
+     << "::" << MD->getDeclName() << "' during ";
   if (*ObState == ObjectState::CtorCalled)
     OS << "construction ";
   else
@@ -223,14 +224,17 @@ void ento::registerVirtualCallChecker(CheckerManager &Mgr) {
   }
 }
 
-bool ento::shouldRegisterVirtualCallModeling(const LangOptions &LO) {
+bool ento::shouldRegisterVirtualCallModeling(const CheckerManager &mgr) {
+  const LangOptions &LO = mgr.getLangOpts();
   return LO.CPlusPlus;
 }
 
-bool ento::shouldRegisterPureVirtualCallChecker(const LangOptions &LO) {
+bool ento::shouldRegisterPureVirtualCallChecker(const CheckerManager &mgr) {
+  const LangOptions &LO = mgr.getLangOpts();
   return LO.CPlusPlus;
 }
 
-bool ento::shouldRegisterVirtualCallChecker(const LangOptions &LO) {
+bool ento::shouldRegisterVirtualCallChecker(const CheckerManager &mgr) {
+  const LangOptions &LO = mgr.getLangOpts();
   return LO.CPlusPlus;
 }

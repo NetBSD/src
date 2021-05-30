@@ -17,6 +17,7 @@
 #include "clang/Driver/Driver.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MD5.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Program.h"
@@ -142,8 +143,9 @@ StringRef CIndexer::getClangToolchainPath() {
   if (!ToolchainPath.empty())
     return ToolchainPath;
   StringRef ResourcePath = getClangResourcesPath();
-  ToolchainPath = llvm::sys::path::parent_path(
-      llvm::sys::path::parent_path(llvm::sys::path::parent_path(ResourcePath)));
+  ToolchainPath =
+      std::string(llvm::sys::path::parent_path(llvm::sys::path::parent_path(
+          llvm::sys::path::parent_path(ResourcePath))));
   return ToolchainPath;
 }
 
@@ -161,7 +163,8 @@ LibclangInvocationReporter::LibclangInvocationReporter(
   TempPath = Path;
   llvm::sys::path::append(TempPath, "libclang-%%%%%%%%%%%%");
   int FD;
-  if (llvm::sys::fs::createUniqueFile(TempPath, FD, TempPath))
+  if (llvm::sys::fs::createUniqueFile(TempPath, FD, TempPath,
+                                      llvm::sys::fs::OF_Text))
     return;
   File = std::string(TempPath.begin(), TempPath.end());
   llvm::raw_fd_ostream OS(FD, /*ShouldClose=*/true);

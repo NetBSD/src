@@ -624,10 +624,10 @@ class CFGBlock {
     template <bool IsOtherConst> friend class ElementRefImpl;
 
     using CFGBlockPtr =
-        typename std::conditional<IsConst, const CFGBlock *, CFGBlock *>::type;
+        std::conditional_t<IsConst, const CFGBlock *, CFGBlock *>;
 
-    using CFGElementPtr = typename std::conditional<IsConst, const CFGElement *,
-                                                    CFGElement *>::type;
+    using CFGElementPtr =
+        std::conditional_t<IsConst, const CFGElement *, CFGElement *>;
 
   protected:
     CFGBlockPtr Parent;
@@ -675,15 +675,14 @@ class CFGBlock {
     friend class ElementRefIterator;
 
     using CFGBlockRef =
-        typename std::conditional<IsConst, const CFGBlock *, CFGBlock *>::type;
+        std::conditional_t<IsConst, const CFGBlock *, CFGBlock *>;
 
-    using UnderlayingIteratorTy = typename std::conditional<
+    using UnderlayingIteratorTy = std::conditional_t<
         IsConst,
-        typename std::conditional<IsReverse,
-                                  ElementList::const_reverse_iterator,
-                                  ElementList::const_iterator>::type,
-        typename std::conditional<IsReverse, ElementList::reverse_iterator,
-                                  ElementList::iterator>::type>::type;
+        std::conditional_t<IsReverse, ElementList::const_reverse_iterator,
+                           ElementList::const_iterator>,
+        std::conditional_t<IsReverse, ElementList::reverse_iterator,
+                           ElementList::iterator>>;
 
     using IteratorTraits = typename std::iterator_traits<UnderlayingIteratorTy>;
     using ElementRef = typename CFGBlock::ElementRefImpl<IsConst>;
@@ -1248,9 +1247,11 @@ public:
     bool AddStaticInitBranches = false;
     bool AddCXXNewAllocator = false;
     bool AddCXXDefaultInitExprInCtors = false;
+    bool AddCXXDefaultInitExprInAggregates = false;
     bool AddRichCXXConstructors = false;
     bool MarkElidedCXXConstructors = false;
     bool AddVirtualBaseBranches = false;
+    bool OmitImplicitValueInitializers = false;
 
     BuildOptions() = default;
 
@@ -1306,6 +1307,12 @@ public:
 
   iterator nodes_begin() { return iterator(Blocks.begin()); }
   iterator nodes_end() { return iterator(Blocks.end()); }
+
+  llvm::iterator_range<iterator> nodes() { return {begin(), end()}; }
+  llvm::iterator_range<const_iterator> const_nodes() const {
+    return {begin(), end()};
+  }
+
   const_iterator nodes_begin() const { return const_iterator(Blocks.begin()); }
   const_iterator nodes_end() const { return const_iterator(Blocks.end()); }
 
@@ -1313,6 +1320,13 @@ public:
   reverse_iterator          rend()                 { return Blocks.rend(); }
   const_reverse_iterator    rbegin()      const    { return Blocks.rbegin(); }
   const_reverse_iterator    rend()        const    { return Blocks.rend(); }
+
+  llvm::iterator_range<reverse_iterator> reverse_nodes() {
+    return {rbegin(), rend()};
+  }
+  llvm::iterator_range<const_reverse_iterator> const_reverse_nodes() const {
+    return {rbegin(), rend()};
+  }
 
   CFGBlock &                getEntry()             { return *Entry; }
   const CFGBlock &          getEntry()    const    { return *Entry; }
@@ -1375,13 +1389,12 @@ public:
   // Member templates useful for various batch operations over CFGs.
   //===--------------------------------------------------------------------===//
 
-  template <typename CALLBACK>
-  void VisitBlockStmts(CALLBACK& O) const {
+  template <typename Callback> void VisitBlockStmts(Callback &O) const {
     for (const_iterator I = begin(), E = end(); I != E; ++I)
       for (CFGBlock::const_iterator BI = (*I)->begin(), BE = (*I)->end();
            BI != BE; ++BI) {
         if (Optional<CFGStmt> stmt = BI->getAs<CFGStmt>())
-          O(const_cast<Stmt*>(stmt->getStmt()));
+          O(const_cast<Stmt *>(stmt->getStmt()));
       }
   }
 
