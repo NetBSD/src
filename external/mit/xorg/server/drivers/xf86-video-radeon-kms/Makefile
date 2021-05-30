@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2020/02/09 12:28:28 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.13 2021/05/30 22:24:36 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -60,5 +60,7 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${X11SRCDIR.${DRIVER}}/../include
 
 LIBDPLIBS+=	gbm ${.CURDIR}/../../../lib/libgbm${OLD_PREFIX}
+
+COPTS+=		-fcommon
 
 .include "../Makefile.xf86-driver"
