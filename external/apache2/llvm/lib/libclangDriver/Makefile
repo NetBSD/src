@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/11/11 22:45:15 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2021/05/30 01:56:56 joerg Exp $
 
 LIB=	clangDriver
 
@@ -16,6 +16,7 @@ SRCS+=	Action.cpp \
 	DriverOptions.cpp \
 	Job.cpp \
 	Multilib.cpp \
+	OptionUtils.cpp \
 	Phases.cpp \
 	SanitizerArgs.cpp \
 	Tool.cpp \
@@ -28,6 +29,7 @@ SRCS+=	Action.cpp \
 SRCS+=	AMDGPU.cpp \
 	Ananas.cpp \
 	AIX.cpp \
+	AMDGPUOpenMP.cpp \
 	AVR.cpp \
 	BareMetal.cpp \
 	Clang.cpp \
@@ -38,6 +40,7 @@ SRCS+=	AMDGPU.cpp \
 	Cuda.cpp \
 	Darwin.cpp \
 	DragonFly.cpp \
+	Flang.cpp \
 	FreeBSD.cpp \
 	Fuchsia.cpp \
 	Gnu.cpp \
@@ -47,6 +50,7 @@ SRCS+=	AMDGPU.cpp \
 	Hurd.cpp \
 	InterfaceStubs.cpp \
 	Linux.cpp \
+	M68k.cpp \
 	MinGW.cpp \
 	Minix.cpp \
 	MipsLinux.cpp \
@@ -61,8 +65,10 @@ SRCS+=	AMDGPU.cpp \
 	RISCVToolchain.cpp \
 	Solaris.cpp \
 	TCE.cpp \
+	VEToolchain.cpp \
 	WebAssembly.cpp \
-	XCore.cpp
+	XCore.cpp \
+	ZOS.cpp
 
 .PATH: ${CLANG_SRCDIR}/lib/Driver/ToolChains/Arch
 
@@ -73,7 +79,10 @@ SRCS+=	AArch64.cpp \
 	RISCV.cpp \
 	Sparc.cpp \
 	SystemZ.cpp \
+	VE.cpp \
 	X86.cpp
+
+
 
 
 .if defined(HOSTLIB)

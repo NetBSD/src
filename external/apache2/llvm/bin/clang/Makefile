@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/11/11 22:44:58 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2021/05/30 01:56:46 joerg Exp $
 
 PROG_CXX=	clang
 NOMAN=		yes
@@ -24,6 +24,7 @@ CLANG_LIBS+= \
 	clangStaticAnalyzerFrontend \
 	clangStaticAnalyzerCheckers \
 	clangStaticAnalyzerCore \
+	clangToolingCore \
 	clangCrossTU \
 	clangIndex \
 	clangASTMatchers \
@@ -42,6 +43,7 @@ CLANG_LIBS+= \
 	clangBasic
 
 LLVM_LIBS+= \
+	FrontendOpenMP \
 	TransformsAggressiveInstCombine \
 	TransformsCoroutines \
 	ProfileDataCoverage \
@@ -91,7 +93,6 @@ LLVM_LIBS+= \
 	X86CodeGen \
 	X86MCTargetDesc \
 	X86TargetInfo \
-	X86Utils \
 	X86AsmParser \
 	GlobalISel \
 	SelectionDAG \
@@ -109,12 +110,12 @@ LLVM_LIBS+= \
 	MCDisassembler \
 	MCParser \
 	MC \
+	TransformsUtils \
 	Analysis \
 	Object \
 	TextAPI \
 	Linker \
 	TransformsCFGuard \
-	TransformsUtils \
 	IR \
 	Remarks \
 	Option \

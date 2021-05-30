@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/11/11 22:45:12 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2021/05/30 01:56:54 joerg Exp $
 
 LIB=	LLVMSupport
 
@@ -10,6 +10,7 @@ SRCS+=	AArch64TargetParser.cpp \
 	ABIBreak.cpp \
 	Allocator.cpp \
 	AMDGPUMetadata.cpp \
+	APFixedPoint.cpp \
 	APFloat.cpp \
 	APInt.cpp \
 	APSInt.cpp \
@@ -17,6 +18,7 @@ SRCS+=	AArch64TargetParser.cpp \
 	ARMBuildAttrs.cpp \
 	ARMTargetParser.cpp \
 	ARMWinEH.cpp \
+	AutoConvert.cpp \
 	BinaryStreamError.cpp \
 	BinaryStreamReader.cpp \
 	BinaryStreamRef.cpp \
@@ -41,9 +43,11 @@ SRCS+=	AArch64TargetParser.cpp \
 	Debug.cpp \
 	DeltaAlgorithm.cpp \
 	DJB.cpp \
+	ELFAttributeParser.cpp \
+	ELFAttributes.cpp \
 	Error.cpp \
 	ErrorHandling.cpp \
-	FileCheck.cpp \
+	ExtensibleRTTI.cpp \
 	FileCollector.cpp \
 	FileOutputBuffer.cpp \
 	FileUtilities.cpp \
@@ -53,6 +57,7 @@ SRCS+=	AArch64TargetParser.cpp \
 	GraphWriter.cpp \
 	Hashing.cpp \
 	InitLLVM.cpp \
+	InstructionCost.cpp \
 	IntEqClasses.cpp \
 	IntervalMap.cpp \
 	ItaniumManglingCanonicalizer.cpp \
@@ -66,10 +71,12 @@ SRCS+=	AArch64TargetParser.cpp \
 	ManagedStatic.cpp \
 	MathExtras.cpp \
 	MD5.cpp \
+	MemAlloc.cpp \
 	MemoryBuffer.cpp \
+	MemoryBufferRef.cpp \
 	NativeFormatting.cpp \
+	OptimizedStructLayout.cpp \
 	Optional.cpp \
-	Options.cpp \
 	Parallel.cpp \
 	PluginLoader.cpp \
 	PrettyStackTrace.cpp \
@@ -81,8 +88,11 @@ SRCS+=	AArch64TargetParser.cpp \
 	regexec.c \
 	regfree.c \
 	regstrlcpy.c \
+	RISCVAttributeParser.cpp \
+	RISCVAttributes.cpp \
 	ScopedPrinter.cpp \
 	SHA1.cpp \
+	SHA256.cpp \
 	Signposts.cpp \
 	SmallPtrSet.cpp \
 	SmallVector.cpp \
@@ -91,9 +101,9 @@ SRCS+=	AArch64TargetParser.cpp \
 	Statistic.cpp \
 	StringExtras.cpp \
 	StringMap.cpp \
-	StringPool.cpp \
 	StringRef.cpp \
 	StringSaver.cpp \
+	SuffixTree.cpp \
 	SymbolRemappingReader.cpp \
 	SystemUtils.cpp \
 	TargetParser.cpp \
@@ -105,12 +115,14 @@ SRCS+=	AArch64TargetParser.cpp \
 	TrigramIndex.cpp \
 	Triple.cpp \
 	Twine.cpp \
+	TypeSize.cpp \
 	UnicodeCaseFold.cpp \
 	Unicode.cpp \
 	VersionTuple.cpp \
 	VirtualFileSystem.cpp \
 	Watchdog.cpp \
 	WithColor.cpp \
+	X86TargetParser.cpp \
 	xxhash.cpp \
 	YAMLParser.cpp \
 	YAMLTraits.cpp \

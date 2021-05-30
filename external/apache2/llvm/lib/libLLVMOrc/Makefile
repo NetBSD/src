@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/11/11 22:45:10 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2021/05/30 01:56:53 joerg Exp $
 
 LIB=	LLVMOrc
 
@@ -9,6 +9,8 @@ LIB=	LLVMOrc
 SRCS+=	CompileOnDemandLayer.cpp \
 	CompileUtils.cpp \
 	Core.cpp \
+	DebugObjectManagerPlugin.cpp \
+	DebugUtils.cpp \
 	ExecutionUtils.cpp \
 	IndirectionUtils.cpp \
 	IRCompileLayer.cpp \
@@ -16,19 +18,21 @@ SRCS+=	CompileOnDemandLayer.cpp \
 	JITTargetMachineBuilder.cpp \
 	Layer.cpp \
 	LazyReexports.cpp \
-	Legacy.cpp \
 	LLJIT.cpp \
-	NullResolver.cpp \
+	MachOPlatform.cpp \
+	Mangling.cpp \
 	ObjectLinkingLayer.cpp \
 	ObjectTransformLayer.cpp \
 	OrcABISupport.cpp \
-	OrcCBindings.cpp \
-	OrcError.cpp \
-	OrcMCJITReplacement.cpp \
-	RPCUtils.cpp \
+	OrcV2CBindings.cpp \
 	RTDyldObjectLinkingLayer.cpp \
 	SpeculateAnalyses.cpp \
 	Speculation.cpp \
-	ThreadSafeModule.cpp
+	TargetProcessControl.cpp \
+	ThreadSafeModule.cpp \
+	TPCDebugObjectRegistrar.cpp \
+	TPCDynamicLibrarySearchGenerator.cpp \
+	TPCEHFrameRegistrar.cpp \
+	TPCIndirectionUtils.cpp
 
 .include <bsd.lib.mk>

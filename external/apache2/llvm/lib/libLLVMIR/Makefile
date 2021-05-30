@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/11/11 22:45:07 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2021/05/30 01:56:52 joerg Exp $
 
 LIB=	LLVMIR
 
@@ -6,17 +6,15 @@ LIB=	LLVMIR
 
 .PATH: ${LLVM_SRCDIR}/lib/IR
 
-TABLEGEN_SRC=		AttributesCompatFunc.td
-TABLEGEN_OUTPUT= \
-	AttributesCompatFunc.inc|-gen-attrs
-
 .include "${.PARSEDIR}/../../tablegen.mk"
 
 SRCS+=	AbstractCallSite.cpp \
 	AsmWriter.cpp \
+	Assumptions.cpp \
 	Attributes.cpp \
 	AutoUpgrade.cpp \
 	BasicBlock.cpp \
+	BuiltinGCs.cpp \
 	Comdat.cpp \
 	ConstantFold.cpp \
 	ConstantRange.cpp \
@@ -31,7 +29,9 @@ SRCS+=	AbstractCallSite.cpp \
 	DiagnosticPrinter.cpp \
 	DIBuilder.cpp \
 	Dominators.cpp \
+	FPEnv.cpp \
 	Function.cpp \
+	GCStrategy.cpp \
 	Globals.cpp \
 	GVMaterializer.cpp \
 	InlineAsm.cpp \
@@ -43,6 +43,7 @@ SRCS+=	AbstractCallSite.cpp \
 	LegacyPassManager.cpp \
 	LLVMContext.cpp \
 	LLVMContextImpl.cpp \
+	LLVMRemarkStreamer.cpp \
 	Mangler.cpp \
 	MDBuilder.cpp \
 	Metadata.cpp \
@@ -55,10 +56,13 @@ SRCS+=	AbstractCallSite.cpp \
 	PassManager.cpp \
 	PassRegistry.cpp \
 	PassTimingInfo.cpp \
+	PrintPasses.cpp \
 	ProfileSummary.cpp \
-	RemarkStreamer.cpp \
+	PseudoProbe.cpp \
+	ReplaceConstant.cpp \
 	SafepointIRVerifier.cpp \
 	Statepoint.cpp \
+	StructuralHash.cpp \
 	Type.cpp \
 	TypeFinder.cpp \
 	Use.cpp \

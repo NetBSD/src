@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.45 2021/04/12 02:08:59 mrg Exp $
+# $NetBSD: ad.aarch64,v 1.46 2021/05/30 01:56:45 joerg Exp $
 ./usr/include/aarch64				comp-c-include
 ./usr/include/aarch64/ansi.h			comp-c-include
 ./usr/include/aarch64/aout_machdep.h		comp-c-include
@@ -120,9 +120,13 @@
 ./usr/include/clang-7.0/arm64intr.h		comp-obsolete		obsolete
 ./usr/include/clang-7.0/arm_acle.h		comp-obsolete		obsolete
 ./usr/include/clang-7.0/arm_neon.h		comp-obsolete		obsolete
-./usr/include/clang-9.0/arm64intr.h		comp-c-include		llvm
-./usr/include/clang-9.0/arm_acle.h		comp-c-include		llvm
-./usr/include/clang-9.0/arm_neon.h		comp-c-include		llvm
+./usr/include/clang-9.0/arm64intr.h		comp-obsolete		obsolete
+./usr/include/clang-9.0/arm_acle.h		comp-obsolete		obsolete
+./usr/include/clang-9.0/arm_neon.h		comp-obsolete		obsolete
+./usr/include/clang-13.0/arm64intr.h		comp-c-include		llvm
+./usr/include/clang-13.0/arm_acle.h		comp-c-include		llvm
+./usr/include/clang-13.0/arm_cmse.h		comp-c-include		llvm
+./usr/include/clang-13.0/arm_neon.h		comp-c-include		llvm
 ./usr/include/evbarm				comp-c-include
 ./usr/include/evbarm/disklabel.h		comp-c-include
 ./usr/include/evbarm/intr.h			comp-c-include
