@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.289 2021/05/30 14:06:37 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.290 2021/05/30 19:41:59 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008, 2020
@@ -135,7 +135,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.289 2021/05/30 14:06:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.290 2021/05/30 19:41:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -507,6 +507,8 @@ pmap_pagelist_free(struct pmap_pagelist * const list)
 
 	while ((pg = LIST_FIRST(list)) != NULL) {
 		LIST_REMOVE(pg, pageq.list);
+		/* Zap any fields we used internally. */
+		atomic_store_relaxed(&pg->loan_count, 0);
 		uvm_pagefree(pg);
 	}
 }
@@ -663,6 +665,7 @@ TLB_COUNT_DECL(shootnow_remote);
 
 TLB_COUNT_DECL(reason_remove_kernel);
 TLB_COUNT_DECL(reason_remove_user);
+TLB_COUNT_DECL(reason_remove_all_user);
 TLB_COUNT_DECL(reason_page_protect_read);
 TLB_COUNT_DECL(reason_page_protect_none);
 TLB_COUNT_DECL(reason_protect);
@@ -729,6 +732,7 @@ pmap_tlb_init(void)
 
 	TLB_COUNT_ATTACH(reason_remove_kernel);
 	TLB_COUNT_ATTACH(reason_remove_user);
+	TLB_COUNT_ATTACH(reason_remove_all_user);
 	TLB_COUNT_ATTACH(reason_page_protect_read);
 	TLB_COUNT_ATTACH(reason_page_protect_none);
 	TLB_COUNT_ATTACH(reason_protect);
@@ -1841,6 +1845,77 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 
 	pmap_tlb_context_init(&tlbctx, 0);
 	pmap_remove_internal(pmap, sva, eva, &tlbctx);
+}
+
+/*
+ * pmap_remove_all:		[ INTERFACE ]
+ *
+ *	Remove all mappings from a pmap in bulk.  This is only called
+ *	when it's known that the address space is no longer visible to
+ *	any user process (e.g. during exit or exec).
+ */
+bool
+pmap_remove_all(pmap_t pmap)
+{
+	struct pmap_tlb_context tlbctx;
+	struct vm_page *pg;
+	pv_entry_t pv;
+
+	KASSERT(pmap != pmap_kernel());
+
+	/*
+	 * This process is pretty simple:
+	 *
+	 * ==> (1) Zero out the user-space portion of the lev1map.
+	 *
+	 * ==> (2) Copy the PT page list to the tlbctx and re-init.
+	 *
+	 * ==> (3) Walk the PV entry list and remove each entry.
+	 *
+	 * ==> (4) Zero the wired and resident count.
+	 *
+	 * Once we've done that, we just need to free everything
+	 * back to the system.
+	 */
+
+	pmap_tlb_context_init(&tlbctx, 0);
+
+	PMAP_MAP_TO_HEAD_LOCK();
+	PMAP_LOCK(pmap);
+
+	/* Step 1 */
+	pt_entry_t * const lev1map = pmap_lev1map(pmap);
+	memset(lev1map, 0,
+	       l1pte_index(VM_MAXUSER_ADDRESS) * sizeof(pt_entry_t));
+
+	/* Step 2 */
+	LIST_MOVE(&pmap->pm_ptpages, &tlbctx.t_freeptq, pageq.list);
+
+	/* Fix up the reference count on the lev1map page. */
+	pg = PHYS_TO_VM_PAGE(ALPHA_K0SEG_TO_PHYS((vaddr_t)lev1map));
+	atomic_store_relaxed(&pg->loan_count, 0);
+
+	/* Step 3 */
+	while ((pv = LIST_FIRST(&pmap->pm_pvents)) != NULL) {
+		KASSERT(pv->pv_pmap == pmap);
+		pmap_pv_remove(pmap, PHYS_TO_VM_PAGE(pmap_pte_pa(pv->pv_pte)),
+		    pv->pv_va, true, NULL, &tlbctx);
+	}
+
+	/* Step 4 */
+	atomic_store_relaxed(&pmap->pm_stats.wired_count, 0);
+	atomic_store_relaxed(&pmap->pm_stats.resident_count, 0);
+
+	pmap_tlb_shootdown_all_user(pmap, PG_EXEC, &tlbctx);
+
+	PMAP_UNLOCK(pmap);
+	PMAP_MAP_TO_HEAD_UNLOCK();
+
+	pmap_tlb_shootnow(&tlbctx);
+	pmap_tlb_context_drain(&tlbctx);
+	TLB_COUNT(reason_remove_all_user);
+
+	return true;
 }
 
 /*
