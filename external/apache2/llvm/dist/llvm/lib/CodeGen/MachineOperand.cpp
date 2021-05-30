@@ -11,9 +11,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/MachineOperand.h"
+#include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Analysis/Loads.h"
 #include "llvm/Analysis/MemoryLocation.h"
+#include "llvm/CodeGen/MIRFormatter.h"
 #include "llvm/CodeGen/MIRPrinter.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
@@ -23,6 +25,7 @@
 #include "llvm/Config/llvm-config.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/IRPrintingPasses.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/IR/ModuleSlotTracker.h"
 #include "llvm/MC/MCDwarf.h"
 #include "llvm/Target/TargetIntrinsicInfo.h"
@@ -82,7 +85,7 @@ void MachineOperand::substVirtReg(Register Reg, unsigned SubIdx,
 }
 
 void MachineOperand::substPhysReg(MCRegister Reg, const TargetRegisterInfo &TRI) {
-  assert(Reg.isPhysical());
+  assert(Register::isPhysicalRegister(Reg));
   if (getSubReg()) {
     Reg = TRI.getSubReg(Reg, getSubReg());
     // Note that getSubReg() may return 0 if the sub-register doesn't exist.
@@ -150,22 +153,25 @@ void MachineOperand::removeRegFromUses() {
 /// ChangeToImmediate - Replace this operand with a new immediate operand of
 /// the specified value.  If an operand is known to be an immediate already,
 /// the setImm method should be used.
-void MachineOperand::ChangeToImmediate(int64_t ImmVal) {
+void MachineOperand::ChangeToImmediate(int64_t ImmVal, unsigned TargetFlags) {
   assert((!isReg() || !isTied()) && "Cannot change a tied operand into an imm");
 
   removeRegFromUses();
 
   OpKind = MO_Immediate;
   Contents.ImmVal = ImmVal;
+  setTargetFlags(TargetFlags);
 }
 
-void MachineOperand::ChangeToFPImmediate(const ConstantFP *FPImm) {
+void MachineOperand::ChangeToFPImmediate(const ConstantFP *FPImm,
+                                         unsigned TargetFlags) {
   assert((!isReg() || !isTied()) && "Cannot change a tied operand into an imm");
 
   removeRegFromUses();
 
   OpKind = MO_FPImmediate;
   Contents.CFP = FPImm;
+  setTargetFlags(TargetFlags);
 }
 
 void MachineOperand::ChangeToES(const char *SymName,
@@ -194,7 +200,7 @@ void MachineOperand::ChangeToGA(const GlobalValue *GV, int64_t Offset,
   setTargetFlags(TargetFlags);
 }
 
-void MachineOperand::ChangeToMCSymbol(MCSymbol *Sym) {
+void MachineOperand::ChangeToMCSymbol(MCSymbol *Sym, unsigned TargetFlags) {
   assert((!isReg() || !isTied()) &&
          "Cannot change a tied operand into an MCSymbol");
 
@@ -202,9 +208,10 @@ void MachineOperand::ChangeToMCSymbol(MCSymbol *Sym) {
 
   OpKind = MO_MCSymbol;
   Contents.Sym = Sym;
+  setTargetFlags(TargetFlags);
 }
 
-void MachineOperand::ChangeToFrameIndex(int Idx) {
+void MachineOperand::ChangeToFrameIndex(int Idx, unsigned TargetFlags) {
   assert((!isReg() || !isTied()) &&
          "Cannot change a tied operand into a FrameIndex");
 
@@ -212,6 +219,7 @@ void MachineOperand::ChangeToFrameIndex(int Idx) {
 
   OpKind = MO_FrameIndex;
   setIndex(Idx);
+  setTargetFlags(TargetFlags);
 }
 
 void MachineOperand::ChangeToTargetIndex(unsigned Idx, int64_t Offset,
@@ -412,6 +420,11 @@ static const char *getTargetIndexName(const MachineFunction &MF, int Index) {
   return nullptr;
 }
 
+const char *MachineOperand::getTargetIndexName() const {
+  const MachineFunction *MF = getMFIfAvailable(*this);
+  return MF ? ::getTargetIndexName(*MF, this->getIndex()) : nullptr;
+}
+
 static const char *getTargetFlagName(const TargetInstrInfo *TII, unsigned TF) {
   auto Flags = TII->getSerializableDirectMachineOperandTargetFlags();
   for (const auto &I : Flags) {
@@ -456,28 +469,6 @@ static void printIRBlockReference(raw_ostream &OS, const BasicBlock &BB,
     MachineOperand::printIRSlotNumber(OS, *Slot);
   else
     OS << "<unknown>";
-}
-
-static void printIRValueReference(raw_ostream &OS, const Value &V,
-                                  ModuleSlotTracker &MST) {
-  if (isa<GlobalValue>(V)) {
-    V.printAsOperand(OS, /*PrintType=*/false, MST);
-    return;
-  }
-  if (isa<Constant>(V)) {
-    // Machine memory operands can load/store to/from constant value pointers.
-    OS << '`';
-    V.printAsOperand(OS, /*PrintType=*/true, MST);
-    OS << '`';
-    return;
-  }
-  OS << "%ir.";
-  if (V.hasName()) {
-    printLLVMNameWithoutPrefix(OS, V.getName());
-    return;
-  }
-  int Slot = MST.getCurrentFunction() ? MST.getLocalSlot(&V) : -1;
-  MachineOperand::printIRSlotNumber(OS, Slot);
 }
 
 static void printSyncScope(raw_ostream &OS, const LLVMContext &Context,
@@ -689,7 +680,7 @@ static void printCFI(raw_ostream &OS, const MCCFIInstruction &CFI,
       size_t e = CFI.getValues().size() - 1;
       for (size_t i = 0; i < e; ++i)
         OS << format("0x%02x", uint8_t(CFI.getValues()[i])) << ", ";
-      OS << format("0x%02x", uint8_t(CFI.getValues()[e])) << ", ";
+      OS << format("0x%02x", uint8_t(CFI.getValues()[e]));
     }
     break;
   }
@@ -734,14 +725,15 @@ void MachineOperand::print(raw_ostream &OS, LLT TypeToPrint,
                            const TargetIntrinsicInfo *IntrinsicInfo) const {
   tryToGetTargetInfo(*this, TRI, IntrinsicInfo);
   ModuleSlotTracker DummyMST(nullptr);
-  print(OS, DummyMST, TypeToPrint, /*PrintDef=*/false, /*IsStandalone=*/true,
+  print(OS, DummyMST, TypeToPrint, None, /*PrintDef=*/false,
+        /*IsStandalone=*/true,
         /*ShouldPrintRegisterTies=*/true,
         /*TiedOperandIdx=*/0, TRI, IntrinsicInfo);
 }
 
 void MachineOperand::print(raw_ostream &OS, ModuleSlotTracker &MST,
-                           LLT TypeToPrint, bool PrintDef, bool IsStandalone,
-                           bool ShouldPrintRegisterTies,
+                           LLT TypeToPrint, Optional<unsigned> OpIdx, bool PrintDef,
+                           bool IsStandalone, bool ShouldPrintRegisterTies,
                            unsigned TiedOperandIdx,
                            const TargetRegisterInfo *TRI,
                            const TargetIntrinsicInfo *IntrinsicInfo) const {
@@ -802,9 +794,19 @@ void MachineOperand::print(raw_ostream &OS, ModuleSlotTracker &MST,
       OS << '(' << TypeToPrint << ')';
     break;
   }
-  case MachineOperand::MO_Immediate:
-    OS << getImm();
+  case MachineOperand::MO_Immediate: {
+    const MIRFormatter *Formatter = nullptr;
+    if (const MachineFunction *MF = getMFIfAvailable(*this)) {
+      const auto *TII = MF->getSubtarget().getInstrInfo();
+      assert(TII && "expected instruction info");
+      Formatter = TII->getMIRFormatter();
+    }
+    if (Formatter)
+      Formatter->printImm(OS, *getParent(), OpIdx, getImm());
+    else
+      OS << getImm();
     break;
+  }
   case MachineOperand::MO_CImmediate:
     getCImm()->printAsOperand(OS, /*PrintType=*/true, MST);
     break;
@@ -831,7 +833,7 @@ void MachineOperand::print(raw_ostream &OS, ModuleSlotTracker &MST,
     OS << "target-index(";
     const char *Name = "<unknown>";
     if (const MachineFunction *MF = getMFIfAvailable(*this))
-      if (const auto *TargetIndexName = getTargetIndexName(*MF, getIndex()))
+      if (const auto *TargetIndexName = ::getTargetIndexName(*MF, getIndex()))
         Name = TargetIndexName;
     OS << Name << ')';
     printOperandOffset(OS, getOffset());
@@ -940,13 +942,13 @@ void MachineOperand::print(raw_ostream &OS, ModuleSlotTracker &MST,
   }
   case MachineOperand::MO_ShuffleMask:
     OS << "shufflemask(";
-    const Constant* C = getShuffleMask();
-    const int NumElts = C->getType()->getVectorNumElements();
-
+    ArrayRef<int> Mask = getShuffleMask();
     StringRef Separator;
-    for (int I = 0; I != NumElts; ++I) {
-      OS << Separator;
-      C->getAggregateElement(I)->printAsOperand(OS, false, MST);
+    for (int Elt : Mask) {
+      if (Elt == -1)
+        OS << Separator << "undef";
+      else
+        OS << Separator << Elt;
       Separator = ", ";
     }
 
@@ -979,8 +981,7 @@ bool MachinePointerInfo::isDereferenceable(unsigned Size, LLVMContext &C,
     return false;
 
   return isDereferenceableAndAlignedPointer(
-      BasePtr, Align::None(), APInt(DL.getPointerSizeInBits(), Offset + Size),
-      DL);
+      BasePtr, Align(1), APInt(DL.getPointerSizeInBits(), Offset + Size), DL);
 }
 
 /// getConstantPool - Return a MachinePointerInfo record that refers to the
@@ -1014,17 +1015,16 @@ MachinePointerInfo MachinePointerInfo::getUnknownStack(MachineFunction &MF) {
 }
 
 MachineMemOperand::MachineMemOperand(MachinePointerInfo ptrinfo, Flags f,
-                                     uint64_t s, uint64_t a,
+                                     uint64_t s, Align a,
                                      const AAMDNodes &AAInfo,
                                      const MDNode *Ranges, SyncScope::ID SSID,
                                      AtomicOrdering Ordering,
                                      AtomicOrdering FailureOrdering)
-    : PtrInfo(ptrinfo), Size(s), FlagVals(f), BaseAlignLog2(Log2_32(a) + 1),
-      AAInfo(AAInfo), Ranges(Ranges) {
+    : PtrInfo(ptrinfo), Size(s), FlagVals(f), BaseAlign(a), AAInfo(AAInfo),
+      Ranges(Ranges) {
   assert((PtrInfo.V.isNull() || PtrInfo.V.is<const PseudoSourceValue *>() ||
           isa<PointerType>(PtrInfo.V.get<const Value *>()->getType())) &&
          "invalid pointer value");
-  assert(getBaseAlignment() == a && a != 0 && "Alignment is not a power of 2!");
   assert((isLoad() || isStore()) && "Not a load/store!");
 
   AtomicInfo.SSID = static_cast<unsigned>(SSID);
@@ -1042,7 +1042,7 @@ void MachineMemOperand::Profile(FoldingSetNodeID &ID) const {
   ID.AddInteger(Size);
   ID.AddPointer(getOpaqueValue());
   ID.AddInteger(getFlags());
-  ID.AddInteger(getBaseAlignment());
+  ID.AddInteger(getBaseAlign().value());
 }
 
 void MachineMemOperand::refineAlignment(const MachineMemOperand *MMO) {
@@ -1051,19 +1051,19 @@ void MachineMemOperand::refineAlignment(const MachineMemOperand *MMO) {
   assert(MMO->getFlags() == getFlags() && "Flags mismatch!");
   assert(MMO->getSize() == getSize() && "Size mismatch!");
 
-  if (MMO->getBaseAlignment() >= getBaseAlignment()) {
+  if (MMO->getBaseAlign() >= getBaseAlign()) {
     // Update the alignment value.
-    BaseAlignLog2 = Log2_32(MMO->getBaseAlignment()) + 1;
+    BaseAlign = MMO->getBaseAlign();
     // Also update the base and offset, because the new alignment may
     // not be applicable with the old ones.
     PtrInfo = MMO->PtrInfo;
   }
 }
 
-/// getAlignment - Return the minimum known alignment in bytes of the
+/// getAlign - Return the minimum known alignment in bytes of the
 /// actual memory reference.
-uint64_t MachineMemOperand::getAlignment() const {
-  return MinAlign(getBaseAlignment(), getOffset());
+Align MachineMemOperand::getAlign() const {
+  return commonAlignment(getBaseAlign(), getOffset());
 }
 
 void MachineMemOperand::print(raw_ostream &OS, ModuleSlotTracker &MST,
@@ -1111,7 +1111,7 @@ void MachineMemOperand::print(raw_ostream &OS, ModuleSlotTracker &MST,
 
   if (const Value *Val = getValue()) {
     OS << ((isLoad() && isStore()) ? " on " : isLoad() ? " from " : " into ");
-    printIRValueReference(OS, *Val, MST);
+    MIRFormatter::printIRValue(OS, *Val, MST);
   } else if (const PseudoSourceValue *PVal = getPseudoValue()) {
     OS << ((isLoad() && isStore()) ? " on " : isLoad() ? " from " : " into ");
     assert(PVal && "Expected a pseudo source value");
@@ -1144,19 +1144,29 @@ void MachineMemOperand::print(raw_ostream &OS, ModuleSlotTracker &MST,
       printLLVMNameWithoutPrefix(
           OS, cast<ExternalSymbolPseudoSourceValue>(PVal)->getSymbol());
       break;
-    default:
+    default: {
+      const MIRFormatter *Formatter = TII->getMIRFormatter();
       // FIXME: This is not necessarily the correct MIR serialization format for
       // a custom pseudo source value, but at least it allows
-      // -print-machineinstrs to work on a target with custom pseudo source
+      // MIR printing to work on a target with custom pseudo source
       // values.
-      OS << "custom ";
-      PVal->printCustom(OS);
+      OS << "custom \"";
+      Formatter->printCustomPseudoSourceValue(OS, MST, *PVal);
+      OS << '\"';
       break;
     }
+    }
+  } else if (getOpaqueValue() == nullptr && getOffset() != 0) {
+    OS << ((isLoad() && isStore()) ? " on "
+           : isLoad()              ? " from "
+                                   : " into ")
+       << "unknown-address";
   }
   MachineOperand::printOperandOffset(OS, getOffset());
-  if (getBaseAlignment() != getSize())
-    OS << ", align " << getBaseAlignment();
+  if (getAlign() != getSize())
+    OS << ", align " << getAlign().value();
+  if (getAlign() != getBaseAlign())
+    OS << ", basealign " << getBaseAlign().value();
   auto AAInfo = getAAInfo();
   if (AAInfo.TBAA) {
     OS << ", !tbaa ";

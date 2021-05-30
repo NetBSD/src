@@ -32,19 +32,18 @@
 #include "llvm/Support/Errc.h"
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/FileSystem.h"
+#include "llvm/Support/InitLLVM.h"
 #include "llvm/Support/JSON.h"
 #include "llvm/Support/MD5.h"
-#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
-#include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Regex.h"
 #include "llvm/Support/SHA1.h"
-#include "llvm/Support/Signals.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/SpecialCaseList.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
+#include "llvm/Support/VirtualFileSystem.h"
 #include "llvm/Support/YAMLParser.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -357,7 +356,7 @@ static std::string parseScalarString(yaml::Node *N) {
   SmallString<64> StringStorage;
   yaml::ScalarNode *S = dyn_cast<yaml::ScalarNode>(N);
   failIf(!S, "expected string");
-  return S->getValue(StringStorage);
+  return std::string(S->getValue(StringStorage));
 }
 
 std::unique_ptr<SymbolizedCoverage>
@@ -470,7 +469,7 @@ static std::unique_ptr<symbolize::LLVMSymbolizer> createSymbolizer() {
 static std::string normalizeFilename(const std::string &FileName) {
   SmallString<256> S(FileName);
   sys::path::remove_dots(S, /* remove_dot_dot */ true);
-  return stripPathPrefix(S.str().str());
+  return stripPathPrefix(sys::path::convert_to_slash(std::string(S)));
 }
 
 class Blacklists {
@@ -510,7 +509,8 @@ private:
     if (ClBlacklist.empty())
       return std::unique_ptr<SpecialCaseList>();
 
-    return SpecialCaseList::createOrDie({{ClBlacklist}});
+    return SpecialCaseList::createOrDie({{ClBlacklist}},
+                                        *vfs::getRealFileSystem());
   }
   std::unique_ptr<SpecialCaseList> DefaultBlacklist;
   std::unique_ptr<SpecialCaseList> UserBlacklist;
@@ -655,7 +655,12 @@ findSanitizerCovFunctions(const object::ObjectFile &O) {
     failIfError(NameOrErr);
     StringRef Name = NameOrErr.get();
 
-    if (!(Symbol.getFlags() & object::BasicSymbolRef::SF_Undefined) &&
+    Expected<uint32_t> FlagsOrErr = Symbol.getFlags();
+    // TODO: Test this error.
+    failIfError(FlagsOrErr);
+    uint32_t Flags = FlagsOrErr.get();
+
+    if (!(Flags & object::BasicSymbolRef::SF_Undefined) &&
         isCoveragePointSymbol(Name)) {
       Result.insert(Address);
     }
@@ -665,12 +670,10 @@ findSanitizerCovFunctions(const object::ObjectFile &O) {
     for (const object::ExportDirectoryEntryRef &Export :
          CO->export_directories()) {
       uint32_t RVA;
-      std::error_code EC = Export.getExportRVA(RVA);
-      failIfError(EC);
+      failIfError(Export.getExportRVA(RVA));
 
       StringRef Name;
-      EC = Export.getSymbolName(Name);
-      failIfError(EC);
+      failIfError(Export.getSymbolName(Name));
 
       if (isCoveragePointSymbol(Name))
         Result.insert(CO->getImageBase() + RVA);
@@ -723,8 +726,7 @@ static void getObjectCoveragePoints(const object::ObjectFile &O,
       TheTarget->createMCAsmInfo(*MRI, TripleName, MCOptions));
   failIfEmpty(AsmInfo, "no asm info for target " + TripleName);
 
-  std::unique_ptr<const MCObjectFileInfo> MOFI(new MCObjectFileInfo);
-  MCContext Ctx(AsmInfo.get(), MRI.get(), MOFI.get());
+  MCContext Ctx(TheTriple, AsmInfo.get(), MRI.get(), STI.get());
   std::unique_ptr<MCDisassembler> DisAsm(
       TheTarget->createMCDisassembler(*STI, Ctx));
   failIfEmpty(DisAsm, "no disassembler info for target " + TripleName);
@@ -756,7 +758,7 @@ static void getObjectCoveragePoints(const object::ObjectFile &O,
          Index += Size) {
       MCInst Inst;
       if (!DisAsm->getInstruction(Inst, Size, Bytes.slice(Index),
-                                  SectionAddr + Index, nulls(), nulls())) {
+                                  SectionAddr + Index, nulls())) {
         if (Size == 0)
           Size = 1;
         continue;
@@ -1068,11 +1070,11 @@ readSymbolizeAndMergeCmdArguments(std::vector<std::string> FileNames) {
         CovFiles.insert(FileName);
       } else {
         auto ShortFileName = llvm::sys::path::filename(FileName);
-        if (ObjFiles.find(ShortFileName) != ObjFiles.end()) {
+        if (ObjFiles.find(std::string(ShortFileName)) != ObjFiles.end()) {
           fail("Duplicate binary file with a short name: " + ShortFileName);
         }
 
-        ObjFiles[ShortFileName] = FileName;
+        ObjFiles[std::string(ShortFileName)] = FileName;
         if (FirstObjFile.empty())
           FirstObjFile = FileName;
       }
@@ -1091,7 +1093,7 @@ readSymbolizeAndMergeCmdArguments(std::vector<std::string> FileNames) {
              FileName);
       }
 
-      auto Iter = ObjFiles.find(Components[1]);
+      auto Iter = ObjFiles.find(std::string(Components[1]));
       if (Iter == ObjFiles.end()) {
         fail("Object file for coverage not found: " + FileName);
       }
@@ -1129,10 +1131,7 @@ readSymbolizeAndMergeCmdArguments(std::vector<std::string> FileNames) {
 } // namespace
 
 int main(int Argc, char **Argv) {
-  // Print stack trace if we signal out.
-  sys::PrintStackTraceOnErrorSignal(Argv[0]);
-  PrettyStackTraceProgram X(Argc, Argv);
-  llvm_shutdown_obj Y; // Call llvm_shutdown() on exit.
+  llvm::InitLLVM X(Argc, Argv);
 
   llvm::InitializeAllTargetInfos();
   llvm::InitializeAllTargetMCs();

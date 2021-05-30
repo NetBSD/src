@@ -60,6 +60,7 @@ class CodeGenTarget {
 
   mutable std::unique_ptr<CodeGenSchedModels> SchedModels;
 
+  mutable StringRef InstNamespace;
   mutable std::vector<const CodeGenInstruction*> InstrsByEnum;
   mutable unsigned NumPseudoInstructions = 0;
 public:
@@ -67,11 +68,14 @@ public:
   ~CodeGenTarget();
 
   Record *getTargetRecord() const { return TargetRec; }
-  const StringRef getName() const;
+  StringRef getName() const;
 
   /// getInstNamespace - Return the target-specific instruction namespace.
   ///
   StringRef getInstNamespace() const;
+
+  /// getRegNamespace - Return the target-specific register namespace.
+  StringRef getRegNamespace() const;
 
   /// getInstructionSet - Return the InstructionSet object.
   ///
@@ -86,12 +90,12 @@ public:
   ///
   Record *getAsmParser() const;
 
-  /// getAsmParserVariant - Return the AssmblyParserVariant definition for
+  /// getAsmParserVariant - Return the AssemblyParserVariant definition for
   /// this target.
   ///
   Record *getAsmParserVariant(unsigned i) const;
 
-  /// getAsmParserVariantCount - Return the AssmblyParserVariant definition
+  /// getAsmParserVariantCount - Return the AssemblyParserVariant definition
   /// available for this target.
   ///
   unsigned getAsmParserVariantCount() const;
@@ -107,7 +111,8 @@ public:
   /// covers \p SubIdx if it exists.
   Optional<CodeGenRegisterClass *>
   getSuperRegForSubReg(const ValueTypeByHwMode &Ty, CodeGenRegBank &RegBank,
-                       const CodeGenSubRegIndex *SubIdx) const;
+                       const CodeGenSubRegIndex *SubIdx,
+                       bool MustBeAllocatable = false) const;
 
   /// getRegisterByName - If there is a register with the specific AsmName,
   /// return it.

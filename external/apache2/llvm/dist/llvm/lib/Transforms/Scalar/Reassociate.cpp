@@ -29,8 +29,8 @@
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Analysis/BasicAliasAnalysis.h"
 #include "llvm/Analysis/GlobalsModRef.h"
-#include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/Argument.h"
 #include "llvm/IR/BasicBlock.h"
@@ -50,12 +50,14 @@
 #include "llvm/IR/User.h"
 #include "llvm/IR/Value.h"
 #include "llvm/IR/ValueHandle.h"
+#include "llvm/InitializePasses.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/Transforms/Utils/Local.h"
 #include <algorithm>
 #include <cassert>
 #include <utility>
@@ -173,7 +175,7 @@ void ReassociatePass::BuildRankMap(Function &F,
                       << "\n");
   }
 
-  // Traverse basic blocks in ReversePostOrder
+  // Traverse basic blocks in ReversePostOrder.
   for (BasicBlock *BB : RPOT) {
     unsigned BBRank = RankMap[BB] = ++Rank << 16;
 
@@ -253,15 +255,15 @@ static BinaryOperator *CreateMul(Value *S1, Value *S2, const Twine &Name,
   }
 }
 
-static BinaryOperator *CreateNeg(Value *S1, const Twine &Name,
-                                 Instruction *InsertBefore, Value *FlagsOp) {
+static Instruction *CreateNeg(Value *S1, const Twine &Name,
+                              Instruction *InsertBefore, Value *FlagsOp) {
   if (S1->getType()->isIntOrIntVectorTy())
     return BinaryOperator::CreateNeg(S1, Name, InsertBefore);
-  else {
-    BinaryOperator *Res = BinaryOperator::CreateFNeg(S1, Name, InsertBefore);
-    Res->setFastMathFlags(cast<FPMathOperator>(FlagsOp)->getFastMathFlags());
-    return Res;
-  }
+
+  if (auto *FMFSource = dyn_cast<Instruction>(FlagsOp))
+    return UnaryOperator::CreateFNegFMF(S1, FMFSource, Name, InsertBefore);
+
+  return UnaryOperator::CreateFNeg(S1, Name, InsertBefore);
 }
 
 /// Replace 0-X with X*-1.
@@ -913,9 +915,104 @@ static Value *NegateValue(Value *V, Instruction *BI,
 
   // Insert a 'neg' instruction that subtracts the value from zero to get the
   // negation.
-  BinaryOperator *NewNeg = CreateNeg(V, V->getName() + ".neg", BI, BI);
+  Instruction *NewNeg = CreateNeg(V, V->getName() + ".neg", BI, BI);
   ToRedo.insert(NewNeg);
   return NewNeg;
+}
+
+// See if this `or` looks like an load widening reduction, i.e. that it
+// consists of an `or`/`shl`/`zext`/`load` nodes only. Note that we don't
+// ensure that the pattern is *really* a load widening reduction,
+// we do not ensure that it can really be replaced with a widened load,
+// only that it mostly looks like one.
+static bool isLoadCombineCandidate(Instruction *Or) {
+  SmallVector<Instruction *, 8> Worklist;
+  SmallSet<Instruction *, 8> Visited;
+
+  auto Enqueue = [&](Value *V) {
+    auto *I = dyn_cast<Instruction>(V);
+    // Each node of an `or` reduction must be an instruction,
+    if (!I)
+      return false; // Node is certainly not part of an `or` load reduction.
+    // Only process instructions we have never processed before.
+    if (Visited.insert(I).second)
+      Worklist.emplace_back(I);
+    return true; // Will need to look at parent nodes.
+  };
+
+  if (!Enqueue(Or))
+    return false; // Not an `or` reduction pattern.
+
+  while (!Worklist.empty()) {
+    auto *I = Worklist.pop_back_val();
+
+    // Okay, which instruction is this node?
+    switch (I->getOpcode()) {
+    case Instruction::Or:
+      // Got an `or` node. That's fine, just recurse into it's operands.
+      for (Value *Op : I->operands())
+        if (!Enqueue(Op))
+          return false; // Not an `or` reduction pattern.
+      continue;
+
+    case Instruction::Shl:
+    case Instruction::ZExt:
+      // `shl`/`zext` nodes are fine, just recurse into their base operand.
+      if (!Enqueue(I->getOperand(0)))
+        return false; // Not an `or` reduction pattern.
+      continue;
+
+    case Instruction::Load:
+      // Perfect, `load` node means we've reached an edge of the graph.
+      continue;
+
+    default:        // Unknown node.
+      return false; // Not an `or` reduction pattern.
+    }
+  }
+
+  return true;
+}
+
+/// Return true if it may be profitable to convert this (X|Y) into (X+Y).
+static bool shouldConvertOrWithNoCommonBitsToAdd(Instruction *Or) {
+  // Don't bother to convert this up unless either the LHS is an associable add
+  // or subtract or mul or if this is only used by one of the above.
+  // This is only a compile-time improvement, it is not needed for correctness!
+  auto isInteresting = [](Value *V) {
+    for (auto Op : {Instruction::Add, Instruction::Sub, Instruction::Mul,
+                    Instruction::Shl})
+      if (isReassociableOp(V, Op))
+        return true;
+    return false;
+  };
+
+  if (any_of(Or->operands(), isInteresting))
+    return true;
+
+  Value *VB = Or->user_back();
+  if (Or->hasOneUse() && isInteresting(VB))
+    return true;
+
+  return false;
+}
+
+/// If we have (X|Y), and iff X and Y have no common bits set,
+/// transform this into (X+Y) to allow arithmetics reassociation.
+static BinaryOperator *convertOrWithNoCommonBitsToAdd(Instruction *Or) {
+  // Convert an or into an add.
+  BinaryOperator *New =
+      CreateAdd(Or->getOperand(0), Or->getOperand(1), "", Or, Or);
+  New->setHasNoSignedWrap();
+  New->setHasNoUnsignedWrap();
+  New->takeName(Or);
+
+  // Everyone now refers to the add instruction.
+  Or->replaceAllUsesWith(New);
+  New->setDebugLoc(Or->getDebugLoc());
+
+  LLVM_DEBUG(dbgs() << "Converted or into an add: " << *New << '\n');
+  return New;
 }
 
 /// Return true if we should break up this subtract of X-Y into (X + -Y).
@@ -974,7 +1071,8 @@ static BinaryOperator *BreakUpSubtract(Instruction *Sub,
 /// this into a multiply by a constant to assist with further reassociation.
 static BinaryOperator *ConvertShiftToMul(Instruction *Shl) {
   Constant *MulCst = ConstantInt::get(Shl->getType(), 1);
-  MulCst = ConstantExpr::getShl(MulCst, cast<Constant>(Shl->getOperand(1)));
+  auto *SA = cast<ConstantInt>(Shl->getOperand(1));
+  MulCst = ConstantExpr::getShl(MulCst, SA);
 
   BinaryOperator *Mul =
     BinaryOperator::CreateMul(Shl->getOperand(0), MulCst, "", Shl);
@@ -987,10 +1085,12 @@ static BinaryOperator *ConvertShiftToMul(Instruction *Shl) {
 
   // We can safely preserve the nuw flag in all cases.  It's also safe to turn a
   // nuw nsw shl into a nuw nsw mul.  However, nsw in isolation requires special
-  // handling.
+  // handling.  It can be preserved as long as we're not left shifting by
+  // bitwidth - 1.
   bool NSW = cast<BinaryOperator>(Shl)->hasNoSignedWrap();
   bool NUW = cast<BinaryOperator>(Shl)->hasNoUnsignedWrap();
-  if (NSW && NUW)
+  unsigned BitWidth = Shl->getType()->getIntegerBitWidth();
+  if (NSW && (NUW || SA->getValue().ult(BitWidth - 1)))
     Mul->setHasNoSignedWrap(true);
   Mul->setHasNoUnsignedWrap(NUW);
   return Mul;
@@ -1029,8 +1129,7 @@ static Value *EmitAddTreeOfValues(Instruction *I,
                                   SmallVectorImpl<WeakTrackingVH> &Ops) {
   if (Ops.size() == 1) return Ops.back();
 
-  Value *V1 = Ops.back();
-  Ops.pop_back();
+  Value *V1 = Ops.pop_back_val();
   Value *V2 = EmitAddTreeOfValues(I, Ops);
   return CreateAdd(V2, V1, "reass.add", I, I);
 }
@@ -1075,7 +1174,7 @@ Value *ReassociatePass::RemoveFactorFromExpression(Value *V, Value *Factor) {
         const APFloat &F1 = FC1->getValueAPF();
         APFloat F2(FC2->getValueAPF());
         F2.changeSign();
-        if (F1.compare(F2) == APFloat::cmpEqual) {
+        if (F1 == F2) {
           FoundFactor = NeedsNegate = true;
           Factors.erase(Factors.begin() + i);
           break;
@@ -1720,7 +1819,7 @@ static bool collectMultiplyFactors(SmallVectorImpl<ValueEntry> &Ops,
 }
 
 /// Build a tree of multiplies, computing the product of Ops.
-static Value *buildMultiplyTree(IRBuilder<> &Builder,
+static Value *buildMultiplyTree(IRBuilderBase &Builder,
                                 SmallVectorImpl<Value*> &Ops) {
   if (Ops.size() == 1)
     return Ops.back();
@@ -1743,7 +1842,7 @@ static Value *buildMultiplyTree(IRBuilder<> &Builder,
 /// DAG of multiplies to compute the final product, and return that product
 /// value.
 Value *
-ReassociatePass::buildMinimalMultiplyDAG(IRBuilder<> &Builder,
+ReassociatePass::buildMinimalMultiplyDAG(IRBuilderBase &Builder,
                                          SmallVectorImpl<Factor> &Factors) {
   assert(Factors[0].Power);
   SmallVector<Value *, 4> OuterProduct;
@@ -1894,10 +1993,11 @@ Value *ReassociatePass::OptimizeExpression(BinaryOperator *I,
 void ReassociatePass::RecursivelyEraseDeadInsts(Instruction *I,
                                                 OrderedSet &Insts) {
   assert(isInstructionTriviallyDead(I) && "Trivially dead instructions only!");
-  SmallVector<Value *, 4> Ops(I->op_begin(), I->op_end());
+  SmallVector<Value *, 4> Ops(I->operands());
   ValueRankMap.erase(I);
   Insts.remove(I);
   RedoInsts.remove(I);
+  llvm::salvageDebugInfo(*I);
   I->eraseFromParent();
   for (auto Op : Ops)
     if (Instruction *OpInst = dyn_cast<Instruction>(Op))
@@ -1910,10 +2010,11 @@ void ReassociatePass::EraseInst(Instruction *I) {
   assert(isInstructionTriviallyDead(I) && "Trivially dead instructions only!");
   LLVM_DEBUG(dbgs() << "Erasing dead inst: "; I->dump());
 
-  SmallVector<Value*, 8> Ops(I->op_begin(), I->op_end());
+  SmallVector<Value *, 8> Ops(I->operands());
   // Erase the dead instruction.
   ValueRankMap.erase(I);
   RedoInsts.remove(I);
+  llvm::salvageDebugInfo(*I);
   I->eraseFromParent();
   // Optimize its operands.
   SmallPtrSet<Instruction *, 8> Visited; // Detect self-referential nodes.
@@ -2108,6 +2209,19 @@ void ReassociatePass::OptimizeInst(Instruction *I) {
   // optimized for the most likely conditions.
   if (I->getType()->isIntegerTy(1))
     return;
+
+  // If this is a bitwise or instruction of operands
+  // with no common bits set, convert it to X+Y.
+  if (I->getOpcode() == Instruction::Or &&
+      shouldConvertOrWithNoCommonBitsToAdd(I) && !isLoadCombineCandidate(I) &&
+      haveNoCommonBitsSet(I->getOperand(0), I->getOperand(1),
+                          I->getModule()->getDataLayout(), /*AC=*/nullptr, I,
+                          /*DT=*/nullptr)) {
+    Instruction *NI = convertOrWithNoCommonBitsToAdd(I);
+    RedoInsts.insert(I);
+    MadeChange = true;
+    I = NI;
+  }
 
   // If this is a subtract instruction which is not already in negate form,
   // see if we can convert it to X+-Y.
@@ -2454,7 +2568,6 @@ PreservedAnalyses ReassociatePass::run(Function &F, FunctionAnalysisManager &) {
   if (MadeChange) {
     PreservedAnalyses PA;
     PA.preserveSet<CFGAnalyses>();
-    PA.preserve<GlobalsAA>();
     return PA;
   }
 
@@ -2484,6 +2597,8 @@ namespace {
 
     void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.setPreservesCFG();
+      AU.addPreserved<AAResultsWrapperPass>();
+      AU.addPreserved<BasicAAWrapperPass>();
       AU.addPreserved<GlobalsAAWrapperPass>();
     }
   };

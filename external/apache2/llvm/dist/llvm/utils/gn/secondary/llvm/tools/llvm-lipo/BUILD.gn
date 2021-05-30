@@ -13,7 +13,5 @@ executable("llvm-lipo") {
     "//llvm/lib/Support",
     "//llvm/lib/Target:TargetsToBuild",
   ]
-  sources = [
-    "llvm-lipo.cpp",
-  ]
+  sources = [ "llvm-lipo.cpp" ]
 }

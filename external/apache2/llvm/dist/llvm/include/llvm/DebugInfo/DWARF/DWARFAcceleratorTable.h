@@ -6,8 +6,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_DEBUGINFO_DWARFACCELERATORTABLE_H
-#define LLVM_DEBUGINFO_DWARFACCELERATORTABLE_H
+#ifndef LLVM_DEBUGINFO_DWARF_DWARFACCELERATORTABLE_H
+#define LLVM_DEBUGINFO_DWARF_DWARFACCELERATORTABLE_H
 
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/SmallVector.h"
@@ -140,7 +140,7 @@ public:
     friend class ValueIterator;
   };
 
-  class ValueIterator : public std::iterator<std::input_iterator_tag, Entry> {
+  class ValueIterator {
     const AppleAcceleratorTable *AccelTable = nullptr;
     Entry Current;           ///< The current entry.
     uint64_t DataOffset = 0; ///< Offset into the section.
@@ -149,7 +149,14 @@ public:
 
     /// Advance the iterator.
     void Next();
+
   public:
+    using iterator_category = std::input_iterator_tag;
+    using value_type = Entry;
+    using difference_type = std::ptrdiff_t;
+    using pointer = value_type *;
+    using reference = value_type &;
+
     /// Construct a new iterator for the entries at \p DataOffset.
     ValueIterator(const AppleAcceleratorTable &AccelTable, uint64_t DataOffset);
     /// End marker.
@@ -222,11 +229,16 @@ public:
 /// referenced by the name table and interpreted with the help of the
 /// abbreviation table.
 class DWARFDebugNames : public DWARFAcceleratorTable {
-  /// The fixed-size part of a DWARF v5 Name Index header
-  struct HeaderPOD {
-    uint32_t UnitLength;
+public:
+  class NameIndex;
+  class NameIterator;
+  class ValueIterator;
+
+  /// DWARF v5 Name Index header.
+  struct Header {
+    uint64_t UnitLength;
+    dwarf::DwarfFormat Format;
     uint16_t Version;
-    uint16_t Padding;
     uint32_t CompUnitCount;
     uint32_t LocalTypeUnitCount;
     uint32_t ForeignTypeUnitCount;
@@ -234,15 +246,6 @@ class DWARFDebugNames : public DWARFAcceleratorTable {
     uint32_t NameCount;
     uint32_t AbbrevTableSize;
     uint32_t AugmentationStringSize;
-  };
-
-public:
-  class NameIndex;
-  class NameIterator;
-  class ValueIterator;
-
-  /// DWARF v5 Name Index header.
-  struct Header : public HeaderPOD {
     SmallString<8> AugmentationString;
 
     Error extract(const DWARFDataExtractor &AS, uint64_t *Offset);
@@ -461,14 +464,24 @@ public:
 
     Error extract();
     uint64_t getUnitOffset() const { return Base; }
-    uint64_t getNextUnitOffset() const { return Base + 4 + Hdr.UnitLength; }
+    uint64_t getNextUnitOffset() const {
+      return Base + dwarf::getUnitLengthFieldByteSize(Hdr.Format) +
+             Hdr.UnitLength;
+    }
     void dump(ScopedPrinter &W) const;
 
     friend class DWARFDebugNames;
   };
 
-  class ValueIterator : public std::iterator<std::input_iterator_tag, Entry> {
+  class ValueIterator {
+  public:
+    using iterator_category = std::input_iterator_tag;
+    using value_type = Entry;
+    using difference_type = std::ptrdiff_t;
+    using pointer = value_type *;
+    using reference = value_type &;
 
+  private:
     /// The Name Index we are currently iterating through. The implementation
     /// relies on the fact that this can also be used as an iterator into the
     /// "NameIndices" vector in the Accelerator section.
@@ -596,4 +609,4 @@ public:
 
 } // end namespace llvm
 
-#endif // LLVM_DEBUGINFO_DWARFACCELERATORTABLE_H
+#endif // LLVM_DEBUGINFO_DWARF_DWARFACCELERATORTABLE_H

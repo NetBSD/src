@@ -15,7 +15,5 @@ executable("clang-scan-deps") {
     "//llvm/lib/IR",
     "//llvm/lib/Support",
   ]
-  sources = [
-    "ClangScanDeps.cpp",
-  ]
+  sources = [ "ClangScanDeps.cpp" ]
 }

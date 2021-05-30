@@ -15,7 +15,7 @@
 #include "llvm/Support/Error.h"
 #include "llvm/Support/Path.h"
 
-#define DEBUG_TYPE "llvm-jitlink"
+#define DEBUG_TYPE "llvm_jitlink"
 
 using namespace llvm;
 using namespace llvm::jitlink;
@@ -49,12 +49,6 @@ static Expected<Symbol &> getMachOGOTTarget(LinkGraph &G, Block &B) {
             "\" points to anonymous "
             "symbol",
         inconvertibleErrorCode());
-  if (TargetSym.isDefined() || TargetSym.isAbsolute())
-    return make_error<StringError>(
-        "GOT entry \"" + TargetSym.getName() + "\" in " + G.getName() + ", \"" +
-            TargetSym.getBlock().getSection().getName() +
-            "\" does not point to an external symbol",
-        inconvertibleErrorCode());
   return TargetSym;
 }
 
@@ -74,7 +68,7 @@ static Expected<Symbol &> getMachOStubTarget(LinkGraph &G, Block &B) {
 
 namespace llvm {
 
-Error registerMachOStubsAndGOT(Session &S, LinkGraph &G) {
+Error registerMachOGraphInfo(Session &S, LinkGraph &G) {
   auto FileName = sys::path::filename(G.getName());
   if (S.FileInfos.count(FileName)) {
     return make_error<StringError>("When -check is passed, file names must be "
@@ -90,12 +84,13 @@ Error registerMachOStubsAndGOT(Session &S, LinkGraph &G) {
   for (auto &Sec : G.sections()) {
     LLVM_DEBUG({
       dbgs() << "  Section \"" << Sec.getName() << "\": "
-             << (Sec.symbols_empty() ? "empty. skipping." : "processing...")
+             << (llvm::empty(Sec.symbols()) ? "empty. skipping."
+                                            : "processing...")
              << "\n";
     });
 
     // Skip empty sections.
-    if (Sec.symbols_empty())
+    if (llvm::empty(Sec.symbols()))
       continue;
 
     if (FileInfo.SectionInfos.count(Sec.getName()))
@@ -164,7 +159,7 @@ Error registerMachOStubsAndGOT(Session &S, LinkGraph &G) {
       FileInfo.SectionInfos[Sec.getName()] = {SecSize, SecAddr};
     else
       FileInfo.SectionInfos[Sec.getName()] = {
-          StringRef(FirstSym->getBlock().getContent().data(), SecSize),
+          ArrayRef<char>(FirstSym->getBlock().getContent().data(), SecSize),
           SecAddr};
   }
 

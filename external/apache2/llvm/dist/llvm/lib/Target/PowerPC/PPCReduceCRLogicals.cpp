@@ -24,6 +24,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Config/llvm-config.h"
+#include "llvm/InitializePasses.h"
 #include "llvm/Support/Debug.h"
 
 using namespace llvm;
@@ -205,9 +206,9 @@ static bool splitMBB(BlockSplitInfo &BSI) {
   NewMBB->splice(NewMBB->end(), ThisMBB, InsertPoint, ThisMBB->end());
   NewMBB->transferSuccessors(ThisMBB);
   if (!ProbOrigTarget.isUnknown()) {
-    auto MBBI = std::find(NewMBB->succ_begin(), NewMBB->succ_end(), OrigTarget);
+    auto MBBI = find(NewMBB->successors(), OrigTarget);
     NewMBB->setSuccProbability(MBBI, ProbOrigTarget);
-    MBBI = std::find(NewMBB->succ_begin(), NewMBB->succ_end(), OrigFallThrough);
+    MBBI = find(NewMBB->successors(), OrigFallThrough);
     NewMBB->setSuccProbability(MBBI, ProbOrigFallThrough);
   }
 
@@ -375,10 +376,10 @@ public:
   };
 
 private:
-  const PPCInstrInfo *TII;
-  MachineFunction *MF;
-  MachineRegisterInfo *MRI;
-  const MachineBranchProbabilityInfo *MBPI;
+  const PPCInstrInfo *TII = nullptr;
+  MachineFunction *MF = nullptr;
+  MachineRegisterInfo *MRI = nullptr;
+  const MachineBranchProbabilityInfo *MBPI = nullptr;
 
   // A vector to contain all the CR logical operations
   SmallVector<CRLogicalOpInfo, 16> AllCRLogicalOps;
@@ -470,21 +471,21 @@ PPCReduceCRLogicals::createCRLogicalOpInfo(MachineInstr &MIParam) {
   } else {
     MachineInstr *Def1 = lookThroughCRCopy(MIParam.getOperand(1).getReg(),
                                            Ret.SubregDef1, Ret.CopyDefs.first);
+    assert(Def1 && "Must be able to find a definition of operand 1.");
     Ret.DefsSingleUse &=
       MRI->hasOneNonDBGUse(Def1->getOperand(0).getReg());
     Ret.DefsSingleUse &=
       MRI->hasOneNonDBGUse(Ret.CopyDefs.first->getOperand(0).getReg());
-    assert(Def1 && "Must be able to find a definition of operand 1.");
     if (isBinary(MIParam)) {
       Ret.IsBinary = 1;
       MachineInstr *Def2 = lookThroughCRCopy(MIParam.getOperand(2).getReg(),
                                              Ret.SubregDef2,
                                              Ret.CopyDefs.second);
+      assert(Def2 && "Must be able to find a definition of operand 2.");
       Ret.DefsSingleUse &=
         MRI->hasOneNonDBGUse(Def2->getOperand(0).getReg());
       Ret.DefsSingleUse &=
         MRI->hasOneNonDBGUse(Ret.CopyDefs.second->getOperand(0).getReg());
-      assert(Def2 && "Must be able to find a definition of operand 2.");
       Ret.TrueDefs = std::make_pair(Def1, Def2);
     } else {
       Ret.TrueDefs = std::make_pair(Def1, nullptr);

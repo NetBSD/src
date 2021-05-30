@@ -274,7 +274,7 @@ GenericValue Interpreter::callExternalFunction(Function *F,
   RawFunc RawFn;
   if (RF == RawFunctions->end()) {
     RawFn = (RawFunc)(intptr_t)
-      sys::DynamicLibrary::SearchForAddressOfSymbol(F->getName());
+      sys::DynamicLibrary::SearchForAddressOfSymbol(std::string(F->getName()));
     if (!RawFn)
       RawFn = (RawFunc)(intptr_t)getPointerToGlobalIfAvailable(F);
     if (RawFn != 0)
@@ -419,7 +419,7 @@ static GenericValue lle_X_printf(FunctionType *FT,
   char Buffer[10000];
   std::vector<GenericValue> NewArgs;
   NewArgs.push_back(PTOGV((void*)&Buffer[0]));
-  NewArgs.insert(NewArgs.end(), Args.begin(), Args.end());
+  llvm::append_range(NewArgs, Args);
   GenericValue GV = lle_X_sprintf(FT, NewArgs);
   outs() << Buffer;
   return GV;

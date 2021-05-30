@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Error.h"
 #include "ObjDumper.h"
 #include "llvm-readobj.h"
 #include "llvm/Object/XCOFFObjectFile.h"
@@ -22,15 +21,10 @@ using namespace object;
 namespace {
 
 class XCOFFDumper : public ObjDumper {
-  enum {
-    SymbolTypeMask = 0x07,
-    SymbolAlignmentMask = 0xF8,
-    SymbolAlignmentBitOffset = 3
-  };
 
 public:
   XCOFFDumper(const XCOFFObjectFile &Obj, ScopedPrinter &Writer)
-      : ObjDumper(Writer), Obj(Obj) {}
+      : ObjDumper(Writer, Obj.getFileName()), Obj(Obj) {}
 
   void printFileHeaders() override;
   void printSectionHeaders() override;
@@ -49,13 +43,6 @@ private:
   void printCsectAuxEnt32(const XCOFFCsectAuxEnt32 *AuxEntPtr);
   void printSectAuxEntForStat(const XCOFFSectAuxEntForStat *AuxEntPtr);
   void printSymbol(const SymbolRef &);
-
-  // Least significant 3 bits are reserved.
-  static constexpr unsigned SectionFlagsReservedMask = 0x7;
-
-  // The low order 16 bits of section flags denotes the section type.
-  static constexpr unsigned SectionFlagsTypeMask = 0xffffu;
-
   void printRelocations(ArrayRef<XCOFFSectionHeader32> Sections);
   const XCOFFObjectFile &Obj;
 };
@@ -195,13 +182,12 @@ static const EnumEntry<XCOFF::StorageMappingClass> CsectStorageMappingClass[] =
     {
 #define ECase(X)                                                               \
   { #X, XCOFF::X }
-        ECase(XMC_PR),   ECase(XMC_RO),     ECase(XMC_DB),
-        ECase(XMC_GL),   ECase(XMC_XO),     ECase(XMC_SV),
-        ECase(XMC_SV64), ECase(XMC_SV3264), ECase(XMC_TI),
-        ECase(XMC_TB),   ECase(XMC_RW),     ECase(XMC_TC0),
-        ECase(XMC_TC),   ECase(XMC_TD),     ECase(XMC_DS),
-        ECase(XMC_UA),   ECase(XMC_BS),     ECase(XMC_UC),
-        ECase(XMC_TL),   ECase(XMC_TE)
+        ECase(XMC_PR), ECase(XMC_RO), ECase(XMC_DB),   ECase(XMC_GL),
+        ECase(XMC_XO), ECase(XMC_SV), ECase(XMC_SV64), ECase(XMC_SV3264),
+        ECase(XMC_TI), ECase(XMC_TB), ECase(XMC_RW),   ECase(XMC_TC0),
+        ECase(XMC_TC), ECase(XMC_TD), ECase(XMC_DS),   ECase(XMC_UA),
+        ECase(XMC_BS), ECase(XMC_UC), ECase(XMC_TL),   ECase(XMC_UL),
+        ECase(XMC_TE)
 #undef ECase
 };
 
@@ -218,17 +204,15 @@ void XCOFFDumper::printCsectAuxEnt32(const XCOFFCsectAuxEnt32 *AuxEntPtr) {
   DictScope SymDs(W, "CSECT Auxiliary Entry");
   W.printNumber("Index",
                 Obj.getSymbolIndex(reinterpret_cast<uintptr_t>(AuxEntPtr)));
-  if ((AuxEntPtr->SymbolAlignmentAndType & SymbolTypeMask) == XCOFF::XTY_LD)
+  if (AuxEntPtr->isLabel())
     W.printNumber("ContainingCsectSymbolIndex", AuxEntPtr->SectionOrLength);
   else
     W.printNumber("SectionLen", AuxEntPtr->SectionOrLength);
   W.printHex("ParameterHashIndex", AuxEntPtr->ParameterHashIndex);
   W.printHex("TypeChkSectNum", AuxEntPtr->TypeChkSectNum);
   // Print out symbol alignment and type.
-  W.printNumber("SymbolAlignmentLog2",
-                (AuxEntPtr->SymbolAlignmentAndType & SymbolAlignmentMask) >>
-                    SymbolAlignmentBitOffset);
-  W.printEnum("SymbolType", AuxEntPtr->SymbolAlignmentAndType & SymbolTypeMask,
+  W.printNumber("SymbolAlignmentLog2", AuxEntPtr->getAlignmentLog2());
+  W.printEnum("SymbolType", AuxEntPtr->getSymbolType(),
               makeArrayRef(CsectSymbolTypeClass));
   W.printEnum("StorageMappingClass",
               static_cast<uint8_t>(AuxEntPtr->StorageMappingClass),
@@ -496,8 +480,7 @@ void XCOFFDumper::printSectionHeaders(ArrayRef<T> Sections) {
     DictScope SecDS(W, "Section");
 
     W.printNumber("Index", Index++);
-
-    uint16_t SectionType = Sec.Flags & SectionFlagsTypeMask;
+    uint16_t SectionType = Sec.getSectionType();
     switch (SectionType) {
     case XCOFF::STYP_OVRFLO:
       printOverflowSectionHeader(Sec);
@@ -513,8 +496,7 @@ void XCOFFDumper::printSectionHeaders(ArrayRef<T> Sections) {
       printGenericSectionHeader(Sec);
       break;
     }
-    // For now we just dump the section type portion of the flags.
-    if (SectionType & SectionFlagsReservedMask)
+    if (Sec.isReservedSectionType())
       W.printHex("Flags", "Reserved", SectionType);
     else
       W.printEnum("Type", SectionType, makeArrayRef(SectionTypeFlagsNames));
@@ -531,14 +513,8 @@ void XCOFFDumper::printSectionHeaders(ArrayRef<T> Sections) {
 }
 
 namespace llvm {
-std::error_code createXCOFFDumper(const object::ObjectFile *Obj,
-                                  ScopedPrinter &Writer,
-                                  std::unique_ptr<ObjDumper> &Result) {
-  const XCOFFObjectFile *XObj = dyn_cast<XCOFFObjectFile>(Obj);
-  if (!XObj)
-    return readobj_error::unsupported_obj_file_format;
-
-  Result.reset(new XCOFFDumper(*XObj, Writer));
-  return readobj_error::success;
+std::unique_ptr<ObjDumper>
+createXCOFFDumper(const object::XCOFFObjectFile &XObj, ScopedPrinter &Writer) {
+  return std::make_unique<XCOFFDumper>(XObj, Writer);
 }
 } // namespace llvm

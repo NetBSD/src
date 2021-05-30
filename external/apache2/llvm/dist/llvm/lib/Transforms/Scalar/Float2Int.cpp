@@ -11,13 +11,14 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/InitializePasses.h"
+#include "llvm/Support/CommandLine.h"
 #define DEBUG_TYPE "float2int"
 
 #include "llvm/Transforms/Scalar/Float2Int.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/GlobalsModRef.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/IRBuilder.h"
@@ -118,8 +119,7 @@ static Instruction::BinaryOps mapBinOpcode(unsigned Opcode) {
 
 // Find the roots - instructions that convert from the FP domain to
 // integer domain.
-void Float2IntPass::findRoots(Function &F, const DominatorTree &DT,
-                              SmallPtrSet<Instruction*,8> &Roots) {
+void Float2IntPass::findRoots(Function &F, const DominatorTree &DT) {
   for (BasicBlock &BB : F) {
     // Unreachable code can take on strange forms that we are not prepared to
     // handle. For example, an instruction may have itself as an operand.
@@ -182,7 +182,7 @@ ConstantRange Float2IntPass::validateRange(ConstantRange R) {
 
 // Breadth-first walk of the use-def graph; determine the set of nodes
 // we care about and eagerly determine if some of them are poisonous.
-void Float2IntPass::walkBackwards(const SmallPtrSetImpl<Instruction*> &Roots) {
+void Float2IntPass::walkBackwards() {
   std::deque<Instruction*> Worklist(Roots.begin(), Roots.end());
   while (!Worklist.empty()) {
     Instruction *I = Worklist.back();
@@ -325,7 +325,7 @@ void Float2IntPass::walkForwards() {
 
         APFloat NewF = F;
         auto Res = NewF.roundToIntegral(APFloat::rmNearestTiesToEven);
-        if (Res != APFloat::opOK || NewF.compare(F) != APFloat::cmpEqual) {
+        if (Res != APFloat::opOK || NewF != F) {
           seen(I, badRange());
           Abort = true;
           break;
@@ -523,9 +523,9 @@ bool Float2IntPass::runImpl(Function &F, const DominatorTree &DT) {
 
   Ctx = &F.getParent()->getContext();
 
-  findRoots(F, DT, Roots);
+  findRoots(F, DT);
 
-  walkBackwards(Roots);
+  walkBackwards();
   walkForwards();
 
   bool Modified = validateAndTransform();
@@ -544,7 +544,6 @@ PreservedAnalyses Float2IntPass::run(Function &F, FunctionAnalysisManager &AM) {
 
   PreservedAnalyses PA;
   PA.preserveSet<CFGAnalyses>();
-  PA.preserve<GlobalsAA>();
   return PA;
 }
 } // End namespace llvm

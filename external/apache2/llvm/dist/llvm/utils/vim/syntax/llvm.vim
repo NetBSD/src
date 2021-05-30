@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:   llvm
 " Maintainer: The LLVM team, http://llvm.org/
-" Version:      $Revision: 1.1.1.1 $
+" Version:      $Revision: 1.1.1.2 $
 
 if version < 600
   syntax clear
@@ -14,8 +14,8 @@ syn case match
 " Types.
 " Types also include struct, array, vector, etc. but these don't
 " benefit as much from having dedicated highlighting rules.
-syn keyword llvmType void half float double x86_fp80 fp128 ppc_fp128
-syn keyword llvmType label metadata x86_mmx
+syn keyword llvmType void half bfloat float double x86_fp80 fp128 ppc_fp128
+syn keyword llvmType label metadata x86_mmx x86_amx
 syn keyword llvmType type label opaque token
 syn match   llvmType /\<i\d\+\>/
 
@@ -44,85 +44,106 @@ syn keyword llvmKeyword
       \ alias
       \ align
       \ alignstack
+      \ allocsize
       \ alwaysinline
       \ appending
       \ argmemonly
-      \ arm_aapcscc
       \ arm_aapcs_vfpcc
+      \ arm_aapcscc
       \ arm_apcscc
       \ asm
       \ atomic
       \ available_externally
       \ blockaddress
       \ builtin
+      \ byref
       \ byval
       \ c
-      \ catch
       \ caller
+      \ catch
       \ cc
       \ ccc
       \ cleanup
+      \ cold
       \ coldcc
       \ comdat
       \ common
       \ constant
+      \ convergent
       \ datalayout
       \ declare
       \ default
       \ define
       \ deplibs
       \ dereferenceable
+      \ dereferenceable_or_null
       \ distinct
       \ dllexport
       \ dllimport
       \ dso_local
       \ dso_preemptable
       \ except
+      \ extern_weak
       \ external
       \ externally_initialized
-      \ extern_weak
       \ fastcc
-      \ tailcc
       \ filter
       \ from
       \ gc
       \ global
-      \ hhvmcc
       \ hhvm_ccc
+      \ hhvmcc
       \ hidden
+      \ hot
       \ immarg
+      \ inaccessiblemem_or_argmemonly
+      \ inaccessiblememonly
+      \ inalloca
       \ initialexec
       \ inlinehint
       \ inreg
-      \ inteldialect
       \ intel_ocl_bicc
+      \ inteldialect
       \ internal
+      \ jumptable
       \ linkonce
       \ linkonce_odr
+      \ local_unnamed_addr
       \ localdynamic
       \ localexec
-      \ local_unnamed_addr
       \ minsize
       \ module
       \ monotonic
       \ msp430_intrcc
+      \ mustprogress
       \ musttail
       \ naked
       \ nest
       \ noalias
       \ nobuiltin
+      \ nocallback
       \ nocapture
+      \ nocf_check
+      \ noduplicate
+      \ nofree
       \ noimplicitfloat
       \ noinline
+      \ nomerge
       \ nonlazybind
       \ nonnull
+      \ noprofile
       \ norecurse
       \ noredzone
       \ noreturn
+      \ nosync
+      \ noundef
       \ nounwind
+      \ null_pointer_is_valid
+      \ optforfuzzing
       \ optnone
       \ optsize
       \ personality
+      \ preallocated
       \ private
       \ protected
       \ ptx_device
@@ -132,16 +153,20 @@ syn keyword llvmKeyword
       \ release
       \ returned
       \ returns_twice
+      \ safestack
       \ sanitize_address
+      \ sanitize_hwaddress
       \ sanitize_memory
+      \ sanitize_memtag
       \ sanitize_thread
       \ section
       \ seq_cst
+      \ shadowcallstack
       \ sideeffect
       \ signext
-      \ syncscope
       \ source_filename
       \ speculatable
+      \ speculative_load_hardening
       \ spir_func
       \ spir_kernel
       \ sret
@@ -150,8 +175,12 @@ syn keyword llvmKeyword
       \ sspstrong
       \ strictfp
       \ swiftcc
+      \ swifterror
+      \ swifttailcc
       \ swiftself
+      \ syncscope
       \ tail
+      \ tailcc
       \ target
       \ thread_local
       \ to
@@ -164,10 +193,11 @@ syn keyword llvmKeyword
       \ volatile
       \ weak
       \ weak_odr
+      \ willreturn
+      \ win64cc
       \ within
       \ writeonly
       \ x86_64_sysvcc
-      \ win64cc
       \ x86_fastcallcc
       \ x86_stdcallcc
       \ x86_thiscallcc
@@ -182,7 +212,7 @@ syn match   llvmNumber /-\?\<\d\+\>/
 syn match   llvmFloat  /-\?\<\d\+\.\d*\(e[+-]\d\+\)\?\>/
 syn match   llvmFloat  /\<0x\x\+\>/
 syn keyword llvmBoolean true false
-syn keyword llvmConstant zeroinitializer undef null none
+syn keyword llvmConstant zeroinitializer undef null none poison vscale
 syn match   llvmComment /;.*$/
 syn region  llvmString start=/"/ skip=/\\"/ end=/"/
 syn match   llvmLabel /[-a-zA-Z$._][-a-zA-Z$._0-9]*:/
@@ -203,8 +233,10 @@ syn match   llvmConstant /\<DIFlag[A-Za-z]\+\>/
 syn match  llvmSpecialComment /;\s*PR\d*\s*$/
 syn match  llvmSpecialComment /;\s*REQUIRES:.*$/
 syn match  llvmSpecialComment /;\s*RUN:.*$/
+syn match  llvmSpecialComment /;\s*ALLOW_RETRIES:.*$/
 syn match  llvmSpecialComment /;\s*CHECK:.*$/
-syn match  llvmSpecialComment "\v;\s*CHECK-(NEXT|NOT|DAG|SAME|LABEL):.*$"
+syn match  llvmSpecialComment /;\s*CHECK-EMPTY:\s*$/
+syn match  llvmSpecialComment /\v;\s*CHECK-(NEXT|NOT|DAG|SAME|LABEL|COUNT-\d+):.*$/
 syn match  llvmSpecialComment /;\s*XFAIL:.*$/
 
 if version >= 508 || !exists("did_c_syn_inits")

@@ -11,22 +11,30 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Object/XCOFFObjectFile.h"
+#include "llvm/ADT/StringSwitch.h"
+#include "llvm/MC/SubtargetFeature.h"
+#include "llvm/Support/DataExtractor.h"
 #include <cstddef>
 #include <cstring>
 
 namespace llvm {
+
+using namespace XCOFF;
+
 namespace object {
 
-enum { FUNCTION_SYM = 0x20, SYM_TYPE_MASK = 0x07, RELOC_OVERFLOW = 65535 };
+static const uint8_t FunctionSym = 0x20;
+static const uint8_t SymTypeMask = 0x07;
+static const uint16_t NoRelMask = 0x0001;
 
 // Checks that [Ptr, Ptr + Size) bytes fall inside the memory buffer
 // 'M'. Returns a pointer to the underlying object on success.
 template <typename T>
 static Expected<const T *> getObject(MemoryBufferRef M, const void *Ptr,
                                      const uint64_t Size = sizeof(T)) {
-  uintptr_t Addr = uintptr_t(Ptr);
-  if (std::error_code EC = Binary::checkOffset(M, Addr, Size))
-    return errorCodeToError(EC);
+  uintptr_t Addr = reinterpret_cast<uintptr_t>(Ptr);
+  if (Error E = Binary::checkOffset(M, Addr, Size))
+    return std::move(E);
   return reinterpret_cast<const T *>(Addr);
 }
 
@@ -44,6 +52,21 @@ static StringRef generateXCOFFFixedNameStringRef(const char *Name) {
       static_cast<const char *>(memchr(Name, '\0', XCOFF::NameSize));
   return NulCharPtr ? StringRef(Name, NulCharPtr - Name)
                     : StringRef(Name, XCOFF::NameSize);
+}
+
+template <typename T> StringRef XCOFFSectionHeader<T>::getName() const {
+  const T &DerivedXCOFFSectionHeader = static_cast<const T &>(*this);
+  return generateXCOFFFixedNameStringRef(DerivedXCOFFSectionHeader.Name);
+}
+
+template <typename T> uint16_t XCOFFSectionHeader<T>::getSectionType() const {
+  const T &DerivedXCOFFSectionHeader = static_cast<const T &>(*this);
+  return DerivedXCOFFSectionHeader.Flags & SectionFlagsTypeMask;
+}
+
+template <typename T>
+bool XCOFFSectionHeader<T>::isReservedSectionType() const {
+  return getSectionType() & SectionFlagsReservedMask;
 }
 
 bool XCOFFRelocation32::isRelocationSigned() const {
@@ -176,9 +199,8 @@ Expected<StringRef> XCOFFObjectFile::getSymbolName(DataRefImpl Symb) const {
 }
 
 Expected<uint64_t> XCOFFObjectFile::getSymbolAddress(DataRefImpl Symb) const {
-  uint64_t Result = 0;
-  llvm_unreachable("Not yet implemented!");
-  return Result;
+  assert(!is64Bit() && "Symbol table support not implemented for 64-bit.");
+  return toSymbolEntry(Symb)->Value;
 }
 
 uint64_t XCOFFObjectFile::getSymbolValueImpl(DataRefImpl Symb) const {
@@ -251,7 +273,21 @@ uint64_t XCOFFObjectFile::getSectionSize(DataRefImpl Sec) const {
 
 Expected<ArrayRef<uint8_t>>
 XCOFFObjectFile::getSectionContents(DataRefImpl Sec) const {
-  llvm_unreachable("Not yet implemented!");
+  if (isSectionVirtual(Sec))
+    return ArrayRef<uint8_t>();
+
+  uint64_t OffsetToRaw;
+  if (is64Bit())
+    OffsetToRaw = toSection64(Sec)->FileOffsetToRawData;
+  else
+    OffsetToRaw = toSection32(Sec)->FileOffsetToRawData;
+
+  const uint8_t * ContentStart = base() + OffsetToRaw;
+  uint64_t SectionSize = getSectionSize(Sec);
+  if (checkOffset(Data, reinterpret_cast<uintptr_t>(ContentStart), SectionSize))
+    return make_error<BinaryError>();
+
+  return makeArrayRef(ContentStart,SectionSize);
 }
 
 uint64_t XCOFFObjectFile::getSectionAlignment(DataRefImpl Sec) const {
@@ -261,9 +297,7 @@ uint64_t XCOFFObjectFile::getSectionAlignment(DataRefImpl Sec) const {
 }
 
 bool XCOFFObjectFile::isSectionCompressed(DataRefImpl Sec) const {
-  bool Result = false;
-  llvm_unreachable("Not yet implemented!");
-  return Result;
+  return false;
 }
 
 bool XCOFFObjectFile::isSectionText(DataRefImpl Sec) const {
@@ -281,64 +315,103 @@ bool XCOFFObjectFile::isSectionBSS(DataRefImpl Sec) const {
 }
 
 bool XCOFFObjectFile::isSectionVirtual(DataRefImpl Sec) const {
-  bool Result = false;
-  llvm_unreachable("Not yet implemented!");
-  return Result;
+  return is64Bit() ? toSection64(Sec)->FileOffsetToRawData == 0
+                   : toSection32(Sec)->FileOffsetToRawData == 0;
 }
 
 relocation_iterator XCOFFObjectFile::section_rel_begin(DataRefImpl Sec) const {
-  llvm_unreachable("Not yet implemented!");
-  return relocation_iterator(RelocationRef());
+  if (is64Bit())
+    report_fatal_error("64-bit support not implemented yet");
+  const XCOFFSectionHeader32 *SectionEntPtr = toSection32(Sec);
+  auto RelocationsOrErr = relocations(*SectionEntPtr);
+  if (Error E = RelocationsOrErr.takeError())
+    return relocation_iterator(RelocationRef());
+  DataRefImpl Ret;
+  Ret.p = reinterpret_cast<uintptr_t>(&*RelocationsOrErr.get().begin());
+  return relocation_iterator(RelocationRef(Ret, this));
 }
 
 relocation_iterator XCOFFObjectFile::section_rel_end(DataRefImpl Sec) const {
-  llvm_unreachable("Not yet implemented!");
-  return relocation_iterator(RelocationRef());
+  if (is64Bit())
+    report_fatal_error("64-bit support not implemented yet");
+  const XCOFFSectionHeader32 *SectionEntPtr = toSection32(Sec);
+  auto RelocationsOrErr = relocations(*SectionEntPtr);
+  if (Error E = RelocationsOrErr.takeError())
+    return relocation_iterator(RelocationRef());
+  DataRefImpl Ret;
+  Ret.p = reinterpret_cast<uintptr_t>(&*RelocationsOrErr.get().end());
+  return relocation_iterator(RelocationRef(Ret, this));
 }
 
 void XCOFFObjectFile::moveRelocationNext(DataRefImpl &Rel) const {
-  llvm_unreachable("Not yet implemented!");
-  return;
+  Rel.p = reinterpret_cast<uintptr_t>(viewAs<XCOFFRelocation32>(Rel.p) + 1);
 }
 
 uint64_t XCOFFObjectFile::getRelocationOffset(DataRefImpl Rel) const {
-  llvm_unreachable("Not yet implemented!");
-  uint64_t Result = 0;
-  return Result;
+  if (is64Bit())
+    report_fatal_error("64-bit support not implemented yet");
+  const XCOFFRelocation32 *Reloc = viewAs<XCOFFRelocation32>(Rel.p);
+  const XCOFFSectionHeader32 *Sec32 = sectionHeaderTable32();
+  const uint32_t RelocAddress = Reloc->VirtualAddress;
+  const uint16_t NumberOfSections = getNumberOfSections();
+  for (uint16_t i = 0; i < NumberOfSections; ++i) {
+    // Find which section this relocation is belonging to, and get the
+    // relocation offset relative to the start of the section.
+    if (Sec32->VirtualAddress <= RelocAddress &&
+        RelocAddress < Sec32->VirtualAddress + Sec32->SectionSize) {
+      return RelocAddress - Sec32->VirtualAddress;
+    }
+    ++Sec32;
+  }
+  return InvalidRelocOffset;
 }
 
 symbol_iterator XCOFFObjectFile::getRelocationSymbol(DataRefImpl Rel) const {
-  llvm_unreachable("Not yet implemented!");
-  return symbol_iterator(SymbolRef());
+  if (is64Bit())
+    report_fatal_error("64-bit support not implemented yet");
+  const XCOFFRelocation32 *Reloc = viewAs<XCOFFRelocation32>(Rel.p);
+  const uint32_t Index = Reloc->SymbolIndex;
+
+  if (Index >= getLogicalNumberOfSymbolTableEntries32())
+    return symbol_end();
+
+  DataRefImpl SymDRI;
+  SymDRI.p = reinterpret_cast<uintptr_t>(getPointerToSymbolTable() + Index);
+  return symbol_iterator(SymbolRef(SymDRI, this));
 }
 
 uint64_t XCOFFObjectFile::getRelocationType(DataRefImpl Rel) const {
-  llvm_unreachable("Not yet implemented!");
-  uint64_t Result = 0;
-  return Result;
+  if (is64Bit())
+    report_fatal_error("64-bit support not implemented yet");
+  return viewAs<XCOFFRelocation32>(Rel.p)->Type;
 }
 
 void XCOFFObjectFile::getRelocationTypeName(
     DataRefImpl Rel, SmallVectorImpl<char> &Result) const {
-  llvm_unreachable("Not yet implemented!");
-  return;
+  if (is64Bit())
+    report_fatal_error("64-bit support not implemented yet");
+  const XCOFFRelocation32 *Reloc = viewAs<XCOFFRelocation32>(Rel.p);
+  StringRef Res = XCOFF::getRelocationTypeString(Reloc->Type);
+  Result.append(Res.begin(), Res.end());
 }
 
-uint32_t XCOFFObjectFile::getSymbolFlags(DataRefImpl Symb) const {
+Expected<uint32_t> XCOFFObjectFile::getSymbolFlags(DataRefImpl Symb) const {
   uint32_t Result = 0;
   llvm_unreachable("Not yet implemented!");
   return Result;
 }
 
 basic_symbol_iterator XCOFFObjectFile::symbol_begin() const {
-  assert(!is64Bit() && "64-bit support not implemented yet.");
+  if (is64Bit())
+    report_fatal_error("64-bit support not implemented yet");
   DataRefImpl SymDRI;
   SymDRI.p = reinterpret_cast<uintptr_t>(SymbolTblPtr);
   return basic_symbol_iterator(SymbolRef(SymDRI, this));
 }
 
 basic_symbol_iterator XCOFFObjectFile::symbol_end() const {
-  assert(!is64Bit() && "64-bit support not implemented yet.");
+  if (is64Bit())
+    report_fatal_error("64-bit support not implemented yet");
   DataRefImpl SymDRI;
   SymDRI.p = reinterpret_cast<uintptr_t>(
       SymbolTblPtr + getLogicalNumberOfSymbolTableEntries32());
@@ -369,20 +442,35 @@ Triple::ArchType XCOFFObjectFile::getArch() const {
 }
 
 SubtargetFeatures XCOFFObjectFile::getFeatures() const {
-  llvm_unreachable("Not yet implemented!");
   return SubtargetFeatures();
 }
 
 bool XCOFFObjectFile::isRelocatableObject() const {
-  bool Result = false;
-  llvm_unreachable("Not yet implemented!");
-  return Result;
+  if (is64Bit())
+    report_fatal_error("64-bit support not implemented yet");
+  return !(fileHeader32()->Flags & NoRelMask);
 }
 
 Expected<uint64_t> XCOFFObjectFile::getStartAddress() const {
   // TODO FIXME Should get from auxiliary_header->o_entry when support for the
   // auxiliary_header is added.
   return 0;
+}
+
+StringRef XCOFFObjectFile::mapDebugSectionName(StringRef Name) const {
+  return StringSwitch<StringRef>(Name)
+      .Case("dwinfo", "debug_info")
+      .Case("dwline", "debug_line")
+      .Case("dwpbnms", "debug_pubnames")
+      .Case("dwpbtyp", "debug_pubtypes")
+      .Case("dwarnge", "debug_aranges")
+      .Case("dwabrev", "debug_abbrev")
+      .Case("dwstr", "debug_str")
+      .Case("dwrnges", "debug_ranges")
+      .Case("dwloc", "debug_loc")
+      .Case("dwframe", "debug_frame")
+      .Case("dwmac", "debug_macinfo")
+      .Default(Name);
 }
 
 size_t XCOFFObjectFile::getFileHeaderSize() const {
@@ -562,7 +650,7 @@ Expected<uint32_t> XCOFFObjectFile::getLogicalNumberOfRelocationEntries(
 
   uint16_t SectionIndex = &Sec - sectionHeaderTable32() + 1;
 
-  if (Sec.NumberOfRelocations < RELOC_OVERFLOW)
+  if (Sec.NumberOfRelocations < XCOFF::RelocOverflow)
     return Sec.NumberOfRelocations;
   for (const auto &Sec : sections32()) {
     if (Sec.Flags == XCOFF::STYP_OVRFLO &&
@@ -582,6 +670,8 @@ XCOFFObjectFile::relocations(const XCOFFSectionHeader32 &Sec) const {
 
   uint32_t NumRelocEntries = NumRelocEntriesOrErr.get();
 
+  static_assert(
+      sizeof(XCOFFRelocation32) == XCOFF::RelocationSerializationSize32, "");
   auto RelocationOrErr =
       getObject<XCOFFRelocation32>(Data, reinterpret_cast<void *>(RelocAddr),
                                    NumRelocEntries * sizeof(XCOFFRelocation32));
@@ -597,9 +687,11 @@ Expected<XCOFFStringTable>
 XCOFFObjectFile::parseStringTable(const XCOFFObjectFile *Obj, uint64_t Offset) {
   // If there is a string table, then the buffer must contain at least 4 bytes
   // for the string table's size. Not having a string table is not an error.
-  if (auto EC = Binary::checkOffset(
-          Obj->Data, reinterpret_cast<uintptr_t>(Obj->base() + Offset), 4))
+  if (Error E = Binary::checkOffset(
+          Obj->Data, reinterpret_cast<uintptr_t>(Obj->base() + Offset), 4)) {
+    consumeError(std::move(E));
     return XCOFFStringTable{0, nullptr};
+  }
 
   // Read the size out of the buffer.
   uint32_t Size = support::endian::read32be(Obj->base() + Offset);
@@ -688,14 +780,6 @@ ObjectFile::createXCOFFObjectFile(MemoryBufferRef MemBufRef,
   return XCOFFObjectFile::create(FileType, MemBufRef);
 }
 
-StringRef XCOFFSectionHeader32::getName() const {
-  return generateXCOFFFixedNameStringRef(Name);
-}
-
-StringRef XCOFFSectionHeader64::getName() const {
-  return generateXCOFFFixedNameStringRef(Name);
-}
-
 XCOFF::StorageClass XCOFFSymbolRef::getStorageClass() const {
   return OwningObjectPtr->toSymbolEntry(SymEntDataRef)->StorageClass;
 }
@@ -704,6 +788,8 @@ uint8_t XCOFFSymbolRef::getNumberOfAuxEntries() const {
   return OwningObjectPtr->toSymbolEntry(SymEntDataRef)->NumberOfAuxEntries;
 }
 
+// TODO: The function needs to return an error if there is no csect auxiliary
+// entry.
 const XCOFFCsectAuxEnt32 *XCOFFSymbolRef::getXCOFFCsectAuxEnt32() const {
   assert(!OwningObjectPtr->is64Bit() &&
          "32-bit interface called on 64-bit object file.");
@@ -729,6 +815,8 @@ int16_t XCOFFSymbolRef::getSectionNumber() const {
   return OwningObjectPtr->toSymbolEntry(SymEntDataRef)->SectionNumber;
 }
 
+// TODO: The function name needs to be changed to express the purpose of the
+// function.
 bool XCOFFSymbolRef::hasCsectAuxEnt() const {
   XCOFF::StorageClass SC = getStorageClass();
   return (SC == XCOFF::C_EXT || SC == XCOFF::C_WEAKEXT ||
@@ -739,7 +827,7 @@ bool XCOFFSymbolRef::isFunction() const {
   if (OwningObjectPtr->is64Bit())
     report_fatal_error("64-bit support is unimplemented yet.");
 
-  if (getType() & FUNCTION_SYM)
+  if (getType() & FunctionSym)
     return true;
 
   if (!hasCsectAuxEnt())
@@ -748,7 +836,7 @@ bool XCOFFSymbolRef::isFunction() const {
   const XCOFFCsectAuxEnt32 *CsectAuxEnt = getXCOFFCsectAuxEnt32();
 
   // A function definition should be a label definition.
-  if ((CsectAuxEnt->SymbolAlignmentAndType & SYM_TYPE_MASK) != XCOFF::XTY_LD)
+  if ((CsectAuxEnt->SymbolAlignmentAndType & SymTypeMask) != XCOFF::XTY_LD)
     return false;
 
   if (CsectAuxEnt->StorageMappingClass != XCOFF::XMC_PR)
@@ -762,5 +850,301 @@ bool XCOFFSymbolRef::isFunction() const {
   return (OwningObjectPtr->getSectionFlags(SI.get()) & XCOFF::STYP_TEXT);
 }
 
+// Explictly instantiate template classes.
+template struct XCOFFSectionHeader<XCOFFSectionHeader32>;
+template struct XCOFFSectionHeader<XCOFFSectionHeader64>;
+
+bool doesXCOFFTracebackTableBegin(ArrayRef<uint8_t> Bytes) {
+  if (Bytes.size() < 4)
+    return false;
+
+  return support::endian::read32be(Bytes.data()) == 0;
+}
+
+TBVectorExt::TBVectorExt(StringRef TBvectorStrRef) {
+  const uint8_t *Ptr = reinterpret_cast<const uint8_t *>(TBvectorStrRef.data());
+  Data = support::endian::read16be(Ptr);
+  VecParmsInfo = support::endian::read32be(Ptr + 2);
+}
+
+#define GETVALUEWITHMASK(X) (Data & (TracebackTable::X))
+#define GETVALUEWITHMASKSHIFT(X, S)                                            \
+  ((Data & (TracebackTable::X)) >> (TracebackTable::S))
+uint8_t TBVectorExt::getNumberOfVRSaved() const {
+  return GETVALUEWITHMASKSHIFT(NumberOfVRSavedMask, NumberOfVRSavedShift);
+}
+
+bool TBVectorExt::isVRSavedOnStack() const {
+  return GETVALUEWITHMASK(IsVRSavedOnStackMask);
+}
+
+bool TBVectorExt::hasVarArgs() const {
+  return GETVALUEWITHMASK(HasVarArgsMask);
+}
+uint8_t TBVectorExt::getNumberOfVectorParms() const {
+  return GETVALUEWITHMASKSHIFT(NumberOfVectorParmsMask,
+                               NumberOfVectorParmsShift);
+}
+
+bool TBVectorExt::hasVMXInstruction() const {
+  return GETVALUEWITHMASK(HasVMXInstructionMask);
+}
+#undef GETVALUEWITHMASK
+#undef GETVALUEWITHMASKSHIFT
+
+SmallString<32> TBVectorExt::getVectorParmsInfoString() const {
+  SmallString<32> ParmsType;
+  uint32_t Value = VecParmsInfo;
+  for (uint8_t I = 0; I < getNumberOfVectorParms(); ++I) {
+    if (I != 0)
+      ParmsType += ", ";
+    switch (Value & TracebackTable::ParmTypeMask) {
+    case TracebackTable::ParmTypeIsVectorCharBit:
+      ParmsType += "vc";
+      break;
+
+    case TracebackTable::ParmTypeIsVectorShortBit:
+      ParmsType += "vs";
+      break;
+
+    case TracebackTable::ParmTypeIsVectorIntBit:
+      ParmsType += "vi";
+      break;
+
+    case TracebackTable::ParmTypeIsVectorFloatBit:
+      ParmsType += "vf";
+      break;
+    }
+    Value <<= 2;
+  }
+  return ParmsType;
+}
+
+static SmallString<32> parseParmsTypeWithVecInfo(uint32_t Value,
+                                                 unsigned int ParmsNum) {
+  SmallString<32> ParmsType;
+  unsigned I = 0;
+  bool Begin = false;
+  while (I < ParmsNum || Value) {
+    if (Begin)
+      ParmsType += ", ";
+    else
+      Begin = true;
+
+    switch (Value & TracebackTable::ParmTypeMask) {
+    case TracebackTable::ParmTypeIsFixedBits:
+      ParmsType += "i";
+      ++I;
+      break;
+    case TracebackTable::ParmTypeIsVectorBits:
+      ParmsType += "v";
+      break;
+    case TracebackTable::ParmTypeIsFloatingBits:
+      ParmsType += "f";
+      ++I;
+      break;
+    case TracebackTable::ParmTypeIsDoubleBits:
+      ParmsType += "d";
+      ++I;
+      break;
+    default:
+      assert(false && "Unrecognized bits in ParmsType.");
+    }
+    Value <<= 2;
+  }
+  assert(I == ParmsNum &&
+         "The total parameters number of fixed-point or floating-point "
+         "parameters not equal to the number in the parameter type!");
+  return ParmsType;
+}
+
+Expected<XCOFFTracebackTable> XCOFFTracebackTable::create(const uint8_t *Ptr,
+                                                          uint64_t &Size) {
+  Error Err = Error::success();
+  XCOFFTracebackTable TBT(Ptr, Size, Err);
+  if (Err)
+    return std::move(Err);
+  return TBT;
+}
+
+XCOFFTracebackTable::XCOFFTracebackTable(const uint8_t *Ptr, uint64_t &Size,
+                                         Error &Err)
+    : TBPtr(Ptr) {
+  ErrorAsOutParameter EAO(&Err);
+  DataExtractor DE(ArrayRef<uint8_t>(Ptr, Size), /*IsLittleEndian=*/false,
+                   /*AddressSize=*/0);
+  DataExtractor::Cursor Cur(/*Offset=*/0);
+
+  // Skip 8 bytes of mandatory fields.
+  DE.getU64(Cur);
+
+  // Begin to parse optional fields.
+  if (Cur) {
+    unsigned ParmNum = getNumberOfFixedParms() + getNumberOfFPParms();
+
+    // As long as there are no "fixed-point" or floating-point parameters, this
+    // field remains not present even when hasVectorInfo gives true and
+    // indicates the presence of vector parameters.
+    if (ParmNum > 0) {
+      uint32_t ParamsTypeValue = DE.getU32(Cur);
+      if (Cur)
+        ParmsType = hasVectorInfo()
+                        ? parseParmsTypeWithVecInfo(ParamsTypeValue, ParmNum)
+                        : parseParmsType(ParamsTypeValue, ParmNum);
+    }
+  }
+
+  if (Cur && hasTraceBackTableOffset())
+    TraceBackTableOffset = DE.getU32(Cur);
+
+  if (Cur && isInterruptHandler())
+    HandlerMask = DE.getU32(Cur);
+
+  if (Cur && hasControlledStorage()) {
+    NumOfCtlAnchors = DE.getU32(Cur);
+    if (Cur && NumOfCtlAnchors) {
+      SmallVector<uint32_t, 8> Disp;
+      Disp.reserve(NumOfCtlAnchors.getValue());
+      for (uint32_t I = 0; I < NumOfCtlAnchors && Cur; ++I)
+        Disp.push_back(DE.getU32(Cur));
+      if (Cur)
+        ControlledStorageInfoDisp = std::move(Disp);
+    }
+  }
+
+  if (Cur && isFuncNamePresent()) {
+    uint16_t FunctionNameLen = DE.getU16(Cur);
+    if (Cur)
+      FunctionName = DE.getBytes(Cur, FunctionNameLen);
+  }
+
+  if (Cur && isAllocaUsed())
+    AllocaRegister = DE.getU8(Cur);
+
+  if (Cur && hasVectorInfo()) {
+    StringRef VectorExtRef = DE.getBytes(Cur, 6);
+    if (Cur)
+      VecExt = TBVectorExt(VectorExtRef);
+  }
+
+  if (Cur && hasExtensionTable())
+    ExtensionTable = DE.getU8(Cur);
+
+  if (!Cur)
+    Err = Cur.takeError();
+  Size = Cur.tell();
+}
+
+#define GETBITWITHMASK(P, X)                                                   \
+  (support::endian::read32be(TBPtr + (P)) & (TracebackTable::X))
+#define GETBITWITHMASKSHIFT(P, X, S)                                           \
+  ((support::endian::read32be(TBPtr + (P)) & (TracebackTable::X)) >>           \
+   (TracebackTable::S))
+
+uint8_t XCOFFTracebackTable::getVersion() const {
+  return GETBITWITHMASKSHIFT(0, VersionMask, VersionShift);
+}
+
+uint8_t XCOFFTracebackTable::getLanguageID() const {
+  return GETBITWITHMASKSHIFT(0, LanguageIdMask, LanguageIdShift);
+}
+
+bool XCOFFTracebackTable::isGlobalLinkage() const {
+  return GETBITWITHMASK(0, IsGlobaLinkageMask);
+}
+
+bool XCOFFTracebackTable::isOutOfLineEpilogOrPrologue() const {
+  return GETBITWITHMASK(0, IsOutOfLineEpilogOrPrologueMask);
+}
+
+bool XCOFFTracebackTable::hasTraceBackTableOffset() const {
+  return GETBITWITHMASK(0, HasTraceBackTableOffsetMask);
+}
+
+bool XCOFFTracebackTable::isInternalProcedure() const {
+  return GETBITWITHMASK(0, IsInternalProcedureMask);
+}
+
+bool XCOFFTracebackTable::hasControlledStorage() const {
+  return GETBITWITHMASK(0, HasControlledStorageMask);
+}
+
+bool XCOFFTracebackTable::isTOCless() const {
+  return GETBITWITHMASK(0, IsTOClessMask);
+}
+
+bool XCOFFTracebackTable::isFloatingPointPresent() const {
+  return GETBITWITHMASK(0, IsFloatingPointPresentMask);
+}
+
+bool XCOFFTracebackTable::isFloatingPointOperationLogOrAbortEnabled() const {
+  return GETBITWITHMASK(0, IsFloatingPointOperationLogOrAbortEnabledMask);
+}
+
+bool XCOFFTracebackTable::isInterruptHandler() const {
+  return GETBITWITHMASK(0, IsInterruptHandlerMask);
+}
+
+bool XCOFFTracebackTable::isFuncNamePresent() const {
+  return GETBITWITHMASK(0, IsFunctionNamePresentMask);
+}
+
+bool XCOFFTracebackTable::isAllocaUsed() const {
+  return GETBITWITHMASK(0, IsAllocaUsedMask);
+}
+
+uint8_t XCOFFTracebackTable::getOnConditionDirective() const {
+  return GETBITWITHMASKSHIFT(0, OnConditionDirectiveMask,
+                             OnConditionDirectiveShift);
+}
+
+bool XCOFFTracebackTable::isCRSaved() const {
+  return GETBITWITHMASK(0, IsCRSavedMask);
+}
+
+bool XCOFFTracebackTable::isLRSaved() const {
+  return GETBITWITHMASK(0, IsLRSavedMask);
+}
+
+bool XCOFFTracebackTable::isBackChainStored() const {
+  return GETBITWITHMASK(4, IsBackChainStoredMask);
+}
+
+bool XCOFFTracebackTable::isFixup() const {
+  return GETBITWITHMASK(4, IsFixupMask);
+}
+
+uint8_t XCOFFTracebackTable::getNumOfFPRsSaved() const {
+  return GETBITWITHMASKSHIFT(4, FPRSavedMask, FPRSavedShift);
+}
+
+bool XCOFFTracebackTable::hasExtensionTable() const {
+  return GETBITWITHMASK(4, HasExtensionTableMask);
+}
+
+bool XCOFFTracebackTable::hasVectorInfo() const {
+  return GETBITWITHMASK(4, HasVectorInfoMask);
+}
+
+uint8_t XCOFFTracebackTable::getNumOfGPRsSaved() const {
+  return GETBITWITHMASKSHIFT(4, GPRSavedMask, GPRSavedShift);
+}
+
+uint8_t XCOFFTracebackTable::getNumberOfFixedParms() const {
+  return GETBITWITHMASKSHIFT(4, NumberOfFixedParmsMask,
+                             NumberOfFixedParmsShift);
+}
+
+uint8_t XCOFFTracebackTable::getNumberOfFPParms() const {
+  return GETBITWITHMASKSHIFT(4, NumberOfFloatingPointParmsMask,
+                             NumberOfFloatingPointParmsShift);
+}
+
+bool XCOFFTracebackTable::hasParmsOnStack() const {
+  return GETBITWITHMASK(4, HasParmsOnStackMask);
+}
+
+#undef GETBITWITHMASK
+#undef GETBITWITHMASKSHIFT
 } // namespace object
 } // namespace llvm

@@ -1,5 +1,3 @@
-:orphan:
-
 ==============================================
 Kaleidoscope: Adding JIT and Optimizer Support
 ==============================================
@@ -100,7 +98,7 @@ LLVM Optimization Passes
 
    Due to the transition to the new PassManager infrastructure this tutorial
    is based on ``llvm::legacy::FunctionPassManager`` which can be found in
-   `LegacyPassManager.h <http://llvm.org/doxygen/classllvm_1_1legacy_1_1FunctionPassManager.html>`_.
+   `LegacyPassManager.h <https://llvm.org/doxygen/classllvm_1_1legacy_1_1FunctionPassManager.html>`_.
    For the purpose of the this tutorial the above should be used until
    the pass manager transition is complete.
 
@@ -117,8 +115,8 @@ but if run at link time, this can be a substantial portion of the whole
 program). It also supports and includes "per-function" passes which just
 operate on a single function at a time, without looking at other
 functions. For more information on passes and how they are run, see the
-`How to Write a Pass <../WritingAnLLVMPass.html>`_ document and the
-`List of LLVM Passes <../Passes.html>`_.
+`How to Write a Pass <../../WritingAnLLVMPass.html>`_ document and the
+`List of LLVM Passes <../../Passes.html>`_.
 
 For Kaleidoscope, we are currently generating functions on the fly, one
 at a time, as the user types them in. We aren't shooting for the
@@ -130,7 +128,7 @@ exactly the code we have now, except that we would defer running the
 optimizer until the entire file has been parsed.
 
 In order to get per-function optimizations going, we need to set up a
-`FunctionPassManager <../WritingAnLLVMPass.html#what-passmanager-doesr>`_ to hold
+`FunctionPassManager <../../WritingAnLLVMPass.html#what-passmanager-doesr>`_ to hold
 and organize the LLVM optimizations that we want to run. Once we have
 that, we can add a set of optimizations to run. We'll need a new
 FunctionPassManager for each module that we want to optimize, so we'll
@@ -144,7 +142,7 @@ for us:
       TheModule = std::make_unique<Module>("my cool jit", TheContext);
 
       // Create a new pass manager attached to it.
-      TheFPM = std::make_unique<FunctionPassManager>(TheModule.get());
+      TheFPM = std::make_unique<legacy::FunctionPassManager>(TheModule.get());
 
       // Do simple "peephole" optimizations and bit-twiddling optzns.
       TheFPM->add(createInstructionCombiningPass());
@@ -207,7 +205,7 @@ point add instruction from every execution of this function.
 
 LLVM provides a wide variety of optimizations that can be used in
 certain circumstances. Some `documentation about the various
-passes <../Passes.html>`_ is available, but it isn't very complete.
+passes <../../Passes.html>`_ is available, but it isn't very complete.
 Another good source of ideas can come from looking at the passes that
 ``Clang`` runs to get started. The "``opt``" tool allows you to
 experiment with passes from the command line, so you can see if they do
@@ -277,7 +275,7 @@ We also need to setup the data layout for the JIT:
       TheModule->setDataLayout(TheJIT->getTargetMachine().createDataLayout());
 
       // Create a new pass manager attached to it.
-      TheFPM = std::make_unique<FunctionPassManager>(TheModule.get());
+      TheFPM = std::make_unique<legacy::FunctionPassManager>(TheModule.get());
       ...
 
 The KaleidoscopeJIT class is a simple JIT built specifically for these
@@ -644,7 +642,7 @@ the LLVM JIT and optimizer. To build this example, use:
 .. code-block:: bash
 
     # Compile
-    clang++ -g toy.cpp `llvm-config --cxxflags --ldflags --system-libs --libs core mcjit native` -O3 -o toy
+    clang++ -g toy.cpp `llvm-config --cxxflags --ldflags --system-libs --libs core orcjit native` -O3 -o toy
     # Run
     ./toy
 

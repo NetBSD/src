@@ -16,6 +16,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCInstBuilder.h"
 
 using namespace llvm;
 
@@ -23,12 +24,12 @@ Thumb1InstrInfo::Thumb1InstrInfo(const ARMSubtarget &STI)
     : ARMBaseInstrInfo(STI), RI() {}
 
 /// Return the noop instruction to use for a noop.
-void Thumb1InstrInfo::getNoop(MCInst &NopInst) const {
-  NopInst.setOpcode(ARM::tMOVr);
-  NopInst.addOperand(MCOperand::createReg(ARM::R8));
-  NopInst.addOperand(MCOperand::createReg(ARM::R8));
-  NopInst.addOperand(MCOperand::createImm(ARMCC::AL));
-  NopInst.addOperand(MCOperand::createReg(0));
+MCInst Thumb1InstrInfo::getNop() const {
+  return MCInstBuilder(ARM::tMOVr)
+      .addReg(ARM::R8)
+      .addReg(ARM::R8)
+      .addImm(ARMCC::AL)
+      .addReg(0);
 }
 
 unsigned Thumb1InstrInfo::getUnindexedOpcode(unsigned Opc) const {
@@ -37,8 +38,8 @@ unsigned Thumb1InstrInfo::getUnindexedOpcode(unsigned Opc) const {
 
 void Thumb1InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                                   MachineBasicBlock::iterator I,
-                                  const DebugLoc &DL, unsigned DestReg,
-                                  unsigned SrcReg, bool KillSrc) const {
+                                  const DebugLoc &DL, MCRegister DestReg,
+                                  MCRegister SrcReg, bool KillSrc) const {
   // Need to check the arch.
   MachineFunction &MF = *MBB.getParent();
   const ARMSubtarget &st = MF.getSubtarget<ARMSubtarget>();
@@ -76,7 +77,7 @@ void Thumb1InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
 
 void Thumb1InstrInfo::
 storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
-                    unsigned SrcReg, bool isKill, int FI,
+                    Register SrcReg, bool isKill, int FI,
                     const TargetRegisterClass *RC,
                     const TargetRegisterInfo *TRI) const {
   assert((RC == &ARM::tGPRRegClass ||
@@ -92,7 +93,7 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     MachineFrameInfo &MFI = MF.getFrameInfo();
     MachineMemOperand *MMO = MF.getMachineMemOperand(
         MachinePointerInfo::getFixedStack(MF, FI), MachineMemOperand::MOStore,
-        MFI.getObjectSize(FI), MFI.getObjectAlignment(FI));
+        MFI.getObjectSize(FI), MFI.getObjectAlign(FI));
     BuildMI(MBB, I, DL, get(ARM::tSTRspi))
         .addReg(SrcReg, getKillRegState(isKill))
         .addFrameIndex(FI)
@@ -104,7 +105,7 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
 
 void Thumb1InstrInfo::
 loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
-                     unsigned DestReg, int FI,
+                     Register DestReg, int FI,
                      const TargetRegisterClass *RC,
                      const TargetRegisterInfo *TRI) const {
   assert(
@@ -121,7 +122,7 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     MachineFrameInfo &MFI = MF.getFrameInfo();
     MachineMemOperand *MMO = MF.getMachineMemOperand(
         MachinePointerInfo::getFixedStack(MF, FI), MachineMemOperand::MOLoad,
-        MFI.getObjectSize(FI), MFI.getObjectAlignment(FI));
+        MFI.getObjectSize(FI), MFI.getObjectAlign(FI));
     BuildMI(MBB, I, DL, get(ARM::tLDRspi), DestReg)
         .addFrameIndex(FI)
         .addImm(0)

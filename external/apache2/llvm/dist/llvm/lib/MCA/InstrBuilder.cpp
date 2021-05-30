@@ -160,8 +160,11 @@ static void initializeUsedResources(InstrDesc &ID,
     if (countPopulation(RPC.first) > 1 && !RPC.second.isReserved()) {
       // Remove the leading 1 from the resource group mask.
       uint64_t Mask = RPC.first ^ PowerOf2Floor(RPC.first);
-      if ((Mask & UsedResourceUnits) == Mask)
+      uint64_t MaxResourceUnits = countPopulation(Mask);
+      if (RPC.second.NumUnits > countPopulation(Mask)) {
         RPC.second.setReserved();
+        RPC.second.NumUnits = MaxResourceUnits;
+      }
     }
   }
 
@@ -256,8 +259,9 @@ void InstrBuilder::populateWrites(InstrDesc &ID, const MCInst &MCI,
   //     the opcode descriptor (MCInstrDesc).
   //  2. Uses start at index #(MCDesc.getNumDefs()).
   //  3. There can only be a single optional register definition, an it is
-  //     always the last operand of the sequence (excluding extra operands
-  //     contributed by variadic opcodes).
+  //     either the last operand of the sequence (excluding extra operands
+  //     contributed by variadic opcodes) or one of the explicit register
+  //     definitions. The latter occurs for some Thumb1 instructions.
   //
   // These assumptions work quite well for most out-of-order in-tree targets
   // like x86. This is mainly because the vast majority of instructions is
@@ -305,11 +309,17 @@ void InstrBuilder::populateWrites(InstrDesc &ID, const MCInst &MCI,
   // The first NumExplicitDefs register operands are expected to be register
   // definitions.
   unsigned CurrentDef = 0;
+  unsigned OptionalDefIdx = MCDesc.getNumOperands() - 1;
   unsigned i = 0;
   for (; i < MCI.getNumOperands() && CurrentDef < NumExplicitDefs; ++i) {
     const MCOperand &Op = MCI.getOperand(i);
     if (!Op.isReg())
       continue;
+
+    if (MCDesc.OpInfo[CurrentDef].isOptionalDef()) {
+      OptionalDefIdx = CurrentDef++;
+      continue;
+    }
 
     WriteDescriptor &Write = ID.Writes[CurrentDef];
     Write.OpIndex = i;
@@ -366,7 +376,7 @@ void InstrBuilder::populateWrites(InstrDesc &ID, const MCInst &MCI,
 
   if (MCDesc.hasOptionalDef()) {
     WriteDescriptor &Write = ID.Writes[NumExplicitDefs + NumImplicitDefs];
-    Write.OpIndex = MCDesc.getNumOperands() - 1;
+    Write.OpIndex = OptionalDefIdx;
     // Assign a default latency for this write.
     Write.Latency = ID.MaxLatency;
     Write.SClassOrWriteResourceID = 0;
@@ -485,24 +495,16 @@ Error InstrBuilder::verifyInstrDesc(const InstrDesc &ID,
   if (ID.NumMicroOps != 0)
     return ErrorSuccess();
 
-  bool UsesMemory = ID.MayLoad || ID.MayStore;
   bool UsesBuffers = ID.UsedBuffers;
   bool UsesResources = !ID.Resources.empty();
-  if (!UsesMemory && !UsesBuffers && !UsesResources)
+  if (!UsesBuffers && !UsesResources)
     return ErrorSuccess();
 
-  StringRef Message;
-  if (UsesMemory) {
-    Message = "found an inconsistent instruction that decodes "
-              "into zero opcodes and that consumes load/store "
-              "unit resources.";
-  } else {
-    Message = "found an inconsistent instruction that decodes "
-              "to zero opcodes and that consumes scheduler "
-              "resources.";
-  }
-
-  return make_error<InstructionError<MCInst>>(Message, MCI);
+  // FIXME: see PR44797. We should revisit these checks and possibly move them
+  // in CodeGenSchedule.cpp.
+  StringRef Message = "found an inconsistent instruction that decodes to zero "
+                      "opcodes and that consumes scheduler resources.";
+  return make_error<InstructionError<MCInst>>(std::string(Message), MCI);
 }
 
 Expected<const InstrDesc &>
@@ -523,7 +525,8 @@ InstrBuilder::createInstrDescImpl(const MCInst &MCI) {
   if (IsVariant) {
     unsigned CPUID = SM.getProcessorID();
     while (SchedClassID && SM.getSchedClassDesc(SchedClassID)->isVariant())
-      SchedClassID = STI.resolveVariantSchedClass(SchedClassID, &MCI, CPUID);
+      SchedClassID =
+          STI.resolveVariantSchedClass(SchedClassID, &MCI, &MCII, CPUID);
 
     if (!SchedClassID) {
       return make_error<InstructionError<MCInst>>(
@@ -567,6 +570,7 @@ InstrBuilder::createInstrDescImpl(const MCInst &MCI) {
   ID->HasSideEffects = MCDesc.hasUnmodeledSideEffects();
   ID->BeginGroup = SCDesc.BeginGroup;
   ID->EndGroup = SCDesc.EndGroup;
+  ID->RetireOOO = SCDesc.RetireOOO;
 
   initializeUsedResources(*ID, SCDesc, STI, ProcResourceMasks);
   computeMaxLatency(*ID, MCDesc, SCDesc, STI);
