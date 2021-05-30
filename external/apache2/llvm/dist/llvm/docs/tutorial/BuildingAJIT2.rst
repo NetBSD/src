@@ -76,8 +76,8 @@ apply to each Module that is added via addModule:
           TransformLayer(ES, CompileLayer, optimizeModule),
           DL(std::move(DL)), Mangle(ES, this->DL),
           Ctx(std::make_unique<LLVMContext>()) {
-      ES.getMainJITDylib().setGenerator(
-          cantFail(DynamicLibrarySearchGenerator::GetForCurrentProcess(DL)));
+      ES.getMainJITDylib().addGenerator(
+          cantFail(DynamicLibrarySearchGenerator::GetForCurrentProcess(DL.getGlobalPrefix())));
     }
 
 Our extended KaleidoscopeJIT class starts out the same as it did in Chapter 1,
@@ -170,7 +170,7 @@ can be implemented.
     TransformFunction Transform;
   };
 
-  // From IRTransfomrLayer.cpp:
+  // From IRTransformLayer.cpp:
 
   IRTransformLayer::IRTransformLayer(ExecutionSession &ES,
                                      IRLayer &BaseLayer,
@@ -250,7 +250,7 @@ each function just passes through code-gen. If we both optimize and code-gen
 lazily we can start executing the first function more quickly, but we will have
 longer pauses as each function has to be both optimized and code-gen'd when it
 is first executed. Things become even more interesting if we consider
-interproceedural optimizations like inlining, which must be performed eagerly.
+interprocedural optimizations like inlining, which must be performed eagerly.
 These are complex trade-offs, and there is no one-size-fits all solution to
 them, but by providing composable layers we leave the decisions to the person
 implementing the JIT, and make it easy for them to experiment with different

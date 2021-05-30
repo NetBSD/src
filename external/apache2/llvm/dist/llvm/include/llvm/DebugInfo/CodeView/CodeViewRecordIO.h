@@ -15,7 +15,8 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/DebugInfo/CodeView/CodeViewError.h"
-#include "llvm/DebugInfo/CodeView/TypeRecord.h"
+#include "llvm/DebugInfo/CodeView/GUID.h"
+#include "llvm/DebugInfo/CodeView/TypeIndex.h"
 #include "llvm/Support/BinaryStreamReader.h"
 #include "llvm/Support/BinaryStreamWriter.h"
 #include "llvm/Support/Error.h"
@@ -29,9 +30,9 @@ namespace codeview {
 
 class CodeViewRecordStreamer {
 public:
-  virtual void EmitBytes(StringRef Data) = 0;
-  virtual void EmitIntValue(uint64_t Value, unsigned Size) = 0;
-  virtual void EmitBinaryData(StringRef Data) = 0;
+  virtual void emitBytes(StringRef Data) = 0;
+  virtual void emitIntValue(uint64_t Value, unsigned Size) = 0;
+  virtual void emitBinaryData(StringRef Data) = 0;
   virtual void AddComment(const Twine &T) = 0;
   virtual void AddRawComment(const Twine &T) = 0;
   virtual bool isVerboseAsm() = 0;
@@ -81,7 +82,7 @@ public:
     if (isStreaming()) {
       StringRef BytesSR =
           StringRef((reinterpret_cast<const char *>(&Value)), sizeof(Value));
-      Streamer->EmitBytes(BytesSR);
+      Streamer->emitBytes(BytesSR);
       incrStreamedLen(sizeof(T));
       return Error::success();
     }
@@ -99,7 +100,7 @@ public:
   template <typename T> Error mapInteger(T &Value, const Twine &Comment = "") {
     if (isStreaming()) {
       emitComment(Comment);
-      Streamer->EmitIntValue((int)Value, sizeof(T));
+      Streamer->emitIntValue((int)Value, sizeof(T));
       incrStreamedLen(sizeof(T));
       return Error::success();
     }
@@ -114,7 +115,7 @@ public:
     if (!isStreaming() && sizeof(Value) > maxFieldLength())
       return make_error<CodeViewError>(cv_error_code::insufficient_buffer);
 
-    using U = typename std::underlying_type<T>::type;
+    using U = std::underlying_type_t<T>;
     U X;
 
     if (isWriting() || isStreaming())
@@ -145,7 +146,7 @@ public:
     if (isStreaming()) {
       Size = static_cast<SizeType>(Items.size());
       emitComment(Comment);
-      Streamer->EmitIntValue(Size, sizeof(Size));
+      Streamer->emitIntValue(Size, sizeof(Size));
       incrStreamedLen(sizeof(Size)); // add 1 for the delimiter
 
       for (auto &X : Items) {

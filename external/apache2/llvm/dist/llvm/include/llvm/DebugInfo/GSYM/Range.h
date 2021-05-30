@@ -9,6 +9,7 @@
 #ifndef LLVM_DEBUGINFO_GSYM_RANGE_H
 #define LLVM_DEBUGINFO_GSYM_RANGE_H
 
+#include "llvm/ADT/Optional.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
 #include <stdint.h>
@@ -61,6 +62,14 @@ struct AddressRange {
   void decode(DataExtractor &Data, uint64_t BaseAddr, uint64_t &Offset);
   void encode(FileWriter &O, uint64_t BaseAddr) const;
   /// @}
+
+  /// Skip an address range object in the specified data a the specified
+  /// offset.
+  ///
+  /// \param Data The binary stream to read the data from.
+  ///
+  /// \param Offset The byte offset within \a Data.
+  static void skip(DataExtractor &Data, uint64_t &Offset);
 };
 
 raw_ostream &operator<<(raw_ostream &OS, const AddressRange &R);
@@ -81,6 +90,7 @@ public:
   bool empty() const { return Ranges.empty(); }
   bool contains(uint64_t Addr) const;
   bool contains(AddressRange Range) const;
+  Optional<AddressRange> getRangeThatContains(uint64_t Addr) const;
   void insert(AddressRange Range);
   size_t size() const { return Ranges.size(); }
   bool operator==(const AddressRanges &RHS) const {
@@ -100,6 +110,16 @@ public:
   void decode(DataExtractor &Data, uint64_t BaseAddr, uint64_t &Offset);
   void encode(FileWriter &O, uint64_t BaseAddr) const;
   /// @}
+
+  /// Skip an address range object in the specified data a the specified
+  /// offset.
+  ///
+  /// \param Data The binary stream to read the data from.
+  ///
+  /// \param Offset The byte offset within \a Data.
+  ///
+  /// \returns The number of address ranges that were skipped.
+  static uint64_t skip(DataExtractor &Data, uint64_t &Offset);
 };
 
 raw_ostream &operator<<(raw_ostream &OS, const AddressRanges &AR);
@@ -107,4 +127,4 @@ raw_ostream &operator<<(raw_ostream &OS, const AddressRanges &AR);
 } // namespace gsym
 } // namespace llvm
 
-#endif // #ifndef LLVM_DEBUGINFO_GSYM_RANGE_H
+#endif // LLVM_DEBUGINFO_GSYM_RANGE_H

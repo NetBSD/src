@@ -19,7 +19,7 @@ Quickstart
    % mkdir venv
    % virtualenv venv
    % . venv/bin/activate
-   % pip install svn+http://llvm.org/svn/llvm-project/llvm/trunk/utils/lit
+   % pip install svn+https://llvm.org/svn/llvm-project/llvm/trunk/utils/lit
    % lit --version
    lit 0.8.0dev
    ```
@@ -71,8 +71,8 @@ Quickstart
 6. Show and compare result files (optional):
 
    ```bash
-   # Make sure pandas is installed. Prepend `sudo` if necessary.
-   % pip install pandas
+   # Make sure pandas and scipy are installed. Prepend `sudo` if necessary.
+   % pip install pandas scipy
    # Show a single result file:
    % test-suite/utils/compare.py results.json
    # Compare two result files:
@@ -163,7 +163,7 @@ benchmarks. CMake can print a list of them:
   Select a build type like `OPTIMIZE` or `DEBUG` selecting a set of predefined
   compiler flags. These flags are applied regardless of the `CMAKE_C_FLAGS`
   option and may be changed by modifying `CMAKE_C_FLAGS_OPTIMIZE` etc.  See
-  [https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html]](https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html)
+  [https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html](https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html)
 
 - `TEST_SUITE_RUN_UNDER`
 
@@ -185,7 +185,7 @@ benchmarks. CMake can print a list of them:
 
 - `TEST_SUITE_COLLECT_STATS`
 
-  Collect internal LLVM statistics. Appends `-save-stats=obj` when invocing the
+  Collect internal LLVM statistics. Appends `-save-stats=obj` when invoking the
   compiler and makes the lit runner collect and merge the statistic files.
 
 - `TEST_SUITE_RUN_BENCHMARKS`
@@ -279,7 +279,7 @@ Example usage:
 
 LNT is a set of client and server tools for continuously monitoring
 performance. You can find more information at
-[http://llvm.org/docs/lnt](http://llvm.org/docs/lnt). The official LNT instance
+[https://llvm.org/docs/lnt](https://llvm.org/docs/lnt). The official LNT instance
 of the LLVM project is hosted at [http://lnt.llvm.org](http://lnt.llvm.org).
 
 
@@ -348,7 +348,7 @@ Cross Compilation and External Devices
 CMake allows to cross compile to a different target via toolchain files. More
 information can be found here:
 
-- [http://llvm.org/docs/lnt/tests.html#cross-compiling](http://llvm.org/docs/lnt/tests.html#cross-compiling)
+- [https://llvm.org/docs/lnt/tests.html#cross-compiling](https://llvm.org/docs/lnt/tests.html#cross-compiling)
 
 - [https://cmake.org/cmake/help/latest/manual/cmake-toolchains.7.html](https://cmake.org/cmake/help/latest/manual/cmake-toolchains.7.html)
 
@@ -389,7 +389,7 @@ Running the test-suite via LNT
 
 The LNT tool can run the test-suite. Use this when submitting test results to
 an LNT instance.  See
-[http://llvm.org/docs/lnt/tests.html#llvm-cmake-test-suite](http://llvm.org/docs/lnt/tests.html#llvm-cmake-test-suite)
+[https://llvm.org/docs/lnt/tests.html#llvm-cmake-test-suite](https://llvm.org/docs/lnt/tests.html#llvm-cmake-test-suite)
 for details.
 
 Running the test-suite via Makefiles (deprecated)

@@ -7,10 +7,41 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/DebugInfo/DWARF/DWARFDataExtractor.h"
-#include "llvm/BinaryFormat/Dwarf.h"
 #include "llvm/DebugInfo/DWARF/DWARFContext.h"
 
 using namespace llvm;
+
+std::pair<uint64_t, dwarf::DwarfFormat>
+DWARFDataExtractor::getInitialLength(uint64_t *Off, Error *Err) const {
+  ErrorAsOutParameter ErrAsOut(Err);
+  if (Err && *Err)
+    return {0, dwarf::DWARF32};
+
+  Cursor C(*Off);
+  uint64_t Length = getRelocatedValue(C, 4);
+  dwarf::DwarfFormat Format = dwarf::DWARF32;
+  if (Length == dwarf::DW_LENGTH_DWARF64) {
+    Length = getRelocatedValue(C, 8);
+    Format = dwarf::DWARF64;
+  } else if (Length >= dwarf::DW_LENGTH_lo_reserved) {
+    cantFail(C.takeError());
+    if (Err)
+      *Err = createStringError(
+          errc::invalid_argument,
+          "unsupported reserved unit length of value 0x%8.8" PRIx64, Length);
+    return {0, dwarf::DWARF32};
+  }
+
+  if (C) {
+    *Off = C.tell();
+    return {Length, Format};
+  }
+  if (Err)
+    *Err = C.takeError();
+  else
+    consumeError(C.takeError());
+  return {0, dwarf::DWARF32};
+}
 
 uint64_t DWARFDataExtractor::getRelocatedValue(uint32_t Size, uint64_t *Off,
                                                uint64_t *SecNdx,
@@ -19,15 +50,19 @@ uint64_t DWARFDataExtractor::getRelocatedValue(uint32_t Size, uint64_t *Off,
     *SecNdx = object::SectionedAddress::UndefSection;
   if (!Section)
     return getUnsigned(Off, Size, Err);
+
+  ErrorAsOutParameter ErrAsOut(Err);
   Optional<RelocAddrEntry> E = Obj->find(*Section, *Off);
-  uint64_t A = getUnsigned(Off, Size, Err);
-  if (!E)
-    return A;
+  uint64_t LocData = getUnsigned(Off, Size, Err);
+  if (!E || (Err && *Err))
+    return LocData;
   if (SecNdx)
     *SecNdx = E->SectionIndex;
-  uint64_t R = E->Resolver(E->Reloc, E->SymbolValue, A);
+
+  uint64_t R =
+      object::resolveRelocation(E->Resolver, E->Reloc, E->SymbolValue, LocData);
   if (E->Reloc2)
-    R = E->Resolver(*E->Reloc2, E->SymbolValue2, R);
+    R = object::resolveRelocation(E->Resolver, *E->Reloc2, E->SymbolValue2, R);
   return R;
 }
 
@@ -71,10 +106,10 @@ DWARFDataExtractor::getEncodedPointer(uint64_t *Offset, uint8_t Encoding,
     Result = getSigned(Offset, 2);
     break;
   case dwarf::DW_EH_PE_sdata4:
-    Result = getSigned(Offset, 4);
+    Result = SignExtend64<32>(getRelocatedValue(4, Offset));
     break;
   case dwarf::DW_EH_PE_sdata8:
-    Result = getSigned(Offset, 8);
+    Result = getRelocatedValue(8, Offset);
     break;
   default:
     return None;

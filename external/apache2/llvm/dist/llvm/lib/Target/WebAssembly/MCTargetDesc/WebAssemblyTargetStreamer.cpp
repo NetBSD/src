@@ -13,8 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "MCTargetDesc/WebAssemblyTargetStreamer.h"
-#include "MCTargetDesc/WebAssemblyInstPrinter.h"
 #include "MCTargetDesc/WebAssemblyMCTargetDesc.h"
+#include "Utils/WebAssemblyTypeUtilities.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCSectionWasm.h"
 #include "llvm/MC/MCSubtargetInfo.h"
@@ -28,7 +28,7 @@ WebAssemblyTargetStreamer::WebAssemblyTargetStreamer(MCStreamer &S)
     : MCTargetStreamer(S) {}
 
 void WebAssemblyTargetStreamer::emitValueType(wasm::ValType Type) {
-  Streamer.EmitIntValue(uint8_t(Type), 1);
+  Streamer.emitIntValue(uint8_t(Type), 1);
 }
 
 WebAssemblyTargetAsmStreamer::WebAssemblyTargetAsmStreamer(
@@ -71,8 +71,24 @@ void WebAssemblyTargetAsmStreamer::emitGlobalType(const MCSymbolWasm *Sym) {
   assert(Sym->isGlobal());
   OS << "\t.globaltype\t" << Sym->getName() << ", "
      << WebAssembly::typeToString(
-            static_cast<wasm::ValType>(Sym->getGlobalType().Type))
-     << '\n';
+            static_cast<wasm::ValType>(Sym->getGlobalType().Type));
+  if (!Sym->getGlobalType().Mutable)
+    OS << ", immutable";
+  OS << '\n';
+}
+
+void WebAssemblyTargetAsmStreamer::emitTableType(const MCSymbolWasm *Sym) {
+  assert(Sym->isTable());
+  const wasm::WasmTableType &Type = Sym->getTableType();
+  OS << "\t.tabletype\t" << Sym->getName() << ", "
+     << WebAssembly::typeToString(static_cast<wasm::ValType>(Type.ElemType));
+  bool HasMaximum = Type.Limits.Flags & wasm::WASM_LIMITS_FLAG_HAS_MAX;
+  if (Type.Limits.Minimum != 0 || HasMaximum) {
+    OS << ", " << Type.Limits.Minimum;
+    if (HasMaximum)
+      OS << ", " << Type.Limits.Maximum;
+  }
+  OS << '\n';
 }
 
 void WebAssemblyTargetAsmStreamer::emitEventType(const MCSymbolWasm *Sym) {
@@ -94,6 +110,12 @@ void WebAssemblyTargetAsmStreamer::emitImportName(const MCSymbolWasm *Sym,
                            << ImportName << '\n';
 }
 
+void WebAssemblyTargetAsmStreamer::emitExportName(const MCSymbolWasm *Sym,
+                                                  StringRef ExportName) {
+  OS << "\t.export_name\t" << Sym->getName() << ", "
+                           << ExportName << '\n';
+}
+
 void WebAssemblyTargetAsmStreamer::emitIndIdx(const MCExpr *Value) {
   OS << "\t.indidx  \t" << *Value << '\n';
 }
@@ -107,9 +129,9 @@ void WebAssemblyTargetWasmStreamer::emitLocal(ArrayRef<wasm::ValType> Types) {
       ++Grouped.back().second;
   }
 
-  Streamer.EmitULEB128IntValue(Grouped.size());
+  Streamer.emitULEB128IntValue(Grouped.size());
   for (auto Pair : Grouped) {
-    Streamer.EmitULEB128IntValue(Pair.second);
+    Streamer.emitULEB128IntValue(Pair.second);
     emitValueType(Pair.first);
   }
 }

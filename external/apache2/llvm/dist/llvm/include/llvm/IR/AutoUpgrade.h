@@ -16,6 +16,7 @@
 #include "llvm/ADT/StringRef.h"
 
 namespace llvm {
+  class AttrBuilder;
   class CallInst;
   class Constant;
   class Function;
@@ -60,6 +61,9 @@ namespace llvm {
 
   void UpgradeSectionAttributes(Module &M);
 
+  /// Correct any IR that is relying on old function attribute behavior.
+  void UpgradeFunctionAttributes(Function &F);
+
   /// If the given TBAA tag uses the scalar TBAA format, create a new node
   /// corresponding to the upgrade to the struct-path aware TBAA format.
   /// Otherwise return the \p TBAANode itself.
@@ -90,6 +94,9 @@ namespace llvm {
   /// Upgrade the datalayout string by adding a section for address space
   /// pointers.
   std::string UpgradeDataLayoutString(StringRef DL, StringRef Triple);
+
+  /// Upgrade attributes that changed format or kind.
+  void UpgradeAttributes(AttrBuilder &B);
 
 } // End llvm namespace
 

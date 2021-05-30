@@ -19,9 +19,10 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/IR/DiagnosticPrinter.h"
+#include "llvm/IR/LLVMRemarkStreamer.h"
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/Module.h"
-#include "llvm/IR/RemarkStreamer.h"
+#include "llvm/Remarks/RemarkStreamer.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
@@ -67,6 +68,22 @@ LLVMContext::LLVMContext() : pImpl(new LLVMContextImpl(*this)) {
          "cfguardtarget operand bundle id drifted!");
   (void)CFGuardTargetEntry;
 
+  auto *PreallocatedEntry = pImpl->getOrInsertBundleTag("preallocated");
+  assert(PreallocatedEntry->second == LLVMContext::OB_preallocated &&
+         "preallocated operand bundle id drifted!");
+  (void)PreallocatedEntry;
+
+  auto *GCLiveEntry = pImpl->getOrInsertBundleTag("gc-live");
+  assert(GCLiveEntry->second == LLVMContext::OB_gc_live &&
+         "gc-transition operand bundle id drifted!");
+  (void)GCLiveEntry;
+
+  auto *ClangAttachedCall =
+      pImpl->getOrInsertBundleTag("clang.arc.attachedcall");
+  assert(ClangAttachedCall->second == LLVMContext::OB_clang_arc_attachedcall &&
+         "clang.arc.attachedcall operand bundle id drifted!");
+  (void)ClangAttachedCall;
+
   SyncScope::ID SingleThreadSSID =
       pImpl->getOrInsertSyncScopeID("singlethread");
   assert(SingleThreadSSID == SyncScope::SingleThread &&
@@ -94,26 +111,6 @@ void LLVMContext::removeModule(Module *M) {
 // Recoverable Backend Errors
 //===----------------------------------------------------------------------===//
 
-void LLVMContext::
-setInlineAsmDiagnosticHandler(InlineAsmDiagHandlerTy DiagHandler,
-                              void *DiagContext) {
-  pImpl->InlineAsmDiagHandler = DiagHandler;
-  pImpl->InlineAsmDiagContext = DiagContext;
-}
-
-/// getInlineAsmDiagnosticHandler - Return the diagnostic handler set by
-/// setInlineAsmDiagnosticHandler.
-LLVMContext::InlineAsmDiagHandlerTy
-LLVMContext::getInlineAsmDiagnosticHandler() const {
-  return pImpl->InlineAsmDiagHandler;
-}
-
-/// getInlineAsmDiagnosticContext - Return the diagnostic context set by
-/// setInlineAsmDiagnosticHandler.
-void *LLVMContext::getInlineAsmDiagnosticContext() const {
-  return pImpl->InlineAsmDiagContext;
-}
-
 void LLVMContext::setDiagnosticHandlerCallBack(
     DiagnosticHandler::DiagnosticHandlerTy DiagnosticHandler,
     void *DiagnosticContext, bool RespectFilters) {
@@ -135,22 +132,38 @@ bool LLVMContext::getDiagnosticsHotnessRequested() const {
   return pImpl->DiagnosticsHotnessRequested;
 }
 
-void LLVMContext::setDiagnosticsHotnessThreshold(uint64_t Threshold) {
+void LLVMContext::setDiagnosticsHotnessThreshold(Optional<uint64_t> Threshold) {
   pImpl->DiagnosticsHotnessThreshold = Threshold;
 }
+
 uint64_t LLVMContext::getDiagnosticsHotnessThreshold() const {
-  return pImpl->DiagnosticsHotnessThreshold;
+  return pImpl->DiagnosticsHotnessThreshold.getValueOr(UINT64_MAX);
 }
 
-RemarkStreamer *LLVMContext::getRemarkStreamer() {
-  return pImpl->RemarkDiagStreamer.get();
+bool LLVMContext::isDiagnosticsHotnessThresholdSetFromPSI() const {
+  return !pImpl->DiagnosticsHotnessThreshold.hasValue();
 }
-const RemarkStreamer *LLVMContext::getRemarkStreamer() const {
-  return const_cast<LLVMContext *>(this)->getRemarkStreamer();
+
+remarks::RemarkStreamer *LLVMContext::getMainRemarkStreamer() {
+  return pImpl->MainRemarkStreamer.get();
 }
-void LLVMContext::setRemarkStreamer(
-    std::unique_ptr<RemarkStreamer> RemarkStreamer) {
-  pImpl->RemarkDiagStreamer = std::move(RemarkStreamer);
+const remarks::RemarkStreamer *LLVMContext::getMainRemarkStreamer() const {
+  return const_cast<LLVMContext *>(this)->getMainRemarkStreamer();
+}
+void LLVMContext::setMainRemarkStreamer(
+    std::unique_ptr<remarks::RemarkStreamer> RemarkStreamer) {
+  pImpl->MainRemarkStreamer = std::move(RemarkStreamer);
+}
+
+LLVMRemarkStreamer *LLVMContext::getLLVMRemarkStreamer() {
+  return pImpl->LLVMRS.get();
+}
+const LLVMRemarkStreamer *LLVMContext::getLLVMRemarkStreamer() const {
+  return const_cast<LLVMContext *>(this)->getLLVMRemarkStreamer();
+}
+void LLVMContext::setLLVMRemarkStreamer(
+    std::unique_ptr<LLVMRemarkStreamer> RemarkStreamer) {
+  pImpl->LLVMRS = std::move(RemarkStreamer);
 }
 
 DiagnosticHandler::DiagnosticHandlerTy
@@ -214,7 +227,7 @@ LLVMContext::getDiagnosticMessagePrefix(DiagnosticSeverity Severity) {
 
 void LLVMContext::diagnose(const DiagnosticInfo &DI) {
   if (auto *OptDiagBase = dyn_cast<DiagnosticInfoOptimizationBase>(&DI))
-    if (RemarkStreamer *RS = getRemarkStreamer())
+    if (LLVMRemarkStreamer *RS = getLLVMRemarkStreamer())
       RS->emit(*OptDiagBase);
 
   // If there is a report handler, use it.
@@ -263,6 +276,11 @@ void LLVMContext::getMDKindNames(SmallVectorImpl<StringRef> &Names) const {
 
 void LLVMContext::getOperandBundleTags(SmallVectorImpl<StringRef> &Tags) const {
   pImpl->getOperandBundleTags(Tags);
+}
+
+StringMapEntry<uint32_t> *
+LLVMContext::getOrInsertBundleTag(StringRef TagName) const {
+  return pImpl->getOrInsertBundleTag(TagName);
 }
 
 uint32_t LLVMContext::getOperandBundleTagID(StringRef Tag) const {

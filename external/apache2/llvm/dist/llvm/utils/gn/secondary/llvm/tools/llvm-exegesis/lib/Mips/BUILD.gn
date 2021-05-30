@@ -14,8 +14,6 @@ static_library("Mips") {
     # depend on these Target/Mips-internal build targets.
     "//llvm/lib/Target/Mips/MCTargetDesc",
   ]
-  sources = [
-    "Target.cpp",
-  ]
+  sources = [ "Target.cpp" ]
   include_dirs = [ "//llvm/lib/Target/Mips" ]
 }

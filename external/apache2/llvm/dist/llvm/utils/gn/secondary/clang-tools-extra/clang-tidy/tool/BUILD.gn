@@ -3,6 +3,7 @@ executable("clang-tidy") {
   deps = [
     "//clang-tools-extra/clang-tidy",
     "//clang-tools-extra/clang-tidy:all-checks",
+    "//clang-tools-extra/clang-tidy:clang-tidy-config",
     "//clang/lib/AST",
     "//clang/lib/ASTMatchers",
     "//clang/lib/Basic",
@@ -15,5 +16,6 @@ executable("clang-tidy") {
   ]
   sources = [
     "ClangTidyMain.cpp",
+    "ClangTidyToolMain.cpp",
   ]
 }

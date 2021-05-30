@@ -18,6 +18,7 @@
 // coroutine.
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Transforms/Coroutines/CoroSplit.h"
 #include "CoroInstr.h"
 #include "CoroInternal.h"
 #include "llvm/ADT/DenseMap.h"
@@ -27,12 +28,11 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Analysis/CallGraphSCCPass.h"
-#include "llvm/Transforms/Utils/Local.h"
+#include "llvm/Analysis/LazyCallGraph.h"
 #include "llvm/IR/Argument.h"
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/CFG.h"
-#include "llvm/IR/CallSite.h"
 #include "llvm/IR/CallingConv.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
@@ -52,6 +52,7 @@
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Value.h"
 #include "llvm/IR/Verifier.h"
+#include "llvm/InitializePasses.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Debug.h"
@@ -59,7 +60,9 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include "llvm/Transforms/Utils/CallGraphUpdater.h"
 #include "llvm/Transforms/Utils/Cloning.h"
+#include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
 #include <cassert>
 #include <cstddef>
@@ -73,7 +76,7 @@ using namespace llvm;
 
 namespace {
 
-/// A little helper class for building 
+/// A little helper class for building
 class CoroCloner {
 public:
   enum class Kind {
@@ -88,7 +91,11 @@ public:
 
     /// An individual continuation function.
     Continuation,
+
+    /// An async resume function.
+    Async,
   };
+
 private:
   Function &OrigF;
   Function *NewF;
@@ -98,9 +105,9 @@ private:
   ValueToValueMapTy VMap;
   IRBuilder<> Builder;
   Value *NewFramePtr = nullptr;
-  Value *SwiftErrorSlot = nullptr;
 
-  /// The active suspend instruction; meaningful only for continuation ABIs.
+  /// The active suspend instruction; meaningful only for continuation and async
+  /// ABIs.
   AnyCoroSuspendInst *ActiveSuspend = nullptr;
 
 public:
@@ -115,11 +122,11 @@ public:
   /// Create a cloner for a continuation lowering.
   CoroCloner(Function &OrigF, const Twine &Suffix, coro::Shape &Shape,
              Function *NewF, AnyCoroSuspendInst *ActiveSuspend)
-    : OrigF(OrigF), NewF(NewF), Suffix(Suffix), Shape(Shape),
-      FKind(Kind::Continuation), Builder(OrigF.getContext()),
-      ActiveSuspend(ActiveSuspend) {
+      : OrigF(OrigF), NewF(NewF), Suffix(Suffix), Shape(Shape),
+        FKind(Shape.ABI == coro::ABI::Async ? Kind::Async : Kind::Continuation),
+        Builder(OrigF.getContext()), ActiveSuspend(ActiveSuspend) {
     assert(Shape.ABI == coro::ABI::Retcon ||
-           Shape.ABI == coro::ABI::RetconOnce);
+           Shape.ABI == coro::ABI::RetconOnce || Shape.ABI == coro::ABI::Async);
     assert(NewF && "need existing function for continuation");
     assert(ActiveSuspend && "need active suspend point for continuation");
   }
@@ -134,6 +141,7 @@ public:
 private:
   bool isSwitchDestroyFunction() {
     switch (FKind) {
+    case Kind::Async:
     case Kind::Continuation:
     case Kind::SwitchResume:
       return false;
@@ -144,21 +152,21 @@ private:
     llvm_unreachable("Unknown CoroCloner::Kind enum");
   }
 
-  void createDeclaration();
   void replaceEntryBlock();
   Value *deriveNewFramePointer();
-  void replaceRetconSuspendUses();
+  void replaceRetconOrAsyncSuspendUses();
   void replaceCoroSuspends();
   void replaceCoroEnds();
   void replaceSwiftErrorOps();
+  void salvageDebugInfo();
   void handleFinalSuspend();
-  void maybeFreeContinuationStorage();
 };
 
 } // end anonymous namespace
 
-static void maybeFreeRetconStorage(IRBuilder<> &Builder, coro::Shape &Shape,
-                                   Value *FramePtr, CallGraph *CG) {
+static void maybeFreeRetconStorage(IRBuilder<> &Builder,
+                                   const coro::Shape &Shape, Value *FramePtr,
+                                   CallGraph *CG) {
   assert(Shape.ABI == coro::ABI::Retcon ||
          Shape.ABI == coro::ABI::RetconOnce);
   if (Shape.RetconLowering.IsFrameInlineInStorage)
@@ -167,10 +175,55 @@ static void maybeFreeRetconStorage(IRBuilder<> &Builder, coro::Shape &Shape,
   Shape.emitDealloc(Builder, FramePtr, CG);
 }
 
+/// Replace an llvm.coro.end.async.
+/// Will inline the must tail call function call if there is one.
+/// \returns true if cleanup of the coro.end block is needed, false otherwise.
+static bool replaceCoroEndAsync(AnyCoroEndInst *End) {
+  IRBuilder<> Builder(End);
+
+  auto *EndAsync = dyn_cast<CoroAsyncEndInst>(End);
+  if (!EndAsync) {
+    Builder.CreateRetVoid();
+    return true /*needs cleanup of coro.end block*/;
+  }
+
+  auto *MustTailCallFunc = EndAsync->getMustTailCallFunction();
+  if (!MustTailCallFunc) {
+    Builder.CreateRetVoid();
+    return true /*needs cleanup of coro.end block*/;
+  }
+
+  // Move the must tail call from the predecessor block into the end block.
+  auto *CoroEndBlock = End->getParent();
+  auto *MustTailCallFuncBlock = CoroEndBlock->getSinglePredecessor();
+  assert(MustTailCallFuncBlock && "Must have a single predecessor block");
+  auto It = MustTailCallFuncBlock->getTerminator()->getIterator();
+  auto *MustTailCall = cast<CallInst>(&*std::prev(It));
+  CoroEndBlock->getInstList().splice(
+      End->getIterator(), MustTailCallFuncBlock->getInstList(), MustTailCall);
+
+  // Insert the return instruction.
+  Builder.SetInsertPoint(End);
+  Builder.CreateRetVoid();
+  InlineFunctionInfo FnInfo;
+
+  // Remove the rest of the block, by splitting it into an unreachable block.
+  auto *BB = End->getParent();
+  BB->splitBasicBlock(End);
+  BB->getTerminator()->eraseFromParent();
+
+  auto InlineRes = InlineFunction(*MustTailCall, FnInfo);
+  assert(InlineRes.isSuccess() && "Expected inlining to succeed");
+  (void)InlineRes;
+
+  // We have cleaned up the coro.end block above.
+  return false;
+}
+
 /// Replace a non-unwind call to llvm.coro.end.
-static void replaceFallthroughCoroEnd(CoroEndInst *End, coro::Shape &Shape,
-                                      Value *FramePtr, bool InResume,
-                                      CallGraph *CG) {
+static void replaceFallthroughCoroEnd(AnyCoroEndInst *End,
+                                      const coro::Shape &Shape, Value *FramePtr,
+                                      bool InResume, CallGraph *CG) {
   // Start inserting right before the coro.end.
   IRBuilder<> Builder(End);
 
@@ -184,6 +237,14 @@ static void replaceFallthroughCoroEnd(CoroEndInst *End, coro::Shape &Shape,
       return;
     Builder.CreateRetVoid();
     break;
+
+  // In async lowering this returns.
+  case coro::ABI::Async: {
+    bool CoroEndBlockNeedsCleanup = replaceCoroEndAsync(End);
+    if (!CoroEndBlockNeedsCleanup)
+      return;
+    break;
+  }
 
   // In unique continuation lowering, the continuations always return void.
   // But we may have implicitly allocated storage.
@@ -218,8 +279,9 @@ static void replaceFallthroughCoroEnd(CoroEndInst *End, coro::Shape &Shape,
 }
 
 /// Replace an unwind call to llvm.coro.end.
-static void replaceUnwindCoroEnd(CoroEndInst *End, coro::Shape &Shape,
-                                 Value *FramePtr, bool InResume, CallGraph *CG){
+static void replaceUnwindCoroEnd(AnyCoroEndInst *End, const coro::Shape &Shape,
+                                 Value *FramePtr, bool InResume,
+                                 CallGraph *CG) {
   IRBuilder<> Builder(End);
 
   switch (Shape.ABI) {
@@ -228,7 +290,9 @@ static void replaceUnwindCoroEnd(CoroEndInst *End, coro::Shape &Shape,
     if (!InResume)
       return;
     break;
-
+  // In async lowering this does nothing.
+  case coro::ABI::Async:
+    break;
   // In continuation-lowering, this frees the continuation storage.
   case coro::ABI::Retcon:
   case coro::ABI::RetconOnce:
@@ -245,7 +309,7 @@ static void replaceUnwindCoroEnd(CoroEndInst *End, coro::Shape &Shape,
   }
 }
 
-static void replaceCoroEnd(CoroEndInst *End, coro::Shape &Shape,
+static void replaceCoroEnd(AnyCoroEndInst *End, const coro::Shape &Shape,
                            Value *FramePtr, bool InResume, CallGraph *CG) {
   if (End->isUnwind())
     replaceUnwindCoroEnd(End, Shape, FramePtr, InResume, CG);
@@ -281,7 +345,7 @@ static void createResumeEntryBlock(Function &F, coro::Shape &Shape) {
   auto *FramePtr = Shape.FramePtr;
   auto *FrameTy = Shape.FrameTy;
   auto *GepIndex = Builder.CreateStructGEP(
-      FrameTy, FramePtr, coro::Shape::SwitchFieldIndex::Index, "index.addr");
+      FrameTy, FramePtr, Shape.getSwitchIndexField(), "index.addr");
   auto *Index = Builder.CreateLoad(Shape.getIndexType(), GepIndex, "index");
   auto *Switch =
       Builder.CreateSwitch(Index, UnreachBB, Shape.CoroSuspends.size());
@@ -307,7 +371,7 @@ static void createResumeEntryBlock(Function &F, coro::Shape &Shape) {
       Builder.CreateStore(NullPtr, GepIndex);
     } else {
       auto *GepIndex = Builder.CreateStructGEP(
-          FrameTy, FramePtr, coro::Shape::SwitchFieldIndex::Index, "index.addr");
+          FrameTy, FramePtr, Shape.getSwitchIndexField(), "index.addr");
       Builder.CreateStore(IndexVal, GepIndex);
     }
     Save->replaceAllUsesWith(ConstantTokenNone::get(C));
@@ -390,30 +454,46 @@ void CoroCloner::handleFinalSuspend() {
   }
 }
 
+static FunctionType *
+getFunctionTypeFromAsyncSuspend(AnyCoroSuspendInst *Suspend) {
+  auto *AsyncSuspend = cast<CoroSuspendAsyncInst>(Suspend);
+  auto *StructTy = cast<StructType>(AsyncSuspend->getType());
+  auto &Context = Suspend->getParent()->getParent()->getContext();
+  auto *VoidTy = Type::getVoidTy(Context);
+  return FunctionType::get(VoidTy, StructTy->elements(), false);
+}
+
 static Function *createCloneDeclaration(Function &OrigF, coro::Shape &Shape,
                                         const Twine &Suffix,
-                                        Module::iterator InsertBefore) {
+                                        Module::iterator InsertBefore,
+                                        AnyCoroSuspendInst *ActiveSuspend) {
   Module *M = OrigF.getParent();
-  auto *FnTy = Shape.getResumeFunctionType();
+  auto *FnTy = (Shape.ABI != coro::ABI::Async)
+                   ? Shape.getResumeFunctionType()
+                   : getFunctionTypeFromAsyncSuspend(ActiveSuspend);
 
   Function *NewF =
       Function::Create(FnTy, GlobalValue::LinkageTypes::InternalLinkage,
                        OrigF.getName() + Suffix);
   NewF->addParamAttr(0, Attribute::NonNull);
-  NewF->addParamAttr(0, Attribute::NoAlias);
+
+  // For the async lowering ABI we can't guarantee that the context argument is
+  // not access via a different pointer not based on the argument.
+  if (Shape.ABI != coro::ABI::Async)
+    NewF->addParamAttr(0, Attribute::NoAlias);
 
   M->getFunctionList().insert(InsertBefore, NewF);
 
   return NewF;
 }
 
-/// Replace uses of the active llvm.coro.suspend.retcon call with the
+/// Replace uses of the active llvm.coro.suspend.retcon/async call with the
 /// arguments to the continuation function.
 ///
 /// This assumes that the builder has a meaningful insertion point.
-void CoroCloner::replaceRetconSuspendUses() {
-  assert(Shape.ABI == coro::ABI::Retcon ||
-         Shape.ABI == coro::ABI::RetconOnce);
+void CoroCloner::replaceRetconOrAsyncSuspendUses() {
+  assert(Shape.ABI == coro::ABI::Retcon || Shape.ABI == coro::ABI::RetconOnce ||
+         Shape.ABI == coro::ABI::Async);
 
   auto NewS = VMap[ActiveSuspend];
   if (NewS->use_empty()) return;
@@ -421,7 +501,11 @@ void CoroCloner::replaceRetconSuspendUses() {
   // Copy out all the continuation arguments after the buffer pointer into
   // an easily-indexed data structure for convenience.
   SmallVector<Value*, 8> Args;
-  for (auto I = std::next(NewF->arg_begin()), E = NewF->arg_end(); I != E; ++I)
+  // The async ABI includes all arguments -- including the first argument.
+  bool IsAsyncABI = Shape.ABI == coro::ABI::Async;
+  for (auto I = IsAsyncABI ? NewF->arg_begin() : std::next(NewF->arg_begin()),
+            E = NewF->arg_end();
+       I != E; ++I)
     Args.push_back(&*I);
 
   // If the suspend returns a single scalar value, we can just do a simple
@@ -467,6 +551,10 @@ void CoroCloner::replaceCoroSuspends() {
     SuspendResult = Builder.getInt8(isSwitchDestroyFunction() ? 1 : 0);
     break;
 
+  // In async lowering there are no uses of the result.
+  case coro::ABI::Async:
+    return;
+
   // In returned-continuation lowering, the arguments from earlier
   // continuations are theoretically arbitrary, and they should have been
   // spilled.
@@ -486,16 +574,18 @@ void CoroCloner::replaceCoroSuspends() {
 }
 
 void CoroCloner::replaceCoroEnds() {
-  for (CoroEndInst *CE : Shape.CoroEnds) {
+  for (AnyCoroEndInst *CE : Shape.CoroEnds) {
     // We use a null call graph because there's no call graph node for
     // the cloned function yet.  We'll just be rebuilding that later.
-    auto NewCE = cast<CoroEndInst>(VMap[CE]);
+    auto *NewCE = cast<AnyCoroEndInst>(VMap[CE]);
     replaceCoroEnd(NewCE, Shape, NewFramePtr, /*in resume*/ true, nullptr);
   }
 }
 
 static void replaceSwiftErrorOps(Function &F, coro::Shape &Shape,
                                  ValueToValueMapTy *VMap) {
+  if (Shape.ABI == coro::ABI::Async && Shape.CoroSuspends.empty())
+    return;
   Value *CachedSlot = nullptr;
   auto getSwiftErrorSlot = [&](Type *ValueTy) -> Value * {
     if (CachedSlot) {
@@ -556,15 +646,47 @@ void CoroCloner::replaceSwiftErrorOps() {
   ::replaceSwiftErrorOps(*NewF, Shape, &VMap);
 }
 
+void CoroCloner::salvageDebugInfo() {
+  SmallVector<DbgVariableIntrinsic *, 8> Worklist;
+  SmallDenseMap<llvm::Value *, llvm::AllocaInst *, 4> DbgPtrAllocaCache;
+  for (auto &BB : *NewF)
+    for (auto &I : BB)
+      if (auto *DVI = dyn_cast<DbgVariableIntrinsic>(&I))
+        Worklist.push_back(DVI);
+  for (DbgVariableIntrinsic *DVI : Worklist)
+    coro::salvageDebugInfo(DbgPtrAllocaCache, DVI, Shape.ReuseFrameSlot);
+
+  // Remove all salvaged dbg.declare intrinsics that became
+  // either unreachable or stale due to the CoroSplit transformation.
+  auto IsUnreachableBlock = [&](BasicBlock *BB) {
+    return BB->hasNPredecessors(0) && BB != &NewF->getEntryBlock();
+  };
+  for (DbgVariableIntrinsic *DVI : Worklist) {
+    if (IsUnreachableBlock(DVI->getParent()))
+      DVI->eraseFromParent();
+    else if (dyn_cast_or_null<AllocaInst>(DVI->getVariableLocationOp(0))) {
+      // Count all non-debuginfo uses in reachable blocks.
+      unsigned Uses = 0;
+      for (auto *User : DVI->getVariableLocationOp(0)->users())
+        if (auto *I = dyn_cast<Instruction>(User))
+          if (!isa<AllocaInst>(I) && !IsUnreachableBlock(I->getParent()))
+            ++Uses;
+      if (!Uses)
+        DVI->eraseFromParent();
+    }
+  }
+}
+
 void CoroCloner::replaceEntryBlock() {
   // In the original function, the AllocaSpillBlock is a block immediately
   // following the allocation of the frame object which defines GEPs for
   // all the allocas that have been moved into the frame, and it ends by
-  // branching to the original beginning of the coroutine.  Make this 
+  // branching to the original beginning of the coroutine.  Make this
   // the entry block of the cloned function.
   auto *Entry = cast<BasicBlock>(VMap[Shape.AllocaSpillBlock]);
+  auto *OldEntry = &NewF->getEntryBlock();
   Entry->setName("entry" + Suffix);
-  Entry->moveBefore(&NewF->getEntryBlock());
+  Entry->moveBefore(OldEntry);
   Entry->getTerminator()->eraseFromParent();
 
   // Clear all predecessors of the new entry block.  There should be
@@ -577,9 +699,6 @@ void CoroCloner::replaceEntryBlock() {
   Builder.CreateUnreachable();
   BranchToEntry->eraseFromParent();
 
-  // TODO: move any allocas into Entry that weren't moved into the frame.
-  // (Currently we move all allocas into the frame.)
-
   // Branch from the entry to the appropriate place.
   Builder.SetInsertPoint(Entry);
   switch (Shape.ABI) {
@@ -591,18 +710,38 @@ void CoroCloner::replaceEntryBlock() {
     Builder.CreateBr(SwitchBB);
     break;
   }
-
+  case coro::ABI::Async:
   case coro::ABI::Retcon:
   case coro::ABI::RetconOnce: {
     // In continuation ABIs, we want to branch to immediately after the
     // active suspend point.  Earlier phases will have put the suspend in its
     // own basic block, so just thread our jump directly to its successor.
-    auto MappedCS = cast<CoroSuspendRetconInst>(VMap[ActiveSuspend]);
+    assert((Shape.ABI == coro::ABI::Async &&
+            isa<CoroSuspendAsyncInst>(ActiveSuspend)) ||
+           ((Shape.ABI == coro::ABI::Retcon ||
+             Shape.ABI == coro::ABI::RetconOnce) &&
+            isa<CoroSuspendRetconInst>(ActiveSuspend)));
+    auto *MappedCS = cast<AnyCoroSuspendInst>(VMap[ActiveSuspend]);
     auto Branch = cast<BranchInst>(MappedCS->getNextNode());
     assert(Branch->isUnconditional());
     Builder.CreateBr(Branch->getSuccessor(0));
     break;
   }
+  }
+
+  // Any static alloca that's still being used but not reachable from the new
+  // entry needs to be moved to the new entry.
+  Function *F = OldEntry->getParent();
+  DominatorTree DT{*F};
+  for (auto IT = inst_begin(F), End = inst_end(F); IT != End;) {
+    Instruction &I = *IT++;
+    auto *Alloca = dyn_cast<AllocaInst>(&I);
+    if (!Alloca || I.use_empty())
+      continue;
+    if (DT.isReachableFromEntry(I.getParent()) ||
+        !isa<ConstantInt>(Alloca->getArraySize()))
+      continue;
+    I.moveBefore(*Entry, Entry->getFirstInsertionPt());
   }
 }
 
@@ -614,7 +753,38 @@ Value *CoroCloner::deriveNewFramePointer() {
   // In switch-lowering, the argument is the frame pointer.
   case coro::ABI::Switch:
     return &*NewF->arg_begin();
-
+  // In async-lowering, one of the arguments is an async context as determined
+  // by the `llvm.coro.id.async` intrinsic. We can retrieve the async context of
+  // the resume function from the async context projection function associated
+  // with the active suspend. The frame is located as a tail to the async
+  // context header.
+  case coro::ABI::Async: {
+    auto *ActiveAsyncSuspend = cast<CoroSuspendAsyncInst>(ActiveSuspend);
+    auto *CalleeContext =
+        NewF->getArg(ActiveAsyncSuspend->getStorageArgumentIndex());
+    auto *FramePtrTy = Shape.FrameTy->getPointerTo();
+    auto *ProjectionFunc =
+        ActiveAsyncSuspend->getAsyncContextProjectionFunction();
+    auto DbgLoc =
+        cast<CoroSuspendAsyncInst>(VMap[ActiveSuspend])->getDebugLoc();
+    // Calling i8* (i8*)
+    auto *CallerContext = Builder.CreateCall(
+        cast<FunctionType>(ProjectionFunc->getType()->getPointerElementType()),
+        ProjectionFunc, CalleeContext);
+    CallerContext->setCallingConv(ProjectionFunc->getCallingConv());
+    CallerContext->setDebugLoc(DbgLoc);
+    // The frame is located after the async_context header.
+    auto &Context = Builder.getContext();
+    auto *FramePtrAddr = Builder.CreateConstInBoundsGEP1_32(
+        Type::getInt8Ty(Context), CallerContext,
+        Shape.AsyncLowering.FrameOffset, "async.ctx.frameptr");
+    // Inline the projection function.
+    InlineFunctionInfo InlineInfo;
+    auto InlineRes = InlineFunction(*CallerContext, InlineInfo);
+    assert(InlineRes.isSuccess());
+    (void)InlineRes;
+    return Builder.CreateBitCast(FramePtrAddr, FramePtrTy);
+  }
   // In continuation-lowering, the argument is the opaque storage.
   case coro::ABI::Retcon:
   case coro::ABI::RetconOnce: {
@@ -628,10 +798,21 @@ Value *CoroCloner::deriveNewFramePointer() {
     // Otherwise, load the real frame from the opaque storage.
     auto FramePtrPtr =
       Builder.CreateBitCast(NewStorage, FramePtrTy->getPointerTo());
-    return Builder.CreateLoad(FramePtrPtr);
+    return Builder.CreateLoad(FramePtrTy, FramePtrPtr);
   }
   }
   llvm_unreachable("bad ABI");
+}
+
+static void addFramePointerAttrs(AttributeList &Attrs, LLVMContext &Context,
+                                 unsigned ParamIndex,
+                                 uint64_t Size, Align Alignment) {
+  AttrBuilder ParamAttrs;
+  ParamAttrs.addAttribute(Attribute::NonNull);
+  ParamAttrs.addAttribute(Attribute::NoAlias);
+  ParamAttrs.addAlignmentAttr(Alignment);
+  ParamAttrs.addDereferenceableAttr(Size);
+  Attrs = Attrs.addParamAttributes(Context, ParamIndex, ParamAttrs);
 }
 
 /// Clone the body of the original function into a resume function of
@@ -640,7 +821,7 @@ void CoroCloner::create() {
   // Create the new function if we don't already have one.
   if (!NewF) {
     NewF = createCloneDeclaration(OrigF, Shape, Suffix,
-                                  OrigF.getParent()->end());
+                                  OrigF.getParent()->end(), ActiveSuspend);
   }
 
   // Replace all args with undefs. The buildCoroutineFrame algorithm already
@@ -663,14 +844,37 @@ void CoroCloner::create() {
   auto savedLinkage = NewF->getLinkage();
   NewF->setLinkage(llvm::GlobalValue::ExternalLinkage);
 
-  CloneFunctionInto(NewF, &OrigF, VMap, /*ModuleLevelChanges=*/true, Returns);
+  CloneFunctionInto(NewF, &OrigF, VMap,
+                    CloneFunctionChangeType::LocalChangesOnly, Returns);
+
+  auto &Context = NewF->getContext();
+
+  // For async functions / continuations, adjust the scope line of the
+  // clone to the line number of the suspend point. The scope line is
+  // associated with all pre-prologue instructions. This avoids a jump
+  // in the linetable from the function declaration to the suspend point.
+  if (DISubprogram *SP = NewF->getSubprogram()) {
+    assert(SP != OrigF.getSubprogram() && SP->isDistinct());
+    if (ActiveSuspend)
+      if (auto DL = ActiveSuspend->getDebugLoc())
+        SP->setScopeLine(DL->getLine());
+    // Update the linkage name to reflect the modified symbol name. It
+    // is necessary to update the linkage name in Swift, since the
+    // mangling changes for resume functions. It might also be the
+    // right thing to do in C++, but due to a limitation in LLVM's
+    // AsmPrinter we can only do this if the function doesn't have an
+    // abstract specification, since the DWARF backend expects the
+    // abstract specification to contain the linkage name and asserts
+    // that they are identical.
+    if (!SP->getDeclaration() && SP->getUnit() &&
+        SP->getUnit()->getSourceLanguage() == dwarf::DW_LANG_Swift)
+      SP->replaceLinkageName(MDString::get(Context, NewF->getName()));
+  }
 
   NewF->setLinkage(savedLinkage);
   NewF->setVisibility(savedVisibility);
   NewF->setUnnamedAddr(savedUnnamedAddr);
   NewF->setDLLStorageClass(savedDLLStorageClass);
-
-  auto &Context = NewF->getContext();
 
   // Replace the attributes of the new function:
   auto OrigAttrs = NewF->getAttributes();
@@ -682,19 +886,28 @@ void CoroCloner::create() {
     // original function.  This should include optimization settings and so on.
     NewAttrs = NewAttrs.addAttributes(Context, AttributeList::FunctionIndex,
                                       OrigAttrs.getFnAttributes());
-    break;
 
+    addFramePointerAttrs(NewAttrs, Context, 0,
+                         Shape.FrameSize, Shape.FrameAlign);
+    break;
+  case coro::ABI::Async: {
+    // Transfer the original function's attributes.
+    auto FnAttrs = OrigF.getAttributes().getFnAttributes();
+    NewAttrs =
+        NewAttrs.addAttributes(Context, AttributeList::FunctionIndex, FnAttrs);
+    break;
+  }
   case coro::ABI::Retcon:
   case coro::ABI::RetconOnce:
     // If we have a continuation prototype, just use its attributes,
     // full-stop.
     NewAttrs = Shape.RetconLowering.ResumePrototype->getAttributes();
+
+    addFramePointerAttrs(NewAttrs, Context, 0,
+                         Shape.getRetconCoroId()->getStorageSize(),
+                         Shape.getRetconCoroId()->getStorageAlignment());
     break;
   }
-
-  // Make the frame parameter nonnull and noalias.
-  NewAttrs = NewAttrs.addParamAttribute(Context, 0, Attribute::NonNull);
-  NewAttrs = NewAttrs.addParamAttribute(Context, 0, Attribute::NoAlias);
 
   switch (Shape.ABI) {
   // In these ABIs, the cloned functions always return 'void', and the
@@ -712,6 +925,12 @@ void CoroCloner::create() {
   // original returns and inserted returns before all the suspend points,
   // so we want to leave any returns in place.
   case coro::ABI::Retcon:
+    break;
+  // Async lowering will insert musttail call functions at all suspend points
+  // followed by a return.
+  // Don't change returns to unreachable because that will trip up the verifier.
+  // These returns should be unreachable from the clone.
+  case coro::ABI::Async:
     break;
   }
 
@@ -743,14 +962,14 @@ void CoroCloner::create() {
     if (Shape.SwitchLowering.HasFinalSuspend)
       handleFinalSuspend();
     break;
-
+  case coro::ABI::Async:
   case coro::ABI::Retcon:
   case coro::ABI::RetconOnce:
     // Replace uses of the active suspend with the corresponding
     // continuation-function arguments.
     assert(ActiveSuspend != nullptr &&
            "no active suspend when lowering a continuation-style coroutine");
-    replaceRetconSuspendUses();
+    replaceRetconOrAsyncSuspendUses();
     break;
   }
 
@@ -762,6 +981,9 @@ void CoroCloner::create() {
 
   // Remove coro.end intrinsics.
   replaceCoroEnds();
+
+  // Salvage debug info that points into the coroutine frame.
+  salvageDebugInfo();
 
   // Eliminate coro.free from the clones, replacing it with 'null' in cleanup,
   // to suppress deallocation code.
@@ -781,13 +1003,31 @@ static Function *createClone(Function &F, const Twine &Suffix,
 }
 
 /// Remove calls to llvm.coro.end in the original function.
-static void removeCoroEnds(coro::Shape &Shape, CallGraph *CG) {
+static void removeCoroEnds(const coro::Shape &Shape, CallGraph *CG) {
   for (auto End : Shape.CoroEnds) {
     replaceCoroEnd(End, Shape, Shape.FramePtr, /*in resume*/ false, CG);
   }
 }
 
+static void updateAsyncFuncPointerContextSize(coro::Shape &Shape) {
+  assert(Shape.ABI == coro::ABI::Async);
+
+  auto *FuncPtrStruct = cast<ConstantStruct>(
+      Shape.AsyncLowering.AsyncFuncPointer->getInitializer());
+  auto *OrigRelativeFunOffset = FuncPtrStruct->getOperand(0);
+  auto *OrigContextSize = FuncPtrStruct->getOperand(1);
+  auto *NewContextSize = ConstantInt::get(OrigContextSize->getType(),
+                                          Shape.AsyncLowering.ContextSize);
+  auto *NewFuncPtrStruct = ConstantStruct::get(
+      FuncPtrStruct->getType(), OrigRelativeFunOffset, NewContextSize);
+
+  Shape.AsyncLowering.AsyncFuncPointer->setInitializer(NewFuncPtrStruct);
+}
+
 static void replaceFrameSize(coro::Shape &Shape) {
+  if (Shape.ABI == coro::ABI::Async)
+    updateAsyncFuncPointerContextSize(Shape);
+
   if (Shape.CoroSizes.empty())
     return;
 
@@ -870,7 +1110,8 @@ static void postSplitCleanup(Function &F) {
   // For now, we do a mandatory verification step because we don't
   // entirely trust this pass.  Note that we don't want to add a verifier
   // pass to FPM below because it will also verify all the global data.
-  verifyFunction(F);
+  if (verifyFunction(F, &errs()))
+    report_fatal_error("Broken function");
 
   legacy::FunctionPassManager FPM(F.getParent());
 
@@ -906,20 +1147,52 @@ scanPHIsAndUpdateValueMap(Instruction *Prev, BasicBlock *NewBlock,
 // values and select the correct case successor when possible.
 static bool simplifyTerminatorLeadingToRet(Instruction *InitialInst) {
   DenseMap<Value *, Value *> ResolvedValues;
+  BasicBlock *UnconditionalSucc = nullptr;
 
   Instruction *I = InitialInst;
-  while (I->isTerminator()) {
+  while (I->isTerminator() ||
+         (isa<CmpInst>(I) && I->getNextNode()->isTerminator())) {
     if (isa<ReturnInst>(I)) {
-      if (I != InitialInst)
+      if (I != InitialInst) {
+        // If InitialInst is an unconditional branch,
+        // remove PHI values that come from basic block of InitialInst
+        if (UnconditionalSucc)
+          UnconditionalSucc->removePredecessor(InitialInst->getParent(), true);
         ReplaceInstWithInst(InitialInst, I->clone());
+      }
       return true;
     }
     if (auto *BR = dyn_cast<BranchInst>(I)) {
       if (BR->isUnconditional()) {
         BasicBlock *BB = BR->getSuccessor(0);
+        if (I == InitialInst)
+          UnconditionalSucc = BB;
         scanPHIsAndUpdateValueMap(I, BB, ResolvedValues);
         I = BB->getFirstNonPHIOrDbgOrLifetime();
         continue;
+      }
+    } else if (auto *CondCmp = dyn_cast<CmpInst>(I)) {
+      auto *BR = dyn_cast<BranchInst>(I->getNextNode());
+      if (BR && BR->isConditional() && CondCmp == BR->getCondition()) {
+        // If the case number of suspended switch instruction is reduced to
+        // 1, then it is simplified to CmpInst in llvm::ConstantFoldTerminator.
+        // And the comparsion looks like : %cond = icmp eq i8 %V, constant.
+        ConstantInt *CondConst = dyn_cast<ConstantInt>(CondCmp->getOperand(1));
+        if (CondConst && CondCmp->getPredicate() == CmpInst::ICMP_EQ) {
+          Value *V = CondCmp->getOperand(0);
+          auto it = ResolvedValues.find(V);
+          if (it != ResolvedValues.end())
+            V = it->second;
+
+          if (ConstantInt *Cond0 = dyn_cast<ConstantInt>(V)) {
+            BasicBlock *BB = Cond0->equalsInt(CondConst->getZExtValue())
+                                 ? BR->getSuccessor(0)
+                                 : BR->getSuccessor(1);
+            scanPHIsAndUpdateValueMap(I, BB, ResolvedValues);
+            I = BB->getFirstNonPHIOrDbgOrLifetime();
+            continue;
+          }
+        }
       }
     } else if (auto *SI = dyn_cast<SwitchInst>(I)) {
       Value *V = SI->getCondition();
@@ -938,6 +1211,37 @@ static bool simplifyTerminatorLeadingToRet(Instruction *InitialInst) {
   return false;
 }
 
+// Check whether CI obeys the rules of musttail attribute.
+static bool shouldBeMustTail(const CallInst &CI, const Function &F) {
+  if (CI.isInlineAsm())
+    return false;
+
+  // Match prototypes and calling conventions of resume function.
+  FunctionType *CalleeTy = CI.getFunctionType();
+  if (!CalleeTy->getReturnType()->isVoidTy() || (CalleeTy->getNumParams() != 1))
+    return false;
+
+  Type *CalleeParmTy = CalleeTy->getParamType(0);
+  if (!CalleeParmTy->isPointerTy() ||
+      (CalleeParmTy->getPointerAddressSpace() != 0))
+    return false;
+
+  if (CI.getCallingConv() != F.getCallingConv())
+    return false;
+
+  // CI should not has any ABI-impacting function attributes.
+  static const Attribute::AttrKind ABIAttrs[] = {
+      Attribute::StructRet,    Attribute::ByVal,     Attribute::InAlloca,
+      Attribute::Preallocated, Attribute::InReg,     Attribute::Returned,
+      Attribute::SwiftSelf,    Attribute::SwiftError};
+  AttributeList Attrs = CI.getAttributes();
+  for (auto AK : ABIAttrs)
+    if (Attrs.hasParamAttribute(0, AK))
+      return false;
+
+  return true;
+}
+
 // Add musttail to any resume instructions that is immediately followed by a
 // suspend (i.e. ret). We do this even in -O0 to support guaranteed tail call
 // for symmetrical coroutine control transfer (C++ Coroutines TS extension).
@@ -950,11 +1254,8 @@ static void addMustTailToCoroResumes(Function &F) {
   SmallVector<CallInst *, 4> Resumes;
   for (auto &I : instructions(F))
     if (auto *Call = dyn_cast<CallInst>(&I))
-      if (auto *CalledValue = Call->getCalledValue())
-        // CoroEarly pass replaced coro resumes with indirect calls to an
-        // address return by CoroSubFnInst intrinsic. See if it is one of those.
-        if (isa<CoroSubFnInst>(CalledValue->stripPointerCasts()))
-          Resumes.push_back(Call);
+      if (shouldBeMustTail(*Call, F))
+        Resumes.push_back(Call);
 
   // Set musttail on those that are followed by a ret instruction.
   for (CallInst *Call : Resumes)
@@ -979,8 +1280,8 @@ static void handleNoSuspendCoroutine(coro::Shape &Shape) {
     coro::replaceCoroFree(SwitchId, /*Elide=*/AllocInst != nullptr);
     if (AllocInst) {
       IRBuilder<> Builder(AllocInst);
-      // FIXME: Need to handle overaligned members.
       auto *Frame = Builder.CreateAlloca(Shape.FrameTy);
+      Frame->setAlignment(Shape.FrameAlign);
       auto *VFrame = Builder.CreateBitCast(Frame, Builder.getInt8PtrTy());
       AllocInst->replaceAllUsesWith(Builder.getFalse());
       AllocInst->eraseFromParent();
@@ -988,9 +1289,10 @@ static void handleNoSuspendCoroutine(coro::Shape &Shape) {
     } else {
       CoroBegin->replaceAllUsesWith(CoroBegin->getMem());
     }
+
     break;
   }
-
+  case coro::ABI::Async:
   case coro::ABI::Retcon:
   case coro::ABI::RetconOnce:
     CoroBegin->replaceAllUsesWith(UndefValue::get(CoroBegin->getType()));
@@ -1009,7 +1311,7 @@ static bool hasCallsInBlockBetween(Instruction *From, Instruction *To) {
     if (isa<IntrinsicInst>(I))
       continue;
 
-    if (CallSite(I))
+    if (isa<CallBase>(I))
       return true;
   }
   return false;
@@ -1079,13 +1381,11 @@ static bool simplifySuspendPoint(CoroSuspendInst *Suspend,
     Prev = Pred->getTerminator();
   }
 
-  CallSite CS{Prev};
-  if (!CS)
+  CallBase *CB = dyn_cast<CallBase>(Prev);
+  if (!CB)
     return false;
 
-  auto *CallInstr = CS.getInstruction();
-
-  auto *Callee = CS.getCalledValue()->stripPointerCasts();
+  auto *Callee = CB->getCalledOperand()->stripPointerCasts();
 
   // See if the callsite is for resumption or destruction of the coroutine.
   auto *SubFn = dyn_cast<CoroSubFnInst>(Callee);
@@ -1100,7 +1400,7 @@ static bool simplifySuspendPoint(CoroSuspendInst *Suspend,
   // calls in between Save and CallInstr. They can potenitally resume the
   // coroutine rendering this optimization unsafe.
   auto *Save = Suspend->getCoroSave();
-  if (hasCallsBetween(Save, CallInstr))
+  if (hasCallsBetween(Save, CB))
     return false;
 
   // Replace llvm.coro.suspend with the value that results in resumption over
@@ -1110,13 +1410,13 @@ static bool simplifySuspendPoint(CoroSuspendInst *Suspend,
   Save->eraseFromParent();
 
   // No longer need a call to coro.resume or coro.destroy.
-  if (auto *Invoke = dyn_cast<InvokeInst>(CallInstr)) {
+  if (auto *Invoke = dyn_cast<InvokeInst>(CB)) {
     BranchInst::Create(Invoke->getNormalDest(), Invoke);
   }
 
-  // Grab the CalledValue from CS before erasing the CallInstr.
-  auto *CalledValue = CS.getCalledValue();
-  CallInstr->eraseFromParent();
+  // Grab the CalledValue from CB before erasing the CallInstr.
+  auto *CalledValue = CB->getCalledOperand();
+  CB->eraseFromParent();
 
   // If no more users remove it. Usually it is a bitcast of SubFn.
   if (CalledValue != SubFn && CalledValue->user_empty())
@@ -1141,7 +1441,10 @@ static void simplifySuspendPoints(coro::Shape &Shape) {
   if (N == 0)
     return;
   while (true) {
-    if (simplifySuspendPoint(cast<CoroSuspendInst>(S[I]), Shape.CoroBegin)) {
+    auto SI = cast<CoroSuspendInst>(S[I]);
+    // Leave final.suspend to handleFinalSuspend since it is undefined behavior
+    // to resume a coroutine suspended at the final suspend point.
+    if (!SI->isFinal() && simplifySuspendPoint(SI, Shape.CoroBegin)) {
       if (--N == I)
         break;
       std::swap(S[I], S[N]);
@@ -1185,6 +1488,135 @@ static void splitSwitchCoroutine(Function &F, coro::Shape &Shape,
   setCoroInfo(F, Shape, Clones);
 }
 
+static void replaceAsyncResumeFunction(CoroSuspendAsyncInst *Suspend,
+                                       Value *Continuation) {
+  auto *ResumeIntrinsic = Suspend->getResumeFunction();
+  auto &Context = Suspend->getParent()->getParent()->getContext();
+  auto *Int8PtrTy = Type::getInt8PtrTy(Context);
+
+  IRBuilder<> Builder(ResumeIntrinsic);
+  auto *Val = Builder.CreateBitOrPointerCast(Continuation, Int8PtrTy);
+  ResumeIntrinsic->replaceAllUsesWith(Val);
+  ResumeIntrinsic->eraseFromParent();
+  Suspend->setOperand(CoroSuspendAsyncInst::ResumeFunctionArg,
+                      UndefValue::get(Int8PtrTy));
+}
+
+/// Coerce the arguments in \p FnArgs according to \p FnTy in \p CallArgs.
+static void coerceArguments(IRBuilder<> &Builder, FunctionType *FnTy,
+                            ArrayRef<Value *> FnArgs,
+                            SmallVectorImpl<Value *> &CallArgs) {
+  size_t ArgIdx = 0;
+  for (auto paramTy : FnTy->params()) {
+    assert(ArgIdx < FnArgs.size());
+    if (paramTy != FnArgs[ArgIdx]->getType())
+      CallArgs.push_back(
+          Builder.CreateBitOrPointerCast(FnArgs[ArgIdx], paramTy));
+    else
+      CallArgs.push_back(FnArgs[ArgIdx]);
+    ++ArgIdx;
+  }
+}
+
+CallInst *coro::createMustTailCall(DebugLoc Loc, Function *MustTailCallFn,
+                                   ArrayRef<Value *> Arguments,
+                                   IRBuilder<> &Builder) {
+  auto *FnTy =
+      cast<FunctionType>(MustTailCallFn->getType()->getPointerElementType());
+  // Coerce the arguments, llvm optimizations seem to ignore the types in
+  // vaarg functions and throws away casts in optimized mode.
+  SmallVector<Value *, 8> CallArgs;
+  coerceArguments(Builder, FnTy, Arguments, CallArgs);
+
+  auto *TailCall = Builder.CreateCall(FnTy, MustTailCallFn, CallArgs);
+  TailCall->setTailCallKind(CallInst::TCK_MustTail);
+  TailCall->setDebugLoc(Loc);
+  TailCall->setCallingConv(MustTailCallFn->getCallingConv());
+  return TailCall;
+}
+
+static void splitAsyncCoroutine(Function &F, coro::Shape &Shape,
+                                SmallVectorImpl<Function *> &Clones) {
+  assert(Shape.ABI == coro::ABI::Async);
+  assert(Clones.empty());
+  // Reset various things that the optimizer might have decided it
+  // "knows" about the coroutine function due to not seeing a return.
+  F.removeFnAttr(Attribute::NoReturn);
+  F.removeAttribute(AttributeList::ReturnIndex, Attribute::NoAlias);
+  F.removeAttribute(AttributeList::ReturnIndex, Attribute::NonNull);
+
+  auto &Context = F.getContext();
+  auto *Int8PtrTy = Type::getInt8PtrTy(Context);
+
+  auto *Id = cast<CoroIdAsyncInst>(Shape.CoroBegin->getId());
+  IRBuilder<> Builder(Id);
+
+  auto *FramePtr = Id->getStorage();
+  FramePtr = Builder.CreateBitOrPointerCast(FramePtr, Int8PtrTy);
+  FramePtr = Builder.CreateConstInBoundsGEP1_32(
+      Type::getInt8Ty(Context), FramePtr, Shape.AsyncLowering.FrameOffset,
+      "async.ctx.frameptr");
+
+  // Map all uses of llvm.coro.begin to the allocated frame pointer.
+  {
+    // Make sure we don't invalidate Shape.FramePtr.
+    TrackingVH<Instruction> Handle(Shape.FramePtr);
+    Shape.CoroBegin->replaceAllUsesWith(FramePtr);
+    Shape.FramePtr = Handle.getValPtr();
+  }
+
+  // Create all the functions in order after the main function.
+  auto NextF = std::next(F.getIterator());
+
+  // Create a continuation function for each of the suspend points.
+  Clones.reserve(Shape.CoroSuspends.size());
+  for (size_t Idx = 0, End = Shape.CoroSuspends.size(); Idx != End; ++Idx) {
+    auto *Suspend = cast<CoroSuspendAsyncInst>(Shape.CoroSuspends[Idx]);
+
+    // Create the clone declaration.
+    auto *Continuation = createCloneDeclaration(
+        F, Shape, ".resume." + Twine(Idx), NextF, Suspend);
+    Clones.push_back(Continuation);
+
+    // Insert a branch to a new return block immediately before the suspend
+    // point.
+    auto *SuspendBB = Suspend->getParent();
+    auto *NewSuspendBB = SuspendBB->splitBasicBlock(Suspend);
+    auto *Branch = cast<BranchInst>(SuspendBB->getTerminator());
+
+    // Place it before the first suspend.
+    auto *ReturnBB =
+        BasicBlock::Create(F.getContext(), "coro.return", &F, NewSuspendBB);
+    Branch->setSuccessor(0, ReturnBB);
+
+    IRBuilder<> Builder(ReturnBB);
+
+    // Insert the call to the tail call function and inline it.
+    auto *Fn = Suspend->getMustTailCallFunction();
+    SmallVector<Value *, 8> Args(Suspend->args());
+    auto FnArgs = ArrayRef<Value *>(Args).drop_front(
+        CoroSuspendAsyncInst::MustTailCallFuncArg + 1);
+    auto *TailCall =
+        coro::createMustTailCall(Suspend->getDebugLoc(), Fn, FnArgs, Builder);
+    Builder.CreateRetVoid();
+    InlineFunctionInfo FnInfo;
+    auto InlineRes = InlineFunction(*TailCall, FnInfo);
+    assert(InlineRes.isSuccess() && "Expected inlining to succeed");
+    (void)InlineRes;
+
+    // Replace the lvm.coro.async.resume intrisic call.
+    replaceAsyncResumeFunction(Suspend, Continuation);
+  }
+
+  assert(Clones.size() == Shape.CoroSuspends.size());
+  for (size_t Idx = 0, End = Shape.CoroSuspends.size(); Idx != End; ++Idx) {
+    auto *Suspend = Shape.CoroSuspends[Idx];
+    auto *Clone = Clones[Idx];
+
+    CoroCloner(F, "resume." + Twine(Idx), Shape, Clone, Suspend).create();
+  }
+}
+
 static void splitRetconCoroutine(Function &F, coro::Shape &Shape,
                                  SmallVectorImpl<Function *> &Clones) {
   assert(Shape.ABI == coro::ABI::Retcon ||
@@ -1211,6 +1643,7 @@ static void splitRetconCoroutine(Function &F, coro::Shape &Shape,
 
     // Allocate.  We don't need to update the call graph node because we're
     // going to recompute it from scratch after splitting.
+    // FIXME: pass the required alignment
     RawFramePtr = Shape.emitAlloc(Builder, Builder.getInt64(Size), nullptr);
     RawFramePtr =
       Builder.CreateBitCast(RawFramePtr, Shape.CoroBegin->getType());
@@ -1243,7 +1676,7 @@ static void splitRetconCoroutine(Function &F, coro::Shape &Shape,
 
     // Create the clone declaration.
     auto Continuation =
-      createCloneDeclaration(F, Shape, ".resume." + Twine(i), NextF);
+        createCloneDeclaration(F, Shape, ".resume." + Twine(i), NextF, nullptr);
     Clones.push_back(Continuation);
 
     // Insert a branch to the unified return block immediately before
@@ -1328,46 +1761,55 @@ namespace {
   };
 }
 
-static void splitCoroutine(Function &F, coro::Shape &Shape,
-                           SmallVectorImpl<Function *> &Clones) {
-  switch (Shape.ABI) {
-  case coro::ABI::Switch:
-    return splitSwitchCoroutine(F, Shape, Clones);
-  case coro::ABI::Retcon:
-  case coro::ABI::RetconOnce:
-    return splitRetconCoroutine(F, Shape, Clones);
-  }
-  llvm_unreachable("bad ABI kind");
-}
-
-static void splitCoroutine(Function &F, CallGraph &CG, CallGraphSCC &SCC) {
+static coro::Shape splitCoroutine(Function &F,
+                                  SmallVectorImpl<Function *> &Clones,
+                                  bool ReuseFrameSlot) {
   PrettyStackTraceFunction prettyStackTrace(F);
 
   // The suspend-crossing algorithm in buildCoroutineFrame get tripped
   // up by uses in unreachable blocks, so remove them as a first pass.
   removeUnreachableBlocks(F);
 
-  coro::Shape Shape(F);
+  coro::Shape Shape(F, ReuseFrameSlot);
   if (!Shape.CoroBegin)
-    return;
+    return Shape;
 
   simplifySuspendPoints(Shape);
   buildCoroutineFrame(F, Shape);
   replaceFrameSize(Shape);
-
-  SmallVector<Function*, 4> Clones;
 
   // If there are no suspend points, no split required, just remove
   // the allocation and deallocation blocks, they are not needed.
   if (Shape.CoroSuspends.empty()) {
     handleNoSuspendCoroutine(Shape);
   } else {
-    splitCoroutine(F, Shape, Clones);
+    switch (Shape.ABI) {
+    case coro::ABI::Switch:
+      splitSwitchCoroutine(F, Shape, Clones);
+      break;
+    case coro::ABI::Async:
+      splitAsyncCoroutine(F, Shape, Clones);
+      break;
+    case coro::ABI::Retcon:
+    case coro::ABI::RetconOnce:
+      splitRetconCoroutine(F, Shape, Clones);
+      break;
+    }
   }
 
   // Replace all the swifterror operations in the original function.
   // This invalidates SwiftErrorOps in the Shape.
   replaceSwiftErrorOps(F, Shape, nullptr);
+
+  return Shape;
+}
+
+static void
+updateCallGraphAfterCoroutineSplit(Function &F, const coro::Shape &Shape,
+                                   const SmallVectorImpl<Function *> &Clones,
+                                   CallGraph &CG, CallGraphSCC &SCC) {
+  if (!Shape.CoroBegin)
+    return;
 
   removeCoroEnds(Shape, &CG);
   postSplitCleanup(F);
@@ -1376,10 +1818,55 @@ static void splitCoroutine(Function &F, CallGraph &CG, CallGraphSCC &SCC) {
   coro::updateCallGraph(F, Clones, CG, SCC);
 }
 
+static void updateCallGraphAfterCoroutineSplit(
+    LazyCallGraph::Node &N, const coro::Shape &Shape,
+    const SmallVectorImpl<Function *> &Clones, LazyCallGraph::SCC &C,
+    LazyCallGraph &CG, CGSCCAnalysisManager &AM, CGSCCUpdateResult &UR,
+    FunctionAnalysisManager &FAM) {
+  if (!Shape.CoroBegin)
+    return;
+
+  for (llvm::AnyCoroEndInst *End : Shape.CoroEnds) {
+    auto &Context = End->getContext();
+    End->replaceAllUsesWith(ConstantInt::getFalse(Context));
+    End->eraseFromParent();
+  }
+
+  if (!Clones.empty()) {
+    switch (Shape.ABI) {
+    case coro::ABI::Switch:
+      // Each clone in the Switch lowering is independent of the other clones.
+      // Let the LazyCallGraph know about each one separately.
+      for (Function *Clone : Clones)
+        CG.addSplitFunction(N.getFunction(), *Clone);
+      break;
+    case coro::ABI::Async:
+    case coro::ABI::Retcon:
+    case coro::ABI::RetconOnce:
+      // Each clone in the Async/Retcon lowering references of the other clones.
+      // Let the LazyCallGraph know about all of them at once.
+      if (!Clones.empty())
+        CG.addSplitRefRecursiveFunctions(N.getFunction(), Clones);
+      break;
+    }
+
+    // Let the CGSCC infra handle the changes to the original function.
+    updateCGAndAnalysisManagerForCGSCCPass(CG, C, N, AM, UR, FAM);
+  }
+
+  // Do some cleanup and let the CGSCC infra see if we've cleaned up any edges
+  // to the split functions.
+  postSplitCleanup(N.getFunction());
+  updateCGAndAnalysisManagerForFunctionPass(CG, C, N, AM, UR, FAM);
+}
+
 // When we see the coroutine the first time, we insert an indirect call to a
 // devirt trigger function and mark the coroutine that it is now ready for
 // split.
-static void prepareForSplit(Function &F, CallGraph &CG) {
+// Async lowering uses this after it has split the function to restart the
+// pipeline.
+static void prepareForSplit(Function &F, CallGraph &CG,
+                            bool MarkForAsyncRestart = false) {
   Module &M = *F.getParent();
   LLVMContext &Context = F.getContext();
 #ifndef NDEBUG
@@ -1387,7 +1874,9 @@ static void prepareForSplit(Function &F, CallGraph &CG) {
   assert(DevirtFn && "coro.devirt.trigger function not found");
 #endif
 
-  F.addFnAttr(CORO_PRESPLIT_ATTR, PREPARED_FOR_SPLIT);
+  F.addFnAttr(CORO_PRESPLIT_ATTR, MarkForAsyncRestart
+                                      ? ASYNC_RESTART_AFTER_SPLIT
+                                      : PREPARED_FOR_SPLIT);
 
   // Insert an indirect call sequence that will be devirtualized by CoroElide
   // pass:
@@ -1395,7 +1884,9 @@ static void prepareForSplit(Function &F, CallGraph &CG) {
   //    %1 = bitcast i8* %0 to void(i8*)*
   //    call void %1(i8* null)
   coro::LowererBase Lowerer(M);
-  Instruction *InsertPt = F.getEntryBlock().getTerminator();
+  Instruction *InsertPt =
+      MarkForAsyncRestart ? F.getEntryBlock().getFirstNonPHIOrDbgOrLifetime()
+                          : F.getEntryBlock().getTerminator();
   auto *Null = ConstantPointerNull::get(Type::getInt8PtrTy(Context));
   auto *DevirtFnAddr =
       Lowerer.makeSubFnCall(Null, CoroSubFnInst::RestartTrigger, InsertPt);
@@ -1407,9 +1898,10 @@ static void prepareForSplit(Function &F, CallGraph &CG) {
   CG[&F]->addCalledFunction(IndirectCall, CG.getCallsExternalNode());
 }
 
-// Make sure that there is a devirtualization trigger function that CoroSplit
-// pass uses the force restart CGSCC pipeline. If devirt trigger function is not
-// found, we will create one and add it to the current SCC.
+// Make sure that there is a devirtualization trigger function that the
+// coro-split pass uses to force a restart of the CGSCC pipeline. If the devirt
+// trigger function is not found, we will create one and add it to the current
+// SCC.
 static void createDevirtTriggerFunc(CallGraph &CG, CallGraphSCC &SCC) {
   Module &M = CG.getModule();
   if (M.getFunction(CORO_DEVIRT_TRIGGER_FN))
@@ -1432,6 +1924,42 @@ static void createDevirtTriggerFunc(CallGraph &CG, CallGraphSCC &SCC) {
   SCC.initialize(Nodes);
 }
 
+/// Replace a call to llvm.coro.prepare.retcon.
+static void replacePrepare(CallInst *Prepare, LazyCallGraph &CG,
+                           LazyCallGraph::SCC &C) {
+  auto CastFn = Prepare->getArgOperand(0); // as an i8*
+  auto Fn = CastFn->stripPointerCasts();   // as its original type
+
+  // Attempt to peephole this pattern:
+  //    %0 = bitcast [[TYPE]] @some_function to i8*
+  //    %1 = call @llvm.coro.prepare.retcon(i8* %0)
+  //    %2 = bitcast %1 to [[TYPE]]
+  // ==>
+  //    %2 = @some_function
+  for (auto UI = Prepare->use_begin(), UE = Prepare->use_end(); UI != UE;) {
+    // Look for bitcasts back to the original function type.
+    auto *Cast = dyn_cast<BitCastInst>((UI++)->getUser());
+    if (!Cast || Cast->getType() != Fn->getType())
+      continue;
+
+    // Replace and remove the cast.
+    Cast->replaceAllUsesWith(Fn);
+    Cast->eraseFromParent();
+  }
+
+  // Replace any remaining uses with the function as an i8*.
+  // This can never directly be a callee, so we don't need to update CG.
+  Prepare->replaceAllUsesWith(CastFn);
+  Prepare->eraseFromParent();
+
+  // Kill dead bitcasts.
+  while (auto *Cast = dyn_cast<BitCastInst>(CastFn)) {
+    if (!Cast->use_empty())
+      break;
+    CastFn = Cast->getOperand(0);
+    Cast->eraseFromParent();
+  }
+}
 /// Replace a call to llvm.coro.prepare.retcon.
 static void replacePrepare(CallInst *Prepare, CallGraph &CG) {
   auto CastFn = Prepare->getArgOperand(0); // as an i8*
@@ -1487,6 +2015,19 @@ static void replacePrepare(CallInst *Prepare, CallGraph &CG) {
   }
 }
 
+static bool replaceAllPrepares(Function *PrepareFn, LazyCallGraph &CG,
+                               LazyCallGraph::SCC &C) {
+  bool Changed = false;
+  for (auto PI = PrepareFn->use_begin(), PE = PrepareFn->use_end(); PI != PE;) {
+    // Intrinsics can only be used in calls.
+    auto *Prepare = cast<CallInst>((PI++)->getUser());
+    replacePrepare(Prepare, CG, C);
+    Changed = true;
+  }
+
+  return Changed;
+}
+
 /// Remove calls to llvm.coro.prepare.retcon, a barrier meant to prevent
 /// IPO from operating on calls to a retcon coroutine before it's been
 /// split.  This is only safe to do after we've split all retcon
@@ -1506,27 +2047,115 @@ static bool replaceAllPrepares(Function *PrepareFn, CallGraph &CG) {
   return Changed;
 }
 
-//===----------------------------------------------------------------------===//
-//                              Top Level Driver
-//===----------------------------------------------------------------------===//
+static bool declaresCoroSplitIntrinsics(const Module &M) {
+  return coro::declaresIntrinsics(M, {"llvm.coro.begin",
+                                      "llvm.coro.prepare.retcon",
+                                      "llvm.coro.prepare.async"});
+}
+
+static void addPrepareFunction(const Module &M,
+                               SmallVectorImpl<Function *> &Fns,
+                               StringRef Name) {
+  auto *PrepareFn = M.getFunction(Name);
+  if (PrepareFn && !PrepareFn->use_empty())
+    Fns.push_back(PrepareFn);
+}
+
+PreservedAnalyses CoroSplitPass::run(LazyCallGraph::SCC &C,
+                                     CGSCCAnalysisManager &AM,
+                                     LazyCallGraph &CG, CGSCCUpdateResult &UR) {
+  // NB: One invariant of a valid LazyCallGraph::SCC is that it must contain a
+  //     non-zero number of nodes, so we assume that here and grab the first
+  //     node's function's module.
+  Module &M = *C.begin()->getFunction().getParent();
+  auto &FAM =
+      AM.getResult<FunctionAnalysisManagerCGSCCProxy>(C, CG).getManager();
+
+  if (!declaresCoroSplitIntrinsics(M))
+    return PreservedAnalyses::all();
+
+  // Check for uses of llvm.coro.prepare.retcon/async.
+  SmallVector<Function *, 2> PrepareFns;
+  addPrepareFunction(M, PrepareFns, "llvm.coro.prepare.retcon");
+  addPrepareFunction(M, PrepareFns, "llvm.coro.prepare.async");
+
+  // Find coroutines for processing.
+  SmallVector<LazyCallGraph::Node *, 4> Coroutines;
+  for (LazyCallGraph::Node &N : C)
+    if (N.getFunction().hasFnAttribute(CORO_PRESPLIT_ATTR))
+      Coroutines.push_back(&N);
+
+  if (Coroutines.empty() && PrepareFns.empty())
+    return PreservedAnalyses::all();
+
+  if (Coroutines.empty()) {
+    for (auto *PrepareFn : PrepareFns) {
+      replaceAllPrepares(PrepareFn, CG, C);
+    }
+  }
+
+  // Split all the coroutines.
+  for (LazyCallGraph::Node *N : Coroutines) {
+    Function &F = N->getFunction();
+    Attribute Attr = F.getFnAttribute(CORO_PRESPLIT_ATTR);
+    StringRef Value = Attr.getValueAsString();
+    LLVM_DEBUG(dbgs() << "CoroSplit: Processing coroutine '" << F.getName()
+                      << "' state: " << Value << "\n");
+    if (Value == UNPREPARED_FOR_SPLIT) {
+      // Enqueue a second iteration of the CGSCC pipeline on this SCC.
+      UR.CWorklist.insert(&C);
+      F.addFnAttr(CORO_PRESPLIT_ATTR, PREPARED_FOR_SPLIT);
+      continue;
+    }
+    F.removeFnAttr(CORO_PRESPLIT_ATTR);
+
+    SmallVector<Function *, 4> Clones;
+    const coro::Shape Shape = splitCoroutine(F, Clones, ReuseFrameSlot);
+    updateCallGraphAfterCoroutineSplit(*N, Shape, Clones, C, CG, AM, UR, FAM);
+
+    if ((Shape.ABI == coro::ABI::Async || Shape.ABI == coro::ABI::Retcon ||
+         Shape.ABI == coro::ABI::RetconOnce) &&
+        !Shape.CoroSuspends.empty()) {
+      // Run the CGSCC pipeline on the newly split functions.
+      // All clones will be in the same RefSCC, so choose a random clone.
+      UR.RCWorklist.insert(CG.lookupRefSCC(CG.get(*Clones[0])));
+    }
+  }
+
+  if (!PrepareFns.empty()) {
+    for (auto *PrepareFn : PrepareFns) {
+      replaceAllPrepares(PrepareFn, CG, C);
+    }
+  }
+
+  return PreservedAnalyses::none();
+}
 
 namespace {
 
-struct CoroSplit : public CallGraphSCCPass {
+// We present a coroutine to LLVM as an ordinary function with suspension
+// points marked up with intrinsics. We let the optimizer party on the coroutine
+// as a single function for as long as possible. Shortly before the coroutine is
+// eligible to be inlined into its callers, we split up the coroutine into parts
+// corresponding to initial, resume and destroy invocations of the coroutine,
+// add them to the current SCC and restart the IPO pipeline to optimize the
+// coroutine subfunctions we extracted before proceeding to the caller of the
+// coroutine.
+struct CoroSplitLegacy : public CallGraphSCCPass {
   static char ID; // Pass identification, replacement for typeid
 
-  CoroSplit() : CallGraphSCCPass(ID) {
-    initializeCoroSplitPass(*PassRegistry::getPassRegistry());
+  CoroSplitLegacy(bool ReuseFrameSlot = false)
+      : CallGraphSCCPass(ID), ReuseFrameSlot(ReuseFrameSlot) {
+    initializeCoroSplitLegacyPass(*PassRegistry::getPassRegistry());
   }
 
   bool Run = false;
+  bool ReuseFrameSlot;
 
   // A coroutine is identified by the presence of coro.begin intrinsic, if
   // we don't have any, this pass has nothing to do.
   bool doInitialization(CallGraph &CG) override {
-    Run = coro::declaresIntrinsics(CG.getModule(),
-                                   {"llvm.coro.begin",
-                                    "llvm.coro.prepare.retcon"});
+    Run = declaresCoroSplitIntrinsics(CG.getModule());
     return CallGraphSCCPass::doInitialization(CG);
   }
 
@@ -1535,10 +2164,10 @@ struct CoroSplit : public CallGraphSCCPass {
       return false;
 
     // Check for uses of llvm.coro.prepare.retcon.
-    auto PrepareFn =
-      SCC.getCallGraph().getModule().getFunction("llvm.coro.prepare.retcon");
-    if (PrepareFn && PrepareFn->use_empty())
-      PrepareFn = nullptr;
+    SmallVector<Function *, 2> PrepareFns;
+    auto &M = SCC.getCallGraph().getModule();
+    addPrepareFunction(M, PrepareFns, "llvm.coro.prepare.retcon");
+    addPrepareFunction(M, PrepareFns, "llvm.coro.prepare.async");
 
     // Find coroutines for processing.
     SmallVector<Function *, 4> Coroutines;
@@ -1547,13 +2176,17 @@ struct CoroSplit : public CallGraphSCCPass {
         if (F->hasFnAttribute(CORO_PRESPLIT_ATTR))
           Coroutines.push_back(F);
 
-    if (Coroutines.empty() && !PrepareFn)
+    if (Coroutines.empty() && PrepareFns.empty())
       return false;
 
     CallGraph &CG = getAnalysis<CallGraphWrapperPass>().getCallGraph();
 
-    if (Coroutines.empty())
-      return replaceAllPrepares(PrepareFn, CG);
+    if (Coroutines.empty()) {
+      bool Changed = false;
+      for (auto *PrepareFn : PrepareFns)
+        Changed |= replaceAllPrepares(PrepareFn, CG);
+      return Changed;
+    }
 
     createDevirtTriggerFunc(CG, SCC);
 
@@ -1563,15 +2196,30 @@ struct CoroSplit : public CallGraphSCCPass {
       StringRef Value = Attr.getValueAsString();
       LLVM_DEBUG(dbgs() << "CoroSplit: Processing coroutine '" << F->getName()
                         << "' state: " << Value << "\n");
+      // Async lowering marks coroutines to trigger a restart of the pipeline
+      // after it has split them.
+      if (Value == ASYNC_RESTART_AFTER_SPLIT) {
+        F->removeFnAttr(CORO_PRESPLIT_ATTR);
+        continue;
+      }
       if (Value == UNPREPARED_FOR_SPLIT) {
         prepareForSplit(*F, CG);
         continue;
       }
       F->removeFnAttr(CORO_PRESPLIT_ATTR);
-      splitCoroutine(*F, CG, SCC);
+
+      SmallVector<Function *, 4> Clones;
+      const coro::Shape Shape = splitCoroutine(*F, Clones, ReuseFrameSlot);
+      updateCallGraphAfterCoroutineSplit(*F, Shape, Clones, CG, SCC);
+      if (Shape.ABI == coro::ABI::Async) {
+        // Restart SCC passes.
+        // Mark function for CoroElide pass. It will devirtualize causing a
+        // restart of the SCC pipeline.
+        prepareForSplit(*F, CG, true /*MarkForAsyncRestart*/);
+      }
     }
 
-    if (PrepareFn)
+    for (auto *PrepareFn : PrepareFns)
       replaceAllPrepares(PrepareFn, CG);
 
     return true;
@@ -1586,16 +2234,18 @@ struct CoroSplit : public CallGraphSCCPass {
 
 } // end anonymous namespace
 
-char CoroSplit::ID = 0;
+char CoroSplitLegacy::ID = 0;
 
 INITIALIZE_PASS_BEGIN(
-    CoroSplit, "coro-split",
+    CoroSplitLegacy, "coro-split",
     "Split coroutine into a set of functions driving its state machine", false,
     false)
 INITIALIZE_PASS_DEPENDENCY(CallGraphWrapperPass)
 INITIALIZE_PASS_END(
-    CoroSplit, "coro-split",
+    CoroSplitLegacy, "coro-split",
     "Split coroutine into a set of functions driving its state machine", false,
     false)
 
-Pass *llvm::createCoroSplitPass() { return new CoroSplit(); }
+Pass *llvm::createCoroSplitLegacyPass(bool ReuseFrameSlot) {
+  return new CoroSplitLegacy(ReuseFrameSlot);
+}

@@ -72,12 +72,22 @@ IBM - Official manuals and docs
 
 * `IBM AIX/5L for POWER Assembly Reference <http://publibn.boulder.ibm.com/doc_link/en_US/a_doc_lib/aixassem/alangref/alangreftfrm.htm>`_
 
+Embedded PowerPC Processors manuals and docs
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* `Book E: Enhanced PowerPC Architecture <https://www.nxp.com/docs/en/user-guide/BOOK_EUM.pdf>`_
+
+* `EREF: A Programmer's Reference Manual for Freescale Embedded Processors (EREFRM) <https://www.nxp.com/files-static/32bit/doc/ref_manual/EREF_RM.pdf>`_
+
+* `Signal Processing Engine (SPE) Programming Environments Manual: A Supplement to the EREF <https://www.nxp.com/docs/en/reference-manual/SPEPEM.pdf>`_
+
+* `Variable-Length Encoding (VLE) Programming Environments Manual: A Supplement to the EREF <https://www.nxp.com/docs/en/reference-manual/VLEPEM.pdf>`_
+
 Other documents, collections, notes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * `PowerPC Compiler Writer's Guide <http://www.ibm.com/chips/techlib/techlib.nsf/techdocs/852569B20050FF7785256996007558C6>`_
 * `Intro to PowerPC Architecture <http://www.ibm.com/developerworks/linux/library/l-powarch/>`_
-* `PowerPC Processor Manuals (embedded) <http://www.ibm.com/chips/techlib/techlib.nsf/products/PowerPC>`_
 * `Various IBM specifications and white papers <https://www.power.org/documentation/?document_company=105&document_category=all&publish_year=all&grid_order=DESC&grid_sort=title>`_
 * `PowerPC ABI documents <http://penguinppc.org/dev/#library>`_
 * `PowerPC64 alignment of long doubles (from GCC) <http://gcc.gnu.org/ml/gcc-patches/2003-09/msg00997.html>`_
@@ -91,6 +101,11 @@ Refer to :doc:`AMDGPUUsage` for additional documentation.
 RISC-V
 ------
 * `RISC-V User-Level ISA Specification <https://riscv.org/specifications/>`_
+
+C-SKY
+------
+* `C-SKY Architecture User Guide <https://github.com/c-sky/csky-doc/blob/master/CSKY%20Architecture%20user_guide.pdf>`_
+* `C-SKY V2 ABI <https://github.com/c-sky/csky-doc/blob/master/C-SKY_V2_CPU_Applications_Binary_Interface_Standards_Manual.pdf>`_
 
 SPARC
 -----
@@ -116,8 +131,9 @@ X86
 XCore
 -----
 
-* `The XMOS XS1 Architecture (ISA) <https://www.xmos.com/en/download/public/The-XMOS-XS1-Architecture%28X7879A%29.pdf>`_
-* `Tools Development Guide (includes ABI) <https://www.xmos.com/download/public/Tools-Development-Guide%28X9114A%29.pdf>`_
+* `The XMOS XS1 Architecture (ISA) <https://www.xmos.ai/download/The-XMOS-XS1-Architecture%281.0%29.pdf>`_
+* `The XMOS XS2 Architecture (ISA) <https://www.xmos.ai/download/xCORE-200:-The-XMOS-XS2-Architecture-%28ISA%29%281.1%29.pdf>`_
+* `Tools Development Guide (includes ABI) <https://www.xmos.ai/download/Tools-Development-Guide%282.1%29.pdf>`_
 
 Hexagon
 -------

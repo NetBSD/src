@@ -13,11 +13,13 @@
 #ifndef LIB_EXECUTIONENGINE_JITLINK_MACHOLINKGRAPHBUILDER_H
 #define LIB_EXECUTIONENGINE_JITLINK_MACHOLINKGRAPHBUILDER_H
 
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/ExecutionEngine/JITLink/JITLink.h"
+#include "llvm/Object/MachO.h"
 
 #include "EHFrameSupportImpl.h"
 #include "JITLinkGeneric.h"
-#include "llvm/Object/MachO.h"
 
 #include <list>
 
@@ -30,74 +32,6 @@ public:
   Expected<std::unique_ptr<LinkGraph>> buildGraph();
 
 protected:
-  class MachOEHFrameBinaryParser : public EHFrameBinaryParser {
-  public:
-    MachOEHFrameBinaryParser(MachOLinkGraphBuilder &Builder,
-                             JITTargetAddress EHFrameAddress,
-                             StringRef EHFrameContent, Section &EHFrameSection,
-                             uint64_t CIEAlignment, uint64_t FDEAlignment,
-                             Edge::Kind FDEToCIERelocKind,
-                             Edge::Kind FDEToTargetRelocKind)
-        : EHFrameBinaryParser(EHFrameAddress, EHFrameContent,
-                              Builder.getGraph().getPointerSize(),
-                              Builder.getGraph().getEndianness()),
-          Builder(Builder), EHFrameSection(EHFrameSection),
-          CIEAlignment(CIEAlignment), FDEAlignment(FDEAlignment),
-          FDEToCIERelocKind(FDEToCIERelocKind),
-          FDEToTargetRelocKind(FDEToTargetRelocKind) {}
-
-    Symbol *getSymbolAtAddress(JITTargetAddress Address) override {
-      if (auto *Sym = Builder.getSymbolByAddress(Address))
-        if (Sym->getAddress() == Address)
-          return Sym;
-      return nullptr;
-    }
-
-    Symbol &createCIERecord(JITTargetAddress RecordAddr,
-                            StringRef RecordContent) override {
-      auto &G = Builder.getGraph();
-      auto &B = G.createContentBlock(EHFrameSection, RecordContent, RecordAddr,
-                                     CIEAlignment, 0);
-      auto &CIESymbol =
-          G.addAnonymousSymbol(B, 0, RecordContent.size(), false, false);
-      Builder.setCanonicalSymbol(CIESymbol);
-      return CIESymbol;
-    }
-
-    Expected<Symbol &> createFDERecord(JITTargetAddress RecordAddr,
-                                       StringRef RecordContent, Symbol &CIE,
-                                       size_t CIEOffset, Symbol &Func,
-                                       size_t FuncOffset, Symbol *LSDA,
-                                       size_t LSDAOffset) override {
-      auto &G = Builder.getGraph();
-      auto &B = G.createContentBlock(EHFrameSection, RecordContent, RecordAddr,
-                                     FDEAlignment, 0);
-
-      // Add edges to CIE, Func, and (conditionally) LSDA.
-      B.addEdge(FDEToCIERelocKind, CIEOffset, CIE, 0);
-      B.addEdge(FDEToTargetRelocKind, FuncOffset, Func, 0);
-
-      if (LSDA)
-        B.addEdge(FDEToTargetRelocKind, LSDAOffset, *LSDA, 0);
-
-      auto &FDESymbol =
-          G.addAnonymousSymbol(B, 0, RecordContent.size(), false, false);
-
-      // Add a keep-alive relocation from the function to the FDE to ensure it
-      // is not dead stripped.
-      Func.getBlock().addEdge(Edge::KeepAlive, 0, FDESymbol, 0);
-
-      return FDESymbol;
-    }
-
-  private:
-    MachOLinkGraphBuilder &Builder;
-    Section &EHFrameSection;
-    uint64_t CIEAlignment;
-    uint64_t FDEAlignment;
-    Edge::Kind FDEToCIERelocKind;
-    Edge::Kind FDEToTargetRelocKind;
-  };
 
   struct NormalizedSymbol {
     friend class MachOLinkGraphBuilder;
@@ -126,6 +60,8 @@ protected:
     Symbol *GraphSymbol = nullptr;
   };
 
+  // Normalized section representation. Section and segment names are guaranteed
+  // to be null-terminated, hence the extra bytes on SegName and SectName.
   class NormalizedSection {
     friend class MachOLinkGraphBuilder;
 
@@ -133,17 +69,20 @@ protected:
     NormalizedSection() = default;
 
   public:
-    Section *GraphSection = nullptr;
+    char SectName[17];
+    char SegName[17];
     uint64_t Address = 0;
     uint64_t Size = 0;
     uint64_t Alignment = 0;
     uint32_t Flags = 0;
     const char *Data = nullptr;
+    Section *GraphSection = nullptr;
   };
 
   using SectionParserFunction = std::function<Error(NormalizedSection &S)>;
 
-  MachOLinkGraphBuilder(const object::MachOObjectFile &Obj);
+  MachOLinkGraphBuilder(const object::MachOObjectFile &Obj, Triple TT,
+                        LinkGraph::GetEdgeKindNameFunction GetEdgeKindName);
 
   LinkGraph &getGraph() const { return *G; }
 
@@ -178,7 +117,7 @@ protected:
     auto I = IndexToSection.find(Index);
     if (I == IndexToSection.end())
       return make_error<JITLinkError>("No section recorded for index " +
-                                      formatv("{0:u}", Index));
+                                      formatv("{0:d}", Index));
     return I->second;
   }
 
@@ -191,7 +130,7 @@ protected:
     auto *Sym = IndexToSymbol[Index];
     if (!Sym)
       return make_error<JITLinkError>("No symbol at index " +
-                                      formatv("{0:u}", Index));
+                                      formatv("{0:d}", Index));
     return *Sym;
   }
 
@@ -218,6 +157,22 @@ protected:
   static Linkage getLinkage(uint16_t Desc);
   static Scope getScope(StringRef Name, uint8_t Type);
   static bool isAltEntry(const NormalizedSymbol &NSym);
+
+  static bool isDebugSection(const NormalizedSection &NSec);
+
+  MachO::relocation_info
+  getRelocationInfo(const object::relocation_iterator RelItr) {
+    MachO::any_relocation_info ARI =
+        getObject().getRelocation(RelItr->getRawDataRefImpl());
+    MachO::relocation_info RI;
+    RI.r_address = ARI.r_word0;
+    RI.r_symbolnum = ARI.r_word1 & 0xffffff;
+    RI.r_pcrel = (ARI.r_word1 >> 24) & 1;
+    RI.r_length = (ARI.r_word1 >> 25) & 3;
+    RI.r_extern = (ARI.r_word1 >> 27) & 1;
+    RI.r_type = (ARI.r_word1 >> 28);
+    return RI;
+  }
 
 private:
   static unsigned getPointerSize(const object::MachOObjectFile &Obj);

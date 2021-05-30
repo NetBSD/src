@@ -1,9 +1,8 @@
 //===- GsymReader.h ---------------------------------------------*- C++ -*-===//
 //
-//                     The LLVM Compiler Infrastructure
-//
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 //===----------------------------------------------------------------------===//
 
@@ -94,27 +93,44 @@ public:
 
   /// Get the full function info for an address.
   ///
+  /// This should be called when a client will store a copy of the complete
+  /// FunctionInfo for a given address. For one off lookups, use the lookup()
+  /// function below.
+  ///
+  /// Symbolication server processes might want to parse the entire function
+  /// info for a given address and cache it if the process stays around to
+  /// service many symbolication addresses, like for parsing profiling
+  /// information.
+  ///
   /// \param Addr A virtual address from the orignal object file to lookup.
+  ///
   /// \returns An expected FunctionInfo that contains the function info object
   /// or an error object that indicates reason for failing to lookup the
-  /// address,
+  /// address.
   llvm::Expected<FunctionInfo> getFunctionInfo(uint64_t Addr) const;
+
+  /// Lookup an address in the a GSYM.
+  ///
+  /// Lookup just the information needed for a specific address \a Addr. This
+  /// function is faster that calling getFunctionInfo() as it will only return
+  /// information that pertains to \a Addr and allows the parsing to skip any
+  /// extra information encoded for other addresses. For example the line table
+  /// parsing can stop when a matching LineEntry has been fouhnd, and the
+  /// InlineInfo can stop parsing early once a match has been found and also
+  /// skip information that doesn't match. This avoids memory allocations and
+  /// is much faster for lookups.
+  ///
+  /// \param Addr A virtual address from the orignal object file to lookup.
+  /// \returns An expected LookupResult that contains only the information
+  /// needed for the current address, or an error object that indicates reason
+  /// for failing to lookup the address.
+  llvm::Expected<LookupResult> lookup(uint64_t Addr) const;
 
   /// Get a string from the string table.
   ///
   /// \param Offset The string table offset for the string to retrieve.
   /// \returns The string from the strin table.
   StringRef getString(uint32_t Offset) const { return StrTab[Offset]; }
-
-protected:
-  /// Gets an address from the address table.
-  ///
-  /// Addresses are stored as offsets frrom the gsym::Header::BaseAddress.
-  ///
-  /// \param Index A index into the address table.
-  /// \returns A resolved virtual address for adddress in the address table
-  /// or llvm::None if Index is out of bounds.
-  Optional<uint64_t> getAddress(size_t Index) const;
 
   /// Get the a file entry for the suppplied file index.
   ///
@@ -130,6 +146,71 @@ protected:
       return Files[Index];
     return llvm::None;
   }
+
+  /// Dump the entire Gsym data contained in this object.
+  ///
+  /// \param  OS The output stream to dump to.
+  void dump(raw_ostream &OS);
+
+  /// Dump a FunctionInfo object.
+  ///
+  /// This function will convert any string table indexes and file indexes
+  /// into human readable format.
+  ///
+  /// \param  OS The output stream to dump to.
+  ///
+  /// \param FI The object to dump.
+  void dump(raw_ostream &OS, const FunctionInfo &FI);
+
+  /// Dump a LineTable object.
+  ///
+  /// This function will convert any string table indexes and file indexes
+  /// into human readable format.
+  ///
+  ///
+  /// \param  OS The output stream to dump to.
+  ///
+  /// \param LT The object to dump.
+  void dump(raw_ostream &OS, const LineTable &LT);
+
+  /// Dump a InlineInfo object.
+  ///
+  /// This function will convert any string table indexes and file indexes
+  /// into human readable format.
+  ///
+  /// \param  OS The output stream to dump to.
+  ///
+  /// \param II The object to dump.
+  ///
+  /// \param Indent The indentation as number of spaces. Used for recurive
+  /// dumping.
+  void dump(raw_ostream &OS, const InlineInfo &II, uint32_t Indent = 0);
+
+  /// Dump a FileEntry object.
+  ///
+  /// This function will convert any string table indexes into human readable
+  /// format.
+  ///
+  /// \param  OS The output stream to dump to.
+  ///
+  /// \param FE The object to dump.
+  void dump(raw_ostream &OS, Optional<FileEntry> FE);
+
+  /// Get the number of addresses in this Gsym file.
+  uint32_t getNumAddresses() const {
+    return Hdr->NumAddresses;
+  }
+
+  /// Gets an address from the address table.
+  ///
+  /// Addresses are stored as offsets frrom the gsym::Header::BaseAddress.
+  ///
+  /// \param Index A index into the address table.
+  /// \returns A resolved virtual address for adddress in the address table
+  /// or llvm::None if Index is out of bounds.
+  Optional<uint64_t> getAddress(size_t Index) const;
+
+protected:
 
   /// Get an appropriate address info offsets array.
   ///
@@ -176,11 +257,15 @@ protected:
   /// \returns The matching address offset index. This index will be used to
   /// extract the FunctionInfo data's offset from the AddrInfoOffsets array.
   template <class T>
-  uint64_t getAddressOffsetIndex(const uint64_t AddrOffset) const {
+  llvm::Optional<uint64_t> getAddressOffsetIndex(const uint64_t AddrOffset) const {
     ArrayRef<T> AIO = getAddrOffsets<T>();
     const auto Begin = AIO.begin();
     const auto End = AIO.end();
     auto Iter = std::lower_bound(Begin, End, AddrOffset);
+    // Watch for addresses that fall between the gsym::Header::BaseAddress and
+    // the first address offset.
+    if (Iter == Begin && AddrOffset < *Begin)
+      return llvm::None;
     if (Iter == End || AddrOffset < *Iter)
       --Iter;
     return std::distance(Begin, Iter);
@@ -225,4 +310,4 @@ protected:
 } // namespace gsym
 } // namespace llvm
 
-#endif // #ifndef LLVM_DEBUGINFO_GSYM_GSYMREADER_H
+#endif // LLVM_DEBUGINFO_GSYM_GSYMREADER_H

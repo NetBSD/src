@@ -10,6 +10,7 @@
 
 #include "llvm/Support/Host.h"
 #include "llvm/Support/TargetRegistry.h"
+#include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
 namespace orc {
@@ -28,14 +29,12 @@ Expected<JITTargetMachineBuilder> JITTargetMachineBuilder::detectHost() {
   // Retrieve host CPU name and sub-target features and add them to builder.
   // Relocation model, code model and codegen opt level are kept to default
   // values.
-  llvm::SubtargetFeatures SubtargetFeatures;
   llvm::StringMap<bool> FeatureMap;
   llvm::sys::getHostCPUFeatures(FeatureMap);
   for (auto &Feature : FeatureMap)
-    SubtargetFeatures.AddFeature(Feature.first(), Feature.second);
+    TMBuilder.getFeatures().AddFeature(Feature.first(), Feature.second);
 
-  TMBuilder.setCPU(llvm::sys::getHostCPUName());
-  TMBuilder.addFeatures(SubtargetFeatures.getFeatures());
+  TMBuilder.setCPU(std::string(llvm::sys::getHostCPUName()));
 
   return TMBuilder;
 }
@@ -64,6 +63,84 @@ JITTargetMachineBuilder &JITTargetMachineBuilder::addFeatures(
     Features.AddFeature(F);
   return *this;
 }
+
+#ifndef NDEBUG
+void JITTargetMachineBuilderPrinter::print(raw_ostream &OS) const {
+  OS << Indent << "{\n"
+     << Indent << "  Triple = \"" << JTMB.TT.str() << "\"\n"
+     << Indent << "  CPU = \"" << JTMB.CPU << "\"\n"
+     << Indent << "  Features = \"" << JTMB.Features.getString() << "\"\n"
+     << Indent << "  Options = <not-printable>\n"
+     << Indent << "  Relocation Model = ";
+
+  if (JTMB.RM) {
+    switch (*JTMB.RM) {
+    case Reloc::Static:
+      OS << "Static";
+      break;
+    case Reloc::PIC_:
+      OS << "PIC_";
+      break;
+    case Reloc::DynamicNoPIC:
+      OS << "DynamicNoPIC";
+      break;
+    case Reloc::ROPI:
+      OS << "ROPI";
+      break;
+    case Reloc::RWPI:
+      OS << "RWPI";
+      break;
+    case Reloc::ROPI_RWPI:
+      OS << "ROPI_RWPI";
+      break;
+    }
+  } else
+    OS << "unspecified (will use target default)";
+
+  OS << "\n"
+     << Indent << "  Code Model = ";
+
+  if (JTMB.CM) {
+    switch (*JTMB.CM) {
+    case CodeModel::Tiny:
+      OS << "Tiny";
+      break;
+    case CodeModel::Small:
+      OS << "Small";
+      break;
+    case CodeModel::Kernel:
+      OS << "Kernel";
+      break;
+    case CodeModel::Medium:
+      OS << "Medium";
+      break;
+    case CodeModel::Large:
+      OS << "Large";
+      break;
+    }
+  } else
+    OS << "unspecified (will use target default)";
+
+  OS << "\n"
+     << Indent << "  Optimization Level = ";
+  switch (JTMB.OptLevel) {
+  case CodeGenOpt::None:
+    OS << "None";
+    break;
+  case CodeGenOpt::Less:
+    OS << "Less";
+    break;
+  case CodeGenOpt::Default:
+    OS << "Default";
+    break;
+  case CodeGenOpt::Aggressive:
+    OS << "Aggressive";
+    break;
+  }
+
+  OS << "\n" << Indent << "}\n";
+}
+#endif // NDEBUG
 
 } // End namespace orc.
 } // End namespace llvm.

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 """ A small program to compute checksums of LLVM checkout.
 """
 from __future__ import absolute_import
@@ -79,7 +79,7 @@ def ComputeLLVMChecksums(root_path, projects):
   hash_algo = hashlib.sha256
 
   def collapse_svn_substitutions(contents):
-    # Replace svn substitutions for $Date: 2019/11/08 14:28:10 $ and $LastChangedDate$.
+    # Replace svn substitutions for $Date: 2021/05/30 01:28:21 $ and $LastChangedDate$.
     # Unfortunately, these are locale-specific.
     return SVN_DATES_REGEX.sub("$\1$", contents)
 

@@ -14,6 +14,7 @@
 #define LLVM_CODEGEN_MACHINEFRAMEINFO_H
 
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/CodeGen/Register.h"
 #include "llvm/Support/Alignment.h"
 #include "llvm/Support/DataTypes.h"
 #include <cassert>
@@ -31,7 +32,7 @@ class AllocaInst;
 /// Callee saved reg can also be saved to a different register rather than
 /// on the stack by setting DstReg instead of FrameIdx.
 class CalleeSavedInfo {
-  unsigned Reg;
+  Register Reg;
   union {
     int FrameIdx;
     unsigned DstReg;
@@ -58,14 +59,14 @@ public:
   : Reg(R), FrameIdx(FI), Restored(true), SpilledToReg(false) {}
 
   // Accessors.
-  unsigned getReg()                        const { return Reg; }
+  Register getReg()                        const { return Reg; }
   int getFrameIdx()                        const { return FrameIdx; }
   unsigned getDstReg()                     const { return DstReg; }
   void setFrameIdx(int FI) {
     FrameIdx = FI;
     SpilledToReg = false;
   }
-  void setDstReg(unsigned SpillReg) {
+  void setDstReg(Register SpillReg) {
     DstReg = SpillReg;
     SpilledToReg = true;
   }
@@ -461,21 +462,21 @@ public:
   }
 
   /// Return the alignment of the specified stack object.
-  unsigned getObjectAlignment(int ObjectIdx) const {
-    assert(unsigned(ObjectIdx+NumFixedObjects) < Objects.size() &&
+  Align getObjectAlign(int ObjectIdx) const {
+    assert(unsigned(ObjectIdx + NumFixedObjects) < Objects.size() &&
            "Invalid Object Idx!");
-    return Objects[ObjectIdx + NumFixedObjects].Alignment.value();
+    return Objects[ObjectIdx + NumFixedObjects].Alignment;
   }
 
   /// setObjectAlignment - Change the alignment of the specified stack object.
-  void setObjectAlignment(int ObjectIdx, unsigned Align) {
-    assert(unsigned(ObjectIdx+NumFixedObjects) < Objects.size() &&
+  void setObjectAlignment(int ObjectIdx, Align Alignment) {
+    assert(unsigned(ObjectIdx + NumFixedObjects) < Objects.size() &&
            "Invalid Object Idx!");
-    Objects[ObjectIdx + NumFixedObjects].Alignment = assumeAligned(Align);
+    Objects[ObjectIdx + NumFixedObjects].Alignment = Alignment;
 
     // Only ensure max alignment for the default stack.
     if (getStackID(ObjectIdx) == 0)
-      ensureMaxAlignment(Align);
+      ensureMaxAlignment(Alignment);
   }
 
   /// Return the underlying Alloca of the specified
@@ -553,7 +554,7 @@ public:
   void setStackSize(uint64_t Size) { StackSize = Size; }
 
   /// Estimate and return the size of the stack frame.
-  unsigned estimateStackSize(const MachineFunction &MF) const;
+  uint64_t estimateStackSize(const MachineFunction &MF) const;
 
   /// Return the correction for frame offsets.
   int getOffsetAdjustment() const { return OffsetAdjustment; }
@@ -563,14 +564,10 @@ public:
 
   /// Return the alignment in bytes that this function must be aligned to,
   /// which is greater than the default stack alignment provided by the target.
-  unsigned getMaxAlignment() const { return MaxAlignment.value(); }
+  Align getMaxAlign() const { return MaxAlignment; }
 
   /// Make sure the function is at least Align bytes aligned.
   void ensureMaxAlignment(Align Alignment);
-  /// FIXME: Remove this once transition to Align is over.
-  inline void ensureMaxAlignment(unsigned Align) {
-    ensureMaxAlignment(assumeAligned(Align));
-  }
 
   /// Return true if this function adjusts the stack -- e.g.,
   /// when calling another function. This is only valid during and after
@@ -605,7 +602,7 @@ public:
 
   /// Returns true if the function contains a tail call.
   bool hasTailCall() const { return HasTailCall; }
-  void setHasTailCall() { HasTailCall = true; }
+  void setHasTailCall(bool V = true) { HasTailCall = V; }
 
   /// Computes the maximum size of a callframe and the AdjustsStack property.
   /// This only works for targets defining
@@ -736,22 +733,10 @@ public:
   /// a nonnegative identifier to represent it.
   int CreateStackObject(uint64_t Size, Align Alignment, bool isSpillSlot,
                         const AllocaInst *Alloca = nullptr, uint8_t ID = 0);
-  /// FIXME: Remove this function when transition to Align is over.
-  inline int CreateStackObject(uint64_t Size, unsigned Alignment,
-                               bool isSpillSlot,
-                               const AllocaInst *Alloca = nullptr,
-                               uint8_t ID = 0) {
-    return CreateStackObject(Size, assumeAligned(Alignment), isSpillSlot,
-                             Alloca, ID);
-  }
 
   /// Create a new statically sized stack object that represents a spill slot,
   /// returning a nonnegative identifier to represent it.
   int CreateSpillStackObject(uint64_t Size, Align Alignment);
-  /// FIXME: Remove this function when transition to Align is over.
-  inline int CreateSpillStackObject(uint64_t Size, unsigned Alignment) {
-    return CreateSpillStackObject(Size, assumeAligned(Alignment));
-  }
 
   /// Remove or mark dead a statically sized stack object.
   void RemoveStackObject(int ObjectIdx) {
@@ -763,10 +748,6 @@ public:
   /// created.  This must be created whenever a variable sized object is
   /// created, whether or not the index returned is actually used.
   int CreateVariableSizedObject(Align Alignment, const AllocaInst *Alloca);
-  /// FIXME: Remove this function when transition to Align is over.
-  int CreateVariableSizedObject(unsigned Alignment, const AllocaInst *Alloca) {
-    return CreateVariableSizedObject(assumeAligned(Alignment), Alloca);
-  }
 
   /// Returns a reference to call saved info vector for the current function.
   const std::vector<CalleeSavedInfo> &getCalleeSavedInfo() const {
@@ -777,8 +758,8 @@ public:
 
   /// Used by prolog/epilog inserter to set the function's callee saved
   /// information.
-  void setCalleeSavedInfo(const std::vector<CalleeSavedInfo> &CSI) {
-    CSInfo = CSI;
+  void setCalleeSavedInfo(std::vector<CalleeSavedInfo> CSI) {
+    CSInfo = std::move(CSI);
   }
 
   /// Has the callee saved info been calculated yet?

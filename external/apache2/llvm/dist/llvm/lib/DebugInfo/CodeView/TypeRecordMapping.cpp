@@ -8,7 +8,9 @@
 
 #include "llvm/DebugInfo/CodeView/TypeRecordMapping.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/Twine.h"
 #include "llvm/DebugInfo/CodeView/EnumTables.h"
+#include "llvm/Support/MD5.h"
 
 using namespace llvm;
 using namespace llvm::codeview;
@@ -99,12 +101,12 @@ static std::string getMemberAttributes(CodeViewRecordIO &IO,
                                        MethodOptions Options) {
   if (!IO.isStreaming())
     return "";
-  std::string AccessSpecifier =
-      getEnumName(IO, uint8_t(Access), makeArrayRef(getMemberAccessNames()));
+  std::string AccessSpecifier = std::string(
+      getEnumName(IO, uint8_t(Access), makeArrayRef(getMemberAccessNames())));
   std::string MemberAttrs(AccessSpecifier);
   if (Kind != MethodKind::Vanilla) {
-    std::string MethodKind =
-        getEnumName(IO, unsigned(Kind), makeArrayRef(getMemberKindNames()));
+    std::string MethodKind = std::string(
+        getEnumName(IO, unsigned(Kind), makeArrayRef(getMemberKindNames())));
     MemberAttrs += ", " + MethodKind;
   }
   if (Options != MethodOptions::None) {
@@ -144,28 +146,51 @@ private:
 };
 } // namespace
 
+// Computes a string representation of a hash of the specified name, suitable
+// for use when emitting CodeView type names.
+static void computeHashString(StringRef Name,
+                              SmallString<32> &StringifiedHash) {
+  llvm::MD5 Hash;
+  llvm::MD5::MD5Result Result;
+  Hash.update(Name);
+  Hash.final(Result);
+  Hash.stringifyResult(Result, StringifiedHash);
+}
+
 static Error mapNameAndUniqueName(CodeViewRecordIO &IO, StringRef &Name,
                                   StringRef &UniqueName, bool HasUniqueName) {
   if (IO.isWriting()) {
     // Try to be smart about what we write here.  We can't write anything too
-    // large, so if we're going to go over the limit, truncate both the name
-    // and unique name by the same amount.
+    // large, so if we're going to go over the limit, replace lengthy names with
+    // a stringified hash value.
     size_t BytesLeft = IO.maxFieldLength();
     if (HasUniqueName) {
       size_t BytesNeeded = Name.size() + UniqueName.size() + 2;
-      StringRef N = Name;
-      StringRef U = UniqueName;
       if (BytesNeeded > BytesLeft) {
-        size_t BytesToDrop = (BytesNeeded - BytesLeft);
-        size_t DropN = std::min(N.size(), BytesToDrop / 2);
-        size_t DropU = std::min(U.size(), BytesToDrop - DropN);
+        // The minimum space required for emitting hashes of both names.
+        assert(BytesLeft >= 70);
 
-        N = N.drop_back(DropN);
-        U = U.drop_back(DropU);
+        // Replace the entire unique name with a hash of the unique name.
+        SmallString<32> Hash;
+        computeHashString(UniqueName, Hash);
+        std::string UniqueB = Twine("??@" + Hash + "@").str();
+        assert(UniqueB.size() == 36);
+
+        // Truncate the name if necessary and append a hash of the name.
+        // The name length, hash included, is limited to 4096 bytes.
+        const size_t MaxTakeN = 4096;
+        size_t TakeN = std::min(MaxTakeN, BytesLeft - UniqueB.size() - 2) - 32;
+        computeHashString(Name, Hash);
+        std::string NameB = (Name.take_front(TakeN) + Hash).str();
+
+        StringRef N = NameB;
+        StringRef U = UniqueB;
+        error(IO.mapStringZ(N));
+        error(IO.mapStringZ(U));
+      } else {
+        error(IO.mapStringZ(Name));
+        error(IO.mapStringZ(UniqueName));
       }
-
-      error(IO.mapStringZ(N));
-      error(IO.mapStringZ(U));
     } else {
       // Cap the length of the string at however many bytes we have available,
       // plus one for the required null terminator.
@@ -201,8 +226,8 @@ Error TypeRecordMapping::visitTypeBegin(CVType &CVR) {
   if (IO.isStreaming()) {
     auto RecordKind = CVR.kind();
     uint16_t RecordLen = CVR.length() - 2;
-    std::string RecordKindName =
-        getEnumName(IO, unsigned(RecordKind), makeArrayRef(LeafTypeNames));
+    std::string RecordKindName = std::string(
+        getEnumName(IO, unsigned(RecordKind), makeArrayRef(LeafTypeNames)));
     error(IO.mapInteger(RecordLen, "Record length"));
     error(IO.mapEnum(RecordKind, "Record kind: " + RecordKindName));
   }
@@ -232,7 +257,7 @@ Error TypeRecordMapping::visitMemberBegin(CVMemberRecord &Record) {
 
   // The largest possible subrecord is one in which there is a record prefix,
   // followed by the subrecord, followed by a continuation, and that entire
-  // sequence spaws `MaxRecordLength` bytes.  So the record's length is
+  // sequence spawns `MaxRecordLength` bytes.  So the record's length is
   // calculated as follows.
 
   constexpr uint32_t ContinuationLength = 8;
@@ -241,7 +266,7 @@ Error TypeRecordMapping::visitMemberBegin(CVMemberRecord &Record) {
 
   MemberKind = Record.Kind;
   if (IO.isStreaming()) {
-    std::string MemberKindName = getLeafTypeName(Record.Kind);
+    std::string MemberKindName = std::string(getLeafTypeName(Record.Kind));
     MemberKindName +=
         " ( " +
         (getEnumName(IO, unsigned(Record.Kind), makeArrayRef(LeafTypeNames)))
@@ -277,8 +302,8 @@ Error TypeRecordMapping::visitKnownRecord(CVType &CVR, ModifierRecord &Record) {
 
 Error TypeRecordMapping::visitKnownRecord(CVType &CVR,
                                           ProcedureRecord &Record) {
-  std::string CallingConvName = getEnumName(
-      IO, uint8_t(Record.CallConv), makeArrayRef(getCallingConventions()));
+  std::string CallingConvName = std::string(getEnumName(
+      IO, uint8_t(Record.CallConv), makeArrayRef(getCallingConventions())));
   std::string FuncOptionNames =
       getFlagNames(IO, static_cast<uint16_t>(Record.Options),
                    makeArrayRef(getFunctionOptionEnum()));
@@ -293,8 +318,8 @@ Error TypeRecordMapping::visitKnownRecord(CVType &CVR,
 
 Error TypeRecordMapping::visitKnownRecord(CVType &CVR,
                                           MemberFunctionRecord &Record) {
-  std::string CallingConvName = getEnumName(
-      IO, uint8_t(Record.CallConv), makeArrayRef(getCallingConventions()));
+  std::string CallingConvName = std::string(getEnumName(
+      IO, uint8_t(Record.CallConv), makeArrayRef(getCallingConventions())));
   std::string FuncOptionNames =
       getFlagNames(IO, static_cast<uint16_t>(Record.Options),
                    makeArrayRef(getFunctionOptionEnum()));
@@ -337,12 +362,13 @@ Error TypeRecordMapping::visitKnownRecord(CVType &CVR, PointerRecord &Record) {
   SmallString<128> Attr("Attrs: ");
 
   if (IO.isStreaming()) {
-    std::string PtrType = getEnumName(IO, unsigned(Record.getPointerKind()),
-                                      makeArrayRef(getPtrKindNames()));
+    std::string PtrType =
+        std::string(getEnumName(IO, unsigned(Record.getPointerKind()),
+                                makeArrayRef(getPtrKindNames())));
     Attr += "[ Type: " + PtrType;
 
-    std::string PtrMode = getEnumName(IO, unsigned(Record.getMode()),
-                                      makeArrayRef(getPtrModeNames()));
+    std::string PtrMode = std::string(getEnumName(
+        IO, unsigned(Record.getMode()), makeArrayRef(getPtrModeNames())));
     Attr += ", Mode: " + PtrMode;
 
     auto PtrSizeOf = Record.getSize();
@@ -374,8 +400,8 @@ Error TypeRecordMapping::visitKnownRecord(CVType &CVR, PointerRecord &Record) {
 
     MemberPointerInfo &M = *Record.MemberInfo;
     error(IO.mapInteger(M.ContainingType, "ClassType"));
-    std::string PtrMemberGetRepresentation = getEnumName(
-        IO, uint16_t(M.Representation), makeArrayRef(getPtrMemberRepNames()));
+    std::string PtrMemberGetRepresentation = std::string(getEnumName(
+        IO, uint16_t(M.Representation), makeArrayRef(getPtrMemberRepNames())));
     error(IO.mapEnum(M.Representation,
                      "Representation: " + PtrMemberGetRepresentation));
   }
@@ -581,8 +607,8 @@ Error TypeRecordMapping::visitKnownRecord(CVType &CVR,
 }
 
 Error TypeRecordMapping::visitKnownRecord(CVType &CVR, LabelRecord &Record) {
-  std::string ModeName =
-      getEnumName(IO, uint16_t(Record.Mode), makeArrayRef(getLabelTypeEnum()));
+  std::string ModeName = std::string(
+      getEnumName(IO, uint16_t(Record.Mode), makeArrayRef(getLabelTypeEnum())));
   error(IO.mapEnum(Record.Mode, "Mode: " + ModeName));
   return Error::success();
 }

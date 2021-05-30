@@ -13,6 +13,8 @@
 #include "llvm/CodeGen/MachineBranchProbabilityInfo.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/InitializePasses.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -23,6 +25,7 @@ INITIALIZE_PASS_BEGIN(MachineBranchProbabilityInfo, "machine-branch-prob",
 INITIALIZE_PASS_END(MachineBranchProbabilityInfo, "machine-branch-prob",
                     "Machine Branch Probability Analysis", false, true)
 
+namespace llvm {
 cl::opt<unsigned>
     StaticLikelyProb("static-likely-prob",
                      cl::desc("branch probability threshold in percentage"
@@ -34,8 +37,15 @@ cl::opt<unsigned> ProfileLikelyProb(
     cl::desc("branch probability threshold in percentage to be considered"
              " very likely when profile is available"),
     cl::init(51), cl::Hidden);
+} // namespace llvm
 
 char MachineBranchProbabilityInfo::ID = 0;
+
+MachineBranchProbabilityInfo::MachineBranchProbabilityInfo()
+    : ImmutablePass(ID) {
+  PassRegistry &Registry = *PassRegistry::getPassRegistry();
+  initializeMachineBranchProbabilityInfoPass(Registry);
+}
 
 void MachineBranchProbabilityInfo::anchor() {}
 

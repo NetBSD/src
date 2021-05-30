@@ -47,7 +47,10 @@ public:
   virtual StringRef getStrSection() const { return ""; }
   virtual const DWARFSection &getRangesSection() const { return Dummy; }
   virtual const DWARFSection &getRnglistsSection() const { return Dummy; }
+  virtual const DWARFSection &getMacroSection() const { return Dummy; }
+  virtual StringRef getMacroDWOSection() const { return ""; }
   virtual StringRef getMacinfoSection() const { return ""; }
+  virtual StringRef getMacinfoDWOSection() const { return ""; }
   virtual const DWARFSection &getPubnamesSection() const { return Dummy; }
   virtual const DWARFSection &getPubtypesSection() const { return Dummy; }
   virtual const DWARFSection &getGnuPubnamesSection() const { return Dummy; }
@@ -60,6 +63,7 @@ public:
   virtual StringRef getAbbrevDWOSection() const { return ""; }
   virtual const DWARFSection &getLineDWOSection() const { return Dummy; }
   virtual const DWARFSection &getLocDWOSection() const { return Dummy; }
+  virtual const DWARFSection &getLoclistsDWOSection() const { return Dummy; }
   virtual StringRef getStrDWOSection() const { return ""; }
   virtual const DWARFSection &getStrOffsetsDWOSection() const {
     return Dummy;
