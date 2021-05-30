@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2021/05/27 04:53:44 jdc Exp $
+#	$NetBSD: Makefile,v 1.3 2021/05/30 02:22:19 joerg Exp $
 
 DRIVER=		xf86-video-pnozz
 DRIVER_NAME=	pnozz_drv
@@ -14,3 +14,4 @@ MAN=		pnozz.4
 # XXX
 COPTS.pnozz_accel.c+=	${${ACTIVE_CC} == "gcc":? -Wno-error=discarded-qualifiers :}
 COPTS.pnozz_accel.c+=	${${ACTIVE_CC} == "clang":? -Wno-error=incompatible-pointer-types-discards-qualifiers :}
+COPTS.pnozz_cursor.c+=	${${ACTIVE_CC} == "clang":? -Wno-error=pointer-sign :}
