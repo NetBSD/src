@@ -1,11 +1,12 @@
-#	$NetBSD: Makefile.inc,v 1.3 2020/09/07 19:05:41 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2021/05/30 01:56:58 joerg Exp $
 
 LLVM_TOPLEVEL:=	${.PARSEDIR}/..
 NOSTATICLIB=	yes
 
-COPTS+=${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} > 8:? -Wno-error=init-list-lifetime :}
+CWARNFLAGS.gcc+=	${${HAVE_GCC:U0} >= 9:? -Wno-error=init-list-lifetime :}
 
 .include "${LLVM_TOPLEVEL}/lib/Makefile.inc"
 .include "${LLVM_TOPLEVEL}/lib/${.CURDIR:T}/Makefile"
 
-CWARNFLAGS.gcc+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 9:? -Wno-error=init-list-lifetime :}
+LLVM_INCLUDE_OBJDIR!=	cd ${LLVM_TOPLEVEL}/include && ${PRINTOBJDIR}
+LLVM_MODULE_CACHE=	${LLVM_INCLUDE_OBJDIR}/module.cache-rt

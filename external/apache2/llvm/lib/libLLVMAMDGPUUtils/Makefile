@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/11/11 22:45:03 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2021/05/30 01:56:50 joerg Exp $
 
 LIB=	LLVMAMDGPUUtils
 
@@ -13,6 +13,7 @@ CPPFLAGS+=	-I${LLVM_SRCDIR}/lib/Target/AMDGPU
 
 SRCS+=	AMDGPUAsmUtils.cpp \
 	AMDGPUBaseInfo.cpp \
+	AMDGPULDSUtils.cpp \
 	AMDGPUPALMetadata.cpp \
 	AMDKernelCodeTUtils.cpp
 

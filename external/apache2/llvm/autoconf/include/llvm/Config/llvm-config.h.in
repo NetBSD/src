@@ -80,4 +80,9 @@
 /* LLVM version string */
 #undef LLVM_VERSION_STRING
 
+/* Define to 1 if you have the <sysexits.h> header file. */
+#undef HAVE_SYSEXITS_H
+
+#define LLVM_ENABLE_NEW_PASS_MANAGER 0
+
 #endif

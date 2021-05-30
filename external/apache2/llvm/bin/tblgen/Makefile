@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/11/11 22:45:02 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2021/05/30 01:56:49 joerg Exp $
 
 PROG_CXX=	llvm-tblgen
 NOMAN=		yes
@@ -12,6 +12,7 @@ SRCS=	AsmMatcherEmitter.cpp \
 	AsmWriterInst.cpp \
 	Attributes.cpp \
 	CallingConvEmitter.cpp \
+	CodeBeadsGen.cpp \
 	CodeEmitterGen.cpp \
 	CodeGenDAGPatterns.cpp \
 	CodeGenHwModes.cpp \
@@ -28,6 +29,7 @@ SRCS=	AsmMatcherEmitter.cpp \
 	DAGISelMatcherOpt.cpp \
 	DFAEmitter.cpp \
 	DFAPacketizerEmitter.cpp \
+	DirectiveEmitter.cpp \
 	DisassemblerEmitter.cpp \
 	ExegesisEmitter.cpp \
 	FastISelEmitter.cpp \
@@ -38,7 +40,9 @@ SRCS=	AsmMatcherEmitter.cpp \
 	InstrDocsEmitter.cpp \
 	InstrInfoEmitter.cpp \
 	IntrinsicEmitter.cpp \
+	OptEmitter.cpp \
 	OptParserEmitter.cpp \
+	OptRSTEmitter.cpp \
 	PredicateExpander.cpp \
 	PseudoLoweringEmitter.cpp \
 	RegisterBankEmitter.cpp \
@@ -58,7 +62,14 @@ SRCS=	AsmMatcherEmitter.cpp \
 	X86RecognizableInstr.cpp
 
 .PATH: ${LLVM_SRCDIR}/utils/TableGen/GlobalISel
-SRCS+=	CodeExpander.cpp
+SRCS+=	CodeExpander.cpp \
+	GIMatchDag.cpp \
+	GIMatchDagEdge.cpp \
+	GIMatchDagInstr.cpp \
+	GIMatchDagOperands.cpp \
+	GIMatchDagPredicate.cpp \
+	GIMatchDagPredicateDependencyEdge.cpp \
+	GIMatchTree.cpp
 
 LLVM_LIBS+= \
 	TableGen \

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/11/11 22:45:05 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2021/05/30 01:56:50 joerg Exp $
 
 LIB=	LLVMAsmPrinter
 
@@ -8,6 +8,7 @@ LIB=	LLVMAsmPrinter
 
 SRCS+=	AccelTable.cpp \
 	AddressPool.cpp \
+	AIXException.cpp \
 	ARMException.cpp \
 	AsmPrinter.cpp \
 	AsmPrinterDwarf.cpp \
@@ -28,6 +29,7 @@ SRCS+=	AccelTable.cpp \
 	EHStreamer.cpp \
 	ErlangGCPrinter.cpp \
 	OcamlGCPrinter.cpp \
+	PseudoProbePrinter.cpp \
 	WasmException.cpp \
 	WinCFGuard.cpp \
 	WinException.cpp

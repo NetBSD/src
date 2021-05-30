@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/11/11 22:45:06 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2021/05/30 01:56:52 joerg Exp $
 
 LIB=	LLVMGlobalISel
 
@@ -14,6 +14,7 @@ SRCS+=	CallLowering.cpp \
 	GISelChangeObserver.cpp \
 	GISelKnownBits.cpp \
 	GlobalISel.cpp \
+	InlineAsmLowering.cpp \
 	InstructionSelect.cpp \
 	InstructionSelector.cpp \
 	IRTranslator.cpp \
@@ -23,6 +24,7 @@ SRCS+=	CallLowering.cpp \
 	LegalizerHelper.cpp \
 	LegalizerInfo.cpp \
 	Localizer.cpp \
+	LostDebugLocObserver.cpp \
 	MachineIRBuilder.cpp \
 	RegBankSelect.cpp \
 	RegisterBank.cpp \

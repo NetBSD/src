@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2020/09/07 00:18:25 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2021/05/30 01:56:50 joerg Exp $
 
 LIB=	LLVMAnalysis
 
@@ -11,6 +11,7 @@ SRCS+=	AliasAnalysis.cpp \
 	AliasAnalysisSummary.cpp \
 	AliasSetTracker.cpp \
 	Analysis.cpp \
+	AssumeBundleQueries.cpp \
 	AssumptionCache.cpp \
 	BasicAliasAnalysis.cpp \
 	BlockFrequencyInfo.cpp \
@@ -28,26 +29,35 @@ SRCS+=	AliasAnalysis.cpp \
 	CmpInstAnalysis.cpp \
 	CodeMetrics.cpp \
 	ConstantFolding.cpp \
+	ConstraintSystem.cpp \
 	CostModel.cpp \
 	DDG.cpp \
+	DDGPrinter.cpp \
 	Delinearization.cpp \
 	DemandedBits.cpp \
 	DependenceAnalysis.cpp \
 	DependenceGraphBuilder.cpp \
+	DevelopmentModeInlineAdvisor.cpp \
 	DivergenceAnalysis.cpp \
 	DominanceFrontier.cpp \
 	DomPrinter.cpp \
 	DomTreeUpdater.cpp \
 	EHPersonalities.cpp \
+	FunctionPropertiesAnalysis.cpp \
 	GlobalsModRef.cpp \
 	GuardUtils.cpp \
+	HeatUtils.cpp \
+	ImportedFunctionsInliningStatistics.cpp \
 	IndirectCallPromotionAnalysis.cpp \
+	InlineAdvisor.cpp \
 	InlineCost.cpp \
+	InlineSizeEstimatorAnalysis.cpp \
 	InstCount.cpp \
 	InstructionPrecedenceTracking.cpp \
 	InstructionSimplify.cpp \
 	Interval.cpp \
 	IntervalPartition.cpp \
+	IRSimilarityIdentifier.cpp \
 	IVDescriptors.cpp \
 	IVUsers.cpp \
 	LazyBlockFrequencyInfo.cpp \
@@ -61,6 +71,7 @@ SRCS+=	AliasAnalysis.cpp \
 	LoopAnalysisManager.cpp \
 	LoopCacheAnalysis.cpp \
 	LoopInfo.cpp \
+	LoopNestAnalysis.cpp \
 	LoopPass.cpp \
 	LoopUnrollAnalyzer.cpp \
 	MemDepPrinter.cpp \
@@ -70,6 +81,7 @@ SRCS+=	AliasAnalysis.cpp \
 	MemoryLocation.cpp \
 	MemorySSA.cpp \
 	MemorySSAUpdater.cpp \
+	MLInlineAdvisor.cpp \
 	ModuleDebugInfoPrinter.cpp \
 	ModuleSummaryAnalysis.cpp \
 	MustExecute.cpp \
@@ -77,8 +89,7 @@ SRCS+=	AliasAnalysis.cpp \
 	ObjCARCAnalysisUtils.cpp \
 	ObjCARCInstKind.cpp \
 	OptimizationRemarkEmitter.cpp \
-	OrderedBasicBlock.cpp \
-	OrderedInstructions.cpp \
+	OverflowInstAnalysis.cpp \
 	PHITransAddr.cpp \
 	PhiValues.cpp \
 	PostDominators.cpp \
@@ -87,24 +98,28 @@ SRCS+=	AliasAnalysis.cpp \
 	RegionInfo.cpp \
 	RegionPass.cpp \
 	RegionPrinter.cpp \
+	ReleaseModeModelRunner.cpp \
+	ReplayInlineAdvisor.cpp \
 	ScalarEvolutionAliasAnalysis.cpp \
 	ScalarEvolution.cpp \
-	ScalarEvolutionExpander.cpp \
+	ScalarEvolutionDivision.cpp \
 	ScalarEvolutionNormalization.cpp \
 	ScopedNoAliasAA.cpp \
+	StackLifetime.cpp \
 	StackSafetyAnalysis.cpp \
 	SyncDependenceAnalysis.cpp \
 	SyntheticCountsUtils.cpp \
 	TargetLibraryInfo.cpp \
 	TargetTransformInfo.cpp \
+	TFUtils.cpp \
 	Trace.cpp \
 	TypeBasedAliasAnalysis.cpp \
 	TypeMetadataUtils.cpp \
-	VFABIDemangling.cpp \
 	ValueLattice.cpp \
 	ValueLatticeUtils.cpp \
 	ValueTracking.cpp \
-	VectorUtils.cpp
+	VectorUtils.cpp \
+	VFABIDemangling.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

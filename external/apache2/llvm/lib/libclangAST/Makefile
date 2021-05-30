@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2019/11/18 19:54:23 joerg Exp $
+#	$NetBSD: Makefile,v 1.4 2021/05/30 01:56:55 joerg Exp $
 
 LIB=	clangAST
 
@@ -7,6 +7,7 @@ LIB=	clangAST
 .PATH: ${CLANG_SRCDIR}/lib/AST
 
 SRCS+=	APValue.cpp \
+	ASTConcept.cpp \
 	ASTConsumer.cpp \
 	ASTContext.cpp \
 	ASTDiagnostic.cpp \
@@ -23,6 +24,7 @@ SRCS+=	APValue.cpp \
 	CommentParser.cpp \
 	CommentSema.cpp \
 	ComparisonCategories.cpp \
+	ComputeDependence.cpp \
 	CXXInheritance.cpp \
 	DataCollection.cpp \
 	DeclarationName.cpp \
@@ -36,6 +38,7 @@ SRCS+=	APValue.cpp \
 	DeclPrinter.cpp \
 	DeclTemplate.cpp \
 	ExprClassification.cpp \
+	ExprConcepts.cpp \
 	ExprConstant.cpp \
 	Expr.cpp \
 	ExprCXX.cpp \
@@ -55,6 +58,7 @@ SRCS+=	APValue.cpp \
 	ODRHash.cpp \
 	OpenMPClause.cpp \
 	OSLog.cpp \
+	ParentMapContext.cpp \
 	ParentMap.cpp \
 	PrintfFormatString.cpp \
 	QualTypeNames.cpp \
@@ -82,8 +86,7 @@ SRCS+=	APValue.cpp \
 
 .PATH: ${CLANG_SRCDIR}/lib/AST/Interp
 
-SRCS+=	Block.cpp \
-	ByteCodeEmitter.cpp \
+SRCS+=	ByteCodeEmitter.cpp \
 	ByteCodeExprGen.cpp \
 	ByteCodeGenError.cpp \
 	ByteCodeStmtGen.cpp \
@@ -94,6 +97,7 @@ SRCS+=	Block.cpp \
 	Frame.cpp \
 	Function.cpp \
 	Interp.cpp \
+	InterpBlock.cpp \
 	InterpFrame.cpp \
 	InterpStack.cpp \
 	InterpState.cpp \

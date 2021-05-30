@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/11/11 22:45:15 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2021/05/30 01:56:56 joerg Exp $
 
 LIB=	clangFormat
 
@@ -12,6 +12,7 @@ SRCS+=	AffectedRangeManager.cpp \
 	Format.cpp \
 	FormatToken.cpp \
 	FormatTokenLexer.cpp \
+	MacroExpander.cpp \
 	NamespaceEndCommentsFixer.cpp \
 	SortJavaScriptImports.cpp \
 	TokenAnalyzer.cpp \

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/11/11 22:45:13 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2021/05/30 01:56:55 joerg Exp $
 
 LIB=	LLVMX86MCTargetDesc
 
@@ -19,6 +19,7 @@ SRCS+=	X86AsmBackend.cpp \
 	X86MCAsmInfo.cpp \
 	X86MCCodeEmitter.cpp \
 	X86MCTargetDesc.cpp \
+	X86ShuffleDecode.cpp \
 	X86WinCOFFObjectWriter.cpp \
 	X86WinCOFFStreamer.cpp \
 	X86WinCOFFTargetStreamer.cpp

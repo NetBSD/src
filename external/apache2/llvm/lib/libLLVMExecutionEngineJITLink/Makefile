@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/11/11 22:45:06 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2021/05/30 01:56:52 joerg Exp $
 
 LIB=	LLVMExecutionEngineJITLink
 
@@ -7,14 +7,16 @@ LIB=	LLVMExecutionEngineJITLink
 .PATH: ${LLVM_SRCDIR}/lib/ExecutionEngine/JITLink
 
 SRCS+=	EHFrameSupport.cpp \
+	ELF.cpp \
+	ELF_x86_64.cpp \
 	JITLink.cpp \
 	JITLinkGeneric.cpp \
 	JITLinkMemoryManager.cpp \
 	MachO_arm64.cpp \
-	MachOAtomGraphBuilder.cpp \
 	MachO.cpp \
 	MachOLinkGraphBuilder.cpp \
-	MachO_x86_64.cpp
+	MachO_x86_64.cpp \
+	x86_64.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2020/02/21 15:00:44 joerg Exp $
+#	$NetBSD: Makefile,v 1.24 2021/05/30 01:57:00 joerg Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -9,7 +9,12 @@
 .include "Makefile.inc"
 .include "${LLVM_TOPLEVEL}/lib/Makefile.inc"
 
-realdepends realall: config/config.status need-dl need-terminfo
+realdepends realall: config/config.status need-dl need-terminfo support-modules
+
+dependall: clean-modulecache
+
+clean-modulecache:
+	rm -rf ${LLVM_MODULE_CACHE}
 
 config/config.status: ${LLVM_SRCDIR}/configure
 	mkdir -p config
@@ -17,8 +22,16 @@ config/config.status: ${LLVM_SRCDIR}/configure
 	chmod 755 config/python
 	cd config && ${HOST_SH} ${CONFIG_DIR}/configure ${LLVM_CONFIGURE_ARGS} \
 	    --enable-optimized CC=${HOST_CC:Q} CXX=${HOST_CXX:Q} \
-	    --with-python=${.OBJDIR}/config/python
-# --disable-assertions
+	    --with-python=${.OBJDIR}/config/python && \
+	cp ${LLVM_TOPLEVEL}/include/module.modulemap include/llvm/module.modulemap
+
+support-modules: module-test.cpp Makefile
+	if ${HOST_CXX} -stdlib=libc++ -c -fmodules -fcxx-modules -fmodules-cache-path=./module.cache \
+	   ${.CURDIR}/module-test.cpp  3> /dev/null 2>&1; then \
+		echo HOST_SUPPORTS_MODULES=yes > ${.TARGET}; \
+	else \
+		echo HOST_SUPPORTS_MODULES=no > ${.TARGET}; \
+	fi
 
 need-dl: Makefile
 	printf '#include <dlfcn.h>\nint main(void){void *p; return dladdr(p, p);}' > need-dl.c
@@ -45,6 +58,7 @@ cleandir: cleandir-llvm
 
 cleandir-llvm: .PHONY
 	test ! -d config || rm -r config
-	rm -f need-dl need-dl.tmp
+	test ! -d module-cache || rm -r module-cache
+	rm -f need-dl need-dl.tmp module-cache module-test.o
 
 .include <bsd.hostprog.mk>

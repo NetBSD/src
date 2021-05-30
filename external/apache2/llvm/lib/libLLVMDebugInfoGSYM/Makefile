@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/11/11 22:45:05 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2021/05/30 01:56:51 joerg Exp $
 
 LIB=	LLVMDebugInfoGSYM
 
@@ -6,13 +6,15 @@ LIB=	LLVMDebugInfoGSYM
 
 .PATH: ${LLVM_SRCDIR}/lib/DebugInfo/GSYM
 
-SRCS+=	FileWriter.cpp \
+SRCS+=	DwarfTransformer.cpp \
+	FileWriter.cpp \
 	FunctionInfo.cpp \
 	GsymCreator.cpp \
 	GsymReader.cpp \
 	Header.cpp \
 	InlineInfo.cpp \
 	LineTable.cpp \
+	LookupResult.cpp \
 	Range.cpp
 
 .if defined(HOSTLIB)

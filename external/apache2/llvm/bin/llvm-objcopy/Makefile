@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/11/11 22:45:00 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2021/05/30 01:56:48 joerg Exp $
 
 PROG_CXX=	llvm-objcopy
 NOMAN=		yes
@@ -9,9 +9,8 @@ NOMAN=		yes
 
 CPPFLAGS+=	-I${LLVM_SRCDIR}/tools/llvm-objcopy
 
-SRCS=	Buffer.cpp \
-	CopyConfig.cpp \
-	llvm-objcopy.cpp
+SRCS=	llvm-objcopy.cpp \
+	ConfigManager.cpp
 
 .PATH: ${LLVM_SRCDIR}/tools/llvm-objcopy/COFF
 SRCS+=	COFFObjcopy.cpp \
@@ -20,8 +19,7 @@ SRCS+=	COFFObjcopy.cpp \
 	Writer.cpp
 
 .PATH: ${LLVM_SRCDIR}/tools/llvm-objcopy/ELF
-SRCS+=	ELFConfig.cpp \
-	ELFObjcopy.cpp \
+SRCS+=	ELFObjcopy.cpp \
 	ELFObject.cpp
 
 ELFObject.cpp: ${LLVM_SRCDIR}/tools/llvm-objcopy/ELF/Object.cpp
@@ -40,6 +38,19 @@ MachOObject.cpp: ${LLVM_SRCDIR}/tools/llvm-objcopy/MachO/Object.cpp
 	cat ${LLVM_SRCDIR}/tools/llvm-objcopy/MachO/Object.cpp > MachOObject.cpp
 
 CPPFLAGS.MachOObject.cpp+=	-I${LLVM_SRCDIR}/tools/llvm-objcopy/MachO
+
+.PATH: ${LLVM_SRCDIR}/tools/llvm-objcopy/wasm
+SRCS+=	WasmObjcopy.cpp \
+	WasmObject.cpp \
+	wasmReader.cpp \
+	wasmWriter.cpp
+
+WasmObject.cpp: ${LLVM_SRCDIR}/tools/llvm-objcopy/wasm/Object.cpp
+	cat ${LLVM_SRCDIR}/tools/llvm-objcopy/wasm/Object.cpp > WasmObject.cpp
+WasmReader.cpp: ${LLVM_SRCDIR}/tools/llvm-objcopy/wasm/Reader.cpp
+	cat ${LLVM_SRCDIR}/tools/llvm-objcopy/wasm/Reader.cpp > WasmReader.cpp
+WasmWriter.cpp: ${LLVM_SRCDIR}/tools/llvm-objcopy/wasm/Writer.cpp
+	cat ${LLVM_SRCDIR}/tools/llvm-objcopy/wasm/Writer.cpp > WasmWriter.cpp
 
 TABLEGEN_SRC=		CommonOpts.td ObjcopyOpts.td StripOpts.td
 

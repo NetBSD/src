@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/11/11 22:45:16 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2021/05/30 01:56:57 joerg Exp $
 
 LIB=	clangStaticAnalyzerCore
 
@@ -18,9 +18,11 @@ SRCS+=	AnalysisManager.cpp \
 	Checker.cpp \
 	CheckerHelpers.cpp \
 	CheckerManager.cpp \
+	CheckerRegistryData.cpp \
 	CommonBugCategories.cpp \
 	ConstraintManager.cpp \
 	CoreEngine.cpp \
+	DynamicExtent.cpp \
 	DynamicType.cpp \
 	Environment.cpp \
 	ExplodedGraph.cpp \
@@ -31,7 +33,6 @@ SRCS+=	AnalysisManager.cpp \
 	ExprEngineObjC.cpp \
 	FunctionSummary.cpp \
 	HTMLDiagnostics.cpp \
-	IssueHash.cpp \
 	LoopUnrolling.cpp \
 	LoopWidening.cpp \
 	MemRegion.cpp \
@@ -45,10 +46,10 @@ SRCS+=	AnalysisManager.cpp \
 	SimpleSValBuilder.cpp \
 	SMTConstraintManager.cpp \
 	Store.cpp \
-	SubEngine.cpp \
 	SValBuilder.cpp \
 	SVals.cpp \
 	SymbolManager.cpp \
+	TextDiagnostics.cpp \
 	WorkList.cpp
 
 .if defined(HOSTLIB)

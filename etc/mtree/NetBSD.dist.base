@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.235 2021/04/12 02:09:27 mrg Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.236 2021/05/30 01:56:45 joerg Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -113,8 +113,12 @@
 ./usr/include/c++
 ./usr/include/c++/experimental
 ./usr/include/c++/ext
+./usr/include/c++/__iterator
+./usr/include/c++/__memory
+./usr/include/c++/__ranges
+./usr/include/c++/__utility
 ./usr/include/cbor
-./usr/include/clang-9.0
+./usr/include/clang-13.0
 ./usr/include/crypto
 ./usr/include/dev
 ./usr/include/dev/apm

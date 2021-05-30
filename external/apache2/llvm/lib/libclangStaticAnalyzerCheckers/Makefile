@@ -1,18 +1,21 @@
-#	$NetBSD: Makefile,v 1.1 2019/11/11 22:45:16 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2021/05/30 01:56:57 joerg Exp $
 
 LIB=	clangStaticAnalyzerCheckers
 
 .include <bsd.init.mk>
 
 .PATH: ${CLANG_SRCDIR}/lib/StaticAnalyzer/Checkers
+.PATH: ${CLANG_SRCDIR}/lib/StaticAnalyzer/Checkers/cert
 .PATH: ${CLANG_SRCDIR}/lib/StaticAnalyzer/Checkers/MPI-Checker
 .PATH: ${CLANG_SRCDIR}/lib/StaticAnalyzer/Checkers/RetainCountChecker
 .PATH: ${CLANG_SRCDIR}/lib/StaticAnalyzer/Checkers/UninitializedObject
+.PATH: ${CLANG_SRCDIR}/lib/StaticAnalyzer/Checkers/WebKit
 
 SRCS+=	AnalysisOrderChecker.cpp \
 	AnalyzerStatsChecker.cpp \
 	ArrayBoundChecker.cpp \
 	ArrayBoundCheckerV2.cpp \
+	ASTUtils.cpp \
 	BasicObjCFoundationChecks.cpp \
 	BlockInCriticalSectionChecker.cpp \
 	BoolAssignmentChecker.cpp \
@@ -24,16 +27,20 @@ SRCS+=	AnalysisOrderChecker.cpp \
 	CheckerDocumentation.cpp \
 	CheckObjCDealloc.cpp \
 	CheckObjCInstMethSignature.cpp \
+	CheckPlacementNew.cpp \
 	CheckSecuritySyntaxOnly.cpp \
 	CheckSizeofPointer.cpp \
 	ChrootChecker.cpp \
 	CloneChecker.cpp \
+	ContainerModeling.cpp \
 	ConversionChecker.cpp \
 	CStringChecker.cpp \
 	CStringSyntaxChecker.cpp \
 	CXXSelfAssignmentChecker.cpp \
 	DeadStoresChecker.cpp \
 	DebugCheckers.cpp \
+	DebugContainerModeling.cpp \
+	DebugIteratorModeling.cpp \
 	DeleteWithNonVirtualDtorChecker.cpp \
 	DereferenceChecker.cpp \
 	DirectIvarAssignment.cpp \
@@ -43,12 +50,16 @@ SRCS+=	AnalysisOrderChecker.cpp \
 	EnumCastOutOfRangeChecker.cpp \
 	ExprInspectionChecker.cpp \
 	FixedAddressChecker.cpp \
+	FuchsiaHandleChecker.cpp \
 	GCDAntipatternChecker.cpp \
 	GenericTaintChecker.cpp \
 	GTestChecker.cpp \
 	IdenticalExprChecker.cpp \
 	InnerPointerChecker.cpp \
-	IteratorChecker.cpp \
+	InvalidatedIteratorChecker.cpp \
+	Iterator.cpp \
+	IteratorModeling.cpp \
+	IteratorRangeChecker.cpp \
 	IvarInvalidationChecker.cpp \
 	LLVMConventionsChecker.cpp \
 	LocalizationChecker.cpp \
@@ -58,6 +69,7 @@ SRCS+=	AnalysisOrderChecker.cpp \
 	MallocOverflowSecurityChecker.cpp \
 	MallocSizeofChecker.cpp \
 	MIGChecker.cpp \
+	MismatchedIteratorChecker.cpp \
 	MmapWriteExecChecker.cpp \
 	MoveChecker.cpp \
 	MPIBugReporter.cpp \
@@ -66,6 +78,7 @@ SRCS+=	AnalysisOrderChecker.cpp \
 	NonnullGlobalConstantsChecker.cpp \
 	NonNullParamChecker.cpp \
 	NoReturnFunctionChecker.cpp \
+	NoUncountedMembersChecker.cpp \
 	NSAutoreleasePoolChecker.cpp \
 	NSErrorChecker.cpp \
 	NullabilityChecker.cpp \
@@ -86,22 +99,30 @@ SRCS+=	AnalysisOrderChecker.cpp \
 	PointerSortingChecker.cpp \
 	PointerSubChecker.cpp \
 	PthreadLockChecker.cpp \
+	PtrTypesSemantics.cpp \
+	PutenvWithAutoChecker.cpp \
+	RefCntblBaseVirtualDtorChecker.cpp \
 	RetainCountChecker.cpp \
 	RetainCountDiagnostics.cpp \
 	ReturnPointerRangeChecker.cpp \
-	ReturnValueChecker.cpp \
 	ReturnUndefChecker.cpp \
+	ReturnValueChecker.cpp \
 	RunLoopAutoreleaseLeakChecker.cpp \
-	SmartPtrModeling.cpp \
 	SimpleStreamChecker.cpp \
+	SmartPtrChecker.cpp \
+	SmartPtrModeling.cpp \
 	StackAddrEscapeChecker.cpp \
 	StdLibraryFunctionsChecker.cpp \
+	STLAlgorithmModeling.cpp \
 	StreamChecker.cpp \
 	Taint.cpp \
 	TaintTesterChecker.cpp \
 	TestAfterDivZeroChecker.cpp \
 	TraversalChecker.cpp \
 	TrustNonnullChecker.cpp \
+	UncountedCallArgsChecker.cpp \
+	UncountedLambdaCapturesChecker.cpp \
+	UncountedLocalVarsChecker.cpp \
 	UndefBranchChecker.cpp \
 	UndefCapturedBlockVarChecker.cpp \
 	UndefinedArraySubscriptChecker.cpp \

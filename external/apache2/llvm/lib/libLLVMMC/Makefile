@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/11/11 22:45:08 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2021/05/30 01:56:53 joerg Exp $
 
 LIB=	LLVMMC
 
@@ -20,7 +20,6 @@ SRCS+=	ConstantPools.cpp \
 	MCAsmStreamer.cpp \
 	MCAssembler.cpp \
 	MCCodeEmitter.cpp \
-	MCCodePadder.cpp \
 	MCCodeView.cpp \
 	MCContext.cpp \
 	MCDwarf.cpp \
@@ -32,6 +31,7 @@ SRCS+=	ConstantPools.cpp \
 	MCInstPrinter.cpp \
 	MCInstrAnalysis.cpp \
 	MCInstrDesc.cpp \
+	MCInstrInfo.cpp \
 	MCLabel.cpp \
 	MCLinkerOptimizationHint.cpp \
 	MCMachObjectTargetWriter.cpp \
@@ -40,6 +40,7 @@ SRCS+=	ConstantPools.cpp \
 	MCObjectFileInfo.cpp \
 	MCObjectStreamer.cpp \
 	MCObjectWriter.cpp \
+	MCPseudoProbe.cpp \
 	MCRegisterInfo.cpp \
 	MCSchedule.cpp \
 	MCSectionCOFF.cpp \
@@ -52,6 +53,8 @@ SRCS+=	ConstantPools.cpp \
 	MCSubtargetInfo.cpp \
 	MCSymbol.cpp \
 	MCSymbolELF.cpp \
+	MCSymbolXCOFF.cpp \
+	MCTargetOptionsCommandFlags.cpp \
 	MCTargetOptions.cpp \
 	MCValue.cpp \
 	MCWasmObjectTargetWriter.cpp \

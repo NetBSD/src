@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/11/11 22:45:15 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2021/05/30 01:56:56 joerg Exp $
 
 LIB=	clangBasic
 
@@ -14,25 +14,31 @@ SRCS+=	Attributes.cpp \
 	Diagnostic.cpp \
 	DiagnosticIDs.cpp \
 	DiagnosticOptions.cpp \
+	ExpressionTraits.cpp \
+	FileEntry.cpp \
 	FileManager.cpp \
 	FileSystemStatCache.cpp \
-	FixedPoint.cpp \
 	IdentifierTable.cpp \
 	LangOptions.cpp \
 	LangStandards.cpp \
 	Module.cpp \
+	NoSanitizeList.cpp \
 	ObjCRuntime.cpp \
+	OpenCLOptions.cpp \
 	OpenMPKinds.cpp \
 	OperatorPrecedence.cpp \
-	SanitizerBlacklist.cpp \
+	ProfileList.cpp \
 	Sanitizers.cpp \
 	SanitizerSpecialCaseList.cpp \
 	SourceLocation.cpp \
 	SourceManager.cpp \
 	Stack.cpp \
+	TargetID.cpp \
 	TargetInfo.cpp \
 	Targets.cpp \
 	TokenKinds.cpp \
+	TypeTraits.cpp \
+	VE.cpp \
 	Version.cpp \
 	Warnings.cpp \
 	XRayInstr.cpp \
@@ -49,6 +55,7 @@ SRCS+=	AArch64.cpp \
 	Hexagon.cpp \
 	Lanai.cpp \
 	Le64.cpp \
+	M68k.cpp \
 	MSP430.cpp \
 	Mips.cpp \
 	NVPTX.cpp \
@@ -64,10 +71,17 @@ SRCS+=	AArch64.cpp \
 	X86.cpp \
 	XCore.cpp
 
-CPPFLAGS+=	-I${CLANG_SRCDIR}/lib/Basic
+CPPFLAGS+=	-I${CLANG_SRCDIR}/lib/Basic -I.
 
-CPPFLAGS.Version.cpp=	-DSVN_REVISION=\"${CLANG_REVISION}\" \
-			-DLLVM_REVISION=\"${LLVM_REVISION}\"
+VCSVersion.inc: ${LLVM_TOPLEVEL}/Makefile.inc
+	echo '#define LLVM_REVISION "${LLVM_REVISION}"' > VCSVersion.inc.tmp
+	echo '#define LLVM_REPOSITORY "git@github.com:llvm/llvm-project.git"' >> VCSVersion.inc.tmp
+	echo '#define CLANG_REVISION "${CLANG_REVISION}"' >> VCSVersion.inc.tmp
+	echo '#define CLANG_REPOSITORY "git@github.com:llvm/llvm-project.git"' >> VCSVersion.inc.tmp
+	mv VCSVersion.inc.tmp VCSVersion.inc
+
+DPSRCS+=	VCSVersion.inc
+CLEANFILES+=	VCSVersion.inc
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

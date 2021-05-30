@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/11/11 22:45:13 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2021/05/30 01:56:55 joerg Exp $
 
 LIB=	LLVMX86CodeGen
 
@@ -13,12 +13,12 @@ SRCS+=	X86AsmPrinter.cpp \
 	X86CallingConv.cpp \
 	X86CallLowering.cpp \
 	X86CmovConversion.cpp \
-	X86CondBrFolding.cpp \
 	X86DiscriminateMemOps.cpp \
 	X86DomainReassignment.cpp \
 	X86EvexToVex.cpp\
 	X86ExpandPseudo.cpp \
 	X86FastISel.cpp \
+	X86FastTileConfig.cpp \
 	X86FixupBWInsts.cpp \
 	X86FixupLEAs.cpp \
 	X86FixupSetCC.cpp \
@@ -26,7 +26,10 @@ SRCS+=	X86AsmPrinter.cpp \
 	X86FloatingPoint.cpp \
 	X86FrameLowering.cpp \
 	X86IndirectBranchTracking.cpp \
+	X86IndirectThunks.cpp \
 	X86InsertPrefetch.cpp \
+	X86InsertWait.cpp \
+	X86InstCombineIntrinsic.cpp \
 	X86InstrFMA3Info.cpp \
 	X86InstrFoldTables.cpp \
 	X86InstrInfo.cpp \
@@ -35,21 +38,30 @@ SRCS+=	X86AsmPrinter.cpp \
 	X86ISelDAGToDAG.cpp \
 	X86ISelLowering.cpp \
 	X86LegalizerInfo.cpp \
+	X86LoadValueInjectionLoadHardening.cpp \
+	X86LoadValueInjectionRetHardening.cpp \
+	X86LowerAMXIntrinsics.cpp \
+	X86LowerAMXType.cpp \
+	X86LowerTileCopy.cpp \
 	X86MachineFunctionInfo.cpp \
 	X86MacroFusion.cpp \
 	X86MCInstLower.cpp \
 	X86OptimizeLEAs.cpp \
 	X86PadShortFunction.cpp \
+	X86PartialReduction.cpp \
+	X86PreAMXConfig.cpp \
+	X86PreTileConfig.cpp \
 	X86RegisterBankInfo.cpp \
 	X86RegisterInfo.cpp \
-	X86RetpolineThunks.cpp \
 	X86SelectionDAGInfo.cpp \
 	X86ShuffleDecodeConstantPool.cpp \
+	X86SpeculativeExecutionSideEffectSuppression.cpp \
 	X86SpeculativeLoadHardening.cpp \
 	X86Subtarget.cpp \
 	X86TargetMachine.cpp \
 	X86TargetObjectFile.cpp \
 	X86TargetTransformInfo.cpp \
+	X86TileConfig.cpp \
 	X86VZeroUpper.cpp \
 	X86WinAllocaExpander.cpp \
 	X86WinEHState.cpp

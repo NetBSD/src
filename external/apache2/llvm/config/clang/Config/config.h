@@ -35,13 +35,16 @@
 #define CLANG_RESOURCE_DIR ""
 
 /* Directories clang will search for headers */
-#define C_INCLUDE_DIRS "/usr/include/clang-9.0:/usr/include"
+#define C_INCLUDE_DIRS "/usr/include/clang-13.0:/usr/include"
 
 /* Default <path> to all compiler invocations for --sysroot=<path>. */
 #define DEFAULT_SYSROOT ""
 
 /* Directory where gcc is installed. */
 #define GCC_INSTALL_PREFIX ""
+
+/* Whether clang should use a new process for the CC1 invocation */
+#define CLANG_SPAWN_CC1 1
 
 /* Define if we have libxml2 */
 /* #undef CLANG_HAVE_LIBXML */
@@ -63,5 +66,6 @@
 
 #define ENABLE_EXPERIMENTAL_NEW_PASS_MANAGER 0
 #define CLANG_OPENMP_NVPTX_DEFAULT_ARCH "sm_35"
+#define CLANG_SYSTEMZ_DEFAULT_ARCH "z10"
 
 #endif

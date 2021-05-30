@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/11/11 22:44:58 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2021/05/30 01:56:46 joerg Exp $
 
 PROG_CXX=	bugpoint
 NOMAN=		yes
@@ -21,6 +21,7 @@ LLVM_LIBS+= \
 	TransformsAggressiveInstCombine \
 	ObjCARC \
 	ipo \
+	FrontendOpenMP \
 	IRReader \
 	AsmParser \
 	BitReader \
@@ -57,8 +58,8 @@ LLVM_LIBS+= \
 	X86CodeGen \
 	X86MCTargetDesc \
 	X86TargetInfo \
-	X86Utils \
 	X86AsmParser \
+	TransformsCFGuard \
 	GlobalISel \
 	SelectionDAG \
 	AsmPrinter \
@@ -76,11 +77,12 @@ LLVM_LIBS+= \
 	MCDisassembler \
 	MCParser \
 	MC \
+	TransformsUtils \
 	Analysis \
 	Object \
 	Linker \
-	TransformsUtils \
 	IR \
+	Remarks \
 	Option \
 	BinaryFormat \
 	Support \

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/11/11 22:45:00 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2021/05/30 01:56:47 joerg Exp $
 
 PROG_CXX=	llvm-dwp
 NOMAN=		yes
@@ -36,7 +36,8 @@ LLVM_LIBS+= \
 	X86CodeGen \
 	X86MCTargetDesc \
 	X86TargetInfo \
-	X86Utils \
+	Passes \
+	TransformsCFGuard \
 	MIRParser \
 	Vectorize \
 	MCDisassembler \
@@ -58,6 +59,7 @@ LLVM_LIBS+= \
 	TransformsUtils \
 	Analysis \
 	IR \
+	Remarks \
 	BinaryFormat \
 	Support \
 	Demangle
