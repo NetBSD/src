@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.199 2021/04/03 11:08:40 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.200 2021/05/30 21:16:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.199 2021/04/03 11:08:40 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.200 2021/05/30 21:16:54 rillig Exp $");
 
 typedef struct List ArchList;
 typedef struct ListNode ArchListNode;
@@ -148,6 +148,7 @@ static FILE *ArchFindMember(const char *, const char *,
 static int ArchSVR4Entry(Arch *, char *, size_t, FILE *);
 #endif
 
+
 #ifdef CLEANUP
 static void
 ArchFree(void *ap)
@@ -167,6 +168,19 @@ ArchFree(void *ap)
 }
 #endif
 
+/* Return "archive(member)". */
+static char *
+FullName(const char *archive, const char *member)
+{
+	size_t len1 = strlen(archive);
+	size_t len3 = strlen(member);
+	char *result = bmake_malloc(len1 + 1 + len3 + 1 + 1);
+	memcpy(result, archive, len1);
+	memcpy(result + len1, "(", 1);
+	memcpy(result + len1 + 1, member, len3);
+	memcpy(result + len1 + 1 + len3, ")", 1 + 1);
+	return result;
+}
 
 /*
  * Parse an archive specification such as "archive.a(member1 member2.${EXT})",
@@ -312,7 +326,7 @@ Arch_ParseArchive(char **pp, GNodeList *gns, GNode *scope)
 			 * Now form an archive spec and recurse to deal with
 			 * nested variables and multi-word variable values.
 			 */
-			fullName = str_concat4(libName.str, "(", memName, ")");
+			fullName = FullName(libName.str, memName);
 			p = fullName;
 
 			if (strchr(memName, '$') != NULL &&
@@ -342,8 +356,7 @@ Arch_ParseArchive(char **pp, GNodeList *gns, GNode *scope)
 
 			while (!Lst_IsEmpty(&members)) {
 				char *member = Lst_Dequeue(&members);
-				char *fullname = str_concat4(libName.str, "(",
-							     member, ")");
+				char *fullname = FullName(libName.str, member);
 				free(member);
 
 				gn = Targ_GetNode(fullname);
@@ -355,8 +368,7 @@ Arch_ParseArchive(char **pp, GNodeList *gns, GNode *scope)
 			Lst_Done(&members);
 
 		} else {
-			char *fullname = str_concat4(libName.str, "(", memName,
-						     ")");
+			char *fullname = FullName(libName.str, memName);
 			gn = Targ_GetNode(fullname);
 			free(fullname);
 
