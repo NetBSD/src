@@ -21,7 +21,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-icmp.c,v 1.11 2020/02/24 18:39:47 kamil Exp $");
+__RCSID("$NetBSD: print-icmp.c,v 1.12 2021/05/30 21:01:43 thorpej Exp $");
 #endif
 
 /* \summary: Internet Control Message Protocol (ICMP) printer */
@@ -89,7 +89,7 @@ struct icmp {
 #define	icmp_ip		icmp_dun.id_ip.idi_ip
 #define	icmp_mask	icmp_dun.id_mask
 #define	icmp_data	icmp_dun.id_data
-};
+} UNALIGNED;
 
 #define ICMP_MPLS_EXT_EXTRACT_VERSION(x) (((x)&0xf0)>>4)
 #define ICMP_MPLS_EXT_VERSION 2
