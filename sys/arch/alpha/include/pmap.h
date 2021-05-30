@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.88 2021/05/29 23:27:22 thorpej Exp $ */
+/* $NetBSD: pmap.h,v 1.89 2021/05/30 00:34:27 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -131,6 +131,9 @@
  * allocate any ASN info for the kernel pmap at all.
  * arrays which hold enough for ALPHA_MAXPROCS.
  */
+
+LIST_HEAD(pmap_pagelist, vm_page);
+
 struct pmap_percpu {
 	unsigned int		pmc_asn;	/* address space number */
 	unsigned int		pmc_pad0;
