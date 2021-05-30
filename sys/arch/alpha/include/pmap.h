@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.95 2021/05/30 14:06:37 thorpej Exp $ */
+/* $NetBSD: pmap.h,v 1.96 2021/05/30 19:41:59 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -208,13 +208,6 @@ void	pmap_tlb_shootdown_ipi(struct cpu_info *, struct trapframe *);
 
 #define	pmap_copy(dp, sp, da, l, sa)	/* nothing */
 #define	pmap_update(pmap)		/* nothing (yet) */
-
-static __inline bool
-pmap_remove_all(struct pmap *pmap)
-{
-	/* Nothing. */
-	return false;
-}
 
 #define	pmap_is_referenced(pg)						\
 	(((pg)->mdpage.pvh_listx & PGA_REFERENCED) != 0)
