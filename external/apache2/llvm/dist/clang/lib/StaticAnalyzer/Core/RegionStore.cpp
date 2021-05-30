@@ -23,10 +23,10 @@
 #include "clang/Basic/TargetInfo.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/AnalysisManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CallEvent.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/MemRegion.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramStateTrait.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/SubEngine.h"
 #include "llvm/ADT/ImmutableMap.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/Support/raw_ostream.h"
@@ -381,7 +381,7 @@ public:
     : StoreManager(mgr), Features(f),
       RBFactory(mgr.getAllocator()), CBFactory(mgr.getAllocator()),
       SmallStructLimit(0) {
-    SubEngine &Eng = StateMgr.getOwningEngine();
+    ExprEngine &Eng = StateMgr.getOwningEngine();
     AnalyzerOptions &Options = Eng.getAnalysisManager().options;
     SmallStructLimit = Options.RegionStoreSmallStructLimit;
   }
@@ -620,15 +620,6 @@ public: // Part of public interface to class.
   ///  It returns a new Store with these values removed.
   StoreRef removeDeadBindings(Store store, const StackFrameContext *LCtx,
                               SymbolReaper& SymReaper) override;
-
-  //===------------------------------------------------------------------===//
-  // Region "extents".
-  //===------------------------------------------------------------------===//
-
-  // FIXME: This method will soon be eliminated; see the note in Store.h.
-  DefinedOrUnknownSVal getSizeInElements(ProgramStateRef state,
-                                         const MemRegion* R,
-                                         QualType EleTy) override;
 
   //===------------------------------------------------------------------===//
   // Utility methods.
@@ -876,7 +867,7 @@ collectSubRegionBindings(SmallVectorImpl<BindingPair> &Bindings,
 
   // Find the length (in bits) of the region being invalidated.
   uint64_t Length = UINT64_MAX;
-  SVal Extent = Top->getExtent(SVB);
+  SVal Extent = Top->getMemRegionManager().getStaticSize(Top, SVB);
   if (Optional<nonloc::ConcreteInt> ExtentCI =
           Extent.getAs<nonloc::ConcreteInt>()) {
     const llvm::APSInt &ExtentInt = ExtentCI->getValue();
@@ -1387,37 +1378,6 @@ RegionStoreManager::invalidateRegions(Store store,
 }
 
 //===----------------------------------------------------------------------===//
-// Extents for regions.
-//===----------------------------------------------------------------------===//
-
-DefinedOrUnknownSVal
-RegionStoreManager::getSizeInElements(ProgramStateRef state,
-                                      const MemRegion *R,
-                                      QualType EleTy) {
-  SVal Size = cast<SubRegion>(R)->getExtent(svalBuilder);
-  const llvm::APSInt *SizeInt = svalBuilder.getKnownValue(state, Size);
-  if (!SizeInt)
-    return UnknownVal();
-
-  CharUnits RegionSize = CharUnits::fromQuantity(SizeInt->getSExtValue());
-
-  if (Ctx.getAsVariableArrayType(EleTy)) {
-    // FIXME: We need to track extra state to properly record the size
-    // of VLAs.  Returning UnknownVal here, however, is a stop-gap so that
-    // we don't have a divide-by-zero below.
-    return UnknownVal();
-  }
-
-  CharUnits EleSize = Ctx.getTypeSizeInChars(EleTy);
-
-  // If a variable is reinterpreted as a type that doesn't fit into a larger
-  // type evenly, round it down.
-  // This is a signed value, since it's used in arithmetic with signed indices.
-  return svalBuilder.makeIntVal(RegionSize / EleSize,
-                                svalBuilder.getArrayIndexType());
-}
-
-//===----------------------------------------------------------------------===//
 // Location and region casting.
 //===----------------------------------------------------------------------===//
 
@@ -1518,7 +1478,7 @@ SVal RegionStoreManager::getBinding(RegionBindingsConstRef B, Loc L, QualType T)
     return UnknownVal();
 
   if (const FieldRegion* FR = dyn_cast<FieldRegion>(R))
-    return CastRetrievedVal(getBindingForField(B, FR), FR, T);
+    return svalBuilder.evalCast(getBindingForField(B, FR), T, QualType{});
 
   if (const ElementRegion* ER = dyn_cast<ElementRegion>(R)) {
     // FIXME: Here we actually perform an implicit conversion from the loaded
@@ -1526,7 +1486,7 @@ SVal RegionStoreManager::getBinding(RegionBindingsConstRef B, Loc L, QualType T)
     // more intelligently.  For example, an 'element' can encompass multiple
     // bound regions (e.g., several bound bytes), or could be a subset of
     // a larger value.
-    return CastRetrievedVal(getBindingForElement(B, ER), ER, T);
+    return svalBuilder.evalCast(getBindingForElement(B, ER), T, QualType{});
   }
 
   if (const ObjCIvarRegion *IVR = dyn_cast<ObjCIvarRegion>(R)) {
@@ -1536,7 +1496,7 @@ SVal RegionStoreManager::getBinding(RegionBindingsConstRef B, Loc L, QualType T)
     // reinterpretted, it is possible we stored a different value that could
     // fit within the ivar.  Either we need to cast these when storing them
     // or reinterpret them lazily (as we do here).
-    return CastRetrievedVal(getBindingForObjCIvar(B, IVR), IVR, T);
+    return svalBuilder.evalCast(getBindingForObjCIvar(B, IVR), T, QualType{});
   }
 
   if (const VarRegion *VR = dyn_cast<VarRegion>(R)) {
@@ -1546,7 +1506,7 @@ SVal RegionStoreManager::getBinding(RegionBindingsConstRef B, Loc L, QualType T)
     // variable is reinterpretted, it is possible we stored a different value
     // that could fit within the variable.  Either we need to cast these when
     // storing them or reinterpret them lazily (as we do here).
-    return CastRetrievedVal(getBindingForVar(B, VR), VR, T);
+    return svalBuilder.evalCast(getBindingForVar(B, VR), T, QualType{});
   }
 
   const SVal *V = B.lookup(R, BindingKey::Direct);
@@ -1667,10 +1627,6 @@ RegionStoreManager::findLazyBinding(RegionBindingsConstRef B,
 
 SVal RegionStoreManager::getBindingForElement(RegionBindingsConstRef B,
                                               const ElementRegion* R) {
-  // We do not currently model bindings of the CompoundLiteralregion.
-  if (isa<CompoundLiteralRegion>(R->getBaseRegion()))
-    return UnknownVal();
-
   // Check if the region has a binding.
   if (const Optional<SVal> &V = B.getDirectBinding(R))
     return *V;
@@ -1951,7 +1907,8 @@ RegionStoreManager::getBindingForFieldOrElementCommon(RegionBindingsConstRef B,
     if (hasSymbolicIndex)
       return UnknownVal();
 
-    if (!hasPartialLazyBinding)
+    // Additionally allow introspection of a block's internal layout.
+    if (!hasPartialLazyBinding && !isa<BlockDataRegion>(R->getBaseRegion()))
       return UndefinedVal();
   }
 

@@ -18,6 +18,7 @@
 #include "llvm/Option/ArgList.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/VirtualFileSystem.h"
 #include <system_error>
 
 using namespace clang::diag;
@@ -49,11 +50,12 @@ void tools::MinGW::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(II.getFilename());
 
   const char *Exec = Args.MakeArgString(getToolChain().GetProgramPath("as"));
-  C.addCommand(std::make_unique<Command>(JA, *this, Exec, CmdArgs, Inputs));
+  C.addCommand(std::make_unique<Command>(JA, *this, ResponseFileSupport::None(),
+                                         Exec, CmdArgs, Inputs, Output));
 
   if (Args.hasArg(options::OPT_gsplit_dwarf))
     SplitDebugInfo(getToolChain(), C, *this, JA, Args, Output,
-                   SplitDebugName(Args, Inputs[0], Output));
+                   SplitDebugName(JA, Args, Inputs[0], Output));
 }
 
 void tools::MinGW::Linker::AddLibGCC(const ArgList &Args,
@@ -160,7 +162,16 @@ void tools::MinGW::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   CmdArgs.push_back("-o");
-  CmdArgs.push_back(Output.getFilename());
+  const char *OutputFile = Output.getFilename();
+  // GCC implicitly adds an .exe extension if it is given an output file name
+  // that lacks an extension.
+  // GCC used to do this only when the compiler itself runs on windows, but
+  // since GCC 8 it does the same when cross compiling as well.
+  if (!llvm::sys::path::has_extension(OutputFile)) {
+    CmdArgs.push_back(Args.MakeArgString(Twine(OutputFile) + ".exe"));
+    OutputFile = CmdArgs.back();
+  } else
+    CmdArgs.push_back(OutputFile);
 
   Args.AddAllArgs(CmdArgs, options::OPT_e);
   // FIXME: add -N, -n flags
@@ -186,6 +197,17 @@ void tools::MinGW::Linker::ConstructJob(Compilation &C, const JobAction &JA,
 
   Args.AddAllArgs(CmdArgs, options::OPT_L);
   TC.AddFilePathLibArgs(Args, CmdArgs);
+
+  // Add the compiler-rt library directories if they exist to help
+  // the linker find the various sanitizer, builtin, and profiling runtimes.
+  for (const auto &LibPath : TC.getLibraryPaths()) {
+    if (TC.getVFS().exists(LibPath))
+      CmdArgs.push_back(Args.MakeArgString("-L" + LibPath));
+  }
+  auto CRTPath = TC.getCompilerRTPath();
+  if (TC.getVFS().exists(CRTPath))
+    CmdArgs.push_back(Args.MakeArgString("-L" + CRTPath));
+
   AddLinkerInputs(TC, Inputs, Args, CmdArgs, JA);
 
   // TODO: Add profile stuff here
@@ -280,21 +302,26 @@ void tools::MinGW::Linker::ConstructJob(Compilation &C, const JobAction &JA,
         CmdArgs.push_back("-lkernel32");
       }
 
-      if (Args.hasArg(options::OPT_static))
+      if (Args.hasArg(options::OPT_static)) {
         CmdArgs.push_back("--end-group");
-      else
+      } else {
         AddLibGCC(Args, CmdArgs);
+        if (!HasWindowsApp)
+          CmdArgs.push_back("-lkernel32");
+      }
     }
 
     if (!Args.hasArg(options::OPT_nostartfiles)) {
       // Add crtfastmath.o if available and fast math is enabled.
-      TC.AddFastMathRuntimeIfAvailable(Args, CmdArgs);
+      TC.addFastMathRuntimeIfAvailable(Args, CmdArgs);
 
       CmdArgs.push_back(Args.MakeArgString(TC.GetFilePath("crtend.o")));
     }
   }
   const char *Exec = Args.MakeArgString(TC.GetLinkerPath());
-  C.addCommand(std::make_unique<Command>(JA, *this, Exec, CmdArgs, Inputs));
+  C.addCommand(std::make_unique<Command>(JA, *this,
+                                         ResponseFileSupport::AtFileUTF8(),
+                                         Exec, CmdArgs, Inputs, Output));
 }
 
 // Simplified from Generic_GCC::GCCInstallationDetector::ScanLibDirForGCCTriple.
@@ -311,7 +338,7 @@ static bool findGccVersion(StringRef LibDir, std::string &GccLibDir,
       continue;
     if (CandidateVersion <= Version)
       continue;
-    Ver = VersionText;
+    Ver = std::string(VersionText);
     GccLibDir = LI->path();
   }
   return Ver.size();
@@ -323,7 +350,7 @@ void toolchains::MinGW::findGccLibDir() {
   Archs[0] += "-w64-mingw32";
   Archs.emplace_back("mingw32");
   if (Arch.empty())
-    Arch = Archs[0].str();
+    Arch = std::string(Archs[0].str());
   // lib: Arch Linux, Ubuntu, Windows
   // lib64: openSUSE Linux
   for (StringRef CandidateLib : {"lib", "lib64"}) {
@@ -331,7 +358,7 @@ void toolchains::MinGW::findGccLibDir() {
       llvm::SmallString<1024> LibDir(Base);
       llvm::sys::path::append(LibDir, CandidateLib, "gcc", CandidateArch);
       if (findGccVersion(LibDir, GccLibDir, Ver)) {
-        Arch = CandidateArch;
+        Arch = std::string(CandidateArch);
         return;
       }
     }
@@ -360,7 +387,7 @@ llvm::ErrorOr<std::string> toolchains::MinGW::findClangRelativeSysroot() {
   StringRef Sep = llvm::sys::path::get_separator();
   for (StringRef CandidateSubdir : Subdirs) {
     if (llvm::sys::fs::is_directory(ClangRoot + Sep + CandidateSubdir)) {
-      Arch = CandidateSubdir;
+      Arch = std::string(CandidateSubdir);
       return (ClangRoot + Sep + CandidateSubdir).str();
     }
   }
@@ -369,7 +396,8 @@ llvm::ErrorOr<std::string> toolchains::MinGW::findClangRelativeSysroot() {
 
 toolchains::MinGW::MinGW(const Driver &D, const llvm::Triple &Triple,
                          const ArgList &Args)
-    : ToolChain(D, Triple, Args), CudaInstallation(D, Triple, Args) {
+    : ToolChain(D, Triple, Args), CudaInstallation(D, Triple, Args),
+      RocmInstallation(D, Triple, Args) {
   getProgramPaths().push_back(getDriver().getInstalledDir());
 
   if (getDriver().SysRoot.size())
@@ -377,12 +405,13 @@ toolchains::MinGW::MinGW(const Driver &D, const llvm::Triple &Triple,
   // Look for <clang-bin>/../<triplet>; if found, use <clang-bin>/.. as the
   // base as it could still be a base for a gcc setup with libgcc.
   else if (llvm::ErrorOr<std::string> TargetSubdir = findClangRelativeSysroot())
-    Base = llvm::sys::path::parent_path(TargetSubdir.get());
+    Base = std::string(llvm::sys::path::parent_path(TargetSubdir.get()));
   else if (llvm::ErrorOr<std::string> GPPName = findGcc())
-    Base = llvm::sys::path::parent_path(
-        llvm::sys::path::parent_path(GPPName.get()));
+    Base = std::string(llvm::sys::path::parent_path(
+        llvm::sys::path::parent_path(GPPName.get())));
   else
-    Base = llvm::sys::path::parent_path(getDriver().getInstalledDir());
+    Base = std::string(
+        llvm::sys::path::parent_path(getDriver().getInstalledDir()));
 
   Base += llvm::sys::path::get_separator();
   findGccLibDir();
@@ -462,6 +491,7 @@ SanitizerMask toolchains::MinGW::getSupportedSanitizers() const {
   Res |= SanitizerKind::Address;
   Res |= SanitizerKind::PointerCompare;
   Res |= SanitizerKind::PointerSubtract;
+  Res |= SanitizerKind::Vptr;
   return Res;
 }
 
@@ -470,8 +500,14 @@ void toolchains::MinGW::AddCudaIncludeArgs(const ArgList &DriverArgs,
   CudaInstallation.AddCudaIncludeArgs(DriverArgs, CC1Args);
 }
 
+void toolchains::MinGW::AddHIPIncludeArgs(const ArgList &DriverArgs,
+                                          ArgStringList &CC1Args) const {
+  RocmInstallation.AddHIPIncludeArgs(DriverArgs, CC1Args);
+}
+
 void toolchains::MinGW::printVerboseInfo(raw_ostream &OS) const {
   CudaInstallation.print(OS);
+  RocmInstallation.print(OS);
 }
 
 // Include directories for various hosts:

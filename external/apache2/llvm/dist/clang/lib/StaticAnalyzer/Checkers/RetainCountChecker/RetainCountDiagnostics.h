@@ -26,7 +26,7 @@ namespace retaincountchecker {
 
 class RefCountBug : public BugType {
 public:
-  enum RefCountBugType {
+  enum RefCountBugKind {
     UseAfterRelease,
     ReleaseNotOwned,
     DeallocNotOwned,
@@ -36,21 +36,14 @@ public:
     LeakWithinFunction,
     LeakAtReturn,
   };
-  RefCountBug(const CheckerBase *checker, RefCountBugType BT);
+  RefCountBug(CheckerNameRef Checker, RefCountBugKind BT);
   StringRef getDescription() const;
 
-  RefCountBugType getBugType() const {
-    return BT;
-  }
-
-  const CheckerBase *getChecker() const {
-    return Checker;
-  }
+  RefCountBugKind getBugType() const { return BT; }
 
 private:
-  RefCountBugType BT;
-  const CheckerBase *Checker;
-  static StringRef bugTypeToName(RefCountBugType BT);
+  RefCountBugKind BT;
+  static StringRef bugTypeToName(RefCountBugKind BT);
 };
 
 class RefCountReport : public PathSensitiveBugReport {
@@ -75,17 +68,20 @@ public:
 };
 
 class RefLeakReport : public RefCountReport {
-  const MemRegion* AllocBinding;
-  const Stmt *AllocStmt;
+  const MemRegion *AllocFirstBinding = nullptr;
+  const MemRegion *AllocBindingToReport = nullptr;
+  const Stmt *AllocStmt = nullptr;
   PathDiagnosticLocation Location;
 
   // Finds the function declaration where a leak warning for the parameter
   // 'sym' should be raised.
-  void deriveParamLocation(CheckerContext &Ctx, SymbolRef sym);
-  // Finds the location where a leak warning for 'sym' should be raised.
-  void deriveAllocLocation(CheckerContext &Ctx, SymbolRef sym);
+  void deriveParamLocation(CheckerContext &Ctx);
+  // Finds the location where the leaking object is allocated.
+  void deriveAllocLocation(CheckerContext &Ctx);
   // Produces description of a leak warning which is printed on the console.
   void createDescription(CheckerContext &Ctx);
+  // Finds the binding that we should use in a leak warning.
+  void findBindingToReport(CheckerContext &Ctx, ExplodedNode *Node);
 
 public:
   RefLeakReport(const RefCountBug &D, const LangOptions &LOpts, ExplodedNode *n,

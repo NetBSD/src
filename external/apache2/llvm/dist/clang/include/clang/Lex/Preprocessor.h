@@ -14,7 +14,6 @@
 #ifndef LLVM_CLANG_LEX_PREPROCESSOR_H
 #define LLVM_CLANG_LEX_PREPROCESSOR_H
 
-#include "clang/Basic/Builtins.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/LLVM.h"
@@ -68,6 +67,7 @@ class CodeCompletionHandler;
 class CommentHandler;
 class DirectoryEntry;
 class DirectoryLookup;
+class EmptylineHandler;
 class ExternalPreprocessorSource;
 class FileEntry;
 class FileManager;
@@ -80,6 +80,10 @@ class PreprocessorLexer;
 class PreprocessorOptions;
 class ScratchBuffer;
 class TargetInfo;
+
+namespace Builtin {
+class Context;
+}
 
 /// Stores token information for comparing actual tokens with
 /// predefined values.  Only handles simple tokens and identifiers.
@@ -239,7 +243,7 @@ class Preprocessor {
   SelectorTable Selectors;
 
   /// Information about builtins.
-  Builtin::Context BuiltinInfo;
+  std::unique_ptr<Builtin::Context> BuiltinInfo;
 
   /// Tracks all of the pragmas that the client registered
   /// with this preprocessor.
@@ -252,6 +256,9 @@ class Preprocessor {
   /// Tracks all of the comment handlers that the client registered
   /// with this preprocessor.
   std::vector<CommentHandler *> CommentHandlers;
+
+  /// Empty line handler.
+  EmptylineHandler *Emptyline = nullptr;
 
   /// True if we want to ignore EOF token and continue later on (thus
   /// avoid tearing the Lexer and etc. down).
@@ -412,6 +419,17 @@ class Preprocessor {
   /// possible for Lex to detect whether it's producing a token for the end
   /// of phase 4 of translation or for some other situation.
   unsigned LexLevel = 0;
+
+  /// The number of (LexLevel 0) preprocessor tokens.
+  unsigned TokenCount = 0;
+
+  /// Preprocess every token regardless of LexLevel.
+  bool PreprocessToken = false;
+
+  /// The maximum number of (LexLevel 0) tokens before issuing a -Wmax-tokens
+  /// warning, or zero for unlimited.
+  unsigned MaxTokens = 0;
+  SourceLocation MaxTokensOverrideLoc;
 
 public:
   struct PreambleSkipInfo {
@@ -911,7 +929,7 @@ public:
   IdentifierTable &getIdentifierTable() { return Identifiers; }
   const IdentifierTable &getIdentifierTable() const { return Identifiers; }
   SelectorTable &getSelectorTable() { return Selectors; }
-  Builtin::Context &getBuiltinInfo() { return BuiltinInfo; }
+  Builtin::Context &getBuiltinInfo() { return *BuiltinInfo; }
   llvm::BumpPtrAllocator &getPreprocessorAllocator() { return BP; }
 
   void setExternalSource(ExternalPreprocessorSource *Source) {
@@ -927,6 +945,12 @@ public:
 
   bool hadModuleLoaderFatalFailure() const {
     return TheModuleLoader.HadFatalFailure;
+  }
+
+  /// Retrieve the number of Directives that have been processed by the
+  /// Preprocessor.
+  unsigned getNumDirectives() const {
+    return NumDirectives;
   }
 
   /// True if we are currently preprocessing a #if or #elif directive
@@ -1001,12 +1025,27 @@ public:
   }
   /// \}
 
+  /// Get the number of tokens processed so far.
+  unsigned getTokenCount() const { return TokenCount; }
+
+  /// Get the max number of tokens before issuing a -Wmax-tokens warning.
+  unsigned getMaxTokens() const { return MaxTokens; }
+
+  void overrideMaxTokens(unsigned Value, SourceLocation Loc) {
+    MaxTokens = Value;
+    MaxTokensOverrideLoc = Loc;
+  };
+
+  SourceLocation getMaxTokensOverrideLoc() const { return MaxTokensOverrideLoc; }
+
   /// Register a function that would be called on each token in the final
   /// expanded token stream.
   /// This also reports annotation tokens produced by the parser.
   void setTokenWatcher(llvm::unique_function<void(const clang::Token &)> F) {
     OnToken = std::move(F);
   }
+
+  void setPreprocessToken(bool Preprocess) { PreprocessToken = Preprocess; }
 
   bool isMacroDefined(StringRef Id) {
     return isMacroDefined(&Identifiers.get(Id));
@@ -1112,7 +1151,7 @@ public:
   /// Register an exported macro for a module and identifier.
   ModuleMacro *addModuleMacro(Module *Mod, IdentifierInfo *II, MacroInfo *Macro,
                               ArrayRef<ModuleMacro *> Overrides, bool &IsNew);
-  ModuleMacro *getModuleMacro(Module *Mod, IdentifierInfo *II);
+  ModuleMacro *getModuleMacro(Module *Mod, const IdentifierInfo *II);
 
   /// Get the list of leaf (non-overridden) module macros for a name.
   ArrayRef<ModuleMacro*> getLeafModuleMacros(const IdentifierInfo *II) const {
@@ -1122,6 +1161,11 @@ public:
     if (I != LeafModuleMacros.end())
       return I->second;
     return None;
+  }
+
+  /// Get the list of submodules that we're currently building.
+  ArrayRef<BuildingSubmoduleInfo> getBuildingSubmodules() const {
+    return BuildingSubmoduleStack;
   }
 
   /// \{
@@ -1154,7 +1198,7 @@ public:
   ///
   /// These predefines are automatically injected when parsing the main file.
   void setPredefines(const char *P) { Predefines = P; }
-  void setPredefines(StringRef P) { Predefines = P; }
+  void setPredefines(StringRef P) { Predefines = std::string(P); }
 
   /// Return information about the specified preprocessor
   /// identifier token.
@@ -1183,6 +1227,11 @@ public:
 
   /// Install empty handlers for all pragmas (making them ignored).
   void IgnorePragmas();
+
+  /// Set empty line handler.
+  void setEmptylineHandler(EmptylineHandler *Handler) { Emptyline = Handler; }
+
+  EmptylineHandler *getEmptylineHandler() const { return Emptyline; }
 
   /// Add the specified comment handler to the preprocessor.
   void addCommentHandler(CommentHandler *Handler);
@@ -1531,6 +1580,12 @@ public:
   /// Enter an annotation token into the token stream.
   void EnterAnnotationToken(SourceRange Range, tok::TokenKind Kind,
                             void *AnnotationVal);
+
+  /// Determine whether it's possible for a future call to Lex to produce an
+  /// annotation token created by a previous call to EnterAnnotationToken.
+  bool mightHavePendingAnnotationTokens() {
+    return CurLexerKind != CLK_Lexer;
+  }
 
   /// Update the current token to represent the provided
   /// identifier, in order to cache an action performed by typo correction.
@@ -2194,21 +2249,23 @@ private:
       ModuleBegin,
       ModuleImport,
       SkippedModuleImport,
+      Failure,
     } Kind;
     Module *ModuleForHeader = nullptr;
 
     ImportAction(ActionKind AK, Module *Mod = nullptr)
         : Kind(AK), ModuleForHeader(Mod) {
-      assert((AK == None || Mod) && "no module for module action");
+      assert((AK == None || Mod || AK == Failure) &&
+             "no module for module action");
     }
   };
 
   Optional<FileEntryRef> LookupHeaderIncludeOrImport(
-      const DirectoryLookup *&CurDir, StringRef Filename,
+      const DirectoryLookup *&CurDir, StringRef &Filename,
       SourceLocation FilenameLoc, CharSourceRange FilenameRange,
       const Token &FilenameTok, bool &IsFrameworkFound, bool IsImportDecl,
       bool &IsMapped, const DirectoryLookup *LookupFrom,
-      const FileEntry *LookupFromFile, StringRef LookupFilename,
+      const FileEntry *LookupFromFile, StringRef &LookupFilename,
       SmallVectorImpl<char> &RelativePath, SmallVectorImpl<char> &SearchPath,
       ModuleMap::KnownHeader &SuggestedModule, bool isAngled);
 
@@ -2240,20 +2297,22 @@ public:
   /// into a module, or is outside any module, returns nullptr.
   Module *getModuleForLocation(SourceLocation Loc);
 
-  /// We want to produce a diagnostic at location IncLoc concerning a
-  /// missing module import.
+  /// We want to produce a diagnostic at location IncLoc concerning an
+  /// unreachable effect at location MLoc (eg, where a desired entity was
+  /// declared or defined). Determine whether the right way to make MLoc
+  /// reachable is by #include, and if so, what header should be included.
   ///
-  /// \param IncLoc The location at which the missing import was detected.
-  /// \param M The desired module.
-  /// \param MLoc A location within the desired module at which some desired
-  ///        effect occurred (eg, where a desired entity was declared).
+  /// This is not necessarily fast, and might load unexpected module maps, so
+  /// should only be called by code that intends to produce an error.
   ///
-  /// \return A file that can be #included to import a module containing MLoc.
-  ///         Null if no such file could be determined or if a #include is not
-  ///         appropriate.
-  const FileEntry *getModuleHeaderToIncludeForDiagnostics(SourceLocation IncLoc,
-                                                          Module *M,
-                                                          SourceLocation MLoc);
+  /// \param IncLoc The location at which the missing effect was detected.
+  /// \param MLoc A location within an unimported module at which the desired
+  ///        effect occurred.
+  /// \return A file that can be #included to provide the desired effect. Null
+  ///         if no such file could be determined or if a #include is not
+  ///         appropriate (eg, if a module should be imported instead).
+  const FileEntry *getHeaderToIncludeForDiagnostics(SourceLocation IncLoc,
+                                                    SourceLocation MLoc);
 
   bool isRecordingPreamble() const {
     return PreambleConditionalStack.isRecording();
@@ -2343,6 +2402,16 @@ public:
   // The handler shall return true if it has pushed any tokens
   // to be read using e.g. EnterToken or EnterTokenStream.
   virtual bool HandleComment(Preprocessor &PP, SourceRange Comment) = 0;
+};
+
+/// Abstract base class that describes a handler that will receive
+/// source ranges for empty lines encountered in the source file.
+class EmptylineHandler {
+public:
+  virtual ~EmptylineHandler();
+
+  // The handler handles empty lines.
+  virtual void HandleEmptyline(SourceRange Range) = 0;
 };
 
 /// Registry of pragma handlers added by plugins

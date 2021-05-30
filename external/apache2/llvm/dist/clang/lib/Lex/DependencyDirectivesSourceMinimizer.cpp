@@ -18,6 +18,7 @@
 #include "clang/Basic/CharInfo.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Lex/LexDiagnostic.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/MemoryBuffer.h"
 
@@ -763,12 +764,13 @@ bool Minimizer::lexEndif(const char *&First, const char *const End) {
   if (top() == pp_else)
     popToken();
 
-  // Strip out "#elif" if they're empty.
-  while (top() == pp_elif)
-    popToken();
-
-  // If "#if" is empty, strip it and skip the "#endif".
-  if (top() == pp_if || top() == pp_ifdef || top() == pp_ifndef) {
+  // If "#ifdef" is empty, strip it and skip the "#endif".
+  //
+  // FIXME: Once/if Clang starts disallowing __has_include in macro expansions,
+  // we can skip empty `#if` and `#elif` blocks as well after scanning for a
+  // literal __has_include in the condition.  Even without that rule we could
+  // drop the tokens if we scan for identifiers in the condition and find none.
+  if (top() == pp_ifdef || top() == pp_ifndef) {
     popToken();
     skipLine(First, End);
     return false;

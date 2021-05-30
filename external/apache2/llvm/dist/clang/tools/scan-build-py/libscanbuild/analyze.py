@@ -33,7 +33,8 @@ from libscanbuild.intercept import capture
 from libscanbuild.report import document
 from libscanbuild.compilation import split_command, classify_source, \
     compiler_language
-from libscanbuild.clang import get_version, get_arguments, get_triple_arch
+from libscanbuild.clang import get_version, get_arguments, get_triple_arch, \
+    ClangErrorException
 from libscanbuild.shell import decode
 
 __all__ = ['scan_build', 'analyze_build', 'analyze_compiler_wrapper']
@@ -51,7 +52,8 @@ def scan_build():
 
     args = parse_args_for_scan_build()
     # will re-assign the report directory as new output
-    with report_directory(args.output, args.keep_empty) as args.output:
+    with report_directory(
+            args.output, args.keep_empty, args.output_format) as args.output:
         # Run against a build command. there are cases, when analyzer run
         # is not required. But we need to set up everything for the
         # wrappers, because 'configure' needs to capture the CC/CXX values
@@ -78,7 +80,7 @@ def analyze_build():
 
     args = parse_args_for_analyze_build()
     # will re-assign the report directory as new output
-    with report_directory(args.output, args.keep_empty) as args.output:
+    with report_directory(args.output, args.keep_empty, args.output_format) as args.output:
         # Run the analyzer against a compilation db.
         govern_analyzer_runs(args)
         # Cover report generation and bug counting.
@@ -206,10 +208,14 @@ def merge_ctu_extdef_maps(ctudir):
 def run_analyzer_parallel(args):
     """ Runs the analyzer against the given compilation database. """
 
-    def exclude(filename):
+    def exclude(filename, directory):
         """ Return true when any excluded directory prefix the filename. """
-        return any(re.match(r'^' + directory, filename)
-                   for directory in args.excludes)
+        if not os.path.isabs(filename):
+            # filename is either absolute or relative to directory. Need to turn
+            # it to absolute since 'args.excludes' are absolute paths.
+            filename = os.path.normpath(os.path.join(directory, filename))
+        return any(re.match(r'^' + exclude_directory, filename)
+                   for exclude_directory in args.excludes)
 
     consts = {
         'clang': args.clang,
@@ -224,7 +230,8 @@ def run_analyzer_parallel(args):
     logging.debug('run analyzer against compilation database')
     with open(args.cdb, 'r') as handle:
         generator = (dict(cmd, **consts)
-                     for cmd in json.load(handle) if not exclude(cmd['file']))
+                     for cmd in json.load(handle) if not exclude(
+                            cmd['file'], cmd['directory']))
         # when verbose output requested execute sequentially
         pool = multiprocessing.Pool(1 if args.verbose > 2 else None)
         for current in pool.imap_unordered(run, generator):
@@ -330,7 +337,7 @@ def analyze_compiler_wrapper_impl(result, execution):
 
 
 @contextlib.contextmanager
-def report_directory(hint, keep):
+def report_directory(hint, keep, output_format):
     """ Responsible for the report directory.
 
     hint -- could specify the parent directory of the output directory.
@@ -349,7 +356,14 @@ def report_directory(hint, keep):
         yield name
     finally:
         if os.listdir(name):
-            msg = "Run 'scan-view %s' to examine bug reports."
+            if output_format not in ['sarif', 'sarif-html']: # FIXME:
+                # 'scan-view' currently does not support sarif format.
+                msg = "Run 'scan-view %s' to examine bug reports."
+            elif output_format == 'sarif-html':
+                msg = "Run 'scan-view %s' to examine bug reports or see " \
+                    "merged sarif results at %s/results-merged.sarif."
+            else:
+                msg = "View merged sarif results at %s/results-merged.sarif."
             keep = True
         else:
             if keep:
@@ -427,7 +441,7 @@ def require(required):
           'direct_args',  # arguments from command line
           'force_debug',  # kill non debug macros
           'output_dir',  # where generated report files shall go
-          'output_format',  # it's 'plist', 'html', both or plist-multi-file
+          'output_format',  # it's 'plist', 'html', 'plist-html', 'plist-multi-file', 'sarif', or 'sarif-html'
           'output_failures',  # generate crash reports or not
           'ctu'])  # ctu control options
 def run(opts):
@@ -435,7 +449,7 @@ def run(opts):
     of the compilation database.
 
     This complex task is decomposed into smaller methods which are calling
-    each other in chain. If the analyzis is not possible the given method
+    each other in chain. If the analysis is not possible the given method
     just return and break the chain.
 
     The passed parameter is a python dictionary. Each method first check
@@ -451,7 +465,7 @@ def run(opts):
 
         return arch_check(opts)
     except Exception:
-        logging.error("Problem occurred during analyzis.", exc_info=1)
+        logging.error("Problem occurred during analysis.", exc_info=1)
         return None
 
 
@@ -490,10 +504,15 @@ def report_failure(opts):
     os.close(handle)
     # Execute Clang again, but run the syntax check only.
     cwd = opts['directory']
-    cmd = get_arguments(
-        [opts['clang'], '-fsyntax-only', '-E'
-         ] + opts['flags'] + [opts['file'], '-o', name], cwd)
-    run_command(cmd, cwd=cwd)
+    cmd = [opts['clang'], '-fsyntax-only', '-E'] + opts['flags'] + \
+        [opts['file'], '-o', name]
+    try:
+        cmd = get_arguments(cmd, cwd)
+        run_command(cmd, cwd=cwd)
+    except subprocess.CalledProcessError:
+        pass
+    except ClangErrorException:
+        pass
     # write general information about the crash
     with open(name + '.info.txt', 'w') as handle:
         handle.write(opts['file'] + os.linesep)
@@ -526,6 +545,14 @@ def run_analyzer(opts, continuation=report_failure):
                                               dir=opts['output_dir'])
             os.close(handle)
             return name
+        elif opts['output_format'] in {
+                'sarif',
+                'sarif-html'}:
+            (handle, name) = tempfile.mkstemp(prefix='result-',
+                                              suffix='.sarif',
+                                              dir=opts['output_dir'])
+            os.close(handle)
+            return name
         return opts['output_dir']
 
     try:
@@ -538,6 +565,12 @@ def run_analyzer(opts, continuation=report_failure):
         return {'error_output': output, 'exit_code': 0}
     except subprocess.CalledProcessError as ex:
         result = {'error_output': ex.output, 'exit_code': ex.returncode}
+        if opts.get('output_failures', False):
+            opts.update(result)
+            continuation(opts)
+        return result
+    except ClangErrorException as ex:
+        result = {'error_output': ex.error, 'exit_code': 0}
         if opts.get('output_failures', False):
             opts.update(result)
             continuation(opts)

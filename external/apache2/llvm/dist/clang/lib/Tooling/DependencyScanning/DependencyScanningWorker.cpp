@@ -14,6 +14,7 @@
 #include "clang/Frontend/Utils.h"
 #include "clang/Lex/PreprocessorOptions.h"
 #include "clang/Tooling/DependencyScanning/DependencyScanningService.h"
+#include "clang/Tooling/DependencyScanning/ModuleDepCollector.h"
 #include "clang/Tooling/Tooling.h"
 
 using namespace clang;
@@ -43,28 +44,6 @@ private:
   DependencyConsumer &C;
 };
 
-/// A proxy file system that doesn't call `chdir` when changing the working
-/// directory of a clang tool.
-class ProxyFileSystemWithoutChdir : public llvm::vfs::ProxyFileSystem {
-public:
-  ProxyFileSystemWithoutChdir(
-      llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> FS)
-      : ProxyFileSystem(std::move(FS)) {}
-
-  llvm::ErrorOr<std::string> getCurrentWorkingDirectory() const override {
-    assert(!CWD.empty() && "empty CWD");
-    return CWD;
-  }
-
-  std::error_code setCurrentWorkingDirectory(const Twine &Path) override {
-    CWD = Path.str();
-    return {};
-  }
-
-private:
-  std::string CWD;
-};
-
 /// A clang tool that runs the preprocessor in a mode that's optimized for
 /// dependency scanning for the given compiler invocation.
 class DependencyScanningAction : public tooling::ToolAction {
@@ -72,9 +51,11 @@ public:
   DependencyScanningAction(
       StringRef WorkingDirectory, DependencyConsumer &Consumer,
       llvm::IntrusiveRefCntPtr<DependencyScanningWorkerFilesystem> DepFS,
-      ExcludedPreprocessorDirectiveSkipMapping *PPSkipMappings)
+      ExcludedPreprocessorDirectiveSkipMapping *PPSkipMappings,
+      ScanningOutputFormat Format)
       : WorkingDirectory(WorkingDirectory), Consumer(Consumer),
-        DepFS(std::move(DepFS)), PPSkipMappings(PPSkipMappings) {}
+        DepFS(std::move(DepFS)), PPSkipMappings(PPSkipMappings),
+        Format(Format) {}
 
   bool runInvocation(std::shared_ptr<CompilerInvocation> Invocation,
                      FileManager *FileMgr,
@@ -115,7 +96,7 @@ public:
             .ExcludedConditionalDirectiveSkipMappings = PPSkipMappings;
     }
 
-    FileMgr->getFileSystemOpts().WorkingDir = WorkingDirectory;
+    FileMgr->getFileSystemOpts().WorkingDir = std::string(WorkingDirectory);
     Compiler.setFileManager(FileMgr);
     Compiler.createSourceManager(*FileMgr);
 
@@ -131,9 +112,25 @@ public:
     // We need at least one -MT equivalent for the generator to work.
     if (Opts->Targets.empty())
       Opts->Targets = {"clang-scan-deps dependency"};
-    Compiler.addDependencyCollector(
-        std::make_shared<DependencyConsumerForwarder>(std::move(Opts),
-                                                      Consumer));
+
+    switch (Format) {
+    case ScanningOutputFormat::Make:
+      Compiler.addDependencyCollector(
+          std::make_shared<DependencyConsumerForwarder>(std::move(Opts),
+                                                        Consumer));
+      break;
+    case ScanningOutputFormat::Full:
+      Compiler.addDependencyCollector(std::make_shared<ModuleDepCollector>(
+          std::move(Opts), Compiler, Consumer));
+      break;
+    }
+
+    // Consider different header search and diagnostic options to create
+    // different modules. This avoids the unsound aliasing of module PCMs.
+    //
+    // TODO: Implement diagnostic bucketing and header search pruning to reduce
+    // the impact of strict context hashing.
+    Compiler.getHeaderSearchOpts().ModulesStrictContextHash = true;
 
     auto Action = std::make_unique<PreprocessOnlyAction>();
     const bool Result = Compiler.ExecuteAction(*Action);
@@ -147,15 +144,17 @@ private:
   DependencyConsumer &Consumer;
   llvm::IntrusiveRefCntPtr<DependencyScanningWorkerFilesystem> DepFS;
   ExcludedPreprocessorDirectiveSkipMapping *PPSkipMappings;
+  ScanningOutputFormat Format;
 };
 
 } // end anonymous namespace
 
 DependencyScanningWorker::DependencyScanningWorker(
-    DependencyScanningService &Service) {
+    DependencyScanningService &Service)
+    : Format(Service.getFormat()) {
   DiagOpts = new DiagnosticOptions();
   PCHContainerOps = std::make_shared<PCHContainerOperations>();
-  RealFS = new ProxyFileSystemWithoutChdir(llvm::vfs::getRealFileSystem());
+  RealFS = llvm::vfs::createPhysicalFileSystem();
   if (Service.canSkipExcludedPPRanges())
     PPSkipMappings =
         std::make_unique<ExcludedPreprocessorDirectiveSkipMapping>();
@@ -195,7 +194,7 @@ llvm::Error DependencyScanningWorker::computeDependencies(
     Tool.setPrintErrorMessage(false);
     Tool.setDiagnosticConsumer(&DC);
     DependencyScanningAction Action(WorkingDirectory, Consumer, DepFS,
-                                    PPSkipMappings.get());
+                                    PPSkipMappings.get(), Format);
     return !Tool.run(&Action);
   });
 }

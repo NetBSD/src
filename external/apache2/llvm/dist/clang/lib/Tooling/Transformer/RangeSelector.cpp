@@ -8,6 +8,7 @@
 
 #include "clang/Tooling/Transformer/RangeSelector.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/TypeLoc.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Lex/Lexer.h"
@@ -23,8 +24,6 @@ using namespace clang;
 using namespace transformer;
 
 using ast_matchers::MatchFinder;
-using ast_type_traits::ASTNodeKind;
-using ast_type_traits::DynTypedNode;
 using llvm::Error;
 using llvm::StringError;
 
@@ -118,11 +117,24 @@ RangeSelector transformer::after(RangeSelector Selector) {
     Expected<CharSourceRange> SelectedRange = Selector(Result);
     if (!SelectedRange)
       return SelectedRange.takeError();
-    if (SelectedRange->isCharRange())
-      return CharSourceRange::getCharRange(SelectedRange->getEnd());
-    return CharSourceRange::getCharRange(Lexer::getLocForEndOfToken(
-        SelectedRange->getEnd(), 0, Result.Context->getSourceManager(),
-        Result.Context->getLangOpts()));
+    SourceLocation End = SelectedRange->getEnd();
+    if (SelectedRange->isTokenRange()) {
+      // We need to find the actual (exclusive) end location from which to
+      // create a new source range. However, that's not guaranteed to be valid,
+      // even if the token location itself is valid. So, we create a token range
+      // consisting only of the last token, then map that range back to the
+      // source file. If that succeeds, we have a valid location for the end of
+      // the generated range.
+      CharSourceRange Range = Lexer::makeFileCharRange(
+          CharSourceRange::getTokenRange(SelectedRange->getEnd()),
+          *Result.SourceManager, Result.Context->getLangOpts());
+      if (Range.isInvalid())
+        return invalidArgumentError(
+            "after: can't resolve sub-range to valid source range");
+      End = Range.getEnd();
+    }
+
+    return CharSourceRange::getCharRange(End);
   };
 }
 
@@ -131,7 +143,8 @@ RangeSelector transformer::node(std::string ID) {
     Expected<DynTypedNode> Node = getNode(Result.Nodes, ID);
     if (!Node)
       return Node.takeError();
-    return Node->get<Stmt>() != nullptr && Node->get<Expr>() == nullptr
+    return (Node->get<Decl>() != nullptr ||
+            (Node->get<Stmt>() != nullptr && Node->get<Expr>() == nullptr))
                ? tooling::getExtendedRange(*Node, tok::TokenKind::semi,
                                            *Result.Context)
                : CharSourceRange::getTokenRange(Node->getSourceRange());
@@ -148,7 +161,7 @@ RangeSelector transformer::statement(std::string ID) {
   };
 }
 
-RangeSelector transformer::range(RangeSelector Begin, RangeSelector End) {
+RangeSelector transformer::enclose(RangeSelector Begin, RangeSelector End) {
   return [Begin, End](const MatchResult &Result) -> Expected<CharSourceRange> {
     Expected<CharSourceRange> BeginRange = Begin(Result);
     if (!BeginRange)
@@ -167,8 +180,9 @@ RangeSelector transformer::range(RangeSelector Begin, RangeSelector End) {
   };
 }
 
-RangeSelector transformer::range(std::string BeginID, std::string EndID) {
-  return transformer::range(node(std::move(BeginID)), node(std::move(EndID)));
+RangeSelector transformer::encloseNodes(std::string BeginID,
+                                        std::string EndID) {
+  return transformer::enclose(node(std::move(BeginID)), node(std::move(EndID)));
 }
 
 RangeSelector transformer::member(std::string ID) {
@@ -215,8 +229,16 @@ RangeSelector transformer::name(std::string ID) {
       SourceLocation L = I->getMemberLocation();
       return CharSourceRange::getTokenRange(L, L);
     }
+    if (const auto *T = Node.get<TypeLoc>()) {
+      TypeLoc Loc = *T;
+      auto ET = Loc.getAs<ElaboratedTypeLoc>();
+      if (!ET.isNull()) {
+        Loc = ET.getNamedTypeLoc();
+      }
+      return CharSourceRange::getTokenRange(Loc.getSourceRange());
+    }
     return typeError(ID, Node.getNodeKind(),
-                     "DeclRefExpr, NamedDecl, CXXCtorInitializer");
+                     "DeclRefExpr, NamedDecl, CXXCtorInitializer, TypeLoc");
   };
 }
 

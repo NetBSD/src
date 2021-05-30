@@ -84,6 +84,20 @@ struct EffectiveContext {
     : Inner(DC),
       Dependent(DC->isDependentContext()) {
 
+    // An implicit deduction guide is semantically in the context enclosing the
+    // class template, but for access purposes behaves like the constructor
+    // from which it was produced.
+    if (auto *DGD = dyn_cast<CXXDeductionGuideDecl>(DC)) {
+      if (DGD->isImplicit()) {
+        DC = DGD->getCorrespondingConstructor();
+        if (!DC) {
+          // The copy deduction candidate doesn't have a corresponding
+          // constructor.
+          DC = cast<DeclContext>(DGD->getDeducedTemplate()->getTemplatedDecl());
+        }
+      }
+    }
+
     // C++11 [class.access.nest]p1:
     //   A nested class is a member and as such has the same access
     //   rights as any other member.
@@ -1476,7 +1490,8 @@ void Sema::HandleDelayedAccessCheck(DelayedDiagnostic &DD, Decl *D) {
   } else if (FunctionDecl *FN = dyn_cast<FunctionDecl>(D)) {
     DC = FN;
   } else if (TemplateDecl *TD = dyn_cast<TemplateDecl>(D)) {
-    DC = cast<DeclContext>(TD->getTemplatedDecl());
+    if (isa<DeclContext>(TD->getTemplatedDecl()))
+      DC = cast<DeclContext>(TD->getTemplatedDecl());
   }
 
   EffectiveContext EC(DC);
@@ -1560,21 +1575,24 @@ Sema::AccessResult Sema::CheckUnresolvedMemberAccess(UnresolvedMemberExpr *E,
   return CheckAccess(*this, E->getMemberLoc(), Entity);
 }
 
-/// Is the given special member function accessible for the purposes of
-/// deciding whether to define a special member function as deleted?
-bool Sema::isSpecialMemberAccessibleForDeletion(CXXMethodDecl *decl,
-                                                AccessSpecifier access,
-                                                QualType objectType) {
+/// Is the given member accessible for the purposes of deciding whether to
+/// define a special member function as deleted?
+bool Sema::isMemberAccessibleForDeletion(CXXRecordDecl *NamingClass,
+                                         DeclAccessPair Found,
+                                         QualType ObjectType,
+                                         SourceLocation Loc,
+                                         const PartialDiagnostic &Diag) {
   // Fast path.
-  if (access == AS_public || !getLangOpts().AccessControl) return true;
+  if (Found.getAccess() == AS_public || !getLangOpts().AccessControl)
+    return true;
 
-  AccessTarget entity(Context, AccessTarget::Member, decl->getParent(),
-                      DeclAccessPair::make(decl, access), objectType);
+  AccessTarget Entity(Context, AccessTarget::Member, NamingClass, Found,
+                      ObjectType);
 
   // Suppress diagnostics.
-  entity.setDiag(PDiag());
+  Entity.setDiag(Diag);
 
-  switch (CheckAccess(*this, SourceLocation(), entity)) {
+  switch (CheckAccess(*this, Loc, Entity)) {
   case AR_accessible: return true;
   case AR_inaccessible: return false;
   case AR_dependent: llvm_unreachable("dependent for =delete computation");
