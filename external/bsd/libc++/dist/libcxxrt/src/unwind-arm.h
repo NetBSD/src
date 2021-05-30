@@ -20,15 +20,19 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */ 
 
+/* For uint32_t and uint64_t */
+#include <stdint.h>
+
 /**
  * ARM-specific unwind definitions.  These are taken from the ARM EHABI
  * specification.
  */
  typedef enum
 {
+	_URC_NO_REASON = 0,
 	_URC_OK = 0,                /* operation completed successfully */
 	_URC_FOREIGN_EXCEPTION_CAUGHT = 1,
-    _URC_END_OF_STACK = 5,
+	_URC_END_OF_STACK = 5,
 	_URC_HANDLER_FOUND = 6,
 	_URC_INSTALL_CONTEXT = 7,
 	_URC_CONTINUE_UNWIND = 8,
@@ -41,10 +45,12 @@ typedef uint32_t _Unwind_State;
 static const _Unwind_State _US_VIRTUAL_UNWIND_FRAME  = 0;
 static const _Unwind_State _US_UNWIND_FRAME_STARTING = 1;
 static const _Unwind_State _US_UNWIND_FRAME_RESUME   = 2;
+static const _Unwind_State _US_ACTION_MASK           = 3;
 #else // GCC fails at knowing what a constant expression is
 #	define _US_VIRTUAL_UNWIND_FRAME  0
 #	define _US_UNWIND_FRAME_STARTING 1
-#	define _US_UNWIND_FRAME_RESUME 2
+#	define _US_UNWIND_FRAME_RESUME   2
+#	define _US_ACTION_MASK           3
 #endif
 
 typedef struct _Unwind_Context _Unwind_Context;
@@ -89,7 +95,7 @@ struct _Unwind_Exception
 	} pr_cache;
 	/** Force alignment of next item to 8-byte boundary */
 	long long int :0;
-};
+} __attribute__((__aligned__(8)));
 
 /* Unwinding functions */
 _Unwind_Reason_Code _Unwind_RaiseException(struct _Unwind_Exception *ucbp);

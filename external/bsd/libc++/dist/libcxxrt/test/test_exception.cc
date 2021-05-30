@@ -1,4 +1,5 @@
 #include "test.h"
+#include "unwind.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -7,12 +8,12 @@
 
 #define fprintf(...)
 
-void log(void* ignored)
+void log_cleanup(void* ignored)
 {
 	//printf("Cleanup called on %s\n", *(char**)ignored);
 }
 #define CLEANUP\
-	__attribute__((cleanup(log))) __attribute__((unused))\
+	__attribute__((cleanup(log_cleanup))) __attribute__((unused))\
 		const char *f = __func__;
 
 /**
@@ -191,6 +192,136 @@ static void throw_zero()
 	throw 0;
 }
 
+struct uncaught_exception_checker
+{
+	uncaught_exception_checker(bool uncaught) : m_uncaught(uncaught) {}
+	~uncaught_exception_checker() {
+		if (std::uncaught_exception())
+			TEST(m_uncaught, "At least one uncaught exception is in flight");
+		else
+			TEST(!m_uncaught, "No uncaught exceptions are in flight");
+	}
+	bool m_uncaught;
+};
+
+void test_rethrown_uncaught_exception()
+{
+	uncaught_exception_checker outer(false);
+	try
+	{
+		try
+		{
+			throw 42;
+		}
+		catch (int)
+		{
+			uncaught_exception_checker inner(true);
+			throw;
+		}
+	}
+	catch (...) {}
+}
+
+static void exception_cleanup(_Unwind_Reason_Code, struct _Unwind_Exception *ex)
+{
+	delete ex;
+}
+
+void test_rethrown_uncaught_foreign_exception()
+{
+	uncaught_exception_checker outer(false);
+	try
+	{
+		try
+		{
+			// Throw a foreign exception.
+			_Unwind_Exception *ex = new _Unwind_Exception;
+			ex->exception_class = 1234;
+			ex->exception_cleanup = exception_cleanup;
+			_Unwind_RaiseException(ex);
+		}
+		catch (...)
+		{
+			// Note: Uncaught exceptions doesn't report foreign exceptions,
+			// because we have no way of receiving a report that the other
+			// language has caught it.
+			uncaught_exception_checker inner(false);
+			throw;
+		}
+	}
+	catch (...) {}
+}
+
+
+void test_uncaught_exception()
+{
+	uncaught_exception_checker outer(false);
+	try {
+		uncaught_exception_checker inner(true);
+		throw 42;
+	}
+	catch (...) {}
+}
+
+struct uncaught_exceptions_checker
+{
+	uncaught_exceptions_checker(int uncaught) : m_uncaught(uncaught) {}
+	~uncaught_exceptions_checker() {
+		char msg[128];
+		int uncaught = std::uncaught_exceptions();
+		snprintf(msg, sizeof msg, "%d uncaught exception%s in flight",
+		    uncaught, uncaught == 1 ? " is" : "s are");
+		TEST(uncaught == m_uncaught, msg);
+	}
+	int m_uncaught;
+};
+
+class top {
+public:
+	~top() {
+		try {
+			uncaught_exceptions_checker uec(4);
+			throw "top";
+		}
+		catch (...) {}
+	}
+};
+
+class middle {
+public:
+	~middle() {
+		try {
+			top f;
+			uncaught_exceptions_checker uec(3);
+			throw "middle";
+		}
+		catch (...) {}
+	}
+};
+
+class bottom {
+public:
+	~bottom() {
+		try {
+			middle f;
+			uncaught_exceptions_checker uec(2);
+			throw "bottom";
+		}
+		catch (...) {}
+	}
+};
+
+void test_uncaught_exceptions()
+{
+	uncaught_exceptions_checker outer(0);
+	try {
+		bottom b;
+		uncaught_exceptions_checker inner(1);
+		throw "test";
+	}
+	catch (...) {}
+}
+
 extern "C" void __cxa_bad_cast();
 
 void test_exceptions(void)
@@ -237,6 +368,10 @@ void test_exceptions(void)
 		TEST(0, "Bad cast was not caught correctly");
 	}
 	test_const();
+	test_uncaught_exception();
+	test_rethrown_uncaught_exception();
+	test_rethrown_uncaught_foreign_exception();
+	test_uncaught_exceptions();
 
 
 	//printf("Test: %s\n",
