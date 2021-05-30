@@ -115,7 +115,7 @@ public:
   std::string ModuleUserBuildPath;
 
   /// The mapping of module names to prebuilt module files.
-  std::map<std::string, std::string> PrebuiltModuleFiles;
+  std::map<std::string, std::string, std::less<>> PrebuiltModuleFiles;
 
   /// The directories used to load prebuilt module files.
   std::vector<std::string> PrebuiltModulePaths;
@@ -141,6 +141,10 @@ public:
   /// The home directory is where we look for files named in the module map
   /// file.
   unsigned ModuleMapFileHomeIsCwd : 1;
+
+  /// Also search for prebuilt implicit modules in the prebuilt module cache
+  /// path.
+  unsigned EnablePrebuiltImplicitModules : 1;
 
   /// The interval (in seconds) between pruning operations.
   ///
@@ -217,8 +221,9 @@ public:
   HeaderSearchOptions(StringRef _Sysroot = "/")
       : Sysroot(_Sysroot), ModuleFormat("raw"), DisableModuleHash(false),
         ImplicitModuleMaps(false), ModuleMapFileHomeIsCwd(false),
-        UseBuiltinIncludes(true), UseStandardSystemIncludes(true),
-        UseStandardCXXIncludes(true), UseLibcxx(false), Verbose(false),
+        EnablePrebuiltImplicitModules(false), UseBuiltinIncludes(true),
+        UseStandardSystemIncludes(true), UseStandardCXXIncludes(true),
+        UseLibcxx(false), Verbose(false),
         ModulesValidateOncePerBuildSession(false),
         ModulesValidateSystemHeaders(false),
         ValidateASTInputFilesContent(false), UseDebugInfo(false),
@@ -239,11 +244,11 @@ public:
   }
 
   void AddVFSOverlayFile(StringRef Name) {
-    VFSOverlayFiles.push_back(Name);
+    VFSOverlayFiles.push_back(std::string(Name));
   }
 
   void AddPrebuiltModulePath(StringRef Name) {
-    PrebuiltModulePaths.push_back(Name);
+    PrebuiltModulePaths.push_back(std::string(Name));
   }
 };
 
