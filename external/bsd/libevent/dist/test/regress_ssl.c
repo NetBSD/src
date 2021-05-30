@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_ssl.c,v 1.5 2021/04/07 03:36:48 christos Exp $	*/
+/*	$NetBSD: regress_ssl.c,v 1.6 2021/05/30 00:19:08 joerg Exp $	*/
 
 /*
  * Copyright (c) 2009-2012 Niels Provos and Nick Mathewson
@@ -891,7 +891,7 @@ regress_bufferevent_openssl_wm(void *arg)
 	struct sockaddr_in sin;
 	struct sockaddr_storage ss;
 	enum regress_openssl_type type =
-		(enum regress_openssl_type)data->setup_data;
+		(enum regress_openssl_type)(uintptr_t)data->setup_data;
 	int bev_flags = BEV_OPT_CLOSE_ON_FREE;
 	ev_socklen_t slen;
 	SSL *ssl;
