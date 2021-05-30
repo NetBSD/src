@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.17 2020/12/11 18:03:33 skrll Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.18 2021/05/30 05:40:56 rin Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.17 2020/12/11 18:03:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.18 2021/05/30 05:40:56 rin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -158,7 +158,7 @@ netbsd32_process_read_fpregs(struct lwp *l, struct fpreg32 *fpregs,
 {
 	struct proc * const p = l->l_proc;
 	struct pcb * const pcb = lwp_getpcb(l);
-	int i;
+	int i, j;
 
 	if ((p->p_flag & PK_32) == 0)
 		return EINVAL;
@@ -180,11 +180,17 @@ netbsd32_process_read_fpregs(struct lwp *l, struct fpreg32 *fpregs,
 	fpregs->fpr_vfp.vfp_fpinst = 0;
 	fpregs->fpr_vfp.vfp_fpinst2 = 0;
 
-	for (i = 0; i < 32; i++) {
+	for (i = j = 0; i < 16; i++) {
 #ifdef __AARCH64EB__
-		fpregs->fpr_vfp.vfp_regs[i] = pcb->pcb_fpregs.fp_reg[i].u64[1];
+		fpregs->fpr_vfp.vfp_regs[j++] =
+		    pcb->pcb_fpregs.fp_reg[i].u64[1];
+		fpregs->fpr_vfp.vfp_regs[j++] =
+		    pcb->pcb_fpregs.fp_reg[i].u64[0];
 #else
-		fpregs->fpr_vfp.vfp_regs[i] = pcb->pcb_fpregs.fp_reg[i].u64[0];
+		fpregs->fpr_vfp.vfp_regs[j++] =
+		    pcb->pcb_fpregs.fp_reg[i].u64[0];
+		fpregs->fpr_vfp.vfp_regs[j++] =
+		    pcb->pcb_fpregs.fp_reg[i].u64[1];
 #endif
 	}
 
@@ -226,7 +232,7 @@ netbsd32_process_write_fpregs(struct lwp *l, const struct fpreg32 *fpregs,
 {
 	struct proc * const p = l->l_proc;
 	struct pcb * const pcb = lwp_getpcb(l);
-	int i;
+	int i, j;
 
 	if ((p->p_flag & PK_32) == 0)
 		return EINVAL;
@@ -237,17 +243,18 @@ netbsd32_process_write_fpregs(struct lwp *l, const struct fpreg32 *fpregs,
 	pcb->pcb_fpregs.fpsr = fpregs->fpr_vfp.vfp_fpscr & FPSR_BITS;
 	pcb->pcb_fpregs.fpcr = fpregs->fpr_vfp.vfp_fpscr & FPCR_BITS;
 
-	CTASSERT(__arraycount(fpregs->fpr_vfp.vfp_regs) ==
-	    __arraycount(pcb->pcb_fpregs.fp_reg) + 1);
-	for (i = 0; i < __arraycount(pcb->pcb_fpregs.fp_reg); i++) {
+	for (i = j = 0; i < 16; i++) {
 #ifdef __AARCH64EB__
-		pcb->pcb_fpregs.fp_reg[i].u64[0] = 0;
 		pcb->pcb_fpregs.fp_reg[i].u64[1] =
-#else
-		pcb->pcb_fpregs.fp_reg[i].u64[1] = 0;
+		    fpregs->fpr_vfp.vfp_regs[j++];
 		pcb->pcb_fpregs.fp_reg[i].u64[0] =
+		    fpregs->fpr_vfp.vfp_regs[j++];
+#else
+		pcb->pcb_fpregs.fp_reg[i].u64[0] =
+		    fpregs->fpr_vfp.vfp_regs[j++];
+		pcb->pcb_fpregs.fp_reg[i].u64[1] =
+		    fpregs->fpr_vfp.vfp_regs[j++];
 #endif
-		    fpregs->fpr_vfp.vfp_regs[i];
 	}
 
 	return 0;
@@ -458,18 +465,21 @@ cpu_getmcontext32(struct lwp *l, mcontext32_t *mcp, unsigned int *flagsp)
 	/* fpu context */
 	if (fpu_used_p(l)) {
 		const struct pcb * const pcb = lwp_getpcb(l);
-		int i;
+		int i, j;
 
 		fpu_save(l);
 
-		CTASSERT(__arraycount(mcp->__vfpregs.__vfp_fstmx) ==
-		    __arraycount(pcb->pcb_fpregs.fp_reg));
-		for (i = 0; i < __arraycount(pcb->pcb_fpregs.fp_reg); i++) {
-			mcp->__vfpregs.__vfp_fstmx[i] =
+		for (i = j = 0; i < 16; i++) {
 #ifdef __AARCH64EB__
+			mcp->__vfpregs.__vfp_fstmx[j++] =
 			    pcb->pcb_fpregs.fp_reg[i].u64[1];
-#else
+			mcp->__vfpregs.__vfp_fstmx[j++] =
 			    pcb->pcb_fpregs.fp_reg[i].u64[0];
+#else
+			mcp->__vfpregs.__vfp_fstmx[j++] =
+			    pcb->pcb_fpregs.fp_reg[i].u64[0];
+			mcp->__vfpregs.__vfp_fstmx[j++] =
+			    pcb->pcb_fpregs.fp_reg[i].u64[1];
 #endif
 		}
 
@@ -491,7 +501,7 @@ cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
 	struct trapframe * const tf = l->l_md.md_utf;
 	const __greg32_t * const gr = mcp->__gregs;
 	struct proc * const p = l->l_proc;
-	int error, i;
+	int error, i, j;
 
 	if (flags & _UC_CPU) {
 		error = cpu_mcontext32_validate(l, mcp);
@@ -521,17 +531,18 @@ cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
 		struct pcb * const pcb = lwp_getpcb(l);
 		fpu_discard(l, true);
 
-		CTASSERT(__arraycount(mcp->__vfpregs.__vfp_fstmx) ==
-		    __arraycount(pcb->pcb_fpregs.fp_reg));
-		for (i = 0; i < __arraycount(pcb->pcb_fpregs.fp_reg); i++) {
+		for (i = j = 0; i < 16; i++) {
 #ifdef __AARCH64EB__
-			pcb->pcb_fpregs.fp_reg[i].u64[0] = 0;
 			pcb->pcb_fpregs.fp_reg[i].u64[1] =
-#else
-			pcb->pcb_fpregs.fp_reg[i].u64[1] = 0;
+			    mcp->__vfpregs.__vfp_fstmx[j++];
 			pcb->pcb_fpregs.fp_reg[i].u64[0] =
+			    mcp->__vfpregs.__vfp_fstmx[j++];
+#else
+			pcb->pcb_fpregs.fp_reg[i].u64[0] =
+			    mcp->__vfpregs.__vfp_fstmx[j++];
+			pcb->pcb_fpregs.fp_reg[i].u64[1] =
+			    mcp->__vfpregs.__vfp_fstmx[j++];
 #endif
-			    mcp->__vfpregs.__vfp_fstmx[i];
 		}
 		pcb->pcb_fpregs.fpsr =
 		    mcp->__vfpregs.__vfp_fpscr & FPSR_BITS;
