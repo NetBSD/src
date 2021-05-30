@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.119 2021/05/24 23:07:40 uwe Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.120 2021/05/30 10:39:41 cjep Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -462,7 +462,9 @@ int __nbcompat_gettemp(char *, int *, int);
 ssize_t pread(int, void *, size_t, off_t);
 #endif
 
+int __nbcompat_heapsort (void *, size_t, size_t, int (*)(const void *, const void *));
 #define heapsort __nbcompat_heapsort
+
 #if !HAVE_DECL_HEAPSORT
 int heapsort (void *, size_t, size_t, int (*)(const void *, const void *));
 #endif
