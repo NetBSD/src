@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.84 2021/04/11 19:05:06 rillig Exp $	*/
+/*	$NetBSD: str.c,v 1.85 2021/05/30 21:16:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -71,7 +71,7 @@
 #include "make.h"
 
 /*	"@(#)str.c	5.8 (Berkeley) 6/1/90"	*/
-MAKE_RCSID("$NetBSD: str.c,v 1.84 2021/04/11 19:05:06 rillig Exp $");
+MAKE_RCSID("$NetBSD: str.c,v 1.85 2021/05/30 21:16:54 rillig Exp $");
 
 /* Return the concatenation of s1 and s2, freshly allocated. */
 char *
@@ -96,22 +96,6 @@ str_concat3(const char *s1, const char *s2, const char *s3)
 	memcpy(result, s1, len1);
 	memcpy(result + len1, s2, len2);
 	memcpy(result + len1 + len2, s3, len3 + 1);
-	return result;
-}
-
-/* Return the concatenation of s1, s2, s3 and s4, freshly allocated. */
-char *
-str_concat4(const char *s1, const char *s2, const char *s3, const char *s4)
-{
-	size_t len1 = strlen(s1);
-	size_t len2 = strlen(s2);
-	size_t len3 = strlen(s3);
-	size_t len4 = strlen(s4);
-	char *result = bmake_malloc(len1 + len2 + len3 + len4 + 1);
-	memcpy(result, s1, len1);
-	memcpy(result + len1, s2, len2);
-	memcpy(result + len1 + len2, s3, len3);
-	memcpy(result + len1 + len2 + len3, s4, len4 + 1);
 	return result;
 }
 
