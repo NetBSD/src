@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.284 2021/05/30 01:41:45 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.285 2021/05/30 04:04:26 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008, 2020
@@ -135,7 +135,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.284 2021/05/30 01:41:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.285 2021/05/30 04:04:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3358,6 +3358,15 @@ pmap_pv_page_free(struct pool *pp, void *v)
 /******************** misc. functions ********************/
 
 /*
+ * Pages that are in-use as page table pages should never be part
+ * of a UVM loan, so we'll use that field for our PT page reference
+ * count.
+ */
+#define	PHYSPAGE_REFCNT(pg)	atomic_load_relaxed(&(pg)->loan_count)
+#define	PHYSPAGE_REFCNT_INC(pg)	atomic_inc_uint_nv(&(pg)->loan_count)
+#define	PHYSPAGE_REFCNT_DEC(pg)	atomic_dec_uint_nv(&(pg)->loan_count)
+
+/*
  * pmap_physpage_alloc:
  *
  *	Allocate a single page from the VM system and return the
@@ -3376,14 +3385,7 @@ pmap_physpage_alloc(int usage)
 	pg = uvm_pagealloc(NULL, 0, NULL, usage == PGU_L1PT ?
 	    UVM_PGA_USERESERVE : UVM_PGA_USERESERVE|UVM_PGA_ZERO);
 	if (pg != NULL) {
-#ifdef DEBUG
-		struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
-		if (md->pvh_refcnt != 0) {
-			printf("pmap_physpage_alloc: page 0x%lx has "
-			    "%d references\n", pa, md->pvh_refcnt);
-			panic("pmap_physpage_alloc");
-		}
-#endif
+		KASSERT(PHYSPAGE_REFCNT(pg) == 0);
 	}
 	return pg;
 }
@@ -3401,11 +3403,7 @@ pmap_physpage_free(paddr_t pa)
 	if ((pg = PHYS_TO_VM_PAGE(pa)) == NULL)
 		panic("pmap_physpage_free: bogus physical page address");
 
-#ifdef DEBUG
-	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
-	if (md->pvh_refcnt != 0)
-		panic("pmap_physpage_free: page still has references");
-#endif
+	KASSERT(PHYSPAGE_REFCNT(pg) == 0);
 
 	uvm_pagefree(pg);
 }
@@ -3419,16 +3417,14 @@ static int
 pmap_physpage_addref(void *kva)
 {
 	struct vm_page *pg;
-	struct vm_page_md *md;
 	paddr_t pa;
 
 	pa = ALPHA_K0SEG_TO_PHYS(trunc_page((vaddr_t)kva));
 	pg = PHYS_TO_VM_PAGE(pa);
-	md = VM_PAGE_TO_MD(pg);
 
-	KASSERT((int)md->pvh_refcnt >= 0);
+	KASSERT(PHYSPAGE_REFCNT(pg) < UINT32_MAX);
 
-	return atomic_inc_uint_nv(&md->pvh_refcnt);
+	return PHYSPAGE_REFCNT_INC(pg);
 }
 
 /*
@@ -3440,16 +3436,14 @@ static int
 pmap_physpage_delref(void *kva)
 {
 	struct vm_page *pg;
-	struct vm_page_md *md;
 	paddr_t pa;
 
 	pa = ALPHA_K0SEG_TO_PHYS(trunc_page((vaddr_t)kva));
 	pg = PHYS_TO_VM_PAGE(pa);
-	md = VM_PAGE_TO_MD(pg);
 
-	KASSERT((int)md->pvh_refcnt > 0);
+	KASSERT(PHYSPAGE_REFCNT(pg) != 0);
 
-	return atomic_dec_uint_nv(&md->pvh_refcnt);
+	return PHYSPAGE_REFCNT_DEC(pg);
 }
 
 /******************** page table page management ********************/
@@ -3685,10 +3679,8 @@ pmap_ptpage_free(pmap_t pmap, pt_entry_t * const pte,
 	struct vm_page * const pg = PHYS_TO_VM_PAGE(ptpa);
 	KASSERT(pg != NULL);
 
+	KASSERT(PHYSPAGE_REFCNT(pg) == 0);
 #ifdef DEBUG
-	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
-	KDASSERT(md->pvh_refcnt == 0);
-
 	pmap_zero_page(ptpa);
 #endif
 
