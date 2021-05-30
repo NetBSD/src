@@ -1,4 +1,4 @@
-/*	$NetBSD: bootcfg.c,v 1.5 2020/06/27 17:22:12 jmcneill Exp $	*/
+/*	$NetBSD: bootcfg.c,v 1.6 2021/05/30 05:59:23 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -80,6 +80,7 @@ bootcfg_do_noop(const char *cmd, char *arg)
  * timeout: Timeout in seconds (overrides that set by installboot)
  * default: the default menu option to use if Return is pressed
  * consdev: the console device to use
+ * root: the root device to use
  * format: how menu choices are displayed: (a)utomatic, (n)umbers or (l)etters
  * clear: whether to clear the screen or not
  *
@@ -222,6 +223,8 @@ perform_bootcfg(const char *conf, bootcfg_command command, const off_t maxsz)
 			bootcfg_info.def = atoi(value) - 1;
 		} else if (!strncmp(key, "consdev", 7)) {
 			bootcfg_info.consdev = value;
+		} else if (!strncmp(key, "root", 4)) {
+			bootcfg_info.root = value;
 		} else if (!strncmp(key, BOOTCFG_CMD_LOAD, 4)) {
 			command(BOOTCFG_CMD_LOAD, value);
 		} else if (!strncmp(key, "format", 6)) {

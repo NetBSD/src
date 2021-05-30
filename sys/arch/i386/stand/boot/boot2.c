@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.74 2020/07/15 12:36:30 kim Exp $	*/
+/*	$NetBSD: boot2.c,v 1.75 2021/05/30 05:59:22 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -83,6 +83,9 @@
 #include <vbe.h>
 #include "devopen.h"
 
+#ifdef _STANDALONE
+#include <bootinfo.h>
+#endif
 #ifdef SUPPORT_PS2
 #include <biosmca.h>
 #endif
@@ -130,6 +133,7 @@ void	command_boot(char *);
 void	command_pkboot(char *);
 void	command_dev(char *);
 void	command_consdev(char *);
+void	command_root(char *);
 #ifndef SMALL
 void	command_menu(char *);
 #endif
@@ -147,6 +151,7 @@ const struct bootblk_command commands[] = {
 	{ "pkboot",	command_pkboot },
 	{ "dev",	command_dev },
 	{ "consdev",	command_consdev },
+	{ "root",	command_root },
 #ifndef SMALL
 	{ "menu",	command_menu },
 #endif
@@ -450,6 +455,9 @@ command_help(char *arg)
 #endif
 	       "dev [dev:]\n"
 	       "consdev {pc|{com[0123]|com[0123]kbd|auto}[,{speed}]}\n"
+	       "root    {spec}\n"
+	       "     spec can be disk, e.g. wd0, sd0\n"
+	       "     or string like wedge:name\n"
 	       "vesa {modenum|on|off|enabled|disabled|list}\n"
 #ifndef SMALL
 	       "menu (reenters boot menu, if defined in boot.cfg)\n"
@@ -608,6 +616,18 @@ command_consdev(char *arg)
 	}
 error:
 	printf("invalid console device.\n");
+}
+
+void
+command_root(char *arg)
+{
+	struct btinfo_rootdevice *biv = &bi_root;
+
+	strncpy(biv->devname, arg, sizeof(biv->devname));
+	if (biv->devname[sizeof(biv->devname)-1] != '\0') {
+		biv->devname[sizeof(biv->devname)-1] = '\0';
+		printf("truncated to %s\n",biv->devname);
+	}
 }
 
 #ifndef SMALL

@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.54 2019/12/17 01:37:53 manu Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.55 2021/05/30 05:59:23 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998
@@ -186,6 +186,7 @@ const struct gpt_part gpt_parts[] = {
 
 struct btinfo_bootdisk bi_disk;
 struct btinfo_bootwedge bi_wedge;
+struct btinfo_rootdevice bi_root;
 
 #define MBR_PARTS(buf) ((char *)(buf) + offsetof(struct mbr_sector, mbr_parts))
 
