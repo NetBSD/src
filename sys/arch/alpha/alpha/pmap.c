@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.281 2021/05/29 23:27:22 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.282 2021/05/30 00:34:27 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008, 2020
@@ -135,7 +135,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.281 2021/05/29 23:27:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.282 2021/05/30 00:34:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -432,6 +432,21 @@ pmap_activation_lock(pmap_t const pmap)
 #endif /* MULTIPROCESSOR */
 
 /*
+ * Generic routine for freeing pages on a pmap_pagelist back to
+ * the system.
+ */
+static void
+pmap_pagelist_free(struct pmap_pagelist * const list)
+{
+	struct vm_page *pg;
+
+	while ((pg = LIST_FIRST(list)) != NULL) {
+		LIST_REMOVE(pg, pageq.list);
+		uvm_pagefree(pg);
+	}
+}
+
+/*
  * TLB management.
  *
  * TLB invalidations need to be performed on local and remote CPUs
@@ -526,7 +541,7 @@ pmap_activation_lock(pmap_t const pmap)
 struct pmap_tlb_context {
 	uintptr_t	t_addrdata[TLB_CTX_MAXVA];
 	pmap_t		t_pmap;
-	LIST_HEAD(, vm_page) t_freeptq;
+	struct pmap_pagelist t_freeptq;
 };
 
 static struct {
@@ -1082,15 +1097,10 @@ pmap_tlb_physpage_free(paddr_t const ptpa,
 	LIST_INSERT_HEAD(&tlbctx->t_freeptq, pg, pageq.list);
 }
 
-static void
+static __inline void
 pmap_tlb_ptpage_drain(struct pmap_tlb_context * const tlbctx)
 {
-	struct vm_page *pg;
-
-	while ((pg = LIST_FIRST(&tlbctx->t_freeptq)) != NULL) {
-		LIST_REMOVE(pg, pageq.list);
-		uvm_pagefree(pg);
-	}
+	pmap_pagelist_free(&tlbctx->t_freeptq);
 }
 
 /*
@@ -1720,7 +1730,8 @@ pmap_remove_internal(pmap_t pmap, vaddr_t sva, vaddr_t eva,
 		PMAP_MAP_TO_HEAD_UNLOCK();
 		PMAP_UNLOCK(pmap);
 		pmap_tlb_shootnow(tlbctx);
-		pmap_tlb_ptpage_drain(tlbctx);
+		/* kernel PT pages are never freed. */
+		KASSERT(LIST_EMPTY(&tlbctx->t_freeptq));
 		TLB_COUNT(reason_remove_kernel);
 
 		return;
