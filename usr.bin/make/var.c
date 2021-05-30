@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.930 2021/04/19 22:22:27 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.931 2021/05/30 20:31:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.930 2021/04/19 22:22:27 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.931 2021/05/30 20:31:03 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -1822,24 +1822,6 @@ Words_JoinFree(Words words)
 	Words_Free(words);
 
 	return Buf_DoneData(&buf);
-}
-
-/* Remove adjacent duplicate words. */
-static char *
-VarUniq(const char *str)
-{
-	Words words = Str_Words(str, false);
-
-	if (words.len > 1) {
-		size_t i, j;
-		for (j = 0, i = 1; i < words.len; i++)
-			if (strcmp(words.words[i], words.words[j]) != 0 &&
-			    (++j != i))
-				words.words[j] = words.words[i];
-		words.len = j + 1;
-	}
-
-	return Words_JoinFree(words);
 }
 
 
@@ -3561,15 +3543,31 @@ ApplyModifier_WordFunc(const char **pp, ModChain *ch,
 	return AMR_OK;
 }
 
+/* Remove adjacent duplicate words. */
 static ApplyModifierResult
 ApplyModifier_Unique(const char **pp, ModChain *ch)
 {
+	Words words;
+
 	if (!IsDelimiter((*pp)[1], ch))
 		return AMR_UNKNOWN;
 	(*pp)++;
 
-	if (ModChain_ShouldEval(ch))
-		Expr_SetValueOwn(ch->expr, VarUniq(ch->expr->value.str));
+	if (!ModChain_ShouldEval(ch))
+		return AMR_OK;
+
+	words = Str_Words(ch->expr->value.str, false);
+
+	if (words.len > 1) {
+		size_t i, j;
+		for (j = 0, i = 1; i < words.len; i++)
+			if (strcmp(words.words[i], words.words[j]) != 0 &&
+			    (++j != i))
+				words.words[j] = words.words[i];
+		words.len = j + 1;
+	}
+
+	Expr_SetValueOwn(ch->expr, Words_JoinFree(words));
 
 	return AMR_OK;
 }
