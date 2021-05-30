@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.291 2021/05/30 19:46:21 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.292 2021/05/30 19:50:23 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008, 2020
@@ -135,7 +135,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.291 2021/05/30 19:46:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.292 2021/05/30 19:50:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1933,9 +1933,6 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	struct pmap_tlb_context tlbctx;
 
 #ifdef DEBUG
-	paddr_t pa = VM_PAGE_TO_PHYS(pg);
-
-
 	if ((pmapdebug & (PDB_FOLLOW|PDB_PROTECT)) ||
 	    (prot == VM_PROT_NONE && (pmapdebug & PDB_REMOVE)))
 		printf("pmap_page_protect(%p, %x)\n", pg, prot);
@@ -2576,7 +2573,7 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 		if (__predict_true(vtophys_internal(va, pap))) {
 #ifdef DEBUG
 			if (pmapdebug & PDB_FOLLOW)
-				printf("0x%lx (kernel vtophys)\n", pa);
+				printf("0x%lx (kernel vtophys)\n", *pap);
 #endif
 			return true;
 		}
@@ -3278,7 +3275,7 @@ pmap_pv_dump(paddr_t pa)
 	lock = pmap_pvh_lock(pg);
 	mutex_enter(lock);
 
-	printf("pa 0x%lx (attrs = 0x%x):\n", pa, md->pvh_listx & PGA_ATTRS);
+	printf("pa 0x%lx (attrs = 0x%lx):\n", pa, md->pvh_listx & PGA_ATTRS);
 	for (pv = VM_MDPAGE_PVS(pg); pv != NULL; pv = pv->pv_next)
 		printf("     pmap %p, va 0x%lx\n",
 		    pv->pv_pmap, pv->pv_va);
@@ -4004,7 +4001,7 @@ pmap_asn_alloc(pmap_t const pmap, struct cpu_info * const ci)
 #ifdef DEBUG
 		if (pmapdebug & PDB_ASN)
 			printf("pmap_asn_alloc: generation bumped to %lu\n",
-			    ci->ci_asn_ge);
+			    ci->ci_asn_gen);
 #endif
 	}
 
