@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.285 2021/05/30 04:04:26 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.286 2021/05/30 05:26:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008, 2020
@@ -135,7 +135,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.285 2021/05/30 04:04:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.286 2021/05/30 05:26:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1823,7 +1823,6 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 void
 pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
-	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
 	pv_entry_t pv, nextpv;
 	pt_entry_t opte;
 	kmutex_t *lock;
@@ -1851,7 +1850,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		PMAP_HEAD_TO_MAP_LOCK();
 		lock = pmap_pvh_lock(pg);
 		mutex_enter(lock);
-		for (pv = md->pvh_list; pv != NULL; pv = pv->pv_next) {
+		for (pv = VM_MDPAGE_PVS(pg); pv != NULL; pv = pv->pv_next) {
 			PMAP_LOCK(pv->pv_pmap);
 			opte = atomic_load_relaxed(pv->pv_pte);
 			if (opte & (PG_KWE | PG_UWE)) {
@@ -1876,7 +1875,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	PMAP_HEAD_TO_MAP_LOCK();
 	lock = pmap_pvh_lock(pg);
 	mutex_enter(lock);
-	for (pv = md->pvh_list; pv != NULL; pv = nextpv) {
+	for (pv = VM_MDPAGE_PVS(pg); pv != NULL; pv = nextpv) {
 		pt_entry_t pte_bits;
 		pmap_t pmap;
 		vaddr_t va;
@@ -3007,7 +3006,6 @@ static void
 pmap_changebit(struct vm_page *pg, pt_entry_t set, pt_entry_t mask,
     struct pmap_tlb_context * const tlbctx)
 {
-	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
 	pv_entry_t pv;
 	pt_entry_t *pte, npte, opte;
 
@@ -3020,7 +3018,7 @@ pmap_changebit(struct vm_page *pg, pt_entry_t set, pt_entry_t mask,
 	/*
 	 * Loop over all current mappings setting/clearing as apropos.
 	 */
-	for (pv = md->pvh_list; pv != NULL; pv = pv->pv_next) {
+	for (pv = VM_MDPAGE_PVS(pg); pv != NULL; pv = pv->pv_next) {
 		PMAP_LOCK(pv->pv_pmap);
 
 		pte = pv->pv_pte;
@@ -3176,7 +3174,7 @@ pmap_pv_dump(paddr_t pa)
 	mutex_enter(lock);
 
 	printf("pa 0x%lx (attrs = 0x%x):\n", pa, md->pvh_attrs);
-	for (pv = md->pvh_list; pv != NULL; pv = pv->pv_next)
+	for (pv = VM_MDPAGE_PVS(pg); pv != NULL; pv = pv->pv_next)
 		printf("     pmap %p, va 0x%lx\n",
 		    pv->pv_pmap, pv->pv_va);
 	printf("\n");
@@ -3264,7 +3262,7 @@ pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t va, pt_entry_t *pte,
 	/*
 	 * Make sure the entry doesn't already exist.
 	 */
-	for (pv = md->pvh_list; pv != NULL; pv = pv->pv_next) {
+	for (pv = VM_MDPAGE_PVS(pg); pv != NULL; pv = pv->pv_next) {
 		if (pmap == pv->pv_pmap && va == pv->pv_va) {
 			printf("pmap = %p, va = 0x%lx\n", pmap, va);
 			panic("pmap_pv_enter: already in pv table");
