@@ -32,6 +32,7 @@ enum class Language : uint8_t {
   ObjC,
   ObjCXX,
   OpenCL,
+  OpenCLCXX,
   CUDA,
   RenderScript,
   HIP,
@@ -48,12 +49,13 @@ enum LangFeatures {
   CPlusPlus11 = (1 << 6),
   CPlusPlus14 = (1 << 7),
   CPlusPlus17 = (1 << 8),
-  CPlusPlus2a = (1 << 9),
-  Digraphs = (1 << 10),
-  GNUMode = (1 << 11),
-  HexFloat = (1 << 12),
-  ImplicitInt = (1 << 13),
-  OpenCL = (1 << 14)
+  CPlusPlus20 = (1 << 9),
+  CPlusPlus2b = (1 << 10),
+  Digraphs = (1 << 11),
+  GNUMode = (1 << 12),
+  HexFloat = (1 << 13),
+  ImplicitInt = (1 << 14),
+  OpenCL = (1 << 15)
 };
 
 /// LangStandard - Information about the properties of a particular language
@@ -108,8 +110,11 @@ public:
   /// isCPlusPlus17 - Language is a C++17 variant (or later).
   bool isCPlusPlus17() const { return Flags & CPlusPlus17; }
 
-  /// isCPlusPlus2a - Language is a post-C++17 variant (or later).
-  bool isCPlusPlus2a() const { return Flags & CPlusPlus2a; }
+  /// isCPlusPlus20 - Language is a C++20 variant (or later).
+  bool isCPlusPlus20() const { return Flags & CPlusPlus20; }
+
+  /// isCPlusPlus2b - Language is a post-C++20 variant (or later).
+  bool isCPlusPlus2b() const { return Flags & CPlusPlus2b; }
 
   /// hasDigraphs - Language supports digraphs.
   bool hasDigraphs() const { return Flags & Digraphs; }

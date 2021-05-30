@@ -13,13 +13,13 @@
 #ifndef LLVM_CLANG_AST_ATTR_H
 #define LLVM_CLANG_AST_ATTR_H
 
-#include "clang/AST/ASTContextAllocate.h"  // For Attrs.inc
+#include "clang/AST/ASTFwd.h"
 #include "clang/AST/AttrIterator.h"
 #include "clang/AST/Decl.h"
-#include "clang/AST/Expr.h"
 #include "clang/AST/Type.h"
 #include "clang/Basic/AttrKinds.h"
 #include "clang/Basic/AttributeCommonInfo.h"
+#include "clang/Basic/LangOptions.h"
 #include "clang/Basic/LLVM.h"
 #include "clang/Basic/OpenMPKinds.h"
 #include "clang/Basic/Sanitizers.h"
@@ -32,83 +32,84 @@
 #include <cassert>
 
 namespace clang {
-  class ASTContext;
-  class AttributeCommonInfo;
-  class IdentifierInfo;
-  class ObjCInterfaceDecl;
-  class Expr;
-  class QualType;
-  class FunctionDecl;
-  class TypeSourceInfo;
+class ASTContext;
+class AttributeCommonInfo;
+class IdentifierInfo;
+class ObjCInterfaceDecl;
+class Expr;
+class QualType;
+class FunctionDecl;
+class TypeSourceInfo;
+class OMPTraitInfo;
 
 /// Attr - This represents one attribute.
-  class Attr : public AttributeCommonInfo {
-  private:
-    unsigned AttrKind : 16;
+class Attr : public AttributeCommonInfo {
+private:
+  unsigned AttrKind : 16;
 
-  protected:
-    /// An index into the spelling list of an
-    /// attribute defined in Attr.td file.
-    unsigned Inherited : 1;
-    unsigned IsPackExpansion : 1;
-    unsigned Implicit : 1;
-    // FIXME: These are properties of the attribute kind, not state for this
-    // instance of the attribute.
-    unsigned IsLateParsed : 1;
-    unsigned InheritEvenIfAlreadyPresent : 1;
+protected:
+  /// An index into the spelling list of an
+  /// attribute defined in Attr.td file.
+  unsigned Inherited : 1;
+  unsigned IsPackExpansion : 1;
+  unsigned Implicit : 1;
+  // FIXME: These are properties of the attribute kind, not state for this
+  // instance of the attribute.
+  unsigned IsLateParsed : 1;
+  unsigned InheritEvenIfAlreadyPresent : 1;
 
-    void *operator new(size_t bytes) noexcept {
-      llvm_unreachable("Attrs cannot be allocated with regular 'new'.");
-    }
-    void operator delete(void *data) noexcept {
-      llvm_unreachable("Attrs cannot be released with regular 'delete'.");
-    }
+  void *operator new(size_t bytes) noexcept {
+    llvm_unreachable("Attrs cannot be allocated with regular 'new'.");
+  }
+  void operator delete(void *data) noexcept {
+    llvm_unreachable("Attrs cannot be released with regular 'delete'.");
+  }
 
-  public:
-    // Forward so that the regular new and delete do not hide global ones.
-    void *operator new(size_t Bytes, ASTContext &C,
-                       size_t Alignment = 8) noexcept {
-      return ::operator new(Bytes, C, Alignment);
-    }
-    void operator delete(void *Ptr, ASTContext &C, size_t Alignment) noexcept {
-      return ::operator delete(Ptr, C, Alignment);
-    }
+public:
+  // Forward so that the regular new and delete do not hide global ones.
+  void *operator new(size_t Bytes, ASTContext &C,
+                     size_t Alignment = 8) noexcept {
+    return ::operator new(Bytes, C, Alignment);
+  }
+  void operator delete(void *Ptr, ASTContext &C, size_t Alignment) noexcept {
+    return ::operator delete(Ptr, C, Alignment);
+  }
 
-  protected:
-    Attr(ASTContext &Context, const AttributeCommonInfo &CommonInfo,
-         attr::Kind AK, bool IsLateParsed)
-        : AttributeCommonInfo(CommonInfo), AttrKind(AK), Inherited(false),
-          IsPackExpansion(false), Implicit(false), IsLateParsed(IsLateParsed),
-          InheritEvenIfAlreadyPresent(false) {}
+protected:
+  Attr(ASTContext &Context, const AttributeCommonInfo &CommonInfo,
+       attr::Kind AK, bool IsLateParsed)
+      : AttributeCommonInfo(CommonInfo), AttrKind(AK), Inherited(false),
+        IsPackExpansion(false), Implicit(false), IsLateParsed(IsLateParsed),
+        InheritEvenIfAlreadyPresent(false) {}
 
-  public:
-    attr::Kind getKind() const { return static_cast<attr::Kind>(AttrKind); }
+public:
+  attr::Kind getKind() const { return static_cast<attr::Kind>(AttrKind); }
 
-    unsigned getSpellingListIndex() const {
-      return getAttributeSpellingListIndex();
-    }
-    const char *getSpelling() const;
+  unsigned getSpellingListIndex() const {
+    return getAttributeSpellingListIndex();
+  }
+  const char *getSpelling() const;
 
-    SourceLocation getLocation() const { return getRange().getBegin(); }
+  SourceLocation getLocation() const { return getRange().getBegin(); }
 
-    bool isInherited() const { return Inherited; }
+  bool isInherited() const { return Inherited; }
 
-    /// Returns true if the attribute has been implicitly created instead
-    /// of explicitly written by the user.
-    bool isImplicit() const { return Implicit; }
-    void setImplicit(bool I) { Implicit = I; }
+  /// Returns true if the attribute has been implicitly created instead
+  /// of explicitly written by the user.
+  bool isImplicit() const { return Implicit; }
+  void setImplicit(bool I) { Implicit = I; }
 
-    void setPackExpansion(bool PE) { IsPackExpansion = PE; }
-    bool isPackExpansion() const { return IsPackExpansion; }
+  void setPackExpansion(bool PE) { IsPackExpansion = PE; }
+  bool isPackExpansion() const { return IsPackExpansion; }
 
-    // Clone this attribute.
-    Attr *clone(ASTContext &C) const;
+  // Clone this attribute.
+  Attr *clone(ASTContext &C) const;
 
-    bool isLateParsed() const { return IsLateParsed; }
+  bool isLateParsed() const { return IsLateParsed; }
 
-    // Pretty print this attribute.
-    void printPretty(raw_ostream &OS, const PrintingPolicy &Policy) const;
-  };
+  // Pretty print this attribute.
+  void printPretty(raw_ostream &OS, const PrintingPolicy &Policy) const;
+};
 
 class TypeAttr : public Attr {
 protected:
@@ -158,6 +159,21 @@ public:
   static bool classof(const Attr *A) {
     return A->getKind() >= attr::FirstInheritableAttr &&
            A->getKind() <= attr::LastInheritableAttr;
+  }
+};
+
+class DeclOrStmtAttr : public InheritableAttr {
+protected:
+  DeclOrStmtAttr(ASTContext &Context, const AttributeCommonInfo &CommonInfo,
+                 attr::Kind AK, bool IsLateParsed,
+                 bool InheritEvenIfAlreadyPresent)
+      : InheritableAttr(Context, CommonInfo, AK, IsLateParsed,
+                        InheritEvenIfAlreadyPresent) {}
+
+public:
+  static bool classof(const Attr *A) {
+    return A->getKind() >= attr::FirstDeclOrStmtAttr &&
+           A->getKind() <= attr::LastDeclOrStmtAttr;
   }
 };
 
@@ -258,7 +274,10 @@ public:
 
   /// Construct from a result from \c serialize.
   static ParamIdx deserialize(SerialType S) {
-    ParamIdx P(*reinterpret_cast<ParamIdx *>(&S));
+    // Using this two-step static_cast via void * instead of reinterpret_cast
+    // silences a -Wstrict-aliasing false positive from GCC7 and earlier.
+    void *ParamIdxPtr = static_cast<void *>(&S);
+    ParamIdx P(*static_cast<ParamIdx *>(ParamIdxPtr));
     assert((!P.IsValid || P.Idx >= 1) && "valid Idx must be one-origin");
     return P;
   }
@@ -329,20 +348,31 @@ public:
 static_assert(sizeof(ParamIdx) == sizeof(ParamIdx::SerialType),
               "ParamIdx does not fit its serialization type");
 
+/// Contains information gathered from parsing the contents of TargetAttr.
+struct ParsedTargetAttr {
+  std::vector<std::string> Features;
+  StringRef Architecture;
+  StringRef Tune;
+  StringRef BranchProtection;
+  bool DuplicateArchitecture = false;
+  bool DuplicateTune = false;
+  bool operator ==(const ParsedTargetAttr &Other) const {
+    return DuplicateArchitecture == Other.DuplicateArchitecture &&
+           DuplicateTune == Other.DuplicateTune &&
+           Architecture == Other.Architecture &&
+           Tune == Other.Tune &&
+           BranchProtection == Other.BranchProtection &&
+           Features == Other.Features;
+  }
+};
+
 #include "clang/AST/Attrs.inc"
 
-inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
-                                           const Attr *At) {
+inline const StreamingDiagnostic &operator<<(const StreamingDiagnostic &DB,
+                                             const Attr *At) {
   DB.AddTaggedVal(reinterpret_cast<intptr_t>(At),
                   DiagnosticsEngine::ak_attr);
   return DB;
-}
-
-inline const PartialDiagnostic &operator<<(const PartialDiagnostic &PD,
-                                           const Attr *At) {
-  PD.AddTaggedVal(reinterpret_cast<intptr_t>(At),
-                  DiagnosticsEngine::ak_attr);
-  return PD;
 }
 }  // end namespace clang
 

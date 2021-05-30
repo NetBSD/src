@@ -11,20 +11,18 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Lex/Preprocessor.h"
-#include "clang/Lex/PreprocessorOptions.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/LexDiagnostic.h"
 #include "clang/Lex/MacroInfo.h"
+#include "clang/Lex/Preprocessor.h"
+#include "clang/Lex/PreprocessorOptions.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/FileSystem.h"
-#include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/MemoryBufferRef.h"
 #include "llvm/Support/Path.h"
 using namespace clang;
-
-PPCallbacks::~PPCallbacks() {}
 
 //===----------------------------------------------------------------------===//
 // Miscellaneous Methods.
@@ -75,13 +73,12 @@ bool Preprocessor::EnterSourceFile(FileID FID, const DirectoryLookup *CurDir,
     MaxIncludeStackDepth = IncludeMacroStack.size();
 
   // Get the MemoryBuffer for this FID, if it fails, we fail.
-  bool Invalid = false;
-  const llvm::MemoryBuffer *InputFile =
-    getSourceManager().getBuffer(FID, Loc, &Invalid);
-  if (Invalid) {
+  llvm::Optional<llvm::MemoryBufferRef> InputFile =
+      getSourceManager().getBufferOrNone(FID, Loc);
+  if (!InputFile) {
     SourceLocation FileStart = SourceMgr.getLocForStartOfFile(FID);
     Diag(Loc, diag::err_pp_error_opening_file)
-      << std::string(SourceMgr.getBufferName(FileStart)) << "";
+        << std::string(SourceMgr.getBufferName(FileStart)) << "";
     return true;
   }
 
@@ -92,7 +89,7 @@ bool Preprocessor::EnterSourceFile(FileID FID, const DirectoryLookup *CurDir,
         CodeCompletionFileLoc.getLocWithOffset(CodeCompletionOffset);
   }
 
-  EnterSourceFileWithLexer(new Lexer(FID, InputFile, *this), CurDir);
+  EnterSourceFileWithLexer(new Lexer(FID, *InputFile, *this), CurDir);
   return false;
 }
 
@@ -265,10 +262,12 @@ static void collectAllSubModulesWithUmbrellaHeader(
 }
 
 void Preprocessor::diagnoseMissingHeaderInUmbrellaDir(const Module &Mod) {
-  assert(Mod.getUmbrellaHeader() && "Module must use umbrella header");
-  SourceLocation StartLoc =
-      SourceMgr.getLocForStartOfFile(SourceMgr.getMainFileID());
-  if (getDiagnostics().isIgnored(diag::warn_uncovered_module_header, StartLoc))
+  const Module::Header &UmbrellaHeader = Mod.getUmbrellaHeader();
+  assert(UmbrellaHeader.Entry && "Module must use umbrella header");
+  const FileID &File = SourceMgr.translateFile(UmbrellaHeader.Entry);
+  SourceLocation ExpectedHeadersLoc = SourceMgr.getLocForEndOfFile(File);
+  if (getDiagnostics().isIgnored(diag::warn_uncovered_module_header,
+                                 ExpectedHeadersLoc))
     return;
 
   ModuleMap &ModMap = getHeaderSearchInfo().getModuleMap();
@@ -293,7 +292,7 @@ void Preprocessor::diagnoseMissingHeaderInUmbrellaDir(const Module &Mod) {
           // Find the relative path that would access this header.
           SmallString<128> RelativePath;
           computeRelativePath(FileMgr, Dir, *Header, RelativePath);
-          Diag(StartLoc, diag::warn_uncovered_module_header)
+          Diag(ExpectedHeadersLoc, diag::warn_uncovered_module_header)
               << Mod.getFullModuleName() << RelativePath;
         }
       }
@@ -417,7 +416,10 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
     }
 
     if (!isEndOfMacro && CurPPLexer &&
-        SourceMgr.getIncludeLoc(CurPPLexer->getFileID()).isValid()) {
+        (SourceMgr.getIncludeLoc(CurPPLexer->getFileID()).isValid() ||
+         // Predefines file doesn't have a valid include location.
+         (PredefinesFileID.isValid() &&
+          CurPPLexer->getFileID() == PredefinesFileID))) {
       // Notify SourceManager to record the number of FileIDs that were created
       // during lexing of the #include'd file.
       unsigned NumFIDs =

@@ -102,8 +102,8 @@ void ExprEngine::VisitBinaryOperator(const BinaryOperator* B,
         state = state->BindExpr(B, LCtx, Result);
       } else {
         // If we cannot evaluate the operation escape the operands.
-        state = escapeValue(state, LeftV, PSK_EscapeOther);
-        state = escapeValue(state, RightV, PSK_EscapeOther);
+        state = escapeValues(state, LeftV, PSK_EscapeOther);
+        state = escapeValues(state, RightV, PSK_EscapeOther);
       }
 
       Bldr.generateNode(B, *it, state);
@@ -218,7 +218,7 @@ void ExprEngine::VisitBlockExpr(const BlockExpr *BE, ExplodedNode *Pred,
     auto CE = BD->capture_end();
     for (; I != E; ++I) {
       const VarRegion *capturedR = I.getCapturedRegion();
-      const VarRegion *originalR = I.getOriginalRegion();
+      const TypedValueRegion *originalR = I.getOriginalRegion();
 
       // If the capture had a copy expression, use the result of evaluating
       // that expression, otherwise use the original value.
@@ -275,7 +275,7 @@ ProgramStateRef ExprEngine::handleLValueBitCast(
     V = evalMinus(V);
   state = state->BindExpr(CastE, LCtx, V);
   if (V.isUnknown() && !OrigV.isUnknown()) {
-    state = escapeValue(state, OrigV, PSK_EscapeOther);
+    state = escapeValues(state, OrigV, PSK_EscapeOther);
   }
   Bldr.generateNode(CastE, Pred, state);
 
@@ -418,6 +418,8 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
       case CK_ZeroToOCLOpaqueType:
       case CK_IntToOCLSampler:
       case CK_LValueBitCast:
+      case CK_FloatingToFixedPoint:
+      case CK_FixedPointToFloating:
       case CK_FixedPointCast:
       case CK_FixedPointToBoolean:
       case CK_FixedPointToIntegral:
@@ -524,10 +526,9 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
       case CK_ReinterpretMemberPointer: {
         SVal V = state->getSVal(Ex, LCtx);
         if (auto PTMSV = V.getAs<nonloc::PointerToMember>()) {
-          SVal CastedPTMSV = svalBuilder.makePointerToMember(
-              getBasicVals().accumCXXBase(
-                  llvm::make_range<CastExpr::path_const_iterator>(
-                      CastE->path_begin(), CastE->path_end()), *PTMSV));
+          SVal CastedPTMSV =
+              svalBuilder.makePointerToMember(getBasicVals().accumCXXBase(
+                  CastE->path(), *PTMSV, CastE->getCastKind()));
           state = state->BindExpr(CastE, LCtx, CastedPTMSV);
           Bldr.generateNode(CastE, Pred, state);
           continue;
@@ -540,6 +541,10 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
       case CK_ToUnion:
       case CK_VectorSplat: {
         state = handleLVectorSplat(state, LCtx, CastE, Bldr, Pred);
+        continue;
+      }
+      case CK_MatrixCast: {
+        // TODO: Handle MatrixCast here.
         continue;
       }
     }
@@ -573,6 +578,18 @@ void ExprEngine::VisitCompoundLiteralExpr(const CompoundLiteralExpr *CL,
 
 void ExprEngine::VisitDeclStmt(const DeclStmt *DS, ExplodedNode *Pred,
                                ExplodedNodeSet &Dst) {
+  if (isa<TypedefNameDecl>(*DS->decl_begin())) {
+    // C99 6.7.7 "Any array size expressions associated with variable length
+    // array declarators are evaluated each time the declaration of the typedef
+    // name is reached in the order of execution."
+    // The checkers should know about typedef to be able to handle VLA size
+    // expressions.
+    ExplodedNodeSet DstPre;
+    getCheckerManager().runCheckersForPreStmt(DstPre, Pred, DS, *this);
+    getCheckerManager().runCheckersForPostStmt(Dst, DstPre, DS, *this);
+    return;
+  }
+
   // Assumption: The CFG has one DeclStmt per Decl.
   const VarDecl *VD = dyn_cast_or_null<VarDecl>(*DS->decl_begin());
 
@@ -979,10 +996,11 @@ void ExprEngine::VisitUnaryOperator(const UnaryOperator* U, ExplodedNode *Pred,
       if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Ex)) {
         const ValueDecl *VD = DRE->getDecl();
 
-        if (isa<CXXMethodDecl>(VD) || isa<FieldDecl>(VD)) {
+        if (isa<CXXMethodDecl>(VD) || isa<FieldDecl>(VD) ||
+            isa<IndirectFieldDecl>(VD)) {
           ProgramStateRef State = (*I)->getState();
           const LocationContext *LCtx = (*I)->getLocationContext();
-          SVal SV = svalBuilder.getMemberPointer(cast<DeclaratorDecl>(VD));
+          SVal SV = svalBuilder.getMemberPointer(cast<NamedDecl>(VD));
           Bldr.generateNode(U, *I, State->BindExpr(U, LCtx, SV));
           break;
         }

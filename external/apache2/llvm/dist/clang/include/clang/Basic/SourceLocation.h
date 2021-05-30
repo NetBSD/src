@@ -26,6 +26,9 @@ namespace llvm {
 
 template <typename T> struct DenseMapInfo;
 
+class FoldingSetNodeID;
+template <typename T> struct FoldingSetTrait;
+
 } // namespace llvm
 
 namespace clang {
@@ -87,6 +90,7 @@ class SourceLocation {
   friend class ASTReader;
   friend class ASTWriter;
   friend class SourceManager;
+  friend struct llvm::FoldingSetTrait<SourceLocation>;
 
   unsigned ID = 0;
 
@@ -175,6 +179,7 @@ public:
            End.isFileID();
   }
 
+  unsigned getHashValue() const;
   void print(raw_ostream &OS, const SourceManager &SM) const;
   std::string printToString(const SourceManager &SM) const;
   void dump(const SourceManager &SM) const;
@@ -188,8 +193,19 @@ inline bool operator!=(const SourceLocation &LHS, const SourceLocation &RHS) {
   return !(LHS == RHS);
 }
 
+// Ordering is meaningful only if LHS and RHS have the same FileID!
+// Otherwise use SourceManager::isBeforeInTranslationUnit().
 inline bool operator<(const SourceLocation &LHS, const SourceLocation &RHS) {
   return LHS.getRawEncoding() < RHS.getRawEncoding();
+}
+inline bool operator>(const SourceLocation &LHS, const SourceLocation &RHS) {
+  return LHS.getRawEncoding() > RHS.getRawEncoding();
+}
+inline bool operator<=(const SourceLocation &LHS, const SourceLocation &RHS) {
+  return LHS.getRawEncoding() <= RHS.getRawEncoding();
+}
+inline bool operator>=(const SourceLocation &LHS, const SourceLocation &RHS) {
+  return LHS.getRawEncoding() >= RHS.getRawEncoding();
 }
 
 /// A trivial tuple used to represent a source range.
@@ -217,6 +233,11 @@ public:
 
   bool operator!=(const SourceRange &X) const {
     return B != X.B || E != X.E;
+  }
+
+  // Returns true iff other is wholly contained within this range.
+  bool fullyContains(const SourceRange &other) const {
+    return B <= other.B && E >= other.E;
   }
 
   void print(raw_ostream &OS, const SourceManager &SM) const;
@@ -463,10 +484,36 @@ namespace llvm {
     }
   };
 
+  /// Define DenseMapInfo so that SourceLocation's can be used as keys in
+  /// DenseMap and DenseSet. This trait class is eqivalent to
+  /// DenseMapInfo<unsigned> which uses SourceLocation::ID is used as a key.
+  template <> struct DenseMapInfo<clang::SourceLocation> {
+    static clang::SourceLocation getEmptyKey() {
+      return clang::SourceLocation::getFromRawEncoding(~0U);
+    }
+
+    static clang::SourceLocation getTombstoneKey() {
+      return clang::SourceLocation::getFromRawEncoding(~0U - 1);
+    }
+
+    static unsigned getHashValue(clang::SourceLocation Loc) {
+      return Loc.getHashValue();
+    }
+
+    static bool isEqual(clang::SourceLocation LHS, clang::SourceLocation RHS) {
+      return LHS == RHS;
+    }
+  };
+
+  // Allow calling FoldingSetNodeID::Add with SourceLocation object as parameter
+  template <> struct FoldingSetTrait<clang::SourceLocation> {
+    static void Profile(const clang::SourceLocation &X, FoldingSetNodeID &ID);
+  };
+
   // Teach SmallPtrSet how to handle SourceLocation.
   template<>
   struct PointerLikeTypeTraits<clang::SourceLocation> {
-    enum { NumLowBitsAvailable = 0 };
+    static constexpr int NumLowBitsAvailable = 0;
 
     static void *getAsVoidPointer(clang::SourceLocation L) {
       return L.getPtrEncoding();
