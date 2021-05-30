@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.931 2021/05/30 20:31:03 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.932 2021/05/30 20:41:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.931 2021/05/30 20:31:03 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.932 2021/05/30 20:41:34 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -3559,12 +3559,17 @@ ApplyModifier_Unique(const char **pp, ModChain *ch)
 	words = Str_Words(ch->expr->value.str, false);
 
 	if (words.len > 1) {
-		size_t i, j;
-		for (j = 0, i = 1; i < words.len; i++)
-			if (strcmp(words.words[i], words.words[j]) != 0 &&
-			    (++j != i))
-				words.words[j] = words.words[i];
-		words.len = j + 1;
+		size_t si, di;
+
+		di = 0;
+		for (si = 1; si < words.len; si++) {
+			if (strcmp(words.words[si], words.words[di]) != 0) {
+				di++;
+				if (di != si)
+					words.words[di] = words.words[si];
+			}
+		}
+		words.len = di + 1;
 	}
 
 	Expr_SetValueOwn(ch->expr, Words_JoinFree(words));
