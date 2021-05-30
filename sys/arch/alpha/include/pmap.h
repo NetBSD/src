@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.89 2021/05/30 00:34:27 thorpej Exp $ */
+/* $NetBSD: pmap.h,v 1.90 2021/05/30 01:41:45 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -150,8 +150,8 @@ struct pmap {	/* pmaps are aligned to COHERENCY_UNIT boundaries */
 	struct pmap_statistics	pm_stats;	/* [ 8] statistics */
 	unsigned int		pm_count;	/* [24] reference count */
 	unsigned int		__pm_spare0;	/* [28] spare field */
-	unsigned long		__pm_spare1;	/* [32] spare field */
-	unsigned long		__pm_spare2;	/* [40] spare field */
+	struct pmap_pagelist	pm_ptpages;	/* [32] list of PT pages */
+	unsigned long		__pm_spare1;	/* [40] spare field */
 	TAILQ_ENTRY(pmap)	pm_list;	/* [48] list of all pmaps */
 	/* -- COHERENCY_UNIT boundary -- */
 	struct pmap_percpu	pm_percpu[];	/* [64] per-CPU data */
