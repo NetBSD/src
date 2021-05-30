@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.14 2019/01/06 18:14:10 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.15 2021/05/30 02:24:05 joerg Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/4/93
 
 # gmon sources
@@ -23,6 +23,7 @@ COPTS.mcount.c+=${${ACTIVE_CXX} == "gcc":? -Wa,--no-warn :}
 # The usage of __builtin_frame_address(1) should be OK.
 COPTS.mcount.c+=${${ACTIVE_CXX} == "gcc":? -Wno-error=frame-address :}
 .endif
+COPTS.mcount.c+=${${ACTIVE_CC} == "clang":? -Wno-error=frame-address :}
 
 
 # mcount and gmon cannot be compiled with profiling
