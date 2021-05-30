@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.207 2020/09/22 00:41:27 kamil Exp $	 */
+/*	$NetBSD: rtld.c,v 1.208 2021/05/30 02:26:08 joerg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.207 2020/09/22 00:41:27 kamil Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.208 2021/05/30 02:26:08 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1118,7 +1118,7 @@ _rtld_objmain_sym(const char *name)
 	return NULL;
 }
 
-#ifdef __powerpc__
+#if defined(__powerpc__) && !defined(__clang__)
 static __noinline void *
 hackish_return_address(void)
 {
@@ -1284,7 +1284,7 @@ dlsym(void *handle, const char *name)
 
 	dbg(("dlsym of %s in %p", name, handle));
 
-#ifdef __powerpc__
+#if defined(__powerpc__) && !defined(__clang__)
 	retaddr = hackish_return_address();
 #else
 	retaddr = __builtin_return_address(0);
@@ -1309,7 +1309,7 @@ dlvsym(void *handle, const char *name, const char *version)
 		ver_entry.flags = 0;
 		ventry = &ver_entry;
 	}
-#ifdef __powerpc__
+#if defined(__powerpc__) && !defined(__clang__)
 	retaddr = hackish_return_address();
 #else
 	retaddr = __builtin_return_address(0);
@@ -1407,7 +1407,7 @@ dlinfo(void *handle, int req, void *v)
 	_rtld_shared_enter();
 
 	if (handle == RTLD_SELF) {
-#ifdef __powerpc__
+#if defined(__powerpc__) && !defined(__clang__)
 		retaddr = hackish_return_address();
 #else
 		retaddr = __builtin_return_address(0);
