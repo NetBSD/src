@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2019/01/01 00:37:06 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2021/05/31 00:04:15 joerg Exp $
 
 DRIVER=		xf86-video-geode
 DRIVER_NAME=	geode_drv
@@ -53,6 +53,8 @@ COPTS.lx_driver.c+=	-Wno-error	# XXX
 COPTS.lx_panel.c+=	-Wno-error	# XXX
 
 CWARNFLAGS.clang+=	-Wno-empty-body
+
+COPTS+=		-fcommon
 
 .include "../Makefile.xf86-driver"
 
