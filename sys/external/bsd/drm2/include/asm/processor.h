@@ -1,4 +1,4 @@
-/*	$NetBSD: processor.h,v 1.3 2014/09/17 15:46:57 riastradh Exp $	*/
+/*	$NetBSD: processor.h,v 1.4 2021/05/31 10:33:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #ifndef _ASM_PROCESSOR_H_
 #define _ASM_PROCESSOR_H_
 
-#include <machine/param.h>
+#include <sys/param.h>
 
 #define	cpu_relax()	DELAY(1)	/* XXX */
 
