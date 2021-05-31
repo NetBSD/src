@@ -1,4 +1,4 @@
-/*      $NetBSD: param.h,v 1.63 2020/05/01 08:21:27 isaki Exp $    */
+/*      $NetBSD: param.h,v 1.64 2021/05/31 14:38:56 simonb Exp $    */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -35,6 +35,10 @@
 
 #ifndef _VAX_PARAM_H_
 #define _VAX_PARAM_H_
+
+#ifdef _KERNEL_OPT
+#include "opt_param.h"
+#endif
 
 /*
  * Machine dependent constants for VAX.
