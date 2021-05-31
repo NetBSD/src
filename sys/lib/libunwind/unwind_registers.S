@@ -380,7 +380,7 @@ END(_ZN7_Unwind15Registers_arm329lazyVFPv3Ev)
 
 	.hidden _ZNK7_Unwind15Registers_arm326jumptoEv
 ARM_ENTRY(_ZNK7_Unwind15Registers_arm326jumptoEv)
-	ldrb	r1, [r0, #68]	/* flags */
+	ldr	r1, [r0, #68]	/* flags */
 	tst	r1, #1
 	beq	.Lnovfpv2
 	add	r2, r0, #72
