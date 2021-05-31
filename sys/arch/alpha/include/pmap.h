@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.97 2021/05/31 17:16:05 thorpej Exp $ */
+/* $NetBSD: pmap.h,v 1.98 2021/05/31 17:22:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -360,6 +360,10 @@ struct vm_page_md {
 	 * XXX These fields are only needed for pages that are used
 	 * as PT pages.  It would be nice to find safely-unused fields
 	 * in the vm_page structure that could be used instead.
+	 *
+	 * (Only 11 bits are needed ... we need to be able to count from
+	 * 0-1025 ... 1025 because sometimes we need to take an extra
+	 * reference temporarily in pmap_enter().)
 	 */
 	unsigned int pvh_physpgrefs;	/* # refs as a PT page */
 	unsigned int pvh_spare0;	/* XXX spare field */
