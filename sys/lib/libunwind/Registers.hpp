@@ -335,8 +335,8 @@ enum {
 class Registers_arm32 {
 public:
   enum {
-    LAST_REGISTER = REGNO_ARM32_D31,
-    LAST_RESTORE_REG = REGNO_ARM32_D31,
+    LAST_REGISTER = REGNO_ARM32_S31,
+    LAST_RESTORE_REG = REGNO_ARM32_S31,
     RETURN_OFFSET = 0,
     RETURN_MASK = 0,
   };
@@ -385,6 +385,14 @@ public:
     assert(validFloatVectorRegister(num));
     const void *addr = reinterpret_cast<const void *>(addr_);
     if (num >= REGNO_ARM32_S0 && num <= REGNO_ARM32_S31) {
+      /*
+       * XXX
+       * There are two numbering schemes for VFPv2 registers: s0-s31
+       * (used by GCC) and d0-d15 (used by LLVM). We won't support both
+       * schemes simultaneously in a same frame.
+       */
+      assert((flags & FLAGS_EXTENDED_VFPV2_REGNO) == 0);
+      flags |= FLAGS_LEGACY_VFPV2_REGNO;
       if ((flags & FLAGS_VFPV2_USED) == 0) {
         lazyVFPv2();
         flags |= FLAGS_VFPV2_USED;
@@ -402,6 +410,12 @@ public:
         addr, sizeof(fpreg[0]) / 2);
     } else {
       if (num <= REGNO_ARM32_D15) {
+	/*
+	 * XXX
+	 * See XXX comment above.
+	 */
+        assert((flags & FLAGS_LEGACY_VFPV2_REGNO) == 0);
+        flags |= FLAGS_EXTENDED_VFPV2_REGNO;
         if ((flags & FLAGS_VFPV2_USED) == 0) {
           lazyVFPv2();
           flags |= FLAGS_VFPV2_USED;
@@ -428,6 +442,8 @@ private:
   enum {
     FLAGS_VFPV2_USED = 0x1,
     FLAGS_VFPV3_USED = 0x2,
+    FLAGS_LEGACY_VFPV2_REGNO = 0x4,
+    FLAGS_EXTENDED_VFPV2_REGNO = 0x8,
   };
 };
 
