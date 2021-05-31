@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.29 2020/11/28 14:02:09 jmcneill Exp $	*/
+/*	$NetBSD: boot.c,v 1.30 2021/05/31 11:12:42 rin Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -132,22 +132,18 @@ const struct boot_command commands[] = {
 static int
 bootcfg_path(char *pathbuf, size_t pathbuflen)
 {
-	/*
-	 * Special handling of boot.cfg on ISO9660 because fs protocol doesn't
-	 * seem to work.
-	 */
-	if (default_fstype == FS_ISO9660) {
-		snprintf(pathbuf, pathbuflen, "%s:%s", default_device, BOOTCFG_FILENAME);
-		return 0;
-	}
 
 	/*
-	 * Fall back to fs protocol for loading boot.cfg
+	 * Fallback to default_device
+	 * - for ISO9660 (efi_file_path() succeeds but does not work correctly)
+	 * - or whenever efi_file_path() fails (due to broken firmware)
 	 */
-	if (efi_bootdp == NULL)
-		return ENXIO;
+	if (default_fstype == FS_ISO9660 || efi_bootdp == NULL ||
+	    efi_file_path(efi_bootdp, BOOTCFG_FILENAME, pathbuf, pathbuflen))
+		snprintf(pathbuf, pathbuflen, "%s:%s", default_device,
+		    BOOTCFG_FILENAME);
 
-	return efi_file_path(efi_bootdp, BOOTCFG_FILENAME, pathbuf, pathbuflen);
+	return 0;
 }
 
 void
