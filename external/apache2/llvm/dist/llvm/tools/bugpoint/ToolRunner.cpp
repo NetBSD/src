@@ -442,7 +442,7 @@ Expected<CC::FileType> LLC::OutputCode(const std::string &Bitcode,
     errs() << "Error making unique filename: " << EC.message() << "\n";
     exit(1);
   }
-  OutputAsmFile = UniqueFile.str();
+  OutputAsmFile = std::string(UniqueFile.str());
   std::vector<StringRef> LLCArgs;
   LLCArgs.push_back(LLCPath);
 
@@ -495,7 +495,7 @@ Expected<int> LLC::ExecuteProgram(const std::string &Bitcode,
     return std::move(E);
 
   std::vector<std::string> CCArgs(ArgsForCC);
-  CCArgs.insert(CCArgs.end(), SharedLibs.begin(), SharedLibs.end());
+  llvm::append_range(CCArgs, SharedLibs);
 
   // Assuming LLC worked, compile the result with CC and run it.
   return cc->ExecuteProgram(OutputAsmFile, Args, *FileKind, InputFile,
@@ -772,7 +772,7 @@ Error CC::MakeSharedObject(const std::string &InputFile, FileType fileType,
     errs() << "Error making unique filename: " << EC.message() << "\n";
     exit(1);
   }
-  OutputFile = UniqueFilename.str();
+  OutputFile = std::string(UniqueFilename.str());
 
   std::vector<StringRef> CCArgs;
 

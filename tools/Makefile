@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.209 2021/05/06 13:23:36 rin Exp $
+#	$NetBSD: Makefile,v 1.209.2.1 2021/05/31 22:15:24 cjep Exp $
 
 .include <bsd.own.mk>
 .include <bsd.endian.mk>
@@ -80,18 +80,22 @@ LINT_BITS= lint lint2
 # XXX .ORDER does not work when multiple targets are passed on the
 # make command line without "-j", so use dependencies in addition to .ORDER.
 #
-.ORDER: dependall-host-mkdep dependall-compat dependall-binstall
+.ORDER: dependall-host-mkdep dependall-compat dependall-binstall \
+	dependall-date
 .if make(dependall-host-mkdep) && make(dependall-compat)
 dependall-compat: dependall-host-mkdep
 .endif
 .if make(dependall-compat) && make(dependall-binstall)
 dependall-binstall: dependall-compat
 .endif
+.if make(dependall-date)
+dependall-date: dependall-host-mkdep dependall-compat
+.endif
 
 # Dependencies in SUBDIR below ordered to maximize parallel ability.
 # See above for special treatment for host-mkdep, compat, and binstall.
 #
-SUBDIR=	host-mkdep compat binstall \
+SUBDIR=	host-mkdep compat binstall date \
 	.WAIT mktemp .WAIT sed .WAIT genassym
 .if ${TOOLS_BUILDRUMP} == "no"
 SUBDIR+= cap_mkdb crunchgen ctags gencat hexdump \

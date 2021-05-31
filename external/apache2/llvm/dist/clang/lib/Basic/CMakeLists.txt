@@ -1,6 +1,4 @@
 set(LLVM_LINK_COMPONENTS
-  Core
-  MC
   Support
   )
 
@@ -12,10 +10,10 @@ set(version_inc "${CMAKE_CURRENT_BINARY_DIR}/VCSVersion.inc")
 
 set(generate_vcs_version_script "${LLVM_CMAKE_PATH}/GenerateVersionFromVCS.cmake")
 
-if(llvm_vc)
+if(llvm_vc AND LLVM_APPEND_VC_REV)
   set(llvm_source_dir ${LLVM_MAIN_SRC_DIR})
 endif()
-if(clang_vc)
+if(clang_vc AND LLVM_APPEND_VC_REV)
   set(clang_source_dir ${CLANG_SOURCE_DIR})
 endif()
 
@@ -33,8 +31,10 @@ set_source_files_properties("${version_inc}"
   PROPERTIES GENERATED TRUE
              HEADER_FILE_ONLY TRUE)
 
-set_property(SOURCE Version.cpp APPEND PROPERTY
-             COMPILE_DEFINITIONS "HAVE_VCS_VERSION_INC")
+if(CLANG_VENDOR)
+  set_source_files_properties(Version.cpp
+    PROPERTIES COMPILE_DEFINITIONS "CLANG_VENDOR=\"${CLANG_VENDOR} \"")
+endif()
 
 add_clang_library(clangBasic
   Attributes.cpp
@@ -45,22 +45,26 @@ add_clang_library(clangBasic
   Diagnostic.cpp
   DiagnosticIDs.cpp
   DiagnosticOptions.cpp
+  ExpressionTraits.cpp
+  FileEntry.cpp
   FileManager.cpp
   FileSystemStatCache.cpp
-  FixedPoint.cpp
   IdentifierTable.cpp
   LangOptions.cpp
   LangStandards.cpp
   Module.cpp
   ObjCRuntime.cpp
+  OpenCLOptions.cpp
   OpenMPKinds.cpp
   OperatorPrecedence.cpp
-  SanitizerBlacklist.cpp
+  ProfileList.cpp
+  NoSanitizeList.cpp
   SanitizerSpecialCaseList.cpp
   Sanitizers.cpp
   SourceLocation.cpp
   SourceManager.cpp
   Stack.cpp
+  TargetID.cpp
   TargetInfo.cpp
   Targets.cpp
   Targets/AArch64.cpp
@@ -72,6 +76,7 @@ add_clang_library(clangBasic
   Targets/Hexagon.cpp
   Targets/Lanai.cpp
   Targets/Le64.cpp
+  Targets/M68k.cpp
   Targets/MSP430.cpp
   Targets/Mips.cpp
   Targets/NVPTX.cpp
@@ -83,14 +88,19 @@ add_clang_library(clangBasic
   Targets/Sparc.cpp
   Targets/SystemZ.cpp
   Targets/TCE.cpp
+  Targets/VE.cpp
   Targets/WebAssembly.cpp
   Targets/X86.cpp
   Targets/XCore.cpp
   TokenKinds.cpp
+  TypeTraits.cpp
   Version.cpp
   Warnings.cpp
   XRayInstr.cpp
   XRayLists.cpp
   ${version_inc}
+
+  DEPENDS
+  omp_gen
   )
 

@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.117 2021/03/02 08:16:52 skrll Exp $ */
+/* $NetBSD: locore.h,v 1.117.6.1 2021/05/31 22:15:14 cjep Exp $ */
 
 /*
  * This file should not be included by MI code!!!
@@ -306,7 +306,7 @@ struct mips_options {
 #endif
 #define	MIPS_HAS_LLADDR		((mips_options.mips_cpu_flags & CPU_MIPS_NO_LLADDR) == 0)
 #define	MIPS_HAS_DSP		(mips_options.mips_cpu_flags & CPU_MIPS_HAVE_DSP)
-# define MIPS_HAS_USERLOCAL	(mips_options.mips_cpu_flags & CPU_MIPS_HAVE_USERLOCAL)
+#define MIPS_HAS_USERLOCAL	(mips_options.mips_cpu_flags & CPU_MIPS_HAVE_USERLOCAL)
 
 /* This test is ... rather bogus */
 #define	CPUISMIPS3	((mips_options.mips_cpu_arch & \
@@ -347,8 +347,6 @@ void	mips_emul_inst(uint32_t, uint32_t, vaddr_t, struct trapframe *);
 void	mips_emul_fp(uint32_t, struct trapframe *, uint32_t);
 void	mips_emul_branchdelayslot(uint32_t, struct trapframe *, uint32_t);
 
-void	mips_emul_lwc0(uint32_t, struct trapframe *, uint32_t);
-void	mips_emul_swc0(uint32_t, struct trapframe *, uint32_t);
 void	mips_emul_special(uint32_t, struct trapframe *, uint32_t);
 void	mips_emul_special3(uint32_t, struct trapframe *, uint32_t);
 

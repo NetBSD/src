@@ -56,9 +56,9 @@ void AArch64InstPrinter::printRegName(raw_ostream &OS, unsigned RegNo) const {
   OS << getRegisterName(RegNo);
 }
 
-void AArch64InstPrinter::printInst(const MCInst *MI, raw_ostream &O,
-                                   StringRef Annot,
-                                   const MCSubtargetInfo &STI) {
+void AArch64InstPrinter::printInst(const MCInst *MI, uint64_t Address,
+                                   StringRef Annot, const MCSubtargetInfo &STI,
+                                   raw_ostream &O) {
   // Check for special encodings and print the canonical alias instead.
 
   unsigned Opcode = MI->getOpcode();
@@ -282,6 +282,13 @@ void AArch64InstPrinter::printInst(const MCInst *MI, raw_ostream &O,
     return;
   }
 
+  if (Opcode == AArch64::SPACE) {
+    O << '\t' << MAI.getCommentString() << " SPACE "
+      << MI->getOperand(1).getImm();
+    printAnnotation(O, Annot);
+    return;
+  }
+
   // Instruction TSB is specified as a one operand instruction, but 'csync' is
   // not encoded, so for printing it is treated as a special case here:
   if (Opcode == AArch64::TSB) {
@@ -289,8 +296,8 @@ void AArch64InstPrinter::printInst(const MCInst *MI, raw_ostream &O,
     return;
   }
 
-  if (!printAliasInstr(MI, STI, O))
-    printInstruction(MI, STI, O);
+  if (!printAliasInstr(MI, Address, STI, O))
+    printInstruction(MI, Address, STI, O);
 
   printAnnotation(O, Annot);
 
@@ -698,9 +705,10 @@ static const LdStNInstrDesc *getLdStNInstrDesc(unsigned Opcode) {
   return nullptr;
 }
 
-void AArch64AppleInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
+void AArch64AppleInstPrinter::printInst(const MCInst *MI, uint64_t Address,
                                         StringRef Annot,
-                                        const MCSubtargetInfo &STI) {
+                                        const MCSubtargetInfo &STI,
+                                        raw_ostream &O) {
   unsigned Opcode = MI->getOpcode();
   StringRef Layout;
 
@@ -748,7 +756,7 @@ void AArch64AppleInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
     return;
   }
 
-  AArch64InstPrinter::printInst(MI, O, Annot, STI);
+  AArch64InstPrinter::printInst(MI, Address, Annot, STI, O);
 }
 
 bool AArch64InstPrinter::printSysAlias(const MCInst *MI,
@@ -841,7 +849,7 @@ bool AArch64InstPrinter::printSysAlias(const MCInst *MI,
     }
     break;
     }
-  } else if (CnVal == 8) {
+  } else if (CnVal == 8 || CnVal == 9) {
     // TLBI aliases
     const AArch64TLBI::TLBI *TLBI = AArch64TLBI::lookupTLBIByEncoding(Encoding);
     if (!TLBI || !TLBI->haveFeatures(STI.getFeatureBits()))
@@ -891,6 +899,19 @@ void AArch64InstPrinter::printImmHex(const MCInst *MI, unsigned OpNo,
                                      raw_ostream &O) {
   const MCOperand &Op = MI->getOperand(OpNo);
   O << format("#%#llx", Op.getImm());
+}
+
+template<int Size>
+void AArch64InstPrinter::printSImm(const MCInst *MI, unsigned OpNo,
+                                  const MCSubtargetInfo &STI,
+                                  raw_ostream &O) {
+  const MCOperand &Op = MI->getOperand(OpNo);
+  if (Size == 8)
+    O << "#" << formatImm((signed char)Op.getImm());
+  else if (Size == 16)
+    O << "#" << formatImm((signed short)Op.getImm());
+  else
+    O << "#" << formatImm(Op.getImm());
 }
 
 void AArch64InstPrinter::printPostIncOperand(const MCInst *MI, unsigned OpNo,
@@ -1131,7 +1152,7 @@ void AArch64InstPrinter::printPSBHintOp(const MCInst *MI, unsigned OpNum,
 void AArch64InstPrinter::printBTIHintOp(const MCInst *MI, unsigned OpNum,
                                         const MCSubtargetInfo &STI,
                                         raw_ostream &O) {
-  unsigned btihintop = (MI->getOperand(OpNum).getImm() ^ 32) >> 1;
+  unsigned btihintop = MI->getOperand(OpNum).getImm() ^ 32;
   auto BTI = AArch64BTIHint::lookupBTIByEncoding(btihintop);
   if (BTI)
     O << BTI->Name;
@@ -1143,8 +1164,8 @@ void AArch64InstPrinter::printFPImmOperand(const MCInst *MI, unsigned OpNum,
                                            const MCSubtargetInfo &STI,
                                            raw_ostream &O) {
   const MCOperand &MO = MI->getOperand(OpNum);
-  float FPImm =
-      MO.isFPImm() ? MO.getFPImm() : AArch64_AM::getFPImmFloat(MO.getImm());
+  float FPImm = MO.isDFPImm() ? bit_cast<double>(MO.getDFPImm())
+                              : AArch64_AM::getFPImmFloat(MO.getImm());
 
   // 8 decimal places are enough to perfectly represent permitted floats.
   O << format("#%.8f", FPImm);
@@ -1327,7 +1348,8 @@ void AArch64InstPrinter::printVectorIndex(const MCInst *MI, unsigned OpNum,
   O << "[" << MI->getOperand(OpNum).getImm() << "]";
 }
 
-void AArch64InstPrinter::printAlignedLabel(const MCInst *MI, unsigned OpNum,
+void AArch64InstPrinter::printAlignedLabel(const MCInst *MI, uint64_t Address,
+                                           unsigned OpNum,
                                            const MCSubtargetInfo &STI,
                                            raw_ostream &O) {
   const MCOperand &Op = MI->getOperand(OpNum);
@@ -1335,24 +1357,28 @@ void AArch64InstPrinter::printAlignedLabel(const MCInst *MI, unsigned OpNum,
   // If the label has already been resolved to an immediate offset (say, when
   // we're running the disassembler), just print the immediate.
   if (Op.isImm()) {
-    O << "#" << formatImm(Op.getImm() * 4);
+    int64_t Offset = Op.getImm() * 4;
+    if (PrintBranchImmAsAddress)
+      O << formatHex(Address + Offset);
+    else
+      O << "#" << formatImm(Offset);
     return;
   }
 
   // If the branch target is simply an address then print it in hex.
   const MCConstantExpr *BranchTarget =
       dyn_cast<MCConstantExpr>(MI->getOperand(OpNum).getExpr());
-  int64_t Address;
-  if (BranchTarget && BranchTarget->evaluateAsAbsolute(Address)) {
-    O << "0x";
-    O.write_hex(Address);
+  int64_t TargetAddress;
+  if (BranchTarget && BranchTarget->evaluateAsAbsolute(TargetAddress)) {
+    O << formatHex(TargetAddress);
   } else {
     // Otherwise, just print the expression.
     MI->getOperand(OpNum).getExpr()->print(O, &MAI);
   }
 }
 
-void AArch64InstPrinter::printAdrpLabel(const MCInst *MI, unsigned OpNum,
+void AArch64InstPrinter::printAdrpLabel(const MCInst *MI, uint64_t Address,
+                                        unsigned OpNum,
                                         const MCSubtargetInfo &STI,
                                         raw_ostream &O) {
   const MCOperand &Op = MI->getOperand(OpNum);
@@ -1360,7 +1386,11 @@ void AArch64InstPrinter::printAdrpLabel(const MCInst *MI, unsigned OpNum,
   // If the label has already been resolved to an immediate offset (say, when
   // we're running the disassembler), just print the immediate.
   if (Op.isImm()) {
-    O << "#" << formatImm(Op.getImm() * (1 << 12));
+    const int64_t Offset = Op.getImm() * 4096;
+    if (PrintBranchImmAsAddress)
+      O << formatHex((Address & -4096) + Offset);
+    else
+      O << "#" << Offset;
     return;
   }
 
@@ -1391,6 +1421,22 @@ void AArch64InstPrinter::printBarrierOption(const MCInst *MI, unsigned OpNo,
     O << "#" << Val;
 }
 
+void AArch64InstPrinter::printBarriernXSOption(const MCInst *MI, unsigned OpNo,
+                                               const MCSubtargetInfo &STI,
+                                               raw_ostream &O) {
+  unsigned Val = MI->getOperand(OpNo).getImm();
+  assert(MI->getOpcode() == AArch64::DSBnXS);
+
+  StringRef Name;
+  auto DB = AArch64DBnXS::lookupDBnXSByEncoding(Val);
+  Name = DB ? DB->Name : "";
+
+  if (!Name.empty())
+    O << Name;
+  else
+    O << "#" << Val;
+}
+
 void AArch64InstPrinter::printMRSSystemRegister(const MCInst *MI, unsigned OpNo,
                                                 const MCSubtargetInfo &STI,
                                                 raw_ostream &O) {
@@ -1401,6 +1447,12 @@ void AArch64InstPrinter::printMRSSystemRegister(const MCInst *MI, unsigned OpNo,
   // going to get the wrong entry
   if (Val == AArch64SysReg::DBGDTRRX_EL0) {
     O << "DBGDTRRX_EL0";
+    return;
+  }
+
+  // Horrible hack for two different registers having the same encoding.
+  if (Val == AArch64SysReg::TRCEXTINSELR) {
+    O << "TRCEXTINSELR";
     return;
   }
 
@@ -1421,6 +1473,12 @@ void AArch64InstPrinter::printMSRSystemRegister(const MCInst *MI, unsigned OpNo,
   // going to get the wrong entry
   if (Val == AArch64SysReg::DBGDTRTX_EL0) {
     O << "DBGDTRTX_EL0";
+    return;
+  }
+
+  // Horrible hack for two different registers having the same encoding.
+  if (Val == AArch64SysReg::TRCEXTINSELR) {
+    O << "TRCEXTINSELR";
     return;
   }
 
@@ -1492,7 +1550,7 @@ void AArch64InstPrinter::printSVERegOp(const MCInst *MI, unsigned OpNum,
 
 template <typename T>
 void AArch64InstPrinter::printImmSVE(T Value, raw_ostream &O) {
-  typename std::make_unsigned<T>::type HexValue = Value;
+  std::make_unsigned_t<T> HexValue = Value;
 
   if (getPrintImmHex())
     O << '#' << formatHex((uint64_t)HexValue);
@@ -1537,8 +1595,8 @@ template <typename T>
 void AArch64InstPrinter::printSVELogicalImm(const MCInst *MI, unsigned OpNum,
                                             const MCSubtargetInfo &STI,
                                             raw_ostream &O) {
-  typedef typename std::make_signed<T>::type SignedT;
-  typedef typename std::make_unsigned<T>::type UnsignedT;
+  typedef std::make_signed_t<T> SignedT;
+  typedef std::make_unsigned_t<T> UnsignedT;
 
   uint64_t Val = MI->getOperand(OpNum).getImm();
   UnsignedT PrintVal = AArch64_AM::decodeLogicalImmediate(Val, 64);
@@ -1585,4 +1643,11 @@ void AArch64InstPrinter::printGPR64as32(const MCInst *MI, unsigned OpNum,
                                         raw_ostream &O) {
   unsigned Reg = MI->getOperand(OpNum).getReg();
   O << getRegisterName(getWRegFromXReg(Reg));
+}
+
+void AArch64InstPrinter::printGPR64x8(const MCInst *MI, unsigned OpNum,
+                                      const MCSubtargetInfo &STI,
+                                      raw_ostream &O) {
+  unsigned Reg = MI->getOperand(OpNum).getReg();
+  O << getRegisterName(MRI.getSubReg(Reg, AArch64::x8sub_0));
 }

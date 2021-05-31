@@ -1,4 +1,8 @@
-# $NetBSD: Makefile.inc,v 1.7 2002/05/04 21:56:50 bjh21 Exp $
+# $NetBSD: Makefile.inc,v 1.7.220.1 2021/05/31 22:15:11 cjep Exp $
+
+.include <bsd.hostinit.mk>
+
+#HOST_CFLAGS+=	-Wall -Werror
 
 realall: ${MAP}
 

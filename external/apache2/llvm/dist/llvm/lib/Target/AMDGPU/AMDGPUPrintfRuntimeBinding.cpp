@@ -19,32 +19,21 @@
 //===----------------------------------------------------------------------===//
 
 #include "AMDGPU.h"
-#include "llvm/ADT/SmallString.h"
-#include "llvm/ADT/StringExtras.h"
-#include "llvm/ADT/Triple.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
-#include "llvm/CodeGen/Passes.h"
-#include "llvm/IR/Constants.h"
-#include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Dominators.h"
-#include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Instructions.h"
-#include "llvm/IR/Module.h"
-#include "llvm/IR/Type.h"
-#include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Debug.h"
-#include "llvm/Support/raw_ostream.h"
+#include "llvm/InitializePasses.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
+
 using namespace llvm;
 
 #define DEBUG_TYPE "printfToRuntime"
 #define DWORD_ALIGN 4
 
 namespace {
-class LLVM_LIBRARY_VISIBILITY AMDGPUPrintfRuntimeBinding final
-    : public ModulePass {
+class AMDGPUPrintfRuntimeBinding final : public ModulePass {
 
 public:
   static char ID;
@@ -53,25 +42,36 @@ public:
 
 private:
   bool runOnModule(Module &M) override;
-  void getConversionSpecifiers(SmallVectorImpl<char> &OpConvSpecifiers,
-                               StringRef fmt, size_t num_ops) const;
-
-  bool shouldPrintAsStr(char Specifier, Type *OpType) const;
-  bool
-  lowerPrintfForGpu(Module &M,
-                    function_ref<const TargetLibraryInfo &(Function &)> GetTLI);
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.addRequired<TargetLibraryInfoWrapperPass>();
     AU.addRequired<DominatorTreeWrapperPass>();
   }
+};
 
-  Value *simplify(Instruction *I, const TargetLibraryInfo *TLI) {
+class AMDGPUPrintfRuntimeBindingImpl {
+public:
+  AMDGPUPrintfRuntimeBindingImpl(
+      function_ref<const DominatorTree &(Function &)> GetDT,
+      function_ref<const TargetLibraryInfo &(Function &)> GetTLI)
+      : GetDT(GetDT), GetTLI(GetTLI) {}
+  bool run(Module &M);
+
+private:
+  void getConversionSpecifiers(SmallVectorImpl<char> &OpConvSpecifiers,
+                               StringRef fmt, size_t num_ops) const;
+
+  bool shouldPrintAsStr(char Specifier, Type *OpType) const;
+  bool lowerPrintfForGpu(Module &M);
+
+  Value *simplify(Instruction *I, const TargetLibraryInfo *TLI,
+                  const DominatorTree *DT) {
     return SimplifyInstruction(I, {*TD, TLI, DT});
   }
 
   const DataLayout *TD;
-  const DominatorTree *DT;
+  function_ref<const DominatorTree &(Function &)> GetDT;
+  function_ref<const TargetLibraryInfo &(Function &)> GetTLI;
   SmallVector<CallInst *, 32> Printfs;
 };
 } // namespace
@@ -94,12 +94,11 @@ ModulePass *createAMDGPUPrintfRuntimeBinding() {
 }
 } // namespace llvm
 
-AMDGPUPrintfRuntimeBinding::AMDGPUPrintfRuntimeBinding()
-    : ModulePass(ID), TD(nullptr), DT(nullptr) {
+AMDGPUPrintfRuntimeBinding::AMDGPUPrintfRuntimeBinding() : ModulePass(ID) {
   initializeAMDGPUPrintfRuntimeBindingPass(*PassRegistry::getPassRegistry());
 }
 
-void AMDGPUPrintfRuntimeBinding::getConversionSpecifiers(
+void AMDGPUPrintfRuntimeBindingImpl::getConversionSpecifiers(
     SmallVectorImpl<char> &OpConvSpecifiers, StringRef Fmt,
     size_t NumOps) const {
   // not all format characters are collected.
@@ -131,8 +130,8 @@ void AMDGPUPrintfRuntimeBinding::getConversionSpecifiers(
   }
 }
 
-bool AMDGPUPrintfRuntimeBinding::shouldPrintAsStr(char Specifier,
-                                                  Type *OpType) const {
+bool AMDGPUPrintfRuntimeBindingImpl::shouldPrintAsStr(char Specifier,
+                                                      Type *OpType) const {
   if (Specifier != 's')
     return false;
   const PointerType *PT = dyn_cast<PointerType>(OpType);
@@ -145,8 +144,7 @@ bool AMDGPUPrintfRuntimeBinding::shouldPrintAsStr(char Specifier,
   return ElemIType->getBitWidth() == 8;
 }
 
-bool AMDGPUPrintfRuntimeBinding::lowerPrintfForGpu(
-    Module &M, function_ref<const TargetLibraryInfo &(Function &)> GetTLI) {
+bool AMDGPUPrintfRuntimeBindingImpl::lowerPrintfForGpu(Module &M) {
   LLVMContext &Ctx = M.getContext();
   IRBuilder<> Builder(Ctx);
   Type *I32Ty = Type::getInt32Ty(Ctx);
@@ -171,7 +169,8 @@ bool AMDGPUPrintfRuntimeBinding::lowerPrintfForGpu(
     }
 
     if (auto I = dyn_cast<Instruction>(Op)) {
-      Value *Op_simplified = simplify(I, &GetTLI(*I->getFunction()));
+      Value *Op_simplified =
+          simplify(I, &GetTLI(*I->getFunction()), &GetDT(*I->getFunction()));
       if (Op_simplified)
         Op = Op_simplified;
     }
@@ -183,8 +182,8 @@ bool AMDGPUPrintfRuntimeBinding::lowerPrintfForGpu(
 
       StringRef Str("unknown");
       if (GVar && GVar->hasInitializer()) {
-        auto Init = GVar->getInitializer();
-        if (auto CA = dyn_cast<ConstantDataArray>(Init)) {
+        auto *Init = GVar->getInitializer();
+        if (auto *CA = dyn_cast<ConstantDataArray>(Init)) {
           if (CA->isString())
             Str = CA->getAsCString();
         } else if (isa<ConstantAggregateZero>(Init)) {
@@ -217,10 +216,10 @@ bool AMDGPUPrintfRuntimeBinding::lowerPrintfForGpu(
         //
         if (ArgSize % DWORD_ALIGN != 0) {
           llvm::Type *ResType = llvm::Type::getInt32Ty(Ctx);
-          VectorType *LLVMVecType = llvm::dyn_cast<llvm::VectorType>(ArgType);
+          auto *LLVMVecType = llvm::dyn_cast<llvm::FixedVectorType>(ArgType);
           int NumElem = LLVMVecType ? LLVMVecType->getNumElements() : 1;
           if (LLVMVecType && NumElem > 1)
-            ResType = llvm::VectorType::get(ResType, NumElem);
+            ResType = llvm::FixedVectorType::get(ResType, NumElem);
           Builder.SetInsertPoint(CI);
           Builder.SetCurrentDebugLocation(CI->getDebugLoc());
           if (OpConvSpecifiers[ArgCount - 1] == 'x' ||
@@ -247,16 +246,15 @@ bool AMDGPUPrintfRuntimeBinding::lowerPrintfForGpu(
           }
         }
         if (shouldPrintAsStr(OpConvSpecifiers[ArgCount - 1], ArgType)) {
-          if (ConstantExpr *ConstExpr = dyn_cast<ConstantExpr>(Arg)) {
-            GlobalVariable *GV =
-                dyn_cast<GlobalVariable>(ConstExpr->getOperand(0));
+          if (auto *ConstExpr = dyn_cast<ConstantExpr>(Arg)) {
+            auto *GV = dyn_cast<GlobalVariable>(ConstExpr->getOperand(0));
             if (GV && GV->hasInitializer()) {
               Constant *Init = GV->getInitializer();
-              ConstantDataArray *CA = dyn_cast<ConstantDataArray>(Init);
-              if (Init->isZeroValue() || CA->isString()) {
-                size_t SizeStr = Init->isZeroValue()
-                                     ? 1
-                                     : (strlen(CA->getAsCString().data()) + 1);
+              bool IsZeroValue = Init->isZeroValue();
+              auto *CA = dyn_cast<ConstantDataArray>(Init);
+              if (IsZeroValue || (CA && CA->isString())) {
+                size_t SizeStr =
+                    IsZeroValue ? 1 : (strlen(CA->getAsCString().data()) + 1);
                 size_t Rem = SizeStr % DWORD_ALIGN;
                 size_t NSizeStr = 0;
                 LLVM_DEBUG(dbgs() << "Printf string original size = " << SizeStr
@@ -358,8 +356,7 @@ bool AMDGPUPrintfRuntimeBinding::lowerPrintfForGpu(
       //
       ConstantPointerNull *zeroIntPtr =
           ConstantPointerNull::get(PointerType::get(Type::getInt8Ty(Ctx), 1));
-      ICmpInst *cmp =
-          dyn_cast<ICmpInst>(Builder.CreateICmpNE(pcall, zeroIntPtr, ""));
+      auto *cmp = cast<ICmpInst>(Builder.CreateICmpNE(pcall, zeroIntPtr, ""));
       if (!CI->use_empty()) {
         Value *result =
             Builder.CreateSExt(Builder.CreateNot(cmp), I32Ty, "printf_res");
@@ -378,17 +375,14 @@ bool AMDGPUPrintfRuntimeBinding::lowerPrintfForGpu(
           ConstantInt::get(Ctx, APInt(32, StringRef("0"), 10));
       ZeroIdxList.push_back(zeroInt);
 
-      GetElementPtrInst *BufferIdx =
-          dyn_cast<GetElementPtrInst>(GetElementPtrInst::Create(
-              nullptr, pcall, ZeroIdxList, "PrintBuffID", Brnch));
+      GetElementPtrInst *BufferIdx = GetElementPtrInst::Create(
+          nullptr, pcall, ZeroIdxList, "PrintBuffID", Brnch);
 
       Type *idPointer = PointerType::get(I32Ty, AMDGPUAS::GLOBAL_ADDRESS);
       Value *id_gep_cast =
           new BitCastInst(BufferIdx, idPointer, "PrintBuffIdCast", Brnch);
 
-      StoreInst *stbuff =
-          new StoreInst(ConstantInt::get(I32Ty, UniqID), id_gep_cast);
-      stbuff->insertBefore(Brnch); // to Remove unused variable warning
+      new StoreInst(ConstantInt::get(I32Ty, UniqID), id_gep_cast, Brnch);
 
       SmallVector<Value *, 2> FourthIdxList;
       ConstantInt *fourInt =
@@ -396,8 +390,8 @@ bool AMDGPUPrintfRuntimeBinding::lowerPrintfForGpu(
 
       FourthIdxList.push_back(fourInt); // 1st 4 bytes hold the printf_id
       // the following GEP is the buffer pointer
-      BufferIdx = cast<GetElementPtrInst>(GetElementPtrInst::Create(
-          nullptr, pcall, FourthIdxList, "PrintBuffGep", Brnch));
+      BufferIdx = GetElementPtrInst::Create(nullptr, pcall, FourthIdxList,
+                                            "PrintBuffGep", Brnch);
 
       Type *Int32Ty = Type::getInt32Ty(Ctx);
       Type *Int64Ty = Type::getInt64Ty(Ctx);
@@ -407,21 +401,18 @@ bool AMDGPUPrintfRuntimeBinding::lowerPrintfForGpu(
         Value *Arg = CI->getArgOperand(ArgCount);
         Type *ArgType = Arg->getType();
         SmallVector<Value *, 32> WhatToStore;
-        if (ArgType->isFPOrFPVectorTy() &&
-            (ArgType->getTypeID() != Type::VectorTyID)) {
+        if (ArgType->isFPOrFPVectorTy() && !isa<VectorType>(ArgType)) {
           Type *IType = (ArgType->isFloatTy()) ? Int32Ty : Int64Ty;
           if (OpConvSpecifiers[ArgCount - 1] == 'f') {
-            ConstantFP *fpCons = dyn_cast<ConstantFP>(Arg);
-            if (fpCons) {
-              APFloat Val(fpCons->getValueAPF());
+            if (auto *FpCons = dyn_cast<ConstantFP>(Arg)) {
+              APFloat Val(FpCons->getValueAPF());
               bool Lost = false;
               Val.convert(APFloat::IEEEsingle(), APFloat::rmNearestTiesToEven,
                           &Lost);
               Arg = ConstantFP::get(Ctx, Val);
               IType = Int32Ty;
-            } else {
-              FPExtInst *FpExt = dyn_cast<FPExtInst>(Arg);
-              if (FpExt && FpExt->getType()->isDoubleTy() &&
+            } else if (auto *FpExt = dyn_cast<FPExtInst>(Arg)) {
+              if (FpExt->getType()->isDoubleTy() &&
                   FpExt->getOperand(0)->getType()->isFloatTy()) {
                 Arg = FpExt->getOperand(0);
                 IType = Int32Ty;
@@ -433,14 +424,14 @@ bool AMDGPUPrintfRuntimeBinding::lowerPrintfForGpu(
         } else if (ArgType->getTypeID() == Type::PointerTyID) {
           if (shouldPrintAsStr(OpConvSpecifiers[ArgCount - 1], ArgType)) {
             const char *S = NonLiteralStr;
-            if (ConstantExpr *ConstExpr = dyn_cast<ConstantExpr>(Arg)) {
-              GlobalVariable *GV =
-                  dyn_cast<GlobalVariable>(ConstExpr->getOperand(0));
+            if (auto *ConstExpr = dyn_cast<ConstantExpr>(Arg)) {
+              auto *GV = dyn_cast<GlobalVariable>(ConstExpr->getOperand(0));
               if (GV && GV->hasInitializer()) {
                 Constant *Init = GV->getInitializer();
-                ConstantDataArray *CA = dyn_cast<ConstantDataArray>(Init);
-                if (Init->isZeroValue() || CA->isString()) {
-                  S = Init->isZeroValue() ? "" : CA->getAsCString().data();
+                bool IsZeroValue = Init->isZeroValue();
+                auto *CA = dyn_cast<ConstantDataArray>(Init);
+                if (IsZeroValue || (CA && CA->isString())) {
+                  S = IsZeroValue ? "" : CA->getAsCString().data();
                 }
               }
             }
@@ -477,18 +468,14 @@ bool AMDGPUPrintfRuntimeBinding::lowerPrintfForGpu(
             Arg = new PtrToIntInst(Arg, DstType, "PrintArgPtr", Brnch);
             WhatToStore.push_back(Arg);
           }
-        } else if (ArgType->getTypeID() == Type::VectorTyID) {
+        } else if (isa<FixedVectorType>(ArgType)) {
           Type *IType = NULL;
-          uint32_t EleCount = cast<VectorType>(ArgType)->getNumElements();
+          uint32_t EleCount = cast<FixedVectorType>(ArgType)->getNumElements();
           uint32_t EleSize = ArgType->getScalarSizeInBits();
           uint32_t TotalSize = EleCount * EleSize;
           if (EleCount == 3) {
-            IntegerType *Int32Ty = Type::getInt32Ty(ArgType->getContext());
-            Constant *Indices[4] = {
-                ConstantInt::get(Int32Ty, 0), ConstantInt::get(Int32Ty, 1),
-                ConstantInt::get(Int32Ty, 2), ConstantInt::get(Int32Ty, 2)};
-            Constant *Mask = ConstantVector::get(Indices);
-            ShuffleVectorInst *Shuffle = new ShuffleVectorInst(Arg, Arg, Mask);
+            ShuffleVectorInst *Shuffle =
+                new ShuffleVectorInst(Arg, Arg, ArrayRef<int>{0, 1, 2, 2});
             Shuffle->insertBefore(Brnch);
             Arg = Shuffle;
             ArgType = Arg->getType();
@@ -497,32 +484,32 @@ bool AMDGPUPrintfRuntimeBinding::lowerPrintfForGpu(
           switch (EleSize) {
           default:
             EleCount = TotalSize / 64;
-            IType = dyn_cast<Type>(Type::getInt64Ty(ArgType->getContext()));
+            IType = Type::getInt64Ty(ArgType->getContext());
             break;
           case 8:
             if (EleCount >= 8) {
               EleCount = TotalSize / 64;
-              IType = dyn_cast<Type>(Type::getInt64Ty(ArgType->getContext()));
+              IType = Type::getInt64Ty(ArgType->getContext());
             } else if (EleCount >= 3) {
               EleCount = 1;
-              IType = dyn_cast<Type>(Type::getInt32Ty(ArgType->getContext()));
+              IType = Type::getInt32Ty(ArgType->getContext());
             } else {
               EleCount = 1;
-              IType = dyn_cast<Type>(Type::getInt16Ty(ArgType->getContext()));
+              IType = Type::getInt16Ty(ArgType->getContext());
             }
             break;
           case 16:
             if (EleCount >= 3) {
               EleCount = TotalSize / 64;
-              IType = dyn_cast<Type>(Type::getInt64Ty(ArgType->getContext()));
+              IType = Type::getInt64Ty(ArgType->getContext());
             } else {
               EleCount = 1;
-              IType = dyn_cast<Type>(Type::getInt32Ty(ArgType->getContext()));
+              IType = Type::getInt32Ty(ArgType->getContext());
             }
             break;
           }
           if (EleCount > 1) {
-            IType = dyn_cast<Type>(VectorType::get(IType, EleCount));
+            IType = FixedVectorType::get(IType, EleCount);
           }
           Arg = new BitCastInst(Arg, IType, "PrintArgVect", Brnch);
           WhatToStore.push_back(Arg);
@@ -545,8 +532,8 @@ bool AMDGPUPrintfRuntimeBinding::lowerPrintfForGpu(
           (void)StBuff;
           if (I + 1 == E && ArgCount + 1 == CI->getNumArgOperands())
             break;
-          BufferIdx = dyn_cast<GetElementPtrInst>(GetElementPtrInst::Create(
-              nullptr, BufferIdx, BuffOffset, "PrintBuffNextPtr", Brnch));
+          BufferIdx = GetElementPtrInst::Create(nullptr, BufferIdx, BuffOffset,
+                                                "PrintBuffNextPtr", Brnch);
           LLVM_DEBUG(dbgs() << "inserting gep to the printf buffer:\n"
                             << *BufferIdx << '\n');
         }
@@ -562,7 +549,7 @@ bool AMDGPUPrintfRuntimeBinding::lowerPrintfForGpu(
   return true;
 }
 
-bool AMDGPUPrintfRuntimeBinding::runOnModule(Module &M) {
+bool AMDGPUPrintfRuntimeBindingImpl::run(Module &M) {
   Triple TT(M.getTargetTriple());
   if (TT.getArch() == Triple::r600)
     return false;
@@ -581,12 +568,41 @@ bool AMDGPUPrintfRuntimeBinding::runOnModule(Module &M) {
   if (Printfs.empty())
     return false;
 
+  if (auto HostcallFunction = M.getFunction("__ockl_hostcall_internal")) {
+    for (auto &U : HostcallFunction->uses()) {
+      if (auto *CI = dyn_cast<CallInst>(U.getUser())) {
+        M.getContext().emitError(
+            CI, "Cannot use both printf and hostcall in the same module");
+      }
+    }
+  }
+
   TD = &M.getDataLayout();
-  auto DTWP = getAnalysisIfAvailable<DominatorTreeWrapperPass>();
-  DT = DTWP ? &DTWP->getDomTree() : nullptr;
+
+  return lowerPrintfForGpu(M);
+}
+
+bool AMDGPUPrintfRuntimeBinding::runOnModule(Module &M) {
+  auto GetDT = [this](Function &F) -> DominatorTree & {
+    return this->getAnalysis<DominatorTreeWrapperPass>(F).getDomTree();
+  };
   auto GetTLI = [this](Function &F) -> TargetLibraryInfo & {
     return this->getAnalysis<TargetLibraryInfoWrapperPass>().getTLI(F);
   };
 
-  return lowerPrintfForGpu(M, GetTLI);
+  return AMDGPUPrintfRuntimeBindingImpl(GetDT, GetTLI).run(M);
+}
+
+PreservedAnalyses
+AMDGPUPrintfRuntimeBindingPass::run(Module &M, ModuleAnalysisManager &AM) {
+  FunctionAnalysisManager &FAM =
+      AM.getResult<FunctionAnalysisManagerModuleProxy>(M).getManager();
+  auto GetDT = [&FAM](Function &F) -> DominatorTree & {
+    return FAM.getResult<DominatorTreeAnalysis>(F);
+  };
+  auto GetTLI = [&FAM](Function &F) -> TargetLibraryInfo & {
+    return FAM.getResult<TargetLibraryAnalysis>(F);
+  };
+  bool Changed = AMDGPUPrintfRuntimeBindingImpl(GetDT, GetTLI).run(M);
+  return Changed ? PreservedAnalyses::none() : PreservedAnalyses::all();
 }

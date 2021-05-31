@@ -1,11 +1,11 @@
-/* $NetBSD: cgram.c,v 1.23 2021/05/01 20:29:23 rillig Exp $ */
+/* $NetBSD: cgram.c,v 1.23.2.1 2021/05/31 22:15:06 cjep Exp $ */
 
 /*-
  * Copyright (c) 2013, 2021 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by David A. Holland and Roland Illig.
+ * by Roland Illig.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.c,v 1.23 2021/05/01 20:29:23 rillig Exp $");
+__RCSID("$NetBSD: cgram.c,v 1.23.2.1 2021/05/31 22:15:06 cjep Exp $");
 #endif
 
 #include <assert.h>
@@ -612,4 +612,5 @@ main(int argc, char *argv[])
 	init(argc > 1 ? argv[1] : NULL);
 	loop();
 	done();
+	return 0;
 }

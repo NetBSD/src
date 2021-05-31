@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2020/06/09 21:50:32 kamil Exp $
+#	$NetBSD: Makefile,v 1.2.2.1 2021/05/31 22:06:56 cjep Exp $
 
 .include <bsd.own.mk>
 
@@ -11,6 +11,7 @@ SUBDIR=	clang \
 SUBDIR+= \
 	bugpoint \
 	clang-format \
+	clang-repl \
 	clang-rename \
 	llc \
 	lli \

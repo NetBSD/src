@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cas.c,v 1.45 2021/05/08 00:27:02 thorpej Exp $	*/
+/*	$NetBSD: if_cas.c,v 1.45.2.1 2021/05/31 22:15:18 cjep Exp $	*/
 /*	$OpenBSD: if_cas.c,v 1.29 2009/11/29 16:19:38 kettenis Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.45 2021/05/08 00:27:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.45.2.1 2021/05/31 22:15:18 cjep Exp $");
 
 #ifndef _MODULE
 #include "opt_inet.h"
@@ -783,8 +783,8 @@ cas_detach(device_t self, int flags)
 			/* XXX   need to check that bus_dmamem_alloc suceeded
 			if (sc->sc_rxsoft[i].rxs_dmaseg != NULL)
 			*/
-				bus_dmamem_free(sc->sc_dmatag,
-				    &(sc->sc_rxsoft[i].rxs_dmaseg), 1);
+			bus_dmamem_free(sc->sc_dmatag,
+			    &(sc->sc_rxsoft[i].rxs_dmaseg), 1);
 		}
 		bus_dmamap_unload(sc->sc_dmatag, sc->sc_cddmamap);
 		/*FALLTHROUGH*/

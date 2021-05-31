@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/11/11 22:45:16 joerg Exp $
+#	$NetBSD: Makefile,v 1.1.4.1 2021/05/31 22:10:13 cjep Exp $
 
 LIB=	clangStaticAnalyzerFrontend
 
@@ -7,8 +7,9 @@ LIB=	clangStaticAnalyzerFrontend
 .PATH: ${CLANG_SRCDIR}/lib/StaticAnalyzer/Frontend
 
 SRCS+=	AnalysisConsumer.cpp \
-	CheckerRegistration.cpp \
+	AnalyzerHelpFlags.cpp \
 	CheckerRegistry.cpp \
+	CreateCheckerManager.cpp \
 	FrontendActions.cpp \
 	ModelConsumer.cpp \
 	ModelInjector.cpp

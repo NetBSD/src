@@ -20,8 +20,11 @@ group("unittests") {
     "ExecutionEngine/JITLink:JITLinkTests",
     "ExecutionEngine/MCJIT:MCJITTests",
     "ExecutionEngine/Orc:OrcJITTests",
+    "FileCheck:FileCheckTests",
+    "Frontend:LLVMFrontendTests",
     "FuzzMutate:FuzzMutateTests",
     "IR:IRTests",
+    "InterfaceStub:InterfaceStubTests",
     "LineEditor:LineEditorTests",
     "Linker:LinkerTests",
     "MC:MCTests",
@@ -29,6 +32,7 @@ group("unittests") {
     "Object:ObjectTests",
     "ObjectYAML:ObjectYAMLTests",
     "Option:OptionTests",
+    "Passes:PassesBindingsTests",
     "Passes:PluginsTests",
     "ProfileData:ProfileDataTests",
     "Remarks:RemarksTests",
@@ -43,6 +47,7 @@ group("unittests") {
     "XRay:XRayTests",
     "tools/llvm-cfi-verify:CFIVerifyTests",
     "tools/llvm-exegesis:LLVMExegesisTests",
+    "tools/llvm-profgen:LLVMProfgenTests",
   ]
 
   # Target-dependent unit tests.
@@ -55,6 +60,12 @@ group("unittests") {
       "tools/llvm-exegesis/AArch64:LLVMExegesisAArch64Tests",
     ]
   }
+  if (llvm_build_AMDGPU) {
+    deps += [
+      "MC/AMDGPU:AMDGPUDwarfTests",
+      "Target/AMDGPU:AMDGPUTests",
+    ]
+  }
   if (llvm_build_ARM) {
     deps += [
       "Target/ARM:ARMTests",
@@ -65,13 +76,22 @@ group("unittests") {
     deps += [ "tools/llvm-exegesis/Mips:LLVMExegesisMipsTests" ]
   }
   if (llvm_build_PowerPC) {
-    deps += [ "tools/llvm-exegesis/PowerPC:LLVMExegesisPowerPCTests" ]
+    deps += [
+      "Target/PowerPC:PowerPCTests",
+      "tools/llvm-exegesis/PowerPC:LLVMExegesisPowerPCTests",
+    ]
+  }
+  if (llvm_build_SystemZ) {
+    deps += [ "MC/SystemZ:SystemZAsmLexerTests" ]
   }
   if (llvm_build_WebAssembly) {
     deps += [ "Target/WebAssembly:WebAssemblyTests" ]
   }
   if (llvm_build_X86) {
-    deps += [ "tools/llvm-exegesis/X86:LLVMExegesisX86Tests" ]
+    deps += [
+      "Target/X86:X86Tests",
+      "tools/llvm-exegesis/X86:LLVMExegesisX86Tests",
+    ]
   }
 
   testonly = true

@@ -46,13 +46,14 @@ struct FileHeader {
 
 struct Limits {
   LimitFlags Flags;
-  yaml::Hex32 Initial;
+  yaml::Hex32 Minimum;
   yaml::Hex32 Maximum;
 };
 
 struct Table {
   TableType ElemType;
   Limits TableLimits;
+  uint32_t Index;
 };
 
 struct Export {
@@ -62,7 +63,9 @@ struct Export {
 };
 
 struct ElemSegment {
-  uint32_t TableIndex;
+  uint32_t Flags;
+  uint32_t TableNumber;
+  ValueType ElemKind;
   wasm::WasmInitExpr Offset;
   std::vector<uint32_t> Functions;
 };
@@ -107,8 +110,10 @@ struct Function {
 struct Relocation {
   RelocType Type;
   uint32_t Index;
+  // TODO(wvo): this would strictly be better as Hex64, but that will change
+  // all existing obj2yaml output.
   yaml::Hex32 Offset;
-  int32_t Addend;
+  int64_t Addend;
 };
 
 struct DataSegment {
@@ -218,6 +223,8 @@ struct NameSection : CustomSection {
   }
 
   std::vector<NameEntry> FunctionNames;
+  std::vector<NameEntry> GlobalNames;
+  std::vector<NameEntry> DataSegmentNames;
 };
 
 struct LinkingSection : CustomSection {
@@ -309,16 +316,6 @@ struct MemorySection : Section {
   std::vector<Limits> Memories;
 };
 
-struct GlobalSection : Section {
-  GlobalSection() : Section(wasm::WASM_SEC_GLOBAL) {}
-
-  static bool classof(const Section *S) {
-    return S->Type == wasm::WASM_SEC_GLOBAL;
-  }
-
-  std::vector<Global> Globals;
-};
-
 struct EventSection : Section {
   EventSection() : Section(wasm::WASM_SEC_EVENT) {}
 
@@ -327,6 +324,16 @@ struct EventSection : Section {
   }
 
   std::vector<Event> Events;
+};
+
+struct GlobalSection : Section {
+  GlobalSection() : Section(wasm::WASM_SEC_GLOBAL) {}
+
+  static bool classof(const Section *S) {
+    return S->Type == wasm::WASM_SEC_GLOBAL;
+  }
+
+  std::vector<Global> Globals;
 };
 
 struct ExportSection : Section {

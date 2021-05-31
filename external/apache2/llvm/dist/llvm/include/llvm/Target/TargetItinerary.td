@@ -1,4 +1,4 @@
-//===- TargetItinerary.td - Target Itinierary Description --*- tablegen -*-===//
+//===- TargetItinerary.td - Target Itinerary Description --*- tablegen -*-====//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -8,7 +8,7 @@
 //
 // This file defines the target-independent scheduling interfaces
 // which should be implemented by each target that uses instruction
-// itineraries for scheduling. Itineraries are details reservation
+// itineraries for scheduling. Itineraries are detailed reservation
 // tables for each instruction class. They are most appropriate for
 // in-order machine with complicated scheduling or bundling constraints.
 //

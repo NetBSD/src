@@ -9,6 +9,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Triple.h"
+#include "llvm/InterfaceStub/ELFObjHandler.h"
 #include "llvm/ObjectYAML/yaml2obj.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
@@ -21,11 +22,12 @@
 #include "llvm/Support/WithColor.h"
 #include "llvm/Support/YAMLTraits.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/TextAPI/MachO/InterfaceFile.h"
-#include "llvm/TextAPI/MachO/TextAPIReader.h"
-#include "llvm/TextAPI/MachO/TextAPIWriter.h"
+#include "llvm/TextAPI/InterfaceFile.h"
+#include "llvm/TextAPI/TextAPIReader.h"
+#include "llvm/TextAPI/TextAPIWriter.h"
 #include <set>
 #include <string>
+#include <vector>
 
 using namespace llvm;
 using namespace llvm::yaml;
@@ -34,8 +36,8 @@ using namespace llvm::MachO;
 #define DEBUG_TYPE "llvm-ifs"
 
 namespace {
-const VersionTuple IFSVersionCurrent(1, 2);
-}
+const VersionTuple IFSVersionCurrent(2, 0);
+} // end anonymous namespace
 
 static cl::opt<std::string> Action("action", cl::desc("<llvm-ifs action>"),
                                    cl::value_desc("write-ifs | write-bin"),
@@ -53,6 +55,11 @@ static cl::list<std::string> InputFilenames(cl::Positional,
 static cl::opt<std::string> OutputFilename("o", cl::desc("<output file>"),
                                            cl::value_desc("path"));
 
+static cl::opt<bool> UseInterfaceStub(
+    "use-interfacestub",
+    cl::desc("Write output ELF file using latest InterfaceStub backend"),
+    cl::init(false));
+
 enum class IFSSymbolType {
   NoType = 0,
   Object,
@@ -61,7 +68,7 @@ enum class IFSSymbolType {
   Unknown = 16,
 };
 
-std::string getTypeName(IFSSymbolType Type) {
+static std::string getTypeName(IFSSymbolType Type) {
   switch (Type) {
   case IFSSymbolType::NoType:
     return "NoType";
@@ -76,6 +83,7 @@ std::string getTypeName(IFSSymbolType Type) {
 }
 
 struct IFSSymbol {
+  IFSSymbol() = default;
   IFSSymbol(std::string SymbolName) : Name(SymbolName) {}
   std::string Name;
   uint64_t Size;
@@ -84,6 +92,8 @@ struct IFSSymbol {
   Optional<std::string> Warning;
   bool operator<(const IFSSymbol &RHS) const { return Name < RHS.Name; }
 };
+
+LLVM_YAML_IS_SEQUENCE_VECTOR(IFSSymbol)
 
 namespace llvm {
 namespace yaml {
@@ -100,30 +110,10 @@ template <> struct ScalarEnumerationTraits<IFSSymbolType> {
   }
 };
 
-template <> struct ScalarTraits<VersionTuple> {
-  static void output(const VersionTuple &Value, void *,
-                     llvm::raw_ostream &Out) {
-    Out << Value.getAsString();
-  }
-
-  static StringRef input(StringRef Scalar, void *, VersionTuple &Value) {
-    if (Value.tryParse(Scalar))
-      return StringRef("Can't parse version: invalid version format.");
-
-    if (Value > IFSVersionCurrent)
-      return StringRef("Unsupported IFS version.");
-
-    // Returning empty StringRef indicates successful parse.
-    return StringRef();
-  }
-
-  // Don't place quotation marks around version value.
-  static QuotingType mustQuote(StringRef) { return QuotingType::None; }
-};
-
 /// YAML traits for IFSSymbol.
 template <> struct MappingTraits<IFSSymbol> {
   static void mapping(IO &IO, IFSSymbol &Symbol) {
+    IO.mapRequired("Name", Symbol.Name);
     IO.mapRequired("Type", Symbol.Type);
     // The need for symbol size depends on the symbol type.
     if (Symbol.Type == IFSSymbolType::NoType)
@@ -140,20 +130,6 @@ template <> struct MappingTraits<IFSSymbol> {
   static const bool flow = true;
 };
 
-/// YAML traits for set of IFSSymbols.
-template <> struct CustomMappingTraits<std::set<IFSSymbol>> {
-  static void inputOne(IO &IO, StringRef Key, std::set<IFSSymbol> &Set) {
-    std::string Name = Key.str();
-    IFSSymbol Sym(Name);
-    IO.mapRequired(Name.c_str(), Sym);
-    Set.insert(Sym);
-  }
-
-  static void output(IO &IO, std::set<IFSSymbol> &Set) {
-    for (auto &Sym : Set)
-      IO.mapRequired(Sym.Name.c_str(), const_cast<IFSSymbol &>(Sym));
-  }
-};
 } // namespace yaml
 } // namespace llvm
 
@@ -167,7 +143,7 @@ public:
   std::string ObjectFileFormat;
   Optional<std::string> SOName;
   std::vector<std::string> NeededLibs;
-  std::set<IFSSymbol> Symbols;
+  std::vector<IFSSymbol> Symbols;
 
   IFSStub() = default;
   IFSStub(const IFSStub &Stub)
@@ -186,14 +162,18 @@ namespace yaml {
 /// YAML traits for IFSStub objects.
 template <> struct MappingTraits<IFSStub> {
   static void mapping(IO &IO, IFSStub &Stub) {
-    if (!IO.mapTag("!experimental-ifs-v1", true))
+    if (!IO.mapTag("!experimental-ifs-v2", true))
       IO.setError("Not a .ifs YAML file.");
+
+    auto OldContext = IO.getContext();
+    IO.setContext(&Stub);
     IO.mapRequired("IfsVersion", Stub.IfsVersion);
     IO.mapOptional("Triple", Stub.Triple);
     IO.mapOptional("ObjectFileFormat", Stub.ObjectFileFormat);
     IO.mapOptional("SOName", Stub.SOName);
     IO.mapOptional("NeededLibs", Stub.NeededLibs);
     IO.mapRequired("Symbols", Stub.Symbols);
+    IO.setContext(&OldContext);
   }
 };
 } // namespace yaml
@@ -202,7 +182,7 @@ template <> struct MappingTraits<IFSStub> {
 static Expected<std::unique_ptr<IFSStub>> readInputFile(StringRef FilePath) {
   // Read in file.
   ErrorOr<std::unique_ptr<MemoryBuffer>> BufOrError =
-      MemoryBuffer::getFileOrSTDIN(FilePath);
+      MemoryBuffer::getFileOrSTDIN(FilePath, /*IsText=*/true);
   if (!BufOrError)
     return createStringError(BufOrError.getError(), "Could not open `%s`",
                              FilePath.data());
@@ -215,11 +195,16 @@ static Expected<std::unique_ptr<IFSStub>> readInputFile(StringRef FilePath) {
   if (std::error_code Err = YamlIn.error())
     return createStringError(Err, "Failed reading Interface Stub File.");
 
+  if (Stub->IfsVersion > IFSVersionCurrent)
+    return make_error<StringError>(
+        "IFS version " + Stub->IfsVersion.getAsString() + " is unsupported.",
+        std::make_error_code(std::errc::invalid_argument));
+
   return std::move(Stub);
 }
 
-int writeTbdStub(const llvm::Triple &T, const std::set<IFSSymbol> &Symbols,
-                 const StringRef Format, raw_ostream &Out) {
+static int writeTbdStub(const Triple &T, const std::vector<IFSSymbol> &Symbols,
+                        const StringRef Format, raw_ostream &Out) {
 
   auto PlatformKindOrError =
       [](const llvm::Triple &T) -> llvm::Expected<llvm::MachO::PlatformKind> {
@@ -280,8 +265,8 @@ int writeTbdStub(const llvm::Triple &T, const std::set<IFSSymbol> &Symbols,
   return 0;
 }
 
-int writeElfStub(const llvm::Triple &T, const std::set<IFSSymbol> &Symbols,
-                 const StringRef Format, raw_ostream &Out) {
+static int writeElfStub(const Triple &T, const std::vector<IFSSymbol> &Symbols,
+                        const StringRef Format, raw_ostream &Out) {
   SmallString<0> Storage;
   Storage.clear();
   raw_svector_ostream OS(Storage);
@@ -346,7 +331,7 @@ int writeElfStub(const llvm::Triple &T, const std::set<IFSSymbol> &Symbols,
   }
   OS << "...\n";
 
-  std::string YamlStr = OS.str();
+  std::string YamlStr = std::string(OS.str());
 
   // Only or debugging. Not an offical format.
   LLVM_DEBUG({
@@ -363,15 +348,81 @@ int writeElfStub(const llvm::Triple &T, const std::set<IFSSymbol> &Symbols,
   return convertYAML(YIn, Out, ErrHandler) ? 0 : 1;
 }
 
-int writeIfso(const IFSStub &Stub, bool IsWriteIfs, raw_ostream &Out) {
+static elfabi::ELFTarget convertIFSStub(const IFSStub &IfsStub,
+                                        elfabi::ELFStub &ElfStub) {
+  ElfStub.TbeVersion = IfsStub.IfsVersion;
+  ElfStub.SoName = IfsStub.SOName;
+  // TODO: Support more archs and targets.
+  Triple IFSTriple(IfsStub.Triple);
+  elfabi::ELFTarget Target = elfabi::ELFTarget::ELF64LE;
+  switch (IFSTriple.getArch()) {
+  case Triple::ArchType::aarch64:
+    ElfStub.Arch = (elfabi::ELFArch)ELF::EM_AARCH64;
+    break;
+  case Triple::ArchType::x86_64:
+    ElfStub.Arch = (elfabi::ELFArch)ELF::EM_X86_64;
+    break;
+  default:
+    ElfStub.Arch = (elfabi::ELFArch)ELF::EM_NONE;
+  }
+  ElfStub.NeededLibs = IfsStub.NeededLibs;
+  for (const IFSSymbol &IfsSymbol : IfsStub.Symbols) {
+    elfabi::ELFSymbol ElfSymbol(IfsSymbol.Name);
+    switch (IfsSymbol.Type) {
+    case IFSSymbolType::Func:
+      ElfSymbol.Type = elfabi::ELFSymbolType::Func;
+      break;
+    case IFSSymbolType::NoType:
+      ElfSymbol.Type = elfabi::ELFSymbolType::NoType;
+      break;
+    case IFSSymbolType::Object:
+      ElfSymbol.Type = elfabi::ELFSymbolType::Object;
+      break;
+    default:
+      ElfSymbol.Type = elfabi::ELFSymbolType::Unknown;
+      break;
+      // TODO: Add support for TLS?
+    }
+    ElfSymbol.Size = IfsSymbol.Size;
+    ElfSymbol.Undefined = false;
+    ElfSymbol.Weak = IfsSymbol.Weak;
+    ElfSymbol.Warning = IfsSymbol.Warning;
+    ElfStub.Symbols.insert(ElfSymbol);
+  }
+  return Target;
+}
+
+static int writeIfso(const IFSStub &Stub, bool IsWriteIfs) {
+  std::string ObjectFileFormat =
+      ForceFormat.empty() ? Stub.ObjectFileFormat : ForceFormat;
+
+  // Use InterfaceStub library if the option is enabled and output
+  // format is ELF.
+  if (UseInterfaceStub && (!IsWriteIfs) && ObjectFileFormat != "TBD") {
+    elfabi::ELFStub ElfStub;
+    elfabi::ELFTarget Target = convertIFSStub(Stub, ElfStub);
+    Error BinaryWriteError =
+        elfabi::writeBinaryStub(OutputFilename, ElfStub, Target);
+    if (BinaryWriteError) {
+      return -1;
+    }
+    return 0;
+  }
+
+  // Open file for writing.
+  std::error_code SysErr;
+  raw_fd_ostream Out(OutputFilename, SysErr);
+  if (SysErr) {
+    WithColor::error() << "Couldn't open " << OutputFilename
+                       << " for writing.\n";
+    return -1;
+  }
+
   if (IsWriteIfs) {
     yaml::Output YamlOut(Out, NULL, /*WrapColumn =*/0);
     YamlOut << const_cast<IFSStub &>(Stub);
     return 0;
   }
-
-  std::string ObjectFileFormat =
-      ForceFormat.empty() ? Stub.ObjectFileFormat : ForceFormat;
 
   if (ObjectFileFormat == "ELF" || ForceFormat == "ELFOBJYAML")
     return writeElfStub(llvm::Triple(Stub.Triple), Stub.Symbols,
@@ -387,8 +438,8 @@ int writeIfso(const IFSStub &Stub, bool IsWriteIfs, raw_ostream &Out) {
 
 // TODO: Drop ObjectFileFormat, it can be subsumed from the triple.
 // New Interface Stubs Yaml Format:
-// --- !experimental-ifs-v1
-// IfsVersion:      1.0
+// --- !experimental-ifs-v2
+// IfsVersion: 2.0
 // Triple:          <llvm triple>
 // ObjectFileFormat: <ELF | others not yet supported>
 // Symbols:
@@ -405,7 +456,7 @@ int main(int argc, char *argv[]) {
   IFSStub Stub;
   std::map<std::string, IFSSymbol> SymbolMap;
 
-  std::string PreviousInputFilePath = "";
+  std::string PreviousInputFilePath;
   for (const std::string &InputFilePath : InputFilenames) {
     Expected<std::unique_ptr<IFSStub>> StubOrErr = readInputFile(InputFilePath);
     if (!StubOrErr) {
@@ -422,6 +473,10 @@ int main(int argc, char *argv[]) {
       Stub.SOName = TargetStub->SOName;
       Stub.NeededLibs = TargetStub->NeededLibs;
     } else {
+      Stub.ObjectFileFormat = !Stub.ObjectFileFormat.empty()
+                                  ? Stub.ObjectFileFormat
+                                  : TargetStub->ObjectFileFormat;
+
       if (Stub.IfsVersion != TargetStub->IfsVersion) {
         if (Stub.IfsVersion.getMajor() != IFSVersionCurrent.getMajor()) {
           WithColor::error()
@@ -434,7 +489,8 @@ int main(int argc, char *argv[]) {
         if (TargetStub->IfsVersion > Stub.IfsVersion)
           Stub.IfsVersion = TargetStub->IfsVersion;
       }
-      if (Stub.ObjectFileFormat != TargetStub->ObjectFileFormat) {
+      if (Stub.ObjectFileFormat != TargetStub->ObjectFileFormat &&
+          !TargetStub->ObjectFileFormat.empty()) {
         WithColor::error() << "Interface Stub: ObjectFileFormat Mismatch."
                            << "\nFilenames: " << PreviousInputFilePath << " "
                            << InputFilePath << "\nObjectFileFormat Values: "
@@ -442,7 +498,7 @@ int main(int argc, char *argv[]) {
                            << TargetStub->ObjectFileFormat << "\n";
         return -1;
       }
-      if (Stub.Triple != TargetStub->Triple) {
+      if (Stub.Triple != TargetStub->Triple && !TargetStub->Triple.empty()) {
         WithColor::error() << "Interface Stub: Triple Mismatch."
                            << "\nFilenames: " << PreviousInputFilePath << " "
                            << InputFilePath
@@ -494,13 +550,8 @@ int main(int argc, char *argv[]) {
         return -1;
       }
       if (Symbol.Weak != SI->second.Weak) {
-        // TODO: Add conflict resolution for Weak vs non-Weak.
-        WithColor::error() << "Interface Stub: Weak Mismatch for "
-                           << Symbol.Name << ".\nFilename: " << InputFilePath
-                           << "\nWeak Values: " << SI->second.Weak << " "
-                           << Symbol.Weak << "\n";
-
-        return -1;
+        Symbol.Weak = false;
+        continue;
       }
       // TODO: Not checking Warning. Will be dropped.
     }
@@ -517,17 +568,7 @@ int main(int argc, char *argv[]) {
     }
 
   for (auto &Entry : SymbolMap)
-    Stub.Symbols.insert(Entry.second);
+    Stub.Symbols.push_back(Entry.second);
 
-  std::error_code SysErr;
-
-  // Open file for writing.
-  raw_fd_ostream Out(OutputFilename, SysErr);
-  if (SysErr) {
-    WithColor::error() << "Couldn't open " << OutputFilename
-                       << " for writing.\n";
-    return -1;
-  }
-
-  return writeIfso(Stub, (Action == "write-ifs"), Out);
+  return writeIfso(Stub, (Action == "write-ifs"));
 }

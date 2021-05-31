@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.170 2021/04/22 10:26:24 yamaguchi Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.170.4.1 2021/05/31 22:15:21 cjep Exp $ */
 
 /*
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.170 2021/04/22 10:26:24 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.170.4.1 2021/05/31 22:15:21 cjep Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -74,6 +74,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.170 2021/04/22 10:26:24 yamaguchi Exp
 
 #ifdef NET_MPSAFE
 #define PPPOE_MPSAFE	1
+#endif
+
+#ifndef PPPOE_DEQUEUE_MAXLEN
+#define PPPOE_DEQUEUE_MAXLEN	IFQ_MAXLEN
 #endif
 
 struct pppoehdr {
@@ -129,6 +133,7 @@ struct pppoetag {
 #define	PPPOE_SLOW_RETRY	(hz*60)	/* persistent retry interval */
 #define	PPPOE_RECON_FAST	(hz*15)	/* first retry after auth failure */
 #define	PPPOE_RECON_IMMEDIATE	(hz/10)	/* "no delay" reconnect */
+#define	PPPOE_RECON_PADTRCVD	(hz*5)	/* reconnect delay after PADT received */
 #define	PPPOE_DISC_MAXPADI	4	/* retry PADI four times (quickly) */
 #define	PPPOE_DISC_MAXPADR	2	/* retry PADR twice */
 
@@ -593,36 +598,32 @@ static void
 pppoeintr(void)
 {
 	struct mbuf *m;
-	int disc_done, data_done;
+	int i;
 
 	SOFTNET_LOCK_UNLESS_NET_MPSAFE();
 
-	do {
-		disc_done = 0;
-		data_done = 0;
-		for (;;) {
-			IFQ_LOCK(&ppoediscinq);
-			IF_DEQUEUE(&ppoediscinq, m);
-			IFQ_UNLOCK(&ppoediscinq);
-			if (m == NULL)
-				break;
-			disc_done = 1;
-			pppoe_disc_input(m);
-		}
+	for (i = 0; i < PPPOE_DEQUEUE_MAXLEN; i++) {
+		IFQ_LOCK(&ppoediscinq);
+		IF_DEQUEUE(&ppoediscinq, m);
+		IFQ_UNLOCK(&ppoediscinq);
+		if (m == NULL)
+			break;
+		pppoe_disc_input(m);
+	}
 
-		for (;;) {
-			IFQ_LOCK(&ppoeinq);
-			IF_DEQUEUE(&ppoeinq, m);
-			IFQ_UNLOCK(&ppoeinq);
-			if (m == NULL)
-				break;
-			data_done = 1;
-			pppoe_data_input(m);
-		}
-	} while (disc_done || data_done);
+	for (i = 0; i < PPPOE_DEQUEUE_MAXLEN; i++) {
+		IFQ_LOCK(&ppoeinq);
+		IF_DEQUEUE(&ppoeinq, m);
+		IFQ_UNLOCK(&ppoeinq);
+		if (m == NULL)
+			break;
+		pppoe_data_input(m);
+	}
 
+#if PPPOE_DEQUEUE_MAXLEN < IFQ_MAXLEN
 	if (!IF_IS_EMPTY(&ppoediscinq) || !IF_IS_EMPTY(&ppoeinq))
 		softint_schedule(pppoe_softintr);
+#endif
 
 	SOFTNET_UNLOCK_UNLESS_NET_MPSAFE();
 }
@@ -659,7 +660,7 @@ pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 	eh = mtod(m, struct ether_header *);
 	off += sizeof(*eh);
 
-	if (m->m_pkthdr.len - off <= PPPOE_HEADERLEN) {
+	if (m->m_pkthdr.len - off < PPPOE_HEADERLEN) {
 		goto done;
 	}
 
@@ -1006,6 +1007,12 @@ breakbreak:;
 		if (sc == NULL)
 			goto done;
 
+		if (memcmp(&sc->sc_dest, eh->ether_shost,
+		    sizeof sc->sc_dest) != 0) {
+			PPPOE_UNLOCK(sc);
+			goto done;
+		}
+
 		sc->sc_session = session;
 		callout_stop(&sc->sc_timeout);
 		pppoe_printf(sc, "session 0x%x connected\n", session);
@@ -1028,9 +1035,18 @@ breakbreak:;
 		if (sc == NULL)
 			goto done;
 
+		if (memcmp(&sc->sc_dest, eh->ether_shost,
+		    sizeof sc->sc_dest) != 0) {
+			PPPOE_UNLOCK(sc);
+			goto done;
+		}
+
 		pppoe_clear_softc(sc, "received PADT");
-		if (sc->sc_sppp.pp_if.if_flags & IFF_RUNNING)
-			callout_schedule(&sc->sc_timeout, PPPOE_RECON_FAST);
+		if (sc->sc_sppp.pp_if.if_flags & IFF_RUNNING) {
+			pppoe_printf(sc, "wait for reconnect\n");
+			callout_schedule(&sc->sc_timeout,
+			    PPPOE_RECON_PADTRCVD);
+		}
 		PPPOE_UNLOCK(sc);
 		break;
 

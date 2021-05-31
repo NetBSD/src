@@ -169,7 +169,7 @@ void UnreachableCodeChecker::checkEndAnalysis(ExplodedGraph &G,
     if (SM.isInSystemHeader(SL) || SM.isInExternCSystemHeader(SL))
       continue;
 
-    B.EmitBasicReport(D, this, "Unreachable code", "Dead code",
+    B.EmitBasicReport(D, this, "Unreachable code", categories::UnusedCode,
                       "This statement is never executed", DL, SR);
   }
 }
@@ -257,6 +257,6 @@ void ento::registerUnreachableCodeChecker(CheckerManager &mgr) {
   mgr.registerChecker<UnreachableCodeChecker>();
 }
 
-bool ento::shouldRegisterUnreachableCodeChecker(const LangOptions &LO) {
+bool ento::shouldRegisterUnreachableCodeChecker(const CheckerManager &mgr) {
   return true;
 }

@@ -75,9 +75,9 @@ static cl::opt<std::string>
 
 static cl::opt<std::string> AssumeFileName(
     "assume-filename",
-    cl::desc("When reading from stdin, clang-format assumes this\n"
-             "filename to look for a style config file (with\n"
-             "-style=file) and to determine the language."),
+    cl::desc("Override filename used to determine the language.\n"
+             "When reading from stdin, clang-format assumes this\n"
+             "filename to determine the language."),
     cl::init("<stdin>"), cl::cat(ClangFormatCategory));
 
 static cl::opt<bool> Inplace("i",
@@ -144,6 +144,23 @@ static cl::opt<bool>
                      cl::desc("If set, changes formatting warnings to errors"),
                      cl::cat(ClangFormatCategory));
 
+namespace {
+enum class WNoError { Unknown };
+}
+
+static cl::bits<WNoError> WNoErrorList(
+    "Wno-error",
+    cl::desc("If set don't error out on the specified warning type."),
+    cl::values(
+        clEnumValN(WNoError::Unknown, "unknown",
+                   "If set, unknown format options are only warned about.\n"
+                   "This can be used to enable formatting, even if the\n"
+                   "configuration contains unknown (newer) options.\n"
+                   "Use with caution, as this might lead to dramatically\n"
+                   "differing format depending on an option being\n"
+                   "supported or not.")),
+    cl::cat(ClangFormatCategory));
+
 static cl::opt<bool>
     ShowColors("fcolor-diagnostics",
                cl::desc("If set, and on a color-capable terminal controls "
@@ -162,13 +179,13 @@ static cl::list<std::string> FileNames(cl::Positional, cl::desc("[<file> ...]"),
 namespace clang {
 namespace format {
 
-static FileID createInMemoryFile(StringRef FileName, MemoryBuffer *Source,
+static FileID createInMemoryFile(StringRef FileName, MemoryBufferRef Source,
                                  SourceManager &Sources, FileManager &Files,
                                  llvm::vfs::InMemoryFileSystem *MemFS) {
   MemFS->addFileNoOwn(FileName, 0, Source);
-  auto File = Files.getFile(FileName);
-  return Sources.createFileID(File ? *File : nullptr, SourceLocation(),
-                              SrcMgr::C_User);
+  auto File = Files.getOptionalFileRef(FileName);
+  assert(File && "File not added to MemFS?");
+  return Sources.createFileID(*File, SourceLocation(), SrcMgr::C_User);
 }
 
 // Parses <start line>:<end line> input to a pair of line numbers.
@@ -189,7 +206,7 @@ static bool fillRanges(MemoryBuffer *Code,
       IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs),
       new DiagnosticOptions);
   SourceManager Sources(Diagnostics, Files);
-  FileID ID = createInMemoryFile("<irrelevant>", Code, Sources, Files,
+  FileID ID = createInMemoryFile("<irrelevant>", *Code, Sources, Files,
                                  InMemoryFileSystem.get());
   if (!LineRanges.empty()) {
     if (!Offsets.empty() || !Lengths.empty()) {
@@ -292,55 +309,25 @@ static void outputReplacementsXML(const Replacements &Replaces) {
 static bool
 emitReplacementWarnings(const Replacements &Replaces, StringRef AssumedFileName,
                         const std::unique_ptr<llvm::MemoryBuffer> &Code) {
-  if (Replaces.empty()) {
+  if (Replaces.empty())
     return false;
-  }
-
-  IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts = new DiagnosticOptions();
-  DiagOpts->ShowColors = (ShowColors && !NoShowColors);
-
-  IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
-  IntrusiveRefCntPtr<DiagnosticsEngine> Diags(
-      new DiagnosticsEngine(DiagID, &*DiagOpts));
-
-  IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem> InMemoryFileSystem(
-      new llvm::vfs::InMemoryFileSystem);
-  FileManager Files(FileSystemOptions(), InMemoryFileSystem);
-  SourceManager Sources(*Diags, Files);
-  FileID FileID = createInMemoryFile(AssumedFileName, Code.get(), Sources,
-                                     Files, InMemoryFileSystem.get());
-
-  FileManager &FileMgr = Sources.getFileManager();
-  llvm::ErrorOr<const FileEntry *> FileEntryPtr =
-      FileMgr.getFile(AssumedFileName);
 
   unsigned Errors = 0;
   if (WarnFormat && !NoWarnFormat) {
+    llvm::SourceMgr Mgr;
+    const char *StartBuf = Code->getBufferStart();
+
+    Mgr.AddNewSourceBuffer(
+        MemoryBuffer::getMemBuffer(StartBuf, AssumedFileName), SMLoc());
     for (const auto &R : Replaces) {
-      PresumedLoc PLoc = Sources.getPresumedLoc(
-          Sources.getLocForStartOfFile(FileID).getLocWithOffset(R.getOffset()));
-
-      SourceLocation LineBegin =
-          Sources.translateFileLineCol(FileEntryPtr.get(), PLoc.getLine(), 1);
-      SourceLocation NextLineBegin = Sources.translateFileLineCol(
-          FileEntryPtr.get(), PLoc.getLine() + 1, 1);
-
-      const char *StartBuf = Sources.getCharacterData(LineBegin);
-      const char *EndBuf = Sources.getCharacterData(NextLineBegin);
-
-      StringRef Line(StartBuf, (EndBuf - StartBuf) - 1);
-
-      SMDiagnostic Diags(
-          llvm::SourceMgr(), SMLoc(), AssumedFileName, PLoc.getLine(),
-          PLoc.getColumn(),
+      SMDiagnostic Diag = Mgr.GetMessage(
+          SMLoc::getFromPointer(StartBuf + R.getOffset()),
           WarningsAsErrors ? SourceMgr::DiagKind::DK_Error
                            : SourceMgr::DiagKind::DK_Warning,
-          "code should be clang-formatted [-Wclang-format-violations]", Line,
-          ArrayRef<std::pair<unsigned, unsigned>>());
+          "code should be clang-formatted [-Wclang-format-violations]");
 
-      Diags.print(nullptr, llvm::errs(), (ShowColors && !NoShowColors));
-      Errors++;
-      if (ErrorLimit && Errors >= ErrorLimit)
+      Diag.print(nullptr, llvm::errs(), (ShowColors && !NoShowColors));
+      if (ErrorLimit && ++Errors >= ErrorLimit)
         break;
     }
   }
@@ -402,16 +389,25 @@ static bool format(StringRef FileName) {
   if (fillRanges(Code.get(), Ranges))
     return true;
   StringRef AssumedFileName = (FileName == "-") ? AssumeFileName : FileName;
+  if (AssumedFileName.empty()) {
+    llvm::errs() << "error: empty filenames are not allowed\n";
+    return true;
+  }
 
   llvm::Expected<FormatStyle> FormatStyle =
-      getStyle(Style, AssumedFileName, FallbackStyle, Code->getBuffer());
+      getStyle(Style, AssumedFileName, FallbackStyle, Code->getBuffer(),
+               nullptr, WNoErrorList.isSet(WNoError::Unknown));
   if (!FormatStyle) {
     llvm::errs() << llvm::toString(FormatStyle.takeError()) << "\n";
     return true;
   }
 
-  if (SortIncludes.getNumOccurrences() != 0)
-    FormatStyle->SortIncludes = SortIncludes;
+  if (SortIncludes.getNumOccurrences() != 0) {
+    if (SortIncludes)
+      FormatStyle->SortIncludes = FormatStyle::SI_CaseSensitive;
+    else
+      FormatStyle->SortIncludes = FormatStyle::SI_Never;
+  }
   unsigned CursorPosition = Cursor;
   Replacements Replaces = sortIncludes(*FormatStyle, Code->getBuffer(), Ranges,
                                        AssumedFileName, &CursorPosition);
@@ -440,7 +436,7 @@ static bool format(StringRef FileName) {
         IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs),
         new DiagnosticOptions);
     SourceManager Sources(Diagnostics, Files);
-    FileID ID = createInMemoryFile(AssumedFileName, Code.get(), Sources, Files,
+    FileID ID = createInMemoryFile(AssumedFileName, *Code, Sources, Files,
                                    InMemoryFileSystem.get());
     Rewriter Rewrite(Sources, LangOptions());
     tooling::applyAllReplacements(Replaces, Rewrite);

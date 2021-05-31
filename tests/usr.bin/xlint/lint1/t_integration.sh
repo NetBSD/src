@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.48 2021/05/03 03:50:43 rillig Exp $
+# $NetBSD: t_integration.sh,v 1.48.2.1 2021/05/31 22:15:24 cjep Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -175,6 +175,7 @@ test_case d_incorrect_array_size
 test_case d_long_double_int
 
 test_case emit
+test_case expr_range
 
 test_case gcc_attribute
 test_case gcc_attribute_aligned
@@ -193,7 +194,7 @@ all_messages_body()
 
 	failed=""
 
-	for msg in $(seq 0 343); do
+	for msg in $(seq 0 344); do
 		name="$(printf 'msg_%03d.c' "${msg}")"
 		check_lint1 "${name}" \
 		|| failed="$failed${failed:+ }$name"

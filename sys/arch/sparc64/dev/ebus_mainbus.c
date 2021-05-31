@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus_mainbus.c,v 1.19 2021/04/24 23:36:49 thorpej Exp $	*/
+/*	$NetBSD: ebus_mainbus.c,v 1.19.4.1 2021/05/31 22:15:16 cjep Exp $	*/
 /*	$OpenBSD: ebus_mainbus.c,v 1.7 2010/11/11 17:58:23 miod Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus_mainbus.c,v 1.19 2021/04/24 23:36:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus_mainbus.c,v 1.19.4.1 2021/05/31 22:15:16 cjep Exp $");
 
 #ifdef DEBUG
 #define	EDB_PROM	0x01
@@ -173,7 +173,9 @@ ebus_mainbus_attach(device_t parent, device_t self, void *aux)
 		} else {
 			DPRINTF(EDB_CHILD, ("- found child `%s', attaching\n",
 			    eba.ea_name));
-			(void)config_found(self, &eba, ebus_print, CFARG_EOL);
+			(void)config_found(self, &eba, ebus_print,
+			    CFARG_DEVHANDLE, prom_node_to_devhandle(node),
+			    CFARG_EOL);
 		}
 		ebus_destroy_attach_args(&eba);
 	}

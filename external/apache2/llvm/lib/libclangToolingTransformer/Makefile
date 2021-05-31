@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/11/11 22:45:17 joerg Exp $
+#	$NetBSD: Makefile,v 1.1.4.1 2021/05/31 22:10:14 cjep Exp $
 
 LIB=	clangToolingTransformer
 
@@ -6,7 +6,8 @@ LIB=	clangToolingTransformer
 
 .PATH: ${CLANG_SRCDIR}/lib/Tooling/Transformer
 
-SRCS+=	RangeSelector.cpp \
+SRCS+=	Parsing.cpp \
+	RangeSelector.cpp \
 	RewriteRule.cpp \
 	SourceCodeBuilders.cpp \
 	SourceCode.cpp \

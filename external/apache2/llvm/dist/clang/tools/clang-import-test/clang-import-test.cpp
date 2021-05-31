@@ -11,6 +11,7 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/ExternalASTMerger.h"
 #include "clang/Basic/Builtins.h"
+#include "clang/Basic/FileManager.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Basic/TargetInfo.h"
@@ -64,6 +65,9 @@ static llvm::cl::opt<std::string>
           llvm::cl::desc("The language to parse (default: c++)"),
           llvm::cl::init("c++"));
 
+static llvm::cl::opt<bool> ObjCARC("objc-arc", llvm::cl::init(false),
+                                   llvm::cl::desc("Emable ObjC ARC"));
+
 static llvm::cl::opt<bool> DumpAST("dump-ast", llvm::cl::init(false),
                                    llvm::cl::desc("Dump combined AST"));
 
@@ -102,20 +106,19 @@ private:
     unsigned LocColumn =
         SM.getSpellingColumnNumber(Loc, /*Invalid=*/nullptr) - 1;
     FileID FID = SM.getFileID(Loc);
-    const llvm::MemoryBuffer *Buffer =
-        SM.getBuffer(FID, Loc, /*Invalid=*/nullptr);
+    llvm::MemoryBufferRef Buffer = SM.getBufferOrFake(FID, Loc);
 
-    assert(LocData >= Buffer->getBufferStart() &&
-           LocData < Buffer->getBufferEnd());
+    assert(LocData >= Buffer.getBufferStart() &&
+           LocData < Buffer.getBufferEnd());
 
     const char *LineBegin = LocData - LocColumn;
 
-    assert(LineBegin >= Buffer->getBufferStart());
+    assert(LineBegin >= Buffer.getBufferStart());
 
     const char *LineEnd = nullptr;
 
     for (LineEnd = LineBegin; *LineEnd != '\n' && *LineEnd != '\r' &&
-                              LineEnd < Buffer->getBufferEnd();
+                              LineEnd < Buffer.getBufferEnd();
          ++LineEnd)
       ;
 
@@ -183,6 +186,8 @@ std::unique_ptr<CompilerInstance> BuildCompilerInstance() {
       Inv->getLangOpts()->ObjC = 1;
     }
   }
+  Inv->getLangOpts()->ObjCAutoRefCount = ObjCARC;
+
   Inv->getLangOpts()->Bool = true;
   Inv->getLangOpts()->WChar = true;
   Inv->getLangOpts()->Blocks = true;
@@ -284,10 +289,11 @@ CIAndOrigins BuildIndirect(CIAndOrigins &CI) {
 llvm::Error ParseSource(const std::string &Path, CompilerInstance &CI,
                         ASTConsumer &Consumer) {
   SourceManager &SM = CI.getSourceManager();
-  auto FE = CI.getFileManager().getFile(Path);
+  auto FE = CI.getFileManager().getFileRef(Path);
   if (!FE) {
+    llvm::consumeError(FE.takeError());
     return llvm::make_error<llvm::StringError>(
-        llvm::Twine("Couldn't open ", Path), std::error_code());
+        llvm::Twine("No such file or directory: ", Path), std::error_code());
   }
   SM.setMainFileID(SM.createFileID(*FE, SourceLocation(), SrcMgr::C_User));
   ParseAST(CI.getPreprocessor(), &Consumer, CI.getASTContext());
@@ -314,9 +320,9 @@ llvm::Expected<CIAndOrigins> Parse(const std::string &Path,
   auto &CG = *static_cast<CodeGenerator *>(ASTConsumers.back().get());
 
   if (ShouldDumpAST)
-    ASTConsumers.push_back(
-        CreateASTDumper(nullptr /*Dump to stdout.*/, "", true, false, false,
-                        clang::ADOF_Default));
+    ASTConsumers.push_back(CreateASTDumper(nullptr /*Dump to stdout.*/, "",
+                                           true, false, false, false,
+                                           clang::ADOF_Default));
 
   CI.getDiagnosticClient().BeginSourceFile(
       CI.getCompilerInstance().getLangOpts(),
@@ -355,7 +361,7 @@ int main(int argc, const char **argv) {
   for (auto I : Imports) {
     llvm::Expected<CIAndOrigins> ImportCI = Parse(I, {}, false, false);
     if (auto E = ImportCI.takeError()) {
-      llvm::errs() << llvm::toString(std::move(E));
+      llvm::errs() << "error: " << llvm::toString(std::move(E)) << "\n";
       exit(-1);
     }
     ImportCIs.push_back(std::move(*ImportCI));
@@ -374,7 +380,7 @@ int main(int argc, const char **argv) {
       Parse(Expression, (Direct && !UseOrigins) ? ImportCIs : IndirectCIs,
             DumpAST, DumpIR);
   if (auto E = ExpressionCI.takeError()) {
-    llvm::errs() << llvm::toString(std::move(E));
+    llvm::errs() << "error: " << llvm::toString(std::move(E)) << "\n";
     exit(-1);
   }
   Forget(*ExpressionCI, (Direct && !UseOrigins) ? ImportCIs : IndirectCIs);

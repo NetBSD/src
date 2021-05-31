@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/11/11 22:44:59 joerg Exp $
+#	$NetBSD: Makefile,v 1.1.4.1 2021/05/31 22:06:57 cjep Exp $
 
 PROG_CXX=	llvm-ar
 NOMAN=		yes
@@ -36,7 +36,6 @@ LLVM_LIBS+= \
 	X86AsmParser \
 	X86CodeGen \
 	X86MCTargetDesc \
-	X86Utils \
 	X86TargetInfo \
 	CodeGen \
 	MCDisassembler \
@@ -46,6 +45,7 @@ LLVM_LIBS+= \
 	BitReader \
 	BitstreamReader \
 	IR \
+	Remarks \
 	BinaryFormat \
 	Option \
 	Support \

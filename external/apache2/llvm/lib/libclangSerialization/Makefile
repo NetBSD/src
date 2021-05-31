@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/11/11 22:45:16 joerg Exp $
+#	$NetBSD: Makefile,v 1.1.4.1 2021/05/31 22:10:12 cjep Exp $
 
 LIB=	clangSerialization
 
@@ -16,7 +16,7 @@ SRCS+=	ASTCommon.cpp \
 	GeneratePCH.cpp \
 	GlobalModuleIndex.cpp \
 	InMemoryModuleCache.cpp \
-	Module.cpp \
+	ModuleFile.cpp \
 	ModuleFileExtension.cpp \
 	ModuleManager.cpp \
 	PCHContainerOperations.cpp

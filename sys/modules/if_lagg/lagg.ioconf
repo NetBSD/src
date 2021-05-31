@@ -1,0 +1,7 @@
+#	$NetBSD: lagg.ioconf,v 1.1.2.2 2021/05/31 22:15:21 cjep Exp $
+
+ioconf		lagg
+
+include		"conf/files"
+
+pseudo-device   lagg

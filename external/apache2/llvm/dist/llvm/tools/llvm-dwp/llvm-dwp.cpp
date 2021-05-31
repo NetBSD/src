@@ -16,6 +16,7 @@
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/DebugInfo/DWARF/DWARFContext.h"
+#include "llvm/DebugInfo/DWARF/DWARFDataExtractor.h"
 #include "llvm/DebugInfo/DWARF/DWARFFormValue.h"
 #include "llvm/DebugInfo/DWARF/DWARFUnitIndex.h"
 #include "llvm/MC/MCAsmBackend.h"
@@ -27,9 +28,10 @@
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCStreamer.h"
-#include "llvm/MC/MCTargetOptionsCommandFlags.inc"
+#include "llvm/MC/MCTargetOptionsCommandFlags.h"
 #include "llvm/Object/Decompressor.h"
 #include "llvm/Object/ObjectFile.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/DataExtractor.h"
 #include "llvm/Support/Error.h"
 #include "llvm/Support/FileSystem.h"
@@ -46,6 +48,8 @@
 using namespace llvm;
 using namespace llvm::object;
 
+static mc::RegisterMCTargetOptionsFlags MCTargetOptionsFlags;
+
 cl::OptionCategory DwpCategory("Specific Options");
 static cl::list<std::string> InputFiles(cl::Positional, cl::ZeroOrMore,
                                         cl::desc("<input files>"),
@@ -61,10 +65,107 @@ static cl::opt<std::string> OutputFilename(cl::Required, "o",
                                            cl::value_desc("filename"),
                                            cl::cat(DwpCategory));
 
+// Returns the size of debug_str_offsets section headers in bytes.
+static uint64_t debugStrOffsetsHeaderSize(DataExtractor StrOffsetsData,
+                                          uint16_t DwarfVersion) {
+  if (DwarfVersion <= 4)
+    return 0; // There is no header before dwarf 5.
+  uint64_t Offset = 0;
+  uint64_t Length = StrOffsetsData.getU32(&Offset);
+  if (Length == llvm::dwarf::DW_LENGTH_DWARF64)
+    return 16; // unit length: 12 bytes, version: 2 bytes, padding: 2 bytes.
+  return 8;    // unit length: 4 bytes, version: 2 bytes, padding: 2 bytes.
+}
+
+// Holds data for Skeleton and Split Compilation Unit Headers as defined in
+// Dwarf 5 specification, 7.5.1.2 and Dwarf 4 specification 7.5.1.1.
+struct CompileUnitHeader {
+  // unit_length field. Note that the type is uint64_t even in 32-bit dwarf.
+  uint64_t Length = 0;
+
+  // version field.
+  uint16_t Version = 0;
+
+  // unit_type field. Initialized only if Version >= 5.
+  uint8_t UnitType = 0;
+
+  // address_size field.
+  uint8_t AddrSize = 0;
+
+  // debug_abbrev_offset field. Note that the type is uint64_t even in 32-bit
+  // dwarf. It is assumed to be 0.
+  uint64_t DebugAbbrevOffset = 0;
+
+  // dwo_id field. This resides in the header only if Version >= 5.
+  // In earlier versions, it is read from DW_AT_GNU_dwo_id.
+  Optional<uint64_t> Signature = None;
+
+  // Derived from the length of Length field.
+  dwarf::DwarfFormat Format = dwarf::DwarfFormat::DWARF32;
+
+  // The size of the Header in bytes. This is derived while parsing the header,
+  // and is stored as a convenience.
+  uint8_t HeaderSize = 0;
+};
+
+// Parse and return the header of the compile unit.
+static Expected<CompileUnitHeader> parseCompileUnitHeader(StringRef Info) {
+  CompileUnitHeader Header;
+  Error Err = Error::success();
+  uint64_t Offset = 0;
+  DWARFDataExtractor InfoData(Info, true, 0);
+  std::tie(Header.Length, Header.Format) =
+      InfoData.getInitialLength(&Offset, &Err);
+  if (Err)
+    return make_error<DWPError>("cannot parse compile unit length: " +
+                                llvm::toString(std::move(Err)));
+
+  if (!InfoData.isValidOffset(Offset + (Header.Length - 1))) {
+    return make_error<DWPError>(
+        "compile unit exceeds .debug_info section range: " +
+        utostr(Offset + Header.Length) + " >= " + utostr(InfoData.size()));
+  }
+
+  Header.Version = InfoData.getU16(&Offset, &Err);
+  if (Err)
+    return make_error<DWPError>("cannot parse compile unit version: " +
+                                llvm::toString(std::move(Err)));
+
+  uint64_t MinHeaderLength;
+  if (Header.Version >= 5) {
+    // Size: Version (2), UnitType (1), AddrSize (1), DebugAbbrevOffset (4),
+    // Signature (8)
+    MinHeaderLength = 16;
+  } else {
+    // Size: Version (2), DebugAbbrevOffset (4), AddrSize (1)
+    MinHeaderLength = 7;
+  }
+  if (Header.Length < MinHeaderLength) {
+    return make_error<DWPError>(
+        "compile unit length is too small: expected at least " +
+        utostr(MinHeaderLength) + " got " + utostr(Header.Length) + ".");
+  }
+  if (Header.Version >= 5) {
+    Header.UnitType = InfoData.getU8(&Offset);
+    Header.AddrSize = InfoData.getU8(&Offset);
+    Header.DebugAbbrevOffset = InfoData.getU32(&Offset);
+    Header.Signature = InfoData.getU64(&Offset);
+  } else {
+    // Note that, address_size and debug_abbrev_offset fields have switched
+    // places between dwarf version 4 and 5.
+    Header.DebugAbbrevOffset = InfoData.getU32(&Offset);
+    Header.AddrSize = InfoData.getU8(&Offset);
+  }
+
+  Header.HeaderSize = Offset;
+  return Header;
+}
+
 static void writeStringsAndOffsets(MCStreamer &Out, DWPStringPool &Strings,
                                    MCSection *StrOffsetSection,
                                    StringRef CurStrSection,
-                                   StringRef CurStrOffsetSection) {
+                                   StringRef CurStrOffsetSection,
+                                   const CompileUnitHeader &Header) {
   // Could possibly produce an error or warning if one of these was non-null but
   // the other was null.
   if (CurStrSection.empty() || CurStrOffsetSection.empty())
@@ -85,20 +186,24 @@ static void writeStringsAndOffsets(MCStreamer &Out, DWPStringPool &Strings,
 
   Out.SwitchSection(StrOffsetSection);
 
+  uint64_t HeaderSize = debugStrOffsetsHeaderSize(Data, Header.Version);
   uint64_t Offset = 0;
   uint64_t Size = CurStrOffsetSection.size();
+  // FIXME: This can be caused by bad input and should be handled as such.
+  assert(HeaderSize <= Size && "StrOffsetSection size is less than its header");
+  // Copy the header to the output.
+  Out.emitBytes(Data.getBytes(&Offset, HeaderSize));
   while (Offset < Size) {
     auto OldOffset = Data.getU32(&Offset);
     auto NewOffset = OffsetRemapping[OldOffset];
-    Out.EmitIntValue(NewOffset, 4);
+    Out.emitIntValue(NewOffset, 4);
   }
 }
 
 static uint64_t getCUAbbrev(StringRef Abbrev, uint64_t AbbrCode) {
-  uint64_t CurCode;
   uint64_t Offset = 0;
   DataExtractor AbbrevData(Abbrev, true, 0);
-  while ((CurCode = AbbrevData.getULEB128(&Offset)) != AbbrCode) {
+  while (AbbrevData.getULEB128(&Offset) != AbbrCode) {
     // Tag
     AbbrevData.getULEB128(&Offset);
     // DW_CHILDREN
@@ -117,16 +222,38 @@ struct CompileUnitIdentifiers {
 };
 
 static Expected<const char *>
-getIndexedString(dwarf::Form Form, DataExtractor InfoData,
-                 uint64_t &InfoOffset, StringRef StrOffsets, StringRef Str) {
+getIndexedString(dwarf::Form Form, DataExtractor InfoData, uint64_t &InfoOffset,
+                 StringRef StrOffsets, StringRef Str, uint16_t Version) {
   if (Form == dwarf::DW_FORM_string)
     return InfoData.getCStr(&InfoOffset);
-  if (Form != dwarf::DW_FORM_GNU_str_index)
+  uint64_t StrIndex;
+  switch (Form) {
+  case dwarf::DW_FORM_strx1:
+    StrIndex = InfoData.getU8(&InfoOffset);
+    break;
+  case dwarf::DW_FORM_strx2:
+    StrIndex = InfoData.getU16(&InfoOffset);
+    break;
+  case dwarf::DW_FORM_strx3:
+    StrIndex = InfoData.getU24(&InfoOffset);
+    break;
+  case dwarf::DW_FORM_strx4:
+    StrIndex = InfoData.getU32(&InfoOffset);
+    break;
+  case dwarf::DW_FORM_strx:
+  case dwarf::DW_FORM_GNU_str_index:
+    StrIndex = InfoData.getULEB128(&InfoOffset);
+    break;
+  default:
     return make_error<DWPError>(
-        "string field encoded without DW_FORM_string or DW_FORM_GNU_str_index");
-  auto StrIndex = InfoData.getULEB128(&InfoOffset);
+        "string field must be encoded with one of the following: "
+        "DW_FORM_string, DW_FORM_strx, DW_FORM_strx1, DW_FORM_strx2, "
+        "DW_FORM_strx3, DW_FORM_strx4, or DW_FORM_GNU_str_index.");
+  }
   DataExtractor StrOffsetsData(StrOffsets, true, 0);
   uint64_t StrOffsetsOffset = 4 * StrIndex;
+  StrOffsetsOffset += debugStrOffsetsHeaderSize(StrOffsetsData, Version);
+
   uint64_t StrOffset = StrOffsetsData.getU32(&StrOffsetsOffset);
   DataExtractor StrData(Str, true, 0);
   return StrData.getCStr(&StrOffset);
@@ -136,22 +263,21 @@ static Expected<CompileUnitIdentifiers> getCUIdentifiers(StringRef Abbrev,
                                                          StringRef Info,
                                                          StringRef StrOffsets,
                                                          StringRef Str) {
-  uint64_t Offset = 0;
+  Expected<CompileUnitHeader> HeaderOrError = parseCompileUnitHeader(Info);
+  if (!HeaderOrError)
+    return HeaderOrError.takeError();
+  CompileUnitHeader &Header = *HeaderOrError;
   DataExtractor InfoData(Info, true, 0);
-  dwarf::DwarfFormat Format = dwarf::DwarfFormat::DWARF32;
-  uint64_t Length = InfoData.getU32(&Offset);
-  // If the length is 0xffffffff, then this indictes that this is a DWARF 64
-  // stream and the length is actually encoded into a 64 bit value that follows.
-  if (Length == 0xffffffffU) {
-    Format = dwarf::DwarfFormat::DWARF64;
-    Length = InfoData.getU64(&Offset);
-  }
-  uint16_t Version = InfoData.getU16(&Offset);
-  InfoData.getU32(&Offset); // Abbrev offset (should be zero)
-  uint8_t AddrSize = InfoData.getU8(&Offset);
+  uint64_t Offset = Header.HeaderSize;
+  if (Header.Version >= 5 && Header.UnitType != dwarf::DW_UT_split_compile)
+    return make_error<DWPError>(
+        std::string("unit type DW_UT_split_compile type not found in "
+                    "debug_info header. Unexpected unit type 0x" +
+                    utostr(Header.UnitType) + " found"));
+
+  CompileUnitIdentifiers ID;
 
   uint32_t AbbrCode = InfoData.getULEB128(&Offset);
-
   DataExtractor AbbrevData(Abbrev, true, 0);
   uint64_t AbbrevOffset = getCUAbbrev(Abbrev, AbbrCode);
   auto Tag = static_cast<dwarf::Tag>(AbbrevData.getULEB128(&AbbrevOffset));
@@ -161,39 +287,39 @@ static Expected<CompileUnitIdentifiers> getCUIdentifiers(StringRef Abbrev,
   AbbrevData.getU8(&AbbrevOffset);
   uint32_t Name;
   dwarf::Form Form;
-  CompileUnitIdentifiers ID;
-  Optional<uint64_t> Signature = None;
   while ((Name = AbbrevData.getULEB128(&AbbrevOffset)) |
          (Form = static_cast<dwarf::Form>(AbbrevData.getULEB128(&AbbrevOffset))) &&
          (Name != 0 || Form != 0)) {
     switch (Name) {
     case dwarf::DW_AT_name: {
-      Expected<const char *> EName =
-          getIndexedString(Form, InfoData, Offset, StrOffsets, Str);
+      Expected<const char *> EName = getIndexedString(
+          Form, InfoData, Offset, StrOffsets, Str, Header.Version);
       if (!EName)
         return EName.takeError();
       ID.Name = *EName;
       break;
     }
-    case dwarf::DW_AT_GNU_dwo_name: {
-      Expected<const char *> EName =
-          getIndexedString(Form, InfoData, Offset, StrOffsets, Str);
+    case dwarf::DW_AT_GNU_dwo_name:
+    case dwarf::DW_AT_dwo_name: {
+      Expected<const char *> EName = getIndexedString(
+          Form, InfoData, Offset, StrOffsets, Str, Header.Version);
       if (!EName)
         return EName.takeError();
       ID.DWOName = *EName;
       break;
     }
     case dwarf::DW_AT_GNU_dwo_id:
-      Signature = InfoData.getU64(&Offset);
+      Header.Signature = InfoData.getU64(&Offset);
       break;
     default:
-      DWARFFormValue::skipValue(Form, InfoData, &Offset,
-                                dwarf::FormParams({Version, AddrSize, Format}));
+      DWARFFormValue::skipValue(
+          Form, InfoData, &Offset,
+          dwarf::FormParams({Header.Version, Header.AddrSize, Header.Format}));
     }
   }
-  if (!Signature)
+  if (!Header.Signature)
     return make_error<DWPError>("compile unit missing dwo_id");
-  ID.Signature = *Signature;
+  ID.Signature = *Header.Signature;
   return ID;
 }
 
@@ -204,10 +330,28 @@ struct UnitIndexEntry {
   StringRef DWPName;
 };
 
+static bool isSupportedSectionKind(DWARFSectionKind Kind) {
+  return Kind != DW_SECT_EXT_unknown;
+}
+
+// Convert an internal section identifier into the index to use with
+// UnitIndexEntry::Contributions.
+static unsigned getContributionIndex(DWARFSectionKind Kind) {
+  // Assuming the pre-standard DWP format.
+  assert(serializeSectionKind(Kind, 2) >= DW_SECT_INFO);
+  return serializeSectionKind(Kind, 2) - DW_SECT_INFO;
+}
+
+// Convert a UnitIndexEntry::Contributions index to the corresponding on-disk
+// value of the section identifier.
+static unsigned getOnDiskSectionId(unsigned Index) {
+  return Index + DW_SECT_INFO;
+}
+
 static StringRef getSubsection(StringRef Section,
                                const DWARFUnitIndex::Entry &Entry,
                                DWARFSectionKind Kind) {
-  const auto *Off = Entry.getOffset(Kind);
+  const auto *Off = Entry.getContribution(Kind);
   if (!Off)
     return StringRef();
   return Section.substr(Off->Offset, Off->Length);
@@ -219,7 +363,7 @@ static void addAllTypesFromDWP(
     const UnitIndexEntry &TUEntry, uint32_t &TypesOffset) {
   Out.SwitchSection(OutputTypes);
   for (const DWARFUnitIndex::Entry &E : TUIndex.getRows()) {
-    auto *I = E.getOffsets();
+    auto *I = E.getContributions();
     if (!I)
       continue;
     auto P = TypeIndexEntries.insert(std::make_pair(E.getSignature(), TUEntry));
@@ -229,15 +373,17 @@ static void addAllTypesFromDWP(
     // Zero out the debug_info contribution
     Entry.Contributions[0] = {};
     for (auto Kind : TUIndex.getColumnKinds()) {
-      auto &C = Entry.Contributions[Kind - DW_SECT_INFO];
+      if (!isSupportedSectionKind(Kind))
+        continue;
+      auto &C = Entry.Contributions[getContributionIndex(Kind)];
       C.Offset += I->Offset;
       C.Length = I->Length;
       ++I;
     }
-    auto &C = Entry.Contributions[DW_SECT_TYPES - DW_SECT_INFO];
-    Out.EmitBytes(Types.substr(
-        C.Offset - TUEntry.Contributions[DW_SECT_TYPES - DW_SECT_INFO].Offset,
-        C.Length));
+    unsigned TypesIndex = getContributionIndex(DW_SECT_EXT_TYPES);
+    auto &C = Entry.Contributions[TypesIndex];
+    Out.emitBytes(Types.substr(
+        C.Offset - TUEntry.Contributions[TypesIndex].Offset, C.Length));
     C.Offset = TypesOffset;
     TypesOffset += C.Length;
   }
@@ -256,7 +402,7 @@ static void addAllTypes(MCStreamer &Out,
       UnitIndexEntry Entry = CUEntry;
       // Zero out the debug_info contribution
       Entry.Contributions[0] = {};
-      auto &C = Entry.Contributions[DW_SECT_TYPES - DW_SECT_INFO];
+      auto &C = Entry.Contributions[getContributionIndex(DW_SECT_EXT_TYPES)];
       C.Offset = TypesOffset;
       auto PrevOffset = Offset;
       // Length of the unit, including the 4 byte length field.
@@ -272,7 +418,7 @@ static void addAllTypes(MCStreamer &Out,
       if (!P.second)
         continue;
 
-      Out.EmitBytes(Types.substr(PrevOffset, C.Length));
+      Out.emitBytes(Types.substr(PrevOffset, C.Length));
       TypesOffset += C.Length;
     }
   }
@@ -285,7 +431,7 @@ writeIndexTable(MCStreamer &Out, ArrayRef<unsigned> ContributionOffsets,
   for (const auto &E : IndexEntries)
     for (size_t i = 0; i != array_lengthof(E.second.Contributions); ++i)
       if (ContributionOffsets[i])
-        Out.EmitIntValue(E.second.Contributions[i].*Field, 4);
+        Out.emitIntValue(E.second.Contributions[i].*Field, 4);
 }
 
 static void
@@ -317,23 +463,23 @@ writeIndex(MCStreamer &Out, MCSection *Section,
   }
 
   Out.SwitchSection(Section);
-  Out.EmitIntValue(2, 4);                   // Version
-  Out.EmitIntValue(Columns, 4);             // Columns
-  Out.EmitIntValue(IndexEntries.size(), 4); // Num Units
-  Out.EmitIntValue(Buckets.size(), 4);      // Num Buckets
+  Out.emitIntValue(2, 4);                   // Version
+  Out.emitIntValue(Columns, 4);             // Columns
+  Out.emitIntValue(IndexEntries.size(), 4); // Num Units
+  Out.emitIntValue(Buckets.size(), 4);      // Num Buckets
 
   // Write the signatures.
   for (const auto &I : Buckets)
-    Out.EmitIntValue(I ? IndexEntries.begin()[I - 1].first : 0, 8);
+    Out.emitIntValue(I ? IndexEntries.begin()[I - 1].first : 0, 8);
 
   // Write the indexes.
   for (const auto &I : Buckets)
-    Out.EmitIntValue(I, 4);
+    Out.emitIntValue(I, 4);
 
   // Write the column headers (which sections will appear in the table)
   for (size_t i = 0; i != ContributionOffsets.size(); ++i)
     if (ContributionOffsets[i])
-      Out.EmitIntValue(i + DW_SECT_INFO, 4);
+      Out.emitIntValue(getOnDiskSectionId(i), 4);
 
   // Write the offsets.
   writeIndexTable(Out, ContributionOffsets, IndexEntries,
@@ -344,7 +490,8 @@ writeIndex(MCStreamer &Out, MCSection *Section,
                   &DWARFUnitIndex::Entry::SectionContribution::Length);
 }
 
-std::string buildDWODescription(StringRef Name, StringRef DWPName, StringRef DWOName) {
+static std::string buildDWODescription(StringRef Name, StringRef DWPName,
+                                       StringRef DWOName) {
   std::string Text = "\'";
   Text += Name;
   Text += '\'';
@@ -426,8 +573,8 @@ static Error handleSection(
     return Error::success();
 
   if (DWARFSectionKind Kind = SectionPair->second.second) {
-    auto Index = Kind - DW_SECT_INFO;
-    if (Kind != DW_SECT_TYPES) {
+    auto Index = getContributionIndex(Kind);
+    if (Kind != DW_SECT_EXT_TYPES) {
       CurEntry.Contributions[Index].Offset = ContributionOffsets[Index];
       ContributionOffsets[Index] +=
           (CurEntry.Contributions[Index].Length = Contents.size());
@@ -458,7 +605,7 @@ static Error handleSection(
     CurTUIndexSection = Contents;
   else {
     Out.SwitchSection(OutSection);
-    Out.EmitBytes(Contents);
+    Out.emitBytes(Contents);
   }
   return Error::success();
 }
@@ -467,7 +614,7 @@ static Error
 buildDuplicateError(const std::pair<uint64_t, UnitIndexEntry> &PrevE,
                     const CompileUnitIdentifiers &ID, StringRef DWPName) {
   return make_error<DWPError>(
-      std::string("Duplicate DWO ID (") + utohexstr(PrevE.first) + ") in " +
+      std::string("duplicate DWO ID (") + utohexstr(PrevE.first) + ") in " +
       buildDWODescription(PrevE.second.Name, PrevE.second.DWPName,
                           PrevE.second.DWOName) +
       " and " + buildDWODescription(ID.Name, DWPName, ID.DWOName));
@@ -492,8 +639,8 @@ getDWOFilenames(StringRef ExecFilename) {
     std::string DWOCompDir =
         dwarf::toString(Die.find(dwarf::DW_AT_comp_dir), "");
     if (!DWOCompDir.empty()) {
-      SmallString<16> DWOPath;
-      sys::path::append(DWOPath, DWOCompDir, DWOName);
+      SmallString<16> DWOPath(std::move(DWOName));
+      sys::fs::make_absolute(DWOCompDir, DWOPath);
       DWOPaths.emplace_back(DWOPath.data(), DWOPath.size());
     } else {
       DWOPaths.push_back(std::move(DWOName));
@@ -511,10 +658,10 @@ static Error write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
   MCSection *const TUIndexSection = MCOFI.getDwarfTUIndexSection();
   const StringMap<std::pair<MCSection *, DWARFSectionKind>> KnownSections = {
       {"debug_info.dwo", {MCOFI.getDwarfInfoDWOSection(), DW_SECT_INFO}},
-      {"debug_types.dwo", {MCOFI.getDwarfTypesDWOSection(), DW_SECT_TYPES}},
+      {"debug_types.dwo", {MCOFI.getDwarfTypesDWOSection(), DW_SECT_EXT_TYPES}},
       {"debug_str_offsets.dwo", {StrOffsetSection, DW_SECT_STR_OFFSETS}},
       {"debug_str.dwo", {StrSection, static_cast<DWARFSectionKind>(0)}},
-      {"debug_loc.dwo", {MCOFI.getDwarfLocDWOSection(), DW_SECT_LOC}},
+      {"debug_loc.dwo", {MCOFI.getDwarfLocDWOSection(), DW_SECT_EXT_LOC}},
       {"debug_line.dwo", {MCOFI.getDwarfLineDWOSection(), DW_SECT_LINE}},
       {"debug_abbrev.dwo", {MCOFI.getDwarfAbbrevDWOSection(), DW_SECT_ABBREV}},
       {"debug_cu_index", {CUIndexSection, static_cast<DWARFSectionKind>(0)}},
@@ -562,8 +709,14 @@ static Error write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
     if (InfoSection.empty())
       continue;
 
+    Expected<CompileUnitHeader> CompileUnitHeaderOrErr =
+        parseCompileUnitHeader(InfoSection);
+    if (!CompileUnitHeaderOrErr)
+      return CompileUnitHeaderOrErr.takeError();
+    CompileUnitHeader &CompileUnitHeader = *CompileUnitHeaderOrErr;
+
     writeStringsAndOffsets(Out, Strings, StrOffsetSection, CurStrSection,
-                           CurStrOffsetSection);
+                           CurStrOffsetSection, CompileUnitHeader);
 
     if (CurCUIndexSection.empty()) {
       Expected<CompileUnitIdentifiers> EID = getCUIdentifiers(
@@ -577,17 +730,22 @@ static Error write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
       P.first->second.Name = ID.Name;
       P.first->second.DWOName = ID.DWOName;
       addAllTypes(Out, TypeIndexEntries, TypesSection, CurTypesSection,
-                  CurEntry, ContributionOffsets[DW_SECT_TYPES - DW_SECT_INFO]);
+                  CurEntry,
+                  ContributionOffsets[getContributionIndex(DW_SECT_EXT_TYPES)]);
       continue;
     }
 
     DWARFUnitIndex CUIndex(DW_SECT_INFO);
     DataExtractor CUIndexData(CurCUIndexSection, Obj.isLittleEndian(), 0);
     if (!CUIndex.parse(CUIndexData))
-      return make_error<DWPError>("Failed to parse cu_index");
+      return make_error<DWPError>("failed to parse cu_index");
+    if (CUIndex.getVersion() != 2)
+      return make_error<DWPError>(
+          "unsupported cu_index version: " + utostr(CUIndex.getVersion()) +
+          " (only version 2 is supported)");
 
     for (const DWARFUnitIndex::Entry &E : CUIndex.getRows()) {
-      auto *I = E.getOffsets();
+      auto *I = E.getContributions();
       if (!I)
         continue;
       auto P = IndexEntries.insert(std::make_pair(E.getSignature(), CurEntry));
@@ -606,7 +764,9 @@ static Error write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
       NewEntry.DWOName = ID.DWOName;
       NewEntry.DWPName = Input;
       for (auto Kind : CUIndex.getColumnKinds()) {
-        auto &C = NewEntry.Contributions[Kind - DW_SECT_INFO];
+        if (!isSupportedSectionKind(Kind))
+          continue;
+        auto &C = NewEntry.Contributions[getContributionIndex(Kind)];
         C.Offset += I->Offset;
         C.Length = I->Length;
         ++I;
@@ -616,13 +776,19 @@ static Error write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
     if (!CurTypesSection.empty()) {
       if (CurTypesSection.size() != 1)
         return make_error<DWPError>("multiple type unit sections in .dwp file");
-      DWARFUnitIndex TUIndex(DW_SECT_TYPES);
+      DWARFUnitIndex TUIndex(DW_SECT_EXT_TYPES);
       DataExtractor TUIndexData(CurTUIndexSection, Obj.isLittleEndian(), 0);
       if (!TUIndex.parse(TUIndexData))
-        return make_error<DWPError>("Failed to parse tu_index");
-      addAllTypesFromDWP(Out, TypeIndexEntries, TUIndex, TypesSection,
-                         CurTypesSection.front(), CurEntry,
-                         ContributionOffsets[DW_SECT_TYPES - DW_SECT_INFO]);
+        return make_error<DWPError>("failed to parse tu_index");
+      if (TUIndex.getVersion() != 2)
+        return make_error<DWPError>(
+            "unsupported tu_index version: " + utostr(TUIndex.getVersion()) +
+            " (only version 2 is supported)");
+
+      addAllTypesFromDWP(
+          Out, TypeIndexEntries, TUIndex, TypesSection, CurTypesSection.front(),
+          CurEntry,
+          ContributionOffsets[getContributionIndex(DW_SECT_EXT_TYPES)]);
     }
   }
 
@@ -633,7 +799,7 @@ static Error write(MCStreamer &Out, ArrayRef<std::string> Inputs) {
              TypeIndexEntries);
 
   // Lie about the type contribution
-  ContributionOffsets[DW_SECT_TYPES - DW_SECT_INFO] = 0;
+  ContributionOffsets[getContributionIndex(DW_SECT_EXT_TYPES)] = 0;
   // Unlie about the info contribution
   ContributionOffsets[0] = 1;
 
@@ -649,6 +815,14 @@ static int error(const Twine &Error, const Twine &Context) {
   return 1;
 }
 
+static Expected<Triple> readTargetTriple(StringRef FileName) {
+  auto ErrOrObj = object::ObjectFile::createObjectFile(FileName);
+  if (!ErrOrObj)
+    return ErrOrObj.takeError();
+
+  return ErrOrObj->getBinary()->makeTriple();
+}
+
 int main(int argc, char **argv) {
   InitLLVM X(argc, argv);
 
@@ -659,37 +833,57 @@ int main(int argc, char **argv) {
   llvm::InitializeAllTargets();
   llvm::InitializeAllAsmPrinters();
 
+  std::vector<std::string> DWOFilenames = InputFiles;
+  for (const auto &ExecFilename : ExecFilenames) {
+    auto DWOs = getDWOFilenames(ExecFilename);
+    if (!DWOs) {
+      logAllUnhandledErrors(DWOs.takeError(), WithColor::error());
+      return 1;
+    }
+    DWOFilenames.insert(DWOFilenames.end(),
+                        std::make_move_iterator(DWOs->begin()),
+                        std::make_move_iterator(DWOs->end()));
+  }
+
+  if (DWOFilenames.empty())
+    return 0;
+
   std::string ErrorStr;
   StringRef Context = "dwarf streamer init";
 
-  Triple TheTriple("x86_64-linux-gnu");
+  auto ErrOrTriple = readTargetTriple(DWOFilenames.front());
+  if (!ErrOrTriple) {
+    logAllUnhandledErrors(ErrOrTriple.takeError(), WithColor::error());
+    return 1;
+  }
 
   // Get the target.
   const Target *TheTarget =
-      TargetRegistry::lookupTarget("", TheTriple, ErrorStr);
+      TargetRegistry::lookupTarget("", *ErrOrTriple, ErrorStr);
   if (!TheTarget)
     return error(ErrorStr, Context);
-  std::string TripleName = TheTriple.getTriple();
+  std::string TripleName = ErrOrTriple->getTriple();
 
   // Create all the MC Objects.
   std::unique_ptr<MCRegisterInfo> MRI(TheTarget->createMCRegInfo(TripleName));
   if (!MRI)
     return error(Twine("no register info for target ") + TripleName, Context);
 
-  MCTargetOptions MCOptions = InitMCTargetOptionsFromFlags();
+  MCTargetOptions MCOptions = llvm::mc::InitMCTargetOptionsFromFlags();
   std::unique_ptr<MCAsmInfo> MAI(
       TheTarget->createMCAsmInfo(*MRI, TripleName, MCOptions));
   if (!MAI)
     return error("no asm info for target " + TripleName, Context);
 
-  MCObjectFileInfo MOFI;
-  MCContext MC(MAI.get(), MRI.get(), &MOFI);
-  MOFI.InitMCObjectFileInfo(TheTriple, /*PIC*/ false, MC);
-
   std::unique_ptr<MCSubtargetInfo> MSTI(
       TheTarget->createMCSubtargetInfo(TripleName, "", ""));
   if (!MSTI)
     return error("no subtarget info for target " + TripleName, Context);
+
+  MCContext MC(*ErrOrTriple, MAI.get(), MRI.get(), MSTI.get());
+  std::unique_ptr<MCObjectFileInfo> MOFI(
+      TheTarget->createMCObjectFileInfo(MC, /*PIC=*/false));
+  MC.setObjectFileInfo(MOFI.get());
 
   MCTargetOptions Options;
   auto MAB = TheTarget->createMCAsmBackend(*MSTI, *MRI, Options);
@@ -719,24 +913,12 @@ int main(int argc, char **argv) {
   }
 
   std::unique_ptr<MCStreamer> MS(TheTarget->createMCObjectStreamer(
-      TheTriple, MC, std::unique_ptr<MCAsmBackend>(MAB),
+      *ErrOrTriple, MC, std::unique_ptr<MCAsmBackend>(MAB),
       MAB->createObjectWriter(*OS), std::unique_ptr<MCCodeEmitter>(MCE), *MSTI,
       MCOptions.MCRelaxAll, MCOptions.MCIncrementalLinkerCompatible,
       /*DWARFMustBeAtTheEnd*/ false));
   if (!MS)
     return error("no object streamer for target " + TripleName, Context);
-
-  std::vector<std::string> DWOFilenames = InputFiles;
-  for (const auto &ExecFilename : ExecFilenames) {
-    auto DWOs = getDWOFilenames(ExecFilename);
-    if (!DWOs) {
-      logAllUnhandledErrors(DWOs.takeError(), WithColor::error());
-      return 1;
-    }
-    DWOFilenames.insert(DWOFilenames.end(),
-                        std::make_move_iterator(DWOs->begin()),
-                        std::make_move_iterator(DWOs->end()));
-  }
 
   if (auto Err = write(*MS, DWOFilenames)) {
     logAllUnhandledErrors(std::move(Err), WithColor::error());

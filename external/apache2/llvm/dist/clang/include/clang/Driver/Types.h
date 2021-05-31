@@ -45,9 +45,6 @@ namespace types {
   /// temp file of this type, or null if unspecified.
   const char *getTypeTempSuffix(ID Id, bool CLMode = false);
 
-  /// onlyAssembleType - Should this type only be assembled.
-  bool onlyAssembleType(ID Id);
-
   /// onlyPrecompileType - Should this type only be precompiled.
   bool onlyPrecompileType(ID Id);
 
@@ -84,6 +81,12 @@ namespace types {
   /// isObjC - Is this an "ObjC" input (Obj-C and Obj-C++ sources and headers).
   bool isObjC(ID Id);
 
+  /// isOpenCL - Is this an "OpenCL" input.
+  bool isOpenCL(ID Id);
+
+  /// isFortran - Is this a Fortran input.
+  bool isFortran(ID Id);
+
   /// isSrcFile - Is this a source file, i.e. something that still has to be
   /// preprocessed. The logic behind this is the same that decides if the first
   /// compilation phase is a preprocessing one.
@@ -98,13 +101,12 @@ namespace types {
   ID lookupTypeForTypeSpecifier(const char *Name);
 
   /// getCompilationPhases - Get the list of compilation phases ('Phases') to be
-  /// done for type 'Id'.
-  void getCompilationPhases(
-    ID Id,
-    llvm::SmallVectorImpl<phases::ID> &Phases);
-  void getCompilationPhases(const clang::driver::Driver &Driver,
-                            llvm::opt::DerivedArgList &DAL, ID Id,
-                            llvm::SmallVectorImpl<phases::ID> &Phases);
+  /// done for type 'Id' up until including LastPhase.
+  llvm::SmallVector<phases::ID, phases::MaxNumberOfPhases>
+  getCompilationPhases(ID Id, phases::ID LastPhase = phases::LastPhase);
+  llvm::SmallVector<phases::ID, phases::MaxNumberOfPhases>
+  getCompilationPhases(const clang::driver::Driver &Driver,
+                       llvm::opt::DerivedArgList &DAL, ID Id);
 
   /// lookupCXXTypeForCType - Lookup CXX input type that corresponds to given
   /// C type (used for clang++ emulation of g++ behaviour)

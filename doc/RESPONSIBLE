@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.126 2020/10/01 18:34:06 kamil Exp $
+#	$NetBSD: RESPONSIBLE,v 1.126.2.1 2021/05/31 22:06:55 cjep Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -11,6 +11,7 @@ necessarily incomplete!
 
 Userland Programs:
 
+aiomixer	nia
 amd		christos
 atf		jmmv
 audioplay	mrg
@@ -84,6 +85,7 @@ curses		blymn, jdc
 edit		christos, jdolecek
 kerberos	lha*, joda*
 openssl		thorpej*, christos
+ossaudio	nia
 pcap		core
 pthread		nathanw*
 quota		dholland

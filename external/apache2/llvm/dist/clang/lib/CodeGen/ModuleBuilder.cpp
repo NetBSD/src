@@ -138,7 +138,7 @@ namespace {
       Ctx = &Context;
 
       M->setTargetTriple(Ctx->getTargetInfo().getTriple().getTriple());
-      M->setDataLayout(Ctx->getTargetInfo().getDataLayout());
+      M->setDataLayout(Ctx->getTargetInfo().getDataLayoutString());
       const auto &SDKVersion = Ctx->getTargetInfo().getSDKVersion();
       if (!SDKVersion.empty())
         M->setSDKVersion(SDKVersion);
@@ -288,6 +288,10 @@ namespace {
         return;
 
       Builder->EmitTentativeDefinition(D);
+    }
+
+    void CompleteExternalDeclaration(VarDecl *D) override {
+      Builder->EmitExternalDeclaration(D);
     }
 
     void HandleVTable(CXXRecordDecl *RD) override {

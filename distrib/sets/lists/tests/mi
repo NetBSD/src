@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1049 2021/05/02 21:22:09 rillig Exp $
+# $NetBSD: mi,v 1.1049.2.1 2021/05/31 22:06:55 cjep Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4106,6 +4106,10 @@
 ./usr/tests/net/if_l2tp/Atffile				tests-net-tests		atf,rump
 ./usr/tests/net/if_l2tp/Kyuafile			tests-net-tests		atf,rump,kyua
 ./usr/tests/net/if_l2tp/t_l2tp				tests-net-tests		atf,rump
+./usr/tests/net/if_lagg					tests-net-tests		compattestfile,atf
+./usr/tests/net/if_lagg/Atffile				tests-net-tests		atf,rump
+./usr/tests/net/if_lagg/Kyuafile			tests-net-tests		atf,rump,kyua
+./usr/tests/net/if_lagg/t_lagg				tests-net-tests		atf,rump
 ./usr/tests/net/if_loop					tests-net-tests		compattestfile,atf
 ./usr/tests/net/if_loop/Atffile				tests-net-tests		atf,rump
 ./usr/tests/net/if_loop/Kyuafile			tests-net-tests		atf,rump,kyua
@@ -6153,7 +6157,7 @@
 ./usr/tests/usr.bin/xlint/lint1/d_gcc_compound_statements2.c	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_gcc_compound_statements3.c	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_gcc_extension.c		tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/xlint/lint1/d_gcc_extension.exp		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/d_gcc_extension.exp		tests-obsolete		obsolete
 ./usr/tests/usr.bin/xlint/lint1/d_gcc_func.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_gcc_variable_array_init.c	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_incorrect_array_size.c	tests-usr.bin-tests	compattestfile,atf
@@ -6189,6 +6193,8 @@
 ./usr/tests/usr.bin/xlint/lint1/emit.c				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/emit.exp			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/emit.ln				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/expr_range.c			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/expr_range.exp			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/feat_stacktrace.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/feat_stacktrace.exp		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/gcc_attribute.c			tests-usr.bin-tests	compattestfile,atf
@@ -6889,6 +6895,8 @@
 ./usr/tests/usr.bin/xlint/lint1/msg_342.exp			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/msg_343.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/msg_343.exp			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/msg_344.c			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/msg_344.exp			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/op_colon.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/op_colon.exp			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/t_integration			tests-usr.bin-tests	compattestfile,atf

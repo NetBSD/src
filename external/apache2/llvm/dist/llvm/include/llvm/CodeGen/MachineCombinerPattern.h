@@ -25,6 +25,15 @@ enum class MachineCombinerPattern {
   REASSOC_XA_BY,
   REASSOC_XA_YB,
 
+  // These are patterns matched by the PowerPC to reassociate FMA chains.
+  REASSOC_XY_AMM_BMM,
+  REASSOC_XMM_AMM_BMM,
+
+  // These are patterns matched by the PowerPC to reassociate FMA and FSUB to
+  // reduce register pressure.
+  REASSOC_XY_BCA,
+  REASSOC_XY_BAC,
+
   // These are multiply-add patterns matched by the AArch64 machine combiner.
   MULADDW_OP1,
   MULADDW_OP2,
@@ -38,6 +47,51 @@ enum class MachineCombinerPattern {
   MULSUBX_OP2,
   MULADDXI_OP1,
   MULSUBXI_OP1,
+  // NEON integers vectors
+  MULADDv8i8_OP1,
+  MULADDv8i8_OP2,
+  MULADDv16i8_OP1,
+  MULADDv16i8_OP2,
+  MULADDv4i16_OP1,
+  MULADDv4i16_OP2,
+  MULADDv8i16_OP1,
+  MULADDv8i16_OP2,
+  MULADDv2i32_OP1,
+  MULADDv2i32_OP2,
+  MULADDv4i32_OP1,
+  MULADDv4i32_OP2,
+
+  MULSUBv8i8_OP1,
+  MULSUBv8i8_OP2,
+  MULSUBv16i8_OP1,
+  MULSUBv16i8_OP2,
+  MULSUBv4i16_OP1,
+  MULSUBv4i16_OP2,
+  MULSUBv8i16_OP1,
+  MULSUBv8i16_OP2,
+  MULSUBv2i32_OP1,
+  MULSUBv2i32_OP2,
+  MULSUBv4i32_OP1,
+  MULSUBv4i32_OP2,
+
+  MULADDv4i16_indexed_OP1,
+  MULADDv4i16_indexed_OP2,
+  MULADDv8i16_indexed_OP1,
+  MULADDv8i16_indexed_OP2,
+  MULADDv2i32_indexed_OP1,
+  MULADDv2i32_indexed_OP2,
+  MULADDv4i32_indexed_OP1,
+  MULADDv4i32_indexed_OP2,
+
+  MULSUBv4i16_indexed_OP1,
+  MULSUBv4i16_indexed_OP2,
+  MULSUBv8i16_indexed_OP1,
+  MULSUBv8i16_indexed_OP2,
+  MULSUBv2i32_indexed_OP1,
+  MULSUBv2i32_indexed_OP2,
+  MULSUBv4i32_indexed_OP1,
+  MULSUBv4i32_indexed_OP2,
+
   // Floating Point
   FMULADDH_OP1,
   FMULADDH_OP2,

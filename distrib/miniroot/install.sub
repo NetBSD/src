@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.59 2020/12/12 05:23:21 tsutsui Exp $
+#	$NetBSD: install.sub,v 1.59.2.1 2021/05/31 22:06:53 cjep Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -403,8 +403,9 @@ configure_ifs() {
 	fi
 
 	set -- $(ifconfig $_interface_name | sed -n '
-		/^[ 	]*inet/{
+		/^[ 	]*inet /{
 		s/inet//
+		s,/[0-9]*,,
 		s/--> [0-9.][0-9.]*//
 		s/netmask//
 		s/broadcast//

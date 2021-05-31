@@ -13,19 +13,15 @@
 #ifndef LLVM_EXECUTIONENGINE_ORC_SPECULATION_H
 #define LLVM_EXECUTIONENGINE_ORC_SPECULATION_H
 
-#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ExecutionEngine/Orc/Core.h"
+#include "llvm/ExecutionEngine/Orc/DebugUtils.h"
 #include "llvm/ExecutionEngine/Orc/IRCompileLayer.h"
-#include "llvm/IR/PassManager.h"
-#include "llvm/Passes/PassBuilder.h"
 #include "llvm/Support/Debug.h"
-
 #include <mutex>
 #include <type_traits>
 #include <utility>
-#include <vector>
 
 namespace llvm {
 namespace orc {
@@ -100,23 +96,27 @@ private:
       SymbolsInJD.insert(ImplSymbolName);
     }
 
-    DEBUG_WITH_TYPE("orc", for (auto &I
-                                : SpeculativeLookUpImpls) {
-      llvm::dbgs() << "\n In " << I.first->getName() << " JITDylib ";
-      for (auto &N : I.second)
-        llvm::dbgs() << "\n Likely Symbol : " << N;
+    DEBUG_WITH_TYPE("orc", {
+      for (auto &I : SpeculativeLookUpImpls) {
+        llvm::dbgs() << "\n In " << I.first->getName() << " JITDylib ";
+        for (auto &N : I.second)
+          llvm::dbgs() << "\n Likely Symbol : " << N;
+      }
     });
 
     // for a given symbol, there may be no symbol qualified for speculatively
     // compile try to fix this before jumping to this code if possible.
     for (auto &LookupPair : SpeculativeLookUpImpls)
-      ES.lookup(JITDylibSearchList({{LookupPair.first, true}}),
-                LookupPair.second, SymbolState::Ready,
-                [this](Expected<SymbolMap> Result) {
-                  if (auto Err = Result.takeError())
-                    ES.reportError(std::move(Err));
-                },
-                NoDependenciesToRegister);
+      ES.lookup(
+          LookupKind::Static,
+          makeJITDylibSearchOrder(LookupPair.first,
+                                  JITDylibLookupFlags::MatchAllSymbols),
+          SymbolLookupSet(LookupPair.second), SymbolState::Ready,
+          [this](Expected<SymbolMap> Result) {
+            if (auto Err = Result.takeError())
+              ES.reportError(std::move(Err));
+          },
+          NoDependenciesToRegister);
   }
 
 public:
@@ -151,8 +151,11 @@ public:
           this->getES().reportError(ReadySymbol.takeError());
       };
       // Include non-exported symbols also.
-      ES.lookup(JITDylibSearchList({{JD, true}}), SymbolNameSet({Target}),
-                SymbolState::Ready, OnReadyFixUp, NoDependenciesToRegister);
+      ES.lookup(
+          LookupKind::Static,
+          makeJITDylibSearchOrder(JD, JITDylibLookupFlags::MatchAllSymbols),
+          SymbolLookupSet(Target, SymbolLookupFlags::WeaklyReferencedSymbol),
+          SymbolState::Ready, OnReadyFixUp, NoDependenciesToRegister);
     }
   }
 
@@ -175,21 +178,21 @@ public:
   IRSpeculationLayer(ExecutionSession &ES, IRCompileLayer &BaseLayer,
                      Speculator &Spec, MangleAndInterner &Mangle,
                      ResultEval Interpreter)
-      : IRLayer(ES), NextLayer(BaseLayer), S(Spec), Mangle(Mangle),
-        QueryAnalysis(Interpreter) {}
+      : IRLayer(ES, BaseLayer.getManglingOptions()), NextLayer(BaseLayer),
+        S(Spec), Mangle(Mangle), QueryAnalysis(Interpreter) {}
 
-  void emit(MaterializationResponsibility R, ThreadSafeModule TSM);
+  void emit(std::unique_ptr<MaterializationResponsibility> R,
+            ThreadSafeModule TSM) override;
 
 private:
   TargetAndLikelies
   internToJITSymbols(DenseMap<StringRef, DenseSet<StringRef>> IRNames) {
     assert(!IRNames.empty() && "No IRNames received to Intern?");
     TargetAndLikelies InternedNames;
-    DenseSet<SymbolStringPtr> TargetJITNames;
     for (auto &NamePair : IRNames) {
+      DenseSet<SymbolStringPtr> TargetJITNames;
       for (auto &TargetNames : NamePair.second)
         TargetJITNames.insert(Mangle(TargetNames));
-
       InternedNames[Mangle(NamePair.first)] = std::move(TargetJITNames);
     }
     return InternedNames;

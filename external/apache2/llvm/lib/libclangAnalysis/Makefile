@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/11/11 22:45:14 joerg Exp $
+#	$NetBSD: Makefile,v 1.1.4.1 2021/05/31 22:10:11 cjep Exp $
 
 LIB=	clangAnalysis
 
@@ -8,6 +8,7 @@ LIB=	clangAnalysis
 
 SRCS+=	AnalysisDeclContext.cpp \
 	BodyFarm.cpp \
+	CalledOnceCheck.cpp \
 	CallGraph.cpp \
 	CFG.cpp \
 	CFGReachabilityAnalysis.cpp \
@@ -19,7 +20,9 @@ SRCS+=	AnalysisDeclContext.cpp \
 	Consumed.cpp \
 	Dominators.cpp \
 	ExprMutationAnalyzer.cpp \
+	IssueHash.cpp \
 	LiveVariables.cpp \
+	MacroExpansionContext.cpp \
 	ObjCNoReturn.cpp \
 	PathDiagnostic.cpp \
 	PostOrderCFGView.cpp \

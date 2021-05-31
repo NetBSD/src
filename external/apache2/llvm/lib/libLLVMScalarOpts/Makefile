@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/11/11 22:45:11 joerg Exp $
+#	$NetBSD: Makefile,v 1.1.4.1 2021/05/31 22:10:10 cjep Exp $
 
 LIB=	LLVMScalarOpts
 
@@ -8,10 +8,11 @@ LIB=	LLVMScalarOpts
 
 SRCS+=	ADCE.cpp \
 	AlignmentFromAssumptions.cpp \
+	AnnotationRemarks.cpp \
 	BDCE.cpp \
 	CallSiteSplitting.cpp \
 	ConstantHoisting.cpp \
-	ConstantProp.cpp \
+	ConstraintElimination.cpp \
 	CorrelatedValuePropagation.cpp \
 	DCE.cpp \
 	DeadStoreElimination.cpp \
@@ -34,6 +35,7 @@ SRCS+=	ADCE.cpp \
 	LoopDataPrefetch.cpp \
 	LoopDeletion.cpp \
 	LoopDistribute.cpp \
+	LoopFlatten.cpp \
 	LoopFuse.cpp \
 	LoopIdiomRecognize.cpp \
 	LoopInstSimplify.cpp \
@@ -54,6 +56,7 @@ SRCS+=	ADCE.cpp \
 	LowerConstantIntrinsics.cpp \
 	LowerExpectIntrinsic.cpp \
 	LowerGuardIntrinsic.cpp \
+	LowerMatrixIntrinsics.cpp \
 	LowerWidenableCondition.cpp \
 	MakeGuardsExplicit.cpp \
 	MemCpyOptimizer.cpp \
@@ -67,6 +70,7 @@ SRCS+=	ADCE.cpp \
 	Reg2Mem.cpp \
 	RewriteStatepointsForGC.cpp \
 	Scalar.cpp \
+	ScalarizeMaskedMemIntrin.cpp \
 	Scalarizer.cpp \
 	SCCP.cpp \
 	SeparateConstOffsetFromGEP.cpp \

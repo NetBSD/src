@@ -196,11 +196,8 @@ inline bool CmpHelperEQ<Pointer>(InterpState &S, CodePtr OpPC, CompareFn Fn) {
   const Pointer &RHS = S.Stk.pop<Pointer>();
   const Pointer &LHS = S.Stk.pop<Pointer>();
 
-  if (LHS.isZero() || RHS.isZero()) {
-    if (LHS.isZero() && RHS.isZero())
-      S.Stk.push<BoolT>(BoolT::from(Fn(ComparisonCategoryResult::Equal)));
-    else
-      S.Stk.push<BoolT>(BoolT::from(Fn(ComparisonCategoryResult::Nonequal)));
+  if (LHS.isZero() && RHS.isZero()) {
+    S.Stk.push<BoolT>(BoolT::from(Fn(ComparisonCategoryResult::Equal)));
     return true;
   }
 
@@ -872,7 +869,7 @@ inline bool ShiftRight(InterpState &S, CodePtr OpPC, const T &V, unsigned RHS) {
 
 template <PrimType TL, PrimType TR, typename T = typename PrimConv<TL>::T>
 inline bool ShiftLeft(InterpState &S, CodePtr OpPC, const T &V, unsigned RHS) {
-  if (V.isSigned() && !S.getLangOpts().CPlusPlus2a) {
+  if (V.isSigned() && !S.getLangOpts().CPlusPlus20) {
     // C++11 [expr.shift]p2: A signed left shift must have a non-negative
     // operand, and must not overflow the corresponding unsigned type.
     // C++2a [expr.shift]p2: E1 << E2 is the unique value congruent to

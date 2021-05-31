@@ -40,6 +40,14 @@ using namespace llvm::bfi_detail;
 
 #define DEBUG_TYPE "block-freq"
 
+namespace llvm {
+cl::opt<bool> CheckBFIUnknownBlockQueries(
+    "check-bfi-unknown-block-queries",
+    cl::init(false), cl::Hidden,
+    cl::desc("Check if block frequency is queried for an unknown block "
+             "for debugging missed BFI updates"));
+}
+
 ScaledNumber<uint64_t> BlockMass::toScaled() const {
   if (isFull())
     return ScaledNumber<uint64_t>(1, 0);
@@ -550,8 +558,17 @@ void BlockFrequencyInfoImplBase::finalizeMetrics() {
 
 BlockFrequency
 BlockFrequencyInfoImplBase::getBlockFreq(const BlockNode &Node) const {
-  if (!Node.isValid())
+  if (!Node.isValid()) {
+#ifndef NDEBUG
+    if (CheckBFIUnknownBlockQueries) {
+      SmallString<256> Msg;
+      raw_svector_ostream OS(Msg);
+      OS << "*** Detected BFI query for unknown block " << getBlockName(Node);
+      report_fatal_error(OS.str());
+    }
+#endif
     return 0;
+  }
   return Freqs[Node.Index].Integer;
 }
 
