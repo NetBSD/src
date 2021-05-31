@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.292 2021/05/30 19:50:23 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.293 2021/05/31 17:16:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008, 2020
@@ -135,7 +135,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.292 2021/05/30 19:50:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.293 2021/05/31 17:16:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -507,8 +507,8 @@ pmap_pagelist_free(struct pmap_pagelist * const list)
 
 	while ((pg = LIST_FIRST(list)) != NULL) {
 		LIST_REMOVE(pg, pageq.list);
-		/* Zap any fields we used internally. */
-		atomic_store_relaxed(&pg->loan_count, 0);
+		/* Fix up ref count; it's not always 0 when we get here. */
+		PHYSPAGE_REFCNT_SET(pg, 0);
 		uvm_pagefree(pg);
 	}
 }
@@ -1893,7 +1893,7 @@ pmap_remove_all(pmap_t pmap)
 
 	/* Fix up the reference count on the lev1map page. */
 	pg = PHYS_TO_VM_PAGE(ALPHA_K0SEG_TO_PHYS((vaddr_t)lev1map));
-	atomic_store_relaxed(&pg->loan_count, 0);
+	PHYSPAGE_REFCNT_SET(pg, 0);
 
 	/* Step 3 */
 	while ((pv = LIST_FIRST(&pmap->pm_pvents)) != NULL) {
@@ -3468,15 +3468,6 @@ pmap_pv_page_free(struct pool *pp, void *v)
 }
 
 /******************** misc. functions ********************/
-
-/*
- * Pages that are in-use as page table pages should never be part
- * of a UVM loan, so we'll use that field for our PT page reference
- * count.
- */
-#define	PHYSPAGE_REFCNT(pg)	atomic_load_relaxed(&(pg)->loan_count)
-#define	PHYSPAGE_REFCNT_INC(pg)	atomic_inc_uint_nv(&(pg)->loan_count)
-#define	PHYSPAGE_REFCNT_DEC(pg)	atomic_dec_uint_nv(&(pg)->loan_count)
 
 /*
  * pmap_physpage_alloc:
