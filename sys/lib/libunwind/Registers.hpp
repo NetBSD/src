@@ -382,6 +382,7 @@ public:
   }
 
   void copyFloatVectorRegister(int num, uint64_t addr_) {
+    assert(validFloatVectorRegister(num));
     const void *addr = reinterpret_cast<const void *>(addr_);
     if (num >= REGNO_ARM32_S0 && num <= REGNO_ARM32_S31) {
       if ((flags & FLAGS_VFPV2_USED) == 0) {
