@@ -398,7 +398,7 @@ public:
 #if _BYTE_ORDER == _BIG_ENDIAN
       part = 1 - part;
 #endif
-      memcpy(fpreg + dnum + part * sizeof(fpreg[0]) / 2,
+      memcpy((uint8_t *)(fpreg + dnum) + part * sizeof(fpreg[0]) / 2,
         addr, sizeof(fpreg[0]) / 2);
     }
     if (num <= REGNO_ARM32_D15) {
