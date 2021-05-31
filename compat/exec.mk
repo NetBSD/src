@@ -1,4 +1,4 @@
-#	$NetBSD: exec.mk,v 1.5 2021/01/05 11:08:00 simonb Exp $
+#	$NetBSD: exec.mk,v 1.6 2021/05/31 02:10:37 simonb Exp $
 
 # this makefile fragment can be included to modify the default
 # ABI a program is compiled with.  this is designed to be used
@@ -34,8 +34,6 @@
 
 # XXX -pie makes n64 crash
 NOPIE=1
-# XXX interesting dynamic binaries crash (hello.c works.)
-LDSTATIC=-static
 
 . include <bsd.own.mk>
 
