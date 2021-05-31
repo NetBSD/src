@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.21 2018/04/26 18:33:02 macallan Exp $	*/
+/*	$NetBSD: param.h,v 1.22 2021/05/31 14:38:56 simonb Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -30,6 +30,10 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifdef _KERNEL_OPT
+#include "opt_param.h"
+#endif
 
 /*
  * Machine dependent constants for PowerPC (32-bit only currently)

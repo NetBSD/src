@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.28 2021/05/08 13:10:29 skrll Exp $	*/
+/*	$NetBSD: param.h,v 1.29 2021/05/31 14:38:55 simonb Exp $	*/
 
 /*	$OpenBSD: param.h,v 1.12 2001/07/06 02:07:41 provos Exp $	*/
 
@@ -27,6 +27,9 @@
 
 #ifdef _KERNEL
 #include <machine/cpu.h>
+#ifdef _KERNEL_OPT
+#include "opt_param.h"
+#endif
 #endif
 
 /*

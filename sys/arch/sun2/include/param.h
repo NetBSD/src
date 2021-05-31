@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.15 2012/08/11 17:03:26 tsutsui Exp $	*/
+/*	$NetBSD: param.h,v 1.16 2021/05/31 14:38:56 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,6 +39,10 @@
 
 #ifndef	_MACHINE_PARAM_H_
 #define	_MACHINE_PARAM_H_
+
+#ifdef _KERNEL_OPT
+#include "opt_param.h"
+#endif
 
 /*
  * Machine dependent constants for the Sun2 series.

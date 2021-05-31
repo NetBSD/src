@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.50 2021/05/23 23:24:45 mrg Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.51 2021/05/31 14:38:56 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -25,6 +25,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifdef _KERNEL_OPT
+#include "opt_param.h"
+#endif
+
 /*
  * No reason this can't be common
  */
