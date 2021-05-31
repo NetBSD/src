@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.96 2021/05/30 19:41:59 thorpej Exp $ */
+/* $NetBSD: pmap.h,v 1.97 2021/05/31 17:16:05 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -355,8 +355,25 @@ do {									\
  */
 #define	__HAVE_VM_PAGE_MD
 struct vm_page_md {
-	uintptr_t pvh_listx;			/* pv_entry list + attrs */
+	uintptr_t pvh_listx;		/* pv_entry list + attrs */
+	/*
+	 * XXX These fields are only needed for pages that are used
+	 * as PT pages.  It would be nice to find safely-unused fields
+	 * in the vm_page structure that could be used instead.
+	 */
+	unsigned int pvh_physpgrefs;	/* # refs as a PT page */
+	unsigned int pvh_spare0;	/* XXX spare field */
 };
+
+/* Reference counting for page table pages. */
+#define	PHYSPAGE_REFCNT(pg)						\
+	atomic_load_relaxed(&(pg)->mdpage.pvh_physpgrefs)
+#define	PHYSPAGE_REFCNT_SET(pg, v)					\
+	atomic_store_relaxed(&(pg)->mdpage.pvh_physpgrefs, (v))
+#define	PHYSPAGE_REFCNT_INC(pg)						\
+	atomic_inc_uint_nv(&(pg)->mdpage.pvh_physpgrefs)
+#define	PHYSPAGE_REFCNT_DEC(pg)						\
+	atomic_dec_uint_nv(&(pg)->mdpage.pvh_physpgrefs)
 
 #define	VM_MDPAGE_PVS(pg)						\
 	((struct pv_entry *)((pg)->mdpage.pvh_listx & ~3UL))
