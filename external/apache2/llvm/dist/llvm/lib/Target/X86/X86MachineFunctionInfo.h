@@ -13,9 +13,10 @@
 #ifndef LLVM_LIB_TARGET_X86_X86MACHINEFUNCTIONINFO_H
 #define LLVM_LIB_TARGET_X86_X86MACHINEFUNCTIONINFO_H
 
+#include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/Support/MachineValueType.h"
 
 namespace llvm {
 
@@ -62,12 +63,12 @@ class X86MachineFunctionInfo : public MachineFunctionInfo {
   /// SRetReturnReg - Some subtargets require that sret lowering includes
   /// returning the value of the returned struct in a register. This field
   /// holds the virtual register into which the sret argument is passed.
-  unsigned SRetReturnReg = 0;
+  Register SRetReturnReg;
 
   /// GlobalBaseReg - keeps track of the virtual register initialized for
   /// use as the global base register. This is used for PIC in some PIC
   /// relocation models.
-  unsigned GlobalBaseReg = 0;
+  Register GlobalBaseReg;
 
   /// VarArgsFrameIndex - FrameIndex for start of varargs area.
   int VarArgsFrameIndex = 0;
@@ -103,6 +104,20 @@ class X86MachineFunctionInfo : public MachineFunctionInfo {
 
   /// True if this function has WIN_ALLOCA instructions.
   bool HasWinAlloca = false;
+
+  /// True if this function has any preallocated calls.
+  bool HasPreallocatedCall = false;
+
+  /// Whether this function has an extended frame record [Ctx, RBP, Return
+  /// addr]. If so, bit 60 of the in-memory frame pointer will be 1 to enable
+  /// other tools to detect the extended record.
+  bool HasSwiftAsyncContext = false;
+
+  Optional<int> SwiftAsyncContextFrameIdx;
+
+  ValueMap<const Value *, size_t> PreallocatedIds;
+  SmallVector<size_t, 0> PreallocatedStackSizes;
+  SmallVector<SmallVector<size_t, 4>, 0> PreallocatedArgOffsets;
 
 private:
   /// ForwardedMustTailRegParms - A list of virtual and physical registers
@@ -143,11 +158,11 @@ public:
   int getTCReturnAddrDelta() const { return TailCallReturnAddrDelta; }
   void setTCReturnAddrDelta(int delta) {TailCallReturnAddrDelta = delta;}
 
-  unsigned getSRetReturnReg() const { return SRetReturnReg; }
-  void setSRetReturnReg(unsigned Reg) { SRetReturnReg = Reg; }
+  Register getSRetReturnReg() const { return SRetReturnReg; }
+  void setSRetReturnReg(Register Reg) { SRetReturnReg = Reg; }
 
-  unsigned getGlobalBaseReg() const { return GlobalBaseReg; }
-  void setGlobalBaseReg(unsigned Reg) { GlobalBaseReg = Reg; }
+  Register getGlobalBaseReg() const { return GlobalBaseReg; }
+  void setGlobalBaseReg(Register Reg) { GlobalBaseReg = Reg; }
 
   int getVarArgsFrameIndex() const { return VarArgsFrameIndex; }
   void setVarArgsFrameIndex(int Idx) { VarArgsFrameIndex = Idx; }
@@ -185,6 +200,44 @@ public:
 
   bool hasWinAlloca() const { return HasWinAlloca; }
   void setHasWinAlloca(bool v) { HasWinAlloca = v; }
+
+  bool hasPreallocatedCall() const { return HasPreallocatedCall; }
+  void setHasPreallocatedCall(bool v) { HasPreallocatedCall = v; }
+
+  bool hasSwiftAsyncContext() const { return HasSwiftAsyncContext; }
+  void setHasSwiftAsyncContext(bool v) { HasSwiftAsyncContext = v; }
+
+  Optional<int> getSwiftAsyncContextFrameIdx() const {
+    return SwiftAsyncContextFrameIdx;
+  }
+  void setSwiftAsyncContextFrameIdx(int v) { SwiftAsyncContextFrameIdx = v; }
+
+  size_t getPreallocatedIdForCallSite(const Value *CS) {
+    auto Insert = PreallocatedIds.insert({CS, PreallocatedIds.size()});
+    if (Insert.second) {
+      PreallocatedStackSizes.push_back(0);
+      PreallocatedArgOffsets.emplace_back();
+    }
+    return Insert.first->second;
+  }
+
+  void setPreallocatedStackSize(size_t Id, size_t StackSize) {
+    PreallocatedStackSizes[Id] = StackSize;
+  }
+
+  size_t getPreallocatedStackSize(const size_t Id) {
+    assert(PreallocatedStackSizes[Id] != 0 && "stack size not set");
+    return PreallocatedStackSizes[Id];
+  }
+
+  void setPreallocatedArgOffsets(size_t Id, ArrayRef<size_t> AO) {
+    PreallocatedArgOffsets[Id].assign(AO.begin(), AO.end());
+  }
+
+  ArrayRef<size_t> getPreallocatedArgOffsets(const size_t Id) {
+    assert(!PreallocatedArgOffsets[Id].empty() && "arg offsets not set");
+    return PreallocatedArgOffsets[Id];
+  }
 };
 
 } // End llvm namespace

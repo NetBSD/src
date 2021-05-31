@@ -1,4 +1,4 @@
-/*	$NetBSD: pyro.c,v 1.23 2021/04/24 23:36:49 thorpej Exp $	*/
+/*	$NetBSD: pyro.c,v 1.23.4.1 2021/05/31 22:15:16 cjep Exp $	*/
 /*	from: $OpenBSD: pyro.c,v 1.20 2010/12/05 15:15:14 kettenis Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pyro.c,v 1.23 2021/04/24 23:36:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pyro.c,v 1.23.4.1 2021/05/31 22:15:16 cjep Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -237,7 +237,9 @@ pyro_init(struct pyro_softc *sc, int busa)
 
 	free(busranges, M_DEVBUF);
 
-	config_found(sc->sc_dev, &pba, pyro_print, CFARG_EOL);
+	config_found(sc->sc_dev, &pba, pyro_print,
+	    CFARG_DEVHANDLE, prom_node_to_devhandle(sc->sc_node),
+	    CFARG_EOL);
 }
 
 void

@@ -89,14 +89,6 @@ struct DumpVisitor {
     else
       printStr("<null>");
   }
-  void print(NodeOrString NS) {
-    if (NS.isNode())
-      print(NS.asNode());
-    else if (NS.isString())
-      print(NS.asString());
-    else
-      printStr("NodeOrString()");
-  }
   void print(NodeArray A) {
     ++Depth;
     printStr("{");
@@ -115,13 +107,11 @@ struct DumpVisitor {
   // Overload used when T is exactly 'bool', not merely convertible to 'bool'.
   void print(bool B) { printStr(B ? "true" : "false"); }
 
-  template <class T>
-  typename std::enable_if<std::is_unsigned<T>::value>::type print(T N) {
+  template <class T> std::enable_if_t<std::is_unsigned<T>::value> print(T N) {
     fprintf(stderr, "%llu", (unsigned long long)N);
   }
 
-  template <class T>
-  typename std::enable_if<std::is_signed<T>::value>::type print(T N) {
+  template <class T> std::enable_if_t<std::is_signed<T>::value> print(T N) {
     fprintf(stderr, "%lld", (long long)N);
   }
 

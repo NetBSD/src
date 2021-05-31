@@ -24,6 +24,19 @@ def verbose: F<"verbose">,
   HelpText<"Enable verbose mode.">,
   Group<grp_general>;
 
+def keep_func_for_static: F<"keep-function-for-static">,
+  HelpText<"Make a static variable keep the enclosing function even if it would have been omitted otherwise.">,
+  Group<grp_general>;
+
+def statistics: F<"statistics">,
+  HelpText<"Print statistics about the contribution of each object file to "
+           "the linked debug info. This prints a table after linking with the "
+           "object file name, the size of the debug info in the object file "
+           "(in bytes) and the size contributed (in bytes) to the linked dSYM. "
+           "The table is sorted by the output size listing the object files "
+           "with the largest contribution first.">,
+  Group<grp_general>;
+
 def verify: F<"verify">,
   HelpText<"Run the DWARF verifier on the linked DWARF debug info.">,
   Group<grp_general>;
@@ -44,7 +57,7 @@ def dump_debug_map: F<"dump-debug-map">,
   HelpText<"Parse and dump the debug map to standard output. Not DWARF link will take place.">,
   Group<grp_general>;
 
-def yaml_input: F<"y">,
+def yaml_input: Flag<["-", "--"], "y">,
   HelpText<"Treat the input file is a YAML debug map rather than a binary.">,
   Group<grp_general>;
 
@@ -52,7 +65,7 @@ def papertrail: F<"papertrail">,
   HelpText<"Embed warnings in the linked DWARF debug info.">,
   Group<grp_general>;
 
-def assembly: F<"S">,
+def assembly: Flag<["-", "--"], "S">,
   HelpText<"Output textual assembly instead of a binary dSYM companion file.">,
   Group<grp_general>;
 
@@ -72,19 +85,6 @@ def: Flag<["-"], "f">,
   HelpText<"Alias for --flat">,
   Group<grp_general>;
 
-def minimize: F<"minimize">,
-  HelpText<"When used when creating a dSYM file with Apple accelerator tables, "
-           "this option will suppress the emission of the .debug_inlines, "
-           ".debug_pubnames, and .debug_pubtypes sections since dsymutil "
-           "has better equivalents: .apple_names and .apple_types. When used in "
-           "conjunction with --update option, this option will cause redundant "
-           "accelerator tables to be removed.">,
-  Group<grp_general>;
-def: Flag<["-"], "z">,
-  Alias<minimize>,
-  HelpText<"Alias for --minimize">,
-  Group<grp_general>;
-
 def update: F<"update">,
   HelpText<"Updates existing dSYM files to contain the latest accelerator tables and other DWARF optimizations.">,
   Group<grp_general>;
@@ -93,22 +93,32 @@ def: Flag<["-"], "u">,
   HelpText<"Alias for --update">,
   Group<grp_general>;
 
-def output: Separate<["--", "-"], "o">,
+def output: Separate<["-", "--"], "o">,
   MetaVarName<"<filename>">,
   HelpText<"Specify the output file. Defaults to <input file>.dwarf">,
   Group<grp_general>;
-def: Separate<["-"], "out">,
+def: Separate<["--", "-"], "out">,
+  MetaVarName<"<filename>">,
   Alias<output>,
-  HelpText<"Alias for --o">,
+  HelpText<"Alias for -o">,
   Group<grp_general>;
 def: Joined<["--", "-"], "out=">, Alias<output>;
-def: Joined<["--", "-"], "o=">, Alias<output>;
+def: Joined<["-", "--"], "o=">, Alias<output>;
 
 def oso_prepend_path: Separate<["--", "-"], "oso-prepend-path">,
   MetaVarName<"<path>">,
   HelpText<"Specify a directory to prepend to the paths of object files.">,
   Group<grp_general>;
 def: Joined<["--", "-"], "oso-prepend-path=">, Alias<oso_prepend_path>;
+
+def object_prefix_map: Separate<["--", "-"], "object-prefix-map">,
+    MetaVarName<"<prefix=remapped>">,
+    HelpText<"Remap object file paths (but no source paths) before processing."
+             "Use this for Clang objects where the module cache location was"
+             "remapped using -fdebug-prefix-map; to help dsymutil"
+             "find the Clang module cache.">,
+    Group<grp_general>;
+def: Joined<["--", "-"], "object-prefix-map=">, Alias<object_prefix_map>;
 
 def symbolmap: Separate<["--", "-"], "symbol-map">,
   MetaVarName<"<bcsymbolmap>">,
@@ -127,7 +137,7 @@ def: Joined<["--", "-"], "arch=">, Alias<arch>;
 
 def accelerator: Separate<["--", "-"], "accelerator">,
   MetaVarName<"<accelerator type>">,
-  HelpText<"Specify the desired type of accelerator table. Valid options are 'Apple', 'Dwarf' and 'Default'">,
+  HelpText<"Specify the desired type of accelerator table. Valid options are 'Apple' (.apple_names, .apple_namespaces, .apple_types, .apple_objc), 'Dwarf' (.debug_names), 'Pub' (.debug_pubnames, .debug_pubtypes) and 'Default'">,
   Group<grp_general>;
 def: Joined<["--", "-"], "accelerator=">, Alias<accelerator>;
 
@@ -141,6 +151,28 @@ def threads: Separate<["--", "-"], "num-threads">,
   HelpText<"Specifies the maximum number of simultaneous threads to use when linking multiple architectures.">,
   Group<grp_general>;
 def: Separate<["-"], "j">,
-  Alias<threads>,
+  MetaVarName<"<threads>">,
   HelpText<"Alias for --num-threads">,
   Group<grp_general>;
+
+def gen_reproducer: F<"gen-reproducer">,
+  HelpText<"Generate a reproducer consisting of the input object files.">,
+  Group<grp_general>;
+
+def use_reproducer: Separate<["--", "-"], "use-reproducer">,
+  MetaVarName<"<path>">,
+  HelpText<"Use the object files from the given reproducer path.">,
+  Group<grp_general>;
+def: Joined<["--", "-"], "use-reproducer=">, Alias<use_reproducer>;
+
+def remarks_prepend_path: Separate<["--", "-"], "remarks-prepend-path">,
+  MetaVarName<"<path>">,
+  HelpText<"Specify a directory to prepend to the paths of the external remark files.">,
+  Group<grp_general>;
+def: Joined<["--", "-"], "remarks-prepend-path=">, Alias<remarks_prepend_path>;
+
+def remarks_output_format: Separate<["--", "-"], "remarks-output-format">,
+  MetaVarName<"<format>">,
+  HelpText<"Specify the format to be used when serializing the linked remarks.">,
+  Group<grp_general>;
+def: Joined<["--", "-"], "remarks-output-format=">, Alias<remarks_output_format>;

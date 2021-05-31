@@ -16,6 +16,7 @@
 #include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/DynamicExtent.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
 
 using namespace clang;
@@ -51,15 +52,19 @@ void ReturnPointerRangeChecker::checkPreStmt(const ReturnStmt *RS,
   // pointer casts.
   if (Idx.isZeroConstant())
     return;
+
   // FIXME: All of this out-of-bounds checking should eventually be refactored
   // into a common place.
+  DefinedOrUnknownSVal ElementCount = getDynamicElementCount(
+      state, ER->getSuperRegion(), C.getSValBuilder(), ER->getValueType());
 
-  DefinedOrUnknownSVal NumElements
-    = C.getStoreManager().getSizeInElements(state, ER->getSuperRegion(),
-                                           ER->getValueType());
+  // We assume that the location after the last element in the array is used as
+  // end() iterator. Reporting on these would return too many false positives.
+  if (Idx == ElementCount)
+    return;
 
-  ProgramStateRef StInBound = state->assumeInBound(Idx, NumElements, true);
-  ProgramStateRef StOutBound = state->assumeInBound(Idx, NumElements, false);
+  ProgramStateRef StInBound = state->assumeInBound(Idx, ElementCount, true);
+  ProgramStateRef StOutBound = state->assumeInBound(Idx, ElementCount, false);
   if (StOutBound && !StInBound) {
     ExplodedNode *N = C.generateErrorNode(StOutBound);
 
@@ -70,7 +75,7 @@ void ReturnPointerRangeChecker::checkPreStmt(const ReturnStmt *RS,
     // types explicitly reference such exploit categories (when applicable).
     if (!BT)
       BT.reset(new BuiltinBug(
-          this, "Return of pointer value outside of expected range",
+          this, "Buffer overflow",
           "Returned pointer value points outside the original object "
           "(potential buffer overflow)"));
 
@@ -91,6 +96,6 @@ void ento::registerReturnPointerRangeChecker(CheckerManager &mgr) {
   mgr.registerChecker<ReturnPointerRangeChecker>();
 }
 
-bool ento::shouldRegisterReturnPointerRangeChecker(const LangOptions &LO) {
+bool ento::shouldRegisterReturnPointerRangeChecker(const CheckerManager &mgr) {
   return true;
 }

@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "LLLexer.h"
+#include "llvm/AsmParser/LLLexer.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
@@ -531,6 +531,7 @@ lltok::Kind LLLexer::LexIdentifier() {
   KEYWORD(undef);
   KEYWORD(null);
   KEYWORD(none);
+  KEYWORD(poison);
   KEYWORD(to);
   KEYWORD(caller);
   KEYWORD(within);
@@ -594,6 +595,7 @@ lltok::Kind LLLexer::LexIdentifier() {
   KEYWORD(arm_aapcscc);
   KEYWORD(arm_aapcs_vfpcc);
   KEYWORD(aarch64_vector_pcs);
+  KEYWORD(aarch64_sve_vector_pcs);
   KEYWORD(msp430_intrcc);
   KEYWORD(avr_intrcc);
   KEYWORD(avr_signalcc);
@@ -607,6 +609,7 @@ lltok::Kind LLLexer::LexIdentifier() {
   KEYWORD(x86_regcallcc);
   KEYWORD(webkit_jscc);
   KEYWORD(swiftcc);
+  KEYWORD(swifttailcc);
   KEYWORD(anyregcc);
   KEYWORD(preserve_mostcc);
   KEYWORD(preserve_allcc);
@@ -623,6 +626,7 @@ lltok::Kind LLLexer::LexIdentifier() {
   KEYWORD(amdgpu_ps);
   KEYWORD(amdgpu_cs);
   KEYWORD(amdgpu_kernel);
+  KEYWORD(amdgpu_gfx);
   KEYWORD(tailcc);
 
   KEYWORD(cc);
@@ -650,6 +654,7 @@ lltok::Kind LLLexer::LexIdentifier() {
   KEYWORD(nest);
   KEYWORD(noalias);
   KEYWORD(nobuiltin);
+  KEYWORD(nocallback);
   KEYWORD(nocapture);
   KEYWORD(noduplicate);
   KEYWORD(nofree);
@@ -657,15 +662,20 @@ lltok::Kind LLLexer::LexIdentifier() {
   KEYWORD(noinline);
   KEYWORD(norecurse);
   KEYWORD(nonlazybind);
+  KEYWORD(nomerge);
   KEYWORD(nonnull);
+  KEYWORD(noprofile);
   KEYWORD(noredzone);
   KEYWORD(noreturn);
   KEYWORD(nosync);
   KEYWORD(nocf_check);
+  KEYWORD(noundef);
   KEYWORD(nounwind);
+  KEYWORD(null_pointer_is_valid);
   KEYWORD(optforfuzzing);
   KEYWORD(optnone);
   KEYWORD(optsize);
+  KEYWORD(preallocated);
   KEYWORD(readnone);
   KEYWORD(readonly);
   KEYWORD(returned);
@@ -687,11 +697,15 @@ lltok::Kind LLLexer::LexIdentifier() {
   KEYWORD(speculative_load_hardening);
   KEYWORD(swifterror);
   KEYWORD(swiftself);
+  KEYWORD(swiftasync);
   KEYWORD(uwtable);
+  KEYWORD(vscale_range);
   KEYWORD(willreturn);
   KEYWORD(writeonly);
   KEYWORD(zeroext);
   KEYWORD(immarg);
+  KEYWORD(byref);
+  KEYWORD(mustprogress);
 
   KEYWORD(type);
   KEYWORD(opaque);
@@ -716,6 +730,7 @@ lltok::Kind LLLexer::LexIdentifier() {
   KEYWORD(vscale);
   KEYWORD(x);
   KEYWORD(blockaddress);
+  KEYWORD(dso_local_equivalent);
 
   // Metadata types.
   KEYWORD(distinct);
@@ -737,7 +752,9 @@ lltok::Kind LLLexer::LexIdentifier() {
   KEYWORD(name);
   KEYWORD(summaries);
   KEYWORD(flags);
+  KEYWORD(blockcount);
   KEYWORD(linkage);
+  KEYWORD(visibility);
   KEYWORD(notEligibleToImport);
   KEYWORD(live);
   KEYWORD(dsoLocal);
@@ -750,8 +767,11 @@ lltok::Kind LLLexer::LexIdentifier() {
   KEYWORD(noRecurse);
   KEYWORD(returnDoesNotAlias);
   KEYWORD(noInline);
+  KEYWORD(alwaysInline);
   KEYWORD(calls);
   KEYWORD(callee);
+  KEYWORD(params);
+  KEYWORD(param);
   KEYWORD(hotness);
   KEYWORD(unknown);
   KEYWORD(hot);
@@ -786,6 +806,7 @@ lltok::Kind LLLexer::LexIdentifier() {
   KEYWORD(sizeM1);
   KEYWORD(bitMask);
   KEYWORD(inlineBits);
+  KEYWORD(vcall_visibility);
   KEYWORD(wpdResolutions);
   KEYWORD(wpdRes);
   KEYWORD(indir);
@@ -815,6 +836,7 @@ lltok::Kind LLLexer::LexIdentifier() {
 
   TYPEKEYWORD("void",      Type::getVoidTy(Context));
   TYPEKEYWORD("half",      Type::getHalfTy(Context));
+  TYPEKEYWORD("bfloat",    Type::getBFloatTy(Context));
   TYPEKEYWORD("float",     Type::getFloatTy(Context));
   TYPEKEYWORD("double",    Type::getDoubleTy(Context));
   TYPEKEYWORD("x86_fp80",  Type::getX86_FP80Ty(Context));
@@ -823,7 +845,9 @@ lltok::Kind LLLexer::LexIdentifier() {
   TYPEKEYWORD("label",     Type::getLabelTy(Context));
   TYPEKEYWORD("metadata",  Type::getMetadataTy(Context));
   TYPEKEYWORD("x86_mmx",   Type::getX86_MMXTy(Context));
+  TYPEKEYWORD("x86_amx",   Type::getX86_AMXTy(Context));
   TYPEKEYWORD("token",     Type::getTokenTy(Context));
+  TYPEKEYWORD("ptr", PointerType::getUnqual(Context));
 
 #undef TYPEKEYWORD
 
@@ -892,6 +916,8 @@ lltok::Kind LLLexer::LexIdentifier() {
   INSTKEYWORD(catchswitch,  CatchSwitch);
   INSTKEYWORD(catchpad,     CatchPad);
   INSTKEYWORD(cleanuppad,   CleanupPad);
+
+  INSTKEYWORD(freeze,       Freeze);
 
 #undef INSTKEYWORD
 
@@ -978,11 +1004,13 @@ lltok::Kind LLLexer::LexIdentifier() {
 ///    HexFP128Constant  0xL[0-9A-Fa-f]+
 ///    HexPPC128Constant 0xM[0-9A-Fa-f]+
 ///    HexHalfConstant   0xH[0-9A-Fa-f]+
+///    HexBFloatConstant 0xR[0-9A-Fa-f]+
 lltok::Kind LLLexer::Lex0x() {
   CurPtr = TokStart + 2;
 
   char Kind;
-  if ((CurPtr[0] >= 'K' && CurPtr[0] <= 'M') || CurPtr[0] == 'H') {
+  if ((CurPtr[0] >= 'K' && CurPtr[0] <= 'M') || CurPtr[0] == 'H' ||
+      CurPtr[0] == 'R') {
     Kind = *CurPtr++;
   } else {
     Kind = 'J';
@@ -1000,7 +1028,7 @@ lltok::Kind LLLexer::Lex0x() {
   if (Kind == 'J') {
     // HexFPConstant - Floating point constant represented in IEEE format as a
     // hexadecimal number for when exponential notation is not precise enough.
-    // Half, Float, and double only.
+    // Half, BFloat, Float, and double only.
     APFloatVal = APFloat(APFloat::IEEEdouble(),
                          APInt(64, HexIntToVal(TokStart + 2, CurPtr)));
     return lltok::APFloat;
@@ -1027,6 +1055,11 @@ lltok::Kind LLLexer::Lex0x() {
   case 'H':
     APFloatVal = APFloat(APFloat::IEEEhalf(),
                          APInt(16,HexIntToVal(TokStart+3, CurPtr)));
+    return lltok::APFloat;
+  case 'R':
+    // Brain floating point
+    APFloatVal = APFloat(APFloat::BFloat(),
+                         APInt(16, HexIntToVal(TokStart + 3, CurPtr)));
     return lltok::APFloat;
   }
 }

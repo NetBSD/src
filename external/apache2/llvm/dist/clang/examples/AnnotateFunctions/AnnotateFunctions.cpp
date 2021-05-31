@@ -14,6 +14,7 @@
 #include "clang/Frontend/FrontendPluginRegistry.h"
 #include "clang/AST/AST.h"
 #include "clang/AST/ASTConsumer.h"
+#include "clang/AST/Attr.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/LexDiagnostic.h"
 using namespace clang;
@@ -31,8 +32,8 @@ public:
       return true;
     for (auto D : DG)
       if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
-        FD->addAttr(AnnotateAttr::CreateImplicit(FD->getASTContext(),
-                                                 "example_annotation"));
+        FD->addAttr(AnnotateAttr::CreateImplicit(
+            FD->getASTContext(), "example_annotation", nullptr, 0));
     return true;
   }
 };

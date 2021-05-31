@@ -1,4 +1,4 @@
-/* $NetBSD: exec.c,v 1.19 2020/10/10 19:17:39 jmcneill Exp $ */
+/* $NetBSD: exec.c,v 1.19.8.1 2021/05/31 22:15:22 cjep Exp $ */
 
 /*-
  * Copyright (c) 2019 Jason R. Thorpe
@@ -42,7 +42,7 @@ extern char twiddle_toggle;
 u_long load_offset = 0;
 
 #define	FDT_SPACE	(4 * 1024 * 1024)
-#define	FDT_ALIGN	((2 * 1024 * 1024) - 1)
+#define	FDT_ALIGN	(2 * 1024 * 1024)
 
 static EFI_PHYSICAL_ADDRESS initrd_addr, dtb_addr, rndseed_addr, efirng_addr;
 static u_long initrd_size = 0, dtb_size = 0, rndseed_size = 0, efirng_size = 0;
@@ -260,7 +260,7 @@ exec_netbsd(const char *fname, const char *args)
 		return EIO;
 	}
 	close(fd);
-	marks[MARK_END] = (((u_long) marks[MARK_END] + sizeof(int) - 1)) & (-sizeof(int));
+	marks[MARK_END] = (((u_long) marks[MARK_END] + sizeof(int) - 1)) & -sizeof(int);
 	alloc_size = marks[MARK_END] - marks[MARK_START] + FDT_SPACE + EFIBOOT_ALIGN;
 
 #ifdef EFIBOOT_ALLOCATE_MAX_ADDRESS
@@ -279,7 +279,7 @@ exec_netbsd(const char *fname, const char *args)
 	}
 
 	memset(marks, 0, sizeof(marks));
-	load_offset = (addr + EFIBOOT_ALIGN) & ~(EFIBOOT_ALIGN - 1);
+	load_offset = (addr + EFIBOOT_ALIGN - 1) & -EFIBOOT_ALIGN;
 	fd = loadfile(fname, marks, LOAD_KERNEL);
 	if (fd < 0) {
 		printf("boot: %s: %s\n", fname, strerror(errno));
@@ -289,7 +289,10 @@ exec_netbsd(const char *fname, const char *args)
 	load_offset = 0;
 
 #ifdef EFIBOOT_ACPI
-	if (efi_acpi_available()) {
+	/* ACPI support only works for little endian kernels */
+	efi_acpi_enable(netbsd_elf_data == ELFDATA2LSB);
+
+	if (efi_acpi_available() && efi_acpi_enabled()) {
 		efi_acpi_create_fdt();
 	} else
 #endif
@@ -308,7 +311,7 @@ exec_netbsd(const char *fname, const char *args)
 		load_file(get_rndseed_path(), 0, false,
 		    &rndseed_addr, &rndseed_size);
 
-		efi_fdt_init((marks[MARK_END] + FDT_ALIGN) & ~FDT_ALIGN, FDT_ALIGN + 1);
+		efi_fdt_init((marks[MARK_END] + FDT_ALIGN - 1) & -FDT_ALIGN, FDT_ALIGN);
 		load_modules(fname);
 		load_fdt_overlays();
 		efi_fdt_initrd(initrd_addr, initrd_size);

@@ -1,7 +1,7 @@
-class AttrSubject;
+include "clang/Basic/ASTNode.td"
 
 class DeclNode<DeclNode base, string diagSpelling = "", bit abstract = 0>
-    : AttrSubject {
+    : ASTNode, AttrSubject {
   DeclNode Base = base;
   bit Abstract = abstract;
   string DiagSpelling = diagSpelling;
@@ -40,6 +40,8 @@ def Named : DeclNode<Decl, "named declarations", 1>;
     def Binding : DeclNode<Value>;
     def OMPDeclareReduction : DeclNode<Value>, DeclContext;
     def OMPDeclareMapper : DeclNode<Value>, DeclContext;
+    def MSGuid : DeclNode<Value>;
+    def TemplateParamObject : DeclNode<Value>;
     def Declarator : DeclNode<Value, "declarators", 1>;
       def Field : DeclNode<Declarator, "non-static data members">;
         def ObjCIvar : DeclNode<Field>;
@@ -100,4 +102,6 @@ def OMPThreadPrivate : DeclNode<Decl>;
 def OMPAllocate : DeclNode<Decl>;
 def OMPRequires : DeclNode<Decl>;
 def Empty : DeclNode<Decl>;
+def RequiresExprBody : DeclNode<Decl>, DeclContext;
+def LifetimeExtendedTemporary : DeclNode<Decl>;
 

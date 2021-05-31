@@ -16,11 +16,13 @@
 #define LLVM_MC_MCREGISTERINFO_H
 
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/iterator.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/MC/LaneBitmask.h"
 #include "llvm/MC/MCRegister.h"
 #include <cassert>
 #include <cstdint>
+#include <iterator>
 #include <utility>
 
 namespace llvm {
@@ -37,6 +39,7 @@ public:
   const uint16_t RegsSize;
   const uint16_t RegSetSize;
   const uint16_t ID;
+  const uint16_t RegSizeInBits;
   const int8_t CopyCost;
   const bool Allocatable;
 
@@ -75,6 +78,12 @@ public:
   bool contains(MCRegister Reg1, MCRegister Reg2) const {
     return contains(Reg1) && contains(Reg2);
   }
+
+  /// Return the size of the physical register in bits if we are able to
+  /// determine it. This always returns zero for registers of targets that use
+  /// HW modes, as we need more information to determine the size of registers
+  /// in such cases. Use TargetRegisterInfo to cover them.
+  unsigned getSizeInBits() const { return RegSizeInBits; }
 
   /// getCopyCost - Return the cost of copying a value between two registers in
   /// this class. A negative number means the register class is very expensive
@@ -177,6 +186,9 @@ private:
   DenseMap<MCRegister, int> L2CVRegs;         // LLVM to CV regs mapping
 
 public:
+  // Forward declaration to become a friend class of DiffListIterator.
+  template <class SubT> class mc_difflist_iterator;
+
   /// DiffListIterator - Base iterator class that can traverse the
   /// differentially encoded register and regunit lists in DiffLists.
   /// Don't use this class directly, use one of the specialized sub-classes
@@ -220,7 +232,112 @@ public:
       if (!advance())
         List = nullptr;
     }
+
+    template <class SubT> friend class MCRegisterInfo::mc_difflist_iterator;
   };
+
+  /// Forward iterator using DiffListIterator.
+  template <class SubT>
+  class mc_difflist_iterator
+      : public iterator_facade_base<mc_difflist_iterator<SubT>,
+                                    std::forward_iterator_tag, MCPhysReg> {
+    MCRegisterInfo::DiffListIterator Iter;
+    /// Current value as MCPhysReg, so we can return a reference to it.
+    MCPhysReg Val;
+
+  protected:
+    mc_difflist_iterator(MCRegisterInfo::DiffListIterator Iter) : Iter(Iter) {}
+
+    // Allow conversion between instantiations where valid.
+    mc_difflist_iterator(MCRegister Reg, const MCPhysReg *DiffList) {
+      Iter.init(Reg, DiffList);
+      Val = *Iter;
+    }
+
+  public:
+    // Allow default construction to build variables, but this doesn't build
+    // a useful iterator.
+    mc_difflist_iterator() = default;
+
+    /// Return an iterator past the last element.
+    static SubT end() {
+      SubT End;
+      End.Iter.List = nullptr;
+      return End;
+    }
+
+    bool operator==(const mc_difflist_iterator &Arg) const {
+      return Iter.List == Arg.Iter.List;
+    }
+
+    const MCPhysReg &operator*() const { return Val; }
+
+    using mc_difflist_iterator::iterator_facade_base::operator++;
+    void operator++() {
+      assert(Iter.List && "Cannot increment the end iterator!");
+      ++Iter;
+      Val = *Iter;
+    }
+  };
+
+  /// Forward iterator over all sub-registers.
+  /// TODO: Replace remaining uses of MCSubRegIterator.
+  class mc_subreg_iterator : public mc_difflist_iterator<mc_subreg_iterator> {
+  public:
+    mc_subreg_iterator(MCRegisterInfo::DiffListIterator Iter)
+        : mc_difflist_iterator(Iter) {}
+    mc_subreg_iterator() = default;
+    mc_subreg_iterator(MCRegister Reg, const MCRegisterInfo *MCRI)
+        : mc_difflist_iterator(Reg, MCRI->DiffLists + MCRI->get(Reg).SubRegs) {}
+  };
+
+  /// Forward iterator over all super-registers.
+  /// TODO: Replace remaining uses of MCSuperRegIterator.
+  class mc_superreg_iterator
+      : public mc_difflist_iterator<mc_superreg_iterator> {
+  public:
+    mc_superreg_iterator(MCRegisterInfo::DiffListIterator Iter)
+        : mc_difflist_iterator(Iter) {}
+    mc_superreg_iterator() = default;
+    mc_superreg_iterator(MCRegister Reg, const MCRegisterInfo *MCRI)
+        : mc_difflist_iterator(Reg,
+                               MCRI->DiffLists + MCRI->get(Reg).SuperRegs) {}
+  };
+
+  /// Return an iterator range over all sub-registers of \p Reg, excluding \p
+  /// Reg.
+  iterator_range<mc_subreg_iterator> subregs(MCRegister Reg) const {
+    return make_range(std::next(mc_subreg_iterator(Reg, this)),
+                      mc_subreg_iterator::end());
+  }
+
+  /// Return an iterator range over all sub-registers of \p Reg, including \p
+  /// Reg.
+  iterator_range<mc_subreg_iterator> subregs_inclusive(MCRegister Reg) const {
+    return make_range({Reg, this}, mc_subreg_iterator::end());
+  }
+
+  /// Return an iterator range over all super-registers of \p Reg, excluding \p
+  /// Reg.
+  iterator_range<mc_superreg_iterator> superregs(MCRegister Reg) const {
+    return make_range(std::next(mc_superreg_iterator(Reg, this)),
+                      mc_superreg_iterator::end());
+  }
+
+  /// Return an iterator range over all super-registers of \p Reg, including \p
+  /// Reg.
+  iterator_range<mc_superreg_iterator>
+  superregs_inclusive(MCRegister Reg) const {
+    return make_range({Reg, this}, mc_superreg_iterator::end());
+  }
+
+  /// Return an iterator range over all sub- and super-registers of \p Reg,
+  /// including \p Reg.
+  detail::concat_range<const MCPhysReg, iterator_range<mc_subreg_iterator>,
+                       iterator_range<mc_superreg_iterator>>
+  sub_and_superregs_inclusive(MCRegister Reg) const {
+    return concat<const MCPhysReg>(subregs_inclusive(Reg), superregs(Reg));
+  }
 
   // These iterators are allowed to sub-class DiffListIterator and access
   // internal list pointers.
@@ -565,6 +682,7 @@ public:
 
   MCRegUnitIterator(MCRegister Reg, const MCRegisterInfo *MCRI) {
     assert(Reg && "Null register has no regunits");
+    assert(MCRegister::isPhysicalRegister(Reg.id()));
     // Decode the RegUnits MCRegisterDesc field.
     unsigned RU = MCRI->get(Reg).RegUnits;
     unsigned Scale = RU & 15;

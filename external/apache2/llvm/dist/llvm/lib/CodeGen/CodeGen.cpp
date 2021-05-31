@@ -20,14 +20,17 @@ using namespace llvm;
 /// initializeCodeGen - Initialize all passes linked into the CodeGen library.
 void llvm::initializeCodeGen(PassRegistry &Registry) {
   initializeAtomicExpandPass(Registry);
+  initializeBasicBlockSectionsPass(Registry);
   initializeBranchFolderPassPass(Registry);
   initializeBranchRelaxationPass(Registry);
   initializeCFGuardLongjmpPass(Registry);
   initializeCFIInstrInserterPass(Registry);
+  initializeCheckDebugMachineModulePass(Registry);
   initializeCodeGenPreparePass(Registry);
   initializeDeadMachineInstructionElimPass(Registry);
+  initializeDebugifyMachineModulePass(Registry);
   initializeDetectDeadLanesPass(Registry);
-  initializeDwarfEHPreparePass(Registry);
+  initializeDwarfEHPrepareLegacyPassPass(Registry);
   initializeEarlyIfConverterPass(Registry);
   initializeEarlyIfPredicatorPass(Registry);
   initializeEarlyMachineLICMPass(Registry);
@@ -37,6 +40,7 @@ void llvm::initializeCodeGen(PassRegistry &Registry) {
   initializeFEntryInserterPass(Registry);
   initializeFinalizeISelPass(Registry);
   initializeFinalizeMachineBundlesPass(Registry);
+  initializeFixupStatepointCallerSavedPass(Registry);
   initializeFuncletLayoutPass(Registry);
   initializeGCMachineCodeAnalysisPass(Registry);
   initializeGCModuleInfoPass(Registry);
@@ -95,16 +99,18 @@ void llvm::initializeCodeGen(PassRegistry &Registry) {
   initializeRegisterCoalescerPass(Registry);
   initializeRenameIndependentSubregsPass(Registry);
   initializeSafeStackLegacyPassPass(Registry);
-  initializeScalarizeMaskedMemIntrinPass(Registry);
   initializeShrinkWrapPass(Registry);
+  initializeSjLjEHPreparePass(Registry);
   initializeSlotIndexesPass(Registry);
   initializeStackColoringPass(Registry);
   initializeStackMapLivenessPass(Registry);
   initializeStackProtectorPass(Registry);
   initializeStackSlotColoringPass(Registry);
+  initializeStripDebugMachineModulePass(Registry);
   initializeTailDuplicatePass(Registry);
   initializeTargetPassConfigPass(Registry);
   initializeTwoAddressInstructionPassPass(Registry);
+  initializeTypePromotionPass(Registry);
   initializeUnpackMachineBundlesPass(Registry);
   initializeUnreachableBlockElimLegacyPassPass(Registry);
   initializeUnreachableMachineBlockElimPass(Registry);

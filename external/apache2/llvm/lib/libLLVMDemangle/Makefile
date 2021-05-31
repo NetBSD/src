@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/11/11 22:45:06 joerg Exp $
+#	$NetBSD: Makefile,v 1.1.4.1 2021/05/31 22:10:07 cjep Exp $
 
 LIB=	LLVMDemangle
 
@@ -9,7 +9,8 @@ LIB=	LLVMDemangle
 SRCS+=	Demangle.cpp \
 	ItaniumDemangle.cpp \
 	MicrosoftDemangle.cpp \
-	MicrosoftDemangleNodes.cpp
+	MicrosoftDemangleNodes.cpp \
+	RustDemangle.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

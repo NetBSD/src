@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/11/11 22:44:58 joerg Exp $
+#	$NetBSD: Makefile,v 1.1.4.1 2021/05/31 22:06:57 cjep Exp $
 
 PROG_CXX=	clang-rename
 NOMAN=		yes
@@ -32,8 +32,10 @@ LLVM_LIBS+= \
 	BitReader \
 	BitstreamReader \
 	IR \
+	FrontendOpenMP \
 	MCParser \
 	MC \
+	BinaryFormat \
 	Option \
 	Support \
 	Demangle

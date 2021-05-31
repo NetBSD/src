@@ -18,7 +18,5 @@ static_library("AsmParser") {
     "//llvm/lib/Target/AMDGPU/Utils",
   ]
   include_dirs = [ ".." ]
-  sources = [
-    "AMDGPUAsmParser.cpp",
-  ]
+  sources = [ "AMDGPUAsmParser.cpp" ]
 }

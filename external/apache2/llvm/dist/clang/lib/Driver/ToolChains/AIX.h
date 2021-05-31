@@ -16,9 +16,20 @@ namespace clang {
 namespace driver {
 namespace tools {
 
-/// aix -- Directly call system default linker.
-// TODO: Enable direct call to system default assembler.
+/// aix -- Directly call system default assembler and linker.
 namespace aix {
+
+class LLVM_LIBRARY_VISIBILITY Assembler : public Tool {
+public:
+  Assembler(const ToolChain &TC) : Tool("aix::Assembler", "assembler", TC) {}
+
+  bool hasIntegratedCPP() const override { return false; }
+
+  void ConstructJob(Compilation &C, const JobAction &JA,
+                    const InputInfo &Output, const InputInfoList &Inputs,
+                    const llvm::opt::ArgList &TCArgs,
+                    const char *LinkingOutput) const override;
+};
 
 class LLVM_LIBRARY_VISIBILITY Linker : public Tool {
 public:
@@ -52,8 +63,30 @@ public:
   bool isPIEDefault() const override { return false; }
   bool isPICDefaultForced() const override { return true; }
 
+  void
+  AddClangSystemIncludeArgs(const llvm::opt::ArgList &DriverArgs,
+                            llvm::opt::ArgStringList &CC1Args) const override;
+
+  void AddCXXStdlibLibArgs(const llvm::opt::ArgList &Args,
+                           llvm::opt::ArgStringList &CmdArgs) const override;
+
+  CXXStdlibType GetDefaultCXXStdlibType() const override;
+
+  RuntimeLibType GetDefaultRuntimeLibType() const override;
+
+  // Set default DWARF version to 3 for now as latest AIX OS supports version 3.
+  unsigned GetDefaultDwarfVersion() const override { return 3; }
+
+  llvm::DebuggerKind getDefaultDebuggerTuning() const override {
+    return llvm::DebuggerKind::DBX;
+  }
+
 protected:
+  Tool *buildAssembler() const override;
   Tool *buildLinker() const override;
+
+private:
+  llvm::StringRef GetHeaderSysroot(const llvm::opt::ArgList &DriverArgs) const;
 };
 
 } // end namespace toolchains

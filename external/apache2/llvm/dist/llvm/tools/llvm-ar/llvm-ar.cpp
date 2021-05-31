@@ -11,19 +11,25 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Triple.h"
+#include "llvm/BinaryFormat/Magic.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/Object/Archive.h"
 #include "llvm/Object/ArchiveWriter.h"
+#include "llvm/Object/IRObjectFile.h"
 #include "llvm/Object/MachO.h"
 #include "llvm/Object/ObjectFile.h"
+#include "llvm/Object/SymbolicFile.h"
 #include "llvm/Support/Chrono.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/ConvertUTF.h"
 #include "llvm/Support/Errc.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/FormatVariadic.h"
+#include "llvm/Support/Host.h"
 #include "llvm/Support/InitLLVM.h"
 #include "llvm/Support/LineIterator.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -44,8 +50,7 @@
 #endif
 
 #ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
+#include "llvm/Support/Windows/WindowsSupport.h"
 #endif
 
 using namespace llvm;
@@ -56,20 +61,20 @@ static StringRef ToolName;
 // The basename of this program.
 static StringRef Stem;
 
-const char RanlibHelp[] = R"(
-OVERVIEW: LLVM Ranlib (llvm-ranlib)
+const char RanlibHelp[] = R"(OVERVIEW: LLVM Ranlib (llvm-ranlib)
 
   This program generates an index to speed access to archives
 
 USAGE: llvm-ranlib <archive-file>
 
 OPTIONS:
-  -help                             - Display available options
-  -version                          - Display the version of this program
+  -h --help             - Display available options
+  -v --version          - Display the version of this program
+  -D                    - Use zero for timestamps and uids/gids (default)
+  -U                    - Use actual timestamps and uids/gids
 )";
 
-const char ArHelp[] = R"(
-OVERVIEW: LLVM Archiver
+const char ArHelp[] = R"(OVERVIEW: LLVM Archiver
 
 USAGE: llvm-ar [options] [-]<operation>[modifiers] [relpos] [count] <archive> [files]
        llvm-ar -M [<mri-script]
@@ -82,6 +87,9 @@ OPTIONS:
     =bsd                -   bsd
   --plugin=<string>     - ignored for compatibility
   -h --help             - display this help and exit
+  --rsp-quoting         - quoting style for response files
+    =posix              -   posix
+    =windows            -   windows
   --version             - print the version and exit
   @<file>               - read options from <file>
 
@@ -117,7 +125,7 @@ MODIFIERS:
   [V] - display the version and exit
 )";
 
-void printHelpMessage() {
+static void printHelpMessage() {
   if (Stem.contains_lower("ranlib"))
     outs() << RanlibHelp;
   else if (Stem.contains_lower("ar"))
@@ -127,6 +135,13 @@ void printHelpMessage() {
 static unsigned MRILineNumber;
 static bool ParsingMRIScript;
 
+// Show the error plus the usage message, and exit.
+LLVM_ATTRIBUTE_NORETURN static void badUsage(Twine Error) {
+  WithColor::error(errs(), ToolName) << Error << "\n";
+  printHelpMessage();
+  exit(1);
+}
+
 // Show the error message and exit.
 LLVM_ATTRIBUTE_NORETURN static void fail(Twine Error) {
   if (ParsingMRIScript) {
@@ -134,9 +149,7 @@ LLVM_ATTRIBUTE_NORETURN static void fail(Twine Error) {
         << "script line " << MRILineNumber << ": " << Error << "\n";
   } else {
     WithColor::error(errs(), ToolName) << Error << "\n";
-    printHelpMessage();
   }
-
   exit(1);
 }
 
@@ -239,25 +252,26 @@ static void getRelPos() {
 // associated with the N modifier
 static void getCountParam() {
   if (PositionalArgs.empty())
-    fail("expected [count] for 'N' modifier");
+    badUsage("expected [count] for 'N' modifier");
   auto CountParamArg = StringRef(PositionalArgs[0]);
   if (CountParamArg.getAsInteger(10, CountParam))
-    fail("value for [count] must be numeric, got: " + CountParamArg);
+    badUsage("value for [count] must be numeric, got: " + CountParamArg);
   if (CountParam < 1)
-    fail("value for [count] must be positive, got: " + CountParamArg);
+    badUsage("value for [count] must be positive, got: " + CountParamArg);
   PositionalArgs.erase(PositionalArgs.begin());
 }
 
 // Get the archive file name from the command line
 static void getArchive() {
   if (PositionalArgs.empty())
-    fail("an archive name must be specified");
+    badUsage("an archive name must be specified");
   ArchiveName = PositionalArgs[0];
   PositionalArgs.erase(PositionalArgs.begin());
 }
 
 static object::Archive &readLibrary(const Twine &Library) {
-  auto BufOrErr = MemoryBuffer::getFile(Library, -1, false);
+  auto BufOrErr = MemoryBuffer::getFile(Library, /*IsText=*/false,
+                                        /*RequiresNullTerminator=*/false);
   failIfError(BufOrErr.getError(), "could not open library " + Library);
   ArchiveBuffers.push_back(std::move(*BufOrErr));
   auto LibOrErr =
@@ -276,7 +290,7 @@ static void runMRIScript();
 static ArchiveOperation parseCommandLine() {
   if (MRI) {
     if (!PositionalArgs.empty() || !Options.empty())
-      fail("cannot mix -M and other options");
+      badUsage("cannot mix -M and other options");
     runMRIScript();
   }
 
@@ -389,7 +403,7 @@ static ArchiveOperation parseCommandLine() {
       printHelpMessage();
       exit(0);
     default:
-      fail(std::string("unknown option ") + Options[i]);
+      badUsage(std::string("unknown option ") + Options[i]);
     }
   }
 
@@ -404,31 +418,31 @@ static ArchiveOperation parseCommandLine() {
     NumOperations = 1;
     Operation = CreateSymTab;
     if (!Members.empty())
-      fail("the 's' operation takes only an archive as argument");
+      badUsage("the 's' operation takes only an archive as argument");
   }
 
   // Perform various checks on the operation/modifier specification
   // to make sure we are dealing with a legal request.
   if (NumOperations == 0)
-    fail("you must specify at least one of the operations");
+    badUsage("you must specify at least one of the operations");
   if (NumOperations > 1)
-    fail("only one operation may be specified");
+    badUsage("only one operation may be specified");
   if (NumPositional > 1)
-    fail("you may only specify one of 'a', 'b', and 'i' modifiers");
+    badUsage("you may only specify one of 'a', 'b', and 'i' modifiers");
   if (AddAfter || AddBefore)
     if (Operation != Move && Operation != ReplaceOrInsert)
-      fail("the 'a', 'b' and 'i' modifiers can only be specified with "
-           "the 'm' or 'r' operations");
+      badUsage("the 'a', 'b' and 'i' modifiers can only be specified with "
+               "the 'm' or 'r' operations");
   if (CountParam)
     if (Operation != Extract && Operation != Delete)
-      fail("the 'N' modifier can only be specified with the 'x' or 'd' "
-           "operations");
+      badUsage("the 'N' modifier can only be specified with the 'x' or 'd' "
+               "operations");
   if (OriginalDates && Operation != Extract)
-    fail("the 'o' modifier is only applicable to the 'x' operation");
+    badUsage("the 'o' modifier is only applicable to the 'x' operation");
   if (OnlyUpdate && Operation != ReplaceOrInsert)
-    fail("the 'u' modifier is only applicable to the 'r' operation");
+    badUsage("the 'u' modifier is only applicable to the 'r' operation");
   if (AddLibrary && Operation != QuickAppend)
-    fail("the 'L' modifier is only applicable to the 'q' operation");
+    badUsage("the 'L' modifier is only applicable to the 'q' operation");
 
   // Return the parsed operation to the caller
   return Operation;
@@ -507,13 +521,13 @@ static std::string normalizePath(StringRef Path) {
 
 static bool comparePaths(StringRef Path1, StringRef Path2) {
 // When on Windows this function calls CompareStringOrdinal
-// as Windows file paths are case-insensitive. 
+// as Windows file paths are case-insensitive.
 // CompareStringOrdinal compares two Unicode strings for
 // binary equivalence and allows for case insensitivity.
 #ifdef _WIN32
   SmallVector<wchar_t, 128> WPath1, WPath2;
-  failIfError(sys::path::widenPath(normalizePath(Path1), WPath1));
-  failIfError(sys::path::widenPath(normalizePath(Path2), WPath2));
+  failIfError(sys::windows::UTF8ToUTF16(normalizePath(Path1), WPath1));
+  failIfError(sys::windows::UTF8ToUTF16(normalizePath(Path2), WPath2));
 
   return CompareStringOrdinal(WPath1.data(), WPath1.size(), WPath2.data(),
                               WPath2.size(), true) == CSTR_EQUAL;
@@ -530,8 +544,12 @@ static void doExtract(StringRef Name, const object::Archive::Child &C) {
   failIfError(ModeOrErr.takeError());
   sys::fs::perms Mode = ModeOrErr.get();
 
+  llvm::StringRef outputFilePath = sys::path::filename(Name);
+  if (Verbose)
+    outs() << "x - " << outputFilePath << '\n';
+
   int FD;
-  failIfError(sys::fs::openFileForWrite(sys::path::filename(Name), FD,
+  failIfError(sys::fs::openFileForWrite(outputFilePath, FD,
                                         sys::fs::CD_CreateAlways,
                                         sys::fs::OF_None, Mode),
               Name);
@@ -640,7 +658,7 @@ static void addChildMember(std::vector<NewArchiveMember> &Members,
   // the archive it's in, so the file resolves correctly.
   if (Thin && FlattenArchive) {
     StringSaver Saver(Alloc);
-    Expected<std::string> FileNameOrErr = M.getName();
+    Expected<std::string> FileNameOrErr(M.getName());
     failIfError(FileNameOrErr.takeError());
     if (sys::path::is_absolute(*FileNameOrErr)) {
       NMOrErr->MemberName = Saver.save(sys::path::convert_to_slash(*FileNameOrErr));
@@ -782,7 +800,7 @@ computeNewArchiveMembers(ArchiveOperation Operation,
       int Pos = Ret.size();
       Expected<StringRef> NameOrErr = Child.getName();
       failIfError(NameOrErr.takeError());
-      std::string Name = NameOrErr.get();
+      std::string Name = std::string(NameOrErr.get());
       if (comparePaths(Name, RelPos)) {
         assert(AddAfter || AddBefore);
         if (AddBefore)
@@ -861,8 +879,9 @@ static object::Archive::Kind getDefaultForHost() {
 }
 
 static object::Archive::Kind getKindFromMember(const NewArchiveMember &Member) {
+  auto MemBufferRef = Member.Buf->getMemBufferRef();
   Expected<std::unique_ptr<object::ObjectFile>> OptionalObject =
-      object::ObjectFile::createObjectFile(Member.Buf->getMemBufferRef());
+      object::ObjectFile::createObjectFile(MemBufferRef);
 
   if (OptionalObject)
     return isa<object::MachOObjectFile>(**OptionalObject)
@@ -871,6 +890,23 @@ static object::Archive::Kind getKindFromMember(const NewArchiveMember &Member) {
 
   // squelch the error in case we had a non-object file
   consumeError(OptionalObject.takeError());
+
+  // If we're adding a bitcode file to the archive, detect the Archive kind
+  // based on the target triple.
+  LLVMContext Context;
+  if (identify_magic(MemBufferRef.getBuffer()) == file_magic::bitcode) {
+    if (auto ObjOrErr = object::SymbolicFile::createSymbolicFile(
+            MemBufferRef, file_magic::bitcode, &Context)) {
+      auto &IRObject = cast<object::IRObjectFile>(**ObjOrErr);
+      return Triple(IRObject.getTargetTriple()).isOSDarwin()
+                 ? object::Archive::K_DARWIN
+                 : object::Archive::K_GNU;
+    } else {
+      // Squelch the error in case this was not a SymbolicFile.
+      consumeError(ObjOrErr.takeError());
+    }
+  }
+
   return getDefaultForHost();
 }
 
@@ -960,11 +996,11 @@ static void performOperation(ArchiveOperation Operation,
 static int performOperation(ArchiveOperation Operation,
                             std::vector<NewArchiveMember> *NewMembers) {
   // Create or open the archive object.
-  ErrorOr<std::unique_ptr<MemoryBuffer>> Buf =
-      MemoryBuffer::getFile(ArchiveName, -1, false);
+  ErrorOr<std::unique_ptr<MemoryBuffer>> Buf = MemoryBuffer::getFile(
+      ArchiveName, /*IsText=*/false, /*RequiresNullTerminator=*/false);
   std::error_code EC = Buf.getError();
   if (EC && EC != errc::no_such_file_or_directory)
-    fail("error opening '" + ArchiveName + "': " + EC.message());
+    fail("unable to open '" + ArchiveName + "': " + EC.message());
 
   if (!EC) {
     Error Err = Error::success();
@@ -979,7 +1015,7 @@ static int performOperation(ArchiveOperation Operation,
   assert(EC == errc::no_such_file_or_directory);
 
   if (!shouldCreateArchive(Operation)) {
-    failIfError(EC, Twine("error loading '") + ArchiveName + "'");
+    failIfError(EC, Twine("unable to load '") + ArchiveName + "'");
   } else {
     if (!Create) {
       // Produce a warning if we should and we're creating the archive
@@ -1048,7 +1084,7 @@ static void runMRIScript() {
         fail("editing multiple archives not supported");
       if (Saved)
         fail("file already saved");
-      ArchiveName = Rest;
+      ArchiveName = std::string(Rest);
       break;
     case MRICommand::Delete: {
       llvm::erase_if(NewMembers, [=](NewArchiveMember &M) {
@@ -1065,9 +1101,9 @@ static void runMRIScript() {
       fail("unknown command: " + CommandStr);
     }
   }
-  
+
   ParsingMRIScript = false;
-  
+
   // Nothing to do if not saved.
   if (Saved)
     performOperation(ReplaceOrInsert, &NewMembers);
@@ -1075,7 +1111,7 @@ static void runMRIScript() {
 }
 
 static bool handleGenericOption(StringRef arg) {
-  if (arg == "-help" || arg == "--help") {
+  if (arg == "-help" || arg == "--help" || arg == "-h") {
     printHelpMessage();
     return true;
   }
@@ -1086,61 +1122,103 @@ static bool handleGenericOption(StringRef arg) {
   return false;
 }
 
-static int ar_main(int argc, char **argv) {
-  SmallVector<const char *, 0> Argv(argv, argv + argc);
-  StringSaver Saver(Alloc);
-  cl::ExpandResponseFiles(Saver, cl::TokenizeGNUCommandLine, Argv);
-  for (size_t i = 1; i < Argv.size(); ++i) {
-    StringRef Arg = Argv[i];
-    const char *match;
-    auto MatchFlagWithArg = [&](const char *expected) {
-      size_t len = strlen(expected);
-      if (Arg == expected) {
-        if (++i >= Argv.size())
-          fail(std::string(expected) + " requires an argument");
-        match = Argv[i];
-        return true;
-      }
-      if (Arg.startswith(expected) && Arg.size() > len && Arg[len] == '=') {
-        match = Arg.data() + len + 1;
-        return true;
-      }
-      return false;
-    };
-    if (handleGenericOption(Argv[i]))
-      return 0;
-    if (Arg == "--") {
-      for (; i < Argv.size(); ++i)
-        PositionalArgs.push_back(Argv[i]);
-      break;
-    }
-    if (Arg[0] == '-') {
-      if (Arg.startswith("--"))
-        Arg = Argv[i] + 2;
+static const char *matchFlagWithArg(StringRef Expected,
+                                    ArrayRef<const char *>::iterator &ArgIt,
+                                    ArrayRef<const char *> Args) {
+  StringRef Arg = *ArgIt;
+
+  if (Arg.startswith("--"))
+    Arg = Arg.substr(2);
+  else if (Arg.startswith("-"))
+    Arg = Arg.substr(1);
+
+  size_t len = Expected.size();
+  if (Arg == Expected) {
+    if (++ArgIt == Args.end())
+      fail(std::string(Expected) + " requires an argument");
+
+    return *ArgIt;
+  }
+  if (Arg.startswith(Expected) && Arg.size() > len && Arg[len] == '=')
+    return Arg.data() + len + 1;
+
+  return nullptr;
+}
+
+static cl::TokenizerCallback getRspQuoting(ArrayRef<const char *> ArgsArr) {
+  cl::TokenizerCallback Ret =
+      Triple(sys::getProcessTriple()).getOS() == Triple::Win32
+          ? cl::TokenizeWindowsCommandLine
+          : cl::TokenizeGNUCommandLine;
+
+  for (ArrayRef<const char *>::iterator ArgIt = ArgsArr.begin();
+       ArgIt != ArgsArr.end(); ++ArgIt) {
+    if (const char *Match = matchFlagWithArg("rsp-quoting", ArgIt, ArgsArr)) {
+      StringRef MatchRef = Match;
+      if (MatchRef == "posix")
+        Ret = cl::TokenizeGNUCommandLine;
+      else if (MatchRef == "windows")
+        Ret = cl::TokenizeWindowsCommandLine;
       else
-        Arg = Argv[i] + 1;
-      if (Arg == "M") {
-        MRI = true;
-      } else if (MatchFlagWithArg("format")) {
-        FormatType = StringSwitch<Format>(match)
-                         .Case("default", Default)
-                         .Case("gnu", GNU)
-                         .Case("darwin", DARWIN)
-                         .Case("bsd", BSD)
-                         .Default(Unknown);
-        if (FormatType == Unknown)
-          fail(std::string("Invalid format ") + match);
-      } else if (MatchFlagWithArg("plugin")) {
-        // Ignored.
-      } else {
-        Options += Argv[i] + 1;
-      }
-    } else if (Options.empty()) {
-      Options += Argv[i];
-    } else {
-      PositionalArgs.push_back(Argv[i]);
+        fail(std::string("Invalid response file quoting style ") + Match);
     }
   }
+
+  return Ret;
+}
+
+static int ar_main(int argc, char **argv) {
+  SmallVector<const char *, 0> Argv(argv + 1, argv + argc);
+  StringSaver Saver(Alloc);
+
+  cl::ExpandResponseFiles(Saver, getRspQuoting(makeArrayRef(argv, argc)), Argv);
+
+  for (ArrayRef<const char *>::iterator ArgIt = Argv.begin();
+       ArgIt != Argv.end(); ++ArgIt) {
+    const char *Match = nullptr;
+
+    if (handleGenericOption(*ArgIt))
+      return 0;
+    if (strcmp(*ArgIt, "--") == 0) {
+      ++ArgIt;
+      for (; ArgIt != Argv.end(); ++ArgIt)
+        PositionalArgs.push_back(*ArgIt);
+      break;
+    }
+
+    if (*ArgIt[0] != '-') {
+      if (Options.empty())
+        Options += *ArgIt;
+      else
+        PositionalArgs.push_back(*ArgIt);
+      continue;
+    }
+
+    if (strcmp(*ArgIt, "-M") == 0) {
+      MRI = true;
+      continue;
+    }
+
+    Match = matchFlagWithArg("format", ArgIt, Argv);
+    if (Match) {
+      FormatType = StringSwitch<Format>(Match)
+                       .Case("default", Default)
+                       .Case("gnu", GNU)
+                       .Case("darwin", DARWIN)
+                       .Case("bsd", BSD)
+                       .Default(Unknown);
+      if (FormatType == Unknown)
+        fail(std::string("Invalid format ") + Match);
+      continue;
+    }
+
+    if (matchFlagWithArg("plugin", ArgIt, Argv) ||
+        matchFlagWithArg("rsp-quoting", ArgIt, Argv))
+      continue;
+
+    Options += *ArgIt + 1;
+  }
+
   ArchiveOperation Operation = parseCommandLine();
   return performOperation(Operation, nullptr);
 }
@@ -1148,14 +1226,37 @@ static int ar_main(int argc, char **argv) {
 static int ranlib_main(int argc, char **argv) {
   bool ArchiveSpecified = false;
   for (int i = 1; i < argc; ++i) {
-    if (handleGenericOption(argv[i])) {
+    StringRef arg(argv[i]);
+    if (handleGenericOption(arg)) {
       return 0;
+    } else if (arg.consume_front("-")) {
+      // Handle the -D/-U flag
+      while (!arg.empty()) {
+        if (arg.front() == 'D') {
+          Deterministic = true;
+        } else if (arg.front() == 'U') {
+          Deterministic = false;
+        } else if (arg.front() == 'h') {
+          printHelpMessage();
+          return 0;
+        } else if (arg.front() == 'v') {
+          cl::PrintVersionMessage();
+          return 0;
+        } else {
+          // TODO: GNU ranlib also supports a -t flag
+          fail("Invalid option: '-" + arg + "'");
+        }
+        arg = arg.drop_front(1);
+      }
     } else {
       if (ArchiveSpecified)
         fail("exactly one archive should be specified");
       ArchiveSpecified = true;
-      ArchiveName = argv[i];
+      ArchiveName = arg.str();
     }
+  }
+  if (!ArchiveSpecified) {
+    badUsage("an archive name must be specified");
   }
   return performOperation(CreateSymTab, nullptr);
 }
@@ -1169,16 +1270,25 @@ int main(int argc, char **argv) {
   llvm::InitializeAllAsmParsers();
 
   Stem = sys::path::stem(ToolName);
-  if (Stem.contains_lower("dlltool"))
+  auto Is = [](StringRef Tool) {
+    // We need to recognize the following filenames.
+    //
+    // Lib.exe -> lib (see D44808, MSBuild runs Lib.exe)
+    // dlltool.exe -> dlltool
+    // arm-pokymllib32-linux-gnueabi-llvm-ar-10 -> ar
+    auto I = Stem.rfind_lower(Tool);
+    return I != StringRef::npos &&
+           (I + Tool.size() == Stem.size() || !isAlnum(Stem[I + Tool.size()]));
+  };
+
+  if (Is("dlltool"))
     return dlltoolDriverMain(makeArrayRef(argv, argc));
-
-  if (Stem.contains_lower("ranlib"))
+  if (Is("ranlib"))
     return ranlib_main(argc, argv);
-
-  if (Stem.contains_lower("lib"))
+  if (Is("lib"))
     return libDriverMain(makeArrayRef(argv, argc));
-
-  if (Stem.contains_lower("ar"))
+  if (Is("ar"))
     return ar_main(argc, argv);
+
   fail("not ranlib, ar, lib or dlltool");
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/11/11 22:45:05 joerg Exp $
+#	$NetBSD: Makefile,v 1.1.4.1 2021/05/31 22:10:06 cjep Exp $
 
 LIB=	LLVMBinaryFormat
 
@@ -8,13 +8,15 @@ LIB=	LLVMBinaryFormat
 
 SRCS+=	AMDGPUMetadataVerifier.cpp \
 	Dwarf.cpp \
+	MachO.cpp \
 	Magic.cpp \
 	Minidump.cpp \
 	MsgPackDocument.cpp \
 	MsgPackDocumentYAML.cpp \
 	MsgPackReader.cpp \
 	MsgPackWriter.cpp \
-	Wasm.cpp
+	Wasm.cpp \
+	XCOFF.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

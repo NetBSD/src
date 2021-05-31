@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sppp.h,v 1.31 2021/04/23 01:13:25 yamaguchi Exp $	*/
+/*	$NetBSD: if_sppp.h,v 1.31.4.1 2021/05/31 22:15:21 cjep Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 #define	SPPP_AUTHPROTO_NONE	0
 #define SPPP_AUTHPROTO_PAP	1
 #define SPPP_AUTHPROTO_CHAP	2
+#define SPPP_AUTHPROTO_NOCHG	3
 
 #define SPPP_AUTHFLAG_NOCALLOUT		1	/* do not require authentication on */
 						/* callouts */
@@ -152,6 +153,7 @@ struct spppkeepalivesettings {
 	u_int	maxalive;		/* number of LCP echo req. w/o reply */
 	time_t	max_noreceive;		/* (sec.) grace period before we start
 					   sending LCP echo requests. */
+	u_int	alive_interval;		/* number of keepalive between echo req. */
 };
 struct spppkeepalivesettings50 {
 	char	ifname[IFNAMSIZ];	/* pppoe interface name */
@@ -232,6 +234,16 @@ struct spppipv6cpstatus {
 };
 
 #define SPPPGETIPV6CPSTATUS	_IOWR('i', 137, struct spppipv6cpstatus)
+
+#define SPPP_NCP_IPCP		__BIT(0)
+#define SPPP_NCP_IPV6CP		__BIT(1)
+struct spppncpcfg {
+	char		ifname[IFNAMSIZ];
+	u_int		ncp_flags;
+};
+
+#define SPPPGETNCPCFG		_IOWR('i', 138, struct spppncpcfg)
+#define SPPPSETNCPCFG		_IOW('i', 139, struct spppncpcfg)
 
 #endif /* !_NET_IF_SPPP_H_ */
 

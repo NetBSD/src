@@ -13,10 +13,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "MCTargetDesc/WebAssemblyMCTargetDesc.h"
+#include "Utils/WebAssemblyUtilities.h"
 #include "WebAssembly.h"
 #include "WebAssemblyMachineFunctionInfo.h"
 #include "WebAssemblySubtarget.h"
-#include "WebAssemblyUtilities.h"
 #include "llvm/ADT/SCCIterator.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -66,7 +66,7 @@ bool WebAssemblyRegNumbering::runOnMachineFunction(MachineFunction &MF) {
   WebAssemblyFunctionInfo &MFI = *MF.getInfo<WebAssemblyFunctionInfo>();
   MachineRegisterInfo &MRI = MF.getRegInfo();
 
-  MFI.initWARegs();
+  MFI.initWARegs(MRI);
 
   // WebAssembly argument registers are in the same index space as local
   // variables. Assign the numbers for them first.

@@ -13,11 +13,13 @@
 #ifndef LLVM_SUPPORT_HOST_H
 #define LLVM_SUPPORT_HOST_H
 
-#include "llvm/ADT/StringMap.h"
-
 #include <string>
 
 namespace llvm {
+class MallocAllocator;
+class StringRef;
+template <typename ValueTy, typename AllocatorTy> class StringMap;
+
 namespace sys {
 
   /// getDefaultTargetTriple() - Return the default target triple the compiler
@@ -50,7 +52,7 @@ namespace sys {
   /// all valid LLVM feature names.
   ///
   /// \return - True on success.
-  bool getHostCPUFeatures(StringMap<bool> &Features);
+  bool getHostCPUFeatures(StringMap<bool, MallocAllocator> &Features);
 
   /// Get the number of physical cores (as opposed to logical cores returned
   /// from thread::hardware_concurrency(), which includes hyperthreads).
@@ -63,6 +65,20 @@ namespace sys {
   StringRef getHostCPUNameForARM(StringRef ProcCpuinfoContent);
   StringRef getHostCPUNameForS390x(StringRef ProcCpuinfoContent);
   StringRef getHostCPUNameForBPF();
+
+  /// Helper functions to extract CPU details from CPUID on x86.
+  namespace x86 {
+  enum class VendorSignatures {
+    UNKNOWN,
+    GENUINE_INTEL,
+    AUTHENTIC_AMD,
+  };
+
+  /// Returns the host CPU's vendor.
+  /// MaxLeaf: if a non-nullptr pointer is specified, the EAX value will be
+  /// assigned to its pointee.
+  VendorSignatures getVendorSignature(unsigned *MaxLeaf = nullptr);
+  } // namespace x86
   }
 }
 }

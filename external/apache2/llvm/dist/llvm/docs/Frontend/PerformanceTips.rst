@@ -27,7 +27,7 @@ can often be useful to write a quick C program with the semantics you're trying
 to model and see what decisions Clang's IRGen makes about what IR to emit.
 Studying Clang's CodeGen directory can also be a good source of ideas.  Note
 that Clang and LLVM are explicitly version locked so you'll need to make sure
-you're using a Clang built from the same svn revision or release as the LLVM
+you're using a Clang built from the same git revision or release as the LLVM
 library you're using.  As always, it's *strongly* recommended that you track
 tip of tree development, particularly during bring up of a new project.
 
@@ -81,7 +81,7 @@ Prefer zext over sext when legal
 On some architectures (X86_64 is one), sign extension can involve an extra
 instruction whereas zero extension can be folded into a load.  LLVM will try to
 replace a sext with a zext when it can be proven safe, but if you have
-information in your source language about the range of a integer value, it can
+information in your source language about the range of an integer value, it can
 be profitable to use a zext rather than a sext.
 
 Alternatively, you can :ref:`specify the range of the value using metadata
@@ -255,11 +255,11 @@ couple specific suggestions:
 
 #. For languages with numerous rarely executed guard conditions (e.g. null
    checks, type checks, range checks) consider adding an extra execution or
-   two of LoopUnswith and LICM to your pass order.  The standard pass order,
+   two of LoopUnswitch and LICM to your pass order.  The standard pass order,
    which is tuned for C and C++ applications, may not be sufficient to remove
    all dischargeable checks from loops.
 
-#. If you language uses range checks, consider using the IRCE pass.  It is not
+#. If your language uses range checks, consider using the IRCE pass.  It is not
    currently part of the standard pass order.
 
 #. A useful sanity check to run is to run your optimized IR back through the
@@ -270,7 +270,7 @@ couple specific suggestions:
 I Still Can't Find What I'm Looking For
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If you didn't find what you were looking for above, consider proposing an piece
+If you didn't find what you were looking for above, consider proposing a piece
 of metadata which provides the optimization hint you need.  Such extensions are
 relatively common and are generally well received by the community.  You will
 need to ensure that your proposal is sufficiently general so that it benefits

@@ -30,6 +30,7 @@
 #include "clang/Lex/PPCallbacks.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/PreprocessorLexer.h"
+#include "clang/Lex/PreprocessorOptions.h"
 #include "clang/Lex/Token.h"
 #include "clang/Lex/TokenLexer.h"
 #include "llvm/ADT/ArrayRef.h"
@@ -39,9 +40,9 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/Support/CrashRecoveryContext.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/Timer.h"
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
@@ -70,31 +71,36 @@ void EmptyPragmaHandler::HandlePragma(Preprocessor &PP,
 // PragmaNamespace Implementation.
 //===----------------------------------------------------------------------===//
 
-PragmaNamespace::~PragmaNamespace() {
-  llvm::DeleteContainerSeconds(Handlers);
-}
-
 /// FindHandler - Check to see if there is already a handler for the
 /// specified name.  If not, return the handler for the null identifier if it
 /// exists, otherwise return null.  If IgnoreNull is true (the default) then
 /// the null handler isn't returned on failure to match.
 PragmaHandler *PragmaNamespace::FindHandler(StringRef Name,
                                             bool IgnoreNull) const {
-  if (PragmaHandler *Handler = Handlers.lookup(Name))
-    return Handler;
-  return IgnoreNull ? nullptr : Handlers.lookup(StringRef());
+  auto I = Handlers.find(Name);
+  if (I != Handlers.end())
+    return I->getValue().get();
+  if (IgnoreNull)
+    return nullptr;
+  I = Handlers.find(StringRef());
+  if (I != Handlers.end())
+    return I->getValue().get();
+  return nullptr;
 }
 
 void PragmaNamespace::AddPragma(PragmaHandler *Handler) {
-  assert(!Handlers.lookup(Handler->getName()) &&
+  assert(!Handlers.count(Handler->getName()) &&
          "A handler with this name is already registered in this namespace");
-  Handlers[Handler->getName()] = Handler;
+  Handlers[Handler->getName()].reset(Handler);
 }
 
 void PragmaNamespace::RemovePragmaHandler(PragmaHandler *Handler) {
-  assert(Handlers.lookup(Handler->getName()) &&
+  auto I = Handlers.find(Handler->getName());
+  assert(I != Handlers.end() &&
          "Handler not registered in this namespace");
-  Handlers.erase(Handler->getName());
+  // Release ownership back to the caller.
+  I->getValue().release();
+  Handlers.erase(I);
 }
 
 void PragmaNamespace::HandlePragma(Preprocessor &PP,
@@ -848,8 +854,8 @@ void Preprocessor::HandlePragmaModuleBuild(Token &Tok) {
          CurLexer->getBuffer().begin() <= End &&
          End <= CurLexer->getBuffer().end() &&
          "module source range not contained within same file buffer");
-  TheModuleLoader.loadModuleFromSource(Loc, ModuleName->getName(),
-                                       StringRef(Start, End - Start));
+  TheModuleLoader.createModuleFromSource(Loc, ModuleName->getName(),
+                                         StringRef(Start, End - Start));
 }
 
 void Preprocessor::HandlePragmaHdrstop(Token &Tok) {
@@ -1035,15 +1041,21 @@ struct PragmaDebugHandler : public PragmaHandler {
     IdentifierInfo *II = Tok.getIdentifierInfo();
 
     if (II->isStr("assert")) {
-      llvm_unreachable("This is an assertion!");
+      if (!PP.getPreprocessorOpts().DisablePragmaDebugCrash)
+        llvm_unreachable("This is an assertion!");
     } else if (II->isStr("crash")) {
-      LLVM_BUILTIN_TRAP;
+      llvm::Timer T("crash", "pragma crash");
+      llvm::TimeRegion R(&T);
+      if (!PP.getPreprocessorOpts().DisablePragmaDebugCrash)
+        LLVM_BUILTIN_TRAP;
     } else if (II->isStr("parser_crash")) {
-      Token Crasher;
-      Crasher.startToken();
-      Crasher.setKind(tok::annot_pragma_parser_crash);
-      Crasher.setAnnotationRange(SourceRange(Tok.getLocation()));
-      PP.EnterToken(Crasher, /*IsReinject*/false);
+      if (!PP.getPreprocessorOpts().DisablePragmaDebugCrash) {
+        Token Crasher;
+        Crasher.startToken();
+        Crasher.setKind(tok::annot_pragma_parser_crash);
+        Crasher.setAnnotationRange(SourceRange(Tok.getLocation()));
+        PP.EnterToken(Crasher, /*IsReinject*/ false);
+      }
     } else if (II->isStr("dump")) {
       Token Identifier;
       PP.LexUnexpandedToken(Identifier);
@@ -1075,9 +1087,11 @@ struct PragmaDebugHandler : public PragmaHandler {
             << II->getName();
       }
     } else if (II->isStr("llvm_fatal_error")) {
-      llvm::report_fatal_error("#pragma clang __debug llvm_fatal_error");
+      if (!PP.getPreprocessorOpts().DisablePragmaDebugCrash)
+        llvm::report_fatal_error("#pragma clang __debug llvm_fatal_error");
     } else if (II->isStr("llvm_unreachable")) {
-      llvm_unreachable("#pragma clang __debug llvm_unreachable");
+      if (!PP.getPreprocessorOpts().DisablePragmaDebugCrash)
+        llvm_unreachable("#pragma clang __debug llvm_unreachable");
     } else if (II->isStr("macro")) {
       Token MacroName;
       PP.LexUnexpandedToken(MacroName);
@@ -1104,13 +1118,61 @@ struct PragmaDebugHandler : public PragmaHandler {
       }
       M->dump();
     } else if (II->isStr("overflow_stack")) {
-      DebugOverflowStack();
-    } else if (II->isStr("handle_crash")) {
-      llvm::CrashRecoveryContext *CRC =llvm::CrashRecoveryContext::GetCurrent();
-      if (CRC)
-        CRC->HandleCrash();
+      if (!PP.getPreprocessorOpts().DisablePragmaDebugCrash)
+        DebugOverflowStack();
     } else if (II->isStr("captured")) {
       HandleCaptured(PP);
+    } else if (II->isStr("modules")) {
+      struct ModuleVisitor {
+        Preprocessor &PP;
+        void visit(Module *M, bool VisibleOnly) {
+          SourceLocation ImportLoc = PP.getModuleImportLoc(M);
+          if (!VisibleOnly || ImportLoc.isValid()) {
+            llvm::errs() << M->getFullModuleName() << " ";
+            if (ImportLoc.isValid()) {
+              llvm::errs() << M << " visible ";
+              ImportLoc.print(llvm::errs(), PP.getSourceManager());
+            }
+            llvm::errs() << "\n";
+          }
+          for (Module *Sub : M->submodules()) {
+            if (!VisibleOnly || ImportLoc.isInvalid() || Sub->IsExplicit)
+              visit(Sub, VisibleOnly);
+          }
+        }
+        void visitAll(bool VisibleOnly) {
+          for (auto &NameAndMod :
+               PP.getHeaderSearchInfo().getModuleMap().modules())
+            visit(NameAndMod.second, VisibleOnly);
+        }
+      } Visitor{PP};
+
+      Token Kind;
+      PP.LexUnexpandedToken(Kind);
+      auto *DumpII = Kind.getIdentifierInfo();
+      if (!DumpII) {
+        PP.Diag(Kind, diag::warn_pragma_debug_missing_argument)
+            << II->getName();
+      } else if (DumpII->isStr("all")) {
+        Visitor.visitAll(false);
+      } else if (DumpII->isStr("visible")) {
+        Visitor.visitAll(true);
+      } else if (DumpII->isStr("building")) {
+        for (auto &Building : PP.getBuildingSubmodules()) {
+          llvm::errs() << "in " << Building.M->getFullModuleName();
+          if (Building.ImportLoc.isValid()) {
+            llvm::errs() << " imported ";
+            if (Building.IsPragma)
+              llvm::errs() << "via pragma ";
+            llvm::errs() << "at ";
+            Building.ImportLoc.print(llvm::errs(), PP.getSourceManager());
+            llvm::errs() << "\n";
+          }
+        }
+      } else {
+        PP.Diag(Tok, diag::warn_pragma_debug_unexpected_command)
+          << DumpII->getName();
+      }
     } else {
       PP.Diag(Tok, diag::warn_pragma_debug_unexpected_command)
         << II->getName();
@@ -1345,7 +1407,7 @@ struct PragmaWarningHandler : public PragmaHandler {
         while (Tok.is(tok::numeric_constant)) {
           uint64_t Value;
           if (!PP.parseSimpleIntegerLiteral(Tok, Value) || Value == 0 ||
-              Value > std::numeric_limits<int>::max()) {
+              Value > INT_MAX) {
             PP.Diag(Tok, diag::warn_pragma_warning_expected_number);
             return;
           }
@@ -1896,10 +1958,9 @@ void Preprocessor::RegisterBuiltinPragmas() {
   }
 
   // Pragmas added by plugins
-  for (PragmaHandlerRegistry::iterator it = PragmaHandlerRegistry::begin(),
-                                       ie = PragmaHandlerRegistry::end();
-       it != ie; ++it) {
-    AddPragmaHandler(it->instantiate().release());
+  for (const PragmaHandlerRegistry::entry &handler :
+       PragmaHandlerRegistry::entries()) {
+    AddPragmaHandler(handler.instantiate().release());
   }
 }
 

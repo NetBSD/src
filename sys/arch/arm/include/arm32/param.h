@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.33 2020/07/10 12:25:09 skrll Exp $	*/
+/*	$NetBSD: param.h,v 1.33.8.1 2021/05/31 22:15:11 cjep Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -38,6 +38,7 @@
 #ifdef _KERNEL_OPT
 #include "opt_arm32_pmap.h"
 #include "opt_kasan.h"
+#include "opt_param.h"
 #endif
 
 /*

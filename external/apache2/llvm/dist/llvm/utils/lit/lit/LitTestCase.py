@@ -1,7 +1,8 @@
 import unittest
 
-import lit.worker
+import lit.discovery
 import lit.LitConfig
+import lit.worker
 
 """
 TestCase adaptor for providing a Python 'unittest' compatible interface to 'lit'
@@ -54,7 +55,7 @@ def load_test_suite(inputs):
         params={})
 
     # Perform test discovery.
-    tests = lit.discovery.find_tests_for_inputs(lit_config, inputs)
+    tests = lit.discovery.find_tests_for_inputs(lit_config, inputs, False)
     test_adaptors = [LitTestCase(t, lit_config) for t in tests]
 
     # Return a unittest test suite which just runs the tests in order.

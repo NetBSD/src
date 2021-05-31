@@ -45,9 +45,11 @@ static_library("LLVMRISCVCodeGen") {
     ":RISCVGenGlobalISel",
     ":RISCVGenMCPseudoLowering",
     ":RISCVGenRegisterBank",
+
+    # See https://reviews.llvm.org/D69130
+    "AsmParser:RISCVGenAsmMatcher",
     "MCTargetDesc",
     "TargetInfo",
-    "Utils",
     "//llvm/include/llvm/Config:llvm-config",
     "//llvm/lib/CodeGen",
     "//llvm/lib/CodeGen/AsmPrinter",
@@ -61,6 +63,8 @@ static_library("LLVMRISCVCodeGen") {
   sources = [
     "RISCVAsmPrinter.cpp",
     "RISCVCallLowering.cpp",
+    "RISCVCleanupVSETVLI.cpp",
+    "RISCVExpandAtomicPseudoInsts.cpp",
     "RISCVExpandPseudoInsts.cpp",
     "RISCVFrameLowering.cpp",
     "RISCVISelDAGToDAG.cpp",
@@ -92,6 +96,5 @@ group("RISCV") {
     "Disassembler",
     "MCTargetDesc",
     "TargetInfo",
-    "Utils",
   ]
 }

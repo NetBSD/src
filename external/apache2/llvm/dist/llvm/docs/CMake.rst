@@ -34,7 +34,7 @@ Quick start
 We use here the command-line, non-interactive CMake interface.
 
 #. `Download <http://www.cmake.org/cmake/resources/software.html>`_ and install
-   CMake. Version 3.4.3 is the minimum required.
+   CMake. Version 3.13.4 is the minimum required.
 
 #. Open a shell. Your development tools must be reachable from this shell
    through the PATH environment variable.
@@ -225,6 +225,11 @@ LLVM-specific variables
   targets. Case-sensitive. Defaults to *all*. Example:
   ``-DLLVM_TARGETS_TO_BUILD="X86;PowerPC"``.
 
+**LLVM_EXPERIMENTAL_TARGETS_TO_BUILD**:STRING
+  Semicolon-separated list of experimental targets to build and linked into 
+  llvm. This will build the experimental target without needing it to add to the 
+  list of all the targets available in the LLVM's main CMakeLists.txt.
+
 **LLVM_BUILD_TOOLS**:BOOL
   Build LLVM tools. Defaults to ON. Targets for building each tool are generated
   in any case. You can build a tool separately by invoking its target. For
@@ -272,7 +277,7 @@ LLVM-specific variables
   Generate build targets for the LLVM benchmarks. Defaults to ON.
 
 **LLVM_APPEND_VC_REV**:BOOL
-  Embed version control revision info (svn revision number or Git revision id).
+  Embed version control revision info (Git revision id).
   The version info is provided by the ``LLVM_REVISION`` macro in
   ``llvm/include/llvm/Support/VCSRevision.h``. Developers using git who don't
   need revision info can disable this option to avoid re-linking most binaries
@@ -305,6 +310,10 @@ LLVM-specific variables
   configured manually to explicitly control the generation of those targets. One
   scenario where a manual override may be desirable is when using Visual Studio
   2017's CMake integration, which would not be detected as an IDE otherwise.
+
+**LLVM_ENABLE_MODULES**:BOOL
+  Compile with `Clang Header Modules
+  <https://clang.llvm.org/docs/Modules.html>`_.
 
 **LLVM_ENABLE_PIC**:BOOL
   Add the ``-fPIC`` flag to the compiler command-line, if the compiler supports
@@ -383,7 +392,7 @@ LLVM-specific variables
   This feature allows to have one build for only LLVM and another for clang+llvm
   using the same source checkout.
   The full list is:
-  ``clang;clang-tools-extra;compiler-rt;debuginfo-tests;libc;libclc;libcxx;libcxxabi;libunwind;lld;lldb;llgo;openmp;parallel-libs;polly;pstl``
+  ``clang;clang-tools-extra;compiler-rt;debuginfo-tests;libc;libclc;libcxx;libcxxabi;libunwind;lld;lldb;openmp;parallel-libs;polly;pstl``
 
 **LLVM_EXTERNAL_PROJECTS**:STRING
   Semicolon-separated list of additional external projects to build as part of
@@ -422,7 +431,12 @@ LLVM-specific variables
 **LLVM_USE_SANITIZER**:STRING
   Define the sanitizer used to build LLVM binaries and tests. Possible values
   are ``Address``, ``Memory``, ``MemoryWithOrigins``, ``Undefined``, ``Thread``,
-  and ``Address;Undefined``. Defaults to empty string.
+  ``DataFlow``, and ``Address;Undefined``. Defaults to empty string.
+
+**LLVM_UBSAN_FLAGS**:STRING
+  Defines the set of compile flags used to enable UBSan. Only used if
+  ``LLVM_USE_SANITIZER`` contains ``Undefined``. This can be used to override
+  the default set of UBSan flags.
 
 **LLVM_ENABLE_LTO**:STRING
   Add ``-flto`` or ``-flto=`` flags to the compile and link command
@@ -444,7 +458,7 @@ LLVM-specific variables
 **LLVM_STATIC_LINK_CXX_STDLIB**:BOOL
   Statically link to the C++ standard library if possible. This uses the flag
   "-static-libstdc++", but a Clang host compiler will statically link to libc++
-  if used in conjuction with the **LLVM_ENABLE_LIBCXX** flag. Defaults to OFF.
+  if used in conjunction with the **LLVM_ENABLE_LIBCXX** flag. Defaults to OFF.
 
 **LLVM_ENABLE_LLD**:BOOL
   This option is equivalent to `-DLLVM_USE_LINKER=lld`, except during a 2-stage
@@ -456,6 +470,31 @@ LLVM-specific variables
 
 **LLVM_PARALLEL_LINK_JOBS**:STRING
   Define the maximum number of concurrent link jobs.
+
+**LLVM_EXTERNALIZE_DEBUGINFO**:BOOL
+  Generate dSYM files and strip executables and libraries (Darwin Only).
+  Defaults to OFF.
+
+**LLVM_USE_CRT_{target}**:STRING
+  On Windows, tells which version of the C runtime library (CRT) should be used.
+  For example, -DLLVM_USE_CRT_RELEASE=MT would statically link the CRT into the
+  LLVM tools and library.
+
+**LLVM_INTEGRATED_CRT_ALLOC**:PATH
+  On Windows, allows embedding a different C runtime allocator into the LLVM
+  tools and libraries. Using a lock-free allocator such as the ones listed below
+  greatly decreases ThinLTO link time by about an order of magnitude. It also
+  midly improves Clang build times, by about 5-10%. At the moment, rpmalloc,
+  snmalloc and mimalloc are supported. Use the path to `git clone` to select
+  the respective allocator, for example:
+
+  .. code-block:: console
+
+    $ D:\git> git clone https://github.com/mjansson/rpmalloc
+    $ D:\llvm-project> cmake ... -DLLVM_INTEGRATED_CRT_ALLOC=D:\git\rpmalloc
+  
+  This flag needs to be used along with the static CRT, ie. if building the
+  Release target, add -DLLVM_USE_CRT_RELEASE=MT.
 
 **LLVM_BUILD_DOCS**:BOOL
   Adds all *enabled* documentation targets (i.e. Doxgyen and Sphinx targets) as
@@ -527,7 +566,7 @@ LLVM-specific variables
 **SPHINX_EXECUTABLE**:STRING
   The path to the ``sphinx-build`` executable detected by CMake.
   For installation instructions, see
-  http://www.sphinx-doc.org/en/latest/usage/installation.html
+  https://www.sphinx-doc.org/en/master/usage/installation.html
 
 **SPHINX_OUTPUT_HTML**:BOOL
   If enabled (and ``LLVM_ENABLE_SPHINX`` is enabled) then the targets for
@@ -570,11 +609,13 @@ LLVM-specific variables
   is also ON.
   The components in the library can be customised by setting LLVM_DYLIB_COMPONENTS
   to a list of the desired components.
+  This option is not available on Windows.
 
 **LLVM_LINK_LLVM_DYLIB**:BOOL
   If enabled, tools will be linked with the libLLVM shared library. Defaults
   to OFF. Setting LLVM_LINK_LLVM_DYLIB to ON also sets LLVM_BUILD_LLVM_DYLIB
   to ON.
+  This option is not available on Windows.
 
 **BUILD_SHARED_LIBS**:BOOL
   Flag indicating if each LLVM component (e.g. Support) is built as a shared
@@ -599,7 +640,7 @@ LLVM-specific variables
 
 **LLVM_BUILD_INSTRUMENTED_COVERAGE**:BOOL
   If enabled, `source-based code coverage
-  <http://clang.llvm.org/docs/SourceBasedCodeCoverage.html>`_ instrumentation
+  <https://clang.llvm.org/docs/SourceBasedCodeCoverage.html>`_ instrumentation
   is enabled while building llvm.
 
 **LLVM_CCACHE_BUILD**:BOOL
@@ -628,6 +669,18 @@ LLVM-specific variables
 **LLVM_ENABLE_Z3_SOLVER**:BOOL
   If enabled, the Z3 constraint solver is activated for the Clang static analyzer.
   A recent version of the z3 library needs to be available on the system.
+
+**LLVM_USE_RELATIVE_PATHS_IN_DEBUG_INFO**:BOOL
+  Rewrite absolute source paths in debug info to relative ones. The source prefix
+  can be adjusted via the LLVM_SOURCE_PREFIX variable.
+
+**LLVM_USE_RELATIVE_PATHS_IN_FILES**:BOOL
+  Rewrite absolute source paths in sources and debug info to relative ones. The
+  source prefix can be adjusted via the LLVM_SOURCE_PREFIX variable.
+
+**LLVM_INSTALL_UTILS**:BOOL
+  If enabled, utility binaries like ``FileCheck`` and ``not`` will be installed
+  to CMAKE_INSTALL_PREFIX.
 
 CMake Caches
 ============
@@ -703,7 +756,7 @@ and uses them to build a simple application ``simple-tool``.
 
 .. code-block:: cmake
 
-  cmake_minimum_required(VERSION 3.4.3)
+  cmake_minimum_required(VERSION 3.13.4)
   project(SimpleProject)
 
   find_package(LLVM REQUIRED CONFIG)

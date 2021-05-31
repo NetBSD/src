@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_130.c,v 1.13 2021/04/02 13:16:38 rillig Exp $	*/
+/*	$NetBSD: msg_130.c,v 1.13.2.1 2021/05/31 22:15:24 cjep Exp $	*/
 # 3 "msg_130.c"
 
 // Test for message: enum type mismatch: '%s' '%s' '%s' [130]
@@ -61,7 +61,7 @@ switch_example(enum color c)
  */
 enum {
 	sizeof_int = sizeof(int),
-	sizeof_long = sizeof(long)
+	sizeof_short = sizeof(short)
 };
 
 enum {
@@ -75,7 +75,7 @@ enum_constant_from_unnamed_type(int x)
 	switch (x) {
 	case sizeof_int:
 		return 1;
-	case sizeof_long:
+	case sizeof_short:
 		return 2;
 	default:
 		break;

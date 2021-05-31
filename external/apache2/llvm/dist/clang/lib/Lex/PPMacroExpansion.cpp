@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Basic/Attributes.h"
+#include "clang/Basic/Builtins.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/LLVM.h"
@@ -24,10 +25,12 @@
 #include "clang/Lex/ExternalPreprocessorSource.h"
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/LexDiagnostic.h"
+#include "clang/Lex/LiteralSupport.h"
 #include "clang/Lex/MacroArgs.h"
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/PreprocessorLexer.h"
+#include "clang/Lex/PreprocessorOptions.h"
 #include "clang/Lex/Token.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
@@ -35,9 +38,9 @@
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/None.h"
 #include "llvm/ADT/Optional.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/Casting.h"
@@ -168,7 +171,8 @@ ModuleMacro *Preprocessor::addModuleMacro(Module *Mod, IdentifierInfo *II,
   return MM;
 }
 
-ModuleMacro *Preprocessor::getModuleMacro(Module *Mod, IdentifierInfo *II) {
+ModuleMacro *Preprocessor::getModuleMacro(Module *Mod,
+                                          const IdentifierInfo *II) {
   llvm::FoldingSetNodeID ID;
   ModuleMacro::Profile(ID, Mod, II);
 
@@ -343,7 +347,7 @@ void Preprocessor::RegisterBuiltinMacros() {
   Ident_Pragma  = RegisterBuiltinMacro(*this, "_Pragma");
 
   // C++ Standing Document Extensions.
-  if (LangOpts.CPlusPlus)
+  if (getLangOpts().CPlusPlus)
     Ident__has_cpp_attribute =
         RegisterBuiltinMacro(*this, "__has_cpp_attribute");
   else
@@ -355,7 +359,7 @@ void Preprocessor::RegisterBuiltinMacros() {
   Ident__TIMESTAMP__     = RegisterBuiltinMacro(*this, "__TIMESTAMP__");
 
   // Microsoft Extensions.
-  if (LangOpts.MicrosoftExt) {
+  if (getLangOpts().MicrosoftExt) {
     Ident__identifier = RegisterBuiltinMacro(*this, "__identifier");
     Ident__pragma = RegisterBuiltinMacro(*this, "__pragma");
   } else {
@@ -369,7 +373,11 @@ void Preprocessor::RegisterBuiltinMacros() {
   Ident__has_extension    = RegisterBuiltinMacro(*this, "__has_extension");
   Ident__has_builtin      = RegisterBuiltinMacro(*this, "__has_builtin");
   Ident__has_attribute    = RegisterBuiltinMacro(*this, "__has_attribute");
-  Ident__has_c_attribute  = RegisterBuiltinMacro(*this, "__has_c_attribute");
+  if (!getLangOpts().CPlusPlus)
+    Ident__has_c_attribute = RegisterBuiltinMacro(*this, "__has_c_attribute");
+  else
+    Ident__has_c_attribute = nullptr;
+
   Ident__has_declspec = RegisterBuiltinMacro(*this, "__has_declspec_attribute");
   Ident__has_include      = RegisterBuiltinMacro(*this, "__has_include");
   Ident__has_include_next = RegisterBuiltinMacro(*this, "__has_include_next");
@@ -383,7 +391,7 @@ void Preprocessor::RegisterBuiltinMacros() {
 
   // Modules.
   Ident__building_module  = RegisterBuiltinMacro(*this, "__building_module");
-  if (!LangOpts.CurrentModule.empty())
+  if (!getLangOpts().CurrentModule.empty())
     Ident__MODULE__ = RegisterBuiltinMacro(*this, "__MODULE__");
   else
     Ident__MODULE__ = nullptr;
@@ -820,18 +828,26 @@ MacroArgs *Preprocessor::ReadMacroCallArgumentList(Token &MacroName,
         }
       } else if (Tok.is(tok::l_paren)) {
         ++NumParens;
-      } else if (Tok.is(tok::comma) && NumParens == 0 &&
-                 !(Tok.getFlags() & Token::IgnoredComma)) {
+      } else if (Tok.is(tok::comma)) {
         // In Microsoft-compatibility mode, single commas from nested macro
         // expansions should not be considered as argument separators. We test
-        // for this with the IgnoredComma token flag above.
-
-        // Comma ends this argument if there are more fixed arguments expected.
-        // However, if this is a variadic macro, and this is part of the
-        // variadic part, then the comma is just an argument token.
-        if (!isVariadic) break;
-        if (NumFixedArgsLeft > 1)
-          break;
+        // for this with the IgnoredComma token flag.
+        if (Tok.getFlags() & Token::IgnoredComma) {
+          // However, in MSVC's preprocessor, subsequent expansions do treat
+          // these commas as argument separators. This leads to a common
+          // workaround used in macros that need to work in both MSVC and
+          // compliant preprocessors. Therefore, the IgnoredComma flag can only
+          // apply once to any given token.
+          Tok.clearFlag(Token::IgnoredComma);
+        } else if (NumParens == 0) {
+          // Comma ends this argument if there are more fixed arguments
+          // expected. However, if this is a variadic macro, and this is part of
+          // the variadic part, then the comma is just an argument token.
+          if (!isVariadic)
+            break;
+          if (NumFixedArgsLeft > 1)
+            break;
+        }
       } else if (Tok.is(tok::comment) && !KeepMacroComments) {
         // If this is a comment token in the argument list and we're just in
         // -C mode (not -CC mode), discard the comment.
@@ -875,10 +891,10 @@ MacroArgs *Preprocessor::ReadMacroCallArgumentList(Token &MacroName,
 
     // Empty arguments are standard in C99 and C++0x, and are supported as an
     // extension in other modes.
-    if (ArgTokens.size() == ArgTokenStart && !LangOpts.C99)
-      Diag(Tok, LangOpts.CPlusPlus11 ?
-           diag::warn_cxx98_compat_empty_fnmacro_arg :
-           diag::ext_empty_fnmacro_arg);
+    if (ArgTokens.size() == ArgTokenStart && !getLangOpts().C99)
+      Diag(Tok, getLangOpts().CPlusPlus11
+                    ? diag::warn_cxx98_compat_empty_fnmacro_arg
+                    : diag::ext_empty_fnmacro_arg);
 
     // Add a marker EOF token to the end of the token list for this argument.
     Token EOFTok;
@@ -1437,6 +1453,15 @@ static bool isTargetEnvironment(const TargetInfo &TI,
   return TI.getTriple().getEnvironment() == Env.getEnvironment();
 }
 
+static void remapMacroPath(
+    SmallString<256> &Path,
+    const std::map<std::string, std::string, std::greater<std::string>>
+        &MacroPrefixMap) {
+  for (const auto &Entry : MacroPrefixMap)
+    if (llvm::sys::path::replace_path_prefix(Path, Entry.first, Entry.second))
+      break;
+}
+
 /// ExpandBuiltinMacro - If an identifier token is read that is to be expanded
 /// as a builtin macro, handle it and return the next token as 'Tok'.
 void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
@@ -1503,7 +1528,7 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
     }
 
     // Escape this filename.  Turn '\' -> '\\' '"' -> '\"'
-    SmallString<128> FN;
+    SmallString<256> FN;
     if (PLoc.isValid()) {
       // __FILE_NAME__ is a Clang-specific extension that expands to the
       // the last part of __FILE__.
@@ -1518,6 +1543,7 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
       } else {
         FN += PLoc.getFilename();
       }
+      remapMacroPath(FN, PPOpts->MacroPrefixMap);
       Lexer::Stringify(FN);
       OS << '"' << FN << '"';
     }
@@ -1604,7 +1630,6 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
       [this](Token &Tok, bool &HasLexedNextToken) -> int {
         IdentifierInfo *II = ExpectFeatureIdentifierInfo(Tok, *this,
                                            diag::err_feature_check_malformed);
-        const LangOptions &LangOpts = getLangOpts();
         if (!II)
           return false;
         else if (II->getBuiltinID() != 0) {
@@ -1640,8 +1665,8 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
         } else {
           return llvm::StringSwitch<bool>(II->getName())
               // Report builtin templates as being builtins.
-              .Case("__make_integer_seq", LangOpts.CPlusPlus)
-              .Case("__type_pack_element", LangOpts.CPlusPlus)
+              .Case("__make_integer_seq", getLangOpts().CPlusPlus)
+              .Case("__type_pack_element", getLangOpts().CPlusPlus)
               // Likewise for some builtin preprocessor macros.
               // FIXME: This is inconsistent; we usually suggest detecting
               // builtin macros via #ifdef. Don't add more cases here.
@@ -1670,8 +1695,14 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
       [this](Token &Tok, bool &HasLexedNextToken) -> int {
         IdentifierInfo *II = ExpectFeatureIdentifierInfo(Tok, *this,
                                            diag::err_feature_check_malformed);
-        return II ? hasAttribute(AttrSyntax::Declspec, nullptr, II,
-                                 getTargetInfo(), getLangOpts()) : 0;
+        if (II) {
+          const LangOptions &LangOpts = getLangOpts();
+          return LangOpts.DeclSpecKeyword &&
+                 hasAttribute(AttrSyntax::Declspec, nullptr, II,
+                              getTargetInfo(), LangOpts);
+        }
+
+        return false;
       });
   } else if (II == Ident__has_cpp_attribute ||
              II == Ident__has_c_attribute) {
@@ -1783,7 +1814,14 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
 
     if (!Tok.isAnnotation() && Tok.getIdentifierInfo())
       Tok.setKind(tok::identifier);
-    else {
+    else if (Tok.is(tok::string_literal) && !Tok.hasUDSuffix()) {
+      StringLiteralParser Literal(Tok, *this);
+      if (Literal.hadError)
+        return;
+
+      Tok.setIdentifierInfo(getIdentifierInfo(Literal.GetString()));
+      Tok.setKind(tok::identifier);
+    } else {
       Diag(Tok.getLocation(), diag::err_pp_identifier_arg_not_identifier)
         << Tok.getKind();
       // Don't walk past anything that's not a real token.

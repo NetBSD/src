@@ -187,7 +187,7 @@ APInt& APInt::operator--() {
   return clearUnusedBits();
 }
 
-/// Adds the RHS APint to this APInt.
+/// Adds the RHS APInt to this APInt.
 /// @returns this, after addition of RHS.
 /// Addition assignment operator.
 APInt& APInt::operator+=(const APInt& RHS) {
@@ -338,8 +338,7 @@ void APInt::flipAllBitsSlowCase() {
 /// Toggles a given bit to its opposite value.
 void APInt::flipBit(unsigned bitPosition) {
   assert(bitPosition < BitWidth && "Out of the bit-width range!");
-  if ((*this)[bitPosition]) clearBit(bitPosition);
-  else setBit(bitPosition);
+  setBitVal(bitPosition, !(*this)[bitPosition]);
 }
 
 void APInt::insertBits(const APInt &subBits, unsigned bitPosition) {
@@ -393,12 +392,8 @@ void APInt::insertBits(const APInt &subBits, unsigned bitPosition) {
   // General case - set/clear individual bits in dst based on src.
   // TODO - there is scope for optimization here, but at the moment this code
   // path is barely used so prefer readability over performance.
-  for (unsigned i = 0; i != subBitWidth; ++i) {
-    if (subBits[i])
-      setBit(bitPosition + i);
-    else
-      clearBit(bitPosition + i);
-  }
+  for (unsigned i = 0; i != subBitWidth; ++i)
+    setBitVal(bitPosition + i, subBits[i]);
 }
 
 void APInt::insertBits(uint64_t subBits, unsigned bitPosition, unsigned numBits) {
@@ -548,9 +543,11 @@ unsigned APInt::getBitsNeeded(StringRef str, uint8_t radix) {
 
 hash_code llvm::hash_value(const APInt &Arg) {
   if (Arg.isSingleWord())
-    return hash_combine(Arg.U.VAL);
+    return hash_combine(Arg.BitWidth, Arg.U.VAL);
 
-  return hash_combine_range(Arg.U.pVal, Arg.U.pVal + Arg.getNumWords());
+  return hash_combine(
+      Arg.BitWidth,
+      hash_combine_range(Arg.U.pVal, Arg.U.pVal + Arg.getNumWords()));
 }
 
 bool APInt::isSplat(unsigned SplatSizeInBits) const {
@@ -670,20 +667,16 @@ bool APInt::isSubsetOfSlowCase(const APInt &RHS) const {
 }
 
 APInt APInt::byteSwap() const {
-  assert(BitWidth >= 16 && BitWidth % 16 == 0 && "Cannot byteswap!");
+  assert(BitWidth >= 16 && BitWidth % 8 == 0 && "Cannot byteswap!");
   if (BitWidth == 16)
     return APInt(BitWidth, ByteSwap_16(uint16_t(U.VAL)));
   if (BitWidth == 32)
     return APInt(BitWidth, ByteSwap_32(unsigned(U.VAL)));
-  if (BitWidth == 48) {
-    unsigned Tmp1 = unsigned(U.VAL >> 16);
-    Tmp1 = ByteSwap_32(Tmp1);
-    uint16_t Tmp2 = uint16_t(U.VAL);
-    Tmp2 = ByteSwap_16(Tmp2);
-    return APInt(BitWidth, (uint64_t(Tmp2) << 32) | Tmp1);
+  if (BitWidth <= 64) {
+    uint64_t Tmp1 = ByteSwap_64(U.VAL);
+    Tmp1 >>= (64 - BitWidth);
+    return APInt(BitWidth, Tmp1);
   }
-  if (BitWidth == 64)
-    return APInt(BitWidth, ByteSwap_64(U.VAL));
 
   APInt Result(getNumWords() * APINT_BITS_PER_WORD, 0);
   for (unsigned I = 0, N = getNumWords(); I != N; ++I)
@@ -884,6 +877,31 @@ APInt APInt::trunc(unsigned width) const {
   return Result;
 }
 
+// Truncate to new width with unsigned saturation.
+APInt APInt::truncUSat(unsigned width) const {
+  assert(width < BitWidth && "Invalid APInt Truncate request");
+  assert(width && "Can't truncate to 0 bits");
+
+  // Can we just losslessly truncate it?
+  if (isIntN(width))
+    return trunc(width);
+  // If not, then just return the new limit.
+  return APInt::getMaxValue(width);
+}
+
+// Truncate to new width with signed saturation.
+APInt APInt::truncSSat(unsigned width) const {
+  assert(width < BitWidth && "Invalid APInt Truncate request");
+  assert(width && "Can't truncate to 0 bits");
+
+  // Can we just losslessly truncate it?
+  if (isSignedIntN(width))
+    return trunc(width);
+  // If not, then just return the new limits.
+  return isNegative() ? APInt::getSignedMinValue(width)
+                      : APInt::getSignedMaxValue(width);
+}
+
 // Sign extend to a new width.
 APInt APInt::sext(unsigned Width) const {
   assert(Width > BitWidth && "Invalid APInt SignExtend request");
@@ -938,6 +956,12 @@ APInt APInt::zextOrTrunc(unsigned width) const {
 APInt APInt::sextOrTrunc(unsigned width) const {
   if (BitWidth < width)
     return sext(width);
+  if (BitWidth > width)
+    return trunc(width);
+  return *this;
+}
+
+APInt APInt::truncOrSelf(unsigned width) const {
   if (BitWidth > width)
     return trunc(width);
   return *this;
@@ -2258,7 +2282,7 @@ void APInt::toString(SmallVectorImpl<char> &Str, unsigned Radix,
 std::string APInt::toString(unsigned Radix = 10, bool Signed = true) const {
   SmallString<40> S;
   toString(S, Radix, Signed, /* formatAsCLiteral = */false);
-  return S.str();
+  return std::string(S.str());
 }
 
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
@@ -2830,7 +2854,7 @@ APInt llvm::APIntOps::RoundingSDiv(const APInt &A, const APInt &B,
       return Quo;
     return Quo + 1;
   }
-  // Currently sdiv rounds twards zero.
+  // Currently sdiv rounds towards zero.
   case APInt::Rounding::TOWARD_ZERO:
     return A.sdiv(B);
   }
@@ -2973,7 +2997,7 @@ llvm::APIntOps::SolveQuadraticEquationWrap(APInt A, APInt B, APInt C,
   APInt Q = SQ * SQ;
   bool InexactSQ = Q != D;
   // The calculated SQ may actually be greater than the exact (non-integer)
-  // value. If that's the case, decremement SQ to get a value that is lower.
+  // value. If that's the case, decrement SQ to get a value that is lower.
   if (Q.sgt(D))
     SQ -= 1;
 
@@ -3063,7 +3087,8 @@ void llvm::StoreIntToMemory(const APInt &IntVal, uint8_t *Dst,
 
 /// LoadIntFromMemory - Loads the integer stored in the LoadBytes bytes starting
 /// from Src into IntVal, which is assumed to be wide enough and to hold zero.
-void llvm::LoadIntFromMemory(APInt &IntVal, uint8_t *Src, unsigned LoadBytes) {
+void llvm::LoadIntFromMemory(APInt &IntVal, const uint8_t *Src,
+                             unsigned LoadBytes) {
   assert((IntVal.getBitWidth()+7)/8 >= LoadBytes && "Integer too small!");
   uint8_t *Dst = reinterpret_cast<uint8_t *>(
                    const_cast<uint64_t *>(IntVal.getRawData()));

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/11/11 22:45:13 joerg Exp $
+#	$NetBSD: Makefile,v 1.1.4.1 2021/05/31 22:10:10 cjep Exp $
 
 LIB=	LLVMVectorize
 
@@ -10,12 +10,13 @@ SRCS+=	LoadStoreVectorizer.cpp \
 	LoopVectorizationLegality.cpp \
 	LoopVectorize.cpp \
 	SLPVectorizer.cpp \
+	VectorCombine.cpp \
 	Vectorize.cpp \
 	VPlan.cpp \
 	VPlanHCFGBuilder.cpp \
-	VPlanHCFGTransforms.cpp \
 	VPlanPredicator.cpp \
 	VPlanSLP.cpp \
+	VPlanTransforms.cpp \
 	VPlanVerifier.cpp
 
 .if defined(HOSTLIB)

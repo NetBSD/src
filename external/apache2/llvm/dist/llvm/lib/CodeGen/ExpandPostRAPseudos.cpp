@@ -19,6 +19,7 @@
 #include "llvm/CodeGen/TargetInstrInfo.h"
 #include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
+#include "llvm/InitializePasses.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -187,9 +188,8 @@ bool ExpandPostRA::runOnMachineFunction(MachineFunction &MF) {
 
   bool MadeChange = false;
 
-  for (MachineFunction::iterator mbbi = MF.begin(), mbbe = MF.end();
-       mbbi != mbbe; ++mbbi) {
-    for (MachineBasicBlock::iterator mi = mbbi->begin(), me = mbbi->end();
+  for (MachineBasicBlock &MBB : MF) {
+    for (MachineBasicBlock::iterator mi = MBB.begin(), me = MBB.end();
          mi != me;) {
       MachineInstr &MI = *mi;
       // Advance iterator here because MI may be erased.

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/11/11 22:45:09 joerg Exp $
+#	$NetBSD: Makefile,v 1.1.4.1 2021/05/31 22:10:09 cjep Exp $
 
 LIB=	LLVMMCParser
 
@@ -9,8 +9,10 @@ LIB=	LLVMMCParser
 SRCS+=	AsmLexer.cpp \
 	AsmParser.cpp \
 	COFFAsmParser.cpp \
+	COFFMasmParser.cpp \
 	DarwinAsmParser.cpp \
 	ELFAsmParser.cpp \
+	MasmParser.cpp \
 	MCAsmLexer.cpp \
 	MCAsmParser.cpp \
 	MCAsmParserExtension.cpp \

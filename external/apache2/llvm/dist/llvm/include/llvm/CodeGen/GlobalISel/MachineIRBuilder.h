@@ -14,15 +14,14 @@
 #define LLVM_CODEGEN_GLOBALISEL_MACHINEIRBUILDER_H
 
 #include "llvm/CodeGen/GlobalISel/CSEInfo.h"
-#include "llvm/CodeGen/GlobalISel/Types.h"
-
 #include "llvm/CodeGen/LowLevelType.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/TargetOpcodes.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DebugLoc.h"
-
+#include "llvm/IR/Module.h"
 
 namespace llvm {
 
@@ -37,23 +36,23 @@ class GISelChangeObserver;
 /// to transfer BuilderState between different kinds of MachineIRBuilders.
 struct MachineIRBuilderState {
   /// MachineFunction under construction.
-  MachineFunction *MF;
+  MachineFunction *MF = nullptr;
   /// Information used to access the description of the opcodes.
-  const TargetInstrInfo *TII;
+  const TargetInstrInfo *TII = nullptr;
   /// Information used to verify types are consistent and to create virtual registers.
-  MachineRegisterInfo *MRI;
+  MachineRegisterInfo *MRI = nullptr;
   /// Debug location to be set to any instruction we create.
   DebugLoc DL;
 
   /// \name Fields describing the insertion point.
   /// @{
-  MachineBasicBlock *MBB;
+  MachineBasicBlock *MBB = nullptr;
   MachineBasicBlock::iterator II;
   /// @}
 
-  GISelChangeObserver *Observer;
+  GISelChangeObserver *Observer = nullptr;
 
-  GISelCSEInfo *CSEInfo;
+  GISelCSEInfo *CSEInfo = nullptr;
 };
 
 class DstOp {
@@ -68,7 +67,7 @@ public:
   DstOp(unsigned R) : Reg(R), Ty(DstType::Ty_Reg) {}
   DstOp(Register R) : Reg(R), Ty(DstType::Ty_Reg) {}
   DstOp(const MachineOperand &Op) : Reg(Op.getReg()), Ty(DstType::Ty_Reg) {}
-  DstOp(const LLT &T) : LLTTy(T), Ty(DstType::Ty_LLT) {}
+  DstOp(const LLT T) : LLTTy(T), Ty(DstType::Ty_LLT) {}
   DstOp(const TargetRegisterClass *TRC) : RC(TRC), Ty(DstType::Ty_RC) {}
 
   void addDefToMIB(MachineRegisterInfo &MRI, MachineInstrBuilder &MIB) const {
@@ -223,21 +222,39 @@ class MachineIRBuilder {
   MachineIRBuilderState State;
 
 protected:
-  void validateTruncExt(const LLT &Dst, const LLT &Src, bool IsExtend);
+  void validateTruncExt(const LLT Dst, const LLT Src, bool IsExtend);
 
-  void validateBinaryOp(const LLT &Res, const LLT &Op0, const LLT &Op1);
-  void validateShiftOp(const LLT &Res, const LLT &Op0, const LLT &Op1);
+  void validateUnaryOp(const LLT Res, const LLT Op0);
+  void validateBinaryOp(const LLT Res, const LLT Op0, const LLT Op1);
+  void validateShiftOp(const LLT Res, const LLT Op0, const LLT Op1);
 
-  void validateSelectOp(const LLT &ResTy, const LLT &TstTy, const LLT &Op0Ty,
-                        const LLT &Op1Ty);
-  void recordInsertion(MachineInstr *MI) const;
+  void validateSelectOp(const LLT ResTy, const LLT TstTy, const LLT Op0Ty,
+                        const LLT Op1Ty);
+
+  void recordInsertion(MachineInstr *InsertedInstr) const {
+    if (State.Observer)
+      State.Observer->createdInstr(*InsertedInstr);
+  }
 
 public:
   /// Some constructors for easy use.
   MachineIRBuilder() = default;
   MachineIRBuilder(MachineFunction &MF) { setMF(MF); }
-  MachineIRBuilder(MachineInstr &MI) : MachineIRBuilder(*MI.getMF()) {
+
+  MachineIRBuilder(MachineBasicBlock &MBB, MachineBasicBlock::iterator InsPt) {
+    setMF(*MBB.getParent());
+    setInsertPt(MBB, InsPt);
+  }
+
+  MachineIRBuilder(MachineInstr &MI) :
+    MachineIRBuilder(*MI.getParent(), MI.getIterator()) {
     setInstr(MI);
+    setDebugLoc(MI.getDebugLoc());
+  }
+
+  MachineIRBuilder(MachineInstr &MI, GISelChangeObserver &Observer) :
+    MachineIRBuilder(MI) {
+    setChangeObserver(Observer);
   }
 
   virtual ~MachineIRBuilder() = default;
@@ -294,10 +311,16 @@ public:
   /// Set the insertion point before the specified position.
   /// \pre MBB must be in getMF().
   /// \pre II must be a valid iterator in MBB.
-  void setInsertPt(MachineBasicBlock &MBB, MachineBasicBlock::iterator II);
+  void setInsertPt(MachineBasicBlock &MBB, MachineBasicBlock::iterator II) {
+    assert(MBB.getParent() == &getMF() &&
+           "Basic block is in a different function");
+    State.MBB = &MBB;
+    State.II = II;
+  }
+
   /// @}
 
-  void setCSEInfo(GISelCSEInfo *Info);
+  void setCSEInfo(GISelCSEInfo *Info) { State.CSEInfo = Info; }
 
   /// \name Setters for the insertion point.
   /// @{
@@ -306,22 +329,41 @@ public:
 
   /// Set the insertion point to the  end of \p MBB.
   /// \pre \p MBB must be contained by getMF().
-  void setMBB(MachineBasicBlock &MBB);
+  void setMBB(MachineBasicBlock &MBB) {
+    State.MBB = &MBB;
+    State.II = MBB.end();
+    assert(&getMF() == MBB.getParent() &&
+           "Basic block is in a different function");
+  }
 
   /// Set the insertion point to before MI.
   /// \pre MI must be in getMF().
-  void setInstr(MachineInstr &MI);
+  void setInstr(MachineInstr &MI) {
+    assert(MI.getParent() && "Instruction is not part of a basic block");
+    setMBB(*MI.getParent());
+    State.II = MI.getIterator();
+  }
   /// @}
 
-  void setChangeObserver(GISelChangeObserver &Observer);
-  void stopObservingChanges();
+  /// Set the insertion point to before MI, and set the debug loc to MI's loc.
+  /// \pre MI must be in getMF().
+  void setInstrAndDebugLoc(MachineInstr &MI) {
+    setInstr(MI);
+    setDebugLoc(MI.getDebugLoc());
+  }
+
+  void setChangeObserver(GISelChangeObserver &Observer) {
+    State.Observer = &Observer;
+  }
+
+  void stopObservingChanges() { State.Observer = nullptr; }
   /// @}
 
   /// Set the debug location to \p DL for all the next build instructions.
   void setDebugLoc(const DebugLoc &DL) { this->State.DL = DL; }
 
   /// Get the current instruction's debug location.
-  DebugLoc getDebugLoc() { return State.DL; }
+  const DebugLoc &getDebugLoc() { return State.DL; }
 
   /// Build and insert <empty> = \p Opcode <empty>.
   /// The insertion point is the one set by the last call of either
@@ -330,7 +372,9 @@ public:
   /// \pre setBasicBlock or setMI must have been called.
   ///
   /// \return a MachineInstrBuilder for the newly created instruction.
-  MachineInstrBuilder buildInstr(unsigned Opcode);
+  MachineInstrBuilder buildInstr(unsigned Opcode) {
+    return insertInstr(buildInstrNoInsert(Opcode));
+  }
 
   /// Build but don't insert <empty> = \p Opcode <empty>.
   ///
@@ -379,7 +423,7 @@ public:
   ///
   /// \return a MachineInstrBuilder for the newly created instruction.
   MachineInstrBuilder buildDynStackAlloc(const DstOp &Res, const SrcOp &Size,
-                                         unsigned Align);
+                                         Align Alignment);
 
   /// Build and insert \p Res = G_FRAME_INDEX \p Idx
   ///
@@ -404,10 +448,11 @@ public:
   /// \return a MachineInstrBuilder for the newly created instruction.
   MachineInstrBuilder buildGlobalValue(const DstOp &Res, const GlobalValue *GV);
 
-  /// Build and insert \p Res = G_GEP \p Op0, \p Op1
+  /// Build and insert \p Res = G_PTR_ADD \p Op0, \p Op1
   ///
-  /// G_GEP adds \p Op1 bytes to the pointer specified by \p Op0,
-  /// storing the resulting pointer in \p Res.
+  /// G_PTR_ADD adds \p Op1 addressible units to the pointer specified by \p Op0,
+  /// storing the resulting pointer in \p Res. Addressible units are typically
+  /// bytes but this can vary between targets.
   ///
   /// \pre setBasicBlock or setMI must have been called.
   /// \pre \p Res and \p Op0 must be generic virtual registers with pointer
@@ -415,32 +460,38 @@ public:
   /// \pre \p Op1 must be a generic virtual register with scalar type.
   ///
   /// \return a MachineInstrBuilder for the newly created instruction.
-  MachineInstrBuilder buildGEP(const DstOp &Res, const SrcOp &Op0,
-                               const SrcOp &Op1);
+  MachineInstrBuilder buildPtrAdd(const DstOp &Res, const SrcOp &Op0,
+                                  const SrcOp &Op1);
 
-  /// Materialize and insert \p Res = G_GEP \p Op0, (G_CONSTANT \p Value)
+  /// Materialize and insert \p Res = G_PTR_ADD \p Op0, (G_CONSTANT \p Value)
   ///
-  /// G_GEP adds \p Value bytes to the pointer specified by \p Op0,
+  /// G_PTR_ADD adds \p Value bytes to the pointer specified by \p Op0,
   /// storing the resulting pointer in \p Res. If \p Value is zero then no
-  /// G_GEP or G_CONSTANT will be created and \pre Op0 will be assigned to
+  /// G_PTR_ADD or G_CONSTANT will be created and \pre Op0 will be assigned to
   /// \p Res.
   ///
   /// \pre setBasicBlock or setMI must have been called.
   /// \pre \p Op0 must be a generic virtual register with pointer type.
   /// \pre \p ValueTy must be a scalar type.
   /// \pre \p Res must be 0. This is to detect confusion between
-  ///      materializeGEP() and buildGEP().
+  ///      materializePtrAdd() and buildPtrAdd().
   /// \post \p Res will either be a new generic virtual register of the same
   ///       type as \p Op0 or \p Op0 itself.
   ///
   /// \return a MachineInstrBuilder for the newly created instruction.
-  Optional<MachineInstrBuilder> materializeGEP(Register &Res, Register Op0,
-                                               const LLT &ValueTy,
-                                               uint64_t Value);
+  Optional<MachineInstrBuilder> materializePtrAdd(Register &Res, Register Op0,
+                                                  const LLT ValueTy,
+                                                  uint64_t Value);
 
-  /// Build and insert \p Res = G_PTR_MASK \p Op0, \p NumBits
+  /// Build and insert \p Res = G_PTRMASK \p Op0, \p Op1
+  MachineInstrBuilder buildPtrMask(const DstOp &Res, const SrcOp &Op0,
+                                   const SrcOp &Op1) {
+    return buildInstr(TargetOpcode::G_PTRMASK, {Res}, {Op0, Op1});
+  }
+
+  /// Build and insert \p Res = G_PTRMASK \p Op0, \p G_CONSTANT (1 << NumBits) - 1
   ///
-  /// G_PTR_MASK clears the low bits of a pointer operand without destroying its
+  /// This clears the low bits of a pointer operand without destroying its
   /// pointer properties. This has the effect of rounding the address *down* to
   /// a specified alignment in bits.
   ///
@@ -451,8 +502,8 @@ public:
   ///      be cleared in \p Op0.
   ///
   /// \return a MachineInstrBuilder for the newly created instruction.
-  MachineInstrBuilder buildPtrMask(const DstOp &Res, const SrcOp &Op0,
-                                   uint32_t NumBits);
+  MachineInstrBuilder buildMaskLowPtrBits(const DstOp &Res, const SrcOp &Op0,
+                                          uint32_t NumBits);
 
   /// Build and insert \p Res, \p CarryOut = G_UADDO \p Op0, \p Op1
   ///
@@ -467,7 +518,27 @@ public:
   ///
   /// \return The newly created instruction.
   MachineInstrBuilder buildUAddo(const DstOp &Res, const DstOp &CarryOut,
-                                 const SrcOp &Op0, const SrcOp &Op1);
+                                 const SrcOp &Op0, const SrcOp &Op1) {
+    return buildInstr(TargetOpcode::G_UADDO, {Res, CarryOut}, {Op0, Op1});
+  }
+
+  /// Build and insert \p Res, \p CarryOut = G_USUBO \p Op0, \p Op1
+  MachineInstrBuilder buildUSubo(const DstOp &Res, const DstOp &CarryOut,
+                                 const SrcOp &Op0, const SrcOp &Op1) {
+    return buildInstr(TargetOpcode::G_USUBO, {Res, CarryOut}, {Op0, Op1});
+  }
+
+  /// Build and insert \p Res, \p CarryOut = G_SADDO \p Op0, \p Op1
+  MachineInstrBuilder buildSAddo(const DstOp &Res, const DstOp &CarryOut,
+                                 const SrcOp &Op0, const SrcOp &Op1) {
+    return buildInstr(TargetOpcode::G_SADDO, {Res, CarryOut}, {Op0, Op1});
+  }
+
+  /// Build and insert \p Res, \p CarryOut = G_SUBO \p Op0, \p Op1
+  MachineInstrBuilder buildSSubo(const DstOp &Res, const DstOp &CarryOut,
+                                 const SrcOp &Op0, const SrcOp &Op1) {
+    return buildInstr(TargetOpcode::G_SSUBO, {Res, CarryOut}, {Op0, Op1});
+  }
 
   /// Build and insert \p Res, \p CarryOut = G_UADDE \p Op0,
   /// \p Op1, \p CarryIn
@@ -485,7 +556,34 @@ public:
   /// \return The newly created instruction.
   MachineInstrBuilder buildUAdde(const DstOp &Res, const DstOp &CarryOut,
                                  const SrcOp &Op0, const SrcOp &Op1,
-                                 const SrcOp &CarryIn);
+                                 const SrcOp &CarryIn) {
+    return buildInstr(TargetOpcode::G_UADDE, {Res, CarryOut},
+                                             {Op0, Op1, CarryIn});
+  }
+
+  /// Build and insert \p Res, \p CarryOut = G_USUBE \p Op0, \p Op1, \p CarryInp
+  MachineInstrBuilder buildUSube(const DstOp &Res, const DstOp &CarryOut,
+                                 const SrcOp &Op0, const SrcOp &Op1,
+                                 const SrcOp &CarryIn) {
+    return buildInstr(TargetOpcode::G_USUBE, {Res, CarryOut},
+                                             {Op0, Op1, CarryIn});
+  }
+
+  /// Build and insert \p Res, \p CarryOut = G_SADDE \p Op0, \p Op1, \p CarryInp
+  MachineInstrBuilder buildSAdde(const DstOp &Res, const DstOp &CarryOut,
+                                 const SrcOp &Op0, const SrcOp &Op1,
+                                 const SrcOp &CarryIn) {
+    return buildInstr(TargetOpcode::G_SADDE, {Res, CarryOut},
+                                             {Op0, Op1, CarryIn});
+  }
+
+  /// Build and insert \p Res, \p CarryOut = G_SSUBE \p Op0, \p Op1, \p CarryInp
+  MachineInstrBuilder buildSSube(const DstOp &Res, const DstOp &CarryOut,
+                                 const SrcOp &Op0, const SrcOp &Op1,
+                                 const SrcOp &CarryIn) {
+    return buildInstr(TargetOpcode::G_SSUBE, {Res, CarryOut},
+                                             {Op0, Op1, CarryIn});
+  }
 
   /// Build and insert \p Res = G_ANYEXT \p Op0
   ///
@@ -516,6 +614,11 @@ public:
   ///
   /// \return The newly created instruction.
   MachineInstrBuilder buildSExt(const DstOp &Res, const SrcOp &Op);
+
+  /// Build and insert \p Res = G_SEXT_INREG \p Op, ImmOp
+  MachineInstrBuilder buildSExtInReg(const DstOp &Res, const SrcOp &Op, int64_t ImmOp) {
+    return buildInstr(TargetOpcode::G_SEXT_INREG, {Res}, {Op, SrcOp(ImmOp)});
+  }
 
   /// Build and insert \p Res = G_FPEXT \p Op
   MachineInstrBuilder buildFPExt(const DstOp &Res, const SrcOp &Op,
@@ -609,6 +712,12 @@ public:
   MachineInstrBuilder buildExtOrTrunc(unsigned ExtOpc, const DstOp &Res,
                                       const SrcOp &Op);
 
+  /// Build and inserts \p Res = \p G_AND \p Op, \p LowBitsSet(ImmOp)
+  /// Since there is no G_ZEXT_INREG like G_SEXT_INREG, the instruction is
+  /// emulated using G_AND.
+  MachineInstrBuilder buildZExtInReg(const DstOp &Res, const SrcOp &Op,
+                                     int64_t ImmOp);
+
   /// Build and insert an appropriate cast between two registers of equal size.
   MachineInstrBuilder buildCast(const DstOp &Dst, const SrcOp &Src);
 
@@ -633,7 +742,7 @@ public:
   ///      depend on bit 0 (for now).
   ///
   /// \return The newly created instruction.
-  MachineInstrBuilder buildBrCond(Register Tst, MachineBasicBlock &Dest);
+  MachineInstrBuilder buildBrCond(const SrcOp &Tst, MachineBasicBlock &Dest);
 
   /// Build and insert G_BRINDIRECT \p Tgt
   ///
@@ -707,6 +816,18 @@ public:
   /// \return a MachineInstrBuilder for the newly created instruction.
   MachineInstrBuilder buildCopy(const DstOp &Res, const SrcOp &Op);
 
+  /// Build and insert \p Res = G_ASSERT_ZEXT Op, Size
+  ///
+  /// \return a MachineInstrBuilder for the newly created instruction.
+  MachineInstrBuilder buildAssertZExt(const DstOp &Res, const SrcOp &Op,
+                                      unsigned Size);
+
+  /// Build and insert \p Res = G_ASSERT_SEXT Op, Size
+  ///
+  /// \return a MachineInstrBuilder for the newly created instruction.
+  MachineInstrBuilder buildAssertSExt(const DstOp &Res, const SrcOp &Op,
+                                      unsigned Size);
+
   /// Build and insert `Res = G_LOAD Addr, MMO`.
   ///
   /// Loads the value stored at \p Addr. Puts the result in \p Res.
@@ -717,7 +838,17 @@ public:
   ///
   /// \return a MachineInstrBuilder for the newly created instruction.
   MachineInstrBuilder buildLoad(const DstOp &Res, const SrcOp &Addr,
-                                MachineMemOperand &MMO);
+                                MachineMemOperand &MMO) {
+    return buildLoadInstr(TargetOpcode::G_LOAD, Res, Addr, MMO);
+  }
+
+  /// Build and insert a G_LOAD instruction, while constructing the
+  /// MachineMemOperand.
+  MachineInstrBuilder
+  buildLoad(const DstOp &Res, const SrcOp &Addr, MachinePointerInfo PtrInfo,
+            Align Alignment,
+            MachineMemOperand::Flags MMOFlags = MachineMemOperand::MONone,
+            const AAMDNodes &AAInfo = AAMDNodes());
 
   /// Build and insert `Res = <opcode> Addr, MMO`.
   ///
@@ -731,6 +862,14 @@ public:
   MachineInstrBuilder buildLoadInstr(unsigned Opcode, const DstOp &Res,
                                      const SrcOp &Addr, MachineMemOperand &MMO);
 
+  /// Helper to create a load from a constant offset given a base address. Load
+  /// the type of \p Dst from \p Offset from the given base address and memory
+  /// operand.
+  MachineInstrBuilder buildLoadFromOffset(const DstOp &Dst,
+                                          const SrcOp &BasePtr,
+                                          MachineMemOperand &BaseMMO,
+                                          int64_t Offset);
+
   /// Build and insert `G_STORE Val, Addr, MMO`.
   ///
   /// Stores the value \p Val to \p Addr.
@@ -742,6 +881,14 @@ public:
   /// \return a MachineInstrBuilder for the newly created instruction.
   MachineInstrBuilder buildStore(const SrcOp &Val, const SrcOp &Addr,
                                  MachineMemOperand &MMO);
+
+  /// Build and insert a G_STORE instruction, while constructing the
+  /// MachineMemOperand.
+  MachineInstrBuilder
+  buildStore(const SrcOp &Val, const SrcOp &Addr, MachinePointerInfo PtrInfo,
+             Align Alignment,
+             MachineMemOperand::Flags MMOFlags = MachineMemOperand::MONone,
+             const AAMDNodes &AAInfo = AAMDNodes());
 
   /// Build and insert `Res0, ... = G_EXTRACT Src, Idx0`.
   ///
@@ -782,6 +929,8 @@ public:
   ///
   /// \return a MachineInstrBuilder for the newly created instruction.
   MachineInstrBuilder buildMerge(const DstOp &Res, ArrayRef<Register> Ops);
+  MachineInstrBuilder buildMerge(const DstOp &Res,
+                                 std::initializer_list<SrcOp> Ops);
 
   /// Build and insert \p Res0, ... = G_UNMERGE_VALUES \p Op
   ///
@@ -832,6 +981,23 @@ public:
   MachineInstrBuilder buildBuildVectorTrunc(const DstOp &Res,
                                             ArrayRef<Register> Ops);
 
+  /// Build and insert a vector splat of a scalar \p Src using a
+  /// G_INSERT_VECTOR_ELT and G_SHUFFLE_VECTOR idiom.
+  ///
+  /// \pre setBasicBlock or setMI must have been called.
+  /// \pre \p Src must have the same type as the element type of \p Dst
+  ///
+  /// \return a MachineInstrBuilder for the newly created instruction.
+  MachineInstrBuilder buildShuffleSplat(const DstOp &Res, const SrcOp &Src);
+
+  /// Build and insert \p Res = G_SHUFFLE_VECTOR \p Src1, \p Src2, \p Mask
+  ///
+  /// \pre setBasicBlock or setMI must have been called.
+  ///
+  /// \return a MachineInstrBuilder for the newly created instruction.
+  MachineInstrBuilder buildShuffleVector(const DstOp &Res, const SrcOp &Src1,
+                                         const SrcOp &Src2, ArrayRef<int> Mask);
+
   /// Build and insert \p Res = G_CONCAT_VECTORS \p Op0, ...
   ///
   /// G_CONCAT_VECTORS creates a vector from the concatenation of 2 or more
@@ -846,8 +1012,8 @@ public:
   MachineInstrBuilder buildConcatVectors(const DstOp &Res,
                                          ArrayRef<Register> Ops);
 
-  MachineInstrBuilder buildInsert(Register Res, Register Src,
-                                  Register Op, unsigned Index);
+  MachineInstrBuilder buildInsert(const DstOp &Res, const SrcOp &Src,
+                                  const SrcOp &Op, unsigned Index);
 
   /// Build and insert either a G_INTRINSIC (if \p HasSideEffects is false) or
   /// G_INTRINSIC_W_SIDE_EFFECTS instruction. Its first operand will be the
@@ -875,7 +1041,7 @@ public:
   ///
   /// \return The newly created instruction.
   MachineInstrBuilder buildFPTrunc(const DstOp &Res, const SrcOp &Op,
-                                   Optional<unsigned> FLags = None);
+                                   Optional<unsigned> Flags = None);
 
   /// Build and insert \p Res = G_TRUNC \p Op
   ///
@@ -1201,6 +1367,11 @@ public:
   /// Build and insert `G_FENCE Ordering, Scope`.
   MachineInstrBuilder buildFence(unsigned Ordering, unsigned Scope);
 
+  /// Build and insert \p Dst = G_FREEZE \p Src
+  MachineInstrBuilder buildFreeze(const DstOp &Dst, const SrcOp &Src) {
+    return buildInstr(TargetOpcode::G_FREEZE, {Dst}, {Src});
+  }
+
   /// Build and insert \p Res = G_BLOCK_ADDR \p BA
   ///
   /// G_BLOCK_ADDR computes the address of a basic block.
@@ -1273,10 +1444,41 @@ public:
     return buildInstr(TargetOpcode::G_SMULH, {Dst}, {Src0, Src1}, Flags);
   }
 
+  /// Build and insert \p Res = G_UREM \p Op0, \p Op1
+  MachineInstrBuilder buildURem(const DstOp &Dst, const SrcOp &Src0,
+                                const SrcOp &Src1,
+                                Optional<unsigned> Flags = None) {
+    return buildInstr(TargetOpcode::G_UREM, {Dst}, {Src0, Src1}, Flags);
+  }
+
   MachineInstrBuilder buildFMul(const DstOp &Dst, const SrcOp &Src0,
                                 const SrcOp &Src1,
                                 Optional<unsigned> Flags = None) {
     return buildInstr(TargetOpcode::G_FMUL, {Dst}, {Src0, Src1}, Flags);
+  }
+
+  MachineInstrBuilder buildFMinNum(const DstOp &Dst, const SrcOp &Src0,
+                                   const SrcOp &Src1,
+                                   Optional<unsigned> Flags = None) {
+    return buildInstr(TargetOpcode::G_FMINNUM, {Dst}, {Src0, Src1}, Flags);
+  }
+
+  MachineInstrBuilder buildFMaxNum(const DstOp &Dst, const SrcOp &Src0,
+                                   const SrcOp &Src1,
+                                   Optional<unsigned> Flags = None) {
+    return buildInstr(TargetOpcode::G_FMAXNUM, {Dst}, {Src0, Src1}, Flags);
+  }
+
+  MachineInstrBuilder buildFMinNumIEEE(const DstOp &Dst, const SrcOp &Src0,
+                                       const SrcOp &Src1,
+                                       Optional<unsigned> Flags = None) {
+    return buildInstr(TargetOpcode::G_FMINNUM_IEEE, {Dst}, {Src0, Src1}, Flags);
+  }
+
+  MachineInstrBuilder buildFMaxNumIEEE(const DstOp &Dst, const SrcOp &Src0,
+                                       const SrcOp &Src1,
+                                       Optional<unsigned> Flags = None) {
+    return buildInstr(TargetOpcode::G_FMAXNUM_IEEE, {Dst}, {Src0, Src1}, Flags);
   }
 
   MachineInstrBuilder buildShl(const DstOp &Dst, const SrcOp &Src0,
@@ -1324,8 +1526,9 @@ public:
   ///
   /// \return a MachineInstrBuilder for the newly created instruction.
   MachineInstrBuilder buildOr(const DstOp &Dst, const SrcOp &Src0,
-                              const SrcOp &Src1) {
-    return buildInstr(TargetOpcode::G_OR, {Dst}, {Src0, Src1});
+                              const SrcOp &Src1,
+                              Optional<unsigned> Flags = None) {
+    return buildInstr(TargetOpcode::G_OR, {Dst}, {Src0, Src1}, Flags);
   }
 
   /// Build and insert \p Res = G_XOR \p Op0, \p Op1
@@ -1367,6 +1570,11 @@ public:
     return buildInstr(TargetOpcode::G_CTTZ_ZERO_UNDEF, {Dst}, {Src0});
   }
 
+  /// Build and insert \p Dst = G_BSWAP \p Src0
+  MachineInstrBuilder buildBSwap(const DstOp &Dst, const SrcOp &Src0) {
+    return buildInstr(TargetOpcode::G_BSWAP, {Dst}, {Src0});
+  }
+
   /// Build and insert \p Res = G_FADD \p Op0, \p Op1
   MachineInstrBuilder buildFAdd(const DstOp &Dst, const SrcOp &Src0,
                                 const SrcOp &Src1,
@@ -1376,14 +1584,23 @@ public:
 
   /// Build and insert \p Res = G_FSUB \p Op0, \p Op1
   MachineInstrBuilder buildFSub(const DstOp &Dst, const SrcOp &Src0,
-                                const SrcOp &Src1) {
-    return buildInstr(TargetOpcode::G_FSUB, {Dst}, {Src0, Src1});
+                                const SrcOp &Src1,
+                                Optional<unsigned> Flags = None) {
+    return buildInstr(TargetOpcode::G_FSUB, {Dst}, {Src0, Src1}, Flags);
+  }
+
+  /// Build and insert \p Res = G_FDIV \p Op0, \p Op1
+  MachineInstrBuilder buildFDiv(const DstOp &Dst, const SrcOp &Src0,
+                                const SrcOp &Src1,
+                                Optional<unsigned> Flags = None) {
+    return buildInstr(TargetOpcode::G_FDIV, {Dst}, {Src0, Src1}, Flags);
   }
 
   /// Build and insert \p Res = G_FMA \p Op0, \p Op1, \p Op2
   MachineInstrBuilder buildFMA(const DstOp &Dst, const SrcOp &Src0,
-                               const SrcOp &Src1, const SrcOp &Src2) {
-    return buildInstr(TargetOpcode::G_FMA, {Dst}, {Src0, Src1, Src2});
+                               const SrcOp &Src1, const SrcOp &Src2,
+                               Optional<unsigned> Flags = None) {
+    return buildInstr(TargetOpcode::G_FMA, {Dst}, {Src0, Src1, Src2}, Flags);
   }
 
   /// Build and insert \p Res = G_FMAD \p Op0, \p Op1, \p Op2
@@ -1409,6 +1626,43 @@ public:
   MachineInstrBuilder buildFCanonicalize(const DstOp &Dst, const SrcOp &Src0,
                                          Optional<unsigned> Flags = None) {
     return buildInstr(TargetOpcode::G_FCANONICALIZE, {Dst}, {Src0}, Flags);
+  }
+
+  /// Build and insert \p Dst = G_INTRINSIC_TRUNC \p Src0
+  MachineInstrBuilder buildIntrinsicTrunc(const DstOp &Dst, const SrcOp &Src0,
+                                         Optional<unsigned> Flags = None) {
+    return buildInstr(TargetOpcode::G_INTRINSIC_TRUNC, {Dst}, {Src0}, Flags);
+  }
+
+  /// Build and insert \p Res = GFFLOOR \p Op0, \p Op1
+  MachineInstrBuilder buildFFloor(const DstOp &Dst, const SrcOp &Src0,
+                                          Optional<unsigned> Flags = None) {
+    return buildInstr(TargetOpcode::G_FFLOOR, {Dst}, {Src0}, Flags);
+  }
+
+  /// Build and insert \p Dst = G_FLOG \p Src
+  MachineInstrBuilder buildFLog(const DstOp &Dst, const SrcOp &Src,
+                                Optional<unsigned> Flags = None) {
+    return buildInstr(TargetOpcode::G_FLOG, {Dst}, {Src}, Flags);
+  }
+
+  /// Build and insert \p Dst = G_FLOG2 \p Src
+  MachineInstrBuilder buildFLog2(const DstOp &Dst, const SrcOp &Src,
+                                Optional<unsigned> Flags = None) {
+    return buildInstr(TargetOpcode::G_FLOG2, {Dst}, {Src}, Flags);
+  }
+
+  /// Build and insert \p Dst = G_FEXP2 \p Src
+  MachineInstrBuilder buildFExp2(const DstOp &Dst, const SrcOp &Src,
+                                Optional<unsigned> Flags = None) {
+    return buildInstr(TargetOpcode::G_FEXP2, {Dst}, {Src}, Flags);
+  }
+
+  /// Build and insert \p Dst = G_FPOW \p Src0, \p Src1
+  MachineInstrBuilder buildFPow(const DstOp &Dst, const SrcOp &Src0,
+                                const SrcOp &Src1,
+                                Optional<unsigned> Flags = None) {
+    return buildInstr(TargetOpcode::G_FPOW, {Dst}, {Src0, Src1}, Flags);
   }
 
   /// Build and insert \p Res = G_FCOPYSIGN \p Op0, \p Op1
@@ -1461,6 +1715,11 @@ public:
     return buildInstr(TargetOpcode::G_UMAX, {Dst}, {Src0, Src1});
   }
 
+  /// Build and insert \p Dst = G_ABS \p Src
+  MachineInstrBuilder buildAbs(const DstOp &Dst, const SrcOp &Src) {
+    return buildInstr(TargetOpcode::G_ABS, {Dst}, {Src});
+  }
+
   /// Build and insert \p Res = G_JUMP_TABLE \p JTI
   ///
   /// G_JUMP_TABLE sets \p Res to the address of the jump table specified by
@@ -1468,6 +1727,146 @@ public:
   ///
   /// \return a MachineInstrBuilder for the newly created instruction.
   MachineInstrBuilder buildJumpTable(const LLT PtrTy, unsigned JTI);
+
+  /// Build and insert \p Res = G_VECREDUCE_SEQ_FADD \p ScalarIn, \p VecIn
+  ///
+  /// \p ScalarIn is the scalar accumulator input to start the sequential
+  /// reduction operation of \p VecIn.
+  MachineInstrBuilder buildVecReduceSeqFAdd(const DstOp &Dst,
+                                            const SrcOp &ScalarIn,
+                                            const SrcOp &VecIn) {
+    return buildInstr(TargetOpcode::G_VECREDUCE_SEQ_FADD, {Dst},
+                      {ScalarIn, {VecIn}});
+  }
+
+  /// Build and insert \p Res = G_VECREDUCE_SEQ_FMUL \p ScalarIn, \p VecIn
+  ///
+  /// \p ScalarIn is the scalar accumulator input to start the sequential
+  /// reduction operation of \p VecIn.
+  MachineInstrBuilder buildVecReduceSeqFMul(const DstOp &Dst,
+                                            const SrcOp &ScalarIn,
+                                            const SrcOp &VecIn) {
+    return buildInstr(TargetOpcode::G_VECREDUCE_SEQ_FMUL, {Dst},
+                      {ScalarIn, {VecIn}});
+  }
+
+  /// Build and insert \p Res = G_VECREDUCE_FADD \p Src
+  ///
+  /// \p ScalarIn is the scalar accumulator input to the reduction operation of
+  /// \p VecIn.
+  MachineInstrBuilder buildVecReduceFAdd(const DstOp &Dst,
+                                         const SrcOp &ScalarIn,
+                                         const SrcOp &VecIn) {
+    return buildInstr(TargetOpcode::G_VECREDUCE_FADD, {Dst}, {ScalarIn, VecIn});
+  }
+
+  /// Build and insert \p Res = G_VECREDUCE_FMUL \p Src
+  ///
+  /// \p ScalarIn is the scalar accumulator input to the reduction operation of
+  /// \p VecIn.
+  MachineInstrBuilder buildVecReduceFMul(const DstOp &Dst,
+                                         const SrcOp &ScalarIn,
+                                         const SrcOp &VecIn) {
+    return buildInstr(TargetOpcode::G_VECREDUCE_FMUL, {Dst}, {ScalarIn, VecIn});
+  }
+
+  /// Build and insert \p Res = G_VECREDUCE_FMAX \p Src
+  MachineInstrBuilder buildVecReduceFMax(const DstOp &Dst, const SrcOp &Src) {
+    return buildInstr(TargetOpcode::G_VECREDUCE_FMAX, {Dst}, {Src});
+  }
+
+  /// Build and insert \p Res = G_VECREDUCE_FMIN \p Src
+  MachineInstrBuilder buildVecReduceFMin(const DstOp &Dst, const SrcOp &Src) {
+    return buildInstr(TargetOpcode::G_VECREDUCE_FMIN, {Dst}, {Src});
+  }
+  /// Build and insert \p Res = G_VECREDUCE_ADD \p Src
+  MachineInstrBuilder buildVecReduceAdd(const DstOp &Dst, const SrcOp &Src) {
+    return buildInstr(TargetOpcode::G_VECREDUCE_ADD, {Dst}, {Src});
+  }
+
+  /// Build and insert \p Res = G_VECREDUCE_MUL \p Src
+  MachineInstrBuilder buildVecReduceMul(const DstOp &Dst, const SrcOp &Src) {
+    return buildInstr(TargetOpcode::G_VECREDUCE_MUL, {Dst}, {Src});
+  }
+
+  /// Build and insert \p Res = G_VECREDUCE_AND \p Src
+  MachineInstrBuilder buildVecReduceAnd(const DstOp &Dst, const SrcOp &Src) {
+    return buildInstr(TargetOpcode::G_VECREDUCE_AND, {Dst}, {Src});
+  }
+
+  /// Build and insert \p Res = G_VECREDUCE_OR \p Src
+  MachineInstrBuilder buildVecReduceOr(const DstOp &Dst, const SrcOp &Src) {
+    return buildInstr(TargetOpcode::G_VECREDUCE_OR, {Dst}, {Src});
+  }
+
+  /// Build and insert \p Res = G_VECREDUCE_XOR \p Src
+  MachineInstrBuilder buildVecReduceXor(const DstOp &Dst, const SrcOp &Src) {
+    return buildInstr(TargetOpcode::G_VECREDUCE_XOR, {Dst}, {Src});
+  }
+
+  /// Build and insert \p Res = G_VECREDUCE_SMAX \p Src
+  MachineInstrBuilder buildVecReduceSMax(const DstOp &Dst, const SrcOp &Src) {
+    return buildInstr(TargetOpcode::G_VECREDUCE_SMAX, {Dst}, {Src});
+  }
+
+  /// Build and insert \p Res = G_VECREDUCE_SMIN \p Src
+  MachineInstrBuilder buildVecReduceSMin(const DstOp &Dst, const SrcOp &Src) {
+    return buildInstr(TargetOpcode::G_VECREDUCE_SMIN, {Dst}, {Src});
+  }
+
+  /// Build and insert \p Res = G_VECREDUCE_UMAX \p Src
+  MachineInstrBuilder buildVecReduceUMax(const DstOp &Dst, const SrcOp &Src) {
+    return buildInstr(TargetOpcode::G_VECREDUCE_UMAX, {Dst}, {Src});
+  }
+
+  /// Build and insert \p Res = G_VECREDUCE_UMIN \p Src
+  MachineInstrBuilder buildVecReduceUMin(const DstOp &Dst, const SrcOp &Src) {
+    return buildInstr(TargetOpcode::G_VECREDUCE_UMIN, {Dst}, {Src});
+  }
+
+  /// Build and insert G_MEMCPY or G_MEMMOVE
+  MachineInstrBuilder buildMemTransferInst(unsigned Opcode, const SrcOp &DstPtr,
+                                           const SrcOp &SrcPtr,
+                                           const SrcOp &Size,
+                                           MachineMemOperand &DstMMO,
+                                           MachineMemOperand &SrcMMO) {
+    auto MIB = buildInstr(
+        Opcode, {}, {DstPtr, SrcPtr, Size, SrcOp(INT64_C(0) /*isTailCall*/)});
+    MIB.addMemOperand(&DstMMO);
+    MIB.addMemOperand(&SrcMMO);
+    return MIB;
+  }
+
+  MachineInstrBuilder buildMemCpy(const SrcOp &DstPtr, const SrcOp &SrcPtr,
+                                  const SrcOp &Size, MachineMemOperand &DstMMO,
+                                  MachineMemOperand &SrcMMO) {
+    return buildMemTransferInst(TargetOpcode::G_MEMCPY, DstPtr, SrcPtr, Size,
+                                DstMMO, SrcMMO);
+  }
+
+  /// Build and insert \p Dst = G_SBFX \p Src, \p LSB, \p Width.
+  MachineInstrBuilder buildSbfx(const DstOp &Dst, const SrcOp &Src,
+                                const SrcOp &LSB, const SrcOp &Width) {
+    return buildInstr(TargetOpcode::G_SBFX, {Dst}, {Src, LSB, Width});
+  }
+
+  /// Build and insert \p Dst = G_UBFX \p Src, \p LSB, \p Width.
+  MachineInstrBuilder buildUbfx(const DstOp &Dst, const SrcOp &Src,
+                                const SrcOp &LSB, const SrcOp &Width) {
+    return buildInstr(TargetOpcode::G_UBFX, {Dst}, {Src, LSB, Width});
+  }
+
+  /// Build and insert \p Dst = G_ROTR \p Src, \p Amt
+  MachineInstrBuilder buildRotateRight(const DstOp &Dst, const SrcOp &Src,
+                                       const SrcOp &Amt) {
+    return buildInstr(TargetOpcode::G_ROTR, {Dst}, {Src, Amt});
+  }
+
+  /// Build and insert \p Dst = G_ROTL \p Src, \p Amt
+  MachineInstrBuilder buildRotateLeft(const DstOp &Dst, const SrcOp &Src,
+                                      const SrcOp &Amt) {
+    return buildInstr(TargetOpcode::G_ROTL, {Dst}, {Src, Amt});
+  }
 
   virtual MachineInstrBuilder buildInstr(unsigned Opc, ArrayRef<DstOp> DstOps,
                                          ArrayRef<SrcOp> SrcOps,

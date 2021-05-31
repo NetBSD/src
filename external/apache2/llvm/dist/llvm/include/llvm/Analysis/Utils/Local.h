@@ -14,6 +14,7 @@
 #ifndef LLVM_ANALYSIS_UTILS_LOCAL_H
 #define LLVM_ANALYSIS_UTILS_LOCAL_H
 
+#include "llvm/ADT/StringRef.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/GetElementPtrTypeIterator.h"
 
@@ -28,15 +29,15 @@ template <typename IRBuilderTy>
 Value *EmitGEPOffset(IRBuilderTy *Builder, const DataLayout &DL, User *GEP,
                      bool NoAssumptions = false) {
   GEPOperator *GEPOp = cast<GEPOperator>(GEP);
-  Type *IntPtrTy = DL.getIntPtrType(GEP->getType());
-  Value *Result = Constant::getNullValue(IntPtrTy);
+  Type *IntIdxTy = DL.getIndexType(GEP->getType());
+  Value *Result = nullptr;
 
   // If the GEP is inbounds, we know that none of the addressing operations will
   // overflow in a signed sense.
   bool isInBounds = GEPOp->isInBounds() && !NoAssumptions;
 
   // Build a mask for high order bits.
-  unsigned IntPtrWidth = IntPtrTy->getScalarType()->getIntegerBitWidth();
+  unsigned IntPtrWidth = IntIdxTy->getScalarType()->getIntegerBitWidth();
   uint64_t PtrSizeMask =
       std::numeric_limits<uint64_t>::max() >> (64 - IntPtrWidth);
 
@@ -45,6 +46,7 @@ Value *EmitGEPOffset(IRBuilderTy *Builder, const DataLayout &DL, User *GEP,
        ++i, ++GTI) {
     Value *Op = *i;
     uint64_t Size = DL.getTypeAllocSize(GTI.getIndexedType()) & PtrSizeMask;
+    Value *Offset;
     if (Constant *OpC = dyn_cast<Constant>(Op)) {
       if (OpC->isZeroValue())
         continue;
@@ -53,46 +55,49 @@ Value *EmitGEPOffset(IRBuilderTy *Builder, const DataLayout &DL, User *GEP,
       if (StructType *STy = GTI.getStructTypeOrNull()) {
         uint64_t OpValue = OpC->getUniqueInteger().getZExtValue();
         Size = DL.getStructLayout(STy)->getElementOffset(OpValue);
+        if (!Size)
+          continue;
 
-        if (Size)
-          Result = Builder->CreateAdd(Result, ConstantInt::get(IntPtrTy, Size),
-                                      GEP->getName()+".offs");
-        continue;
+        Offset = ConstantInt::get(IntIdxTy, Size);
+      } else {
+        // Splat the constant if needed.
+        if (IntIdxTy->isVectorTy() && !OpC->getType()->isVectorTy())
+          OpC = ConstantVector::getSplat(
+              cast<VectorType>(IntIdxTy)->getElementCount(), OpC);
+
+        Constant *Scale = ConstantInt::get(IntIdxTy, Size);
+        Constant *OC =
+            ConstantExpr::getIntegerCast(OpC, IntIdxTy, true /*SExt*/);
+        Offset =
+            ConstantExpr::getMul(OC, Scale, false /*NUW*/, isInBounds /*NSW*/);
       }
+    } else {
+      // Splat the index if needed.
+      if (IntIdxTy->isVectorTy() && !Op->getType()->isVectorTy())
+        Op = Builder->CreateVectorSplat(
+            cast<FixedVectorType>(IntIdxTy)->getNumElements(), Op);
 
-      // Splat the constant if needed.
-      if (IntPtrTy->isVectorTy() && !OpC->getType()->isVectorTy())
-        OpC = ConstantVector::getSplat(IntPtrTy->getVectorNumElements(), OpC);
-
-      Constant *Scale = ConstantInt::get(IntPtrTy, Size);
-      Constant *OC = ConstantExpr::getIntegerCast(OpC, IntPtrTy, true /*SExt*/);
-      Scale =
-          ConstantExpr::getMul(OC, Scale, false /*NUW*/, isInBounds /*NSW*/);
-      // Emit an add instruction.
-      Result = Builder->CreateAdd(Result, Scale, GEP->getName()+".offs");
-      continue;
+      // Convert to correct type.
+      if (Op->getType() != IntIdxTy)
+        Op = Builder->CreateIntCast(Op, IntIdxTy, true, Op->getName().str()+".c");
+      if (Size != 1) {
+        // We'll let instcombine(mul) convert this to a shl if possible.
+        Op = Builder->CreateMul(Op, ConstantInt::get(IntIdxTy, Size),
+                                GEP->getName().str() + ".idx", false /*NUW*/,
+                                isInBounds /*NSW*/);
+      }
+      Offset = Op;
     }
 
-    // Splat the index if needed.
-    if (IntPtrTy->isVectorTy() && !Op->getType()->isVectorTy())
-      Op = Builder->CreateVectorSplat(IntPtrTy->getVectorNumElements(), Op);
-
-    // Convert to correct type.
-    if (Op->getType() != IntPtrTy)
-      Op = Builder->CreateIntCast(Op, IntPtrTy, true, Op->getName()+".c");
-    if (Size != 1) {
-      // We'll let instcombine(mul) convert this to a shl if possible.
-      Op = Builder->CreateMul(Op, ConstantInt::get(IntPtrTy, Size),
-                              GEP->getName() + ".idx", false /*NUW*/,
-                              isInBounds /*NSW*/);
-    }
-
-    // Emit an add instruction.
-    Result = Builder->CreateAdd(Op, Result, GEP->getName()+".offs");
+    if (Result)
+      Result = Builder->CreateAdd(Result, Offset, GEP->getName().str()+".offs",
+                                  false /*NUW*/, isInBounds /*NSW*/);
+    else
+      Result = Offset;
   }
-  return Result;
+  return Result ? Result : Constant::getNullValue(IntIdxTy);
 }
 
 }
 
-#endif // LLVM_TRANSFORMS_UTILS_LOCAL_H
+#endif // LLVM_ANALYSIS_UTILS_LOCAL_H

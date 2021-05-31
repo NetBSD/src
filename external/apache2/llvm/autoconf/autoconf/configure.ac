@@ -1276,6 +1276,7 @@ AC_ARG_WITH(clang-default-openmp-runtime,
 AC_DEFINE_UNQUOTED(CLANG_ENABLE_ARCMT, 1, [Build ARCMT])
 AC_DEFINE_UNQUOTED(CLANG_ENABLE_OBJC_REWRITER, 1, [Build ObjC rewriter])
 AC_DEFINE_UNQUOTED(CLANG_ENABLE_STATIC_ANALYZER, 1, [Build Static analyzer])
+AC_DEFINE_UNQUOTED(CLANG_SPAWN_CC1, 1, [Whether clang should use a new process for the CC1 invocation])
 
 AC_DEFINE_UNQUOTED(ENABLE_EXPERIMENTAL_NEW_PASS_MANAGER, 0,
                    [Enable the experimental new pass manager by default])
@@ -1296,6 +1297,8 @@ AC_DEFINE_UNQUOTED(CLANG_DEFAULT_UNWINDLIB, "none",
                    [Default unwind library to use.])
 AC_DEFINE_UNQUOTED(CLANG_DEFAULT_OPENMP_RUNTIME, "libomp",
                    [Default OpenMP runtime used by -fopenmp.])
+AC_DEFINE_UNQUOTED(CLANG_SYSTEMZ_DEFAULT_ARCH, "z10",
+                   [SystemZ Default Arch])
 AC_DEFINE_UNQUOTED(CLANG_LIBDIR_SUFFIX, "",
                    [Multilib suffix for libdir.])
 AC_DEFINE_UNQUOTED(DEFAULT_SYSROOT, "",
@@ -1698,7 +1701,7 @@ AC_HEADER_STAT
 AC_HEADER_TIME
 
 AC_CHECK_HEADERS([dlfcn.h execinfo.h fcntl.h inttypes.h link.h])
-AC_CHECK_HEADERS([signal.h stdint.h termios.h unistd.h])
+AC_CHECK_HEADERS([signal.h stdint.h sysexits.h termios.h unistd.h])
 AC_CHECK_HEADERS([sys/mman.h sys/param.h sys/resource.h sys/time.h sys/uio.h])
 AC_CHECK_HEADERS([sys/ioctl.h malloc/malloc.h mach/mach.h])
 AC_CHECK_HEADERS([valgrind/valgrind.h])

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/11/11 22:45:01 joerg Exp $
+#	$NetBSD: Makefile,v 1.1.4.1 2021/05/31 22:07:00 cjep Exp $
 
 PROG_CXX=	sancov
 NOMAN=		yes
@@ -7,7 +7,7 @@ NOMAN=		yes
 
 .PATH: ${LLVM_SRCDIR}/tools/sancov
 
-SRCS=	sancov.cc
+SRCS=	sancov.cpp
 
 LLVM_LIBS+= \
 	AArch64Disassembler \
@@ -36,16 +36,18 @@ LLVM_LIBS+= \
 	X86CodeGen \
 	X86MCTargetDesc \
 	X86TargetInfo \
-	X86Utils \
 	MCDisassembler \
 	DebugInfoSymbolize \
 	DebugInfoDWARF \
 	DebugInfoPDB \
-	DebugInfoPDBNative \
+	DebugInfoMSF \
+	DebugInfoCodeView \
 	Object \
+	TextAPI \
 	BitReader \
 	BitstreamReader \
 	IR \
+	Remarks \
 	MCParser \
 	MC \
 	BinaryFormat \

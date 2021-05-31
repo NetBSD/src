@@ -13,21 +13,22 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_REMARKS_REMARK_STRING_TABLE_H
-#define LLVM_REMARKS_REMARK_STRING_TABLE_H
+#ifndef LLVM_REMARKS_REMARKSTRINGTABLE_H
+#define LLVM_REMARKS_REMARKSTRINGTABLE_H
 
 #include "llvm/ADT/StringMap.h"
-#include "llvm/ADT/StringRef.h"
-#include "llvm/Remarks/Remark.h"
+#include "llvm/Support/Allocator.h"
 #include <vector>
 
 namespace llvm {
 
 class raw_ostream;
+class StringRef;
 
 namespace remarks {
 
 struct ParsedStringTable;
+struct Remark;
 
 /// The string table used for serializing remarks.
 /// This table can be for example serialized in a section to be consumed after
@@ -70,4 +71,4 @@ struct StringTable {
 } // end namespace remarks
 } // end namespace llvm
 
-#endif /* LLVM_REMARKS_REMARK_STRING_TABLE_H */
+#endif // LLVM_REMARKS_REMARKSTRINGTABLE_H

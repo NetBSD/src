@@ -17,7 +17,6 @@
 #include "clang/Basic/LangOptions.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/IR/DataLayout.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/TargetParser.h"
 #include <cstdlib>
@@ -36,6 +35,8 @@ TargetInfo::TargetInfo(const llvm::Triple &T) : TargetOpts(), Triple(T) {
   HasLegalHalfType = false;
   HasFloat128 = false;
   HasFloat16 = false;
+  HasBFloat16 = false;
+  HasStrictFP = false;
   PointerWidth = PointerAlign = 32;
   BoolWidth = BoolAlign = 8;
   IntWidth = IntAlign = 32;
@@ -65,9 +66,12 @@ TargetInfo::TargetInfo(const llvm::Triple &T) : TargetOpts(), Triple(T) {
   // From the glibc documentation, on GNU systems, malloc guarantees 16-byte
   // alignment on 64-bit systems and 8-byte alignment on 32-bit systems. See
   // https://www.gnu.org/software/libc/manual/html_node/Malloc-Examples.html.
-  // This alignment guarantee also applies to Windows and Android.
+  // This alignment guarantee also applies to Windows and Android. On Darwin,
+  // the alignment is 16 bytes on both 64-bit and 32-bit systems.
   if (T.isGNUEnvironment() || T.isWindowsMSVCEnvironment() || T.isAndroid())
     NewAlign = Triple.isArch64Bit() ? 128 : Triple.isArch32Bit() ? 64 : 0;
+  else if (T.isOSDarwin())
+    NewAlign = 128;
   else
     NewAlign = 0; // Infer from basic type alignment.
   HalfWidth = 16;
@@ -94,25 +98,32 @@ TargetInfo::TargetInfo(const llvm::Triple &T) : TargetOpts(), Triple(T) {
   Char16Type = UnsignedShort;
   Char32Type = UnsignedInt;
   Int64Type = SignedLongLong;
+  Int16Type = SignedShort;
   SigAtomicType = SignedInt;
   ProcessIDType = SignedInt;
   UseSignedCharForObjCBool = true;
   UseBitFieldTypeAlignment = true;
   UseZeroLengthBitfieldAlignment = false;
+  UseLeadingZeroLengthBitfield = true;
   UseExplicitBitFieldAlignment = true;
   ZeroLengthBitfieldBoundary = 0;
+  MaxAlignedAttribute = 0;
   HalfFormat = &llvm::APFloat::IEEEhalf();
   FloatFormat = &llvm::APFloat::IEEEsingle();
   DoubleFormat = &llvm::APFloat::IEEEdouble();
   LongDoubleFormat = &llvm::APFloat::IEEEdouble();
   Float128Format = &llvm::APFloat::IEEEquad();
   MCountName = "mcount";
+  UserLabelPrefix = "_";
   RegParmMax = 0;
   SSERegParmMax = 0;
   HasAlignMac68kSupport = false;
   HasBuiltinMSVaList = false;
   IsRenderScriptTarget = false;
   HasAArch64SVETypes = false;
+  HasRISCVVTypes = false;
+  AllowAMDGPUUnsafeFPAtomics = false;
+  ARMCDECoprocMask = 0;
 
   // Default to no types using fpret.
   RealTypeUsesObjCFPRet = 0;
@@ -132,13 +143,16 @@ TargetInfo::TargetInfo(const llvm::Triple &T) : TargetOpts(), Triple(T) {
   // Default to an unknown platform name.
   PlatformName = "unknown";
   PlatformMinVersion = VersionTuple();
+
+  MaxOpenCLWorkGroupSize = 1024;
 }
 
 // Out of line virtual dtor for TargetInfo.
 TargetInfo::~TargetInfo() {}
 
-void TargetInfo::resetDataLayout(StringRef DL) {
-  DataLayout.reset(new llvm::DataLayout(DL));
+void TargetInfo::resetDataLayout(StringRef DL, const char *ULP) {
+  DataLayoutString = DL.str();
+  UserLabelPrefix = ULP;
 }
 
 bool
@@ -262,7 +276,8 @@ TargetInfo::IntType TargetInfo::getLeastIntTypeByWidth(unsigned BitWidth,
   return NoInt;
 }
 
-TargetInfo::RealType TargetInfo::getRealTypeByWidth(unsigned BitWidth) const {
+TargetInfo::RealType TargetInfo::getRealTypeByWidth(unsigned BitWidth,
+                                                    bool ExplicitIEEE) const {
   if (getFloatWidth() == BitWidth)
     return Float;
   if (getDoubleWidth() == BitWidth)
@@ -274,6 +289,10 @@ TargetInfo::RealType TargetInfo::getRealTypeByWidth(unsigned BitWidth) const {
       return LongDouble;
     break;
   case 128:
+    // The caller explicitly asked for an IEEE compliant type but we still
+    // have to check if the target supports it.
+    if (ExplicitIEEE)
+      return hasFloat128Type() ? Float128 : NoFloat;
     if (&getLongDoubleFormat() == &llvm::APFloat::PPCDoubleDouble() ||
         &getLongDoubleFormat() == &llvm::APFloat::IEEEquad())
       return LongDouble;
@@ -379,6 +398,20 @@ void TargetInfo::adjust(LangOptions &Opts) {
     LongDoubleFormat = &llvm::APFloat::IEEEquad();
   }
 
+  if (Opts.DoubleSize) {
+    if (Opts.DoubleSize == 32) {
+      DoubleWidth = 32;
+      LongDoubleWidth = 32;
+      DoubleFormat = &llvm::APFloat::IEEEsingle();
+      LongDoubleFormat = &llvm::APFloat::IEEEsingle();
+    } else if (Opts.DoubleSize == 64) {
+      DoubleWidth = 64;
+      LongDoubleWidth = 64;
+      DoubleFormat = &llvm::APFloat::IEEEdouble();
+      LongDoubleFormat = &llvm::APFloat::IEEEdouble();
+    }
+  }
+
   if (Opts.LongDoubleSize) {
     if (Opts.LongDoubleSize == DoubleWidth) {
       LongDoubleWidth = DoubleWidth;
@@ -447,8 +480,8 @@ static StringRef removeGCCRegisterPrefix(StringRef Name) {
 /// a valid clobber in an inline asm statement. This is used by
 /// Sema.
 bool TargetInfo::isValidClobber(StringRef Name) const {
-  return (isValidGCCRegisterName(Name) ||
-          Name == "memory" || Name == "cc");
+  return (isValidGCCRegisterName(Name) || Name == "memory" || Name == "cc" ||
+          Name == "unwind");
 }
 
 /// isValidGCCRegisterName - Returns whether the passed in string

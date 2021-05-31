@@ -1,4 +1,4 @@
-.\"     $NetBSD: raidctl.8,v 1.74 2018/01/18 00:32:49 mrg Exp $
+.\"     $NetBSD: raidctl.8,v 1.74.10.1 2021/05/31 22:15:08 cjep Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,7 @@
 .\" any improvements or extensions that they make and grant Carnegie the
 .\" rights to redistribute these changes.
 .\"
-.Dd January 6, 2016
+.Dd May 26, 2021
 .Dt RAIDCTL 8
 .Os
 .Sh NAME
@@ -166,7 +166,8 @@ All components of the set must be of type
 .Dv RAID
 in the disklabel.
 Note that only certain architectures
-.Pq currently alpha, amd64, i386, pmax, sandpoint, sparc, sparc64, and vax
+(currently arc, alpha, amd64, bebox, cobalt, emips, evbarm, i386, landisk,
+ofppc, pmax, riscv, sandpoint, sgimips, sparc, sparc64, and vax)
 support booting a kernel directly from a RAID set.
 Please note that
 .Ic forceroot
@@ -501,6 +502,12 @@ For more details on this the reader is referred to
 the RAIDframe documentation discussed in the
 .Sx HISTORY
 section.
+.Pp
+Since
+.Nx 10
+RAIDframe has been been capable of autoconfiguration of components
+originally configured on opposite endian systems.  The current label
+endianness will be retained.
 .Pp
 See
 .Sx EXAMPLES
@@ -1298,7 +1305,7 @@ arguments.
 .Pp
 Note that kernels can only be directly read from RAID 1 components on
 architectures that support that
-.Pq currently alpha, i386, pmax, sandpoint, sparc, sparc64, and vax .
+(currently alpha, i386, pmax, sandpoint, sparc, sparc64, and vax).
 On those architectures, the
 .Dv FS_RAID
 file system is recognized by the bootblocks, and will properly load the
@@ -1562,7 +1569,6 @@ RAIDframe is found in the paper "RAIDframe: A Rapid Prototyping Tool
 for RAID Systems", by William V. Courtright II, Garth Gibson, Mark
 Holland, LeAnn Neal Reilly, and Jim Zelenka, and published by the
 Parallel Data Laboratory of Carnegie Mellon University.
-.Pp
 The
 .Nm
 command first appeared as a program in CMU's RAIDframe v1.1 distribution.

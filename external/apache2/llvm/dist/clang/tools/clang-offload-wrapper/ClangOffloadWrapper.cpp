@@ -27,6 +27,7 @@
 #include "llvm/Support/Errc.h"
 #include "llvm/Support/Error.h"
 #include "llvm/Support/ErrorOr.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/ToolOutputFile.h"
@@ -262,7 +263,12 @@ private:
     Builder.CreateRetVoid();
 
     // Add this function to constructors.
-    appendToGlobalCtors(M, Func, 0);
+    // Set priority to 1 so that __tgt_register_lib is executed AFTER
+    // __tgt_register_requires (we want to know what requirements have been
+    // asked for before we load a libomptarget plugin so that by the time the
+    // plugin is loaded it can report how many devices there are which can
+    // satisfy these requirements).
+    appendToGlobalCtors(M, Func, /*Priority*/ 1);
   }
 
   void createUnregisterFunction(GlobalVariable *BinDesc) {
@@ -283,7 +289,8 @@ private:
     Builder.CreateRetVoid();
 
     // Add this function to global destructors.
-    appendToGlobalDtors(M, Func, 0);
+    // Match priority of __tgt_register_lib
+    appendToGlobalDtors(M, Func, /*Priority*/ 1);
   }
 
 public:

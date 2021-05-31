@@ -49,6 +49,12 @@
 /* Relative directory for resource files */
 #undef CLANG_RESOURCE_DIR
 
+/* Whether clang should use a new process for the CC1 invocation */
+#undef CLANG_SPAWN_CC1
+
+/* SystemZ Default Arch */
+#undef CLANG_SYSTEMZ_DEFAULT_ARCH
+
 /* Directories clang will search for headers */
 #undef C_INCLUDE_DIRS
 
@@ -278,6 +284,9 @@
 
 /* Define to 1 if you have the `sysconf' function. */
 #undef HAVE_SYSCONF
+
+/* Define to 1 if you have the <sysexits.h> header file. */
+#undef HAVE_SYSEXITS_H
 
 /* Define to 1 if you have the <sys/dir.h> header file, and it defines `DIR'.
    */

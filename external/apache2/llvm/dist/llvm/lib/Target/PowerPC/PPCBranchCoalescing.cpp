@@ -23,6 +23,7 @@
 #include "llvm/CodeGen/TargetFrameLowering.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
+#include "llvm/InitializePasses.h"
 #include "llvm/Support/Debug.h"
 
 using namespace llvm;
@@ -268,6 +269,11 @@ bool PPCBranchCoalescing::canCoalesceBranch(CoalescingCandidateInfo &Cand) {
 
   if (Cand.BranchBlock->isEHPad() || Cand.BranchBlock->hasEHPadSuccessor()) {
     LLVM_DEBUG(dbgs() << "EH Pad - skip\n");
+    return false;
+  }
+
+  if (Cand.BranchBlock->mayHaveInlineAsmBr()) {
+    LLVM_DEBUG(dbgs() << "Inline Asm Br - skip\n");
     return false;
   }
 

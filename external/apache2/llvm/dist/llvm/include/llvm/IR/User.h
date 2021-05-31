@@ -45,7 +45,7 @@ class User : public Value {
   template <unsigned>
   friend struct HungoffOperandTraits;
 
-  LLVM_ATTRIBUTE_ALWAYS_INLINE inline static void *
+  LLVM_ATTRIBUTE_ALWAYS_INLINE static void *
   allocateFixedOperandUser(size_t, unsigned, unsigned);
 
 protected:
@@ -217,6 +217,11 @@ public:
     assert(NumOps < (1u << NumUserOperandsBits) && "Too many operands");
     NumUserOperands = NumOps;
   }
+
+  /// A droppable user is a user for which uses can be dropped without affecting
+  /// correctness and should be dropped rather than preventing a transformation
+  /// from happening.
+  bool isDroppable() const;
 
   // ---------------------------------------------------------------------------
   // Operand Iterator interface...

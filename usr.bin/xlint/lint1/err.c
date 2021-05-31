@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.116 2021/04/18 17:36:18 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.116.2.1 2021/05/31 22:15:26 cjep Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.116 2021/04/18 17:36:18 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.116.2.1 2021/05/31 22:15:26 cjep Exp $");
 #endif
 
 #include <sys/types.h>
@@ -88,7 +88,7 @@ const char *const msgs[] = {
 	"incomplete structure or union %s: %s",			      /* 31 */
 	"argument type defaults to 'int': %s",			      /* 32 */
 	"duplicate member name: %s",				      /* 33 */
-	"nonportable bit-field type",				      /* 34 */
+	"nonportable bit-field type '%s'",			      /* 34 */
 	"illegal bit-field type '%s'",				      /* 35 */
 	"illegal bit-field size: %d",				      /* 36 */
 	"zero size bit-field",					      /* 37 */
@@ -363,7 +363,7 @@ const char *const msgs[] = {
 	"constant truncated by conversion, op %s",		      /* 306 */
 	"static variable %s set but not used",			      /* 307 */
 	"invalid type for _Complex",				      /* 308 */
-	"extra bits set to 0 in conversion of '%s' to '%s', op %s",   /* 309 */
+	"extra bits set to 0 in conversion of '%s' to '%s', op '%s'", /* 309 */
 	"symbol renaming can't be used on function arguments",	      /* 310 */
 	"symbol renaming can't be used on automatic variables",	      /* 311 */
 	"%s C does not support // comments",			      /* 312 */
@@ -398,6 +398,7 @@ const char *const msgs[] = {
 	"argument to '%s' must be 'unsigned char' or EOF, not '%s'",  /* 341 */
 	"argument to '%s' must be cast to 'unsigned char', not to '%s'", /* 342 */
 	"static array size is a C11 extension",			      /* 343 */
+	"bit-field of type plain 'int' has implementation-defined signedness", /* 344 */
 };
 
 static struct include_level {

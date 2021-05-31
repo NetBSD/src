@@ -6130,7 +6130,7 @@ share_mount(int op, int argc, char **argv)
 			break;
 
 		case 'O':
-			warnx("no overlay mounts support on FreeBSD, ignoring");
+			warnx("no overlay mounts support on NetBSD, ignoring");
 			break;
 		case ':':
 			(void) fprintf(stderr, gettext("missing argument for "

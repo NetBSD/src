@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2014/01/22 01:03:09 christos Exp $
+#	$NetBSD: Makefile,v 1.28.32.1 2021/05/31 22:06:52 cjep Exp $
 #
 
 .include <bsd.own.mk>
@@ -91,9 +91,9 @@ setup_tmp:
 	-rm -rf tmp
 	mkdir tmp
 	cp -R ${.CURDIR}/BtNetBSD tmp/
-	-find tmp -path '*/CVS/*' -type f -exec rm -rf {} \;
-	find tmp -name CVS -type d | xargs rmdir
-	find tmp -name '*.uue' -type f -exec rm -f {} \;
+	-find tmp -path '*/CVS/*' -type f -exec rm -rf {} +
+	-find tmp -name CVS -type d -exec rmdir {} +
+	-find tmp -name '*.uue' -type f -exec rm -f {} +
 
 .PHONY: settypes
 settypes: setup_tmp

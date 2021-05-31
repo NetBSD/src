@@ -14,6 +14,8 @@
 #include "llvm/Analysis/TypeMetadataUtils.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Dominators.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/Module.h"
 
@@ -37,10 +39,10 @@ findCallsAtConstantOffset(SmallVectorImpl<DevirtCallSite> &DevirtCalls,
     if (isa<BitCastInst>(User)) {
       findCallsAtConstantOffset(DevirtCalls, HasNonCallUses, User, Offset, CI,
                                 DT);
-    } else if (auto CI = dyn_cast<CallInst>(User)) {
-      DevirtCalls.push_back({Offset, CI});
-    } else if (auto II = dyn_cast<InvokeInst>(User)) {
-      DevirtCalls.push_back({Offset, II});
+    } else if (auto *CI = dyn_cast<CallInst>(User)) {
+      DevirtCalls.push_back({Offset, *CI});
+    } else if (auto *II = dyn_cast<InvokeInst>(User)) {
+      DevirtCalls.push_back({Offset, *II});
     } else if (HasNonCallUses) {
       *HasNonCallUses = true;
     }
@@ -79,13 +81,9 @@ void llvm::findDevirtualizableCallsForTypeTest(
   const Module *M = CI->getParent()->getParent()->getParent();
 
   // Find llvm.assume intrinsics for this llvm.type.test call.
-  for (const Use &CIU : CI->uses()) {
-    if (auto *AssumeCI = dyn_cast<CallInst>(CIU.getUser())) {
-      Function *F = AssumeCI->getCalledFunction();
-      if (F && F->getIntrinsicID() == Intrinsic::assume)
-        Assumes.push_back(AssumeCI);
-    }
-  }
+  for (const Use &CIU : CI->uses())
+    if (auto *Assume = dyn_cast<AssumeInst>(CIU.getUser()))
+      Assumes.push_back(Assume);
 
   // If we found any, search for virtual calls based on %p and add them to
   // DevirtCalls.

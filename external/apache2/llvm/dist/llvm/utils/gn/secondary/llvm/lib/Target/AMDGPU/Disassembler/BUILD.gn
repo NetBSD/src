@@ -18,7 +18,5 @@ static_library("Disassembler") {
     "//llvm/lib/Target/AMDGPU/Utils",
   ]
   include_dirs = [ ".." ]
-  sources = [
-    "AMDGPUDisassembler.cpp",
-  ]
+  sources = [ "AMDGPUDisassembler.cpp" ]
 }

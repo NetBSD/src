@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/11/11 22:45:11 joerg Exp $
+#	$NetBSD: Makefile,v 1.1.4.1 2021/05/31 22:10:09 cjep Exp $
 
 LIB=	LLVMRemarks
 
@@ -10,8 +10,10 @@ SRCS+=	BitstreamRemarkParser.cpp \
 	BitstreamRemarkSerializer.cpp \
 	Remark.cpp \
 	RemarkFormat.cpp \
+	RemarkLinker.cpp \
 	RemarkParser.cpp \
 	RemarkSerializer.cpp \
+	RemarkStreamer.cpp \
 	RemarkStringTable.cpp \
 	YAMLRemarkParser.cpp \
 	YAMLRemarkSerializer.cpp

@@ -73,10 +73,13 @@ private:
                           llvm::opt::ArgStringList &CmdArgs) const;
   void AddWebAssemblyTargetArgs(const llvm::opt::ArgList &Args,
                                 llvm::opt::ArgStringList &CmdArgs) const;
+  void AddVETargetArgs(const llvm::opt::ArgList &Args,
+                       llvm::opt::ArgStringList &CmdArgs) const;
 
   enum RewriteKind { RK_None, RK_Fragile, RK_NonFragile };
 
   ObjCRuntime AddObjCRuntimeArgs(const llvm::opt::ArgList &args,
+                                 const InputInfoList &inputs,
                                  llvm::opt::ArgStringList &cmdArgs,
                                  RewriteKind rewrite) const;
 
@@ -84,10 +87,6 @@ private:
                       llvm::opt::ArgStringList &CmdArgs,
                       codegenoptions::DebugInfoKind *DebugInfoKind,
                       bool *EmitCodeView) const;
-
-  visualstudio::Compiler *getCLFallback() const;
-
-  mutable std::unique_ptr<visualstudio::Compiler> CLFallback;
 
   mutable std::unique_ptr<llvm::raw_fd_ostream> CompilationDatabase = nullptr;
   void DumpCompilationDatabase(Compilation &C, StringRef Filename,
@@ -118,7 +117,7 @@ public:
 class LLVM_LIBRARY_VISIBILITY ClangAs : public Tool {
 public:
   ClangAs(const ToolChain &TC)
-      : Tool("clang::as", "clang integrated assembler", TC, RF_Full) {}
+      : Tool("clang::as", "clang integrated assembler", TC) {}
   void AddMIPSTargetArgs(const llvm::opt::ArgList &Args,
                          llvm::opt::ArgStringList &CmdArgs) const;
   void AddX86TargetArgs(const llvm::opt::ArgList &Args,

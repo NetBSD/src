@@ -203,6 +203,9 @@ class LLVM_LIBRARY_VISIBILITY CodeViewDebug : public DebugHandlerBase {
   // Array of non-COMDAT global variables.
   SmallVector<CVGlobalVariable, 1> GlobalVariables;
 
+  /// List of static const data members to be emitted as S_CONSTANTs.
+  SmallVector<const DIDerivedType *, 4> StaticConstMembers;
+
   /// The set of comdat .debug$S sections that we've seen so far. Each section
   /// must start with a magic version number that must only be emitted once.
   /// This set tracks which sections we've already opened.
@@ -226,10 +229,6 @@ class LLVM_LIBRARY_VISIBILITY CodeViewDebug : public DebugHandlerBase {
 
   void calculateRanges(LocalVariable &Var,
                        const DbgValueHistoryMap::Entries &Entries);
-
-  static void collectInlineSiteChildren(SmallVectorImpl<unsigned> &Children,
-                                        const FunctionInfo &FI,
-                                        const InlineSite &Site);
 
   /// Remember some debug info about each function. Keep it in a stable order to
   /// emit at the end of the TU.
@@ -310,12 +309,14 @@ class LLVM_LIBRARY_VISIBILITY CodeViewDebug : public DebugHandlerBase {
 
   void emitDebugInfoForRetainedTypes();
 
-  void
-  emitDebugInfoForUDTs(ArrayRef<std::pair<std::string, const DIType *>> UDTs);
+  void emitDebugInfoForUDTs(
+      const std::vector<std::pair<std::string, const DIType *>> &UDTs);
 
+  void collectDebugInfoForGlobals();
   void emitDebugInfoForGlobals();
   void emitGlobalVariableList(ArrayRef<CVGlobalVariable> Globals);
   void emitDebugInfoForGlobal(const CVGlobalVariable &CVGV);
+  void emitStaticConstMemberList();
 
   /// Opens a subsection of the given kind in a .debug$S codeview section.
   /// Returns an end label for use with endCVSubsection when the subsection is
@@ -443,6 +444,15 @@ class LLVM_LIBRARY_VISIBILITY CodeViewDebug : public DebugHandlerBase {
                                                codeview::TypeIndex TI,
                                                const DIType *ClassTy = nullptr);
 
+  /// Collect the names of parent scopes, innermost to outermost. Return the
+  /// innermost subprogram scope if present. Ensure that parent type scopes are
+  /// inserted into the type table.
+  const DISubprogram *
+  collectParentScopeNames(const DIScope *Scope,
+                          SmallVectorImpl<StringRef> &ParentScopeNames);
+  std::string getFullyQualifiedName(const DIScope *Scope, StringRef Name);
+  std::string getFullyQualifiedName(const DIScope *Scope);
+
   unsigned getPointerSizeInBytes();
 
 protected:
@@ -454,6 +464,8 @@ protected:
 
 public:
   CodeViewDebug(AsmPrinter *AP);
+
+  void beginModule(Module *M) override;
 
   void setSymbolSize(const MCSymbol *, uint64_t) override {}
 

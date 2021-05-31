@@ -14,8 +14,10 @@
 #ifndef LLVM_CLANG_AST_ASTIMPORTER_H
 #define LLVM_CLANG_AST_ASTIMPORTER_H
 
+#include "clang/AST/APValue.h"
 #include "clang/AST/DeclBase.h"
 #include "clang/AST/DeclarationName.h"
+#include "clang/AST/ExprCXX.h"
 #include "clang/AST/NestedNameSpecifier.h"
 #include "clang/AST/TemplateName.h"
 #include "clang/AST/Type.h"
@@ -60,8 +62,12 @@ class TypeSourceInfo;
 
     static char ID;
 
-    ImportError() : Error(Unknown) { }
-    ImportError(const ImportError &Other) : Error(Other.Error) { }
+    ImportError() : Error(Unknown) {}
+    ImportError(const ImportError &Other) : Error(Other.Error) {}
+    ImportError &operator=(const ImportError &Other) {
+      Error = Other.Error;
+      return *this;
+    }
     ImportError(ErrorKind Error) : Error(Error) { }
 
     std::string toString() const;
@@ -87,8 +93,6 @@ class TypeSourceInfo;
     using NonEquivalentDeclSet = llvm::DenseSet<std::pair<Decl *, Decl *>>;
     using ImportedCXXBaseSpecifierMap =
         llvm::DenseMap<const CXXBaseSpecifier *, CXXBaseSpecifier *>;
-    using FileIDImportHandlerType =
-        std::function<void(FileID /*ToID*/, FileID /*FromID*/)>;
 
     enum class ODRHandlingType { Conservative, Liberal };
 
@@ -214,8 +218,6 @@ class TypeSourceInfo;
     };
 
   private:
-    FileIDImportHandlerType FileIDImportHandler;
-
     std::shared_ptr<ASTImporterSharedState> SharedState = nullptr;
 
     /// The path which we go through during the import of a given AST node.
@@ -318,14 +320,6 @@ class TypeSourceInfo;
 
     virtual ~ASTImporter();
 
-    /// Set a callback function for FileID import handling.
-    /// The function is invoked when a FileID is imported from the From context.
-    /// The imported FileID in the To context and the original FileID in the
-    /// From context is passed to it.
-    void setFileIDImportHandler(FileIDImportHandlerType H) {
-      FileIDImportHandler = H;
-    }
-
     /// Whether the importer will perform a minimal import, creating
     /// to-be-completed forward declarations when possible.
     bool isMinimalImport() const { return Minimal; }
@@ -345,7 +339,17 @@ class TypeSourceInfo;
       return ToOrErr.takeError();
     }
 
+    /// Import cleanup objects owned by ExprWithCleanup.
+    llvm::Expected<ExprWithCleanups::CleanupObject>
+    Import(ExprWithCleanups::CleanupObject From);
+
     /// Import the given type from the "from" context into the "to"
+    /// context.
+    ///
+    /// \returns The equivalent type in the "to" context, or the import error.
+    llvm::Expected<const Type *> Import(const Type *FromT);
+
+    /// Import the given qualified type from the "from" context into the "to"
     /// context. A null type is imported as a null type (no error).
     ///
     /// \returns The equivalent type in the "to" context, or the import error.
@@ -493,6 +497,13 @@ class TypeSourceInfo;
     /// \returns The equivalent CXXBaseSpecifier in the source manager of the
     /// "to" context, or the import error.
     llvm::Expected<CXXBaseSpecifier *> Import(const CXXBaseSpecifier *FromSpec);
+
+    /// Import the given APValue from the "from" context into
+    /// the "to" context.
+    ///
+    /// \return the equivalent APValue in the "to" context or the import
+    /// error.
+    llvm::Expected<APValue> Import(const APValue &FromValue);
 
     /// Import the definition of the given declaration, including all of
     /// the declarations it contains.

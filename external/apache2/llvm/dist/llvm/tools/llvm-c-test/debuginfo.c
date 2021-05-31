@@ -36,9 +36,9 @@ int llvm_test_dibuilder(void) {
   LLVMMetadataRef File = LLVMDIBuilderCreateFile(DIB, Filename,
     strlen(Filename), ".", 1);
 
-  LLVMMetadataRef CompileUnit = LLVMDIBuilderCreateCompileUnit(DIB,
-    LLVMDWARFSourceLanguageC, File, "llvm-c-test", 11, 0, NULL, 0, 0,
-    NULL, 0, LLVMDWARFEmissionFull, 0, 0, 0);
+  LLVMMetadataRef CompileUnit = LLVMDIBuilderCreateCompileUnit(
+      DIB, LLVMDWARFSourceLanguageC, File, "llvm-c-test", 11, 0, NULL, 0, 0,
+      NULL, 0, LLVMDWARFEmissionFull, 0, 0, 0, "/", 1, "", 0);
 
   LLVMMetadataRef Module =
     LLVMDIBuilderCreateModule(DIB, CompileUnit,
@@ -69,7 +69,7 @@ int llvm_test_dibuilder(void) {
   LLVMMetadataRef Int64Ty =
       LLVMDIBuilderCreateBasicType(DIB, "Int64", 5, 64, 0, LLVMDIFlagZero);
   LLVMMetadataRef Int64TypeDef =
-    LLVMDIBuilderCreateTypedef(DIB, Int64Ty, "int64_t", 7, File, 42, File);
+      LLVMDIBuilderCreateTypedef(DIB, Int64Ty, "int64_t", 7, File, 42, File, 0);
 
   LLVMMetadataRef GlobalVarValueExpr =
       LLVMDIBuilderCreateConstantValueExpression(DIB, 0);

@@ -157,9 +157,8 @@ unsigned A15SDOptimizer::getPrefSPRLane(unsigned SReg) {
   MachineInstr *MI = MRI->getVRegDef(SReg);
   if (!MI) return ARM::ssub_0;
   MachineOperand *MO = MI->findRegisterDefOperand(SReg);
-
-  assert(MO->isReg() && "Non-register operand found!");
   if (!MO) return ARM::ssub_0;
+  assert(MO->isReg() && "Non-register operand found!");
 
   if (MI->isCopy() && usesRegClass(MI->getOperand(1),
                                     &ARM::SPRRegClass)) {
@@ -360,8 +359,7 @@ void A15SDOptimizer::elideCopiesAndPHIs(MachineInstr *MI,
    SmallVector<MachineInstr *, 8> Front;
    Front.push_back(MI);
    while (Front.size() != 0) {
-     MI = Front.back();
-     Front.pop_back();
+     MI = Front.pop_back_val();
 
      // If we have already explored this MachineInstr, ignore it.
      if (Reached.find(MI) != Reached.end())

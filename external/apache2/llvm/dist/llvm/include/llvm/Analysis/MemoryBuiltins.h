@@ -19,7 +19,6 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Analysis/TargetFolder.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
-#include "llvm/IR/CallSite.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/InstVisitor.h"
 #include "llvm/IR/ValueHandle.h"
@@ -48,7 +47,6 @@ class LoadInst;
 class PHINode;
 class PointerType;
 class SelectInst;
-class TargetLibraryInfo;
 class Type;
 class UndefValue;
 class Value;
@@ -74,6 +72,14 @@ bool isMallocLikeFn(const Value *V, const TargetLibraryInfo *TLI,
 bool isMallocLikeFn(const Value *V,
                     function_ref<const TargetLibraryInfo &(Function &)> GetTLI,
                     bool LookThroughBitCast = false);
+
+/// Tests if a value is a call or invoke to a library function that
+/// allocates uninitialized memory with alignment (such as aligned_alloc).
+bool isAlignedAllocLikeFn(const Value *V, const TargetLibraryInfo *TLI,
+                          bool LookThroughBitCast = false);
+bool isAlignedAllocLikeFn(
+    const Value *V, function_ref<const TargetLibraryInfo &(Function &)> GetTLI,
+    bool LookThroughBitCast = false);
 
 /// Tests if a value is a call or invoke to a library function that
 /// allocates zero-filled memory (such as calloc).
@@ -206,6 +212,10 @@ struct ObjectSizeOpts {
 /// object size in Size if successful, and false otherwise. In this context, by
 /// object we mean the region of memory starting at Ptr to the end of the
 /// underlying object pointed to by Ptr.
+///
+/// WARNING: The object size returned is the allocation size.  This does not
+/// imply dereferenceability at site of use since the object may be freeed in
+/// between.
 bool getObjectSize(const Value *Ptr, uint64_t &Size, const DataLayout &DL,
                    const TargetLibraryInfo *TLI, ObjectSizeOpts Opts = {});
 
@@ -259,7 +269,7 @@ public:
   // compute() should be used by external users.
   SizeOffsetType visitAllocaInst(AllocaInst &I);
   SizeOffsetType visitArgument(Argument &A);
-  SizeOffsetType visitCallSite(CallSite CS);
+  SizeOffsetType visitCallBase(CallBase &CB);
   SizeOffsetType visitConstantPointerNull(ConstantPointerNull&);
   SizeOffsetType visitExtractElementInst(ExtractElementInst &I);
   SizeOffsetType visitExtractValueInst(ExtractValueInst &I);
@@ -329,7 +339,7 @@ public:
 
   // The individual instruction visitors should be treated as private.
   SizeOffsetEvalType visitAllocaInst(AllocaInst &I);
-  SizeOffsetEvalType visitCallSite(CallSite CS);
+  SizeOffsetEvalType visitCallBase(CallBase &CB);
   SizeOffsetEvalType visitExtractElementInst(ExtractElementInst &I);
   SizeOffsetEvalType visitExtractValueInst(ExtractValueInst &I);
   SizeOffsetEvalType visitGEPOperator(GEPOperator &GEP);

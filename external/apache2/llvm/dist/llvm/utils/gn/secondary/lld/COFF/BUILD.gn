@@ -27,6 +27,7 @@ static_library("COFF") {
     "//llvm/lib/WindowsManifest",
   ]
   sources = [
+    "CallGraphSort.cpp",
     "Chunks.cpp",
     "DLL.cpp",
     "DebugTypes.cpp",
@@ -34,6 +35,7 @@ static_library("COFF") {
     "DriverUtils.cpp",
     "ICF.cpp",
     "InputFiles.cpp",
+    "LLDMapFile.cpp",
     "LTO.cpp",
     "MapFile.cpp",
     "MarkLive.cpp",

@@ -7,12 +7,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "COFFObjcopy.h"
-#include "Buffer.h"
-#include "CopyConfig.h"
+#include "COFFConfig.h"
+#include "CommonConfig.h"
 #include "Object.h"
 #include "Reader.h"
 #include "Writer.h"
-#include "llvm-objcopy.h"
 
 #include "llvm/Object/Binary.h"
 #include "llvm/Object/COFF.h"
@@ -40,11 +39,12 @@ static uint64_t getNextRVA(const Object &Obj) {
                  Obj.IsPE ? Obj.PeHeader.SectionAlignment : 1);
 }
 
-static std::vector<uint8_t> createGnuDebugLinkSectionContents(StringRef File) {
+static Expected<std::vector<uint8_t>>
+createGnuDebugLinkSectionContents(StringRef File) {
   ErrorOr<std::unique_ptr<MemoryBuffer>> LinkTargetOrErr =
       MemoryBuffer::getFile(File);
   if (!LinkTargetOrErr)
-    error("'" + File + "': " + LinkTargetOrErr.getError().message());
+    return createFileError(File, LinkTargetOrErr.getError());
   auto LinkTarget = std::move(*LinkTargetOrErr);
   uint32_t CRC32 = llvm::crc32(arrayRefFromStringRef(LinkTarget->getBuffer()));
 
@@ -81,15 +81,57 @@ static void addSection(Object &Obj, StringRef Name, ArrayRef<uint8_t> Contents,
   Obj.addSections(Sec);
 }
 
-static void addGnuDebugLink(Object &Obj, StringRef DebugLinkFile) {
-  std::vector<uint8_t> Contents =
+static Error addGnuDebugLink(Object &Obj, StringRef DebugLinkFile) {
+  Expected<std::vector<uint8_t>> Contents =
       createGnuDebugLinkSectionContents(DebugLinkFile);
-  addSection(Obj, ".gnu_debuglink", Contents,
+  if (!Contents)
+    return Contents.takeError();
+
+  addSection(Obj, ".gnu_debuglink", *Contents,
              IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ |
                  IMAGE_SCN_MEM_DISCARDABLE);
+
+  return Error::success();
 }
 
-static Error handleArgs(const CopyConfig &Config, Object &Obj) {
+static void setSectionFlags(Section &Sec, SectionFlag AllFlags) {
+  // Need to preserve alignment flags.
+  const uint32_t PreserveMask =
+      IMAGE_SCN_ALIGN_1BYTES | IMAGE_SCN_ALIGN_2BYTES | IMAGE_SCN_ALIGN_4BYTES |
+      IMAGE_SCN_ALIGN_8BYTES | IMAGE_SCN_ALIGN_16BYTES |
+      IMAGE_SCN_ALIGN_32BYTES | IMAGE_SCN_ALIGN_64BYTES |
+      IMAGE_SCN_ALIGN_128BYTES | IMAGE_SCN_ALIGN_256BYTES |
+      IMAGE_SCN_ALIGN_512BYTES | IMAGE_SCN_ALIGN_1024BYTES |
+      IMAGE_SCN_ALIGN_2048BYTES | IMAGE_SCN_ALIGN_4096BYTES |
+      IMAGE_SCN_ALIGN_8192BYTES;
+
+  // Setup new section characteristics based on the flags provided in command
+  // line.
+  uint32_t NewCharacteristics =
+      (Sec.Header.Characteristics & PreserveMask) | IMAGE_SCN_MEM_READ;
+
+  if ((AllFlags & SectionFlag::SecAlloc) && !(AllFlags & SectionFlag::SecLoad))
+    NewCharacteristics |= IMAGE_SCN_CNT_UNINITIALIZED_DATA;
+  if (AllFlags & SectionFlag::SecNoload)
+    NewCharacteristics |= IMAGE_SCN_LNK_REMOVE;
+  if (!(AllFlags & SectionFlag::SecReadonly))
+    NewCharacteristics |= IMAGE_SCN_MEM_WRITE;
+  if (AllFlags & SectionFlag::SecDebug)
+    NewCharacteristics |=
+        IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_DISCARDABLE;
+  if (AllFlags & SectionFlag::SecCode)
+    NewCharacteristics |= IMAGE_SCN_CNT_CODE | IMAGE_SCN_MEM_EXECUTE;
+  if (AllFlags & SectionFlag::SecData)
+    NewCharacteristics |= IMAGE_SCN_CNT_INITIALIZED_DATA;
+  if (AllFlags & SectionFlag::SecShare)
+    NewCharacteristics |= IMAGE_SCN_MEM_SHARED;
+  if (AllFlags & SectionFlag::SecExclude)
+    NewCharacteristics |= IMAGE_SCN_LNK_REMOVE;
+
+  Sec.Header.Characteristics = NewCharacteristics;
+}
+
+static Error handleArgs(const CommonConfig &Config, Object &Obj) {
   // Perform the actual section removals.
   Obj.removeSections([&Config](const Section &Sec) {
     // Contrary to --only-keep-debug, --only-section fully removes sections that
@@ -131,8 +173,13 @@ static Error handleArgs(const CopyConfig &Config, Object &Obj) {
     if (Error E = Obj.markSymbols())
       return E;
 
-  // Actually do removals of symbols.
-  Obj.removeSymbols([&](const Symbol &Sym) {
+  for (Symbol &Sym : Obj.getMutableSymbols()) {
+    auto I = Config.SymbolsToRename.find(Sym.Name);
+    if (I != Config.SymbolsToRename.end())
+      Sym.Name = I->getValue();
+  }
+
+  auto ToRemove = [&](const Symbol &Sym) -> Expected<bool> {
     // For StripAll, all relocations have been stripped and we remove all
     // symbols.
     if (Config.StripAll || Config.StripAllGNU)
@@ -141,11 +188,10 @@ static Error handleArgs(const CopyConfig &Config, Object &Obj) {
     if (Config.SymbolsToRemove.matches(Sym.Name)) {
       // Explicitly removing a referenced symbol is an error.
       if (Sym.Referenced)
-        reportError(Config.OutputFilename,
-                    createStringError(llvm::errc::invalid_argument,
-                                      "not stripping symbol '%s' because it is "
-                                      "named in a relocation",
-                                      Sym.Name.str().c_str()));
+        return createStringError(
+            llvm::errc::invalid_argument,
+            "'" + Config.OutputFilename + "': not stripping symbol '" +
+                Sym.Name.str() + "' because it is named in a relocation");
       return true;
     }
 
@@ -170,7 +216,18 @@ static Error handleArgs(const CopyConfig &Config, Object &Obj) {
     }
 
     return false;
-  });
+  };
+
+  // Actually do removals of symbols.
+  if (Error Err = Obj.removeSymbols(ToRemove))
+    return Err;
+
+  if (!Config.SetSectionFlags.empty())
+    for (Section &Sec : Obj.getMutableSections()) {
+      const auto It = Config.SetSectionFlags.find(Sec.Name);
+      if (It != Config.SetSectionFlags.end())
+        setSectionFlags(Sec, It->second.NewFlags);
+    }
 
   for (const auto &Flag : Config.AddSection) {
     StringRef SecName, FileName;
@@ -189,32 +246,14 @@ static Error handleArgs(const CopyConfig &Config, Object &Obj) {
   }
 
   if (!Config.AddGnuDebugLink.empty())
-    addGnuDebugLink(Obj, Config.AddGnuDebugLink);
-
-  if (Config.AllowBrokenLinks || !Config.BuildIdLinkDir.empty() ||
-      Config.BuildIdLinkInput || Config.BuildIdLinkOutput ||
-      !Config.SplitDWO.empty() || !Config.SymbolsPrefix.empty() ||
-      !Config.AllocSectionsPrefix.empty() || !Config.DumpSection.empty() ||
-      !Config.KeepSection.empty() || Config.NewSymbolVisibility ||
-      !Config.SymbolsToGlobalize.empty() || !Config.SymbolsToKeep.empty() ||
-      !Config.SymbolsToLocalize.empty() || !Config.SymbolsToWeaken.empty() ||
-      !Config.SymbolsToKeepGlobal.empty() || !Config.SectionsToRename.empty() ||
-      !Config.SetSectionAlignment.empty() || !Config.SetSectionFlags.empty() ||
-      !Config.SymbolsToRename.empty() || Config.ExtractDWO ||
-      Config.KeepFileSymbols || Config.LocalizeHidden || Config.PreserveDates ||
-      Config.StripDWO || Config.StripNonAlloc || Config.StripSections ||
-      Config.Weaken || Config.DecompressDebugSections ||
-      Config.DiscardMode == DiscardType::Locals ||
-      !Config.SymbolsToAdd.empty() || Config.EntryExpr) {
-    return createStringError(llvm::errc::invalid_argument,
-                             "option not supported by llvm-objcopy for COFF");
-  }
+    if (Error E = addGnuDebugLink(Obj, Config.AddGnuDebugLink))
+      return E;
 
   return Error::success();
 }
 
-Error executeObjcopyOnBinary(const CopyConfig &Config, COFFObjectFile &In,
-                             Buffer &Out) {
+Error executeObjcopyOnBinary(const CommonConfig &Config, const COFFConfig &,
+                             COFFObjectFile &In, raw_ostream &Out) {
   COFFReader Reader(In);
   Expected<std::unique_ptr<Object>> ObjOrErr = Reader.create();
   if (!ObjOrErr)

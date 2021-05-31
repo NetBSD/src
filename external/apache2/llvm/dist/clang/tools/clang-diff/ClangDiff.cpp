@@ -102,7 +102,7 @@ getAST(const std::unique_ptr<CompilationDatabase> &CommonCompilations,
     }
   }
   addExtraArgs(Compilations);
-  std::array<std::string, 1> Files = {{Filename}};
+  std::array<std::string, 1> Files = {{std::string(Filename)}};
   ClangTool Tool(Compilations ? *Compilations : *CommonCompilations, Files);
   std::vector<std::unique_ptr<ASTUnit>> ASTs;
   Tool.buildASTs(ASTs);
@@ -284,7 +284,7 @@ static unsigned printHtmlForNode(raw_ostream &OS, const diff::ASTDiff &Diff,
   unsigned Begin, End;
   std::tie(Begin, End) = Tree.getSourceRangeOffsets(Node);
   const SourceManager &SrcMgr = Tree.getASTContext().getSourceManager();
-  auto Code = SrcMgr.getBuffer(SrcMgr.getMainFileID())->getBuffer();
+  auto Code = SrcMgr.getBufferOrFake(SrcMgr.getMainFileID()).getBuffer();
   for (; Offset < Begin; ++Offset)
     printHtml(OS, Code[Offset]);
   OS << "<span id='" << MyTag << Id << "' "

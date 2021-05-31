@@ -1,4 +1,4 @@
-# $NetBSD: printf.sh,v 1.6 2020/04/24 14:29:19 kre Exp $
+# $NetBSD: printf.sh,v 1.6.2.1 2021/05/31 22:15:23 cjep Exp $
 #
 # Copyright (c) 2018 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -403,15 +403,15 @@ d_decimal()
 	expect 65		'%d'		"'A"
 	expect 065		'%03d'		"'A"
 	expect 49		'%d'		"'1"
-	expect 45		'%d'		"'-1"
-	expect 43		'%d'		"'+1"
+	expect_fail 45		'%d'		"'-1"
+	expect_fail 43		'%d'		"'+1"
 	expect 00		'%.2d'		"'"
 
 	expect 68		'%d'		'"D'
 	expect 069		'%03d'		'"E'
 	expect 51		'%d'		'"3'
-	expect 45		'%d'		'"-3'
-	expect 43		'%d'		'"+3'
+	expect_fail 45		'%d'		'"-3'
+	expect_fail 43		'%d'		'"+3'
 
 	expect -1		'% d'		-1
 	expect ' 1'		'% d'		1
@@ -527,14 +527,14 @@ u_unsigned()
 	expect 65		'%u'		"'A"
 	expect 065		'%03u'		"'A"
 	expect 49		'%u'		"'1"
-	expect 45		'%u'		"'-1"
-	expect 43		'%u'		"'+1"
+	expect_fail 45		'%u'		"'-1"
+	expect_fail 43		'%u'		"'+1"
 
 	expect 68		'%u'		'"D'
 	expect 069		'%03u'		'"E'
 	expect 51		'%u'		'"3'
-	expect 45		'%u'		'"-3'
-	expect 43		'%u'		'"+3'
+	expect_fail 45		'%u'		'"-3'
+	expect_fail 43		'%u'		'"+3'
 
 	# Note that the ' ' and '+' flags only apply to signed conversions
 	# so they should be simply ignored for '%u'
@@ -604,8 +604,8 @@ o_octal()
 	expect 101		'%o'		"'A"
 	expect 0101		'%04o'		"'A"
 	expect 61		'%o'		"'1"
-	expect 55		'%o'		"'-1"
-	expect 53		'%o'		"'+1"
+	expect_fail 55		'%o'		"'-1"
+	expect_fail 53		'%o'		"'+1"
 
 	expect 01747		'%#o'		999
 	expect '  02'		'%#4o'		2
@@ -613,8 +613,8 @@ o_octal()
 	expect 0101		'%#o'		"'A"
 	expect 0101		'%#04o'		"'A"
 	expect 061		'%#o'		"'1"
-	expect 055		'%#o'		"'-1"
-	expect 053		'%#o'		"'+1"
+	expect_fail 055		'%#o'		"'-1"
+	expect_fail 053		'%#o'		"'+1"
 	expect 063		'%#o'		063
 
 	# negative numbers are allowed, but printed as unsigned.
@@ -652,8 +652,8 @@ x_hex()
 	expect 41		'%x'		"'A"
 	expect 041		'%03x'		"'A"
 	expect 31		'%x'		"'1"
-	expect 2d		'%x'		"'-1"
-	expect 2b		'%x'		"'+1"
+	expect_fail 2d		'%x'		"'-1"
+	expect_fail 2b		'%x'		"'+1"
 
 	expect ' face '		'%5x '		64206
 
@@ -690,8 +690,8 @@ X_hex()
 	# the alpha digits, so just do minimal testing of that...
 
 	expect 3E7		%X		999
-	expect 2D		%X		"'-1"
-	expect 2B		%X		"'+1"
+	expect_fail 2D		%X		"'-1"
+	expect_fail 2B		%X		"'+1"
 	expect ' FACE '		'%5X '		64206
 	expect DEADBEEF		%X		3735928559
 
@@ -1071,13 +1071,13 @@ g_floats()
 	expect 1.00000		%#g	1		# p = 6, x = 0 :  %.5f
 	expect -0.500000	%#g	-0.5		# p = 6, x = -1:  %.6f
 
-	expect 0.001234		%#.4g	0.001234	# p= 4, x = -3:  %.6f
+	expect 0.001234		%#.4g	0.001234	# p= 4, x = -3 :  %.6f
 
 	expect 9999.		%#.4g	9999		# p = 4, x = 3 :  %.0f
 	expect 9999.0		%#.5g	9999		# p = 5, x = 3 :  %.1f
 
 	expect 4.4?e+03		%.3g	4444		# p = 3, x = 3 :  %.2e
-	expect 1.2e-05		%.2g	0.000012	# p = 2, x = -5:  $.1e
+	expect 1.2e-05		%.2g	0.000012	# p = 2, x = -5:  %.1e
 
 	expect 1e+10		%g	10000000000
 	expect 1e+10		%g	1e10
@@ -1556,10 +1556,10 @@ NetBSD_extensions()
 	expect 6.500000e+01	'%e'		"'A"
 	expect 6.5e+01		'%.1e'		"'A"
 	expect 5e+01		'%.0e'		"'1"
-	expect 4.50e+01		'%.2e'		"'-1"
-	expect 4.300e+01	'%.3e'		"'+1"
-	expect 99.000000	'%f'		'"c"
-	expect 97		'%g'		'"a"
+	expect_fail 4.50e+01	'%.2e'		"'-1"
+	expect_fail 4.300e+01	'%.3e'		"'+1"
+	expect 99.000000	'%f'		'"c'
+	expect 97		'%g'		'"a'
 
 	# NetBSD (non-POSIX) format excape extensions
 	expect ''		'\e'

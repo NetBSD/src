@@ -64,10 +64,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Analysis/LegacyDivergenceAnalysis.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/Analysis/CFG.h"
 #include "llvm/Analysis/DivergenceAnalysis.h"
-#include "llvm/Analysis/LegacyDivergenceAnalysis.h"
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
@@ -75,6 +75,8 @@
 #include "llvm/IR/InstIterator.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Value.h"
+#include "llvm/InitializePasses.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include <vector>
@@ -281,6 +283,9 @@ void DivergencePropagator::propagate() {
 
 // Register this pass.
 char LegacyDivergenceAnalysis::ID = 0;
+LegacyDivergenceAnalysis::LegacyDivergenceAnalysis() : FunctionPass(ID) {
+  initializeLegacyDivergenceAnalysisPass(*PassRegistry::getPassRegistry());
+}
 INITIALIZE_PASS_BEGIN(LegacyDivergenceAnalysis, "divergence",
                       "Legacy Divergence Analysis", false, true)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
@@ -294,16 +299,15 @@ FunctionPass *llvm::createLegacyDivergenceAnalysisPass() {
 }
 
 void LegacyDivergenceAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.addRequired<DominatorTreeWrapperPass>();
-  AU.addRequired<PostDominatorTreeWrapperPass>();
-  if (UseGPUDA)
-    AU.addRequired<LoopInfoWrapperPass>();
+  AU.addRequiredTransitive<DominatorTreeWrapperPass>();
+  AU.addRequiredTransitive<PostDominatorTreeWrapperPass>();
+  AU.addRequiredTransitive<LoopInfoWrapperPass>();
   AU.setPreservesAll();
 }
 
 bool LegacyDivergenceAnalysis::shouldUseGPUDivergenceAnalysis(
-    const Function &F) const {
-  if (!UseGPUDA)
+    const Function &F, const TargetTransformInfo &TTI) const {
+  if (!(UseGPUDA || TTI.useGPUDivergenceAnalysis()))
     return false;
 
   // GPUDivergenceAnalysis requires a reducible CFG.
@@ -332,10 +336,11 @@ bool LegacyDivergenceAnalysis::runOnFunction(Function &F) {
   auto &DT = getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   auto &PDT = getAnalysis<PostDominatorTreeWrapperPass>().getPostDomTree();
 
-  if (shouldUseGPUDivergenceAnalysis(F)) {
+  if (shouldUseGPUDivergenceAnalysis(F, TTI)) {
     // run the new GPU divergence analysis
     auto &LI = getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
-    gpuDA = std::make_unique<GPUDivergenceAnalysis>(F, DT, PDT, LI, TTI);
+    gpuDA = std::make_unique<DivergenceInfo>(F, DT, PDT, LI, TTI,
+                                             /* KnownReducible  = */ true);
 
   } else {
     // run LLVM's existing DivergenceAnalysis
@@ -392,8 +397,7 @@ void LegacyDivergenceAnalysis::print(raw_ostream &OS, const Module *) const {
     OS << Arg << "\n";
   }
   // Iterate instructions using instructions() to ensure a deterministic order.
-  for (auto BI = F->begin(), BE = F->end(); BI != BE; ++BI) {
-    auto &BB = *BI;
+  for (const BasicBlock &BB : *F) {
     OS << "\n           " << BB.getName() << ":\n";
     for (auto &I : BB.instructionsWithoutDebug()) {
       OS << (isDivergent(&I) ? "DIVERGENT:     " : "               ");

@@ -25,6 +25,8 @@
 #include "llvm/ADT/Hashing.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Analysis/ProfileSummaryInfo.h"
+#include "llvm/CodeGen/LazyMachineBlockFrequencyInfo.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -32,6 +34,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/MachineSizeOpts.h"
 #include "llvm/CodeGen/TargetOpcodes.h"
 #include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/IR/DebugInfoMetadata.h"
@@ -109,9 +112,9 @@ public:
 
 } // end anonymous namespace
 
-/// Provide DenseMapInfo for MemOpKey.
 namespace llvm {
 
+/// Provide DenseMapInfo for MemOpKey.
 template <> struct DenseMapInfo<MemOpKey> {
   using PtrInfo = DenseMapInfo<const MachineOperand *>;
 
@@ -247,6 +250,12 @@ public:
 
   static char ID;
 
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
+    AU.addRequired<ProfileSummaryInfoWrapperPass>();
+    AU.addRequired<LazyMachineBlockFrequencyInfoPass>();
+    MachineFunctionPass::getAnalysisUsage(AU);
+  }
+
 private:
   using MemOpMap = DenseMap<MemOpKey, SmallVector<MachineInstr *, 16>>;
 
@@ -286,17 +295,17 @@ private:
   /// Replace debug value MI with a new debug value instruction using register
   /// VReg with an appropriate offset and DIExpression to incorporate the
   /// address displacement AddrDispShift. Return new debug value instruction.
-  MachineInstr *replaceDebugValue(MachineInstr &MI, unsigned VReg,
-                                  int64_t AddrDispShift);
+  MachineInstr *replaceDebugValue(MachineInstr &MI, unsigned OldReg,
+                                  unsigned NewReg, int64_t AddrDispShift);
 
   /// Removes LEAs which calculate similar addresses.
   bool removeRedundantLEAs(MemOpMap &LEAs);
 
   DenseMap<const MachineInstr *, unsigned> InstrPos;
 
-  MachineRegisterInfo *MRI;
-  const X86InstrInfo *TII;
-  const X86RegisterInfo *TRI;
+  MachineRegisterInfo *MRI = nullptr;
+  const X86InstrInfo *TII = nullptr;
+  const X86RegisterInfo *TRI = nullptr;
 };
 
 } // end anonymous namespace
@@ -567,21 +576,50 @@ bool X86OptimizeLEAPass::removeRedundantAddrCalc(MemOpMap &LEAs) {
 }
 
 MachineInstr *X86OptimizeLEAPass::replaceDebugValue(MachineInstr &MI,
-                                                    unsigned VReg,
+                                                    unsigned OldReg,
+                                                    unsigned NewReg,
                                                     int64_t AddrDispShift) {
-  DIExpression *Expr = const_cast<DIExpression *>(MI.getDebugExpression());
-  if (AddrDispShift != 0)
-    Expr = DIExpression::prepend(Expr, DIExpression::StackValue, AddrDispShift);
+  const DIExpression *Expr = MI.getDebugExpression();
+  if (AddrDispShift != 0) {
+    if (MI.isNonListDebugValue()) {
+      Expr =
+          DIExpression::prepend(Expr, DIExpression::StackValue, AddrDispShift);
+    } else {
+      // Update the Expression, appending an offset of `AddrDispShift` to the
+      // Op corresponding to `OldReg`.
+      SmallVector<uint64_t, 3> Ops;
+      DIExpression::appendOffset(Ops, AddrDispShift);
+      for (MachineOperand &Op : MI.getDebugOperandsForReg(OldReg)) {
+        unsigned OpIdx = MI.getDebugOperandIndex(&Op);
+        Expr = DIExpression::appendOpsToArg(Expr, Ops, OpIdx);
+      }
+    }
+  }
 
   // Replace DBG_VALUE instruction with modified version.
   MachineBasicBlock *MBB = MI.getParent();
   DebugLoc DL = MI.getDebugLoc();
   bool IsIndirect = MI.isIndirectDebugValue();
   const MDNode *Var = MI.getDebugVariable();
+  unsigned Opcode = MI.isNonListDebugValue() ? TargetOpcode::DBG_VALUE
+                                             : TargetOpcode::DBG_VALUE_LIST;
   if (IsIndirect)
-    assert(MI.getOperand(1).getImm() == 0 && "DBG_VALUE with nonzero offset");
-  return BuildMI(*MBB, MBB->erase(&MI), DL, TII->get(TargetOpcode::DBG_VALUE),
-                 IsIndirect, VReg, Var, Expr);
+    assert(MI.getDebugOffset().getImm() == 0 &&
+           "DBG_VALUE with nonzero offset");
+  SmallVector<MachineOperand, 4> NewOps;
+  // If we encounter an operand using the old register, replace it with an
+  // operand that uses the new register; otherwise keep the old operand.
+  auto replaceOldReg = [OldReg, NewReg](const MachineOperand &Op) {
+    if (Op.isReg() && Op.getReg() == OldReg)
+      return MachineOperand::CreateReg(NewReg, false, false, false, false,
+                                       false, false, false, false, 0,
+                                       /*IsRenamable*/ true);
+    return Op;
+  };
+  for (const MachineOperand &Op : MI.debug_operands())
+    NewOps.push_back(replaceOldReg(Op));
+  return BuildMI(*MBB, MBB->erase(&MI), DL, TII->get(Opcode), IsIndirect,
+                 NewOps, Var, Expr);
 }
 
 // Try to find similar LEAs in the list and replace one with another.
@@ -626,7 +664,7 @@ bool X86OptimizeLEAPass::removeRedundantLEAs(MemOpMap &LEAs) {
             // Replace DBG_VALUE instruction with modified version using the
             // register from the replacing LEA and the address displacement
             // between the LEA instructions.
-            replaceDebugValue(MI, FirstVReg, AddrDispShift);
+            replaceDebugValue(MI, LastVReg, FirstVReg, AddrDispShift);
             continue;
           }
 
@@ -681,6 +719,11 @@ bool X86OptimizeLEAPass::runOnMachineFunction(MachineFunction &MF) {
   MRI = &MF.getRegInfo();
   TII = MF.getSubtarget<X86Subtarget>().getInstrInfo();
   TRI = MF.getSubtarget<X86Subtarget>().getRegisterInfo();
+  auto *PSI =
+      &getAnalysis<ProfileSummaryInfoWrapperPass>().getPSI();
+  auto *MBFI = (PSI && PSI->hasProfileSummary()) ?
+               &getAnalysis<LazyMachineBlockFrequencyInfoPass>().getBFI() :
+               nullptr;
 
   // Process all basic blocks.
   for (auto &MBB : MF) {
@@ -699,7 +742,9 @@ bool X86OptimizeLEAPass::runOnMachineFunction(MachineFunction &MF) {
 
     // Remove redundant address calculations. Do it only for -Os/-Oz since only
     // a code size gain is expected from this part of the pass.
-    if (MF.getFunction().hasOptSize())
+    bool OptForSize = MF.getFunction().hasOptSize() ||
+                      llvm::shouldOptimizeForSize(&MBB, PSI, MBFI);
+    if (OptForSize)
       Changed |= removeRedundantAddrCalc(LEAs);
   }
 

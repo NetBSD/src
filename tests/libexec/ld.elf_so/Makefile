@@ -1,9 +1,8 @@
-# $NetBSD: Makefile,v 1.11 2020/09/22 01:09:32 kamil Exp $
+# $NetBSD: Makefile,v 1.11.2.1 2021/05/31 22:15:23 cjep Exp $
 #
 
 NOMAN=		# defined
 
-.include "Makefile.inc"
 .include <bsd.own.mk>
 
 .if ${MKPIC} != "no"

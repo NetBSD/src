@@ -24,6 +24,7 @@
 #include "llvm/Support/Error.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/SpecialCaseList.h"
+#include "llvm/Support/VirtualFileSystem.h"
 
 #include <cstdlib>
 
@@ -59,7 +60,7 @@ cl::opt<bool> Summarize("summarize", cl::desc("Print the summary only."),
 
 ExitOnError ExitOnErr;
 
-void printBlameContext(const DILineInfo &LineInfo, unsigned Context) {
+static void printBlameContext(const DILineInfo &LineInfo, unsigned Context) {
   auto FileOrErr = MemoryBuffer::getFile(LineInfo.FileName);
   if (!FileOrErr) {
     errs() << "Could not open file: " << LineInfo.FileName << "\n";
@@ -83,10 +84,10 @@ void printBlameContext(const DILineInfo &LineInfo, unsigned Context) {
   }
 }
 
-void printInstructionInformation(const FileAnalysis &Analysis,
-                                 const Instr &InstrMeta,
-                                 const GraphResult &Graph,
-                                 CFIProtectionStatus ProtectionStatus) {
+static void printInstructionInformation(const FileAnalysis &Analysis,
+                                        const Instr &InstrMeta,
+                                        const GraphResult &Graph,
+                                        CFIProtectionStatus ProtectionStatus) {
   outs() << "Instruction: " << format_hex(InstrMeta.VMAddress, 2) << " ("
          << stringCFIProtectionStatus(ProtectionStatus) << "): ";
   Analysis.printInstruction(InstrMeta, outs());
@@ -96,8 +97,8 @@ void printInstructionInformation(const FileAnalysis &Analysis,
     Graph.printToDOT(Analysis, outs());
 }
 
-void printInstructionStatus(unsigned BlameLine, bool CFIProtected,
-                            const DILineInfo &LineInfo) {
+static void printInstructionStatus(unsigned BlameLine, bool CFIProtected,
+                                   const DILineInfo &LineInfo) {
   if (BlameLine) {
     outs() << "Blacklist Match: " << BlacklistFilename << ":" << BlameLine
            << "\n";
@@ -121,8 +122,9 @@ void printInstructionStatus(unsigned BlameLine, bool CFIProtected,
   }
 }
 
-void printIndirectCFInstructions(FileAnalysis &Analysis,
-                                 const SpecialCaseList *SpecialCaseList) {
+static void
+printIndirectCFInstructions(FileAnalysis &Analysis,
+                            const SpecialCaseList *SpecialCaseList) {
   uint64_t ExpectedProtected = 0;
   uint64_t UnexpectedProtected = 0;
   uint64_t ExpectedUnprotected = 0;
@@ -261,7 +263,8 @@ int main(int argc, char **argv) {
   std::unique_ptr<SpecialCaseList> SpecialCaseList;
   if (BlacklistFilename != "-") {
     std::string Error;
-    SpecialCaseList = SpecialCaseList::create({BlacklistFilename}, Error);
+    SpecialCaseList = SpecialCaseList::create({BlacklistFilename},
+                                              *vfs::getRealFileSystem(), Error);
     if (!SpecialCaseList) {
       errs() << "Failed to get blacklist: " << Error << "\n";
       exit(EXIT_FAILURE);

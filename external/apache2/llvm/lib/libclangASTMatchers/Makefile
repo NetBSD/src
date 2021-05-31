@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/11/11 22:45:14 joerg Exp $
+#	$NetBSD: Makefile,v 1.1.4.1 2021/05/31 22:10:11 cjep Exp $
 
 LIB=	clangASTMatchers
 
@@ -7,7 +7,8 @@ LIB=	clangASTMatchers
 .PATH: ${CLANG_SRCDIR}/lib/ASTMatchers
 
 SRCS+=	ASTMatchFinder.cpp \
-	ASTMatchersInternal.cpp
+	ASTMatchersInternal.cpp \
+	GtestMatchers.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

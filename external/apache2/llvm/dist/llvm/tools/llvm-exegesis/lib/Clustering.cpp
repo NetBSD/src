@@ -7,12 +7,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "Clustering.h"
+#include "Error.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include <algorithm>
 #include <string>
 #include <vector>
+#include <deque>
 
 namespace llvm {
 namespace exegesis {
@@ -106,14 +108,13 @@ Error InstructionBenchmarkClustering::validateAndSetup() {
     const auto *CurMeasurement = &Point.Measurements;
     if (LastMeasurement) {
       if (LastMeasurement->size() != CurMeasurement->size()) {
-        return make_error<StringError>("inconsistent measurement dimensions",
-                                       inconvertibleErrorCode());
+        return make_error<ClusteringError>(
+            "inconsistent measurement dimensions");
       }
       for (size_t I = 0, E = LastMeasurement->size(); I < E; ++I) {
         if (LastMeasurement->at(I).Key != CurMeasurement->at(I).Key) {
-          return make_error<StringError>(
-              "inconsistent measurement dimensions keys",
-              inconvertibleErrorCode());
+          return make_error<ClusteringError>(
+              "inconsistent measurement dimensions keys");
         }
       }
     }
@@ -252,7 +253,7 @@ void InstructionBenchmarkClustering::stabilize(unsigned NumOpcodes) {
   std::map<OpcodeAndConfig, SmallSet<ClusterId, 1>> OpcodeConfigToClusterIDs;
   // Populate OpcodeConfigToClusterIDs and UnstableOpcodes data structures.
   assert(ClusterIdForPoint_.size() == Points_.size() && "size mismatch");
-  for (const auto &Point : zip(Points_, ClusterIdForPoint_)) {
+  for (auto Point : zip(Points_, ClusterIdForPoint_)) {
     const ClusterId &ClusterIdOfPoint = std::get<1>(Point);
     if (!ClusterIdOfPoint.isValid())
       continue; // Only process fully valid clusters.
@@ -333,7 +334,7 @@ Expected<InstructionBenchmarkClustering> InstructionBenchmarkClustering::create(
       Clustering.stabilize(NumOpcodes.getValue());
   } else /*if(Mode == ModeE::Naive)*/ {
     if (!NumOpcodes.hasValue())
-      report_fatal_error(
+      return make_error<Failure>(
           "'naive' clustering mode requires opcode count to be specified");
     Clustering.clusterizeNaive(NumOpcodes.getValue());
   }
@@ -347,13 +348,13 @@ void SchedClassClusterCentroid::addPoint(ArrayRef<BenchmarkMeasure> Point) {
   assert(Representative.size() == Point.size() &&
          "All points should have identical dimensions.");
 
-  for (const auto &I : zip(Representative, Point))
+  for (auto I : zip(Representative, Point))
     std::get<0>(I).push(std::get<1>(I));
 }
 
 std::vector<BenchmarkMeasure> SchedClassClusterCentroid::getAsPoint() const {
   std::vector<BenchmarkMeasure> ClusterCenterPoint(Representative.size());
-  for (const auto &I : zip(ClusterCenterPoint, Representative))
+  for (auto I : zip(ClusterCenterPoint, Representative))
     std::get<0>(I).PerInstructionValue = std::get<1>(I).avg();
   return ClusterCenterPoint;
 }

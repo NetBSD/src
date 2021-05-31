@@ -90,6 +90,20 @@ private:
   IdKind Kind;
 };
 
+// Generic type information for an assembly object.
+// All sizes measured in bytes.
+struct AsmTypeInfo {
+  StringRef Name;
+  unsigned Size = 0;
+  unsigned ElementSize = 0;
+  unsigned Length = 0;
+};
+
+struct AsmFieldInfo {
+  AsmTypeInfo Type;
+  unsigned Offset = 0;
+};
+
 /// Generic Sema callback for assembly parser.
 class MCAsmParserSemaCallback {
 public:
@@ -165,8 +179,26 @@ public:
   /// Run the parser on the input source buffer.
   virtual bool Run(bool NoInitialTextSection, bool NoFinalize = false) = 0;
 
-  virtual void setParsingInlineAsm(bool V) = 0;
-  virtual bool isParsingInlineAsm() = 0;
+  virtual void setParsingMSInlineAsm(bool V) = 0;
+  virtual bool isParsingMSInlineAsm() = 0;
+
+  virtual bool discardLTOSymbol(StringRef) const { return false; }
+
+  virtual bool isParsingMasm() const { return false; }
+
+  virtual bool defineMacro(StringRef Name, StringRef Value) { return true; }
+
+  virtual bool lookUpField(StringRef Name, AsmFieldInfo &Info) const {
+    return true;
+  }
+  virtual bool lookUpField(StringRef Base, StringRef Member,
+                           AsmFieldInfo &Info) const {
+    return true;
+  }
+
+  virtual bool lookUpType(StringRef Name, AsmTypeInfo &Info) const {
+    return true;
+  }
 
   /// Parse MS-style inline assembly.
   virtual bool parseMSInlineAsm(
@@ -228,6 +260,8 @@ public:
   /// success.
   bool parseOptionalToken(AsmToken::TokenKind T);
 
+  bool parseComma() { return parseToken(AsmToken::Comma, "expected comma"); }
+  bool parseEOL();
   bool parseEOL(const Twine &ErrMsg);
 
   bool parseMany(function_ref<bool()> parseOne, bool hasComma = true);
@@ -250,6 +284,10 @@ public:
   /// characters and return the string contents.
   virtual bool parseEscapedString(std::string &Data) = 0;
 
+  /// Parse an angle-bracket delimited string at the current position if one is
+  /// present, returning the string contents.
+  virtual bool parseAngleBracketString(std::string &Data) = 0;
+
   /// Skip to the end of the current statement, for error recovery.
   virtual void eatToEndOfStatement() = 0;
 
@@ -266,7 +304,8 @@ public:
   /// \param Res - The value of the expression. The result is undefined
   /// on error.
   /// \return - False on success.
-  virtual bool parsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) = 0;
+  virtual bool parsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc,
+                                AsmTypeInfo *TypeInfo) = 0;
 
   /// Parse an arbitrary expression, assuming that an initial '(' has
   /// already been consumed.
@@ -300,9 +339,13 @@ public:
                                      SMLoc &EndLoc) = 0;
 };
 
-/// Create an MCAsmParser instance.
+/// Create an MCAsmParser instance for parsing assembly similar to gas syntax
 MCAsmParser *createMCAsmParser(SourceMgr &, MCContext &, MCStreamer &,
                                const MCAsmInfo &, unsigned CB = 0);
+
+/// Create an MCAsmParser instance for parsing Microsoft MASM-style assembly
+MCAsmParser *createMCMasmParser(SourceMgr &, MCContext &, MCStreamer &,
+                                const MCAsmInfo &, unsigned CB = 0);
 
 } // end namespace llvm
 

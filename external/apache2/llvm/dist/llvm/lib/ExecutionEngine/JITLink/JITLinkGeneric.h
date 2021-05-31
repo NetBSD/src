@@ -32,9 +32,11 @@ namespace jitlink {
 /// remaining linker work) to allow them to be performed asynchronously.
 class JITLinkerBase {
 public:
-  JITLinkerBase(std::unique_ptr<JITLinkContext> Ctx, PassConfiguration Passes)
-      : Ctx(std::move(Ctx)), Passes(std::move(Passes)) {
+  JITLinkerBase(std::unique_ptr<JITLinkContext> Ctx,
+                std::unique_ptr<LinkGraph> G, PassConfiguration Passes)
+      : Ctx(std::move(Ctx)), G(std::move(G)), Passes(std::move(Passes)) {
     assert(this->Ctx && "Ctx can not be null");
+    assert(this->G && "G can not be null");
   }
 
   virtual ~JITLinkerBase();
@@ -49,21 +51,29 @@ protected:
 
   using SegmentLayoutMap = DenseMap<unsigned, SegmentLayout>;
 
+  // Returns the PassConfiguration for this instance. This can be used by
+  // JITLinkerBase implementations to add late passes that reference their
+  // own data structures (e.g. for ELF implementations to locate / construct
+  // a GOT start symbol prior to fixup).
+  PassConfiguration &getPassConfig() { return Passes; }
+
   // Phase 1:
-  //   1.1: Build link graph
-  //   1.2: Run pre-prune passes
+  //   1.1: Run pre-prune passes
   //   1.2: Prune graph
   //   1.3: Run post-prune passes
   //   1.4: Sort blocks into segments
-  //   1.5: Allocate segment memory
-  //   1.6: Identify externals and make an async call to resolve function
+  //   1.5: Allocate segment memory, update node vmaddrs to target vmaddrs
+  //   1.6: Run post-allocation passes
+  //   1.7: Notify context of final assigned symbol addresses
+  //   1.8: Identify external symbols and make an async call to resolve
   void linkPhase1(std::unique_ptr<JITLinkerBase> Self);
 
   // Phase 2:
   //   2.1: Apply resolution results
-  //   2.2: Fix up block contents
-  //   2.3: Call OnResolved callback
-  //   2.3: Make an async call to transfer and finalize memory.
+  //   2.2: Run pre-fixup passes
+  //   2.3: Fix up block contents
+  //   2.4: Run post-fixup passes
+  //   2.5: Make an async call to transfer and finalize memory.
   void linkPhase2(std::unique_ptr<JITLinkerBase> Self,
                   Expected<AsyncLookupResult> LookupResult,
                   SegmentLayoutMap Layout);
@@ -72,21 +82,13 @@ protected:
   //   3.1: Call OnFinalized callback, handing off allocation.
   void linkPhase3(std::unique_ptr<JITLinkerBase> Self, Error Err);
 
-  // Build a graph from the given object buffer.
-  // To be implemented by the client.
-  virtual Expected<std::unique_ptr<LinkGraph>>
-  buildGraph(MemoryBufferRef ObjBuffer) = 0;
-
-  // For debug dumping of the link graph.
-  virtual StringRef getEdgeKindName(Edge::Kind K) const = 0;
-
-  // Alight a JITTargetAddress to conform with block alignment requirements.
+  // Align a JITTargetAddress to conform with block alignment requirements.
   static JITTargetAddress alignToBlock(JITTargetAddress Addr, Block &B) {
     uint64_t Delta = (B.getAlignmentOffset() - Addr) % B.getAlignment();
     return Addr + Delta;
   }
 
-  // Alight a pointer to conform with block alignment requirements.
+  // Align a pointer to conform with block alignment requirements.
   static char *alignToBlock(char *P, Block &B) {
     uint64_t PAddr = static_cast<uint64_t>(reinterpret_cast<uintptr_t>(P));
     uint64_t Delta = (B.getAlignmentOffset() - PAddr) % B.getAlignment();
@@ -100,21 +102,19 @@ private:
 
   // Copy block contents and apply relocations.
   // Implemented in JITLinker.
-  virtual Error
-  copyAndFixUpBlocks(const SegmentLayoutMap &Layout,
-                     JITLinkMemoryManager::Allocation &Alloc) const = 0;
+  virtual Error fixUpBlocks(LinkGraph &G) const = 0;
 
   SegmentLayoutMap layOutBlocks();
   Error allocateSegments(const SegmentLayoutMap &Layout);
-  DenseSet<StringRef> getExternalSymbolNames() const;
+  JITLinkContext::LookupMap getExternalSymbolNames() const;
   void applyLookupResult(AsyncLookupResult LR);
+  void copyBlockContentToWorkingMemory(const SegmentLayoutMap &Layout,
+                                       JITLinkMemoryManager::Allocation &Alloc);
   void deallocateAndBailOut(Error Err);
 
-  void dumpGraph(raw_ostream &OS);
-
   std::unique_ptr<JITLinkContext> Ctx;
-  PassConfiguration Passes;
   std::unique_ptr<LinkGraph> G;
+  PassConfiguration Passes;
   std::unique_ptr<JITLinkMemoryManager::Allocation> Alloc;
 };
 
@@ -144,88 +144,25 @@ private:
     return static_cast<const LinkerImpl &>(*this);
   }
 
-  Error
-  copyAndFixUpBlocks(const SegmentLayoutMap &Layout,
-                     JITLinkMemoryManager::Allocation &Alloc) const override {
-    LLVM_DEBUG(dbgs() << "Copying and fixing up blocks:\n");
-    for (auto &KV : Layout) {
-      auto &Prot = KV.first;
-      auto &SegLayout = KV.second;
+  Error fixUpBlocks(LinkGraph &G) const override {
+    LLVM_DEBUG(dbgs() << "Fixing up blocks:\n");
 
-      auto SegMem = Alloc.getWorkingMemory(
-          static_cast<sys::Memory::ProtectionFlags>(Prot));
-      char *LastBlockEnd = SegMem.data();
-      char *BlockDataPtr = LastBlockEnd;
+    for (auto *B : G.blocks()) {
+      LLVM_DEBUG(dbgs() << "  " << *B << ":\n");
 
-      LLVM_DEBUG({
-        dbgs() << "  Processing segment "
-               << static_cast<sys::Memory::ProtectionFlags>(Prot) << " [ "
-               << (const void *)SegMem.data() << " .. "
-               << (const void *)((char *)SegMem.data() + SegMem.size())
-               << " ]\n    Processing content sections:\n";
-      });
+      // Copy Block data and apply fixups.
+      LLVM_DEBUG(dbgs() << "    Applying fixups.\n");
+      for (auto &E : B->edges()) {
 
-      for (auto *B : SegLayout.ContentBlocks) {
-        LLVM_DEBUG(dbgs() << "    " << *B << ":\n");
+        // Skip non-relocation edges.
+        if (!E.isRelocation())
+          continue;
 
-        // Pad to alignment/alignment-offset.
-        BlockDataPtr = alignToBlock(BlockDataPtr, *B);
-
-        LLVM_DEBUG({
-          dbgs() << "      Bumped block pointer to "
-                 << (const void *)BlockDataPtr << " to meet block alignment "
-                 << B->getAlignment() << " and alignment offset "
-                 << B->getAlignmentOffset() << "\n";
-        });
-
-        // Zero pad up to alignment.
-        LLVM_DEBUG({
-          if (LastBlockEnd != BlockDataPtr)
-            dbgs() << "      Zero padding from " << (const void *)LastBlockEnd
-                   << " to " << (const void *)BlockDataPtr << "\n";
-        });
-
-        while (LastBlockEnd != BlockDataPtr)
-          *LastBlockEnd++ = 0;
-
-        // Copy initial block content.
-        LLVM_DEBUG({
-          dbgs() << "      Copying block " << *B << " content, "
-                 << B->getContent().size() << " bytes, from "
-                 << (const void *)B->getContent().data() << " to "
-                 << (const void *)BlockDataPtr << "\n";
-        });
-        memcpy(BlockDataPtr, B->getContent().data(), B->getContent().size());
-
-        // Copy Block data and apply fixups.
-        LLVM_DEBUG(dbgs() << "      Applying fixups.\n");
-        for (auto &E : B->edges()) {
-
-          // Skip non-relocation edges.
-          if (!E.isRelocation())
-            continue;
-
-          // Dispatch to LinkerImpl for fixup.
-          if (auto Err = impl().applyFixup(*B, E, BlockDataPtr))
-            return Err;
-        }
-
-        // Point the block's content to the fixed up buffer.
-        B->setContent(StringRef(BlockDataPtr, B->getContent().size()));
-
-        // Update block end pointer.
-        LastBlockEnd = BlockDataPtr + B->getContent().size();
-        BlockDataPtr = LastBlockEnd;
+        // Dispatch to LinkerImpl for fixup.
+        auto *BlockData = const_cast<char *>(B->getContent().data());
+        if (auto Err = impl().applyFixup(G, *B, E, BlockData))
+          return Err;
       }
-
-      // Zero pad the rest of the segment.
-      LLVM_DEBUG({
-        dbgs() << "    Zero padding end of segment from "
-               << (const void *)LastBlockEnd << " to "
-               << (const void *)((char *)SegMem.data() + SegMem.size()) << "\n";
-      });
-      while (LastBlockEnd != SegMem.data() + SegMem.size())
-        *LastBlockEnd++ = 0;
     }
 
     return Error::success();

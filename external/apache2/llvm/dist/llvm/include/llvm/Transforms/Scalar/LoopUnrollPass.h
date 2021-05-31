@@ -12,6 +12,7 @@
 #include "llvm/ADT/Optional.h"
 #include "llvm/Analysis/LoopAnalysisManager.h"
 #include "llvm/IR/PassManager.h"
+#include "llvm/Support/CommandLine.h"
 
 namespace llvm {
 
@@ -21,7 +22,7 @@ class Function;
 class Loop;
 class LPMUpdater;
 
-/// Loop unroll pass that only does full loop unrolling.
+/// Loop unroll pass that only does full loop unrolling and peeling.
 class LoopFullUnrollPass : public PassInfoMixin<LoopFullUnrollPass> {
   const int OptLevel;
 

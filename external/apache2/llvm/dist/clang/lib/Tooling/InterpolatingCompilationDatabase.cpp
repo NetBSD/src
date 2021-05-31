@@ -114,6 +114,9 @@ static types::ID foldType(types::ID Lang) {
   case types::TY_ObjCXX:
   case types::TY_ObjCXXHeader:
     return types::TY_ObjCXX;
+  case types::TY_CUDA:
+  case types::TY_CUDA_DEVICE:
+    return types::TY_CUDA;
   default:
     return types::TY_INVALID;
   }
@@ -174,6 +177,10 @@ struct TransferableCommand {
                            Opt.matches(OPT__SLASH_Fo))))
         continue;
 
+      // ...including when the inputs are passed after --.
+      if (Opt.matches(OPT__DASH_DASH))
+        break;
+
       // Strip -x, but record the overridden language.
       if (const auto GivenType = tryParseTypeArg(*Arg)) {
         Type = *GivenType;
@@ -191,7 +198,8 @@ struct TransferableCommand {
                              OldArgs.data() + OldPos, OldArgs.data() + Pos);
     }
 
-    if (Std != LangStandard::lang_unspecified) // -std take precedence over -x
+    // Make use of -std iff -x was missing.
+    if (Type == types::TY_INVALID && Std != LangStandard::lang_unspecified)
       Type = toType(LangStandard::getLangStandardForKind(Std).getLanguage());
     Type = foldType(*Type);
     // The contract is to store None instead of TY_INVALID.
@@ -200,9 +208,11 @@ struct TransferableCommand {
   }
 
   // Produce a CompileCommand for \p filename, based on this one.
-  CompileCommand transferTo(StringRef Filename) const {
-    CompileCommand Result = Cmd;
-    Result.Filename = Filename;
+  // (This consumes the TransferableCommand just to avoid copying Cmd).
+  CompileCommand transferTo(StringRef Filename) && {
+    CompileCommand Result = std::move(Cmd);
+    Result.Heuristic = "inferred from " + Result.Filename;
+    Result.Filename = std::string(Filename);
     bool TypeCertain;
     auto TargetType = guessType(Filename, &TypeCertain);
     // If the filename doesn't determine the language (.h), transfer with -x.
@@ -216,7 +226,7 @@ struct TransferableCommand {
       if (ClangCLMode) {
         const StringRef Flag = toCLFlag(TargetType);
         if (!Flag.empty())
-          Result.CommandLine.push_back(Flag);
+          Result.CommandLine.push_back(std::string(Flag));
       } else {
         Result.CommandLine.push_back("-x");
         Result.CommandLine.push_back(types::getTypeName(TargetType));
@@ -229,8 +239,9 @@ struct TransferableCommand {
           llvm::Twine(ClangCLMode ? "/std:" : "-std=") +
           LangStandard::getLangStandardForKind(Std).getName()).str());
     }
-    Result.CommandLine.push_back(Filename);
-    Result.Heuristic = "inferred from " + Cmd.Filename;
+    if (Filename.startswith("-") || (ClangCLMode && Filename.startswith("/")))
+      Result.CommandLine.push_back("--");
+    Result.CommandLine.push_back(std::string(Filename));
     return Result;
   }
 
@@ -517,7 +528,7 @@ public:
         Inner->getCompileCommands(Index.chooseProxy(Filename, foldType(Lang)));
     if (ProxyCommands.empty())
       return {};
-    return {TransferableCommand(ProxyCommands[0]).transferTo(Filename)};
+    return {transferCompileCommand(std::move(ProxyCommands.front()), Filename)};
   }
 
   std::vector<std::string> getAllFiles() const override {
@@ -538,6 +549,11 @@ private:
 std::unique_ptr<CompilationDatabase>
 inferMissingCompileCommands(std::unique_ptr<CompilationDatabase> Inner) {
   return std::make_unique<InterpolatingCompilationDatabase>(std::move(Inner));
+}
+
+tooling::CompileCommand transferCompileCommand(CompileCommand Cmd,
+                                               StringRef Filename) {
+  return TransferableCommand(std::move(Cmd)).transferTo(Filename);
 }
 
 } // namespace tooling

@@ -1,4 +1,4 @@
-/*	$NetBSD: str.h,v 1.8 2021/04/14 17:39:11 rillig Exp $	*/
+/*	$NetBSD: str.h,v 1.8.2.1 2021/05/31 22:15:25 cjep Exp $	*/
 
 /*
  Copyright (c) 2021 Roland Illig <rillig@NetBSD.org>
@@ -362,6 +362,5 @@ SubstringWords_Free(SubstringWords w)
 
 char *str_concat2(const char *, const char *);
 char *str_concat3(const char *, const char *, const char *);
-char *str_concat4(const char *, const char *, const char *, const char *);
 
 bool Str_Match(const char *, const char *);

@@ -217,7 +217,7 @@ namespace {
     MachineDominatorTree *MDT = nullptr;
     MachineLoopInfo *MLI = nullptr;
     BlockSetType Deleted;
-    const MachineBranchProbabilityInfo *MBPI;
+    const MachineBranchProbabilityInfo *MBPI = nullptr;
   };
 
 } // end anonymous namespace
@@ -282,6 +282,7 @@ bool HexagonEarlyIfConversion::matchFlowPattern(MachineBasicBlock *B,
   // can fall through into the other, in other words, it will be executed
   // in both cases. We only want to predicate the block that is executed
   // conditionally.
+  assert(TB && FB && "Failed to find triangle control flow blocks");
   unsigned TNP = TB->pred_size(), FNP = FB->pred_size();
   unsigned TNS = TB->succ_size(), FNS = FB->succ_size();
 
@@ -385,7 +386,7 @@ bool HexagonEarlyIfConversion::isValidCandidate(const MachineBasicBlock *B)
       if (!MO.isReg() || !MO.isDef())
         continue;
       Register R = MO.getReg();
-      if (!Register::isVirtualRegister(R))
+      if (!R.isVirtual())
         continue;
       if (!isPredicate(R))
         continue;
@@ -402,7 +403,7 @@ bool HexagonEarlyIfConversion::usesUndefVReg(const MachineInstr *MI) const {
     if (!MO.isReg() || !MO.isUse())
       continue;
     Register R = MO.getReg();
-    if (!Register::isVirtualRegister(R))
+    if (!R.isVirtual())
       continue;
     const MachineInstr *DefI = MRI->getVRegDef(R);
     // "Undefined" virtual registers are actually defined via IMPLICIT_DEF.
@@ -492,7 +493,7 @@ unsigned HexagonEarlyIfConversion::countPredicateDefs(
       if (!MO.isReg() || !MO.isDef())
         continue;
       Register R = MO.getReg();
-      if (!Register::isVirtualRegister(R))
+      if (!R.isVirtual())
         continue;
       if (isPredicate(R))
         PredDefs++;
@@ -682,7 +683,7 @@ bool HexagonEarlyIfConversion::isPredicableStore(const MachineInstr *MI)
 
 bool HexagonEarlyIfConversion::isSafeToSpeculate(const MachineInstr *MI)
       const {
-  if (MI->mayLoad() || MI->mayStore())
+  if (MI->mayLoadOrStore())
     return false;
   if (MI->isCall() || MI->isBarrier() || MI->isBranch())
     return false;
@@ -1016,18 +1017,20 @@ void HexagonEarlyIfConversion::mergeBlocks(MachineBasicBlock *PredB,
   PredB->removeSuccessor(SuccB);
   PredB->splice(PredB->end(), SuccB, SuccB->begin(), SuccB->end());
   PredB->transferSuccessorsAndUpdatePHIs(SuccB);
+  MachineBasicBlock *OldLayoutSuccessor = SuccB->getNextNode();
   removeBlock(SuccB);
   if (!TermOk)
-    PredB->updateTerminator();
+    PredB->updateTerminator(OldLayoutSuccessor);
 }
 
 void HexagonEarlyIfConversion::simplifyFlowGraph(const FlowPattern &FP) {
+  MachineBasicBlock *OldLayoutSuccessor = FP.SplitB->getNextNode();
   if (FP.TrueB)
     removeBlock(FP.TrueB);
   if (FP.FalseB)
     removeBlock(FP.FalseB);
 
-  FP.SplitB->updateTerminator();
+  FP.SplitB->updateTerminator(OldLayoutSuccessor);
   if (FP.SplitB->succ_size() != 1)
     return;
 

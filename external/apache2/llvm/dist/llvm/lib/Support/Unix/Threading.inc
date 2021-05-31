@@ -28,6 +28,7 @@
 
 #if defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
 #include <errno.h>
+#include <sys/cpuset.h>
 #include <sys/sysctl.h>
 #include <sys/user.h>
 #include <unistd.h>
@@ -37,7 +38,12 @@
 #include <lwp.h> // For _lwp_self()
 #endif
 
+#if defined(__OpenBSD__)
+#include <unistd.h> // For getthrid()
+#endif
+
 #if defined(__linux__)
+#include <sched.h>       // For sched_getaffinity
 #include <sys/syscall.h> // For syscall codes
 #include <unistd.h>      // For syscall()
 #endif
@@ -89,6 +95,10 @@ llvm_execute_on_thread_impl(void *(*ThreadFunc)(void *), void *Arg,
     if ((errnum = ::pthread_join(Thread, nullptr)) != 0) {
       ReportErrnumFatal("pthread_join failed", errnum);
     }
+  } else if (JP == JoiningPolicy::Detach) {
+    if ((errnum = ::pthread_detach(Thread)) != 0) {
+      ReportErrnumFatal("pthread_detach failed", errnum);
+    }
   }
 }
 
@@ -104,6 +114,8 @@ uint64_t llvm::get_threadid() {
   return uint64_t(pthread_getthreadid_np());
 #elif defined(__NetBSD__)
   return uint64_t(_lwp_self());
+#elif defined(__OpenBSD__)
+  return uint64_t(getthrid());
 #elif defined(__ANDROID__)
   return uint64_t(gettid());
 #elif defined(__linux__)
@@ -267,3 +279,33 @@ SetThreadPriorityResult llvm::set_thread_priority(ThreadPriority Priority) {
 #endif
   return SetThreadPriorityResult::FAILURE;
 }
+
+#include <thread>
+
+int computeHostNumHardwareThreads() {
+#if defined(__FreeBSD__)
+  cpuset_t mask;
+  CPU_ZERO(&mask);
+  if (cpuset_getaffinity(CPU_LEVEL_WHICH, CPU_WHICH_TID, -1, sizeof(mask),
+                         &mask) == 0)
+    return CPU_COUNT(&mask);
+#elif defined(__linux__)
+  cpu_set_t Set;
+  if (sched_getaffinity(0, sizeof(Set), &Set) == 0)
+    return CPU_COUNT(&Set);
+#endif
+  // Guard against std::thread::hardware_concurrency() returning 0.
+  if (unsigned Val = std::thread::hardware_concurrency())
+    return Val;
+  return 1;
+}
+
+void llvm::ThreadPoolStrategy::apply_thread_strategy(
+    unsigned ThreadPoolNum) const {}
+
+llvm::BitVector llvm::get_thread_affinity_mask() {
+  // FIXME: Implement
+  llvm_unreachable("Not implemented!");
+}
+
+unsigned llvm::get_cpus() { return 1; }

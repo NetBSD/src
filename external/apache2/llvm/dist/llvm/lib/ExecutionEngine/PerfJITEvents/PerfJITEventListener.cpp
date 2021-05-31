@@ -24,6 +24,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Errno.h"
 #include "llvm/Support/FileSystem.h"
+#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Mutex.h"
 #include "llvm/Support/Path.h"
@@ -33,9 +34,8 @@
 #include <mutex>
 
 #include <sys/mman.h>  // mmap()
-#include <sys/types.h> // getpid()
 #include <time.h>      // clock_gettime(), time(), localtime_r() */
-#include <unistd.h>    // for getpid(), read(), close()
+#include <unistd.h>    // for read(), close()
 
 using namespace llvm;
 using namespace llvm::object;
@@ -80,7 +80,7 @@ private:
   void NotifyDebug(uint64_t CodeAddr, DILineInfoTable Lines);
 
   // cache lookups
-  pid_t Pid;
+  sys::Process::Pid Pid;
 
   // base directory for output data
   std::string JitPath;
@@ -176,7 +176,8 @@ static inline uint64_t perf_get_timestamp(void) {
   return timespec_to_ns(&ts);
 }
 
-PerfJITEventListener::PerfJITEventListener() : Pid(::getpid()) {
+PerfJITEventListener::PerfJITEventListener()
+    : Pid(sys::Process::getProcessId()) {
   // check if clock-source is supported
   if (!perf_get_timestamp()) {
     errs() << "kernel does not support CLOCK_MONOTONIC\n";
@@ -327,7 +328,7 @@ bool PerfJITEventListener::InitDebuggingDir() {
     return false;
   }
 
-  JitPath = UniqueDebugDir.str();
+  JitPath = std::string(UniqueDebugDir.str());
 
   return true;
 }

@@ -5550,10 +5550,8 @@ rs6000_machine_from_flags (void)
   HOST_WIDE_INT flags = rs6000_isa_flags;
 
   /* Disable the flags that should never influence the .machine selection.  */
-  flags &= ~(OPTION_MASK_PPC_GFXOPT | OPTION_MASK_PPC_GPOPT);
+  flags &= ~(OPTION_MASK_PPC_GFXOPT | OPTION_MASK_PPC_GPOPT | OPTION_MASK_ISEL);
 
-  if ((flags & OPTION_MASK_POWERPC64) == 0)
-    return "ppc";
   if ((flags & (ISA_3_1_MASKS_SERVER & ~ISA_3_0_MASKS_SERVER)) != 0)
     return "power10";
   if ((flags & (ISA_3_0_MASKS_SERVER & ~ISA_2_7_MASKS_SERVER)) != 0)
@@ -5568,7 +5566,9 @@ rs6000_machine_from_flags (void)
     return "power5";
   if ((flags & ISA_2_1_MASKS) != 0)
     return "power4";
-  return "ppc64";
+  if ((flags & OPTION_MASK_POWERPC64) != 0)
+    return "ppc64";
+  return "ppc";
 }
 
 void

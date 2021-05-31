@@ -16,11 +16,10 @@
 #define LLVM_C_CORE_H
 
 #include "llvm-c/ErrorHandling.h"
+#include "llvm-c/ExternC.h"
 #include "llvm-c/Types.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+LLVM_C_EXTERN_C_BEGIN
 
 /**
  * @defgroup LLVMC LLVM-C: C interface to LLVM
@@ -127,6 +126,7 @@ typedef enum {
   LLVMShuffleVector  = 52,
   LLVMExtractValue   = 53,
   LLVMInsertValue    = 54,
+  LLVMFreeze         = 68,
 
   /* Atomic operators */
   LLVMFence          = 55,
@@ -144,23 +144,26 @@ typedef enum {
 } LLVMOpcode;
 
 typedef enum {
-  LLVMVoidTypeKind,        /**< type with no size */
-  LLVMHalfTypeKind,        /**< 16 bit floating point type */
-  LLVMFloatTypeKind,       /**< 32 bit floating point type */
-  LLVMDoubleTypeKind,      /**< 64 bit floating point type */
-  LLVMX86_FP80TypeKind,    /**< 80 bit floating point type (X87) */
-  LLVMFP128TypeKind,       /**< 128 bit floating point type (112-bit mantissa)*/
-  LLVMPPC_FP128TypeKind,   /**< 128 bit floating point type (two 64-bits) */
-  LLVMLabelTypeKind,       /**< Labels */
-  LLVMIntegerTypeKind,     /**< Arbitrary bit width integers */
-  LLVMFunctionTypeKind,    /**< Functions */
-  LLVMStructTypeKind,      /**< Structures */
-  LLVMArrayTypeKind,       /**< Arrays */
-  LLVMPointerTypeKind,     /**< Pointers */
-  LLVMVectorTypeKind,      /**< SIMD 'packed' format, or other vector type */
-  LLVMMetadataTypeKind,    /**< Metadata */
-  LLVMX86_MMXTypeKind,     /**< X86 MMX */
-  LLVMTokenTypeKind        /**< Tokens */
+  LLVMVoidTypeKind,      /**< type with no size */
+  LLVMHalfTypeKind,      /**< 16 bit floating point type */
+  LLVMFloatTypeKind,     /**< 32 bit floating point type */
+  LLVMDoubleTypeKind,    /**< 64 bit floating point type */
+  LLVMX86_FP80TypeKind,  /**< 80 bit floating point type (X87) */
+  LLVMFP128TypeKind,     /**< 128 bit floating point type (112-bit mantissa)*/
+  LLVMPPC_FP128TypeKind, /**< 128 bit floating point type (two 64-bits) */
+  LLVMLabelTypeKind,     /**< Labels */
+  LLVMIntegerTypeKind,   /**< Arbitrary bit width integers */
+  LLVMFunctionTypeKind,  /**< Functions */
+  LLVMStructTypeKind,    /**< Structures */
+  LLVMArrayTypeKind,     /**< Arrays */
+  LLVMPointerTypeKind,   /**< Pointers */
+  LLVMVectorTypeKind,    /**< Fixed width SIMD vector type */
+  LLVMMetadataTypeKind,  /**< Metadata */
+  LLVMX86_MMXTypeKind,   /**< X86 MMX */
+  LLVMTokenTypeKind,     /**< Tokens */
+  LLVMScalableVectorTypeKind, /**< Scalable SIMD vector type */
+  LLVMBFloatTypeKind,    /**< 16 bit brain floating point type */
+  LLVMX86_AMXTypeKind    /**< X86 AMX */
 } LLVMTypeKind;
 
 typedef enum {
@@ -279,6 +282,7 @@ typedef enum {
   LLVMInlineAsmValueKind,
 
   LLVMInstructionValueKind,
+  LLVMPoisonValueValueKind
 } LLVMValueKind;
 
 typedef enum {
@@ -601,6 +605,17 @@ unsigned LLVMGetEnumAttributeKind(LLVMAttributeRef A);
 uint64_t LLVMGetEnumAttributeValue(LLVMAttributeRef A);
 
 /**
+ * Create a type attribute
+ */
+LLVMAttributeRef LLVMCreateTypeAttribute(LLVMContextRef C, unsigned KindID,
+                                         LLVMTypeRef type_ref);
+
+/**
+ * Get the type attribute's value.
+ */
+LLVMTypeRef LLVMGetTypeAttributeValue(LLVMAttributeRef A);
+
+/**
  * Create a string attribute.
  */
 LLVMAttributeRef LLVMCreateStringAttribute(LLVMContextRef C,
@@ -622,6 +637,12 @@ const char *LLVMGetStringAttributeValue(LLVMAttributeRef A, unsigned *Length);
  */
 LLVMBool LLVMIsEnumAttribute(LLVMAttributeRef A);
 LLVMBool LLVMIsStringAttribute(LLVMAttributeRef A);
+LLVMBool LLVMIsTypeAttribute(LLVMAttributeRef A);
+
+/**
+ * Obtain a Type from a context by its registered name.
+ */
+LLVMTypeRef LLVMGetTypeByName2(LLVMContextRef C, const char *Name);
 
 /**
  * @}
@@ -851,11 +872,11 @@ void LLVMAppendModuleInlineAsm(LLVMModuleRef M, const char *Asm, size_t Len);
  *
  * @see InlineAsm::get()
  */
-LLVMValueRef LLVMGetInlineAsm(LLVMTypeRef Ty,
-                              char *AsmString, size_t AsmStringSize,
-                              char *Constraints, size_t ConstraintsSize,
-                              LLVMBool HasSideEffects, LLVMBool IsAlignStack,
-                              LLVMInlineAsmDialect Dialect);
+LLVMValueRef LLVMGetInlineAsm(LLVMTypeRef Ty, char *AsmString,
+                              size_t AsmStringSize, char *Constraints,
+                              size_t ConstraintsSize, LLVMBool HasSideEffects,
+                              LLVMBool IsAlignStack,
+                              LLVMInlineAsmDialect Dialect, LLVMBool CanThrow);
 
 /**
  * Obtain the context to which this module is associated.
@@ -864,9 +885,7 @@ LLVMValueRef LLVMGetInlineAsm(LLVMTypeRef Ty,
  */
 LLVMContextRef LLVMGetModuleContext(LLVMModuleRef M);
 
-/**
- * Obtain a Type from a module by its registered name.
- */
+/** Deprecated: Use LLVMGetTypeByName2 instead. */
 LLVMTypeRef LLVMGetTypeByName(LLVMModuleRef M, const char *Name);
 
 /**
@@ -1163,6 +1182,11 @@ unsigned LLVMGetIntTypeWidth(LLVMTypeRef IntegerTy);
 LLVMTypeRef LLVMHalfTypeInContext(LLVMContextRef C);
 
 /**
+ * Obtain a 16-bit brain floating point type from a context.
+ */
+LLVMTypeRef LLVMBFloatTypeInContext(LLVMContextRef C);
+
+/**
  * Obtain a 32-bit floating point type from a context.
  */
 LLVMTypeRef LLVMFloatTypeInContext(LLVMContextRef C);
@@ -1194,6 +1218,7 @@ LLVMTypeRef LLVMPPCFP128TypeInContext(LLVMContextRef C);
  * These map to the functions in this group of the same name.
  */
 LLVMTypeRef LLVMHalfType(void);
+LLVMTypeRef LLVMBFloatType(void);
 LLVMTypeRef LLVMFloatType(void);
 LLVMTypeRef LLVMDoubleType(void);
 LLVMTypeRef LLVMX86FP80Type(void);
@@ -1436,9 +1461,21 @@ unsigned LLVMGetPointerAddressSpace(LLVMTypeRef PointerTy);
 LLVMTypeRef LLVMVectorType(LLVMTypeRef ElementType, unsigned ElementCount);
 
 /**
- * Obtain the number of elements in a vector type.
+ * Create a vector type that contains a defined type and has a scalable
+ * number of elements.
  *
- * This only works on types that represent vectors.
+ * The created type will exist in the context thats its element type
+ * exists in.
+ *
+ * @see llvm::ScalableVectorType::get()
+ */
+LLVMTypeRef LLVMScalableVectorType(LLVMTypeRef ElementType,
+                                   unsigned ElementCount);
+
+/**
+ * Obtain the (possibly scalable) number of elements in a vector type.
+ *
+ * This only works on types that represent vectors (fixed or scalable).
  *
  * @see llvm::VectorType::getNumElements()
  */
@@ -1470,6 +1507,11 @@ LLVMTypeRef LLVMLabelTypeInContext(LLVMContextRef C);
 LLVMTypeRef LLVMX86MMXTypeInContext(LLVMContextRef C);
 
 /**
+ * Create a X86 AMX type in a context.
+ */
+LLVMTypeRef LLVMX86AMXTypeInContext(LLVMContextRef C);
+
+/**
  * Create a token type in a context.
  */
 LLVMTypeRef LLVMTokenTypeInContext(LLVMContextRef C);
@@ -1486,6 +1528,7 @@ LLVMTypeRef LLVMMetadataTypeInContext(LLVMContextRef C);
 LLVMTypeRef LLVMVoidType(void);
 LLVMTypeRef LLVMLabelType(void);
 LLVMTypeRef LLVMX86MMXType(void);
+LLVMTypeRef LLVMX86AMXType(void);
 
 /**
  * @}
@@ -1542,6 +1585,7 @@ LLVMTypeRef LLVMX86MMXType(void);
           macro(Function)                   \
           macro(GlobalVariable)             \
       macro(UndefValue)                     \
+      macro(PoisonValue)                    \
     macro(Instruction)                      \
       macro(UnaryOperator)                  \
       macro(BinaryOperator)                 \
@@ -1600,6 +1644,7 @@ LLVMTypeRef LLVMX86MMXType(void);
         macro(ExtractValueInst)             \
         macro(LoadInst)                     \
         macro(VAArgInst)                    \
+        macro(FreezeInst)                   \
       macro(AtomicCmpXchgInst)              \
       macro(AtomicRMWInst)                  \
       macro(FenceInst)
@@ -1673,6 +1718,11 @@ LLVMBool LLVMIsConstant(LLVMValueRef Val);
  * Determine whether a value instance is undefined.
  */
 LLVMBool LLVMIsUndef(LLVMValueRef Val);
+
+/**
+ * Determine whether a value instance is poisonous.
+ */
+LLVMBool LLVMIsPoison(LLVMValueRef Val);
 
 /**
  * Convert value instances between types.
@@ -1831,6 +1881,13 @@ LLVMValueRef LLVMConstAllOnes(LLVMTypeRef Ty);
  * @see llvm::UndefValue::get()
  */
 LLVMValueRef LLVMGetUndef(LLVMTypeRef Ty);
+
+/**
+ * Obtain a constant value referring to a poison value of a type.
+ *
+ * @see llvm::PoisonValue::get()
+ */
+LLVMValueRef LLVMGetPoison(LLVMTypeRef Ty);
 
 /**
  * Determine whether a value instance is null.
@@ -2204,6 +2261,8 @@ void LLVMSetUnnamedAddr(LLVMValueRef Global, LLVMBool HasUnnamedAddr);
  * @see llvm::AllocaInst::getAlignment()
  * @see llvm::LoadInst::getAlignment()
  * @see llvm::StoreInst::getAlignment()
+ * @see llvm::AtomicRMWInst::setAlignment()
+ * @see llvm::AtomicCmpXchgInst::setAlignment()
  * @see llvm::GlobalValue::getAlignment()
  */
 unsigned LLVMGetAlignment(LLVMValueRef V);
@@ -2213,6 +2272,8 @@ unsigned LLVMGetAlignment(LLVMValueRef V);
  * @see llvm::AllocaInst::setAlignment()
  * @see llvm::LoadInst::setAlignment()
  * @see llvm::StoreInst::setAlignment()
+ * @see llvm::AtomicRMWInst::setAlignment()
+ * @see llvm::AtomicCmpXchgInst::setAlignment()
  * @see llvm::GlobalValue::setAlignment()
  */
 void LLVMSetAlignment(LLVMValueRef V, unsigned Bytes);
@@ -2689,7 +2750,7 @@ LLVMValueRef LLVMGetNextGlobalIFunc(LLVMValueRef IFunc);
  * no previous global aliases.
  */
 LLVMValueRef LLVMGetPreviousGlobalIFunc(LLVMValueRef IFunc);
-  
+
 /**
  * Retrieves the resolver function associated with this indirect function, or
  * NULL if it doesn't not exist.
@@ -2943,7 +3004,7 @@ void LLVMInsertExistingBasicBlockAfterInsertBlock(LLVMBuilderRef Builder,
  */
 void LLVMAppendExistingBasicBlock(LLVMValueRef Fn,
                                   LLVMBasicBlockRef BB);
-  
+
 /**
  * Create a new basic block without inserting it into a function.
  *
@@ -3250,8 +3311,8 @@ LLVMTypeRef LLVMGetCalledFunctionType(LLVMValueRef C);
  * This expects an LLVMValueRef that corresponds to a llvm::CallInst or
  * llvm::InvokeInst.
  *
- * @see llvm::CallInst::getCalledValue()
- * @see llvm::InvokeInst::getCalledValue()
+ * @see llvm::CallInst::getCalledOperand()
+ * @see llvm::InvokeInst::getCalledOperand()
  */
 LLVMValueRef LLVMGetCalledValue(LLVMValueRef Instr);
 
@@ -3627,7 +3688,7 @@ void LLVMAddDestination(LLVMValueRef IndirectBr, LLVMBasicBlockRef Dest);
 /* Get the number of clauses on the landingpad instruction */
 unsigned LLVMGetNumClauses(LLVMValueRef LandingPad);
 
-/* Get the value of the clause at idnex Idx on the landingpad instruction */
+/* Get the value of the clause at index Idx on the landingpad instruction */
 LLVMValueRef LLVMGetClause(LLVMValueRef LandingPad, unsigned Idx);
 
 /* Add a catch or filter clause to the landingpad instruction */
@@ -3754,7 +3815,7 @@ LLVMValueRef LLVMBuildArrayMalloc(LLVMBuilderRef, LLVMTypeRef Ty,
                                   LLVMValueRef Val, const char *Name);
 
 /**
- * Creates and inserts a memset to the specified pointer and the 
+ * Creates and inserts a memset to the specified pointer and the
  * specified value.
  *
  * @see llvm::IRRBuilder::CreateMemSet()
@@ -3767,7 +3828,7 @@ LLVMValueRef LLVMBuildMemSet(LLVMBuilderRef B, LLVMValueRef Ptr,
  *
  * @see llvm::IRRBuilder::CreateMemCpy()
  */
-LLVMValueRef LLVMBuildMemCpy(LLVMBuilderRef B, 
+LLVMValueRef LLVMBuildMemCpy(LLVMBuilderRef B,
                              LLVMValueRef Dst, unsigned DstAlign,
                              LLVMValueRef Src, unsigned SrcAlign,
                              LLVMValueRef Size);
@@ -3776,7 +3837,7 @@ LLVMValueRef LLVMBuildMemCpy(LLVMBuilderRef B,
  *
  * @see llvm::IRRBuilder::CreateMemMove()
  */
-LLVMValueRef LLVMBuildMemMove(LLVMBuilderRef B, 
+LLVMValueRef LLVMBuildMemMove(LLVMBuilderRef B,
                               LLVMValueRef Dst, unsigned DstAlign,
                               LLVMValueRef Src, unsigned SrcAlign,
                               LLVMValueRef Size);
@@ -3907,6 +3968,8 @@ LLVMValueRef LLVMBuildExtractValue(LLVMBuilderRef, LLVMValueRef AggVal,
 LLVMValueRef LLVMBuildInsertValue(LLVMBuilderRef, LLVMValueRef AggVal,
                                   LLVMValueRef EltVal, unsigned Index,
                                   const char *Name);
+LLVMValueRef LLVMBuildFreeze(LLVMBuilderRef, LLVMValueRef Val,
+                             const char *Name);
 
 LLVMValueRef LLVMBuildIsNull(LLVMBuilderRef, LLVMValueRef Val,
                              const char *Name);
@@ -3925,6 +3988,26 @@ LLVMValueRef LLVMBuildAtomicCmpXchg(LLVMBuilderRef B, LLVMValueRef Ptr,
                                     LLVMAtomicOrdering SuccessOrdering,
                                     LLVMAtomicOrdering FailureOrdering,
                                     LLVMBool SingleThread);
+
+/**
+ * Get the number of elements in the mask of a ShuffleVector instruction.
+ */
+unsigned LLVMGetNumMaskElements(LLVMValueRef ShuffleVectorInst);
+
+/**
+ * \returns a constant that specifies that the result of a \c ShuffleVectorInst
+ * is undefined.
+ */
+int LLVMGetUndefMaskElem(void);
+
+/**
+ * Get the mask value at position Elt in the mask of a ShuffleVector
+ * instruction.
+ *
+ * \Returns the result of \c LLVMGetUndefMaskElem() if the mask value is undef
+ * at that position.
+ */
+int LLVMGetMaskValue(LLVMValueRef ShuffleVectorInst, unsigned Elt);
 
 LLVMBool LLVMIsAtomicSingleThread(LLVMValueRef AtomicInst);
 void LLVMSetAtomicSingleThread(LLVMValueRef AtomicInst, LLVMBool SingleThread);
@@ -4086,8 +4169,6 @@ LLVMBool LLVMIsMultithreaded(void);
  * @}
  */
 
-#ifdef __cplusplus
-}
-#endif
+LLVM_C_EXTERN_C_END
 
 #endif /* LLVM_C_CORE_H */

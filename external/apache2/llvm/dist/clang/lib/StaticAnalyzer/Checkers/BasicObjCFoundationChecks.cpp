@@ -978,8 +978,7 @@ void ObjCLoopChecker::checkPostStmt(const ObjCForCollectionStmt *FCS,
   ProgramStateRef State = C.getState();
 
   // Check if this is the branch for the end of the loop.
-  SVal CollectionSentinel = C.getSVal(FCS);
-  if (CollectionSentinel.isZeroConstant()) {
+  if (!ExprEngine::hasMoreIteration(State, FCS, C.getLocationContext())) {
     if (!alreadyExecutedAtLeastOneLoopIteration(C.getPredecessor(), FCS))
       State = assumeCollectionNonEmpty(C, State, FCS, /*Assumption*/false);
 
@@ -1243,7 +1242,7 @@ void ento::registerNilArgChecker(CheckerManager &mgr) {
   mgr.registerChecker<NilArgChecker>();
 }
 
-bool ento::shouldRegisterNilArgChecker(const LangOptions &LO) {
+bool ento::shouldRegisterNilArgChecker(const CheckerManager &mgr) {
   return true;
 }
 
@@ -1251,7 +1250,7 @@ void ento::registerCFNumberChecker(CheckerManager &mgr) {
   mgr.registerChecker<CFNumberChecker>();
 }
 
-bool ento::shouldRegisterCFNumberChecker(const LangOptions &LO) {
+bool ento::shouldRegisterCFNumberChecker(const CheckerManager &mgr) {
   return true;
 }
 
@@ -1259,7 +1258,7 @@ void ento::registerCFRetainReleaseChecker(CheckerManager &mgr) {
   mgr.registerChecker<CFRetainReleaseChecker>();
 }
 
-bool ento::shouldRegisterCFRetainReleaseChecker(const LangOptions &LO) {
+bool ento::shouldRegisterCFRetainReleaseChecker(const CheckerManager &mgr) {
   return true;
 }
 
@@ -1267,7 +1266,7 @@ void ento::registerClassReleaseChecker(CheckerManager &mgr) {
   mgr.registerChecker<ClassReleaseChecker>();
 }
 
-bool ento::shouldRegisterClassReleaseChecker(const LangOptions &LO) {
+bool ento::shouldRegisterClassReleaseChecker(const CheckerManager &mgr) {
   return true;
 }
 
@@ -1275,7 +1274,7 @@ void ento::registerVariadicMethodTypeChecker(CheckerManager &mgr) {
   mgr.registerChecker<VariadicMethodTypeChecker>();
 }
 
-bool ento::shouldRegisterVariadicMethodTypeChecker(const LangOptions &LO) {
+bool ento::shouldRegisterVariadicMethodTypeChecker(const CheckerManager &mgr) {
   return true;
 }
 
@@ -1283,7 +1282,7 @@ void ento::registerObjCLoopChecker(CheckerManager &mgr) {
   mgr.registerChecker<ObjCLoopChecker>();
 }
 
-bool ento::shouldRegisterObjCLoopChecker(const LangOptions &LO) {
+bool ento::shouldRegisterObjCLoopChecker(const CheckerManager &mgr) {
   return true;
 }
 
@@ -1291,6 +1290,6 @@ void ento::registerObjCNonNilReturnValueChecker(CheckerManager &mgr) {
   mgr.registerChecker<ObjCNonNilReturnValueChecker>();
 }
 
-bool ento::shouldRegisterObjCNonNilReturnValueChecker(const LangOptions &LO) {
+bool ento::shouldRegisterObjCNonNilReturnValueChecker(const CheckerManager &mgr) {
   return true;
 }

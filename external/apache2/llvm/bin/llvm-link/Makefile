@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/11/11 22:45:00 joerg Exp $
+#	$NetBSD: Makefile,v 1.1.4.1 2021/05/31 22:06:58 cjep Exp $
 
 PROG_CXX=	llvm-link
 NOMAN=		yes
@@ -24,6 +24,7 @@ LLVM_LIBS+= \
 	Analysis \
 	Target \
 	IR \
+	Remarks \
 	BinaryFormat \
 	Support \
 	Demangle

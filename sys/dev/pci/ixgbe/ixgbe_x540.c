@@ -1,3 +1,5 @@
+/* $NetBSD: ixgbe_x540.c,v 1.18.2.1 2021/05/31 22:15:18 cjep Exp $ */
+
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
 
@@ -34,7 +36,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_x540.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe_x540.c,v 1.18 2021/04/30 06:55:32 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_x540.c,v 1.18.2.1 2021/05/31 22:15:18 cjep Exp $");
 
 #include "ixgbe_x540.h"
 #include "ixgbe_type.h"

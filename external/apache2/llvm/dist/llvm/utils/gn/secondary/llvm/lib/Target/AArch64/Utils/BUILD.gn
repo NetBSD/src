@@ -9,9 +9,7 @@ tablegen("AArch64GenSystemOperands") {
 
 static_library("Utils") {
   output_name = "LLVMAArch64Utils"
-  public_deps = [
-    ":AArch64GenSystemOperands",
-  ]
+  public_deps = [ ":AArch64GenSystemOperands" ]
   deps = [
     "//llvm/lib/Support",
 
@@ -22,7 +20,5 @@ static_library("Utils") {
 
   # AArch64BaseInfo.h includes a header from MCTargetDesc :-/
   include_dirs = [ ".." ]
-  sources = [
-    "AArch64BaseInfo.cpp",
-  ]
+  sources = [ "AArch64BaseInfo.cpp" ]
 }

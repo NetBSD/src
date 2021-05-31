@@ -9,9 +9,7 @@ tablegen("ARMGenSystemRegister") {
 
 static_library("Utils") {
   output_name = "LLVMARMUtils"
-  public_deps = [
-    ":ARMGenSystemRegister",
-  ]
+  public_deps = [ ":ARMGenSystemRegister" ]
   deps = [
     "//llvm/lib/Support",
 
@@ -23,7 +21,5 @@ static_library("Utils") {
   # ARMBaseInfo.h includes a header from MCTargetDesc,
   # https://reviews.llvm.org/D35209#1075113 :-/
   include_dirs = [ ".." ]
-  sources = [
-    "ARMBaseInfo.cpp",
-  ]
+  sources = [ "ARMBaseInfo.cpp" ]
 }

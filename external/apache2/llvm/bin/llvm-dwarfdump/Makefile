@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/11/11 22:45:00 joerg Exp $
+#	$NetBSD: Makefile,v 1.1.4.1 2021/05/31 22:06:58 cjep Exp $
 
 PROG_CXX=	llvm-dwarfdump
 NOMAN=		yes
@@ -7,8 +7,9 @@ NOMAN=		yes
 
 .PATH: ${LLVM_SRCDIR}/tools/llvm-dwarfdump
 
-SRCS=	Statistics.cpp \
-	llvm-dwarfdump.cpp
+SRCS=	llvm-dwarfdump.cpp \
+	SectionSizes.cpp \
+	Statistics.cpp \
 
 LLVM_LIBS+= \
 	AArch64TargetInfo \
@@ -28,16 +29,17 @@ LLVM_LIBS+= \
 	SparcMCTargetDesc \
 	X86TargetInfo \
 	X86MCTargetDesc \
-	X86Utils \
 	DebugInfoDWARF \
 	Object \
+	TextAPI \
 	BitReader \
 	BitstreamReader \
 	IR \
-	BinaryFormat \
 	MCDisassembler \
 	MCParser \
 	MC \
+	Remarks \
+	BinaryFormat \
 	Support \
 	Demangle
 

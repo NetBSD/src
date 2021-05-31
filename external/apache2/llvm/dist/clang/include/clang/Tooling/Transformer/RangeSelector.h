@@ -32,10 +32,20 @@ inline RangeSelector charRange(CharSourceRange R) {
 }
 
 /// Selects from the start of \p Begin and to the end of \p End.
-RangeSelector range(RangeSelector Begin, RangeSelector End);
+RangeSelector enclose(RangeSelector Begin, RangeSelector End);
 
 /// Convenience version of \c range where end-points are bound nodes.
-RangeSelector range(std::string BeginID, std::string EndID);
+RangeSelector encloseNodes(std::string BeginID, std::string EndID);
+
+/// DEPRECATED. Use `enclose`.
+inline RangeSelector range(RangeSelector Begin, RangeSelector End) {
+  return enclose(std::move(Begin), std::move(End));
+}
+
+/// DEPRECATED. Use `encloseNodes`.
+inline RangeSelector range(std::string BeginID, std::string EndID) {
+  return encloseNodes(std::move(BeginID), std::move(EndID));
+}
 
 /// Selects the (empty) range [B,B) when \p Selector selects the range [B,E).
 RangeSelector before(RangeSelector Selector);
@@ -43,11 +53,16 @@ RangeSelector before(RangeSelector Selector);
 /// Selects the the point immediately following \p Selector. That is, the
 /// (empty) range [E,E), when \p Selector selects either
 /// * the CharRange [B,E) or
-/// * the TokenRange [B,E'] where the token at E' spans the range [E,E').
+/// * the TokenRange [B,E'] where the token at E' spans the range [E',E).
 RangeSelector after(RangeSelector Selector);
 
-/// Selects a node, including trailing semicolon (for non-expression
-/// statements). \p ID is the node's binding in the match result.
+/// Selects the range between `R1` and `R2.
+inline RangeSelector between(RangeSelector R1, RangeSelector R2) {
+  return enclose(after(std::move(R1)), before(std::move(R2)));
+}
+
+/// Selects a node, including trailing semicolon, if any (for declarations and
+/// non-expression statements). \p ID is the node's binding in the match result.
 RangeSelector node(std::string ID);
 
 /// Selects a node, including trailing semicolon (always). Useful for selecting
@@ -58,9 +73,9 @@ RangeSelector statement(std::string ID);
 /// binding in the match result.
 RangeSelector member(std::string ID);
 
-/// Given a node with a "name", (like \c NamedDecl, \c DeclRefExpr or \c
-/// CxxCtorInitializer) selects the name's token.  Only selects the final
-/// identifier of a qualified name, but not any qualifiers or template
+/// Given a node with a "name", (like \c NamedDecl, \c DeclRefExpr, \c
+/// CxxCtorInitializer, and \c TypeLoc) selects the name's token.  Only selects
+/// the final identifier of a qualified name, but not any qualifiers or template
 /// arguments.  For example, for `::foo::bar::baz` and `::foo::bar::baz<int>`,
 /// it selects only `baz`.
 ///
@@ -88,26 +103,6 @@ RangeSelector elseBranch(std::string ID);
 /// `SourceManager::getExpansionRange`.
 RangeSelector expansion(RangeSelector S);
 } // namespace transformer
-
-namespace tooling {
-// DEPRECATED: These are temporary aliases supporting client migration to the
-// `transformer` namespace.
-using RangeSelector = transformer::RangeSelector;
-
-using transformer::after;
-using transformer::before;
-using transformer::callArgs;
-using transformer::charRange;
-using transformer::elseBranch;
-using transformer::expansion;
-using transformer::initListElements;
-using transformer::member;
-using transformer::name;
-using transformer::node;
-using transformer::range;
-using transformer::statement;
-using transformer::statements;
-} // namespace tooling
 } // namespace clang
 
 #endif // LLVM_CLANG_TOOLING_REFACTOR_RANGE_SELECTOR_H_
