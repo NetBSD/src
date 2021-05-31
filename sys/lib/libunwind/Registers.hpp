@@ -350,9 +350,8 @@ public:
       return REGNO_ARM32_SPSR;
     if (num >= DWARF_ARM32_D0 && num <= DWARF_ARM32_D31)
       return REGNO_ARM32_D0 + (num - DWARF_ARM32_D0);
-    if (num >= DWARF_ARM32_S0 && num <= DWARF_ARM32_S31) {
+    if (num >= DWARF_ARM32_S0 && num <= DWARF_ARM32_S31)
       return REGNO_ARM32_S0 + (num - DWARF_ARM32_S0);
-    }
     return LAST_REGISTER + 1;
   }
 
@@ -385,9 +384,9 @@ public:
   void copyFloatVectorRegister(int num, uint64_t addr_) {
     const void *addr = reinterpret_cast<const void *>(addr_);
     if (num >= REGNO_ARM32_S0 && num <= REGNO_ARM32_S31) {
-      if ((flags & 1) == 0) {
-        lazyVFP1();
-        flags |= 1;
+      if ((flags & FLAGS_VFPV2_USED) == 0) {
+        lazyVFPv2();
+        flags |= FLAGS_VFPV2_USED;
       }
       /*
        * Emulate single precision register as half of the
@@ -402,27 +401,32 @@ public:
         addr, sizeof(fpreg[0]) / 2);
     }
     if (num <= REGNO_ARM32_D15) {
-      if ((flags & 1) == 0) {
-        lazyVFP1();
-        flags |= 1;
+      if ((flags & FLAGS_VFPV2_USED) == 0) {
+        lazyVFPv2();
+        flags |= FLAGS_VFPV2_USED;
       }
     } else {
-      if ((flags & 2) == 0) {
-        lazyVFP3();
-        flags |= 2;
+      if ((flags & FLAGS_VFPV3_USED) == 0) {
+        lazyVFPv3();
+        flags |= FLAGS_VFPV3_USED;
       }
     }
     memcpy(fpreg + (num - REGNO_ARM32_D0), addr, sizeof(fpreg[0]));
   }
 
-  __dso_hidden void lazyVFP1();
-  __dso_hidden void lazyVFP3();
+  __dso_hidden void lazyVFPv2();
+  __dso_hidden void lazyVFPv3();
   __dso_hidden void jumpto() const __dead;
 
 private:
   uint32_t reg[REGNO_ARM32_SPSR + 1];
   uint32_t flags;
   uint64_t fpreg[32];
+
+  enum {
+    FLAGS_VFPV2_USED = 0x1,
+    FLAGS_VFPV3_USED = 0x2,
+  };
 };
 
 enum {
