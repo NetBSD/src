@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.25 2021/03/30 02:04:44 rin Exp $	*/
+/*	$NetBSD: cpu.h,v 1.26 2021/05/31 14:38:56 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -37,6 +37,10 @@
 
 #ifndef	_IBM4XX_CPU_H_
 #define	_IBM4XX_CPU_H_
+
+#ifdef _KERNEL_OPT
+#include "opt_param.h"
+#endif
 
 #include <powerpc/psl.h>
 #include <powerpc/spr.h>

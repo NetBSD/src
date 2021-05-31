@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.61 2019/09/28 15:11:53 christos Exp $ */
+/*	$NetBSD: param.h,v 1.62 2021/05/31 14:38:56 simonb Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -64,6 +64,7 @@
  */
 
 #if defined(_KERNEL_OPT)
+#include "opt_param.h"
 #include "opt_sparc_arch.h"
 #endif
 

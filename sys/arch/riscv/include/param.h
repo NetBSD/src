@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.4 2021/05/01 07:06:54 skrll Exp $ */
+/* $NetBSD: param.h,v 1.5 2021/05/31 14:38:57 simonb Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,6 +31,10 @@
 
 #ifndef	_RISCV_PARAM_H_
 #define	_RISCV_PARAM_H_
+
+#ifdef _KERNEL_OPT
+#include "opt_param.h"
+#endif
 
 /*
  * Machine dependent constants for all OpenRISC processors
