@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.47 2020/10/10 21:59:03 thorpej Exp $ */
+/* $NetBSD: param.h,v 1.48 2021/05/31 14:38:55 simonb Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -37,6 +37,10 @@
  *
  *	@(#)param.h	8.1 (Berkeley) 6/10/93
  */
+
+#ifdef _KERNEL_OPT
+#include "opt_param.h"
+#endif
 
 /*
  * Machine dependent constants for the Alpha.

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.29 2019/12/28 11:42:18 isaki Exp $	*/
+/*	$NetBSD: param.h,v 1.30 2021/05/31 14:38:57 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -40,6 +40,10 @@
 
 #ifndef	_MACHINE_PARAM_H_
 #define	_MACHINE_PARAM_H_
+
+#ifdef _KERNEL_OPT
+#include "opt_param.h"
+#endif
 
 /*
  * Machine dependent constants for x68k
