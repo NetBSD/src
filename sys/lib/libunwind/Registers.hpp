@@ -400,19 +400,20 @@ public:
 #endif
       memcpy((uint8_t *)(fpreg + dnum) + part * sizeof(fpreg[0]) / 2,
         addr, sizeof(fpreg[0]) / 2);
-    }
-    if (num <= REGNO_ARM32_D15) {
-      if ((flags & FLAGS_VFPV2_USED) == 0) {
-        lazyVFPv2();
-        flags |= FLAGS_VFPV2_USED;
-      }
     } else {
-      if ((flags & FLAGS_VFPV3_USED) == 0) {
-        lazyVFPv3();
-        flags |= FLAGS_VFPV3_USED;
+      if (num <= REGNO_ARM32_D15) {
+        if ((flags & FLAGS_VFPV2_USED) == 0) {
+          lazyVFPv2();
+          flags |= FLAGS_VFPV2_USED;
+        }
+      } else {
+        if ((flags & FLAGS_VFPV3_USED) == 0) {
+          lazyVFPv3();
+          flags |= FLAGS_VFPV3_USED;
+        }
       }
+      memcpy(fpreg + (num - REGNO_ARM32_D0), addr, sizeof(fpreg[0]));
     }
-    memcpy(fpreg + (num - REGNO_ARM32_D0), addr, sizeof(fpreg[0]));
   }
 
   __dso_hidden void lazyVFPv2();
