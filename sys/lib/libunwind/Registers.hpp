@@ -332,6 +332,11 @@ enum {
   REGNO_ARM32_S31 = 80,
 };
 
+#define	FLAGS_VFPV2_USED		0x1
+#define	FLAGS_VFPV3_USED		0x2
+#define	FLAGS_LEGACY_VFPV2_REGNO	0x4
+#define	FLAGS_EXTENDED_VFPV2_REGNO	0x8
+
 class Registers_arm32 {
 public:
   enum {
@@ -438,14 +443,12 @@ private:
   uint32_t reg[REGNO_ARM32_SPSR + 1];
   uint32_t flags;
   uint64_t fpreg[32];
-
-  enum {
-    FLAGS_VFPV2_USED = 0x1,
-    FLAGS_VFPV3_USED = 0x2,
-    FLAGS_LEGACY_VFPV2_REGNO = 0x4,
-    FLAGS_EXTENDED_VFPV2_REGNO = 0x8,
-  };
 };
+
+#undef	FLAGS_VFPV2_USED
+#undef	FLAGS_VFPV3_USED
+#undef	FLAGS_LEGACY_VFPV2_REGNO
+#undef	FLAGS_EXTENDED_VFPV2_REGNO
 
 enum {
   DWARF_VAX_R0 = 0,
