@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.99 2021/06/01 21:14:52 riastradh Exp $	*/
+/*	$NetBSD: audio.c,v 1.100 2021/06/01 21:15:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.99 2021/06/01 21:14:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.100 2021/06/01 21:15:37 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -2545,9 +2545,6 @@ int
 audio_close(struct audio_softc *sc, audio_file_t *file)
 {
 	int error;
-
-	/* Protect entering new fileops to this file */
-	atomic_store_relaxed(&file->dying, true);
 
 	/*
 	 * Drain first.
