@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.254 2021/06/01 05:08:46 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.255 2021/06/01 05:11:22 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.254 2021/06/01 05:08:46 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.255 2021/06/01 05:11:22 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -3897,6 +3897,7 @@ sppp_ipcp_tlu(struct sppp *sp)
 
 	KASSERT(SPPP_WLOCKED(sp));
 
+	SPPP_LOG(sp, LOG_INFO, "IPCP layer up\n");
 	ifp = &sp->pp_if;
 	if ((sp->ipcp.flags & IPCP_MYADDR_DYN) &&
 	    ((sp->ipcp.flags & IPCP_MYADDR_SEEN) == 0)) {
@@ -3920,6 +3921,7 @@ sppp_ipcp_tld(struct sppp *sp)
 
 	KASSERT(SPPP_WLOCKED(sp));
 
+	SPPP_LOG(sp, LOG_INFO, "IPCP layer down\n");
 	ifp = &sp->pp_if;
 	rt_ifmsg(ifp);
 #endif
@@ -4464,6 +4466,7 @@ sppp_ipv6cp_tlu(struct sppp *sp)
 
 	KASSERT(SPPP_WLOCKED(sp));
 
+	SPPP_LOG(sp, LOG_INFO, "IPv6CP layer up\n");
 	ifp = &sp->pp_if;
 	/* we are up - notify isdn daemon */
 	sppp_notify_con_wlocked(sp);
@@ -4477,6 +4480,7 @@ sppp_ipv6cp_tld(struct sppp *sp)
 
 	KASSERT(SPPP_WLOCKED(sp));
 
+	SPPP_LOG(sp, LOG_INFO, "IPv6CP layer down\n");
 	ifp = &sp->pp_if;
 	rt_ifmsg(ifp);
 }
