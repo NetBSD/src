@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2018/12/31 11:58:43 mrg Exp $
+#	$NetBSD: Makefile,v 1.16.2.1 2021/06/01 10:36:32 martin Exp $
 
 DRIVER=		xf86-input-keyboard
 DRIVER_NAME=	kbd_drv
@@ -16,7 +16,7 @@ CPPFLAGS+=	-DPCVT_SUPPORT
 .if ${MACHINE_ARCH} == "powerpc" || ${MACHINE} == "sparc" || \
     ${MACHINE} == "sparc64" || ${MACHINE} == "sgimips" || \
     ${MACHINE} == "shark" || ${MACHINE} == "vax" || \
-    ${MACHINE} == "evbarm"
+    ${MACHINE} == "evbarm" || ${MACHINE} == "mac68k"
 CPPFLAGS+=	-DDEFAULT_TO_WSKBD
 .endif
 
