@@ -1,4 +1,4 @@
-#	$NetBSD: t_pppoe.sh,v 1.32 2021/05/13 03:37:58 yamaguchi Exp $
+#	$NetBSD: t_pppoe.sh,v 1.33 2021/06/01 05:18:33 yamaguchi Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -743,7 +743,7 @@ pppoe_params_body()
 	atf_pppoectl pppoe0 noipv6cp
 	atf_ifconfig pppoe0 up
 	wait_for_opened "IPCP"
-	atf_check -s exit:0 -o match:'IPv6CP state: initial' \
+	atf_check -s exit:0 -o match:'IPv6CP state: closed' \
 	    -x "$HIJACKING pppoectl -dd pppoe0"
 
 	atf_ifconfig pppoe0 down
@@ -755,7 +755,7 @@ pppoe_params_body()
 	atf_pppoectl pppoe0 noipcp ipv6cp
 	atf_ifconfig pppoe0 up
 	wait_for_opened "IPv6CP"
-	atf_check -s exit:0 -o match:'IPCP state: initial' \
+	atf_check -s exit:0 -o match:'IPCP state: closed' \
 	    -x "$HIJACKING pppoectl -dd pppoe0"
 }
 
