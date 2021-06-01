@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.255 2021/06/01 05:11:22 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.256 2021/06/01 05:16:46 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.255 2021/06/01 05:11:22 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.256 2021/06/01 05:16:46 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1898,6 +1898,7 @@ sppp_open_event(struct sppp *sp, void *xcp)
 		break;
 	case STATE_CLOSED:
 		sp->scp[cp->protoidx].rst_counter = sp->lcp.max_configure;
+		sp->lcp.protos |= (1 << cp->protoidx);
 		(cp->scr)(sp);
 		sppp_cp_change_state(cp, sp, STATE_REQ_SENT);
 		break;
@@ -3114,6 +3115,7 @@ static void
 sppp_lcp_tlu(struct sppp *sp)
 {
 	struct ifnet *ifp;
+	struct sppp_cp *scp;
 	int i;
 	bool going_up;
 
@@ -3160,26 +3162,28 @@ sppp_lcp_tlu(struct sppp *sp)
 	else
 		sppp_change_phase(sp, SPPP_PHASE_NETWORK);
 
-	/*
-	 * Open all authentication protocols.  This is even required
-	 * if we already proceeded to network phase, since it might be
-	 * that remote wants us to authenticate, so we might have to
-	 * send a PAP request.  Undesired authentication protocols
-	 * don't do anything when they get an Open event.
-	 */
-	for (i = 0; i < IDX_COUNT; i++)
-		if ((cps[i])->flags & CP_AUTH) {
-			sppp_wq_add(sp->wq_cp,
-			    &sp->scp[(cps[i])->protoidx].work_open);
-		}
 
-	if (sp->pp_phase == SPPP_PHASE_NETWORK) {
-		/* Notify all NCPs. */
-		for (i = 0; i < IDX_COUNT; i++)
-			if ((cps[i])->flags & CP_NCP) {
-			sppp_wq_add(sp->wq_cp,
-			    &sp->scp[(cps[i])->protoidx].work_open);
-			}
+	for (i = 0; i < IDX_COUNT; i++) {
+		scp = &sp->scp[(cps[i])->protoidx];
+
+		if (((cps[i])->flags & CP_LCP) == 0)
+			sppp_wq_add(sp->wq_cp, &scp->work_up);
+
+		/*
+		 * Open all authentication protocols.  This is even required
+		 * if we already proceeded to network phase, since it might be
+		 * that remote wants us to authenticate, so we might have to
+		 * send a PAP request.  Undesired authentication protocols
+		 * don't do anything when they get an Open event.
+		 */
+		if ((cps[i])->flags & CP_AUTH)
+			sppp_wq_add(sp->wq_cp, &scp->work_open);
+
+		/* Open all NCPs. */
+		if (sp->pp_phase == SPPP_PHASE_NETWORK &&
+		    ((cps[i])->flags & CP_NCP) != 0) {
+			sppp_wq_add(sp->wq_cp, &scp->work_open);
+		}
 	}
 
 	/* notify low-level driver of state change */
@@ -3190,7 +3194,8 @@ static void
 sppp_lcp_tld(struct sppp *sp)
 {
 	struct ifnet *ifp;
-	int i, pi, phase;
+	struct sppp_cp *scp;
+	int i, phase;
 
 	KASSERT(SPPP_WLOCKED(sp));
 
@@ -3221,15 +3226,19 @@ sppp_lcp_tld(struct sppp *sp)
 	 * describes it.
 	 */
 	for (i = 0; i < IDX_COUNT; i++) {
-		pi = (cps[i])->protoidx;
-		if (((cps[i])->flags & CP_LCP) == 0) {
-			/* skip if ncp was not started */
-			if (phase != SPPP_PHASE_NETWORK &&
-			    ((cps[i])->flags & CP_NCP) != 0)
-				continue;
+		scp = &sp->scp[(cps[i])->protoidx];
 
-			sppp_wq_add(sp->wq_cp, &sp->scp[pi].work_down);
-			sppp_wq_add(sp->wq_cp, &sp->scp[pi].work_close);
+		if (((cps[i])->flags & CP_LCP) == 0)
+			sppp_wq_add(sp->wq_cp, &scp->work_down);
+
+		if ((cps[i])->flags & CP_AUTH) {
+			sppp_wq_add(sp->wq_cp, &scp->work_close);
+		}
+
+		/* Close all NCPs. */
+		if (phase == SPPP_PHASE_NETWORK &&
+		    ((cps[i])->flags & CP_NCP) != 0) {
+			sppp_wq_add(sp->wq_cp, &scp->work_close);
 		}
 	}
 }
@@ -6510,11 +6519,10 @@ static void
 sppp_tls(const struct cp *cp, struct sppp *sp)
 {
 
+	SPPP_DLOG(sp, "%s tls\n", cp->name);
+
 	/* notify lcp that is lower layer */
 	sp->lcp.protos |= (1 << cp->protoidx);
-
-	if (sp->scp[IDX_LCP].state == STATE_OPENED)
-		sppp_wq_add(sp->wq_cp, &sp->scp[cp->protoidx].work_up);
 }
 
 static void
