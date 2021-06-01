@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.54 2015/08/05 06:54:39 mrg Exp $	*/
+/*	$NetBSD: record.c,v 1.55 2021/06/01 21:08:48 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003, 2005, 2010 Matthew R. Green
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: record.c,v 1.54 2015/08/05 06:54:39 mrg Exp $");
+__RCSID("$NetBSD: record.c,v 1.55 2021/06/01 21:08:48 riastradh Exp $");
 #endif
 
 
@@ -81,6 +81,7 @@ main(int argc, char *argv[])
 {
 	u_char	*buffer;
 	size_t	len, bufsize = 0;
+	ssize_t	nread;
 	int	ch, no_time_limit = 1;
 	const char *defdevice = _PATH_SOUND;
 
@@ -337,8 +338,12 @@ main(int argc, char *argv[])
 
 	(void)gettimeofday(&start_time, NULL);
 	while (no_time_limit || timeleft(&start_time, &record_time)) {
-		if ((size_t)read(audiofd, buffer, bufsize) != bufsize)
+		if ((nread = read(audiofd, buffer, bufsize)) == -1)
 			err(1, "read failed");
+		if (nread == 0)
+			errx(1, "read eof");
+		if ((size_t)nread != bufsize)
+			errx(1, "invalid read");
 		if (conv_func)
 			(*conv_func)(buffer, bufsize);
 		if ((size_t)write(ti.outfd, buffer, bufsize) != bufsize)
