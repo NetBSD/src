@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppvar.h,v 1.41 2021/06/01 04:55:55 yamaguchi Exp $	*/
+/*	$NetBSD: if_spppvar.h,v 1.42 2021/06/01 04:59:50 yamaguchi Exp $	*/
 
 #ifndef _NET_IF_SPPPVAR_H_
 #define _NET_IF_SPPPVAR_H_
@@ -214,6 +214,7 @@ struct sppp {
 #define PP_LOOPBACK		0x40	/* in line loopback mode */
 #define PP_LOOPBACK_IFDOWN	0x80	/* if_down() when loopback detected */
 #define PP_KEEPALIVE_IFDOWN	0x100	/* if_down() when no ECHO_REPLY received */
+#define PP_ADMIN_UP		0x200	/* the interface is up */
 
 
 #define PP_MTU          1500    /* default/minimal MRU */
