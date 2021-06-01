@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.72 2020/10/30 18:54:37 skrll Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.73 2021/06/01 00:13:19 rin Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -32,7 +32,7 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfp_init.c,v 1.72 2020/10/30 18:54:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfp_init.c,v 1.73 2021/06/01 00:13:19 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -438,9 +438,11 @@ vfp_handler(u_int address, u_int insn, trapframe_t *frame, int fault_code)
 	 * If we already own the FPU and it's enabled (and no exception), raise
 	 * SIGILL.  If there is an exception, drop through to raise a SIGFPE.
 	 */
-	if (curcpu()->ci_pcu_curlwp[PCU_FPU] == curlwp
-	    && (armreg_fpexc_read() & (VFP_FPEXC_EX|VFP_FPEXC_EN)) == VFP_FPEXC_EN)
+	if (curlwp->l_pcu_cpu[PCU_FPU] == ci
+	    && (armreg_fpexc_read() & (VFP_FPEXC_EX|VFP_FPEXC_EN)) == VFP_FPEXC_EN) {
+		KASSERT(ci->ci_pcu_curlwp[PCU_FPU] == curlwp);
 		return 1;
+	}
 
 	/*
 	 * Make sure we own the FP.
