@@ -1,4 +1,4 @@
-/*	$NetBSD: tsc.c,v 1.54 2021/02/19 02:15:58 christos Exp $	*/
+/*	$NetBSD: tsc.c,v 1.55 2021/06/01 21:29:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.54 2021/02/19 02:15:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.55 2021/06/01 21:29:24 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -439,4 +439,19 @@ tsc_get_timecount(struct timecounter *tc)
 #else
 	return cpu_counter32();
 #endif
+}
+
+/*
+ * tsc has been reset; zero the cached tsc of every lwp in the system
+ * so we don't spuriously report that the tsc has gone backward.
+ * Caller must ensure all LWPs are quiescent (except the current one,
+ * obviously) and interrupts are blocked while we update this.
+ */
+void
+tsc_tc_reset(void)
+{
+	struct lwp *l;
+
+	LIST_FOREACH(l, &alllwp, l_list)
+		l->l_md.md_tsc = 0;
 }

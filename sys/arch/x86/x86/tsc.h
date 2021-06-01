@@ -1,4 +1,4 @@
-/*	$NetBSD: tsc.h,v 1.7 2020/06/15 09:09:24 msaitoh Exp $	*/
+/*	$NetBSD: tsc.h,v 1.8 2021/06/01 21:29:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -26,6 +26,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef	_X86_TSC_H_
+#define	_X86_TSC_H_
+
 bool	tsc_is_invariant(void);
 void	tsc_setfunc(struct cpu_info *);
 void	tsc_tc_init(void);
@@ -34,3 +37,6 @@ void	tsc_sync_bp(struct cpu_info *);
 void	tsc_sync_drift(int64_t);
 void	tsc_user_enable(void);
 void	tsc_user_disable(void);
+void	tsc_tc_reset(void);
+
+#endif	/* _X86_TSC_H_ */
