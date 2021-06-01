@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.97 2021/06/01 21:12:35 riastradh Exp $	*/
+/*	$NetBSD: audio.c,v 1.98 2021/06/01 21:12:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.97 2021/06/01 21:12:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.98 2021/06/01 21:12:47 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -1180,7 +1180,7 @@ mixer_init(struct audio_softc *sc)
 
 	/* Allocate save area.  Ensure non-zero allocation. */
 	sc->sc_nmixer_states = mi.index;
-	sc->sc_mixer_state = kmem_zalloc(sizeof(mixer_ctrl_t) *
+	sc->sc_mixer_state = kmem_zalloc(sizeof(sc->sc_mixer_state[0]) *
 	    (sc->sc_nmixer_states + 1), KM_SLEEP);
 
 	/*
@@ -2234,7 +2234,7 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	rmixer_started = false;
 	inserted = false;
 
-	af = kmem_zalloc(sizeof(audio_file_t), KM_SLEEP);
+	af = kmem_zalloc(sizeof(*af), KM_SLEEP);
 	af->sc = sc;
 	af->dev = dev;
 	if (flags & FWRITE) {
@@ -3513,7 +3513,7 @@ audioctl_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	if (error)
 		return error;
 
-	af = kmem_zalloc(sizeof(audio_file_t), KM_SLEEP);
+	af = kmem_zalloc(sizeof(*af), KM_SLEEP);
 	af->sc = sc;
 	af->dev = dev;
 
