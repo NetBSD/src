@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppvar.h,v 1.39 2021/06/01 03:27:23 yamaguchi Exp $	*/
+/*	$NetBSD: if_spppvar.h,v 1.40 2021/06/01 03:51:33 yamaguchi Exp $	*/
 
 #ifndef _NET_IF_SPPPVAR_H_
 #define _NET_IF_SPPPVAR_H_
@@ -203,15 +203,17 @@ struct sppp {
 	void	(*pp_chg)(struct sppp *, int);
 };
 
-#define PP_KEEPALIVE	0x01	/* use keepalive protocol */
-#define PP_CISCO	0x02	/* use Cisco protocol instead of PPP */
-				/* 0x04 was PP_TIMO */
-#define PP_CALLIN	0x08	/* we are being called */
-#define PP_NEEDAUTH	0x10	/* remote requested authentication */
-#define PP_NOFRAMING	0x20	/* do not add/expect encapsulation
-				   around PPP frames (i.e. the serial
-				   HDLC like encapsulation, RFC1662) */
-#define PP_LOOPBACK	0x40	/* in line loopback mode */
+#define PP_KEEPALIVE		0x01	/* use keepalive protocol */
+#define PP_CISCO		0x02	/* use Cisco protocol instead of PPP */
+					/* 0x04 was PP_TIMO */
+#define PP_CALLIN		0x08	/* we are being called */
+#define PP_NEEDAUTH		0x10	/* remote requested authentication */
+#define PP_NOFRAMING		0x20	/* do not add/expect encapsulation
+					   around PPP frames (i.e. the serial
+					   HDLC like encapsulation, RFC1662) */
+#define PP_LOOPBACK		0x40	/* in line loopback mode */
+#define PP_LOOPBACK_IFDOWN	0x80	/* if_down() when loopback detected */
+#define PP_KEEPALIVE_IFDOWN	0x100	/* if_down() when no ECHO_REPLY received */
 
 
 #define PP_MTU          1500    /* default/minimal MRU */
