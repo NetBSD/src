@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.3 2021/05/19 17:07:57 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.4 2021/06/01 10:41:23 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -44,3 +44,15 @@ xsrc/external/mit/libX11/dist/src/xlibi18n/imKStoUCS.c	(apply patch)
 	Reject string longer than USHRT_MAX before sending them on the wire.
 	Fix out-of-bound access in KeySymToUcs4().
 	[mrg, ticket #1275]
+
+external/mit/xorg/server/drivers/xf86-input-keyboard/Makefile 1.17
+
+	Make wskbd(4) default for mac68k; no other protocol is available.
+	[rin, ticket #1276]
+
+sys/arch/aarch64/aarch64/netbsd32_machdep.c	1.18
+
+	Fix conversion between aarch64 and aarch32 fpregs to fix crashes
+	in VFP-optimized codes running on COMPAT_NETBSD32.
+	[rin, ticket #1277]
+
