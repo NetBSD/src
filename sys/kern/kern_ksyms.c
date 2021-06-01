@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.90 2021/06/01 21:10:23 riastradh Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.91 2021/06/01 21:11:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.90 2021/06/01 21:10:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.91 2021/06/01 21:11:07 riastradh Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_copy_symtab.h"
@@ -93,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.90 2021/06/01 21:10:23 riastradh Ex
 #include <sys/atomic.h>
 #include <sys/ksyms.h>
 #include <sys/kernel.h>
+#include <sys/intr.h>
 
 #ifdef DDB
 #include <ddb/db_output.h>
@@ -308,6 +309,7 @@ addsymtab(const char *name, void *symstart, size_t symsize,
 	int i, j, n, nglob;
 	char *str;
 	int nsyms = symsize / sizeof(Elf_Sym);
+	int s;
 
 	/* Sanity check for pre-allocated map table used during startup. */
 	if ((nmap == ksyms_nmap) && (nsyms >= KSYMS_MAX_ID)) {
@@ -443,7 +445,14 @@ addsymtab(const char *name, void *symstart, size_t symsize,
 	KASSERT(strcmp(name, "netbsd") == 0 || mutex_owned(&ksyms_lock));
 	KASSERT(cold || mutex_owned(&ksyms_lock));
 
+	/*
+	 * Ensure ddb never witnesses an inconsistent state of the
+	 * queue, unless memory is so corrupt that we crash in
+	 * TAILQ_INSERT_TAIL.
+	 */
+	s = splhigh();
 	TAILQ_INSERT_TAIL(&ksyms_symtabs, tab, sd_queue);
+	splx(s);
 
 	ksyms_sizes_calc();
 	ksyms_loaded = true;
@@ -772,6 +781,7 @@ ksyms_modunload(const char *name)
 {
 	struct ksyms_symtab *st;
 	bool do_free = false;
+	int s;
 
 	mutex_enter(&ksyms_lock);
 	TAILQ_FOREACH(st, &ksyms_symtabs, sd_queue) {
@@ -782,7 +792,14 @@ ksyms_modunload(const char *name)
 		st->sd_gone = true;
 		ksyms_sizes_calc();
 		if (!ksyms_isopen) {
+			/*
+			 * Ensure ddb never witnesses an inconsistent
+			 * state of the queue, unless memory is so
+			 * corrupt that we crash in TAILQ_REMOVE.
+			 */
+			s = splhigh();
 			TAILQ_REMOVE(&ksyms_symtabs, st, sd_queue);
+			splx(s);
 			do_free = true;
 		}
 		break;
@@ -1015,6 +1032,7 @@ ksymsclose(dev_t dev, int oflags, int devtype, struct lwp *l)
 {
 	struct ksyms_symtab *st, *next;
 	TAILQ_HEAD(, ksyms_symtab) to_free = TAILQ_HEAD_INITIALIZER(to_free);
+	int s;
 
 	/* Discard references to symbol tables. */
 	mutex_enter(&ksyms_lock);
@@ -1022,7 +1040,14 @@ ksymsclose(dev_t dev, int oflags, int devtype, struct lwp *l)
 	ksyms_last_snapshot = NULL;
 	TAILQ_FOREACH_SAFE(st, &ksyms_symtabs, sd_queue, next) {
 		if (st->sd_gone) {
+			/*
+			 * Ensure ddb never witnesses an inconsistent
+			 * state of the queue, unless memory is so
+			 * corrupt that we crash in TAILQ_REMOVE.
+			 */
+			s = splhigh();
 			TAILQ_REMOVE(&ksyms_symtabs, st, sd_queue);
+			splx(s);
 			TAILQ_INSERT_TAIL(&to_free, st, sd_queue);
 		}
 	}
