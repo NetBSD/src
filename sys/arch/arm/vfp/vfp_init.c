@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.73 2021/06/01 00:13:19 rin Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.74 2021/06/01 00:30:22 rin Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -32,7 +32,7 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfp_init.c,v 1.73 2021/06/01 00:13:19 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfp_init.c,v 1.74 2021/06/01 00:30:22 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -423,6 +423,7 @@ static int
 vfp_handler(u_int address, u_int insn, trapframe_t *frame, int fault_code)
 {
 	struct cpu_info * const ci = curcpu();
+	uint32_t fpexc;
 
 	/* This shouldn't ever happen.  */
 	if (fault_code != FAULT_USER &&
@@ -436,12 +437,19 @@ vfp_handler(u_int address, u_int insn, trapframe_t *frame, int fault_code)
 
 	/* 
 	 * If we already own the FPU and it's enabled (and no exception), raise
-	 * SIGILL.  If there is an exception, drop through to raise a SIGFPE.
+	 * SIGILL.  If there is an exception, raise SIGFPE.
 	 */
-	if (curlwp->l_pcu_cpu[PCU_FPU] == ci
-	    && (armreg_fpexc_read() & (VFP_FPEXC_EX|VFP_FPEXC_EN)) == VFP_FPEXC_EN) {
+	if (curlwp->l_pcu_cpu[PCU_FPU] == ci) {
 		KASSERT(ci->ci_pcu_curlwp[PCU_FPU] == curlwp);
-		return 1;
+
+		fpexc = armreg_fpexc_read();
+		if (fpexc & VFP_FPEXC_EN) {
+			if ((fpexc & VFP_FPEXC_EX) == 0) {
+				return 1;	/* SIGILL */
+			} else {
+				goto fpe;	/* SIGFPE; skip pcu_load(9) */
+			}
+		}
 	}
 
 	/*
@@ -449,11 +457,12 @@ vfp_handler(u_int address, u_int insn, trapframe_t *frame, int fault_code)
 	 */
 	pcu_load(&arm_vfp_ops);
 
-	uint32_t fpexc = armreg_fpexc_read();
+	fpexc = armreg_fpexc_read();
 	if (fpexc & VFP_FPEXC_EX) {
 		ksiginfo_t ksi;
 		KASSERT(fpexc & VFP_FPEXC_EN);
 
+fpe:
 		curcpu()->ci_vfp_evs[2].ev_count++;
 
 		/*
