@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.252 2021/06/01 04:59:50 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.253 2021/06/01 05:04:06 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.252 2021/06/01 04:59:50 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.253 2021/06/01 05:04:06 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -417,6 +417,7 @@ static enum cp_rcr_type
 static void sppp_ipcp_confrej(struct sppp *, struct lcp_header *, int);
 static void sppp_ipcp_confnak(struct sppp *, struct lcp_header *, int);
 static void sppp_ipcp_tlu(struct sppp *);
+static void sppp_ipcp_tld(struct sppp *);
 static void sppp_ipcp_scr(struct sppp *);
 
 static void sppp_ipv6cp_init(struct sppp *);
@@ -427,6 +428,7 @@ static enum cp_rcr_type
 static void sppp_ipv6cp_confrej(struct sppp *, struct lcp_header *, int);
 static void sppp_ipv6cp_confnak(struct sppp *, struct lcp_header *, int);
 static void sppp_ipv6cp_tlu(struct sppp *);
+static void sppp_ipv6cp_tld(struct sppp *);
 static void sppp_ipv6cp_scr(struct sppp *);
 
 static void sppp_pap_input(struct sppp *, struct mbuf *);
@@ -504,7 +506,7 @@ static const struct cp ipcp = {
 	"ipcp",
 	sppp_up_event, sppp_down_event, sppp_ipcp_open,
 	sppp_ipcp_close, sppp_to_event,
-	sppp_ipcp_tlu, sppp_null, sppp_tls,
+	sppp_ipcp_tlu, sppp_ipcp_tld, sppp_tls,
 	sppp_tlf, sppp_ipcp_scr, sppp_screply,
 	sppp_ipcp_confreq, sppp_ipcp_confrej, sppp_ipcp_confnak,
 };
@@ -519,7 +521,7 @@ static const struct cp ipv6cp = {
 	"ipv6cp",
 	sppp_up_event, sppp_down_event, sppp_ipv6cp_open,
 	sppp_close_event, sppp_to_event,
-	sppp_ipv6cp_tlu, sppp_null, sppp_tls,
+	sppp_ipv6cp_tlu, sppp_ipv6cp_tld, sppp_tls,
 	sppp_tlf, sppp_ipv6cp_scr, sppp_screply,
 	sppp_ipv6cp_confreq, sppp_ipv6cp_confrej, sppp_ipv6cp_confnak,
 };
@@ -3936,8 +3938,9 @@ sppp_ipcp_tlu(struct sppp *sp)
 #ifdef INET
 	struct ifnet *ifp;
 
-	ifp = &sp->pp_if;
 	KASSERT(SPPP_WLOCKED(sp));
+
+	ifp = &sp->pp_if;
 	if ((sp->ipcp.flags & IPCP_MYADDR_DYN) &&
 	    ((sp->ipcp.flags & IPCP_MYADDR_SEEN) == 0)) {
 		log(LOG_WARNING, "%s: no IP address, closing IPCP\n",
@@ -3947,7 +3950,21 @@ sppp_ipcp_tlu(struct sppp *sp)
 	} else {
 		/* we are up. Set addresses and notify anyone interested */
 		sppp_set_ip_addrs(sp);
+		rt_ifmsg(ifp);
 	}
+#endif
+}
+
+static void
+sppp_ipcp_tld(struct sppp *sp)
+{
+#ifdef INET
+	struct ifnet *ifp;
+
+	KASSERT(SPPP_WLOCKED(sp));
+
+	ifp = &sp->pp_if;
+	rt_ifmsg(ifp);
 #endif
 }
 
@@ -4483,10 +4500,25 @@ end:
 static void
 sppp_ipv6cp_tlu(struct sppp *sp)
 {
+	struct ifnet *ifp;
 
 	KASSERT(SPPP_WLOCKED(sp));
+
+	ifp = &sp->pp_if;
 	/* we are up - notify isdn daemon */
 	sppp_notify_con_wlocked(sp);
+	rt_ifmsg(ifp);
+}
+
+static void
+sppp_ipv6cp_tld(struct sppp *sp)
+{
+	struct ifnet *ifp;
+
+	KASSERT(SPPP_WLOCKED(sp));
+
+	ifp = &sp->pp_if;
+	rt_ifmsg(ifp);
 }
 
 static void
