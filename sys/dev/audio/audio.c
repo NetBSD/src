@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.96 2021/06/01 21:12:24 riastradh Exp $	*/
+/*	$NetBSD: audio.c,v 1.97 2021/06/01 21:12:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.96 2021/06/01 21:12:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.97 2021/06/01 21:12:35 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -2458,6 +2458,7 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	mutex_enter(sc->sc_lock);
 	if (sc->sc_dying) {
 		mutex_exit(sc->sc_lock);
+		error = ENXIO;
 		goto bad;
 	}
 
