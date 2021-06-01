@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.95 2021/05/02 21:37:32 nia Exp $	*/
+/*	$NetBSD: audio.c,v 1.96 2021/06/01 21:12:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.95 2021/05/02 21:37:32 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.96 2021/06/01 21:12:24 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -2237,10 +2237,20 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	af = kmem_zalloc(sizeof(audio_file_t), KM_SLEEP);
 	af->sc = sc;
 	af->dev = dev;
-	if ((flags & FWRITE) != 0 && audio_can_playback(sc))
+	if (flags & FWRITE) {
+		if (!audio_can_playback(sc)) {
+			error = ENXIO;
+			goto bad;
+		}
 		af->mode |= AUMODE_PLAY | AUMODE_PLAY_ALL;
-	if ((flags & FREAD) != 0 && audio_can_capture(sc))
+	}
+	if (flags & FREAD) {
+		if (!audio_can_capture(sc)) {
+			error = ENXIO;
+			goto bad;
+		}
 		af->mode |= AUMODE_RECORD;
+	}
 	if (af->mode == 0) {
 		error = ENXIO;
 		goto bad;
