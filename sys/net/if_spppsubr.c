@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.249 2021/06/01 04:19:57 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.250 2021/06/01 04:45:22 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.249 2021/06/01 04:19:57 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.250 2021/06/01 04:45:22 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -3477,16 +3477,6 @@ sppp_lcp_tls(const struct cp *cp __unused, struct sppp *sp)
 
 	KASSERT(SPPP_WLOCKED(sp));
 
-	if (sp->pp_max_auth_fail != 0 && sp->pp_auth_failures >= sp->pp_max_auth_fail) {
-		printf("%s: authentication failed %d times, not retrying again\n",
-		sp->pp_if.if_xname, sp->pp_auth_failures);
-
-		SPPP_UNLOCK(sp);
-		if_down(&sp->pp_if);
-		SPPP_LOCK(sp, RW_WRITER);
-		return;
-	}
-
 	sppp_change_phase(sp, SPPP_PHASE_ESTABLISH);
 
 	/* Notify lower layer if desired. */
@@ -3597,7 +3587,18 @@ sppp_lcp_check_and_close(struct sppp *sp)
 		return;
 
 	sppp_wq_add(sp->wq_cp, &sp->scp[IDX_LCP].work_close);
-	sppp_wq_add(sp->wq_cp, &sp->scp[IDX_LCP].work_open);
+
+	if (sp->pp_max_auth_fail != 0 &&
+	    sp->pp_auth_failures >= sp->pp_max_auth_fail) {
+		printf("%s: authentication failed %d times, "
+		    "not retrying again\n",
+		sp->pp_if.if_xname, sp->pp_auth_failures);
+
+		sppp_wq_add(sp->wq_cp, &sp->work_ifdown);
+		sp->pp_if.if_flags &= ~IFF_RUNNING;
+	} else {
+		sppp_wq_add(sp->wq_cp, &sp->scp[IDX_LCP].work_open);
+	}
 }
 
 /*
