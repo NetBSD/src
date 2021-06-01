@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.98 2021/06/01 21:12:47 riastradh Exp $	*/
+/*	$NetBSD: audio.c,v 1.99 2021/06/01 21:14:52 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.98 2021/06/01 21:12:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.99 2021/06/01 21:14:52 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -2584,6 +2584,7 @@ audio_close(struct audio_softc *sc, audio_file_t *file)
 int
 audio_unlink(struct audio_softc *sc, audio_file_t *file)
 {
+	kauth_cred_t cred = NULL;
 	int error;
 
 	mutex_enter(sc->sc_lock);
@@ -2655,11 +2656,13 @@ audio_unlink(struct audio_softc *sc, audio_file_t *file)
 			sc->hw_if->close(sc->hw_hdl);
 			mutex_exit(sc->sc_intr_lock);
 		}
+		cred = sc->sc_cred;
+		sc->sc_cred = NULL;
 	}
 
 	mutex_exit(sc->sc_lock);
-	if (sc->sc_popens + sc->sc_ropens == 0)
-		kauth_cred_free(sc->sc_cred);
+	if (cred)
+		kauth_cred_free(cred);
 
 	TRACE(3, "done");
 
