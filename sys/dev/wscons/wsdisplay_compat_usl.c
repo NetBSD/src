@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay_compat_usl.c,v 1.53 2020/05/23 23:42:42 ad Exp $ */
+/* $NetBSD: wsdisplay_compat_usl.c,v 1.54 2021/06/01 23:28:07 riastradh Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.53 2020/05/23 23:42:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.54 2021/06/01 23:28:07 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_freebsd.h"
@@ -80,13 +80,13 @@ static void usl_detachtimeout(void *);
 static int usl_attachproc(void *, int, void (*)(void *, int, int), void *);
 static int usl_attachack(struct usl_syncdata *, int);
 static void usl_attachtimeout(void *);
+static void usl_sync_destroy(void *);
 
 static const struct wscons_syncops usl_syncops = {
-	usl_detachproc,
-	usl_attachproc,
-	usl_sync_check,
-#define _usl_sync_destroy ((void (*)(void *))usl_sync_done)
-	_usl_sync_destroy
+	.detach = usl_detachproc,
+	.attach = usl_attachproc,
+	.check = usl_sync_check,
+	.destroy = usl_sync_destroy,
 };
 
 #ifndef WSCOMPAT_USL_SYNCTIMEOUT
@@ -292,6 +292,14 @@ usl_attachtimeout(void *arg)
 		(*sd->s_callback)(sd->s_cbarg, EIO, 0);
 
 	(void) usl_sync_check(sd);
+}
+
+static void
+usl_sync_destroy(void *cookie)
+{
+	struct usl_syncdata *sd = cookie;
+
+	usl_sync_done(sd);
 }
 
 int
