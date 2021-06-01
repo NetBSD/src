@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.256 2021/06/01 05:16:46 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.257 2021/06/01 05:22:57 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.256 2021/06/01 05:16:46 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.257 2021/06/01 05:22:57 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -538,7 +538,7 @@ static const struct cp ipv6cp = {
 static const struct cp pap = {
 	PPP_PAP, IDX_PAP, CP_AUTH, "pap",
 	sppp_up_event, sppp_down_event, sppp_open_event,
-	sppp_close_event, sppp_to_event,
+	sppp_close_event, sppp_auth_to_event,
 	sppp_pap_tlu, sppp_null, sppp_tls, sppp_tlf,
 	sppp_pap_scr, sppp_auth_screply,
 	NULL, NULL, NULL
