@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.247 2021/06/01 03:27:23 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.248 2021/06/01 03:51:33 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.247 2021/06/01 03:27:23 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.248 2021/06/01 03:51:33 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1136,6 +1136,9 @@ sppp_attach(struct ifnet *ifp)
 	sp->pp_up = sppp_notify_up;
 	sp->pp_down = sppp_notify_down;
 	sp->pp_ncpflags = SPPP_NCP_IPCP | SPPP_NCP_IPV6CP;
+#ifdef SPPP_IFDOWN_RECONNECT
+	sp->pp_flags |= PP_LOOPBACK_IFDOWN | PP_KEEPALIVE_IFDOWN;
+#endif
 	sppp_wq_set(&sp->work_ifdown, sppp_ifdown, NULL);
 	memset(sp->scp, 0, sizeof(sp->scp));
 	rw_init(&sp->pp_lock);
@@ -1481,9 +1484,11 @@ sppp_cisco_input(struct sppp *sp, struct mbuf *m)
 					ifp->if_xname);
 				sp->pp_loopcnt = 0;
 
-				sp->pp_flags |= PP_LOOPBACK;
-				sppp_wq_add(sp->wq_cp,
-				    &sp->work_ifdown);
+				if (sp->pp_flags & PP_LOOPBACK_IFDOWN) {
+					sp->pp_flags |= PP_LOOPBACK;
+					sppp_wq_add(sp->wq_cp,
+					    &sp->work_ifdown);
+				}
 
 				sppp_wq_add(sp->wq_cp,
 				    &sp->scp[IDX_LCP].work_close);
@@ -1951,9 +1956,11 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 			/* Line loopback mode detected. */
 			printf("%s: loopback\n", ifp->if_xname);
 
-			sp->pp_flags |= PP_LOOPBACK;
-			sppp_wq_add(sp->wq_cp,
-			    &sp->work_ifdown);
+			if (sp->pp_flags & PP_LOOPBACK_IFDOWN) {
+				sp->pp_flags |= PP_LOOPBACK;
+				sppp_wq_add(sp->wq_cp,
+				    &sp->work_ifdown);
+			}
 
 			/* Shut down the PPP link. */
 			sppp_wq_add(sp->wq_cp,
@@ -3001,9 +3008,11 @@ sppp_lcp_confreq(struct sppp *sp, struct lcp_header *h, int origlen,
 					ifp->if_xname);
 				sp->pp_loopcnt = 0;
 
-				sp->pp_flags |= PP_LOOPBACK;
-				sppp_wq_add(sp->wq_cp,
-				    &sp->work_ifdown);
+				if (sp->pp_flags & PP_LOOPBACK_IFDOWN) {
+					sp->pp_flags |= PP_LOOPBACK;
+					sppp_wq_add(sp->wq_cp,
+					    &sp->work_ifdown);
+				}
 
 				sppp_wq_add(sp->wq_cp,
 				    &sp->scp[IDX_LCP].work_close);
@@ -5768,7 +5777,8 @@ sppp_keepalive(void *dummy)
 
 		if (sp->pp_alivecnt >= sp->pp_maxalive) {
 			/* No keepalive packets got.  Stop the interface. */
-			sppp_wq_add(sp->wq_cp, &sp->work_ifdown);
+			if (sp->pp_flags & PP_KEEPALIVE_IFDOWN)
+				sppp_wq_add(sp->wq_cp, &sp->work_ifdown);
 
 			if (! (sp->pp_flags & PP_CISCO)) {
 				printf("%s: LCP keepalive timed out, going to restart the connection\n",
