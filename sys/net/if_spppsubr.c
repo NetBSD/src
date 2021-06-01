@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.246 2021/05/19 02:14:19 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.247 2021/06/01 03:27:23 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.246 2021/05/19 02:14:19 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.247 2021/06/01 03:27:23 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1480,15 +1480,18 @@ sppp_cisco_input(struct sppp *sp, struct mbuf *m)
 				printf ("%s: loopback\n",
 					ifp->if_xname);
 				sp->pp_loopcnt = 0;
-				if (ifp->if_flags & IFF_UP) {
-					SPPP_UNLOCK(sp);
-					if_down(ifp);
-					SPPP_LOCK(sp, RW_WRITER);
 
-					IF_PURGE(&sp->pp_cpq);
-				}
+				sp->pp_flags |= PP_LOOPBACK;
+				sppp_wq_add(sp->wq_cp,
+				    &sp->work_ifdown);
+
+				sppp_wq_add(sp->wq_cp,
+				    &sp->scp[IDX_LCP].work_close);
+				sppp_wq_add(sp->wq_cp,
+				    &sp->scp[IDX_LCP].work_open);
+			} else {
+				++sp->pp_loopcnt;
 			}
-			++sp->pp_loopcnt;
 
 			/* Generate new local sequence number */
 			sp->scp[IDX_LCP].seq = cprng_fast32();
@@ -1500,6 +1503,7 @@ sppp_cisco_input(struct sppp *sp, struct mbuf *m)
 			SPPP_UNLOCK(sp);
 			if_up(ifp);
 			SPPP_LOCK(sp, RW_WRITER);
+			sp->pp_flags &= ~PP_LOOPBACK;
 		}
 		break;
 	case CISCO_ADDR_REQ:
@@ -1946,20 +1950,16 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 		if (ntohl(u32) == sp->lcp.magic) {
 			/* Line loopback mode detected. */
 			printf("%s: loopback\n", ifp->if_xname);
-			/*
-			 * There is no change for items of sp->scp[cp->protoidx]
-			 * while if_down() even without SPPP_LOCK
-			 */
-			SPPP_UNLOCK(sp);
-			if_down(ifp);
-			SPPP_LOCK(sp, RW_WRITER);
 
-			IF_PURGE(&sp->pp_cpq);
+			sp->pp_flags |= PP_LOOPBACK;
+			sppp_wq_add(sp->wq_cp,
+			    &sp->work_ifdown);
 
 			/* Shut down the PPP link. */
-			/* XXX */
-			sppp_wq_add(sp->wq_cp, &sp->scp[IDX_LCP].work_down);
-			sppp_wq_add(sp->wq_cp, &sp->scp[IDX_LCP].work_up);
+			sppp_wq_add(sp->wq_cp,
+			    &sp->scp[IDX_LCP].work_close);
+			sppp_wq_add(sp->wq_cp,
+			    &sp->scp[IDX_LCP].work_open);
 			break;
 		}
 		u32 = htonl(sp->lcp.magic);
@@ -3000,21 +3000,20 @@ sppp_lcp_confreq(struct sppp *sp, struct lcp_header *h, int origlen,
 				printf ("%s: loopback\n",
 					ifp->if_xname);
 				sp->pp_loopcnt = 0;
-				if (ifp->if_flags & IFF_UP) {
-					SPPP_UNLOCK(sp);
-					if_down(ifp);
-					SPPP_LOCK(sp, RW_WRITER);
 
-					IF_PURGE(&sp->pp_cpq);
-					/* XXX ? */
-					sppp_wq_add(sp->wq_cp,
-					    &sp->scp[IDX_LCP].work_down);
-					sppp_wq_add(sp->wq_cp,
-					    &sp->scp[IDX_LCP].work_up);
-				}
-			} else if (debug)
-				addlog(" [glitch]");
-			++sp->pp_loopcnt;
+				sp->pp_flags |= PP_LOOPBACK;
+				sppp_wq_add(sp->wq_cp,
+				    &sp->work_ifdown);
+
+				sppp_wq_add(sp->wq_cp,
+				    &sp->scp[IDX_LCP].work_close);
+				sppp_wq_add(sp->wq_cp,
+				    &sp->scp[IDX_LCP].work_open);
+			} else {
+				if (debug)
+					addlog(" [glitch]");
+				++sp->pp_loopcnt;
+			}
 			/*
 			 * We negate our magic here, and NAK it.  If
 			 * we see it later in an NAK packet, we
@@ -3351,21 +3350,33 @@ sppp_lcp_tlu(struct sppp *sp)
 {
 	STDDCL;
 	int i;
+	bool going_up;
 
 	KASSERT(SPPP_WLOCKED(sp));
 
 	/* unlock for IFNET_LOCK and if_up() */
 	SPPP_UNLOCK(sp);
 
-	/* XXX ? */
 	if (! (ifp->if_flags & IFF_UP) &&
 	    (ifp->if_flags & IFF_RUNNING)) {
 		/* Coming out of loopback mode. */
+		going_up = true;
 		if_up(ifp);
+	} else {
+		going_up = false;
 	}
 
 	IFNET_LOCK(ifp);
 	SPPP_LOCK(sp, RW_WRITER);
+
+	if (going_up) {
+		if ((sp->pp_flags & PP_LOOPBACK) == 0) {
+			log(LOG_DEBUG, "%s: interface is going up, "
+			    "but no loopback packet is deteted\n",
+			    ifp->if_xname);
+		}
+		sp->pp_flags &= ~PP_LOOPBACK;
+	}
 
 	if (ifp->if_mtu > sp->lcp.their_mru) {
 		sp->pp_saved_mtu = ifp->if_mtu;
