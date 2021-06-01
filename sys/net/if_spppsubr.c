@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.248 2021/06/01 03:51:33 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.249 2021/06/01 04:19:57 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.248 2021/06/01 03:51:33 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.249 2021/06/01 04:19:57 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2746,29 +2746,16 @@ sppp_lcp_down(struct sppp *sp, void *xcp)
 		sp->lcp.tlf_sent = false;
 	}
 
-	/*
-	 * If this is neither a dial-on-demand nor a passive
-	 * interface, simulate an ``ifconfig down'' action, so the
-	 * administrator can force a redial by another ``ifconfig
-	 * up''.  XXX For leased line operation, should we immediately
-	 * try to reopen the connection here?
-	 */
-	if ((ifp->if_flags & (IFF_AUTO | IFF_PASSIVE)) == 0) {
-		if (debug)
-			log(LOG_INFO,
-			    "%s: Down event (carrier loss), taking interface down.\n",
-			    ifp->if_xname);
-		SPPP_UNLOCK(sp);
-		if_down(ifp);
-		SPPP_LOCK(sp, RW_WRITER);
+	if (debug) {
+		log(LOG_DEBUG,
+		    "%s: Down event (carrier loss)\n",
+		    ifp->if_xname);
+	}
 
+	if ((ifp->if_flags & (IFF_AUTO | IFF_PASSIVE)) == 0) {
 		if (sp->lcp.reestablish)
 			sppp_wq_add(sp->wq_cp, &sp->scp[IDX_LCP].work_open);
 	} else {
-		if (debug)
-			log(LOG_DEBUG,
-			    "%s: Down event (carrier loss)\n",
-			    ifp->if_xname);
 
 		sp->pp_flags &= ~PP_CALLIN;
 		if (sp->scp[pidx].state != STATE_INITIAL)
