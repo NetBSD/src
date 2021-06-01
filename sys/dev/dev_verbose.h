@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_verbose.h,v 1.4 2020/08/11 12:10:10 uwe Exp $ */
+/*	$NetBSD: dev_verbose.h,v 1.5 2021/06/01 22:58:03 riastradh Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -75,6 +75,8 @@ tag ## verbose_modcmd(modcmd_t cmd, void *arg)				\
 		tag ## _findproduct = saved_findproduct;		\
 		tag ## verbose_loaded = 0;				\
 		return 0;						\
+	case MODULE_CMD_AUTOUNLOAD:					\
+		return EBUSY;						\
 	default:							\
 		return ENOTTY;						\
 	}								\
