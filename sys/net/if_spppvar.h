@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppvar.h,v 1.40 2021/06/01 03:51:33 yamaguchi Exp $	*/
+/*	$NetBSD: if_spppvar.h,v 1.41 2021/06/01 04:55:55 yamaguchi Exp $	*/
 
 #ifndef _NET_IF_SPPPVAR_H_
 #define _NET_IF_SPPPVAR_H_
@@ -204,7 +204,7 @@ struct sppp {
 };
 
 #define PP_KEEPALIVE		0x01	/* use keepalive protocol */
-#define PP_CISCO		0x02	/* use Cisco protocol instead of PPP */
+					/* 0x02 was PP_CISCO */
 					/* 0x04 was PP_TIMO */
 #define PP_CALLIN		0x08	/* we are being called */
 #define PP_NEEDAUTH		0x10	/* remote requested authentication */
