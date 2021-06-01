@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.251 2021/06/01 04:55:55 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.252 2021/06/01 04:59:50 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.251 2021/06/01 04:55:55 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.252 2021/06/01 04:59:50 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1254,6 +1254,12 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			/* sanity */
 			newmode = IFF_PASSIVE;
 			ifp->if_flags &= ~IFF_AUTO;
+		}
+
+		if (ifp->if_flags & IFF_UP) {
+			sp->pp_flags |= PP_ADMIN_UP;
+		} else {
+			sp->pp_flags &= ~PP_ADMIN_UP;
 		}
 
 		if (going_up || going_down) {
@@ -2570,6 +2576,10 @@ sppp_lcp_open(struct sppp *sp, void *xcp)
 
 	sp->lcp.reestablish = false;
 	sp->scp[IDX_LCP].fail_counter = 0;
+
+	/* the interface was down while waiting for reconnection */
+	if ((sp->pp_flags & PP_ADMIN_UP) == 0)
+		return;
 
 	if (sp->pp_if.if_mtu < PP_MTU) {
 		sp->lcp.mru = sp->pp_if.if_mtu;
