@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.301 2021/03/23 13:22:40 simonb Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.302 2021/06/02 00:00:39 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.301 2021/03/23 13:22:40 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.302 2021/06/02 00:00:39 simonb Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -1785,9 +1785,9 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTL_MACHDEP, CPU_ROOT_DEVICE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
-                       CTLTYPE_INT, "llsc", NULL,
-                       NULL, MIPS_HAS_LLSC, NULL, 0,
-                       CTL_MACHDEP, CPU_LLSC, CTL_EOL);
+		       CTLTYPE_INT, "llsc", NULL,
+		       NULL, MIPS_HAS_LLSC, NULL, 0,
+		       CTL_MACHDEP, CPU_LLSC, CTL_EOL);
 #ifdef MIPS3_LOONGSON2
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
@@ -1797,8 +1797,8 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 #endif
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
-                       CTLTYPE_INT, "fpu_present", NULL,
-                       NULL,
+		       CTLTYPE_INT, "fpu_present", NULL,
+		       NULL,
 #ifdef NOFPU
 		       0,
 #else
