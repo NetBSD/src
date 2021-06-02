@@ -1,4 +1,4 @@
-#	$NetBSD: files.i915drmkms,v 1.40 2021/04/13 04:59:00 mrg Exp $
+#	$NetBSD: files.i915drmkms,v 1.41 2021/06/02 15:45:28 nia Exp $
 
 version	20180827
 
@@ -8,6 +8,10 @@ attach	i915drmkms at pci
 
 device	intelfb: intelfbbus, drmfb, drmfb_pci, wsemuldisplaydev
 attach	intelfb at intelfbbus
+
+# This code comes from the Linux kernel, which assumes signed
+# overflow is OK.
+makeoptions 	i915drmkms	"COPTS.i915drmkms"+="-fwrapv"
 
 makeoptions	i915drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/i915drm"
 
