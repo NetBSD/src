@@ -1,4 +1,4 @@
-/*	$NetBSD: tsc.c,v 1.55 2021/06/01 21:29:24 riastradh Exp $	*/
+/*	$NetBSD: tsc.c,v 1.56 2021/06/02 06:48:10 nia Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.55 2021/06/01 21:29:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.56 2021/06/02 06:48:10 nia Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -427,7 +427,8 @@ tsc_get_timecount(struct timecounter *tc)
 			ticks = getticks();
 			if (ticks - lastwarn >= hz) {
 				printf(
-				    "WARNING: TSC time went backwards by %u\n",
+				    "WARNING: TSC time went backwards by %u - "
+				    "change sysctl(7) kern.timecounter?\n",
 				    (unsigned)(prev - cur));
 				lastwarn = ticks;
 			}
