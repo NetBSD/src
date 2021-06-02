@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.dtb.mk,v 1.2 2020/05/19 08:59:36 rin Exp $
+#	$NetBSD: bsd.dtb.mk,v 1.3 2021/06/02 10:28:21 jmcneill Exp $
 
 .include <bsd.init.mk>
 .include <bsd.own.mk>
@@ -71,11 +71,24 @@ dtbinstall:	dtb
 	${INSTALL_FILE} -o ${DTBOWN} -g ${DTBGRP} -m ${DTBMODE} \
 	    ${.OBJDIR}/${_dtb} ${DESTDIR}${DTBINSTDIR}
 .endfor
+.if defined(DTSSUBDIR)
+.for _dtb in ${DTB_NOSUBDIR}
+	${_MKSHMSG_INSTALL} ${_dtb}
+	${_MKSHECHO} "${INSTALL_FILE} -o ${DTBOWN} -g ${DTBGRP} -m ${DTBMODE} \
+	    ${.OBJDIR}/${_dtb} ${DESTDIR}${DTBDIR}"
+	${INSTALL_FILE} -o ${DTBOWN} -g ${DTBGRP} -m ${DTBMODE} \
+	    ${.OBJDIR}/${_dtb} ${DESTDIR}${DTBDIR}
+.endfor
+.endif
 
 dtblist:
 .if defined(DTSSUBDIR)
 	@echo ".${DTBINSTDIR}\t\tdtb-base-boot\tdtb" | \
 	    ${TOOL_SED} 's/\\t/	/g'
+.for _dtb in ${DTB_NOSUBDIR}
+	@echo ".${DTBDIR}/${_dtb}\t\tdtb-base-boot\tdtb" | \
+	    ${TOOL_SED} 's/\\t/	/g'
+.endfor
 .endif
 .for _dtb in ${DTB}
 	@echo ".${DTBINSTDIR}/${_dtb}\t\tdtb-base-boot\tdtb" | \
