@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwmreg.h,v 1.7 2018/04/19 21:50:09 christos Exp $	*/
+/*	$NetBSD: if_iwmreg.h,v 1.8 2021/06/02 11:32:24 nia Exp $	*/
 /*	OpenBSD: if_iwmreg.h,v 1.19 2016/09/20 11:46:09 stsp Exp 	*/
 
 /*-
@@ -191,7 +191,7 @@
 
 /* interrupt flags in INTA, set by uCode or hardware (e.g. dma),
  * acknowledged (reset) by host writing "1" to flagged bits. */
-#define IWM_CSR_INT_BIT_FH_RX	(1 << 31) /* Rx DMA, cmd responses, FH_INT[17:16] */
+#define IWM_CSR_INT_BIT_FH_RX	(1U << 31) /* Rx DMA, cmd responses, FH_INT[17:16] */
 #define IWM_CSR_INT_BIT_HW_ERR	(1 << 29) /* DMA hardware error FH_INT[31] */
 #define IWM_CSR_INT_BIT_RX_PERIODIC	(1 << 28) /* Rx periodic */
 #define IWM_CSR_INT_BIT_FH_TX	(1 << 27) /* Tx DMA FH_INT[1:0] */
@@ -214,7 +214,7 @@
 				 IWM_CSR_INT_BIT_RX_PERIODIC)
 
 /* interrupt flags in FH (flow handler) (PCI busmaster DMA) */
-#define IWM_CSR_FH_INT_BIT_ERR       (1 << 31) /* Error */
+#define IWM_CSR_FH_INT_BIT_ERR       (1U << 31) /* Error */
 #define IWM_CSR_FH_INT_BIT_HI_PRIOR  (1 << 30) /* High priority Rx, bypass coalescing */
 #define IWM_CSR_FH_INT_BIT_RX_CHNL1  (1 << 17) /* Rx channel 1 */
 #define IWM_CSR_FH_INT_BIT_RX_CHNL0  (1 << 16) /* Rx channel 0 */
@@ -405,7 +405,7 @@
 #define IWM_CSR_DBG_HPET_MEM_REG_VAL	(0xFFFF0000)
 
 /* DRAM INT TABLE */
-#define IWM_CSR_DRAM_INT_TBL_ENABLE		(1 << 31)
+#define IWM_CSR_DRAM_INT_TBL_ENABLE		(1U << 31)
 #define IWM_CSR_DRAM_INIT_TBL_WRITE_POINTER	(1 << 28)
 #define IWM_CSR_DRAM_INIT_TBL_WRAP_CHECK	(1 << 27)
 
@@ -558,7 +558,7 @@ enum iwm_secure_load_status_reg {
 #define IWM_HOST_INT_TIMEOUT_MAX	(0xFF)
 #define IWM_HOST_INT_TIMEOUT_DEF	(0x40)
 #define IWM_HOST_INT_TIMEOUT_MIN	(0x0)
-#define IWM_HOST_INT_OPER_MODE		(1 << 31)
+#define IWM_HOST_INT_OPER_MODE		(1U << 31)
 
 /*****************************************************************************
  *                        7000/3000 series SHR DTS addresses                 *
@@ -643,7 +643,7 @@ enum iwm_ucode_tlv_flag {
 	IWM_UCODE_TLV_FLAGS_P2P_PS_UAPSD	= (1 << 26),
 	IWM_UCODE_TLV_FLAGS_BCAST_FILTERING	= (1 << 29),
 	IWM_UCODE_TLV_FLAGS_GO_UAPSD		= (1 << 30),
-	IWM_UCODE_TLV_FLAGS_LTE_COEX		= (1 << 31),
+	IWM_UCODE_TLV_FLAGS_LTE_COEX		= (1U << 31),
 };
 #define IWM_UCODE_TLV_FLAG_BITS \
 	"\020\1PAN\2NEWSCAN\3MFP\4P2P\5DW_BC_TABLE\6NEWBT_COEX\7PM_CMD\10SHORT_BL\11RX_ENERGY\12TIME_EVENT_V2\13D3_6_IPV6\14BF_UPDATED\15NO_BASIC_SSID\17D3_CONTINUITY\20NEW_NSOFFL_S\21NEW_NSOFFL_L\22SCHED_SCAN\24STA_KEY_CMD\25DEVICE_PS_CMD\26P2P_PS\27P2P_PS_DCM\30P2P_PS_SCM\31UAPSD_SUPPORT\32EBS\33P2P_PS_UAPSD\36BCAST_FILTERING\37GO_UAPSD\40LTE_COEX"
@@ -4369,7 +4369,7 @@ enum iwm_tx_flags {
 	IWM_TX_CMD_FLG_FW_DROP		= (1 << 26),
 	IWM_TX_CMD_FLG_EXEC_PAPD	= (1 << 27),
 	IWM_TX_CMD_FLG_PAPD_TYPE	= (1 << 28),
-	IWM_TX_CMD_FLG_HCCA_CHUNK	= (1 << 31)
+	IWM_TX_CMD_FLG_HCCA_CHUNK	= (1U << 31)
 }; /* IWM_TX_FLAGS_BITS_API_S_VER_1 */
 
 /**
