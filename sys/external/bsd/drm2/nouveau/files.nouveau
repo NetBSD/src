@@ -1,4 +1,4 @@
-#	$NetBSD: files.nouveau,v 1.29 2020/02/14 04:30:05 riastradh Exp $
+#	$NetBSD: files.nouveau,v 1.30 2021/06/02 15:45:28 nia Exp $
 
 version	20180827
 
@@ -15,6 +15,10 @@ attach	nouveaufb at nouveaufbbus
 file	external/bsd/drm2/nouveau/nouveau_sysfs.c		nouveau
 file	external/bsd/drm2/nouveau/nouveau_vga.c			nouveau
 file	external/bsd/drm2/nouveau/nouveaufb.c			nouveaufb
+
+# This code comes from the Linux kernel, which assumes signed
+# overflow is OK.
+makeoptions 	nouveau	"COPTS.nouveau"+="-fwrapv"
 
 makeoptions	nouveau	CPPFLAGS+="-I$S/external/bsd/drm2/dist/drm/nouveau"
 makeoptions	nouveau	CPPFLAGS+="-I$S/external/bsd/drm2/dist/drm/nouveau/include"
