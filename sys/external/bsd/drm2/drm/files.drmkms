@@ -1,4 +1,4 @@
-#	$NetBSD: files.drmkms,v 1.34 2020/02/14 04:30:05 riastradh Exp $
+#	$NetBSD: files.drmkms,v 1.35 2021/06/02 15:45:28 nia Exp $
 
 include "external/bsd/drm2/linux/files.drmkms_linux"
 
@@ -11,6 +11,10 @@ define	drmkms_i2c: drmkms_linux
 define	drmkms: drmkms_linux, drmkms_i2c, linux
 
 defflag		opt_drmkms.h	DRMKMS_DEBUG
+
+# This code comes from the Linux kernel, which assumes signed
+# overflow is OK.
+makeoptions 	drmkms	"COPTS.drmkms"+="-fwrapv"
 
 # Overrides first.
 makeoptions 	drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/include"

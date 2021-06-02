@@ -1,4 +1,4 @@
-#	$NetBSD: files.radeon,v 1.28 2020/02/14 04:30:05 riastradh Exp $
+#	$NetBSD: files.radeon,v 1.29 2021/06/02 15:45:29 nia Exp $
 
 version	20180827
 
@@ -9,6 +9,10 @@ attach	radeon at pci
 # XXX Rename this to radeonfb when the legacy radeonfb(4) is gone.
 device	radeondrmkmsfb: radeonfbbus, drmfb, drmfb_pci, wsemuldisplaydev
 attach	radeondrmkmsfb at radeonfbbus
+
+# This code comes from the Linux kernel, which assumes signed
+# overflow is OK.
+makeoptions 	radeon	"COPTS.radeon"+="-fwrapv"
 
 # Our overrides first.
 makeoptions	radeon	CPPFLAGS+="-I$S/external/bsd/drm2/include/radeon"
