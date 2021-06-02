@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2015/07/19 22:42:24 mrg Exp $
+#	$NetBSD: Makefile,v 1.2.24.1 2021/06/02 14:46:21 cjep Exp $
 
 .include <bsd.own.mk>
 
@@ -7,8 +7,8 @@ SRCS=	xkbprint.c utils.c psgeom.c
 
 CPPFLAGS+=	-DHAVE_ASPRINTF
 
-LDADD+=	-lxkbfile -lXext -lX11
-DPADD+=	${LIBXKBFILE} ${LIBXEXT} ${LIBX11}
+LDADD+=	${XLIBLDADD_KDFILE}
+DPADD+=	${XLIBDPADD_KDFILE}
 
 .PATH:	${X11SRCDIR.${PROG}} ${X11SRCDIR.${PROG}}/man
 

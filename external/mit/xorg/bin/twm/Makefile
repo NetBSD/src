@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2019/09/13 10:31:46 maya Exp $
+#	$NetBSD: Makefile,v 1.8.6.1 2021/06/02 14:46:19 cjep Exp $
 
 .include <bsd.own.mk>
 
@@ -39,8 +39,8 @@ deftwmrc.c: system.twmrc deftwmrc.sed
 	echo '    (char *) 0 };' >>$@
 
 
-LDADD+=	-lXmu -lXt -lSM -lICE -lXext -lX11
-DPADD+=	${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} ${LIBXEXT} ${LIBX11}
+LDADD+=	${XLIBLDADD_XMU}
+DPADD+=	${XLIBDPADD_XMU}
 
 .PATH:	${TWMDIR}/src ${TWMDIR}/man
 

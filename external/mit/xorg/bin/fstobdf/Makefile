@@ -1,12 +1,12 @@
-#	$NetBSD: Makefile,v 1.3 2015/07/22 07:58:00 mrg Exp $
+#	$NetBSD: Makefile,v 1.3.24.1 2021/06/02 14:46:19 cjep Exp $
 
 .include <bsd.own.mk>
 
 PROG=	fstobdf
 SRCS=	chars.c fstobdf.c header.c props.c
 
-LDADD+=	-lFS -lXext -lX11
-DPADD+=	${LIBFS} ${LIBXEXT} ${LIBX11}
+LDADD+=	-lFS ${XLIBLDADD_XEXT}
+DPADD+=	${LIBFS} ${XLIBDPADD_XEXT}
 
 .PATH:	${X11SRCDIR.${PROG}}
 .PATH:	${X11SRCDIR.${PROG}}/man

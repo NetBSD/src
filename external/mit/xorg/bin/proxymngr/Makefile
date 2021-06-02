@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2019/03/11 06:25:55 mrg Exp $
+#	$NetBSD: Makefile,v 1.4.8.1 2021/06/02 14:46:19 cjep Exp $
 
 .include <bsd.own.mk>
 
@@ -20,8 +20,8 @@ CPPSCRIPTFLAGS=	-DLBXPROXY=${X11BINDIR}/lbxproxy
 CONFIGFILES=	pmconfig
 FILESDIR=	${PROXYMANAGERDIR}
 
-LDADD+=	-lXt -lSM -lICE -lXext -lX11
-DPADD+=	${LIBXT} ${LIBSM} ${LIBICE} ${LIBXEXT} ${LIBX11}
+LDADD+=	${XLIBLDADD_XT}
+DPADD+=	${XLIBDPADD_XT}
 
 .if (${USE_INET6} != "no")
 CPPFLAGS+=      -DIPv6

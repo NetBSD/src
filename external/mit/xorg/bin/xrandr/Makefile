@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.7 2016/06/07 23:33:45 christos Exp $
+#	$NetBSD: Makefile,v 1.7.24.1 2021/06/02 14:46:23 cjep Exp $
 
 .include <bsd.own.mk>
 
 PROG=	xrandr
 
-LDADD+=	-lXrandr -lXrender -lXext -lX11 -lm
-DPADD+=	${LIBXRANDR} ${LIBXRENDER} ${LIBXEXT} ${LIBX11} ${LIBM}
+LDADD+=	${XLIBLDADD_XRANDR} -lm
+DPADD+=	${XLIBDPADD_XRANDR} ${LIBM}
 
 CPPFLAGS+=	-DVERSION=\"1.4.0\"
 

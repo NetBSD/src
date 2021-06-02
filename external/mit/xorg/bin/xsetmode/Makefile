@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.1.72.1 2021/06/02 14:46:24 cjep Exp $
 
 .include <bsd.own.mk>
 
 PROG=	xsetmode
 
-LDADD+=	-lXi -lXext -lX11
-DPADD+=	${LIBXI} ${LIBXEXT} ${LIBX11}
+LDADD+=	${XLIBLDADD_XI}
+DPADD+=	${XLIBDPADD_XI}
 
 .PATH:	${X11SRCDIR.${PROG}}
 

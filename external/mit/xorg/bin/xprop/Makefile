@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2013/05/30 23:42:19 mrg Exp $
+#	$NetBSD: Makefile,v 1.5.36.1 2021/06/02 14:46:23 cjep Exp $
 
 .include <bsd.own.mk>
 
@@ -8,8 +8,8 @@ SRCS=	xprop.c dsimple.c clientwin.c
 CPPFLAGS+=-DHAVE_WCHAR_H -DHAVE_WCTYPE_H -DNO_WIDEC_H
 CPPFLAGS+=-I${X11SRCDIR.${PROG}}/../include
 
-LDADD+=	-lXmuu -lXt -lSM -lICE -lXext -lX11
-DPADD+=	${LIBXMUU} ${LIBXT} ${LIBSM} ${LIBICE} ${LIBXEXT} ${LIBX11}
+LDADD+=	${XLIBLDADD_XMUU}
+DPADD+=	${XLIBDPADD_XMUU}
 
 .PATH:	${X11SRCDIR.${PROG}} ${X11SRCDIR.${PROG}}/man
 

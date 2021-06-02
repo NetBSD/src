@@ -1,12 +1,12 @@
-#	$NetBSD: Makefile,v 1.3 2015/07/20 03:12:57 mrg Exp $
+#	$NetBSD: Makefile,v 1.3.24.1 2021/06/02 14:46:22 cjep Exp $
 
 .include <bsd.own.mk>
 
 PROG=	xlsfonts
 SRCS=	xlsfonts.c dsimple.c
 
-LDADD+=	-lXext -lX11
-DPADD+=	${LIBXEXT} ${LIBX11}
+LDADD+=	${XLIBLDADD_XEXT}
+DPADD+=	${XLIBDPADD_XEXT}
 
 .PATH:	${X11SRCDIR.${PROG}}
 .PATH:	${X11SRCDIR.${PROG}}/man

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2020/04/20 13:04:10 joerg Exp $
+#	$NetBSD: Makefile,v 1.11.4.1 2021/06/02 14:46:21 cjep Exp $
 
 .include <bsd.own.mk>
 .include "Makefile.common"
@@ -22,8 +22,8 @@ FILES=	README
 SYMLINKS+=	${BINDIR}/xkbcomp ${XKBROOTDIR}/xkbcomp
 SYMLINKS+=	${XKBDATADIR} ${XKBCOMPDIR}
 
-LDADD+=	-lxkbfile -lXext -lX11
-DPADD+=	${LIBXKBFILE} ${LIBXEXT} ${LIBX11}
+LDADD+=	${XLIBLDADD_KDFILE}
+DPADD+=	${XLIBDPADD_KDFILE}
 
 .PATH:	${X11SRCDIR.${PROG}}
 .PATH:	${X11SRCDIR.${PROG}}/man

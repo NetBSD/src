@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2015/07/20 23:50:23 mrg Exp $
+#	$NetBSD: Makefile,v 1.4.24.1 2021/06/02 14:46:22 cjep Exp $
 
 .include <bsd.own.mk>
 
@@ -9,9 +9,8 @@ APPDEFS=Xmag
 
 CPPFLAGS+=	-DHAVE_LRINT -DHAVE_NANOSLEEP
 
-LDADD+=	-lXaw -lXmu -lXt -lSM -lICE -lXpm -lXext -lX11 -lm
-DPADD+=	${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} \
-	${LIBXPM} ${LIBXEXT} ${LIBX11} ${LIBM}
+LDADD+=	${XLIBLDADD_XAW} -lm
+DPADD+=	${XLIBDPADD_XAW} ${LIBM}
 
 .PATH:	${X11SRCDIR.${PROG}} ${X11SRCDIR.${PROG}}/app-defaults
 .PATH:	${X11SRCDIR.${PROG}}/man

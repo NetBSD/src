@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2016/04/16 20:52:07 nakayama Exp $
+#	$NetBSD: Makefile,v 1.8.24.1 2021/06/02 14:46:22 cjep Exp $
 
 .include <bsd.own.mk>
 
@@ -8,8 +8,8 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR} -DHAVE_STRNLEN
 
 #BUILDSYMLINKS=	xlscli.man xlsclients.man
 
-LDADD+=	-lxcb -lxcb-atom
-DPADD+=	${LIBXCB} ${LIBXCB_ATOM}
+LDADD+=	${XLIBLDADD_XCB_ATOM}
+DPADD+=	${XLIBDPADD_XCB_ATOM}
 
 .PATH:	${X11SRCDIR.${PROG}} ${X11SRCDIR.${PROG}}/man
 

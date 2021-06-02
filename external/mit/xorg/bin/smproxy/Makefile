@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2016/04/16 20:52:07 nakayama Exp $
+#	$NetBSD: Makefile,v 1.6.24.1 2021/06/02 14:46:19 cjep Exp $
 
 .include <bsd.own.mk>
 
@@ -7,8 +7,8 @@ SRCS=	smproxy.c save.c
 
 CPPFLAGS+=-DHAVE_MKSTEMP -DHAVE_ASPRINTF
 
-LDADD+=	-lXmu -lXt -lSM -lICE -lXext -lX11
-DPADD+=	${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} ${LIBXEXT} ${LIBX11}
+LDADD+=	${XLIBLDADD_XMU}
+DPADD+=	${XLIBDPADD_XMU}
 
 .PATH:	${X11SRCDIR.${PROG}} ${X11SRCDIR.${PROG}}/man
 

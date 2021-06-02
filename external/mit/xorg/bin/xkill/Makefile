@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.4 2016/04/16 20:52:07 nakayama Exp $
+#	$NetBSD: Makefile,v 1.4.24.1 2021/06/02 14:46:21 cjep Exp $
 
 .include <bsd.own.mk>
 
 PROG=	xkill
 
-LDADD+=	-lXmuu -lXt -lSM -lICE -lXext -lX11
-DPADD+=	${LIBXMUU} ${LIBXT} ${LIBSM} ${LIBICE} ${LIBXEXT} ${LIBX11}
+LDADD+=	${XLIBLDADD_XMUU}
+DPADD+=	${XLIBDPADD_XMUU}
 
 .PATH:	${X11SRCDIR.${PROG}} ${X11SRCDIR.${PROG}}/man
 

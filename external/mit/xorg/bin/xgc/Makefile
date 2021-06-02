@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2013/05/31 07:22:21 mrg Exp $
+#	$NetBSD: Makefile,v 1.4.36.1 2021/06/02 14:46:21 cjep Exp $
 
 .include <bsd.own.mk>
 
@@ -11,9 +11,8 @@ CPPFLAGS+=-I. -I${X11SRCDIR.${PROG}}
 
 APPDEFS=Xgc Xgc-color
 
-LDADD+=	-lXaw -lXmu -lXt -lSM -lICE -lXpm -lXext -lX11 -lm
-DPADD+=	${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} ${LIBXPM} \
-	${LIBXEXT} ${LIBX11} ${LIBM}
+LDADD+=	${XLIBLDADD_XAW} -lm
+DPADD+=	${XLIBDPADD_XAW} ${LIBM}
 
 .PATH:	${X11SRCDIR.${PROG}} ${X11SRCDIR.${PROG}}/app-defaults
 .PATH:	${X11SRCDIR.${PROG}}/man

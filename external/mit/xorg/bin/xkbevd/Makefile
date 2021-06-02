@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2015/07/22 08:35:26 mrg Exp $
+#	$NetBSD: Makefile,v 1.3.24.1 2021/06/02 14:46:21 cjep Exp $
 
 .include <bsd.own.mk>
 
@@ -10,8 +10,8 @@ CPPFLAGS+=-DDFLT_SOUND_CMD='"/usr/bin/audioplay"'
 CPPFLAGS+=-DDFLT_SOUND_DIR='"${X11ROOTDIR}/share/sounds/"'
 CPPFLAGS+=-DHAVE_STRCASECMP
 CPPFLAGS+=-I${X11SRCDIR.${PROG}}
-LDADD+=	-lxkbfile -lXext -lX11
-DPADD+=	${LIBXKBFILE} ${LIBXEXT} ${LIBX11}
+LDADD+=	${XLIBLDADD_KDFILE}
+DPADD+=	${XLIBDPADD_KDFILE}
 
 .PATH:	${X11SRCDIR.${PROG}}
 .PATH:	${X11SRCDIR.${PROG}}/man

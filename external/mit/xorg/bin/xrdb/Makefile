@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2016/04/16 20:52:07 nakayama Exp $
+#	$NetBSD: Makefile,v 1.8.24.1 2021/06/02 14:46:23 cjep Exp $
 
 .include <bsd.own.mk>
 
@@ -7,8 +7,8 @@ PROG=	xrdb
 CPPFLAGS+=-DCPP="\"/usr/bin/cpp -traditional\"" -DHAVE_MKSTEMP	# XXX
 CPPFLAGS+=-DHAVE_ASPRINTF
 
-LDADD+=	-lXmuu -lXt -lSM -lICE -lXext -lX11
-DPADD+=	${LIBXMUU} ${LIBXT} ${LIBSM} ${LIBICE} ${LIBXEXT} ${LIBX11}
+LDADD+=	${XLIBLDADD_XMUU}
+DPADD+=	${XLIBDPADD_XMUU}
 
 .PATH:	${X11SRCDIR.${PROG}}
 .PATH:	${X11SRCDIR.${PROG}}/man
