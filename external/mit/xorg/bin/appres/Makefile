@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.5 2015/07/20 23:50:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.5.24.1 2021/06/02 15:31:33 cjep Exp $
 
 .include <bsd.own.mk>
 
 PROG=	appres
 
-LDADD+=	-lXt -lSM -lICE -lXext -lX11 -lxcb -lXdmcp -lXau
-DPADD+=	${LIBXT} ${LIBSM} ${LIBICE} ${LIBXEXT} ${LIBX11} ${LIBXCB} ${LIBXDMCP} ${LIBXAU}
+LDADD+=	${XLIBLDADD_XT}
+DPADD+=	${XLIBDPADD_XT}
 
 .PATH:	${X11SRCDIR.${PROG}}
 .PATH:	${X11SRCDIR.${PROG}}/man
