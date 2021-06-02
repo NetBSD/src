@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2020/10/16 08:28:17 nia Exp $
+#	$NetBSD: Makefile,v 1.1.4.1 2021/06/02 15:02:43 cjep Exp $
 
 .include <bsd.own.mk>
 
@@ -6,8 +6,8 @@ PROG=	xcompmgr
 
 LDADD+=	-lm -lXcomposite -lXdamage -lXfixes -lXrender
 DPADD+=	${LIBM} ${LIBXCOMPOSITE} ${LIBXDAMAGE} ${LIBXFIXES} ${LIBXRENDER}
-LDADD+=	-lX11 -lXext
-DPADD+=	${LIBX11} ${LIBXEXT}
+LDADD+=	${XLIBLDADD_XEXT}
+DPADD+=	${XLIBDPADD_XEXT}
 
 .PATH:	${X11SRCDIR.${PROG}}
 .PATH:	${X11SRCDIR.${PROG}}/man

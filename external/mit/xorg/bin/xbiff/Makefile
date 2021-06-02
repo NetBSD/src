@@ -1,13 +1,12 @@
-#	$NetBSD: Makefile,v 1.3 2019/07/15 05:41:16 mrg Exp $
+#	$NetBSD: Makefile,v 1.3.8.1 2021/06/02 15:04:23 cjep Exp $
 
 .include <bsd.own.mk>
 
 PROG=	xbiff
 SRCS=	xbiff.c Mailbox.c
 
-LDADD+=	-lXext -lXaw -lXmu -lXt -lX11 -lSM -lICE -lXau
-DPADD+=	${LIBXEXT} ${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBX11} ${LIBSM} ${LIBICE} \
-	${LIBXAU}
+LDADD+=	${XLIBLDADD_XAW}
+DPADD+=	${XLIBDPADD_XAW}
 
 CPPFLAGS+=	-I${X11SRCDIR.${PROG}}/../include
 CPPFLAGS+=	-D_CONST_X_STRING
