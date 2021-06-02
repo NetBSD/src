@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.280 2021/04/06 15:05:12 simonb Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.281 2021/06/02 15:45:28 nia Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -449,7 +449,7 @@ CFLAGS+=	${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}}
 CPPFLAGS+=	${CPPFLAGS.${.IMPSRC:T}}
 CWARNFLAGS+=	${CWARNFLAGS.${.IMPSRC:T}}
 
-.for _v in CFLAGS CPPFLAGS CWARNFLAGS
+.for _v in COPTS CPPFLAGS CWARNFLAGS
 .for _c in ${CSRCS}
 ${_v}.${_c:T}+=${OPT.${_c:T}:@.o.@${${_v}.${.o.}}@}
 .endfor
