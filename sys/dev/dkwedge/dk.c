@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.103 2021/05/22 13:43:50 mlelstv Exp $	*/
+/*	$NetBSD: dk.c,v 1.104 2021/06/02 15:59:08 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.103 2021/05/22 13:43:50 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.104 2021/06/02 15:59:08 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -1137,6 +1137,7 @@ static int
 dkopen(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	struct dkwedge_softc *sc = dkwedge_lookup(dev);
+	struct dkwedge_softc *nsc;
 	struct vnode *vp;
 	int error = 0;
 	int mode;
@@ -1169,13 +1170,24 @@ dkopen(dev_t dev, int flags, int fmt, struct lwp *l)
 			}
 			if (error)
 				goto popen_fail;
-			/* remember open mode */
-			sc->sc_mode = mode;
 			sc->sc_parent->dk_rawvp = vp;
+		} else {
+			/*
+			 * Retrieve mode from an already opened wedge.
+			 */
+			mode = 0;
+			LIST_FOREACH(nsc, &sc->sc_parent->dk_wedges, sc_plink) {
+				if (nsc == sc || nsc->sc_dk.dk_openmask == 0)
+					continue;
+				mode = nsc->sc_mode;
+				break;
+			}
 		}
+		sc->sc_mode = mode;
 		sc->sc_parent->dk_rawopens++;
-	} else if (flags & ~sc->sc_mode & FWRITE) {
-		/* parent is opened read-only, cannot open read-write */
+	}
+	KASSERT(sc->sc_mode != 0);
+	if (flags & ~sc->sc_mode & FWRITE) {
 		error = EROFS;
 		goto popen_fail;
 	}
@@ -1199,7 +1211,9 @@ static int
 dklastclose(struct dkwedge_softc *sc)
 {
 	struct vnode *vp;
-	int error = 0;
+	int error = 0, mode;
+
+	mode = sc->sc_mode;
 
 	vp = NULL;
 	if (sc->sc_parent->dk_rawopens > 0) {
@@ -1214,7 +1228,7 @@ dklastclose(struct dkwedge_softc *sc)
 	mutex_exit(&sc->sc_dk.dk_openlock);
 
 	if (vp) {
-		dk_close_parent(vp, sc->sc_mode);
+		dk_close_parent(vp, mode);
 	}
 
 	return error;
@@ -1248,9 +1262,11 @@ dkclose(dev_t dev, int flags, int fmt, struct lwp *l)
 	sc->sc_dk.dk_openmask =
 	    sc->sc_dk.dk_copenmask | sc->sc_dk.dk_bopenmask;
 
-	if (sc->sc_dk.dk_openmask == 0)
+	if (sc->sc_dk.dk_openmask == 0) {
 		error = dklastclose(sc); /* releases locks */
-	else {
+		sc->sc_mode = 0;
+	} else {
+		sc->sc_mode = 0;
 		mutex_exit(&sc->sc_parent->dk_rawlock);
 		mutex_exit(&sc->sc_dk.dk_openlock);
 	}
