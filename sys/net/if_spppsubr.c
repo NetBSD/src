@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.257 2021/06/01 05:22:57 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.258 2021/06/02 00:47:59 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.257 2021/06/01 05:22:57 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.258 2021/06/02 00:47:59 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -4569,6 +4569,13 @@ sppp_ipv6cp_confnak(struct sppp *sp, struct lcp_header *h,
 
 static void
 sppp_ipv6cp_tlu(struct sppp *sp)
+{
+
+	KASSERT(SPPP_WLOCKED(sp));
+}
+
+static void
+sppp_ipv6cp_tld(struct sppp *sp)
 {
 
 	KASSERT(SPPP_WLOCKED(sp));
