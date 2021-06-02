@@ -1,4 +1,4 @@
-/*	$NetBSD: tpm.c,v 1.21 2021/05/29 08:45:29 riastradh Exp $	*/
+/*	$NetBSD: tpm.c,v 1.22 2021/06/02 21:35:17 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpm.c,v 1.21 2021/05/29 08:45:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpm.c,v 1.22 2021/06/02 21:35:17 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -811,7 +811,7 @@ tpm_tis12_end(struct tpm_softc *sc, int rw, int err)
 	if (rw == UIO_READ) {
 		rv = tpm_waitfor(sc, TPM_STS_VALID, TPM_READ_TMO, sc->sc_intf->read);
 		if (rv)
-			return rv;
+			goto out;
 
 		/* Still more data? */
 		sc->sc_status = tpm_status(sc);
@@ -836,7 +836,7 @@ tpm_tis12_end(struct tpm_softc *sc, int rw, int err)
 		    err ? TPM_STS_CMD_READY : TPM_STS_GO);
 	}
 
-	return rv;
+out:	return err ? err : rv;
 }
 
 const struct tpm_intf tpm_intf_tis12 = {
