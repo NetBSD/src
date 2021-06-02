@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2021/04/26 22:04:51 mrg Exp $
+#	$NetBSD: Makefile,v 1.4.4.1 2021/06/02 14:46:24 cjep Exp $
 
 .include <bsd.own.mk>
 
@@ -19,9 +19,8 @@ FILESDIR=	${XSMDIR}
 .PATH:	${X11SRCDIR.${PROG}}/app-defaults
 APPDEFS=XSm
 
-LDADD+=	-lXaw -lXmu -lXt -lSM -lICE -lXpm -lXext -lX11
-DPADD+=	${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} \
-	${LIBXPM} ${LIBXEXT} ${LIBX11}
+LDADD+=	${XLIBLDADD_XAW}
+DPADD+=	${XLIBDPADD_XAW}
 
 .PATH:	${X11SRCDIR.${PROG}}
 .PATH:	${X11SRCDIR.${PROG}}/man

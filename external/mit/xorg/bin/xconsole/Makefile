@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2019/10/13 07:28:08 mrg Exp $
+#	$NetBSD: Makefile,v 1.5.6.1 2021/06/02 14:46:20 cjep Exp $
 
 .include <bsd.own.mk>
 
@@ -6,9 +6,8 @@ PROG=	xconsole
 
 APPDEFS=XConsole
 
-LDADD+=	-lutil -lXaw -lXmu -lXt -lSM -lICE -lXpm -lXext -lX11
-DPADD+=	${LIBUTIL} ${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} \
-	${LIBXPM} ${LIBXEXT} ${LIBX11}
+LDADD+=	-lutil ${XLIBLDADD_XAW}
+DPADD+=	${LIBUTIL} ${XLIBDPADD_XAW}
 
 .PATH:	${X11SRCDIR.${PROG}} ${X11SRCDIR.${PROG}}/app-defaults
 .PATH:	${X11SRCDIR.${PROG}}/man

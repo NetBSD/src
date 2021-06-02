@@ -1,12 +1,11 @@
-#	$NetBSD: Makefile,v 1.2 2013/05/31 06:46:55 mrg Exp $
+#	$NetBSD: Makefile,v 1.2.36.1 2021/06/02 14:46:20 cjep Exp $
 
 .include <bsd.own.mk>
 
 PROG=	xcutsel
 
-LDADD+=	-lXaw -lXmu -lXt -lSM -lICE -lXpm -lXext -lX11
-DPADD+=	${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} \
-	${LIBXPM} ${LIBXEXT} ${LIBX11}
+LDADD+=	${XLIBLDADD_XAW}
+DPADD+=	${XLIBDPADD_XAW}
 
 .PATH:	${X11SRCDIR.xclipboard}
 .PATH:	${X11SRCDIR.xclipboard}/man

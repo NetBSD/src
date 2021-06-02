@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2019/03/03 09:19:02 mrg Exp $
+#	$NetBSD: Makefile,v 1.4.8.1 2021/06/02 14:46:21 cjep Exp $
 
 .include <bsd.own.mk>
 
@@ -11,8 +11,8 @@ CPPFLAGS+=-DHAVE_INET_ATON
 CPPFLAGS+=      -DIPv6
 .endif
 
-LDADD+=	-lXmuu -lXt -lSM -lICE -lXext -lX11
-DPADD+=	${LIBXMUU} ${LIBXT} ${LIBSM} ${LIBICE} ${LIBXEXT} ${LIBX11}
+LDADD+=	${XLIBLDADD_XMUU}
+DPADD+=	${XLIBDPADD_XMUU}
 
 .PATH:	${X11SRCDIR.${PROG}}
 .PATH:	${X11SRCDIR.${PROG}}/man

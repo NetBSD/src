@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2015/07/19 19:49:18 mrg Exp $
+#	$NetBSD: Makefile,v 1.5.24.1 2021/06/02 14:46:20 cjep Exp $
 
 .include <bsd.own.mk>
 
@@ -17,9 +17,8 @@ DPADD+=		${LIB.${_L}}/lib${_L}.a
 LDADD+=		-L${LIB.${_L}} -l${_L}
 .endfor
 
-LDADD+=		-lXaw -lXmu -lXt -lSM -lICE -lXpm -lXext -lX11 -lm
-DPADD+=		${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} \
-		${LIBXPM} ${LIBXEXT} ${LIBX11} ${LIBM}
+LDADD+=		${XLIBLDADD_XAW} -lm
+DPADD+=		${XLIBDPADD_XAW} ${LIBM}
 
 .PATH:	${X11SRCDIR.${PROG}} ${X11SRCDIR.${PROG}}/app-defaults
 .PATH:	${X11SRCDIR.${PROG}}/man

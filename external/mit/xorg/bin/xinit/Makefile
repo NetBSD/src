@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2020/10/12 11:43:11 nia Exp $
+#	$NetBSD: Makefile,v 1.11.4.1 2021/06/02 14:46:21 cjep Exp $
 
 .include <bsd.own.mk>
 
@@ -30,8 +30,8 @@ SCRIPTS=	startx
 CONFIGFILES=	xinitrc
 FILESDIR=	${XINITDIR}
 
-LDADD+=	-lXmuu -lXt -lSM -lICE -lXext -lX11
-DPADD+=	${LIBXMUU} ${LIBXT} ${LIBSM} ${LIBICE} ${LIBXEXT} ${LIBX11}
+LDADD+=	${XLIBLDADD_XMUU}
+DPADD+=	${XLIBDPADD_XMUU}
 
 X11EXTRAMANTRANSFORMS+= \
 	__xinitdir__		${XINITDIR} \

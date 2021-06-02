@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2018/07/04 12:25:48 maya Exp $
+#	$NetBSD: Makefile,v 1.4.8.1 2021/06/02 14:46:18 cjep Exp $
 
 .include <bsd.own.mk>
 
@@ -8,8 +8,8 @@ CPPFLAGS+=	-I${X11SRCDIR.fontconfig} -I.
 CPPFLAGS+=	-DHAVE_CONFIG_H -I${X11SRCDIR.fontconfig}/../include
 CPPFLAGS+=	-DHAVE_GETOPT_LONG=1
 
-LDADD+=	-lfontconfig -lfreetype -lexpat
-DPADD+=	${LIBFONTCONFIG} ${LIBFREETYPE} ${LIBEXPAT}
+LDADD+=	${XLIBLDADD_FC}
+DPADD+=	${XLIBDPADD_FC}
 
 .PATH:	${X11SRCDIR.fontconfig}/${PROG}
 

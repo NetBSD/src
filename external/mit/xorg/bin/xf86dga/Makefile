@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.2 2010/05/22 02:40:40 mrg Exp $
+#	$NetBSD: Makefile,v 1.2.54.1 2021/06/02 14:46:20 cjep Exp $
 
 .include <bsd.own.mk>
 
 PROG=	dga
 
-LDADD+=	-lXxf86dga -lXext -lX11
-DPADD+=	${LIBXXF86DGA} ${LIBXEXT} ${LIBX11}
+LDADD+=	${XLIBLDADD_XF86DGA}
+DPADD+=	${XLIBDPADD_XF86DGA}
 
 .PATH:	${X11SRCDIR.xf86dga}
 

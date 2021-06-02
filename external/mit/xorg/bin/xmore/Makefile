@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2019/03/04 09:25:04 mrg Exp $
+#	$NetBSD: Makefile,v 1.5.8.1 2021/06/02 14:46:22 cjep Exp $
 
 .include <bsd.own.mk>
 
@@ -9,9 +9,8 @@ SRCS=	xmore.c
 
 CPPFLAGS+=	-DXMORE
 
-LDADD+=	-lXaw -lXmu -lXt -lSM -lICE -lXpm -lXext -lX11
-DPADD+=	${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} \
-	${LIBICE} ${LIBXPM} ${LIBXEXT} ${LIBX11}
+LDADD+=	${XLIBLDADD_XAW}
+DPADD+=	${XLIBDPADD_XAW}
 
 .PATH:	${X11SRCDIR.${PROG}} ${X11SRCDIR.${PROG}}/app-defaults ${X11SRCDIR.${PROG}}/man
 

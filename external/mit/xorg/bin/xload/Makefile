@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2013/06/13 11:25:18 christos Exp $
+#	$NetBSD: Makefile,v 1.5.36.1 2021/06/02 14:46:21 cjep Exp $
 
 .include <bsd.own.mk>
 
@@ -9,9 +9,8 @@ CPPFLAGS+=${X11FLAGS.VERSION} -DHAVE_GETLOADAVG
 
 APPDEFS=XLoad
 
-LDADD+=	-lXaw -lXmu -lXt -lSM -lICE -lXpm -lXext -lX11
-DPADD+=	${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} \
-	${LIBXPM} ${LIBXEXT} ${LIBX11}
+LDADD+=	${XLIBLDADD_XAW}
+DPADD+=	${XLIBDPADD_XAW}
 
 .PATH:	${X11SRCDIR.${PROG}} ${X11SRCDIR.${PROG}}/app-defaults
 .PATH:	${X11SRCDIR.${PROG}}/man

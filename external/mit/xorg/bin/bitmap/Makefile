@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2013/05/31 09:14:18 mrg Exp $
+#	$NetBSD: Makefile,v 1.4.36.1 2021/06/02 14:46:17 cjep Exp $
 
 .include <bsd.own.mk>
 
@@ -14,9 +14,8 @@ FILESDIR=${X11INCDIR}/X11/bitmaps
 
 CPPFLAGS+=	-DHAVE_MKSTEMP -DHAVE_LRINT
 
-LDADD+=	-lXaw -lXmu -lXt -lSM -lICE -lXpm -lXext -lX11 -lm
-DPADD+=	${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} \
-	${LIBXPM} ${LIBXEXT} ${LIBX11} ${LIBM}
+LDADD+=	${XLIBLDADD_XAW} -lm
+DPADD+=	${XLIBDPADD_XAW} ${LIBM}
 
 SUBDIR=	bmtoa atobm app-defaults
 

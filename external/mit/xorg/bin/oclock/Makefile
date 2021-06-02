@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2013/05/31 06:24:05 mrg Exp $
+#	$NetBSD: Makefile,v 1.3.36.1 2021/06/02 14:46:19 cjep Exp $
 
 .include <bsd.own.mk>
 
@@ -7,8 +7,8 @@ SRCS=	oclock.c Clock.c transform.c
 
 APPDEFS=Clock-color
 
-LDADD+=	-lXmu -lXt -lSM -lICE -lXext -lX11 -lm
-DPADD+=	${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} ${LIBXEXT} ${LIBX11} ${LIBM}
+LDADD+=	${XLIBLDADD_XMU} -lm
+DPADD+=	${XLIBDPADD_XMU} ${LIBM}
 
 .PATH:	${X11SRCDIR.${PROG}} ${X11SRCDIR.${PROG}}/app-defaults
 .PATH:	${X11SRCDIR.${PROG}}/man

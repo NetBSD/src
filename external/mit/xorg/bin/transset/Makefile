@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/03/11 09:20:13 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.10.1 2021/06/02 14:46:19 cjep Exp $
 
 .include <bsd.own.mk>
 
@@ -7,8 +7,8 @@ SRCS=	dsimple.c transSet.c
 
 CPPFLAGS+=${X11FLAGS.EXTENSION}
 
-LDADD+=	-lX11
-DPADD+=	${LIBX11}
+LDADD+=	${XLIBLDADD_X11}
+DPADD+=	${XLIBDPADD_X11}
 
 .PATH:	${X11SRCDIR.${PROG}}
 .PATH:	${X11SRCDIR.${PROG}}/man
