@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.104 2021/06/02 15:59:08 mlelstv Exp $	*/
+/*	$NetBSD: dk.c,v 1.105 2021/06/02 17:56:40 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.104 2021/06/02 15:59:08 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.105 2021/06/02 17:56:40 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -1221,6 +1221,7 @@ dklastclose(struct dkwedge_softc *sc)
 			KASSERT(sc->sc_parent->dk_rawvp != NULL);
 			vp = sc->sc_parent->dk_rawvp;
 			sc->sc_parent->dk_rawvp = NULL;
+			sc->sc_mode = 0;
 		}
 	}
 
@@ -1264,9 +1265,7 @@ dkclose(dev_t dev, int flags, int fmt, struct lwp *l)
 
 	if (sc->sc_dk.dk_openmask == 0) {
 		error = dklastclose(sc); /* releases locks */
-		sc->sc_mode = 0;
 	} else {
-		sc->sc_mode = 0;
 		mutex_exit(&sc->sc_parent->dk_rawlock);
 		mutex_exit(&sc->sc_dk.dk_openlock);
 	}
