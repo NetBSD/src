@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1721 2021/06/03 07:41:26 wiz Exp $
+# $NetBSD: mi,v 1.1722 2021/06/03 13:16:41 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4489,7 +4489,7 @@
 ./usr/share/man/html4/hythygtemp.html		man-sys-htmlman		html
 ./usr/share/man/html4/i386/PCIBIOS.html		man-sys-htmlman		html
 ./usr/share/man/html4/i386/apm.html		man-sys-htmlman		html
-./usr/share/man/html4/386/autoconf.html	man-obsolete		obsolete
+./usr/share/man/html4/i386/autoconf.html	man-obsolete		obsolete
 ./usr/share/man/html4/i386/cmos.html		man-sys-htmlman		html
 ./usr/share/man/html4/i386/cons.html		man-obsolete		obsolete
 ./usr/share/man/html4/i386/console.html		man-obsolete		obsolete
