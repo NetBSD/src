@@ -1,7 +1,7 @@
-/*	$NetBSD: ssl.h,v 1.4 2019/04/04 00:36:09 christos Exp $	*/
+/*	$NetBSD: ssl.h,v 1.5 2021/06/03 10:23:33 lukem Exp $	*/
 
 /*-
- * Copyright (c) 2012 The NetBSD Foundation, Inc.
+ * Copyright (c) 2012-2021 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifdef WITH_SSL
 
 #define FETCH struct fetch_connect
 struct fetch_connect;
@@ -43,21 +42,3 @@ char *fetch_getln(char *, int, struct fetch_connect *);
 int fetch_getline(struct fetch_connect *, char *, size_t, const char **);
 void fetch_set_ssl(struct fetch_connect *, void *);
 void *fetch_start_ssl(int, const char *);
-
-#else	/* !WITH_SSL */
-
-#define FETCH FILE
-
-#define	fetch_printf	fprintf
-#define	fetch_fileno	fileno
-#define	fetch_error	ferror
-#define	fetch_flush	fflush
-#define	fetch_open	fopen
-#define	fetch_fdopen	fdopen
-#define	fetch_close	fclose
-#define	fetch_read	fread
-#define	fetch_getln	fgets
-#define	fetch_getline	get_line
-#define	fetch_set_ssl(a, b)
-
-#endif	/* !WITH_SSL */
