@@ -1,4 +1,4 @@
-#	$NetBSD: DHT,v 1.1 2021/04/02 07:00:33 rin Exp $
+#	$NetBSD: DHT,v 1.2 2021/06/03 09:09:22 rin Exp $
 #
 #	DHT --- DHT Walnut 405GP Evaluation Board
 #		(Digital Home Technologies PCB 01070201 Rev. 1.1)
@@ -8,7 +8,7 @@ include 	"arch/evbppc/conf/std.dht"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"DHT-$Revision: 1.1 $"
+#ident 		"DHT-$Revision: 1.2 $"
 
 maxusers	32
 
@@ -49,7 +49,7 @@ options 	DIAGNOSTIC		# cheap kernel consistency checks
 options 	DDB			# in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	TRAP_PANICWAIT
-makeoptions	COPY_SYMTAB=1	# size for embedded symbol table
+makeoptions	COPY_SYMTAB=1		# size for embedded symbol table
 
 makeoptions	DEBUG="-g"		# compile full symbol table
 
@@ -177,6 +177,7 @@ siisata* at pci? dev ? function ?	# SiI SteelVine controllers
 
 wm*	at pci? dev ? function ?	# Intel 82543/82544 gigabit
 igphy*	at mii? phy ?			# Intel IGP01E1000
+makphy* at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
 xhci*	at pci?	dev ? function ?	# eXtensible Host Controller
@@ -204,7 +205,7 @@ pseudo-device	swcrypto		# software crypto implementation
 #pseudo-device	cgd			# cryptographic disk devices
 #pseudo-device	raid			# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
-#pseudo-device	fss			# file system snapshot device
+pseudo-device	fss			# file system snapshot device
 #pseudo-device	md			# memory disk device
 pseudo-device	vnd			# disk-like interface to files
 
@@ -231,6 +232,7 @@ pseudo-device	agr			# IEEE 802.3ad link aggregation
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	drvctl			# user control of drive subsystem
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	putter			# for puffs and pud
 
