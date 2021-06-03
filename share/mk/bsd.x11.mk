@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.138.4.1 2021/06/02 14:22:55 cjep Exp $
+#	$NetBSD: bsd.x11.mk,v 1.138.4.2 2021/06/03 10:18:30 cjep Exp $
 
 .include <bsd.init.mk>
 
@@ -254,7 +254,7 @@ XLIBDPADD_XMUU=		${LIBXMUU} ${XLIBDPADD_XT_XEXT}
 
 # XAW depends on XMU and XPM which have overlapping dependencies
 #
-XLIBLDADD_XMU_XPM=	-lXmu -lXt -lXpm ${XLIBLDADD_XT_XEXT}
+XLIBLDADD_XMU_XPM=	-lXmu -lXpm ${XLIBLDADD_XT_XEXT}
 XLIBDPADD_XMU_XPM=	${LIBXMU} ${LIBXT} ${LIBXPM} ${XLIBDPADD_XT_XEXT}
 
 XLIBLDADD_XAW=		-lXaw ${XLIBLDADD_XMU_XPM}
