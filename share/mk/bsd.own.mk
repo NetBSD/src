@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1255 2021/05/29 12:25:08 rin Exp $
+#	$NetBSD: bsd.own.mk,v 1.1256 2021/06/03 07:40:48 rin Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1580,7 +1580,6 @@ X11SRCDIR.${_proto}proto?=		${X11SRCDIRMIT}/${_proto}proto/dist
 # During transition from xorg-server 1.10 to 1.20
 .if \
     ${MACHINE} == "alpha"	|| \
-    ${MACHINE} == "amiga"	|| \
     ${MACHINE} == "netwinder"	|| \
     ${MACHINE} == "sgimips"	|| \
     ${MACHINE} == "vax"
