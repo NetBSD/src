@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1720 2021/05/17 04:07:42 yamaguchi Exp $
+# $NetBSD: mi,v 1.1721 2021/06/03 07:41:26 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1264,12 +1264,12 @@
 ./usr/share/man/cat4/hythygtemp.0		man-sys-catman		.cat
 ./usr/share/man/cat4/i386/PCIBIOS.0		man-sys-catman		.cat
 ./usr/share/man/cat4/i386/apm.0			man-sys-catman		.cat
-./usr/share/man/cat4/i386/autoconf.0		man-sys-catman		.cat
+./usr/share/man/cat4/i386/autoconf.0		man-obsolete		obsolete
 ./usr/share/man/cat4/i386/busmouse.0		man-obsolete		obsolete
 ./usr/share/man/cat4/i386/cmos.0		man-sys-catman		.cat
 ./usr/share/man/cat4/i386/com.0			man-obsolete		obsolete
-./usr/share/man/cat4/i386/cons.0		man-sys-catman		.cat
-./usr/share/man/cat4/i386/console.0		man-sys-catman		.cat
+./usr/share/man/cat4/i386/cons.0		man-obsolete		obsolete
+./usr/share/man/cat4/i386/console.0		man-obsolete		obsolete
 ./usr/share/man/cat4/i386/ed.0			man-sys-catman		.cat
 ./usr/share/man/cat4/i386/elanpar.0		man-sys-catman		.cat
 ./usr/share/man/cat4/i386/elanpex.0		man-sys-catman		.cat
@@ -2078,7 +2078,10 @@
 ./usr/share/man/cat4/x86/amdsmn.0		man-sys-catman		.cat
 ./usr/share/man/cat4/x86/amdzentemp.0		man-sys-catman		.cat
 ./usr/share/man/cat4/x86/apic.0			man-sys-catman		.cat
+./usr/share/man/cat4/x86/autoconf.0		man-sys-catman		.cat
 ./usr/share/man/cat4/x86/balloon.0		man-sys-catman		.cat
+./usr/share/man/cat4/x86/cons.0			man-sys-catman		.cat
+./usr/share/man/cat4/x86/console.0		man-sys-catman		.cat
 ./usr/share/man/cat4/x86/coretemp.0		man-sys-catman		.cat
 ./usr/share/man/cat4/x86/est.0			man-sys-catman		.cat
 ./usr/share/man/cat4/x86/fdc.0			man-sys-catman		.cat
@@ -4486,10 +4489,10 @@
 ./usr/share/man/html4/hythygtemp.html		man-sys-htmlman		html
 ./usr/share/man/html4/i386/PCIBIOS.html		man-sys-htmlman		html
 ./usr/share/man/html4/i386/apm.html		man-sys-htmlman		html
-./usr/share/man/html4/i386/autoconf.html	man-sys-htmlman		html
+./usr/share/man/html4/386/autoconf.html	man-obsolete		obsolete
 ./usr/share/man/html4/i386/cmos.html		man-sys-htmlman		html
-./usr/share/man/html4/i386/cons.html		man-sys-htmlman		html
-./usr/share/man/html4/i386/console.html		man-sys-htmlman		html
+./usr/share/man/html4/i386/cons.html		man-obsolete		obsolete
+./usr/share/man/html4/i386/console.html		man-obsolete		obsolete
 ./usr/share/man/html4/i386/ed.html		man-sys-htmlman		html
 ./usr/share/man/html4/i386/elanpar.html		man-sys-htmlman		html
 ./usr/share/man/html4/i386/elanpex.html		man-sys-htmlman		html
@@ -5231,7 +5234,10 @@
 ./usr/share/man/html4/x86/amdsmn.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/amdzentemp.html	man-sys-htmlman		html
 ./usr/share/man/html4/x86/apic.html		man-sys-htmlman		html
+./usr/share/man/html4/x86/autoconf.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/balloon.html		man-sys-htmlman		html
+./usr/share/man/html4/x86/cons.html		man-sys-htmlman		html
+./usr/share/man/html4/x86/console.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/coretemp.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/est.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/fdc.html		man-sys-htmlman		html
@@ -7501,12 +7507,12 @@
 ./usr/share/man/man4/hythygtemp.4		man-sys-man		.man
 ./usr/share/man/man4/i386/PCIBIOS.4		man-sys-man		.man
 ./usr/share/man/man4/i386/apm.4			man-sys-man		.man
-./usr/share/man/man4/i386/autoconf.4		man-sys-man		.man
+./usr/share/man/man4/i386/autoconf.4		man-obsolete		obsolete
 ./usr/share/man/man4/i386/busmouse.4		man-obsolete		obsolete
 ./usr/share/man/man4/i386/cmos.4		man-sys-man		.man
 ./usr/share/man/man4/i386/com.4			man-obsolete		obsolete
-./usr/share/man/man4/i386/cons.4		man-sys-man		.man
-./usr/share/man/man4/i386/console.4		man-sys-man		.man
+./usr/share/man/man4/i386/cons.4		man-obsolete		obsolete
+./usr/share/man/man4/i386/console.4		man-obsolete		obsolete
 ./usr/share/man/man4/i386/ed.4			man-sys-man		.man
 ./usr/share/man/man4/i386/elanpar.4		man-sys-man		.man
 ./usr/share/man/man4/i386/elanpex.4		man-sys-man		.man
@@ -8316,7 +8322,10 @@
 ./usr/share/man/man4/x86/amdsmn.4		man-sys-man		.man
 ./usr/share/man/man4/x86/amdzentemp.4		man-sys-man		.man
 ./usr/share/man/man4/x86/apic.4			man-sys-man		.man
+./usr/share/man/man4/x86/autoconf.4		man-sys-man		.man
 ./usr/share/man/man4/x86/balloon.4		man-sys-man		.man
+./usr/share/man/man4/x86/cons.4			man-sys-man		.man
+./usr/share/man/man4/x86/console.4		man-sys-man		.man
 ./usr/share/man/man4/x86/coretemp.4		man-sys-man		.man
 ./usr/share/man/man4/x86/est.4			man-sys-man		.man
 ./usr/share/man/man4/x86/fdc.4			man-sys-man		.man
