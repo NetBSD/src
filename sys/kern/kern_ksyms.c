@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.95 2021/06/03 01:00:15 riastradh Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.96 2021/06/03 01:00:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.95 2021/06/03 01:00:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.96 2021/06/03 01:00:24 riastradh Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_copy_symtab.h"
@@ -1089,8 +1089,6 @@ ksymsread(dev_t dev, struct uio *uio, int ioflag)
 	for (st = TAILQ_FIRST(&ksyms_symtabs);
 	     ;
 	     st = TAILQ_NEXT(st, sd_queue)) {
-		if (__predict_false(st->sd_gone))
-			continue;
 		if (uio->uio_resid == 0)
 			return 0;
 		if (uio->uio_offset <= st->sd_symsize + filepos) {
@@ -1108,13 +1106,11 @@ ksymsread(dev_t dev, struct uio *uio, int ioflag)
 	/*
 	 * Copy out the string table
 	 */
-	KASSERT(filepos <= sizeof(struct ksyms_hdr) +
+	KASSERT(filepos == sizeof(struct ksyms_hdr) +
 	    ksyms_hdr.kh_shdr[SYMTAB].sh_size);
 	for (st = TAILQ_FIRST(&ksyms_symtabs);
 	     ;
 	     st = TAILQ_NEXT(st, sd_queue)) {
-		if (__predict_false(st->sd_gone))
-			continue;
 		if (uio->uio_resid == 0)
 			return 0;
 		if (uio->uio_offset <= st->sd_strsize + filepos) {
