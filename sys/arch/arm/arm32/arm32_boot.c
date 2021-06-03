@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_boot.c,v 1.42 2021/06/01 16:55:07 skrll Exp $	*/
+/*	$NetBSD: arm32_boot.c,v 1.43 2021/06/03 07:06:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.42 2021/06/01 16:55:07 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.43 2021/06/03 07:06:22 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cputypes.h"
@@ -261,15 +261,21 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 			continue;
 		}
 		VPRINTF("\n");
+
+		/*
+		 * This assumes the bp list is sorted in ascending
+		 * order.
+		 */
 		paddr_t segend = end;
-		for (size_t j = 0; j < nbp; j++) {
+		for (size_t j = 0; j < nbp && start < end; j++) {
 			paddr_t bp_start = bp[j].bp_start;
 			paddr_t bp_end = bp_start + bp[j].bp_pages;
 
 			VPRINTF("   bp %2zu start %08lx  end %08lx\n",
 			    j, ptoa(bp_start), ptoa(bp_end));
+
 			KASSERT(bp_start < bp_end);
-			if (start > bp_end || segend < bp_start)
+			if (start >= bp_end || segend < bp_start)
 				continue;
 
 			if (start < bp_start)
@@ -281,11 +287,13 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 				}
 				vm_freelist = bp[j].bp_freelist;
 
-				uvm_page_physload(start, segend, start, segend,
-				    vm_freelist);
 				VPRINTF("         start %08lx  end %08lx"
 				    "... loading in freelist %d\n", ptoa(start),
 				    ptoa(segend), vm_freelist);
+
+				uvm_page_physload(start, segend, start, segend,
+				    vm_freelist);
+
 				start = segend;
 				segend = end;
 			}
