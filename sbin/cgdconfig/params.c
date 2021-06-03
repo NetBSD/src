@@ -1,4 +1,4 @@
-/* $NetBSD: params.c,v 1.30 2018/12/30 12:05:48 mlelstv Exp $ */
+/* $NetBSD: params.c,v 1.31 2021/06/03 15:40:27 prlw1 Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: params.c,v 1.30 2018/12/30 12:05:48 mlelstv Exp $");
+__RCSID("$NetBSD: params.c,v 1.31 2021/06/03 15:40:27 prlw1 Exp $");
 #endif
 
 #include <sys/types.h>
@@ -69,6 +69,7 @@ static struct crypto_defaults {
 	char	alg[32];
 	int	keylen;
 } crypto_defaults[] = {
+	{ "adiantum",		256 },
 	{ "aes-cbc",		128 },
 	{ "aes-xts",		256 },
 	{ "3des-cbc",		192 },
