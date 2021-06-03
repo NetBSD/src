@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.13 2020/02/14 09:35:52 riastradh Exp $
+# $NetBSD: Makefile,v 1.14 2021/06/03 15:59:04 nia Exp $
 
 .include "../Makefile.inc"
 .include "Makefile.inc"
@@ -24,6 +24,9 @@ SRCS+=	drm_sysctl.c
 SRCS+=	drmfb.c
 
 # XXX ttm
+
+# Code imported from Linux - expects signed overflow to be OK.
+COPTS+=	-fwrapv
 
 CPPFLAGS+=	-I.
 

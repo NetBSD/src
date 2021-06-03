@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.17 2021/04/13 04:59:00 mrg Exp $
+# $NetBSD: Makefile,v 1.18 2021/06/03 15:59:04 nia Exp $
 
 .include "../Makefile.inc"
 .include "../drmkms/Makefile.inc"
@@ -26,6 +26,9 @@ CPPFLAGS+=	-DNVGA=1
 
 CWARNFLAGS+=	-Wno-shadow
 CWARNFLAGS+=	-Wno-pointer-arith
+
+# Code imported from Linux - expects signed overflow to be OK.
+COPTS+=		-fwrapv
 
 COPTS.i915_drv.c+=	${${ACTIVE_CC} == "gcc":? -Wno-override-init :}
 COPTS.i915_drv.c+=	${${ACTIVE_CC} == "clang":? -Wno-initializer-overrides :}
