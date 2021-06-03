@@ -1,4 +1,4 @@
-/*	$NetBSD: ssl.c,v 1.9 2021/01/06 04:43:14 lukem Exp $	*/
+/*	$NetBSD: ssl.c,v 1.10 2021/06/03 10:23:33 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
@@ -34,13 +34,17 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ssl.c,v 1.9 2021/01/06 04:43:14 lukem Exp $");
+__RCSID("$NetBSD: ssl.c,v 1.10 2021/06/03 10:23:33 lukem Exp $");
 #endif
 
+#include <errno.h>
+#include <fcntl.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <time.h>
 #include <unistd.h>
-#include <string.h>
-#include <fcntl.h>
 
 #include <sys/param.h>
 #include <sys/select.h>
@@ -48,11 +52,14 @@ __RCSID("$NetBSD: ssl.c,v 1.9 2021/01/06 04:43:14 lukem Exp $");
 
 #include <netinet/tcp.h>
 #include <netinet/in.h>
+
+#ifdef WITH_SSL
 #include <openssl/crypto.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#endif
 
 #include "ssl.h"
 
@@ -75,7 +82,9 @@ struct fetch_connect {
 	int 			 issock;
 	int			 iserr;
 	int			 iseof;
+#ifdef WITH_SSL
 	SSL			*ssl;		/* SSL handle */
+#endif
 };
 
 /*
@@ -121,9 +130,11 @@ fetch_writev(struct fetch_connect *conn, struct iovec *iov, int iovcnt)
 			}
 		}
 		errno = 0;
+#ifdef WITH_SSL
 		if (conn->ssl != NULL)
 			len = SSL_write(conn->ssl, iov->iov_base, iov->iov_len);
 		else
+#endif
 			len = writev(fd, iov, iovcnt);
 		if (len == 0) {
 			/* we consider a short write a failure */
@@ -275,7 +286,9 @@ fetch_close(struct fetch_connect *conn)
 		return 0;
 
 	fetch_flush(conn);
+#ifdef WITH_SSL
 	SSL_free(conn->ssl);
+#endif
 	close(conn->sd);
 	free(conn->cache.buf);
 	free(conn->buf);
@@ -287,6 +300,7 @@ fetch_close(struct fetch_connect *conn)
 #define FETCH_READ_WAIT		-2
 #define FETCH_READ_ERROR	-1
 
+#ifdef WITH_SSL
 static ssize_t
 fetch_ssl_read(SSL *ssl, void *buf, size_t len)
 {
@@ -305,6 +319,7 @@ fetch_ssl_read(SSL *ssl, void *buf, size_t len)
 		return FETCH_READ_ERROR;
 	}
 }
+#endif /* WITH_SSL */
 
 static ssize_t
 fetch_nonssl_read(int sd, void *buf, size_t len)
@@ -433,9 +448,11 @@ fetch_read(void *ptr, size_t size, size_t nmemb, struct fetch_connect *conn)
 		 * In the non-SSL case, it may improve performance (very
 		 * slightly) when reading small amounts of data.
 		 */
+#ifdef WITH_SSL
 		if (conn->ssl != NULL)
 			rlen = fetch_ssl_read(conn->ssl, buf, len);
 		else
+#endif
 			rlen = fetch_nonssl_read(conn->sd, buf, len);
 		switch (rlen) {
 		case 0:
@@ -564,6 +581,7 @@ fetch_getline(struct fetch_connect *conn, char *buf, size_t buflen,
 	return len;
 }
 
+#ifdef WITH_SSL
 void *
 fetch_start_ssl(int sock, const char *servername)
 {
@@ -624,10 +642,13 @@ fetch_start_ssl(int sock, const char *servername)
 
 	return ssl;
 }
+#endif /* WITH_SSL */
 
 
 void
 fetch_set_ssl(struct fetch_connect *conn, void *ssl)
 {
+#ifdef WITH_SSL
 	conn->ssl = ssl;
+#endif
 }
