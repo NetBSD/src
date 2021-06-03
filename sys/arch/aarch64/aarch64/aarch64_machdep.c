@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.60 2021/03/25 07:31:56 skrll Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.61 2021/06/03 07:02:59 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.60 2021/03/25 07:31:56 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.61 2021/06/03 07:02:59 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
@@ -391,12 +391,15 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 		 * order.
 		 */
 		paddr_t segend = end;
-		for (size_t j = 0; j < nbp; j++) {
+		for (size_t j = 0; j < nbp && start < end; j++) {
 			paddr_t bp_start = bp[j].bp_start;
 			paddr_t bp_end = bp_start + bp[j].bp_pages;
 
+			VPRINTF("   bp %2zu start %08lx  end %08lx\n",
+			    j, ptoa(bp_start), ptoa(bp_end));
+
 			KASSERT(bp_start < bp_end);
-			if (start > bp_end || segend < bp_start)
+			if (start >= bp_end || segend < bp_start)
 				continue;
 
 			if (start < bp_start)
@@ -414,6 +417,7 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 
 				uvm_page_physload(start, segend, start, segend,
 				    vm_freelist);
+
 				memsize_total += ptoa(segend - start);
 				start = segend;
 				segend = end;
