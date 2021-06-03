@@ -1,11 +1,11 @@
-.\"	$NetBSD: console.4,v 1.12 2011/04/05 08:24:43 wiz Exp $
+.\"	$NetBSD: console.4,v 1.1 2021/06/03 07:41:26 wiz Exp $
 .\"
 .Dd September 6, 2006
-.Dt CONS 4 i386
+.Dt CONS 4 x86
 .Os
 .Sh NAME
 .Nm console
-.Nd i386 console interface
+.Nd x86 console interface
 .Sh SYNOPSIS
 .Cd options CONSDEVNAME=string
 .Cd options CONADDR=integer
@@ -87,7 +87,7 @@ value, see
 .Xr termios 4
 for details.
 Default is
-.Li (CREAD | CS8 | HUPCL)
+.Li ( CREAD | CS8 | HUPCL )
 (8N1).
 This option takes always effect, because mode settings are not passed
 by the bootloader.
@@ -95,15 +95,13 @@ by the bootloader.
 .Sh FILES
 .Bl -tag -width /dev/console
 .It Pa /dev/console
-.It Pa /sys/arch/i386/conf/CONFIG
 .El
 .Sh EXAMPLES
 .Cd options CONSDEVNAME=\&"\e"com\e"\&",CONADDR=0x2f8,CONSPEED=57600
 .Sh SEE ALSO
 .Xr config 1 ,
 .Xr tty 4 ,
-.Xr boot 8 ,
-.Xr boot_console 8
+.Xr boot 8
 .Sh BUGS
 The console device is chosen early in system startup regardless
 if the specified driver / device is present in the system configuration file.
