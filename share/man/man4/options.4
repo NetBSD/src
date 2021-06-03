@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.518 2021/03/14 02:56:07 rin Exp $
+.\"	$NetBSD: options.4,v 1.519 2021/06/03 20:18:06 riastradh Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -2203,6 +2203,16 @@ for details.
 .It Cd options VMSWAP
 Enable paging device/file support.
 This option is on by default.
+.It Cd options VMSWAP_DEFAULT_PLAINTEXT
+Store swap in plaintext, not encrypted, which may expose secrets if the
+underlying nonvolatile medium is disclosed.
+This option is off by default; it is available only for extremely slow
+machines where the performance impact of swapping early at boot
+outweighs the security risks.
+Swap encryption can still be turned on dynamically with the
+.Em vm.swap_encrypt
+.Xr sysctl 7
+knob.
 .It Cd options PDPOLICY_CLOCKPRO
 Use CLOCK-Pro, an alternative page replace policy.
 .El

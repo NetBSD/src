@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.204 2021/05/23 00:36:36 mrg Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.205 2021/06/03 20:18:06 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,11 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.204 2021/05/23 00:36:36 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.205 2021/06/03 20:18:06 riastradh Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
+#include "opt_vmswap.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -210,7 +211,11 @@ static struct workqueue *sw_reg_workqueue;
 
 /* tuneables */
 u_int uvm_swapisfull_factor = 99;
+#if VMSWAP_DEFAULT_PLAINTEXT
 bool uvm_swap_encrypt = false;
+#else
+bool uvm_swap_encrypt = true;
+#endif
 
 /*
  * prototypes

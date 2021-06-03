@@ -1,4 +1,4 @@
-#	$NetBSD: files.uvm,v 1.36 2020/08/04 06:10:27 skrll Exp $
+#	$NetBSD: files.uvm,v 1.37 2021/06/03 20:18:06 riastradh Exp $
 
 #
 # UVM options
@@ -8,6 +8,7 @@ defflag opt_uvmhist.h		UVMHIST_PRINT: KERNHIST_PRINT
 defparam opt_uvmhist.h		UVMHIST_MAPHIST_SIZE UVMHIST_PDHIST_SIZE
 defflag opt_uvm.h		UVMMAP_COUNTERS
 defparam opt_uvm.h		UVM_RESERVED_PAGES_PER_CPU
+defflag opt_vmswap.h		VMSWAP_DEFAULT_PLAINTEXT
 defflag opt_vmswap.h		VMSWAP : aes
 defflag opt_readahead.h		READAHEAD_STATS
 defflag opt_ubc.h		UBC_STATS
