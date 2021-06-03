@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.96 2021/06/03 01:00:24 riastradh Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.97 2021/06/03 09:22:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.96 2021/06/03 01:00:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.97 2021/06/03 09:22:47 riastradh Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_copy_symtab.h"
@@ -112,7 +112,7 @@ static uint32_t *ksyms_nmap = NULL;
 #endif
 
 static int ksyms_maxlen;
-static bool ksyms_isopen;
+static uint64_t ksyms_opencnt;
 static struct ksyms_symtab *ksyms_last_snapshot;
 static bool ksyms_initted;
 static bool ksyms_loaded;
@@ -791,7 +791,7 @@ ksyms_modunload(const char *name)
 			continue;
 		st->sd_gone = true;
 		ksyms_sizes_calc();
-		if (!ksyms_isopen) {
+		if (ksyms_opencnt == 0) {
 			/*
 			 * Ensure ddb never witnesses an inconsistent
 			 * state of the queue, unless memory is so
@@ -1004,14 +1004,12 @@ ksymsopen(dev_t dev, int oflags, int devtype, struct lwp *l)
 		return ENXIO;
 
 	/*
-	 * Create a "snapshot" of the kernel symbol table.  Setting
-	 * ksyms_isopen will prevent symbol tables from being freed.
+	 * Create a "snapshot" of the kernel symbol table.  Bumping
+	 * ksyms_opencnt will prevent symbol tables from being freed.
 	 */
 	mutex_enter(&ksyms_lock);
-	if (ksyms_isopen) {
-		mutex_exit(&ksyms_lock);
-		return EBUSY;
-	}
+	if (ksyms_opencnt++)
+		goto out;
 	ksyms_hdr.kh_shdr[SYMTAB].sh_size = ksyms_symsz;
 	ksyms_hdr.kh_shdr[SYMTAB].sh_info = ksyms_symsz / sizeof(Elf_Sym);
 	ksyms_hdr.kh_shdr[STRTAB].sh_offset = ksyms_symsz +
@@ -1020,9 +1018,8 @@ ksymsopen(dev_t dev, int oflags, int devtype, struct lwp *l)
 	ksyms_hdr.kh_shdr[SHCTF].sh_offset = ksyms_strsz +
 	    ksyms_hdr.kh_shdr[STRTAB].sh_offset;
 	ksyms_hdr.kh_shdr[SHCTF].sh_size = ksyms_ctfsz;
-	ksyms_isopen = true;
 	ksyms_last_snapshot = TAILQ_LAST(&ksyms_symtabs, ksyms_symtab_queue);
-	mutex_exit(&ksyms_lock);
+out:	mutex_exit(&ksyms_lock);
 
 	return 0;
 }
@@ -1036,7 +1033,8 @@ ksymsclose(dev_t dev, int oflags, int devtype, struct lwp *l)
 
 	/* Discard references to symbol tables. */
 	mutex_enter(&ksyms_lock);
-	ksyms_isopen = false;
+	if (--ksyms_opencnt)
+		goto out;
 	ksyms_last_snapshot = NULL;
 	TAILQ_FOREACH_SAFE(st, &ksyms_symtabs, sd_queue, next) {
 		if (st->sd_gone) {
@@ -1053,7 +1051,7 @@ ksymsclose(dev_t dev, int oflags, int devtype, struct lwp *l)
 	}
 	if (!TAILQ_EMPTY(&to_free))
 		ksyms_sizes_calc();
-	mutex_exit(&ksyms_lock);
+out:	mutex_exit(&ksyms_lock);
 
 	TAILQ_FOREACH_SAFE(st, &to_free, sd_queue, next) {
 		kmem_free(st->sd_nmap, st->sd_nmapsize * sizeof(uint32_t));
