@@ -8,7 +8,7 @@ INCLUDE_PATH="${BASEDIR}/tests/"
 export INCLUDE_PATH
 #
 CURSES_TRACE_FILE="/tmp/ctrace"
-SLAVE="${BASEDIR}/slave/slave"
+SLAVE="${BASEDIR}/slave"
 
 usage() {
 	echo "Set up the environment to run the test frame.  Option flags:"
@@ -31,10 +31,11 @@ usage() {
 
 # This is needed for getwin/putwin test case and /tmp can be used for any file
 # related tests.
-rm -rf /tmp/*
+#rm -rf /tmp/*
 
 #
-ARGS="-T ${BASEDIR} -I ${INCLUDE_PATH} -C ${CHECK_PATH}"
+#ARGS="-T ${BASEDIR} -I ${INCLUDE_PATH} -C ${CHECK_PATH}"
+ARGS="-T ${BASEDIR} -C ${CHECK_PATH}"
 #
 while getopts cf:L:s:vg opt
 do
@@ -90,4 +91,4 @@ then
 	exit 1
 fi
 #
-exec ${BASEDIR}/director/director ${ARGS} -s ${SLAVE} "${INCLUDE_PATH}/$1"
+exec ${BASEDIR}/director ${ARGS} -s ${SLAVE} "${INCLUDE_PATH}/$1"
