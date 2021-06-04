@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.95 2021/06/04 08:17:53 wiz Exp $	*/
+/*	$NetBSD: ps.c,v 1.96 2021/06/04 22:39:41 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.95 2021/06/04 08:17:53 wiz Exp $");
+__RCSID("$NetBSD: ps.c,v 1.96 2021/06/04 22:39:41 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -257,20 +257,13 @@ main(int argc, char *argv[])
 		case 'G':
 			if (*optarg != '\0') {
 				struct group *gr;
-				char *ep;
 				
 				what = KERN_PROC_GID;
 				gr = getgrnam(optarg);
 				if (gr == NULL) {
-					errno = 0;
-					flag = strtoul(optarg, &ep, 10);
-					if (errno)
-						err(1, "%s", optarg);
-					if (*ep != '\0')
-						errx(1, "%s: illegal group",
-							optarg);
-					} else
-						flag = gr->gr_gid;
+					flag = parsenum(optarg, "group id");
+				} else
+					flag = gr->gr_gid;
 			}
 			break;
 
@@ -359,7 +352,7 @@ main(int argc, char *argv[])
 				what = KERN_PROC_UID;
 				pw = getpwnam(optarg);
 				if (pw == NULL) {
-					flag = parsenum(optarg, "user name");
+					flag = parsenum(optarg, "user id");
 				} else
 					flag = pw->pw_uid;
 			}
