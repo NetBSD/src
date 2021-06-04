@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_chfs.c,v 1.2 2013/09/13 21:03:29 joerg Exp $	*/
+/*	$NetBSD: mount_chfs.c,v 1.3 2021/06/04 22:41:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -116,12 +116,11 @@ mount_chfs(int argc, char *argv[])
 	struct ufs_args args;
 	char canon_dev[MAXPATHLEN], fs_name[MAXPATHLEN];
 	int mntflags;
-	
 
 	mount_chfs_parseargs(argc, argv, &args, &mntflags,
 	    canon_dev, fs_name);
 
-	if (mount(MOUNT_CHEWIEFS, fs_name, mntflags, &args, sizeof args) == -1) {
+	if (mount(MOUNT_CHFS, fs_name, mntflags, &args, sizeof args) == -1) {
 		err(EXIT_FAILURE, "chfs on %s", fs_name);
 	}
 
