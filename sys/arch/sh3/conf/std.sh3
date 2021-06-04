@@ -1,4 +1,4 @@
-# $NetBSD: std.sh3,v 1.6 2008/02/02 03:06:04 uwe Exp $
+# $NetBSD: std.sh3,v 1.7 2021/06/04 10:46:11 martin Exp $
 #
 # standard, required NetBSD/sh3 'options'
 
@@ -6,3 +6,7 @@ options 	EXEC_ELF32	# exec ELF binaries
 options 	EXEC_SCRIPT	# exec #! scripts
 
 options 	CPU_IN_CKSUM	# use assembler version of cpu_in_cksum()
+
+options		VMSWAP_DEFAULT_PLAINTEXT	# do not encrypt swap by
+				# default (slow cpu)
+

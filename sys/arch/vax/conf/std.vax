@@ -1,4 +1,4 @@
-#	$NetBSD: std.vax,v 1.16 2005/12/11 12:19:34 christos Exp $
+#	$NetBSD: std.vax,v 1.17 2021/06/04 10:46:11 martin Exp $
 #
 # Std vaxfiles
 #
@@ -8,3 +8,7 @@ include		"conf/std"	# MI standard options
 options 	EXEC_AOUT	# execve(2) support for a.out binaries
 options 	EXEC_SCRIPT	# execve(2) support for scripts
 options 	EXEC_ELF32	# execve(2) support for ELF32 binaries
+
+options		VMSWAP_DEFAULT_PLAINTEXT	# do not encrypt swap by
+				# default (slow cpu)
+
