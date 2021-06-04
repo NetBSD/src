@@ -1,4 +1,4 @@
-.\"	$NetBSD: afterboot.8,v 1.76 2021/01/10 23:24:26 riastradh Exp $
+.\"	$NetBSD: afterboot.8,v 1.77 2021/06/04 11:33:18 nia Exp $
 .\"	$OpenBSD: afterboot.8,v 1.72 2002/02/22 02:02:33 miod Exp $
 .\"
 .\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
@@ -59,7 +59,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 5, 2020
+.Dd June 4, 2021
 .Dt AFTERBOOT 8
 .Os
 .Sh NAME
@@ -451,7 +451,7 @@ Then, to make the system use it, put the following in
 nameserver 127.0.0.1
 .Ed
 .Ss Wireless networking
-To configure the system to connect to a wireless network with a password
+To configure the system to connect to a Wi-Fi network with a password
 using WPA:
 .Bd -literal -offset indent
 .Ic wpa_passphrase networkname password >> /etc/wpa_supplicant.conf
@@ -939,21 +939,22 @@ The
 .Nx
 packages collection, pkgsrc, includes a large set of third-party software.
 A lot of it is available as binary packages that you can download from
-.Lk https://cdn.netbsd.org/pub/pkgsrc/packages/NetBSD/
+.Lk https://cdn.NetBSD.org/pub/pkgsrc/packages/NetBSD/
 or a mirror.
 .Pp
 For most users, using pkgin to manage binary packages is recommended.
 .Pp
 To install pkgin, if it was not done by the installer:
 .Bd -literal -offset indent
-.Ic export PKG_PATH=https://cdn.netbsd.org/pub/pkgsrc/packages/NetBSD/$(uname -p)/$(uname -r | cut -d_ -f1)/All
+.Ic PKG_PATH=https://cdn.NetBSD.org/pub/pkgsrc/packages/NetBSD/[...]
+.Ic export PKG_PATH
 .Ic pkg_add pkgin
 .Ic pkgin update
 .Ic pkgin install bash mpg123 fluxbox ...
 .Ed
 .Pp
 See
-.Lk https://www.NetBSD.org/docs/pkgsrc/
+.Lk https://www.pkgsrc.org/
 and
 .Pa pkgsrc/doc/pkgsrc.txt
 for more details.
