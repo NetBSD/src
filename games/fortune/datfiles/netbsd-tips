@@ -159,3 +159,6 @@ on its extension.  For example, to extract a zip file:
 You can use progress(1) to monitor the progress of data in a pipe:
 
 	zcat example.tar.gz | progress tar xf -
+%
+Press CTRL+T to send SIGINFO and see the current status of the
+command running in the current terminal.
