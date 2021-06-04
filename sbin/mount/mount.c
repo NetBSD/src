@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.103 2020/10/18 10:57:30 mlelstv Exp $	*/
+/*	$NetBSD: mount.c,v 1.104 2021/06/04 11:55:45 simonb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.103 2020/10/18 10:57:30 mlelstv Exp $");
+__RCSID("$NetBSD: mount.c,v 1.104 2021/06/04 11:55:45 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -294,11 +294,6 @@ out:
 			err(EXIT_FAILURE, "%s", buf);
 		if (vfslist == NULL) {
 			if (strpbrk(argv[0], ":@") != NULL) {
-				fprintf(stderr, "WARNING: autoselecting nfs "
-				    "based on : or @ in the device name is "
-				    "deprecated!\n"
-				    "WARNING: This behaviour will be removed "
-				    "in a future release\n");
 				vfstype = "nfs";
 			} else {
 				vfstype = getfslab(mntfromname);
