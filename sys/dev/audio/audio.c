@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.102 2021/06/01 21:27:36 riastradh Exp $	*/
+/*	$NetBSD: audio.c,v 1.103 2021/06/04 08:57:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.102 2021/06/01 21:27:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.103 2021/06/04 08:57:05 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -1747,20 +1747,25 @@ audioclose(struct file *fp)
 	bound = curlwp_bind();
 	sc = audio_sc_acquire_fromfile(file, &sc_ref);
 	if (sc) {
-		mutex_enter(sc->sc_lock);
-		mutex_enter(sc->sc_intr_lock);
-		SLIST_REMOVE(&sc->sc_files, file, audio_file, entry);
-		mutex_exit(sc->sc_intr_lock);
-		mutex_exit(sc->sc_lock);
 		switch (AUDIODEV(dev)) {
 		case SOUND_DEVICE:
 		case AUDIO_DEVICE:
 			error = audio_close(sc, file);
 			break;
 		case AUDIOCTL_DEVICE:
+			mutex_enter(sc->sc_lock);
+			mutex_enter(sc->sc_intr_lock);
+			SLIST_REMOVE(&sc->sc_files, file, audio_file, entry);
+			mutex_exit(sc->sc_intr_lock);
+			mutex_exit(sc->sc_lock);
 			error = 0;
 			break;
 		case MIXER_DEVICE:
+			mutex_enter(sc->sc_lock);
+			mutex_enter(sc->sc_intr_lock);
+			SLIST_REMOVE(&sc->sc_files, file, audio_file, entry);
+			mutex_exit(sc->sc_intr_lock);
+			mutex_exit(sc->sc_lock);
 			error = mixer_close(sc, file);
 			break;
 		default:
@@ -2568,6 +2573,12 @@ audio_close(struct audio_softc *sc, audio_file_t *file)
 		audio_track_drain(sc, file->ptrack);
 		mutex_exit(sc->sc_lock);
 	}
+
+	mutex_enter(sc->sc_lock);
+	mutex_enter(sc->sc_intr_lock);
+	SLIST_REMOVE(&sc->sc_files, file, audio_file, entry);
+	mutex_exit(sc->sc_intr_lock);
+	mutex_exit(sc->sc_lock);
 
 	error = audio_exlock_enter(sc);
 	if (error) {
