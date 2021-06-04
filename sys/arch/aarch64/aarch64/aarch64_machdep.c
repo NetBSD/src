@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.28.4.3 2020/02/12 20:10:09 martin Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.28.4.4 2021/06/04 14:00:17 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.28.4.3 2020/02/12 20:10:09 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.28.4.4 2021/06/04 14:00:17 martin Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -275,7 +275,7 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 	vaddr_t kernstart, kernend;
 	vaddr_t kernstart_l2 __unused, kernend_l2;	/* L2 table 2MB aligned */
 	vaddr_t kernelvmstart;
-	int i;
+	size_t i;
 
 	cputype = cpu_idnum();	/* for compatible arm */
 
@@ -398,17 +398,24 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 		end = start + bootconfig.dram[i].pages;
 
 		int vm_freelist = VM_FREELIST_DEFAULT;
+
+		VPRINTF("block %2zu start %08lx  end %08lx\n", i, ptoa(start),
+		    ptoa(end));
+
 		/*
 		 * This assumes the bp list is sorted in ascending
 		 * order.
 		 */
 		paddr_t segend = end;
-		for (size_t j = 0; j < nbp; j++ /*, start = segend, segend = end */) {
+		for (size_t j = 0; j < nbp && start < end; j++) {
 			paddr_t bp_start = bp[j].bp_start;
 			paddr_t bp_end = bp_start + bp[j].bp_pages;
 
+			VPRINTF("   bp %2zu start %08lx  end %08lx\n",
+			    j, ptoa(bp_start), ptoa(bp_end));
+
 			KASSERT(bp_start < bp_end);
-			if (start > bp_end || segend < bp_start)
+			if (start >= bp_end || segend < bp_start)
 				continue;
 
 			if (start < bp_start)
@@ -420,8 +427,13 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 				}
 				vm_freelist = bp[j].bp_freelist;
 
+				VPRINTF("         start %08lx  end %08lx"
+				    "... loading in freelist %d\n", ptoa(start),
+				    ptoa(segend), vm_freelist);
+
 				uvm_page_physload(start, segend, start, segend,
 				    vm_freelist);
+
 				memsize_total += ptoa(segend - start);
 				start = segend;
 				segend = end;
