@@ -1,4 +1,4 @@
-/*	$NetBSD: rdvar.h,v 1.23 2015/04/14 20:32:35 riastradh Exp $	*/
+/*	$NetBSD: rdvar.h,v 1.24 2021/06/04 17:12:08 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -87,16 +87,16 @@ struct	rd_softc {
 /* sc_flags values */
 #define	RDF_ALIVE	0x01
 #define	RDF_SEEK	0x02
-#define RDF_SWAIT	0x04
-#define RDF_OPENING	0x08
-#define RDF_CLOSING	0x10
-#define RDF_WANTED	0x20
-#define RDF_WLABEL	0x40
+#define	RDF_SWAIT	0x04
+#define	RDF_OPENING	0x08
+#define	RDF_CLOSING	0x10
+#define	RDF_WANTED	0x20
+#define	RDF_WLABEL	0x40
 
 #define	rdunit(x)	((int)(minor(x) >> 3))
-#define rdpart(x)	((int)(minor(x) & 0x7))
+#define	rdpart(x)	((int)(minor(x) & 0x7))
 #define	rdpunit(x)	((x) & 7)
-#define rdlabdev(d)	(dev_t)(((int)(d)&~7)|2)	/* rd?c */
+#define	rdlabdev(d)	(dev_t)(((int)(d)&~7)|2)	/* rd?c */
 
 #define	RDRETRY		5
-#define RDWAITC		1	/* min time for timeout in seconds */
+#define	RDWAITC		1	/* min time for timeout in seconds */
