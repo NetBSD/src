@@ -85,6 +85,7 @@
 #include <sys/socket.h>
 #include <sys/queue.h>
 #include <sys/mutex.h>
+#include <sys/hook.h>
 
 #include <net/dlt.h>
 #include <net/pfil.h>
@@ -433,6 +434,7 @@ typedef struct ifnet {
 	/* XXX should be protocol independent */
 	LIST_HEAD(, in6_multi)
 			if_multiaddrs;	/* 6: */
+	khook_list_t	*if_linkstate_hooks;	/* :: */
 #endif
 } ifnet_t;
 
@@ -1243,6 +1245,11 @@ void	loopattach(int);
 void	loopinit(void);
 int	looutput(struct ifnet *,
 	   struct mbuf *, const struct sockaddr *, const struct rtentry *);
+
+void *	if_linkstate_change_establish(struct ifnet *,
+	    void (*)(void *), void *);
+void	if_linkstate_change_disestablish(struct ifnet *,
+	    void *, kmutex_t *);
 
 /*
  * These are exported because they're an easy way to tell if
