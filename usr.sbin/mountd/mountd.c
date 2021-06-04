@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.135 2021/06/04 10:46:01 hannken Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.136 2021/06/04 10:46:57 hannken Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.135 2021/06/04 10:46:01 hannken Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.136 2021/06/04 10:46:57 hannken Exp $");
 #endif
 #endif				/* not lint */
 
@@ -235,6 +235,8 @@ static struct uucred def_anon = {
 	0,
 	{ 0 }
 };
+static struct mountd_exports_list *mel_tab;
+static int mel_tab_len;
 
 int      opt_flags;
 static int	have_v6 = 1;
@@ -1207,6 +1209,18 @@ nextline:
 }
 
 /*
+ * Compare two export lists by path.
+ */
+static int
+mel_compare(const void *a, const void *b)
+{
+	const struct mountd_exports_list *mela = a;
+	const struct mountd_exports_list *melb = b;
+
+	return strcmp(mela->mel_path, melb->mel_path);
+}
+
+/*
  * Get the export list
  */
 /* ARGSUSED */
@@ -1216,7 +1230,7 @@ get_exportlist(int n)
 	struct exportlist *ep, *ep2;
 	struct grouplist *grp, *tgrp;
 	struct statvfs *fsp;
-	int num, i;
+	int i, j;
 	FILE *exp_file;
 
 
@@ -1243,20 +1257,14 @@ get_exportlist(int n)
 	 * And delete exports that are in the kernel for all local
 	 * file systems.
 	 */
-	num = getmntinfo(&fsp, MNT_NOWAIT);
-	for (i = 0; i < num; i++) {
-		struct mountd_exports_list mel;
-
-		/* Delete all entries from the export list. */
-		mel.mel_path = fsp->f_mntonname;
-		mel.mel_nexports = 0;
-		if (nfssvc(NFSSVC_SETEXPORTSLIST, &mel) == -1 &&
-		    errno != EOPNOTSUPP)
-			syslog(LOG_ERR, "Can't delete exports for %s (%m)",
-			    fsp->f_mntonname);
-
-		fsp++;
+	mel_tab_len = getmntinfo(&fsp, MNT_NOWAIT);
+	mel_tab = ecalloc(mel_tab_len, sizeof(*mel_tab));
+	for (i = 0; i < mel_tab_len; i++) {
+		mel_tab[i].mel_path = estrdup(fsp[i].f_mntonname);
+		mel_tab[i].mel_nexports = 0;
+		mel_tab[i].mel_exports = NULL;
 	}
+	qsort(mel_tab, mel_tab_len, sizeof(mel_tab[0]), mel_compare);
 
 	/*
 	 * Read in the exports file and build the list, calling
@@ -1278,6 +1286,30 @@ get_exportlist(int n)
 
 		(void)fclose(exp_file);
 	}
+
+	for (i = 0; i < mel_tab_len; i++) {
+		struct mountd_exports_list *mel = &mel_tab[i];
+
+		if (nfssvc(NFSSVC_REPLACEEXPORTSLIST, mel) == -1 &&
+		    (mel->mel_nexports > 0 || errno != EOPNOTSUPP))
+			syslog(LOG_ERR, "Can't update exports for %s (%m)",
+			    mel_tab[i].mel_path);
+		for (j = 0; j < (int)mel_tab->mel_nexports; j++) {
+			struct export_args *export = &mel->mel_exports[j];
+
+			if (export->ex_indexfile)
+				free(export->ex_indexfile);
+			if (export->ex_addr)
+				free(export->ex_addr);
+			if (export->ex_mask)
+				free(export->ex_mask);
+		}
+		if (mel->mel_nexports > 0)
+			free(mel->mel_exports);
+		free(__UNCONST(mel->mel_path));
+	}
+	free(mel_tab);
+	mel_tab_len = 0;
 }
 
 /*
@@ -1923,30 +1955,38 @@ add_export_arg(const char *path, int exflags, struct uucred *anoncrp,
     struct sockaddr *addrp, int addrlen, struct sockaddr *maskp, int masklen,
     char *indexfile)
 {
-	struct mountd_exports_list mel;
-	struct export_args export;
-	int error;
+	const struct mountd_exports_list mel_key = { .mel_path = path };
+	struct mountd_exports_list *mel;
+	struct export_args *export;
 
 	if (addrp != NULL && addrp->sa_family == AF_INET6 && have_v6 == 0)
 		return 0;
 
-	mel.mel_path = path;
-	mel.mel_nexports = 1;
-	mel.mel_exports = &export;
-
-	export.ex_flags = exflags;
-	export.ex_anon = *anoncrp;
-	export.ex_indexfile = indexfile;
-	export.ex_addr = addrp;
-	export.ex_addrlen = addrlen;
-	export.ex_mask = maskp;
-	export.ex_masklen = masklen;
-
-	error = nfssvc(NFSSVC_SETEXPORTSLIST, &mel);
-
-	if (error) {
-		syslog(LOG_ERR, "Can't change attributes for %s: %m", path);
+	mel = bsearch(&mel_key, mel_tab, mel_tab_len, sizeof(mel_tab[0]),
+	    mel_compare);
+	if (mel == NULL) {
+		syslog(LOG_ERR, "Can't change attributes for %s: not found",
+		    path);
 		return 1;
+	}
+	ereallocarr(&mel->mel_exports, mel->mel_nexports + 1,
+	    sizeof(*mel->mel_exports));
+	export = &mel->mel_exports[mel->mel_nexports++];
+	memset(export, 0, sizeof(*export));
+
+	export->ex_flags = exflags;
+	export->ex_anon = *anoncrp;
+	if (indexfile)
+		export->ex_indexfile = estrdup(indexfile);
+	if (addrlen > 0) {
+		export->ex_addr = emalloc(addrlen);
+		export->ex_addrlen = addrlen;
+		memcpy(export->ex_addr, addrp, addrlen);
+	}
+	if (masklen > 0) {
+		export->ex_mask = emalloc(masklen);
+		export->ex_masklen = masklen;
+		memcpy(export->ex_mask, maskp, masklen);
 	}
 
 	return 0;
