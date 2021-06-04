@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.94 2021/06/04 06:28:42 cjep Exp $	*/
+/*	$NetBSD: ps.c,v 1.95 2021/06/04 08:17:53 wiz Exp $	*/
 
 /*
  * Copyright (c) 2000-2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.94 2021/06/04 06:28:42 cjep Exp $");
+__RCSID("$NetBSD: ps.c,v 1.95 2021/06/04 08:17:53 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -965,8 +965,8 @@ usage(void)
 
 	(void)fprintf(stderr,
 	    "usage:\t%s\n\t   %s\n\t%s\n",
-	    "ps [-AaCcdehjlmrSsTuvwx] [-k key] [-M core] [-N system] [-O fmt]",
-	    "[-o fmt] [-p pid] [-t tty] [-U user] [-G group] [-W swap]",
+	    "ps [-AaCcdehjlmrSsTuvwx] [-G group] [-k key] [-M core] [-N system]",
+	    "[-O fmt] [-o fmt] [-p pid] [-t tty] [-U user] [-W swap]",
 	    "ps -L");
 	exit(1);
 	/* NOTREACHED */
