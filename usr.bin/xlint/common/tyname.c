@@ -1,4 +1,4 @@
-/*	$NetBSD: tyname.c,v 1.40 2021/04/18 17:47:32 rillig Exp $	*/
+/*	$NetBSD: tyname.c,v 1.41 2021/06/04 20:54:18 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tyname.c,v 1.40 2021/04/18 17:47:32 rillig Exp $");
+__RCSID("$NetBSD: tyname.c,v 1.41 2021/06/04 20:54:18 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -197,7 +197,7 @@ sametype(const type_t *t1, const type_t *t2)
 	if (t1->t_tspec != t2->t_tspec)
 		return false;
 
-	/* Ignore const/void */
+	/* Ignore const/volatile */
 
 	switch (t = t1->t_tspec) {
 	case BOOL:
