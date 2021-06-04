@@ -1,3 +1,5 @@
+/*	$NetBSD: mount_chfs.h,v 1.2 2021/06/04 22:41:36 riastradh Exp $	*/
+
 /*
  * Copyright (c) 2008 The NetBSD Foundation.  All Rights Reserved.
  *
@@ -23,18 +25,17 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _SBIN_MOUNT_CHEWIEFS_MOUNT_CHEWIEFS_H_
-#define _SBIN_MOUNT_CHEWIEFS_MOUNT_CHEWIEFS_H_
+#ifndef _SBIN_MOUNT_CHFS_MOUNT_CHFS_H_
+#define _SBIN_MOUNT_CHFS_MOUNT_CHFS_H_
 
 #include <ufs/ufs/ufsmount.h>
 
-#ifndef MOUNT_CHEWIEFS
-#define MOUNT_CHEWIEFS "chfs"
+#ifndef MOUNT_CHFS
+#define MOUNT_CHFS "chfs"
 #endif
-
 
 int	 mount_chfs(int, char **);
 void mount_chfs_parseargs(int, char **, struct ufs_args *, int *,
     char *, char *);
 
-#endif /* _SBIN_MOUNT_CHEWIEFS_MOUNT_CHEWIEFS_H_ */
+#endif /* _SBIN_MOUNT_CHFS_MOUNT_CHFS_H_ */
