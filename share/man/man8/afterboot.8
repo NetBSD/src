@@ -1,4 +1,4 @@
-.\"	$NetBSD: afterboot.8,v 1.79 2021/06/04 11:56:47 wiz Exp $
+.\"	$NetBSD: afterboot.8,v 1.80 2021/06/04 12:12:02 nia Exp $
 .\"	$OpenBSD: afterboot.8,v 1.72 2002/02/22 02:02:33 miod Exp $
 .\"
 .\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
@@ -88,46 +88,6 @@ command, type:
 Administrators will rapidly become more familiar with
 .Nx
 if they get used to using the manual pages.
-.Ss Security alerts
-By the time that you have installed your system, it is quite likely that
-bugs in the release have been found.
-All significant and easily fixed problems will be reported at
-.Lk http://www.NetBSD.org/support/security/ .
-It is recommended that you check this page regularly.
-.Pp
-Additionally, you should set
-.Dq fetch_pkg_vulnerabilities=YES
-in
-.Pa /etc/daily.conf
-to allow your system to automatically update the local database of known
-vulnerable packages to the latest version available on-line.
-The system will later check, on a daily basis, if any of your installed
-packages are vulnerable based on the contents of this database.
-See
-.Xr daily.conf 5
-and
-.Xr security.conf 5
-for more details.
-.Ss Entropy
-If your machine does not have a hardware random number generator, it
-may not be safe to use on the internet until it has enough entropy to
-generate unpredictable secrets for programs like web browsers and
-.Xr ssh 1 .
-You can use
-.Xr rndctl 8
-to list the entropy sources with
-.Ic rndctl -l ,
-or save entropy from another machine running
-.Nx
-with
-.Ic rndctl -S
-and load it on this one with
-.Ic rndctl -L
-(as long as there are no eavesdroppers on the medium between the two
-machines).
-See
-.Xr entropy 7
-for more details.
 .Ss Login
 On a fresh install with no other user accounts, login as
 .Dq Ic root .
@@ -217,6 +177,44 @@ variable found in
 .Pp
 .Xr wscons.conf 5
 contains more information about this file.
+.Ss Security alerts
+All significant and easily fixed problems will be reported at
+.Lk http://www.NetBSD.org/support/security/ .
+It is recommended that you check this page regularly.
+.Pp
+Additionally, you should set
+.Dq fetch_pkg_vulnerabilities=YES
+in
+.Pa /etc/daily.conf
+to allow your system to automatically update the local database of known
+vulnerable packages to the latest version available on-line.
+The system will later check, on a daily basis, if any of your installed
+packages are vulnerable based on the contents of this database.
+See
+.Xr daily.conf 5
+and
+.Xr security.conf 5
+for more details.
+.Ss Entropy
+If your machine does not have a hardware random number generator, it
+may not be safe to use on the internet until it has enough entropy to
+generate unpredictable secrets for programs like web browsers and
+.Xr ssh 1 .
+You can use
+.Xr rndctl 8
+to list the entropy sources with
+.Ic rndctl -l ,
+or save entropy from another machine running
+.Nx
+with
+.Ic rndctl -S
+and load it on this one with
+.Ic rndctl -L
+(as long as there are no eavesdroppers on the medium between the two
+machines).
+See
+.Xr entropy 7
+for more details.
 .Ss Check hostname
 Use the
 .Ic hostname
@@ -260,9 +258,8 @@ and then using
 to manually configure it
 if you do not wish to reboot.
 .Pp
-Alternatively, you can configure interfaces automatically via DHCP with
-.Xr dhcpcd 8
-if you have a DHCP server running somewhere on your network.
+Alternatively, many networks allow interfaces to be configured
+automatically via DHCP.
 To get
 .Xr dhcpcd 8
 to start automatically on boot,
@@ -276,6 +273,8 @@ See
 and
 .Xr dhcpcd.conf 5
 for more information on setting up a DHCP client.
+For information on setting up Wi-Fi, see
+.Sx Wireless networking .
 .Pp
 You can add new
 .Dq virtual interfaces
@@ -436,6 +435,12 @@ and either rebooting or running the following command:
 .Ic service mdnsd start
 .Ed
 .Pp
+You may also wish to enable mdnsd as a source for host lookups
+in
+.Pa /etc/nsswitch.conf ,
+see
+.Xr nsswitch.conf 5 .
+.Pp
 If your network does not have a usable DNS resolver, e.g. one provided
 by DHCP, you can run a local caching recursive resolver by setting
 .Dq named=YES
@@ -513,7 +518,7 @@ you will need to have this line in
 .Pa /etc/rc.conf :
 .Pp
 .Dl rpcbind=YES
-.Ss YP (NIS) Setup
+.Ss YP (Network Information Service) Setup
 Check the YP domain name with the
 .Xr domainname 1
 command.
@@ -776,6 +781,22 @@ You then
 and edit
 .Pa /etc/fstab
 as needed.
+.Ss Nx Packet Filter
+.Xr npf 7
+is the default firewall used on
+.Nx .
+You may wish to enable it if your machine is connected directly to the
+internet.
+To do this, edit
+.Pa /etc/npf.conf
+and set
+.Dq npf=YES
+in
+.Pa /etc/rc.conf .
+Configuration examples for NPF can be found in
+.Pa /usr/share/examples/npf .
+Before installing a configuration, you can validate it with
+.Xr npfctl 8 .
 .Ss X Display Manager
 If you've installed X, you may want to turn on
 .Xr xdm 1 ,
@@ -795,12 +816,15 @@ Consult
 and
 .Xr printcap 5
 if needed.
-.Ss Tighten up security
-In
-.Pa /etc/inetd.conf
-comment out any extra entries you do not need, and only add things
-that are really needed.
+.Ss Internet Services (inetd)
+Various internet services can be enabled in
+.Pa /etc/inetd.conf ,
+including
+.Xr httpd 8
+and
+.Xr finger 1 .
 Note that by default all services are disabled for security reasons.
+Only add things that are really needed.
 .Ss Kerberos
 If you are going to use Kerberos for authentication,
 see
@@ -825,7 +849,7 @@ Run
 after changes.
 .Ss Postfix
 .Nx
-uses Postfix as its MTA.
+uses Postfix as its Mail Transfer Agent.
 Postfix is started by default, but its initial configuration does not
 cause it to listen on the network for incoming connections.
 To configure Postfix, see
