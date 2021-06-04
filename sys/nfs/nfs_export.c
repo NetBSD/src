@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.62 2020/01/17 20:08:09 ad Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.63 2021/06/04 10:44:58 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2008, 2019 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.62 2020/01/17 20:08:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.63 2021/06/04 10:44:58 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,17 +233,14 @@ netexport_fini(void)
  * Returns zero on success or an appropriate error code otherwise.
  *
  * Helper function for the nfssvc(2) system call (NFSSVC_SETEXPORTSLIST
- * command).
+ * and NFSSVC_REPLACEEXPORTSLIST command).
  */
 int
 mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l,
-    struct mount *nmp)
+    struct mount *nmp, int cmd)
 {
 	int error;
-#ifdef notyet
-	/* XXX: See below to see the reason why this is disabled. */
 	size_t i;
-#endif
 	struct mount *mp;
 	struct netexport *ne;
 	struct pathbuf *pb;
@@ -302,31 +299,24 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l,
 	KASSERT(ne != NULL);
 	KASSERT(ne->ne_mount == mp);
 
-	/*
-	 * XXX: The part marked as 'notyet' works fine from the kernel's
-	 * point of view, in the sense that it is able to atomically update
-	 * the complete exports list for a file system.  However, supporting
-	 * this in mountd(8) requires a lot of work; so, for now, keep the
-	 * old behavior of updating a single entry per call.
-	 *
-	 * When mountd(8) is fixed, just remove the second branch of this
-	 * preprocessor conditional and enable the first one.
-	 */
-#ifdef notyet
-	netexport_clear(ne);
-	for (i = 0; error == 0 && i < mel->mel_nexports; i++)
-		error = export(ne, &mel->mel_exports[i]);
-#else
-	if (mel->mel_nexports == 0)
+	if (cmd == NFSSVC_SETEXPORTSLIST) {
+		if (mel->mel_nexports == 0)
+			netexport_clear(ne);
+		else if (mel->mel_nexports == 1)
+			error = export(ne, &mel->mel_exports[0]);
+		else {
+			printf("%s: Cannot set more than one "
+			    "entry at once (unimplemented)\n", __func__);
+			error = EOPNOTSUPP;
+		}
+	} else if (cmd == NFSSVC_REPLACEEXPORTSLIST) {
 		netexport_clear(ne);
-	else if (mel->mel_nexports == 1)
-		error = export(ne, &mel->mel_exports[0]);
-	else {
-		printf("%s: Cannot set more than one "
-		    "entry at once (unimplemented)\n", __func__);
+		for (i = 0; error == 0 && i < mel->mel_nexports; i++)
+			error = export(ne, &mel->mel_exports[i]);
+	} else {
+		printf("%s: Command %#x not implemented\n", __func__, cmd);
 		error = EOPNOTSUPP;
 	}
-#endif
 
 out:
 	netexport_wrunlock();
@@ -455,7 +445,7 @@ nfs_export_update_30(struct mount *mp, const char *path, void *data)
 		mel.mel_exports = (void *)&args->eargs;
 	}
 
-	return mountd_set_exports_list(&mel, curlwp, mp);
+	return mountd_set_exports_list(&mel, curlwp, mp, NFSSVC_SETEXPORTSLIST);
 }
 
 /*

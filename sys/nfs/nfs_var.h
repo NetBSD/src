@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.94 2015/07/15 03:28:55 manu Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.95 2021/06/04 10:44:58 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -356,7 +356,7 @@ int do_nfssvc(struct nfssvc_copy_ops *, struct lwp *, int, void *, register_t *)
 /* nfs_export.c */
 extern struct nfs_public nfs_pub;
 int mountd_set_exports_list(const struct mountd_exports_list *, struct lwp *,
-    struct mount *);
+    struct mount *, int);
 int netexport_check(const fsid_t *, struct mbuf *, struct mount **, int *,
     kauth_cred_t *);
 void netexport_rdlock(void);
