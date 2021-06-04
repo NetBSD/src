@@ -1,4 +1,4 @@
-#	$NetBSD: std.sparc,v 1.23 2010/09/20 10:21:10 tsutsui Exp $
+#	$NetBSD: std.sparc,v 1.24 2021/06/04 10:46:11 martin Exp $
 
 #
 # Mandatory NetBSD/sparc kernel options.
@@ -12,3 +12,7 @@ options 	EXEC_ELF32	# execve(2) support for ELF binaries
 options 	EXEC_SCRIPT	# execve(2) support for scripts
 
 options 	CPU_IN_CKSUM	# use MD optimized cpu_in_cksum()
+
+options		VMSWAP_DEFAULT_PLAINTEXT	# do not encrypt swap by
+				# default (slow cpu)
+
