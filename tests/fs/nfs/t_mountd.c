@@ -1,4 +1,4 @@
-/*	$NetBSD: t_mountd.c,v 1.7 2019/07/16 17:29:17 martin Exp $	*/
+/*	$NetBSD: t_mountd.c,v 1.8 2021/06/04 10:48:07 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -105,11 +105,8 @@ ATF_TC_BODY(mountdhup, tc)
 
 	FSTEST_DESTRUCTOR(tc, nfs, voidargs);
 
-	atf_tc_expect_fail("PR kern/5844");
 	if (fail)
 		atf_tc_fail("op failed with EACCES");
-	else
-		atf_tc_fail("race did not trigger this time");
 }
 
 ATF_TP_ADD_TCS(tp)
