@@ -1,4 +1,4 @@
-.\"	$NetBSD: ps.1,v 1.110 2019/08/06 18:07:51 kamil Exp $
+.\"	$NetBSD: ps.1,v 1.111 2021/06/04 06:28:42 cjep Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -46,6 +46,7 @@
 .Op Fl p Ar pid
 .Op Fl t Ar tty
 .Op Fl U Ar user
+.Op Fl G Ar group
 .Op Fl W Ar swap
 .Nm
 .Fl L
@@ -110,6 +111,9 @@ relative to each other.
 Display the environment as well.
 The environment for other
 users' processes can only be displayed by the super-user.
+.It Fl G Ar group
+Display processes belonging to the users belonging to the specified group,
+given either as a group name or a gid.
 .It Fl h
 Repeat the information header as often as necessary to guarantee one
 header per page of information.
@@ -714,3 +718,7 @@ Since
 .Nm
 cannot run faster than the system and is run as any other scheduled
 process, the information it displays can never be exact.
+.Pp
+The 
+.Fl G 
+option should ideally take a list instead of a single group.
