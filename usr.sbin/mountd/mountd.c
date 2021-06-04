@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.134 2021/02/16 10:00:27 hannken Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.135 2021/06/04 10:46:01 hannken Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.134 2021/02/16 10:00:27 hannken Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.135 2021/06/04 10:46:01 hannken Exp $");
 #endif
 #endif				/* not lint */
 
@@ -1918,6 +1918,40 @@ get_ht(void)
 	return (hp);
 }
 
+static int
+add_export_arg(const char *path, int exflags, struct uucred *anoncrp,
+    struct sockaddr *addrp, int addrlen, struct sockaddr *maskp, int masklen,
+    char *indexfile)
+{
+	struct mountd_exports_list mel;
+	struct export_args export;
+	int error;
+
+	if (addrp != NULL && addrp->sa_family == AF_INET6 && have_v6 == 0)
+		return 0;
+
+	mel.mel_path = path;
+	mel.mel_nexports = 1;
+	mel.mel_exports = &export;
+
+	export.ex_flags = exflags;
+	export.ex_anon = *anoncrp;
+	export.ex_indexfile = indexfile;
+	export.ex_addr = addrp;
+	export.ex_addrlen = addrlen;
+	export.ex_mask = maskp;
+	export.ex_masklen = masklen;
+
+	error = nfssvc(NFSSVC_SETEXPORTSLIST, &mel);
+
+	if (error) {
+		syslog(LOG_ERR, "Can't change attributes for %s: %m", path);
+		return 1;
+	}
+
+	return 0;
+}
+
 /*
  * Do the nfssvc syscall to push the export info into the kernel.
  */
@@ -1930,92 +1964,37 @@ do_nfssvc(const char *line, size_t lineno, struct exportlist *ep,
 	struct sockaddr_storage ss;
 	struct addrinfo *ai;
 	int addrlen;
-	int done;
-	struct export_args export;
 
-	export.ex_flags = exflags;
-	export.ex_anon = *anoncrp;
-	export.ex_indexfile = ep->ex_indexfile;
 	if (grp->gr_type == GT_HOST) {
-		ai = grp->gr_ptr.gt_addrinfo;
-		addrp = ai->ai_addr;
-		addrlen = ai->ai_addrlen;
-	} else {
-		addrp = NULL;
-		ai = NULL;	/* XXXGCC -Wuninitialized */
-		addrlen = 0;	/* XXXGCC -Wuninitialized */
-	}
-	done = FALSE;
-	while (!done) {
-		struct mountd_exports_list mel;
-
-		switch (grp->gr_type) {
-		case GT_HOST:
-			if (addrp != NULL && addrp->sa_family == AF_INET6 &&
-			    have_v6 == 0)
-				goto skip;
-			export.ex_addr = addrp;
-			export.ex_addrlen = addrlen;
-			export.ex_masklen = 0;
-			break;
-		case GT_NET:
-			export.ex_addr = (struct sockaddr *)
-			    &grp->gr_ptr.gt_net.nt_net;
-			if (export.ex_addr->sa_family == AF_INET6 &&
-			    have_v6 == 0)
-				goto skip;
-			export.ex_addrlen = export.ex_addr->sa_len;
-			memset(&ss, 0, sizeof ss);
-			ss.ss_family = export.ex_addr->sa_family;
-			ss.ss_len = export.ex_addr->sa_len;
-			if (allones(&ss, grp->gr_ptr.gt_net.nt_len) != 0) {
-				syslog(LOG_ERR,
-				    "\"%s\", line %ld: Bad network flag",
-				    line, (unsigned long)lineno);
-				return (1);
-			}
-			export.ex_mask = (struct sockaddr *)&ss;
-			export.ex_masklen = ss.ss_len;
-			break;
-		default:
-			syslog(LOG_ERR, "\"%s\", line %ld: Bad netgroup type",
-			    line, (unsigned long)lineno);
-			return (1);
-		};
-
-		/*
-		 * XXX:
-		 * Maybe I should just use the fsb->f_mntonname path?
-		 */
-
-		mel.mel_path = dirp;
-		mel.mel_nexports = 1;
-		mel.mel_exports = &export;
-
-		if (nfssvc(NFSSVC_SETEXPORTSLIST, &mel) != 0) {
-			syslog(LOG_ERR,
-	    "\"%s\", line %ld: Can't change attributes for %s to %s: %m",
-			    line, (unsigned long)lineno,
-			    dirp, (grp->gr_type == GT_HOST) ?
-			    grp->gr_ptr.gt_addrinfo->ai_canonname :
-			    (grp->gr_type == GT_NET) ?
-			    grp->gr_ptr.gt_net.nt_name :
-			    "Unknown");
-			return (1);
+		for (ai = grp->gr_ptr.gt_addrinfo; ai; ai = ai->ai_next) {
+			addrp = ai->ai_addr;
+			addrlen = ai->ai_addrlen;
+			if (add_export_arg(fsb->f_mntonname, exflags, anoncrp,
+			    addrp, addrlen, NULL, 0, ep->ex_indexfile) != 0)
+				return 1;
 		}
-skip:
-		if (addrp) {
-			ai = ai->ai_next;
-			if (ai == NULL)
-				done = TRUE;
-			else {
-				addrp = ai->ai_addr;
-				addrlen = ai->ai_addrlen;
-			}
-		} else
-			done = TRUE;
+	} else if (grp->gr_type == GT_NET) {
+		addrp = (struct sockaddr *)&grp->gr_ptr.gt_net.nt_net;
+		addrlen = addrp->sa_len;
+		memset(&ss, 0, sizeof ss);
+		ss.ss_family = addrp->sa_family;
+		ss.ss_len = addrp->sa_len;
+		if (allones(&ss, grp->gr_ptr.gt_net.nt_len) != 0) {
+			syslog(LOG_ERR, "\"%s\", line %ld: Bad network flag",
+			    line, (unsigned long)lineno);
+			return 1;
+		}
+		if (add_export_arg(fsb->f_mntonname, exflags, anoncrp,
+		    addrp, addrlen, (struct sockaddr *)&ss, ss.ss_len,
+		    ep->ex_indexfile) != 0)
+			return 1;
+	} else {
+		syslog(LOG_ERR, "\"%s\", line %ld: Bad netgroup type",
+		    line, (unsigned long)lineno);
+		return 1;
 	}
-	return (0);
+
+	return 0;
 }
 
 /*
