@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootimage,v 1.26 2020/08/05 01:35:18 jmcneill Exp $
+#	$NetBSD: Makefile.bootimage,v 1.27 2021/06/04 17:09:36 tsutsui Exp $
 #
 # Copyright (c) 2009, 2010, 2011 Izumi Tsutsui.  All rights reserved.
 #
@@ -294,6 +294,15 @@ WORKFATDIR?=	work.fatdir
 
 .if ${USE_GPT} != "no"
 ${WORKFSTAB}: ${WORKMBR}
+
+.BEGIN:
+	@if [ -f ${WORKMBR} ]; then			 		\
+		st_size=`${TOOL_STAT} -f %z ${WORKMBR}`;		\
+		if [ "$$st_size" -ne "$$((${IMAGESECTORS} * 512))" ]; then \
+			echo Removing stale ${WORKMBR} ...;		\
+			rm -f ${WORKMBR};				\
+		fi							\
+	fi
 .endif
 
 ${WORKFSTAB}:
