@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.78 2018/08/22 01:05:24 msaitoh Exp $	*/
+/*	$NetBSD: nfs.h,v 1.79 2021/06/04 10:44:58 hannken Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -285,6 +285,7 @@ struct nfsstats {
 #define	NFSSVC_AUTHINFAIL 0x080
 #define	NFSSVC_MNTD	0x100
 #define	NFSSVC_SETEXPORTSLIST	0x200
+#define	NFSSVC_REPLACEEXPORTSLIST	0x400
 
 /*
  * fs.nfs sysctl(3) identifiers
