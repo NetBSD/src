@@ -3257,6 +3257,7 @@
 ./usr/include/sys/gmon.h			comp-c-include
 ./usr/include/sys/gpio.h			comp-c-include
 ./usr/include/sys/hash.h			comp-c-include
+./usr/include/sys/hook.h			comp-c-include
 ./usr/include/sys/idtype.h			comp-c-include
 ./usr/include/sys/ieee754.h			comp-c-include
 ./usr/include/sys/intr.h			comp-c-include

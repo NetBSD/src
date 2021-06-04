@@ -38,6 +38,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_hook.c,v 1.8 2019/10/16 18:29:49 christos Exp $
 #include <sys/rwlock.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/hook.h>
+#include <sys/kmem.h>
+#include <sys/condvar.h>
 
 /*
  * A generic linear hook.
@@ -48,6 +51,23 @@ struct hook_desc {
 	void	*hk_arg;
 };
 typedef LIST_HEAD(, hook_desc) hook_list_t;
+
+enum hook_list_st {
+	HKLIST_IDLE,
+	HKLIST_INUSE,
+};
+
+struct khook_list {
+	hook_list_t	 hl_list;
+	kmutex_t	 hl_lock;
+	kmutex_t	*hl_cvlock;
+	struct lwp	*hl_lwp;
+	kcondvar_t	 hl_cv;
+	enum hook_list_st
+			 hl_state;
+	khook_t		*hl_active_hk;
+	char		 hl_namebuf[HOOKNAMSIZ];
+};
 
 int	powerhook_debug = 0;
 
@@ -397,4 +417,187 @@ dopowerhooks(int why)
 
 	if (powerhook_debug)
 		printf("dopowerhooks: %s done\n", why_name);
+}
+
+/*
+ * A simple linear hook.
+ */
+
+khook_list_t *
+simplehook_create(int ipl, const char *wmsg)
+{
+	khook_list_t *l;
+
+	l = kmem_zalloc(sizeof(*l), KM_SLEEP);
+
+	mutex_init(&l->hl_lock, MUTEX_DEFAULT, ipl);
+	strlcpy(l->hl_namebuf, wmsg, sizeof(l->hl_namebuf));
+	cv_init(&l->hl_cv, l->hl_namebuf);
+	LIST_INIT(&l->hl_list);
+	l->hl_state = HKLIST_IDLE;
+
+	return l;
+}
+
+void
+simplehook_destroy(khook_list_t *l)
+{
+	struct hook_desc *hd;
+
+	KASSERT(l->hl_state == HKLIST_IDLE);
+
+	while ((hd = LIST_FIRST(&l->hl_list)) != NULL) {
+		LIST_REMOVE(hd, hk_list);
+		kmem_free(hd, sizeof(*hd));
+	}
+
+	cv_destroy(&l->hl_cv);
+	mutex_destroy(&l->hl_lock);
+	kmem_free(l, sizeof(*l));
+}
+
+int
+simplehook_dohooks(khook_list_t *l)
+{
+	struct hook_desc *hd, *nexthd;
+	kmutex_t *cv_lock;
+	void (*fn)(void *);
+	void *arg;
+
+	mutex_enter(&l->hl_lock);
+	if (l->hl_state != HKLIST_IDLE) {
+		mutex_exit(&l->hl_lock);
+		return EBUSY;
+	}
+
+	/* stop removing hooks */
+	l->hl_state = HKLIST_INUSE;
+	l->hl_lwp = curlwp;
+
+	LIST_FOREACH(hd, &l->hl_list, hk_list) {
+		if (hd->hk_fn == NULL)
+			continue;
+
+		fn = hd->hk_fn;
+		arg = hd->hk_arg;
+		l->hl_active_hk = hd;
+		l->hl_cvlock = NULL;
+
+		mutex_exit(&l->hl_lock);
+
+		/* do callback without l->hl_lock */
+		(*fn)(arg);
+
+		mutex_enter(&l->hl_lock);
+		l->hl_active_hk = NULL;
+		cv_lock = l->hl_cvlock;
+
+		if (hd->hk_fn == NULL) {
+			if (cv_lock != NULL) {
+				mutex_exit(&l->hl_lock);
+				mutex_enter(cv_lock);
+			}
+
+			cv_broadcast(&l->hl_cv);
+
+			if (cv_lock != NULL) {
+				mutex_exit(cv_lock);
+				mutex_enter(&l->hl_lock);
+			}
+		}
+	}
+
+	/* remove marked node while running hooks */
+	LIST_FOREACH_SAFE(hd, &l->hl_list, hk_list, nexthd) {
+		if (hd->hk_fn == NULL) {
+			LIST_REMOVE(hd, hk_list);
+			kmem_free(hd, sizeof(*hd));
+		}
+	}
+
+	l->hl_lwp = NULL;
+	l->hl_state = HKLIST_IDLE;
+	mutex_exit(&l->hl_lock);
+
+	return 0;
+}
+
+khook_t *
+simplehook_establish(khook_list_t *l,  void (*fn)(void *), void *arg)
+{
+	struct hook_desc *hd;
+
+	hd = kmem_zalloc(sizeof(*hd), KM_SLEEP);
+	hd->hk_fn = fn;
+	hd->hk_arg = arg;
+
+	mutex_enter(&l->hl_lock);
+	LIST_INSERT_HEAD(&l->hl_list, hd, hk_list);
+	mutex_exit(&l->hl_lock);
+
+	return hd;
+}
+
+void
+simplehook_disestablish(khook_list_t *l, khook_t *hd, kmutex_t *lock)
+{
+	struct hook_desc *hd0 __diagused;
+	kmutex_t *cv_lock;
+
+	KASSERT(lock == NULL || mutex_owned(lock));
+	mutex_enter(&l->hl_lock);
+
+#ifdef DIAGNOSTIC
+	LIST_FOREACH(hd0, &l->hl_list, hk_list) {
+		if (hd == hd0)
+			break;
+	}
+
+	if (hd0 == NULL)
+		panic("hook_disestablish: hook %p not established", hd);
+#endif
+
+	/* The hook is not referred, remove immidiately */
+	if (l->hl_state == HKLIST_IDLE) {
+		LIST_REMOVE(hd, hk_list);
+		kmem_free(hd, sizeof(*hd));
+		mutex_exit(&l->hl_lock);
+		return;
+	}
+
+	/* remove callback. hd will be removed in dohooks */
+	hd->hk_fn = NULL;
+	hd->hk_arg = NULL;
+
+	/* If the hook is running, wait for the completion */
+	if (l->hl_active_hk == hd &&
+	    l->hl_lwp != curlwp) {
+		if (lock != NULL) {
+			cv_lock = lock;
+			KASSERT(l->hl_cvlock == NULL);
+			l->hl_cvlock = lock;
+			mutex_exit(&l->hl_lock);
+		} else {
+			cv_lock = &l->hl_lock;
+		}
+
+		cv_wait(&l->hl_cv, cv_lock);
+
+		if (lock == NULL)
+			mutex_exit(&l->hl_lock);
+	} else {
+		mutex_exit(&l->hl_lock);
+	}
+}
+
+bool
+simplehook_has_hooks(khook_list_t *l)
+{
+	bool empty;
+
+	mutex_enter(&l->hl_lock);
+	empty = LIST_EMPTY(&l->hl_list);
+	mutex_exit(&l->hl_lock);
+
+	return !empty;
 }
