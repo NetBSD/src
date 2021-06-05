@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.21 2020/07/27 12:32:54 skrll Exp $	*/
+/* 	$NetBSD: intr.h,v 1.22 2021/06/05 21:24:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -123,8 +123,6 @@ void	splx(int);
 #error ARM_INTR_IMPL not defined.
 
 #endif	/* ARM_INTR_IMPL */
-
-#define splsoft()	_splraise(IPL_SOFT)
 
 #endif /* _MODULE */
 
