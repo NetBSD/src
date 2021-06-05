@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.61 2021/04/24 23:36:54 thorpej Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.62 2021/06/05 02:27:08 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.61 2021/04/24 23:36:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.62 2021/06/05 02:27:08 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_hpcfb.h"
@@ -410,8 +410,17 @@ hpcfb_cnattach(struct hpcfb_fbconf *fbconf)
 	hpcfb_console_wsscreen.capabilities = hpcfb_console_dc.dc_rinfo.ri_caps;
 	hpcfb_allocattr(&hpcfb_console_dc,
 			WSCOL_WHITE, WSCOL_BLACK, 0, &defattr);
-	wsdisplay_cnattach(&hpcfb_console_wsscreen, &hpcfb_console_dc,
-	    0, 0, defattr);
+#if NBIVIDEO > 0
+	/*
+	 * This is early console. Do not really attach wsdisplay.
+	 */
+	if (fbconf == &__fbconf)
+		wsdisplay_preattach(&hpcfb_console_wsscreen, &hpcfb_console_dc,
+		    0, 0, defattr);
+	else
+#endif
+		wsdisplay_cnattach(&hpcfb_console_wsscreen, &hpcfb_console_dc,
+		    0, 0, defattr);
 	hpcfbconsole = 1;
 
 	return (0);
