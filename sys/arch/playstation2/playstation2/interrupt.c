@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.16 2018/02/08 09:05:18 dholland Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.17 2021/06/05 21:38:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.16 2018/02/08 09:05:18 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.17 2021/06/05 21:38:37 christos Exp $");
 
 #include "debug_playstation2.h"
 #if defined INTR_DEBUG && !defined GSFB_DEBUG_MONITOR
@@ -105,8 +105,8 @@ interrupt_init(void)
 	evcnt_attach_static(&_playstation2_evcnt.dmac);
 
 	/* install software interrupt handler */
-	intc_intr_establish(I_CH10_TIMER1, IPL_SOFT, timer1_intr, 0);
-	intc_intr_establish(I_CH11_TIMER2, IPL_SOFTCLOCK, timer2_intr, 0);
+	intc_intr_establish(I_CH10_TIMER1, IPL_SOFTCLOCK, timer1_intr, 0);
+	intc_intr_establish(I_CH11_TIMER2, IPL_SOFTBIO, timer2_intr, 0);
 
 	/* IPL_SOFTNET and IPL_SOFTSERIAL are shared interrupt. */
 	intc_intr_establish(I_CH12_TIMER3, IPL_SOFTNET, timer3_intr, 0);
