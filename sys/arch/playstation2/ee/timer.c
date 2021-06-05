@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.8 2014/03/31 11:25:49 martin Exp $	*/
+/*	$NetBSD: timer.c,v 1.9 2021/06/05 21:38:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.8 2014/03/31 11:25:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.9 2021/06/05 21:38:37 christos Exp $");
 
 #include "debug_playstation2.h"
 
@@ -116,7 +116,7 @@ timer1_intr(void *arg)
 	_reg_write_4(T1_MODE_REG, T_MODE_EQUF | T_MODE_OVFF);
 
 #ifdef __HAVE_FAST_SOFTINTS
-	softintr_dispatch(0); /* IPL_SOFT */
+	softintr_dispatch(0); /* IPL_SOFTCLOCK */
 #endif
 
 	return (1);
@@ -129,7 +129,7 @@ timer2_intr(void *arg)
 	_reg_write_4(T2_MODE_REG, T_MODE_EQUF | T_MODE_OVFF);
 
 #ifdef __HAVE_FAST_SOFTINTS
-	softintr_dispatch(1); /* IPL_SOFTCLOCK */
+	softintr_dispatch(1); /* IPL_SOFTBIO */
 #endif
 	return (1);
 }
