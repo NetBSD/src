@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.60 2014/08/23 20:26:58 dholland Exp $
+# $NetBSD: INSTALL,v 1.60.12.1 2021/06/05 10:37:10 martin Exp $
 #
 # INSTALL machine description file
 #
@@ -39,7 +39,7 @@ options 	HP433
 options 	FPSP		# floating point interface for 68040
 
 # Need to set locally
-maxusers	32
+maxusers	8
 
 # Standard system options
 #options 	COMPAT_43	# compatibility with 4.3BSD interfaces
@@ -202,10 +202,11 @@ dcm*		at dio? scode ?	flags 0xe # DCM 4- or 8-port serial interfaces
 
 le*		at dio? scode ?		# LANCE ethernet interfaces
 
-nhpib0		at dio? scode 7		# slow internal HP-IB
+nhpib*		at intio?		# internal HP-IB
+nhpib0		at dio? scode 7		# 98624A HP-IB
 nhpib*		at dio? scode ?
 
-fhpib*		at dio? scode ?		# `fast' HP-IB
+fhpib*		at dio? scode ?		# 98625A/98625B HP-IB
 
 hpibbus0	at nhpib0
 hpibbus*	at nhpib?
