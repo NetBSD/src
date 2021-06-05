@@ -1,4 +1,4 @@
-/*	$NetBSD: itesio_isavar.h,v 1.12 2019/07/23 09:38:53 msaitoh Exp $	*/
+/*	$NetBSD: itesio_isavar.h,v 1.13 2021/06/05 01:40:53 nonaka Exp $	*/
 /*	$OpenBSD: itvar.h,v 1.2 2003/11/05 20:57:10 grange Exp $	*/
 
 /*
@@ -57,6 +57,7 @@
 #define ITESIO_CHIPID2	0x21	/* Chip ID 2 */
 #define ITESIO_DEVREV	0x22	/* Device Revision */
 
+#define ITESIO_ID8625	0x8625
 #define ITESIO_ID8628	0x8628
 #define ITESIO_ID8655	0x8655
 #define ITESIO_ID8705	0x8705
