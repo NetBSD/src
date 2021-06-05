@@ -1,4 +1,4 @@
-/* $NetBSD: if_tireg.h,v 1.30 2020/04/02 16:18:51 msaitoh Exp $ */
+/* $NetBSD: if_tireg.h,v 1.31 2021/06/05 14:28:28 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -270,7 +270,7 @@
 #define TI_GCR_RXRETURNCONS_IDX		0x680
 #define TI_GCR_CMDRING			0x700
 
-#define TI_GCR_NIC_ADDR(x)		(x - TI_GCR_BASE)
+#define TI_GCR_NIC_ADDR(x)		(x - TI_GCR_BASE);
 
 /*
  * Local memory window. The local memory window is a 2K shared
@@ -373,10 +373,22 @@
  */
 #define TI_MEM_MAX		0x7FFFFF
 
+/*
+ * Even on the alpha, pci addresses are 32-bit quantities
+ */
+
+#ifdef __64_bit_pci_addressing__
+typedef struct {
+	u_int64_t		ti_addr;
+} ti_hostaddr;
+#define TI_HOSTADDR(x)	x.ti_addr
+#else
 typedef struct {
 	uint32_t	ti_addr_hi;
 	uint32_t	ti_addr_lo;
 } ti_hostaddr;
+#define TI_HOSTADDR(x)	x.ti_addr_lo
+#endif
 
 /*
  * Ring control block structure. The rules for the max_len field
