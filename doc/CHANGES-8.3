@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.89 2021/05/19 17:21:13 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.90 2021/06/05 10:58:28 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -1932,3 +1932,20 @@ xsrc/external/mit/libX11/dist/src/xlibi18n/imKStoUCS.c	(apply patch)
 	Reject string longer than USHRT_MAX before sending them on the wire.
 	Fix out-of-bound access in KeySymToUcs4().
 	[mrg, ticket #1679]
+
+sys/arch/hp300/conf/INSTALL			1.67,1.68
+
+	Add missing 'nhpib at intio' for internal HP-IB.
+	Reduce maxusers to 8 (same as GENERIC).
+	[tsutsui, ticket #1680]
+
+distrib/miniroot/install.sub			1.60
+
+	Handle recent ifconfig(8) output in the miniroot installation script.
+	[tsutsui, ticket #1681]
+
+sys/dev/pci/if_iwmreg.h				1.8
+
+	iwm(4): fix various bit declarations - use unsigned for 2^32.
+	[nia, ticket #1682]
+
