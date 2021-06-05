@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.136 2021/06/04 10:46:57 hannken Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.137 2021/06/05 08:26:34 hannken Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.136 2021/06/04 10:46:57 hannken Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.137 2021/06/05 08:26:34 hannken Exp $");
 #endif
 #endif				/* not lint */
 
@@ -1294,7 +1294,7 @@ get_exportlist(int n)
 		    (mel->mel_nexports > 0 || errno != EOPNOTSUPP))
 			syslog(LOG_ERR, "Can't update exports for %s (%m)",
 			    mel_tab[i].mel_path);
-		for (j = 0; j < (int)mel_tab->mel_nexports; j++) {
+		for (j = 0; j < (int)mel->mel_nexports; j++) {
 			struct export_args *export = &mel->mel_exports[j];
 
 			if (export->ex_indexfile)
