@@ -1,4 +1,10 @@
-include addstr
+include start
+call OK addstr "abcde\n"
+call OK addstr "\n"
+call OK addstr "\t8\n"
+call OK addstr "0123456\t8\n"
+call OK refresh
+compare clear0.chk
 call OK clear
 call OK refresh
 compare clear1.chk
