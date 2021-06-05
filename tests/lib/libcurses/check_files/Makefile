@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2021/02/07 01:53:54 rillig Exp $
+# $NetBSD: Makefile,v 1.6 2021/06/05 06:11:09 blymn Exp $
 
 NOMAN=		# defined
 
@@ -41,6 +41,7 @@ FILES+=		box_standout.chk
 FILES+=		chgat1.chk
 FILES+=		chgat2.chk
 FILES+=		chgat3.chk
+FILES+=		clear0.chk
 FILES+=		clear1.chk
 FILES+=		clear10.chk
 FILES+=		clear2.chk
