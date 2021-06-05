@@ -1,4 +1,4 @@
-# $NetBSD: t_vnd.sh,v 1.10 2017/03/23 08:18:17 martin Exp $
+# $NetBSD: t_vnd.sh,v 1.11 2021/06/05 06:40:59 gson Exp $
 #
 # Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -69,7 +69,7 @@ basic_body() {
 }
 basic_cleanup() {
 	if [ ! -f done ]; then
-		umount mnt 2>/dev/null 1>&2
+		umount mntpt/mnt 2>/dev/null 1>&2
 		vndconfig -u ${vnddev} 2>/dev/null 1>&2
 	fi
 }
