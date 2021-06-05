@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_verbose.c,v 1.6 2019/03/25 09:46:24 msaitoh Exp $ */
+/*	$NetBSD: mii_verbose.c,v 1.7 2021/06/05 22:21:15 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_verbose.c,v 1.6 2019/03/25 09:46:24 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_verbose.c,v 1.7 2021/06/05 22:21:15 pgoyette Exp $");
 
 #include <sys/module.h>
 #include <dev/mii/miidevs.h>
@@ -81,6 +81,8 @@ miiverbose_modcmd(modcmd_t cmd, void *arg)
 		mii_get_descr = saved_mii_get_descr;
 		mii_verbose_loaded = 0;
 		return 0;
+	casce MODULE_CMD_AUTOUNLOAD:
+		return EBUSY;
 	default:
 		return ENOTTY;
 	}

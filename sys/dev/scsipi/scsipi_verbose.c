@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_verbose.c,v 1.34 2018/09/16 23:20:18 mrg Exp $	*/
+/*	$NetBSD: scsipi_verbose.c,v 1.35 2021/06/05 22:21:15 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_verbose.c,v 1.34 2018/09/16 23:20:18 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_verbose.c,v 1.35 2021/06/05 22:21:15 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -853,6 +853,8 @@ scsiverbose_modcmd(modcmd_t cmd, void *arg)
 		scsipi_print_sense_data = saved_print_sense_data;
 		scsi_verbose_loaded = 0;
 		return 0;
+	case MODULE_CMD_AUTOUNLOAD:
+		return EBUSY;
 	default:
 		return ENOTTY;
 	}
