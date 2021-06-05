@@ -1,4 +1,4 @@
-/*      $NetBSD: amdzentemp.c,v 1.11 2020/04/25 15:26:18 bouyer Exp $ */
+/*      $NetBSD: amdzentemp.c,v 1.12 2021/06/05 01:38:22 nonaka Exp $ */
 /*      $OpenBSD: kate.c,v 1.2 2008/03/27 04:52:03 cnst Exp $   */
 
 /*
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdzentemp.c,v 1.11 2020/04/25 15:26:18 bouyer Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: amdzentemp.c,v 1.12 2021/06/05 01:38:22 nonaka Exp $ ");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -177,6 +177,7 @@ amdzentemp_attach(device_t parent, device_t self, void *aux)
 		sc->sc_sme->sme_refresh = amdzentemp_family15_refresh;
 		break;
 	case 0x17:
+	case 0x19:
 		sc->sc_sme->sme_refresh = amdzentemp_family17_refresh;
 		break;
 	default:
