@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.4 2021/06/01 10:41:23 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.5 2021/06/05 10:56:18 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -55,4 +55,30 @@ sys/arch/aarch64/aarch64/netbsd32_machdep.c	1.18
 	Fix conversion between aarch64 and aarch32 fpregs to fix crashes
 	in VFP-optimized codes running on COMPAT_NETBSD32.
 	[rin, ticket #1277]
+
+sys/arch/aarch64/aarch64/aarch64_machdep.c	1.50,1.60,1.61
+
+	Minor fix for aarch64 memory detection.
+	[skrll, ticket #1278]
+
+sys/arch/arm/arm32/arm32_boot.c			1.42,1.43
+
+	Minor fix for ARM memory detection.
+	[skrll, ticket #1279]
+
+sys/arch/hp300/conf/INSTALL			1.67,1.68
+
+	Add missing 'nhpib at intio' for internal HP-IB.
+	Reduce maxusers to 8 (same as GENERIC).
+	[tsutsui, ticket #1280]
+
+distrib/miniroot/install.sub			1.60
+
+	Handle recent ifconfig(8) output in the miniroot installation script.
+	[tsutsui, ticket #1281]
+
+sys/dev/pci/if_iwmreg.h				1.8
+
+	iwm(4): fix various bit declarations - use unsigned for 2^32.
+	[nia, ticket #1282]
 
