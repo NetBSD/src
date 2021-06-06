@@ -1,4 +1,4 @@
-/*      $NetBSD: amdzentemp.c,v 1.13 2021/06/06 08:45:18 nonaka Exp $ */
+/*      $NetBSD: amdzentemp.c,v 1.14 2021/06/06 11:35:22 nonaka Exp $ */
 /*      $OpenBSD: kate.c,v 1.2 2008/03/27 04:52:03 cnst Exp $   */
 
 /*
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdzentemp.c,v 1.13 2021/06/06 08:45:18 nonaka Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: amdzentemp.c,v 1.14 2021/06/06 11:35:22 nonaka Exp $ ");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -431,8 +431,9 @@ static void
 amdzentemp_setup_ccd_sensors(struct amdzentemp_softc *sc)
 {
 	envsys_data_t *edata;
+	size_t i;
 	uint32_t temp;
-	int i, error;
+	int error;
 
 	for (i = 0; i < sc->sc_numsensors - 1; i++) {
 		error = amdsmn_read(sc->sc_smn,
@@ -446,7 +447,7 @@ amdzentemp_setup_ccd_sensors(struct amdzentemp_softc *sc)
 		edata->flags = ENVSYS_FHAS_ENTROPY;
 		edata->private = CCD_BASE + i;
 		snprintf(edata->desc, sizeof(edata->desc),
-		    "cpu%u ccd%u temperature", device_unit(sc->sc_dev), i);
+		    "cpu%u ccd%zu temperature", device_unit(sc->sc_dev), i);
 	}
 }
 
