@@ -1,12 +1,11 @@
-#	$NetBSD: Makefile.xkbutils,v 1.5 2015/07/20 23:50:23 mrg Exp $
+#	$NetBSD: Makefile.xkbutils,v 1.5.24.1 2021/06/06 20:30:47 cjep Exp $
 
 .include <bsd.own.mk>
 
 CPPFLAGS+=-DXKB
 
-LDADD+=	-lxkbfile -lXaw -lXmu -lXt -lSM -lICE -lXpm -lXext -lX11
-DPADD+=	${LIBXKBFILE} ${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} \
-	${LIBXPM} ${LIBXEXT} ${LIBX11}
+LDADD+=	${XLIBLDADD_KDFILE} ${XLIBLDADD_XAW}
+DPADD+=	${XLIBDPADD_KDFILE} ${XLIBDPADD_XAW}
 
 CPPFLAGS+=	-DHAVE_STRCASECMP
 

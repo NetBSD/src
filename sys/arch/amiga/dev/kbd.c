@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.59 2021/04/24 23:36:24 thorpej Exp $ */
+/*	$NetBSD: kbd.c,v 1.59.6.1 2021/06/06 20:30:49 cjep Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.59 2021/04/24 23:36:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.59.6.1 2021/06/06 20:30:49 cjep Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,6 +220,7 @@ kbdattach(device_t parent, device_t self, void *aux)
 		waa.accessops = &kbd_accessops;
 		waa.accesscookie = NULL;
 		kbd_softc.k_wskbddev = config_found(self, &waa, wskbddevprint,
+		    CFARG_IATTR, "wskbddev",
 		    CFARG_EOL);
 
 		kbd_softc.k_pollingmode = 0;

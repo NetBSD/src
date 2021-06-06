@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.138.4.2 2021/06/03 10:18:30 cjep Exp $
+#	$NetBSD: bsd.x11.mk,v 1.138.4.3 2021/06/06 20:30:49 cjep Exp $
 
 .include <bsd.init.mk>
 
@@ -82,7 +82,6 @@ X11FLAGS.OS_DEFINES=	-DDDXOSINIT -DSERVER_LOCK -DDDXOSFATALERROR \
 			-DDDXOSVERRORF -DDDXTIME -DUSB_HID
 
 .if !(${MACHINE} == "acorn32"	|| \
-    ${MACHINE} == "amiga"	|| \
     ${MACHINE} == "pmax"	|| \
     ${MACHINE} == "sun3"	|| \
     ${MACHINE} == "x68k"	|| \

@@ -141,3 +141,24 @@ To do so:
   cd /usr/tests
   atf-run | atf-report
 %
+To share files from your NetBSD system, you can use the built-in
+httpd(8).  Uncomment the 'http' lines in /etc/inetd.conf, reload inetd
+with service(8), and then any files in /var/www will be published to
+http://127.0.0.1/.
+%
+You can schedule simple periodic tasks for your NetBSD system to run
+without using cron(8) by editing the sh(1) scripts /etc/daily.local,
+/etc/weekly.local, and /etc/monthly.local.
+%
+NetBSD's tar(1) command can handle a wide range of file types, e.g.
+zip, 7z, and rar, and will autodetect the type of the file based
+on its extension.  For example, to extract a zip file:
+
+	tar xvf example.zip
+%
+You can use progress(1) to monitor the progress of data in a pipe:
+
+	zcat example.tar.gz | progress tar xf -
+%
+Press CTRL+T to send SIGINFO and see the current status of the
+command running in the current terminal.

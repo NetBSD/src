@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2013/05/31 01:41:56 mrg Exp $
+#	$NetBSD: Makefile,v 1.2.36.1 2021/06/06 20:30:45 cjep Exp $
 
 .include <bsd.own.mk>
 
@@ -7,8 +7,8 @@ PROG=	sxpm
 CPPFLAGS+=	-I${X11SRCDIR.Xpm}/src
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11
 
-LDADD+=	-lXpm -lXt -lSM -lICE -lXext -lX11
-DPADD+=	${LIBXPM} ${LIBXT} ${LIBSM} ${LIBICE} ${LIBXEXT} ${LIBX11}
+LDADD+=	${XLIBLDADD_XPM} ${XLIBLDADD_XT}
+DPADD+=	${XLIBDPADD_XPM} ${XLIBDPADD_XT}
 
 .PATH:	${X11SRCDIR.Xpm}/${PROG}
 .PATH:	${X11SRCDIR.Xpm}/man

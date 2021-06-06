@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/04/03 13:29:45 mbalmer Exp $
+#	$NetBSD: Makefile,v 1.3.52.1 2021/06/06 20:30:45 cjep Exp $
 
 .include <bsd.own.mk>
 
@@ -40,8 +40,8 @@ SshAskpass_ad.h: SshAskpass.ad
 	rm -f ${.TARGET}
 	${TOOL_SED} -n '/^[^!]/s/.*/"&",/p' <${.ALLSRC} > ${.TARGET}
 
-LDADD+=		-lXt -lSM -lICE -lXinerama -lXext -lX11
-DPADD+=		${LIBXT} ${LIBSM} ${LIBICE} ${LIBXINERAMA} ${LIBXEXT} ${LIBX11}
+LDADD+=		${XLIBLDADD_XT} -lXinerama ${XLIBLDADD_XEXT}
+DPADD+=		${XLIBDPADD_XTXT} ${LIBXINERAMA} ${XLIBDPADD_XEXT}
 
 .PATH:		${X11SRCDIR.local}/programs/x11-ssh-askpass
 

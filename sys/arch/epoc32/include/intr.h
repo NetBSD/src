@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.2 2020/07/23 19:25:14 skrll Exp $	*/
+/*	$NetBSD: intr.h,v 1.2.10.1 2021/06/06 20:30:49 cjep Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.
@@ -70,8 +70,6 @@
 #define PIC_MAXMAXSOURCES	16
 
 #include <arm/pic/picvar.h>
-
-#define	splsoft()	_splraise(IPL_SOFT)
 
 typedef uint8_t ipl_t;
 typedef struct {

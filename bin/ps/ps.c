@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.93 2019/09/15 15:27:50 kamil Exp $	*/
+/*	$NetBSD: ps.c,v 1.93.6.1 2021/06/06 20:30:43 cjep Exp $	*/
 
 /*
  * Copyright (c) 2000-2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.93 2019/09/15 15:27:50 kamil Exp $");
+__RCSID("$NetBSD: ps.c,v 1.93.6.1 2021/06/06 20:30:43 cjep Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,6 +86,7 @@ __RCSID("$NetBSD: ps.c,v 1.93 2019/09/15 15:27:50 kamil Exp $");
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <grp.h>
 #include <kvm.h>
 #include <limits.h>
 #include <locale.h>
@@ -104,8 +105,8 @@ __RCSID("$NetBSD: ps.c,v 1.93 2019/09/15 15:27:50 kamil Exp $");
  * ARGOPTS must contain all option characters that take arguments
  * (except for 't'!) - it is used in kludge_oldps_options()
  */
-#define	GETOPTSTR	"aAcCdeghjk:LlM:mN:O:o:p:rSsTt:U:uvW:wx"
-#define	ARGOPTS		"kMNOopUW"
+#define	GETOPTSTR	"aAcCdegG:hjk:LlM:mN:O:o:p:rSsTt:U:uvW:wx"
+#define	ARGOPTS		"GkMNOopUW"
 
 struct varlist displaylist = SIMPLEQ_HEAD_INITIALIZER(displaylist);
 struct varlist sortlist = SIMPLEQ_HEAD_INITIALIZER(sortlist);
@@ -253,6 +254,19 @@ main(int argc, char *argv[])
 			break;
 		case 'g':
 			break;			/* no-op */
+		case 'G':
+			if (*optarg != '\0') {
+				struct group *gr;
+				
+				what = KERN_PROC_GID;
+				gr = getgrnam(optarg);
+				if (gr == NULL) {
+					flag = parsenum(optarg, "group id");
+				} else
+					flag = gr->gr_gid;
+			}
+			break;
+
 		case 'h':
 			prtheader = ws.ws_row > 5 ? ws.ws_row : 22;
 			break;
@@ -338,7 +352,7 @@ main(int argc, char *argv[])
 				what = KERN_PROC_UID;
 				pw = getpwnam(optarg);
 				if (pw == NULL) {
-					flag = parsenum(optarg, "user name");
+					flag = parsenum(optarg, "user id");
 				} else
 					flag = pw->pw_uid;
 			}
@@ -944,8 +958,8 @@ usage(void)
 
 	(void)fprintf(stderr,
 	    "usage:\t%s\n\t   %s\n\t%s\n",
-	    "ps [-AaCcdehjlmrSsTuvwx] [-k key] [-M core] [-N system] [-O fmt]",
-	    "[-o fmt] [-p pid] [-t tty] [-U user] [-W swap]",
+	    "ps [-AaCcdehjlmrSsTuvwx] [-G group] [-k key] [-M core] [-N system]",
+	    "[-O fmt] [-o fmt] [-p pid] [-t tty] [-U user] [-W swap]",
 	    "ps -L");
 	exit(1);
 	/* NOTREACHED */
