@@ -85,7 +85,7 @@
 #define HAVE_UNISTD_H 1
 
 /* Define if -lz is available. */
-/* #undef HAVE_ZLIB */
+#define HAVE_ZLIB 1
 
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */
