@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_send.c,v 1.37 2018/03/04 07:39:45 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_send.c,v 1.38 2021/06/06 10:39:10 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -548,9 +548,10 @@ resend_pdu(ccb_t *ccb)
 	} else {
 		TAILQ_INSERT_TAIL(&conn->c_pdus_to_send, pdu, pdu_send_chain);
 	}
-	ccb_timeout_start(ccb, COMMAND_TIMEOUT);
 	cv_broadcast(&conn->c_conn_cv);
 	mutex_exit(&conn->c_lock);
+
+	ccb_timeout_start(ccb, COMMAND_TIMEOUT);
 }
 
 
