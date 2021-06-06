@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1055 2021/06/05 22:17:15 blymn Exp $
+# $NetBSD: mi,v 1.1056 2021/06/06 04:59:36 blymn Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3270,6 +3270,8 @@
 ./usr/tests/lib/libcurses/check_files/addnwstr1.chk		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/addnwstr2.chk		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/addstr.chk		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libcurses/check_files/addstr2.chk		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libcurses/check_files/addstr3.chk		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/addwstr1.chk		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/addwstr2.chk		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/addwstr3.chk		tests-lib-tests		compattestfile,atf
