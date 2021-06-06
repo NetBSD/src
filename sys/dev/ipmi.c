@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.5 2020/08/17 08:34:36 nonaka Exp $ */
+/*	$NetBSD: ipmi.c,v 1.6 2021/06/06 11:48:55 mlelstv Exp $ */
 
 /*
  * Copyright (c) 2019 Michael van Elst
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.5 2020/08/17 08:34:36 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.6 2021/06/06 11:48:55 mlelstv Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -238,7 +238,6 @@ static	int bmc_io_wait(struct ipmi_softc *, int, uint8_t, uint8_t, const char *)
 static	int bmc_io_wait_spin(struct ipmi_softc *, int, uint8_t, uint8_t);
 static	int bmc_io_wait_sleep(struct ipmi_softc *, int, uint8_t, uint8_t);
 
-static	void *bt_buildmsg(struct ipmi_softc *, int, int, int, const void *, int *);
 static	void *cmn_buildmsg(struct ipmi_softc *, int, int, int, const void *, int *);
 
 static	int getbits(uint8_t *, int, int);
@@ -268,6 +267,7 @@ static	int kcs_reset(struct ipmi_softc *);
 static	int kcs_sendmsg(struct ipmi_softc *, int, const uint8_t *);
 static	int kcs_recvmsg(struct ipmi_softc *, int, int *len, uint8_t *);
 
+static	void *bt_buildmsg(struct ipmi_softc *, int, int, int, const void *, int *);
 static	int bt_probe(struct ipmi_softc *);
 static	int bt_reset(struct ipmi_softc *);
 static	int bt_sendmsg(struct ipmi_softc *, int, const uint8_t *);
@@ -2034,6 +2034,7 @@ ipmi_thread(void *cookie)
 	if (sysmon_envsys_register(sc->sc_envsys)) {
 		aprint_error_dev(self, "unable to register with sysmon\n");
 		sysmon_envsys_destroy(sc->sc_envsys);
+		sc->sc_envsys = NULL;
 	}
 
 	/* initialize sensor list for thread */
@@ -2314,6 +2315,13 @@ ipmi_suspend(device_t dev, const pmf_qual_t *qual)
 static int
 ipmi_open(dev_t dev, int flag, int fmt, lwp_t *l)
 {
+	struct ipmi_softc *sc;
+	int unit;
+
+	unit = IPMIUNIT(dev);
+	if ((sc = device_lookup_private(&ipmi_cd, unit)) == NULL)
+		return (ENXIO);
+
 	return 0;
 }
 
