@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.143 2021/05/29 16:49:30 riastradh Exp $	*/
+/*	$NetBSD: xhci.c,v 1.144 2021/06/06 18:37:20 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.143 2021/05/29 16:49:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.144 2021/06/06 18:37:20 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2159,6 +2159,7 @@ xhci_close_pipe(struct usbd_pipe *pipe)
 	usb_syncmem(&xs->xs_dc_dma, 0, sc->sc_pgsz, BUS_DMASYNC_POSTREAD);
 
 	xhci_ring_free(sc, &xs->xs_xr[dci]);
+	xs->xs_xr[dci] = NULL;
 }
 
 /*
