@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2019/10/24 18:17:59 kamil Exp $
+#	$NetBSD: Makefile,v 1.7.6.1 2021/06/06 20:30:47 cjep Exp $
 
 .include <bsd.own.mk>
 
@@ -10,8 +10,8 @@ CPPFLAGS+=-I${XWININFODIR} -I${XWININFODIR}/../include -DICONV_CONST=''
 
 .PATH:	${XWININFODIR} ${XWININFODIR}/man
 
-LDADD+=	-lXmuu -lXt -lSM -lICE -lXext -lX11 -lxcb -lxcb-shape
-DPADD+=	${LIBXMUU} ${LIBXT} ${LIBSM} ${LIBICE} ${LIBXEXT} ${LIBX11} ${LIBXCB} ${LIBXCB_SHAPE}
+LDADD+=	${XLIBLDADD_XCB_SHAPE} ${XLIBLDADD_XMUU}
+DPADD+=	${XLIBDPADD_XCB_SHAPE} ${XLIBDPADD_XMUU}
 
 CWARNFLAGS.clang+=	-Wno-tautological-compare
 

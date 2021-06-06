@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.134 2021/02/16 10:00:27 hannken Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.134.4.1 2021/06/06 20:30:55 cjep Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.134 2021/02/16 10:00:27 hannken Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.134.4.1 2021/06/06 20:30:55 cjep Exp $");
 #endif
 #endif				/* not lint */
 
@@ -235,6 +235,8 @@ static struct uucred def_anon = {
 	0,
 	{ 0 }
 };
+static struct mountd_exports_list *mel_tab;
+static int mel_tab_len;
 
 int      opt_flags;
 static int	have_v6 = 1;
@@ -1207,6 +1209,18 @@ nextline:
 }
 
 /*
+ * Compare two export lists by path.
+ */
+static int
+mel_compare(const void *a, const void *b)
+{
+	const struct mountd_exports_list *mela = a;
+	const struct mountd_exports_list *melb = b;
+
+	return strcmp(mela->mel_path, melb->mel_path);
+}
+
+/*
  * Get the export list
  */
 /* ARGSUSED */
@@ -1216,7 +1230,7 @@ get_exportlist(int n)
 	struct exportlist *ep, *ep2;
 	struct grouplist *grp, *tgrp;
 	struct statvfs *fsp;
-	int num, i;
+	int i, j;
 	FILE *exp_file;
 
 
@@ -1243,20 +1257,14 @@ get_exportlist(int n)
 	 * And delete exports that are in the kernel for all local
 	 * file systems.
 	 */
-	num = getmntinfo(&fsp, MNT_NOWAIT);
-	for (i = 0; i < num; i++) {
-		struct mountd_exports_list mel;
-
-		/* Delete all entries from the export list. */
-		mel.mel_path = fsp->f_mntonname;
-		mel.mel_nexports = 0;
-		if (nfssvc(NFSSVC_SETEXPORTSLIST, &mel) == -1 &&
-		    errno != EOPNOTSUPP)
-			syslog(LOG_ERR, "Can't delete exports for %s (%m)",
-			    fsp->f_mntonname);
-
-		fsp++;
+	mel_tab_len = getmntinfo(&fsp, MNT_NOWAIT);
+	mel_tab = ecalloc(mel_tab_len, sizeof(*mel_tab));
+	for (i = 0; i < mel_tab_len; i++) {
+		mel_tab[i].mel_path = estrdup(fsp[i].f_mntonname);
+		mel_tab[i].mel_nexports = 0;
+		mel_tab[i].mel_exports = NULL;
 	}
+	qsort(mel_tab, mel_tab_len, sizeof(mel_tab[0]), mel_compare);
 
 	/*
 	 * Read in the exports file and build the list, calling
@@ -1278,6 +1286,30 @@ get_exportlist(int n)
 
 		(void)fclose(exp_file);
 	}
+
+	for (i = 0; i < mel_tab_len; i++) {
+		struct mountd_exports_list *mel = &mel_tab[i];
+
+		if (nfssvc(NFSSVC_REPLACEEXPORTSLIST, mel) == -1 &&
+		    (mel->mel_nexports > 0 || errno != EOPNOTSUPP))
+			syslog(LOG_ERR, "Can't update exports for %s (%m)",
+			    mel_tab[i].mel_path);
+		for (j = 0; j < (int)mel->mel_nexports; j++) {
+			struct export_args *export = &mel->mel_exports[j];
+
+			if (export->ex_indexfile)
+				free(export->ex_indexfile);
+			if (export->ex_addr)
+				free(export->ex_addr);
+			if (export->ex_mask)
+				free(export->ex_mask);
+		}
+		if (mel->mel_nexports > 0)
+			free(mel->mel_exports);
+		free(__UNCONST(mel->mel_path));
+	}
+	free(mel_tab);
+	mel_tab_len = 0;
 }
 
 /*
@@ -1918,6 +1950,48 @@ get_ht(void)
 	return (hp);
 }
 
+static int
+add_export_arg(const char *path, int exflags, struct uucred *anoncrp,
+    struct sockaddr *addrp, int addrlen, struct sockaddr *maskp, int masklen,
+    char *indexfile)
+{
+	const struct mountd_exports_list mel_key = { .mel_path = path };
+	struct mountd_exports_list *mel;
+	struct export_args *export;
+
+	if (addrp != NULL && addrp->sa_family == AF_INET6 && have_v6 == 0)
+		return 0;
+
+	mel = bsearch(&mel_key, mel_tab, mel_tab_len, sizeof(mel_tab[0]),
+	    mel_compare);
+	if (mel == NULL) {
+		syslog(LOG_ERR, "Can't change attributes for %s: not found",
+		    path);
+		return 1;
+	}
+	ereallocarr(&mel->mel_exports, mel->mel_nexports + 1,
+	    sizeof(*mel->mel_exports));
+	export = &mel->mel_exports[mel->mel_nexports++];
+	memset(export, 0, sizeof(*export));
+
+	export->ex_flags = exflags;
+	export->ex_anon = *anoncrp;
+	if (indexfile)
+		export->ex_indexfile = estrdup(indexfile);
+	if (addrlen > 0) {
+		export->ex_addr = emalloc(addrlen);
+		export->ex_addrlen = addrlen;
+		memcpy(export->ex_addr, addrp, addrlen);
+	}
+	if (masklen > 0) {
+		export->ex_mask = emalloc(masklen);
+		export->ex_masklen = masklen;
+		memcpy(export->ex_mask, maskp, masklen);
+	}
+
+	return 0;
+}
+
 /*
  * Do the nfssvc syscall to push the export info into the kernel.
  */
@@ -1930,92 +2004,37 @@ do_nfssvc(const char *line, size_t lineno, struct exportlist *ep,
 	struct sockaddr_storage ss;
 	struct addrinfo *ai;
 	int addrlen;
-	int done;
-	struct export_args export;
 
-	export.ex_flags = exflags;
-	export.ex_anon = *anoncrp;
-	export.ex_indexfile = ep->ex_indexfile;
 	if (grp->gr_type == GT_HOST) {
-		ai = grp->gr_ptr.gt_addrinfo;
-		addrp = ai->ai_addr;
-		addrlen = ai->ai_addrlen;
-	} else {
-		addrp = NULL;
-		ai = NULL;	/* XXXGCC -Wuninitialized */
-		addrlen = 0;	/* XXXGCC -Wuninitialized */
-	}
-	done = FALSE;
-	while (!done) {
-		struct mountd_exports_list mel;
-
-		switch (grp->gr_type) {
-		case GT_HOST:
-			if (addrp != NULL && addrp->sa_family == AF_INET6 &&
-			    have_v6 == 0)
-				goto skip;
-			export.ex_addr = addrp;
-			export.ex_addrlen = addrlen;
-			export.ex_masklen = 0;
-			break;
-		case GT_NET:
-			export.ex_addr = (struct sockaddr *)
-			    &grp->gr_ptr.gt_net.nt_net;
-			if (export.ex_addr->sa_family == AF_INET6 &&
-			    have_v6 == 0)
-				goto skip;
-			export.ex_addrlen = export.ex_addr->sa_len;
-			memset(&ss, 0, sizeof ss);
-			ss.ss_family = export.ex_addr->sa_family;
-			ss.ss_len = export.ex_addr->sa_len;
-			if (allones(&ss, grp->gr_ptr.gt_net.nt_len) != 0) {
-				syslog(LOG_ERR,
-				    "\"%s\", line %ld: Bad network flag",
-				    line, (unsigned long)lineno);
-				return (1);
-			}
-			export.ex_mask = (struct sockaddr *)&ss;
-			export.ex_masklen = ss.ss_len;
-			break;
-		default:
-			syslog(LOG_ERR, "\"%s\", line %ld: Bad netgroup type",
-			    line, (unsigned long)lineno);
-			return (1);
-		};
-
-		/*
-		 * XXX:
-		 * Maybe I should just use the fsb->f_mntonname path?
-		 */
-
-		mel.mel_path = dirp;
-		mel.mel_nexports = 1;
-		mel.mel_exports = &export;
-
-		if (nfssvc(NFSSVC_SETEXPORTSLIST, &mel) != 0) {
-			syslog(LOG_ERR,
-	    "\"%s\", line %ld: Can't change attributes for %s to %s: %m",
-			    line, (unsigned long)lineno,
-			    dirp, (grp->gr_type == GT_HOST) ?
-			    grp->gr_ptr.gt_addrinfo->ai_canonname :
-			    (grp->gr_type == GT_NET) ?
-			    grp->gr_ptr.gt_net.nt_name :
-			    "Unknown");
-			return (1);
+		for (ai = grp->gr_ptr.gt_addrinfo; ai; ai = ai->ai_next) {
+			addrp = ai->ai_addr;
+			addrlen = ai->ai_addrlen;
+			if (add_export_arg(fsb->f_mntonname, exflags, anoncrp,
+			    addrp, addrlen, NULL, 0, ep->ex_indexfile) != 0)
+				return 1;
 		}
-skip:
-		if (addrp) {
-			ai = ai->ai_next;
-			if (ai == NULL)
-				done = TRUE;
-			else {
-				addrp = ai->ai_addr;
-				addrlen = ai->ai_addrlen;
-			}
-		} else
-			done = TRUE;
+	} else if (grp->gr_type == GT_NET) {
+		addrp = (struct sockaddr *)&grp->gr_ptr.gt_net.nt_net;
+		addrlen = addrp->sa_len;
+		memset(&ss, 0, sizeof ss);
+		ss.ss_family = addrp->sa_family;
+		ss.ss_len = addrp->sa_len;
+		if (allones(&ss, grp->gr_ptr.gt_net.nt_len) != 0) {
+			syslog(LOG_ERR, "\"%s\", line %ld: Bad network flag",
+			    line, (unsigned long)lineno);
+			return 1;
+		}
+		if (add_export_arg(fsb->f_mntonname, exflags, anoncrp,
+		    addrp, addrlen, (struct sockaddr *)&ss, ss.ss_len,
+		    ep->ex_indexfile) != 0)
+			return 1;
+	} else {
+		syslog(LOG_ERR, "\"%s\", line %ld: Bad netgroup type",
+		    line, (unsigned long)lineno);
+		return 1;
 	}
-	return (0);
+
+	return 0;
 }
 
 /*

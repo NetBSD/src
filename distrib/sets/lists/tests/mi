@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1054 2021/05/25 19:22:18 rillig Exp $
+# $NetBSD: mi,v 1.1054.2.1 2021/06/06 20:30:44 cjep Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3270,6 +3270,8 @@
 ./usr/tests/lib/libcurses/check_files/addnwstr1.chk		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/addnwstr2.chk		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/addstr.chk		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libcurses/check_files/addstr2.chk		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libcurses/check_files/addstr3.chk		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/addwstr1.chk		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/addwstr2.chk		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/addwstr3.chk		tests-lib-tests		compattestfile,atf
@@ -3290,6 +3292,7 @@
 ./usr/tests/lib/libcurses/check_files/chgat1.chk		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/chgat2.chk		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/chgat3.chk		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libcurses/check_files/clear0.chk		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/clear1.chk		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/clear10.chk		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/clear2.chk		tests-lib-tests		compattestfile,atf

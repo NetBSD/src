@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2017/01/04 15:44:06 christos Exp $
+#	$NetBSD: Makefile,v 1.6.22.1 2021/06/06 20:30:46 cjep Exp $
 
 .include <bsd.own.mk>
 
@@ -9,8 +9,8 @@ SRCS=	buttonmap.c feedback.c hierarchy.c list.c property.c setcp.c setint.c \
 CPPFLAGS+=	-DVERSION='"1.6.2"'
 CPPFLAGS+=	-DHAVE_XI2 -DHAVE_XI22
 
-LDADD+=	-lXi -lX11 -lXrandr -lXinerama -lm
-DPADD+=	${LIBXI} ${LIBM}
+LDADD+=	${XLIBLDADD_XI} ${XLIBLDADD_XRANDR} -lXinerama -lm
+DPADD+=	${XLIBDPADD_XI} ${XLIBDPADD_XRANDR} ${LIBXINERAMA} ${LIBM}
 .PATH:	${X11SRCDIR.${PROG}}/src
 .PATH:	${X11SRCDIR.${PROG}}/man
 

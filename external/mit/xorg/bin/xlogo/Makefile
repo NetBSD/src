@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2018/05/09 08:39:55 mrg Exp $
+#	$NetBSD: Makefile,v 1.4.10.1 2021/06/06 20:30:47 cjep Exp $
 
 .include <bsd.own.mk>
 
@@ -10,11 +10,8 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/freetype2/freetype
 
 APPDEFS=XLogo XLogo-color
 
-LDADD+=	-lXft -lfontconfig -lfreetype -lexpat -lXrender
-DPADD+=	${LIBXFT} ${LIBFONTCONFIG} ${LIBFREETYPE} ${LIBEXPAT} ${LIBXRENDER}
-LDADD+=	-lXaw -lXmu -lXt -lSM -lICE -lXpm -lXext -lX11 -lm
-DPADD+= ${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} \
-	${LIBXPM} ${LIBXEXT} ${LIBX11} ${LIBM}
+LDADD+=	${XLIBLDADD_XFT} ${XLIBLDADD_XAW} -lm
+DPADD+=	${XLIBDPADD_XFT} ${XLIBDPADD_XAW} ${LIBM}
 
 .PATH:	${X11SRCDIR.${PROG}} ${X11SRCDIR.${PROG}}/app-defaults
 .PATH:	${X11SRCDIR.${PROG}}/man

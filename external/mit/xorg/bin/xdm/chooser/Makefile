@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2021/04/26 22:04:51 mrg Exp $
+#	$NetBSD: Makefile,v 1.6.4.1 2021/06/06 20:30:46 cjep Exp $
 
 NOMAN=	1
 
@@ -11,9 +11,8 @@ CPPFLAGS+=	-D_CONST_X_STRING=1
 
 APPDEFS=Chooser
 
-LDADD+=	-lXaw -lXmu -lXt -lSM -lICE -lXpm -lXext -lX11 -lXdmcp -lXinerama
-DPADD+=	${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} \
-	${LIBXPM} ${LIBXEXT} ${LIBX11} ${LIBXDMCP} ${LIBXINERAMA}
+LDADD+=	${XLIBLDADD_XAW} ${XLIBLDADD_XPM} -lXinerama
+DPADD+=	${XLIDDPADD_XAW} ${XLIBDPADD_XPM} ${LIBXINERAMA}
 
 .include "../Makefile.xdm"
 

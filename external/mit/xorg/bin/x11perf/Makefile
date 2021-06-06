@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2018/05/09 08:39:55 mrg Exp $
+#	$NetBSD: Makefile,v 1.4.10.1 2021/06/06 20:30:45 cjep Exp $
 
 .include <bsd.own.mk>
 
@@ -27,10 +27,12 @@ SCRIPTSDIR_perfratio.sh=${X11LIBDIR}/x11perfcomp
 
 CLEANFILES+=	x11perfcomp
 
-LDADD+=	-lXft -lfontconfig -lfreetype -lexpat -lXrender
-DPADD+=	${LIBXFT} ${LIBFONTCONFIG} ${LIBFREETYPE} ${LIBEXPAT} ${LIBXRENDER}
-LDADD+=	-lXmuu -lXt -lSM -lICE -lXext -lX11 -lm
-DPADD+=	${LIBXMUU} ${LIBXT} ${LIBSM} ${LIBICE} ${LIBXEXT} ${LIBX11} ${LIBM}
+LDADD+=	-lXft ${XLIBLDADD_FC} -lexpat -lXrender
+DPADD+=	${LIBXFT} ${XLIBDPADD_FC} ${LIBEXPAT} ${LIBXRENDER}
+LDADD+=	${XLIBLDADD_XMUU}
+DPADD+=	${XLIBDPADD_XMUU} 
+LDADD+=	-lm
+DPADD+= ${LIBM}
 
 .PATH:	${X11SRCDIR.${PROG}}
 .PATH:	${X11SRCDIR.${PROG}}/man

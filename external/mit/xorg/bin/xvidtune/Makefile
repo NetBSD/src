@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2013/05/31 08:02:00 mrg Exp $
+#	$NetBSD: Makefile,v 1.4.36.1 2021/06/06 20:30:47 cjep Exp $
 
 .include <bsd.own.mk>
 
@@ -7,9 +7,8 @@ APPDEFS=	Xvidtune
 
 SRCS=	xvidtune.c
 
-LDADD+=	-lXxf86vm -lXaw -lXmu -lXt -lSM -lICE -lXpm -lXext -lX11
-DPADD+=	${LIBXXF86VM} ${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} \
-	${LIBXPM} ${LIBXEXT} ${LIBX11}
+LDADD+=	-lXxf86vm ${XLIBLDADD_XAW} # XXX
+DPADD+=	${LIBXXF86VM} ${XLIBDPADD_XAW}
 
 .PATH:	${X11SRCDIR.${PROG}} ${X11SRCDIR.${PROG}}/app-defaults
 .PATH:	${X11SRCDIR.${PROG}}/man

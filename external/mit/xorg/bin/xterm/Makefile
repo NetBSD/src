@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2021/04/27 02:11:55 mrg Exp $
+#	$NetBSD: Makefile,v 1.22.4.1 2021/06/06 20:30:47 cjep Exp $
 
 .include <bsd.own.mk>
 
@@ -33,12 +33,12 @@ BUILDSYMLINKS=	XTerm-col.ad XTerm-color.ad
 #CPPFLAGS+=-DOPT_TRACE
 #SRCS+=trace.c
 
-LDADD+=	-lXft -lfontconfig -lfreetype -lexpat -lXrender
-DPADD+=	${LIBXFT} ${LIBFONTCONFIG} ${LIBFREETYPE} ${LIBEXPAT} ${LIBXRENDER}
-LDADD+=	-lXaw -lXmu -lXt -lSM -lICE -lXinerama
-DPADD+=	${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} ${LIBXINERAMA}
-LDADD+=	-lXpm -lXext -lX11 -lcurses -lterminfo -lutil
-DPADD+=	${LIBXPM} ${LIBXEXT} ${LIBX11} ${LIBCURSES} ${LIBTERMINFO} ${LIBUTIL}
+LDADD+=	${XLIBLDADD_XFT} ${XLIBLDADD_XAW}
+DPADD+=	${XLIBDPADD_XFT} ${XLIBDPADD_XAW} 
+LDADD+=	-lXinerama
+DPADD+=	${LIBXINERAMA}
+LDADD+=	${XLIBLDADD_XPM} -lcurses -lterminfo -lutil
+DPADD+=	${XLIBDPADD_XPM} ${LIBCURSES} ${LIBTERMINFO} ${LIBUTIL}
 
 SUBDIR=	uxterm
 

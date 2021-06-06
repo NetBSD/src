@@ -6,10 +6,10 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
 /* Define to 1 if you have the `acosf' function. */
-/* #undef HAVE_ACOSF */
+#define HAVE_ACOSF 1
 
 /* Define to 1 if you have the `acosl' function. */
-/* #undef HAVE_ACOSL */
+#define HAVE_ACOSL 1
 
 /* Define to 1 if you have the `aligned_alloc' function. */
 #define HAVE_ALIGNED_ALLOC 1
@@ -18,25 +18,25 @@
 #define HAVE_ARPA_INET_H 1
 
 /* Define to 1 if you have the `asinf' function. */
-/* #undef HAVE_ASINF */
+#define HAVE_ASINF 1
 
 /* Define to 1 if you have the `asinl' function. */
-/* #undef HAVE_ASINL */
+#define HAVE_ASINL 1
 
 /* Define to 1 if the target assembler supports .symver directive. */
 #define HAVE_AS_SYMVER_DIRECTIVE 1
 
 /* Define to 1 if you have the `atan2f' function. */
-/* #undef HAVE_ATAN2F */
+#define HAVE_ATAN2F 1
 
 /* Define to 1 if you have the `atan2l' function. */
-/* #undef HAVE_ATAN2L */
+#define HAVE_ATAN2L 1
 
 /* Define to 1 if you have the `atanf' function. */
-/* #undef HAVE_ATANF */
+#define HAVE_ATANF 1
 
 /* Define to 1 if you have the `atanl' function. */
-/* #undef HAVE_ATANL */
+#define HAVE_ATANL 1
 
 /* Defined if shared_ptr reference counting should use atomic operations. */
 #define HAVE_ATOMIC_LOCK_POLICY 1
@@ -48,25 +48,25 @@
 /* #undef HAVE_CC_TLS */
 
 /* Define to 1 if you have the `ceilf' function. */
-/* #undef HAVE_CEILF */
+#define HAVE_CEILF 1
 
 /* Define to 1 if you have the `ceill' function. */
-/* #undef HAVE_CEILL */
+#define HAVE_CEILL 1
 
 /* Define to 1 if you have the <complex.h> header file. */
 #define HAVE_COMPLEX_H 1
 
 /* Define to 1 if you have the `cosf' function. */
-/* #undef HAVE_COSF */
+#define HAVE_COSF 1
 
 /* Define to 1 if you have the `coshf' function. */
-/* #undef HAVE_COSHF */
+#define HAVE_COSHF 1
 
 /* Define to 1 if you have the `coshl' function. */
-/* #undef HAVE_COSHL */
+#define HAVE_COSHL 1
 
 /* Define to 1 if you have the `cosl' function. */
-/* #undef HAVE_COSL */
+#define HAVE_COSL 1
 
 /* Define to 1 if you have the <dirent.h> header file. */
 #define HAVE_DIRENT_H 1
@@ -84,16 +84,16 @@
 #define HAVE_EXECINFO_H 1
 
 /* Define to 1 if you have the `expf' function. */
-/* #undef HAVE_EXPF */
+#define HAVE_EXPF 1
 
 /* Define to 1 if you have the `expl' function. */
-/* #undef HAVE_EXPL */
+#define HAVE_EXPL 1
 
 /* Define to 1 if you have the `fabsf' function. */
-/* #undef HAVE_FABSF */
+#define HAVE_FABSF 1
 
 /* Define to 1 if you have the `fabsl' function. */
-/* #undef HAVE_FABSL */
+#define HAVE_FABSL 1
 
 /* Define to 1 if you have the <fcntl.h> header file. */
 #define HAVE_FCNTL_H 1
@@ -102,10 +102,10 @@
 #define HAVE_FENV_H 1
 
 /* Define to 1 if you have the `finite' function. */
-/* #undef HAVE_FINITE */
+#define HAVE_FINITE 1
 
 /* Define to 1 if you have the `finitef' function. */
-/* #undef HAVE_FINITEF */
+#define HAVE_FINITEF 1
 
 /* Define to 1 if you have the `finitel' function. */
 /* #undef HAVE_FINITEL */
@@ -114,16 +114,16 @@
 #define HAVE_FLOAT_H 1
 
 /* Define to 1 if you have the `floorf' function. */
-/* #undef HAVE_FLOORF */
+#define HAVE_FLOORF 1
 
 /* Define to 1 if you have the `floorl' function. */
-/* #undef HAVE_FLOORL */
+#define HAVE_FLOORL 1
 
 /* Define to 1 if you have the `fmodf' function. */
-/* #undef HAVE_FMODF */
+#define HAVE_FMODF 1
 
 /* Define to 1 if you have the `fmodl' function. */
-/* #undef HAVE_FMODL */
+#define HAVE_FMODL 1
 
 /* Define to 1 if you have the `fpclass' function. */
 /* #undef HAVE_FPCLASS */
@@ -132,10 +132,10 @@
 /* #undef HAVE_FP_H */
 
 /* Define to 1 if you have the `frexpf' function. */
-/* #undef HAVE_FREXPF */
+#define HAVE_FREXPF 1
 
 /* Define to 1 if you have the `frexpl' function. */
-/* #undef HAVE_FREXPL */
+#define HAVE_FREXPL 1
 
 /* Define if _Unwind_GetIPInfo is available. */
 #define HAVE_GETIPINFO 1
@@ -144,13 +144,13 @@
 #define HAVE_GETS 1
 
 /* Define to 1 if you have the `hypot' function. */
-/* #undef HAVE_HYPOT */
+#define HAVE_HYPOT 1
 
 /* Define to 1 if you have the `hypotf' function. */
-/* #undef HAVE_HYPOTF */
+#define HAVE_HYPOTF 1
 
 /* Define to 1 if you have the `hypotl' function. */
-/* #undef HAVE_HYPOTL */
+#define HAVE_HYPOTL 1
 
 /* Define if you have the iconv() function. */
 #define HAVE_ICONV 1
@@ -174,7 +174,7 @@
 #define HAVE_ISINF 1
 
 /* Define to 1 if you have the `isinff' function. */
-/* #undef HAVE_ISINFF */
+#define HAVE_ISINFF 1
 
 /* Define to 1 if you have the `isinfl' function. */
 /* #undef HAVE_ISINFL */
@@ -183,7 +183,7 @@
 #define HAVE_ISNAN 1
 
 /* Define to 1 if you have the `isnanf' function. */
-/* #undef HAVE_ISNANF */
+#define HAVE_ISNANF 1
 
 /* Define to 1 if you have the `isnanl' function. */
 /* #undef HAVE_ISNANL */
@@ -195,10 +195,10 @@
 #define HAVE_LC_MESSAGES 1
 
 /* Define to 1 if you have the `ldexpf' function. */
-/* #undef HAVE_LDEXPF */
+#define HAVE_LDEXPF 1
 
 /* Define to 1 if you have the `ldexpl' function. */
-/* #undef HAVE_LDEXPL */
+#define HAVE_LDEXPL 1
 
 /* Define to 1 if you have the <libintl.h> header file. */
 /* #undef HAVE_LIBINTL_H */
@@ -219,7 +219,7 @@
 #define HAVE_LIMIT_VMEM 1
 
 /* Define if link is available in <unistd.h>. */
-/* #undef HAVE_LINK */
+#define HAVE_LINK 1
 
 /* Define if futex syscall is available. */
 /* #undef HAVE_LINUX_FUTEX */
@@ -234,16 +234,16 @@
 #define HAVE_LOCALE_H 1
 
 /* Define to 1 if you have the `log10f' function. */
-/* #undef HAVE_LOG10F */
+#define HAVE_LOG10F 1
 
 /* Define to 1 if you have the `log10l' function. */
-/* #undef HAVE_LOG10L */
+#define HAVE_LOG10L 1
 
 /* Define to 1 if you have the `logf' function. */
-/* #undef HAVE_LOGF */
+#define HAVE_LOGF 1
 
 /* Define to 1 if you have the `logl' function. */
-/* #undef HAVE_LOGL */
+#define HAVE_LOGL 1
 
 /* Define to 1 if you have the <machine/endian.h> header file. */
 #define HAVE_MACHINE_ENDIAN_H 1
@@ -264,10 +264,10 @@
 #define HAVE_MODF 1
 
 /* Define to 1 if you have the `modff' function. */
-/* #undef HAVE_MODFF */
+#define HAVE_MODFF 1
 
 /* Define to 1 if you have the `modfl' function. */
-/* #undef HAVE_MODFL */
+#define HAVE_MODFL 1
 
 /* Define to 1 if you have the <nan.h> header file. */
 /* #undef HAVE_NAN_H */
@@ -288,7 +288,7 @@
 /* #undef HAVE_OBSOLETE_ISNAN */
 
 /* Define if poll is available in <poll.h>. */
-/* #undef HAVE_POLL */
+#define HAVE_POLL 1
 
 /* Define to 1 if you have the <poll.h> header file. */
 #define HAVE_POLL_H 1
@@ -297,10 +297,10 @@
 #define HAVE_POSIX_MEMALIGN 1
 
 /* Define to 1 if you have the `powf' function. */
-/* #undef HAVE_POWF */
+#define HAVE_POWF 1
 
 /* Define to 1 if you have the `powl' function. */
-/* #undef HAVE_POWL */
+#define HAVE_POWL 1
 
 /* Define to 1 if you have the `qfpclass' function. */
 /* #undef HAVE_QFPCLASS */
@@ -309,7 +309,7 @@
 #define HAVE_QUICK_EXIT 1
 
 /* Define if readlink is available in <unistd.h>. */
-/* #undef HAVE_READLINK */
+#define HAVE_READLINK 1
 
 /* Define to 1 if you have the `setenv' function. */
 #define HAVE_SETENV 1
@@ -324,28 +324,28 @@
 /* #undef HAVE_SINCOSL */
 
 /* Define to 1 if you have the `sinf' function. */
-/* #undef HAVE_SINF */
+#define HAVE_SINF 1
 
 /* Define to 1 if you have the `sinhf' function. */
-/* #undef HAVE_SINHF */
+#define HAVE_SINHF 1
 
 /* Define to 1 if you have the `sinhl' function. */
-/* #undef HAVE_SINHL */
+#define HAVE_SINHL 1
 
 /* Define to 1 if you have the `sinl' function. */
-/* #undef HAVE_SINL */
+#define HAVE_SINL 1
 
 /* Defined if sleep exists. */
-#define HAVE_SLEEP 1
+/* #undef HAVE_SLEEP */
 
 /* Define to 1 if you have the `sockatmark' function. */
 #define HAVE_SOCKATMARK 1
 
 /* Define to 1 if you have the `sqrtf' function. */
-/* #undef HAVE_SQRTF */
+#define HAVE_SQRTF 1
 
 /* Define to 1 if you have the `sqrtl' function. */
-/* #undef HAVE_SQRTL */
+#define HAVE_SQRTL 1
 
 /* Define to 1 if you have the <stdalign.h> header file. */
 #define HAVE_STDALIGN_H 1
@@ -378,13 +378,13 @@
 #define HAVE_STRTOLD 1
 
 /* Define to 1 if `d_type' is a member of `struct dirent'. */
-/* #undef HAVE_STRUCT_DIRENT_D_TYPE */
+#define HAVE_STRUCT_DIRENT_D_TYPE 1
 
 /* Define if strxfrm_l is available in <string.h>. */
 /* #undef HAVE_STRXFRM_L */
 
 /* Define if symlink is available in <unistd.h>. */
-/* #undef HAVE_SYMLINK */
+#define HAVE_SYMLINK 1
 
 /* Define to 1 if the target runtime linker supports binding the same symbol
    to different versions. */
@@ -442,19 +442,19 @@
 /* #undef HAVE_S_IFREG */
 
 /* Define if S_ISREG is available in <sys/stat.h>. */
-/* #undef HAVE_S_ISREG */
+#define HAVE_S_ISREG 1
 
 /* Define to 1 if you have the `tanf' function. */
-/* #undef HAVE_TANF */
+#define HAVE_TANF 1
 
 /* Define to 1 if you have the `tanhf' function. */
-/* #undef HAVE_TANHF */
+#define HAVE_TANHF 1
 
 /* Define to 1 if you have the `tanhl' function. */
-/* #undef HAVE_TANHL */
+#define HAVE_TANHL 1
 
 /* Define to 1 if you have the `tanl' function. */
-/* #undef HAVE_TANL */
+#define HAVE_TANL 1
 
 /* Define to 1 if you have the <tgmath.h> header file. */
 #define HAVE_TGMATH_H 1
@@ -466,7 +466,7 @@
 #define HAVE_TLS 1
 
 /* Define if truncate is available in <unistd.h>. */
-/* #undef HAVE_TRUNCATE */
+#define HAVE_TRUNCATE 1
 
 /* Define to 1 if you have the <uchar.h> header file. */
 /* #undef HAVE_UCHAR_H */
@@ -475,7 +475,7 @@
 #define HAVE_UNISTD_H 1
 
 /* Defined if usleep exists. */
-#define HAVE_USLEEP 1
+/* #undef HAVE_USLEEP */
 
 /* Define to 1 if you have the <utime.h> header file. */
 #define HAVE_UTIME_H 1
@@ -502,7 +502,7 @@
 /* #undef HAVE_WIN32_SLEEP */
 
 /* Define if writev is available in <sys/uio.h>. */
-/* #undef HAVE_WRITEV */
+#define HAVE_WRITEV 1
 
 /* Define to 1 if you have the `_acosf' function. */
 /* #undef HAVE__ACOSF */
@@ -901,10 +901,10 @@
 /* #undef _GLIBCXX_USE_CLOCK_GETTIME_SYSCALL */
 
 /* Defined if clock_gettime has monotonic clock support. */
-/* #undef _GLIBCXX_USE_CLOCK_MONOTONIC */
+#define _GLIBCXX_USE_CLOCK_MONOTONIC 1
 
 /* Defined if clock_gettime has realtime clock support. */
-/* #undef _GLIBCXX_USE_CLOCK_REALTIME */
+#define _GLIBCXX_USE_CLOCK_REALTIME 1
 
 /* Define if ISO/IEC TR 24733 decimal floating point types are supported on
    this host. */
@@ -915,13 +915,13 @@
 #define _GLIBCXX_USE_DEV_RANDOM 1
 
 /* Define if fchmod is available in <sys/stat.h>. */
-/* #undef _GLIBCXX_USE_FCHMOD */
+#define _GLIBCXX_USE_FCHMOD 1
 
 /* Define if fchmodat is available in <sys/stat.h>. */
-/* #undef _GLIBCXX_USE_FCHMODAT */
+#define _GLIBCXX_USE_FCHMODAT 1
 
 /* Defined if gettimeofday is available. */
-/* #undef _GLIBCXX_USE_GETTIMEOFDAY */
+#define _GLIBCXX_USE_GETTIMEOFDAY 1
 
 /* Define if get_nprocs is available in <sys/sysinfo.h>. */
 /* #undef _GLIBCXX_USE_GET_NPROCS */
@@ -936,10 +936,10 @@
 #define _GLIBCXX_USE_LONG_LONG 1
 
 /* Define if lstat is available in <sys/stat.h>. */
-/* #undef _GLIBCXX_USE_LSTAT */
+#define _GLIBCXX_USE_LSTAT 1
 
 /* Defined if nanosleep is available. */
-/* #undef _GLIBCXX_USE_NANOSLEEP */
+#define _GLIBCXX_USE_NANOSLEEP 1
 
 /* Define if NLS translations are to be used. */
 /* #undef _GLIBCXX_USE_NLS */
@@ -971,7 +971,7 @@
 #define _GLIBCXX_USE_SCHED_YIELD 1
 
 /* Define if _SC_NPROCESSORS_ONLN is available in <unistd.h>. */
-/* #undef _GLIBCXX_USE_SC_NPROCESSORS_ONLN */
+#define _GLIBCXX_USE_SC_NPROCESSORS_ONLN 1
 
 /* Define if _SC_NPROC_ONLN is available in <unistd.h>. */
 /* #undef _GLIBCXX_USE_SC_NPROC_ONLN */
@@ -980,20 +980,20 @@
 /* #undef _GLIBCXX_USE_SENDFILE */
 
 /* Define if struct stat has timespec members. */
-/* #undef _GLIBCXX_USE_ST_MTIM */
+#define _GLIBCXX_USE_ST_MTIM 1
 
 /* Define if sysctl(), CTL_HW and HW_NCPU are available in <sys/sysctl.h>. */
-/* #undef _GLIBCXX_USE_SYSCTL_HW_NCPU */
+#define _GLIBCXX_USE_SYSCTL_HW_NCPU 1
 
 /* Define if obsolescent tmpnam is available in <stdio.h>. */
-/* #undef _GLIBCXX_USE_TMPNAM */
+#define _GLIBCXX_USE_TMPNAM 1
 
 /* Define if utime is available in <utime.h>. */
-/* #undef _GLIBCXX_USE_UTIME */
+#define _GLIBCXX_USE_UTIME 1
 
 /* Define if utimensat and UTIME_OMIT are available in <sys/stat.h> and
    AT_FDCWD in <fcntl.h>. */
-/* #undef _GLIBCXX_USE_UTIMENSAT */
+#define _GLIBCXX_USE_UTIMENSAT 1
 
 /* Define if code specialized for wchar_t should be used. */
 #define _GLIBCXX_USE_WCHAR_T 1
