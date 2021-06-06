@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2021/06/05 06:11:09 blymn Exp $
+# $NetBSD: Makefile,v 1.7 2021/06/06 04:57:58 blymn Exp $
 
 NOMAN=		# defined
 
@@ -21,6 +21,8 @@ FILES+=		addnstr.chk
 FILES+=		addnwstr1.chk
 FILES+=		addnwstr2.chk
 FILES+=		addstr.chk
+FILES+=		addstr2.chk
+FILES+=		addstr3.chk
 FILES+=		addwstr1.chk
 FILES+=		addwstr2.chk
 FILES+=		addwstr3.chk
