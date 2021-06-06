@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_main.c,v 1.35 2021/04/24 23:36:56 thorpej Exp $	*/
+/*	$NetBSD: iscsi_main.c,v 1.36 2021/06/06 10:40:14 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -87,8 +87,15 @@ static int iscsiclose(struct file *);
 
 static const struct fileops iscsi_fileops = {
 	.fo_name = "iscsi",
+	.fo_read = fbadop_read,
+	.fo_write = fbadop_write,
 	.fo_ioctl = iscsiioctl,
+	.fo_fcntl = fnullop_fcntl,
+	.fo_poll = fnullop_poll,
+	.fo_stat = fbadop_stat,
 	.fo_close = iscsiclose,
+	.fo_kqfilter = fnullop_kqfilter,
+	.fo_restart = fnullop_restart
 };
 
 struct cdevsw iscsi_cdevsw = {
@@ -166,14 +173,11 @@ iscsiclose(struct file *fp)
 	struct iscsi_softc *sc;
 
 	sc = device_lookup_private(&iscsi_cd, d->fd_unit);
-	if (sc == NULL) {
-		DEBOUT(("%s: Cannot find private data\n",__func__));
-		return ENXIO;
+	if (sc != NULL) {
+		mutex_enter(&sc->lock);
+		TAILQ_REMOVE(&sc->fds, d, fd_link);
+		mutex_exit(&sc->lock);
 	}
-
-	mutex_enter(&sc->lock);
-	TAILQ_REMOVE(&sc->fds, d, fd_link);
-	mutex_exit(&sc->lock);
 
 	kmem_free(d, sizeof(*d));
 	fp->f_iscsi = NULL;
