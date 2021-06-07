@@ -997,12 +997,6 @@ ether_snprintf(char *buf, size_t len, const u_char *ap)
 	return buf;
 }
 
-static void
-ether_link_state_changed(struct ifnet *ifp, int link_state)
-{
-
-}
-
 /*
  * Perform common duties while attaching to interface list
  */
@@ -1017,7 +1011,6 @@ ether_ifattach(struct ifnet *ifp, const uint8_t *lla)
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_output = ether_output;
 	ifp->_if_input = ether_input;
-	ifp->if_link_state_changed = ether_link_state_changed;
 	if (ifp->if_baudrate == 0)
 		ifp->if_baudrate = IF_Mbps(10);		/* just a default */
 
