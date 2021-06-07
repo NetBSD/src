@@ -31,9 +31,9 @@
 #include <string.h>
 
 /*
- * Not supported on hppa or on arm with oabi
+ * Not supported on hppa
  */
-#if !defined(__hppa__) && !(defined(__arm__) && !defined(__ARM_EABI__))
+#if !defined(__hppa__)
 
 static long long
 ifunc1(void)

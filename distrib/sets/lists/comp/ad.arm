@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.106 2021/05/30 01:56:45 joerg Exp $
+# $NetBSD: ad.arm,v 1.107 2021/06/07 17:11:17 christos Exp $
 ./usr/bin/elf2aout				comp-sysutil-bin
 ./usr/include/acorn26				comp-obsolete		obsolete
 ./usr/include/acorn26/ansi.h			comp-obsolete		obsolete
@@ -717,9 +717,9 @@
 ./usr/lib/libc_vfp_p.a				comp-c-lib		profile,softfloat
 ./usr/lib/libpmc.a				comp-obsolete		obsolete
 ./usr/lib/libpmc_p.a				comp-obsolete		obsolete
-./usr/lib/oabi/libc_vfp.a			comp-c-lib		compat
-./usr/lib/oabi/libc_vfp.so			base-sys-shlib		compat,pic
-./usr/lib/oabi/libc_vfp_p.a			comp-c-proflib		compat,profile
+./usr/lib/oabi/libc_vfp.a			comp-obsolete		obsolete
+./usr/lib/oabi/libc_vfp.so			base-obsolete		obsolete
+./usr/lib/oabi/libc_vfp_p.a			comp-obsolete		obsolete
 ./usr/libdata/ldscripts/armelf.x		comp-util-bin		binutils
 ./usr/libdata/ldscripts/armelf.xbn		comp-util-bin		binutils
 ./usr/libdata/ldscripts/armelf.xc		comp-util-bin		binutils
