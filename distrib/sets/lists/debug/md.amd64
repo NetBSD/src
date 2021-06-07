@@ -1,4 +1,5 @@
-# $NetBSD: md.amd64,v 1.113 2020/10/16 11:09:32 rin Exp $
+# $NetBSD: md.amd64,v 1.114 2021/06/07 14:24:42 christos Exp $
+./usr/libdata/debug/usr/bin/gdbserver.debug	base-util-debug		debug
 ./usr/lib/i386/12.202++_g.a			comp-c-debuglib		debuglib,compat,12.202xx
 ./usr/lib/i386/libi386_g.a			comp-c-debuglib		debuglib,compat
 ./usr/lib/i386/libiberty_g.a			comp-obsolete		obsolete
