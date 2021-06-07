@@ -1,4 +1,4 @@
-.\" $NetBSD: mount_chfs.8,v 1.4 2016/09/12 00:38:42 sevan Exp $
+.\" $NetBSD: mount_chfs.8,v 1.5 2021/06/07 21:44:35 dholland Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 12, 2016
+.Dd June 7, 2021
 .Dt MOUNT_CHFS 8
 .Os
 .Sh NAME
@@ -41,6 +41,21 @@ For regular block devices like SSD drives or USB drives,
 please use a regular file system.
 The file system will be created during the first mount.
 CHFS stands for Chip File System.
+.Pp
+This command is normally executed by
+.Xr mount 8
+at boot time.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl o
+Options are specified with a
+.Fl o
+flag followed by a comma-separated string of options.
+See the
+.Xr mount 8
+man page for possible options and their meanings.
+.El
 .Sh EXAMPLES
 .Dl mount_chfs /dev/flash0 /mnt
 .Sh SEE ALSO
