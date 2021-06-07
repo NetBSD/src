@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2018/12/30 08:51:21 mrg Exp $
+#	$NetBSD: Makefile,v 1.4.8.1 2021/06/07 09:46:46 cjep Exp $
 
 .include <bsd.own.mk>
 
@@ -13,8 +13,8 @@ CPPFLAGS+=	-DXFREE86_FT2 -I${DESTDIR}${X11INCDIR}/freetype2 \
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/fonts
 
 
-LDADD+=	-lfreetype -lfontenc -lz -lm
-DPADD+=	 ${LIBFREETYPE} ${LIBFONTENC} ${LIBZ} ${LIBM}
+LDADD+=	${XLIBLDADD_FNT} -lm
+DPADD+=	${XLIBDPADD_FNT} ${LIBM}
 
 .PATH:	${X11SRCDIR.${PROG}} ${X11SRCDIR.${PROG}}/man
 
