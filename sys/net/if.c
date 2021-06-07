@@ -2414,11 +2414,6 @@ if_link_state_change_process(struct ifnet *ifp, int link_state)
 	/* Notify that the link state has changed. */
 	rt_ifmsg(ifp);
 
-#if NCARP > 0
-	if (ifp->if_carp)
-		carp_carpdev_state(ifp);
-#endif
-
 	simplehook_dohooks(ifp->if_linkstate_hooks);
 
 	DOMAIN_FOREACH(dp) {
