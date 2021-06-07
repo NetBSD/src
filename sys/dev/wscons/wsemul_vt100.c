@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100.c,v 1.46 2019/11/10 21:16:38 chs Exp $ */
+/* $OpenBSD: wsemul_vt100.c,v 1.28 2011/08/04 04:18:42 miod Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.46 2019/11/10 21:16:38 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.47 2021/06/07 15:52:08 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_wsmsgattrs.h"
@@ -429,7 +429,13 @@ wsemul_vt100_output_c0c1(struct wsemul_vt100_emuldata *edp, u_char c,
 		/* ignore */
 		break;
 	case ASCII_BEL:
-		wsdisplay_emulbell(vd->cbcookie);
+		if (edp->state == VT100_EMUL_STATE_STRING) {
+			/* acts as an equivalent to the ``ESC \'' string end */
+			wsemul_vt100_handle_dcs(vd);
+			edp->state = VT100_EMUL_STATE_NORMAL;
+		} else {
+			wsdisplay_emulbell(vd->cbcookie);
+		}
 		break;
 	case ASCII_BS:
 		if (vd->ccol > 0) {
@@ -489,7 +495,7 @@ wsemul_vt100_output_c0c1(struct wsemul_vt100_emuldata *edp, u_char c,
 		break;
 	case ST: /* string end 8-bit */
 		/* XXX only in VT100_EMUL_STATE_STRING */
-		wsemul_vt100_handle_dcs(edp);
+		wsemul_vt100_handle_dcs(vd);
 		edp->state = VT100_EMUL_STATE_NORMAL;
 		break;
 #endif
