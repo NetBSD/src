@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.104 2021/05/23 07:17:50 thorpej Exp $	*/
+/*	$NetBSD: ping6.c,v 1.105 2021/06/07 22:13:34 dholland Exp $	*/
 /*	$KAME: ping6.c,v 1.164 2002/11/16 14:05:37 itojun Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.104 2021/05/23 07:17:50 thorpej Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.105 2021/06/07 22:13:34 dholland Exp $");
 #endif
 #endif
 
@@ -568,6 +568,10 @@ main(int argc, char *argv[])
 		}
 	} else
 		target = argv[argc - 1];
+
+	if ((options & F_PINGFILLED) != 0 && datalen <= (int)ICMP6ECHOTMLEN) {
+		warnx("-p: No fill space; increase packet size with -s");
+	}
 
 	/* getaddrinfo */
 	memset(&hints, 0, sizeof(struct addrinfo));
