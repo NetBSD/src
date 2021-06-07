@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.46 2021/05/30 01:56:45 joerg Exp $
+# $NetBSD: ad.aarch64,v 1.47 2021/06/07 17:11:17 christos Exp $
 ./usr/include/aarch64				comp-c-include
 ./usr/include/aarch64/ansi.h			comp-c-include
 ./usr/include/aarch64/aout_machdep.h		comp-c-include
@@ -176,14 +176,14 @@
 ./usr/lib/eabihf/libarm.so			base-sys-shlib		compat,pic,llvm
 ./usr/lib/eabihf/libarm_p.a			comp-c-proflib		compat,profile,llvm
 ./usr/lib/eabihf/libarm_pic.a			comp-c-piclib		compat,pic,picinstall,llvm
-./usr/lib/oabi/libarm.a				comp-c-lib		compat,llvm
-./usr/lib/oabi/libarm.so			base-sys-shlib		compat,pic,llvm
-./usr/lib/oabi/libarm_p.a			comp-c-proflib		compat,profile,llvm
-./usr/lib/oabi/libarm_pic.a			comp-c-piclib		compat,pic,picinstall,llvm
-./usr/lib/oabi/libc_vfp.a			comp-c-lib		compat,llvm
-./usr/lib/oabi/libc_vfp.so			base-sys-shlib		compat,pic,llvm
-./usr/lib/oabi/libc_vfp_p.a			comp-c-proflib		compat,profile,llvm
-./usr/lib/oabi/libc_vfp_pic.a			comp-c-piclib		compat,pic,picinstall,llvm
+./usr/lib/oabi/libarm.a				comp-obsolete		obsolete
+./usr/lib/oabi/libarm.so			base-obsolete		obsolete
+./usr/lib/oabi/libarm_p.a			comp-obsolete		obsolete
+./usr/lib/oabi/libarm_pic.a			comp-obsolete		obsolete
+./usr/lib/oabi/libc_vfp.a			comp-obsolete		obsolete
+./usr/lib/oabi/libc_vfp.so			base-obsolete		obsolete
+./usr/lib/oabi/libc_vfp_p.a			comp-obsolete		obsolete
+./usr/lib/oabi/libc_vfp_pic.a			comp-obsolete		obsolete
 ./usr/libdata/ldscripts/aarch64elf.x		comp-util-bin		binutils
 ./usr/libdata/ldscripts/aarch64elf.xbn		comp-util-bin		binutils
 ./usr/libdata/ldscripts/aarch64elf.xc		comp-util-bin		binutils
