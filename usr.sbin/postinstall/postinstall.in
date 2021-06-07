@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.38 2021/04/25 06:21:37 lukem Exp $
+# $NetBSD: postinstall.in,v 1.39 2021/06/07 05:29:22 mlelstv Exp $
 #
 # Copyright (c) 2002-2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -902,12 +902,12 @@ special_null
 		mkdir -p "${DEST_DIR}/etc/autofs"
 	fi
 	failed=$(( ${failed} + $? ))
-	populate_dir "$op" false "${SRC_DIR}/etc" \
+	populate_dir "$op" true "${SRC_DIR}/etc" \
 	    "${DEST_DIR}/etc" \
 	    644 \
 	    auto_master
 	failed=$(( ${failed} + $? ))
-	populate_dir "$op" false "${SRC_DIR}/etc/autofs" \
+	populate_dir "$op" true "${SRC_DIR}/etc/autofs" \
 	    "${DEST_DIR}/etc/autofs" \
 	    644 \
 	    ${autofs_files}
