@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100.c,v 1.28 2011/08/04 04:18:42 miod Exp $ */
+/*	$NetBSD: wsemul_vt100.c,v 1.48 2021/06/07 16:37:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.47 2021/06/07 15:52:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.48 2021/06/07 16:37:34 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_wsmsgattrs.h"
