@@ -83,7 +83,6 @@ struct vlanreq {
 #ifdef _KERNEL
 void	vlan_input(struct ifnet *, struct mbuf *);
 void	vlan_ifdetach(struct ifnet *);
-void	vlan_link_state_changed(struct ifnet *, int);
 
 /*
  * Locking notes:

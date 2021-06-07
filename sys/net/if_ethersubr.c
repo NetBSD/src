@@ -1000,12 +1000,7 @@ ether_snprintf(char *buf, size_t len, const u_char *ap)
 static void
 ether_link_state_changed(struct ifnet *ifp, int link_state)
 {
-#if NVLAN > 0
-	struct ethercom *ec = (void *)ifp;
 
-	if (ec->ec_nvlans)
-		vlan_link_state_changed(ifp, link_state);
-#endif
 }
 
 /*

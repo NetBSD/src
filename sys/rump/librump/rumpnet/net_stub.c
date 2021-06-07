@@ -75,7 +75,6 @@ __weak_alias(pppoedisc_input,rumpnet_stub);
 /* vlan */
 __weak_alias(vlan_input,rumpnet_stub);
 __weak_alias(vlan_ifdetach,rumpnet_stub);
-__weak_alias(vlan_link_state_changed,rumpnet_stub);
 
 /* ipsec */
 /* FIXME: should modularize netipsec and reduce reverse symbol references */
