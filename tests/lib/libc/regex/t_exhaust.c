@@ -1,4 +1,4 @@
-/*	$NetBSD: t_exhaust.c,v 1.10 2019/07/09 13:59:25 gson Exp $	*/
+/*	$NetBSD: t_exhaust.c,v 1.11 2021/06/07 11:45:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_exhaust.c,v 1.10 2019/07/09 13:59:25 gson Exp $");
+__RCSID("$NetBSD: t_exhaust.c,v 1.11 2021/06/07 11:45:35 christos Exp $");
 
 #include <sys/resource.h>
 #include <atf-c.h>
@@ -69,7 +69,7 @@ concat(const char *d, const char *s)
 	size_t slen = strlen(s);
 	char *p = malloc(dlen + slen + 1);
 
-	ATF_REQUIRE(p != NULL);
+	ATF_REQUIRE_MSG(p != NULL, "slen=%zu, dlen=%zu", slen, dlen);
 	strcpy(p, d);
 	strcpy(p + dlen, s);
 	return p;
