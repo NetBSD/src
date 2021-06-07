@@ -198,6 +198,8 @@ struct ethercom {
 	 * being added or removed.
 	 */
 	ether_vlancb_t				ec_vlan_cb;
+	/* Hooks called at the beginning of detach of this interface */
+	khook_list_t				*ec_ifdetach_hooks;
 	kmutex_t				*ec_lock;
 	/* Flags used only by the kernel */
 	int					ec_flags;
@@ -385,6 +387,10 @@ void	ether_ifattach(struct ifnet *, const uint8_t *);
 void	ether_ifdetach(struct ifnet *);
 int	ether_mediachange(struct ifnet *);
 void	ether_mediastatus(struct ifnet *, struct ifmediareq *);
+void *	ether_ifdetachhook_establish(struct ifnet *,
+	    void (*)(void *), void *arg);
+void	ether_ifdetachhook_disestablish(struct ifnet *,
+	    void *, kmutex_t *);
 
 char	*ether_sprintf(const uint8_t *);
 char	*ether_snprintf(char *, size_t, const uint8_t *);
