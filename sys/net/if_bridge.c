@@ -738,6 +738,10 @@ bridge_delete_member(struct bridge_softc *sc, struct bridge_iflist *bif)
 
 	PSLIST_WRITER_REMOVE(bif, bif_next);
 	BRIDGE_PSZ_PERFORM(sc);
+
+	if_linkstate_change_disestablish(ifs,
+	    bif->bif_linkstate_hook, BRIDGE_LOCK_OBJ(sc));
+
 	BRIDGE_UNLOCK(sc);
 
 	switch (ifs->if_type) {
@@ -796,9 +800,10 @@ bridge_calc_csum_flags(struct bridge_softc *sc)
  *
  *	Calculate the link state based on each member interface.
  */
-void
-bridge_calc_link_state(struct bridge_softc *sc)
+static void
+bridge_calc_link_state(void *xsc)
 {
+	struct bridge_softc *sc = xsc;
 	struct bridge_iflist *bif;
 	struct ifnet *ifs;
 	int link_state = LINK_STATE_DOWN;
@@ -889,6 +894,8 @@ bridge_ioctl_add(struct bridge_softc *sc, void *arg)
 	bif->bif_flags = IFBIF_LEARNING | IFBIF_DISCOVER;
 	bif->bif_priority = BSTP_DEFAULT_PORT_PRIORITY;
 	bif->bif_path_cost = BSTP_DEFAULT_PATH_COST;
+	bif->bif_linkstate_hook = if_linkstate_change_establish(ifs,
+	    bridge_calc_link_state, sc);
 	PSLIST_ENTRY_INIT(bif, bif_next);
 	psref_target_init(&bif->bif_psref, bridge_psref_class);
 

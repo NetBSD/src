@@ -62,7 +62,6 @@ rumpnet_stub(void)
 __weak_alias(bridge_ifdetach,rumpnet_stub);
 __weak_alias(bridge_output,rumpnet_stub);
 __weak_alias(bridge_calc_csum_flags,rumpnet_stub);
-__weak_alias(bridge_calc_link_state,rumpnet_stub);
 
 /* agr */
 __weak_alias(agr_input,rumpnet_stub);

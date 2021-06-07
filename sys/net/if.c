@@ -2429,11 +2429,6 @@ if_link_state_change_process(struct ifnet *ifp, int link_state)
 	if (ifp->if_link_state_changed != NULL)
 		ifp->if_link_state_changed(ifp, link_state);
 
-#if NBRIDGE > 0
-	if (ifp->if_bridge != NULL)
-		bridge_calc_link_state(ifp->if_bridge);
-#endif
-
 #if NLAGG > 0
 	if (ifp->if_lagg != NULL)
 		lagg_linkstate_changed(ifp);
