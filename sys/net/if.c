@@ -1218,8 +1218,6 @@ if_deactivate(struct ifnet *ifp)
 	ifp->if_slowtimo = if_nullslowtimo;
 	ifp->if_drain	 = if_nulldrain;
 
-	ifp->if_link_state_changed = NULL;
-
 	/* No more packets may be enqueued. */
 	ifp->if_snd.ifq_maxlen = 0;
 
@@ -2420,9 +2418,6 @@ if_link_state_change_process(struct ifnet *ifp, int link_state)
 	if (ifp->if_carp)
 		carp_carpdev_state(ifp);
 #endif
-
-	if (ifp->if_link_state_changed != NULL)
-		ifp->if_link_state_changed(ifp, link_state);
 
 	simplehook_dohooks(ifp->if_linkstate_hooks);
 
