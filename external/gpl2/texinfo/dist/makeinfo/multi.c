@@ -1,4 +1,4 @@
-/*	$NetBSD: multi.c,v 1.1.1.1 2016/01/14 00:11:29 christos Exp $	*/
+/*	$NetBSD: multi.c,v 1.2 2021/06/07 20:27:59 cjep Exp $	*/
 
 /* multi.c -- multiple-column tables (@multitable) for makeinfo.
    Id: multi.c,v 1.8 2004/04/11 17:56:47 karl Exp 
@@ -209,7 +209,7 @@ setup_multitable_parameters (void)
       params++;
 
     if (*params == '@') {
-      sscanf (params, "%200s", command);
+      sscanf (params, "%199s", command);
       nchars = strlen (command);
       params += nchars;
       if (strcmp (command, "@hsep") == 0)
@@ -432,8 +432,8 @@ output_multitable_row (void)
 
   /* remove trailing whitespace from each column */
   for (i = 1; i <= last_column; i++) {
-    if (envs[i].output_paragraph_offset)
-      while (cr_or_whitespace (CHAR_AT (envs[i].output_paragraph_offset - 1)))
+    while (envs[i].output_paragraph_offset &&
+      cr_or_whitespace (CHAR_AT (envs[i].output_paragraph_offset - 1)))
         envs[i].output_paragraph_offset--;
 
     if (i == current_env_no)
