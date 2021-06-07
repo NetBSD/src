@@ -68,6 +68,7 @@ struct lagg_port {
 	struct lagg_softc	*lp_softc;	/* parent lagg */
 	void			*lp_proto_ctx;
 	bool			 lp_detaching;
+	void			*lp_linkstate_hook;
 
 	uint32_t		 lp_prio;	/* port priority */
 	uint32_t		 lp_flags;	/* port flags */

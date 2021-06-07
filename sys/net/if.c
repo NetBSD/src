@@ -161,11 +161,6 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.485 2021/05/17 04:07:43 yamaguchi Exp $");
 #include <netinet/ip_carp.h>
 #endif
 
-#include "lagg.h"
-#if NLAGG > 0
-#include <net/lagg/if_laggvar.h>
-#endif
-
 #include <compat/sys/sockio.h>
 
 MALLOC_DEFINE(M_IFADDR, "ifaddr", "interface address");
@@ -2428,11 +2423,6 @@ if_link_state_change_process(struct ifnet *ifp, int link_state)
 
 	if (ifp->if_link_state_changed != NULL)
 		ifp->if_link_state_changed(ifp, link_state);
-
-#if NLAGG > 0
-	if (ifp->if_lagg != NULL)
-		lagg_linkstate_changed(ifp);
-#endif
 
 	simplehook_dohooks(ifp->if_linkstate_hooks);
 

@@ -110,7 +110,6 @@ __weak_alias(key_sp_unref,rumpnet_stub);
 /* lagg */
 __weak_alias(lagg_ifdetach,rumpnet_stub);
 __weak_alias(lagg_input_ethernet,rumpnet_stub);
-__weak_alias(lagg_linkstate_changed,rumpnet_stub);
 
 struct ifnet_head ifnet_list;
 struct pslist_head ifnet_pslist;
