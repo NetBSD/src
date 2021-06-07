@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.138.4.3 2021/06/06 20:30:49 cjep Exp $
+#	$NetBSD: bsd.x11.mk,v 1.138.4.4 2021/06/07 09:45:55 cjep Exp $
 
 .include <bsd.init.mk>
 
@@ -176,6 +176,9 @@ LDFLAGS+=		-Wl,-rpath,${X11USRLIBDIR} -L=${X11USRLIBDIR}
 #
 XLIBLDADD_XAU=	-lXau
 XLIBDPADD_XAU=	${LIBXAU}
+
+XLIBLDADD_FNT=	-lfreetype -lfontenc -lz 
+XLIBDPADD_FNT=	${LIBFREETYPE} ${LIBFONTENC} ${LIBZ}
 
 XLIBLDADD_FC=	-lfontconfig -lfreetype -lexpat -lz -lbz2
 XLIBDPADD_FC=	${LIBFONTCONFIG} ${LIBFREETYPE} ${LIBEXPAT} \
