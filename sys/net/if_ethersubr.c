@@ -1058,10 +1058,6 @@ ether_ifdetach(struct ifnet *ifp)
 	KASSERT(!simplehook_has_hooks(ec->ec_ifdetach_hooks));
 	simplehook_destroy(ec->ec_ifdetach_hooks);
 
-#if NBRIDGE > 0
-	if (ifp->if_bridge)
-		bridge_ifdetach(ifp);
-#endif
 	bpf_detach(ifp);
 #if NVLAN > 0
 	if (ec->ec_nvlans)

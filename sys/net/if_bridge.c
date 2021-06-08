@@ -243,6 +243,7 @@ static int	bridge_ioctl(struct ifnet *, u_long, void *);
 static int	bridge_init(struct ifnet *);
 static void	bridge_stop(struct ifnet *, int);
 static void	bridge_start(struct ifnet *);
+static void	bridge_ifdetach(void *);
 
 static void	bridge_input(struct ifnet *, struct mbuf *);
 static void	bridge_forward(struct bridge_softc *, struct mbuf *);
@@ -741,6 +742,8 @@ bridge_delete_member(struct bridge_softc *sc, struct bridge_iflist *bif)
 
 	if_linkstate_change_disestablish(ifs,
 	    bif->bif_linkstate_hook, BRIDGE_LOCK_OBJ(sc));
+	ether_ifdetachhook_disestablish(ifs,
+	    bif->bif_ifdetach_hook, BRIDGE_LOCK_OBJ(sc));
 
 	BRIDGE_UNLOCK(sc);
 
@@ -907,6 +910,9 @@ bridge_ioctl_add(struct bridge_softc *sc, void *arg)
 	ifs->_if_input = bridge_input;
 
 	BRIDGE_UNLOCK(sc);
+
+	bif->bif_ifdetach_hook = ether_ifdetachhook_establish(ifs,
+	    bridge_ifdetach, (void *)ifs);
 
 	bridge_calc_csum_flags(sc);
 	bridge_calc_link_state(sc);
@@ -1400,17 +1406,21 @@ bridge_ioctl_sifcost(struct bridge_softc *sc, void *arg)
  *	Detach an interface from a bridge.  Called when a member
  *	interface is detaching.
  */
-void
-bridge_ifdetach(struct ifnet *ifp)
+static void
+bridge_ifdetach(void *xifs)
 {
-	struct bridge_softc *sc = ifp->if_bridge;
+	struct ifnet *ifs;
+	struct bridge_softc *sc;
 	struct ifbreq breq;
+
+	ifs = (struct ifnet *)xifs;
+	sc = ifs->if_bridge;
 
 	/* ioctl_lock should prevent this from happening */
 	KASSERT(sc != NULL);
 
 	memset(&breq, 0, sizeof(breq));
-	strlcpy(breq.ifbr_ifsname, ifp->if_xname, sizeof(breq.ifbr_ifsname));
+	strlcpy(breq.ifbr_ifsname, ifs->if_xname, sizeof(breq.ifbr_ifsname));
 
 	(void) bridge_ioctl_del(sc, &breq);
 }

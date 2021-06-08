@@ -270,6 +270,7 @@ struct bridge_iflist {
 	uint32_t		bif_flags;	/* member if flags */
 	struct psref_target	bif_psref;
 	void *			*bif_linkstate_hook;
+	void *			*bif_ifdetach_hook;
 };
 
 /*
@@ -333,8 +334,6 @@ struct bridge_softc {
 };
 
 extern const uint8_t bstp_etheraddr[];
-
-void	bridge_ifdetach(struct ifnet *);
 
 int	bridge_output(struct ifnet *, struct mbuf *, const struct sockaddr *,
 	    const struct rtentry *);

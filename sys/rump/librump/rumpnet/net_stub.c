@@ -59,7 +59,6 @@ rumpnet_stub(void)
  */
 
 /* bridge */
-__weak_alias(bridge_ifdetach,rumpnet_stub);
 __weak_alias(bridge_output,rumpnet_stub);
 __weak_alias(bridge_calc_csum_flags,rumpnet_stub);
 
