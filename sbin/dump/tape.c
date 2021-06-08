@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.54.8.1 2019/03/29 19:43:28 martin Exp $	*/
+/*	$NetBSD: tape.c,v 1.54.8.2 2021/06/08 12:59:32 martin Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.4 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.54.8.1 2019/03/29 19:43:28 martin Exp $");
+__RCSID("$NetBSD: tape.c,v 1.54.8.2 2021/06/08 12:59:32 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -328,7 +328,8 @@ flushtape(void)
 	}
 
 	blks = 0;
-	if (iswap32(spcl.c_type) != TS_END) {
+	if (iswap32(spcl.c_type) == TS_INODE ||
+	    iswap32(spcl.c_type) == TS_ADDR) {
 		for (i = 0; i < iswap32(spcl.c_count); i++)
 			if (spcl.c_addr[i] != 0)
 				blks++;
