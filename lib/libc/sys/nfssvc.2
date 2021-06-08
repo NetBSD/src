@@ -1,4 +1,4 @@
-.\"	$NetBSD: nfssvc.2,v 1.24 2009/03/10 21:00:47 joerg Exp $
+.\"	$NetBSD: nfssvc.2,v 1.25 2021/06/08 10:02:04 hannken Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)nfssvc.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd December 30, 2006
+.Dd June 8, 2021
 .Dt NFSSVC 2
 .Os
 .Sh NAME
@@ -138,10 +138,10 @@ The
 server daemon calls
 .Fn nfssvc
 with the flag
-.Dv NFSSVC_SETEXPORTSLIST
+.Dv NFSSVC_REPLACEEXPORTSLIST
 and a pointer to a
 .Ft struct mountd_exports_list
-object to atomically change the exports lists of a specific file system.
+object to atomically replace the exports lists of a specific file system.
 This structure has the following fields:
 .Bl -tag -width ".Vt const char *mel_path"
 .It Vt const char *mel_path
