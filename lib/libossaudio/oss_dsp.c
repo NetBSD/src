@@ -1,4 +1,4 @@
-/*	$NetBSD: oss_dsp.c,v 1.1 2021/06/08 18:43:54 nia Exp $	*/
+/*	$NetBSD: oss_dsp.c,v 1.2 2021/06/08 19:26:48 nia Exp $	*/
 
 /*-
  * Copyright (c) 1997-2021 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: oss_dsp.c,v 1.1 2021/06/08 18:43:54 nia Exp $");
+__RCSID("$NetBSD: oss_dsp.c,v 1.2 2021/06/08 19:26:48 nia Exp $");
 
 #include <sys/audioio.h>
 #include <stdbool.h>
@@ -37,6 +37,9 @@ __RCSID("$NetBSD: oss_dsp.c,v 1.1 2021/06/08 18:43:54 nia Exp $");
 #define GETPRINFO(info, name)	\
 	(((info)->mode == AUMODE_RECORD) \
 	    ? (info)->record.name : (info)->play.name)
+
+static int encoding_to_format(u_int, u_int);
+static int format_to_encoding(int, struct audio_info *);
 
 static int get_vol(u_int, u_char);
 static void set_vol(int, int, bool);
@@ -54,8 +57,6 @@ _oss_dsp_ioctl(int fd, unsigned long com, void *argp)
 	struct count_info cntinfo;
 	struct audio_encoding tmpenc;
 	u_int u;
-	u_int encoding;
-	u_int precision;
 	int perrors, rerrors;
 	static int totalperrors = 0;
 	static int totalrerrors = 0;
@@ -173,82 +174,8 @@ _oss_dsp_ioctl(int fd, unsigned long com, void *argp)
 		break;
 	case SNDCTL_DSP_SETFMT:
 		AUDIO_INITINFO(&tmpinfo);
-		switch (INTARG) {
-		case AFMT_MU_LAW:
-			tmpinfo.play.precision =
-			tmpinfo.record.precision = 8;
-			tmpinfo.play.encoding =
-			tmpinfo.record.encoding = AUDIO_ENCODING_ULAW;
-			break;
-		case AFMT_A_LAW:
-			tmpinfo.play.precision =
-			tmpinfo.record.precision = 8;
-			tmpinfo.play.encoding =
-			tmpinfo.record.encoding = AUDIO_ENCODING_ALAW;
-			break;
-		case AFMT_U8:
-			tmpinfo.play.precision =
-			tmpinfo.record.precision = 8;
-			tmpinfo.play.encoding =
-			tmpinfo.record.encoding = AUDIO_ENCODING_ULINEAR;
-			break;
-		case AFMT_S8:
-			tmpinfo.play.precision =
-			tmpinfo.record.precision = 8;
-			tmpinfo.play.encoding =
-			tmpinfo.record.encoding = AUDIO_ENCODING_SLINEAR;
-			break;
-		case AFMT_S16_LE:
-			tmpinfo.play.precision =
-			tmpinfo.record.precision = 16;
-			tmpinfo.play.encoding =
-			tmpinfo.record.encoding = AUDIO_ENCODING_SLINEAR_LE;
-			break;
-		case AFMT_S16_BE:
-			tmpinfo.play.precision =
-			tmpinfo.record.precision = 16;
-			tmpinfo.play.encoding =
-			tmpinfo.record.encoding = AUDIO_ENCODING_SLINEAR_BE;
-			break;
-		case AFMT_U16_LE:
-			tmpinfo.play.precision =
-			tmpinfo.record.precision = 16;
-			tmpinfo.play.encoding =
-			tmpinfo.record.encoding = AUDIO_ENCODING_ULINEAR_LE;
-			break;
-		case AFMT_U16_BE:
-			tmpinfo.play.precision =
-			tmpinfo.record.precision = 16;
-			tmpinfo.play.encoding =
-			tmpinfo.record.encoding = AUDIO_ENCODING_ULINEAR_BE;
-			break;
-		/*
-		 * XXX: When the kernel supports 24-bit LPCM by default,
-		 * the 24-bit formats should be handled properly instead
-		 * of falling back to 32 bits.
-		 */
-		case AFMT_S24_PACKED:
-		case AFMT_S24_LE:
-		case AFMT_S32_LE:
-			tmpinfo.play.precision =
-			tmpinfo.record.precision = 32;
-			tmpinfo.play.encoding =
-			tmpinfo.record.encoding = AUDIO_ENCODING_SLINEAR_LE;
-			break;
-		case AFMT_S24_BE:
-		case AFMT_S32_BE:
-			tmpinfo.play.precision =
-			tmpinfo.record.precision = 32;
-			tmpinfo.play.encoding =
-			tmpinfo.record.encoding = AUDIO_ENCODING_SLINEAR_BE;
-			break;
-		case AFMT_AC3:
-			tmpinfo.play.precision =
-			tmpinfo.record.precision = 16;
-			tmpinfo.play.encoding =
-			tmpinfo.record.encoding = AUDIO_ENCODING_AC3;
-			break;
-		default:
+		retval = format_to_encoding(INTARG, &tmpinfo);
+		if (retval < 0) {
 			/*
 			 * OSSv4 specifies that if an invalid format is chosen
 			 * by an application then a sensible format supported
@@ -270,7 +197,6 @@ _oss_dsp_ioctl(int fd, unsigned long com, void *argp)
 			tmpinfo.record.precision =
 			    (tmpinfo.mode == AUMODE_RECORD) ?
 			    hwfmt.record.precision : hwfmt.play.precision ;
-			break;
 		}
 		/*
 		 * In the post-kernel-mixer world, assume that any error means
@@ -284,55 +210,17 @@ _oss_dsp_ioctl(int fd, unsigned long com, void *argp)
 		retval = ioctl(fd, AUDIO_GETBUFINFO, &tmpinfo);
 		if (retval < 0)
 			return retval;
-		encoding = GETPRINFO(&tmpinfo, encoding);
-		precision = GETPRINFO(&tmpinfo, precision);
-		switch (encoding) {
-		case AUDIO_ENCODING_ULAW:
-			idat = AFMT_MU_LAW;
-			break;
-		case AUDIO_ENCODING_ALAW:
-			idat = AFMT_A_LAW;
-			break;
-		case AUDIO_ENCODING_SLINEAR_LE:
-			if (precision == 32)
-				idat = AFMT_S32_LE;
-			else if (precision == 24)
-				idat = AFMT_S24_LE;
-			else if (precision == 16)
-				idat = AFMT_S16_LE;
-			else
-				idat = AFMT_S8;
-			break;
-		case AUDIO_ENCODING_SLINEAR_BE:
-			if (precision == 32)
-				idat = AFMT_S32_BE;
-			else if (precision == 24)
-				idat = AFMT_S24_BE;
-			else if (precision == 16)
-				idat = AFMT_S16_BE;
-			else
-				idat = AFMT_S8;
-			break;
-		case AUDIO_ENCODING_ULINEAR_LE:
-			if (precision == 16)
-				idat = AFMT_U16_LE;
-			else
-				idat = AFMT_U8;
-			break;
-		case AUDIO_ENCODING_ULINEAR_BE:
-			if (precision == 16)
-				idat = AFMT_U16_BE;
-			else
-				idat = AFMT_U8;
-			break;
-		case AUDIO_ENCODING_ADPCM:
-			idat = AFMT_IMA_ADPCM;
-			break;
-		case AUDIO_ENCODING_AC3:
-			idat = AFMT_AC3;
-			break;
+		if (tmpinfo.mode == AUMODE_RECORD)
+			retval = encoding_to_format(tmpinfo.record.encoding,
+			    tmpinfo.record.precision);
+		else
+			retval = encoding_to_format(tmpinfo.play.encoding,
+			    tmpinfo.play.precision);
+		if (retval < 0) {
+			errno = EINVAL;
+			return retval;
 		}
-		INTARG = idat;
+		INTARG = retval;
 		break;
 	case SNDCTL_DSP_CHANNELS:
 		retval = ioctl(fd, AUDIO_GETBUFINFO, &tmpinfo);
@@ -386,60 +274,10 @@ _oss_dsp_ioctl(int fd, unsigned long com, void *argp)
 		for(idat = 0, tmpenc.index = 0;
 		    ioctl(fd, AUDIO_GETENC, &tmpenc) == 0;
 		    tmpenc.index++) {
-			switch(tmpenc.encoding) {
-			case AUDIO_ENCODING_ULAW:
-				idat |= AFMT_MU_LAW;
-				break;
-			case AUDIO_ENCODING_ALAW:
-				idat |= AFMT_A_LAW;
-				break;
-			case AUDIO_ENCODING_SLINEAR:
-				idat |= AFMT_S8;
-				break;
-			case AUDIO_ENCODING_SLINEAR_LE:
-				if (tmpenc.precision == 32)
-					idat |= AFMT_S32_LE;
-				else if (tmpenc.precision == 24)
-					idat |= AFMT_S24_LE;
-				else if (tmpenc.precision == 16)
-					idat |= AFMT_S16_LE;
-				else
-					idat |= AFMT_S8;
-				break;
-			case AUDIO_ENCODING_SLINEAR_BE:
-				if (tmpenc.precision == 32)
-					idat |= AFMT_S32_BE;
-				else if (tmpenc.precision == 24)
-					idat |= AFMT_S24_BE;
-				else if (tmpenc.precision == 16)
-					idat |= AFMT_S16_BE;
-				else
-					idat |= AFMT_S8;
-				break;
-			case AUDIO_ENCODING_ULINEAR:
-				idat |= AFMT_U8;
-				break;
-			case AUDIO_ENCODING_ULINEAR_LE:
-				if (tmpenc.precision == 16)
-					idat |= AFMT_U16_LE;
-				else
-					idat |= AFMT_U8;
-				break;
-			case AUDIO_ENCODING_ULINEAR_BE:
-				if (tmpenc.precision == 16)
-					idat |= AFMT_U16_BE;
-				else
-					idat |= AFMT_U8;
-				break;
-			case AUDIO_ENCODING_ADPCM:
-				idat |= AFMT_IMA_ADPCM;
-				break;
-			case AUDIO_ENCODING_AC3:
-				idat |= AFMT_AC3;
-				break;
-			default:
-				break;
-			}
+			retval = encoding_to_format(tmpenc.encoding,
+			    tmpenc.precision);
+			if (retval != -1)
+				idat |= retval;
 		}
 		INTARG = idat;
 		break;
@@ -708,4 +546,140 @@ set_channels(int fd, int mode, int nchannels)
 			(void)ioctl(fd, AUDIO_SETINFO, &tmpinfo);
 		}
 	}
+}
+
+/* Convert a NetBSD "encoding" to a OSS "format". */
+static int
+encoding_to_format(u_int encoding, u_int precision)
+{
+	switch(encoding) {
+	case AUDIO_ENCODING_ULAW:
+		return AFMT_MU_LAW;
+	case AUDIO_ENCODING_ALAW:
+		return AFMT_A_LAW;
+	case AUDIO_ENCODING_SLINEAR:
+		if (precision == 32)
+			return AFMT_S32_NE;
+		else if (precision == 24)
+			return AFMT_S24_NE;
+		else if (precision == 16)
+			return AFMT_S16_NE;
+		return AFMT_S8;
+	case AUDIO_ENCODING_SLINEAR_LE:
+		if (precision == 32)
+			return AFMT_S32_LE;
+		else if (precision == 24)
+			return AFMT_S24_LE;
+		else if (precision == 16)
+			return AFMT_S16_LE;
+		return AFMT_S8;
+	case AUDIO_ENCODING_SLINEAR_BE:
+		if (precision == 32)
+			return AFMT_S32_BE;
+		else if (precision == 24)
+			return AFMT_S24_BE;
+		else if (precision == 16)
+			return AFMT_S16_BE;
+		return AFMT_S8;
+	case AUDIO_ENCODING_ULINEAR:
+		if (precision == 16)
+			return AFMT_U16_NE;
+		return AFMT_U8;
+	case AUDIO_ENCODING_ULINEAR_LE:
+		if (precision == 16)
+			return AFMT_U16_LE;
+		return AFMT_U8;
+	case AUDIO_ENCODING_ULINEAR_BE:
+		if (precision == 16)
+			return AFMT_U16_BE;
+		return AFMT_U8;
+	case AUDIO_ENCODING_ADPCM:
+		return AFMT_IMA_ADPCM;
+	case AUDIO_ENCODING_AC3:
+		return AFMT_AC3;
+	}
+	return -1;
+}
+
+/* Convert an OSS "format" to a NetBSD "encoding". */
+static int
+format_to_encoding(int fmt, struct audio_info *tmpinfo)
+{
+	switch (fmt) {
+	case AFMT_MU_LAW:
+		tmpinfo->record.precision =
+		tmpinfo->play.precision = 8;
+		tmpinfo->record.encoding =
+		tmpinfo->play.encoding = AUDIO_ENCODING_ULAW;
+		return 0;
+	case AFMT_A_LAW:
+		tmpinfo->record.precision =
+		tmpinfo->play.precision = 8;
+		tmpinfo->record.encoding =
+		tmpinfo->play.encoding = AUDIO_ENCODING_ALAW;
+		return 0;
+	case AFMT_U8:
+		tmpinfo->record.precision =
+		tmpinfo->play.precision = 8;
+		tmpinfo->record.encoding =
+		tmpinfo->play.encoding = AUDIO_ENCODING_ULINEAR;
+		return 0;
+	case AFMT_S8:
+		tmpinfo->record.precision =
+		tmpinfo->play.precision = 8;
+		tmpinfo->record.encoding =
+		tmpinfo->play.encoding = AUDIO_ENCODING_SLINEAR;
+		return 0;
+	case AFMT_S16_LE:
+		tmpinfo->record.precision =
+		tmpinfo->play.precision = 16;
+		tmpinfo->record.encoding =
+		tmpinfo->play.encoding = AUDIO_ENCODING_SLINEAR_LE;
+		return 0;
+	case AFMT_S16_BE:
+		tmpinfo->record.precision =
+		tmpinfo->play.precision = 16;
+		tmpinfo->record.encoding =
+		tmpinfo->play.encoding = AUDIO_ENCODING_SLINEAR_BE;
+		return 0;
+	case AFMT_U16_LE:
+		tmpinfo->record.precision =
+		tmpinfo->play.precision = 16;
+		tmpinfo->record.encoding =
+		tmpinfo->play.encoding = AUDIO_ENCODING_ULINEAR_LE;
+		return 0;
+	case AFMT_U16_BE:
+		tmpinfo->record.precision =
+		tmpinfo->play.precision = 16;
+		tmpinfo->record.encoding =
+		tmpinfo->play.encoding = AUDIO_ENCODING_ULINEAR_BE;
+		return 0;
+	/*
+	 * XXX: When the kernel supports 24-bit LPCM by default,
+	 * the 24-bit formats should be handled properly instead
+	 * of falling back to 32 bits.
+	 */
+	case AFMT_S24_PACKED:
+	case AFMT_S24_LE:
+	case AFMT_S32_LE:
+		tmpinfo->record.precision =
+		tmpinfo->play.precision = 32;
+		tmpinfo->record.encoding =
+		tmpinfo->play.encoding = AUDIO_ENCODING_SLINEAR_LE;
+		return 0;
+	case AFMT_S24_BE:
+	case AFMT_S32_BE:
+		tmpinfo->record.precision =
+		tmpinfo->play.precision = 32;
+		tmpinfo->record.encoding =
+		tmpinfo->play.encoding = AUDIO_ENCODING_SLINEAR_BE;
+		return 0;
+	case AFMT_AC3:
+		tmpinfo->record.precision =
+		tmpinfo->play.precision = 16;
+		tmpinfo->record.encoding =
+		tmpinfo->play.encoding = AUDIO_ENCODING_AC3;
+		return 0;
+	}
+	return -1;
 }
