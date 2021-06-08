@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.90 2021/06/05 10:58:28 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.91 2021/06/08 13:01:10 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -1948,4 +1948,9 @@ sys/dev/pci/if_iwmreg.h				1.8
 
 	iwm(4): fix various bit declarations - use unsigned for 2^32.
 	[nia, ticket #1682]
+
+sbin/dump/tape.c				1.56
+
+	dump(8): prevent crashes for large file systems.
+	[hannken, ticket #1683]
 
