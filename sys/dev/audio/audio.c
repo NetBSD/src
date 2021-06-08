@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.103 2021/06/04 08:57:05 riastradh Exp $	*/
+/*	$NetBSD: audio.c,v 1.104 2021/06/08 09:46:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.103 2021/06/04 08:57:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.104 2021/06/08 09:46:04 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -2255,20 +2255,10 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	af = kmem_zalloc(sizeof(*af), KM_SLEEP);
 	af->sc = sc;
 	af->dev = dev;
-	if (flags & FWRITE) {
-		if (!audio_can_playback(sc)) {
-			error = ENXIO;
-			goto bad;
-		}
+	if ((flags & FWRITE) != 0 && audio_can_playback(sc))
 		af->mode |= AUMODE_PLAY | AUMODE_PLAY_ALL;
-	}
-	if (flags & FREAD) {
-		if (!audio_can_capture(sc)) {
-			error = ENXIO;
-			goto bad;
-		}
+	if ((flags & FREAD) != 0 && audio_can_capture(sc))
 		af->mode |= AUMODE_RECORD;
-	}
 	if (af->mode == 0) {
 		error = ENXIO;
 		goto bad;
@@ -2821,7 +2811,8 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag,
 	int error;
 
 	track = file->ptrack;
-	KASSERT(track);
+	if (track == NULL)
+		return EPERM;
 
 	/* I think it's better than EINVAL. */
 	if (track->mmapped)
