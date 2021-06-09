@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfdesc.h,v 1.47 2020/06/11 13:36:20 roy Exp $	*/
+/*	$NetBSD: bpfdesc.h,v 1.48 2021/06/09 15:44:15 martin Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -162,6 +162,14 @@ struct bpf_d_ext {
 
 
 /*
+ * Record for each event tracker watching a tap point
+ */
+struct bpf_event_tracker {
+	SLIST_ENTRY(bpf_event_tracker) bet_entries;
+	void (*bet_notify)(struct bpf_if *, struct ifnet *, int, int);
+};
+
+/*
  * Descriptor associated with each attached hardware interface.
  */
 struct bpf_if {
@@ -179,6 +187,7 @@ struct bpf_if {
 	struct pslist_entry bif_iflist_entry;
 	struct pslist_head bif_dlist_head;
 	struct psref_target bif_psref;
+	SLIST_HEAD(, bpf_event_tracker) bif_trackers;
 #endif
 };
 
