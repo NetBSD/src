@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.75 2020/06/11 13:36:20 roy Exp $	*/
+/*	$NetBSD: bpf.h,v 1.76 2021/06/09 15:38:39 martin Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -499,6 +499,16 @@ static __inline void
 bpf_change_type(struct ifnet *_ifp, u_int _dlt, u_int _hdrlen)
 {
 	bpf_ops->bpf_change_type(_ifp, _dlt, _hdrlen);
+}
+
+static __inline bool
+bpf_peers_present(struct bpf_if *dp)
+{
+	/*
+	 * Our code makes sure the driver visible pointer is NULL
+	 * whenever there is no listener on this tap.
+	 */
+	return dp != NULL;
 }
 
 static __inline void
