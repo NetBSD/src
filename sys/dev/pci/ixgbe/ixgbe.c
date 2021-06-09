@@ -76,7 +76,6 @@ __KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.284 2021/06/16 00:21:18 riastradh Exp $"
 #include "ixgbe.h"
 #include "ixgbe_phy.h"
 #include "ixgbe_sriov.h"
-#include "vlan.h"
 
 #include <sys/cprng.h>
 #include <dev/mii/mii.h>
@@ -3631,17 +3630,13 @@ ixgbe_detach(device_t dev, int flags)
 		return (EBUSY);
 	}
 
-#if NVLAN > 0
-	/* Make sure VLANs are not using driver */
-	if (!VLAN_ATTACHED(&adapter->osdep.ec))
-		;	/* nothing to do: no VLANs */
-	else if ((flags & (DETACH_SHUTDOWN | DETACH_FORCE)) != 0)
-		vlan_ifdetach(adapter->ifp);
-	else {
+	if (VLAN_ATTACHED(&adapter->osdep.ec) &&
+	    (flags & (DETACH_SHUTDOWN | DETACH_FORCE)) == 0) {
 		aprint_error_dev(dev, "VLANs in use, detach first\n");
 		return (EBUSY);
 	}
-#endif
+
+	ether_ifdetach(adapter->ifp);
 
 	adapter->osdep.detaching = true;
 	/*
@@ -3661,8 +3656,6 @@ ixgbe_detach(device_t dev, int flags)
 	atomic_store_relaxed(&adapter->timer_pending, 0);
 
 	pmf_device_deregister(dev);
-
-	ether_ifdetach(adapter->ifp);
 
 	ixgbe_free_deferred_handlers(adapter);
 
