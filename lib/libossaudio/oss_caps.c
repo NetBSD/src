@@ -1,4 +1,4 @@
-/*	$NetBSD: oss_caps.c,v 1.1 2021/06/08 18:43:54 nia Exp $	*/
+/*	$NetBSD: oss_caps.c,v 1.2 2021/06/09 14:49:13 nia Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -41,27 +41,26 @@ _oss_get_caps(int fd, int *out)
 	if (ioctl(fd, AUDIO_GETPROPS, &props) < 0)
 		return -1;
 
-	if (ioctl(fd, AUDIO_GETFORMAT, &info) < 0)
-		return -1;
-
 	caps = 0;
 	caps |= PCM_CAP_TRIGGER;
 	caps |= PCM_CAP_MULTI;
 	caps |= PCM_CAP_FREERATE;
 
-	nchannels = (props & AUDIO_PROP_PLAYBACK) ?
-	    info.play.channels : info.record.channels;
+	if (ioctl(fd, AUDIO_GETFORMAT, &info) != -1) {
+		nchannels = (props & AUDIO_PROP_PLAYBACK) ?
+		    info.play.channels : info.record.channels;
 
-	switch (nchannels) {
-	case 2:
-		caps |= DSP_CH_STEREO;
-		break;
-	case 1:
-		caps |= DSP_CH_MONO;
-		break;
-	default:
-		caps |= DSP_CH_MULTI;
-		break;
+		switch (nchannels) {
+		case 2:
+			caps |= DSP_CH_STEREO;
+			break;
+		case 1:
+			caps |= DSP_CH_MONO;
+			break;
+		default:
+			caps |= DSP_CH_MULTI;
+			break;
+		}
 	}
 
 	if (props & AUDIO_PROP_FULLDUPLEX)
