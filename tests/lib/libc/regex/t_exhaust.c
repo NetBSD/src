@@ -1,4 +1,4 @@
-/*	$NetBSD: t_exhaust.c,v 1.11 2021/06/07 11:45:35 christos Exp $	*/
+/*	$NetBSD: t_exhaust.c,v 1.12 2021/06/09 20:48:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -37,18 +37,57 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_exhaust.c,v 1.11 2021/06/07 11:45:35 christos Exp $");
+__RCSID("$NetBSD: t_exhaust.c,v 1.12 2021/06/09 20:48:37 christos Exp $");
 
 #include <sys/resource.h>
-#include <atf-c.h>
 #include <err.h>
+
+#ifdef TEST
+# include <assert.h>
+# define ATF_REQUIRE(a) assert(a)
+# define ATF_REQUIRE_MSG(a, fmt, ...) \
+    if (!(a)) err(EXIT_FAILURE, fmt, __VA_ARGS__)
+#else
+# include <atf-c.h>
+#endif
+
 #include <regex.h>
+#include <dlfcn.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 
 #ifndef REGEX_MAXSIZE
 #define REGEX_MAXSIZE	9999
+#endif
+
+#ifdef TRACE
+void *
+malloc(size_t l)
+{
+	static void *(*m)(size_t);
+	static int q;
+	if (m == NULL) m = dlsym(RTLD_NEXT, "malloc");
+	void *p = (*m)(l);
+	if (q)
+		return p;
+	q = 1;
+	printf("%p m %zu\n", p, l);
+	if (p == (void *)0x7f7ff7e21ac0)
+		kill(0, SIGSTOP);
+	q = 0;
+	return p;
+}
+
+void
+free(void *p)
+{
+	static void (*f)(void *);
+	if (f == NULL) f = dlsym(RTLD_NEXT, "malloc");
+	printf("%p f\n", p);
+	(*f)(p);
+}
 #endif
 
 static char *
@@ -168,6 +207,41 @@ static const struct {
 	{ p6, REG_BASIC },
 };
 
+static void
+run(void)
+{
+	regex_t re;
+	int e;
+	struct rlimit limit;
+	char *patterns[__arraycount(tests)];
+
+	for (size_t i = 0; i < __arraycount(patterns); i++) {
+		patterns[i] = (*tests[i].pattern)(REGEX_MAXSIZE);
+	}
+
+	limit.rlim_cur = limit.rlim_max = 256 * 1024 * 1024;
+	ATF_REQUIRE(setrlimit(RLIMIT_VMEM, &limit) != -1);
+
+	for (size_t i = 0; i < __arraycount(tests); i++) {
+		e = regcomp(&re, patterns[i], tests[i].type);
+		if (e) {
+			char ebuf[1024];
+			(void)regerror(e, &re, ebuf, sizeof(ebuf));
+			ATF_REQUIRE_MSG(e == REG_ESPACE,
+			    "regcomp returned %d (%s) for pattern %zu [%s]", e,
+			    ebuf, i, patterns[i]);
+			continue;
+		}
+		(void)regexec(&re, "aaaaaaaaaaa", 0, NULL, 0);
+		regfree(&re);
+	}
+	for (size_t i = 0; i < __arraycount(patterns); i++) {
+		free(patterns[i]);
+	}
+}
+
+#ifndef TEST
+
 ATF_TC(regcomp_too_big);
 
 ATF_TC_HEAD(regcomp_too_big, tc)
@@ -182,29 +256,7 @@ ATF_TC_HEAD(regcomp_too_big, tc)
 
 ATF_TC_BODY(regcomp_too_big, tc)
 {
-	regex_t re;
-	int e;
-	struct rlimit limit;
-
-	limit.rlim_cur = limit.rlim_max = 256 * 1024 * 1024;
-	ATF_REQUIRE(setrlimit(RLIMIT_VMEM, &limit) != -1);
-
-	for (size_t i = 0; i < __arraycount(tests); i++) {
-		char *d = (*tests[i].pattern)(REGEX_MAXSIZE);
-		e = regcomp(&re, d, tests[i].type);
-		if (e) {
-			char ebuf[1024];
-			(void)regerror(e, &re, ebuf, sizeof(ebuf));
-			ATF_REQUIRE_MSG(e == REG_ESPACE,
-			    "regcomp returned %d (%s) for pattern %zu [%s]", e, ebuf,
-			    i, d);
-			free(d);
-			continue;
-		}
-		free(d);
-		(void)regexec(&re, "aaaaaaaaaaa", 0, NULL, 0);
-		regfree(&re);
-	}
+	run();
 }
 
 ATF_TP_ADD_TCS(tp)
@@ -213,3 +265,11 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, regcomp_too_big);
 	return atf_no_error();
 }
+#else
+int
+main(void)
+{
+	run();
+	return 0;
+}
+#endif
