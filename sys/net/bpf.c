@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.239 2020/12/18 01:31:49 thorpej Exp $	*/
+/*	$NetBSD: bpf.c,v 1.240 2021/06/09 15:44:15 martin Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.239 2020/12/18 01:31:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.240 2021/06/09 15:44:15 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -461,6 +461,7 @@ bad:
 static void
 bpf_attachd(struct bpf_d *d, struct bpf_if *bp)
 {
+	struct bpf_event_tracker *t;
 
 	KASSERT(mutex_owned(&bpf_mtx));
 	KASSERT(mutex_owned(d->bd_mtx));
@@ -473,6 +474,11 @@ bpf_attachd(struct bpf_d *d, struct bpf_if *bp)
 	BPFIF_DLIST_WRITER_INSERT_HEAD(bp, d);
 
 	*bp->bif_driverp = bp;
+
+	SLIST_FOREACH(t, &bp->bif_trackers, bet_entries) {
+		t->bet_notify(bp, bp->bif_ifp, bp->bif_dlt,
+		    BPF_TRACK_EVENT_ATTACH);
+	}
 }
 
 /*
@@ -482,6 +488,7 @@ static void
 bpf_detachd(struct bpf_d *d)
 {
 	struct bpf_if *bp;
+	struct bpf_event_tracker *t;
 
 	KASSERT(mutex_owned(&bpf_mtx));
 	KASSERT(mutex_owned(d->bd_mtx));
@@ -522,7 +529,13 @@ bpf_detachd(struct bpf_d *d)
 		 */
 		*d->bd_bif->bif_driverp = NULL;
 	}
+
 	d->bd_bif = NULL;
+
+	SLIST_FOREACH(t, &bp->bif_trackers, bet_entries) {
+		t->bet_notify(bp, bp->bif_ifp, bp->bif_dlt,
+		    BPF_TRACK_EVENT_DETACH);
+	}
 }
 
 static void
@@ -2125,6 +2138,7 @@ _bpfattach(struct ifnet *ifp, u_int dlt, u_int hdrlen, struct bpf_if **driverp)
 	BPF_IFLIST_ENTRY_INIT(bp);
 	PSLIST_INIT(&bp->bif_dlist_head);
 	psref_target_init(&bp->bif_psref, bpf_psref_class);
+	SLIST_INIT(&bp->bif_trackers);
 
 	BPF_IFLIST_WRITER_INSERT_HEAD(bp);
 
@@ -2133,7 +2147,7 @@ _bpfattach(struct ifnet *ifp, u_int dlt, u_int hdrlen, struct bpf_if **driverp)
 	bp->bif_hdrlen = hdrlen;
 	mutex_exit(&bpf_mtx);
 #if 0
-	printf("bpf: %s attached\n", ifp->if_xname);
+	printf("bpf: %s attached with dlt %x\n", ifp->if_xname, dlt);
 #endif
 }
 
@@ -2195,6 +2209,14 @@ _bpfdetach(struct ifnet *ifp)
 
 			pserialize_perform(bpf_psz);
 			psref_target_destroy(&bp->bif_psref, bpf_psref_class);
+
+			while (!SLIST_EMPTY(&bp->bif_trackers)) {
+				struct bpf_event_tracker *t =
+				    SLIST_FIRST(&bp->bif_trackers);
+				SLIST_REMOVE_HEAD(&bp->bif_trackers,
+				    bet_entries);
+				kmem_free(t, sizeof(*t));
+			}
 
 			BPF_IFLIST_ENTRY_DESTROY(bp);
 			if (bp->bif_si != NULL) {
@@ -2523,10 +2545,69 @@ SYSCTL_SETUP(sysctl_net_bpf_setup, "bpf sysctls")
 
 }
 
+static int
+_bpf_register_track_event(struct bpf_if **driverp,
+	    void (*_fun)(struct bpf_if *, struct ifnet *, int, int))
+{
+	struct bpf_if *bp;
+	struct bpf_event_tracker *t;
+	int ret = ENOENT;
+
+	t = kmem_zalloc(sizeof(*t), KM_SLEEP);
+	if (!t)
+		return ENOMEM;
+	t->bet_notify = _fun;
+
+	mutex_enter(&bpf_mtx);
+	BPF_IFLIST_WRITER_FOREACH(bp) {
+		if (bp->bif_driverp != driverp)
+			continue;
+		SLIST_INSERT_HEAD(&bp->bif_trackers, t, bet_entries);
+		ret = 0;
+		break;
+	}
+	mutex_exit(&bpf_mtx);
+
+	return ret;
+}
+
+static int
+_bpf_deregister_track_event(struct bpf_if **driverp,
+	    void (*_fun)(struct bpf_if *, struct ifnet *, int, int))
+{
+	struct bpf_if *bp;
+	struct bpf_event_tracker *t = NULL;
+	int ret = ENOENT;
+
+	mutex_enter(&bpf_mtx);
+	BPF_IFLIST_WRITER_FOREACH(bp) {
+		if (bp->bif_driverp != driverp)
+			continue;
+		SLIST_FOREACH(t, &bp->bif_trackers, bet_entries) {
+			if (t->bet_notify == _fun) {
+				ret = 0;
+				break;
+			}
+		}
+		if (ret == 0)
+			break;
+	}
+	if (ret == 0 && t && t->bet_notify == _fun) {
+		SLIST_REMOVE(&bp->bif_trackers, t, bpf_event_tracker,
+		    bet_entries);
+	}
+	mutex_exit(&bpf_mtx);
+	if (ret == 0)
+		kmem_free(t, sizeof(*t));
+	return ret;
+}
+
 struct bpf_ops bpf_ops_kernel = {
 	.bpf_attach =		_bpfattach,
 	.bpf_detach =		_bpfdetach,
 	.bpf_change_type =	_bpf_change_type,
+	.bpf_register_track_event = _bpf_register_track_event,
+	.bpf_deregister_track_event = _bpf_deregister_track_event,
 
 	.bpf_mtap =		_bpf_mtap,
 	.bpf_mtap2 =		_bpf_mtap2,
