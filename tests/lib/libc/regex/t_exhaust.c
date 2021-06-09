@@ -1,4 +1,4 @@
-/*	$NetBSD: t_exhaust.c,v 1.12 2021/06/09 20:48:37 christos Exp $	*/
+/*	$NetBSD: t_exhaust.c,v 1.13 2021/06/09 21:08:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_exhaust.c,v 1.12 2021/06/09 20:48:37 christos Exp $");
+__RCSID("$NetBSD: t_exhaust.c,v 1.13 2021/06/09 21:08:56 christos Exp $");
 
 #include <sys/resource.h>
 #include <err.h>
@@ -52,17 +52,17 @@ __RCSID("$NetBSD: t_exhaust.c,v 1.12 2021/06/09 20:48:37 christos Exp $");
 #endif
 
 #include <regex.h>
-#include <dlfcn.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <signal.h>
 
 #ifndef REGEX_MAXSIZE
 #define REGEX_MAXSIZE	9999
 #endif
 
 #ifdef TRACE
+
+#include <dlfcn.h>
 void *
 malloc(size_t l)
 {
