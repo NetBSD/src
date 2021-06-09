@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.6 2021/06/08 12:56:29 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.7 2021/06/09 19:47:29 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -86,4 +86,9 @@ sbin/dump/tape.c				1.56
 
 	dump(8): prevent crashes for large file systems.
 	[hannken, ticket #1283]
+
+external/bsd/libpcap/bin/Makefile		1.3
+
+	Fix pcap-config output.
+	[dholland, ticket #1284]
 
