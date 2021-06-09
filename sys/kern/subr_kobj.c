@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.67 2020/06/27 17:27:59 christos Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.68 2021/06/09 15:15:35 christos Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.67 2020/06/27 17:27:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.68 2021/06/09 15:15:35 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -881,7 +881,7 @@ kobj_sym_lookup(kobj_t ko, uintptr_t symidx, Elf_Addr *val)
 
 	sym = ko->ko_symtab + symidx;
 
-	if (symidx == SHN_ABS) {
+	if (symidx == SHN_ABS || symidx == 0) {
 		*val = (uintptr_t)sym->st_value;
 		return 0;
 	} else if (symidx >= ko->ko_symcnt) {
@@ -1074,7 +1074,12 @@ kobj_relocate(kobj_t ko, bool local)
 			}
 			error = kobj_reloc(ko, base, rel, false, local);
 			if (error != 0) {
-				return ENOENT;
+				kobj_error(ko, "unresolved rel relocation "
+				    "@%#jx type=%d symidx=%d",
+				    (intmax_t)rel->r_offset,
+				    (int)ELF_R_TYPE(rel->r_info),
+				    (int)ELF_R_SYM(rel->r_info));
+				return ENOEXEC;
 			}
 		}
 	}
@@ -1105,7 +1110,12 @@ kobj_relocate(kobj_t ko, bool local)
 			}
 			error = kobj_reloc(ko, base, rela, true, local);
 			if (error != 0) {
-				return ENOENT;
+				kobj_error(ko, "unresolved rela relocation "
+				    "@%#jx type=%d symidx=%d",
+				    (intmax_t)rela->r_offset,
+				    (int)ELF_R_TYPE(rela->r_info),
+				    (int)ELF_R_SYM(rela->r_info));
+				return ENOEXEC;
 			}
 		}
 	}
