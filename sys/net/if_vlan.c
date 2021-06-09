@@ -157,11 +157,13 @@ struct ifvlan {
 	kmutex_t ifv_lock;		/* writer lock for ifv_mib */
 	pserialize_t ifv_psz;
 	void *ifv_linkstate_hook;
+	void *ifv_ifdetach_hook;
 
 	LIST_HEAD(__vlan_mchead, vlan_mc_entry) ifv_mc_listhead;
 	LIST_ENTRY(ifvlan) ifv_list;
 	struct pslist_entry ifv_hash;
 	int ifv_flags;
+	bool ifv_stopping;
 };
 
 #define	IFVF_PROMISC	0x01		/* promiscuous mode enabled */
@@ -197,6 +199,7 @@ static int	vlan_ioctl(struct ifnet *, u_long, void *);
 static void	vlan_start(struct ifnet *);
 static int	vlan_transmit(struct ifnet *, struct mbuf *);
 static void	vlan_link_state_changed(void *);
+static void	vlan_ifdetach_hk(void *);
 static void	vlan_unconfig(struct ifnet *);
 static int	vlan_unconfig_locked(struct ifvlan *, struct ifvlan_linkmib *);
 static void	vlan_hash_init(void);
@@ -550,6 +553,9 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, uint16_t tag)
 	nmib_psref = NULL;
 	omib_cleanup = true;
 
+	ifv->ifv_ifdetach_hook = ether_ifdetachhook_establish(p,
+	    vlan_ifdetach_hk, ifp);
+
 	/*
 	 * We inherit the parents link state.
 	 */
@@ -602,6 +608,12 @@ vlan_unconfig_locked(struct ifvlan *ifv, struct ifvlan_linkmib *nmib)
 
 	KASSERT(IFNET_LOCKED(ifp));
 	KASSERT(mutex_owned(&ifv->ifv_lock));
+
+	if (ifv->ifv_stopping) {
+		error = -1;
+		goto done;
+	}
+	ifv->ifv_stopping = true;
 
 	ifp->if_flags &= ~(IFF_UP | IFF_RUNNING);
 
@@ -691,7 +703,12 @@ vlan_unconfig_locked(struct ifvlan *ifv, struct ifvlan_linkmib *nmib)
 
 	vlan_linkmib_update(ifv, nmib);
 
+	/*XXX Must not disestablish ifv->ifv_ifdetach_hook with IFNET_LOCK */
+	IFNET_UNLOCK(ifp);
+	ether_ifdetachhook_disestablish(p, ifv->ifv_ifdetach_hook,
+	    &ifv->ifv_lock);
 	mutex_exit(&ifv->ifv_lock);
+	IFNET_LOCK(ifp);
 
 	nmib_psref = NULL;
 	kmem_free(omib, sizeof(*omib));
@@ -710,6 +727,7 @@ vlan_unconfig_locked(struct ifvlan *ifv, struct ifvlan_linkmib *nmib)
 	ifp->if_capabilities = 0;
 	mutex_enter(&ifv->ifv_lock);
 done:
+	ifv->ifv_stopping = false;
 
 	if (nmib_psref)
 		psref_target_destroy(nmib_psref, ifvm_psref_class);
@@ -913,6 +931,19 @@ vlan_ifdetach(struct ifnet *p)
 	kmem_free(nmibs, sizeof(*nmibs) * cnt);
 
 	return;
+}
+
+static void
+vlan_ifdetach_hk(void *xifp)
+{
+	struct ifnet *ifp;
+
+	ifp = (struct ifnet *)xifp;
+
+	/* IFNET_LOCK must be held before ifv_lock. */
+	IFNET_LOCK(ifp);
+	vlan_unconfig(ifp);
+	IFNET_UNLOCK(ifp);
 }
 
 static int

@@ -1059,10 +1059,6 @@ ether_ifdetach(struct ifnet *ifp)
 	simplehook_destroy(ec->ec_ifdetach_hooks);
 
 	bpf_detach(ifp);
-#if NVLAN > 0
-	if (ec->ec_nvlans)
-		vlan_ifdetach(ifp);
-#endif
 
 #if NLAGG > 0
 	if (ifp->if_lagg)
