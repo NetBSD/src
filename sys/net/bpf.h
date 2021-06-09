@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.76 2021/06/09 15:38:39 martin Exp $	*/
+/*	$NetBSD: bpf.h,v 1.77 2021/06/09 15:44:15 martin Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -450,6 +450,11 @@ struct bpf_ops {
 
 	void (*bpf_mtap_softint_init)(struct ifnet *);
 	void (*bpf_mtap_softint)(struct ifnet *, struct mbuf *);
+
+	int (*bpf_register_track_event)(struct bpf_if **,
+	    void (*)(struct bpf_if *, struct ifnet *, int, int));
+	int (*bpf_deregister_track_event)(struct bpf_if **,
+	    void (*)(struct bpf_if *, struct ifnet *, int, int));
 };
 
 extern struct bpf_ops *bpf_ops;
@@ -545,6 +550,24 @@ bpf_mtap_softint(struct ifnet *_ifp, struct mbuf *_m)
 		bpf_ops->bpf_mtap_softint(_ifp, _m);
 }
 
+static __inline int
+bpf_register_track_event(struct bpf_if **_dp,
+	    void (*_fun)(struct bpf_if *, struct ifnet *, int, int))
+{
+	if (bpf_ops->bpf_register_track_event == NULL)
+		return ENXIO;
+	return bpf_ops->bpf_register_track_event(_dp, _fun);
+}
+
+static __inline int
+bpf_deregister_track_event(struct bpf_if **_dp,
+	    void (*_fun)(struct bpf_if *, struct ifnet *, int, int))
+{
+	if (bpf_ops->bpf_deregister_track_event == NULL)
+		return ENXIO;
+	return bpf_ops->bpf_deregister_track_event(_dp, _fun);
+}
+
 void	bpf_setops(void);
 
 void	bpf_ops_handover_enter(struct bpf_ops *);
@@ -569,6 +592,12 @@ int	bpf_validate(const struct bpf_insn *, int);
 u_int	bpf_filter(const struct bpf_insn *, const u_char *, u_int, u_int);
 
 u_int	bpf_filter_with_aux_data(const struct bpf_insn *, const u_char *, u_int, u_int, const struct bpf_aux_data *);
+
+/*
+ * events to be tracked by bpf_register_track_event callbacks
+ */
+#define	BPF_TRACK_EVENT_ATTACH	1
+#define	BPF_TRACK_EVENT_DETACH	2
 
 
 __END_DECLS
