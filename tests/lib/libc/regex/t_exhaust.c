@@ -1,4 +1,4 @@
-/*	$NetBSD: t_exhaust.c,v 1.13 2021/06/09 21:08:56 christos Exp $	*/
+/*	$NetBSD: t_exhaust.c,v 1.14 2021/06/09 21:09:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_exhaust.c,v 1.13 2021/06/09 21:08:56 christos Exp $");
+__RCSID("$NetBSD: t_exhaust.c,v 1.14 2021/06/09 21:09:20 christos Exp $");
 
 #include <sys/resource.h>
 #include <err.h>
@@ -74,8 +74,6 @@ malloc(size_t l)
 		return p;
 	q = 1;
 	printf("%p m %zu\n", p, l);
-	if (p == (void *)0x7f7ff7e21ac0)
-		kill(0, SIGSTOP);
 	q = 0;
 	return p;
 }
