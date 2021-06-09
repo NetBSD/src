@@ -45,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.162 2021/06/16 00:21:18 riastradh Exp $");
 #endif
 
 #include "ixgbe.h"
-#include "vlan.h"
 
 /************************************************************************
  * Driver version
@@ -600,17 +599,11 @@ ixv_detach(device_t dev, int flags)
 	/* Stop the interface. Callouts are stopped in it. */
 	ixv_ifstop(adapter->ifp, 1);
 
-#if NVLAN > 0
-	/* Make sure VLANs are not using driver */
-	if (!VLAN_ATTACHED(&adapter->osdep.ec))
-		;	/* nothing to do: no VLANs */
-	else if ((flags & (DETACH_SHUTDOWN | DETACH_FORCE)) != 0)
-		vlan_ifdetach(adapter->ifp);
-	else {
+	if (VLAN_ATTACHED(&adapter->osdep.ec) &&
+	    (flags & (DETACH_SHUTDOWN | DETACH_FORCE)) == 0) {
 		aprint_error_dev(dev, "VLANs in use, detach first\n");
 		return EBUSY;
 	}
-#endif
 
 	ether_ifdetach(adapter->ifp);
 	callout_halt(&adapter->timer, NULL);
