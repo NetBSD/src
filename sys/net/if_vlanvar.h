@@ -82,7 +82,6 @@ struct vlanreq {
 
 #ifdef _KERNEL
 void	vlan_input(struct ifnet *, struct mbuf *);
-void	vlan_ifdetach(struct ifnet *);
 
 /*
  * Locking notes:

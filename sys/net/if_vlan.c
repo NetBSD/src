@@ -199,7 +199,7 @@ static int	vlan_ioctl(struct ifnet *, u_long, void *);
 static void	vlan_start(struct ifnet *);
 static int	vlan_transmit(struct ifnet *, struct mbuf *);
 static void	vlan_link_state_changed(void *);
-static void	vlan_ifdetach_hk(void *);
+static void	vlan_ifdetach(void *);
 static void	vlan_unconfig(struct ifnet *);
 static int	vlan_unconfig_locked(struct ifvlan *, struct ifvlan_linkmib *);
 static void	vlan_hash_init(void);
@@ -554,7 +554,7 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, uint16_t tag)
 	omib_cleanup = true;
 
 	ifv->ifv_ifdetach_hook = ether_ifdetachhook_establish(p,
-	    vlan_ifdetach_hk, ifp);
+	    vlan_ifdetach, ifp);
 
 	/*
 	 * We inherit the parents link state.
@@ -615,6 +615,7 @@ vlan_unconfig_locked(struct ifvlan *ifv, struct ifvlan_linkmib *nmib)
 	}
 	ifv->ifv_stopping = true;
 
+	ifv->ifv_stopping = true;
 	ifp->if_flags &= ~(IFF_UP | IFF_RUNNING);
 
 	omib = ifv->ifv_mib;
@@ -702,6 +703,7 @@ vlan_unconfig_locked(struct ifvlan *ifv, struct ifvlan_linkmib *nmib)
 	    ifv->ifv_linkstate_hook, NULL);
 
 	vlan_linkmib_update(ifv, nmib);
+	ifv->ifv_stopping = false;
 
 	/*XXX Must not disestablish ifv->ifv_ifdetach_hook with IFNET_LOCK */
 	IFNET_UNLOCK(ifp);
@@ -853,88 +855,8 @@ vlan_linkmib_update(struct ifvlan *ifv, struct ifvlan_linkmib *nmib)
  * Called when a parent interface is detaching; destroy any VLAN
  * configuration for the parent interface.
  */
-void
-vlan_ifdetach(struct ifnet *p)
-{
-	struct ifvlan *ifv;
-	struct ifvlan_linkmib *mib, **nmibs;
-	struct psref psref;
-	int error;
-	int bound;
-	int i, cnt = 0;
-
-	bound = curlwp_bind();
-
-	mutex_enter(&ifv_list.lock);
-	LIST_FOREACH(ifv, &ifv_list.list, ifv_list) {
-		mib = vlan_getref_linkmib(ifv, &psref);
-		if (mib == NULL)
-			continue;
-
-		if (mib->ifvm_p == p)
-			cnt++;
-
-		vlan_putref_linkmib(mib, &psref);
-	}
-	mutex_exit(&ifv_list.lock);
-
-	if (cnt == 0) {
-		curlwp_bindx(bound);
-		return;
-	}
-
-	/*
-	 * The value of "cnt" does not increase while ifv_list.lock
-	 * and ifv->ifv_lock are released here, because the parent
-	 * interface is detaching.
-	 */
-	nmibs = kmem_alloc(sizeof(*nmibs) * cnt, KM_SLEEP);
-	for (i = 0; i < cnt; i++) {
-		nmibs[i] = kmem_alloc(sizeof(*nmibs[i]), KM_SLEEP);
-	}
-
-	mutex_enter(&ifv_list.lock);
-
-	i = 0;
-	LIST_FOREACH(ifv, &ifv_list.list, ifv_list) {
-		struct ifnet *ifp = &ifv->ifv_if;
-
-		/* IFNET_LOCK must be held before ifv_lock. */
-		IFNET_LOCK(ifp);
-		mutex_enter(&ifv->ifv_lock);
-
-		/* XXX ifv_mib = NULL? */
-		if (ifv->ifv_mib->ifvm_p == p) {
-			KASSERTMSG(i < cnt,
-			    "no memory for unconfig, parent=%s", p->if_xname);
-			error = vlan_unconfig_locked(ifv, nmibs[i]);
-			if (!error) {
-				nmibs[i] = NULL;
-				i++;
-			}
-
-		}
-
-		mutex_exit(&ifv->ifv_lock);
-		IFNET_UNLOCK(ifp);
-	}
-
-	mutex_exit(&ifv_list.lock);
-
-	curlwp_bindx(bound);
-
-	for (i = 0; i < cnt; i++) {
-		if (nmibs[i])
-			kmem_free(nmibs[i], sizeof(*nmibs[i]));
-	}
-
-	kmem_free(nmibs, sizeof(*nmibs) * cnt);
-
-	return;
-}
-
 static void
-vlan_ifdetach_hk(void *xifp)
+vlan_ifdetach(void *xifp)
 {
 	struct ifnet *ifp;
 
