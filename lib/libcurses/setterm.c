@@ -1,4 +1,4 @@
-/*	$NetBSD: setterm.c,v 1.68 2018/10/26 22:22:24 uwe Exp $	*/
+/*	$NetBSD: setterm.c,v 1.69 2021/06/10 07:15:40 mcf Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setterm.c	8.8 (Berkeley) 10/25/94";
 #else
-__RCSID("$NetBSD: setterm.c,v 1.68 2018/10/26 22:22:24 uwe Exp $");
+__RCSID("$NetBSD: setterm.c,v 1.69 2021/06/10 07:15:40 mcf Exp $");
 #endif
 #endif /* not lint */
 
@@ -103,7 +103,7 @@ _cursesi_setterm(char *type, SCREEN *screen)
 		t_lines(screen->term) = 1;
 	}
 #ifdef DEBUG
-	__CTRACE(__CTRACE_INIT, "setterm: filtered %d", screen->filtered);
+	__CTRACE(__CTRACE_INIT, "setterm: filtered %d\n", screen->filtered);
 #endif
 
 	if ((p = getenv("ESCDELAY")) != NULL)
