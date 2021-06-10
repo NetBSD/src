@@ -1,4 +1,4 @@
-/*	$NetBSD: director.c,v 1.28 2021/02/13 09:18:12 rillig Exp $	*/
+/*	$NetBSD: director.c,v 1.29 2021/06/10 07:21:07 mcf Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -194,6 +194,9 @@ main(int argc, char *argv[])
 
 	if (setenv("TERM", term, 1) != 0)
 		err(2, "Failed to set TERM variable");
+
+	if (unsetenv("ESCDELAY") != 0)
+		err(2, "Failed to unset ESCDELAY variable");
 
 	if (stat(termpath, &st) == -1)
 		err(1, "Cannot stat %s", termpath);
