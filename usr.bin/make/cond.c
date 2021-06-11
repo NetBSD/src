@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.262 2021/04/19 23:51:42 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.263 2021/06/11 12:23:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.262 2021/04/19 23:51:42 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.263 2021/06/11 12:23:00 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -475,7 +475,7 @@ CondParser_StringExpr(CondParser *par, const char *start,
  *	Sets out_quoted if the string was quoted.
  */
 static void
-CondParser_String(CondParser *par, bool doEval, bool strictLHS,
+CondParser_Leaf(CondParser *par, bool doEval, bool strictLHS,
 		  FStr *out_str, bool *out_quoted)
 {
 	Buffer buf;
@@ -684,7 +684,7 @@ CondParser_Comparison(CondParser *par, bool doEval)
 	 * Parse the variable spec and skip over it, saving its
 	 * value in lhs.
 	 */
-	CondParser_String(par, doEval, lhsStrict, &lhs, &lhsQuoted);
+	CondParser_Leaf(par, doEval, lhsStrict, &lhs, &lhsQuoted);
 	if (lhs.str == NULL)
 		goto done_lhs;
 
@@ -705,7 +705,7 @@ CondParser_Comparison(CondParser *par, bool doEval)
 		goto done_lhs;
 	}
 
-	CondParser_String(par, doEval, false, &rhs, &rhsQuoted);
+	CondParser_Leaf(par, doEval, false, &rhs, &rhsQuoted);
 	if (rhs.str == NULL)
 		goto done_rhs;
 
@@ -773,8 +773,9 @@ FuncEmpty(size_t arglen, const char *arg MAKE_ATTR_UNUSED)
 	return arglen == 1;
 }
 
+/* Parse a function call expression, such as 'defined(${file})'. */
 static bool
-CondParser_Func(CondParser *par, bool doEval, Token *out_token)
+CondParser_FuncCall(CondParser *par, bool doEval, Token *out_token)
 {
 	static const struct fn_def {
 		const char *fn_name;
@@ -835,7 +836,7 @@ CondParser_LeafToken(CondParser *par, bool doEval)
 	const char *cp;
 	const char *cp1;
 
-	if (CondParser_Func(par, doEval, &t))
+	if (CondParser_FuncCall(par, doEval, &t))
 		return t;
 
 	/* Push anything numeric through the compare expression */
