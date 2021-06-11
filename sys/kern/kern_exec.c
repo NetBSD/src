@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.505 2021/05/02 10:23:55 martin Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.506 2021/06/11 12:54:22 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.505 2021/05/02 10:23:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.506 2021/06/11 12:54:22 martin Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -2260,13 +2260,13 @@ spawn_return(void *arg)
 	rw_enter(&p->p_reflock, RW_WRITER);
 	have_reflock = true;
 
-	/* handle posix_spawn_file_actions */
-	error = handle_posix_spawn_file_actions(spawn_data->sed_actions);
+	/* handle posix_spawnattr */
+	error = handle_posix_spawn_attrs(attrs, spawn_data->sed_parent);
 	if (error)
 		goto report_error;
 
-	/* handle posix_spawnattr */
-	error = handle_posix_spawn_attrs(attrs, spawn_data->sed_parent);
+	/* handle posix_spawn_file_actions */
+	error = handle_posix_spawn_file_actions(spawn_data->sed_actions);
 	if (error)
 		goto report_error;
 
