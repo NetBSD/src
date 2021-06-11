@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.265 2021/06/11 14:37:51 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.266 2021/06/11 14:42:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.265 2021/06/11 14:37:51 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.266 2021/06/11 14:42:52 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -467,12 +467,13 @@ CondParser_StringExpr(CondParser *par, const char *start,
 }
 
 /*
- * Parse a string from a variable reference or an optionally quoted
- * string.  This is called for the lhs and rhs of string comparisons.
+ * Parse a string from a variable expression or an optionally quoted
+ * string.  This is called for the left-hand and right-hand sides of
+ * comparisons.
  *
  * Results:
  *	Returns the string, absent any quotes, or NULL on error.
- *	Sets out_quoted if the string was quoted.
+ *	Sets out_quoted if the leaf was a quoted string literal.
  */
 static void
 CondParser_Leaf(CondParser *par, bool doEval, bool strictLHS,
@@ -540,7 +541,7 @@ CondParser_Leaf(CondParser *par, bool doEval, bool strictLHS,
 got_str:
 	str = FStr_InitOwn(buf.data);
 cleanup:
-	Buf_DoneData(&buf);
+	Buf_DoneData(&buf);	/* XXX: memory leak on failure? */
 	*out_str = str;
 }
 
@@ -824,11 +825,11 @@ CondParser_FuncCall(CondParser *par, bool doEval, Token *out_token)
 }
 
 /*
- * Parse a function call, a number, a variable expression or a string
- * literal.
+ * Parse a comparison such as '${VAR} == "value"', or a simple leaf without
+ * operator, which is a number, a variable expression or a string literal.
  */
 static Token
-CondParser_LeafToken(CondParser *par, bool doEval)
+CondParser_ComparisonOrLeaf(CondParser *par, bool doEval)
 {
 	Token t;
 	char *arg = NULL;
@@ -848,6 +849,10 @@ CondParser_LeafToken(CondParser *par, bool doEval)
 	 * If what follows the function argument is a '=' or '!' then the
 	 * syntax would be invalid if we did "defined(a)" - so instead treat
 	 * as an expression.
+	 */
+	/*
+	 * XXX: Is it possible to have a variable expression evaluated twice
+	 *  at this point?
 	 */
 	arglen = ParseFuncArg(par, &cp, doEval, NULL, &arg);
 	cp1 = cp;
@@ -930,7 +935,7 @@ CondParser_Token(CondParser *par, bool doEval)
 	default:
 		if (CondParser_FuncCall(par, doEval, &t))
 			return t;
-		return CondParser_LeafToken(par, doEval);
+		return CondParser_ComparisonOrLeaf(par, doEval);
 	}
 }
 
