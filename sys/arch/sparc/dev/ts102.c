@@ -1,5 +1,5 @@
 /*	$OpenBSD: ts102.c,v 1.14 2005/01/27 17:03:23 millert Exp $	*/
-/*	$NetBSD: ts102.c,v 1.19 2021/04/24 23:36:49 thorpej Exp $ */
+/*	$NetBSD: ts102.c,v 1.20 2021/06/11 04:58:30 jdc Exp $ */
 /*
  * Copyright (c) 2003, 2004, Miodrag Vallat.
  * Copyright (c) 2005, Michael Lorenz.
@@ -182,6 +182,7 @@ static void tslot_slot_intr(struct tslot_data *, int);
 static void tslot_slot_settype(pcmcia_chipset_handle_t, int);
 static void tslot_update_lcd(struct tslot_softc *, int, int);
 static void tslot_intr_dispatch(void *arg);
+void tslot_delay(struct tslot_softc *sc, unsigned int ms);
 
 CFATTACH_DECL_NEW(tslot, sizeof(struct tslot_softc),
     tslot_match, tslot_attach, NULL, NULL);
@@ -620,22 +621,35 @@ static void
 tslot_slot_disable(pcmcia_chipset_handle_t pch)
 {
 	struct tslot_data *td = (struct tslot_data *)pch;
+	int status;
+
 #ifdef TSLOT_DEBUG
 	printf("%s: disable slot %d\n",
 	    device_xname(td->td_parent->sc_dev), td->td_slot);
 #endif
 
-	/*
-	 * Disable card access.
-	 */
-	TSLOT_WRITE(td, TS102_REG_CARD_A_STS,
-	    TSLOT_READ(td, TS102_REG_CARD_A_STS) & ~TS102_CARD_STS_ACEN);
+	status = TSLOT_READ(td, TS102_REG_CARD_A_STS);
+
+	status &= ~TS102_CARD_STS_ACEN;
 
 	/*
 	 * Disable interrupts, except for insertion.
 	 */
 	TSLOT_WRITE(td, TS102_REG_CARD_A_INT,
 	    TS102_CARD_INT_MASK_CARDDETECT_STATUS);
+
+	/*
+	 * Power down the socket and disable access
+	 */
+	status &= ~TS102_CARD_STS_ACEN;
+	status &= ~(TS102_CARD_STS_VPP1_MASK | TS102_CARD_STS_VPP2_MASK);
+	status |= TS102_CARD_STS_VCCEN;
+	TSLOT_WRITE(td, TS102_REG_CARD_A_STS, status);
+	
+	/*
+	 * wait 300ms until power fails (Tpf).
+	 */
+	tslot_delay(td->td_parent, 300);
 }
 
 static void
@@ -652,18 +666,23 @@ tslot_slot_enable(pcmcia_chipset_handle_t pch)
 	/* Power down the socket to reset it */
 	status = TSLOT_READ(td, TS102_REG_CARD_A_STS);
 	TSPRINTF("status: %x\n", status);
-	TSLOT_WRITE(td, TS102_REG_CARD_A_STS, status | TS102_CARD_STS_VCCEN);
+
+	status &= ~TS102_CARD_STS_ACEN;
+	status &= ~(TS102_CARD_STS_VPP1_MASK | TS102_CARD_STS_VPP2_MASK);
+	status |= TS102_CARD_STS_VCCEN;
+	TSLOT_WRITE(td, TS102_REG_CARD_A_STS, status);
 
 	/*
 	 * wait 300ms until power fails (Tpf).  Then, wait 100ms since we
 	 * are changing Vcc (Toff).
 	 */
-	DELAY((300 + 100) * 1000);
+	tslot_delay(td->td_parent, 300 + 100);
 
 	/*
 	 * Power on the card if not already done, and enable card access
 	 */
 	status |= TS102_CARD_STS_ACEN;
+	status |= TS102_CARD_STS_VPP1_VCC;
 	status &= ~TS102_CARD_STS_VCCEN;
 	TSLOT_WRITE(td, TS102_REG_CARD_A_STS, status);
 
@@ -671,22 +690,18 @@ tslot_slot_enable(pcmcia_chipset_handle_t pch)
 	 * wait 100ms until power raise (Tpr) and 20ms to become
 	 * stable (Tsu(Vcc)).
 	 */
-	DELAY((100 + 20) * 1000);
-
-	status &= ~TS102_CARD_STS_VPP1_MASK;
-	status |= TS102_CARD_STS_VPP1_VCC;
-	TSLOT_WRITE(td, TS102_REG_CARD_A_STS, status);
+	tslot_delay(td->td_parent, 100 + 20);
 
 	/*
 	 * hold RESET at least 20us.
 	 */
 	intr = TSLOT_READ(td, TS102_REG_CARD_A_INT);
-	TSLOT_WRITE(td, TS102_REG_CARD_A_INT, TS102_CARD_INT_SOFT_RESET);
-	DELAY(20);
-	TSLOT_WRITE(td, TS102_REG_CARD_A_INT, intr);
+	delay(20);
+	TSLOT_WRITE(td, TS102_REG_CARD_A_INT,
+	    intr & ~TS102_CARD_INT_SOFT_RESET);
 
 	/* wait 20ms as per pc card standard (r2.01) section 4.3.6 */
-	DELAY(20 * 1000);
+	tslot_delay(td->td_parent, 20);
 
 	/* We need level-triggered interrupts for PC Card hardware */
 	TSLOT_WRITE(td, TS102_REG_CARD_A_STS,
@@ -709,7 +724,7 @@ tslot_slot_enable(pcmcia_chipset_handle_t pch)
 		if (status & TS102_CARD_STS_RDY)
 			break;
 		else
-			DELAY(100);
+			delay(100);
 	}
 
 	if (i == 0) {
@@ -1019,4 +1034,25 @@ tslot_update_lcd(struct tslot_softc *sc, int socket, int status)
 		tadpole_set_lcd(is, 0x40);
 	}
 #endif
+}
+
+/*
+ * Delay and possibly yield CPU.
+ * XXX - assumes a context
+ */
+void
+tslot_delay(struct tslot_softc *sc, unsigned int ms)
+{
+	unsigned int ticks = mstohz(ms);
+
+	if (cold || ticks == 0) {
+		delay(ms);
+		return;
+	}
+
+#ifdef DIAGNOSTIC
+	if (ticks > 60*hz)
+		panic("tslot: preposterous delay: %u", ticks);
+#endif
+	tsleep(sc, 0, "tslotdel", ticks);
 }
