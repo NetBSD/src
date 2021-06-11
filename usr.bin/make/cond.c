@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.263 2021/06/11 12:23:00 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.264 2021/06/11 13:09:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.263 2021/06/11 12:23:00 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.264 2021/06/11 13:09:10 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -836,9 +836,6 @@ CondParser_LeafToken(CondParser *par, bool doEval)
 	const char *cp;
 	const char *cp1;
 
-	if (CondParser_FuncCall(par, doEval, &t))
-		return t;
-
 	/* Push anything numeric through the compare expression */
 	cp = par->p;
 	if (ch_isdigit(cp[0]) || cp[0] == '-' || cp[0] == '+')
@@ -931,6 +928,8 @@ CondParser_Token(CondParser *par, bool doEval)
 		return CondParser_Comparison(par, doEval);
 
 	default:
+		if (CondParser_FuncCall(par, doEval, &t))
+			return t;
 		return CondParser_LeafToken(par, doEval);
 	}
 }
