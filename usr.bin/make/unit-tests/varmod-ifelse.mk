@@ -1,4 +1,4 @@
-# $NetBSD: varmod-ifelse.mk,v 1.16 2021/04/19 23:51:42 rillig Exp $
+# $NetBSD: varmod-ifelse.mk,v 1.17 2021/06/11 13:01:28 rillig Exp $
 #
 # Tests for the ${cond:?then:else} variable modifier, which evaluates either
 # the then-expression or the else-expression, depending on the condition.
@@ -158,3 +158,14 @@ NUMBER=		no		# not really a number
 NUMBER=		# empty, not really a number either
 .info ${${STRING} == "literal" && ${NUMBER} >= 10:?yes:no}.
 .info ${${STRING} == "literal" || ${NUMBER} >= 10:?yes:no}.
+
+# CondParser_LeafToken handles [0-9-+] specially, treating them as a number.
+PLUS=		+
+ASTERISK=	*
+EMPTY=		# empty
+# "true" since "+" is not the empty string.
+.info ${${PLUS}		:?true:false}
+# "false" since the variable named "*" is not defined.
+.info ${${ASTERISK}	:?true:false}
+# syntax error since the condition is completely blank.
+.info ${${EMPTY}	:?true:false}
