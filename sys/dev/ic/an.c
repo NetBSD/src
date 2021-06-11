@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.73 2020/01/29 14:09:58 thorpej Exp $	*/
+/*	$NetBSD: an.c,v 1.74 2021/06/11 05:00:41 jdc Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.73 2020/01/29 14:09:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.74 2021/06/11 05:00:41 jdc Exp $");
 
 
 #include <sys/param.h>
@@ -1509,7 +1509,7 @@ an_rx_intr(struct an_softc *sc)
 		    (le16toh(frmhdr.an_rx_status) & AN_STAT_UNDECRYPTABLE))
 		    tap->ar_flags |= IEEE80211_RADIOTAP_F_BADFCS;
 
-		bpf_mtap2(sc->sc_drvbpf, tap, tap->ar_ihdr.it_len, m,
+		bpf_mtap2(sc->sc_drvbpf, tap, htole16(tap->ar_ihdr.it_len), m,
 		    BPF_D_IN);
 	}
 	wh = mtod(m, struct ieee80211_frame_min *);
