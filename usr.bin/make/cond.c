@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.264 2021/06/11 13:09:10 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.265 2021/06/11 14:37:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.264 2021/06/11 13:09:10 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.265 2021/06/11 14:37:51 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -545,7 +545,7 @@ cleanup:
 }
 
 static bool
-If_Eval(const CondParser *par, const char *arg, size_t arglen)
+EvalBare(const CondParser *par, const char *arg, size_t arglen)
 {
 	bool res = par->evalBare(arglen, arg);
 	return par->negateEvalBare ? !res : res;
@@ -575,7 +575,7 @@ EvalNotEmpty(CondParser *par, const char *value, bool quoted)
 	if (par->plain)
 		return value[0] != '\0';
 
-	return If_Eval(par, value, strlen(value));
+	return EvalBare(par, value, strlen(value));
 }
 
 /* Evaluate a numerical comparison, such as in ".if ${VAR} >= 9". */
@@ -862,7 +862,7 @@ CondParser_LeafToken(CondParser *par, bool doEval)
 	 * after .if must have been taken literally, so the argument cannot
 	 * be empty - even if it contained a variable expansion.
 	 */
-	t = ToToken(!doEval || If_Eval(par, arg, arglen));
+	t = ToToken(!doEval || EvalBare(par, arg, arglen));
 	free(arg);
 	return t;
 }
