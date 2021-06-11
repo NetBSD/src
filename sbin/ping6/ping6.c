@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.105 2021/06/07 22:13:34 dholland Exp $	*/
+/*	$NetBSD: ping6.c,v 1.106 2021/06/11 18:47:56 rillig Exp $	*/
 /*	$KAME: ping6.c,v 1.164 2002/11/16 14:05:37 itojun Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.105 2021/06/07 22:13:34 dholland Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.106 2021/06/11 18:47:56 rillig Exp $");
 #endif
 #endif
 
@@ -205,7 +205,7 @@ static u_char outpack[MAXPACKETLEN] __aligned(sizeof(u_long));
 static char BSPACE = '\b';		/* characters written for flood */
 static char DOT = '.';
 static char *hostname;
-static int ident;			/* process id to identify our packets */
+static int ident;			/* 16 random bits to identify our packets */
 static u_int8_t nonce[8];		/* nonce field for node information */
 static int hoplimit = -1;		/* hoplimit */
 
@@ -1055,7 +1055,7 @@ onsignal(int sig)
 /*
  * pinger --
  *	Compose and transmit an ICMP ECHO REQUEST packet.  The IP packet
- * will be added on by the kernel.  The ID field is our UNIX process ID,
+ * will be added on by the kernel.  The ID field is random,
  * and the sequence number is an ascending integer.  The first 8 bytes
  * of the data portion are used to hold a UNIX "timeval" struct in VAX
  * byte-order, to compute the round-trip time.

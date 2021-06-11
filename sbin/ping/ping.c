@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.117 2017/10/02 10:08:11 maya Exp $	*/
+/*	$NetBSD: ping.c,v 1.118 2021/06/11 18:47:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,7 +58,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.117 2017/10/02 10:08:11 maya Exp $");
+__RCSID("$NetBSD: ping.c,v 1.118 2021/06/11 18:47:56 rillig Exp $");
 #endif
 
 #include <stdio.h>
@@ -187,7 +187,7 @@ static int optlen;
 static int npackets;				/* total packets to send */
 static int preload;				/* number of packets to "preload" */
 static int ntransmitted;			/* output sequence # = #sent */
-static int ident;				/* our ID, in network byte order */
+static int ident;				/* 16 random bits to identify our packets */
 
 static int nreceived;				/* # of packets we got back */
 
@@ -884,7 +884,7 @@ jiggle(int delta)
 
 /*
  * Compose and transmit an ICMP ECHO REQUEST packet.  The IP packet
- * will be added on by the kernel.  The ID field is our UNIX process ID,
+ * will be added on by the kernel.  The ID field is random,
  * and the sequence number is an ascending integer.  The first phdrlen bytes
  * of the data portion are used to hold a UNIX "timeval" struct in VAX
  * byte-order, to compute the round-trip time, or a UNIX "timespec" in native
