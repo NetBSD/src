@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.151 2020/06/11 19:20:46 ad Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.152 2021/06/11 23:41:47 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.151 2020/06/11 19:20:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.152 2021/06/11 23:41:47 pgoyette Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -717,7 +717,7 @@ module_autoload(const char *filename, modclass_t modclass)
 		error = module_do_load(filename, false, 0, NULL, NULL, modclass,
 		    true);
 
-	module_print("Autoload for `%s' requested by pid %d (%s), status %d\n",
+	module_print("Autoload for `%s' requested by pid %d (%s), status %d",
 	    filename, p->p_pid, p->p_comm, error);
 	kernconfig_unlock();
 	return error;
