@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.212 2021/06/12 15:39:57 riastradh Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.213 2021/06/12 15:40:07 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.212 2021/06/12 15:39:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.213 2021/06/12 15:40:07 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -303,19 +303,16 @@ usbd_close_pipe(struct usbd_pipe *pipe)
 
 	usbd_lock_pipe(pipe);
 	SDT_PROBE1(usb, device, pipe, close,  pipe);
-
 	if (!SIMPLEQ_EMPTY(&pipe->up_queue)) {
 		printf("WARNING: pipe closed with active xfers on addr %d\n",
 		    pipe->up_dev->ud_addr);
 		usbd_ar_pipe(pipe);
 	}
-
 	KASSERT(SIMPLEQ_EMPTY(&pipe->up_queue));
-
 	pipe->up_methods->upm_close(pipe);
-
 	usbd_unlock_pipe(pipe);
-	if (pipe->up_intrxfer != NULL)
+
+	if (pipe->up_intrxfer)
 		usbd_destroy_xfer(pipe->up_intrxfer);
 	usb_rem_task_wait(pipe->up_dev, &pipe->up_async_task, USB_TASKQ_DRIVER,
 	    NULL);
