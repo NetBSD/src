@@ -1,4 +1,4 @@
-/*	$NetBSD: intelfb.c,v 1.17 2019/08/15 00:27:47 rin Exp $	*/
+/*	$NetBSD: intelfb.c,v 1.18 2021/06/12 12:15:43 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intelfb.c,v 1.17 2019/08/15 00:27:47 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intelfb.c,v 1.18 2021/06/12 12:15:43 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/bus.h>
@@ -119,7 +119,7 @@ intelfb_attach(device_t parent, device_t self, void *aux)
 		    error);
 		goto fail1;
 	}
-	self->dv_flags |= DVF_ATTACH_INPROGRESS;
+	config_pending_incr(self);
 	sc->sc_scheduled = true;
 
 	/* Success!  */
@@ -189,7 +189,7 @@ intelfb_attach_task(struct i915drmkms_task *task)
 
 	sc->sc_attached = true;
 out:
-	sc->sc_dev->dv_flags &= ~DVF_ATTACH_INPROGRESS;
+	config_pending_decr(sc->sc_dev);
 }
 
 static bool
