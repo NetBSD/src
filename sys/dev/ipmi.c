@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.6 2021/06/06 11:48:55 mlelstv Exp $ */
+/*	$NetBSD: ipmi.c,v 1.7 2021/06/12 12:15:43 riastradh Exp $ */
 
 /*
  * Copyright (c) 2019 Michael van Elst
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.6 2021/06/06 11:48:55 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.7 2021/06/12 12:15:43 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -2108,7 +2108,7 @@ ipmi_thread(void *cookie)
 		    SENSOR_REFRESH_RATE);
 	}
 	mutex_exit(&sc->sc_poll_mtx);
-	self->dv_flags &= ~DVF_ATTACH_INPROGRESS;
+	config_pending_decr(self);
 	kthread_exit(0);
 }
 
@@ -2135,7 +2135,7 @@ ipmi_attach(device_t parent, device_t self, void *aux)
 	    &sc->sc_kthread, "%s", device_xname(self)) != 0) {
 		aprint_error_dev(self, "unable to create thread, disabled\n");
 	} else
-		self->dv_flags |= DVF_ATTACH_INPROGRESS;
+		config_pending_incr(self);
 }
 
 static int
