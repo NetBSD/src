@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.206 2021/06/12 13:57:51 riastradh Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.207 2021/06/12 13:58:05 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.206 2021/06/12 13:57:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.207 2021/06/12 13:58:05 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -241,8 +241,6 @@ usbd_open_pipe_ival(struct usbd_interface *iface, uint8_t address,
 	}
 	return USBD_BAD_ADDRESS;
  found:
-	if ((flags & USBD_EXCLUSIVE_USE) && ep->ue_refcnt != 0)
-		return USBD_IN_USE;
 	err = usbd_setup_pipe_flags(iface->ui_dev, iface, ep, ival, &p, flags);
 	if (err)
 		return err;
@@ -316,7 +314,6 @@ usbd_close_pipe(struct usbd_pipe *pipe)
 	KASSERT(SIMPLEQ_EMPTY(&pipe->up_queue));
 
 	LIST_REMOVE(pipe, up_next);
-	pipe->up_endpoint->ue_refcnt--;
 
 	pipe->up_methods->upm_close(pipe);
 
@@ -325,6 +322,7 @@ usbd_close_pipe(struct usbd_pipe *pipe)
 		usbd_destroy_xfer(pipe->up_intrxfer);
 	usb_rem_task_wait(pipe->up_dev, &pipe->up_async_task, USB_TASKQ_DRIVER,
 	    NULL);
+	usbd_endpoint_release(pipe->up_dev, pipe->up_endpoint);
 	kmem_free(pipe, pipe->up_dev->ud_bus->ub_pipesize);
 
 	return USBD_NORMAL_COMPLETION;
