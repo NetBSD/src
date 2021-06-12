@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.134 2021/04/13 03:27:13 mrg Exp $	*/
+/*	$NetBSD: ath.c,v 1.135 2021/06/12 12:15:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.134 2021/04/13 03:27:13 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.135 2021/06/12 12:15:54 riastradh Exp $");
 #endif
 
 /*
@@ -652,8 +652,7 @@ bad2:
 bad:
 	if (ah)
 		ath_hal_detach(ah);
-	/* XXX don't get under the abstraction like this */
-	sc->sc_dev->dv_flags &= ~DVF_ACTIVE;
+	(void)config_deactivate(sc->sc_dev);
 	return error;
 }
 
