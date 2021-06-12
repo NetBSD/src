@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.148 2021/06/12 12:11:01 riastradh Exp $	*/
+/*	$NetBSD: uhub.c,v 1.149 2021/06/12 12:13:10 riastradh Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 /*	$OpenBSD: uhub.c,v 1.86 2015/06/29 18:27:40 mpi Exp $ */
 
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.148 2021/06/12 12:11:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.149 2021/06/12 12:13:10 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -533,6 +533,8 @@ uhub_explore(struct usbd_device *dev)
 	    device_unit(sc->sc_dev), (uintptr_t)dev, dev->ud_addr,
 	    dev->ud_speed);
 
+	KASSERT(KERNEL_LOCKED_P());
+
 	if (!sc->sc_running)
 		return USBD_NOT_STARTED;
 
@@ -930,6 +932,8 @@ uhub_rescan(device_t self, const char *ifattr, const int *locators)
 	struct usbd_device *dev;
 	int port;
 
+	KASSERT(KERNEL_LOCKED_P());
+
 	if (uhub_explore_enter(sc) != 0)
 		return EBUSY;
 	for (port = 1; port <= hub->uh_hubdesc.bNbrPorts; port++) {
@@ -952,6 +956,8 @@ uhub_childdet(device_t self, device_t child)
 	int nports;
 	int port;
 	int i;
+
+	KASSERT(KERNEL_LOCKED_P());
 
 	if (!devhub->ud_hub)
 		/* should never happen; children are only created after init */
