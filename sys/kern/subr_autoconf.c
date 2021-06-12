@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.282 2021/06/12 12:12:11 riastradh Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.283 2021/06/12 12:13:51 riastradh Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -79,7 +79,7 @@
 #define	__SUBR_AUTOCONF_PRIVATE	/* see <sys/device.h> */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.282 2021/06/12 12:12:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.283 2021/06/12 12:13:51 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -471,7 +471,6 @@ config_interrupts_thread(void *cookie)
 		kmem_free(dc, sizeof(*dc));
 
 		mutex_enter(&config_misc_lock);
-		dev->dv_flags &= ~DVF_ATTACH_INPROGRESS;
 	}
 	mutex_exit(&config_misc_lock);
 
@@ -1721,6 +1720,7 @@ config_vattach(device_t parent, cfdata_t cf, void *aux, cfprint_t print,
 	device_t dev;
 	struct cftable *ct;
 	const char *drvname;
+	bool deferred;
 
 	KASSERT(KERNEL_LOCKED_P());
 
@@ -1776,10 +1776,15 @@ config_vattach(device_t parent, cfdata_t cf, void *aux, cfprint_t print,
 	/* Let userland know */
 	devmon_report_device(dev, true);
 
+	config_pending_incr(dev);
 	(*dev->dv_cfattach->ca_attach)(parent, dev, aux);
+	config_pending_decr(dev);
 
-	if (((dev->dv_flags & DVF_ATTACH_INPROGRESS) == 0)
-	    && !device_pmf_is_registered(dev))
+	mutex_enter(&config_misc_lock);
+	deferred = (dev->dv_pending != 0);
+	mutex_exit(&config_misc_lock);
+
+	if (!deferred && !device_pmf_is_registered(dev))
 		aprint_debug_dev(dev,
 		    "WARNING: power management not supported\n");
 
@@ -1841,7 +1846,9 @@ config_attach_pseudo(cfdata_t cf)
 	/* Let userland know */
 	devmon_report_device(dev, true);
 
+	config_pending_incr(dev);
 	(*dev->dv_cfattach->ca_attach)(ROOT, dev, NULL);
+	config_pending_decr(dev);
 
 	config_process_deferred(&deferred_config_queue, dev);
 	return dev;
@@ -1884,6 +1891,41 @@ config_dump_garbage(struct devicelist *garbage)
 	}
 }
 
+static int
+config_detach_enter(device_t dev)
+{
+	int error;
+
+	mutex_enter(&config_misc_lock);
+	for (;;) {
+		if (dev->dv_pending == 0 && dev->dv_detaching == NULL) {
+			dev->dv_detaching = curlwp;
+			error = 0;
+			break;
+		}
+		KASSERTMSG(dev->dv_detaching != curlwp,
+		    "recursively detaching %s", device_xname(dev));
+		error = cv_wait_sig(&config_misc_cv, &config_misc_lock);
+		if (error)
+			break;
+	}
+	KASSERT(error || dev->dv_detaching == curlwp);
+	mutex_exit(&config_misc_lock);
+
+	return error;
+}
+
+static void
+config_detach_exit(device_t dev)
+{
+
+	mutex_enter(&config_misc_lock);
+	KASSERT(dev->dv_detaching == curlwp);
+	dev->dv_detaching = NULL;
+	cv_broadcast(&config_misc_cv);
+	mutex_exit(&config_misc_lock);
+}
+
 /*
  * Detach a device.  Optionally forced (e.g. because of hardware
  * removal) and quiet.  Returns zero if successful, non-zero
@@ -1918,6 +1960,14 @@ config_detach(device_t dev, int flags)
 	ca = dev->dv_cfattach;
 	KASSERT(ca != NULL);
 
+	/*
+	 * Only one detach at a time, please -- and not until fully
+	 * attached.
+	 */
+	rv = config_detach_enter(dev);
+	if (rv)
+		return rv;
+
 	mutex_enter(&alldevs_lock);
 	if (dev->dv_del_gen != 0) {
 		mutex_exit(&alldevs_lock);
@@ -1925,6 +1975,7 @@ config_detach(device_t dev, int flags)
 		printf("%s: %s is already detached\n", __func__,
 		    device_xname(dev));
 #endif /* DIAGNOSTIC */
+		config_detach_exit(dev);
 		return ENOENT;
 	}
 	alldevs_nwrite++;
@@ -2004,6 +2055,8 @@ config_detach(device_t dev, int flags)
 		aprint_normal_dev(dev, "detached\n");
 
 out:
+	config_detach_exit(dev);
+
 	config_alldevs_enter(&af);
 	KASSERT(alldevs_nwrite != 0);
 	--alldevs_nwrite;
@@ -2204,7 +2257,6 @@ config_interrupts(device_t dev, void (*func)(device_t))
 	dc->dc_dev = dev;
 	dc->dc_func = func;
 	TAILQ_INSERT_TAIL(&interrupt_config_queue, dc, dc_queue);
-	dev->dv_flags |= DVF_ATTACH_INPROGRESS;
 	mutex_exit(&config_misc_lock);
 }
 
@@ -2298,13 +2350,13 @@ config_pending_decr(device_t dev)
 	mutex_enter(&config_misc_lock);
 	KASSERTMSG(dev->dv_pending > 0,
 	    "%s: excess config_pending_decr", device_xname(dev));
-	if (--dev->dv_pending == 0)
+	if (--dev->dv_pending == 0) {
 		TAILQ_REMOVE(&config_pending, dev, dv_pending_list);
+		cv_broadcast(&config_misc_cv);
+	}
 #ifdef DEBUG_AUTOCONF
 	printf("%s: %s %d\n", __func__, device_xname(dev), dev->dv_pending);
 #endif
-	if (TAILQ_EMPTY(&config_pending))
-		cv_broadcast(&config_misc_cv);
 	mutex_exit(&config_misc_lock);
 }
 
