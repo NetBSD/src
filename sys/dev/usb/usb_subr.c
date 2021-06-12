@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.258 2021/06/12 15:39:57 riastradh Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.259 2021/06/12 15:41:22 riastradh Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.258 2021/06/12 15:39:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.259 2021/06/12 15:41:22 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -444,6 +444,7 @@ usbd_fill_iface_data(struct usbd_device *dev, int ifaceidx, int altidx)
 	    ifaceidx, altidx, 0, 0);
 	struct usbd_interface *ifc = &dev->ud_ifaces[ifaceidx];
 	usb_interface_descriptor_t *idesc;
+	struct usbd_endpoint *endpoints;
 	char *p, *end;
 	int endpt, nendpt;
 
@@ -453,18 +454,16 @@ usbd_fill_iface_data(struct usbd_device *dev, int ifaceidx, int altidx)
 	idesc = usbd_find_idesc(dev->ud_cdesc, ifaceidx, altidx);
 	if (idesc == NULL)
 		return USBD_INVAL;
-	ifc->ui_idesc = idesc;
-	ifc->ui_index = ifaceidx;
-	ifc->ui_altindex = altidx;
-	nendpt = ifc->ui_idesc->bNumEndpoints;
+
+	nendpt = idesc->bNumEndpoints;
 	DPRINTFN(4, "found idesc nendpt=%jd", nendpt, 0, 0, 0);
 	if (nendpt != 0) {
-		ifc->ui_endpoints = kmem_alloc(nendpt * sizeof(struct usbd_endpoint),
-				KM_SLEEP);
+		endpoints = kmem_alloc(nendpt * sizeof(struct usbd_endpoint),
+		    KM_SLEEP);
 	} else
-		ifc->ui_endpoints = NULL;
-	ifc->ui_priv = NULL;
-	p = (char *)ifc->ui_idesc + ifc->ui_idesc->bLength;
+		endpoints = NULL;
+
+	p = (char *)idesc + idesc->bLength;
 	end = (char *)dev->ud_cdesc + UGETW(dev->ud_cdesc->wTotalLength);
 #define ed ((usb_endpoint_descriptor_t *)p)
 	for (endpt = 0; endpt < nendpt; endpt++) {
@@ -495,7 +494,7 @@ usbd_fill_iface_data(struct usbd_device *dev, int ifaceidx, int altidx)
 		}
 		goto bad;
 	found:
-		ifc->ui_endpoints[endpt].ue_edesc = ed;
+		endpoints[endpt].ue_edesc = ed;
 		if (dev->ud_speed == USB_SPEED_HIGH) {
 			u_int mps;
 			/* Control and bulk endpoints have max packet limits. */
@@ -518,18 +517,28 @@ usbd_fill_iface_data(struct usbd_device *dev, int ifaceidx, int altidx)
 				break;
 			}
 		}
-		ifc->ui_endpoints[endpt].ue_refcnt = 0;
-		ifc->ui_endpoints[endpt].ue_toggle = 0;
+		endpoints[endpt].ue_refcnt = 0;
+		endpoints[endpt].ue_toggle = 0;
 		p += ed->bLength;
 	}
 #undef ed
+
+	/* Success!  Free the old endpoints and commit the changes.  */
+	if (ifc->ui_endpoints) {
+		kmem_free(ifc->ui_endpoints, (sizeof(ifc->ui_endpoints[0]) *
+			ifc->ui_idesc->bNumEndpoints));
+	}
+
+	ifc->ui_idesc = idesc;
+	ifc->ui_index = ifaceidx;
+	ifc->ui_altindex = altidx;
+	ifc->ui_endpoints = endpoints;
+
 	return USBD_NORMAL_COMPLETION;
 
  bad:
-	if (ifc->ui_endpoints != NULL) {
-		kmem_free(ifc->ui_endpoints, nendpt * sizeof(struct usbd_endpoint));
-		ifc->ui_endpoints = NULL;
-	}
+	if (endpoints)
+		kmem_free(endpoints, nendpt * sizeof(struct usbd_endpoint));
 	return USBD_INVAL;
 }
 
