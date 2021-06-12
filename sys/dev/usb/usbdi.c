@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.208 2021/06/12 14:43:27 riastradh Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.209 2021/06/12 14:57:53 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.208 2021/06/12 14:43:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.209 2021/06/12 14:57:53 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -241,12 +241,16 @@ usbd_open_pipe_ival(struct usbd_interface *iface, uint8_t address,
 	}
 	return USBD_BAD_ADDRESS;
  found:
-	err = usbd_setup_pipe_flags(iface->ui_dev, iface, ep, ival, &p, flags);
-	if (err)
-		return err;
 	mutex_enter(&iface->ui_pipelock);
 	LIST_INSERT_HEAD(&iface->ui_pipes, p, up_next);
 	mutex_exit(&iface->ui_pipelock);
+	err = usbd_setup_pipe_flags(iface->ui_dev, iface, ep, ival, &p, flags);
+	if (err) {
+		mutex_enter(&iface->ui_pipelock);
+		LIST_REMOVE(p, up_next);
+		mutex_exit(&iface->ui_pipelock);
+		return err;
+	}
 	*pipe = p;
 	SDT_PROBE5(usb, device, pipe, open,
 	    iface, address, flags, ival, p);
