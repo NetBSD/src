@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.257 2021/06/12 15:39:46 riastradh Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.258 2021/06/12 15:39:57 riastradh Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.257 2021/06/12 15:39:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.258 2021/06/12 15:39:57 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -900,19 +900,13 @@ usbd_endpoint_release(struct usbd_device *dev, struct usbd_endpoint *ep)
 	mutex_exit(dev->ud_bus->ub_lock);
 }
 
-/* Abort the device control pipe. */
+/* Abort and close the device control pipe. */
 void
 usbd_kill_pipe(struct usbd_pipe *pipe)
 {
+
 	usbd_abort_pipe(pipe);
-	usbd_lock_pipe(pipe);
-	pipe->up_methods->upm_close(pipe);
-	usbd_unlock_pipe(pipe);
-	usb_rem_task_wait(pipe->up_dev, &pipe->up_async_task, USB_TASKQ_DRIVER,
-	    NULL);
-	KASSERT(pipe->up_iface == NULL);
-	usbd_endpoint_release(pipe->up_dev, pipe->up_endpoint);
-	kmem_free(pipe, pipe->up_dev->ud_bus->ub_pipesize);
+	usbd_close_pipe(pipe);
 }
 
 int
