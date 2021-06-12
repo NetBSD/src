@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.205 2021/06/12 13:57:40 riastradh Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.206 2021/06/12 13:57:51 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.205 2021/06/12 13:57:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.206 2021/06/12 13:57:51 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -320,13 +320,9 @@ usbd_close_pipe(struct usbd_pipe *pipe)
 
 	pipe->up_methods->upm_close(pipe);
 
-	if (pipe->up_intrxfer != NULL) {
-	    	usbd_unlock_pipe(pipe);
-		usbd_destroy_xfer(pipe->up_intrxfer);
-		usbd_lock_pipe(pipe);
-	}
-
 	usbd_unlock_pipe(pipe);
+	if (pipe->up_intrxfer != NULL)
+		usbd_destroy_xfer(pipe->up_intrxfer);
 	usb_rem_task_wait(pipe->up_dev, &pipe->up_async_task, USB_TASKQ_DRIVER,
 	    NULL);
 	kmem_free(pipe, pipe->up_dev->ud_bus->ub_pipesize);
