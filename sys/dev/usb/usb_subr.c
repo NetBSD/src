@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.254 2021/06/12 12:13:23 riastradh Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.255 2021/06/12 13:58:05 riastradh Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.254 2021/06/12 12:13:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.255 2021/06/12 13:58:05 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -775,12 +775,15 @@ usbd_setup_pipe_flags(struct usbd_device *dev, struct usbd_interface *iface,
 	struct usbd_pipe *p;
 	usbd_status err;
 
+	err = usbd_endpoint_acquire(dev, ep, flags & USBD_EXCLUSIVE_USE);
+	if (err)
+		return err;
+
 	p = kmem_alloc(dev->ud_bus->ub_pipesize, KM_SLEEP);
 	DPRINTFN(1, "pipe=%#jx", (uintptr_t)p, 0, 0, 0);
 	p->up_dev = dev;
 	p->up_iface = iface;
 	p->up_endpoint = ep;
-	ep->ue_refcnt++;
 	p->up_intrxfer = NULL;
 	p->up_running = 0;
 	p->up_aborting = 0;
@@ -794,6 +797,7 @@ usbd_setup_pipe_flags(struct usbd_device *dev, struct usbd_interface *iface,
 		DPRINTF("endpoint=%#jx failed, error=%jd",
 		    (uintptr_t)ep->ue_edesc->bEndpointAddress, err, 0, 0);
 		kmem_free(p, dev->ud_bus->ub_pipesize);
+		usbd_endpoint_release(dev, ep);
 		return err;
 	}
 
@@ -806,6 +810,36 @@ usbd_setup_pipe_flags(struct usbd_device *dev, struct usbd_interface *iface,
 	return USBD_NORMAL_COMPLETION;
 }
 
+usbd_status
+usbd_endpoint_acquire(struct usbd_device *dev, struct usbd_endpoint *ep,
+    int flags)
+{
+	usbd_status err;
+
+	mutex_enter(dev->ud_bus->ub_lock);
+	if (ep->ue_refcnt == INT_MAX) {
+		err = USBD_IN_USE; /* XXX rule out or switch to 64-bit */
+	} else if ((flags & USBD_EXCLUSIVE_USE) && ep->ue_refcnt) {
+		err = USBD_IN_USE;
+	} else {
+		ep->ue_refcnt++;
+		err = 0;
+	}
+	mutex_exit(dev->ud_bus->ub_lock);
+
+	return err;
+}
+
+void
+usbd_endpoint_release(struct usbd_device *dev, struct usbd_endpoint *ep)
+{
+
+	mutex_enter(dev->ud_bus->ub_lock);
+	KASSERT(ep->ue_refcnt);
+	ep->ue_refcnt--;
+	mutex_exit(dev->ud_bus->ub_lock);
+}
+
 /* Abort the device control pipe. */
 void
 usbd_kill_pipe(struct usbd_pipe *pipe)
@@ -816,7 +850,7 @@ usbd_kill_pipe(struct usbd_pipe *pipe)
 	usbd_unlock_pipe(pipe);
 	usb_rem_task_wait(pipe->up_dev, &pipe->up_async_task, USB_TASKQ_DRIVER,
 	    NULL);
-	pipe->up_endpoint->ue_refcnt--;
+	usbd_endpoint_release(pipe->up_dev, pipe->up_endpoint);
 	kmem_free(pipe, pipe->up_dev->ud_bus->ub_pipesize);
 }
 
