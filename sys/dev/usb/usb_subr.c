@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.250 2021/04/24 23:36:59 thorpej Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.251 2021/06/12 12:11:11 riastradh Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.250 2021/04/24 23:36:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.251 2021/06/12 12:11:11 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1068,8 +1068,6 @@ usbd_probe_and_attach(device_t parent, struct usbd_device *dev,
 		nifaces = dev->ud_cdesc->bNumInterface;
 		dev->ud_subdevs = kmem_zalloc(nifaces * sizeof(device_t),
 		    KM_SLEEP);
-		if (dev->ud_subdevs == NULL)
-			return USBD_NOMEM;
 		dev->ud_subdevlen = nifaces;
 
 		err = usbd_attachinterfaces(parent, dev, port, NULL);
