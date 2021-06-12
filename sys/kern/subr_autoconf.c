@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.280 2021/04/28 03:21:57 thorpej Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.281 2021/06/12 12:11:49 riastradh Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -79,7 +79,7 @@
 #define	__SUBR_AUTOCONF_PRIVATE	/* see <sys/device.h> */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.280 2021/04/28 03:21:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.281 2021/06/12 12:11:49 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1285,11 +1285,15 @@ device_t
 config_rootfound(const char *rootname, void *aux)
 {
 	cfdata_t cf;
+	device_t dev = NULL;
 
+	KERNEL_LOCK(1, NULL);
 	if ((cf = config_rootsearch(NULL, rootname, aux)) != NULL)
-		return config_attach(ROOT, cf, aux, NULL, CFARG_EOL);
-	aprint_error("root device %s not configured\n", rootname);
-	return NULL;
+		dev = config_attach(ROOT, cf, aux, NULL, CFARG_EOL);
+	else
+		aprint_error("root device %s not configured\n", rootname);
+	KERNEL_UNLOCK_ONE(NULL);
+	return dev;
 }
 
 /* just like sprintf(buf, "%d") except that it works from the end */
@@ -2046,8 +2050,10 @@ config_detach_all(int how)
 	bool progress = false;
 	int flags;
 
+	KERNEL_LOCK(1, NULL);
+
 	if ((how & (RB_NOSYNC|RB_DUMP)) != 0)
-		return false;
+		goto out;
 
 	if ((how & RB_POWERDOWN) == RB_POWERDOWN)
 		flags = DETACH_SHUTDOWN | DETACH_POWEROFF;
@@ -2063,6 +2069,8 @@ config_detach_all(int how)
 		} else
 			aprint_debug("failed.");
 	}
+
+out:	KERNEL_UNLOCK_ONE(NULL);
 	return progress;
 }
 
@@ -2286,6 +2294,9 @@ int
 config_finalize_register(device_t dev, int (*fn)(device_t))
 {
 	struct finalize_hook *f;
+	int error = 0;
+
+	KERNEL_LOCK(1, NULL);
 
 	/*
 	 * If finalization has already been done, invoke the
@@ -2294,13 +2305,15 @@ config_finalize_register(device_t dev, int (*fn)(device_t))
 	if (config_finalize_done) {
 		while ((*fn)(dev) != 0)
 			/* loop */ ;
-		return 0;
+		goto out;
 	}
 
 	/* Ensure this isn't already on the list. */
 	TAILQ_FOREACH(f, &config_finalize_list, f_list) {
-		if (f->f_func == fn && f->f_dev == dev)
-			return EEXIST;
+		if (f->f_func == fn && f->f_dev == dev) {
+			error = EEXIST;
+			goto out;
+		}
 	}
 
 	f = kmem_alloc(sizeof(*f), KM_SLEEP);
@@ -2308,7 +2321,11 @@ config_finalize_register(device_t dev, int (*fn)(device_t))
 	f->f_dev = dev;
 	TAILQ_INSERT_TAIL(&config_finalize_list, f, f_list);
 
-	return 0;
+	/* Success!  */
+	error = 0;
+
+out:	KERNEL_UNLOCK_ONE(NULL);
+	return error;
 }
 
 void
