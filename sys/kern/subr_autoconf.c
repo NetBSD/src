@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.283 2021/06/12 12:13:51 riastradh Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.284 2021/06/12 12:14:13 riastradh Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -79,7 +79,7 @@
 #define	__SUBR_AUTOCONF_PRIVATE	/* see <sys/device.h> */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.283 2021/06/12 12:13:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.284 2021/06/12 12:14:13 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -2020,6 +2020,7 @@ config_detach(device_t dev, int flags)
 	 * after parents, we only need to search the latter part of
 	 * the list.)
 	 */
+	mutex_enter(&alldevs_lock);
 	for (d = TAILQ_NEXT(dev, dv_list); d != NULL;
 	    d = TAILQ_NEXT(d, dv_list)) {
 		if (d->dv_parent == dev && d->dv_del_gen == 0) {
@@ -2029,6 +2030,7 @@ config_detach(device_t dev, int flags)
 			panic("config_detach");
 		}
 	}
+	mutex_exit(&alldevs_lock);
 #endif
 
 	/* notify the parent that the child is gone */
