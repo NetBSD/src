@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.281 2021/06/12 12:11:49 riastradh Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.282 2021/06/12 12:12:11 riastradh Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -79,7 +79,7 @@
 #define	__SUBR_AUTOCONF_PRIVATE	/* see <sys/device.h> */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.281 2021/06/12 12:11:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.282 2021/06/12 12:12:11 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -377,6 +377,8 @@ config_init_component(struct cfdriver * const *cfdriverv,
 {
 	int error;
 
+	KASSERT(KERNEL_LOCKED_P());
+
 	if ((error = frob_cfdrivervec(cfdriverv,
 	    config_cfdriver_attach, config_cfdriver_detach, "init", false))!= 0)
 		return error;
@@ -403,6 +405,8 @@ config_fini_component(struct cfdriver * const *cfdriverv,
 	const struct cfattachinit *cfattachv, struct cfdata *cfdatav)
 {
 	int error;
+
+	KASSERT(KERNEL_LOCKED_P());
 
 	if ((error = config_cfdata_detach(cfdatav)) != 0)
 		return error;
@@ -439,6 +443,9 @@ config_init_mi(void)
 void
 config_deferred(device_t dev)
 {
+
+	KASSERT(KERNEL_LOCKED_P());
+
 	config_process_deferred(&deferred_config_queue, dev);
 	config_process_deferred(&interrupt_config_queue, dev);
 	config_process_deferred(&mountroot_config_queue, dev);
@@ -906,6 +913,7 @@ rescan_with_cfdata(const struct cfdata *cf)
 	const struct cfdata *cf1;
 	deviter_t di;
 
+	KASSERT(KERNEL_LOCKED_P());
 
 	/*
 	 * "alldevs" is likely longer than a modules's cfdata, so make it
@@ -938,6 +946,8 @@ int
 config_cfdata_attach(cfdata_t cf, int scannow)
 {
 	struct cftable *ct;
+
+	KASSERT(KERNEL_LOCKED_P());
 
 	ct = kmem_alloc(sizeof(*ct), KM_SLEEP);
 	ct->ct_cfdata = cf;
@@ -1010,6 +1020,8 @@ int
 config_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct cfattach *ca;
+
+	KASSERT(KERNEL_LOCKED_P());
 
 	ca = config_cfattach_lookup(cf->cf_name, cf->cf_atname);
 	if (ca == NULL) {
@@ -1710,6 +1722,8 @@ config_vattach(device_t parent, cfdata_t cf, void *aux, cfprint_t print,
 	struct cftable *ct;
 	const char *drvname;
 
+	KASSERT(KERNEL_LOCKED_P());
+
 	dev = config_vdevalloc(parent, cf, tag, ap);
 	if (!dev)
 		panic("config_attach: allocation of device softc failed");
@@ -1782,6 +1796,8 @@ config_attach(device_t parent, cfdata_t cf, void *aux, cfprint_t print,
 	device_t dev;
 	va_list ap;
 
+	KASSERT(KERNEL_LOCKED_P());
+
 	va_start(ap, tag);
 	dev = config_vattach(parent, cf, aux, print, tag, ap);
 	va_end(ap);
@@ -1802,6 +1818,8 @@ device_t
 config_attach_pseudo(cfdata_t cf)
 {
 	device_t dev;
+
+	KASSERT(KERNEL_LOCKED_P());
 
 	dev = config_devalloc(ROOT, cf, CFARG_EOL);
 	if (!dev)
@@ -1885,6 +1903,8 @@ config_detach(device_t dev, int flags)
 	struct cfdriver *cd;
 	device_t d __diagused;
 	int rv = 0;
+
+	KASSERT(KERNEL_LOCKED_P());
 
 	cf = dev->dv_cfdata;
 	KASSERTMSG((cf == NULL || cf->cf_fstate == FSTATE_FOUND ||
@@ -2006,6 +2026,8 @@ config_detach_children(device_t parent, int flags)
 	device_t dv;
 	deviter_t di;
 	int error = 0;
+
+	KASSERT(KERNEL_LOCKED_P());
 
 	for (dv = deviter_first(&di, DEVITER_F_RW); dv != NULL;
 	     dv = deviter_next(&di)) {
@@ -2227,6 +2249,8 @@ static void
 config_process_deferred(struct deferred_config_head *queue, device_t parent)
 {
 	struct deferred_config *dc;
+
+	KASSERT(KERNEL_LOCKED_P());
 
 	mutex_enter(&config_misc_lock);
 	dc = TAILQ_FIRST(queue);
