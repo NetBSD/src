@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.147 2020/06/05 17:20:56 maxv Exp $	*/
+/*	$NetBSD: uhub.c,v 1.148 2021/06/12 12:11:01 riastradh Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 /*	$OpenBSD: uhub.c,v 1.86 2015/06/29 18:27:40 mpi Exp $ */
 
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.147 2020/06/05 17:20:56 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.148 2021/06/12 12:11:01 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -110,6 +110,7 @@ struct uhub_softc {
 	struct usbd_pipe	*sc_ipipe;	/* interrupt pipe */
 
 	kmutex_t		 sc_lock;
+	kcondvar_t		 sc_cv;
 
 	uint8_t			*sc_statusbuf;
 	uint8_t			*sc_statuspend;
@@ -118,6 +119,8 @@ struct uhub_softc {
 	bool			 sc_explorepending;
 	bool			 sc_first_explore;
 	bool			 sc_running;
+
+	struct lwp		*sc_exploring;
 };
 
 #define UHUB_IS_HIGH_SPEED(sc) \
@@ -127,6 +130,8 @@ struct uhub_softc {
 #define PORTSTAT_ISSET(sc, port) \
 	((sc)->sc_status[(port) / 8] & (1 << ((port) % 8)))
 
+Static usbd_status uhub_explore_enter(struct uhub_softc *);
+Static void uhub_explore_exit(struct uhub_softc *);
 Static usbd_status uhub_explore(struct usbd_device *);
 Static void uhub_intr(struct usbd_xfer *, void *, usbd_status);
 
@@ -365,6 +370,7 @@ uhub_attach(device_t parent, device_t self, void *aux)
 	sc->sc_statuspend = kmem_zalloc(sc->sc_statuslen, KM_SLEEP);
 	sc->sc_status = kmem_alloc(sc->sc_statuslen, KM_SLEEP);
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTUSB);
+	cv_init(&sc->sc_cv, "uhubex");
 
 	/* force initial scan */
 	memset(sc->sc_status, 0xff, sc->sc_statuslen);
@@ -476,6 +482,41 @@ uhub_attach(device_t parent, device_t self, void *aux)
 	config_pending_decr(self);
 }
 
+Static usbd_status
+uhub_explore_enter(struct uhub_softc *sc)
+{
+	usbd_status err;
+
+	mutex_enter(&sc->sc_lock);
+	for (;;) {
+		if (sc->sc_exploring == NULL) {
+			sc->sc_exploring = curlwp;
+			err = 0;
+			break;
+		}
+		KASSERT(sc->sc_exploring != curlwp);
+		if (cv_wait_sig(&sc->sc_cv, &sc->sc_lock)) {
+			err = USBD_INTERRUPTED;
+			break;
+		}
+	}
+	mutex_exit(&sc->sc_lock);
+
+	return err;
+}
+
+Static void
+uhub_explore_exit(struct uhub_softc *sc)
+{
+
+	mutex_enter(&sc->sc_lock);
+	KASSERTMSG(sc->sc_exploring == curlwp, "lwp %p exploring %s",
+	    sc->sc_exploring, device_xname(sc->sc_dev));
+	sc->sc_exploring = NULL;
+	cv_broadcast(&sc->sc_cv);
+	mutex_exit(&sc->sc_lock);
+}
+
 usbd_status
 uhub_explore(struct usbd_device *dev)
 {
@@ -498,6 +539,11 @@ uhub_explore(struct usbd_device *dev)
 	/* Ignore hubs that are too deep. */
 	if (dev->ud_depth > USB_HUB_MAX_DEPTH)
 		return USBD_TOO_DEEP;
+
+	/* Only one explore at a time, please.  */
+	err = uhub_explore_enter(sc);
+	if (err)
+		return err;
 
 	if (PORTSTAT_ISSET(sc, 0)) { /* hub status change */
 		usb_hub_status_t hs;
@@ -803,6 +849,7 @@ uhub_explore(struct usbd_device *dev)
 		}
 	}
 	mutex_exit(&sc->sc_lock);
+	uhub_explore_exit(sc);
 	if (sc->sc_first_explore) {
 		config_pending_decr(sc->sc_dev);
 		sc->sc_first_explore = false;
@@ -866,6 +913,7 @@ uhub_detach(device_t self, int flags)
 	if (sc->sc_statusbuf)
 		kmem_free(sc->sc_statusbuf, sc->sc_statuslen);
 
+	cv_destroy(&sc->sc_cv);
 	mutex_destroy(&sc->sc_lock);
 
 	/* XXXSMP usb */
@@ -882,12 +930,15 @@ uhub_rescan(device_t self, const char *ifattr, const int *locators)
 	struct usbd_device *dev;
 	int port;
 
+	if (uhub_explore_enter(sc) != 0)
+		return EBUSY;
 	for (port = 1; port <= hub->uh_hubdesc.bNbrPorts; port++) {
 		dev = hub->uh_ports[port - 1].up_dev;
 		if (dev == NULL)
 			continue;
 		usbd_reattach_device(sc->sc_dev, dev, port, locators);
 	}
+	uhub_explore_exit(sc);
 	return 0;
 }
 
