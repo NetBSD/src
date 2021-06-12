@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.126 2021/06/12 14:43:27 riastradh Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.127 2021/06/12 15:49:45 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -230,7 +230,6 @@ struct usbd_interface {
 	int			ui_index;
 	int			ui_altindex;
 	struct usbd_endpoint   *ui_endpoints;
-	void		       *ui_priv;
 	kmutex_t		ui_pipelock;
 	LIST_HEAD(, usbd_pipe)	ui_pipes;
 };
