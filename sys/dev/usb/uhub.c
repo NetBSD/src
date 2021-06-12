@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.149 2021/06/12 12:13:10 riastradh Exp $	*/
+/*	$NetBSD: uhub.c,v 1.150 2021/06/12 12:13:23 riastradh Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 /*	$OpenBSD: uhub.c,v 1.86 2015/06/29 18:27:40 mpi Exp $ */
 
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.149 2021/06/12 12:13:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.150 2021/06/12 12:13:23 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -931,6 +931,9 @@ uhub_rescan(device_t self, const char *ifattr, const int *locators)
 	struct usbd_hub *hub = sc->sc_hub->ud_hub;
 	struct usbd_device *dev;
 	int port;
+
+	UHUBHIST_FUNC();
+	UHUBHIST_CALLARGS("uhub%jd", device_unit(sc->sc_dev), 0, 0, 0);
 
 	KASSERT(KERNEL_LOCKED_P());
 

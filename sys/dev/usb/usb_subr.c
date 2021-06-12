@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.253 2021/06/12 12:13:10 riastradh Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.254 2021/06/12 12:13:23 riastradh Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.253 2021/06/12 12:13:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.254 2021/06/12 12:13:23 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1115,6 +1115,10 @@ usbd_reattach_device(device_t parent, struct usbd_device *dev,
                      int port, const int *locators)
 {
 	int i, loc;
+
+	USBHIST_FUNC();
+	USBHIST_CALLARGS(usbdebug, "uhub%jd port=%jd",
+	    device_unit(parent), port, 0, 0);
 
 	KASSERT(KERNEL_LOCKED_P());
 
