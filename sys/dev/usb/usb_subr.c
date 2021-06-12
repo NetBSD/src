@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.255 2021/06/12 13:58:05 riastradh Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.256 2021/06/12 14:43:27 riastradh Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.255 2021/06/12 13:58:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.256 2021/06/12 14:43:27 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -403,6 +403,39 @@ usbd_find_edesc(usb_config_descriptor_t *cd, int ifaceidx, int altidx,
 	return NULL;
 }
 
+static void
+usbd_iface_init(struct usbd_device *dev, int ifaceidx)
+{
+	struct usbd_interface *ifc = &dev->ud_ifaces[ifaceidx];
+
+	memset(ifc, 0, sizeof(*ifc));
+
+	ifc->ui_dev = dev;
+	ifc->ui_idesc = NULL;
+	ifc->ui_index = 0;
+	ifc->ui_altindex = 0;
+	ifc->ui_endpoints = NULL;
+	ifc->ui_priv = NULL;
+	LIST_INIT(&ifc->ui_pipes);
+	mutex_init(&ifc->ui_pipelock, MUTEX_DEFAULT, IPL_NONE);
+}
+
+static void
+usbd_iface_fini(struct usbd_device *dev, int ifaceidx)
+{
+	struct usbd_interface *ifc = &dev->ud_ifaces[ifaceidx];
+
+	KASSERT(ifc->ui_dev == dev);
+	KASSERT(ifc->ui_idesc == NULL);
+	KASSERT(ifc->ui_index == 0);
+	KASSERT(ifc->ui_altindex == 0);
+	KASSERT(ifc->ui_endpoints == NULL);
+	KASSERT(ifc->ui_priv == NULL);
+	KASSERT(LIST_EMPTY(&ifc->ui_pipes));
+
+	mutex_destroy(&ifc->ui_pipelock);
+}
+
 usbd_status
 usbd_fill_iface_data(struct usbd_device *dev, int ifaceidx, int altidx)
 {
@@ -414,10 +447,12 @@ usbd_fill_iface_data(struct usbd_device *dev, int ifaceidx, int altidx)
 	char *p, *end;
 	int endpt, nendpt;
 
+	KASSERT(ifc->ui_dev == dev);
+	KASSERT(LIST_EMPTY(&ifc->ui_pipes));
+
 	idesc = usbd_find_idesc(dev->ud_cdesc, ifaceidx, altidx);
 	if (idesc == NULL)
 		return USBD_INVAL;
-	ifc->ui_dev = dev;
 	ifc->ui_idesc = idesc;
 	ifc->ui_index = ifaceidx;
 	ifc->ui_altindex = altidx;
@@ -488,7 +523,6 @@ usbd_fill_iface_data(struct usbd_device *dev, int ifaceidx, int altidx)
 		p += ed->bLength;
 	}
 #undef ed
-	LIST_INIT(&ifc->ui_pipes);
 	return USBD_NORMAL_COMPLETION;
 
  bad:
@@ -499,16 +533,25 @@ usbd_fill_iface_data(struct usbd_device *dev, int ifaceidx, int altidx)
 	return USBD_INVAL;
 }
 
-void
+Static void
 usbd_free_iface_data(struct usbd_device *dev, int ifcno)
 {
 	struct usbd_interface *ifc = &dev->ud_ifaces[ifcno];
+
+	KASSERT(ifc->ui_dev == dev);
+	KASSERT(ifc->ui_idesc != NULL);
+	KASSERT(LIST_EMPTY(&ifc->ui_pipes));
+
 	if (ifc->ui_endpoints) {
 		int nendpt = ifc->ui_idesc->bNumEndpoints;
 		size_t sz = nendpt * sizeof(struct usbd_endpoint);
 		kmem_free(ifc->ui_endpoints, sz);
 		ifc->ui_endpoints = NULL;
 	}
+
+	ifc->ui_altindex = 0;
+	ifc->ui_index = 0;
+	ifc->ui_idesc = NULL;
 }
 
 usbd_status
@@ -557,8 +600,10 @@ usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 		DPRINTF("free old config", 0, 0, 0, 0);
 		/* Free all configuration data structures. */
 		nifc = dev->ud_cdesc->bNumInterface;
-		for (ifcidx = 0; ifcidx < nifc; ifcidx++)
+		for (ifcidx = 0; ifcidx < nifc; ifcidx++) {
 			usbd_free_iface_data(dev, ifcidx);
+			usbd_iface_fini(dev, ifcidx);
+		}
 		kmem_free(dev->ud_ifaces, nifc * sizeof(struct usbd_interface));
 		kmem_free(dev->ud_cdesc, UGETW(dev->ud_cdesc->wTotalLength));
 		if (dev->ud_bdesc != NULL)
@@ -730,10 +775,13 @@ usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 	dev->ud_cdesc = cdp;
 	dev->ud_config = cdp->bConfigurationValue;
 	for (ifcidx = 0; ifcidx < nifc; ifcidx++) {
+		usbd_iface_init(dev, ifcidx);
 		err = usbd_fill_iface_data(dev, ifcidx, 0);
 		if (err) {
-			while (--ifcidx >= 0)
+			while (--ifcidx >= 0) {
 				usbd_free_iface_data(dev, ifcidx);
+				usbd_iface_fini(dev, ifcidx);
+			}
 			kmem_free(dev->ud_ifaces,
 			    nifc * sizeof(struct usbd_interface));
 			dev->ud_ifaces = NULL;
@@ -1649,8 +1697,10 @@ usb_free_device(struct usbd_device *dev)
 		usbd_kill_pipe(dev->ud_pipe0);
 	if (dev->ud_ifaces != NULL) {
 		nifc = dev->ud_cdesc->bNumInterface;
-		for (ifcidx = 0; ifcidx < nifc; ifcidx++)
+		for (ifcidx = 0; ifcidx < nifc; ifcidx++) {
 			usbd_free_iface_data(dev, ifcidx);
+			usbd_iface_fini(dev, ifcidx);
+		}
 		kmem_free(dev->ud_ifaces,
 		    nifc * sizeof(struct usbd_interface));
 	}
