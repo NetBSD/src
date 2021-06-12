@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.207 2021/06/12 13:58:05 riastradh Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.208 2021/06/12 14:43:27 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.207 2021/06/12 13:58:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.208 2021/06/12 14:43:27 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -244,7 +244,9 @@ usbd_open_pipe_ival(struct usbd_interface *iface, uint8_t address,
 	err = usbd_setup_pipe_flags(iface->ui_dev, iface, ep, ival, &p, flags);
 	if (err)
 		return err;
+	mutex_enter(&iface->ui_pipelock);
 	LIST_INSERT_HEAD(&iface->ui_pipes, p, up_next);
+	mutex_exit(&iface->ui_pipelock);
 	*pipe = p;
 	SDT_PROBE5(usb, device, pipe, open,
 	    iface, address, flags, ival, p);
@@ -313,13 +315,14 @@ usbd_close_pipe(struct usbd_pipe *pipe)
 
 	KASSERT(SIMPLEQ_EMPTY(&pipe->up_queue));
 
-	LIST_REMOVE(pipe, up_next);
-
 	pipe->up_methods->upm_close(pipe);
 
 	usbd_unlock_pipe(pipe);
 	if (pipe->up_intrxfer != NULL)
 		usbd_destroy_xfer(pipe->up_intrxfer);
+	mutex_enter(&pipe->up_iface->ui_pipelock);
+	LIST_REMOVE(pipe, up_next);
+	mutex_exit(&pipe->up_iface->ui_pipelock);
 	usb_rem_task_wait(pipe->up_dev, &pipe->up_async_task, USB_TASKQ_DRIVER,
 	    NULL);
 	usbd_endpoint_release(pipe->up_dev, pipe->up_endpoint);
@@ -872,8 +875,11 @@ usbd_set_interface(struct usbd_interface *iface, int altidx)
 
 	USBHIST_FUNC();
 
-	if (LIST_FIRST(&iface->ui_pipes) != NULL)
-		return USBD_IN_USE;
+	mutex_enter(&iface->ui_pipelock);
+	if (LIST_FIRST(&iface->ui_pipes) != NULL) {
+		err = USBD_IN_USE;
+		goto out;
+	}
 
 	endpoints = iface->ui_endpoints;
 	int nendpt = iface->ui_idesc->bNumEndpoints;
@@ -882,7 +888,7 @@ usbd_set_interface(struct usbd_interface *iface, int altidx)
 	    iface->ui_idesc->bNumEndpoints, 0);
 	err = usbd_fill_iface_data(iface->ui_dev, iface->ui_index, altidx);
 	if (err)
-		return err;
+		goto out;
 
 	/* new setting works, we can free old endpoints */
 	if (endpoints != NULL) {
@@ -897,7 +903,10 @@ usbd_set_interface(struct usbd_interface *iface, int altidx)
 	USETW(req.wValue, iface->ui_idesc->bAlternateSetting);
 	USETW(req.wIndex, iface->ui_idesc->bInterfaceNumber);
 	USETW(req.wLength, 0);
-	return usbd_do_request(iface->ui_dev, &req, 0);
+	err = usbd_do_request(iface->ui_dev, &req, 0);
+
+out:	mutex_exit(&iface->ui_pipelock);
+	return err;
 }
 
 int
