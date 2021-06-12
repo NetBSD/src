@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.259 2021/06/12 15:41:22 riastradh Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.260 2021/06/12 15:49:45 riastradh Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.259 2021/06/12 15:41:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.260 2021/06/12 15:49:45 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -415,7 +415,6 @@ usbd_iface_init(struct usbd_device *dev, int ifaceidx)
 	ifc->ui_index = 0;
 	ifc->ui_altindex = 0;
 	ifc->ui_endpoints = NULL;
-	ifc->ui_priv = NULL;
 	LIST_INIT(&ifc->ui_pipes);
 	mutex_init(&ifc->ui_pipelock, MUTEX_DEFAULT, IPL_NONE);
 }
@@ -430,7 +429,6 @@ usbd_iface_fini(struct usbd_device *dev, int ifaceidx)
 	KASSERT(ifc->ui_index == 0);
 	KASSERT(ifc->ui_altindex == 0);
 	KASSERT(ifc->ui_endpoints == NULL);
-	KASSERT(ifc->ui_priv == NULL);
 	KASSERT(LIST_EMPTY(&ifc->ui_pipes));
 
 	mutex_destroy(&ifc->ui_pipelock);
