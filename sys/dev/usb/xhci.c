@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.144 2021/06/06 18:37:20 jdolecek Exp $	*/
+/*	$NetBSD: xhci.c,v 1.145 2021/06/12 12:13:10 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.144 2021/06/06 18:37:20 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.145 2021/06/12 12:13:10 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2777,6 +2777,8 @@ xhci_new_device(device_t parent, struct usbd_bus *bus, int depth,
 	XHCIHIST_FUNC();
 	XHCIHIST_CALLARGS("port %ju depth %ju speed %ju up %#jx",
 	    port, depth, speed, (uintptr_t)up);
+
+	KASSERT(KERNEL_LOCKED_P());
 
 	dev = kmem_zalloc(sizeof(*dev), KM_SLEEP);
 	dev->ud_bus = bus;
