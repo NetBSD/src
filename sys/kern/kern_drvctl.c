@@ -1,4 +1,4 @@
-/* $NetBSD: kern_drvctl.c,v 1.45 2020/06/11 02:28:01 thorpej Exp $ */
+/* $NetBSD: kern_drvctl.c,v 1.46 2021/06/12 12:11:59 riastradh Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.45 2020/06/11 02:28:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.46 2021/06/12 12:11:59 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -336,6 +336,7 @@ drvctl_ioctl(struct file *fp, u_long cmd, void *data)
 	int *locs;
 	size_t locs_sz = 0; /* XXXgcc */
 
+	KERNEL_LOCK(1, NULL);
 	switch (cmd) {
 	case DRVSUSPENDDEV:
 	case DRVRESUMEDEV:
@@ -363,14 +364,16 @@ drvctl_ioctl(struct file *fp, u_long cmd, void *data)
 			ifattr = 0;
 
 		if (d->numlocators) {
-			if (d->numlocators > MAXLOCATORS)
-				return EINVAL;
+			if (d->numlocators > MAXLOCATORS) {
+				res = EINVAL;
+				goto out;
+			}
 			locs_sz = d->numlocators * sizeof(int);
 			locs = kmem_alloc(locs_sz, KM_SLEEP);
 			res = copyin(d->locators, locs, locs_sz);
 			if (res) {
 				kmem_free(locs, locs_sz);
-				return res;
+				goto out;
 			}
 		} else
 			locs = NULL;
@@ -388,8 +391,10 @@ drvctl_ioctl(struct file *fp, u_long cmd, void *data)
 		    fp->f_flag);
 		break;
 	default:
-		return EPASSTHROUGH;
+		res = EPASSTHROUGH;
+		break;
 	}
+out:	KERNEL_UNLOCK_ONE(NULL);
 	return res;
 }
 
