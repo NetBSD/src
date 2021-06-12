@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.124 2020/06/05 17:20:56 maxv Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.125 2021/06/12 13:58:05 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -353,6 +353,11 @@ void		usb_free_device(struct usbd_device *);
 usbd_status	usb_insert_transfer(struct usbd_xfer *);
 void		usb_transfer_complete(struct usbd_xfer *);
 int		usb_disconnect_port(struct usbd_port *, device_t, int);
+
+usbd_status	usbd_endpoint_acquire(struct usbd_device *,
+		    struct usbd_endpoint *, int);
+void		usbd_endpoint_release(struct usbd_device *,
+		    struct usbd_endpoint *);
 
 void		usbd_kill_pipe(struct usbd_pipe *);
 usbd_status	usbd_attach_roothub(device_t, struct usbd_device *);
