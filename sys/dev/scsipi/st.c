@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.240 2019/12/27 09:41:51 msaitoh Exp $ */
+/*	$NetBSD: st.c,v 1.241 2021/06/13 10:07:56 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.240 2019/12/27 09:41:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.241 2021/06/13 10:07:56 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -343,7 +343,7 @@ static int	st_mount_tape(dev_t, int);
 static void	st_unmount(struct st_softc *, boolean);
 static int	st_decide_mode(struct st_softc *, boolean);
 static void	ststart(struct scsipi_periph *);
-static int	ststart1(struct scsipi_periph *, struct buf *);
+static int	ststart1(struct scsipi_periph *, struct buf *, int *);
 static void	strestart(void *);
 static void	stdone(struct scsipi_xfer *, int);
 static int	st_read(struct st_softc *, char *, int, int);
@@ -1183,13 +1183,13 @@ abort:
  * ststart() is called with channel lock held
  */
 static int
-ststart1(struct scsipi_periph *periph, struct buf *bp)
+ststart1(struct scsipi_periph *periph, struct buf *bp, int *errnop)
 {
 	struct st_softc *st = device_private(periph->periph_dev);
         struct scsipi_channel *chan = periph->periph_channel;
 	struct scsi_rw_tape cmd;
 	struct scsipi_xfer *xs;
-	int flags, error;
+	int flags, error, complete = 1;
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("ststart1 "));
 
@@ -1239,7 +1239,6 @@ ststart1(struct scsipi_periph *periph, struct buf *bp)
 					goto out;
 				}
 			} else {
-				bp->b_resid = bp->b_bcount;
 				error = 0;
 				st->flags &= ~ST_AT_FILEMARK;
 				goto out;
@@ -1251,7 +1250,10 @@ ststart1(struct scsipi_periph *periph, struct buf *bp)
 	 * yet then we should report it now.
 	 */
 	if (st->flags & (ST_EOM_PENDING|ST_EIO_PENDING)) {
-		error = EIO;
+		error = 0;
+		if (st->flags & ST_EIO_PENDING)
+			error = EIO;
+		st->flags &= ~(ST_EOM_PENDING|ST_EIO_PENDING);
 		goto out;
 	}
 
@@ -1299,11 +1301,14 @@ ststart1(struct scsipi_periph *periph, struct buf *bp)
 	error = scsipi_execute_xs(xs);
 	/* with a scsipi_xfer preallocated, scsipi_command can't fail */
 	KASSERT(error == 0);
+	if (error == 0)
+		complete = 0;
 
 out:
 	mutex_exit(chan_mtx(chan));
 
-	return error;
+	*errnop = error;
+	return complete;
 }
 
 static void
@@ -1312,7 +1317,7 @@ ststart(struct scsipi_periph *periph)
 	struct st_softc *st = device_private(periph->periph_dev);
         struct scsipi_channel *chan = periph->periph_channel;
 	struct buf *bp;
-	int error;
+	int error, complete;
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("ststart "));
 
@@ -1325,19 +1330,20 @@ ststart(struct scsipi_periph *periph)
 		iostat_busy(st->stats);
 		mutex_exit(&st->sc_iolock);
 
-		error = ststart1(periph, bp);
+		complete = ststart1(periph, bp, &error);
 
 		mutex_enter(&st->sc_iolock);
-		if (error != 0)
+		if (complete) {
 			iostat_unbusy(st->stats, 0,
 			              ((bp->b_flags & B_READ) == B_READ));
-		if (error == EAGAIN) {
-			bufq_put(st->buf_defer, bp);
-			break;
+			if (error == EAGAIN) {
+				bufq_put(st->buf_defer, bp);
+				break;
+			}
 		}
 		mutex_exit(&st->sc_iolock);
 
-		if (error != 0) {
+		if (complete) {
 			bp->b_error = error;
 			bp->b_resid = bp->b_bcount;
 			biodone(bp);
