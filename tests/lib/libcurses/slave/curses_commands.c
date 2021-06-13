@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_commands.c,v 1.28 2021/06/13 19:17:53 rillig Exp $	*/
+/*	$NetBSD: curses_commands.c,v 1.29 2021/06/13 21:54:51 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -4084,7 +4084,7 @@ cmd_mvwget_wch(int nargs, char **args)
 {
 	wchar_t ch;
 
-	ARGC(1);	/* FIXME: 3 */
+	ARGC(3);
 	ARG_WINDOW(win);
 	ARG_INT(y);
 	ARG_INT(x);
