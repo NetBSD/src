@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.59 2020/03/15 23:04:51 thorpej Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.60 2021/06/13 09:24:33 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.59 2020/03/15 23:04:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.60 2021/06/13 09:24:33 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -141,8 +141,7 @@ static const struct zyd_type {
 	ZYD_ZD1211B_DEV(SITECOMEU,	ZD1211B),
 	ZYD_ZD1211B_DEV(SONY,		IFU_WLM2),
 	ZYD_ZD1211B_DEV(UMEDIA,		TEW429UBC1),
-	ZYD_ZD1211B_DEV(UNKNOWN1,	ZD1211B_1),
-	ZYD_ZD1211B_DEV(UNKNOWN1,	ZD1211B_2),
+	ZYD_ZD1211B_DEV(UNKNOWN1,	ZD1211B),
 	ZYD_ZD1211B_DEV(UNKNOWN2,	ZD1211B),
 	ZYD_ZD1211B_DEV(UNKNOWN3,	ZD1211B),
 	ZYD_ZD1211B_DEV(USR,		USR5423),
