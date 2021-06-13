@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsa_common.c,v 1.14 2020/03/14 02:35:33 christos Exp $	*/
+/*	$NetBSD: ubsa_common.c,v 1.15 2021/06/13 09:29:38 mlelstv Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsa_common.c,v 1.14 2020/03/14 02:35:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsa_common.c,v 1.15 2021/06/13 09:29:38 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -316,8 +316,10 @@ ubsa_flow(struct ubsa_softc *sc, int portno, tcflag_t cflag, tcflag_t iflag)
 	value = 0;
 	if (cflag & CRTSCTS)
 		value |= UBSA_FLOW_OCTS | UBSA_FLOW_IRTS;
-	if (iflag & (IXON|IXOFF))
-		value |= UBSA_FLOW_OXON | UBSA_FLOW_IXON;
+	if (iflag & IXOFF)
+		value |= UBSA_FLOW_OXON;
+	if (iflag & IXON)
+		value |= UBSA_FLOW_IXON;
 
 	ubsa_request(sc, portno, UBSA_SET_FLOW_CTRL, value);
 }
