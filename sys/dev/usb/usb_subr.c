@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.264 2021/06/13 09:12:24 mlelstv Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.265 2021/06/13 14:48:10 riastradh Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.264 2021/06/13 09:12:24 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.265 2021/06/13 14:48:10 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1097,6 +1097,8 @@ usbd_attachwholedevice(device_t parent, struct usbd_device *dev, int port,
 	device_t dv;
 	int dlocs[USBDEVIFCF_NLOCS];
 
+	KASSERT(usb_in_event_thread(parent));
+
 	uaa.uaa_device = dev;
 	uaa.uaa_usegeneric = usegeneric;
 	uaa.uaa_port = port;
@@ -1147,8 +1149,7 @@ usbd_attachinterfaces(device_t parent, struct usbd_device *dev,
 	int i, j, loc;
 	device_t dv;
 
-	/* Needed for access to dev->ud_subdevs.  */
-	KASSERT(KERNEL_LOCKED_P());
+	KASSERT(usb_in_event_thread(parent));
 
 	nifaces = dev->ud_cdesc->bNumInterface;
 	ifaces = kmem_zalloc(nifaces * sizeof(*ifaces), KM_SLEEP);
@@ -1240,7 +1241,7 @@ usbd_probe_and_attach(device_t parent, struct usbd_device *dev,
 	int confi, nifaces;
 	usbd_status err;
 
-	KASSERT(KERNEL_LOCKED_P());
+	KASSERT(usb_in_event_thread(parent));
 
 	/* First try with device specific drivers. */
 	err = usbd_attachwholedevice(parent, dev, port, 0);
@@ -1310,7 +1311,7 @@ usbd_reattach_device(device_t parent, struct usbd_device *dev,
 	USBHIST_CALLARGS(usbdebug, "uhub%jd port=%jd",
 	    device_unit(parent), port, 0, 0);
 
-	KASSERT(KERNEL_LOCKED_P());
+	KASSERT(usb_in_event_thread(parent));
 
 	if (locators != NULL) {
 		loc = locators[USBIFIFCF_PORT];
@@ -1370,7 +1371,7 @@ usbd_new_device(device_t parent, struct usbd_bus *bus, int depth, int speed,
 	int i;
 	int p;
 
-	KASSERT(KERNEL_LOCKED_P());
+	KASSERT(usb_in_event_thread(parent));
 
 	if (bus->ub_methods->ubm_newdev != NULL)
 		return (bus->ub_methods->ubm_newdev)(parent, bus, depth, speed,

@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.102 2020/02/16 09:40:35 maxv Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.103 2021/06/13 14:48:10 riastradh Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -221,6 +221,8 @@ bool usb_rem_task_wait(struct usbd_device *, struct usb_task *, int,
     kmutex_t *);
 bool usb_task_pending(struct usbd_device *, struct usb_task *);
 #define usb_init_task(t, f, a, fl) ((t)->fun = (f), (t)->arg = (a), (t)->queue = USB_NUM_TASKQS, (t)->flags = (fl))
+
+bool usb_in_event_thread(device_t);
 
 struct usb_devno {
 	uint16_t ud_vendor;
