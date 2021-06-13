@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.66 2021/06/08 09:09:28 nia Exp $ */
+/* $NetBSD: pad.c,v 1.67 2021/06/13 23:09:22 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.66 2021/06/08 09:09:28 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.67 2021/06/13 23:09:22 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -362,7 +362,9 @@ cdev_pad_open(dev_t dev, int flags, int fmt, struct lwp *l)
 	sc->sc_swvol = 255;
 	sc->sc_buflen = 0;
 	sc->sc_rpos = sc->sc_wpos = 0;
+	KERNEL_LOCK(1, NULL);
 	sc->sc_audiodev = audio_attach_mi(&pad_hw_if, sc, sc->sc_dev);
+	KERNEL_UNLOCK_ONE(NULL);
 
 	if (!pmf_device_register(sc->sc_dev, NULL, NULL))
 		aprint_error_dev(sc->sc_dev,
