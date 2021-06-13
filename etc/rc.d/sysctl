@@ -1,11 +1,11 @@
 #!/bin/sh
 #
-# $NetBSD: sysctl,v 1.13 2004/08/13 18:08:03 mycroft Exp $
+# $NetBSD: sysctl,v 1.14 2021/06/13 10:14:40 mlelstv Exp $
 #
 
 # PROVIDE: sysctl
-# REQUIRE: root ipfilter ipsec
-# BEFORE:  DAEMON
+# REQUIRE: root
+# BEFORE:  DISKS
 
 $_rc_subr_loaded . /etc/rc.subr
 
