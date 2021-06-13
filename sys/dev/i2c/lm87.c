@@ -1,4 +1,4 @@
-/*	$NetBSD: lm87.c,v 1.14 2021/01/27 02:29:48 thorpej Exp $	*/
+/*	$NetBSD: lm87.c,v 1.15 2021/06/13 09:46:04 mlelstv Exp $	*/
 /*	$OpenBSD: lm87.c,v 1.20 2008/11/10 05:19:48 cnst Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm87.c,v 1.14 2021/01/27 02:29:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm87.c,v 1.15 2021/06/13 09:46:04 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,7 +162,8 @@ lmenv_match(device_t parent, cfdata_t match, void *aux)
 		return 0;
 
 	cmd = LM87_COMPANY_ID;
-	iic_acquire_bus(ia->ia_tag, 0);
+	if (iic_acquire_bus(ia->ia_tag, 0))
+		return 0;
 	error = iic_exec(ia->ia_tag, I2C_OP_READ_WITH_STOP, ia->ia_addr,
 	    &cmd, 1, &val, 1, 0);
 	iic_release_bus(ia->ia_tag, 0);
