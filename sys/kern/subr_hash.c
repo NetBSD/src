@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_hash.c,v 1.11 2021/06/13 14:02:46 christos Exp $	*/
+/*	$NetBSD: subr_hash.c,v 1.12 2021/06/13 14:58:49 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_hash.c,v 1.11 2021/06/13 14:02:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_hash.c,v 1.12 2021/06/13 14:58:49 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -242,6 +242,9 @@ hashstat_sysctl(SYSCTLFN_ARGS)
 	}
 	rw_exit(&hashstat_lock);
 	sysctl_relock();
+
+	if (query && written == 0)	/* query not found? */
+		error = ENOENT;
 
 	*oldlenp = written;
 	return error;
