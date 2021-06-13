@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.150 2021/06/12 12:13:23 riastradh Exp $	*/
+/*	$NetBSD: uhub.c,v 1.151 2021/06/13 00:11:57 riastradh Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 /*	$OpenBSD: uhub.c,v 1.86 2015/06/29 18:27:40 mpi Exp $ */
 
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.150 2021/06/12 12:13:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.151 2021/06/13 00:11:57 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -946,6 +946,10 @@ uhub_rescan(device_t self, const char *ifattr, const int *locators)
 		usbd_reattach_device(sc->sc_dev, dev, port, locators);
 	}
 	uhub_explore_exit(sc);
+
+	/* Arrange to recursively explore hubs we may have found.  */
+	usb_needs_explore(sc->sc_hub);
+
 	return 0;
 }
 
