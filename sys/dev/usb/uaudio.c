@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.170 2021/06/13 07:49:43 mlelstv Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.171 2021/06/13 07:51:09 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.170 2021/06/13 07:49:43 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.171 2021/06/13 07:51:09 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2835,8 +2835,9 @@ uaudio_chan_pintr(struct usbd_xfer *xfer, void *priv,
 		    count, ch->transferred);
 #ifdef DIAGNOSTIC
 	if (count != cb->size) {
-		aprint_error("uaudio_chan_pintr: count(%d) != size(%d)\n",
-		       count, cb->size);
+		device_printf(ch->sc->sc_dev,
+		    "uaudio_chan_pintr: count(%d) != size(%d), status(%d)\n",
+		    count, cb->size, status);
 	}
 #endif
 
@@ -2918,8 +2919,9 @@ uaudio_chan_rintr(struct usbd_xfer *xfer, void *priv,
 	/* count < cb->size is normal for asynchronous source */
 #ifdef DIAGNOSTIC
 	if (count > cb->size) {
-		aprint_error("uaudio_chan_rintr: count(%d) > size(%d)\n",
-		       count, cb->size);
+		device_printf(ch->sc->sc_dev,
+		    "uaudio_chan_rintr: count(%d) > size(%d) status(%d)\n",
+		    count, cb->size, status);
 	}
 #endif
 
