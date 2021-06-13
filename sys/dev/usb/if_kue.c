@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.104 2020/03/21 06:55:22 skrll Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.105 2021/06/13 09:26:24 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.104 2020/03/21 06:55:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.105 2021/06/13 09:26:24 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -131,7 +131,7 @@ static const struct usb_devno kue_devs[] = {
 	{ USB_VENDOR_ABOCOM, USB_PRODUCT_ABOCOM_URE450 },
 	{ USB_VENDOR_ADS, USB_PRODUCT_ADS_UBS10BT },
 	{ USB_VENDOR_ADS, USB_PRODUCT_ADS_UBS10BTX },
-	{ USB_VENDOR_ACTIONTEC, USB_PRODUCT_ACTIONTEC_KL5KUSB101 },
+	{ USB_VENDOR_ACTIONTEC, USB_PRODUCT_ACTIONTEC_AR9287 },
 	{ USB_VENDOR_ALLIEDTELESYN, USB_PRODUCT_ALLIEDTELESYN_AT_USB10 },
 	{ USB_VENDOR_AOX, USB_PRODUCT_AOX_USB101 },
 	{ USB_VENDOR_ASANTE, USB_PRODUCT_ASANTE_EA },
