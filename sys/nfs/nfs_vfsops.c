@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.242 2021/04/02 03:07:54 christos Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.243 2021/06/13 10:25:11 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.242 2021/04/02 03:07:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.243 2021/06/13 10:25:11 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfs.h"
@@ -296,8 +296,7 @@ nfs_fsinfo(struct nfsmount *nmp, struct vnode *vp, kauth_cred_t cred, struct lwp
 			if (nmp->nm_readdirsize == 0)
 				nmp->nm_readdirsize = xmax;
 		}
-		/* XXX */
-		nmp->nm_maxfilesize = (u_int64_t)0x80000000 * DEV_BSIZE - 1;
+		nmp->nm_maxfilesize = 0xffffffffffffffffull;
 		maxfsize = fxdr_hyper(&fsp->fs_maxfilesize);
 		if (maxfsize > 0 && maxfsize < nmp->nm_maxfilesize)
 			nmp->nm_maxfilesize = maxfsize;
