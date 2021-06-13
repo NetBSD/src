@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.72 2020/05/11 09:51:47 jdc Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.73 2021/06/13 09:50:02 mlelstv Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.72 2020/05/11 09:51:47 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.73 2021/06/13 09:50:02 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -255,18 +255,17 @@ mmc_mode:
 		}
 
 		error = sdmmc_mem_signal_voltage(sc, SDMMC_SIGNAL_VOLTAGE_180);
-		if (error)
+		if (error) {
+			DPRINTF(("%s: voltage change on host failed\n",
+			    SDMMCDEVNAME(sc)));
 			goto out;
+		}
 
 		SET(sc->sc_flags, SMF_UHS_MODE);
 	}
 
 out:
 	SDMMC_UNLOCK(sc);
-
-	if (error)
-		printf("%s: %s failed with error %d\n", SDMMCDEVNAME(sc),
-		    __func__, error);
 
 	return error;
 }
