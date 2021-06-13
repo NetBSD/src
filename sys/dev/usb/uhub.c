@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.152 2021/06/13 14:46:07 riastradh Exp $	*/
+/*	$NetBSD: uhub.c,v 1.153 2021/06/13 14:48:10 riastradh Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 /*	$OpenBSD: uhub.c,v 1.86 2015/06/29 18:27:40 mpi Exp $ */
 
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.152 2021/06/13 14:46:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.153 2021/06/13 14:48:10 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -269,9 +269,11 @@ uhub_attach(device_t parent, device_t self, void *aux)
 	usb_endpoint_descriptor_t *ed;
 	struct usbd_tt *tts = NULL;
 
-	config_pending_incr(self);
-
 	UHUBHIST_FUNC(); UHUBHIST_CALLED();
+
+	KASSERT(usb_in_event_thread(parent));
+
+	config_pending_incr(self);
 
 	sc->sc_dev = self;
 	sc->sc_hub = dev;
@@ -498,7 +500,7 @@ uhub_explore(struct usbd_device *dev)
 	    device_unit(sc->sc_dev), (uintptr_t)dev, dev->ud_addr,
 	    dev->ud_speed);
 
-	KASSERT(KERNEL_LOCKED_P());
+	KASSERT(usb_in_event_thread(sc->sc_dev));
 
 	if (!sc->sc_running)
 		return USBD_NOT_STARTED;

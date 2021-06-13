@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.195 2021/06/12 12:13:10 riastradh Exp $	*/
+/*	$NetBSD: usb.c,v 1.196 2021/06/13 14:48:10 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.195 2021/06/12 12:13:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.196 2021/06/13 14:48:10 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -142,6 +142,7 @@ struct usb_softc {
 	struct usbd_port sc_port;	/* dummy port for root hub */
 
 	struct lwp	*sc_event_thread;
+	struct lwp	*sc_attach_thread;
 
 	char		sc_dying;
 	bool		sc_pmf_registered;
@@ -483,8 +484,10 @@ usb_doattach(device_t self)
 	ue->u.ue_ctrlr.ue_bus = device_unit(self);
 	usb_add_event(USB_EVENT_CTRLR_ATTACH, ue);
 
+	sc->sc_attach_thread = curlwp;
 	err = usbd_new_device(self, sc->sc_bus, 0, speed, 0,
 		  &sc->sc_port);
+	sc->sc_attach_thread = NULL;
 	if (!err) {
 		dev = sc->sc_port.up_dev;
 		if (dev->ud_hub == NULL) {
@@ -527,6 +530,25 @@ usb_create_event_thread(device_t self)
 		       device_xname(self));
 		panic("usb_create_event_thread");
 	}
+}
+
+bool
+usb_in_event_thread(device_t dev)
+{
+	struct usb_softc *sc;
+
+	if (cold)
+		return true;
+
+	for (; dev; dev = device_parent(dev)) {
+		if (device_is_a(dev, "usb"))
+			break;
+	}
+	if (dev == NULL)
+		return false;
+	sc = device_private(dev);
+
+	return curlwp == sc->sc_event_thread || curlwp == sc->sc_attach_thread;
 }
 
 /*
