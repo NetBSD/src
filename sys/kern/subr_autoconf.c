@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.284 2021/06/12 12:14:13 riastradh Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.285 2021/06/13 00:11:17 riastradh Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -79,7 +79,7 @@
 #define	__SUBR_AUTOCONF_PRIVATE	/* see <sys/device.h> */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.284 2021/06/12 12:14:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.285 2021/06/13 00:11:17 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -377,27 +377,31 @@ config_init_component(struct cfdriver * const *cfdriverv,
 {
 	int error;
 
-	KASSERT(KERNEL_LOCKED_P());
+	KERNEL_LOCK(1, NULL);
 
 	if ((error = frob_cfdrivervec(cfdriverv,
 	    config_cfdriver_attach, config_cfdriver_detach, "init", false))!= 0)
-		return error;
+		goto out;
 	if ((error = frob_cfattachvec(cfattachv,
 	    config_cfattach_attach, config_cfattach_detach,
 	    "init", false)) != 0) {
 		frob_cfdrivervec(cfdriverv,
 	            config_cfdriver_detach, NULL, "init rollback", true);
-		return error;
+		goto out;
 	}
 	if ((error = config_cfdata_attach(cfdatav, 1)) != 0) {
 		frob_cfattachvec(cfattachv,
 		    config_cfattach_detach, NULL, "init rollback", true);
 		frob_cfdrivervec(cfdriverv,
 	            config_cfdriver_detach, NULL, "init rollback", true);
-		return error;
+		goto out;
 	}
 
-	return 0;
+	/* Success!  */
+	error = 0;
+
+out:	KERNEL_UNLOCK_ONE(NULL);
+	return error;
 }
 
 int
@@ -406,16 +410,16 @@ config_fini_component(struct cfdriver * const *cfdriverv,
 {
 	int error;
 
-	KASSERT(KERNEL_LOCKED_P());
+	KERNEL_LOCK(1, NULL);
 
 	if ((error = config_cfdata_detach(cfdatav)) != 0)
-		return error;
+		goto out;
 	if ((error = frob_cfattachvec(cfattachv,
 	    config_cfattach_detach, config_cfattach_attach,
 	    "fini", false)) != 0) {
 		if (config_cfdata_attach(cfdatav, 0) != 0)
 			panic("config_cfdata fini rollback failed");
-		return error;
+		goto out;
 	}
 	if ((error = frob_cfdrivervec(cfdriverv,
 	    config_cfdriver_detach, config_cfdriver_attach,
@@ -424,10 +428,14 @@ config_fini_component(struct cfdriver * const *cfdriverv,
 	            config_cfattach_attach, NULL, "fini rollback", true);
 		if (config_cfdata_attach(cfdatav, 0) != 0)
 			panic("config_cfdata fini rollback failed");
-		return error;
+		goto out;
 	}
 
-	return 0;
+	/* Success!  */
+	error = 0;
+
+out:	KERNEL_UNLOCK_ONE(NULL);
+	return error;
 }
 
 void
@@ -946,7 +954,7 @@ config_cfdata_attach(cfdata_t cf, int scannow)
 {
 	struct cftable *ct;
 
-	KASSERT(KERNEL_LOCKED_P());
+	KERNEL_LOCK(1, NULL);
 
 	ct = kmem_alloc(sizeof(*ct), KM_SLEEP);
 	ct->ct_cfdata = cf;
@@ -954,6 +962,8 @@ config_cfdata_attach(cfdata_t cf, int scannow)
 
 	if (scannow)
 		rescan_with_cfdata(cf);
+
+	KERNEL_UNLOCK_ONE();
 
 	return 0;
 }
@@ -986,6 +996,8 @@ config_cfdata_detach(cfdata_t cf)
 	struct cftable *ct;
 	deviter_t di;
 
+	KERNEL_LOCK(1, NULL);
+
 	for (d = deviter_first(&di, DEVITER_F_RW); d != NULL;
 	     d = deviter_next(&di)) {
 		if (!dev_in_cfdata(d, cf))
@@ -996,19 +1008,23 @@ config_cfdata_detach(cfdata_t cf)
 	deviter_release(&di);
 	if (error) {
 		aprint_error_dev(d, "unable to detach instance\n");
-		return error;
+		goto out;
 	}
 
 	TAILQ_FOREACH(ct, &allcftables, ct_list) {
 		if (ct->ct_cfdata == cf) {
 			TAILQ_REMOVE(&allcftables, ct, ct_list);
 			kmem_free(ct, sizeof(*ct));
-			return 0;
+			error = 0;
+			goto out;
 		}
 	}
 
 	/* not found -- shouldn't happen */
-	return EINVAL;
+	error = EINVAL;
+
+out:	KERNEL_UNLOCK_ONE(NULL);
+	return error;
 }
 
 /*
@@ -1824,11 +1840,11 @@ config_attach_pseudo(cfdata_t cf)
 {
 	device_t dev;
 
-	KASSERT(KERNEL_LOCKED_P());
+	KERNEL_LOCK(1, NULL);
 
 	dev = config_devalloc(ROOT, cf, CFARG_EOL);
 	if (!dev)
-		return NULL;
+		goto out;
 
 	/* XXX mark busy in cfdata */
 
@@ -1851,6 +1867,8 @@ config_attach_pseudo(cfdata_t cf)
 	config_pending_decr(dev);
 
 	config_process_deferred(&deferred_config_queue, dev);
+
+out:	KERNEL_UNLOCK_ONE(NULL);
 	return dev;
 }
 
