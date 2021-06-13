@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsa.c,v 1.41 2021/04/24 23:36:59 thorpej Exp $	*/
+/*	$NetBSD: ubsa.c,v 1.42 2021/06/13 09:32:01 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.41 2021/04/24 23:36:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.42 2021/06/13 09:32:01 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -107,25 +107,28 @@ static const struct	ucom_methods ubsa_methods = {
 	.ucom_close = ubsa_close,
 };
 
-Static const struct usb_devno ubsa_devs[] = {
+Static const struct ubsa_type {
+	struct usb_devno ubsa_dev;
+	int ubsa_quadumts;
+} ubsa_devs[] = {
 	/* BELKIN F5U103 */
-	{ USB_VENDOR_BELKIN, USB_PRODUCT_BELKIN_F5U103 },
+	{ { USB_VENDOR_BELKIN, USB_PRODUCT_BELKIN_F5U103 }, 0 },
 	/* BELKIN F5U120 */
-	{ USB_VENDOR_BELKIN, USB_PRODUCT_BELKIN_F5U120 },
+	{ { USB_VENDOR_BELKIN, USB_PRODUCT_BELKIN_F5U120 }, 0 },
 	/* GoHubs GO-COM232 */
-	{ USB_VENDOR_ETEK, USB_PRODUCT_ETEK_1COM },
+	{ { USB_VENDOR_ETEK, USB_PRODUCT_ETEK_1COM }, 0 },
 	/* GoHubs GO-COM232 */
-	{ USB_VENDOR_GOHUBS, USB_PRODUCT_GOHUBS_GOCOM232 },
+	{ { USB_VENDOR_GOHUBS, USB_PRODUCT_GOHUBS_GOCOM232 }, 0 },
 	/* Peracom */
-	{ USB_VENDOR_PERACOM, USB_PRODUCT_PERACOM_SERIAL1 },
+	{ { USB_VENDOR_PERACOM, USB_PRODUCT_PERACOM_SERIAL1 }, 0 },
 	/* Option N.V. */
-	{ USB_VENDOR_OPTIONNV, USB_PRODUCT_OPTIONNV_MC3G },
-	{ USB_VENDOR_OPTIONNV, USB_PRODUCT_OPTIONNV_QUADUMTS2 },
-	{ USB_VENDOR_OPTIONNV, USB_PRODUCT_OPTIONNV_QUADUMTS },
-	/* AnyDATA ADU-E100H */
-	{ USB_VENDOR_ANYDATA, USB_PRODUCT_ANYDATA_ADU_E100H },
+	{ { USB_VENDOR_OPTIONNV, USB_PRODUCT_OPTIONNV_MC3G }, 0 },
+	{ { USB_VENDOR_OPTIONNV, USB_PRODUCT_OPTIONNV_QUADUMTS2 }, 1 },
+	{ { USB_VENDOR_OPTIONNV, USB_PRODUCT_OPTIONNV_QUADUMTS }, 1 },
+	{ { USB_VENDOR_OPTIONNV, USB_PRODUCT_OPTIONNV_QUADPLUSUMTS }, 1 },
+	{ { USB_VENDOR_OPTIONNV, USB_PRODUCT_OPTIONNV_HSDPA }, 1 },
 };
-#define ubsa_lookup(v, p) usb_lookup(ubsa_devs, v, p)
+#define ubsa_lookup(v, p) ((const struct ubsa_type *)usb_lookup(ubsa_devs, v, p))
 
 int ubsa_match(device_t, cfdata_t, void *);
 void ubsa_attach(device_t, device_t, void *);
@@ -183,15 +186,7 @@ ubsa_attach(device_t parent, device_t self, void *aux)
 	 * Quad UMTS cards use different requests to
 	 * control com settings and only some.
 	 */
-	sc->sc_quadumts = 0;
-	if (uaa->uaa_vendor == USB_VENDOR_OPTIONNV) {
-		switch (uaa->uaa_product) {
-		case USB_PRODUCT_OPTIONNV_QUADUMTS:
-		case USB_PRODUCT_OPTIONNV_QUADUMTS2:
-			sc->sc_quadumts = 1;
-			break;
-		}
-	}
+	sc->sc_quadumts = ubsa_lookup(uaa->uaa_vendor, uaa->uaa_product)->ubsa_quadumts;
 
 	DPRINTF(("ubsa attach: sc = %p\n", sc));
 
