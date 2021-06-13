@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_commands.c,v 1.27 2021/06/13 19:13:20 rillig Exp $	*/
+/*	$NetBSD: curses_commands.c,v 1.28 2021/06/13 19:17:53 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -38,8 +38,8 @@
 #include "slave.h"
 #include "curses_commands.h"
 
-int
-set_int(char *arg, int *x)
+static int
+set_int(const char *arg, int *x)
 {
 	if (sscanf(arg, "%d", x) == 0) {
 		report_count(1);
@@ -50,8 +50,8 @@ set_int(char *arg, int *x)
 	return 0;
 }
 
-int
-set_uint(char *arg, unsigned int *x)
+static int
+set_uint(const char *arg, unsigned int *x)
 {
 	if (sscanf(arg, "%u", x) == 0) {
 		report_count(1);
@@ -62,8 +62,8 @@ set_uint(char *arg, unsigned int *x)
 	return 0;
 }
 
-int
-set_short(char *arg, short *x)
+static int
+set_short(const char *arg, short *x)
 {
 	if (sscanf(arg, "%hd", x) == 0) {
 		report_count(1);
@@ -74,8 +74,8 @@ set_short(char *arg, short *x)
 	return 0;
 }
 
-int
-set_win(char *arg, WINDOW **x)
+static int
+set_win(const char *arg, WINDOW **x)
 {
 	if (sscanf(arg, "%p", x) == 0) {
 		report_count(1);
@@ -86,8 +86,8 @@ set_win(char *arg, WINDOW **x)
 	return 0;
 }
 
-int
-set_scrn(char *arg, SCREEN **x)
+static int
+set_scrn(const char *arg, SCREEN **x)
 {
 	if (sscanf(arg, "%p", x) == 0) {
 		report_count(1);
