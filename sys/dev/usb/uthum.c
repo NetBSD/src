@@ -1,4 +1,4 @@
-/*	$NetBSD: uthum.c,v 1.20 2020/03/14 02:35:33 christos Exp $   */
+/*	$NetBSD: uthum.c,v 1.21 2021/06/13 09:28:23 mlelstv Exp $   */
 /*	$OpenBSD: uthum.c,v 1.6 2010/01/03 18:43:02 deraadt Exp $   */
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uthum.c,v 1.20 2020/03/14 02:35:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uthum.c,v 1.21 2021/06/13 09:28:23 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -206,12 +206,14 @@ uthum_attach(device_t parent, device_t self, void *aux)
 		sc->sc_sme->sme_refresh = uthum_refresh;
 
 		if (sysmon_envsys_register(sc->sc_sme)) {
+			sysmon_envsys_destroy(sc->sc_sme);
+			sc->sc_sme = NULL;
 			aprint_error_dev(self,
 			    "unable to register with sysmon\n");
-			sysmon_envsys_destroy(sc->sc_sme);
 		}
 	} else {
 		sysmon_envsys_destroy(sc->sc_sme);
+		sc->sc_sme = NULL;
 	}
 
 	DPRINTF(("uthum_attach: complete\n"));
@@ -225,9 +227,8 @@ uthum_detach(device_t self, int flags)
 
 	sc->sc_dying = 1;
 
-	if (sc->sc_num_sensors > 0) {
+	if (sc->sc_sme != NULL)
 		sysmon_envsys_unregister(sc->sc_sme);
-	}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 	    sc->sc_hdev.sc_dev);
