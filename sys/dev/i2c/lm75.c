@@ -1,4 +1,4 @@
-/*	$NetBSD: lm75.c,v 1.43 2021/05/21 20:42:05 macallan Exp $	*/
+/*	$NetBSD: lm75.c,v 1.44 2021/06/13 09:46:04 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm75.c,v 1.43 2021/05/21 20:42:05 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm75.c,v 1.44 2021/06/13 09:46:04 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,7 +230,11 @@ lmtemp_attach(device_t parent, device_t self, void *aux)
 	sc->sc_lmtemp_decode = lmtemptbl[i].lmtemp_decode;
 	sc->sc_lmtemp_encode = lmtemptbl[i].lmtemp_encode;
 
-	iic_acquire_bus(sc->sc_tag, 0);
+	if (iic_acquire_bus(sc->sc_tag, 0)) {
+		aprint_error_dev(self,
+		    "unable to acquire I2C bus\n");
+		return;
+	}
 
 	/* Read temperature limit(s) and remember initial value(s). */
 	if (i == lmtemp_lm77) {
@@ -378,7 +382,8 @@ lmtemp_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	struct lmtemp_softc *sc = sme->sme_cookie;
 
-	iic_acquire_bus(sc->sc_tag, 0);	/* also locks our instance */
+	if (iic_acquire_bus(sc->sc_tag, 0))	/* also locks our instance */
+		return;
 	lmtemp_refresh_sensor_data(sc);
 	iic_release_bus(sc->sc_tag, 0);	/* also unlocks our instance */
 }
@@ -392,7 +397,8 @@ lmtemp_getlim_lm75(struct sysmon_envsys *sme, envsys_data_t *edata,
 
 	*props &= ~(PROP_CRITMAX);
 
-	iic_acquire_bus(sc->sc_tag, 0);
+	if (iic_acquire_bus(sc->sc_tag, 0))
+		return;
 	if (lmtemp_temp_read(sc, LM75_REG_TOS_SET_POINT, &val, 0) == 0) {
 		limits->sel_critmax = val;
 		*props |= PROP_CRITMAX;
@@ -409,7 +415,8 @@ lmtemp_getlim_lm77(struct sysmon_envsys *sme, envsys_data_t *edata,
 
 	*props &= ~(PROP_CRITMAX | PROP_WARNMAX | PROP_WARNMIN);
 
-	iic_acquire_bus(sc->sc_tag, 0);
+	if (iic_acquire_bus(sc->sc_tag, 0))
+		return;
 	if (lmtemp_temp_read(sc, LM77_REG_TCRIT_SET_POINT, &val, 0) == 0) {
 		limits->sel_critmax = val;
 		*props |= PROP_CRITMAX;
@@ -437,7 +444,8 @@ lmtemp_setlim_lm75(struct sysmon_envsys *sme, envsys_data_t *edata,
 			limit = sc->sc_smax;
 		else
 			limit = limits->sel_critmax;
-		iic_acquire_bus(sc->sc_tag, 0);
+		if (iic_acquire_bus(sc->sc_tag, 0))
+			return;
 		lmtemp_temp_write(sc, LM75_REG_THYST_SET_POINT,
 		    limit - 5000000, 0);
 		lmtemp_temp_write(sc, LM75_REG_TOS_SET_POINT, limit, 0);
@@ -608,7 +616,7 @@ sysctl_lm75_temp(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node = *rnode;
 	struct lmtemp_softc *sc = node.sysctl_data;
-	int temp;
+	int temp, error;
 
 	if (newp) {
 
@@ -618,7 +626,9 @@ sysctl_lm75_temp(SYSCTLFN_ARGS)
 
 			temp = *(int *)node.sysctl_data;
 			sc->sc_tmax = temp;
-			iic_acquire_bus(sc->sc_tag, 0);
+			error = iic_acquire_bus(sc->sc_tag, 0);
+			if (error)
+				return error;
 			lmtemp_temp_write(sc, LM75_REG_THYST_SET_POINT,
 			    sc->sc_tmax - 5, 1);
 			lmtemp_temp_write(sc, LM75_REG_TOS_SET_POINT,
