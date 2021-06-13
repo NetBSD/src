@@ -1,5 +1,5 @@
 #! /usr/bin/lua
--- $NetBSD: lint.lua,v 1.4 2021/06/13 19:25:08 rillig Exp $
+-- $NetBSD: lint.lua,v 1.5 2021/06/13 19:41:12 rillig Exp $
 
 --[[
 
@@ -53,29 +53,27 @@ local function check_args(errors)
 
   for lineno, line in ipairs(lines) do
 
-    local line_argc = num(line:match("^\tARGC%((%d)"))
-    local line_arg = line:match("^\tARG_[%w_]+%(")
-
+    local line_argc = num(line:match("^\tARGC%((%d+)"))
     if line_argc and line_argc > 0 then
       curr_argc, curr_arg = line_argc, 0
+      goto next
     end
 
-    if line_arg and not curr_arg then
-      errors:add("%s:%d: ARG without preceding ARGC", fname, lineno)
-    end
-
-    if not line_arg and curr_arg and not line_argc then
-      errors:add("%s:%d: expecting ARG %d, got %s",
-        fname, lineno, curr_arg, line)
-      curr_argc, curr_arg = nil, nil
-    end
-
+    local line_arg = line:match("^\tARG_[%w_]+%(")
     if line_arg and curr_arg then
       curr_arg = curr_arg + 1
       if curr_arg == curr_argc then
         curr_argc, curr_arg = nil, nil
       end
+    elseif line_arg then
+      errors:add("%s:%d: ARG without preceding ARGC", fname, lineno)
+    elseif curr_arg then
+      errors:add("%s:%d: expecting ARG %d, got %s",
+        fname, lineno, curr_arg, line)
+      curr_argc, curr_arg = nil, nil
     end
+
+    ::next::
   end
 end
 
