@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_commands.c,v 1.26 2021/06/13 18:11:44 rillig Exp $	*/
+/*	$NetBSD: curses_commands.c,v 1.27 2021/06/13 19:13:20 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -165,7 +165,9 @@ cmd_DRAIN(int nargs, char **args)
 	ARGC(1);
 	ARG_WINDOW(win);
 
-	while (wgetch(win) != ERR);
+	while (wgetch(win) != ERR)
+		continue;
+
 	report_count(1);
 	report_return(OK);
 }
