@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.285 2021/06/13 00:11:17 riastradh Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.286 2021/06/13 00:11:46 riastradh Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -79,7 +79,7 @@
 #define	__SUBR_AUTOCONF_PRIVATE	/* see <sys/device.h> */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.285 2021/06/13 00:11:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.286 2021/06/13 00:11:46 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1421,7 +1421,9 @@ config_devlink(device_t dev)
 static void
 config_devfree(device_t dev)
 {
+
 	KASSERT(dev->dv_flags & DVF_PRIV_ALLOC);
+	KASSERTMSG(dev->dv_pending == 0, "%d", dev->dv_pending);
 
 	if (dev->dv_cfattach->ca_devsize > 0)
 		kmem_free(dev->dv_private, dev->dv_cfattach->ca_devsize);
@@ -1439,6 +1441,7 @@ config_devunlink(device_t dev, struct devicelist *garbage)
 	int i;
 
 	KASSERT(mutex_owned(&alldevs_lock));
+	KASSERTMSG(dev->dv_pending == 0, "%d", dev->dv_pending);
 
  	/* Unlink from device list.  Link to garbage list. */
 	TAILQ_REMOVE(&alldevs, dev, dv_list);
@@ -1468,6 +1471,8 @@ config_devdelete(device_t dev)
 {
 	struct device_garbage *dg = &dev->dv_garbage;
 	device_lock_t dvl = device_getlock(dev);
+
+	KASSERTMSG(dev->dv_pending == 0, "%d", dev->dv_pending);
 
 	if (dg->dg_devs != NULL)
 		kmem_free(dg->dg_devs, sizeof(device_t) * dg->dg_ndevs);
