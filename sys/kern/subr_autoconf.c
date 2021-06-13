@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.286 2021/06/13 00:11:46 riastradh Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.287 2021/06/13 09:30:48 riastradh Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -79,7 +79,7 @@
 #define	__SUBR_AUTOCONF_PRIVATE	/* see <sys/device.h> */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.286 2021/06/13 00:11:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.287 2021/06/13 09:30:48 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1969,7 +1969,7 @@ config_detach(device_t dev, int flags)
 	device_t d __diagused;
 	int rv = 0;
 
-	KASSERT(KERNEL_LOCKED_P());
+	KERNEL_LOCK(1, NULL);
 
 	cf = dev->dv_cfdata;
 	KASSERTMSG((cf == NULL || cf->cf_fstate == FSTATE_FOUND ||
@@ -1988,8 +1988,10 @@ config_detach(device_t dev, int flags)
 	 * attached.
 	 */
 	rv = config_detach_enter(dev);
-	if (rv)
+	if (rv) {
+		KERNEL_UNLOCK_ONE(NULL);
 		return rv;
+	}
 
 	mutex_enter(&alldevs_lock);
 	if (dev->dv_del_gen != 0) {
@@ -1999,6 +2001,7 @@ config_detach(device_t dev, int flags)
 		    device_xname(dev));
 #endif /* DIAGNOSTIC */
 		config_detach_exit(dev);
+		KERNEL_UNLOCK_ONE(NULL);
 		return ENOENT;
 	}
 	alldevs_nwrite++;
@@ -2094,6 +2097,8 @@ out:
 		}
 	}
 	config_alldevs_exit(&af);
+
+	KERNEL_UNLOCK_ONE(NULL);
 
 	return rv;
 }
