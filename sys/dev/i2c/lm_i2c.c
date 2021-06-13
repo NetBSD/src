@@ -1,4 +1,4 @@
-/*	$NetBSD: lm_i2c.c,v 1.6 2020/06/24 19:11:49 jdolecek Exp $	*/
+/*	$NetBSD: lm_i2c.c,v 1.7 2021/06/13 09:48:44 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm_i2c.c,v 1.6 2020/06/24 19:11:49 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm_i2c.c,v 1.7 2021/06/13 09:48:44 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,7 +119,8 @@ lm_i2c_readreg(struct lm_softc *lmsc, int reg)
 	struct lm_i2c_softc *sc = (struct lm_i2c_softc *)lmsc;
 	uint8_t cmd, data;
 
-	iic_acquire_bus(sc->sc_tag, 0);
+	if (iic_acquire_bus(sc->sc_tag, 0))
+		return 0;
 
 	cmd = reg;
 	iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
@@ -137,7 +138,8 @@ lm_i2c_writereg(struct lm_softc *lmsc, int reg, uint8_t val)
 	struct lm_i2c_softc *sc = (struct lm_i2c_softc *)lmsc;
 	uint8_t cmd, data;
 
-	iic_acquire_bus(sc->sc_tag, 0);
+	if (iic_acquire_bus(sc->sc_tag, 0))
+		return;
 
 	cmd = reg;
 	data = val;
