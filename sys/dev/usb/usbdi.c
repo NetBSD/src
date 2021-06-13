@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.215 2021/06/12 15:49:45 riastradh Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.216 2021/06/13 00:13:24 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.215 2021/06/12 15:49:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.216 2021/06/13 00:13:24 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -225,6 +225,7 @@ usbd_open_pipe_ival(struct usbd_interface *iface, uint8_t address,
 {
 	struct usbd_pipe *p;
 	struct usbd_endpoint *ep;
+	bool piperef = false;
 	usbd_status err;
 	int i;
 
@@ -232,22 +233,49 @@ usbd_open_pipe_ival(struct usbd_interface *iface, uint8_t address,
 	USBHIST_CALLARGS(usbdebug, "iface = %#jx address = %#jx flags = %#jx",
 	    (uintptr_t)iface, address, flags, 0);
 
+	/*
+	 * Block usbd_set_interface so we have a snapshot of the
+	 * interface endpoints.  They will remain stable until we drop
+	 * the reference in usbd_close_pipe (or on failure here).
+	 */
+	err = usbd_iface_piperef(iface);
+	if (err)
+		goto out;
+	piperef = true;
+
+	/* Find the endpoint at this address.  */
 	for (i = 0; i < iface->ui_idesc->bNumEndpoints; i++) {
 		ep = &iface->ui_endpoints[i];
-		if (ep->ue_edesc == NULL)
-			return USBD_IOERROR;
+		if (ep->ue_edesc == NULL) {
+			err = USBD_IOERROR;
+			goto out;
+		}
 		if (ep->ue_edesc->bEndpointAddress == address)
-			goto found;
+			break;
 	}
-	return USBD_BAD_ADDRESS;
- found:
+	if (i == iface->ui_idesc->bNumEndpoints) {
+		err = USBD_BAD_ADDRESS;
+		goto out;
+	}
+
+	/* Set up the pipe with this endpoint.  */
 	err = usbd_setup_pipe_flags(iface->ui_dev, iface, ep, ival, &p, flags);
 	if (err)
-		return err;
+		goto out;
+
+	/* Success! */
 	*pipe = p;
+	p = NULL;		/* handed off to caller */
+	piperef = false;	/* handed off to pipe */
 	SDT_PROBE5(usb, device, pipe, open,
 	    iface, address, flags, ival, p);
-	return USBD_NORMAL_COMPLETION;
+	err = USBD_NORMAL_COMPLETION;
+
+out:	if (p)
+		usbd_close_pipe(p);
+	if (piperef)
+		usbd_iface_pipeunref(iface);
+	return err;
 }
 
 usbd_status
@@ -316,12 +344,9 @@ usbd_close_pipe(struct usbd_pipe *pipe)
 		usbd_destroy_xfer(pipe->up_intrxfer);
 	usb_rem_task_wait(pipe->up_dev, &pipe->up_async_task, USB_TASKQ_DRIVER,
 	    NULL);
-	if (pipe->up_iface) {
-		mutex_enter(&pipe->up_iface->ui_pipelock);
-		LIST_REMOVE(pipe, up_next);
-		mutex_exit(&pipe->up_iface->ui_pipelock);
-	}
 	usbd_endpoint_release(pipe->up_dev, pipe->up_endpoint);
+	if (pipe->up_iface)
+		usbd_iface_pipeunref(pipe->up_iface);
 	kmem_free(pipe, pipe->up_dev->ud_bus->ub_pipesize);
 
 	return USBD_NORMAL_COMPLETION;
@@ -865,17 +890,17 @@ usbd_pipe2device_handle(struct usbd_pipe *pipe)
 usbd_status
 usbd_set_interface(struct usbd_interface *iface, int altidx)
 {
+	bool locked = false;
 	usb_device_request_t req;
 	usbd_status err;
 
 	USBHIST_FUNC();
 	USBHIST_CALLARGS(usbdebug, "iface %#jx", (uintptr_t)iface, 0, 0, 0);
 
-	mutex_enter(&iface->ui_pipelock);
-	if (LIST_FIRST(&iface->ui_pipes) != NULL) {
-		err = USBD_IN_USE;
+	err = usbd_iface_lock(iface);
+	if (err)
 		goto out;
-	}
+	locked = true;
 
 	err = usbd_fill_iface_data(iface->ui_dev, iface->ui_index, altidx);
 	if (err)
@@ -888,7 +913,9 @@ usbd_set_interface(struct usbd_interface *iface, int altidx)
 	USETW(req.wLength, 0);
 	err = usbd_do_request(iface->ui_dev, &req, 0);
 
-out:	mutex_exit(&iface->ui_pipelock);
+out:	/* XXX back out iface data?  */
+	if (locked)
+		usbd_iface_unlock(iface);
 	return err;
 }
 

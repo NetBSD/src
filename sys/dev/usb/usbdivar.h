@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.127 2021/06/12 15:49:45 riastradh Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.128 2021/06/13 00:13:24 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -230,8 +230,7 @@ struct usbd_interface {
 	int			ui_index;
 	int			ui_altindex;
 	struct usbd_endpoint   *ui_endpoints;
-	kmutex_t		ui_pipelock;
-	LIST_HEAD(, usbd_pipe)	ui_pipes;
+	int64_t			ui_busy;	/* #pipes, or -1 if setting */
 };
 
 struct usbd_pipe {
@@ -243,7 +242,6 @@ struct usbd_pipe {
 	bool			up_serialise;
 	SIMPLEQ_HEAD(, usbd_xfer)
 			        up_queue;
-	LIST_ENTRY(usbd_pipe)	up_next;
 	struct usb_task		up_async_task;
 
 	struct usbd_xfer       *up_intrxfer; /* used for repeating requests */
@@ -347,6 +345,11 @@ usbd_status	usbd_reattach_device(device_t, struct usbd_device *,
 				     int, const int *);
 
 void		usbd_remove_device(struct usbd_device *, struct usbd_port *);
+bool		usbd_iface_locked(struct usbd_interface *);
+usbd_status	usbd_iface_lock(struct usbd_interface *);
+void		usbd_iface_unlock(struct usbd_interface *);
+usbd_status	usbd_iface_piperef(struct usbd_interface *);
+void		usbd_iface_pipeunref(struct usbd_interface *);
 usbd_status	usbd_fill_iface_data(struct usbd_device *, int, int);
 void		usb_free_device(struct usbd_device *);
 
