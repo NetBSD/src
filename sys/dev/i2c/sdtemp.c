@@ -1,4 +1,4 @@
-/*      $NetBSD: sdtemp.c,v 1.39 2020/06/30 19:02:42 msaitoh Exp $        */
+/*      $NetBSD: sdtemp.c,v 1.40 2021/06/13 09:47:36 mlelstv Exp $        */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.39 2020/06/30 19:02:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.40 2021/06/13 09:47:36 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -405,6 +405,7 @@ sdtemp_attach(device_t parent, device_t self, void *aux)
 bad:
 	kmem_free(sc->sc_sensor, sizeof(envsys_data_t));
 	sysmon_envsys_destroy(sc->sc_sme);
+	sc->sc_sme = NULL;
 }
 
 static int
