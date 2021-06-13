@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc.c,v 1.41 2021/04/24 23:36:59 thorpej Exp $	*/
+/*	$NetBSD: sdmmc.c,v 1.42 2021/06/13 09:58:28 mlelstv Exp $	*/
 /*	$OpenBSD: sdmmc.c,v 1.18 2009/01/09 10:58:38 jsg Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.41 2021/04/24 23:36:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.42 2021/06/13 09:58:28 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -300,14 +300,16 @@ sdmmc_del_task(struct sdmmc_softc *sc, struct sdmmc_task *task,
 	} else {
 		KASSERT(task->sc == NULL);
 		KASSERT(!task->onqueue);
-		mutex_exit(interlock);
+		if (interlock != NULL)
+			mutex_exit(interlock);
 		while (sc->sc_curtask == task) {
 			KASSERT(curlwp != sc->sc_tskq_lwp);
 			cv_wait(&sc->sc_tskq_cv, &sc->sc_tskq_mtx);
 		}
-		if (!mutex_tryenter(interlock)) {
+		if (interlock == NULL || !mutex_tryenter(interlock)) {
 			mutex_exit(&sc->sc_tskq_mtx);
-			mutex_enter(interlock);
+			if (interlock != NULL)
+				mutex_enter(interlock);
 			mutex_enter(&sc->sc_tskq_mtx);
 		}
 		cancelled = false;
