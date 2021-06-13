@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.151 2021/06/13 00:11:57 riastradh Exp $	*/
+/*	$NetBSD: uhub.c,v 1.152 2021/06/13 14:46:07 riastradh Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 /*	$OpenBSD: uhub.c,v 1.86 2015/06/29 18:27:40 mpi Exp $ */
 
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.151 2021/06/13 00:11:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.152 2021/06/13 14:46:07 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -119,6 +119,7 @@ struct uhub_softc {
 	bool			 sc_explorepending;
 	bool			 sc_first_explore;
 	bool			 sc_running;
+	bool			 sc_rescan;
 
 	struct lwp		*sc_exploring;
 };
@@ -130,8 +131,6 @@ struct uhub_softc {
 #define PORTSTAT_ISSET(sc, port) \
 	((sc)->sc_status[(port) / 8] & (1 << ((port) % 8)))
 
-Static usbd_status uhub_explore_enter(struct uhub_softc *);
-Static void uhub_explore_exit(struct uhub_softc *);
 Static usbd_status uhub_explore(struct usbd_device *);
 Static void uhub_intr(struct usbd_xfer *, void *, usbd_status);
 
@@ -482,51 +481,17 @@ uhub_attach(device_t parent, device_t self, void *aux)
 	config_pending_decr(self);
 }
 
-Static usbd_status
-uhub_explore_enter(struct uhub_softc *sc)
-{
-	usbd_status err;
-
-	mutex_enter(&sc->sc_lock);
-	for (;;) {
-		if (sc->sc_exploring == NULL) {
-			sc->sc_exploring = curlwp;
-			err = 0;
-			break;
-		}
-		KASSERT(sc->sc_exploring != curlwp);
-		if (cv_wait_sig(&sc->sc_cv, &sc->sc_lock)) {
-			err = USBD_INTERRUPTED;
-			break;
-		}
-	}
-	mutex_exit(&sc->sc_lock);
-
-	return err;
-}
-
-Static void
-uhub_explore_exit(struct uhub_softc *sc)
-{
-
-	mutex_enter(&sc->sc_lock);
-	KASSERTMSG(sc->sc_exploring == curlwp, "lwp %p exploring %s",
-	    sc->sc_exploring, device_xname(sc->sc_dev));
-	sc->sc_exploring = NULL;
-	cv_broadcast(&sc->sc_cv);
-	mutex_exit(&sc->sc_lock);
-}
-
 usbd_status
 uhub_explore(struct usbd_device *dev)
 {
 	usb_hub_descriptor_t *hd = &dev->ud_hub->uh_hubdesc;
 	struct uhub_softc *sc = dev->ud_hub->uh_hubsoftc;
 	struct usbd_port *up;
+	struct usbd_device *subdev;
 	usbd_status err;
 	int speed;
 	int port;
-	int change, status, reconnect;
+	int change, status, reconnect, rescan;
 
 	UHUBHIST_FUNC();
 	UHUBHIST_CALLARGS("uhub%jd dev=%#jx addr=%jd speed=%ju",
@@ -542,10 +507,19 @@ uhub_explore(struct usbd_device *dev)
 	if (dev->ud_depth > USB_HUB_MAX_DEPTH)
 		return USBD_TOO_DEEP;
 
-	/* Only one explore at a time, please.  */
-	err = uhub_explore_enter(sc);
-	if (err)
-		return err;
+	/* Process rescan if requested.  */
+	mutex_enter(&sc->sc_lock);
+	rescan = sc->sc_rescan;
+	sc->sc_rescan = false;
+	mutex_exit(&sc->sc_lock);
+	if (rescan) {
+		for (port = 1; port <= hd->bNbrPorts; port++) {
+			subdev = dev->ud_hub->uh_ports[port - 1].up_dev;
+			if (subdev == NULL)
+				continue;
+			usbd_reattach_device(sc->sc_dev, subdev, port, NULL);
+		}
+	}
 
 	if (PORTSTAT_ISSET(sc, 0)) { /* hub status change */
 		usb_hub_status_t hs;
@@ -851,7 +825,6 @@ uhub_explore(struct usbd_device *dev)
 		}
 	}
 	mutex_exit(&sc->sc_lock);
-	uhub_explore_exit(sc);
 	if (sc->sc_first_explore) {
 		config_pending_decr(sc->sc_dev);
 		sc->sc_first_explore = false;
@@ -928,26 +901,17 @@ static int
 uhub_rescan(device_t self, const char *ifattr, const int *locators)
 {
 	struct uhub_softc *sc = device_private(self);
-	struct usbd_hub *hub = sc->sc_hub->ud_hub;
-	struct usbd_device *dev;
-	int port;
 
 	UHUBHIST_FUNC();
 	UHUBHIST_CALLARGS("uhub%jd", device_unit(sc->sc_dev), 0, 0, 0);
 
 	KASSERT(KERNEL_LOCKED_P());
 
-	if (uhub_explore_enter(sc) != 0)
-		return EBUSY;
-	for (port = 1; port <= hub->uh_hubdesc.bNbrPorts; port++) {
-		dev = hub->uh_ports[port - 1].up_dev;
-		if (dev == NULL)
-			continue;
-		usbd_reattach_device(sc->sc_dev, dev, port, locators);
-	}
-	uhub_explore_exit(sc);
-
-	/* Arrange to recursively explore hubs we may have found.  */
+	/* Trigger bus exploration.  */
+	/* XXX locators */
+	mutex_enter(&sc->sc_lock);
+	sc->sc_rescan = true;
+	mutex_exit(&sc->sc_lock);
 	usb_needs_explore(sc->sc_hub);
 
 	return 0;
