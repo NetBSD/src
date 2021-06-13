@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.280 2021/04/11 18:18:39 mlelstv Exp $	*/
+/*	$NetBSD: vnd.c,v 1.281 2021/06/13 10:01:43 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008, 2020 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.280 2021/04/11 18:18:39 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.281 2021/06/13 10:01:43 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -361,6 +361,11 @@ vndopen(dev_t dev, int flags, int mode, struct lwp *l)
 
 	if (sc->sc_dkdev.dk_nwedges != 0 && part != RAW_PART) {
 		error = EBUSY;
+		goto done;
+	}
+
+	if ((flags & FWRITE) && (sc->sc_flags & VNF_READONLY)) {
+		error = EROFS;
 		goto done;
 	}
 
