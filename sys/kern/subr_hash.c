@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_hash.c,v 1.10 2021/06/13 03:09:20 christos Exp $	*/
+/*	$NetBSD: subr_hash.c,v 1.11 2021/06/13 14:02:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_hash.c,v 1.10 2021/06/13 03:09:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_hash.c,v 1.11 2021/06/13 14:02:46 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -214,7 +214,6 @@ hashstat_sysctl(SYSCTLFN_ARGS)
 			return EINVAL;
 		}
 		query = true;
-		h = newp;
 		error = sysctl_copyinstr(l, h->hash_name, queryname, 
 		    sizeof(queryname), &s);
 		if (error)
