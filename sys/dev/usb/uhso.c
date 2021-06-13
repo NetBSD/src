@@ -1,4 +1,4 @@
-/*	$NetBSD: uhso.c,v 1.34 2020/03/14 02:35:33 christos Exp $	*/
+/*	$NetBSD: uhso.c,v 1.35 2021/06/13 09:27:20 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2009 Iain Hibbert
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.34 2020/03/14 02:35:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.35 2021/06/13 09:27:20 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -233,7 +233,6 @@ struct uhso_dev {
 #define UHSOTYPE_CONFIG		3
 
 Static const struct uhso_dev uhso_devs[] = {
-    { USB_VENDOR_OPTIONNV, USB_PRODUCT_OPTIONNV_MAXHSDPA,    UHSOTYPE_DEFAULT },
     { USB_VENDOR_OPTIONNV, USB_PRODUCT_OPTIONNV_GSICON72,    UHSOTYPE_DEFAULT },
     { USB_VENDOR_OPTIONNV, USB_PRODUCT_OPTIONNV_ICON225,     UHSOTYPE_DEFAULT },
     { USB_VENDOR_OPTIONNV, USB_PRODUCT_OPTIONNV_GEHSUPA,     UHSOTYPE_DEFAULT },
