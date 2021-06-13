@@ -1,4 +1,4 @@
-/*	$NetBSD: slave.c,v 1.16 2021/02/13 10:03:49 rillig Exp $	*/
+/*	$NetBSD: slave.c,v 1.17 2021/06/13 12:46:01 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -82,12 +82,12 @@ read_command_argument(char ***pargs, int argslen)
 	int type, len;
 	char **args = *pargs;
 
-	read_from_director(&type, sizeof type);
-	read_from_director(&len, sizeof len);
+	read_from_director(&type, sizeof(type));
+	read_from_director(&len, sizeof(len));
 	if (len < 0)
 		return false;
 
-	args = realloc(args, (argslen + 1) * sizeof args[0]);
+	args = realloc(args, (argslen + 1) * sizeof(args[0]));
 	if (args == NULL)
 		err(1, "slave realloc of args array failed");
 	*pargs = args;
@@ -134,11 +134,11 @@ process_commands(void)
 	if ((cmdbuf = malloc(maxlen)) == NULL)
 		err(1, "slave cmdbuf malloc failed");
 
-	while (try_read_from_director(&type, sizeof type)) {
+	while (try_read_from_director(&type, sizeof(type))) {
 		if (type != data_string)
 			errx(1, "Unexpected type for command, got %d", type);
 
-		read_from_director(&len, sizeof len);
+		read_from_director(&len, sizeof(len));
 
 		if ((len + 1) > maxlen) {
 			maxlen = len + 1;
