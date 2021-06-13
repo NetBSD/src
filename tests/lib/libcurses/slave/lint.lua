@@ -1,5 +1,5 @@
 #! /usr/bin/lua
--- $NetBSD: lint.lua,v 1.2 2021/02/13 18:24:11 rillig Exp $
+-- $NetBSD: lint.lua,v 1.3 2021/06/13 18:11:44 rillig Exp $
 
 --[[
 
@@ -10,7 +10,7 @@ inconsistencies.
 
 ]]
 
-
+---@return string[]
 local function load_lines(fname)
   local lines = {}
 
@@ -54,26 +54,21 @@ local function check_args(errors)
   for lineno, line in ipairs(lines) do
 
     local c = num(line:match("^\tARGC%((%d)"))
-    if c ~= nil and c > 0 then
+    if c and c > 0 then
       argc, argi = c, 0
     end
 
-    local i = num(line:match("^\tARG_[%w_]+%((%d+)"))
-    if i ~= nil and argi == nil then
+    local arg = line:match("^\tARG_[%w_]+%(")
+    if arg and not argi then
       errors:add("%s:%d: ARG without preceding ARGC", fname, lineno)
     end
 
-    if i == nil and argi ~= nil and c == nil then
+    if not arg and argi and not c then
       errors:add("%s:%d: expecting ARG %d, got %s", fname, lineno, argi, line)
       argc, argi = nil, nil
     end
 
-    if i ~= nil and argi ~= nil and i ~= argi then
-      errors:add("%s:%d: expecting ARG %d, not %d", fname, lineno, argi, i)
-      argi = i
-    end
-
-    if i ~= nil and argi ~= nil and i == argi then
+    if arg and argi then
       argi = argi + 1
       if argi == argc then
         argc, argi = nil, nil
