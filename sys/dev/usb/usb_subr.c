@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.262 2021/06/13 08:48:29 mlelstv Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.263 2021/06/13 08:50:33 mlelstv Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.262 2021/06/13 08:48:29 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.263 2021/06/13 08:50:33 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -421,7 +421,7 @@ usbd_iface_init(struct usbd_device *dev, int ifaceidx)
 static void
 usbd_iface_fini(struct usbd_device *dev, int ifaceidx)
 {
-	struct usbd_interface *ifc __diagused = &dev->ud_ifaces[ifaceidx];
+	struct usbd_interface *ifc = &dev->ud_ifaces[ifaceidx] __diagused;
 
 	KASSERT(ifc->ui_dev == dev);
 	KASSERT(ifc->ui_idesc == NULL);
@@ -1067,12 +1067,12 @@ usbd_properties(device_t dv, struct usbd_device *dev)
 	vendor = UGETW(dd->idVendor);
 	product = UGETW(dd->idProduct);
 
-	prop_dictionary_set_uint16(dict, "class", class);
-	prop_dictionary_set_uint16(dict, "subclass", subclass);
+	prop_dictionary_set_uint8(dict, "class", class);
+	prop_dictionary_set_uint8(dict, "subclass", subclass);
 	prop_dictionary_set_uint16(dict, "release", release);
-	prop_dictionary_set_uint16(dict, "proto", proto);
-	prop_dictionary_set_uint16(dict, "vendor", vendor);
-	prop_dictionary_set_uint16(dict, "product", product);
+	prop_dictionary_set_uint8(dict, "proto", proto);
+	prop_dictionary_set_uint16(dict, "vendor-id", vendor);
+	prop_dictionary_set_uint16(dict, "product-id", product);
 
 	if (dev->ud_vendor) {
 		prop_dictionary_set_string(dict,
