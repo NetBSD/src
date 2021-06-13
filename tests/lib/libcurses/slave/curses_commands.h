@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_commands.h,v 1.7 2021/02/13 08:14:46 rillig Exp $	*/
+/*	$NetBSD: curses_commands.h,v 1.8 2021/06/13 19:17:53 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -35,12 +35,6 @@ struct command_def {
 	const char *name;
 	void (*func)(int, char **);
 };
-
-int set_int(char *, int *);
-int set_uint(char *, unsigned int *);
-int set_short(char *, short *);
-int set_win(char *, WINDOW **);
-int set_scrn(char *, SCREEN **);
 
 /*
  * prototypes for test commands
