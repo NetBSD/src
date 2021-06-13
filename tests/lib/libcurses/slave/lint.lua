@@ -1,5 +1,5 @@
 #! /usr/bin/lua
--- $NetBSD: lint.lua,v 1.5 2021/06/13 19:41:12 rillig Exp $
+-- $NetBSD: lint.lua,v 1.6 2021/06/13 19:50:18 rillig Exp $
 
 --[[
 
@@ -24,18 +24,10 @@ local function load_lines(fname)
   return lines
 end
 
-
-local function new_errors()
-  local errors = {}
-  errors.add = function(self, fmt, ...)
-    table.insert(self, string.format(fmt, ...))
-  end
-  errors.print = function(self)
-    for _, msg in ipairs(self) do
-      print(msg)
-    end
-  end
-  return errors
+local had_errors = false
+local function print_error(fmt, ...)
+  print(fmt:format(...))
+  had_errors = true
 end
 
 
@@ -46,7 +38,7 @@ end
 
 
 -- After each macro ARGC, there must be the corresponding macros for ARG.
-local function check_args(errors)
+local function check_args()
   local fname = "curses_commands.c"
   local lines = load_lines(fname)
   local curr_argc, curr_arg ---@type number|nil, number|nil
@@ -66,9 +58,9 @@ local function check_args(errors)
         curr_argc, curr_arg = nil, nil
       end
     elseif line_arg then
-      errors:add("%s:%d: ARG without preceding ARGC", fname, lineno)
+      print_error("%s:%d: ARG without preceding ARGC", fname, lineno)
     elseif curr_arg then
-      errors:add("%s:%d: expecting ARG %d, got %s",
+      print_error("%s:%d: expecting ARG %d, got %s",
         fname, lineno, curr_arg, line)
       curr_argc, curr_arg = nil, nil
     end
@@ -77,13 +69,5 @@ local function check_args(errors)
   end
 end
 
-
-local function main(arg)
-  local errors = new_errors()
-  check_args(errors)
-  errors:print()
-  return #errors == 0
-end
-
-
-os.exit(main(arg))
+check_args()
+os.exit(not had_errors)
