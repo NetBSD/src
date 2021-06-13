@@ -1,11 +1,11 @@
 #! /usr/bin/lua
--- $NetBSD: lint.lua,v 1.3 2021/06/13 18:11:44 rillig Exp $
+-- $NetBSD: lint.lua,v 1.4 2021/06/13 19:25:08 rillig Exp $
 
 --[[
 
 usage: lua ./lint.lua
 
-Check that the boilerplate code does not contain unintended
+Check that the argument handling code does not contain unintended
 inconsistencies.
 
 ]]
@@ -49,29 +49,31 @@ end
 local function check_args(errors)
   local fname = "curses_commands.c"
   local lines = load_lines(fname)
-  local argi, argc
+  local curr_argc, curr_arg ---@type number|nil, number|nil
 
   for lineno, line in ipairs(lines) do
 
-    local c = num(line:match("^\tARGC%((%d)"))
-    if c and c > 0 then
-      argc, argi = c, 0
+    local line_argc = num(line:match("^\tARGC%((%d)"))
+    local line_arg = line:match("^\tARG_[%w_]+%(")
+
+    if line_argc and line_argc > 0 then
+      curr_argc, curr_arg = line_argc, 0
     end
 
-    local arg = line:match("^\tARG_[%w_]+%(")
-    if arg and not argi then
+    if line_arg and not curr_arg then
       errors:add("%s:%d: ARG without preceding ARGC", fname, lineno)
     end
 
-    if not arg and argi and not c then
-      errors:add("%s:%d: expecting ARG %d, got %s", fname, lineno, argi, line)
-      argc, argi = nil, nil
+    if not line_arg and curr_arg and not line_argc then
+      errors:add("%s:%d: expecting ARG %d, got %s",
+        fname, lineno, curr_arg, line)
+      curr_argc, curr_arg = nil, nil
     end
 
-    if arg and argi then
-      argi = argi + 1
-      if argi == argc then
-        argc, argi = nil, nil
+    if line_arg and curr_arg then
+      curr_arg = curr_arg + 1
+      if curr_arg == curr_argc then
+        curr_argc, curr_arg = nil, nil
       end
     end
   end
