@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.71 2021/06/14 10:14:58 riastradh Exp $ */
+/* $NetBSD: pad.c,v 1.72 2021/06/14 10:21:21 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.71 2021/06/14 10:14:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.72 2021/06/14 10:21:21 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -258,6 +258,7 @@ pad_detach(device_t self, int flags)
 
 	pmf_device_deregister(sc->sc_dev);
 
+	callout_destroy(&sc->sc_pcallout);
 	mutex_destroy(&sc->sc_lock);
 	mutex_destroy(&sc->sc_intr_lock);
 	cv_destroy(&sc->sc_condvar);
