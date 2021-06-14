@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1026.c,v 1.12 2021/06/14 09:56:04 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm1026.c,v 1.13 2021/06/14 13:52:11 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,9 +104,9 @@ static int adm1026_detach(device_t, int);
 bool adm1026_pmf_suspend(device_t, const pmf_qual_t *);
 bool adm1026_pmf_resume(device_t, const pmf_qual_t *);
 
-static void adm1026_setup_fans(struct adm1026_softc *sc, int div2_val);
-static void adm1026_setup_temps(struct adm1026_softc *sc);
-static void adm1026_setup_volts(struct adm1026_softc *sc);
+static int adm1026_setup_fans(struct adm1026_softc *sc, int div2_val);
+static int adm1026_setup_temps(struct adm1026_softc *sc);
+static int adm1026_setup_volts(struct adm1026_softc *sc);
 
 void adm1026_refresh(struct sysmon_envsys *sme, envsys_data_t *edata);
 static void adm1026_read_fan(struct adm1026_softc *sc, envsys_data_t *edata);
@@ -221,10 +221,13 @@ adm1026_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_sme = sysmon_envsys_create();
 	sc->sc_nfans = 0;
-	adm1026_setup_fans(sc, div2_val);
 	sc->sc_ntemps = 0;
-	adm1026_setup_temps(sc);
-	adm1026_setup_volts(sc);
+	if (adm1026_setup_fans(sc, div2_val))
+		goto bad;
+	if (adm1026_setup_temps(sc))
+		goto bad;
+	if (adm1026_setup_volts(sc))
+		goto bad;
 	aprint_normal_dev(self, "%d fans, %d temperatures, %d voltages\n",
 	    sc->sc_nfans, sc->sc_ntemps, sc->sc_ntemps == 3 ? 15 : 17);
 	
@@ -234,14 +237,17 @@ adm1026_attach(device_t parent, device_t self, void *aux)
 	if (sysmon_envsys_register(sc->sc_sme)) {
 		aprint_error_dev(self,
 		    "unable to register with sysmon\n");
-		sysmon_envsys_destroy(sc->sc_sme);
-		sc->sc_sme = NULL;
-		return;
+		goto bad;
 	}
 
 	if (!pmf_device_register(self, adm1026_pmf_suspend, adm1026_pmf_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
+	return;
+
+bad:
+	sysmon_envsys_destroy(sc->sc_sme);
+	sc->sc_sme = NULL;
 	return;
 }
 
@@ -275,7 +281,7 @@ adm1026_detach(device_t self, int flags)
 	return 0;
 }
 
-static void
+static int
 adm1026_setup_fans(struct adm1026_softc *sc, int div2_val)
 {
 	int i, err = 0;
@@ -284,11 +290,11 @@ adm1026_setup_fans(struct adm1026_softc *sc, int div2_val)
 	/* Read fan-related registers (configuration and divisors) */
 	if ((err = adm1026_read_reg(sc, ADM1026_CONF2, &sc->sc_cfg[1])) != 0) {
 		aprint_error_dev(sc->sc_dev, "unable to read conf2\n");
-		return;
+		return 0;
 	}
 	if ((err = adm1026_read_reg(sc, ADM1026_FAN_DIV1, &div1)) != 0) {
 		aprint_error_dev(sc->sc_dev, "unable to read fan_div1\n");
-		return;
+		return 0;
 	}
 	sc->sc_fandiv[0] = 1 << ADM1026_FAN0_DIV(div1);
 	sc->sc_fandiv[1] = 1 << ADM1026_FAN1_DIV(div1);
@@ -299,7 +305,7 @@ adm1026_setup_fans(struct adm1026_softc *sc, int div2_val)
 		    adm1026_read_reg(sc, ADM1026_FAN_DIV2, &div2)) != 0) {
 			aprint_error_dev(sc->sc_dev,
 			    "unable to read fan_div2\n");
-			return;
+			return 0;
 		}
 	} else
 		div2 = div2_val;
@@ -317,20 +323,19 @@ adm1026_setup_fans(struct adm1026_softc *sc, int div2_val)
 			snprintf(sc->sc_sensor[ADM1026_FAN_NUM(i)].desc,
 			    sizeof(sc->sc_sensor[ADM1026_FAN_NUM(i)].desc),
 			    "fan %d", ADM1026_FAN_NUM(i));
-			sc->sc_nfans++;
 			if (sysmon_envsys_sensor_attach(
 			    sc->sc_sme, &sc->sc_sensor[ADM1026_FAN_NUM(i)])) {
-				sysmon_envsys_destroy(sc->sc_sme);
-				sc->sc_sme = NULL;
 				aprint_error_dev(sc->sc_dev,
 				    "unable to attach fan %d at sysmon\n", i);
-				return;
+				return 1;
 			}
+			sc->sc_nfans++;
 		}
 	}
+	return 0;
 }
 
-static void
+static int
 adm1026_setup_temps(struct adm1026_softc *sc)
 {
 	int i;
@@ -340,7 +345,7 @@ adm1026_setup_temps(struct adm1026_softc *sc)
 	if (adm1026_read_reg(sc, ADM1026_INT_TEMP_OFF, &val)
 	    != 0) {
 		aprint_error_dev(sc->sc_dev, "unable to read int temp. off.\n");
-		return;
+		return 0;
 	}
 	if (val & 0x80)
 		sc->sc_temp_off[0] = 0 - 1000000 * (val & 0x7f);
@@ -348,7 +353,7 @@ adm1026_setup_temps(struct adm1026_softc *sc)
 		sc->sc_temp_off[0] = 1000000 * (val & 0x7f);
 	if (adm1026_read_reg(sc, ADM1026_TDM1_OFF, &val) != 0) {
 		aprint_error_dev(sc->sc_dev, "unable to read tdm1 off.\n");
-		return;
+		return 0;
 	}
 	if (val & 0x80)
 		sc->sc_temp_off[1] = 0 - 1000000 * (val & 0x7f);
@@ -356,7 +361,7 @@ adm1026_setup_temps(struct adm1026_softc *sc)
 		sc->sc_temp_off[1] = 1000000 * (val & 0x7f);
 	if (adm1026_read_reg(sc, ADM1026_TDM2_OFF, &val) != 0) {
 		aprint_error_dev(sc->sc_dev, "unable to read tdm2 off.\n");
-		return;
+		return 0;
 	}
 	if (val & 0x80)
 		sc->sc_temp_off[2] = 0 - 1000000 * (val & 0x7f);
@@ -375,19 +380,18 @@ adm1026_setup_temps(struct adm1026_softc *sc)
 			continue;
 		sc->sc_sensor[ADM1026_TEMP_NUM(i)].units = ENVSYS_STEMP;
 		sc->sc_sensor[ADM1026_TEMP_NUM(i)].state = ENVSYS_SINVALID;
-		sc->sc_ntemps++;
 		if (sysmon_envsys_sensor_attach(
 		    sc->sc_sme, &sc->sc_sensor[ADM1026_TEMP_NUM(i)])) {
-			sysmon_envsys_destroy(sc->sc_sme);
-			sc->sc_sme = NULL;
 			aprint_error_dev(sc->sc_dev,
 			    "unable to attach temp %d at sysmon\n", i);
-			return;
+			return 1;
 		}
+		sc->sc_ntemps++;
 	}
+	return 0;
 }
 
-static void
+static int
 adm1026_setup_volts(struct adm1026_softc *sc)
 {
 	int i;
@@ -404,13 +408,12 @@ adm1026_setup_volts(struct adm1026_softc *sc)
 		sc->sc_sensor[ADM1026_VOLT_NUM(i)].state = ENVSYS_SINVALID;
 		if (sysmon_envsys_sensor_attach(
 		    sc->sc_sme, &sc->sc_sensor[ADM1026_VOLT_NUM(i)])) {
-			sysmon_envsys_destroy(sc->sc_sme);
-			sc->sc_sme = NULL;
 			aprint_error_dev(sc->sc_dev,
 			    "unable to attach volts %d at sysmon\n", i);
-			return;
+			return 1;
 		}
 	}
+	return 0;
 }
 
 void
