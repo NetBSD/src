@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.168.2.1 2021/01/29 20:58:19 martin Exp $	*/
+/*	$NetBSD: ftp.c,v 1.168.2.2 2021/06/14 11:22:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996-2021 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.168.2.1 2021/01/29 20:58:19 martin Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.168.2.2 2021/06/14 11:22:16 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -320,6 +320,17 @@ cmdtimeout(int notused)
 	errno = oerrno;
 }
 
+static int
+issighandler(sigfunc func)
+{
+	return (func != SIG_IGN &&
+		func != SIG_DFL &&
+#ifdef SIG_HOLD
+		func != SIG_HOLD &&
+#endif
+		func != SIG_ERR);
+}
+
 /*VARARGS*/
 int
 command(const char *fmt, ...)
@@ -359,8 +370,9 @@ command(const char *fmt, ...)
 	(void)fflush(cout);
 	cpend = 1;
 	r = getreply(!strcmp(fmt, "QUIT"));
-	if (abrtflag && oldsigint != SIG_IGN)
+	if (abrtflag && issighandler(oldsigint)) {
 		(*oldsigint)(SIGINT);
+	}
 	(void)xsignal(SIGINT, oldsigint);
 	return (r);
 }
@@ -510,11 +522,14 @@ getreply(int expecteof)
 		(void)xsignal(SIGALRM, oldsigalrm);
 		if (code == 421 || originalcode == 421)
 			lostpeer(0);
-		if (abrtflag && oldsigint != cmdabort && oldsigint != SIG_IGN)
+		if (abrtflag && oldsigint != cmdabort &&
+		    issighandler(oldsigint)) {
 			(*oldsigint)(SIGINT);
+		}
 		if (timeoutflag && oldsigalrm != cmdtimeout &&
-		    oldsigalrm != SIG_IGN)
+		    issighandler(oldsigalrm)) {
 			(*oldsigalrm)(SIGINT);
+		}
 		return (n - '0');
 	}
 }
@@ -680,7 +695,7 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 	FILE *volatile dout;
 	int (*volatile closefunc)(FILE *);
 	sigfunc volatile oldintr;
-	sigfunc volatile oldintp;
+	sigfunc volatile oldpipe;
 	off_t volatile hashbytes;
 	int hash_interval;
 	const char *lmode;
@@ -707,8 +722,8 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 	if (curtype != type)
 		changetype(type, 0);
 	closefunc = NULL;
-	oldintr = NULL;
-	oldintp = NULL;
+	oldintr = SIG_ERR;
+	oldpipe = SIG_ERR;
 	lmode = "w";
 	if (sigsetjmp(xferabort, 1)) {
 		while (cpend)
@@ -722,7 +737,7 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 		fin = stdin;
 		progress = 0;
 	} else if (*local == '|') {
-		oldintp = xsignal(SIGPIPE, SIG_IGN);
+		oldpipe = xsignal(SIGPIPE, SIG_IGN);
 		fin = popen(local + 1, "r");
 		if (fin == NULL) {
 			warn("Can't execute `%s'", local + 1);
@@ -796,7 +811,9 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 	}
 
 	progressmeter(-1);
-	oldintp = xsignal(SIGPIPE, SIG_IGN);
+	if (oldpipe == SIG_ERR) {
+		oldpipe = xsignal(SIGPIPE, SIG_IGN);
+	}
 	hash_interval = (hash && (!progress || filesize < 0)) ? mark : 0;
 
 	switch (curtype) {
@@ -865,7 +882,7 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 
  abort:
 	(void)xsignal(SIGINT, oldintr);
-	oldintr = NULL;
+	oldintr = SIG_ERR;
 	if (!cpend) {
 		code = -1;
 		goto cleanupsend;
@@ -884,10 +901,10 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 		ptransfer(0);
 
  cleanupsend:
-	if (oldintr)
+	if (oldintr != SIG_ERR)
 		(void)xsignal(SIGINT, oldintr);
-	if (oldintp)
-		(void)xsignal(SIGPIPE, oldintp);
+	if (oldpipe != SIG_ERR)
+		(void)xsignal(SIGPIPE, oldpipe);
 	if (data >= 0) {
 		(void)close(data);
 		data = -1;
@@ -909,7 +926,7 @@ recvrequest(const char *cmd, const char *volatile local, const char *remote,
 	FILE *volatile din;
 	int (*volatile closefunc)(FILE *);
 	sigfunc volatile oldintr;
-	sigfunc volatile oldintp;
+	sigfunc volatile oldpipe;
 	int c, d;
 	int volatile is_retr;
 	int volatile tcrflag;
@@ -945,8 +962,8 @@ recvrequest(const char *cmd, const char *volatile local, const char *remote,
 		return;
 	}
 	closefunc = NULL;
-	oldintr = NULL;
-	oldintp = NULL;
+	oldintr = SIG_ERR;
+	oldpipe = SIG_ERR;
 	tcrflag = !crflag && is_retr;
 	if (sigsetjmp(xferabort, 1)) {
 		while (cpend)
@@ -1027,7 +1044,7 @@ recvrequest(const char *cmd, const char *volatile local, const char *remote,
 		progress = 0;
 		preserve = 0;
 	} else if (!ignorespecial && *local == '|') {
-		oldintp = xsignal(SIGPIPE, SIG_IGN);
+		oldpipe = xsignal(SIGPIPE, SIG_IGN);
 		fout = popen(local + 1, "w");
 		if (fout == NULL) {
 			warn("Can't execute `%s'", local+1);
@@ -1193,10 +1210,10 @@ recvrequest(const char *cmd, const char *volatile local, const char *remote,
 		ptransfer(0);
 
  cleanuprecv:
-	if (oldintr)
+	if (oldintr != SIG_ERR)
 		(void)xsignal(SIGINT, oldintr);
-	if (oldintp)
-		(void)xsignal(SIGPIPE, oldintp);
+	if (oldpipe != SIG_ERR)
+		(void)xsignal(SIGPIPE, oldpipe);
 	if (data >= 0) {
 		(void)close(data);
 		data = -1;
@@ -1866,7 +1883,7 @@ proxtrans(const char *cmd, const char *local, const char *remote)
 	int volatile secndflag;
 	const char *volatile cmd2;
 
-	oldintr = NULL;
+	oldintr = SIG_ERR;
 	secndflag = 0;
 	if (strcmp(cmd, "RETR"))
 		cmd2 = "RETR";
