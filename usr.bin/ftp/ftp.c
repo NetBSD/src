@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.168.2.2 2021/06/14 11:22:16 martin Exp $	*/
+/*	$NetBSD: ftp.c,v 1.168.2.3 2021/06/14 11:28:28 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996-2021 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.168.2.2 2021/06/14 11:22:16 martin Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.168.2.3 2021/06/14 11:28:28 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -2074,7 +2074,7 @@ gunique(const char *local)
  *	needs to get back to a known state.
  */
 static void
-abort_squared(int dummy)
+abort_squared(int signo)
 {
 	char msgbuf[100];
 	size_t len;
@@ -2084,7 +2084,7 @@ abort_squared(int dummy)
 	len = strlcpy(msgbuf, "\nremote abort aborted; closing connection.\n",
 	    sizeof(msgbuf));
 	write(fileno(ttyout), msgbuf, len);
-	lostpeer(0);
+	lostpeer(signo);
 	siglongjmp(xferabort, 1);
 }
 
