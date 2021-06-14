@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.73 2021/06/14 18:44:37 riastradh Exp $ */
+/* $NetBSD: pad.c,v 1.74 2021/06/14 18:44:45 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.73 2021/06/14 18:44:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.74 2021/06/14 18:44:45 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -533,7 +533,6 @@ pad_start_output(void *opaque, void *block, int blksize,
 
 	sc->sc_intr = intr;
 	sc->sc_intrarg = intrarg;
-	sc->sc_blksize = blksize;
 
 	DPRINTF("%s: blksize=%d\n", __func__, blksize);
 	err = pad_add_block(sc, block, blksize);
