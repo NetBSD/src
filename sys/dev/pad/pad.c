@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.72 2021/06/14 10:21:21 riastradh Exp $ */
+/* $NetBSD: pad.c,v 1.73 2021/06/14 18:44:37 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.72 2021/06/14 10:21:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.73 2021/06/14 18:44:37 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -271,6 +271,8 @@ pad_childdet(device_t self, device_t child)
 {
 	struct pad_softc *sc = device_private(self);
 
+	KASSERT(KERNEL_LOCKED_P());
+
 	if (child == sc->sc_audiodev)
 		sc->sc_audiodev = NULL;
 }
@@ -280,7 +282,11 @@ pad_add_block(struct pad_softc *sc, uint8_t *blk, int blksize)
 {
 	int l;
 
-	if (sc->sc_buflen + blksize > PAD_BUFSIZE)
+	KASSERT(blksize >= 0);
+	KASSERT(mutex_owned(&sc->sc_intr_lock));
+
+	if (blksize > PAD_BUFSIZE ||
+	    sc->sc_buflen > PAD_BUFSIZE - (unsigned)blksize)
 		return ENOBUFS;
 
 	if (sc->sc_wpos + blksize <= PAD_BUFSIZE)
@@ -296,16 +302,27 @@ pad_add_block(struct pad_softc *sc, uint8_t *blk, int blksize)
 		sc->sc_wpos -= PAD_BUFSIZE;
 
 	sc->sc_buflen += blksize;
+	cv_broadcast(&sc->sc_condvar);
 
 	return 0;
 }
 
 static int
-pad_get_block(struct pad_softc *sc, pad_block_t *pb, int blksize)
+pad_get_block(struct pad_softc *sc, pad_block_t *pb, int maxblksize)
 {
-	int l;
+	int l, blksize, error;
 
-	KASSERT(pb != NULL);
+	KASSERT(maxblksize > 0);
+	KASSERT(mutex_owned(&sc->sc_intr_lock));
+
+	while (sc->sc_buflen == 0) {
+		DPRINTF("%s: wait\n", __func__);
+		error = cv_wait_sig(&sc->sc_condvar, &sc->sc_intr_lock);
+		DPRINTF("%s: wake up %d\n", __func__, err);
+		if (error)
+			return error;
+	}
+	blksize = uimin(maxblksize, sc->sc_buflen);
 
 	pb->pb_ptr = (sc->sc_audiobuf + sc->sc_rpos);
 	if (sc->sc_rpos + blksize < PAD_BUFSIZE) {
@@ -453,35 +470,21 @@ pad_read(struct pad_softc *sc, off_t *offp, struct uio *uio, kauth_cred_t cred,
     int ioflag)
 {
 	pad_block_t pb;
-	int len;
 	int err;
 
 	err = 0;
 	DPRINTF("%s: resid=%zu\n", __func__, uio->uio_resid);
-	while (uio->uio_resid > 0 && !err) {
+	while (uio->uio_resid > 0) {
 		mutex_enter(&sc->sc_intr_lock);
-		if (sc->sc_buflen == 0) {
-			DPRINTF("%s: wait\n", __func__);
-			err = cv_wait_sig(&sc->sc_condvar, &sc->sc_intr_lock);
-			DPRINTF("%s: wake up %d\n", __func__, err);
-			mutex_exit(&sc->sc_intr_lock);
-			if (err) {
-				if (err == ERESTART)
-					err = EINTR;
-				break;
-			}
-			if (sc->sc_buflen == 0)
-				break;
-			continue;
-		}
-
-		len = uimin(uio->uio_resid, sc->sc_buflen);
-		err = pad_get_block(sc, &pb, len);
+		err = pad_get_block(sc, &pb, uio->uio_resid);
 		mutex_exit(&sc->sc_intr_lock);
 		if (err)
 			break;
+
 		DPRINTF("%s: move %d\n", __func__, pb.pb_len);
-		uiomove(pb.pb_ptr, pb.pb_len, uio);
+		err = uiomove(pb.pb_ptr, pb.pb_len, uio);
+		if (err)
+			break;
 	}
 
 	return err;
@@ -534,7 +537,6 @@ pad_start_output(void *opaque, void *block, int blksize,
 
 	DPRINTF("%s: blksize=%d\n", __func__, blksize);
 	err = pad_add_block(sc, block, blksize);
-	cv_broadcast(&sc->sc_condvar);
 
 	ms = blksize * 1000 / PADCHAN / (PADPREC / NBBY) / PADFREQ;
 	DPRINTF("%s: callout ms=%d\n", __func__, ms);
@@ -557,7 +559,6 @@ pad_halt_output(void *opaque)
 	sc->sc_intrarg = NULL;
 	sc->sc_buflen = 0;
 	sc->sc_rpos = sc->sc_wpos = 0;
-	cv_broadcast(&sc->sc_condvar);
 
 	return 0;
 }
