@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.7 2021/06/12 12:15:43 riastradh Exp $ */
+/*	$NetBSD: ipmi.c,v 1.8 2021/06/14 22:00:10 riastradh Exp $ */
 
 /*
  * Copyright (c) 2019 Michael van Elst
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.7 2021/06/12 12:15:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.8 2021/06/14 22:00:10 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -2090,6 +2090,8 @@ ipmi_thread(void *cookie)
 	if (!pmf_device_register(self, ipmi_suspend, NULL))
                 aprint_error_dev(self, "couldn't establish a power handler\n");
 
+	config_pending_decr(self);
+
 	mutex_enter(&sc->sc_poll_mtx);
 	while (sc->sc_thread_running) {
 		while (sc->sc_mode == IPMI_MODE_COMMAND)
@@ -2108,7 +2110,6 @@ ipmi_thread(void *cookie)
 		    SENSOR_REFRESH_RATE);
 	}
 	mutex_exit(&sc->sc_poll_mtx);
-	config_pending_decr(self);
 	kthread_exit(0);
 }
 
