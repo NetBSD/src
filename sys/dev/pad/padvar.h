@@ -1,4 +1,4 @@
-/* $NetBSD: padvar.h,v 1.15 2021/06/14 10:14:46 riastradh Exp $ */
+/* $NetBSD: padvar.h,v 1.16 2021/06/14 18:44:45 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -49,7 +49,6 @@ struct pad_softc {
 	callout_t	sc_pcallout;
 
 	device_t	sc_audiodev;
-	int		sc_blksize;
 
 #define PAD_BUFSIZE	65536
 	uint8_t		sc_audiobuf[PAD_BUFSIZE];
