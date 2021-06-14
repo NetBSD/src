@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.168.2.3 2021/06/14 11:28:28 martin Exp $	*/
+/*	$NetBSD: ftp.c,v 1.168.2.4 2021/06/14 11:45:48 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996-2021 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.168.2.3 2021/06/14 11:28:28 martin Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.168.2.4 2021/06/14 11:45:48 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -278,6 +278,11 @@ hookup(const char *host, const char *port)
 			(void)fclose(cout);
 		code = -1;
 		goto bad;
+	}
+
+	if (setsockopt(s, SOL_SOCKET, SO_KEEPALIVE,
+			(void *)&on, sizeof(on)) == -1) {
+		DWARN("setsockopt %s (ignored)", "SO_KEEPALIVE");
 	}
 
 	if (setsockopt(s, SOL_SOCKET, SO_OOBINLINE,
