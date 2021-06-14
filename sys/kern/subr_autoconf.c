@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.287 2021/06/13 09:30:48 riastradh Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.288 2021/06/14 08:55:49 skrll Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -79,7 +79,7 @@
 #define	__SUBR_AUTOCONF_PRIVATE	/* see <sys/device.h> */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.287 2021/06/13 09:30:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.288 2021/06/14 08:55:49 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -963,7 +963,7 @@ config_cfdata_attach(cfdata_t cf, int scannow)
 	if (scannow)
 		rescan_with_cfdata(cf);
 
-	KERNEL_UNLOCK_ONE();
+	KERNEL_UNLOCK_ONE(NULL);
 
 	return 0;
 }
