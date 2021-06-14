@@ -1,4 +1,4 @@
-/* $NetBSD: padvar.h,v 1.14 2021/06/14 10:14:01 riastradh Exp $ */
+/* $NetBSD: padvar.h,v 1.15 2021/06/14 10:14:46 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,6 +28,13 @@
 
 #ifndef _SYS_DEV_PAD_PADVAR_H
 #define _SYS_DEV_PAD_PADVAR_H
+
+#include <sys/types.h>
+
+#include <sys/callout.h>
+#include <sys/condvar.h>
+#include <sys/device_if.h>
+#include <sys/mutex.h>
 
 struct pad_softc {
 	device_t	sc_dev;

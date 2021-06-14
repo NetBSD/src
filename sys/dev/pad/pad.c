@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.69 2021/06/14 10:14:01 riastradh Exp $ */
+/* $NetBSD: pad.c,v 1.70 2021/06/14 10:14:46 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,26 +27,27 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.69 2021/06/14 10:14:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.70 2021/06/14 10:14:46 riastradh Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
-#include <sys/conf.h>
+#include <sys/types.h>
+
+#include <sys/audioio.h>
 #include <sys/buf.h>
+#include <sys/condvar.h>
+#include <sys/conf.h>
+#include <sys/device.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
-#include <sys/vnode.h>
 #include <sys/kauth.h>
-#include <sys/kmem.h>
 #include <sys/kernel.h>
-#include <sys/device.h>
+#include <sys/kmem.h>
+#include <sys/module.h>
 #include <sys/poll.h>
 #include <sys/proc.h>
-#include <sys/condvar.h>
 #include <sys/select.h>
 #include <sys/stat.h>
-#include <sys/audioio.h>
-#include <sys/module.h>
+#include <sys/vnode.h>
 
 #include <dev/audio/audio_if.h>
 #include <dev/audio/audiovar.h>
