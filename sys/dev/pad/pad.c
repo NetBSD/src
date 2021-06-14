@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.74 2021/06/14 18:44:45 riastradh Exp $ */
+/* $NetBSD: pad.c,v 1.75 2021/06/14 18:44:53 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.74 2021/06/14 18:44:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.75 2021/06/14 18:44:53 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -386,6 +386,36 @@ pad_close(struct pad_softc *sc)
 	device_t self = sc->sc_dev;
 	cfdata_t cf = device_cfdata(self);
 
+	/*
+	 * XXX This is not quite enough to prevent racing with drvctl
+	 * detach.  What can happen:
+	 *
+	 *	cpu0				cpu1
+	 *
+	 *	pad_close
+	 *	take kernel lock
+	 *	sc->sc_open = 0
+	 *	drop kernel lock
+	 *	wait for config_misc_lock
+	 *					drvctl detach
+	 *					take kernel lock
+	 *					drop kernel lock
+	 *					wait for config_misc_lock
+	 *					retake kernel lock
+	 *					drop config_misc_lock
+	 *	take config_misc_lock
+	 *	wait for kernel lock
+	 *					pad_detach (sc_open=0 already)
+	 *					free device
+	 *					drop kernel lock
+	 *	use device after free
+	 *
+	 * We need a way to grab a reference to the device so it won't
+	 * be freed until we're done -- it's OK if we config_detach
+	 * twice as long as it's idempotent, but not OK if the first
+	 * config_detach frees the struct device before the second one
+	 * has finished handling it.
+	 */
 	KERNEL_LOCK(1, NULL);
 	KASSERT(sc->sc_open);
 	sc->sc_open = 0;
