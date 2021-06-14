@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.67 2021/06/13 23:09:22 riastradh Exp $ */
+/* $NetBSD: pad.c,v 1.68 2021/06/14 00:21:09 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.67 2021/06/13 23:09:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.68 2021/06/14 00:21:09 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -218,21 +218,50 @@ pad_match(device_t parent, cfdata_t data, void *opaque)
 static void
 pad_attach(device_t parent, device_t self, void *opaque)
 {
+	struct pad_softc *sc = device_private(self);
 
 	aprint_normal_dev(self, "outputs: 44100Hz, 16-bit, stereo\n");
+
+	sc->sc_dev = self;
+	sc->sc_dying = false;
+
+	cv_init(&sc->sc_condvar, device_xname(sc->sc_dev));
+	mutex_init(&sc->sc_cond_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_NONE);
+	callout_init(&sc->sc_pcallout, 0/*XXX?*/);
+
+	sc->sc_swvol = 255;
+	sc->sc_buflen = 0;
+	sc->sc_rpos = sc->sc_wpos = 0;
+	sc->sc_audiodev = audio_attach_mi(&pad_hw_if, sc, sc->sc_dev);
+
+	if (!pmf_device_register(sc->sc_dev, NULL, NULL))
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't establish power handler\n");
 }
 
 static int
 pad_detach(device_t self, int flags)
 {
-	struct pad_softc *sc;
+	struct pad_softc *sc = device_private(self);
 	int cmaj, mn;
+	int error;
 
-	sc = device_private(self);
+	error = config_detach_children(self, flags);
+	if (error)
+		return error;
+
 	cmaj = cdevsw_lookup_major(&pad_cdevsw);
 	mn = device_unit(sc->sc_dev);
-	if (!sc->sc_dying)
-		vdevgone(cmaj, mn, mn, VCHR);
+	vdevgone(cmaj, mn, mn, VCHR);
+
+	pmf_device_deregister(sc->sc_dev);
+
+	mutex_destroy(&sc->sc_cond_lock);
+	mutex_destroy(&sc->sc_lock);
+	mutex_destroy(&sc->sc_intr_lock);
+	cv_destroy(&sc->sc_condvar);
 
 	return 0;
 }
@@ -242,7 +271,8 @@ pad_childdet(device_t self, device_t child)
 {
 	struct pad_softc *sc = device_private(self);
 
-	sc->sc_audiodev = NULL;
+	if (child == sc->sc_audiodev)
+		sc->sc_audiodev = NULL;
 }
 
 static int
@@ -340,40 +370,17 @@ cdev_pad_open(dev_t dev, int flags, int fmt, struct lwp *l)
 		return EBUSY;
 	}
 
-	sc->sc_dev = paddev;
-	sc->sc_dying = false;
-
 	if (PADUNIT(dev) == PADCLONER) {
 		error = fd_allocfile(&fp, &fd);
 		if (error) {
 			if (existing == false)
-				config_detach(sc->sc_dev, 0);
+				config_detach(paddev, 0);
 			mutex_exit(&padconfig);
 			return error;
 		}
-	}
-
-	cv_init(&sc->sc_condvar, device_xname(sc->sc_dev));
-	mutex_init(&sc->sc_cond_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_NONE);
-	callout_init(&sc->sc_pcallout, 0/*XXX?*/);
-
-	sc->sc_swvol = 255;
-	sc->sc_buflen = 0;
-	sc->sc_rpos = sc->sc_wpos = 0;
-	KERNEL_LOCK(1, NULL);
-	sc->sc_audiodev = audio_attach_mi(&pad_hw_if, sc, sc->sc_dev);
-	KERNEL_UNLOCK_ONE(NULL);
-
-	if (!pmf_device_register(sc->sc_dev, NULL, NULL))
-		aprint_error_dev(sc->sc_dev,
-		    "couldn't establish power handler\n");
-
-	if (PADUNIT(dev) == PADCLONER) {
 		error = fd_clone(fp, fd, flags, &pad_fileops, sc);
 		KASSERT(error == EMOVEFD);
-	}	
+	}
 	sc->sc_open = 1;
 	mutex_exit(&padconfig);
 
@@ -386,65 +393,42 @@ bad:
 static int
 pad_close(struct pad_softc *sc)
 {
-	int rc;
+	int rc __diagused;
 
-	if (sc == NULL)
-		return ENXIO;
+	/* XXX Defend against concurrent drvctl detach.  */
+	rc = config_detach(sc->sc_dev, DETACH_FORCE);
+	KASSERT(rc == 0);
 
-	mutex_enter(&padconfig);
-	config_deactivate(sc->sc_audiodev);
-	
-	/* Start draining existing accessors of the device. */
-	if ((rc = config_detach_children(sc->sc_dev,
-	    DETACH_SHUTDOWN|DETACH_FORCE)) != 0) {
-		mutex_exit(&padconfig);
-		return rc;
-	}
-
-	mutex_enter(&sc->sc_lock);
-	sc->sc_dying = true;
-	cv_broadcast(&sc->sc_condvar);
-	mutex_exit(&sc->sc_lock);
-
-	KASSERT(sc->sc_open > 0);
-	sc->sc_open = 0;
-
-	pmf_device_deregister(sc->sc_dev);
-
-	mutex_destroy(&sc->sc_cond_lock);
-	mutex_destroy(&sc->sc_lock);
-	mutex_destroy(&sc->sc_intr_lock);
-	cv_destroy(&sc->sc_condvar);
-
-	rc = config_detach(sc->sc_dev, 0);
-	mutex_exit(&padconfig);
-
-	return rc;
+	return 0;
 }
 
 static int
 fops_pad_close(struct file *fp)
 {
-	struct pad_softc *sc;
-	int error;
+	struct pad_softc *sc = fp->f_pad;
 
-	sc = fp->f_pad;
+	pad_close(sc);
+	fp->f_pad = NULL;
 
-	error = pad_close(sc);
-
-	if (error == 0)
-		fp->f_pad = NULL;
-
-	return error;
+	return 0;
 }
 
 int
 cdev_pad_close(dev_t dev, int flags, int ifmt, struct lwp *l)
 {
 	struct pad_softc *sc;
-	sc = device_private(device_lookup(&pad_cd, PADUNIT(dev)));
 
-	return pad_close(sc);
+	/*
+	 * XXX Defend against concurrent drvctl detach.  Simply testing
+	 * sc == NULL here is not enough -- it could be detached after
+	 * we look it up but before we've issued our own config_detach.
+	 */
+	sc = device_lookup_private(&pad_cd, PADUNIT(dev));
+	if (sc == NULL)
+		return 0;
+	pad_close(sc);
+
+	return 0;
 }
 
 static int
@@ -457,12 +441,8 @@ fops_pad_poll(struct file *fp, int events)
 static int
 fops_pad_kqfilter(struct file *fp, struct knote *kn)
 {
-	struct pad_softc *sc;
+	struct pad_softc *sc = fp->f_pad;
 	dev_t dev;
-	
-	sc = fp->f_pad;
-	if (sc == NULL)
-		return EIO;
 
 	dev = makedev(cdevsw_lookup_major(&pad_cdevsw),
 	    device_unit(sc->sc_dev));
@@ -480,11 +460,7 @@ fops_pad_ioctl(struct file *fp, u_long cmd, void *data)
 static int
 fops_pad_stat(struct file *fp, struct stat *st)
 {
-	struct pad_softc *sc;
-	
-	sc = fp->f_pad;
-	if (sc == NULL)
-		return EIO;
+	struct pad_softc *sc = fp->f_pad;
 
 	memset(st, 0, sizeof(*st));
 
@@ -522,11 +498,7 @@ static int
 fops_pad_read(struct file *fp, off_t *offp, struct uio *uio, kauth_cred_t cred,
     int ioflag)
 {
-	struct pad_softc *sc;
-
-	sc = fp->f_pad;
-	if (sc == NULL)
-		return ENXIO;
+	struct pad_softc *sc = fp->f_pad;
 
 	return pad_read(sc, offp, uio, cred, ioflag);
 }
