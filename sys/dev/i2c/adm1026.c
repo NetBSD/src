@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1026.c,v 1.11 2021/01/27 02:29:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm1026.c,v 1.12 2021/06/14 09:56:04 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -235,6 +235,7 @@ adm1026_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self,
 		    "unable to register with sysmon\n");
 		sysmon_envsys_destroy(sc->sc_sme);
+		sc->sc_sme = NULL;
 		return;
 	}
 
@@ -268,8 +269,8 @@ adm1026_detach(device_t self, int flags)
 
 	pmf_device_deregister(self);
 
-	sysmon_envsys_unregister(sc->sc_sme);
-	sc->sc_sme = NULL;
+	if (sc->sc_sme != NULL)
+		sysmon_envsys_unregister(sc->sc_sme);
 
 	return 0;
 }
@@ -320,6 +321,7 @@ adm1026_setup_fans(struct adm1026_softc *sc, int div2_val)
 			if (sysmon_envsys_sensor_attach(
 			    sc->sc_sme, &sc->sc_sensor[ADM1026_FAN_NUM(i)])) {
 				sysmon_envsys_destroy(sc->sc_sme);
+				sc->sc_sme = NULL;
 				aprint_error_dev(sc->sc_dev,
 				    "unable to attach fan %d at sysmon\n", i);
 				return;
@@ -377,6 +379,7 @@ adm1026_setup_temps(struct adm1026_softc *sc)
 		if (sysmon_envsys_sensor_attach(
 		    sc->sc_sme, &sc->sc_sensor[ADM1026_TEMP_NUM(i)])) {
 			sysmon_envsys_destroy(sc->sc_sme);
+			sc->sc_sme = NULL;
 			aprint_error_dev(sc->sc_dev,
 			    "unable to attach temp %d at sysmon\n", i);
 			return;
@@ -402,6 +405,7 @@ adm1026_setup_volts(struct adm1026_softc *sc)
 		if (sysmon_envsys_sensor_attach(
 		    sc->sc_sme, &sc->sc_sensor[ADM1026_VOLT_NUM(i)])) {
 			sysmon_envsys_destroy(sc->sc_sme);
+			sc->sc_sme = NULL;
 			aprint_error_dev(sc->sc_dev,
 			    "unable to attach volts %d at sysmon\n", i);
 			return;
