@@ -1,4 +1,4 @@
-/*	$NetBSD: addbytes.c,v 1.55 2021/06/06 05:06:44 blymn Exp $	*/
+/*	$NetBSD: addbytes.c,v 1.56 2021/06/15 22:18:55 blymn Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)addbytes.c	8.4 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addbytes.c,v 1.55 2021/06/06 05:06:44 blymn Exp $");
+__RCSID("$NetBSD: addbytes.c,v 1.56 2021/06/15 22:18:55 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -175,7 +175,7 @@ _cursesi_waddbytes(WINDOW *win, const char *bytes, int count, attr_t attr,
 		 * screen and this character would take us past the
 		 * end of the line then we are done.
 		 */
-		if ((win->curx + n >= win->maxx) && 
+		if ((win->curx + wcwidth(wc) >= win->maxx) && 
 		    (!(win->flags & __SCROLLOK)) &&
 		    (win->cury == win->scr_b))
 			break;
