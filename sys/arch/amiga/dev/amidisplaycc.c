@@ -1,4 +1,4 @@
-/*	$NetBSD: amidisplaycc.c,v 1.35 2021/06/15 08:53:47 rin Exp $ */
+/*	$NetBSD: amidisplaycc.c,v 1.36 2021/06/15 09:00:33 rin Exp $ */
 
 /*-
  * Copyright (c) 2000 Jukka Andberg.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.35 2021/06/15 08:53:47 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.36 2021/06/15 09:00:33 rin Exp $");
 
 /*
  * wscons interface to amiga custom chips. Contains the necessary functions
@@ -403,11 +403,11 @@ amidisplaycc_match(device_t parent, cfdata_t cf, void *aux)
 	char *name = aux;
 
 	if (matchname("amidisplaycc", name) == 0)
-		return (0);
+		return 0;
 
 	/* Allow only one of us. */
 	if (amidisplaycc_attached)
-		return (0);
+		return 0;
 
 	return 1;
 }
@@ -542,10 +542,10 @@ amidisplaycc_mapchar(void *screen, int ch, unsigned int *chp)
 {
 	if (ch > 0 && ch < 256) {
 		*chp = ch;
-		return (5);
+		return 5;
 	}
 	*chp = ' ';
-	return (0);
+	return 0;
 }
 
 /*
@@ -1001,7 +1001,7 @@ amidisplaycc_allocattr(void *screen, int fg, int bg, int flags, long *attrp)
 #endif
 	*attrp = MAKEATTR(newfg, newbg, flags);
 
-	return (0);
+	return 0;
 }
 
 int
@@ -1014,7 +1014,7 @@ amidisplaycc_ioctl(void *dp, void *vs, u_long cmd, void *data, int flag,
 
 	if (adp == NULL) {
 		printf("amidisplaycc_ioctl: adp==NULL\n");
-		return (EINVAL);
+		return EINVAL;
 	}
 
 #define UINTDATA (*(u_int*)data)
@@ -1025,20 +1025,20 @@ amidisplaycc_ioctl(void *dp, void *vs, u_long cmd, void *data, int flag,
 	{
 	case WSDISPLAYIO_GTYPE:
 		UINTDATA = WSDISPLAY_TYPE_AMIGACC;
-		return (0);
+		return 0;
 
 	case WSDISPLAYIO_SVIDEO:
 		dprintf("amidisplaycc: WSDISPLAYIO_SVIDEO %s\n",
 			UINTDATA ? "On" : "Off");
 
-		return (amidisplaycc_setvideo(adp, UINTDATA));
+		return amidisplaycc_setvideo(adp, UINTDATA);
 
 	case WSDISPLAYIO_GVIDEO:
 		dprintf("amidisplaycc: WSDISPLAYIO_GVIDEO\n");
 		UINTDATA = adp->ison ?
 		    WSDISPLAYIO_VIDEO_ON : WSDISPLAYIO_VIDEO_OFF;
 
-		return (0);
+		return 0;
 
 	case WSDISPLAYIO_SMODE:
 		switch (INTDATA) {
@@ -1048,7 +1048,7 @@ amidisplaycc_ioctl(void *dp, void *vs, u_long cmd, void *data, int flag,
 		case WSDISPLAYIO_MODE_DUMBFB:
 			return amidisplaycc_setgfxview(adp, 1);
 		default:
-			return (EINVAL);
+			return EINVAL;
 		}
 
 	case WSDISPLAYIO_GINFO:
@@ -1056,19 +1056,18 @@ amidisplaycc_ioctl(void *dp, void *vs, u_long cmd, void *data, int flag,
 		FBINFO.height = adp->gfxheight;
 		FBINFO.depth  = adp->gfxdepth;
 		FBINFO.cmsize = 1 << FBINFO.depth;
-		return (0);
+		return 0;
 
 	case WSDISPLAYIO_PUTCMAP:
 	case WSDISPLAYIO_GETCMAP:
-		return (amidisplaycc_cmapioctl(adp->gfxview,
-					       cmd,
-					       (struct wsdisplay_cmap*)data));
+		return amidisplaycc_cmapioctl(adp->gfxview, cmd,
+					       (struct wsdisplay_cmap*)data);
 	case WSDISPLAYIO_GET_FBINFO:
 		amidisplaycc_initgfxview(adp);
 		return amidisplaycc_getfbinfo(adp, data);
 	}
 
-	return (EPASSTHROUGH);
+	return EPASSTHROUGH;
 
 #undef UINTDATA
 #undef INTDATA
@@ -1101,7 +1100,7 @@ amidisplaycc_getfbinfo(struct amidisplaycc_softc *adp, struct wsdisplayio_fbinfo
 	fbinfo->fbi_flags = 0;
 	fbinfo->fbi_subtype.fbi_cmapinfo.cmap_entries = 1 << adp->gfxdepth;
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -1137,7 +1136,7 @@ amidisplaycc_setgfxview(struct amidisplaycc_softc *adp, int on)
 
 	/* Current mode same as requested mode? */
 	if ( (on > 0) == (adp->gfxon > 0) )
-		return (0);
+		return 0;
 
 	if (!on) {
 		/*
@@ -1151,7 +1150,7 @@ amidisplaycc_setgfxview(struct amidisplaycc_softc *adp, int on)
 		else if (adp->gfxview)
 			grf_remove_view(adp->gfxview);
 
-		return (0);
+		return 0;
 	}
 
 	/* switch to mapped mode then */
@@ -1163,9 +1162,9 @@ amidisplaycc_setgfxview(struct amidisplaycc_softc *adp, int on)
 		grf_display_view(adp->gfxview);
 	} else {
 		printf("amidisplaycc: failed to make mapped screen\n");
-		return (ENOMEM);
+		return ENOMEM;
 	}
-	return (0);
+	return 0;
 }
 
 /*
@@ -1247,9 +1246,9 @@ amidisplaycc_alloc_screen(void *dp, const struct wsscreen_descr *screenp,
 
 	/* Sanity checks because of fixed buffers */
 	if (depth > MAXDEPTH || maxcolor >= MAXCOLORS)
-		return (ENOMEM);
+		return ENOMEM;
 	if (screenp->nrows > MAXROWS)
-		return (ENOMEM);
+		return ENOMEM;
 
 	fontwidth = screenp->fontwidth;
 	fontheight = screenp->fontheight;
@@ -1264,7 +1263,7 @@ amidisplaycc_alloc_screen(void *dp, const struct wsscreen_descr *screenp,
 
 	view = grf_alloc_view(NULL, &dimension, depth);
 	if (view == NULL)
-		return (ENOMEM);
+		return ENOMEM;
 
 	/*
 	 * First screen gets the statically allocated console screen.
@@ -1383,7 +1382,7 @@ amidisplaycc_alloc_screen(void *dp, const struct wsscreen_descr *screenp,
 			scr->wsfont->name);
 	}
 
-	return (0);
+	return 0;
 }
 
 
@@ -1439,11 +1438,11 @@ amidisplaycc_show_screen(void *dp, void *screen, int waitok,
 
 	if (adp == NULL) {
 		dprintf("amidisplaycc_show_screen: adp==NULL\n");
-		return (EINVAL);
+		return EINVAL;
 	}
 	if (scr == NULL) {
 		dprintf("amidisplaycc_show_screen: scr==NULL\n");
-		return (EINVAL);
+		return EINVAL;
 	}
 
 	if (adp->gfxon) {
@@ -1456,7 +1455,7 @@ amidisplaycc_show_screen(void *dp, void *screen, int waitok,
 
 	grf_display_view(scr->view);
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -1482,7 +1481,7 @@ amidisplaycc_load_font(void *dp, void *cookie, struct wsdisplay_font *font)
 	if (font->data)
 	{
 		/* request to load the font, not supported */
-		return (EINVAL);
+		return EINVAL;
 	}
 	else
 	{
@@ -1501,11 +1500,11 @@ amidisplaycc_setvideo(struct amidisplaycc_softc *adp, int mode)
 
 	if (adp == NULL) {
 		dprintf("amidisplaycc_setvideo: adp==NULL\n");
-		return (EINVAL);
+		return EINVAL;
 	}
 	if (adp->currentscreen == NULL) {
 		dprintf("amidisplaycc_setvideo: adp->currentscreen==NULL\n");
-		return (EINVAL);
+		return EINVAL;
 	}
 
 	/* select graphics or emulation screen */
@@ -1529,7 +1528,7 @@ amidisplaycc_setvideo(struct amidisplaycc_softc *adp, int mode)
 		adp->ison = 0;
 	}
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -1552,10 +1551,10 @@ amidisplaycc_cmapioctl(view_t *view, u_long cmd, struct wsdisplay_cmap *cmap)
 	if (cmap->index >= MAXCOLORS ||
 	    cmap->count > MAXCOLORS ||
 	    cmap->index + cmap->count > MAXCOLORS)
-		return (EINVAL);
+		return EINVAL;
 
 	if (cmap->count == 0)
-		return (0);
+		return 0;
 
 	tmpcmap.index = cmap->index;
 	tmpcmap.count = cmap->count;
@@ -1568,15 +1567,15 @@ amidisplaycc_cmapioctl(view_t *view, u_long cmd, struct wsdisplay_cmap *cmap)
 
 		err = copyin(cmap->red, cmred, cmap->count);
 		if (err)
-			return (err);
+			return err;
 
 		err = copyin(cmap->green, cmgrn, cmap->count);
 		if (err)
-			return (err);
+			return err;
 
 		err = copyin(cmap->blue, cmblu, cmap->count);
 		if (err)
-			return (err);
+			return err;
 
 		return amidisplaycc_setcmap(view, &tmpcmap);
 
@@ -1584,26 +1583,26 @@ amidisplaycc_cmapioctl(view_t *view, u_long cmd, struct wsdisplay_cmap *cmap)
 
 		err = amidisplaycc_getcmap(view, &tmpcmap);
 		if (err)
-			return (err);
+			return err;
 
 		/* copy data to user space */
 
 		err = copyout(cmred, cmap->red, cmap->count);
 		if (err)
-			return (err);
+			return err;
 
 		err = copyout(cmgrn, cmap->green, cmap->count);
 		if (err)
-			return (err);
+			return err;
 
 		err = copyout(cmblu, cmap->blue, cmap->count);
 		if (err)
-			return (err);
+			return err;
 
-		return (0);
+		return 0;
 
 	} else
-		return (EPASSTHROUGH);
+		return EPASSTHROUGH;
 }
 
 /*
@@ -1643,7 +1642,7 @@ amidisplaycc_setemulcmap(struct amidisplaycc_screen *scr,
 
 	rc = amidisplaycc_getcmap(scr->view, &tmpcmap);
 	if (rc)
-		return (rc);
+		return rc;
 
 	for (i = cmap->index ; i < cmap->index + cmap->count ; i++) {
 
@@ -1654,9 +1653,9 @@ amidisplaycc_setemulcmap(struct amidisplaycc_screen *scr,
 
 	rc = amidisplaycc_setcmap(scr->view, &tmpcmap);
 	if (rc)
-		return (rc);
+		return rc;
 
-	return (0);
+	return 0;
 }
 
 
@@ -1676,11 +1675,11 @@ amidisplaycc_setcmap(view_t *view, struct wsdisplay_cmap *cmap)
 	colormap_t  cm;
 
 	if (view == NULL)
-		return (EINVAL);
+		return EINVAL;
 
 	if (!cmap || !cmap->red || !cmap->green || !cmap->blue) {
 		dprintf("amidisplaycc_setcmap: other==NULL\n");
-		return (EINVAL);
+		return EINVAL;
 	}
 
 	index  = cmap->index;
@@ -1688,10 +1687,10 @@ amidisplaycc_setcmap(view_t *view, struct wsdisplay_cmap *cmap)
 	colors = (1 << view->bitmap->depth);
 
 	if (count > colors || index >= colors || index + count > colors)
-		return (EINVAL);
+		return EINVAL;
 
 	if (count == 0)
-		return (0);
+		return 0;
 
 	cm.entry = cmentries;
 	cm.first = index;
@@ -1704,7 +1703,7 @@ amidisplaycc_setcmap(view_t *view, struct wsdisplay_cmap *cmap)
 
 	err = grf_get_colormap(view, &cm);
 	if (err)
-		return (err);
+		return err;
 
 	/*
 	 * The palette entries from wscons contain 8 bits per gun.
@@ -1740,7 +1739,7 @@ amidisplaycc_setcmap(view_t *view, struct wsdisplay_cmap *cmap)
 				 cmap->green[c] +
 				 cmap->blue[c]) / 3 / grey_div);
 	} else
-		return (EINVAL); /* Hmhh */
+		return EINVAL; /* Hmhh */
 
 	/*
 	 * Now we have a new colormap that contains all the entries. Set
@@ -1751,7 +1750,7 @@ amidisplaycc_setcmap(view_t *view, struct wsdisplay_cmap *cmap)
 	if (err)
 		return err;
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -1770,20 +1769,20 @@ amidisplaycc_getcmap(view_t *view, struct wsdisplay_cmap *cmap)
 	colormap_t  cm;
 
 	if (view == NULL)
-		return (EINVAL);
+		return EINVAL;
 
 	if (!cmap || !cmap->red || !cmap->green || !cmap->blue)
-		return (EINVAL);
+		return EINVAL;
 
 	index  = cmap->index;
 	count  = cmap->count;
 	colors = (1 << view->bitmap->depth);
 
 	if (count > colors || index >= colors || index + count > colors)
-		return (EINVAL);
+		return EINVAL;
 
 	if (count == 0)
-		return (0);
+		return 0;
 
 	cm.entry = cmentries;
 	cm.first = index;
@@ -1791,7 +1790,7 @@ amidisplaycc_getcmap(view_t *view, struct wsdisplay_cmap *cmap)
 
 	err = grf_get_colormap(view, &cm);
 	if (err)
-		return (err);
+		return err;
 
 	/*
 	 * Copy color data to wscons-style structure. Translate to
@@ -1826,9 +1825,9 @@ amidisplaycc_getcmap(view_t *view, struct wsdisplay_cmap *cmap)
 				CM_GET_GREY(cm.entry[index+c]);
 		}
 	} else
-		return (EINVAL);
+		return EINVAL;
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -1858,11 +1857,11 @@ amidisplaycc_setfont(struct amidisplaycc_screen *scr, const char *fontname)
 		WSFONT_FIND_BITMAP);
 
 	if (wsfontcookie == -1)
-		return (EINVAL);
+		return EINVAL;
 
 	/* Suitable font found. Now lock it. */
 	if (wsfont_lock(wsfontcookie, &wsfont))
-		return (EINVAL);
+		return EINVAL;
 
 	KASSERT(wsfont);
 
@@ -1872,7 +1871,7 @@ amidisplaycc_setfont(struct amidisplaycc_screen *scr, const char *fontname)
 	scr->wsfont = wsfont;
 	scr->wsfontcookie = wsfontcookie;
 	
-	return (0);
+	return 0;
 }
 
 /*
@@ -1945,7 +1944,7 @@ amidisplaycc_cnputc(dev_t cd, int ch)
 int
 amidisplaycc_cngetc(dev_t cd)
 {
-	return (0);
+	return 0;
 }
 
 /* ARGSUSED */
