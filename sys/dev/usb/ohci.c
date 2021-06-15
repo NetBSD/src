@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.315 2021/01/05 18:00:21 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.316 2021/06/15 23:39:43 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012, 2016, 2020 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.315 2021/01/05 18:00:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.316 2021/06/15 23:39:43 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1403,7 +1403,7 @@ ohci_rhsc_enable(void *v_sc)
 }
 
 #ifdef OHCI_DEBUG
-const char *ohci_cc_strs[] = {
+const char *const ohci_cc_strs[] = {
 	"NO_ERROR",
 	"CRC",
 	"BIT_STUFFING",
