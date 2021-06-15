@@ -3,7 +3,7 @@
 
 .include <bsd.own.mk>
 
-RUMPKERNCOMPS=	crypto nv sysproxy tty z
+RUMPKERNCOMPS=	crypto nv sysproxy tty z simplehook_tester
 RUMPSYSEMUS=	sys_cygwin sys_linux sys_sunos
 
 .if make(rumpdescribe)

@@ -2235,6 +2235,7 @@
 ./usr/tests/kernel/t_pty				tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_rnd				tests-kernel-tests	atf,rump
 ./usr/tests/kernel/t_sigaction				tests-obsolete		obsolete
+./usr/tests/kernel/t_simplehook				tests-kernel-tests	atf,rump
 ./usr/tests/kernel/t_subr_prf				tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_sysctl				tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_sysv				tests-kernel-tests	compattestfile,atf

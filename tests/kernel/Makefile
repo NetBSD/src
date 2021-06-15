@@ -32,6 +32,7 @@ TESTS_SH+=	t_origin
 TESTS_SH+=	t_procpath
 TESTS_SH+=	t_fexecve
 TESTS_SH+=	t_fpufork
+TESTS_SH+=	t_simplehook
 
 BINDIR=		${TESTSDIR}
 PROGS=		h_fexecve

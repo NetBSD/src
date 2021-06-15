@@ -3998,6 +3998,8 @@
 ./usr/lib/librumpkern_ksem_p.a			comp-obsolete		obsolete
 ./usr/lib/librumpkern_nv.a			comp-c-lib		rump
 ./usr/lib/librumpkern_nv_p.a			comp-c-proflib		rump,profile
+./usr/lib/librumpkern_simplehook_tester.a	comp-c-lib		rump
+./usr/lib/librumpkern_simplehook_tester_p.a	comp-c-proflib		rump,profile
 ./usr/lib/librumpkern_sljit.a			comp-c-lib		rump,sljit
 ./usr/lib/librumpkern_sljit_p.a			comp-c-proflib		rump,sljit,profile
 ./usr/lib/librumpkern_solaris.a			comp-c-lib		rump,zfs
