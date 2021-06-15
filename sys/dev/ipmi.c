@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.8 2021/06/14 22:00:10 riastradh Exp $ */
+/*	$NetBSD: ipmi.c,v 1.9 2021/06/15 00:20:33 riastradh Exp $ */
 
 /*
  * Copyright (c) 2019 Michael van Elst
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.8 2021/06/14 22:00:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.9 2021/06/15 00:20:33 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1984,13 +1984,8 @@ ipmi_thread(void *cookie)
 			break;
 
 	/* allocate and fill sensor arrays */
-	sc->sc_sensor =
-	    malloc(sizeof(envsys_data_t) * sc->sc_nsensors,
-	        M_DEVBUF, M_WAITOK | M_ZERO);
-	if (sc->sc_sensor == NULL) {
-		aprint_error_dev(self, "can't allocate envsys_data_t\n");
-		kthread_exit(0);
-	}
+	sc->sc_sensor = malloc(sizeof(sc->sc_sensor[0]) * sc->sc_nsensors,
+	    M_DEVBUF, M_WAITOK | M_ZERO);
 
 	sc->sc_envsys = sysmon_envsys_create();
 	sc->sc_envsys->sme_cookie = sc;
@@ -2132,7 +2127,7 @@ ipmi_attach(device_t parent, device_t self, void *aux)
 	cv_init(&sc->sc_poll_cv, "ipmipoll");
 	cv_init(&sc->sc_mode_cv, "ipmimode");
 
-	if (kthread_create(PRI_NONE, 0, NULL, ipmi_thread, self,
+	if (kthread_create(PRI_NONE, KTHREAD_MUSTJOIN, NULL, ipmi_thread, self,
 	    &sc->sc_kthread, "%s", device_xname(self)) != 0) {
 		aprint_error_dev(self, "unable to create thread, disabled\n");
 	} else
@@ -2150,6 +2145,8 @@ ipmi_detach(device_t self, int flags)
 	sc->sc_thread_running = false;
 	cv_signal(&sc->sc_poll_cv);
 	mutex_exit(&sc->sc_poll_mtx);
+	if (sc->sc_kthread)
+		(void)kthread_join(sc->sc_kthread);
 
 	if ((rc = sysmon_wdog_unregister(&sc->sc_wdog)) != 0) {
 		if (rc == ERESTART)
