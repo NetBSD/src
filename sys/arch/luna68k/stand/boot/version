@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.12 2016/01/17 04:40:10 tsutsui Exp $
+$NetBSD: version,v 1.13 2021/06/15 17:16:16 tsutsui Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -17,3 +17,4 @@ is taken as the current.
 1.9:	Parse boot flags and pass boothowto and bootdev info to kernel.
 1.10:	Use booted device unit by default if no unit number is specified.
 1.11:	Disable slow gunzip CRC32 calculation.
+1.12:	Fix off-by-one of a number of blocks of probed disks.

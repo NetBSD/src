@@ -1,4 +1,4 @@
-/*	$NetBSD: sc.c,v 1.17 2018/02/09 22:08:28 jakllsch Exp $	*/
+/*	$NetBSD: sc.c,v 1.18 2021/06/15 17:16:16 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -240,12 +240,16 @@ static void
 scprobe(struct scsi_softc *hs, uint target, uint lun)
 {
 	struct scsi_inquiry inqbuf;
-	uint32_t capbuf[2];
+	uint32_t capbuf[2], blocks, blksize;
 	char idstr[32];
 	int i;
 
 	if (!scident(hs->sc_ctlr, target, lun, &inqbuf, capbuf))
 		return;
+
+	/* CMD_READ_CAPACITY returns the last logical data block address. */
+	blocks  = capbuf[0] + 1;
+	blksize = capbuf[1];
 
 	memcpy(idstr, &inqbuf.vendor_id, 28);
 	for (i = 27; i > 23; --i)
@@ -262,7 +266,7 @@ scprobe(struct scsi_softc *hs, uint target, uint lun)
 	idstr[i + 1] = '\0';
 
 	printf(" ID %d: %s %s rev %s", target, idstr, &idstr[8], &idstr[24]);
-	printf(", %d bytes/sect x %d sectors\n", capbuf[1], capbuf[0]);
+	printf(", %d bytes/sect x %d sectors\n", blksize, blocks);
 }
 
 
