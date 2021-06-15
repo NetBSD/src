@@ -1,4 +1,4 @@
-/*	$NetBSD: amidisplaycc.c,v 1.34 2021/04/24 23:36:24 thorpej Exp $ */
+/*	$NetBSD: amidisplaycc.c,v 1.35 2021/06/15 08:53:47 rin Exp $ */
 
 /*-
  * Copyright (c) 2000 Jukka Andberg.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.34 2021/04/24 23:36:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.35 2021/06/15 08:53:47 rin Exp $");
 
 /*
  * wscons interface to amiga custom chips. Contains the necessary functions
@@ -1041,11 +1041,15 @@ amidisplaycc_ioctl(void *dp, void *vs, u_long cmd, void *data, int flag,
 		return (0);
 
 	case WSDISPLAYIO_SMODE:
-		if (INTDATA == WSDISPLAYIO_MODE_EMUL)
+		switch (INTDATA) {
+		case WSDISPLAYIO_MODE_EMUL:
 			return amidisplaycc_setgfxview(adp, 0);
-		if (INTDATA == WSDISPLAYIO_MODE_MAPPED)
+		case WSDISPLAYIO_MODE_MAPPED:
+		case WSDISPLAYIO_MODE_DUMBFB:
 			return amidisplaycc_setgfxview(adp, 1);
-		return (EINVAL);
+		default:
+			return (EINVAL);
+		}
 
 	case WSDISPLAYIO_GINFO:
 		FBINFO.width  = adp->gfxwidth;
