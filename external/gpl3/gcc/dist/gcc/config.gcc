@@ -1280,7 +1280,7 @@ arm*-*-netbsdelf*)
 	esac
 	case ${target} in
 	arm*-*-netbsdelf-*eabi*)
-	    tm_file="${tm_file} arm/bpabi.h arm/netbsd-elf.h arm/netbsd-eabi.h"
+	    tm_file="${tm_file} arm/netbsd-elf.h arm/bpabi.h arm/netbsd-eabi.h"
 	    # GCC 7 vs NetBSD/eabi -> avoid arm unwinder
 	    #tmake_file="$tmake_file arm/t-bpabi"
 	    tmake_file="$tmake_file arm/t-netbsdeabi"
@@ -1288,7 +1288,7 @@ arm*-*-netbsdelf*)
 	    default_use_cxa_atexit=yes
 	    ;;
 	*)
-	    tm_file="$tm_file arm/bpabi.h arm/netbsd-elf.h"
+	    tm_file="$tm_file arm/netbsd-elf.h arm/bpabi.h"
 	    #tmake_file="$tmake_file arm/t-bpabi arm/t-netbsdeabi"
 	    tmake_file="$tmake_file arm/t-netbsd"
 	    ;;
