@@ -1,4 +1,4 @@
-/*	$NetBSD: si70xx.c,v 1.6 2020/12/05 14:50:33 jdc Exp $	*/
+/*	$NetBSD: si70xx.c,v 1.7 2021/06/15 04:39:49 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2017 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si70xx.c,v 1.6 2020/12/05 14:50:33 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si70xx.c,v 1.7 2021/06/15 04:39:49 mlelstv Exp $");
 
 /*
   Driver for the Silicon Labs SI7013/SI7020/SI7021
@@ -968,10 +968,8 @@ si70xx_detach(device_t self, int flags)
 	mutex_enter(&sc->sc_mutex);
 
 	/* Remove the sensors */
-	if (sc->sc_sme != NULL) {
+	if (sc->sc_sme != NULL)
 		sysmon_envsys_unregister(sc->sc_sme);
-		sc->sc_sme = NULL;
-	}
 	mutex_exit(&sc->sc_mutex);
 
 	/* Remove the sysctl tree */
