@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.281 2021/05/04 05:40:10 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.282 2021/06/15 16:56:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.281 2021/05/04 05:40:10 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.282 2021/06/15 16:56:00 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2090,6 +2090,76 @@ check_pointer_conversion(tnode_t *tn, type_t *ntp)
 	}
 }
 
+static void
+convert_constant_floating(const op_t op, int arg, const tspec_t ot,
+			  const type_t *tp, const tspec_t nt, val_t *const v,
+			  val_t *const nv)
+{
+	ldbl_t	max = 0.0, min = 0.0;
+
+	switch (nt) {
+	case CHAR:
+		max = TARG_CHAR_MAX;	min = TARG_CHAR_MIN;	break;
+	case UCHAR:
+		max = TARG_UCHAR_MAX;	min = 0;		break;
+	case SCHAR:
+		max = TARG_SCHAR_MAX;	min = TARG_SCHAR_MIN;	break;
+	case SHORT:
+		max = TARG_SHRT_MAX;	min = TARG_SHRT_MIN;	break;
+	case USHORT:
+		max = TARG_USHRT_MAX;	min = 0;		break;
+	case ENUM:
+	case INT:
+		max = TARG_INT_MAX;	min = TARG_INT_MIN;	break;
+	case UINT:
+		max = (u_int)TARG_UINT_MAX;min = 0;		break;
+	case LONG:
+		max = TARG_LONG_MAX;	min = TARG_LONG_MIN;	break;
+	case ULONG:
+		max = (u_long)TARG_ULONG_MAX; min = 0;		break;
+	case QUAD:
+		max = QUAD_MAX;		min = QUAD_MIN;		break;
+	case UQUAD:
+		max = (uint64_t)UQUAD_MAX; min = 0;		break;
+	case FLOAT:
+	case FCOMPLEX:
+		max = FLT_MAX;		min = -FLT_MAX;		break;
+	case DOUBLE:
+	case DCOMPLEX:
+		max = DBL_MAX;		min = -DBL_MAX;		break;
+	case PTR:
+		/* Got already an error because of float --> ptr */
+	case LDOUBLE:
+	case LCOMPLEX:
+		max = LDBL_MAX;		min = -LDBL_MAX;	break;
+	default:
+		lint_assert(/*CONSTCOND*/false);
+	}
+	if (v->v_ldbl > max || v->v_ldbl < min) {
+		lint_assert(nt != LDOUBLE);
+		if (op == FARG) {
+			/* conv. of '%s' to '%s' is out of range, ... */
+			warning(295,
+			    type_name(gettyp(ot)), type_name(tp), arg);
+		} else {
+			/* conversion of '%s' to '%s' is out of range */
+			warning(119,
+			    type_name(gettyp(ot)), type_name(tp));
+		}
+		v->v_ldbl = v->v_ldbl > 0 ? max : min;
+	}
+	if (nt == FLOAT) {
+		nv->v_ldbl = (float)v->v_ldbl;
+	} else if (nt == DOUBLE) {
+		nv->v_ldbl = (double)v->v_ldbl;
+	} else if (nt == LDOUBLE) {
+		nv->v_ldbl = v->v_ldbl;
+	} else {
+		nv->v_quad = (nt == PTR || is_uinteger(nt)) ?
+		    (int64_t)v->v_ldbl : (int64_t)v->v_ldbl;
+	}
+}
+
 /*
  * Converts a typed constant to a constant of another type.
  *
@@ -2103,7 +2173,6 @@ void
 convert_constant(op_t op, int arg, const type_t *tp, val_t *nv, val_t *v)
 {
 	tspec_t	ot, nt;
-	ldbl_t	max = 0.0, min = 0.0;
 	int	sz;
 	bool	rchk;
 	int64_t	xmask, xmsk1;
@@ -2124,67 +2193,7 @@ convert_constant(op_t op, int arg, const type_t *tp, val_t *nv, val_t *v)
 	}
 
 	if (ot == FLOAT || ot == DOUBLE || ot == LDOUBLE) {
-		switch (nt) {
-		case CHAR:
-			max = TARG_CHAR_MAX;	min = TARG_CHAR_MIN;	break;
-		case UCHAR:
-			max = TARG_UCHAR_MAX;	min = 0;		break;
-		case SCHAR:
-			max = TARG_SCHAR_MAX;	min = TARG_SCHAR_MIN;	break;
-		case SHORT:
-			max = TARG_SHRT_MAX;	min = TARG_SHRT_MIN;	break;
-		case USHORT:
-			max = TARG_USHRT_MAX;	min = 0;		break;
-		case ENUM:
-		case INT:
-			max = TARG_INT_MAX;	min = TARG_INT_MIN;	break;
-		case UINT:
-			max = (u_int)TARG_UINT_MAX;min = 0;		break;
-		case LONG:
-			max = TARG_LONG_MAX;	min = TARG_LONG_MIN;	break;
-		case ULONG:
-			max = (u_long)TARG_ULONG_MAX; min = 0;		break;
-		case QUAD:
-			max = QUAD_MAX;		min = QUAD_MIN;		break;
-		case UQUAD:
-			max = (uint64_t)UQUAD_MAX; min = 0;		break;
-		case FLOAT:
-		case FCOMPLEX:
-			max = FLT_MAX;		min = -FLT_MAX;		break;
-		case DOUBLE:
-		case DCOMPLEX:
-			max = DBL_MAX;		min = -DBL_MAX;		break;
-		case PTR:
-			/* Got already an error because of float --> ptr */
-		case LDOUBLE:
-		case LCOMPLEX:
-			max = LDBL_MAX;		min = -LDBL_MAX;	break;
-		default:
-			lint_assert(/*CONSTCOND*/false);
-		}
-		if (v->v_ldbl > max || v->v_ldbl < min) {
-			lint_assert(nt != LDOUBLE);
-			if (op == FARG) {
-				/* conv. of '%s' to '%s' is out of range, ... */
-				warning(295,
-				    type_name(gettyp(ot)), type_name(tp), arg);
-			} else {
-				/* conversion of '%s' to '%s' is out of range */
-				warning(119,
-				    type_name(gettyp(ot)), type_name(tp));
-			}
-			v->v_ldbl = v->v_ldbl > 0 ? max : min;
-		}
-		if (nt == FLOAT) {
-			nv->v_ldbl = (float)v->v_ldbl;
-		} else if (nt == DOUBLE) {
-			nv->v_ldbl = (double)v->v_ldbl;
-		} else if (nt == LDOUBLE) {
-			nv->v_ldbl = v->v_ldbl;
-		} else {
-			nv->v_quad = (nt == PTR || is_uinteger(nt)) ?
-				(int64_t)v->v_ldbl : (int64_t)v->v_ldbl;
-		}
+		convert_constant_floating(op, arg, ot, tp, nt, v, nv);
 	} else {
 		if (nt == FLOAT) {
 			nv->v_ldbl = (ot == PTR || is_uinteger(ot)) ?
