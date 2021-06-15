@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hytp14.c,v 1.13 2021/01/27 02:29:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hytp14.c,v 1.14 2021/06/15 04:39:49 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,6 +204,7 @@ hytp14_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(sc->sc_dev,
 		    "unable to register with sysmon\n");
 		sysmon_envsys_destroy(sc->sc_sme);
+		sc->sc_sme = NULL;
 		return;
 	}
 
@@ -244,10 +245,8 @@ hytp14_detach(device_t self, int flags)
 
 	sc = device_private(self);
 
-	if (sc->sc_sme != NULL) {
+	if (sc->sc_sme != NULL)
 		sysmon_envsys_unregister(sc->sc_sme);
-		sc->sc_sme = NULL;
-	}
 
 	/* stop measurement thread */
 	mutex_enter(&sc->sc_mutex);
