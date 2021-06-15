@@ -1,4 +1,4 @@
-/*	$NetBSD: hdtoa.c,v 1.11 2020/04/11 20:48:53 christos Exp $	*/
+/*	$NetBSD: hdtoa.c,v 1.12 2021/06/15 10:56:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 David Schultz <das@FreeBSD.ORG>
@@ -30,7 +30,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/gdtoa/_hdtoa.c,v 1.4 2007/01/03 04:57:58 das Exp $");
 #else
-__RCSID("$NetBSD: hdtoa.c,v 1.11 2020/04/11 20:48:53 christos Exp $");
+__RCSID("$NetBSD: hdtoa.c,v 1.12 2021/06/15 10:56:52 christos Exp $");
 #endif
 
 #include <float.h>
@@ -256,7 +256,7 @@ char *
 hldtoa(long double e, const char *xdigs, int ndigits, int *decpt, int *sign,
     char **rve)
 {
-	static const int sigfigs = (LDBL_MANT_DIG + 3) / 4;
+	static const int sigfigs = (LDBL_MANT_DIG + 3) / 4 + 1;
 	union ieee_ext_u u;
 	char *s, *s0;
 	size_t bufsize;
