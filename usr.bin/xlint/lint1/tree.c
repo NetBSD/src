@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.286 2021/06/15 18:23:39 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.287 2021/06/15 20:46:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.286 2021/06/15 18:23:39 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.287 2021/06/15 20:46:45 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2203,7 +2203,7 @@ convert_constant_check_range_bitand(size_t nsz, size_t osz,
 				    const type_t *tp, op_t op)
 {
 	if (nsz > osz &&
-	    (nv->v_quad & qbmasks[osz - 1]) != 0 &&
+	    (nv->v_quad & bit(osz - 1)) != 0 &&
 	    (nv->v_quad & xmask) != xmask) {
 		/* extra bits set to 0 in conversion of '%s' to '%s', ... */
 		warning(309, type_name(gettyp(ot)),
@@ -2315,8 +2315,8 @@ convert_constant_check_range(tspec_t ot, const type_t *tp, tspec_t nt,
 
 	osz = size_in_bits(ot);
 	nsz = tp->t_bitfield ? tp->t_flen : size_in_bits(nt);
-	xmask = qlmasks[nsz] ^ qlmasks[osz];
-	xmsk1 = qlmasks[nsz] ^ qlmasks[osz - 1];
+	xmask = value_bits(nsz) ^ value_bits(osz);
+	xmsk1 = value_bits(nsz) ^ value_bits(osz - 1);
 	/*
 	 * For bitwise operations we are not interested in the
 	 * value, but in the bits itself.
@@ -2940,7 +2940,7 @@ fold(tnode_t *tn)
 	if (modtab[tn->tn_op].m_binary)
 		ur = sr = tn->tn_right->tn_val->v_quad;
 
-	mask = qlmasks[size_in_bits(t)];
+	mask = value_bits(size_in_bits(t));
 	ovfl = false;
 
 	switch (tn->tn_op) {

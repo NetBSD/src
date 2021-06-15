@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.101 2021/05/15 19:12:14 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.102 2021/06/15 20:46:45 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -530,4 +530,28 @@ static inline bool
 is_nonzero(const tnode_t *tn)
 {
 	return tn != NULL && tn->tn_op == CON && is_nonzero_val(tn->tn_val);
+}
+
+static inline uint64_t
+bit(unsigned i)
+{
+	lint_assert(i < 64);
+	return (uint64_t)1 << i;
+}
+
+static inline uint64_t
+value_bits(unsigned bitsize)
+{
+	lint_assert(bitsize > 0);
+
+	/* for long double (80 or 128), double _Complex (128) */
+	/*
+	 * XXX: double _Complex does not have 128 bits of precision,
+	 * therefore it should never be necessary to query the value bits
+	 * of such a type; see d_c99_complex_split.c to trigger this case.
+	 */
+	if (bitsize >= 64)
+		return ~((uint64_t)0);
+
+	return ~(~(uint64_t)0 << bitsize);
 }
