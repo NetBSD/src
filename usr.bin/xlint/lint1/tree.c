@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.282 2021/06/15 16:56:00 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.283 2021/06/15 17:13:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.282 2021/06/15 16:56:00 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.283 2021/06/15 17:13:08 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2160,6 +2160,134 @@ convert_constant_floating(const op_t op, int arg, const tspec_t ot,
 	}
 }
 
+static void
+convert_constant_check_range(tspec_t const ot, const type_t *const tp,
+			     tspec_t const nt,
+			     op_t const op, int const arg,
+			     const val_t *const v, val_t *const nv)
+{
+	int	osz, nsz;
+	int64_t	xmask, xmsk1;
+
+	osz = size_in_bits(ot);
+	nsz = tp->t_bitfield ? tp->t_flen : size_in_bits(nt);
+	xmask = qlmasks[nsz] ^ qlmasks[osz];
+	xmsk1 = qlmasks[nsz] ^ qlmasks[osz - 1];
+	/*
+	 * For bitwise operations we are not interested in the
+	 * value, but in the bits itself.
+	 */
+	if (op == ORASS || op == BITOR || op == BITXOR) {
+		/*
+		 * Print a warning if bits which were set are
+		 * lost due to the conversion.
+		 * This can happen with operator ORASS only.
+		 */
+		if (nsz < osz && (v->v_quad & xmask) != 0) {
+			/* constant truncated by conv., op %s */
+			warning(306, op_name(op));
+		}
+	} else if (op == ANDASS || op == BITAND) {
+		/*
+		 * Print a warning if additional bits are not all 1
+		 * and the most significant bit of the old value is 1,
+		 * or if at least one (but not all) removed bit was 0.
+		 */
+		if (nsz > osz &&
+		    (nv->v_quad & qbmasks[osz - 1]) != 0 &&
+		    (nv->v_quad & xmask) != xmask) {
+			/* extra bits set to 0 in conv. of '%s' ... */
+			warning(309, type_name(gettyp(ot)),
+			    type_name(tp), op_name(op));
+		} else if (nsz < osz &&
+			   (v->v_quad & xmask) != xmask &&
+			   (v->v_quad & xmask) != 0) {
+			/* constant truncated by conv., op %s */
+			warning(306, op_name(op));
+		}
+	} else if ((nt != PTR && is_uinteger(nt)) &&
+		   (ot != PTR && !is_uinteger(ot)) &&
+		   v->v_quad < 0) {
+		if (op == ASSIGN) {
+			/* assignment of negative constant to ... */
+			warning(164);
+		} else if (op == INIT) {
+			/* initialization of unsigned with neg... */
+			warning(221);
+		} else if (op == FARG) {
+			/* conversion of negative constant to ... */
+			warning(296, arg);
+		} else if (modtab[op].m_comparison) {
+			/* handled by check_integer_comparison() */
+		} else {
+			/* conversion of negative constant to ... */
+			warning(222);
+		}
+	} else if (nv->v_quad != v->v_quad && nsz <= osz &&
+		   (v->v_quad & xmask) != 0 &&
+		   (is_uinteger(ot) || (v->v_quad & xmsk1) != xmsk1)) {
+		/*
+		 * Loss of significant bit(s). All truncated bits
+		 * of unsigned types or all truncated bits plus the
+		 * msb of the target for signed types are considered
+		 * to be significant bits. Loss of significant bits
+		 * means that at least on of the bits was set in an
+		 * unsigned type or that at least one, but not all of
+		 * the bits was set in an signed type.
+		 * Loss of significant bits means that it is not
+		 * possible, also not with necessary casts, to convert
+		 * back to the original type. A example for a
+		 * necessary cast is:
+		 *	char c;	int	i; c = 128;
+		 *	i = c;			** yields -128 **
+		 *	i = (unsigned char)c;	** yields 128 **
+		 */
+		if (op == ASSIGN && tp->t_bitfield) {
+			/* precision lost in bit-field assignment */
+			warning(166);
+		} else if (op == ASSIGN) {
+			/* constant truncated by assignment */
+			warning(165);
+		} else if (op == INIT && tp->t_bitfield) {
+			/* bit-field initializer does not fit */
+			warning(180);
+		} else if (op == INIT) {
+			/* initializer does not fit */
+			warning(178);
+		} else if (op == CASE) {
+			/* case label affected by conversion */
+			warning(196);
+		} else if (op == FARG) {
+			/* conv. of '%s' to '%s' is out of range, ... */
+			warning(295,
+			    type_name(gettyp(ot)), type_name(tp), arg);
+		} else {
+			/* conversion of '%s' to '%s' is out of range */
+			warning(119,
+			    type_name(gettyp(ot)), type_name(tp));
+		}
+	} else if (nv->v_quad != v->v_quad) {
+		if (op == ASSIGN && tp->t_bitfield) {
+			/* precision lost in bit-field assignment */
+			warning(166);
+		} else if (op == INIT && tp->t_bitfield) {
+			/* bit-field initializer out of range */
+			warning(11);
+		} else if (op == CASE) {
+			/* case label affected by conversion */
+			warning(196);
+		} else if (op == FARG) {
+			/* conv. of '%s' to '%s' is out of range, ... */
+			warning(295,
+			    type_name(gettyp(ot)), type_name(tp), arg);
+		} else {
+			/* conversion of '%s' to '%s' is out of range */
+			warning(119,
+			    type_name(gettyp(ot)), type_name(tp));
+		}
+	}
+}
+
 /*
  * Converts a typed constant to a constant of another type.
  *
@@ -2174,9 +2302,7 @@ convert_constant(op_t op, int arg, const type_t *tp, val_t *nv, val_t *v)
 {
 	tspec_t	ot, nt;
 	int	sz;
-	bool	rchk;
-	int64_t	xmask, xmsk1;
-	int	osz, nsz;
+	bool	range_check;
 
 	/*
 	 * TODO: make 'v' const; the name of this function does not suggest
@@ -2184,7 +2310,7 @@ convert_constant(op_t op, int arg, const type_t *tp, val_t *nv, val_t *v)
 	 */
 	ot = v->v_tspec;
 	nt = nv->v_tspec = tp->t_tspec;
-	rchk = false;
+	range_check = false;
 
 	if (nt == BOOL) {	/* C99 6.3.1.2 */
 		nv->v_ansiu = false;
@@ -2205,7 +2331,7 @@ convert_constant(op_t op, int arg, const type_t *tp, val_t *nv, val_t *v)
 			nv->v_ldbl = (ot == PTR || is_uinteger(ot)) ?
 			       (ldbl_t)(uint64_t)v->v_quad : (ldbl_t)v->v_quad;
 		} else {
-			rchk = true;		/* Check for lost precision. */
+			range_check = true;	/* Check for lost precision. */
 			nv->v_quad = v->v_quad;
 		}
 	}
@@ -2236,125 +2362,8 @@ convert_constant(op_t op, int arg, const type_t *tp, val_t *nv, val_t *v)
 		break;
 	}
 
-	if (rchk && op != CVT) {
-		osz = size_in_bits(ot);
-		nsz = tp->t_bitfield ? tp->t_flen : size_in_bits(nt);
-		xmask = qlmasks[nsz] ^ qlmasks[osz];
-		xmsk1 = qlmasks[nsz] ^ qlmasks[osz - 1];
-		/*
-		 * For bitwise operations we are not interested in the
-		 * value, but in the bits itself.
-		 */
-		if (op == ORASS || op == BITOR || op == BITXOR) {
-			/*
-			 * Print a warning if bits which were set are
-			 * lost due to the conversion.
-			 * This can happen with operator ORASS only.
-			 */
-			if (nsz < osz && (v->v_quad & xmask) != 0) {
-				/* constant truncated by conv., op %s */
-				warning(306, op_name(op));
-			}
-		} else if (op == ANDASS || op == BITAND) {
-			/*
-			 * Print a warning if additional bits are not all 1
-			 * and the most significant bit of the old value is 1,
-			 * or if at least one (but not all) removed bit was 0.
-			 */
-			if (nsz > osz &&
-			    (nv->v_quad & qbmasks[osz - 1]) != 0 &&
-			    (nv->v_quad & xmask) != xmask) {
-				/* extra bits set to 0 in conv. of '%s' ... */
-				warning(309, type_name(gettyp(ot)),
-				    type_name(tp), op_name(op));
-			} else if (nsz < osz &&
-				   (v->v_quad & xmask) != xmask &&
-				   (v->v_quad & xmask) != 0) {
-				/* constant truncated by conv., op %s */
-				warning(306, op_name(op));
-			}
-		} else if ((nt != PTR && is_uinteger(nt)) &&
-			   (ot != PTR && !is_uinteger(ot)) &&
-			   v->v_quad < 0) {
-			if (op == ASSIGN) {
-				/* assignment of negative constant to ... */
-				warning(164);
-			} else if (op == INIT) {
-				/* initialization of unsigned with neg... */
-				warning(221);
-			} else if (op == FARG) {
-				/* conversion of negative constant to ... */
-				warning(296, arg);
-			} else if (modtab[op].m_comparison) {
-				/* handled by check_integer_comparison() */
-			} else {
-				/* conversion of negative constant to ... */
-				warning(222);
-			}
-		} else if (nv->v_quad != v->v_quad && nsz <= osz &&
-			   (v->v_quad & xmask) != 0 &&
-			   (is_uinteger(ot) || (v->v_quad & xmsk1) != xmsk1)) {
-			/*
-			 * Loss of significant bit(s). All truncated bits
-			 * of unsigned types or all truncated bits plus the
-			 * msb of the target for signed types are considered
-			 * to be significant bits. Loss of significant bits
-			 * means that at least on of the bits was set in an
-			 * unsigned type or that at least one, but not all of
-			 * the bits was set in an signed type.
-			 * Loss of significant bits means that it is not
-			 * possible, also not with necessary casts, to convert
-			 * back to the original type. A example for a
-			 * necessary cast is:
-			 *	char c;	int	i; c = 128;
-			 *	i = c;			** yields -128 **
-			 *	i = (unsigned char)c;	** yields 128 **
-			 */
-			if (op == ASSIGN && tp->t_bitfield) {
-				/* precision lost in bit-field assignment */
-				warning(166);
-			} else if (op == ASSIGN) {
-				/* constant truncated by assignment */
-				warning(165);
-			} else if (op == INIT && tp->t_bitfield) {
-				/* bit-field initializer does not fit */
-				warning(180);
-			} else if (op == INIT) {
-				/* initializer does not fit */
-				warning(178);
-			} else if (op == CASE) {
-				/* case label affected by conversion */
-				warning(196);
-			} else if (op == FARG) {
-				/* conv. of '%s' to '%s' is out of range, ... */
-				warning(295,
-				    type_name(gettyp(ot)), type_name(tp), arg);
-			} else {
-				/* conversion of '%s' to '%s' is out of range */
-				warning(119,
-				    type_name(gettyp(ot)), type_name(tp));
-			}
-		} else if (nv->v_quad != v->v_quad) {
-			if (op == ASSIGN && tp->t_bitfield) {
-				/* precision lost in bit-field assignment */
-				warning(166);
-			} else if (op == INIT && tp->t_bitfield) {
-				/* bit-field initializer out of range */
-				warning(11);
-			} else if (op == CASE) {
-				/* case label affected by conversion */
-				warning(196);
-			} else if (op == FARG) {
-				/* conv. of '%s' to '%s' is out of range, ... */
-				warning(295,
-				    type_name(gettyp(ot)), type_name(tp), arg);
-			} else {
-				/* conversion of '%s' to '%s' is out of range */
-				warning(119,
-				    type_name(gettyp(ot)), type_name(tp));
-			}
-		}
-	}
+	if (range_check && op != CVT)
+		convert_constant_check_range(ot, tp, nt, op, arg, v, nv);
 }
 
 /*
