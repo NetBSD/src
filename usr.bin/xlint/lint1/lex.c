@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.36 2021/05/03 08:03:45 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.37 2021/06/15 20:46:45 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.36 2021/05/03 08:03:45 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.37 2021/06/15 20:46:45 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -250,15 +250,6 @@ static	struct	kwtab {
 /* Symbol table */
 static	sym_t	*symtab[HSHSIZ1];
 
-/* bit i of the entry with index i is set */
-uint64_t qbmasks[64];
-
-/* least significant i bits are set in the entry with index i */
-uint64_t qlmasks[64 + 1];
-
-/* least significant i bits are not set in the entry with index i */
-uint64_t qumasks[64 + 1];
-
 /* free list for sbuf structures */
 static	sbuf_t	 *sbfrlst;
 
@@ -321,8 +312,6 @@ void
 initscan(void)
 {
 	struct	kwtab *kw;
-	size_t	i;
-	uint64_t uq;
 
 	for (kw = kwtab; kw->kw_name != NULL; kw++) {
 		if ((kw->kw_c89 || kw->kw_c99) && tflag)
@@ -335,16 +324,6 @@ initscan(void)
 		add_keyword(kw, 2);
 		add_keyword(kw, 4);
 	}
-
-	/* initialize bit-masks for quads */
-	for (i = 0; i < 64; i++) {
-		qbmasks[i] = (uint64_t)1 << i;
-		uq = ~(uint64_t)0 << i;
-		qumasks[i] = uq;
-		qlmasks[i] = ~uq;
-	}
-	qumasks[i] = 0;
-	qlmasks[i] = ~(uint64_t)0;
 }
 
 /*
@@ -715,7 +694,7 @@ msb(int64_t q, tspec_t t, int len)
 
 	if (len <= 0)
 		len = size_in_bits(t);
-	return (q & qbmasks[len - 1]) != 0 ? 1 : 0;
+	return (q & bit(len - 1)) != 0 ? 1 : 0;
 }
 
 /*
@@ -724,16 +703,15 @@ msb(int64_t q, tspec_t t, int len)
 int64_t
 xsign(int64_t q, tspec_t t, int len)
 {
+	uint64_t vbits;
 
 	if (len <= 0)
 		len = size_in_bits(t);
 
-	if (t == PTR || is_uinteger(t) || !sign(q, t, len)) {
-		q &= qlmasks[len];
-	} else {
-		q |= qumasks[len];
-	}
-	return q;
+	vbits = value_bits(len);
+	return t == PTR || is_uinteger(t) || !sign(q, t, len)
+	    ? q & vbits
+	    : q | ~vbits;
 }
 
 /*
