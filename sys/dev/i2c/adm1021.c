@@ -1,4 +1,4 @@
-/*	$NetBSD: adm1021.c,v 1.27 2021/01/30 01:22:06 thorpej Exp $ */
+/*	$NetBSD: adm1021.c,v 1.28 2021/06/15 04:41:01 mlelstv Exp $ */
 /*	$OpenBSD: adm1021.c,v 1.27 2007/06/24 05:34:35 dlg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.27 2021/01/30 01:22:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.28 2021/06/15 04:41:01 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -344,7 +344,11 @@ admtemp_attach(device_t parent, device_t self, void *aux)
 	sc->sc_prop = ia->ia_prop;
 	prop_object_retain(sc->sc_prop);
 
-	iic_acquire_bus(sc->sc_tag, 0);
+	if (iic_acquire_bus(sc->sc_tag, 0)) {
+		aprint_error_dev(self, "cannot acquire iic bus\n");
+		return;
+	}
+
 	cmd = ADM1021_CONFIG_READ;
 	if (admtemp_exec(sc, I2C_OP_READ_WITH_STOP, &cmd, &data) != 0) {
 		iic_release_bus(sc->sc_tag, 0);
@@ -466,10 +470,8 @@ admtemp_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	uint8_t cmd, xdata;
 	int8_t sdata;
 
-	if (iic_acquire_bus(sc->sc_tag, 0)) {
-		edata->state = ENVSYS_SINVALID;
+	if (iic_acquire_bus(sc->sc_tag, 0) != 0)
 		return;
-	}
 
 	if (edata->sensor == ADMTEMP_INT)
 		cmd = ADM1021_INT_TEMP;
