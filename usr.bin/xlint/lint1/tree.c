@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.285 2021/06/15 18:16:11 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.286 2021/06/15 18:23:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.285 2021/06/15 18:16:11 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.286 2021/06/15 18:23:39 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2159,6 +2159,24 @@ convert_constant_floating(op_t op, int arg, tspec_t ot, const type_t *tp,
 	}
 }
 
+static bool
+convert_constant_to_floating(tspec_t nt, val_t *nv,
+			     tspec_t ot, const val_t *v)
+{
+	if (nt == FLOAT) {
+		nv->v_ldbl = (ot == PTR || is_uinteger(ot)) ?
+		    (float)(uint64_t)v->v_quad : (float)v->v_quad;
+	} else if (nt == DOUBLE) {
+		nv->v_ldbl = (ot == PTR || is_uinteger(ot)) ?
+		    (double)(uint64_t)v->v_quad : (double)v->v_quad;
+	} else if (nt == LDOUBLE) {
+		nv->v_ldbl = (ot == PTR || is_uinteger(ot)) ?
+		    (ldbl_t)(uint64_t)v->v_quad : (ldbl_t)v->v_quad;
+	} else
+		return false;
+	return true;
+}
+
 /*
  * Print a warning if bits which were set are lost due to the conversion.
  * This can happen with operator ORASS only.
@@ -2353,20 +2371,9 @@ convert_constant(op_t op, int arg, const type_t *tp, val_t *nv, val_t *v)
 
 	if (ot == FLOAT || ot == DOUBLE || ot == LDOUBLE) {
 		convert_constant_floating(op, arg, ot, tp, nt, v, nv);
-	} else {
-		if (nt == FLOAT) {
-			nv->v_ldbl = (ot == PTR || is_uinteger(ot)) ?
-			       (float)(uint64_t)v->v_quad : (float)v->v_quad;
-		} else if (nt == DOUBLE) {
-			nv->v_ldbl = (ot == PTR || is_uinteger(ot)) ?
-			       (double)(uint64_t)v->v_quad : (double)v->v_quad;
-		} else if (nt == LDOUBLE) {
-			nv->v_ldbl = (ot == PTR || is_uinteger(ot)) ?
-			       (ldbl_t)(uint64_t)v->v_quad : (ldbl_t)v->v_quad;
-		} else {
-			range_check = true;	/* Check for lost precision. */
-			nv->v_quad = v->v_quad;
-		}
+	} else if (!convert_constant_to_floating(nt, nv, ot, v)) {
+		range_check = true;	/* Check for lost precision. */
+		nv->v_quad = v->v_quad;
 	}
 
 	if ((v->v_ansiu && is_floating(nt)) ||
