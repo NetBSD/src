@@ -1,4 +1,4 @@
-/*	$NetBSD: am2315.c,v 1.5 2018/06/17 01:08:15 thorpej Exp $	*/
+/*	$NetBSD: am2315.c,v 1.6 2021/06/15 04:40:13 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2017 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am2315.c,v 1.5 2018/06/17 01:08:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am2315.c,v 1.6 2021/06/15 04:40:13 mlelstv Exp $");
 
 /*
  * Driver for the Aosong AM2315
@@ -458,10 +458,8 @@ am2315_detach(device_t self, int flags)
 	mutex_enter(&sc->sc_mutex);
 
 	/* Remove the sensors */
-	if (sc->sc_sme != NULL) {
+	if (sc->sc_sme != NULL)
 		sysmon_envsys_unregister(sc->sc_sme);
-		sc->sc_sme = NULL;
-	}
 	mutex_exit(&sc->sc_mutex);
 
 	/* Destroy the wait cond */
