@@ -1,5 +1,5 @@
 #! /usr/bin/lua
--- $NetBSD: check-msgs.lua,v 1.10 2021/04/14 18:35:40 rillig Exp $
+-- $NetBSD: check-msgs.lua,v 1.11 2021/06/15 08:37:56 rillig Exp $
 
 --[[
 
@@ -12,7 +12,7 @@ actual user-visible message text in err.c.
 
 
 local function load_messages(fname)
-  local msgs = {}
+  local msgs = {} ---@type table<number>string
 
   local f = assert(io.open(fname, "r"))
   for line in f:lines() do
@@ -28,11 +28,19 @@ local function load_messages(fname)
 end
 
 
-local function check_message(fname, lineno, id, comment, msgs, errors)
+local had_errors = false
+---@param fmt string
+function print_error(fmt, ...)
+  print(fmt:format(...))
+  had_errors = true
+end
+
+
+local function check_message(fname, lineno, id, comment, msgs)
   local msg = msgs[id]
 
   if msg == nil then
-    errors:add("%s:%d: id=%d not found", fname, lineno, id)
+    print_error("%s:%d: id=%d not found", fname, lineno, id)
     return
   end
 
@@ -40,6 +48,7 @@ local function check_message(fname, lineno, id, comment, msgs, errors)
   msg = msg:gsub("%*/", "**")
   msg = msg:gsub("\\(.)", "%1")
 
+  -- allow a few abbreviations to be used in the code
   comment = comment:gsub("arg%.", "argument")
   comment = comment:gsub("comb%.", "combination")
   comment = comment:gsub("conv%.", "conversion")
@@ -64,17 +73,12 @@ local function check_message(fname, lineno, id, comment, msgs, errors)
     return
   end
 
-  errors:add("%s:%d:   id=%-3d   msg=%-40s   comment=%s",
+  print_error("%s:%d:   id=%-3d   msg=%-40s   comment=%s",
     fname, lineno, id, msg, comment)
 end
 
 
-local function collect_errors(fname, msgs)
-  local errors = {}
-  errors.add = function(self, fmt, ...)
-    table.insert(self, fmt:format(...))
-  end
-
+local function check_file(fname, msgs)
   local f = assert(io.open(fname, "r"))
   local lineno = 0
   local prev = ""
@@ -88,9 +92,9 @@ local function collect_errors(fname, msgs)
        func == "gnuism" or func == "message" then
       local comment = prev:match("^%s+/%* (.+) %*/$")
       if comment ~= nil then
-        check_message(fname, lineno, id, comment, msgs, errors)
+        check_message(fname, lineno, id, comment, msgs)
       else
-        errors:add("%s:%d: missing comment for %d: /* %s */",
+        print_error("%s:%d: missing comment for %d: /* %s */",
           fname, lineno, id, msgs[id])
       end
     end
@@ -99,18 +103,8 @@ local function collect_errors(fname, msgs)
   end
 
   f:close()
-
-  return errors
 end
 
-
-local function check_file(fname, msgs)
-  local errors = collect_errors(fname, msgs)
-  for _, err in ipairs(errors) do
-    print(err)
-  end
-  return #errors == 0
-end
 
 local function file_contains(filename, text)
   local f = assert(io.open(filename, "r"))
@@ -118,6 +112,7 @@ local function file_contains(filename, text)
   f:close()
   return found
 end
+
 
 local function check_test_files(msgs)
 
@@ -128,28 +123,22 @@ local function check_test_files(msgs)
   table.sort(msgids)
 
   local testdir = "../../../tests/usr.bin/xlint/lint1"
-  local ok = true
   for _, msgid in ipairs(msgids) do
     local msg = msgs[msgid]:gsub("\\(.)", "%1")
     local filename = ("%s/msg_%03d.c"):format(testdir, msgid)
     if not file_contains(filename, msg) then
-      ok = false
-      print(("%s must contain: %s"):format(filename, msg))
+      print_error("%s must contain: %s", filename, msg)
     end
   end
-
-  return ok
 end
 
 local function main(arg)
   local msgs = load_messages("err.c")
-  local ok = true
   for _, fname in ipairs(arg) do
-    ok = check_file(fname, msgs) and ok
+    check_file(fname, msgs)
   end
-  ok = check_test_files(msgs) and ok
-  return ok
+  check_test_files(msgs)
 end
 
-
-os.exit(main(arg))
+main(arg)
+os.exit(not had_errors)
