@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.283 2021/06/15 17:13:08 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.284 2021/06/15 17:17:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.283 2021/06/15 17:13:08 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.284 2021/06/15 17:17:14 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2336,13 +2336,10 @@ convert_constant(op_t op, int arg, const type_t *tp, val_t *nv, val_t *v)
 		}
 	}
 
-	if (v->v_ansiu && is_floating(nt)) {
-		/* ANSI C treats constant as unsigned */
-		warning(157);
-		v->v_ansiu = false;
-	} else if (v->v_ansiu && (is_integer(nt) && !is_uinteger(nt) &&
-				  portable_size_in_bits(nt) >
-				  portable_size_in_bits(ot))) {
+	if ((v->v_ansiu && is_floating(nt)) ||
+	    (v->v_ansiu && (is_integer(nt) && !is_uinteger(nt) &&
+			    portable_size_in_bits(nt) >
+			    portable_size_in_bits(ot)))) {
 		/* ANSI C treats constant as unsigned */
 		warning(157);
 		v->v_ansiu = false;
