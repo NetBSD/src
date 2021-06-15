@@ -1,4 +1,4 @@
-/* $NetBSD: dstemp.c,v 1.12 2021/03/01 04:39:45 rin Exp $ */
+/* $NetBSD: dstemp.c,v 1.13 2021/06/15 04:41:01 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2018 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dstemp.c,v 1.12 2021/03/01 04:39:45 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dstemp.c,v 1.13 2021/06/15 04:41:01 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,7 +145,8 @@ dstemp_init(struct dstemp_softc *sc)
 	int error;
 	uint8_t cmd[2], data;
 
-	iic_acquire_bus(sc->sc_i2c, 0);
+	if (iic_acquire_bus(sc->sc_i2c, 0))
+		return;
 	cmd[0] = DSTEMP_CONFIG;
 	data = 0;
 	error = iic_exec(sc->sc_i2c, I2C_OP_READ_WITH_STOP,
@@ -171,10 +172,12 @@ dstemp_sensors_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	int error;
 
 		
-	iic_acquire_bus(sc->sc_i2c, 0);
-	error = iic_exec(sc->sc_i2c, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, 1, &data, 2, 0);
-	iic_release_bus(sc->sc_i2c, 0);
+	error = iic_acquire_bus(sc->sc_i2c, 0);
+	if (error == 0) {
+		error = iic_exec(sc->sc_i2c, I2C_OP_READ_WITH_STOP,
+		    sc->sc_addr, &cmd, 1, &data, 2, 0);
+		iic_release_bus(sc->sc_i2c, 0);
+	}
 
 	if (error) {
 		edata->state = ENVSYS_SINVALID;
