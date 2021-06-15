@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_verbose.h,v 1.6 2021/06/09 23:22:51 pgoyette Exp $ */
+/*	$NetBSD: dev_verbose.h,v 1.7 2021/06/15 23:24:57 riastradh Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -117,7 +117,7 @@ tag ## _findvendor(char *buf, size_t len, uint16_t vendor)		\
 									\
 	tag ## _load_verbose();						\
 	MODULE_HOOK_CALL(tag ## _findvendor_hook, (buf, len, vendor),	\
-		{snprintf(buf, len, "vendor %4.4x", vendor); NULL; },	\
+		(snprintf(buf, len, "vendor %4.4x", vendor), NULL),	\
 		retval);						\
 	return retval;							\
 }									\
@@ -131,7 +131,7 @@ tag ## _findproduct(char *buf, size_t len, uint16_t vendor,		\
 	tag ## _load_verbose();						\
 	MODULE_HOOK_CALL(tag ## _findproduct_hook,			\
 		(buf, len, vendor, product),				\
-		{snprintf(buf, len, "product %4.4x", product); NULL; },	\
+		(snprintf(buf, len, "product %4.4x", product), NULL),	\
 		retval);						\
 	return retval;							\
 }									\
