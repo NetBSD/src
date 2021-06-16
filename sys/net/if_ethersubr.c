@@ -78,7 +78,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.293 2021/05/17 04:07:43 yamaguchi
 #include "bridge.h"
 #include "arp.h"
 #include "agr.h"
-#include "lagg.h"
 
 #include <sys/sysctl.h>
 #include <sys/mbuf.h>
@@ -1059,11 +1058,6 @@ ether_ifdetach(struct ifnet *ifp)
 	simplehook_destroy(ec->ec_ifdetach_hooks);
 
 	bpf_detach(ifp);
-
-#if NLAGG > 0
-	if (ifp->if_lagg)
-		lagg_ifdetach(ifp);
-#endif
 
 	ETHER_LOCK(ec);
 	KASSERT(ec->ec_nvlans == 0);

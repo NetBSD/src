@@ -148,6 +148,7 @@ static int	lagg_media_change(struct ifnet *);
 static void	lagg_media_status(struct ifnet *, struct ifmediareq *);
 static int	lagg_vlan_cb(struct ethercom *, uint16_t, bool);
 static void	lagg_linkstate_changed(void *);
+static void	lagg_ifdetach(void *);
 static struct lagg_softc *
 		lagg_softc_alloc(enum lagg_iftypes);
 static void	lagg_softc_free(struct lagg_softc *);
@@ -2012,6 +2013,8 @@ lagg_addport_locked(struct lagg_softc *sc, struct lagg_port *lp)
 	lp->lp_prio = LAGG_PORT_PRIO;
 	lp->lp_linkstate_hook = if_linkstate_change_establish(ifp_port,
 	    lagg_linkstate_changed, ifp_port);
+	lp->lp_ifdetach_hook = ether_ifdetachhook_establish(ifp_port,
+	    lagg_ifdetach, ifp_port);
 
 	/* save and change items of ifp_port */
 	IFNET_LOCK(ifp_port);
@@ -2068,6 +2071,8 @@ remove_port:
 
 restore_lladdr:
 	lagg_lladdr_unset(sc, lp, if_type);
+	ether_ifdetachhook_disestablish(ifp_port,
+	    lp->lp_ifdetach_hook, &sc->sc_lock);
 	if_linkstate_change_disestablish(ifp_port,
 	    lp->lp_linkstate_hook, NULL);
 	psref_target_destroy(&lp->lp_psref, lagg_port_psref_class);
@@ -2128,6 +2133,8 @@ lagg_delport_locked(struct lagg_softc *sc, struct lagg_port *lp,
 
 	if_linkstate_change_disestablish(ifp_port,
 	    lp->lp_linkstate_hook, NULL);
+	ether_ifdetachhook_disestablish(ifp_port,
+	    lp->lp_ifdetach_hook, &sc->sc_lock);
 
 	lagg_proto_stopport(sc, lp);
 	psref_target_destroy(&lp->lp_psref, lagg_port_psref_class);
@@ -2367,13 +2374,15 @@ lagg_port_output(struct ifnet *ifp, struct mbuf *m,
 	return error;
 }
 
-void
-lagg_ifdetach(struct ifnet *ifp_port)
+static void
+lagg_ifdetach(void *xifp)
 {
+	struct ifnet *ifp_port;
 	struct lagg_port *lp;
 	struct lagg_softc *sc;
 	int s;
 
+	ifp_port = (struct ifnet *)xifp;
 	IFNET_ASSERT_UNLOCKED(ifp_port);
 
 	s = pserialize_read_enter();
