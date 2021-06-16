@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.433 2021/06/16 03:15:47 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.434 2021/06/16 03:56:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -142,7 +142,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.433 2021/06/16 03:15:47 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.434 2021/06/16 03:56:59 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -1585,7 +1585,7 @@ JobMakeArgv(Job *job, char **argv)
 }
 
 static void
-JobWriteShellCommands(Job *job, GNode *gn, bool cmdsOK, bool *out_run)
+JobWriteShellCommands(Job *job, GNode *gn, bool *out_run)
 {
 	/*
 	 * tfile is the name of a file into which all shell commands
@@ -1594,15 +1594,6 @@ JobWriteShellCommands(Job *job, GNode *gn, bool cmdsOK, bool *out_run)
 	 */
 	char tfile[MAXPATHLEN];
 	int tfd;		/* File descriptor to the temp file */
-
-	/*
-	 * We're serious here, but if the commands were bogus, we're
-	 * also dead...
-	 */
-	if (!cmdsOK) {
-		PrintOnError(gn, NULL); /* provide some clue */
-		DieHorribly();
-	}
 
 	tfd = Job_TempFile(TMPPAT, tfile, sizeof tfile);
 
@@ -1681,7 +1672,16 @@ JobStart(GNode *gn, bool special)
 		 * virtual targets.
 		 */
 
-		JobWriteShellCommands(job, gn, cmdsOK, &run);
+		/*
+		 * We're serious here, but if the commands were bogus, we're
+		 * also dead...
+		 */
+		if (!cmdsOK) {
+			PrintOnError(gn, NULL); /* provide some clue */
+			DieHorribly();
+		}
+
+		JobWriteShellCommands(job, gn, &run);
 		(void)fflush(job->cmdFILE);
 	} else if (!GNode_ShouldExecute(gn)) {
 		/*
