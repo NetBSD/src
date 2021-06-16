@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.51 2021/04/18 19:56:09 maya Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.52 2021/06/16 23:22:08 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2002, 2003\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.51 2021/04/18 19:56:09 maya Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.52 2021/06/16 23:22:08 riastradh Exp $");
 #endif
 
 #include <err.h>
@@ -460,10 +460,14 @@ getkey_shell_cmd(const char *target, struct keygen *kg, size_t keylen)
 {
 	FILE	*f;
 	bits_t	*ret;
+	int	status;
 
-	f = popen(string_tocharstar(kg->kg_cmd), "r");
-	ret = bits_fget(f, keylen);
-	pclose(f);
+	if ((f = popen(string_tocharstar(kg->kg_cmd), "r")) == NULL)
+		errx(1, "command failed");
+	if ((ret = bits_fget(f, keylen)) == NULL)
+		errx(1, "command output too short");
+	if ((status = pclose(f)) != 0)
+		err(1, "command failed with status %d", status);
 
 	return ret;
 }
