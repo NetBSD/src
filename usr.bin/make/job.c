@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.432 2021/04/27 16:25:46 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.433 2021/06/16 03:15:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -142,7 +142,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.432 2021/04/27 16:25:46 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.433 2021/06/16 03:15:47 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -1624,20 +1624,14 @@ JobWriteShellCommands(Job *job, GNode *gn, bool cmdsOK, bool *out_run)
 }
 
 /*
- * Start a target-creation process going for the target described by the
- * graph node gn.
- *
- * Input:
- *	gn		target to create
- *	flags		flags for the job to override normal ones.
- *	previous	The previous Job structure for this node, if any.
+ * Start a target-creation process going for the target described by gn.
  *
  * Results:
  *	JOB_ERROR if there was an error in the commands, JOB_FINISHED
  *	if there isn't actually anything left to do for the job and
  *	JOB_RUNNING if the job has been started.
  *
- * Side Effects:
+ * Details:
  *	A new Job node is created and added to the list of running
  *	jobs. PMake is forked and a child shell created.
  *
