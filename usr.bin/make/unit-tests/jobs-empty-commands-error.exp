@@ -1,4 +1,5 @@
 : 'Making existing-target out of nothing.'
 make: don't know how to make nonexistent-target (continuing)
-`nonexistent-target' was not built (being made, type OP_DEPS_FOUND|OP_MARK, flags REMAKE|DONE_WAIT|DONE_ALLSRC|DONECYCLE)!
-exit status 1
+
+make: stopped in unit-tests
+exit status 2
