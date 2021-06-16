@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.214 2020/11/09 18:09:02 chs Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.215 2021/06/16 01:51:57 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.214 2020/11/09 18:09:02 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.215 2021/06/16 01:51:57 dholland Exp $");
 
 #include "veriexec.h"
 
@@ -161,6 +161,8 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 		if ((fmode & O_EXCL) == 0 &&
 		    ((fmode & O_NOFOLLOW) == 0))
 			ndp->ni_cnd.cn_flags |= FOLLOW;
+		if ((fmode & O_EXCL) == 0)
+			ndp->ni_cnd.cn_flags |= NONEXCLHACK;
 	} else {
 		ndp->ni_cnd.cn_nameiop = LOOKUP;
 		ndp->ni_cnd.cn_flags |= LOCKLEAF;
@@ -183,7 +185,12 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 	error = veriexec_openchk(l, ndp->ni_vp, pathstring, fmode);
 	if (error) {
 		/* We have to release the locks ourselves */
-		if (fmode & O_CREAT) {
+		/*
+		 * 20210604 dholland passing NONEXCLHACK means we can
+		 * get ni_dvp == NULL back if ni_vp exists, and we should
+		 * treat that like the non-O_CREAT case.
+		 */
+		if ((fmode & O_CREAT) != 0 && ndp->ni_dvp != NULL) {
 			if (vp == NULL) {
 				vput(ndp->ni_dvp);
 			} else {
@@ -202,7 +209,10 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 	}
 #endif /* NVERIEXEC > 0 */
 
-	if (fmode & O_CREAT) {
+	/*
+	 * 20210604 dholland ditto
+	 */
+	if ((fmode & O_CREAT) != 0 && ndp->ni_dvp != NULL) {
 		if (ndp->ni_vp == NULL) {
 			vattr_null(&va);
 			va.va_type = VREG;
@@ -233,6 +243,17 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 			}
 			fmode &= ~O_CREAT;
 		}
+	} else if ((fmode & O_CREAT) != 0) {
+		/*
+		 * 20210606 dholland passing NONEXCLHACK means this
+		 * case exists; it is the same as the following one
+		 * but also needs to do things in the second (exists)
+		 * half of the following block. (Besides handle
+		 * ni_dvp, anyway.)
+		 */
+		vp = ndp->ni_vp;
+		KASSERT((fmode & O_EXCL) == 0);
+		fmode &= ~O_CREAT;
 	} else {
 		vp = ndp->ni_vp;
 	}
