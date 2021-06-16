@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.208 2021/05/30 02:26:08 joerg Exp $	 */
+/*	$NetBSD: rtld.c,v 1.209 2021/06/16 21:53:51 riastradh Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.208 2021/05/30 02:26:08 joerg Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.209 2021/06/16 21:53:51 riastradh Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1672,8 +1672,6 @@ _rtld_shared_enter(void)
 {
 	unsigned int cur;
 	lwpid_t waiter, self = 0;
-
-	membar_enter();
 
 	for (;;) {
 		cur = _rtld_mutex;
