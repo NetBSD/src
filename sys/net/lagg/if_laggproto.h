@@ -143,6 +143,7 @@ struct lagg_softc {
 	struct ifmedia		 sc_media;
 	u_char			 sc_iftype;
 	uint8_t			 sc_lladdr[ETHER_ADDR_LEN];
+	uint8_t			 sc_lladdr_default[ETHER_ADDR_LEN];
 	LIST_HEAD(, lagg_mc_entry)
 				 sc_mclist;
 	TAILQ_HEAD(, lagg_vlantag)
@@ -154,6 +155,8 @@ struct lagg_softc {
 	size_t			 sc_nports;
 	char			 sc_evgroup[16];
 	struct evcnt		 sc_novar;
+	struct workqueue	*sc_wq;
+	struct lagg_work	 sc_wk_lladdr;
 
 	struct sysctllog	*sc_sysctllog;
 	const struct sysctlnode	*sc_sysctlnode;
@@ -196,7 +199,7 @@ struct lagg_softc {
 #define LAGG_LOCK(_sc)		mutex_enter(&(_sc)->sc_lock)
 #define LAGG_UNLOCK(_sc)	mutex_exit(&(_sc)->sc_lock)
 #define LAGG_LOCKED(_sc)	mutex_owned(&(_sc)->sc_lock)
-#define LAGG_CLLADDR(_sc)	CLLADDR((_sc)->sc_if.if_sadl)
+#define LAGG_CLLADDR(_sc)	((const void *)(_sc)->sc_lladdr)
 
 #define	LAGG_PORTS_FOREACH(_sc, _lp)	\
     SIMPLEQ_FOREACH((_lp), &(_sc)->sc_ports, lp_entry)
