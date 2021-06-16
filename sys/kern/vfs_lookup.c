@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.225 2020/12/29 22:13:40 chs Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.226 2021/06/16 01:51:57 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.225 2020/12/29 22:13:40 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.226 2021/06/16 01:51:57 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_magiclinks.h"
@@ -1802,10 +1802,33 @@ namei_oneroot(struct namei_state *state,
 		 * a CREATE, DELETE, or RENAME), and we don't have one
 		 * (because this is the root directory, or we crossed
 		 * a mount point), then we must fail.
+		 *
+		 * 20210604 dholland when NONEXCLHACK is set (open
+		 * with O_CREAT but not O_EXCL) skip this logic. Since
+		 * we have a foundobj, open will not be creating, so
+		 * it doesn't actually need or use the searchdir, so
+		 * it's ok to return it even if it's on a different
+		 * volume, and it's also ok to return NULL; by setting
+		 * NONEXCLHACK the open code promises to cope with
+		 * those cases correctly. (That is, it should do what
+		 * it would do anyway, that is, just release the
+		 * searchdir, except not crash if it's null.) This is
+		 * needed because otherwise opening mountpoints with
+		 * O_CREAT but not O_EXCL fails... which is a silly
+		 * thing to do but ought to work. (This whole issue
+		 * came to light because 3rd party code wanted to open
+		 * certain procfs nodes with O_CREAT for some 3rd
+		 * party reason, and it failed.)
+		 *
+		 * Note that NONEXCLHACK is properly a different
+		 * nameiop (it is partway between LOOKUP and CREATE)
+		 * but it was stuffed in as a flag instead to make the
+		 * resulting patch less invasive for pullup. Blah.
 		 */
 		if (cnp->cn_nameiop != LOOKUP &&
 		    (searchdir == NULL ||
-		     searchdir->v_mount != foundobj->v_mount)) {
+		     searchdir->v_mount != foundobj->v_mount) &&
+		    (cnp->cn_flags & NONEXCLHACK) == 0) {
 			if (searchdir) {
 				if (searchdir_locked) {
 					vput(searchdir);
