@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.4 2021/05/24 13:42:58 thorpej Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.5 2021/06/16 00:21:19 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.4 2021/05/24 13:42:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.5 2021/06/16 00:21:19 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -381,9 +381,7 @@ lagg_clone_create(struct if_clone *ifc, int unit)
 	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_AUTO, 0, NULL);
 	ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_AUTO);
 
-	error = if_initialize(ifp);
-	if (error != 0)
-		goto cleanup_ifmedia;
+	if_initialize(ifp);
 
 	switch (lagg_iftype) {
 	case LAGG_IF_TYPE_ETHERNET:
@@ -406,9 +404,6 @@ lagg_clone_create(struct if_clone *ifc, int unit)
 
 	return 0;
 
-cleanup_ifmedia:
-	ifmedia_fini(&sc->sc_media);
-	lagg_teardown_sysctls(sc);
 destroy_psz:
 	pserialize_destroy(sc->sc_psz);
 	mutex_destroy(&sc->sc_lock);

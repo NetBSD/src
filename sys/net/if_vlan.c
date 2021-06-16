@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.153 2020/09/26 18:38:09 roy Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.154 2021/06/16 00:21:19 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.153 2020/09/26 18:38:09 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.154 2021/06/16 00:21:19 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -333,7 +333,6 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 	struct ifvlan *ifv;
 	struct ifnet *ifp;
 	struct ifvlan_linkmib *mib;
-	int rv;
 
 	ifv = malloc(sizeof(struct ifvlan), M_DEVBUF, M_WAITOK | M_ZERO);
 	mib = kmem_zalloc(sizeof(struct ifvlan_linkmib), KM_SLEEP);
@@ -362,14 +361,7 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_transmit = vlan_transmit;
 	ifp->if_ioctl = vlan_ioctl;
 	IFQ_SET_READY(&ifp->if_snd);
-
-	rv = if_initialize(ifp);
-	if (rv != 0) {
-		aprint_error("%s: if_initialize failed(%d)\n", ifp->if_xname,
-		    rv);
-		goto fail;
-	}
-
+	if_initialize(ifp);
 	/*
 	 * Set the link state to down.
 	 * When the parent interface attaches we will use that link state.
@@ -380,18 +372,6 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 	vlan_reset_linkname(ifp);
 	if_register(ifp);
 	return 0;
-
-fail:
-	mutex_enter(&ifv_list.lock);
-	LIST_REMOVE(ifv, ifv_list);
-	mutex_exit(&ifv_list.lock);
-
-	mutex_destroy(&ifv->ifv_lock);
-	psref_target_destroy(&ifv->ifv_mib->ifvm_psref, ifvm_psref_class);
-	kmem_free(ifv->ifv_mib, sizeof(struct ifvlan_linkmib));
-	free(ifv, M_DEVBUF);
-
-	return rv;
 }
 
 static int

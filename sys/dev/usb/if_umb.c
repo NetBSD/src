@@ -1,4 +1,4 @@
-/*	$NetBSD: if_umb.c,v 1.19 2020/03/24 07:12:16 maxv Exp $ */
+/*	$NetBSD: if_umb.c,v 1.20 2021/06/16 00:21:19 riastradh Exp $ */
 /*	$OpenBSD: if_umb.c,v 1.20 2018/09/10 17:00:45 gerhard Exp $ */
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.19 2020/03/24 07:12:16 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.20 2021/06/16 00:21:19 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -311,7 +311,6 @@ umb_attach(device_t parent, device_t self, void *aux)
 	int	 altnum;
 	int	 s;
 	struct ifnet *ifp;
-	int rv;
 
 	sc->sc_dev = self;
 	sc->sc_udev = uiaa->uiaa_device;
@@ -532,12 +531,7 @@ umb_attach(device_t parent, device_t self, void *aux)
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* attach the interface */
-	rv = if_initialize(ifp);
-	if (rv != 0) {
-		aprint_error_dev(self, "if_initialize failed(%d)\n", rv);
-		splx(s);
-		return;
-	}
+	if_initialize(ifp);
 	if_register(ifp);
 	if_alloc_sadl(ifp);
 

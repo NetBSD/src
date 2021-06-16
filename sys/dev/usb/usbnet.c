@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.41 2021/04/25 05:15:20 rin Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.42 2021/06/16 00:21:19 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.41 2021/04/25 05:15:20 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.42 2021/06/16 00:21:19 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1452,11 +1452,7 @@ usbnet_attach_ifp(struct usbnet *un,
 		unp->unp_link = true;
 
 	/* Attach the interface. */
-	int rv = if_initialize(ifp);
-	if (rv != 0) {
-		aprint_error_dev(un->un_dev, "if_initialize failed: %d\n", rv);
-		return;
-	}
+	if_initialize(ifp);
 	if (ifp->_if_input == NULL)
 		ifp->if_percpuq = if_percpuq_create(ifp);
 	if_register(ifp);
