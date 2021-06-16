@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.217 2021/06/14 15:35:34 mlelstv Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.218 2021/06/16 13:20:49 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.217 2021/06/14 15:35:34 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.218 2021/06/16 13:20:49 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -223,7 +223,7 @@ usbd_status
 usbd_open_pipe_ival(struct usbd_interface *iface, uint8_t address,
 		    uint8_t flags, struct usbd_pipe **pipe, int ival)
 {
-	struct usbd_pipe *p;
+	struct usbd_pipe *p = NULL;
 	struct usbd_endpoint *ep = NULL /* XXXGCC */;
 	bool piperef = false;
 	usbd_status err;
