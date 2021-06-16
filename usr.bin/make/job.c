@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.434 2021/06/16 03:56:59 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.435 2021/06/16 09:47:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -142,7 +142,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.434 2021/06/16 03:56:59 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.435 2021/06/16 09:47:51 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -1663,6 +1663,15 @@ JobStart(GNode *gn, bool special)
 	if (Lst_IsEmpty(&gn->commands)) {
 		job->cmdFILE = stdout;
 		run = false;
+
+		/*
+		 * We're serious here, but if the commands were bogus, we're
+		 * also dead...
+		 */
+		if (!cmdsOK) {
+			PrintOnError(gn, NULL); /* provide some clue */
+			DieHorribly();
+		}
 	} else if (((gn->type & OP_MAKE) && !opts.noRecursiveExecute) ||
 	    (!opts.noExecute && !opts.touchFlag)) {
 		/*
