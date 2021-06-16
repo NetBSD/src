@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.278 2021/05/18 17:05:45 sjg Exp $
+# $NetBSD: Makefile,v 1.279 2021/06/16 09:39:48 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -206,6 +206,7 @@ TESTS+=		job-flags
 TESTS+=		job-output-long-lines
 TESTS+=		job-output-null
 TESTS+=		jobs-empty-commands
+TESTS+=		jobs-empty-commands-error
 TESTS+=		jobs-error-indirect
 TESTS+=		jobs-error-nested
 TESTS+=		jobs-error-nested-make
