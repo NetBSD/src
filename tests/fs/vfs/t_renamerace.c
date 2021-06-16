@@ -1,4 +1,4 @@
-/*	$NetBSD: t_renamerace.c,v 1.40 2020/09/05 02:55:39 riastradh Exp $	*/
+/*	$NetBSD: t_renamerace.c,v 1.41 2021/06/16 23:58:07 riastradh Exp $	*/
 
 /*
  * Modified for rump and atf from a program supplied
@@ -254,6 +254,8 @@ renamerace_cycle(const atf_tc_t *tc, const char *mp)
 		atf_tc_expect_fail("assertion \"dfd\" failed");
 	if (FSTYPE_NFS(tc))
 		atf_tc_expect_fail("mkdir fails with ESTALE");
+	if (FSTYPE_UDF(tc))
+		atf_tc_expect_fail("sometimes fails with ENOSPC, PR kern/56253");
 
 	/* XXX: msdosfs also sometimes hangs */
 	if (FSTYPE_MSDOS(tc))
@@ -276,6 +278,9 @@ renamerace_cycle(const atf_tc_t *tc, const char *mp)
 	pthread_join(pt_rename2, NULL);
 	alarm(0);
 	RL(rump_sys_chdir("/"));
+
+	if (FSTYPE_UDF(tc))
+		atf_tc_fail("PR kern/56253 did not trigger this time");
 
 	/*
 	 * Doesn't always trigger when run on a slow backend
