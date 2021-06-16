@@ -1,6 +1,7 @@
-# $NetBSD: Makefile.compiler-rt,v 1.12 2020/04/24 00:22:57 rin Exp $
+# $NetBSD: Makefile.compiler-rt,v 1.13 2021/06/16 05:21:09 rin Exp $
 
-COMPILER_RT_SRCDIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist
+COMPILER_RT_DIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt
+COMPILER_RT_SRCDIR=	${COMPILER_RT_DIR}/dist
 
 .if ${MACHINE_ARCH} == "powerpc"
 COMPILER_RT_CPU_DIR=	${COMPILER_RT_SRCDIR}/lib/builtins/ppc
@@ -134,3 +135,6 @@ CPPFLAGS.int_util.c+=	-DKERNEL_USE
 COPTS.udivmoddi4.c+=	-fnon-call-exceptions
 . endif
 .endif
+
+# XXX This makes no binary changes at the moment.
+.include "${COMPILER_RT_DIR}/abi.mk"
