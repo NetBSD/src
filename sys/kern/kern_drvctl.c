@@ -1,4 +1,4 @@
-/* $NetBSD: kern_drvctl.c,v 1.48 2021/06/12 12:14:03 riastradh Exp $ */
+/* $NetBSD: kern_drvctl.c,v 1.49 2021/06/16 00:19:46 riastradh Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.48 2021/06/12 12:14:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.49 2021/06/16 00:19:46 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -318,11 +318,15 @@ rescanbus(const char *busname, const char *ifattr,
 	    !d->dv_cfdriver->cd_attrs)
 		return ENODEV;
 
-	/* allow to omit attribute if there is exactly one */
+	/* rescan all ifattrs if none is specified */
 	if (!ifattr) {
-		if (d->dv_cfdriver->cd_attrs[1])
-			return EINVAL;
-		ifattr = d->dv_cfdriver->cd_attrs[0]->ci_name;
+		rc = 0;
+		for (ap = d->dv_cfdriver->cd_attrs; *ap; ap++) {
+			rc = (*d->dv_cfattach->ca_rescan)(d, (*ap)->ci_name,
+			    locs);
+			if (rc)
+				break;
+		}
 	} else {
 		/* check for valid attribute passed */
 		for (ap = d->dv_cfdriver->cd_attrs; *ap; ap++)
@@ -330,9 +334,9 @@ rescanbus(const char *busname, const char *ifattr,
 				break;
 		if (!*ap)
 			return EINVAL;
+		rc = (*d->dv_cfattach->ca_rescan)(d, ifattr, locs);
 	}
 
-	rc = (*d->dv_cfattach->ca_rescan)(d, ifattr, locs);
 	config_deferred(NULL);
 	return rc;
 }
