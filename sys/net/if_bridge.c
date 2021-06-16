@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.179 2021/02/19 14:51:59 christos Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.180 2021/06/16 00:21:19 riastradh Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.179 2021/02/19 14:51:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.180 2021/06/16 00:21:19 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -451,19 +451,7 @@ bridge_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_addrlen = 0;
 	ifp->if_dlt = DLT_EN10MB;
 	ifp->if_hdrlen = ETHER_HDR_LEN;
-
-	error = if_initialize(ifp);
-	if (error != 0) {
-		pserialize_destroy(sc->sc_iflist_psref.bip_psz);
-		mutex_destroy(&sc->sc_iflist_psref.bip_lock);
-		callout_destroy(&sc->sc_brcallout);
-		callout_destroy(&sc->sc_bstpcallout);
-		workqueue_destroy(sc->sc_rtage_wq);
-		bridge_rtable_fini(sc);
-		kmem_free(sc, sizeof(*sc));
-
-		return error;
-	}
+	if_initialize(ifp);
 
 	/*
 	 * Set the link state to down.

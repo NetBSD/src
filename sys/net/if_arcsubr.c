@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.82 2020/08/28 06:23:42 ozaki-r Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.83 2021/06/16 00:21:19 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.82 2020/08/28 06:23:42 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.83 2021/06/16 00:21:19 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -605,7 +605,6 @@ int
 arc_ifattach(struct ifnet *ifp, uint8_t lla)
 {
 	struct arccom *ac;
-	int rv;
 
 	ifp->if_type = IFT_ARCNET;
 	ifp->if_addrlen = 1;
@@ -627,9 +626,7 @@ arc_ifattach(struct ifnet *ifp, uint8_t lla)
 		log(LOG_ERR,"%s: link address 0 reserved for broadcasts.  Please change it and ifconfig %s down up\n",
 		   ifp->if_xname, ifp->if_xname);
 	}
-	rv = if_attach(ifp);
-	if (rv != 0)
-		return rv;
+	if_attach(ifp);
 
 	if_set_sadl(ifp, &lla, sizeof(lla), true);
 

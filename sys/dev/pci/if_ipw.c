@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.73 2020/01/30 06:03:34 thorpej Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.74 2021/06/16 00:21:18 riastradh Exp $	*/
 /*	FreeBSD: src/sys/dev/ipw/if_ipw.c,v 1.15 2005/11/13 17:17:40 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.73 2020/01/30 06:03:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.74 2021/06/16 00:21:18 riastradh Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -298,13 +298,7 @@ ipw_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(sc->sc_dev, "802.11 address %s\n",
 	    ether_sprintf(ic->ic_myaddr));
 
-	error = if_initialize(ifp);
-	if (error != 0) {
-		ifp->if_softc = NULL; /* For ipw_detach(). */
-		aprint_error_dev(sc->sc_dev, "if_initialize failed(%d)\n",
-		    error);
-		goto fail;
-	}
+	if_initialize(ifp);
 	ieee80211_ifattach(ic);
 	/* Use common softint-based if_input */
 	ifp->if_percpuq = if_percpuq_create(ifp);

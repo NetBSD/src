@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hvn.c,v 1.20 2021/01/29 04:38:49 nonaka Exp $	*/
+/*	$NetBSD: if_hvn.c,v 1.21 2021/06/16 00:21:18 riastradh Exp $	*/
 /*	$OpenBSD: if_hvn.c,v 1.39 2018/03/11 14:31:34 mikeb Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hvn.c,v 1.20 2021/01/29 04:38:49 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hvn.c,v 1.21 2021/06/16 00:21:18 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -243,7 +243,6 @@ hvn_attach(device_t parent, device_t self, void *aux)
 	struct vmbus_attach_args *aa = aux;
 	struct ifnet *ifp = SC2IFP(sc);
 	uint8_t enaddr[ETHER_ADDR_LEN];
-	int error;
 
 	sc->sc_dev = self;
 	sc->sc_vmbus = (struct vmbus_softc *)device_private(parent);
@@ -302,11 +301,7 @@ hvn_attach(device_t parent, device_t self, void *aux)
 	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_MANUAL, 0, NULL);
 	ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_MANUAL);
 
-	error = if_initialize(ifp);
-	if (error) {
-		aprint_error_dev(self, "if_initialize failed(%d)\n", error);
-		goto fail3;
-	}
+	if_initialize(ifp);
 	sc->sc_ipq = if_percpuq_create(ifp);
 	if_deferred_start_init(ifp, NULL);
 

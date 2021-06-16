@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iavf.c,v 1.13 2021/03/05 13:21:07 yamaguchi Exp $	*/
+/*	$NetBSD: if_iavf.c,v 1.14 2021/06/16 00:21:18 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iavf.c,v 1.13 2021/03/05 13:21:07 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iavf.c,v 1.14 2021/06/16 00:21:18 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -876,11 +876,7 @@ iavf_attach(device_t parent, device_t self, void *aux)
 		goto teardown_wqs;
 	}
 
-	error = if_initialize(ifp);
-	if (error != 0) {
-		aprint_error_dev(self, "if_initialize failed=%d\n", error);
-		goto teardown_wqs;
-	}
+	if_initialize(ifp);
 
 	strlcpy(ifp->if_xname, device_xname(self), IFNAMSIZ);
 

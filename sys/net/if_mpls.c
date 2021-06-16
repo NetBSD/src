@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mpls.c,v 1.36 2020/01/29 04:18:34 thorpej Exp $ */
+/*	$NetBSD: if_mpls.c,v 1.37 2021/06/16 00:21:19 riastradh Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.36 2020/01/29 04:18:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.37 2021/06/16 00:21:19 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -139,7 +139,6 @@ static int
 mpls_clone_create(struct if_clone *ifc, int unit)
 {
 	struct mpls_softc *sc;
-	int rv;
 
 	atomic_inc_uint(&mpls_count);
 	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK | M_ZERO);
@@ -156,12 +155,7 @@ mpls_clone_create(struct if_clone *ifc, int unit)
 	sc->sc_if.if_output = mpls_output;
 	sc->sc_if.if_ioctl = mpls_ioctl;
 
-	rv = if_attach(&sc->sc_if);
-	if (rv != 0) {
-		free(sc, M_DEVBUF);
-		atomic_dec_uint(&mpls_count);
-		return rv;
-	}
+	if_attach(&sc->sc_if);
 	if_alloc_sadl(&sc->sc_if);
 	bpf_attach(&sc->sc_if, DLT_NULL, sizeof(uint32_t));
 	return 0;
