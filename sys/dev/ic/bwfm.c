@@ -1,4 +1,4 @@
-/* $NetBSD: bwfm.c,v 1.30 2021/04/13 04:13:52 mrg Exp $ */
+/* $NetBSD: bwfm.c,v 1.31 2021/06/16 00:21:18 riastradh Exp $ */
 /* $OpenBSD: bwfm.c,v 1.5 2017/10/16 22:27:16 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -422,15 +422,7 @@ bwfm_attach(struct bwfm_softc *sc)
 	IFQ_SET_READY(&ifp->if_snd);
 	memcpy(ifp->if_xname, DEVNAME(sc), IFNAMSIZ);
 
-	error = if_initialize(ifp);
-	if (error != 0) {
-		printf("%s: if_initialize failed(%d)\n", DEVNAME(sc), error);
-		pool_cache_destroy(sc->sc_freetask);
-		workqueue_destroy(sc->sc_taskq);
-
-		return; /* Error */
-	}
-
+	if_initialize(ifp);
 	ieee80211_ifattach(ic);
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = bwfm_newstate;

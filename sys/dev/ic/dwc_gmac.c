@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.73 2021/05/13 05:56:39 msaitoh Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.74 2021/06/16 00:21:18 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.73 2021/05/13 05:56:39 msaitoh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.74 2021/06/16 00:21:18 riastradh Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -188,7 +188,6 @@ dwc_gmac_attach(struct dwc_gmac_softc *sc, int phy_id, uint32_t mii_clk)
 	struct mii_data * const mii = &sc->sc_mii;
 	struct ifnet * const ifp = &sc->sc_ec.ec_if;
 	prop_dictionary_t dict;
-	int rv;
 
 	mutex_init(&sc->sc_mdio_lock, MUTEX_DEFAULT, IPL_NET);
 	sc->sc_mii_clk = mii_clk & 7;
@@ -332,9 +331,7 @@ dwc_gmac_attach(struct dwc_gmac_softc *sc, int phy_id, uint32_t mii_clk)
 	 * Ready, attach interface
 	 */
 	/* Attach the interface. */
-	rv = if_initialize(ifp);
-	if (rv != 0)
-		goto fail_2;
+	if_initialize(ifp);
 	sc->sc_ipq = if_percpuq_create(&sc->sc_ec.ec_if);
 	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, enaddr);
@@ -355,12 +352,6 @@ dwc_gmac_attach(struct dwc_gmac_softc *sc, int phy_id, uint32_t mii_clk)
 
 	return 0;
 
-fail_2:
-	ifmedia_removeall(&mii->mii_media);
-	mii_detach(mii, MII_PHY_ANY, MII_OFFSET_ANY);
-	mutex_destroy(&sc->sc_txq.t_mtx);
-	mutex_destroy(&sc->sc_rxq.r_mtx);
-	mutex_obj_free(sc->sc_lock);
 fail:
 	dwc_gmac_free_rx_ring(sc, &sc->sc_rxq);
 	dwc_gmac_free_tx_ring(sc, &sc->sc_txq);

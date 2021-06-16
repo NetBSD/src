@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.107 2020/01/29 04:28:27 thorpej Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.108 2021/06/16 00:21:19 riastradh Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $ */
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.107 2020/01/29 04:28:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.108 2021/06/16 00:21:19 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -236,16 +236,7 @@ stf_clone_create(struct if_clone *ifc, int unit)
 	sc->sc_if.if_output = stf_output;
 	sc->sc_if.if_type   = IFT_STF;
 	sc->sc_if.if_dlt    = DLT_NULL;
-	error = if_attach(&sc->sc_if);
-	if (error != 0) {
-		aprint_error("%s: if_initialize failed(%d)\n",
-		    if_name(&sc->sc_if), error);
-		encap_lock_enter();
-		encap_detach(sc->encap_cookie);
-		encap_lock_exit();
-		free(sc, M_DEVBUF);
-		return error;
-	}
+	if_attach(&sc->sc_if);
 	if_alloc_sadl(&sc->sc_if);
 	bpf_attach(&sc->sc_if, DLT_NULL, sizeof(u_int));
 	LIST_INSERT_HEAD(&stf_softc_list, sc, sc_list);
