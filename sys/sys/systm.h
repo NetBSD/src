@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.300 2021/03/14 02:53:57 rin Exp $	*/
+/*	$NetBSD: systm.h,v 1.301 2021/06/16 11:55:10 rin Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -46,6 +46,7 @@
 #include "opt_kasan.h"
 #include "opt_kcsan.h"
 #include "opt_kmsan.h"
+#include "opt_modular.h"
 #include "opt_wsdisplay_compat.h"
 #endif
 #if !defined(_KERNEL) && !defined(_STANDALONE)
@@ -728,7 +729,7 @@ void	kernconfig_unlock(void);
 bool	kernconfig_is_held(void);
 #endif
 
-#if defined(MULTIPROCESSOR) || defined(_MODULE)
+#if defined(MULTIPROCESSOR) || defined(MODULAR) || defined(_MODULE)
 #define	KERNEL_LOCK(count, lwp)			\
 do {						\
 	if ((count) != 0)			\
