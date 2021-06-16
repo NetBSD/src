@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.50 2021/05/16 11:11:37 rillig Exp $
+# $NetBSD: t_integration.sh,v 1.51 2021/06/16 10:19:23 rillig Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -25,9 +25,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-LINT1=/usr/libexec/lint1
+lint1=/usr/libexec/lint1
 
-Names=
+test_case_names=
+
 
 extract_flags()
 {
@@ -59,46 +60,43 @@ check_lint1()
 	local exp="${src%.c}.exp"
 	local src_ln="${src%.c}.ln"
 	local wrk_ln="${1%.c}.ln"
-	local flags="$(extract_flags "${src}")"
+	local flags="$(extract_flags "$src")"
 
-	if [ ! -f "${src_ln}" ]; then
-		src_ln="/dev/null"
-		wrk_ln="/dev/null"
+	if [ ! -f "$src_ln" ]; then
+		src_ln='/dev/null'
+		wrk_ln='/dev/null'
 	fi
 
-	if [ -f "${exp}" ]; then
+	if [ -f "$exp" ]; then
 		# shellcheck disable=SC2086
-		atf_check -s not-exit:0 -o "file:${exp}" -e empty \
-		    ${LINT1} ${flags} "${src}" "${wrk_ln}"
+		atf_check -s not-exit:0 -o "file:$exp" -e empty \
+		    "$lint1" $flags "$src" "$wrk_ln"
 	else
 		# shellcheck disable=SC2086
 		atf_check -s exit:0 \
-		    ${LINT1} ${flags} "${src}" "${wrk_ln}"
+		    "$lint1" $flags "$src" "$wrk_ln"
 	fi
 
-	if [ "${src_ln}" != "/dev/null" ]; then
-		atf_check -o "file:${src_ln}" cat "${wrk_ln}"
+	if [ "$src_ln" != '/dev/null' ]; then
+		atf_check -o "file:$src_ln" cat "$wrk_ln"
 	fi
 }
 
 test_case()
 {
-	local name="${1}"; shift
-	local descr="${*}"
+	local name="$1"
 
-	atf_test_case ${name}
+	atf_test_case "$name"
 	eval "${name}_head() {
-		if [ \"${descr}\" ]; then
-			atf_set \"descr\" \"${descr}\"
-		fi
-		atf_set \"require.progs\" \"${LINT1}\"
+		atf_set 'require.progs' '$lint1'
 	}"
 	eval "${name}_body() {
-		check_lint1 ${name}.c
+		check_lint1 '$name.c'
 	}"
 
-	Names="${Names} ${name}"
+	test_case_names="$test_case_names $name"
 }
+
 
 test_case d_bltinoffsetof
 test_case d_c99_anon_struct
@@ -126,7 +124,6 @@ test_case d_return_type
 test_case d_type_question_colon
 test_case d_typefun
 test_case d_typename_as_var
-
 test_case d_c99_struct_init
 test_case d_c99_union_init1
 test_case d_c99_union_init2
@@ -137,27 +134,22 @@ test_case d_nested_structs
 test_case d_packed_structs
 test_case d_pr_22119
 test_case d_struct_init_nested
-
 test_case d_cast_init
 test_case d_cast_init2
 test_case d_cast_lhs
-
 test_case d_gcc_func
 test_case d_c99_func
-
 test_case d_gcc_variable_array_init
 test_case d_c9x_array_init
 test_case d_c99_decls_after_stmt
 test_case d_c99_decls_after_stmt3
 test_case d_nolimit_init
 test_case d_zero_sized_arrays
-
 test_case d_compound_literals1
 test_case d_compound_literals2
 test_case d_gcc_compound_statements1
 test_case d_gcc_compound_statements2
 test_case d_gcc_compound_statements3
-
 test_case d_cvt_in_ternary
 test_case d_cvt_constant
 test_case d_ellipsis_in_switch
@@ -173,19 +165,16 @@ test_case d_type_conv2
 test_case d_type_conv3
 test_case d_incorrect_array_size
 test_case d_long_double_int
-
 test_case emit
 test_case expr_range
-
+test_case feat_stacktrace
 test_case gcc_attribute
 test_case gcc_attribute_aligned
 test_case gcc_bit_field_types
 test_case gcc_init_compound_literal
 test_case gcc_typeof_after_statement
-
 test_case op_colon
 
-test_case feat_stacktrace
 
 test_case all_messages
 all_messages_body()
@@ -195,8 +184,8 @@ all_messages_body()
 	failed=""
 
 	for msg in $(seq 0 344); do
-		name="$(printf 'msg_%03d.c' "${msg}")"
-		check_lint1 "${name}" \
+		name="$(printf 'msg_%03d.c' "$msg")"
+		check_lint1 "$name" \
 		|| failed="$failed${failed:+ }$name"
 	done
 
@@ -208,7 +197,7 @@ all_messages_body()
 
 atf_init_test_cases()
 {
-	for name in ${Names}; do
-		atf_add_test_case ${name}
+	for name in $test_case_names; do
+		atf_add_test_case "$name"
 	done
 }
