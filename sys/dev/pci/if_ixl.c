@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.76 2021/02/09 15:05:49 jakllsch Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.77 2021/06/16 00:21:18 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.76 2021/02/09 15:05:49 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.77 2021/06/16 00:21:18 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1316,11 +1316,7 @@ ixl_attach(device_t parent, device_t self, void *aux)
 	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_NONE, 0, NULL);
 	ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_AUTO);
 
-	rv = if_initialize(ifp);
-	if (rv != 0) {
-		aprint_error_dev(self, "if_initialize failed=%d\n", rv);
-		goto teardown_wqs;
-	}
+	if_initialize(ifp);
 
 	sc->sc_ipq = if_percpuq_create(ifp);
 	if_deferred_start_init(ifp, NULL);

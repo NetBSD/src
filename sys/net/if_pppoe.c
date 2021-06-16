@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.176 2021/05/19 03:44:46 yamaguchi Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.177 2021/06/16 00:21:19 riastradh Exp $ */
 
 /*
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.176 2021/05/19 03:44:46 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.177 2021/06/16 00:21:19 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -389,9 +389,7 @@ pppoe_clone_create(struct if_clone *ifc, int unit)
 	callout_init(&sc->sc_timeout, CALLOUT_MPSAFE);
 	callout_setfunc(&sc->sc_timeout, pppoe_timeout_co, sc);
 
-	rv = if_initialize(ifp);
-	if (rv != 0)
-		goto destroy_timeout;
+	if_initialize(ifp);
 
 	ifp->if_percpuq = if_percpuq_create(ifp);
 
@@ -408,9 +406,6 @@ pppoe_clone_create(struct if_clone *ifc, int unit)
 
 	return 0;
 
-destroy_timeout:
-	callout_destroy(&sc->sc_timeout);
-	workqueue_destroy(sc->sc_timeout_wq);
 destroy_sclock:
 	rw_destroy(&sc->sc_lock);
 	kmem_free(sc, sizeof(*sc));

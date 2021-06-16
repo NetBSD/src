@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.63 2021/04/29 17:55:51 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.64 2021/06/16 00:21:19 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.63 2021/04/29 17:55:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.64 2021/06/16 00:21:19 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -3558,7 +3558,6 @@ wg_destroy_peer_name(struct wg_softc *wg, const char *name)
 static int
 wg_if_attach(struct wg_softc *wg)
 {
-	int error;
 
 	wg->wg_if.if_addrlen = 0;
 	wg->wg_if.if_mtu = WG_MTU;
@@ -3577,10 +3576,7 @@ wg_if_attach(struct wg_softc *wg)
 #ifdef ALTQ
 	IFQ_SET_READY(&wg->wg_if.if_snd);
 #endif
-
-	error = if_initialize(&wg->wg_if);
-	if (error != 0)
-		return error;
+	if_initialize(&wg->wg_if);
 
 	wg->wg_if.if_link_state = LINK_STATE_DOWN;
 	if_alloc_sadl(&wg->wg_if);

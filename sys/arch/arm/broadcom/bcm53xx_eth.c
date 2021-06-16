@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.40 2020/02/03 08:00:35 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.41 2021/06/16 00:21:17 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -407,12 +407,7 @@ bcmeth_ccb_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Attach the interface.
 	 */
-	error = if_initialize(ifp);
-	if (error != 0) {
-		aprint_error_dev(sc->sc_dev, "if_initialize failed(%d)\n",
-		    error);
-		goto fail_5;
-	}
+	if_initialize(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
 	if_register(ifp);
 
@@ -433,8 +428,6 @@ bcmeth_ccb_attach(device_t parent, device_t self, void *aux)
 
 	return;
 
-fail_5:
-	ifmedia_removeall(&sc->sc_media);
 fail_4:
 	intr_disestablish(sc->sc_ih);
 fail_3:

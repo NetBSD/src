@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.81 2020/02/25 03:26:18 ozaki-r Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.82 2021/06/16 00:21:19 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.81 2020/02/25 03:26:18 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.82 2021/06/16 00:21:19 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -164,7 +164,7 @@ allocif(int unit, struct shmif_sc **scp)
 	struct shmif_sc *sc;
 	struct ifnet *ifp;
 	uint64_t randnum;
-	int error;
+	int error = 0;
 
 	randnum = cprng_strong64();
 	memcpy(&enaddr[2], &randnum, 4);
@@ -195,16 +195,7 @@ allocif(int unit, struct shmif_sc **scp)
 	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&sc->sc_cv, "shmifcv");
 
-	error = if_initialize(ifp);
-	if (error != 0) {
-		aprint_error("shmif%d: if_initialize failed(%d)\n", unit,
-		    error);
-		cv_destroy(&sc->sc_cv);
-		mutex_destroy(&sc->sc_mtx);
-		kmem_free(sc, sizeof(*sc));
-
-		return error;
-	}
+	if_initialize(ifp);
 #if 1
 	char buf[256];
 
@@ -224,7 +215,6 @@ allocif(int unit, struct shmif_sc **scp)
 	if (scp)
 		*scp = sc;
 
-	error = 0;
 	if (rump_threads) {
 		error = kthread_create(PRI_NONE,
 		    KTHREAD_MPSAFE | KTHREAD_MUSTJOIN, NULL,
@@ -237,7 +227,7 @@ allocif(int unit, struct shmif_sc **scp)
 		shmif_unclone(ifp);
 	}
 
-	return error;
+	return 0;
 }
 
 static int

@@ -1,8 +1,8 @@
-/* $NetBSD: if_srt.c,v 1.31 2020/01/29 04:28:27 thorpej Exp $ */
+/* $NetBSD: if_srt.c,v 1.32 2021/06/16 00:21:19 riastradh Exp $ */
 /* This file is in the public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.31 2020/01/29 04:28:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.32 2021/06/16 00:21:19 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -272,7 +272,6 @@ static int
 srt_clone_create(struct if_clone *cl, int unit)
 {
 	struct srt_softc *sc;
-	int rv;
 
 	if (unit < 0 || unit > SRT_MAXUNIT)
 		return ENXIO;
@@ -292,13 +291,7 @@ srt_clone_create(struct if_clone *cl, int unit)
 	sc->intf.if_ioctl = &srt_if_ioctl;
 	sc->intf.if_output = &srt_if_output;
 	sc->intf.if_dlt = DLT_RAW;
-	rv = if_attach(&sc->intf);
-	if (rv != 0) {
-		aprint_error("%s: if_initialize failed(%d)\n",
-		    sc->intf.if_xname, rv);
-		free(sc, M_DEVBUF);
-		return rv;
-	}
+	if_attach(&sc->intf);
 	if_alloc_sadl(&sc->intf);
 #ifdef BPFILTER_NOW_AVAILABLE
 	bpf_attach(&sc->intf, 0, 0);

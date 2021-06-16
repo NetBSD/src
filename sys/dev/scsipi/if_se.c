@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.112 2020/09/29 02:58:52 msaitoh Exp $	*/
+/*	$NetBSD: if_se.c,v 1.113 2021/06/16 00:21:19 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.112 2020/09/29 02:58:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.113 2021/06/16 00:21:19 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -368,11 +368,7 @@ seattach(device_t parent, device_t self, void *aux)
 	sc->sc_attach_state = 1;
 
 	/* Attach the interface. */
-	rv = if_initialize(ifp);
-	if (rv != 0) {
-		sedetach(sc->sc_dev, 0);
-		return; /* Error */
-	}
+	if_initialize(ifp);
 
 	snprintf(wqname, sizeof(wqname), "%sRx", device_xname(sc->sc_dev));
 	rv = workqueue_create(&sc->sc_recv_wq, wqname, se_recv_worker, sc,

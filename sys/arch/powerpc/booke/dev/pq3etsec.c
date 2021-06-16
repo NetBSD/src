@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.54 2021/04/24 23:36:46 thorpej Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.55 2021/06/16 00:21:18 riastradh Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.54 2021/04/24 23:36:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.55 2021/06/16 00:21:18 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -804,12 +804,7 @@ pq3etsec_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Attach the interface.
 	 */
-	error = if_initialize(ifp);
-	if (error != 0) {
-		aprint_error_dev(sc->sc_dev, "if_initialize failed(%d)\n",
-		    error);
-		goto fail_10;
-	}
+	if_initialize(ifp);
 	pq3etsec_sysctl_setup(NULL, sc);
 	if_attach(ifp);
 	if_deferred_start_init(ifp, NULL);
@@ -840,9 +835,6 @@ pq3etsec_attach(device_t parent, device_t self, void *aux)
 	    NULL, xname, "mii ticks");
 	return;
 
-fail_10:
-	ifmedia_removeall(&mii->mii_media);
-	mii_detach(mii, sc->sc_phy_addr, MII_OFFSET_ANY);
 fail_9:
 	softint_disestablish(sc->sc_soft_ih);
 fail_8:

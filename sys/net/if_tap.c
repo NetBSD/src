@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.121 2020/12/18 01:31:49 thorpej Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.122 2021/06/16 00:21:19 riastradh Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.121 2020/12/18 01:31:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.122 2021/06/16 00:21:19 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -346,15 +346,7 @@ tap_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ec.ec_capabilities = ETHERCAP_VLAN_MTU | ETHERCAP_JUMBO_MTU;
 
 	/* Those steps are mandatory for an Ethernet driver. */
-	error = if_initialize(ifp);
-	if (error != 0) {
-		aprint_error_dev(self, "if_initialize failed(%d)\n", error);
-		pmf_device_deregister(self);
-		mutex_destroy(&sc->sc_lock);
-		seldestroy(&sc->sc_rsel);
-
-		return; /* Error */
-	}
+	if_initialize(ifp);
 	ifp->if_percpuq = if_percpuq_create(ifp);
 	ether_ifattach(ifp, enaddr);
 	/* Opening the device will bring the link state up. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.112 2020/10/14 16:10:32 roy Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.113 2021/06/16 00:21:19 riastradh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.112 2020/10/14 16:10:32 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.113 2021/06/16 00:21:19 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -175,7 +175,6 @@ static int
 loop_clone_create(struct if_clone *ifc, int unit)
 {
 	struct ifnet *ifp;
-	int rv;
 
 	ifp = if_alloc(IFT_LOOP);
 
@@ -198,11 +197,7 @@ loop_clone_create(struct if_clone *ifc, int unit)
 	IFQ_SET_READY(&ifp->if_snd);
 	if (unit == 0)
 		lo0ifp = ifp;
-	rv = if_initialize(ifp);
-	if (rv != 0) {
-		if_free(ifp);
-		return rv;
-	}
+	if_initialize(ifp);
 	ifp->if_link_state = LINK_STATE_UP;
 	if_alloc_sadl(ifp);
 	bpf_attach(ifp, DLT_NULL, sizeof(u_int));

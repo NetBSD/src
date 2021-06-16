@@ -1,4 +1,4 @@
-/*	$NetBSD: if_virt.c,v 1.58 2020/02/01 22:45:01 thorpej Exp $	*/
+/*	$NetBSD: if_virt.c,v 1.59 2021/06/16 00:21:20 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008, 2013 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.58 2020/02/01 22:45:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.59 2021/06/16 00:21:20 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -121,13 +121,7 @@ virtif_clone(struct if_clone *ifc, int num)
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_dlt = DLT_EN10MB;
 
-	error = if_initialize(ifp);
-	if (error != 0) {
-		aprint_error("%s: if_initialize failed(%d)\n", ifp->if_xname,
-		    error);
-		goto fail_1;
-	}
-
+	if_initialize(ifp);
 	if_register(ifp);
 
 #ifndef RUMP_VIF_LINKSTR
@@ -140,17 +134,16 @@ virtif_clone(struct if_clone *ifc, int num)
 	sc->sc_linkstr = kmem_alloc(LINKSTRNUMLEN, KM_SLEEP);
 	if (sc->sc_linkstr == NULL) {
 		error = ENOMEM;
-		goto fail_2;
+		goto fail;
 	}
 	snprintf(sc->sc_linkstr, LINKSTRNUMLEN, "%d", sc->sc_num);
 	error = virtif_create(ifp);
 	if (error) {
-fail_2:
+fail:
 		if_detach(ifp);
 		if (sc->sc_linkstr != NULL)
 			kmem_free(sc->sc_linkstr, LINKSTRNUMLEN);
 #undef LINKSTRNUMLEN
-fail_1:
 		kmem_free(sc, sizeof(*sc));
 		ifp->if_softc = NULL;
 	}

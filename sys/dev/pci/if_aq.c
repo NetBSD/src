@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aq.c,v 1.26 2021/06/13 10:05:39 mlelstv Exp $	*/
+/*	$NetBSD: if_aq.c,v 1.27 2021/06/16 00:21:18 riastradh Exp $	*/
 
 /**
  * aQuantia Corporation Network Driver
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.26 2021/06/13 10:05:39 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.27 2021/06/16 00:21:18 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_aq.h"
@@ -1458,12 +1458,7 @@ aq_attach(device_t parent, device_t self, void *aux)
 	ifp->if_capabilities |= IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_TCPv6_Rx;
 	ifp->if_capabilities |= IFCAP_CSUM_UDPv4_Rx | IFCAP_CSUM_UDPv6_Rx;
 
-	error = if_initialize(ifp);
-	if (error != 0) {
-		aprint_error_dev(sc->sc_dev, "if_initialize failed(%d)\n",
-		    error);
-		goto attach_failure;
-	}
+	if_initialize(ifp);
 	ifp->if_percpuq = if_percpuq_create(ifp);
 	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, sc->sc_enaddr.ether_addr_octet);

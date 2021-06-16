@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.135 2020/01/29 15:06:12 thorpej Exp $ */
+/* $NetBSD: rtw.c,v 1.136 2021/06/16 00:21:18 riastradh Exp $ */
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 David Young.  All rights
  * reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.135 2020/01/29 15:06:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.136 2021/06/16 00:21:18 riastradh Exp $");
 
 
 #include <sys/param.h>
@@ -4224,11 +4224,7 @@ rtw_attach(struct rtw_softc *sc)
 	/*
 	 * Call MI attach routines.
 	 */
-	rc = if_initialize(ifp);
-	if (rc != 0) {
-		aprint_error_dev(sc->sc_dev, "if_initialize failed(%d)\n", rc);
-		goto err;
-	}
+	if_initialize(ifp);
 	ieee80211_ifattach(ic);
 	/* Use common softint-based if_input */
 	ifp->if_percpuq = if_percpuq_create(ifp);

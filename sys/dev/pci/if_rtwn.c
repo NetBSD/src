@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtwn.c,v 1.19 2020/01/30 06:03:34 thorpej Exp $	*/
+/*	$NetBSD: if_rtwn.c,v 1.20 2021/06/16 00:21:18 riastradh Exp $	*/
 /*	$OpenBSD: if_rtwn.c,v 1.5 2015/06/14 08:02:47 stsp Exp $	*/
 #define	IEEE80211_NO_HT
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtwn.c,v 1.19 2020/01/30 06:03:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtwn.c,v 1.20 2021/06/16 00:21:18 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -359,13 +359,7 @@ rtwn_attach(device_t parent, device_t self, void *aux)
 	IFQ_SET_READY(&ifp->if_snd);
 	memcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 
-	error = if_initialize(ifp);
-	if (error != 0) {
-		ifp->if_softc = NULL; /* For rtwn_detach() */
-		aprint_error_dev(sc->sc_dev, "if_initialize failed(%d)\n",
-		    error);
-		goto fail;
-	}
+	if_initialize(ifp);
 	ieee80211_ifattach(ic);
 	/* Use common softint-based if_input */
 	ifp->if_percpuq = if_percpuq_create(ifp);
@@ -397,11 +391,6 @@ rtwn_attach(device_t parent, device_t self, void *aux)
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
-
-	return;
-
-fail:
-	rtwn_detach(self, 0);
 }
 
 static int

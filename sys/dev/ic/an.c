@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.74 2021/06/11 05:00:41 jdc Exp $	*/
+/*	$NetBSD: an.c,v 1.75 2021/06/16 00:21:18 riastradh Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.74 2021/06/11 05:00:41 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.75 2021/06/16 00:21:18 riastradh Exp $");
 
 
 #include <sys/param.h>
@@ -315,11 +315,7 @@ an_attach(struct an_softc *sc)
 	/*
 	 * Call MI attach routine.
 	 */
-	rv = if_initialize(ifp);
-	if (rv != 0) {
-		aprint_error_dev(sc->sc_dev, "if_initialize failed(%d)\n", rv);
-		goto fail_2;
-	}
+	if_initialize(ifp);
 	ieee80211_ifattach(ic);
 	ifp->if_percpuq = if_percpuq_create(ifp);
 	if_register(ifp);

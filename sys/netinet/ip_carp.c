@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.114 2020/10/14 13:43:56 roy Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.115 2021/06/16 00:21:19 riastradh Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.114 2020/10/14 13:43:56 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.115 2021/06/16 00:21:19 riastradh Exp $");
 
 /*
  * TODO:
@@ -843,7 +843,6 @@ carp_clone_create(struct if_clone *ifc, int unit)
 	extern int ifqmaxlen;
 	struct carp_softc *sc;
 	struct ifnet *ifp;
-	int rv;
 
 	sc = malloc(sizeof(*sc), M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (!sc)
@@ -877,15 +876,7 @@ carp_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_start = carp_start;
 	IFQ_SET_MAXLEN(&ifp->if_snd, ifqmaxlen);
 	IFQ_SET_READY(&ifp->if_snd);
-	rv = if_initialize(ifp);
-	if (rv != 0) {
-		callout_destroy(&sc->sc_ad_tmo);
-		callout_destroy(&sc->sc_md_tmo);
-		callout_destroy(&sc->sc_md6_tmo);
-		free(ifp->if_softc, M_DEVBUF);
-
-		return rv;
-	}
+	if_initialize(ifp);
 	ether_ifattach(ifp, NULL);
 	/* Overwrite ethernet defaults */
 	ifp->if_type = IFT_CARP;

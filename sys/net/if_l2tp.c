@@ -1,4 +1,4 @@
-/*	$NetBSD: if_l2tp.c,v 1.46 2020/10/25 08:18:39 roy Exp $	*/
+/*	$NetBSD: if_l2tp.c,v 1.47 2021/06/16 00:21:19 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.46 2020/10/25 08:18:39 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.47 2021/06/16 00:21:19 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -281,7 +281,6 @@ l2tp_clone_create(struct if_clone *ifc, int unit)
 int
 l2tpattach0(struct l2tp_softc *sc)
 {
-	int rv;
 
 	sc->l2tp_ec.ec_if.if_addrlen = 0;
 	sc->l2tp_ec.ec_if.if_mtu    = L2TP_MTU;
@@ -321,9 +320,7 @@ l2tpattach0(struct l2tp_softc *sc)
 	 * if_percpuq_enqueue(). However, that causes recursive softnet_lock
 	 * when NET_MPSAFE is not set.
 	 */
-	rv = if_attach(&sc->l2tp_ec.ec_if);
-	if (rv != 0)
-		return rv;
+	if_attach(&sc->l2tp_ec.ec_if);
 	if_link_state_change(&sc->l2tp_ec.ec_if, LINK_STATE_DOWN);
 	if_alloc_sadl(&sc->l2tp_ec.ec_if);
 	bpf_attach(&sc->l2tp_ec.ec_if, DLT_EN10MB, sizeof(struct ether_header));

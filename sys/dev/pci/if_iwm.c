@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.85 2020/05/22 20:27:16 thorpej Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.86 2021/06/16 00:21:18 riastradh Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.148 2016/11/19 21:07:08 stsp Exp	*/
 #define IEEE80211_NO_HT
 /*
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.85 2020/05/22 20:27:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.86 2021/06/16 00:21:18 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -8136,12 +8136,7 @@ iwm_attach(device_t parent, device_t self, void *aux)
 	IFQ_SET_READY(&ifp->if_snd);
 	memcpy(ifp->if_xname, DEVNAME(sc), IFNAMSIZ);
 
-	err = if_initialize(ifp);
-	if (err != 0) {
-		aprint_error_dev(sc->sc_dev, "if_initialize failed(%d)\n",
-		    err);
-		goto fail6;
-	}
+	if_initialize(ifp);
 #if 0
 	ieee80211_ifattach(ic);
 #else
@@ -8193,7 +8188,6 @@ iwm_attach(device_t parent, device_t self, void *aux)
 
 	return;
 
-fail6:	iwm_free_rx_ring(sc, &sc->rxq);
 fail5:	while (--txq_i >= 0)
 		iwm_free_tx_ring(sc, &sc->txq[txq_i]);
 fail4:	iwm_dma_contig_free(&sc->sched_dma);

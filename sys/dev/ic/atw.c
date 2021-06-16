@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.170 2020/01/29 14:09:58 thorpej Exp $  */
+/*	$NetBSD: atw.c,v 1.171 2021/06/16 00:21:18 riastradh Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.170 2020/01/29 14:09:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.171 2021/06/16 00:21:18 riastradh Exp $");
 
 
 #include <sys/param.h>
@@ -780,12 +780,7 @@ atw_attach(struct atw_softc *sc)
 	 * Call MI attach routines.
 	 */
 
-	error = if_initialize(ifp);
-	if (error != 0) {
-		aprint_error_dev(sc->sc_dev, "if_initialize failed(%d)\n",
-		    error);
-		goto fail_5;
-	}
+	if_initialize(ifp);
 	ieee80211_ifattach(ic);
 	/* Use common softint-based if_input */
 	ifp->if_percpuq = if_percpuq_create(ifp);

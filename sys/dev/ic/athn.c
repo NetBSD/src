@@ -1,4 +1,4 @@
-/*	$NetBSD: athn.c,v 1.24 2020/11/15 12:33:53 mlelstv Exp $	*/
+/*	$NetBSD: athn.c,v 1.25 2021/06/16 00:21:18 riastradh Exp $	*/
 /*	$OpenBSD: athn.c,v 1.83 2014/07/22 13:12:11 mpi Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: athn.c,v 1.24 2020/11/15 12:33:53 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athn.c,v 1.25 2021/06/16 00:21:18 riastradh Exp $");
 
 #ifndef _MODULE
 #include "athn_usb.h"		/* for NATHN_USB */
@@ -348,16 +348,7 @@ athn_attach(struct athn_softc *sc)
 	IFQ_SET_READY(&ifp->if_snd);
 	memcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 
-	error = if_initialize(ifp);
-	if (error != 0) {
-		aprint_error_dev(sc->sc_dev, "if_initialize failed(%d)\n",
-		    error);
-		pmf_event_deregister(sc->sc_dev, PMFE_RADIO_OFF,
-		    athn_pmf_wlan_off, false);
-		callout_destroy(&sc->sc_scan_to);
-		callout_destroy(&sc->sc_calib_to);
-		return error;
-	}
+	if_initialize(ifp);
 	ieee80211_ifattach(ic);
 	/* Use common softint-based if_input */
 	ifp->if_percpuq = if_percpuq_create(ifp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.154 2020/10/14 15:22:17 roy Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.155 2021/06/16 00:21:19 riastradh Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.154 2020/10/14 15:22:17 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.155 2021/06/16 00:21:19 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -379,7 +379,6 @@ gif_clone_create(struct if_clone *ifc, int unit)
 static int
 gifattach0(struct gif_softc *sc)
 {
-	int rv;
 
 	sc->gif_if.if_addrlen = 0;
 	sc->gif_if.if_mtu    = GIF_MTU;
@@ -395,9 +394,7 @@ gifattach0(struct gif_softc *sc)
 	sc->gif_if.if_dlt    = DLT_NULL;
 	sc->gif_if.if_softc  = sc;
 	IFQ_SET_READY(&sc->gif_if.if_snd);
-	rv = if_initialize(&sc->gif_if);
-	if (rv != 0)
-		return rv;
+	if_initialize(&sc->gif_if);
 
 	sc->gif_if.if_link_state = LINK_STATE_DOWN;
 	if_alloc_sadl(&sc->gif_if);

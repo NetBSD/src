@@ -1,4 +1,4 @@
-.\"	$NetBSD: usbnet.4,v 1.4 2019/09/20 10:34:54 mrg Exp $
+.\"	$NetBSD: usbnet.4,v 1.5 2021/06/16 00:21:17 riastradh Exp $
 .\"
 .\" Copyright (c) 2019 Matthew R. Green
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd August 24, 2019
+.Dd June 15, 2021
 .Dt USBNET 4
 .Os
 .Sh NAME
@@ -60,8 +60,6 @@ Creation of Rx or Tx list failed, device non-functional.
 Time out in transmission.
 .It "devN: pipe abort failed"
 Aborting USB pipes after watchdog timeout failed.
-.It "devN: if_initialize failed"
-Couldn't register network interface, device non-functional.
 .It "devN: couldn't establish power handler"
 Call to
 .Xr pmf_device_register 9

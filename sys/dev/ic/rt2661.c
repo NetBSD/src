@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2661.c,v 1.43 2020/01/29 15:06:12 thorpej Exp $	*/
+/*	$NetBSD: rt2661.c,v 1.44 2021/06/16 00:21:18 riastradh Exp $	*/
 /*	$OpenBSD: rt2661.c,v 1.17 2006/05/01 08:41:11 damien Exp $	*/
 /*	$FreeBSD: rt2560.c,v 1.5 2006/06/02 19:59:31 csjp Exp $	*/
 
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.43 2020/01/29 15:06:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.44 2021/06/16 00:21:18 riastradh Exp $");
 
 
 #include <sys/param.h>
@@ -330,12 +330,7 @@ rt2661_attach(void *xsc, int id)
 		    IEEE80211_CHAN_DYN | IEEE80211_CHAN_2GHZ;
 	}
 
-	error = if_initialize(ifp);
-	if (error != 0) {
-		aprint_error_dev(sc->sc_dev, "if_initialize failed(%d)\n",
-		    error);
-		goto fail7;
-	}
+	if_initialize(ifp);
 	ieee80211_ifattach(ic);
 	/* Use common softint-based if_input */
 	ifp->if_percpuq = if_percpuq_create(ifp);
@@ -373,7 +368,6 @@ rt2661_attach(void *xsc, int id)
 
 	return 0;
 
-fail7:	rt2661_free_rx_ring(sc, &sc->rxq);
 fail6:	rt2661_free_tx_ring(sc, &sc->mgtq);
 fail5:	rt2661_free_tx_ring(sc, &sc->txq[3]);
 fail4:	rt2661_free_tx_ring(sc, &sc->txq[2]);

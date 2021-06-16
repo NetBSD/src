@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2560.c,v 1.38 2020/01/29 15:06:12 thorpej Exp $	*/
+/*	$NetBSD: rt2560.c,v 1.39 2021/06/16 00:21:18 riastradh Exp $	*/
 /*	$OpenBSD: rt2560.c,v 1.15 2006/04/20 20:31:12 miod Exp $  */
 /*	$FreeBSD: rt2560.c,v 1.3 2006/03/21 21:15:43 damien Exp $*/
 
@@ -24,7 +24,7 @@
  * http://www.ralinktech.com/
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.38 2020/01/29 15:06:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.39 2021/06/16 00:21:18 riastradh Exp $");
 
 
 #include <sys/param.h>
@@ -441,12 +441,7 @@ rt2560_attach(void *xsc, int id)
 		    IEEE80211_CHAN_DYN | IEEE80211_CHAN_2GHZ;
 	}
 
-	error = if_initialize(ifp);
-	if (error != 0) {
-		aprint_error_dev(sc->sc_dev, "if_initialize failed(%d)\n",
-		    error);
-		goto fail6;
-	}
+	if_initialize(ifp);
 	ieee80211_ifattach(ic);
 	/* Use common softint-based if_input */
 	ifp->if_percpuq = if_percpuq_create(ifp);
@@ -485,7 +480,6 @@ rt2560_attach(void *xsc, int id)
 
 	return 0;
 
-fail6:	rt2560_free_rx_ring(sc, &sc->rxq);
 fail5:	rt2560_free_tx_ring(sc, &sc->bcnq);
 fail4:	rt2560_free_tx_ring(sc, &sc->prioq);
 fail3:	rt2560_free_tx_ring(sc, &sc->atimq);

@@ -1,4 +1,4 @@
-/*	$NetBSD: bwi.c,v 1.37 2020/01/29 14:14:55 thorpej Exp $	*/
+/*	$NetBSD: bwi.c,v 1.38 2021/06/16 00:21:18 riastradh Exp $	*/
 /*	$OpenBSD: bwi.c,v 1.74 2008/02/25 21:13:30 mglocker Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.37 2020/01/29 14:14:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.38 2021/06/16 00:21:18 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -1021,12 +1021,7 @@ bwi_attach(struct bwi_softc *sc)
 
 	ic->ic_updateslot = bwi_updateslot;
 
-	error = if_initialize(ifp);
-	if (error != 0) {
-		aprint_error_dev(sc->sc_dev, "if_initialize failed(%d)\n",
-		    error);
-		goto fail;
-	}
+	if_initialize(ifp);
 	ieee80211_ifattach(ic);
 	ifp->if_percpuq = if_percpuq_create(ifp);
 	if_register(ifp);
