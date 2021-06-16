@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_probe.c,v 1.56 2021/04/24 23:36:52 thorpej Exp $ */
+/* $NetBSD: xenbus_probe.c,v 1.57 2021/06/16 10:49:50 bouyer Exp $ */
 /******************************************************************************
  * Talks to Xen Store to figure out what devices we have.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.56 2021/04/24 23:36:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.57 2021/06/16 10:49:50 bouyer Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -469,8 +469,11 @@ xenbus_probe_device_type(const char *path, const char *type,
 				kmem_free(xbusd, xbusd->xbusd_sz);
 				break;
 			}
+
+			KERNEL_LOCK(1, curlwp);
 			xbusd->xbusd_u.f.f_dev = config_found(xenbus_dev,
 			    &xa, xenbus_print, CFARG_EOL);
+			KERNEL_UNLOCK_ONE(curlwp);
 			if (xbusd->xbusd_u.f.f_dev == NULL) {
 				kmem_free(xbusd, xbusd->xbusd_sz);
 				continue;
@@ -652,8 +655,10 @@ xenbus_probe(void *unused)
 	register_xenbus_watch(&be_watch);
 
 	/* attach balloon. */
+	KERNEL_LOCK(1, curlwp);
 	config_found(xenbus_dev, &balloon_xa, xenbus_print,
 	    CFARG_EOL);
+	KERNEL_UNLOCK_ONE(curlwp);
 
 	shutdown_xenbus_setup();
 
