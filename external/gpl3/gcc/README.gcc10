@@ -1,4 +1,4 @@
-$NetBSD: README.gcc10,v 1.21 2021/05/27 06:58:27 mrg Exp $
+$NetBSD: README.gcc10,v 1.22 2021/06/16 00:56:16 rin Exp $
 
 
 new stuff:
@@ -39,14 +39,14 @@ earmv5		y	b	y	y		y		y	y	n
 earmv5eb	y	b	y	y		y		?	?	?
 earmv5hf	y	y	y	y		y		?	?	?
 earmv5hfeb	y	b	y	y		y		?	?	?
-earmv6		y	b	y	y		y		y	?	?
-earmv6eb	y	b	y	y		y		y	?	?
-earmv6hf	y	y	y	y		y		y[2]	?	?
-earmv6hfeb	y	b	y	y		y		y[2]	?	?
-earmv7		y	b	y	y		y		?	?	?
-earmv7eb	y	b	y	y		y		?	?	?
+earmv6		y	b	y	y		y		y	y	n
+earmv6eb	y	b	y	y		y		y	y	n
+earmv6hf	y	y	y	y		y		y	y	n
+earmv6hfeb	y	y	y	y		y		y	y	n
+earmv7		y	b	y	y		y		y	y	n
+earmv7eb	y	b	y	y		y		y	y	n
 earmv7hf	y	y	y	y		y		y	y	n
-earmv7hfeb	y	b	y	y		y		y	y	n
+earmv7hfeb	y	y	y	y		y		y	y	n
 hppa		y	y	y	y		y		y	y	y
 i386		y	y	y	y		y		y	n[8]	y
 ia64		y	y	y	y		y		?	N/A	y
@@ -72,14 +72,6 @@ coldfire	?	N/A	?	?		?		N/A	N/A
 architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
 
 [1] - ramdisk.fs is too large, needs fixing.
-[2] - armv6hf (both little and big endian) has new problems:
-      rpi# cat bar.s
-              .cfi_startproc
-              .cfi_endproc
-      rpi# as bar.s
-      bar.s: Assembler messages:
-      bar.s: Internal error (Illegal instruction).
-      Please report this bug.
 [6] - vax vs c++ exceptions issue, same as it ever was
 [7] - fails just as poorly in gxemul/landisk as GCC 9
 [8] - i386 seems to have a signal delivery issue.  pthread tests hang and then
