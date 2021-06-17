@@ -49,6 +49,12 @@ KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="096e", ATTRS{idProduct
 # Unknown product by Feitian Technologies Co., Ltd.
 KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="096e", ATTRS{idProduct}=="085d", TAG+="uaccess", GROUP="plugdev", MODE="0660"
 
+# BioPass FIDO2 K33 by Feitian Technologies Co., Ltd.
+KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="096e", ATTRS{idProduct}=="0866", TAG+="uaccess", GROUP="plugdev", MODE="0660"
+
+# BioPass FIDO2 K43 by Feitian Technologies Co., Ltd.
+KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="096e", ATTRS{idProduct}=="0867", TAG+="uaccess", GROUP="plugdev", MODE="0660"
+
 # Hypersecu HyperFIDO by Feitian Technologies Co., Ltd.
 KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="096e", ATTRS{idProduct}=="0880", TAG+="uaccess", GROUP="plugdev", MODE="0660"
 
@@ -124,14 +130,20 @@ KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="1ea8", ATTRS{idProduct
 # GoTrust Idem Key by NXP Semiconductors
 KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="1fc9", ATTRS{idProduct}=="f143", TAG+="uaccess", GROUP="plugdev", MODE="0660"
 
-# Nitrokey FIDO U2F by Flirc
+# Nitrokey FIDO U2F by Clay Logic
 KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="20a0", ATTRS{idProduct}=="4287", TAG+="uaccess", GROUP="plugdev", MODE="0660"
 
-# Nitrokey FIDO2 by Flirc
+# Nitrokey FIDO2 by Clay Logic
 KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="20a0", ATTRS{idProduct}=="42b1", TAG+="uaccess", GROUP="plugdev", MODE="0660"
 
-# Safetech SafeKey by Flirc
+# Nitrokey 3C NFC by Clay Logic
+KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="20a0", ATTRS{idProduct}=="42b2", TAG+="uaccess", GROUP="plugdev", MODE="0660"
+
+# Safetech SafeKey by Clay Logic
 KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="20a0", ATTRS{idProduct}=="42b3", TAG+="uaccess", GROUP="plugdev", MODE="0660"
+
+# CanoKey by Clay Logic
+KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="20a0", ATTRS{idProduct}=="42d4", TAG+="uaccess", GROUP="plugdev", MODE="0660"
 
 # JaCarta U2F by Aladdin Software Security R.D.
 KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="24dc", ATTRS{idProduct}=="0101", TAG+="uaccess", GROUP="plugdev", MODE="0660"
@@ -145,26 +157,56 @@ KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="2581", ATTRS{idProduct
 # Bluink Key by Bluink Ltd
 KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="2abe", ATTRS{idProduct}=="1002", TAG+="uaccess", GROUP="plugdev", MODE="0660"
 
-# Ledger Nano S by LEDGER
+# Ledger Blue by LEDGER
+KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="2c97", ATTRS{idProduct}=="0000", TAG+="uaccess", GROUP="plugdev", MODE="0660"
+
+# Ledger Nano S Old firmware by LEDGER
 KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="2c97", ATTRS{idProduct}=="0001", TAG+="uaccess", GROUP="plugdev", MODE="0660"
 
-# Ledger Nano X by LEDGER
+# Ledger Nano X Old firmware by LEDGER
 KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="2c97", ATTRS{idProduct}=="0004", TAG+="uaccess", GROUP="plugdev", MODE="0660"
+
+# Ledger Blue by LEDGER
+KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="2c97", ATTRS{idProduct}=="0011", TAG+="uaccess", GROUP="plugdev", MODE="0660"
+
+# Ledger Blue Legacy by LEDGER
+KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="2c97", ATTRS{idProduct}=="0015", TAG+="uaccess", GROUP="plugdev", MODE="0660"
+
+# Ledger Nano S by LEDGER
+KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="2c97", ATTRS{idProduct}=="1011", TAG+="uaccess", GROUP="plugdev", MODE="0660"
+
+# Ledger Nano S Legacy by LEDGER
+KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="2c97", ATTRS{idProduct}=="1015", TAG+="uaccess", GROUP="plugdev", MODE="0660"
+
+# Ledger Nano X by LEDGER
+KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="2c97", ATTRS{idProduct}=="4011", TAG+="uaccess", GROUP="plugdev", MODE="0660"
+
+# Ledger Nano X Legacy by LEDGER
+KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="2c97", ATTRS{idProduct}=="4015", TAG+="uaccess", GROUP="plugdev", MODE="0660"
 
 # Hypersecu HyperFIDO by Hypersecu Information Systems, Inc.
 KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="2ccf", ATTRS{idProduct}=="0880", TAG+="uaccess", GROUP="plugdev", MODE="0660"
 
-# eWBM FIDO2 Goldengate 310 by eWBM Co., Ltd.
+# TrustKey Solutions FIDO2 G310 by eWBM Co., Ltd.
 KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="311f", ATTRS{idProduct}=="4a1a", TAG+="uaccess", GROUP="plugdev", MODE="0660"
 
-# eWBM FIDO2 Goldengate 320 by eWBM Co., Ltd.
+# TrustKey Solutions FIDO2 G320 by eWBM Co., Ltd.
 KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="311f", ATTRS{idProduct}=="4c2a", TAG+="uaccess", GROUP="plugdev", MODE="0660"
 
-# eWBM FIDO2 Goldengate 500 by eWBM Co., Ltd.
+# eWBM FIDO2 Goldengate G500 by eWBM Co., Ltd.
 KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="311f", ATTRS{idProduct}=="5c2f", TAG+="uaccess", GROUP="plugdev", MODE="0660"
 
-# eWBM FIDO2 Goldengate 450 by eWBM Co., Ltd.
+# TrustKey Solutions FIDO2 T120 by eWBM Co., Ltd.
+KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="311f", ATTRS{idProduct}=="a6e9", TAG+="uaccess", GROUP="plugdev", MODE="0660"
+
+# TrustKey Solutions FIDO2 T110 by eWBM Co., Ltd.
+KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="311f", ATTRS{idProduct}=="a7f9", TAG+="uaccess", GROUP="plugdev", MODE="0660"
+
+# eWBM FIDO2 Goldengate G450 by eWBM Co., Ltd.
 KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="311f", ATTRS{idProduct}=="f47c", TAG+="uaccess", GROUP="plugdev", MODE="0660"
+
+# Idem Key by GoTrustID Inc.
+KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="32a3", ATTRS{idProduct}=="3201", TAG+="uaccess", GROUP="plugdev", MODE="0660"
 
 # Longmai mFIDO by Unknown vendor
 KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="4c4d", ATTRS{idProduct}=="f703", TAG+="uaccess", GROUP="plugdev", MODE="0660"

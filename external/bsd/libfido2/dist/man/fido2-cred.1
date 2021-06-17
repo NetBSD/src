@@ -11,7 +11,7 @@
 .Sh SYNOPSIS
 .Nm
 .Fl M
-.Op Fl dhqruv
+.Op Fl bdhqruv
 .Op Fl c Ar cred_protect
 .Op Fl i Ar input_file
 .Op Fl o Ar output_file
@@ -91,9 +91,19 @@ to make a new credential on
 Tells
 .Nm
 to verify a credential.
+.It Fl b
+Request the credential's
+.Dq largeBlobKey ,
+a 32-byte symmetric key associated with the generated credential.
 .It Fl c Ar cred_protect
 If making a credential, set the credential's protection level to
-.Ar cred_protect .
+.Ar cred_protect ,
+where
+.Ar cred_protect
+is the credential's protection level in decimal notation.
+Please refer to
+.In fido/param.h
+for the set of possible values.
 If verifying a credential, check whether the credential's protection
 level was signed by the authenticator as
 .Ar cred_protect .
@@ -131,6 +141,9 @@ is specified,
 will fail.
 .It Fl r
 Create a resident credential.
+Resident credentials are called
+.Dq discoverable credentials
+in FIDO2.1.
 .It Fl u
 Create a U2F credential.
 By default,
@@ -212,6 +225,10 @@ credential id (base64 blob);
 attestation signature (base64 blob);
 .It
 attestation certificate, if present (base64 blob).
+.It
+the credential's associated 32-byte symmetric key
+.Pq Dq largeBlobKey ,
+if present (base64 blob).
 .El
 .Pp
 Upon the successful verification of a credential,
@@ -244,3 +261,7 @@ verify it, and save the id and the public key of the credential in
 Please note that
 .Nm
 handles Basic Attestation and Self Attestation transparently.
+In the case of Basic Attestation, the validity of the authenticator's
+attestation certificate is
+.Em not
+verified.

@@ -20,13 +20,14 @@ vendor OPENMOKO		0x1d50	OpenMoko, Inc.
 vendor NEOWAVE		0x1e0d	NEOWAVE
 vendor EXCELSECU	0x1ea8	Shenzhen Excelsecu Data Technology Co., Ltd.
 vendor NXP		0x1fc9	NXP Semiconductors
-vendor FLIRC		0x20a0	Flirc
+vendor CLAYLOGIC	0x20a0	Clay Logic
 vendor ALLADIN		0x24dc	Aladdin Software Security R.D.
 vendor PLUGUP		0x2581	Plug‐up
 vendor BLUINK		0x2abe	Bluink Ltd
 vendor LEDGER		0x2c97	LEDGER
 vendor HYPERSECU	0x2ccf	Hypersecu Information Systems, Inc.
 vendor EWBM		0x311f	eWBM Co., Ltd.
+vendor GOTRUST		0x32a3	GoTrustID Inc.
 vendor UNKNOWN1		0x4c4d	Unknown vendor
 vendor SATOSHI		0x534c	SatoshiLabs
 
@@ -49,6 +50,8 @@ product FEITIAN		0x0858	Unknown product
 product FEITIAN		0x085a	FS MultiPass FIDO U2F
 product FEITIAN		0x085b	Unknown product
 product FEITIAN		0x085d	Unknown product
+product FEITIAN		0x0866  BioPass FIDO2 K33
+product FEITIAN		0x0867  BioPass FIDO2 K43
 product FEITIAN		0x0880	Hypersecu HyperFIDO
 
 product YUBICO		0x0113	YubiKey NEO FIDO
@@ -84,9 +87,11 @@ product EXCELSECU	0xfc25	ExcelSecu FIDO2 Security Key
 
 product NXP		0xf143	GoTrust Idem Key
 
-product FLIRC		0x4287	Nitrokey FIDO U2F
-product FLIRC		0x42b1	Nitrokey FIDO2
-product FLIRC		0x42b3	Safetech SafeKey
+product CLAYLOGIC	0x4287	Nitrokey FIDO U2F
+product CLAYLOGIC	0x42b1	Nitrokey FIDO2
+product CLAYLOGIC	0x42b2	Nitrokey 3C NFC
+product CLAYLOGIC	0x42b3	Safetech SafeKey
+product CLAYLOGIC	0x42d4	CanoKey
 
 product ALLADIN		0x0101	JaCarta U2F
 product ALLADIN		0x0501	JaCarta U2F
@@ -95,15 +100,26 @@ product PLUGUP		0xf1d0	Happlink Security Key
 
 product BLUINK		0x1002	Bluink Key
 
-product LEDGER		0x0001	Ledger Nano S
-product LEDGER		0x0004	Ledger Nano X
+product LEDGER		0x0000  Ledger Blue
+product LEDGER		0x0001	Ledger Nano S Old firmware
+product LEDGER		0x0004	Ledger Nano X Old firmware
+product LEDGER		0x0011  Ledger Blue
+product LEDGER		0x0015  Ledger Blue Legacy
+product LEDGER		0x1011	Ledger Nano S
+product LEDGER		0x1015	Ledger Nano S Legacy
+product LEDGER		0x4011	Ledger Nano X
+product LEDGER		0x4015	Ledger Nano X Legacy
 
 product HYPERSECU	0x0880	Hypersecu HyperFIDO
 
-product EWBM		0x4a1a	eWBM FIDO2 Goldengate 310
-product EWBM		0x4c2a	eWBM FIDO2 Goldengate 320
-product EWBM		0x5c2f	eWBM FIDO2 Goldengate 500
-product EWBM		0xf47c	eWBM FIDO2 Goldengate 450
+product EWBM		0x4a1a	TrustKey Solutions FIDO2 G310
+product EWBM		0x4c2a	TrustKey Solutions FIDO2 G320
+product EWBM		0x5c2f	eWBM FIDO2 Goldengate G500
+product EWBM		0xa6e9	TrustKey Solutions FIDO2 T120
+product EWBM		0xa7f9	TrustKey Solutions FIDO2 T110
+product EWBM		0xf47c	eWBM FIDO2 Goldengate G450
+
+product GOTRUST		0x3201	Idem Key
 
 product UNKNOWN1	0xf703	Longmai mFIDO
 

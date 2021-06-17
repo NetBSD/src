@@ -11,10 +11,14 @@
 #include <openssl/evp.h>
 #include <openssl/pem.h>
 
+#include <fido.h>
+#include <fido/es256.h>
+#include <fido/rs256.h>
+#include <fido/eddsa.h>
+
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
-#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #ifdef HAVE_SIGNAL_H
@@ -26,13 +30,8 @@
 #ifdef _MSC_VER
 #include "../openbsd-compat/posix_win.h"
 #endif
-
-#include "fido.h"
-#include "fido/es256.h"
-#include "fido/rs256.h"
-#include "fido/eddsa.h"
-#include "extern.h"
 #include "../openbsd-compat/openbsd-compat.h"
+#include "extern.h"
 
 #ifdef SIGNAL_EXAMPLE
 volatile sig_atomic_t got_signal = 0;
@@ -81,7 +80,7 @@ write_blob(const char *path, const unsigned char *ptr, size_t len)
 	int fd, ok = -1;
 	ssize_t n;
 
-	if ((fd = open(path, O_WRONLY | O_CREAT, 0644)) < 0) {
+	if ((fd = open(path, O_WRONLY | O_CREAT, 0600)) < 0) {
 		warn("open %s", path);
 		goto fail;
 	}

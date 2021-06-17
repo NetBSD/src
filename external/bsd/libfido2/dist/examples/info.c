@@ -4,13 +4,13 @@
  * license that can be found in the LICENSE file.
  */
 
+#include <fido.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "fido.h"
 #include "../openbsd-compat/openbsd-compat.h"
 
 /*
