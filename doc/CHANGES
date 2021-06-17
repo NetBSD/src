@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2810 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2811 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -380,3 +380,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	dhcp: Import version 4.4.2-P1. [christos 20210526]
 	mips: Switch to GCC 10.  [mrg 20210426]
 	i386: Switch to GCC 10.  [mrg 20210426]
+	libfido2: Import 1.7.0 [christos 20210616]
