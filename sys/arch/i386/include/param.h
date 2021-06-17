@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.87 2020/03/05 15:18:54 riastradh Exp $	*/
+/*	$NetBSD: param.h,v 1.87.8.1 2021/06/17 04:46:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,6 +36,10 @@
 
 #ifndef _I386_PARAM_H_
 #define _I386_PARAM_H_
+
+#ifdef _KERNEL_OPT
+#include "opt_param.h"
+#endif
 
 /*
  * Machine dependent constants for Intel 386.

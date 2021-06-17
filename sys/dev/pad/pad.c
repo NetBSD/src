@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.65 2020/02/23 04:02:46 isaki Exp $ */
+/* $NetBSD: pad.c,v 1.65.10.1 2021/06/17 04:46:29 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,31 +27,34 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.65 2020/02/23 04:02:46 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.65.10.1 2021/06/17 04:46:29 thorpej Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
-#include <sys/conf.h>
+#include <sys/types.h>
+
+#include <sys/audioio.h>
 #include <sys/buf.h>
+#include <sys/condvar.h>
+#include <sys/conf.h>
+#include <sys/device.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
-#include <sys/vnode.h>
 #include <sys/kauth.h>
-#include <sys/kmem.h>
 #include <sys/kernel.h>
-#include <sys/device.h>
+#include <sys/kmem.h>
+#include <sys/module.h>
 #include <sys/poll.h>
 #include <sys/proc.h>
-#include <sys/condvar.h>
 #include <sys/select.h>
 #include <sys/stat.h>
-#include <sys/audioio.h>
-#include <sys/module.h>
+#include <sys/vnode.h>
 
 #include <dev/audio/audio_if.h>
 #include <dev/audio/audiovar.h>
 
 #include <dev/pad/padvar.h>
+
+#include "ioconf.h"
 
 /* #define PAD_DEBUG */
 #ifdef PAD_DEBUG
@@ -60,16 +63,9 @@ __KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.65 2020/02/23 04:02:46 isaki Exp $");
 #define DPRINTF(fmt...) /**/
 #endif
 
-#define MAXDEVS		128
-#define PADCLONER	254
-#define PADUNIT(x)	minor(x)
-
 #define PADFREQ		44100
 #define PADCHAN		2
 #define PADPREC		16
-
-extern struct cfdriver pad_cd;
-kmutex_t padconfig;
 
 typedef struct pad_block {
 	uint8_t		*pb_ptr;
@@ -106,7 +102,7 @@ static void	pad_get_locks(void *, kmutex_t **, kmutex_t **);
 static void	pad_done_output(void *);
 static void	pad_swvol_codec(audio_filter_arg_t *);
 
-static int	pad_close(struct pad_softc *);
+static void	pad_close(struct pad_softc *);
 static int	pad_read(struct pad_softc *, off_t *, struct uio *,
 		    kauth_cred_t, int);
 
@@ -154,14 +150,12 @@ extern void	padattach(int);
 static int	pad_add_block(struct pad_softc *, uint8_t *, int);
 static int	pad_get_block(struct pad_softc *, pad_block_t *, int);
 
-dev_type_open(cdev_pad_open);
-dev_type_close(cdev_pad_close);
-dev_type_read(cdev_pad_read);
+static dev_type_open(pad_open);
 
 const struct cdevsw pad_cdevsw = {
-	.d_open		= cdev_pad_open,
-	.d_close	= cdev_pad_close,
-	.d_read		= cdev_pad_read,
+	.d_open		= pad_open,
+	.d_close	= noclose,
+	.d_read		= noread,
 	.d_write	= nowrite,
 	.d_ioctl	= noioctl,
 	.d_stop		= nostop,
@@ -203,9 +197,6 @@ padattach(int n)
 		config_cfdriver_detach(&pad_cd);
 		return;
 	}
-	mutex_init(&padconfig, MUTEX_DEFAULT, IPL_NONE);
-
-	return;
 }
 
 static int
@@ -218,21 +209,59 @@ pad_match(device_t parent, cfdata_t data, void *opaque)
 static void
 pad_attach(device_t parent, device_t self, void *opaque)
 {
+	struct pad_softc *sc = device_private(self);
+
+	KASSERT(KERNEL_LOCKED_P());
 
 	aprint_normal_dev(self, "outputs: 44100Hz, 16-bit, stereo\n");
+
+	sc->sc_dev = self;
+
+	cv_init(&sc->sc_condvar, device_xname(sc->sc_dev));
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SOFTCLOCK);
+	callout_init(&sc->sc_pcallout, CALLOUT_MPSAFE);
+	callout_setfunc(&sc->sc_pcallout, pad_done_output, sc);
+
+	sc->sc_swvol = 255;
+	sc->sc_buflen = 0;
+	sc->sc_rpos = sc->sc_wpos = 0;
+	sc->sc_audiodev = audio_attach_mi(&pad_hw_if, sc, sc->sc_dev);
+
+	if (!pmf_device_register(sc->sc_dev, NULL, NULL))
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't establish power handler\n");
+
+	sc->sc_open = 1;
 }
 
 static int
 pad_detach(device_t self, int flags)
 {
-	struct pad_softc *sc;
+	struct pad_softc *sc = device_private(self);
 	int cmaj, mn;
+	int error;
 
-	sc = device_private(self);
+	KASSERT(KERNEL_LOCKED_P());
+
+	/* Prevent detach without going through close -- e.g., drvctl.  */
+	if (sc->sc_open)
+		return EBUSY;
+
+	error = config_detach_children(self, flags);
+	if (error)
+		return error;
+
 	cmaj = cdevsw_lookup_major(&pad_cdevsw);
 	mn = device_unit(sc->sc_dev);
-	if (!sc->sc_dying)
-		vdevgone(cmaj, mn, mn, VCHR);
+	vdevgone(cmaj, mn, mn, VCHR);
+
+	pmf_device_deregister(sc->sc_dev);
+
+	callout_destroy(&sc->sc_pcallout);
+	mutex_destroy(&sc->sc_lock);
+	mutex_destroy(&sc->sc_intr_lock);
+	cv_destroy(&sc->sc_condvar);
 
 	return 0;
 }
@@ -242,7 +271,10 @@ pad_childdet(device_t self, device_t child)
 {
 	struct pad_softc *sc = device_private(self);
 
-	sc->sc_audiodev = NULL;
+	KASSERT(KERNEL_LOCKED_P());
+
+	if (child == sc->sc_audiodev)
+		sc->sc_audiodev = NULL;
 }
 
 static int
@@ -250,7 +282,11 @@ pad_add_block(struct pad_softc *sc, uint8_t *blk, int blksize)
 {
 	int l;
 
-	if (sc->sc_buflen + blksize > PAD_BUFSIZE)
+	KASSERT(blksize >= 0);
+	KASSERT(mutex_owned(&sc->sc_intr_lock));
+
+	if (blksize > PAD_BUFSIZE ||
+	    sc->sc_buflen > PAD_BUFSIZE - (unsigned)blksize)
 		return ENOBUFS;
 
 	if (sc->sc_wpos + blksize <= PAD_BUFSIZE)
@@ -266,16 +302,27 @@ pad_add_block(struct pad_softc *sc, uint8_t *blk, int blksize)
 		sc->sc_wpos -= PAD_BUFSIZE;
 
 	sc->sc_buflen += blksize;
+	cv_broadcast(&sc->sc_condvar);
 
 	return 0;
 }
 
 static int
-pad_get_block(struct pad_softc *sc, pad_block_t *pb, int blksize)
+pad_get_block(struct pad_softc *sc, pad_block_t *pb, int maxblksize)
 {
-	int l;
+	int l, blksize, error;
 
-	KASSERT(pb != NULL);
+	KASSERT(maxblksize > 0);
+	KASSERT(mutex_owned(&sc->sc_intr_lock));
+
+	while (sc->sc_buflen == 0) {
+		DPRINTF("%s: wait\n", __func__);
+		error = cv_wait_sig(&sc->sc_condvar, &sc->sc_intr_lock);
+		DPRINTF("%s: wake up %d\n", __func__, err);
+		if (error)
+			return error;
+	}
+	blksize = uimin(maxblksize, sc->sc_buflen);
 
 	pb->pb_ptr = (sc->sc_audiobuf + sc->sc_rpos);
 	if (sc->sc_rpos + blksize < PAD_BUFSIZE) {
@@ -291,158 +338,101 @@ pad_get_block(struct pad_softc *sc, pad_block_t *pb, int blksize)
 	return 0;
 }
 
-int
-cdev_pad_open(dev_t dev, int flags, int fmt, struct lwp *l)
+static int
+pad_open(dev_t dev, int flags, int fmt, struct lwp *l)
 {
-	struct pad_softc *sc;
-	struct file *fp;
-	device_t paddev;
-	cfdata_t cf;
-	int error, fd, i;
+	struct file *fp = NULL;
+	device_t self;
+	struct pad_softc *sc = NULL;
+	cfdata_t cf = NULL;
+	int error, fd;
 
-	error = 0;
+	error = fd_allocfile(&fp, &fd);
+	if (error)
+		goto out;
 
-	mutex_enter(&padconfig);
-	if (PADUNIT(dev) == PADCLONER) {
-		for (i = 0; i < MAXDEVS; i++) {
-			if (device_lookup(&pad_cd, i) == NULL)
-				break;
-		}
-		if (i == MAXDEVS)
-			goto bad;
-	} else {
-		if (PADUNIT(dev) >= MAXDEVS)
-			goto bad;
-		i = PADUNIT(dev);
-	}
-
-	cf = kmem_alloc(sizeof(struct cfdata), KM_SLEEP);
+	cf = kmem_alloc(sizeof(*cf), KM_SLEEP);
 	cf->cf_name = pad_cd.cd_name;
 	cf->cf_atname = pad_cd.cd_name;
-	cf->cf_unit = i;
+	cf->cf_unit = 0;
 	cf->cf_fstate = FSTATE_STAR;
 
-	bool existing = false;
-	paddev = device_lookup(&pad_cd, minor(dev));
-	if (paddev == NULL)
-		paddev = config_attach_pseudo(cf);
-	else
-		existing = true;
-	if (paddev == NULL)
-		goto bad;
-
-	sc = device_private(paddev);
-	if (sc == NULL)
-		goto bad;
-
-	if (sc->sc_open == 1) {
-		mutex_exit(&padconfig);
-		return EBUSY;
+	self = config_attach_pseudo(cf);
+	if (self == NULL) {
+		error = ENXIO;
+		goto out;
 	}
+	sc = device_private(self);
+	KASSERT(sc->sc_dev == self);
+	cf = NULL;
 
-	sc->sc_dev = paddev;
-	sc->sc_dying = false;
+	error = fd_clone(fp, fd, flags, &pad_fileops, sc);
+	KASSERT(error == EMOVEFD);
+	fp = NULL;
+	sc = NULL;
 
-	if (PADUNIT(dev) == PADCLONER) {
-		error = fd_allocfile(&fp, &fd);
-		if (error) {
-			if (existing == false)
-				config_detach(sc->sc_dev, 0);
-			mutex_exit(&padconfig);
-			return error;
-		}
-	}
-
-	cv_init(&sc->sc_condvar, device_xname(sc->sc_dev));
-	mutex_init(&sc->sc_cond_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_NONE);
-	callout_init(&sc->sc_pcallout, 0/*XXX?*/);
-
-	sc->sc_swvol = 255;
-	sc->sc_buflen = 0;
-	sc->sc_rpos = sc->sc_wpos = 0;
-	sc->sc_audiodev = audio_attach_mi(&pad_hw_if, sc, sc->sc_dev);
-
-	if (!pmf_device_register(sc->sc_dev, NULL, NULL))
-		aprint_error_dev(sc->sc_dev,
-		    "couldn't establish power handler\n");
-
-	if (PADUNIT(dev) == PADCLONER) {
-		error = fd_clone(fp, fd, flags, &pad_fileops, sc);
-		KASSERT(error == EMOVEFD);
-	}	
-	sc->sc_open = 1;
-	mutex_exit(&padconfig);
-
+out:	if (sc)
+		pad_close(sc);
+	if (cf)
+		kmem_free(cf, sizeof(*cf));
+	if (fp)
+		fd_abort(curproc, fp, fd);
 	return error;
-bad:
-	mutex_exit(&padconfig);
-	return ENXIO;
 }
 
-static int
+static void
 pad_close(struct pad_softc *sc)
 {
-	int rc;
+	device_t self = sc->sc_dev;
+	cfdata_t cf = device_cfdata(self);
 
-	if (sc == NULL)
-		return ENXIO;
-
-	mutex_enter(&padconfig);
-	config_deactivate(sc->sc_audiodev);
-	
-	/* Start draining existing accessors of the device. */
-	if ((rc = config_detach_children(sc->sc_dev,
-	    DETACH_SHUTDOWN|DETACH_FORCE)) != 0) {
-		mutex_exit(&padconfig);
-		return rc;
-	}
-
-	mutex_enter(&sc->sc_lock);
-	sc->sc_dying = true;
-	cv_broadcast(&sc->sc_condvar);
-	mutex_exit(&sc->sc_lock);
-
-	KASSERT(sc->sc_open > 0);
+	/*
+	 * XXX This is not quite enough to prevent racing with drvctl
+	 * detach.  What can happen:
+	 *
+	 *	cpu0				cpu1
+	 *
+	 *	pad_close
+	 *	take kernel lock
+	 *	sc->sc_open = 0
+	 *	drop kernel lock
+	 *	wait for config_misc_lock
+	 *					drvctl detach
+	 *					take kernel lock
+	 *					drop kernel lock
+	 *					wait for config_misc_lock
+	 *					retake kernel lock
+	 *					drop config_misc_lock
+	 *	take config_misc_lock
+	 *	wait for kernel lock
+	 *					pad_detach (sc_open=0 already)
+	 *					free device
+	 *					drop kernel lock
+	 *	use device after free
+	 *
+	 * We need a way to grab a reference to the device so it won't
+	 * be freed until we're done -- it's OK if we config_detach
+	 * twice as long as it's idempotent, but not OK if the first
+	 * config_detach frees the struct device before the second one
+	 * has finished handling it.
+	 */
+	KERNEL_LOCK(1, NULL);
+	KASSERT(sc->sc_open);
 	sc->sc_open = 0;
+	(void)config_detach(self, DETACH_FORCE);
+	KERNEL_UNLOCK_ONE(NULL);
 
-	pmf_device_deregister(sc->sc_dev);
-
-	mutex_destroy(&sc->sc_cond_lock);
-	mutex_destroy(&sc->sc_lock);
-	mutex_destroy(&sc->sc_intr_lock);
-	cv_destroy(&sc->sc_condvar);
-
-	rc = config_detach(sc->sc_dev, 0);
-	mutex_exit(&padconfig);
-
-	return rc;
+	kmem_free(cf, sizeof(*cf));
 }
 
 static int
 fops_pad_close(struct file *fp)
 {
-	struct pad_softc *sc;
-	int error;
+	struct pad_softc *sc = fp->f_pad;
 
-	sc = fp->f_pad;
+	pad_close(sc);
 
-	error = pad_close(sc);
-
-	if (error == 0)
-		fp->f_pad = NULL;
-
-	return error;
-}
-
-int
-cdev_pad_close(dev_t dev, int flags, int ifmt, struct lwp *l)
-{
-	struct pad_softc *sc;
-	sc = device_private(device_lookup(&pad_cd, PADUNIT(dev)));
-
-	return pad_close(sc);
+	return 0;
 }
 
 static int
@@ -455,12 +445,8 @@ fops_pad_poll(struct file *fp, int events)
 static int
 fops_pad_kqfilter(struct file *fp, struct knote *kn)
 {
-	struct pad_softc *sc;
+	struct pad_softc *sc = fp->f_pad;
 	dev_t dev;
-	
-	sc = fp->f_pad;
-	if (sc == NULL)
-		return EIO;
 
 	dev = makedev(cdevsw_lookup_major(&pad_cdevsw),
 	    device_unit(sc->sc_dev));
@@ -478,11 +464,7 @@ fops_pad_ioctl(struct file *fp, u_long cmd, void *data)
 static int
 fops_pad_stat(struct file *fp, struct stat *st)
 {
-	struct pad_softc *sc;
-	
-	sc = fp->f_pad;
-	if (sc == NULL)
-		return EIO;
+	struct pad_softc *sc = fp->f_pad;
 
 	memset(st, 0, sizeof(*st));
 
@@ -504,27 +486,11 @@ fops_pad_mmap(struct file *fp, off_t *offp, size_t len, int prot, int *flagsp,
 	return 1;
 }
 
-int
-cdev_pad_read(dev_t dev, struct uio *uio, int ioflag)
-{
-	struct pad_softc *sc;
-
-	sc = device_private(device_lookup(&pad_cd, PADUNIT(dev)));
-	if (sc == NULL)
-		return ENXIO;
-
-	return pad_read(sc, NULL, uio, NULL, ioflag);
-}
-
 static int
 fops_pad_read(struct file *fp, off_t *offp, struct uio *uio, kauth_cred_t cred,
     int ioflag)
 {
-	struct pad_softc *sc;
-
-	sc = fp->f_pad;
-	if (sc == NULL)
-		return ENXIO;
+	struct pad_softc *sc = fp->f_pad;
 
 	return pad_read(sc, offp, uio, cred, ioflag);
 }
@@ -534,35 +500,21 @@ pad_read(struct pad_softc *sc, off_t *offp, struct uio *uio, kauth_cred_t cred,
     int ioflag)
 {
 	pad_block_t pb;
-	int len;
 	int err;
 
 	err = 0;
 	DPRINTF("%s: resid=%zu\n", __func__, uio->uio_resid);
-	while (uio->uio_resid > 0 && !err) {
-		mutex_enter(&sc->sc_cond_lock);
-		if (sc->sc_buflen == 0) {
-			DPRINTF("%s: wait\n", __func__);
-			err = cv_wait_sig(&sc->sc_condvar, &sc->sc_cond_lock);
-			DPRINTF("%s: wake up %d\n", __func__, err);
-			mutex_exit(&sc->sc_cond_lock);
-			if (err) {
-				if (err == ERESTART)
-					err = EINTR;
-				break;
-			}
-			if (sc->sc_buflen == 0)
-				break;
-			continue;
-		}
-
-		len = uimin(uio->uio_resid, sc->sc_buflen);
-		err = pad_get_block(sc, &pb, len);
-		mutex_exit(&sc->sc_cond_lock);
+	while (uio->uio_resid > 0) {
+		mutex_enter(&sc->sc_intr_lock);
+		err = pad_get_block(sc, &pb, uio->uio_resid);
+		mutex_exit(&sc->sc_intr_lock);
 		if (err)
 			break;
+
 		DPRINTF("%s: move %d\n", __func__, pb.pb_len);
-		uiomove(pb.pb_ptr, pb.pb_len, uio);
+		err = uiomove(pb.pb_ptr, pb.pb_len, uio);
+		if (err)
+			break;
 	}
 
 	return err;
@@ -588,9 +540,7 @@ pad_set_format(void *opaque, int setmode,
     const audio_params_t *play, const audio_params_t *rec,
     audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
 {
-	struct pad_softc *sc;
-
-	sc = (struct pad_softc *)opaque;
+	struct pad_softc *sc = opaque;
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
@@ -605,45 +555,35 @@ static int
 pad_start_output(void *opaque, void *block, int blksize,
     void (*intr)(void *), void *intrarg)
 {
-	struct pad_softc *sc;
+	struct pad_softc *sc = opaque;
 	int err;
 	int ms;
-
-	sc = (struct pad_softc *)opaque;
 
 	KASSERT(mutex_owned(&sc->sc_intr_lock));
 
 	sc->sc_intr = intr;
 	sc->sc_intrarg = intrarg;
-	sc->sc_blksize = blksize;
 
 	DPRINTF("%s: blksize=%d\n", __func__, blksize);
-	mutex_enter(&sc->sc_cond_lock);
 	err = pad_add_block(sc, block, blksize);
-	mutex_exit(&sc->sc_cond_lock);
-	cv_broadcast(&sc->sc_condvar);
-	if (err)
-		return err;
 
 	ms = blksize * 1000 / PADCHAN / (PADPREC / NBBY) / PADFREQ;
 	DPRINTF("%s: callout ms=%d\n", __func__, ms);
-	callout_reset(&sc->sc_pcallout, mstohz(ms), pad_done_output, sc);
+	callout_schedule(&sc->sc_pcallout, mstohz(ms));
 
-	return 0;
+	return err;
 }
 
 static int
 pad_halt_output(void *opaque)
 {
-	struct pad_softc *sc;
-
-	sc = (struct pad_softc *)opaque;
+	struct pad_softc *sc = opaque;
 
 	DPRINTF("%s\n", __func__);
 	KASSERT(mutex_owned(&sc->sc_intr_lock));
 
-	cv_broadcast(&sc->sc_condvar);
-	callout_stop(&sc->sc_pcallout);
+	callout_halt(&sc->sc_pcallout, &sc->sc_intr_lock);
+
 	sc->sc_intr = NULL;
 	sc->sc_intrarg = NULL;
 	sc->sc_buflen = 0;
@@ -655,11 +595,9 @@ pad_halt_output(void *opaque)
 static void
 pad_done_output(void *arg)
 {
-	struct pad_softc *sc;
+	struct pad_softc *sc = arg;
 
 	DPRINTF("%s\n", __func__);
-	sc = (struct pad_softc *)arg;
-	callout_stop(&sc->sc_pcallout);
 
 	mutex_enter(&sc->sc_intr_lock);
 	(*sc->sc_intr)(sc->sc_intrarg);
@@ -680,9 +618,7 @@ pad_getdev(void *opaque, struct audio_device *ret)
 static int
 pad_set_port(void *opaque, mixer_ctrl_t *mc)
 {
-	struct pad_softc *sc;
-
-	sc = (struct pad_softc *)opaque;
+	struct pad_softc *sc = opaque;
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
@@ -701,9 +637,7 @@ pad_set_port(void *opaque, mixer_ctrl_t *mc)
 static int
 pad_get_port(void *opaque, mixer_ctrl_t *mc)
 {
-	struct pad_softc *sc;
-
-	sc = (struct pad_softc *)opaque;
+	struct pad_softc *sc = opaque;
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
@@ -722,9 +656,7 @@ pad_get_port(void *opaque, mixer_ctrl_t *mc)
 static int
 pad_query_devinfo(void *opaque, mixer_devinfo_t *di)
 {
-	struct pad_softc *sc __diagused;
-
-	sc = (struct pad_softc *)opaque;
+	struct pad_softc *sc __diagused = opaque;
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
@@ -772,9 +704,7 @@ pad_get_props(void *opaque)
 static void
 pad_get_locks(void *opaque, kmutex_t **intr, kmutex_t **thread)
 {
-	struct pad_softc *sc;
-
-	sc = (struct pad_softc *)opaque;
+	struct pad_softc *sc = opaque;
 
 	*intr = &sc->sc_intr_lock;
 	*thread = &sc->sc_lock;
@@ -841,7 +771,6 @@ pad_modcmd(modcmd_t cmd, void *arg)
 			    pad_cfattach, cfdata_ioconf_pad);
 			break;
 		}
-		mutex_init(&padconfig, MUTEX_DEFAULT, IPL_NONE);
 
 #endif
 		break;
@@ -859,7 +788,6 @@ pad_modcmd(modcmd_t cmd, void *arg)
 			    &pad_cdevsw, &cmajor);
 			break;
 		}
-		mutex_destroy(&padconfig);
 #endif
 		break;
 

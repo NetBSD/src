@@ -1,4 +1,4 @@
-/* $NetBSD: efiacpi.h,v 1.1 2018/10/12 22:08:04 jmcneill Exp $ */
+/* $NetBSD: efiacpi.h,v 1.1.20.1 2021/06/17 04:46:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,4 +32,6 @@
 int efi_acpi_probe(void);
 void efi_acpi_show(void);
 int efi_acpi_available(void);
+int efi_acpi_enabled(void);
+void efi_acpi_enable(int);
 int efi_acpi_create_fdt(void);

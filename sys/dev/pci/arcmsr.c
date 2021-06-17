@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsr.c,v 1.41 2021/04/24 23:36:57 thorpej Exp $ */
+/*	$NetBSD: arcmsr.c,v 1.41.2.1 2021/06/17 04:46:29 thorpej Exp $ */
 /*	$OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -21,7 +21,7 @@
 #include "bio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.41 2021/04/24 23:36:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.41.2.1 2021/06/17 04:46:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1884,9 +1884,9 @@ arc_create_sensors(void *arg)
 
 bad:
 	sysmon_envsys_destroy(sc->sc_sme);
-	kmem_free(sc->sc_arc_sensors, slen);
-
 	sc->sc_sme = NULL;
+
+	kmem_free(sc->sc_arc_sensors, slen);
 	sc->sc_arc_sensors = NULL;
 
 	kthread_exit(0);

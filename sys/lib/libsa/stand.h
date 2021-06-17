@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.82 2016/08/27 18:59:18 dholland Exp $	*/
+/*	$NetBSD: stand.h,v 1.82.32.1 2021/06/17 04:46:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -246,7 +246,6 @@ void	*alloc(size_t) __compactcall;
 void	dealloc(void *, size_t) __compactcall;
 struct	disklabel;
 char	*getdisklabel(const char *, struct disklabel *);
-int	dkcksum(const struct disklabel *);
 
 void	printf(const char *, ...)
     __attribute__((__format__(__printf__, 1, 2)));

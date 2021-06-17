@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sppp.h,v 1.31.2.1 2021/05/13 00:47:33 thorpej Exp $	*/
+/*	$NetBSD: if_sppp.h,v 1.31.2.2 2021/06/17 04:46:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -153,6 +153,7 @@ struct spppkeepalivesettings {
 	u_int	maxalive;		/* number of LCP echo req. w/o reply */
 	time_t	max_noreceive;		/* (sec.) grace period before we start
 					   sending LCP echo requests. */
+	u_int	alive_interval;		/* number of keepalive between echo req. */
 };
 struct spppkeepalivesettings50 {
 	char	ifname[IFNAMSIZ];	/* pppoe interface name */

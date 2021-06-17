@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.93 2020/09/07 01:54:26 mrg Exp $
+#	$NetBSD: Makefile,v 1.93.6.1 2021/06/17 04:46:34 thorpej Exp $
 
 LIB=	sa
 LIBISPRIVATE?= yes
@@ -46,7 +46,7 @@ SRCS+=	memcmp.c memcpy.c memmove.c memset.c strchr.c
 SRCS+=	bcopy.c bzero.c	# Remove me eventually.
 
 # io routines
-SRCS+=	closeall.c dev.c disklabel.c dkcksum.c ioctl.c nullfs.c stat.c fstat.c
+SRCS+=	closeall.c dev.c disklabel.c ioctl.c nullfs.c stat.c fstat.c
 SRCS+=	close.c lseek.c open.c read.c write.c
 .if (${SA_USE_CREAD} == "yes")
 CPPFLAGS+= -D__INTERNAL_LIBSA_CREAD
@@ -80,7 +80,7 @@ CPPFLAGS+=	-DLIBSA_BIENDIAN_SUPPORT
 SRCS+=		byteorder.c
 .endif
 
-SRCS+=	ffsv1.c ffsv2.c
+SRCS+=	ffsv1.c ffsv2.c ffs_bswap.c
 SRCS+=	lfsv1.c lfsv2.c
 SRCS+=	cd9660.c
 SRCS+=	ustarfs.c

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aq.c,v 1.25 2021/04/16 08:09:40 ryo Exp $	*/
+/*	$NetBSD: if_aq.c,v 1.25.2.1 2021/06/17 04:46:29 thorpej Exp $	*/
 
 /**
  * aQuantia Corporation Network Driver
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.25 2021/04/16 08:09:40 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.25.2.1 2021/06/17 04:46:29 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_aq.h"
@@ -1458,12 +1458,7 @@ aq_attach(device_t parent, device_t self, void *aux)
 	ifp->if_capabilities |= IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_TCPv6_Rx;
 	ifp->if_capabilities |= IFCAP_CSUM_UDPv4_Rx | IFCAP_CSUM_UDPv6_Rx;
 
-	error = if_initialize(ifp);
-	if (error != 0) {
-		aprint_error_dev(sc->sc_dev, "if_initialize failed(%d)\n",
-		    error);
-		goto attach_failure;
-	}
+	if_initialize(ifp);
 	ifp->if_percpuq = if_percpuq_create(ifp);
 	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, sc->sc_enaddr.ether_addr_octet);
@@ -1491,7 +1486,11 @@ aq_attach(device_t parent, device_t self, void *aux)
 		snprintf(sc->sc_sensor_temp.desc, ENVSYS_DESCLEN, "PHY");
 
 		sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor_temp);
-		sysmon_envsys_register(sc->sc_sme);
+		if (sysmon_envsys_register(sc->sc_sme)) {
+			sysmon_envsys_destroy(sc->sc_sme);
+			sc->sc_sme = NULL;
+			goto attach_failure;
+		}
 
 		/*
 		 * for unknown reasons, the first call of fw2x_get_temperature()
@@ -1579,7 +1578,6 @@ aq_detach(device_t self, int flags __unused)
 	if (sc->sc_sme != NULL) {
 		/* all sensors associated with this will also be detached */
 		sysmon_envsys_unregister(sc->sc_sme);
-		sc->sc_sme = NULL;
 	}
 #endif
 

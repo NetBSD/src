@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_emul.c,v 1.27 2019/04/06 03:06:26 thorpej Exp $ */
+/*	$NetBSD: mips_emul.c,v 1.27.16.1 2021/06/17 04:46:22 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999 Shuichiro URATA.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.27 2019/04/06 03:06:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.27.16.1 2021/06/17 04:46:22 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,9 @@ __KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.27 2019/04/06 03:06:26 thorpej Exp $
 static inline void	send_sigsegv(intptr_t, uint32_t, struct trapframe *,
 			    uint32_t);
 static inline void	update_pc(struct trapframe *, uint32_t);
+
+static void	mips_emul_ll(uint32_t, struct trapframe *, uint32_t);
+static void	mips_emul_sc(uint32_t, struct trapframe *, uint32_t);
 
 /*
  * MIPS2 LL instruction emulation state
@@ -152,7 +155,7 @@ mips_emul_branch(struct trapframe *tf, vaddr_t instpc, uint32_t fpuCSR,
 
 	case OP_COP1:
 		if (inst.RType.rs == OP_BCx || inst.RType.rs == OP_BCy) {
-			int condition = (fpuCSR & MIPS_FPU_COND_BIT) != 0;
+			int condition = (fpuCSR & MIPS_FCSR_FCC0) != 0;
 			if ((inst.RType.rt & COPz_BC_TF_MASK) != COPz_BC_TRUE)
 				condition = !condition;
 			if (condition)
@@ -198,11 +201,11 @@ mips_emul_inst(uint32_t status, uint32_t cause, vaddr_t opc,
 		inst = mips_ufetch32((uint32_t *)opc);
 
 	switch (((InstFmt)inst).FRType.op) {
-	case OP_LWC0:
-		mips_emul_lwc0(inst, tf, cause);
+	case OP_LL:
+		mips_emul_ll(inst, tf, cause);
 		break;
-	case OP_SWC0:
-		mips_emul_swc0(inst, tf, cause);
+	case OP_SC:
+		mips_emul_sc(inst, tf, cause);
 		break;
 	case OP_SPECIAL:
 		mips_emul_special(inst, tf, cause);
@@ -240,7 +243,10 @@ mips_emul_inst(uint32_t status, uint32_t cause, vaddr_t opc,
 #endif
 	default:
 #ifdef DEBUG
-		printf("pid %d (%s): trap: bad insn @ %#"PRIxVADDR" cause %#x insn %#x code %d\n", curproc->p_pid, curproc->p_comm, opc, cause, inst, code);
+		printf("pid %d (%s): trap: bad insn @ %#"PRIxVADDR
+		    " cause %#x status %#"PRIxREGISTER" insn %#x code %d\n",
+		    curproc->p_pid, curproc->p_comm, opc,
+		    cause, tf->tf_regs[_R_SR], inst, code);
 #endif
 		tf->tf_regs[_R_CAUSE] = cause;
 		tf->tf_regs[_R_BADVADDR] = opc;
@@ -286,7 +292,7 @@ update_pc(struct trapframe *tf, uint32_t cause)
  * MIPS2 LL instruction
  */
 void
-mips_emul_lwc0(uint32_t inst, struct trapframe *tf, uint32_t cause)
+mips_emul_ll(uint32_t inst, struct trapframe *tf, uint32_t cause)
 {
 	intptr_t	vaddr;
 	int16_t		offset;
@@ -319,7 +325,7 @@ mips_emul_lwc0(uint32_t inst, struct trapframe *tf, uint32_t cause)
  * MIPS2 SC instruction
  */
 void
-mips_emul_swc0(uint32_t inst, struct trapframe *tf, uint32_t cause)
+mips_emul_sc(uint32_t inst, struct trapframe *tf, uint32_t cause)
 {
 	intptr_t	vaddr;
 	uint32_t	value;

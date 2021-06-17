@@ -1,4 +1,4 @@
-/*	$NetBSD: rk_tsadc.c,v 1.12 2021/01/27 03:10:19 thorpej Exp $	*/
+/*	$NetBSD: rk_tsadc.c,v 1.12.4.1 2021/06/17 04:46:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rk_tsadc.c,v 1.12 2021/01/27 03:10:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_tsadc.c,v 1.12.4.1 2021/06/17 04:46:18 thorpej Exp $");
 
 /*
  * Driver for the TSADC temperature sensor monitor in RK3328 and RK3399.
@@ -449,7 +449,7 @@ rk_tsadc_attach(device_t parent, device_t self, void *aux)
 			     TSHUT_DEF_TEMP);
 		tshut_temp = TSHUT_DEF_TEMP;
 	}
-	tshut_temp *= 1000;	/* convert fdt ms -> us */
+	tshut_temp *= 1000;	/* convert fdt mK -> uK */
 
 	memcpy(sc->sc_sensors, rk_tsadc_sensors, sizeof(sc->sc_sensors));
 	for (unsigned n = 0; n < sc->sc_rd->rd_num_sensors; n++) {

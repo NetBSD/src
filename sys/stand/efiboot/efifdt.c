@@ -1,4 +1,4 @@
-/* $NetBSD: efifdt.c,v 1.28 2020/12/19 08:09:31 skrll Exp $ */
+/* $NetBSD: efifdt.c,v 1.28.4.1 2021/06/17 04:46:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jason R. Thorpe
@@ -370,7 +370,7 @@ efi_fdt_gop(void)
 		/*
 		 * In ACPI mode, use GOP as console.
 		 */
-		if (efi_acpi_available()) {
+		if (efi_acpi_available() && efi_acpi_enabled()) {
 			snprintf(buf, sizeof(buf), "/chosen/framebuffer@%" PRIx64, mode->FrameBufferBase);
 			fdt_setprop_string(fdt_data, chosen, "stdout-path", buf);
 		}

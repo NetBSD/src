@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.162 2020/03/14 18:08:39 ad Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.162.8.1 2021/06/17 04:46:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.162 2020/03/14 18:08:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.162.8.1 2021/06/17 04:46:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -340,7 +340,7 @@ do_nfssvc(struct nfssvc_copy_ops *ops, struct lwp *l, int flag, void *argp, regi
 		}
 		error = nfssvc_addsock(fp, nam);
 		fd_putfile(nfsdarg.sock);
-	} else if (flag & NFSSVC_SETEXPORTSLIST) {
+	} else if (flag & (NFSSVC_SETEXPORTSLIST | NFSSVC_REPLACEEXPORTSLIST)) {
 		struct export_args *args;
 		struct mountd_exports_list mel;
 
@@ -357,7 +357,8 @@ do_nfssvc(struct nfssvc_copy_ops *ops, struct lwp *l, int flag, void *argp, regi
 		}
 		mel.mel_exports = args;
 
-		error = mountd_set_exports_list(&mel, l, NULL);
+		error = mountd_set_exports_list(&mel, l, NULL,
+		    flag & (NFSSVC_SETEXPORTSLIST | NFSSVC_REPLACEEXPORTSLIST));
 
 		free(args, M_TEMP);
 	} else {

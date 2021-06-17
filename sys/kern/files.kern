@@ -1,4 +1,4 @@
-#	$NetBSD: files.kern,v 1.54 2020/11/01 18:51:02 pgoyette Exp $
+#	$NetBSD: files.kern,v 1.54.4.1 2021/06/17 04:46:33 thorpej Exp $
 
 #
 # kernel sources
@@ -115,6 +115,7 @@ file	kern/subr_device.c		kern
 file	kern/subr_devsw.c		kern
 file	kern/subr_disk.c		kern
 file	kern/subr_disklabel.c		kern
+defflag opt_disklabel.h			DISKLABEL_EI
 file	kern/subr_disk_open.c		kern
 file	kern/subr_emul.c		kern
 file	kern/subr_evcnt.c		kern

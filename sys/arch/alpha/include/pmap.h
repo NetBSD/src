@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.84 2020/09/03 02:09:09 thorpej Exp $ */
+/* $NetBSD: pmap.h,v 1.84.6.1 2021/06/17 04:46:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -131,28 +131,36 @@
  * allocate any ASN info for the kernel pmap at all.
  * arrays which hold enough for ALPHA_MAXPROCS.
  */
-struct pmap_asn_info {
-	unsigned int		pma_asn;	/* address space number */
-	unsigned int		pma_pad0;
-	unsigned long		pma_asngen;	/* ASN generation number */
-	unsigned long		pma_padN[(COHERENCY_UNIT / 8) - 2];
+
+LIST_HEAD(pmap_pagelist, vm_page);
+LIST_HEAD(pmap_pvlist, pv_entry);
+
+struct pmap_percpu {
+	unsigned int		pmc_asn;	/* address space number */
+	unsigned int		pmc_pad0;
+	unsigned long		pmc_asngen;	/* ASN generation number */
+	unsigned int		pmc_needisync;	/* CPU needes isync */
+	unsigned int		pmc_pad1;
+	pt_entry_t		*pmc_lev1map;	/* level 1 map */
+	unsigned long		pmc_padN[(COHERENCY_UNIT / 8) - 4];
 };
 
 struct pmap {	/* pmaps are aligned to COHERENCY_UNIT boundaries */
 		/* pmaps are locked by hashed mutexes */
-	pt_entry_t		*pm_lev1map;	/* [ 0] level 1 map */
-	unsigned long		pm_cpus;	/* [ 8] CPUs using pmap */
-	unsigned long		pm_needisync;	/* [16] CPUs needing isync */
-	struct pmap_statistics	pm_stats;	/* [32] statistics */
-	long			pm_count;	/* [40] reference count */
+	unsigned long		pm_cpus;	/* [ 0] CPUs using pmap */
+	struct pmap_statistics	pm_stats;	/* [ 8] statistics */
+	unsigned int		pm_count;	/* [24] reference count */
+	unsigned int		__pm_spare0;	/* [28] spare field */
+	struct pmap_pagelist	pm_ptpages;	/* [32] list of PT pages */
+	struct pmap_pvlist	pm_pvents;	/* [40] list of PV entries */
 	TAILQ_ENTRY(pmap)	pm_list;	/* [48] list of all pmaps */
 	/* -- COHERENCY_UNIT boundary -- */
-	struct pmap_asn_info	pm_asni[];	/* [64] ASN information */
+	struct pmap_percpu	pm_percpu[];	/* [64] per-CPU data */
 			/*	variable length		*/
 };
 
 #define	PMAP_SIZEOF(x)							\
-	(ALIGN(offsetof(struct pmap, pm_asni[(x)])))
+	(ALIGN(offsetof(struct pmap, pm_percpu[(x)])))
 
 #define	PMAP_ASN_KERNEL		0	/* kernel-reserved ASN */
 #define	PMAP_ASN_FIRST_USER	1	/* first user ASN */
@@ -164,15 +172,17 @@ struct pmap {	/* pmaps are aligned to COHERENCY_UNIT boundaries */
  * mappings of that page.  An entry is a pv_entry_t, the list is pv_table.
  */
 typedef struct pv_entry {
-	struct pv_entry	*pv_next;	/* next pv_entry on list */
+	struct pv_entry	*pv_next;	/* next pv_entry on page list */
+	LIST_ENTRY(pv_entry) pv_link;	/* link on owning pmap's list */
 	struct pmap	*pv_pmap;	/* pmap where mapping lies */
 	vaddr_t		pv_va;		/* virtual address for mapping */
 	pt_entry_t	*pv_pte;	/* PTE that maps the VA */
 } *pv_entry_t;
 
-/* pvh_attrs */
-#define	PGA_MODIFIED		0x01		/* modified */
-#define	PGA_REFERENCED		0x02		/* referenced */
+/* attrs in pvh_listx */
+#define	PGA_MODIFIED		0x01UL		/* modified */
+#define	PGA_REFERENCED		0x02UL		/* referenced */
+#define	PGA_ATTRS		(PGA_MODIFIED | PGA_REFERENCED)
 
 /* pvh_usage */
 #define	PGU_NORMAL		0		/* free or normal use */
@@ -199,17 +209,10 @@ void	pmap_tlb_shootdown_ipi(struct cpu_info *, struct trapframe *);
 #define	pmap_copy(dp, sp, da, l, sa)	/* nothing */
 #define	pmap_update(pmap)		/* nothing (yet) */
 
-static __inline bool
-pmap_remove_all(struct pmap *pmap)
-{
-	/* Nothing. */
-	return false;
-}
-
 #define	pmap_is_referenced(pg)						\
-	(((pg)->mdpage.pvh_attrs & PGA_REFERENCED) != 0)
+	(((pg)->mdpage.pvh_listx & PGA_REFERENCED) != 0)
 #define	pmap_is_modified(pg)						\
-	(((pg)->mdpage.pvh_attrs & PGA_MODIFIED) != 0)
+	(((pg)->mdpage.pvh_listx & PGA_MODIFIED) != 0)
 
 #define	PMAP_STEAL_MEMORY		/* enable pmap_steal_memory() */
 #define	PMAP_GROWKERNEL			/* enable pmap_growkernel() */
@@ -273,45 +276,60 @@ do {									\
 
 #define	pmap_pte_prot_chg(pte, np) ((np) ^ pmap_pte_prot(pte))
 
-static __inline pt_entry_t *pmap_l2pte(pmap_t, vaddr_t, pt_entry_t *);
-static __inline pt_entry_t *pmap_l3pte(pmap_t, vaddr_t, pt_entry_t *);
-
-#define	pmap_l1pte(pmap, v)						\
-	(&(pmap)->pm_lev1map[l1pte_index((vaddr_t)(v))])
+static __inline pt_entry_t *
+pmap_lev1map(pmap_t pmap)
+{
+	if (__predict_false(pmap == pmap_kernel())) {
+		return kernel_lev1map;
+	}
+	/*
+	 * We're just reading a per-CPU field that's the same on
+	 * all CPUs, so don't bother disabling preemption around
+	 * this.
+	 */
+	return pmap->pm_percpu[cpu_number()].pmc_lev1map;
+}
 
 static __inline pt_entry_t *
-pmap_l2pte(pmap_t pmap, vaddr_t v, pt_entry_t *l1pte)
+pmap_l1pte(pt_entry_t *lev1map, vaddr_t v)
+{
+	KASSERT(lev1map != NULL);
+	return &lev1map[l1pte_index(v)];
+}
+
+static __inline pt_entry_t *
+pmap_l2pte(pt_entry_t *lev1map, vaddr_t v, pt_entry_t *l1pte)
 {
 	pt_entry_t *lev2map;
 
 	if (l1pte == NULL) {
-		l1pte = pmap_l1pte(pmap, v);
+		l1pte = pmap_l1pte(lev1map, v);
 		if (pmap_pte_v(l1pte) == 0)
-			return (NULL);
+			return NULL;
 	}
 
 	lev2map = (pt_entry_t *)ALPHA_PHYS_TO_K0SEG(pmap_pte_pa(l1pte));
-	return (&lev2map[l2pte_index(v)]);
+	return &lev2map[l2pte_index(v)];
 }
 
 static __inline pt_entry_t *
-pmap_l3pte(pmap_t pmap, vaddr_t v, pt_entry_t *l2pte)
+pmap_l3pte(pt_entry_t *lev1map, vaddr_t v, pt_entry_t *l2pte)
 {
 	pt_entry_t *l1pte, *lev2map, *lev3map;
 
 	if (l2pte == NULL) {
-		l1pte = pmap_l1pte(pmap, v);
+		l1pte = pmap_l1pte(lev1map, v);
 		if (pmap_pte_v(l1pte) == 0)
-			return (NULL);
+			return NULL;
 
 		lev2map = (pt_entry_t *)ALPHA_PHYS_TO_K0SEG(pmap_pte_pa(l1pte));
 		l2pte = &lev2map[l2pte_index(v)];
 		if (pmap_pte_v(l2pte) == 0)
-			return (NULL);
+			return NULL;
 	}
 
 	lev3map = (pt_entry_t *)ALPHA_PHYS_TO_K0SEG(pmap_pte_pa(l2pte));
-	return (&lev3map[l3pte_index(v)]);
+	return &lev3map[l3pte_index(v)];
 }
 
 /*
@@ -324,10 +342,10 @@ pmap_l3pte(pmap_t pmap, vaddr_t v, pt_entry_t *l2pte)
  */
 #define	PMAP_USERRET(pmap)						\
 do {									\
-	u_long cpu_mask = (1UL << cpu_number());			\
+	const unsigned long cpu_id = cpu_number();			\
 									\
-	if ((pmap)->pm_needisync & cpu_mask) {				\
-		atomic_and_ulong(&(pmap)->pm_needisync,	~cpu_mask);	\
+	if ((pmap)->pm_percpu[cpu_id].pmc_needisync) {			\
+		(pmap)->pm_percpu[cpu_id].pmc_needisync = 0;		\
 		alpha_pal_imb();					\
 	}								\
 } while (0)
@@ -337,15 +355,36 @@ do {									\
  */
 #define	__HAVE_VM_PAGE_MD
 struct vm_page_md {
-	struct pv_entry *pvh_list;		/* pv_entry list */
-	int pvh_attrs;				/* page attributes */
-	unsigned pvh_refcnt;
+	uintptr_t pvh_listx;		/* pv_entry list + attrs */
+	/*
+	 * XXX These fields are only needed for pages that are used
+	 * as PT pages.  It would be nice to find safely-unused fields
+	 * in the vm_page structure that could be used instead.
+	 *
+	 * (Only 11 bits are needed ... we need to be able to count from
+	 * 0-1025 ... 1025 because sometimes we need to take an extra
+	 * reference temporarily in pmap_enter().)
+	 */
+	unsigned int pvh_physpgrefs;	/* # refs as a PT page */
+	unsigned int pvh_spare0;	/* XXX spare field */
 };
+
+/* Reference counting for page table pages. */
+#define	PHYSPAGE_REFCNT(pg)						\
+	atomic_load_relaxed(&(pg)->mdpage.pvh_physpgrefs)
+#define	PHYSPAGE_REFCNT_SET(pg, v)					\
+	atomic_store_relaxed(&(pg)->mdpage.pvh_physpgrefs, (v))
+#define	PHYSPAGE_REFCNT_INC(pg)						\
+	atomic_inc_uint_nv(&(pg)->mdpage.pvh_physpgrefs)
+#define	PHYSPAGE_REFCNT_DEC(pg)						\
+	atomic_dec_uint_nv(&(pg)->mdpage.pvh_physpgrefs)
+
+#define	VM_MDPAGE_PVS(pg)						\
+	((struct pv_entry *)((pg)->mdpage.pvh_listx & ~3UL))
 
 #define	VM_MDPAGE_INIT(pg)						\
 do {									\
-	(pg)->mdpage.pvh_list = NULL;					\
-	(pg)->mdpage.pvh_refcnt = 0;					\
+	(pg)->mdpage.pvh_listx = 0UL;					\
 } while (/*CONSTCOND*/0)
 
 #endif /* _KERNEL */

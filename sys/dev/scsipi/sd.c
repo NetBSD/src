@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.331 2021/02/10 16:30:01 christos Exp $	*/
+/*	$NetBSD: sd.c,v 1.331.4.1 2021/06/17 04:46:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.331 2021/02/10 16:30:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.331.4.1 2021/06/17 04:46:30 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -681,7 +681,7 @@ sd_diskstart(device_t dev, struct buf *bp)
 	/*
 	 * If the device has become invalid, abort all the
 	 * reads and writes until all files have been closed and
-	 * re-opened
+	 * re-opened.
 	 */
 	if (__predict_false(
 	    (periph->periph_flags & PERIPH_MEDIA_LOADED) == 0)) {

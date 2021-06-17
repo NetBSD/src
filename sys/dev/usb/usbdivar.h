@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.124 2020/06/05 17:20:56 maxv Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.124.6.1 2021/06/17 04:46:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -230,8 +230,7 @@ struct usbd_interface {
 	int			ui_index;
 	int			ui_altindex;
 	struct usbd_endpoint   *ui_endpoints;
-	void		       *ui_priv;
-	LIST_HEAD(, usbd_pipe)	ui_pipes;
+	int64_t			ui_busy;	/* #pipes, or -1 if setting */
 };
 
 struct usbd_pipe {
@@ -243,7 +242,6 @@ struct usbd_pipe {
 	bool			up_serialise;
 	SIMPLEQ_HEAD(, usbd_xfer)
 			        up_queue;
-	LIST_ENTRY(usbd_pipe)	up_next;
 	struct usb_task		up_async_task;
 
 	struct usbd_xfer       *up_intrxfer; /* used for repeating requests */
@@ -347,12 +345,22 @@ usbd_status	usbd_reattach_device(device_t, struct usbd_device *,
 				     int, const int *);
 
 void		usbd_remove_device(struct usbd_device *, struct usbd_port *);
+bool		usbd_iface_locked(struct usbd_interface *);
+usbd_status	usbd_iface_lock(struct usbd_interface *);
+void		usbd_iface_unlock(struct usbd_interface *);
+usbd_status	usbd_iface_piperef(struct usbd_interface *);
+void		usbd_iface_pipeunref(struct usbd_interface *);
 usbd_status	usbd_fill_iface_data(struct usbd_device *, int, int);
 void		usb_free_device(struct usbd_device *);
 
 usbd_status	usb_insert_transfer(struct usbd_xfer *);
 void		usb_transfer_complete(struct usbd_xfer *);
 int		usb_disconnect_port(struct usbd_port *, device_t, int);
+
+usbd_status	usbd_endpoint_acquire(struct usbd_device *,
+		    struct usbd_endpoint *, int);
+void		usbd_endpoint_release(struct usbd_device *,
+		    struct usbd_endpoint *);
 
 void		usbd_kill_pipe(struct usbd_pipe *);
 usbd_status	usbd_attach_roothub(device_t, struct usbd_device *);

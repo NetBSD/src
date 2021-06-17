@@ -1,4 +1,4 @@
-/* $NetBSD: m25p.c,v 1.17.4.1 2021/05/19 03:46:26 thorpej Exp $ */
+/* $NetBSD: m25p.c,v 1.17.4.2 2021/06/17 04:46:30 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m25p.c,v 1.17.4.1 2021/05/19 03:46:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m25p.c,v 1.17.4.2 2021/06/17 04:46:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,7 +166,7 @@ m25p_doattach(device_t self)
 	/* first we try JEDEC ID read */
 	cmd = SPIFLASH_CMD_RDJI;
 	if (spi_send_recv(sc->sc_sh, 1, &cmd, 3, buf)) {
-		aprint_error(": failed to get JEDEC identification\n");
+		aprint_error_dev(self, "failed to get JEDEC identification\n");
 		return;
 	}
 	mfgid = buf[0];
@@ -175,7 +175,8 @@ m25p_doattach(device_t self)
 	if ((mfgid == 0xff) || (mfgid == 0)) {
 		cmd = SPIFLASH_CMD_RDID;
 		if (spi_send_recv(sc->sc_sh, 1, &cmd, 4, buf)) {
-			aprint_error(": failed to get legacy signature\n");
+			aprint_error_dev(self,
+			    "failed to get legacy signature\n");
 			return;
 		}
 		sig = buf[3];
@@ -192,8 +193,9 @@ m25p_doattach(device_t self)
 	}
 
 	if (info->name == NULL) {
-		aprint_error(": vendor 0x%02X dev 0x%04X sig 0x%02X not supported\n",
-			     mfgid, devid, sig);
+		aprint_error_dev(self,
+		    "vendor 0x%02X dev 0x%04X sig 0x%02X not supported\n",
+		     mfgid, devid, sig);
 		return;
 	}
 

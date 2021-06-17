@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.105.2.1 2021/05/13 00:47:20 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.105.2.2 2021/06/17 04:46:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.105.2.1 2021/05/13 00:47:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.105.2.2 2021/06/17 04:46:16 thorpej Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -554,6 +554,10 @@ pmap_init(void)
 	pool_cache_bootstrap(&_pmap_pv_pool, sizeof(struct pv_entry),
 	    32, 0, PR_LARGECACHE, "pvpl", NULL, IPL_NONE, _pmap_pv_ctor,
 	    NULL, NULL);
+
+	int nmaxproc = cpu_maxproc();
+	if (maxproc > nmaxproc)
+		maxproc = nmaxproc;
 }
 
 void
@@ -1420,12 +1424,6 @@ pmap_protect(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	pm_unlock(pm);
 }
 
-/* XXX: due to the current implementation of pmap depends on 16bit ASID */
-int
-cpu_maxproc(void)
-{
-	return 65535;
-}
 
 void
 pmap_activate(struct lwp *l)

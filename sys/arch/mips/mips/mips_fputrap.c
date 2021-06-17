@@ -1,4 +1,4 @@
-/* $NetBSD: mips_fputrap.c,v 1.10 2011/02/26 15:41:32 tsutsui Exp $ */
+/* $NetBSD: mips_fputrap.c,v 1.10.72.1 2021/06/17 04:46:22 thorpej Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -47,7 +47,7 @@ mips_fpuexcept(struct lwp *l, uint32_t fpustat)
 	ksiginfo_t ksi;
 
 #ifdef FPEMUL_DEBUG
-	printf("%s(%x,%#"PRIxREGISTER")\n",
+	printf("%s(%#x,%#"PRIxREGISTER")\n",
 	   __func__, fpustat, l->l_md.md_utf->tf_regs[_R_PC]);
 #endif
 
@@ -64,7 +64,7 @@ mips_fpuillinst(struct lwp *l, uint32_t opcode)
 	ksiginfo_t ksi;
 
 #ifdef FPEMUL_DEBUG
-	printf("%s(%x,%#"PRIxREGISTER")\n",
+	printf("%s(%#x,%#"PRIxREGISTER")\n",
 	   __func__, opcode, l->l_md.md_utf->tf_regs[_R_PC]);
 #endif
 
@@ -80,12 +80,12 @@ static const struct {
 	unsigned int bit;
 	int code;
 } fpecodes[] = {
-	{ MIPS_FPU_EXCEPTION_UNDERFLOW, FPE_FLTUND },
-	{ MIPS_FPU_EXCEPTION_OVERFLOW, FPE_FLTOVF },
-	{ MIPS_FPU_EXCEPTION_INEXACT, FPE_FLTRES },
-	{ MIPS_FPU_EXCEPTION_DIV0, FPE_FLTDIV },
-	{ MIPS_FPU_EXCEPTION_INVALID, FPE_FLTINV },
-	{ MIPS_FPU_EXCEPTION_UNIMPL, FPE_FLTINV }
+	{ MIPS_FCSR_CAUSE_I, FPE_FLTRES },
+	{ MIPS_FCSR_CAUSE_U, FPE_FLTUND },
+	{ MIPS_FCSR_CAUSE_O, FPE_FLTOVF },
+	{ MIPS_FCSR_CAUSE_Z, FPE_FLTDIV },
+	{ MIPS_FCSR_CAUSE_V, FPE_FLTINV },
+	{ MIPS_FCSR_CAUSE_E, FPE_FLTINV }
 };
 
 static int

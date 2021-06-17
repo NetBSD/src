@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.231 2020/08/14 09:06:15 chs Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.231.6.1 2021/06/17 04:46:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,6 +71,8 @@
  *
  * NOTE: vm system calls are prototyped in syscallargs.h
  */
+
+#include <sys/types.h>
 
 /*
  * defines

@@ -79,6 +79,7 @@ AcpiNsRootInitialize (
     ACPI_NAMESPACE_NODE         *PrevNode = NULL;
     ACPI_OPERAND_OBJECT         *ObjDesc;
     ACPI_STRING                 Val = NULL;
+    UINT32                      Name;
 
 
     ACPI_FUNCTION_TRACE (NsRootInitialize);
@@ -143,7 +144,8 @@ AcpiNsRootInitialize (
          * predefined names are at the root level. It is much easier to
          * just create and link the new node(s) here.
          */
-        NewNode = AcpiNsCreateNode (*ACPI_CAST_PTR (UINT32, InitVal->Name));
+        memcpy(&Name, InitVal->Name, sizeof(Name));
+        NewNode = AcpiNsCreateNode (Name);
         if (!NewNode)
         {
             Status = AE_NO_MEMORY;

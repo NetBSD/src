@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.8 2010/12/01 06:47:16 skrll Exp $	*/
+/*	$NetBSD: param.h,v 1.8.76.1 2021/06/17 04:46:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -34,6 +34,10 @@
 
 #ifndef	_CATS_PARAM_H_
 #define	_CATS_PARAM_H_
+
+#ifdef _KERNEL_OPT
+#include "opt_param.h"
+#endif
 
 /*
  * Machine dependent constants for ARM6+ processors

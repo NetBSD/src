@@ -1,4 +1,4 @@
-/* $NetBSD: thinkpad_acpi.c,v 1.49 2021/01/29 15:49:55 thorpej Exp $ */
+/* $NetBSD: thinkpad_acpi.c,v 1.49.4.1 2021/06/17 04:46:27 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,11 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.49 2021/01/29 15:49:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.49.4.1 2021/06/17 04:46:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/module.h>
+#include <sys/sdt.h>
 #include <sys/systm.h>
 
 #include <dev/acpi/acpireg.h>
@@ -54,6 +55,7 @@ typedef struct thinkpad_softc {
 	struct acpi_devnode	*sc_node;
 	ACPI_HANDLE		sc_powhdl;
 	ACPI_HANDLE		sc_cmoshdl;
+	ACPI_INTEGER		sc_ver;
 
 #define	TP_PSW_SLEEP		0	/* FnF4 */
 #define	TP_PSW_HIBERNATE	1	/* FnF12 */
@@ -75,7 +77,11 @@ typedef struct thinkpad_softc {
 #define	TP_PSW_VOLUME_UP	17
 #define	TP_PSW_VOLUME_DOWN	18
 #define	TP_PSW_VOLUME_MUTE	19
-#define	TP_PSW_LAST		20
+#define	TP_PSW_STAR_BUTTON	20
+#define	TP_PSW_SCISSORS_BUTTON	21
+#define	TP_PSW_BLUETOOTH_BUTTON	22
+#define	TP_PSW_KEYBOARD_BUTTON	23
+#define	TP_PSW_LAST		24
 
 	struct sysmon_pswitch	sc_smpsw[TP_PSW_LAST];
 	bool			sc_smpsw_valid;
@@ -107,11 +113,16 @@ typedef struct thinkpad_softc {
 #define	THINKPAD_NOTIFY_VolumeDown	0x016	/* XXX: Not seen on T61 */
 #define	THINKPAD_NOTIFY_VolumeMute	0x017	/* XXX: Not seen on T61 */
 #define	THINKPAD_NOTIFY_ThinkVantage	0x018
+#define	THINKPAD_NOTIFY_Star		0x311
+#define	THINKPAD_NOTIFY_Scissors	0x312
+#define	THINKPAD_NOTIFY_Bluetooth	0x314
+#define	THINKPAD_NOTIFY_Keyboard	0x315
 
 #define	THINKPAD_CMOS_BRIGHTNESS_UP	0x04
 #define	THINKPAD_CMOS_BRIGHTNESS_DOWN	0x05
 
-#define	THINKPAD_HKEY_VERSION		0x0100
+#define	THINKPAD_HKEY_VERSION_1		0x0100
+#define	THINKPAD_HKEY_VERSION_2		0x0200
 
 #define	THINKPAD_DISPLAY_LCD		0x01
 #define	THINKPAD_DISPLAY_CRT		0x02
@@ -164,6 +175,7 @@ CFATTACH_DECL3_NEW(thinkpad, sizeof(thinkpad_softc_t),
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "IBM0068" },
 	{ .compat = "LEN0068" },
+	{ .compat = "LEN0268" },
 	DEVICE_COMPAT_EOL
 };
 
@@ -178,13 +190,18 @@ thinkpad_match(device_t parent, cfdata_t match, void *opaque)
 	if (ret == 0)
 		return 0;
 
-	/* We only support hotkey version 0x0100 */
+	/* We only support hotkey versions 0x0100 and 0x0200 */
 	if (ACPI_FAILURE(acpi_eval_integer(aa->aa_node->ad_handle, "MHKV",
 	    &ver)))
 		return 0;
 
-	if (ver != THINKPAD_HKEY_VERSION)
+	switch (ver) {
+	case THINKPAD_HKEY_VERSION_1:
+	case THINKPAD_HKEY_VERSION_2:
+		break;
+	default:
 		return 0;
+	}
 
 	/* Cool, looks like we're good to go */
 	return ret;
@@ -225,12 +242,57 @@ thinkpad_attach(device_t parent, device_t self, void *opaque)
 		aprint_debug_dev(self, "using EC at %s\n",
 		    device_xname(sc->sc_ecdev));
 
-	/* Get the supported event mask */
-	rv = acpi_eval_integer(sc->sc_node->ad_handle, "MHKA", &val);
+	/* Query the version number */
+	rv = acpi_eval_integer(aa->aa_node->ad_handle, "MHKV", &sc->sc_ver);
 	if (ACPI_FAILURE(rv)) {
-		aprint_error_dev(self, "couldn't evaluate MHKA: %s\n",
+		aprint_error_dev(self, "couldn't evaluate MHKV: %s\n",
 		    AcpiFormatException(rv));
 		goto fail;
+	}
+	aprint_normal_dev(self, "version %04x\n", (unsigned)sc->sc_ver);
+
+	/* Get the supported event mask */
+	switch (sc->sc_ver) {
+	case THINKPAD_HKEY_VERSION_1:
+		rv = acpi_eval_integer(sc->sc_node->ad_handle, "MHKA", &val);
+		if (ACPI_FAILURE(rv)) {
+			aprint_error_dev(self, "couldn't evaluate MHKA: %s\n",
+			    AcpiFormatException(rv));
+			goto fail;
+		}
+		break;
+	case THINKPAD_HKEY_VERSION_2: {
+		ACPI_OBJECT args[1] = {
+			[0] = { .Integer = {
+				.Type = ACPI_TYPE_INTEGER,
+				.Value = 1, /* hotkey events */
+			} },
+		};
+		ACPI_OBJECT_LIST arglist = {
+			.Count = __arraycount(args),
+			.Pointer = args,
+		};
+		ACPI_OBJECT ret;
+		ACPI_BUFFER buf = { .Pointer = &ret, .Length = sizeof(ret) };
+
+		rv = AcpiEvaluateObject(sc->sc_node->ad_handle, "MHKA",
+		    &arglist, &buf);
+		if (ACPI_FAILURE(rv)) {
+			aprint_error_dev(self, "couldn't evaluate MHKA(1):"
+			    " %s\n",
+			    AcpiFormatException(rv));
+			goto fail;
+		}
+		if (buf.Length == 0 || ret.Type != ACPI_TYPE_INTEGER) {
+			aprint_error_dev(self, "failed to evaluate MHKA(1)\n");
+			goto fail;
+		}
+		val = ret.Integer.Value;
+		break;
+	}
+	default:
+		panic("%s: invalid version %jd", device_xname(self),
+		    (intmax_t)sc->sc_ver);
 	}
 
 	/* Enable all supported events */
@@ -287,6 +349,10 @@ thinkpad_attach(device_t parent, device_t self, void *opaque)
 	psw[TP_PSW_VOLUME_UP].smpsw_name       = PSWITCH_HK_VOLUME_UP;
 	psw[TP_PSW_VOLUME_DOWN].smpsw_name     = PSWITCH_HK_VOLUME_DOWN;
 	psw[TP_PSW_VOLUME_MUTE].smpsw_name     = PSWITCH_HK_VOLUME_MUTE;
+	psw[TP_PSW_STAR_BUTTON].smpsw_name     = PSWITCH_HK_STAR_BUTTON;
+	psw[TP_PSW_SCISSORS_BUTTON].smpsw_name = PSWITCH_HK_SCISSORS_BUTTON;
+	psw[TP_PSW_BLUETOOTH_BUTTON].smpsw_name = PSWITCH_HK_BLUETOOTH_BUTTON;
+	psw[TP_PSW_KEYBOARD_BUTTON].smpsw_name = PSWITCH_HK_KEYBOARD_BUTTON;
 #endif /* THINKPAD_NORMAL_HOTKEYS */
 
 	for (i = 0; i < TP_PSW_LAST; i++) {
@@ -356,6 +422,10 @@ thinkpad_notify_handler(ACPI_HANDLE hdl, uint32_t notify, void *opaque)
 	(void)AcpiOsExecute(OSL_NOTIFY_HANDLER, thinkpad_get_hotkeys, sc);
 }
 
+SDT_PROBE_DEFINE2(sdt, thinkpad, hotkey, MHKP,
+    "struct thinkpad_softc *"/*sc*/,
+    "ACPI_INTEGER"/*val*/);
+
 static void
 thinkpad_get_hotkeys(void *opaque)
 {
@@ -372,6 +442,7 @@ thinkpad_get_hotkeys(void *opaque)
 			    AcpiFormatException(rv));
 			return;
 		}
+		SDT_PROBE2(sdt, thinkpad, hotkey, MHKP,  sc, val);
 
 		if (val == 0)
 			return;
@@ -410,6 +481,15 @@ thinkpad_get_hotkeys(void *opaque)
 			if (sc->sc_smpsw_valid == false)
 				break;
 			sysmon_pswitch_event(&sc->sc_smpsw[TP_PSW_WIRELESS_BUTTON],
+			    PSWITCH_EVENT_PRESSED);
+#endif
+			break;
+		case THINKPAD_NOTIFY_Bluetooth:
+			thinkpad_bluetooth_toggle(sc);
+#ifndef THINKPAD_NORMAL_HOTKEYS
+			if (sc->sc_smpsw_valid == false)
+				break;
+			sysmon_pswitch_event(&sc->sc_smpsw[TP_PSW_BLUETOOTH_BUTTON],
 			    PSWITCH_EVENT_PRESSED);
 #endif
 			break;
@@ -530,6 +610,24 @@ thinkpad_get_hotkeys(void *opaque)
 			sysmon_pswitch_event(&sc->sc_smpsw[TP_PSW_VOLUME_MUTE],
 			    PSWITCH_EVENT_PRESSED);
 			break;
+		case THINKPAD_NOTIFY_Star:
+			if (sc->sc_smpsw_valid == false)
+				break;
+			sysmon_pswitch_event(&sc->sc_smpsw[TP_PSW_STAR_BUTTON],
+			    PSWITCH_EVENT_PRESSED);
+			break;
+		case THINKPAD_NOTIFY_Scissors:
+			if (sc->sc_smpsw_valid == false)
+				break;
+			sysmon_pswitch_event(&sc->sc_smpsw[TP_PSW_SCISSORS_BUTTON],
+			    PSWITCH_EVENT_PRESSED);
+			break;
+		case THINKPAD_NOTIFY_Keyboard:
+			if (sc->sc_smpsw_valid == false)
+				break;
+			sysmon_pswitch_event(&sc->sc_smpsw[TP_PSW_KEYBOARD_BUTTON],
+			    PSWITCH_EVENT_PRESSED);
+			break;
 #else
 		case THINKPAD_NOTIFY_FnF1:
 		case THINKPAD_NOTIFY_PointerSwitch:
@@ -539,6 +637,9 @@ thinkpad_get_hotkeys(void *opaque)
 		case THINKPAD_NOTIFY_VolumeUp:
 		case THINKPAD_NOTIFY_VolumeDown:
 		case THINKPAD_NOTIFY_VolumeMute:
+		case THINKPAD_NOTIFY_Star:
+		case THINKPAD_NOTIFY_Scissors:
+		case THINKPAD_NOTIFY_Keyboard:
 			/* XXXJDM we should deliver hotkeys as keycodes */
 			break;
 #endif /* THINKPAD_NORMAL_HOTKEYS */

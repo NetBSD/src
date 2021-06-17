@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.75 2021/03/29 02:07:43 simonb Exp $	*/
+/*	$NetBSD: types.h,v 1.75.2.1 2021/06/17 04:46:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -49,13 +49,10 @@ typedef __uint64_t		__fpregister64_t;
 typedef	unsigned int		__cpu_simple_lock_nv_t;
 #if defined(__mips_o32)
 typedef __register32_t		__register_t;
+typedef __fpregister32_t	__fpregister_t;
 #else
 typedef __register64_t		__register_t;
-#endif
-#if defined(__mips_o64) || defined(__mips_o32)
-typedef	__fpregister32_t	__fpregister_t;
-#else
-typedef	__fpregister64_t	__fpregister_t;
+typedef __fpregister64_t	__fpregister_t;
 #endif
 
 /*

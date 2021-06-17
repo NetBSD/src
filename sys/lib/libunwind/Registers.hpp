@@ -318,7 +318,7 @@ enum {
   DWARF_ARM32_R15 = 15,
   DWARF_ARM32_SPSR = 128,
   DWARF_ARM32_S0 = 64,
-  DWARF_ARM32_S31 = 91,
+  DWARF_ARM32_S31 = 95,
   DWARF_ARM32_D0 = 256,
   DWARF_ARM32_D31 = 287,
   REGNO_ARM32_R0 = 0,
@@ -329,14 +329,19 @@ enum {
   REGNO_ARM32_D15 = 32,
   REGNO_ARM32_D31 = 48,
   REGNO_ARM32_S0 = 49,
-  REGNO_ARM32_S31 = 70,
+  REGNO_ARM32_S31 = 80,
 };
+
+#define	FLAGS_VFPV2_USED		0x1
+#define	FLAGS_VFPV3_USED		0x2
+#define	FLAGS_LEGACY_VFPV2_REGNO	0x4
+#define	FLAGS_EXTENDED_VFPV2_REGNO	0x8
 
 class Registers_arm32 {
 public:
   enum {
-    LAST_REGISTER = REGNO_ARM32_D31,
-    LAST_RESTORE_REG = REGNO_ARM32_D31,
+    LAST_REGISTER = REGNO_ARM32_S31,
+    LAST_RESTORE_REG = REGNO_ARM32_S31,
     RETURN_OFFSET = 0,
     RETURN_MASK = 0,
   };
@@ -350,9 +355,8 @@ public:
       return REGNO_ARM32_SPSR;
     if (num >= DWARF_ARM32_D0 && num <= DWARF_ARM32_D31)
       return REGNO_ARM32_D0 + (num - DWARF_ARM32_D0);
-    if (num >= DWARF_ARM32_S0 && num <= DWARF_ARM32_S31) {
+    if (num >= DWARF_ARM32_S0 && num <= DWARF_ARM32_S31)
       return REGNO_ARM32_S0 + (num - DWARF_ARM32_S0);
-    }
     return LAST_REGISTER + 1;
   }
 
@@ -383,11 +387,20 @@ public:
   }
 
   void copyFloatVectorRegister(int num, uint64_t addr_) {
+    assert(validFloatVectorRegister(num));
     const void *addr = reinterpret_cast<const void *>(addr_);
     if (num >= REGNO_ARM32_S0 && num <= REGNO_ARM32_S31) {
-      if ((flags & 1) == 0) {
-        lazyVFP1();
-        flags |= 1;
+      /*
+       * XXX
+       * There are two numbering schemes for VFPv2 registers: s0-s31
+       * (used by GCC) and d0-d15 (used by LLVM). We won't support both
+       * schemes simultaneously in a same frame.
+       */
+      assert((flags & FLAGS_EXTENDED_VFPV2_REGNO) == 0);
+      flags |= FLAGS_LEGACY_VFPV2_REGNO;
+      if ((flags & FLAGS_VFPV2_USED) == 0) {
+        lazyVFPv2();
+        flags |= FLAGS_VFPV2_USED;
       }
       /*
        * Emulate single precision register as half of the
@@ -398,25 +411,32 @@ public:
 #if _BYTE_ORDER == _BIG_ENDIAN
       part = 1 - part;
 #endif
-      memcpy(fpreg + dnum + part * sizeof(fpreg[0]) / 2,
+      memcpy((uint8_t *)(fpreg + dnum) + part * sizeof(fpreg[0]) / 2,
         addr, sizeof(fpreg[0]) / 2);
-    }
-    if (num <= REGNO_ARM32_D15) {
-      if ((flags & 1) == 0) {
-        lazyVFP1();
-        flags |= 1;
-      }
     } else {
-      if ((flags & 2) == 0) {
-        lazyVFP3();
-        flags |= 2;
+      if (num <= REGNO_ARM32_D15) {
+	/*
+	 * XXX
+	 * See XXX comment above.
+	 */
+        assert((flags & FLAGS_LEGACY_VFPV2_REGNO) == 0);
+        flags |= FLAGS_EXTENDED_VFPV2_REGNO;
+        if ((flags & FLAGS_VFPV2_USED) == 0) {
+          lazyVFPv2();
+          flags |= FLAGS_VFPV2_USED;
+        }
+      } else {
+        if ((flags & FLAGS_VFPV3_USED) == 0) {
+          lazyVFPv3();
+          flags |= FLAGS_VFPV3_USED;
+        }
       }
+      memcpy(fpreg + (num - REGNO_ARM32_D0), addr, sizeof(fpreg[0]));
     }
-    memcpy(fpreg + (num - REGNO_ARM32_D0), addr, sizeof(fpreg[0]));
   }
 
-  __dso_hidden void lazyVFP1();
-  __dso_hidden void lazyVFP3();
+  __dso_hidden void lazyVFPv2();
+  __dso_hidden void lazyVFPv3();
   __dso_hidden void jumpto() const __dead;
 
 private:
@@ -424,6 +444,11 @@ private:
   uint32_t flags;
   uint64_t fpreg[32];
 };
+
+#undef	FLAGS_VFPV2_USED
+#undef	FLAGS_VFPV3_USED
+#undef	FLAGS_LEGACY_VFPV2_REGNO
+#undef	FLAGS_EXTENDED_VFPV2_REGNO
 
 enum {
   DWARF_VAX_R0 = 0,

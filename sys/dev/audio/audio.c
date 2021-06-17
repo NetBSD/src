@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.92.2.1 2021/05/13 00:47:30 thorpej Exp $	*/
+/*	$NetBSD: audio.c,v 1.92.2.2 2021/06/17 04:46:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.92.2.1 2021/05/13 00:47:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.92.2.2 2021/06/17 04:46:27 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -545,7 +545,7 @@ static int  filt_audioread_event(struct knote *, long);
 static int audio_open(dev_t, struct audio_softc *, int, int, struct lwp *,
 	audio_file_t **);
 static int audio_close(struct audio_softc *, audio_file_t *);
-static int audio_unlink(struct audio_softc *, audio_file_t *);
+static void audio_unlink(struct audio_softc *, audio_file_t *);
 static int audio_read(struct audio_softc *, struct uio *, int, audio_file_t *);
 static int audio_write(struct audio_softc *, struct uio *, int, audio_file_t *);
 static void audio_file_clear(struct audio_softc *, audio_file_t *);
@@ -1180,7 +1180,7 @@ mixer_init(struct audio_softc *sc)
 
 	/* Allocate save area.  Ensure non-zero allocation. */
 	sc->sc_nmixer_states = mi.index;
-	sc->sc_mixer_state = kmem_zalloc(sizeof(mixer_ctrl_t) *
+	sc->sc_mixer_state = kmem_zalloc(sizeof(sc->sc_mixer_state[0]) *
 	    (sc->sc_nmixer_states + 1), KM_SLEEP);
 
 	/*
@@ -1343,11 +1343,19 @@ audiodetach(device_t self, int flags)
 
 	/*
 	 * Clean up all open instances.
-	 * Here, we no longer need any locks to traverse sc_files.
 	 */
+	mutex_enter(sc->sc_lock);
 	while ((file = SLIST_FIRST(&sc->sc_files)) != NULL) {
-		audio_unlink(sc, file);
+		mutex_enter(sc->sc_intr_lock);
+		SLIST_REMOVE_HEAD(&sc->sc_files, entry);
+		mutex_exit(sc->sc_intr_lock);
+		if (file->ptrack || file->rtrack) {
+			mutex_exit(sc->sc_lock);
+			audio_unlink(sc, file);
+			mutex_enter(sc->sc_lock);
+		}
 	}
+	mutex_exit(sc->sc_lock);
 
 	pmf_event_deregister(self, PMFE_AUDIO_VOLUME_DOWN,
 	    audio_volume_down, true);
@@ -1745,9 +1753,19 @@ audioclose(struct file *fp)
 			error = audio_close(sc, file);
 			break;
 		case AUDIOCTL_DEVICE:
+			mutex_enter(sc->sc_lock);
+			mutex_enter(sc->sc_intr_lock);
+			SLIST_REMOVE(&sc->sc_files, file, audio_file, entry);
+			mutex_exit(sc->sc_intr_lock);
+			mutex_exit(sc->sc_lock);
 			error = 0;
 			break;
 		case MIXER_DEVICE:
+			mutex_enter(sc->sc_lock);
+			mutex_enter(sc->sc_intr_lock);
+			SLIST_REMOVE(&sc->sc_files, file, audio_file, entry);
+			mutex_exit(sc->sc_intr_lock);
+			mutex_exit(sc->sc_lock);
 			error = mixer_close(sc, file);
 			break;
 		default:
@@ -2234,7 +2252,7 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	rmixer_started = false;
 	inserted = false;
 
-	af = kmem_zalloc(sizeof(audio_file_t), KM_SLEEP);
+	af = kmem_zalloc(sizeof(*af), KM_SLEEP);
 	af->sc = sc;
 	af->dev = dev;
 	if ((flags & FWRITE) != 0 && audio_can_playback(sc))
@@ -2448,6 +2466,7 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	mutex_enter(sc->sc_lock);
 	if (sc->sc_dying) {
 		mutex_exit(sc->sc_lock);
+		error = ENXIO;
 		goto bad;
 	}
 
@@ -2535,9 +2554,6 @@ audio_close(struct audio_softc *sc, audio_file_t *file)
 {
 	int error;
 
-	/* Protect entering new fileops to this file */
-	atomic_store_relaxed(&file->dying, true);
-
 	/*
 	 * Drain first.
 	 * It must be done before unlinking(acquiring exlock).
@@ -2547,6 +2563,12 @@ audio_close(struct audio_softc *sc, audio_file_t *file)
 		audio_track_drain(sc, file->ptrack);
 		mutex_exit(sc->sc_lock);
 	}
+
+	mutex_enter(sc->sc_lock);
+	mutex_enter(sc->sc_intr_lock);
+	SLIST_REMOVE(&sc->sc_files, file, audio_file, entry);
+	mutex_exit(sc->sc_intr_lock);
+	mutex_exit(sc->sc_lock);
 
 	error = audio_exlock_enter(sc);
 	if (error) {
@@ -2560,19 +2582,20 @@ audio_close(struct audio_softc *sc, audio_file_t *file)
 		/* XXX This should not happen but what should I do ? */
 		panic("%s: can't acquire exlock: errno=%d", __func__, error);
 	}
-	error = audio_unlink(sc, file);
+	audio_unlink(sc, file);
 	audio_exlock_exit(sc);
 
-	return error;
+	return 0;
 }
 
 /*
  * Unlink this file, but not freeing memory here.
  * Must be called with sc_exlock held and without sc_lock held.
  */
-int
+static void
 audio_unlink(struct audio_softc *sc, audio_file_t *file)
 {
+	kauth_cred_t cred = NULL;
 	int error;
 
 	mutex_enter(sc->sc_lock);
@@ -2586,10 +2609,6 @@ audio_unlink(struct audio_softc *sc, audio_file_t *file)
 	    sc->sc_popens, sc->sc_ropens);
 
 	device_active(sc->sc_dev, DVA_SYSTEM);
-
-	mutex_enter(sc->sc_intr_lock);
-	SLIST_REMOVE(&sc->sc_files, file, audio_file, entry);
-	mutex_exit(sc->sc_intr_lock);
 
 	if (file->ptrack) {
 		TRACET(3, file->ptrack, "dropframes=%" PRIu64,
@@ -2644,15 +2663,15 @@ audio_unlink(struct audio_softc *sc, audio_file_t *file)
 			sc->hw_if->close(sc->hw_hdl);
 			mutex_exit(sc->sc_intr_lock);
 		}
+		cred = sc->sc_cred;
+		sc->sc_cred = NULL;
 	}
 
 	mutex_exit(sc->sc_lock);
-	if (sc->sc_popens + sc->sc_ropens == 0)
-		kauth_cred_free(sc->sc_cred);
+	if (cred)
+		kauth_cred_free(cred);
 
 	TRACE(3, "done");
-
-	return 0;
 }
 
 /*
@@ -2792,7 +2811,8 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag,
 	int error;
 
 	track = file->ptrack;
-	KASSERT(track);
+	if (track == NULL)
+		return EPERM;
 
 	/* I think it's better than EINVAL. */
 	if (track->mmapped)
@@ -3502,11 +3522,21 @@ audioctl_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	if (error)
 		return error;
 
-	af = kmem_zalloc(sizeof(audio_file_t), KM_SLEEP);
+	af = kmem_zalloc(sizeof(*af), KM_SLEEP);
 	af->sc = sc;
 	af->dev = dev;
 
-	/* Not necessary to insert sc_files. */
+	mutex_enter(sc->sc_lock);
+	if (sc->sc_dying) {
+		mutex_exit(sc->sc_lock);
+		kmem_free(af, sizeof(*af));
+		fd_abort(curproc, fp, fd);
+		return ENXIO;
+	}
+	mutex_enter(sc->sc_intr_lock);
+	SLIST_INSERT_HEAD(&sc->sc_files, af, entry);
+	mutex_exit(sc->sc_intr_lock);
+	mutex_exit(sc->sc_lock);
 
 	error = fd_clone(fp, fd, flags, &audio_fileops, af);
 	KASSERTMSG(error == EMOVEFD, "error=%d", error);
@@ -8121,6 +8151,18 @@ mixer_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	af = kmem_zalloc(sizeof(*af), KM_SLEEP);
 	af->sc = sc;
 	af->dev = dev;
+
+	mutex_enter(sc->sc_lock);
+	if (sc->sc_dying) {
+		mutex_exit(sc->sc_lock);
+		kmem_free(af, sizeof(*af));
+		fd_abort(curproc, fp, fd);
+		return ENXIO;
+	}
+	mutex_enter(sc->sc_intr_lock);
+	SLIST_INSERT_HEAD(&sc->sc_files, af, entry);
+	mutex_exit(sc->sc_intr_lock);
+	mutex_exit(sc->sc_lock);
 
 	error = fd_clone(fp, fd, flags, &audio_fileops, af);
 	KASSERT(error == EMOVEFD);

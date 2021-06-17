@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.36.2.1 2021/05/13 00:47:23 thorpej Exp $	*/
+/*	$NetBSD: lock.h,v 1.36.2.2 2021/06/17 04:46:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -204,7 +204,7 @@ static __inline void __unused
 __cpu_simple_unlock(__cpu_simple_lock_t *__alp)
 {
 
-#if defined(_ARM_ARCH_8)
+#if defined(_ARM_ARCH_8) && defined(__LP64__)
 	if (sizeof(*__alp) == 1) {
 		__asm __volatile("stlrb\t%w0, [%1]"
 		    :: "r"(__SIMPLELOCK_UNLOCKED), "r"(__alp) : "memory");

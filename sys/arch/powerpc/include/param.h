@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.33 2020/07/06 09:34:17 rin Exp $	*/
+/*	$NetBSD: param.h,v 1.33.6.1 2021/06/17 04:46:24 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -35,6 +35,7 @@
 #define	_POWERPC_PARAM_H
 
 #ifdef _KERNEL_OPT
+#include "opt_param.h"
 #include "opt_ppcarch.h"
 #endif
 

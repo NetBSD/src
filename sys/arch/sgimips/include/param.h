@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.17 2019/01/07 22:00:32 jdolecek Exp $	*/
+/*	$NetBSD: param.h,v 1.17.16.1 2021/06/17 04:46:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -36,6 +36,10 @@
 
 #ifndef	_SGIMIPS_PARAM_H_
 #define	_SGIMIPS_PARAM_H_
+
+#ifdef _KERNEL_OPT
+#include "opt_param.h"
+#endif
 
 #if !defined(MSGBUFSIZE)
 #define	MSGBUFSIZE	8192

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.25 2020/05/01 08:21:27 isaki Exp $	*/
+/*	$NetBSD: param.h,v 1.25.6.1 2021/06/17 04:46:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -44,6 +44,9 @@
 
 #if defined(_KERNEL) && !defined(_LOCORE)
 #include <machine/cpu.h>
+#endif
+#ifdef _KERNEL_OPT
+#include "opt_param.h"
 #endif
 
 /* NetBSD/sh3 is 4KB page */
