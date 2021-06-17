@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2021/06/17 06:20:56 rin Exp $
+# $NetBSD: Makefile,v 1.6 2021/06/17 12:38:53 christos Exp $
 
 NOLINT=
 .include <bsd.own.mk>
@@ -11,7 +11,7 @@ CPPFLAGS+= -D_FIDO_INTERNAL -I${DIST}/src
 LDADD+=-lusbhid -lcbor
 DPADD+=${LIBUSBHID} ${LIBCBOR}
 
-LDFLAGS+=-Wl,--version-script=${.CURDIR}/fido2.map
+LDFLAGS+=-Wl,--version-script=${DIST}/src/export.gnu
 
 LIB=    fido2
 
