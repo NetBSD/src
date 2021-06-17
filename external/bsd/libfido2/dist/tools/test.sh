@@ -1,96 +1,296 @@
-#!/bin/bash -e
-#
-# Copyright (c) 2018 Yubico AB. All rights reserved.
+#!/bin/sh -ex
+
+# Copyright (c) 2021 Yubico AB. All rights reserved.
 # Use of this source code is governed by a BSD-style
 # license that can be found in the LICENSE file.
 
-if [[ "$#" -ne 1 ]]; then
-	echo "usage: test.sh device" 1>&2
-	exit 1
-fi
+# usage: ./test.sh "$(mktemp -d fido2test-XXXXXXXX)" device
 
-read -p "This script will reset the authenticator at $1, permanently erasing "\
-"its credentials. Are you *SURE* you want to proceed (yes/no)? "
-if [[ "${REPLY}" != "yes" ]]; then
-	exit 1
-fi
+# Please note that this test script:
+# - is incomplete;
+# - assumes CTAP 2.1-like hmac-secret;
+# - should pass as-is on a YubiKey with a PIN set;
+# - may otherwise require set +e above;
+# - can be executed with UV=1 to run additional UV tests;
+# - was last tested on 2021-03-26 with firmware 5.2.7.
 
-echo "Resetting authenticator... (tap to continue!)"
-fido2-token -R $1
+cd "$1"
+DEV="$2"
 
-CRED_PARAM="$(mktemp /tmp/cred_param.XXXXXXXX)"
-ASSERT_PARAM="$(mktemp /tmp/assert_param.XXXXXXXX)"
-ASSERT_PUBKEY="$(mktemp /tmp/assert_pubkey.XXXXXXXX)"
-ES256_CRED="$(mktemp /tmp/es256_cred.XXXXXXX)"
-ES256_CRED_R="$(mktemp /tmp/es256_cred_r.XXXXXXXX)"
-
-cleanup() {
-	echo "Cleaning up..."
-	[[ "${CRED_PARAM}" != "" ]] && rm "${CRED_PARAM}"
-	[[ "${ASSERT_PARAM}" != "" ]] && rm "${ASSERT_PARAM}"
-	[[ "${ASSERT_PUBKEY}" != "" ]] && rm "${ASSERT_PUBKEY}"
-	[[ "${ES256_CRED}" != "" ]] && rm "${ES256_CRED}"
-	[[ "${ES256_CRED_R}" != "" ]] && rm "${ES256_CRED_R}"
+make_cred() {
+	cat > cred_param << EOF
+$(dd if=/dev/urandom bs=32 count=1 2>/dev/null | base64)
+$1
+some user name
+$(dd if=/dev/urandom bs=32 count=1 2>/dev/null | base64)
+EOF
+	fido2-cred -M $2 "${DEV}" > "$3" < cred_param
 }
 
-trap cleanup EXIT
+verify_cred() {
+	fido2-cred -V $1 > cred_out < "$2"
+	head -1 cred_out > "$3"
+	tail -n +2 cred_out > "$4"
+}
 
-dd if=/dev/urandom bs=1 count=32 2>/dev/null | base64 > "${CRED_PARAM}"
-echo "Boring Relying Party" >> "${CRED_PARAM}"
-echo "Boring User Name" >> "${CRED_PARAM}"
-dd if=/dev/urandom bs=1 count=32 2>/dev/null | base64 >> "${CRED_PARAM}"
-echo "Credential parameters:"
-cat "${CRED_PARAM}"
+get_assert() {
+	cat > assert_param << EOF
+$(dd if=/dev/urandom bs=32 count=1 2>/dev/null | base64)
+$1
+$(cat $3)
+$(cat $4)
+EOF
+	fido2-assert -G $2 "${DEV}" > "$5" < assert_param
+}
 
-echo "Generating non-resident ES256 credential... (tap to continue!)"
-fido2-cred -M -i "${CRED_PARAM}" $1 | fido2-cred -V | tee "${ES256_CRED}"
-echo "Generating resident ES256 credential... (tap to continue!)"
-fido2-cred -M -r -i "${CRED_PARAM}" $1 | fido2-cred -V | tee "${ES256_CRED_R}"
+verify_assert() {
+	fido2-assert -V $1 "$2" < "$3"
+}
 
-PIN1="$(dd if=/dev/urandom | tr -cd '[:print:]' | fold -w50 | head -1)"
-PIN2="$(dd if=/dev/urandom | tr -cd '[:print:]' | fold -w50 | head -1)"
+dd if=/dev/urandom bs=32 count=1 | base64 > hmac-salt
 
-echo "Setting ${PIN1} as the PIN..."
-echo -e "${PIN1}\n${PIN1}" | setsid -w fido2-token -S $1
-echo "Changing PIN from ${PIN1} to ${PIN2}..."
-echo -e "${PIN1}\n${PIN2}\n${PIN2}" | setsid -w fido2-token -C $1
-echo ""
+# u2f
+make_cred no.tld "-u" u2f
+! make_cred no.tld "-ru" /dev/null
+! make_cred no.tld "-uc1" /dev/null
+! make_cred no.tld "-uc2" /dev/null
+verify_cred "--"  u2f u2f-cred u2f-pubkey
+! verify_cred "-h" u2f /dev/null /dev/null
+! verify_cred "-v" u2f /dev/null /dev/null
+verify_cred "-c0" u2f /dev/null /dev/null
+! verify_cred "-c1" u2f /dev/null /dev/null
+! verify_cred "-c2" u2f /dev/null /dev/null
+! verify_cred "-c3" u2f /dev/null /dev/null
 
-echo "Testing non-resident ES256 credential..."
-echo "Getting assertion without user presence verification..."
-dd if=/dev/urandom bs=1 count=32 2>/dev/null | base64 > "${ASSERT_PARAM}"
-echo "Boring Relying Party" >> "${ASSERT_PARAM}"
-head -1 "${ES256_CRED}" >> "${ASSERT_PARAM}"
-tail -n +2 "${ES256_CRED}" > "${ASSERT_PUBKEY}"
-echo "Assertion parameters:"
-cat "${ASSERT_PARAM}"
-fido2-assert -G -i "${ASSERT_PARAM}" $1 | fido2-assert -V "${ASSERT_PUBKEY}" 
-echo "Checking that the user presence bit is observed..."
-! fido2-assert -G -i "${ASSERT_PARAM}" $1 | fido2-assert -V -p "${ASSERT_PUBKEY}"
-echo "Checking that the user verification bit is observed..."
-! fido2-assert -G -i "${ASSERT_PARAM}" $1 | fido2-assert -V -v "${ASSERT_PUBKEY}"
-echo "Getting assertion _with_ user presence verification... (tap to continue!)"
-fido2-assert -G -p -i "${ASSERT_PARAM}" $1 | fido2-assert -V -p "${ASSERT_PUBKEY}" 
-echo "Getting assertion  _with_ user verification..."
-echo -e "${PIN2}\n" | setsid -w fido2-assert -G -v -i "${ASSERT_PARAM}" $1 | \
-	fido2-assert -V -v "${ASSERT_PUBKEY}" 
-echo ""
+# wrap (non-resident)
+make_cred no.tld "--" wrap
+verify_cred "--" wrap wrap-cred	wrap-pubkey
+! verify_cred "-h" wrap	/dev/null /dev/null
+! verify_cred "-v" wrap	/dev/null /dev/null
+verify_cred "-c0" wrap /dev/null /dev/null
+! verify_cred "-c1" wrap /dev/null /dev/null
+! verify_cred "-c2" wrap /dev/null /dev/null
+! verify_cred "-c3" wrap /dev/null /dev/null
 
-echo "Testing resident ES256 credential..."
-echo "Getting assertion without user presence verification..."
-dd if=/dev/urandom bs=1 count=32 2>/dev/null | base64 > "${ASSERT_PARAM}"
-echo "Boring Relying Party" >> "${ASSERT_PARAM}"
-tail -n +2 "${ES256_CRED_R}" > "${ASSERT_PUBKEY}"
-echo "Assertion parameters:"
-cat "${ASSERT_PARAM}"
-fido2-assert -G -r -i "${ASSERT_PARAM}" $1 | fido2-assert -V "${ASSERT_PUBKEY}" 
-echo "Checking that the user presence bit is observed..."
-! fido2-assert -G -r -i "${ASSERT_PARAM}" $1 | fido2-assert -V -p "${ASSERT_PUBKEY}"
-echo "Checking that the user verification bit is observed..."
-! fido2-assert -G -r -i "${ASSERT_PARAM}" $1 | fido2-assert -V -v "${ASSERT_PUBKEY}"
-echo "Getting assertion _with_ user presence verification... (tap to continue!)"
-fido2-assert -G -r -p -i "${ASSERT_PARAM}" $1 | fido2-assert -V -p "${ASSERT_PUBKEY}" 
-echo "Getting assertion _with_ user verification..."
-echo -e "${PIN2}\n" | setsid -w fido2-assert -G -v -r -i "${ASSERT_PARAM}" $1 | \
-	fido2-assert -V -v "${ASSERT_PUBKEY}" 
-echo ""
+# wrap (non-resident) + hmac-secret
+make_cred no.tld "-h" wrap-hs
+! verify_cred "--" wrap-hs /dev/null /dev/null
+verify_cred "-h" wrap-hs wrap-hs-cred wrap-hs-pubkey
+! verify_cred "-v" wrap-hs /dev/null /dev/null
+verify_cred "-hc0" wrap-hs /dev/null /dev/null
+! verify_cred "-c0" wrap-hs /dev/null /dev/null
+! verify_cred "-c1" wrap-hs /dev/null /dev/null
+! verify_cred "-c2" wrap-hs /dev/null /dev/null
+! verify_cred "-c3" wrap-hs /dev/null /dev/null
+
+# resident
+make_cred no.tld "-r" rk
+verify_cred "--" rk rk-cred rk-pubkey
+! verify_cred "-h" rk /dev/null /dev/null
+! verify_cred "-v" rk /dev/null /dev/null
+verify_cred "-c0" rk /dev/null /dev/null
+! verify_cred "-c1" rk /dev/null /dev/null
+! verify_cred "-c2" rk /dev/null /dev/null
+! verify_cred "-c3" rk /dev/null /dev/null
+
+# resident + hmac-secret
+make_cred no.tld "-hr" rk-hs
+! verify_cred  "--" rk-hs rk-hs-cred rk-hs-pubkey
+verify_cred "-h" rk-hs /dev/null /dev/null
+! verify_cred "-v" rk-hs /dev/null /dev/null
+verify_cred "-hc0" rk-hs /dev/null /dev/null
+! verify_cred "-c0" rk-hs /dev/null /dev/null
+! verify_cred "-c1" rk-hs /dev/null /dev/null
+! verify_cred "-c2" rk-hs /dev/null /dev/null
+! verify_cred "-c3" rk-hs /dev/null /dev/null
+
+# u2f
+get_assert no.tld "-u" u2f-cred /dev/null u2f-assert
+! get_assert no.tld "-u -t up=false" u2f-cred /dev/null /dev/null
+verify_assert "--"  u2f-pubkey u2f-assert
+verify_assert "-p"  u2f-pubkey u2f-assert
+
+# wrap (non-resident)
+get_assert no.tld "--" wrap-cred /dev/null wrap-assert
+verify_assert "--" wrap-pubkey wrap-assert
+get_assert no.tld "-t pin=true" wrap-cred /dev/null wrap-assert
+verify_assert "--" wrap-pubkey wrap-assert
+verify_assert "-v" wrap-pubkey wrap-assert
+get_assert no.tld "-t pin=false" wrap-cred /dev/null wrap-assert
+verify_assert "--" wrap-pubkey wrap-assert
+get_assert no.tld "-t up=true" wrap-cred /dev/null wrap-assert
+verify_assert "-p" wrap-pubkey wrap-assert
+get_assert no.tld "-t up=true -t pin=true" wrap-cred /dev/null wrap-assert
+verify_assert "--" wrap-pubkey wrap-assert
+verify_assert "-p" wrap-pubkey wrap-assert
+verify_assert "-v" wrap-pubkey wrap-assert
+verify_assert "-pv" wrap-pubkey wrap-assert
+get_assert no.tld "-t up=true -t pin=false" wrap-cred /dev/null wrap-assert
+verify_assert "--" wrap-pubkey wrap-assert
+verify_assert "-p" wrap-pubkey wrap-assert
+get_assert no.tld "-t up=false" wrap-cred /dev/null wrap-assert
+verify_assert "--" wrap-pubkey wrap-assert
+! verify_assert "-p" wrap-pubkey wrap-assert
+get_assert no.tld "-t up=false -t pin=true" wrap-cred /dev/null wrap-assert
+! verify_assert "-p" wrap-pubkey wrap-assert
+verify_assert "-v" wrap-pubkey wrap-assert
+! verify_assert "-pv" wrap-pubkey wrap-assert
+get_assert no.tld "-t up=false -t pin=false" wrap-cred /dev/null wrap-assert
+! verify_assert "-p" wrap-pubkey wrap-assert
+get_assert no.tld "-h" wrap-cred hmac-salt wrap-assert
+! verify_assert "--" wrap-pubkey wrap-assert
+verify_assert "-h" wrap-pubkey wrap-assert
+get_assert no.tld "-h -t pin=true" wrap-cred hmac-salt wrap-assert
+! verify_assert "--" wrap-pubkey wrap-assert
+verify_assert "-h" wrap-pubkey wrap-assert
+verify_assert "-hv" wrap-pubkey wrap-assert
+get_assert no.tld "-h -t pin=false" wrap-cred hmac-salt wrap-assert
+! verify_assert "--" wrap-pubkey wrap-assert
+verify_assert "-h" wrap-pubkey wrap-assert
+get_assert no.tld "-h -t up=true" wrap-cred hmac-salt wrap-assert
+! verify_assert "--" wrap-pubkey wrap-assert
+verify_assert "-h" wrap-pubkey wrap-assert
+verify_assert "-hp" wrap-pubkey wrap-assert
+get_assert no.tld "-h -t up=true -t pin=true" wrap-cred hmac-salt wrap-assert
+! verify_assert "--" wrap-pubkey wrap-assert
+verify_assert "-h" wrap-pubkey wrap-assert
+verify_assert "-hp" wrap-pubkey wrap-assert
+verify_assert "-hv" wrap-pubkey wrap-assert
+verify_assert "-hpv" wrap-pubkey wrap-assert
+get_assert no.tld "-h -t up=true -t pin=false" wrap-cred hmac-salt wrap-assert
+! verify_assert "--" wrap-pubkey wrap-assert
+verify_assert "-h" wrap-pubkey wrap-assert
+verify_assert "-hp" wrap-pubkey wrap-assert
+! get_assert no.tld "-h -t up=false" wrap-cred hmac-salt wrap-assert
+! get_assert no.tld "-h -t up=false -t pin=true" wrap-cred hmac-salt wrap-assert
+! get_assert no.tld "-h -t up=false -t pin=false" wrap-cred hmac-salt wrap-assert
+
+if [ "x${UV}" != "x" ]; then
+	get_assert no.tld "-t uv=true" wrap-cred /dev/null wrap-assert
+	verify_assert "-v" wrap-pubkey wrap-assert
+	get_assert no.tld "-t uv=true -t pin=true" wrap-cred /dev/null wrap-assert
+	verify_assert "-v" wrap-pubkey wrap-assert
+	get_assert no.tld "-t uv=true -t pin=false" wrap-cred /dev/null wrap-assert
+	verify_assert "-v" wrap-pubkey wrap-assert
+	get_assert no.tld "-t uv=false" wrap-cred /dev/null wrap-assert
+	verify_assert "--" wrap-pubkey wrap-assert
+	get_assert no.tld "-t uv=false -t pin=true" wrap-cred /dev/null wrap-assert
+	verify_assert "-v" wrap-pubkey wrap-assert
+	get_assert no.tld "-t uv=false -t pin=false" wrap-cred /dev/null wrap-assert
+	verify_assert "--" wrap-pubkey wrap-assert
+	get_assert no.tld "-t up=true -t uv=true" wrap-cred /dev/null wrap-assert
+	verify_assert "-pv" wrap-pubkey wrap-assert
+	get_assert no.tld "-t up=true -t uv=true -t pin=true" wrap-cred /dev/null wrap-assert
+	verify_assert "-pv" wrap-pubkey wrap-assert
+	get_assert no.tld "-t up=true -t uv=true -t pin=false" wrap-cred /dev/null wrap-assert
+	verify_assert "-pv" wrap-pubkey wrap-assert
+	get_assert no.tld "-t up=true -t uv=false" wrap-cred /dev/null wrap-assert
+	verify_assert "-p" wrap-pubkey wrap-assert
+	get_assert no.tld "-t up=true -t uv=false -t pin=true" wrap-cred /dev/null wrap-assert
+	verify_assert "-pv" wrap-pubkey wrap-assert
+	get_assert no.tld "-t up=true -t uv=false -t pin=false" wrap-cred /dev/null wrap-assert
+	verify_assert "-p" wrap-pubkey wrap-assert
+	get_assert no.tld "-t up=false -t uv=true" wrap-cred /dev/null wrap-assert
+	verify_assert "-v" wrap-pubkey wrap-assert
+	get_assert no.tld "-t up=false -t uv=true -t pin=true" wrap-cred /dev/null wrap-assert
+	verify_assert "-v" wrap-pubkey wrap-assert
+	get_assert no.tld "-t up=false -t uv=true -t pin=false" wrap-cred /dev/null wrap-assert
+	verify_assert "-v" wrap-pubkey wrap-assert
+	get_assert no.tld "-t up=false -t uv=false" wrap-cred /dev/null wrap-assert
+	! verify_assert "--" wrap-pubkey wrap-assert
+	get_assert no.tld "-t up=false -t uv=false -t pin=true" wrap-cred /dev/null wrap-assert
+	verify_assert "-v" wrap-pubkey wrap-assert
+	get_assert no.tld "-t up=false -t uv=false -t pin=false" wrap-cred /dev/null wrap-assert
+	! verify_assert "--" wrap-pubkey wrap-assert
+	get_assert no.tld "-h -t uv=true" wrap-cred hmac-salt wrap-assert
+	verify_assert "-hv" wrap-pubkey wrap-assert
+	get_assert no.tld "-h -t uv=true -t pin=true" wrap-cred hmac-salt wrap-assert
+	verify_assert "-hv" wrap-pubkey wrap-assert
+	get_assert no.tld "-h -t uv=true -t pin=false" wrap-cred hmac-salt wrap-assert
+	verify_assert "-hv" wrap-pubkey wrap-assert
+	get_assert no.tld "-h -t uv=false" wrap-cred hmac-salt wrap-assert
+	verify_assert "-h" wrap-pubkey wrap-assert
+	get_assert no.tld "-h -t uv=false -t pin=true" wrap-cred hmac-salt wrap-assert
+	verify_assert "-hv" wrap-pubkey wrap-assert
+	get_assert no.tld "-h -t uv=false -t pin=false" wrap-cred hmac-salt wrap-assert
+	verify_assert "-h" wrap-pubkey wrap-assert
+	get_assert no.tld "-h -t up=true -t uv=true" wrap-cred hmac-salt wrap-assert
+	verify_assert "-hpv" wrap-pubkey wrap-assert
+	get_assert no.tld "-h -t up=true -t uv=true -t pin=true" wrap-cred hmac-salt wrap-assert
+	verify_assert "-hpv" wrap-pubkey wrap-assert
+	get_assert no.tld "-h -t up=true -t uv=true -t pin=false" wrap-cred hmac-salt wrap-assert
+	verify_assert "-hpv" wrap-pubkey wrap-assert
+	get_assert no.tld "-h -t up=true -t uv=false" wrap-cred hmac-salt wrap-assert
+	verify_assert "-hp" wrap-pubkey wrap-assert
+	get_assert no.tld "-h -t up=true -t uv=false -t pin=true" wrap-cred hmac-salt wrap-assert
+	verify_assert "-hpv" wrap-pubkey wrap-assert
+	get_assert no.tld "-h -t up=true -t uv=false -t pin=false" wrap-cred hmac-salt wrap-assert
+	verify_assert "-hp" wrap-pubkey wrap-assert
+	! get_assert no.tld "-h -t up=false -t uv=true" wrap-cred hmac-salt wrap-assert
+	! get_assert no.tld "-h -t up=false -t uv=true -t pin=true" wrap-cred hmac-salt wrap-assert
+	! get_assert no.tld "-h -t up=false -t uv=true -t pin=false" wrap-cred hmac-salt wrap-assert
+	! get_assert no.tld "-h -t up=false -t uv=false" wrap-cred hmac-salt wrap-assert
+	! get_assert no.tld "-h -t up=false -t uv=false -t pin=true" wrap-cred hmac-salt wrap-assert
+	! get_assert no.tld "-h -t up=false -t uv=false -t pin=false" wrap-cred hmac-salt wrap-assert
+fi
+
+# resident
+get_assert no.tld "-r" /dev/null /dev/null wrap-assert
+get_assert no.tld "-r -t pin=true" /dev/null /dev/null wrap-assert
+get_assert no.tld "-r -t pin=false" /dev/null /dev/null wrap-assert
+get_assert no.tld "-r -t up=true" /dev/null /dev/null wrap-assert
+get_assert no.tld "-r -t up=true -t pin=true" /dev/null /dev/null wrap-assert
+get_assert no.tld "-r -t up=true -t pin=false" /dev/null /dev/null wrap-assert
+get_assert no.tld "-r -t up=false" /dev/null /dev/null wrap-assert
+get_assert no.tld "-r -t up=false -t pin=true" /dev/null /dev/null wrap-assert
+get_assert no.tld "-r -t up=false -t pin=false" /dev/null /dev/null wrap-assert
+get_assert no.tld "-r -h" /dev/null hmac-salt wrap-assert
+get_assert no.tld "-r -h -t pin=true" /dev/null hmac-salt wrap-assert
+get_assert no.tld "-r -h -t pin=false" /dev/null hmac-salt wrap-assert
+get_assert no.tld "-r -h -t up=true" /dev/null hmac-salt wrap-assert
+get_assert no.tld "-r -h -t up=true -t pin=true" /dev/null hmac-salt wrap-assert
+get_assert no.tld "-r -h -t up=true -t pin=false" /dev/null hmac-salt wrap-assert
+! get_assert no.tld "-r -h -t up=false" /dev/null hmac-salt wrap-assert
+! get_assert no.tld "-r -h -t up=false -t pin=true" /dev/null hmac-salt wrap-assert
+! get_assert no.tld "-r -h -t up=false -t pin=false" /dev/null hmac-salt wrap-assert
+
+if [ "x${UV}" != "x" ]; then
+	get_assert no.tld "-r -t uv=true" /dev/null /dev/null wrap-assert
+	get_assert no.tld "-r -t uv=true -t pin=true" /dev/null /dev/null wrap-assert
+	get_assert no.tld "-r -t uv=true -t pin=false" /dev/null /dev/null wrap-assert
+	get_assert no.tld "-r -t uv=false" /dev/null /dev/null wrap-assert
+	get_assert no.tld "-r -t uv=false -t pin=true" /dev/null /dev/null wrap-assert
+	get_assert no.tld "-r -t uv=false -t pin=false" /dev/null /dev/null wrap-assert
+	get_assert no.tld "-r -t up=true -t uv=true" /dev/null /dev/null wrap-assert
+	get_assert no.tld "-r -t up=true -t uv=true -t pin=true" /dev/null /dev/null wrap-assert
+	get_assert no.tld "-r -t up=true -t uv=true -t pin=false" /dev/null /dev/null wrap-assert
+	get_assert no.tld "-r -t up=true -t uv=false" /dev/null /dev/null wrap-assert
+	get_assert no.tld "-r -t up=true -t uv=false -t pin=true" /dev/null /dev/null wrap-assert
+	get_assert no.tld "-r -t up=true -t uv=false -t pin=false" /dev/null /dev/null wrap-assert
+	get_assert no.tld "-r -t up=false -t uv=true" /dev/null /dev/null wrap-assert
+	get_assert no.tld "-r -t up=false -t uv=true -t pin=true" /dev/null /dev/null wrap-assert
+	get_assert no.tld "-r -t up=false -t uv=true -t pin=false" /dev/null /dev/null wrap-assert
+	get_assert no.tld "-r -t up=false -t uv=false" /dev/null /dev/null wrap-assert
+	get_assert no.tld "-r -t up=false -t uv=false -t pin=true" /dev/null /dev/null wrap-assert
+	get_assert no.tld "-r -t up=false -t uv=false -t pin=false" /dev/null /dev/null wrap-assert
+	get_assert no.tld "-r -h -t uv=true" /dev/null hmac-salt wrap-assert
+	get_assert no.tld "-r -h -t uv=true -t pin=true" /dev/null hmac-salt wrap-assert
+	get_assert no.tld "-r -h -t uv=true -t pin=false" /dev/null hmac-salt wrap-assert
+	get_assert no.tld "-r -h -t uv=false" /dev/null hmac-salt wrap-assert
+	get_assert no.tld "-r -h -t uv=false -t pin=true" /dev/null hmac-salt wrap-assert
+	get_assert no.tld "-r -h -t uv=false -t pin=false" /dev/null hmac-salt wrap-assert
+	get_assert no.tld "-r -h -t up=true -t uv=true" /dev/null hmac-salt wrap-assert
+	get_assert no.tld "-r -h -t up=true -t uv=true -t pin=true" /dev/null hmac-salt wrap-assert
+	get_assert no.tld "-r -h -t up=true -t uv=true -t pin=false" /dev/null hmac-salt wrap-assert
+	get_assert no.tld "-r -h -t up=true -t uv=false" /dev/null hmac-salt wrap-assert
+	get_assert no.tld "-r -h -t up=true -t uv=false -t pin=true" /dev/null hmac-salt wrap-assert
+	get_assert no.tld "-r -h -t up=true -t uv=false -t pin=false" /dev/null hmac-salt wrap-assert
+	! get_assert no.tld "-r -h -t up=false -t uv=true" /dev/null hmac-salt wrap-assert
+	! get_assert no.tld "-r -h -t up=false -t uv=true -t pin=true" /dev/null hmac-salt wrap-assert
+	! get_assert no.tld "-r -h -t up=false -t uv=true -t pin=false" /dev/null hmac-salt wrap-assert
+	! get_assert no.tld "-r -h -t up=false -t uv=false" /dev/null hmac-salt wrap-assert
+	! get_assert no.tld "-r -h -t up=false -t uv=false -t pin=true" /dev/null hmac-salt wrap-assert
+	! get_assert no.tld "-r -h -t up=false -t uv=false -t pin=false" /dev/null hmac-salt wrap-assert
+fi
+
+exit 0

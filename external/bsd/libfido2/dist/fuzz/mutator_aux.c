@@ -6,15 +6,20 @@
 
 #include <assert.h>
 #include <cbor.h>
+#include <errno.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "fido.h"
 #include "mutator_aux.h"
 
+#define HID_DEV_HANDLE	0x68696421
+#define NFC_DEV_HANDLE	0x6e666321
+
+int fido_nfc_rx(fido_dev_t *, uint8_t, unsigned char *, size_t, int);
+int fido_nfc_tx(fido_dev_t *, uint8_t, const unsigned char *, size_t);
 size_t LLVMFuzzerMutate(uint8_t *, size_t, size_t);
 
 static const uint8_t *wire_data_ptr = NULL;
@@ -161,29 +166,13 @@ mutate_string(char *s)
 	s[n] = '\0';
 }
 
-void *
-dev_open(const char *path)
-{
-	(void)path;
-
-	return (void *)0xdeadbeef;
-}
-
-void
-dev_close(void *handle)
-{
-	assert(handle == (void *)0xdeadbeef);
-}
-
-int
-dev_read(void *handle, unsigned char *ptr, size_t len, int ms)
+/* XXX should fail, but doesn't */
+static int
+buf_read(unsigned char *ptr, size_t len, int ms)
 {
 	size_t n;
 
 	(void)ms;
-
-	assert(handle == (void *)0xdeadbeef);
-	assert(len >= CTAP_MIN_REPORT_LEN && len <= CTAP_MAX_REPORT_LEN);
 
 	if (wire_data_len < len)
 		n = wire_data_len;
@@ -198,19 +187,143 @@ dev_read(void *handle, unsigned char *ptr, size_t len, int ms)
 	return (int)n;
 }
 
-int
-dev_write(void *handle, const unsigned char *ptr, size_t len)
+static int
+buf_write(const unsigned char *ptr, size_t len)
 {
-	assert(handle == (void *)0xdeadbeef);
+	consume(ptr, len);
+
+	if (uniform_random(400) < 1) {
+		errno = EIO;
+		return -1;
+	}
+
+	return (int)len;
+}
+
+static void *
+hid_open(const char *path)
+{
+	(void)path;
+
+	return (void *)HID_DEV_HANDLE;
+}
+
+static void
+hid_close(void *handle)
+{
+	assert(handle == (void *)HID_DEV_HANDLE);
+}
+
+static int
+hid_read(void *handle, unsigned char *ptr, size_t len, int ms)
+{
+	assert(handle == (void *)HID_DEV_HANDLE);
+	assert(len >= CTAP_MIN_REPORT_LEN && len <= CTAP_MAX_REPORT_LEN);
+
+	return buf_read(ptr, len, ms);
+}
+
+static int
+hid_write(void *handle, const unsigned char *ptr, size_t len)
+{
+	assert(handle == (void *)HID_DEV_HANDLE);
 	assert(len >= CTAP_MIN_REPORT_LEN + 1 &&
 	    len <= CTAP_MAX_REPORT_LEN + 1);
 
-	consume(ptr, len);
+	return buf_write(ptr, len);
+}
 
-	if (uniform_random(400) < 1)
-		return -1;
+static void *
+nfc_open(const char *path)
+{
+	(void)path;
 
-	return (int)len;
+	return (void *)NFC_DEV_HANDLE;
+}
+
+static void
+nfc_close(void *handle)
+{
+	assert(handle == (void *)NFC_DEV_HANDLE);
+}
+
+static int
+nfc_read(void *handle, unsigned char *ptr, size_t len, int ms)
+{
+	assert(handle == (void *)NFC_DEV_HANDLE);
+	assert(len > 0 && len <= 256 + 2);
+
+	return buf_read(ptr, len, ms);
+}
+
+static int
+nfc_write(void *handle, const unsigned char *ptr, size_t len)
+{
+	assert(handle == (void *)NFC_DEV_HANDLE);
+	assert(len > 0 && len <= 256 + 2);
+
+	return buf_write(ptr, len);
+}
+
+ssize_t
+fd_read(int fd, void *ptr, size_t len)
+{
+	assert(fd != -1);
+
+	return buf_read(ptr, len, -1);
+}
+
+ssize_t
+fd_write(int fd, const void *ptr, size_t len)
+{
+	assert(fd != -1);
+
+	return buf_write(ptr, len);
+}
+
+fido_dev_t *
+open_dev(int nfc)
+{
+	fido_dev_t *dev;
+	fido_dev_io_t io;
+	fido_dev_transport_t t;
+
+	memset(&io, 0, sizeof(io));
+	memset(&t, 0, sizeof(t));
+
+	if ((dev = fido_dev_new()) == NULL)
+		return NULL;
+
+	if (nfc) {
+		io.open = nfc_open;
+		io.close = nfc_close;
+		io.read = nfc_read;
+		io.write = nfc_write;
+	} else {
+		io.open = hid_open;
+		io.close = hid_close;
+		io.read = hid_read;
+		io.write = hid_write;
+	}
+
+	if (fido_dev_set_io_functions(dev, &io) != FIDO_OK)
+		goto fail;
+
+	if (nfc) {
+		t.rx = fido_nfc_rx;
+		t.tx = fido_nfc_tx;
+		if (fido_dev_set_transport_functions(dev, &t) != FIDO_OK)
+			goto fail;
+	}
+
+	if (fido_dev_open(dev, "nodev") != FIDO_OK)
+		goto fail;
+
+	return dev;
+fail:
+	fido_dev_free(&dev);
+
+	return NULL;
 }
 
 void

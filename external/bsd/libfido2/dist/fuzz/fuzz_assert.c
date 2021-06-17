@@ -5,21 +5,15 @@
  */
 
 #include <assert.h>
-#include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 
 #include "mutator_aux.h"
 #include "wiredata_fido2.h"
 #include "wiredata_u2f.h"
 #include "dummy.h"
-
-#include "fido.h"
-#include "fido/es256.h"
-#include "fido/rs256.h"
-#include "fido/eddsa.h"
 
 #include "../openbsd-compat/openbsd-compat.h"
 
@@ -37,7 +31,7 @@ struct param {
 	struct blob wire_data;
 	uint8_t cred_count;
 	uint8_t type;
-	uint8_t u2f;
+	uint8_t opt;
 	uint8_t up;
 	uint8_t uv;
 };
@@ -86,7 +80,7 @@ unpack(const uint8_t *ptr, size_t len)
 
 	if (unpack_byte(v[0], &p->uv) < 0 ||
 	    unpack_byte(v[1], &p->up) < 0 ||
-	    unpack_byte(v[2], &p->u2f) < 0 ||
+	    unpack_byte(v[2], &p->opt) < 0 ||
 	    unpack_byte(v[3], &p->type) < 0 ||
 	    unpack_byte(v[4], &p->cred_count) < 0 ||
 	    unpack_int(v[5], &p->ext) < 0 ||
@@ -126,7 +120,7 @@ pack(uint8_t *ptr, size_t len, const struct param *p)
 	if ((array = cbor_new_definite_array(15)) == NULL ||
 	    (argv[0] = pack_byte(p->uv)) == NULL ||
 	    (argv[1] = pack_byte(p->up)) == NULL ||
-	    (argv[2] = pack_byte(p->u2f)) == NULL ||
+	    (argv[2] = pack_byte(p->opt)) == NULL ||
 	    (argv[3] = pack_byte(p->type)) == NULL ||
 	    (argv[4] = pack_byte(p->cred_count)) == NULL ||
 	    (argv[5] = pack_int(p->ext)) == NULL ||
@@ -208,33 +202,25 @@ pack_dummy(uint8_t *ptr, size_t len)
 }
 
 static void
-get_assert(fido_assert_t *assert, uint8_t u2f, const struct blob *cdh,
+get_assert(fido_assert_t *assert, uint8_t opt, const struct blob *cdh,
     const char *rp_id, int ext, uint8_t up, uint8_t uv, const char *pin,
     uint8_t cred_count, const struct blob *cred)
 {
 	fido_dev_t *dev;
-	fido_dev_io_t io;
 
-	memset(&io, 0, sizeof(io));
-
-	io.open = dev_open;
-	io.close = dev_close;
-	io.read = dev_read;
-	io.write = dev_write;
-
-	if ((dev = fido_dev_new()) == NULL || fido_dev_set_io_functions(dev,
-	    &io) != FIDO_OK || fido_dev_open(dev, "nodev") != FIDO_OK) {
-		fido_dev_free(&dev);
+	if ((dev = open_dev(opt & 2)) == NULL)
 		return;
-	}
-
-	if (u2f & 1)
+	if (opt & 1)
 		fido_dev_force_u2f(dev);
-	if (ext & 1)
+	if (ext & FIDO_EXT_HMAC_SECRET)
 		fido_assert_set_extensions(assert, FIDO_EXT_HMAC_SECRET);
+	if (ext & FIDO_EXT_CRED_BLOB)
+		fido_assert_set_extensions(assert, FIDO_EXT_CRED_BLOB);
+	if (ext & FIDO_EXT_LARGEBLOB_KEY)
+		fido_assert_set_extensions(assert, FIDO_EXT_LARGEBLOB_KEY);
 	if (up & 1)
 		fido_assert_set_up(assert, FIDO_OPT_TRUE);
-	else if (u2f &1)
+	else if (opt & 1)
 		fido_assert_set_up(assert, FIDO_OPT_FALSE);
 	if (uv & 1)
 		fido_assert_set_uv(assert, FIDO_OPT_TRUE);
@@ -255,7 +241,7 @@ get_assert(fido_assert_t *assert, uint8_t u2f, const struct blob *cdh,
 	if (strlen(pin) == 0)
 		pin = NULL;
 
-	fido_dev_get_assert(dev, assert, u2f & 1 ? NULL : pin);
+	fido_dev_get_assert(dev, assert, (opt & 1) ? NULL : pin);
 
 	fido_dev_cancel(dev);
 	fido_dev_close(dev);
@@ -408,7 +394,7 @@ test(const struct param *p)
 
 	set_wire_data(p->wire_data.body, p->wire_data.len);
 
-	get_assert(assert, p->u2f, &p->cdh, p->rp_id, p->ext, p->up, p->uv,
+	get_assert(assert, p->opt, &p->cdh, p->rp_id, p->ext, p->up, p->uv,
 	    p->pin, p->cred_count, &p->cred);
 
 	/* XXX +1 on purpose */
@@ -433,6 +419,10 @@ test(const struct param *p)
 		    xstrlen(fido_assert_user_name(assert, i)));
 		consume(fido_assert_user_display_name(assert, i),
 		    xstrlen(fido_assert_user_display_name(assert, i)));
+		consume(fido_assert_blob_ptr(assert, i),
+		    fido_assert_blob_len(assert, i));
+		consume(fido_assert_largeblob_key_ptr(assert, i),
+		    fido_assert_largeblob_key_len(assert, i));
 		flags = fido_assert_flags(assert, i);
 		consume(&flags, sizeof(flags));
 		sigcount = fido_assert_sigcount(assert, i);
@@ -456,7 +446,7 @@ mutate(struct param *p, unsigned int seed, unsigned int flags) NO_MSAN
 	if (flags & MUTATE_PARAM) {
 		mutate_byte(&p->uv);
 		mutate_byte(&p->up);
-		mutate_byte(&p->u2f);
+		mutate_byte(&p->opt);
 		mutate_byte(&p->type);
 		mutate_byte(&p->cred_count);
 		mutate_int(&p->ext);
@@ -470,7 +460,7 @@ mutate(struct param *p, unsigned int seed, unsigned int flags) NO_MSAN
 	}
 
 	if (flags & MUTATE_WIREDATA) {
-		if (p->u2f & 1) {
+		if (p->opt & 1) {
 			p->wire_data.len = sizeof(dummy_wire_data_u2f);
 			memcpy(&p->wire_data.body, &dummy_wire_data_u2f,
 			    p->wire_data.len);

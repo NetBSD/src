@@ -23,6 +23,10 @@ The following definitions are used in the description below:
 	The file system path of a file containing a NIST P-256 public key in
 	PEM format.
 
+- <blobkey>
+
+	A credential's associated FIDO2.1 "largeBlob" symmetric key.
+
 === Description
 
 The following examples are provided:
@@ -45,7 +49,7 @@ The following examples are provided:
 	the device's PIN is changed from [oldpin] to <pin>.
 
 - cred [-t ecdsa|rsa|eddsa] [-k pubkey] [-ei cred_id] [-P pin] [-T seconds]
-       [-hruv] <device>
+       [-b blobkey] [-hruv] <device>
 
 	Creates a new credential on <device> and verify that the credential
 	was signed by the authenticator. The device's attestation certificate
@@ -58,10 +62,12 @@ The following examples are provided:
 	will involve a resident key. User verification may be requested
 	through the -v option. If option -u is specified, the credential
 	is generated using U2F (CTAP1) instead of FIDO2 (CTAP2) commands.
-	The -T option may be used to enforce a timeout of <seconds>.
+	The -T option may be used to enforce a timeout of <seconds>. If the
+	option -b is specified, the credential's "largeBlob" key is stored in
+	<blobkey>.
 
 - assert [-t ecdsa|rsa|eddsa] [-a cred_id] [-h hmac_secret] [-s hmac_salt]
-	 [-P pin] [-T seconds] [-puv] <pubkey> <device>
+	 [-P pin] [-T seconds] [-b blobkey] [-puv] <pubkey> <device>
 
 	Asks <device> for a FIDO2 assertion corresponding to [cred_id],
 	which may be omitted for resident keys. The obtained assertion
@@ -72,7 +78,9 @@ The following examples are provided:
 	specified, a FIDO2 hmac-secret is requested from the authenticator,
 	and the contents of <hmac_salt> are used as the salt. If option -h
 	is specified, the resulting hmac-secret is stored in <hmac_secret>.
-	The -T option may be used to enforce a timeout of <seconds>.
+	The -T option may be used to enforce a timeout of <seconds>. If the
+	option -b specified, the credential's "largeBlob" key is stored in
+	<blobkey>.
 
 - retries <device>
 	Get the number of PIN attempts left on <device> before lockout.

@@ -19,6 +19,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,17 +32,35 @@
 
 #include "extern.h"
 
-void
-read_pin(const char *path, char *buf, size_t len)
+char *
+get_pin(const char *path)
 {
+	char *pin;
 	char prompt[1024];
-	int r;
+	int r, ok = -1;
 
-	r = snprintf(prompt, sizeof(prompt), "Enter PIN for %s: ", path);
-	if (r < 0 || (size_t)r >= sizeof(prompt))
-		errx(1, "snprintf");
-	if (!readpassphrase(prompt, buf, len, RPP_ECHO_OFF))
-		errx(1, "readpassphrase");
+	if ((pin = calloc(1, PINBUF_LEN)) == NULL) {
+		warn("%s: calloc", __func__);
+		return NULL;
+	}
+	if ((r = snprintf(prompt, sizeof(prompt), "Enter PIN for %s: ",
+	    path)) < 0 || (size_t)r >= sizeof(prompt)) {
+		warn("%s: snprintf", __func__);
+		goto out;
+	}
+	if (!readpassphrase(prompt, pin, PINBUF_LEN, RPP_ECHO_OFF)) {
+		warnx("%s: readpassphrase", __func__);
+		goto out;
+	}
+
+	ok = 0;
+out:
+	if (ok < 0) {
+		freezero(pin, PINBUF_LEN);
+		pin = NULL;
+	}
+
+	return pin;
 }
 
 FILE *
@@ -152,6 +171,44 @@ open_dev(const char *path)
 		errx(1, "fido_dev_open %s: %s", path, fido_strerr(r));
 
 	return (dev);
+}
+
+int
+get_devopt(fido_dev_t *dev, const char *name, int *val)
+{
+	fido_cbor_info_t *cbor_info;
+	char * const *names;
+	const bool *values;
+	int r, ok = -1;
+
+	if ((cbor_info = fido_cbor_info_new()) == NULL) {
+		warnx("fido_cbor_info_new");
+		goto out;
+	}
+
+	if ((r = fido_dev_get_cbor_info(dev, cbor_info)) != FIDO_OK) {
+		warnx("fido_dev_get_cbor_info: %s (0x%x)", fido_strerr(r), r);
+		goto out;
+	}
+
+	if ((names = fido_cbor_info_options_name_ptr(cbor_info)) == NULL ||
+	    (values = fido_cbor_info_options_value_ptr(cbor_info)) == NULL) {
+		warnx("fido_dev_get_cbor_info: NULL name/value pointer");
+		goto out;
+	}
+
+	*val = -1;
+	for (size_t i = 0; i < fido_cbor_info_options_len(cbor_info); i++)
+		if (strcmp(names[i], name) == 0) {
+			*val = values[i];
+			break;
+		}
+
+	ok = 0;
+out:
+	fido_cbor_info_free(&cbor_info);
+
+	return (ok);
 }
 
 EC_KEY *
@@ -429,4 +486,95 @@ prot_string(int prot)
 	default:
 		return ("unknown");
 	}
+}
+
+int
+read_file(const char *path, u_char **ptr, size_t *len)
+{
+	int fd, ok = -1;
+	struct stat st;
+	ssize_t n;
+
+	*ptr = NULL;
+	*len = 0;
+
+	if ((fd = open(path, O_RDONLY)) < 0) {
+		warn("%s: open %s", __func__, path);
+		goto fail;
+	}
+	if (fstat(fd, &st) < 0) {
+		warn("%s: stat %s", __func__, path);
+		goto fail;
+	}
+	if (st.st_size < 0) {
+		warnx("%s: stat %s: invalid size", __func__, path);
+		goto fail;
+	}
+	*len = (size_t)st.st_size;
+	if ((*ptr = malloc(*len)) == NULL) {
+		warn("%s: malloc", __func__);
+		goto fail;
+	}
+	if ((n = read(fd, *ptr, *len)) < 0) {
+		warn("%s: read", __func__);
+		goto fail;
+	}
+	if ((size_t)n != *len) {
+		warnx("%s: read", __func__);
+		goto fail;
+	}
+
+	ok = 0;
+fail:
+	if (fd != -1) {
+		close(fd);
+	}
+	if (ok < 0) {
+		free(*ptr);
+		*ptr = NULL;
+		*len = 0;
+	}
+
+	return ok;
+}
+
+int
+write_file(const char *path, const u_char *ptr, size_t len)
+{
+	int fd, ok = -1;
+	ssize_t n;
+
+	if ((fd = open(path, O_WRONLY | O_CREAT, 0600)) < 0) {
+		warn("%s: open %s", __func__, path);
+		goto fail;
+	}
+	if ((n = write(fd, ptr, len)) < 0) {
+		warn("%s: write", __func__);
+		goto fail;
+	}
+	if ((size_t)n != len) {
+		warnx("%s: write", __func__);
+		goto fail;
+	}
+
+	ok = 0;
+fail:
+	if (fd != -1) {
+		close(fd);
+	}
+
+	return ok;
+}
+
+const char *
+plural(size_t x)
+{
+	return x == 1 ? "" : "s";
+}
+
+int
+should_retry_with_pin(const fido_dev_t *dev, int r)
+{
+	return fido_dev_has_pin(dev) && (r == FIDO_ERR_PIN_REQUIRED ||
+	    r == FIDO_ERR_UV_INVALID || r == FIDO_ERR_UNAUTHORIZED_PERM);
 }
