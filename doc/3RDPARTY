@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1803 2021/05/27 07:01:23 mrg Exp $
+#	$NetBSD: 3RDPARTY,v 1.1804 2021/06/17 01:16:55 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -2236,12 +2236,12 @@ Location:	external/bsd/pam-u2f
 Notes:
 
 Package:	libfido2
-Version:	1.5.0
-Current Vers:	1.5.0
+Version:	1.7.0
+Current Vers:	1.7.0
 Maintainer:	Yubico
 Archive Site:	https://github.com/Yubico/libfido2
 Home Page:	https://developers.yubico.com/libfido2/
-Date:		2020-12-04
+Date:		2021-06-16
 Mailing List:
 Responsible:	christos
 License:	bsd
