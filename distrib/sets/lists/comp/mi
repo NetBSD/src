@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2388 2021/05/30 01:56:45 joerg Exp $
+#	$NetBSD: mi,v 1.2389 2021/06/17 01:17:28 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -952,6 +952,7 @@
 ./usr/include/fido.h				comp-c-include
 ./usr/include/fido/bio.h			comp-c-include
 ./usr/include/fido/credman.h			comp-c-include
+./usr/include/fido/config.h			comp-c-include
 ./usr/include/fido/eddsa.h			comp-c-include
 ./usr/include/fido/err.h			comp-c-include
 ./usr/include/fido/es256.h			comp-c-include
@@ -7356,9 +7357,11 @@
 ./usr/share/man/cat3/fido_cred_set_authdata.0		comp-c-catman	.cat
 ./usr/share/man/cat3/fido_cred_verify.0			comp-c-catman	.cat
 ./usr/share/man/cat3/fido_credman_metadata_new.0	comp-c-catman	.cat
+./usr/share/man/cat3/fido_dev_enable_entattest.0	comp-c-catman	.cat
 ./usr/share/man/cat3/fido_dev_get_assert.0		comp-c-catman	.cat
 ./usr/share/man/cat3/fido_dev_get_touch_begin.0		comp-c-catman	.cat
 ./usr/share/man/cat3/fido_dev_info_manifest.0		comp-c-catman	.cat
+./usr/share/man/cat3/fido_dev_largeblob_get.0		comp-c-catman	.cat
 ./usr/share/man/cat3/fido_dev_make_cred.0		comp-c-catman	.cat
 ./usr/share/man/cat3/fido_dev_open.0			comp-c-catman	.cat
 ./usr/share/man/cat3/fido_dev_set_io_functions.0	comp-c-catman	.cat
@@ -15639,9 +15642,11 @@
 ./usr/share/man/html3/fido_cred_set_authdata.html	comp-c-htmlman	html
 ./usr/share/man/html3/fido_cred_verify.html		comp-c-htmlman	html
 ./usr/share/man/html3/fido_credman_metadata_new.html	comp-c-htmlman	html
+./usr/share/man/html3/fido_dev_enable_entattest.html	comp-c-htmlman	html
 ./usr/share/man/html3/fido_dev_get_assert.html		comp-c-htmlman	html
 ./usr/share/man/html3/fido_dev_get_touch_begin.html	comp-c-htmlman	html
 ./usr/share/man/html3/fido_dev_info_manifest.html	comp-c-htmlman	html
+./usr/share/man/html3/fido_dev_largeblob_get.html	comp-c-htmlman	html
 ./usr/share/man/html3/fido_dev_make_cred.html		comp-c-htmlman	html
 ./usr/share/man/html3/fido_dev_open.html		comp-c-htmlman	html
 ./usr/share/man/html3/fido_dev_set_io_functions.html	comp-c-htmlman	html
@@ -23860,9 +23865,11 @@
 ./usr/share/man/man3/fido_cred_set_authdata.3		comp-c-man	.man
 ./usr/share/man/man3/fido_cred_verify.3			comp-c-man	.man
 ./usr/share/man/man3/fido_credman_metadata_new.3	comp-c-man	.man
+./usr/share/man/man3/fido_dev_enable_entattest.3	comp-c-man	.man
 ./usr/share/man/man3/fido_dev_get_assert.3		comp-c-man	.man
 ./usr/share/man/man3/fido_dev_get_touch_begin.3		comp-c-man	.man
 ./usr/share/man/man3/fido_dev_info_manifest.3		comp-c-man	.man
+./usr/share/man/man3/fido_dev_largeblob_get.3		comp-c-man	.man
 ./usr/share/man/man3/fido_dev_make_cred.3		comp-c-man	.man
 ./usr/share/man/man3/fido_dev_open.3			comp-c-man	.man
 ./usr/share/man/man3/fido_dev_set_io_functions.3	comp-c-man	.man
