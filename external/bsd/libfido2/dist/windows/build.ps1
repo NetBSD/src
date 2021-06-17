@@ -11,13 +11,19 @@ $ErrorActionPreference = "Continue"
 
 # LibreSSL coordinates.
 New-Variable -Name 'LIBRESSL_URL' `
-	-Value 'https://ftp.openbsd.org/pub/OpenBSD/LibreSSL' -Option Constant
-New-Variable -Name 'LIBRESSL' -Value 'libressl-3.1.4' -Option Constant
+	-Value 'https://fastly.cdn.openbsd.org/pub/OpenBSD/LibreSSL' -Option Constant
+New-Variable -Name 'LIBRESSL' -Value 'libressl-3.2.5' -Option Constant
 
 # libcbor coordinates.
-New-Variable -Name 'LIBCBOR' -Value 'libcbor-0.7.0' -Option Constant
-New-Variable -Name 'LIBCBOR_BRANCH' -Value 'v0.7.0' -Option Constant
+New-Variable -Name 'LIBCBOR' -Value 'libcbor-0.8.0' -Option Constant
+New-Variable -Name 'LIBCBOR_BRANCH' -Value 'v0.8.0' -Option Constant
 New-Variable -Name 'LIBCBOR_GIT' -Value 'https://github.com/pjk/libcbor' `
+	-Option Constant
+
+# zlib coordinates.
+New-Variable -Name 'ZLIB' -Value 'zlib-1.2.11' -Option Constant
+New-Variable -Name 'ZLIB_BRANCH' -Value 'v1.2.11' -Option Constant
+New-Variable -Name 'ZLIB_GIT' -Value 'https://github.com/madler/zlib' `
 	-Option Constant
 
 # Work directories.
@@ -71,10 +77,16 @@ Write-Host "GPG: $GPG"
 
 New-Item -Type Directory ${BUILD}
 New-Item -Type Directory ${BUILD}\32
+New-Item -Type Directory ${BUILD}\32\dynamic
+New-Item -Type Directory ${BUILD}\32\static
 New-Item -Type Directory ${BUILD}\64
+New-Item -Type Directory ${BUILD}\64\dynamic
+New-Item -Type Directory ${BUILD}\64\static
 New-Item -Type Directory ${OUTPUT}
 New-Item -Type Directory ${OUTPUT}\pkg\Win64\Release\v142\dynamic
 New-Item -Type Directory ${OUTPUT}\pkg\Win32\Release\v142\dynamic
+New-Item -Type Directory ${OUTPUT}\pkg\Win64\Release\v142\static
+New-Item -Type Directory ${OUTPUT}\pkg\Win32\Release\v142\static
 
 Push-Location ${BUILD}
 
@@ -109,69 +121,106 @@ try {
 		& $Git clone --branch ${LIBCBOR_BRANCH} ${LIBCBOR_GIT} `
 			.\${LIBCBOR}
 	}
+
+	if(-Not (Test-Path .\${ZLIB})) {
+		Write-Host "Cloning ${ZLIB}..."
+		& $Git clone --branch ${ZLIB_BRANCH} ${ZLIB_GIT} `
+			.\${ZLIB}
+	}
 } catch {
 	throw "Failed to fetch and verify dependencies"
 } finally {
 	Pop-Location
 }
 
-Function Build(${OUTPUT}, ${GENERATOR}, ${ARCH}) {
-	if(-Not (Test-Path .\${LIBRESSL})) {
+Function Build(${OUTPUT}, ${GENERATOR}, ${ARCH}, ${SHARED}, ${FLAGS}) {
+	if (-Not (Test-Path .\${LIBRESSL})) {
 		New-Item -Type Directory .\${LIBRESSL} -ErrorAction Stop
 	}
 
 	Push-Location .\${LIBRESSL}
-	& $CMake ..\..\${LIBRESSL} -G "${GENERATOR}" -A "${ARCH}" `
-		-DCMAKE_C_FLAGS_RELEASE="/Zi" `
-		-DCMAKE_INSTALL_PREFIX="${OUTPUT}" -DBUILD_SHARED_LIBS=ON `
-		-DLIBRESSL_TESTS=OFF
-	& $CMake --build . --config Release
-	& $CMake --build . --config Release --target install
+	& $CMake ..\..\..\${LIBRESSL} -G "${GENERATOR}" -A "${ARCH}" `
+		-DBUILD_SHARED_LIBS="${SHARED}" -DLIBRESSL_TESTS=OFF `
+		-DCMAKE_C_FLAGS_RELEASE="${FLAGS} /Zi /guard:cf /sdl" `
+		-DCMAKE_INSTALL_PREFIX="${OUTPUT}"
+	& $CMake --build . --config Release --verbose
+	& $CMake --build . --config Release --target install --verbose
 	Pop-Location
 
-	if(-Not (Test-Path .\${LIBCBOR})) {
+	if (-Not (Test-Path .\${LIBCBOR})) {
 		New-Item -Type Directory .\${LIBCBOR} -ErrorAction Stop
 	}
 
 	Push-Location .\${LIBCBOR}
-	& $CMake ..\..\${LIBCBOR} -G "${GENERATOR}" -A "${ARCH}" `
-		-DCMAKE_C_FLAGS_RELEASE="/Zi" `
+	& $CMake ..\..\..\${LIBCBOR} -G "${GENERATOR}" -A "${ARCH}" `
+		-DBUILD_SHARED_LIBS="${SHARED}" `
+		-DCMAKE_C_FLAGS_RELEASE="${FLAGS} /Zi /guard:cf /sdl" `
 		-DCMAKE_INSTALL_PREFIX="${OUTPUT}"
-	& $CMake --build . --config Release
-	& $CMake --build . --config Release --target install
+	& $CMake --build . --config Release --verbose
+	& $CMake --build . --config Release --target install --verbose
 	Pop-Location
 
-	& $CMake ..\.. -G "${GENERATOR}" -A "${ARCH}" `
+	if(-Not (Test-Path .\${ZLIB})) {
+		New-Item -Type Directory .\${ZLIB} -ErrorAction Stop
+	}
+
+	Push-Location .\${ZLIB}
+	& $CMake ..\..\..\${ZLIB} -G "${GENERATOR}" -A "${ARCH}" `
+		-DBUILD_SHARED_LIBS="${SHARED}" `
+		-DCMAKE_C_FLAGS_RELEASE="${FLAGS} /Zi /guard:cf /sdl" `
+		-DCMAKE_INSTALL_PREFIX="${OUTPUT}"
+	& $CMake --build . --config Release --verbose
+	& $CMake --build . --config Release --target install --verbose
+	Pop-Location
+
+	& $CMake ..\..\.. -G "${GENERATOR}" -A "${ARCH}" `
+		-DBUILD_SHARED_LIBS="${SHARED}" `
 		-DCBOR_INCLUDE_DIRS="${OUTPUT}\include" `
 		-DCBOR_LIBRARY_DIRS="${OUTPUT}\lib" `
+		-DZLIB_INCLUDE_DIRS="${OUTPUT}\include" `
+		-DZLIB_LIBRARY_DIRS="${OUTPUT}\lib" `
 		-DCRYPTO_INCLUDE_DIRS="${OUTPUT}\include" `
 		-DCRYPTO_LIBRARY_DIRS="${OUTPUT}\lib" `
+		-DCMAKE_C_FLAGS_RELEASE="${FLAGS} /Zi /guard:cf /sdl" `
 		-DCMAKE_INSTALL_PREFIX="${OUTPUT}"
-	& $CMake --build . --config Release
-	& $CMake --build . --config Release --target install
-	"cbor.dll", "crypto-46.dll" | %{ Copy-Item "${OUTPUT}\bin\$_" `
-		-Destination "examples\Release" }
+	& $CMake --build . --config Release --verbose
+	& $CMake --build . --config Release --target install --verbose
+	if ("${SHARED}" -eq "ON") {
+		"cbor.dll", "crypto-46.dll", "zlib1.dll" | %{ Copy-Item "${OUTPUT}\bin\$_" `
+			-Destination "examples\Release" }
+	}
 }
 
 Function Package-Headers() {
-	Copy-Item "${OUTPUT}\64\include" -Destination "${OUTPUT}\pkg" `
+	Copy-Item "${OUTPUT}\64\dynamic\include" -Destination "${OUTPUT}\pkg" `
 		-Recurse -ErrorAction Stop
 }
 
-Function Package-Libraries(${SRC}, ${DEST}) {
+Function Package-Dynamic(${SRC}, ${DEST}) {
 	Copy-Item "${SRC}\bin\cbor.dll" "${DEST}" -ErrorAction Stop
 	Copy-Item "${SRC}\lib\cbor.lib" "${DEST}" -ErrorAction Stop
+	Copy-Item "${SRC}\bin\zlib1.dll" "${DEST}" -ErrorAction Stop
+	Copy-Item "${SRC}\lib\zlib.lib" "${DEST}" -ErrorAction Stop
 	Copy-Item "${SRC}\bin\crypto-46.dll" "${DEST}" -ErrorAction Stop
 	Copy-Item "${SRC}\lib\crypto-46.lib" "${DEST}" -ErrorAction Stop
 	Copy-Item "${SRC}\lib\fido2.dll" "${DEST}" -ErrorAction Stop
 	Copy-Item "${SRC}\lib\fido2.lib" "${DEST}" -ErrorAction Stop
 }
 
+Function Package-Static(${SRC}, ${DEST}) {
+	Copy-Item "${SRC}/lib/cbor.lib" "${DEST}" -ErrorAction Stop
+	Copy-Item "${SRC}/lib/crypto-46.lib" "${DEST}" -ErrorAction Stop
+	Copy-Item "${SRC}/lib/fido2_static.lib" "${DEST}/fido2.lib" `
+		-ErrorAction Stop
+}
+
 Function Package-PDBs(${SRC}, ${DEST}) {
 	Copy-Item "${SRC}\${LIBRESSL}\crypto\crypto.dir\Release\vc142.pdb" `
 		"${DEST}\crypto-46.pdb" -ErrorAction Stop
-	Copy-Item "${SRC}\${LIBCBOR}\src\cbor_shared.dir\Release\vc142.pdb" `
+	Copy-Item "${SRC}\${LIBCBOR}\src\cbor.dir\Release\vc142.pdb" `
 		"${DEST}\cbor.pdb" -ErrorAction Stop
+	Copy-Item "${SRC}\${ZLIB}\zlib.dir\Release\vc142.pdb" `
+		"${DEST}\zlib.pdb" -ErrorAction Stop
 	Copy-Item "${SRC}\src\fido2_shared.dir\Release\vc142.pdb" `
 		"${DEST}\fido2.pdb" -ErrorAction Stop
 }
@@ -185,20 +234,29 @@ Function Package-Tools(${SRC}, ${DEST}) {
 		"${DEST}\fido2-token.exe" -ErrorAction stop
 }
 
-Push-Location ${BUILD}\64
-Build ${OUTPUT}\64 "Visual Studio 16 2019" "x64"
+Push-Location ${BUILD}\64\dynamic
+Build ${OUTPUT}\64\dynamic "Visual Studio 16 2019" "x64" "ON" "/MD"
+Pop-Location
+Push-Location ${BUILD}\32\dynamic
+Build ${OUTPUT}\32\dynamic "Visual Studio 16 2019" "Win32" "ON" "/MD"
 Pop-Location
 
-Push-Location ${BUILD}\32
-Build ${OUTPUT}\32 "Visual Studio 16 2019" "Win32"
+Push-Location ${BUILD}\64\static
+Build ${OUTPUT}\64\static "Visual Studio 16 2019" "x64" "OFF" "/MT"
+Pop-Location
+Push-Location ${BUILD}\32\static
+Build ${OUTPUT}\32\static "Visual Studio 16 2019" "Win32" "OFF" "/MT"
 Pop-Location
 
 Package-Headers
 
-Package-Libraries ${OUTPUT}\64 ${OUTPUT}\pkg\Win64\Release\v142\dynamic
-Package-PDBs ${BUILD}\64 ${OUTPUT}\pkg\Win64\Release\v142\dynamic
-Package-Tools ${BUILD}\64 ${OUTPUT}\pkg\Win64\Release\v142\dynamic
+Package-Dynamic ${OUTPUT}\64\dynamic ${OUTPUT}\pkg\Win64\Release\v142\dynamic
+Package-PDBs ${BUILD}\64\dynamic ${OUTPUT}\pkg\Win64\Release\v142\dynamic
+Package-Tools ${BUILD}\64\dynamic ${OUTPUT}\pkg\Win64\Release\v142\dynamic
 
-Package-Libraries ${OUTPUT}\32 ${OUTPUT}\pkg\Win32\Release\v142\dynamic
-Package-PDBs ${BUILD}\32 ${OUTPUT}\pkg\Win32\Release\v142\dynamic
-Package-Tools ${BUILD}\32 ${OUTPUT}\pkg\Win32\Release\v142\dynamic
+Package-Dynamic ${OUTPUT}\32\dynamic ${OUTPUT}\pkg\Win32\Release\v142\dynamic
+Package-PDBs ${BUILD}\32\dynamic ${OUTPUT}\pkg\Win32\Release\v142\dynamic
+Package-Tools ${BUILD}\32\dynamic ${OUTPUT}\pkg\Win32\Release\v142\dynamic
+
+Package-Static ${OUTPUT}\64\static ${OUTPUT}\pkg\Win64\Release\v142\static
+Package-Static ${OUTPUT}\32\static ${OUTPUT}\pkg\Win32\Release\v142\static

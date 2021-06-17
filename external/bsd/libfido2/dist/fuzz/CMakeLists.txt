@@ -12,6 +12,8 @@ list(APPEND COMMON_SOURCES
 	mutator_aux.c
 )
 
+set(FUZZ_LDFLAGS "-fsanitize=fuzzer")
+
 # fuzz_cred
 add_executable(fuzz_cred fuzz_cred.c ${COMMON_SOURCES} ${COMPAT_SOURCES})
 target_compile_options(fuzz_cred PRIVATE ${FUZZ_LDFLAGS})
@@ -41,3 +43,21 @@ add_executable(fuzz_bio fuzz_bio.c ${COMMON_SOURCES} ${COMPAT_SOURCES})
 target_compile_options(fuzz_bio PRIVATE ${FUZZ_LDFLAGS})
 set_target_properties(fuzz_bio PROPERTIES LINK_FLAGS ${FUZZ_LDFLAGS})
 target_link_libraries(fuzz_bio fido2_shared)
+
+# fuzz_hid
+add_executable(fuzz_hid fuzz_hid.c ${COMMON_SOURCES} ${COMPAT_SOURCES})
+target_compile_options(fuzz_hid PRIVATE ${FUZZ_LDFLAGS})
+set_target_properties(fuzz_hid PROPERTIES LINK_FLAGS ${FUZZ_LDFLAGS})
+target_link_libraries(fuzz_hid fido2_shared)
+
+# fuzz_netlink
+add_executable(fuzz_netlink fuzz_netlink.c ${COMMON_SOURCES} ${COMPAT_SOURCES})
+target_compile_options(fuzz_netlink PRIVATE ${FUZZ_LDFLAGS})
+set_target_properties(fuzz_netlink PROPERTIES LINK_FLAGS ${FUZZ_LDFLAGS})
+target_link_libraries(fuzz_netlink fido2_shared)
+
+# fuzz_largeblob
+add_executable(fuzz_largeblob fuzz_largeblob.c ${COMMON_SOURCES} ${COMPAT_SOURCES})
+target_compile_options(fuzz_largeblob PRIVATE ${FUZZ_LDFLAGS})
+set_target_properties(fuzz_largeblob PROPERTIES LINK_FLAGS ${FUZZ_LDFLAGS})
+target_link_libraries(fuzz_largeblob fido2_shared)
