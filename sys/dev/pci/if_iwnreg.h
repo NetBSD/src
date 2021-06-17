@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwnreg.h,v 1.17 2017/07/19 16:55:12 mlelstv Exp $	*/
+/*	$NetBSD: if_iwnreg.h,v 1.18 2021/06/17 02:05:47 msaitoh Exp $	*/
 /*	$OpenBSD: if_iwnreg.h,v 1.49 2014/09/09 18:56:24 sthen Exp $	*/
 
 /*-
@@ -244,7 +244,7 @@
 
 /* Possible flags for register IWN_DRAM_INT_TBL. */
 #define IWN_DRAM_INT_TBL_WRAP_CHECK	(1 << 27)
-#define IWN_DRAM_INT_TBL_ENABLE		(1 << 31)
+#define IWN_DRAM_INT_TBL_ENABLE		(1U << 31)
 
 /* Possible values for register IWN_ANA_PLL. */
 #define IWN_ANA_PLL_INIT	0x00880300
@@ -267,7 +267,7 @@
 #define IWN_INT_FH_TX		(1 << 27)
 #define IWN_INT_RX_PERIODIC	(1 << 28)
 #define IWN_INT_HW_ERR		(1 << 29)
-#define IWN_INT_FH_RX		(1 << 31)
+#define IWN_INT_FH_RX		(1U << 31)
 
 /* Shortcut. */
 #define IWN_INT_MASK_DEF						\
