@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.169 2021/02/15 13:39:18 isaki Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.169.4.1 2021/06/17 04:46:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.169 2021/02/15 13:39:18 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.169.4.1 2021/06/17 04:46:30 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -519,7 +519,7 @@ static int
 uaudio_detach(device_t self, int flags)
 {
 	struct uaudio_softc *sc = device_private(self);
-	int rv = 0;
+	int rv;
 
 	sc->sc_dying = 1;
 
@@ -529,8 +529,11 @@ uaudio_detach(device_t self, int flags)
 	uaudio_halt_out_dma_unlocked(sc);
 	uaudio_halt_in_dma_unlocked(sc);
 
-	if (sc->sc_audiodev != NULL)
+	if (sc->sc_audiodev != NULL) {
 		rv = config_detach(sc->sc_audiodev, flags);
+		if (rv)
+			return rv;
+	}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
@@ -541,7 +544,7 @@ uaudio_detach(device_t self, int flags)
 	mutex_destroy(&sc->sc_lock);
 	mutex_destroy(&sc->sc_intr_lock);
 
-	return rv;
+	return 0;
 }
 
 Static int
@@ -2832,8 +2835,9 @@ uaudio_chan_pintr(struct usbd_xfer *xfer, void *priv,
 		    count, ch->transferred);
 #ifdef DIAGNOSTIC
 	if (count != cb->size) {
-		aprint_error("uaudio_chan_pintr: count(%d) != size(%d)\n",
-		       count, cb->size);
+		device_printf(ch->sc->sc_dev,
+		    "uaudio_chan_pintr: count(%d) != size(%d), status(%d)\n",
+		    count, cb->size, status);
 	}
 #endif
 
@@ -2915,8 +2919,9 @@ uaudio_chan_rintr(struct usbd_xfer *xfer, void *priv,
 	/* count < cb->size is normal for asynchronous source */
 #ifdef DIAGNOSTIC
 	if (count > cb->size) {
-		aprint_error("uaudio_chan_rintr: count(%d) > size(%d)\n",
-		       count, cb->size);
+		device_printf(ch->sc->sc_dev,
+		    "uaudio_chan_rintr: count(%d) > size(%d) status(%d)\n",
+		    count, cb->size, status);
 	}
 #endif
 

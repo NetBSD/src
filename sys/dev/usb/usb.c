@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.193 2021/02/24 01:46:57 mrg Exp $	*/
+/*	$NetBSD: usb.c,v 1.193.4.1 2021/06/17 04:46:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.193 2021/02/24 01:46:57 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.193.4.1 2021/06/17 04:46:31 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -142,6 +142,7 @@ struct usb_softc {
 	struct usbd_port sc_port;	/* dummy port for root hub */
 
 	struct lwp	*sc_event_thread;
+	struct lwp	*sc_attach_thread;
 
 	char		sc_dying;
 	bool		sc_pmf_registered;
@@ -453,6 +454,8 @@ usb_doattach(device_t self)
 
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
 
+	KASSERT(KERNEL_LOCKED_P());
+
 	/* Protected by KERNEL_LOCK */
 	nusbbusses++;
 
@@ -481,8 +484,10 @@ usb_doattach(device_t self)
 	ue->u.ue_ctrlr.ue_bus = device_unit(self);
 	usb_add_event(USB_EVENT_CTRLR_ATTACH, ue);
 
+	sc->sc_attach_thread = curlwp;
 	err = usbd_new_device(self, sc->sc_bus, 0, speed, 0,
 		  &sc->sc_port);
+	sc->sc_attach_thread = NULL;
 	if (!err) {
 		dev = sc->sc_port.up_dev;
 		if (dev->ud_hub == NULL) {
@@ -518,13 +523,32 @@ usb_create_event_thread(device_t self)
 {
 	struct usb_softc *sc = device_private(self);
 
-	if (kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL,
+	if (kthread_create(PRI_NONE, 0, NULL,
 	    usb_event_thread, sc, &sc->sc_event_thread,
 	    "%s", device_xname(self))) {
 		printf("%s: unable to create event thread for\n",
 		       device_xname(self));
 		panic("usb_create_event_thread");
 	}
+}
+
+bool
+usb_in_event_thread(device_t dev)
+{
+	struct usb_softc *sc;
+
+	if (cold)
+		return true;
+
+	for (; dev; dev = device_parent(dev)) {
+		if (device_is_a(dev, "usb"))
+			break;
+	}
+	if (dev == NULL)
+		return false;
+	sc = device_private(dev);
+
+	return curlwp == sc->sc_event_thread || curlwp == sc->sc_attach_thread;
 }
 
 /*
@@ -689,6 +713,8 @@ usb_event_thread(void *arg)
 	struct usbd_bus *bus = sc->sc_bus;
 
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
+
+	KASSERT(KERNEL_LOCKED_P());
 
 	/*
 	 * In case this controller is a companion controller to an
@@ -1146,6 +1172,7 @@ usb_discover(struct usb_softc *sc)
 
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
 
+	KASSERT(KERNEL_LOCKED_P());
 	KASSERT(mutex_owned(bus->ub_lock));
 
 	if (usb_noexplore > 1)

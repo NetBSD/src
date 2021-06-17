@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.249 2021/03/25 09:49:00 nia Exp $
+#	$NetBSD: Makefile,v 1.249.2.1 2021/06/17 04:46:34 thorpej Exp $
 
 .include <bsd.own.mk>
 
@@ -81,6 +81,7 @@ SUBDIR+=	if_gif
 SUBDIR+=	if_gre
 SUBDIR+=	if_kue
 SUBDIR+=	if_l2tp
+SUBDIR+=	if_lagg
 SUBDIR+=	if_loop
 SUBDIR+=	if_mpls
 SUBDIR+=	if_mue

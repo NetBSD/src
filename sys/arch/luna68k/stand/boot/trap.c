@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.1 2013/01/05 17:44:24 tsutsui Exp $	*/
+/*	$NetBSD: trap.c,v 1.1.58.1 2021/06/17 04:46:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -77,7 +77,7 @@
 
 #define	USER	040		/* user-mode flag added to type */
 
-char	*trap_type[] = {
+const char *trap_type[] = {
 	"Bus error",
 	"Address error",
 	"Illegal instruction",

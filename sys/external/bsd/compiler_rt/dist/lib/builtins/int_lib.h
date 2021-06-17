@@ -22,25 +22,26 @@
 
 #if defined(__ELF__)
 #define FNALIAS(alias_name, original_name) \
-  void alias_name() __attribute__((alias(#original_name)))
+  void alias_name() __attribute__((__alias__(#original_name)))
+#define COMPILER_RT_ALIAS(aliasee) __attribute__((__alias__(#aliasee)))
 #else
 #define FNALIAS(alias, name) _Pragma("GCC error(\"alias unsupported on this file format\")")
+#define COMPILER_RT_ALIAS(aliasee) _Pragma("GCC error(\"alias unsupported on this file format\")")
 #endif
 
 /* ABI macro definitions */
 
 #if __ARM_EABI__
-# define ARM_EABI_FNALIAS(aeabi_name, name)         \
-  void __aeabi_##aeabi_name() __attribute__((alias("__" #name)));
-# define COMPILER_RT_ABI __attribute__((pcs("aapcs")))
-#else
-# define ARM_EABI_FNALIAS(aeabi_name, name)
-# if defined(__arm__) && defined(_WIN32) && (!defined(_MSC_VER) || defined(__clang__))
-#   define COMPILER_RT_ABI __attribute__((pcs("aapcs")))
-# else
+# ifdef COMPILER_RT_ARMHF_TARGET
 #   define COMPILER_RT_ABI
+# else
+#   define COMPILER_RT_ABI __attribute__((__pcs__("aapcs")))
 # endif
+#else
+# define COMPILER_RT_ABI
 #endif
+
+#define AEABI_RTABI __attribute__((__pcs__("aapcs")))
 
 #ifdef _MSC_VER
 #define ALWAYS_INLINE __forceinline

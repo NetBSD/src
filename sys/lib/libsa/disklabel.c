@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.10 2007/11/24 13:20:54 isaki Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.10.122.1 2021/06/17 04:46:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -33,6 +33,7 @@
 
 #include <sys/param.h>
 #include <sys/disklabel.h>
+#include <lib/libkern/libkern.h>
 #include "stand.h"
 
 
@@ -53,6 +54,12 @@ getdisklabel(const char *buf, struct disklabel *lp)
 	elp = (const void *)(buf + DEV_BSIZE - sizeof(*dlp));
 	for (dlp = (const void *)buf; dlp <= elp;
 	    dlp = (const void *)((const char *)dlp + sizeof(long))) {
+#if defined(LIBSA_DISKLABEL_EI)
+		if (dlp->d_magic == bswap32(DISKMAGIC) &&
+		    dlp->d_magic2 == bswap32(DISKMAGIC)) {
+			disklabel_swap(__UNCONST(dlp), __UNCONST(dlp));
+		}
+#endif
 		if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC) {
 			if (msg == NULL)
 				msg = nolabel;

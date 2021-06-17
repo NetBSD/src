@@ -1,4 +1,4 @@
-/* $NetBSD: exec.c,v 1.19.6.1 2021/05/13 00:47:33 thorpej Exp $ */
+/* $NetBSD: exec.c,v 1.19.6.2 2021/06/17 04:46:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jason R. Thorpe
@@ -289,7 +289,10 @@ exec_netbsd(const char *fname, const char *args)
 	load_offset = 0;
 
 #ifdef EFIBOOT_ACPI
-	if (efi_acpi_available()) {
+	/* ACPI support only works for little endian kernels */
+	efi_acpi_enable(netbsd_elf_data == ELFDATA2LSB);
+
+	if (efi_acpi_available() && efi_acpi_enabled()) {
 		efi_acpi_create_fdt();
 	} else
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_gmx.c,v 1.17.2.1 2021/05/13 00:47:26 thorpej Exp $	*/
+/*	$NetBSD: octeon_gmx.c,v 1.17.2.2 2021/06/17 04:46:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_gmx.c,v 1.17.2.1 2021/05/13 00:47:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_gmx.c,v 1.17.2.2 2021/06/17 04:46:22 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -834,7 +834,7 @@ octgmx_rgmii_speed_speed(struct octgmx_port_softc *sc)
 
 	prt_cfg = _GMX_PORT_RD8(sc, GMX0_PRT0_CFG);
 
-	switch (sc->sc_link & RXN_RX_INBND_SPEED) {
+	switch (__SHIFTOUT(sc->sc_link, RXN_RX_INBND_SPEED)) {
 	case RXN_RX_INBND_SPEED_2_5:
 		/* 10Mbps */
 		/*

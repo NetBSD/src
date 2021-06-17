@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.114.8.1 2021/05/13 00:47:31 thorpej Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.114.8.2 2021/06/17 04:46:29 thorpej Exp $  */
 /*	$OpenBSD: if_iwi.c,v 1.111 2010/11/15 19:11:57 damien Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.114.8.1 2021/05/13 00:47:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.114.8.2 2021/06/17 04:46:29 thorpej Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -364,13 +364,7 @@ iwi_attach(device_t parent, device_t self, void *aux)
 	IFQ_SET_READY(&ifp->if_snd);
 	memcpy(ifp->if_xname, device_xname(self), IFNAMSIZ);
 
-	error = if_initialize(ifp);
-	if (error != 0) {
-		ifp->if_softc = NULL; /* For iwi_detach() */
-		aprint_error_dev(sc->sc_dev, "if_initialize failed(%d)\n",
-		    error);
-		goto fail;
-	}
+	if_initialize(ifp);
 	ieee80211_ifattach(ic);
 	/* Use common softint-based if_input */
 	ifp->if_percpuq = if_percpuq_create(ifp);

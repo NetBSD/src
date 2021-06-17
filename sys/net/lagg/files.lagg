@@ -1,0 +1,7 @@
+#	$NetBSD: files.lagg,v 1.1.6.2 2021/06/17 04:46:35 thorpej Exp $
+
+file	net/lagg/if_lagg.c		lagg & ether	needs-flag
+file	net/lagg/if_lagg_lacp.c		lagg & ether
+file	net/lagg/if_laggproto.c		lagg
+
+defflag opt_lagg.h			LAGG_DEBUG LACP_DEBUG

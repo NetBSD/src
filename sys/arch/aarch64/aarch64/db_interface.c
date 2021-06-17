@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.12.4.1 2021/05/13 00:47:20 thorpej Exp $ */
+/* $NetBSD: db_interface.c,v 1.12.4.2 2021/06/17 04:46:16 thorpej Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.12.4.1 2021/05/13 00:47:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.12.4.2 2021/06/17 04:46:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -360,15 +360,13 @@ db_pte_print(pt_entry_t pte, int level,
 
 		pr(", PA=%lx", l3pte_pa(pte));
 
-		pr(", %s", (pte & LX_BLKPAG_UXN) ?
-		    "UXN" : "UX ");
-		pr(", %s", (pte & LX_BLKPAG_PXN) ?
-		   "PXN" :  "PX ");
+		pr(", %s", (pte & LX_BLKPAG_UXN) ? "UXN" : "UX");
+		pr(", %s", (pte & LX_BLKPAG_PXN) ? "PXN" : "PX");
 
 		if (pte & LX_BLKPAG_CONTIG)
 			pr(", CONTIG");
 
-		pr(", %s", (pte & LX_BLKPAG_NG) ? "NG" : "global");
+		pr(", %s", (pte & LX_BLKPAG_NG) ? "nG" : "G");
 		pr(", %s", (pte & LX_BLKPAG_AF) ?
 		    "accessible" :
 		    "**fault** ");
@@ -403,24 +401,24 @@ db_pte_print(pt_entry_t pte, int level,
 			pr(", WT");
 			break;
 		case LX_BLKPAG_ATTR_DEVICE_MEM:
-			pr(", DEVICE");
+			pr(", DEV");
 			break;
 		case LX_BLKPAG_ATTR_DEVICE_MEM_SO:
-			pr(", DEVICE(SO)");
+			pr(", DEV(SO)");
 			break;
 		default:
 			pr(", ATTR(%lu)", __SHIFTOUT(pte, LX_BLKPAG_ATTR_INDX));
 			break;
 		}
 
-		if (pte & LX_BLKPAG_OS_BOOT)
-			pr(", boot");
-		if (pte & LX_BLKPAG_OS_READ)
-			pr(", pmap_read");
-		if (pte & LX_BLKPAG_OS_WRITE)
-			pr(", pmap_write");
-		if (pte & LX_BLKPAG_OS_WIRED)
-			pr(", wired");
+		if (pte & LX_BLKPAG_OS_0)
+			pr(", " PMAP_PTE_OS0);
+		if (pte & LX_BLKPAG_OS_1)
+			pr(", " PMAP_PTE_OS1);
+		if (pte & LX_BLKPAG_OS_2)
+			pr(", " PMAP_PTE_OS2);
+		if (pte & LX_BLKPAG_OS_3)
+			pr(", " PMAP_PTE_OS3);
 	} else {
 		pr(" **ILLEGAL TYPE**");
 	}
@@ -528,7 +526,6 @@ dump_ln_table(bool countmode, pd_entry_t *pdp, int level, int lnindex,
     vaddr_t va, void (*pr)(const char *, ...) __printflike(1, 2))
 {
 	struct vm_page *pg;
-	struct vm_page_md *md;
 	pd_entry_t pde;
 	paddr_t pa;
 	int i, n;
@@ -537,13 +534,11 @@ dump_ln_table(bool countmode, pd_entry_t *pdp, int level, int lnindex,
 
 	pa = AARCH64_KVA_TO_PA((vaddr_t)pdp);
 	pg = PHYS_TO_VM_PAGE(pa);
-	md = VM_PAGE_TO_MD(pg);
 
 	if (pg == NULL) {
 		pr("%sL%d: pa=%lx pg=NULL\n", spc, level, pa);
 	} else {
-		pr("%sL%d: pa=%lx pg=%p, wire_count=%d, mdpg_ptep_parent=%p\n",
-		    spc, level, pa, pg, pg->wire_count, md->mdpg_ptep_parent);
+		pr("%sL%d: pa=%lx pg=%p", spc, level, pa, pg);
 	}
 
 	for (i = n = 0; i < Ln_ENTRIES; i++) {

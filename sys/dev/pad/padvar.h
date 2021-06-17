@@ -1,4 +1,4 @@
-/* $NetBSD: padvar.h,v 1.13 2019/06/26 11:53:15 isaki Exp $ */
+/* $NetBSD: padvar.h,v 1.13.14.1 2021/06/17 04:46:29 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,6 +29,13 @@
 #ifndef _SYS_DEV_PAD_PADVAR_H
 #define _SYS_DEV_PAD_PADVAR_H
 
+#include <sys/types.h>
+
+#include <sys/callout.h>
+#include <sys/condvar.h>
+#include <sys/device_if.h>
+#include <sys/mutex.h>
+
 struct pad_softc {
 	device_t	sc_dev;
 
@@ -39,12 +46,9 @@ struct pad_softc {
 	kcondvar_t	sc_condvar;
 	kmutex_t	sc_lock;
 	kmutex_t	sc_intr_lock;
-	kmutex_t	sc_cond_lock;
 	callout_t	sc_pcallout;
-	bool		sc_dying;
 
 	device_t	sc_audiodev;
-	int		sc_blksize;
 
 #define PAD_BUFSIZE	65536
 	uint8_t		sc_audiobuf[PAD_BUFSIZE];

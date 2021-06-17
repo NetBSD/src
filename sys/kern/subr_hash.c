@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_hash.c,v 1.9 2021/04/05 05:47:31 simonb Exp $	*/
+/*	$NetBSD: subr_hash.c,v 1.9.2.1 2021/06/17 04:46:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_hash.c,v 1.9 2021/04/05 05:47:31 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_hash.c,v 1.9.2.1 2021/06/17 04:46:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -207,14 +207,17 @@ hashstat_sysctl(SYSCTLFN_ARGS)
 
 	if (namelen > 0 && name[0] == CTL_QUERY) {
 		const struct hashstat_sysctl *h = newp;
+		size_t s;
 
 		if (h == NULL) {
 			/* Can't QUERY one hash without supplying the hash name. */
 			return EINVAL;
 		}
 		query = true;
-		h = newp;
-		strlcpy(queryname, h->hash_name, sizeof(queryname));
+		error = sysctl_copyinstr(l, h->hash_name, queryname, 
+		    sizeof(queryname), &s);
+		if (error)
+			return error;
 	} else {
 		query = false;
 	}
@@ -239,6 +242,9 @@ hashstat_sysctl(SYSCTLFN_ARGS)
 	}
 	rw_exit(&hashstat_lock);
 	sysctl_relock();
+
+	if (query && written == 0)	/* query not found? */
+		error = ENOENT;
 
 	*oldlenp = written;
 	return error;

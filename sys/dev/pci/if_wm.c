@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.702.4.1 2021/05/13 00:47:31 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.702.4.2 2021/06/17 04:46:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.702.4.1 2021/05/13 00:47:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.702.4.2 2021/06/17 04:46:29 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -3091,12 +3091,7 @@ alloc_retry:
 	sc->sc_rx_intr_process_limit = WM_RX_INTR_PROCESS_LIMIT_DEFAULT;
 
 	/* Attach the interface. */
-	error = if_initialize(ifp);
-	if (error != 0) {
-		aprint_error_dev(sc->sc_dev, "if_initialize failed(%d)\n",
-		    error);
-		return; /* Error */
-	}
+	if_initialize(ifp);
 	sc->sc_ipq = if_percpuq_create(&sc->sc_ethercom.ec_if);
 	ether_ifattach(ifp, enaddr);
 	ether_set_ifflags_cb(&sc->sc_ethercom, wm_ifflags_cb);

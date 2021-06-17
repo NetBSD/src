@@ -1,4 +1,4 @@
-/* $NetBSD: procfs_machdep.c,v 1.4 2020/10/01 07:31:27 skrll Exp $ */
+/* $NetBSD: procfs_machdep.c,v 1.4.6.1 2021/06/17 04:46:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.4 2020/10/01 07:31:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.4.6.1 2021/06/17 04:46:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -36,7 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.4 2020/10/01 07:31:27 skrll Exp
 #include <miscfs/procfs/procfs.h>
 
 #include <aarch64/armreg.h>
-
+#include <aarch64/cpufunc.h>
 
 /* use variables named 'buf', 'left', 'total' */
 #define FORWARD_BUF(_len)					\

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.6.2.1 2021/05/13 00:47:27 thorpej Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.6.2.2 2021/06/17 04:46:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: db_disasm.c,v 1.6.2.1 2021/05/13 00:47:27 thorpej Exp $");
+__RCSID("$NetBSD: db_disasm.c,v 1.6.2.2 2021/06/17 04:46:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,6 +39,7 @@ __RCSID("$NetBSD: db_disasm.c,v 1.6.2.1 2021/05/13 00:47:27 thorpej Exp $");
 #include <riscv/db_machdep.h>
 #include <riscv/insn.h>
 
+#include <ddb/db_access.h>
 #include <ddb/db_user.h>
 #include <ddb/db_interface.h>
 #include <ddb/db_output.h>
@@ -1463,23 +1464,16 @@ db_disasm(db_addr_t loc, bool altfmt)
 	unsigned n, i;
 	uint32_t insn32;
 
-#ifdef _KERNEL
-	if ((intptr_t) loc >= 0) {
-		db_printf("%s: %#"PRIxVADDR" is not a kernel address\n",
-		    __func__, loc);
-		return loc;
-	}
-#endif
-
 	/*
 	 * Fetch the instruction. The first halfword tells us how many
 	 * more there are, and they're always in little-endian order.
 	 */
-	insn[0] = ((const uint16_t *)loc)[0];
+	db_read_bytes(loc, sizeof(insn[0]), (void *)&insn[0]);
 	n = INSN_HALFWORDS(insn[0]);
 	KASSERT(n > 0 && n <= 5);
 	for (i = 1; i < n; i++) {
-		insn[i] = ((const uint16_t *)loc)[i];
+		db_read_bytes(loc + i * sizeof(insn[i]), sizeof(insn[i]),
+			      (void *)&insn[i]);
 	}
 
 	switch (n) {

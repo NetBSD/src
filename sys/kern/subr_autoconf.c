@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.278.2.1 2021/05/13 00:47:32 thorpej Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.278.2.2 2021/06/17 04:46:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -79,7 +79,7 @@
 #define	__SUBR_AUTOCONF_PRIVATE	/* see <sys/device.h> */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.278.2.1 2021/05/13 00:47:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.278.2.2 2021/06/17 04:46:33 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -377,25 +377,31 @@ config_init_component(struct cfdriver * const *cfdriverv,
 {
 	int error;
 
+	KERNEL_LOCK(1, NULL);
+
 	if ((error = frob_cfdrivervec(cfdriverv,
 	    config_cfdriver_attach, config_cfdriver_detach, "init", false))!= 0)
-		return error;
+		goto out;
 	if ((error = frob_cfattachvec(cfattachv,
 	    config_cfattach_attach, config_cfattach_detach,
 	    "init", false)) != 0) {
 		frob_cfdrivervec(cfdriverv,
 	            config_cfdriver_detach, NULL, "init rollback", true);
-		return error;
+		goto out;
 	}
 	if ((error = config_cfdata_attach(cfdatav, 1)) != 0) {
 		frob_cfattachvec(cfattachv,
 		    config_cfattach_detach, NULL, "init rollback", true);
 		frob_cfdrivervec(cfdriverv,
 	            config_cfdriver_detach, NULL, "init rollback", true);
-		return error;
+		goto out;
 	}
 
-	return 0;
+	/* Success!  */
+	error = 0;
+
+out:	KERNEL_UNLOCK_ONE(NULL);
+	return error;
 }
 
 int
@@ -404,14 +410,16 @@ config_fini_component(struct cfdriver * const *cfdriverv,
 {
 	int error;
 
+	KERNEL_LOCK(1, NULL);
+
 	if ((error = config_cfdata_detach(cfdatav)) != 0)
-		return error;
+		goto out;
 	if ((error = frob_cfattachvec(cfattachv,
 	    config_cfattach_detach, config_cfattach_attach,
 	    "fini", false)) != 0) {
 		if (config_cfdata_attach(cfdatav, 0) != 0)
 			panic("config_cfdata fini rollback failed");
-		return error;
+		goto out;
 	}
 	if ((error = frob_cfdrivervec(cfdriverv,
 	    config_cfdriver_detach, config_cfdriver_attach,
@@ -420,10 +428,14 @@ config_fini_component(struct cfdriver * const *cfdriverv,
 	            config_cfattach_attach, NULL, "fini rollback", true);
 		if (config_cfdata_attach(cfdatav, 0) != 0)
 			panic("config_cfdata fini rollback failed");
-		return error;
+		goto out;
 	}
 
-	return 0;
+	/* Success!  */
+	error = 0;
+
+out:	KERNEL_UNLOCK_ONE(NULL);
+	return error;
 }
 
 void
@@ -439,6 +451,9 @@ config_init_mi(void)
 void
 config_deferred(device_t dev)
 {
+
+	KASSERT(KERNEL_LOCKED_P());
+
 	config_process_deferred(&deferred_config_queue, dev);
 	config_process_deferred(&interrupt_config_queue, dev);
 	config_process_deferred(&mountroot_config_queue, dev);
@@ -464,7 +479,6 @@ config_interrupts_thread(void *cookie)
 		kmem_free(dc, sizeof(*dc));
 
 		mutex_enter(&config_misc_lock);
-		dev->dv_flags &= ~DVF_ATTACH_INPROGRESS;
 	}
 	mutex_exit(&config_misc_lock);
 
@@ -906,6 +920,7 @@ rescan_with_cfdata(const struct cfdata *cf)
 	const struct cfdata *cf1;
 	deviter_t di;
 
+	KASSERT(KERNEL_LOCKED_P());
 
 	/*
 	 * "alldevs" is likely longer than a modules's cfdata, so make it
@@ -939,12 +954,16 @@ config_cfdata_attach(cfdata_t cf, int scannow)
 {
 	struct cftable *ct;
 
+	KERNEL_LOCK(1, NULL);
+
 	ct = kmem_alloc(sizeof(*ct), KM_SLEEP);
 	ct->ct_cfdata = cf;
 	TAILQ_INSERT_TAIL(&allcftables, ct, ct_list);
 
 	if (scannow)
 		rescan_with_cfdata(cf);
+
+	KERNEL_UNLOCK_ONE(NULL);
 
 	return 0;
 }
@@ -977,6 +996,8 @@ config_cfdata_detach(cfdata_t cf)
 	struct cftable *ct;
 	deviter_t di;
 
+	KERNEL_LOCK(1, NULL);
+
 	for (d = deviter_first(&di, DEVITER_F_RW); d != NULL;
 	     d = deviter_next(&di)) {
 		if (!dev_in_cfdata(d, cf))
@@ -987,19 +1008,23 @@ config_cfdata_detach(cfdata_t cf)
 	deviter_release(&di);
 	if (error) {
 		aprint_error_dev(d, "unable to detach instance\n");
-		return error;
+		goto out;
 	}
 
 	TAILQ_FOREACH(ct, &allcftables, ct_list) {
 		if (ct->ct_cfdata == cf) {
 			TAILQ_REMOVE(&allcftables, ct, ct_list);
 			kmem_free(ct, sizeof(*ct));
-			return 0;
+			error = 0;
+			goto out;
 		}
 	}
 
 	/* not found -- shouldn't happen */
-	return EINVAL;
+	error = EINVAL;
+
+out:	KERNEL_UNLOCK_ONE(NULL);
+	return error;
 }
 
 /*
@@ -1010,6 +1035,8 @@ int
 config_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct cfattach *ca;
+
+	KASSERT(KERNEL_LOCKED_P());
 
 	ca = config_cfattach_lookup(cf->cf_name, cf->cf_atname);
 	if (ca == NULL) {
@@ -1285,11 +1312,15 @@ device_t
 config_rootfound(const char *rootname, void *aux)
 {
 	cfdata_t cf;
+	device_t dev = NULL;
 
+	KERNEL_LOCK(1, NULL);
 	if ((cf = config_rootsearch(NULL, rootname, aux)) != NULL)
-		return config_attach(ROOT, cf, aux, NULL, CFARG_EOL);
-	aprint_error("root device %s not configured\n", rootname);
-	return NULL;
+		dev = config_attach(ROOT, cf, aux, NULL, CFARG_EOL);
+	else
+		aprint_error("root device %s not configured\n", rootname);
+	KERNEL_UNLOCK_ONE(NULL);
+	return dev;
 }
 
 /* just like sprintf(buf, "%d") except that it works from the end */
@@ -1390,7 +1421,9 @@ config_devlink(device_t dev)
 static void
 config_devfree(device_t dev)
 {
+
 	KASSERT(dev->dv_flags & DVF_PRIV_ALLOC);
+	KASSERTMSG(dev->dv_pending == 0, "%d", dev->dv_pending);
 
 	if (dev->dv_cfattach->ca_devsize > 0)
 		kmem_free(dev->dv_private, dev->dv_cfattach->ca_devsize);
@@ -1408,6 +1441,7 @@ config_devunlink(device_t dev, struct devicelist *garbage)
 	int i;
 
 	KASSERT(mutex_owned(&alldevs_lock));
+	KASSERTMSG(dev->dv_pending == 0, "%d", dev->dv_pending);
 
  	/* Unlink from device list.  Link to garbage list. */
 	TAILQ_REMOVE(&alldevs, dev, dv_list);
@@ -1437,6 +1471,8 @@ config_devdelete(device_t dev)
 {
 	struct device_garbage *dg = &dev->dv_garbage;
 	device_lock_t dvl = device_getlock(dev);
+
+	KASSERTMSG(dev->dv_pending == 0, "%d", dev->dv_pending);
 
 	if (dg->dg_devs != NULL)
 		kmem_free(dg->dg_devs, sizeof(device_t) * dg->dg_ndevs);
@@ -1705,6 +1741,9 @@ config_vattach(device_t parent, cfdata_t cf, void *aux, cfprint_t print,
 	device_t dev;
 	struct cftable *ct;
 	const char *drvname;
+	bool deferred;
+
+	KASSERT(KERNEL_LOCKED_P());
 
 	dev = config_vdevalloc(parent, cf, tag, ap);
 	if (!dev)
@@ -1758,10 +1797,15 @@ config_vattach(device_t parent, cfdata_t cf, void *aux, cfprint_t print,
 	/* Let userland know */
 	devmon_report_device(dev, true);
 
+	config_pending_incr(dev);
 	(*dev->dv_cfattach->ca_attach)(parent, dev, aux);
+	config_pending_decr(dev);
 
-	if (((dev->dv_flags & DVF_ATTACH_INPROGRESS) == 0)
-	    && !device_pmf_is_registered(dev))
+	mutex_enter(&config_misc_lock);
+	deferred = (dev->dv_pending != 0);
+	mutex_exit(&config_misc_lock);
+
+	if (!deferred && !device_pmf_is_registered(dev))
 		aprint_debug_dev(dev,
 		    "WARNING: power management not supported\n");
 
@@ -1777,6 +1821,8 @@ config_attach(device_t parent, cfdata_t cf, void *aux, cfprint_t print,
 {
 	device_t dev;
 	va_list ap;
+
+	KASSERT(KERNEL_LOCKED_P());
 
 	va_start(ap, tag);
 	dev = config_vattach(parent, cf, aux, print, tag, ap);
@@ -1799,9 +1845,11 @@ config_attach_pseudo(cfdata_t cf)
 {
 	device_t dev;
 
+	KERNEL_LOCK(1, NULL);
+
 	dev = config_devalloc(ROOT, cf, CFARG_EOL);
 	if (!dev)
-		return NULL;
+		goto out;
 
 	/* XXX mark busy in cfdata */
 
@@ -1819,9 +1867,13 @@ config_attach_pseudo(cfdata_t cf)
 	/* Let userland know */
 	devmon_report_device(dev, true);
 
+	config_pending_incr(dev);
 	(*dev->dv_cfattach->ca_attach)(ROOT, dev, NULL);
+	config_pending_decr(dev);
 
 	config_process_deferred(&deferred_config_queue, dev);
+
+out:	KERNEL_UNLOCK_ONE(NULL);
 	return dev;
 }
 
@@ -1862,6 +1914,41 @@ config_dump_garbage(struct devicelist *garbage)
 	}
 }
 
+static int
+config_detach_enter(device_t dev)
+{
+	int error;
+
+	mutex_enter(&config_misc_lock);
+	for (;;) {
+		if (dev->dv_pending == 0 && dev->dv_detaching == NULL) {
+			dev->dv_detaching = curlwp;
+			error = 0;
+			break;
+		}
+		KASSERTMSG(dev->dv_detaching != curlwp,
+		    "recursively detaching %s", device_xname(dev));
+		error = cv_wait_sig(&config_misc_cv, &config_misc_lock);
+		if (error)
+			break;
+	}
+	KASSERT(error || dev->dv_detaching == curlwp);
+	mutex_exit(&config_misc_lock);
+
+	return error;
+}
+
+static void
+config_detach_exit(device_t dev)
+{
+
+	mutex_enter(&config_misc_lock);
+	KASSERT(dev->dv_detaching == curlwp);
+	dev->dv_detaching = NULL;
+	cv_broadcast(&config_misc_cv);
+	mutex_exit(&config_misc_lock);
+}
+
 /*
  * Detach a device.  Optionally forced (e.g. because of hardware
  * removal) and quiet.  Returns zero if successful, non-zero
@@ -1882,6 +1969,8 @@ config_detach(device_t dev, int flags)
 	device_t d __diagused;
 	int rv = 0;
 
+	KERNEL_LOCK(1, NULL);
+
 	cf = dev->dv_cfdata;
 	KASSERTMSG((cf == NULL || cf->cf_fstate == FSTATE_FOUND ||
 		cf->cf_fstate == FSTATE_STAR),
@@ -1894,6 +1983,16 @@ config_detach(device_t dev, int flags)
 	ca = dev->dv_cfattach;
 	KASSERT(ca != NULL);
 
+	/*
+	 * Only one detach at a time, please -- and not until fully
+	 * attached.
+	 */
+	rv = config_detach_enter(dev);
+	if (rv) {
+		KERNEL_UNLOCK_ONE(NULL);
+		return rv;
+	}
+
 	mutex_enter(&alldevs_lock);
 	if (dev->dv_del_gen != 0) {
 		mutex_exit(&alldevs_lock);
@@ -1901,6 +2000,8 @@ config_detach(device_t dev, int flags)
 		printf("%s: %s is already detached\n", __func__,
 		    device_xname(dev));
 #endif /* DIAGNOSTIC */
+		config_detach_exit(dev);
+		KERNEL_UNLOCK_ONE(NULL);
 		return ENOENT;
 	}
 	alldevs_nwrite++;
@@ -1945,6 +2046,7 @@ config_detach(device_t dev, int flags)
 	 * after parents, we only need to search the latter part of
 	 * the list.)
 	 */
+	mutex_enter(&alldevs_lock);
 	for (d = TAILQ_NEXT(dev, dv_list); d != NULL;
 	    d = TAILQ_NEXT(d, dv_list)) {
 		if (d->dv_parent == dev && d->dv_del_gen == 0) {
@@ -1954,6 +2056,7 @@ config_detach(device_t dev, int flags)
 			panic("config_detach");
 		}
 	}
+	mutex_exit(&alldevs_lock);
 #endif
 
 	/* notify the parent that the child is gone */
@@ -1980,6 +2083,8 @@ config_detach(device_t dev, int flags)
 		aprint_normal_dev(dev, "detached\n");
 
 out:
+	config_detach_exit(dev);
+
 	config_alldevs_enter(&af);
 	KASSERT(alldevs_nwrite != 0);
 	--alldevs_nwrite;
@@ -1993,6 +2098,8 @@ out:
 	}
 	config_alldevs_exit(&af);
 
+	KERNEL_UNLOCK_ONE(NULL);
+
 	return rv;
 }
 
@@ -2002,6 +2109,8 @@ config_detach_children(device_t parent, int flags)
 	device_t dv;
 	deviter_t di;
 	int error = 0;
+
+	KASSERT(KERNEL_LOCKED_P());
 
 	for (dv = deviter_first(&di, DEVITER_F_RW); dv != NULL;
 	     dv = deviter_next(&di)) {
@@ -2046,8 +2155,10 @@ config_detach_all(int how)
 	bool progress = false;
 	int flags;
 
+	KERNEL_LOCK(1, NULL);
+
 	if ((how & (RB_NOSYNC|RB_DUMP)) != 0)
-		return false;
+		goto out;
 
 	if ((how & RB_POWERDOWN) == RB_POWERDOWN)
 		flags = DETACH_SHUTDOWN | DETACH_POWEROFF;
@@ -2063,6 +2174,8 @@ config_detach_all(int how)
 		} else
 			aprint_debug("failed.");
 	}
+
+out:	KERNEL_UNLOCK_ONE(NULL);
 	return progress;
 }
 
@@ -2174,7 +2287,6 @@ config_interrupts(device_t dev, void (*func)(device_t))
 	dc->dc_dev = dev;
 	dc->dc_func = func;
 	TAILQ_INSERT_TAIL(&interrupt_config_queue, dc, dc_queue);
-	dev->dv_flags |= DVF_ATTACH_INPROGRESS;
 	mutex_exit(&config_misc_lock);
 }
 
@@ -2219,6 +2331,8 @@ static void
 config_process_deferred(struct deferred_config_head *queue, device_t parent)
 {
 	struct deferred_config *dc;
+
+	KASSERT(KERNEL_LOCKED_P());
 
 	mutex_enter(&config_misc_lock);
 	dc = TAILQ_FIRST(queue);
@@ -2266,13 +2380,13 @@ config_pending_decr(device_t dev)
 	mutex_enter(&config_misc_lock);
 	KASSERTMSG(dev->dv_pending > 0,
 	    "%s: excess config_pending_decr", device_xname(dev));
-	if (--dev->dv_pending == 0)
+	if (--dev->dv_pending == 0) {
 		TAILQ_REMOVE(&config_pending, dev, dv_pending_list);
+		cv_broadcast(&config_misc_cv);
+	}
 #ifdef DEBUG_AUTOCONF
 	printf("%s: %s %d\n", __func__, device_xname(dev), dev->dv_pending);
 #endif
-	if (TAILQ_EMPTY(&config_pending))
-		cv_broadcast(&config_misc_cv);
 	mutex_exit(&config_misc_lock);
 }
 
@@ -2286,6 +2400,9 @@ int
 config_finalize_register(device_t dev, int (*fn)(device_t))
 {
 	struct finalize_hook *f;
+	int error = 0;
+
+	KERNEL_LOCK(1, NULL);
 
 	/*
 	 * If finalization has already been done, invoke the
@@ -2294,13 +2411,15 @@ config_finalize_register(device_t dev, int (*fn)(device_t))
 	if (config_finalize_done) {
 		while ((*fn)(dev) != 0)
 			/* loop */ ;
-		return 0;
+		goto out;
 	}
 
 	/* Ensure this isn't already on the list. */
 	TAILQ_FOREACH(f, &config_finalize_list, f_list) {
-		if (f->f_func == fn && f->f_dev == dev)
-			return EEXIST;
+		if (f->f_func == fn && f->f_dev == dev) {
+			error = EEXIST;
+			goto out;
+		}
 	}
 
 	f = kmem_alloc(sizeof(*f), KM_SLEEP);
@@ -2308,7 +2427,11 @@ config_finalize_register(device_t dev, int (*fn)(device_t))
 	f->f_dev = dev;
 	TAILQ_INSERT_TAIL(&config_finalize_list, f, f_list);
 
-	return 0;
+	/* Success!  */
+	error = 0;
+
+out:	KERNEL_UNLOCK_ONE(NULL);
+	return error;
 }
 
 void

@@ -360,37 +360,37 @@ ARM_ENTRY(_ZN7_Unwind15Registers_arm32C1Ev)
 	mrs	r1, cpsr
 	str	r1, [r0, #64]	/* CPSR */
 	mov	r1, #0
-	str	r1, [r0, #68]
+	str	r1, [r0, #68]	/* flags */
 	RET
 END(_ZN7_Unwind15Registers_arm32C1Ev)
 
-	.hidden _ZN7_Unwind15Registers_arm328lazyVFP1Ev
-ARM_ENTRY(_ZN7_Unwind15Registers_arm328lazyVFP1Ev)
+	.hidden _ZN7_Unwind15Registers_arm329lazyVFPv2Ev
+ARM_ENTRY(_ZN7_Unwind15Registers_arm329lazyVFPv2Ev)
 	add	r0, #72
 	vstmia	r0, {d0-d15}
 	RET
-END(_ZN7_Unwind15Registers_arm328lazyVFP1Ev)
+END(_ZN7_Unwind15Registers_arm329lazyVFPv2Ev)
 
-	.hidden _ZN7_Unwind15Registers_arm328lazyVFP3Ev
-ARM_ENTRY(_ZN7_Unwind15Registers_arm328lazyVFP3Ev)
+	.hidden _ZN7_Unwind15Registers_arm329lazyVFPv3Ev
+ARM_ENTRY(_ZN7_Unwind15Registers_arm329lazyVFPv3Ev)
 	add	r0, #200
 	vstmia	r0, {d16-d31}
 	RET
-END(_ZN7_Unwind15Registers_arm328lazyVFP3Ev)
+END(_ZN7_Unwind15Registers_arm329lazyVFPv3Ev)
 
 	.hidden _ZNK7_Unwind15Registers_arm326jumptoEv
 ARM_ENTRY(_ZNK7_Unwind15Registers_arm326jumptoEv)
-	ldrb	r1, [r0, #68]
+	ldr	r1, [r0, #68]	/* flags */
 	tst	r1, #1
-	beq	.Lnovfp1
+	beq	.Lnovfpv2
 	add	r2, r0, #72
 	vldmia	r2, {d0-d15}
-.Lnovfp1:
+.Lnovfpv2:
 	tst	r1, #2
-	beq	.Lnovfp3
+	beq	.Lnovfpv3
 	add	r2, r0, #200
 	vldmia	r2, {d16-d31}
-.Lnovfp3:
+.Lnovfpv3:
 	ldr	r1, [r0, #64]
 	msr	cpsr_sxc, r1
 	ldmia	r0, {r0-r15}

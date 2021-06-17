@@ -1,4 +1,4 @@
-/*	$NetBSD: hvs.c,v 1.5 2021/04/24 23:36:54 thorpej Exp $	*/
+/*	$NetBSD: hvs.c,v 1.5.2.1 2021/06/17 04:46:28 thorpej Exp $	*/
 /*	$OpenBSD: hvs.c,v 1.17 2017/08/10 17:22:48 mikeb Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
 /* #define HVS_DEBUG_IO */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hvs.c,v 1.5 2021/04/24 23:36:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hvs.c,v 1.5.2.1 2021/06/17 04:46:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -833,7 +833,7 @@ hvs_scsi_probe(void *arg)
 	struct hvs_softc *sc = arg;
 
 	if (sc->sc_scsibus != NULL)
-		scsi_probe_bus((void *)sc->sc_scsibus, -1, -1);
+		scsi_probe_bus(device_private(sc->sc_scsibus), -1, -1);
 }
 
 static void

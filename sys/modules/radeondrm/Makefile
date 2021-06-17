@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.14 2019/11/11 22:45:27 joerg Exp $
+# $NetBSD: Makefile,v 1.14.12.1 2021/06/17 04:46:34 thorpej Exp $
 
 .include "../Makefile.inc"
 
@@ -17,6 +17,9 @@ SRCS+=	radeon_cs.c
 SRCS+=	radeon_irq.c
 SRCS+=	radeon_mem.c
 SRCS+=	radeon_state.c
+
+# Code imported from Linux - expects signed overflow to be OK.
+COPTS+=	-fwrapv
 
 CPPFLAGS+=	-I${S}/external/bsd/drm/dist/bsd-core \
 		-I${S}/external/bsd/drm/dist/shared-core

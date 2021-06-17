@@ -1,4 +1,4 @@
-/* $NetBSD: dwiic_pci.c,v 1.4.2.2 2021/04/25 22:02:59 thorpej Exp $ */
+/* $NetBSD: dwiic_pci.c,v 1.4.2.3 2021/06/17 04:46:26 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwiic_pci.c,v 1.4.2.2 2021/04/25 22:02:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwiic_pci.c,v 1.4.2.3 2021/06/17 04:46:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,9 +62,8 @@ struct pci_dwiic_softc {
 static uint32_t
 lpss_read(struct pci_dwiic_softc *sc, int offset)
 {
-	u_int32_t b = bus_space_read_4(sc->sc_dwiic.sc_iot, sc->sc_dwiic.sc_ioh,
-	     offset);
-	return b;
+	return bus_space_read_4(sc->sc_dwiic.sc_iot, sc->sc_dwiic.sc_ioh,
+	    offset);
 }
 
 static void
@@ -174,13 +173,18 @@ out:
 static bool
 dwiic_pci_power(struct dwiic_softc *dwsc, bool power)
 {
-	struct pci_dwiic_softc *sc = (void *)dwsc;
-	pcireg_t pmreg;
+	struct pci_dwiic_softc *sc = container_of(dwsc, struct pci_dwiic_softc,
+	    sc_dwiic);
+	pcireg_t pmreg, csr;
+	uint32_t reset, rlo, rhi;
 
-	printf("status 0x%x\n", pci_conf_read(sc->sc_pc, sc->sc_ptag, PCI_COMMAND_STATUS_REG));
-	printf("reset 0x%x\n", lpss_read(sc, LPSS_RESET));
-	printf("rlo 0x%x\n", lpss_read(sc, LPSS_REMAP_LO));
-	printf("rho 0x%x\n", lpss_read(sc, LPSS_REMAP_HI));
+	csr = pci_conf_read(sc->sc_pc, sc->sc_ptag, PCI_COMMAND_STATUS_REG);
+	reset = lpss_read(sc, LPSS_RESET);
+	rlo = lpss_read(sc, LPSS_REMAP_LO);
+	rhi = lpss_read(sc, LPSS_REMAP_HI);
+	aprint_debug_dev(dwsc->sc_dev,
+	    "status 0x%x reset 0x%x rlo 0x%x rhi 0x%x\n",
+	    csr, reset, rlo, rhi);
 
 	if (!power)
 		lpss_write(sc, LPSS_CLKGATE, LPSS_CLKGATE_CTRL_OFF);
@@ -191,7 +195,7 @@ dwiic_pci_power(struct dwiic_softc *dwsc, bool power)
 		pci_conf_write(sc->sc_pc, sc->sc_ptag, pmreg + PCI_PMCSR,
 		    power ? PCI_PMCSR_STATE_D0 : PCI_PMCSR_STATE_D3);
 		DELAY(10000); /* 10 milliseconds */
-		DPRINTF((" -> 0x%x\n", 
+		DPRINTF((" -> 0x%x\n",
 		    pci_conf_read(sc->sc_pc, sc->sc_ptag, pmreg + PCI_PMCSR)));
 	}
 	if (power) {

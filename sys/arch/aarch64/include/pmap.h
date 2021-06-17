@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.46.2.1 2021/05/13 00:47:20 thorpej Exp $ */
+/* $NetBSD: pmap.h,v 1.46.2.2 2021/06/17 04:46:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -129,6 +129,11 @@ struct vm_page_md {
 #define LX_BLKPAG_OS_WIRED		LX_BLKPAG_OS_2
 #define LX_BLKPAG_OS_BOOT		LX_BLKPAG_OS_3
 #define LX_BLKPAG_OS_RWMASK		(LX_BLKPAG_OS_WRITE|LX_BLKPAG_OS_READ)
+
+#define PMAP_PTE_OS0	"read"
+#define PMAP_PTE_OS1	"write"
+#define PMAP_PTE_OS2	"wired"
+#define PMAP_PTE_OS3	"boot"
 
 /* memory attributes are configured MAIR_EL1 in locore */
 #define LX_BLKPAG_ATTR_NORMAL_WB	__SHIFTIN(0, LX_BLKPAG_ATTR_INDX)

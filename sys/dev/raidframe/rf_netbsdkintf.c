@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.391.2.1 2021/05/13 00:47:32 thorpej Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.391.2.2 2021/06/17 04:46:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.391.2.1 2021/05/13 00:47:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.391.2.2 2021/06/17 04:46:30 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_autoconfig.h"
@@ -300,24 +300,23 @@ static int raid_detach_unlocked(struct raid_softc *);
 static void rf_markalldirty(RF_Raid_t *);
 static void rf_set_geometry(struct raid_softc *, RF_Raid_t *);
 
-void rf_ReconThread(struct rf_recon_req_internal *);
-void rf_RewriteParityThread(RF_Raid_t *raidPtr);
-void rf_CopybackThread(RF_Raid_t *raidPtr);
-void rf_ReconstructInPlaceThread(struct rf_recon_req_internal *);
-int rf_autoconfig(device_t);
-void rf_buildroothack(RF_ConfigSet_t *);
+static void rf_ReconThread(struct rf_recon_req_internal *);
+static void rf_RewriteParityThread(RF_Raid_t *raidPtr);
+static void rf_CopybackThread(RF_Raid_t *raidPtr);
+static void rf_ReconstructInPlaceThread(struct rf_recon_req_internal *);
+static int rf_autoconfig(device_t);
+static void rf_buildroothack(RF_ConfigSet_t *);
 
-RF_AutoConfig_t *rf_find_raid_components(void);
-RF_ConfigSet_t *rf_create_auto_sets(RF_AutoConfig_t *);
+static RF_AutoConfig_t *rf_find_raid_components(void);
+static RF_ConfigSet_t *rf_create_auto_sets(RF_AutoConfig_t *);
 static int rf_does_it_fit(RF_ConfigSet_t *,RF_AutoConfig_t *);
-int rf_reasonable_label(RF_ComponentLabel_t *, uint64_t);
-void rf_create_configuration(RF_AutoConfig_t *,RF_Config_t *, RF_Raid_t *);
-int rf_set_autoconfig(RF_Raid_t *, int);
-int rf_set_rootpartition(RF_Raid_t *, int);
-void rf_release_all_vps(RF_ConfigSet_t *);
-void rf_cleanup_config_set(RF_ConfigSet_t *);
-int rf_have_enough_components(RF_ConfigSet_t *);
-struct raid_softc *rf_auto_config_set(RF_ConfigSet_t *);
+static void rf_create_configuration(RF_AutoConfig_t *,RF_Config_t *, RF_Raid_t *);
+static int rf_set_autoconfig(RF_Raid_t *, int);
+static int rf_set_rootpartition(RF_Raid_t *, int);
+static void rf_release_all_vps(RF_ConfigSet_t *);
+static void rf_cleanup_config_set(RF_ConfigSet_t *);
+static int rf_have_enough_components(RF_ConfigSet_t *);
+static struct raid_softc *rf_auto_config_set(RF_ConfigSet_t *);
 static void rf_fix_old_label_size(RF_ComponentLabel_t *, uint64_t);
 
 /*
@@ -397,7 +396,7 @@ raidattach(int num)
 	 */
 }
 
-int
+static int
 rf_autoconfig(device_t self)
 {
 	RF_AutoConfig_t *ac_list;
@@ -481,7 +480,7 @@ rf_containsboot(RF_Raid_t *r, device_t bdv) {
 	return 0;
 }
 
-void
+static void
 rf_buildroothack(RF_ConfigSet_t *config_sets)
 {
 	RF_ConfigSet_t *cset;
@@ -2265,6 +2264,7 @@ int
 raidfetch_component_label(RF_Raid_t *raidPtr, RF_RowCol_t col)
 {
 	KASSERT(raidPtr->bytesPerSector);
+
 	return raidread_component_label(raidPtr->bytesPerSector,
 	    raidPtr->Disks[col].dev,
 	    raidPtr->raid_cinfo[col].ci_vp,
@@ -2292,15 +2292,54 @@ raidflush_component_label(RF_Raid_t *raidPtr, RF_RowCol_t col)
 	    raidPtr->raid_cinfo[col].ci_vp, label);
 }
 
+/*
+ * Swap the label endianness.
+ *
+ * Everything in the component label is 4-byte-swapped except the version,
+ * which is kept in the byte-swapped version at all times, and indicates
+ * for the writer that a swap is necessary.
+ *
+ * For reads it is expected that out_label == clabel, but writes expect
+ * separate labels so only the re-swapped label is written out to disk,
+ * leaving the swapped-except-version internally.
+ *
+ * Only support swapping label version 2.
+ */
+static void
+rf_swap_label(RF_ComponentLabel_t *clabel, RF_ComponentLabel_t *out_label)
+{
+	int	*in, *out, *in_last;
+
+	KASSERT(clabel->version == bswap32(RF_COMPONENT_LABEL_VERSION));
+
+	/* Don't swap the label, but do copy it. */
+	out_label->version = clabel->version;
+
+	in = &clabel->serial_number;
+	in_last = &clabel->future_use2[42];
+	out = &out_label->serial_number;
+
+	for (; in < in_last; in++, out++)
+		*out = bswap32(*in);
+}
 
 static int
 raidread_component_label(unsigned secsize, dev_t dev, struct vnode *b_vp,
     RF_ComponentLabel_t *clabel)
 {
-	return raidread_component_area(dev, b_vp, clabel,
+	int error;
+
+	error = raidread_component_area(dev, b_vp, clabel,
 	    sizeof(RF_ComponentLabel_t),
 	    rf_component_info_offset(),
 	    rf_component_info_size(secsize));
+
+	if (error == 0 &&
+	    clabel->version == bswap32(RF_COMPONENT_LABEL_VERSION)) {
+		rf_swap_label(clabel, clabel);
+	}
+
+	return error;
 }
 
 /* ARGSUSED */
@@ -2341,15 +2380,24 @@ raidread_component_area(dev_t dev, struct vnode *b_vp, void *data,
 	return(error);
 }
 
-
 static int
 raidwrite_component_label(unsigned secsize, dev_t dev, struct vnode *b_vp,
     RF_ComponentLabel_t *clabel)
 {
-	return raidwrite_component_area(dev, b_vp, clabel,
+	RF_ComponentLabel_t *clabel_write = clabel;
+	RF_ComponentLabel_t lclabel;
+	int error;
+
+	if (clabel->version == bswap32(RF_COMPONENT_LABEL_VERSION)) {
+		clabel_write = &lclabel;
+		rf_swap_label(clabel, clabel_write);
+	}
+	error = raidwrite_component_area(dev, b_vp, clabel_write,
 	    sizeof(RF_ComponentLabel_t),
 	    rf_component_info_offset(),
 	    rf_component_info_size(secsize), 0);
+
+	return error;
 }
 
 /* ARGSUSED */
@@ -2614,7 +2662,7 @@ rf_UnconfigureVnodes(RF_Raid_t *raidPtr)
 }
 
 
-void
+static void
 rf_ReconThread(struct rf_recon_req_internal *req)
 {
 	int     s;
@@ -2636,7 +2684,7 @@ rf_ReconThread(struct rf_recon_req_internal *req)
 	kthread_exit(0);	/* does not return */
 }
 
-void
+static void
 rf_RewriteParityThread(RF_Raid_t *raidPtr)
 {
 	int retcode;
@@ -2670,7 +2718,7 @@ rf_RewriteParityThread(RF_Raid_t *raidPtr)
 }
 
 
-void
+static void
 rf_CopybackThread(RF_Raid_t *raidPtr)
 {
 	int s;
@@ -2686,7 +2734,7 @@ rf_CopybackThread(RF_Raid_t *raidPtr)
 }
 
 
-void
+static void
 rf_ReconstructInPlaceThread(struct rf_recon_req_internal *req)
 {
 	int s;
@@ -2746,7 +2794,7 @@ rf_get_component(RF_AutoConfig_t *ac_list, dev_t dev, struct vnode *vp,
 	return ac_list;
 }
 
-RF_AutoConfig_t *
+static RF_AutoConfig_t *
 rf_find_raid_components(void)
 {
 	struct vnode *vp;
@@ -2775,21 +2823,21 @@ rf_find_raid_components(void)
 		for (dv = deviter_first(&di, DEVITER_F_ROOT_FIRST); dv != NULL;
 		     dv = deviter_next(&di)) {
 
-			/* we are only interested in disks... */
+			/* we are only interested in disks */
 			if (device_class(dv) != DV_DISK)
 				continue;
 
-			/* we don't care about floppies... */
+			/* we don't care about floppies */
 			if (device_is_a(dv, "fd")) {
 				continue;
 			}
 
-			/* we don't care about CD's... */
+			/* we don't care about CDs. */
 			if (device_is_a(dv, "cd")) {
 				continue;
 			}
 
-			/* we don't care about md's... */
+			/* we don't care about md. */
 			if (device_is_a(dv, "md")) {
 				continue;
 			}
@@ -2801,6 +2849,11 @@ rf_find_raid_components(void)
 
 			/* fdisa is the Atari/Milan floppy driver */
 			if (device_is_a(dv, "fdisa")) {
+				continue;
+			}
+
+			/* we don't care about spiflash */
+			if (device_is_a(dv, "spiflash")) {
 				continue;
 			}
 
@@ -2953,15 +3006,15 @@ rf_find_raid_components(void)
 	return ac_list;
 }
 
-
 int
 rf_reasonable_label(RF_ComponentLabel_t *clabel, uint64_t numsecs)
 {
 
-	if (((clabel->version==RF_COMPONENT_LABEL_VERSION_1) ||
-	     (clabel->version==RF_COMPONENT_LABEL_VERSION)) &&
-	    ((clabel->clean == RF_RAID_CLEAN) ||
-	     (clabel->clean == RF_RAID_DIRTY)) &&
+	if ((clabel->version==RF_COMPONENT_LABEL_VERSION_1 ||
+	     clabel->version==RF_COMPONENT_LABEL_VERSION ||
+	     clabel->version == bswap32(RF_COMPONENT_LABEL_VERSION)) &&
+	    (clabel->clean == RF_RAID_CLEAN ||
+	     clabel->clean == RF_RAID_DIRTY) &&
 	    clabel->row >=0 &&
 	    clabel->column >= 0 &&
 	    clabel->num_rows > 0 &&
@@ -3052,7 +3105,7 @@ rf_print_component_label(RF_ComponentLabel_t *clabel)
 }
 #endif
 
-RF_ConfigSet_t *
+static RF_ConfigSet_t *
 rf_create_auto_sets(RF_AutoConfig_t *ac_list)
 {
 	RF_AutoConfig_t *ac;
@@ -3168,7 +3221,7 @@ rf_does_it_fit(RF_ConfigSet_t *cset, RF_AutoConfig_t *ac)
 	return(1);
 }
 
-int
+static int
 rf_have_enough_components(RF_ConfigSet_t *cset)
 {
 	RF_AutoConfig_t *ac;
@@ -3271,7 +3324,7 @@ rf_have_enough_components(RF_ConfigSet_t *cset)
 	return(1);
 }
 
-void
+static void
 rf_create_configuration(RF_AutoConfig_t *ac, RF_Config_t *config,
 			RF_Raid_t *raidPtr)
 {
@@ -3305,7 +3358,7 @@ rf_create_configuration(RF_AutoConfig_t *ac, RF_Config_t *config,
 	}
 }
 
-int
+static int
 rf_set_autoconfig(RF_Raid_t *raidPtr, int new_value)
 {
 	RF_ComponentLabel_t *clabel;
@@ -3332,7 +3385,7 @@ rf_set_autoconfig(RF_Raid_t *raidPtr, int new_value)
 	return(new_value);
 }
 
-int
+static int
 rf_set_rootpartition(RF_Raid_t *raidPtr, int new_value)
 {
 	RF_ComponentLabel_t *clabel;
@@ -3358,7 +3411,7 @@ rf_set_rootpartition(RF_Raid_t *raidPtr, int new_value)
 	return(new_value);
 }
 
-void
+static void
 rf_release_all_vps(RF_ConfigSet_t *cset)
 {
 	RF_AutoConfig_t *ac;
@@ -3377,7 +3430,7 @@ rf_release_all_vps(RF_ConfigSet_t *cset)
 }
 
 
-void
+static void
 rf_cleanup_config_set(RF_ConfigSet_t *cset)
 {
 	RF_AutoConfig_t *ac;
@@ -3401,8 +3454,9 @@ rf_cleanup_config_set(RF_ConfigSet_t *cset)
 void
 raid_init_component_label(RF_Raid_t *raidPtr, RF_ComponentLabel_t *clabel)
 {
-	/* current version number */
-	clabel->version = RF_COMPONENT_LABEL_VERSION;
+	/* avoid over-writing byteswapped version. */
+	if (clabel->version != bswap32(RF_COMPONENT_LABEL_VERSION))
+		clabel->version = RF_COMPONENT_LABEL_VERSION;
 	clabel->serial_number = raidPtr->serial_number;
 	clabel->mod_counter = raidPtr->mod_counter;
 
@@ -3431,7 +3485,7 @@ raid_init_component_label(RF_Raid_t *raidPtr, RF_ComponentLabel_t *clabel)
 #endif
 }
 
-struct raid_softc *
+static struct raid_softc *
 rf_auto_config_set(RF_ConfigSet_t *cset)
 {
 	RF_Raid_t *raidPtr;
@@ -3792,6 +3846,9 @@ rf_get_component_label(RF_Raid_t *raidPtr, void *data)
 		return EINVAL;
 	raid_clabel = raidget_component_label(raidPtr, column);
 	memcpy(clabel, raid_clabel, sizeof *clabel);
+	/* Fix-up for userland. */
+	if (clabel->version == bswap32(RF_COMPONENT_LABEL_VERSION))
+		clabel->version = RF_COMPONENT_LABEL_VERSION;
 
 	return 0;
 }

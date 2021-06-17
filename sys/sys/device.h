@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.168.2.2 2021/05/15 00:32:41 thorpej Exp $ */
+/* $NetBSD: device.h,v 1.168.2.3 2021/06/17 04:46:36 thorpej Exp $ */
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -273,6 +273,8 @@ struct device {
 
 	int		dv_pending;	/* config_pending count */
 	TAILQ_ENTRY(device) dv_pending_list;
+
+	struct lwp	*dv_detaching;	/* detach lock (config_misc_lock/cv) */
 
 	size_t		dv_activity_count;
 	void		(**dv_activity_handlers)(device_t, devactive_t);

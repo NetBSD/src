@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.15 2021/01/24 12:51:32 jmcneill Exp $ */
+/* $NetBSD: param.h,v 1.15.4.1 2021/06/17 04:46:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,6 +36,7 @@
 
 #ifdef _KERNEL_OPT
 #include "opt_cputypes.h"
+#include "opt_param.h"
 #endif
 
 /*

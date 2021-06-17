@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.60 2021/01/30 01:22:06 thorpej Exp $ */
+/*	$NetBSD: dbcool.c,v 1.60.4.1 2021/06/17 04:46:28 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.60 2021/01/30 01:22:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.60.4.1 2021/06/17 04:46:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -819,11 +819,11 @@ dbcool_detach(device_t self, int flags)
 
 	pmf_device_deregister(self);
 
-	sysmon_envsys_unregister(sc->sc_sme);
+	if (sc->sc_sme != NULL)
+		sysmon_envsys_unregister(sc->sc_sme);
 
 	sysctl_teardown(&sc->sc_sysctl_log);
 
-	sc->sc_sme = NULL;
 	return 0;
 }
 
@@ -1600,6 +1600,7 @@ dbcool_setup(device_t self)
 
 out:
 	sysmon_envsys_destroy(sc->sc_sme);
+	sc->sc_sme = NULL;
 }
 
 static int

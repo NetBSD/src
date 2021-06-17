@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.117.4.1 2021/05/13 00:47:26 thorpej Exp $ */
+/* $NetBSD: locore.h,v 1.117.4.2 2021/06/17 04:46:22 thorpej Exp $ */
 
 /*
  * This file should not be included by MI code!!!
@@ -347,8 +347,6 @@ void	mips_emul_inst(uint32_t, uint32_t, vaddr_t, struct trapframe *);
 void	mips_emul_fp(uint32_t, struct trapframe *, uint32_t);
 void	mips_emul_branchdelayslot(uint32_t, struct trapframe *, uint32_t);
 
-void	mips_emul_lwc0(uint32_t, struct trapframe *, uint32_t);
-void	mips_emul_swc0(uint32_t, struct trapframe *, uint32_t);
 void	mips_emul_special(uint32_t, struct trapframe *, uint32_t);
 void	mips_emul_special3(uint32_t, struct trapframe *, uint32_t);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.3 2011/07/17 20:54:43 joerg Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.3.70.1 2021/06/17 04:46:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998
@@ -66,6 +66,7 @@
 #include <sys/types.h>
 #include <sys/disklabel.h>
 
+#include <lib/libkern/libkern.h>
 #include <lib/libsa/stand.h>
 #include <lib/libsa/saerrno.h>
 #include <lib/libsa/loadfile.h>

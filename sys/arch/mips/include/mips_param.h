@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.47.6.1 2021/05/13 00:47:26 thorpej Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.47.6.2 2021/06/17 04:46:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -25,6 +25,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifdef _KERNEL_OPT
+#include "opt_param.h"
+#endif
+
 /*
  * No reason this can't be common
  */
@@ -38,19 +43,28 @@
 # error neither __MIPSEL__ nor __MIPSEB__ are defined.
 #endif
 
+#define	___MACHINE32_OARCH		mips##_MACHINE_SUFFIX
+#define	__MACHINE32_OARCH		"mips" MACHINE_SUFFIX
+#define	___MACHINE32_NARCH		mips64##_MACHINE_SUFFIX
+#define	__MACHINE32_NARCH		"mips64" MACHINE_SUFFIX
+#define	___MACHINE64_NARCH		mipsn64##_MACHINE_SUFFIX
+#define	__MACHINE64_NARCH		"mipsn64" MACHINE_SUFFIX
+
 #if defined(__mips_n32) || defined(__mips_n64)
 # if defined(__mips_n32)
-#  define	_MACHINE_ARCH	mips64##_MACHINE_SUFFIX
-#  define	MACHINE_ARCH	"mips64" MACHINE_SUFFIX
+#  define	_MACHINE_ARCH		___MACHINE32_NARCH
+#  define	MACHINE_ARCH		__MACHINE32_NARCH
 # else /* __mips_n64 */
-#  define	_MACHINE_ARCH	mipsn64##_MACHINE_SUFFIX
-#  define	MACHINE_ARCH	"mipsn64" MACHINE_SUFFIX
+#  define	_MACHINE_ARCH		___MACHINE64_NARCH
+#  define	MACHINE_ARCH		__MACHINE64_NARCH
+#  define	_MACHINE32_NARCH	___MACHINE32_NARCH
+#  define	MACHINE32_NARCH		__MACHINE32_NARCH
 # endif
-# define	_MACHINE32_ARCH	mips##_MACHINE_SUFFIX
-# define	MACHINE32_ARCH	"mips" MACHINE_SUFFIX
+# define	_MACHINE32_OARCH	___MACHINE32_OARCH
+# define	MACHINE32_OARCH		__MACHINE32_OARCH
 #else /* o32 */
-# define	_MACHINE_ARCH	mips##_MACHINE_SUFFIX
-# define	MACHINE_ARCH	"mips" MACHINE_SUFFIX
+# define	_MACHINE_ARCH		___MACHINE32_OARCH
+# define	MACHINE_ARCH		__MACHINE32_OARCH
 #endif
 
 /*

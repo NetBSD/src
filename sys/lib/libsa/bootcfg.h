@@ -1,4 +1,4 @@
-/*	$NetBSD: bootcfg.h,v 1.3 2019/03/31 20:08:45 christos Exp $	*/
+/*	$NetBSD: bootcfg.h,v 1.3.16.1 2021/06/17 04:46:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@ struct bootcfg_def {
 	char *banner[BOOTCFG_MAXBANNER];	/* Banner text */
 	char *command[BOOTCFG_MAXMENU];		/* Menu commands per entry*/
 	char *consdev;				/* Console device */
+	char *root;				/* Root specification */
 	int def;				/* Default menu option */
 	char *desc[BOOTCFG_MAXMENU];		/* Menu text per entry */
 	int nummenu;				/* Number of menu items */

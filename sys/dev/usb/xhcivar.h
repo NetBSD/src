@@ -1,4 +1,4 @@
-/*	$NetBSD: xhcivar.h,v 1.17 2020/08/21 20:46:03 jakllsch Exp $	*/
+/*	$NetBSD: xhcivar.h,v 1.17.6.1 2021/06/17 04:46:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -128,6 +128,7 @@ struct xhci_softc {
 	bool sc_resultpending;
 
 	bool sc_dying;
+	struct lwp *sc_suspender;
 
 	void (*sc_vendor_init)(struct xhci_softc *);
 	int (*sc_vendor_port_status)(struct xhci_softc *, uint32_t, int);
@@ -137,6 +138,18 @@ struct xhci_softc {
 #define XHCI_DEFERRED_START	__BIT(1)
 	uint32_t sc_hcc;		/* copy of HCCPARAMS1 */
 	uint32_t sc_hcc2;		/* copy of HCCPARAMS2 */
+
+	struct xhci_registers {
+		uint32_t	usbcmd;
+		uint32_t	dnctrl;
+		uint64_t	dcbaap;
+		uint32_t	config;
+		uint32_t	erstsz0;
+		uint64_t	erstba0;
+		uint64_t	erdp0;
+		uint32_t	iman0;
+		uint32_t	imod0;
+	} sc_regs;
 };
 
 int	xhci_init(struct xhci_softc *);
