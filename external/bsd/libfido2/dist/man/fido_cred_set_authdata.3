@@ -14,6 +14,7 @@
 .Nm fido_cred_set_rp ,
 .Nm fido_cred_set_user ,
 .Nm fido_cred_set_extensions ,
+.Nm fido_cred_set_blob ,
 .Nm fido_cred_set_prot ,
 .Nm fido_cred_set_rk ,
 .Nm fido_cred_set_uv ,
@@ -45,6 +46,8 @@ typedef enum {
 .Fn fido_cred_set_user "fido_cred_t *cred" "const unsigned char *user_id" "size_t user_id_len" "const char *name" "const char *display_name" "const char *icon"
 .Ft int
 .Fn fido_cred_set_extensions "fido_cred_t *cred" "int flags"
+.Ft int
+.Fn fido_cred_set_blob "fido_cred_t *cred" "const unsigned char *ptr" "size_t len"
 .Ft int
 .Fn fido_cred_set_prot "fido_cred_t *cred" "int prot"
 .Ft int
@@ -151,15 +154,29 @@ function sets the extensions of
 to the bitmask
 .Fa flags .
 At the moment, only the
-.Dv FIDO_EXT_HMAC_SECRET
+.Dv FIDO_EXT_CRED_BLOB ,
+.Dv FIDO_EXT_CRED_PROTECT ,
+.Dv FIDO_EXT_HMAC_SECRET ,
 and
-.Dv FIDO_EXT_CRED_PROTECT
+.Dv FIDO_EXT_LARGEBLOB_KEY
 extensions are supported.
 If
 .Fa flags
 is zero, the extensions of
 .Fa cred
 are cleared.
+.Pp
+The
+.Fn fido_cred_set_blob
+function sets the
+.Dq credBlob
+to be stored with
+.Fa cred
+to the data pointed to by
+.Fa ptr ,
+which must be
+.Fa len
+bytes long.
 .Pp
 The
 .Fn fido_cred_set_prot
@@ -185,10 +202,10 @@ and
 .Fn fido_cred_set_uv
 functions set the
 .Em rk
-(resident key)
+.Pq resident/discoverable key
 and
 .Em uv
-(user verification)
+.Pq user verification
 attributes of
 .Fa cred .
 Both are
@@ -205,10 +222,10 @@ where
 .Fa fmt
 must be either
 .Vt "packed"
-(the format used in FIDO 2)
+.Pq the format used in FIDO2
 or
 .Vt "fido-u2f"
-(the format used by U2F).
+.Pq the format used by U2F .
 A copy of
 .Fa fmt
 is made, and no references to the passed pointer are kept.

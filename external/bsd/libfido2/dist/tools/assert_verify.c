@@ -9,7 +9,6 @@
 #include <fido/rs256.h>
 #include <fido/eddsa.h>
 
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
