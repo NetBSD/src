@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Yubico AB. All rights reserved.
+ * Copyright (c) 2019-2021 Yubico AB. All rights reserved.
  * Use of this source code is governed by a BSD-style
  * license that can be found in the LICENSE file.
  */
@@ -9,8 +9,6 @@
 #include <openssl/sha.h>
 
 #include <cbor.h>
-#include <fido.h>
-
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -60,6 +58,23 @@ WRAP(char *,
 	1
 )
 
+WRAP(int,
+	EVP_Cipher,
+	(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in,
+	    unsigned int inl),
+	-1,
+	(ctx, out, in, inl),
+	1
+)
+
+WRAP(int,
+	EVP_CIPHER_CTX_ctrl,
+	(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr),
+	0,
+	(ctx, type, arg, ptr),
+	1
+)
+
 WRAP(EVP_CIPHER_CTX *,
 	EVP_CIPHER_CTX_new,
 	(void),
@@ -68,7 +83,8 @@ WRAP(EVP_CIPHER_CTX *,
 	1
 )
 
-WRAP(int, EVP_EncryptInit_ex,
+WRAP(int,
+	EVP_EncryptInit_ex,
 	(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type, ENGINE *impl,
 	    const unsigned char *key, const unsigned char *iv),
 	0,
@@ -90,6 +106,15 @@ WRAP(int,
 	    const unsigned char *in, int inl),
 	0,
 	(ctx, out, outl, in, inl),
+	1
+)
+
+WRAP(int,
+	EVP_CipherInit,
+	(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
+	    const unsigned char *key, const unsigned char *iv, int enc),
+	0,
+	(ctx, cipher, key, iv, enc),
 	1
 )
 
@@ -333,6 +358,14 @@ WRAP(EVP_PKEY_CTX *,
 	(int id, ENGINE *e),
 	NULL,
 	(id, e),
+	1
+)
+
+WRAP(int,
+	EVP_PKEY_derive,
+	(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *pkeylen),
+	0,
+	(ctx, key, pkeylen),
 	1
 )
 

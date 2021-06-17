@@ -58,6 +58,8 @@
 .Ft uint64_t
 .Fn fido_cbor_info_maxmsgsiz "const fido_cbor_info_t *ci"
 .Ft uint64_t
+.Fn fido_cbor_info_maxcredbloblen "const fido_cbor_info_t *ci"
+.Ft uint64_t
 .Fn fido_cbor_info_maxcredcntlst "const fido_cbor_info_t *ci"
 .Ft uint64_t
 .Fn fido_cbor_info_maxcredidlen "const fido_cbor_info_t *ci"
@@ -134,6 +136,13 @@ The length of the options array is returned by
 The
 .Fn fido_cbor_info_maxmsgsiz
 function returns the maximum message size attribute of
+.Fa ci .
+.Pp
+The
+.Fn fido_cbor_info_maxcredbloblen
+function returns the maximum
+.Dq credBlob
+length in bytes supported by the authenticator as reported in
 .Fa ci .
 .Pp
 The

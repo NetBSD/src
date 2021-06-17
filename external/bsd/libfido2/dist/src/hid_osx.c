@@ -6,11 +6,10 @@
 
 #include <sys/types.h>
 
+#include <errno.h>
 #include <fcntl.h>
-#include <string.h>
-#ifdef HAVE_UNISTD_H
+#include <signal.h>
 #include <unistd.h>
-#endif
 
 #include <CoreFoundation/CoreFoundation.h>
 #include <IOKit/IOKitLib.h>
@@ -314,9 +313,13 @@ report_callback(void *context, IOReturn result, void *dev, IOHIDReportType type,
 		return;
 	}
 
-	if ((r = write(ctx->report_pipe[1], ptr, (size_t)len)) < 0 ||
-	    (size_t)r != (size_t)len) {
-		fido_log_debug("%s: write", __func__);
+	if ((r = write(ctx->report_pipe[1], ptr, (size_t)len)) == -1) {
+		fido_log_error(errno, "%s: write", __func__);
+		return;
+	}
+
+	if (r < 0 || (size_t)r != (size_t)len) {
+		fido_log_debug("%s: %zd != %zu", __func__, r, (size_t)len);
 		return;
 	}
 }
@@ -328,7 +331,7 @@ removal_callback(void *context, IOReturn result, void *sender)
 	(void)result;
 	(void)sender;
 
-	CFRunLoopStop(CFRunLoopGetMain());
+	CFRunLoopStop(CFRunLoopGetCurrent());
 }
 
 static int
@@ -337,12 +340,12 @@ set_nonblock(int fd)
 	int flags;
 
 	if ((flags = fcntl(fd, F_GETFL)) == -1) {
-		fido_log_debug("%s: fcntl F_GETFL", __func__);
+		fido_log_error(errno, "%s: fcntl F_GETFL", __func__);
 		return (-1);
 	}
 
 	if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1) {
-		fido_log_debug("%s: fcntl, F_SETFL", __func__);
+		fido_log_error(errno, "%s: fcntl F_SETFL", __func__);
 		return (-1);
 	}
 
@@ -355,7 +358,7 @@ disable_sigpipe(int fd)
 	int disabled = 1;
 
 	if (fcntl(fd, F_SETNOSIGPIPE, &disabled) == -1) {
-		fido_log_debug("%s: fcntl F_SETNOSIGPIPE", __func__);
+		fido_log_error(errno, "%s: fcntl F_SETNOSIGPIPE", __func__);
 		return (-1);
 	}
 
@@ -380,7 +383,7 @@ fido_hid_open(const char *path)
 	ctx->report_pipe[1] = -1;
 
 	if (pipe(ctx->report_pipe) == -1) {
-		fido_log_debug("%s: pipe", __func__);
+		fido_log_error(errno, "%s: pipe", __func__);
 		goto fail;
 	}
 
@@ -440,8 +443,6 @@ fido_hid_open(const char *path)
 	IOHIDDeviceRegisterInputReportCallback(ctx->ref, ctx->report,
 	    (long)ctx->report_in_len, &report_callback, ctx);
 	IOHIDDeviceRegisterRemovalCallback(ctx->ref, &removal_callback, ctx);
-	IOHIDDeviceScheduleWithRunLoop(ctx->ref, CFRunLoopGetMain(),
-	    ctx->loop_id);
 
 	ok = 0;
 fail:
@@ -471,9 +472,7 @@ fido_hid_close(void *handle)
 
 	IOHIDDeviceRegisterInputReportCallback(ctx->ref, ctx->report,
 	    (long)ctx->report_in_len, NULL, ctx);
-	IOHIDDeviceRegisterRemovalCallback(ctx->ref, NULL, NULL);
-	IOHIDDeviceUnscheduleFromRunLoop(ctx->ref, CFRunLoopGetMain(),
-	    ctx->loop_id);
+	IOHIDDeviceRegisterRemovalCallback(ctx->ref, NULL, ctx);
 
 	if (IOHIDDeviceClose(ctx->ref,
 	    kIOHIDOptionsTypeSeizeDevice) != kIOReturnSuccess)
@@ -490,6 +489,15 @@ fido_hid_close(void *handle)
 }
 
 int
+fido_hid_set_sigmask(void *handle, const fido_sigset_t *sigmask)
+{
+	(void)handle;
+	(void)sigmask;
+
+	return (FIDO_ERR_INTERNAL);
+}
+
+int
 fido_hid_read(void *handle, unsigned char *buf, size_t len, int ms)
 {
 	struct hid_osx		*ctx = handle;
@@ -503,17 +511,24 @@ fido_hid_read(void *handle, unsigned char *buf, size_t len, int ms)
 		return (-1);
 	}
 
+	IOHIDDeviceScheduleWithRunLoop(ctx->ref, CFRunLoopGetCurrent(),
+	    ctx->loop_id);
+
 	if (ms == -1)
 		ms = 5000; /* wait 5 seconds by default */
 
-	if (CFRunLoopGetCurrent() != CFRunLoopGetMain())
-		fido_log_debug("%s: CFRunLoopGetCurrent != CFRunLoopGetMain",
-		    __func__);
-
 	CFRunLoopRunInMode(ctx->loop_id, (double)ms/1000.0, true);
 
-	if ((r = read(ctx->report_pipe[0], buf, len)) < 0 || (size_t)r != len) {
-		fido_log_debug("%s: read", __func__);
+	IOHIDDeviceUnscheduleFromRunLoop(ctx->ref, CFRunLoopGetCurrent(),
+	    ctx->loop_id);
+
+	if ((r = read(ctx->report_pipe[0], buf, len)) == -1) {
+		fido_log_error(errno, "%s: read", __func__);
+		return (-1);
+	}
+
+	if (r < 0 || (size_t)r != len) {
+		fido_log_debug("%s: %zd != %zu", __func__, r, len);
 		return (-1);
 	}
 

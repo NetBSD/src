@@ -6,16 +6,13 @@
 
 #include <assert.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 
 #include "mutator_aux.h"
 #include "wiredata_fido2.h"
 #include "dummy.h"
-
-#include "fido.h"
-#include "fido/bio.h"
 
 #include "../openbsd-compat/openbsd-compat.h"
 
@@ -223,27 +220,20 @@ static fido_dev_t *
 prepare_dev(void)
 {
 	fido_dev_t *dev;
-	fido_dev_io_t io;
 	bool x;
 
-	memset(&io, 0, sizeof(io));
-
-	io.open = dev_open;
-	io.close = dev_close;
-	io.read = dev_read;
-	io.write = dev_write;
-
-	if ((dev = fido_dev_new()) == NULL || fido_dev_set_io_functions(dev,
-	    &io) != FIDO_OK || fido_dev_open(dev, "nodev") != FIDO_OK) {
-		fido_dev_free(&dev);
+	if ((dev = open_dev(0)) == NULL)
 		return NULL;
-	}
 
 	x = fido_dev_is_fido2(dev);
 	consume(&x, sizeof(x));
 	x = fido_dev_supports_pin(dev);
 	consume(&x, sizeof(x));
 	x = fido_dev_has_pin(dev);
+	consume(&x, sizeof(x));
+	x = fido_dev_supports_uv(dev);
+	consume(&x, sizeof(x));
+	x = fido_dev_has_uv(dev);
 	consume(&x, sizeof(x));
 
 	return dev;
@@ -313,7 +303,7 @@ enroll(const struct param *p)
 	    (e = fido_bio_enroll_new()) == NULL)
 		goto done;
 
-	fido_bio_dev_enroll_begin(dev, t, e, p->seed, p->pin);
+	fido_bio_dev_enroll_begin(dev, t, e, (uint32_t)p->seed, p->pin);
 
 	consume_template(t);
 	consume_enroll(e);

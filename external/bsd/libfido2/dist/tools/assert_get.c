@@ -132,6 +132,11 @@ prepare_assert(FILE *in_f, int flags, const struct toggle *opt)
 			errx(1, "fido_assert_set_hmac_salt: %s",
 			    fido_strerr(r));
 	}
+	if (flags & FLAG_LARGEBLOB) {
+		if ((r = fido_assert_set_extensions(assert,
+		    FIDO_EXT_LARGEBLOB_KEY)) != FIDO_OK)
+			errx(1, "fido_assert_set_extensions: %s", fido_strerr(r));
+	}
 	if ((flags & FLAG_RK) == 0) {
 		if ((r = fido_assert_allow_cred(assert, id.ptr,
 		    id.len)) != FIDO_OK)
@@ -154,6 +159,7 @@ print_assert(FILE *out_f, const fido_assert_t *assert, size_t idx, int flags)
 	char *sig = NULL;
 	char *user_id = NULL;
 	char *hmac_secret = NULL;
+	char *key = NULL;
 	int r;
 
 	r = base64_encode(fido_assert_clientdata_hash_ptr(assert),
@@ -168,6 +174,9 @@ print_assert(FILE *out_f, const fido_assert_t *assert, size_t idx, int flags)
 	if (flags & FLAG_HMAC)
 		r |= base64_encode(fido_assert_hmac_secret_ptr(assert, idx),
 		    fido_assert_hmac_secret_len(assert, idx), &hmac_secret);
+	if (flags & FLAG_LARGEBLOB)
+		r |= base64_encode(fido_assert_largeblob_key_ptr(assert, idx),
+		    fido_assert_largeblob_key_len(assert, idx), &key);
 	if (r < 0)
 		errx(1, "output error");
 
@@ -181,7 +190,12 @@ print_assert(FILE *out_f, const fido_assert_t *assert, size_t idx, int flags)
 		fprintf(out_f, "%s\n", hmac_secret);
 		explicit_bzero(hmac_secret, strlen(hmac_secret));
 	}
+	if (key) {
+		fprintf(out_f, "%s\n", key);
+		explicit_bzero(key, strlen(key));
+	}
 
+	free(key);
 	free(hmac_secret);
 	free(cdh);
 	free(authdata);
@@ -207,8 +221,11 @@ assert_get(int argc, char **argv)
 
 	opt.up = opt.uv = opt.pin = FIDO_OPT_OMIT;
 
-	while ((ch = getopt(argc, argv, "dhi:o:prt:uv")) != -1) {
+	while ((ch = getopt(argc, argv, "bdhi:o:prt:uv")) != -1) {
 		switch (ch) {
+		case 'b':
+			flags |= FLAG_LARGEBLOB;
+			break;
 		case 'd':
 			flags |= FLAG_DEBUG;
 			break;

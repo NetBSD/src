@@ -4,7 +4,6 @@
  * license that can be found in the LICENSE file.
  */
 
-#include <string.h>
 #include "fido.h"
 
 static int
@@ -223,6 +222,8 @@ parse_reply_element(const cbor_item_t *key, const cbor_item_t *val, void *arg)
 		return (cbor_decode_uint64(val, &ci->maxcredidlen));
 	case 14: /* fwVersion */
 		return (cbor_decode_uint64(val, &ci->fwversion));
+	case 15: /* maxCredBlobLen */
+		return (cbor_decode_uint64(val, &ci->maxcredbloblen));
 	default: /* ignore */
 		fido_log_debug("%s: cbor type", __func__);
 		return (0);
@@ -394,6 +395,12 @@ size_t
 fido_cbor_info_options_len(const fido_cbor_info_t *ci)
 {
 	return (ci->options.len);
+}
+
+uint64_t
+fido_cbor_info_maxcredbloblen(const fido_cbor_info_t *ci)
+{
+	return (ci->maxcredbloblen);
 }
 
 uint64_t

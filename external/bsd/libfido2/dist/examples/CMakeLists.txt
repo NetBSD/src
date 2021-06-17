@@ -9,12 +9,20 @@ list(APPEND COMPAT_SOURCES
 	../openbsd-compat/strlcpy.c
 )
 
-if(WIN32 AND NOT CYGWIN AND NOT MSYS)
+if(WIN32 AND BUILD_SHARED_LIBS AND NOT CYGWIN AND NOT MSYS)
 	list(APPEND COMPAT_SOURCES ../openbsd-compat/posix_win.c)
 endif()
 
-# drop -rdynamic
-set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
+# set the library to link against
+if(BUILD_STATIC_LIBS)
+	# drop -rdynamic
+	set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
+	set(_FIDO2_LIBRARY fido2)
+elseif(BUILD_SHARED_LIBS)
+	set(_FIDO2_LIBRARY fido2_shared)
+else()
+	set(_FIDO2_LIBRARY ${CRYPTO_LIBRARIES} fido2)
+endif()
 
 # enable -Wconversion -Wsign-conversion
 if(NOT MSVC)
@@ -25,35 +33,36 @@ endif()
 
 # manifest
 add_executable(manifest manifest.c ${COMPAT_SOURCES})
-target_link_libraries(manifest fido2)
+target_link_libraries(manifest ${_FIDO2_LIBRARY})
 
 # info
 add_executable(info info.c ${COMPAT_SOURCES})
-target_link_libraries(info fido2)
+target_link_libraries(info ${_FIDO2_LIBRARY})
 
 # reset
 add_executable(reset reset.c util.c ${COMPAT_SOURCES})
-target_link_libraries(reset fido2)
+target_link_libraries(reset ${_FIDO2_LIBRARY})
 
 # cred
 add_executable(cred cred.c util.c ${COMPAT_SOURCES})
-target_link_libraries(cred fido2)
+target_link_libraries(cred ${_FIDO2_LIBRARY})
 
 # assert
 add_executable(assert assert.c util.c ${COMPAT_SOURCES})
-target_link_libraries(assert fido2)
+target_link_libraries(assert ${_FIDO2_LIBRARY})
 
 # setpin
 add_executable(setpin setpin.c ${COMPAT_SOURCES})
-target_link_libraries(setpin fido2)
+target_link_libraries(setpin ${_FIDO2_LIBRARY})
 
 # retries
 add_executable(retries retries.c ${COMPAT_SOURCES})
-target_link_libraries(retries fido2)
+target_link_libraries(retries ${_FIDO2_LIBRARY})
 
 # select
 add_executable(select select.c ${COMPAT_SOURCES})
-target_link_libraries(select fido2)
+target_link_libraries(select ${_FIDO2_LIBRARY})
+
 if(MINGW)
 	# needed for nanosleep() in mingw
 	target_link_libraries(select winpthread)

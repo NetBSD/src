@@ -18,13 +18,14 @@ rm -rf "${LIBCBOR}/build" "${LIBCBOR}/install" "${LIBFIDO2}/build"
 # Patch, build, and install libcbor.
 (cd "${LIBCBOR}" && patch -N -l -s -p0 < "${LIBFIDO2}/fuzz/README") || true
 mkdir "${LIBCBOR}/build" "${LIBCBOR}/install"
-(cd "${LIBCBOR}/build" && cmake -DCMAKE_INSTALL_PREFIX="${LIBCBOR}/install" ..)
-make -C "${LIBCBOR}/build" all install
+(cd "${LIBCBOR}/build" && cmake -DBUILD_SHARED_LIBS=ON \
+	-DCMAKE_INSTALL_PREFIX="${LIBCBOR}/install" ..)
+make -C "${LIBCBOR}/build" VERBOSE=1 all install
 
 # Build libfido2.
 mkdir -p "${LIBFIDO2}/build"
 export CFLAGS="-fprofile-instr-generate -fcoverage-mapping"
 export LDFLAGS="${CFLAGS}"
-(cd "${LIBFIDO2}/build" && cmake -DFUZZ=1 -DLIBFUZZER=1 \
+(cd "${LIBFIDO2}/build" && cmake -DFUZZ=ON -DLIBFUZZER=ON \
     -DCMAKE_BUILD_TYPE=Debug ..)
 make -C "${LIBFIDO2}/build"

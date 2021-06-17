@@ -26,9 +26,6 @@ pin_set(char *path)
 	int r;
 	int status = 1;
 
-	if (path == NULL)
-		usage();
-
 	dev = open_dev(path);
 
 	r = snprintf(prompt, sizeof(prompt), "Enter new PIN for %s: ", path);

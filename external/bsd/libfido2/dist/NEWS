@@ -1,3 +1,52 @@
+* Version 1.7.0 (2021-03-29)
+ ** New dependency on zlib.
+ ** Fixed musl build; gh#259.
+ ** hid_win: detect devices with vendor or product IDs > 0x7fff; gh#264.
+ ** Support for FIDO 2.1 authenticator configuration.
+ ** Support for FIDO 2.1 UV token permissions.
+ ** Support for FIDO 2.1 "credBlobs" and "largeBlobs" extensions.
+ ** New API calls:
+  - fido_assert_blob_len;
+  - fido_assert_blob_ptr;
+  - fido_assert_largeblob_key_len;
+  - fido_assert_largeblob_key_ptr;
+  - fido_assert_set_hmac_secret;
+  - fido_cbor_info_maxcredbloblen;
+  - fido_cred_largeblob_key_len;
+  - fido_cred_largeblob_key_ptr;
+  - fido_cred_set_blob;
+  - fido_dev_enable_entattest;
+  - fido_dev_force_pin_change;
+  - fido_dev_has_uv;
+  - fido_dev_largeblob_get;
+  - fido_dev_largeblob_get_array;
+  - fido_dev_largeblob_remove;
+  - fido_dev_largeblob_set;
+  - fido_dev_largeblob_set_array;
+  - fido_dev_set_pin_minlen;
+  - fido_dev_set_sigmask;
+  - fido_dev_supports_credman;
+  - fido_dev_supports_permissions;
+  - fido_dev_supports_uv;
+  - fido_dev_toggle_always_uv.
+ ** New fido_init flag to disable fido_dev_open's U2F fallback; gh#282.
+ ** Experimental NFC support on Linux; enable with -DNFC_LINUX.
+
+* Version 1.6.0 (2020-12-22)
+ ** Fix OpenSSL 1.0 and Cygwin builds.
+ ** hid_linux: fix build on 32-bit systems.
+ ** hid_osx: allow reads from spawned threads.
+ ** Documentation and reliability fixes.
+ ** New API calls:
+  - fido_cred_authdata_raw_len;
+  - fido_cred_authdata_raw_ptr;
+  - fido_cred_sigcount;
+  - fido_dev_get_uv_retry_count;
+  - fido_dev_supports_credman.
+ ** Hardened Windows build.
+ ** Native FreeBSD and NetBSD support.
+ ** Use CTAP2 canonical CBOR when combining hmac-secret and credProtect.
+
 * Version 1.5.0 (2020-09-01)
  ** hid_linux: return FIDO_OK if no devices are found.
  ** hid_osx:

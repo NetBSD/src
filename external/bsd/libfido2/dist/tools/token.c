@@ -232,6 +232,11 @@ token_info(int argc, char **argv, char *path)
 	else
 		printf("pin retries: %d\n", retrycnt);
 
+	if (fido_dev_get_uv_retry_count(dev, &retrycnt) != FIDO_OK)
+		printf("uv retries: undefined\n");
+	else
+		printf("uv retries: %d\n", retrycnt);
+
 	bio_info(dev);
 
 	fido_cbor_info_free(&ci);
@@ -262,22 +267,26 @@ token_reset(char *path)
 }
 
 int
-token_set(int argc, char **argv, char *path)
+token_get(int argc, char **argv, char *path)
 {
 	char	*id = NULL;
+	char	*key = NULL;
 	char	*name = NULL;
+	int	 blob = 0;
 	int	 ch;
-	int	 enroll = 0;
 
 	optind = 1;
 
 	while ((ch = getopt(argc, argv, TOKEN_OPT)) != -1) {
 		switch (ch) {
-		case 'e':
-			enroll = 1;
+		case 'b':
+			blob = 1;
 			break;
 		case 'i':
 			id = optarg;
+			break;
+		case 'k':
+			key = optarg;
 			break;
 		case 'n':
 			name = optarg;
@@ -287,13 +296,99 @@ token_set(int argc, char **argv, char *path)
 		}
 	}
 
+	argc -= optind;
+	argv += optind;
+
+	if (blob == 0 || argc != 2)
+		usage();
+
+	return blob_get(path, key, name, id, argv[0]);
+}
+
+int
+token_set(int argc, char **argv, char *path)
+{
+	char	*id = NULL;
+	char	*key = NULL;
+	char	*len = NULL;
+	char	*name = NULL;
+	int	 blob = 0;
+	int	 ch;
+	int	 enroll = 0;
+	int	 ea = 0;
+	int	 uv = 0;
+	bool	 force = false;
+
+	optind = 1;
+
+	while ((ch = getopt(argc, argv, TOKEN_OPT)) != -1) {
+		switch (ch) {
+		case 'a':
+			ea = 1;
+			break;
+		case 'b':
+			blob = 1;
+			break;
+		case 'e':
+			enroll = 1;
+			break;
+		case 'f':
+			force = true;
+			break;
+		case 'i':
+			id = optarg;
+			break;
+		case 'k':
+			key = optarg;
+			break;
+		case 'l':
+			len = optarg;
+			break;
+		case 'n':
+			name = optarg;
+			break;
+		case 'u':
+			uv = 1;
+			break;
+		default:
+			break; /* ignore */
+		}
+	}
+
+	argc -= optind;
+	argv += optind;
+
+	if (path == NULL)
+		usage();
+
+	if (blob) {
+		if (argc != 2)
+			usage();
+		return (blob_set(path, key, name, id, argv[0]));
+	}
+
 	if (enroll) {
+		if (ea || uv)
+			usage();
 		if (id && name)
 			return (bio_set_name(path, id, name));
 		if (!id && !name)
 			return (bio_enroll(path));
 		usage();
 	}
+
+	if (ea) {
+		if (uv)
+			usage();
+		return (config_entattest(path));
+	}
+
+	if (len)
+		return (config_pin_minlen(path, len));
+	if (force)
+		return (config_force_pin_change(path));
+	if (uv)
+		return (config_always_uv(path, 1));
 
 	return (pin_set(path));
 }
@@ -304,6 +399,7 @@ token_list(int argc, char **argv, char *path)
 	fido_dev_info_t *devlist;
 	size_t ndevs;
 	const char *rp_id = NULL;
+	int blobs = 0;
 	int enrolls = 0;
 	int keys = 0;
 	int rplist = 0;
@@ -314,6 +410,9 @@ token_list(int argc, char **argv, char *path)
 
 	while ((ch = getopt(argc, argv, TOKEN_OPT)) != -1) {
 		switch (ch) {
+		case 'b':
+			blobs = 1;
+			break;
 		case 'e':
 			enrolls = 1;
 			break;
@@ -329,12 +428,19 @@ token_list(int argc, char **argv, char *path)
 		}
 	}
 
-	if (enrolls)
-		return (bio_list(path));
-	if (keys)
-		return (credman_list_rk(path, rp_id));
-	if (rplist)
-		return (credman_list_rp(path));
+	if (blobs || enrolls || keys || rplist) {
+		if (path == NULL)
+			usage();
+		if (blobs)
+			return (blob_list(path));
+		if (enrolls)
+			return (bio_list(path));
+		if (keys)
+			return (credman_list_rk(path, rp_id));
+		if (rplist)
+			return (credman_list_rp(path));
+		/* NOTREACHED */
+	}
 
 	if ((devlist = fido_dev_info_new(64)) == NULL)
 		errx(1, "fido_dev_info_new");
@@ -360,32 +466,56 @@ int
 token_delete(int argc, char **argv, char *path)
 {
 	char		*id = NULL;
-	fido_dev_t	*dev = NULL;
+	char		*key = NULL;
+	char		*name = NULL;
+	int		 blob = 0;
 	int		 ch;
 	int		 enroll = 0;
+	int		 uv = 0;
 
 	optind = 1;
 
 	while ((ch = getopt(argc, argv, TOKEN_OPT)) != -1) {
 		switch (ch) {
+		case 'b':
+			blob = 1;
+			break;
 		case 'e':
 			enroll = 1;
 			break;
 		case 'i':
 			id = optarg;
 			break;
+		case 'k':
+			key = optarg;
+			break;
+		case 'n':
+			name = optarg;
+			break;
+		case 'u':
+			uv = 1;
+			break;
 		default:
 			break; /* ignore */
 		}
 	}
 
-	if (path == NULL || id == NULL)
+	if (path == NULL)
 		usage();
 
-	dev = open_dev(path);
+	if (blob)
+		return (blob_delete(path, key, name, id));
 
-	if (id && !enroll)
-		return (credman_delete_rk(dev, path, id));
+	if (id) {
+		if (uv)
+			usage();
+		if (enroll == 0)
+			return (credman_delete_rk(path, id));
+		return (bio_delete(path, id));
+	}
 
-	return (bio_delete(dev, path, id));
+	if (uv == 0)
+		usage();
+
+	return (config_always_uv(path, 0));
 }

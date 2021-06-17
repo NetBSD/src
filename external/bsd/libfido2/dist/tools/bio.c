@@ -7,7 +7,6 @@
 #include <fido.h>
 #include <fido/bio.h>
 
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,72 +17,75 @@
 #include "../openbsd-compat/openbsd-compat.h"
 #include "extern.h"
 
-static void
+static int
 print_template(const fido_bio_template_array_t *ta, size_t idx)
 {
-	char				*id = NULL;
-	const fido_bio_template_t	*t = NULL;
+	const fido_bio_template_t *t = NULL;
+	char *id = NULL;
 
-	if ((t = fido_bio_template(ta, idx)) == NULL)
-		errx(1, "fido_bio_template");
-
+	if ((t = fido_bio_template(ta, idx)) == NULL) {
+		warnx("fido_bio_template");
+		return -1;
+	}
 	if (base64_encode(fido_bio_template_id_ptr(t),
-	    fido_bio_template_id_len(t), &id) < 0)
-		errx(1, "output error");
+	    fido_bio_template_id_len(t), &id) < 0) {
+		warnx("output error");
+		return -1;
+	}
 
 	printf("%02u: %s %s\n", (unsigned)idx, id, fido_bio_template_name(t));
-
 	free(id);
+
+	return 0;
 }
 
 int
-bio_list(char *path)
+bio_list(const char *path)
 {
-	char				 pin[1024];
-	fido_bio_template_array_t	*ta = NULL;
-	fido_dev_t			*dev = NULL;
-	int				 r;
+	fido_bio_template_array_t *ta = NULL;
+	fido_dev_t *dev = NULL;
+	char *pin = NULL;
+	int r, ok = 1;
 
-	if (path == NULL)
-		usage();
 	if ((ta = fido_bio_template_array_new()) == NULL)
 		errx(1, "fido_bio_template_array_new");
-
 	dev = open_dev(path);
-	read_pin(path, pin, sizeof(pin));
+	if ((pin = get_pin(path)) == NULL)
+		goto out;
 	r = fido_bio_dev_get_template_array(dev, ta, pin);
-	explicit_bzero(pin, sizeof(pin));
-
-	if (r != FIDO_OK)
-		errx(1, "fido_bio_dev_get_template_array: %s", fido_strerr(r));
+	freezero(pin, PINBUF_LEN);
+	pin = NULL;
+	if (r != FIDO_OK) {
+		warnx("fido_bio_dev_get_template_array: %s", fido_strerr(r));
+		goto out;
+	}
 	for (size_t i = 0; i < fido_bio_template_array_count(ta); i++)
-		print_template(ta, i);
+		if (print_template(ta, i) < 0)
+			goto out;
 
+	ok = 0;
+out:
 	fido_bio_template_array_free(&ta);
 	fido_dev_close(dev);
 	fido_dev_free(&dev);
 
-	exit(0);
+	exit(ok);
 }
 
 int
-bio_set_name(char *path, char *id, char *name)
+bio_set_name(const char *path, const char *id, const char *name)
 {
-	char			 pin[1024];
-	fido_bio_template_t	*t = NULL;
-	fido_dev_t		*dev = NULL;
-	int			 r;
-	size_t			 id_blob_len = 0;
-	void			*id_blob_ptr = NULL;
+	fido_bio_template_t *t = NULL;
+	fido_dev_t *dev = NULL;
+	char *pin = NULL;
+	void *id_blob_ptr = NULL;
+	size_t id_blob_len = 0;
+	int r, ok = 1;
 
-	if (path == NULL)
-		usage();
 	if ((t = fido_bio_template_new()) == NULL)
 		errx(1, "fido_bio_template_new");
-
 	if (base64_decode(id, &id_blob_ptr, &id_blob_len) < 0)
 		errx(1, "base64_decode");
-
 	if ((r = fido_bio_template_set_name(t, name)) != FIDO_OK)
 		errx(1, "fido_bio_template_set_name: %s", fido_strerr(r));
 	if ((r = fido_bio_template_set_id(t, id_blob_ptr,
@@ -91,27 +93,24 @@ bio_set_name(char *path, char *id, char *name)
 		errx(1, "fido_bio_template_set_id: %s", fido_strerr(r));
 
 	dev = open_dev(path);
-	read_pin(path, pin, sizeof(pin));
+	if ((pin = get_pin(path)) == NULL)
+		goto out;
 	r = fido_bio_dev_set_template_name(dev, t, pin);
-	explicit_bzero(pin, sizeof(pin));
+	freezero(pin, PINBUF_LEN);
+	pin = NULL;
+	if (r != FIDO_OK) {
+		warnx("fido_bio_dev_set_template_name: %s", fido_strerr(r));
+		goto out;
+	}
 
-	if (r != FIDO_OK)
-		errx(1, "fido_bio_dev_set_template_name: %s", fido_strerr(r));
-
+	ok = 0;
+out:
 	free(id_blob_ptr);
 	fido_bio_template_free(&t);
 	fido_dev_close(dev);
 	fido_dev_free(&dev);
 
-	exit(0);
-}
-
-static const char *
-plural(uint8_t n)
-{
-	if (n == 1)
-		return "";
-	return "s";
+	exit(ok);
 }
 
 static const char *
@@ -154,31 +153,30 @@ enroll_strerr(uint8_t n)
 }
 
 int
-bio_enroll(char *path)
+bio_enroll(const char *path)
 {
-	char			 pin[1024];
-	fido_bio_enroll_t	*e = NULL;
-	fido_bio_template_t	*t = NULL;
-	fido_dev_t		*dev = NULL;
-	int			 r;
+	fido_bio_template_t *t = NULL;
+	fido_bio_enroll_t *e = NULL;
+	fido_dev_t *dev = NULL;
+	char *pin = NULL;
+	int r, ok = 1;
 
-	if (path == NULL)
-		usage();
 	if ((t = fido_bio_template_new()) == NULL)
 		errx(1, "fido_bio_template_new");
 	if ((e = fido_bio_enroll_new()) == NULL)
 		errx(1, "fido_bio_enroll_new");
 
 	dev = open_dev(path);
-	read_pin(path, pin, sizeof(pin));
-
+	if ((pin = get_pin(path)) == NULL)
+		goto out;
 	printf("Touch your security key.\n");
-
 	r = fido_bio_dev_enroll_begin(dev, t, e, 10000, pin);
-	explicit_bzero(pin, sizeof(pin));
-	if (r != FIDO_OK)
-		errx(1, "fido_bio_dev_enroll_begin: %s", fido_strerr(r));
-
+	freezero(pin, PINBUF_LEN);
+	pin = NULL;
+	if (r != FIDO_OK) {
+		warnx("fido_bio_dev_enroll_begin: %s", fido_strerr(r));
+		goto out;
+	}
 	printf("%s.\n", enroll_strerr(fido_bio_enroll_last_status(e)));
 
 	while (fido_bio_enroll_remaining_samples(e) > 0) {
@@ -187,53 +185,61 @@ bio_enroll(char *path)
 		    plural(fido_bio_enroll_remaining_samples(e)));
 		if ((r = fido_bio_dev_enroll_continue(dev, t, e,
 		    10000)) != FIDO_OK) {
-			errx(1, "fido_bio_dev_enroll_continue: %s",
+			fido_dev_cancel(dev);
+			warnx("fido_bio_dev_enroll_continue: %s",
 			    fido_strerr(r));
+			goto out;
 		}
 		printf("%s.\n", enroll_strerr(fido_bio_enroll_last_status(e)));
 	}
 
+	ok = 0;
+out:
 	fido_bio_template_free(&t);
 	fido_bio_enroll_free(&e);
 	fido_dev_close(dev);
 	fido_dev_free(&dev);
 
-	exit(0);
+	exit(ok);
 }
 
 int
-bio_delete(fido_dev_t *dev, char *path, char *id)
+bio_delete(const char *path, const char *id)
 {
-	char			 pin[1024];
-	fido_bio_template_t	*t = NULL;
-	int			 r;
-	size_t			 id_blob_len = 0;
-	void			*id_blob_ptr = NULL;
+	fido_bio_template_t *t = NULL;
+	fido_dev_t *dev = NULL;
+	char *pin = NULL;
+	void *id_blob_ptr = NULL;
+	size_t id_blob_len = 0;
+	int r, ok = 1;
 
-	if (path == NULL)
-		usage();
 	if ((t = fido_bio_template_new()) == NULL)
 		errx(1, "fido_bio_template_new");
-
 	if (base64_decode(id, &id_blob_ptr, &id_blob_len) < 0)
 		errx(1, "base64_decode");
 	if ((r = fido_bio_template_set_id(t, id_blob_ptr,
 	    id_blob_len)) != FIDO_OK)
 		errx(1, "fido_bio_template_set_id: %s", fido_strerr(r));
 
-	read_pin(path, pin, sizeof(pin));
+	dev = open_dev(path);
+	if ((pin = get_pin(path)) == NULL)
+		goto out;
 	r = fido_bio_dev_enroll_remove(dev, t, pin);
-	explicit_bzero(pin, sizeof(pin));
+	freezero(pin, PINBUF_LEN);
+	pin = NULL;
+	if (r != FIDO_OK) {
+		warnx("fido_bio_dev_enroll_remove: %s", fido_strerr(r));
+		goto out;
+	}
 
-	if (r != FIDO_OK)
-		errx(1, "fido_bio_dev_enroll_remove: %s", fido_strerr(r));
-
+	ok = 0;
+out:
 	free(id_blob_ptr);
 	fido_bio_template_free(&t);
 	fido_dev_close(dev);
 	fido_dev_free(&dev);
 
-	exit(0);
+	exit(ok);
 }
 
 static const char *
@@ -254,8 +260,10 @@ bio_info(fido_dev_t *dev)
 {
 	fido_bio_info_t	*i = NULL;
 
-	if ((i = fido_bio_info_new()) == NULL)
-		errx(1, "fido_bio_info_new");
+	if ((i = fido_bio_info_new()) == NULL) {
+		warnx("fido_bio_info_new");
+		return;
+	}
 	if (fido_bio_dev_get_info(dev, i) != FIDO_OK) {
 		fido_bio_info_free(&i);
 		return;

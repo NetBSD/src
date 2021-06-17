@@ -8,14 +8,12 @@
  * Perform a factory reset on a given authenticator.
  */
 
-#include <stdbool.h>
-#include <stdint.h>
+#include <fido.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "fido.h"
-#include "extern.h"
 #include "../openbsd-compat/openbsd-compat.h"
+#include "extern.h"
 
 int
 main(int argc, char **argv)

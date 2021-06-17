@@ -5,12 +5,11 @@
  */
 
 #include <errno.h>
-#include <stdbool.h>
+#include <fido.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 
-#include "fido.h"
 #include "../openbsd-compat/openbsd-compat.h"
 
 #define FIDO_POLL_MS	50

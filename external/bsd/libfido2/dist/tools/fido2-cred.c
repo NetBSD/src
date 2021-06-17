@@ -26,7 +26,7 @@ void
 usage(void)
 {
 	fprintf(stderr,
-"usage: fido2-cred -M [-dhqruv] [-c cred_protect] [-i input_file] [-o output_file] device [type]\n"
+"usage: fido2-cred -M [-bdhqruv] [-c cred_protect] [-i input_file] [-o output_file] device [type]\n"
 "       fido2-cred -V [-dhv] [-c cred_protect] [-i input_file] [-o output_file] [type]\n"
 	);
 

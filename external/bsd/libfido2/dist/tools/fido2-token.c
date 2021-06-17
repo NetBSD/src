@@ -7,7 +7,6 @@
 #include <fido.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include "../openbsd-compat/openbsd-compat.h"
 #include "extern.h"
@@ -18,11 +17,16 @@ void
 usage(void)
 {
 	fprintf(stderr,
-"usage: fido2-token [-CR] [-d] device\n"
-"       fido2-token -D [-de] -i id device\n"
-"       fido2-token -I [-cd] [-k rp_id -i cred_id] device\n"
-"       fido2-token -L [-der] [-k rp_id] [device]\n"
-"       fido2-token -S [-de] [-i template_id -n template_name] device\n"
+"usage: fido2-token -C [-d] device\n"
+"       fido2-token -Db [-k key_path] [-i cred_id -n rp_id] device\n"
+"       fido2-token -Dei template_id device\n"
+"       fido2-token -Du device\n"
+"       fido2-token -Gb [-k key_path] [-i cred_id -n rp_id] blob_path device\n"
+"       fido2-token -I [-cd] [-k rp_id -i cred_id]  device\n"
+"       fido2-token -L [-bder] [-k rp_id] [device]\n"
+"       fido2-token -R [-d] device\n"
+"       fido2-token -S [-adefu] [-l pin_length] [-i template_id -n template_name] device\n"
+"       fido2-token -Sb [-k key_path] [-i cred_id -n rp_id] blob_path device\n"
 "       fido2-token -V\n"
 	);
 
@@ -46,13 +50,17 @@ main(int argc, char **argv)
 
 	while ((ch = getopt(argc, argv, TOKEN_OPT)) != -1) {
 		switch (ch) {
+		case 'a':
 		case 'b':
 		case 'c':
 		case 'e':
+		case 'f':
 		case 'i':
 		case 'k':
+		case 'l':
 		case 'n':
 		case 'r':
+		case 'u':
 			break; /* ignore */
 		case 'd':
 			flags = FIDO_DEBUG;
@@ -63,10 +71,10 @@ main(int argc, char **argv)
 		}
 	}
 
-	if (argc - optind == 1)
-		device = argv[optind];
-	else
+	if (argc - optind < 1)
 		device = NULL;
+	else
+		device = argv[argc - 1];
 
 	fido_init(flags);
 
@@ -75,6 +83,8 @@ main(int argc, char **argv)
 		return (pin_change(device));
 	case 'D':
 		return (token_delete(argc, argv, device));
+	case 'G':
+		return (token_get(argc, argv, device));
 	case 'I':
 		return (token_info(argc, argv, device));
 	case 'L':

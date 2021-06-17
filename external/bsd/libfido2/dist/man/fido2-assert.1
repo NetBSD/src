@@ -11,7 +11,7 @@
 .Sh SYNOPSIS
 .Nm
 .Fl G
-.Op Fl dhpruv
+.Op Fl bdhpruv
 .Op Fl t Ar option
 .Op Fl i Ar input_file
 .Op Fl o Ar output_file
@@ -75,6 +75,10 @@ If
 is not specified,
 .Em es256
 is assumed.
+.It Fl b
+Request the credential's
+.Dq largeBlobKey ,
+a 32-byte symmetric key associated with the asserted credential.
 .It Fl h
 If obtaining an assertion, enable the FIDO2 hmac-secret
 extension.
@@ -111,6 +115,9 @@ is specified,
 .Nm
 will not expect a credential id in its input, and may output
 multiple assertions.
+Resident credentials are called
+.Dq discoverable credentials
+in FIDO2.1.
 .It Fl t Ar option
 Toggles a key/value
 .Ar option ,
@@ -219,6 +226,10 @@ user id, if credential resident (base64 blob);
 .It
 hmac secret, if the FIDO2 hmac-secret extension is enabled
 (base64 blob);
+.It
+the credential's associated 32-byte symmetric key
+.Pq Dq largeBlobKey ,
+if requested (base64 blob).
 .El
 .Pp
 When verifying an assertion,

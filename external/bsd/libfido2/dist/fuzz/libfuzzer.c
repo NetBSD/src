@@ -116,13 +116,16 @@ LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 {
 	struct param *p;
 
+	if (size > 4096)
+		return 0;
+
 	if (++test_total % 100000 == 0 && debug) {
 		double r = (double)test_fail/(double)test_total * 100.0;
 		fprintf(stderr, "%s: %llu/%llu (%.2f%%)\n", __func__,
 		    test_fail, test_total, r);
 	}
 
-	if (size > 4096 || (p = unpack(data, size)) == NULL)
+	if ((p = unpack(data, size)) == NULL)
 		test_fail++;
 	else {
 		test(p);

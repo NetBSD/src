@@ -8,12 +8,10 @@
  * Configure a PIN on a given authenticator.
  */
 
-#include <stdbool.h>
-#include <stdint.h>
+#include <fido.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "fido.h"
 #include "../openbsd-compat/openbsd-compat.h"
 
 static void

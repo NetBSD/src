@@ -6,15 +6,14 @@
 
 #include <assert.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 
 #include "mutator_aux.h"
 #include "wiredata_fido2.h"
 #include "wiredata_u2f.h"
 #include "dummy.h"
-#include "fido.h"
 
 #include "../openbsd-compat/openbsd-compat.h"
 
@@ -35,7 +34,7 @@ struct param {
 	uint8_t excl_count;
 	uint8_t rk;
 	uint8_t type;
-	uint8_t u2f;
+	uint8_t opt;
 	uint8_t uv;
 };
 
@@ -87,7 +86,7 @@ unpack(const uint8_t *ptr, size_t len)
 
 	if (unpack_byte(v[0], &p->rk) < 0 ||
 	    unpack_byte(v[1], &p->type) < 0 ||
-	    unpack_byte(v[2], &p->u2f) < 0 ||
+	    unpack_byte(v[2], &p->opt) < 0 ||
 	    unpack_byte(v[3], &p->uv) < 0 ||
 	    unpack_byte(v[4], &p->excl_count) < 0 ||
 	    unpack_int(v[5], &p->ext) < 0 ||
@@ -129,7 +128,7 @@ pack(uint8_t *ptr, size_t len, const struct param *p)
 	if ((array = cbor_new_definite_array(17)) == NULL ||
 	    (argv[0] = pack_byte(p->rk)) == NULL ||
 	    (argv[1] = pack_byte(p->type)) == NULL ||
-	    (argv[2] = pack_byte(p->u2f)) == NULL ||
+	    (argv[2] = pack_byte(p->opt)) == NULL ||
 	    (argv[3] = pack_byte(p->uv)) == NULL ||
 	    (argv[4] = pack_byte(p->excl_count)) == NULL ||
 	    (argv[5] = pack_int(p->ext)) == NULL ||
@@ -211,29 +210,17 @@ pack_dummy(uint8_t *ptr, size_t len)
 }
 
 static void
-make_cred(fido_cred_t *cred, uint8_t u2f, int type, const struct blob *cdh,
+make_cred(fido_cred_t *cred, uint8_t opt, int type, const struct blob *cdh,
     const char *rp_id, const char *rp_name, const struct blob *user_id,
     const char *user_name, const char *user_nick, const char *user_icon,
     int ext, uint8_t rk, uint8_t uv, const char *pin, uint8_t excl_count,
     const struct blob *excl_cred)
 {
 	fido_dev_t *dev;
-	fido_dev_io_t io;
 
-	memset(&io, 0, sizeof(io));
-
-	io.open = dev_open;
-	io.close = dev_close;
-	io.read = dev_read;
-	io.write = dev_write;
-
-	if ((dev = fido_dev_new()) == NULL || fido_dev_set_io_functions(dev,
-	    &io) != FIDO_OK || fido_dev_open(dev, "nodev") != FIDO_OK) {
-		fido_dev_free(&dev);
+	if ((dev = open_dev(opt & 2)) == NULL)
 		return;
-	}
-
-	if (u2f & 1)
+	if (opt & 1)
 		fido_dev_force_u2f(dev);
 
 	for (uint8_t i = 0; i < excl_count; i++)
@@ -244,7 +231,12 @@ make_cred(fido_cred_t *cred, uint8_t u2f, int type, const struct blob *cdh,
 	fido_cred_set_rp(cred, rp_id, rp_name);
 	fido_cred_set_user(cred, user_id->body, user_id->len, user_name,
 	    user_nick, user_icon);
-	fido_cred_set_extensions(cred, ext);
+	if (ext & FIDO_EXT_HMAC_SECRET)
+		fido_cred_set_extensions(cred, FIDO_EXT_HMAC_SECRET);
+	if (ext & FIDO_EXT_CRED_BLOB)
+		fido_cred_set_blob(cred, user_id->body, user_id->len);
+	if (ext & FIDO_EXT_LARGEBLOB_KEY)
+		fido_cred_set_extensions(cred, FIDO_EXT_LARGEBLOB_KEY);
 
 	if (rk & 1)
 		fido_cred_set_rk(cred, FIDO_OPT_TRUE);
@@ -263,7 +255,7 @@ make_cred(fido_cred_t *cred, uint8_t u2f, int type, const struct blob *cdh,
 	if (strlen(pin) == 0)
 		pin = NULL;
 
-	fido_dev_make_cred(dev, cred, u2f & 1 ? NULL : pin);
+	fido_dev_make_cred(dev, cred, (opt & 1) ? NULL : pin);
 
 	fido_dev_cancel(dev);
 	fido_dev_close(dev);
@@ -273,12 +265,14 @@ make_cred(fido_cred_t *cred, uint8_t u2f, int type, const struct blob *cdh,
 static void
 verify_cred(int type, const unsigned char *cdh_ptr, size_t cdh_len,
     const char *rp_id, const char *rp_name, const unsigned char *authdata_ptr,
-    size_t authdata_len, int ext, uint8_t rk, uint8_t uv,
+    size_t authdata_len, const unsigned char *authdata_raw_ptr,
+    size_t authdata_raw_len, int ext, uint8_t rk, uint8_t uv,
     const unsigned char *x5c_ptr, size_t x5c_len, const unsigned char *sig_ptr,
     size_t sig_len, const char *fmt, int prot)
 {
 	fido_cred_t *cred;
 	uint8_t flags;
+	uint32_t sigcount;
 
 	if ((cred = fido_cred_new()) == NULL)
 		return;
@@ -286,8 +280,11 @@ verify_cred(int type, const unsigned char *cdh_ptr, size_t cdh_len,
 	fido_cred_set_type(cred, type);
 	fido_cred_set_clientdata_hash(cred, cdh_ptr, cdh_len);
 	fido_cred_set_rp(cred, rp_id, rp_name);
+	consume(authdata_ptr, authdata_len);
+	consume(authdata_raw_ptr, authdata_raw_len);
 	if (fido_cred_set_authdata(cred, authdata_ptr, authdata_len) != FIDO_OK)
-		fido_cred_set_authdata_raw(cred, authdata_ptr, authdata_len);
+		fido_cred_set_authdata_raw(cred, authdata_raw_ptr,
+		    authdata_raw_len);
 	fido_cred_set_extensions(cred, ext);
 	fido_cred_set_x509(cred, x5c_ptr, x5c_len);
 	fido_cred_set_sig(cred, sig_ptr, sig_len);
@@ -316,9 +313,13 @@ verify_cred(int type, const unsigned char *cdh_ptr, size_t cdh_len,
 	consume(fido_cred_user_name(cred), xstrlen(fido_cred_user_name(cred)));
 	consume(fido_cred_display_name(cred),
 	    xstrlen(fido_cred_display_name(cred)));
+	consume(fido_cred_largeblob_key_ptr(cred),
+	    fido_cred_largeblob_key_len(cred));
 
 	flags = fido_cred_flags(cred);
 	consume(&flags, sizeof(flags));
+	sigcount = fido_cred_sigcount(cred);
+	consume(&sigcount, sizeof(sigcount));
 	type = fido_cred_type(cred);
 	consume(&type, sizeof(type));
 
@@ -348,7 +349,7 @@ test_cred(const struct param *p)
 
 	set_wire_data(p->wire_data.body, p->wire_data.len);
 
-	make_cred(cred, p->u2f, cose_alg, &p->cdh, p->rp_id, p->rp_name,
+	make_cred(cred, p->opt, cose_alg, &p->cdh, p->rp_id, p->rp_name,
 	    &p->user_id, p->user_name, p->user_nick, p->user_icon, p->ext,
 	    p->rk, p->uv, p->pin, p->excl_count, &p->excl_cred);
 
@@ -356,7 +357,8 @@ test_cred(const struct param *p)
 	    fido_cred_clientdata_hash_ptr(cred),
 	    fido_cred_clientdata_hash_len(cred), fido_cred_rp_id(cred),
 	    fido_cred_rp_name(cred), fido_cred_authdata_ptr(cred),
-	    fido_cred_authdata_len(cred), p->ext, p->rk, p->uv,
+	    fido_cred_authdata_len(cred), fido_cred_authdata_raw_ptr(cred),
+	    fido_cred_authdata_raw_len(cred), p->ext, p->rk, p->uv,
 	    fido_cred_x5c_ptr(cred), fido_cred_x5c_len(cred),
 	    fido_cred_sig_ptr(cred), fido_cred_sig_len(cred),
 	    fido_cred_fmt(cred), fido_cred_prot(cred));
@@ -368,26 +370,14 @@ static void
 test_touch(const struct param *p)
 {
 	fido_dev_t *dev;
-	fido_dev_io_t io;
 	int r;
 	int touched;
 
-	memset(&io, 0, sizeof(io));
-
-	io.open = dev_open;
-	io.close = dev_close;
-	io.read = dev_read;
-	io.write = dev_write;
-
 	set_wire_data(p->wire_data.body, p->wire_data.len);
 
-	if ((dev = fido_dev_new()) == NULL || fido_dev_set_io_functions(dev,
-	    &io) != FIDO_OK || fido_dev_open(dev, "nodev") != FIDO_OK) {
-		fido_dev_free(&dev);
+	if ((dev = open_dev(p->opt & 2)) == NULL)
 		return;
-	}
-
-	if (p->u2f & 1)
+	if (p->opt & 1)
 		fido_dev_force_u2f(dev);
 
 	r = fido_dev_get_touch_begin(dev);
@@ -421,7 +411,7 @@ mutate(struct param *p, unsigned int seed, unsigned int flags) NO_MSAN
 	if (flags & MUTATE_PARAM) {
 		mutate_byte(&p->rk);
 		mutate_byte(&p->type);
-		mutate_byte(&p->u2f);
+		mutate_byte(&p->opt);
 		mutate_byte(&p->uv);
 		mutate_byte(&p->excl_count);
 		mutate_int(&p->ext);
@@ -437,7 +427,7 @@ mutate(struct param *p, unsigned int seed, unsigned int flags) NO_MSAN
 	}
 
 	if (flags & MUTATE_WIREDATA) {
-		if (p->u2f & 1) {
+		if (p->opt & 1) {
 			p->wire_data.len = sizeof(dummy_wire_data_u2f);
 			memcpy(&p->wire_data.body, &dummy_wire_data_u2f,
 			    p->wire_data.len);

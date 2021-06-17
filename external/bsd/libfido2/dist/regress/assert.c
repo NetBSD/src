@@ -8,6 +8,7 @@
 #include <fido.h>
 #include <fido/es256.h>
 #include <fido/rs256.h>
+#include <fido/eddsa.h>
 #include <string.h>
 
 #define FAKE_DEV_HANDLE	((void *)0xdeadbeef)
@@ -159,11 +160,30 @@ free_rs256_pk(rs256_pk_t *pk)
 	assert(pk == NULL);
 }
 
+static eddsa_pk_t *
+alloc_eddsa_pk(void)
+{
+	eddsa_pk_t *pk;
+
+	pk = eddsa_pk_new();
+	assert(pk != NULL);
+
+	return (pk);
+}
+
+static void
+free_eddsa_pk(eddsa_pk_t *pk)
+{
+	eddsa_pk_free(&pk);
+	assert(pk == NULL);
+}
+
 static void
 empty_assert(fido_dev_t *d, fido_assert_t *a, size_t idx)
 {
 	es256_pk_t *es256;
 	rs256_pk_t *rs256;
+	eddsa_pk_t *eddsa;
 
 	assert(fido_assert_flags(a, idx) == 0);
 	assert(fido_assert_authdata_len(a, idx) == 0);
@@ -183,6 +203,7 @@ empty_assert(fido_dev_t *d, fido_assert_t *a, size_t idx)
 
 	es256 = alloc_es256_pk();
 	rs256 = alloc_rs256_pk();
+	eddsa = alloc_eddsa_pk();
 
 	fido_dev_force_u2f(d);
 	assert(fido_dev_get_assert(d, a, NULL) == FIDO_ERR_INVALID_ARGUMENT);
@@ -191,8 +212,12 @@ empty_assert(fido_dev_t *d, fido_assert_t *a, size_t idx)
 	    NULL) == FIDO_ERR_INVALID_ARGUMENT);
 	assert(fido_assert_verify(a, idx, COSE_ES256,
 	    es256) == FIDO_ERR_INVALID_ARGUMENT);
+	assert(fido_assert_verify(a, idx, -1,
+	    es256) == FIDO_ERR_INVALID_ARGUMENT);
 	assert(fido_assert_verify(a, idx, COSE_RS256,
 	    rs256) == FIDO_ERR_INVALID_ARGUMENT);
+	assert(fido_assert_verify(a, idx, COSE_EDDSA,
+	    eddsa) == FIDO_ERR_INVALID_ARGUMENT);
 
 	fido_dev_force_fido2(d);
 	assert(fido_dev_get_assert(d, a, NULL) == FIDO_ERR_INVALID_ARGUMENT);
@@ -201,11 +226,16 @@ empty_assert(fido_dev_t *d, fido_assert_t *a, size_t idx)
 	    NULL) == FIDO_ERR_INVALID_ARGUMENT);
 	assert(fido_assert_verify(a, idx, COSE_ES256,
 	    es256) == FIDO_ERR_INVALID_ARGUMENT);
+	assert(fido_assert_verify(a, idx, -1,
+	    es256) == FIDO_ERR_INVALID_ARGUMENT);
 	assert(fido_assert_verify(a, idx, COSE_RS256,
 	    rs256) == FIDO_ERR_INVALID_ARGUMENT);
+	assert(fido_assert_verify(a, idx, COSE_EDDSA,
+	    eddsa) == FIDO_ERR_INVALID_ARGUMENT);
 
 	free_es256_pk(es256);
 	free_rs256_pk(rs256);
+	free_eddsa_pk(eddsa);
 }
 
 static void
@@ -244,11 +274,15 @@ static void
 valid_assert(void)
 {
 	fido_assert_t *a;
-	es256_pk_t *pk;
+	es256_pk_t *es256;
+	rs256_pk_t *rs256;
+	eddsa_pk_t *eddsa;
 
 	a = alloc_assert();
-	pk = alloc_es256_pk();
-	assert(es256_pk_from_ptr(pk, es256_pk, sizeof(es256_pk)) == FIDO_OK);
+	es256 = alloc_es256_pk();
+	rs256 = alloc_rs256_pk();
+	eddsa = alloc_eddsa_pk();
+	assert(es256_pk_from_ptr(es256, es256_pk, sizeof(es256_pk)) == FIDO_OK);
 	assert(fido_assert_set_clientdata_hash(a, cdh, sizeof(cdh)) == FIDO_OK);
 	assert(fido_assert_set_rp(a, "localhost") == FIDO_OK);
 	assert(fido_assert_set_count(a, 1) == FIDO_OK);
@@ -257,9 +291,13 @@ valid_assert(void)
 	assert(fido_assert_set_up(a, FIDO_OPT_FALSE) == FIDO_OK);
 	assert(fido_assert_set_uv(a, FIDO_OPT_FALSE) == FIDO_OK);
 	assert(fido_assert_set_sig(a, 0, sig, sizeof(sig)) == FIDO_OK);
-	assert(fido_assert_verify(a, 0, COSE_ES256, pk) == FIDO_OK);
+	assert(fido_assert_verify(a, 0, COSE_ES256, es256) == FIDO_OK);
+	assert(fido_assert_verify(a, 0, COSE_RS256, rs256) == FIDO_ERR_INVALID_SIG);
+	assert(fido_assert_verify(a, 0, COSE_EDDSA, eddsa) == FIDO_ERR_INVALID_SIG);
 	free_assert(a);
-	free_es256_pk(pk);
+	free_es256_pk(es256);
+	free_rs256_pk(rs256);
+	free_eddsa_pk(eddsa);
 }
 
 static void

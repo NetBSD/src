@@ -5,6 +5,7 @@
  */
 
 #include <assert.h>
+#include <cbor.h>
 #include <fido.h>
 #include <string.h>
 
@@ -327,6 +328,8 @@ empty_cred(void)
 	c = alloc_cred();
 	assert(fido_cred_authdata_len(c) == 0);
 	assert(fido_cred_authdata_ptr(c) == NULL);
+	assert(fido_cred_authdata_raw_len(c) == 0);
+	assert(fido_cred_authdata_raw_ptr(c) == NULL);
 	assert(fido_cred_clientdata_hash_len(c) == 0);
 	assert(fido_cred_clientdata_hash_ptr(c) == NULL);
 	assert(fido_cred_flags(c) == 0);
@@ -696,6 +699,8 @@ junk_authdata(void)
 	    sizeof(authdata)) == FIDO_ERR_INVALID_ARGUMENT);
 	assert(fido_cred_authdata_len(c) == 0);
 	assert(fido_cred_authdata_ptr(c) == NULL);
+	assert(fido_cred_authdata_raw_len(c) == 0);
+	assert(fido_cred_authdata_raw_ptr(c) == NULL);
 	assert(fido_cred_flags(c) == 0);
 	assert(fido_cred_fmt(c) == NULL);
 	assert(fido_cred_id_len(c) == 0);
@@ -866,6 +871,46 @@ wrong_credprot(void)
 	free_cred(c);
 }
 
+static void
+raw_authdata(void)
+{
+	fido_cred_t *c;
+	cbor_item_t *item;
+	struct cbor_load_result cbor_result;
+	const unsigned char *ptr;
+	unsigned char *cbor;
+	size_t len;
+	size_t cbor_len;
+	size_t alloclen;
+
+	c = alloc_cred();
+	assert(fido_cred_set_type(c, COSE_ES256) == FIDO_OK);
+	assert(fido_cred_set_authdata(c, authdata, sizeof(authdata)) == FIDO_OK);
+	assert((ptr = fido_cred_authdata_ptr(c)) != NULL);
+	assert((len = fido_cred_authdata_len(c)) != 0);
+	assert((item = cbor_load(ptr, len, &cbor_result)) != NULL);
+	assert(cbor_result.read == len);
+	assert(cbor_isa_bytestring(item));
+	assert((ptr = fido_cred_authdata_raw_ptr(c)) != NULL);
+	assert((len = fido_cred_authdata_raw_len(c)) != 0);
+	assert(cbor_bytestring_length(item) == len);
+	assert(memcmp(ptr, cbor_bytestring_handle(item), len) == 0);
+	assert((len = fido_cred_authdata_len(c)) != 0);
+	assert((cbor_len = cbor_serialize_alloc(item, &cbor, &alloclen)) == len);
+	assert((ptr = cbor_bytestring_handle(item)) != NULL);
+	assert((len = cbor_bytestring_length(item)) != 0);
+	assert(fido_cred_set_authdata_raw(c, ptr, len) == FIDO_OK);
+	assert((ptr = fido_cred_authdata_ptr(c)) != NULL);
+	assert((len = fido_cred_authdata_len(c)) != 0);
+	assert(len == cbor_len);
+	assert(memcmp(cbor, ptr, len) == 0);
+	assert(cbor_len == sizeof(authdata));
+	assert(memcmp(cbor, authdata, cbor_len) == 0);
+	cbor_decref(&item);
+	free(cbor);
+	free_cred(c);
+}
+
 int
 main(void)
 {
@@ -892,6 +937,7 @@ main(void)
 	duplicate_keys();
 	unsorted_keys();
 	wrong_credprot();
+	raw_authdata();
 
 	exit(0);
 }

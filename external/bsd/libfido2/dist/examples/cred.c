@@ -4,10 +4,8 @@
  * license that can be found in the LICENSE file.
  */
 
-#include <openssl/ec.h>
-#include <openssl/pem.h>
-
 #include <errno.h>
+#include <fido.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,9 +14,8 @@
 #include <unistd.h>
 #endif
 
-#include "fido.h"
-#include "extern.h"
 #include "../openbsd-compat/openbsd-compat.h"
+#include "extern.h"
 
 static const unsigned char cdh[32] = {
 	0xf9, 0x64, 0x57, 0xe7, 0x2d, 0x97, 0xf6, 0xbb,
@@ -38,7 +35,8 @@ static void
 usage(void)
 {
 	fprintf(stderr, "usage: cred [-t ecdsa|rsa|eddsa] [-k pubkey] "
-	    "[-ei cred_id] [-P pin] [-T seconds] [-hruv] <device>\n");
+	    "[-ei cred_id] [-P pin] [-T seconds] [-b blobkey] [-hruv] "
+	    "<device>\n");
 	exit(EXIT_FAILURE);
 }
 
@@ -164,6 +162,7 @@ main(int argc, char **argv)
 	fido_dev_t	*dev;
 	fido_cred_t	*cred = NULL;
 	const char	*pin = NULL;
+	const char	*blobkey_out = NULL;
 	const char	*key_out = NULL;
 	const char	*id_out = NULL;
 	const char	*path = NULL;
@@ -180,7 +179,7 @@ main(int argc, char **argv)
 	if ((cred = fido_cred_new()) == NULL)
 		errx(1, "fido_cred_new");
 
-	while ((ch = getopt(argc, argv, "P:T:e:hi:k:rt:uv")) != -1) {
+	while ((ch = getopt(argc, argv, "P:T:b:e:hi:k:rt:uv")) != -1) {
 		switch (ch) {
 		case 'P':
 			pin = optarg;
@@ -196,6 +195,10 @@ main(int argc, char **argv)
 				errx(1, "-T: %s must be in (0,30]", optarg);
 			break;
 #endif
+		case 'b':
+			ext |= FIDO_EXT_LARGEBLOB_KEY;
+			blobkey_out = optarg;
+			break;
 		case 'e':
 			if (read_blob(optarg, &body, &len) < 0)
 				errx(1, "read_blob: %s", optarg);
@@ -207,7 +210,7 @@ main(int argc, char **argv)
 			body = NULL;
 			break;
 		case 'h':
-			ext = FIDO_EXT_HMAC_SECRET;
+			ext |= FIDO_EXT_HMAC_SECRET;
 			break;
 		case 'i':
 			id_out = optarg;
@@ -323,6 +326,13 @@ main(int argc, char **argv)
 	    fido_cred_authdata_len(cred), fido_cred_x5c_ptr(cred),
 	    fido_cred_x5c_len(cred), fido_cred_sig_ptr(cred),
 	    fido_cred_sig_len(cred), rk, uv, ext, key_out, id_out);
+
+	if (blobkey_out != NULL) {
+		/* extract the "largeBlob" key */
+		if (write_blob(blobkey_out, fido_cred_largeblob_key_ptr(cred),
+		    fido_cred_largeblob_key_len(cred)) < 0)
+			errx(1, "write_blob");
+	}
 
 	fido_cred_free(&cred);
 

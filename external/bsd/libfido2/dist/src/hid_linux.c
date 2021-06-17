@@ -11,146 +11,38 @@
 #include <linux/input.h>
 
 #include <errno.h>
-#include <fcntl.h>
 #include <libudev.h>
-#include <poll.h>
-#include <string.h>
 #include <unistd.h>
 
 #include "fido.h"
 
 struct hid_linux {
-	int	fd;
-	size_t	report_in_len;
-	size_t	report_out_len;
+	int             fd;
+	size_t          report_in_len;
+	size_t          report_out_len;
+	sigset_t        sigmask;
+	const sigset_t *sigmaskp;
 };
-
-static int
-get_key_len(uint8_t tag, uint8_t *key, size_t *key_len)
-{
-	*key = tag & 0xfc;
-	if ((*key & 0xf0) == 0xf0) {
-		fido_log_debug("%s: *key=0x%02x", __func__, *key);
-		return (-1);
-	}
-
-	*key_len = tag & 0x3;
-	if (*key_len == 3) {
-		*key_len = 4;
-	}
-
-	return (0);
-}
-
-static int
-get_key_val(const void *body, size_t key_len, uint32_t *val)
-{
-	const uint8_t *ptr = body;
-
-	switch (key_len) {
-	case 0:
-		*val = 0;
-		break;
-	case 1:
-		*val = ptr[0];
-		break;
-	case 2:
-		*val = (uint32_t)((ptr[1] << 8) | ptr[0]);
-		break;
-	default:
-		fido_log_debug("%s: key_len=%zu", __func__, key_len);
-		return (-1);
-	}
-
-	return (0);
-}
-
-static int
-get_usage_info(const struct hidraw_report_descriptor *hrd, uint32_t *usage_page,
-    uint32_t *usage)
-{
-	const uint8_t	*ptr = hrd->value;
-	size_t		 len = hrd->size;
-
-	while (len > 0) {
-		const uint8_t tag = ptr[0];
-		ptr++;
-		len--;
-
-		uint8_t  key;
-		size_t   key_len;
-		uint32_t key_val;
-
-		if (get_key_len(tag, &key, &key_len) < 0 || key_len > len ||
-		    get_key_val(ptr, key_len, &key_val) < 0) {
-			return (-1);
-		}
-
-		if (key == 0x4) {
-			*usage_page = key_val;
-		} else if (key == 0x8) {
-			*usage = key_val;
-		}
-
-		ptr += key_len;
-		len -= key_len;
-	}
-
-	return (0);
-}
-
-static int
-get_report_sizes(const struct hidraw_report_descriptor *hrd,
-    size_t *report_in_len, size_t *report_out_len)
-{
-	const uint8_t	*ptr = hrd->value;
-	size_t		 len = hrd->size;
-	uint32_t	 report_size = 0;
-
-	while (len > 0) {
-		const uint8_t tag = ptr[0];
-		ptr++;
-		len--;
-
-		uint8_t  key;
-		size_t   key_len;
-		uint32_t key_val;
-
-		if (get_key_len(tag, &key, &key_len) < 0 || key_len > len ||
-		    get_key_val(ptr, key_len, &key_val) < 0) {
-			return (-1);
-		}
-
-		if (key == 0x94) {
-			report_size = key_val;
-		} else if (key == 0x80) {
-			*report_in_len = (size_t)report_size;
-		} else if (key == 0x90) {
-			*report_out_len = (size_t)report_size;
-		}
-
-		ptr += key_len;
-		len -= key_len;
-	}
-
-	return (0);
-}
 
 static int
 get_report_descriptor(int fd, struct hidraw_report_descriptor *hrd)
 {
 	int s = -1;
 
-	if (ioctl(fd, HIDIOCGRDESCSIZE, &s) < 0 || s < 0 ||
-	    (unsigned)s > HID_MAX_DESCRIPTOR_SIZE) {
-		fido_log_debug("%s: ioctl HIDIOCGRDESCSIZE", __func__);
+	if (ioctl(fd, IOCTL_REQ(HIDIOCGRDESCSIZE), &s) == -1) {
+		fido_log_error(errno, "%s: ioctl HIDIOCGRDESCSIZE", __func__);
+		return (-1);
+	}
+
+	if (s < 0 || (unsigned)s > HID_MAX_DESCRIPTOR_SIZE) {
+		fido_log_debug("%s: HIDIOCGRDESCSIZE %d", __func__, s);
 		return (-1);
 	}
 
 	hrd->size = (unsigned)s;
 
-	if (ioctl(fd, HIDIOCGRDESC, hrd) < 0) {
-		fido_log_debug("%s: ioctl HIDIOCGRDESC", __func__);
+	if (ioctl(fd, IOCTL_REQ(HIDIOCGRDESC), hrd) == -1) {
+		fido_log_error(errno, "%s: ioctl HIDIOCGRDESC", __func__);
 		return (-1);
 	}
 
@@ -161,24 +53,20 @@ static bool
 is_fido(const char *path)
 {
 	int				fd;
-	uint32_t			usage = 0;
 	uint32_t			usage_page = 0;
 	struct hidraw_report_descriptor	hrd;
 
 	memset(&hrd, 0, sizeof(hrd));
 
-	if ((fd = open(path, O_RDONLY)) == -1) {
-		fido_log_debug("%s: open", __func__);
+	if ((fd = fido_hid_unix_open(path)) == -1)
 		return (false);
-	}
 
 	if (get_report_descriptor(fd, &hrd) < 0 ||
-	    get_usage_info(&hrd, &usage_page, &usage) < 0) {
-		close(fd);
-		return (false);
-	}
+	    fido_hid_get_usage(hrd.value, hrd.size, &usage_page) < 0)
+		usage_page = 0;
 
-	close(fd);
+	if (close(fd) == -1)
+		fido_log_error(errno, "%s: close", __func__);
 
 	return (usage_page == 0xf1d0);
 }
@@ -354,14 +242,15 @@ fido_hid_open(const char *path)
 	if ((ctx = calloc(1, sizeof(*ctx))) == NULL)
 		return (NULL);
 
-	if ((ctx->fd = open(path, O_RDWR)) < 0) {
+	if ((ctx->fd = fido_hid_unix_open(path)) == -1) {
 		free(ctx);
 		return (NULL);
 	}
 
-	if (get_report_descriptor(ctx->fd, &hrd) < 0 || get_report_sizes(&hrd,
-	    &ctx->report_in_len, &ctx->report_out_len) < 0 ||
-	    ctx->report_in_len == 0 || ctx->report_out_len == 0) {
+	if (get_report_descriptor(ctx->fd, &hrd) < 0 ||
+	    fido_hid_get_report_len(hrd.value, hrd.size, &ctx->report_in_len,
+	    &ctx->report_out_len) < 0 || ctx->report_in_len == 0 ||
+	    ctx->report_out_len == 0) {
 		fido_log_debug("%s: using default report sizes", __func__);
 		ctx->report_in_len = CTAP_MAX_REPORT_LEN;
 		ctx->report_out_len = CTAP_MAX_REPORT_LEN;
@@ -375,73 +264,21 @@ fido_hid_close(void *handle)
 {
 	struct hid_linux *ctx = handle;
 
-	close(ctx->fd);
+	if (close(ctx->fd) == -1)
+		fido_log_error(errno, "%s: close", __func__);
+
 	free(ctx);
 }
 
-static int
-timespec_to_ms(const struct timespec *ts, int upper_bound)
+int
+fido_hid_set_sigmask(void *handle, const fido_sigset_t *sigmask)
 {
-	int64_t x;
-	int64_t y;
+	struct hid_linux *ctx = handle;
 
-	if (ts->tv_sec < 0 || ts->tv_sec > INT64_MAX / 1000LL ||
-	    ts->tv_nsec < 0 || ts->tv_nsec / 1000000LL > INT64_MAX)
-		return (upper_bound);
+	ctx->sigmask = *sigmask;
+	ctx->sigmaskp = &ctx->sigmask;
 
-	x = ts->tv_sec * 1000LL;
-	y = ts->tv_nsec / 1000000LL;
-
-	if (INT64_MAX - x < y || x + y > upper_bound)
-		return (upper_bound);
-
-	return (int)(x + y);
-}
-
-static int
-waitfd(int fd, int ms)
-{
-	struct timespec	ts_start;
-	struct timespec	ts_now;
-	struct timespec	ts_delta;
-	struct pollfd	pfd;
-	int		ms_remain;
-	int		r;
-
-	if (ms < 0)
-		return (0);
-
-	memset(&pfd, 0, sizeof(pfd));
-	pfd.events = POLLIN;
-	pfd.fd = fd;
-
-	if (clock_gettime(CLOCK_MONOTONIC, &ts_start) != 0) {
-		fido_log_debug("%s: clock_gettime: %s", __func__,
-		    strerror(errno));
-		return (-1);
-	}
-
-	for (ms_remain = ms; ms_remain > 0;) {
-		if ((r = poll(&pfd, 1, ms_remain)) > 0)
-			return (0);
-		else if (r == 0)
-			break;
-		else if (errno != EINTR) {
-			fido_log_debug("%s: poll: %s", __func__,
-			    strerror(errno));
-			return (-1);
-		}
-		/* poll interrupted - subtract time already waited */
-		if (clock_gettime(CLOCK_MONOTONIC, &ts_now) != 0) {
-			fido_log_debug("%s: clock_gettime: %s", __func__,
-			    strerror(errno));
-			return (-1);
-		}
-		timespecsub(&ts_now, &ts_start, &ts_delta);
-		ms_remain = ms - timespec_to_ms(&ts_delta, ms);
-	}
-
-	return (-1);
+	return (FIDO_OK);
 }
 
 int
@@ -455,13 +292,18 @@ fido_hid_read(void *handle, unsigned char *buf, size_t len, int ms)
 		return (-1);
 	}
 
-	if (waitfd(ctx->fd, ms) < 0) {
+	if (fido_hid_unix_wait(ctx->fd, ms, ctx->sigmaskp) < 0) {
 		fido_log_debug("%s: fd not ready", __func__);
 		return (-1);
 	}
 
-	if ((r = read(ctx->fd, buf, len)) < 0 || (size_t)r != len) {
-		fido_log_debug("%s: read", __func__);
+	if ((r = read(ctx->fd, buf, len)) == -1) {
+		fido_log_error(errno, "%s: read", __func__);
+		return (-1);
+	}
+
+	if (r < 0 || (size_t)r != len) {
+		fido_log_debug("%s: %zd != %zu", __func__, r, len);
 		return (-1);
 	}
 
@@ -479,8 +321,13 @@ fido_hid_write(void *handle, const unsigned char *buf, size_t len)
 		return (-1);
 	}
 
-	if ((r = write(ctx->fd, buf, len)) < 0 || (size_t)r != len) {
-		fido_log_debug("%s: write", __func__);
+	if ((r = write(ctx->fd, buf, len)) == -1) {
+		fido_log_error(errno, "%s: write", __func__);
+		return (-1);
+	}
+
+	if (r < 0 || (size_t)r != len) {
+		fido_log_debug("%s: %zd != %zu", __func__, r, len);
 		return (-1);
 	}
 

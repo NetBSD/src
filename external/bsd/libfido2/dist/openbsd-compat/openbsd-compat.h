@@ -20,9 +20,12 @@
 #define be16toh(x) OSSwapBigToHostInt16((x))
 #define htobe16(x) OSSwapHostToBigInt16((x))
 #define be32toh(x) OSSwapBigToHostInt32((x))
+#define htole32(x) OSSwapHostToLittleInt32((x))
+#define htole64(x) OSSwapHostToLittleInt64((x))
 #endif /* __APPLE__ && !HAVE_ENDIAN_H */
 
 #if defined(_WIN32) && !defined(HAVE_ENDIAN_H)
+#include <stdint.h>
 #include <winsock2.h>
 #if !defined(_MSC_VER)
 #include <sys/param.h>
@@ -30,6 +33,8 @@
 #define be16toh(x) ntohs((x))
 #define htobe16(x) htons((x))
 #define be32toh(x) ntohl((x))
+uint32_t htole32(uint32_t);
+uint64_t htole64(uint64_t);
 #endif /* _WIN32 && !HAVE_ENDIAN_H */
 
 #if defined(__FreeBSD__) && !defined(HAVE_ENDIAN_H)
@@ -37,6 +42,7 @@
 #endif
 
 #include <stdlib.h>
+#include <string.h>
 
 #if !defined(HAVE_STRLCAT)
 size_t strlcat(char *, const char *, size_t);
@@ -54,6 +60,10 @@ void *recallocarray(void *, size_t, size_t, size_t);
 void explicit_bzero(void *, size_t);
 #endif
 
+#if !defined(HAVE_FREEZERO)
+void freezero(void *, size_t);
+#endif
+
 #if !defined(HAVE_GETPAGESIZE)
 int getpagesize(void);
 #endif
@@ -68,7 +78,11 @@ int timingsafe_bcmp(const void *, const void *, size_t);
 #include <readpassphrase.h>
 #endif
 
+#include <openssl/opensslv.h>
+
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
+#include <stdint.h>
+#include "hkdf.h"
 #define EVP_PKEY_get0_EC_KEY(x) ((x)->pkey.ec)
 #define EVP_PKEY_get0_RSA(x) ((x)->pkey.rsa)
 #endif
@@ -90,6 +104,16 @@ int timingsafe_bcmp(const void *, const void *, size_t);
 ssize_t getline(char **, size_t *, FILE *);
 #endif
 
+#if defined(_MSC_VER)
+#define strerror_r(e, b, l) strerror_s((b), (l), (e))
+#endif
+
 #include "time.h"
+
+#if !defined(HAVE_POSIX_IOCTL)
+#define IOCTL_REQ(x)	(x)
+#else
+#define IOCTL_REQ(x)	((int)(x))
+#endif
 
 #endif /* !_OPENBSD_COMPAT_H */
