@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2021/06/17 01:15:46 christos Exp $
+# $NetBSD: Makefile,v 1.5 2021/06/17 06:20:56 rin Exp $
 
 NOLINT=
 .include <bsd.own.mk>
@@ -48,6 +48,7 @@ u2f.c
 
 SRCS+= \
 explicit_bzero.c \
+freezero.c \
 recallocarray.c \
 timingsafe_bcmp.c
 
