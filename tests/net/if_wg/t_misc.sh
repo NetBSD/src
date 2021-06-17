@@ -1,4 +1,4 @@
-#	$NetBSD: t_misc.sh,v 1.9 2021/06/17 12:16:09 riastradh Exp $
+#	$NetBSD: t_misc.sh,v 1.10 2021/06/17 12:45:58 riastradh Exp $
 #
 # Copyright (c) 2018 Ryota Ozaki <ozaki.ryota@gmail.com>
 # All rights reserved.
@@ -85,8 +85,6 @@ wg_rekey_body()
 	sleep 1
 
 	$ping $ip_wg_peer
-
-	atf_expect_fail "PR kern/56252"
 
 	atf_expect_fail "PR kern/56252"
 
