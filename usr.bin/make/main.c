@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.539 2021/04/19 16:35:11 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.540 2021/06/18 12:54:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.539 2021/04/19 16:35:11 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.540 2021/06/18 12:54:17 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -349,16 +349,16 @@ debug_setbuf:
 static bool
 IsRelativePath(const char *path)
 {
-	const char *cp;
+	const char *p;
 
 	if (path[0] != '/')
 		return true;
-	cp = path;
-	while ((cp = strstr(cp, "/.")) != NULL) {
-		cp += 2;
-		if (*cp == '.')
-			cp++;
-		if (cp[0] == '/' || cp[0] == '\0')
+	p = path;
+	while ((p = strstr(p, "/.")) != NULL) {
+		p += 2;
+		if (*p == '.')
+			p++;
+		if (*p == '/' || *p == '\0')
 			return true;
 	}
 	return false;
