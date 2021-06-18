@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2020/06/01 14:39:42 christos Exp $
+# $NetBSD: Makefile,v 1.5 2021/06/18 22:12:02 mrg Exp $
 
 LIBISPRIVATE=pic
 
@@ -61,7 +61,7 @@ CPPFLAGS+=	-I${LIBUVDIR}/include -I${LIBUVDIR}/src
 
 LIBDPLIBS+=	kvm ${NETBSDSRCDIR}/lib/libkvm
 
-.if ${LIBISPRIVATE} != "yes"
+.if ${LIBISPRIVATE} != "yes" && ${LIBISPRIVATE} != "pic"
 SHLIB_MAJOR=	1
 SHLIB_MINOR=	0
 
