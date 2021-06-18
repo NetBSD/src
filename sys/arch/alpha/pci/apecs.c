@@ -1,4 +1,4 @@
-/* $NetBSD: apecs.c,v 1.55 2021/04/24 23:36:23 thorpej Exp $ */
+/* $NetBSD: apecs.c,v 1.56 2021/06/18 22:17:53 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.55 2021/04/24 23:36:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.56 2021/06/18 22:17:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,7 @@ static int apecs_bus_get_window(int, int,
     struct alpha_bus_space_translation *);
 
 /* There can be only one. */
-int apecsfound;
+static int apecsfound;
 struct apecs_config apecs_configuration;
 
 static int
@@ -234,7 +234,8 @@ apecsattach(device_t parent, device_t self, void *aux)
 }
 
 static int
-apecs_bus_get_window(int type, int window, struct alpha_bus_space_translation *abst)
+apecs_bus_get_window(int type, int window,
+    struct alpha_bus_space_translation *abst)
 {
 	struct apecs_config *acp = &apecs_configuration;
 	bus_space_tag_t st;

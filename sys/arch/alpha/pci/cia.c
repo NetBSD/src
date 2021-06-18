@@ -1,4 +1,4 @@
-/* $NetBSD: cia.c,v 1.75 2021/04/24 23:36:23 thorpej Exp $ */
+/* $NetBSD: cia.c,v 1.76 2021/06/18 22:17:53 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.75 2021/04/24 23:36:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.76 2021/06/18 22:17:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,18 +102,19 @@ __KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.75 2021/04/24 23:36:23 thorpej Exp $");
 #include <alpha/pci/pci_1000.h>
 #endif
 
-int	ciamatch(device_t, cfdata_t, void *);
-void	ciaattach(device_t, device_t, void *);
+static int	ciamatch(device_t, cfdata_t, void *);
+static void	ciaattach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(cia, sizeof(struct cia_softc),
     ciamatch, ciaattach, NULL, NULL);
 
 extern struct cfdriver cia_cd;
 
-int	cia_bus_get_window(int, int, struct alpha_bus_space_translation *);
+static int	cia_bus_get_window(int, int,
+		    struct alpha_bus_space_translation *);
 
 /* There can be only one. */
-int ciafound;
+static int ciafound;
 struct cia_config cia_configuration;
 
 /*
@@ -147,7 +148,7 @@ int	cia_pci_use_bwx = CIA_PCI_USE_BWX;
 int	cia_bus_use_bwx = CIA_BUS_USE_BWX;
 int	cia_pyxis_force_bwx = CIA_PYXIS_FORCE_BWX;
 
-int
+static int
 ciamatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
@@ -260,7 +261,7 @@ cia_init(struct cia_config *ccp, int mallocsafe)
 	ccp->cc_initted = 1;
 }
 
-void
+static void
 ciaattach(device_t parent, device_t self, void *aux)
 {
 	struct cia_softc *sc = device_private(self);
@@ -404,8 +405,9 @@ ciaattach(device_t parent, device_t self, void *aux)
 	config_found(self, &pba, pcibusprint, CFARG_EOL);
 }
 
-int
-cia_bus_get_window(int type, int window, struct alpha_bus_space_translation *abst)
+static int
+cia_bus_get_window(int type, int window,
+    struct alpha_bus_space_translation *abst)
 {
 	struct cia_config *ccp = &cia_configuration;
 	bus_space_tag_t st;
