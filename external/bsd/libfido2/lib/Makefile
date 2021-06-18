@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2021/06/17 12:38:53 christos Exp $
+# $NetBSD: Makefile,v 1.7 2021/06/18 13:57:52 christos Exp $
 
 NOLINT=
 .include <bsd.own.mk>
@@ -8,8 +8,8 @@ NOLINT=
 
 CPPFLAGS+= -D_FIDO_INTERNAL -I${DIST}/src
 
-LDADD+=-lusbhid -lcbor
-DPADD+=${LIBUSBHID} ${LIBCBOR}
+LDADD+=-lusbhid -lcbor -lz
+DPADD+=${LIBUSBHID} ${LIBCBOR} ${LIBZ}
 
 LDFLAGS+=-Wl,--version-script=${DIST}/src/export.gnu
 
