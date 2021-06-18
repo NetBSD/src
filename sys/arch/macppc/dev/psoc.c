@@ -1,4 +1,4 @@
- /* $NetBSD: psoc.c,v 1.7 2021/06/18 22:57:18 macallan Exp $ */
+ /* $NetBSD: psoc.c,v 1.8 2021/06/18 23:00:47 macallan Exp $ */
 
 /*-
  * Copyright (c) 2019 Michael Lorenz
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psoc.c,v 1.7 2021/06/18 22:57:18 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psoc.c,v 1.8 2021/06/18 23:00:47 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -221,6 +221,8 @@ psoc_dump(struct psoc_softc *sc)
 {
 	int i, j;
 	uint8_t data, cmd;
+
+	iic_acquire_bus(sc->sc_i2c, 0);
 	for (i = 0x20; i < 0x5f; i+= 8) {
 		printf("%02x:", i);
 		for (j = 0; j < 8; j++) {
@@ -232,4 +234,5 @@ psoc_dump(struct psoc_softc *sc)
 		}
 		printf("\n");
 	}
+	iic_release_bus(sc->sc_i2c, 0);
 }
