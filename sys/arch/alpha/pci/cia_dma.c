@@ -1,4 +1,4 @@
-/* $NetBSD: cia_dma.c,v 1.32 2021/05/05 02:15:18 thorpej Exp $ */
+/* $NetBSD: cia_dma.c,v 1.33 2021/06/18 22:18:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia_dma.c,v 1.32 2021/05/05 02:15:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia_dma.c,v 1.33 2021/06/18 22:18:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -321,7 +321,8 @@ cia_bus_dmamap_create_direct(
  * Load a CIA SGMAP-mapped DMA map with a linear buffer.
  */
 static int
-cia_bus_dmamap_load_sgmap(bus_dma_tag_t t, bus_dmamap_t map, void *buf, bus_size_t buflen, struct proc *p, int flags)
+cia_bus_dmamap_load_sgmap(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
+    bus_size_t buflen, struct proc *p, int flags)
 {
 	int error;
 
@@ -337,7 +338,8 @@ cia_bus_dmamap_load_sgmap(bus_dma_tag_t t, bus_dmamap_t map, void *buf, bus_size
  * Load a CIA SGMAP-mapped DMA map with an mbuf chain.
  */
 static int
-cia_bus_dmamap_load_mbuf_sgmap(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m, int flags)
+cia_bus_dmamap_load_mbuf_sgmap(bus_dma_tag_t t, bus_dmamap_t map,
+    struct mbuf *m, int flags)
 {
 	int error;
 
@@ -352,7 +354,8 @@ cia_bus_dmamap_load_mbuf_sgmap(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m
  * Load a CIA SGMAP-mapped DMA map with a uio.
  */
 static int
-cia_bus_dmamap_load_uio_sgmap(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio, int flags)
+cia_bus_dmamap_load_uio_sgmap(bus_dma_tag_t t, bus_dmamap_t map,
+    struct uio *uio, int flags)
 {
 	int error;
 
@@ -367,7 +370,8 @@ cia_bus_dmamap_load_uio_sgmap(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio
  * Load a CIA SGMAP-mapped DMA map with raw memory.
  */
 static int
-cia_bus_dmamap_load_raw_sgmap(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment_t *segs, int nsegs, bus_size_t size, int flags)
+cia_bus_dmamap_load_raw_sgmap(bus_dma_tag_t t, bus_dmamap_t map,
+    bus_dma_segment_t *segs, int nsegs, bus_size_t size, int flags)
 {
 	int error;
 
