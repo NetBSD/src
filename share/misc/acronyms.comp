@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.323 2021/04/16 15:53:55 pgoyette Exp $
+$NetBSD: acronyms.comp,v 1.324 2021/06/18 21:58:20 riastradh Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -517,6 +517,7 @@ EDS	electronical data sheet
 EDSAC	electronic delay storage automatic calculator
 EDVAC	electronic discrete variable automatic computer
 EEE	energy efficient ethernet
+EEE	embrace, extend, extinguish
 EEPROM	electrically erasable programmable read only memory
 EFI	extensible firmware interface
 EFL	emitter follower logic

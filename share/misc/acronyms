@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.309 2021/04/16 15:53:55 pgoyette Exp $
+$NetBSD: acronyms,v 1.310 2021/06/18 21:58:20 riastradh Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -143,6 +143,7 @@ DYK	do you know?
 EA	early adopter
 ECR	electronic cash register
 EDS	eternal downward spiral
+EEE	eastern equine encephalitis
 EFT	electronic funds transfer
 EG	evil grin
 EIE	enough is enough
