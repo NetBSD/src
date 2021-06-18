@@ -1,4 +1,4 @@
- /* $NetBSD: psoc.c,v 1.6 2021/01/27 02:17:28 thorpej Exp $ */
+ /* $NetBSD: psoc.c,v 1.7 2021/06/18 22:57:18 macallan Exp $ */
 
 /*-
  * Copyright (c) 2019 Michael Lorenz
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psoc.c,v 1.6 2021/01/27 02:17:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psoc.c,v 1.7 2021/06/18 22:57:18 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +56,13 @@ __KERNEL_RCSID(0, "$NetBSD: psoc.c,v 1.6 2021/01/27 02:17:28 thorpej Exp $");
 #include <dev/i2c/i2cvar.h>
 
 #include <dev/sysmon/sysmonvar.h>
+
+#include "opt_psoc.h"
+#ifdef PSOC_DEBUG
+#define DPRINTF printf
+#else
+#define DPRINTF if (0) printf
+#endif
 
 struct psoc_softc {
 	device_t	sc_dev;
@@ -117,10 +124,10 @@ psoc_attach(device_t parent, device_t self, void *aux)
 
 	error = OF_package_to_path(sc->sc_node, path, 256);
 	path[error] = 0;
-	printf("path [%s]\n", path);
+	DPRINTF("path [%s]\n", path);
 	ih = OF_open("fan");
 	OF_call_method_1("fan-init", ih, 0);
-	printf("ih %08x\n", ih);
+	DPRINTF("ih %08x\n", ih);
 
 	sc->sc_sme = sysmon_envsys_create();
 	sc->sc_sme->sme_name = device_xname(self);
