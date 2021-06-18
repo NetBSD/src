@@ -1,4 +1,4 @@
-/* $NetBSD: lmu.c,v 1.8 2021/01/27 02:17:28 thorpej Exp $ */
+/* $NetBSD: lmu.c,v 1.9 2021/06/18 22:52:04 macallan Exp $ */
 
 /*-
  * Copyright (c) 2020 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lmu.c,v 1.8 2021/01/27 02:17:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lmu.c,v 1.9 2021/06/18 22:52:04 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: lmu.c,v 1.8 2021/01/27 02:17:28 thorpej Exp $");
 #include <dev/i2c/i2cvar.h>
 
 #include <dev/sysmon/sysmonvar.h>
+#include "opt_lmu.h"
 
 #ifdef LMU_DEBUG
 #define DPRINTF printf
@@ -208,7 +209,6 @@ lmu_attach(device_t parent, device_t self, void *aux)
 
 	sysmon_envsys_register(sc->sc_sme);
 
-	/* TODO: make this adjustable via sysctl */
 	sc->sc_thresh = 300;
 	sc->sc_hyst = 30;
 	sc->sc_level = 16;
