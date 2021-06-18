@@ -1,4 +1,4 @@
-/* $NetBSD: irongate.c,v 1.17 2021/04/24 23:36:23 thorpej Exp $ */
+/* $NetBSD: irongate.c,v 1.18 2021/06/18 22:17:53 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: irongate.c,v 1.17 2021/04/24 23:36:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irongate.c,v 1.18 2021/06/18 22:17:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,8 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: irongate.c,v 1.17 2021/04/24 23:36:23 thorpej Exp $"
 #include <alpha/pci/pci_up1000.h>
 #endif
 
-int	irongate_match(device_t, cfdata_t, void *);
-void	irongate_attach(device_t, device_t, void *);
+static int	irongate_match(device_t, cfdata_t, void *);
+static void	irongate_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(irongate, sizeof(struct irongate_softc),
     irongate_match, irongate_attach, NULL, NULL);
@@ -67,9 +67,10 @@ extern struct cfdriver irongate_cd;
 
 /* There can be only one. */
 struct irongate_config irongate_configuration;
-int	irongate_found;
+static int irongate_found;
 
-int	irongate_bus_get_window(int, int, struct alpha_bus_space_translation *);
+static int	irongate_bus_get_window(int, int,
+		    struct alpha_bus_space_translation *);
 
 /*
  * Set up the chipset's function pointers.
@@ -110,7 +111,7 @@ irongate_init(struct irongate_config *icp, int mallocsafe)
 	icp->ic_initted = 1;
 }
 
-int
+static int
 irongate_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
@@ -125,7 +126,7 @@ irongate_match(device_t parent, cfdata_t match, void *aux)
 	return (1);
 }
 
-void
+static void
 irongate_attach(device_t parent, device_t self, void *aux)
 {
 	struct irongate_softc *sc = device_private(self);
@@ -206,7 +207,7 @@ irongate_attach(device_t parent, device_t self, void *aux)
 	    CFARG_EOL);
 }
 
-int
+static int
 irongate_bus_get_window(int type, int window,
     struct alpha_bus_space_translation *abst)
 {
