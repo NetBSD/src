@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.118 2021/05/12 23:22:33 thorpej Exp $
+#	$NetBSD: files.macppc,v 1.119 2021/06/18 22:24:51 macallan Exp $
 #
 # macppc-specific configuration info
 
@@ -319,8 +319,10 @@ file arch/macppc/dev/platinumfb.c			platinumfb
 device	psoc: sysmon_envsys
 attach	psoc at iic
 file	arch/macppc/dev/psoc.c				psoc
+defflag opt_psoc.h PSOC_DEBUG
 
 # 'lmu-micro' found in late PowerBooks
 device	lmu: sysmon_envsys
 attach	lmu at iic
 file	arch/macppc/dev/lmu.c				lmu
+defflag opt_lmu.h LMU_DEBUG
