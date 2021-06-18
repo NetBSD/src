@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2021/03/01 16:50:01 martin Exp $
+#	$NetBSD: Makefile,v 1.27 2021/06/18 20:30:58 mrg Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -6,10 +6,28 @@
 
 IMAGE=		ramdisk.fs
 IMAGESIZE=	600k
-MAKEFS_FLAGS+=	-f 15 -o density=2048
+MAKEFS_FLAGS+=	-f 15 -o density=3072,bsize=4096,fsize=512,optimization=space
 
 WARNS=		1
-DBG=		-Os -fno-unwind-tables
+DBG=		-Os -fno-unwind-tables -fno-ident
+
+# XXXMRG - see if these help/hinder reduced size?
+#-fno-jump-tables 
+#-fzero-initialized-in-bss
+#-fgcse-after-reload
+#-fdelete-null-pointer-checks
+#-fno-sched-interblock
+#-fno-sched-spec
+#-fsched-pressure
+#-fcode-hoisting
+#-ftree-partial-pre
+#-fno-ipa-cp
+#-ftree-builtin-call-dce
+#-fno-align-functions
+#-fno-align-loops
+#-fno-align-jumps
+#-fno-align-labels
+#-fallow-store-data-races
 
 CRUNCHBIN=	rd_bin
 LISTS=		${.CURDIR}/list
