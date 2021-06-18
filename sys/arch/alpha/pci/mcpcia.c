@@ -1,4 +1,4 @@
-/* $NetBSD: mcpcia.c,v 1.31 2021/04/24 23:36:23 thorpej Exp $ */
+/* $NetBSD: mcpcia.c,v 1.32 2021/06/18 22:17:53 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.31 2021/04/24 23:36:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.32 2021/06/18 22:17:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,8 +111,8 @@ void	mcpcia_init0(struct mcpcia_config *, int);
  */
 struct mcpcia_config mcpcia_console_configuration;
 
-int	mcpcia_bus_get_window(int, int,
-	    struct alpha_bus_space_translation *abst);
+static int	mcpcia_bus_get_window(int, int,
+		    struct alpha_bus_space_translation *abst);
 
 static int
 mcpciamatch(device_t parent, cfdata_t cf, void *aux)
@@ -332,8 +332,9 @@ mcpcia_config_cleanup(void)
 #endif
 }
 
-int
-mcpcia_bus_get_window(int type, int window, struct alpha_bus_space_translation *abst)
+static int
+mcpcia_bus_get_window(int type, int window,
+    struct alpha_bus_space_translation *abst)
 {
 	struct mcpcia_config *ccp = &mcpcia_console_configuration;
 	bus_space_tag_t st;

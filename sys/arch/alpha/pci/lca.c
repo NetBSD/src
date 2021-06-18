@@ -1,4 +1,4 @@
-/* $NetBSD: lca.c,v 1.52 2021/04/24 23:36:23 thorpej Exp $ */
+/* $NetBSD: lca.c,v 1.53 2021/06/18 22:17:53 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.52 2021/04/24 23:36:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.53 2021/06/18 22:17:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,22 +91,22 @@ __KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.52 2021/04/24 23:36:23 thorpej Exp $");
 #include <alpha/pci/pci_eb66.h>
 #endif
 
-int	lcamatch(device_t, cfdata_t, void *);
-void	lcaattach(device_t, device_t, void *);
+static int	lcamatch(device_t, cfdata_t, void *);
+static void	lcaattach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(lca, sizeof(struct lca_softc),
     lcamatch, lcaattach, NULL, NULL);
 
 extern struct cfdriver lca_cd;
 
-int	lca_bus_get_window(int, int,
-	    struct alpha_bus_space_translation *);
+static int	lca_bus_get_window(int, int,
+		    struct alpha_bus_space_translation *);
 
 /* There can be only one. */
-int lcafound;
 struct lca_config lca_configuration;
+static int lcafound;
 
-int
+static int
 lcamatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
@@ -181,7 +181,7 @@ lca_init(struct lca_config *lcp, int mallocsafe)
 	lcp->lc_initted = 1;
 }
 
-void
+static void
 lcaattach(device_t parent, device_t self, void *aux)
 {
 	struct lca_softc *sc = device_private(self);
@@ -189,7 +189,6 @@ lcaattach(device_t parent, device_t self, void *aux)
 	struct pcibus_attach_args pba;
 
 	/* note that we've attached the chipset; can't have 2 LCAs. */
-	/* Um, not sure about this.  XXX JH */
 	lcafound = 1;
 	sc->sc_dev = self;
 
@@ -240,8 +239,9 @@ lcaattach(device_t parent, device_t self, void *aux)
 	config_found(self, &pba, pcibusprint, CFARG_EOL);
 }
 
-int
-lca_bus_get_window(int type, int window, struct alpha_bus_space_translation *abst)
+static int
+lca_bus_get_window(int type, int window,
+    struct alpha_bus_space_translation *abst)
 {
 	struct lca_config *lcp = &lca_configuration;
 	bus_space_tag_t st;
