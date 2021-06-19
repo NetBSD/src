@@ -1,4 +1,4 @@
-$NetBSD: README.gcc10,v 1.22 2021/06/16 00:56:16 rin Exp $
+$NetBSD: README.gcc10,v 1.23 2021/06/19 06:19:35 mrg Exp $
 
 
 new stuff:
@@ -33,25 +33,25 @@ architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf	switched
 aarch64		y	y	y	y		y		y	y	y
 aarch64eb	y	y	y	y		y		y	y	y
 alpha		y	y	y	y		y		y	y	y
-earmv4		y	y	y	y		y		y	?	n
-earmv4eb	y	b	y	y		y		?	?	?
-earmv5		y	b	y	y		y		y	y	n
-earmv5eb	y	b	y	y		y		?	?	?
-earmv5hf	y	y	y	y		y		?	?	?
-earmv5hfeb	y	b	y	y		y		?	?	?
-earmv6		y	b	y	y		y		y	y	n
-earmv6eb	y	b	y	y		y		y	y	n
-earmv6hf	y	y	y	y		y		y	y	n
-earmv6hfeb	y	y	y	y		y		y	y	n
-earmv7		y	b	y	y		y		y	y	n
-earmv7eb	y	b	y	y		y		y	y	n
-earmv7hf	y	y	y	y		y		y	y	n
-earmv7hfeb	y	y	y	y		y		y	y	n
+earmv4		y	y	y	y		y		y	?	y
+earmv4eb	y	b	y	y		y		?	?	y
+earmv5		y	b	y	y		y		y	y	y
+earmv5eb	y	b	y	y		y		?	?	y
+earmv5hf	y	y	y	y		y		?	?	y
+earmv5hfeb	y	b	y	y		y		?	?	y
+earmv6		y	b	y	y		y		y	y	y
+earmv6eb	y	b	y	y		y		y	y	y
+earmv6hf	y	y	y	y		y		y	y	y
+earmv6hfeb	y	y	y	y		y		y	y	y
+earmv7		y	b	y	y		y		y	y	y
+earmv7eb	y	b	y	y		y		y	y	y
+earmv7hf	y	y	y	y		y		y	y	y
+earmv7hfeb	y	y	y	y		y		y	y	y
 hppa		y	y	y	y		y		y	y	y
 i386		y	y	y	y		y		y	n[8]	y
 ia64		y	y	y	y		y		?	N/A	y
-m68000		y	b	y	y		n[1]		?	?	?
-m68k		y	y	y	y		y[9]		y	?	n
+m68000		y	b	y	y		y		n[1]	?	y
+m68k		y	y	y	y		y		y	?	y
 mipseb		y	y	y	y		y		y	?	y
 mipsel		y	y	y	y		y		y	?	y
 mips64eb	y	y	y	y		y		y	y	y
@@ -71,23 +71,13 @@ coldfire	?	N/A	?	?		?		N/A	N/A
 ------------	-----	-------	------	----------	------------	----	---
 architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
 
-[1] - ramdisk.fs is too large, needs fixing.
+[1] - kernel may be too large, does not boot.  GCC 9 is the same, though.
 [6] - vax vs c++ exceptions issue, same as it ever was
 [7] - fails just as poorly in gxemul/landisk as GCC 9
 [8] - i386 seems to have a signal delivery issue.  pthread tests hang and then
       complain with eg:
 	  threads_and_exec: q[ 627.6700846] sorry, pid 3154 was killed: orphaned traced process
       this problem occurs with GCC 9 as well.  works in qemu?
-[9] - x68k/stand fails with:
-      link  loadbsd/loadbsd.x
-      loadbsd1: program header #1 is not loadable
-      problem is understood (thanks tsutsui@): previously loadbsd was linked
-      against normal userland libc components for m68k, which allows it to
-      detect running on m68000 CPU and sanely fail, instead of an barf error.
-      new gcc built libc includes TLS support, that isn't compatible with this
-      and the conversion process fails.  can be fixed by using libkern instead,
-      and accepting the poor error on m68000.
-
 
 
 CPU vs platform test table (for CPUs with multiple ports).  this is "make release" or just kernels.
@@ -105,7 +95,7 @@ earmv7:		 		 	 	y		y
 earmv7hf:	 		 	 	y		y
 
 		amiga		atari	cesfic	hp300		luna68k		mac68k		mvme68k		news68k		next68k		sun3	x68k
-m68k:		y		y	y	y		y		y		y		y		y		y 	n[9]
+m68k:		y		y	y	y		y		y		y		y		y		y 	y
 
 		evbmips		emips		ews4800mips	mipsco		newsmips	sgimips
 mipseb:		y		y		y		y		y		y
