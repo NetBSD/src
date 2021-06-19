@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.60 2021/05/29 23:46:14 tsutsui Exp $
+#	$NetBSD: install.sub,v 1.61 2021/06/19 00:00:26 tsutsui Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -606,12 +606,8 @@ fi
 	echo	""
 
 	if [ "${_resolver_enabled:-FALSE}" = "TRUE" ]; then
-		netstat -r
-		echo	""
 		echo	"Resolver enabled."
 	else
-		netstat -rn
-		echo	""
 		echo	"Resolver not enabled."
 	fi
 
