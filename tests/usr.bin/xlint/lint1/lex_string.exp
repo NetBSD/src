@@ -1,0 +1,8 @@
+lex_string.c(26): error: unknown character \134 [250]
+lex_string.c(26): error: syntax error '0' [249]
+lex_string.c(26): error: unknown character \134 [250]
+lex_string.c(26): error: unknown character \134 [250]
+lex_string.c(26): error: unknown character \134 [250]
+lex_string.c(29): error: unknown character \134 [250]
+lex_string.c(32): error: unknown character \134 [250]
+lex_string.c(36): error: cannot recover from previous errors [224]

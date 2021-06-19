@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.52 2021/06/16 10:21:51 rillig Exp $
+# $NetBSD: t_integration.sh,v 1.53 2021/06/19 08:30:08 rillig Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -174,6 +174,12 @@ test_case gcc_attribute_aligned
 test_case gcc_bit_field_types
 test_case gcc_init_compound_literal
 test_case gcc_typeof_after_statement
+test_case lex_char
+test_case lex_floating
+test_case lex_integer
+test_case lex_string
+test_case lex_wide_char
+test_case lex_wide_string
 test_case op_colon
 
 all_messages_body()
