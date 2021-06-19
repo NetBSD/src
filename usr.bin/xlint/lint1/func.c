@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.109 2021/06/19 15:51:11 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.110 2021/06/19 16:05:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.109 2021/06/19 15:51:11 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.110 2021/06/19 16:05:07 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -173,7 +173,9 @@ end_control_statement(control_statement_kind kind)
 	case_label_t *cl, *next;
 
 	lint_assert(cstmt != NULL);
-	lint_assert(cstmt->c_kind == kind);
+
+	while (cstmt->c_kind != kind)
+		cstmt = cstmt->c_surrounding;
 
 	ci = cstmt;
 	cstmt = ci->c_surrounding;
