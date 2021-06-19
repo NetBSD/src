@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.185 2021/06/19 14:28:04 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.186 2021/06/19 15:51:11 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.185 2021/06/19 14:28:04 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.186 2021/06/19 15:51:11 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -3052,7 +3052,10 @@ check_variable_usage(bool novar, sym_t *sym)
 	sym_t	*xsym;
 
 	lint_assert(block_level != 0);
-	lint_assert(sym->s_block_level != 0);
+
+	/* example at file scope: int c = ({ return 3; }); */
+	if (sym->s_block_level == 0 && ch_isdigit(sym->s_name[0]))
+		return;
 
 	/* errors in expressions easily cause lots of these warnings */
 	if (nerr != 0)
