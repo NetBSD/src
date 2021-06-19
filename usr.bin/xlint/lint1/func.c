@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.108 2021/05/15 19:12:14 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.109 2021/06/19 15:51:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.108 2021/05/15 19:12:14 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.109 2021/06/19 15:51:11 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1049,7 +1049,14 @@ do_return(tnode_t *tn)
 	cstk_t	*ci;
 	op_t	op;
 
-	for (ci = cstmt; ci->c_surrounding != NULL; ci = ci->c_surrounding)
+	ci = cstmt;
+	if (ci == NULL) {
+		/* syntax error '%s' */
+		error(249, "return outside function");
+		return;
+	}
+
+	for (; ci->c_surrounding != NULL; ci = ci->c_surrounding)
 		continue;
 
 	if (tn != NULL)
