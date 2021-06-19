@@ -1,0 +1,2 @@
+d_gcc_compound_statements1.c(23): error: syntax error 'return outside function' [249]
+d_gcc_compound_statements1.c(24): error: cannot initialize 'int' from 'void' [185]
