@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.38 2021/06/18 20:29:00 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.39 2021/06/19 08:37:18 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.38 2021/06/18 20:29:00 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.39 2021/06/19 08:37:18 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -1304,7 +1304,7 @@ lex_string(void)
 	s = xmalloc(max = 64);
 
 	len = 0;
-	while ((c = get_escaped_char('"')) > 0) {
+	while ((c = get_escaped_char('"')) >= 0) {
 		/* +1 to reserve space for a trailing NUL character */
 		if (len + 1 == max)
 			s = xrealloc(s, max *= 2);
