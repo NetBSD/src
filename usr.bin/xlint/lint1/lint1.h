@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.102 2021/06/15 20:46:45 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.103 2021/06/19 15:23:57 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -554,4 +554,11 @@ value_bits(unsigned bitsize)
 		return ~((uint64_t)0);
 
 	return ~(~(uint64_t)0 << bitsize);
+}
+
+/* C99 6.7.8p7 */
+static inline bool
+is_struct_or_union(tspec_t t)
+{
+	return t == STRUCT || t == UNION;
 }
