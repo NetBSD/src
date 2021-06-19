@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.184 2021/06/19 14:08:45 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.185 2021/06/19 14:28:04 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.184 2021/06/19 14:08:45 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.185 2021/06/19 14:28:04 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -2039,7 +2039,7 @@ declare(sym_t *decl, bool initflg, sbuf_t *renaming)
 
 	if (dcs->d_ctx == EXTERN) {
 		declare_extern(decl, initflg, renaming);
-	} else if (dcs->d_ctx == ARG) {
+	} else if (dcs->d_ctx == ARG || dcs->d_ctx == PROTO_ARG) {
 		if (renaming != NULL) {
 			/* symbol renaming can't be used on function arguments */
 			error(310);
