@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.62 2021/06/19 19:49:15 rillig Exp $
+# $NetBSD: Makefile,v 1.63 2021/06/19 19:59:02 rillig Exp $
 
 NOMAN=		# defined
 MAX_MESSAGE=	344		# see lint1/err.c
@@ -134,6 +134,8 @@ FILES+=		lex_wide_string.exp
 FILES+=		${:U0 ${:U:${:Urange=${MAX_MESSAGE}}}:C,^.$,0&,:C,^..$,0&,:@i@msg_${i}.c msg_${i}.exp@:Nmsg_176.exp}
 FILES+=		op_colon.c
 FILES+=		op_colon.exp
+FILES+=		stmt_for.c
+FILES+=		stmt_for.exp
 
 # ----- begin hack -----
 # Prevent that ${DESTDIR}/emit.ln gets ${DESTDIR}/emit.c as implicit source.

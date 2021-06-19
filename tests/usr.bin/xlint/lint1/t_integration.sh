@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.54 2021/06/19 19:49:15 rillig Exp $
+# $NetBSD: t_integration.sh,v 1.55 2021/06/19 19:59:02 rillig Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -182,6 +182,7 @@ test_case lex_string
 test_case lex_wide_char
 test_case lex_wide_string
 test_case op_colon
+test_case stmt_for
 
 all_messages_body()
 {

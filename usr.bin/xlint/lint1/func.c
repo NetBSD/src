@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.110 2021/06/19 16:05:07 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.111 2021/06/19 19:59:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.110 2021/06/19 16:05:07 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.111 2021/06/19 19:59:02 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -414,6 +414,10 @@ funcend(void)
 		    cstmt->c_had_return_value, funcsym->s_osdef,
 		    dcs->d_func_args);
 	}
+
+	/* clean up after syntax errors, see test stmt_for.c. */
+	while (dcs->d_next != NULL)
+		dcs = dcs->d_next;
 
 	/*
 	 * remove all symbols declared during argument declaration from
