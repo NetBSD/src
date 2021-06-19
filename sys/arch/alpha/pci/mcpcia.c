@@ -1,4 +1,4 @@
-/* $NetBSD: mcpcia.c,v 1.33 2021/06/19 16:13:40 thorpej Exp $ */
+/* $NetBSD: mcpcia.c,v 1.34 2021/06/19 16:59:07 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.33 2021/06/19 16:13:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.34 2021/06/19 16:59:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,6 @@ __KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.33 2021/06/19 16:13:40 thorpej Exp $");
 #include <alpha/mcbus/mcbusvar.h>
 #include <alpha/pci/mcpciareg.h>
 #include <alpha/pci/mcpciavar.h>
-#include <alpha/pci/pci_kn300.h>
 
 #define KV(_addr)	((void *)ALPHA_PHYS_TO_K0SEG((_addr)))
 #define	MCPCIA_SYSBASE(mc)	\
@@ -173,7 +172,7 @@ mcpciaattach(device_t parent, device_t self, void *aux)
 	/*
 	 * Set up interrupts
 	 */
-	pci_kn300_pickintr(ccp);
+	alpha_pci_intr_init(ccp, &ccp->cc_iot, &ccp->cc_memt, &ccp->cc_pc);
 
 	/*
 	 * Attach PCI bus

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_550.c,v 1.38 2020/09/22 15:24:02 thorpej Exp $ */
+/* $NetBSD: pci_550.c,v 1.39 2021/06/19 16:59:07 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_550.c,v 1.38 2020/09/22 15:24:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_550.c,v 1.39 2021/06/19 16:59:07 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -80,8 +80,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_550.c,v 1.38 2020/09/22 15:24:02 thorpej Exp $")
 
 #include <alpha/pci/ciareg.h>
 #include <alpha/pci/ciavar.h>
-
-#include <alpha/pci/pci_550.h>
 
 #include "sio.h"
 #if NSIO
@@ -119,15 +117,14 @@ static void	dec_550_intr_disestablish(pci_chipset_tag_t, void *);
 static void	dec_550_intr_enable(pci_chipset_tag_t, int irq);
 static void	dec_550_intr_disable(pci_chipset_tag_t, int irq);
 
-void
-pci_550_pickintr(struct cia_config *ccp)
+static void
+pci_550_pickintr(void *core, bus_space_tag_t iot, bus_space_tag_t memt,
+    pci_chipset_tag_t pc)
 {
-	bus_space_tag_t iot = &ccp->cc_iot;
-	pci_chipset_tag_t pc = &ccp->cc_pc;
 	char *cp;
 	int i;
 
-	pc->pc_intr_v = ccp;
+	pc->pc_intr_v = core;
 	pc->pc_intr_map = dec_550_intr_map;
 	pc->pc_intr_string = dec_550_intr_string;
 	pc->pc_intr_evcnt = dec_550_intr_evcnt;
@@ -158,7 +155,7 @@ pci_550_pickintr(struct cia_config *ccp)
 	for (i = 0; i < DEC_550_MAX_IRQ; i++) {
 		alpha_shared_intr_set_maxstrays(pc->pc_shared_intrs, i,
 		    PCI_STRAY_MAX);
-		alpha_shared_intr_set_private(pc->pc_shared_intrs, i, ccp);
+		alpha_shared_intr_set_private(pc->pc_shared_intrs, i, core);
 		
 		cp = alpha_shared_intr_string(pc->pc_shared_intrs, i);
 		snprintf(cp, PCI_550_IRQ_STR, "irq %d", i);
@@ -171,6 +168,7 @@ pci_550_pickintr(struct cia_config *ccp)
 	sio_intr_setup(pc, iot);
 #endif
 }
+ALPHA_PCI_INTR_INIT(ST_DEC_550, pci_550_pickintr)
 
 static int
 dec_550_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)

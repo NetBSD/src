@@ -1,4 +1,4 @@
-/* $NetBSD: pci_2100_a500.h,v 1.2 2008/04/28 20:23:11 martin Exp $ */
+/* $NetBSD: pci_2100_a500.h,v 1.3 2021/06/19 16:59:07 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,6 @@
  */
 
 struct ttwoga_config;
-void	pci_2100_a500_pickintr(struct ttwoga_config *);
 
 void	pci_2100_a500_eisa_pickintr(pci_chipset_tag_t, eisa_chipset_tag_t);
 void	pci_2100_a500_isa_pickintr(pci_chipset_tag_t, isa_chipset_tag_t);
