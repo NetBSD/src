@@ -1,0 +1,2 @@
+lex_wide_string.c(24): error: no hex digits follow \x [74]
+lex_wide_string.c(27): warning: dubious escape \y [79]

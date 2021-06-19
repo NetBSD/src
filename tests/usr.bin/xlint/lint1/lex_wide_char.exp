@@ -1,0 +1,2 @@
+lex_wide_char.c(24): error: too many characters in character constant [71]
+lex_wide_char.c(29): warning: dubious escape \e [79]
