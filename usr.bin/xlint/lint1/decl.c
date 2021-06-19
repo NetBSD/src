@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.182 2021/05/16 11:11:36 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.183 2021/06/19 11:01:23 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.182 2021/05/16 11:11:36 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.183 2021/06/19 11:01:23 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -3256,6 +3256,8 @@ check_global_variable_size(const sym_t *sym)
 		 * function declaration
 		 */
 		return;
+	if (sym->s_def == TDEF && sym->s_type->t_tspec == VOID)
+		return;		/* prevent internal error in length() below */
 
 	cpos = curr_pos;
 	curr_pos = sym->s_def_pos;
