@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.53 2021/06/19 08:30:08 rillig Exp $
+# $NetBSD: t_integration.sh,v 1.54 2021/06/19 19:49:15 rillig Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -166,6 +166,7 @@ test_case d_type_question_colon
 test_case d_typefun
 test_case d_typename_as_var
 test_case d_zero_sized_arrays
+test_case decl_struct_member
 test_case emit
 test_case expr_range
 test_case feat_stacktrace
