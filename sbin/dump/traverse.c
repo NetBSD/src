@@ -1,4 +1,4 @@
-/*	$NetBSD: traverse.c,v 1.52 2019/03/01 16:42:11 christos Exp $	*/
+/*	$NetBSD: traverse.c,v 1.53 2021/06/19 13:56:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)traverse.c	8.7 (Berkeley) 6/15/95";
 #else
-__RCSID("$NetBSD: traverse.c,v 1.52 2019/03/01 16:42:11 christos Exp $");
+__RCSID("$NetBSD: traverse.c,v 1.53 2021/06/19 13:56:34 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -45,6 +45,7 @@ __RCSID("$NetBSD: traverse.c,v 1.52 2019/03/01 16:42:11 christos Exp $");
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
 
+#include <assert.h>
 #include <ctype.h>
 #include <errno.h>
 #include <fts.h>
@@ -58,8 +59,10 @@ __RCSID("$NetBSD: traverse.c,v 1.52 2019/03/01 16:42:11 christos Exp $");
 #define	HASDUMPEDFILE	0x1
 #define	HASSUBDIRS	0x2
 
+static	int appendextdata(union dinode *dp);
+static	void writeextdata(union dinode *dp, ino_t ino, int added);
 static	int dirindir(ino_t, daddr_t, int, off_t *, u_int64_t *, int);
-static	void dmpindir(ino_t, daddr_t, int, off_t *);
+static	void dmpindir(union dinode *dp, ino_t, daddr_t, int, off_t *);
 static	int searchdir(ino_t, daddr_t, long, off_t, u_int64_t *, int);
 
 /*
@@ -475,7 +478,7 @@ searchdir(ino_t dino, daddr_t blkno, long size, off_t filesize,
 void
 dumpino(union dinode *dp, ino_t ino)
 {
-	int ind_level, cnt;
+	int ind_level, cnt, last, added;
 	off_t size;
 	char buf[TP_BSIZE];
 	daddr_t blk;
@@ -504,6 +507,7 @@ dumpino(union dinode *dp, ino_t ino)
 			ffs_dinode2_swap(&dp->dp2, &dp->dp2);
 		spcl.c_mode = dp->dp2.di_mode;
 		spcl.c_size = dp->dp2.di_size;
+		spcl.c_extsize = dp->dp2.di_extsize;
 		spcl.c_atime = dp->dp2.di_atime;
 		spcl.c_atimensec = dp->dp2.di_atimensec;
 		spcl.c_mtime = dp->dp2.di_mtime;
@@ -539,6 +543,7 @@ dumpino(union dinode *dp, ino_t ino)
 			) {
 			spcl.c_addr[0] = 1;
 			spcl.c_count = iswap32(1);
+			added = appendextdata(dp);
 			writeheader(ino);
 			if (is_ufs2)
 				shortlink = dp->dp2.di_db;
@@ -547,6 +552,7 @@ dumpino(union dinode *dp, ino_t ino)
 			memmove(buf, shortlink, DIP(dp, size));
 			buf[DIP(dp, size)] = '\0';
 			writerec(buf, 0);
+			writeextdata(dp, ino, added);
 			return;
 		}
 		/* fall through */
@@ -561,19 +567,24 @@ dumpino(union dinode *dp, ino_t ino)
 	case IFSOCK:
 	case IFCHR:
 	case IFBLK:
+		added = appendextdata(dp);
 		writeheader(ino);
+		writeextdata(dp, ino, added);
 		return;
 
 	default:
 		msg("Warning: undefined file type 0%o\n", DIP(dp, mode) & IFMT);
 		return;
 	}
-	if (DIP(dp, size) > UFS_NDADDR * ufsib->ufs_bsize)
+	if (DIP(dp, size) > UFS_NDADDR * ufsib->ufs_bsize) {
 		cnt = UFS_NDADDR * ufsib->ufs_frag;
-	else
+		last = 0;
+	} else {
 		cnt = howmany(DIP(dp, size), ufsib->ufs_fsize);
+		last = 1;
+	}
 	if (is_ufs2)
-		blksout64(&dp->dp2.di_db[0], cnt, ino);
+		blksout64(dp, &dp->dp2.di_db[0], cnt, ino, last);
 	else
 		blksout32(&dp->dp1.di_db[0], cnt, ino);
 
@@ -584,7 +595,7 @@ dumpino(union dinode *dp, ino_t ino)
 			blk = iswap64(dp->dp2.di_ib[ind_level]);
 		else
 			blk = iswap32(dp->dp1.di_ib[ind_level]);
-		dmpindir(ino, blk, ind_level, &size);
+		dmpindir(dp, ino, blk, ind_level, &size);
 		if (size <= 0)
 			return;
 	}
@@ -594,9 +605,9 @@ dumpino(union dinode *dp, ino_t ino)
  * Read indirect blocks, and pass the data blocks to be dumped.
  */
 static void
-dmpindir(ino_t ino, daddr_t blk, int ind_level, off_t *size)
+dmpindir(union dinode *dp, ino_t ino, daddr_t blk, int ind_level, off_t *size)
 {
-	int i, cnt;
+	int i, cnt, last;
 	union {
 		int32_t i32[MAXBSIZE / sizeof (int32_t)];
 		int64_t i64[MAXBSIZE / sizeof (int64_t)];
@@ -610,13 +621,16 @@ dmpindir(ino_t ino, daddr_t blk, int ind_level, off_t *size)
 	else
 		memset(&idblk, 0, (int)ufsib->ufs_bsize);
 	if (ind_level <= 0) {
-		if (*size < ufsib->ufs_nindir * ufsib->ufs_bsize)
+		if (*size < ufsib->ufs_nindir * ufsib->ufs_bsize) {
 			cnt = howmany(*size, ufsib->ufs_fsize);
-		else
+			last = 0;
+		} else {
 			cnt = ufsib->ufs_nindir * ufsib->ufs_frag;
+			last = 1;
+		}
 		*size -= ufsib->ufs_nindir * ufsib->ufs_bsize;
 		if (is_ufs2)
-			blksout64(&idblk.i64[0], cnt, ino);
+			blksout64(dp, &idblk.i64[0], cnt, ino, last);
 		else
 			blksout32(&idblk.i32[0], cnt, ino);
 		return;
@@ -627,7 +641,7 @@ dmpindir(ino_t ino, daddr_t blk, int ind_level, off_t *size)
 			iblk = iswap64(idblk.i64[i]);
 		else
 			iblk = iswap32(idblk.i32[i]);
-		dmpindir(ino, iblk, ind_level, size);
+		dmpindir(dp, ino, iblk, ind_level, size);
 		if (*size <= 0)
 			return;
 	}
@@ -669,24 +683,40 @@ blksout32(int32_t *blkp, int frags, ino_t ino)
 }
 
 void
-blksout64(int64_t *blkp, int frags, ino_t ino)
+blksout64(union dinode *dp, int64_t *blkp, int frags, ino_t ino, int last)
 {
 	int64_t *bp;
-	int i, j, count, blks, tbperdb;
+	int i, j, count, blks, tbperdb, added = 0;
+	static int writingextdata = 0;
 
 	blks = howmany(frags * ufsib->ufs_fsize, TP_BSIZE);
+	if (last) {
+		int resid;
+		int extsize = iswap32(spcl.c_extsize);
+		if (writingextdata)
+			resid = howmany(ufsib->ufs_qfmask & extsize,
+			    TP_BSIZE);
+		else
+			resid = howmany(ufsib->ufs_qfmask & dp->dp2.di_size,
+			    TP_BSIZE);
+		if (resid > 0)
+			blks -= howmany(ufsib->ufs_fsize, TP_BSIZE) - resid;
+	}
 	tbperdb = ufsib->ufs_bsize >> tp_bshift;
 	for (i = 0; i < blks; i += TP_NINDIR) {
 		if (i + TP_NINDIR > blks)
 			count = blks;
 		else
 			count = i + TP_NINDIR;
+		assert(count <= TP_NINDIR + i);
 		for (j = i; j < count; j++)
 			if (blkp[j / tbperdb] != 0)
 				spcl.c_addr[j - i] = 1;
 			else
 				spcl.c_addr[j - i] = 0;
 		spcl.c_count = iswap32(count - i);
+		if (last && count == blks && !writingextdata)
+			added = appendextdata(dp);
 		writeheader(ino);
 		bp = &blkp[i / tbperdb];
 		for (j = i; j < count; j += tbperdb, bp++)
@@ -697,7 +727,127 @@ blksout64(int64_t *blkp, int frags, ino_t ino)
 					dumpblock(iswap64(*bp), (count - j) * TP_BSIZE);
 			}
 		spcl.c_type = iswap32(TS_ADDR);
+		spcl.c_count = 0;
+		if (last && count == blks && !writingextdata) {
+			writingextdata = 1;
+			writeextdata(dp, ino, added);
+			writingextdata = 0;
+		}
 	}
+}
+
+/*
+ * If there is room in the current block for the extended attributes
+ * as well as the file data, update the header to reflect the added
+ * attribute data at the end. Attributes are placed at the end so that
+ * old versions of restore will correctly restore the file and simply
+ * discard the extra data at the end that it does not understand.
+ * The attribute data is dumped following the file data by the
+ * writeextdata() function (below).
+ */
+static int
+appendextdata(union dinode *dp)
+{
+	int i, blks, tbperdb, count, extsize;
+
+	count = iswap32(spcl.c_count);
+	extsize = iswap32(spcl.c_extsize);
+	/*
+	 * If no extended attributes, there is nothing to do.
+	 */
+	if (extsize == 0)
+		return (0);
+	/*
+	 * If there is not enough room at the end of this block
+	 * to add the extended attributes, then rather than putting
+	 * part of them here, we simply push them entirely into a
+	 * new block rather than putting some here and some later.
+	 */
+	if (extsize > UFS_NXADDR * ufsib->ufs_bsize)
+		blks = howmany(UFS_NXADDR * ufsib->ufs_bsize, TP_BSIZE);
+	else
+		blks = howmany(extsize, TP_BSIZE);
+	if (count + blks > TP_NINDIR)
+		return (0);
+	/*
+	 * Update the block map in the header to indicate the added
+	 * extended attribute. They will be appended after the file
+	 * data by the writeextdata() routine.
+	 */
+	tbperdb = ufsib->ufs_bsize >> tp_bshift;
+	assert(count + blks < TP_NINDIR);
+	for (i = 0; i < blks; i++)
+		if (&dp->dp2.di_extb[i / tbperdb] != 0)
+				spcl.c_addr[count + i] = 1;
+			else
+				spcl.c_addr[count + i] = 0;
+	spcl.c_count = iswap32(count + blks);
+	return (blks);
+}
+
+/*
+ * Dump the extended attribute data. If there was room in the file
+ * header, then all we need to do is output the data blocks. If there
+ * was not room in the file header, then an additional TS_ADDR header
+ * is created to hold the attribute data.
+ */
+static void
+writeextdata(union dinode *dp, ino_t ino, int added)
+{
+	int i, frags, blks, tbperdb, last, extsize;
+	int64_t *bp;
+	off_t size;
+
+	extsize = iswap32(spcl.c_extsize);
+
+	/*
+	 * If no extended attributes, there is nothing to do.
+	 */
+	if (extsize == 0)
+		return;
+	/*
+	 * If there was no room in the file block for the attributes,
+	 * dump them out in a new block, otherwise just dump the data.
+	 */
+	if (added == 0) {
+		if (extsize > UFS_NXADDR * ufsib->ufs_bsize) {
+			frags = UFS_NXADDR * ufsib->ufs_frag;
+			last = 0;
+		} else {
+			frags = howmany(extsize, ufsib->ufs_fsize);
+			last = 1;
+		}
+		blksout64(dp, &dp->dp2.di_extb[0], frags, ino, last);
+	} else {
+		if (extsize > UFS_NXADDR * ufsib->ufs_bsize)
+			blks = howmany(UFS_NXADDR * ufsib->ufs_bsize, TP_BSIZE);
+		else
+			blks = howmany(extsize, TP_BSIZE);
+		tbperdb = ufsib->ufs_bsize >> tp_bshift;
+		for (i = 0; i < blks; i += tbperdb) {
+			bp = &dp->dp2.di_extb[i / tbperdb];
+			if (*bp != 0) {
+				if (i + tbperdb <= blks)
+					dumpblock(iswap64(*bp), (int)ufsib->ufs_bsize);
+				else
+					dumpblock(iswap64(*bp), (blks - i) * TP_BSIZE);
+			}
+		}
+
+	}
+	/*
+	 * If an indirect block is added for extended attributes, then
+	 * di_exti below should be changed to the structure element
+	 * that references the extended attribute indirect block. This
+	 * definition is here only to make it compile without complaint.
+	 */
+#define di_exti di_spare[0]
+	/*
+	 * If the extended attributes fall into an indirect block,
+	 * dump it as well.
+	 */
+	if ((size = extsize - UFS_NXADDR * ufsib->ufs_bsize) > 0)
+		dmpindir(dp, ino, dp->dp2.di_exti, 0, &size);
 }
 
 /*

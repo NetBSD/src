@@ -1,4 +1,4 @@
-/*	$NetBSD: symtab.c,v 1.29 2013/01/22 09:39:13 dholland Exp $	*/
+/*	$NetBSD: symtab.c,v 1.30 2021/06/19 13:56:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)symtab.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: symtab.c,v 1.29 2013/01/22 09:39:13 dholland Exp $");
+__RCSID("$NetBSD: symtab.c,v 1.30 2021/06/19 13:56:35 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -102,7 +102,7 @@ addino(ino_t inum, struct entry *np)
 	struct entry **epp;
 
 	if (inum < UFS_WINO || inum >= maxino)
-		panic("addino: out of range %llu\n", (unsigned long long)inum);
+		panic("addino: out of range %ju\n", (uintmax_t)inum);
 	epp = &entry[inum % entrytblsize];
 	np->e_ino = inum;
 	np->e_next = *epp;
@@ -123,8 +123,8 @@ deleteino(ino_t inum)
 	struct entry **prev;
 
 	if (inum < UFS_WINO || inum >= maxino)
-		panic("deleteino: out of range %llu\n",
-		    (unsigned long long)inum);
+		panic("deleteino: out of range %ju\n",
+		    (uintmax_t)inum);
 	prev = &entry[inum % entrytblsize];
 	for (next = *prev; next != NULL; next = next->e_next) {
 		if (next->e_ino == inum) {
@@ -134,7 +134,7 @@ deleteino(ino_t inum)
 		}
 		prev = &next->e_next;
 	}
-	panic("deleteino: %llu not found\n", (unsigned long long)inum);
+	panic("deleteino: %ju not found\n", (uintmax_t)inum);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: restore.h,v 1.22 2020/04/05 15:25:40 joerg Exp $	*/
+/*	$NetBSD: restore.h,v 1.23 2021/06/19 13:56:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -134,6 +134,7 @@ extern struct context {
 	int	atime_nsec;	/* access time nanoseconds */
 	int	mtime_nsec;	/* modified time nanoseconds */
 	int	birthtime_nsec;	/* creation time nanoseconds */
+	int	extsize;	/* size of extended attribute data */
 	off_t	size;		/* size of file */
 	const char *name;	/* name of file */
 } curfile;
