@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.40 2021/06/19 08:57:24 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.41 2021/06/19 20:25:58 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.40 2021/06/19 08:57:24 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.41 2021/06/19 20:25:58 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -369,7 +369,12 @@ inpc(void)
 {
 	int	c;
 
-	if ((c = lex_input()) != EOF && (c &= CHAR_MASK) == '\n')
+	if ((c = lex_input()) == EOF)
+		return c;
+	c &= CHAR_MASK;
+	if (c == '\0')
+		return EOF;	/* lex returns 0 on EOF. */
+	if (c == '\n')
 		lex_next_line();
 	return c;
 }
