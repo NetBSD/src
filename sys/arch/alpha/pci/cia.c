@@ -1,4 +1,4 @@
-/* $NetBSD: cia.c,v 1.76 2021/06/18 22:17:53 thorpej Exp $ */
+/* $NetBSD: cia.c,v 1.77 2021/06/19 16:59:07 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -57,15 +57,11 @@
  * rights to redistribute these changes.
  */
 
-#include "opt_dec_eb164.h"
-#include "opt_dec_kn20aa.h"
 #include "opt_dec_550.h"
-#include "opt_dec_1000a.h"
-#include "opt_dec_1000.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.76 2021/06/18 22:17:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.77 2021/06/19 16:59:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,22 +81,6 @@ __KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.76 2021/06/18 22:17:53 thorpej Exp $");
 #include <dev/pci/pcivar.h>
 #include <alpha/pci/ciareg.h>
 #include <alpha/pci/ciavar.h>
-
-#ifdef DEC_KN20AA
-#include <alpha/pci/pci_kn20aa.h>
-#endif
-#ifdef DEC_EB164
-#include <alpha/pci/pci_eb164.h>
-#endif
-#ifdef DEC_550
-#include <alpha/pci/pci_550.h>
-#endif
-#ifdef DEC_1000A
-#include <alpha/pci/pci_1000a.h>
-#endif
-#ifdef DEC_1000
-#include <alpha/pci/pci_1000.h>
-#endif
 
 static int	ciamatch(device_t, cfdata_t, void *);
 static void	ciaattach(device_t, device_t, void *);
@@ -353,42 +333,7 @@ ciaattach(device_t parent, device_t self, void *aux)
 
 	cia_dma_init(ccp);
 
-	switch (cputype) {
-#ifdef DEC_KN20AA
-	case ST_DEC_KN20AA:
-		pci_kn20aa_pickintr(ccp);
-		break;
-#endif
-
-#ifdef DEC_EB164
-	case ST_EB164:
-		pci_eb164_pickintr(ccp);
-		break;
-#endif
-
-#ifdef DEC_550
-	case ST_DEC_550:
-		pci_550_pickintr(ccp);
-		break;
-#endif
-
-#ifdef DEC_1000A
-	case ST_DEC_1000A:
-		pci_1000a_pickintr(ccp, &ccp->cc_iot, &ccp->cc_memt,
-			&ccp->cc_pc);
-		break;
-#endif
-
-#ifdef DEC_1000
-	case ST_DEC_1000:
-		pci_1000_pickintr(ccp, &ccp->cc_iot, &ccp->cc_memt,
-			&ccp->cc_pc);
-		break;
-#endif
-
-	default:
-		panic("ciaattach: shouldn't be here, really...");
-	}
+	alpha_pci_intr_init(ccp, &ccp->cc_iot, &ccp->cc_memt, &ccp->cc_pc);
 
 	pba.pba_iot = &ccp->cc_iot;
 	pba.pba_memt = &ccp->cc_memt;

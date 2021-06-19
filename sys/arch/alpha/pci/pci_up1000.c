@@ -1,4 +1,4 @@
-/* $NetBSD: pci_up1000.c,v 1.16 2020/09/22 15:24:02 thorpej Exp $ */
+/* $NetBSD: pci_up1000.c,v 1.17 2021/06/19 16:59:07 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_up1000.c,v 1.16 2020/09/22 15:24:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_up1000.c,v 1.17 2021/06/19 16:59:07 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_up1000.c,v 1.16 2020/09/22 15:24:02 thorpej Exp 
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
+#include <machine/rpb.h>
 #include <sys/bus.h>
 #include <machine/intr.h>
 
@@ -53,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_up1000.c,v 1.16 2020/09/22 15:24:02 thorpej Exp 
 
 #include <alpha/pci/irongatevar.h>
 
-#include <alpha/pci/pci_up1000.h>
 #include <alpha/pci/siovar.h>
 #include <alpha/pci/sioreg.h>
 
@@ -62,14 +62,12 @@ __KERNEL_RCSID(0, "$NetBSD: pci_up1000.c,v 1.16 2020/09/22 15:24:02 thorpej Exp 
 static int	api_up1000_intr_map(const struct pci_attach_args *,
 		    pci_intr_handle_t *);
 
-void
-pci_up1000_pickintr(struct irongate_config *icp)
+static void
+pci_up1000_pickintr(void *core, bus_space_tag_t iot, bus_space_tag_t memt,
+    pci_chipset_tag_t pc)
 {
 #if NSIO
-	bus_space_tag_t iot = &icp->ic_iot;
-	pci_chipset_tag_t pc = &icp->ic_pc;
-
-	pc->pc_intr_v = icp;
+	pc->pc_intr_v = core;
 	pc->pc_intr_map = api_up1000_intr_map;
 	pc->pc_intr_string = sio_pci_intr_string;
 	pc->pc_intr_evcnt = sio_pci_intr_evcnt;
@@ -84,6 +82,7 @@ pci_up1000_pickintr(struct irongate_config *icp)
 	panic("pci_up1000_pickintr: no I/O interrupt handler (no sio)");
 #endif
 }
+ALPHA_PCI_INTR_INIT(ST_API_NAUTILUS, pci_up1000_pickintr)
 
 static int
 api_up1000_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
