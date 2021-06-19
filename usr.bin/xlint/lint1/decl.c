@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.183 2021/06/19 11:01:23 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.184 2021/06/19 14:08:45 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.183 2021/06/19 11:01:23 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.184 2021/06/19 14:08:45 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -601,8 +601,7 @@ begin_declaration_level(scl_t sc)
 	di->d_ctx = sc;
 	di->d_ldlsym = &di->d_dlsyms;
 	if (dflag)
-		(void)printf("%s(%p %d)\n", __func__, dcs, (int)sc);
-
+		(void)printf("%s(%p %s)\n", __func__, dcs, scl_name(sc));
 }
 
 /*
@@ -614,7 +613,8 @@ end_declaration_level(void)
 	dinfo_t	*di;
 
 	if (dflag)
-		(void)printf("%s(%p %d)\n", __func__, dcs, (int)dcs->d_ctx);
+		(void)printf("%s(%p %s)\n",
+		    __func__, dcs, scl_name(dcs->d_ctx));
 
 	lint_assert(dcs->d_next != NULL);
 	di = dcs;
