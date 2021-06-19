@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx.c,v 1.40 2021/04/24 23:36:23 thorpej Exp $ */
+/* $NetBSD: dwlpx.c,v 1.41 2021/06/19 16:29:03 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.40 2021/04/24 23:36:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.41 2021/06/19 16:29:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,6 @@ dwlpxmatch(device_t parent, cfdata_t cf, void *aux)
 static void
 dwlpxattach(device_t parent, device_t self, void *aux)
 {
-	static int once = 0;
 	struct dwlpx_softc *sc = device_private(self);
 	struct dwlpx_config *ccp = &sc->dwlpx_cc;
 	struct kft_dev_attach_args *ka = aux;
@@ -158,15 +157,10 @@ dwlpxattach(device_t parent, device_t self, void *aux)
 	}
 #endif
 
-	if (once == 0) {
-		/*
-		 * Set up interrupts
-		 */
-		pci_kn8ae_pickintr(&sc->dwlpx_cc, 1);
-		once++;
-	} else {
-		pci_kn8ae_pickintr(&sc->dwlpx_cc, 0);
-	}
+	/*
+	 * Set up interrupts
+	 */
+	pci_kn8ae_pickintr(&sc->dwlpx_cc);
 
 	/*
 	 * Attach PCI bus
