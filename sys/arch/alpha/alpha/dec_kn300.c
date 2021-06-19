@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn300.c,v 1.42 2015/12/14 10:12:45 martin Exp $ */
+/* $NetBSD: dec_kn300.c,v 1.43 2021/06/19 16:36:35 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.42 2015/12/14 10:12:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.43 2021/06/19 16:36:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,6 @@ __KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.42 2015/12/14 10:12:45 martin Exp $"
 #include <alpha/mcbus/mcbusvar.h>
 #include <alpha/pci/mcpciareg.h>
 #include <alpha/pci/mcpciavar.h>
-#include <alpha/pci/pci_kn300.h>
 #include <machine/logout.h>
 
 #include <dev/scsipi/scsi_all.h>
