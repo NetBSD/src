@@ -1,4 +1,4 @@
-/*	$NetBSD: extattr.h,v 1.10 2020/05/16 18:31:53 christos Exp $	*/
+/*	$NetBSD: extattr.h,v 1.11 2021/06/19 13:56:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001 Robert N. M. Watson
@@ -41,10 +41,26 @@
 
 #include <sys/types.h>
 
+#define	EXTATTR_NAMESPACE_EMPTY		0x00000000
+#define	EXTATTR_NAMESPACE_EMPTY_STRING	"empty"
 #define	EXTATTR_NAMESPACE_USER		0x00000001
 #define	EXTATTR_NAMESPACE_USER_STRING	"user"
 #define	EXTATTR_NAMESPACE_SYSTEM	0x00000002
 #define	EXTATTR_NAMESPACE_SYSTEM_STRING	"system"
+
+/*    
+ * The following macro is designed to initialize an array that maps
+ * extended-attribute namespace values to their names, e.g.:
+ * 
+ * char *extattr_namespace_names[] = EXTATTR_NAMESPACE_NAMES;
+ */
+#define	EXTATTR_NAMESPACE_NAMES { \
+    EXTATTR_NAMESPACE_EMPTY_STRING, \
+    EXTATTR_NAMESPACE_USER_STRING, \
+    EXTATTR_NAMESPACE_SYSTEM_STRING, \
+}
+
+#define	EXTATTR_MAXNAMELEN	KERNEL_NAME_MAX
 
 /* for sys_extattrctl */
 #define EXTATTR_CMD_START		0x00000001
@@ -57,7 +73,6 @@
 /* VOP_LISTEXTATTR flags */
 #define EXTATTR_LIST_LENPREFIX	1	/* names with length prefix */
 
-#define	EXTATTR_MAXNAMELEN	KERNEL_NAME_MAX
 struct lwp;
 struct vnode;
 int	extattr_check_cred(struct vnode *, int, kauth_cred_t, int);

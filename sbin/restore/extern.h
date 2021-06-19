@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.15 2008/02/16 17:58:01 matt Exp $	*/
+/*	$NetBSD: extern.h,v 1.16 2021/06/19 13:56:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@ struct entry	*addentry(const char *, ino_t, int);
 long		 addfile(const char *, ino_t, int);
 int		 addwhiteout(char *);
 void		 badentry(struct entry *, const char *);
-void	 	 canon(const char *, char *);
+void	 	 canon(const char *, char *, size_t);
 void		 checkrestore(void);
 void 		 cleanup(void);
 void		 closemt(void);
@@ -57,7 +57,8 @@ void		 freeentry(struct entry *);
 void		 freename(char *);
 int	 	 genliteraldir(const char *, ino_t);
 char		*gentempname(struct entry *);
-void		 getfile(void (*)(char *, long), void (*)(char *, long));
+void		 getfile(void (*)(char *, size_t),
+    void (*)(char *, size_t), void (*)(char *, size_t));
 void		 getvol(int);
 void		 initsymtable(const char *);
 int	 	 inodetype(ino_t);
@@ -91,6 +92,12 @@ struct direct	*rst_readdir(RST_DIR *);
 void		 rst_closedir(RST_DIR *);
 void	 	 runcmdshell(void);
 char		*savename(const char *);
+enum set_extattr_mode {
+	SXA_FILE,
+	SXA_LINK,
+	SXA_FD,
+};
+void		 set_extattr(int, char *, void *, int, enum set_extattr_mode);
 void	 	 setdirmodes(int);
 void		 setinput(const char *);
 void		 setup(void);
@@ -104,7 +111,7 @@ ino_t		 upperbnd(ino_t);
 long		 verifyfile(const char *, ino_t, int);
 void		 writemtree(const char *, const char *, const uid_t,
 				const gid_t, const mode_t, const u_long);
-void		 xtrnull(char *, long);
+void		 xtrnull(char *, size_t);
 
 /* From ../dump/dumprmt.c */
 void		rmtclose(void);
