@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.198 2021/04/18 09:53:03 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.199 2021/06/19 15:23:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.198 2021/04/18 09:53:03 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.199 2021/06/19 15:23:57 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -232,14 +232,6 @@ unconst_cast(const void *p)
 
 	memcpy(&r, &p, sizeof(r));
 	return r;
-}
-
-/* C99 6.7.8p7 */
-static bool
-is_struct_or_union(tspec_t t)
-{
-
-	return t == STRUCT || t == UNION;
 }
 
 static bool
