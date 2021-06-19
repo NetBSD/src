@@ -1,4 +1,4 @@
-/* $NetBSD: pci_1000a.c,v 1.29 2020/09/22 15:24:02 thorpej Exp $ */
+/* $NetBSD: pci_1000a.c,v 1.30 2021/06/19 16:59:07 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_1000a.c,v 1.29 2020/09/22 15:24:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_1000a.c,v 1.30 2021/06/19 16:59:07 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -72,11 +72,10 @@ __KERNEL_RCSID(0, "$NetBSD: pci_1000a.c,v 1.29 2020/09/22 15:24:02 thorpej Exp $
 #include <sys/syslog.h>
 
 #include <machine/autoconf.h>
+#include <machine/rpb.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
-
-#include <alpha/pci/pci_1000a.h>
 
 #include "sio.h"
 #if NSIO > 0 || NPCEB > 0
@@ -99,8 +98,9 @@ static void	dec_1000a_enable_intr(pci_chipset_tag_t, int irq);
 static void	dec_1000a_disable_intr(pci_chipset_tag_t, int irq);
 static void	pci_1000a_imi(void);
 
-void
-pci_1000a_pickintr(void *core, bus_space_tag_t iot, bus_space_tag_t memt, pci_chipset_tag_t pc)
+static void
+pci_1000a_pickintr(void *core, bus_space_tag_t iot, bus_space_tag_t memt,
+    pci_chipset_tag_t pc)
 {
 	char *cp;
 	int i;
@@ -146,6 +146,7 @@ pci_1000a_pickintr(void *core, bus_space_tag_t iot, bus_space_tag_t memt, pci_ch
 	sio_intr_setup(pc, iot);
 #endif
 }
+ALPHA_PCI_INTR_INIT(ST_DEC_1000A, pci_1000a_pickintr)
 
 int
 dec_1000a_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)

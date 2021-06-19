@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn8ae.c,v 1.32 2021/06/19 16:29:03 thorpej Exp $ */
+/* $NetBSD: pci_kn8ae.c,v 1.33 2021/06/19 16:59:07 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn8ae.c,v 1.32 2021/06/19 16:29:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn8ae.c,v 1.33 2021/06/19 16:59:07 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -46,13 +46,13 @@ __KERNEL_RCSID(0, "$NetBSD: pci_kn8ae.c,v 1.32 2021/06/19 16:29:03 thorpej Exp $
 #include <sys/once.h>
 
 #include <machine/autoconf.h>
+#include <machine/rpb.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 
 #include <alpha/pci/dwlpxreg.h>
 #include <alpha/pci/dwlpxvar.h>
-#include <alpha/pci/pci_kn8ae.h>
 
 static int	dec_kn8ae_intr_map(const struct pci_attach_args *,
 		    pci_intr_handle_t *);
@@ -106,12 +106,12 @@ pci_kn8ae_init_imaskcache(void)
 	return 0;
 }
 
-void
-pci_kn8ae_pickintr(struct dwlpx_config *ccp)
+static void
+pci_kn8ae_pickintr(void *core, bus_space_tag_t iot, bus_space_tag_t memt,
+    pci_chipset_tag_t pc)
 {
-	pci_chipset_tag_t pc = &ccp->cc_pc;
 
-	pc->pc_intr_v = ccp;
+	pc->pc_intr_v = core;
 	pc->pc_intr_map = dec_kn8ae_intr_map;
 	pc->pc_intr_string = dec_kn8ae_intr_string;
 	pc->pc_intr_evcnt = dec_kn8ae_intr_evcnt;
@@ -123,6 +123,7 @@ pci_kn8ae_pickintr(struct dwlpx_config *ccp)
 
 	RUN_ONCE(&pci_kn8ae_once, pci_kn8ae_init_imaskcache);
 }
+ALPHA_PCI_INTR_INIT(ST_DEC_21000, pci_kn8ae_pickintr)
 
 #define	IH_MAKE(vec, dev, pin)						\
 	((vec) | ((dev) << 16) | ((pin) << 24))

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn300.c,v 1.39 2021/06/19 16:13:40 thorpej Exp $ */
+/* $NetBSD: pci_kn300.c,v 1.40 2021/06/19 16:59:07 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.39 2021/06/19 16:13:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.40 2021/06/19 16:59:07 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.39 2021/06/19 16:13:40 thorpej Exp $
 #include <sys/syslog.h>
 
 #include <machine/autoconf.h>
+#include <machine/rpb.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -53,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.39 2021/06/19 16:13:40 thorpej Exp $
 #include <alpha/mcbus/mcbusreg.h>
 #include <alpha/pci/mcpciareg.h>
 #include <alpha/pci/mcpciavar.h>
-#include <alpha/pci/pci_kn300.h>
 
 #include "sio.h"
 #if NSIO > 0 || NPCEB > 0
@@ -84,11 +84,12 @@ static void	kn300_iointr(void *, unsigned long);
 static void	kn300_enable_intr(struct mcpcia_config *, int);
 static void	kn300_disable_intr(struct mcpcia_config *, int);
 
-void
-pci_kn300_pickintr(struct mcpcia_config *ccp)
+static void
+pci_kn300_pickintr(void *core, bus_space_tag_t iot, bus_space_tag_t memt,
+    pci_chipset_tag_t pc)
 {
+	struct mcpcia_config *ccp = core;
 	char *cp;
-	pci_chipset_tag_t pc = &ccp->cc_pc;
 
 	if (kn300_pci_intr == NULL) {
 		int g;
@@ -107,7 +108,7 @@ pci_kn300_pickintr(struct mcpcia_config *ccp)
 		}
 	}
 
-	pc->pc_intr_v = ccp;
+	pc->pc_intr_v = core;
 	pc->pc_intr_map = dec_kn300_intr_map;
 	pc->pc_intr_string = dec_kn300_intr_string;
 	pc->pc_intr_evcnt = dec_kn300_intr_evcnt;
@@ -125,6 +126,7 @@ pci_kn300_pickintr(struct mcpcia_config *ccp)
 #endif
 	}
 }
+ALPHA_PCI_INTR_INIT(ST_DEC_4100, pci_kn300_pickintr)
 
 static int
 dec_kn300_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)

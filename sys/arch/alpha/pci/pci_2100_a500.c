@@ -1,4 +1,4 @@
-/* $NetBSD: pci_2100_a500.c,v 1.14 2020/09/25 03:40:11 thorpej Exp $ */
+/* $NetBSD: pci_2100_a500.c,v 1.15 2021/06/19 16:59:07 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_2100_a500.c,v 1.14 2020/09/25 03:40:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_2100_a500.c,v 1.15 2021/06/19 16:59:07 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_2100_a500.c,v 1.14 2020/09/25 03:40:11 thorpej E
 #include <sys/syslog.h>
 
 #include <machine/autoconf.h>
+#include <machine/rpb.h>
 
 #include <dev/eisa/eisavar.h>
 
@@ -182,16 +183,17 @@ static const int dec_2100_a500_intr_deftype[SABLE_MAX_IRQ] = {
 	IST_LEVEL,
 };
 
-void
-pci_2100_a500_pickintr(struct ttwoga_config *tcp)
+static void
+pci_2100_a500_pickintr(void *core, bus_space_tag_t iot, bus_space_tag_t memt,
+    pci_chipset_tag_t pc)
 {
-	pci_chipset_tag_t pc = &tcp->tc_pc;
+	struct ttwoga_config *tcp = core;
 	char *cp;
 	int i;
 
-	pic_iot = &tcp->tc_iot;
+	pic_iot = iot;
 
-	pc->pc_intr_v = tcp;
+	pc->pc_intr_v = core;
 	pc->pc_intr_string = alpha_pci_generic_intr_string;
 	pc->pc_intr_evcnt = alpha_pci_generic_intr_evcnt;
 	pc->pc_intr_establish = dec_2100_a500_intr_establish;
@@ -246,6 +248,8 @@ pci_2100_a500_pickintr(struct ttwoga_config *tcp)
 		dec_2100_a500_icic_init_intr(tcp);
 	}
 }
+ALPHA_PCI_INTR_INIT(ST_DEC_2100_A500, pci_2100_a500_pickintr)
+ALPHA_PCI_INTR_INIT(ST_DEC_2100A_A500, pci_2100_a500_pickintr)
 
 void
 pci_2100_a500_eisa_pickintr(pci_chipset_tag_t pc, eisa_chipset_tag_t ec)

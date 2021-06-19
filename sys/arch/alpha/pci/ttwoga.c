@@ -1,4 +1,4 @@
-/* $NetBSD: ttwoga.c,v 1.17 2021/05/08 00:08:43 thorpej Exp $ */
+/* $NetBSD: ttwoga.c,v 1.18 2021/06/19 16:59:07 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ttwoga.c,v 1.17 2021/05/08 00:08:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttwoga.c,v 1.18 2021/06/19 16:59:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -235,19 +235,10 @@ ttwopciattach(device_t parent, device_t self, void *aux)
 	    tcp->tc_rev);
 
 	if (tcp->tc_rev < 1)
-		aprint_normal_dev(self, "WARNING: T2 NOT PASS2... NO BETS...\n");
+		aprint_normal_dev(self,
+		    "WARNING: T2 NOT PASS2... NO BETS...\n");
 
-	switch (cputype) {
-#if defined(DEC_2100_A500) || defined(DEC_2100A_A500)
-	case ST_DEC_2100_A500:
-	case ST_DEC_2100A_A500:
-		pci_2100_a500_pickintr(tcp);
-		break;
-#endif
-	
-	default:
-		panic("ttwogaattach: shouldn't be here, really...");
-	}
+	alpha_pci_intr_init(tcp, &tcp->tc_iot, &tcp->tc_memt, &tcp->tc_pc);
 
 	npba.pba_iot = &tcp->tc_iot;
 	npba.pba_memt = &tcp->tc_memt;

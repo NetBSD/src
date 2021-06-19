@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx.c,v 1.41 2021/06/19 16:29:03 thorpej Exp $ */
+/* $NetBSD: dwlpx.c,v 1.42 2021/06/19 16:59:07 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.41 2021/06/19 16:29:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.42 2021/06/19 16:59:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.41 2021/06/19 16:29:03 thorpej Exp $");
 #include <alpha/tlsb/kftxxreg.h>
 #include <alpha/pci/dwlpxreg.h>
 #include <alpha/pci/dwlpxvar.h>
-#include <alpha/pci/pci_kn8ae.h>
 
 #define	KV(_addr)	((void *)ALPHA_PHYS_TO_K0SEG((_addr)))
 #define	DWLPX_SYSBASE(sc)	\
@@ -160,7 +159,8 @@ dwlpxattach(device_t parent, device_t self, void *aux)
 	/*
 	 * Set up interrupts
 	 */
-	pci_kn8ae_pickintr(&sc->dwlpx_cc);
+	alpha_pci_intr_init(&sc->dwlpx_cc, &sc->dwlpx_cc.cc_iot,
+	    &sc->dwlpx_cc.cc_memt, &sc->dwlpx_cc.cc_pc);
 
 	/*
 	 * Attach PCI bus

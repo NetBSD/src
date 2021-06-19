@@ -1,4 +1,4 @@
-/* $NetBSD: irongate.c,v 1.18 2021/06/18 22:17:53 thorpej Exp $ */
+/* $NetBSD: irongate.c,v 1.19 2021/06/19 16:59:07 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -29,11 +29,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_api_up1000.h"
-
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: irongate.c,v 1.18 2021/06/18 22:17:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irongate.c,v 1.19 2021/06/19 16:59:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,10 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: irongate.c,v 1.18 2021/06/18 22:17:53 thorpej Exp $"
 
 #include <alpha/pci/irongatereg.h>
 #include <alpha/pci/irongatevar.h>
-
-#ifdef API_UP1000
-#include <alpha/pci/pci_up1000.h>
-#endif
 
 static int	irongate_match(device_t, cfdata_t, void *);
 static void	irongate_attach(device_t, device_t, void *);
@@ -157,16 +151,7 @@ irongate_attach(device_t parent, device_t self, void *aux)
 	 */
 	irongate_bus_mem_init2(&icp->ic_memt, icp);
 
-	switch (cputype) {
-#ifdef API_UP1000
-	case ST_API_NAUTILUS:
-		pci_up1000_pickintr(icp);
-		break;
-#endif
-
-	default:
-		panic("irongate_attach: shouldn't be here, really...");
-	}
+	alpha_pci_intr_init(icp, &icp->ic_iot, &icp->ic_memt, &icp->ic_pc);
 
 	tag = pci_make_tag(&icp->ic_pc, 0, IRONGATE_PCIHOST_DEV, 0);
 

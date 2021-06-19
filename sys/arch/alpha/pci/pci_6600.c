@@ -1,4 +1,4 @@
-/* $NetBSD: pci_6600.c,v 1.29 2020/09/26 21:07:48 thorpej Exp $ */
+/* $NetBSD: pci_6600.c,v 1.30 2021/06/19 16:59:07 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pci_6600.c,v 1.29 2020/09/26 21:07:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_6600.c,v 1.30 2021/06/19 16:59:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_6600.c,v 1.29 2020/09/26 21:07:48 thorpej Exp $"
 
 #include <alpha/pci/tsreg.h>
 #include <alpha/pci/tsvar.h>
-#include <alpha/pci/pci_6600.h>
 
 #define pci_6600() { Generate ctags(1) key. }
 
@@ -107,17 +106,16 @@ static void	dec_6600_intr_redistribute(void);
 static uint64_t	dec_6600_intr_enables __read_mostly;
 static uint64_t dec_6600_cpu_intr_enables[4] __read_mostly;
 
-void
-pci_6600_pickintr(struct tsp_config *pcp)
+static void
+pci_6600_pickintr(void *core, bus_space_tag_t iot, bus_space_tag_t memt,
+    pci_chipset_tag_t pc)
 {
-	bus_space_tag_t iot = &pcp->pc_iot;
-	pci_chipset_tag_t pc = &pcp->pc_pc;
 	char *cp;
 	int i;
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
 
-	pc->pc_intr_v = pcp;
+	pc->pc_intr_v = core;
 	pc->pc_intr_map = dec_6600_intr_map;
 	pc->pc_intr_string = dec_6600_intr_string;
 	pc->pc_intr_evcnt = dec_6600_intr_evcnt;
@@ -146,7 +144,7 @@ pci_6600_pickintr(struct tsp_config *pcp)
 	 * System-wide and Pchip-0-only logic...
 	 */
 	if (sioprimary == NULL) {
-		sioprimary = pcp;
+		sioprimary = core;
 		/*
 		 * Unless explicitly routed, all interrupts go to the
 		 * primary CPU.
@@ -181,6 +179,8 @@ pci_6600_pickintr(struct tsp_config *pcp)
 		pc->pc_shared_intrs = sioprimary->pc_pc.pc_shared_intrs;
 	}
 }
+ALPHA_PCI_INTR_INIT(ST_DEC_6600, pci_6600_pickintr)
+ALPHA_PCI_INTR_INIT(ST_DEC_TITAN, pci_6600_pickintr)
 
 static int
 dec_6600_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)

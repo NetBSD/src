@@ -1,4 +1,4 @@
-/* $NetBSD: tsc.c,v 1.26 2021/05/27 22:11:31 thorpej Exp $ */
+/* $NetBSD: tsc.c,v 1.27 2021/06/19 16:59:07 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -31,11 +31,9 @@
  *
  */
 
-#include "opt_dec_6600.h"
-
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.26 2021/05/27 22:11:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.27 2021/06/19 16:59:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,10 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.26 2021/05/27 22:11:31 thorpej Exp $");
 #include <alpha/pci/tsvar.h>
 
 #include "tsciic.h"
-
-#ifdef DEC_6600
-#include <alpha/pci/pci_6600.h>
-#endif
 
 #define tsc() { Generate ctags(1) key. }
 
@@ -225,7 +219,7 @@ tspattach(device_t parent, device_t self, void *aux)
 	 */
 	tsp_bus_mem_init2(&pcp->pc_memt, pcp);
 
-	pci_6600_pickintr(pcp);
+	alpha_pci_intr_init(pcp, &pcp->pc_iot, &pcp->pc_memt, &pcp->pc_pc);
 
 	pba.pba_iot = &pcp->pc_iot;
 	pba.pba_memt = &pcp->pc_memt;

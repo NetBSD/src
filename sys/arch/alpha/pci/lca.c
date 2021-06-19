@@ -1,4 +1,4 @@
-/* $NetBSD: lca.c,v 1.53 2021/06/18 22:17:53 thorpej Exp $ */
+/* $NetBSD: lca.c,v 1.54 2021/06/19 16:59:07 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -56,13 +56,9 @@
  * rights to redistribute these changes.
  */
 
-#include "opt_dec_axppci_33.h"
-#include "opt_dec_alphabook1.h"
-#include "opt_dec_eb66.h"
-
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.53 2021/06/18 22:17:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.54 2021/06/19 16:59:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,15 +77,6 @@ __KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.53 2021/06/18 22:17:53 thorpej Exp $");
 #include <dev/pci/pcivar.h>
 #include <alpha/pci/lcareg.h>
 #include <alpha/pci/lcavar.h>
-#ifdef DEC_AXPPCI_33
-#include <alpha/pci/pci_axppci_33.h>
-#endif
-#ifdef DEC_ALPHABOOK1
-#include <alpha/pci/pci_alphabook1.h>
-#endif
-#ifdef DEC_EB66
-#include <alpha/pci/pci_eb66.h>
-#endif
 
 static int	lcamatch(device_t, cfdata_t, void *);
 static void	lcaattach(device_t, device_t, void *);
@@ -205,26 +192,7 @@ lcaattach(device_t parent, device_t self, void *aux)
 
 	lca_dma_init(lcp);
 
-	switch (cputype) {
-#ifdef DEC_AXPPCI_33
-	case ST_DEC_AXPPCI_33:
-		pci_axppci_33_pickintr(lcp);
-		break;
-#endif
-#ifdef DEC_ALPHABOOK1
-	case ST_ALPHABOOK1:
-		pci_alphabook1_pickintr(lcp);
-		break;
-#endif
-#ifdef DEC_EB66
-	case ST_EB66:
-		pci_eb66_pickintr(lcp);
-		break;
-#endif
-
-	default:
-		panic("lcaattach: shouldn't be here, really...");
-	}
+	alpha_pci_intr_init(lcp, &lcp->lc_iot, &lcp->lc_memt, &lcp->lc_pc);
 
 	pba.pba_iot = &lcp->lc_iot;
 	pba.pba_memt = &lcp->lc_memt;
