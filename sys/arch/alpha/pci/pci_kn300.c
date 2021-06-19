@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn300.c,v 1.38 2020/09/25 03:40:11 thorpej Exp $ */
+/* $NetBSD: pci_kn300.c,v 1.39 2021/06/19 16:13:40 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.38 2020/09/25 03:40:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.39 2021/06/19 16:13:40 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -85,12 +85,12 @@ static void	kn300_enable_intr(struct mcpcia_config *, int);
 static void	kn300_disable_intr(struct mcpcia_config *, int);
 
 void
-pci_kn300_pickintr(struct mcpcia_config *ccp, int first)
+pci_kn300_pickintr(struct mcpcia_config *ccp)
 {
 	char *cp;
 	pci_chipset_tag_t pc = &ccp->cc_pc;
 
-	if (first) {
+	if (kn300_pci_intr == NULL) {
 		int g;
 
 #define PCI_KN300_IRQ_STR	16
