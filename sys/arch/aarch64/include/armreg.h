@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.56 2021/06/19 13:38:21 jmcneill Exp $ */
+/* $NetBSD: armreg.h,v 1.57 2021/06/19 13:40:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -248,6 +248,7 @@ AARCH64REG_READ_INLINE(id_aa64dfr0_el1)
 #define	 ID_AA64DFR0_EL1_PMUVER_NONE	 0
 #define	 ID_AA64DFR0_EL1_PMUVER_V3	 1
 #define	 ID_AA64DFR0_EL1_PMUVER_NOV3	 2
+#define	 ID_AA64DFR0_EL1_PMUVER_IMPL	 15
 #define	ID_AA64DFR0_EL1_TRACEVER	__BITS(4,7)
 #define	 ID_AA64DFR0_EL1_TRACEVER_NONE	 0
 #define	 ID_AA64DFR0_EL1_TRACEVER_IMPL	 1

@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.59 2021/03/09 16:44:27 ryo Exp $ */
+/* $NetBSD: cpu.c,v 1.60 2021/06/19 13:40:00 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.59 2021/03/09 16:44:27 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.60 2021/06/19 13:40:00 jmcneill Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -484,6 +484,10 @@ cpu_init_counter(struct cpu_info *ci)
 	const u_int pmuver = __SHIFTOUT(dfr0, ID_AA64DFR0_EL1_PMUVER);
 	if (pmuver == ID_AA64DFR0_EL1_PMUVER_NONE) {
 		/* Performance Monitors Extension not implemented. */
+		return;
+	}
+	if (pmuver == ID_AA64DFR0_EL1_PMUVER_IMPL) {
+		/* Non-standard Performance Monitors are not supported. */
 		return;
 	}
 
