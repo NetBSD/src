@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.171 2021/06/13 07:51:09 mlelstv Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.172 2021/06/19 05:50:48 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.171 2021/06/13 07:51:09 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.172 2021/06/19 05:50:48 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -561,8 +561,14 @@ uaudio_find_iface(const char *tbuf, int size, int *offsp, int subtype)
 {
 	const usb_interface_descriptor_t *d;
 
-	while (*offsp < size) {
+	while (*offsp + sizeof(*d) <= size) {
 		d = (const void *)(tbuf + *offsp);
+		DPRINTFN(3, "%d + %d <= %d type %d class %d/%d iface %d\n",
+		    *offsp, d->bLength, size,
+		    d->bDescriptorType,
+		    d->bInterfaceClass,
+		    d->bInterfaceSubClass,
+		    d->bInterfaceNumber);
 		*offsp += d->bLength;
 		if (d->bDescriptorType == UDESC_INTERFACE &&
 		    d->bInterfaceClass == UICLASS_AUDIO &&
@@ -1533,7 +1539,6 @@ uaudio_add_alt(struct uaudio_softc *sc, const struct as_info *ai)
 Static usbd_status
 uaudio_process_as(struct uaudio_softc *sc, const char *tbuf, int *offsp,
 		  int size, const usb_interface_descriptor_t *id)
-#define offs (*offsp)
 {
 	const struct usb_audio_streaming_interface_descriptor *asid;
 	const struct usb_audio_streaming_type1_descriptor *asf1d;
@@ -1541,55 +1546,151 @@ uaudio_process_as(struct uaudio_softc *sc, const char *tbuf, int *offsp,
 	const usb_endpoint_descriptor_audio_t *epdesc1;
 	const struct usb_audio_streaming_endpoint_descriptor *sed;
 	int format, chan __unused, prec, enc;
-	int dir, type, sync;
+	int dir, type, sync, epcount;
 	struct as_info ai;
 	const char *format_str __unused;
+	const uaudio_cs_descriptor_t *desc;
 
-	asid = (const void *)(tbuf + offs);
-	if (asid->bDescriptorType != UDESC_CS_INTERFACE ||
-	    asid->bDescriptorSubtype != AS_GENERAL)
-		return USBD_INVAL;
-	DPRINTF("asid: bTerminalLink=%d wFormatTag=%d\n",
-		 asid->bTerminalLink, UGETW(asid->wFormatTag));
-	offs += asid->bLength;
-	if (offs > size)
-		return USBD_INVAL;
+	DPRINTF("offset = %d < %d\n", *offsp, size);
 
-	asf1d = (const void *)(tbuf + offs);
-	if (asf1d->bDescriptorType != UDESC_CS_INTERFACE ||
-	    asf1d->bDescriptorSubtype != FORMAT_TYPE)
-		return USBD_INVAL;
-	offs += asf1d->bLength;
-	if (offs > size)
-		return USBD_INVAL;
+	epcount = 0;
+	asid = NULL;
+	asf1d = NULL;
+	ed = NULL;
+	epdesc1 = NULL;
+	sed = NULL;
 
-	if (asf1d->bFormatType != FORMAT_TYPE_I) {
-		aprint_normal_dev(sc->sc_dev,
-		    "ignored setting with type %d format\n", UGETW(asid->wFormatTag));
-		return USBD_NORMAL_COMPLETION;
+	while (*offsp < size) {
+		desc = (const uaudio_cs_descriptor_t *)(tbuf + *offsp);
+		if (*offsp + desc->bLength > size)
+			return USBD_INVAL;
+
+		switch (desc->bDescriptorType) {
+		case UDESC_CS_INTERFACE:
+			switch (desc->bDescriptorSubtype) {
+			case AS_GENERAL:
+				if (asid != NULL)
+					goto ignore;
+				asid = (const struct usb_audio_streaming_interface_descriptor *) desc;
+				DPRINTF("asid: bTerminalLink=%d wFormatTag=%d bLength=%d\n",
+					 asid->bTerminalLink, UGETW(asid->wFormatTag), asid->bLength);
+				break;
+			case FORMAT_TYPE:
+				if (asf1d != NULL)
+					goto ignore;
+				asf1d = (const struct usb_audio_streaming_type1_descriptor *) desc;
+				DPRINTF("asf1d: bDescriptorType=%d bDescriptorSubtype=%d\n",
+				         asf1d->bDescriptorType, asf1d->bDescriptorSubtype);
+				if (asf1d->bFormatType != FORMAT_TYPE_I) {
+					aprint_normal_dev(sc->sc_dev,
+					    "ignored setting with type %d format\n", UGETW(asid->wFormatTag));
+					return USBD_NORMAL_COMPLETION;
+				}
+				break;
+			default:
+				goto ignore;
+			}
+			break;
+		case UDESC_ENDPOINT:
+			epcount++;
+			if (epcount > id->bNumEndpoints)
+				goto ignore;
+			switch (epcount) {
+			case 1:
+				ed = (const usb_endpoint_descriptor_audio_t *) desc;
+				DPRINTF("endpoint[0] bLength=%d bDescriptorType=%d "
+					 "bEndpointAddress=%d bmAttributes=%#x wMaxPacketSize=%d "
+					 "bInterval=%d bRefresh=%d bSynchAddress=%d\n",
+					 ed->bLength, ed->bDescriptorType, ed->bEndpointAddress,
+					 ed->bmAttributes, UGETW(ed->wMaxPacketSize),
+					 ed->bInterval, ed->bRefresh, ed->bSynchAddress);
+				if (UE_GET_XFERTYPE(ed->bmAttributes) != UE_ISOCHRONOUS)
+					return USBD_INVAL;
+				break;
+			case 2:
+				epdesc1 = (const usb_endpoint_descriptor_audio_t *) desc;
+				DPRINTF("endpoint[1] bLength=%d "
+					 "bDescriptorType=%d bEndpointAddress=%d "
+					 "bmAttributes=%#x wMaxPacketSize=%d bInterval=%d "
+					 "bRefresh=%d bSynchAddress=%d\n",
+					 epdesc1->bLength, epdesc1->bDescriptorType,
+					 epdesc1->bEndpointAddress, epdesc1->bmAttributes,
+					 UGETW(epdesc1->wMaxPacketSize), epdesc1->bInterval,
+					 epdesc1->bRefresh, epdesc1->bSynchAddress);
+				if (epdesc1->bSynchAddress != 0) {
+					aprint_error_dev(sc->sc_dev,
+					    "invalid endpoint: bSynchAddress=0\n");
+					return USBD_INVAL;
+				}
+				if (UE_GET_XFERTYPE(epdesc1->bmAttributes) != UE_ISOCHRONOUS) {
+					aprint_error_dev(sc->sc_dev,
+					    "invalid endpoint: bmAttributes=%#x\n",
+					     epdesc1->bmAttributes);
+					return USBD_INVAL;
+				}
+				if (epdesc1->bEndpointAddress != ed->bSynchAddress) {
+					aprint_error_dev(sc->sc_dev,
+					    "invalid endpoint addresses: "
+					    "ep[0]->bSynchAddress=%#x "
+					    "ep[1]->bEndpointAddress=%#x\n",
+					    ed->bSynchAddress, epdesc1->bEndpointAddress);
+					return USBD_INVAL;
+				}
+				/* UE_GET_ADDR(epdesc1->bEndpointAddress), and epdesc1->bRefresh */
+				break;
+			default:
+				goto ignore;
+			}
+			break;
+		case UDESC_CS_ENDPOINT:
+			switch (desc->bDescriptorSubtype) {
+			case AS_GENERAL:
+				if (sed != NULL)
+					goto ignore;
+				sed = (const struct usb_audio_streaming_endpoint_descriptor *) desc;
+				DPRINTF(" streadming_endpoint: offset=%d bLength=%d\n", *offsp, sed->bLength);
+				break;
+			default:
+				goto ignore;
+			}
+			break;
+		case UDESC_INTERFACE:
+		case UDESC_DEVICE:
+			goto leave;
+		default:
+ignore:
+			aprint_normal_dev(sc->sc_dev,
+			    "ignored descriptor type %d subtype %d\n",
+			    desc->bDescriptorType, desc->bDescriptorSubtype);
+			break;
+		}
+
+		*offsp += desc->bLength;
 	}
+leave:
 
-	ed = (const void *)(tbuf + offs);
-	if (ed->bDescriptorType != UDESC_ENDPOINT)
+	if (asid == NULL) {
+		DPRINTF("%s", "No streaming interface descriptor found\n");
 		return USBD_INVAL;
-	DPRINTF("endpoint[0] bLength=%d bDescriptorType=%d "
-		 "bEndpointAddress=%d bmAttributes=%#x wMaxPacketSize=%d "
-		 "bInterval=%d bRefresh=%d bSynchAddress=%d\n",
-		 ed->bLength, ed->bDescriptorType, ed->bEndpointAddress,
-		 ed->bmAttributes, UGETW(ed->wMaxPacketSize),
-		 ed->bInterval, ed->bRefresh, ed->bSynchAddress);
-	offs += ed->bLength;
-	if (offs > size)
+	}
+	if (asf1d == NULL) {
+		DPRINTF("%s", "No format type descriptor found\n");
 		return USBD_INVAL;
-	if (UE_GET_XFERTYPE(ed->bmAttributes) != UE_ISOCHRONOUS)
+	}
+	if (ed == NULL) {
+		DPRINTF("%s", "No endpoint descriptor found\n");
 		return USBD_INVAL;
+	}
+	if (sed == NULL) {
+		DPRINTF("%s", "No streaming endpoint descriptor found\n");
+		return USBD_INVAL;
+	}
 
 	dir = UE_GET_DIR(ed->bEndpointAddress);
 	type = UE_GET_ISO_TYPE(ed->bmAttributes);
 	if ((usbd_get_quirks(sc->sc_udev)->uq_flags & UQ_AU_INP_ASYNC) &&
 	    dir == UE_DIR_IN && type == UE_ISO_ADAPT)
 		type = UE_ISO_ASYNC;
-
 	/* We can't handle endpoints that need a sync pipe yet. */
 	sync = FALSE;
 	if (dir == UE_DIR_IN && type == UE_ISO_ADAPT) {
@@ -1608,16 +1709,6 @@ uaudio_process_as(struct uaudio_softc *sc, const char *tbuf, int *offsp,
 		return USBD_NORMAL_COMPLETION;
 #endif
 	}
-
-	sed = (const void *)(tbuf + offs);
-	if (sed->bDescriptorType != UDESC_CS_ENDPOINT ||
-	    sed->bDescriptorSubtype != AS_GENERAL)
-		return USBD_INVAL;
-	DPRINTF(" streadming_endpoint: offset=%d bLength=%d\n", offs, sed->bLength);
-	offs += sed->bLength;
-	if (offs > size)
-		return USBD_INVAL;
-
 #ifdef UAUDIO_MULTIPLE_ENDPOINTS
 	if (sync && id->bNumEndpoints <= 1) {
 		aprint_error_dev(sc->sc_dev,
@@ -1629,43 +1720,6 @@ uaudio_process_as(struct uaudio_softc *sc, const char *tbuf, int *offsp,
 		aprint_error_dev(sc->sc_dev,
 		    "non sync-pipe endpoint but multiple endpoints\n");
 		return USBD_INVAL;
-	}
-	epdesc1 = NULL;
-	if (id->bNumEndpoints > 1) {
-		epdesc1 = (const void*)(tbuf + offs);
-		if (epdesc1->bDescriptorType != UDESC_ENDPOINT)
-			return USBD_INVAL;
-		DPRINTF("endpoint[1] bLength=%d "
-			 "bDescriptorType=%d bEndpointAddress=%d "
-			 "bmAttributes=%#x wMaxPacketSize=%d bInterval=%d "
-			 "bRefresh=%d bSynchAddress=%d\n",
-			 epdesc1->bLength, epdesc1->bDescriptorType,
-			 epdesc1->bEndpointAddress, epdesc1->bmAttributes,
-			 UGETW(epdesc1->wMaxPacketSize), epdesc1->bInterval,
-			 epdesc1->bRefresh, epdesc1->bSynchAddress);
-		offs += epdesc1->bLength;
-		if (offs > size)
-			return USBD_INVAL;
-		if (epdesc1->bSynchAddress != 0) {
-			aprint_error_dev(sc->sc_dev,
-			    "invalid endpoint: bSynchAddress=0\n");
-			return USBD_INVAL;
-		}
-		if (UE_GET_XFERTYPE(epdesc1->bmAttributes) != UE_ISOCHRONOUS) {
-			aprint_error_dev(sc->sc_dev,
-			    "invalid endpoint: bmAttributes=%#x\n",
-			     epdesc1->bmAttributes);
-			return USBD_INVAL;
-		}
-		if (epdesc1->bEndpointAddress != ed->bSynchAddress) {
-			aprint_error_dev(sc->sc_dev,
-			    "invalid endpoint addresses: "
-			    "ep[0]->bSynchAddress=%#x "
-			    "ep[1]->bEndpointAddress=%#x\n",
-			    ed->bSynchAddress, epdesc1->bEndpointAddress);
-			return USBD_INVAL;
-		}
-		/* UE_GET_ADDR(epdesc1->bEndpointAddress), and epdesc1->bRefresh */
 	}
 
 	format = UGETW(asid->wFormatTag);
@@ -1745,7 +1799,6 @@ uaudio_process_as(struct uaudio_softc *sc, const char *tbuf, int *offsp,
 
 	return USBD_NORMAL_COMPLETION;
 }
-#undef offs
 
 Static usbd_status
 uaudio_identify_as(struct uaudio_softc *sc,
