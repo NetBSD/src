@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.11 2021/03/20 20:56:58 rillig Exp $	*/
+/*	$NetBSD: print.c,v 1.12 2021/06/19 14:08:45 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print.c,v 1.11 2021/03/20 20:56:58 rillig Exp $");
+__RCSID("$NetBSD: print.c,v 1.12 2021/06/19 14:08:45 rillig Exp $");
 #endif
 
 #include <stdio.h>
@@ -86,4 +86,18 @@ print_tnode(char *buf, size_t bufsiz, const tnode_t *tn)
 		break;
 	}
 	return buf;
+}
+
+/* Return the name of the "storage class" in the wider sense. */
+const char *
+scl_name(scl_t scl)
+{
+	static const char *const names[] = {
+	    "none", "extern", "static", "auto", "register", "typedef",
+	    "struct", "union", "enum", "member of struct", "member of union",
+	    "compile-time constant", "abstract", "argument",
+	    "prototype argument", "inline"
+	};
+
+	return names[scl];
 }
