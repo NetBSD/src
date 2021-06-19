@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.55 2021/03/09 16:41:43 ryo Exp $ */
+/* $NetBSD: armreg.h,v 1.56 2021/06/19 13:38:21 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -1506,7 +1506,7 @@ gtmr_cntvct_read(void)
 /*
  * Counter-timer Virtual Timer Control register
  */
-static __inline uint32_t
+static __inline uint64_t
 gtmr_cntv_ctl_read(void)
 {
 
@@ -1514,7 +1514,7 @@ gtmr_cntv_ctl_read(void)
 }
 
 static __inline void
-gtmr_cntv_ctl_write(uint32_t val)
+gtmr_cntv_ctl_write(uint64_t val)
 {
 
 	reg_cntv_ctl_el0_write(val);
