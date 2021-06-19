@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.h,v 1.59 2020/12/03 08:25:57 kre Exp $	*/
+/*	$NetBSD: dump.h,v 1.60 2021/06/19 13:56:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -205,7 +205,7 @@ int	mapdirs(ino_t, u_int64_t *);
 
 /* file dumping routines */
 void	blksout32(int32_t *, int, ino_t);
-void	blksout64(int64_t *, int, ino_t);
+void	blksout64(union dinode *, int64_t *, int, ino_t, int);
 void	dumpino(union dinode *, ino_t);
 #ifndef RRESTORE
 void	dumpmap(char *, int, ino_t);

@@ -1,4 +1,4 @@
-/*	$NetBSD: interactive.c,v 1.28 2019/02/03 03:19:26 mrg Exp $	*/
+/*	$NetBSD: interactive.c,v 1.29 2021/06/19 13:56:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)interactive.c	8.5 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: interactive.c,v 1.28 2019/02/03 03:19:26 mrg Exp $");
+__RCSID("$NetBSD: interactive.c,v 1.29 2021/06/19 13:56:35 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: interactive.c,v 1.28 2019/02/03 03:19:26 mrg Exp $");
 
 #include <setjmp.h>
 #include <glob.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -85,7 +86,7 @@ struct arglist {
 static char	*copynext(char *, char *);
 static int	 fcmp(const void *, const void *);
 static void	 formatf(struct afile *, int);
-static void	 getcmd(char *, char *, char *, struct arglist *);
+static void	 getcmd(char *, char *, char *, size_t, struct arglist *);
 struct dirent	*glob_readdir(RST_DIR *dirp);
 static int	 glob_stat(const char *, struct stat *);
 static void	 mkentry(char *, struct direct *, struct afile *);
@@ -112,7 +113,7 @@ runcmdshell(void)
 	arglist.glob.gl_closedir = (void *)rst_closedir;
 	arglist.glob.gl_lstat = glob_stat;
 	arglist.glob.gl_stat = glob_stat;
-	canon("/", curdir);
+	canon("/", curdir, sizeof(curdir));
 loop:
 	if (setjmp(reset) != 0) {
 		if (arglist.freeglob != 0) {
@@ -124,7 +125,7 @@ loop:
 		volno = 0;
 	}
 	runshell = 1;
-	getcmd(curdir, cmd, name, &arglist);
+	getcmd(curdir, cmd, name, sizeof(name), &arglist);
 	switch (cmd[0]) {
 	/*
 	 * Add elements to the extraction list.
@@ -307,11 +308,11 @@ loop:
  * eliminate any embedded ".." components.
  */
 static void
-getcmd(char *curdir, char *cmd, char *name, struct arglist *ap)
+getcmd(char *curdir, char *cmd, char *name, size_t size, struct arglist *ap)
 {
 	char *cp;
 	static char input[BUFSIZ];
-	char output[BUFSIZ];
+	char output[BUFSIZ * 2];
 	int globretval;
 #	define rawname input	/* save space by reusing input buffer */
 
@@ -331,7 +332,7 @@ getcmd(char *curdir, char *cmd, char *name, struct arglist *ap)
 		(void) fgets(input, BUFSIZ, terminal);
 	} while (!feof(terminal) && input[0] == '\n');
 	if (feof(terminal)) {
-		(void) strcpy(cmd, "quit");
+		(void) strlcpy(cmd, "quit", size);
 		return;
 	}
 	for (cp = &input[strlen(input) - 2]; *cp == ' ' || *cp == '\t'; cp--)
@@ -346,7 +347,7 @@ getcmd(char *curdir, char *cmd, char *name, struct arglist *ap)
 	 * If no argument, use curdir as the default.
 	 */
 	if (*cp == '\0') {
-		(void) strcpy(name, curdir);
+		(void) strlcpy(name, curdir, size);
 		return;
 	}
 	nextarg = cp;
@@ -363,16 +364,14 @@ getnext:
 	 * If it is an absolute pathname, canonicalize it and return it.
 	 */
 	if (rawname[0] == '/') {
-		canon(rawname, name);
+		canon(rawname, name, size);
 	} else {
 		/*
 		 * For relative pathnames, prepend the current directory to
 		 * it then canonicalize and return it.
 		 */
-		(void) strcpy(output, curdir);
-		(void) strcat(output, "/");
-		(void) strcat(output, rawname);
-		canon(output, name);
+		snprintf(output, sizeof(output), "%s/%s", curdir, rawname);
+		canon(output, name, sizeof(name));
 	}
 	if ((globretval = glob(name, GLOB_ALTDIRFUNC, NULL, &ap->glob)) < 0) {
 		fprintf(stderr, "%s: %s: ", ap->cmd, name);
@@ -397,7 +396,7 @@ getnext:
 	ap->argcnt = ap->glob.gl_pathc;
 
 retnext:
-	strcpy(name, ap->glob.gl_pathv[ap->glob.gl_pathc - ap->argcnt]);
+	strlcpy(name, ap->glob.gl_pathv[ap->glob.gl_pathc - ap->argcnt], size);
 	if (--ap->argcnt == 0) {
 		ap->freeglob = 0;
 		globfree(&ap->glob);
@@ -458,7 +457,7 @@ copynext(char *input, char *output)
  * remove any imbedded "." and ".." components.
  */
 void
-canon(const char *rawname, char *canonname)
+canon(const char *rawname, char *canonname, size_t len)
 {
 	char *cp, *np;
 
@@ -468,6 +467,11 @@ canon(const char *rawname, char *canonname)
 		(void) strcpy(canonname, ".");
 	else
 		(void) strcpy(canonname, "./");
+	if (strlen(canonname) + strlen(rawname) >= len) {
+		fprintf(stderr, "canonname: not enough buffer space\n");
+		exit(1);
+	}
+		
 	(void) strcat(canonname, rawname);
 	/*
 	 * Eliminate multiple and trailing '/'s
@@ -546,9 +550,7 @@ printlist(char *name, char *basename)
 		fprintf(stderr, "%s:\n", name);
 		entries = 0;
 		listp = list;
-		(void) strncpy(locname, name, MAXPATHLEN);
-		(void) strncat(locname, "/", MAXPATHLEN);
-		namelen = strlen(locname);
+		namelen = snprintf(locname, sizeof(locname), "%s/", name);
 		while ((dp = rst_readdir(dirp)) != NULL) {
 			if (!dflag && TSTINO(dp->d_ino, dumpmap) == 0)
 				continue;
@@ -561,8 +563,7 @@ printlist(char *name, char *basename)
 				fprintf(stderr, "%s%s: name exceeds %d char\n",
 					locname, dp->d_name, MAXPATHLEN);
 			} else {
-				(void) strncat(locname, dp->d_name,
-				    (int)dp->d_namlen);
+				(void)strlcat(locname, dp->d_name, MAXPATHLEN);
 				mkentry(locname, dp, listp++);
 				entries++;
 			}
@@ -596,7 +597,7 @@ mkentry(char *name, struct direct *dp, struct afile *fp)
 	fp->fnum = dp->d_ino;
 	fp->fname = savename(dp->d_name);
 	for (cp = fp->fname; *cp; cp++)
-		if (!vflag && (*cp < ' ' || *cp >= 0177))
+		if (!vflag && isprint((unsigned char)*cp))
 			*cp = '?';
 	fp->len = cp - fp->fname;
 	if (dflag && TSTINO(fp->fnum, dumpmap) == 0)
@@ -610,7 +611,7 @@ mkentry(char *name, struct direct *dp, struct afile *fp)
 	default:
 		fprintf(stderr, "Warning: undefined file type %d\n",
 		    dp->d_type);
-		/* fall through */
+		/* FALLTHROUGH */
 	case DT_REG:
 		fp->postfix = ' ';
 		break;
@@ -690,8 +691,8 @@ formatf(struct afile *list, int nentry)
 		for (j = 0; j < columns; j++) {
 			fp = &list[j * lines + i];
 			if (vflag) {
-				fprintf(stderr, "%*llu ", precision,
-				    (unsigned long long)fp->fnum);
+				fprintf(stderr, "%*ju ", precision,
+				    (uintmax_t)fp->fnum);
 				fp->len += precision + 1;
 			}
 			if (haveprefix) {
@@ -767,7 +768,7 @@ glob_stat(const char *name, struct stat *stp)
 static int
 fcmp(const void *f1, const void *f2)
 {
-	return (strcmp(((const struct afile *)f1)->fname,
+	return (strcoll(((const struct afile *)f1)->fname,
 	    ((const struct afile *)f2)->fname));
 }
 

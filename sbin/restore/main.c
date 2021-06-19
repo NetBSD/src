@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.36 2020/04/05 15:25:40 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.37 2021/06/19 13:56:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.36 2020/04/05 15:25:40 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.37 2021/06/19 13:56:35 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -268,7 +268,7 @@ main(int argc, char *argv[])
 		extractdirs(0);
 		initsymtable((char *)0);
 		while (argc--) {
-			canon(*argv++, name);
+			canon(*argv++, name, sizeof(name));
 			ino = dirlookup(name);
 			if (ino == 0)
 				continue;
@@ -283,7 +283,7 @@ main(int argc, char *argv[])
 		extractdirs(1);
 		initsymtable((char *)0);
 		while (argc--) {
-			canon(*argv++, name);
+			canon(*argv++, name, sizeof(name));
 			ino = dirlookup(name);
 			if (ino == 0)
 				continue;
