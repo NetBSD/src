@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn8ae.c,v 1.31 2020/09/25 03:40:11 thorpej Exp $ */
+/* $NetBSD: pci_kn8ae.c,v 1.32 2021/06/19 16:29:03 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn8ae.c,v 1.31 2020/09/25 03:40:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn8ae.c,v 1.32 2021/06/19 16:29:03 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_kn8ae.c,v 1.31 2020/09/25 03:40:11 thorpej Exp $
 #include <sys/device.h>
 #include <sys/cpu.h>
 #include <sys/syslog.h>
+#include <sys/once.h>
 
 #include <machine/autoconf.h>
 
@@ -87,10 +88,27 @@ kn8ae_intr_wrapper(void *arg, u_long vec)
 	KERNEL_UNLOCK_ONE(NULL);
 }
 
-void
-pci_kn8ae_pickintr(struct dwlpx_config *ccp, int first)
+static ONCE_DECL(pci_kn8ae_once);
+
+static int
+pci_kn8ae_init_imaskcache(void)
 {
 	int io, hose, dev;
+
+	for (io = 0; io < DWLPX_NIONODE; io++) {
+		for (hose = 0; hose < DWLPX_NHOSE; hose++) {
+			for (dev = 0; dev < NHPC; dev++) {
+				imaskcache[io][hose][dev] = DWLPX_IMASK_DFLT;
+			}
+		}
+	}
+
+	return 0;
+}
+
+void
+pci_kn8ae_pickintr(struct dwlpx_config *ccp)
+{
 	pci_chipset_tag_t pc = &ccp->cc_pc;
 
 	pc->pc_intr_v = ccp;
@@ -103,17 +121,7 @@ pci_kn8ae_pickintr(struct dwlpx_config *ccp, int first)
 	/* Not supported on KN8AE. */
 	pc->pc_pciide_compat_intr_establish = NULL;
 
-	if (!first) {
-		return;
-	}
-
-	for (io = 0; io < DWLPX_NIONODE; io++) {
-		for (hose = 0; hose < DWLPX_NHOSE; hose++) {
-			for (dev = 0; dev < NHPC; dev++) {
-				imaskcache[io][hose][dev] = DWLPX_IMASK_DFLT;
-			}
-		}
-	}
+	RUN_ONCE(&pci_kn8ae_once, pci_kn8ae_init_imaskcache);
 }
 
 #define	IH_MAKE(vec, dev, pin)						\
