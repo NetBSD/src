@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1061 2021/06/19 19:59:01 rillig Exp $
+# $NetBSD: mi,v 1.1062 2021/06/19 20:25:57 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6217,6 +6217,8 @@
 ./usr/tests/usr.bin/xlint/lint1/gcc_typeof_after_statement.exp	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/lex_char.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/lex_char.exp			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/lex_comment.c			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/lex_comment.exp			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/lex_floating.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/lex_floating.exp		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/lex_integer.c			tests-usr.bin-tests	compattestfile,atf
