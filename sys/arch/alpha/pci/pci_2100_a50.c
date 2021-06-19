@@ -1,4 +1,4 @@
-/* $NetBSD: pci_2100_a50.c,v 1.42 2020/09/22 15:24:02 thorpej Exp $ */
+/* $NetBSD: pci_2100_a50.c,v 1.43 2021/06/19 16:59:07 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_2100_a50.c,v 1.42 2020/09/22 15:24:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_2100_a50.c,v 1.43 2021/06/19 16:59:07 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_2100_a50.c,v 1.42 2020/09/22 15:24:02 thorpej Ex
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
+#include <machine/rpb.h>
 #include <sys/bus.h>
 #include <machine/intr.h>
 
@@ -48,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_2100_a50.c,v 1.42 2020/09/22 15:24:02 thorpej Ex
 
 #include <alpha/pci/apecsvar.h>
 
-#include <alpha/pci/pci_2100_a50.h>
 #include <alpha/pci/siovar.h>
 #include <alpha/pci/sioreg.h>
 
@@ -59,11 +59,10 @@ static int	dec_2100_a50_intr_map(const struct pci_attach_args *,
 
 #define	APECS_SIO_DEVICE	7	/* XXX */
 
-void
-pci_2100_a50_pickintr(struct apecs_config *acp)
+static void
+pci_2100_a50_pickintr(void *core, bus_space_tag_t iot, bus_space_tag_t memt,
+    pci_chipset_tag_t pc)
 {
-	bus_space_tag_t iot = &acp->ac_iot;
-	pci_chipset_tag_t pc = &acp->ac_pc;
 	pcireg_t sioclass;
 	int sioII;
 
@@ -74,7 +73,7 @@ pci_2100_a50_pickintr(struct apecs_config *acp)
 	if (!sioII)
 		printf("WARNING: SIO NOT SIO II... NO BETS...\n");
 
-	pc->pc_intr_v = acp;
+	pc->pc_intr_v = core;
 	pc->pc_intr_map = dec_2100_a50_intr_map;
 	pc->pc_intr_string = sio_pci_intr_string;
 	pc->pc_intr_evcnt = sio_pci_intr_evcnt;
@@ -90,6 +89,7 @@ pci_2100_a50_pickintr(struct apecs_config *acp)
 	panic("pci_2100_a50_pickintr: no I/O interrupt handler (no sio)");
 #endif
 }
+ALPHA_PCI_INTR_INIT(ST_DEC_2100_A50, pci_2100_a50_pickintr)
 
 int
 dec_2100_a50_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)

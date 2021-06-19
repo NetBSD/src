@@ -1,4 +1,4 @@
-/* $NetBSD: pci_alphabook1.c,v 1.18 2020/09/22 15:24:02 thorpej Exp $ */
+/* $NetBSD: pci_alphabook1.c,v 1.19 2021/06/19 16:59:07 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_alphabook1.c,v 1.18 2020/09/22 15:24:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_alphabook1.c,v 1.19 2021/06/19 16:59:07 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -69,6 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_alphabook1.c,v 1.18 2020/09/22 15:24:02 thorpej 
 #include <sys/device.h>
 
 #include <machine/intr.h>
+#include <machine/rpb.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcireg.h>
@@ -76,7 +77,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_alphabook1.c,v 1.18 2020/09/22 15:24:02 thorpej 
 
 #include <alpha/pci/lcavar.h>
 
-#include <alpha/pci/pci_alphabook1.h>
 #include <alpha/pci/siovar.h>
 #include <alpha/pci/sioreg.h>
 
@@ -87,11 +87,10 @@ static int	dec_alphabook1_intr_map(const struct pci_attach_args *,
 
 #define	LCA_SIO_DEVICE	7	/* XXX */
 
-void
-pci_alphabook1_pickintr(struct lca_config *lcp)
+static void
+pci_alphabook1_pickintr(void *core, bus_space_tag_t iot, bus_space_tag_t memt,
+    pci_chipset_tag_t pc)
 {
-	bus_space_tag_t iot = &lcp->lc_iot;
-	pci_chipset_tag_t pc = &lcp->lc_pc;
 	pcireg_t sioclass;
 	int sioII;
 
@@ -103,7 +102,7 @@ pci_alphabook1_pickintr(struct lca_config *lcp)
 	if (!sioII)
 		printf("WARNING: SIO NOT SIO II... NO BETS...\n");
 
-	pc->pc_intr_v = lcp;
+	pc->pc_intr_v = core;
 	pc->pc_intr_map = dec_alphabook1_intr_map;
 	pc->pc_intr_string = sio_pci_intr_string;
 	pc->pc_intr_evcnt = sio_pci_intr_evcnt;
@@ -119,6 +118,7 @@ pci_alphabook1_pickintr(struct lca_config *lcp)
 	panic("pci_alphabook1_pickintr: no I/O interrupt handler (no sio)");
 #endif
 }
+ALPHA_PCI_INTR_INIT(ST_ALPHABOOK1, pci_alphabook1_pickintr)
 
 int
 dec_alphabook1_intr_map(const struct pci_attach_args *pa,

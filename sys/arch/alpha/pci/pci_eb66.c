@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb66.c,v 1.25 2020/09/22 15:24:02 thorpej Exp $ */
+/* $NetBSD: pci_eb66.c,v 1.26 2021/06/19 16:59:07 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_eb66.c,v 1.25 2020/09/22 15:24:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_eb66.c,v 1.26 2021/06/19 16:59:07 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -71,14 +71,13 @@ __KERNEL_RCSID(0, "$NetBSD: pci_eb66.c,v 1.25 2020/09/22 15:24:02 thorpej Exp $"
 #include <sys/syslog.h>
 
 #include <machine/autoconf.h>
+#include <machine/rpb.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 
 #include <alpha/pci/lcareg.h>
 #include <alpha/pci/lcavar.h>
-
-#include <alpha/pci/pci_eb66.h>
 
 #include "sio.h"
 #if NSIO
@@ -95,15 +94,14 @@ static bus_space_handle_t eb66_intrgate_ioh;
 extern void	eb66_intr_enable(pci_chipset_tag_t pc, int irq);
 extern void	eb66_intr_disable(pci_chipset_tag_t pc, int irq);
 
-void
-pci_eb66_pickintr(struct lca_config *lcp)
+static void
+pci_eb66_pickintr(void *core, bus_space_tag_t iot, bus_space_tag_t memt,
+    pci_chipset_tag_t pc)
 {
-	bus_space_tag_t iot = &lcp->lc_iot;
-	pci_chipset_tag_t pc = &lcp->lc_pc;
 	char *cp;
 	int i;
 
-	pc->pc_intr_v = lcp;
+	pc->pc_intr_v = core;
 	pc->pc_intr_map = alpha_pci_generic_intr_map;
 	pc->pc_intr_string = alpha_pci_generic_intr_string;
 	pc->pc_intr_evcnt = alpha_pci_generic_intr_evcnt;
@@ -145,6 +143,7 @@ pci_eb66_pickintr(struct lca_config *lcp)
 	sio_intr_setup(pc, iot);
 #endif
 }
+ALPHA_PCI_INTR_INIT(ST_EB66, pci_eb66_pickintr)
 
 #if 0		/* THIS DOES NOT WORK!  see pci_eb66_intr.S. */
 uint8_t eb66_intr_mask[3] = { 0xff, 0xff, 0xff };

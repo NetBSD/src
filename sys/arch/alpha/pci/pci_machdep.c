@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.c,v 1.28 2020/09/26 21:07:48 thorpej Exp $ */
+/* $NetBSD: pci_machdep.c,v 1.29 2021/06/19 16:59:07 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.28 2020/09/26 21:07:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.29 2021/06/19 16:59:07 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -158,6 +158,22 @@ device_pci_register(device_t dev, void *aux)
 		dict = device_properties(dev);
 		prop_dictionary_set_bool(dict, "is_console", true);
 	}
+}
+
+void
+alpha_pci_intr_init(void *core, bus_space_tag_t iot, bus_space_tag_t memt,
+    pci_chipset_tag_t pc)
+{
+	__link_set_decl(alpha_pci_intr_impls, struct alpha_pci_intr_impl);
+	struct alpha_pci_intr_impl * const *impl;
+
+	__link_set_foreach(impl, alpha_pci_intr_impls) {
+		if ((*impl)->systype == cputype) {
+			(*impl)->intr_init(core, iot, memt, pc);
+			return;
+		}
+	}
+	panic("%s: unknown systype %d", __func__, cputype);
 }
 
 int
