@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.227 2021/06/19 15:23:57 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.228 2021/06/19 19:49:15 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.227 2021/06/19 15:23:57 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.228 2021/06/19 19:49:15 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -843,10 +843,14 @@ member_declaration:
 		if (!Sflag)
 			/* anonymous struct/union members is a C9X feature */
 			warning(49);
-		lint_assert(is_struct_or_union(dcs->d_type->t_tspec));
-		$$ = dcs->d_type->t_str->sou_first_member;
-		/* add all the members of the anonymous struct/union */
-		anonymize($$);
+		if (is_struct_or_union(dcs->d_type->t_tspec)) {
+			$$ = dcs->d_type->t_str->sou_first_member;
+			/* add all the members of the anonymous struct/union */
+			anonymize($$);
+		} else {
+			/* syntax error '%s' */
+			error(249, "unnamed member");
+		}
 	  }
 	| error {
 		symtyp = FVFT;
