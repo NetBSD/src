@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.61 2021/06/19 00:00:26 tsutsui Exp $
+#	$NetBSD: install.sub,v 1.62 2021/06/19 00:54:27 tsutsui Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -40,7 +40,7 @@ RELEASE=10.0				# updated by distrib/miniroot/list
 export RELEASE
 
 ALLSETS="base comp etc games man misc modules rescue text"	# default install sets
-UPGRSETS="base comp games man misc text"		# default upgrade sets
+UPGRSETS="base comp games man misc modules rescue text"		# default upgrade sets
 THESETS=						# one of the above
 
 local_sets_dir=""			# Path searched for sets by install_sets
