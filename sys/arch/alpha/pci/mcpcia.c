@@ -1,4 +1,4 @@
-/* $NetBSD: mcpcia.c,v 1.32 2021/06/18 22:17:53 thorpej Exp $ */
+/* $NetBSD: mcpcia.c,v 1.33 2021/06/19 16:13:40 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.32 2021/06/18 22:17:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.33 2021/06/19 16:13:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,7 +126,6 @@ mcpciamatch(device_t parent, cfdata_t cf, void *aux)
 static void
 mcpciaattach(device_t parent, device_t self, void *aux)
 {
-	static int first = 1;
 	struct mcbus_dev_attach_args *ma = aux;
 	struct mcpcia_softc *mcp = device_private(self);
 	struct mcpcia_config *ccp;
@@ -174,8 +173,7 @@ mcpciaattach(device_t parent, device_t self, void *aux)
 	/*
 	 * Set up interrupts
 	 */
-	pci_kn300_pickintr(ccp, first);
-	first = 0;
+	pci_kn300_pickintr(ccp);
 
 	/*
 	 * Attach PCI bus
