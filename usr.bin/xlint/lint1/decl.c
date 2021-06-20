@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.186 2021/06/19 15:51:11 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.187 2021/06/20 11:00:18 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.186 2021/06/19 15:51:11 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.187 2021/06/20 11:00:18 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -198,6 +198,7 @@ setcomplete(type_t *tp, bool complete)
 {
 	tspec_t	t;
 
+	lint_assert(tp != NULL);
 	if ((t = tp->t_tspec) == ARRAY) {
 		tp->t_incomplete_array = !complete;
 	} else if (t == STRUCT || t == UNION) {
