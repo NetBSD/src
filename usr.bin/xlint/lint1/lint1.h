@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.103 2021/06/19 15:23:57 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.104 2021/06/20 19:04:50 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -104,13 +104,11 @@ typedef enum {
 	CONST, VOLATILE, RESTRICT, THREAD
 } tqual_t;
 
-/*
- * Integer and floating point values are stored in this structure
- */
+/* An integer or floating-point value. */
 typedef struct {
 	tspec_t	v_tspec;
-	bool	v_ansiu;		/* set if an integer constant is
-					   unsigned in ANSI C */
+	bool	v_unsigned;		/* set if an integer constant is
+					   unsigned in C90 and later */
 	union {
 		int64_t	_v_quad;	/* integers */
 		ldbl_t	_v_ldbl;	/* floats */
