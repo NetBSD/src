@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.42 2021/06/20 18:38:12 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.43 2021/06/20 18:41:27 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.42 2021/06/20 18:38:12 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.43 2021/06/20 18:41:27 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -831,18 +831,17 @@ lex_character_constant(void)
 	if (c == -2) {
 		/* unterminated character constant */
 		error(253);
-	} else {
+	} else if (n > sizeof(int) || (n > 1 && (pflag || hflag))) {
 		/* XXX: should rather be sizeof(TARG_INT) */
-		if (n > sizeof(int) || (n > 1 && (pflag || hflag))) {
-			/* too many characters in character constant */
-			error(71);
-		} else if (n > 1) {
-			/* multi-character character constant */
-			warning(294);
-		} else if (n == 0) {
-			/* empty character constant */
-			error(73);
-		}
+
+		/* too many characters in character constant */
+		error(71);
+	} else if (n > 1) {
+		/* multi-character character constant */
+		warning(294);
+	} else if (n == 0) {
+		/* empty character constant */
+		error(73);
 	}
 	if (n == 1) {
 		cv = (char)val;
@@ -884,18 +883,16 @@ lex_wide_character_constant(void)
 	} else if (i == 0) {
 		/* empty character constant */
 		error(73);
+	} else if (i > imax) {
+		i = imax;
+		/* too many characters in character constant */
+		error(71);
 	} else {
-		if (i > imax) {
-			i = imax;
-			/* too many characters in character constant */
-			error(71);
-		} else {
-			buf[i] = '\0';
-			(void)mbtowc(NULL, NULL, 0);
-			if (mbtowc(&wc, buf, imax) < 0)
-				/* invalid multibyte character */
-				error(291);
-		}
+		buf[i] = '\0';
+		(void)mbtowc(NULL, NULL, 0);
+		if (mbtowc(&wc, buf, imax) < 0)
+			/* invalid multibyte character */
+			error(291);
 	}
 
 	yylval.y_val = xcalloc(1, sizeof(*yylval.y_val));
