@@ -1,4 +1,4 @@
-/*	$NetBSD: sel.h,v 1.5 2019/12/15 22:50:50 christos Exp $	*/
+/*	$NetBSD: sel.h,v 1.6 2021/06/20 12:01:07 christos Exp $	*/
 
 /*
  * Copyright (c) 2008 Kungliga Tekniska Högskolan
@@ -69,20 +69,6 @@ struct hx_expr_input {
 
 extern struct hx_expr_input _hx509_expr_input;
 
-#if !defined(yylex)
-#define yylex   _hx509_sel_yylex
-#define yywrap  _hx509_sel_yywrap
-#endif
-#if !defined(yyparse)
-#define yyparse _hx509_sel_yyparse
-#define yyerror _hx509_sel_yyerror
-#define yylval  _hx509_sel_yylval
-#define yychar  _hx509_sel_yychar
-#define yydebug _hx509_sel_yydebug
-#define yynerrs _hx509_sel_yynerrs
-#endif
-
-int  _hx509_sel_yyparse(void);
-int  _hx509_sel_yylex(void);
-void _hx509_sel_yyerror(const char *);
-
+extern int	_hx509_sel_yyparse(void);
+extern int	_hx509_sel_yylex(void);
+extern void	_hx509_sel_yyerror(const char *);
