@@ -1,4 +1,4 @@
-/* $NetBSD: exec.c,v 1.21 2021/05/21 21:53:15 jmcneill Exp $ */
+/* $NetBSD: exec.c,v 1.22 2021/06/20 19:07:39 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jason R. Thorpe
@@ -245,6 +245,8 @@ exec_netbsd(const char *fname, const char *args)
 	u_long marks[MARK_MAX], alloc_size;
 	EFI_STATUS status;
 	int fd, ohowto;
+
+	twiddle_toggle = 0;
 
 	load_file(get_initrd_path(), 0, false, &initrd_addr, &initrd_size);
 	load_file(get_dtb_path(), 0, false, &dtb_addr, &dtb_size);
