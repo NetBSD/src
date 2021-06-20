@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2018/02/04 03:19:51 christos Exp $
+# $NetBSD: Makefile,v 1.7 2021/06/20 10:38:54 christos Exp $
 
 NOLINT=		# defined
 
@@ -19,6 +19,8 @@ LIBDPLIBS+=	asn1	${HEIMBASE}/lib/libasn1		\
 		wind	${HEIMBASE}/lib/libwind
 
 YHEADER=1
+YPREFIX=  _hx509_sel_yy
+LPREFIX=  _hx509_sel_yy
 
 INCSDIR=	/usr/include/krb5 
 INCS+=		hx509.h hx509-protos.h ${ASN1_INCS} ${COMPILE_ET_INCS}
@@ -56,7 +58,6 @@ SRCS=				\
 	softp11.c		\
 	${BUILT_SOURCES}
 
-LPREFIX=  _hx509_sel_yy
 
 CPPFLAGS+=				\
 	-I${HEIMDIST}/lib/hx509/ref	\
