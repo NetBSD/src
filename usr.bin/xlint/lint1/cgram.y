@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.229 2021/06/20 11:42:25 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.230 2021/06/20 18:15:12 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.229 2021/06/20 11:42:25 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.230 2021/06/20 18:15:12 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -123,7 +123,7 @@ anonymize(sym_t *s)
 }
 %}
 
-%expect 181
+%expect 182
 
 %union {
 	val_t	*y_val;
@@ -142,7 +142,7 @@ anonymize(sym_t *s)
 };
 
 %token			T_LBRACE T_RBRACE T_LBRACK T_RBRACK T_LPAREN T_RPAREN
-%token	<y_op>		T_MEMBACC
+%token			T_POINT T_ARROW
 %token	<y_op>		T_UNARY
 %token	<y_op>		T_INCDEC
 %token			T_SIZEOF
@@ -269,7 +269,7 @@ anonymize(sym_t *s)
 %left	T_ADDITIVE
 %left	T_ASTERISK T_MULTIPLICATIVE
 %right	T_UNARY T_INCDEC T_SIZEOF T_REAL T_IMAG
-%left	T_LPAREN T_LBRACK T_MEMBACC
+%left	T_LPAREN T_LBRACK T_POINT T_ARROW
 
 %token	<y_sb>		T_NAME
 %token	<y_sb>		T_TYPENAME
@@ -1420,7 +1420,7 @@ designator:			/* C99 6.7.8 "Initialization" */
 			/* array initializer with des.s is a C9X feature */
 			warning(321);
 	  }
-	| point identifier {
+	| T_POINT identifier {
 		if (!Sflag)
 			/* struct or union member name in initializer is ... */
 			warning(313);
@@ -2074,18 +2074,13 @@ func_arg_list:
 	;
 
 point_or_arrow:
-	  T_MEMBACC {
+	  T_POINT {
 		symtyp = FMEMBER;
-		$$ = $1;
+		$$ = POINT;
 	  }
-	;
-
-point:
-	  T_MEMBACC {
-		if ($1 != POINT) {
-			/* syntax error '%s' */
-			error(249, yytext);
-		}
+	| T_ARROW {
+		symtyp = FMEMBER;
+		$$ = ARROW;
 	  }
 	;
 
