@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.288 2021/06/20 19:04:50 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.289 2021/06/20 20:32:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.288 2021/06/20 19:04:50 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.289 2021/06/20 20:32:42 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -183,7 +183,7 @@ expr_new_constant(type_t *tp, val_t *v)
 	n->tn_type = tp;
 	n->tn_val = expr_zalloc(sizeof(*n->tn_val));
 	n->tn_val->v_tspec = tp->t_tspec;
-	n->tn_val->v_unsigned = v->v_unsigned;
+	n->tn_val->v_unsigned_since_c90 = v->v_unsigned_since_c90;
 	n->tn_val->v_u = v->v_u;
 	free(v);
 	return n;
@@ -532,16 +532,16 @@ build(op_t op, tnode_t *ln, tnode_t *rn)
 	 * ANSI C, print a warning.
 	 */
 	if (mp->m_warn_if_left_unsigned_in_c90 &&
-	    ln->tn_op == CON && ln->tn_val->v_unsigned) {
+	    ln->tn_op == CON && ln->tn_val->v_unsigned_since_c90) {
 		/* ANSI C treats constant as unsigned, op %s */
 		warning(218, mp->m_name);
-		ln->tn_val->v_unsigned = false;
+		ln->tn_val->v_unsigned_since_c90 = false;
 	}
 	if (mp->m_warn_if_right_unsigned_in_c90 &&
-	    rn->tn_op == CON && rn->tn_val->v_unsigned) {
+	    rn->tn_op == CON && rn->tn_val->v_unsigned_since_c90) {
 		/* ANSI C treats constant as unsigned, op %s */
 		warning(218, mp->m_name);
-		rn->tn_val->v_unsigned = false;
+		rn->tn_val->v_unsigned_since_c90 = false;
 	}
 
 	/* Make sure both operands are of the same type */
@@ -2364,7 +2364,7 @@ convert_constant(op_t op, int arg, const type_t *tp, val_t *nv, val_t *v)
 	range_check = false;
 
 	if (nt == BOOL) {	/* C99 6.3.1.2 */
-		nv->v_unsigned = false;
+		nv->v_unsigned_since_c90 = false;
 		nv->v_quad = is_nonzero_val(v) ? 1 : 0;
 		return;
 	}
@@ -2376,13 +2376,13 @@ convert_constant(op_t op, int arg, const type_t *tp, val_t *nv, val_t *v)
 		nv->v_quad = v->v_quad;
 	}
 
-	if ((v->v_unsigned && is_floating(nt)) ||
-	    (v->v_unsigned && (is_integer(nt) && !is_uinteger(nt) &&
+	if ((v->v_unsigned_since_c90 && is_floating(nt)) ||
+	    (v->v_unsigned_since_c90 && (is_integer(nt) && !is_uinteger(nt) &&
 			    portable_size_in_bits(nt) >
 			    portable_size_in_bits(ot)))) {
 		/* ANSI C treats constant as unsigned */
 		warning(157);
-		v->v_unsigned = false;
+		v->v_unsigned_since_c90 = false;
 	}
 
 	switch (nt) {
@@ -3618,7 +3618,8 @@ constant(tnode_t *tn, bool required)
 	if (tn->tn_op == CON) {
 		lint_assert(tn->tn_type->t_tspec == tn->tn_val->v_tspec);
 		if (is_integer(tn->tn_val->v_tspec)) {
-			v->v_unsigned = tn->tn_val->v_unsigned;
+			v->v_unsigned_since_c90 =
+			    tn->tn_val->v_unsigned_since_c90;
 			v->v_quad = tn->tn_val->v_quad;
 			return v;
 		}
