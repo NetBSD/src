@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.139 2020/04/30 15:12:25 martin Exp $	*/
+/*	$NetBSD: kdump.c,v 1.140 2021/06/20 00:25:29 chs Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.139 2020/04/30 15:12:25 martin Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.140 2021/06/20 00:25:29 chs Exp $");
 #endif
 #endif /* not lint */
 
@@ -1288,7 +1288,7 @@ ktruser_soname(const char *name, const void *buf, size_t len)
 static void
 ktruser_xattr_name(const char *name, const void *buf, size_t len)
 {
-	printf("%.*s: [%*s]\n", KTR_USER_MAXIDLEN, name, (int)len,
+	printf("%.*s: [%.*s]\n", KTR_USER_MAXIDLEN, name, (int)len,
 	    (const char *)buf);
 }
 
