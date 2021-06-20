@@ -1,4 +1,4 @@
-/*	$NetBSD: decl_struct_member.c,v 1.1 2021/06/19 19:49:15 rillig Exp $	*/
+/*	$NetBSD: decl_struct_member.c,v 1.2 2021/06/20 11:24:32 rillig Exp $	*/
 # 3 "decl_struct_member.c"
 
 /*
@@ -10,3 +10,16 @@
 struct {
 	char;			/* expect: syntax error 'unnamed member' */
 };
+
+/*
+ * Before decl.c 1.188 from 2021-06-20, lint ran into a segmentation fault.
+ */
+struct {
+	char a(_)0		/* expect: syntax error '0' */
+}				/* expect: ';' after last */
+/*
+ * FIXME: adding a semicolon here triggers another assertion:
+ *
+ * assertion "t == NOTSPEC" failed in deftyp at decl.c:774
+ */
+/* expect+1: cannot recover from previous errors */

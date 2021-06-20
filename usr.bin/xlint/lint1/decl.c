@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.187 2021/06/20 11:00:18 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.188 2021/06/20 11:24:32 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.187 2021/06/20 11:00:18 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.188 2021/06/20 11:24:32 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1805,6 +1805,9 @@ complete_tag_struct_or_union(type_t *tp, sym_t *fmem)
 	struct_or_union	*sp;
 	int	n;
 	sym_t	*mem;
+
+	if (tp == NULL)		/* in case of syntax errors */
+		return gettyp(INT);
 
 	setcomplete(tp, true);
 
