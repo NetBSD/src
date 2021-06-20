@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2020/09/24 14:53:35 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2021/06/20 12:29:58 riastradh Exp $
 
 NOCTF=
 NOMAN=
@@ -29,6 +29,9 @@ CPPFLAGS+=	-I${.CURDIR} \
 		-I${.CURDIR}/../../lib/libgnulib/arch/${GDB_MACHINE_ARCH}/gnulib/import \
 		-I${DIST}/include \
 		${GCPPFLAGS:M-D*}
+
+# /usr/src/current/external/gpl3/gdb/bin/gdbserver/../../dist/gdb/nat/fork-inferior.c:497:15: error: 6 enumeration values not handled in switch: 'TARGET_WAITKIND_VFORK_DONE', 'TARGET_WAITKIND_IGNORE', 'TARGET_WAITKIND_NO_HISTORY'... [-Werror,-Wswitch]
+CXXFLAGS+=	${${ACTIVE_CC} == "clang":? -Wno-error=switch : }
 
 .include "../../Makefile.inc"
 .include <bsd.info.mk>
