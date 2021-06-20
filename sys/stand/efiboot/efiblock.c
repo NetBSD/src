@@ -1,4 +1,4 @@
-/* $NetBSD: efiblock.c,v 1.11 2021/05/26 09:42:36 mrg Exp $ */
+/* $NetBSD: efiblock.c,v 1.12 2021/06/20 19:10:47 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -37,6 +37,9 @@
 
 #include "efiboot.h"
 #include "efiblock.h"
+
+#define	EFI_BLOCK_TIMEOUT	120
+#define	EFI_BLOCK_TIMEOUT_CODE	0x810c0000
 
 /*
  * The raidframe support is basic.  Ideally, it should be expanded to
@@ -604,6 +607,8 @@ efi_block_strategy(void *devdata, int rw, daddr_t dblk, size_t size, void *buf, 
 
 	if (rw != F_READ)
 		return EROFS;
+
+	efi_set_watchdog(EFI_BLOCK_TIMEOUT, EFI_BLOCK_TIMEOUT_CODE);
 
 	switch (bpart->type) {
 	case EFI_BLOCK_PART_DISKLABEL:

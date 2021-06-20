@@ -1,4 +1,4 @@
-/*	$NetBSD: efiboot.h,v 1.14 2020/10/11 14:03:33 jmcneill Exp $	*/
+/*	$NetBSD: efiboot.h,v 1.15 2021/06/20 19:10:47 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -103,6 +103,9 @@ extern struct netif_driver efinetif;
 /* efipxe.c */
 void efi_pxe_probe(void);
 bool efi_pxe_match_booted_interface(const EFI_MAC_ADDRESS *, UINT32);
+
+/* efiwatchdog.c */
+void efi_set_watchdog(uint32_t, uint64_t);
 
 /* exec.c */
 int exec_netbsd(const char *, const char *);
