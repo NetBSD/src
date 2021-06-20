@@ -1,8 +1,8 @@
-/*	$NetBSD: d_init_pop_member.c,v 1.7 2021/03/30 14:25:28 rillig Exp $	*/
+/*	$NetBSD: d_init_pop_member.c,v 1.8 2021/06/20 18:11:21 rillig Exp $	*/
 # 3 "d_init_pop_member.c"
 
 /*
- * Since init.c 1.27 from 2015-07-28,
+ * Since init.c 1.27 from 2015-07-28 and before init.c 1.178 from 2021-03-29,
  * a bug in memberpop or pop_member led to a wrong error message
  * "undefined struct/union member: capital [101]" in the second and third
  * named initializer.
