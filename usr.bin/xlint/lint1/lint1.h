@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.104 2021/06/20 19:04:50 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.105 2021/06/20 20:32:42 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -107,8 +107,13 @@ typedef enum {
 /* An integer or floating-point value. */
 typedef struct {
 	tspec_t	v_tspec;
-	bool	v_unsigned;		/* set if an integer constant is
-					   unsigned in C90 and later */
+	/*
+	 * Set if an integer constant is unsigned only in C90 and later, but
+	 * not in traditional C.
+	 *
+	 * See the operators table in ops.def, columns "l r".
+	 */
+	bool	v_unsigned_since_c90;
 	union {
 		int64_t	_v_quad;	/* integers */
 		ldbl_t	_v_ldbl;	/* floats */
