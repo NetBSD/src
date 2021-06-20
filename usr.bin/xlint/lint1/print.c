@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.13 2021/06/20 19:04:50 rillig Exp $	*/
+/*	$NetBSD: print.c,v 1.14 2021/06/20 20:32:42 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print.c,v 1.13 2021/06/20 19:04:50 rillig Exp $");
+__RCSID("$NetBSD: print.c,v 1.14 2021/06/20 20:32:42 rillig Exp $");
 #endif
 
 #include <stdio.h>
@@ -63,7 +63,8 @@ print_tnode(char *buf, size_t bufsiz, const tnode_t *tn)
 			break;
 		default:
 			(void)snprintf(buf, bufsiz,
-			    v->v_unsigned ? "%llu" : "%lld",
+			    /* FIXME */
+			    v->v_unsigned_since_c90 ? "%llu" : "%lld",
 			    (unsigned long long)v->v_quad);
 			break;
 		}
