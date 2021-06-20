@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.43 2021/04/02 12:16:50 rillig Exp $	*/
+/*	$NetBSD: mem1.c,v 1.44 2021/06/20 18:51:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem1.c,v 1.43 2021/04/02 12:16:50 rillig Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.44 2021/06/20 18:51:50 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -49,10 +49,11 @@ __RCSID("$NetBSD: mem1.c,v 1.43 2021/04/02 12:16:50 rillig Exp $");
 #include "lint1.h"
 
 /*
- * Filenames allocated by record_filename are shared.
+ * Filenames allocated by record_filename are shared and have unlimited
+ * lifetime.
  */
 struct filename {
-	char	*fn_name;
+	const char *fn_name;
 	size_t	fn_len;
 	int	fn_id;
 	struct	filename *fn_next;
@@ -74,10 +75,10 @@ search_filename(const char *s, size_t len)
 }
 
 struct filename_replacement {
-	char *orig;
+	const char *orig;
 	size_t orig_len;
-	char *repl;
-	struct filename_replacement *next;
+	const char *repl;
+	const struct filename_replacement *next;
 };
 
 static struct filename_replacement *filename_replacements;
@@ -132,6 +133,7 @@ record_filename(const char *s, size_t slen)
 {
 	const struct filename *existing_fn;
 	struct filename *fn;
+	char *name;
 
 	if (s == NULL)
 		return NULL;
@@ -139,11 +141,13 @@ record_filename(const char *s, size_t slen)
 	if ((existing_fn = search_filename(s, slen)) != NULL)
 		return existing_fn->fn_name;
 
-	fn = xmalloc(sizeof(*fn));
 	/* Do not use strdup() because s is not NUL-terminated.*/
-	fn->fn_name = xmalloc(slen + 1);
-	(void)memcpy(fn->fn_name, s, slen);
-	fn->fn_name[slen] = '\0';
+	name = xmalloc(slen + 1);
+	(void)memcpy(name, s, slen);
+	name[slen] = '\0';
+
+	fn = xmalloc(sizeof(*fn));
+	fn->fn_name = name;
 	fn->fn_len = slen;
 	fn->fn_id = next_filename_id();
 	fn->fn_next = filenames;
