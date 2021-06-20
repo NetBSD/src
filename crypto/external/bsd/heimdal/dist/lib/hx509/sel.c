@@ -1,4 +1,4 @@
-/*	$NetBSD: sel.c,v 1.2 2017/01/28 21:31:48 christos Exp $	*/
+/*	$NetBSD: sel.c,v 1.3 2021/06/20 12:01:07 christos Exp $	*/
 
 /*
  * Copyright (c) 2008 Kungliga Tekniska Högskolan
@@ -219,7 +219,7 @@ _hx509_expr_parse(const char *buf)
 	_hx509_expr_input.error = NULL;
     }
 
-    yyparse();
+    _hx509_sel_yyparse();
 
     return _hx509_expr_input.expr;
 }
