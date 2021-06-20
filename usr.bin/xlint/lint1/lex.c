@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.41 2021/06/19 20:25:58 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.42 2021/06/20 18:38:12 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.41 2021/06/19 20:25:58 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.42 2021/06/20 18:38:12 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -881,7 +881,7 @@ lex_wide_character_constant(void)
 	if (c == -2) {
 		/* unterminated character constant */
 		error(253);
-	} else if (c == 0) {
+	} else if (i == 0) {
 		/* empty character constant */
 		error(73);
 	} else {
