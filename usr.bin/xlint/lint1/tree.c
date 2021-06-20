@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.289 2021/06/20 20:32:42 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.290 2021/06/20 20:48:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.289 2021/06/20 20:32:42 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.290 2021/06/20 20:48:25 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1934,12 +1934,10 @@ check_prototype_conversion(int arg, tspec_t nt, tspec_t ot, type_t *tp,
 /*
  * Print warnings for conversions of integer types which may cause problems.
  */
-/* ARGSUSED */
 static void
 check_integer_conversion(op_t op, int arg, tspec_t nt, tspec_t ot, type_t *tp,
 			 tnode_t *tn)
 {
-	char opbuf[16];
 
 	if (tn->tn_op == CON)
 		return;
@@ -1971,7 +1969,7 @@ check_integer_conversion(op_t op, int arg, tspec_t nt, tspec_t ot, type_t *tp,
 		case SHL:
 			/* suggest cast from '%s' to '%s' on op %s to ... */
 			warning(324, type_name(gettyp(ot)), type_name(tp),
-			    print_tnode(opbuf, sizeof(opbuf), tn));
+			    op_name(tn->tn_op));
 			break;
 		default:
 			break;
