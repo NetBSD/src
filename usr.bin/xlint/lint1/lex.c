@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.43 2021/06/20 18:41:27 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.44 2021/06/20 18:44:48 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.43 2021/06/20 18:41:27 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.44 2021/06/20 18:44:48 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -862,17 +862,17 @@ int
 lex_wide_character_constant(void)
 {
 	static	char buf[MB_LEN_MAX + 1];
-	size_t	i, imax;
+	size_t	n, nmax;
 	int c;
 	wchar_t	wc;
 
-	imax = MB_CUR_MAX;
+	nmax = MB_CUR_MAX;
 
-	i = 0;
+	n = 0;
 	while ((c = get_escaped_char('\'')) >= 0) {
-		if (i < imax)
-			buf[i] = (char)c;
-		i++;
+		if (n < nmax)
+			buf[n] = (char)c;
+		n++;
 	}
 
 	wc = 0;
@@ -880,17 +880,17 @@ lex_wide_character_constant(void)
 	if (c == -2) {
 		/* unterminated character constant */
 		error(253);
-	} else if (i == 0) {
+	} else if (n == 0) {
 		/* empty character constant */
 		error(73);
-	} else if (i > imax) {
-		i = imax;
+	} else if (n > nmax) {
+		n = nmax;
 		/* too many characters in character constant */
 		error(71);
 	} else {
-		buf[i] = '\0';
+		buf[n] = '\0';
 		(void)mbtowc(NULL, NULL, 0);
-		if (mbtowc(&wc, buf, imax) < 0)
+		if (mbtowc(&wc, buf, nmax) < 0)
 			/* invalid multibyte character */
 			error(291);
 	}
