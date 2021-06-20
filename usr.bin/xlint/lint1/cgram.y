@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.228 2021/06/19 19:49:15 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.229 2021/06/20 11:42:25 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.228 2021/06/19 19:49:15 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.229 2021/06/20 11:42:25 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -2028,12 +2028,17 @@ gcc_statement_expr_item:
 		$$->tn_type = gettyp(VOID);
 	  }
 	| expr T_SEMI {
-		/* XXX: We should really do that only on the last name */
-		if ($1->tn_op == NAME)
-			$1->tn_sym->s_used = true;
-		$$ = $1;
-		expr($1, false, false, false, false);
-		seen_fallthrough = false;
+		if ($1 == NULL) {	/* in case of syntax errors */
+			$$ = expr_zalloc_tnode();
+			$$->tn_type = gettyp(VOID);
+		} else {
+			/* XXX: do that only on the last name */
+			if ($1->tn_op == NAME)
+				$1->tn_sym->s_used = true;
+			$$ = $1;
+			expr($1, false, false, false, false);
+			seen_fallthrough = false;
+		}
 	}
 	;
 
