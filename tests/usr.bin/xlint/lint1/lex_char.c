@@ -1,4 +1,4 @@
-/*	$NetBSD: lex_char.c,v 1.1 2021/06/19 08:30:08 rillig Exp $	*/
+/*	$NetBSD: lex_char.c,v 1.2 2021/06/20 18:23:07 rillig Exp $	*/
 # 3 "lex_char.c"
 
 /*
@@ -23,7 +23,6 @@ test(void)
 	/* expect+2: multi-character character constant */
 	/* expect+1: conversion of 'int' to 'char' is out of range */
 	sink('ä');
-	/* rescue the parser: ' */
 
 	/* GCC extension */
 	/* expect+1: dubious escape \e */
