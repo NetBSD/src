@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.114 2021/04/24 23:36:57 thorpej Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.115 2021/06/21 03:21:17 christos Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.114 2021/04/24 23:36:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.115 2021/06/21 03:21:17 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -812,7 +812,7 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 
 	/* setup default video mode from devprop (allows PROM override) */
 	sc->sc_defaultmode = radeonfb_default_mode;
-	if (prop_dictionary_get_cstring_nocopy(device_properties(sc->sc_dev),
+	if (prop_dictionary_get_string(device_properties(sc->sc_dev),
 	    "videomode", &mptr)) {
 
 		strncpy(sc->sc_modebuf, mptr, sizeof(sc->sc_modebuf));
