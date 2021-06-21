@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmevar.h,v 1.20 2019/06/28 15:08:47 jmcneill Exp $	*/
+/*	$NetBSD: nvmevar.h,v 1.20.2.1 2021/06/21 17:25:48 martin Exp $	*/
 /*	$OpenBSD: nvmevar.h,v 1.8 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -122,6 +122,7 @@ struct nvme_softc {
 	size_t			sc_mps;		/* memory page size */  
 	size_t			sc_mdts;	/* max data trasfer size */
 	u_int			sc_max_sgl;	/* max S/G segments */
+	u_int			sc_dstrd;
 
 	struct nvm_identify_controller
 				sc_identify;
@@ -162,6 +163,8 @@ int	nvme_attach(struct nvme_softc *);
 int	nvme_detach(struct nvme_softc *, int flags);
 int	nvme_rescan(device_t, const char *, const int *);
 void	nvme_childdet(device_t, device_t);
+int	nvme_suspend(struct nvme_softc *);
+int	nvme_resume(struct nvme_softc *);
 int	nvme_intr(void *);
 void	nvme_softintr_intx(void *);
 int	nvme_intr_msi(void *);
