@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.262 2021/04/14 17:39:11 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.263 2021/06/21 10:33:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -206,6 +206,8 @@ typedef enum GNodeMade {
  * should be made.
  *
  * Some of the OP_ constants can be combined, others cannot.
+ *
+ * See the tests depsrc-*.mk and deptgt-*.mk.
  */
 typedef enum GNodeType {
 	OP_NONE		= 0,
