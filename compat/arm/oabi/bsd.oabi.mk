@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.oabi.mk,v 1.4 2015/06/24 22:20:24 matt Exp $
+#	$NetBSD: bsd.oabi.mk,v 1.4.18.1 2021/06/21 17:40:43 martin Exp $
 
 .if !defined(MLIBDIR)
 MLIBDIR=		oabi
@@ -15,10 +15,12 @@ ARM_APCS_FLAGS= ${${ACTIVE_CC} == "clang":? -target arm--netbsdelf -B ${TOOLDIR}
 ARM_MACHINE_ARCH=	armeb
 ARM_LD=			-m armelfb_nbsd
 LDFLAGS+=		-Wl,-m,armelfb_nbsd
+ARM_APCS_FLAGS=		-mcpu=arm10
 .else
 ARM_MACHINE_ARCH=	arm
 ARM_LD=			-m armelf_nbsd
 LDFLAGS+=		-Wl,-m,armelf_nbsd
+ARM_APCS_FLAGS=		-mcpu=arm10
 .endif
 
 LIBC_MACHINE_ARCH=	${ARM_MACHINE_ARCH}
