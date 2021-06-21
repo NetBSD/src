@@ -86,15 +86,6 @@ make: Unclosed variable expression, expecting '}' for modifier "C,from,to," of v
 6: TheVariable
 7: TheVariable
 
-mod-regex-undefined-subexpression:
-one one 2 3 5 8 one3 2one 34
-make: No match for subexpression \2
-make: No match for subexpression \2
-make: No match for subexpression \1
-make: No match for subexpression \2
-make: No match for subexpression \1
-()+() ()+() ()+() 3 5 8 (3)+() ()+(1) 34
-
 mod-ts-parse:
 112358132134
 15152535558513521534
