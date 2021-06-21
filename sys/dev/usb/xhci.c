@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.107.2.7 2020/12/23 12:34:38 martin Exp $	*/
+/*	$NetBSD: xhci.c,v 1.107.2.8 2021/06/21 17:11:46 martin Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.107.2.7 2020/12/23 12:34:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.107.2.8 2021/06/21 17:11:46 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -154,6 +154,8 @@ static int xhci_roothub_ctrl(struct usbd_bus *, usb_device_request_t *,
 static usbd_status xhci_configure_endpoint(struct usbd_pipe *);
 //static usbd_status xhci_unconfigure_endpoint(struct usbd_pipe *);
 static usbd_status xhci_reset_endpoint(struct usbd_pipe *);
+static usbd_status xhci_stop_endpoint_cmd(struct xhci_softc *,
+    struct xhci_slot *, u_int, uint32_t);
 static usbd_status xhci_stop_endpoint(struct usbd_pipe *);
 
 static void xhci_host_dequeue(struct xhci_ring * const);
@@ -369,7 +371,6 @@ xhci_rt_write_4(const struct xhci_softc * const sc, bus_size_t offset,
 	bus_space_write_4(sc->sc_iot, sc->sc_rbh, offset, value);
 }
 
-#if 0 /* unused */
 static inline uint64_t
 xhci_rt_read_8(const struct xhci_softc * const sc, bus_size_t offset)
 {
@@ -389,7 +390,6 @@ xhci_rt_read_8(const struct xhci_softc * const sc, bus_size_t offset)
 
 	return value;
 }
-#endif /* unused */
 
 static inline void
 xhci_rt_write_8(const struct xhci_softc * const sc, bus_size_t offset,
@@ -678,15 +678,408 @@ xhci_activate(device_t self, enum devact act)
 }
 
 bool
-xhci_suspend(device_t dv, const pmf_qual_t *qual)
+xhci_suspend(device_t self, const pmf_qual_t *qual)
 {
-	return false;
+	struct xhci_softc * const sc = device_private(self);
+	size_t i, j, bn, dci;
+	int port;
+	uint32_t v;
+	usbd_status err;
+	bool ok = false;
+
+	XHCIHIST_FUNC(); XHCIHIST_CALLED();
+
+	mutex_enter(&sc->sc_lock);
+
+	/*
+	 * Block issuance of new commands, and wait for all pending
+	 * commands to complete.
+	 */
+	KASSERT(sc->sc_suspender == NULL);
+	sc->sc_suspender = curlwp;
+	while (sc->sc_command_addr != 0)
+		cv_wait(&sc->sc_cmdbusy_cv, &sc->sc_lock);
+
+	/*
+	 * xHCI Requirements Specification 1.2, May 2019, Sec. 4.23.2:
+	 * xHCI Power Management, p. 342
+	 * https://www.intel.com/content/dam/www/public/us/en/documents/technical-specifications/extensible-host-controler-interface-usb-xhci.pdf#page=342
+	 */
+
+	/*
+	 * `1. Stop all USB activity by issuing Stop Endpoint Commands
+	 *     for Busy endpoints in the Running state.  If the Force
+	 *     Save Context Capability (FSC = ``0'') is not supported,
+	 *     then Stop Endpoint Commands shall be issued for all idle
+	 *     endpoints in the Running state as well.  The Stop
+	 *     Endpoint Command causes the xHC to update the respective
+	 *     Endpoint or Stream Contexts in system memory, e.g. the
+	 *     TR Dequeue Pointer, DCS, etc. fields.  Refer to
+	 *     Implementation Note "0".'
+	 */
+	for (i = 0; i < sc->sc_maxslots; i++) {
+		struct xhci_slot *xs = &sc->sc_slots[i];
+
+		/* Skip if the slot is not in use.  */
+		if (xs->xs_idx == 0)
+			continue;
+
+		for (dci = XHCI_DCI_SLOT; dci <= XHCI_MAX_DCI; dci++) {
+			/* Skip if the endpoint is not Running.  */
+			/* XXX What about Busy?  */
+			if (xhci_get_epstate(sc, xs, dci) !=
+			    XHCI_EPSTATE_RUNNING)
+				continue;
+
+			/* Stop endpoint.  */
+			err = xhci_stop_endpoint_cmd(sc, xs, dci,
+			    XHCI_TRB_3_SUSP_EP_BIT);
+			if (err) {
+				device_printf(self, "failed to stop endpoint"
+				    " slot %zu dci %zu err %d\n",
+				    i, dci, err);
+				goto out;
+			}
+		}
+	}
+
+	/*
+	 * Next, suspend all the ports:
+	 *
+	 * xHCI Requirements Specification 1.2, May 2019, Sec. 4.15:
+	 * Suspend-Resume, pp. 276-283
+	 * https://www.intel.com/content/dam/www/public/us/en/documents/technical-specifications/extensible-host-controler-interface-usb-xhci.pdf#page=276
+	 */
+	for (bn = 0; bn < 2; bn++) {
+		for (i = 1; i <= sc->sc_rhportcount[bn]; i++) {
+			/* 4.15.1: Port Suspend.  */
+			port = XHCI_PORTSC(xhci_rhport2ctlrport(sc, bn, i));
+
+			/*
+			 * `System software places individual ports
+			 *  into suspend mode by writing a ``3'' into
+			 *  the appropriate PORTSC register Port Link
+			 *  State (PLS) field (refer to Section 5.4.8).
+			 *  Software should only set the PLS field to
+			 *  ``3'' when the port is in the Enabled
+			 *  state.'
+			 *
+			 * `Software should not attempt to suspend a
+			 *  port unless the port reports that it is in
+			 *  the enabled (PED = ``1''; PLS < ``3'')
+			 *  state (refer to Section 5.4.8 for more
+			 *  information about PED and PLS).'
+			 */
+			v = xhci_op_read_4(sc, port);
+			if (((v & XHCI_PS_PED) == 0) ||
+			    XHCI_PS_PLS_GET(v) >= XHCI_PS_PLS_U3)
+				continue;
+			v &= ~(XHCI_PS_PLS_MASK | XHCI_PS_CLEAR);
+			v |= XHCI_PS_LWS | XHCI_PS_PLS_SET(XHCI_PS_PLS_SETU3);
+			xhci_op_write_4(sc, port, v);
+
+			/*
+			 * `When the PLS field is written with U3
+			 *  (``3''), the status of the PLS bit will not
+			 *  change to the target U state U3 until the
+			 *  suspend signaling has completed to the
+			 *  attached device (which may be as long as
+			 *  10ms.).'
+			 *
+			 * `Software is required to wait for U3
+			 *  transitions to complete before it puts the
+			 *  xHC into a low power state, and before
+			 *  resuming the port.'
+			 *
+			 * XXX Take advantage of the technique to
+			 * reduce polling on host controllers that
+			 * support the U3C capability.
+			 */
+			for (j = 0; j < XHCI_WAIT_PLS_U3; j++) {
+				v = xhci_op_read_4(sc, port);
+				if (XHCI_PS_PLS_GET(v) == XHCI_PS_PLS_U3)
+					break;
+				usb_delay_ms(&sc->sc_bus, 1);
+			}
+			if (j == XHCI_WAIT_PLS_U3) {
+				device_printf(self,
+				    "suspend timeout on bus %zu port %zu\n",
+				    bn, i);
+				goto out;
+			}
+		}
+	}
+
+	/*
+	 * `2. Ensure that the Command Ring is in the Stopped state
+	 *     (CRR = ``0'') or Idle (i.e. the Command Transfer Ring is
+	 *     empty), and all Command Completion Events associated
+	 *     with them have been received.'
+	 *
+	 * XXX
+	 */
+
+	/* `3. Stop the controller by setting Run/Stop (R/S) = ``0''.'  */
+	xhci_op_write_4(sc, XHCI_USBCMD,
+	    xhci_op_read_4(sc, XHCI_USBCMD) & ~XHCI_CMD_RS);
+
+	/*
+	 * `4. Read the Operational Runtime, and VTIO registers in the
+	 *     following order: USBCMD, DNCTRL, DCBAAP, CONFIG, ERSTSZ,
+	 *     ERSTBA, ERDP, IMAN, IMOD, and VTIO and save their
+	 *     state.'
+	 *
+	 * (We don't use VTIO here (XXX for now?).)
+	 */
+	sc->sc_regs.usbcmd = xhci_op_read_4(sc, XHCI_USBCMD);
+	sc->sc_regs.dnctrl = xhci_op_read_4(sc, XHCI_DNCTRL);
+	sc->sc_regs.dcbaap = xhci_op_read_8(sc, XHCI_DCBAAP);
+	sc->sc_regs.config = xhci_op_read_4(sc, XHCI_CONFIG);
+	sc->sc_regs.erstsz0 = xhci_rt_read_4(sc, XHCI_ERSTSZ(0));
+	sc->sc_regs.erstba0 = xhci_rt_read_8(sc, XHCI_ERSTBA(0));
+	sc->sc_regs.erdp0 = xhci_rt_read_8(sc, XHCI_ERDP(0));
+	sc->sc_regs.iman0 = xhci_rt_read_4(sc, XHCI_IMAN(0));
+	sc->sc_regs.imod0 = xhci_rt_read_4(sc, XHCI_IMOD(0));
+
+	/*
+	 * `5. Set the Controller Save State (CSS) flag in the USBCMD
+	 *     register (5.4.1)...'
+	 */
+	xhci_op_write_4(sc, XHCI_USBCMD,
+	    xhci_op_read_4(sc, XHCI_USBCMD) | XHCI_CMD_CSS);
+
+	/*
+	 *    `...and wait for the Save State Status (SSS) flag in the
+	 *     USBSTS register (5.4.2) to transition to ``0''.'
+	 */
+	for (i = 0; i < XHCI_WAIT_SSS; i++) {
+		if ((xhci_op_read_4(sc, XHCI_USBSTS) & XHCI_STS_SSS) == 0)
+			break;
+		usb_delay_ms(&sc->sc_bus, 1);
+	}
+	if (i >= XHCI_WAIT_SSS) {
+		device_printf(self, "suspend timeout, USBSTS.SSS\n");
+		/*
+		 * Just optimistically go on and check SRE anyway --
+		 * what's the worst that could happen?
+		 */
+	}
+
+	/*
+	 * `Note: After a Save or Restore operation completes, the
+	 *  Save/Restore Error (SRE) flag in the USBSTS register should
+	 *  be checked to ensure that the operation completed
+	 *  successfully.'
+	 */
+	if (xhci_op_read_4(sc, XHCI_USBSTS) & XHCI_STS_SRE) {
+		device_printf(self, "suspend error, USBSTS.SRE\n");
+		goto out;
+	}
+
+	/* Success!  */
+	ok = true;
+
+out:	mutex_exit(&sc->sc_lock);
+	return ok;
 }
 
 bool
-xhci_resume(device_t dv, const pmf_qual_t *qual)
+xhci_resume(device_t self, const pmf_qual_t *qual)
 {
-	return false;
+	struct xhci_softc * const sc = device_private(self);
+	size_t i, j, bn, dci;
+	int port;
+	uint32_t v;
+	bool ok = false;
+
+	XHCIHIST_FUNC(); XHCIHIST_CALLED();
+
+	mutex_enter(&sc->sc_lock);
+	KASSERT(sc->sc_suspender);
+
+	/*
+	 * xHCI Requirements Specification 1.2, May 2019, Sec. 4.23.2:
+	 * xHCI Power Management, p. 343
+	 * https://www.intel.com/content/dam/www/public/us/en/documents/technical-specifications/extensible-host-controler-interface-usb-xhci.pdf#page=343
+	 */
+
+	/*
+	 * `4. Restore the Operational Runtime, and VTIO registers with
+	 *     their previously saved state in the following order:
+	 *     DNCTRL, DCBAAP, CONFIG, ERSTSZ, ERSTBA, ERDP, IMAN,
+	 *     IMOD, and VTIO.'
+	 *
+	 * (We don't use VTIO here (for now?).)
+	 */
+	xhci_op_write_4(sc, XHCI_USBCMD, sc->sc_regs.usbcmd);
+	xhci_op_write_4(sc, XHCI_DNCTRL, sc->sc_regs.dnctrl);
+	xhci_op_write_8(sc, XHCI_DCBAAP, sc->sc_regs.dcbaap);
+	xhci_op_write_4(sc, XHCI_CONFIG, sc->sc_regs.config);
+	xhci_rt_write_4(sc, XHCI_ERSTSZ(0), sc->sc_regs.erstsz0);
+	xhci_rt_write_8(sc, XHCI_ERSTBA(0), sc->sc_regs.erstba0);
+	xhci_rt_write_8(sc, XHCI_ERDP(0), sc->sc_regs.erdp0);
+	xhci_rt_write_4(sc, XHCI_IMAN(0), sc->sc_regs.iman0);
+	xhci_rt_write_4(sc, XHCI_IMOD(0), sc->sc_regs.imod0);
+
+	memset(&sc->sc_regs, 0, sizeof(sc->sc_regs)); /* paranoia */
+
+	/*
+	 * `5. Set the Controller Restore State (CRS) flag in the
+	 *     USBCMD register (5.4.1) to ``1''...'
+	 */
+	xhci_op_write_4(sc, XHCI_USBCMD,
+	    xhci_op_read_4(sc, XHCI_USBCMD) | XHCI_CMD_CRS);
+
+	/*
+	 *    `...and wait for the Restore State Status (RSS) in the
+	 *     USBSTS register (5.4.2) to transition to ``0''.'
+	 */
+	for (i = 0; i < XHCI_WAIT_RSS; i++) {
+		if ((xhci_op_read_4(sc, XHCI_USBSTS) & XHCI_STS_RSS) == 0)
+			break;
+		usb_delay_ms(&sc->sc_bus, 1);
+	}
+	if (i >= XHCI_WAIT_RSS) {
+		device_printf(self, "suspend timeout, USBSTS.RSS\n");
+		goto out;
+	}
+
+	/*
+	 * `6. Reinitialize the Command Ring, i.e. so its Cycle bits
+	 *     are consistent with the RCS values to be written to the
+	 *     CRCR.'
+	 *
+	 * XXX Hope just zeroing it is good enough!
+	 */
+	xhci_host_dequeue(sc->sc_cr);
+
+	/*
+	 * `7. Write the CRCR with the address and RCS value of the
+	 *     reinitialized Command Ring.  Note that this write will
+	 *     cause the Command Ring to restart at the address
+	 *     specified by the CRCR.'
+	 */
+	xhci_op_write_8(sc, XHCI_CRCR, xhci_ring_trbp(sc->sc_cr, 0) |
+	    sc->sc_cr->xr_cs);
+
+	/*
+	 * `8. Enable the controller by setting Run/Stop (R/S) =
+	 *     ``1''.'
+	 */
+	xhci_op_write_4(sc, XHCI_USBCMD,
+	    xhci_op_read_4(sc, XHCI_USBCMD) | XHCI_CMD_RS);
+
+	/*
+	 * `9. Software shall walk the USB topology and initialize each
+	 *     of the xHC PORTSC, PORTPMSC, and PORTLI registers, and
+	 *     external hub ports attached to USB devices.'
+	 *
+	 * This follows the procedure in 4.15 `Suspend-Resume', 4.15.2
+	 * `Port Resume', 4.15.2.1 `Host Initiated'.
+	 *
+	 * XXX We should maybe batch up initiating the state
+	 * transitions, and then wait for them to complete all at once.
+	 */
+	for (bn = 0; bn < 2; bn++) {
+		for (i = 1; i <= sc->sc_rhportcount[bn]; i++) {
+			port = XHCI_PORTSC(xhci_rhport2ctlrport(sc, bn, i));
+
+			/* `When a port is in the U3 state: ...' */
+			v = xhci_op_read_4(sc, port);
+			if (XHCI_PS_PLS_GET(v) != XHCI_PS_PLS_U3)
+				continue;
+
+			/*
+			 * `For a USB2 protocol port, software shall
+			 *  write a ``15'' (Resume) to the PLS field to
+			 *  initiate resume signaling.  The port shall
+			 *  transition to the Resume substate and the
+			 *  xHC shall transmit the resume signaling
+			 *  within 1ms (T_URSM).  Software shall ensure
+			 *  that resume is signaled for at least 20ms
+			 *  (T_DRSMDN).  Software shall start timing
+			 *  T_DRSMDN from the write of ``15'' (Resume)
+			 *  to PLS.'
+			 */
+			if (bn == 1) {
+				KASSERT(sc->sc_bus2.ub_revision == USBREV_2_0);
+				v &= ~(XHCI_PS_PLS_MASK | XHCI_PS_CLEAR);
+				v |= XHCI_PS_LWS;
+				v |= XHCI_PS_PLS_SET(XHCI_PS_PLS_SETRESUME);
+				xhci_op_write_4(sc, port, v);
+				usb_delay_ms(&sc->sc_bus, USB_RESUME_WAIT);
+			} else {
+				KASSERT(sc->sc_bus.ub_revision > USBREV_2_0);
+			}
+
+			/*
+			 * `For a USB3 protocol port [and a USB2
+			 *  protocol port after transitioning to
+			 *  Resume], software shall write a ``0'' (U0)
+			 *  to the PLS field...'
+			 */
+			v = xhci_op_read_4(sc, port);
+			v &= ~(XHCI_PS_PLS_MASK | XHCI_PS_CLEAR);
+			v |= XHCI_PS_LWS | XHCI_PS_PLS_SET(XHCI_PS_PLS_SETU0);
+			xhci_op_write_4(sc, port, v);
+
+			for (j = 0; j < XHCI_WAIT_PLS_U0; j++) {
+				v = xhci_op_read_4(sc, port);
+				if (XHCI_PS_PLS_GET(v) == XHCI_PS_PLS_U0)
+					break;
+				usb_delay_ms(&sc->sc_bus, 1);
+			}
+			if (j == XHCI_WAIT_PLS_U0) {
+				device_printf(self,
+				    "resume timeout on bus %zu port %zu\n",
+				    bn, i);
+				goto out;
+			}
+		}
+	}
+
+	/*
+	 * `10. Restart each of the previously Running endpoints by
+	 *      ringing their doorbells.'
+	 */
+	for (i = 0; i < sc->sc_maxslots; i++) {
+		struct xhci_slot *xs = &sc->sc_slots[i];
+
+		/* Skip if the slot is not in use.  */
+		if (xs->xs_idx == 0)
+			continue;
+
+		for (dci = XHCI_DCI_SLOT; dci <= XHCI_MAX_DCI; dci++) {
+			/* Skip if the endpoint is not Running.  */
+			if (xhci_get_epstate(sc, xs, dci) !=
+			    XHCI_EPSTATE_RUNNING)
+				continue;
+
+			/* Ring the doorbell.  */
+			xhci_db_write_4(sc, XHCI_DOORBELL(xs->xs_idx), dci);
+		}
+	}
+
+	/*
+	 * `Note: After a Save or Restore operation completes, the
+	 *  Save/Restore Error (SRE) flag in the USBSTS register should
+	 *  be checked to ensure that the operation completed
+	 *  successfully.'
+	 */
+	if (xhci_op_read_4(sc, XHCI_USBSTS) & XHCI_STS_SRE) {
+		device_printf(self, "resume error, USBSTS.SRE\n");
+		goto out;
+	}
+
+	/* Resume command issuance.  */
+	sc->sc_suspender = NULL;
+	cv_broadcast(&sc->sc_cmdbusy_cv);
+
+	/* Success!  */
+	ok = true;
+
+out:	mutex_exit(&sc->sc_lock);
+	return ok;
 }
 
 bool
@@ -751,7 +1144,6 @@ xhci_hc_reset(struct xhci_softc * const sc)
 
 	return 0;
 }
-
 
 /* 7.2 xHCI Support Protocol Capability */
 static void
@@ -1505,13 +1897,11 @@ xhci_reset_endpoint(struct usbd_pipe *pipe)
  * Should be called with sc_lock held.
  */
 static usbd_status
-xhci_stop_endpoint(struct usbd_pipe *pipe)
+xhci_stop_endpoint_cmd(struct xhci_softc *sc, struct xhci_slot *xs, u_int dci,
+    uint32_t trb3flags)
 {
-	struct xhci_softc * const sc = XHCI_PIPE2SC(pipe);
-	struct xhci_slot * const xs = pipe->up_dev->ud_hcpriv;
 	struct xhci_soft_trb trb;
 	usbd_status err;
-	const u_int dci = xhci_ep_get_dci(pipe->up_endpoint->ue_edesc);
 
 	XHCIHIST_FUNC();
 	XHCIHIST_CALLARGS("slot %ju dci %ju", xs->xs_idx, dci, 0, 0);
@@ -1522,11 +1912,27 @@ xhci_stop_endpoint(struct usbd_pipe *pipe)
 	trb.trb_2 = 0;
 	trb.trb_3 = XHCI_TRB_3_SLOT_SET(xs->xs_idx) |
 	    XHCI_TRB_3_EP_SET(dci) |
-	    XHCI_TRB_3_TYPE_SET(XHCI_TRB_TYPE_STOP_EP);
+	    XHCI_TRB_3_TYPE_SET(XHCI_TRB_TYPE_STOP_EP) |
+	    trb3flags;
 
 	err = xhci_do_command_locked(sc, &trb, USBD_DEFAULT_TIMEOUT);
 
 	return err;
+}
+
+static usbd_status
+xhci_stop_endpoint(struct usbd_pipe *pipe)
+{
+	struct xhci_softc * const sc = XHCI_PIPE2SC(pipe);
+	struct xhci_slot * const xs = pipe->up_dev->ud_hcpriv;
+	const u_int dci = xhci_ep_get_dci(pipe->up_endpoint->ue_edesc);
+
+	XHCIHIST_FUNC();
+	XHCIHIST_CALLARGS("slot %ju dci %ju", xs->xs_idx, dci, 0, 0);
+
+	KASSERT(mutex_owned(&sc->sc_lock));
+
+	return xhci_stop_endpoint_cmd(sc, xs, dci, 0);
 }
 
 /*
@@ -2692,7 +3098,8 @@ xhci_do_command_locked(struct xhci_softc * const sc,
 	KASSERTMSG(!cpu_intr_p() && !cpu_softintr_p(), "called from intr ctx");
 	KASSERT(mutex_owned(&sc->sc_lock));
 
-	while (sc->sc_command_addr != 0)
+	while (sc->sc_command_addr != 0 ||
+	    (sc->sc_suspender != NULL && sc->sc_suspender != curlwp))
 		cv_wait(&sc->sc_cmdbusy_cv, &sc->sc_lock);
 
 	/*
