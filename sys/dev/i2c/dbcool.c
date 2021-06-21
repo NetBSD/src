@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.61 2021/06/15 04:39:49 mlelstv Exp $ */
+/*	$NetBSD: dbcool.c,v 1.62 2021/06/21 03:12:54 christos Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.61 2021/06/15 04:39:49 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.62 2021/06/21 03:12:54 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1697,7 +1697,7 @@ dbcool_attach_sensor(struct dbcool_softc *sc, int idx)
 
 	name_index = sc->sc_dc.dc_chip->table[idx].name_index;
 	snprintf(name, 7, "s%02x", sc->sc_dc.dc_chip->table[idx].reg.val_reg);
-	if (prop_dictionary_get_cstring_nocopy(sc->sc_prop, name, &desc)) {
+	if (prop_dictionary_get_string(sc->sc_prop, name, &desc)) {
 		 strlcpy(sc->sc_sensor[idx].desc, desc,
 			sizeof(sc->sc_sensor[idx].desc));
 	} else {

@@ -1,4 +1,4 @@
-/*	$NetBSD: lm75.c,v 1.44 2021/06/13 09:46:04 mlelstv Exp $	*/
+/*	$NetBSD: lm75.c,v 1.45 2021/06/21 03:12:54 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm75.c,v 1.44 2021/06/13 09:46:04 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm75.c,v 1.45 2021/06/21 03:12:54 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -290,7 +290,7 @@ lmtemp_attach(device_t parent, device_t self, void *aux)
 	    ia->ia_name? ia->ia_name : device_xname(self),
 	    sizeof(sc->sc_sensor.desc));
 
-	if (prop_dictionary_get_cstring_nocopy(sc->sc_prop, "s00", &desc)) {
+	if (prop_dictionary_get_string(sc->sc_prop, "s00", &desc)) {
 		strncpy(name, desc, 64);
 	}
 

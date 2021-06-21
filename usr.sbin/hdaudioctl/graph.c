@@ -1,4 +1,4 @@
-/* $NetBSD: graph.c,v 1.5 2020/06/15 13:06:39 sborrill Exp $ */
+/* $NetBSD: graph.c,v 1.6 2021/06/21 03:09:52 christos Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -95,7 +95,7 @@ hdaudioctl_graph(int fd, int argc, char *argv[])
 		    HDAUDIO_FGRP_WIDGET_INFO, &response);
 		if (error != 0)
 			break;
-		prop_dictionary_get_cstring_nocopy(response, "name", &name);
+		prop_dictionary_get_string(response, "name", &name);
 		prop_dictionary_get_uint32(response, "cap", &cap);
 		prop_dictionary_get_uint32(response, "config", &config);
 		prop_dictionary_get_uint8(response, "type", &type);
@@ -174,7 +174,7 @@ next:
 		    HDAUDIO_AFG_WIDGET_INFO, &response);
 		if (error != 0)
 			break;
-		prop_dictionary_get_cstring_nocopy(response, "name", &name);
+		prop_dictionary_get_string(response, "name", &name);
 		prop_dictionary_get_uint8(response, "type", &type);
 		prop_dictionary_get_uint8(response, "nid", &nid);
 
@@ -197,7 +197,7 @@ next:
 		    HDAUDIO_AFG_WIDGET_INFO, &response);
 		if (error != 0)
 			break;
-		prop_dictionary_get_cstring_nocopy(response, "name", &name);
+		prop_dictionary_get_string(response, "name", &name);
 		prop_dictionary_get_uint8(response, "type", &type);
 		prop_dictionary_get_uint8(response, "nid", &nid);
 

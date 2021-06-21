@@ -266,7 +266,7 @@ libdm_task_get_name(libdm_task_t libdm_task)
 {
 	char *name;
 
-	if (!prop_dictionary_get_cstring_nocopy(libdm_task->ldm_task,
+	if (!prop_dictionary_get_string(libdm_task->ldm_task,
 	    DM_IOCTL_NAME, (const char **)&name))
 		return NULL;
 
@@ -291,7 +291,7 @@ libdm_task_get_uuid(libdm_task_t libdm_task)
 {
 	char *uuid;
 
-	if (!prop_dictionary_get_cstring_nocopy(libdm_task->ldm_task,
+	if (!prop_dictionary_get_string(libdm_task->ldm_task,
 	    DM_IOCTL_UUID, (const char **)&uuid))
 		return NULL;
 
@@ -304,7 +304,7 @@ libdm_task_get_command(libdm_task_t libdm_task)
 {
 	char *command;
 
-	if (!prop_dictionary_get_cstring_nocopy(libdm_task->ldm_task,
+	if (!prop_dictionary_get_string(libdm_task->ldm_task,
 	    DM_IOCTL_COMMAND, (const char **)&command))
 		return NULL;
 
@@ -755,7 +755,7 @@ libdm_table_get_target(libdm_table_t libdm_table)
 {
 	char *target;
 
-	if (!prop_dictionary_get_cstring_nocopy(libdm_table->ldm_tbl, DM_TABLE_TYPE,
+	if (!prop_dictionary_get_string(libdm_table->ldm_tbl, DM_TABLE_TYPE,
 	    (const char **)&target))
 		return NULL;
 
@@ -782,7 +782,7 @@ libdm_table_get_params(libdm_table_t  libdm_table)
 {
 	char *params;
 
-	if (!prop_dictionary_get_cstring_nocopy(libdm_table->ldm_tbl, DM_TABLE_PARAMS,
+	if (!prop_dictionary_get_string(libdm_table->ldm_tbl, DM_TABLE_PARAMS,
 	    (const char **)&params))
 		return NULL;
 
@@ -816,7 +816,7 @@ libdm_target_get_name(libdm_target_t libdm_target)
 {
 	char *name;
 
-	if (!prop_dictionary_get_cstring_nocopy(libdm_target->ldm_trgt,
+	if (!prop_dictionary_get_string(libdm_target->ldm_trgt,
 	    DM_TARGETS_NAME, (const char **)&name))
 		return NULL;
 
@@ -860,7 +860,7 @@ libdm_dev_get_name(libdm_dev_t libdm_dev)
 {
 	char *name;
 
-	if (!prop_dictionary_get_cstring_nocopy(libdm_dev->ldm_dev,
+	if (!prop_dictionary_get_string(libdm_dev->ldm_dev,
 	    DM_DEV_NAME, (const char **)&name))
 		return NULL;
 

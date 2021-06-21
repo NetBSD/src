@@ -1,4 +1,4 @@
-/* $NetBSD: drvctl.c,v 1.2 2010/09/02 02:17:35 jmcneill Exp $ */
+/* $NetBSD: drvctl.c,v 1.3 2021/06/21 03:04:27 christos Exp $ */
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -64,9 +64,9 @@ drvctl_get_properties(int fd, const char *devnode, prop_dictionary_t *props)
 	command_dict = prop_dictionary_create();
 	args_dict = prop_dictionary_create();
 
-	prop_dictionary_set_cstring_nocopy(command_dict, "drvctl-command",
+	prop_dictionary_set_string_nocopy(command_dict, "drvctl-command",
 	    "get-properties");
-	prop_dictionary_set_cstring_nocopy(args_dict, "device-name", devnode);
+	prop_dictionary_set_string_nocopy(args_dict, "device-name", devnode);
 	prop_dictionary_set(command_dict, "drvctl-arguments", args_dict);
 	prop_object_release(args_dict);
 
@@ -115,7 +115,7 @@ drvctl_search(int fd, const char *curnode, const char *dvname,
 		rv = drvctl_get_properties(fd, laa.l_childname[i], &props);
 		if (rv == false || props == NULL)
 			continue;
-		rv = prop_dictionary_get_cstring_nocopy(props,
+		rv = prop_dictionary_get_string(props,
 		    "device-driver", &curdvname);
 		if (rv == true && strcmp(curdvname, dvname) == 0) {
 			rv = prop_dictionary_get_uint32(props,
