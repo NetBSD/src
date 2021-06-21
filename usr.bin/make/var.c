@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.933 2021/06/21 04:24:17 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.934 2021/06/21 08:40:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.933 2021/06/21 04:24:17 sjg Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.934 2021/06/21 08:40:44 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2135,7 +2135,7 @@ IsEscapedModifierPart(const char *p, char delim,
 	return p[1] == '&' && subst != NULL;
 }
 
-/* See ParseModifierPart */
+/* See ParseModifierPart for the documentation. */
 static VarParseResult
 ParseModifierPartSubst(
     const char **pp,
@@ -2143,8 +2143,8 @@ ParseModifierPartSubst(
     VarEvalMode emode,
     ModChain *ch,
     LazyBuf *part,
-    /* For the first part of the :S modifier, sets the VARP_ANCHOR_END flag
-     * if the last character of the pattern is a $. */
+    /* For the first part of the modifier ':S', set anchorEnd if the last
+     * character of the pattern is a $. */
     PatternFlags *out_pflags,
     /* For the second part of the :S modifier, allow ampersands to be
      * escaped and replace unescaped ampersands with subst->lhs. */
@@ -2265,10 +2265,9 @@ ParseModifierPartSubst(
  * including the next unescaped delimiter.  The delimiter, as well as the
  * backslash or the dollar, can be escaped with a backslash.
  *
- * Return the parsed (and possibly expanded) string, or NULL if no delimiter
- * was found.  On successful return, the parsing position pp points right
- * after the delimiter.  The delimiter is not included in the returned
- * value though.
+ * Return VPR_OK if parsing succeeded, together with the parsed (and possibly
+ * expanded) part.  In that case, pp points right after the delimiter.  The
+ * delimiter is not included in the part though.
  */
 static VarParseResult
 ParseModifierPart(
