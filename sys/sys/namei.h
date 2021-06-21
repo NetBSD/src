@@ -1,11 +1,11 @@
-/*	$NetBSD: namei.h,v 1.98 2019/06/03 06:05:39 msaitoh Exp $	*/
+/*	$NetBSD: namei.h,v 1.98.2.1 2021/06/21 14:52:58 martin Exp $	*/
 
 
 /*
  * WARNING: GENERATED FILE.  DO NOT EDIT
  * (edit namei.src and run make namei in src/sys/sys)
  *   by:   NetBSD: gennameih.awk,v 1.5 2009/12/23 14:17:19 pooka Exp 
- *   from: NetBSD: namei.src,v 1.42 2019/06/03 06:04:21 msaitoh Exp 
+ *   from: NetBSD: namei.src,v 1.42.2.1 2021/06/21 14:50:57 martin Exp 
  */
 
 /*
@@ -160,7 +160,8 @@ struct nameidata {
 #define	EMULROOTSET	0x00000080	/* emulation root already
 					   in ni_erootdir */
 #define	NOCHROOT	0x01000000	/* no chroot on abs path lookups */
-#define	MODMASK		0x010000fc	/* mask of operational modifiers */
+#define	NONEXCLHACK	0x02000000	/* open wwith O_CREAT but not O_EXCL */
+#define	MODMASK		0x030000fc	/* mask of operational modifiers */
 /*
  * Namei parameter descriptors.
  */
@@ -351,7 +352,8 @@ struct	nchstats _NAMEI_CACHE_STATS(uint64_t);
 #define NAMEI_NOFOLLOW	0x00000000
 #define NAMEI_EMULROOTSET	0x00000080
 #define NAMEI_NOCHROOT	0x01000000
-#define NAMEI_MODMASK	0x010000fc
+#define NAMEI_NONEXCLHACK	0x02000000
+#define NAMEI_MODMASK	0x030000fc
 #define NAMEI_NOCROSSMOUNT	0x0000100
 #define NAMEI_RDONLY	0x0000200
 #define NAMEI_ISDOTDOT	0x0002000
