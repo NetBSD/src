@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.26 2021/06/20 19:10:47 jmcneill Exp $
+$NetBSD: version,v 1.27 2021/06/21 11:11:33 jmcneill Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE EFI BOOTLOADER HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -30,3 +30,4 @@ is taken as the current.
 2.7:	Add basic support for booting from RAID1 volumes.
 2.8:	Add bi-endian disklabel and FFS support.
 2.9:	Watchdog support.
+2.10:	Use disk I/O protocol for block devices.

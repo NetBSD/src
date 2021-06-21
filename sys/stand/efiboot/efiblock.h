@@ -1,4 +1,4 @@
-/* $NetBSD: efiblock.h,v 1.4 2020/10/11 14:03:33 jmcneill Exp $ */
+/* $NetBSD: efiblock.h,v 1.5 2021/06/21 11:11:33 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -43,6 +43,7 @@ struct efi_block_dev {
 	uint16_t index;
 	EFI_DEVICE_PATH *path;
 	EFI_BLOCK_IO *bio;
+	EFI_DISK_IO *dio;
 	UINT32 media_id;
 	TAILQ_HEAD(, efi_block_part) partitions;
 
