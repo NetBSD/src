@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.30 2021/05/31 11:12:42 rin Exp $	*/
+/*	$NetBSD: boot.c,v 1.31 2021/06/21 19:07:30 nia Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -451,9 +451,13 @@ set_bootargs(const char *arg)
 void
 print_banner(void)
 {
-	printf("\n\n"
-	    ">> %s, Revision %s\n",
-	    bootprog_name, bootprog_rev);
+	printf("  \\-__,------,___.\n");
+	printf("   \\        __,---`  %s\n", bootprog_name);
+	printf("    \\       `---,_.  Revision %s\n", bootprog_rev);
+	printf("     \\-,_____,.---`\n");
+	printf("      \\\n");
+	printf("       \\\n");
+	printf("        \\\n\n");
 }
 
 void
