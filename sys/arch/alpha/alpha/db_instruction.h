@@ -1,4 +1,4 @@
-/* $NetBSD: db_instruction.h,v 1.10 2020/07/21 13:37:18 thorpej Exp $ */
+/* $NetBSD: db_instruction.h,v 1.11 2021/06/21 02:01:13 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -741,5 +741,19 @@ typedef union {
 #define	op_cvtgd_su	0x5ad
 #define	op_cvtgqg_sv	0x5af
 
+#ifdef _KERNEL
+struct alpha_print_instruction_context {
+	unsigned long pc;	/* address of insn */
+	alpha_instruction insn;	/* instruction bits */
+	char	*buf;		/* output buffer (if not DDB) */
+	size_t	bufsize;	/* size of output buffer */
+	size_t	cursor;		/* current next output location */
+	int	regcount;	/* how many rebgs used in this insn */
+	int	regnum[3];	/* which regs are used in this insn */
+	bool	showregs;	/* show registers */
+};
+
+int	alpha_print_instruction(struct alpha_print_instruction_context *);
+#endif /* _KERNEL */
 
 #endif	/* _ALPHA_INSTRUCTION_H_ */
