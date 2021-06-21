@@ -1,4 +1,4 @@
-/* $NetBSD: dm_ioctl.c,v 1.51 2021/05/07 09:53:39 hannken Exp $      */
+/* $NetBSD: dm_ioctl.c,v 1.52 2021/06/21 03:16:43 christos Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.51 2021/05/07 09:53:39 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.52 2021/06/21 03:16:43 christos Exp $");
 
 /*
  * Locking is used to synchronise between ioctl calls and between dm_table's
@@ -910,8 +910,8 @@ dm_table_status_ioctl(prop_dictionary_t dm_dict)
 	name = NULL;
 	flags = 0;
 
-	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_NAME, &name);
-	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_UUID, &uuid);
+	prop_dictionary_get_string(dm_dict, DM_IOCTL_NAME, &name);
+	prop_dictionary_get_string(dm_dict, DM_IOCTL_UUID, &uuid);
 	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_FLAGS, &flags);
 	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_MINOR, &minor);
 

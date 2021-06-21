@@ -1,4 +1,4 @@
-/*	$NetBSD: vlan.c,v 1.15 2019/08/16 10:33:17 msaitoh Exp $	*/
+/*	$NetBSD: vlan.c,v 1.16 2021/06/21 03:14:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: vlan.c,v 1.15 2019/08/16 10:33:17 msaitoh Exp $");
+__RCSID("$NetBSD: vlan.c,v 1.16 2021/06/21 03:14:40 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -140,7 +140,7 @@ setvlanif(prop_dictionary_t env, prop_dictionary_t oenv)
 	if (getvlan(env, &vlr, false) == -1)
 		err(EXIT_FAILURE, "%s: getsock", __func__);
 
-	if (!prop_dictionary_get_cstring_nocopy(env, "vlanif", &parent)) {
+	if (!prop_dictionary_get_string(env, "vlanif", &parent)) {
 		errno = ENOENT;
 		return -1;
 	}
