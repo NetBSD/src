@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.src,v 1.42 2019/06/03 06:04:21 msaitoh Exp $	*/
+/*	$NetBSD: namei.src,v 1.42.2.1 2021/06/21 14:50:57 martin Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -152,7 +152,8 @@ NAMEIFL	NOFOLLOW	0x00000000	/* do not follow symbolic links
 NAMEIFL	EMULROOTSET	0x00000080	/* emulation root already
 					   in ni_erootdir */
 NAMEIFL	NOCHROOT	0x01000000	/* no chroot on abs path lookups */
-NAMEIFL	MODMASK		0x010000fc	/* mask of operational modifiers */
+NAMEIFL	NONEXCLHACK	0x02000000	/* open wwith O_CREAT but not O_EXCL */
+NAMEIFL	MODMASK		0x030000fc	/* mask of operational modifiers */
 /*
  * Namei parameter descriptors.
  */
