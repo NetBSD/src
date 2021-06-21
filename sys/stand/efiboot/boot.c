@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.31 2021/06/21 19:07:30 nia Exp $	*/
+/*	$NetBSD: boot.c,v 1.32 2021/06/21 21:18:47 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -171,7 +171,9 @@ command_boot(char *arg)
 	if (!*bootargs)
 		bootargs = netbsd_args;
 
+	efi_block_set_readahead(true);
 	exec_netbsd(kernel, bootargs);
+	efi_block_set_readahead(false);
 }
 
 void
@@ -498,7 +500,9 @@ boot(void)
 		if (c != '\r' && c != '\n' && c != '\0')
 			bootprompt(); /* does not return */
 
+		efi_block_set_readahead(true);
 		exec_netbsd(netbsd_path, netbsd_args);
+		efi_block_set_readahead(false);
 	}
 
 	bootprompt();	/* does not return */
