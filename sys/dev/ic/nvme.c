@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.44.2.5 2020/12/07 20:04:07 martin Exp $	*/
+/*	$NetBSD: nvme.c,v 1.44.2.6 2021/06/21 17:25:48 martin Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.44.2.5 2020/12/07 20:04:07 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.44.2.6 2021/06/21 17:25:48 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,6 +81,7 @@ static void	nvme_empty_done(struct nvme_queue *, struct nvme_ccb *,
 static struct nvme_queue *
 		nvme_q_alloc(struct nvme_softc *, uint16_t, u_int, u_int);
 static int	nvme_q_create(struct nvme_softc *, struct nvme_queue *);
+static void	nvme_q_reset(struct nvme_softc *, struct nvme_queue *);
 static int	nvme_q_delete(struct nvme_softc *, struct nvme_queue *);
 static void	nvme_q_submit(struct nvme_softc *, struct nvme_queue *,
 		    struct nvme_ccb *, void (*)(struct nvme_queue *,
@@ -338,7 +339,6 @@ nvme_attach(struct nvme_softc *sc)
 {
 	uint64_t cap;
 	uint32_t reg;
-	u_int dstrd;
 	u_int mps = PAGE_SHIFT;
 	u_int ncq, nsq;
 	uint16_t adminq_entries = nvme_adminq_size;
@@ -359,7 +359,7 @@ nvme_attach(struct nvme_softc *sc)
 		    NVME_VS_MNR(reg), NVME_VS_TER(reg));
 
 	cap = nvme_read8(sc, NVME_CAP);
-	dstrd = NVME_CAP_DSTRD(cap);
+	sc->sc_dstrd = NVME_CAP_DSTRD(cap);
 	if (NVME_CAP_MPSMIN(cap) > PAGE_SHIFT) {
 		aprint_error_dev(sc->sc_dev, "NVMe minimum page size %u "
 		    "is greater than CPU page size %u\n",
@@ -382,7 +382,8 @@ nvme_attach(struct nvme_softc *sc)
 		return 1;
 	}
 
-	sc->sc_admin_q = nvme_q_alloc(sc, NVME_ADMIN_Q, adminq_entries, dstrd);
+	sc->sc_admin_q = nvme_q_alloc(sc, NVME_ADMIN_Q, adminq_entries,
+	    sc->sc_dstrd);
 	if (sc->sc_admin_q == NULL) {
 		aprint_error_dev(sc->sc_dev,
 		    "unable to allocate admin queue\n");
@@ -427,7 +428,8 @@ nvme_attach(struct nvme_softc *sc)
 
 	sc->sc_q = kmem_zalloc(sizeof(*sc->sc_q) * sc->sc_nq, KM_SLEEP);
 	for (i = 0; i < sc->sc_nq; i++) {
-		sc->sc_q[i] = nvme_q_alloc(sc, i + 1, ioq_entries, dstrd);
+		sc->sc_q[i] = nvme_q_alloc(sc, i + 1, ioq_entries,
+		    sc->sc_dstrd);
 		if (sc->sc_q[i] == NULL) {
 			aprint_error_dev(sc->sc_dev,
 			    "unable to allocate io queue\n");
@@ -550,12 +552,75 @@ nvme_detach(struct nvme_softc *sc, int flags)
 		return error;
 
 	/* from now on we are committed to detach, following will never fail */
+	sc->sc_intr_disestablish(sc, NVME_ADMIN_Q);
 	for (i = 0; i < sc->sc_nq; i++)
 		nvme_q_free(sc, sc->sc_q[i]);
 	kmem_free(sc->sc_q, sizeof(*sc->sc_q) * sc->sc_nq);
 	nvme_q_free(sc, sc->sc_admin_q);
 
 	return 0;
+}
+
+int
+nvme_suspend(struct nvme_softc *sc)
+{
+
+	return nvme_shutdown(sc);
+}
+
+int
+nvme_resume(struct nvme_softc *sc)
+{
+	int ioq_entries = nvme_ioq_size;
+	uint64_t cap;
+	int i, error;
+
+	error = nvme_disable(sc);
+	if (error) {
+		device_printf(sc->sc_dev, "unable to disable controller\n");
+		return error;
+	}
+
+	nvme_q_reset(sc, sc->sc_admin_q);
+
+	error = nvme_enable(sc, ffs(sc->sc_mps) - 1);
+	if (error) {
+		device_printf(sc->sc_dev, "unable to enable controller\n");
+		return error;
+	}
+
+	for (i = 0; i < sc->sc_nq; i++) {
+		cap = nvme_read8(sc, NVME_CAP);
+		if (ioq_entries > NVME_CAP_MQES(cap))
+			ioq_entries = NVME_CAP_MQES(cap);
+		sc->sc_q[i] = nvme_q_alloc(sc, i + 1, ioq_entries,
+		    sc->sc_dstrd);
+		if (sc->sc_q[i] == NULL) {
+			error = ENOMEM;
+			device_printf(sc->sc_dev, "unable to allocate io q %d"
+			    "\n", i);
+			goto disable;
+		}
+		if (nvme_q_create(sc, sc->sc_q[i]) != 0) {
+			error = EIO;
+			device_printf(sc->sc_dev, "unable to create io q %d"
+			    "\n", i);
+			nvme_q_free(sc, sc->sc_q[i]);
+			goto free_q;
+		}
+	}
+
+	nvme_write4(sc, NVME_INTMC, 1);
+
+	return 0;
+
+free_q:
+	while (i --> 0)
+		nvme_q_free(sc, sc->sc_q[i]);
+disable:
+	(void)nvme_disable(sc);
+
+	return error;
 }
 
 static int
@@ -575,7 +640,6 @@ nvme_shutdown(struct nvme_softc *sc)
 			disabled = true;
 		}
 	}
-	sc->sc_intr_disestablish(sc, NVME_ADMIN_Q);
 	if (disabled)
 		goto disable;
 
@@ -1817,6 +1881,24 @@ free:
 	kmem_free(q, sizeof(*q));
 
 	return NULL;
+}
+
+static void
+nvme_q_reset(struct nvme_softc *sc, struct nvme_queue *q)
+{
+
+	memset(NVME_DMA_KVA(q->q_sq_dmamem), 0, NVME_DMA_LEN(q->q_sq_dmamem));
+	memset(NVME_DMA_KVA(q->q_cq_dmamem), 0, NVME_DMA_LEN(q->q_cq_dmamem));
+
+	q->q_sqtdbl = NVME_SQTDBL(q->q_id, sc->sc_dstrd);
+	q->q_cqhdbl = NVME_CQHDBL(q->q_id, sc->sc_dstrd);
+
+	q->q_sq_tail = 0;
+	q->q_cq_head = 0;
+	q->q_cq_phase = NVME_CQE_PHASE;
+
+	nvme_dmamem_sync(sc, q->q_sq_dmamem, BUS_DMASYNC_PREWRITE);
+	nvme_dmamem_sync(sc, q->q_cq_dmamem, BUS_DMASYNC_PREREAD);
 }
 
 static void
