@@ -1,4 +1,4 @@
-/*	$NetBSD: devpubd.c,v 1.6 2020/02/24 11:45:30 mlelstv Exp $	*/
+/*	$NetBSD: devpubd.c,v 1.7 2021/06/21 03:14:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2011-2015\
 Jared D. McNeill <jmcneill@invisible.ca>. All rights reserved.");
-__RCSID("$NetBSD: devpubd.c,v 1.6 2020/02/24 11:45:30 mlelstv Exp $");
+__RCSID("$NetBSD: devpubd.c,v 1.7 2021/06/21 03:14:12 christos Exp $");
 
 #include <sys/queue.h>
 #include <sys/types.h>
@@ -144,8 +144,8 @@ devpubd_eventloop(void)
 		res = prop_dictionary_recv_ioctl(drvctl_fd, DRVGETEVENT, &ev);
 		if (res)
 			err(EXIT_FAILURE, "DRVGETEVENT failed");
-		prop_dictionary_get_cstring_nocopy(ev, "event", &event);
-		prop_dictionary_get_cstring_nocopy(ev, "device", &device[0]);
+		prop_dictionary_get_string(ev, "event", &event);
+		prop_dictionary_get_string(ev, "device", &device[0]);
 
 		printf("%s: event='%s', device='%s'\n", __func__,
 		    event, device[0]);

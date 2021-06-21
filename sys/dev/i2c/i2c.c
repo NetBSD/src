@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.78 2021/04/24 23:36:54 thorpej Exp $	*/
+/*	$NetBSD: i2c.c,v 1.79 2021/06/21 03:12:54 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.78 2021/04/24 23:36:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.79 2021/06/21 03:12:54 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -452,7 +452,7 @@ iic_attach(device_t parent, device_t self, void *aux)
 		for (i = 0; i < count; i++) {
 			dev = prop_array_get(child_devices, i);
 			if (!dev) continue;
- 			if (!prop_dictionary_get_cstring_nocopy(
+ 			if (!prop_dictionary_get_string(
 			    dev, "name", &name)) {
 				/* "name" property is optional. */
 				name = NULL;

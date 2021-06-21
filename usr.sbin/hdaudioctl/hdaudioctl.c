@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudioctl.c,v 1.5 2020/07/01 12:19:45 sborrill Exp $ */
+/* $NetBSD: hdaudioctl.c,v 1.6 2021/06/21 03:09:52 christos Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -141,7 +141,7 @@ hdaudioctl_list(int fd)
 		prop_dictionary_get_uint16(dict, "vendor-id", &vendor);
 		prop_dictionary_get_uint16(dict, "product-id", &product);
 		prop_dictionary_get_uint32(dict, "subsystem-id", &subsystem);
-		prop_dictionary_get_cstring_nocopy(dict, "device", &device);
+		prop_dictionary_get_string(dict, "device", &device);
 
 		printf("codecid 0x%02X nid 0x%02X vendor 0x%04X "
 		    "product 0x%04X subsystem 0x%08X device %s\n",
