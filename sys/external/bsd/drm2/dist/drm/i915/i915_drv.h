@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.h,v 1.29.2.1 2019/12/12 21:00:32 martin Exp $	*/
+/*	$NetBSD: i915_drv.h,v 1.29.2.2 2021/06/21 16:41:02 martin Exp $	*/
 
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
@@ -3021,9 +3021,10 @@ i915_gem_object_get_page(struct drm_i915_gem_object *obj, int n)
 		 * lock to prevent them from disappearing.
 		 */
 		KASSERT(obj->pages != NULL);
-		mutex_enter(obj->base.filp->vmobjlock);
-		page = uvm_pagelookup(obj->base.filp, ptoa(n));
-		mutex_exit(obj->base.filp->vmobjlock);
+		TAILQ_FOREACH(page, &obj->pageq, pageq.queue) {
+			if (n-- == 0)
+				break;
+		}
 	}
 	KASSERT(page != NULL);
 	return container_of(page, struct page, p_vmp);
