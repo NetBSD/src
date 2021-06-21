@@ -1,4 +1,4 @@
-/* $NetBSD: if_bwfm_sdio.c,v 1.25 2021/01/27 03:10:21 thorpej Exp $ */
+/* $NetBSD: if_bwfm_sdio.c,v 1.26 2021/06/21 03:17:59 christos Exp $ */
 /* $OpenBSD: if_bwfm_sdio.c,v 1.1 2017/10/11 17:19:50 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -565,7 +565,7 @@ bwfm_fdt_find_phandle(device_t self, device_t parent)
 
 	/* locate in FDT */
 	dict = device_properties(self);
-	if (prop_dictionary_get_cstring_nocopy(dict, "fdt-path", &str)) {
+	if (prop_dictionary_get_string(dict, "fdt-path", &str)) {
 		/* search in FDT */
 		phandle = OF_finddevice(str);
 	} else {
@@ -576,7 +576,7 @@ bwfm_fdt_find_phandle(device_t self, device_t parent)
 			return -1;
 		/* locate in FDT */
 		dict = device_properties(dev);
-		if (!prop_dictionary_get_cstring_nocopy(dict, "fdt-path", &str))
+		if (!prop_dictionary_get_string(dict, "fdt-path", &str))
 			return -1;
 
 		/* are we the only FDT child ? */
