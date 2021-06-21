@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.557 2021/04/04 11:56:43 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.558 2021/06/21 10:29:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.557 2021/04/04 11:56:43 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.558 2021/06/21 10:29:08 rillig Exp $");
 
 /* types and constants */
 
@@ -1303,6 +1303,15 @@ ClearPaths(SearchPathList *paths)
 	Dir_SetPATH();
 }
 
+/*
+ * Several special targets take different actions if present with no
+ * sources:
+ *	a .SUFFIXES line with no sources clears out all old suffixes
+ *	a .PRECIOUS line makes all targets precious
+ *	a .IGNORE line ignores errors for all targets
+ *	a .SILENT line creates silence when making all targets
+ *	a .PATH removes all directories from the search path(s).
+ */
 static void
 ParseDependencySourcesEmpty(ParseSpecial specType, SearchPathList *paths)
 {
@@ -1574,6 +1583,55 @@ ParseDependencySourcesMundane(char *start, char *end,
 	return true;
 }
 
+/* In a dependency line like 'targets: sources', parse the sources. */
+static void
+ParseDependencySources(char *const line, char *const cp,
+		       GNodeType const tOp,
+		       ParseSpecial const specType,
+		       SearchPathList ** inout_paths)
+{
+	if (line[0] == '\0') {
+		ParseDependencySourcesEmpty(specType, *inout_paths);
+	} else if (specType == SP_MFLAGS) {
+		Main_ParseArgLine(line);
+		/*
+		 * Set the initial character to a null-character so the loop
+		 * to get sources won't get anything.
+		 */
+		*line = '\0';
+	} else if (specType == SP_SHELL) {
+		if (!Job_ParseShell(line)) {
+			Parse_Error(PARSE_FATAL,
+			    "improper shell specification");
+			return;
+		}
+		*line = '\0';
+	} else if (specType == SP_NOTPARALLEL || specType == SP_SINGLESHELL ||
+		   specType == SP_DELETE_ON_ERROR) {
+		*line = '\0';
+	}
+
+	/* Now go for the sources. */
+	if (specType == SP_SUFFIXES || specType == SP_PATH ||
+	    specType == SP_INCLUDES || specType == SP_LIBS ||
+	    specType == SP_NULL || specType == SP_OBJDIR) {
+		ParseDependencySourcesSpecial(line, cp, specType,
+		    *inout_paths);
+		if (*inout_paths != NULL) {
+			Lst_Free(*inout_paths);
+			*inout_paths = NULL;
+		}
+		if (specType == SP_PATH)
+			Dir_SetPATH();
+	} else {
+		assert(*inout_paths == NULL);
+		if (!ParseDependencySourcesMundane(line, cp, specType, tOp))
+			return;
+	}
+
+	FindMainTarget();
+}
+
 /*
  * Parse a dependency line consisting of targets, followed by a dependency
  * operator, optionally followed by sources.
@@ -1665,55 +1723,7 @@ ParseDependency(char *line)
 	pp_skip_whitespace(&cp);
 	line = cp;		/* XXX: 'line' is an inappropriate name */
 
-	/*
-	 * Several special targets take different actions if present with no
-	 * sources:
-	 *	a .SUFFIXES line with no sources clears out all old suffixes
-	 *	a .PRECIOUS line makes all targets precious
-	 *	a .IGNORE line ignores errors for all targets
-	 *	a .SILENT line creates silence when making all targets
-	 *	a .PATH removes all directories from the search path(s).
-	 */
-	if (line[0] == '\0') {
-		ParseDependencySourcesEmpty(specType, paths);
-	} else if (specType == SP_MFLAGS) {
-		/*
-		 * Call on functions in main.c to deal with these arguments and
-		 * set the initial character to a null-character so the loop to
-		 * get sources won't get anything
-		 */
-		Main_ParseArgLine(line);
-		*line = '\0';
-	} else if (specType == SP_SHELL) {
-		if (!Job_ParseShell(line)) {
-			Parse_Error(PARSE_FATAL,
-			    "improper shell specification");
-			goto out;
-		}
-		*line = '\0';
-	} else if (specType == SP_NOTPARALLEL || specType == SP_SINGLESHELL ||
-		   specType == SP_DELETE_ON_ERROR) {
-		*line = '\0';
-	}
-
-	/* Now go for the sources. */
-	if (specType == SP_SUFFIXES || specType == SP_PATH ||
-	    specType == SP_INCLUDES || specType == SP_LIBS ||
-	    specType == SP_NULL || specType == SP_OBJDIR) {
-		ParseDependencySourcesSpecial(line, cp, specType, paths);
-		if (paths != NULL) {
-			Lst_Free(paths);
-			paths = NULL;
-		}
-		if (specType == SP_PATH)
-			Dir_SetPATH();
-	} else {
-		assert(paths == NULL);
-		if (!ParseDependencySourcesMundane(line, cp, specType, tOp))
-			goto out;
-	}
-
-	FindMainTarget();
+	ParseDependencySources(line, cp, tOp, specType, &paths);
 
 out:
 	if (paths != NULL)
