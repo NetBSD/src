@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.91 2021/06/08 13:01:10 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.92 2021/06/21 17:46:13 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -1953,4 +1953,22 @@ sbin/dump/tape.c				1.56
 
 	dump(8): prevent crashes for large file systems.
 	[hannken, ticket #1683]
+
+sys/kern/vfs_lookup.c				1.226
+sys/kern/vfs_vnops.c				1.215
+sys/sys/namei.src				1.59 (patch)
+sys/rump/include/rump/rump_namei.h		(regen)
+sys/sys/namei.h					(regen)
+
+	Add a new namei flag NONEXCLHACK for open with O_CREAT and not O_EXCL.
+	In the case where that target is the root, or a mount
+	point, such that there's no parent dir, "real" CREATE operations fail,
+	but O_CREAT without O_EXCL needs to succeed.
+	Fixes newer Samba usage of /proc/self/fd/NNN with O_CREAT.
+	[dholland, ticket #1685]
+
+compat/arm/oabi/bsd.oabi.mk		(apply patch)
+
+	Fix PR 50192.
+	[mrg, ticket #1684]
 
