@@ -1,4 +1,4 @@
-/* $NetBSD: pcf8574.c,v 1.9 2021/01/27 02:29:48 thorpej Exp $ */
+/* $NetBSD: pcf8574.c,v 1.10 2021/06/21 03:12:54 christos Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcf8574.c,v 1.9 2021/01/27 02:29:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcf8574.c,v 1.10 2021/06/21 03:12:54 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,7 +175,7 @@ pcf8574_attach(device_t parent, device_t self, void *aux)
 
 	for (i = 0; i < prop_array_count(pins); i++) {
 		pin = prop_array_get(pins, i);
-		ok &= prop_dictionary_get_cstring_nocopy(pin, "name", &nptr);
+		ok &= prop_dictionary_get_string(pin, "name", &nptr);
 		ok &= prop_dictionary_get_uint32(pin, "pin", &num);
 		ok &= prop_dictionary_get_bool(pin, "active_high", &act);
 		/* optional default state */
