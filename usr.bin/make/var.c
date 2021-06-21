@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.936 2021/06/21 17:52:33 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.937 2021/06/21 18:12:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.936 2021/06/21 17:52:33 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.937 2021/06/21 18:12:49 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -1585,54 +1585,18 @@ VarREError(int reerr, const regex_t *pat, const char *str)
 	free(errbuf);
 }
 
-struct ModifyWord_SubstRegexArgs {
-	regex_t re;
-	size_t nsub;
-	const char *replace;
-	PatternFlags pflags;
-	bool matched;
-};
-
 /*
- * Callback for ModifyWords to implement the :C/from/to/ modifier.
- * Perform a regex substitution on the given word.
+ * Replacement of regular expressions is not specified by POSIX, therefore
+ * re-implement it here.
  */
 static void
-ModifyWord_SubstRegex(Substring word, SepBuf *buf, void *data)
+RegexReplace(const char *replace, SepBuf *buf, const char *wp,
+	     const regmatch_t *m, size_t nsub)
 {
-	struct ModifyWord_SubstRegexArgs *args = data;
-	int xrv;
-	const char *wp;
 	const char *rp;
-	int flags = 0;
-	regmatch_t m[10];
 	size_t n;
 
-	assert(word.end[0] == '\0');	/* assume null-terminated word */
-	wp = word.start;
-	if (args->pflags.subOnce && args->matched)
-		goto no_match;
-
-again:
-	xrv = regexec(&args->re, wp, args->nsub, m, flags);
-	if (xrv == 0)
-		goto ok;
-	if (xrv != REG_NOMATCH)
-		VarREError(xrv, &args->re, "Unexpected regex error");
-no_match:
-	SepBuf_AddStr(buf, wp);
-	return;
-
-ok:
-	args->matched = true;
-	SepBuf_AddBytes(buf, wp, (size_t)m[0].rm_so);
-
-	/*
-	 * Replacement of regular expressions is not specified by
-	 * POSIX, therefore re-implement it here.
-	 */
-
-	for (rp = args->replace; *rp != '\0'; rp++) {
+	for (rp = replace; *rp != '\0'; rp++) {
 		if (*rp == '\\' && (rp[1] == '&' || rp[1] == '\\')) {
 			SepBuf_AddBytes(buf, rp + 1, 1);
 			rp++;
@@ -1654,7 +1618,7 @@ ok:
 		n = (size_t)(rp[1] - '0');
 		rp++;
 
-		if (n >= args->nsub) {
+		if (n >= nsub) {
 			Error("No subexpression \\%u", (unsigned)n);
 		} else if (m[n].rm_so == -1) {
 			if (opts.strict) {
@@ -1666,6 +1630,49 @@ ok:
 			    wp + m[n].rm_so, wp + m[n].rm_eo);
 		}
 	}
+}
+
+struct ModifyWord_SubstRegexArgs {
+	regex_t re;
+	size_t nsub;
+	const char *replace;
+	PatternFlags pflags;
+	bool matched;
+};
+
+/*
+ * Callback for ModifyWords to implement the :C/from/to/ modifier.
+ * Perform a regex substitution on the given word.
+ */
+static void
+ModifyWord_SubstRegex(Substring word, SepBuf *buf, void *data)
+{
+	struct ModifyWord_SubstRegexArgs *args = data;
+	int xrv;
+	const char *wp;
+	int flags = 0;
+	regmatch_t m[10];
+
+	assert(word.end[0] == '\0');	/* assume null-terminated word */
+	wp = word.start;
+	if (args->pflags.subOnce && args->matched)
+		goto no_match;
+
+again:
+	xrv = regexec(&args->re, wp, args->nsub, m, flags);
+	if (xrv == 0)
+		goto ok;
+	if (xrv != REG_NOMATCH)
+		VarREError(xrv, &args->re, "Unexpected regex error");
+no_match:
+	SepBuf_AddStr(buf, wp);
+	return;
+
+ok:
+	args->matched = true;
+	SepBuf_AddBytes(buf, wp, (size_t)m[0].rm_so);
+
+	RegexReplace(args->replace, buf, wp, m, args->nsub);
 
 	wp += m[0].rm_eo;
 	if (args->pflags.subGlobal) {
