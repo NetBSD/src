@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.76 2021/06/21 19:43:17 nia Exp $	*/
+/*	$NetBSD: boot2.c,v 1.77 2021/06/21 19:52:17 nia Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -311,16 +311,17 @@ print_banner(void)
 			printf("%s\n", bootcfg_info.banner[n]);
 	} else {
 #endif /* !SMALL */
-		printf("\n");
-		printf("  \\-__,------,___.\n");
-		printf("   \\        __,---`  %s (from NetBSD %s)\n",
-		    bootprog_name, bootprog_kernrev);
-		printf("    \\       `---,_.  Revision %s\n", bootprog_rev);
-		printf("     \\-,_____,.---`  Memory: %d/%d k\n",
-		    getbasemem(), getextmem());
-		printf("      \\\n");
-		printf("       \\\n");
-		printf("        \\\n");
+		printf("\n"
+		       "  \\-__,------,___.\n"
+		       "   \\        __,---`  %s (from NetBSD %s)\n"
+		       "    \\       `---,_.  Revision %s\n"
+		       "     \\-,_____,.---`  Memory: %d/%d k\n"
+		       "      \\\n"
+		       "       \\\n"
+		       "        \\\n",
+		       bootprog_name, bootprog_kernrev,
+		       bootprog_rev,
+		       getbasemem(), getextmem());
 #ifndef SMALL
 	}
 #endif /* !SMALL */
