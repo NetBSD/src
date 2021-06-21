@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.937 2021/06/21 18:12:49 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.938 2021/06/21 18:25:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.937 2021/06/21 18:12:49 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.938 2021/06/21 18:25:20 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -1594,7 +1594,7 @@ RegexReplace(const char *replace, SepBuf *buf, const char *wp,
 	     const regmatch_t *m, size_t nsub)
 {
 	const char *rp;
-	size_t n;
+	unsigned int n;
 
 	for (rp = replace; *rp != '\0'; rp++) {
 		if (*rp == '\\' && (rp[1] == '&' || rp[1] == '\\')) {
@@ -1615,15 +1615,14 @@ RegexReplace(const char *replace, SepBuf *buf, const char *wp,
 		}
 
 		/* \0 to \9 backreference */
-		n = (size_t)(rp[1] - '0');
+		n = rp[1] - '0';
 		rp++;
 
 		if (n >= nsub) {
-			Error("No subexpression \\%u", (unsigned)n);
+			Error("No subexpression \\%u", n);
 		} else if (m[n].rm_so == -1) {
 			if (opts.strict) {
-				Error("No match for subexpression \\%u",
-				    (unsigned)n);
+				Error("No match for subexpression \\%u", n);
 			}
 		} else {
 			SepBuf_AddBytesBetween(buf,
