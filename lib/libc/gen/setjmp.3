@@ -1,4 +1,4 @@
-.\"	$NetBSD: setjmp.3,v 1.17 2008/05/31 16:15:07 enami Exp $
+.\"	$NetBSD: setjmp.3,v 1.17.64.1 2021/06/21 16:04:57 martin Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -85,6 +85,15 @@ invocation of the
 call had just returned the value specified by
 .Fa val ,
 instead of 0.
+The
+.Fn longjmp
+functions cannot cause
+.Fn setjmp
+to return 0; if
+.Fa val
+is 0,
+.Fn setjmp
+returns 1 instead.
 .Pp
 Pairs of calls may be intermixed, i.e., both
 .Fn sigsetjmp
