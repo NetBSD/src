@@ -798,7 +798,9 @@ copy_file_data_block(struct bsdtar *bsdtar, struct archive *a,
 		progress += bytes_written;
 	}
 	if (r < ARCHIVE_WARN) {
-		lafe_warnc(archive_errno(a), "%s", archive_error_string(a));
+		const char *s = archive_error_string(a);
+		if (s)
+			lafe_warnc(archive_errno(a), "%s", s);
 		return (-1);
 	}
 	return (0);
@@ -971,16 +973,15 @@ write_entry(struct bsdtar *bsdtar, struct archive *a,
 
 	e = archive_write_header(a, entry);
 	if (e != ARCHIVE_OK) {
-		if (bsdtar->verbose > 1) {
+		if (bsdtar->verbose > 0) {
 			safe_fprintf(stderr, "a ");
 			list_item_verbose(bsdtar, stderr, entry);
 			lafe_warnc(0, ": %s", archive_error_string(a));
-		} else if (bsdtar->verbose > 0) {
+		} else {
 			lafe_warnc(0, "%s: %s",
 			    archive_entry_pathname(entry),
 			    archive_error_string(a));
-		} else
-			fprintf(stderr, ": %s", archive_error_string(a));
+		}
 	}
 
 	if (e == ARCHIVE_FATAL)

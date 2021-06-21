@@ -2184,8 +2184,11 @@ restore_entry(struct archive_write_disk *a)
 			if ((a->flags & ARCHIVE_EXTRACT_ATOMIC) &&
 			    S_ISREG(a->st.st_mode)) {
 				/* Use a temporary file to extract */
-				if ((a->fd = la_mktemp(a)) == -1)
+				if ((a->fd = la_mktemp(a)) == -1) {
+					archive_set_error(&a->archive, en,
+					    "Can't create '%s'", a->name);
 					return ARCHIVE_FAILED;
+				}
 				a->pst = NULL;
 				en = 0;
 			} else {
