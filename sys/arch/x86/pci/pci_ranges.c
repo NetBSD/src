@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_ranges.c,v 1.8 2019/03/01 09:25:59 msaitoh Exp $	*/
+/*	$NetBSD: pci_ranges.c,v 1.9 2021/06/21 03:01:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_ranges.c,v 1.8 2019/03/01 09:25:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_ranges.c,v 1.9 2021/06/21 03:01:23 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -784,7 +784,7 @@ pci_range_record(pci_chipset_tag_t pc, prop_array_t rsvns,
 		pci_decompose_tag(pc, pal->pal_tag, &bus, &dev, &fun);
 
 		ok = ok &&
-		    prop_dictionary_set_cstring_nocopy(rsvn, "type",
+		    prop_dictionary_set_string_nocopy(rsvn, "type",
 		        pci_alloc_regtype_string(pal->pal_type)) &&
 		    prop_dictionary_set_uint64(rsvn, "address",
 		        pal->pal_addr) &&
