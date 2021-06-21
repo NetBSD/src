@@ -1,4 +1,4 @@
-/* $NetBSD: db_disasm.c,v 1.16 2014/03/20 20:51:40 christos Exp $ */
+/* $NetBSD: db_disasm.c,v 1.17 2021/06/21 02:01:13 thorpej Exp $ */
 
 /*
  * Mach Operating System
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.16 2014/03/20 20:51:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.17 2021/06/21 02:01:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -781,20 +781,37 @@ static const char * const name_of_register[32] = {
 	"t10",	"t11",	"ra",	"pv",	"at",	"gp",	"sp",	"zero"
 };
 
-static int regcount;		/* how many regs used in this inst */
-static int regnum[3];		/* which regs used in this inst */
-
 static const char *
-register_name(int ireg)
+register_name(struct alpha_print_instruction_context *ctx, int ireg)
 {
 	int	i;
 
-	for (i = 0; i < regcount; i++)
-		if (regnum[i] == ireg)
+	for (i = 0; i < ctx->regcount; i++)
+		if (ctx->regnum[i] == ireg)
 			break;
-	if (i >= regcount)
-		regnum[regcount++] = ireg;
+	if (i >= ctx->regcount)
+		ctx->regnum[ctx->regcount++] = ireg;
 	return (name_of_register[ireg]);
+}
+
+static void
+insn_printf(struct alpha_print_instruction_context *ctx,
+    const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+
+	if (ctx->buf != NULL) {
+		if (ctx->cursor < ctx->bufsize) {
+			ctx->cursor += vsnprintf(ctx->buf + ctx->cursor,
+			    ctx->bufsize - ctx->cursor, fmt, ap);
+		}
+	} else {
+		db_vprintf(fmt, ap);
+	}
+
+	va_end(ap);
 }
 
 /*
@@ -803,9 +820,8 @@ register_name(int ireg)
  * next instruction.
  */
 
-static int
-alpha_print_instruction(db_addr_t iadr, alpha_instruction i,
-    bool showregs)
+int
+alpha_print_instruction(struct alpha_print_instruction_context *ctx)
 {
 	const char	*opcode;
 	int		ireg;
@@ -813,18 +829,19 @@ alpha_print_instruction(db_addr_t iadr, alpha_instruction i,
 	bool		fstore;
 	pal_instruction	p;
 
-	regcount = 0;
+	ctx->regcount = 0;
 	fstore = false;
-	opcode = op_name[i.mem_format.opcode];
+	opcode = op_name[ctx->insn.mem_format.opcode];
 
 	/*
 	 *	Dispatch directly on the opcode, save code
 	 *	duplication sometimes via "harmless gotos".
 	 */
-	switch (i.mem_format.opcode) {
+	switch (ctx->insn.mem_format.opcode) {
 	case op_pal:
 		/* "call_pal" is a long string; just use a space. */
-		db_printf("%s %s", opcode, pal_opname(i.pal_format.function));
+		insn_printf(ctx, "%s %s", opcode,
+		    pal_opname(ctx->insn.pal_format.function));
 		break;
 	case op_lda:
 	case op_ldah:
@@ -846,49 +863,54 @@ alpha_print_instruction(db_addr_t iadr, alpha_instruction i,
 		 * For this and the following three groups we
 		 * just need different opcode strings
 		 */
-		opcode = arit_name(i.operate_lit_format.function);
+		opcode = arit_name(ctx->insn.operate_lit_format.function);
 		goto operate;
 		break;
 	case op_logical:
-		opcode = logical_name(i.operate_lit_format.function);
+		opcode = logical_name(ctx->insn.operate_lit_format.function);
 		goto operate;
 		break;
 	case op_bit:
-		opcode = bitop_name(i.operate_lit_format.function);
+		opcode = bitop_name(ctx->insn.operate_lit_format.function);
 		goto operate;
 		break;
 	case op_mul:
-		opcode = mul_name(i.operate_lit_format.function);
+		opcode = mul_name(ctx->insn.operate_lit_format.function);
 operate:
 		/*
 		 * Nice and uniform, just check for literals
 		 */
-		db_printf("%s\t%s,", opcode,
-		    register_name(i.operate_lit_format.ra));
-		if (i.operate_lit_format.one)
-			db_printf("#0x%x", i.operate_lit_format.literal);
-		else
-			db_printf("%s", register_name(i.operate_reg_format.rb));
-		db_printf(",%s", register_name(i.operate_lit_format.rc));
+		insn_printf(ctx, "%s\t%s,", opcode,
+		    register_name(ctx, ctx->insn.operate_lit_format.ra));
+		if (ctx->insn.operate_lit_format.one) {
+			insn_printf(ctx, "#0x%x",
+			    ctx->insn.operate_lit_format.literal);
+		} else {
+			insn_printf(ctx, "%s",
+			    register_name(ctx,
+					  ctx->insn.operate_reg_format.rb));
+		}
+		insn_printf(ctx, ",%s",
+		    register_name(ctx, ctx->insn.operate_lit_format.rc));
 		break;
 	case op_vax_float:
 		/*
 		 * The three floating point groups are even simpler
 		 */
-		opcode = vaxf_name(i.float_format.function);
+		opcode = vaxf_name(ctx->insn.float_format.function);
 		goto foperate;
 		break;
 	case op_ieee_float:
-		opcode = ieeef_name(i.float_format.function);
+		opcode = ieeef_name(ctx->insn.float_format.function);
 		goto foperate;
 		break;
 	case op_any_float:
-		opcode = anyf_name(i.float_format.function);
+		opcode = anyf_name(ctx->insn.float_format.function);
 foperate:
-		db_printf("%s\tf%d,f%d,f%d", opcode,
-			i.float_format.fa,
-			i.float_format.fb,
-			i.float_format.fc);
+		insn_printf(ctx, "%s\tf%d,f%d,f%d", opcode,
+			ctx->insn.float_format.fa,
+			ctx->insn.float_format.fb,
+			ctx->insn.float_format.fc);
 		break;
 	case op_special:
 		/*
@@ -897,27 +919,30 @@ foperate:
 		{
 			register unsigned int code;
 
-			code = (i.mem_format.displacement)&0xffff;
+			code = (ctx->insn.mem_format.displacement)&0xffff;
 			opcode = special_name(code);
 
 			switch (code) {
 			case op_ecb:
-				db_printf("%s\t(%s)", opcode,
-					register_name(i.mem_format.rb));
+				insn_printf(ctx, "%s\t(%s)", opcode,
+				    register_name(ctx,
+						  ctx->insn.mem_format.rb));
 				break;
 			case op_fetch:
 			case op_fetch_m:
-				db_printf("%s\t0(%s)", opcode,
-					register_name(i.mem_format.rb));
+				insn_printf(ctx, "%s\t0(%s)", opcode,
+				    register_name(ctx,
+						  ctx->insn.mem_format.rb));
 				break;
 			case op_rpcc:
 			case op_rc:
 			case op_rs:
-				db_printf("%s\t%s", opcode,
-					register_name(i.mem_format.ra));
+				insn_printf(ctx, "%s\t%s", opcode,
+				    register_name(ctx,
+						  ctx->insn.mem_format.ra));
 				break;
 			default:
-				db_printf("%s", opcode);
+				insn_printf(ctx, "%s", opcode);
 			break;
 			}
 		}
@@ -927,21 +952,21 @@ foperate:
 		 * Jump instructions really are of two sorts,
 		 * depending on the use of the hint info.
 		 */
-		opcode = jump_name(i.jump_format.action);
-		switch (i.jump_format.action) {
+		opcode = jump_name(ctx->insn.jump_format.action);
+		switch (ctx->insn.jump_format.action) {
 		case op_jmp:
 		case op_jsr:
-			db_printf("%s\t%s,(%s),", opcode,
-				register_name(i.jump_format.ra),
-				register_name(i.jump_format.rb));
-			signed_immediate = i.jump_format.hint;
+			insn_printf(ctx, "%s\t%s,(%s),", opcode,
+			    register_name(ctx, ctx->insn.jump_format.ra),
+			    register_name(ctx, ctx->insn.jump_format.rb));
+			signed_immediate = ctx->insn.jump_format.hint;
 			goto branch_displacement;
 			break;
 		case op_ret:
 		case op_jcr:
-			db_printf("%s\t%s,(%s)", opcode,
-				register_name(i.jump_format.ra),
-				register_name(i.jump_format.rb));
+			insn_printf(ctx, "%s\t%s,(%s)", opcode,
+			    register_name(ctx, ctx->insn.jump_format.ra),
+			    register_name(ctx, ctx->insn.jump_format.rb));
 			break;
 		}
 		break;
@@ -949,30 +974,30 @@ foperate:
 		/*
 		 * These are just in "operate" format.
 		 */
-		opcode = intmisc_name(i.operate_lit_format.function);
+		opcode = intmisc_name(ctx->insn.operate_lit_format.function);
 		goto operate;
 		break;
 			/* HW instructions, possibly chip-specific XXXX */
 	case op_pal19:	/* "hw_mfpr" */
 	case op_pal1d:	/* "hw_mtpr" */
-		p.bits = i.bits;
-		db_printf("\t%s%s\t%s, %d", opcode,
+		p.bits = ctx->insn.bits;
+		insn_printf(ctx, "\t%s%s\t%s, %d", opcode,
 			mXpr_name[p.mXpr_format.regset],
-			register_name(p.mXpr_format.rd),
+			register_name(ctx, p.mXpr_format.rd),
 			p.mXpr_format.index);
 		break;
 	case op_pal1b:	/* "hw_ld" */
 	case op_pal1f:	/* "hw_st" */
-		p.bits = i.bits;
-		db_printf("\t%s%c%s\t%s,", opcode,
+		p.bits = ctx->insn.bits;
+		insn_printf(ctx, "\t%s%c%s\t%s,", opcode,
 			(p.mem_format.qw) ? 'q' : 'l',
 			hwlds_name[p.mem_format.qualif],
-			register_name(p.mem_format.rd));
+			register_name(ctx, p.mem_format.rd));
 		signed_immediate = (long)p.mem_format.displacement;
 		goto loadstore_address;
 
 	case op_pal1e:	/* "hw_rei" */
-		db_printf("\t%s", opcode);
+		insn_printf(ctx, "\t%s", opcode);
 		break;
 
 	case op_ldf:
@@ -997,28 +1022,31 @@ foperate:
 		 * Memory operations, including floats
 		 */
 loadstore:
-		if (fstore)
-		    db_printf("%s\tf%d,", opcode, i.mem_format.ra);
-		else
-		    db_printf("%s\t%s,", opcode,
-		        register_name(i.mem_format.ra));
-		signed_immediate = (long)i.mem_format.displacement;
+		if (fstore) {
+			insn_printf(ctx, "%s\tf%d,", opcode,
+			    ctx->insn.mem_format.ra);
+		} else {
+			insn_printf(ctx, "%s\t%s,", opcode,
+			    register_name(ctx, ctx->insn.mem_format.ra));
+		}
+		signed_immediate = (long)ctx->insn.mem_format.displacement;
 loadstore_address:
 		{
 			char tbuf[24];
 
 			db_format_hex(tbuf, 24, signed_immediate, false);
-			db_printf("%s(%s)", tbuf,
-				register_name(i.mem_format.rb));
+			insn_printf(ctx, "%s(%s)", tbuf,
+			    register_name(ctx, ctx->insn.mem_format.rb));
 		}
 		/*
 		 * For convenience, do the address computation
 		 */
-		if (showregs) {
-			if (i.mem_format.opcode == op_ldah)
+		if (ctx->showregs) {
+			if (ctx->insn.mem_format.opcode == op_ldah)
 				signed_immediate <<= 16;
-			db_printf(" <0x%lx>", signed_immediate +
-			    db_register_value(DDB_REGS, i.mem_format.rb));
+			insn_printf(ctx, " <0x%lx>", signed_immediate +
+			    db_register_value(DDB_REGS,
+					      ctx->insn.mem_format.rb));
 		}
 		break;
 	case op_br:
@@ -1040,45 +1068,54 @@ loadstore_address:
 		/*
 		 * We want to know where we are branching to
 		 */
-		signed_immediate = (long)i.branch_format.displacement;
-		db_printf("%s\t%s,", opcode,
-			  register_name(i.branch_format.ra));
+		signed_immediate = (long)ctx->insn.branch_format.displacement;
+		insn_printf(ctx, "%s\t%s,", opcode,
+		    register_name(ctx, ctx->insn.branch_format.ra));
 branch_displacement:
-		db_printsym(iadr + sizeof(alpha_instruction) +
-		    (signed_immediate << 2), DB_STGY_PROC, db_printf);
+		if (ctx->buf == NULL) {
+			db_printsym(ctx->pc + sizeof(alpha_instruction) +
+			    (signed_immediate << 2), DB_STGY_PROC, db_printf);
+		}
 		break;
 	default:
 		/*
 		 * Shouldn't happen
 		 */
-		db_printf("? 0x%x ?", i.bits);
+		insn_printf(ctx, "? 0x%x ?", ctx->insn.bits);
 	}
 
 	/*
 	 *	Print out the registers used in this instruction
 	 */
-	if (showregs && regcount > 0) {
-		db_printf("\t<");
-		for (ireg = 0; ireg < regcount; ireg++) {
+	if (ctx->showregs && ctx->regcount > 0) {
+		insn_printf(ctx, "\t<");
+		for (ireg = 0; ireg < ctx->regcount; ireg++) {
 			if (ireg != 0)
-				db_printf(",");
-			db_printf("%s=0x%lx",
-			    name_of_register[regnum[ireg]],
-			    db_register_value(DDB_REGS, regnum[ireg]));
+				insn_printf(ctx, ",");
+			insn_printf(ctx, "%s=0x%lx",
+			    name_of_register[ctx->regnum[ireg]],
+			    db_register_value(DDB_REGS, ctx->regnum[ireg]));
 		}
-		db_printf(">");
+		insn_printf(ctx, ">");
 	}
-	db_printf("\n");
+
+	/* If printing into a buffer, skip the newline. */
+	if (ctx->buf == NULL) {
+		insn_printf(ctx, "\n");
+	}
+
 	return (sizeof(alpha_instruction));
 }
 
 db_addr_t
 db_disasm(db_addr_t loc, bool altfmt)
 {
-	alpha_instruction inst;
+	struct alpha_print_instruction_context ctx = {
+		.insn.bits = db_get_value(loc, 4, 0),
+		.pc = loc,
+		.showregs = altfmt,
+	};
 
-	inst.bits = db_get_value(loc, 4, 0);
-
-	loc += alpha_print_instruction(loc, inst, altfmt);
-	return (loc);
+	loc += alpha_print_instruction(&ctx);
+	return loc;
 }
