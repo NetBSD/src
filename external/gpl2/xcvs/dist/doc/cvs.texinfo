@@ -11807,7 +11807,7 @@ them):
 @table @code
 @item -D date
 Use the most recent revision no later than @var{date}.
-This option is sticky, and implies @samp{-P}.
+This option is sticky.
 See @ref{Sticky tags}, for more information on sticky tags/dates.
 
 @item -f
