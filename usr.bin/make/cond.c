@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.267 2021/06/11 14:52:03 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.268 2021/06/21 21:07:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.267 2021/06/11 14:52:03 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.268 2021/06/21 21:07:35 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -171,6 +171,7 @@ static CondResult CondParser_Or(CondParser *par, bool);
 static unsigned int cond_depth = 0;	/* current .if nesting level */
 static unsigned int cond_min_depth = 0;	/* depth at makefile open */
 
+/* Names for ComparisonOp. */
 static const char *opname[] = { "<", "<=", ">", ">=", "==", "!=" };
 
 /*
@@ -309,7 +310,7 @@ FuncDefined(size_t argLen MAKE_ATTR_UNUSED, const char *arg)
 	return result;
 }
 
-/* See if the given target is being made. */
+/* See if the given target is requested to be made. */
 /*ARGSUSED*/
 static bool
 FuncMake(size_t argLen MAKE_ATTR_UNUSED, const char *arg)
@@ -682,10 +683,6 @@ CondParser_Comparison(CondParser *par, bool doEval)
 	ComparisonOp op;
 	bool lhsQuoted, rhsQuoted;
 
-	/*
-	 * Parse the variable spec and skip over it, saving its
-	 * value in lhs.
-	 */
 	CondParser_Leaf(par, doEval, lhsStrict, &lhs, &lhsQuoted);
 	if (lhs.str == NULL)
 		goto done_lhs;
