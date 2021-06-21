@@ -1,4 +1,4 @@
-/* $NetBSD: db_disasm.c,v 1.17 2021/06/21 02:01:13 thorpej Exp $ */
+/* $NetBSD: db_disasm.c,v 1.18 2021/06/21 02:10:46 thorpej Exp $ */
 
 /*
  * Mach Operating System
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.17 2021/06/21 02:01:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.18 2021/06/21 02:10:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -784,13 +784,6 @@ static const char * const name_of_register[32] = {
 static const char *
 register_name(struct alpha_print_instruction_context *ctx, int ireg)
 {
-	int	i;
-
-	for (i = 0; i < ctx->regcount; i++)
-		if (ctx->regnum[i] == ireg)
-			break;
-	if (i >= ctx->regcount)
-		ctx->regnum[ctx->regcount++] = ireg;
 	return (name_of_register[ireg]);
 }
 
@@ -824,12 +817,10 @@ int
 alpha_print_instruction(struct alpha_print_instruction_context *ctx)
 {
 	const char	*opcode;
-	int		ireg;
 	long		signed_immediate;
 	bool		fstore;
 	pal_instruction	p;
 
-	ctx->regcount = 0;
 	fstore = false;
 	opcode = op_name[ctx->insn.mem_format.opcode];
 
@@ -1038,16 +1029,6 @@ loadstore_address:
 			insn_printf(ctx, "%s(%s)", tbuf,
 			    register_name(ctx, ctx->insn.mem_format.rb));
 		}
-		/*
-		 * For convenience, do the address computation
-		 */
-		if (ctx->showregs) {
-			if (ctx->insn.mem_format.opcode == op_ldah)
-				signed_immediate <<= 16;
-			insn_printf(ctx, " <0x%lx>", signed_immediate +
-			    db_register_value(DDB_REGS,
-					      ctx->insn.mem_format.rb));
-		}
 		break;
 	case op_br:
 	case op_fbeq:
@@ -1084,21 +1065,6 @@ branch_displacement:
 		insn_printf(ctx, "? 0x%x ?", ctx->insn.bits);
 	}
 
-	/*
-	 *	Print out the registers used in this instruction
-	 */
-	if (ctx->showregs && ctx->regcount > 0) {
-		insn_printf(ctx, "\t<");
-		for (ireg = 0; ireg < ctx->regcount; ireg++) {
-			if (ireg != 0)
-				insn_printf(ctx, ",");
-			insn_printf(ctx, "%s=0x%lx",
-			    name_of_register[ctx->regnum[ireg]],
-			    db_register_value(DDB_REGS, ctx->regnum[ireg]));
-		}
-		insn_printf(ctx, ">");
-	}
-
 	/* If printing into a buffer, skip the newline. */
 	if (ctx->buf == NULL) {
 		insn_printf(ctx, "\n");
@@ -1108,12 +1074,11 @@ branch_displacement:
 }
 
 db_addr_t
-db_disasm(db_addr_t loc, bool altfmt)
+db_disasm(db_addr_t loc, bool altfmt __unused)
 {
 	struct alpha_print_instruction_context ctx = {
 		.insn.bits = db_get_value(loc, 4, 0),
 		.pc = loc,
-		.showregs = altfmt,
 	};
 
 	loc += alpha_print_instruction(&ctx);
