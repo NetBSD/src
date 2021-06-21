@@ -1,4 +1,4 @@
-/*	$NetBSD: ldvar.h,v 1.33 2019/03/19 07:01:14 mlelstv Exp $	*/
+/*	$NetBSD: ldvar.h,v 1.33.4.1 2021/06/21 17:23:13 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -70,6 +70,7 @@ struct ld_softc {
 #define	LDF_DRAIN	0x020		/* maxqueuecnt has changed; drain */
 #define	LDF_NO_RND	0x040		/* do not attach rnd source */
 #define	LDF_MPSAFE	0x080		/* backend is MPSAFE */
+#define	LDF_SUSPEND	0x100		/* disk is suspended until resume */
 
 int	ldadjqparam(struct ld_softc *, int);
 void	ldattach(struct ld_softc *, const char *);

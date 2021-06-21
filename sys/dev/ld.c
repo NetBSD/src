@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.106.4.2 2020/03/21 15:52:09 martin Exp $	*/
+/*	$NetBSD: ld.c,v 1.106.4.3 2021/06/21 17:23:13 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.106.4.2 2020/03/21 15:52:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.106.4.3 2021/06/21 17:23:13 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.106.4.2 2020/03/21 15:52:09 martin Exp $");
 
 static void	ldminphys(struct buf *bp);
 static bool	ld_suspend(device_t, const pmf_qual_t *);
+static bool	ld_resume(device_t, const pmf_qual_t *);
 static bool	ld_shutdown(device_t, int);
 static int	ld_diskstart(device_t, struct buf *bp);
 static void	ld_iosize(device_t, int *);
@@ -160,7 +161,8 @@ ldattach(struct ld_softc *sc, const char *default_strategy)
 	bufq_alloc(&dksc->sc_bufq, default_strategy, BUFQ_SORT_RAWBLOCK);
 
 	/* Register with PMF */
-	if (!pmf_device_register1(dksc->sc_dev, ld_suspend, NULL, ld_shutdown))
+	if (!pmf_device_register1(dksc->sc_dev, ld_suspend, ld_resume,
+		ld_shutdown))
 		aprint_error_dev(dksc->sc_dev,
 		    "couldn't establish power handler\n");
 
@@ -266,7 +268,55 @@ ldenddetach(struct ld_softc *sc)
 static bool
 ld_suspend(device_t dev, const pmf_qual_t *qual)
 {
-	return ld_shutdown(dev, 0);
+	struct ld_softc *sc = device_private(dev);
+	int queuecnt;
+	bool ok = false;
+
+	/* Block new requests and wait for outstanding requests to drain.  */
+	mutex_enter(&sc->sc_mutex);
+	KASSERT((sc->sc_flags & LDF_SUSPEND) == 0);
+	sc->sc_flags |= LDF_SUSPEND;
+	while ((queuecnt = sc->sc_queuecnt) > 0) {
+		if (cv_timedwait(&sc->sc_drain, &sc->sc_mutex, 30 * hz))
+			break;
+	}
+	mutex_exit(&sc->sc_mutex);
+
+	/* Block suspend if we couldn't drain everything in 30sec.  */
+	if (queuecnt > 0) {
+		device_printf(dev, "timeout draining buffers\n");
+		goto out;
+	}
+
+	/* Flush cache before we lose power.  If we can't, block suspend.  */
+	if (ld_flush(dev, /*poll*/false) != 0) {
+		device_printf(dev, "failed to flush cache\n");
+		goto out;
+	}
+
+	/* Success!  */
+	ok = true;
+
+out:	if (!ok)
+		(void)ld_resume(dev, qual);
+	return ok;
+}
+
+static bool
+ld_resume(device_t dev, const pmf_qual_t *qual)
+{
+	struct ld_softc *sc = device_private(dev);
+
+	/* Allow new requests to come in.  */
+	mutex_enter(&sc->sc_mutex);
+	KASSERT(sc->sc_flags & LDF_SUSPEND);
+	sc->sc_flags &= ~LDF_SUSPEND;
+	mutex_exit(&sc->sc_mutex);
+
+	/* Restart any pending queued requests.  */
+	dk_start(&sc->sc_dksc, NULL);
+
+	return true;
 }
 
 /* ARGSUSED */
@@ -428,17 +478,24 @@ ld_diskstart(device_t dev, struct buf *bp)
 	struct ld_softc *sc = device_private(dev);
 	int error;
 
-	if (sc->sc_queuecnt >= sc->sc_maxqueuecnt)
+	if (sc->sc_queuecnt >= sc->sc_maxqueuecnt ||
+	    sc->sc_flags & LDF_SUSPEND) {
+		if (sc->sc_flags & LDF_SUSPEND)
+			aprint_debug_dev(dev, "i/o blocked while suspended\n");
 		return EAGAIN;
+	}
 
 	if ((sc->sc_flags & LDF_MPSAFE) == 0)
 		KERNEL_LOCK(1, curlwp);
 
 	mutex_enter(&sc->sc_mutex);
 
-	if (sc->sc_queuecnt >= sc->sc_maxqueuecnt)
+	if (sc->sc_queuecnt >= sc->sc_maxqueuecnt ||
+	    sc->sc_flags & LDF_SUSPEND) {
+		if (sc->sc_flags & LDF_SUSPEND)
+			aprint_debug_dev(dev, "i/o blocked while suspended\n");
 		error = EAGAIN;
-	else {
+	} else {
 		error = (*sc->sc_start)(sc, bp);
 		if (error == 0)
 			sc->sc_queuecnt++;
