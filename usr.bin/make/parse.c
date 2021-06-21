@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.558 2021/06/21 10:29:08 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.559 2021/06/21 10:33:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.558 2021/06/21 10:29:08 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.559 2021/06/21 10:33:11 rillig Exp $");
 
 /* types and constants */
 
@@ -1054,7 +1054,11 @@ ParseDependencyTargetWord(const char **pp, const char *lstart)
 	*pp = cp;
 }
 
-/* Handle special targets like .PATH, .DEFAULT, .BEGIN, .ORDER. */
+/*
+ * Handle special targets like .PATH, .DEFAULT, .BEGIN, .ORDER.
+ *
+ * See the tests deptgt-*.mk.
+ */
 static void
 ParseDependencyTargetSpecial(ParseSpecial *inout_specType,
 			     const char *targetName,
@@ -1583,7 +1587,11 @@ ParseDependencySourcesMundane(char *start, char *end,
 	return true;
 }
 
-/* In a dependency line like 'targets: sources', parse the sources. */
+/*
+ * In a dependency line like 'targets: sources', parse the sources.
+ *
+ * See the tests depsrc-*.mk.
+ */
 static void
 ParseDependencySources(char *const line, char *const cp,
 		       GNodeType const tOp,
