@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.932 2021/05/30 20:41:34 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.933 2021/06/21 04:24:17 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.932 2021/05/30 20:41:34 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.933 2021/06/21 04:24:17 sjg Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -1651,9 +1651,11 @@ tryagain:
 					Error("No subexpression \\%u",
 					    (unsigned)n);
 				} else if (m[n].rm_so == -1) {
-					Error(
-					    "No match for subexpression \\%u",
-					    (unsigned)n);
+					if (opts.strict) {
+						Error(
+						    "No match for subexpression \\%u",
+							(unsigned)n);
+					}
 				} else {
 					SepBuf_AddBytesBetween(buf,
 					    wp + m[n].rm_so, wp + m[n].rm_eo);
