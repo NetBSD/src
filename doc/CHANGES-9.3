@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.8 2021/06/14 12:00:44 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.9 2021/06/21 17:42:15 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -131,3 +131,135 @@ usr.bin/ftp/version.h				1.93
 	Set version to 20210603.
 	[lukem, ticket #1295]
 
+sys/kern/vfs_lookup.c				1.226
+sys/kern/vfs_vnops.c				1.215
+sys/sys/namei.src				1.59 (patch)
+sys/rump/include/rump/rump_namei.h		(regen)
+sys/sys/namei.h					(regen)
+
+	Add a new namei flag NONEXCLHACK for open with O_CREAT and not O_EXCL.
+	In the case where that target is the root, or a mount
+	point, such that there's no parent dir, "real" CREATE operations fail,
+	but O_CREAT without O_EXCL needs to succeed.
+	Fixes newer Samba usage of /proc/self/fd/NNN with O_CREAT.
+	[dholland, ticket #1296]
+
+external/bsd/libarchive/dist/cat/test/test_0.c			up to 1.2
+external/bsd/libarchive/dist/cpio/test/test_basic.c		up to 1.2
+external/bsd/libarchive/dist/cpio/test/test_format_newc.c	up to 1.3
+external/bsd/libarchive/dist/libarchive/archive_read.c		up to 1.2
+external/bsd/libarchive/dist/libarchive/archive_read_disk_posix.c	up to 1.2
+external/bsd/libarchive/dist/libarchive/archive_read_open_filename.c	up to 1.2
+external/bsd/libarchive/dist/libarchive/archive_read_support_format_xar.c	up to 1.2
+external/bsd/libarchive/dist/libarchive/archive_write_disk_posix.c	up to 1.6
+external/bsd/libarchive/dist/libarchive/test/test_acl_platform_nfs4.c	up to 1.2
+external/bsd/libarchive/dist/libarchive/test/test_acl_platform_posix1e.c	up to 1.2
+external/bsd/libarchive/dist/libarchive/test/test_compat_zip.c	up to 1.2
+external/bsd/libarchive/dist/libarchive/test/test_fuzz.c	up to 1.2
+external/bsd/libarchive/dist/libarchive/test/test_read_extract.c	up to 1.2
+external/bsd/libarchive/dist/libarchive/test/test_read_format_gtar_sparse.c	up to 1.2
+external/bsd/libarchive/dist/libarchive/test/test_read_format_zip.c	up to 1.2
+external/bsd/libarchive/dist/libarchive/test/test_read_format_zip_7075_utf8_paths.c	up to 1.2
+external/bsd/libarchive/dist/libarchive/test/test_read_format_zip_comment_stored.c	up to 1.2
+external/bsd/libarchive/dist/libarchive/test/test_read_format_zip_extra_padding.c	up to 1.2
+external/bsd/libarchive/dist/libarchive/test/test_read_format_zip_high_compression.c	up to 1.2
+external/bsd/libarchive/dist/libarchive/test/test_read_format_zip_jar.c	up to 1.2
+external/bsd/libarchive/dist/libarchive/test/test_read_format_zip_mac_metadata.c	up to 1.2
+external/bsd/libarchive/dist/libarchive/test/test_read_format_zip_malformed.c	up to 1.2
+external/bsd/libarchive/dist/libarchive/test/test_read_format_zip_msdos.c	up to 1.2
+external/bsd/libarchive/dist/libarchive/test/test_read_format_zip_nested.c	up to 1.2
+external/bsd/libarchive/dist/libarchive/test/test_read_format_zip_nofiletype.c	up to 1.2
+external/bsd/libarchive/dist/libarchive/test/test_read_format_zip_padded.c	up to 1.2
+external/bsd/libarchive/dist/libarchive/test/test_read_format_zip_sfx.c	up to 1.2
+external/bsd/libarchive/dist/libarchive/test/test_read_format_zip_with_invalid_traditional_eocd.c	up to 1.2
+external/bsd/libarchive/dist/libarchive/test/test_read_format_zip_zip64.c	up to 1.2
+external/bsd/libarchive/dist/libarchive/test/test_read_pax_truncated.c	up to 1.2
+external/bsd/libarchive/dist/libarchive/test/test_read_truncated_filter.c	up to 1.2
+external/bsd/libarchive/dist/libarchive/test/test_sparse_basic.c	up to 1.3
+external/bsd/libarchive/dist/libarchive/test/test_write_disk.c	up to 1.2
+external/bsd/libarchive/dist/libarchive/test/test_write_disk_secure.c	up to 1.4
+external/bsd/libarchive/dist/libarchive/test/test_write_format_cpio_empty.c	up to 1.2
+external/bsd/libarchive/dist/libarchive/test/test_write_format_shar_empty.c	up to 1.2
+external/bsd/libarchive/dist/libarchive/test/test_write_format_tar.c	up to 1.2
+external/bsd/libarchive/dist/libarchive/test/test_write_format_tar_sparse.c	up to 1.2
+external/bsd/libarchive/dist/tar/write.c			up to 1.3
+external/bsd/libarchive/dist/tar/test/test_basic.c		up to 1.2
+external/bsd/libarchive/dist/tar/test/test_copy.c		up to 1.3
+external/bsd/libarchive/dist/tar/test/test_option_C_upper.c	up to 1.2
+external/bsd/libarchive/dist/tar/test/test_option_s.c		up to 1.2
+external/bsd/libarchive/dist/test_utils/test_common.h		up to 1.2
+external/bsd/libarchive/dist/test_utils/test_main.c		up to 1.2
+
+	PR 56257: sync libarchive with -current, leaving out extended
+	attributes and changes for newer gcc not relevant for this
+	branch.
+	[christos, ticket #1297]
+
+lib/libc/gen/setjmp.3				1.18
+
+	Clarify what happens when you longjmp(..., 0).
+	[riastradh, ticket #1298]
+
+sys/kern/kern_ksyms.c				1.90-1.97
+
+	ksyms(4): Fix races and allow multiple concurrent opens.
+	[riastradh, ticket #1299]
+
+sys/external/bsd/drm2/dist/drm/i915/i915_drv.h	1.33 (patch)
+
+	i915drmkms: Fix LOCKDEBUG panic and potential deadlock.
+	[riastradh, ticket #1300]
+
+sys/dev/usb/xhci.c				1.139-1.141,1.143
+sys/dev/usb/xhcireg.h				1.19
+sys/dev/usb/xhcivar.h				1.18,1.19
+
+	xhci(4): support suspend/resume.
+	[riastradh, ticket #1301]
+
+sys/dev/usb/ualea.c				1.13
+
+	ualea(4): suport suspend/resume.
+	[riastradh, ticket #1302]
+
+sys/arch/x86/pci/dwiic_pci.c			1.5 (patch)
+
+	dwiic(4): Attribute output correctly and relegate to debug-level.
+	[riastradh, ticket #1303]
+
+sys/dev/ld.c					1.112
+sys/dev/ldvar.h					1.35
+
+	ld(4): fix suspend/resume.
+	[riastradh, ticket #1304]
+
+sys/dev/ic/nvme.c				1.56,1.57
+sys/dev/ic/nvmevar.h				1.22
+sys/dev/pci/nvme_pci.c				1.30
+
+	nvme(4): add suspend/resume.
+	[riastradh, ticket #1305]
+
+sys/dev/usb/umass.c				1.185
+sys/dev/usb/umass_scsipi.c			1.68
+
+	umass(4): fix suspend/resume.
+	[riastradh, ticket #1306]
+
+sys/arch/amd64/amd64/db_disasm.c		1.28
+sys/arch/i386/i386/db_disasm.c			1.49
+
+	ddb(4) on amd64 and i386: don't go out of the way to detect
+	invalid addresses. Fixes a double fault in ddb when a NULL function
+	pointer is called.
+	[riastradh, ticket #1307]
+
+sys/arch/amd64/conf/GENERIC			1.581
+
+	Enable tpm at acpi.
+	[riastradh, ticket #1308]
+
+compat/arm/oabi/bsd.oabi.mk		(apply patch)
+
+	Fix PR 50192.
+	[mrg, ticket #1309]
