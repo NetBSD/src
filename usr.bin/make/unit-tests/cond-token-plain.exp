@@ -39,7 +39,7 @@ make: "cond-token-plain.mk" line 130: Numbers can be composed from literals and 
 CondParser_Eval: 0${:Ux01}
 make: "cond-token-plain.mk" line 134: Numbers can be composed from literals and variable expressions.
 CondParser_Eval: "" ==
-make: "cond-token-plain.mk" line 140: Missing right-hand-side of operator '=='
+make: "cond-token-plain.mk" line 140: Missing right-hand side of operator '=='
 CondParser_Eval: == ""
 make: "cond-token-plain.mk" line 148: Malformed conditional (== "")
 CondParser_Eval: \\
