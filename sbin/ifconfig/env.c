@@ -1,4 +1,4 @@
-/*	$NetBSD: env.c,v 1.13 2020/06/07 06:02:58 thorpej Exp $	*/
+/*	$NetBSD: env.c,v 1.14 2021/06/21 03:14:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Young.  All rights reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: env.c,v 1.13 2020/06/07 06:02:58 thorpej Exp $");
+__RCSID("$NetBSD: env.c,v 1.14 2021/06/21 03:14:40 christos Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -122,7 +122,7 @@ getifname(prop_dictionary_t env)
 {
 	const char *s;
 
-	return prop_dictionary_get_cstring_nocopy(env, "if", &s) ? s : NULL;
+	return prop_dictionary_get_string(env, "if", &s) ? s : NULL;
 }
 
 ssize_t

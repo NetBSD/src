@@ -1,4 +1,4 @@
-/*	$NetBSD: lagg.c,v 1.1 2021/05/17 04:07:42 yamaguchi Exp $	*/
+/*	$NetBSD: lagg.c,v 1.2 2021/06/21 03:14:40 christos Exp $	*/
 
 /*
  * Copyright (c) 2021 Internet Initiative Japan Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: lagg.c,v 1.1 2021/05/17 04:07:42 yamaguchi Exp $");
+__RCSID("$NetBSD: lagg.c,v 1.2 2021/06/21 03:14:40 christos Exp $");
 #endif /* !defined(lint) */
 
 #include <sys/param.h>
@@ -391,7 +391,7 @@ setlaggport(prop_dictionary_t env, prop_dictionary_t oenv __unused)
 	enum lagg_ioctl ioc;
 	int64_t lpcmd, pri;
 
-	if (!prop_dictionary_get_cstring_nocopy(env, "laggport", &ifname)) {
+	if (!prop_dictionary_get_string(env, "laggport", &ifname)) {
 		if (lagg_debug)
 			warnx("%s.%d", __func__, __LINE__);
 		errno = ENOENT;

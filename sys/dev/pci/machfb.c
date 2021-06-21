@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.104 2021/04/24 23:36:57 thorpej Exp $	*/
+/*	$NetBSD: machfb.c,v 1.105 2021/06/21 03:19:21 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0,
-	"$NetBSD: machfb.c,v 1.104 2021/04/24 23:36:57 thorpej Exp $");
+	"$NetBSD: machfb.c,v 1.105 2021/06/21 03:19:21 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -520,7 +520,7 @@ mach64_attach(device_t parent, device_t self, void *aux)
 	default_mode.hdisplay = width;
 	default_mode.vdisplay = height;
 
-	prop_dictionary_get_cstring_nocopy(device_properties(sc->sc_dev),
+	prop_dictionary_get_string(device_properties(sc->sc_dev),
 	    "videomode", &mptr);
 
 	memset(&sc->sc_ei, 0, sizeof(sc->sc_ei));

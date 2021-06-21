@@ -1,4 +1,4 @@
-/*	$NetBSD: agr.c,v 1.15 2008/07/15 21:27:58 dyoung Exp $	*/
+/*	$NetBSD: agr.c,v 1.16 2021/06/21 03:14:40 christos Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: agr.c,v 1.15 2008/07/15 21:27:58 dyoung Exp $");
+__RCSID("$NetBSD: agr.c,v 1.16 2021/06/21 03:14:40 christos Exp $");
 #endif /* !defined(lint) */
 
 #include <sys/param.h>
@@ -101,7 +101,7 @@ agrsetport(prop_dictionary_t env, prop_dictionary_t oenv)
 		return -1;
 	}
 
-	if (!prop_dictionary_get_cstring_nocopy(env, "agrport", &port)) {
+	if (!prop_dictionary_get_string(env, "agrport", &port)) {
 		warnx("%s.%d", __func__, __LINE__);
 		errno = ENOENT;
 		return -1;

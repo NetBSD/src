@@ -1,4 +1,4 @@
-/*	$NetBSD: pfsync.c,v 1.3 2020/06/07 06:02:58 thorpej Exp $	*/
+/*	$NetBSD: pfsync.c,v 1.4 2021/06/21 03:14:40 christos Exp $	*/
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pfsync.c,v 1.3 2020/06/07 06:02:58 thorpej Exp $");
+__RCSID("$NetBSD: pfsync.c,v 1.4 2021/06/21 03:14:40 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -155,7 +155,7 @@ setpfsyncdev(prop_dictionary_t env, prop_dictionary_t oenv)
 	struct pfsyncreq pfsyncr;
 	const char *dev;
 
-	if (!prop_dictionary_get_cstring_nocopy(env, "syncdev", &dev)) {
+	if (!prop_dictionary_get_string(env, "syncdev", &dev)) {
 		errno = ENOENT;
 		return -1;
 	}
