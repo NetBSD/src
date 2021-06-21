@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.935 2021/06/21 17:21:37 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.936 2021/06/21 17:52:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.935 2021/06/21 17:21:37 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.936 2021/06/21 17:52:33 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -1610,11 +1610,8 @@ ModifyWord_SubstRegex(Substring word, SepBuf *buf, void *data)
 
 	assert(word.end[0] == '\0');	/* assume null-terminated word */
 	wp = word.start;
-	if (args->pflags.subOnce && args->matched) {
-	nosub:
-		SepBuf_AddStr(buf, wp);
-		return;
-	}
+	if (args->pflags.subOnce && args->matched)
+		goto no_match;
 
 again:
 	xrv = regexec(&args->re, wp, args->nsub, m, flags);
@@ -1622,7 +1619,9 @@ again:
 		goto ok;
 	if (xrv != REG_NOMATCH)
 		VarREError(xrv, &args->re, "Unexpected regex error");
-	goto nosub;
+no_match:
+	SepBuf_AddStr(buf, wp);
+	return;
 
 ok:
 	args->matched = true;
