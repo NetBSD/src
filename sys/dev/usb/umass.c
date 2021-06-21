@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.175.2.1 2020/03/01 12:38:59 martin Exp $	*/
+/*	$NetBSD: umass.c,v 1.175.2.2 2021/06/21 17:27:57 martin Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.175.2.1 2020/03/01 12:38:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.175.2.2 2021/06/21 17:27:57 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1105,6 +1105,7 @@ umass_bbb_transfer(struct umass_softc *sc, int lun, void *cmd, int cmdlen,
 	UMASSHIST_FUNC(); UMASSHIST_CALLED();
 	static int dCBWtag = 42;	/* unique for CBW of transfer */
 
+	KASSERT(cb);
 	DPRINTFM(UDMASS_BBB, "sc %#jx cmd=0x%02jx", (uintptr_t)sc,
 	    *(u_char *)cmd, 0, 0);
 
@@ -1629,6 +1630,7 @@ umass_cbi_transfer(struct umass_softc *sc, int lun,
 	DPRINTFM(UDMASS_CBI, "sc %#jx: cmd=0x%02jx, len=%jd",
 	     (uintptr_t)sc, *(u_char *)cmd, datalen, 0);
 
+	KASSERT(cb);
 	KASSERTMSG(sc->sc_wire & (UMASS_WPROTO_CBI|UMASS_WPROTO_CBI_I),
 		   "sc->sc_wire == 0x%02x wrong for umass_cbi_transfer\n",
 		   sc->sc_wire);
