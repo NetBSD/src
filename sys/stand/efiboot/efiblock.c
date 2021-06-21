@@ -1,4 +1,4 @@
-/* $NetBSD: efiblock.c,v 1.13 2021/06/21 11:11:33 jmcneill Exp $ */
+/* $NetBSD: efiblock.c,v 1.14 2021/06/21 21:18:47 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -38,6 +38,7 @@
 #include "efiboot.h"
 #include "efiblock.h"
 
+#define	EFI_BLOCK_READAHEAD	(64 * 1024)
 #define	EFI_BLOCK_TIMEOUT	120
 #define	EFI_BLOCK_TIMEOUT_CODE	0x810c0000
 
@@ -51,6 +52,12 @@
 static EFI_HANDLE *efi_block;
 static UINTN efi_nblock;
 static struct efi_block_part *efi_block_booted = NULL;
+
+static bool efi_ra_enable = false;
+static UINT8 *efi_ra_buffer = NULL;
+static UINT32 efi_ra_media_id;
+static UINT64 efi_ra_start = 0;
+static UINT64 efi_ra_length = 0;
 
 static TAILQ_HEAD(, efi_block_dev) efi_block_devs = TAILQ_HEAD_INITIALIZER(efi_block_devs);
 
@@ -111,9 +118,51 @@ efi_block_generate_hash_mbr(struct efi_block_part *bpart, struct mbr_sector *mbr
 }
 
 static EFI_STATUS
+efi_block_disk_readahead(struct efi_block_dev *bdev, UINT64 off, void *buf,
+    UINTN bufsize)
+{
+	EFI_STATUS status;
+	UINT64 mediasize, len;
+
+	if (efi_ra_buffer == NULL) {
+		efi_ra_buffer = AllocatePool(EFI_BLOCK_READAHEAD);
+		if (efi_ra_buffer == NULL) {
+			return EFI_OUT_OF_RESOURCES;
+		}
+	}
+
+	if (bdev->media_id != efi_ra_media_id ||
+	    off < efi_ra_start ||
+	    off + bufsize > efi_ra_start + efi_ra_length) {
+		mediasize = bdev->bio->Media->BlockSize *
+		    (bdev->bio->Media->LastBlock + 1);
+		len = EFI_BLOCK_READAHEAD;
+		if (len > mediasize - off) {
+			len = mediasize - off;
+		}
+		status = uefi_call_wrapper(bdev->dio->ReadDisk, 5, bdev->dio,
+		    bdev->media_id, off, len, efi_ra_buffer);
+		if (EFI_ERROR(status)) {
+			efi_ra_start = efi_ra_length = 0;
+			return status;
+		}
+		efi_ra_start = off;
+		efi_ra_length = len;
+		efi_ra_media_id = bdev->media_id;
+	}
+
+	memcpy(buf, &efi_ra_buffer[off - efi_ra_start], bufsize);
+	return EFI_SUCCESS;
+}
+
+static EFI_STATUS
 efi_block_disk_read(struct efi_block_dev *bdev, UINT64 off, void *buf,
     UINTN bufsize)
 {
+	if (efi_ra_enable) {
+		return efi_block_disk_readahead(bdev, off, buf, bufsize);
+	}
+
 	return uefi_call_wrapper(bdev->dio->ReadDisk, 5, bdev->dio,
 	    bdev->media_id, off, bufsize, buf);
 }
@@ -587,4 +636,10 @@ efi_block_strategy(void *devdata, int rw, daddr_t dblk, size_t size, void *buf, 
 	*rsize = size;
 
 	return 0;
+}
+
+void
+efi_block_set_readahead(bool onoff)
+{
+	efi_ra_enable = onoff;
 }
