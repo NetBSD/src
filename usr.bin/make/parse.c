@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.559 2021/06/21 10:33:11 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.560 2021/06/21 10:42:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.559 2021/06/21 10:33:11 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.560 2021/06/21 10:42:06 rillig Exp $");
 
 /* types and constants */
 
@@ -1265,8 +1265,12 @@ ParseDependencyCheckSpec(ParseSpecial specType)
 	}
 }
 
+/*
+ * In a dependency line like 'targets: sources' or 'targets! sources', parse
+ * the operator ':', '::' or '!' from between the targets and the sources.
+ */
 static bool
-ParseDependencyParseOp(char **pp, const char *lstart, GNodeType *out_op)
+ParseDependencyOp(char **pp, const char *lstart, GNodeType *out_op)
 {
 	const char *cp = *pp;
 
@@ -1694,7 +1698,7 @@ ParseDependency(char *line)
 	/*
 	 * First, grind through the targets.
 	 */
-	/* XXX: don't use line as an iterator variable */
+	/* XXX: don't use 'line' as an iterator variable */
 	if (!ParseDependencyTargets(&cp, &line, lstart, &specType, &tOp,
 	    &paths, &curTargs))
 		goto out;
@@ -1712,7 +1716,7 @@ ParseDependency(char *line)
 	/*
 	 * Have now parsed all the target names. Must parse the operator next.
 	 */
-	if (!ParseDependencyParseOp(&cp, lstart, &op))
+	if (!ParseDependencyOp(&cp, lstart, &op))
 		goto out;
 
 	/*
