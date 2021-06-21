@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.934 2021/06/21 08:40:44 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.935 2021/06/21 17:21:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.934 2021/06/21 08:40:44 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.935 2021/06/21 17:21:37 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -1606,84 +1606,80 @@ ModifyWord_SubstRegex(Substring word, SepBuf *buf, void *data)
 	const char *rp;
 	int flags = 0;
 	regmatch_t m[10];
+	size_t n;
 
 	assert(word.end[0] == '\0');	/* assume null-terminated word */
 	wp = word.start;
-	if (args->pflags.subOnce && args->matched)
-		goto nosub;
-
-tryagain:
-	xrv = regexec(&args->re, wp, args->nsub, m, flags);
-
-	switch (xrv) {
-	case 0:
-		args->matched = true;
-		SepBuf_AddBytes(buf, wp, (size_t)m[0].rm_so);
-
-		/*
-		 * Replacement of regular expressions is not specified by
-		 * POSIX, therefore implement it here.
-		 */
-
-		for (rp = args->replace; *rp != '\0'; rp++) {
-			if (*rp == '\\' && (rp[1] == '&' || rp[1] == '\\')) {
-				SepBuf_AddBytes(buf, rp + 1, 1);
-				rp++;
-				continue;
-			}
-
-			if (*rp == '&') {
-				SepBuf_AddBytesBetween(buf,
-				    wp + m[0].rm_so, wp + m[0].rm_eo);
-				continue;
-			}
-
-			if (*rp != '\\' || !ch_isdigit(rp[1])) {
-				SepBuf_AddBytes(buf, rp, 1);
-				continue;
-			}
-
-			{	/* \0 to \9 backreference */
-				size_t n = (size_t)(rp[1] - '0');
-				rp++;
-
-				if (n >= args->nsub) {
-					Error("No subexpression \\%u",
-					    (unsigned)n);
-				} else if (m[n].rm_so == -1) {
-					if (opts.strict) {
-						Error(
-						    "No match for subexpression \\%u",
-							(unsigned)n);
-					}
-				} else {
-					SepBuf_AddBytesBetween(buf,
-					    wp + m[n].rm_so, wp + m[n].rm_eo);
-				}
-			}
-		}
-
-		wp += m[0].rm_eo;
-		if (args->pflags.subGlobal) {
-			flags |= REG_NOTBOL;
-			if (m[0].rm_so == 0 && m[0].rm_eo == 0) {
-				SepBuf_AddBytes(buf, wp, 1);
-				wp++;
-			}
-			if (*wp != '\0')
-				goto tryagain;
-		}
-		if (*wp != '\0')
-			SepBuf_AddStr(buf, wp);
-		break;
-	default:
-		VarREError(xrv, &args->re, "Unexpected regex error");
-		/* FALLTHROUGH */
-	case REG_NOMATCH:
+	if (args->pflags.subOnce && args->matched) {
 	nosub:
 		SepBuf_AddStr(buf, wp);
-		break;
+		return;
 	}
+
+again:
+	xrv = regexec(&args->re, wp, args->nsub, m, flags);
+	if (xrv == 0)
+		goto ok;
+	if (xrv != REG_NOMATCH)
+		VarREError(xrv, &args->re, "Unexpected regex error");
+	goto nosub;
+
+ok:
+	args->matched = true;
+	SepBuf_AddBytes(buf, wp, (size_t)m[0].rm_so);
+
+	/*
+	 * Replacement of regular expressions is not specified by
+	 * POSIX, therefore re-implement it here.
+	 */
+
+	for (rp = args->replace; *rp != '\0'; rp++) {
+		if (*rp == '\\' && (rp[1] == '&' || rp[1] == '\\')) {
+			SepBuf_AddBytes(buf, rp + 1, 1);
+			rp++;
+			continue;
+		}
+
+		if (*rp == '&') {
+			SepBuf_AddBytesBetween(buf,
+			    wp + m[0].rm_so, wp + m[0].rm_eo);
+			continue;
+		}
+
+		if (*rp != '\\' || !ch_isdigit(rp[1])) {
+			SepBuf_AddBytes(buf, rp, 1);
+			continue;
+		}
+
+		/* \0 to \9 backreference */
+		n = (size_t)(rp[1] - '0');
+		rp++;
+
+		if (n >= args->nsub) {
+			Error("No subexpression \\%u", (unsigned)n);
+		} else if (m[n].rm_so == -1) {
+			if (opts.strict) {
+				Error("No match for subexpression \\%u",
+				    (unsigned)n);
+			}
+		} else {
+			SepBuf_AddBytesBetween(buf,
+			    wp + m[n].rm_so, wp + m[n].rm_eo);
+		}
+	}
+
+	wp += m[0].rm_eo;
+	if (args->pflags.subGlobal) {
+		flags |= REG_NOTBOL;
+		if (m[0].rm_so == 0 && m[0].rm_eo == 0) {
+			SepBuf_AddBytes(buf, wp, 1);
+			wp++;
+		}
+		if (*wp != '\0')
+			goto again;
+	}
+	if (*wp != '\0')
+		SepBuf_AddStr(buf, wp);
 }
 #endif
 
