@@ -1,9 +1,6 @@
-# $NetBSD: moderrs.mk,v 1.29 2021/06/21 08:17:39 rillig Exp $
+# $NetBSD: moderrs.mk,v 1.30 2021/06/21 08:28:37 rillig Exp $
 #
 # various modifier error tests
-
-# report unmatched subexpressions
-.MAKEFLAGS: -dL
 
 '=		'\''
 VAR=		TheVariable
