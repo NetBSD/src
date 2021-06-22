@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.70 2021/04/18 22:51:24 rillig Exp $
+#	$NetBSD: Makefile,v 1.71 2021/06/22 12:58:28 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -26,6 +26,11 @@ CPPFLAGS+=	-I${.CURDIR}
 CPPFLAGS+=	${DEBUG:D-DDEBUG}
 
 COPTS.err.c+=	${${ACTIVE_CC} == "clang":? -Wno-format-nonliteral :}
+
+.if ${HAVE_GCC} == 9 &&	\
+	(${MACHINE_ARCH} == "sh3el" || ${MACHINE_ARCH} == "sh3eb")
+COPTS.lex.c+=	-O0
+.endif
 
 BINDIR=		/usr/libexec
 
