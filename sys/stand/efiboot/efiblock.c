@@ -1,4 +1,4 @@
-/* $NetBSD: efiblock.c,v 1.14 2021/06/21 21:18:47 jmcneill Exp $ */
+/* $NetBSD: efiblock.c,v 1.15 2021/06/22 21:56:51 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -118,7 +118,74 @@ efi_block_generate_hash_mbr(struct efi_block_part *bpart, struct mbr_sector *mbr
 }
 
 static EFI_STATUS
-efi_block_disk_readahead(struct efi_block_dev *bdev, UINT64 off, void *buf,
+efi_block_do_read_blockio(struct efi_block_dev *bdev, UINT64 off, void *buf,
+    UINTN bufsize)
+{
+	UINT8 *blkbuf, *blkbuf_start;
+	EFI_STATUS status;
+	EFI_LBA lba_start, lba_end;
+	UINT64 blkbuf_offset;
+	UINT64 blkbuf_size;
+
+	lba_start = off / bdev->bio->Media->BlockSize;
+	lba_end = (off + bufsize + bdev->bio->Media->BlockSize - 1) /
+	    bdev->bio->Media->BlockSize;
+	blkbuf_offset = off % bdev->bio->Media->BlockSize;
+	blkbuf_size = (lba_end - lba_start) * bdev->bio->Media->BlockSize;
+	if (bdev->bio->Media->IoAlign > 1) {
+		blkbuf_size += bdev->bio->Media->IoAlign - 1;
+	}
+
+	blkbuf = AllocatePool(blkbuf_size);
+	if (blkbuf == NULL) {
+		return EFI_OUT_OF_RESOURCES;
+	}
+
+	if (bdev->bio->Media->IoAlign > 1) {
+		blkbuf_start = (void *)roundup2((intptr_t)blkbuf,
+		    bdev->bio->Media->IoAlign);
+	} else {
+		blkbuf_start = blkbuf;
+	}
+
+	status = uefi_call_wrapper(bdev->bio->ReadBlocks, 5, bdev->bio,
+	    bdev->media_id, lba_start, blkbuf_size, blkbuf_start);
+	if (EFI_ERROR(status)) {
+		goto done;
+	}
+
+	memcpy(buf, blkbuf_start + blkbuf_offset, bufsize);
+
+done:
+	FreePool(blkbuf);
+	return status;
+}
+
+static EFI_STATUS
+efi_block_do_read_diskio(struct efi_block_dev *bdev, UINT64 off, void *buf,
+    UINTN bufsize)
+{
+	return uefi_call_wrapper(bdev->dio->ReadDisk, 5, bdev->dio,
+	    bdev->media_id, off, bufsize, buf);
+}
+
+static EFI_STATUS
+efi_block_do_read(struct efi_block_dev *bdev, UINT64 off, void *buf,
+    UINTN bufsize)
+{
+	/*
+	 * Perform read access using EFI_DISK_IO_PROTOCOL if available,
+	 * otherwise use EFI_BLOCK_IO_PROTOCOL.
+	 */
+	if (bdev->dio != NULL) {
+		return efi_block_do_read_diskio(bdev, off, buf, bufsize);
+	} else {
+		return efi_block_do_read_blockio(bdev, off, buf, bufsize);
+	}
+}
+
+static EFI_STATUS
+efi_block_readahead(struct efi_block_dev *bdev, UINT64 off, void *buf,
     UINTN bufsize)
 {
 	EFI_STATUS status;
@@ -140,8 +207,7 @@ efi_block_disk_readahead(struct efi_block_dev *bdev, UINT64 off, void *buf,
 		if (len > mediasize - off) {
 			len = mediasize - off;
 		}
-		status = uefi_call_wrapper(bdev->dio->ReadDisk, 5, bdev->dio,
-		    bdev->media_id, off, len, efi_ra_buffer);
+		status = efi_block_do_read(bdev, off, efi_ra_buffer, len);
 		if (EFI_ERROR(status)) {
 			efi_ra_start = efi_ra_length = 0;
 			return status;
@@ -156,15 +222,14 @@ efi_block_disk_readahead(struct efi_block_dev *bdev, UINT64 off, void *buf,
 }
 
 static EFI_STATUS
-efi_block_disk_read(struct efi_block_dev *bdev, UINT64 off, void *buf,
+efi_block_read(struct efi_block_dev *bdev, UINT64 off, void *buf,
     UINTN bufsize)
 {
 	if (efi_ra_enable) {
-		return efi_block_disk_readahead(bdev, off, buf, bufsize);
+		return efi_block_readahead(bdev, off, buf, bufsize);
 	}
 
-	return uefi_call_wrapper(bdev->dio->ReadDisk, 5, bdev->dio,
-	    bdev->media_id, off, bufsize, buf);
+	return efi_block_do_read(bdev, off, buf, bufsize);
 }
 
 static int
@@ -176,7 +241,7 @@ efi_block_find_partitions_cd9660(struct efi_block_dev *bdev)
 	EFI_LBA lba;
 
 	for (lba = 16;; lba++) {
-		status = efi_block_disk_read(bdev,
+		status = efi_block_read(bdev,
 		    lba * ISO_DEFAULT_BLOCK_SIZE, &vd, sizeof(vd));
 		if (EFI_ERROR(status)) {
 			goto io_error;
@@ -220,7 +285,7 @@ efi_block_find_partitions_disklabel(struct efi_block_dev *bdev,
 	EFI_STATUS status;
 	int n;
 
-	status = efi_block_disk_read(bdev,
+	status = efi_block_read(bdev,
 	    ((EFI_LBA)start + LABELSECTOR) * DEV_BSIZE, buf, sizeof(buf));
 	if (EFI_ERROR(status) || getdisklabel(buf, &d) != NULL) {
 		FreePool(buf);
@@ -268,7 +333,7 @@ efi_block_find_partitions_mbr(struct efi_block_dev *bdev)
 	EFI_STATUS status;
 	int n;
 
-	status = efi_block_disk_read(bdev, 0, &mbr, sizeof(mbr));
+	status = efi_block_read(bdev, 0, &mbr, sizeof(mbr));
 	if (EFI_ERROR(status))
 		return EIO;
 
@@ -348,7 +413,7 @@ efi_block_find_partitions_gpt(struct efi_block_dev *bdev)
 	void *buf;
 	UINTN sz;
 
-	status = efi_block_disk_read(bdev, GPT_HDR_BLKNO * DEV_BSIZE, &hdr,
+	status = efi_block_read(bdev, GPT_HDR_BLKNO * DEV_BSIZE, &hdr,
 	    sizeof(hdr));
 	if (EFI_ERROR(status)) {
 		return EIO;
@@ -364,7 +429,7 @@ efi_block_find_partitions_gpt(struct efi_block_dev *bdev)
 	if (buf == NULL)
 		return ENOMEM;
 
-	status = efi_block_disk_read(bdev,
+	status = efi_block_read(bdev,
 	    le64toh(hdr.hdr_lba_table) * DEV_BSIZE, buf, sz);
 	if (EFI_ERROR(status)) {
 		FreePool(buf);
@@ -421,18 +486,22 @@ efi_block_probe(void)
 	}
 
 	for (n = 0; n < efi_nblock; n++) {
+		/* EFI_BLOCK_IO_PROTOCOL is required */
 		status = uefi_call_wrapper(BS->HandleProtocol, 3, efi_block[n],
 		    &BlockIoProtocol, (void **)&bio);
 		if (EFI_ERROR(status) || !bio->Media->MediaPresent)
 			continue;
 
+		/* Ignore logical partitions (we do our own partition discovery) */
 		if (bio->Media->LogicalPartition)
 			continue;
 
+		/* EFI_DISK_IO_PROTOCOL is optional */
 		status = uefi_call_wrapper(BS->HandleProtocol, 3, efi_block[n],
 		    &DiskIoProtocol, (void **)&dio);
-		if (EFI_ERROR(status))
-			continue;
+		if (EFI_ERROR(status)) {
+			dio = NULL;
+		}
 
 		bdev = alloc(sizeof(*bdev));
 		bdev->index = devindex++;
@@ -629,7 +698,7 @@ efi_block_strategy(void *devdata, int rw, daddr_t dblk, size_t size, void *buf, 
 		return EINVAL;
 	}
 
-	status = efi_block_disk_read(bpart->bdev, off, buf, size);
+	status = efi_block_read(bpart->bdev, off, buf, size);
 	if (EFI_ERROR(status))
 		return EIO;
 
