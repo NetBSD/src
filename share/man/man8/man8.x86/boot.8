@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.25 2021/05/30 06:05:24 mlelstv Exp $
+.\"	$NetBSD: boot.8,v 1.26 2021/06/22 03:39:21 gutteridge Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -877,13 +877,13 @@ field of the
 disklabel (if it is a hard disk).
 .Pp
 .Tn UEFI
-implementation are supposed to support either
+implementations are supposed to support either
 .Xr x86/mbr 8
 or
 .Xr gpt 8
 partitioning, but some do not handle the latter.
 .Tn UEFI
-Booting
+booting
 from a
 .Xr gpt 8
 partitioned disk is still possible in this case, by adding
