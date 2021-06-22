@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.107.2.8 2021/06/21 17:11:46 martin Exp $	*/
+/*	$NetBSD: xhci.c,v 1.107.2.9 2021/06/22 05:10:50 martin Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.107.2.8 2021/06/21 17:11:46 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.107.2.9 2021/06/22 05:10:50 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -724,7 +724,7 @@ xhci_suspend(device_t self, const pmf_qual_t *qual)
 		if (xs->xs_idx == 0)
 			continue;
 
-		for (dci = XHCI_DCI_SLOT; dci <= XHCI_MAX_DCI; dci++) {
+		for (dci = 0; dci < 32; dci++) {
 			/* Skip if the endpoint is not Running.  */
 			/* XXX What about Busy?  */
 			if (xhci_get_epstate(sc, xs, dci) !=
@@ -951,7 +951,7 @@ xhci_resume(device_t self, const pmf_qual_t *qual)
 	 *
 	 * XXX Hope just zeroing it is good enough!
 	 */
-	xhci_host_dequeue(sc->sc_cr);
+	xhci_host_dequeue(&sc->sc_cr);
 
 	/*
 	 * `7. Write the CRCR with the address and RCS value of the
@@ -959,8 +959,8 @@ xhci_resume(device_t self, const pmf_qual_t *qual)
 	 *     cause the Command Ring to restart at the address
 	 *     specified by the CRCR.'
 	 */
-	xhci_op_write_8(sc, XHCI_CRCR, xhci_ring_trbp(sc->sc_cr, 0) |
-	    sc->sc_cr->xr_cs);
+	xhci_op_write_8(sc, XHCI_CRCR, xhci_ring_trbp(&sc->sc_cr, 0) |
+	    sc->sc_cr.xr_cs);
 
 	/*
 	 * `8. Enable the controller by setting Run/Stop (R/S) =
@@ -1049,7 +1049,7 @@ xhci_resume(device_t self, const pmf_qual_t *qual)
 		if (xs->xs_idx == 0)
 			continue;
 
-		for (dci = XHCI_DCI_SLOT; dci <= XHCI_MAX_DCI; dci++) {
+		for (dci = 0; dci < 32; dci++) {
 			/* Skip if the endpoint is not Running.  */
 			if (xhci_get_epstate(sc, xs, dci) !=
 			    XHCI_EPSTATE_RUNNING)
