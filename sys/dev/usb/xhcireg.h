@@ -1,4 +1,4 @@
-/* $NetBSD: xhcireg.h,v 1.13.2.1 2021/06/21 17:11:46 martin Exp $ */
+/* $NetBSD: xhcireg.h,v 1.13.2.2 2021/06/22 05:10:50 martin Exp $ */
 
 /*-
  * Copyright (c) 2010 Hans Petter Selasky. All rights reserved.
@@ -162,8 +162,31 @@
 #define	 XHCI_PS_PED		0x00000002	/* RW - port enabled / disabled */
 #define	 XHCI_PS_OCA		0x00000008	/* RO - over current active */
 #define	 XHCI_PS_PR		0x00000010	/* RW - port reset */
+#define	 XHCI_PS_PLS_MASK	__BITS(8, 5)
 #define	 XHCI_PS_PLS_GET(x)	(((x) >> 5) & 0xF)	/* RW - port link state */
 #define	 XHCI_PS_PLS_SET(x)	(((x) & 0xF) << 5)	/* RW - port link state */
+
+#define  XHCI_PS_PLS_SETU0	0
+#define  XHCI_PS_PLS_SETU2	2
+#define  XHCI_PS_PLS_SETU3	3
+#define  XHCI_PS_PLS_SETDISC	5
+#define  XHCI_PS_PLS_SETCOMP	10
+#define  XHCI_PS_PLS_SETRESUME	15
+
+#define  XHCI_PS_PLS_U0		0
+#define  XHCI_PS_PLS_U1		1
+#define  XHCI_PS_PLS_U2		2
+#define  XHCI_PS_PLS_U3		3
+#define  XHCI_PS_PLS_DISABLED	4
+#define  XHCI_PS_PLS_RXDETECT	5
+#define  XHCI_PS_PLS_INACTIVE	6
+#define  XHCI_PS_PLS_POLLING	7
+#define  XHCI_PS_PLS_RECOVERY	8
+#define  XHCI_PS_PLS_HOTRESET	9
+#define  XHCI_PS_PLS_COMPLIANCE	10
+#define  XHCI_PS_PLS_TEST	11
+#define  XHCI_PS_PLS_RESUME	15
+
 #define	 XHCI_PS_PP		0x00000200	/* RW - port power */
 #define	 XHCI_PS_SPEED_GET(x)	(((x) >> 10) & 0xF)	/* RO - port speed */
 #define	 XHCI_PS_SPEED_FS	1
