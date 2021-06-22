@@ -1,4 +1,4 @@
-/*	$NetBSD: efirng.c,v 1.2 2020/05/14 23:09:29 jmcneill Exp $	*/
+/*	$NetBSD: efirng.c,v 1.3 2021/06/22 10:19:35 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -121,14 +121,14 @@ efi_rng(void *buf, UINTN len)
 	if (!efi_rng_available())
 		return EIO;
 
-	status = uefi_call_wrapper(rng->GetRNG, 3, rng, &RngAlgorithmRawGuid,
+	status = uefi_call_wrapper(rng->GetRNG, 4, rng, &RngAlgorithmRawGuid,
 	    len, buf);
 	if (status == EFI_UNSUPPORTED) {
 		/*
 		 * Fall back to any supported RNG `algorithm' even
 		 * though we would prefer raw samples.
 		 */
-		status = uefi_call_wrapper(rng->GetRNG, 3, rng, NULL, len, buf);
+		status = uefi_call_wrapper(rng->GetRNG, 4, rng, NULL, len, buf);
 	}
 	if (EFI_ERROR(status)) {
 		DPRINT(L"efirng: GetRNG: %r\n", status);
