@@ -1,4 +1,4 @@
-/*	$NetBSD: slk.c,v 1.8 2019/07/28 00:51:59 uwe Exp $	*/
+/*	$NetBSD: slk.c,v 1.9 2021/06/22 07:26:45 blymn Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: slk.c,v 1.8 2019/07/28 00:51:59 uwe Exp $");
+__RCSID("$NetBSD: slk.c,v 1.9 2021/06/22 07:26:45 blymn Exp $");
 #endif				/* not lint */
 
 #include <ctype.h>
@@ -555,9 +555,21 @@ __slk_wset(SCREEN *screen, int labnum, const wchar_t *label, int justify)
 
 	if (screen == NULL)
 		return ERR;
+#ifdef DEBUG
+	__CTRACE(__CTRACE_INPUT, "__slk_wset: entry\n");
+#endif
 	olabel = label;
-	if ((len = wcsrtombs(NULL, &olabel, 0, &screen->sp)) == -1)
+	if ((len = wcsrtombs(NULL, &olabel, 0, &screen->sp)) == -1) {
+#ifdef DEBUG
+	__CTRACE(__CTRACE_INPUT, "__slk_wset: conversion failed on char 0x%x\n",
+	    (uint16_t) *olabel);
+#endif
 		return ERR;
+	}
+
+#ifdef DEBUG
+	__CTRACE(__CTRACE_INPUT, "__slk_wset: wcsrtombs %ld\n", len);
+#endif
 	len++; /* We need to store the NULL character. */
 	if ((str = malloc(len)) == NULL)
 		return ERR;
@@ -567,6 +579,10 @@ __slk_wset(SCREEN *screen, int labnum, const wchar_t *label, int justify)
 	result = __slk_set(screen, labnum, str, justify);
 out:
 	free(str);
+#ifdef DEBUG
+	__CTRACE(__CTRACE_INPUT, "__slk_wset: return %s\n",
+	    (result == OK)?"OK":"ERR");
+#endif
 	return result;
 }
 #endif	/* HAVE_WCHAR */
@@ -801,19 +817,69 @@ static int
 __slk_draw(SCREEN *screen, int labnum)
 {
 	const struct __slk_label *l;
+	int retval, inc, lcnt, tx;
+	cchar_t cc;
+	wchar_t wc[2];
+	char ts[MB_CUR_MAX];
 
 	if (screen->slk_hidden)
 		return OK;
+
+	retval = OK; /* quiet gcc... */
 
 	l = &screen->slk_labels[labnum];
 	if (screen->is_term_slk)
 		return ti_putp(screen->term,
 		    ti_tiparm(screen->term,
 		    t_plab_norm(screen->term), labnum + 1, l->label));
-	else if (screen->slk_window != NULL)
-		return mvwaddnstr(screen->slk_window, 0, l->x,
-		    l->label, screen->slk_label_len);
-	else
+	else if (screen->slk_window != NULL) {
+		if ((labnum != screen->slk_nlabels - 1) ||
+		    (screen->slk_window->flags & __SCROLLOK) ||
+		    ((l->x + screen->slk_label_len) < screen->slk_window->maxx)) {
+			retval = mvwaddnstr(screen->slk_window, 0, l->x,
+			    l->label, screen->slk_label_len);
+		} else {
+			lcnt = 0;
+			tx = 0;
+			while (lcnt < screen->slk_label_len) {
+				inc = wctomb(ts, l->label[lcnt]);
+				if (inc < 0) {
+					/* conversion failed, skip? */
+					lcnt++;
+					continue;
+				}
+
+#ifdef DEBUG
+	__CTRACE(__CTRACE_INPUT, "__slk_draw: last label, (%d,%d) char[%d] 0x%x\n",
+	    l->x + tx, 0, lcnt, l->label[lcnt]);
+	__CTRACE(__CTRACE_INPUT, "__slk_draw: label len %d, wcwidth %d\n",
+	    screen->slk_label_len, wcwidth(l->label[lcnt]));
+#endif
+				wc[0] = l->label[lcnt];
+				wc[1] = L'\0';
+				if (setcchar(&cc, wc,
+				    screen->slk_window->wattr, 0,
+				    NULL) == ERR)
+					return ERR;
+
+				if (l->x + wcwidth(l->label[lcnt] + tx) >=
+				    screen->slk_label_len) {
+					/* last character that will fit
+					 * so insert it to avoid scroll
+					 */
+					retval = mvwins_wch(screen->slk_window,
+					    0, l->x + tx, &cc);
+				} else {
+					retval = mvwadd_wch(screen->slk_window,
+					    0, l->x + tx, &cc);
+				}
+				tx += wcwidth(l->label[lcnt]);
+				lcnt += inc;
+			}
+		}
+
+		return retval;
+	} else
 		return ERR;
 }
 
