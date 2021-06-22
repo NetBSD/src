@@ -1,4 +1,4 @@
-/*   $NetBSD: ins_wch.c,v 1.15 2020/07/06 22:46:50 uwe Exp $ */
+/*   $NetBSD: ins_wch.c,v 1.16 2021/06/22 07:22:44 blymn Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ins_wch.c,v 1.15 2020/07/06 22:46:50 uwe Exp $");
+__RCSID("$NetBSD: ins_wch.c,v 1.16 2021/06/22 07:22:44 blymn Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -95,19 +95,14 @@ wins_wch(WINDOW *win, const cchar_t *wch)
 	if (!wch)
 		return OK;
 	cw = wcwidth(wch->vals[0]);
+#ifdef DEBUG
+	__CTRACE(__CTRACE_INPUT, "wins_wch: wcwidth %d\n", cw);
+#endif
 	if (cw < 0)
 		cw = 1;
 	if (!cw)
 		return wadd_wch( win, wch );
 
-#ifdef DEBUG
-	__CTRACE(__CTRACE_INPUT, "--before--\n");
-	for (x = 0; x < win->maxx; x++)
-		__CTRACE(__CTRACE_INPUT, "wins_wch: (0,%d)=(%x,%x,%p)\n", x,
-		    win->alines[0]->line[x].ch,
-		    win->alines[0]->line[x].attr,
-		    win->alines[0]->line[x].nsp);
-#endif /* DEBUG */
 	x = win->curx;
 	y = win->cury;
 #ifdef DEBUG
@@ -217,17 +212,7 @@ wins_wch(WINDOW *win, const cchar_t *wch)
 		temp1->nsp = NULL;
 		ex++, temp1++;
 	}
-#ifdef DEBUG
-	{
-		__CTRACE(__CTRACE_INPUT, "--after---\n");
-		for (x = 0; x < win->maxx; x++)
-			__CTRACE(__CTRACE_INPUT,
-			    "wins_wch: (0,%d)=(%x,%x,%p)\n", x,
-			    win->alines[0]->line[x].ch,
-			    win->alines[0]->line[x].attr,
-			    win->alines[0]->line[x].nsp);
-	}
-#endif /* DEBUG */
+
 	newx = win->maxx - 1 + win->ch_off;
 	if (newx > *lnp->lastchp)
 		*lnp->lastchp = newx;
