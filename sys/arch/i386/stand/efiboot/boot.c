@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.18 2021/05/30 05:59:22 mlelstv Exp $	*/
+/*	$NetBSD: boot.c,v 1.19 2021/06/22 19:53:58 nia Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -287,8 +287,19 @@ print_banner(void)
 		for (n = 0; n < BOOTCFG_MAXBANNER && bootcfg_info.banner[n];
 		    n++)
 			printf("%s\n", bootcfg_info.banner[n]);
-	} else
-		command_version("short");
+	} else {
+		printf("\n"
+		   "  \\-__,------,___.\n"
+		   "   \\        __,---`  %s (from NetBSD %s)\n"
+		   "    \\       `---,_.  Revision %s\n"
+		   "     \\-,_____,.---`  Memory: %d/%d k\n"
+		   "      \\\n"  
+		   "       \\\n"
+		   "        \\\n",
+		   bootprog_name, bootprog_kernrev,
+		   bootprog_rev,               
+		   getbasemem(), getextmem());
+	}
 }
 
 void
