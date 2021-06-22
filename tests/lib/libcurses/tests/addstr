@@ -9,12 +9,12 @@ compare addstr.chk
 # Checks for PR#56224
 #
 call OK move 23 0
-# the addstr should be truncated since no scrolling
-call OK addstr "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890123456789"
+# the addstr should be truncated since no scrolling and will return ERR
+call ERR addstr "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890123456789"
 call OK refresh
 call OK clear
 call OK move 23 75
-call OK addstr "a\thello"
+call ERR addstr "a\thello"
 call OK refresh
 compare addstr2.chk
 call OK scrollok STDSCR $TRUE
