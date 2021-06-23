@@ -1,9 +1,9 @@
-# $NetBSD: md.amd64,v 1.284 2021/06/07 14:24:42 christos Exp $
+# $NetBSD: md.amd64,v 1.285 2021/06/23 18:30:32 christos Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./libexec/ld.elf_so-i386			base-sys-shlib		compat,pic
 ./usr/bin/fdformat				base-util-bin
-./usr/bin/gdbserver				base-util-bin
+./usr/bin/gdbserver				base-util-bin		gdb
 ./usr/bin/pmc					base-obsolete		obsolete
 ./usr/lib/i386/libi386.so.2			base-compat-shlib	compat,pic
 ./usr/lib/i386/libi386.so.2.0			base-compat-shlib	compat,pic
