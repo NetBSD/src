@@ -1,4 +1,4 @@
-/* $NetBSD: rk_platform.c,v 1.12 2021/04/24 23:36:28 thorpej Exp $ */
+/* $NetBSD: rk_platform.c,v 1.13 2021/06/23 00:56:41 mrg Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,13 +31,15 @@
 #include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_platform.c,v 1.12 2021/04/24 23:36:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_platform.c,v 1.13 2021/06/23 00:56:41 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/cpu.h>
 #include <sys/device.h>
 #include <sys/termios.h>
+
+#include <prop/proplib.h>
 
 #include <dev/fdt/fdtvar.h>
 #include <arm/fdt/arm_fdtvar.h>
@@ -70,6 +72,17 @@ rk_platform_init_attach_args(struct fdt_attach_args *faa)
 static void
 rk_platform_device_register(device_t self, void *aux)
 {
+	prop_dictionary_t dict = device_properties(self);
+
+	if (device_is_a(self, "ahcisata")) {
+		/*
+		 * Marvel 9230 AHCI SATA controllers take between 1213 and 1216
+		 * milliseconds to reset, exceeding the AHCI spec of 1000.
+		 */
+		if (!prop_dictionary_set_uint32(dict, "ahci-reset-ms", 2000))
+			printf("%s: Failed to set \"ahci-reset-ms\" property"
+			       " on ahcisata\n", __func__);
+	}
 }
 
 static void
