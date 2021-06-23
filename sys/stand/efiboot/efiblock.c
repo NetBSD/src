@@ -1,4 +1,4 @@
-/* $NetBSD: efiblock.c,v 1.15 2021/06/22 21:56:51 jmcneill Exp $ */
+/* $NetBSD: efiblock.c,v 1.16 2021/06/23 20:55:50 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -133,7 +133,9 @@ efi_block_do_read_blockio(struct efi_block_dev *bdev, UINT64 off, void *buf,
 	blkbuf_offset = off % bdev->bio->Media->BlockSize;
 	blkbuf_size = (lba_end - lba_start) * bdev->bio->Media->BlockSize;
 	if (bdev->bio->Media->IoAlign > 1) {
-		blkbuf_size += bdev->bio->Media->IoAlign - 1;
+		blkbuf_size = (blkbuf_size + bdev->bio-Media->IoAlign - 1) /
+		    bdev->bio->Media->IoAlign *
+		    bdev->bio->Media->IoAlign;
 	}
 
 	blkbuf = AllocatePool(blkbuf_size);
