@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.33 2021/06/23 00:38:12 jmcneill Exp $	*/
+/*	$NetBSD: boot.c,v 1.34 2021/06/23 21:43:38 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -479,7 +479,7 @@ format_bytes(uint64_t val, uint64_t *pdiv, const char **punit)
 	*punit = "bytes";
 	*pdiv = 1;
 
-	for (n = 0; n < __arraycount(units) && val >= 1024; n++) {
+	for (n = 0; n < __arraycount(units) && val >= 1024 * 10; n++) {
 		*punit = units[n];
 		*pdiv *= 1024;
 		val /= 1024;
