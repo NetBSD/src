@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.65 2021/02/26 02:18:29 simonb Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.66 2021/06/23 15:11:40 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -198,7 +198,6 @@
 
 /* VM_PHYSSEG_MAX defined by platform-dependent code. */
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
-#define	VM_PHYSSEG_NOADD	/* can add RAM after vm_mem_init */
 
 #ifndef VM_NFREELIST
 #define	VM_NFREELIST		16	/* 16 distinct memory segments */
