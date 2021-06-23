@@ -1,4 +1,4 @@
-/*	$NetBSD: dirs.c,v 1.52 2021/06/19 13:56:35 christos Exp $	*/
+/*	$NetBSD: dirs.c,v 1.53 2021/06/23 14:22:08 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)dirs.c	8.7 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: dirs.c,v 1.52 2021/06/19 13:56:35 christos Exp $");
+__RCSID("$NetBSD: dirs.c,v 1.53 2021/06/23 14:22:08 riastradh Exp $");
 #endif
 #endif /* not lint */
 
@@ -135,7 +135,7 @@ static void		 putent(struct direct *);
 static void		 rst_seekdir(RST_DIR *, long, long);
 static long		 rst_telldir(RST_DIR *);
 static struct direct	*searchdir(ino_t, char *);
-static void		 fail_dirtmp(char *);
+static void		 fail_dirtmp(char *) __dead;
 
 /*
  *	Extract directory contents, building up a directory structure
@@ -833,7 +833,7 @@ cleanup(void)
  * Print out information about the failure to save directory,
  * extended attribute, and mode information.
  */
-static void
+static void __dead
 fail_dirtmp(char *filename)
 {
 	warn("%s: cannot write directory database", filename);
