@@ -1,4 +1,4 @@
-/*	$NetBSD: boot1.c,v 1.20 2011/01/06 01:08:48 jakllsch Exp $	*/
+/*	$NetBSD: boot1.c,v 1.21 2021/06/24 01:23:16 gutteridge Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: boot1.c,v 1.20 2011/01/06 01:08:48 jakllsch Exp $");
+__RCSID("$NetBSD: boot1.c,v 1.21 2021/06/24 01:23:16 gutteridge Exp $");
 
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
@@ -106,7 +106,6 @@ boot1(uint32_t biosdev, uint64_t *sector)
 	fd = ob();
 
 done:
-	/* if we fail here, so will fstat, so keep going */
 	if (fd == -1 || fstat(fd, &sb) == -1)
 		return "Can't open /boot\r\n";
 
