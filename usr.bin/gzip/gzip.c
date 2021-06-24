@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.116 2018/10/27 11:39:12 skrll Exp $	*/
+/*	$NetBSD: gzip.c,v 1.117 2021/06/24 07:16:49 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004, 2006, 2008, 2009, 2010, 2011, 2015, 2017
@@ -31,7 +31,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004, 2006, 2008,\
  2009, 2010, 2011, 2015, 2017 Matthew R. Green.  All rights reserved.");
-__RCSID("$NetBSD: gzip.c,v 1.116 2018/10/27 11:39:12 skrll Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.117 2021/06/24 07:16:49 simonb Exp $");
 #endif /* not lint */
 
 /*
@@ -622,6 +622,7 @@ gz_compress(int in, int out, off_t *gsizep, const char *origname, uint32_t mtime
 
 	crc = crc32(0L, Z_NULL, 0);
 	for (;;) {
+		check_siginfo();
 		if (z.avail_out == 0) {
 			if (write_retry(out, outbufp, BUFLEN) != BUFLEN) {
 				maybe_warn("write");
