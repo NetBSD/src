@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.316 2021/06/15 23:39:43 riastradh Exp $	*/
+/*	$NetBSD: ohci.c,v 1.317 2021/06/24 23:01:03 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012, 2016, 2020 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.316 2021/06/15 23:39:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.317 2021/06/24 23:01:03 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -77,7 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.316 2021/06/15 23:39:43 riastradh Exp $")
 #ifndef OHCI_DEBUG
 #define ohcidebug 0
 #else
-static int ohcidebug = 10;
+static int ohcidebug = 0;
 
 SYSCTL_SETUP(sysctl_hw_ohci_setup, "sysctl hw.ohci setup")
 {
