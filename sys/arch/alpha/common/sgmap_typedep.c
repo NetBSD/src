@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_typedep.c,v 1.41 2021/04/15 00:11:09 rin Exp $ */
+/* $NetBSD: sgmap_typedep.c,v 1.42 2021/06/24 16:41:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: sgmap_typedep.c,v 1.41 2021/04/15 00:11:09 rin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sgmap_typedep.c,v 1.42 2021/06/24 16:41:16 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -60,22 +60,30 @@ __C(SGMAP_TYPE,_init_spill_page_pte)(void)
 }
 
 DMA_COUNT_DECL(spill_page);
+DMA_COUNT_DECL(extra_segment);
+DMA_COUNT_DECL(extra_segment_and_spill);
 
 static int
 __C(SGMAP_TYPE,_load_buffer)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
-    size_t buflen, struct vmspace *vm, int flags, int seg,
+    size_t buflen, struct vmspace *vm, int flags, int * const segp,
     struct alpha_sgmap *sgmap)
 {
 	vaddr_t endva, va = (vaddr_t)buf;
 	paddr_t pa;
-	bus_addr_t dmaoffset, sgva;
-	bus_size_t sgvalen, boundary, alignment;
+	bus_addr_t dmaoffset, sgva, extra_sgva;
+	bus_size_t sgvalen, extra_sgvalen, boundary, alignment;
 	SGMAP_PTE_TYPE *pte, *page_table = sgmap->aps_pt;
-	int pteidx, error, spill;
+	int pteidx, error, spill, seg = *segp;
 
 	/* Initialize the spill page PTE if it hasn't been already. */
 	if (__C(SGMAP_TYPE,_prefetch_spill_page_pte) == 0)
 		__C(SGMAP_TYPE,_init_spill_page_pte)();
+
+	if (seg == map->_dm_segcnt) {
+		/* Ran of segments. */
+		return EFBIG;
+	}
+	KASSERT(seg < map->_dm_segcnt);
 
 	/*
 	 * Remember the offset into the first page and the total
@@ -106,13 +114,77 @@ __C(SGMAP_TYPE,_load_buffer)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	else
 		spill = 0;
 
+	boundary = map->_dm_boundary;
+
+	/*
+	 * Caller's mistake if the requested length is larger than
+	 * their own boundary constraint.
+	 */
+	if (__predict_false(boundary != 0 && buflen > boundary)) {
+		return EINVAL;
+	}
+
 	endva = round_page(va + buflen);
 	va = trunc_page(va);
 
-	boundary = map->_dm_boundary;
-	alignment = PAGE_SIZE;
+	const vm_flag_t vmflags = VM_INSTANTFIT |
+	    ((flags & BUS_DMA_NOWAIT) ? VM_NOSLEEP : VM_SLEEP);
 
+	alignment = PAGE_SIZE;
 	sgvalen = (endva - va);
+
+	SGMAP_PTE_TYPE spill_pte_v = __C(SGMAP_TYPE,_prefetch_spill_page_pte);
+
+	/*
+	 * If we have a boundary constraint, it's possible to end up in
+	 * a situation where sgvalen > boundary if the caller's buffer
+	 * is not page aligned.  In this case, we will have to allocate
+	 * an extra SG segment and split the buffer.
+	 */
+	if (__predict_false(boundary != 0 && boundary < sgvalen)) {
+#ifdef SGMAP_DEBUG
+		if (__C(SGMAP_TYPE,_debug)) {
+			printf("sgmap_load: extra segment needed\n");
+		}
+#endif
+		DMA_COUNT(extra_segment);
+
+		/* This should only ever happen for unaligned buffers. */
+		KASSERT(dmaoffset != 0);
+
+		extra_sgvalen = sgvalen - boundary;
+		KASSERT(extra_sgvalen == PAGE_SIZE);
+
+		/*
+		 * Adjust the lengths of the first segment.  The length
+		 * of the second segment will be dmaoffset.
+		 */
+		sgvalen -= extra_sgvalen;
+		endva -= extra_sgvalen;
+		buflen -= dmaoffset;
+
+		if (spill) {
+			DMA_COUNT(extra_segment_and_spill);
+			extra_sgvalen += PAGE_SIZE;
+		}
+
+		error = vmem_xalloc(sgmap->aps_arena, extra_sgvalen,
+				    alignment,		/* alignment */
+				    0,			/* phase */
+				    boundary,		/* nocross */
+				    VMEM_ADDR_MIN,	/* minaddr */
+				    VMEM_ADDR_MAX,	/* maxaddr */
+				    vmflags,
+				    &extra_sgva);
+		if (error) {
+			return error;
+		}
+	} else {
+		extra_sgvalen = 0;
+		extra_sgva = 0;
+	}
+
+
 	if (spill) {
 		DMA_COUNT(spill_page);
 		sgvalen += PAGE_SIZE;
@@ -120,6 +192,11 @@ __C(SGMAP_TYPE,_load_buffer)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		/*
 		 * ARGH!  If the addition of the spill page bumped us
 		 * over our boundary, we have to 2x the boundary limit.
+		 * To compensate (and enforce the original boundary
+		 * constraint), we force our alignment to be the previous
+		 * boundary, thus ensuring that the only boundary violation
+		 * is the pre-fetch that the SGMAP controller performs that
+		 * necessitates the spill page in the first place.
 		 */
 		if (boundary && boundary < sgvalen) {
 			alignment = boundary;
@@ -137,9 +214,6 @@ __C(SGMAP_TYPE,_load_buffer)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	}
 #endif
 
-	const vm_flag_t vmflags = VM_INSTANTFIT |
-	    ((flags & BUS_DMA_NOWAIT) ? VM_NOSLEEP : VM_SLEEP);
-
 	error = vmem_xalloc(sgmap->aps_arena, sgvalen,
 			    alignment,		/* alignment */
 			    0,			/* phase */
@@ -148,8 +222,12 @@ __C(SGMAP_TYPE,_load_buffer)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 			    VMEM_ADDR_MAX,	/* maxaddr */
 			    vmflags,
 			    &sgva);
-	if (error)
-		return (error);
+	if (error) {
+		if (extra_sgvalen != 0) {
+			vmem_xfree(sgmap->aps_arena, extra_sgva, extra_sgvalen);
+		}
+		return error;
+	}
 
 	pteidx = sgva >> SGMAP_ADDR_PTEIDX_SHIFT;
 	pte = &page_table[pteidx * SGMAP_PTE_SPACING];
@@ -164,6 +242,17 @@ __C(SGMAP_TYPE,_load_buffer)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	/* Generate the DMA address. */
 	map->dm_segs[seg].ds_addr = sgmap->aps_wbase | sgva | dmaoffset;
 	map->dm_segs[seg].ds_len = buflen;
+	if (__predict_false(extra_sgvalen != 0)) {
+		if (++seg == map->_dm_segcnt) {
+			/* Boo! Ran out of segments! */
+			vmem_xfree(sgmap->aps_arena, extra_sgva, extra_sgvalen);
+			vmem_xfree(sgmap->aps_arena, sgva, sgvalen);
+			return EFBIG;
+		}
+		map->dm_segs[seg].ds_addr = sgmap->aps_wbase | extra_sgva;
+		map->dm_segs[seg].ds_len = dmaoffset;
+		*segp = seg;
+	}
 
 #ifdef SGMAP_DEBUG
 	if (__C(SGMAP_TYPE,_debug))
@@ -189,9 +278,37 @@ __C(SGMAP_TYPE,_load_buffer)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 #endif
 	}
 
+	if (__predict_false(extra_sgvalen != 0)) {
+		int extra_pteidx = extra_sgva >> SGMAP_ADDR_PTEIDX_SHIFT;
+		SGMAP_PTE_TYPE *extra_pte =
+		    &page_table[extra_pteidx * SGMAP_PTE_SPACING];
+
+		/* va == endva == address of extra page */
+		KASSERT(va == endva);
+		if (!VMSPACE_IS_KERNEL_P(vm))
+			(void) pmap_extract(vm->vm_map.pmap, va, &pa);
+		else
+			pa = vtophys(va);
+
+		/*
+		 * If a spill page is needed, the previous segment will
+		 * need to use this PTE value for it.
+		 */
+		spill_pte_v = (pa >> SGPTE_PGADDR_SHIFT) | SGPTE_VALID;
+		*extra_pte = spill_pte_v;
+
+		/* ...but the extra segment uses the real spill PTE. */
+		if (spill) {
+			extra_pteidx++;
+			extra_pte =
+			    &page_table[extra_pteidx * SGMAP_PTE_SPACING];
+			*extra_pte = __C(SGMAP_TYPE,_prefetch_spill_page_pte);
+		}
+	}
+
 	if (spill) {
 		/* ...and the prefetch-spill page. */
-		*pte = __C(SGMAP_TYPE,_prefetch_spill_page_pte);
+		*pte = spill_pte_v;
 #ifdef SGMAP_DEBUG
 		if (__C(SGMAP_TYPE,_debug)) {
 			printf("sgmap_load:     spill page, pte = %p, "
@@ -235,7 +352,7 @@ __C(SGMAP_TYPE,_load)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	}
 	seg = 0;
 	error = __C(SGMAP_TYPE,_load_buffer)(t, map, buf, buflen, vm,
-	    flags, seg, sgmap);
+	    flags, &seg, sgmap);
 
 	alpha_mb();
 
@@ -247,7 +364,7 @@ __C(SGMAP_TYPE,_load)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	if (error == 0) {
 		DMA_COUNT(load);
 		map->dm_mapsize = buflen;
-		map->dm_nsegs = 1;
+		map->dm_nsegs = seg + 1;
 		map->_dm_window = t;
 	} else {
 		map->_dm_flags &= ~(BUS_DMA_READ|BUS_DMA_WRITE);
@@ -297,7 +414,7 @@ __C(SGMAP_TYPE,_load_mbuf)(bus_dma_tag_t t, bus_dmamap_t map,
 		if (m->m_len == 0)
 			continue;
 		error = __C(SGMAP_TYPE,_load_buffer)(t, map,
-		    m->m_data, m->m_len, vmspace_kernel(), flags, seg, sgmap);
+		    m->m_data, m->m_len, vmspace_kernel(), flags, &seg, sgmap);
 		seg++;
 	}
 
@@ -361,8 +478,7 @@ __C(SGMAP_TYPE,_load_uio)(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 
 	seg = 0;
 	error = 0;
-	for (i = 0; i < uio->uio_iovcnt && resid != 0 && error == 0;
-	     i++, seg++) {
+	for (i = 0; i < uio->uio_iovcnt && resid != 0 && error == 0; i++) {
 		/*
 		 * Now at the first iovec to load.  Load each iovec
 		 * until we have exhausted the residual count.
@@ -371,7 +487,8 @@ __C(SGMAP_TYPE,_load_uio)(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 		addr = (void *)iov[i].iov_base;
 
 		error = __C(SGMAP_TYPE,_load_buffer)(t, map,
-		    addr, minlen, vm, flags, seg, sgmap);
+		    addr, minlen, vm, flags, &seg, sgmap);
+		seg++;
 
 		resid -= minlen;
 	}
