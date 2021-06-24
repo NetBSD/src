@@ -72,4 +72,11 @@ make: "directive-for-escape.mk" line 107: .    ${i\}}: inner}
 make: "directive-for-escape.mk" line 108: .     ${i2}: two
 make: "directive-for-escape.mk" line 109: .     ${i,}: comma
 make: "directive-for-escape.mk" line 110: .  adjacent: innerinnerinnerinner
+For: end for 1
+For: loop body:
+.  info eight $$$$$$$$ and no cents.
+.  info eight ${:Udollar}${:Udollar}${:Udollar}${:Udollar} and no cents.
+make: "directive-for-escape.mk" line 118: eight $$$$ and no cents.
+make: "directive-for-escape.mk" line 119: eight dollardollardollardollar and no cents.
+make: "directive-for-escape.mk" line 128: eight  and no cents.
 exit status 0
