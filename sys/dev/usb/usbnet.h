@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.h,v 1.20 2021/03/01 22:59:52 mrg Exp $	*/
+/*	$NetBSD: usbnet.h,v 1.21 2021/06/24 23:01:36 mrg Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -59,7 +59,7 @@
  *   - ioctl can use either a device-specific override (useful for special
  *     cases), but provides a normal handler with callback to handle
  *     ENETRESET conditions that should be sufficient for most users
- *   - start uses usbnet send callback
+ *   - start uses usbnet transmit prepare callback (uno_tx_prepare)
  * - interface init and stop have helper functions
  *   - device specific init should use usbnet_init_rx_tx() to open pipes
  *     to the device and setup the rx/tx chains for use after any device
@@ -73,9 +73,9 @@
  *     packets, which can use usbnet_enqueue() to provide data to the
  *     higher layers
  *   - for tx, usbnet_start (if_start) will pull entries out of the
- *     transmit queue and use the send callback for the given mbuf.
- *     the usb callback will use usbnet_txeof() for the transmit
- *     completion function (internal to usbnet)
+ *     transmit queue and use the transmit prepare callback (uno_tx_prepare)
+ *     for the given mbuf.  the usb callback will use usbnet_txeof() for
+ *     the transmit completion function (internal to usbnet)
  *   - there is special interrupt pipe handling
  * - timer/tick:
  *   - the uno_tick callback will be called once a second if present.
