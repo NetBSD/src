@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.86 2021/06/16 00:21:18 riastradh Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.87 2021/06/24 09:17:53 riastradh Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.148 2016/11/19 21:07:08 stsp Exp	*/
 #define IEEE80211_NO_HT
 /*
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.86 2021/06/16 00:21:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.87 2021/06/24 09:17:53 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -482,6 +482,7 @@ static void	iwm_softintr(void *);
 static int	iwm_preinit(struct iwm_softc *);
 static void	iwm_attach_hook(device_t);
 static void	iwm_attach(device_t, device_t, void *);
+static int	iwm_config_complete(struct iwm_softc *);
 #if 0
 static void	iwm_init_task(void *);
 static int	iwm_activate(device_t, enum devact);
@@ -6598,10 +6599,6 @@ iwm_init_hw(struct iwm_softc *sc)
 	struct ieee80211com *ic = &sc->sc_ic;
 	int err, i, ac;
 
-	err = iwm_preinit(sc);
-	if (err)
-		return err;
-
 	err = iwm_start_hw(sc);
 	if (err) {
 		aprint_error_dev(sc->sc_dev, "could not initialize hardware\n");
@@ -6951,10 +6948,6 @@ iwm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		if (!ISSET(sc->sc_flags, IWM_FLAG_ATTACHED)) {
-			err = ENXIO;
-			break;
-		}
 		sa = ifreq_getaddr(SIOCADDMULTI, (struct ifreq *)data);
 		err = (cmd == SIOCADDMULTI) ?
 		    ether_addmulti(sa, &sc->sc_ec) :
@@ -6964,10 +6957,6 @@ iwm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	default:
-		if (!ISSET(sc->sc_flags, IWM_FLAG_ATTACHED)) {
-			err = ether_ioctl(ifp, cmd, data);
-			break;
-		}
 		err = ieee80211_ioctl(ic, cmd, data);
 		break;
 	}
@@ -7728,12 +7717,7 @@ iwm_match(device_t parent, cfdata_t match __unused, void *aux)
 static int
 iwm_preinit(struct iwm_softc *sc)
 {
-	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = IC2IFP(&sc->sc_ic);
 	int err;
-
-	if (ISSET(sc->sc_flags, IWM_FLAG_ATTACHED))
-		return 0;
 
 	err = iwm_start_hw(sc);
 	if (err) {
@@ -7746,43 +7730,9 @@ iwm_preinit(struct iwm_softc *sc)
 	if (err)
 		return err;
 
-	sc->sc_flags |= IWM_FLAG_ATTACHED;
-
 	aprint_normal_dev(sc->sc_dev, "hw rev 0x%x, fw ver %s, address %s\n",
 	    sc->sc_hw_rev & IWM_CSR_HW_REV_TYPE_MSK, sc->sc_fwver,
 	    ether_sprintf(sc->sc_nvm.hw_addr));
-
-#ifndef IEEE80211_NO_HT
-	if (sc->sc_nvm.sku_cap_11n_enable)
-		iwm_setup_ht_rates(sc);
-#endif
-
-	/* not all hardware can do 5GHz band */
-	if (sc->sc_nvm.sku_cap_band_52GHz_enable)
-		ic->ic_sup_rates[IEEE80211_MODE_11A] = ieee80211_std_rateset_11a;
-
-	ether_ifdetach(ifp);
-	/*
-	 * XXX
-	 * ether_ifdetach() overwrites ifp->if_ioctl, so restore it here.
-	 */
-	ifp->if_ioctl = iwm_ioctl;
-	ieee80211_ifattach(ic);
-
-	ic->ic_node_alloc = iwm_node_alloc;
-
-	/* Override 802.11 state transition machine. */
-	sc->sc_newstate = ic->ic_newstate;
-	ic->ic_newstate = iwm_newstate;
-
-	/* XXX media locking needs revisiting */
-	mutex_init(&sc->sc_media_mtx, MUTEX_DEFAULT, IPL_SOFTNET);
-	ieee80211_media_init_with_lock(ic,
-	    iwm_media_change, ieee80211_media_status, &sc->sc_media_mtx);
-
-	ieee80211_announce(ic);
-
-	iwm_radiotap_attach(sc);
 
 	return 0;
 }
@@ -7792,7 +7742,7 @@ iwm_attach_hook(device_t dev)
 {
 	struct iwm_softc *sc = device_private(dev);
 
-	iwm_preinit(sc);
+	iwm_config_complete(sc);
 }
 
 static void
@@ -7800,8 +7750,6 @@ iwm_attach(device_t parent, device_t self, void *aux)
 {
 	struct iwm_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
-	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	pcireg_t reg, memtype;
 	char intrbuf[PCI_INTRSTR_LEN];
 	const char *intrstr;
@@ -8081,6 +8029,60 @@ iwm_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
+	callout_init(&sc->sc_calib_to, 0);
+	callout_setfunc(&sc->sc_calib_to, iwm_calib_timeout, sc);
+	callout_init(&sc->sc_led_blink_to, 0);
+	callout_setfunc(&sc->sc_led_blink_to, iwm_led_blink_timeout, sc);
+#ifndef IEEE80211_NO_HT
+	if (workqueue_create(&sc->sc_setratewq, "iwmsr",
+	    iwm_setrates_task, sc, PRI_NONE, IPL_NET, 0))
+		panic("%s: could not create workqueue: setrates",
+		    device_xname(self));
+	if (workqueue_create(&sc->sc_bawq, "iwmba",
+	    iwm_ba_task, sc, PRI_NONE, IPL_NET, 0))
+		panic("%s: could not create workqueue: blockack",
+		    device_xname(self));
+	if (workqueue_create(&sc->sc_htprowq, "iwmhtpro",
+	    iwm_htprot_task, sc, PRI_NONE, IPL_NET, 0))
+		panic("%s: could not create workqueue: htprot",
+		    device_xname(self));
+#endif
+
+	/*
+	 * We can't do normal attach before the file system is mounted
+	 * because we cannot read the MAC address without loading the
+	 * firmware from disk.  So we postpone until mountroot is done.
+	 * Notably, this will require a full driver unload/load cycle
+	 * (or reboot) in case the firmware is not present when the
+	 * hook runs.
+	 */
+	config_mountroot(self, iwm_attach_hook);
+
+	return;
+
+fail5:	while (--txq_i >= 0)
+		iwm_free_tx_ring(sc, &sc->txq[txq_i]);
+fail4:	iwm_dma_contig_free(&sc->sched_dma);
+fail3:	if (sc->ict_dma.vaddr != NULL)
+		iwm_dma_contig_free(&sc->ict_dma);
+fail2:	iwm_dma_contig_free(&sc->kw_dma);
+fail1:	iwm_dma_contig_free(&sc->fw_dma);
+}
+
+static int
+iwm_config_complete(struct iwm_softc *sc)
+{
+	device_t self = sc->sc_dev;
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	int err;
+
+	KASSERT(!ISSET(sc->sc_flags, IWM_FLAG_ATTACHED));
+
+	err = iwm_preinit(sc);
+	if (err)
+		return err;
+
 	/*
 	 * Attach interface
 	 */
@@ -8112,6 +8114,15 @@ iwm_attach(device_t parent, device_t self, void *aux)
 	ic->ic_sup_rates[IEEE80211_MODE_11B] = ieee80211_std_rateset_11b;
 	ic->ic_sup_rates[IEEE80211_MODE_11G] = ieee80211_std_rateset_11g;
 
+	/* not all hardware can do 5GHz band */
+	if (sc->sc_nvm.sku_cap_band_52GHz_enable)
+		ic->ic_sup_rates[IEEE80211_MODE_11A] = ieee80211_std_rateset_11a;
+
+#ifndef IEEE80211_NO_HT
+	if (sc->sc_nvm.sku_cap_11n_enable)
+		iwm_setup_ht_rates(sc);
+#endif
+
 	for (int i = 0; i < __arraycount(sc->sc_phyctxt); i++) {
 		sc->sc_phyctxt[i].id = i;
 	}
@@ -8137,64 +8148,34 @@ iwm_attach(device_t parent, device_t self, void *aux)
 	memcpy(ifp->if_xname, DEVNAME(sc), IFNAMSIZ);
 
 	if_initialize(ifp);
-#if 0
 	ieee80211_ifattach(ic);
-#else
-	/*
-	 * XXX
-	 * To avoid setting ifp->if_hwdl in if_set_sadl(), we fake
-	 *  ic->ic_myaddr as local address.
-	 */
-	ic->ic_myaddr[0] = 0x02;
-	ether_ifattach(ifp,  ic->ic_myaddr);	/* XXX */
-#endif
 	/* Use common softint-based if_input */
 	ifp->if_percpuq = if_percpuq_create(ifp);
 	if_register(ifp);
 
-	callout_init(&sc->sc_calib_to, 0);
-	callout_setfunc(&sc->sc_calib_to, iwm_calib_timeout, sc);
-	callout_init(&sc->sc_led_blink_to, 0);
-	callout_setfunc(&sc->sc_led_blink_to, iwm_led_blink_timeout, sc);
-#ifndef IEEE80211_NO_HT
-	if (workqueue_create(&sc->sc_setratewq, "iwmsr",
-	    iwm_setrates_task, sc, PRI_NONE, IPL_NET, 0))
-		panic("%s: could not create workqueue: setrates",
-		    device_xname(self));
-	if (workqueue_create(&sc->sc_bawq, "iwmba",
-	    iwm_ba_task, sc, PRI_NONE, IPL_NET, 0))
-		panic("%s: could not create workqueue: blockack",
-		    device_xname(self));
-	if (workqueue_create(&sc->sc_htprowq, "iwmhtpro",
-	    iwm_htprot_task, sc, PRI_NONE, IPL_NET, 0))
-		panic("%s: could not create workqueue: htprot",
-		    device_xname(self));
-#endif
+	ic->ic_node_alloc = iwm_node_alloc;
+
+	/* Override 802.11 state transition machine. */
+	sc->sc_newstate = ic->ic_newstate;
+	ic->ic_newstate = iwm_newstate;
+
+	/* XXX media locking needs revisiting */
+	mutex_init(&sc->sc_media_mtx, MUTEX_DEFAULT, IPL_SOFTNET);
+	ieee80211_media_init_with_lock(ic,
+	    iwm_media_change, ieee80211_media_status, &sc->sc_media_mtx);
+
+	ieee80211_announce(ic);
+
+	iwm_radiotap_attach(sc);
 
 	if (pmf_device_register(self, NULL, NULL))
 		pmf_class_network_register(self, ifp);
 	else
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
-	/*
-	 * We can't do normal attach before the file system is mounted
-	 * because we cannot read the MAC address without loading the
-	 * firmware from disk.  So we postpone until mountroot is done.
-	 * Notably, this will require a full driver unload/load cycle
-	 * (or reboot) in case the firmware is not present when the
-	 * hook runs.
-	 */
-	config_mountroot(self, iwm_attach_hook);
+	sc->sc_flags |= IWM_FLAG_ATTACHED;
 
-	return;
-
-fail5:	while (--txq_i >= 0)
-		iwm_free_tx_ring(sc, &sc->txq[txq_i]);
-fail4:	iwm_dma_contig_free(&sc->sched_dma);
-fail3:	if (sc->ict_dma.vaddr != NULL)
-		iwm_dma_contig_free(&sc->ict_dma);
-fail2:	iwm_dma_contig_free(&sc->kw_dma);
-fail1:	iwm_dma_contig_free(&sc->fw_dma);
+	return 0;
 }
 
 void
