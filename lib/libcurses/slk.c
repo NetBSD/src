@@ -1,4 +1,4 @@
-/*	$NetBSD: slk.c,v 1.10 2021/06/24 05:53:05 blymn Exp $	*/
+/*	$NetBSD: slk.c,v 1.11 2021/06/24 15:41:25 martin Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: slk.c,v 1.10 2021/06/24 05:53:05 blymn Exp $");
+__RCSID("$NetBSD: slk.c,v 1.11 2021/06/24 15:41:25 martin Exp $");
 #endif				/* not lint */
 
 #include <ctype.h>
@@ -568,7 +568,7 @@ __slk_wset(SCREEN *screen, int labnum, const wchar_t *label, int justify)
 	}
 
 #ifdef DEBUG
-	__CTRACE(__CTRACE_INPUT, "__slk_wset: wcsrtombs %ld\n", len);
+	__CTRACE(__CTRACE_INPUT, "__slk_wset: wcsrtombs %zu\n", len);
 #endif
 	len++; /* We need to store the NULL character. */
 	if ((str = malloc(len)) == NULL)
