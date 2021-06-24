@@ -1,4 +1,4 @@
-/*	$NetBSD: slk.c,v 1.9 2021/06/22 07:26:45 blymn Exp $	*/
+/*	$NetBSD: slk.c,v 1.10 2021/06/24 05:53:05 blymn Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: slk.c,v 1.9 2021/06/22 07:26:45 blymn Exp $");
+__RCSID("$NetBSD: slk.c,v 1.10 2021/06/24 05:53:05 blymn Exp $");
 #endif				/* not lint */
 
 #include <ctype.h>
@@ -818,9 +818,11 @@ __slk_draw(SCREEN *screen, int labnum)
 {
 	const struct __slk_label *l;
 	int retval, inc, lcnt, tx;
+	char ts[MB_CUR_MAX];
+#ifdef HAVE_WCHAR
 	cchar_t cc;
 	wchar_t wc[2];
-	char ts[MB_CUR_MAX];
+#endif
 
 	if (screen->slk_hidden)
 		return OK;
@@ -855,23 +857,35 @@ __slk_draw(SCREEN *screen, int labnum)
 	__CTRACE(__CTRACE_INPUT, "__slk_draw: label len %d, wcwidth %d\n",
 	    screen->slk_label_len, wcwidth(l->label[lcnt]));
 #endif
+#ifdef HAVE_WCHAR
 				wc[0] = l->label[lcnt];
 				wc[1] = L'\0';
 				if (setcchar(&cc, wc,
 				    screen->slk_window->wattr, 0,
 				    NULL) == ERR)
 					return ERR;
+#endif
 
 				if (l->x + wcwidth(l->label[lcnt] + tx) >=
 				    screen->slk_label_len) {
 					/* last character that will fit
 					 * so insert it to avoid scroll
 					 */
+#ifdef HAVE_WCHAR
 					retval = mvwins_wch(screen->slk_window,
 					    0, l->x + tx, &cc);
+#else
+					retval = mvwinsch(screen->slk_window,
+					    0, l->x + tx, l->label[lcnt]);
+#endif
 				} else {
+#ifdef HAVE_WCHAR
 					retval = mvwadd_wch(screen->slk_window,
 					    0, l->x + tx, &cc);
+#else
+					retval = mvwaddch(screen->slk_window,
+					    0, l->x + tx, l->label[lcnt]);
+#endif
 				}
 				tx += wcwidth(l->label[lcnt]);
 				lcnt += inc;
