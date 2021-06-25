@@ -1,4 +1,4 @@
-/* $NetBSD: irongate_pci.c,v 1.11 2021/05/07 16:58:34 thorpej Exp $ */
+/* $NetBSD: irongate_pci.c,v 1.12 2021/06/25 03:45:59 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: irongate_pci.c,v 1.11 2021/05/07 16:58:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irongate_pci.c,v 1.12 2021/06/25 03:45:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,12 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: irongate_pci.c,v 1.11 2021/05/07 16:58:34 thorpej Ex
 #include <alpha/pci/irongatereg.h>
 #include <alpha/pci/irongatevar.h>
 
-static void	irongate_attach_hook(device_t, device_t,
-		    struct pcibus_attach_args *);
-static int	irongate_bus_maxdevs(void *, int);
-static pcitag_t	irongate_make_tag(void *, int, int, int);
-static void	irongate_decompose_tag(void *, pcitag_t, int *, int *,
-		    int *);
 static pcireg_t	irongate_conf_read(void *, pcitag_t, int);
 static void	irongate_conf_write(void *, pcitag_t, int, pcireg_t);
 
@@ -71,53 +65,19 @@ irongate_pci_init(pci_chipset_tag_t pc, void *v)
 {
 
 	pc->pc_conf_v = v;
-	pc->pc_attach_hook = irongate_attach_hook;
-	pc->pc_bus_maxdevs = irongate_bus_maxdevs;
-	pc->pc_make_tag = irongate_make_tag;
-	pc->pc_decompose_tag = irongate_decompose_tag;
 	pc->pc_conf_read = irongate_conf_read;
 	pc->pc_conf_write = irongate_conf_write;
-}
-
-static void
-irongate_attach_hook(device_t parent, device_t self,
-    struct pcibus_attach_args *pba)
-{
-}
-
-static int
-irongate_bus_maxdevs(void *ipv, int busno)
-{
-
-	return 32;
-}
-
-static pcitag_t
-irongate_make_tag(void *ipv, int b, int d, int f)
-{
-
-	return (b << 16) | (d << 11) | (f << 8);
-}
-
-static void
-irongate_decompose_tag(void *ipv, pcitag_t tag, int *bp, int *dp, int *fp)
-{
-
-	if (bp != NULL)
-		*bp = (tag >> 16) & 0xff;
-	if (dp != NULL)
-		*dp = (tag >> 11) & 0x1f;
-	if (fp != NULL)
-		*fp = (tag >> 8) & 0x7;
 }
 
 static pcireg_t
 irongate_conf_read(void *ipv, pcitag_t tag, int offset)
 {
-	int d;
+	int b, d;
 
 	if ((unsigned int)offset >= PCI_CONF_SIZE)
 		return (pcireg_t) -1;
+
+	struct irongate_config * const icp = ipv;
 
 	/*
 	 * The AMD 751 appears in PCI configuration space, but
@@ -126,8 +86,8 @@ irongate_conf_read(void *ipv, pcitag_t tag, int offset)
 	 * the AMD 751 device here.  We provide a private entry
 	 * point for getting at it from machdep code.
 	 */
-	irongate_decompose_tag(ipv, tag, NULL, &d, NULL);
-	if (d == IRONGATE_PCIHOST_DEV && offset == PCI_ID_REG)
+	pci_decompose_tag(&icp->ic_pc, tag, &b, &d, NULL);
+	if (b == 0 && d == IRONGATE_PCIHOST_DEV && offset == PCI_ID_REG)
 		return ((pcireg_t) -1);
 	
 	return (irongate_conf_read0(ipv, tag, offset));
