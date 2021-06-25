@@ -79,4 +79,18 @@ For: loop body:
 make: "directive-for-escape.mk" line 118: eight $$$$ and no cents.
 make: "directive-for-escape.mk" line 119: eight dollardollardollardollar and no cents.
 make: "directive-for-escape.mk" line 128: eight  and no cents.
-exit status 0
+For: end for 1
+For: loop body:
+.  info short: ${:U"
+"}
+.  info long: ${:U"
+"}
+make: Unclosed variable expression, expecting '}' for modifier "U"" of variable "" with value """
+make: "directive-for-escape.mk" line 134: short: "
+make: "directive-for-escape.mk" line 135: Invalid line type
+make: Unclosed variable expression, expecting '}' for modifier "U"" of variable "" with value """
+make: "directive-for-escape.mk" line 136: long: "
+make: "directive-for-escape.mk" line 137: Invalid line type
+make: Fatal errors encountered -- cannot continue
+make: stopped in unit-tests
+exit status 1
