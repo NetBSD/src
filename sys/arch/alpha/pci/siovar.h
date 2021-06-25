@@ -1,4 +1,4 @@
-/* $NetBSD: siovar.h,v 1.13 2020/09/22 15:24:02 thorpej Exp $ */
+/* $NetBSD: siovar.h,v 1.14 2021/06/25 13:41:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -37,6 +37,7 @@ void	*sio_intr_establish(void *, int, int, int, int, int (*)(void *),
 void	sio_intr_disestablish(void *, void *);
 int	sio_intr_alloc(void *, int, int, int *);
 
+int	sio_pirq_intr_map(pci_chipset_tag_t, int, pci_intr_handle_t *);
 const char *sio_pci_intr_string(pci_chipset_tag_t, pci_intr_handle_t,
 	    char *, size_t);
 const struct evcnt *sio_pci_intr_evcnt(pci_chipset_tag_t, pci_intr_handle_t);
