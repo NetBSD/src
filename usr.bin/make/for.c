@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.143 2021/06/24 23:19:52 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.144 2021/06/25 16:10:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -58,7 +58,7 @@
 #include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.143 2021/06/24 23:19:52 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.144 2021/06/25 16:10:07 rillig Exp $");
 
 
 /* One of the variables to the left of the "in" in a .for loop. */
@@ -325,7 +325,8 @@ NeedsEscapes(const char *value, char endc)
 	const char *p;
 
 	for (p = value; *p != '\0'; p++) {
-		if (*p == ':' || *p == '$' || *p == '\\' || *p == endc)
+		if (*p == ':' || *p == '$' || *p == '\\' || *p == endc ||
+		    *p == '\n')
 			return true;
 	}
 	return false;
@@ -360,6 +361,10 @@ Buf_AddEscaped(Buffer *cmds, const char *item, char endc)
 			Buf_AddByte(cmds, '\\');
 		} else if (ch == ':' || ch == '\\' || ch == endc)
 			Buf_AddByte(cmds, '\\');
+		else if (ch == '\n') {
+			Parse_Error(PARSE_FATAL, "newline in .for value");
+			ch = ' ';	/* prevent newline injection */
+		}
 		Buf_AddByte(cmds, ch);
 	}
 }
