@@ -1,4 +1,4 @@
-/* $NetBSD: mcpcia_pci.c,v 1.13 2021/05/07 16:58:34 thorpej Exp $ */
+/* $NetBSD: mcpcia_pci.c,v 1.14 2021/06/25 03:46:54 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcpcia_pci.c,v 1.13 2021/05/07 16:58:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcpcia_pci.c,v 1.14 2021/06/25 03:46:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,8 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: mcpcia_pci.c,v 1.13 2021/05/07 16:58:34 thorpej Exp 
 
 #define	KV(_addr)	((void *)ALPHA_PHYS_TO_K0SEG((_addr)))
 
-static void	mcpcia_attach_hook(device_t, device_t,
-		    struct pcibus_attach_args *);
 static int	mcpcia_bus_maxdevs(void *, int);
 static pcitag_t	mcpcia_make_tag(void *, int, int, int);
 static void	mcpcia_decompose_tag(void *, pcitag_t, int *, int *, int *);
@@ -58,17 +56,11 @@ void
 mcpcia_pci_init(pci_chipset_tag_t pc, void *v)
 {
 	pc->pc_conf_v = v;
-	pc->pc_attach_hook = mcpcia_attach_hook;
 	pc->pc_bus_maxdevs = mcpcia_bus_maxdevs;
 	pc->pc_make_tag = mcpcia_make_tag;
 	pc->pc_decompose_tag = mcpcia_decompose_tag;
 	pc->pc_conf_read = mcpcia_conf_read;
 	pc->pc_conf_write = mcpcia_conf_write;
-}
-
-static void
-mcpcia_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
-{
 }
 
 static int

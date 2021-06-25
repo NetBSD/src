@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx_pci.c,v 1.20 2021/05/07 16:58:34 thorpej Exp $ */
+/* $NetBSD: dwlpx_pci.c,v 1.21 2021/06/25 03:46:30 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx_pci.c,v 1.20 2021/05/07 16:58:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx_pci.c,v 1.21 2021/06/25 03:46:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,8 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: dwlpx_pci.c,v 1.20 2021/05/07 16:58:34 thorpej Exp $
 
 #define	KV(_addr)	((void *)ALPHA_PHYS_TO_K0SEG((_addr)))
 
-static void	dwlpx_attach_hook(device_t, device_t,
-		    struct pcibus_attach_args *);
 static int	dwlpx_bus_maxdevs(void *, int);
 static pcitag_t	dwlpx_make_tag(void *, int, int, int);
 static void	dwlpx_decompose_tag(void *, pcitag_t, int *, int *,
@@ -60,17 +58,11 @@ void
 dwlpx_pci_init(pci_chipset_tag_t pc, void *v)
 {
 	pc->pc_conf_v = v;
-	pc->pc_attach_hook = dwlpx_attach_hook;
 	pc->pc_bus_maxdevs = dwlpx_bus_maxdevs;
 	pc->pc_make_tag = dwlpx_make_tag;
 	pc->pc_decompose_tag = dwlpx_decompose_tag;
 	pc->pc_conf_read = dwlpx_conf_read;
 	pc->pc_conf_write = dwlpx_conf_write;
-}
-
-static void
-dwlpx_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
-{
 }
 
 static int
