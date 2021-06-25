@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.47 2019/07/28 10:29:49 martin Exp $
+#	$NetBSD: Makefile,v 1.47.2.1 2021/06/25 19:08:46 martin Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -53,7 +53,9 @@ HACK_CURSES=yes
 ${CRUNCHBIN}:	libhack.o
 
 install.sub: ${DISTRIBDIR}/miniroot/install.sub
-	${TOOL_SED} -e "/^VERSION=/s/=.*/=${DISTRIBREV}/" < $? > $@
+	${TOOL_SED} -e "/^VERSION=/s/=.*/=${DISTRIBREV}/" \
+		    -e "/^RELEASE=/s/=.*/=${DISTRIBVER}/" \
+		    -e "/^MACHINE=/s/=.*/=${MACHINE}/" < $? > $@
 
 CLEANFILES+= install.sub
 
