@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn20aa.c,v 1.56 2021/06/19 16:59:07 thorpej Exp $ */
+/* $NetBSD: pci_kn20aa.c,v 1.57 2021/06/25 18:08:34 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.56 2021/06/19 16:59:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.57 2021/06/25 18:08:34 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -84,7 +84,7 @@ pci_kn20aa_pickintr(void *core, bus_space_tag_t iot, bus_space_tag_t memt,
 #define PCI_KN20AA_IRQ_STR	8
 	pc->pc_shared_intrs = alpha_shared_intr_alloc(KN20AA_MAX_IRQ,
 	    PCI_KN20AA_IRQ_STR);
-	pc->pc_intr_desc = "kn20aa irq";
+	pc->pc_intr_desc = "kn20aa";
 	pc->pc_vecbase = 0x900;
 	pc->pc_nirq = KN20AA_MAX_IRQ;
 
@@ -99,7 +99,7 @@ pci_kn20aa_pickintr(void *core, bus_space_tag_t iot, bus_space_tag_t memt,
 		snprintf(cp, PCI_KN20AA_IRQ_STR, "irq %d", i);
 		evcnt_attach_dynamic(alpha_shared_intr_evcnt(
 		    pc->pc_shared_intrs, i), EVCNT_TYPE_INTR, NULL,
-		    "kn20aa", cp);
+		    pc->pc_intr_desc, cp);
 	}
 
 #if NSIO > 0 || NPCEB > 0

@@ -1,4 +1,4 @@
-/* $NetBSD: jensenio_intr.c,v 1.14 2021/05/07 16:58:34 thorpej Exp $ */
+/* $NetBSD: jensenio_intr.c,v 1.15 2021/06/25 18:08:34 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: jensenio_intr.c,v 1.14 2021/05/07 16:58:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jensenio_intr.c,v 1.15 2021/06/25 18:08:34 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -269,14 +269,14 @@ jensenio_eisa_intr_establish(void *v, int irq, int type, int level,
 	}
 
 	cookie = alpha_shared_intr_alloc_intrhand(jensenio_eisa_intr, irq,
-	    type, level, 0, fn, arg, "eisa irq");
+	    type, level, 0, fn, arg, "eisa");
 
 	if (cookie == NULL)
 		return NULL;
 
 	mutex_enter(&cpu_lock);
 
-	if (! alpha_shared_intr_link(jensenio_eisa_intr, cookie, "eisa irq")) {
+	if (! alpha_shared_intr_link(jensenio_eisa_intr, cookie, "eisa")) {
 		mutex_exit(&cpu_lock);
 		alpha_shared_intr_free_intrhand(cookie);
 		return NULL;
@@ -310,7 +310,7 @@ jensenio_eisa_intr_disestablish(void *v, void *cookie)
 		scb_free(0x800 + SCB_IDXTOVEC(irq));
 	}
 
-	alpha_shared_intr_unlink(jensenio_eisa_intr, cookie, "eisa irq");
+	alpha_shared_intr_unlink(jensenio_eisa_intr, cookie, "eisa");
 
 	mutex_exit(&cpu_lock);
 
@@ -333,7 +333,7 @@ jensenio_iointr(void *framep, u_long vec)
 	irq = SCB_VECTOIDX(vec - 0x800);
 
 	if (!alpha_shared_intr_dispatch(jensenio_eisa_intr, irq))
-		alpha_shared_intr_stray(jensenio_eisa_intr, irq, "eisa irq");
+		alpha_shared_intr_stray(jensenio_eisa_intr, irq, "eisa");
 
 	jensenio_specific_eoi(irq);
 }
