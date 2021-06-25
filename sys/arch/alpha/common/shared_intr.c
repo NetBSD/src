@@ -1,4 +1,4 @@
-/* $NetBSD: shared_intr.c,v 1.27 2021/05/07 16:58:33 thorpej Exp $ */
+/* $NetBSD: shared_intr.c,v 1.28 2021/06/25 18:08:34 thorpej Exp $ */
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.27 2021/05/07 16:58:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.28 2021/06/25 18:08:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -170,7 +170,7 @@ alpha_shared_intr_alloc_intrhand(struct alpha_shared_intr *intr,
 	struct alpha_shared_intrhand *ih;
 
 	if (intr[num].intr_sharetype == IST_UNUSABLE) {
-		printf("%s: %s %d: unusable\n", __func__,
+		printf("%s: %s irq %d: unusable\n", __func__,
 		    basename, num);
 		return NULL;
 	}
@@ -249,12 +249,12 @@ alpha_shared_intr_link(struct alpha_shared_intr *intr,
 	case IST_PULSE:
 		if (type != IST_NONE) {
 			if (intr[num].intr_q.tqh_first == NULL) {
-				printf("alpha_shared_intr_establish: %s %d: warning: using %s on %s\n",
+				printf("alpha_shared_intr_establish: %s irq %d: warning: using %s on %s\n",
 				    basename, num, intr_typename(type),
 				    intr_typename(intr[num].intr_sharetype));
 				type = intr[num].intr_sharetype;
 			} else {
-				printf("alpha_shared_intr_establish: %s %d: can't share %s with %s\n",
+				printf("alpha_shared_intr_establish: %s irq %d: can't share %s with %s\n",
 				    basename, num, intr_typename(type),
 				    intr_typename(intr[num].intr_sharetype));
 				return (false);
@@ -381,7 +381,7 @@ alpha_shared_intr_stray(struct alpha_shared_intr *intr, unsigned int num,
 		return;
 
 	if (intr[num].intr_nstrays <= intr[num].intr_maxstrays)
-		log(LOG_ERR, "stray %s %d%s\n", basename, num,
+		log(LOG_ERR, "stray %s irq %d%s\n", basename, num,
 		    intr[num].intr_nstrays >= intr[num].intr_maxstrays ?
 		      "; stopped logging" : "");
 }

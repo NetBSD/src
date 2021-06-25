@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.c,v 1.30 2021/06/25 03:44:10 thorpej Exp $ */
+/* $NetBSD: pci_machdep.c,v 1.31 2021/06/25 18:08:34 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.30 2021/06/25 03:44:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.31 2021/06/25 18:08:34 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -225,7 +225,7 @@ alpha_pci_generic_intr_string(pci_chipset_tag_t const pc,
 
 	KASSERT(irq < pc->pc_nirq);
 
-	snprintf(buf, len, "%s %u", pc->pc_intr_desc, irq);
+	snprintf(buf, len, "%s irq %u", pc->pc_intr_desc, irq);
 	return buf;
 }
 

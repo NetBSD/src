@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb64plus.c,v 1.26 2021/06/19 16:59:07 thorpej Exp $ */
+/* $NetBSD: pci_eb64plus.c,v 1.27 2021/06/25 18:08:34 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_eb64plus.c,v 1.26 2021/06/19 16:59:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_eb64plus.c,v 1.27 2021/06/25 18:08:34 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -121,7 +121,7 @@ pci_eb64plus_pickintr(void *core, bus_space_tag_t iot, bus_space_tag_t memt,
 #define PCI_EB64PLUS_IRQ_STR	8
 	pc->pc_shared_intrs = alpha_shared_intr_alloc(EB64PLUS_MAX_IRQ,
 	    PCI_EB64PLUS_IRQ_STR);
-	pc->pc_intr_desc = "eb64+ irq";
+	pc->pc_intr_desc = "eb64+";
 	pc->pc_vecbase = 0x900;
 	pc->pc_nirq = EB64PLUS_MAX_IRQ;
 
@@ -136,7 +136,7 @@ pci_eb64plus_pickintr(void *core, bus_space_tag_t iot, bus_space_tag_t memt,
 		snprintf(cp, PCI_EB64PLUS_IRQ_STR, "irq %d", i);
 		evcnt_attach_dynamic(alpha_shared_intr_evcnt(
 		    pc->pc_shared_intrs, i), EVCNT_TYPE_INTR, NULL,
-		    "eb64+", cp);
+		    pc->pc_intr_desc, cp);
 	}
 
 #if NSIO

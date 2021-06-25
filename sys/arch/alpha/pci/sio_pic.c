@@ -1,4 +1,4 @@
-/* $NetBSD: sio_pic.c,v 1.49 2021/06/25 13:41:33 thorpej Exp $ */
+/* $NetBSD: sio_pic.c,v 1.50 2021/06/25 18:08:34 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2020 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.49 2021/06/25 13:41:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.50 2021/06/25 18:08:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -446,14 +446,14 @@ sio_intr_establish(void *v, int irq, int type, int level, int flags,
 		panic("sio_intr_establish: bogus irq or type");
 
 	cookie = alpha_shared_intr_alloc_intrhand(sio_intr, irq, type, level,
-	    flags, fn, arg, "isa irq");
+	    flags, fn, arg, "isa");
 
 	if (cookie == NULL)
 		return NULL;
 
 	mutex_enter(&cpu_lock);
 
-	if (! alpha_shared_intr_link(sio_intr, cookie, "isa irq")) {
+	if (! alpha_shared_intr_link(sio_intr, cookie, "isa")) {
 		mutex_exit(&cpu_lock);
 		alpha_shared_intr_free_intrhand(cookie);
 		return NULL;
@@ -525,7 +525,7 @@ sio_intr_disestablish(void *v, void *cookie)
 	}
 
 	/* Remove it from the link. */
-	alpha_shared_intr_unlink(sio_intr, cookie, "isa irq");
+	alpha_shared_intr_unlink(sio_intr, cookie, "isa");
 
 	mutex_exit(&cpu_lock);
 
@@ -648,7 +648,7 @@ sio_iointr(void *arg, unsigned long vec)
 #endif
 
 	if (!alpha_shared_intr_dispatch(sio_intr, irq))
-		alpha_shared_intr_stray(sio_intr, irq, "isa irq");
+		alpha_shared_intr_stray(sio_intr, irq, "isa");
 	else
 		alpha_shared_intr_reset_strays(sio_intr, irq);
 

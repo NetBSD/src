@@ -1,4 +1,4 @@
-/* $NetBSD: pci_6600.c,v 1.30 2021/06/19 16:59:07 thorpej Exp $ */
+/* $NetBSD: pci_6600.c,v 1.31 2021/06/25 18:08:34 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pci_6600.c,v 1.30 2021/06/19 16:59:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_6600.c,v 1.31 2021/06/25 18:08:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,7 @@ pci_6600_pickintr(void *core, bus_space_tag_t iot, bus_space_tag_t memt,
 
 	pc->pc_pciide_compat_intr_establish = NULL;
 
-	pc->pc_intr_desc = "dec 6600 irq";
+	pc->pc_intr_desc = "dec 6600";
 	pc->pc_vecbase = 0x900;
 	pc->pc_nirq = PCI_NIRQ;
 
@@ -166,7 +166,7 @@ pci_6600_pickintr(void *core, bus_space_tag_t iot, bus_space_tag_t memt,
 			snprintf(cp, PCI_6600_IRQ_STR, "irq %d", i);
 			evcnt_attach_dynamic(alpha_shared_intr_evcnt(
 			    pc->pc_shared_intrs, i), EVCNT_TYPE_INTR, NULL,
-			    "dec 6600", cp);
+			    pc->pc_intr_desc, cp);
 		}
 #if NSIO
 		sio_intr_setup(pc, iot);
