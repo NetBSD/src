@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.72 2021/06/23 07:11:41 rillig Exp $
+#	$NetBSD: Makefile,v 1.73 2021/06/25 20:17:56 tnn Exp $
 
 .include <bsd.own.mk>
 
@@ -28,7 +28,7 @@ CPPFLAGS+=	${DEBUG:D-DDEBUG}
 COPTS.err.c+=	${${ACTIVE_CC} == "clang":? -Wno-format-nonliteral :}
 
 # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=101177
-.if ${HAVE_GCC} == 9 &&	\
+.if defined(HAVE_GCC) && ${HAVE_GCC} == 9 &&	\
 	(${MACHINE_ARCH} == "sh3el" || ${MACHINE_ARCH} == "sh3eb")
 COPTS.lex.c+=	-O0
 .endif
