@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.10 2021/06/22 05:12:27 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.11 2021/06/25 19:09:53 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -263,3 +263,15 @@ compat/arm/oabi/bsd.oabi.mk		(apply patch)
 
 	Fix PR 50192.
 	[mrg, ticket #1309]
+
+distrib/miniroot/install.sub			1.61,1.62
+distrib/sun2/miniroot/Makefile			1.40
+distrib/sun3/miniroot/Makefile			1.50
+
+	Fixes to sun2 and sun3 miniroot upgrade scripts:
+	- Replace RELEASE and VERSION strings proplery.
+	- Remove netstat(1) calls to print resolver info on upgrade using
+	  miniroot, the binary is not available.
+	- The modules and rescue sets are also required on upgrade.
+	[tsutsui, ticket #1310]
+
