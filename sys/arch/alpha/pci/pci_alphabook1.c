@@ -1,4 +1,4 @@
-/* $NetBSD: pci_alphabook1.c,v 1.19 2021/06/19 16:59:07 thorpej Exp $ */
+/* $NetBSD: pci_alphabook1.c,v 1.20 2021/06/25 13:38:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_alphabook1.c,v 1.19 2021/06/19 16:59:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_alphabook1.c,v 1.20 2021/06/25 13:38:21 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -85,22 +85,10 @@ __KERNEL_RCSID(0, "$NetBSD: pci_alphabook1.c,v 1.19 2021/06/19 16:59:07 thorpej 
 static int	dec_alphabook1_intr_map(const struct pci_attach_args *,
 		    pci_intr_handle_t *);
 
-#define	LCA_SIO_DEVICE	7	/* XXX */
-
 static void
 pci_alphabook1_pickintr(void *core, bus_space_tag_t iot, bus_space_tag_t memt,
     pci_chipset_tag_t pc)
 {
-	pcireg_t sioclass;
-	int sioII;
-
-	/* XXX MAGIC NUMBER */
-	sioclass = pci_conf_read(pc, pci_make_tag(pc, 0, LCA_SIO_DEVICE, 0),
-	    PCI_CLASS_REG);
-	sioII = (sioclass & 0xff) >= 3;
-
-	if (!sioII)
-		printf("WARNING: SIO NOT SIO II... NO BETS...\n");
 
 	pc->pc_intr_v = core;
 	pc->pc_intr_map = dec_alphabook1_intr_map;
