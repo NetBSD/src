@@ -1,4 +1,4 @@
-/* $NetBSD: sioreg.h,v 1.2 1997/04/07 02:00:07 cgd Exp $ */
+/* $NetBSD: sioreg.h,v 1.3 2021/06/25 13:32:39 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 BBN Corporation.
@@ -82,6 +82,13 @@
 #define	SIO_PCIREG_PIRQ2	0x62	/* PIRQ2 Route Control */
 #define	SIO_PCIREG_PIRQ3	0x63	/* PIRQ3 Route Control */
 #define	SIO_PCIREG_PIRQ_RTCTRL	SIO_PCIREG_PIRQ0
+
+	/* extract the PIRQx field from 32-bit reg */
+#define	PIRQ_RTCTRL_PIRQx(r, p)	(((r) >> ((p) * 8)) & 0xff)
+
+	/* bits within each PIRQx field */
+#define	PIRQ_RTCTRL_NOT_ROUTED	__BIT(7)    /* 0 == interrupt routed */
+#define	PIRQ_RTCTRL_IRQ		__BITS(0,3) /* PIRQ routed to this ISA IRQ */
 
 /*
  * System Management Interrupt (SMI)
