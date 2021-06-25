@@ -1,4 +1,4 @@
-/*	$NetBSD: vdsk.c,v 1.6 2021/04/24 23:36:49 thorpej Exp $	*/
+/*	$NetBSD: vdsk.c,v 1.7 2021/06/25 19:10:50 palle Exp $	*/
 /*	$OpenBSD: vdsk.c,v 1.46 2015/01/25 21:42:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
@@ -492,6 +492,7 @@ vdsk_rx_intr(void *arg)
 			break;
 		case LDC_CHANNEL_RESET:
 			DPRINTF(("Rx link reset\n"));
+			ldc_send_vers(lc);
 			break;
 		}
 		lc->lc_rx_state = rx_state;
@@ -773,6 +774,8 @@ vdsk_rx_vio_dring_data(struct vdsk_softc *sc, struct vio_msg_tag *tag)
 
 		case VIO_SUBTYPE_NACK:
 			DPRINTF(("DATA/NACK/DRING_DATA\n"));
+			struct ldc_conn *lc = &sc->sc_lc;
+			ldc_send_vers(lc);
 			break;
 
 		default:
