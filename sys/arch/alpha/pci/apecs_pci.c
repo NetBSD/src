@@ -1,4 +1,4 @@
-/* $NetBSD: apecs_pci.c,v 1.27 2021/05/07 16:58:34 thorpej Exp $ */
+/* $NetBSD: apecs_pci.c,v 1.28 2021/06/25 03:45:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: apecs_pci.c,v 1.27 2021/05/07 16:58:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apecs_pci.c,v 1.28 2021/06/25 03:45:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,11 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: apecs_pci.c,v 1.27 2021/05/07 16:58:34 thorpej Exp $
 #include <alpha/pci/apecsreg.h>
 #include <alpha/pci/apecsvar.h>
 
-static void	apecs_attach_hook(device_t, device_t,
-		    struct pcibus_attach_args *);
-static int	apecs_bus_maxdevs(void *, int);
-static pcitag_t	apecs_make_tag(void *, int, int, int);
-static void	apecs_decompose_tag(void *, pcitag_t, int *, int *, int *);
 static pcireg_t	apecs_conf_read(void *, pcitag_t, int);
 static void	apecs_conf_write(void *, pcitag_t, int, pcireg_t);
 
@@ -54,43 +49,8 @@ apecs_pci_init(pci_chipset_tag_t pc, void *v)
 {
 
 	pc->pc_conf_v = v;
-	pc->pc_attach_hook = apecs_attach_hook;
-	pc->pc_bus_maxdevs = apecs_bus_maxdevs;
-	pc->pc_make_tag = apecs_make_tag;
-	pc->pc_decompose_tag = apecs_decompose_tag;
 	pc->pc_conf_read = apecs_conf_read;
 	pc->pc_conf_write = apecs_conf_write;
-}
-
-static void
-apecs_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
-{
-}
-
-static int
-apecs_bus_maxdevs(void *cpv, int busno)
-{
-
-	return 32;
-}
-
-static pcitag_t
-apecs_make_tag(void *cpv, int b, int d, int f)
-{
-
-	return (b << 16) | (d << 11) | (f << 8);
-}
-
-static void
-apecs_decompose_tag(void *cpv, pcitag_t tag, int *bp, int *dp, int *fp)
-{
-
-	if (bp != NULL)
-		*bp = (tag >> 16) & 0xff;
-	if (dp != NULL)
-		*dp = (tag >> 11) & 0x1f;
-	if (fp != NULL)
-		*fp = (tag >> 8) & 0x7;
 }
 
 static pcireg_t
