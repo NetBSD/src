@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn300.c,v 1.40 2021/06/19 16:59:07 thorpej Exp $ */
+/* $NetBSD: pci_kn300.c,v 1.41 2021/06/25 18:08:34 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.40 2021/06/19 16:59:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.41 2021/06/25 18:08:34 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -217,14 +217,14 @@ dec_kn300_intr_establish(
 	const u_int flags = alpha_pci_intr_handle_get_flags(&ih);
 
 	cookie = alpha_shared_intr_alloc_intrhand(kn300_pci_intr, irq,
-	    IST_LEVEL, level, flags, func, arg, "kn300 irq");
+	    IST_LEVEL, level, flags, func, arg, "kn300");
 
 	if (cookie == NULL)
 		return NULL;
 
 	mutex_enter(&cpu_lock);
 
-	if (! alpha_shared_intr_link(kn300_pci_intr, cookie, "kn300 irq")) {
+	if (! alpha_shared_intr_link(kn300_pci_intr, cookie, "kn300")) {
 		mutex_exit(&cpu_lock);
 		alpha_shared_intr_free_intrhand(cookie);
 		return NULL;
@@ -289,7 +289,7 @@ kn300_iointr(void * const arg __unused, unsigned long const vec)
 	 * Stray interrupt; disable the IRQ on the appropriate MCPCIA
 	 * if we've reached the limit.
 	 */
-	alpha_shared_intr_stray(kn300_pci_intr, irq, "kn300 irq");
+	alpha_shared_intr_stray(kn300_pci_intr, irq, "kn300");
 	if (ALPHA_SHARED_INTR_DISABLE(kn300_pci_intr, irq) == 0)
 		return;
 	kn300_disable_intr(mcp->mcpcia_cc, savirqs[irq]);
