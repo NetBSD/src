@@ -1,4 +1,4 @@
-/* $NetBSD: lca_pci.c,v 1.23 2021/05/07 16:58:34 thorpej Exp $ */
+/* $NetBSD: lca_pci.c,v 1.24 2021/06/25 03:52:41 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lca_pci.c,v 1.23 2021/05/07 16:58:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lca_pci.c,v 1.24 2021/06/25 03:52:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,11 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: lca_pci.c,v 1.23 2021/05/07 16:58:34 thorpej Exp $")
 #include <alpha/pci/lcareg.h>
 #include <alpha/pci/lcavar.h>
 
-static void	lca_attach_hook(device_t, device_t,
-		    struct pcibus_attach_args *);
 static int	lca_bus_maxdevs(void *, int);
-static pcitag_t	lca_make_tag(void *, int, int, int);
-static void	lca_decompose_tag(void *, pcitag_t, int *, int *, int *);
 static pcireg_t	lca_conf_read(void *, pcitag_t, int);
 static void	lca_conf_write(void *, pcitag_t, int, pcireg_t);
 
@@ -54,46 +50,26 @@ lca_pci_init(pci_chipset_tag_t pc, void *v)
 {
 
 	pc->pc_conf_v = v;
-	pc->pc_attach_hook = lca_attach_hook;
 	pc->pc_bus_maxdevs = lca_bus_maxdevs;
-	pc->pc_make_tag = lca_make_tag;
-	pc->pc_decompose_tag = lca_decompose_tag;
 	pc->pc_conf_read = lca_conf_read;
 	pc->pc_conf_write = lca_conf_write;
-}
-
-static void
-lca_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
-{
 }
 
 static int
 lca_bus_maxdevs(void *cpv, int busno)
 {
-
-	if (busno == 0)
-		return 16;
-	else
-		return 32;
+	/*
+	 * We have to drive the IDSEL directly on bus 0, so we are
+	 * limited to 16 devices there.
+	 */
+	return busno == 0 ? 16 : 32;
 }
 
-static pcitag_t
-lca_make_tag(void *cpv, int b, int d, int f)
+static paddr_t
+lca_make_type0addr(int d, int f)
 {
-
-	return (b << 16) | (d << 11) | (f << 8);
-}
-
-static void
-lca_decompose_tag(void *cpv, pcitag_t tag, int *bp, int *dp, int *fp)
-{
-
-	if (bp != NULL)
-		*bp = (tag >> 16) & 0xff;
-	if (dp != NULL)
-		*dp = (tag >> 11) & 0x1f;
-	if (fp != NULL)
-		*fp = (tag >> 8) & 0x7;
+	KASSERT(d < 16);
+	return PCI_CONF_TYPE0_IDSEL(d) | __SHIFTIN(f, PCI_CONF_TYPE0_FUNCTION);
 }
 
 static pcireg_t
@@ -101,7 +77,8 @@ lca_conf_read(void *cpv, pcitag_t tag, int offset)
 {
 	struct lca_config *lcp = cpv;
 	pcireg_t *datap, data;
-	int s, secondary, device, ba;
+	paddr_t confaddr;
+	int s, secondary, d, f, ba;
 
 	if ((unsigned int)offset >= PCI_CONF_SIZE)
 		return (pcireg_t) -1;
@@ -109,24 +86,19 @@ lca_conf_read(void *cpv, pcitag_t tag, int offset)
 	s = 0;					/* XXX gcc -Wuninitialized */
 
 	/* secondary if bus # != 0 */
-	pci_decompose_tag(&lcp->lc_pc, tag, &secondary, &device, 0);
+	pci_decompose_tag(&lcp->lc_pc, tag, &secondary, &d, &f);
 	if (secondary) {
 		s = splhigh();
 		alpha_mb();
 		REGVAL(LCA_IOC_CONF) = 0x01;
 		alpha_mb();
+		confaddr = tag;
 	} else {
-		/*
-		 * on the LCA, must frob the tag used for
-		 * devices on the primary bus, in the same ways
-		 * as is used by type 1 configuration cycles
-		 * on PCs.
-		 */
-		tag = (1 << (device + 11)) | (tag & 0x7ff);
+		confaddr = lca_make_type0addr(d, f);
 	}
 
 	datap = (pcireg_t *)ALPHA_PHYS_TO_K0SEG(LCA_PCI_CONF |
-	    tag << 5UL |					/* XXX */
+	    confaddr << 5UL |					/* XXX */
 	    (offset & ~0x03) << 5 |				/* XXX */
 	    0 << 5 |						/* XXX */
 	    0x3 << 3);						/* XXX */
@@ -154,7 +126,8 @@ lca_conf_write(void *cpv, pcitag_t tag, int offset, pcireg_t data)
 {
 	struct lca_config *lcp = cpv;
 	pcireg_t *datap;
-	int s, secondary, device;
+	paddr_t confaddr;
+	int s, secondary, d, f;
 
 	if ((unsigned int)offset >= PCI_CONF_SIZE)
 		return;
@@ -162,24 +135,19 @@ lca_conf_write(void *cpv, pcitag_t tag, int offset, pcireg_t data)
 	s = 0;					/* XXX gcc -Wuninitialized */
 
 	/* secondary if bus # != 0 */
-	pci_decompose_tag(&lcp->lc_pc, tag, &secondary, &device, 0);
+	pci_decompose_tag(&lcp->lc_pc, tag, &secondary, &d, &f);
 	if (secondary) {
 		s = splhigh();
 		alpha_mb();
 		REGVAL(LCA_IOC_CONF) = 0x01;
 		alpha_mb();
+		confaddr = tag;
 	} else {
-		/*
-		 * on the LCA, must frob the tag used for
-		 * devices on the primary bus, in the same ways
-		 * as is used by type 1 configuration cycles
-		 * on PCs.
-		 */
-		tag = (1 << (device + 11)) | (tag & 0x7ff);
+		confaddr = lca_make_type0addr(d, f);
 	}
 
 	datap = (pcireg_t *)ALPHA_PHYS_TO_K0SEG(LCA_PCI_CONF |
-	    tag << 5UL |					/* XXX */
+	    confaddr << 5UL |					/* XXX */
 	    (offset & ~0x03) << 5 |				/* XXX */
 	    0 << 5 |						/* XXX */
 	    0x3 << 3);						/* XXX */
