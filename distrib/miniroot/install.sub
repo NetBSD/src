@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.45.56.3 2021/06/05 10:41:20 martin Exp $
+#	$NetBSD: install.sub,v 1.45.56.4 2021/06/25 19:13:20 martin Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -40,7 +40,7 @@ RELEASE=				# filled in automatically (see list)
 export RELEASE
 
 ALLSETS="base comp etc games man misc modules text"	# default install sets
-UPGRSETS="base comp games man misc text"	# default upgrade sets
+UPGRSETS="base comp games man misc modules text"	# default upgrade sets
 THESETS=					# one of the above
 
 local_sets_dir=""			# Path searched for sets by install_sets
@@ -606,12 +606,8 @@ fi
 	echo	""
 
 	if [ "${_resolver_enabled:-FALSE}" = "TRUE" ]; then
-		netstat -r
-		echo	""
 		echo	"Resolver enabled."
 	else
-		netstat -rn
-		echo	""
 		echo	"Resolver not enabled."
 	fi
 
