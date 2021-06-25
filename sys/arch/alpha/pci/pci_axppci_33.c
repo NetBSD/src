@@ -1,4 +1,4 @@
-/* $NetBSD: pci_axppci_33.c,v 1.40 2021/06/19 16:59:07 thorpej Exp $ */
+/* $NetBSD: pci_axppci_33.c,v 1.41 2021/06/25 13:41:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_axppci_33.c,v 1.40 2021/06/19 16:59:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_axppci_33.c,v 1.41 2021/06/25 13:41:33 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -57,22 +57,10 @@ __KERNEL_RCSID(0, "$NetBSD: pci_axppci_33.c,v 1.40 2021/06/19 16:59:07 thorpej E
 static int	dec_axppci_33_intr_map(const struct pci_attach_args *,
 		    pci_intr_handle_t *);
 
-#define	LCA_SIO_DEVICE	7	/* XXX */
-
 static void
 pci_axppci_33_pickintr(void *core, bus_space_tag_t iot, bus_space_tag_t memt,
     pci_chipset_tag_t pc)
 {
-	pcireg_t sioclass;
-	int sioII;
-
-	/* XXX MAGIC NUMBER */
-	sioclass = pci_conf_read(pc, pci_make_tag(pc, 0, LCA_SIO_DEVICE, 0),
-	    PCI_CLASS_REG);
-	sioII = (sioclass & 0xff) >= 3;
-
-	if (!sioII)
-		printf("WARNING: SIO NOT SIO II... NO BETS...\n");
 
 	pc->pc_intr_v = core;
 	pc->pc_intr_map = dec_axppci_33_intr_map;
@@ -99,8 +87,6 @@ dec_axppci_33_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	int buspin = pa->pa_intrpin;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	int device, pirq;
-	pcireg_t pirqreg;
-	uint8_t pirqline;
 
 #ifndef DIAGNOSTIC
 	pirq = 0;				/* XXX gcc -Wuninitialized */
@@ -189,22 +175,10 @@ dec_axppci_33_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	        return 1;
 	}
 
-	pirqreg = pci_conf_read(pc, pci_make_tag(pc, 0, LCA_SIO_DEVICE, 0),
-	    SIO_PCIREG_PIRQ_RTCTRL);
 #if 0
-	printf("dec_axppci_33_intr_map: device %d pin %c: pirq %d, reg = %x\n",
-		device, '@' + buspin, pirq, pirqreg);
-#endif
-	pirqline = (pirqreg >> (pirq * 8)) & 0xff;
-	if ((pirqline & 0x80) != 0)
-		return 1;			/* not routed? */
-	pirqline &= 0xf;
-
-#if 0
-	printf("dec_axppci_33_intr_map: device %d pin %c: mapped to line %d\n",
-	    device, '@' + buspin, pirqline);
+	printf("dec_axppci_33_intr_map: device %d pin %c: pirq %d\n",
+		device, '@' + buspin, pirq);
 #endif
 
-	alpha_pci_intr_handle_init(ihp, pirqline, 0);
-	return (0);
+	return sio_pirq_intr_map(pc, pirq, ihp);
 }
