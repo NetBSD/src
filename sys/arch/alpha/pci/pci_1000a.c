@@ -1,4 +1,4 @@
-/* $NetBSD: pci_1000a.c,v 1.30 2021/06/19 16:59:07 thorpej Exp $ */
+/* $NetBSD: pci_1000a.c,v 1.31 2021/06/25 18:08:34 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_1000a.c,v 1.30 2021/06/19 16:59:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_1000a.c,v 1.31 2021/06/25 18:08:34 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -123,7 +123,7 @@ pci_1000a_pickintr(void *core, bus_space_tag_t iot, bus_space_tag_t memt,
 #define PCI_1000A_IRQ_STR	8
 	pc->pc_shared_intrs = alpha_shared_intr_alloc(PCI_NIRQ,
 	    PCI_1000A_IRQ_STR);
-	pc->pc_intr_desc = "dec 1000a irq";
+	pc->pc_intr_desc = "dec 1000a";
 	pc->pc_vecbase = 0x900;
 	pc->pc_nirq = PCI_NIRQ;
 
@@ -138,7 +138,7 @@ pci_1000a_pickintr(void *core, bus_space_tag_t iot, bus_space_tag_t memt,
 		snprintf(cp, PCI_1000A_IRQ_STR, "irq %d", i);
 		evcnt_attach_dynamic(alpha_shared_intr_evcnt(
 		    pc->pc_shared_intrs, i), EVCNT_TYPE_INTR, NULL,
-		    "dec 1000a", cp);
+		    pc->pc_intr_desc, cp);
 	}
 
 	pci_1000a_imi();
