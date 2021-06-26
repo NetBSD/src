@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.177 2021/03/01 18:12:58 jakllsch Exp $
+#	$NetBSD: GENERIC64,v 1.178 2021/06/26 09:05:24 nia Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -416,6 +416,8 @@ sunxii2s*	at fdt?			# Allwinner I2S/PCM
 audio*		at audiobus?
 
 spkr*		at audio?		# PC speaker (synthesized)
+
+pseudo-device	pad			# Pseudo audio device
 
 # HDMI CEC
 tegracec0	at fdt?			# NVIDIA Tegra HDMI CEC
