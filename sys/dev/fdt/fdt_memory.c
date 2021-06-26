@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_memory.c,v 1.2 2021/06/25 08:41:09 ryo Exp $ */
+/* $NetBSD: fdt_memory.c,v 1.3 2021/06/26 10:43:52 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_memory.c,v 1.2 2021/06/25 08:41:09 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_memory.c,v 1.3 2021/06/26 10:43:52 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -110,11 +110,12 @@ void
 fdt_memory_remove_reserved(uint64_t min_addr, uint64_t max_addr)
 {
 	uint64_t lstart = 0, lend = 0;
-	uint64_t addr, size;
 	int index, error, phandle, child;
 
 	const int num = fdt_num_mem_rsv(fdtbus_get_data());
 	for (index = 0; index <= num; index++) {
+		uint64_t addr, size;
+
 		error = fdt_get_mem_rsv(fdtbus_get_data(), index,
 		    &addr, &size);
 		if (error != 0)
@@ -147,6 +148,9 @@ fdt_memory_remove_reserved(uint64_t min_addr, uint64_t max_addr)
 	phandle = OF_finddevice("/reserved-memory");
 	if (phandle != -1) {
 		for (child = OF_child(phandle); child; child = OF_peer(child)) {
+			bus_addr_t addr;
+			bus_size_t size;
+
 			if (!of_hasprop(child, "no-map"))
 				continue;
 
