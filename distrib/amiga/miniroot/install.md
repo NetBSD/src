@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.32 2021/02/25 21:46:55 rin Exp $
+#	$NetBSD: install.md,v 1.33 2021/06/26 00:28:19 tsutsui Exp $
 #
 #
 # Copyright (c) 1996,2006 The NetBSD Foundation, Inc.
@@ -50,7 +50,6 @@ md_makerootwritable() {
 	# Mount root rw for convenience of the tester ;-)
 	if ! cp /dev/null /tmp/.root_writable >/dev/null 2>&1; then
 		mi_mount_kernfs
-		# XXX: Use /kern/rootdev instead?
 		mount -t ffs -u /kern/rootdev / > /dev/null 2>&1
 	fi
 }
