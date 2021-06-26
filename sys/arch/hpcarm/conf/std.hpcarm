@@ -1,4 +1,4 @@
-#	$NetBSD: std.hpcarm,v 1.8 2008/01/27 12:37:12 chris Exp $
+#	$NetBSD: std.hpcarm,v 1.9 2021/06/26 09:11:31 rin Exp $
 #
 # standard NetBSD/hpcarm options
 
@@ -12,3 +12,6 @@ options 	EXEC_SCRIPT
 
 # To support easy transit to ../arch/arm/arm32
 options 	ARM32
+
+options 	VMSWAP_DEFAULT_PLAINTEXT	# do not encrypt swap by
+						# default (slow cpu)

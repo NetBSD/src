@@ -1,4 +1,4 @@
-#	$NetBSD: std.hpcmips,v 1.20 2011/02/20 07:58:13 matt Exp $
+#	$NetBSD: std.hpcmips,v 1.21 2021/06/26 09:11:31 rin Exp $
 # standard, required hpcmips info
 
 machine hpcmips mips
@@ -17,3 +17,6 @@ options 	EXEC_SCRIPT		# may be unsafe
 
 makeoptions	DEFTEXTADDR="0x80001000"
 makeoptions	DEFCOPTS="-Os -mmemcpy"
+
+options 	VMSWAP_DEFAULT_PLAINTEXT	# do not encrypt swap by
+						# default (slow cpu)
