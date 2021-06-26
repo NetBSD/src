@@ -1,4 +1,4 @@
-#	$NetBSD: std.explora,v 1.8 2021/06/26 09:00:39 rin Exp $
+#	$NetBSD: std.explora,v 1.9 2021/06/26 09:03:46 rin Exp $
 #
 # Standard/required options for NetBSD/explora.
 
@@ -28,5 +28,3 @@ options 	INTSTK=16384
 options 	PPC_CPU_FREQ=66000000	# XXX hack for pckbc_cnattach()
 
 include		"arch/evbppc/conf/files.explora"
-
-options 	PPC_PCI_MACHDEP_IMPL="<evbppc/explora/dev/pci_machdep.h>"
