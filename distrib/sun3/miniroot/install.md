@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.7 2020/12/05 18:52:06 tsutsui Exp $
+#	$NetBSD: install.md,v 1.8 2021/06/26 00:25:41 tsutsui Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -53,7 +53,6 @@ md_makerootwritable() {
 		echo "Remounting root read-write..."
 		mi_mount_kernfs
 		mount -u /kern/rootdev /
-		swapctl -a /kern/rootdev
 		cp /dev/null /tmp/root_writable
 	fi
 }
