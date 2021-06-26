@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.101 2021/04/20 00:09:45 thorpej Exp $ */
+/* $NetBSD: cpu.h,v 1.102 2021/06/26 15:02:19 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@ struct clockframe {
 /*
  * This isn't perfect; if the clock interrupt comes in before the
  * r/m/w cycle is complete, we won't be counted... but it's not
- * like this stastic has to be extremely accurate.
+ * like this statistic has to be extremely accurate.
  */
 #define	CLKF_INTR(framep)						\
 	((curcpu()->ci_intrdepth & 0xf) != 0)	/* see interrupt() */
