@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.98 2021/06/26 09:05:24 nia Exp $
+#	$NetBSD: GENERIC,v 1.99 2021/06/26 09:29:14 nia Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -438,8 +438,6 @@ sunxicodec* 	at fdt?			# Allwinner audio codec
 sunxii2s* 	at fdt?			# I2S/PCM
 audio* 		at audiobus?
 spkr* 		at audio?
-
-pseudo-device	pad			# Pseudo audio device
 
 # SDMMC
 bcmsdhost* 	at fdt?			# Broadcom BCM283x SD Host Interface
