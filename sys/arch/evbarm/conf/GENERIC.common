@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.common,v 1.46 2021/01/18 00:32:38 nia Exp $
+#	$NetBSD: GENERIC.common,v 1.47 2021/06/26 09:29:14 nia Exp $
 #
 #	GENERIC evbarm kernel config (template)
 #
@@ -162,6 +162,7 @@ pseudo-device	gre			# generic L3 over IP tunnel
 pseudo-device	npf			# NPF packet filter
 
 # miscellaneous pseudo-devices
+pseudo-device	pad			# pseudo audio device
 pseudo-device	pty			# pseudo-terminals
 #options 	RND_COM
 pseudo-device	clockctl		# user control of clock subsystem
