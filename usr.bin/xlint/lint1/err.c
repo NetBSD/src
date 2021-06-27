@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.119 2021/05/16 11:11:36 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.120 2021/06/27 19:10:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.119 2021/05/16 11:11:36 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.120 2021/06/27 19:10:29 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -399,6 +399,7 @@ const char *const msgs[] = {
 	"argument to '%s' must be cast to 'unsigned char', not to '%s'", /* 342 */
 	"static array size is a C11 extension",			      /* 343 */
 	"bit-field of type plain 'int' has implementation-defined signedness", /* 344 */
+	"generic selection requires C11 or later",		      /* 345 */
 };
 
 static struct include_level {
