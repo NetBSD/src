@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.94 2020/03/23 13:37:36 roy Exp $
+#	$NetBSD: Makefile,v 1.95 2021/06/27 16:24:52 christos Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/2/94
 
 .include <bsd.own.mk>
@@ -9,6 +9,9 @@ CPPFLAGS+=-I${.CURDIR} -I${NETBSDSRCDIR}/lib/libterminfo
 .if defined(DEBUG_CURSES)
 CPPFLAGS+=-g -DDEBUG
 .endif
+
+COPTS.slk.c += -Wno-stack-protector
+
 .if defined(SMALL)
 CPPFLAGS+=-DSMALL
 .endif
