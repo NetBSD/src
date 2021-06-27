@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.234 2021/06/27 18:19:13 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.235 2021/06/27 18:54:14 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.234 2021/06/27 18:19:13 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.235 2021/06/27 18:54:14 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -325,7 +325,7 @@ anonymize(sym_t *s)
 %type	<y_tnode>	gcc_statement_expr_list
 %type	<y_tnode>	gcc_statement_expr_item
 %type	<y_tnode>	term
-%type	<y_tnode>	generic_expr
+%type	<y_tnode>	generic_selection
 %type	<y_tnode>	func_arg_list
 %type	<y_op>		point_or_arrow
 %type	<y_type>	type_name
@@ -1679,25 +1679,22 @@ switch_expr:
 	  }
 	;
 
-/* TODO: rename to generic-association, as in C11 6.5.1.1 */
-association:
-	  type_name T_COLON expr
-	| T_DEFAULT T_COLON expr
-	;
-
-association_list:
-	  association
-	| association_list T_COMMA association
-	;
-
-/* TODO: sort from big to small, as in C11 6.5.1.1 */
-/* TODO: rename to generic_expression, as in C11 6.5.1.1 */
 /* TODO: C11 6.5.1.1 says "assignment-expression", not plain "expr". */
 /* TODO: c11ism */
-generic_expr:
-	  T_GENERIC T_LPAREN expr T_COMMA association_list T_RPAREN {
+generic_selection:		/* C11 6.5.1.1 */
+	  T_GENERIC T_LPAREN expr T_COMMA generic_assoc_list T_RPAREN {
 		$$ = $3;
 	  }
+	;
+
+generic_assoc_list:		/* C11 6.5.1.1 */
+	  generic_association
+	| generic_assoc_list T_COMMA generic_association
+	;
+
+generic_association:		/* C11 6.5.1.1 */
+	  type_name T_COLON expr
+	| T_DEFAULT T_COLON expr
 	;
 
 do_statement:			/* C99 6.8.5 */
@@ -1893,7 +1890,7 @@ expr:
 	| term {
 		$$ = $1;
 	  }
-	| generic_expr {
+	| generic_selection {
 		$$ = $1;
 	  }
 	;
