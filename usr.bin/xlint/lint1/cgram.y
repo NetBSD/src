@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.233 2021/06/27 18:03:05 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.234 2021/06/27 18:19:13 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.233 2021/06/27 18:03:05 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.234 2021/06/27 18:19:13 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1608,7 +1608,7 @@ block_item_list:
 		if (!Sflag && $1 && !$2)
 			/* declarations after statements is a C99 feature */
 			c99ism(327);
-		/* TODO: $$ = $1 || $2; */
+		$$ = $1 || $2;
 	}
 	;
 
