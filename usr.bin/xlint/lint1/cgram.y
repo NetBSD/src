@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.232 2021/06/27 13:59:29 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.233 2021/06/27 18:03:05 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.232 2021/06/27 13:59:29 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.233 2021/06/27 18:03:05 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -284,7 +284,6 @@ anonymize(sym_t *s)
 %type	<y_type>	notype_typespec
 %type	<y_type>	struct_spec
 %type	<y_type>	enum_spec
-%type	<y_type>	type_attribute
 %type	<y_sym>		struct_tag
 %type	<y_sym>		enum_tag
 %type	<y_tspec>	struct
@@ -1072,6 +1071,7 @@ notype_decl:
 	  }
 	;
 
+/* TODO: move below type_decl */
 notype_direct_decl:
 	  T_NAME {
 		$$ = declarator_name(getsym($1));
@@ -1094,6 +1094,7 @@ notype_direct_decl:
 		block_level--;
 	  }
 	| notype_direct_decl type_attribute_list
+/* TODO: either add { $$ = $1 } everywhere or remove it everywhere. */
 	;
 
 type_decl:
@@ -1105,6 +1106,10 @@ type_decl:
 	  }
 	;
 
+/*
+ * TODO: document whether T_NAME here vs. identifier in notype_direct_decl
+ *  is on purpose.
+ */
 type_direct_decl:
 	  identifier {
 		$$ = declarator_name(getsym($1));
@@ -1145,6 +1150,7 @@ param_decl:
 	  }
 	;
 
+/* TODO: consistently use 'opt' either as prefix or as suffix */
 opt_type_qualifier_list:
 	  /* empty */
 	| type_qualifier_list
@@ -1216,11 +1222,14 @@ direct_notype_param_decl:
 	  }
 	;
 
+/* TODO: rename 'pointer' to something less ambiguous, maybe 'pointer_level' */
 pointer:
 	  asterisk {
 		$$ = $1;
 	  }
 	| asterisk type_qualifier_list {
+		/* TODO: rename pqinf_t to be more expressive */
+		/* TODO: then rename the merge function */
 		$$ = merge_pointers_and_qualifiers($1, $2);
 	  }
 	| asterisk pointer {
@@ -1239,6 +1248,7 @@ asterisk:
 	  }
 	;
 
+/* TODO: try whether type_qualifier_list_opt makes the code simpler */
 type_qualifier_list:
 	  type_qualifier {
 		$$ = $1;
@@ -1434,6 +1444,7 @@ designator_list:		/* C99 6.7.8 "Initialization" */
 	| designator_list designator
 	;
 
+/* TODO: order from big to small */
 designation:			/* C99 6.7.8 "Initialization" */
 	  designator_list T_ASSIGN
 	| identifier T_COLON {
@@ -1479,6 +1490,7 @@ abstract_declaration:
 	  }
 	;
 
+/* TODO: abstract_declaration and abstract_decl sound too similar */
 abstract_decl:
 	  pointer {
 		$$ = add_pointer(abstract_name(), $1);
@@ -1596,6 +1608,7 @@ block_item_list:
 		if (!Sflag && $1 && !$2)
 			/* declarations after statements is a C99 feature */
 			c99ism(327);
+		/* TODO: $$ = $1 || $2; */
 	}
 	;
 
@@ -1666,6 +1679,7 @@ switch_expr:
 	  }
 	;
 
+/* TODO: rename to generic-association, as in C11 6.5.1.1 */
 association:
 	  type_name T_COLON expr
 	| T_DEFAULT T_COLON expr
@@ -1676,13 +1690,17 @@ association_list:
 	| association_list T_COMMA association
 	;
 
+/* TODO: sort from big to small, as in C11 6.5.1.1 */
+/* TODO: rename to generic_expression, as in C11 6.5.1.1 */
+/* TODO: C11 6.5.1.1 says "assignment-expression", not plain "expr". */
+/* TODO: c11ism */
 generic_expr:
 	  T_GENERIC T_LPAREN expr T_COMMA association_list T_RPAREN {
 		$$ = $3;
 	  }
 	;
 
-do_statement:
+do_statement:			/* C99 6.8.5 */
 	  do statement {
 		clear_warning_flags();
 	  }
@@ -2040,7 +2058,7 @@ gcc_statement_expr_item:
 			expr($1, false, false, false, false);
 			seen_fallthrough = false;
 		}
-	}
+	  }
 	;
 
 string:
