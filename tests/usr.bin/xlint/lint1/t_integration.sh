@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.59 2021/06/27 10:14:43 rillig Exp $
+# $NetBSD: t_integration.sh,v 1.60 2021/06/27 18:48:45 rillig Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -117,6 +117,7 @@ test_case()
 
 
 test_case all_messages
+test_case c11_generic_expression
 test_case c99_init_designator
 test_case d_alignof
 test_case d_bltinoffsetof
