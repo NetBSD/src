@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_reservation.c,v 1.11 2018/09/03 18:02:11 riastradh Exp $	*/
+/*	$NetBSD: linux_reservation.c,v 1.12 2021/06/27 08:10:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_reservation.c,v 1.11 2018/09/03 18:02:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_reservation.c,v 1.12 2021/06/27 08:10:36 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/poll.h>
@@ -796,6 +796,7 @@ wait:
 	ret = fence_wait_timeout(fence, intr, timeout);
 	if (ret <= 0)
 		return ret;
+	fence_put(fence);
 	KASSERT(ret <= timeout);
 	timeout = ret;
 	goto top;
