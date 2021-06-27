@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_345.c,v 1.1 2021/06/27 19:10:29 rillig Exp $	*/
+/*	$NetBSD: msg_345.c,v 1.2 2021/06/27 20:47:13 rillig Exp $	*/
 # 3 "msg_345.c"
 
 // Test for message: generic selection requires C11 or later [345]
@@ -10,5 +10,5 @@ int
 test(int x)
 {
 	/* expect+1: generic selection requires C11 or later [345] */
-	return _Generic(x, default: 3);
+	return _Generic(x, default: 3) + x;
 }

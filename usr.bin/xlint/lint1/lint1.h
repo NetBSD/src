@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.106 2021/06/27 08:20:50 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.107 2021/06/27 20:47:13 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -315,6 +315,12 @@ typedef	struct tnode {
 #define tn_sym		tn_u._tn_sym
 #define	tn_val		tn_u._tn_val
 #define	tn_string	tn_u._tn_string
+
+struct generic_association_types {
+	type_t *gat_arg;	/* NULL means default or error */
+	tnode_t *gat_result;	/* NULL means error */
+	struct generic_association_types *gat_prev;
+};
 
 /*
  * For nested declarations a stack exists, which holds all information

@@ -1,4 +1,4 @@
-/*	$NetBSD: c11_generic_expression.c,v 1.2 2021/06/27 19:59:23 rillig Exp $	*/
+/*	$NetBSD: c11_generic_expression.c,v 1.3 2021/06/27 20:47:13 rillig Exp $	*/
 # 3 "c11_generic_expression.c"
 
 /*
@@ -20,13 +20,14 @@
 const char *
 classify_type_without_default(double var)
 {
+	/* expect-2: argument 'var' unused */
+
 	return _Generic(var,
 	    long double: "long double",
 	    long long: "long long",
 	    unsigned: "unsigned"
 	);
-	/* expect-7: argument 'var' unused */
-	/* expect-2: type mismatch (pointer to const char) and (double) *//* FIXME */
+	/* expect-1: expects to return value [214] */
 }
 
 /*
@@ -35,14 +36,14 @@ classify_type_without_default(double var)
 const char *
 classify_type_with_default(double var)
 {
+	/* expect-2: argument 'var' unused */
+
 	return _Generic(var,
 	    long double: "long double",
 	    long long: "long long",
 	    unsigned: "unsigned",
 	    default: "unknown"
 	);
-	/* expect-8: argument 'var' unused */
-	/* expect-2: type mismatch (pointer to const char) and (double) *//* FIXME */
 }
 
 /*
@@ -51,9 +52,10 @@ classify_type_with_default(double var)
 const char *
 classify_char(char c)
 {
+	/* expect-2: argument 'c' unused */
+
 	return _Generic(c,
 	    char: "yes",
 	    default: 0.0
 	);
-	/* expect-1: (pointer to const char) and integer (char) [183] */
 }
