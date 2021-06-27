@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.237 2021/06/27 20:47:13 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.238 2021/06/27 21:30:46 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.237 2021/06/27 20:47:13 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.238 2021/06/27 21:30:46 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -323,6 +323,7 @@ anonymize(sym_t *s)
 %type	<y_sym>		parameter_type_list
 %type	<y_sym>		parameter_declaration
 %type	<y_tnode>	expr
+%type	<y_tnode>	assignment_expression
 %type	<y_tnode>	gcc_statement_expr_list
 %type	<y_tnode>	gcc_statement_expr_item
 %type	<y_tnode>	term
@@ -1682,10 +1683,9 @@ switch_expr:
 	  }
 	;
 
-/* TODO: C11 6.5.1.1 says "assignment-expression", not plain "expr". */
-/* TODO: c11ism */
 generic_selection:		/* C11 6.5.1.1 */
-	  T_GENERIC T_LPAREN expr T_COMMA generic_assoc_list T_RPAREN {
+	  T_GENERIC T_LPAREN assignment_expression T_COMMA
+	    generic_assoc_list T_RPAREN {
 	  	/* generic selection requires C11 or later */
 	  	c11ism(345);
 		$$ = build_generic_selection($3, $5);
@@ -1909,6 +1909,10 @@ expr:
 	| generic_selection {
 		$$ = $1;
 	  }
+	;
+
+assignment_expression:		/* C99 6.5.16 */
+	  expr %prec T_ASSIGN
 	;
 
 term:
