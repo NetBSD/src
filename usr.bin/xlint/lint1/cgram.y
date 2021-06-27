@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.239 2021/06/27 21:36:14 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.240 2021/06/27 21:46:17 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.239 2021/06/27 21:36:14 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.240 2021/06/27 21:46:17 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -702,9 +702,7 @@ clrtyp_typespec:
 	;
 
 typespec:
-	  notype_typespec {
-		$$ = $1;
-	  }
+	  notype_typespec
 	| T_TYPENAME {
 		$$ = getsym($1)->s_type;
 	  }
@@ -784,9 +782,7 @@ struct_decl_lbrace:
 	;
 
 member_declaration_list_with_rbrace:
-	  member_declaration_list T_SEMI T_RBRACE {
-		$$ = $1;
-	  }
+	  member_declaration_list T_SEMI T_RBRACE
 	| member_declaration_list T_RBRACE {
 		if (sflag) {
 			/* syntax req. ';' after last struct/union member */
@@ -808,9 +804,7 @@ opt_type_attribute:
 	;
 
 member_declaration_list:
-	  member_declaration {
-		$$ = $1;
-	  }
+	  member_declaration
 	| member_declaration_list T_SEMI member_declaration {
 		$$ = lnklst($1, $3);
 	  }
@@ -911,9 +905,7 @@ type_member_decls:
 	;
 
 notype_member_decl:
-	  notype_decl {
-		$$ = $1;
-	  }
+	  notype_decl
 	| notype_decl T_COLON constant_expr {		/* C99 6.7.2.1 */
 		$$ = bitfield($1, to_int_constant($3, true));
 	  }
@@ -925,9 +917,7 @@ notype_member_decl:
 	;
 
 type_member_decl:
-	  type_decl {
-		$$ = $1;
-	  }
+	  type_decl
 	| type_decl T_COLON constant_expr {
 		$$ = bitfield($1, to_int_constant($3, true));
 	  }
@@ -985,9 +975,7 @@ enum_decl_lbrace:
 	;
 
 enums_with_opt_comma:
-	  enums {
-		$$ = $1;
-	  }
+	  enums
 	| enums T_COMMA {
 		if (sflag) {
 			/* trailing ',' prohibited in enum declaration */
@@ -1001,9 +989,7 @@ enums_with_opt_comma:
 	;
 
 enums:
-	  enumerator {
-		$$ = $1;
-	  }
+	  enumerator
 	| enums T_COMMA enumerator {
 		$$ = lnklst($1, $3);
 	  }
@@ -1067,18 +1053,14 @@ type_init_decl:
 	;
 
 notype_decl:
-	  notype_direct_decl {
-		$$ = $1;
-	  }
+	  notype_direct_decl
 	| pointer notype_direct_decl {
 		$$ = add_pointer($2, $1);
 	  }
 	;
 
 type_decl:
-	  type_direct_decl {
-		$$ = $1;
-	  }
+	  type_direct_decl
 	| pointer type_direct_decl {
 		$$ = add_pointer($2, $1);
 	  }
@@ -1106,7 +1088,6 @@ notype_direct_decl:
 		block_level--;
 	  }
 	| notype_direct_decl type_attribute_list
-/* TODO: either add { $$ = $1 } everywhere or remove it everywhere. */
 	;
 
 /*
@@ -1145,9 +1126,7 @@ type_direct_decl:
  *				not "typedef int a; f(int a);"
  */
 param_decl:
-	  direct_param_decl {
-		$$ = $1;
-	  }
+	  direct_param_decl
 	| pointer direct_param_decl {
 		$$ = add_pointer($2, $1);
 	  }
@@ -1168,9 +1147,7 @@ array_size:
 		c11ism(343);
 		$$ = $3;
 	  }
-	| constant_expr {
-		$$ = $1;
-	}
+	| constant_expr
 	;
 
 direct_param_decl:
@@ -1197,9 +1174,7 @@ direct_param_decl:
 	;
 
 notype_param_decl:
-	  direct_notype_param_decl {
-		$$ = $1;
-	  }
+	  direct_notype_param_decl
 	| pointer direct_notype_param_decl {
 		$$ = add_pointer($2, $1);
 	  }
@@ -1227,9 +1202,7 @@ direct_notype_param_decl:
 
 /* TODO: rename 'pointer' to something less ambiguous, maybe 'pointer_level' */
 pointer:
-	  asterisk {
-		$$ = $1;
-	  }
+	  asterisk
 	| asterisk type_qualifier_list {
 		/* TODO: rename pqinf_t to be more expressive */
 		/* TODO: then rename the merge function */
@@ -1253,9 +1226,7 @@ asterisk:
 
 /* TODO: try whether type_qualifier_list_opt makes the code simpler */
 type_qualifier_list:
-	  type_qualifier {
-		$$ = $1;
-	  }
+	  type_qualifier
 	| type_qualifier_list type_qualifier {
 		$$ = merge_pointers_and_qualifiers($1, $2);
 	  }
@@ -1278,9 +1249,7 @@ param_list:
 	  id_list_lparen identifier_list T_RPAREN {
 		$$ = $2;
 	  }
-	| abstract_decl_param_list {
-		$$ = $1;
-	  }
+	| abstract_decl_param_list
 	;
 
 id_list_lparen:
@@ -1297,9 +1266,7 @@ identifier_list:
 	| identifier_list T_COMMA T_NAME {
 		$$ = lnklst($1, old_style_function_name(getsym($3)));
 	  }
-	| identifier_list error {
-		$$ = $1;
-	  }
+	| identifier_list error
 	;
 
 abstract_decl_param_list:
@@ -1323,9 +1290,7 @@ abstract_decl_lparen:
 	;
 
 vararg_parameter_type_list:
-	  parameter_type_list {
-		$$ = $1;
-	  }
+	  parameter_type_list
 	| parameter_type_list T_COMMA T_ELLIPSIS {
 		dcs->d_vararg = true;
 		$$ = $1;
@@ -1344,9 +1309,7 @@ vararg_parameter_type_list:
 	;
 
 parameter_type_list:
-	  parameter_declaration {
-		$$ = $1;
-	  }
+	  parameter_declaration
 	| parameter_type_list T_COMMA parameter_declaration {
 		$$ = lnklst($1, $3);
 	  }
@@ -1497,9 +1460,7 @@ abstract_decl:
 	  pointer {
 		$$ = add_pointer(abstract_name(), $1);
 	  }
-	| direct_abstract_decl {
-		$$ = $1;
-	  }
+	| direct_abstract_decl
 	| pointer direct_abstract_decl {
 		$$ = add_pointer($2, $1);
 	  }
@@ -1791,9 +1752,7 @@ opt_expr:
 	  /* empty */ {
 		$$ = NULL;
 	  }
-	| expr {
-		$$ = $1;
-	  }
+	| expr
 	;
 
 jump_statement:			/* C99 6.8.6 */
@@ -1850,9 +1809,7 @@ constant_expr_list:
 	;
 
 constant_expr:			/* C99 6.6 */
-	  expr				%prec T_ASSIGN {
-		  $$ = $1;
-	  }
+	  expr %prec T_ASSIGN
 	;
 
 expr:
@@ -1901,12 +1858,8 @@ expr:
 	| expr T_COMMA expr {
 		$$ = build(COMMA, $1, $3);
 	  }
-	| term {
-		$$ = $1;
-	  }
-	| generic_selection {
-		$$ = $1;
-	  }
+	| term
+	| generic_selection
 	;
 
 assignment_expression:		/* C99 6.5.16 */
@@ -2077,9 +2030,7 @@ gcc_statement_expr_item:
 	;
 
 string:
-	  T_STRING {
-		$$ = $1;
-	  }
+	  T_STRING
 	| T_STRING string2 {
 		$$ = cat_strings($1, $2);
 	  }
