@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.240 2021/06/27 21:46:17 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.241 2021/06/27 21:52:18 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.240 2021/06/27 21:46:17 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.241 2021/06/27 21:52:18 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -333,10 +333,10 @@ anonymize(sym_t *s)
 %type	<y_type>	type_name
 %type	<y_sym>		abstract_declaration
 %type	<y_tnode>	do_while_expr
-%type	<y_tnode>	opt_expr
+%type	<y_tnode>	expr_opt
 %type	<y_string>	string
 %type	<y_string>	string2
-%type	<y_sb>		opt_asm_or_symbolrename
+%type	<y_sb>		asm_or_symbolrename_opt
 %type	<y_range>	range
 %type	<y_seen_statement> block_item_list
 %type	<y_seen_statement> block_item
@@ -798,7 +798,7 @@ member_declaration_list_with_rbrace:
 	  }
 	;
 
-opt_type_attribute:
+type_attribute_opt:
 	  /* empty */
 	| type_attribute
 	;
@@ -814,17 +814,17 @@ member_declaration:
 	  noclass_declmods deftyp {
 		/* too late, i know, but getsym() compensates it */
 		symtyp = FMEMBER;
-	  } notype_member_decls opt_type_attribute {
+	  } notype_member_decls type_attribute_opt {
 		symtyp = FVFT;
 		$$ = $4;
 	  }
 	| noclass_declspecs deftyp {
 		symtyp = FMEMBER;
-	  } type_member_decls opt_type_attribute {
+	  } type_member_decls type_attribute_opt {
 		symtyp = FVFT;
 		$$ = $4;
 	  }
-	| noclass_declmods deftyp opt_type_attribute {
+	| noclass_declmods deftyp type_attribute_opt {
 		symtyp = FVFT;
 		/* struct or union member must be named */
 		if (!Sflag)
@@ -834,7 +834,7 @@ member_declaration:
 		$$ = dcs->d_type->t_str->sou_first_member;
 		anonymize($$);
 	  }
-	| noclass_declspecs deftyp opt_type_attribute {
+	| noclass_declspecs deftyp type_attribute_opt {
 		symtyp = FVFT;
 		/* struct or union member must be named */
 		if (!Sflag)
@@ -1025,11 +1025,11 @@ type_init_decls:
 	;
 
 notype_init_decl:
-	  notype_decl opt_asm_or_symbolrename {
+	  notype_decl asm_or_symbolrename_opt {
 		cgram_declare($1, false, $2);
 		check_size($1);
 	  }
-	| notype_decl opt_asm_or_symbolrename {
+	| notype_decl asm_or_symbolrename_opt {
 		begin_initialization($1);
 		cgram_declare($1, true, $2);
 	  } T_ASSIGN initializer {
@@ -1039,11 +1039,11 @@ notype_init_decl:
 	;
 
 type_init_decl:
-	  type_decl opt_asm_or_symbolrename {
+	  type_decl asm_or_symbolrename_opt {
 		cgram_declare($1, false, $2);
 		check_size($1);
 	  }
-	| type_decl opt_asm_or_symbolrename {
+	| type_decl asm_or_symbolrename_opt {
 		begin_initialization($1);
 		cgram_declare($1, true, $2);
 	  } T_ASSIGN initializer {
@@ -1082,7 +1082,7 @@ notype_direct_decl:
 	| notype_direct_decl T_LBRACK array_size T_RBRACK {
 		$$ = add_array($1, true, to_int_constant($3, false));
 	  }
-	| notype_direct_decl param_list opt_asm_or_symbolrename {
+	| notype_direct_decl param_list asm_or_symbolrename_opt {
 		$$ = add_function(symbolrename($1, $3), $2);
 		end_declaration_level();
 		block_level--;
@@ -1110,7 +1110,7 @@ type_direct_decl:
 	| type_direct_decl T_LBRACK array_size T_RBRACK {
 		$$ = add_array($1, true, to_int_constant($3, false));
 	  }
-	| type_direct_decl param_list opt_asm_or_symbolrename {
+	| type_direct_decl param_list asm_or_symbolrename_opt {
 		$$ = add_function(symbolrename($1, $3), $2);
 		end_declaration_level();
 		block_level--;
@@ -1132,14 +1132,13 @@ param_decl:
 	  }
 	;
 
-/* TODO: consistently use 'opt' either as prefix or as suffix */
-opt_type_qualifier_list:
+type_qualifier_list_opt:
 	  /* empty */
 	| type_qualifier_list
 	;
 
 array_size:
-	  opt_type_qualifier_list T_SCLASS constant_expr {
+	  type_qualifier_list_opt T_SCLASS constant_expr {
 		/* C11 6.7.6.3p7 */
 		if ($2 != STATIC)
 			yyerror("Bad attribute");
@@ -1166,7 +1165,7 @@ direct_param_decl:
 	| direct_param_decl T_LBRACK array_size T_RBRACK {
 		$$ = add_array($1, true, to_int_constant($3, false));
 	  }
-	| direct_param_decl param_list opt_asm_or_symbolrename {
+	| direct_param_decl param_list asm_or_symbolrename_opt {
 		$$ = add_function(symbolrename($1, $3), $2);
 		end_declaration_level();
 		block_level--;
@@ -1193,7 +1192,7 @@ direct_notype_param_decl:
 	| direct_notype_param_decl T_LBRACK array_size T_RBRACK {
 		$$ = add_array($1, true, to_int_constant($3, false));
 	  }
-	| direct_notype_param_decl param_list opt_asm_or_symbolrename {
+	| direct_notype_param_decl param_list asm_or_symbolrename_opt {
 		$$ = add_function(symbolrename($1, $3), $2);
 		end_declaration_level();
 		block_level--;
@@ -1270,14 +1269,14 @@ identifier_list:
 	;
 
 abstract_decl_param_list:
-	  abstract_decl_lparen T_RPAREN opt_type_attribute {
+	  abstract_decl_lparen T_RPAREN type_attribute_opt {
 		$$ = NULL;
 	  }
-	| abstract_decl_lparen vararg_parameter_type_list T_RPAREN opt_type_attribute {
+	| abstract_decl_lparen vararg_parameter_type_list T_RPAREN type_attribute_opt {
 		dcs->d_proto = true;
 		$$ = $2;
 	  }
-	| abstract_decl_lparen error T_RPAREN opt_type_attribute {
+	| abstract_decl_lparen error T_RPAREN type_attribute_opt {
 		$$ = NULL;
 	  }
 	;
@@ -1343,7 +1342,7 @@ parameter_declaration:
 	  }
 	;
 
-opt_asm_or_symbolrename:		/* expect only one */
+asm_or_symbolrename_opt:		/* expect only one */
 	  /* empty */ {
 		$$ = NULL;
 	  }
@@ -1488,12 +1487,12 @@ direct_abstract_decl:
 	| direct_abstract_decl T_LBRACK array_size T_RBRACK {
 		$$ = add_array($1, true, to_int_constant($3, false));
 	  }
-	| abstract_decl_param_list opt_asm_or_symbolrename {
+	| abstract_decl_param_list asm_or_symbolrename_opt {
 		$$ = add_function(symbolrename(abstract_name(), $2), $1);
 		end_declaration_level();
 		block_level--;
 	  }
-	| direct_abstract_decl abstract_decl_param_list opt_asm_or_symbolrename {
+	| direct_abstract_decl abstract_decl_param_list asm_or_symbolrename_opt {
 		$$ = add_function(symbolrename($1, $3), $2);
 		end_declaration_level();
 		block_level--;
@@ -1519,7 +1518,7 @@ statement:			/* C99 6.8 */
 	;
 
 labeled_statement:		/* C99 6.8.1 */
-	  label opt_type_attribute statement
+	  label type_attribute_opt statement
 	;
 
 label:
@@ -1736,19 +1735,19 @@ for_start:
 	;
 for_exprs:
 	  for_start declaration_specifiers deftyp notype_init_decls T_SEMI
-	    opt_expr T_SEMI opt_expr T_RPAREN {
+	    expr_opt T_SEMI expr_opt T_RPAREN {
 		/* variable declaration in for loop */
 		c99ism(325);
 		for1(NULL, $6, $8);
 		clear_warning_flags();
 	    }
-	  | for_start opt_expr T_SEMI opt_expr T_SEMI opt_expr T_RPAREN {
+	  | for_start expr_opt T_SEMI expr_opt T_SEMI expr_opt T_RPAREN {
 		for1($2, $4, $6);
 		clear_warning_flags();
 	  }
 	;
 
-opt_expr:
+expr_opt:
 	  /* empty */ {
 		$$ = NULL;
 	  }
