@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.105 2021/06/20 20:32:42 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.106 2021/06/27 08:20:50 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -373,9 +373,9 @@ typedef	struct dinfo {
  * declarators.
  */
 typedef	struct pqinf {
-	int	p_pcnt;			/* number of asterisks */
-	bool	p_const : 1;
-	bool	p_volatile : 1;
+	bool	p_pointer: 1;
+	bool	p_const: 1;
+	bool	p_volatile: 1;
 	struct	pqinf *p_next;
 } pqinf_t;
 

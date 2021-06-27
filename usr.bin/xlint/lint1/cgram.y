@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.230 2021/06/20 18:15:12 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.231 2021/06/27 08:20:50 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.230 2021/06/20 18:15:12 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.231 2021/06/27 08:20:50 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1234,7 +1234,7 @@ pointer:
 asterisk:
 	  T_ASTERISK {
 		$$ = xcalloc(1, sizeof(*$$));
-		$$->p_pcnt = 1;
+		$$->p_pointer = true;
 	  }
 	;
 
