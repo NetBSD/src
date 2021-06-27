@@ -1,4 +1,4 @@
-/*	$NetBSD: c11_generic_expression.c,v 1.1 2021/06/27 18:48:45 rillig Exp $	*/
+/*	$NetBSD: c11_generic_expression.c,v 1.2 2021/06/27 19:59:23 rillig Exp $	*/
 # 3 "c11_generic_expression.c"
 
 /*
@@ -18,7 +18,7 @@
  * generic-association.  This is a compile-time error.
  */
 const char *
-classify_integer_without_default(double var)
+classify_type_without_default(double var)
 {
 	return _Generic(var,
 	    long double: "long double",
@@ -33,7 +33,7 @@ classify_integer_without_default(double var)
  * In this case, the 'default' expression is selected.
  */
 const char *
-classify_integer_with_default(double var)
+classify_type_with_default(double var)
 {
 	return _Generic(var,
 	    long double: "long double",
@@ -43,4 +43,17 @@ classify_integer_with_default(double var)
 	);
 	/* expect-8: argument 'var' unused */
 	/* expect-2: type mismatch (pointer to const char) and (double) *//* FIXME */
+}
+
+/*
+ * The type of a _Generic expression is the one from the selected association.
+ */
+const char *
+classify_char(char c)
+{
+	return _Generic(c,
+	    char: "yes",
+	    default: 0.0
+	);
+	/* expect-1: (pointer to const char) and integer (char) [183] */
 }
