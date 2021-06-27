@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.231 2021/06/27 08:20:50 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.232 2021/06/27 13:59:29 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.231 2021/06/27 08:20:50 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.232 2021/06/27 13:59:29 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -850,6 +850,7 @@ member_declaration:
 		} else {
 			/* syntax error '%s' */
 			error(249, "unnamed member");
+			$$ = NULL;
 		}
 	  }
 	| error {
