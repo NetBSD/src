@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_xattr.c,v 1.35 2020/05/16 18:31:50 christos Exp $	*/
+/*	$NetBSD: vfs_xattr.c,v 1.36 2021/06/27 09:13:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.35 2020/05/16 18:31:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.36 2021/06/27 09:13:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,6 +88,18 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.35 2020/05/16 18:31:50 christos Exp 
 #include <sys/ktrace.h>
 
 #include <miscfs/genfs/genfs.h>
+
+static void
+ktr_xattr_name(const char *str)
+{
+	ktrkuser("xattr-name", (void *)__UNCONST(str), strlen(str));
+}
+
+static void
+ktr_xattr_val(const void *data, size_t cnt)
+{
+	ktruser("xattr-val", __UNCONST(data), cnt, 0);
+}
 
 /*
  * Credential check based on process requesting service, and per-attribute
@@ -250,8 +262,8 @@ extattr_set_vp(struct vnode *vp, int attrnamespace, const char *attrname,
 	auio.uio_vmspace = l->l_proc->p_vmspace;
 	cnt = nbytes;
 
-	ktrkuser("xattr-name", (void *)__UNCONST(attrname), strlen(attrname));
-	ktruser("xattr-val", __UNCONST(data), nbytes, 0);
+	ktr_xattr_name(attrname);
+	ktr_xattr_val(data, nbytes);
 
 	error = VOP_SETEXTATTR(vp, attrnamespace, attrname, &auio, l->l_cred);
 	cnt -= auio.uio_resid;
@@ -305,7 +317,7 @@ extattr_get_vp(struct vnode *vp, int attrnamespace, const char *attrname,
 	} else
 		sizep = &size;
 
-	ktrkuser("xattr-name", (void *)__UNCONST(attrname), strlen(attrname));
+	ktr_xattr_name(attrname);
 
 	error = VOP_GETEXTATTR(vp, attrnamespace, attrname, auiop, sizep,
 	    l->l_cred);
@@ -314,7 +326,7 @@ extattr_get_vp(struct vnode *vp, int attrnamespace, const char *attrname,
 		cnt -= auio.uio_resid;
 		retval[0] = cnt;
 
-		ktruser("xattr-val", data, cnt, 0);
+		ktr_xattr_val(data, cnt);
 	} else
 		retval[0] = size;
 
@@ -336,7 +348,7 @@ extattr_delete_vp(struct vnode *vp, int attrnamespace, const char *attrname,
 
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 
-	ktrkuser("xattr-name", (void *)__UNCONST(attrname), strlen(attrname));
+	ktr_xattr_name(attrname);
 
 	error = VOP_DELETEEXTATTR(vp, attrnamespace, attrname, l->l_cred);
 	if (error == EOPNOTSUPP)
