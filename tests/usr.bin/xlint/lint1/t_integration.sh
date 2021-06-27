@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.61 2021/06/27 19:10:29 rillig Exp $
+# $NetBSD: t_integration.sh,v 1.62 2021/06/27 19:33:25 rillig Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -27,7 +27,6 @@
 
 lint1=/usr/libexec/lint1
 
-test_case_names=
 machine_arch="$(sysctl -n hw.machine_arch)"
 
 
@@ -100,132 +99,21 @@ check_lint1()
 	fi
 }
 
-test_case()
-{
-	local name="$1"
-
-	atf_test_case "$name"
-	eval "${name}_head() {
-		atf_set 'require.progs' '$lint1'
-	}"
-	eval "${name}_body() {
-		check_lint1 '$name.c'
-	}"
-
-	test_case_names="$test_case_names $name"
-}
-
-
-test_case all_messages
-test_case c11_generic_expression
-test_case c99_init_designator
-test_case d_alignof
-test_case d_bltinoffsetof
-test_case d_c99_anon_struct
-test_case d_c99_anon_union
-test_case d_c99_bool
-test_case d_c99_bool_strict
-test_case d_c99_bool_strict_syshdr
-test_case d_c99_complex_num
-test_case d_c99_complex_split
-test_case d_c99_compound_literal_comma
-test_case d_c99_decls_after_stmt
-test_case d_c99_decls_after_stmt2
-test_case d_c99_decls_after_stmt3
-test_case d_c99_flex_array_packed
-test_case d_c99_for_loops
-test_case d_c99_func
-test_case d_c99_init
-test_case d_c99_nested_struct
-test_case d_c99_recursive_init
-test_case d_c99_struct_init
-test_case d_c99_union_cast
-test_case d_c99_union_init1
-test_case d_c99_union_init2
-test_case d_c99_union_init3
-test_case d_c99_union_init4
-test_case d_c99_union_init5
-test_case d_c9x_array_init
-test_case d_c9x_recursive_init
-test_case d_cast_fun_array_param
-test_case d_cast_init
-test_case d_cast_init2
-test_case d_cast_lhs
-test_case d_cast_typeof
-test_case d_compound_literals1
-test_case d_compound_literals2
-test_case d_constant_conv1
-test_case d_constant_conv2
-test_case d_cvt_constant
-test_case d_cvt_in_ternary
-test_case d_decl_old_style_arguments
-test_case d_ellipsis_in_switch
-test_case d_fold_test
-test_case d_gcc_compound_statements1
-test_case d_gcc_compound_statements2
-test_case d_gcc_compound_statements3
-test_case d_gcc_extension
-test_case d_gcc_func
-test_case d_gcc_variable_array_init
-test_case d_incorrect_array_size
-test_case d_init_array_using_string
-test_case d_init_pop_member
-test_case d_lint_assert
-test_case d_long_double_int
-test_case d_nested_structs
-test_case d_nolimit_init
-test_case d_packed_structs
-test_case d_pr_22119
-test_case d_return_type
-test_case d_shift_to_narrower_type
-test_case d_struct_init_nested
-test_case d_type_conv1
-test_case d_type_conv2
-test_case d_type_conv3
-test_case d_type_question_colon
-test_case d_typefun
-test_case d_typename_as_var
-test_case d_zero_sized_arrays
-test_case decl_struct_member
-test_case emit
-test_case expr_range
-test_case feat_stacktrace
-test_case gcc_attribute
-test_case gcc_attribute_aligned
-test_case gcc_bit_field_types
-test_case gcc_init_compound_literal
-test_case gcc_typeof_after_statement
-test_case lex_char
-test_case lex_comment
-test_case lex_floating
-test_case lex_integer
-test_case lex_string
-test_case lex_wide_char
-test_case lex_wide_string
-test_case op_colon
-test_case stmt_for
-
-all_messages_body()
-{
-	local failed msg
-
-	failed=""
-
-	for msg in $(seq 0 345); do
-		name="$(printf 'msg_%03d.c' "$msg")"
-		check_lint1 "$name" \
-		|| failed="$failed${failed:+ }$name"
-	done
-
-	if [ "$failed" != "" ]; then
-		atf_check "false" "$failed"
-	fi
-}
-
-
 atf_init_test_cases()
 {
-	for name in $test_case_names; do
+	local src name
+
+	for src in "$(atf_get_srcdir)"/*.c; do
+		src=${src##*/}
+		name=${src%.c}
+
+		atf_test_case "$name"
+		eval "${name}_head() {
+			atf_set 'require.progs' '$lint1'
+		}"
+		eval "${name}_body() {
+			check_lint1 '$name.c'
+		}"
 		atf_add_test_case "$name"
 	done
 }
