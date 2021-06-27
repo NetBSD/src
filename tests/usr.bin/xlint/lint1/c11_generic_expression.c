@@ -1,4 +1,4 @@
-/*	$NetBSD: c11_generic_expression.c,v 1.3 2021/06/27 20:47:13 rillig Exp $	*/
+/*	$NetBSD: c11_generic_expression.c,v 1.4 2021/06/27 21:16:40 rillig Exp $	*/
 # 3 "c11_generic_expression.c"
 
 /*
@@ -58,4 +58,20 @@ classify_char(char c)
 	    char: "yes",
 	    default: 0.0
 	);
+}
+
+/*
+ * Before cgram.y 1.238 from 2021-06-27, lint accepted a comma-expression,
+ * which looked as if _Generic would accept multiple arguments before the
+ * selection.
+ */
+/* ARGSUSED */
+const int *
+comma_expression(char first, double second)
+{
+	return _Generic(first, second,	/* FIXME */
+	    char: "first",
+	    double: 2.0
+	);
+	/* expect-1: mismatch (pointer to const int) and (double) [211] */
 }
