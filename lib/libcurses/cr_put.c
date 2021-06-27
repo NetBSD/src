@@ -1,4 +1,4 @@
-/*	$NetBSD: cr_put.c,v 1.34 2019/05/20 22:17:41 blymn Exp $	*/
+/*	$NetBSD: cr_put.c,v 1.35 2021/06/27 23:57:08 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cr_put.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: cr_put.c,v 1.34 2019/05/20 22:17:41 blymn Exp $");
+__RCSID("$NetBSD: cr_put.c,v 1.35 2021/06/27 23:57:08 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -93,6 +93,8 @@ fgoto(int in_refresh)
 
 #ifdef DEBUG
 	__CTRACE(__CTRACE_OUTPUT, "fgoto: in_refresh=%d\n", in_refresh);
+	__CTRACE(__CTRACE_OUTPUT, "fgoto: outcol=%d, outline=%d, destcol=%d, destline=%d\n",
+		outcol, outline, destcol, destline);
 #endif /* DEBUG */
 	if (destcol >= COLS) {
 		destline += destcol / COLS;
@@ -214,6 +216,8 @@ plod(int cnt, int in_refresh)
 #ifdef DEBUG
 	__CTRACE(__CTRACE_OUTPUT, "plod: cnt=%d, in_refresh=%d\n",
 	    cnt, in_refresh);
+	__CTRACE(__CTRACE_OUTPUT, "plod: plodding from col %d, row %d to col %d, row %d\n",
+	    outcol, outline, destcol, destline);
 #endif /* DEBUG */
 	plodcnt = plodflg = cnt;
 	soutcol = outcol;
@@ -331,6 +335,7 @@ plod(int cnt, int in_refresh)
 				plodput('\n');
 			outline++;
 		}
+
 		outcol = 0;
 	}
 dontcr:while (outline < destline) {
@@ -341,7 +346,14 @@ dontcr:while (outline < destline) {
 			plodput('\n');
 		if (plodcnt < 0)
 			goto out;
-		if (__NONL || __pfast == 0)
+		/*
+		 * If the terminal does a CR with NL or we are in
+		 * a mode where a \n will result in an implicit \r
+		 * then adjust the outcol to match iff we actually
+		 * emitted said \n.
+		 */
+		if ((__NONL || __pfast == 0) &&
+		    (!cursor_down || (*cursor_down == '\n')))
 			outcol = 0;
 	}
 #ifdef notdef
