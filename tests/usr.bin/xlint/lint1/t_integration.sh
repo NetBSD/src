@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.58 2021/06/27 09:22:31 rillig Exp $
+# $NetBSD: t_integration.sh,v 1.59 2021/06/27 10:14:43 rillig Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -28,16 +28,19 @@
 lint1=/usr/libexec/lint1
 
 test_case_names=
+machine_arch="$(sysctl -n hw.machine_arch)"
 
 
-extract_flags()
+configure_test_case()
 {
-	local extract_flags_awk
+	local awk
 
 	# shellcheck disable=SC2016
-	extract_flags_awk='
+	awk='
 		BEGIN {
+			machine_arch = "'"$machine_arch"'"
 			flags = "-g -S -w"
+			skip = 0
 		}
 		/^\/\* (lint1-flags|lint1-extra-flags): .*\*\/$/ {
 			if ($2 == "lint1-flags:")
@@ -45,12 +48,19 @@ extract_flags()
 			for (i = 3; i < NF; i++)
 				flags = flags " " $i
 		}
+		/^\/\* lint1-only-on-arch: .* \*\/$/ && $3 != machine_arch {
+			skip = 1
+		}
+		/^\/\* lint1-not-on-arch: .* \*\/$/ && $3 == machine_arch {
+			skip = 1
+		}
 		END {
-			print flags
+			printf("flags='\''%s'\''\n", flags)
+			printf("skip=%s\n", skip ? "yes" : "no")
 		}
 	'
 
-	awk "$extract_flags_awk" "$@"
+	eval "$(awk "$awk" "$1")"
 }
 
 # shellcheck disable=SC2155
@@ -60,11 +70,19 @@ check_lint1()
 	local exp="${src%.c}.exp"
 	local exp_ln="${src%.c}.ln"
 	local wrk_ln="${1%.c}.ln"
-	local flags="$(extract_flags "$src")"
+	local flags=""
+	local skip=""
 
 	if [ ! -f "$exp_ln" ]; then
 		exp_ln='/dev/null'
 		wrk_ln='/dev/null'
+	fi
+
+	configure_test_case "$src"
+
+	if [ "$skip" = "yes" ]; then
+		atf_check -o 'ignore' echo 'skipped'
+		return
 	fi
 
 	if [ -f "$exp" ]; then
@@ -77,7 +95,7 @@ check_lint1()
 		    "$lint1" $flags "$src" "$wrk_ln"
 	fi
 
-	if [ "$src_ln" != '/dev/null' ]; then
+	if [ "$exp_ln" != '/dev/null' ]; then
 		atf_check -o "file:$exp_ln" cat "$wrk_ln"
 	fi
 }
