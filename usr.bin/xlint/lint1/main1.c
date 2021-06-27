@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.45 2021/04/18 22:51:24 rillig Exp $	*/
+/*	$NetBSD: main1.c,v 1.46 2021/06/27 18:48:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: main1.c,v 1.45 2021/04/18 22:51:24 rillig Exp $");
+__RCSID("$NetBSD: main1.c,v 1.46 2021/06/27 18:48:45 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -208,7 +208,7 @@ main(int argc, char *argv[])
 			if (strcmp(optarg, "c11") == 0) {
 				c11flag = true;
 				Sflag = true;
-				sflag = true;
+				sflag = false;
 			} else
 				usage();
 			break;

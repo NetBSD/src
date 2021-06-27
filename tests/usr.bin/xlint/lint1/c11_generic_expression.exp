@@ -1,0 +1,4 @@
+c11_generic_expression.c(27): error: return value type mismatch (pointer to const char) and (double) [211]
+c11_generic_expression.c(21): warning: argument 'var' unused in function 'classify_integer_without_default' [231]
+c11_generic_expression.c(43): error: return value type mismatch (pointer to const char) and (double) [211]
+c11_generic_expression.c(36): warning: argument 'var' unused in function 'classify_integer_with_default' [231]
