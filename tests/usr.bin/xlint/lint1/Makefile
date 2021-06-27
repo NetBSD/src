@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.65 2021/06/20 18:09:48 rillig Exp $
+# $NetBSD: Makefile,v 1.66 2021/06/27 09:22:31 rillig Exp $
 
 NOMAN=		# defined
 MAX_MESSAGE=	344		# see lint1/err.c
@@ -106,7 +106,7 @@ FILES+=		decl_struct_member.c
 FILES+=		decl_struct_member.exp
 FILES+=		emit.c
 FILES+=		emit.exp
-FILES+=		emit.ln
+FILES+=		emit.exp-ln
 FILES+=		expr_range.c
 FILES+=		expr_range.exp
 FILES+=		feat_stacktrace.c
@@ -140,20 +140,6 @@ FILES+=		op_colon.c
 FILES+=		op_colon.exp
 FILES+=		stmt_for.c
 FILES+=		stmt_for.exp
-
-# ----- begin hack -----
-# Prevent that ${DESTDIR}/emit.ln gets ${DESTDIR}/emit.c as implicit source.
-# The suffix transformation rule '.c.ln' thinks that ${DESTDIR}/emit.ln should
-# depend in ${DESTDIR}/emit.c, but these files are not intended to depend on
-# each other, they have these suffixes just for convenience and convention.
-.if make(install)
-.  if ${MKUPDATE} == "no"	# see bsd.files.mk
-${DESTDIR}${FILESDIR}/emit.ln! .PHONY
-.  else
-${DESTDIR}${FILESDIR}/emit.ln: .PHONY
-.  endif
-.endif
-# ----- end hack -----
 
 # Note: only works for adding tests.
 # To remove a test, the $$mi file must be edited manually.

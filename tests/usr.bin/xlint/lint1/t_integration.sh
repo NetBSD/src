@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.57 2021/06/20 18:09:48 rillig Exp $
+# $NetBSD: t_integration.sh,v 1.58 2021/06/27 09:22:31 rillig Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -58,12 +58,12 @@ check_lint1()
 {
 	local src="$(atf_get_srcdir)/$1"
 	local exp="${src%.c}.exp"
-	local src_ln="${src%.c}.ln"
+	local exp_ln="${src%.c}.ln"
 	local wrk_ln="${1%.c}.ln"
 	local flags="$(extract_flags "$src")"
 
-	if [ ! -f "$src_ln" ]; then
-		src_ln='/dev/null'
+	if [ ! -f "$exp_ln" ]; then
+		exp_ln='/dev/null'
 		wrk_ln='/dev/null'
 	fi
 
@@ -78,7 +78,7 @@ check_lint1()
 	fi
 
 	if [ "$src_ln" != '/dev/null' ]; then
-		atf_check -o "file:$src_ln" cat "$wrk_ln"
+		atf_check -o "file:$exp_ln" cat "$wrk_ln"
 	fi
 }
 
