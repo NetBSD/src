@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.62 2021/06/27 19:33:25 rillig Exp $
+# $NetBSD: t_integration.sh,v 1.63 2021/06/27 19:41:15 rillig Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -67,7 +67,7 @@ check_lint1()
 {
 	local src="$(atf_get_srcdir)/$1"
 	local exp="${src%.c}.exp"
-	local exp_ln="${src%.c}.ln"
+	local exp_ln="${src%.c}.exp-ln"
 	local wrk_ln="${1%.c}.ln"
 	local flags=""
 	local skip=""
