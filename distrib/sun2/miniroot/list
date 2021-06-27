@@ -1,5 +1,5 @@
 #
-# $NetBSD: list,v 1.24 2021/03/01 16:49:07 martin Exp $
+# $NetBSD: list,v 1.25 2021/06/27 05:25:12 tsutsui Exp $
 #
 
 # The PROM provides a default kernel name of "vmunix"
@@ -103,7 +103,7 @@ PROG	bin/ls
 PROG	bin/mkdir
 PROG	bin/mt
 PROG	bin/mv
-PROG	bin/pax	usr/bin/tar	usr/bin/cpio
+PROG	bin/pax		usr/bin/tar	usr/bin/cpio
 PROG	bin/ps
 PROG	bin/pwd
 PROG	bin/rm
@@ -148,6 +148,7 @@ SPECIAL	ifconfig	srcdir	distrib/utils/x_ifconfig
 SPECIAL	newfs		srcdir	distrib/utils/x_newfs
 SPECIAL	ping		srcdir	distrib/utils/x_ping
 SPECIAL	route		srcdir	distrib/utils/x_route
+SPECIAL	umount		srcdir	distrib/utils/x_umount
 
 SPECIAL	more		srcdir	distrib/utils/more
 SPECIAL	edlabel		srcdir	distrib/utils/edlabel
