@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.238 2021/06/27 21:30:46 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.239 2021/06/27 21:36:14 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.238 2021/06/27 21:30:46 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.239 2021/06/27 21:36:14 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1075,7 +1075,15 @@ notype_decl:
 	  }
 	;
 
-/* TODO: move below type_decl */
+type_decl:
+	  type_direct_decl {
+		$$ = $1;
+	  }
+	| pointer type_direct_decl {
+		$$ = add_pointer($2, $1);
+	  }
+	;
+
 notype_direct_decl:
 	  T_NAME {
 		$$ = declarator_name(getsym($1));
@@ -1101,18 +1109,9 @@ notype_direct_decl:
 /* TODO: either add { $$ = $1 } everywhere or remove it everywhere. */
 	;
 
-type_decl:
-	  type_direct_decl {
-		$$ = $1;
-	  }
-	| pointer type_direct_decl {
-		$$ = add_pointer($2, $1);
-	  }
-	;
-
 /*
- * TODO: document whether T_NAME here vs. identifier in notype_direct_decl
- *  is on purpose.
+ * TODO: document whether the subtle difference between 'identifier' here and
+ *  'T_NAME' in notype_direct_decl above is on purpose.
  */
 type_direct_decl:
 	  identifier {
@@ -1415,17 +1414,18 @@ initializer_list_item:
 	| initializer
 	;
 
-range:
-	  constant_expr {
-		$$.lo = to_int_constant($1, true);
-		$$.hi = $$.lo;
+designation:			/* C99 6.7.8 "Initialization" */
+	  designator_list T_ASSIGN
+	| identifier T_COLON {
+		/* GCC style struct or union member name in initializer */
+		gnuism(315);
+		add_designator_member($1);
 	  }
-	| constant_expr T_ELLIPSIS constant_expr {
-		$$.lo = to_int_constant($1, true);
-		$$.hi = to_int_constant($3, true);
-		/* initialization with '[a...b]' is a GNU extension */
-		gnuism(340);
-	  }
+	;
+
+designator_list:		/* C99 6.7.8 "Initialization" */
+	  designator
+	| designator_list designator
 	;
 
 designator:			/* C99 6.7.8 "Initialization" */
@@ -1443,18 +1443,16 @@ designator:			/* C99 6.7.8 "Initialization" */
 	  }
 	;
 
-designator_list:		/* C99 6.7.8 "Initialization" */
-	  designator
-	| designator_list designator
-	;
-
-/* TODO: order from big to small */
-designation:			/* C99 6.7.8 "Initialization" */
-	  designator_list T_ASSIGN
-	| identifier T_COLON {
-		/* GCC style struct or union member name in initializer */
-		gnuism(315);
-		add_designator_member($1);
+range:
+	  constant_expr {
+		$$.lo = to_int_constant($1, true);
+		$$.hi = $$.lo;
+	  }
+	| constant_expr T_ELLIPSIS constant_expr {
+		$$.lo = to_int_constant($1, true);
+		$$.hi = to_int_constant($3, true);
+		/* initialization with '[a...b]' is a GNU extension */
+		gnuism(340);
 	  }
 	;
 
