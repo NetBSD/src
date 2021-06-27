@@ -1,4 +1,4 @@
-/*	$NetBSD: lex_integer.c,v 1.1 2021/06/19 08:30:08 rillig Exp $	*/
+/*	$NetBSD: lex_integer.c,v 1.2 2021/06/27 10:14:43 rillig Exp $	*/
 # 3 "lex_integer.c"
 
 /*
@@ -6,6 +6,8 @@
  *
  * C99 6.4.4.1 "Integer constants"
  */
+
+/* lint1-not-on-arch: i386 (has 32-bit long) */
 
 void sinki(int);
 void sinku(unsigned int);
