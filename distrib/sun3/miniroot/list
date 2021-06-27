@@ -1,5 +1,5 @@
 #
-# $NetBSD: list,v 1.31 2020/04/05 11:19:01 martin Exp $
+# $NetBSD: list,v 1.32 2021/06/27 05:25:12 tsutsui Exp $
 #
 
 COPY	${KERNEL3}			netbsd.sun3
@@ -55,7 +55,7 @@ SRCDIRS	bin sbin usr.bin usr.sbin
 
 PROG	sbin/disklabel
 PROG	sbin/dmesg
-PROG 	sbin/edlabel
+PROG	sbin/edlabel
 
 PROG	sbin/fsck
 PROG	sbin/fsck_ffs
@@ -74,9 +74,9 @@ PROG	sbin/newfs	sbin/mount_mfs
 PROG	sbin/ping
 PROG	sbin/reboot	sbin/halt
 
-PROG	sbin/route
 PROG	sbin/restore	sbin/rrestore
 
+PROG	sbin/route
 PROG	sbin/shutdown
 PROG	sbin/slattach
 PROG	sbin/swapctl
@@ -132,19 +132,25 @@ PROG	usr/bin/rsh
 PROG	usr/bin/sed
 PROG	usr/bin/tip
 PROG	usr/bin/vi
+
 PROG	usr/bin/gzip	usr/bin/gzcat usr/bin/gunzip
 
 # install.md still uses sort
 PROG	usr/bin/sort
 
-SPECIAL	less		srcdir external/bsd/less/bin/less
-SPECIAL	vi		srcdir external/bsd/nvi/usr.bin/nvi
+SPECIAL	less		srcdir	external/bsd/less/bin/less
+SPECIAL	vi		srcdir	external/bsd/nvi/usr.bin/nvi
 
+SPECIAL	disklabel	srcdir	distrib/utils/x_disklabel
 SPECIAL	ed		srcdir	distrib/utils/x_ed
+SPECIAL	fsck_ffs	srcdir	distrib/utils/x_fsck_ffs
 SPECIAL	gzip		srcdir	distrib/utils/x_gzip
 SPECIAL	ifconfig	srcdir	distrib/utils/x_ifconfig
+SPECIAL	newfs		srcdir	distrib/utils/x_newfs
 SPECIAL	ping		srcdir	distrib/utils/x_ping
 SPECIAL	route		srcdir	distrib/utils/x_route
+SPECIAL	umount		srcdir	distrib/utils/x_umount
+
 SPECIAL	edlabel		srcdir	distrib/utils/edlabel
 
 ARGVLN	sh -sh
