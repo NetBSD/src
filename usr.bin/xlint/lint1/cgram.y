@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.235 2021/06/27 18:54:14 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.236 2021/06/27 19:10:29 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.235 2021/06/27 18:54:14 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.236 2021/06/27 19:10:29 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1683,6 +1683,8 @@ switch_expr:
 /* TODO: c11ism */
 generic_selection:		/* C11 6.5.1.1 */
 	  T_GENERIC T_LPAREN expr T_COMMA generic_assoc_list T_RPAREN {
+	  	/* generic selection requires C11 or later */
+	  	c11ism(345);
 		$$ = $3;
 	  }
 	;
