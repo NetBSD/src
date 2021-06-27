@@ -1,4 +1,4 @@
-/*	$NetBSD: targparam.h,v 1.8 2021/01/24 14:47:41 rillig Exp $	*/
+/*	$NetBSD: targparam.h,v 1.9 2021/06/27 08:43:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,11 +38,10 @@
 #include "ilp32.h"
 
 /*
- * Should be set to 1 if the difference of two pointers is of type long
+ * Should be set to LONG if the difference of two pointers is of type long
  * or the value of sizeof is of type unsigned long.  Note this MUST be
  * kept in sync with the compiler!
  */
-
 #define	PTRDIFF_TSPEC		LONG
 #define	SIZEOF_TSPEC		ULONG
 #define	INTPTR_TSPEC		LONG
