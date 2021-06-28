@@ -1,8 +1,8 @@
-/*	$NetBSD: msg_155.c,v 1.3 2021/06/28 10:07:43 rillig Exp $	*/
+/*	$NetBSD: msg_155.c,v 1.4 2021/06/28 10:23:50 rillig Exp $	*/
 # 3 "msg_155.c"
 
-// Test for message: argument is incompatible with prototype, arg #%d [155]
-// TODO: Add type information to the message
+// Test for message: passing '%s' to incompatible '%s', arg #%d [155]
+
 
 void c99_6_7_6_example_a(int);
 void c99_6_7_6_example_b(int *);
@@ -21,27 +21,31 @@ struct incompatible {
 void
 provoke_error_messages(struct incompatible arg)
 {
-	/* expect+1: argument is incompatible with prototype, arg #1 */
+	/* expect+1: 'int' */
 	c99_6_7_6_example_a(arg);
 
-	/* expect+1: argument is incompatible with prototype, arg #1 */
+	/* expect+1: 'pointer to int' */
 	c99_6_7_6_example_b(arg);
 
-	/* expect+1: argument is incompatible with prototype, arg #1 */
+	/* C99 says 'array[3] of pointer to int', which is close enough. */
+	/* expect+1: 'pointer to pointer to int' */
 	c99_6_7_6_example_c(arg);
 
-	/* expect+1: argument is incompatible with prototype, arg #1 */
+	/* expect+1: 'pointer to array[3] of int' */
 	c99_6_7_6_example_d(arg);
 
+	/* TODO: C99 says 'pointer to a variable length array of an unspecified number of ints' */
 	/* FIXME: no warning or error at all for an undefined function? */
 	c99_6_7_6_example_e(arg);
 
+	/* TODO: C99 says 'function with no parameter specification returning a pointer to int' */
 	/* FIXME: no warning or error at all for an undefined function? */
 	c99_6_7_6_example_f(arg);
 
-	/* expect+1: argument is incompatible with prototype, arg #1 */
+	/* TODO: fix type_name to generate '(void)' in this case */
+	/* expect+1: 'pointer to function() returning int' */
 	c99_6_7_6_example_g(arg);
 
-	/* expect+1: argument is incompatible with prototype, arg #1 */
+	/* expect+1: 'pointer to const pointer to function(unsigned int, ...) returning int' */
 	c99_6_7_6_example_h(arg);
 }
