@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.245 2021/06/28 09:14:42 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.246 2021/06/28 09:40:52 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.245 2021/06/28 09:14:42 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.246 2021/06/28 09:40:52 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -318,8 +318,8 @@ anonymize(sym_t *s)
 %type	<y_qual_ptr>	type_qualifier_list
 %type	<y_qual_ptr>	type_qualifier
 %type	<y_sym>		identifier_list
-%type	<y_sym>		abstract_decl
-%type	<y_sym>		direct_abstract_decl
+%type	<y_sym>		abstract_declarator
+%type	<y_sym>		direct_abstract_declarator
 %type	<y_sym>		vararg_parameter_type_list
 %type	<y_sym>		parameter_type_list
 %type	<y_sym>		parameter_declaration
@@ -1329,10 +1329,10 @@ parameter_declaration:
 	| declaration_specifiers deftyp param_decl {
 		$$ = declare_argument($3, false);
 	  }
-	| declmods deftyp abstract_decl {
+	| declmods deftyp abstract_declarator {
 		$$ = declare_argument($3, false);
 	  }
-	| declaration_specifiers deftyp abstract_decl {
+	| declaration_specifiers deftyp abstract_declarator {
 		$$ = declare_argument($3, false);
 	  }
 	;
@@ -1425,7 +1425,7 @@ init_rbrace:
 	  }
 	;
 
-type_name:
+type_name:			/* C99 6.7.6 */
 	  {
 		begin_declaration_level(ABSTRACT);
 	  } abstract_declaration {
@@ -1441,30 +1441,29 @@ abstract_declaration:
 	| noclass_declspecs deftyp {
 		$$ = declare_1_abstract(abstract_name());
 	  }
-	| noclass_declmods deftyp abstract_decl {
+	| noclass_declmods deftyp abstract_declarator {
 		$$ = declare_1_abstract($3);
 	  }
-	| noclass_declspecs deftyp abstract_decl {
+	| noclass_declspecs deftyp abstract_declarator {
 		$$ = declare_1_abstract($3);
 	  }
 	;
 
-/* TODO: abstract_declaration and abstract_decl sound too similar */
-abstract_decl:
+abstract_declarator:		/* C99 6.7.6 */
 	  pointer {
 		$$ = add_pointer(abstract_name(), $1);
 	  }
-	| direct_abstract_decl
-	| pointer direct_abstract_decl {
+	| direct_abstract_declarator
+	| pointer direct_abstract_declarator {
 		$$ = add_pointer($2, $1);
 	  }
-	| T_TYPEOF term {
+	| T_TYPEOF term {	/* GCC extension */
 		$$ = mktempsym($2->tn_type);
 	  }
 	;
 
-direct_abstract_decl:
-	  T_LPAREN abstract_decl T_RPAREN {
+direct_abstract_declarator:
+	  T_LPAREN abstract_declarator T_RPAREN {
 		$$ = $2;
 	  }
 	| T_LBRACK T_RBRACK {
@@ -1473,13 +1472,13 @@ direct_abstract_decl:
 	| T_LBRACK array_size T_RBRACK {
 		$$ = add_array(abstract_name(), true, to_int_constant($2, false));
 	  }
-	| type_attribute direct_abstract_decl {
+	| type_attribute direct_abstract_declarator {
 		$$ = $2;
 	  }
-	| direct_abstract_decl T_LBRACK T_RBRACK {
+	| direct_abstract_declarator T_LBRACK T_RBRACK {
 		$$ = add_array($1, false, 0);
 	  }
-	| direct_abstract_decl T_LBRACK array_size T_RBRACK {
+	| direct_abstract_declarator T_LBRACK array_size T_RBRACK {
 		$$ = add_array($1, true, to_int_constant($3, false));
 	  }
 	| abstract_decl_param_list asm_or_symbolrename_opt {
@@ -1487,12 +1486,12 @@ direct_abstract_decl:
 		end_declaration_level();
 		block_level--;
 	  }
-	| direct_abstract_decl abstract_decl_param_list asm_or_symbolrename_opt {
+	| direct_abstract_declarator abstract_decl_param_list asm_or_symbolrename_opt {
 		$$ = add_function(symbolrename($1, $3), $2);
 		end_declaration_level();
 		block_level--;
 	  }
-	| direct_abstract_decl type_attribute_list
+	| direct_abstract_declarator type_attribute_list
 	;
 
 non_expr_statement:
