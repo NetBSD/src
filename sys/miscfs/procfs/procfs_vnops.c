@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.215 2020/06/27 17:29:19 christos Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.216 2021/06/28 17:52:13 chs Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.215 2020/06/27 17:29:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.216 2021/06/28 17:52:13 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -237,7 +237,7 @@ int	procfs_inactive(void *);
 int	procfs_reclaim(void *);
 #define	procfs_lock	genfs_lock
 #define	procfs_unlock	genfs_unlock
-#define	procfs_bmap	genfs_badop
+#define	procfs_bmap	genfs_eopnotsupp
 #define	procfs_strategy	genfs_badop
 int	procfs_print(void *);
 int	procfs_pathconf(void *);

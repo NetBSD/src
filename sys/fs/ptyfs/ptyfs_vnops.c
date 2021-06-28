@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.62 2020/11/27 14:43:57 christos Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.63 2021/06/28 17:52:12 chs Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.62 2020/11/27 14:43:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.63 2021/06/28 17:52:12 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,7 +144,7 @@ int	ptyfs_reclaim	(void *);
 int	ptyfs_inactive	(void *);
 #define	ptyfs_lock	genfs_lock
 #define	ptyfs_unlock	genfs_unlock
-#define	ptyfs_bmap	genfs_badop
+#define	ptyfs_bmap	genfs_eopnotsupp
 #define	ptyfs_strategy	genfs_badop
 int	ptyfs_print	(void *);
 int	ptyfs_pathconf	(void *);
