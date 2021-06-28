@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.242 2021/06/28 07:55:05 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.243 2021/06/28 08:52:55 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.242 2021/06/28 07:55:05 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.243 2021/06/28 08:52:55 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -137,7 +137,7 @@ anonymize(sym_t *s)
 	tnode_t	*y_tnode;
 	range_t	y_range;
 	strg_t	*y_string;
-	pqinf_t	*y_pqinf;
+	qual_ptr *y_qual_ptr;
 	bool	y_seen_statement;
 	struct generic_association_types *y_types;
 };
@@ -306,16 +306,16 @@ anonymize(sym_t *s)
 %type	<y_sym>		enumeration_constant
 %type	<y_sym>		notype_direct_decl
 %type	<y_sym>		type_direct_decl
-%type	<y_pqinf>	pointer
-%type	<y_pqinf>	asterisk
+%type	<y_qual_ptr>	pointer
+%type	<y_qual_ptr>	asterisk
 %type	<y_sym>		param_decl
 %type	<y_sym>		param_list
 %type	<y_sym>		abstract_decl_param_list
 %type	<y_sym>		direct_param_decl
 %type	<y_sym>		notype_param_decl
 %type	<y_sym>		direct_notype_param_decl
-%type	<y_pqinf>	type_qualifier_list
-%type	<y_pqinf>	type_qualifier
+%type	<y_qual_ptr>	type_qualifier_list
+%type	<y_qual_ptr>	type_qualifier
 %type	<y_sym>		identifier_list
 %type	<y_sym>		abstract_decl
 %type	<y_sym>		direct_abstract_decl
@@ -1203,16 +1203,14 @@ direct_notype_param_decl:
 pointer:
 	  asterisk
 	| asterisk type_qualifier_list {
-		/* TODO: rename pqinf_t to be more expressive */
-		/* TODO: then rename the merge function */
-		$$ = merge_pointers_and_qualifiers($1, $2);
+		$$ = merge_qualified_pointer($1, $2);
 	  }
 	| asterisk pointer {
-		$$ = merge_pointers_and_qualifiers($1, $2);
+		$$ = merge_qualified_pointer($1, $2);
 	  }
 	| asterisk type_qualifier_list pointer {
-		$$ = merge_pointers_and_qualifiers($1, $2);
-		$$ = merge_pointers_and_qualifiers($$, $3);
+		$$ = merge_qualified_pointer($1, $2);
+		$$ = merge_qualified_pointer($$, $3);
 	  }
 	;
 
@@ -1227,7 +1225,7 @@ asterisk:
 type_qualifier_list:
 	  type_qualifier
 	| type_qualifier_list type_qualifier {
-		$$ = merge_pointers_and_qualifiers($1, $2);
+		$$ = merge_qualified_pointer($1, $2);
 	  }
 	;
 

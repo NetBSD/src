@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.112 2021/06/27 20:47:13 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.113 2021/06/28 08:52:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -163,8 +163,8 @@ extern	sym_t	*lnklst(sym_t *, sym_t *);
 extern	void	check_type(sym_t *);
 extern	sym_t	*declarator_1_struct_union(sym_t *);
 extern	sym_t	*bitfield(sym_t *, int);
-extern	pqinf_t	*merge_pointers_and_qualifiers(pqinf_t *, pqinf_t *);
-extern	sym_t	*add_pointer(sym_t *, pqinf_t *);
+extern	qual_ptr *merge_qualified_pointer(qual_ptr *, qual_ptr *);
+extern	sym_t	*add_pointer(sym_t *, qual_ptr *);
 extern	sym_t	*add_array(sym_t *, bool, int);
 extern	sym_t	*add_function(sym_t *, sym_t *);
 extern	void	check_function_definition(sym_t *, bool);

@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.107 2021/06/27 20:47:13 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.108 2021/06/28 08:52:55 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -374,16 +374,13 @@ typedef	struct dinfo {
 	struct	dinfo *d_next;	/* next level */
 } dinfo_t;
 
-/*
- * Used to collect information about pointers and qualifiers in
- * declarators.
- */
-typedef	struct pqinf {
-	bool	p_pointer: 1;
+/* One level of pointer indirection in declarators, including qualifiers. */
+typedef	struct qual_ptr {
 	bool	p_const: 1;
 	bool	p_volatile: 1;
-	struct	pqinf *p_next;
-} pqinf_t;
+	bool	p_pointer: 1;
+	struct	qual_ptr *p_next;
+} qual_ptr;
 
 /*
  * The values of the 'case' labels, linked via cl_next in reverse order of

@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.189 2021/06/27 08:20:50 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.190 2021/06/28 08:52:55 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.189 2021/06/27 08:20:50 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.190 2021/06/28 08:52:55 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1286,40 +1286,41 @@ bitfield(sym_t *dsym, int len)
 }
 
 /*
- * Collect information about a sequence of asterisks and qualifiers in a
- * list of type pqinf_t.
- * Qualifiers always refer to the left asterisk.
- * The rightmost asterisk will be at the top of the list.
+ * A sequence of asterisks and qualifiers, from right to left.  For example,
+ * 'const ***volatile **const volatile' results in [cvp, p, vp, p, p].  The
+ * leftmost 'const' is not included in this list, it is stored in dcs->d_const
+ * instead.
  */
-pqinf_t *
-merge_pointers_and_qualifiers(pqinf_t *p1, pqinf_t *p2)
+qual_ptr *
+merge_qualified_pointer(qual_ptr *p1, qual_ptr *p2)
 {
-	pqinf_t	*p;
+	qual_ptr *tail;
 
 	if (p2->p_pointer) {
-		/* left '*' at the end of the list */
-		for (p = p2; p->p_next != NULL; p = p->p_next)
+		/* append p1 to p2, keeping p2 */
+		for (tail = p2; tail->p_next != NULL; tail = tail->p_next)
 			continue;
-		p->p_next = p1;
+		tail->p_next = p1;
 		return p2;
-	} else {
-		if (p2->p_const) {
-			if (p1->p_const) {
-				/* duplicate '%s' */
-				warning(10, "const");
-			}
-			p1->p_const = true;
-		}
-		if (p2->p_volatile) {
-			if (p1->p_volatile) {
-				/* duplicate '%s' */
-				warning(10, "volatile");
-			}
-			p1->p_volatile = true;
-		}
-		free(p2);
-		return p1;
 	}
+
+	/* merge p2 into p1, keeping p1 */
+	if (p2->p_const) {
+		if (p1->p_const) {
+			/* duplicate '%s' */
+			warning(10, "const");
+		}
+		p1->p_const = true;
+	}
+	if (p2->p_volatile) {
+		if (p1->p_volatile) {
+			/* duplicate '%s' */
+			warning(10, "volatile");
+		}
+		p1->p_volatile = true;
+	}
+	free(p2);
+	return p1;
 }
 
 /*
@@ -1331,10 +1332,10 @@ merge_pointers_and_qualifiers(pqinf_t *p1, pqinf_t *p2)
  * declarator. The new type extension is inserted between both.
  */
 sym_t *
-add_pointer(sym_t *decl, pqinf_t *pi)
+add_pointer(sym_t *decl, qual_ptr *p)
 {
-	type_t	**tpp, *tp;
-	pqinf_t	*npi;
+	type_t **tpp, *tp;
+	qual_ptr *next;
 
 	tpp = &decl->s_type;
 	while (*tpp != NULL && *tpp != dcs->d_type)
@@ -1342,15 +1343,15 @@ add_pointer(sym_t *decl, pqinf_t *pi)
 	if (*tpp == NULL)
 		return decl;
 
-	while (pi != NULL) {
+	while (p != NULL) {
 		*tpp = tp = getblk(sizeof(*tp));
 		tp->t_tspec = PTR;
-		tp->t_const = pi->p_const;
-		tp->t_volatile = pi->p_volatile;
+		tp->t_const = p->p_const;
+		tp->t_volatile = p->p_volatile;
 		*(tpp = &tp->t_subt) = dcs->d_type;
-		npi = pi->p_next;
-		free(pi);
-		pi = npi;
+		next = p->p_next;
+		free(p);
+		p = next;
 	}
 	return decl;
 }
