@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_155.c,v 1.4 2021/06/28 10:23:50 rillig Exp $	*/
+/*	$NetBSD: msg_155.c,v 1.5 2021/06/28 10:29:05 rillig Exp $	*/
 # 3 "msg_155.c"
 
 // Test for message: passing '%s' to incompatible '%s', arg #%d [155]
@@ -42,8 +42,7 @@ provoke_error_messages(struct incompatible arg)
 	/* FIXME: no warning or error at all for an undefined function? */
 	c99_6_7_6_example_f(arg);
 
-	/* TODO: fix type_name to generate '(void)' in this case */
-	/* expect+1: 'pointer to function() returning int' */
+	/* expect+1: 'pointer to function(void) returning int' */
 	c99_6_7_6_example_g(arg);
 
 	/* expect+1: 'pointer to const pointer to function(unsigned int, ...) returning int' */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tyname.c,v 1.41 2021/06/04 20:54:18 rillig Exp $	*/
+/*	$NetBSD: tyname.c,v 1.42 2021/06/28 10:29:05 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tyname.c,v 1.41 2021/06/04 20:54:18 rillig Exp $");
+__RCSID("$NetBSD: tyname.c,v 1.42 2021/06/28 10:29:05 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -263,14 +263,20 @@ type_name_of_function(buffer *buf, const type_t *tp)
 #ifdef t_enum /* lint1 */
 		sym_t *arg;
 
-		for (arg = tp->t_args; arg != NULL; arg = arg->s_next) {
+		arg = tp->t_args;
+		if (arg == NULL)
+			buf_add(buf, "void");
+		for (; arg != NULL; arg = arg->s_next) {
 			buf_add(buf, sep), sep = ", ";
 			buf_add(buf, type_name(arg->s_type));
 		}
 #else /* lint2 */
 		type_t **argtype;
 
-		for (argtype = tp->t_args; *argtype != NULL; argtype++) {
+		argtype = tp->t_args;
+		if (argtype == NULL)
+			buf_add(buf, "void");
+		for (; *argtype != NULL; argtype++) {
 			buf_add(buf, sep), sep = ", ";
 			buf_add(buf, type_name(*argtype));
 		}
