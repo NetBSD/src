@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.190 2021/06/28 08:52:55 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.191 2021/06/28 09:14:42 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.190 2021/06/28 08:52:55 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.191 2021/06/28 09:14:42 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1295,6 +1295,9 @@ qual_ptr *
 merge_qualified_pointer(qual_ptr *p1, qual_ptr *p2)
 {
 	qual_ptr *tail;
+
+	if (p2 == NULL)
+		return p1;	/* for optional qualifiers */
 
 	if (p2->p_pointer) {
 		/* append p1 to p2, keeping p2 */

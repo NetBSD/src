@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.244 2021/06/28 09:01:48 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.245 2021/06/28 09:14:42 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.244 2021/06/28 09:01:48 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.245 2021/06/28 09:14:42 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -314,6 +314,7 @@ anonymize(sym_t *s)
 %type	<y_sym>		direct_param_decl
 %type	<y_sym>		notype_param_decl
 %type	<y_sym>		direct_notype_param_decl
+%type	<y_qual_ptr>	type_qualifier_list_opt
 %type	<y_qual_ptr>	type_qualifier_list
 %type	<y_qual_ptr>	type_qualifier
 %type	<y_sym>		identifier_list
@@ -1132,11 +1133,6 @@ param_decl:
 	  }
 	;
 
-type_qualifier_list_opt:
-	  /* empty */
-	| type_qualifier_list
-	;
-
 array_size:
 	  type_qualifier_list_opt T_SCLASS constant_expr {
 		/* C11 6.7.6.3p7 */
@@ -1200,14 +1196,10 @@ direct_notype_param_decl:
 	;
 
 pointer:			/* C99 6.7.5 */
-	  asterisk
-	| asterisk type_qualifier_list {
+	  asterisk type_qualifier_list_opt {
 		$$ = merge_qualified_pointer($1, $2);
 	  }
-	| asterisk pointer {
-		$$ = merge_qualified_pointer($1, $2);
-	  }
-	| asterisk type_qualifier_list pointer {
+	| asterisk type_qualifier_list_opt pointer {
 		$$ = merge_qualified_pointer($1, $2);
 		$$ = merge_qualified_pointer($$, $3);
 	  }
@@ -1220,8 +1212,14 @@ asterisk:
 	  }
 	;
 
-/* TODO: try whether type_qualifier_list_opt makes the code simpler */
-type_qualifier_list:
+type_qualifier_list_opt:
+	  /* empty */ {
+		$$ = NULL;
+	  }
+	| type_qualifier_list
+	;
+
+type_qualifier_list:		/* C99 6.7.5 */
 	  type_qualifier
 	| type_qualifier_list type_qualifier {
 		$$ = merge_qualified_pointer($1, $2);
