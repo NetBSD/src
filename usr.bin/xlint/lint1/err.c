@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.120 2021/06/27 19:10:29 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.121 2021/06/28 10:23:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.120 2021/06/27 19:10:29 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.121 2021/06/28 10:23:49 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -209,7 +209,7 @@ const char *const msgs[] = {
 	"argument cannot have unknown size, arg #%d",		      /* 152 */
 	"converting '%s' to incompatible '%s' for argument %d",	      /* 153 */
 	"illegal combination of %s (%s) and %s (%s), arg #%d",	      /* 154 */
-	"argument is incompatible with prototype, arg #%d",	      /* 155 */
+	"passing '%s' to incompatible '%s', arg #%d",		      /* 155 */
 	"enum type mismatch, arg #%d (%s != %s)",		      /* 156 */
 	"ANSI C treats constant as unsigned",			      /* 157 */
 	"%s may be used before set",				      /* 158 */
