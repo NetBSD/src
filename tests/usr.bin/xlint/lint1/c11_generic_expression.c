@@ -1,4 +1,4 @@
-/*	$NetBSD: c11_generic_expression.c,v 1.5 2021/06/27 21:30:46 rillig Exp $	*/
+/*	$NetBSD: c11_generic_expression.c,v 1.6 2021/06/28 07:55:05 rillig Exp $	*/
 # 3 "c11_generic_expression.c"
 
 /*
@@ -74,4 +74,17 @@ comma_expression(char first, double second)
 	    double: 2.0
 	);
 	/* expect+1: without returning value [217] */
+}
+
+/*
+ * Ensure that assignment-expressions are accepted by the grammar, as
+ * opposed to comma-expressions.
+ */
+/* ARGSUSED */
+int
+assignment_expression(int first, int second)
+{
+	return _Generic(first = second,
+	    int: second = first
+	);
 }
