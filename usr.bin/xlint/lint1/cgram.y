@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.246 2021/06/28 09:40:52 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.247 2021/06/28 11:09:35 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.246 2021/06/28 09:40:52 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.247 2021/06/28 11:09:35 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1462,7 +1462,7 @@ abstract_declarator:		/* C99 6.7.6 */
 	  }
 	;
 
-direct_abstract_declarator:
+direct_abstract_declarator:		/* C99 6.7.6 */
 	  T_LPAREN abstract_declarator T_RPAREN {
 		$$ = $2;
 	  }
@@ -1476,6 +1476,9 @@ direct_abstract_declarator:
 		$$ = $2;
 	  }
 	| direct_abstract_declarator T_LBRACK T_RBRACK {
+		$$ = add_array($1, false, 0);
+	  }
+	| direct_abstract_declarator T_LBRACK T_ASTERISK T_RBRACK { /* C99 */
 		$$ = add_array($1, false, 0);
 	  }
 	| direct_abstract_declarator T_LBRACK array_size T_RBRACK {
