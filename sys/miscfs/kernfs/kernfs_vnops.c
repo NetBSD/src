@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.166 2020/06/27 17:29:19 christos Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.167 2021/06/28 17:52:13 chs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.166 2020/06/27 17:29:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.167 2021/06/28 17:52:13 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,7 +166,7 @@ int	kernfs_reclaim(void *);
 #define	kernfs_lock	genfs_lock
 #define	kernfs_unlock	genfs_unlock
 #define	kernfs_bmap	genfs_badop
-#define	kernfs_strategy	genfs_badop
+#define	kernfs_strategy	genfs_eopnotsupp
 int	kernfs_print(void *);
 #define	kernfs_islocked	genfs_islocked
 int	kernfs_pathconf(void *);
