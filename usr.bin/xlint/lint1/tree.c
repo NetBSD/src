@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.293 2021/06/28 10:23:49 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.294 2021/06/28 11:27:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.293 2021/06/28 10:23:49 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.294 2021/06/28 11:27:00 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -245,7 +245,10 @@ new_name_node(sym_t *sym, int follow_token)
 		sym->s_scl = EXTERN;
 		sym->s_def = DECL;
 		if (follow_token == T_LPAREN) {
-			if (sflag) {
+			if (Sflag) {
+				/* function implicitly declared to ... */
+				error(215);
+			} else if (sflag) {
 				/* function implicitly declared to ... */
 				warning(215);
 			}
