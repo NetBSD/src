@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.243 2021/06/28 08:52:55 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.244 2021/06/28 09:01:48 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.243 2021/06/28 08:52:55 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.244 2021/06/28 09:01:48 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1199,8 +1199,7 @@ direct_notype_param_decl:
 	  }
 	;
 
-/* TODO: rename 'pointer' to something less ambiguous, maybe 'pointer_level' */
-pointer:
+pointer:			/* C99 6.7.5 */
 	  asterisk
 	| asterisk type_qualifier_list {
 		$$ = merge_qualified_pointer($1, $2);
