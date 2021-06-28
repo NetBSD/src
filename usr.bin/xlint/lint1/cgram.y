@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.241 2021/06/27 21:52:18 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.242 2021/06/28 07:55:05 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.241 2021/06/27 21:52:18 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.242 2021/06/28 07:55:05 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1659,12 +1659,12 @@ generic_assoc_list:		/* C11 6.5.1.1 */
 	;
 
 generic_association:		/* C11 6.5.1.1 */
-	  type_name T_COLON expr {
+	  type_name T_COLON assignment_expression {
 		$$ = getblk(sizeof(*$$));
 		$$->gat_arg = $1;
 		$$->gat_result = $3;
 	  }
-	| T_DEFAULT T_COLON expr {
+	| T_DEFAULT T_COLON assignment_expression {
 		$$ = getblk(sizeof(*$$));
 		$$->gat_arg = NULL;
 		$$->gat_result = $3;
