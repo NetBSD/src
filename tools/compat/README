@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.17 2021/06/28 07:16:46 cjep Exp $
+$NetBSD: README,v 1.18 2021/06/28 07:18:01 cjep Exp $
 
 Special notes for cross-hosting a NetBSD build on certain platforms.  
 Only those platforms which have been tested to complete a "build.sh" run
@@ -14,7 +14,7 @@ In addition all hosts must provide the following local tools:
   zlib and headers (this requirement may be dropped in future)
 
 FreeBSD
-=======
+-------
 
 build.sh was recently tested on:
 * FreeBSD 13 (amd64, aarch64) 
@@ -23,7 +23,7 @@ build.sh was recently tested on:
 * FreeBSD 10.4 (amd64)
 
 Linux
-=====
+-----
 
 build.sh has been tested on:
 * Amazon Linux 2 (x86)
@@ -45,7 +45,7 @@ build.sh has been tested on:
 * There is a known build problem on Linux/aarch64 with glibc <2.28
 
 macOS/Darwin
-============
+------------
 
 build.sh was recently tested on:
 * macOS Big Sur (x86)
@@ -57,12 +57,12 @@ Previously, there have been issues building on case-insensitive
 HFS filesystems. build.sh is not working yet on M1-based Macs.
 
 HP-UX
-=====
+-----
 
 * zlib must be available.
 
 NetBSD (earlier releases)
-=========================
+-------------------------
 
 * Tested on NetBSD 1.5.2 (machine-independently).
 * Should need no special setup.
@@ -70,7 +70,7 @@ NetBSD (earlier releases)
   compat_defs.h will error out if it finds it defined. 
 
 Solaris
-=======
+-------
 
 (updated instruction for Solaris 11 further below)
 
