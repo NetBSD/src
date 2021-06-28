@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_or_64.S,v 1.11 2019/09/15 14:55:04 skrll Exp $	*/
+/*	$NetBSD: atomic_or_64.S,v 1.12 2021/06/28 09:00:45 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #ifdef _ARM_ARCH_6
 
 ENTRY_NP(_atomic_or_64_nv)
-	push	{r3,r4}			/* save temporary */
+	push	{r3, r4}		/* save temporary */
 #ifndef __ARM_EABI__
 	mov	r3, r2
 	mov	r2, r1
@@ -50,7 +50,7 @@ ENTRY_NP(_atomic_or_64_nv)
 #else
 	mcr	p15, 0, r4, c7, c10, 5	/* data memory barrier */
 #endif
-	pop	{r3,r4}			/* restore temporary */
+	pop	{r3, r4}		/* restore temporary */
 	RET				/* return new value */
 END(_atomic_or_64_nv)
 
