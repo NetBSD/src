@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.135 2021/05/01 15:08:14 hannken Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.136 2021/06/28 17:52:13 chs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.135 2021/05/01 15:08:14 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.136 2021/06/28 17:52:13 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,7 @@ int	fdesc_inactive(void *);
 int	fdesc_reclaim(void *);
 #define	fdesc_lock	genfs_lock
 #define	fdesc_unlock	genfs_unlock
-#define	fdesc_bmap	genfs_badop
+#define	fdesc_bmap	genfs_eopnotsupp
 #define	fdesc_strategy	genfs_badop
 int	fdesc_print(void *);
 int	fdesc_pathconf(void *);
