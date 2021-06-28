@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.191 2021/06/28 09:14:42 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.192 2021/06/28 10:07:43 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.191 2021/06/28 09:14:42 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.192 2021/06/28 10:07:43 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -2433,6 +2433,7 @@ declare_argument(sym_t *sym, bool initflg)
 		error(52, sym->s_name);
 	}
 
+	lint_assert(sym->s_type != NULL);
 	if ((t = sym->s_type->t_tspec) == ARRAY) {
 		sym->s_type = derive_type(sym->s_type->t_subt, PTR);
 	} else if (t == FUNC) {

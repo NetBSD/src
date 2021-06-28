@@ -1,1 +1,7 @@
-msg_155.c(6): error: syntax error ':' [249]
+msg_155.c(11): error: syntax error ']' [249]
+msg_155.c(25): warning: argument is incompatible with prototype, arg #1 [155]
+msg_155.c(28): warning: argument is incompatible with prototype, arg #1 [155]
+msg_155.c(31): warning: argument is incompatible with prototype, arg #1 [155]
+msg_155.c(34): warning: argument is incompatible with prototype, arg #1 [155]
+msg_155.c(43): warning: argument is incompatible with prototype, arg #1 [155]
+msg_155.c(46): warning: argument is incompatible with prototype, arg #1 [155]
