@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.292 2021/06/27 21:16:40 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.293 2021/06/28 10:23:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.292 2021/06/27 21:16:40 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.293 2021/06/28 10:23:49 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1490,8 +1490,8 @@ check_assign_types_compatible(op_t op, int arg,
 		error(211, type_name(ltp), type_name(rtp));
 		break;
 	case FARG:
-		/* argument is incompatible with prototype, arg #%d */
-		warning(155, arg);
+		/* passing '%s' to incompatible '%s', arg #%d */
+		warning(155, type_name(rtp), type_name(ltp), arg);
 		break;
 	default:
 		warn_incompatible_types(op, ltp, lt, rtp, rt);
