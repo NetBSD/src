@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_verbose.h,v 1.2 2010/06/06 18:58:22 pgoyette Exp $ */
+/*	$NetBSD: mii_verbose.h,v 1.3 2021/06/29 21:03:36 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -33,16 +33,17 @@
 #ifndef _DEV_MII_MII_VERBOSE_H_
 #define	_DEV_MII_MII_VERBOSE_H_
 
+#include <dev/dev_verbose.h>
+
+DEV_VERBOSE_DECLARE(mii);
+
 #ifdef _KERNEL
 
 /* Misc. stuff for miiverbose module */
 
-extern const char *	(*mii_get_descr)(int, int);
+const char *	mii_get_descr(char *, size_t, uint32_t, uint32_t);
 
-const char *	mii_get_descr_stub(int, int);
-void		mii_load_verbose(void);
-
-extern int	mii_verbose_loaded;
+extern int	miiverbose_loaded;
 
 #endif /* _KERNEL */
 
