@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2812 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2813 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -383,3 +383,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	libfido2: Import 1.7.0 [christos 20210616]
 	m68k: Switch to GCC 10.  [mrg 20210619]
 	arm: Switch to GCC 10.  [mrg 20210619]
+	uscanner(4): Removed from the tree. [nia 20210629]
