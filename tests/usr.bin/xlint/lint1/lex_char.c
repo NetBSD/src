@@ -1,4 +1,4 @@
-/*	$NetBSD: lex_char.c,v 1.3 2021/06/29 07:17:43 rillig Exp $	*/
+/*	$NetBSD: lex_char.c,v 1.4 2021/06/29 07:28:01 rillig Exp $	*/
 # 3 "lex_char.c"
 
 /*
@@ -58,3 +58,14 @@ test(void)
 	/* U+000D carriage return */
 	sink('\r');
 }
+
+/*
+ * Even though backslash-newline is not supported by C99, lint accepts it
+ * in any mode, even for traditional C.
+ */
+char ch = '\
+\
+\
+\
+\
+x';
