@@ -277,6 +277,7 @@ case ${host} in
   *-*-openbsd*)
     out_host_hook_obj=host-openbsd.o
     host_xmake_file="${host_xmake_file} x-openbsd"
+    host_lto_plugin_soname=liblto_plugin.so.0.0
     ;;
   *-*-netbsd*)
     out_host_hook_obj=host-netbsd.o
