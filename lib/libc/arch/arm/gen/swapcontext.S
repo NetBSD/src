@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.15 2018/11/21 21:01:41 skrll Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.16 2021/06/29 23:29:12 rin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "assym.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-        RCSID("$NetBSD: swapcontext.S,v 1.15 2018/11/21 21:01:41 skrll Exp $")
+        RCSID("$NetBSD: swapcontext.S,v 1.16 2021/06/29 23:29:12 rin Exp $")
 #endif /* LIBC_SCCS && !lint */
 
 ENTRY(swapcontext)
@@ -85,7 +85,9 @@ ENTRY(swapcontext)
 	b	PLT_SYM(_C_LABEL(setcontext))
 #else
 	push	{lr}
+	sub	sp, #4
 	bl	PLT_SYM(_C_LABEL(setcontext))
+	add	sp, #4
 	pop	{pc}
 #endif
 #if defined(__ARM_EABI__) && defined(__UNWIND_TABLES__)
