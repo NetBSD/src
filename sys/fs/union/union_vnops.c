@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.75 2021/06/29 22:34:07 dholland Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.76 2021/06/29 22:38:46 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.75 2021/06/29 22:34:07 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.76 2021/06/29 22:38:46 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.75 2021/06/29 22:34:07 dholland Ex
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
 
+int union_parsepath(void *);
 int union_lookup(void *);
 int union_create(void *);
 int union_whiteout(void *);
@@ -144,7 +145,7 @@ static int union_lookup1(struct vnode *, struct vnode **,
 int (**union_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc union_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
-	{ &vop_parsepath_desc, genfs_parsepath },	/* parsepath */
+	{ &vop_parsepath_desc, union_parsepath },	/* parsepath */
 	{ &vop_lookup_desc, union_lookup },		/* lookup */
 	{ &vop_create_desc, union_create },		/* create */
 	{ &vop_whiteout_desc, union_whiteout },		/* whiteout */
@@ -196,6 +197,40 @@ const struct vnodeopv_desc union_vnodeop_opv_desc =
 #define NODE_IS_SPECIAL(vp) \
 	((vp)->v_type == VBLK || (vp)->v_type == VCHR || \
 	(vp)->v_type == VSOCK || (vp)->v_type == VFIFO)
+
+int
+union_parsepath(void *v)
+{
+	struct vop_parsepath_args /* {
+		struct vnode *a_dvp;
+		const char *a_name;
+		size_t *a_retval;
+	} */ *ap = v;
+	struct vnode *upperdvp, *lowerdvp;
+	size_t upper, lower;
+	int error;
+
+	upperdvp = UPPERVP(ap->a_dvp);
+	lowerdvp = LOWERVP(ap->a_dvp);
+
+	error = VOP_PARSEPATH(upperdvp, ap->a_name, &upper);
+	if (error) {
+		return error;
+	}
+
+	error = VOP_PARSEPATH(lowerdvp, ap->a_name, &lower);
+	if (error) {
+		return error;
+	}
+
+	/*
+	 * If they're different, use the larger one. This is not a
+	 * comprehensive solution, but it's sufficient for the
+	 * non-default cases of parsepath that currently exist.
+	 */
+	*ap->a_retval = MAX(upper, lower);
+	return 0;
+}
 
 static int
 union_lookup1(struct vnode *udvp, struct vnode **dvpp, struct vnode **vpp,
