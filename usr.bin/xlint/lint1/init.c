@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.199 2021/06/19 15:23:57 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.200 2021/06/29 21:05:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.199 2021/06/19 15:23:57 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.200 2021/06/29 21:05:32 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -381,14 +381,17 @@ static void
 check_init_expr(const type_t *tp, sym_t *sym, tnode_t *tn)
 {
 	tnode_t *ln;
+	type_t *ltp;
 	tspec_t lt, rt;
 	struct memory_block *tmem;
+
+	ltp = expr_dup_type(tp);
+	ltp->t_const = false;
 
 	/* Create a temporary node for the left side. */
 	ln = expr_zalloc(sizeof(*ln));
 	ln->tn_op = NAME;
-	ln->tn_type = expr_dup_type(tp);
-	ln->tn_type->t_const = false;
+	ln->tn_type = ltp;
 	ln->tn_lvalue = true;
 	ln->tn_sym = sym;
 
