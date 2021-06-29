@@ -1,7 +1,25 @@
-/*	$NetBSD: msg_077.c,v 1.2 2021/02/21 09:07:58 rillig Exp $	*/
+/*	$NetBSD: msg_077.c,v 1.3 2021/06/29 07:17:43 rillig Exp $	*/
 # 3 "msg_077.c"
 
-// Test for message: bad octal digit %c [77]
+/* Test for message: bad octal digit %c [77] */
 
-TODO: "Add example code that triggers the above message." /* expect: 249 */
-TODO: "Add example code that almost triggers the above message."
+/* lint1-flags: -tw */
+
+char single_digit = '\8';	/* expect: bad octal digit 8 [77] */
+
+/*
+ * Before lex.c 1.47 from 2021-06-29, lint intended to detect a "bad octal
+ * digit" following good octal digits, but the corresponding code had an
+ * unsatisfiable guard clause.
+ *
+ * The C Reference Manual 1978, 2.4.3 "Character constants" does not mention
+ * non-octal digits, therefore this code must have been due to a particular
+ * C compiler's interpretation.  It's even wrong according to the Reference
+ * Manual to interpret '\088' as anything else than a malformed character
+ * literal.
+ *
+ * That code has been removed since nobody runs lint in traditional C mode
+ * anyway.
+ * https://mail-index.netbsd.org/tech-toolchain/2021/03/16/msg003933.html
+ */
+char several_digits = '\08';

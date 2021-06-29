@@ -1,1 +1,1 @@
-msg_077.c(6): error: syntax error ':' [249]
+msg_077.c(8): warning: bad octal digit 8 [77]

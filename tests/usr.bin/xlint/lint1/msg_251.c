@@ -1,7 +1,10 @@
-/*	$NetBSD: msg_251.c,v 1.2 2021/02/21 09:07:58 rillig Exp $	*/
+/*	$NetBSD: msg_251.c,v 1.3 2021/06/29 07:17:43 rillig Exp $	*/
 # 3 "msg_251.c"
 
 // Test for message: malformed integer constant [251]
 
-TODO: "Add example code that triggers the above message." /* expect: 249 */
-TODO: "Add example code that almost triggers the above message."
+/* expect+1: malformed integer constant */
+int lll = 123LLL;
+
+/* expect+1: malformed integer constant */
+unsigned int uu = 123UU;
