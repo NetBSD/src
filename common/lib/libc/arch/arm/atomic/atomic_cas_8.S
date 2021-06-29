@@ -1,4 +1,4 @@
-/* $NetBSD: atomic_cas_8.S,v 1.7 2014/03/04 16:15:28 matt Exp $ */
+/* $NetBSD: atomic_cas_8.S,v 1.8 2021/06/29 06:28:07 skrll Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@ ENTRY_NP(_atomic_cas_8)
 	mcr	p15, 0, r3, c7, c10, 4	/* data synchronization barrier */
 #endif
 2:	RET				/* return. */
-	END(_atomic_cas_8)
+END(_atomic_cas_8)
 
 ATOMIC_OP_ALIAS(atomic_cas_8,_atomic_cas_8)
 STRONG_ALIAS(_atomic_cas_char,_atomic_cas_8)
