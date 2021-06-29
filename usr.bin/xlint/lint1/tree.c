@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.294 2021/06/28 11:27:00 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.295 2021/06/29 10:12:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.294 2021/06/28 11:27:00 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.295 2021/06/29 10:12:35 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2257,9 +2257,9 @@ convert_constant_check_range_signed(op_t op, int arg)
  * of unsigned types or all truncated bits plus the
  * msb of the target for signed types are considered
  * to be significant bits. Loss of significant bits
- * means that at least on of the bits was set in an
- * unsigned type or that at least one, but not all of
- * the bits was set in an signed type.
+ * means that at least one of the bits was set in an
+ * unsigned type or that at least one but not all of
+ * the bits was set in a signed type.
  * Loss of significant bits means that it is not
  * possible, also not with necessary casts, to convert
  * back to the original type. A example for a
