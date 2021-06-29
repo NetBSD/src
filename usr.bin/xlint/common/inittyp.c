@@ -1,4 +1,4 @@
-/*	$NetBSD: inittyp.c,v 1.22 2021/03/27 11:08:00 rillig Exp $	*/
+/*	$NetBSD: inittyp.c,v 1.23 2021/06/29 21:33:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: inittyp.c,v 1.22 2021/03/27 11:08:00 rillig Exp $");
+__RCSID("$NetBSD: inittyp.c,v 1.23 2021/06/29 21:33:09 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -77,7 +77,8 @@ inittyp(void)
 		typeinfo(BOOL, BOOL, BOOL, CHAR_SIZE, 1,
 		    1, 1, 0, 1, 1, 0, "_Bool"),
 		typeinfo(CHAR, SCHAR, UCHAR, CHAR_SIZE, 8,
-		    1, 0, 0, 1, 1, 0, "char"),
+		    1, /*CONSTCOND*/ TARG_CHAR_MIN == 0 ? 1 : 0,
+		    /* */ 0, 1, 1, 0, "char"),
 		typeinfo(SCHAR, SCHAR, UCHAR, CHAR_SIZE, 8,
 		    1, 0, 0, 1, 1, 0, "signed char"),
 		typeinfo(UCHAR, SCHAR, UCHAR, CHAR_SIZE, 8,
