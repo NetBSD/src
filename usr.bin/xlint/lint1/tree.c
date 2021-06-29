@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.297 2021/06/29 20:44:38 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.298 2021/06/29 21:16:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.297 2021/06/29 20:44:38 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.298 2021/06/29 21:16:54 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2402,13 +2402,8 @@ convert_constant(op_t op, int arg, const type_t *tp, val_t *nv, val_t *v)
 	}
 
 	if (is_integer(nt)) {
-		/*
-		 * FIXME: There must be no sign extension when converting
-		 *  from int to char on a platform where char == unsigned
-		 *  char.  See test lex_char_uchar.c.
-		 */
 		sz = tp->t_bitfield ? tp->t_flen : size_in_bits(nt);
-		nv->v_quad = xsign(nv->v_quad, nt, sz);
+		nv->v_quad = convert_integer(nv->v_quad, nt, sz);
 	}
 
 	if (range_check && op != CVT)
@@ -3027,7 +3022,7 @@ fold(tnode_t *tn)
 		 * shifts of signed values are implementation dependent.
 		 */
 		q = ul >> sr;
-		q = xsign(q, t, size_in_bits(t) - (int)sr);
+		q = convert_integer(q, t, size_in_bits(t) - (int)sr);
 		break;
 	case LT:
 		q = (utyp ? ul < ur : sl < sr) ? 1 : 0;
@@ -3068,7 +3063,7 @@ fold(tnode_t *tn)
 			warning(141, op_name(tn->tn_op));
 	}
 
-	v->v_quad = xsign(q, t, -1);
+	v->v_quad = convert_integer(q, t, -1);
 
 	cn = expr_new_constant(tn->tn_type, v);
 	if (tn->tn_left->tn_system_dependent)
