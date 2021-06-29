@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.485 2021/05/17 04:07:43 yamaguchi Exp $	*/
+/*	$NetBSD: if.c,v 1.486 2021/06/29 21:19:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.485 2021/05/17 04:07:43 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.486 2021/06/29 21:19:58 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -702,10 +702,9 @@ skip:
  *     ether_ifattach(ifp, enaddr);
  *     if_register(ifp);
  */
-int
+void
 if_initialize(ifnet_t *ifp)
 {
-	int rv = 0;
 
 	KASSERT(if_indexlim > 0);
 	TAILQ_INIT(&ifp->if_addrlist);
@@ -748,25 +747,11 @@ if_initialize(ifnet_t *ifp)
 	psref_target_init(&ifp->if_psref, ifnet_psref_class);
 	ifp->if_ioctl_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 	LIST_INIT(&ifp->if_multiaddrs);
-	if ((rv = if_stats_init(ifp)) != 0) {
-		goto fail;
-	}
+	if_stats_init(ifp);
 
 	IFNET_GLOBAL_LOCK();
 	if_getindex(ifp);
 	IFNET_GLOBAL_UNLOCK();
-
-	return 0;
-
-fail:
-	IF_AFDATA_LOCK_DESTROY(ifp);
-
-	pfil_run_ifhooks(if_pfil, PFIL_IFNET_DETACH, ifp);
-	(void)pfil_head_destroy(ifp->if_pfil);
-
-	IFQ_LOCK_DESTROY(&ifp->if_snd);
-
-	return rv;
 }
 
 /*
@@ -1142,19 +1127,13 @@ if_input(struct ifnet *ifp, struct mbuf *m)
  * migrate softint-based if_input without much changes. If you don't
  * want to enable it, use if_initialize instead.
  */
-int
+void
 if_attach(ifnet_t *ifp)
 {
-	int rv;
 
-	rv = if_initialize(ifp);
-	if (rv != 0)
-		return rv;
-
+	if_initialize(ifp);
 	ifp->if_percpuq = if_percpuq_create(ifp);
 	if_register(ifp);
-
-	return 0;
 }
 
 void
