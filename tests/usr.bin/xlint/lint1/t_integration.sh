@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.64 2021/06/29 08:46:10 rillig Exp $
+# $NetBSD: t_integration.sh,v 1.65 2021/06/29 09:19:17 rillig Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -27,7 +27,7 @@
 
 lint1=/usr/libexec/lint1
 
-machine_arch="$(sysctl -n hw.machine_arch)"
+: "${machine_arch:="$(sysctl -n hw.machine_arch)"}"
 
 
 configure_test_case()
