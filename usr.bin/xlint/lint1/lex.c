@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.46 2021/06/20 20:32:42 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.47 2021/06/29 07:23:21 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.46 2021/06/20 20:32:42 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.47 2021/06/29 07:23:21 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -987,10 +987,7 @@ get_escaped_char(int delim)
 			do {
 				v = (v << 3) + (c - '0');
 				c = inpc();
-			} while (--n > 0 && isdigit(c) && (tflag || c <= '7'));
-			if (tflag && n > 0 && isdigit(c))
-				/* bad octal digit %c */
-				warning(77, c);
+			} while (--n > 0 && '0' <= c && c <= '7');
 			pbc = c;
 			if (v > TARG_UCHAR_MAX) {
 				/* character escape does not fit in character */
