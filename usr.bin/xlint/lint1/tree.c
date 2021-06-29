@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.296 2021/06/29 14:19:51 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.297 2021/06/29 20:44:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.296 2021/06/29 14:19:51 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.297 2021/06/29 20:44:38 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2401,15 +2401,7 @@ convert_constant(op_t op, int arg, const type_t *tp, val_t *nv, val_t *v)
 		v->v_unsigned_since_c90 = false;
 	}
 
-	switch (nt) {
-	case FLOAT:
-	case FCOMPLEX:
-	case DOUBLE:
-	case DCOMPLEX:
-	case LDOUBLE:
-	case LCOMPLEX:
-		break;
-	default:
+	if (is_integer(nt)) {
 		/*
 		 * FIXME: There must be no sign extension when converting
 		 *  from int to char on a platform where char == unsigned
@@ -2417,7 +2409,6 @@ convert_constant(op_t op, int arg, const type_t *tp, val_t *nv, val_t *v)
 		 */
 		sz = tp->t_bitfield ? tp->t_flen : size_in_bits(nt);
 		nv->v_quad = xsign(nv->v_quad, nt, sz);
-		break;
 	}
 
 	if (range_check && op != CVT)
