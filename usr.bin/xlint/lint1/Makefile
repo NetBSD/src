@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.74 2021/06/28 09:09:14 mrg Exp $
+#	$NetBSD: Makefile,v 1.75 2021/06/29 07:37:34 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -94,8 +94,6 @@ add-test: .PHONY
 		"FILES+=		$$test.exp" \
 		'.' 'w' 'q' \
 	| ed Makefile; \
-	${MAKE} sync-mi; \
-	printf '%s\n' '/^test_case /i' "test_case $$test" '.' 'w' 'q' \
-	| ed t_integration.sh
+	${MAKE} sync-mi
 
 .include <bsd.prog.mk>
