@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.69 2021/06/29 09:19:17 rillig Exp $
+# $NetBSD: Makefile,v 1.70 2021/06/29 09:44:25 rillig Exp $
 
 NOMAN=		# defined
 MAX_MESSAGE=	345		# see lint1/err.c
@@ -160,5 +160,8 @@ sync-mi: .PHONY
 	distrib/sets/fmt-list "$$mi.tmp";				\
 	mv "$$mi.tmp" "$$mi";						\
 	cvs diff "$$mi" || true
+
+accept: .PHONY
+	@sh ./accept.sh ''
 
 .include <bsd.test.mk>
