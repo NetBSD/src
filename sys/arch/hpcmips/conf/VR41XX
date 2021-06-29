@@ -1,4 +1,4 @@
-# $NetBSD: VR41XX,v 1.75 2020/05/16 13:46:11 maya Exp $
+# $NetBSD: VR41XX,v 1.76 2021/06/29 10:22:35 nia Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/hpcmips/conf/std.hpcmips"
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
-#ident 		"GENERIC-$Revision: 1.75 $"
+#ident 		"GENERIC-$Revision: 1.76 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -495,9 +495,6 @@ ucom*	at uvisor?
 # Kyocera AIR-EDGE PHONE
 ukyopon* at uhub? port ?
 ucom*	at ukyopon? portno ?
-
-# USB scanners
-#uscanner* at uhub? port ?
 
 # USB scanners that use SCSI emulation, e.g., HP5300
 usscanner* at uhub? port ?

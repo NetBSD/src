@@ -1,4 +1,4 @@
-#	$NetBSD: majors.evbppc,v 1.36 2020/04/04 16:06:13 jdolecek Exp $
+#	$NetBSD: majors.evbppc,v 1.37 2021/06/29 10:22:35 nia Exp $
 #
 # Device majors for evbppc
 # (When possible, make entries the same as macppc)
@@ -54,7 +54,7 @@ device-major	audio		char 48			audio
 device-major	midi		char 49			midi
 device-major	sequencer	char 50			sequencer
 #device-major	obsolete	char 51			obsolete (urio)
-device-major	uscanner	char 52			uscanner
+#device-major	obsolete	char 52			obsolete (uscanner)
 #				char 53
 #device-major	obsolete	char 54			obsolete (isdn)
 #device-major	obsolete	char 55			obsolete (isdnctl)

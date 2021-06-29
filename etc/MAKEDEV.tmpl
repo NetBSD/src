@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.222 2020/12/06 02:57:29 jmcneill Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.223 2021/06/29 10:22:33 nia Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -180,7 +180,6 @@
 #	uhid*	USB generic HID devices
 #	ulpt*	USB printer devices
 #	ugen*	USB generic devices
-#	uscanner*	USB scanners
 #	ttyHS*	USB Option N.V. modems
 #	ttyU*	USB modems
 #	ttyY*	USB serial adapters
@@ -924,7 +923,6 @@ usbs)
 	makedev ttyU0 ttyU1 ttyU2 ttyU3 ttyU4 ttyU5 ttyU6 ttyU7
 	makedev ttyY0 ttyY1
 	makedev ttyHS0
-	makedev uscanner0 uscanner1
 	makedev utoppy0 utoppy1
 	makedev ugen0 ugen1 ugen2 ugen3
 	;;
@@ -969,11 +967,6 @@ ulpt[0-9]*)
 	unit=${i#ulpt}
 	mkdev ulpt$unit c %ulpt_chr% $unit
 	mkdev ulpn$unit c %ulpt_chr% $(($unit + 64))
-	;;
-
-uscanner[0-9]*)
-	unit=${i#uscanner}
-	mkdev uscanner$unit c %uscanner_chr% $unit
 	;;
 
 utoppy[0-9]*)

@@ -1,4 +1,4 @@
-#	$NetBSD: SHEEVAPLUG,v 1.73 2021/01/20 01:20:26 nia Exp $
+#	$NetBSD: SHEEVAPLUG,v 1.74 2021/06/29 10:22:35 nia Exp $
 #
 #  This configuration supports for generically Marvell SheevaPlug
 #
@@ -346,9 +346,6 @@ ucom*	at uvisor?
 # Kyocera AIR-EDGE PHONE
 ukyopon* at uhub? port ?
 ucom*	at ukyopon? portno ?
-
-# USB scanners
-#uscanner* at uhub? port ?
 
 # USB scanners that use SCSI emulation, e.g., HP5300
 usscanner* at uhub? port ?
