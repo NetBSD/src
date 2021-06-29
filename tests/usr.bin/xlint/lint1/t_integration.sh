@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.65 2021/06/29 09:19:17 rillig Exp $
+# $NetBSD: t_integration.sh,v 1.66 2021/06/29 13:58:13 rillig Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -36,12 +36,43 @@ configure_test_case()
 
 	# shellcheck disable=SC2016
 	awk='
-		function is_ilp32() {
-			return match(machine_arch, /^(arm|coldfire|hppa|i386|m68000|m68k|mips|mips64|or1k|powerpc|riscv32|sh3|sparc|vax)$/)
+		BEGIN {
+			# see usr.bin/xlint/arch/.../targparam.h
+			platform["aarch64"]	= "schar lp64  long ldbl-128"
+			platform["alpha"]	= "schar lp64  long ldbl-64"
+			platform["arm"]		= "uchar ilp32 long ldbl-64"
+			platform["coldfire"]	= "schar ilp32 int  ldbl-64"
+			platform["hppa"]	= "schar ilp32 long ldbl-64"
+			platform["i386"]	= "schar ilp32 int  ldbl-96"
+			platform["ia64"]	= "schar lp64  long ldbl-128"
+			platform["m68000"]	= "schar ilp32 int  ldbl-64"
+			platform["m68k"]	= "schar ilp32 int  ldbl-96"
+			platform["mips"]	= "schar ilp32 ???? ldbl-64"
+			platform["mips64"]	= "schar ilp32 long ldbl-128"
+			platform["mipsn64"]	= "schar lp64  long ldbl-128"
+			platform["or1k"]	= "schar ilp32 int  ldbl-64"
+			platform["powerpc"]	= "uchar ilp32 int  ldbl-64"
+			platform["powerpc64"]	= "uchar lp64  long ldbl-64"
+			platform["powerpc64"]	= "uchar lp64  long ldbl-64"
+			platform["riscv32"]	= "schar ilp32 int  ldbl-64"
+			platform["riscv64"]	= "schar lp64  long ldbl-64"
+			platform["sh3"]		= "schar ilp32 int  ldbl-64"
+			platform["sparc"]	= "schar ilp32 long ldbl-64"
+			platform["sparc64"]	= "schar lp64  long ldbl-128"
+			platform["vax"]		= "schar ilp32 long ldbl-64"
+			platform["x86_64"]	= "schar lp64  long ldbl-128"
 		}
 
-		function is_lp64() {
-			return match(machine_arch, /^(aarch64|alpha|ia64|mipsn64|powerpc64|riscv64|sparc64|x86_64)$/)
+		function platform_has(prop) {
+			if (!match(prop, /^(schar|uchar|ilp32|lp64|int|long|ldbl-64|ldbl-96|ldbl-128)$/)) {
+				printf("bad property '\''%s'\''\n", prop) > "/dev/stderr";
+				exit(1);
+			}
+			if (platform[machine_arch] == "") {
+				printf("bad machine_arch '\''%s'\''\n", machine_arch) > "/dev/stderr";
+				exit(1);
+			}
+			return match(" " platform[machine_arch] " ", " " prop " ")
 		}
 
 		BEGIN {
@@ -58,16 +89,16 @@ configure_test_case()
 				for (i = 3; i < NF; i++)
 					flags = flags " " $i
 			}
-			if ($2 == "lint1-only-on-arch") {
+			if ($2 == "lint1-only-if-arch") {
 				seen_only_on_arch = 1
 				if ($3 == machine_arch)
 					match_only_on_arch = 1
 			}
-			if ($2 == "lint1-not-on-arch" && $3 == machine_arch)
+			if ($2 == "lint1-skip-if-arch" && $3 == machine_arch)
 				skip = 1
-			if ($2 == "lint1-only-on-ilp32" && !is_ilp32())
+			if ($2 == "lint1-only-if" && !platform_has($3))
 				skip = 1
-			if ($2 == "lint1-only-on-lp64" && !is_lp64())
+			if ($2 == "lint1-skip-if" && platform_has($3))
 				skip = 1
 		}
 
