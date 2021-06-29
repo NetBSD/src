@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.176 2020/07/13 04:44:03 mrg Exp $
+#	$NetBSD: files.usb,v 1.177 2021/06/29 10:22:37 nia Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -459,12 +459,6 @@ file	dev/usb/uslsa.c			uslsa
 device	uchcom: ucombus
 attach	uchcom at usbdevif
 file	dev/usb/uchcom.c		uchcom
-
-# Scanners
-# Generic scanner support
-device	uscanner
-attach	uscanner at usbdevif
-file	dev/usb/uscanner.c		uscanner		needs-flag
 
 # Avision SCSI over USB, HP5300
 device	usscanner: scsi
