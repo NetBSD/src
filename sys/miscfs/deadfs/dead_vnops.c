@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vnops.c,v 1.63 2020/02/23 15:46:41 ad Exp $	*/
+/*	$NetBSD: dead_vnops.c,v 1.64 2021/06/29 22:34:08 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.63 2020/02/23 15:46:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.64 2021/06/29 22:34:08 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,6 +82,7 @@ int (**dead_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc dead_vnodeop_entries[] = {
 	{ &vop_default_desc, dead_default_error },
 	{ &vop_bwrite_desc, dead_bwrite },		/* bwrite */
+	{ &vop_parsepath_desc, genfs_parsepath },	/* parsepath */
 	{ &vop_lookup_desc, dead_lookup },		/* lookup */
 	{ &vop_open_desc, dead_open },			/* open */
 	{ &vop_close_desc, dead_close },		/* close */

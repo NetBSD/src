@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.104 2020/06/27 17:29:18 christos Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.105 2021/06/29 22:34:07 dholland Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.104 2020/06/27 17:29:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.105 2021/06/29 22:34:07 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1841,6 +1841,7 @@ msdosfs_detimes(struct denode *dep, const struct timespec *acc,
 int (**msdosfs_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc msdosfs_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
+	{ &vop_parsepath_desc, genfs_parsepath },	/* parsepath */
 	{ &vop_lookup_desc, msdosfs_lookup },		/* lookup */
 	{ &vop_create_desc, msdosfs_create },		/* create */
 	{ &vop_mknod_desc, genfs_eopnotsupp },		/* mknod */

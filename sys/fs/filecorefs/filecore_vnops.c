@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.47 2020/06/27 17:29:18 christos Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.48 2021/06/29 22:34:06 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.47 2020/06/27 17:29:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.48 2021/06/29 22:34:06 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -554,6 +554,7 @@ filecore_pathconf(void *v)
 int (**filecore_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc filecore_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
+	{ &vop_parsepath_desc, genfs_parsepath },	/* parsepath */
 	{ &vop_lookup_desc, filecore_lookup },		/* lookup */
 	{ &vop_create_desc, filecore_create },		/* create */
 	{ &vop_mknod_desc, filecore_mknod },		/* mknod */

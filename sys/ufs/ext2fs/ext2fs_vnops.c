@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.132 2020/05/16 18:31:53 christos Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.133 2021/06/29 22:34:09 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.132 2020/05/16 18:31:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.133 2021/06/29 22:34:09 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1094,6 +1094,7 @@ ext2fs_reclaim(void *v)
 int (**ext2fs_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc ext2fs_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
+	{ &vop_parsepath_desc, genfs_parsepath },	/* parsepath */
 	{ &vop_lookup_desc, ext2fs_lookup },		/* lookup */
 	{ &vop_create_desc, ext2fs_create },		/* create */
 	{ &vop_mknod_desc, ext2fs_mknod },		/* mknod */
@@ -1149,6 +1150,7 @@ const struct vnodeopv_desc ext2fs_vnodeop_opv_desc =
 int (**ext2fs_specop_p)(void *);
 const struct vnodeopv_entry_desc ext2fs_specop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
+	{ &vop_parsepath_desc, genfs_parsepath },	/* parsepath */
 	{ &vop_lookup_desc, spec_lookup },		/* lookup */
 	{ &vop_create_desc, spec_create },		/* create */
 	{ &vop_mknod_desc, spec_mknod },		/* mknod */
@@ -1204,6 +1206,7 @@ const struct vnodeopv_desc ext2fs_specop_opv_desc =
 int (**ext2fs_fifoop_p)(void *);
 const struct vnodeopv_entry_desc ext2fs_fifoop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
+	{ &vop_parsepath_desc, genfs_parsepath },	/* parsepath */
 	{ &vop_lookup_desc, vn_fifo_bypass },		/* lookup */
 	{ &vop_create_desc, vn_fifo_bypass },		/* create */
 	{ &vop_mknod_desc, vn_fifo_bypass },		/* mknod */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs.c,v 1.18 2020/05/16 18:31:49 christos Exp $	*/
+/*	$NetBSD: sysvbfs.c,v 1.19 2021/06/29 22:34:07 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs.c,v 1.18 2020/05/16 18:31:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs.c,v 1.19 2021/06/29 22:34:07 dholland Exp $");
 
 #include <sys/resource.h>
 #include <sys/param.h>
@@ -49,6 +49,7 @@ int (**sysvbfs_vnodeop_p)(void *);	/* filled by getnewvnode (vnode.h) */
 
 const struct vnodeopv_entry_desc sysvbfs_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
+	{ &vop_parsepath_desc, genfs_parsepath },	/* parsepath */
 	{ &vop_lookup_desc, sysvbfs_lookup },		/* lookup */
 	{ &vop_create_desc, sysvbfs_create },		/* create */
 	{ &vop_mknod_desc, genfs_eopnotsupp },		/* mknod */

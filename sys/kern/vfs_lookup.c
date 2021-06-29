@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.227 2021/06/29 22:29:59 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.228 2021/06/29 22:34:08 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.227 2021/06/29 22:29:59 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.228 2021/06/29 22:34:08 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_magiclinks.h"
@@ -223,25 +223,6 @@ namei_hash(const char *name, const char **ep)
 		*ep = name;
 	}
 	return (hash + (hash >> 5));
-}
-
-/*
- * Find the end of the first path component in NAME and return its
- * length.
- */
-static int
-namei_getcomponent(struct vnode *dvp, const char *name, size_t *ret)
-{
-	size_t pos;
-
-	(void)dvp;
-
-	pos = 0;
-	while (name[pos] != '\0' && name[pos] != '/') {
-		pos++;
-	}
-	*ret = pos;
-	return 0;
 }
 
 ////////////////////////////////////////////////////////////
@@ -865,8 +846,7 @@ lookup_parsepath(struct namei_state *state, struct vnode *searchdir)
 	 * is held.
 	 */
 	cnp->cn_consume = 0;
-	error = namei_getcomponent(searchdir, cnp->cn_nameptr,
-				   &cnp->cn_namelen);
+	error = VOP_PARSEPATH(searchdir, cnp->cn_nameptr, &cnp->cn_namelen);
 	if (error) {
 		return error;
 	}
@@ -2080,8 +2060,7 @@ do_lookup_for_nfsd_index(struct namei_state *state)
 	ndp->ni_dvp = NULL;
 
 	cnp->cn_consume = 0;
-	error = namei_getcomponent(startdir, cnp->cn_nameptr,
-				   &cnp->cn_namelen);
+	error = VOP_PARSEPATH(startdir, cnp->cn_nameptr, &cnp->cn_namelen);
 	if (error) {
 		return error;
 	}
@@ -2216,7 +2195,7 @@ relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp, int d
 	if ((uint32_t)newhash != (uint32_t)cnp->cn_hash)
 		panic("relookup: bad hash");
 #endif
-	error = namei_getcomponent(dvp, cnp->cn_nameptr, &newlen);
+	error = VOP_PARSEPATH(dvp, cnp->cn_nameptr, &newlen);
 	if (error) {
 		panic("relookup: parsepath failed with error %d", error);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: nilfs_vnops.c,v 1.42 2020/06/27 17:29:18 christos Exp $	*/
+/*	$NetBSD: nilfs_vnops.c,v 1.43 2021/06/29 22:34:07 dholland Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.42 2020/06/27 17:29:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.43 2021/06/29 22:34:07 dholland Exp $");
 #endif /* not lint */
 
 
@@ -1543,6 +1543,7 @@ int (**nilfs_vnodeop_p) __P((void *));
 
 const struct vnodeopv_entry_desc nilfs_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
+	{ &vop_parsepath_desc, genfs_parsepath }, /* parsepath */
 	{ &vop_lookup_desc, nilfs_lookup },	/* lookup */
 	{ &vop_create_desc, nilfs_create },	/* create */
 	{ &vop_mknod_desc, nilfs_mknod },	/* mknod */	/* TODO */

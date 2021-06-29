@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.210 2020/09/05 16:30:12 riastradh Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.211 2021/06/29 22:34:08 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.210 2020/09/05 16:30:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.211 2021/06/29 22:34:08 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,6 +83,31 @@ __KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.210 2020/09/05 16:30:12 riastradh 
 static void filt_genfsdetach(struct knote *);
 static int filt_genfsread(struct knote *, long);
 static int filt_genfsvnode(struct knote *, long);
+
+/*
+ * Find the end of the first path component in NAME and return its
+ * length.
+ */
+int
+genfs_parsepath(void *v)
+{
+	struct vop_parsepath_args /* {
+		struct vnode *a_dvp;
+		const char *a_name;
+		size_t *a_ret;
+	} */ *ap = v;
+	const char *name = ap->a_name;
+	size_t pos;
+
+	(void)ap->a_dvp;
+
+	pos = 0;
+	while (name[pos] != '\0' && name[pos] != '/') {
+		pos++;
+	}
+	*ap->a_retval = pos;
+	return 0;
+}
 
 int
 genfs_poll(void *v)

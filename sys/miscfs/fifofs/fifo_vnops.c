@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.82 2020/12/19 22:09:15 thorpej Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.83 2021/06/29 22:34:08 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.82 2020/12/19 22:09:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.83 2021/06/29 22:34:08 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -631,6 +631,7 @@ fifo_kqfilter(void *v)
 int (**fifo_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc fifo_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
+	{ &vop_parsepath_desc, genfs_parsepath },	/* parsepath */
 	{ &vop_lookup_desc, fifo_lookup },		/* lookup */
 	{ &vop_create_desc, genfs_badop },		/* create */
 	{ &vop_mknod_desc, genfs_badop },		/* mknod */

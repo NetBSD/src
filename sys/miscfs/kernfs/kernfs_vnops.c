@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.167 2021/06/28 17:52:13 chs Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.168 2021/06/29 22:34:08 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.167 2021/06/28 17:52:13 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.168 2021/06/29 22:34:08 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,6 +182,7 @@ static int	kernfs_xwrite(const struct kernfs_node *, char *, size_t);
 int (**kernfs_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc kernfs_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
+	{ &vop_parsepath_desc, genfs_parsepath },	/* parsepath */
 	{ &vop_lookup_desc, kernfs_lookup },		/* lookup */
 	{ &vop_create_desc, kernfs_create },		/* create */
 	{ &vop_mknod_desc, kernfs_mknod },		/* mknod */
@@ -231,6 +232,7 @@ const struct vnodeopv_desc kernfs_vnodeop_opv_desc =
 int (**kernfs_specop_p)(void *);
 const struct vnodeopv_entry_desc kernfs_specop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
+	{ &vop_parsepath_desc, genfs_parsepath },	/* parsepath */
 	{ &vop_lookup_desc, spec_lookup },		/* lookup */
 	{ &vop_create_desc, spec_create },		/* create */
 	{ &vop_mknod_desc, spec_mknod },		/* mknod */

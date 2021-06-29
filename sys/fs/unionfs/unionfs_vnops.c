@@ -1814,6 +1814,7 @@ unionfs_revoke(void *v)
 int (**unionfs_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc unionfs_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
+	{ &vop_parsepath_desc, genfs_parsepath },	/* parsepath */
 	{ &vop_lookup_desc, unionfs_lookup },		/* lookup */
 	{ &vop_create_desc, unionfs_create },		/* create */
 	{ &vop_whiteout_desc, unionfs_whiteout },	/* whiteout */

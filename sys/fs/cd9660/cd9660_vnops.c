@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.58 2020/06/27 17:29:17 christos Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.59 2021/06/29 22:34:06 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.58 2020/06/27 17:29:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.59 2021/06/29 22:34:06 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -849,6 +849,7 @@ cd9660_setattr(void *v)
 int (**cd9660_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc cd9660_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
+	{ &vop_parsepath_desc, genfs_parsepath },	/* parsepath */
 	{ &vop_lookup_desc, cd9660_lookup },		/* lookup */
 	{ &vop_create_desc, cd9660_create },		/* create */
 	{ &vop_mknod_desc, cd9660_mknod },		/* mknod */
@@ -902,6 +903,7 @@ const struct vnodeopv_desc cd9660_vnodeop_opv_desc =
 int (**cd9660_specop_p)(void *);
 const struct vnodeopv_entry_desc cd9660_specop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
+	{ &vop_parsepath_desc, genfs_parsepath },	/* parsepath */
 	{ &vop_lookup_desc, spec_lookup },		/* lookup */
 	{ &vop_create_desc, spec_create },		/* create */
 	{ &vop_mknod_desc, spec_mknod },		/* mknod */
@@ -953,6 +955,7 @@ const struct vnodeopv_desc cd9660_specop_opv_desc =
 int (**cd9660_fifoop_p)(void *);
 const struct vnodeopv_entry_desc cd9660_fifoop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
+	{ &vop_parsepath_desc, genfs_parsepath },	/* parsepath */
 	{ &vop_lookup_desc, vn_fifo_bypass },		/* lookup */
 	{ &vop_create_desc, vn_fifo_bypass },		/* create */
 	{ &vop_mknod_desc, vn_fifo_bypass },		/* mknod */

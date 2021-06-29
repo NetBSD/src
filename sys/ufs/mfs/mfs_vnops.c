@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vnops.c,v 1.61 2020/05/16 18:31:54 christos Exp $	*/
+/*	$NetBSD: mfs_vnops.c,v 1.62 2021/06/29 22:34:10 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.61 2020/05/16 18:31:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.62 2021/06/29 22:34:10 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.61 2020/05/16 18:31:54 christos Exp 
 int (**mfs_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc mfs_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
+	{ &vop_parsepath_desc, genfs_parsepath },	/* parsepath */
 	{ &vop_lookup_desc, mfs_lookup },		/* lookup */
 	{ &vop_create_desc, mfs_create },		/* create */
 	{ &vop_mknod_desc, mfs_mknod },			/* mknod */
