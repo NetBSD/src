@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpdev,v 1.13 2019/05/13 17:49:05 bad Exp $
+#	$NetBSD: Makefile.rumpdev,v 1.14 2021/06/29 21:03:36 pgoyette Exp $
 #
 
 LIB=	rumpdev
@@ -15,6 +15,7 @@ SRCS+=	kern_pmf.c
 
 # sys/dev
 SRCS+=	dev_verbose.c
+COPTS.dev_verbose.c+= -Wno-error=format-nonliteral
 
 CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern
 
