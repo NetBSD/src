@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.247 2021/06/28 11:09:35 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.248 2021/06/29 05:41:45 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.247 2021/06/28 11:09:35 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.248 2021/06/29 05:41:45 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1091,10 +1091,6 @@ notype_direct_decl:
 	| notype_direct_decl type_attribute_list
 	;
 
-/*
- * TODO: document whether the subtle difference between 'identifier' here and
- *  'T_NAME' in notype_direct_decl above is on purpose.
- */
 type_direct_decl:
 	  identifier {
 		$$ = declarator_name(getsym($1));
