@@ -1,1 +1,2 @@
-msg_253.c(6): error: syntax error ':' [249]
+msg_253.c(9): error: unterminated character constant [253]
+msg_253.c(9): error: syntax error '' [249]
