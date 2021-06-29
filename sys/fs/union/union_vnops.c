@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.76 2021/06/29 22:38:46 dholland Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.77 2021/06/29 22:39:20 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.76 2021/06/29 22:38:46 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.77 2021/06/29 22:39:20 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -358,12 +358,6 @@ start:
 	if (upperdvp != NULLVP) {
 		uerror = union_lookup1(um->um_uppervp, &upperdvp,
 					&uppervp, cnp);
-		if (cnp->cn_consume != 0) {
-			if (uppervp != upperdvp)
-				VOP_UNLOCK(uppervp);
-			*ap->a_vpp = uppervp;
-			return (uerror);
-		}
 		if (uerror == ENOENT || uerror == EJUSTRETURN) {
 			if (cnp->cn_flags & ISWHITEOUT) {
 				iswhiteout = 1;
@@ -415,18 +409,6 @@ start:
 
 		if (lowervp != lowerdvp)
 			VOP_UNLOCK(lowerdvp);
-
-		if (cnp->cn_consume != 0) {
-			if (uppervp != NULLVP) {
-				if (uppervp == upperdvp)
-					vrele(uppervp);
-				else
-					vput(uppervp);
-				uppervp = NULLVP;
-			}
-			*ap->a_vpp = lowervp;
-			return (lerror);
-		}
 	} else {
 		lerror = ENOENT;
 		if ((cnp->cn_flags & ISDOTDOT) && dun->un_pvp != NULLVP) {

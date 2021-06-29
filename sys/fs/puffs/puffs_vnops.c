@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.218 2021/06/29 22:34:07 dholland Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.219 2021/06/29 22:39:20 dholland Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.218 2021/06/29 22:34:07 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.219 2021/06/29 22:39:20 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -711,9 +711,10 @@ puffs_vnop_lookup(void *v)
 	/* XXX */
 	if ((lookup_msg->pvnr_cn.pkcn_flags & REQUIREDIR) == 0)
 		cnp->cn_flags &= ~REQUIREDIR;
-	if (lookup_msg->pvnr_cn.pkcn_consume)
-		cnp->cn_consume = MIN(lookup_msg->pvnr_cn.pkcn_consume,
-		    strlen(cnp->cn_nameptr) - cnp->cn_namelen);
+	if (lookup_msg->pvnr_cn.pkcn_consume) {
+		printf("puffs: warning: ignoring cn_consume of %zu chars\n",
+		    lookup_msg->pvnr_cn.pkcn_consume);
+	}
 
 	VPTOPP(vp)->pn_nlookup++;
 
