@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_extattr.c,v 1.16 2020/05/16 18:31:53 christos Exp $	*/
+/*	$NetBSD: ulfs_extattr.c,v 1.17 2021/06/29 22:40:54 dholland Exp $	*/
 /*  from NetBSD: ulfs_extattr.c,v 1.48 2016/11/09 05:08:35 dholland Exp  */
 
 /*-
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_extattr.c,v 1.16 2020/05/16 18:31:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_extattr.c,v 1.17 2021/06/29 22:40:54 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lfs.h"
@@ -171,7 +171,6 @@ ulfs_extattr_autocreate_attr(struct vnode *vp, int attrnamespace,
 	struct mount *mp = vp->v_mount;
 	struct ulfsmount *ump = VFSTOULFS(mp);
 	struct vnode *backing_vp;
-	struct nameidata nd;
 	struct pathbuf *pb;
 	char *path;
 	struct ulfs_extattr_fileheader uef;
@@ -223,14 +222,16 @@ ulfs_extattr_autocreate_attr(struct vnode *vp, int attrnamespace,
 	VOP_UNLOCK(vp);
 
 	pb = pathbuf_create(path);
-	NDINIT(&nd, CREATE, LOCKPARENT, pb);
 	
 	/*
 	 * Since we do not hold ulfs_extattr_uepm_lock anymore,
 	 * another thread may race with us for backend creation,
-	 * but only one can succeed here thanks to O_EXCL
+	 * but only one can succeed here thanks to O_EXCL.
+	 *
+ 	 * backing_vp is the backing store. 
 	 */
-	error = vn_open(&nd, O_CREAT|O_EXCL|O_RDWR, 0600);
+	error = vn_open(NULL, pb, 0, O_CREAT|O_EXCL|O_RDWR, 0600,
+	    &backing_vp, NULL, NULL);
 
 	/*
 	 * Reacquire the lock on the vnode
@@ -247,14 +248,9 @@ ulfs_extattr_autocreate_attr(struct vnode *vp, int attrnamespace,
 		return error;
 	}
 
-	KASSERT(nd.ni_vp != NULL);
-	KASSERT(VOP_ISLOCKED(nd.ni_vp) == LK_EXCLUSIVE);
-	KASSERT(VOP_ISLOCKED(nd.ni_dvp) == 0);
+	KASSERT(backing_vp != NULL);
+	KASSERT(VOP_ISLOCKED(backing_vp) == LK_EXCLUSIVE);
 
-	/*
- 	 * backing_vp is the backing store. 
-	 */	
-	backing_vp = nd.ni_vp;
 	pathbuf_destroy(pb);
 	PNBUF_PUT(path);
 

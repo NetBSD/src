@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_core.c,v 1.34 2020/11/01 18:51:02 pgoyette Exp $	*/
+/*	$NetBSD: kern_core.c,v 1.35 2021/06/29 22:40:53 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.34 2020/11/01 18:51:02 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.35 2021/06/29 22:40:53 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -123,7 +123,6 @@ coredump(struct lwp *l, const char *pattern)
 	struct vmspace		*vm;
 	kauth_cred_t		cred;
 	struct pathbuf		*pb;
-	struct nameidata	nd;
 	struct vattr		vattr;
 	struct coredump_iostate	io;
 	struct plimit		*lim;
@@ -240,13 +239,12 @@ coredump(struct lwp *l, const char *pattern)
 		error = ENOMEM;
 		goto done;
 	}
-	NDINIT(&nd, LOOKUP, NOFOLLOW, pb);
-	if ((error = vn_open(&nd, O_CREAT | O_NOFOLLOW | FWRITE,
-	    S_IRUSR | S_IWUSR)) != 0) {
+	error = vn_open(NULL, pb, 0, O_CREAT | O_NOFOLLOW | FWRITE,
+	    S_IRUSR | S_IWUSR, &vp, NULL, NULL);
+	if (error != 0) {
 		pathbuf_destroy(pb);
 		goto done;
 	}
-	vp = nd.ni_vp;
 	pathbuf_destroy(pb);
 
 	/*
