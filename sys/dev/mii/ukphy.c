@@ -1,4 +1,4 @@
-/*	$NetBSD: ukphy.c,v 1.54 2020/03/28 18:37:18 thorpej Exp $	*/
+/*	$NetBSD: ukphy.c,v 1.55 2021/06/29 21:03:36 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukphy.c,v 1.54 2020/03/28 18:37:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukphy.c,v 1.55 2021/06/29 21:03:36 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mii.h"
@@ -109,9 +109,9 @@ ukphyattach(device_t parent, device_t self, void *aux)
 	int oui = MII_OUI(ma->mii_id1, ma->mii_id2);
 	int model = MII_MODEL(ma->mii_id2);
 	int rev = MII_REV(ma->mii_id2);
-	const char *descr;
+	char descr[MII_MAX_DESCR_LEN];
 
-	if ((descr = mii_get_descr(oui, model)) != NULL)
+	if (mii_get_descr(descr, sizeof(descr), oui, model) && descr[0])
 		aprint_normal(": %s (OUI 0x%06x, model 0x%04x), rev. %d\n",
 		       descr, oui, model, rev);
 	else
