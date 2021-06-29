@@ -28,8 +28,10 @@
         .p2align 2
 DEFINE_COMPILERRT_FUNCTION(__aeabi_cfcmpeq)
         push {r0-r3, lr}
+        sub sp, #4
         bl __aeabi_cfcmpeq_check_nan
         cmp r0, #1
+        add sp, #4
         pop {r0-r3, lr}
 
         // NaN has been ruled out, so __aeabi_cfcmple can't trap
@@ -56,13 +58,16 @@ DEFINE_COMPILERRT_FUNCTION(__aeabi_cfcmple)
         // Per the RTABI, this function must preserve r0-r11.
         // Save lr in the same instruction for compactness
         push {r0-r3, lr}
+        sub sp, #4
 
         bl __aeabi_fcmplt
         cmp r0, #1
         moveq ip, #0
         beq 1f
 
+        add sp, #4
         ldm sp, {r0-r3}
+        sub sp, #4
         bl __aeabi_fcmpeq
         cmp r0, #1
         moveq ip, #(APSR_C | APSR_Z)
@@ -70,6 +75,7 @@ DEFINE_COMPILERRT_FUNCTION(__aeabi_cfcmple)
 
 1:
         msr CPSR_f, ip
+        add sp, #4
         pop {r0-r3}
         POP_PC()
 END_COMPILERRT_FUNCTION(__aeabi_cfcmple)
