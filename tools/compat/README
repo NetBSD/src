@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.18 2021/06/28 07:18:01 cjep Exp $
+$NetBSD: README,v 1.19 2021/06/29 10:02:34 cjep Exp $
 
 Special notes for cross-hosting a NetBSD build on certain platforms.  
 Only those platforms which have been tested to complete a "build.sh" run
@@ -60,6 +60,15 @@ HP-UX
 -----
 
 * zlib must be available.
+
+OpenBSD
+-------
+
+As of -current 20210629, ./build.sh will build src on OpenBSD 6.9
+for some platforms. Known problems:
+* MIPS targets do not currently build. 
+* The LLVM RT library will not build and consequently nor will X on 
+  amd64 and i386.
 
 NetBSD (earlier releases)
 -------------------------
