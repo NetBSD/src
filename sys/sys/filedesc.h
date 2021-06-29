@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.68 2020/04/21 21:46:07 ad Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.69 2021/06/29 22:40:53 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -192,7 +192,7 @@ struct proc;
  */
 void	fd_sys_init(void);
 int	fd_open(const char*, int, int, int*);
-int	fd_dupopen(int, int *, int, int);
+int	fd_dupopen(int, bool, int, int *);
 int	fd_alloc(struct proc *, int, int *);
 void	fd_tryexpand(struct proc *);
 int	fd_allocfile(file_t **, int *);

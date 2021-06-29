@@ -1,4 +1,4 @@
-/*	$NetBSD: lua.c,v 1.24 2017/12/26 12:43:59 martin Exp $ */
+/*	$NetBSD: lua.c,v 1.25 2021/06/29 22:40:53 dholland Exp $ */
 
 /*
  * Copyright (c) 2011 - 2017 by Marc Balmer <mbalmer@NetBSD.org>.
@@ -284,7 +284,7 @@ luaioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	struct lua_state *s;
 	struct lua_module *m;
 	kauth_cred_t cred;
-	struct nameidata nd;
+	struct vnode *vp;
 	struct pathbuf *pb;
 	struct vattr va;
 	struct lua_loadstate ls;
@@ -414,8 +414,8 @@ luaioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 				pb = pathbuf_create(load->path);
 				if (pb == NULL)
 					return ENOMEM;
-				NDINIT(&nd, LOOKUP, FOLLOW | NOCHROOT, pb);
-				error = vn_open(&nd, FREAD, 0);
+				error = vn_open(NULL, pb, NOCHROOT, FREAD, 0,
+				    &vp, NULL, NULL);
 				pathbuf_destroy(pb);
 				if (error) {
 					if (lua_verbose)
@@ -424,11 +424,11 @@ luaioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 						    error);
 					return error;
 				}
-				error = VOP_GETATTR(nd.ni_vp, &va,
+				error = VOP_GETATTR(vp, &va,
 				    kauth_cred_get());
 				if (error) {
-					VOP_UNLOCK(nd.ni_vp);
-					vn_close(nd.ni_vp, FREAD,
+					VOP_UNLOCK(vp);
+					vn_close(vp, FREAD,
 					    kauth_cred_get());
 					if (lua_verbose)
 						device_printf(sc->sc_dev,
@@ -437,19 +437,19 @@ luaioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 					return error;
 				}
 				if (va.va_type != VREG) {
-					VOP_UNLOCK(nd.ni_vp);
-					vn_close(nd.ni_vp, FREAD,
+					VOP_UNLOCK(vp);
+					vn_close(vp, FREAD,
 					    kauth_cred_get());
 					return EINVAL;
 				}
-				ls.vp = nd.ni_vp;
+				ls.vp = vp;
 				ls.off = 0L;
 				ls.size = va.va_size;
-				VOP_UNLOCK(nd.ni_vp);
+				VOP_UNLOCK(vp);
 				klua_lock(s->K);
 				error = lua_load(s->K->L, lua_reader, &ls,
 				    strrchr(load->path, '/') + 1, "bt");
-				vn_close(nd.ni_vp, FREAD, cred);
+				vn_close(vp, FREAD, cred);
 				switch (error) {
 				case 0:	/* no error */
 					break;

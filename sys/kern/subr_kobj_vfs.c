@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj_vfs.c,v 1.11 2017/06/01 02:45:13 chs Exp $	*/
+/*	$NetBSD: subr_kobj_vfs.c,v 1.12 2021/06/29 22:40:53 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 #include <sys/vnode.h>
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj_vfs.c,v 1.11 2017/06/01 02:45:13 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj_vfs.c,v 1.12 2021/06/29 22:40:53 dholland Exp $");
 
 static void
 kobj_close_vfs(kobj_t ko)
@@ -150,8 +150,8 @@ kobj_read_vfs(kobj_t ko, void **basep, size_t size, off_t off,
 int
 kobj_load_vfs(kobj_t *kop, const char *path, const bool nochroot)
 {
-	struct nameidata nd;
 	struct pathbuf *pb;
+	struct vnode *vp;
 	int error;
 	kobj_t ko;
 
@@ -166,8 +166,8 @@ kobj_load_vfs(kobj_t *kop, const char *path, const bool nochroot)
 		return ENOMEM;
 	}
 
-	NDINIT(&nd, LOOKUP, FOLLOW | (nochroot ? NOCHROOT : 0), pb);
-	error = vn_open(&nd, FREAD, 0);
+	error = vn_open(NULL, pb, (nochroot ? NOCHROOT : 0), FREAD, 0,
+	    &vp, NULL, NULL);
 
  	if (error != 0) {
 		pathbuf_destroy(pb);
@@ -177,7 +177,7 @@ kobj_load_vfs(kobj_t *kop, const char *path, const bool nochroot)
 
 	ko->ko_type = KT_VNODE;
 	kobj_setname(ko, path);
-	ko->ko_source = nd.ni_vp;
+	ko->ko_source = vp;
 	ko->ko_read = kobj_read_vfs;
 	ko->ko_close = kobj_close_vfs;
 	pathbuf_destroy(pb);

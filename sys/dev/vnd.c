@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.281 2021/06/13 10:01:43 mlelstv Exp $	*/
+/*	$NetBSD: vnd.c,v 1.282 2021/06/29 22:40:53 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008, 2020 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.281 2021/06/13 10:01:43 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.282 2021/06/29 22:40:53 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -1145,7 +1145,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	struct vnd_ioctl *vio;
 	struct vattr vattr;
 	struct pathbuf *pb;
-	struct nameidata nd;
+	struct vnode *vp;
 	int error, part, pmask;
 	uint64_t geomsize;
 	int fflags;
@@ -1273,20 +1273,20 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		if (error) {
 			goto unlock_and_exit;
 		}
-		NDINIT(&nd, LOOKUP, FOLLOW, pb);
-		if ((error = vn_open(&nd, fflags, 0)) != 0) {
+		error = vn_open(NULL, pb, 0, fflags, 0, &vp, NULL, NULL);
+		if (error != 0) {
 			pathbuf_destroy(pb);
 			goto unlock_and_exit;
 		}
 		KASSERT(l);
-		error = VOP_GETATTR(nd.ni_vp, &vattr, l->l_cred);
-		if (!error && nd.ni_vp->v_type != VREG)
+		error = VOP_GETATTR(vp, &vattr, l->l_cred);
+		if (!error && vp->v_type != VREG)
 			error = EOPNOTSUPP;
 		if (!error && vattr.va_bytes < vattr.va_size)
 			/* File is definitely sparse, use vn_rdwr() */
 			vnd->sc_flags |= VNF_USE_VN_RDWR;
 		if (error) {
-			VOP_UNLOCK(nd.ni_vp);
+			VOP_UNLOCK(vp);
 			goto close_and_exit;
 		}
 
@@ -1304,19 +1304,19 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			    M_TEMP, M_WAITOK);
 
 			/* read compressed file header */
-			error = vn_rdwr(UIO_READ, nd.ni_vp, (void *)ch,
+			error = vn_rdwr(UIO_READ, vp, (void *)ch,
 			    sizeof(struct vnd_comp_header), 0, UIO_SYSSPACE,
 			    IO_UNIT|IO_NODELOCKED, l->l_cred, NULL, NULL);
 			if (error) {
 				free(ch, M_TEMP);
-				VOP_UNLOCK(nd.ni_vp);
+				VOP_UNLOCK(vp);
 				goto close_and_exit;
 			}
 
 			if (be32toh(ch->block_size) == 0 ||
 			    be32toh(ch->num_blocks) > UINT32_MAX - 1) {
 				free(ch, M_TEMP);
-				VOP_UNLOCK(nd.ni_vp);
+				VOP_UNLOCK(vp);
 				goto close_and_exit;
 			}
 
@@ -1326,7 +1326,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			vnd->sc_comp_numoffs = be32toh(ch->num_blocks) + 1;
 			free(ch, M_TEMP);
 			if (!DK_DEV_BSIZE_OK(vnd->sc_comp_blksz)) {
-				VOP_UNLOCK(nd.ni_vp);
+				VOP_UNLOCK(vp);
 				error = EINVAL;
 				goto close_and_exit;
 			}
@@ -1340,7 +1340,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			 */
 #if SIZE_MAX <= UINT32_MAX*(64/CHAR_BIT)
 			if (SIZE_MAX/sizeof(uint64_t) < vnd->sc_comp_numoffs) {
-				VOP_UNLOCK(nd.ni_vp);
+				VOP_UNLOCK(vp);
 				error = EINVAL;
 				goto close_and_exit;
 			}
@@ -1350,7 +1350,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 				sizeof(uint64_t)*vnd->sc_comp_numoffs) ||
 			    (UQUAD_MAX/vnd->sc_comp_blksz <
 				vnd->sc_comp_numoffs - 1)) {
-				VOP_UNLOCK(nd.ni_vp);
+				VOP_UNLOCK(vp);
 				error = EINVAL;
 				goto close_and_exit;
 			}
@@ -1369,13 +1369,13 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 				M_DEVBUF, M_WAITOK);
 
 			/* read in the offsets */
-			error = vn_rdwr(UIO_READ, nd.ni_vp,
+			error = vn_rdwr(UIO_READ, vp,
 			    (void *)vnd->sc_comp_offsets,
 			    sizeof(uint64_t) * vnd->sc_comp_numoffs,
 			    sizeof(struct vnd_comp_header), UIO_SYSSPACE,
 			  IO_UNIT|IO_NODELOCKED, l->l_cred, NULL, NULL);
 			if (error) {
-				VOP_UNLOCK(nd.ni_vp);
+				VOP_UNLOCK(vp);
 				goto close_and_exit;
 			}
 			/*
@@ -1414,21 +1414,21 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 				if (vnd->sc_comp_stream.msg)
 					printf("vnd%d: compressed file, %s\n",
 					    unit, vnd->sc_comp_stream.msg);
-				VOP_UNLOCK(nd.ni_vp);
+				VOP_UNLOCK(vp);
 				error = EINVAL;
 				goto close_and_exit;
 			}
 
 			vnd->sc_flags |= VNF_COMP | VNF_READONLY;
 #else /* !VND_COMPRESSION */
-			VOP_UNLOCK(nd.ni_vp);
+			VOP_UNLOCK(vp);
 			error = EOPNOTSUPP;
 			goto close_and_exit;
 #endif /* VND_COMPRESSION */
 		}
 
-		VOP_UNLOCK(nd.ni_vp);
-		vnd->sc_vp = nd.ni_vp;
+		VOP_UNLOCK(vp);
+		vnd->sc_vp = vp;
 		vnd->sc_size = btodb(vattr.va_size);	/* note truncation */
 
 		/* get smallest I/O size for underlying device, fall back to
@@ -1553,7 +1553,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		break;
 
 close_and_exit:
-		(void) vn_close(nd.ni_vp, fflags, l->l_cred);
+		(void) vn_close(vp, fflags, l->l_cred);
 		pathbuf_destroy(pb);
 unlock_and_exit:
 #ifdef VND_COMPRESSION

@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.c,v 1.28 2020/09/05 16:30:11 riastradh Exp $	*/
+/*	$NetBSD: kloader.c,v 1.29 2021/06/29 22:40:53 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.28 2020/09/05 16:30:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.29 2021/06/29 22:40:53 dholland Exp $");
 
 #include "debug_kloader.h"
 
@@ -586,6 +586,7 @@ kloader_open(const char *filename)
 {
 	struct pathbuf *pb;
 	struct nameidata nid;
+	struct vnode *vp;
 	int error;
 
 	pb = pathbuf_create(filename);
@@ -594,8 +595,11 @@ kloader_open(const char *filename)
 		return (NULL);
 	}
 
-	NDINIT(&nid, LOOKUP, FOLLOW, pb);
+	/*
+	 * XXX why does this call both namei and vn_open?
+	 */
 
+	NDINIT(&nid, LOOKUP, FOLLOW, pb);
 	error = namei(&nid);
 	if (error != 0) {
 		PRINTF("%s: namei failed, errno=%d\n", filename, error);
@@ -603,7 +607,7 @@ kloader_open(const char *filename)
 		return (NULL);
 	}
 
-	error = vn_open(&nid, FREAD, 0);
+	error = vn_open(NULL, pb, 0, FREAD, 0, &vp, NULL, NULL);
 	if (error != 0) {
 		PRINTF("%s: open failed, errno=%d\n", filename, error);
 		pathbuf_destroy(pb);
@@ -611,7 +615,7 @@ kloader_open(const char *filename)
 	}
 
 	pathbuf_destroy(pb);
-	return (nid.ni_vp);
+	return vp;
 }
 
 void

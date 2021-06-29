@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.549 2021/02/17 17:39:08 dholland Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.550 2021/06/29 22:40:53 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.549 2021/02/17 17:39:08 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.550 2021/06/29 22:40:53 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -1635,9 +1635,10 @@ do_open(lwp_t *l, struct vnode *dvp, struct pathbuf *pb, int open_flags,
 	struct cwdinfo *cwdi = p->p_cwdi;
 	file_t *fp;
 	struct vnode *vp;
+	int dupfd;
+	bool dupfd_move;
 	int flags, cmode;
 	int indx, error;
-	struct nameidata nd;
 
 	if (open_flags & O_SEARCH) {
 		open_flags &= ~(int)O_SEARCH;
@@ -1660,34 +1661,32 @@ do_open(lwp_t *l, struct vnode *dvp, struct pathbuf *pb, int open_flags,
 
 	/* We're going to read cwdi->cwdi_cmask unlocked here. */
 	cmode = ((open_mode &~ cwdi->cwdi_cmask) & ALLPERMS) &~ S_ISTXT;
-	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, pb);
-	if (dvp != NULL)
-		NDAT(&nd, dvp);
 	
-	l->l_dupfd = -indx - 1;			/* XXX check for fdopen */
-	if ((error = vn_open(&nd, flags, cmode)) != 0) {
+	error = vn_open(dvp, pb, TRYEMULROOT, flags, cmode,
+	    &vp, &dupfd_move, &dupfd);
+	if (error != 0) {
 		fd_abort(p, fp, indx);
-		if ((error == EDUPFD || error == EMOVEFD) &&
-		    l->l_dupfd >= 0 &&			/* XXX from fdopen */
-		    (error =
-			fd_dupopen(l->l_dupfd, &indx, flags, error)) == 0) {
-			*fd = indx;
-			return 0;
-		}
 		if (error == ERESTART)
 			error = EINTR;
 		return error;
 	}
 
-	l->l_dupfd = 0;
-	vp = nd.ni_vp;
+	if (vp == NULL) {
+		fd_abort(p, fp, indx);
+		error = fd_dupopen(dupfd, dupfd_move, flags, &indx);
+		if (error == 0) {
+			*fd = indx;
+			return 0;
+		}
+	} else {
+		error = open_setfp(l, fp, vp, indx, flags);
+		if (error)
+			return error;
+		VOP_UNLOCK(vp);
+		*fd = indx;
+		fd_affix(p, fp, indx);
+	}
 
-	if ((error = open_setfp(l, fp, vp, indx, flags)))
-		return error;
-
-	VOP_UNLOCK(vp);
-	*fd = indx;
-	fd_affix(p, fp, indx);
 	return 0;
 }
 
@@ -2114,6 +2113,10 @@ bad:
 	fd_abort(p, fp, indx);
 	if (vp != NULL)
 		vput(vp);
+	if (error == EDUPFD || error == EMOVEFD) {
+		/* XXX should probably close curlwp->l_dupfd */
+		error = EOPNOTSUPP;
+	}
 	return (error);
 }
 

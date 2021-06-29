@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.110 2020/12/26 14:50:50 nia Exp $	*/
+/*	$NetBSD: fss.c,v 1.111 2021/06/29 22:40:53 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.110 2020/12/26 14:50:50 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.111 2021/06/29 22:40:53 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -699,10 +699,9 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	uint64_t numsec;
 	unsigned int secsize;
 	struct timespec ts;
-	/* nd -> nd2 to reduce mistakes while updating only some namei calls */
+	/* distinguish lookup 1 from lookup 2 to reduce mistakes */
 	struct pathbuf *pb2;
-	struct nameidata nd2;
-	struct vnode *vp;
+	struct vnode *vp, *vp2;
 
 	/*
 	 * Get the mounted file system.
@@ -789,16 +788,17 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	if (error) {
  		return error;
 	}
-	NDINIT(&nd2, LOOKUP, FOLLOW, pb2);
-	if ((error = vn_open(&nd2, FREAD|FWRITE, 0)) != 0) {
+	error = vn_open(NULL, pb2, 0, FREAD|FWRITE, 0, &vp2, NULL, NULL);
+	if (error != 0) {
 		pathbuf_destroy(pb2);
 		return error;
 	}
-	VOP_UNLOCK(nd2.ni_vp);
+	VOP_UNLOCK(vp2);
 
-	sc->sc_bs_vp = nd2.ni_vp;
+	sc->sc_bs_vp = vp2;
 
-	if (nd2.ni_vp->v_type != VREG && nd2.ni_vp->v_type != VCHR) {
+	if (vp2->v_type != VREG && vp2->v_type != VCHR) {
+		vrele(vp2);
 		pathbuf_destroy(pb2);
 		return EINVAL;
 	}

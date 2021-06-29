@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.250 2020/12/24 12:14:50 nia Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.251 2021/06/29 22:40:53 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.250 2020/12/24 12:14:50 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.251 2021/06/29 22:40:53 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1646,14 +1646,32 @@ filedescopen(dev_t dev, int mode, int type, lwp_t *l)
 
 /*
  * Duplicate the specified descriptor to a free descriptor.
+ *
+ * old is the original fd.
+ * moveit is true if we should move rather than duplicate.
+ * flags are the open flags (converted from O_* to F*).
+ * newp returns the new fd on success.
+ *
+ * These two cases are produced by the EDUPFD and EMOVEFD magic
+ * errnos, but in the interest of removing that regrettable interface,
+ * vn_open has been changed to intercept them. Now vn_open returns
+ * either a vnode or a filehandle, and the filehandle is accompanied
+ * by a boolean that says whether we should dup (moveit == false) or
+ * move (moveit == true) the fd.
+ *
+ * The dup case is used by /dev/stderr, /proc/self/fd, and such. The
+ * move case is used by cloner devices that allocate a fd of their
+ * own (a layering violation that should go away eventually) that
+ * then needs to be put in the place open() expects it.
  */
 int
-fd_dupopen(int old, int *newp, int mode, int error)
+fd_dupopen(int old, bool moveit, int flags, int *newp)
 {
 	filedesc_t *fdp;
 	fdfile_t *ff;
 	file_t *fp;
 	fdtab_t *dt;
+	int error;
 
 	if ((fp = fd_getfile(old)) == NULL) {
 		return EBADF;
@@ -1665,35 +1683,30 @@ fd_dupopen(int old, int *newp, int mode, int error)
 	/*
 	 * There are two cases of interest here.
 	 *
-	 * For EDUPFD simply dup (old) to file descriptor
-	 * (new) and return.
+	 * 1. moveit == false (used to be the EDUPFD magic errno):
+	 *    simply dup (old) to file descriptor (new) and return.
 	 *
-	 * For EMOVEFD steal away the file structure from (old) and
-	 * store it in (new).  (old) is effectively closed by
-	 * this operation.
-	 *
-	 * Any other error code is just returned.
+	 * 2. moveit == true (used to be the EMOVEFD magic errno):
+	 *    steal away the file structure from (old) and store it in
+	 *    (new).  (old) is effectively closed by this operation.
 	 */
-	switch (error) {
-	case EDUPFD:
+	if (moveit == false) {
 		/*
 		 * Check that the mode the file is being opened for is a
 		 * subset of the mode of the existing descriptor.
 		 */
-		if (((mode & (FREAD|FWRITE)) | fp->f_flag) != fp->f_flag) {
+		if (((flags & (FREAD|FWRITE)) | fp->f_flag) != fp->f_flag) {
 			error = EACCES;
-			break;
+			goto out;
 		}
 
 		/* Copy it. */
 		error = fd_dup(fp, 0, newp, ff->ff_exclose);
-		break;
-
-	case EMOVEFD:
+	} else {
 		/* Copy it. */
 		error = fd_dup(fp, 0, newp, ff->ff_exclose);
 		if (error != 0) {
-			break;
+			goto out;
 		}
 
 		/* Steal away the file pointer from 'old'. */
@@ -1701,6 +1714,7 @@ fd_dupopen(int old, int *newp, int mode, int error)
 		return 0;
 	}
 
+out:
 	fd_putfile(old);
 	return error;
 }

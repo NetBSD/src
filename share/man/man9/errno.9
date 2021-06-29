@@ -1,4 +1,4 @@
-.\"	$NetBSD: errno.9,v 1.5 2010/03/22 18:58:33 joerg Exp $
+.\"	$NetBSD: errno.9,v 1.6 2021/06/29 22:40:53 dholland Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -97,7 +97,8 @@ to that new file descriptor and return
 .Xr vn_open 9
 takes the file descriptor pointed to by
 .Ar l_dupfd
-and copies it to the file descriptor that the open call will return.
+and arranges for it to be copied to the file descriptor that the open
+call will return.
 .It Er \-6 EMOVEFD Em "Move file descriptor."
 This error is similar to
 .Er EDUPFD
