@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.228 2021/06/29 22:34:08 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.229 2021/06/29 22:39:21 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.228 2021/06/29 22:34:08 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.229 2021/06/29 22:39:21 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_magiclinks.h"
@@ -845,7 +845,6 @@ lookup_parsepath(struct namei_state *state, struct vnode *searchdir)
 	 * At this point, our only vnode state is that the search dir
 	 * is held.
 	 */
-	cnp->cn_consume = 0;
 	error = VOP_PARSEPATH(searchdir, cnp->cn_nameptr, &cnp->cn_namelen);
 	if (error) {
 		return error;
@@ -1237,19 +1236,6 @@ unionlookup:
 #ifdef NAMEI_DIAGNOSTIC
 	printf("found\n");
 #endif /* NAMEI_DIAGNOSTIC */
-
-	/*
-	 * Take into account any additional components consumed by the
-	 * underlying filesystem.  This will include any trailing slashes after
-	 * the last component consumed.
-	 */
-	if (cnp->cn_consume > 0) {
-		ndp->ni_pathlen -= cnp->cn_consume - state->slashes;
-		ndp->ni_next += cnp->cn_consume - state->slashes;
-		cnp->cn_consume = 0;
-		if (ndp->ni_next[0] == '\0')
-			cnp->cn_flags |= ISLASTCN;
-	}
 
 	/* Unlock, unless the caller needs the parent locked. */
 	if (searchdir != NULL) {
@@ -2059,7 +2045,6 @@ do_lookup_for_nfsd_index(struct namei_state *state)
 	state->rdonly = cnp->cn_flags & RDONLY;
 	ndp->ni_dvp = NULL;
 
-	cnp->cn_consume = 0;
 	error = VOP_PARSEPATH(startdir, cnp->cn_nameptr, &cnp->cn_namelen);
 	if (error) {
 		return error;
