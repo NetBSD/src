@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.63 2021/06/28 17:52:12 chs Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.64 2021/06/29 22:34:07 dholland Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.63 2021/06/28 17:52:12 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.64 2021/06/29 22:34:07 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,6 +166,7 @@ static int atoi(const char *, size_t);
 int (**ptyfs_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc ptyfs_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
+	{ &vop_parsepath_desc, genfs_parsepath },	/* parsepath */
 	{ &vop_lookup_desc, ptyfs_lookup },		/* lookup */
 	{ &vop_create_desc, ptyfs_create },		/* create */
 	{ &vop_mknod_desc, ptyfs_mknod },		/* mknod */

@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.114 2020/11/14 11:42:56 hannken Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.115 2021/06/29 22:34:05 dholland Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.114 2020/11/14 11:42:56 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.115 2021/06/29 22:34:05 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,6 +101,7 @@ static int coda_lockdebug = 0;
 
 const struct vnodeopv_entry_desc coda_vnodeop_entries[] = {
     { &vop_default_desc, coda_vop_error },
+    { &vop_parsepath_desc, genfs_parsepath },	/* parsepath */
     { &vop_lookup_desc, coda_lookup },		/* lookup */
     { &vop_create_desc, coda_create },		/* create */
     { &vop_mknod_desc, coda_vop_error },	/* mknod */

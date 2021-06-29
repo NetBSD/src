@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.74 2020/08/18 09:44:07 hannken Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.75 2021/06/29 22:34:07 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.74 2020/08/18 09:44:07 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.75 2021/06/29 22:34:07 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,6 +144,7 @@ static int union_lookup1(struct vnode *, struct vnode **,
 int (**union_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc union_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
+	{ &vop_parsepath_desc, genfs_parsepath },	/* parsepath */
 	{ &vop_lookup_desc, union_lookup },		/* lookup */
 	{ &vop_create_desc, union_create },		/* create */
 	{ &vop_whiteout_desc, union_whiteout },		/* whiteout */

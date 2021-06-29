@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.217 2020/05/16 18:31:49 christos Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.218 2021/06/29 22:34:07 dholland Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.217 2020/05/16 18:31:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.218 2021/06/29 22:34:07 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -105,6 +105,7 @@ int	puffs_vnop_checkop(void *);
 int (**puffs_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc puffs_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
+	{ &vop_parsepath_desc, genfs_parsepath },	/* parsepath */
 	{ &vop_lookup_desc, puffs_vnop_lookup },	/* REAL lookup */
 	{ &vop_create_desc, puffs_vnop_checkop },	/* create */
         { &vop_mknod_desc, puffs_vnop_checkop },	/* mknod */
@@ -163,6 +164,7 @@ const struct vnodeopv_desc puffs_vnodeop_opv_desc =
 int (**puffs_specop_p)(void *);
 const struct vnodeopv_entry_desc puffs_specop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
+	{ &vop_parsepath_desc, genfs_parsepath },	/* parsepath */
 	{ &vop_lookup_desc, spec_lookup },		/* lookup, ENOTDIR */
 	{ &vop_create_desc, spec_create },		/* genfs_badop */
 	{ &vop_mknod_desc, spec_mknod },		/* genfs_badop */
@@ -223,6 +225,7 @@ const struct vnodeopv_desc puffs_specop_opv_desc =
 int (**puffs_fifoop_p)(void *);
 const struct vnodeopv_entry_desc puffs_fifoop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
+	{ &vop_parsepath_desc, genfs_parsepath },	/* parsepath */
 	{ &vop_lookup_desc, vn_fifo_bypass },		/* lookup, ENOTDIR */
 	{ &vop_create_desc, vn_fifo_bypass },		/* genfs_badop */
 	{ &vop_mknod_desc, vn_fifo_bypass },		/* genfs_badop */
@@ -283,6 +286,7 @@ const struct vnodeopv_desc puffs_fifoop_opv_desc =
 int (**puffs_msgop_p)(void *);
 const struct vnodeopv_entry_desc puffs_msgop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
+	{ &vop_parsepath_desc, genfs_parsepath },
 	{ &vop_create_desc, puffs_vnop_create },	/* create */
         { &vop_mknod_desc, puffs_vnop_mknod },		/* mknod */
         { &vop_open_desc, puffs_vnop_open },		/* open */

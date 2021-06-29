@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.216 2021/06/28 17:52:13 chs Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.217 2021/06/29 22:34:09 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.216 2021/06/28 17:52:13 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.217 2021/06/29 22:34:09 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -255,6 +255,7 @@ static int atoi(const char *, size_t);
 int (**procfs_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc procfs_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
+	{ &vop_parsepath_desc, genfs_parsepath },	/* parsepath */
 	{ &vop_lookup_desc, procfs_lookup },		/* lookup */
 	{ &vop_create_desc, procfs_create },		/* create */
 	{ &vop_mknod_desc, procfs_mknod },		/* mknod */

@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.55 2020/06/27 17:29:17 christos Exp $	*/
+/*	$NetBSD: advnops.c,v 1.56 2021/06/29 22:34:05 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.55 2020/06/27 17:29:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.56 2021/06/29 22:34:05 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,6 +95,7 @@ int	adosfs_pathconf(void *);
 
 const struct vnodeopv_entry_desc adosfs_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
+	{ &vop_parsepath_desc, genfs_parsepath },	/* parsepath */
 	{ &vop_lookup_desc, adosfs_lookup },		/* lookup */
 	{ &vop_create_desc, adosfs_create },		/* create */
 	{ &vop_mknod_desc, adosfs_mknod },		/* mknod */

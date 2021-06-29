@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.145 2020/12/13 19:22:02 chs Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.146 2021/06/29 22:34:07 dholland Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007, 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.145 2020/12/13 19:22:02 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.146 2021/06/29 22:34:07 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.145 2020/12/13 19:22:02 chs Exp $"
 int (**tmpfs_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc tmpfs_vnodeop_entries[] = {
 	{ &vop_default_desc,		vn_default_error },
+	{ &vop_parsepath_desc,		genfs_parsepath },
 	{ &vop_lookup_desc,		tmpfs_lookup },
 	{ &vop_create_desc,		tmpfs_create },
 	{ &vop_mknod_desc,		tmpfs_mknod },

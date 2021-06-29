@@ -1,4 +1,4 @@
-/*	$NetBSD: autofs_vnops.c,v 1.6 2020/05/16 18:31:48 christos Exp $	*/
+/*	$NetBSD: autofs_vnops.c,v 1.7 2021/06/29 22:34:06 dholland Exp $	*/
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
  * Copyright (c) 2016 The DragonFly Project
@@ -34,7 +34,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autofs_vnops.c,v 1.6 2020/05/16 18:31:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autofs_vnops.c,v 1.7 2021/06/29 22:34:06 dholland Exp $");
 
 #include "autofs.h"
 
@@ -587,6 +587,7 @@ autofs_reclaim(void *v)
 int (**autofs_vnodeop_p)(void *);
 static const struct vnodeopv_entry_desc autofs_vnodeop_entries[] = {
 	{ &vop_default_desc,	vn_default_error },
+	{ &vop_parsepath_desc,	genfs_parsepath },
 	{ &vop_lookup_desc,	autofs_lookup },
 	{ &vop_open_desc,	autofs_open },
 	{ &vop_close_desc,	autofs_close },

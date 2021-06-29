@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.162 2020/05/16 18:31:52 christos Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.163 2021/06/29 22:34:09 dholland Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.162 2020/05/16 18:31:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.163 2021/06/29 22:34:09 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -90,6 +90,7 @@ static int rump_vop_fcntl(void *);
 int (**rump_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc rump_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
+	{ &vop_parsepath_desc, genfs_parsepath },
 	{ &vop_lookup_desc, rump_vop_lookup },
 	{ &vop_getattr_desc, rump_vop_getattr },
 	{ &vop_setattr_desc, rump_vop_setattr },
