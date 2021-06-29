@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_quota1.c,v 1.11 2016/06/20 00:53:10 dholland Exp $	*/
+/*	$NetBSD: ulfs_quota1.c,v 1.12 2021/06/29 22:40:54 dholland Exp $	*/
 /*  from NetBSD: ufs_quota1.c,v 1.22 2016/06/20 00:52:04 dholland Exp  */
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_quota1.c,v 1.11 2016/06/20 00:53:10 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_quota1.c,v 1.12 2021/06/29 22:40:54 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -312,7 +312,6 @@ lfsquota1_handle_cmd_quotaon(struct lwp *l, struct ulfsmount *ump, int type,
 	struct dquot *dq;
 	int error;
 	struct pathbuf *pb;
-	struct nameidata nd;
 
 	if (fs->um_flags & ULFS_QUOTA2) {
 		uprintf("%s: quotas v2 already enabled\n",
@@ -326,12 +325,11 @@ lfsquota1_handle_cmd_quotaon(struct lwp *l, struct ulfsmount *ump, int type,
 	if (pb == NULL) {
 		return ENOMEM;
 	}
-	NDINIT(&nd, LOOKUP, FOLLOW, pb);
-	if ((error = vn_open(&nd, FREAD|FWRITE, 0)) != 0) {
+	error = vn_open(NULL, pb, 0, FREAD|FWRITE, 0, &vp, NULL, NULL);
+	if (error != 0) {
 		pathbuf_destroy(pb);
 		return error;
 	}
-	vp = nd.ni_vp;
 	pathbuf_destroy(pb);
 
 	VOP_UNLOCK(vp);

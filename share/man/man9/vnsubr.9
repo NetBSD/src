@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnsubr.9,v 1.47 2019/11/17 11:46:38 wiz Exp $
+.\"     $NetBSD: vnsubr.9,v 1.48 2021/06/29 22:40:53 dholland Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 2, 2017
+.Dd June 28, 2021
 .Dt VNSUBR 9
 .Os
 .Sh NAME
@@ -65,7 +65,11 @@
 .Ft void
 .Fn vn_marktext "struct vnode *vp"
 .Ft int
-.Fn vn_open "struct nameidata *ndp" "int fmode" "int cmode"
+.Fo vn_open
+.Fa "struct vnode *at_dvp" "struct pathbuf *pb"
+.Fa "int nmode" "int fmode" "int cmode" 
+.Fa "struct vnode **ret_vp" "bool *ret_domove" "int *ret_fd"
+.Fc
 .Ft int
 .Fn vn_bdev_open "dev_t dev" "struct vnode **vpp" "struct lwp *l"
 .Ft int
@@ -160,25 +164,81 @@ as containing executable code of a running process.
 Common code to mark the vnode
 .Fa vp
 as being the text of a running process.
-.It Fn vn_open "ndp" "fmode" "cmode"
+.It Fn vn_open "at_dvp" "pb" "nmode" "fmode" "cmode" "ret_vp" "ret_domove" "ret_fd"
 Common code for vnode open operations.
-The pathname is described in the nameidata pointer (see
-.Xr namei 9 ) .
+The
+.Fa at_dvp
+argument, if not NULL, provides the directory relative paths start
+from, as per
+.Xr openat 2 .
+The
+.Fa pb
+argument gives the pathname.
 The arguments
+.Fa nmode ,
 .Fa fmode
 and
 .Fa cmode
-specify the
+specify additional
+.Xr namei 9
+flags, the
 .Xr open 2
-file mode and the access permissions for creation.
+flags (converted to
+.Dv F*
+from
+.Dv O_*
+form)
+and the access mode (permissions) for creation, respectively.
+The
+.Fa nmode
+argument is restricted to one or perhaps both of the flags
+.Dv TRYEMULROOT
+and
+.Dv NOCHROOT .
+Other
+.Xr name 9
+modes should be selected via
+.Fn fmode .
+The
+.Fa ret_vp ,
+.Fa ret_domove ,
+and
+.Fa ret_fd
+arguments encode the possible return values.
+When called,
 .Fn vn_open
-checks  permissions and invokes the
+checks permissions and invokes the
 .Xr VOP_OPEN 9
 or
 .Xr VOP_CREATE 9
 vnode operations.
-If the operation is successful zero is returned and the vnode is locked,
-otherwise an appropriate error code is returned.
+If the operation is unsuccessful an appropriate error code is returned.
+Otherwise, zero is returned.
+If a vnode is produced, it is returned locked via
+.Fa ret_vp .
+If a file descriptor number is produced instead, the pointer passed via
+.Fa ret_vp
+is NULL, the file descriptor is returned via
+.Fa ret_fd ,
+and the
+.Fa ret_domove
+returns a value that is true if the file descriptor should be moved
+rather than copied.
+These cases correspond to the internal errors
+.Dv EMOVEFD
+and
+.Dv EDUPFD
+respectively.
+See
+.Xr errno 9
+for further information.
+Callers unprepared to handle file descriptors can set
+.Fa ret_fd
+and
+.Fa ret_domove
+to NULL, in which case an operation that would produce a file descriptor
+will instead fail with
+.Dv EOPNOTSUPP .
 .It Fn vn_bdev_open "dev" "vpp" "l"
 Opens a block device by its device number for reading and writing, and
 stores the vnode pointer into

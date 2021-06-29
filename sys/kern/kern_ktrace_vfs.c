@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace_vfs.c,v 1.2 2014/09/05 09:20:59 matt Exp $	*/
+/*	$NetBSD: kern_ktrace_vfs.c,v 1.3 2021/06/29 22:40:53 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace_vfs.c,v 1.2 2014/09/05 09:20:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace_vfs.c,v 1.3 2021/06/29 22:40:53 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,6 @@ sys_ktrace(struct lwp *l, const struct sys_ktrace_args *uap, register_t *retval)
 	struct vnode *vp = NULL;
 	file_t *fp = NULL;
 	struct pathbuf *pb;
-	struct nameidata nd;
 	int error = 0;
 	int fd;
 
@@ -109,13 +108,12 @@ sys_ktrace(struct lwp *l, const struct sys_ktrace_args *uap, register_t *retval)
 			ktrexit(l);
 			return (error);
 		}
-		NDINIT(&nd, LOOKUP, FOLLOW, pb);
-		if ((error = vn_open(&nd, FREAD|FWRITE, 0)) != 0) {
+		error = vn_open(NULL, pb, 0, FREAD|FWRITE, 0, &vp, NULL, NULL);
+		if (error != 0) {
 			pathbuf_destroy(pb);
 			ktrexit(l);
 			return (error);
 		}
-		vp = nd.ni_vp;
 		pathbuf_destroy(pb);
 		VOP_UNLOCK(vp);
 		if (vp->v_type != VREG) {
