@@ -1,4 +1,4 @@
-/*	$NetBSD: lex_char_uchar.c,v 1.2 2021/06/29 14:19:51 rillig Exp $	*/
+/*	$NetBSD: lex_char_uchar.c,v 1.3 2021/06/29 21:33:09 rillig Exp $	*/
 # 3 "lex_char_uchar.c"
 
 /*
@@ -9,9 +9,11 @@
 /* lint1-only-if uchar */
 
 /*
- * FIXME: The warning is bogus; it must be possible to initialize a char
- *  variable with a character constant.
- * See tree.c, function convert_constant.
+ * Before inittyp.c 1.23 from 2021-06-29, the following initialization
+ * triggered a wrong warning "conversion of 'int' to 'char' is out of range",
+ * but only on platforms where char has the same representation as unsigned
+ * char.  There are only few of these platforms, which allowed this bug to
+ * survive for almost 26 years, since the initial commit of lint on
+ * 1995-07-03.
  */
-/* expect+1: conversion of 'int' to 'char' is out of range [119] */
 char ch = '\xff';
