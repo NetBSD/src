@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.181 2020/12/25 09:28:56 mlelstv Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.182 2021/06/29 22:34:09 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.181 2020/12/25 09:28:56 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.182 2021/06/29 22:34:09 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -115,6 +115,7 @@ extern struct mount *dead_rootmount;
 int (**spec_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc spec_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
+	{ &vop_parsepath_desc, genfs_parsepath },	/* parsepath */
 	{ &vop_lookup_desc, spec_lookup },		/* lookup */
 	{ &vop_create_desc, spec_create },		/* create */
 	{ &vop_mknod_desc, spec_mknod },		/* mknod */

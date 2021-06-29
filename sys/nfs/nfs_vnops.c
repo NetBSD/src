@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.317 2020/09/05 16:30:12 riastradh Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.318 2021/06/29 22:34:09 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.317 2020/09/05 16:30:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.318 2021/06/29 22:34:09 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -100,6 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.317 2020/09/05 16:30:12 riastradh Ex
 int (**nfsv2_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc nfsv2_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
+	{ &vop_parsepath_desc, genfs_parsepath },	/* parsepath */
 	{ &vop_lookup_desc, nfs_lookup },		/* lookup */
 	{ &vop_create_desc, nfs_create },		/* create */
 	{ &vop_mknod_desc, nfs_mknod },			/* mknod */
@@ -154,6 +155,7 @@ const struct vnodeopv_desc nfsv2_vnodeop_opv_desc =
 int (**spec_nfsv2nodeop_p)(void *);
 const struct vnodeopv_entry_desc spec_nfsv2nodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
+	{ &vop_parsepath_desc, genfs_parsepath },	/* parsepath */
 	{ &vop_lookup_desc, spec_lookup },		/* lookup */
 	{ &vop_create_desc, spec_create },		/* create */
 	{ &vop_mknod_desc, spec_mknod },		/* mknod */
@@ -205,6 +207,7 @@ const struct vnodeopv_desc spec_nfsv2nodeop_opv_desc =
 int (**fifo_nfsv2nodeop_p)(void *);
 const struct vnodeopv_entry_desc fifo_nfsv2nodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
+	{ &vop_parsepath_desc, genfs_parsepath },	/* parsepath */
 	{ &vop_lookup_desc, vn_fifo_bypass },		/* lookup */
 	{ &vop_create_desc, vn_fifo_bypass },		/* create */
 	{ &vop_mknod_desc, vn_fifo_bypass },		/* mknod */
