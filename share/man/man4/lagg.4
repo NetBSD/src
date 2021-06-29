@@ -1,5 +1,4 @@
-
-.\"	$NetBSD: lagg.4,v 1.2 2021/06/21 06:36:28 yamaguchi Exp $
+.\"	$NetBSD: lagg.4,v 1.3 2021/06/29 10:26:00 wiz Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -81,7 +80,7 @@ The interface preferentially uses the child interface that is
 the smallest numeric in the priority.
 .Pp
 The driver currently supports the aggregation protocols
-.Ic failover,
+.Ic failover ,
 .Ic loadbalance ,
 .Ic lacp ,
 and
@@ -153,7 +152,6 @@ command.
 .Pp
 The MTU of the first interface to be added is used as the lagg MTU.
 All additional interfaces are required to have exactly the same value.
-.Pp
 .Sh EXAMPLES
 Create a link aggregation using LACP with two
 .Xr wm 4
@@ -177,7 +175,6 @@ Gigabit Ethernet interfaces and set each priority:
 	laggport wm0 pri 1000 laggport wm1 pri 2000 \e
 	192.168.1.1 netmask 255.255.255.0
 .Ed
-.Pp
 .Sh SEE ALSO
 .Xr ifconfig 8
 .Sh HISTORY
