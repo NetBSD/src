@@ -1,4 +1,4 @@
-#	$NetBSD: majors.evbmips,v 1.37 2020/07/24 12:07:09 jmcneill Exp $
+#	$NetBSD: majors.evbmips,v 1.38 2021/06/29 10:22:35 nia Exp $
 #
 # Device majors for evbmips
 #
@@ -63,7 +63,7 @@ device-major	ld		char 59  block 17	ld
 device-major	cy		char 60			cy
 device-major	cz		char 61			cz
 #device-major	obsolete	char 62			obsolete (urio)
-device-major	uscanner	char 63			uscanner
+#device-major	obsolete	char 63			obsolete (uscanner)
 device-major	altq		char 64			altq
 device-major	mlx		char 65			mlx
 device-major	pci		char 66			pci

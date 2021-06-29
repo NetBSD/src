@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1722 2021/06/03 13:16:41 wiz Exp $
+# $NetBSD: mi,v 1.1723 2021/06/29 10:22:34 nia Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1936,7 +1936,7 @@
 ./usr/share/man/cat4/usb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/usbnet.0			man-sys-catman		.cat
 ./usr/share/man/cat4/usbtask.0			man-sys-catman		.cat
-./usr/share/man/cat4/uscanner.0			man-sys-catman		.cat
+./usr/share/man/cat4/uscanner.0			man-obsolete		obsolete
 ./usr/share/man/cat4/userconf.0			man-sys-catman		.cat
 ./usr/share/man/cat4/uslsa.0			man-sys-catman		.cat
 ./usr/share/man/cat4/usmsc.0			man-sys-catman		.cat
@@ -5096,7 +5096,7 @@
 ./usr/share/man/html4/usb.html			man-sys-htmlman		html
 ./usr/share/man/html4/usbnet.html		man-sys-htmlman		html
 ./usr/share/man/html4/usbtask.html		man-sys-htmlman		html
-./usr/share/man/html4/uscanner.html		man-sys-htmlman		html
+./usr/share/man/html4/uscanner.html		man-obsolete		obsolete
 ./usr/share/man/html4/userconf.html		man-sys-htmlman		html
 ./usr/share/man/html4/uslsa.html		man-sys-htmlman		html
 ./usr/share/man/html4/usmsc.html		man-sys-htmlman		html
@@ -8180,7 +8180,7 @@
 ./usr/share/man/man4/usb.4			man-sys-man		.man
 ./usr/share/man/man4/usbnet.4			man-sys-man		.man
 ./usr/share/man/man4/usbtask.4			man-sys-man		.man
-./usr/share/man/man4/uscanner.4			man-sys-man		.man
+./usr/share/man/man4/uscanner.4			man-obsolete		obsolete
 ./usr/share/man/man4/userconf.4			man-sys-man		.man
 ./usr/share/man/man4/uslsa.4			man-sys-man		.man
 ./usr/share/man/man4/usmsc.4			man-sys-man		.man

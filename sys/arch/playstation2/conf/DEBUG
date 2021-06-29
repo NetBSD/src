@@ -1,7 +1,7 @@
 #
 # kernel config file for debugging.
 #
-# 	$NetBSD: DEBUG,v 1.27 2020/05/16 13:46:11 maya Exp $
+# 	$NetBSD: DEBUG,v 1.28 2021/06/29 10:22:36 nia Exp $
 #
 
 include 	"arch/playstation2/conf/std.playstation2"
@@ -104,9 +104,6 @@ ucom*	at uvisor?
 # Kyocera AIR-EDGE PHONE
 ukyopon* at uhub? port ?
 ucom*	at ukyopon? portno ?
-
-# USB scanners
-uscanner* at uhub? port ?
 
 # USB scanners that use SCSI emulation, e.g., HP5300
 usscanner* at uhub? port ?

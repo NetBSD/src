@@ -1,4 +1,4 @@
-#	$NetBSD: majors.ia64,v 1.19 2020/04/04 16:06:14 jdolecek Exp $
+#	$NetBSD: majors.ia64,v 1.20 2021/06/29 10:22:36 nia Exp $
 #
 # Device majors for ia64
 #
@@ -73,7 +73,7 @@ device-major	bktr		char 71			bktr
 
 device-major	cz		char 73			cz
 device-major	ses		char 74			ses
-device-major	uscanner	char 75			uscanner
+#device-major	obsolete	char 75			obsolete (uscanner)
 device-major	iop		char 76			iop
 device-major	altq		char 77			altq
 device-major	mlx		char 78			mlx

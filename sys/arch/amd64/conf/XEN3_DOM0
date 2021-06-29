@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.192 2021/03/05 20:30:56 gdt Exp $
+# $NetBSD: XEN3_DOM0,v 1.193 2021/06/29 10:22:34 nia Exp $
 
 # XEN3_DOM0 machine description file
 #
@@ -14,7 +14,7 @@ include 	"arch/amd64/conf/std.xen"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"XEN3_DOM0-$Revision: 1.192 $"
+#ident		"XEN3_DOM0-$Revision: 1.193 $"
 
 maxusers	32		# estimated number of users
 
@@ -1087,9 +1087,6 @@ ucom*	at uvisor?
 # Kyocera AIR-EDGE PHONE
 ukyopon* at uhub? port ?
 ucom*	at ukyopon? portno ?
-
-# USB scanners
-#uscanner* at uhub? port ?
 
 # USB scanners that use SCSI emulation, e.g., HP5300
 usscanner* at uhub? port ?

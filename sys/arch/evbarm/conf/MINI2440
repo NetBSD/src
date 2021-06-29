@@ -1,4 +1,4 @@
-#	$NetBSD: MINI2440,v 1.32 2020/09/27 13:48:50 roy Exp $
+#	$NetBSD: MINI2440,v 1.33 2021/06/29 10:22:35 nia Exp $
 #
 #	MINI2440 -- Friendly ARM evaluation board based on Samsung S3C2440
 #
@@ -327,9 +327,6 @@ umass*	at uhub? port ? configuration ? interface ?
 # Kyocera AIR-EDGE PHONE
 #ukyopon* at uhub? port ?
 #ucom*	at ukyopon? portno ?
-
-# USB scanners
-#uscanner* at uhub? port ?
 
 # USB scanners that use SCSI emulation, e.g., HP5300
 #usscanner* at uhub? port ?

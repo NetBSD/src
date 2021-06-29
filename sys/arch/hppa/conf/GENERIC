@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.37 2021/01/21 06:51:55 nia Exp $
+# $NetBSD: GENERIC,v 1.38 2021/06/29 10:22:35 nia Exp $
 #
 # GENERIC machine description file
 #
@@ -23,7 +23,7 @@ include 	"arch/hppa/conf/std.hppa"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.37 $"
+#ident 		"GENERIC-$Revision: 1.38 $"
 
 maxusers	32		# estimated number of users
 
@@ -663,9 +663,6 @@ ucom*	at uvisor?
 # Kyocera AIR-EDGE PHONE
 ukyopon* at uhub? port ?
 ucom*	at ukyopon? portno ?
-
-# USB scanners
-#uscanner* at uhub? port ?
 
 # USB scanners that use SCSI emulation, e.g., HP5300
 usscanner* at uhub? port ?

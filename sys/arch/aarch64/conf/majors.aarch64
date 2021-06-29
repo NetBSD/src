@@ -1,4 +1,4 @@
-# $NetBSD: majors.aarch64,v 1.6 2020/04/04 16:06:10 jdolecek Exp $
+# $NetBSD: majors.aarch64,v 1.7 2021/06/29 10:22:34 nia Exp $
 #
 # Device majors for arm32
 #
@@ -69,7 +69,7 @@ device-major	ugen		char 72			ugen
 device-major	wsmux		char 73			wsmux
 device-major	ucom		char 74			ucom
 #device-major	obsolete	char 75			obsolete (urio)
-device-major	uscanner	char 76			uscanner
+#device-major	obsolete	char 76			obsolete (uscanner)
 device-major	openfirm	char 77			openfirm
 device-major	biconsdev	char 78			biconsdev
 #device-major	obsolete	char 79			obsolete (isdn)

@@ -1,4 +1,4 @@
-#	$NetBSD: TWINTAIL,v 1.83 2020/09/27 13:48:50 roy Exp $
+#	$NetBSD: TWINTAIL,v 1.84 2021/06/29 10:22:35 nia Exp $
 #
 #	TWINTAIL -- Genetec corp. G4255EB-X002 Evaluation Board Kernel
 #
@@ -265,9 +265,6 @@ opio0 	at obio?  intr 2
 # Kyocera AIR-EDGE PHONE
 #ukyopon* at uhub? port ?
 #ucom*	at ukyopon? portno ?
-
-# USB scanners
-#uscanner* at uhub? port ?
 
 # USB scanners that use SCSI emulation, e.g., HP5300
 #usscanner* at uhub? port ?

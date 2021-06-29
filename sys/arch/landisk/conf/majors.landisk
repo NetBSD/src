@@ -1,4 +1,4 @@
-#	$NetBSD: majors.landisk,v 1.11 2020/04/04 16:06:14 jdolecek Exp $
+#	$NetBSD: majors.landisk,v 1.12 2021/06/29 10:22:36 nia Exp $
 #
 # Device majors for landisk
 #
@@ -59,7 +59,7 @@ device-major	uhid		char 65			uhid
 device-major	ulpt		char 66			ulpt
 device-major	ugen		char 67			ugen
 device-major	ucom		char 68			ucom
-device-major	uscanner	char 69			uscanner
+#device-major	obsolete	char 69			obsolete (uscanner)
 #device-major	obsolete	char 70			obsolete (urio)
 
 device-major	midi		char 72			midi

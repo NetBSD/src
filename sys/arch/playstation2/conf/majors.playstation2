@@ -1,4 +1,4 @@
-#	$NetBSD: majors.playstation2,v 1.25 2020/04/04 16:06:16 jdolecek Exp $
+#	$NetBSD: majors.playstation2,v 1.26 2021/06/29 10:22:36 nia Exp $
 #
 # Device majors for playstation2
 #
@@ -40,7 +40,7 @@ device-major	ulpt		char 33			ulpt
 device-major	ugen		char 34			ugen
 device-major	ucom		char 35			ucom
 #device-major	obsolete	char 36			obsolete (urio)
-device-major	uscanner	char 37			uscanner
+#device-major	obsolete	char 37			obsolete (uscanner)
 device-major	clockctl	char 38			clockctl
 #device-major	obsolete	char 39			obsolete (systrace)
 device-major	cgd		char 40  block 10	cgd

@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3PAE_DOM0,v 1.34 2021/01/20 13:22:08 nia Exp $
+#	$NetBSD: XEN3PAE_DOM0,v 1.35 2021/06/29 10:22:36 nia Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -644,9 +644,6 @@ ucom*	at uvisor?
 # Kyocera AIR-EDGE PHONE
 ukyopon* at uhub? port ?
 ucom*	at ukyopon? portno ?
-
-# USB scanners
-#uscanner* at uhub? port ?
 
 # USB scanners that use SCSI emulation, e.g., HP5300
 usscanner* at uhub? port ?

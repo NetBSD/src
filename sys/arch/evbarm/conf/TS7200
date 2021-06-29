@@ -1,4 +1,4 @@
-#	$NetBSD: TS7200,v 1.76 2020/05/16 13:46:11 maya Exp $
+#	$NetBSD: TS7200,v 1.77 2021/06/29 10:22:35 nia Exp $
 #
 #	TS7200 - Kernel for Technologic Systems TS7200 ARM hardware
 #
@@ -363,9 +363,6 @@ uhub*	at uhub? port ?
 # Kyocera AIR-EDGE PHONE
 #ukyopon* at uhub? port ?
 #ucom*	at ukyopon? portno ?
-
-# USB scanners
-# uscanner* at uhub? port ?
 
 # USB scanners that use SCSI emulation, e.g., HP5300
 # usscanner* at uhub? port ?

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.183 2020/09/27 13:48:50 roy Exp $
+# $NetBSD: GENERIC,v 1.184 2021/06/29 10:22:34 nia Exp $
 #
 # GENERIC machine description file
 #
@@ -402,9 +402,6 @@ ucom*	at uvisor?
 # Kyocera AIR-EDGE PHONE
 ukyopon* at uhub? port ?
 ucom*	at ukyopon? portno ?
-
-# USB scanners
-#uscanner* at uhub? port ?
 
 # USB scanners that use SCSI emulation, e.g., HP5300
 usscanner* at uhub? port ?

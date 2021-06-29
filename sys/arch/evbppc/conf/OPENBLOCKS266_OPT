@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS266_OPT,v 1.30 2020/05/16 13:46:11 maya Exp $
+#	$NetBSD: OPENBLOCKS266_OPT,v 1.31 2021/06/29 10:22:35 nia Exp $
 #
 
 include		"arch/evbppc/conf/OPENBLOCKS266"
@@ -263,9 +263,6 @@ ucom*	at uvisor?
 # Kyocera AIR-EDGE PHONE
 ukyopon* at uhub? port ?
 ucom*	at ukyopon? portno ?
-
-# USB scanners
-#uscanner* at uhub? port ?
 
 # USB scanners that use SCSI emulation, e.g., HP5300
 usscanner* at uhub? port ?

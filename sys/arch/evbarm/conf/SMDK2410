@@ -1,4 +1,4 @@
-#	$NetBSD: SMDK2410,v 1.77 2020/09/27 13:48:50 roy Exp $
+#	$NetBSD: SMDK2410,v 1.78 2021/06/29 10:22:35 nia Exp $
 #
 #	SMDK2410 -- Samsung's S3C2410 evaluation board.
 #
@@ -302,9 +302,6 @@ ucom*	at uvisor?
 # Kyocera AIR-EDGE PHONE
 ukyopon* at uhub? port ?
 ucom*	at ukyopon? portno ?
-
-# USB scanners
-#uscanner* at uhub? port ?
 
 # USB scanners that use SCSI emulation, e.g., HP5300
 usscanner* at uhub? port ?

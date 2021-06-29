@@ -1,4 +1,4 @@
-#	$NetBSD: majors.powerpc,v 1.16 2020/04/04 16:06:16 jdolecek Exp $
+#	$NetBSD: majors.powerpc,v 1.17 2021/06/29 10:22:36 nia Exp $
 #
 # Device majors for shared PowerPC
 #
@@ -58,7 +58,7 @@ device-major	midi		char 49			midi
 
 device-major	sequencer	char 50			sequencer
 #device-major	obsolete	char 51			obsolete (urio)
-device-major	uscanner	char 52			uscanner
+#device-major	obsolete	char 52			obsolete (uscanner)
 device-major	openfirm	char 53			openfirm
 #device-major	obsolete	char 54			obsolete (isdn)
 #device-major	obsolete	char 55			obsolete (isdnctl)

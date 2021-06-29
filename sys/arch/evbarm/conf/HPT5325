@@ -1,4 +1,4 @@
-#	$NetBSD: HPT5325,v 1.51 2021/01/20 01:20:26 nia Exp $
+#	$NetBSD: HPT5325,v 1.52 2021/06/29 10:22:35 nia Exp $
 #
 #  This configuration supports for HP T5325 Thin Client
 #
@@ -348,9 +348,6 @@ ucom*	at uvisor?
 # Kyocera AIR-EDGE PHONE
 #ukyopon* at uhub? port ?
 #ucom*	at ukyopon? portno ?
-
-# USB scanners
-#uscanner* at uhub? port ?
 
 # USB scanners that use SCSI emulation, e.g., HP5300
 usscanner* at uhub? port ?

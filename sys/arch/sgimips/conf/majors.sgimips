@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sgimips,v 1.33 2020/04/04 16:06:16 jdolecek Exp $
+#	$NetBSD: majors.sgimips,v 1.34 2021/06/29 10:22:37 nia Exp $
 #
 # Device majors for sgimips
 #
@@ -67,7 +67,7 @@ device-major	uhid		char 72			uhid
 device-major	ulpt		char 73			ulpt
 device-major	midi		char 74			midi
 device-major	sequencer	char 75			sequencer
-device-major	uscanner	char 76			uscanner
+#device-major	obsolete	char 76			obsolete (uscanner)
 device-major	ksyms		char 77			ksyms
 device-major	lpt		char 78			lpt
 device-major    sysmon          char 79                 sysmon

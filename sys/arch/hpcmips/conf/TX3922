@@ -1,7 +1,7 @@
 #
 # Distribution kernel (TOSHIBA TX3922 based model) kernel config file
 #
-#	$NetBSD: TX3922,v 1.111 2020/05/16 13:46:11 maya Exp $
+#	$NetBSD: TX3922,v 1.112 2021/06/29 10:22:35 nia Exp $
 #
 include 	"arch/hpcmips/conf/std.hpcmips"
 
@@ -241,9 +241,6 @@ ucom*	at uvisor?
 # Kyocera AIR-EDGE PHONE
 ukyopon* at uhub? port ?
 ucom*	at ukyopon? portno ?
-
-# USB scanners
-#uscanner* at uhub? port ?
 
 # USB Generic driver
 ugen*	at uhub? port ?

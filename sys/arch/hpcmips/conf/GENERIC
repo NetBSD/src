@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.244 2021/01/12 08:03:19 skrll Exp $
+# $NetBSD: GENERIC,v 1.245 2021/06/29 10:22:35 nia Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include 	"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.244 $"
+#ident 		"GENERIC-$Revision: 1.245 $"
 
 maxusers	16
 
@@ -631,9 +631,6 @@ ucom*	at uvisor?
 # Kyocera AIR-EDGE PHONE
 ukyopon* at uhub? port ?
 ucom*	at ukyopon? portno ?
-
-# USB scanners
-#uscanner* at uhub? port ?
 
 # USB scanners that use SCSI emulation, e.g., HP5300
 usscanner* at uhub? port ?
