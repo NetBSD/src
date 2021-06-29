@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.63 2021/06/27 19:41:15 rillig Exp $
+# $NetBSD: t_integration.sh,v 1.64 2021/06/29 08:46:10 rillig Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -36,24 +36,45 @@ configure_test_case()
 
 	# shellcheck disable=SC2016
 	awk='
+		function is_ilp32() {
+			return match(machine_arch, /^(arm|coldfire|hppa|i386|m68000|m68k|mips|mips64|or1k|powerpc|riscv32|sh3|sparc|vax)$/)
+		}
+
+		function is_lp64() {
+			return match(machine_arch, /^(aarch64|alpha|ia64|mipsn64|powerpc64|riscv64|sparc64|x86_64)$/)
+		}
+
 		BEGIN {
 			machine_arch = "'"$machine_arch"'"
 			flags = "-g -S -w"
+			seen_only_on_arch = 0
+			match_only_on_arch = 0
 			skip = 0
 		}
-		/^\/\* (lint1-flags|lint1-extra-flags): .*\*\/$/ {
-			if ($2 == "lint1-flags:")
-				flags = ""
-			for (i = 3; i < NF; i++)
-				flags = flags " " $i
+		$1 == "/*" && $2 ~ /^lint1-/ && $NF == "*/" {
+			if ($2 == "lint1-flags:" || $2 == "lint1-extra-flags:") {
+				if ($2 == "lint1-flags:")
+					flags = ""
+				for (i = 3; i < NF; i++)
+					flags = flags " " $i
+			}
+			if ($2 == "lint1-only-on-arch") {
+				seen_only_on_arch = 1
+				if ($3 == machine_arch)
+					match_only_on_arch = 1
+			}
+			if ($2 == "lint1-not-on-arch" && $3 == machine_arch)
+				skip = 1
+			if ($2 == "lint1-only-on-ilp32" && !is_ilp32())
+				skip = 1
+			if ($2 == "lint1-only-on-lp64" && !is_lp64())
+				skip = 1
 		}
-		/^\/\* lint1-only-on-arch: .* \*\/$/ && $3 != machine_arch {
-			skip = 1
-		}
-		/^\/\* lint1-not-on-arch: .* \*\/$/ && $3 == machine_arch {
-			skip = 1
-		}
+
 		END {
+			if (seen_only_on_arch && !match_only_on_arch)
+				skip = 1
+
 			printf("flags='\''%s'\''\n", flags)
 			printf("skip=%s\n", skip ? "yes" : "no")
 		}
