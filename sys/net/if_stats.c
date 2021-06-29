@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stats.c,v 1.3 2020/02/14 22:04:12 thorpej Exp $	*/
+/*	$NetBSD: if_stats.c,v 1.4 2021/06/29 21:19:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stats.c,v 1.3 2020/02/14 22:04:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stats.c,v 1.4 2021/06/29 21:19:58 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -45,13 +45,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_stats.c,v 1.3 2020/02/14 22:04:12 thorpej Exp $")
  * if_stats_init --
  *	Initialize statistics storage for a network interface.
  */
-int
+void
 if_stats_init(ifnet_t * const ifp)
 {
 	ifp->if_stats = percpu_alloc(IF_STATS_SIZE);
-	if (ifp->if_stats == NULL)
-		return ENOMEM;
-	return 0;
 }
 
 /*

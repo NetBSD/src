@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stats.h,v 1.2 2020/02/14 22:04:12 thorpej Exp $	*/
+/*	$NetBSD: if_stats.h,v 1.3 2021/06/29 21:19:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@ if_statsub_ref(net_stat_ref_t nsr, if_stat_t x, uint64_t v)
 	_NET_STATSUB_REF(nsr, x, v);
 }
 
-int	if_stats_init(ifnet_t *);
+void	if_stats_init(ifnet_t *);
 void	if_stats_fini(ifnet_t *);
 void	if_stats_to_if_data(ifnet_t *, struct if_data *, bool);
 
