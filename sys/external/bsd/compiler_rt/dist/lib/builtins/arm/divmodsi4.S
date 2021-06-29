@@ -17,8 +17,10 @@
 
 #define ESTABLISH_FRAME    \
     push   {r4-r7, lr}   ;\
-    add     r7,     sp, #12
+    add     r7,     sp, #12   ;\
+    sub     sp,     #4
 #define CLEAR_FRAME_AND_RETURN \
+    add     sp,     #4   ;\
     pop    {r4-r7, pc}
 
 	.syntax unified
