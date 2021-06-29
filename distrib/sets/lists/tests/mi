@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1069 2021/06/29 13:58:13 rillig Exp $
+# $NetBSD: mi,v 1.1070 2021/06/29 21:33:08 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6205,7 +6205,7 @@
 ./usr/tests/usr.bin/xlint/lint1/emit.c				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/emit.exp			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/emit.exp-ln			tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/xlint/lint1/emit.ln				obsolete		obsolete
+./usr/tests/usr.bin/xlint/lint1/emit.ln				tests-obsolete		obsolete
 ./usr/tests/usr.bin/xlint/lint1/expr_range.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/expr_range.exp			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/feat_stacktrace.c		tests-usr.bin-tests	compattestfile,atf
@@ -6223,7 +6223,7 @@
 ./usr/tests/usr.bin/xlint/lint1/lex_char.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/lex_char.exp			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/lex_char_uchar.c		tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/xlint/lint1/lex_char_uchar.exp		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/lex_char_uchar.exp		tests-obsolete		obsolete
 ./usr/tests/usr.bin/xlint/lint1/lex_comment.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/lex_comment.exp			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/lex_floating.c			tests-usr.bin-tests	compattestfile,atf
