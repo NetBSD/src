@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_extern.c,v 1.7 2020/05/16 18:31:50 christos Exp $	*/
+/*	$NetBSD: v7fs_extern.c,v 1.8 2021/06/29 22:34:08 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_extern.c,v 1.7 2020/05/16 18:31:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_extern.c,v 1.8 2021/06/29 22:34:08 dholland Exp $");
 
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
@@ -55,6 +55,7 @@ int (**v7fs_vnodeop_p)(void *);	/* filled by getnewvnode (vnode.h) */
 
 const struct vnodeopv_entry_desc v7fs_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
+	{ &vop_parsepath_desc, genfs_parsepath },	/* parsepath */
 	{ &vop_lookup_desc, v7fs_lookup },		/* lookup */
 	{ &vop_create_desc, v7fs_create },		/* create */
 	{ &vop_mknod_desc, v7fs_mknod },		/* mknod */
@@ -105,6 +106,7 @@ const struct vnodeopv_entry_desc v7fs_vnodeop_entries[] = {
 int (**v7fs_specop_p)(void *);
 const struct vnodeopv_entry_desc v7fs_specop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
+	{ &vop_parsepath_desc, genfs_parsepath },	/* parsepath */
 	{ &vop_lookup_desc, spec_lookup },		/* lookup */
 	{ &vop_create_desc, spec_create },		/* create xxx*/
 	{ &vop_mknod_desc, spec_mknod },		/* mknod xxx*/
@@ -154,6 +156,7 @@ const struct vnodeopv_entry_desc v7fs_specop_entries[] = {
 int (**v7fs_fifoop_p)(void *);
 const struct vnodeopv_entry_desc v7fs_fifoop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
+	{ &vop_parsepath_desc, genfs_parsepath },	/* parsepath */
 	{ &vop_lookup_desc, vn_fifo_bypass },		/* lookup */
 	{ &vop_create_desc, vn_fifo_bypass },		/* create */
 	{ &vop_mknod_desc, vn_fifo_bypass },		/* mknod */
