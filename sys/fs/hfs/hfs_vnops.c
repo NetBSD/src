@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vnops.c,v 1.37 2021/06/29 22:34:06 dholland Exp $	*/
+/*	$NetBSD: hfs_vnops.c,v 1.38 2021/06/29 22:37:50 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.37 2021/06/29 22:34:06 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.38 2021/06/29 22:37:50 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -132,6 +132,7 @@ __KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.37 2021/06/29 22:34:06 dholland Exp 
 
 #include <miscfs/genfs/genfs.h>
 
+int	hfs_vop_parsepath(void *);
 int	hfs_vop_lookup(void *);
 int	hfs_vop_open(void *);
 int	hfs_vop_close(void *);
@@ -331,6 +332,29 @@ const struct vnodeopv_desc hfs_fifoop_opv_desc =
 	{ &hfs_fifoop_p, hfs_fifoop_entries };
 
 int
+hfs_vop_parsepath(void *v)
+{
+	struct vop_parsepath_args /* {
+		struct vnode *a_dvp;
+		const char *a_name;
+		size_t *a_retval;
+	} */ *ap = v;
+	size_t len;
+	int error;
+
+	error = genfs_parsepath(v);
+	if (error) {
+		return error;
+	}
+
+	len = *ap->a_retval;
+	if (!strcmp(ap->a_name + len, "/rsrc")) {
+		*ap->a_retval += 5;
+	}
+	return 0;
+}
+
+int
 hfs_vop_lookup(void *v)
 {
 	struct vop_lookup_v2_args /* {
@@ -346,6 +370,8 @@ hfs_vop_lookup(void *v)
 	struct vnode *vdp;		/* vnode for directory being searched */
 	hfs_catalog_key_t key;	/* hfs+ catalog search key for requested child */
 	hfs_catalog_keyed_record_t rec; /* catalog record of requested child */
+	size_t namelen;
+	int use_resource_fork = 0;
 	unichar_t* unicn;		/* name of component, in Unicode */
 	const char *pname;
 	int error;
@@ -420,12 +446,18 @@ hfs_vop_lookup(void *v)
 
 		hfslib_init_cbargs(&cbargs);
 
+		namelen = cnp->cn_namelen;
+		if (namelen > 5 &&
+		    !strcmp(cnp->cn_nameptr + namelen - 5, "/rsrc")) {
+			namelen -= 5;
+			use_resource_fork = 1;
+		}
+
 		/* XXX: when decomposing, string could grow
 		   and we have to handle overflow */
-		unicn = malloc(cnp->cn_namelen * sizeof(unicn[0]),
-		    M_TEMP, M_WAITOK);
-		len = utf8_to_utf16(unicn, cnp->cn_namelen,
-		    cnp->cn_nameptr, cnp->cn_namelen, 0, NULL);
+		unicn = malloc(namelen * sizeof(unicn[0]), M_TEMP, M_WAITOK);
+		len = utf8_to_utf16(unicn, namelen,
+		    cnp->cn_nameptr, namelen, 0, NULL);
 		for (ni = 0; ni < len; ni++)
 			if (unicn[ni] == (unichar_t)':')
 				unicn[ni] = (unichar_t)'/';
@@ -462,13 +494,11 @@ hfs_vop_lookup(void *v)
 		}
 
 		if (rec.type == HFS_REC_FILE
-		    && strcmp(cnp->cn_nameptr+cnp->cn_namelen, "/rsrc") == 0
+		    && use_resource_fork
 		    && rec.file.rsrc_fork.logical_size > 0) {
-		    /* advance namei next pointer to end of stirng */
-		    cnp->cn_consume = 5;
-		    cnp->cn_flags &= ~REQUIREDIR; /* XXX: needed? */
-		    error = hfs_vget_internal(vdp->v_mount, rec.file.cnid,
-			HFS_RSRCFORK, &tdp);
+		    /* advance namei next pointer to end of string */
+			error = hfs_vget_internal(vdp->v_mount, rec.file.cnid,
+			    HFS_RSRCFORK, &tdp);
 		} else
 			error = hfs_vget_internal(vdp->v_mount, rec.file.cnid,
 			    HFS_DATAFORK, &tdp);
