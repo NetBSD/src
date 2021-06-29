@@ -1,4 +1,4 @@
-#	$NetBSD: majors.x68k,v 1.32 2020/04/04 16:06:17 jdolecek Exp $
+#	$NetBSD: majors.x68k,v 1.33 2021/06/29 10:22:37 nia Exp $
 #
 # Device majors for x68k
 #
@@ -58,7 +58,7 @@ device-major	uhid		char 56			uhid
 device-major	ulpt		char 57			ulpt
 device-major	ucom		char 58			ucom
 #device-major	obsolete	char 59			obsolete (urio)
-device-major	uscanner	char 60			uscanner
+#device-major	obsolete	char 60			obsolete (uscanner)
 device-major	sysmon		char 61			sysmon
 #device-major	obsolete	char 98			obsolete (nsmb)
 
