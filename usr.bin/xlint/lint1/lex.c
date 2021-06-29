@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.48 2021/06/29 13:48:24 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.49 2021/06/29 21:16:54 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.48 2021/06/29 13:48:24 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.49 2021/06/29 21:16:54 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -668,7 +668,7 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 		break;
 	}
 
-	uq = (uint64_t)xsign((int64_t)uq, typ, -1);
+	uq = (uint64_t)convert_integer((int64_t)uq, typ, -1);
 
 	yylval.y_val = xcalloc(1, sizeof(*yylval.y_val));
 	yylval.y_val->v_tspec = typ;
@@ -703,10 +703,10 @@ msb(int64_t q, tspec_t t, int len)
 }
 
 /*
- * Extends the sign of q.
+ * Extend or truncate q to match t.  If t is signed, sign-extend.
  */
 int64_t
-xsign(int64_t q, tspec_t t, int len)
+convert_integer(int64_t q, tspec_t t, int len)
 {
 	uint64_t vbits;
 
