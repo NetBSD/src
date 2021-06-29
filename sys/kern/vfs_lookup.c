@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.226 2021/06/16 01:51:57 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.227 2021/06/29 22:29:59 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.226 2021/06/16 01:51:57 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.227 2021/06/29 22:29:59 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_magiclinks.h"
@@ -229,16 +229,19 @@ namei_hash(const char *name, const char **ep)
  * Find the end of the first path component in NAME and return its
  * length.
  */
-static size_t
-namei_getcomponent(const char *name)
+static int
+namei_getcomponent(struct vnode *dvp, const char *name, size_t *ret)
 {
 	size_t pos;
+
+	(void)dvp;
 
 	pos = 0;
 	while (name[pos] != '\0' && name[pos] != '/') {
 		pos++;
 	}
-	return pos;
+	*ret = pos;
+	return 0;
 }
 
 ////////////////////////////////////////////////////////////
@@ -840,9 +843,10 @@ namei_follow(struct namei_state *state, int inhibitmagic,
  * Inspect the leading path component and update the state accordingly.
  */
 static int
-lookup_parsepath(struct namei_state *state)
+lookup_parsepath(struct namei_state *state, struct vnode *searchdir)
 {
 	const char *cp;			/* pointer into pathname argument */
+	int error;
 
 	struct componentname *cnp = state->cnp;
 	struct nameidata *ndp = state->ndp;
@@ -861,7 +865,11 @@ lookup_parsepath(struct namei_state *state)
 	 * is held.
 	 */
 	cnp->cn_consume = 0;
-	cnp->cn_namelen = namei_getcomponent(cnp->cn_nameptr);
+	error = namei_getcomponent(searchdir, cnp->cn_nameptr,
+				   &cnp->cn_namelen);
+	if (error) {
+		return error;
+	}
 	cp = cnp->cn_nameptr + cnp->cn_namelen;
 	if (cnp->cn_namelen > KERNEL_NAME_MAX) {
 		return ENAMETOOLONG;
@@ -1325,7 +1333,7 @@ lookup_fastforward(struct namei_state *state, struct vnode **searchdir_ret,
 		 */
 		KASSERT(cnp->cn_nameptr[0] != '/');
 		KASSERT(cnp->cn_nameptr[0] != '\0');
-		if ((error = lookup_parsepath(state)) != 0) {
+		if ((error = lookup_parsepath(state, searchdir)) != 0) {
 			break;
 		}
 
@@ -1500,9 +1508,13 @@ lookup_fastforward(struct namei_state *state, struct vnode **searchdir_ret,
 			}
 			cnp->cn_nameptr = oldnameptr;
 			ndp->ni_pathlen = oldpathlen;
-			error = lookup_parsepath(state);
-			if (error == 0) {
+			if (searchdir == NULL) {
 				error = EOPNOTSUPP;
+			} else {
+				error = lookup_parsepath(state, searchdir);
+				if (error == 0) {
+					error = EOPNOTSUPP;
+				}
 			}
 		}
 	} else if (plock != NULL) {
@@ -2049,7 +2061,7 @@ lookup_for_nfsd(struct nameidata *ndp, struct vnode *forcecwd, int neverfollow)
 static int
 do_lookup_for_nfsd_index(struct namei_state *state)
 {
-	int error = 0;
+	int error;
 
 	struct componentname *cnp = state->cnp;
 	struct nameidata *ndp = state->ndp;
@@ -2068,7 +2080,12 @@ do_lookup_for_nfsd_index(struct namei_state *state)
 	ndp->ni_dvp = NULL;
 
 	cnp->cn_consume = 0;
-	cnp->cn_namelen = namei_getcomponent(cnp->cn_nameptr);
+	error = namei_getcomponent(startdir, cnp->cn_nameptr,
+				   &cnp->cn_namelen);
+	if (error) {
+		return error;
+	}
+
 	cp = cnp->cn_nameptr + cnp->cn_namelen;
 	KASSERT(cnp->cn_namelen <= KERNEL_NAME_MAX);
 	ndp->ni_pathlen -= cnp->cn_namelen;
@@ -2199,7 +2216,10 @@ relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp, int d
 	if ((uint32_t)newhash != (uint32_t)cnp->cn_hash)
 		panic("relookup: bad hash");
 #endif
-	newlen = namei_getcomponent(cnp->cn_nameptr);
+	error = namei_getcomponent(dvp, cnp->cn_nameptr, &newlen);
+	if (error) {
+		panic("relookup: parsepath failed with error %d", error);
+	}
 	if (cnp->cn_namelen != newlen)
 		panic("relookup: bad len");
 	cp = cnp->cn_nameptr + cnp->cn_namelen;
