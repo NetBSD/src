@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota1.c,v 1.23 2020/12/25 10:00:40 nia Exp $	*/
+/*	$NetBSD: ufs_quota1.c,v 1.24 2021/06/29 22:40:54 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota1.c,v 1.23 2020/12/25 10:00:40 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota1.c,v 1.24 2021/06/29 22:40:54 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -309,7 +309,6 @@ quota1_handle_cmd_quotaon(struct lwp *l, struct ufsmount *ump, int type,
 	struct dquot *dq;
 	int error;
 	struct pathbuf *pb;
-	struct nameidata nd;
 
 	if (type < 0 || type >= MAXQUOTAS)
 		return EINVAL;
@@ -332,12 +331,11 @@ quota1_handle_cmd_quotaon(struct lwp *l, struct ufsmount *ump, int type,
 	if (pb == NULL) {
 		return ENOMEM;
 	}
-	NDINIT(&nd, LOOKUP, FOLLOW, pb);
-	if ((error = vn_open(&nd, FREAD|FWRITE, 0)) != 0) {
+	error = vn_open(NULL, pb, 0, FREAD|FWRITE, 0, &vp, NULL, NULL);
+	if (error != 0) {
 		pathbuf_destroy(pb);
 		return error;
 	}
-	vp = nd.ni_vp;
 	pathbuf_destroy(pb);
 
 	VOP_UNLOCK(vp);

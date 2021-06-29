@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_exec_fd.c,v 1.11 2020/05/23 23:42:43 ad Exp $	*/
+/*	$NetBSD: subr_exec_fd.c,v 1.12 2021/06/29 22:40:53 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_exec_fd.c,v 1.11 2020/05/23 23:42:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_exec_fd.c,v 1.12 2021/06/29 22:40:53 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -81,7 +81,7 @@ fd_checkstd(void)
 {
 	struct proc *p;
 	struct pathbuf *pb;
-	struct nameidata nd;
+	struct vnode *vp;
 	filedesc_t *fdp;
 	file_t *fp;
 	fdtab_t *dt;
@@ -108,17 +108,17 @@ fd_checkstd(void)
 		if (pb == NULL) {
 			return ENOMEM;
 		}
-		NDINIT(&nd, LOOKUP, FOLLOW, pb);
-		if ((error = vn_open(&nd, flags, 0)) != 0) {
+		error = vn_open(NULL, pb, 0, flags, 0, &vp, NULL, NULL);
+		if (error != 0) {
 			pathbuf_destroy(pb);
 			fd_abort(p, fp, fd);
 			return (error);
 		}
 		fp->f_type = DTYPE_VNODE;
-		fp->f_vnode = nd.ni_vp;
+		fp->f_vnode = vp;
 		fp->f_flag = flags;
 		fp->f_ops = &vnops;
-		VOP_UNLOCK(nd.ni_vp);
+		VOP_UNLOCK(vp);
 		fd_affix(p, fp, fd);
 		pathbuf_destroy(pb);
 	}
