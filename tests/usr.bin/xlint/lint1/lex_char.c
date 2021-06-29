@@ -1,4 +1,4 @@
-/*	$NetBSD: lex_char.c,v 1.2 2021/06/20 18:23:07 rillig Exp $	*/
+/*	$NetBSD: lex_char.c,v 1.3 2021/06/29 07:17:43 rillig Exp $	*/
 # 3 "lex_char.c"
 
 /*
@@ -34,9 +34,27 @@ test(void)
 	/* octal */
 	sink('\177');
 
-	/* newline */
-	sink('\n');
-
 	/* expect+1: empty character constant */
 	sink('');
+
+	/* U+0007 alarm/bell */
+	sink('\a');
+
+	/* U+0008 backspace */
+	sink('\b');
+
+	/* U+0009 horizontal tabulation */
+	sink('\t');
+
+	/* U+000A line feed */
+	sink('\n');
+
+	/* U+000B vertical tabulation */
+	sink('\v');
+
+	/* U+000C form feed */
+	sink('\f');
+
+	/* U+000D carriage return */
+	sink('\r');
 }
