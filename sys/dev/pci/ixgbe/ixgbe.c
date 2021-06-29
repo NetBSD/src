@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.284 2021/06/16 00:21:18 riastradh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.285 2021/06/29 21:03:36 pgoyette Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.284 2021/06/16 00:21:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.285 2021/06/29 21:03:36 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1177,14 +1177,15 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 	if (hw->phy.media_type == ixgbe_media_type_copper) {
 		uint16_t id1, id2;
 		int oui, model, rev;
-		const char *descr;
+		char descr[MII_MAX_DESCR_LEN];
 
 		id1 = hw->phy.id >> 16;
 		id2 = hw->phy.id & 0xffff;
 		oui = MII_OUI(id1, id2);
 		model = MII_MODEL(id2);
 		rev = MII_REV(id2);
-		if ((descr = mii_get_descr(oui, model)) != NULL)
+		mii_get_descr(descr, sizeof(descr), oui, model);
+		if (descr[0])
 			aprint_normal_dev(dev,
 			    "PHY: %s (OUI 0x%06x, model 0x%04x), rev. %d\n",
 			    descr, oui, model, rev);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_verbose.c,v 1.8 2021/06/05 22:45:03 pgoyette Exp $ */
+/*	$NetBSD: mii_verbose.c,v 1.9 2021/06/29 21:03:36 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -55,47 +55,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_verbose.c,v 1.8 2021/06/05 22:45:03 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_verbose.c,v 1.9 2021/06/29 21:03:36 pgoyette Exp $");
 
 #include <sys/module.h>
 #include <dev/mii/miidevs.h>
 #include <dev/mii/miidevs_data.h>
 #include <dev/mii/mii_verbose.h>
 
-const char * mii_get_descr_real(int, int);
-
-MODULE(MODULE_CLASS_MISC, miiverbose, NULL);
-
-static int
-miiverbose_modcmd(modcmd_t cmd, void *arg)
-{
-	static const char *(*saved_mii_get_descr)(int, int);
-
-	switch (cmd) {
-	case MODULE_CMD_INIT:
-		saved_mii_get_descr = mii_get_descr;
-		mii_get_descr = mii_get_descr_real;
-		mii_verbose_loaded = 1;
-		return 0;
-	case MODULE_CMD_FINI:
-		mii_get_descr = saved_mii_get_descr;
-		mii_verbose_loaded = 0;
-		return 0;
-	case MODULE_CMD_AUTOUNLOAD:
-		return EBUSY;
-	default:
-		return ENOTTY;
-	}
-}
-
-const char *
-mii_get_descr_real(int oui, int model)
-{
-	int i;
-
-	for (i = 0; mii_knowndevs[i].descr != NULL; i++)
-		if (mii_knowndevs[i].oui == oui &&
-		    mii_knowndevs[i].model == model)
-			break;
-	return mii_knowndevs[i].descr;
-}
+DEV_VERBOSE_MODULE_DEFINE(mii, NULL)

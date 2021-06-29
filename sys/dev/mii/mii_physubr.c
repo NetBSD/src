@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.94 2020/08/27 10:10:23 kardel Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.95 2021/06/29 21:03:36 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.94 2020/08/27 10:10:23 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.95 2021/06/29 21:03:36 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -44,37 +44,43 @@ __KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.94 2020/08/27 10:10:23 kardel Exp 
 #include <sys/socket.h>
 #include <sys/errno.h>
 #include <sys/module.h>
+#include <sys/module_hook.h>
 #include <sys/proc.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
 #include <net/route.h>
 
+#include <dev/dev_verbose.h>
+
 #include <dev/mii/mii.h>
+#include <dev/mii/miidevs.h>
 #include <dev/mii/miivar.h>
 
-const char *(*mii_get_descr)(int, int) = mii_get_descr_stub;
-
-int mii_verbose_loaded = 0;
+DEV_VERBOSE_DEFINE(mii);
 
 const char *
-mii_get_descr_stub(int oui, int model)
+mii_get_descr(char *descr, size_t len, uint32_t oui, uint32_t model)
 {
-	mii_load_verbose();
-	if (mii_verbose_loaded)
-		return mii_get_descr(oui, model);
-	else
-		return NULL;
-}
+	char temp[MII_MAX_DESCR_LEN];
 
-/*
- * Routine to load the miiverbose kernel module as needed
- */
-void
-mii_load_verbose(void)
-{
-	if (mii_verbose_loaded == 0)
-		module_autoload("miiverbose", MODULE_CLASS_MISC);
+	mii_load_verbose();
+	if (miiverbose_loaded) {
+		if (mii_findvendor(temp, sizeof(temp), oui) == NULL) {
+			descr[0] = '\0';
+			return NULL;
+		}
+		strlcpy(descr, temp, len);
+		strlcat(descr, " ", len);
+		if (mii_findproduct(temp, sizeof(temp), oui, model) == NULL) {
+			descr[0] = '\0';
+			return NULL;
+		}
+		strlcat(descr, temp, len);
+		return descr;
+	}
+	snprintf(descr, len, "oui 0x%6x model 0x%04x", oui, model);
+	return NULL;
 }
 
 static void mii_phy_statusmsg(struct mii_softc *);
@@ -683,7 +689,7 @@ const struct mii_phydesc *
 mii_phy_match(const struct mii_attach_args *ma, const struct mii_phydesc *mpd)
 {
 
-	for (; mpd->mpd_name != NULL; mpd++) {
+	for (; mpd->mpd_oui != 0; mpd++) {
 		if (MII_OUI(ma->mii_id1, ma->mii_id2) == mpd->mpd_oui &&
 		    MII_MODEL(ma->mii_id2) == mpd->mpd_model)
 			return mpd;

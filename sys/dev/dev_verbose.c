@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_verbose.c,v 1.3 2016/10/26 06:10:39 pgoyette Exp $	*/
+/*	$NetBSD: dev_verbose.c,v 1.4 2021/06/29 21:03:36 pgoyette Exp $	*/
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dev_verbose.c,v 1.3 2016/10/26 06:10:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dev_verbose.c,v 1.4 2021/06/29 21:03:36 pgoyette Exp $");
 
 #include <sys/param.h>
 
@@ -37,7 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: dev_verbose.c,v 1.3 2016/10/26 06:10:39 pgoyette Exp
 #include <dev/dev_verbose.h>
 
 static const char *
-dev_untokenstring(const char *words, const uint16_t *token, char *buf,
+dev_untokenstring(const char *words, const uint32_t *token, char *buf,
     size_t len)
 {
 	char *cp = buf;
@@ -58,7 +58,8 @@ dev_untokenstring(const char *words, const uint16_t *token, char *buf,
 
 const char *
 dev_findvendor(char *buf, size_t len, const char *words, size_t nwords,
-    const uint16_t *vendors, size_t nvendors, uint16_t vendor)
+    const uint32_t *vendors, size_t nvendors, uint32_t vendor,
+    const char *fmt)
 {
 	size_t n;
 
@@ -72,14 +73,14 @@ dev_findvendor(char *buf, size_t len, const char *words, size_t nwords,
 		while (n < nvendors && vendors[n] != 0)
 			n++;
 	}
-	snprintf(buf, len, "vendor %4.4x", vendor);
+	snprintf(buf, len, fmt, vendor);
 	return NULL;
 }
 
 const char *
 dev_findproduct(char *buf, size_t len, const char *words, size_t nwords,
-    const uint16_t *products, size_t nproducts, uint16_t vendor,
-    uint16_t product)
+    const uint32_t *products, size_t nproducts, uint32_t vendor,
+    uint32_t product, const char *fmt)
 {
 	size_t n;
 
@@ -93,6 +94,6 @@ dev_findproduct(char *buf, size_t len, const char *words, size_t nwords,
 		while (n < nproducts && products[n] != 0)
 			n++;
 	}
-	snprintf(buf, len, "product %4.4x", product);
+	snprintf(buf, len, fmt, product);
 	return NULL;
 }

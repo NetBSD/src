@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2014/09/21 14:32:37 christos Exp $
+#	$NetBSD: Makefile,v 1.6 2021/06/29 21:03:36 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -9,6 +9,8 @@ SYSDIR= ${NETBSDSRCDIR}/sys/
 
 .PATH.c: ${SYSDIR}/dev/pci ${SYSDIR}/dev
 CPPFLAGS+= -I${SYSDIR}
+
+COPTS.dev_verbose.c+= -Wno-error=format-nonliteral
 
 MAN=	pci.3
 

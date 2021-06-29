@@ -1,4 +1,4 @@
-/*	$NetBSD: miivar.h,v 1.73 2020/08/24 04:23:41 msaitoh Exp $	*/
+/*	$NetBSD: miivar.h,v 1.74 2021/06/29 21:03:36 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2020 The NetBSD Foundation, Inc.
@@ -351,6 +351,9 @@ u_int	mii_oui(uint16_t, uint16_t);
 #define	MII_OUI(id1, id2)	mii_oui(id1, id2)
 #define	MII_MODEL(id2)		(((id2) & IDR2_MODEL) >> 4)
 #define	MII_REV(id2)		((id2) & IDR2_REV)
+
+/* Max length for phy's verbose oui+model */
+#define	MII_MAX_DESCR_LEN	68
 
 #endif /* _KERNEL */
 

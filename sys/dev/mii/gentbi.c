@@ -1,4 +1,4 @@
-/*	$NetBSD: gentbi.c,v 1.31 2020/03/15 23:04:50 thorpej Exp $	*/
+/*	$NetBSD: gentbi.c,v 1.32 2021/06/29 21:03:36 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gentbi.c,v 1.31 2020/03/15 23:04:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gentbi.c,v 1.32 2021/06/29 21:03:36 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,9 +141,10 @@ gentbiattach(device_t parent, device_t self, void *aux)
 	int oui = MII_OUI(ma->mii_id1, ma->mii_id2);
 	int model = MII_MODEL(ma->mii_id2);
 	int rev = MII_REV(ma->mii_id2);
-	const char *descr;
+	char descr[MII_MAX_DESCR_LEN];
 
-	if ((descr = mii_get_descr(oui, model)) != NULL)
+	mii_get_descr(descr, sizeof(descr), oui, model);
+	if (descr[0])
 		aprint_normal(": %s (OUI 0x%06x, model 0x%04x), rev. %d\n",
 		    descr, oui, model, rev);
 	else
