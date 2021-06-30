@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$NetBSD: devlist2h.awk,v 1.4 2021/06/29 21:03:36 pgoyette Exp $
+#	$NetBSD: devlist2h.awk,v 1.5 2021/06/30 17:34:03 riastradh Exp $
 #
 # Copyright (c) 1995, 1996 Christopher G. Demetriou
 # All rights reserved.
@@ -31,7 +31,7 @@
 #
 
 function collectline(f) {
-	oparen = 0 
+	oparen = 0
 	line = ""
 	while (f <= NF) {
 		if ($f == "#") {
@@ -40,7 +40,7 @@ function collectline(f) {
 			f++
 			continue
 		}
-		if (oparen) {  
+		if (oparen) {
 			line = line $f
 			if (f < NF)
 			line = line " "
