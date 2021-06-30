@@ -1,4 +1,4 @@
-/* $NetBSD: __clone.S,v 1.11 2021/06/30 00:00:49 rin Exp $ */
+/* $NetBSD: __clone.S,v 1.12 2021/06/30 07:34:24 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 Christopher Gilbert
@@ -55,12 +55,12 @@ ENTRY(__clone)
 
 	/* place the func and its arg onto the child's stack */
 #if !defined(__thumb__) || defined(_ARM_ARCH_T2)
-	stmfd	r1!, {r0, r3} 
+	stmfd	r1!, {r0, r3}
 #else
 	subs	r1, r1, #8
-	stmia	r1!, {r0, r3} 
+	stmia	r1!, {r0, r3}
 #endif
-	
+
 	/* syscall expects (flags, stack) */
 	mov	r0, r2
 
