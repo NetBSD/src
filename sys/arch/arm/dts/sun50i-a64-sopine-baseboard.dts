@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i-a64-sopine-baseboard.dts,v 1.3 2021/06/25 07:03:28 skrll Exp $ */
+/* $NetBSD: sun50i-a64-sopine-baseboard.dts,v 1.4 2021/06/30 06:24:02 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -35,9 +35,5 @@
 
 &sound_hdmi {
 	status = "okay";
-};
-
-&emac {
-	allwinner,tx-delay-ps = <500>;
 };
 
