@@ -1,4 +1,4 @@
-/* $NetBSD: __clone.S,v 1.13 2021/06/30 07:36:05 skrll Exp $ */
+/* $NetBSD: __clone.S,v 1.14 2021/06/30 21:20:30 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 Christopher Gilbert
@@ -117,14 +117,8 @@ ENTRY(__clone)
 	b	CERROR
 #else
 .Lcerror:
-	push	{lr}
-	mov	r1, sp
-	subs	r1, #4
-	mov	sp, r1
+	push	{r3, lr}
 	bl	CERROR
-	mov	r1, sp
-	adds	r1, #4
-	mov	sp, r1
-	pop	{pc}
+	pop	{r3, pc}
 #endif
 END(__clone)
