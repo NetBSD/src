@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_215.c,v 1.8 2021/06/30 14:32:41 rillig Exp $	*/
+/*	$NetBSD: msg_215.c,v 1.9 2021/06/30 14:42:13 rillig Exp $	*/
 # 3 "msg_215.c"
 
 // Test for message: function '%s' implicitly declared to return int [215]
@@ -27,4 +27,8 @@ test(struct str str)
 	/* expect+2: error: type 'struct str' does not have member 'member' [101] */
 	/* expect+1: error: illegal function (type int) [149] */
 	str.member();
+
+	/* https://gcc.gnu.org/onlinedocs/gcc/C-Extensions.html */
+	__builtin_whatever(123, "string");
+	__atomic_whatever(123, "string");
 }
