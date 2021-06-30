@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.217 2021/06/30 11:20:32 christos Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.218 2021/06/30 17:51:49 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.217 2021/06/30 11:20:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.218 2021/06/30 17:51:49 dholland Exp $");
 
 #include "veriexec.h"
 
@@ -172,6 +172,9 @@ vn_open(struct vnode *at_dvp, struct pathbuf *pb,
 	const char *pathstring;
 
 	KASSERT((nmode & (TRYEMULROOT | NOCHROOT)) == nmode);
+
+	KASSERT(ret_vp != NULL);
+	KASSERT((ret_domove == NULL) == (ret_fd == NULL));
 
 	if ((fmode & (O_CREAT | O_DIRECTORY)) == (O_CREAT | O_DIRECTORY))
 		return EINVAL;
@@ -332,9 +335,11 @@ out:
 	case EDUPFD:
 	case EMOVEFD:
 		/* if the caller isn't prepared to handle fds, fail for them */
-		KASSERTMSG(ret_domove && ret_fd,
-		    "caller did not supply ret_domove and ret_fd for %d",
-		    error);
+		if (ret_fd == NULL) {
+			error = EOPNOTSUPP;
+			break;
+		}
+		error = 0;
 		*ret_vp = NULL;
 		*ret_domove = error == EMOVEFD;
 		*ret_fd = l->l_dupfd;
