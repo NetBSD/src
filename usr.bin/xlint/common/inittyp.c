@@ -1,4 +1,4 @@
-/*	$NetBSD: inittyp.c,v 1.23 2021/06/29 21:33:09 rillig Exp $	*/
+/*	$NetBSD: inittyp.c,v 1.24 2021/06/30 10:56:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: inittyp.c,v 1.23 2021/06/29 21:33:09 rillig Exp $");
+__RCSID("$NetBSD: inittyp.c,v 1.24 2021/06/30 10:56:24 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -115,13 +115,8 @@ inittyp(void)
 		    0, 0, 1, 1, 1, 1, "float _Complex"),
 		typeinfo(DCOMPLEX, DCOMPLEX, DCOMPLEX, DOUBLE_SIZE * 2, 64 * 2,
 		    0, 0, 1, 1, 1, 1, "double _Complex"),
-		/*
-		* XXX: with -p, LCOMPLEX.tt_portable_size_in_bits !=
-		*  2 * LDOUBLE.tt_portable_size_in_bits.
-		*  This may or may not have been intentional.
-		*/
 		typeinfo(LCOMPLEX, LCOMPLEX, LCOMPLEX,
-		    LDOUBLE_SIZE * 2, 64 * 2,
+		    LDOUBLE_SIZE * 2, 80 * 2,
 		    0, 0, 1, 1, 1, 1, "long double _Complex"),
 		typeinfo(VOID, VOID, VOID, -1, -1,
 		    0, 0, 0, 0, 0, 0, "void"),
