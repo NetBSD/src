@@ -1,4 +1,4 @@
-/* $NetBSD: __clone.S,v 1.10 2021/06/29 23:29:12 rin Exp $ */
+/* $NetBSD: __clone.S,v 1.11 2021/06/30 00:00:49 rin Exp $ */
 
 /*
  * Copyright (c) 2001 Christopher Gilbert
@@ -122,9 +122,13 @@ ENTRY(__clone)
 #else
 .Lcerror:
 	push	{lr}
-	sub	sp, #4
+	mov	r1, sp
+	subs	r1, #4
+	mov	sp, r1
 	bl	CERROR
-	add	sp, #4
+	mov	r1, sp
+	adds	r1, #4
+	mov	sp, r1
 	pop	{pc}
 #endif
 END(__clone)
