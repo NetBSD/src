@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_155.c,v 1.8 2021/06/30 12:26:35 rillig Exp $	*/
+/*	$NetBSD: msg_155.c,v 1.9 2021/06/30 14:23:50 rillig Exp $	*/
 # 3 "msg_155.c"
 
 // Test for message: passing '%s' to incompatible '%s', arg #%d [155]
@@ -38,7 +38,8 @@ provoke_error_messages(struct incompatible arg)
 	c99_6_7_6_example_e(arg);
 
 	/* TODO: C99 says 'function with no parameter specification returning a pointer to int' */
-	c99_6_7_6_example_f(arg);	/* expect: function implicitly declared */
+	/* expect+1: function 'c99_6_7_6_example_f' implicitly declared */
+	c99_6_7_6_example_f(arg);
 
 	/* expect+1: 'pointer to function(void) returning int' */
 	c99_6_7_6_example_g(arg);
