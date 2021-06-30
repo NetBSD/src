@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.302 2021/06/30 14:32:41 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.303 2021/06/30 14:42:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.302 2021/06/30 14:32:41 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.303 2021/06/30 14:42:13 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -232,6 +232,14 @@ fallback_symbol(sym_t *sym)
 	error(99, sym->s_name);
 }
 
+/* https://gcc.gnu.org/onlinedocs/gcc/C-Extensions.html */
+static bool
+is_gcc_builtin(const char *name)
+{
+	return strncmp(name, "__atomic_", 9) == 0 ||
+	       strncmp(name, "__builtin_", 10) == 0;
+}
+
 /*
  * Create a node for a name (symbol table entry).
  * follow_token is the token which follows the name.
@@ -245,7 +253,13 @@ new_name_node(sym_t *sym, int follow_token)
 		sym->s_scl = EXTERN;
 		sym->s_def = DECL;
 		if (follow_token == T_LPAREN) {
-			if (Sflag) {
+			if (gflag && is_gcc_builtin(sym->s_name)) {
+				/*
+				 * Do not warn about these, just assume that
+				 * they are regular functions compatible with
+				 * non-prototype calling conventions.
+				 */
+			} else if (Sflag) {
 				/* function '%s' implicitly declared to ... */
 				warning(215, sym->s_name);
 			} else if (sflag) {
