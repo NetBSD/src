@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.298 2021/06/29 21:16:54 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.299 2021/06/30 12:28:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.298 2021/06/29 21:16:54 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.299 2021/06/30 12:28:03 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1748,7 +1748,8 @@ promote(op_t op, bool farg, tnode_t *tn)
 		ntp = expr_dup_type(tn->tn_type);
 		ntp->t_tspec = t;
 		/*
-		 * Keep t_is_enum so we are later able to check compatibility
+		 * Keep t_is_enum even though t_tspec gets converted from
+		 * ENUM to INT, so we are later able to check compatibility
 		 * of enum types.
 		 */
 		tn = convert(op, 0, ntp, tn);
