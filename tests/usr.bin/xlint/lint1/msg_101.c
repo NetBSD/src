@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_101.c,v 1.5 2021/06/30 14:02:11 rillig Exp $	*/
+/*	$NetBSD: msg_101.c,v 1.6 2021/06/30 14:11:08 rillig Exp $	*/
 # 3 "msg_101.c"
 
 // Test for message: type '%s' does not have member '%s' [101]
@@ -17,11 +17,9 @@ test(const struct point *ptr, const struct point pt)
 	sink(pt.x);
 
 	/* accessing a nonexistent member */
-	/* FIXME: "type 'int'" is wrong. */
-	/* expect+1: error: type 'int' does not have member 'z' [101] */
+	/* expect+1: error: type 'pointer to const struct point' does not have member 'z' [101] */
 	sink(ptr->z);
-	/* FIXME: "type 'int'" is wrong. */
-	/* expect+1: error: type 'int' does not have member 'z' [101] */
+	/* expect+1: error: type 'const struct point' does not have member 'z' [101] */
 	sink(pt.z);
 
 	/* mixed up '.' and '->' */
@@ -33,10 +31,9 @@ test(const struct point *ptr, const struct point pt)
 	sink(pt->x);
 
 	/* accessing a nonexistent member via the wrong operator */
-	/* FIXME: "type 'int'" is wrong. */
-	/* expect+1: error: type 'int' does not have member 'z' [101] */
+	/* expect+1: error: type 'pointer to const struct point' does not have member 'z' [101] */
 	sink(ptr.z);
-	/* FIXME: "type 'int'" is wrong. */
-	/* expect+1: error: type 'int' does not have member 'z' [101] */
+	/* XXX: Why is the 'const' missing here, but not above? */
+	/* expect+1: error: type 'struct point' does not have member 'z' [101] */
 	sink(pt->z);
 }
