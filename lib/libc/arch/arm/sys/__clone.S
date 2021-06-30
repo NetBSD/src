@@ -1,4 +1,4 @@
-/* $NetBSD: __clone.S,v 1.12 2021/06/30 07:34:24 skrll Exp $ */
+/* $NetBSD: __clone.S,v 1.13 2021/06/30 07:36:05 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 Christopher Gilbert
@@ -65,11 +65,7 @@ ENTRY(__clone)
 	mov	r0, r2
 
 	SYSTRAP(__clone)
-#if !defined(__thumb__) || defined(_ARM_ARCH_T2)
 	_INVOKE_CERROR()
-#else
-	bcs	.Lcerror
-#endif
 
 	/*
 	 * r1 and r0 are the same as from fork:
