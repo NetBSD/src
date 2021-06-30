@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.103 2021/01/10 00:58:56 tsutsui Exp $	*/
+/*	$NetBSD: rd.c,v 1.104 2021/06/30 14:54:03 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.103 2021/01/10 00:58:56 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.104 2021/06/30 14:54:03 tsutsui Exp $");
 
 #include "opt_useleds.h"
 
@@ -429,20 +429,20 @@ rdident(device_t parent, struct rd_softc *sc, struct hpibbus_attach_args *ha)
 
 #ifdef DEBUG
 	if (rddebug & RDB_IDENT) {
-		aprint_debug("\n");
-		aprint_debug_dev(sc->sc_dev, "name: %x ('%s')\n",
-		    desc->d_name, name);
-		aprint_debug("  iuw %x, maxxfr %d, ctype %d\n",
+		aprint_normal("\n");
+		aprint_normal_dev(sc->sc_dev, "id: 0x%04x, name: %x ('%s')\n",
+		    ha->ha_id, desc->d_name, name);
+		aprint_normal("  iuw %x, maxxfr %d, ctype %d\n",
 		    desc->d_iuw, desc->d_cmaxxfr, desc->d_ctype);
-		aprint_debug("  utype %d, bps %d, blkbuf %d, burst %d,"
+		aprint_normal("  utype %d, bps %d, blkbuf %d, burst %d,"
 		    " blktime %d\n",
 		    desc->d_utype, desc->d_sectsize,
 		    desc->d_blkbuf, desc->d_burstsize, desc->d_blocktime);
-		aprint_debug("  avxfr %d, ort %d, atp %d, maxint %d, fv %x"
+		aprint_normal("  avxfr %d, ort %d, atp %d, maxint %d, fv %x"
 		    ", rv %x\n",
 		    desc->d_uavexfr, desc->d_retry, desc->d_access,
 		    desc->d_maxint, desc->d_fvbyte, desc->d_rvbyte);
-		aprint_debug("  maxcyl/head/sect %d/%d/%d, maxvsect %d,"
+		aprint_normal("  maxcyl/head/sect %d/%d/%d, maxvsect %d,"
 		    " inter %d\n",
 		    desc->d_maxcyl, desc->d_maxhead, desc->d_maxsect,
 		    desc->d_maxvsectl, desc->d_interleave);
