@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.49 2021/06/29 21:16:54 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.50 2021/06/30 10:25:02 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.49 2021/06/29 21:16:54 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.50 2021/06/30 10:25:02 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -678,21 +678,6 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 	return T_CON;
 }
 
-/*
- * Returns whether t is a signed type and the value is negative.
- *
- * len is the number of significant bits. If len is -1, len is set
- * to the width of type t.
- */
-static bool
-sign(int64_t q, tspec_t t, int len)
-{
-
-	if (t == PTR || is_uinteger(t))
-		return false;
-	return msb(q, t, len) != 0;
-}
-
 int
 msb(int64_t q, tspec_t t, int len)
 {
@@ -704,6 +689,9 @@ msb(int64_t q, tspec_t t, int len)
 
 /*
  * Extend or truncate q to match t.  If t is signed, sign-extend.
+ *
+ * len is the number of significant bits. If len is -1, len is set
+ * to the width of type t.
  */
 int64_t
 convert_integer(int64_t q, tspec_t t, int len)
@@ -714,7 +702,7 @@ convert_integer(int64_t q, tspec_t t, int len)
 		len = size_in_bits(t);
 
 	vbits = value_bits(len);
-	return t == PTR || is_uinteger(t) || !sign(q, t, len)
+	return t == PTR || is_uinteger(t) || msb(q, t, len) == 0
 	    ? q & vbits
 	    : q | ~vbits;
 }
