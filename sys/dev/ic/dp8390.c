@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.97 2020/02/04 05:25:39 thorpej Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.98 2021/06/30 20:00:18 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -14,7 +14,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.97 2020/02/04 05:25:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.98 2021/06/30 20:00:18 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -50,6 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.97 2020/02/04 05:25:39 thorpej Exp $");
 #ifdef DEBUG
 int	dp8390_debug = 0;
 #endif
+
+static void	dp8390_halt(struct dp8390_softc *);
 
 static void dp8390_xmit(struct dp8390_softc *);
 
@@ -115,7 +117,9 @@ dp8390_config(struct dp8390_softc *sc)
 		goto out;
 
 	/* Set interface to stopped condition (reset). */
-	dp8390_stop(sc);
+	dp8390_halt(sc);
+
+	callout_init(&sc->sc_tick_ch, 0);
 
 	/* Initialize ifnet structure. */
 	strcpy(ifp->if_xname, device_xname(sc->sc_dev));
@@ -201,8 +205,8 @@ dp8390_reset(struct dp8390_softc *sc)
 /*
  * Take interface offline.
  */
-void
-dp8390_stop(struct dp8390_softc *sc)
+static void
+dp8390_halt(struct dp8390_softc *sc)
 {
 	bus_space_tag_t regt = sc->sc_regt;
 	bus_space_handle_t regh = sc->sc_regh;
@@ -221,7 +225,12 @@ dp8390_stop(struct dp8390_softc *sc)
 	 */
 	while (((NIC_GET(regt, regh, ED_P0_ISR) & ED_ISR_RST) == 0) && --n)
 		DELAY(1);
+}
 
+void
+dp8390_stop(struct dp8390_softc *sc)
+{
+	dp8390_halt(sc);
 	if (sc->stop_card != NULL)
 		(*sc->stop_card)(sc);
 }
