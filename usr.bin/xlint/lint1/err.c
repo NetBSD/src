@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.121 2021/06/28 10:23:49 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.122 2021/06/30 14:23:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.121 2021/06/28 10:23:49 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.122 2021/06/30 14:23:50 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -269,7 +269,7 @@ const char *const msgs[] = {
 	"cannot return incomplete type",			      /* 212 */
 	"void function %s cannot return value",			      /* 213 */
 	"function %s expects to return value",			      /* 214 */
-	"function implicitly declared to return int",		      /* 215 */
+	"function '%s' implicitly declared to return int",	      /* 215 */
 	"function %s has return (e); and return;",		      /* 216 */
 	"function %s falls off bottom without returning value",	      /* 217 */
 	"ANSI C treats constant as unsigned, op %s",		      /* 218 */
