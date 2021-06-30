@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.299 2021/06/30 12:28:03 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.300 2021/06/30 14:11:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.299 2021/06/30 12:28:03 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.300 2021/06/30 14:11:08 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -333,7 +333,7 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 	 */
 	if (msym->s_scl == NOSCL) {
 		/* type '%s' does not have member '%s' */
-		error(101, type_name(msym->s_type), msym->s_name);
+		error(101, type_name(tn->tn_type), msym->s_name);
 		rmsym(msym);
 		msym->s_kind = FMEMBER;
 		msym->s_scl = MOS;
