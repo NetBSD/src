@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.216 2021/06/29 22:40:53 dholland Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.217 2021/06/30 11:20:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.216 2021/06/29 22:40:53 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.217 2021/06/30 11:20:32 christos Exp $");
 
 #include "veriexec.h"
 
@@ -328,35 +328,20 @@ bad:
 out:
 	pathbuf_stringcopy_put(nd.ni_pathbuf, pathstring);
 
-	/* if the caller isn't prepared to handle fds, fail for them */
-	if (ret_fd == NULL && (error == EDUPFD || error == EMOVEFD)) {
-		/*
-		 * XXX: for EMOVEFD (cloning devices) this leaks the
-		 * device's file descriptor. That's not good, but
-		 * fixing it here would still be a layer violation and
-		 * callers not currently prepared to deal weren't
-		 * prepared before I rearranged things either and
-		 * would still have leaked the fd, so it's at least
-		 * not a regression.
-		 *    -- dholland 20210627
-		 */
-		error = EOPNOTSUPP;
-	}
-
-	if (error == EDUPFD) {
+	switch (error) {
+	case EDUPFD:
+	case EMOVEFD:
+		/* if the caller isn't prepared to handle fds, fail for them */
+		KASSERTMSG(ret_domove && ret_fd,
+		    "caller did not supply ret_domove and ret_fd for %d",
+		    error);
 		*ret_vp = NULL;
-		*ret_domove = false;
+		*ret_domove = error == EMOVEFD;
 		*ret_fd = l->l_dupfd;
-		error = 0;
-	} else if (error == EMOVEFD) {
-		*ret_vp = NULL;
-		*ret_domove = true;
-		*ret_fd = l->l_dupfd;
-		error = 0;
-	} else if (error == 0) {
+		break;
+	case 0:
 		*ret_vp = vp;
-		*ret_domove = false;
-		*ret_fd = -1;
+		break;
 	}
 	l->l_dupfd = 0;
 	return error;
