@@ -1,4 +1,4 @@
-/*	$NetBSD: synapticsvar.h,v 1.10 2020/04/27 22:31:47 jmcneill Exp $	*/
+/*	$NetBSD: synapticsvar.h,v 1.11 2021/06/30 22:13:27 blymn Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -38,6 +38,8 @@
 #ifndef _DEV_PCKBCPORT_SYNAPTICSVAR_H_
 #define _DEV_PCKBCPORT_SYNAPTICSVAR_H_
 
+#define SYN_MAX_FINGERS 2
+
 struct synaptics_softc {
 	int	caps;
 
@@ -56,7 +58,9 @@ struct synaptics_softc {
 #define	SYN_FLAG_HAS_EXTENDED_WMODE		(1 << 11)
 #define	SYN_FLAG_HAS_ADV_GESTURE_MODE		(1 << 12)
 
-	u_int	total_packets[2];	/* Total number of packets received */
+	/* Total number of packets received */
+	u_int	total_packets[SYN_MAX_FINGERS];
+
 #define	SYN_TIME(sc,c,n)	(((sc)->total_packets[(n)] >= (c)) ?	\
 				((sc)->total_packets[(n)] - (c)) :	\
 				((c) - (sc)->total_packets[(n)]))
@@ -79,7 +83,6 @@ struct synaptics_softc {
 #define	SYN_IS_DRAG(t)		((t) & SYN_GESTURE_DRAG)
 
 #define	SYN_HIST_SIZE	4
-#define SYN_MAX_FINGERS 2
 	char	button_history;
 	int	dz_hold;
 	int	rem_x[SYN_MAX_FINGERS];
