@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.300 2021/06/30 14:11:08 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.301 2021/06/30 14:23:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.300 2021/06/30 14:11:08 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.301 2021/06/30 14:23:50 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -246,11 +246,11 @@ new_name_node(sym_t *sym, int follow_token)
 		sym->s_def = DECL;
 		if (follow_token == T_LPAREN) {
 			if (Sflag) {
-				/* function implicitly declared to ... */
-				error(215);
+				/* function '%s' implicitly declared to ... */
+				error(215, sym->s_name);
 			} else if (sflag) {
-				/* function implicitly declared to ... */
-				warning(215);
+				/* function '%s' implicitly declared to ... */
+				warning(215, sym->s_name);
 			}
 			/*
 			 * XXX if tflag is set the symbol should be
