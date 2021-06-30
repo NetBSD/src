@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_155.c,v 1.7 2021/06/28 11:27:00 rillig Exp $	*/
+/*	$NetBSD: msg_155.c,v 1.8 2021/06/30 12:26:35 rillig Exp $	*/
 # 3 "msg_155.c"
 
 // Test for message: passing '%s' to incompatible '%s', arg #%d [155]
@@ -45,4 +45,34 @@ provoke_error_messages(struct incompatible arg)
 
 	/* expect+1: 'pointer to const pointer to function(unsigned int, ...) returning int' */
 	c99_6_7_6_example_h(arg);
+}
+
+extern void sink(struct incompatible);
+
+/*
+ * The function type_name has a special case for an enum type that has been
+ * implicitly converted to an int.  Such a type is still output as the enum
+ * type.
+ *
+ * XXX: The expressions 'day + 0' and '0 + day' should result in the same
+ *  type.
+ */
+void
+type_name_of_enum(void)
+{
+	enum Day {
+		MONDAY
+	} day = MONDAY;
+
+	/* expect+1: passing 'enum Day' */
+	sink(day);
+
+	/* expect+1: passing 'enum Day' */
+	sink(day + 0);
+
+	/* expect+1: passing 'int' */
+	sink(0 + day);
+
+	/* expect+1: passing 'int' */
+	sink(0);
 }
