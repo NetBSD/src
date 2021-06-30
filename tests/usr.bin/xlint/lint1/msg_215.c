@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_215.c,v 1.7 2021/06/30 14:23:50 rillig Exp $	*/
+/*	$NetBSD: msg_215.c,v 1.8 2021/06/30 14:32:41 rillig Exp $	*/
 # 3 "msg_215.c"
 
 // Test for message: function '%s' implicitly declared to return int [215]
@@ -17,7 +17,7 @@ struct str {
 void
 test(struct str str)
 {
-	/* expect+1: error: function 'name' implicitly declared to return int [215] */
+	/* expect+1: warning: function 'name' implicitly declared to return int [215] */
 	name();
 
 	/* expect+2: error: 'parenthesized' undefined [99] */
