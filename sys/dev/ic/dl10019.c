@@ -1,4 +1,4 @@
-/*	$NetBSD: dl10019.c,v 1.16 2021/06/30 20:00:18 thorpej Exp $	*/
+/*	$NetBSD: dl10019.c,v 1.17 2021/07/01 20:39:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dl10019.c,v 1.16 2021/06/30 20:00:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dl10019.c,v 1.17 2021/07/01 20:39:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,6 +133,8 @@ dl10019_media_init(struct dp8390_softc *sc)
 	struct mii_data *mii = &sc->sc_mii;
 
 	callout_setfunc(&sc->sc_tick_ch, dl10019_tick, sc);
+
+	sc->sc_ec.ec_mii = mii;
 
 	mii->mii_ifp = ifp;
 	mii->mii_readreg = dl10019_mii_readreg;
