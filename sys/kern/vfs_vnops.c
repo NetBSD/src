@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.218 2021/06/30 17:51:49 dholland Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.219 2021/07/01 04:25:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.218 2021/06/30 17:51:49 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.219 2021/07/01 04:25:51 christos Exp $");
 
 #include "veriexec.h"
 
@@ -339,10 +339,10 @@ out:
 			error = EOPNOTSUPP;
 			break;
 		}
-		error = 0;
 		*ret_vp = NULL;
 		*ret_domove = error == EMOVEFD;
 		*ret_fd = l->l_dupfd;
+		error = 0;
 		break;
 	case 0:
 		*ret_vp = vp;
