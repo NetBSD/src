@@ -36,7 +36,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/dev/ena/ena.c 333456 2018-05-10 09:37:54Z mw $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.27 2021/01/23 11:50:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.28 2021/07/01 17:22:10 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2394,28 +2394,6 @@ ena_ioctl(struct ifnet *ifp, u_long command, void *data)
 
 		rc = ena_up(adapter);
 		rw_exit(&adapter->ioctl_sx);
-		break;
-
-	case SIOCSIFFLAGS:
-		if ((ifp->if_flags & IFF_UP) != 0) {
-			if ((if_getdrvflags(ifp) & IFF_RUNNING) != 0) {
-				if ((ifp->if_flags & (IFF_PROMISC |
-				    IFF_ALLMULTI)) != 0) {
-					device_printf(adapter->pdev,
-					    "ioctl promisc/allmulti\n");
-				}
-			} else {
-				rw_enter(&adapter->ioctl_sx, RW_WRITER);
-				rc = ena_up(adapter);
-				rw_exit(&adapter->ioctl_sx);
-			}
-		} else {
-			if ((if_getdrvflags(ifp) & IFF_RUNNING) != 0) {
-				rw_enter(&adapter->ioctl_sx, RW_WRITER);
-				ena_down(adapter);
-				rw_exit(&adapter->ioctl_sx);
-			}
-		}
 		break;
 
 	case SIOCADDMULTI:
