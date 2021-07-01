@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.3 2019/05/04 13:04:36 skrll Exp $	*/
+/*	$NetBSD: intr.c,v 1.4 2021/07/01 22:57:45 macallan Exp $	*/
 /*	$OpenBSD: intr.c,v 1.27 2009/12/31 12:52:35 jsing Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.3 2019/05/04 13:04:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.4 2021/07/01 22:57:45 macallan Exp $");
 
 #define __MUTEX_PRIVATE
 
@@ -435,7 +435,7 @@ hppa_intr_dispatch(int ncpl, int eiem, struct trapframe *frame)
 		ib->ib_evcnt.ev_count++;
 		arg = ib->ib_arg;
 		if (arg == NULL) {
-			clkframe.cf_flags = (ci->ci_intr_depth ?
+			clkframe.cf_flags = (ci->ci_intr_depth > 1 ?
 			    TFF_INTR : 0);
 			clkframe.cf_spl = ncpl;
 			if (frame != NULL) {
