@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ec2_init,v 1.1 2018/11/30 20:53:02 jmcneill Exp $
+# $NetBSD: ec2_init,v 1.2 2021/07/01 18:05:45 jmcneill Exp $
 #
 # PROVIDE: ec2_init
 # REQUIRE: NETWORKING
@@ -13,24 +13,37 @@ rcvar=${name}
 start_cmd="ec2_init"
 stop_cmd=":"
 
+EC2_USER="ec2-user"
 METADATA_URL="http://169.254.169.254/latest/meta-data/"
 SSH_KEY_URL="public-keys/0/openssh-key"
 HOSTNAME_URL="hostname"
 
-SSH_KEY_FILE="/root/.ssh/authorized_keys"
+SSH_KEY_FILE="/home/${EC2_USER}/.ssh/authorized_keys"
+
+ec2_newuser()
+{
+	echo "Creating EC2 user account ${EC2_USER}"
+	useradd -g users -G wheel,operator -m "${EC2_USER}"
+}
 
 ec2_init()
 {
 	(
 	umask 022
+
+	# create EC2 user
+	id "${EC2_USER}" >/dev/null 2>&1 || ec2_newuser
+
 	# fetch the key pair from Amazon Web Services
 	EC2_SSH_KEY=$(ftp -o - "${METADATA_URL}${SSH_KEY_URL}")
 
 	if [ -n "$EC2_SSH_KEY" ]; then
 		# A key pair is associated with this instance, add it
-		# to root 'authorized_keys' file
+		# to EC2_USER's 'authorized_keys' file
 		mkdir -p $(dirname "$SSH_KEY_FILE")
+		chown "${EC2_USER}:users" $(dirname "$SSH_KEY_FILE")
 		touch "$SSH_KEY_FILE"
+		chown "${EC2_USER}:users" "$SSH_KEY_FILE"
 		cd $(dirname "$SSH_KEY_FILE")
 
 		grep -q "$EC2_SSH_KEY" "$SSH_KEY_FILE"
