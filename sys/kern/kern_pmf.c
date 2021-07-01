@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pmf.c,v 1.46 2021/06/30 21:52:16 blymn Exp $ */
+/* $NetBSD: kern_pmf.c,v 1.47 2021/07/01 22:08:13 blymn Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.46 2021/06/30 21:52:16 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.47 2021/07/01 22:08:13 blymn Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -892,18 +892,11 @@ pmf_class_network_suspend(device_t dev, const pmf_qual_t *qual)
 	struct ifnet *ifp = device_pmf_class_private(dev);
 	int s;
 
-	if (ifp == NULL)
-		return true;
-
-	if ((*ifp->if_stop) == NULL)
-		printf("device %s has no if_stop\n", ifp->if_xname);
-	else {
-		s = splnet();
-		IFNET_LOCK(ifp);
-		(*ifp->if_stop)(ifp, 0);
-		IFNET_UNLOCK(ifp);
-		splx(s);
-	}
+	s = splnet();
+	IFNET_LOCK(ifp);
+	(*ifp->if_stop)(ifp, 0);
+	IFNET_UNLOCK(ifp);
+	splx(s);
 
 	return true;
 }

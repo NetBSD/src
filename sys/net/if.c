@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.486 2021/06/29 21:19:58 riastradh Exp $	*/
+/*	$NetBSD: if.c,v 1.487 2021/07/01 22:08:13 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.486 2021/06/29 21:19:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.487 2021/07/01 22:08:13 blymn Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -761,11 +761,13 @@ void
 if_register(ifnet_t *ifp)
 {
 	/*
-	 * If the driver has not supplied its own if_ioctl, then
-	 * supply the default.
+	 * If the driver has not supplied its own if_ioctl or if_stop,
+	 * then supply the default.
 	 */
 	if (ifp->if_ioctl == NULL)
 		ifp->if_ioctl = ifioctl_common;
+	if (ifp->if_stop == NULL)
+		ifp->if_stop = if_nullstop;
 
 	sysctl_sndq_setup(&ifp->if_sysctl_log, ifp->if_xname, &ifp->if_snd);
 
