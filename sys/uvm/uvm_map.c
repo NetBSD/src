@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.389 2021/06/20 07:11:38 mrg Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.390 2021/07/01 15:06:01 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.389 2021/06/20 07:11:38 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.390 2021/07/01 15:06:01 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -4451,6 +4451,7 @@ uvm_mapent_forkzero(struct vm_map *new_map, struct vm_map *old_map,
 			new_entry->object.uvm_obj->pgops->pgo_detach(
 			    new_entry->object.uvm_obj);
 		new_entry->object.uvm_obj = NULL;
+		new_entry->offset = 0;
 		new_entry->etype &= ~UVM_ET_OBJ;
 	}
 }
