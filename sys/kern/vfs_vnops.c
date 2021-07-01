@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.219 2021/07/01 04:25:51 christos Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.220 2021/07/01 15:53:20 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.219 2021/07/01 04:25:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.220 2021/07/01 15:53:20 martin Exp $");
 
 #include "veriexec.h"
 
@@ -164,7 +164,7 @@ vn_open(struct vnode *at_dvp, struct pathbuf *pb,
 	struct vnode **ret_vp, bool *ret_domove, int *ret_fd)
 {
 	struct nameidata nd;
-	struct vnode *vp;
+	struct vnode *vp = NULL;
 	struct lwp *l = curlwp;
 	kauth_cred_t cred = l->l_cred;
 	struct vattr va;
