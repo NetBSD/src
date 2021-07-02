@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.180 2021/01/31 05:59:55 skrll Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.181 2021/07/02 07:15:35 skrll Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.180 2021/01/31 05:59:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.181 2021/07/02 07:15:35 skrll Exp $");
 
 #include "opt_arm_start.h"
 #include "opt_compat_netbsd.h"
@@ -2868,10 +2868,10 @@ pj4bv7_setup(char *args)
 	pj4b_config();
 
 	cpuctrl = CPU_CONTROL_MMU_ENABLE;
-#ifdef ARM32_DISABLE_ALIGNMENT_FAULTS
-	cpuctrl |= CPU_CONTROL_UNAL_ENABLE;
-#else
+#ifndef ARM32_DISABLE_ALIGNMENT_FAULTS
 	cpuctrl |= CPU_CONTROL_AFLT_ENABLE;
+#else
+	cpuctrl |= CPU_CONTROL_UNAL_ENABLE;
 #endif
 	cpuctrl |= CPU_CONTROL_DC_ENABLE;
 	cpuctrl |= CPU_CONTROL_IC_ENABLE;
