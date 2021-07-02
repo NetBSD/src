@@ -1,1 +1,2 @@
+c99_init_array.c(13): error: negative array dimension (-1) [20]
 c99_init_array.c(18): error: negative array dimension (-1) [20]
