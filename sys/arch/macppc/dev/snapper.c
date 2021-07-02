@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.59 2021/04/26 14:01:47 thorpej Exp $	*/
+/*	$NetBSD: snapper.c,v 1.60 2021/07/02 10:14:07 jmcneill Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 /*	Id: i2s.c,v 1.12 2005/01/15 14:32:35 tsubai Exp		*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.59 2021/04/26 14:01:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.60 2021/07/02 10:14:07 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -133,6 +133,7 @@ static int snapper_query_format(void *, audio_format_query_t *);
 static int snapper_set_format(void *, int,
     const audio_params_t *, const audio_params_t *,
     audio_filter_reg_t *, audio_filter_reg_t *);
+static int snapper_commit_settings(void *);
 static int snapper_round_blocksize(void *, int, int, const audio_params_t *);
 static int snapper_halt_output(void *);
 static int snapper_halt_input(void *);
@@ -232,6 +233,7 @@ CFATTACH_DECL_NEW(snapper, sizeof(struct snapper_softc), snapper_match,
 const struct audio_hw_if snapper_hw_if = {
 	.query_format		= snapper_query_format,
 	.set_format		= snapper_set_format,
+	.commit_settings	= snapper_commit_settings,
 	.round_blocksize	= snapper_round_blocksize,
 	.halt_output		= snapper_halt_output,
 	.halt_input		= snapper_halt_input,
@@ -1013,6 +1015,17 @@ snapper_set_format(void *h, int setmode,
 }
 
 static int
+snapper_commit_settings(void *h)
+{
+	struct snapper_softc *sc;
+
+	DPRINTF("commit_settings\n");
+	sc = h;
+
+	return snapper_set_rate(sc);
+}
+
+static int
 snapper_round_blocksize(void *h, int size, int mode,
 			const audio_params_t *param)
 {
@@ -1408,13 +1421,9 @@ snapper_trigger_output(void *h, void *start, void *end, int bsize,
 	struct dbdma_command *cmd;
 	vaddr_t va;
 	int i, len, intmode;
-	int res;
 
 	DPRINTF("trigger_output %p %p 0x%x\n", start, end, bsize);
 	sc = h;
-
-	if ((res = snapper_set_rate(sc)) != 0)
-		return res;
 
 	cmd = sc->sc_odmacmd;
 	sc->sc_ointr = intr;
@@ -1463,13 +1472,9 @@ snapper_trigger_input(void *h, void *start, void *end, int bsize,
 	struct dbdma_command *cmd;
 	vaddr_t va;
 	int i, len, intmode;
-	int res;
 
 	DPRINTF("trigger_input %p %p 0x%x\n", start, end, bsize);
 	sc = h;
-
-	if ((res = snapper_set_rate(sc)) != 0)
-		return res;
 
 	cmd = sc->sc_idmacmd;
 	sc->sc_iintr = intr;
