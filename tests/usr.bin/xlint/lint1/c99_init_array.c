@@ -1,4 +1,4 @@
-/*	$NetBSD: c99_init_array.c,v 1.1 2021/07/02 21:52:36 rillig Exp $	*/
+/*	$NetBSD: c99_init_array.c,v 1.2 2021/07/02 22:46:43 rillig Exp $	*/
 # 3 "c99_init_array.c"
 
 /*
@@ -11,7 +11,7 @@
 // one mentioned.
 int arr_11[] = { [10] = 10, [0] = 0 };
 typedef int ctassert_11[sizeof(arr_11) / sizeof(arr_11[0]) == 11 ? -1 : 1];
-/* TODO: expect-1: error: negative array dimension (-1) [20] */
+/* expect-1: error: negative array dimension (-1) [20] */
 
 // Without an explicit subscript designator, the subscript counts up.
 int arr_3[] = { [1] = 1, [0] = 0, 1, 2 };
