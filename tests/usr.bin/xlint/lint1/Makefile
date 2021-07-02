@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.72 2021/06/29 21:33:09 rillig Exp $
+# $NetBSD: Makefile,v 1.73 2021/07/02 21:52:36 rillig Exp $
 
 NOMAN=		# defined
 MAX_MESSAGE=	345		# see lint1/err.c
@@ -12,6 +12,8 @@ TESTS_SH=	t_integration
 FILESDIR=	${TESTSDIR}
 FILES+=		c11_generic_expression.c
 FILES+=		c11_generic_expression.exp
+FILES+=		c99_init_array.c
+FILES+=		c99_init_array.exp
 FILES+=		c99_init_designator.c
 FILES+=		c99_init_designator.exp
 FILES+=		d_alignof.c
