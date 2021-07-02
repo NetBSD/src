@@ -6347,6 +6347,7 @@ const struct genfs_ops zfs_genfsops = {
 int (**zfs_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc zfs_vnodeop_entries[] = {
 	{ &vop_default_desc,		vn_default_error },
+	{ &vop_parsepath_desc,		genfs_parsepath },
 	{ &vop_lookup_desc,		zfs_netbsd_lookup },
 	{ &vop_create_desc,		zfs_netbsd_create },
 	{ &vop_mknod_desc,		zfs_netbsd_mknod },
