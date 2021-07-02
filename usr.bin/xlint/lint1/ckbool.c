@@ -1,4 +1,4 @@
-/* $NetBSD: ckbool.c,v 1.5 2021/07/02 18:52:20 rillig Exp $ */
+/* $NetBSD: ckbool.c,v 1.6 2021/07/02 21:22:26 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: ckbool.c,v 1.5 2021/07/02 18:52:20 rillig Exp $");
+__RCSID("$NetBSD: ckbool.c,v 1.6 2021/07/02 21:22:26 rillig Exp $");
 #endif
 
 #include <string.h>
@@ -229,14 +229,8 @@ is_typeok_bool_operand(const tnode_t *tn)
 	/* For enums that are used as bit sets, allow "flags & FLAG". */
 	if (tn->tn_op == BITAND &&
 	    tn->tn_left->tn_op == CVT &&
-	    tn->tn_left->tn_type->t_tspec == INT && !tn->tn_left->tn_cast &&
-	    tn->tn_left->tn_left->tn_type->t_tspec == ENUM &&
-	    /*
-	     * XXX: Somehow the type information got lost here.  The type
-	     * of the enum constant on the right-hand side should still be
-	     * ENUM, but is INT.
-	     */
-	    tn->tn_right->tn_type->t_tspec == INT)
+	    tn->tn_left->tn_type->t_is_enum &&
+	    tn->tn_right->tn_type->t_is_enum)
 		return true;
 
 	return false;
