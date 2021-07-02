@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict.c,v 1.28 2021/04/05 01:35:34 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict.c,v 1.29 2021/07/02 18:52:20 rillig Exp $	*/
 # 3 "d_c99_bool_strict.c"
 
 /*
@@ -439,6 +439,8 @@ strict_bool_operand_unary_address(void)
 	b = *bp;
 }
 
+/* see strict_bool_operand_unary_all below for the other unary operators. */
+
 /*
  * strict-bool-operand-binary:
  *	Operator	left:	bool?	other?	right:	bool?	other?
@@ -512,7 +514,7 @@ strict_bool_operand_binary(bool b, int i)
 }
 
 void
-strict_bool_operand_binary_all(bool b, unsigned u)
+strict_bool_operand_unary_all(bool b)
 {
 	b = !b;
 	b = ~b;			/* expect: 335 */
@@ -522,7 +524,11 @@ strict_bool_operand_binary_all(bool b, unsigned u)
 	b--;			/* expect: 335 */
 	b = +b;			/* expect: 335 */
 	b = -b;			/* expect: 335 */
+}
 
+void
+strict_bool_operand_binary_all(bool b, unsigned u)
+{
 	b = b * b;		/* expect: 336 *//* expect: 337 */
 	b = b / b;		/* expect: 336 *//* expect: 337 */
 	b = b % b;		/* expect: 336 *//* expect: 337 */
