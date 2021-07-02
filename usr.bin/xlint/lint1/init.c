@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.200 2021/06/29 21:05:32 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.201 2021/07/02 22:46:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.200 2021/06/29 21:05:32 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.201 2021/07/02 22:46:43 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -118,14 +118,29 @@ struct designation {
  * See C99 6.7.8p17.
  */
 struct brace_level {
-	const type_t	*bl_type;	/* The type of the current object that
-					 * is initialized at this brace
-					 * level. */
+	/*
+	 * The type of the current object that is initialized at this brace
+	 * level.
+	 */
+	const type_t	*bl_type;
 
 	struct designation bl_designation;	/* .member[123].member */
 
-	const sym_t	*bl_member;		/* for structs and unions */
-	size_t		bl_subscript;		/* for arrays */
+	/*
+	 * The next member of the struct or union that is to be initialized,
+	 * unless a specific member is selected by a designator.
+	 */
+	const sym_t	*bl_member;
+	/*
+	 * The subscript of the next array element that is to be initialized,
+	 * unless a specific subscript is selected by a designator.
+	 */
+	size_t		bl_subscript;
+	/*
+	 * The maximum subscript that has ever be seen; only relevant for an
+	 * array of unknown size at the outermost brace level.
+	 */
+	size_t		bl_max_subscript;
 	bool		bl_scalar_done: 1;	/* for scalars */
 	bool		bl_confused: 1;		/* skip further checks */
 
@@ -700,6 +715,8 @@ brace_level_advance(struct brace_level *bl)
 		break;
 	case ARRAY:
 		bl->bl_subscript++;
+		if (bl->bl_subscript > bl->bl_max_subscript)
+			bl->bl_max_subscript = bl->bl_subscript;
 		break;
 	default:
 		bl->bl_scalar_done = true;
@@ -822,12 +839,7 @@ initialization_set_size_of_unknown_array(struct initialization *in)
 	if (in->in_sym->s_type->t_incomplete_array &&
 	    in->in_brace_level->bl_enclosing == NULL)
 		update_type_of_array_of_unknown_size(in->in_sym,
-		    in->in_brace_level->bl_subscript);
-	/*
-	 * XXX: bl_subscript is not entirely correct.
-	 * It should rather be max(actually used subscript) + 1.
-	 * int arr[] = { [100] = 100, [0] = 0 };
-	 */
+		    in->in_brace_level->bl_max_subscript);
 }
 
 static void
