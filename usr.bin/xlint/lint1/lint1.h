@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.108 2021/06/28 08:52:55 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.109 2021/07/02 18:22:09 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -165,7 +165,16 @@ struct lint1_type {
 	bool	t_vararg : 1;	/* prototype with '...' */
 	bool	t_typedef : 1;	/* type defined with typedef */
 	bool	t_bitfield : 1;
-	bool	t_is_enum : 1;	/* type is (or was) enum (t_enum valid) */
+	/*
+	 * Either the type is currently an enum (having t_tspec ENUM), or
+	 * it is an integer type (typically INT) that has been implicitly
+	 * converted from an enum type.  In both cases, t_enum is valid.
+	 *
+	 * The information about a former enum type is retained to allow
+	 * type checks in expressions such as ((var1 & 0x0001) == var2), to
+	 * detect when var1 and var2 are from incompatible enum types.
+	 */
+	bool	t_is_enum : 1;
 	bool	t_packed : 1;
 	union {
 		int	_t_dim;		/* dimension (if ARRAY) */
