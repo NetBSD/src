@@ -1,4 +1,4 @@
-/* $NetBSD: ckbool.c,v 1.4 2021/06/20 20:32:42 rillig Exp $ */
+/* $NetBSD: ckbool.c,v 1.5 2021/07/02 18:52:20 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: ckbool.c,v 1.4 2021/06/20 20:32:42 rillig Exp $");
+__RCSID("$NetBSD: ckbool.c,v 1.5 2021/07/02 18:52:20 rillig Exp $");
 #endif
 
 #include <string.h>
@@ -82,13 +82,10 @@ is_int_constant_zero(const tnode_t *tn, tspec_t t)
 }
 
 static bool
-is_typeok_strict_bool(op_t op,
-		      const tnode_t *ln, tspec_t lt,
-		      const tnode_t *rn, tspec_t rt)
+is_typeok_strict_bool_binary(op_t op,
+			     const tnode_t *ln, tspec_t lt,
+			     const tnode_t *rn, tspec_t rt)
 {
-	if (rn == NULL)
-		return true;	/* TODO: check unary operators as well. */
-
 	if ((lt == BOOL) == (rt == BOOL))
 		return true;
 
@@ -113,12 +110,11 @@ is_typeok_strict_bool(op_t op,
  * behavior.
  */
 static bool
-typeok_strict_bool_compatible(op_t op, int arg,
-			      const tnode_t *ln, tspec_t lt,
-			      const tnode_t *rn, tspec_t rt)
+typeok_strict_bool_binary_compatible(op_t op, int arg,
+				     const tnode_t *ln, tspec_t lt,
+				     const tnode_t *rn, tspec_t rt)
 {
-
-	if (is_typeok_strict_bool(op, ln, lt, rn, rt))
+	if (is_typeok_strict_bool_binary(op, ln, lt, rn, rt))
 		return true;
 
 	if (op == FARG) {
@@ -157,7 +153,8 @@ typeok_scalar_strict_bool(op_t op, const mod_t *mp, int arg,
 		rt = NOTSPEC;
 	}
 
-	if (!typeok_strict_bool_compatible(op, arg, ln, lt, rn, rt))
+	if (rn != NULL &&
+	    !typeok_strict_bool_binary_compatible(op, arg, ln, lt, rn, rt))
 		return false;
 
 	if (mp->m_requires_bool || op == QUEST) {
