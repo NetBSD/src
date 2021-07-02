@@ -1,4 +1,4 @@
-/*	$NetBSD: tyname.c,v 1.42 2021/06/28 10:29:05 rillig Exp $	*/
+/*	$NetBSD: tyname.c,v 1.43 2021/07/02 18:22:09 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tyname.c,v 1.42 2021/06/28 10:29:05 rillig Exp $");
+__RCSID("$NetBSD: tyname.c,v 1.43 2021/07/02 18:22:09 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -351,10 +351,6 @@ type_name(const type_t *tp)
 	if (tp == NULL)
 		return "(null)";
 
-	/*
-	 * XXX: Why is this necessary, and in which cases does this apply?
-	 * Shouldn't the type be an ENUM from the beginning?
-	 */
 	if ((t = tp->t_tspec) == INT && tp->t_is_enum)
 		t = ENUM;
 
