@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.180 2021/06/16 00:21:19 riastradh Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.181 2021/07/02 03:30:46 yamaguchi Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.180 2021/06/16 00:21:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.181 2021/07/02 03:30:46 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -861,7 +861,7 @@ bridge_ioctl_add(struct bridge_softc *sc, void *arg)
 			memset(&ifr, 0, sizeof(ifr));
 			ifr.ifr_mtu = sc->sc_if.if_mtu;
 			IFNET_LOCK(ifs);
-			error = ether_ioctl(ifs, SIOCSIFMTU, &ifr);
+			error = ifs->if_ioctl(ifs, SIOCSIFMTU, &ifr);
 			IFNET_UNLOCK(ifs);
 			if (error != 0)
 				goto out;
