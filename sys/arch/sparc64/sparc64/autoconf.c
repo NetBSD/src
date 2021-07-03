@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.232 2021/07/03 19:18:55 palle Exp $ */
+/*	$NetBSD: autoconf.c,v 1.233 2021/07/03 19:39:07 palle Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.232 2021/07/03 19:18:55 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.233 2021/07/03 19:39:07 palle Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -189,9 +189,9 @@ void	sun4v_set_soft_state(int, const char *);
 char sun4v_soft_state_booting[] __align32 = "NetBSD booting";
 char sun4v_soft_state_running[] __align32 = "NetBSD running";
 
+void	sun4v_interrupt_init(void);
 #if 0
 XXX notyet		
-void	sun4v_interrupt_init(void);
 void	sun4v_sdio_init(void);
 #endif
 #endif
@@ -378,9 +378,9 @@ die_old_boot_loader:
 	if (CPU_ISSUN4V) {
 		sun4v_soft_state_init();
 		sun4v_set_soft_state(SIS_TRANSITION, sun4v_soft_state_booting);
+		sun4v_interrupt_init();
 #if 0
 XXX notyet		
-		sun4v_interrupt_init();
 		sun4v_sdio_init();
 #endif 
 	}
@@ -570,8 +570,6 @@ sun4v_set_soft_state(int state, const char *desc)
 		printf("soft_state_set: %d\n", err);
 }
 
-#if 0
-XXX notyet		
 void
 sun4v_interrupt_init(void)
 {
@@ -582,7 +580,6 @@ sun4v_interrupt_init(void)
 
 	sun4v_group_interrupt_major = 3;
 }
-#endif
 
 #if 0
 XXX notyet		
