@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.550 2021/06/29 22:40:53 dholland Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.551 2021/07/03 09:39:26 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.550 2021/06/29 22:40:53 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.551 2021/07/03 09:39:26 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -1674,10 +1674,9 @@ do_open(lwp_t *l, struct vnode *dvp, struct pathbuf *pb, int open_flags,
 	if (vp == NULL) {
 		fd_abort(p, fp, indx);
 		error = fd_dupopen(dupfd, dupfd_move, flags, &indx);
-		if (error == 0) {
-			*fd = indx;
-			return 0;
-		}
+		if (error)
+			return error;
+		*fd = indx;
 	} else {
 		error = open_setfp(l, fp, vp, indx, flags);
 		if (error)
