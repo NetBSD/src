@@ -1,4 +1,4 @@
-/*	$NetBSD: ax88190.c,v 1.15 2019/05/29 06:17:28 msaitoh Exp $	*/
+/*	$NetBSD: ax88190.c,v 1.15.2.1 2021/07/03 10:18:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ax88190.c,v 1.15 2019/05/29 06:17:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ax88190.c,v 1.15.2.1 2021/07/03 10:18:16 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,6 +85,8 @@ ax88190_media_init(struct dp8390_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	struct mii_data *mii = &sc->sc_mii;
+
+	sc->sc_ec.ec_mii = mii;
 
 	mii->mii_ifp = ifp;
 	mii->mii_readreg = ax88190_mii_readreg;
