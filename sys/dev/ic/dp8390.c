@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.95 2019/05/29 10:07:29 msaitoh Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.95.2.1 2021/07/03 10:18:16 martin Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -14,7 +14,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.95 2019/05/29 10:07:29 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.95.2.1 2021/07/03 10:18:16 martin Exp $");
 
 #include "opt_inet.h"
 
@@ -66,7 +66,6 @@ void
 dp8390_media_init(struct dp8390_softc *sc)
 {
 
-	sc->sc_ec.ec_ifmedia = &sc->sc_media;
 	ifmedia_init(&sc->sc_media, 0, dp8390_mediachange, dp8390_mediastatus);
 	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_MANUAL, 0, NULL);
 	ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_MANUAL);
@@ -131,7 +130,13 @@ dp8390_config(struct dp8390_softc *sc)
 	aprint_normal_dev(sc->sc_dev, "Ethernet address %s\n",
 	    ether_sprintf(sc->sc_enaddr));
 
-	/* Initialize media goo. */
+	/*
+	 * Initialize media structures.  We'll default to pointing ec_ifmedia
+	 * at our embedded media structure.  A card front-end can initialize
+	 * ec_mii if it has an MII interface.  (Note that sc_media is an
+	 * alias of sc_mii.mii_media in dp8390_softc.)
+	 */
+	sc->sc_ec.ec_ifmedia = &sc->sc_media;
 	(*sc->sc_media_init)(sc);
 
 	/* We can support 802.1Q VLAN-sized frames. */
