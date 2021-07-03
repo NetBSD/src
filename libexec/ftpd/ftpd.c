@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.205 2019/10/15 18:29:32 christos Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.206 2021/07/03 14:59:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.205 2019/10/15 18:29:32 christos Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.206 2021/07/03 14:59:49 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1547,8 +1547,7 @@ do_pass(int pass_checked, int pass_rval, const char *passwd)
 			    "GUEST user %s: can't chdir to %s: %m",
 			    pw->pw_name, homedir);
  bad_guest:
-			reply(550, "Can't set guest privileges.");
-			goto bad;
+			fatal("Can't set guest privileges.");
 		}
 		break;
 	case CLASS_CHROOT:
@@ -1571,8 +1570,7 @@ do_pass(int pass_checked, int pass_rval, const char *passwd)
 			    "CHROOT user %s: can't chdir to %s: %m",
 			    pw->pw_name, homedir);
  bad_chroot:
-			reply(550, "Can't change root.");
-			goto bad;
+			fatal("Can't change root.");
 		}
 		break;
 	case CLASS_REAL:
@@ -1618,16 +1616,16 @@ do_pass(int pass_checked, int pass_rval, const char *passwd)
 		dropprivs++;
 		if (setgid((gid_t)pw->pw_gid) < 0) {
 			reply(550, "Can't set gid.");
-			goto bad;
+			goto bad_perms;
 		}
 		if (setuid((uid_t)pw->pw_uid) < 0) {
 			reply(550, "Can't set uid.");
-			goto bad;
+			goto bad_perms;
 		}
 	} else {
 		if (seteuid((uid_t)pw->pw_uid) < 0) {
 			reply(550, "Can't set uid.");
-			goto bad;
+			goto bad_perms;
 		}
 	}
 	setenv("HOME", homedir, 1);
@@ -1686,6 +1684,11 @@ do_pass(int pass_checked, int pass_rval, const char *passwd)
 #endif
 			/* Forget all about it... */
 	end_login();
+	return;
+
+bad_perms:
+	syslog(LOG_NOTICE, "user %s: can't setuid/gid: %m", pw->pw_name);
+	fatal("Can't drop privileges.");
 }
 
 void
