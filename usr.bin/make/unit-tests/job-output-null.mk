@@ -1,4 +1,4 @@
-# $NetBSD: job-output-null.mk,v 1.1 2021/04/15 19:02:29 rillig Exp $
+# $NetBSD: job-output-null.mk,v 1.2 2021/07/03 22:39:40 rillig Exp $
 #
 # Test how null bytes in the output of a command are handled.  Make processes
 # them using null-terminated strings, which may cut off some of the output.
@@ -7,20 +7,33 @@
 # inconsistently.  It's an edge case though since typically the child
 # processes output text.
 
+# Note: The printf commands used in this test must only use a single format
+# string, without parameters.  This is because it is implementation-dependent
+# how many times the command 'printf "fmt%s" "" "" ""' calls write(2).
+#
+#	NetBSD /bin/sh		1 x write("fmtfmtfmt")
+#	Dash			1 x write("fmtfmtfmt")
+#	NetBSD /bin/ksh		3 x write("fmt") (via /bin/printf)
+#	Bash 5			3 x write("fmt")
+#
+# In the latter case the output may arrive in parts, which in this test makes
+# a crucial difference since the outcome of the test depends on whether there
+# is a '\n' in each of the blocks from the output.
+
 .MAKEFLAGS: -j1		# force jobs mode
 
 all: .PHONY
 	# The null byte from the command output is kept as-is.
 	# See CollectOutput, which looks like it intended to replace these
 	# null bytes with simple spaces.
-	@printf 'hello\0world%s\n' ''
+	@printf 'hello\0world\n'
 
 	# Give the parent process a chance to see the above output, but not
 	# yet the output from the next printf command.
 	@sleep 1
 
 	# All null bytes from the command output are kept as-is.
-	@printf 'hello\0world%s\n' '' '' '' '' '' ''
+	@printf 'hello\0world\n''hello\0world\n''hello\0world\n'
 
 	@sleep 1
 
@@ -29,4 +42,4 @@ all: .PHONY
 	#
 	# The three null bytes in a row test whether this output is
 	# compressed to a single space like in DebugFailedTarget.  It isn't.
-	@printf 'hello\0world\0without\0\0\0newline%s' ', ' ', ' '.'
+	@printf 'hello\0without\0\0\0newline, hello\0without\0\0\0newline.'
