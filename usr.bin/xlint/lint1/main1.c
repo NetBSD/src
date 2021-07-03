@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.47 2021/07/03 20:43:35 rillig Exp $	*/
+/*	$NetBSD: main1.c,v 1.48 2021/07/03 21:27:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: main1.c,v 1.47 2021/07/03 20:43:35 rillig Exp $");
+__RCSID("$NetBSD: main1.c,v 1.48 2021/07/03 21:27:48 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -266,7 +266,7 @@ main(int argc, char *argv[])
 	initdecl();
 	initscan();
 
-	if (gflag) {
+	if (gflag && !tflag) {
 		if ((yyin = gcc_builtins()) == NULL)
 			err(1, "cannot open builtins");
 		yyparse();
