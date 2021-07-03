@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.231 2021/05/12 23:22:33 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.232 2021/07/03 19:18:55 palle Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.231 2021/05/12 23:22:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.232 2021/07/03 19:18:55 palle Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -180,6 +180,21 @@ struct intrmap intrmap[] = {
 	{ "SUNW,CS4231",	PIL_AUD },
 	{ NULL,		0 }
 };
+
+#ifdef SUN4V
+void	sun4v_soft_state_init(void);
+void	sun4v_set_soft_state(int, const char *);
+
+#define __align32 __attribute__((__aligned__(32)))
+char sun4v_soft_state_booting[] __align32 = "NetBSD booting";
+char sun4v_soft_state_running[] __align32 = "NetBSD running";
+
+#if 0
+XXX notyet		
+void	sun4v_interrupt_init(void);
+void	sun4v_sdio_init(void);
+#endif
+#endif
 
 int console_node, console_instance;
 struct genfb_colormap_callback gfb_cb;
@@ -358,6 +373,18 @@ die_old_boot_loader:
 
 	get_ncpus();
 	pmap_bootstrap(KERNBASE, bi_kend->addr);
+
+#ifdef SUN4V
+	if (CPU_ISSUN4V) {
+		sun4v_soft_state_init();
+		sun4v_set_soft_state(SIS_TRANSITION, sun4v_soft_state_booting);
+#if 0
+XXX notyet		
+		sun4v_interrupt_init();
+		sun4v_sdio_init();
+#endif 
+	}
+#endif
 }
 
 /*
@@ -499,7 +526,79 @@ cpu_configure(void)
         setpstate(getpstate()|PSTATE_IE);
 
 	(void)spl0();
+
+#ifdef SUN4V
+	if (CPU_ISSUN4V)
+		sun4v_set_soft_state(SIS_NORMAL, sun4v_soft_state_running);
+#endif
 }
+
+#ifdef SUN4V
+
+#define HSVC_GROUP_INTERRUPT	0x002
+#define HSVC_GROUP_SOFT_STATE	0x003
+#define HSVC_GROUP_SDIO		0x108
+
+int sun4v_soft_state_initialized = 0;
+
+void
+sun4v_soft_state_init(void)
+{
+	uint64_t minor;
+
+	if (prom_set_sun4v_api_version(HSVC_GROUP_SOFT_STATE, 1, 0, &minor))
+		return;
+
+	prom_sun4v_soft_state_supported();
+	sun4v_soft_state_initialized = 1;
+}
+
+void
+sun4v_set_soft_state(int state, const char *desc)
+{
+	paddr_t pa;
+	int err;
+
+	if (!sun4v_soft_state_initialized)
+		return;
+
+	if (!pmap_extract(pmap_kernel(), (vaddr_t)desc, &pa))
+		panic("sun4v_set_soft_state: pmap_extract failed");
+
+	err = hv_soft_state_set(state, pa);
+	if (err != H_EOK)
+		printf("soft_state_set: %d\n", err);
+}
+
+#if 0
+XXX notyet		
+void
+sun4v_interrupt_init(void)
+{
+	uint64_t minor;
+
+	if (prom_set_sun4v_api_version(HSVC_GROUP_INTERRUPT, 3, 0, &minor))
+		return;
+
+	sun4v_group_interrupt_major = 3;
+}
+#endif
+
+#if 0
+XXX notyet		
+void
+sun4v_sdio_init(void)
+{
+	uint64_t minor;
+
+	if (prom_set_sun4v_api_version(HSVC_GROUP_SDIO, 1, 0, &minor))
+		return;
+
+	sun4v_group_sdio_major = 1;
+}
+#endif
+
+#endif
 
 void
 cpu_rootconf(void)
