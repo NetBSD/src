@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.46 2021/06/27 18:48:45 rillig Exp $	*/
+/*	$NetBSD: main1.c,v 1.47 2021/07/03 20:43:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: main1.c,v 1.46 2021/06/27 18:48:45 rillig Exp $");
+__RCSID("$NetBSD: main1.c,v 1.47 2021/07/03 20:43:35 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -254,6 +254,8 @@ main(int argc, char *argv[])
 	/* initialize output */
 	outopen(argv[1]);
 
+	if (dflag)
+		setvbuf(stdout, NULL, _IONBF, 0);
 #ifdef YYDEBUG
 	if (yflag)
 		yydebug = 1;
