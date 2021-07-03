@@ -1,4 +1,4 @@
-/*	$NetBSD: itesio_isa.c,v 1.28 2019/07/23 09:38:53 msaitoh Exp $ */
+/*	$NetBSD: itesio_isa.c,v 1.29 2021/07/03 04:44:16 nonaka Exp $ */
 /*	Derived from $OpenBSD: it.c,v 1.19 2006/04/10 00:57:54 deraadt Exp $	*/
 
 /*
@@ -34,13 +34,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.28 2019/07/23 09:38:53 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.29 2021/07/03 04:44:16 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/module.h>
 #include <sys/bus.h>
+#include <sys/kmem.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
@@ -51,6 +52,11 @@ __KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.28 2019/07/23 09:38:53 msaitoh Exp 
 
 #define IT_VOLTSTART_IDX 	3 	/* voltage start index */
 #define IT_FANSTART_IDX 	12 	/* fan start index */
+
+/* IT8625: 3 temps, 10 volts, 6 fans */
+#define IT8625_NUM_SENSORS	19
+#define IT8625_VOLTSTART_IDX 	3	/* voltage start index */
+#define IT8625_FANSTART_IDX 	13	/* fan start index */
 
 #if defined(ITESIO_DEBUG)
 #define DPRINTF(x)		do { printf x; } while (0)
@@ -90,6 +96,13 @@ static void	itesio_refresh_temp(struct itesio_softc *, envsys_data_t *);
 static void	itesio_refresh_volts(struct itesio_softc *, envsys_data_t *);
 static void	itesio_refresh_fans(struct itesio_softc *, envsys_data_t *);
 static void	itesio_refresh(struct sysmon_envsys *, envsys_data_t *);
+static void	itesio_refresh_it8705_fans(struct itesio_softc *,
+		    envsys_data_t *);
+static void	itesio_setup_it8625_sensors(struct itesio_softc *);
+static void	itesio_refresh_it8625_volts(struct itesio_softc *,
+		    envsys_data_t *);
+static void	itesio_refresh_it8625_fans(struct itesio_softc *,
+		    envsys_data_t *);
 
 /* sysmon_wdog glue */
 static bool	itesio_wdt_suspend(device_t, const pmf_qual_t *);
@@ -109,11 +122,58 @@ static const int itesio_vrfact[] = {
 	RFACT_NONE	/* VBAT		*/
 };
 
+static const struct itesio_config itesio_config[] = {
+	{
+		.chipid = ITESIO_ID8625,
+		.no_wdt = true,
+		.num_sensors = IT8625_NUM_SENSORS,
+		.voltstart_idx = IT8625_VOLTSTART_IDX,
+		.fanstart_idx = IT8625_FANSTART_IDX,
+		.setup_sensors = itesio_setup_it8625_sensors,
+		.refresh_volts = itesio_refresh_it8625_volts,
+		.refresh_fans = itesio_refresh_it8625_fans,
+	},
+	{	.chipid = ITESIO_ID8628, },
+	{	.chipid = ITESIO_ID8655, },
+	{
+		.chipid = ITESIO_ID8705,
+		.no_wdt = true,
+		.refresh_fans = itesio_refresh_it8705_fans,
+	},
+	{
+		.chipid = ITESIO_ID8712,
+		.refresh_fans = itesio_refresh_it8705_fans,
+	},
+	{	.chipid = ITESIO_ID8716, },
+	{	.chipid = ITESIO_ID8718, },
+	{	.chipid = ITESIO_ID8720, },
+	{	.chipid = ITESIO_ID8721, },
+	{	.chipid = ITESIO_ID8726, },
+	{	.chipid = ITESIO_ID8728, },
+	{	.chipid = ITESIO_ID8771, },
+	{	.chipid = ITESIO_ID8772, },
+};
+
+static const struct itesio_config *
+itesio_isa_find_config(uint16_t chipid)
+{
+	const struct itesio_config *ic;
+	size_t i;
+
+	for (i = 0; i < __arraycount(itesio_config); i++) {
+		ic = &itesio_config[i];
+		if (chipid == ic->chipid)
+			return ic;
+	}
+	return NULL;
+}
+
 static int
 itesio_isa_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_handle_t ioh;
+	const struct itesio_config *ic;
 	uint16_t cr;
 
 	/* Must supply an address */
@@ -135,28 +195,16 @@ itesio_isa_match(device_t parent, cfdata_t match, void *aux)
 	itesio_exit(ia->ia_iot, ioh);
 	bus_space_unmap(ia->ia_iot, ioh, 2);
 
-	switch (cr) {
-	case ITESIO_ID8628:
-	case ITESIO_ID8655:
-	case ITESIO_ID8705:
-	case ITESIO_ID8712:
-	case ITESIO_ID8716:
-	case ITESIO_ID8718:
-	case ITESIO_ID8720:
-	case ITESIO_ID8721:
-	case ITESIO_ID8726:
-	case ITESIO_ID8728:
-	case ITESIO_ID8771:
-	case ITESIO_ID8772:
-		ia->ia_nio = 1;
-		ia->ia_io[0].ir_size = 2;
-		ia->ia_niomem = 0;
-		ia->ia_nirq = 0;
-		ia->ia_ndrq = 0;
-		return 1;
-	default:
+	ic = itesio_isa_find_config(cr);
+	if (ic == NULL)
 		return 0;
-	}
+
+	ia->ia_nio = 1;
+	ia->ia_io[0].ir_size = 2;
+	ia->ia_niomem = 0;
+	ia->ia_nirq = 0;
+	ia->ia_ndrq = 0;
+	return 1;
 }
 
 static void
@@ -164,7 +212,9 @@ itesio_isa_attach(device_t parent, device_t self, void *aux)
 {
 	struct itesio_softc *sc = device_private(self);
 	struct isa_attach_args *ia = aux;
-	int i;
+	const struct itesio_config *ic;
+	uint32_t i;
+	int error;
 	uint8_t cr;
 
 	sc->sc_iot = ia->ia_iot;
@@ -205,6 +255,27 @@ itesio_isa_attach(device_t parent, device_t self, void *aux)
 	 */
 	itesio_exit(sc->sc_iot, sc->sc_pnp_ioh);
 
+	ic = itesio_isa_find_config(sc->sc_chipid);
+	if (ic == NULL) {
+		aprint_error(": unknown chipid: %04x", sc->sc_chipid);
+		goto out2;
+	}
+	sc->sc_config = *ic;
+	if (sc->sc_config.num_sensors == 0)
+		sc->sc_config.num_sensors = IT_NUM_SENSORS;
+	if (sc->sc_config.voltstart_idx == 0)
+		sc->sc_config.voltstart_idx = IT_VOLTSTART_IDX;
+	if (sc->sc_config.fanstart_idx == 0)
+		sc->sc_config.fanstart_idx = IT_FANSTART_IDX;
+	if (sc->sc_config.setup_sensors == NULL)
+		sc->sc_config.setup_sensors = itesio_setup_sensors;
+	if (sc->sc_config.refresh_temp == NULL)
+		sc->sc_config.refresh_temp = itesio_refresh_temp;
+	if (sc->sc_config.refresh_volts == NULL)
+		sc->sc_config.refresh_volts = itesio_refresh_volts;
+	if (sc->sc_config.refresh_fans == NULL)
+		sc->sc_config.refresh_fans = itesio_refresh_fans;
+
 	aprint_normal(": iTE IT%4xF Super I/O (rev %d)\n",
 	    sc->sc_chipid, sc->sc_devrev);
 	aprint_normal_dev(self, "Hardware Monitor registers at 0x%x\n",
@@ -234,9 +305,9 @@ itesio_isa_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Initialize and attach sensors.
 	 */
-	itesio_setup_sensors(sc);
+	(*sc->sc_config.setup_sensors)(sc);
 	sc->sc_sme = sysmon_envsys_create();
-	for (i = 0; i < IT_NUM_SENSORS; i++) {
+	for (i = 0; i < sc->sc_config.num_sensors; i++) {
 		if (sysmon_envsys_sensor_attach(sc->sc_sme,
 						&sc->sc_sensor[i])) {
 			sysmon_envsys_destroy(sc->sc_sme);
@@ -250,9 +321,9 @@ itesio_isa_attach(device_t parent, device_t self, void *aux)
 	sc->sc_sme->sme_cookie = sc;
 	sc->sc_sme->sme_refresh = itesio_refresh;
 	
-	if ((i = sysmon_envsys_register(sc->sc_sme))) {
+	if ((error = sysmon_envsys_register(sc->sc_sme))) {
 		aprint_error_dev(self,
-		    "unable to register with sysmon (%d)\n", i);
+		    "unable to register with sysmon (%d)\n", error);
 		sysmon_envsys_destroy(sc->sc_sme);
 		goto out;
 	}
@@ -261,8 +332,8 @@ itesio_isa_attach(device_t parent, device_t self, void *aux)
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
-	/* The IT8705 doesn't support the WDT */
-	if (sc->sc_chipid == ITESIO_ID8705)
+	/* Some chips don't support the WDT */
+	if (sc->sc_config.no_wdt)
 		goto out2;
 
 	/*
@@ -305,6 +376,11 @@ itesio_isa_detach(device_t self, int flags)
 	if (sc->sc_wdt_enabled) {
 		sysmon_wdog_unregister(&sc->sc_smw);
 		bus_space_unmap(sc->sc_iot, sc->sc_pnp_ioh, 2);
+	}
+
+	if (sc->sc_sensor != NULL) {
+		kmem_free(sc->sc_sensor,
+		    sizeof(sc->sc_sensor[0]) * sc->sc_config.num_sensors);
 	}
 
 	return 0;
@@ -380,24 +456,46 @@ itesio_exit(bus_space_tag_t iot, bus_space_handle_t ioh)
  * sysmon_envsys(9) glue.
  */
 static void
-itesio_setup_sensors(struct itesio_softc *sc)
+itesio_setup_sensors_common(struct itesio_softc *sc)
 {
-	int i;
+	const struct itesio_config *ic = &sc->sc_config;
+	size_t allocsz;
+	uint32_t i;
+
+	allocsz = sizeof(sc->sc_sensor[0]) * ic->num_sensors;
+	sc->sc_sensor = kmem_zalloc(allocsz, KM_SLEEP);
 
 	/* temperatures */
-	for (i = 0; i < IT_VOLTSTART_IDX; i++)
+	for (i = 0; i < ic->voltstart_idx; i++)
 		sc->sc_sensor[i].units = ENVSYS_STEMP;
 
+	/* voltages */
+	for (i = ic->voltstart_idx; i < ic->fanstart_idx; i++) {
+		sc->sc_sensor[i].units = ENVSYS_SVOLTS_DC;
+		sc->sc_sensor[i].flags = ENVSYS_FCHANGERFACT;
+	}
+
+	/* fans */
+	for (i = ic->fanstart_idx; i < ic->num_sensors; i++)
+		sc->sc_sensor[i].units = ENVSYS_SFANRPM;
+
+	/* all */
+	for (i = 0; i < ic->num_sensors; i++)
+		sc->sc_sensor[i].state = ENVSYS_SINVALID;
+}
+
+static void
+itesio_setup_sensors(struct itesio_softc *sc)
+{
+
+	itesio_setup_sensors_common(sc);
+
+	/* temperatures */
 	COPYDESCR(sc->sc_sensor[0].desc, "CPU Temp");
 	COPYDESCR(sc->sc_sensor[1].desc, "System Temp");
 	COPYDESCR(sc->sc_sensor[2].desc, "Aux Temp");
 
 	/* voltages */
-	for (i = IT_VOLTSTART_IDX; i < IT_FANSTART_IDX; i++) {
-		sc->sc_sensor[i].units = ENVSYS_SVOLTS_DC;
-		sc->sc_sensor[i].flags = ENVSYS_FCHANGERFACT;
-	}
-
 	COPYDESCR(sc->sc_sensor[3].desc, "VCORE_A");
 	COPYDESCR(sc->sc_sensor[4].desc, "VCORE_B");
 	COPYDESCR(sc->sc_sensor[5].desc, "+3.3V");
@@ -409,16 +507,41 @@ itesio_setup_sensors(struct itesio_softc *sc)
 	COPYDESCR(sc->sc_sensor[11].desc, "VBAT");
 
 	/* fans */
-	for (i = IT_FANSTART_IDX; i < IT_NUM_SENSORS; i++)
-		sc->sc_sensor[i].units = ENVSYS_SFANRPM;
-
 	COPYDESCR(sc->sc_sensor[12].desc, "CPU Fan");
 	COPYDESCR(sc->sc_sensor[13].desc, "System Fan");
 	COPYDESCR(sc->sc_sensor[14].desc, "Aux Fan");
+}
 
-	/* all */
-	for (i = 0; i < IT_NUM_SENSORS; i++)
-		sc->sc_sensor[i].state = ENVSYS_SINVALID;
+static void
+itesio_setup_it8625_sensors(struct itesio_softc *sc)
+{
+
+	itesio_setup_sensors_common(sc);
+
+	/* temperatures */
+	COPYDESCR(sc->sc_sensor[0].desc, "Temp0");
+	COPYDESCR(sc->sc_sensor[1].desc, "Temp1");
+	COPYDESCR(sc->sc_sensor[2].desc, "Temp2");
+
+	/* voltages */
+	COPYDESCR(sc->sc_sensor[3].desc, "VIN0");
+	COPYDESCR(sc->sc_sensor[4].desc, "VIN1");
+	COPYDESCR(sc->sc_sensor[5].desc, "VIN2");
+	COPYDESCR(sc->sc_sensor[6].desc, "VIN3");
+	COPYDESCR(sc->sc_sensor[7].desc, "VIN4");
+	COPYDESCR(sc->sc_sensor[8].desc, "VIN5");
+	COPYDESCR(sc->sc_sensor[9].desc, "VIN6");
+	COPYDESCR(sc->sc_sensor[10].desc, "Internal 3VSB");
+	COPYDESCR(sc->sc_sensor[11].desc, "VBAT");
+	COPYDESCR(sc->sc_sensor[12].desc, "Internal AVCC3");
+
+	/* fans */
+	COPYDESCR(sc->sc_sensor[13].desc, "Fan0");
+	COPYDESCR(sc->sc_sensor[14].desc, "Fan1");
+	COPYDESCR(sc->sc_sensor[15].desc, "Fan2");
+	COPYDESCR(sc->sc_sensor[16].desc, "Fan3");
+	COPYDESCR(sc->sc_sensor[17].desc, "Fan4");
+	COPYDESCR(sc->sc_sensor[18].desc, "Fan5");
 }
 #undef COPYDESCR
 
@@ -446,7 +569,7 @@ itesio_refresh_volts(struct itesio_softc *sc, envsys_data_t *edata)
 	uint8_t vbatcr = 0;
 	int i, sdata;
 
-	i = edata->sensor - IT_VOLTSTART_IDX;
+	i = edata->sensor - sc->sc_config.voltstart_idx;
 
 	sdata = itesio_ecreadreg(sc, ITESIO_EC_SENSORVOLTBASE + i);
 	/* not connected */
@@ -486,63 +609,148 @@ itesio_refresh_volts(struct itesio_softc *sc, envsys_data_t *edata)
 }
 
 static void
+itesio_refresh_it8625_volts(struct itesio_softc *sc, envsys_data_t *edata)
+{
+	int i, sdata;
+
+	i = edata->sensor - sc->sc_config.voltstart_idx;
+
+	if (i < 9)
+		sdata = itesio_ecreadreg(sc, ITESIO_EC_SENSORVOLTBASE + i);
+	else
+		sdata = itesio_ecreadreg(sc,
+		    ITESIO_EC_SENSORVOLTEXTBASE + i - 9);
+	/* not connected */
+	if (sdata == 0 || sdata == 0xff) {
+		edata->state = ENVSYS_SINVALID;
+		return;
+	}
+
+	DPRINTF(("%s: sdata[volt%d] 0x%x\n", __func__, i, sdata));
+
+	if (i == 7) {
+		/* Internal 3VSB: reading value * 2 * 10.9mV */
+		edata->value_cur = sdata * 2 * 109;
+	} else {
+		/* other: reading value * 10.9mV */
+		edata->value_cur = sdata * 109;
+	}
+	/* rfact is (factor * 10^4) */
+	if (edata->rfact)
+		edata->value_cur *= edata->rfact;
+	else
+		edata->value_cur *= RFACT_NONE;
+	/* division by 100 gets us back to uVDC */
+	edata->value_cur /= 100;
+	edata->state = ENVSYS_SVALID;
+}
+
+static void
 itesio_refresh_fans(struct itesio_softc *sc, envsys_data_t *edata)
 {
-	uint8_t mode = 0;
-	uint16_t sdata = 0;
+	uint8_t mode;
+	uint16_t sdata;
+	int i;
+
+	i = edata->sensor - sc->sc_config.fanstart_idx;
+
+	mode = itesio_ecreadreg(sc, ITESIO_EC_FAN16_CER);
+	sdata = itesio_ecreadreg(sc, ITESIO_EC_SENSORFANBASE + i);
+	if (mode & (1 << i))
+		sdata += (itesio_ecreadreg(sc,
+		    ITESIO_EC_SENSORFANEXTBASE + i) << 8);
+	edata->state = ENVSYS_SVALID;
+	if (sdata == 0 ||
+	    sdata == ((mode & (1 << i)) ? 0xffff : 0xff))
+		edata->state = ENVSYS_SINVALID;
+	else {
+		edata->value_cur = 1350000 / 2 / sdata;
+		edata->state = ENVSYS_SVALID;
+	}
+	DPRINTF(("%s: 16bit sdata[fan%d] 0x%x\n", __func__, i, sdata));
+}
+
+static void
+itesio_refresh_it8705_fans(struct itesio_softc *sc, envsys_data_t *edata)
+{
+	uint16_t sdata;
 	int i, divisor, odivisor, ndivisor;
 
-	i = edata->sensor - IT_FANSTART_IDX;
-	divisor = odivisor = ndivisor = 0;
+	i = edata->sensor - sc->sc_config.fanstart_idx;
 
-	if (sc->sc_chipid == ITESIO_ID8705 || sc->sc_chipid == ITESIO_ID8712) {
-		/* 
-		 * Use the Fan Tachometer Divisor Register for
-		 * IT8705F and IT8712F.
-		 */
-		divisor = odivisor = ndivisor =
-		    itesio_ecreadreg(sc, ITESIO_EC_FAN_TDR);
-		sdata = itesio_ecreadreg(sc, ITESIO_EC_SENSORFANBASE + i);
-		if (sdata == 0xff) {
-			edata->state = ENVSYS_SINVALID;
-			if (i == 2)
-				ndivisor |= 0x40;
-			else {
-				ndivisor &= ~(7 << (i * 3));
-				ndivisor |= ((divisor + 1) & 7) << (i * 3);
-			}
-		} else {
-			if (i == 2)
-				divisor = divisor & 1 ? 3 : 1;
-
-			if ((sdata << (divisor & 7)) == 0)
-				edata->state = ENVSYS_SINVALID;
-			else {
-				edata->value_cur =
-				    1350000 / (sdata << (divisor & 7));
-				edata->state = ENVSYS_SVALID;
-			}
+	/*
+	 * Use the Fan Tachometer Divisor Register for
+	 * IT8705F and IT8712F.
+	 */
+	divisor = odivisor = ndivisor =
+	    itesio_ecreadreg(sc, ITESIO_EC_FAN_TDR);
+	sdata = itesio_ecreadreg(sc, ITESIO_EC_SENSORFANBASE + i);
+	if (sdata == 0xff) {
+		edata->state = ENVSYS_SINVALID;
+		if (i == 2)
+			ndivisor |= 0x40;
+		else {
+			ndivisor &= ~(7 << (i * 3));
+			ndivisor |= ((divisor + 1) & 7) << (i * 3);
 		}
-		DPRINTF(("%s: 8bit sdata[fan%d] 0x%x div: 0x%x\n", __func__,
-		    i, sdata, divisor));
-		if (ndivisor != odivisor)
-			itesio_ecwritereg(sc, ITESIO_EC_FAN_TDR, ndivisor);
 	} else {
-		mode = itesio_ecreadreg(sc, ITESIO_EC_FAN16_CER);
-		sdata = itesio_ecreadreg(sc, ITESIO_EC_SENSORFANBASE + i);
-		if (mode & (1 << i))
-			sdata += (itesio_ecreadreg(sc,
-			    ITESIO_EC_SENSORFANEXTBASE + i) << 8);
-		edata->state = ENVSYS_SVALID;
-		if (sdata == 0 ||
-		    sdata == ((mode & (1 << i)) ? 0xffff : 0xff))
+		if (i == 2)
+			divisor = divisor & 1 ? 3 : 1;
+
+		if ((sdata << (divisor & 7)) == 0)
 			edata->state = ENVSYS_SINVALID;
 		else {
-			edata->value_cur = 1350000 / 2 / sdata;
+			edata->value_cur =
+			    1350000 / (sdata << (divisor & 7));
 			edata->state = ENVSYS_SVALID;
 		}
-		DPRINTF(("%s: 16bit sdata[fan%d] 0x%x\n", __func__, i, sdata));
 	}
+	DPRINTF(("%s: 8bit sdata[fan%d] 0x%x div: 0x%x\n", __func__,
+	    i, sdata, divisor));
+	if (ndivisor != odivisor)
+		itesio_ecwritereg(sc, ITESIO_EC_FAN_TDR, ndivisor);
+}
+
+static void
+itesio_refresh_it8625_fans(struct itesio_softc *sc, envsys_data_t *edata)
+{
+	uint16_t sdata;
+	int i;
+
+	i = edata->sensor - sc->sc_config.fanstart_idx;
+
+	switch (i) {
+	case 0:
+	case 1:
+	case 2:
+		sdata = itesio_ecreadreg(sc, ITESIO_EC_SENSORFANBASE + i);
+		sdata += (itesio_ecreadreg(sc,
+		    ITESIO_EC_SENSORFANEXTBASE + i) << 8);
+		break;
+	case 3:
+		sdata = itesio_ecreadreg(sc, IT8625_EC_SENSORFAN4_LSB);
+		sdata += itesio_ecreadreg(sc, IT8625_EC_SENSORFAN4_MSB) << 8;
+		break;
+	case 4:
+		sdata = itesio_ecreadreg(sc, IT8625_EC_SENSORFAN5_LSB);
+		sdata += itesio_ecreadreg(sc, IT8625_EC_SENSORFAN5_MSB) << 8;
+		break;
+	case 5:
+		sdata = itesio_ecreadreg(sc, IT8625_EC_SENSORFAN6_LSB);
+		sdata += itesio_ecreadreg(sc, IT8625_EC_SENSORFAN6_MSB) << 8;
+		break;
+	default:
+		edata->state = ENVSYS_SINVALID;
+		return;
+	}
+	edata->state = ENVSYS_SVALID;
+	if (sdata == 0 || sdata == 0xffff)
+		edata->state = ENVSYS_SINVALID;
+	else {
+		edata->value_cur = 1350000 / 2 / sdata;
+		edata->state = ENVSYS_SVALID;
+	}
+	DPRINTF(("%s: 16bit sdata[fan%d] 0x%x\n", __func__, i, sdata));
 }
 
 static void
@@ -550,13 +758,13 @@ itesio_refresh(struct sysmon_envsys *sme, struct envsys_data *edata)
 {
 	struct itesio_softc *sc = sme->sme_cookie;
 
-	if (edata->sensor < IT_VOLTSTART_IDX)
-		itesio_refresh_temp(sc, edata);
-	else if (edata->sensor >= IT_VOLTSTART_IDX &&
-	         edata->sensor < IT_FANSTART_IDX)
-		itesio_refresh_volts(sc, edata);
+	if (edata->sensor < sc->sc_config.voltstart_idx)
+		(*sc->sc_config.refresh_temp)(sc, edata);
+	else if (edata->sensor >= sc->sc_config.voltstart_idx &&
+	    edata->sensor < sc->sc_config.fanstart_idx)
+		(*sc->sc_config.refresh_volts)(sc, edata);
 	else
-		itesio_refresh_fans(sc, edata);
+		(*sc->sc_config.refresh_fans)(sc, edata);
 }
 
 static int
