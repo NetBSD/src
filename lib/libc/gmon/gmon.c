@@ -1,4 +1,4 @@
-/*	$NetBSD: gmon.c,v 1.35 2014/09/18 13:58:20 christos Exp $	*/
+/*	$NetBSD: gmon.c,v 1.36 2021/07/03 14:08:55 christos Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Wasabi Systems, Inc.
@@ -69,7 +69,7 @@
 #if 0
 static char sccsid[] = "@(#)gmon.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: gmon.c,v 1.35 2014/09/18 13:58:20 christos Exp $");
+__RCSID("$NetBSD: gmon.c,v 1.36 2021/07/03 14:08:55 christos Exp $");
 #endif
 #endif
 
@@ -231,6 +231,7 @@ _m_gmon_alloc(void)
 		    PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE, -1, (off_t)0);
 		p = (void *)cp;
 		*p = _gmonparam;
+		p->state = GMON_PROF_ON;
 		p->kcount = NULL;
 		cp += sizeof (struct gmonparam);
 		memset(cp, 0, (size_t)(p->fromssize + p->tossize));
