@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.122 2020/05/26 21:49:29 joerg Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.123 2021/07/03 14:07:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -190,8 +190,6 @@ int	 mkostemp(char *, int);
 int	 mkostemps(char *, int, int);
 #endif
 
-char	*mkdtemp(char *);
-int	 mkstemp(char *);
 char	*mktemp(char *)
 #ifdef __MKTEMP_OK__
 	__RENAME(_mktemp)
@@ -205,8 +203,6 @@ char	*realpath(const char * __restrict, char * __restrict);
 int	 ttyslot(void);
 
 void	*valloc(size_t);		/* obsoleted by malloc() */
-
-int	 getsubopt(char **, char * const *, char **);
 
 int	 grantpt(int);
 int	 unlockpt(int);
@@ -253,6 +249,20 @@ int	 unsetenv(const char *) __RENAME(__unsetenv13);
 
 int	 posix_openpt(int);
 int	 posix_memalign(void **, size_t, size_t);
+#endif
+
+/*
+ * The Open Group Base Specifications, Issue 7; IEEE Std 1003.1-2008 (POSIX)
+ *   or
+ * X/Open Portability Guide >= Issue 4 Version 2
+ */
+#if (_POSIX_C_SOURCE - 0) >= 200809L || \
+    (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
+    (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)
+char	*mkdtemp(char *);
+int	 mkstemp(char *);
+
+int	 getsubopt(char **, char * const *, char **);
 #endif
 
 /*
