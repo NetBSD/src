@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.11 2021/06/25 19:09:53 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.12 2021/07/03 10:20:00 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -274,4 +274,12 @@ distrib/sun3/miniroot/Makefile			1.50
 	  miniroot, the binary is not available.
 	- The modules and rescue sets are also required on upgrade.
 	[tsutsui, ticket #1310]
+
+sys/dev/ic/ax88190.c				1.18
+sys/dev/ic/dl10019.c				1.17
+sys/dev/ic/dp8390.c				1.99
+
+	Make sure the media / mii members in struct ethercom are initialized
+	so that the media-related ioctls work.
+	[thorpej, ticket #1311]
 
