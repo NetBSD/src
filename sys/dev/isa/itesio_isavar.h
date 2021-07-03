@@ -1,4 +1,4 @@
-/*	$NetBSD: itesio_isavar.h,v 1.13 2021/06/05 01:40:53 nonaka Exp $	*/
+/*	$NetBSD: itesio_isavar.h,v 1.14 2021/07/03 04:44:16 nonaka Exp $	*/
 /*	$OpenBSD: itvar.h,v 1.2 2003/11/05 20:57:10 grange Exp $	*/
 
 /*
@@ -103,6 +103,7 @@
 #define ITESIO_EC_SENSORFANEXTBASE 	0x18 	/* Fan (MSB) from 0x18 to 0x1A */
 #define ITESIO_EC_SENSORVOLTBASE 	0x20 	/* Voltage from 0x20 to 0x28 */
 #define ITESIO_EC_SENSORTEMPBASE 	0x29 	/* Temperature from 0x29 to 0x2b */
+#define ITESIO_EC_SENSORVOLTEXTBASE 	0x2f 	/* Extra Voltage 0x2f */
 
 #define ITESIO_EC_VIN0 	0x20
 #define ITESIO_EC_VIN1 	0x21
@@ -143,7 +144,30 @@
 #define ITESIO_EC_TEMP2_HIGH_LIMIT	0x44
 #define ITESIO_EC_TEMP2_LOW_LIMIT	0x45
 
+#define IT8625_EC_SENSORFAN4_LSB	0x80
+#define IT8625_EC_SENSORFAN4_MSB	0x81
+#define IT8625_EC_SENSORFAN5_LSB	0x82
+#define IT8625_EC_SENSORFAN5_MSB	0x83
+#define IT8625_EC_SENSORFAN6_LSB	0x93
+#define IT8625_EC_SENSORFAN6_MSB	0x94
+
 #define ITESIO_EC_VREF			(4096) /* Vref = 4.096 V */
+
+struct itesio_softc;
+struct itesio_config {
+	uint16_t	chipid;
+	bool		no_wdt;
+	uint32_t	num_sensors;
+	uint32_t	voltstart_idx;
+	uint32_t	fanstart_idx;
+	void		(*setup_sensors)(struct itesio_softc *);
+	void		(*refresh_temp)(struct itesio_softc *,
+			    envsys_data_t *);
+	void		(*refresh_volts)(struct itesio_softc *,
+			    envsys_data_t *);
+	void		(*refresh_fans)(struct itesio_softc *,
+			    envsys_data_t *);
+};
 
 struct itesio_softc {
 	bus_space_tag_t 	sc_iot;
@@ -151,9 +175,11 @@ struct itesio_softc {
 	bus_space_handle_t 	sc_pnp_ioh;
 	bus_space_handle_t	sc_ec_ioh;
 
+	struct itesio_config	sc_config;
+
 	struct sysmon_wdog	sc_smw;
 	struct sysmon_envsys 	*sc_sme;
-	envsys_data_t 		sc_sensor[IT_NUM_SENSORS];
+	envsys_data_t 		*sc_sensor;
 	
 	uint16_t 		sc_hwmon_baseaddr;
 	bool 			sc_hwmon_mapped;
