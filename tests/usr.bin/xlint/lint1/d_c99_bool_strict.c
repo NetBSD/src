@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict.c,v 1.29 2021/07/02 18:52:20 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict.c,v 1.30 2021/07/04 07:09:39 rillig Exp $	*/
 # 3 "d_c99_bool_strict.c"
 
 /*
@@ -373,13 +373,13 @@ strict_bool_controlling_expression(bool b, int i, double d, const void *p)
 	if (b)
 		do_nothing();
 
-	if (0)			/* expect: 333 */
+	if (/*CONSTCOND*/0)	/* expect: 333 */
+		do_nothing();	/* expect: statement not reached [193] */
+
+	if (/*CONSTCOND*/1)	/* expect: 333 */
 		do_nothing();
 
-	if (1)			/* expect: 333 */
-		do_nothing();
-
-	if (2)			/* expect: 333 */
+	if (/*CONSTCOND*/2)	/* expect: 333 */
 		do_nothing();
 
 	/* Not allowed: There is no implicit conversion from scalar to bool. */
