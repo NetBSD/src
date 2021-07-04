@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.77 2021/07/04 08:50:26 rillig Exp $
+# $NetBSD: Makefile,v 1.78 2021/07/04 13:14:54 rillig Exp $
 
 NOMAN=		# defined
 MAX_MESSAGE=	345		# see lint1/err.c
@@ -55,6 +55,7 @@ FILES+=		d_cast_fun_array_param.c
 FILES+=		d_cast_init.c
 FILES+=		d_cast_init2.c
 FILES+=		d_cast_lhs.c
+FILES+=		d_cast_lhs.exp
 FILES+=		d_cast_typeof.c
 FILES+=		d_compound_literals1.c
 FILES+=		d_compound_literals2.c
