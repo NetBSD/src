@@ -1,0 +1,2 @@
+op_shl_lp64.c(14): warning: shift amount 105 is greater than bit-size 32 of 'int' [122]
+op_shl_lp64.c(17): warning: shift amount 41 is greater than bit-size 32 of 'int' [122]
