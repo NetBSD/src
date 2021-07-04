@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.77 2021/06/29 22:39:20 dholland Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.78 2021/07/04 11:24:09 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.77 2021/06/29 22:39:20 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.78 2021/07/04 11:24:09 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,14 +213,26 @@ union_parsepath(void *v)
 	upperdvp = UPPERVP(ap->a_dvp);
 	lowerdvp = LOWERVP(ap->a_dvp);
 
-	error = VOP_PARSEPATH(upperdvp, ap->a_name, &upper);
-	if (error) {
-		return error;
+	if (upperdvp != NULLVP) {
+		error = VOP_PARSEPATH(upperdvp, ap->a_name, &upper);
+		if (error) {
+			return error;
+		}
+	} else {
+		upper = 0;
 	}
 
-	error = VOP_PARSEPATH(lowerdvp, ap->a_name, &lower);
-	if (error) {
-		return error;
+	if (lowerdvp != NULLVP) {
+		error = VOP_PARSEPATH(lowerdvp, ap->a_name, &lower);
+		if (error) {
+			return error;
+		}
+	} else {
+		lower = 0;
+	}
+
+	if (upper == 0 && lower == 0) {
+		panic("%s: missing both layers", __func__);
 	}
 
 	/*
