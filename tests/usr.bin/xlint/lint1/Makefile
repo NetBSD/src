@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.78 2021/07/04 13:14:54 rillig Exp $
+# $NetBSD: Makefile,v 1.79 2021/07/04 20:22:31 rillig Exp $
 
 NOMAN=		# defined
 MAX_MESSAGE=	345		# see lint1/err.c
@@ -151,6 +151,8 @@ FILES+=		msg_259_ilp32.c
 FILES+=		msg_259_ilp32.exp
 FILES+=		op_colon.c
 FILES+=		op_colon.exp
+FILES+=		op_shl_lp64.c
+FILES+=		op_shl_lp64.exp
 FILES+=		stmt_for.c
 FILES+=		stmt_for.exp
 
