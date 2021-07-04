@@ -1,4 +1,4 @@
-/* $NetBSD: jensenio_intr.c,v 1.15 2021/06/25 18:08:34 thorpej Exp $ */
+/* $NetBSD: jensenio_intr.c,v 1.16 2021/07/04 22:36:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: jensenio_intr.c,v 1.15 2021/06/25 18:08:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jensenio_intr.c,v 1.16 2021/07/04 22:36:43 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -66,7 +66,6 @@ static void		jensenio_eisa_intr_disestablish(void *, void *);
 static int		jensenio_eisa_intr_alloc(void *, int, int, int *);
 
 #define	JENSEN_MAX_IRQ		16
-#define	JENSEN_MAX_IRQ_STR	16
 
 static struct alpha_shared_intr *jensenio_eisa_intr;
 
@@ -111,27 +110,23 @@ jensenio_intr_init(struct jensenio_config *jcp)
 {
 	eisa_chipset_tag_t ec = &jcp->jc_ec;
 	isa_chipset_tag_t ic = &jcp->jc_ic;
-	char *cp;
+	struct evcnt *ev;
+	const char *cp;
 	int i;
 
 	pic_iot = &jcp->jc_eisa_iot;
 
 	jensenio_pic_init();
 
-	jensenio_eisa_intr = alpha_shared_intr_alloc(JENSEN_MAX_IRQ,
-	    JENSEN_MAX_IRQ_STR);
+	jensenio_eisa_intr = alpha_shared_intr_alloc(JENSEN_MAX_IRQ);
 	for (i = 0; i < JENSEN_MAX_IRQ; i++) {
 		alpha_shared_intr_set_dfltsharetype(jensenio_eisa_intr,
 		    i, jensenio_intr_deftype[i]);
-		/* Don't bother with stray interrupts. */
-		alpha_shared_intr_set_maxstrays(jensenio_eisa_intr,
-		    i, 0);
 
+		ev = alpha_shared_intr_evcnt(jensenio_eisa_intr, i);
 		cp = alpha_shared_intr_string(jensenio_eisa_intr, i);
-		snprintf(cp, JENSEN_MAX_IRQ_STR, "irq %d", i);
-		evcnt_attach_dynamic(alpha_shared_intr_evcnt(
-		    jensenio_eisa_intr, i), EVCNT_TYPE_INTR,
-		    NULL, "eisa", cp);
+
+		evcnt_attach_dynamic(ev, EVCNT_TYPE_INTR, NULL, "eisa", cp);
 	}
 
 	/*
