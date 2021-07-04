@@ -1825,6 +1825,7 @@ sfs_print(void *v)
 
 const struct vnodeopv_entry_desc zfs_sfsop_entries[] = {
 	{ &vop_default_desc,		vn_default_error },
+	{ &vop_parsepath_desc,		genfs_parsepath },
 	{ &vop_lookup_desc,		sfs_lookup },
 	{ &vop_open_desc,		sfs_open },
 	{ &vop_close_desc,		sfs_close },
