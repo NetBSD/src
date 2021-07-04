@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.307 2021/07/04 12:24:38 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.308 2021/07/04 13:14:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.307 2021/07/04 12:24:38 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.308 2021/07/04 13:14:54 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -783,8 +783,6 @@ typeok_address(const mod_t *mp,
 	} else if (!tn->tn_lvalue) {
 		if (tn->tn_op == CVT && tn->tn_cast &&
 		    tn->tn_left->tn_op == LOAD) {
-			if (tn->tn_type->t_tspec == PTR)
-				return true;
 			/* a cast does not yield an lvalue */
 			error(163);
 		}
@@ -1073,8 +1071,6 @@ typeok_assign(const mod_t *mp, const tnode_t *ln, const type_t *ltp, tspec_t lt)
 	if (!ln->tn_lvalue) {
 		if (ln->tn_op == CVT && ln->tn_cast &&
 		    ln->tn_left->tn_op == LOAD) {
-			if (ln->tn_type->t_tspec == PTR)
-				return true;
 			/* a cast does not yield an lvalue */
 			error(163);
 		}

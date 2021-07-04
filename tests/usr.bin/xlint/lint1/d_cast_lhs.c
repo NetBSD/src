@@ -1,18 +1,29 @@
-/*	$NetBSD: d_cast_lhs.c,v 1.4 2021/03/27 13:59:18 rillig Exp $	*/
+/*	$NetBSD: d_cast_lhs.c,v 1.5 2021/07/04 13:14:54 rillig Exp $	*/
 # 3 "d_cast_lhs.c"
 
 /*
- * pointer casts are valid lhs lvalues
+ * Pointer casts had been valid lvalues in GCC before 4.0.
  *
- * XXX: C99 6.5.4 "Cast operators" footnote 85 says "A cast does not yield an
- * lvalue".  It does not mention any exceptional rule for pointers.
+ * https://gcc.gnu.org/onlinedocs/gcc-3.4.6/gcc/Lvalues.html#Lvalues
+ *
+ * C99 6.5.4 "Cast operators" footnote 85 says "A cast does not yield an
+ * lvalue".
  */
-struct sockaddr {
+struct str {
+	int member;
 };
 
+void sink(const void *);
+
+/* ARGSUSED */
 void
-foo()
+foo(void *p)
 {
-	unsigned long p = 6;
-	((struct sockaddr *)p) = 0;
+	/* expect+2: error: a cast does not yield an lvalue [163] */
+	/* expect+1: error: left operand of '=' must be lvalue [114] */
+	((struct str *)p) = 0;
+
+	/* expect+2: error: a cast does not yield an lvalue [163] */
+	/* expect+1: error: operand of '&' must be lvalue [114] */
+	sink(&(const void *)p);
 }
