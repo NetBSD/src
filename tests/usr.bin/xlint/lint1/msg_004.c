@@ -1,9 +1,9 @@
-/*	$NetBSD: msg_004.c,v 1.4 2021/04/05 01:35:34 rillig Exp $	*/
+/*	$NetBSD: msg_004.c,v 1.5 2021/07/04 13:32:35 rillig Exp $	*/
 # 3 "msg_004.c"
 
 // Test for message: illegal type combination [4]
 
-// XXX: this goes undetected
+// Lint does not detect "two or more data types", but GCC does.
 signed double signed_double;
 
 int ok_int;
