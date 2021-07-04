@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.192 2021/06/28 10:07:43 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.193 2021/07/04 13:31:10 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.192 2021/06/28 10:07:43 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.193 2021/07/04 13:31:10 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -917,8 +917,8 @@ length(const type_t *tp, const char *name)
 	case STRUCT:
 	case UNION:
 		if (is_incomplete(tp) && name != NULL) {
-			/* incomplete structure or union %s: %s */
-			error(31, tp->t_str->sou_tag->s_name, name);
+			/* argument '%s' has type '%s' */
+			error(31, name, type_name(tp));
 		}
 		elsz = tp->t_str->sou_size_in_bits;
 		break;

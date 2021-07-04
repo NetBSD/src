@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.123 2021/07/03 20:54:08 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.124 2021/07/04 13:31:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.123 2021/07/03 20:54:08 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.124 2021/07/04 13:31:10 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -85,7 +85,7 @@ const char *const msgs[] = {
 	"redefinition of %s",					      /* 28 */
 	"previously declared extern, becomes static: %s",	      /* 29 */
 	"redeclaration of %s; ANSI C requires static",		      /* 30 */
-	"incomplete structure or union %s: %s",			      /* 31 */
+	"argument '%s' has type '%s'",				      /* 31 */
 	"argument type defaults to 'int': %s",			      /* 32 */
 	"duplicate member name: %s",				      /* 33 */
 	"nonportable bit-field type '%s'",			      /* 34 */
