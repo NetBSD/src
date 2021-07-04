@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.83 2020/10/10 03:05:04 thorpej Exp $ */
+/* $NetBSD: intr.h,v 1.84 2021/07/04 22:36:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -227,7 +227,7 @@ struct alpha_shared_intr {
 	((asi)[num].intr_maxstrays != 0 &&				\
 	 (asi)[num].intr_nstrays == (asi)[num].intr_maxstrays)
 
-struct alpha_shared_intr *alpha_shared_intr_alloc(unsigned int, unsigned int);
+struct alpha_shared_intr *alpha_shared_intr_alloc(unsigned int);
 int	alpha_shared_intr_dispatch(struct alpha_shared_intr *,
 	    unsigned int);
 struct alpha_shared_intrhand *
@@ -262,7 +262,9 @@ void	alpha_shared_intr_set_cpu(struct alpha_shared_intr *,
 struct cpu_info	*
 	alpha_shared_intr_get_cpu(struct alpha_shared_intr *,
 	    unsigned int);
-char	*alpha_shared_intr_string(struct alpha_shared_intr *,
+void	alpha_shared_intr_set_string(struct alpha_shared_intr *,
+	    unsigned int, char *);
+const char *alpha_shared_intr_string(struct alpha_shared_intr *,
 	    unsigned int);
 struct evcnt *alpha_shared_intr_evcnt(struct alpha_shared_intr *,
 	    unsigned int);

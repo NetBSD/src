@@ -1,4 +1,4 @@
-/* $NetBSD: pci_2100_a500.c,v 1.16 2021/06/25 18:08:34 thorpej Exp $ */
+/* $NetBSD: pci_2100_a500.c,v 1.17 2021/07/04 22:36:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,13 +31,14 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_2100_a500.c,v 1.16 2021/06/25 18:08:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_2100_a500.c,v 1.17 2021/07/04 22:36:43 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
+#include <sys/kmem.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/cpu.h>
@@ -188,6 +189,7 @@ pci_2100_a500_pickintr(void *core, bus_space_tag_t iot, bus_space_tag_t memt,
     pci_chipset_tag_t pc)
 {
 	struct ttwoga_config *tcp = core;
+	struct evcnt *ev;
 	char *cp;
 	int i;
 
@@ -202,29 +204,30 @@ pci_2100_a500_pickintr(void *core, bus_space_tag_t iot, bus_space_tag_t memt,
 	/* Not supported on T2. */
 	pc->pc_pciide_compat_intr_establish = NULL;
 
-#define PCI_2100_IRQ_STR	8
-	pc->pc_shared_intrs = alpha_shared_intr_alloc(SABLE_MAX_IRQ,
-	    PCI_2100_IRQ_STR);
-
 	pc->pc_intr_desc = "T2";
-
 	/* 64 16-byte vectors per hose. */
 	pc->pc_vecbase = 0x800 + ((64 * 16) * tcp->tc_hose);
 	pc->pc_nirq = SABLE_MAX_IRQ;
 
-	for (i = 0; i < SABLE_MAX_IRQ; i++) {
-		alpha_shared_intr_set_dfltsharetype(pc->pc_shared_intrs,
-		    i, tcp->tc_hose == 0 ?
-		    dec_2100_a500_intr_deftype[i] : IST_LEVEL);
-		alpha_shared_intr_set_maxstrays(pc->pc_shared_intrs,
-		    i, PCI_STRAY_MAX);
+	pc->pc_shared_intrs = alpha_shared_intr_alloc(pc->pc_nirq);
 
-		cp = alpha_shared_intr_string(pc->pc_shared_intrs, i);
-		snprintf(cp, PCI_2100_IRQ_STR, "irq %d", T2_IRQ_IS_EISA(i) ?
-		    i - T2_IRQ_EISA_START : i);
-		evcnt_attach_dynamic(alpha_shared_intr_evcnt(
-		    pc->pc_shared_intrs, i), EVCNT_TYPE_INTR, NULL,
-		    T2_IRQ_IS_EISA(i) ? "eisa" : "T2", cp);
+	for (i = 0; i < pc->pc_nirq; i++) {
+		alpha_shared_intr_set_maxstrays(pc->pc_shared_intrs, i,
+		    PCI_STRAY_MAX);
+		alpha_shared_intr_set_private(pc->pc_shared_intrs, i,
+		    pc->pc_intr_v);
+		alpha_shared_intr_set_dfltsharetype(pc->pc_shared_intrs, i,
+		    tcp->tc_hose == 0 ? dec_2100_a500_intr_deftype[i]
+				      : IST_LEVEL);
+
+		ev = alpha_shared_intr_evcnt(pc->pc_shared_intrs, i);
+		cp = kmem_asprintf("irq %d",
+		    T2_IRQ_IS_EISA(i) ? i - T2_IRQ_EISA_START : i);
+
+		alpha_shared_intr_set_string(pc->pc_shared_intrs, i, cp);
+
+		evcnt_attach_dynamic(ev, EVCNT_TYPE_INTR, NULL,
+		    T2_IRQ_IS_EISA(i) ? "eisa" : pc->pc_intr_desc, cp);
 	}
 
 	/*

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.23 2021/06/19 16:59:07 thorpej Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.24 2021/07/04 22:36:43 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -136,6 +136,7 @@ void	device_pci_register(device_t, void *);
 
 void	alpha_pci_intr_init(void *, bus_space_tag_t, bus_space_tag_t,
 	    pci_chipset_tag_t);
+void	alpha_pci_intr_alloc(pci_chipset_tag_t, unsigned int);
 
 int	alpha_pci_generic_intr_map(const struct pci_attach_args *,
 	    pci_intr_handle_t *);

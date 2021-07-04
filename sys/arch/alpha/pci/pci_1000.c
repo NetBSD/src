@@ -1,4 +1,4 @@
-/* $NetBSD: pci_1000.c,v 1.29 2021/06/25 18:08:34 thorpej Exp $ */
+/* $NetBSD: pci_1000.c,v 1.30 2021/07/04 22:36:43 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_1000.c,v 1.29 2021/06/25 18:08:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_1000.c,v 1.30 2021/07/04 22:36:43 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -99,8 +99,6 @@ static void
 pci_1000_pickintr(void *core, bus_space_tag_t iot, bus_space_tag_t memt,
     pci_chipset_tag_t pc)
 {
-	char *cp;
-	int i;
 
 	another_mystery_icu_iot = iot;
 
@@ -116,9 +114,6 @@ pci_1000_pickintr(void *core, bus_space_tag_t iot, bus_space_tag_t memt,
 
 	pc->pc_pciide_compat_intr_establish = NULL;
 
-#define PCI_1000_IRQ_STR 8
-	pc->pc_shared_intrs =
-	    alpha_shared_intr_alloc(PCI_NIRQ, PCI_1000_IRQ_STR);
 	pc->pc_intr_desc = "dec 1000";
 	pc->pc_vecbase = 0x900;
 	pc->pc_nirq = PCI_NIRQ;
@@ -126,18 +121,10 @@ pci_1000_pickintr(void *core, bus_space_tag_t iot, bus_space_tag_t memt,
 	pc->pc_intr_enable = dec_1000_enable_intr;
 	pc->pc_intr_disable = dec_1000_disable_intr;
 
-	for (i = 0; i < PCI_NIRQ; i++) {
-		alpha_shared_intr_set_maxstrays(pc->pc_shared_intrs, i,
-		    PCI_STRAY_MAX);
-		
-		cp = alpha_shared_intr_string(pc->pc_shared_intrs, i);
-		snprintf(cp, PCI_1000_IRQ_STR, "irq %d", i);
-		evcnt_attach_dynamic(alpha_shared_intr_evcnt(
-		    pc->pc_shared_intrs, i), EVCNT_TYPE_INTR, NULL,
-		    pc->pc_intr_desc, cp);
-	}
-
 	pci_1000_imi();
+
+	alpha_pci_intr_alloc(pc, PCI_STRAY_MAX);
+
 #if NSIO > 0 || NPCEB > 0
 	sio_intr_setup(pc, iot);
 #endif

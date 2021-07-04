@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb164.c,v 1.48 2021/06/25 18:08:34 thorpej Exp $ */
+/* $NetBSD: pci_eb164.c,v 1.49 2021/07/04 22:36:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.48 2021/06/25 18:08:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.49 2021/07/04 22:36:43 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -105,7 +105,6 @@ pci_eb164_pickintr(void *core, bus_space_tag_t iot, bus_space_tag_t memt,
     pci_chipset_tag_t pc)
 {
 	struct cia_config *ccp = core;
-	char *cp;
 	int i;
 
 	pc->pc_intr_v = core;
@@ -122,12 +121,7 @@ pci_eb164_pickintr(void *core, bus_space_tag_t iot, bus_space_tag_t memt,
 	if (bus_space_map(eb164_intrgate_iot, 0x804, 3, 0,
 	    &eb164_intrgate_ioh) != 0)
 		panic("pci_eb164_pickintr: couldn't map interrupt PLD");
-	for (i = 0; i < EB164_MAX_IRQ; i++)
-		eb164_intr_disable(pc, i);	
 
-#define PCI_EB164_IRQ_STR	8
-	pc->pc_shared_intrs = alpha_shared_intr_alloc(EB164_MAX_IRQ,
-	    PCI_EB164_IRQ_STR);
 	pc->pc_intr_desc = "eb164";
 	pc->pc_vecbase = 0x900;
 	pc->pc_nirq = EB164_MAX_IRQ;
@@ -136,20 +130,15 @@ pci_eb164_pickintr(void *core, bus_space_tag_t iot, bus_space_tag_t memt,
 	pc->pc_intr_disable = eb164_intr_disable;
 
 	for (i = 0; i < EB164_MAX_IRQ; i++) {
-		/*
-		 * Systems with a Pyxis seem to have problems with
-		 * stray interrupts, so just ignore them.  Sigh,
-		 * I hate buggy hardware.
-		 */
-		alpha_shared_intr_set_maxstrays(pc->pc_shared_intrs, i,
-			(ccp->cc_flags & CCF_ISPYXIS) ? 0 : PCI_STRAY_MAX);
-
-		cp = alpha_shared_intr_string(pc->pc_shared_intrs, i);
-		snprintf(cp, PCI_EB164_IRQ_STR, "irq %d", i);
-		evcnt_attach_dynamic(alpha_shared_intr_evcnt(
-		    pc->pc_shared_intrs, i), EVCNT_TYPE_INTR, NULL,
-		    pc->pc_intr_desc, cp);
+		eb164_intr_disable(pc, i);
 	}
+
+	/*
+	 * Systems with a Pyxis seem to have problems with
+	 * stray interrupts, so just ignore them.
+	 */
+	alpha_pci_intr_alloc(pc,
+	    (ccp->cc_flags & CCF_ISPYXIS) ? 0 : PCI_STRAY_MAX);
 
 #if NSIO
 	sio_intr_setup(pc, iot);
