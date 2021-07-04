@@ -1,5 +1,0 @@
-c99_bool_strict_suppressed.c(29): error: controlling expression must be bool, not 'int' [333]
-c99_bool_strict_suppressed.c(33): error: operands of '=' have incompatible types (_Bool != int) [107]
-c99_bool_strict_suppressed.c(36): error: operand of '!' must be bool, not 'int' [330]
-c99_bool_strict_suppressed.c(39): error: left operand of '&&' must be bool, not 'int' [331]
-c99_bool_strict_suppressed.c(42): error: right operand of '&&' must be bool, not 'int' [332]
