@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.304 2021/07/03 20:40:17 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.305 2021/07/04 08:19:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.304 2021/07/03 20:40:17 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.305 2021/07/04 08:19:06 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3682,9 +3682,7 @@ void
 expr(tnode_t *tn, bool vctx, bool tctx, bool dofreeblk, bool is_do_while)
 {
 
-	lint_assert(tn != NULL || nerr != 0);
-
-	if (tn == NULL) {
+	if (tn == NULL) {	/* in case of errors */
 		expr_free_all();
 		return;
 	}

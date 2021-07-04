@@ -1,4 +1,4 @@
-/*	$NetBSD: c99_bool_strict_suppressed.c,v 1.1 2021/07/04 07:50:53 rillig Exp $	*/
+/*	$NetBSD: c99_bool_strict_suppressed.c,v 1.2 2021/07/04 08:19:06 rillig Exp $	*/
 # 3 "c99_bool_strict_suppressed.c"
 
 /*
@@ -17,8 +17,7 @@
  * interaction with the assertion in expr().
  */
 
-/* lint1-extra-flags: -T */
-/* TODO: -X 107,330,331,332,333 */
+/* lint1-extra-flags: -T -X 107,330,331,332,333 */
 
 /* ARGSUSED */
 void
