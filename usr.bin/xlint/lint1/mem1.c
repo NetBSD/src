@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.44 2021/06/20 18:51:50 rillig Exp $	*/
+/*	$NetBSD: mem1.c,v 1.45 2021/07/04 09:13:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem1.c,v 1.44 2021/06/20 18:51:50 rillig Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.45 2021/07/04 09:13:59 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -346,6 +346,16 @@ expr_zalloc(size_t s)
 	return xgetblk(&tmblk, s);
 }
 
+static bool
+str_endswith(const char *haystack, const char *needle)
+{
+	size_t hlen = strlen(haystack);
+	size_t nlen = strlen(needle);
+
+	return nlen <= hlen &&
+	       memcmp(haystack + hlen - nlen, needle, nlen) == 0;
+}
+
 /*
  * Return a freshly allocated tree node that is freed at the end of the
  * current expression.
@@ -354,7 +364,14 @@ tnode_t *
 expr_zalloc_tnode(void)
 {
 	tnode_t *tn = expr_zalloc(sizeof(*tn));
-	tn->tn_from_system_header = in_system_header;
+	/*
+	 * files named *.c that are different from the main translation unit
+	 * typically contain generated code that cannot be influenced, such
+	 * as a flex lexer or a yacc parser.
+	 */
+	tn->tn_relaxed = in_system_header ||
+			 (curr_pos.p_file != csrc_pos.p_file &&
+			  str_endswith(curr_pos.p_file, ".c"));
 	return tn;
 }
 

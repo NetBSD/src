@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.305 2021/07/04 08:19:06 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.306 2021/07/04 09:13:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.305 2021/07/04 08:19:06 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.306 2021/07/04 09:13:59 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1642,10 +1642,10 @@ new_tnode(op_t op, type_t *type, tnode_t *ln, tnode_t *rn)
 
 	ntn->tn_op = op;
 	ntn->tn_type = type;
-	if (ln->tn_from_system_header)
-		ntn->tn_from_system_header = true;
-	if (rn != NULL && rn->tn_from_system_header)
-		ntn->tn_from_system_header = true;
+	if (ln->tn_relaxed)
+		ntn->tn_relaxed = true;
+	if (rn != NULL && rn->tn_relaxed)
+		ntn->tn_relaxed = true;
 	ntn->tn_left = ln;
 	ntn->tn_right = rn;
 
@@ -1887,7 +1887,7 @@ convert(op_t op, int arg, type_t *tp, tnode_t *tn)
 	ntn->tn_op = CVT;
 	ntn->tn_type = tp;
 	ntn->tn_cast = op == CVT;
-	ntn->tn_from_system_header |= tn->tn_from_system_header;
+	ntn->tn_relaxed |= tn->tn_relaxed;
 	ntn->tn_right = NULL;
 	if (tn->tn_op != CON || nt == VOID) {
 		ntn->tn_left = tn;
