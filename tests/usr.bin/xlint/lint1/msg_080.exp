@@ -1,3 +1,1 @@
-msg_080.c(9): warning: dubious escape \342 [80]
-msg_080.c(9): warning: multi-character character constant [294]
-msg_080.c(9): warning: initializer does not fit [178]
+msg_080.c(7): warning: dubious escape \177 [80]
