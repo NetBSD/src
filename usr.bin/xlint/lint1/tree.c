@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.309 2021/07/04 16:44:13 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.310 2021/07/04 17:01:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.309 2021/07/04 16:44:13 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.310 2021/07/04 17:01:58 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -457,11 +457,11 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 	if (eq) {
 		if (op == POINT) {
 			if (tflag) {
-				/* left operand of '.' must be struct/... */
-				warning(103);
+				/* left operand of '.' must be struct ... */
+				warning(103, type_name(tn->tn_type));
 			} else {
-				/* left operand of '.' must be struct/... */
-				error(103);
+				/* left operand of '.' must be struct ... */
+				error(103, type_name(tn->tn_type));
 			}
 		} else {
 			if (tflag && tn->tn_type->t_tspec == PTR) {

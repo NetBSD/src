@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_101.c,v 1.6 2021/06/30 14:11:08 rillig Exp $	*/
+/*	$NetBSD: msg_101.c,v 1.7 2021/07/04 17:01:58 rillig Exp $	*/
 # 3 "msg_101.c"
 
 // Test for message: type '%s' does not have member '%s' [101]
@@ -23,11 +23,9 @@ test(const struct point *ptr, const struct point pt)
 	sink(pt.z);
 
 	/* mixed up '.' and '->' */
-	/* TODO: mention actual type in the diagnostic */
-	/* expect+1: error: left operand of '.' must be struct/union object [103] */
+	/* expect+1: error: left operand of '.' must be struct or union, not 'pointer to const struct point' [103] */
 	sink(ptr.x);
-	/* TODO: put actual type in 'quotes' */
-	/* expect+1: error: left operand of '->' must be pointer to struct/union not struct point [104] */
+	/* expect+1: error: left operand of '->' must be pointer to struct or union, not 'struct point' [104] */
 	sink(pt->x);
 
 	/* accessing a nonexistent member via the wrong operator */
