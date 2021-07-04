@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_common.c,v 1.27 2020/06/17 04:12:39 thorpej Exp $ */
+/* $NetBSD: sgmap_common.c,v 1.28 2021/07/04 22:42:35 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -32,12 +32,11 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sgmap_common.c,v 1.27 2020/06/17 04:12:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgmap_common.c,v 1.28 2021/07/04 22:42:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/proc.h>
 
 #include <uvm/uvm_extern.h>

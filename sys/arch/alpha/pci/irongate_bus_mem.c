@@ -1,4 +1,4 @@
-/* $NetBSD: irongate_bus_mem.c,v 1.11 2012/02/06 02:14:14 matt Exp $ */
+/* $NetBSD: irongate_bus_mem.c,v 1.12 2021/07/04 22:42:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -31,11 +31,10 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(1, "$NetBSD: irongate_bus_mem.c,v 1.11 2012/02/06 02:14:14 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: irongate_bus_mem.c,v 1.12 2021/07/04 22:42:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
 

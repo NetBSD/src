@@ -1,4 +1,4 @@
-/* $NetBSD: cia_bwx_bus_mem.c,v 1.5 2011/07/01 19:19:49 dyoung Exp $ */
+/* $NetBSD: cia_bwx_bus_mem.c,v 1.6 2021/07/04 22:42:36 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -29,11 +29,10 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(1, "$NetBSD: cia_bwx_bus_mem.c,v 1.5 2011/07/01 19:19:49 dyoung Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cia_bwx_bus_mem.c,v 1.6 2021/07/04 22:42:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
 
