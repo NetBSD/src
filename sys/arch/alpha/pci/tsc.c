@@ -1,4 +1,4 @@
-/* $NetBSD: tsc.c,v 1.27 2021/06/19 16:59:07 thorpej Exp $ */
+/* $NetBSD: tsc.c,v 1.28 2021/07/04 22:42:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -33,12 +33,11 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.27 2021/06/19 16:59:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.28 2021/07/04 22:42:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 
 #include <machine/autoconf.h>
 #include <machine/rpb.h>

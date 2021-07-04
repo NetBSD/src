@@ -1,4 +1,4 @@
-/* $NetBSD: irongate_dma.c,v 1.9 2021/05/05 02:15:18 thorpej Exp $ */
+/* $NetBSD: irongate_dma.c,v 1.10 2021/07/04 22:42:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2020 The NetBSD Foundation, Inc.
@@ -44,13 +44,12 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: irongate_dma.c,v 1.9 2021/05/05 02:15:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irongate_dma.c,v 1.10 2021/07/04 22:42:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 
 #define _ALPHA_BUS_DMA_PRIVATE
 #include <sys/bus.h>

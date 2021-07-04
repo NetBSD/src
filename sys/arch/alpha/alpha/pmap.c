@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.293 2021/05/31 17:16:04 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.294 2021/07/04 22:42:35 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008, 2020
@@ -135,13 +135,12 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.293 2021/05/31 17:16:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.294 2021/07/04 22:42:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/buf.h>
 #include <sys/evcnt.h>
