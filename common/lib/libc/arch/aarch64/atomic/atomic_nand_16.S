@@ -1,4 +1,4 @@
-/* $NetBSD: atomic_nand_16.S,v 1.2 2020/08/12 12:59:57 skrll Exp $ */
+/* $NetBSD: atomic_nand_16.S,v 1.3 2021/07/04 06:55:47 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,11 +31,14 @@
 
 #include "atomic_op_asm.h"
 
+/*
+ * { tmp = *ptr; *ptr = ~(tmp & value); return tmp; }   // nand
+ */
 ENTRY_NP(_atomic_nand_16)
 	mov	x4, x0
-1:	ldxrh	w0, [x4]		/* load old value (to be returned) */
-	mvn	w3, w0			/* complement source */
-	and	w3, w3, w1		/* calculate new value */
+1:	ldxrh	w0, [x4]		/* load old value (*ptr) */
+	and	w3, w0, w1		/* w3 =  (*ptr & value) */
+	mvn	w3, w3			/* w3 = ~(*pte & value) */
 	stxrh	w2, w3, [x4]		/* try to store */
 	cbnz	w2, 2f			/*   succeed? no, try again */
 	ret				/* return old value */
@@ -47,11 +50,15 @@ ATOMIC_OP_ALIAS(atomic_nand_ushort,_atomic_nand_16)
 STRONG_ALIAS(__sync_fetch_and_nand_2,_atomic_nand_16)
 STRONG_ALIAS(_atomic_nand_ushort,_atomic_nand_16)
 
+
+/*
+ * { tmp = ~(*ptr & value); *ptr = tmp; return *ptr; }   // nand
+ */
 ENTRY_NP(_atomic_nand_16_nv)
 	mov	x4, x0			/* need r0 for return value */
-1:	ldxrh	w0, [x4]		/* load old value */
-	mvn	w0, w0			/* complement source */
-	and	w0, w0, w1		/* calculate new value (return value) */
+1:	ldxrh	w0, [x4]		/* load old value (*ptr) */
+	and	w0, w0, w1		/* w0 =  (*ptr & value) */
+	mvn	w0, w0			/* w0 = ~(*pte & value), return value */
 	stxrh	w2, w0, [x4]		/* try to store */
 	cbnz	w2, 2f			/*   succeed? no, try again? */
 	ret				/* return new value */
