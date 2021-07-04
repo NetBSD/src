@@ -1,0 +1,43 @@
+/*	$NetBSD: c99_bool_strict_suppressed.c,v 1.1 2021/07/04 07:50:53 rillig Exp $	*/
+# 3 "c99_bool_strict_suppressed.c"
+
+/*
+ * In strict bool mode, like everywhere else, individual errors can be
+ * suppressed.  Suppressing a message affects lint's output as well as the
+ * exit status.  Lint's control flow stays the same as before though.
+ *
+ * This can result in assertion failures later.  One such assertion has been
+ * there since at least 1995, at the beginning of expr(), ensuring that the
+ * expression is either non-null or an error message has been _printed_.
+ * In 1995 it was not possible to suppress error messages, which means that
+ * the number of printed errors equaled the number of occurred errors.
+ *
+ * In err.c 1.12 from 2000-07-06, the option -X was added, allowing to
+ * suppress individual error messages.  That commit did not mention any
+ * interaction with the assertion in expr().
+ */
+
+/* lint1-extra-flags: -T */
+/* TODO: -X 107,330,331,332,333 */
+
+/* ARGSUSED */
+void
+test(_Bool b, int i, const char *p)
+{
+
+	/* expect+1: error: controlling expression must be bool, not 'int' [333] */
+	while (1)
+		break;
+
+	/* expect+1: error: operands of '=' have incompatible types (_Bool != int) [107] */
+	b = i;
+
+	/* expect+1: error: operand of '!' must be bool, not 'int' [330] */
+	b = !i;
+
+	/* expect+1: error: left operand of '&&' must be bool, not 'int' [331] */
+	b = i && b;
+
+	/* expect+1: error: right operand of '&&' must be bool, not 'int' [332] */
+	b = b && i;
+}
