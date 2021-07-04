@@ -1,4 +1,4 @@
-/* $NetBSD: tlsb.c,v 1.39 2021/04/24 23:36:24 thorpej Exp $ */
+/* $NetBSD: tlsb.c,v 1.40 2021/07/04 22:42:36 thorpej Exp $ */
 /*
  * Copyright (c) 1997 by Matthew Jacob
  * NASA AMES Research Center.
@@ -39,14 +39,13 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.39 2021/04/24 23:36:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.40 2021/07/04 22:42:36 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>

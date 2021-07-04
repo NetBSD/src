@@ -1,4 +1,4 @@
-/* $NetBSD: sio_pic.c,v 1.51 2021/07/04 22:36:43 thorpej Exp $ */
+/* $NetBSD: sio_pic.c,v 1.52 2021/07/04 22:42:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2020 The NetBSD Foundation, Inc.
@@ -59,12 +59,11 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.51 2021/07/04 22:36:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.52 2021/07/04 22:42:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/cpu.h>
 #include <sys/syslog.h>
 

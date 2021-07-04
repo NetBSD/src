@@ -1,4 +1,4 @@
-/* $NetBSD: tc_bus_mem.c,v 1.39 2021/05/05 02:15:18 thorpej Exp $ */
+/* $NetBSD: tc_bus_mem.c,v 1.40 2021/07/04 22:42:36 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -33,11 +33,10 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_bus_mem.c,v 1.39 2021/05/05 02:15:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_bus_mem.c,v 1.40 2021/07/04 22:42:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
 

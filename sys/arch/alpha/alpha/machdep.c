@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.372 2021/05/24 21:00:12 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.373 2021/07/04 22:42:35 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2019, 2020 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.372 2021/05/24 21:00:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.373 2021/07/04 22:42:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.372 2021/05/24 21:00:12 thorpej Exp $"
 #include <sys/sched.h>
 #include <sys/reboot.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/module.h>
 #include <sys/mman.h>
 #include <sys/msgbuf.h>

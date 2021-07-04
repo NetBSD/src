@@ -1,4 +1,4 @@
-/* $NetBSD: tsp_dma.c,v 1.17 2021/05/27 22:11:31 thorpej Exp $ */
+/* $NetBSD: tsp_dma.c,v 1.18 2021/07/04 22:42:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2021 The NetBSD Foundation, Inc.
@@ -61,13 +61,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsp_dma.c,v 1.17 2021/05/27 22:11:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsp_dma.c,v 1.18 2021/07/04 22:42:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 
 #include <machine/autoconf.h>
 #define _ALPHA_BUS_DMA_PRIVATE

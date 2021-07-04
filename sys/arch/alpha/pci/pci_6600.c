@@ -1,4 +1,4 @@
-/* $NetBSD: pci_6600.c,v 1.32 2021/07/04 22:36:43 thorpej Exp $ */
+/* $NetBSD: pci_6600.c,v 1.33 2021/07/04 22:42:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -33,13 +33,12 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pci_6600.c,v 1.32 2021/07/04 22:36:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_6600.c,v 1.33 2021/07/04 22:42:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/cpu.h>
 
 #include <machine/autoconf.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: jensenio_intr.c,v 1.16 2021/07/04 22:36:43 thorpej Exp $ */
+/* $NetBSD: jensenio_intr.c,v 1.17 2021/07/04 22:42:35 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -31,14 +31,13 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: jensenio_intr.c,v 1.16 2021/07/04 22:36:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jensenio_intr.c,v 1.17 2021/07/04 22:42:35 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/cpu.h>
 #include <sys/syslog.h>

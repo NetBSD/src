@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.97 2021/05/05 15:34:54 thorpej Exp $ */
+/* $NetBSD: interrupt.c,v 1.98 2021/07/04 22:42:35 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -65,14 +65,13 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.97 2021/05/05 15:34:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.98 2021/07/04 22:42:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/vmmeter.h>
 #include <sys/sched.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/time.h>
 #include <sys/intr.h>

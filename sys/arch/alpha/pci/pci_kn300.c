@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn300.c,v 1.42 2021/07/04 22:36:43 thorpej Exp $ */
+/* $NetBSD: pci_kn300.c,v 1.43 2021/07/04 22:42:36 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,14 +32,13 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.42 2021/07/04 22:36:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.43 2021/07/04 22:42:36 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/cpu.h>
 #include <sys/syslog.h>

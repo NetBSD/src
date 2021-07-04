@@ -1,4 +1,4 @@
-/* $NetBSD: core_machdep.c,v 1.10 2019/11/20 19:37:51 pgoyette Exp $ */
+/* $NetBSD: core_machdep.c,v 1.11 2021/07/04 22:42:35 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,12 +29,11 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.10 2019/11/20 19:37:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.11 2021/07/04 22:42:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>
 #include <sys/core.h>

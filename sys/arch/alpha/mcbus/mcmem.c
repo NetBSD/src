@@ -1,4 +1,4 @@
-/* $NetBSD: mcmem.c,v 1.5 2008/07/09 21:30:04 joerg Exp $ */
+/* $NetBSD: mcmem.c,v 1.6 2021/07/04 22:42:35 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -37,12 +37,11 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcmem.c,v 1.5 2008/07/09 21:30:04 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcmem.c,v 1.6 2021/07/04 22:42:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 
 #include <machine/autoconf.h>
 #include <machine/rpb.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: irongate.c,v 1.19 2021/06/19 16:59:07 thorpej Exp $ */
+/* $NetBSD: irongate.c,v 1.20 2021/07/04 22:42:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -31,12 +31,11 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: irongate.c,v 1.19 2021/06/19 16:59:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irongate.c,v 1.20 2021/07/04 22:42:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 
 #include <machine/autoconf.h>
 #include <machine/rpb.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: ttwoga_bus_mem.c,v 1.3 2011/07/01 19:19:50 dyoung Exp $ */
+/* $NetBSD: ttwoga_bus_mem.c,v 1.4 2021/07/04 22:42:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,11 +31,10 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(1, "$NetBSD: ttwoga_bus_mem.c,v 1.3 2011/07/01 19:19:50 dyoung Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ttwoga_bus_mem.c,v 1.4 2021/07/04 22:42:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
 
