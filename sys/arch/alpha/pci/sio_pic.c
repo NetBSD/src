@@ -1,4 +1,4 @@
-/* $NetBSD: sio_pic.c,v 1.50 2021/06/25 18:08:34 thorpej Exp $ */
+/* $NetBSD: sio_pic.c,v 1.51 2021/07/04 22:36:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2020 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.50 2021/06/25 18:08:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.51 2021/07/04 22:36:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -322,7 +322,8 @@ sio_setirqstat(int irq, int enabled, int type)
 void
 sio_intr_setup(pci_chipset_tag_t pc, bus_space_tag_t iot)
 {
-	char *cp;
+	struct evcnt *ev;
+	const char *cp;
 	int i;
 
 	sio_iot = iot;
@@ -349,8 +350,7 @@ sio_intr_setup(pci_chipset_tag_t pc, bus_space_tag_t iot)
 	shutdownhook_establish(sio_intr_shutdown, 0);
 #endif
 
-#define PCI_SIO_IRQ_STR	8
-	sio_intr = alpha_shared_intr_alloc(ICU_LEN, PCI_SIO_IRQ_STR);
+	sio_intr = alpha_shared_intr_alloc(ICU_LEN);
 
 	/*
 	 * set up initial values for interrupt enables.
@@ -358,10 +358,10 @@ sio_intr_setup(pci_chipset_tag_t pc, bus_space_tag_t iot)
 	for (i = 0; i < ICU_LEN; i++) {
 		alpha_shared_intr_set_maxstrays(sio_intr, i, STRAY_MAX);
 
+		ev = alpha_shared_intr_evcnt(sio_intr, i);
 		cp = alpha_shared_intr_string(sio_intr, i);
-		snprintf(cp, PCI_SIO_IRQ_STR, "irq %d", i);
-		evcnt_attach_dynamic(alpha_shared_intr_evcnt(sio_intr, i),
-		    EVCNT_TYPE_INTR, NULL, "isa", cp);
+
+		evcnt_attach_dynamic(ev, EVCNT_TYPE_INTR, NULL, "isa", cp);
 
 		switch (i) {
 		case 0:

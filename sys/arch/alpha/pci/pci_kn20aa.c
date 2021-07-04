@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn20aa.c,v 1.57 2021/06/25 18:08:34 thorpej Exp $ */
+/* $NetBSD: pci_kn20aa.c,v 1.58 2021/07/04 22:36:43 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.57 2021/06/25 18:08:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.58 2021/07/04 22:36:43 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -69,7 +69,6 @@ pci_kn20aa_pickintr(void *core, bus_space_tag_t iot, bus_space_tag_t memt,
     pci_chipset_tag_t pc)
 {
 	int i;
-	char *cp;
 
 	pc->pc_intr_v = core;
 	pc->pc_intr_map = dec_kn20aa_intr_map;
@@ -81,9 +80,6 @@ pci_kn20aa_pickintr(void *core, bus_space_tag_t iot, bus_space_tag_t memt,
 	/* Not supported on KN20AA. */
 	pc->pc_pciide_compat_intr_establish = NULL;
 
-#define PCI_KN20AA_IRQ_STR	8
-	pc->pc_shared_intrs = alpha_shared_intr_alloc(KN20AA_MAX_IRQ,
-	    PCI_KN20AA_IRQ_STR);
 	pc->pc_intr_desc = "kn20aa";
 	pc->pc_vecbase = 0x900;
 	pc->pc_nirq = KN20AA_MAX_IRQ;
@@ -92,15 +88,10 @@ pci_kn20aa_pickintr(void *core, bus_space_tag_t iot, bus_space_tag_t memt,
 	pc->pc_intr_disable = kn20aa_disable_intr;
 
 	for (i = 0; i < KN20AA_MAX_IRQ; i++) {
-		alpha_shared_intr_set_maxstrays(pc->pc_shared_intrs, i,
-		    PCI_STRAY_MAX);
-
-		cp = alpha_shared_intr_string(pc->pc_shared_intrs, i);
-		snprintf(cp, PCI_KN20AA_IRQ_STR, "irq %d", i);
-		evcnt_attach_dynamic(alpha_shared_intr_evcnt(
-		    pc->pc_shared_intrs, i), EVCNT_TYPE_INTR, NULL,
-		    pc->pc_intr_desc, cp);
+		kn20aa_disable_intr(pc, i);
 	}
+
+	alpha_pci_intr_alloc(pc, PCI_STRAY_MAX);
 
 #if NSIO > 0 || NPCEB > 0
 	sio_intr_setup(pc, iot);
