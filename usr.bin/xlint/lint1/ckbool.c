@@ -1,4 +1,4 @@
-/* $NetBSD: ckbool.c,v 1.6 2021/07/02 21:22:26 rillig Exp $ */
+/* $NetBSD: ckbool.c,v 1.7 2021/07/04 09:13:59 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: ckbool.c,v 1.6 2021/07/02 21:22:26 rillig Exp $");
+__RCSID("$NetBSD: ckbool.c,v 1.7 2021/07/04 09:13:59 rillig Exp $");
 #endif
 
 #include <string.h>
@@ -89,13 +89,12 @@ is_typeok_strict_bool_binary(op_t op,
 	if ((lt == BOOL) == (rt == BOOL))
 		return true;
 
-	if ((ln->tn_from_system_header || rn->tn_from_system_header) &&
+	if ((ln->tn_relaxed || rn->tn_relaxed) &&
 	    (is_int_constant_zero(ln, lt) || is_int_constant_zero(rn, rt)))
 		return true;
 
 	if (is_assignment_bool_or_other(op)) {
-		return lt != BOOL &&
-		       (ln->tn_from_system_header || rn->tn_from_system_header);
+		return lt != BOOL && (ln->tn_relaxed || rn->tn_relaxed);
 	}
 
 	return !is_symmetric_bool_or_other(op);
@@ -223,7 +222,7 @@ is_typeok_bool_operand(const tnode_t *tn)
 	if (t == BOOL)
 		return true;
 
-	if (tn->tn_from_system_header && is_scalar(t))
+	if (tn->tn_relaxed && is_scalar(t))
 		return true;
 
 	/* For enums that are used as bit sets, allow "flags & FLAG". */
