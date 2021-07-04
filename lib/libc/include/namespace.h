@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.200 2020/09/22 21:38:50 nia Exp $	*/
+/*	$NetBSD: namespace.h,v 1.201 2021/07/04 16:18:50 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -32,7 +32,6 @@
 #include <sys/cdefs.h>
 #include <ssp/ssp.h>
 
-#ifndef __lint__
 #define aio_suspend	_aio_suspend
 #define brk		_brk
 #define catclose	_catclose
@@ -961,6 +960,5 @@
 
 #define __learn_tree		___learn_tree
 #endif /* __weak_alias */
-#endif /* !__lint__ */
 
 #endif /* _NAMESPACE_H_ */
