@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.124 2021/07/04 13:31:10 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.125 2021/07/04 17:01:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.124 2021/07/04 13:31:10 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.125 2021/07/04 17:01:58 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -157,8 +157,8 @@ const char *const msgs[] = {
 	"unary + is illegal in traditional C",			      /* 100 */
 	"type '%s' does not have member '%s'",			      /* 101 */
 	"illegal member use: %s",				      /* 102 */
-	"left operand of '.' must be struct/union object",	      /* 103 */
-	"left operand of '->' must be pointer to struct/union not %s",/* 104 */
+	"left operand of '.' must be struct or union, not '%s'",      /* 103 */
+	"left operand of '->' must be pointer to struct or union, not '%s'", /* 104 */
 	"non-unique member requires struct/union %s",		      /* 105 */
 	"left operand of '->' must be pointer",			      /* 106 */
 	"operands of '%s' have incompatible types (%s != %s)",	      /* 107 */

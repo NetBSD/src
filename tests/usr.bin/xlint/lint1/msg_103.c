@@ -1,7 +1,16 @@
-/*	$NetBSD: msg_103.c,v 1.2 2021/02/21 09:07:58 rillig Exp $	*/
+/*	$NetBSD: msg_103.c,v 1.3 2021/07/04 17:01:58 rillig Exp $	*/
 # 3 "msg_103.c"
 
-// Test for message: left operand of '.' must be struct/union object [103]
+// Test for message: left operand of '.' must be struct or union, not '%s' [103]
 
-TODO: "Add example code that triggers the above message." /* expect: 249 */
-TODO: "Add example code that almost triggers the above message."
+struct point {
+	int x, y;
+};
+
+void
+test(struct point pt, struct point *ptr)
+{
+	pt.x = 0;
+	/* expect+1: left operand of '.' must be struct or union, not 'pointer to struct point' [103] */
+	ptr.y = 0;
+}
