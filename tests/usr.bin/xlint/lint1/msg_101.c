@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_101.c,v 1.8 2021/07/04 17:16:09 rillig Exp $	*/
+/*	$NetBSD: msg_101.c,v 1.9 2021/07/04 17:28:06 rillig Exp $	*/
 # 3 "msg_101.c"
 
 // Test for message: type '%s' does not have member '%s' [101]
@@ -31,7 +31,6 @@ test(const struct point *ptr, const struct point pt)
 	/* accessing a nonexistent member via the wrong operator */
 	/* expect+1: error: type 'pointer to const struct point' does not have member 'z' [101] */
 	sink(ptr.z);
-	/* FIXME: In cconv, don't set t_const unconditionally to false. */
 	/* expect+1: error: type 'struct point' does not have member 'z' [101] */
 	sink(pt->z);
 }
