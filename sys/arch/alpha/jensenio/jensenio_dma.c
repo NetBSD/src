@@ -1,4 +1,4 @@
-/* $NetBSD: jensenio_dma.c,v 1.8 2021/05/07 16:58:34 thorpej Exp $ */
+/* $NetBSD: jensenio_dma.c,v 1.9 2021/07/04 22:42:35 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2020 The NetBSD Foundation, Inc.
@@ -47,13 +47,12 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: jensenio_dma.c,v 1.8 2021/05/07 16:58:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jensenio_dma.c,v 1.9 2021/07/04 22:42:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 
 #define _ALPHA_BUS_DMA_PRIVATE

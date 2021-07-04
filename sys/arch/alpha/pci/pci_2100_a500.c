@@ -1,4 +1,4 @@
-/* $NetBSD: pci_2100_a500.c,v 1.17 2021/07/04 22:36:43 thorpej Exp $ */
+/* $NetBSD: pci_2100_a500.c,v 1.18 2021/07/04 22:42:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_2100_a500.c,v 1.17 2021/07/04 22:36:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_2100_a500.c,v 1.18 2021/07/04 22:42:36 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -39,7 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_2100_a500.c,v 1.17 2021/07/04 22:36:43 thorpej E
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/kmem.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/cpu.h>
 #include <sys/syslog.h>

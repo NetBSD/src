@@ -1,4 +1,4 @@
-/* $NetBSD: pci_sgmap_pte32.c,v 1.9 2020/10/11 00:33:31 thorpej Exp $ */
+/* $NetBSD: pci_sgmap_pte32.c,v 1.10 2021/07/04 22:42:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -32,13 +32,12 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(1, "$NetBSD: pci_sgmap_pte32.c,v 1.9 2020/10/11 00:33:31 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: pci_sgmap_pte32.c,v 1.10 2021/07/04 22:42:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/proc.h>
 

@@ -1,4 +1,4 @@
-/* $NetBSD: jensenio_bus_mem.c,v 1.3 2011/07/01 19:22:35 dyoung Exp $ */
+/* $NetBSD: jensenio_bus_mem.c,v 1.4 2021/07/04 22:42:35 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,11 +31,10 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(1, "$NetBSD: jensenio_bus_mem.c,v 1.3 2011/07/01 19:22:35 dyoung Exp $");
+__KERNEL_RCSID(1, "$NetBSD: jensenio_bus_mem.c,v 1.4 2021/07/04 22:42:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
 
