@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.310 2021/07/04 17:01:58 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.311 2021/07/04 17:16:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.310 2021/07/04 17:01:58 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.311 2021/07/04 17:16:09 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -728,6 +728,7 @@ cconv(tnode_t *tn)
 	/* lvalue to rvalue */
 	if (tn->tn_lvalue) {
 		tp = expr_dup_type(tn->tn_type);
+		/* FIXME: even rvalues can be const/volatile, see msg_101 */
 		tp->t_const = tp->t_volatile = false;
 		tn = new_tnode(LOAD, tp, tn, NULL);
 	}
