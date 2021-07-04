@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.308 2021/07/04 13:14:54 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.309 2021/07/04 16:44:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.308 2021/07/04 13:14:54 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.309 2021/07/04 16:44:13 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1627,7 +1627,7 @@ new_tnode(op_t op, type_t *type, tnode_t *ln, tnode_t *rn)
 {
 	tnode_t	*ntn;
 	tspec_t	t;
-#ifdef notyet
+#if 0 /* not yet */
 	size_t l;
 	uint64_t rnum;
 #endif
@@ -1636,15 +1636,12 @@ new_tnode(op_t op, type_t *type, tnode_t *ln, tnode_t *rn)
 
 	ntn->tn_op = op;
 	ntn->tn_type = type;
-	if (ln->tn_relaxed)
-		ntn->tn_relaxed = true;
-	if (rn != NULL && rn->tn_relaxed)
-		ntn->tn_relaxed = true;
+	ntn->tn_relaxed = ln->tn_relaxed || (rn != NULL && rn->tn_relaxed);
 	ntn->tn_left = ln;
 	ntn->tn_right = rn;
 
 	switch (op) {
-#ifdef notyet
+#if 0 /* not yet */
 	case SHR:
 		if (rn->tn_op != CON)
 			break;
