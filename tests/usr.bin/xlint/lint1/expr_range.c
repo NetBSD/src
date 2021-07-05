@@ -1,13 +1,13 @@
-/*	$NetBSD: expr_range.c,v 1.2 2021/05/15 19:12:14 rillig Exp $	*/
+/*	$NetBSD: expr_range.c,v 1.3 2021/07/05 19:43:29 rillig Exp $	*/
 # 3 "expr_range.c"
 
 /*
  * In a switch statement that has (expr & constant) as the controlling
- * expression, complain if one of the case branches is unreachable because
- * the case label does can never match the controlling expression.
+ * expression, complain if a case branch is unreachable because the case
+ * label can never match the controlling expression.
  *
  * GCC 10 does not complain about the unreachable branch.  It knows that the
- * branch is unreachable though since it doesn't generate any code for it.
+ * branch is unreachable though, since it doesn't generate any code for it.
  * GCC once had the option -Wunreachable-code, but that option was made a
  * no-op in 2011.
  *
