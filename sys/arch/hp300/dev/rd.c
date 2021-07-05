@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.105 2021/07/05 14:03:46 tsutsui Exp $	*/
+/*	$NetBSD: rd.c,v 1.106 2021/07/05 14:15:16 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.105 2021/07/05 14:03:46 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.106 2021/07/05 14:15:16 tsutsui Exp $");
 
 #include "opt_useleds.h"
 
@@ -320,6 +320,8 @@ rdattach(device_t parent, device_t self, void *aux)
 {
 	struct rd_softc *sc = device_private(self);
 	struct hpibbus_attach_args *ha = aux;
+	int id;
+	char pbuf[9];
 
 	sc->sc_dev = self;
 	bufq_alloc(&sc->sc_tab, "disksort", BUFQ_SORT_RAWBLOCK);
@@ -328,6 +330,21 @@ rdattach(device_t parent, device_t self, void *aux)
 		aprint_error(": didn't respond to describe command!\n");
 		return;
 	}
+
+	/*
+	 * XXX We use DEV_BSIZE instead of the sector size value pulled
+	 * XXX off the driver because all of this code assumes 512 byte
+	 * XXX blocks.  ICK!
+	 */
+	id = sc->sc_type;
+	aprint_normal(": %s\n", rdidentinfo[id].ri_desc);
+	format_bytes(pbuf, sizeof(pbuf),
+	    rdidentinfo[id].ri_nblocks * DEV_BSIZE);
+	aprint_normal_dev(sc->sc_dev, "%s, %d cyl, %d head, %d sec,"
+	    " %d bytes/block x %u blocks\n",
+	    pbuf, rdidentinfo[id].ri_ncyl, rdidentinfo[id].ri_ntpc,
+	    rdidentinfo[id].ri_nbpt,
+	    DEV_BSIZE, rdidentinfo[id].ri_nblocks);
 
 	/*
 	 * Initialize and attach the disk structure.
@@ -366,7 +383,7 @@ rdident(device_t parent, struct rd_softc *sc, struct hpibbus_attach_args *ha)
 {
 	struct rd_describe *desc = sc != NULL ? &sc->sc_rddesc : NULL;
 	u_char stat, cmd[3];
-	char name[7], pbuf[9];
+	char name[7];
 	int i, id, n, ctlr, slave;
 
 	ctlr = device_unit(parent);
@@ -463,20 +480,6 @@ rdident(device_t parent, struct rd_softc *sc, struct hpibbus_attach_args *ha)
 	}
 
 	sc->sc_type = id;
-
-	/*
-	 * XXX We use DEV_BSIZE instead of the sector size value pulled
-	 * XXX off the driver because all of this code assumes 512 byte
-	 * XXX blocks.  ICK!
-	 */
-	aprint_normal(": %s\n", rdidentinfo[id].ri_desc);
-	format_bytes(pbuf, sizeof(pbuf),
-	    rdidentinfo[id].ri_nblocks * DEV_BSIZE);
-	aprint_normal_dev(sc->sc_dev, "%s, %d cyl, %d head, %d sec,"
-	    " %d bytes/block x %u blocks\n",
-	    pbuf, rdidentinfo[id].ri_ncyl, rdidentinfo[id].ri_ntpc,
-	    rdidentinfo[id].ri_nbpt,
-	    DEV_BSIZE, rdidentinfo[id].ri_nblocks);
 
 	return 1;
 }
