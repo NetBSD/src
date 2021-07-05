@@ -1,5 +1,5 @@
 #!  /usr/bin/lua
--- $NetBSD: check-expect.lua,v 1.8 2021/04/08 22:18:27 rillig Exp $
+-- $NetBSD: check-expect.lua,v 1.9 2021/07/05 18:55:14 rillig Exp $
 
 --[[
 
@@ -73,15 +73,14 @@ local function load_expect_comments_from_c(fname, errors)
 end
 
 
-local function load_actual_messages_from_exp(exp_fname, primary_fname)
+local function load_actual_messages_from_exp(exp_fname)
 
   local lines = load_lines(exp_fname)
   if lines == nil then return nil end
 
   local messages = {}
   for exp_lineno, line in ipairs(lines) do
-    for location, c_filename, c_lineno, message
-         in line:gmatch("((%S+)%((%d+)%)): (.+)$") do
+    for location, message in line:gmatch("(%S+%(%d+%)): (.+)$") do
       table.insert(messages, {
         exp_lineno = exp_lineno,
         location = location,
@@ -101,7 +100,7 @@ local function check_test(c_fname, errors)
     load_expect_comments_from_c(c_fname, errors)
   if comment_locations == nil then return end
 
-  local messages = load_actual_messages_from_exp(exp_fname, c_fname)
+  local messages = load_actual_messages_from_exp(exp_fname)
   if messages == nil then return end
 
   for _, act in ipairs(messages) do
