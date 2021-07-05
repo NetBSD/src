@@ -1,4 +1,4 @@
-/* $NetBSD: atomic_nand_64.S,v 1.3 2021/07/04 06:55:47 skrll Exp $ */
+/* $NetBSD: atomic_nand_64.S,v 1.4 2021/07/05 08:50:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@ ENTRY_NP(_atomic_nand_64)
 	mov	x4, x0
 1:	ldxr	x0, [x4]		/* load old value (*ptr) */
 	and	x2, x0, x1		/* x2 =  (*ptr & value) */
-	mvn	x2, x2			/* x2 = ~(*pte & value) */
+	mvn	x2, x2			/* x2 = ~(*ptr & value) */
 	stxr	w3, x2, [x4]		/* try to store */
 	cbnz	w3, 2f			/*   succeed? no, try again */
 	ret				/* return old value */
@@ -58,7 +58,7 @@ ENTRY_NP(_atomic_nand_64_nv)
 	mov	x4, x0			/* need r0 for return value */
 1:	ldxr	x0, [x4]		/* load old value (*ptr) */
 	and	x0, x0, x1		/* x0 =  (*ptr & value) */
-	mvn	x0, x0			/* x0 = ~(*pte & value), return value */
+	mvn	x0, x0			/* x0 = ~(*ptr & value), return value */
 	stxr	w3, x0, [x4]		/* try to store */
 	cbnz	w3, 2f			/*   succeed? no, try again? */
 	ret				/* return new value */
