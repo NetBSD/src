@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnops.c,v 1.43 2021/06/29 22:34:09 dholland Exp $	*/
+/*	$NetBSD: chfs_vnops.c,v 1.44 2021/07/05 21:43:56 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -1598,7 +1598,7 @@ int
 const struct vnodeopv_entry_desc chfs_vnodeop_entries[] =
 	{
 		{ &vop_default_desc, vn_default_error },
-	{ &vop_parsepath_desc, genfs_parsepath },	/* parsepath */
+		{ &vop_parsepath_desc, genfs_parsepath },	/* parsepath */
 		{ &vop_lookup_desc, chfs_lookup },
 		{ &vop_create_desc, chfs_create },
 		{ &vop_mknod_desc, chfs_mknod },
