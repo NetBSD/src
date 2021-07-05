@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.194 2021/07/05 19:48:32 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.195 2021/07/05 19:55:51 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.194 2021/07/05 19:48:32 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.195 2021/07/05 19:55:51 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1783,20 +1783,17 @@ newtag(sym_t *tag, scl_t scl, bool decl, bool semi)
 const char *
 storage_class_name(scl_t sc)
 {
-	const	char *s;
-
 	switch (sc) {
-	case EXTERN:	s = "extern";	break;
-	case STATIC:	s = "static";	break;
-	case AUTO:	s = "auto";	break;
-	case REG:	s = "register";	break;
-	case TYPEDEF:	s = "typedef";	break;
-	case STRUCT_TAG:s = "struct";	break;
-	case UNION_TAG:	s = "union";	break;
-	case ENUM_TAG:	s = "enum";	break;
+	case EXTERN:	return "extern";
+	case STATIC:	return "static";
+	case AUTO:	return "auto";
+	case REG:	return "register";
+	case TYPEDEF:	return "typedef";
+	case STRUCT_TAG:return "struct";
+	case UNION_TAG:	return "union";
+	case ENUM_TAG:	return "enum";
 	default:	lint_assert(/*CONSTCOND*/false);
 	}
-	return s;
 }
 
 /*
