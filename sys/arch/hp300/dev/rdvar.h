@@ -1,4 +1,4 @@
-/*	$NetBSD: rdvar.h,v 1.24 2021/06/04 17:12:08 tsutsui Exp $	*/
+/*	$NetBSD: rdvar.h,v 1.25 2021/07/05 14:51:23 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -69,7 +69,6 @@ struct	rd_softc {
 	short	sc_type;
 	char	*sc_addr;
 	int	sc_resid;
-	struct	rd_describe sc_rddesc;
 	struct	hpibqueue sc_hq;	/* hpib job queue entry */
 	struct	rd_iocmd sc_ioc;
 	struct	rd_rscmd sc_rsc;
