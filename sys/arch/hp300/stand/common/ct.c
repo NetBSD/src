@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.7 2011/07/17 20:54:40 joerg Exp $	*/
+/*	$NetBSD: ct.c,v 1.8 2021/07/05 14:51:23 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -106,7 +106,7 @@ ctinit(int ctlr, int unit)
 int
 ctident(int ctlr, int unit)
 {
-	struct ct_describe desc;
+	struct cs80_describe desc;
 	uint8_t stat, cmd[3];
 	char name[7];
 	int id, i;
@@ -131,7 +131,7 @@ ctident(int ctlr, int unit)
 	cmd[1] = C_SVOL(0);
 	cmd[2] = C_DESC;
 	hpibsend(ctlr, unit, C_CMD, cmd, sizeof(cmd));
-	hpibrecv(ctlr, unit, C_EXEC, (uint8_t *)&desc, 37);
+	hpibrecv(ctlr, unit, C_EXEC, (uint8_t *)&desc, sizeof(desc));
 	hpibrecv(ctlr, unit, C_QSTAT, &stat, sizeof(stat));
 	memset(name, 0, sizeof(name));
 	if (!stat) {

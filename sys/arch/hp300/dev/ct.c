@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.62 2021/07/05 14:03:46 tsutsui Exp $	*/
+/*	$NetBSD: ct.c,v 1.63 2021/07/05 14:51:23 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.62 2021/07/05 14:03:46 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.63 2021/07/05 14:51:23 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -257,7 +257,7 @@ ctattach(device_t parent, device_t self, void *aux)
 static int
 ctident(device_t parent, struct ct_softc *sc, struct hpibbus_attach_args *ha)
 {
-	struct ct_describe desc;
+	struct cs80_describe desc;
 	u_char stat, cmd[3];
 	char name[7];
 	int i, id, n, type, canstream;
@@ -284,9 +284,10 @@ ctident(device_t parent, struct ct_softc *sc, struct hpibbus_attach_args *ha)
 	cmd[1] = C_SVOL(0);
 	cmd[2] = C_DESC;
 	hpibsend(device_unit(parent), ha->ha_slave, C_CMD, cmd, sizeof(cmd));
-	hpibrecv(device_unit(parent), ha->ha_slave, C_EXEC, &desc, 37);
+	hpibrecv(device_unit(parent), ha->ha_slave, C_EXEC, &desc,
+	    sizeof(desc));
 	hpibrecv(device_unit(parent), ha->ha_slave, C_QSTAT, &stat,
-		 sizeof(stat));
+	    sizeof(stat));
 
 	memset(name, 0, sizeof(name));
 	if (stat == 0) {

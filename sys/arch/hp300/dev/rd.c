@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.106 2021/07/05 14:15:16 tsutsui Exp $	*/
+/*	$NetBSD: rd.c,v 1.107 2021/07/05 14:51:23 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.106 2021/07/05 14:15:16 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.107 2021/07/05 14:51:23 tsutsui Exp $");
 
 #include "opt_useleds.h"
 
@@ -178,7 +178,7 @@ static const char *err_info[] = {
 #define RDB_IO		0x08
 #define RDB_ASYNC	0x10
 #define RDB_ERROR	0x80
-int	rddebug = HDB_ERROR | HDB_IDENT;
+int	rddebug = RDB_ERROR | RDB_IDENT;
 #endif
 
 /*
@@ -381,7 +381,7 @@ rdattach(device_t parent, device_t self, void *aux)
 static int
 rdident(device_t parent, struct rd_softc *sc, struct hpibbus_attach_args *ha)
 {
-	struct rd_describe *desc = sc != NULL ? &sc->sc_rddesc : NULL;
+	struct cs80_describe desc;
 	u_char stat, cmd[3];
 	char name[7];
 	int i, id, n, ctlr, slave;
@@ -416,11 +416,11 @@ rdident(device_t parent, struct rd_softc *sc, struct hpibbus_attach_args *ha)
 	cmd[1] = C_SVOL(0);
 	cmd[2] = C_DESC;
 	hpibsend(ctlr, slave, C_CMD, cmd, sizeof(cmd));
-	hpibrecv(ctlr, slave, C_EXEC, desc, 37);
+	hpibrecv(ctlr, slave, C_EXEC, &desc, sizeof(desc));
 	hpibrecv(ctlr, slave, C_QSTAT, &stat, sizeof(stat));
 	memset(name, 0, sizeof(name));
 	if (stat == 0) {
-		n = desc->d_name;
+		n = desc.d_name;
 		for (i = 5; i >= 0; i--) {
 			name[i] = (n & 0xf) + '0';
 			n >>= 4;
@@ -431,21 +431,21 @@ rdident(device_t parent, struct rd_softc *sc, struct hpibbus_attach_args *ha)
 	if (rddebug & RDB_IDENT) {
 		aprint_normal("\n");
 		aprint_normal_dev(sc->sc_dev, "id: 0x%04x, name: %x ('%s')\n",
-		    ha->ha_id, desc->d_name, name);
+		    ha->ha_id, desc.d_name, name);
 		aprint_normal("  iuw %x, maxxfr %d, ctype %d\n",
-		    desc->d_iuw, desc->d_cmaxxfr, desc->d_ctype);
+		    desc.d_iuw, desc.d_cmaxxfr, desc.d_ctype);
 		aprint_normal("  utype %d, bps %d, blkbuf %d, burst %d,"
 		    " blktime %d\n",
-		    desc->d_utype, desc->d_sectsize,
-		    desc->d_blkbuf, desc->d_burstsize, desc->d_blocktime);
+		    desc.d_utype, desc.d_sectsize,
+		    desc.d_blkbuf, desc.d_burstsize, desc.d_blocktime);
 		aprint_normal("  avxfr %d, ort %d, atp %d, maxint %d, fv %x"
 		    ", rv %x\n",
-		    desc->d_uavexfr, desc->d_retry, desc->d_access,
-		    desc->d_maxint, desc->d_fvbyte, desc->d_rvbyte);
+		    desc.d_uavexfr, desc.d_retry, desc.d_access,
+		    desc.d_maxint, desc.d_fvbyte, desc.d_rvbyte);
 		aprint_normal("  maxcyl/head/sect %d/%d/%d, maxvsect %d,"
 		    " inter %d\n",
-		    desc->d_maxcyl, desc->d_maxhead, desc->d_maxsect,
-		    desc->d_maxvsectl, desc->d_interleave);
+		    desc.d_maxcyl, desc.d_maxhead, desc.d_maxsect,
+		    desc.d_maxvsectl, desc.d_interleave);
 		aprint_normal("%s", device_xname(sc->sc_dev));
 	}
 #endif
