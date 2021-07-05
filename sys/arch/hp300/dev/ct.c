@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.61 2014/07/25 08:10:33 dholland Exp $	*/
+/*	$NetBSD: ct.c,v 1.62 2021/07/05 14:03:46 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.61 2014/07/25 08:10:33 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.62 2021/07/05 14:03:46 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -270,12 +270,11 @@ ctident(device_t parent, struct ct_softc *sc, struct hpibbus_attach_args *ha)
 
 	/* Is it one of the tapes we support? */
 	for (id = 0; id < nctinfo; id++)
-		if (ha->ha_id == ctinfo[id].hwid)
+		if (ha->ha_id == ctinfo[id].hwid &&
+		    ha->ha_punit == ctinfo[id].punit)
 			break;
 	if (id == nctinfo)
 		return 0;
-
-	ha->ha_punit = ctinfo[id].punit;
 
 	/*
 	 * So far, so good.  Get drive parameters.  Note command

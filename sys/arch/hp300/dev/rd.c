@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.104 2021/06/30 14:54:03 tsutsui Exp $	*/
+/*	$NetBSD: rd.c,v 1.105 2021/07/05 14:03:46 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.104 2021/06/30 14:54:03 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.105 2021/07/05 14:03:46 tsutsui Exp $");
 
 #include "opt_useleds.h"
 
@@ -172,13 +172,13 @@ static const char *err_info[] = {
 	0, 0
 };
 
-int	rddebug = 0x80;
 #define RDB_FOLLOW	0x01
 #define RDB_STATUS	0x02
 #define RDB_IDENT	0x04
 #define RDB_IO		0x08
 #define RDB_ASYNC	0x10
 #define RDB_ERROR	0x80
+int	rddebug = HDB_ERROR | HDB_IDENT;
 #endif
 
 /*
@@ -312,25 +312,7 @@ rdmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct hpibbus_attach_args *ha = aux;
 
-	/*
-	 * Set punit if operator specified one in the kernel
-	 * configuration file.
-	 */
-	if (cf->hpibbuscf_punit != HPIBBUSCF_PUNIT_DEFAULT &&
-	    cf->hpibbuscf_punit < HPIB_NPUNITS)
-		ha->ha_punit = cf->hpibbuscf_punit;
-
-	if (rdident(parent, NULL, ha) == 0) {
-		/*
-		 * XXX Some aging HP-IB drives are slow to
-		 * XXX respond; give them a chance to catch
-		 * XXX up and probe them again.
-		 */
-		delay(10000);
-		ha->ha_id = hpibid(device_unit(parent), ha->ha_slave);
-		return rdident(parent, NULL, ha);
-	}
-	return 1;
+	return rdident(parent, NULL, ha);
 }
 
 static void
@@ -396,9 +378,10 @@ rdident(device_t parent, struct rd_softc *sc, struct hpibbus_attach_args *ha)
 
 	/* Is it one of the disks we support? */
 	for (id = 0; id < numrdidentinfo; id++)
-		if (ha->ha_id == rdidentinfo[id].ri_hwid)
+		if (ha->ha_id == rdidentinfo[id].ri_hwid &&
+		    ha->ha_punit <= rdidentinfo[id].ri_maxunum)
 			break;
-	if (id == numrdidentinfo || ha->ha_punit > rdidentinfo[id].ri_maxunum)
+	if (id == numrdidentinfo)
 		return 0;
 
 	/*

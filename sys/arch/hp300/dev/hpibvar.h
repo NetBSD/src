@@ -1,4 +1,4 @@
-/*	$NetBSD: hpibvar.h,v 1.21 2012/10/13 06:12:23 tsutsui Exp $	*/
+/*	$NetBSD: hpibvar.h,v 1.22 2021/07/05 14:03:46 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -174,12 +174,6 @@ struct hpibbus_softc {
 	char	*sc_addr;
 	int	sc_count;
 	int	sc_curcnt;
-
-	/*
-	 * HP-IB is an indirect bus; this cheezy resource map
-	 * keeps track of slave/punit allocations.
-	 */
-	char	sc_rmap[HPIB_NSLAVES][HPIB_NPUNITS];
 };
 
 /* sc_flags */
