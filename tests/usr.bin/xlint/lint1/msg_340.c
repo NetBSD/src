@@ -1,10 +1,10 @@
-/*	$NetBSD: msg_340.c,v 1.1 2021/03/07 19:42:54 rillig Exp $	*/
+/*	$NetBSD: msg_340.c,v 1.2 2021/07/05 19:53:43 rillig Exp $	*/
 # 3 "msg_340.c"
 
-// Test for message: initialization with '[a...b]' is a GNU extension [340]
+// Test for message: initialization with '[a...b]' is a GCC extension [340]
 
 /*
- * In strict C mode, GNU extensions are flagged as such.
+ * In strict C mode, GCC extensions are flagged as such.
  */
 
 /* lint1-flags: -Ssw */
