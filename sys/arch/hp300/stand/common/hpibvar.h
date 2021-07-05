@@ -1,4 +1,4 @@
-/*	$NetBSD: hpibvar.h,v 1.5 2006/06/25 17:37:43 tsutsui Exp $	*/
+/*	$NetBSD: hpibvar.h,v 1.6 2021/07/05 14:51:23 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -31,21 +31,7 @@
  *	@(#)hpibvar.h	8.1 (Berkeley) 6/10/93
  */
 
-#define	HPIBA		32
-#define	HPIBB		1
-#define	HPIBC		8
-#define	HPIBA_BA	21
-#define	HPIBC_BA	30
-
-#define	CSA_BA		0x1F
-
-#define	C_DCL		20
-#define	C_LAG		32
-#define	C_UNL		63
-#define	C_TAG		64
-#define	C_UNA		94
-#define	C_UNT		95
-#define	C_SCG		96
+#include <hp300/dev/hpibvar.h>
 
 struct	hpib_softc {
 	char	sc_alive;

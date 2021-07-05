@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.10 2011/07/17 20:54:40 joerg Exp $	*/
+/*	$NetBSD: rd.c,v 1.11 2021/07/05 14:51:23 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -144,7 +144,7 @@ rdreset(int ctlr, int unit)
 static int
 rdident(int ctlr, int unit)
 {
-	struct rd_describe desc;
+	struct cs80_describe desc;
 	uint8_t stat, cmd[3];
 	char name[7];
 	int id, i;
@@ -163,7 +163,7 @@ rdident(int ctlr, int unit)
 	cmd[1] = C_SVOL(0);
 	cmd[2] = C_DESC;
 	hpibsend(ctlr, unit, C_CMD, cmd, sizeof(cmd));
-	hpibrecv(ctlr, unit, C_EXEC, (uint8_t *)&desc, 37);
+	hpibrecv(ctlr, unit, C_EXEC, (uint8_t *)&desc, sizeof(desc));
 	hpibrecv(ctlr, unit, C_QSTAT, &stat, sizeof(stat));
 	memset(name, 0, sizeof(name));
 	if (!stat) {
