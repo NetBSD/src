@@ -1,5 +1,5 @@
 #!  /usr/bin/lua
--- $NetBSD: check-expect.lua,v 1.9 2021/07/05 18:55:14 rillig Exp $
+-- $NetBSD: check-expect.lua,v 1.10 2021/07/05 19:02:14 rillig Exp $
 
 --[[
 
@@ -76,7 +76,7 @@ end
 local function load_actual_messages_from_exp(exp_fname)
 
   local lines = load_lines(exp_fname)
-  if lines == nil then return nil end
+  if lines == nil then return {} end
 
   local messages = {}
   for exp_lineno, line in ipairs(lines) do

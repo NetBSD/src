@@ -1,4 +1,4 @@
-/*	$NetBSD: c99_bool_strict_suppressed.c,v 1.2 2021/07/04 08:19:06 rillig Exp $	*/
+/*	$NetBSD: c99_bool_strict_suppressed.c,v 1.3 2021/07/05 19:02:14 rillig Exp $	*/
 # 3 "c99_bool_strict_suppressed.c"
 
 /*
@@ -24,19 +24,19 @@ void
 test(_Bool b, int i, const char *p)
 {
 
-	/* expect+1: error: controlling expression must be bool, not 'int' [333] */
+	/* suppressed+1: error: controlling expression must be bool, not 'int' [333] */
 	while (1)
 		break;
 
-	/* expect+1: error: operands of '=' have incompatible types (_Bool != int) [107] */
+	/* suppressed+1: error: operands of '=' have incompatible types (_Bool != int) [107] */
 	b = i;
 
-	/* expect+1: error: operand of '!' must be bool, not 'int' [330] */
+	/* suppressed+1: error: operand of '!' must be bool, not 'int' [330] */
 	b = !i;
 
-	/* expect+1: error: left operand of '&&' must be bool, not 'int' [331] */
+	/* suppressed+1: error: left operand of '&&' must be bool, not 'int' [331] */
 	b = i && b;
 
-	/* expect+1: error: right operand of '&&' must be bool, not 'int' [332] */
+	/* suppressed+1: error: right operand of '&&' must be bool, not 'int' [332] */
 	b = b && i;
 }
