@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.125 2021/07/04 17:01:58 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.126 2021/07/05 19:53:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.125 2021/07/04 17:01:58 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.126 2021/07/05 19:53:43 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -394,7 +394,7 @@ const char *const msgs[] = {
 	"right operand of '%s' must not be bool",		      /* 337 */
 	"option '%c' should be handled in the switch",		      /* 338 */
 	"option '%c' should be listed in the options string",	      /* 339 */
-	"initialization with '[a...b]' is a GNU extension",	      /* 340 */
+	"initialization with '[a...b]' is a GCC extension",	      /* 340 */
 	"argument to '%s' must be 'unsigned char' or EOF, not '%s'",  /* 341 */
 	"argument to '%s' must be cast to 'unsigned char', not to '%s'", /* 342 */
 	"static array size is a C11 extension",			      /* 343 */
