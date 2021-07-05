@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.18 2016/02/26 18:11:11 christos Exp $	*/
+/*	$NetBSD: ite.c,v 1.19 2021/07/05 13:41:08 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,7 @@
 #include <sys/param.h>
 #include <dev/cons.h>
 
-#include <hp300/stand/common/grfreg.h>
+#include <hp300/dev/diofbreg.h>
 #include <hp300/dev/intioreg.h>
 #include <hp300/dev/sgcreg.h>
 #include <dev/ic/stireg.h>
@@ -129,19 +129,19 @@ iteconfig(void)
 	int dtype, fboff, slotno, i;
 	uint8_t *va;
 	struct hp_hw *hw;
-	struct grfreg *gr;
+	struct diofbreg *fb;
 	struct ite_data *ip;
 
 	i = 0;
 	for (hw = sc_table; hw < &sc_table[MAXCTLRS]; hw++) {
 	        if (!HW_ISDEV(hw, D_BITMAP))
 			continue;
-		gr = (struct grfreg *) hw->hw_kva;
+		fb = (struct diofbreg *)hw->hw_kva;
 		/* XXX: redundent but safe */
-		if (badaddr((void *)gr) || gr->gr_id != GRFHWID)
+		if (badaddr((void *)fb) || fb->id != GRFHWID)
 			continue;
 		for (dtype = 0; dtype < nitesw; dtype++)
-			if (itesw[dtype].ite_hwid == gr->gr_id2)
+			if (itesw[dtype].ite_hwid == fb->fbid)
 				break;
 		if (dtype == nitesw)
 			continue;
@@ -150,16 +150,16 @@ iteconfig(void)
 		ite_scode[i] = hw->hw_sc;
 		ip = &ite_data[i];
 		ip->isw = &itesw[dtype];
-		ip->regbase = (void *) gr;
-		fboff = (gr->gr_fbomsb << 8) | gr->gr_fbolsb;
+		ip->regbase = (void *)fb;
+		fboff = (fb->fbomsb << 8) | fb->fbolsb;
 		ip->fbbase = (void *)(*((u_char *)ip->regbase + fboff) << 16);
 		/* DIO II: FB offset is relative to select code space */
 		if (ip->regbase >= (void *)DIOIIBASE)
 			ip->fbbase = (char*)ip->fbbase + (int)ip->regbase;
-		ip->fbwidth  = gr->gr_fbwidth_h << 8 | gr->gr_fbwidth_l;
-		ip->fbheight = gr->gr_fbheight_h << 8 | gr->gr_fbheight_l;
-		ip->dwidth   = gr->gr_dwidth_h << 8 | gr->gr_dwidth_l;
-		ip->dheight  = gr->gr_dheight_h << 8 | gr->gr_dheight_l;
+		ip->fbwidth  = fb->fbwmsb << 8 | fb->fbwlsb;
+		ip->fbheight = fb->fbhmsb << 8 | fb->fbhlsb;
+		ip->dwidth   = fb->dwmsb  << 8 | fb->dwlsb;
+		ip->dheight  = fb->dhmsb  << 8 | fb->dhlsb;
 		/*
 		 * XXX some displays (e.g. the davinci) appear
 		 * to return a display height greater than the

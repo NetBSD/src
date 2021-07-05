@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_tc.c,v 1.10 2011/02/10 12:46:22 tsutsui Exp $	*/
+/*	$NetBSD: ite_tc.c,v 1.11 2021/07/05 13:41:08 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,8 +42,8 @@
 
 #include <sys/param.h>
 
+#include <hp300/dev/diofbreg.h>
 #include <hp300/stand/common/itereg.h>
-#include <hp300/stand/common/grfreg.h>
 #include <hp300/stand/common/grf_tcreg.h>
 
 #include <hp300/stand/common/samachdep.h>
