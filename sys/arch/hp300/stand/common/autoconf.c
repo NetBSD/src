@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.13 2011/02/08 20:20:14 rmind Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.14 2021/07/05 13:41:08 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,7 +49,6 @@
 #include <hp300/stand/common/scsivar.h>
 
 #include <hp300/dev/dioreg.h>
-#include <hp300/stand/common/grfreg.h>
 #include <hp300/dev/intioreg.h>
 
 /*
