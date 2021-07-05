@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.251 2021/07/05 19:53:43 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.252 2021/07/05 19:59:10 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.251 2021/07/05 19:53:43 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.252 2021/07/05 19:59:10 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1026,6 +1026,7 @@ type_init_decls:
 	| type_init_decls T_COMMA type_init_decl
 	;
 
+/* See the Bison manual, section 7.1 "Semantic Info in Token Kinds". */
 notype_init_decl:
 	  notype_decl asm_or_symbolrename_opt {
 		cgram_declare($1, false, $2);
