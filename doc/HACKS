@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.220 2021/06/23 07:11:41 rillig Exp $
+# $NetBSD: HACKS,v 1.221 2021/07/05 11:16:56 hgutch Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -1003,12 +1003,19 @@ port	sh3
 
 	hack	gcc9-sh3-lint
 	cdate	Tue Jun 22 14:59:52 CEST 2021
-	mdate	Tue Jun 22 14:59:52 CEST 2021
-	who	martin
-	file	usr.bin/xlint/lint1/Makefile	: 1.70
+	mdate	Mon Jul  5 12:34:57 CEST 2021
+	who	hgutch
+	file	external/gpl3/gcc/dist/gcc/config/sh/sh.md 1.2
+		external/gpl3/gcc.old/dist/gcc/config/sh/sh.md 1.11
 	descr
-		The in-tree gcc 9 crashes with an internal invalid
-		opcode exception when using any kind of optimization
-		on the lex.c file. Force -O0 for this file.
+		The in-tree gcc 9/gcc 10 crashes with an internal
+		invalid opcode exception when using any kind of
+		optimization on lex.c in usr.bin/xlint/lint .  This
+		was introduced apparently unintendedly in gcc when
+		addressing a different issue.  Rather than disabling
+		optimization for lex.c, instead revert the change to
+		gcc.  The bug report upstream has been updated to
+		reflect the exact breakage.
+
 		https://gcc.gnu.org/bugzilla/show_bug.cgi?id=101177
 kcah
