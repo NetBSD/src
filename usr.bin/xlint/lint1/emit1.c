@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.44 2021/04/18 20:02:56 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.45 2021/07/05 19:39:12 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,10 +38,8 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit1.c,v 1.44 2021/04/18 20:02:56 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.45 2021/07/05 19:39:12 rillig Exp $");
 #endif
-
-#include <ctype.h>
 
 #include "lint1.h"
 
@@ -146,7 +144,7 @@ outtype(const type_t *tp)
 		} else if (ts == FUNC && tp->t_proto) {
 			na = 0;
 			for (arg = tp->t_args; arg != NULL; arg = arg->s_next)
-					na++;
+				na++;
 			if (tp->t_vararg)
 				na++;
 			outint(na);
@@ -495,7 +493,7 @@ outcall(const tnode_t *tn, bool rvused, bool rvdisc)
 static void
 outfstrg(strg_t *strg)
 {
-	int	c, oc;
+	unsigned char c, oc;
 	bool	first;
 	u_char	*cp;
 
@@ -525,7 +523,7 @@ outfstrg(strg_t *strg)
 		}
 
 		/* numeric field width */
-		while (c != '\0' && ch_isdigit(c)) {
+		while (c != '\0' && ch_isdigit((char)c)) {
 			outqchar(c);
 			c = *cp++;
 		}
@@ -537,7 +535,7 @@ outfstrg(strg_t *strg)
 				outqchar(c);
 				c = *cp++;
 			} else {
-				while (c != '\0' && ch_isdigit(c)) {
+				while (c != '\0' && ch_isdigit((char)c)) {
 					outqchar(c);
 					c = *cp++;
 				}
