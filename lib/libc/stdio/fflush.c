@@ -1,4 +1,4 @@
-/*	$NetBSD: fflush.c,v 1.18 2012/03/27 15:05:42 christos Exp $	*/
+/*	$NetBSD: fflush.c,v 1.19 2021/07/05 07:26:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fflush.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fflush.c,v 1.18 2012/03/27 15:05:42 christos Exp $");
+__RCSID("$NetBSD: fflush.c,v 1.19 2021/07/05 07:26:00 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -45,6 +45,8 @@ __RCSID("$NetBSD: fflush.c,v 1.18 2012/03/27 15:05:42 christos Exp $");
 #include <assert.h>
 #include <errno.h>
 #include <stdio.h>
+#include <string.h>
+
 #include "reentrant.h"
 #include "local.h"
 
@@ -106,6 +108,14 @@ __sflush(FILE *fp)
 	for (; n > 0; n -= t, p += t) {
 		t = (*fp->_write)(fp->_cookie, (char *)p, n);
 		if (t <= 0) {
+			/* Reset _p and _w. */
+			if (p > fp->_p) {
+				/* Some was written. */
+				memmove(fp->_p, p, n);
+				fp->_p += n;
+				if ((fp->_flags & (__SLBF | __SNBF)) == 0)
+					fp->_w -= n;
+			}
 			fp->_flags |= __SERR;
 			return EOF;
 		}
