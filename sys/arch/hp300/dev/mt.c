@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.54 2014/07/25 08:10:33 dholland Exp $	*/
+/*	$NetBSD: mt.c,v 1.55 2021/07/05 14:03:46 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.54 2014/07/25 08:10:33 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.55 2021/07/05 14:03:46 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -224,7 +224,8 @@ mtident(struct mt_softc *sc, struct hpibbus_attach_args *ha)
 	int i;
 
 	for (i = 0; i < nmtinfo; i++) {
-		if (ha->ha_id == mtinfo[i].hwid) {
+		if (ha->ha_id == mtinfo[i].hwid &&
+		    ha->ha_punit == 0) {
 			if (sc != NULL) {
 				sc->sc_type = mtinfo[i].hwid;
 				aprint_normal(": %s tape\n", mtinfo[i].desc);
