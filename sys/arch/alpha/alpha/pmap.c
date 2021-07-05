@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.294 2021/07/04 22:42:35 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.295 2021/07/05 10:00:22 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008, 2020
@@ -135,7 +135,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.294 2021/07/04 22:42:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.295 2021/07/05 10:00:22 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2344,7 +2344,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 
 		lock = pmap_pvh_lock(pg);
 		mutex_enter(lock);
-		md->pvh_listx |= attrs;
+		attrs = (md->pvh_listx |= attrs);
 		mutex_exit(lock);
 
 		/* Set up referenced/modified emulation for new mapping. */
