@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.50 2021/06/30 10:25:02 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.51 2021/07/06 20:17:15 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.50 2021/06/30 10:25:02 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.51 2021/07/06 20:17:15 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -183,7 +183,7 @@ static	struct	kwtab {
 	kwdef_gcc_attr(	"gnu_printf",	T_AT_FORMAT_GNU_PRINTF),
 	kwdef_keyword(	"goto",		T_GOTO),
 	kwdef_keyword(	"if",		T_IF),
-	kwdef_token(	"imag",		T_IMAG,			0,1,0,0,4),
+	kwdef_token(	"imag",		T_IMAG,			0,0,1,0,4),
 	kwdef_sclass(	"inline",	INLINE,			0,1,0,0,7),
 	kwdef_type(	"int",		INT,			0,0,0,0,1),
 	kwdef_type(	"long",		LONG,			0,0,0,0,1),
@@ -204,7 +204,7 @@ static	struct	kwtab {
 	kwdef_gcc_attr(	"pcs",		T_AT_PCS),
 	kwdef_gcc_attr(	"printf",	T_AT_FORMAT_PRINTF),
 	kwdef_gcc_attr(	"pure",		T_AT_PURE),
-	kwdef_token(	"real",		T_REAL,			0,1,0,0,4),
+	kwdef_token(	"real",		T_REAL,			0,0,1,0,4),
 	kwdef_sclass(	"register",	REG,			0,0,0,0,1),
 	kwdef_tqual(	"restrict",	RESTRICT,		0,1,0,0,5),
 	kwdef_keyword(	"return",	T_RETURN),
