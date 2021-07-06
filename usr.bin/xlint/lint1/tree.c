@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.312 2021/07/04 17:28:05 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.313 2021/07/06 04:44:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.312 2021/07/04 17:28:05 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.313 2021/07/06 04:44:20 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -487,16 +487,16 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 
 tnode_t *
 build_generic_selection(const tnode_t *expr,
-			struct generic_association_types *sel)
+			struct generic_association *sel)
 {
 	tnode_t *default_result = NULL;
 
-	for (; sel != NULL; sel = sel->gat_prev)
+	for (; sel != NULL; sel = sel->ga_prev)
 		if (expr != NULL &&
-		    eqtype(sel->gat_arg, expr->tn_type, false, false, NULL))
-			return sel->gat_result;
-		else if (sel->gat_arg == NULL)
-			default_result = sel->gat_result;
+		    eqtype(sel->ga_arg, expr->tn_type, false, false, NULL))
+			return sel->ga_result;
+		else if (sel->ga_arg == NULL)
+			default_result = sel->ga_result;
 	return default_result;
 }
 
