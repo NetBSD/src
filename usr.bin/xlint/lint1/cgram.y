@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.262 2021/07/06 19:08:28 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.263 2021/07/06 20:29:08 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.262 2021/07/06 19:08:28 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.263 2021/07/06 20:29:08 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -123,7 +123,7 @@ anonymize(sym_t *s)
 }
 %}
 
-%expect 164
+%expect 162
 
 %union {
 	val_t	*y_val;
@@ -1844,12 +1844,6 @@ term:
 	  }
 	| T_EXTENSION term {
 		$$ = $2;
-	  }
-	| T_REAL T_LPAREN term T_RPAREN {
-		$$ = build(REAL, $3, NULL);
-	  }
-	| T_IMAG T_LPAREN term T_RPAREN {
-		$$ = build(IMAG, $3, NULL);
 	  }
 	| T_BUILTIN_OFFSETOF T_LPAREN type_name T_COMMA identifier T_RPAREN {
 		symtyp = FMEMBER;
