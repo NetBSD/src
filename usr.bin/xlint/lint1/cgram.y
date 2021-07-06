@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.252 2021/07/05 19:59:10 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.253 2021/07/06 04:44:20 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.252 2021/07/05 19:59:10 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.253 2021/07/06 04:44:20 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -139,7 +139,7 @@ anonymize(sym_t *s)
 	strg_t	*y_string;
 	qual_ptr *y_qual_ptr;
 	bool	y_seen_statement;
-	struct generic_association_types *y_types;
+	struct generic_association *y_generic;
 };
 
 %token			T_LBRACE T_RBRACE T_LBRACK T_RBRACK T_LPAREN T_RPAREN
@@ -341,8 +341,8 @@ anonymize(sym_t *s)
 %type	<y_range>	range
 %type	<y_seen_statement> block_item_list
 %type	<y_seen_statement> block_item
-%type	<y_types>	generic_assoc_list
-%type	<y_types>	generic_association
+%type	<y_generic>	generic_assoc_list
+%type	<y_generic>	generic_association
 
 
 %%
@@ -1648,7 +1648,7 @@ generic_selection:		/* C11 6.5.1.1 */
 generic_assoc_list:		/* C11 6.5.1.1 */
 	  generic_association
 	| generic_assoc_list T_COMMA generic_association {
-		$3->gat_prev = $1;
+		$3->ga_prev = $1;
 		$$ = $3;
 	  }
 	;
@@ -1656,13 +1656,13 @@ generic_assoc_list:		/* C11 6.5.1.1 */
 generic_association:		/* C11 6.5.1.1 */
 	  type_name T_COLON assignment_expression {
 		$$ = getblk(sizeof(*$$));
-		$$->gat_arg = $1;
-		$$->gat_result = $3;
+		$$->ga_arg = $1;
+		$$->ga_result = $3;
 	  }
 	| T_DEFAULT T_COLON assignment_expression {
 		$$ = getblk(sizeof(*$$));
-		$$->gat_arg = NULL;
-		$$->gat_result = $3;
+		$$->ga_arg = NULL;
+		$$->ga_result = $3;
 	  }
 	;
 
