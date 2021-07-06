@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.13 2021/07/06 03:46:24 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.14 2021/07/06 04:23:55 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -288,4 +288,54 @@ sys/miscfs/kernfs/kernfs_vnops.c		1.169,1.170
 	Add missing VOP_KQFILTER to kernfs.
 	Fix permissons on /kern/{r,}rootdev.
 	[dholland, ticket #1318]
+
+sys/arch/hppa/hppa/intr.c			1.4
+
+	Fix off by one which resulted in all idle time reported as interrupt
+	time.
+	[macallan, ticket #1312]
+
+common/lib/libc/arch/arm/atomic/atomic_add_64.S	1.12
+common/lib/libc/arch/arm/atomic/atomic_and_64.S	1.11
+common/lib/libc/arch/arm/atomic/atomic_cas_8.S	1.8
+common/lib/libc/arch/arm/atomic/atomic_nand_64.S 1.5
+common/lib/libc/arch/arm/atomic/atomic_or_64.S	1.12
+common/lib/libc/arch/arm/atomic/atomic_sub_64.S	1.3
+common/lib/libc/arch/arm/atomic/atomic_swap_64.S 1.13
+common/lib/libc/arch/arm/atomic/atomic_xor_64.S	1.5
+
+	Whitespace fixes to help later pullups.
+	[skrll, ticket #1313]
+
+common/lib/libc/arch/aarch64/atomic/atomic_nand_16.S 1.3
+common/lib/libc/arch/aarch64/atomic/atomic_nand_32.S 1.3
+common/lib/libc/arch/aarch64/atomic/atomic_nand_32.S 1.4
+common/lib/libc/arch/aarch64/atomic/atomic_nand_64.S 1.3
+common/lib/libc/arch/aarch64/atomic/atomic_nand_64.S 1.4
+common/lib/libc/arch/aarch64/atomic/atomic_nand_8.S 1.3
+common/lib/libc/arch/aarch64/atomic/atomic_nand_8.S 1.4
+
+	Fix the logic operation for atomic_nand_{8,16,32,64}.
+	[skrll, ticket #1314]
+
+external/cddl/osnet/sys/kern/printf.c		1.3
+
+	Use vpanic, not vprintf and then panic.
+	[riastradh, ticket #1315]
+
+external/cddl/osnet/dist/uts/common/dtrace/dtrace.c 1.41
+
+	Remove a pointless printf.
+	[riastradh, ticket #1316]
+
+external/cddl/osnet/dist/uts/common/fs/zfs/zfs_vnops.c 1.71 (patch)
+sys/rump/librump/rumpkern/vm.c			1.191 (patch)
+sys/rump/librump/rumpvfs/vm_vfs.c		1.39-1.41 (patch)
+sys/uvm/uvm_anon.c				1.80 (patch)
+sys/uvm/uvm_page.c				1.248 (patch)
+sys/uvm/uvm_pager.c				1.130 (patch)
+tests/rump/rumpkern/t_vm.c			1.5,1.6 (patch)
+
+	PR 55702, PR 55945: fix uvm pageout crashes.
+	[riastradh, ticket #1317]
 
