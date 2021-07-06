@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.256 2021/07/06 05:22:34 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.257 2021/07/06 05:39:27 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.256 2021/07/06 05:22:34 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.257 2021/07/06 05:39:27 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -308,7 +308,7 @@ anonymize(sym_t *s)
 %type	<y_sym>		type_direct_decl
 %type	<y_qual_ptr>	pointer
 %type	<y_qual_ptr>	asterisk
-%type	<y_sym>		param_decl
+%type	<y_sym>		type_param_decl
 %type	<y_sym>		param_list
 %type	<y_sym>		abstract_decl_param_list
 %type	<y_sym>		direct_param_decl
@@ -1122,15 +1122,22 @@ type_direct_decl:
 	;
 
 /*
- * param_decl and notype_param_decl exist to avoid a conflict in
- * argument lists. A typename enclosed in parens should always be
- * treated as a typename, not an argument.
- * "typedef int a; f(int (a));" is  "typedef int a; f(int foo(a));"
- *				not "typedef int a; f(int a);"
+ * The two distinct rules type_param_decl and notype_param_decl avoid a
+ * conflict in argument lists. A typename enclosed in parentheses is always
+ * treated as a typename, not an argument name. For example, after
+ * "typedef double a;", the declaration "f(int (a));" is interpreted as
+ * "f(int (double));", not "f(int a);".
  */
-param_decl:
+type_param_decl:
 	  direct_param_decl
 	| pointer direct_param_decl {
+		$$ = add_pointer($2, $1);
+	  }
+	;
+
+notype_param_decl:
+	  direct_notype_param_decl
+	| pointer direct_notype_param_decl {
 		$$ = add_pointer($2, $1);
 	  }
 	;
@@ -1158,14 +1165,8 @@ direct_param_decl:
 	  }
 	;
 
-notype_param_decl:
-	  direct_notype_param_decl
-	| pointer direct_notype_param_decl {
-		$$ = add_pointer($2, $1);
-	  }
-	;
-
 direct_notype_param_decl:
+	/* XXX: missing identifier type_attribute_list? */
 	  identifier {
 		$$ = declarator_name(getsym($1));
 	  }
@@ -1309,14 +1310,7 @@ parameter_declaration:
 	| declmods deftyp notype_param_decl {
 		$$ = declare_argument($3, false);
 	  }
-	/*
-	 * param_decl is needed because of following conflict:
-	 * "typedef int a; f(int (a));" could be parsed as
-	 * "function with argument a of type int", or
-	 * "function with an abstract argument of type function".
-	 * This grammar realizes the second case.
-	 */
-	| declaration_specifiers deftyp param_decl {
+	| declaration_specifiers deftyp type_param_decl {
 		$$ = declare_argument($3, false);
 	  }
 	| declmods deftyp abstract_declarator {
