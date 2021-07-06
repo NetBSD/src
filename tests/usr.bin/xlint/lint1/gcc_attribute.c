@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_attribute.c,v 1.6 2021/07/06 06:38:29 rillig Exp $	*/
+/*	$NetBSD: gcc_attribute.c,v 1.7 2021/07/06 17:33:07 rillig Exp $	*/
 # 3 "gcc_attribute.c"
 
 /*
@@ -6,12 +6,6 @@
  * provided by GCC.
  *
  * https://gcc.gnu.org/onlinedocs/gcc/Attribute-Syntax.html
- * https://gcc.gnu.org/onlinedocs/gcc/Function-Attributes.html
- * https://gcc.gnu.org/onlinedocs/gcc/Variable-Attributes.html
- * https://gcc.gnu.org/onlinedocs/gcc/Type-Attributes.html
- * https://gcc.gnu.org/onlinedocs/gcc/Enumerator-Attributes.html
- * https://gcc.gnu.org/onlinedocs/gcc/Statement-Attributes.html
- * https://gcc.gnu.org/onlinedocs/gcc/Label-Attributes.html
  */
 
 void __attribute__((noinline))
