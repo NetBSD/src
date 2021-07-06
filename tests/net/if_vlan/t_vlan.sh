@@ -1,4 +1,4 @@
-#	$NetBSD: t_vlan.sh,v 1.18 2021/07/02 04:38:10 yamaguchi Exp $
+#	$NetBSD: t_vlan.sh,v 1.19 2021/07/06 01:18:22 yamaguchi Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -589,8 +589,12 @@ vlan_configs_body_common()
 	$atf_ifconfig shmif1 link b0:a0:75:00:01:01 active
 	$atf_ifconfig vlan0 create
 
+	atf_check -s exit:0 -o match:'status: +down' \
+	    rump.ifconfig vlan0
 	$atf_ifconfig vlan0 vlan 10 vlanif shmif0
 	$atf_ifconfig vlan0 -vlanif
+	atf_check -s exit:0 -o match:'status: +down' \
+	    rump.ifconfig vlan0
 
 	$atf_ifconfig vlan0 vlan 10 vlanif shmif0
 	$atf_ifconfig vlan0 -vlanif shmif0
