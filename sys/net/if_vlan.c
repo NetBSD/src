@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.154 2021/06/16 00:21:19 riastradh Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.155 2021/07/06 01:16:01 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.154 2021/06/16 00:21:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.155 2021/07/06 01:16:01 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -366,6 +366,7 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 	 * Set the link state to down.
 	 * When the parent interface attaches we will use that link state.
 	 * When the parent interface link state changes, so will ours.
+	 * When the parent interface detaches, set the link state to down.
 	 */
 	ifp->if_link_state = LINK_STATE_DOWN;
 
@@ -685,6 +686,7 @@ vlan_unconfig_locked(struct ifvlan *ifv, struct ifvlan_linkmib *nmib)
 	PSLIST_ENTRY_DESTROY(ifv, ifv_hash);
 
 	vlan_linkmib_update(ifv, nmib);
+	if_link_state_change(ifp, LINK_STATE_DOWN);
 
 	mutex_exit(&ifv->ifv_lock);
 
