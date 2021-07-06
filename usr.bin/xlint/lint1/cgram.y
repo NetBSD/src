@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.254 2021/07/06 04:48:17 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.255 2021/07/06 05:12:44 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.254 2021/07/06 04:48:17 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.255 2021/07/06 05:12:44 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -123,7 +123,7 @@ anonymize(sym_t *s)
 }
 %}
 
-%expect 182
+%expect 166
 
 %union {
 	val_t	*y_val;
@@ -690,7 +690,7 @@ declmod:
 	| T_SCLASS {
 		add_storage_class($1);
 	  }
-	| type_attribute_list
+	| type_attribute
 	;
 
 clrtyp_typespec:
@@ -1090,7 +1090,7 @@ notype_direct_decl:
 		end_declaration_level();
 		block_level--;
 	  }
-	| notype_direct_decl type_attribute_list
+	| notype_direct_decl type_attribute
 	;
 
 type_direct_decl:
@@ -1114,7 +1114,7 @@ type_direct_decl:
 		end_declaration_level();
 		block_level--;
 	  }
-	| type_direct_decl type_attribute_list
+	| type_direct_decl type_attribute
 	;
 
 /*
@@ -1492,7 +1492,7 @@ direct_abstract_declarator:		/* C99 6.7.6 */
 		end_declaration_level();
 		block_level--;
 	  }
-	| direct_abstract_declarator type_attribute_list
+	| direct_abstract_declarator type_attribute
 	;
 
 non_expr_statement:
