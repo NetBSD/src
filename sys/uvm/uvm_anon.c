@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.64 2017/10/28 00:37:13 pgoyette Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.64.8.1 2021/07/06 04:22:34 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.64 2017/10/28 00:37:13 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.64.8.1 2021/07/06 04:22:34 martin Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -442,6 +442,11 @@ uvm_anon_release(struct vm_anon *anon)
 	KASSERT(pg->uanon == anon);
 	KASSERT(pg->loan_count == 0);
 	KASSERT(anon->an_ref == 0);
+
+	if ((pg->flags & PG_PAGEOUT) != 0) {
+		pg->flags &= ~PG_PAGEOUT;
+		uvm_pageout_done(1);
+	}
 
 	mutex_enter(&uvm_pageqlock);
 	uvm_pagefree(pg);

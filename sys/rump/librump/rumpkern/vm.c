@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.173 2017/05/14 13:49:55 nat Exp $	*/
+/*	$NetBSD: vm.c,v 1.173.14.1 2021/07/06 04:22:34 martin Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.173 2017/05/14 13:49:55 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.173.14.1 2021/07/06 04:22:34 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -632,23 +632,50 @@ void
 uvm_page_unbusy(struct vm_page **pgs, int npgs)
 {
 	struct vm_page *pg;
-	int i;
+	int i, pageout_done;
 
 	KASSERT(npgs > 0);
-	KASSERT(mutex_owned(pgs[0]->uobject->vmobjlock));
 
+	pageout_done = 0;
 	for (i = 0; i < npgs; i++) {
 		pg = pgs[i];
-		if (pg == NULL)
+		if (pg == NULL || pg == PGO_DONTCARE) {
 			continue;
+		}
 
+#if 0
+		KASSERT(uvm_page_owner_locked_p(pg, true));
+#else
+		/*
+		 * uvm_page_owner_locked_p() is not available in rump,
+		 * and rump doesn't support amaps anyway.
+		 */
+		KASSERT(mutex_owned(pg->uobject->vmobjlock));
+#endif
 		KASSERT(pg->flags & PG_BUSY);
-		if (pg->flags & PG_WANTED)
+
+		if (pg->flags & PG_PAGEOUT) {
+			pg->flags &= ~PG_PAGEOUT;
+			pg->flags |= PG_RELEASED;
+			pageout_done++;
+			atomic_inc_uint(&uvmexp.pdfreed);
+		}
+		if (pg->flags & PG_WANTED) {
 			wakeup(pg);
-		if (pg->flags & PG_RELEASED)
+		}
+		if (pg->flags & PG_RELEASED) {
+			KASSERT(pg->uobject != NULL ||
+			    (pg->uanon != NULL && pg->uanon->an_ref > 0));
+			pg->flags &= ~PG_RELEASED;
 			uvm_pagefree(pg);
-		else
+		} else {
+			KASSERT((pg->flags & PG_FAKE) == 0);
 			pg->flags &= ~(PG_WANTED|PG_BUSY);
+			UVM_PAGE_OWN(pg, NULL);
+		}
+	}
+	if (pageout_done != 0) {
+		uvm_pageout_done(pageout_done);
 	}
 }
 
