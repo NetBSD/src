@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_attribute.c,v 1.5 2021/05/03 07:08:54 rillig Exp $	*/
+/*	$NetBSD: gcc_attribute.c,v 1.6 2021/07/06 06:38:29 rillig Exp $	*/
 # 3 "gcc_attribute.c"
 
 /*
@@ -53,3 +53,21 @@ local_variable_pcs(void)
 	int pcs = 3;
 	return pcs;
 }
+
+/*
+ * FIXME: The attributes are handled by different grammar rules even though
+ *  they occur in the same syntactical position.
+ *
+ * Grammar rule abstract_decl_param_list handles the first attribute.
+ *
+ * Grammar rule direct_abstract_declarator handles all remaining attributes.
+ *
+ * Since abstract_decl_param_list contains type_attribute_opt, this could be
+ * the source of the many shift/reduce conflicts in the grammar.
+ */
+int
+func(
+    int(int)
+    __attribute__((__noreturn__))
+    __attribute__((__noreturn__))
+);
