@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.232 2020/07/11 00:29:38 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.233 2021/07/06 09:26:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2015 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.232 2020/07/11 00:29:38 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.233 2021/07/06 09:26:47 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -137,6 +137,43 @@ static int	redirect_loop;
 #define	IS_HTTP_TYPE(urltype) \
 	((urltype) == HTTP_URL_T)
 #endif
+
+/**
+ * fwrite(3) replacement that just uses write(2). Many stdio implementations
+ * don't handle interrupts properly and corrupt the output. We are taking
+ * alarm interrupts because of the progress bar.
+ *
+ * Assumes `fp' is pristine with no prior I/O calls on it.
+ */
+static size_t
+maxwrite(const void *buf, size_t size, size_t nmemb, FILE *fp)
+{
+	const char *p = buf;
+	ssize_t nwr = 0;
+	ssize_t n;
+	int fd = fileno(fp);
+
+	size *= nmemb;	/* assume no overflow */
+
+	while (size > 0) {
+		if ((n = write(fd, p, size)) == -1) {
+			switch (errno) {
+			case EINTR:
+			case EAGAIN:
+#if defined(EWOULDBLOCK) && EWOULDBLOCK != EAGAIN
+			case EWOULDBLOCK:
+#endif
+				continue;
+			default:
+				return nwr;
+			}
+		}
+		p += n;
+		nwr += n;
+		size -= n;
+	}
+	return nwr;
+}
 
 /*
  * Determine if token is the next word in buf (case insensitive).
@@ -1650,7 +1687,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 				}
 				bytes += flen;
 				bufrem -= flen;
-				if (fwrite(xferbuf, sizeof(char), flen, fout)
+				if (maxwrite(xferbuf, sizeof(char), flen, fout)
 				    != flen) {
 					warn("Writing `%s'", savefile);
 					goto cleanup_fetch_url;
