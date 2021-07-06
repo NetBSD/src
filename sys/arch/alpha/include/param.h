@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.48 2021/05/31 14:38:55 simonb Exp $ */
+/* $NetBSD: param.h,v 1.49 2021/07/06 12:20:52 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -56,6 +56,12 @@
 #else
 #define ALPHA_PGSHIFT	13
 #endif
+
+/*
+ * Compiler assumes 16 byte stack alignment, per recommendation of
+ * Alpha Architecture Handbook.
+ */
+#define	STACK_ALIGNBYTES	(16 - 1)
 
 #define	NBPG		(1 << ALPHA_PGSHIFT)		/* bytes/page */
 #define	PGOFSET		(NBPG-1)			/* byte off. into pg */
