@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.12 2021/07/03 10:20:00 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.13 2021/07/06 03:46:24 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -282,4 +282,10 @@ sys/dev/ic/dp8390.c				1.99
 	Make sure the media / mii members in struct ethercom are initialized
 	so that the media-related ioctls work.
 	[thorpej, ticket #1311]
+
+sys/miscfs/kernfs/kernfs_vnops.c		1.169,1.170
+
+	Add missing VOP_KQFILTER to kernfs.
+	Fix permissons on /kern/{r,}rootdev.
+	[dholland, ticket #1318]
 
