@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.253 2021/07/06 04:44:20 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.254 2021/07/06 04:48:17 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.253 2021/07/06 04:44:20 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.254 2021/07/06 04:48:17 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -575,7 +575,7 @@ type_attribute_spec:
 	| T_AT_DESTRUCTOR
 	| T_AT_FALLTHROUGH {
 		fallthru(1);
-	}
+	  }
 	| T_AT_FORMAT T_LPAREN type_attribute_format_type T_COMMA
 	    constant_expr T_COMMA constant_expr T_RPAREN
 	| T_AT_FORMAT_ARG T_LPAREN constant_expr T_RPAREN
@@ -1349,7 +1349,7 @@ asm_or_symbolrename_opt:		/* expect only one */
 	;
 
 initializer:			/* C99 6.7.8 "Initialization" */
-	  expr				%prec T_COMMA {
+	  expr %prec T_COMMA {
 		init_expr($1);
 	  }
 	| init_lbrace init_rbrace {
@@ -1566,7 +1566,7 @@ block_item_list:
 			/* declarations after statements is a C99 feature */
 			c99ism(327);
 		$$ = $1 || $2;
-	}
+	  }
 	;
 
 block_item:
@@ -1728,6 +1728,7 @@ for_start:
 		block_level++;
 	  }
 	;
+
 for_exprs:
 	  for_start declaration_specifiers deftyp notype_init_decls T_SEMI
 	    expr_opt T_SEMI expr_opt T_RPAREN {
@@ -1965,13 +1966,13 @@ term:
 		if ($$ != NULL)
 			check_expr_misc($2, false, false, false, false, false, true);
 	  }
-	| T_SIZEOF T_LPAREN type_name T_RPAREN		%prec T_SIZEOF {
+	| T_SIZEOF T_LPAREN type_name T_RPAREN %prec T_SIZEOF {
 		$$ = build_sizeof($3);
 	  }
 	| T_ALIGNOF T_LPAREN type_name T_RPAREN {
 		$$ = build_alignof($3);
 	  }
-	| T_LPAREN type_name T_RPAREN term		%prec T_UNARY {
+	| T_LPAREN type_name T_RPAREN term %prec T_UNARY {
 		$$ = cast($4, $2);
 	  }
 	| T_LPAREN type_name T_RPAREN {	/* C99 6.5.2.5 "Compound literals" */
@@ -2044,7 +2045,7 @@ string2:
 	;
 
 func_arg_list:
-	  expr						%prec T_COMMA {
+	  expr %prec T_COMMA {
 		$$ = new_function_argument_node(NULL, $1);
 	  }
 	| func_arg_list T_COMMA expr {
@@ -2075,9 +2076,10 @@ identifier:			/* C99 6.4.2.1 */
 	;
 
 comma_opt:
-	  T_COMMA
-	| /* empty */
+	  /* empty */
+	| T_COMMA
 	;
+
 %%
 
 /* ARGSUSED */
