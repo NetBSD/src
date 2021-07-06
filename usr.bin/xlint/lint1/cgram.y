@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.257 2021/07/06 05:39:27 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.258 2021/07/06 16:02:44 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.257 2021/07/06 05:39:27 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.258 2021/07/06 16:02:44 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1300,6 +1300,7 @@ parameter_type_list:
 	  }
 	;
 
+/* XXX: C99 6.7.5 defines the same name, but it looks completely different. */
 parameter_declaration:
 	  declmods deftyp {
 		$$ = declare_argument(abstract_name(), false);
