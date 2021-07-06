@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.264 2021/07/06 20:56:38 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.265 2021/07/06 21:41:36 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.264 2021/07/06 20:56:38 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.265 2021/07/06 21:41:36 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -749,6 +749,11 @@ member_declaration:
 	  }
 	;
 
+/*
+ * XXX: shift/reduce conflict, caused by:
+ *	type_attribute noclass_declspecs
+ *	noclass_declspecs type_attribute
+ */
 noclass_declspecs:
 	  clrtyp_typespec {
 		add_type($1);
@@ -1352,6 +1357,11 @@ abstract_declarator:		/* C99 6.7.6 */
 	  }
 	;
 
+/*
+ * XXX: shift/reduce conflict, caused by:
+ *	type_attribute direct_abstract_declarator
+ *	direct_abstract_declarator type_attribute
+ */
 direct_abstract_declarator:		/* C99 6.7.6 */
 	  T_LPAREN abstract_declarator T_RPAREN {
 		$$ = $2;
