@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.160.4.2 2020/02/12 19:59:22 martin Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.160.4.3 2021/07/06 03:45:11 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.160.4.2 2020/02/12 19:59:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.160.4.3 2021/07/06 03:45:11 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,8 +91,8 @@ const struct kern_target kern_targets[] = {
 #if 0
      { DT_DIR, N("root"),      0,            KFSnull,        VDIR, DIR_MODE   },
 #endif
-     { DT_BLK, N("rootdev"),   &rootdev,     KFSdevice,      VBLK, READ_MODE  },
-     { DT_CHR, N("rrootdev"),  &rrootdev,    KFSdevice,      VCHR, READ_MODE  },
+     { DT_BLK, N("rootdev"),   &rootdev,     KFSdevice,      VBLK, UREAD_MODE  },
+     { DT_CHR, N("rrootdev"),  &rrootdev,    KFSdevice,      VCHR, UREAD_MODE  },
      { DT_REG, N("time"),      0,            KFStime,        VREG, READ_MODE  },
 			/* XXXUNCONST */
      { DT_REG, N("version"),   __UNCONST(version),
@@ -197,6 +197,7 @@ const struct vnodeopv_entry_desc kernfs_vnodeop_entries[] = {
 	{ &vop_fcntl_desc, kernfs_fcntl },		/* fcntl */
 	{ &vop_ioctl_desc, kernfs_ioctl },		/* ioctl */
 	{ &vop_poll_desc, kernfs_poll },		/* poll */
+	{ &vop_kqfilter_desc, genfs_kqfilter },		/* kqfilter */
 	{ &vop_revoke_desc, kernfs_revoke },		/* revoke */
 	{ &vop_fsync_desc, kernfs_fsync },		/* fsync */
 	{ &vop_seek_desc, kernfs_seek },		/* seek */
@@ -245,6 +246,7 @@ const struct vnodeopv_entry_desc kernfs_specop_entries[] = {
 	{ &vop_fcntl_desc, spec_fcntl },		/* fcntl */
 	{ &vop_ioctl_desc, spec_ioctl },		/* ioctl */
 	{ &vop_poll_desc, spec_poll },			/* poll */
+	{ &vop_kqfilter_desc, genfs_kqfilter },		/* kqfilter */
 	{ &vop_revoke_desc, spec_revoke },		/* revoke */
 	{ &vop_fsync_desc, spec_fsync },		/* fsync */
 	{ &vop_seek_desc, spec_seek },			/* seek */
