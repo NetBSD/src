@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.147 2020/07/02 11:49:48 martin Exp $	*/
+/*	$NetBSD: cpu.c,v 1.148 2021/07/06 08:34:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.147 2020/07/02 11:49:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.148 2021/07/06 08:34:28 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -739,7 +739,10 @@ identify_arm_cpu(device_t dv, struct cpu_info *ci)
 	aprint_normal("\n");
 
 	if (CPU_ID_CORTEX_P(arm_cpuid) || CPU_ID_ARM11_P(arm_cpuid) || CPU_ID_MV88SV58XX_P(arm_cpuid)) {
-		identify_features(dv);
+		if ((arm_cpuid & CPU_ID_CPU_MASK) != CPU_ID_ARM1136JS &&
+		    (arm_cpuid & CPU_ID_CPU_MASK) != CPU_ID_ARM1176JZS) {
+			identify_features(dv);
+		}
 	}
 
 	/* Print cache info. */
