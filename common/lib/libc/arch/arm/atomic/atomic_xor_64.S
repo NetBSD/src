@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_xor_64.S,v 1.3.32.1 2019/09/17 19:25:18 martin Exp $	*/
+/*	$NetBSD: atomic_xor_64.S,v 1.3.32.2 2021/07/06 04:11:31 martin Exp $	*/
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #ifdef _ARM_ARCH_6
 
 ENTRY_NP(_atomic_xor_64_nv)
-	push	{r3,r4}			/* save temporary */
+	push	{r3, r4}		/* save temporary */
 #ifndef __ARM_EABI__
 	mov	r3, r2
 	mov	r2, r1
@@ -50,7 +50,7 @@ ENTRY_NP(_atomic_xor_64_nv)
 #else
 	mcr	p15, 0, r4, c7, c10, 5	/* data memory barrier */
 #endif
-	pop	{r3,r4}			/* restore temporary */
+	pop	{r3, r4}		/* restore temporary */
 	RET				/* return new value */
 END(_atomic_xor_64_nv)
 
