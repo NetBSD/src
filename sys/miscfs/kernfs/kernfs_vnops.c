@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.169 2021/07/06 03:22:44 dholland Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.170 2021/07/06 03:23:03 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.169 2021/07/06 03:22:44 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.170 2021/07/06 03:23:03 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,8 +91,8 @@ const struct kern_target kern_targets[] = {
 #if 0
      { DT_DIR, N("root"),      0,            KFSnull,        VDIR, DIR_MODE   },
 #endif
-     { DT_BLK, N("rootdev"),   &rootdev,     KFSdevice,      VBLK, READ_MODE  },
-     { DT_CHR, N("rrootdev"),  &rrootdev,    KFSdevice,      VCHR, READ_MODE  },
+     { DT_BLK, N("rootdev"),   &rootdev,     KFSdevice,      VBLK, UREAD_MODE  },
+     { DT_CHR, N("rrootdev"),  &rrootdev,    KFSdevice,      VCHR, UREAD_MODE  },
      { DT_REG, N("time"),      0,            KFStime,        VREG, READ_MODE  },
 			/* XXXUNCONST */
      { DT_REG, N("version"),   __UNCONST(version),
