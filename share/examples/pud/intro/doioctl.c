@@ -1,10 +1,12 @@
-/*	$NetBSD: doioctl.c,v 1.1 2007/11/22 11:28:48 pooka Exp $	*/
+/*	$NetBSD: doioctl.c,v 1.2 2021/07/06 09:30:07 jmcneill Exp $	*/
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
 
+#include <err.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "common.h"
 
