@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.199 2019/03/14 19:10:04 kre Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.199.4.1 2021/07/06 04:22:34 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.199 2019/03/14 19:10:04 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.199.4.1 2021/07/06 04:22:34 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -1362,9 +1362,10 @@ void
 uvm_page_unbusy(struct vm_page **pgs, int npgs)
 {
 	struct vm_page *pg;
-	int i;
+	int i, pageout_done;
 	UVMHIST_FUNC("uvm_page_unbusy"); UVMHIST_CALLED(ubchist);
 
+	pageout_done = 0;
 	for (i = 0; i < npgs; i++) {
 		pg = pgs[i];
 		if (pg == NULL || pg == PGO_DONTCARE) {
@@ -1373,7 +1374,13 @@ uvm_page_unbusy(struct vm_page **pgs, int npgs)
 
 		KASSERT(uvm_page_locked_p(pg));
 		KASSERT(pg->flags & PG_BUSY);
-		KASSERT((pg->flags & PG_PAGEOUT) == 0);
+
+		if (pg->flags & PG_PAGEOUT) {
+			pg->flags &= ~PG_PAGEOUT;
+			pg->flags |= PG_RELEASED;
+			pageout_done++;
+			atomic_inc_uint(&uvmexp.pdfreed);
+		}
 		if (pg->flags & PG_WANTED) {
 			wakeup(pg);
 		}
@@ -1391,6 +1398,9 @@ uvm_page_unbusy(struct vm_page **pgs, int npgs)
 			pg->flags &= ~(PG_WANTED|PG_BUSY);
 			UVM_PAGE_OWN(pg, NULL);
 		}
+	}
+	if (pageout_done != 0) {
+		uvm_pageout_done(pageout_done);
 	}
 }
 
