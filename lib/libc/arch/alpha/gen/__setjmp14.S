@@ -1,4 +1,4 @@
-/* $NetBSD: __setjmp14.S,v 1.8 2020/10/21 01:24:05 thorpej Exp $ */
+/* $NetBSD: __setjmp14.S,v 1.9 2021/07/06 12:38:40 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -68,12 +68,12 @@ LEAF(__setjmp14, 1)
 	lda	a2, SC_MASK(s0)			/* point to mask in sc */
 	CALL(__sigprocmask14)
 
-	lda	sp, -24(sp)			/* sizeof struct sigaltstack */
+	lda	sp, -32(sp)	/* roundup(sizeof(struct sigaltstack), 16) */
 	mov	zero, a0
 	mov	sp, a1
 	CALL(__sigaltstack14)
 	ldl	t0, 16(sp)			/* offset of ss_flags */
-	lda	sp, 24(sp)			/* sizeof struct sigaltstack */
+	lda	sp, 32(sp)			/* pop the sigaltstack */
 	ldq	ra, (SC_REGS+_REG_RA*8)(s0)	/* restore return address */
 	blt	v0, botch			/* check for error */
 	and	t0, 0x1, t0			/* get SA_ONSTACK flag */
