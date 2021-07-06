@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.258 2021/07/06 16:02:44 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.259 2021/07/06 17:52:04 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.258 2021/07/06 16:02:44 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.259 2021/07/06 17:52:04 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -300,8 +300,7 @@ anonymize(sym_t *s)
 %type	<y_tnode>	constant_expr
 %type	<y_tnode>	array_size
 %type	<y_sym>		enum_declaration
-%type	<y_sym>		enums_with_opt_comma
-%type	<y_sym>		enums
+%type	<y_sym>		enumerator_list
 %type	<y_sym>		enumerator
 %type	<y_sym>		enumeration_constant
 %type	<y_sym>		notype_direct_decl
@@ -964,7 +963,7 @@ enum_tag:
 	;
 
 enum_declaration:
-	  enum_decl_lbrace enums_with_opt_comma T_RBRACE {
+	  enum_decl_lbrace enumerator_list enumerator_list_comma_opt T_RBRACE {
 		$$ = $2;
 	  }
 	;
@@ -976,23 +975,9 @@ enum_decl_lbrace:
 	  }
 	;
 
-enums_with_opt_comma:
-	  enums
-	| enums T_COMMA {
-		if (sflag) {
-			/* trailing ',' prohibited in enum declaration */
-			error(54);
-		} else {
-			/* trailing ',' prohibited in enum declaration */
-			c99ism(54);
-		}
-		$$ = $1;
-	  }
-	;
-
-enums:
+enumerator_list:		/* C99 6.7.2.2 */
 	  enumerator
-	| enums T_COMMA enumerator {
+	| enumerator_list T_COMMA enumerator {
 		$$ = lnklst($1, $3);
 	  }
 	| error {
@@ -1000,7 +985,20 @@ enums:
 	  }
 	;
 
-enumerator:
+enumerator_list_comma_opt:
+	  /* empty */
+	| T_COMMA {
+		if (sflag) {
+			/* trailing ',' prohibited in enum declaration */
+			error(54);
+		} else {
+			/* trailing ',' prohibited in enum declaration */
+			c99ism(54);
+		}
+	  }
+	;
+
+enumerator:			/* C99 6.7.2.2 */
 	  enumeration_constant {
 		$$ = enumeration_constant($1, enumval, true);
 	  }
