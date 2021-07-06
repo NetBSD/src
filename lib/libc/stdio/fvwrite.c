@@ -1,4 +1,4 @@
-/*	$NetBSD: fvwrite.c,v 1.25 2012/03/27 15:05:42 christos Exp $	*/
+/*	$NetBSD: fvwrite.c,v 1.26 2021/07/06 14:22:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fvwrite.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fvwrite.c,v 1.25 2012/03/27 15:05:42 christos Exp $");
+__RCSID("$NetBSD: fvwrite.c,v 1.26 2021/07/06 14:22:16 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -97,15 +97,21 @@ __sfvwrite(FILE *fp, struct __suio *uio)
 		len = iov->iov_len; \
 		iov++; \
 	}
+#define WRITE(nw) \
+	w = (*fp->_write)(fp->_cookie, p, nw); \
+	if (w < 0) { \
+		if (errno != EINTR) \
+			goto err; \
+		w = 0; \
+	} else \
+		w = w
 	if (fp->_flags & __SNBF) {
 		/*
 		 * Unbuffered: write up to BUFSIZ bytes at a time.
 		 */
 		do {
 			GETIOV(;);
-			w = (*fp->_write)(fp->_cookie, p, MIN(len, BUFSIZ));
-			if (w <= 0)
-				goto err;
+			WRITE(MIN(len, BUFSIZ));
 			p += w;
 			len -= w;
 		} while ((uio->uio_resid -= w) != 0);
@@ -160,9 +166,7 @@ __sfvwrite(FILE *fp, struct __suio *uio)
 					goto err;
 			} else if (len >= (size_t)(w = fp->_bf._size)) {
 				/* write directly */
-				w = (*fp->_write)(fp->_cookie, p, (size_t)w);
-				if (w <= 0)
-					goto err;
+				WRITE((size_t)w);
 			} else {
 				/* fill and done */
 				w = len;
@@ -199,9 +203,7 @@ __sfvwrite(FILE *fp, struct __suio *uio)
 				if (fflush(fp))
 					goto err;
 			} else if (s >= (w = fp->_bf._size)) {
-				w = (*fp->_write)(fp->_cookie, p, (size_t)w);
-				if (w <= 0)
-				 	goto err;
+				WRITE((size_t)w);
 			} else {
 				w = s;
 				COPY(w);

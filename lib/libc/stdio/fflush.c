@@ -1,4 +1,4 @@
-/*	$NetBSD: fflush.c,v 1.19 2021/07/05 07:26:00 christos Exp $	*/
+/*	$NetBSD: fflush.c,v 1.20 2021/07/06 14:22:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fflush.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fflush.c,v 1.19 2021/07/05 07:26:00 christos Exp $");
+__RCSID("$NetBSD: fflush.c,v 1.20 2021/07/06 14:22:16 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -107,7 +107,11 @@ __sflush(FILE *fp)
 
 	for (; n > 0; n -= t, p += t) {
 		t = (*fp->_write)(fp->_cookie, (char *)p, n);
-		if (t <= 0) {
+		if (t < 0) {
+			if (errno == EINTR) {
+				t = 0;
+				continue;
+			}
 			/* Reset _p and _w. */
 			if (p > fp->_p) {
 				/* Some was written. */
