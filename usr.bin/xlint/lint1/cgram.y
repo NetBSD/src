@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.255 2021/07/06 05:12:44 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.256 2021/07/06 05:22:34 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.255 2021/07/06 05:12:44 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.256 2021/07/06 05:22:34 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1016,6 +1016,11 @@ enumeration_constant:		/* C99 6.4.4.3 */
 	;
 
 
+/*
+ * For an explanation of 'notype' in the following rules, see the Bison
+ * manual, section 7.1 "Semantic Info in Token Kinds".
+ */
+
 notype_init_decls:
 	  notype_init_decl
 	| notype_init_decls T_COMMA type_init_decl
@@ -1026,7 +1031,6 @@ type_init_decls:
 	| type_init_decls T_COMMA type_init_decl
 	;
 
-/* See the Bison manual, section 7.1 "Semantic Info in Token Kinds". */
 notype_init_decl:
 	  notype_decl asm_or_symbolrename_opt {
 		cgram_declare($1, false, $2);
@@ -1129,18 +1133,6 @@ param_decl:
 	| pointer direct_param_decl {
 		$$ = add_pointer($2, $1);
 	  }
-	;
-
-array_size:
-	  type_qualifier_list_opt T_SCLASS constant_expr {
-		/* C11 6.7.6.3p7 */
-		if ($2 != STATIC)
-			yyerror("Bad attribute");
-		/* static array size is a C11 extension */
-		c11ism(343);
-		$$ = $3;
-	  }
-	| constant_expr
 	;
 
 direct_param_decl:
@@ -1493,6 +1485,18 @@ direct_abstract_declarator:		/* C99 6.7.6 */
 		block_level--;
 	  }
 	| direct_abstract_declarator type_attribute
+	;
+
+array_size:
+	  type_qualifier_list_opt T_SCLASS constant_expr {
+		/* C11 6.7.6.3p7 */
+		if ($2 != STATIC)
+			yyerror("Bad attribute");
+		/* static array size is a C11 extension */
+		c11ism(343);
+		$$ = $3;
+	  }
+	| constant_expr
 	;
 
 non_expr_statement:
