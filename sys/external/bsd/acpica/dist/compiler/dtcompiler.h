@@ -566,6 +566,14 @@ DtCompilePptt (
     void                    **PFieldList);
 
 ACPI_STATUS
+DtCompilePrmt (
+    void                    **PFieldList);
+
+ACPI_STATUS
+DtCompileRgrt (
+    void                    **PFieldList);
+
+ACPI_STATUS
 DtCompileRsdt (
     void                    **PFieldList);
 
@@ -591,6 +599,10 @@ DtCompileSrat (
 
 ACPI_STATUS
 DtCompileStao (
+    void                    **PFieldList);
+
+ACPI_STATUS
+DtCompileSvkl (
     void                    **PFieldList);
 
 ACPI_STATUS
@@ -635,6 +647,7 @@ DtGetGenericTableInfo (
 
 extern const unsigned char  TemplateAsf[];
 extern const unsigned char  TemplateBoot[];
+extern const unsigned char  TemplateBdat[];
 extern const unsigned char  TemplateBert[];
 extern const unsigned char  TemplateBgrt[];
 extern const unsigned char  TemplateCedt[];
@@ -668,7 +681,9 @@ extern const unsigned char  TemplatePdtt[];
 extern const unsigned char  TemplatePhat[];
 extern const unsigned char  TemplatePmtt[];
 extern const unsigned char  TemplatePptt[];
+extern const unsigned char  TemplatePrmt[];
 extern const unsigned char  TemplateRasf[];
+extern const unsigned char  TemplateRgrt[];
 extern const unsigned char  TemplateRsdt[];
 extern const unsigned char  TemplateS3pt[];
 extern const unsigned char  TemplateSbst[];
@@ -680,6 +695,7 @@ extern const unsigned char  TemplateSpcr[];
 extern const unsigned char  TemplateSpmi[];
 extern const unsigned char  TemplateSrat[];
 extern const unsigned char  TemplateStao[];
+extern const unsigned char  TemplateSvkl[];
 extern const unsigned char  TemplateTcpa[];
 extern const unsigned char  TemplateTpm2[];
 extern const unsigned char  TemplateUefi[];
