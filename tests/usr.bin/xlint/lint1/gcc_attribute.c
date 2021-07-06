@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_attribute.c,v 1.7 2021/07/06 17:33:07 rillig Exp $	*/
+/*	$NetBSD: gcc_attribute.c,v 1.8 2021/07/06 18:43:27 rillig Exp $	*/
 # 3 "gcc_attribute.c"
 
 /*
@@ -65,3 +65,22 @@ func(
     __attribute__((__noreturn__))
     __attribute__((__noreturn__))
 );
+
+/*
+ * https://gcc.gnu.org/onlinedocs/gcc/Attribute-Syntax.html says that the
+ * attribute-list is a "possibly empty comma-separated sequence of
+ * attributes".
+ *
+ * No matter whether this particular example is interpreted as an empty list
+ * or a list containing a single empty attribute, the result is the same in
+ * both cases.
+ */
+void one_empty_attribute(void)
+    __attribute__((/* none */));
+
+/*
+ * https://gcc.gnu.org/onlinedocs/gcc/Attribute-Syntax.html further says that
+ * each individual attribute may be "Empty. Empty attributes are ignored".
+ */
+void two_empty_attributes(void)
+    __attribute__((/* none */, /* still none */));
