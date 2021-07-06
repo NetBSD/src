@@ -1,0 +1,4 @@
+gcc_attribute_label.c(25): error: syntax error '__hot__' [249]
+gcc_attribute_label.c(27): error: 'i' undefined [99]
+gcc_attribute_label.c(19): warning: label error unused in function test [232]
+gcc_attribute_label.c(30): warning: undefined label error [23]
