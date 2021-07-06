@@ -114,13 +114,6 @@ alloc_failed (void)
    holds the same value as the value returned.  */
 
 char *
-#ifdef __alpha__
-/*
- * toolchain/56153
- * GCC 10 and 9 miscompile malloca() macro for alpha.
- */
-__attribute__((optimize("O0")))
-#endif
 __realpath (const char *name, char *resolved)
 {
   char *rpath, *dest, *extra_buf = NULL;
