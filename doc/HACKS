@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.221 2021/07/05 11:16:56 hgutch Exp $
+# $NetBSD: HACKS,v 1.222 2021/07/06 12:42:12 thorpej Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -950,17 +950,6 @@ descr	Disable optimization for rtld.c on the vax with gcc-7. Crashes on the
 	second pass loop with elm == 0xffffffff
 kcah
 
-port	alpha
-hack	GCC 7.4/8.3/9.3: userland binaries crash randomly (port-alpha/54307)
-cdate	Fri Nov  1 20:43:35 UTC 2019
-mdate	Wed Dec 16 01:21:32 UTC 2020
-who	rin
-file	src/external/bsd/jemalloc/lib/Makefile.inc: 1.11
-descr	GCC miscompiles rtree.c and tcache.c (for 7.4, 8.3, and 9.3) with
-	optimization levels -O[12]. Compile these files with -O0,
-	alternatively, compile whole jemalloc with -DJEMALLOC_DEBUG.
-kcah
-
 port	powerpc
 hack	compile tc.c, logerr.c, ubsan.c with -O0 for clang
 cdate	Wed Jan 29 17:40:19 EST 2020
@@ -986,17 +975,6 @@ descr	GCC 9.4 and 8.3 miscompile aes_ccm_tag() for m68k with optimization
 	For 9.4, -O0 and -O1 work but -O2 fails for amiga (A1200, 68060) and
 	mac68k (Quadra 840AV, 68040). Whereas -O0 and -O2 work but -O1 fails
 	for sun3 (TME, 68020 emulator) and sun2 (TME, 68010 emulator).
-kcah
-
-port	alpha
-hack	compile __realpath in gdb/gnulib/canonicalize-lgpl.c with -O0 (PR/56153)
-cdate	Sat May  8 08:24:49 EDT 2021
-mdate	Sat May  8 08:24:49 EDT 2021
-who	christos
-file	src/external/gpl3/gdb/dist/gnulib/import/canonicalize-lgpl.c: 1.2
-descr	For alpha gcc-9 and gcc-10 miscompile the malloca macro leading to
-        allocation from the stack and freeing with regular free which causes
-	a crash.
 kcah
 
 port	sh3
