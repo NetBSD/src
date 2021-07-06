@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.260 2021/07/06 18:22:40 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.261 2021/07/06 18:28:08 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.260 2021/07/06 18:22:40 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.261 2021/07/06 18:28:08 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1984,27 +1984,29 @@ type_attribute_list:
 	;
 
 type_attribute:
-	  T_ATTRIBUTE T_LPAREN T_LPAREN {
-	    attron = true;
-	  } type_attribute_spec_list {
-	    attron = false;
-	  } T_RPAREN T_RPAREN
-	| T_ALIGNAS T_LPAREN align_as T_RPAREN {
-	  }
+	  gcc_attribute
+	| T_ALIGNAS T_LPAREN align_as T_RPAREN
 	| T_PACKED {
 		addpacked();
 	  }
-	| T_NORETURN {
-	  }
+	| T_NORETURN
 	;
 
 /* https://gcc.gnu.org/onlinedocs/gcc/Attribute-Syntax.html */
-type_attribute_spec_list:
-	  type_attribute_spec
-	| type_attribute_spec_list T_COMMA type_attribute_spec
+gcc_attribute:
+	  T_ATTRIBUTE T_LPAREN T_LPAREN {
+	    attron = true;
+	  } gcc_attribute_spec_list {
+	    attron = false;
+	  } T_RPAREN T_RPAREN
 	;
 
-type_attribute_spec:
+gcc_attribute_spec_list:
+	  gcc_attribute_spec
+	| gcc_attribute_spec_list T_COMMA gcc_attribute_spec
+	;
+
+gcc_attribute_spec:
 	  /* empty */
 	| T_AT_ALWAYS_INLINE
 	| T_AT_ALIAS T_LPAREN string T_RPAREN
@@ -2012,7 +2014,7 @@ type_attribute_spec:
 	| T_AT_ALIGNED
 	| T_AT_ALLOC_SIZE T_LPAREN constant_expr T_COMMA constant_expr T_RPAREN
 	| T_AT_ALLOC_SIZE T_LPAREN constant_expr T_RPAREN
-	| T_AT_BOUNDED T_LPAREN type_attribute_bounded_type
+	| T_AT_BOUNDED T_LPAREN gcc_attribute_bounded
 	  T_COMMA constant_expr T_COMMA constant_expr T_RPAREN
 	| T_AT_COLD
 	| T_AT_COMMON
@@ -2025,7 +2027,7 @@ type_attribute_spec:
 	| T_AT_FALLTHROUGH {
 		fallthru(1);
 	  }
-	| T_AT_FORMAT T_LPAREN type_attribute_format_type T_COMMA
+	| T_AT_FORMAT T_LPAREN gcc_attribute_format T_COMMA
 	    constant_expr T_COMMA constant_expr T_RPAREN
 	| T_AT_FORMAT_ARG T_LPAREN constant_expr T_RPAREN
 	| T_AT_GNU_INLINE
@@ -2066,13 +2068,13 @@ type_attribute_spec:
 	  }
 	;
 
-type_attribute_bounded_type:
+gcc_attribute_bounded:
 	  T_AT_MINBYTES
 	| T_AT_STRING
 	| T_AT_BUFFER
 	;
 
-type_attribute_format_type:
+gcc_attribute_format:
 	  T_AT_FORMAT_GNU_PRINTF
 	| T_AT_FORMAT_PRINTF
 	| T_AT_FORMAT_SCANF
