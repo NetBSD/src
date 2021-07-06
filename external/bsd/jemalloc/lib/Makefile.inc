@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.13 2020/12/16 01:21:32 rin Exp $
+#	$NetBSD: Makefile.inc,v 1.14 2021/07/06 12:40:24 thorpej Exp $
 
 JEMALLOC:=${.PARSEDIR}/..
 
@@ -50,14 +50,6 @@ COPTS.background_thread.c+=-Wno-error=stack-protector
 COPTS.ctl.c+=-Wno-error=stack-protector
 COPTS.stats.c+=-Wno-error=stack-protector
 COPTS.tcache.c+=-Wno-error=stack-protector
-
-.if ${MACHINE} == "alpha" && ${ACTIVE_CC} == "gcc"
-# These files need to be compiled with -O0, or build everything with
-# -DJEMALLOC_DEBUG. Otherwise, userland binaries crash randomly, as
-# reported in port-alpha/54307.
-COPTS.rtree.c+=	-O0
-COPTS.tcache.c+=-O0
-.endif
 
 .if ${MACHINE_ARCH} == "vax"
 # in merge_overlapping_regs, at regrename.c
