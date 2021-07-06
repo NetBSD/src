@@ -1,4 +1,4 @@
-/* $NetBSD: lrint.S,v 1.3 2004/10/13 15:18:31 drochner Exp $ */
+/* $NetBSD: lrint.S,v 1.4 2021/07/06 12:38:40 thorpej Exp $ */
 
 /*
  * Written by Matthias Drochner <drochner@NetBSD.org>.
@@ -12,10 +12,10 @@ LEAF(lrint, 1)
 #if 0
 	ftoit ft0,v0
 #else
-	lda sp,-8(sp)
+	lda sp,-16(sp)
 	stt ft0,0(sp)
 	ldq v0,0(sp)
-	lda sp,8(sp)
+	lda sp,16(sp)
 #endif
 	ret
 END(lrint)

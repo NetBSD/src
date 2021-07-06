@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.4 2020/10/21 01:24:05 thorpej Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.5 2021/07/06 12:38:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -32,25 +32,30 @@
 #include "SYS.h"
 #include "assym.h"
 
-NESTED(swapcontext, 2, 24, ra, IM_RA|IM_A0|IM_A1, 0)
+#define	FRAME_SIZE	32
+#define	FRAME_RA	(32-16)
+#define	FRAME_OUCP	(32-24)
+#define	FRAME_UCP	(32-32)
+
+NESTED(swapcontext, 2, FRAME_SIZE, ra, IM_RA|IM_A0|IM_A1, 0)
 	LDGP(pv)
-	lda	sp, -24(sp)
-	stq	ra, (24- 8)(sp)		/* must save ra, oucp, ucp */
-	stq	a0, (24-16)(sp)
-	stq	a1, (24-24)(sp)
+	lda	sp, -FRAME_SIZE(sp)
+	stq	ra, FRAME_RA(sp)	/* must save ra, oucp, ucp */
+	stq	a0, FRAME_OUCP(sp)
+	stq	a1, FRAME_UCP(sp)
 	CALL(_getcontext)		/* getcontext(oucp) */
-	ldq	t0, (24-16)(sp)
+	ldq	t0, FRAME_OUCP(sp)
 	bne	v0, Lerr
-	ldq	t1, (24- 8)(sp)
+	ldq	t1, FRAME_RA(sp)
 	stq	t1, (UC_GREGS + _REG_RA*8)(t0)	/* Adjust saved RA */
 	stq	t1, (UC_GREGS + _REG_PC*8)(t0)	/* Adjust saved PC */
-	lda	t1, 24(sp)
+	lda	t1, FRAME_SIZE(sp)
 	stq	t1, (UC_GREGS + _REG_SP*8)(t0)	/* Adjust saved SP */
 
-	ldq	a0, (24-24)(sp)
+	ldq	a0, FRAME_UCP(sp)
 	CALL(setcontext)		/* setcontext(ucp) */
 Lerr:
-	ldq	ra, (24- 8)(sp)
-	lda	sp, 24(sp)
+	ldq	ra, FRAME_RA(sp)
+	lda	sp, FRAME_SIZE(sp)
 	RET
 END(swapcontext)
