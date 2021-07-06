@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.111 2021/07/05 19:48:32 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.112 2021/07/06 04:44:20 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -328,10 +328,10 @@ typedef	struct tnode {
 #define	tn_val		tn_u._tn_val
 #define	tn_string	tn_u._tn_string
 
-struct generic_association_types {
-	type_t *gat_arg;	/* NULL means default or error */
-	tnode_t *gat_result;	/* NULL means error */
-	struct generic_association_types *gat_prev;
+struct generic_association {
+	type_t *ga_arg;		/* NULL means default or error */
+	tnode_t *ga_result;	/* NULL means error */
+	struct generic_association *ga_prev;
 };
 
 /*
