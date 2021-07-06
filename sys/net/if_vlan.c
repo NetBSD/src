@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.156 2021/07/06 02:34:12 yamaguchi Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.157 2021/07/06 02:39:46 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.156 2021/07/06 02:34:12 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.157 2021/07/06 02:39:46 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1659,6 +1659,24 @@ vlan_input(struct ifnet *ifp, struct mbuf *m)
 		memmove(mtod(m, char *) + mib->ifvm_encaplen,
 		    mtod(m, void *), sizeof(struct ether_header));
 		m_adj(m, mib->ifvm_encaplen);
+	}
+
+	/*
+	 * Drop promiscuously received packets if we are not in
+	 * promiscuous mode
+	 */
+	if ((m->m_flags & (M_BCAST | M_MCAST)) == 0 &&
+	    (ifp->if_flags & IFF_PROMISC) &&
+	    (ifv->ifv_if.if_flags & IFF_PROMISC) == 0) {
+		struct ether_header *eh;
+
+		eh = mtod(m, struct ether_header *);
+		if (memcmp(CLLADDR(ifv->ifv_if.if_sadl),
+		    eh->ether_dhost, ETHER_ADDR_LEN) != 0) {
+			m_freem(m);
+			if_statinc(&ifv->ifv_if, if_ierrors);
+			goto out;
+		}
 	}
 
 	m_set_rcvif(m, &ifv->ifv_if);
