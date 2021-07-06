@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.263 2021/07/06 20:29:08 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.264 2021/07/06 20:56:38 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.263 2021/07/06 20:29:08 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.264 2021/07/06 20:56:38 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -963,6 +963,11 @@ type_decl:
 	  }
 	;
 
+/*
+ * XXX: shift/reduce conflict, caused by:
+ *	type_attribute notype_direct_decl
+ *	notype_direct_decl type_attribute
+ */
 notype_direct_decl:
 	  T_NAME {
 		$$ = declarator_name(getsym($1));
@@ -987,6 +992,11 @@ notype_direct_decl:
 	| notype_direct_decl type_attribute
 	;
 
+/*
+ * XXX: shift/reduce conflict, caused by:
+ *	type_attribute type_direct_decl
+ *	type_direct_decl type_attribute
+ */
 type_direct_decl:
 	  identifier {
 		$$ = declarator_name(getsym($1));
