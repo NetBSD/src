@@ -1,4 +1,4 @@
-/* $NetBSD: ixv.c,v 1.162 2021/06/16 00:21:18 riastradh Exp $ */
+/* $NetBSD: ixv.c,v 1.163 2021/07/07 08:58:19 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -35,7 +35,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.162 2021/06/16 00:21:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.163 2021/07/07 08:58:19 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -148,6 +148,7 @@ static int	ixv_sysctl_rdh_handler(SYSCTLFN_PROTO);
 static int	ixv_sysctl_rdt_handler(SYSCTLFN_PROTO);
 static int	ixv_sysctl_tdt_handler(SYSCTLFN_PROTO);
 static int	ixv_sysctl_tdh_handler(SYSCTLFN_PROTO);
+static int	ixv_sysctl_rx_copy_len(SYSCTLFN_PROTO);
 
 /* The MSI-X Interrupt handlers */
 static int	ixv_msix_que(void *);
@@ -515,6 +516,9 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 		adapter->num_rx_desc = DEFAULT_RXD;
 	} else
 		adapter->num_rx_desc = ixv_rxd;
+
+	/* Set default high limit of copying mbuf in rxeof */
+	adapter->rx_copy_len = IXGBE_RX_COPY_LEN_MAX;
 
 	adapter->num_jcl = adapter->num_rx_desc * IXGBE_JCLNUM_MULTI;
 
@@ -2561,6 +2565,13 @@ ixv_add_device_sysctls(struct adapter *adapter)
 		aprint_error_dev(dev, "could not create sysctl\n");
 
 	if (sysctl_createv(log, 0, &rnode, &cnode,
+	    CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "rx_copy_len", SYSCTL_DESCR("RX Copy Length"),
+	    ixv_sysctl_rx_copy_len, 0,
+	    (void *)adapter, 0, CTL_CREATE, CTL_EOL) != 0)
+		aprint_error_dev(dev, "could not create sysctl\n");
+
+	if (sysctl_createv(log, 0, &rnode, &cnode,
 	    CTLFLAG_READONLY, CTLTYPE_INT, "num_jcl_per_queue",
 	    SYSCTL_DESCR("Number of jumbo buffers per queue"),
 	    NULL, 0, &adapter->num_jcl, 0, CTL_CREATE,
@@ -2931,6 +2942,31 @@ ixv_sysctl_debug(SYSCTLFN_ARGS)
 
 	return 0;
 } /* ixv_sysctl_debug */
+
+/************************************************************************
+ * ixv_sysctl_rx_copy_len
+ ************************************************************************/
+static int
+ixv_sysctl_rx_copy_len(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	struct adapter *adapter = (struct adapter *)node.sysctl_data;
+	int error;
+	int result = adapter->rx_copy_len;
+
+	node.sysctl_data = &result;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+
+	if (error || newp == NULL)
+		return error;
+
+	if ((result < 0) || (result > IXGBE_RX_COPY_LEN_MAX))
+		return EINVAL;
+
+	adapter->rx_copy_len = result;
+
+	return 0;
+} /* ixgbe_sysctl_rx_copy_len */
 
 /************************************************************************
  * ixv_init_device_features
