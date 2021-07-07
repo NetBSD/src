@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.5 2020/09/04 03:41:49 thorpej Exp $	*/
+/*	$NetBSD: patch.c,v 1.6 2021/07/07 03:30:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.5 2020/09/04 03:41:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.6 2021/07/07 03:30:35 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -56,6 +56,9 @@ void	_membar_sync(void);
 void	_membar_sync_end(void);
 void	_membar_sync_mp(void);
 void	_membar_sync_mp_end(void);
+
+extern char alpha_copystr_bwx[], alpha_copystr_bwx_end[];
+extern char alpha_copystr[], alpha_copystr_end[];
 
 static void __attribute__((__unused__))
 patchfunc(void *from_s, void *from_e, void *to_s, void *to_e)
@@ -84,6 +87,11 @@ alpha_patch(bool is_mp)
 	 * CPUs have not yet actually hatched to start running
 	 * kernel code.
 	 */
+
+	if (cpu_amask & ALPHA_AMASK_BWX) {
+		patchfunc(alpha_copystr_bwx, alpha_copystr_bwx_end,
+		    alpha_copystr, alpha_copystr_end);
+	}
 
 #if defined(MULTIPROCESSOR)
 	if (is_mp) {
