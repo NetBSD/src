@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.17 2020/05/17 18:59:02 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.18 2021/07/07 11:51:46 martin Exp $
 
 WARNS?=	4
 
@@ -45,6 +45,10 @@ LDADD+=		-lrumpdev_disk -lrumpdev
 
 LDADD+=		-lp2k -lukfs -lrumpvfs -lrumpvfs_nofifofs -lrump -lrumpuser -lpuffs -lutil
 LDADD+=		-lpthread
+
+.if ${RUMP_SANITIZE:Uno} != "no"
+LDADD+=	-fsanitize=${RUMP_SANITIZE}
+.endif
 
 DPADD+=		${LIBP2K} ${LIBUKFS} ${LIBRUMPVFS} ${LIBRUMP} ${LIBRUMPUSER}
 DPADD+=		${LIBPUFFS} ${LIBUTIL} ${LIBPTHREAD}
