@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2020/05/16 12:46:57 christos Exp $
+#	$NetBSD: Makefile,v 1.15 2021/07/07 11:51:46 martin Exp $
 #
 
 .PATH: ${.CURDIR}/../rump_allserver
@@ -12,5 +12,9 @@ LDADD+= \
 	-lrumpkern_sysproxy -lrump -lrumpvfs_nofifofs -lrumpvfs -lrumpuser \
     -Wl,--no-whole-archive
 LDADD+= -lpthread
+
+.if ${RUMP_SANITIZE:Uno} != "no"
+LDADD+=	-fsanitize=${RUMP_SANITIZE}
+.endif
 
 .include <bsd.prog.mk>

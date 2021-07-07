@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2020/05/26 18:52:29 christos Exp $
+#	$NetBSD: Makefile,v 1.13 2021/07/07 11:51:45 martin Exp $
 #
 
 .include <bsd.init.mk>
@@ -24,6 +24,10 @@ LDADD+= \
 
 LDADD+=		-lrumpuser -lpthread
 DPADD+=		${LIBRUMPVFS} ${LIBRUMP} ${LIBRUMPUSER}
+
+.if ${RUMP_SANITIZE:Uno} != "no"
+LDADD+=	-fsanitize=${RUMP_SANITIZE}
+.endif
 
 WARNS=	4
 

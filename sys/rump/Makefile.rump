@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.132 2021/04/25 15:16:56 christos Exp $
+#	$NetBSD: Makefile.rump,v 1.133 2021/07/07 11:51:45 martin Exp $
 #
 
 .if !defined(_RUMP_MK)
@@ -23,6 +23,11 @@ CPPFLAGS+=	-D_RUMPKERNEL -I${RUMPTOP}/librump/rumpkern
 # and compiling without it, causes issues at least on sh3 by adding
 # aborts after kern_assert on NULL pointer checks.
 CFLAGS+=    ${${ACTIVE_CC} == "gcc":? -fno-delete-null-pointer-checks :}
+
+.if ${RUMP_SANITIZE:Uno} != "no"
+CFLAGS+=	-fsanitize=${RUMP_SANITIZE}
+LDFLAGS+=	-fsanitize=${RUMP_SANITIZE}
+.endif
 
 # NULL + 0 arithmetic raises LLVM UBSan warnings, specially in sys/pslist.h
 # in the type-safe macros _PSLIST_VALIDATE_PTRS and _PSLIST_VALIDATE_CONTAINER.
