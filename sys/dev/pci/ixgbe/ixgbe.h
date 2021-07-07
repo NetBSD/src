@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.75 2021/03/09 10:03:18 msaitoh Exp $ */
+/* $NetBSD: ixgbe.h,v 1.76 2021/07/07 08:58:19 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -185,7 +185,7 @@
  */
 #define	MPKTHSIZE		(offsetof(struct _mbuf_dummy, m_pktdat))
 #define IXGBE_RX_COPY_HDR_PADDED  ((((MPKTHSIZE - 1) / 32) + 1) * 32)
-#define IXGBE_RX_COPY_LEN         (MSIZE - IXGBE_RX_COPY_HDR_PADDED)
+#define IXGBE_RX_COPY_LEN_MAX     (MSIZE - IXGBE_RX_COPY_HDR_PADDED)
 #define IXGBE_RX_COPY_ALIGN       (IXGBE_RX_COPY_HDR_PADDED - MPKTHSIZE)
 
 /* Keep older OS drivers building... */
@@ -568,6 +568,7 @@ struct adapter {
 	u64			active_queues;
 	u32			num_rx_desc;
 	u32			rx_process_limit;
+	u32			rx_copy_len;
 	int			num_jcl;
 
 	/* Multicast array memory */
