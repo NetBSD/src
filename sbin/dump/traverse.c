@@ -1,4 +1,4 @@
-/*	$NetBSD: traverse.c,v 1.53 2021/06/19 13:56:34 christos Exp $	*/
+/*	$NetBSD: traverse.c,v 1.54 2021/07/07 11:06:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)traverse.c	8.7 (Berkeley) 6/15/95";
 #else
-__RCSID("$NetBSD: traverse.c,v 1.53 2021/06/19 13:56:34 christos Exp $");
+__RCSID("$NetBSD: traverse.c,v 1.54 2021/07/07 11:06:37 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -502,6 +502,7 @@ dumpino(union dinode *dp, ino_t ino)
 			ffs_dinode1_swap(&dp->dp1, &spcl.c_dinode);
 		else
 			spcl.c_dinode = dp->dp1;
+		spcl.c_extsize = 0;
 	} else {
 		if (needswap)
 			ffs_dinode2_swap(&dp->dp2, &dp->dp2);
