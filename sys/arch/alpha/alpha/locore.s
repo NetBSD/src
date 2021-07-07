@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.138 2021/07/07 02:44:04 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.139 2021/07/07 03:30:35 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2019 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.138 2021/07/07 02:44:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.139 2021/07/07 03:30:35 thorpej Exp $");
 
 #include "assym.h"
 
@@ -902,6 +902,44 @@ LEAF_NOPROFILE(lwp_trampoline, 0)
 /*
  * alpha_copystr(const void *from, void *to, size_t len, size_t *donep)
  */
+	.arch	ev56
+LEAF(alpha_copystr_bwx, 4)
+	LDGP(pv)
+
+	mov	a2, t0			/* t0 = i = len */
+	beq	a2, 5f			/* if (len == 0), bail */
+
+1:	ldbu	t1, 0(a0)		/* t1 = *from */
+	subl	a2, 1, a2		/* len-- */
+	addq	a0, 1, a0		/* from++ */
+	stb	t1, 0(a1)		/* *to = t1 */
+	beq	t1, 2f			/* if (t1 == '\0'), bail out */
+	addq	a1, 1, a1		/* to++ */
+	bne	a2, 1b			/* if (len != 0), copy more */
+
+2:	beq	a3, 3f			/* if (lenp != NULL) */
+	subl	t0, a2, t0		/* *lenp = (i - len) */
+	stq	t0, 0(a3)
+3:	bne	t1, 4f			/* *from != '\0'; leave in a huff */
+
+	mov	zero, v0		/* return 0. */
+	RET
+
+4:	ldiq	v0, ENAMETOOLONG
+	RET
+
+5:	ldiq	t1, 1			/* fool the test above... */
+	br	zero, 2b
+
+	nop				/* pad to same length as... */
+	nop				/* non-BWX version. */
+	nop
+	nop
+	nop
+	EXPORT(alpha_copystr_bwx_end)
+	END(alpha_copystr_bwx)
+	.arch	ev4
+
 LEAF(alpha_copystr, 4)
 	LDGP(pv)
 
@@ -935,6 +973,7 @@ LEAF(alpha_copystr, 4)
 
 5:	ldiq	t1, 1			/* fool the test above... */
 	br	zero, 2b
+	EXPORT(alpha_copystr_end)
 	END(alpha_copystr)
 
 NESTED(copyinstr, 4, 16, ra, IM_RA|IM_S0, 0)
