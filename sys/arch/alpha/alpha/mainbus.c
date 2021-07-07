@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.35 2021/04/24 23:36:23 thorpej Exp $ */
+/* $NetBSD: mainbus.c,v 1.36 2021/07/07 03:24:26 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.35 2021/04/24 23:36:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.36 2021/07/07 03:24:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,6 +91,9 @@ mbattach(device_t parent, device_t self, void *aux)
 	if (ncpus != cpuattachcnt)
 		printf("WARNING: %d cpus in machine, %d attached\n",
 			ncpus, cpuattachcnt);
+
+	/* Patch-up any routines based on architecture features. */
+	alpha_patch(false);
 
 	if (alpha_is_qemu) {
 		ma.ma_name = "qemu";
