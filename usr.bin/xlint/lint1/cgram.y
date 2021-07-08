@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.267 2021/07/08 03:19:17 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.268 2021/07/08 03:22:47 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.267 2021/07/08 03:19:17 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.268 2021/07/08 03:22:47 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -688,11 +688,6 @@ member_declaration_list_with_rbrace:
 	| T_RBRACE {
 		$$ = NULL;
 	  }
-	;
-
-type_attribute_opt:
-	  /* empty */
-	| type_attribute
 	;
 
 member_declaration_list:
@@ -1627,13 +1622,6 @@ for_exprs:
 	  }
 	;
 
-expr_opt:
-	  /* empty */ {
-		$$ = NULL;
-	  }
-	| expr
-	;
-
 jump_statement:			/* C99 6.8.6 */
 	  goto identifier T_SEMI {
 		do_goto(getsym($2));
@@ -1689,6 +1677,13 @@ constant_expr_list:
 
 constant_expr:			/* C99 6.6 */
 	  expr %prec T_ASSIGN
+	;
+
+expr_opt:
+	  /* empty */ {
+		$$ = NULL;
+	  }
+	| expr
 	;
 
 expr:
@@ -1993,6 +1988,11 @@ comma_opt:
 type_attribute_list:
 	  type_attribute
 	| type_attribute_list type_attribute
+	;
+
+type_attribute_opt:
+	  /* empty */
+	| type_attribute
 	;
 
 type_attribute:
