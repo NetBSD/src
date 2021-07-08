@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.270 2021/07/08 03:55:54 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.271 2021/07/08 04:09:10 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.270 2021/07/08 03:55:54 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.271 2021/07/08 04:09:10 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -343,7 +343,6 @@ anonymize(sym_t *s)
 %type	<y_generic>	generic_assoc_list
 %type	<y_generic>	generic_association
 
-
 %%
 
 program:
@@ -645,14 +644,13 @@ struct_spec:
 	;
 
 struct:
-	  struct type_attribute
-	| T_STRUCT_OR_UNION {
+	  T_STRUCT_OR_UNION {
 		symtyp = FTAG;
 		begin_declaration_level($1 == STRUCT ? MOS : MOU);
 		dcs->d_offset = 0;
 		dcs->d_sou_align_in_bits = CHAR_SIZE;
 		$$ = $1;
-	  }
+	  } type_attribute_list_opt
 	;
 
 struct_tag:
@@ -1035,10 +1033,7 @@ notype_param_decl:
 	;
 
 direct_param_decl:
-	  identifier type_attribute_list {
-		$$ = declarator_name(getsym($1));
-	  }
-	| identifier {
+	  identifier type_attribute_list_opt {
 		$$ = declarator_name(getsym($1));
 	  }
 	| T_LPAREN notype_param_decl T_RPAREN {
@@ -1058,8 +1053,7 @@ direct_param_decl:
 	;
 
 direct_notype_param_decl:
-	/* XXX: missing identifier type_attribute_list? */
-	  identifier {
+	  identifier /* XXX: missing type_attribute_list_opt? */ {
 		$$ = declarator_name(getsym($1));
 	  }
 	| T_LPAREN notype_param_decl T_RPAREN {
@@ -1981,6 +1975,11 @@ comma_opt:
 	;
 
 /* GCC extensions */
+
+type_attribute_list_opt:
+	  /* empty */
+	| type_attribute_list
+	;
 
 type_attribute_list:
 	  type_attribute
