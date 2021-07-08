@@ -1,8 +1,12 @@
-/*	$NetBSD: msg_002.c,v 1.3 2021/01/31 11:12:07 rillig Exp $	*/
+/*	$NetBSD: msg_002.c,v 1.4 2021/07/08 05:18:49 rillig Exp $	*/
 # 3 "msg_002.c"
 
 // Test for message: empty declaration [2]
 
-int;				/* expect: 2 */
+/* expect+1: warning: empty declaration [2] */
+int;
 
 int local_variable;
+
+/* expect+1: warning: empty declaration [2] */
+const;
