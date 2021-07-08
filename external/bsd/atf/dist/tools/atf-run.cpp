@@ -388,7 +388,22 @@ atf_run::run_test_program(const tools::fs::path& tp,
     tools::fs::temp_dir resdir(
         tools::fs::path(tools::config::get("atf_workdir")) / "atf-run.XXXXXX");
 
-    w.start_tp(tp.str(), md.test_cases.size());
+    size_t nseltcs;
+    if (tc.empty()) {
+        nseltcs = md.test_cases.size();
+    } else {
+        nseltcs = 0;
+        for (std::map< std::string, vars_map >::const_iterator iter
+             = md.test_cases.begin(); iter != md.test_cases.end(); iter++) {
+            const std::string& tcname = (*iter).first;
+            if (tcname == tc)
+                nseltcs++;
+        }
+        if (nseltcs == 0)
+            throw std::runtime_error("No such test case");
+    }
+
+    w.start_tp(tp.str(), nseltcs);
     if (md.test_cases.empty()) {
         w.end_tp("Bogus test program: reported 0 test cases");
         errcode = EXIT_FAILURE;
