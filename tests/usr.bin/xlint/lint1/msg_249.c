@@ -1,7 +1,25 @@
-/*	$NetBSD: msg_249.c,v 1.3 2021/06/19 16:05:07 rillig Exp $	*/
+/*	$NetBSD: msg_249.c,v 1.4 2021/07/08 18:02:22 rillig Exp $	*/
 # 3 "msg_249.c"
 
 // Test for message: syntax error '%s' [249]
+
+/*
+ * Cover the grammar rule 'top_level_declaration: error T_SEMI'.
+ */
+/* expect+1: syntax error '"' [249] */
+"syntax error in top_level_declaration";
+
+/* XXX: This is necessary to recover the yacc parser. */
+int recover_from_semi;
+
+/*
+ * Cover the grammar rule 'top_level_declaration: error T_RBRACE'.
+ */
+/* expect+1: syntax error '"' [249] */
+"syntax error in top_level_declaration"}
+
+/* XXX: This is necessary to recover the yacc parser. */
+int recover_from_rbrace;
 
 /*
  * Before func.c 1.110 from 2021-06-19, lint ran into this:
@@ -14,3 +32,6 @@ function(void)
 		;
 	);			/* expect: syntax error ')' */
 }
+
+/* XXX: This is necessary to recover the yacc parser. */
+int recover_from_rparen;
