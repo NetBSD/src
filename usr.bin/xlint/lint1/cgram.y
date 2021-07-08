@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.266 2021/07/08 03:14:56 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.267 2021/07/08 03:19:17 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.266 2021/07/08 03:14:56 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.267 2021/07/08 03:19:17 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1550,36 +1550,6 @@ switch_expr:
 	  }
 	;
 
-generic_selection:		/* C11 6.5.1.1 */
-	  T_GENERIC T_LPAREN assignment_expression T_COMMA
-	    generic_assoc_list T_RPAREN {
-	  	/* generic selection requires C11 or later */
-	  	c11ism(345);
-		$$ = build_generic_selection($3, $5);
-	  }
-	;
-
-generic_assoc_list:		/* C11 6.5.1.1 */
-	  generic_association
-	| generic_assoc_list T_COMMA generic_association {
-		$3->ga_prev = $1;
-		$$ = $3;
-	  }
-	;
-
-generic_association:		/* C11 6.5.1.1 */
-	  type_name T_COLON assignment_expression {
-		$$ = getblk(sizeof(*$$));
-		$$->ga_arg = $1;
-		$$->ga_result = $3;
-	  }
-	| T_DEFAULT T_COLON assignment_expression {
-		$$ = getblk(sizeof(*$$));
-		$$->ga_arg = NULL;
-		$$->ga_result = $3;
-	  }
-	;
-
 do_statement:			/* C99 6.8.5 */
 	  do statement {
 		clear_warning_flags();
@@ -1893,6 +1863,36 @@ term:
 			 gnuism(319);
 		$$ = new_name_node(*current_initsym(), 0);
 		end_initialization();
+	  }
+	;
+
+generic_selection:		/* C11 6.5.1.1 */
+	  T_GENERIC T_LPAREN assignment_expression T_COMMA
+	    generic_assoc_list T_RPAREN {
+	  	/* generic selection requires C11 or later */
+	  	c11ism(345);
+		$$ = build_generic_selection($3, $5);
+	  }
+	;
+
+generic_assoc_list:		/* C11 6.5.1.1 */
+	  generic_association
+	| generic_assoc_list T_COMMA generic_association {
+		$3->ga_prev = $1;
+		$$ = $3;
+	  }
+	;
+
+generic_association:		/* C11 6.5.1.1 */
+	  type_name T_COLON assignment_expression {
+		$$ = getblk(sizeof(*$$));
+		$$->ga_arg = $1;
+		$$->ga_result = $3;
+	  }
+	| T_DEFAULT T_COLON assignment_expression {
+		$$ = getblk(sizeof(*$$));
+		$$->ga_arg = NULL;
+		$$->ga_result = $3;
 	  }
 	;
 
