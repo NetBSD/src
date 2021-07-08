@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.268 2021/07/08 03:22:47 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.269 2021/07/08 03:35:07 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.268 2021/07/08 03:22:47 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.269 2021/07/08 03:35:07 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -290,7 +290,7 @@ anonymize(sym_t *s)
 %type	<y_tspec>	struct
 %type	<y_sym>		struct_declaration
 %type	<y_sb>		identifier
-%type	<y_sym>		member_declaration_list_with_rbrace
+%type	<y_sym>		member_declaration_list_semi
 %type	<y_sym>		member_declaration_list
 %type	<y_sym>		member_declaration
 %type	<y_sym>		notype_member_decls
@@ -662,20 +662,19 @@ struct_tag:
 	;
 
 struct_declaration:
-	  struct_decl_lbrace member_declaration_list_with_rbrace {
-		$$ = $2;
-	  }
-	;
-
-struct_decl_lbrace:
 	  T_LBRACE {
 		symtyp = FVFT;
+	  } member_declaration_list_semi T_RBRACE {
+		$$ = $3;
 	  }
 	;
 
-member_declaration_list_with_rbrace:
-	  member_declaration_list T_SEMI T_RBRACE
-	| member_declaration_list T_RBRACE {
+member_declaration_list_semi:
+	  /* empty */ {
+		$$ = NULL;
+	  }
+	| member_declaration_list T_SEMI
+	| member_declaration_list {
 		if (sflag) {
 			/* syntax req. ';' after last struct/union member */
 			error(66);
@@ -684,9 +683,6 @@ member_declaration_list_with_rbrace:
 			warning(66);
 		}
 		$$ = $1;
-	  }
-	| T_RBRACE {
-		$$ = NULL;
 	  }
 	;
 
