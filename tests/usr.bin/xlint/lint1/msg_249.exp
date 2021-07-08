@@ -1,1 +1,3 @@
-msg_249.c(15): error: syntax error ')' [249]
+msg_249.c(10): error: syntax error '"' [249]
+msg_249.c(19): error: syntax error '"' [249]
+msg_249.c(33): error: syntax error ')' [249]
