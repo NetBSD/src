@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.51 2021/07/06 20:17:15 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.52 2021/07/08 02:59:22 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.51 2021/07/06 20:17:15 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.52 2021/07/08 02:59:22 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -258,7 +258,7 @@ symt_t	symtyp;
 
 
 static void
-add_keyword(struct kwtab *kw, u_int deco)
+add_keyword(const struct kwtab *kw, u_int deco)
 {
 	sym_t *sym;
 	size_t h;
@@ -452,7 +452,7 @@ search(sbuf_t *sb)
 	for (sym = symtab[sb->sb_hash]; sym != NULL; sym = sym->s_link) {
 		if (strcmp(sym->s_name, sb->sb_name) == 0) {
 			if (sym->s_keyword != NULL) {
-				struct kwtab *kw = sym->s_keyword;
+				const struct kwtab *kw = sym->s_keyword;
 				if (!kw->kw_attr || attron)
 					return sym;
 			} else if (!attron && sym->s_kind == symtyp)
