@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.265 2021/07/06 21:41:36 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.266 2021/07/08 03:14:56 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.265 2021/07/06 21:41:36 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.266 2021/07/08 03:14:56 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -207,54 +207,54 @@ anonymize(sym_t *s)
 %token			T_SWITCH
 %token			T_SYMBOLRENAME
 %token			T_WHILE
-/* Type Attributes */
-%token <y_type>		T_ATTRIBUTE
-%token <y_type>		T_AT_ALIAS
-%token <y_type>		T_AT_ALIGNED
-%token <y_type>		T_AT_ALLOC_SIZE
-%token <y_type>		T_AT_ALWAYS_INLINE
-%token <y_type>		T_AT_BOUNDED
-%token <y_type>		T_AT_BUFFER
-%token <y_type>		T_AT_COLD
-%token <y_type>		T_AT_COMMON
-%token <y_type>		T_AT_CONSTRUCTOR
-%token <y_type>		T_AT_DEPRECATED
-%token <y_type>		T_AT_DESTRUCTOR
-%token <y_type>		T_AT_FALLTHROUGH
-%token <y_type>		T_AT_FORMAT
-%token <y_type>		T_AT_FORMAT_ARG
-%token <y_type>		T_AT_FORMAT_GNU_PRINTF
-%token <y_type>		T_AT_FORMAT_PRINTF
-%token <y_type>		T_AT_FORMAT_SCANF
-%token <y_type>		T_AT_FORMAT_STRFMON
-%token <y_type>		T_AT_FORMAT_STRFTIME
-%token <y_type>		T_AT_FORMAT_SYSLOG
-%token <y_type>		T_AT_GNU_INLINE
-%token <y_type>		T_AT_MALLOC
-%token <y_type>		T_AT_MAY_ALIAS
-%token <y_type>		T_AT_MINBYTES
-%token <y_type>		T_AT_MODE
-%token <y_type>		T_AT_NOINLINE
-%token <y_type>		T_AT_NONNULL
-%token <y_type>		T_AT_NONSTRING
-%token <y_type>		T_AT_NORETURN
-%token <y_type>		T_AT_NOTHROW
-%token <y_type>		T_AT_NO_INSTRUMENT_FUNCTION
-%token <y_type>		T_AT_OPTIMIZE
-%token <y_type>		T_AT_PACKED
-%token <y_type>		T_AT_PCS
-%token <y_type>		T_AT_PURE
-%token <y_type>		T_AT_RETURNS_TWICE
-%token <y_type>		T_AT_SECTION
-%token <y_type>		T_AT_SENTINEL
-%token <y_type>		T_AT_STRING
-%token <y_type>		T_AT_TLS_MODEL
-%token <y_type>		T_AT_TUNION
-%token <y_type>		T_AT_UNUSED
-%token <y_type>		T_AT_USED
-%token <y_type>		T_AT_VISIBILITY
-%token <y_type>		T_AT_WARN_UNUSED_RESULT
-%token <y_type>		T_AT_WEAK
+
+%token			T_ATTRIBUTE
+%token			T_AT_ALIAS
+%token			T_AT_ALIGNED
+%token			T_AT_ALLOC_SIZE
+%token			T_AT_ALWAYS_INLINE
+%token			T_AT_BOUNDED
+%token			T_AT_BUFFER
+%token			T_AT_COLD
+%token			T_AT_COMMON
+%token			T_AT_CONSTRUCTOR
+%token			T_AT_DEPRECATED
+%token			T_AT_DESTRUCTOR
+%token			T_AT_FALLTHROUGH
+%token			T_AT_FORMAT
+%token			T_AT_FORMAT_ARG
+%token			T_AT_FORMAT_GNU_PRINTF
+%token			T_AT_FORMAT_PRINTF
+%token			T_AT_FORMAT_SCANF
+%token			T_AT_FORMAT_STRFMON
+%token			T_AT_FORMAT_STRFTIME
+%token			T_AT_FORMAT_SYSLOG
+%token			T_AT_GNU_INLINE
+%token			T_AT_MALLOC
+%token			T_AT_MAY_ALIAS
+%token			T_AT_MINBYTES
+%token			T_AT_MODE
+%token			T_AT_NOINLINE
+%token			T_AT_NONNULL
+%token			T_AT_NONSTRING
+%token			T_AT_NORETURN
+%token			T_AT_NOTHROW
+%token			T_AT_NO_INSTRUMENT_FUNCTION
+%token			T_AT_OPTIMIZE
+%token			T_AT_PACKED
+%token			T_AT_PCS
+%token			T_AT_PURE
+%token			T_AT_RETURNS_TWICE
+%token			T_AT_SECTION
+%token			T_AT_SENTINEL
+%token			T_AT_STRING
+%token			T_AT_TLS_MODEL
+%token			T_AT_TUNION
+%token			T_AT_UNUSED
+%token			T_AT_USED
+%token			T_AT_VISIBILITY
+%token			T_AT_WARN_UNUSED_RESULT
+%token			T_AT_WEAK
 
 %left	T_COMMA
 %right	T_ASSIGN T_OPASSIGN
