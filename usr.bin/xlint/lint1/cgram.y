@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.272 2021/07/08 18:50:57 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.273 2021/07/08 18:53:57 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.272 2021/07/08 18:50:57 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.273 2021/07/08 18:53:57 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -853,8 +853,7 @@ enum_declaration:
 		symtyp = FVFT;
 		enumval = 0;
 	  } enumerator_list enumerator_list_comma_opt T_RBRACE {
-	  	/* FIXME: $2 must be $3 */
-		$$ = $2;
+		$$ = $3;
 	  }
 	;
 
