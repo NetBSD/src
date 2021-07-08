@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.269 2021/07/08 03:35:07 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.270 2021/07/08 03:55:54 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.269 2021/07/08 03:35:07 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.270 2021/07/08 03:55:54 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -851,15 +851,11 @@ enum_tag:
 	;
 
 enum_declaration:
-	  enum_decl_lbrace enumerator_list enumerator_list_comma_opt T_RBRACE {
-		$$ = $2;
-	  }
-	;
-
-enum_decl_lbrace:
 	  T_LBRACE {
 		symtyp = FVFT;
 		enumval = 0;
+	  } enumerator_list enumerator_list_comma_opt T_RBRACE {
+		$$ = $2;
 	  }
 	;
 
@@ -1413,7 +1409,7 @@ non_expr_statement:
 	;
 
 statement:			/* C99 6.8 */
-	  expr_statement
+	  expression_statement
 	| non_expr_statement
 	;
 
@@ -1442,8 +1438,8 @@ label:
 	;
 
 compound_statement:		/* C99 6.8.2 */
-	  compound_statement_lbrace compound_statement_rbrace
-	| compound_statement_lbrace block_item_list compound_statement_rbrace
+	  compound_statement_lbrace block_item_list_opt
+	    compound_statement_rbrace
 	;
 
 compound_statement_lbrace:
@@ -1462,6 +1458,11 @@ compound_statement_rbrace:
 		block_level--;
 		seen_fallthrough = false;
 	  }
+	;
+
+block_item_list_opt:		/* C99 6.8.2 */
+	  /* empty */
+	| block_item_list
 	;
 
 block_item_list:
@@ -1485,7 +1486,7 @@ block_item:
 	  }
 	;
 
-expr_statement:
+expression_statement:		/* C99 6.8.3 */
 	  expr T_SEMI {
 		expr($1, false, false, false, false);
 		seen_fallthrough = false;
@@ -1522,19 +1523,19 @@ selection_statement:		/* C99 6.8.4 */
 	  }
 	;
 
-if_without_else:
+if_without_else:		/* see C99 6.8.4 */
 	  if_expr statement
 	| if_expr error
 	;
 
-if_expr:
+if_expr:			/* see C99 6.8.4 */
 	  T_IF T_LPAREN expr T_RPAREN {
 		if1($3);
 		clear_warning_flags();
 	  }
 	;
 
-switch_expr:
+switch_expr:			/* see C99 6.8.4 */
 	  T_SWITCH T_LPAREN expr T_RPAREN {
 		switch1($3);
 		clear_warning_flags();
@@ -1578,33 +1579,33 @@ iteration_statement:		/* C99 6.8.5 */
 	  }
 	;
 
-while_expr:
+while_expr:			/* see C99 6.8.5 */
 	  T_WHILE T_LPAREN expr T_RPAREN {
 		while1($3);
 		clear_warning_flags();
 	  }
 	;
 
-do:
+do:				/* see C99 6.8.5 */
 	  T_DO {
 		do1();
 	  }
 	;
 
-do_while_expr:
+do_while_expr:			/* see C99 6.8.5 */
 	  T_WHILE T_LPAREN expr T_RPAREN T_SEMI {
 		$$ = $3;
 	  }
 	;
 
-for_start:
+for_start:			/* see C99 6.8.5 */
 	  T_FOR T_LPAREN {
 		begin_declaration_level(AUTO);
 		block_level++;
 	  }
 	;
 
-for_exprs:
+for_exprs:			/* see C99 6.8.5 */
 	  for_start declaration_specifiers deftyp notype_init_decls T_SEMI
 	    expr_opt T_SEMI expr_opt T_RPAREN {
 		/* variable declaration in for loop */
@@ -1682,7 +1683,7 @@ expr_opt:
 	| expr
 	;
 
-expr:
+expr:				/* C99 6.5 */
 	  expr T_ASTERISK expr {
 		$$ = build(MULT, $1, $3);
 	  }
@@ -1736,7 +1737,7 @@ assignment_expression:		/* C99 6.5.16 */
 	  expr %prec T_ASSIGN
 	;
 
-term:
+term:				/* see C99 6.5.1 */
 	  T_NAME {
 		/* XXX really necessary? */
 		if (yychar < 0)
