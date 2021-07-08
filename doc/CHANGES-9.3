@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.14 2021/07/06 04:23:55 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.15 2021/07/08 11:24:41 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -338,4 +338,14 @@ tests/rump/rumpkern/t_vm.c			1.5,1.6 (patch)
 
 	PR 55702, PR 55945: fix uvm pageout crashes.
 	[riastradh, ticket #1317]
+
+common/lib/libc/arch/aarch64/atomic/atomic_nand_16.S 1.4
+
+	Cosmetics (to help later additional pullups)
+	[skrll, ticket #1319]
+
+sys/external/bsd/drm2/linux/linux_reservation.c	1.12
+
+	drm: Release fence after use.
+	[riastradh, ticket #1320]
 
