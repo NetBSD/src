@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.52 2021/07/08 02:59:22 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.53 2021/07/08 03:10:39 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.52 2021/07/08 02:59:22 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.53 2021/07/08 03:10:39 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -1381,11 +1381,10 @@ lex_wide_string(void)
  * putting undeclared symbols into the symbol table if a syntax error
  * occurs.
  *
- * getsym() is called as soon as it is probably ok to put the symbol to
- * the symbol table. This does not mean that it is not possible that
- * symbols are put to the symbol table which are not completely
- * declared due to syntax errors. To avoid too many problems in this
- * case, symbols get type int in getsym().
+ * getsym() is called as soon as it is probably ok to put the symbol to the
+ * symbol table. It is still possible that symbols are put in the symbol
+ * table that are not completely declared due to syntax errors. To avoid too
+ * many problems in this case, symbols get type int in getsym().
  *
  * XXX calls to getsym() should be delayed until decl1*() is called.
  */
@@ -1456,8 +1455,8 @@ getsym(sbuf_t *sb)
 }
 
 /*
- * Construct a temporary symbol. The symbol starts with a digit, so that
- * it is illegal.
+ * Construct a temporary symbol. The symbol name starts with a digit, making
+ * the name illegal.
  */
 sym_t *
 mktempsym(type_t *t)
