@@ -1,9 +1,11 @@
-# $NetBSD: Makefile,v 1.15 2021/07/08 09:07:46 christos Exp $
+# $NetBSD: Makefile,v 1.16 2021/07/08 12:30:20 christos Exp $
 
 NOMAN=
 .include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/lib/libc/stdio
+
+BINDIR=         ${TESTSDIR}
 
 TESTS_C+=	t_clearerr
 TESTS_C+=	t_fflush
