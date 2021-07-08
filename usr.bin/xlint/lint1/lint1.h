@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.112 2021/07/06 04:44:20 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.113 2021/07/08 02:59:22 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -244,7 +244,7 @@ typedef	struct sym {
 	pos_t	s_set_pos;	/* position of first initialization */
 	pos_t	s_use_pos;	/* position of first use */
 	symt_t	s_kind;		/* type of symbol */
-	void   *s_keyword;
+	const struct kwtab *s_keyword;
 	bool	s_bitfield : 1;
 	bool	s_set : 1;	/* variable set, label defined */
 	bool	s_used : 1;	/* variable/label used */
