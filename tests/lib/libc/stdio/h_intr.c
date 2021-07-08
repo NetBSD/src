@@ -1,4 +1,4 @@
-/*	$NetBSD: h_intr.c,v 1.1 2021/07/08 09:07:46 christos Exp $	*/
+/*	$NetBSD: h_intr.c,v 1.2 2021/07/08 15:21:40 christos Exp $	*/
 
 /**
  * Test of interrupted writes to popen()'ed commands.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: h_intr.c,v 1.1 2021/07/08 09:07:46 christos Exp $");
+__RCSID("$NetBSD: h_intr.c,v 1.2 2021/07/08 15:21:40 christos Exp $");
 
 #include <time.h>
 #include <err.h>
@@ -144,7 +144,7 @@ process(const char *fn)
 		nw += i;
 	}
 	alarmtimer(0);
-	// printf("%lu\n", nw);
+	// printf("%zu\n", nw);
 
 	fclose(ifp);
 	if (pclose(ofp) != 0)
@@ -341,11 +341,11 @@ usage(FILE* fp)
 	fprintf(fp, "%s: Test interrupted writes to popen()ed CMD.\n",
 	    getprogname());
 	fprintf(fp, "\n");
-	fprintf(fp, "  -b SIZE   Buffer size (%lu)\n", opts.bsize);
+	fprintf(fp, "  -b SIZE   Buffer size (%zu)\n", opts.bsize);
 	fprintf(fp, "  -c CMD    Command to run on each FILE.\n");
 	fprintf(fp, "  -h        This message.\n");
 	fprintf(fp, "  -p        Buffering type %s.\n", getbtype(opts.btype));
-	fprintf(fp, "  -s SIZE   stdio buffer size (%lu)\n", opts.ssize);
+	fprintf(fp, "  -s SIZE   stdio buffer size (%zu)\n", opts.ssize);
 	fprintf(fp, "  -t TMOUT  Interrupt writing to CMD every (%d) ms\n",
 	    opts.tmout);
 }
