@@ -1,7 +1,29 @@
-/*	$NetBSD: msg_206.c,v 1.2 2021/02/21 09:07:58 rillig Exp $	*/
+/*	$NetBSD: msg_206.c,v 1.3 2021/07/08 18:50:57 rillig Exp $	*/
 # 3 "msg_206.c"
 
 // Test for message: enumeration value(s) not handled in switch [206]
 
-TODO: "Add example code that triggers the above message." /* expect: 249 */
-TODO: "Add example code that almost triggers the above message."
+/* lint1-extra-flags: -eh */
+
+enum number {
+	ONE, TWO, THREE
+};
+
+void
+test(enum number num)
+{
+	switch (num) {
+	case ONE:
+	case TWO:
+		break;
+	}
+	/* expect-1: warning: enumeration value(s) not handled in switch [206] */
+
+	switch (num) {
+	case ONE:
+	case TWO:
+	case THREE:
+		break;
+	}
+	/* FIXME *//* expect-1: warning: enumeration value(s) not handled in switch [206] */
+}
