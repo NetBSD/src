@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1078 2021/07/08 05:18:49 rillig Exp $
+# $NetBSD: mi,v 1.1079 2021/07/08 09:16:24 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3063,12 +3063,16 @@
 ./usr/tests/lib/libc/stdio				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/stdio/Atffile			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/stdio/Kyuafile			tests-lib-tests		compattestfile,atf,kyua
+./usr/tests/lib/libc/stdio/h_intr			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/stdio/h_makenumbers		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/stdio/h_testnumbers		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/stdio/t_clearerr			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/stdio/t_fflush			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/stdio/t_fmemopen			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/stdio/t_fopen			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/stdio/t_format			tests-obsolete		obsolete
 ./usr/tests/lib/libc/stdio/t_fputc			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/stdio/t_intr			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/stdio/t_mktemp			tests-obsolete		obsolete
 ./usr/tests/lib/libc/stdio/t_open_memstream		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/stdio/t_popen			tests-lib-tests		compattestfile,atf
