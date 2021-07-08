@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_249.c,v 1.4 2021/07/08 18:02:22 rillig Exp $	*/
+/*	$NetBSD: msg_249.c,v 1.5 2021/07/08 20:11:15 rillig Exp $	*/
 # 3 "msg_249.c"
 
 // Test for message: syntax error '%s' [249]
@@ -33,5 +33,15 @@ function(void)
 	);			/* expect: syntax error ')' */
 }
 
+/* XXX: It is unexpected that this error is not detected. */
+"This syntax error is not detected.";
+
 /* XXX: This is necessary to recover the yacc parser. */
-int recover_from_rparen;
+double recover_from_rparen;
+
+/* Ensure that the declaration after the syntax error is processed. */
+double *
+access_declaration_after_syntax_error(void)
+{
+	return &recover_from_rparen;
+}
