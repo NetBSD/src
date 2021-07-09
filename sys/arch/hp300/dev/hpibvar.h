@@ -1,4 +1,4 @@
-/*	$NetBSD: hpibvar.h,v 1.23 2021/07/05 14:51:23 tsutsui Exp $	*/
+/*	$NetBSD: hpibvar.h,v 1.24 2021/07/09 17:05:33 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -167,7 +167,7 @@ struct hpibbus_attach_args {
 #define	hpibbuscf_punit		cf_loc[HPIBBUSCF_PUNIT]
 
 #define	HPIB_NSLAVES		8	/* number of slaves on a bus */
-#define	HPIB_NPUNITS		2	/* number of punits per slave */
+#define	HPIB_NPUNITS		15	/* number of punits per slave */
 
 /*
  * An HP-IB job queue entry.  Slave drivers have one of these used
