@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.275 2021/07/09 06:37:11 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.276 2021/07/09 20:36:34 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.275 2021/07/09 06:37:11 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.276 2021/07/09 20:36:34 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -123,7 +123,7 @@ anonymize(sym_t *s)
 }
 %}
 
-%expect 162
+%expect 156
 
 %union {
 	val_t	*y_val;
@@ -939,9 +939,12 @@ type_init_decl:
 	;
 
 notype_decl:
-	  notype_direct_decl
-	| pointer notype_direct_decl {
-		$$ = add_pointer($2, $1);
+	/* TODO: removing type_attribute_list_opt here removes another 18 conflicts */
+	  type_attribute_list_opt notype_direct_decl {
+		$$ = $2;
+	  }
+	| pointer type_attribute_list_opt notype_direct_decl {
+		$$ = add_pointer($3, $1);
 	  }
 	;
 
@@ -952,19 +955,11 @@ type_decl:
 	  }
 	;
 
-/*
- * XXX: shift/reduce conflict, caused by:
- *	type_attribute notype_direct_decl
- *	notype_direct_decl type_attribute
- */
 notype_direct_decl:
 	  T_NAME {
 		$$ = declarator_name(getsym($1));
 	  }
 	| T_LPAREN type_decl T_RPAREN {
-		$$ = $2;
-	  }
-	| type_attribute notype_direct_decl {
 		$$ = $2;
 	  }
 	| notype_direct_decl T_LBRACK T_RBRACK {
