@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.15 2021/07/08 11:24:41 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.16 2021/07/09 17:53:05 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -348,4 +348,9 @@ sys/external/bsd/drm2/linux/linux_reservation.c	1.12
 
 	drm: Release fence after use.
 	[riastradh, ticket #1320]
+
+sys/rump/librump/rumpvfs/vm_vfs.c		(apply patch)
+
+	Adapt the uvm pageout changes to the branch.
+	[chs, ticket #1321]
 
