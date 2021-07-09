@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_attribute.c,v 1.8 2021/07/06 18:43:27 rillig Exp $	*/
+/*	$NetBSD: gcc_attribute.c,v 1.9 2021/07/09 18:55:28 rillig Exp $	*/
 # 3 "gcc_attribute.c"
 
 /*
@@ -84,3 +84,36 @@ void one_empty_attribute(void)
  */
 void two_empty_attributes(void)
     __attribute__((/* none */, /* still none */));
+
+/*
+ * Ensure that __attribute__ can be specified everywhere in a declaration.
+ * This is the simplest possible requirement that covers all valid code.
+ * It accepts invalid code as well, but these cases are covered by GCC and
+ * Clang already.
+ *
+ * Since lint only parses the attributes but doesn't really relate them to
+ * identifiers or other entities, ensuring that valid code can be parsed is
+ * enough for now.
+ *
+ * To really associate __attribute__ with the corresponding entity, the
+ * grammar needs to be rewritten, see the example with __noreturn__ above.
+ */
+__attribute__((deprecated("d1")))
+const
+__attribute__((deprecated("d2")))
+int
+__attribute__((deprecated("d3")))
+*
+// The below line would produce a syntax error.
+// __attribute__((deprecated("d3")))
+const
+__attribute__((deprecated("d4")))
+identifier
+__attribute__((deprecated("d5")))
+(
+    __attribute__((deprecated("d6")))
+    void
+    __attribute__((deprecated("d7")))
+    )
+    __attribute__((deprecated("d8")))
+;
