@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.57 2021/05/22 15:05:36 thorpej Exp $ */
+/* $NetBSD: autoconf.c,v 1.58 2021/07/09 01:29:20 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.57 2021/05/22 15:05:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.58 2021/07/09 01:29:20 thorpej Exp $");
 
 #include "pci.h"
 
@@ -57,6 +57,9 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.57 2021/05/22 15:05:36 thorpej Exp $"
 
 #include <dev/pci/pcivar.h>
 
+#include <net/if.h>
+#include <net/if_ether.h>
+
 #include <machine/autoconf.h>
 #include <machine/alpha.h>
 #include <machine/cpu.h>
@@ -66,8 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.57 2021/05/22 15:05:36 thorpej Exp $"
 
 struct bootdev_data	*bootdev_data;
 
-void	parse_prom_bootdev(void);
-static inline int atoi(const char *);
+static void	parse_prom_bootdev(void);
 
 /*
  * cpu_configure:
@@ -138,6 +140,86 @@ qemu_find_rootdev(void)
 	booted_device = device_find_by_xname(cp);
 }
 
+static bool
+parse_dec_macaddr(const char *str, uint8_t enaddr[ETHER_ADDR_LEN])
+{
+	char *cp;
+	long long l;
+	int i;
+
+	/*
+	 * DEC Ethernet address strings are formatted like so:
+	 *
+	 *	XX-XX-XX-XX-XX-XX
+	 */
+
+	for (i = 0; i < ETHER_ADDR_LEN; i++) {
+		l = strtoll(str, &cp, 16);
+		if (l < 0 || l > 0xff) {
+			/* Not a valid MAC address. */
+			return false;
+		}
+		if (*cp == '-') {
+			/* Octet separator. */
+			enaddr[i] = (uint8_t)l;
+			str = cp + 1;
+			continue;
+		}
+		if (*cp == ' ' || *cp == '\0') {
+			/* End of the string. */
+			enaddr[i] = (uint8_t)l;
+			return i == ETHER_ADDR_LEN - 1;
+		}
+		/* Bogus character. */
+		break;
+	}
+
+	/* Encountered bogus character or didn't reach end of string. */
+	return false;
+}
+
+static void
+netboot_find_rootdev_planb(void)
+{
+	struct psref psref;
+	uint8_t enaddr[ETHER_ADDR_LEN];
+	char ifname[IFNAMSIZ];
+	int i;
+
+	if (strncasecmp(bootinfo.booted_dev, "BOOTP ", 6) != 0 &&
+	    strncasecmp(bootinfo.booted_dev, "MOP ", 4) != 0) {
+		/* We weren't netbooted. */
+		return;
+	}
+
+	for (i = 2; bootinfo.booted_dev[i] != '\0'; i++) {
+		if (bootinfo.booted_dev[i] == '-') {
+			if (parse_dec_macaddr(&bootinfo.booted_dev[i - 2],
+					      enaddr)) {
+				/* Found it! */
+				break;
+			}
+		}
+	}
+	if (bootinfo.booted_dev[i] == '\0') {
+		/* No MAC address in string. */
+		return;
+	}
+
+	/* Now try to look up the interface by the link address. */
+	struct ifnet *ifp = if_get_bylla(enaddr, ETHER_ADDR_LEN, &psref);
+	if (ifp == NULL) {
+		/* No interface attached with that MAC address. */
+		return;
+	}
+
+	strlcpy(ifname, if_name(ifp), sizeof(ifname));
+	if_put(ifp, &psref);
+
+	/* Ok! Now look up the device_t by name! */
+	booted_device = device_find_by_xname(ifname);
+}
+
 void
 cpu_rootconf(void)
 {
@@ -147,13 +229,33 @@ cpu_rootconf(void)
 	}
 
 	if (booted_device == NULL) {
+		/*
+		 * It's possible that we netbooted from an Ethernet
+		 * interface that can't be matched via the usual
+		 * logic in device_register() (a DE204 in an ISA slot,
+		 * for example).  In these cases, the console may have
+		 * provided us with a MAC address that we can use to
+		 * try and find the interface, * e.g.:
+		 *
+		 *	BOOTP 1 1 0 0 0 5 0 08-00-2B-xx-xx-xx 1
+		 */
+		netboot_find_rootdev_planb();
+	}
+
+	if (booted_device == NULL) {
 		printf("WARNING: can't figure what device matches \"%s\"\n",
 		    bootinfo.booted_dev);
 	}
 	rootconf();
 }
 
-void
+static inline int
+atoi(const char *s)
+{
+	return (int)strtoll(s, NULL, 10);
+}
+
+static void
 parse_prom_bootdev(void)
 {
 	static char hacked_boot_dev[128];
@@ -211,12 +313,6 @@ parse_prom_bootdev(void)
 #endif
 
 	bootdev_data = &bd;
-}
-
-static inline int
-atoi(const char *s)
-{
-	return (int)strtoll(s, NULL, 10);
 }
 
 void
