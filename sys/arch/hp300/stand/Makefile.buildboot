@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.36 2017/04/08 19:53:20 christos Exp $
+#	$NetBSD: Makefile.buildboot,v 1.37 2021/07/09 17:44:28 tsutsui Exp $
 
 # RELOC=FFF00000 allows for boot prog up to FF000 (1044480) bytes long
 RELOC=	FFF00000
@@ -20,7 +20,7 @@ CLEANFILES+=	${PROGAOUT}
 CPPFLAGS+=	-I${.CURDIR}/../../.. -I${.CURDIR}/../../../..  -I${.OBJDIR}
 CPPFLAGS+=	-Wno-main
 CPPFLAGS+=	-D__daddr_t=int32_t
-CFLAGS=		-Os -msoft-float -ffreestanding
+CFLAGS=		-Os -fno-unwind-tables -msoft-float -ffreestanding
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
