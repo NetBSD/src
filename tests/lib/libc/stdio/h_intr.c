@@ -1,4 +1,4 @@
-/*	$NetBSD: h_intr.c,v 1.3 2021/07/09 15:26:59 christos Exp $	*/
+/*	$NetBSD: h_intr.c,v 1.4 2021/07/09 20:00:26 kre Exp $	*/
 
 /**
  * Test of interrupted I/O to popen()ed commands.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: h_intr.c,v 1.3 2021/07/09 15:26:59 christos Exp $");
+__RCSID("$NetBSD: h_intr.c,v 1.4 2021/07/09 20:00:26 kre Exp $");
 
 #include <time.h>
 #include <err.h>
@@ -53,7 +53,7 @@ static void usage(FILE *fp);
 
 /* Globals */
 static struct options {
-	char* cmd;		/* cmd to run (which must read from stdin) */
+	const char* cmd;	/* cmd to run (which must read from stdin) */
 	size_t bsize;		/* block size to use */
 	size_t asize;		/* alt. stdio buffer size */
 	int btype;		/* buffering type: _IONBF, ... */
