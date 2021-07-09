@@ -1,4 +1,4 @@
-#	$NetBSD: t_vlan.sh,v 1.19 2021/07/06 01:18:22 yamaguchi Exp $
+#	$NetBSD: t_vlan.sh,v 1.20 2021/07/09 05:54:11 yamaguchi Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -897,6 +897,104 @@ vlan_multicast6_cleanup()
 	cleanup
 }
 
+atf_test_case vlan_promisc cleanup
+vlan_promisc_head()
+{
+
+	atf_set "descr" "tests of IFF_PROMISC of vlan"
+	atf_set "require.progs" "rump_server"
+}
+
+vlan_promisc_body()
+{
+	local atf_ifconfig="atf_check -s exit:0 rump.ifconfig"
+	local atf_brconfig="atf_check -s exit:0 $HIJACKING /sbin/brconfig"
+	local atf_arp="atf_check -s exit:0 rump.arp"
+	local bpfopen="$HIJACKING $(atf_get_srcdir)/bpfopen"
+	local macaddr=""
+
+	rump_server_bpf_start $SOCK_LOCAL vlan bridge
+	rump_server_start $SOCK_REMOTE vlan
+
+	rump_server_add_iface $SOCK_LOCAL shmif0 $BUS
+	rump_server_add_iface $SOCK_LOCAL shmif1
+	rump_server_add_iface $SOCK_LOCAL vlan0
+	rump_server_add_iface $SOCK_LOCAL vlan1
+	rump_server_add_iface $SOCK_LOCAL bridge0
+
+	rump_server_add_iface $SOCK_REMOTE shmif0 $BUS
+	rump_server_add_iface $SOCK_REMOTE vlan0
+
+	macaddr=$(get_macaddr $SOCK_LOCAL shmif1)
+
+	export RUMP_SERVER=$SOCK_REMOTE
+	$atf_ifconfig vlan0 vlan 1 vlanif shmif0
+	$atf_ifconfig shmif0 up
+	$atf_ifconfig vlan0 inet $IP_REMOTE0/24
+	$atf_ifconfig vlan0 up
+	$atf_ifconfig -w 10
+	$atf_arp -s $IP_LOCAL0 $macaddr
+
+	export RUMP_SERVER=$SOCK_LOCAL
+	$atf_ifconfig bridge0 mtu 1496
+	#
+	# When vlan IF is PROMISC, the parent is also PROMISC
+	#
+	$atf_ifconfig vlan0 vlan 1 vlanif shmif0
+	$atf_ifconfig shmif0 up
+	$atf_ifconfig vlan0 up
+
+	atf_check -s exit:0 -o not-match:'PROMISC' rump.ifconfig vlan0
+	atf_check -s exit:0 -o not-match:'PROMISC' rump.ifconfig shmif0
+
+	$atf_brconfig bridge0 add vlan0
+	$atf_ifconfig bridge0 up
+	atf_check -s exit:0 -o match:'PROMISC' rump.ifconfig vlan0
+	atf_check -s exit:0 -o match:'PROMISC' rump.ifconfig shmif0
+
+	$atf_ifconfig bridge0 down
+	$atf_brconfig bridge0 delete vlan0
+	atf_check -s exit:0 -o not-match:'PROMISC' rump.ifconfig vlan0
+	atf_check -s exit:0 -o not-match:'PROMISC' rump.ifconfig shmif0
+	$atf_ifconfig vlan0 -vlanif
+
+	#
+	# drop unicast packets that is not for the host
+	#
+	$atf_ifconfig vlan0 vlan 1 vlanif shmif0
+	$atf_ifconfig -w 10
+
+	$bpfopen -r shmif0 &
+	pid=$!
+
+	atf_check -s exit:0 -o not-match:'PROMISC' rump.ifconfig vlan0
+	atf_check -s exit:0 -o match:'PROMISC' rump.ifconfig shmif0
+	atf_check -s exit:0 -o ignore rump.ifconfig -z vlan0
+	atf_check -s exit:0 -o not-match:'input:.*errors' \
+	    rump.ifconfig -v vlan0
+
+	export RUMP_SERVER=$SOCK_REMOTE
+	atf_check -s not-exit:0 -o ignore -e ignore \
+	    rump.ping -c 3 -i 0.2 $IP_LOCAL0
+
+	export RUMP_SERVER=$SOCK_LOCAL
+	atf_check -s exit:0 -o match:'input:.*errors' \
+	    rump.ifconfig -v vlan0
+
+	kill -TERM $pid
+	sleep 2
+
+	atf_check -s exit:0 -o not-match:'PROMISC' rump.ifconfig vlan0
+	atf_check -s exit:0 -o not-match:'PROMISC' rump.ifconfig shmif0
+}
+
+vlan_promisc_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
+
 atf_init_test_cases()
 {
 
@@ -907,6 +1005,7 @@ atf_init_test_cases()
 	atf_add_test_case vlan_configs
 	atf_add_test_case vlan_bridge
 	atf_add_test_case vlan_multicast
+	atf_add_test_case vlan_promisc
 
 	atf_add_test_case vlan_create_destroy6
 	atf_add_test_case vlan_basic6
