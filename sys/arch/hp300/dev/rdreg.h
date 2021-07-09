@@ -1,4 +1,4 @@
-/*	$NetBSD: rdreg.h,v 1.15 2021/07/05 14:51:23 tsutsui Exp $	*/
+/*	$NetBSD: rdreg.h,v 1.16 2021/07/09 17:05:33 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -121,6 +121,28 @@ struct	rd_clearcmd {
 #define	RD2200AID	0x22F
 #define	RD2203AID	0x230	/* yet another guess */
 
+/* Drive names -- per identify description structure */
+#define	RD7945ANAME	"079450"
+#define	RD9134DNAME	"091340"
+#define	RD9122SNAME	"091220"
+#define	RD7912PNAME	"079120"
+#define	RD7914PNAME	"079140"
+#define	RD7958ANAME	"079580"
+#define	RD7957ANAME	"079570"
+#define	RD7933HNAME	"079330"
+#define	RD9134LNAME	"091340"
+#define	RD7936HNAME	"079360"
+#define	RD7937HNAME	"079370"
+#define	RD7914CTNAME	"079140"
+#define	RD9122DNAME	RD9122SNAME
+#define	RD7957BNAME	"079571"
+#define	RD7958BNAME	"079581"
+#define	RD7959BNAME	"079591"
+#define	RD2200ANAME	"022000"
+#define	RD2203ANAME	"022030"
+
+#define	RDNAMELEN	6
+
 /* SW ids -- indicies into rdidentinfo, order is arbitrary */
 #define	RD7945A		0
 #define	RD9134D		1
@@ -139,6 +161,8 @@ struct	rd_clearcmd {
 #define	RD7957B		14
 #define	RD7958B		15
 #define	RD7959B		16
+#define	RD2200A		17
+#define	RD2203A		18
 
 #define	NRD7945ABPT	16
 #define	NRD7945ATRK	7

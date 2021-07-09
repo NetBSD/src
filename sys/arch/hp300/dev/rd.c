@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.107 2021/07/05 14:51:23 tsutsui Exp $	*/
+/*	$NetBSD: rd.c,v 1.108 2021/07/09 17:05:33 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.107 2021/07/05 14:51:23 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.108 2021/07/09 17:05:33 tsutsui Exp $");
 
 #include "opt_useleds.h"
 
@@ -186,64 +186,203 @@ int	rddebug = RDB_ERROR | RDB_IDENT;
  * Nothing really critical here, could do without it.
  */
 static const struct rdidentinfo rdidentinfo[] = {
-	{ RD7946AID,	0,	"7945A",	NRD7945ABPT,
-	  NRD7945ATRK,	968,	 108416 },
+	[RD7945A] = {
+		.ri_hwid = RD7946AID,
+		.ri_desc = "7945A",
+		.ri_nbpt = NRD7945ABPT,
+		.ri_ntpc = NRD7945ATRK,
+		.ri_ncyl = 968,
+		.ri_nblocks = 108416
+	},
 
-	{ RD9134DID,	1,	"9134D",	NRD9134DBPT,
-	  NRD9134DTRK,	303,	  29088 },
+	[RD9134D] = {
+		.ri_hwid = RD9134DID,
+		.ri_desc = "9134D",
+		.ri_nbpt = NRD9134DBPT,
+		.ri_ntpc = NRD9134DTRK,
+		.ri_ncyl = 303,
+		.ri_nblocks = 29088
+	},
 
-	{ RD9134LID,	1,	"9122S",	NRD9122SBPT,
-	  NRD9122STRK,	77,	   1232 },
+	[RD9122S] = {
+		.ri_hwid = RD9134LID,
+		.ri_desc = "9122S",
+		.ri_nbpt = NRD9122SBPT,
+		.ri_ntpc = NRD9122STRK,
+		.ri_ncyl = 77,
+		.ri_nblocks = 1232
+	},
 
-	{ RD7912PID,	0,	"7912P",	NRD7912PBPT,
-	  NRD7912PTRK,	572,	 128128 },
+	[RD7912P] = {
+		.ri_hwid = RD7912PID,
+		.ri_desc = "7912P",
+		.ri_nbpt = NRD7912PBPT,
+		.ri_ntpc = NRD7912PTRK,
+		.ri_ncyl = 572,
+		.ri_nblocks = 128128
+	},
 
-	{ RD7914PID,	0,	"7914P",	NRD7914PBPT,
-	  NRD7914PTRK,	1152,	 258048 },
+	[RD7914P] = {
+		.ri_hwid = RD7914PID,
+		.ri_desc = "7914P",
+		.ri_nbpt = NRD7914PBPT,
+		.ri_ntpc = NRD7914PTRK,
+		.ri_ncyl = 1152,
+		.ri_nblocks = 258048
+	},
 
-	{ RD7958AID,	0,	"7958A",	NRD7958ABPT,
-	  NRD7958ATRK,	1013,	 255276 },
+	[RD7958A] = {
+		.ri_hwid = RD7958AID,
+		.ri_desc = "7958A",
+		.ri_nbpt = NRD7958ABPT,
+		.ri_ntpc = NRD7958ATRK,
+		.ri_ncyl = 1013,
+		.ri_nblocks = 255276
+	},
 
-	{ RD7957AID,	0,	"7957A",	NRD7957ABPT,
-	  NRD7957ATRK,	1036,	 159544 },
+	[RD7957A] = {
+		.ri_hwid = RD7957AID,
+		.ri_desc = "7957A",
+		.ri_nbpt = NRD7957ABPT,
+		.ri_ntpc = NRD7957ATRK,
+		.ri_ncyl = 1036,
+		.ri_nblocks = 159544
+	},
 
-	{ RD7933HID,	0,	"7933H",	NRD7933HBPT,
-	  NRD7933HTRK,	1321,	 789958 },
+	[RD7933H] = {
+		.ri_hwid = RD7933HID,
+		.ri_desc = "7933H",
+		.ri_nbpt = NRD7933HBPT,
+		.ri_ntpc = NRD7933HTRK,
+		.ri_ncyl = 1321,
+		.ri_nblocks = 789958
+	},
 
-	{ RD9134LID,	1,	"9134L",	NRD9134LBPT,
-	  NRD9134LTRK,	973,	  77840 },
+	[RD9134L] = {
+		.ri_hwid = RD9134LID,
+		.ri_desc = "9134L",
+		.ri_nbpt = NRD9134LBPT,
+		.ri_ntpc = NRD9134LTRK,
+		.ri_ncyl = 973,
+		.ri_nblocks = 77840
+	},
 
-	{ RD7936HID,	0,	"7936H",	NRD7936HBPT,
-	  NRD7936HTRK,	698,	 600978 },
+	[RD7936H] = {
+		.ri_hwid = RD7936HID,
+		.ri_desc = "7936H",
+		.ri_nbpt = NRD7936HBPT,
+		.ri_ntpc = NRD7936HTRK,
+		.ri_ncyl = 698,
+		.ri_nblocks = 600978
+	},
 
-	{ RD7937HID,	0,	"7937H",	NRD7937HBPT,
-	  NRD7937HTRK,	698,	1116102 },
+	[RD7937H] = {
+		.ri_hwid = RD7937HID,
+		.ri_desc = "7937H",
+		.ri_nbpt = NRD7937HBPT,
+		.ri_ntpc = NRD7937HTRK,
+		.ri_ncyl = 698,
+		.ri_nblocks = 1116102
+	},
 
-	{ RD7914CTID,	0,	"7914CT",	NRD7914PBPT,
-	  NRD7914PTRK,	1152,	 258048 },
+	[RD7914CT] = {
+		.ri_hwid = RD7914CTID,
+		.ri_desc = "7914CT",
+		.ri_nbpt = NRD7914PBPT,
+		.ri_ntpc = NRD7914PTRK,
+		.ri_ncyl = 1152,
+		.ri_nblocks = 258048
+	},
 
-	{ RD7946AID,	0,	"7946A",	NRD7945ABPT,
-	  NRD7945ATRK,	968,	 108416 },
+	[RD7946A] = {
+		.ri_hwid = RD7946AID,
+		.ri_desc = "7946A",
+		.ri_nbpt = NRD7945ABPT,
+		.ri_ntpc = NRD7945ATRK,
+		.ri_ncyl = 968,
+		.ri_nblocks = 108416
+	},
 
-	{ RD9134LID,	1,	"9122D",	NRD9122SBPT,
-	  NRD9122STRK,	77,	   1232 },
+	[RD9122D] = {
+		.ri_hwid = RD9134LID,
+		.ri_desc = "9122D",
+		.ri_nbpt = NRD9122SBPT,
+		.ri_ntpc = NRD9122STRK,
+		.ri_ncyl = 77,
+		.ri_nblocks = 1232
+	},
 
-	{ RD7957BID,	0,	"7957B",	NRD7957BBPT,
-	  NRD7957BTRK,	1269,	 159894 },
+	[RD7957B] = {
+		.ri_hwid = RD7957BID,
+		.ri_desc = "7957B",
+		.ri_nbpt = NRD7957BBPT,
+		.ri_ntpc = NRD7957BTRK,
+		.ri_ncyl = 1269,
+		.ri_nblocks = 159894
+	},
 
-	{ RD7958BID,	0,	"7958B",	NRD7958BBPT,
-	  NRD7958BTRK,	786,	 297108 },
+	[RD7958B] = {
+		.ri_hwid = RD7958BID,
+		.ri_desc = "7958B",
+		.ri_nbpt = NRD7958BBPT,
+		.ri_ntpc = NRD7958BTRK,
+		.ri_ncyl = 786,
+		.ri_nblocks = 297108
+	},
 
-	{ RD7959BID,	0,	"7959B",	NRD7959BBPT,
-	  NRD7959BTRK,	1572,	 594216 },
+	[RD7959B] = {
+		.ri_hwid = RD7959BID,
+		.ri_desc = "7959B",
+		.ri_nbpt = NRD7959BBPT,
+		.ri_ntpc = NRD7959BTRK,
+		.ri_ncyl = 1572,
+		.ri_nblocks = 594216
+	},
 
-	{ RD2200AID,	0,	"2200A",	NRD2200ABPT,
-	  NRD2200ATRK,	1449,	 654948 },
+	[RD2200A] = {
+		.ri_hwid = RD2200AID,
+		.ri_desc = "2200A",
+		.ri_nbpt = NRD2200ABPT,
+		.ri_ntpc = NRD2200ATRK,
+		.ri_ncyl = 1449,
+		.ri_nblocks = 654948
+	},
 
-	{ RD2203AID,	0,	"2203A",	NRD2203ABPT,
-	  NRD2203ATRK,	1449,	1309896 }
+	[RD2203A] = {
+		.ri_hwid = RD2203AID,
+		.ri_desc = "2203A",
+		.ri_nbpt = NRD2203ABPT,
+		.ri_ntpc = NRD2203ATRK,
+		.ri_ncyl = 1449,
+		.ri_nblocks = 1309896
+	}
 };
 static const int numrdidentinfo = __arraycount(rdidentinfo);
+
+struct rdname2id {
+	const char *rn_name;
+	int rn_id;
+};
+static const struct rdname2id rdname2id[] = {
+	{ RD7945ANAME,	RD7945A },
+	{ RD9134DNAME,	RD9134D },
+	{ RD7912PNAME,	RD7912P },
+	{ RD7914PNAME,	RD7914P },
+	{ RD7958ANAME,	RD7958A },
+	{ RD7957ANAME,	RD7957A },
+	{ RD7933HNAME,	RD7933H },
+	{ RD9134LNAME,	RD9134L },
+	{ RD7936HNAME,	RD7936H },
+	{ RD7937HNAME,	RD7937H },
+	{ RD7914CTNAME,	RD7914CT },
+	{ RD9122DNAME,	RD9122D },
+	{ RD7957BNAME,	RD7957B },
+	{ RD7958BNAME,	RD7958B },
+	{ RD7959BNAME,	RD7959B },
+	{ RD2200ANAME,	RD2200A },
+	{ RD2203ANAME,	RD2203A }
+};
+static const int numrdname2id = __arraycount(rdname2id);
 
 static int	rdident(device_t, struct rd_softc *,
 		    struct hpibbus_attach_args *);
@@ -311,8 +450,36 @@ static int
 rdmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct hpibbus_attach_args *ha = aux;
+	struct rd_clearcmd ccmd;
+	int ctlr, slave, punit;
+	int rv;
+	uint8_t stat;
 
-	return rdident(parent, NULL, ha);
+	rv = rdident(parent, NULL, ha);
+
+	if (rv == 0)
+		return 0;
+
+	/*
+	 * The supported device ID is probed.
+	 * Check if the specified physical unit is actually supported
+	 * by brandnew HP-IB emulator devices like HPDisk and HPDrive etc.
+	 */
+	ctlr  = device_unit(parent);
+	slave = ha->ha_slave;
+	punit = ha->ha_punit;
+	if (punit == 0)
+		return 1;
+
+	ccmd.c_unit = C_SUNIT(punit);
+	ccmd.c_cmd  = C_CLEAR;
+	hpibsend(ctlr, slave, C_TCMD, &ccmd, sizeof(ccmd));
+	hpibswait(ctlr, slave);
+	hpibrecv(ctlr, slave, C_QSTAT, &stat, sizeof(stat));
+	if (stat != 0)
+		return 0;
+
+	return 1;
 }
 
 static void
@@ -395,8 +562,7 @@ rdident(device_t parent, struct rd_softc *sc, struct hpibbus_attach_args *ha)
 
 	/* Is it one of the disks we support? */
 	for (id = 0; id < numrdidentinfo; id++)
-		if (ha->ha_id == rdidentinfo[id].ri_hwid &&
-		    ha->ha_punit <= rdidentinfo[id].ri_maxunum)
+		if (ha->ha_id == rdidentinfo[id].ri_hwid)
 			break;
 	if (id == numrdidentinfo)
 		return 0;
@@ -458,25 +624,41 @@ rdident(device_t parent, struct rd_softc *sc, struct hpibbus_attach_args *ha)
 	 */
 	switch (ha->ha_id) {
 	case RD7946AID:
-		if (memcmp(name, "079450", 6) == 0)
+		if (memcmp(name, RD7945ANAME, RDNAMELEN) == 0)
 			id = RD7945A;
 		else
 			id = RD7946A;
 		break;
 
 	case RD9134LID:
-		if (memcmp(name, "091340", 6) == 0)
+		if (memcmp(name, RD9134LNAME, RDNAMELEN) == 0)
 			id = RD9134L;
 		else
 			id = RD9122D;
 		break;
 
 	case RD9134DID:
-		if (memcmp(name, "091220", 6) == 0)
+		if (memcmp(name, RD9122SNAME, RDNAMELEN) == 0)
 			id = RD9122S;
 		else
 			id = RD9134D;
 		break;
+	}
+
+	/*
+	 * HPDisk can have independent physical units that are not
+	 * corresponding to device IDs.
+	 * To handle this, we have to check names in the drive description
+	 * data for punit >= 1.
+	 */
+	if (ha->ha_punit >= 1) {
+		for (i = 0; i < numrdname2id; i++) {
+			if (memcmp(name, rdname2id[i].rn_name,
+			    RDNAMELEN) == 0) {
+				id = rdname2id[i].rn_id;
+				break;
+			}
+		}
 	}
 
 	sc->sc_type = id;
