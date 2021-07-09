@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1079 2021/07/08 09:16:24 christos Exp $
+# $NetBSD: mi,v 1.1080 2021/07/09 05:54:11 yamaguchi Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4142,6 +4142,7 @@
 ./usr/tests/net/if_vlan					tests-net-tests		compattestfile,atf
 ./usr/tests/net/if_vlan/Atffile				tests-net-tests		atf,rump
 ./usr/tests/net/if_vlan/Kyuafile			tests-net-tests		atf,rump,kyua
+./usr/tests/net/if_vlan/bpfopen				tests-net-tests		atf,rump
 ./usr/tests/net/if_vlan/siocXmulti			tests-net-tests		atf,rump
 ./usr/tests/net/if_vlan/t_vlan				tests-net-tests		atf,rump
 ./usr/tests/net/if_wg					tests-net-tests		compattestfile,atf
