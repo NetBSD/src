@@ -1,4 +1,4 @@
-#	$NetBSD: net_common.sh,v 1.41 2020/04/01 00:49:04 christos Exp $
+#	$NetBSD: net_common.sh,v 1.42 2021/07/09 05:54:11 yamaguchi Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -180,6 +180,7 @@ CRYPTO_LIBS="$BASIC_LIBS -lrumpdev -lrumpdev_opencrypto \
     -lrumpkern_z -lrumpkern_crypto"
 NPF_LIBS="$BASIC_LIBS -lrumpdev -lrumpvfs -lrumpdev_bpf -lrumpnet_npf"
 CRYPTO_NPF_LIBS="$CRYPTO_LIBS -lrumpvfs -lrumpdev_bpf -lrumpnet_npf"
+BPF_LIBS="$BASIC_LIBS -lrumpdev -lrumpvfs -lrumpdev_bpf"
 
 # We cannot keep variables between test phases, so need to store in files
 _rump_server_socks=./.__socks
@@ -302,6 +303,24 @@ rump_server_crypto_npf_start()
 	local sock=$1
 	local lib=
 	local libs="$CRYPTO_NPF_LIBS"
+
+	shift 1
+
+	for lib
+	do
+		libs="$libs -lrumpnet_$lib"
+	done
+
+	_rump_server_start_common $sock $libs
+
+	return 0
+}
+
+rump_server_bpf_start()
+{
+	local sock=$1
+	local lib=
+	local libs="$BPF_LIBS"
 
 	shift 1
 
