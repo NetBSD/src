@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2814 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2815 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -385,3 +385,5 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	arm: Switch to GCC 10.  [mrg 20210619]
 	uscanner(4): Removed from the tree. [nia 20210629]
 	acpi(4): Updated ACPICA to 20210604. [christos 20210706]
+	hp300: Add support of multiple rd(4) disks on all punits for HPDisk.
+		[tsutsui 20210709]
