@@ -1,20 +1,20 @@
-/*	$NetBSD: h_intr.c,v 1.2 2021/07/08 15:21:40 christos Exp $	*/
+/*	$NetBSD: h_intr.c,v 1.3 2021/07/09 15:26:59 christos Exp $	*/
 
 /**
- * Test of interrupted writes to popen()'ed commands.
+ * Test of interrupted I/O to popen()ed commands.
  *
  * Example 1:
- * ./h_fwrite -c "gzip -t" *.gz
+ * ./h_intr -c "gzip -t" *.gz
  *
  * Example 2:
- * while :; do ./h_fwrite -b $((12*1024)) -t 10 -c "bzip2 -t" *.bz2; sleep 2; done
+ * while :; do ./h_intr -b $((12*1024)) -t 10 -c "bzip2 -t" *.bz2; sleep 2; done
  *
  * Example 3:
  * Create checksum file:
  * find /mnt -type f -exec sha512 -n {} + >SHA512
  *
  * Check program:
- * find /mnt -type f -exec ./h_fwrite -b 512 -c run.sh {} +
+ * find /mnt -type f -exec ./h_intr -b 512 -c run.sh {} +
  * 
  * ./run.sh:
 	#!/bin/sh
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: h_intr.c,v 1.2 2021/07/08 15:21:40 christos Exp $");
+__RCSID("$NetBSD: h_intr.c,v 1.3 2021/07/09 15:26:59 christos Exp $");
 
 #include <time.h>
 #include <err.h>
@@ -38,25 +38,29 @@ __RCSID("$NetBSD: h_intr.c,v 1.2 2021/07/08 15:21:40 christos Exp $");
 #include <string.h>
 #include <unistd.h>
 
-static int process(const char *fn);
+static bool process(const char *fn);
 ssize_t maxread(FILE *fp, void *buf, size_t size);
 ssize_t smaxread(FILE *fp, void *buf, size_t size);
 ssize_t maxwrite(FILE *fp, const void *buf, size_t size);
 ssize_t smaxwrite(FILE *fp, const void *buf, size_t size);
+static int rndbuf(void);
+static int rndmode(void);
 static sig_t xsignal(int signo, sig_t handler);
 static void alarmtimer(int wait);
 static void pr_star(int signo);
-static bool isvalid(const char *s);
 static int do_opts(int argc, char* argv[]);
-static void usage(FILE* fp);
+static void usage(FILE *fp);
 
 /* Globals */
 static struct options {
-	size_t bsize;
-	size_t ssize;
-	int btype;
-	int tmout;
-	const char *cmd;
+	char* cmd;		/* cmd to run (which must read from stdin) */
+	size_t bsize;		/* block size to use */
+	size_t asize;		/* alt. stdio buffer size */
+	int btype;		/* buffering type: _IONBF, ... */
+	int tmout;		/* alarm timeout */
+	int flush;		/* call fflush() after write if 1 */
+	int rndbuf;		/* switch buffer randomly if 1 */
+	int rndmod;		/* switch buffering modes randomly if 1 */
 } opts;
 
 static const struct {
@@ -68,15 +72,24 @@ static const struct {
 	{ "IOFBF", _IOFBF },
 };
 
+static void (*alarm_fn)(int);				/* real/dummy alarm fn. */
+static int (*sintr_fn)(int, int);			/*  " siginterrupt fn. */
+static ssize_t (*rd_fn)(FILE*, void*, size_t);		/* read fn. */
+static ssize_t (*wr_fn)(FILE*, const void*, size_t);	/* write fn. */
+
 enum {
-	MB = 1024 * 1024,
-	BSIZE = 16 * 1024,
-	DEF_MS = 100,
-	MS = 1000,
+	MB = 1024 * 1024,	/* a megabyte */
+	BSIZE = 16 * 1024,	/* default RW buffer size */
+	DEF_MS = 100,		/* interrupt 10x a second */
+	MS = 1000,		/* msecs. in a second */
 };
 
 
 
+
+/**
+ * M A I N
+ */
 int
 main(int argc, char* argv[])
 {
@@ -100,8 +113,8 @@ main(int argc, char* argv[])
 
 		sig_t osig = xsignal(SIGALRM, pr_star);
 
-		if (process(argv[i]) == 0)
-			printf("ok\n");
+		if (process(argv[i]) == true)
+			printf(" OK\n");
 		else
 			rc = EXIT_FAILURE;
 
@@ -111,46 +124,79 @@ main(int argc, char* argv[])
 	return rc;
 }
 
-static int
+static bool
 process(const char *fn)
 {
 	FILE *ifp, *ofp;
-	char *buf;
+	char *buf, *abuf;
+	int rc = false;
 	size_t nw = 0;
-	int rc = EXIT_FAILURE;
 	ssize_t n;
 
-	if ((buf = malloc(opts.bsize)) == NULL)
-		err(rc, "buffer alloc failed");
+	abuf = NULL;
 
-	if ((ifp = fopen(fn, "r")) == NULL) {
-		warn("fopen failed: %s", fn);
+	if ((buf = malloc(opts.bsize)) == NULL) {
+		warn("buffer alloc failed");
 		return rc;
 	}
 
-	if ((ofp = popen(opts.cmd, "w")) == NULL)
-		err(rc, "popen failed `%s'", opts.cmd);
+	if ((abuf = malloc(opts.asize)) == NULL) {
+		warn("alt. buffer alloc failed");
+		goto fail;
+	}
 
-	setvbuf(ofp, NULL, opts.btype, opts.ssize);
-	setvbuf(ifp, NULL, opts.btype, opts.ssize);
+	if ((ifp = fopen(fn, "r")) == NULL) {
+		warn("fopen failed: %s", fn);
+		goto fail;
+	}
 
-	alarmtimer(opts.tmout);
-	while ((n = maxread(ifp, buf, opts.bsize)) > 0) {
+	if ((ofp = popen(opts.cmd, "w")) == NULL) {
+		warn("popen failed `%s'", opts.cmd);
+		goto fail;
+	}
+
+	setvbuf(ofp, NULL, opts.btype, opts.asize);
+	setvbuf(ifp, NULL, opts.btype, opts.asize);
+
+	alarm_fn(opts.tmout);
+
+	while ((n = rd_fn(ifp, buf, opts.bsize)) > 0) {
 		ssize_t i;
-		if ((i = maxwrite(ofp, buf, n)) == -1) {
+
+		if (opts.rndbuf || opts.rndmod) {
+			int r = rndbuf();
+			setvbuf(ofp, r ? abuf : NULL,
+				rndmode(), r ? opts.asize : 0);
+		}
+
+		sintr_fn(SIGALRM, 0);
+
+		if ((i = wr_fn(ofp, buf, n)) == -1) {
+			sintr_fn(SIGALRM, 1);
 			warn("write failed");
 			break;
 		}
+
+		if (opts.flush)
+			if (fflush(ofp))
+				warn("fflush failed");
+
+		sintr_fn(SIGALRM, 1);
 		nw += i;
 	}
-	alarmtimer(0);
+
+	alarm_fn(0);
 	// printf("%zu\n", nw);
 
 	fclose(ifp);
 	if (pclose(ofp) != 0)
 		warn("command failed `%s'", opts.cmd);
 	else
-		rc = EXIT_SUCCESS;
+		rc = true;
+
+fail:
+	free(abuf);
+	free(buf);
 
 	return rc;
 }
@@ -238,7 +284,7 @@ smaxwrite(FILE* fp, const void* buf, size_t size)
 }
 
 /**
- * maxwrite - stdio version (substrate is buggy)
+ * maxwrite - stdio version (warning: substrate may be buggy)
  */
 ssize_t
 maxwrite(FILE* fp, const void* buf, size_t size)
@@ -266,6 +312,28 @@ maxwrite(FILE* fp, const void* buf, size_t size)
 		size -= n;
 	}
 	return nwr;
+}
+
+static int
+rndbuf(void)
+{
+	if (opts.rndbuf == 0)
+		return 0;
+	return arc4random_uniform(2);
+}
+
+static int
+rndmode(void)
+{
+	if (opts.rndmod == 0)
+		return opts.btype;
+
+	switch (arc4random_uniform(3)) {
+	case 0:	return _IONBF;
+	case 1: return _IOLBF;
+	case 2: return _IOFBF;
+	default: errx(EXIT_FAILURE, "programmer error!");
+	}
 }
 
 /**
@@ -296,6 +364,20 @@ alarmtimer(int wait)
 	setitimer(ITIMER_REAL, &itv, NULL); 
 }
 
+static void
+dummytimer(int dummy)
+{
+	(void)dummy;
+}
+
+static int
+dummysintr(int dum1, int dum2)
+{
+	(void)dum1;
+	(void)dum2;
+	return 0;	/* OK */
+}
+
 /**
  * Print a `*' each time an alarm signal occurs.
  */
@@ -312,22 +394,30 @@ pr_star(int signo)
 }
 
 /**
- * return true if not empty or blank; FAIL otherwise.
+ * return true if not empty or blank; false otherwise.
  */
 static bool
 isvalid(const char *s)
 {
-	if (*s == '\0')
-		return false;
 	return strspn(s, " \t") != strlen(s);
 }
 
 static const char *
-getbtype(int val) {
+btype2str(int val)
+{
 	for (size_t i = 0; i < __arraycount(btypes); i++)
 		if (btypes[i].value == val)
 			return btypes[i].name;
 	return "*invalid*";
+}
+
+static int
+str2btype(const char* s)
+{
+	for (size_t i = 0; i < __arraycount(btypes); i++)
+		if (strcmp(btypes[i].name, s) == 0)
+			return btypes[i].value;
+	return EOF;
 }
 
 /**
@@ -336,18 +426,28 @@ getbtype(int val) {
 static void
 usage(FILE* fp)
 {
-	fprintf(fp, "Usage: %s [-b SIZE] [-h] [-t TMOUT] -c CMD FILE...\n",
-	    getprogname());
+	fprintf(fp, "Usage: %s [-a SIZE] [-b SIZE] [-fihmnrsw]"
+		    " [-p TYPE] [-t TMOUT] -c CMD FILE...\n",
+		getprogname());
 	fprintf(fp, "%s: Test interrupted writes to popen()ed CMD.\n",
-	    getprogname());
+		getprogname());
 	fprintf(fp, "\n");
-	fprintf(fp, "  -b SIZE   Buffer size (%zu)\n", opts.bsize);
-	fprintf(fp, "  -c CMD    Command to run on each FILE.\n");
-	fprintf(fp, "  -h        This message.\n");
-	fprintf(fp, "  -p        Buffering type %s.\n", getbtype(opts.btype));
-	fprintf(fp, "  -s SIZE   stdio buffer size (%zu)\n", opts.ssize);
+	fprintf(fp, "Usual options:\n");
+	fprintf(fp, "  -a SIZE   Alt. stdio buffer size (%zu)\n", opts.asize);
+	fprintf(fp, "  -b SIZE   Program buffer size (%zu)\n", opts.bsize);
+	fprintf(fp, "  -c CMD    Command to run on each FILE\n");
+	fprintf(fp, "  -h        This message\n");
+	fprintf(fp, "  -p TYPE   Buffering type (%s)\n", btype2str(opts.btype));
 	fprintf(fp, "  -t TMOUT  Interrupt writing to CMD every (%d) ms\n",
-	    opts.tmout);
+		opts.tmout);
+	fprintf(fp, "Debug options:\n");
+	fprintf(fp, "  -f        Do fflush() after writing each block\n");
+	fprintf(fp, "  -i        Use siginterrupt to block interrupts\n");
+	fprintf(fp, "  -m        Use random buffering modes\n");
+	fprintf(fp, "  -n        No interruptions (turns off -i)\n");
+	fprintf(fp, "  -r        Use read() instead of fread()\n");
+	fprintf(fp, "  -s        Switch between own/stdio buffers at random\n");
+	fprintf(fp, "  -w        Use write() instead of fwrite()\n");
 }
 
 /**
@@ -356,50 +456,70 @@ usage(FILE* fp)
 static int
 do_opts(int argc, char *argv[])
 {
-	int opt;
-	int i;
-	size_t j;
+	int opt, i;
 
 	/* defaults */
+	opts.cmd = "";
 	opts.btype = _IONBF;
-	opts.ssize = BSIZE;		/* 16K */
+	opts.asize = BSIZE;		/* 16K */
 	opts.bsize = BSIZE;		/* 16K */
 	opts.tmout = DEF_MS;		/* 100ms */
-	opts.cmd = "";
+	opts.flush = 0;			/* no fflush() after each write */
+	opts.rndbuf = 0;		/* no random buffer switching */
+	opts.rndmod = 0;		/* no random mode    " */
+	alarm_fn = alarmtimer;
+	sintr_fn = dummysintr;		/* don't protect writes with siginterrupt() */
+	rd_fn = maxread;		/* read using stdio funcs. */
+	wr_fn = maxwrite;		/* write   "   */
 
-	while ((opt = getopt(argc, argv, "b:c:hp:s:t:")) != -1) {
+	while ((opt = getopt(argc, argv, "a:b:c:fhimnp:rst:w")) != -1) {
 		switch (opt) {
+		case 'a':
+			i = atoi(optarg);
+			if (i <= 0 || i > MB)
+				errx(EXIT_FAILURE,
+				     "alt. buffer size not in range (1 - %d): %d",
+				     MB, i);
+			opts.asize = i;
+			break;
 		case 'b':
 			i = atoi(optarg);
 			if (i <= 0 || i > MB)
 				errx(EXIT_FAILURE,
-				    "buffer size not in range (1 - %d): %d",
-				    MB, i);
+				     "buffer size not in range (1 - %d): %d",
+				     MB, i);
 			opts.bsize = i;
 			break;
 		case 'c':
 			opts.cmd = optarg;
 			break;
-		case 'h':
-			usage(stdout);
-			exit(EXIT_SUCCESS);
+		case 'f':
+			opts.flush = 1;
+			break;
+		case 'i':
+			sintr_fn = siginterrupt;
+			break;
+		case 'm':
+			opts.rndmod = 1;
+			break;
+		case 'n':
+			alarm_fn = dummytimer;
+			break;
 		case 'p':
-			for (j = 0; j < __arraycount(btypes); j++)
-				if (strcmp(btypes[j].name, optarg) == 0) {
-					opts.btype = btypes[j].value;
-					break;
-				}
-			if (j == __arraycount(btypes))
+			i = str2btype(optarg);
+			if (i == EOF)
 				errx(EXIT_FAILURE,
-				    "unknown buffering type: `%s'", optarg);
+				     "unknown buffering type: `%s'", optarg);
+			opts.btype = i;
+			break;
+		case 'r':
+			rd_fn = smaxread;
+			break;
+		case 'w':
+			wr_fn = smaxwrite;
 			break;
 		case 's':
-			i = atoi(optarg);
-			if (i <= 0 || i > MB)
-				errx(EXIT_FAILURE,
-				    "buffer size not in range (1 - %d): %d",
-				    MB, i);
-			opts.ssize = i;
+			opts.rndbuf = 1;
 			break;
 		case 't':
 			i = atoi(optarg);
@@ -408,6 +528,9 @@ do_opts(int argc, char *argv[])
 				    "timeout not in range (10ms - 10s): %d", i);
 			opts.tmout = i;
 			break;
+		case 'h':
+			usage(stdout);
+			exit(EXIT_SUCCESS);
 		default:
 			usage(stderr);
 			exit(EXIT_FAILURE);
@@ -416,6 +539,10 @@ do_opts(int argc, char *argv[])
 
 	if (!isvalid(opts.cmd))
 		errx(EXIT_FAILURE, "Please specify a valid command with -c");
+
+	/* don't call siginterrupt() if not interrupting */
+	if (alarm_fn == dummytimer)
+		sintr_fn = dummysintr;
 
 	return optind;
 }
