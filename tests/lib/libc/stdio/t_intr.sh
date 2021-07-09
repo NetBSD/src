@@ -1,4 +1,4 @@
-# $NetBSD: t_intr.sh,v 1.1 2021/07/08 09:07:46 christos Exp $
+# $NetBSD: t_intr.sh,v 1.2 2021/07/09 15:26:59 christos Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -38,7 +38,7 @@ TMOUT=20
 h_test() {
 	"${DIR}/h_makenumbers" "$1" > numbers.in
 	"${DIR}/h_intr" \
-	    -p "$2" -b ${BSIZE} -s ${SSIZE} -t ${TMOUT} \
+	    -p "$2" -a ${SSIZE} -b ${BSIZE} -t ${TMOUT} \
 	    -c "dd of=numbers.out msgfmt=quiet" numbers.in
 	"${DIR}/h_testnumbers" < numbers.out
 }
