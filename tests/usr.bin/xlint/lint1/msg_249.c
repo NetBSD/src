@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_249.c,v 1.6 2021/07/10 10:30:26 rillig Exp $	*/
+/*	$NetBSD: msg_249.c,v 1.7 2021/07/10 11:22:19 rillig Exp $	*/
 # 3 "msg_249.c"
 
 // Test for message: syntax error '%s' [249]
@@ -54,6 +54,6 @@ struct cover_member_declaration {
 	const int noclass_declspecs;
 
 	/* cover 'noclass_declmods deftyp ...' */
-	/* expect+1: error: syntax error 'unnamed member' [249] */
+	/* expect+1: error: syntax error 'member without type' [249] */
 	const;
 };
