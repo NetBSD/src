@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_swap.S,v 1.17 2021/04/26 21:40:21 skrll Exp $	*/
+/*	$NetBSD: atomic_swap.S,v 1.18 2021/07/10 06:53:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007,2012 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 ENTRY_NP(_atomic_swap_32)
 	mov	ip, r0
 1:
-#ifdef _ARM_ARCH_6
+#if defined(_ARM_ARCH_6)
 	ldrex	r0, [ip]
 	cmp	r0, r1
 #ifdef __thumb__
@@ -100,7 +100,7 @@ END(__sync_lock_release_4)
 ENTRY_NP(_atomic_swap_8)
 	mov	ip, r0
 1:
-#ifdef _ARM_ARCH_6
+#if defined(_ARM_ARCH_6)
 	ldrexb	r0, [ip]
 	strexb	r3, r1, [ip]
 #else

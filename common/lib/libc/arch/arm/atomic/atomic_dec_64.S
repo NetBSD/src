@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_dec_64.S,v 1.7 2013/11/30 21:09:11 joerg Exp $	*/
+/*	$NetBSD: atomic_dec_64.S,v 1.8 2021/07/10 06:53:40 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include "atomic_op_asm.h"
 
-#ifdef _ARM_ARCH_6
+#if defined(_ARM_ARCH_6)
 
 ENTRY_NP(_atomic_dec_64_nv)
 	mov	ip, r0			/* need r0 for return value */

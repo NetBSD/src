@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_dec_32.S,v 1.5 2013/08/11 04:41:17 matt Exp $	*/
+/*	$NetBSD: atomic_dec_32.S,v 1.6 2021/07/10 06:53:40 skrll Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include "atomic_op_asm.h"
 
-#ifdef _ARM_ARCH_6
+#if defined(_ARM_ARCH_6)
 
 ENTRY_NP(_atomic_dec_32)
 1:	ldrex	r3, [r0]		/* load old value (return value) */
