@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_247.c,v 1.13 2021/04/09 20:00:07 rillig Exp $	*/
+/*	$NetBSD: msg_247.c,v 1.14 2021/07/10 17:35:54 rillig Exp $	*/
 # 3 "msg_247.c"
 
 // Test for message: pointer cast from '%s' to '%s' may be troublesome [247]
@@ -23,7 +23,7 @@ example(struct Other *arg)
 	 * XXX: The target type is reported as 'struct <unnamed>'.  In cases
 	 *  like these, it would be helpful to print at least the type name
 	 *  of the pointer.  This type name though is discarded immediately
-	 *  when the parser reduces 'T_TYPENAME clrtyp' to 'clrtyp_typespec'.
+	 *  in the grammar rule 'typespec: T_TYPENAME'.
 	 *  After that, the target type of the cast is just an unnamed struct,
 	 *  with no hint at all that there is a typedef for a pointer to the
 	 *  struct.

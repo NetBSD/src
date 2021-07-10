@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.295 2021/07/10 17:17:05 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.296 2021/07/10 17:35:54 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.295 2021/07/10 17:17:05 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.296 2021/07/10 17:35:54 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -393,7 +393,7 @@ top_level_declaration:		/* C99 6.9 calls this 'declaration' */
 			warning(0);
 		}
 	  }
-	| clrtyp deftyp notype_init_decls T_SEMI {
+	| begin_type end_type notype_init_decls T_SEMI {
 		if (sflag) {
 			/* old style declaration; add 'int' */
 			error(1);
@@ -441,13 +441,13 @@ function_definition:		/* C99 6.9.1 */
 	;
 
 func_decl:
-	  clrtyp deftyp notype_decl {
+	  begin_type end_type notype_decl {
 		$$ = $3;
 	  }
-	| clrtyp declmods deftyp notype_decl {
+	| begin_type declmods end_type notype_decl {
 		$$ = $4;
 	  }
-	| clrtyp declaration_specifiers deftyp type_decl {
+	| begin_type declaration_specifiers end_type type_decl {
 		$$ = $4;
 	  }
 	;
@@ -469,12 +469,12 @@ arg_declaration_list:		/* C99 6.9.1p13 example 1 */
  * needs other error handling.
  */
 arg_declaration:
-	  clrtyp declmods deftyp T_SEMI {
+	  begin_type declmods end_type T_SEMI {
 		/* empty declaration */
 		warning(2);
 	  }
-	| clrtyp declmods deftyp notype_init_decls T_SEMI
-	| clrtyp declaration_specifiers deftyp T_SEMI {
+	| begin_type declmods end_type notype_init_decls T_SEMI
+	| begin_type declaration_specifiers end_type T_SEMI {
 		if (!dcs->d_nonempty_decl) {
 			/* empty declaration */
 			warning(2);
@@ -483,14 +483,14 @@ arg_declaration:
 			warning(3, type_name(dcs->d_type));
 		}
 	  }
-	| clrtyp declaration_specifiers deftyp type_init_decls T_SEMI {
+	| begin_type declaration_specifiers end_type type_init_decls T_SEMI {
 		if (dcs->d_nonempty_decl) {
 			/* '%s' declared in argument declaration list */
 			warning(3, type_name(dcs->d_type));
 		}
 	  }
-	| clrtyp declmods error
-	| clrtyp declaration_specifiers error
+	| begin_type declmods error
+	| begin_type declaration_specifiers error
 	;
 
 declaration:			/* C99 6.7 */
@@ -499,7 +499,7 @@ declaration:			/* C99 6.7 */
 	;
 
 declaration_noerror:		/* see C99 6.7 'declaration' */
-	  clrtyp declmods deftyp T_SEMI {
+	  begin_type declmods end_type T_SEMI {
 		if (dcs->d_scl == TYPEDEF) {
 			/* typedef declares no type name */
 			warning(72);
@@ -508,8 +508,8 @@ declaration_noerror:		/* see C99 6.7 'declaration' */
 			warning(2);
 		}
 	  }
-	| clrtyp declmods deftyp notype_init_decls T_SEMI
-	| clrtyp declaration_specifiers deftyp T_SEMI {
+	| begin_type declmods end_type notype_init_decls T_SEMI
+	| begin_type declaration_specifiers end_type T_SEMI {
 		if (dcs->d_scl == TYPEDEF) {
 			/* typedef declares no type name */
 			warning(72);
@@ -518,18 +518,18 @@ declaration_noerror:		/* see C99 6.7 'declaration' */
 			warning(2);
 		}
 	  }
-	| clrtyp declaration_specifiers deftyp type_init_decls T_SEMI
+	| begin_type declaration_specifiers end_type type_init_decls T_SEMI
 	;
 
-clrtyp:
+begin_type:
 	  /* empty */ {
-		clrtyp();
+		begin_type();
 	  }
 	;
 
-deftyp:
+end_type:
 	  /* empty */ {
-		deftyp();
+		end_type();
 	  }
 	;
 
@@ -665,25 +665,25 @@ member_declaration_list:
 	;
 
 member_declaration:
-	  clrtyp add_type_qualifier_list deftyp {
+	  begin_type add_type_qualifier_list end_type {
 		/* too late, i know, but getsym() compensates it */
 		symtyp = FMEMBER;
 	  } notype_member_decls type_attribute_opt {
 		symtyp = FVFT;
 		$$ = $5;
 	  }
-	| clrtyp noclass_declspecs deftyp {
+	| begin_type noclass_declspecs end_type {
 		symtyp = FMEMBER;
 	  } type_member_decls type_attribute_opt {
 		symtyp = FVFT;
 		$$ = $5;
 	  }
-	| clrtyp add_type_qualifier_list deftyp type_attribute_opt {
+	| begin_type add_type_qualifier_list end_type type_attribute_opt {
 		/* syntax error '%s' */
 		error(249, "member without type");
 		$$ = NULL;
 	  }
-	| clrtyp noclass_declspecs deftyp type_attribute_opt {
+	| begin_type noclass_declspecs end_type type_attribute_opt {
 		symtyp = FVFT;
 		if (!Sflag)
 			/* anonymous struct/union members is a C9X feature */
@@ -1150,22 +1150,22 @@ parameter_type_list:
 
 /* XXX: C99 6.7.5 defines the same name, but it looks completely different. */
 parameter_declaration:
-	  clrtyp declmods deftyp {
+	  begin_type declmods end_type {
 		$$ = declare_argument(abstract_name(), false);
 	  }
-	| clrtyp declaration_specifiers deftyp {
+	| begin_type declaration_specifiers end_type {
 		$$ = declare_argument(abstract_name(), false);
 	  }
-	| clrtyp declmods deftyp notype_param_decl {
+	| begin_type declmods end_type notype_param_decl {
 		$$ = declare_argument($4, false);
 	  }
-	| clrtyp declaration_specifiers deftyp type_param_decl {
+	| begin_type declaration_specifiers end_type type_param_decl {
 		$$ = declare_argument($4, false);
 	  }
-	| clrtyp declmods deftyp abstract_declarator {
+	| begin_type declmods end_type abstract_declarator {
 		$$ = declare_argument($4, false);
 	  }
-	| clrtyp declaration_specifiers deftyp abstract_declarator {
+	| begin_type declaration_specifiers end_type abstract_declarator {
 		$$ = declare_argument($4, false);
 	  }
 	;
@@ -1268,16 +1268,16 @@ type_name:			/* C99 6.7.6 */
 	;
 
 abstract_declaration:
-	  clrtyp add_type_qualifier_list deftyp {
+	  begin_type add_type_qualifier_list end_type {
 		$$ = declare_1_abstract(abstract_name());
 	  }
-	| clrtyp noclass_declspecs deftyp {
+	| begin_type noclass_declspecs end_type {
 		$$ = declare_1_abstract(abstract_name());
 	  }
-	| clrtyp add_type_qualifier_list deftyp abstract_declarator {
+	| begin_type add_type_qualifier_list end_type abstract_declarator {
 		$$ = declare_1_abstract($4);
 	  }
-	| clrtyp noclass_declspecs deftyp abstract_declarator {
+	| begin_type noclass_declspecs end_type abstract_declarator {
 		$$ = declare_1_abstract($4);
 	  }
 	;
@@ -1540,7 +1540,7 @@ for_start:			/* see C99 6.8.5 */
 
 for_exprs:			/* see C99 6.8.5 */
 	  for_start
-	    clrtyp declaration_specifiers deftyp notype_init_decls T_SEMI
+	    begin_type declaration_specifiers end_type notype_init_decls T_SEMI
 	    expr_opt T_SEMI
 	    expr_opt T_RPAREN {
 		/* variable declaration in for loop */
