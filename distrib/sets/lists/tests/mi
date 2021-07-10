@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1082 2021/07/10 09:24:26 rillig Exp $
+# $NetBSD: mi,v 1.1083 2021/07/10 18:25:57 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6210,6 +6210,8 @@
 ./usr/tests/usr.bin/xlint/lint1/d_typefun.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_typename_as_var.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_zero_sized_arrays.c		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/decl.c				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/decl.exp			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/decl_arg.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/decl_arg.exp			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/decl_struct_member.c		tests-usr.bin-tests	compattestfile,atf
