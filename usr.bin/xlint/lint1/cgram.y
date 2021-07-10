@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.291 2021/07/10 16:39:43 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.292 2021/07/10 16:41:51 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.291 2021/07/10 16:39:43 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.292 2021/07/10 16:41:51 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -281,7 +281,6 @@ anonymize(sym_t *s)
 %type	<y_sym>		notype_decl
 %type	<y_sym>		type_decl
 %type	<y_type>	typespec
-%type	<y_type>	clrtyp_typespec
 %type	<y_type>	notype_typespec
 %type	<y_type>	struct_spec
 %type	<y_type>	enum_spec
@@ -535,8 +534,8 @@ deftyp:
 	;
 
 declaration_specifiers:		/* C99 6.7 */
-	  clrtyp_typespec {
-		add_type($1);
+	  clrtyp typespec {
+		add_type($2);
 	  }
 	| clrtyp_declmods typespec {
 		add_type($2);
@@ -564,12 +563,6 @@ qualifier_or_storage_class:
 	  }
 	| T_SCLASS {
 		add_storage_class($1);
-	  }
-	;
-
-clrtyp_typespec:
-	  clrtyp typespec {
-		$$ = $2;
 	  }
 	;
 
@@ -717,8 +710,8 @@ noclass_declspecs:
 	;
 
 noclass_declspecs_postfix:
-	  clrtyp_typespec {
-		add_type($1);
+	  clrtyp typespec {
+		add_type($2);
 	  }
 	| clrtyp add_type_qualifier_list typespec {
 		add_type($3);
