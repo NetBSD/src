@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.286 2021/07/10 10:30:26 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.287 2021/07/10 10:56:30 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.286 2021/07/10 10:30:26 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.287 2021/07/10 10:56:30 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -675,12 +675,12 @@ member_declaration_list:
 	;
 
 member_declaration:
-	  noclass_declmods deftyp {
+	  clrtyp add_type_qualifier_list deftyp {
 		/* too late, i know, but getsym() compensates it */
 		symtyp = FMEMBER;
 	  } notype_member_decls type_attribute_opt {
 		symtyp = FVFT;
-		$$ = $4;
+		$$ = $5;
 	  }
 	| noclass_declspecs deftyp {
 		symtyp = FMEMBER;
@@ -688,7 +688,7 @@ member_declaration:
 		symtyp = FVFT;
 		$$ = $4;
 	  }
-	| noclass_declmods deftyp type_attribute_opt {
+	| clrtyp add_type_qualifier_list deftyp type_attribute_opt {
 		symtyp = FVFT;
 		if (!Sflag)
 			/* anonymous struct/union members is a C9X feature */
@@ -733,8 +733,8 @@ noclass_declspecs_postfix:
 	  clrtyp_typespec {
 		add_type($1);
 	  }
-	| noclass_declmods typespec {
-		add_type($2);
+	| clrtyp add_type_qualifier_list typespec {
+		add_type($3);
 	  }
 	| noclass_declspecs_postfix T_QUAL {
 		add_qualifier($2);
@@ -745,12 +745,14 @@ noclass_declspecs_postfix:
 	| noclass_declspecs_postfix type_attribute
 	;
 
-noclass_declmods:
-	  clrtyp T_QUAL {
-		add_qualifier($2);
-	  }
-	| noclass_declmods T_QUAL {
-		add_qualifier($2);
+add_type_qualifier_list:
+	  add_type_qualifier
+	| add_type_qualifier_list add_type_qualifier
+	;
+
+add_type_qualifier:
+	  T_QUAL {
+		add_qualifier($1);
 	  }
 	;
 
@@ -1286,14 +1288,14 @@ type_name:			/* C99 6.7.6 */
 	;
 
 abstract_declaration:
-	  noclass_declmods deftyp {
+	  clrtyp add_type_qualifier_list deftyp {
 		$$ = declare_1_abstract(abstract_name());
 	  }
 	| noclass_declspecs deftyp {
 		$$ = declare_1_abstract(abstract_name());
 	  }
-	| noclass_declmods deftyp abstract_declarator {
-		$$ = declare_1_abstract($3);
+	| clrtyp add_type_qualifier_list deftyp abstract_declarator {
+		$$ = declare_1_abstract($4);
 	  }
 	| noclass_declspecs deftyp abstract_declarator {
 		$$ = declare_1_abstract($3);
