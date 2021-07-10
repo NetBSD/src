@@ -1,4 +1,4 @@
-/*	$NetBSD: decl.c,v 1.1 2021/07/10 18:25:57 rillig Exp $	*/
+/*	$NetBSD: decl.c,v 1.2 2021/07/10 19:30:19 rillig Exp $	*/
 # 3 "decl.c"
 
 /*
@@ -70,4 +70,19 @@ declarators(void)
 	sink(c);
 	/* expect+1: converting 'pointer to pointer to char' to incompatible 'pointer to double' */
 	sink(ppc);
+}
+
+_Bool
+enum_error_handling(void)
+{
+	enum {
+		/* expect+1: syntax error '"' [249] */
+		"error 1"
+		:		/* still the same error */
+		,		/* back on track */
+		A,
+		B
+	} x = A;
+
+	return x == B;
 }
