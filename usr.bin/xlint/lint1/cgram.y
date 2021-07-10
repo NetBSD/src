@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.304 2021/07/10 21:44:51 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.305 2021/07/10 22:46:02 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.304 2021/07/10 21:44:51 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.305 2021/07/10 22:46:02 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -124,7 +124,7 @@ anonymize(sym_t *s)
 
 %}
 
-%expect 136
+%expect 131
 
 %union {
 	val_t	*y_val;
@@ -715,7 +715,7 @@ struct_declaration:
 
 noclass_declspecs:
 	  noclass_declspecs_postfix
-	| type_attribute noclass_declspecs_postfix
+	| type_attribute noclass_declspecs
 	;
 
 noclass_declspecs_postfix:
