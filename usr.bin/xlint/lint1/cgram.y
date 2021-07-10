@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.293 2021/07/10 16:54:40 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.294 2021/07/10 17:06:56 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.293 2021/07/10 16:54:40 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.294 2021/07/10 17:06:56 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -447,8 +447,8 @@ func_decl:
 	| clrtyp declmods deftyp notype_decl {
 		$$ = $4;
 	  }
-	| declaration_specifiers deftyp type_decl {
-		$$ = $3;
+	| clrtyp declaration_specifiers deftyp type_decl {
+		$$ = $4;
 	  }
 	;
 
@@ -474,7 +474,7 @@ arg_declaration:
 		warning(2);
 	  }
 	| clrtyp declmods deftyp notype_init_decls T_SEMI
-	| declaration_specifiers deftyp T_SEMI {
+	| clrtyp declaration_specifiers deftyp T_SEMI {
 		if (!dcs->d_nonempty_decl) {
 			/* empty declaration */
 			warning(2);
@@ -483,14 +483,14 @@ arg_declaration:
 			warning(3, type_name(dcs->d_type));
 		}
 	  }
-	| declaration_specifiers deftyp type_init_decls T_SEMI {
+	| clrtyp declaration_specifiers deftyp type_init_decls T_SEMI {
 		if (dcs->d_nonempty_decl) {
 			/* '%s' declared in argument declaration list */
 			warning(3, type_name(dcs->d_type));
 		}
 	  }
 	| clrtyp declmods error
-	| declaration_specifiers error
+	| clrtyp declaration_specifiers error
 	;
 
 declaration:			/* C99 6.7 */
@@ -509,7 +509,7 @@ declaration_noerror:		/* see C99 6.7 'declaration' */
 		}
 	  }
 	| clrtyp declmods deftyp notype_init_decls T_SEMI
-	| declaration_specifiers deftyp T_SEMI {
+	| clrtyp declaration_specifiers deftyp T_SEMI {
 		if (dcs->d_scl == TYPEDEF) {
 			/* typedef declares no type name */
 			warning(72);
@@ -518,7 +518,7 @@ declaration_noerror:		/* see C99 6.7 'declaration' */
 			warning(2);
 		}
 	  }
-	| declaration_specifiers deftyp type_init_decls T_SEMI
+	| clrtyp declaration_specifiers deftyp type_init_decls T_SEMI
 	;
 
 clrtyp:
@@ -534,11 +534,11 @@ deftyp:
 	;
 
 declaration_specifiers:		/* C99 6.7 */
-	  clrtyp typespec {
-		add_type($2);
+	  typespec {
+		add_type($1);
 	  }
-	| clrtyp declmods typespec {
-		add_type($3);
+	| declmods typespec {
+		add_type($2);
 	  }
 	| type_attribute declaration_specifiers
 	| declaration_specifiers declmod
@@ -709,6 +709,7 @@ noclass_declspecs:
 	| type_attribute noclass_declspecs_postfix
 	;
 
+/* TODO: pair up clrtyp with deftyp */
 noclass_declspecs_postfix:
 	  clrtyp typespec {
 		add_type($2);
@@ -1153,20 +1154,20 @@ parameter_declaration:
 	  clrtyp declmods deftyp {
 		$$ = declare_argument(abstract_name(), false);
 	  }
-	| declaration_specifiers deftyp {
+	| clrtyp declaration_specifiers deftyp {
 		$$ = declare_argument(abstract_name(), false);
 	  }
 	| clrtyp declmods deftyp notype_param_decl {
 		$$ = declare_argument($4, false);
 	  }
-	| declaration_specifiers deftyp type_param_decl {
-		$$ = declare_argument($3, false);
+	| clrtyp declaration_specifiers deftyp type_param_decl {
+		$$ = declare_argument($4, false);
 	  }
 	| clrtyp declmods deftyp abstract_declarator {
 		$$ = declare_argument($4, false);
 	  }
-	| declaration_specifiers deftyp abstract_declarator {
-		$$ = declare_argument($3, false);
+	| clrtyp declaration_specifiers deftyp abstract_declarator {
+		$$ = declare_argument($4, false);
 	  }
 	;
 
@@ -1539,11 +1540,13 @@ for_start:			/* see C99 6.8.5 */
 	;
 
 for_exprs:			/* see C99 6.8.5 */
-	  for_start declaration_specifiers deftyp notype_init_decls T_SEMI
-	    expr_opt T_SEMI expr_opt T_RPAREN {
+	  for_start
+	    clrtyp declaration_specifiers deftyp notype_init_decls T_SEMI
+	    expr_opt T_SEMI
+	    expr_opt T_RPAREN {
 		/* variable declaration in for loop */
 		c99ism(325);
-		for1(NULL, $6, $8);
+		for1(NULL, $7, $9);
 		clear_warning_flags();
 	    }
 	  | for_start expr_opt T_SEMI expr_opt T_SEMI expr_opt T_RPAREN {
