@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.284 2021/07/10 09:48:41 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.285 2021/07/10 09:53:00 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.284 2021/07/10 09:48:41 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.285 2021/07/10 09:53:00 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1513,7 +1513,7 @@ iteration_statement:		/* C99 6.8.5 */
 	  T_WHILE T_LPAREN expr T_RPAREN {
 		while1($3);
 		clear_warning_flags();
-	  } while_body {
+	  } iteration_body {
 		clear_warning_flags();
 		while2();
 	  }
@@ -1527,13 +1527,7 @@ iteration_statement:		/* C99 6.8.5 */
 		clear_warning_flags();
 		do2(NULL);
 	  }
-	| for_exprs statement {
-		clear_warning_flags();
-		for2();
-		end_declaration_level();
-		block_level--;
-	  }
-	| for_exprs error {
+	| for_exprs iteration_body {
 		clear_warning_flags();
 		for2();
 		end_declaration_level();
@@ -1541,7 +1535,7 @@ iteration_statement:		/* C99 6.8.5 */
 	  }
 	;
 
-while_body:
+iteration_body:
 	  statement
 	| error
 	;
