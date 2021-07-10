@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.288 2021/07/10 11:22:19 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.289 2021/07/10 14:45:15 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.288 2021/07/10 11:22:19 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.289 2021/07/10 14:45:15 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -445,7 +445,7 @@ func_decl:
 	  clrtyp deftyp notype_decl {
 		$$ = $3;
 	  }
-	| declmods deftyp notype_decl {
+	| clrtyp_declmods deftyp notype_decl {
 		$$ = $3;
 	  }
 	| declaration_specifiers deftyp type_decl {
@@ -470,11 +470,11 @@ arg_declaration_list:		/* C99 6.9.1p13 example 1 */
  * needs other error handling.
  */
 arg_declaration:
-	  declmods deftyp T_SEMI {
+	  clrtyp_declmods deftyp T_SEMI {
 		/* empty declaration */
 		warning(2);
 	  }
-	| declmods deftyp notype_init_decls T_SEMI
+	| clrtyp_declmods deftyp notype_init_decls T_SEMI
 	| declaration_specifiers deftyp T_SEMI {
 		if (!dcs->d_nonempty_decl) {
 			/* empty declaration */
@@ -490,7 +490,7 @@ arg_declaration:
 			warning(3, type_name(dcs->d_type));
 		}
 	  }
-	| declmods error
+	| clrtyp_declmods error
 	| declaration_specifiers error
 	;
 
@@ -500,7 +500,7 @@ declaration:			/* C99 6.7 */
 	;
 
 declaration_noerror:		/* see C99 6.7 'declaration' */
-	  declmods deftyp T_SEMI {
+	  clrtyp_declmods deftyp T_SEMI {
 		if (dcs->d_scl == TYPEDEF) {
 			/* typedef declares no type name */
 			warning(72);
@@ -509,7 +509,7 @@ declaration_noerror:		/* see C99 6.7 'declaration' */
 			warning(2);
 		}
 	  }
-	| declmods deftyp notype_init_decls T_SEMI
+	| clrtyp_declmods deftyp notype_init_decls T_SEMI
 	| declaration_specifiers deftyp T_SEMI {
 		if (dcs->d_scl == TYPEDEF) {
 			/* typedef declares no type name */
@@ -538,7 +538,7 @@ declaration_specifiers:		/* C99 6.7 */
 	  clrtyp_typespec {
 		add_type($1);
 	  }
-	| declmods typespec {
+	| clrtyp_declmods typespec {
 		add_type($2);
 	  }
 	| type_attribute declaration_specifiers
@@ -548,9 +548,9 @@ declaration_specifiers:		/* C99 6.7 */
 	  }
 	;
 
-declmods:
+clrtyp_declmods:
 	  clrtyp qualifier_or_storage_class
-	| declmods declmod
+	| clrtyp_declmods declmod
 	;
 
 declmod:
@@ -1160,19 +1160,19 @@ parameter_type_list:
 
 /* XXX: C99 6.7.5 defines the same name, but it looks completely different. */
 parameter_declaration:
-	  declmods deftyp {
+	  clrtyp_declmods deftyp {
 		$$ = declare_argument(abstract_name(), false);
 	  }
 	| declaration_specifiers deftyp {
 		$$ = declare_argument(abstract_name(), false);
 	  }
-	| declmods deftyp notype_param_decl {
+	| clrtyp_declmods deftyp notype_param_decl {
 		$$ = declare_argument($3, false);
 	  }
 	| declaration_specifiers deftyp type_param_decl {
 		$$ = declare_argument($3, false);
 	  }
-	| declmods deftyp abstract_declarator {
+	| clrtyp_declmods deftyp abstract_declarator {
 		$$ = declare_argument($3, false);
 	  }
 	| declaration_specifiers deftyp abstract_declarator {
