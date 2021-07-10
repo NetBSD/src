@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.279 2021/07/10 04:47:25 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.280 2021/07/10 04:57:41 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.279 2021/07/10 04:47:25 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.280 2021/07/10 04:57:41 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -123,7 +123,7 @@ anonymize(sym_t *s)
 }
 %}
 
-%expect 150
+%expect 142
 
 %union {
 	val_t	*y_val;
@@ -721,26 +721,25 @@ member_declaration:
 	  }
 	;
 
-/*
- * XXX: shift/reduce conflict, caused by:
- *	type_attribute noclass_declspecs
- *	noclass_declspecs type_attribute
- */
 noclass_declspecs:
+	  noclass_declspecs_postfix
+	| type_attribute noclass_declspecs_postfix
+	;
+
+noclass_declspecs_postfix:
 	  clrtyp_typespec {
 		add_type($1);
 	  }
-	| type_attribute noclass_declspecs
 	| noclass_declmods typespec {
 		add_type($2);
 	  }
-	| noclass_declspecs T_QUAL {
+	| noclass_declspecs_postfix T_QUAL {
 		add_qualifier($2);
 	  }
-	| noclass_declspecs notype_typespec {
+	| noclass_declspecs_postfix notype_typespec {
 		add_type($2);
 	  }
-	| noclass_declspecs type_attribute
+	| noclass_declspecs_postfix type_attribute
 	;
 
 noclass_declmods:
