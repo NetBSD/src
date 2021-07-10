@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_anon_struct.c,v 1.3 2021/01/31 14:39:31 rillig Exp $	*/
+/*	$NetBSD: d_c99_anon_struct.c,v 1.4 2021/07/10 10:56:31 rillig Exp $	*/
 # 3 "d_c99_anon_struct.c"
 
 /* Anonymous struct test */
@@ -10,7 +10,7 @@ struct point {
 	int y;
 };
 
-struct bar {
+struct rect {
 	struct {
 		struct point top_left;
 		struct point bottom_right;
@@ -22,7 +22,7 @@ struct bar {
 int
 main(void)
 {
-	struct bar b;
-	b.top_left.x = 1;
+	struct rect r;
+	r.top_left.x = 1;
 	return 0;
 }
