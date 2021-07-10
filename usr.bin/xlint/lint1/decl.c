@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.196 2021/07/10 12:10:39 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.197 2021/07/10 17:35:54 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.196 2021/07/10 12:10:39 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.197 2021/07/10 17:35:54 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -235,7 +235,7 @@ add_storage_class(scl_t sc)
 	} else {
 		/*
 		 * multiple storage classes. An error will be reported in
-		 * deftyp().
+		 * end_type().
 		 */
 		dcs->d_mscl = true;
 	}
@@ -244,7 +244,7 @@ add_storage_class(scl_t sc)
 /*
  * Remember the type, modifier or typedef name returned by the parser
  * in *dcs (top element of decl stack). This information is used in
- * deftyp() to build the type used for all declarators in this
+ * end_type() to build the type used for all declarators in this
  * declaration.
  *
  * If tp->t_typedef is 1, the type comes from a previously defined typename.
@@ -283,7 +283,7 @@ add_type(type_t *tp)
 		    dcs->d_rank_mod != NOTSPEC || dcs->d_sign_mod != NOTSPEC) {
 			/*
 			 * remember that an error must be reported in
-			 * deftyp().
+			 * end_type().
 			 */
 			dcs->d_terr = true;
 			dcs->d_abstract_type = NOTSPEC;
@@ -340,7 +340,7 @@ add_type(type_t *tp)
 		if (dcs->d_sign_mod != NOTSPEC)
 			/*
 			 * more than one "signed" and/or "unsigned"; print
-			 * an error in deftyp()
+			 * an error in end_type()
 			 */
 			dcs->d_terr = true;
 		dcs->d_sign_mod = t;
@@ -350,7 +350,7 @@ add_type(type_t *tp)
 		 * dcs->d_rank_mod
 		 */
 		if (dcs->d_rank_mod != NOTSPEC)
-			/* more than one, print error in deftyp() */
+			/* more than one, print error in end_type() */
 			dcs->d_terr = true;
 		dcs->d_rank_mod = t;
 	} else if (t == FLOAT || t == DOUBLE) {
@@ -372,7 +372,7 @@ add_type(type_t *tp)
 		 * or "_Complex" in dcs->d_abstract_type
 		 */
 		if (dcs->d_abstract_type != NOTSPEC)
-			/* more than one, print error in deftyp() */
+			/* more than one, print error in end_type() */
 			dcs->d_terr = true;
 		dcs->d_abstract_type = t;
 	}
@@ -561,7 +561,7 @@ add_attr_used(void)
  * (and not the declarator) in the top element of the declaration stack.
  * Also detect multiple qualifiers of the same kind.
 
- * The remembered qualifier is used by deftyp() to construct the type
+ * The remembered qualifier is used by end_type() to construct the type
  * for all declarators.
  */
 void
@@ -687,7 +687,7 @@ end_declaration_level(void)
  * There is no need to clear d_asm in dinfo structs with context AUTO,
  * because these structs are freed at the end of the compound statement.
  * But it must be cleared in the outermost dinfo struct, which has
- * context EXTERN. This could be done in clrtyp() and would work for C90,
+ * context EXTERN. This could be done in begin_type() and would work for C90,
  * but not for C99 or C++ (due to mixed statements and declarations). Thus
  * we clear it in global_clean_up_decl(), which is used to do some cleanup
  * after global declarations/definitions.
@@ -706,7 +706,7 @@ setasm(void)
  * will be used by the next declaration
  */
 void
-clrtyp(void)
+begin_type(void)
 {
 
 	dcs->d_abstract_type = NOTSPEC;
@@ -749,7 +749,7 @@ dcs_adjust_storage_class(void)
  * context.
  */
 void
-deftyp(void)
+end_type(void)
 {
 	tspec_t	t, s, l, c;
 	type_t	*tp;
@@ -826,7 +826,7 @@ deftyp(void)
 		case LCOMPLEX:
 			break;
 		default:
-			INTERNAL_ERROR("deftyp(%s)", tspec_name(t));
+			INTERNAL_ERROR("end_type(%s)", tspec_name(t));
 		}
 		if (t != INT && t != CHAR && (s != NOTSPEC || l != NOTSPEC)) {
 			dcs->d_terr = true;
@@ -1330,7 +1330,7 @@ merge_qualified_pointer(qual_ptr *p1, qual_ptr *p2)
  * The following 3 functions extend the type of a declarator with
  * pointer, function and array types.
  *
- * The current type is the type built by deftyp() (dcs->d_type) and
+ * The current type is the type built by end_type() (dcs->d_type) and
  * pointer, function and array types already added for this
  * declarator. The new type extension is inserted between both.
  */
