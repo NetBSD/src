@@ -1,0 +1,3 @@
+init_c90.c(19): warning: struct or union member name in initializer is a C9X feature [313]
+init_c90.c(19): warning: struct or union member name in initializer is a C9X feature [313]
+init_c90.c(23): warning: array initializer with designators is a C9X feature [321]
