@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.303 2021/07/10 21:08:16 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.304 2021/07/10 21:44:51 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.303 2021/07/10 21:08:16 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.304 2021/07/10 21:44:51 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -535,23 +535,22 @@ declaration_specifiers:		/* C99 6.7 */
 	  add_type_specifier
 	| declmods add_type_specifier
 	| type_attribute declaration_specifiers
-	| declaration_specifiers declmod
+	| declaration_specifiers add_storage_class
 	| declaration_specifiers add_notype_type_specifier
+	| declaration_specifiers add_type_qualifier
+	| declaration_specifiers type_attribute
 	;
 
 declmods:
-	  qualifier_or_storage_class
-	| declmods declmod
+	  add_storage_class
+	| add_type_qualifier
+	| declmods add_storage_class
+	| declmods add_type_qualifier
+	| declmods type_attribute
 	;
 
-declmod:
-	  qualifier_or_storage_class
-	| type_attribute
-	;
-
-qualifier_or_storage_class:
-	  add_type_qualifier
-	| T_SCLASS {
+add_storage_class:
+	  T_SCLASS {
 		add_storage_class($1);
 	  }
 	;
