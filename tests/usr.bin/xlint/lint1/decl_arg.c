@@ -1,4 +1,4 @@
-/*	$NetBSD: decl_arg.c,v 1.4 2021/07/10 08:40:36 rillig Exp $	*/
+/*	$NetBSD: decl_arg.c,v 1.5 2021/07/10 09:24:27 rillig Exp $	*/
 # 3 "decl_arg.c"
 
 /*
@@ -123,3 +123,9 @@ void cover_parameter_declaration(
     double *const,		/* 6 */
     ...
 );
+
+void cover_asm_or_symbolrename_asm(void)
+    __asm("assembly code");
+
+void cover_asm_or_symbolrename_symbolrename(void)
+    __symbolrename(alternate_name);
