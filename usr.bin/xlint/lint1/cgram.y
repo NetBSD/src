@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.287 2021/07/10 10:56:30 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.288 2021/07/10 11:22:19 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.287 2021/07/10 10:56:30 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.288 2021/07/10 11:22:19 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -689,19 +689,9 @@ member_declaration:
 		$$ = $4;
 	  }
 	| clrtyp add_type_qualifier_list deftyp type_attribute_opt {
-		symtyp = FVFT;
-		if (!Sflag)
-			/* anonymous struct/union members is a C9X feature */
-			warning(49);
-		if (is_struct_or_union(dcs->d_type->t_tspec)) {
-			$$ = dcs->d_type->t_str->sou_first_member;
-			/* add all the members of the anonymous struct/union */
-			anonymize($$);
-		} else {
-			/* syntax error '%s' */
-			error(249, "unnamed member");
-			$$ = NULL;
-		}
+		/* syntax error '%s' */
+		error(249, "member without type");
+		$$ = NULL;
 	  }
 	| noclass_declspecs deftyp type_attribute_opt {
 		symtyp = FVFT;
