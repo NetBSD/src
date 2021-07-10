@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.53 2021/07/08 03:10:39 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.54 2021/07/10 17:46:55 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.53 2021/07/08 03:10:39 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.54 2021/07/10 17:46:55 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -440,7 +440,7 @@ lex_name(const char *yytext, size_t yyleng)
 		tok = T_NAME;
 	}
 
-	yylval.y_sb = sb;
+	yylval.y_name = sb;
 	return tok;
 }
 

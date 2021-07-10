@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.296 2021/07/10 17:35:54 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.297 2021/07/10 17:46:55 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.296 2021/07/10 17:35:54 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.297 2021/07/10 17:46:55 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -121,13 +121,14 @@ anonymize(sym_t *s)
 	for ( ; s != NULL; s = s->s_next)
 		s->s_styp = NULL;
 }
+
 %}
 
 %expect 136
 
 %union {
 	val_t	*y_val;
-	sbuf_t	*y_sb;
+	sbuf_t	*y_name;
 	sym_t	*y_sym;
 	op_t	y_op;
 	scl_t	y_scl;
@@ -272,8 +273,8 @@ anonymize(sym_t *s)
 %right	T_UNARY T_INCDEC T_SIZEOF T_REAL T_IMAG
 %left	T_LPAREN T_LBRACK T_POINT T_ARROW
 
-%token	<y_sb>		T_NAME
-%token	<y_sb>		T_TYPENAME
+%token	<y_name>	T_NAME
+%token	<y_name>	T_TYPENAME
 %token	<y_val>		T_CON
 %token	<y_string>	T_STRING
 
@@ -288,7 +289,7 @@ anonymize(sym_t *s)
 %type	<y_sym>		enum_tag
 %type	<y_tspec>	struct
 %type	<y_sym>		struct_declaration
-%type	<y_sb>		identifier
+%type	<y_name>	identifier
 %type	<y_sym>		member_declaration_list_semi
 %type	<y_sym>		member_declaration_list
 %type	<y_sym>		member_declaration
@@ -335,7 +336,7 @@ anonymize(sym_t *s)
 %type	<y_tnode>	expr_opt
 %type	<y_string>	string
 %type	<y_string>	string2
-%type	<y_sb>		asm_or_symbolrename_opt
+%type	<y_name>	asm_or_symbolrename_opt
 %type	<y_range>	range
 %type	<y_seen_statement> block_item_list
 %type	<y_seen_statement> block_item
