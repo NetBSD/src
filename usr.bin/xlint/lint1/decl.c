@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.195 2021/07/05 19:55:51 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.196 2021/07/10 12:10:39 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.195 2021/07/05 19:55:51 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.196 2021/07/10 12:10:39 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -2430,7 +2430,9 @@ declare_argument(sym_t *sym, bool initflg)
 		error(52, sym->s_name);
 	}
 
-	lint_assert(sym->s_type != NULL);
+	if (sym->s_type == NULL)	/* for c(void()) */
+		sym->s_type = gettyp(VOID);
+
 	if ((t = sym->s_type->t_tspec) == ARRAY) {
 		sym->s_type = derive_type(sym->s_type->t_subt, PTR);
 	} else if (t == FUNC) {
@@ -2448,7 +2450,7 @@ declare_argument(sym_t *sym, bool initflg)
 		warning(269, sym->s_name);
 
 	/*
-	 * Arguments must have complete types. lengths() prints the needed
+	 * Arguments must have complete types. length() prints the needed
 	 * error messages (null dimension is impossible because arrays are
 	 * converted to pointers).
 	 */
