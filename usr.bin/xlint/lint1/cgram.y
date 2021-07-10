@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.300 2021/07/10 19:29:28 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.301 2021/07/10 20:44:23 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.300 2021/07/10 19:29:28 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.301 2021/07/10 20:44:23 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -285,10 +285,9 @@ anonymize(sym_t *s)
 %type	<y_type>	notype_type_specifier
 %type	<y_type>	struct_or_union_specifier
 %type	<y_type>	enum_specifier
-%type	<y_sym>		struct_tag
-%type	<y_sym>		enum_tag
 %type	<y_tspec>	struct_or_union
 %type	<y_sym>		braced_struct_declaration_list
+%type	<y_sym>		identifier_sym
 %type	<y_name>	identifier
 %type	<y_sym>		struct_declaration_list_semi
 %type	<y_sym>		struct_declaration_list
@@ -302,7 +301,6 @@ anonymize(sym_t *s)
 %type	<y_sym>		enum_declaration
 %type	<y_sym>		enumerator_list
 %type	<y_sym>		enumerator
-%type	<y_sym>		enumeration_constant
 %type	<y_sym>		notype_direct_decl
 %type	<y_sym>		type_direct_decl
 %type	<y_qual_ptr>	pointer
@@ -597,7 +595,7 @@ notype_type_specifier:
 	;
 
 struct_or_union_specifier:	/* C99 6.7.2.1 */
-	  struct_or_union struct_tag {
+	  struct_or_union identifier_sym {
 		/*
 		 * STDC requires that "struct a;" always introduces
 		 * a new tag if "a" is not declared at current level
@@ -607,7 +605,7 @@ struct_or_union_specifier:	/* C99 6.7.2.1 */
 		 */
 		$$ = mktag($2, $1, false, yychar == T_SEMI);
 	  }
-	| struct_or_union struct_tag {
+	| struct_or_union identifier_sym {
 		dcs->d_tagtyp = mktag($2, $1, true, false);
 	  } braced_struct_declaration_list {
 		$$ = complete_tag_struct_or_union(dcs->d_tagtyp, $4);
@@ -630,12 +628,6 @@ struct_or_union:		/* C99 6.7.2.1 */
 		dcs->d_offset = 0;
 		dcs->d_sou_align_in_bits = CHAR_SIZE;
 	  } type_attribute_list_opt
-	;
-
-struct_tag:
-	  identifier {
-		$$ = getsym($1);
-	  }
 	;
 
 braced_struct_declaration_list:
@@ -781,10 +773,10 @@ type_member_decl:
 	;
 
 enum_specifier:		/* C99 6.7.2.2 */
-	  enum enum_tag {
+	  enum identifier_sym {
 		$$ = mktag($2, ENUM, false, false);
 	  }
-	| enum enum_tag {
+	| enum identifier_sym {
 		dcs->d_tagtyp = mktag($2, ENUM, true, false);
 	  } enum_declaration {
 		$$ = complete_tag_enum(dcs->d_tagtyp, $4);
@@ -804,12 +796,6 @@ enum:
 	  T_ENUM {
 		symtyp = FTAG;
 		begin_declaration_level(CTCONST);
-	  }
-	;
-
-enum_tag:
-	  identifier {
-		$$ = getsym($1);
 	  }
 	;
 
@@ -846,17 +832,11 @@ enumerator_list_comma_opt:
 	;
 
 enumerator:			/* C99 6.7.2.2 */
-	  enumeration_constant {
+	  identifier_sym {
 		$$ = enumeration_constant($1, enumval, true);
 	  }
-	| enumeration_constant T_ASSIGN constant_expr {
+	| identifier_sym T_ASSIGN constant_expr {
 		$$ = enumeration_constant($1, to_int_constant($3, true), false);
-	  }
-	;
-
-enumeration_constant:		/* C99 6.4.4.3 */
-	  identifier {
-		$$ = getsym($1);
 	  }
 	;
 
@@ -1894,6 +1874,12 @@ point_or_arrow:
 	| T_ARROW {
 		symtyp = FMEMBER;
 		$$ = ARROW;
+	  }
+	;
+
+identifier_sym:
+	  identifier {
+		$$ = getsym($1);
 	  }
 	;
 
