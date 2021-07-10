@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.299 2021/07/10 18:56:54 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.300 2021/07/10 19:29:28 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.299 2021/07/10 18:56:54 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.300 2021/07/10 19:29:28 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -281,18 +281,18 @@ anonymize(sym_t *s)
 %type	<y_sym>		func_decl
 %type	<y_sym>		notype_decl
 %type	<y_sym>		type_decl
-%type	<y_type>	typespec
-%type	<y_type>	notype_typespec
-%type	<y_type>	struct_spec
-%type	<y_type>	enum_spec
+%type	<y_type>	type_specifier
+%type	<y_type>	notype_type_specifier
+%type	<y_type>	struct_or_union_specifier
+%type	<y_type>	enum_specifier
 %type	<y_sym>		struct_tag
 %type	<y_sym>		enum_tag
-%type	<y_tspec>	struct
-%type	<y_sym>		struct_declaration
+%type	<y_tspec>	struct_or_union
+%type	<y_sym>		braced_struct_declaration_list
 %type	<y_name>	identifier
-%type	<y_sym>		member_declaration_list_semi
-%type	<y_sym>		member_declaration_list
-%type	<y_sym>		member_declaration
+%type	<y_sym>		struct_declaration_list_semi
+%type	<y_sym>		struct_declaration_list
+%type	<y_sym>		struct_declaration
 %type	<y_sym>		notype_member_decls
 %type	<y_sym>		type_member_decls
 %type	<y_sym>		notype_member_decl
@@ -535,11 +535,11 @@ end_type:
 	;
 
 declaration_specifiers:		/* C99 6.7 */
-	  add_typespec
-	| declmods add_typespec
+	  add_type_specifier
+	| declmods add_type_specifier
 	| type_attribute declaration_specifiers
 	| declaration_specifiers declmod
-	| declaration_specifiers add_notype_typespec
+	| declaration_specifiers add_notype_type_specifier
 	;
 
 declmods:
@@ -559,44 +559,45 @@ qualifier_or_storage_class:
 	  }
 	;
 
-add_typespec:
-	  typespec {
+add_type_specifier:
+	  type_specifier {
 		add_type($1);
 	  }
 	;
 
-typespec:
-	  notype_typespec
+type_specifier:			/* C99 6.7.2 */
+	  notype_type_specifier
 	| T_TYPENAME {
 		$$ = getsym($1)->s_type;
 	  }
 	;
 
-add_notype_typespec:
-	  notype_typespec {
+add_notype_type_specifier:
+	  notype_type_specifier {
 		add_type($1);
 	  }
 	;
 
-notype_typespec:
+/* Like type_specifier, but without typedef-name. */
+notype_type_specifier:
 	  T_TYPE {
 		$$ = gettyp($1);
 	  }
 	| T_TYPEOF term {
 		$$ = $2->tn_type;
 	  }
-	| struct_spec {
+	| struct_or_union_specifier {
 		end_declaration_level();
 		$$ = $1;
 	  }
-	| enum_spec {
+	| enum_specifier {
 		end_declaration_level();
 		$$ = $1;
 	  }
 	;
 
-struct_spec:
-	  struct struct_tag {
+struct_or_union_specifier:	/* C99 6.7.2.1 */
+	  struct_or_union struct_tag {
 		/*
 		 * STDC requires that "struct a;" always introduces
 		 * a new tag if "a" is not declared at current level
@@ -606,23 +607,23 @@ struct_spec:
 		 */
 		$$ = mktag($2, $1, false, yychar == T_SEMI);
 	  }
-	| struct struct_tag {
+	| struct_or_union struct_tag {
 		dcs->d_tagtyp = mktag($2, $1, true, false);
-	  } struct_declaration {
+	  } braced_struct_declaration_list {
 		$$ = complete_tag_struct_or_union(dcs->d_tagtyp, $4);
 	  }
-	| struct {
+	| struct_or_union {
 		dcs->d_tagtyp = mktag(NULL, $1, true, false);
-	  } struct_declaration {
+	  } braced_struct_declaration_list {
 		$$ = complete_tag_struct_or_union(dcs->d_tagtyp, $3);
 	  }
-	| struct error {
+	| struct_or_union error {
 		symtyp = FVFT;
 		$$ = gettyp(INT);
 	  }
 	;
 
-struct:
+struct_or_union:		/* C99 6.7.2.1 */
 	  T_STRUCT_OR_UNION {
 		symtyp = FTAG;
 		begin_declaration_level($1 == STRUCT ? MOS : MOU);
@@ -637,20 +638,20 @@ struct_tag:
 	  }
 	;
 
-struct_declaration:
+braced_struct_declaration_list:
 	  T_LBRACE {
 		symtyp = FVFT;
-	  } member_declaration_list_semi T_RBRACE {
+	  } struct_declaration_list_semi T_RBRACE {
 		$$ = $3;
 	  }
 	;
 
-member_declaration_list_semi:
+struct_declaration_list_semi:
 	  /* empty */ {
 		$$ = NULL;
 	  }
-	| member_declaration_list T_SEMI
-	| member_declaration_list {
+	| struct_declaration_list T_SEMI
+	| struct_declaration_list {
 		if (sflag) {
 			/* syntax req. ';' after last struct/union member */
 			error(66);
@@ -662,14 +663,14 @@ member_declaration_list_semi:
 	  }
 	;
 
-member_declaration_list:
-	  member_declaration
-	| member_declaration_list T_SEMI member_declaration {
+struct_declaration_list:
+	  struct_declaration
+	| struct_declaration_list T_SEMI struct_declaration {
 		$$ = lnklst($1, $3);
 	  }
 	;
 
-member_declaration:
+struct_declaration:
 	  begin_type add_type_qualifier_list end_type {
 		/* too late, i know, but getsym() compensates it */
 		symtyp = FMEMBER;
@@ -715,10 +716,10 @@ noclass_declspecs:
 	;
 
 noclass_declspecs_postfix:
-	  add_typespec
-	| add_type_qualifier_list add_typespec
+	  add_type_specifier
+	| add_type_qualifier_list add_type_specifier
 	| noclass_declspecs_postfix add_type_qualifier
-	| noclass_declspecs_postfix add_notype_typespec
+	| noclass_declspecs_postfix add_notype_type_specifier
 	| noclass_declspecs_postfix type_attribute
 	;
 
@@ -779,7 +780,7 @@ type_member_decl:
 	  }
 	;
 
-enum_spec:
+enum_specifier:		/* C99 6.7.2.2 */
 	  enum enum_tag {
 		$$ = mktag($2, ENUM, false, false);
 	  }
@@ -1071,7 +1072,7 @@ type_qualifier:
 	;
 
 align_as:			/* See alignment-specifier in C11 6.7.5 */
-	  typespec
+	  type_specifier
 	| constant_expr
 	;
 
@@ -1414,7 +1415,7 @@ block_item_list_opt:		/* C99 6.8.2 */
 	| block_item_list
 	;
 
-block_item_list:
+block_item_list:		/* C99 6.8.2 */
 	  block_item
 	| block_item_list block_item {
 		if (!Sflag && $1 && !$2)
@@ -1424,13 +1425,13 @@ block_item_list:
 	  }
 	;
 
-block_item:
-	  statement {
-		$$ = true;
+block_item:			/* C99 6.8.2 */
+	  declaration {
+		$$ = false;
 		restore_warning_flags();
 	  }
-	| declaration {
-		$$ = false;
+	| statement {
+		$$ = true;
 		restore_warning_flags();
 	  }
 	;
