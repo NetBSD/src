@@ -1,9 +1,8 @@
-/*	$NetBSD: decl_struct_member.c,v 1.4 2021/07/10 22:34:02 rillig Exp $	*/
+/*	$NetBSD: decl_struct_member.c,v 1.5 2021/07/10 22:46:02 rillig Exp $	*/
 # 3 "decl_struct_member.c"
 
 struct multi_attributes {
 	__attribute__((deprecated))
-	/* expect+1: error: syntax error '__attribute__' [249] */
 	__attribute__((deprecated))
 	__attribute__((deprecated))
 	int deprecated;
