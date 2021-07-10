@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_249.c,v 1.5 2021/07/08 20:11:15 rillig Exp $	*/
+/*	$NetBSD: msg_249.c,v 1.6 2021/07/10 10:30:26 rillig Exp $	*/
 # 3 "msg_249.c"
 
 // Test for message: syntax error '%s' [249]
@@ -45,3 +45,15 @@ access_declaration_after_syntax_error(void)
 {
 	return &recover_from_rparen;
 }
+
+struct cover_member_declaration {
+	/* cover 'noclass_declmods ... notype_member_decls' */
+	const noclass_declmods;
+
+	/* cover 'noclass_declspecs ...' */
+	const int noclass_declspecs;
+
+	/* cover 'noclass_declmods deftyp ...' */
+	/* expect+1: error: syntax error 'unnamed member' [249] */
+	const;
+};
