@@ -1,4 +1,4 @@
-/*	$NetBSD: decl_arg.c,v 1.3 2021/07/10 08:01:11 rillig Exp $	*/
+/*	$NetBSD: decl_arg.c,v 1.4 2021/07/10 08:40:36 rillig Exp $	*/
 # 3 "decl_arg.c"
 
 /*
@@ -102,9 +102,24 @@ void test_varargs_attribute(
  *  need to be enclosed by one more pair of parentheses than usual.
  */
 void cover_direct_notype_param_decl(
-    double (f1),
+    double (identifier),
     double ((parenthesized)),
     double (array[]),
     double (array_size[3]),
     double (*)(void (function()))
+);
+
+/*
+ * Just some unrealistic code to cover the grammar rule parameter_declaration.
+ */
+/* expect+4: error: only register valid as formal parameter storage class [9] */
+void cover_parameter_declaration(
+    volatile,			/* 1 */
+    double,			/* 2 */
+    static storage_class,	/* 3.1 */
+    const type_qualifier,	/* 3.2 */
+    double (identifier),	/* 4 */
+    const (*),			/* 5 */
+    double *const,		/* 6 */
+    ...
 );
