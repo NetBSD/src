@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.302 2021/07/10 20:58:35 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.303 2021/07/10 21:08:16 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.302 2021/07/10 20:58:35 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.303 2021/07/10 21:08:16 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -286,7 +286,7 @@ anonymize(sym_t *s)
 %type	<y_type>	struct_or_union_specifier
 %type	<y_type>	enum_specifier
 %type	<y_tspec>	struct_or_union
-%type	<y_sym>		braced_struct_declaration_list
+%type	<y_sym>		identifier_sym_opt
 %type	<y_sym>		identifier_sym
 %type	<y_name>	identifier
 %type	<y_sym>		struct_declaration_list_semi
@@ -298,7 +298,6 @@ anonymize(sym_t *s)
 %type	<y_sym>		type_member_decl
 %type	<y_tnode>	constant_expr
 %type	<y_tnode>	array_size
-%type	<y_sym>		enum_declaration
 %type	<y_sym>		enumerator_list
 %type	<y_sym>		enumerator
 %type	<y_sym>		notype_direct_decl
@@ -629,15 +628,12 @@ struct_or_union_specifier:	/* C99 6.7.2.1 */
 		 */
 		$$ = mktag($2, $1, false, yychar == T_SEMI);
 	  }
-	| struct_or_union identifier_sym {
+	| struct_or_union identifier_sym_opt {
 		dcs->d_tagtyp = mktag($2, $1, true, false);
-	  } braced_struct_declaration_list {
-		$$ = complete_tag_struct_or_union(dcs->d_tagtyp, $4);
-	  }
-	| struct_or_union {
-		dcs->d_tagtyp = mktag(NULL, $1, true, false);
-	  } braced_struct_declaration_list {
-		$$ = complete_tag_struct_or_union(dcs->d_tagtyp, $3);
+	  } T_LBRACE {
+		symtyp = FVFT;
+	  } struct_declaration_list_semi T_RBRACE {
+		$$ = complete_tag_struct_or_union(dcs->d_tagtyp, $6);
 	  }
 	| struct_or_union error {
 		symtyp = FVFT;
@@ -652,14 +648,6 @@ struct_or_union:		/* C99 6.7.2.1 */
 		dcs->d_offset = 0;
 		dcs->d_sou_align_in_bits = CHAR_SIZE;
 	  } type_attribute_list_opt
-	;
-
-braced_struct_declaration_list:
-	  T_LBRACE {
-		symtyp = FVFT;
-	  } struct_declaration_list_semi T_RBRACE {
-		$$ = $3;
-	  }
 	;
 
 struct_declaration_list_semi:
@@ -800,15 +788,13 @@ enum_specifier:		/* C99 6.7.2.2 */
 	  enum identifier_sym {
 		$$ = mktag($2, ENUM, false, false);
 	  }
-	| enum identifier_sym {
+	| enum identifier_sym_opt {
 		dcs->d_tagtyp = mktag($2, ENUM, true, false);
-	  } enum_declaration {
-		$$ = complete_tag_enum(dcs->d_tagtyp, $4);
-	  }
-	| enum {
-		dcs->d_tagtyp = mktag(NULL, ENUM, true, false);
-	  } enum_declaration {
-		$$ = complete_tag_enum(dcs->d_tagtyp, $3);
+	  } T_LBRACE {
+		symtyp = FVFT;
+		enumval = 0;
+	  } enumerator_list enumerator_list_comma_opt T_RBRACE {
+		$$ = complete_tag_enum(dcs->d_tagtyp, $6);
 	  }
 	| enum error {
 		symtyp = FVFT;
@@ -820,15 +806,6 @@ enum:
 	  T_ENUM {
 		symtyp = FTAG;
 		begin_declaration_level(CTCONST);
-	  }
-	;
-
-enum_declaration:
-	  T_LBRACE {
-		symtyp = FVFT;
-		enumval = 0;
-	  } enumerator_list enumerator_list_comma_opt T_RBRACE {
-		$$ = $3;
 	  }
 	;
 
@@ -1899,6 +1876,13 @@ point_or_arrow:
 		symtyp = FMEMBER;
 		$$ = ARROW;
 	  }
+	;
+
+identifier_sym_opt:
+	  /* empty */ {
+		$$ = NULL;
+	  }
+	| identifier_sym
 	;
 
 identifier_sym:
