@@ -1,4 +1,4 @@
-/*	$NetBSD: lex_integer.c,v 1.4 2021/06/29 13:58:13 rillig Exp $	*/
+/*	$NetBSD: lex_integer.c,v 1.5 2021/07/10 18:42:28 rillig Exp $	*/
 # 3 "lex_integer.c"
 
 /*
@@ -42,4 +42,20 @@ test_unsigned_int(void)
 	/* expect+2: from 'unsigned long' to 'unsigned int' due to prototype */
 	/* expect+1: conversion of 'unsigned long' to 'unsigned int' is out of range */
 	sinku(4294967296U);
+}
+
+void sinkull(unsigned long long);
+
+void
+suffixes(void)
+{
+	sinkull(3u);
+	sinkull(3ll);
+	sinkull(3llu);
+	sinkull(3Ull);
+
+	/* The 'LL' must not be split. Checked by the compiler. */
+	sinkull(3lul);
+	/* The 'Ll' must not used mixed case. Checked by the compiler. */
+	sinkull(3ULl);
 }
