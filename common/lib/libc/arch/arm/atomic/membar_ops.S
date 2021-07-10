@@ -1,4 +1,4 @@
-/*	$NetBSD: membar_ops.S,v 1.7 2021/04/27 05:40:29 skrll Exp $	*/
+/*	$NetBSD: membar_ops.S,v 1.8 2021/07/10 06:53:40 skrll Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include "atomic_op_asm.h"
 
-#ifdef _ARM_ARCH_6
+#if defined(_ARM_ARCH_6)
 
 ENTRY_NP(_membar_producer)
 #ifdef _ARM_ARCH_7
