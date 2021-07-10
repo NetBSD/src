@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.283 2021/07/10 09:40:12 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.284 2021/07/10 09:48:41 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.283 2021/07/10 09:40:12 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.284 2021/07/10 09:48:41 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -333,7 +333,6 @@ anonymize(sym_t *s)
 %type	<y_op>		point_or_arrow
 %type	<y_type>	type_name
 %type	<y_sym>		abstract_declaration
-%type	<y_tnode>	do_while_expr
 %type	<y_tnode>	expr_opt
 %type	<y_string>	string
 %type	<y_string>	string2
@@ -1510,12 +1509,6 @@ switch_expr:			/* see C99 6.8.4 */
 	  }
 	;
 
-do_statement:			/* C99 6.8.5 */
-	  do statement {
-		clear_warning_flags();
-	  }
-	;
-
 iteration_statement:		/* C99 6.8.5 */
 	  T_WHILE T_LPAREN expr T_RPAREN {
 		while1($3);
@@ -1524,8 +1517,10 @@ iteration_statement:		/* C99 6.8.5 */
 		clear_warning_flags();
 		while2();
 	  }
-	| do_statement do_while_expr {
-		do2($2);
+	| do statement {
+		clear_warning_flags();
+	  } T_WHILE T_LPAREN expr T_RPAREN T_SEMI {
+		do2($6);
 		seen_fallthrough = false;
 	  }
 	| do error {
@@ -1554,12 +1549,6 @@ while_body:
 do:				/* see C99 6.8.5 */
 	  T_DO {
 		do1();
-	  }
-	;
-
-do_while_expr:			/* see C99 6.8.5 */
-	  T_WHILE T_LPAREN expr T_RPAREN T_SEMI {
-		$$ = $3;
 	  }
 	;
 
