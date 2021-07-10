@@ -1,4 +1,4 @@
-/*	$NetBSD: decl_arg.c,v 1.2 2021/07/10 06:01:41 rillig Exp $	*/
+/*	$NetBSD: decl_arg.c,v 1.3 2021/07/10 08:01:11 rillig Exp $	*/
 # 3 "decl_arg.c"
 
 /*
@@ -95,4 +95,16 @@ const
 void test_varargs_attribute(
     void (*pr)(const char *, ...)
 	__attribute__((__format__(__printf__, 1, 2)))
+);
+
+/*
+ * XXX: To cover the grammar rule 'direct_notype_param_decl', the parameters
+ *  need to be enclosed by one more pair of parentheses than usual.
+ */
+void cover_direct_notype_param_decl(
+    double (f1),
+    double ((parenthesized)),
+    double (array[]),
+    double (array_size[3]),
+    double (*)(void (function()))
 );
