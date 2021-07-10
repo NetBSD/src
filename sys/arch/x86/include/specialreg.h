@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.176 2020/11/24 00:46:28 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.177 2021/07/10 17:08:37 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
@@ -458,6 +458,7 @@
 #define CPUID_SEF_VPCLMULQDQ	__BIT(10)
 #define CPUID_SEF_AVX512_VNNI	__BIT(11) /* Vector neural Network Instruction */
 #define CPUID_SEF_AVX512_BITALG	__BIT(12)
+#define CPUID_SEF_TME_EN	__BIT(13) /* Total Memory Encryption */
 #define CPUID_SEF_AVX512_VPOPCNTDQ __BIT(14)
 #define CPUID_SEF_LA57		__BIT(16) /* 57bit linear addr & 5LVL paging */
 #define CPUID_SEF_MAWAU		__BITS(21, 17) /* MAWAU for BND{LD,ST}X */
@@ -473,7 +474,7 @@
 	"b\0PREFETCHWT1\0" "b\1AVX512_VBMI\0" "b\2UMIP\0" "b\3PKU\0"	\
 	"b\4OSPKE\0"	"b\5WAITPKG\0"	"b\6AVX512_VBMI2\0" "b\7CET_SS\0" \
 	"b\10GFNI\0"	"b\11VAES\0"	"b\12VPCLMULQDQ\0" "b\13AVX512_VNNI\0"\
-	"b\14AVX512_BITALG\0"		"b\16AVX512_VPOPCNTDQ\0"	\
+	"b\14AVX512_BITALG\0" "b\15TME_EN\0" "b\16AVX512_VPOPCNTDQ\0"	\
 	"b\20LA57\0"							\
 	"f\21\5MAWAU\0"			"b\26RDPID\0"	"b\27KL\0"	\
 			"b\31CLDEMOTE\0"		"b\33MOVDIRI\0"	\
@@ -490,6 +491,7 @@
 #define CPUID_SEF_SERIALIZE	__BIT(14) /* SERIALIZE instruction */
 #define CPUID_SEF_HYBRID	__BIT(15) /* Hybrid part */
 #define CPUID_SEF_TSXLDTRK	__BIT(16) /* TSX suspend load addr tracking */
+#define CPUID_SEF_PCONFIG	__BIT(18) /* Platform CONFIGuration */
 #define CPUID_SEF_CET_IBT	__BIT(20) /* CET Indirect Branch Tracking */
 #define CPUID_SEF_IBRS		__BIT(26) /* IBRS / IBPB Speculation Control */
 #define CPUID_SEF_STIBP		__BIT(27) /* STIBP Speculation Control */
@@ -503,7 +505,7 @@
 	"\5" "FSREP_MOV"						\
 	"\11VP2INTERSECT" "\12SRBDS_CTRL" "\13MD_CLEAR"			\
 			"\16TSX_FORCE_ABORT" "\17SERIALIZE" "\20HYBRID"	\
-	"\21" "TSXLDTRK"						\
+	"\21" "TSXLDTRK"		"\23" "PCONFIG"			\
 	"\25" "CET_IBT"							\
 	"\33" "IBRS"	"\34" "STIBP"					\
 	"\35" "L1D_FLUSH" "\36" "ARCH_CAP" "\37CORE_CAP"	"\40" "SSBD"
