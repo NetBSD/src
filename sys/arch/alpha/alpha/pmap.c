@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.296 2021/07/05 15:12:00 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.297 2021/07/10 20:22:37 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008, 2020
@@ -135,7 +135,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.296 2021/07/05 15:12:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.297 2021/07/10 20:22:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2758,85 +2758,9 @@ pmap_deactivate(struct lwp *l)
 	pmap_destroy(pmap);
 }
 
-/*
- * pmap_zero_page:		[ INTERFACE ]
- *
- *	Zero the specified (machine independent) page by mapping the page
- *	into virtual memory and clear its contents, one machine dependent
- *	page at a time.
- *
- *	Note: no locking is necessary in this function.
- */
-void
-pmap_zero_page(paddr_t phys)
-{
-	u_long *p0, *p1, *pend;
+/* pmap_zero_page() is in pmap_subr.s */
 
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_zero_page(%lx)\n", phys);
-#endif
-
-	p0 = (u_long *)ALPHA_PHYS_TO_K0SEG(phys);
-	p1 = NULL;
-	pend = (u_long *)((u_long)p0 + PAGE_SIZE);
-
-	/*
-	 * Unroll the loop a bit, doing 16 quadwords per iteration.
-	 * Do only 8 back-to-back stores, and alternate registers.
-	 */
-	do {
-		__asm volatile(
-		"# BEGIN loop body\n"
-		"	addq	%2, (8 * 8), %1		\n"
-		"	stq	$31, (0 * 8)(%0)	\n"
-		"	stq	$31, (1 * 8)(%0)	\n"
-		"	stq	$31, (2 * 8)(%0)	\n"
-		"	stq	$31, (3 * 8)(%0)	\n"
-		"	stq	$31, (4 * 8)(%0)	\n"
-		"	stq	$31, (5 * 8)(%0)	\n"
-		"	stq	$31, (6 * 8)(%0)	\n"
-		"	stq	$31, (7 * 8)(%0)	\n"
-		"					\n"
-		"	addq	%3, (8 * 8), %0		\n"
-		"	stq	$31, (0 * 8)(%1)	\n"
-		"	stq	$31, (1 * 8)(%1)	\n"
-		"	stq	$31, (2 * 8)(%1)	\n"
-		"	stq	$31, (3 * 8)(%1)	\n"
-		"	stq	$31, (4 * 8)(%1)	\n"
-		"	stq	$31, (5 * 8)(%1)	\n"
-		"	stq	$31, (6 * 8)(%1)	\n"
-		"	stq	$31, (7 * 8)(%1)	\n"
-		"	# END loop body"
-		: "=r" (p0), "=r" (p1)
-		: "0" (p0), "1" (p1)
-		: "memory");
-	} while (p0 < pend);
-}
-
-/*
- * pmap_copy_page:		[ INTERFACE ]
- *
- *	Copy the specified (machine independent) page by mapping the page
- *	into virtual memory and using memcpy to copy the page, one machine
- *	dependent page at a time.
- *
- *	Note: no locking is necessary in this function.
- */
-void
-pmap_copy_page(paddr_t src, paddr_t dst)
-{
-	const void *s;
-	void *d;
-
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_copy_page(%lx, %lx)\n", src, dst);
-#endif
-	s = (const void *)ALPHA_PHYS_TO_K0SEG(src);
-	d = (void *)ALPHA_PHYS_TO_K0SEG(dst);
-	memcpy(d, s, PAGE_SIZE);
-}
+/* pmap_copy_page() is in pmap_subr.s */
 
 /*
  * pmap_pageidlezero:		[ INTERFACE ]
