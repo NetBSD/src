@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_sub_64.S,v 1.3 2021/06/28 09:00:45 skrll Exp $	*/
+/*	$NetBSD: atomic_sub_64.S,v 1.4 2021/07/10 06:53:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "atomic_op_asm.h"
 
-#ifdef _ARM_ARCH_6
+#if defined(_ARM_ARCH_6)
 
 ENTRY_NP(_atomic_sub_64_nv)
 	push	{r3, r4}		/* save temporary */

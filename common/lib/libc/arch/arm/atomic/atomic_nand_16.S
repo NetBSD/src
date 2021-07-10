@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_nand_16.S,v 1.3 2015/12/11 12:41:10 skrll Exp $	*/
+/*	$NetBSD: atomic_nand_16.S,v 1.4 2021/07/10 06:53:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "atomic_op_asm.h"
 
-#ifdef _ARM_ARCH_6
+#if defined(_ARM_ARCH_6)
 
 ENTRY_NP(_atomic_nand_16)
 	mov	ip, r0

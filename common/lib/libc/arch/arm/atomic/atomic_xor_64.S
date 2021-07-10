@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_xor_64.S,v 1.5 2021/06/28 09:00:45 skrll Exp $	*/
+/*	$NetBSD: atomic_xor_64.S,v 1.6 2021/07/10 06:53:40 skrll Exp $	*/
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include "atomic_op_asm.h"
 
-#ifdef _ARM_ARCH_6
+#if defined(_ARM_ARCH_6)
 
 ENTRY_NP(_atomic_xor_64_nv)
 	push	{r3, r4}		/* save temporary */
