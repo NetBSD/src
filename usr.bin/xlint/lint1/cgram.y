@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.280 2021/07/10 04:57:41 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.281 2021/07/10 05:03:03 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.280 2021/07/10 04:57:41 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.281 2021/07/10 05:03:03 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -123,7 +123,7 @@ anonymize(sym_t *s)
 }
 %}
 
-%expect 142
+%expect 136
 
 %union {
 	val_t	*y_val;
@@ -319,6 +319,7 @@ anonymize(sym_t *s)
 %type	<y_sym>		identifier_list
 %type	<y_sym>		abstract_declarator
 %type	<y_sym>		direct_abstract_declarator
+%type	<y_sym>		direct_abstract_declarator_postfix
 %type	<y_sym>		vararg_parameter_type_list
 %type	<y_sym>		parameter_type_list
 %type	<y_sym>		parameter_declaration
@@ -1310,12 +1311,14 @@ abstract_declarator:		/* C99 6.7.6 */
 	  }
 	;
 
-/*
- * XXX: shift/reduce conflict, caused by:
- *	type_attribute direct_abstract_declarator
- *	direct_abstract_declarator type_attribute
- */
 direct_abstract_declarator:		/* C99 6.7.6 */
+	  direct_abstract_declarator_postfix
+	| type_attribute direct_abstract_declarator_postfix {
+		$$ = $2;
+	  }
+	;
+
+direct_abstract_declarator_postfix:	/* C99 6.7.6 */
 	  T_LPAREN abstract_declarator T_RPAREN {
 		$$ = $2;
 	  }
@@ -1325,16 +1328,14 @@ direct_abstract_declarator:		/* C99 6.7.6 */
 	| T_LBRACK array_size T_RBRACK {
 		$$ = add_array(abstract_name(), true, to_int_constant($2, false));
 	  }
-	| type_attribute direct_abstract_declarator {
-		$$ = $2;
-	  }
-	| direct_abstract_declarator T_LBRACK T_RBRACK {
+	| direct_abstract_declarator_postfix T_LBRACK T_RBRACK {
 		$$ = add_array($1, false, 0);
 	  }
-	| direct_abstract_declarator T_LBRACK T_ASTERISK T_RBRACK { /* C99 */
+	| direct_abstract_declarator_postfix
+	    T_LBRACK T_ASTERISK T_RBRACK {	/* C99 */
 		$$ = add_array($1, false, 0);
 	  }
-	| direct_abstract_declarator T_LBRACK array_size T_RBRACK {
+	| direct_abstract_declarator_postfix T_LBRACK array_size T_RBRACK {
 		$$ = add_array($1, true, to_int_constant($3, false));
 	  }
 	| abstract_decl_param_list asm_or_symbolrename_opt {
@@ -1342,12 +1343,13 @@ direct_abstract_declarator:		/* C99 6.7.6 */
 		end_declaration_level();
 		block_level--;
 	  }
-	| direct_abstract_declarator abstract_decl_param_list asm_or_symbolrename_opt {
+	| direct_abstract_declarator_postfix abstract_decl_param_list
+	    asm_or_symbolrename_opt {
 		$$ = add_function(symbolrename($1, $3), $2);
 		end_declaration_level();
 		block_level--;
 	  }
-	| direct_abstract_declarator type_attribute
+	| direct_abstract_declarator_postfix type_attribute
 	;
 
 array_size:
