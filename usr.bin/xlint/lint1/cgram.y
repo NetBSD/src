@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.301 2021/07/10 20:44:23 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.302 2021/07/10 20:58:35 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.301 2021/07/10 20:44:23 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.302 2021/07/10 20:58:35 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -561,6 +561,30 @@ add_type_specifier:
 	  type_specifier {
 		add_type($1);
 	  }
+	;
+
+type_attribute_list_opt:
+	  /* empty */
+	| type_attribute_list
+	;
+
+type_attribute_list:
+	  type_attribute
+	| type_attribute_list type_attribute
+	;
+
+type_attribute_opt:
+	  /* empty */
+	| type_attribute
+	;
+
+type_attribute:			/* See C11 6.7 declaration-specifiers */
+	  gcc_attribute
+	| T_ALIGNAS T_LPAREN align_as T_RPAREN
+	| T_PACKED {
+		addpacked();
+	  }
+	| T_NORETURN
 	;
 
 type_specifier:			/* C99 6.7.2 */
@@ -1900,30 +1924,6 @@ comma_opt:
 	;
 
 /* GCC extensions */
-
-type_attribute_list_opt:
-	  /* empty */
-	| type_attribute_list
-	;
-
-type_attribute_list:
-	  type_attribute
-	| type_attribute_list type_attribute
-	;
-
-type_attribute_opt:
-	  /* empty */
-	| type_attribute
-	;
-
-type_attribute:
-	  gcc_attribute
-	| T_ALIGNAS T_LPAREN align_as T_RPAREN
-	| T_PACKED {
-		addpacked();
-	  }
-	| T_NORETURN
-	;
 
 gcc_attribute_list_opt:
 	  /* empty */
