@@ -1,12 +1,19 @@
-/*	$NetBSD: decl_struct_member.c,v 1.3 2021/07/10 17:35:54 rillig Exp $	*/
+/*	$NetBSD: decl_struct_member.c,v 1.4 2021/07/10 22:34:02 rillig Exp $	*/
 # 3 "decl_struct_member.c"
+
+struct multi_attributes {
+	__attribute__((deprecated))
+	/* expect+1: error: syntax error '__attribute__' [249] */
+	__attribute__((deprecated))
+	__attribute__((deprecated))
+	int deprecated;
+};
 
 /*
  * Before cgram.y 1.228 from 2021-06-19, lint ran into an assertion failure:
  *
  * "is_struct_or_union(dcs->d_type->t_tspec)" at cgram.y:846
  */
-
 struct {
 	char;			/* expect: syntax error 'unnamed member' */
 };
