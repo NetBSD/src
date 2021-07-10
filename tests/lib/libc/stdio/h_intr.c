@@ -1,4 +1,4 @@
-/*	$NetBSD: h_intr.c,v 1.4 2021/07/09 20:00:26 kre Exp $	*/
+/*	$NetBSD: h_intr.c,v 1.5 2021/07/10 07:50:20 christos Exp $	*/
 
 /**
  * Test of interrupted I/O to popen()ed commands.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: h_intr.c,v 1.4 2021/07/09 20:00:26 kre Exp $");
+__RCSID("$NetBSD: h_intr.c,v 1.5 2021/07/10 07:50:20 christos Exp $");
 
 #include <time.h>
 #include <err.h>
@@ -48,12 +48,12 @@ static int rndmode(void);
 static sig_t xsignal(int signo, sig_t handler);
 static void alarmtimer(int wait);
 static void pr_star(int signo);
-static int do_opts(int argc, char* argv[]);
+static int do_opts(int argc, char *argv[]);
 static void usage(FILE *fp);
 
 /* Globals */
 static struct options {
-	const char* cmd;	/* cmd to run (which must read from stdin) */
+	const char *cmd;	/* cmd to run (which must read from stdin) */
 	size_t bsize;		/* block size to use */
 	size_t asize;		/* alt. stdio buffer size */
 	int btype;		/* buffering type: _IONBF, ... */
@@ -74,8 +74,8 @@ static const struct {
 
 static void (*alarm_fn)(int);				/* real/dummy alarm fn. */
 static int (*sintr_fn)(int, int);			/*  " siginterrupt fn. */
-static ssize_t (*rd_fn)(FILE*, void*, size_t);		/* read fn. */
-static ssize_t (*wr_fn)(FILE*, const void*, size_t);	/* write fn. */
+static ssize_t (*rd_fn)(FILE *, void *, size_t);	/* read fn. */
+static ssize_t (*wr_fn)(FILE *, const void *, size_t);	/* write fn. */
 
 enum {
 	MB = 1024 * 1024,	/* a megabyte */
@@ -91,7 +91,7 @@ enum {
  * M A I N
  */
 int
-main(int argc, char* argv[])
+main(int argc, char *argv[])
 {
 	int i, rc = EXIT_SUCCESS;
 
@@ -205,9 +205,9 @@ fail:
  * maxread - syscall version
  */
 ssize_t
-smaxread(FILE* fp, void* buf, size_t size)
+smaxread(FILE* fp, void *buf, size_t size)
 {
-	char* p = buf;
+	char *p = buf;
 	ssize_t nrd = 0;
 	ssize_t n;
 
@@ -231,9 +231,9 @@ smaxread(FILE* fp, void* buf, size_t size)
  * maxread - stdio version
  */
 ssize_t
-maxread(FILE* fp, void* buf, size_t size)
+maxread(FILE* fp, void *buf, size_t size)
 {
-	char* p = buf;
+	char *p = buf;
 	ssize_t nrd = 0;
 	size_t n;
 
@@ -262,9 +262,9 @@ maxread(FILE* fp, void* buf, size_t size)
  * maxwrite - syscall version
  */
 ssize_t
-smaxwrite(FILE* fp, const void* buf, size_t size)
+smaxwrite(FILE* fp, const void *buf, size_t size)
 {
-	const char* p = buf;
+	const char *p = buf;
 	ssize_t nwr = 0;
 	ssize_t n;
 
@@ -287,9 +287,9 @@ smaxwrite(FILE* fp, const void* buf, size_t size)
  * maxwrite - stdio version (warning: substrate may be buggy)
  */
 ssize_t
-maxwrite(FILE* fp, const void* buf, size_t size)
+maxwrite(FILE* fp, const void *buf, size_t size)
 {
-	const char* p = buf;
+	const char *p = buf;
 	ssize_t nwr = 0;
 	size_t n;
 
@@ -412,7 +412,7 @@ btype2str(int val)
 }
 
 static int
-str2btype(const char* s)
+str2btype(const char *s)
 {
 	for (size_t i = 0; i < __arraycount(btypes); i++)
 		if (strcmp(btypes[i].name, s) == 0)
