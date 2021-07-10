@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_124.c,v 1.9 2021/04/13 22:21:19 christos Exp $	*/
+/*	$NetBSD: msg_124.c,v 1.10 2021/07/10 06:01:41 rillig Exp $	*/
 # 3 "msg_124.c"
 
 // Test for message: illegal pointer combination (%s) and (%s), op %s [124]
@@ -49,6 +49,3 @@ compare_pointers(const void *vp, const char *cp, const int *ip,
 	ok(ip == 0L);
 	ok(fp == 0L);
 }
-
-void	test_varargs_attribute(void (*pr)(const char *, ...) __attribute__((__format__(__printf__, 1, 2))));
-

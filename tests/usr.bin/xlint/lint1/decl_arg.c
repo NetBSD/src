@@ -1,4 +1,4 @@
-/*	$NetBSD: decl_arg.c,v 1.1 2021/07/09 20:20:03 rillig Exp $	*/
+/*	$NetBSD: decl_arg.c,v 1.2 2021/07/10 06:01:41 rillig Exp $	*/
 # 3 "decl_arg.c"
 
 /*
@@ -91,3 +91,8 @@ const
 {
 	return arg;
 }
+
+void test_varargs_attribute(
+    void (*pr)(const char *, ...)
+	__attribute__((__format__(__printf__, 1, 2)))
+);
