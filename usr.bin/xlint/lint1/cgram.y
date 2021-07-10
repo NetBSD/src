@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.281 2021/07/10 05:03:03 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.282 2021/07/10 05:42:29 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.281 2021/07/10 05:03:03 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.282 2021/07/10 05:42:29 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1365,7 +1365,7 @@ array_size:
 	;
 
 non_expr_statement:
-	  type_attribute T_SEMI
+	  gcc_attribute T_SEMI
 	| labeled_statement
 	| compound_statement
 	| selection_statement
