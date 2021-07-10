@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_249.c,v 1.7 2021/07/10 11:22:19 rillig Exp $	*/
+/*	$NetBSD: msg_249.c,v 1.8 2021/07/10 17:35:54 rillig Exp $	*/
 # 3 "msg_249.c"
 
 // Test for message: syntax error '%s' [249]
@@ -53,7 +53,7 @@ struct cover_member_declaration {
 	/* cover 'noclass_declspecs ...' */
 	const int noclass_declspecs;
 
-	/* cover 'noclass_declmods deftyp ...' */
+	/* cover 'add_type_qualifier_list end_type' */
 	/* expect+1: error: syntax error 'member without type' [249] */
 	const;
 };

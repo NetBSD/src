@@ -1,4 +1,4 @@
-/*	$NetBSD: decl_struct_member.c,v 1.2 2021/06/20 11:24:32 rillig Exp $	*/
+/*	$NetBSD: decl_struct_member.c,v 1.3 2021/07/10 17:35:54 rillig Exp $	*/
 # 3 "decl_struct_member.c"
 
 /*
@@ -20,6 +20,6 @@ struct {
 /*
  * FIXME: adding a semicolon here triggers another assertion:
  *
- * assertion "t == NOTSPEC" failed in deftyp at decl.c:774
+ * assertion "t == NOTSPEC" failed in end_type at decl.c:774
  */
 /* expect+1: cannot recover from previous errors */
