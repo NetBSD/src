@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.298 2021/07/10 18:13:06 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.299 2021/07/10 18:56:54 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.298 2021/07/10 18:13:06 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.299 2021/07/10 18:56:54 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -535,17 +535,11 @@ end_type:
 	;
 
 declaration_specifiers:		/* C99 6.7 */
-	  typespec {
-		add_type($1);
-	  }
-	| declmods typespec {
-		add_type($2);
-	  }
+	  add_typespec
+	| declmods add_typespec
 	| type_attribute declaration_specifiers
 	| declaration_specifiers declmod
-	| declaration_specifiers notype_typespec {
-		add_type($2);
-	  }
+	| declaration_specifiers add_notype_typespec
 	;
 
 declmods:
@@ -559,11 +553,15 @@ declmod:
 	;
 
 qualifier_or_storage_class:
-	  T_QUAL {
-		add_qualifier($1);
-	  }
+	  add_type_qualifier
 	| T_SCLASS {
 		add_storage_class($1);
+	  }
+	;
+
+add_typespec:
+	  typespec {
+		add_type($1);
 	  }
 	;
 
@@ -571,6 +569,12 @@ typespec:
 	  notype_typespec
 	| T_TYPENAME {
 		$$ = getsym($1)->s_type;
+	  }
+	;
+
+add_notype_typespec:
+	  notype_typespec {
+		add_type($1);
 	  }
 	;
 
@@ -711,18 +715,10 @@ noclass_declspecs:
 	;
 
 noclass_declspecs_postfix:
-	  typespec {
-		add_type($1);
-	  }
-	| add_type_qualifier_list typespec {
-		add_type($2);
-	  }
-	| noclass_declspecs_postfix T_QUAL {
-		add_qualifier($2);
-	  }
-	| noclass_declspecs_postfix notype_typespec {
-		add_type($2);
-	  }
+	  add_typespec
+	| add_type_qualifier_list add_typespec
+	| noclass_declspecs_postfix add_type_qualifier
+	| noclass_declspecs_postfix add_notype_typespec
 	| noclass_declspecs_postfix type_attribute
 	;
 
