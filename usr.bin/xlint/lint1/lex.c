@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.54 2021/07/10 17:46:55 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.55 2021/07/11 19:24:41 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.54 2021/07/10 17:46:55 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.55 2021/07/11 19:24:41 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -182,6 +182,7 @@ static	struct	kwtab {
 	kwdef_gcc_attr(	"gnu_inline",	T_AT_GNU_INLINE),
 	kwdef_gcc_attr(	"gnu_printf",	T_AT_FORMAT_GNU_PRINTF),
 	kwdef_keyword(	"goto",		T_GOTO),
+	kwdef_gcc_attr(	"hot",		T_AT_HOT),
 	kwdef_keyword(	"if",		T_IF),
 	kwdef_token(	"imag",		T_IMAG,			0,0,1,0,4),
 	kwdef_sclass(	"inline",	INLINE,			0,1,0,0,7),

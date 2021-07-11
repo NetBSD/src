@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1084 2021/07/11 18:58:13 rillig Exp $
+# $NetBSD: mi,v 1.1085 2021/07/11 19:24:41 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6233,7 +6233,7 @@
 ./usr/tests/usr.bin/xlint/lint1/gcc_attribute_func.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/gcc_attribute_func.exp		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/gcc_attribute_label.c		tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/xlint/lint1/gcc_attribute_label.exp		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/gcc_attribute_label.exp		tests-obsolete		obsolete
 ./usr/tests/usr.bin/xlint/lint1/gcc_attribute_stmt.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/gcc_attribute_stmt.exp		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/gcc_attribute_type.c		tests-usr.bin-tests	compattestfile,atf
