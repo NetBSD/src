@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.311 2021/07/11 18:22:02 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.312 2021/07/11 19:01:37 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.311 2021/07/11 18:22:02 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.312 2021/07/11 19:01:37 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -124,7 +124,7 @@ anonymize(sym_t *s)
 
 %}
 
-%expect 168
+%expect 167
 
 %union {
 	val_t	*y_val;
@@ -257,6 +257,8 @@ anonymize(sym_t *s)
 %token			T_AT_WARN_UNUSED_RESULT
 %token			T_AT_WEAK
 
+%left	T_THEN
+%left	T_ELSE
 %left	T_COMMA
 %right	T_ASSIGN T_OPASSIGN
 %right	T_QUEST T_COLON
@@ -1486,7 +1488,7 @@ expression_statement:		/* C99 6.8.3 */
 	;
 
 selection_statement:		/* C99 6.8.4 */
-	  if_without_else {
+	  if_without_else %prec T_THEN {
 		save_warning_flags();
 		if2();
 		if3(false);
