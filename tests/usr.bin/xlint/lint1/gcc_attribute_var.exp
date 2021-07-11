@@ -1,3 +1,2 @@
-gcc_attribute_var.c(54): error: syntax error '_Bool' [249]
-gcc_attribute_var.c(60): error: syntax error '_Bool' [249]
-gcc_attribute_var.c(69): error: syntax error 'syntax_error' [249]
+gcc_attribute_var.c(59): warning: 'var2' unused in function 'ambiguity_for_attribute' [192]
+gcc_attribute_var.c(68): error: syntax error 'syntax_error' [249]
