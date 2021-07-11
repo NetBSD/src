@@ -1,4 +1,4 @@
-/*	$NetBSD: c11_generic_expression.c,v 1.7 2021/07/11 20:34:05 rillig Exp $	*/
+/*	$NetBSD: c11_generic_expression.c,v 1.8 2021/07/11 20:37:21 rillig Exp $	*/
 # 3 "c11_generic_expression.c"
 
 /*
@@ -92,7 +92,5 @@ assignment_expression(int first, int second)
 int
 primary_expression(void)
 {
-	/*FIXME*//* expect+1: syntax error '(' [249] */
 	return _Generic(0, int: assignment_expression)(0, 0);
 }
-/* expect-1: falls off */

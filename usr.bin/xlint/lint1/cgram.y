@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.316 2021/07/11 20:25:54 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.317 2021/07/11 20:37:21 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.316 2021/07/11 20:25:54 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.317 2021/07/11 20:37:21 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1722,7 +1722,6 @@ expr:				/* C99 6.5 */
 		$$ = build(COMMA, $1, $3);
 	  }
 	| cast_expression
-	| generic_selection	/* TODO: move to primary_expression */
 	;
 
 assignment_expression:		/* C99 6.5.16 */
@@ -1747,6 +1746,7 @@ primary_expression:		/* C99 6.5.1 */
 			$2->tn_parenthesized = true;
 		$$ = $2;
 	  }
+	| generic_selection
 	/* GCC primary-expression, see c_parser_postfix_expression */
 	| T_BUILTIN_OFFSETOF T_LPAREN type_name T_COMMA identifier T_RPAREN {
 		symtyp = FMEMBER;
