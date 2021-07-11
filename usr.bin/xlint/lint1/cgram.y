@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.307 2021/07/11 16:57:21 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.308 2021/07/11 17:38:55 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.307 2021/07/11 16:57:21 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.308 2021/07/11 17:38:55 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -124,7 +124,7 @@ anonymize(sym_t *s)
 
 %}
 
-%expect 173
+%expect 172
 
 %union {
 	val_t	*y_val;
@@ -280,6 +280,7 @@ anonymize(sym_t *s)
 
 %type	<y_tnode>	primary_expression
 %type	<y_tnode>	postfix_expression
+%type	<y_tnode>	unary_expression
 
 %type	<y_sym>		func_decl
 %type	<y_sym>		notype_decl
@@ -1806,19 +1807,16 @@ postfix_expression:		/* C99 6.5.2 */
 	 }
 	;
 
-term:				/* see C99 6.5.1 */
+unary_expression:		/* C99 6.5.3 */
 	  postfix_expression
-	| T_INCDEC term {
+	| T_INCDEC unary_expression {
 		$$ = build($1 == INC ? INCBEF : DECBEF, $2, NULL);
-	  }
-	| T_ASTERISK term {
-		$$ = build(INDIR, $2, NULL);
 	  }
 	| T_AMPER term {
 		$$ = build(ADDR, $2, NULL);
 	  }
-	| T_UNARY term {
-		$$ = build($1, $2, NULL);
+	| T_ASTERISK term {
+		$$ = build(INDIR, $2, NULL);
 	  }
 	| T_ADDITIVE term {
 		if (tflag && $1 == PLUS) {
@@ -1827,6 +1825,21 @@ term:				/* see C99 6.5.1 */
 		}
 		$$ = build($1 == PLUS ? UPLUS : UMINUS, $2, NULL);
 	  }
+	| T_UNARY term {
+		$$ = build($1, $2, NULL);
+	  }
+	| T_SIZEOF unary_expression {
+		$$ = $2 == NULL ? NULL : build_sizeof($2->tn_type);
+		if ($$ != NULL)
+			check_expr_misc($2, false, false, false, false, false, true);
+	  }
+	| T_SIZEOF T_LPAREN type_name T_RPAREN %prec T_SIZEOF {
+		$$ = build_sizeof($3);
+	  }
+	;
+
+term:				/* see C99 6.5.1 */
+	  unary_expression
 	| T_REAL term {
 		$$ = build(REAL, $2, NULL);
 	  }
@@ -1845,14 +1858,6 @@ term:				/* see C99 6.5.1 */
 	| T_BUILTIN_OFFSETOF T_LPAREN type_name T_COMMA identifier T_RPAREN {
 		symtyp = FMEMBER;
 		$$ = build_offsetof($3, getsym($5));
-	  }
-	| T_SIZEOF term	{
-		$$ = $2 == NULL ? NULL : build_sizeof($2->tn_type);
-		if ($$ != NULL)
-			check_expr_misc($2, false, false, false, false, false, true);
-	  }
-	| T_SIZEOF T_LPAREN type_name T_RPAREN %prec T_SIZEOF {
-		$$ = build_sizeof($3);
 	  }
 	| T_ALIGNOF T_LPAREN type_name T_RPAREN {
 		$$ = build_alignof($3);
