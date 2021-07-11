@@ -1,11 +1,16 @@
-Changes in version 1.2.0:
+Changes in version 1.2.1, released in October 2020:
+  - Bug fixes:
+    - Fix an incompatibility problem with GMP 6.0 and before.
+    - Fix an intermediate overflow in asin.
+
+Changes in version 1.2.0 ("Hyacinthus orientalis"), released in August 2020:
   - Minimally required library version: MPFR 4.1.0
   - New functions: mpc_sum, mpc_dot
   - Several functions are more robust with a reduced exponent range
     (for example corresponding to IEEE 754 binary formats)
   - New tool mpcheck.
 
-Changes in version 1.1.0:
+Changes in version 1.1.0 ("Gladiolus palustris"), released in January 2018:
   - Minimally required library versions: GMP 5.0.0 and MPFR 3.0.0
   - Fixed issues with MPFR 4.0.0
   - New functions: mpc_cmp_abs, mpc_rootofunity
@@ -19,25 +24,25 @@ Changes in version 1.1.0:
   - Fixed a bug in mpc_atan(0,y) with |y| near 1, see
     http://lists.gforge.inria.fr/pipermail/mpc-discuss/2017-March/001404.html
 
-Changes in version 1.0.3:
+Changes in version 1.0.3, released in February 2015:
   - Fixed mpc_pow, see
     http://lists.gforge.inria.fr/pipermail/mpc-discuss/2014-October/001315.html
   - #18257: Switched to libtool 2.4.5.
 
-Changes in version 1.0.2:
+Changes in version 1.0.2, released in January 2014:
   - Fixed mpc_atan, mpc_atanh for (+-0, +-1), see
     http://gcc.gnu.org/bugzilla/show_bug.cgi?id=57994#c7
   - Fixed mpc_log10 for purely imaginary argument, see
     http://lists.gforge.inria.fr/pipermail/mpc-discuss/2012-September/001208.html
 
-Changes in version 1.0.1:
+Changes in version 1.0.1, released in September 2012:
   - Switched to automake 1.11.6, see
     https://lists.gnu.org/archive/html/automake/2012-07/msg00023.html
   - #14669: Fixed extraction of CC from gmp.h
   - Fixed case of intermediate zero real or imaginary part in mpc_fma,
     found by hydra with GMP_CHECK_RANDOMIZE=1346362345
 
-Changes in version 1.0:
+Changes in version 1.0 ("Fagus silvatica"), released in July 2012:
   - First release as a GNU package
   - License change: LGPLv3+ for code, GFDLv1.3+ (with no invariant sections)
     for documentation
@@ -59,7 +64,7 @@ Changes in version 1.0:
       infinite part and equals output variable is corrected
     - mpc_fr_sub: Wrong return value for imaginary part is corrected
 
-Changes in version 0.9:
+Changes in version 0.9 ("Epilobium montanum"), released in February 2011:
   - New functions:
     - mpc_set_dc, mpc_set_ldc, mpc_get_dc, mpc_get_ldc for converting
       between mpc type variables and C variables of type double _Complex
@@ -81,24 +86,24 @@ Changes in version 0.9:
       #include "mpc-log.h" instead of #include "mpc.h"
   - Minimally required library versions: gmp 4.3.2, mpfr 2.4.2
 
-Changes in version 0.8.2:
+Changes in version 0.8.2, released in May 2010:
   - Speed-up of mpc_pow_ui through binary exponentiation
 
-Changes in version 0.8.1:
+Changes in version 0.8.1, released in December 2009:
   - Bug fixes:
     - mpc_acosh, mpc_asinh, mpc_atanh: swap of precisions between real and
       imaginary parts
     - mpc_atan: memory leak
     - mpc_log: wrong ternary value in data file; masked by bug in mpfr-2.4.1
 
-Changes in version 0.8 ("Dianthus deltoides"):
+Changes in version 0.8 ("Dianthus deltoides"), released in November 2009:
   - New functions:
     - mpc_asin, mpc_acos, mpc_atan, mpc_asinh, mpc_acosh, mpc_atanh,
       mpc_pow_d, mpc_pow_ld, mpc_pow_si, mpc_pow_ui, mpc_pow_z, mpc_pow_fr
   - Bug fixes:
     - mpc_ui_div: real divisor
 
-Changes in version 0.7 ("Campanula uniflora"):
+Changes in version 0.7 ("Campanula uniflora"), released in September 2009:
   - New functions: mpc_pow, mpc_set_nan, mpc_swap
   - Bug fixes:
     - mpc_log: along branch cut
@@ -111,7 +116,7 @@ Changes in version 0.7 ("Campanula uniflora"):
   - Changed MPC_SET_X_Y macro
   - Functions mpc_random and mpc_random2 removed
 
-Changes in version 0.6 ("Bellis perennis"):
+Changes in version 0.6 ("Bellis perennis"), released in April 2009:
   - New functions: mpc_get_str, mpc_set_str, mpc_strtoc, mpc_set_uj,
     mpc_set_sj, mpc_set_ld, mpc_set_ld_ld, mpc_set_si_si, mpc_set_uj_uj,
     mpc_set_sj_sj, mpc_set_f, mpc_set_f_f, mpc_set_q, mpc_set_q_q, mpc_set_z,
@@ -130,14 +135,14 @@ Changes in version 0.6 ("Bellis perennis"):
     - mpc_get_version and MPC_VERSION_STRING agree
     - Compilation on i686-pc-cygwin and i686-pc-mingw32 fixed
 
-Changes in version 0.5.2:
+Changes in version 0.5.2, released in December 2008:
   - New macros:
     - version number: MPC_VERSION_NUM, MPC_VERSION
   - Makefile.vc updated (thanks to Mickael Gastineau)
   - Compilation on Debian-Gnu-Linux-PowerPC and MacOsX
     fixed (thanks to Laurent Fousse and Mickael Gastineau)
 
-Changes in version 0.5.1:
+Changes in version 0.5.1, released in November 2008:
   - New functions:
     - mpc_set_fr_fr
     - mpc_real, mpc_imag
@@ -162,7 +167,7 @@ Changes in version 0.5.1:
     - fix handling of special values: mpc_exp, mpc_log, mpc_mul, mpc_norm,
       mpc_sqr, mpc_sqrt
 
-Changes in version 0.5 ("Aconitum neomontanum"):
+Changes in version 0.5 ("Aconitum neomontanum"), released in September 2008:
   - Support for autotools
   - New functions:
      - logarithm

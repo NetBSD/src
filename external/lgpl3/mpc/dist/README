@@ -24,8 +24,8 @@ This is for the impatient, for deeper explanations see the chapter
 
 1. In the directory of the GNU MPC archive, type
 
-      tar xzf mpc-1.2.0.tar.gz
-      cd mpc-1.2.0
+      tar xzf mpc-1.2.1.tar.gz
+      cd mpc-1.2.1
       ./configure
       make
 
