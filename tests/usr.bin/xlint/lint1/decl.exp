@@ -9,6 +9,3 @@ decl.c(68): warning: converting 'pointer to char' to incompatible 'pointer to do
 decl.c(70): warning: illegal combination of pointer (pointer to double) and integer (char), arg #1 [154]
 decl.c(72): warning: converting 'pointer to pointer to char' to incompatible 'pointer to double' for argument 1 [153]
 decl.c(80): error: syntax error '"' [249]
-decl.c(94): error: syntax error '_Bool' [249]
-decl.c(99): error: syntax error '__attribute__' [249]
-decl.c(99): error: cannot recover from previous errors [224]

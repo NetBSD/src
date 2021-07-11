@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_attribute_var.c,v 1.2 2021/07/11 13:32:06 rillig Exp $	*/
+/*	$NetBSD: gcc_attribute_var.c,v 1.3 2021/07/11 15:07:39 rillig Exp $	*/
 # 3 "gcc_attribute_var.c"
 
 /*
@@ -50,13 +50,12 @@ void println(void);
 void
 ambiguity_for_attribute(void)
 {
-	/*FIXME*//* expect+1: error: syntax error '_Bool' [249] */
 	__attribute__((unused)) _Bool var1;
 
 	switch (1) {
 	case 1:
 		println();
-		/*FIXME*//* expect+1: error: syntax error '_Bool' [249] */
+		/* expect+1: warning: 'var2' unused in function 'ambiguity_for_attribute' [192] */
 		__attribute__((unused)) _Bool var2;
 		__attribute__((fallthrough));
 		case 2:
