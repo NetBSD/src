@@ -4,3 +4,5 @@ c11_generic_expression.c(37): warning: argument 'var' unused in function 'classi
 c11_generic_expression.c(53): warning: argument 'c' unused in function 'classify_char' [231]
 c11_generic_expression.c(72): error: syntax error 'second' [249]
 c11_generic_expression.c(77): warning: function comma_expression falls off bottom without returning value [217]
+c11_generic_expression.c(96): error: syntax error '(' [249]
+c11_generic_expression.c(97): warning: function primary_expression falls off bottom without returning value [217]
