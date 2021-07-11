@@ -696,7 +696,6 @@ mpc_pow (mpc_ptr z, mpc_srcptr x, mpc_srcptr y, mpc_rnd_t rnd)
       if (mpfr_underflow_p () || mpfr_overflow_p ()) {
          /* under- and overflow flags are set by mpc_exp */
          mpc_set (z, u, MPC_RNDNN);
-         ret = ret_exp;
          inex_re = MPC_INEX_RE(ret_exp);
          inex_im = MPC_INEX_IM(ret_exp);
          if (mpfr_inf_p (mpc_realref (z)))
