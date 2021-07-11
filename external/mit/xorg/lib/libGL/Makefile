@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.31 2020/10/31 13:28:22 nia Exp $
+#	$NetBSD: Makefile,v 1.32 2021/07/11 20:52:06 mrg Exp $
 
 .include <bsd.own.mk>
+
+.include "../mesa-which.mk"
 
 LIB=		GL
 LIBISCXX=	yes
@@ -201,7 +203,7 @@ LIBDPLIBS=	Xext		${.CURDIR}/../libXext \
 		Xxf86vm		${.CURDIR}/../libXxf86vm \
 		Xfixes		${.CURDIR}/../libXfixes \
 		Xdamage		${.CURDIR}/../libXdamage \
-		glapi		${.CURDIR}/../libglapi \
+		glapi		${.CURDIR}/../libglapi${OLD_SUFFIX} \
 		drm		${.CURDIR}/../libdrm \
 		X11-xcb		${.CURDIR}/../libX11/libX11-xcb \
 		xcb-dri2	${.CURDIR}/../libxcb/dri2 \

@@ -1,8 +1,10 @@
-# $NetBSD: Makefile,v 1.37 2021/04/13 04:58:59 mrg Exp $
+# $NetBSD: Makefile,v 1.38 2021/07/11 20:52:06 mrg Exp $
 
 # Link the mesa_dri_drivers mega driver.
 
 .include <bsd.own.mk>
+
+.include "../mesa-which.mk"
 
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64" || \
     ${MACHINE} == "evbarm"
@@ -425,7 +427,7 @@ SRCS+=	${DRI_SOURCES.${_d}}
 LIBDPLIBS+=	expat		${NETBSDSRCDIR}/external/mit/expat/lib/libexpat
 LIBDPLIBS+=	m		${NETBSDSRCDIR}/lib/libm
 LIBDPLIBS+=	pthread		${NETBSDSRCDIR}/lib/libpthread
-LIBDPLIBS+= 	glapi		${.CURDIR}/../libglapi
+LIBDPLIBS+= 	glapi		${.CURDIR}/../libglapi${OLD_SUFFIX}
 LIBDPLIBS+= 	drm		${.CURDIR}/../libdrm
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 LIBDPLIBS+= 	drm_intel	${.CURDIR}/../libdrm_intel

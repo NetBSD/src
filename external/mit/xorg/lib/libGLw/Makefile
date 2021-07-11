@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2019/03/10 02:29:53 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2021/07/11 20:52:06 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -32,7 +32,7 @@ LIBDPLIBS=	Xext		${.CURDIR}/../libXext \
 		Xdamage		${.CURDIR}/../libXdamage \
 		m		${.CURDIR}/../../../../../lib/libm \
 		drm		${.CURDIR}/../libdrm \
-		GL		${.CURDIR}/../libGL${OLD_PREFIX} \
+		GL		${.CURDIR}/../libGL${OLD_SUFFIX} \
 		ICE		${.CURDIR}/../libICE \
 		SM		${.CURDIR}/../libSM \
 		Xt		${.CURDIR}/../libXt \

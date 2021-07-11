@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.7 2019/09/24 19:29:42 maya Exp $
+#	$NetBSD: Makefile,v 1.8 2021/07/11 20:52:06 mrg Exp $
 
 .include <bsd.own.mk>
+
+.include "../mesa-which.mk"
 
 LIB=		gbm
 
@@ -45,7 +47,7 @@ COPTS.gbm_dri.c+=	-Wno-error
 INCS=		gbm.h
 INCSDIR=	${X11INCDIR}
 
-LIBDPLIBS=	glapi	${.CURDIR}/../libglapi
+LIBDPLIBS=	glapi	${.CURDIR}/../libglapi${OLD_SUFFIX}
 LIBDPLIBS+=	drm     ${.CURDIR}/../libdrm
 LIBDPLIBS+=	expat	${NETBSDSRCDIR}/external/mit/expat/lib/libexpat
 

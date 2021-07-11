@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.47 2021/05/30 01:57:00 joerg Exp $
+# $NetBSD: Makefile,v 1.48 2021/07/11 20:52:06 mrg Exp $
 
 # Link the gallium mega driver.
 
@@ -6,6 +6,8 @@ LIBISMODULE=	yes
 LIBISCXX=     yes
 
 .include <bsd.own.mk>
+
+.include "../mesa-which.mk"
 
 SHLIB_MAJOR=    0
 
@@ -970,7 +972,7 @@ LIBDPLIBS+= 	drm_amdgpu	${.CURDIR}/../libdrm_amdgpu
 LIBDPLIBS+= 	drm_nouveau	${.CURDIR}/../libdrm_nouveau
 .endif	# ${BUILD_NOUVEAU} == 1
 .endif	# ${BUILD_RADEON} == 1 || ${BUILD_NOUVEAU} == 1
-LIBDPLIBS+= 	glapi		${.CURDIR}/../libglapi
+LIBDPLIBS+= 	glapi		${.CURDIR}/../libglapi${OLD_SUFFIX}
 LIBDPLIBS+=	expat		${.CURDIR}/../../../../../external/mit/expat/lib/libexpat
 LIBDPLIBS+=	terminfo	${.CURDIR}/../../../../../lib/libterminfo
 LIBDPLIBS+=	execinfo	${.CURDIR}/../../../../../lib/libexecinfo
