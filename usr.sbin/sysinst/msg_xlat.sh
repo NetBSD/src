@@ -1,5 +1,5 @@
 #! /bin/sh
-#	$NetBSD: msg_xlat.sh,v 1.3 2021/06/29 08:02:50 cjep Exp $
+#	$NetBSD: msg_xlat.sh,v 1.4 2021/07/11 10:51:46 cjep Exp $
 
 #-
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -174,7 +174,7 @@ do
 		$IGNORE_MISSING_TRANSLATIONS || rval=1
 	fi
 done
-unset IFS
+IFS=%
 
 if $count_fmtargs; then exit $rval; fi
 
