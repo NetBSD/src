@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.54 2020/10/28 08:10:10 nia Exp $
+#	$NetBSD: Makefile,v 1.55 2021/07/11 01:13:26 mrg Exp $
 
 # build libraries for xorg
 
@@ -23,7 +23,7 @@ SUBDIR+=libxcb \
 	libX11 \
 	.WAIT
 .if !defined(MLIBDIR)
-SUBDIR+=${EXTRA_DRI_DIRS} dri${OLD_PREFIX} gallium${OLD_PREFIX}
+SUBDIR+=dri${OLD_PREFIX} gallium${OLD_PREFIX}
 .endif
 SUBDIR+=fontconfig libSM \
 	.WAIT \
