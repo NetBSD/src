@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_232.c,v 1.3 2021/01/31 11:12:07 rillig Exp $	*/
+/*	$NetBSD: msg_232.c,v 1.4 2021/07/11 19:24:42 rillig Exp $	*/
 # 3 "msg_232.c"
 
 // Test for message: label %s unused in function %s [232]
@@ -12,3 +12,5 @@ unused_label:			/* expect: 232 */
 used_label:
 	return;
 }
+
+/* TODO: add quotes around '%s' */
