@@ -1,4 +1,4 @@
-/*	$NetBSD: sti_sgc.c,v 1.2 2019/04/15 20:40:37 skrll Exp $	*/
+/*	$NetBSD: sti_sgc.c,v 1.3 2021/07/11 13:36:02 tsutsui Exp $	*/
 
 /*	$OpenBSD: sti_sgc.c,v 1.38 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.2 2019/04/15 20:40:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.3 2021/07/11 13:36:02 tsutsui Exp $");
 
 #include "opt_cputype.h"
 
@@ -72,6 +72,16 @@ extern int stidebug;
 
 #define	STI_ROMSIZE	(sizeof(struct sti_dd) * 4)
 #define	STI_ID_FDDI	0x280b31af	/* Medusa FDDI ROM id */
+
+/*
+ * hpa addresses to check on-board variants
+ * XXX should check via device_register(9)?
+ * 
+ * 0xf4000000: HPA1991AC19 on 715/33, 715/50
+ * 0xf8000000: HPA1439A on 735/99, HPA208LCxxx on 715/80, 715/100, 712
+ */
+#define	STI_ONBOARD_HPA0	0xf4000000
+#define	STI_ONBOARD_HPA1	0xf8000000
 
 /* gecko optional graphics */
 #define	STI_GOPT1_REV	0x17
@@ -118,7 +128,9 @@ sti_sgc_getrom(struct confargs *ca)
 	rom = PAGE0->pd_resv2[1];
 	hppa_pagezero_unmap(pagezero_cookie);
 
-	if (ca->ca_type.iodc_sv_model == HPPA_FIO_GSGC) {
+	if (ca->ca_type.iodc_sv_model == HPPA_FIO_GSGC &&
+	    ca->ca_hpa != STI_ONBOARD_HPA0 &&
+	    ca->ca_hpa != STI_ONBOARD_HPA1) {
 		int i;
 		for (i = sizeof(sti_sgc_opt); i--; )
 			if (sti_sgc_opt[i] == ca->ca_type.iodc_revision)
