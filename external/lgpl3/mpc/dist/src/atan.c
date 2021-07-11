@@ -143,7 +143,7 @@ mpc_atan (mpc_ptr rop, mpc_srcptr op, mpc_rnd_t rnd)
           mpfr_rnd_t rnd_im, rnd_away;
           mpfr_t y, z;
           mpfr_prec_t p, p_im;
-          int ok;
+          int ok = 0;
 
           rnd_im = MPC_RND_IM (rnd);
           mpfr_init (y);
