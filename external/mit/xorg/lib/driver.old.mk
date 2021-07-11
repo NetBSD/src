@@ -1,20 +1,48 @@
-#	$NetBSD: driver.old.mk,v 1.1 2019/03/10 02:29:52 mrg Exp $
+#	$NetBSD: driver.old.mk,v 1.2 2021/07/11 20:53:35 mrg Exp $
 
 # stuff both dri and gallium drivers need.
 
 # util
 .PATH:		${X11SRCDIR.Mesa}/src/util
-SRCS.util=	\
-	hash_table.c    \
-        MESAralloc.c
 .PATH:		${X11SRCDIR.Mesa}/../src/util
-SRCS.util+=	\
-	format_srgb.c
+
+SRCS.util=	\
+	hash_table.c \
+	build_id.c \
+	crc32.c \
+	disk_cache.c \
+	fast_idiv_by_const.c \
+	half_float.c \
+	format_srgb.c \
+	mesa-sha1.c \
+	os_time.c \
+	ralloc.c \
+	UTILdebug.c \
+	rand_xor.c \
+	rb_tree.c \
+	register_allocate.c \
+	rgtc.c \
+	set.c \
+	slab.c \
+	string_buffer.c \
+	strtod.c \
+	u_atomic.c \
+	u_cpu_detect.c \
+	u_math.c \
+	u_queue.c \
+	u_process.c \
+	u_vector.c \
+	vma.c
+
 CPPFLAGS.format_srgb.c+=	-I${X11SRCDIR.Mesa}/src/util
 CPPFLAGS.hash_table.c+=		-I${X11SRCDIR.Mesa}/src/util
 CPPFLAGS.MESAralloc.c+=		-I${X11SRCDIR.Mesa}/src/util
+CPPFLAGS.UTILdebug.c+=		-I${X11SRCDIR.Mesa}/src/util \
+				-I${X11SRCDIR.Mesa}/src/mesa \
+				-I${X11SRCDIR.Mesa}/src \
+				-I${X11SRCDIR.Mesa}/src/gallium/include
 
-BUILDSYMLINKS+=	${X11SRCDIR.Mesa}/src/util/ralloc.c MESAralloc.c
+BUILDSYMLINKS+=	${X11SRCDIR.Mesa}/src/util/debug.c UTILdebug.c
 
 SRCS+=	${SRCS.util}
 
@@ -22,3 +50,6 @@ SRCS+=	${SRCS.util}
 .PATH: ${X11SRCDIR.Mesa}/src/mesa/drivers/dri/common
 SRCS+=	utils.c dri_util.c xmlconfig.c
 SRCS+=	megadriver_stub.c
+
+CPPFLAGS.dri_util.c+=		-I${X11SRCDIR.Mesa}/../src/util
+
