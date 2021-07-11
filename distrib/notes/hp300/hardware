@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.25 2021/07/11 13:53:48 tsutsui Exp $
+.\"	$NetBSD: hardware,v 1.26 2021/07/11 14:17:48 tsutsui Exp $
 .
 .Nx*M
 \*V will run on most HP 9000/300- and 400-series machines.
@@ -73,8 +73,14 @@ up to 128 MB RAM)
 HP-IB devices
 .(bullet -compact
 .Em rd ;
-CS80 disks: 2200, 2203, 7912, 7914, 7933, 7936, 7937, 7945, 7946,
-7957, 7958, and 7959
+CS80 disks: 2200, 2202, 2203, 7908, 7911, 7912, 7914, 7933, 7936, 7937, 7941,
+7945, 7946, 7957, 7958, and 7959
+.br
+.Em "Emulated CS80 disks by"
+.Lk http://www.dalton.ax/hpdisk/ HPDisk
+.Em and
+.Lk https://www.hp9845.net/9845/projects/hpdrive/ HPDrive
+.Em "also work."
 .It
 .Em rd ;
 CS80 floppy disks: 9122, 9134 (possibly others)
