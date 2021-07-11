@@ -1,4 +1,4 @@
-/*	$NetBSD: decl.c,v 1.3 2021/07/11 12:12:30 rillig Exp $	*/
+/*	$NetBSD: decl.c,v 1.4 2021/07/11 15:07:39 rillig Exp $	*/
 # 3 "decl.c"
 
 /*
@@ -87,14 +87,15 @@ enum_error_handling(void)
 	return x == B;
 }
 
+/*
+ * An __attribute__ at the beginning of a declaration may become ambiguous
+ * since a GCC fallthrough statement starts with __attribute__ as well.
+ */
 void
 unused_local_variable(void)
 {
-	/*FIXME*//* expect+1: syntax error '_Bool' [249] */
 	__attribute__((unused)) _Bool unused_var;
 
 	__attribute__((unused))
-	/*FIXME*//* expect+2: syntax error '__attribute__' [249] */
-	/*FIXME*//* expect+1: cannot recover from previous errors [224] */
 	__attribute__((unused)) _Bool unused_twice;
 }
