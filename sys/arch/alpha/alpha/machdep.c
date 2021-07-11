@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.373 2021/07/04 22:42:35 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.374 2021/07/11 01:58:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2019, 2020 The NetBSD Foundation, Inc.
@@ -65,9 +65,11 @@
 #include "opt_dec_3000_500.h"
 #include "opt_execfmt.h"
 
+#define	__RWLOCK_PRIVATE 
+
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.373 2021/07/04 22:42:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.374 2021/07/11 01:58:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,6 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.373 2021/07/04 22:42:35 thorpej Exp $"
 #include <sys/kauth.h>
 #include <sys/atomic.h>
 #include <sys/cpu.h>
+#include <sys/rwlock.h>
 
 #include <machine/kcore.h>
 #include <machine/fpu.h>
@@ -132,6 +135,10 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.373 2021/07/04 22:42:35 thorpej Exp $"
 int sigdebug = 0x0;
 int sigpid = 0;
 #endif
+
+/* Assert some assumptions made in lock_stubs.s */
+__CTASSERT(RW_READER == 0);
+__CTASSERT(RW_HAS_WAITERS == 1);
 
 #include <machine/alpha.h>
 
