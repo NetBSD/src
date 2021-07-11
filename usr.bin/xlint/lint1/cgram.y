@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.306 2021/07/11 15:07:39 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.307 2021/07/11 16:57:21 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.306 2021/07/11 15:07:39 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.307 2021/07/11 16:57:21 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -124,7 +124,7 @@ anonymize(sym_t *s)
 
 %}
 
-%expect 178
+%expect 173
 
 %union {
 	val_t	*y_val;
@@ -277,6 +277,9 @@ anonymize(sym_t *s)
 %token	<y_name>	T_TYPENAME
 %token	<y_val>		T_CON
 %token	<y_string>	T_STRING
+
+%type	<y_tnode>	primary_expression
+%type	<y_tnode>	postfix_expression
 
 %type	<y_sym>		func_decl
 %type	<y_sym>		notype_decl
@@ -1724,68 +1727,38 @@ assignment_expression:		/* C99 6.5.16 */
 	  expr %prec T_ASSIGN
 	;
 
-term:				/* see C99 6.5.1 */
+primary_expression:		/* C99 6.5.1 */
 	  T_NAME {
 		/* XXX really necessary? */
 		if (yychar < 0)
 			yychar = yylex();
 		$$ = new_name_node(getsym($1), yychar);
 	  }
-	| string {
-		$$ = new_string_node($1);
-	  }
 	| T_CON {
 		$$ = expr_new_constant(gettyp($1->v_tspec), $1);
+	  }
+	| string {
+		$$ = new_string_node($1);
 	  }
 	| T_LPAREN expr T_RPAREN {
 		if ($2 != NULL)
 			$2->tn_parenthesized = true;
 		$$ = $2;
 	  }
-	| T_LPAREN compound_statement_lbrace gcc_statement_expr_list {
-		block_level--;
-		mem_block_level--;
-		begin_initialization(mktempsym(dup_type($3->tn_type)));
-		mem_block_level++;
-		block_level++;
-		/* ({ }) is a GCC extension */
-		gnuism(320);
-	 } compound_statement_rbrace T_RPAREN {
-		$$ = new_name_node(*current_initsym(), 0);
-		end_initialization();
-	 }
-	| term T_INCDEC {
-		$$ = build($2 == INC ? INCAFT : DECAFT, $1, NULL);
-	  }
-	| T_INCDEC term {
-		$$ = build($1 == INC ? INCBEF : DECBEF, $2, NULL);
-	  }
-	| T_ASTERISK term {
-		$$ = build(INDIR, $2, NULL);
-	  }
-	| T_AMPER term {
-		$$ = build(ADDR, $2, NULL);
-	  }
-	| T_UNARY term {
-		$$ = build($1, $2, NULL);
-	  }
-	| T_ADDITIVE term {
-		if (tflag && $1 == PLUS) {
-			/* unary + is illegal in traditional C */
-			warning(100);
-		}
-		$$ = build($1 == PLUS ? UPLUS : UMINUS, $2, NULL);
-	  }
-	| term T_LBRACK expr T_RBRACK {
+	;
+
+postfix_expression:		/* C99 6.5.2 */
+	  primary_expression
+	| postfix_expression T_LBRACK expr T_RBRACK {
 		$$ = build(INDIR, build(PLUS, $1, $3), NULL);
 	  }
-	| term T_LPAREN T_RPAREN {
+	| postfix_expression T_LPAREN T_RPAREN {
 		$$ = new_function_call_node($1, NULL);
 	  }
-	| term T_LPAREN argument_expression_list T_RPAREN {
+	| postfix_expression T_LPAREN argument_expression_list T_RPAREN {
 		$$ = new_function_call_node($1, $3);
 	  }
-	| term point_or_arrow T_NAME {
+	| postfix_expression point_or_arrow T_NAME {
 		if ($1 != NULL) {
 			sym_t	*msym;
 			/*
@@ -1804,6 +1777,55 @@ term:				/* see C99 6.5.1 */
 		} else {
 			$$ = NULL;
 		}
+	  }
+	| postfix_expression T_INCDEC {
+		$$ = build($2 == INC ? INCAFT : DECAFT, $1, NULL);
+	  }
+	| T_LPAREN type_name T_RPAREN {	/* C99 6.5.2.5 "Compound literals" */
+		sym_t *tmp = mktempsym($2);
+		begin_initialization(tmp);
+		cgram_declare(tmp, true, NULL);
+	  } init_lbrace initializer_list comma_opt init_rbrace {
+		if (!Sflag)
+			 /* compound literals are a C9X/GCC extension */
+			 gnuism(319);
+		$$ = new_name_node(*current_initsym(), 0);
+		end_initialization();
+	  }
+	| T_LPAREN compound_statement_lbrace gcc_statement_expr_list {
+		block_level--;
+		mem_block_level--;
+		begin_initialization(mktempsym(dup_type($3->tn_type)));
+		mem_block_level++;
+		block_level++;
+		/* ({ }) is a GCC extension */
+		gnuism(320);
+	 } compound_statement_rbrace T_RPAREN {
+		$$ = new_name_node(*current_initsym(), 0);
+		end_initialization();
+	 }
+	;
+
+term:				/* see C99 6.5.1 */
+	  postfix_expression
+	| T_INCDEC term {
+		$$ = build($1 == INC ? INCBEF : DECBEF, $2, NULL);
+	  }
+	| T_ASTERISK term {
+		$$ = build(INDIR, $2, NULL);
+	  }
+	| T_AMPER term {
+		$$ = build(ADDR, $2, NULL);
+	  }
+	| T_UNARY term {
+		$$ = build($1, $2, NULL);
+	  }
+	| T_ADDITIVE term {
+		if (tflag && $1 == PLUS) {
+			/* unary + is illegal in traditional C */
+			warning(100);
+		}
+		$$ = build($1 == PLUS ? UPLUS : UMINUS, $2, NULL);
 	  }
 	| T_REAL term {
 		$$ = build(REAL, $2, NULL);
@@ -1837,17 +1859,6 @@ term:				/* see C99 6.5.1 */
 	  }
 	| T_LPAREN type_name T_RPAREN term %prec T_UNARY {
 		$$ = cast($4, $2);
-	  }
-	| T_LPAREN type_name T_RPAREN {	/* C99 6.5.2.5 "Compound literals" */
-		sym_t *tmp = mktempsym($2);
-		begin_initialization(tmp);
-		cgram_declare(tmp, true, NULL);
-	  } init_lbrace initializer_list comma_opt init_rbrace {
-		if (!Sflag)
-			 /* compound literals are a C9X/GCC extension */
-			 gnuism(319);
-		$$ = new_name_node(*current_initsym(), 0);
-		end_initialization();
 	  }
 	;
 
