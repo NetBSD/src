@@ -2975,6 +2975,9 @@ extern enum attr_cpu ix86_schedule;
 #define NUM_X86_64_MS_CLOBBERED_REGS 12
 #endif
 
+/* Standard location for 32-bit ASAN shadow map.  */
+#define X86_32_ASAN_BIT_OFFSET 29
+
 /*
 Local variables:
 version-control: t
