@@ -1,4 +1,4 @@
-/*	$NetBSD: initdir.c,v 1.4 2016/12/16 04:45:04 mrg Exp $	*/
+/*	$NetBSD: initdir.c,v 1.5 2021/07/11 16:30:41 kre Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: initdir.c,v 1.4 2016/12/16 04:45:04 mrg Exp $");
+__RCSID("$NetBSD: initdir.c,v 1.5 2021/07/11 16:30:41 kre Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -242,6 +242,7 @@ retry:
 		dirp->dd_size = ddptr - dirp->dd_buf;
 	} else {
 		dirp->dd_len = incr;
+		dirp->dd_size = 0;
 		dirp->dd_buf = malloc((size_t)dirp->dd_len);
 		if (dirp->dd_buf == NULL)
 			return errno;
