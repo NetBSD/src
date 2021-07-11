@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.108 2021/07/09 17:05:33 tsutsui Exp $	*/
+/*	$NetBSD: rd.c,v 1.109 2021/07/11 13:00:52 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.108 2021/07/09 17:05:33 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.109 2021/07/11 13:00:52 tsutsui Exp $");
 
 #include "opt_useleds.h"
 
@@ -355,6 +355,42 @@ static const struct rdidentinfo rdidentinfo[] = {
 		.ri_ntpc = NRD2203ATRK,
 		.ri_ncyl = 1449,
 		.ri_nblocks = 1309896
+	},
+
+	[RD2202A] = {
+		.ri_hwid = RD2202AID,
+		.ri_desc = "2202A",
+		.ri_nbpt = NRD2202ABPT,
+		.ri_ntpc = NRD2202ATRK,
+		.ri_ncyl = 1449,
+		.ri_nblocks = 1309896
+	},
+
+	[RD7908A] = {
+		.ri_hwid = RD7908AID,
+		.ri_desc = "7908A",
+		.ri_nbpt = NRD7908ABPT,
+		.ri_ntpc = NRD7908ATRK,
+		.ri_ncyl = 185,
+		.ri_nblocks = 32375
+	},
+
+	[RD7911A] = {
+		.ri_hwid = RD7911AID,
+		.ri_desc = "7911A",
+		.ri_nbpt = NRD7911ABPT,
+		.ri_ntpc = NRD7911ATRK,
+		.ri_ncyl = 572,
+		.ri_nblocks = 54912
+	},
+
+	[RD7941A] = {
+		.ri_hwid = RD7946AID,
+		.ri_desc = "7941A",
+		.ri_nbpt = NRD7941ABPT,
+		.ri_ntpc = NRD7941ATRK,
+		.ri_ncyl = 968,
+		.ri_nblocks = 46464
 	}
 };
 static const int numrdidentinfo = __arraycount(rdidentinfo);
@@ -380,7 +416,11 @@ static const struct rdname2id rdname2id[] = {
 	{ RD7958BNAME,	RD7958B },
 	{ RD7959BNAME,	RD7959B },
 	{ RD2200ANAME,	RD2200A },
-	{ RD2203ANAME,	RD2203A }
+	{ RD2203ANAME,	RD2203A },
+	{ RD2202ANAME,	RD2202A },
+	{ RD7908ANAME,	RD7908A },
+	{ RD7911ANAME,	RD7911A },
+	{ RD7941ANAME,	RD7941A }
 };
 static const int numrdname2id = __arraycount(rdname2id);
 
@@ -618,7 +658,7 @@ rdident(device_t parent, struct rd_softc *sc, struct hpibbus_attach_args *ha)
 
 	/*
 	 * Take care of a couple of anomolies:
-	 * 1. 7945A and 7946A both return same HW id
+	 * 1. 7945A, 7946A, and 7941A all return same HW id
 	 * 2. 9122S and 9134D both return same HW id
 	 * 3. 9122D and 9134L both return same HW id
 	 */
@@ -626,6 +666,8 @@ rdident(device_t parent, struct rd_softc *sc, struct hpibbus_attach_args *ha)
 	case RD7946AID:
 		if (memcmp(name, RD7945ANAME, RDNAMELEN) == 0)
 			id = RD7945A;
+		else if (memcmp(name, RD7941ANAME, RDNAMELEN) == 0)
+			id = RD7941A;
 		else
 			id = RD7946A;
 		break;
