@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_193.c,v 1.11 2021/03/21 20:08:21 rillig Exp $	*/
+/*	$NetBSD: msg_193.c,v 1.12 2021/07/11 19:30:56 rillig Exp $	*/
 # 3 "msg_193.c"
 
 // Test for message: statement not reached [193]
@@ -577,7 +577,7 @@ one:
 	goto two;
 seven:
 	goto eight;
-six:				/* expect: warning: label six unused */
+six:				/* expect: warning: label 'six' unused */
 	goto seven;
 ten:
 	return;

@@ -1,1 +1,1 @@
-msg_023.c(13): warning: undefined label undefined_label [23]
+msg_023.c(12): warning: undefined label 'undefined_label' [23]

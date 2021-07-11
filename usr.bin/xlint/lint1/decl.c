@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.197 2021/07/10 17:35:54 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.198 2021/07/11 19:30:56 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.197 2021/07/10 17:35:54 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.198 2021/07/11 19:30:56 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -3131,10 +3131,10 @@ check_label_usage(sym_t *lab)
 	lint_assert(lab->s_block_level == 1);
 
 	if (lab->s_set && !lab->s_used) {
-		/* label %s unused in function %s */
+		/* label '%s' unused in function '%s' */
 		warning_at(232, &lab->s_set_pos, lab->s_name, funcsym->s_name);
 	} else if (!lab->s_set) {
-		/* undefined label %s */
+		/* undefined label '%s' */
 		warning_at(23, &lab->s_use_pos, lab->s_name);
 	}
 }
