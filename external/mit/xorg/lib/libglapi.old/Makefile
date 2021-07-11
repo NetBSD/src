@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/03/10 02:29:53 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2021/07/11 20:53:35 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -8,48 +8,36 @@ LIBISCXX=	yes
 SHLIB_MAJOR=    1
 SHLIB_MINOR=    0
 
-# util
-.PATH:		${X11SRCDIR.Mesa}/src/util
-SRCS.util=	\
-	hash_table.c    \
-        ralloc.c
-.PATH:		${X11SRCDIR.Mesa}/../src/util
-SRCS.util+=	\
-	format_srgb.c
-
 # mapi
 .PATH:		${X11SRCDIR.Mesa}/src/mapi
 SRCS.mapi=	\
-	entry.c \
 	mapi_glapi.c \
+	shared_entry.c \
 	stub.c \
 	table.c \
 	u_current.c \
 	u_execmem.c
-CPPFLAGS.entry.c=	-DMAPI_MODE_GLAPI -DMAPI_ABI_HEADER=\"shared-glapi_glapi_mapi_tmp.h\"
 
-BUILDSYMLINKS+=   ${X11SRCDIR.Mesa}/src/mapi/entry.c shared_entry.c
+BUILDSYMLINKS+=	${X11SRCDIR.Mesa}/src/mapi/entry.c shared_entry.c
+
+.for _f in ${SRCS.mapi}
+CPPFLAGS.${_f}=	-DMAPI_MODE_GLAPI -DMAPI_ABI_HEADER=\"shared-glapi_glapi_mapi_tmp.h\"
+.endfor
 
 # above is shared/libglapi.la
 
-SRCS+=	${SRCS.util} ${SRCS.mapi} ${SRCS.mapi-glapi}
+SRCS+=	${SRCS.mapi} ${SRCS.mapi-glapi}
 
 CPPFLAGS+= \
 	-I${X11SRCDIR.Mesa}/include \
 	-I${X11SRCDIR.Mesa}/src/mapi \
-	-I${X11SRCDIR.Mesa}/src/mapi/glapi \
-	-I${X11SRCDIR.Mesa}/src/mesa \
-	-I${X11SRCDIR.Mesa}/src/util \
+	-I${X11SRCDIR.Mesa}/src \
 	-I${X11SRCDIR.Mesa}/../src/mapi \
-	-I${X11SRCDIR.Mesa}/../src/mapi/glapi \
-	-I${X11SRCDIR.Mesa}/../src/mesa
-
-CPPFLAGS+= \
-	-DMAPI_MODE_GLAPI -DMAPI_ABI_HEADER=\"shared-glapi_glapi_mapi_tmp.h\"
+	-I${X11SRCDIR.Mesa}/../src/mapi/glapi
 
 CPPFLAGS+=	${X11FLAGS.THREADLIB}
 
-.include "${.CURDIR}/../libGL.old/mesa-ver.mk"
+.include "${.CURDIR}/../libGL/mesa-ver.mk"
 
 CFLAGS+=	-fno-strict-aliasing -fvisibility=hidden -pthread -fno-builtin-memcmp
 
@@ -62,6 +50,31 @@ CPPFLAGS+=	\
 	-DVERSION=\"${MESA_VER}\" \
 	-DPACKAGE_URL=\"\" \
 	-DPACKAGE=\"mesa\" \
+	-D__STDC_CONSTANT_MACROS \
+	-D__STDC_FORMAT_MACROS \
+	-D__STDC_LIMIT_MACROS \
+	-DUSE_GCC_ATOMIC_BUILTINS \
+	-DNDEBUG \
+	-DHAVE_SYS_SYSCTL_H \
+	-DHAVE_DLFCN_H \
+	-DHAVE_STRTOF \
+	-DHAVE_MKOSTEMP \
+	-DHAVE_TIMESPEC_GET \
+	-DHAVE_STRTOD_L \
+	-DHAVE_DL_ITERATE_PHDR \
+	-DHAVE_POSIX_MEMALIGN \
+	-DHAVE_ZLIB \
+	-DHAVE_LIBDRM \
+	-DGLX_USE_DRM \
+	-DGLX_INDIRECT_RENDERING \
+	-DGLX_DIRECT_RENDERING \
+	-DGLX_USE_TLS \
+	-DHAVE_X11_PLATFORM \
+	-DHAVE_DRM_PLATFORM \
+	-DENABLE_SHADER_CACHE \
+	-DHAVE_MINCORE \
+	-DMESA_LLVM_VERSION_PATCH=0 \
+	-I. \
 	-DSTDC_HEADERS=1 \
 	-DHAVE_SYS_TYPES_H=1 \
 	-DHAVE_SYS_STAT_H=1 \
@@ -76,20 +89,33 @@ CPPFLAGS+=	\
 	-DYYTEXT_POINTER=1 \
 	-DHAVE___BUILTIN_BSWAP32=1 \
 	-DHAVE___BUILTIN_BSWAP64=1 \
+	-DHAVE___BUILTIN_CLZ=1 \
+	-DHAVE___BUILTIN_CLZLL=1 \
+	-DHAVE___BUILTIN_CTZ=1 \
+	-DHAVE___BUILTIN_EXPECT=1 \
+	-DHAVE___BUILTIN_FFS=1 \
+	-DHAVE___BUILTIN_FFSLL=1 \
+	-DHAVE___BUILTIN_POPCOUNT=1 \
+	-DHAVE___BUILTIN_POPCOUNTLL=1 \
+	-DHAVE___BUILTIN_UNREACHABLE=1 \
+	-DHAVE_FUNC_ATTRIBUTE_CONST=1 \
+	-DHAVE_FUNC_ATTRIBUTE_FLATTEN=1 \
+	-DHAVE_FUNC_ATTRIBUTE_FORMAT=1 \
+	-DHAVE_FUNC_ATTRIBUTE_MALLOC=1 \
+	-DHAVE_FUNC_ATTRIBUTE_PACKED=1 \
+	-DHAVE_FUNC_ATTRIBUTE_PURE=1 \
+	-DHAVE_FUNC_ATTRIBUTE_RETURNS_NONNULL=1 \
+	-DHAVE_FUNC_ATTRIBUTE_UNUSED=1 \
+	-DHAVE_FUNC_ATTRIBUTE_VISIBILITY=1 \
+	-DHAVE_FUNC_ATTRIBUTE_WARN_UNUSED_RESULT=1 \
+	-DHAVE_FUNC_ATTRIBUTE_WEAK=1 \
+	-DHAVE_FUNC_ATTRIBUTE_ALIAS=1 \
+	-DHAVE_FUNC_ATTRIBUTE_NORETURN=1 \
+	-DHAVE_ENDIAN_H=1 \
 	-DHAVE_DLADDR=1 \
 	-DHAVE_CLOCK_GETTIME=1 \
-	-DHAVE_PTHREAD=1 \
-	-I. \
-	-DUSE_EXTERNAL_DXTN_LIB=1 \
-	-DHAVE_DLOPEN \
-	-DHAVE_POSIX_MEMALIGN \
-	-DHAVE_LIBDRM \
-	-DGLX_USE_DRM \
-	-DGLX_INDIRECT_RENDERING \
-	-DGLX_DIRECT_RENDERING \
-	-DHAVE_PTHREAD \
-	-DHAVE_ALIAS \
-	-DMESA_EGL_NO_X11_HEADERS
+	-DHAVE_PTHREAD_PRIO_INHERIT=1 \
+	-DHAVE_PTHREAD=1
 
 .include "../asm.mk"
 
