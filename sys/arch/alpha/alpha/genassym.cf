@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.27 2020/09/19 01:24:31 thorpej Exp $
+# $NetBSD: genassym.cf,v 1.28 2021/07/11 01:54:42 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -84,6 +84,7 @@ include <uvm/uvm_extern.h>
 
 # general constants 
 define	VM_MAX_ADDRESS		VM_MAX_ADDRESS
+define	ALPHA_PGBYTES		ALPHA_PGBYTES
 
 # Register offsets, for stack frames.
 define	FRAME_V0		FRAME_V0
