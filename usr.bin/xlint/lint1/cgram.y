@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.314 2021/07/11 19:46:09 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.315 2021/07/11 20:07:41 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.314 2021/07/11 19:46:09 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.315 2021/07/11 20:07:41 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1747,6 +1747,11 @@ primary_expression:		/* C99 6.5.1 */
 			$2->tn_parenthesized = true;
 		$$ = $2;
 	  }
+	/* GCC primary-expression, see c_parser_postfix_expression */
+	| T_BUILTIN_OFFSETOF T_LPAREN type_name T_COMMA identifier T_RPAREN {
+		symtyp = FMEMBER;
+		$$ = build_offsetof($3, getsym($5));
+	  }
 	;
 
 postfix_expression:		/* C99 6.5.2 */
@@ -1802,10 +1807,10 @@ postfix_expression:		/* C99 6.5.2 */
 		block_level++;
 		/* ({ }) is a GCC extension */
 		gnuism(320);
-	 } compound_statement_rbrace T_RPAREN {
+	  } compound_statement_rbrace T_RPAREN {
 		$$ = new_name_node(*current_initsym(), 0);
 		end_initialization();
-	 }
+	  }
 	;
 
 unary_expression:		/* C99 6.5.3 */
@@ -1832,6 +1837,15 @@ unary_expression:		/* C99 6.5.3 */
 	| T_LOGNOT term {
 		$$ = build(NOT, $2, NULL);
 	  }
+	| T_REAL term {		/* GCC c_parser_unary_expression */
+		$$ = build(REAL, $2, NULL);
+	  }
+	| T_IMAG term {		/* GCC c_parser_unary_expression */
+		$$ = build(IMAG, $2, NULL);
+	  }
+	| T_EXTENSION term {	/* GCC c_parser_unary_expression */
+		$$ = $2;
+	  }
 	| T_SIZEOF unary_expression {
 		$$ = $2 == NULL ? NULL : build_sizeof($2->tn_type);
 		if ($$ != NULL)
@@ -1840,26 +1854,13 @@ unary_expression:		/* C99 6.5.3 */
 	| T_SIZEOF T_LPAREN type_name T_RPAREN {
 		$$ = build_sizeof($3);
 	  }
+	| T_ALIGNOF T_LPAREN type_name T_RPAREN {	/* C11 6.5.3 */
+		$$ = build_alignof($3);
+	  }
 	;
 
 term:				/* see C99 6.5.1 */
 	  unary_expression
-	| T_REAL term {
-		$$ = build(REAL, $2, NULL);
-	  }
-	| T_IMAG term {
-		$$ = build(IMAG, $2, NULL);
-	  }
-	| T_EXTENSION term {
-		$$ = $2;
-	  }
-	| T_BUILTIN_OFFSETOF T_LPAREN type_name T_COMMA identifier T_RPAREN {
-		symtyp = FMEMBER;
-		$$ = build_offsetof($3, getsym($5));
-	  }
-	| T_ALIGNOF T_LPAREN type_name T_RPAREN {
-		$$ = build_alignof($3);
-	  }
 	| T_LPAREN type_name T_RPAREN term {
 		$$ = cast($4, $2);
 	  }
