@@ -1399,7 +1399,7 @@ ix86_asan_shadow_offset (void)
 {
   return TARGET_LP64 ? (TARGET_MACHO ? (HOST_WIDE_INT_1 << 44)
 				     : HOST_WIDE_INT_C (0x7fff8000))
-		     : (HOST_WIDE_INT_1 << 29);
+		     : (HOST_WIDE_INT_1 << X86_32_ASAN_BIT_OFFSET);
 }
 
 /* Argument support functions.  */

@@ -129,3 +129,7 @@ along with GCC; see the file COPYING3.  If not see
 /* Preserve i386 psABI  */
 #undef PREFERRED_STACK_BOUNDARY_DEFAULT
 #define PREFERRED_STACK_BOUNDARY_DEFAULT MIN_STACK_BOUNDARY
+
+/* NetBSD/x86 on 32-bit places the ASAN shadow map at 0x40000000.  */
+#undef X86_32_ASAN_BIT_OFFSET
+#define X86_32_ASAN_BIT_OFFSET 30
