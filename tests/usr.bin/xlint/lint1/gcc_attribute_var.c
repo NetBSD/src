@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_attribute_var.c,v 1.1 2021/07/06 17:33:07 rillig Exp $	*/
+/*	$NetBSD: gcc_attribute_var.c,v 1.2 2021/07/11 13:32:06 rillig Exp $	*/
 # 3 "gcc_attribute_var.c"
 
 /*
@@ -22,6 +22,47 @@ placement(
     int __attribute__((__deprecated__)) between,
     int after __attribute__((__deprecated__))
 );
+
+void println(void);
+
+/*
+ * Since cgram.y 1.294 from 2021-07-10, lint did not accept declarations that
+ * started with __attribute__, due to a newly and accidentally introduced
+ * shift/reduce conflict in the grammar.
+ *
+ * A GCC extension allows statement of the form __attribute__((fallthrough)),
+ * thus starting with __attribute__.  This is the 'shift' in the conflict.
+ * The 'reduce' in the conflict was begin_type.
+ *
+ * Before cgram 1.294, the gcc_attribute was placed outside the pair of
+ * begin_type/end_type, exactly to resolve this conflict.
+ *
+ * Conceptually, it made sense to put the __attribute__((unused)) between
+ * begin_type and end_type, to make it part of the declaration-specifiers.
+ * This change introduced the hidden conflict though.
+ *
+ * Interestingly, the number of shift/reduce conflicts did not change in
+ * cgram 1.294, the conflicts were just resolved differently than before.
+ *
+ * To prevent this from happening again, make sure that declarations as well
+ * as statements can start with gcc_attribute.
+ */
+void
+ambiguity_for_attribute(void)
+{
+	/*FIXME*//* expect+1: error: syntax error '_Bool' [249] */
+	__attribute__((unused)) _Bool var1;
+
+	switch (1) {
+	case 1:
+		println();
+		/*FIXME*//* expect+1: error: syntax error '_Bool' [249] */
+		__attribute__((unused)) _Bool var2;
+		__attribute__((fallthrough));
+		case 2:
+			println();
+	}
+}
 
 /* just to trigger _some_ error, to keep the .exp file */
 /* expect+1: error: syntax error 'syntax_error' [249] */
