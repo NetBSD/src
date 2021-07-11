@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.309 2021/07/11 17:52:20 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.310 2021/07/11 18:03:47 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.309 2021/07/11 17:52:20 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.310 2021/07/11 18:03:47 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -145,7 +145,7 @@ anonymize(sym_t *s)
 
 %token			T_LBRACE T_RBRACE T_LBRACK T_RBRACK T_LPAREN T_RPAREN
 %token			T_POINT T_ARROW
-%token	<y_op>		T_UNARY
+%token			T_COMPLEMENT T_LOGNOT
 %token	<y_op>		T_INCDEC
 %token			T_SIZEOF
 %token			T_BUILTIN_OFFSETOF
@@ -1823,8 +1823,11 @@ unary_expression:		/* C99 6.5.3 */
 		}
 		$$ = build($1 == PLUS ? UPLUS : UMINUS, $2, NULL);
 	  }
-	| T_UNARY term {
-		$$ = build($1, $2, NULL);
+	| T_COMPLEMENT term {
+		$$ = build(COMPL, $2, NULL);
+	  }
+	| T_LOGNOT term {
+		$$ = build(NOT, $2, NULL);
 	  }
 	| T_SIZEOF unary_expression {
 		$$ = $2 == NULL ? NULL : build_sizeof($2->tn_type);
