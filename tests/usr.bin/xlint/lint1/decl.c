@@ -1,4 +1,4 @@
-/*	$NetBSD: decl.c,v 1.2 2021/07/10 19:30:19 rillig Exp $	*/
+/*	$NetBSD: decl.c,v 1.3 2021/07/11 12:12:30 rillig Exp $	*/
 # 3 "decl.c"
 
 /*
@@ -85,4 +85,16 @@ enum_error_handling(void)
 	} x = A;
 
 	return x == B;
+}
+
+void
+unused_local_variable(void)
+{
+	/*FIXME*//* expect+1: syntax error '_Bool' [249] */
+	__attribute__((unused)) _Bool unused_var;
+
+	__attribute__((unused))
+	/*FIXME*//* expect+2: syntax error '__attribute__' [249] */
+	/*FIXME*//* expect+1: cannot recover from previous errors [224] */
+	__attribute__((unused)) _Bool unused_twice;
 }
