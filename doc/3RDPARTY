@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1805 2021/07/06 12:26:03 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1806 2021/07/11 20:15:38 mrg Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1514,8 +1514,8 @@ Notes:
 3. Carefully check for non-autoconf GPL components leaked into the dist area.
 
 Package:	mpc
-Version:	1.2.0
-Current Vers:	1.2.0
+Version:	1.2.1
+Current Vers:	1.2.1
 Maintainer:
 Archive Site:	http://www.multiprecision.org/mpc/download/
 Home Page:	http://www.multiprecision.org/mpc/
@@ -1539,7 +1539,7 @@ Notes:
 
 Package:	GNU MP
 Version:	6.2.0
-Current Vers:	6.2.0
+Current Vers:	6.2.1
 Maintainer:	http://gmplib.org/mailman/listinfo/gmp-devel
 Archive Site:	http://gmplib.org/
 Home Page:	http://gmplib.org/
