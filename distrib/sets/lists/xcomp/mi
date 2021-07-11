@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.224 2021/01/09 02:40:44 uki Exp $
+#	 $NetBSD: mi,v 1.225 2021/07/11 20:48:48 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -34,12 +34,11 @@
 ./usr/X11R7/include/GL/internal/sarea.h			xcomp-obsolete	obsolete
 ./usr/X11R7/include/GL/osmesa.h				xcomp-xorgproto-include	xorg
 ./usr/X11R7/include/GL/wglext.h				xcomp-xorgproto-include	xorg
-./usr/X11R7/include/GL/wmesa.h				xcomp-obsolete	xorg,obsolete,mesa_ver=18
-./usr/X11R7/include/GL/wmesa.h				xcomp-xorgproto-include	xorg,mesa_ver=10
+./usr/X11R7/include/GL/wmesa.h				xcomp-obsolete	obsolete
 ./usr/X11R7/include/GL/xmesa.h				xcomp-obsolete	obsolete
 ./usr/X11R7/include/GL/xmesa_x.h			xcomp-obsolete	obsolete
 ./usr/X11R7/include/GL/xmesa_xf86.h			xcomp-obsolete	obsolete
-./usr/X11R7/include/KHR/khrplatform.h			xcomp-KHR-include	xorg,mesa_ver=18
+./usr/X11R7/include/KHR/khrplatform.h			xcomp-KHR-include	xorg
 ./usr/X11R7/include/X11/CallbackI.h			xcomp-libXt-include	xorg
 ./usr/X11R7/include/X11/Composite.h			xcomp-libXt-include	xorg
 ./usr/X11R7/include/X11/CompositeP.h			xcomp-libXt-include	xorg
