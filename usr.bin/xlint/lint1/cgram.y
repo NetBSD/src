@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.308 2021/07/11 17:38:55 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.309 2021/07/11 17:52:20 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.308 2021/07/11 17:38:55 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.309 2021/07/11 17:52:20 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -270,8 +270,6 @@ anonymize(sym_t *s)
 %left	T_SHIFT
 %left	T_ADDITIVE
 %left	T_ASTERISK T_MULTIPLICATIVE
-%right	T_UNARY T_INCDEC T_SIZEOF T_REAL T_IMAG
-%left	T_LPAREN T_LBRACK T_POINT T_ARROW
 
 %token	<y_name>	T_NAME
 %token	<y_name>	T_TYPENAME
@@ -1833,7 +1831,7 @@ unary_expression:		/* C99 6.5.3 */
 		if ($$ != NULL)
 			check_expr_misc($2, false, false, false, false, false, true);
 	  }
-	| T_SIZEOF T_LPAREN type_name T_RPAREN %prec T_SIZEOF {
+	| T_SIZEOF T_LPAREN type_name T_RPAREN {
 		$$ = build_sizeof($3);
 	  }
 	;
@@ -1862,7 +1860,7 @@ term:				/* see C99 6.5.1 */
 	| T_ALIGNOF T_LPAREN type_name T_RPAREN {
 		$$ = build_alignof($3);
 	  }
-	| T_LPAREN type_name T_RPAREN term %prec T_UNARY {
+	| T_LPAREN type_name T_RPAREN term {
 		$$ = cast($4, $2);
 	  }
 	;
