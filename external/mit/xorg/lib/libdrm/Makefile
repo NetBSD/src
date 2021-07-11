@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2019/08/12 14:21:54 maya Exp $
+#	$NetBSD: Makefile,v 1.18 2021/07/11 00:43:40 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -10,7 +10,7 @@ SRCS=	xf86drm.c xf86drmHash.c xf86drmMode.c xf86drmRandom.c xf86drmSL.c
 INCS=	xf86drm.h xf86drmMode.h libsync.h
 INCSDIR=${X11INCDIR}
 
-CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/libdrm
+CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/libdrm -I${X11SRCDIR.${LIB}}/../include
 
 SUBDIR=	drm kms
 
