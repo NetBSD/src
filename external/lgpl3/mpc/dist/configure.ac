@@ -20,7 +20,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.61)
-AC_INIT(mpc, 1.2.0, mpc-discuss@lists.gforge.inria.fr)
+AC_INIT(mpc, 1.2.1, mpc-discuss@lists.gforge.inria.fr)
 AC_CONFIG_SRCDIR([src/mpc-impl.h])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADER([config.h])
@@ -164,22 +164,6 @@ AC_LINK_IFELSE(
         [
         AC_MSG_RESULT(no)
         AC_MSG_ERROR([libmpfr not found or uses a different ABI (including static vs shared).])
-        ])
-
-AC_MSG_CHECKING(for mpfr_fmma)
-LIBS="-lmpfr $LIBS"
-AC_LINK_IFELSE(
-        [AC_LANG_PROGRAM(
-                [[#include "mpfr.h"]],
-                [[mpfr_t x; mpfr_fmma (x, x, x, x, x, 0);]]
-        )],
-        [
-	AC_MSG_RESULT(yes)
-	AC_DEFINE(HAVE_MPFR_FMMA, 1, [mpfr_fmma is present])
-	],
-        [
-        AC_MSG_RESULT(no)
-	AC_DEFINE(HAVE_MPFR_FMMA, 0, [mpfr_fmma	is not present])
         ])
 
 # Check for a recent GMP

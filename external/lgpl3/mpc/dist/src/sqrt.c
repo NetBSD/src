@@ -20,13 +20,6 @@ along with this program. If not, see http://www.gnu.org/licenses/ .
 
 #include "mpc-impl.h"
 
-#if MPFR_VERSION_MAJOR < 3
-#define mpfr_min_prec(x) \
-   ( ((prec + BITS_PER_MP_LIMB - 1) / BITS_PER_MP_LIMB) * BITS_PER_MP_LIMB \
-     - mpn_scan1 (x->_mpfr_d, 0))
-#endif
-
-
 int
 mpc_sqrt (mpc_ptr a, mpc_srcptr b, mpc_rnd_t rnd)
 {

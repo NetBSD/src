@@ -1,7 +1,7 @@
 This is mpc.info, produced by makeinfo version 6.7 from mpc.texi.
 
 This manual is for GNU MPC, a library for multiple precision complex
-arithmetic, version 1.2.0 of August 2020.
+arithmetic, version 1.2.1 of October 2020.
 
    Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
 2011, 2012, 2013, 2016, 2018, 2020 INRIA
@@ -23,7 +23,7 @@ GNU MPC
 *******
 
 This manual documents how to install and use the GNU Multiple Precision
-Complex Library, version 1.2.0
+Complex Library, version 1.2.1
 
 * Menu:
 
@@ -94,9 +94,9 @@ Unix utility programs.
 
    Here are the steps needed to install the library on Unix systems:
 
-  1. 'tar xzf mpc-1.2.0.tar.gz'
+  1. 'tar xzf mpc-1.2.1.tar.gz'
 
-  2. 'cd mpc-1.2.0'
+  2. 'cd mpc-1.2.1'
 
   3. './configure'
 
@@ -460,12 +460,12 @@ numbers.
      is done in case the current allocated space for the mantissa of X
      is sufficient.
 
- -- Function: mpfr_prec_t mpc_get_prec (mpc_t X)
+ -- Function: mpfr_prec_t mpc_get_prec (const mpc_t X)
      If the real and imaginary part of X have the same precision, it is
      returned, otherwise, 0 is returned.
 
  -- Function: void mpc_get_prec2 (mpfr_prec_t* PR, mpfr_prec_t* PI,
-          mpc_t X)
+          const mpc_t X)
      Returns the precision of the real part of X via PR and of its
      imaginary part via PI.
 
@@ -485,7 +485,7 @@ included _before_ 'mpc.h'.  If you need assignment functions that are
 not in the current API, you can define them using the 'MPC_SET_X_Y'
 macro (*note Advanced Functions::).
 
- -- Function: int mpc_set (mpc_t ROP, mpc_t OP, mpc_rnd_t RND)
+ -- Function: int mpc_set (mpc_t ROP, const mpc_t OP, mpc_rnd_t RND)
      Set the value of ROP from OP, rounded to the precision of ROP with
      the given rounding mode RND.
 
@@ -500,10 +500,10 @@ macro (*note Advanced Functions::).
           RND)
  -- Function: int mpc_set_ldc (mpc_t ROP, long double _Complex OP,
           mpc_rnd_t RND)
- -- Function: int mpc_set_z (mpc_t ROP, mpz_t OP mpc_rnd_t RND)
- -- Function: int mpc_set_q (mpc_t ROP, mpq_t OP mpc_rnd_t RND)
- -- Function: int mpc_set_f (mpc_t ROP, mpf_t OP mpc_rnd_t RND)
- -- Function: int mpc_set_fr (mpc_t ROP, mpfr_t OP, mpc_rnd_t RND)
+ -- Function: int mpc_set_z (mpc_t ROP, const mpz_t OP mpc_rnd_t RND)
+ -- Function: int mpc_set_q (mpc_t ROP, const mpq_t OP mpc_rnd_t RND)
+ -- Function: int mpc_set_f (mpc_t ROP, const mpf_t OP mpc_rnd_t RND)
+ -- Function: int mpc_set_fr (mpc_t ROP, const mpfr_t OP, mpc_rnd_t RND)
      Set the value of ROP from OP, rounded to the precision of ROP with
      the given rounding mode RND.  The argument OP is interpreted as
      real, so the imaginary part of ROP is set to zero with a positive
@@ -527,14 +527,14 @@ macro (*note Advanced Functions::).
           mpc_rnd_t RND)
  -- Function: int mpc_set_ld_ld (mpc_t ROP, long double OP1, long double
           OP2, mpc_rnd_t RND)
- -- Function: int mpc_set_z_z (mpc_t ROP, mpz_t OP1, mpz_t OP2,
-          mpc_rnd_t RND)
- -- Function: int mpc_set_q_q (mpc_t ROP, mpq_t OP1, mpq_t OP2,
-          mpc_rnd_t RND)
- -- Function: int mpc_set_f_f (mpc_t ROP, mpf_t OP1, mpf_t OP2,
-          mpc_rnd_t RND)
- -- Function: int mpc_set_fr_fr (mpc_t ROP, mpfr_t OP1, mpfr_t OP2,
-          mpc_rnd_t RND)
+ -- Function: int mpc_set_z_z (mpc_t ROP, const mpz_t OP1, const mpz_t
+          OP2, mpc_rnd_t RND)
+ -- Function: int mpc_set_q_q (mpc_t ROP, const mpq_t OP1, const mpq_t
+          OP2, mpc_rnd_t RND)
+ -- Function: int mpc_set_f_f (mpc_t ROP, const mpf_t OP1, const mpf_t
+          OP2, mpc_rnd_t RND)
+ -- Function: int mpc_set_fr_fr (mpc_t ROP, const mpfr_t OP1, const
+          mpfr_t OP2, mpc_rnd_t RND)
      Set the real part of ROP from OP1, and its imaginary part from OP2,
      according to the rounding mode RND.
 
@@ -566,7 +566,7 @@ File: mpc.info,  Node: Converting Complex Numbers,  Next: String and Stream Inpu
 The following functions are available only if '<complex.h>' is included
 _before_ 'mpc.h'.
 
- -- Function: double _Complex mpc_get_dc (mpc_t OP, mpc_rnd_t RND)
+ -- Function: double _Complex mpc_get_dc (const mpc_t OP, mpc_rnd_t RND)
  -- Function: long double _Complex mpc_get_ldc (mpc_t OP, mpc_rnd_t RND)
      Convert OP to a C complex number, using the rounding mode RND.
 
@@ -621,8 +621,8 @@ File: mpc.info,  Node: String and Stream Input and Output,  Next: Complex Compar
      number in base BASE; otherwise it returns -1, and ROP is set to
      NaN+i*NaN.
 
- -- Function: char * mpc_get_str (int B, size_t N, mpc_t OP, mpc_rnd_t
-          RND)
+ -- Function: char * mpc_get_str (int B, size_t N, const mpc_t OP,
+          mpc_rnd_t RND)
      Convert OP to a string containing its real and imaginary parts,
      separated by a space and enclosed in a pair of parentheses.  The
      numbers are written in base B (which may vary from 2 to 36) and
@@ -683,7 +683,7 @@ include 'stdio.h' _before_ 'mpc.h'.
      problem.
 
  -- Function: size_t mpc_out_str (FILE *STREAM, int BASE, size_t
-          N_DIGITS, mpc_t OP, mpc_rnd_t RND)
+          N_DIGITS, const mpc_t OP, mpc_rnd_t RND)
      Output OP on stdio stream STREAM in base BASE, rounded according to
      RND, in the same format as for 'mpc_strtoc' If STREAM is the null
      pointer, ROP is written to 'stdout'.
@@ -696,9 +696,9 @@ File: mpc.info,  Node: Complex Comparison,  Next: Projection & Decomposing,  Pre
 5.5 Comparison Functions
 ========================
 
- -- Function: int mpc_cmp (mpc_t OP1, mpc_t OP2)
- -- Function: int mpc_cmp_si_si (mpc_t OP1, long int OP2R, long int
-          OP2I)
+ -- Function: int mpc_cmp (const mpc_t OP1, const mpc_t OP2)
+ -- Function: int mpc_cmp_si_si (const mpc_t OP1, long int OP2R, long
+          int OP2I)
  -- Macro: int mpc_cmp_si (mpc_t OP1, long int OP2)
 
      Compare OP1 and OP2, where in the case of 'mpc_cmp_si_si', OP2 is
@@ -713,7 +713,7 @@ File: mpc.info,  Node: Complex Comparison,  Next: Projection & Decomposing,  Pre
      The storage of the return value is such that equality can be simply
      checked with 'mpc_cmp (op1, op2) == 0'.
 
- -- Function: int mpc_cmp_abs (mpc_t OP1, mpc_t OP2)
+ -- Function: int mpc_cmp_abs (const mpc_t OP1, const mpc_t OP2)
 
      Compare the absolute values of OP1 and OP2.  The return value is 0
      if both are the same (including infinity), positive if the absolute
@@ -728,11 +728,11 @@ File: mpc.info,  Node: Projection & Decomposing,  Next: Basic Arithmetic,  Prev:
 5.6 Projection and Decomposing Functions
 ========================================
 
- -- Function: int mpc_real (mpfr_t ROP, mpc_t OP, mpfr_rnd_t RND)
+ -- Function: int mpc_real (mpfr_t ROP, const mpc_t OP, mpfr_rnd_t RND)
      Set ROP to the value of the real part of OP rounded in the
      direction RND.
 
- -- Function: int mpc_imag (mpfr_t ROP, mpc_t OP, mpfr_rnd_t RND)
+ -- Function: int mpc_imag (mpfr_t ROP, const mpc_t OP, mpfr_rnd_t RND)
      Set ROP to the value of the imaginary part of OP rounded in the
      direction RND.
 
@@ -742,11 +742,11 @@ File: mpc.info,  Node: Projection & Decomposing,  Next: Basic Arithmetic,  Prev:
      respectively.  The 'mpfr' functions can be used on the result of
      these macros (note that the 'mpfr_t' type is itself a pointer).
 
- -- Function: int mpc_arg (mpfr_t ROP, mpc_t OP, mpfr_rnd_t RND)
+ -- Function: int mpc_arg (mpfr_t ROP, const mpc_t OP, mpfr_rnd_t RND)
      Set ROP to the argument of OP, with a branch cut along the negative
      real axis.
 
- -- Function: int mpc_proj (mpc_t ROP, mpc_t OP, mpc_rnd_t RND)
+ -- Function: int mpc_proj (mpc_t ROP, const mpc_t OP, mpc_rnd_t RND)
      Compute a projection of OP onto the Riemann sphere.  Set ROP to OP
      rounded in the direction RND, except when at least one part of OP
      is infinite (even if the other part is a NaN) in which case the
@@ -764,105 +764,105 @@ working with real numbers instead of complex numbers, their complexity
 should essentially be the same as with the GNU MPFR library, with only a
 marginal overhead due to the GNU MPC layer.
 
- -- Function: int mpc_add (mpc_t ROP, mpc_t OP1, mpc_t OP2, mpc_rnd_t
-          RND)
- -- Function: int mpc_add_ui (mpc_t ROP, mpc_t OP1, unsigned long int
-          OP2, mpc_rnd_t RND)
- -- Function: int mpc_add_fr (mpc_t ROP, mpc_t OP1, mpfr_t OP2,
+ -- Function: int mpc_add (mpc_t ROP, const mpc_t OP1, const mpc_t OP2,
           mpc_rnd_t RND)
+ -- Function: int mpc_add_ui (mpc_t ROP, const mpc_t OP1, unsigned long
+          int OP2, mpc_rnd_t RND)
+ -- Function: int mpc_add_fr (mpc_t ROP, const mpc_t OP1, const mpfr_t
+          OP2, mpc_rnd_t RND)
      Set ROP to OP1 + OP2 rounded according to RND.
 
- -- Function: int mpc_sub (mpc_t ROP, mpc_t OP1, mpc_t OP2, mpc_rnd_t
-          RND)
- -- Function: int mpc_sub_fr (mpc_t ROP, mpc_t OP1, mpfr_t OP2,
+ -- Function: int mpc_sub (mpc_t ROP, const mpc_t OP1, const mpc_t OP2,
           mpc_rnd_t RND)
- -- Function: int mpc_fr_sub (mpc_t ROP, mpfr_t OP1, mpc_t OP2,
-          mpc_rnd_t RND)
- -- Function: int mpc_sub_ui (mpc_t ROP, mpc_t OP1, unsigned long int
+ -- Function: int mpc_sub_fr (mpc_t ROP, const mpc_t OP1, const mpfr_t
           OP2, mpc_rnd_t RND)
- -- Macro: int mpc_ui_sub (mpc_t ROP, unsigned long int OP1, mpc_t OP2,
-          mpc_rnd_t RND)
+ -- Function: int mpc_fr_sub (mpc_t ROP, const mpfr_t OP1, const mpc_t
+          OP2, mpc_rnd_t RND)
+ -- Function: int mpc_sub_ui (mpc_t ROP, const mpc_t OP1, unsigned long
+          int OP2, mpc_rnd_t RND)
+ -- Macro: int mpc_ui_sub (mpc_t ROP, unsigned long int OP1, const mpc_t
+          OP2, mpc_rnd_t RND)
  -- Function: int mpc_ui_ui_sub (mpc_t ROP, unsigned long int RE1,
           unsigned long int IM1, mpc_t OP2, mpc_rnd_t RND)
      Set ROP to OP1 - OP2 rounded according to RND.  For
      'mpc_ui_ui_sub', OP1 is RE1 + IM1.
 
- -- Function: int mpc_neg (mpc_t ROP, mpc_t OP, mpc_rnd_t RND)
+ -- Function: int mpc_neg (mpc_t ROP, const mpc_t OP, mpc_rnd_t RND)
      Set ROP to -OP rounded according to RND.  Just changes the sign if
      ROP and OP are the same variable.
 
- -- Function: int mpc_sum (mpc_t ROP, mpc_ptr* OP, unsigned long N,
-          mpc_rnd_t RND)
+ -- Function: int mpc_sum (mpc_t ROP, const mpc_ptr* OP, unsigned long
+          N, mpc_rnd_t RND)
      Set ROP to the sum of the elements in the array OP of length N,
      rounded according to RND.
 
- -- Function: int mpc_mul (mpc_t ROP, mpc_t OP1, mpc_t OP2, mpc_rnd_t
-          RND)
- -- Function: int mpc_mul_ui (mpc_t ROP, mpc_t OP1, unsigned long int
+ -- Function: int mpc_mul (mpc_t ROP, const mpc_t OP1, const mpc_t OP2,
+          mpc_rnd_t RND)
+ -- Function: int mpc_mul_ui (mpc_t ROP, const mpc_t OP1, unsigned long
+          int OP2, mpc_rnd_t RND)
+ -- Function: int mpc_mul_si (mpc_t ROP, const mpc_t OP1, long int OP2,
+          mpc_rnd_t RND)
+ -- Function: int mpc_mul_fr (mpc_t ROP, const mpc_t OP1, const mpfr_t
           OP2, mpc_rnd_t RND)
- -- Function: int mpc_mul_si (mpc_t ROP, mpc_t OP1, long int OP2,
-          mpc_rnd_t RND)
- -- Function: int mpc_mul_fr (mpc_t ROP, mpc_t OP1, mpfr_t OP2,
-          mpc_rnd_t RND)
      Set ROP to OP1 times OP2 rounded according to RND.  Note: for
      'mpc_mul', in case OP1 and OP2 have the same value, use 'mpc_sqr'
      for better efficiency.
 
- -- Function: int mpc_mul_i (mpc_t ROP, mpc_t OP, int SGN, mpc_rnd_t
-          RND)
+ -- Function: int mpc_mul_i (mpc_t ROP, const mpc_t OP, int SGN,
+          mpc_rnd_t RND)
      Set ROP to OP times the imaginary unit i if SGN is non-negative,
      set ROP to OP times -i otherwise, in both cases rounded according
      to RND.
 
- -- Function: int mpc_sqr (mpc_t ROP, mpc_t OP, mpc_rnd_t RND)
+ -- Function: int mpc_sqr (mpc_t ROP, const mpc_t OP, mpc_rnd_t RND)
      Set ROP to the square of OP rounded according to RND.
 
- -- Function: int mpc_fma (mpc_t ROP, mpc_t OP1, mpc_t OP2, mpc_t OP3,
-          mpc_rnd_t RND)
+ -- Function: int mpc_fma (mpc_t ROP, const mpc_t OP1, const mpc_t OP2,
+          const mpc_t OP3, mpc_rnd_t RND)
      Set ROP to OP1*OP2+OP3, rounded according to RND, with only one
      final rounding.
 
- -- Function: int mpc_dot (mpc_t ROP, mpc_ptr* OP1, mpc_ptr* OP2,
+ -- Function: int mpc_dot (mpc_t ROP, const mpc_ptr* OP1, mpc_ptr* OP2,
           unsigned long N, mpc_rnd_t RND)
      Set ROP to the dot product of the elements in the arrays OP1 and
      OP2, both of length N, rounded according to RND.
 
- -- Function: int mpc_div (mpc_t ROP, mpc_t OP1, mpc_t OP2, mpc_rnd_t
-          RND)
- -- Function: int mpc_div_ui (mpc_t ROP, mpc_t OP1, unsigned long int
-          OP2, mpc_rnd_t RND)
- -- Function: int mpc_div_fr (mpc_t ROP, mpc_t OP1, mpfr_t OP2,
+ -- Function: int mpc_div (mpc_t ROP, const mpc_t OP1, const mpc_t OP2,
           mpc_rnd_t RND)
- -- Function: int mpc_ui_div (mpc_t ROP, unsigned long int OP1, mpc_t
+ -- Function: int mpc_div_ui (mpc_t ROP, const mpc_t OP1, unsigned long
+          int OP2, mpc_rnd_t RND)
+ -- Function: int mpc_div_fr (mpc_t ROP, const mpc_t OP1, const mpfr_t
           OP2, mpc_rnd_t RND)
- -- Function: int mpc_fr_div (mpc_t ROP, mpfr_t OP1, mpc_t OP2,
-          mpc_rnd_t RND)
+ -- Function: int mpc_ui_div (mpc_t ROP, unsigned long int OP1, const
+          mpc_t OP2, mpc_rnd_t RND)
+ -- Function: int mpc_fr_div (mpc_t ROP, const mpfr_t OP1, const mpc_t
+          OP2, mpc_rnd_t RND)
      Set ROP to OP1/OP2 rounded according to RND.
 
- -- Function: int mpc_conj (mpc_t ROP, mpc_t OP, mpc_rnd_t RND)
+ -- Function: int mpc_conj (mpc_t ROP, const mpc_t OP, mpc_rnd_t RND)
      Set ROP to the conjugate of OP rounded according to RND.  Just
      changes the sign of the imaginary part if ROP and OP are the same
      variable.
 
- -- Function: int mpc_abs (mpfr_t ROP, mpc_t OP, mpfr_rnd_t RND)
+ -- Function: int mpc_abs (mpfr_t ROP, const mpc_t OP, mpfr_rnd_t RND)
      Set the floating-point number ROP to the absolute value of OP,
      rounded in the direction RND.
 
- -- Function: int mpc_norm (mpfr_t ROP, mpc_t OP, mpfr_rnd_t RND)
+ -- Function: int mpc_norm (mpfr_t ROP, const mpc_t OP, mpfr_rnd_t RND)
      Set the floating-point number ROP to the norm of OP (i.e., the
      square of its absolute value), rounded in the direction RND.
 
- -- Function: int mpc_mul_2ui (mpc_t ROP, mpc_t OP1, unsigned long int
-          OP2, mpc_rnd_t RND)
- -- Function: int mpc_mul_2si (mpc_t ROP, mpc_t OP1, long int OP2,
+ -- Function: int mpc_mul_2ui (mpc_t ROP, const mpc_t OP1, unsigned long
+          int OP2, mpc_rnd_t RND)
+ -- Function: int mpc_mul_2si (mpc_t ROP, const mpc_t OP1, long int OP2,
           mpc_rnd_t RND)
      Set ROP to OP1 times 2 raised to OP2 rounded according to RND.
      Just modifies the exponents of the real and imaginary parts by OP2
      when ROP and OP1 are identical.
 
- -- Function: int mpc_div_2ui (mpc_t ROP, mpc_t OP1, unsigned long int
-          OP2, mpc_rnd_t RND)
- -- Function: int mpc_div_2si (mpc_t ROP, mpc_t OP1, long int OP2,
+ -- Function: int mpc_div_2ui (mpc_t ROP, const mpc_t OP1, unsigned long
+          int OP2, mpc_rnd_t RND)
+ -- Function: int mpc_div_2si (mpc_t ROP, const mpc_t OP1, long int OP2,
           mpc_rnd_t RND)
      Set ROP to OP1 divided by 2 raised to OP2 rounded according to RND.
      Just modifies the exponents of the real and imaginary parts by OP2
@@ -874,25 +874,25 @@ File: mpc.info,  Node: Power Functions and Logarithm,  Next: Trigonometric Funct
 5.8 Power Functions and Logarithm
 =================================
 
- -- Function: int mpc_sqrt (mpc_t ROP, mpc_t OP, mpc_rnd_t RND)
+ -- Function: int mpc_sqrt (mpc_t ROP, const mpc_t OP, mpc_rnd_t RND)
      Set ROP to the square root of OP rounded according to RND.  The
      returned value ROP has a non-negative real part, and if its real
      part is zero, a non-negative imaginary part.
 
- -- Function: int mpc_pow (mpc_t ROP, mpc_t OP1, mpc_t OP2, mpc_rnd_t
-          RND)
- -- Function: int mpc_pow_d (mpc_t ROP, mpc_t OP1, double OP2, mpc_rnd_t
-          RND)
- -- Function: int mpc_pow_ld (mpc_t ROP, mpc_t OP1, long double OP2,
+ -- Function: int mpc_pow (mpc_t ROP, const mpc_t OP1, const mpc_t OP2,
           mpc_rnd_t RND)
- -- Function: int mpc_pow_si (mpc_t ROP, mpc_t OP1, long OP2, mpc_rnd_t
-          RND)
- -- Function: int mpc_pow_ui (mpc_t ROP, mpc_t OP1, unsigned long OP2,
+ -- Function: int mpc_pow_d (mpc_t ROP, const mpc_t OP1, double OP2,
           mpc_rnd_t RND)
- -- Function: int mpc_pow_z (mpc_t ROP, mpc_t OP1, mpz_t OP2, mpc_rnd_t
-          RND)
- -- Function: int mpc_pow_fr (mpc_t ROP, mpc_t OP1, mpfr_t OP2,
+ -- Function: int mpc_pow_ld (mpc_t ROP, const mpc_t OP1, long double
+          OP2, mpc_rnd_t RND)
+ -- Function: int mpc_pow_si (mpc_t ROP, const mpc_t OP1, long OP2,
           mpc_rnd_t RND)
+ -- Function: int mpc_pow_ui (mpc_t ROP, const mpc_t OP1, unsigned long
+          OP2, mpc_rnd_t RND)
+ -- Function: int mpc_pow_z (mpc_t ROP, const mpc_t OP1, const mpz_t
+          OP2, mpc_rnd_t RND)
+ -- Function: int mpc_pow_fr (mpc_t ROP, const mpc_t OP1, const mpfr_t
+          OP2, mpc_rnd_t RND)
      Set ROP to OP1 raised to the power OP2, rounded according to RND.
      For 'mpc_pow_d', 'mpc_pow_ld', 'mpc_pow_si', 'mpc_pow_ui',
      'mpc_pow_z' and 'mpc_pow_fr', the imaginary part of OP2 is
@@ -900,12 +900,12 @@ File: mpc.info,  Node: Power Functions and Logarithm,  Next: Trigonometric Funct
      real part 1, and imaginary part 0, with sign being the opposite of
      that of OP2.
 
- -- Function: int mpc_exp (mpc_t ROP, mpc_t OP, mpc_rnd_t RND)
+ -- Function: int mpc_exp (mpc_t ROP, const mpc_t OP, mpc_rnd_t RND)
      Set ROP to the exponential of OP, rounded according to RND with the
      precision of ROP.
 
- -- Function: int mpc_log (mpc_t ROP, mpc_t OP, mpc_rnd_t RND)
- -- Function: int mpc_log10 (mpc_t ROP, mpc_t OP, mpc_rnd_t RND)
+ -- Function: int mpc_log (mpc_t ROP, const mpc_t OP, mpc_rnd_t RND)
+ -- Function: int mpc_log10 (mpc_t ROP, const mpc_t OP, mpc_rnd_t RND)
      Set ROP to the natural and base-10 logarithm of OP respectively,
      rounded according to RND with the precision of ROP.  The principal
      branch is chosen, with the branch cut on the negative real axis, so
@@ -924,48 +924,36 @@ File: mpc.info,  Node: Trigonometric Functions,  Next: Miscellaneous Complex Fun
 5.9 Trigonometric Functions
 ===========================
 
- -- Function: int mpc_sin (mpc_t ROP, mpc_t OP, mpc_rnd_t RND)
-     Set ROP to the sine of OP, rounded according to RND with the
-     precision of ROP.
+ -- Function: int mpc_sin (mpc_t ROP, const mpc_t OP, mpc_rnd_t RND)
+ -- Function: int mpc_cos (mpc_t ROP, const mpc_t OP, mpc_rnd_t RND)
+ -- Function: int mpc_tan (mpc_t ROP, const mpc_t OP, mpc_rnd_t RND)
+     Set ROP to the sine, cosine, tangent of OP, rounded according to
+     RND with the precision of ROP.
 
- -- Function: int mpc_cos (mpc_t ROP, mpc_t OP, mpc_rnd_t RND)
-     Set ROP to the cosine of OP, rounded according to RND with the
-     precision of ROP.
-
- -- Function: int mpc_sin_cos (mpc_t ROP_SIN, mpc_t ROP_COS, mpc_t OP,
-          mpc_rnd_t RND_SIN, mpc_rnd_t RND_COS)
+ -- Function: int mpc_sin_cos (mpc_t ROP_SIN, mpc_t ROP_COS, const mpc_t
+          OP, mpc_rnd_t RND_SIN, mpc_rnd_t RND_COS)
      Set ROP_SIN to the sine of OP, rounded according to RND_SIN with
      the precision of ROP_SIN, and ROP_COS to the cosine of OP, rounded
      according to RND_COS with the precision of ROP_COS.
 
- -- Function: int mpc_tan (mpc_t ROP, mpc_t OP, mpc_rnd_t RND)
-     Set ROP to the tangent of OP, rounded according to RND with the
-     precision of ROP.
+ -- Function: int mpc_sinh (mpc_t ROP, const mpc_t OP, mpc_rnd_t RND)
+ -- Function: int mpc_cosh (mpc_t ROP, const mpc_t OP, mpc_rnd_t RND)
+ -- Function: int mpc_tanh (mpc_t ROP, const mpc_t OP, mpc_rnd_t RND)
+     Set ROP to the hyperbolic sine, hyperbolic cosine, hyperbolic
+     tangent of OP, rounded according to RND with the precision of ROP.
 
- -- Function: int mpc_sinh (mpc_t ROP, mpc_t OP, mpc_rnd_t RND)
-     Set ROP to the hyperbolic sine of OP, rounded according to RND with
-     the precision of ROP.
-
- -- Function: int mpc_cosh (mpc_t ROP, mpc_t OP, mpc_rnd_t RND)
-     Set ROP to the hyperbolic cosine of OP, rounded according to RND
-     with the precision of ROP.
-
- -- Function: int mpc_tanh (mpc_t ROP, mpc_t OP, mpc_rnd_t RND)
-     Set ROP to the hyperbolic tangent of OP, rounded according to RND
-     with the precision of ROP.
-
- -- Function: int mpc_asin (mpc_t ROP, mpc_t OP, mpc_rnd_t RND)
- -- Function: int mpc_acos (mpc_t ROP, mpc_t OP, mpc_rnd_t RND)
- -- Function: int mpc_atan (mpc_t ROP, mpc_t OP, mpc_rnd_t RND)
+ -- Function: int mpc_asin (mpc_t ROP, const mpc_t OP, mpc_rnd_t RND)
+ -- Function: int mpc_acos (mpc_t ROP, const mpc_t OP, mpc_rnd_t RND)
+ -- Function: int mpc_atan (mpc_t ROP, const mpc_t OP, mpc_rnd_t RND)
      Set ROP to the inverse sine, inverse cosine, inverse tangent of OP,
      rounded according to RND with the precision of ROP.
 
- -- Function: int mpc_asinh (mpc_t ROP, mpc_t OP, mpc_rnd_t RND)
- -- Function: int mpc_acosh (mpc_t ROP, mpc_t OP, mpc_rnd_t RND)
- -- Function: int mpc_atanh (mpc_t ROP, mpc_t OP, mpc_rnd_t RND)
+ -- Function: int mpc_asinh (mpc_t ROP, const mpc_t OP, mpc_rnd_t RND)
+ -- Function: int mpc_acosh (mpc_t ROP, const mpc_t OP, mpc_rnd_t RND)
+ -- Function: int mpc_atanh (mpc_t ROP, const mpc_t OP, mpc_rnd_t RND)
      Set ROP to the inverse hyperbolic sine, inverse hyperbolic cosine,
      inverse hyperbolic tangent of OP, rounded according to RND with the
-     precision of ROP.  The branch cut of MPC_ACOSH is (-Inf, 1)
+     precision of ROP.  The branch cut of 'mpc_acosh' is (-Inf, 1)
 
 
 File: mpc.info,  Node: Miscellaneous Complex Functions,  Next: Advanced Functions,  Prev: Trigonometric Functions,  Up: Complex Functions
@@ -1030,7 +1018,7 @@ File: mpc.info,  Node: Advanced Functions,  Next: Internals,  Prev: Miscellaneou
      return-value.).
 
      For instance, you can define mpc_set_ui_fr as follows:
-          int mpc_set_ui_fr (mpc_t rop, long int re, double im, mpc_rnd_t rnd)
+          int mpc_set_ui_fr (mpc_t rop, unsigned long int re, mpfr_t im, mpc_rnd_t rnd)
               MPC_SET_X_Y (ui, fr, rop, re, im, rnd);
 
 
@@ -1053,18 +1041,16 @@ File: mpc.info,  Node: References,  Next: Concept Index,  Prev: Complex Function
 References
 **********
 
-   * Torbjörn Granlund et al.  'gmp' - GNU multiprecision library.
-     Version 4.2.4, <http://gmplib.org/>.
+   * Torbjörn Granlund et al.  'GMP' - GNU multiprecision library.
+     Version 6.2.0, <http://gmplib.org>.
 
    * Guillaume Hanrot, Vincent Lefèvre, Patrick Pélissier, Paul
-     Zimmermann et al.  'mpfr' - A library for multiple-precision
-     floating-point computations with exact rounding.  Version 2.4.1,
+     Zimmermann et al.  'MPFR' - A library for multiple-precision
+     floating-point computations with exact rounding.  Version 4.1.0,
      <http://www.mpfr.org>.
 
-   * IEEE standard for binary floating-point arithmetic, Technical
-     Report ANSI-IEEE Standard 754-1985, New York, 1985.  Approved March
-     21, 1985: IEEE Standards Board; approved July 26, 1985: American
-     National Standards Institute, 18 pages.
+   * IEEE Standard for Floating-Point Arithmetic, IEEE Computer Society,
+     IEEE Std 754-2019, Approved 13 June 2019, 84 pages.
 
    * Donald E. Knuth, "The Art of Computer Programming", vol 2,
      "Seminumerical Algorithms", 2nd edition, Addison-Wesley, 1981.
@@ -1124,22 +1110,22 @@ Function Index
                                                               (line   9)
 * mpc_abs:                               Basic Arithmetic.    (line  91)
 * mpc_acos:                              Trigonometric Functions.
-                                                              (line  37)
+                                                              (line  25)
 * mpc_acosh:                             Trigonometric Functions.
-                                                              (line  43)
+                                                              (line  31)
 * mpc_add:                               Basic Arithmetic.    (line  11)
 * mpc_add_fr:                            Basic Arithmetic.    (line  15)
 * mpc_add_ui:                            Basic Arithmetic.    (line  13)
 * mpc_arg:                               Projection & Decomposing.
                                                               (line  20)
 * mpc_asin:                              Trigonometric Functions.
-                                                              (line  36)
+                                                              (line  24)
 * mpc_asinh:                             Trigonometric Functions.
-                                                              (line  42)
+                                                              (line  30)
 * mpc_atan:                              Trigonometric Functions.
-                                                              (line  38)
+                                                              (line  26)
 * mpc_atanh:                             Trigonometric Functions.
-                                                              (line  44)
+                                                              (line  32)
 * mpc_clear:                             Initializing Complex Numbers.
                                                               (line  21)
 * mpc_cmp:                               Complex Comparison.  (line   6)
@@ -1148,9 +1134,9 @@ Function Index
 * mpc_cmp_si_si:                         Complex Comparison.  (line   7)
 * mpc_conj:                              Basic Arithmetic.    (line  86)
 * mpc_cos:                               Trigonometric Functions.
-                                                              (line  10)
+                                                              (line   7)
 * mpc_cosh:                              Trigonometric Functions.
-                                                              (line  28)
+                                                              (line  19)
 * mpc_div:                               Basic Arithmetic.    (line  74)
 * mpc_div_2si:                           Basic Arithmetic.    (line 109)
 * mpc_div_2ui:                           Basic Arithmetic.    (line 107)
@@ -1278,9 +1264,9 @@ Function Index
 * mpc_sin:                               Trigonometric Functions.
                                                               (line   6)
 * mpc_sinh:                              Trigonometric Functions.
-                                                              (line  24)
+                                                              (line  18)
 * mpc_sin_cos:                           Trigonometric Functions.
-                                                              (line  14)
+                                                              (line  12)
 * mpc_sqr:                               Basic Arithmetic.    (line  61)
 * mpc_sqrt:                              Power Functions and Logarithm.
                                                               (line   6)
@@ -1294,9 +1280,9 @@ Function Index
                                                               (line  82)
 * mpc_t:                                 GNU MPC Basics.      (line  15)
 * mpc_tan:                               Trigonometric Functions.
-                                                              (line  20)
+                                                              (line   8)
 * mpc_tanh:                              Trigonometric Functions.
-                                                              (line  32)
+                                                              (line  20)
 * mpc_ui_div:                            Basic Arithmetic.    (line  80)
 * mpc_ui_sub:                            Basic Arithmetic.    (line  27)
 * mpc_ui_ui_sub:                         Basic Arithmetic.    (line  29)
@@ -1801,30 +1787,30 @@ their use in free software.
 
 
 Tag Table:
-Node: Top758
-Node: Copying1465
-Node: Introduction to GNU MPC2237
-Node: Installing GNU MPC2956
-Node: Reporting Bugs8041
-Node: GNU MPC Basics9385
-Ref: return-value13062
-Node: Complex Functions14513
-Node: Initializing Complex Numbers15673
-Node: Assigning Complex Numbers18060
-Node: Converting Complex Numbers22460
-Node: String and Stream Input and Output23085
-Node: Complex Comparison29641
-Node: Projection & Decomposing31154
-Node: Basic Arithmetic32531
-Node: Power Functions and Logarithm37531
-Node: Trigonometric Functions39880
-Node: Miscellaneous Complex Functions42101
-Node: Advanced Functions44277
-Node: Internals45350
-Node: References45801
-Node: Concept Index46704
-Node: Function Index49018
-Node: GNU Free Documentation License63166
+Node: Top759
+Node: Copying1466
+Node: Introduction to GNU MPC2238
+Node: Installing GNU MPC2957
+Node: Reporting Bugs8042
+Node: GNU MPC Basics9386
+Ref: return-value13063
+Node: Complex Functions14514
+Node: Initializing Complex Numbers15674
+Node: Assigning Complex Numbers18073
+Node: Converting Complex Numbers22551
+Node: String and Stream Input and Output23182
+Node: Complex Comparison29750
+Node: Projection & Decomposing31293
+Node: Basic Arithmetic32694
+Node: Power Functions and Logarithm37946
+Node: Trigonometric Functions40379
+Node: Miscellaneous Complex Functions42344
+Node: Advanced Functions44520
+Node: Internals45602
+Node: References46053
+Node: Concept Index46830
+Node: Function Index49144
+Node: GNU Free Documentation License63292
 
 End Tag Table
 

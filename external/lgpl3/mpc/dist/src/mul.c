@@ -1,6 +1,6 @@
 /* mpc_mul -- Multiply two complex numbers
 
-Copyright (C) 2002, 2004, 2005, 2008, 2009, 2010, 2011, 2012, 2016 INRIA
+Copyright (C) 2002, 2004, 2005, 2008, 2009, 2010, 2011, 2012, 2016, 2020 INRIA
 
 This file is part of GNU MPC.
 
@@ -170,196 +170,6 @@ mul_imag (mpc_ptr z, mpc_srcptr x, mpc_srcptr y, mpc_rnd_t rnd)
    return MPC_INEX (inex_re, inex_im);
 }
 
-#define MPFR_MANT(x)      ((x)->_mpfr_d)
-#define MPFR_PREC(x)      ((x)->_mpfr_prec)
-#define MPFR_EXP(x)       ((x)->_mpfr_exp)
-#define MPFR_LIMB_SIZE(x) ((MPFR_PREC (x) - 1) / GMP_NUMB_BITS + 1)
-
-#if HAVE_MPFR_FMMA == 0
-static int
-mpc_fmma (mpfr_ptr z, mpfr_srcptr a, mpfr_srcptr b, mpfr_srcptr c,
-           mpfr_srcptr d, int sign, mpfr_rnd_t rnd)
-{
-   /* Computes z = ab+cd if sign >= 0, or z = ab-cd if sign < 0.
-      Assumes that a, b, c, d are finite and non-zero; so any multiplication
-      of two of them yielding an infinity is an overflow, and a
-      multiplication yielding 0 is an underflow.
-      Assumes further that z is distinct from a, b, c, d. */
-
-   int inex;
-   mpfr_t u, v;
-   mp_size_t an, bn, cn, dn;
-
-   /* u=a*b, v=sign*c*d exactly */
-   an = MPFR_LIMB_SIZE(a);
-   bn = MPFR_LIMB_SIZE(b);
-   cn = MPFR_LIMB_SIZE(c);
-   dn = MPFR_LIMB_SIZE(d);
-   MPFR_MANT(u) = malloc ((an + bn) * sizeof (mp_limb_t));
-   MPFR_MANT(v) = malloc ((cn + dn) * sizeof (mp_limb_t));
-   if (an >= bn)
-     mpn_mul (MPFR_MANT(u), MPFR_MANT(a), an, MPFR_MANT(b), bn);
-   else
-     mpn_mul (MPFR_MANT(u), MPFR_MANT(b), bn, MPFR_MANT(a), an);
-   if ((MPFR_MANT(u)[an + bn - 1] >> (GMP_NUMB_BITS - 1)) == 0)
-     {
-       mpn_lshift (MPFR_MANT(u), MPFR_MANT(u), an + bn, 1);
-       MPFR_EXP(u) = MPFR_EXP(a) + MPFR_EXP(b) - 1;
-     }
-   else
-     MPFR_EXP(u) = MPFR_EXP(a) + MPFR_EXP(b);
-   if (cn >= dn)
-     mpn_mul (MPFR_MANT(v), MPFR_MANT(c), cn, MPFR_MANT(d), dn);
-   else
-     mpn_mul (MPFR_MANT(v), MPFR_MANT(d), dn, MPFR_MANT(c), cn);
-   if ((MPFR_MANT(v)[cn + dn - 1] >> (GMP_NUMB_BITS - 1)) == 0)
-     {
-       mpn_lshift (MPFR_MANT(v), MPFR_MANT(v), cn + dn, 1);
-       MPFR_EXP(v) = MPFR_EXP(c) + MPFR_EXP(d) - 1;
-     }
-   else
-     MPFR_EXP(v) = MPFR_EXP(c) + MPFR_EXP(d);
-   MPFR_PREC(u) = (an + bn) * GMP_NUMB_BITS;
-   MPFR_PREC(v) = (cn + dn) * GMP_NUMB_BITS;
-   MPFR_SIGN(u) = MPFR_SIGN(a) * MPFR_SIGN(b);
-   if (sign > 0)
-     MPFR_SIGN(v) = MPFR_SIGN(c) * MPFR_SIGN(d);
-   else
-     MPFR_SIGN(v) = -MPFR_SIGN(c) * MPFR_SIGN(d);
-
-   mpfr_check_range (u, 0, MPFR_RNDN);
-   mpfr_check_range (v, 0, MPFR_RNDN);
-
-   /* tentatively compute z as u+v; here we need z to be distinct
-      from a, b, c, d to not lose the latter */
-   inex = mpfr_add (z, u, v, rnd);
-
-   if (!mpfr_regular_p(z) || !mpfr_regular_p(u) || !mpfr_regular_p(v))
-     {
-       if (mpfr_inf_p (z)) {
-         /* replace by "correctly rounded overflow" */
-         mpfr_set_si (z, (mpfr_signbit (z) ? -1 : 1), MPFR_RNDN);
-         inex = mpfr_mul_2ui (z, z, mpfr_get_emax (), rnd);
-       }
-       else if (mpfr_zero_p (u) && !mpfr_zero_p (v)) {
-         /* exactly u underflowed, determine inexact flag */
-         inex = (mpfr_signbit (u) ? 1 : -1);
-       }
-       else if (mpfr_zero_p (v) && !mpfr_zero_p (u)) {
-         /* exactly v underflowed, determine inexact flag */
-         inex = (mpfr_signbit (v) ? 1 : -1);
-       }
-       else if (mpfr_nan_p (z) || (mpfr_zero_p (u) && mpfr_zero_p (v))) {
-      /* In the first case, u and v are infinities with opposite signs.
-         In the second case, u and v are zeroes; their sum may be 0 or the
-         least representable number, with a sign to be determined.
-         Redo the computations with mpz_t exponents */
-      mpfr_exp_t ea, eb, ec, ed;
-      mpz_t eu, ev;
-         /* cheat to work around the const qualifiers */
-
-      /* Normalise the input by shifting and keep track of the shifts in
-         the exponents of u and v */
-      ea = mpfr_get_exp (a);
-      eb = mpfr_get_exp (b);
-      ec = mpfr_get_exp (c);
-      ed = mpfr_get_exp (d);
-
-      mpfr_set_exp ((mpfr_ptr) a, (mpfr_prec_t) 0);
-      mpfr_set_exp ((mpfr_ptr) b, (mpfr_prec_t) 0);
-      mpfr_set_exp ((mpfr_ptr) c, (mpfr_prec_t) 0);
-      mpfr_set_exp ((mpfr_ptr) d, (mpfr_prec_t) 0);
-
-      mpz_init (eu);
-      mpz_init (ev);
-      mpz_set_si (eu, (long int) ea);
-      mpz_add_si (eu, eu, (long int) eb);
-      mpz_set_si (ev, (long int) ec);
-      mpz_add_si (ev, ev, (long int) ed);
-
-      /* recompute u and v and move exponents to eu and ev */
-      mpfr_mul (u, a, b, MPFR_RNDN);
-      /* exponent of u is non-positive */
-      mpz_sub_ui (eu, eu, (unsigned long int) (-mpfr_get_exp (u)));
-      mpfr_set_exp (u, (mpfr_prec_t) 0);
-      mpfr_mul (v, c, d, MPFR_RNDN);
-      if (sign < 0)
-         mpfr_neg (v, v, MPFR_RNDN);
-      mpz_sub_ui (ev, ev, (unsigned long int) (-mpfr_get_exp (v)));
-      mpfr_set_exp (v, (mpfr_prec_t) 0);
-
-      if (mpfr_nan_p (z)) {
-         mpfr_exp_t emax = mpfr_get_emax ();
-         int overflow;
-         /* We have a = ma * 2^ea with 1/2 <= |ma| < 1 and ea <= emax, and
-            analogously for b. So eu <= 2*emax, and eu > emax since we have
-            an overflow. The same holds for ev. Shift u and v by as much as
-            possible so that one of them has exponent emax and the
-            remaining exponents in eu and ev are the same. Then carry out
-            the addition. Shifting u and v prevents an underflow. */
-         if (mpz_cmp (eu, ev) >= 0) {
-            mpfr_set_exp (u, emax);
-            mpz_sub_ui (eu, eu, (long int) emax);
-            mpz_sub (ev, ev, eu);
-            mpfr_set_exp (v, (mpfr_exp_t) mpz_get_ui (ev));
-               /* remaining common exponent is now in eu */
-         }
-         else {
-            mpfr_set_exp (v, emax);
-            mpz_sub_ui (ev, ev, (long int) emax);
-            mpz_sub (eu, eu, ev);
-            mpfr_set_exp (u, (mpfr_exp_t) mpz_get_ui (eu));
-            mpz_set (eu, ev);
-               /* remaining common exponent is now also in eu */
-         }
-         inex = mpfr_add (z, u, v, rnd);
-            /* Result is finite since u and v have different signs. */
-         overflow = mpfr_mul_2ui (z, z, mpz_get_ui (eu), rnd);
-         if (overflow)
-            inex = overflow;
-      }
-      else {
-         int underflow;
-         /* Addition of two zeroes with same sign. We have a = ma * 2^ea
-            with 1/2 <= |ma| < 1 and ea >= emin and similarly for b.
-            So 2*emin < 2*emin+1 <= eu < emin < 0, and analogously for v. */
-         mpfr_exp_t emin = mpfr_get_emin ();
-         if (mpz_cmp (eu, ev) <= 0) {
-            mpfr_set_exp (u, emin);
-            mpz_add_ui (eu, eu, (unsigned long int) (-emin));
-            mpz_sub (ev, ev, eu);
-            mpfr_set_exp (v, (mpfr_exp_t) mpz_get_si (ev));
-         }
-         else {
-            mpfr_set_exp (v, emin);
-            mpz_add_ui (ev, ev, (unsigned long int) (-emin));
-            mpz_sub (eu, eu, ev);
-            mpfr_set_exp (u, (mpfr_exp_t) mpz_get_si (eu));
-            mpz_set (eu, ev);
-         }
-         inex = mpfr_add (z, u, v, rnd);
-         mpz_neg (eu, eu);
-         underflow = mpfr_div_2ui (z, z, mpz_get_ui (eu), rnd);
-         if (underflow)
-            inex = underflow;
-      }
-
-      mpz_clear (eu);
-      mpz_clear (ev);
-
-      mpfr_set_exp ((mpfr_ptr) a, ea);
-      mpfr_set_exp ((mpfr_ptr) b, eb);
-      mpfr_set_exp ((mpfr_ptr) c, ec);
-      mpfr_set_exp ((mpfr_ptr) d, ed);
-         /* works also when some of a, b, c, d are not all distinct */
-       }
-     }
-
-   free (MPFR_MANT(u));
-   free (MPFR_MANT(v));
-   return inex;
-}
-#endif
 
 int
 mpc_mul_naive (mpc_ptr z, mpc_srcptr x, mpc_srcptr y, mpc_rnd_t rnd)
@@ -377,17 +187,10 @@ mpc_mul_naive (mpc_ptr z, mpc_srcptr x, mpc_srcptr y, mpc_rnd_t rnd)
    else
       rop [0] = z [0];
 
-#if HAVE_MPFR_FMMA
    inex_re = mpfr_fmms (mpc_realref (rop), mpc_realref (x), mpc_realref (y),
                         mpc_imagref (x), mpc_imagref (y), MPC_RND_RE (rnd));
    inex_im = mpfr_fmma (mpc_imagref (rop), mpc_realref (x), mpc_imagref (y),
                         mpc_imagref (x), mpc_realref (y), MPC_RND_IM (rnd));
-#else
-   inex_re = mpc_fmma (mpc_realref (rop), mpc_realref (x), mpc_realref (y),
-                       mpc_imagref (x), mpc_imagref (y), -1, MPC_RND_RE (rnd));
-   inex_im = mpc_fmma (mpc_imagref (rop), mpc_realref (x), mpc_imagref (y),
-                       mpc_imagref (x), mpc_realref (y), +1, MPC_RND_IM (rnd));
-#endif
 
    mpc_set (z, rop, MPC_RNDNN);
    if (overlap)

@@ -549,12 +549,12 @@ a call to @code{mpc_clear(x)} followed by a call to
 case the current allocated space for the mantissa of @var{x} is sufficient.
 @end deftypefun
 
-@deftypefun mpfr_prec_t mpc_get_prec (mpc_t @var{x})
+@deftypefun mpfr_prec_t mpc_get_prec (const mpc_t @var{x})
 If the real and imaginary part of @var{x} have the same precision, it is returned,
 otherwise, 0 is returned.
 @end deftypefun
 
-@deftypefun void mpc_get_prec2 (mpfr_prec_t* @var{pr}, mpfr_prec_t* @var{pi}, mpc_t @var{x})
+@deftypefun void mpc_get_prec2 (mpfr_prec_t* @var{pr}, mpfr_prec_t* @var{pi}, const mpc_t @var{x})
 Returns the precision of the real part of @var{x} via @var{pr} and of its imaginary part
 via @var{pi}.
 @end deftypefun
@@ -576,7 +576,7 @@ Similarly, functions with parameters of type @code{complex} or
 If you need assignment functions that are not in the current API, you can
 define them using the @code{MPC_SET_X_Y} macro (@pxref{Advanced Functions}).
 
-@deftypefun int mpc_set (mpc_t @var{rop}, mpc_t @var{op}, mpc_rnd_t @var{rnd})
+@deftypefun int mpc_set (mpc_t @var{rop}, const mpc_t @var{op}, mpc_rnd_t @var{rnd})
 Set the value of @var{rop} from @var{op}, rounded to the precision of @var{rop}
 with the given rounding mode @var{rnd}.
 @end deftypefun
@@ -589,10 +589,10 @@ with the given rounding mode @var{rnd}.
 @deftypefunx int mpc_set_ld (mpc_t @var{rop}, long double @var{op}, mpc_rnd_t @var{rnd})
 @deftypefunx int mpc_set_dc (mpc_t @var{rop}, double _Complex @var{op}, mpc_rnd_t @var{rnd})
 @deftypefunx int mpc_set_ldc (mpc_t @var{rop}, long double _Complex @var{op}, mpc_rnd_t @var{rnd})
-@deftypefunx int mpc_set_z (mpc_t @var{rop}, mpz_t @var{op} mpc_rnd_t @var{rnd})
-@deftypefunx int mpc_set_q (mpc_t @var{rop}, mpq_t @var{op} mpc_rnd_t @var{rnd})
-@deftypefunx int mpc_set_f (mpc_t @var{rop}, mpf_t @var{op} mpc_rnd_t @var{rnd})
-@deftypefunx int mpc_set_fr (mpc_t @var{rop}, mpfr_t @var{op}, mpc_rnd_t @var{rnd})
+@deftypefunx int mpc_set_z (mpc_t @var{rop}, const mpz_t @var{op} mpc_rnd_t @var{rnd})
+@deftypefunx int mpc_set_q (mpc_t @var{rop}, const mpq_t @var{op} mpc_rnd_t @var{rnd})
+@deftypefunx int mpc_set_f (mpc_t @var{rop}, const mpf_t @var{op} mpc_rnd_t @var{rnd})
+@deftypefunx int mpc_set_fr (mpc_t @var{rop}, const mpfr_t @var{op}, mpc_rnd_t @var{rnd})
 Set the value of @var{rop} from @var{op}, rounded to the precision of
 @var{rop} with the given rounding mode @var{rnd}.
 The argument @var{op} is interpreted as real, so the imaginary part of
@@ -611,10 +611,10 @@ double-precision number, and then only to a complex number.
 @deftypefunx int mpc_set_sj_sj (mpc_t @var{rop}, intmax_t @var{op1}, intmax_t @var{op2}, mpc_rnd_t @var{rnd})
 @deftypefunx int mpc_set_d_d (mpc_t @var{rop}, double @var{op1}, double @var{op2}, mpc_rnd_t @var{rnd})
 @deftypefunx int mpc_set_ld_ld (mpc_t @var{rop}, long double @var{op1}, long double @var{op2}, mpc_rnd_t @var{rnd})
-@deftypefunx int mpc_set_z_z (mpc_t @var{rop}, mpz_t @var{op1}, mpz_t @var{op2}, mpc_rnd_t @var{rnd})
-@deftypefunx int mpc_set_q_q (mpc_t @var{rop}, mpq_t @var{op1}, mpq_t @var{op2}, mpc_rnd_t @var{rnd})
-@deftypefunx int mpc_set_f_f (mpc_t @var{rop}, mpf_t @var{op1}, mpf_t @var{op2}, mpc_rnd_t @var{rnd})
-@deftypefunx int mpc_set_fr_fr (mpc_t @var{rop}, mpfr_t @var{op1}, mpfr_t @var{op2}, mpc_rnd_t @var{rnd})
+@deftypefunx int mpc_set_z_z (mpc_t @var{rop}, const mpz_t @var{op1}, const mpz_t @var{op2}, mpc_rnd_t @var{rnd})
+@deftypefunx int mpc_set_q_q (mpc_t @var{rop}, const mpq_t @var{op1}, const mpq_t @var{op2}, mpc_rnd_t @var{rnd})
+@deftypefunx int mpc_set_f_f (mpc_t @var{rop}, const mpf_t @var{op1}, const mpf_t @var{op2}, mpc_rnd_t @var{rnd})
+@deftypefunx int mpc_set_fr_fr (mpc_t @var{rop}, const mpfr_t @var{op1}, const mpfr_t @var{op2}, mpc_rnd_t @var{rnd})
 Set the real part of @var{rop} from @var{op1}, and its imaginary part from
 @var{op2}, according to the rounding mode @var{rnd}.
 
@@ -647,7 +647,7 @@ third auxiliary variable.
 The following functions are available only if @code{<complex.h>}
 is included @emph{before} @file{mpc.h}.
 
-@deftypefun double _Complex mpc_get_dc (mpc_t @var{op}, mpc_rnd_t @var{rnd})
+@deftypefun double _Complex mpc_get_dc (const mpc_t @var{op}, mpc_rnd_t @var{rnd})
 @deftypefunx {long double _Complex} mpc_get_ldc (mpc_t @var{op}, mpc_rnd_t @var{rnd})
 Convert @var{op} to a C complex number, using the rounding mode @var{rnd}.
 @end deftypefun
@@ -711,7 +711,7 @@ in base @var{base}; otherwise it returns @minus{}1, and @var{rop} is set to
 NaN+i*NaN.
 @end deftypefun
 
-@deftypefun {char *} mpc_get_str (int @var{b}, size_t @var{n}, mpc_t @var{op}, mpc_rnd_t @var{rnd})
+@deftypefun {char *} mpc_get_str (int @var{b}, size_t @var{n}, const mpc_t @var{op}, mpc_rnd_t @var{rnd})
 Convert @var{op} to a string containing its real and imaginary parts,
 separated by a space and enclosed in a pair of parentheses.
 The numbers are written in base @var{b} (which may vary from 2 to 36) and
@@ -776,7 +776,7 @@ It is thus recommended to have a whitespace follow each floating point number
 to avoid this problem.
 @end deftypefun
 
-@deftypefun size_t mpc_out_str (FILE *@var{stream}, int @var{base}, size_t @var{n_digits}, mpc_t @var{op}, mpc_rnd_t @var{rnd})
+@deftypefun size_t mpc_out_str (FILE *@var{stream}, int @var{base}, size_t @var{n_digits}, const mpc_t @var{op}, mpc_rnd_t @var{rnd})
 Output @var{op} on stdio stream @var{stream} in
 base @var{base}, rounded according to @var{rnd}, in the same format
 as for @code{mpc_strtoc}
@@ -791,8 +791,8 @@ Return the number of characters written.
 @cindex Complex comparisons functions
 @cindex Comparison functions
 
-@deftypefn Function int mpc_cmp (mpc_t @var{op1}, mpc_t @var{op2})
-@deftypefnx Function int mpc_cmp_si_si (mpc_t @var{op1}, long int @var{op2r}, long int @var{op2i})
+@deftypefn Function int mpc_cmp (const mpc_t @var{op1}, const mpc_t @var{op2})
+@deftypefnx Function int mpc_cmp_si_si (const mpc_t @var{op1}, long int @var{op2r}, long int @var{op2i})
 @deftypefnx Macro int mpc_cmp_si (mpc_t @var{op1}, long int @var{op2})
 
 Compare @var{op1} and @var{op2}, where in the case of @code{mpc_cmp_si_si},
@@ -810,7 +810,7 @@ The storage of the return value is such that equality can be simply checked
 with @code{mpc_cmp (op1, op2) == 0}.
 @end deftypefn
 
-@deftypefn Function int mpc_cmp_abs (mpc_t @var{op1}, mpc_t @var{op2})
+@deftypefn Function int mpc_cmp_abs (const mpc_t @var{op1}, const mpc_t @var{op2})
 
 Compare the absolute values of @var{op1} and @var{op2}.
 The return value is 0 if both are the same (including infinity),
@@ -826,12 +826,12 @@ one is NaN.
 @section Projection and Decomposing Functions
 @cindex Projection and Decomposing Functions
 
-@deftypefn Function int mpc_real (mpfr_t @var{rop}, mpc_t @var{op}, mpfr_rnd_t @var{rnd})
+@deftypefn Function int mpc_real (mpfr_t @var{rop}, const mpc_t @var{op}, mpfr_rnd_t @var{rnd})
 Set @var{rop} to the value of the real part of @var{op} rounded
 in the direction @var{rnd}.
 @end deftypefn
 
-@deftypefn Function int mpc_imag (mpfr_t @var{rop}, mpc_t @var{op}, mpfr_rnd_t @var{rnd})
+@deftypefn Function int mpc_imag (mpfr_t @var{rop}, const mpc_t @var{op}, mpfr_rnd_t @var{rnd})
 Set @var{rop} to the value of the imaginary part of @var{op} rounded in the
 direction @var{rnd}.
 @end deftypefn
@@ -843,12 +843,12 @@ respectively. The @code{mpfr} functions can be used on the result of these
 macros (note that the @code{mpfr_t} type is itself a pointer).
 @end deftypefn
 
-@deftypefn Function int mpc_arg (mpfr_t @var{rop}, mpc_t @var{op}, mpfr_rnd_t @var{rnd})
+@deftypefn Function int mpc_arg (mpfr_t @var{rop}, const mpc_t @var{op}, mpfr_rnd_t @var{rnd})
 Set @var{rop} to the argument of @var{op}, with a branch cut along the
 negative real axis.
 @end deftypefn
 
-@deftypefn Function int mpc_proj (mpc_t @var{rop}, mpc_t @var{op}, mpc_rnd_t @var{rnd})
+@deftypefn Function int mpc_proj (mpc_t @var{rop}, const mpc_t @var{op}, mpc_rnd_t @var{rnd})
 Compute a projection of @var{op} onto the Riemann sphere. Set @var{rop} to
 @var{op} rounded in the direction @var{rnd}, except when at least one part of
 @var{op} is infinite (even if the other part is a NaN) in which case the real
@@ -867,96 +867,96 @@ with real numbers instead of complex numbers, their complexity should
 essentially be the same as with the GNU MPFR library, with only a marginal
 overhead due to the GNU MPC layer.
 
-@deftypefun int mpc_add (mpc_t @var{rop}, mpc_t @var{op1}, mpc_t @var{op2}, mpc_rnd_t @var{rnd})
-@deftypefunx int mpc_add_ui (mpc_t @var{rop}, mpc_t @var{op1}, unsigned long int @var{op2}, mpc_rnd_t @var{rnd})
-@deftypefunx int mpc_add_fr (mpc_t @var{rop}, mpc_t @var{op1}, mpfr_t @var{op2}, mpc_rnd_t @var{rnd})
+@deftypefun int mpc_add (mpc_t @var{rop}, const mpc_t @var{op1}, const mpc_t @var{op2}, mpc_rnd_t @var{rnd})
+@deftypefunx int mpc_add_ui (mpc_t @var{rop}, const mpc_t @var{op1}, unsigned long int @var{op2}, mpc_rnd_t @var{rnd})
+@deftypefunx int mpc_add_fr (mpc_t @var{rop}, const mpc_t @var{op1}, const mpfr_t @var{op2}, mpc_rnd_t @var{rnd})
 Set @var{rop} to @var{op1} @math{+} @var{op2} rounded according to @var{rnd}.
 @end deftypefun
 
-@deftypefn Function int mpc_sub (mpc_t @var{rop}, mpc_t @var{op1}, mpc_t @var{op2}, mpc_rnd_t @var{rnd})
-@deftypefnx Function int mpc_sub_fr (mpc_t @var{rop}, mpc_t @var{op1}, mpfr_t @var{op2}, mpc_rnd_t @var{rnd})
-@deftypefnx Function int mpc_fr_sub (mpc_t @var{rop}, mpfr_t @var{op1}, mpc_t @var{op2}, mpc_rnd_t @var{rnd})
-@deftypefnx Function int mpc_sub_ui (mpc_t @var{rop}, mpc_t @var{op1}, unsigned long int @var{op2}, mpc_rnd_t @var{rnd})
-@deftypefnx Macro int mpc_ui_sub (mpc_t @var{rop}, unsigned long int @var{op1}, mpc_t @var{op2}, mpc_rnd_t @var{rnd})
+@deftypefn Function int mpc_sub (mpc_t @var{rop}, const mpc_t @var{op1}, const mpc_t @var{op2}, mpc_rnd_t @var{rnd})
+@deftypefnx Function int mpc_sub_fr (mpc_t @var{rop}, const mpc_t @var{op1}, const mpfr_t @var{op2}, mpc_rnd_t @var{rnd})
+@deftypefnx Function int mpc_fr_sub (mpc_t @var{rop}, const mpfr_t @var{op1}, const mpc_t @var{op2}, mpc_rnd_t @var{rnd})
+@deftypefnx Function int mpc_sub_ui (mpc_t @var{rop}, const mpc_t @var{op1}, unsigned long int @var{op2}, mpc_rnd_t @var{rnd})
+@deftypefnx Macro int mpc_ui_sub (mpc_t @var{rop}, unsigned long int @var{op1}, const mpc_t @var{op2}, mpc_rnd_t @var{rnd})
 @deftypefnx Function int mpc_ui_ui_sub (mpc_t @var{rop}, unsigned long int @var{re1}, unsigned long int @var{im1}, mpc_t @var{op2}, mpc_rnd_t @var{rnd})
 Set @var{rop} to @var{op1} @minus{} @var{op2} rounded according to @var{rnd}.
 For @code{mpc_ui_ui_sub}, @var{op1} is @var{re1} + @var{im1}.
 @end deftypefn
 
-@deftypefun int mpc_neg (mpc_t @var{rop}, mpc_t @var{op}, mpc_rnd_t @var{rnd})
+@deftypefun int mpc_neg (mpc_t @var{rop}, const mpc_t @var{op}, mpc_rnd_t @var{rnd})
 Set @var{rop} to @minus{}@var{op} rounded according to @var{rnd}.
 Just changes the sign if @var{rop} and @var{op} are the same variable.
 @end deftypefun
 
-@deftypefun int mpc_sum (mpc_t @var{rop}, mpc_ptr* @var{op}, unsigned long @var{n}, mpc_rnd_t @var{rnd})
+@deftypefun int mpc_sum (mpc_t @var{rop}, const mpc_ptr* @var{op}, unsigned long @var{n}, mpc_rnd_t @var{rnd})
 Set @var{rop} to the sum of the elements in the array @var{op} of
 length @var{n}, rounded according to @var{rnd}.
 @end deftypefun
 
-@deftypefun int mpc_mul (mpc_t @var{rop}, mpc_t @var{op1}, mpc_t @var{op2}, mpc_rnd_t @var{rnd})
-@deftypefunx int mpc_mul_ui (mpc_t @var{rop}, mpc_t @var{op1}, unsigned long int @var{op2}, mpc_rnd_t @var{rnd})
-@deftypefunx int mpc_mul_si (mpc_t @var{rop}, mpc_t @var{op1}, long int @var{op2}, mpc_rnd_t @var{rnd})
-@deftypefunx int mpc_mul_fr (mpc_t @var{rop}, mpc_t @var{op1}, mpfr_t @var{op2}, mpc_rnd_t @var{rnd})
+@deftypefun int mpc_mul (mpc_t @var{rop}, const mpc_t @var{op1}, const mpc_t @var{op2}, mpc_rnd_t @var{rnd})
+@deftypefunx int mpc_mul_ui (mpc_t @var{rop}, const mpc_t @var{op1}, unsigned long int @var{op2}, mpc_rnd_t @var{rnd})
+@deftypefunx int mpc_mul_si (mpc_t @var{rop}, const mpc_t @var{op1}, long int @var{op2}, mpc_rnd_t @var{rnd})
+@deftypefunx int mpc_mul_fr (mpc_t @var{rop}, const mpc_t @var{op1}, const mpfr_t @var{op2}, mpc_rnd_t @var{rnd})
 Set @var{rop} to @var{op1} times @var{op2} rounded according to @var{rnd}.
 Note: for @code{mpc_mul}, in case @var{op1} and @var{op2} have the same value,
 use @code{mpc_sqr} for better efficiency.
 @end deftypefun
 
-@deftypefun int mpc_mul_i (mpc_t @var{rop}, mpc_t @var{op}, int @var{sgn}, mpc_rnd_t @var{rnd})
+@deftypefun int mpc_mul_i (mpc_t @var{rop}, const mpc_t @var{op}, int @var{sgn}, mpc_rnd_t @var{rnd})
 Set @var{rop} to @var{op} times the imaginary unit i if @var{sgn} is
 non-negative, set @var{rop} to @var{op} times -i otherwise,
 in both cases rounded according to @var{rnd}.
 @end deftypefun
 
-@deftypefun int mpc_sqr (mpc_t @var{rop}, mpc_t @var{op}, mpc_rnd_t @var{rnd})
+@deftypefun int mpc_sqr (mpc_t @var{rop}, const mpc_t @var{op}, mpc_rnd_t @var{rnd})
 Set @var{rop} to the square of @var{op} rounded according to @var{rnd}.
 @end deftypefun
 
-@deftypefun int mpc_fma (mpc_t @var{rop}, mpc_t @var{op1}, mpc_t @var{op2}, mpc_t @var{op3}, mpc_rnd_t @var{rnd})
+@deftypefun int mpc_fma (mpc_t @var{rop}, const mpc_t @var{op1}, const mpc_t @var{op2}, const mpc_t @var{op3}, mpc_rnd_t @var{rnd})
 Set @var{rop} to @var{op1}*@var{op2}+@var{op3},
 rounded according to @var{rnd}, with only one final rounding.
 @end deftypefun
 
-@deftypefun int mpc_dot (mpc_t @var{rop}, mpc_ptr* @var{op1}, mpc_ptr* @var{op2}, unsigned long @var{n}, mpc_rnd_t @var{rnd})
+@deftypefun int mpc_dot (mpc_t @var{rop}, const mpc_ptr* @var{op1}, mpc_ptr* @var{op2}, unsigned long @var{n}, mpc_rnd_t @var{rnd})
 Set @var{rop} to the dot product of the elements in the arrays @var{op1} and
 @var{op2}, both of length @var{n}, rounded according to @var{rnd}.
 @end deftypefun
 
-@deftypefun int mpc_div (mpc_t @var{rop}, mpc_t @var{op1}, mpc_t @var{op2}, mpc_rnd_t @var{rnd})
-@deftypefunx int mpc_div_ui (mpc_t @var{rop}, mpc_t @var{op1}, unsigned long int @var{op2}, mpc_rnd_t @var{rnd})
-@deftypefunx int mpc_div_fr (mpc_t @var{rop}, mpc_t @var{op1}, mpfr_t @var{op2}, mpc_rnd_t @var{rnd})
-@deftypefunx int mpc_ui_div (mpc_t @var{rop}, unsigned long int @var{op1}, mpc_t @var{op2}, mpc_rnd_t @var{rnd})
-@deftypefunx int mpc_fr_div (mpc_t @var{rop}, mpfr_t @var{op1}, mpc_t @var{op2}, mpc_rnd_t @var{rnd})
+@deftypefun int mpc_div (mpc_t @var{rop}, const mpc_t @var{op1}, const mpc_t @var{op2}, mpc_rnd_t @var{rnd})
+@deftypefunx int mpc_div_ui (mpc_t @var{rop}, const mpc_t @var{op1}, unsigned long int @var{op2}, mpc_rnd_t @var{rnd})
+@deftypefunx int mpc_div_fr (mpc_t @var{rop}, const mpc_t @var{op1}, const mpfr_t @var{op2}, mpc_rnd_t @var{rnd})
+@deftypefunx int mpc_ui_div (mpc_t @var{rop}, unsigned long int @var{op1}, const mpc_t @var{op2}, mpc_rnd_t @var{rnd})
+@deftypefunx int mpc_fr_div (mpc_t @var{rop}, const mpfr_t @var{op1}, const mpc_t @var{op2}, mpc_rnd_t @var{rnd})
 Set @var{rop} to @var{op1}/@var{op2} rounded according to @var{rnd}.
 @end deftypefun
 
-@deftypefun int mpc_conj (mpc_t @var{rop}, mpc_t @var{op}, mpc_rnd_t @var{rnd})
+@deftypefun int mpc_conj (mpc_t @var{rop}, const mpc_t @var{op}, mpc_rnd_t @var{rnd})
 Set @var{rop} to the conjugate of @var{op} rounded according to @var{rnd}.
 Just changes the sign of the imaginary part
 if @var{rop} and @var{op} are the same variable.
 @end deftypefun
 
-@deftypefun int mpc_abs (mpfr_t @var{rop}, mpc_t @var{op}, mpfr_rnd_t @var{rnd})
+@deftypefun int mpc_abs (mpfr_t @var{rop}, const mpc_t @var{op}, mpfr_rnd_t @var{rnd})
 Set the floating-point number @var{rop} to the absolute value of @var{op},
 rounded in the direction @var{rnd}.
 @end deftypefun
 
-@deftypefun int mpc_norm (mpfr_t @var{rop}, mpc_t @var{op}, mpfr_rnd_t @var{rnd})
+@deftypefun int mpc_norm (mpfr_t @var{rop}, const mpc_t @var{op}, mpfr_rnd_t @var{rnd})
 Set the floating-point number @var{rop} to the norm of @var{op}
 (i.e., the square of its absolute value),
 rounded in the direction @var{rnd}.
 @end deftypefun
 
-@deftypefun int mpc_mul_2ui (mpc_t @var{rop}, mpc_t @var{op1}, unsigned long int @var{op2}, mpc_rnd_t @var{rnd})
-@deftypefunx int mpc_mul_2si (mpc_t @var{rop}, mpc_t @var{op1}, long int @var{op2}, mpc_rnd_t @var{rnd})
+@deftypefun int mpc_mul_2ui (mpc_t @var{rop}, const mpc_t @var{op1}, unsigned long int @var{op2}, mpc_rnd_t @var{rnd})
+@deftypefunx int mpc_mul_2si (mpc_t @var{rop}, const mpc_t @var{op1}, long int @var{op2}, mpc_rnd_t @var{rnd})
 Set @var{rop} to @var{op1} times 2 raised to @var{op2}
 rounded according to @var{rnd}. Just modifies the exponents
 of the real and imaginary parts by @var{op2}
 when @var{rop} and @var{op1} are identical.
 @end deftypefun
 
-@deftypefun int mpc_div_2ui (mpc_t @var{rop}, mpc_t @var{op1}, unsigned long int @var{op2}, mpc_rnd_t @var{rnd})
-@deftypefunx int mpc_div_2si (mpc_t @var{rop}, mpc_t @var{op1}, long int @var{op2}, mpc_rnd_t @var{rnd})
+@deftypefun int mpc_div_2ui (mpc_t @var{rop}, const mpc_t @var{op1}, unsigned long int @var{op2}, mpc_rnd_t @var{rnd})
+@deftypefunx int mpc_div_2si (mpc_t @var{rop}, const mpc_t @var{op1}, long int @var{op2}, mpc_rnd_t @var{rnd})
 Set @var{rop} to @var{op1} divided by 2 raised to @var{op2}
 rounded according to @var{rnd}. Just modifies the exponents
 of the real and imaginary parts by @var{op2}
@@ -969,19 +969,19 @@ when @var{rop} and @var{op1} are identical.
 @cindex Power functions
 @cindex Logarithm
 
-@deftypefun int mpc_sqrt (mpc_t @var{rop}, mpc_t @var{op}, mpc_rnd_t @var{rnd})
+@deftypefun int mpc_sqrt (mpc_t @var{rop}, const mpc_t @var{op}, mpc_rnd_t @var{rnd})
 Set @var{rop} to the square root of @var{op} rounded according to @var{rnd}.
 The returned value @var{rop} has a non-negative real part, and if its real
 part is zero, a non-negative imaginary part.
 @end deftypefun
 
-@deftypefun int mpc_pow (mpc_t @var{rop}, mpc_t @var{op1}, mpc_t @var{op2}, mpc_rnd_t @var{rnd})
-@deftypefunx int mpc_pow_d (mpc_t @var{rop}, mpc_t @var{op1}, double @var{op2}, mpc_rnd_t @var{rnd})
-@deftypefunx int mpc_pow_ld (mpc_t @var{rop}, mpc_t @var{op1}, long double @var{op2}, mpc_rnd_t @var{rnd})
-@deftypefunx int mpc_pow_si (mpc_t @var{rop}, mpc_t @var{op1}, long @var{op2}, mpc_rnd_t @var{rnd})
-@deftypefunx int mpc_pow_ui (mpc_t @var{rop}, mpc_t @var{op1}, unsigned long @var{op2}, mpc_rnd_t @var{rnd})
-@deftypefunx int mpc_pow_z (mpc_t @var{rop}, mpc_t @var{op1}, mpz_t @var{op2}, mpc_rnd_t @var{rnd})
-@deftypefunx int mpc_pow_fr (mpc_t @var{rop}, mpc_t @var{op1}, mpfr_t @var{op2}, mpc_rnd_t @var{rnd})
+@deftypefun int mpc_pow (mpc_t @var{rop}, const mpc_t @var{op1}, const mpc_t @var{op2}, mpc_rnd_t @var{rnd})
+@deftypefunx int mpc_pow_d (mpc_t @var{rop}, const mpc_t @var{op1}, double @var{op2}, mpc_rnd_t @var{rnd})
+@deftypefunx int mpc_pow_ld (mpc_t @var{rop}, const mpc_t @var{op1}, long double @var{op2}, mpc_rnd_t @var{rnd})
+@deftypefunx int mpc_pow_si (mpc_t @var{rop}, const mpc_t @var{op1}, long @var{op2}, mpc_rnd_t @var{rnd})
+@deftypefunx int mpc_pow_ui (mpc_t @var{rop}, const mpc_t @var{op1}, unsigned long @var{op2}, mpc_rnd_t @var{rnd})
+@deftypefunx int mpc_pow_z (mpc_t @var{rop}, const mpc_t @var{op1}, const mpz_t @var{op2}, mpc_rnd_t @var{rnd})
+@deftypefunx int mpc_pow_fr (mpc_t @var{rop}, const mpc_t @var{op1}, const mpfr_t @var{op2}, mpc_rnd_t @var{rnd})
 Set @var{rop} to @var{op1} raised to the power @var{op2}, rounded according
 to @var{rnd}.
 For @code{mpc_pow_d}, @code{mpc_pow_ld}, @code{mpc_pow_si}, @code{mpc_pow_ui},
@@ -991,13 +991,13 @@ When both @var{op1} and @var{op2} are zero, the result has real part 1,
 and imaginary part 0, with sign being the opposite of that of @var{op2}.
 @end deftypefun
 
-@deftypefun int mpc_exp (mpc_t @var{rop}, mpc_t @var{op}, mpc_rnd_t @var{rnd})
+@deftypefun int mpc_exp (mpc_t @var{rop}, const mpc_t @var{op}, mpc_rnd_t @var{rnd})
 Set @var{rop} to the exponential of @var{op},
 rounded according to @var{rnd} with the precision of @var{rop}.
 @end deftypefun
 
-@deftypefun int mpc_log (mpc_t @var{rop}, mpc_t @var{op}, mpc_rnd_t @var{rnd})
-@deftypefunx int mpc_log10 (mpc_t @var{rop}, mpc_t @var{op}, mpc_rnd_t @var{rnd})
+@deftypefun int mpc_log (mpc_t @var{rop}, const mpc_t @var{op}, mpc_rnd_t @var{rnd})
+@deftypefunx int mpc_log10 (mpc_t @var{rop}, const mpc_t @var{op}, mpc_rnd_t @var{rnd})
 Set @var{rop} to the natural and base-10 logarithm of @var{op} respectively,
 rounded according to @var{rnd} with the precision of @var{rop}.
 The principal branch is chosen, with the branch cut on the negative real axis,
@@ -1029,57 +1029,41 @@ rounded according to @var{rnd} with the precision of @var{rop}.
 @section Trigonometric Functions
 @cindex Trigonometric functions
 
-@deftypefun int mpc_sin (mpc_t @var{rop}, mpc_t @var{op}, mpc_rnd_t @var{rnd})
-Set @var{rop} to the sine of @var{op},
+@deftypefun int mpc_sin (mpc_t @var{rop}, const mpc_t @var{op}, mpc_rnd_t @var{rnd})
+@deftypefunx int mpc_cos (mpc_t @var{rop}, const mpc_t @var{op}, mpc_rnd_t @var{rnd})
+@deftypefunx int mpc_tan (mpc_t @var{rop}, const mpc_t @var{op}, mpc_rnd_t @var{rnd})
+Set @var{rop} to the sine, cosine, tangent of @var{op},
 rounded according to @var{rnd} with the precision of @var{rop}.
 @end deftypefun
 
-@deftypefun int mpc_cos (mpc_t @var{rop}, mpc_t @var{op}, mpc_rnd_t @var{rnd})
-Set @var{rop} to the cosine of @var{op},
-rounded according to @var{rnd} with the precision of @var{rop}.
-@end deftypefun
-
-@deftypefun int mpc_sin_cos (mpc_t @var{rop_sin}, mpc_t @var{rop_cos}, mpc_t @var{op}, mpc_rnd_t @var{rnd_sin}, mpc_rnd_t @var{rnd_cos})
+@deftypefun int mpc_sin_cos (mpc_t @var{rop_sin}, mpc_t @var{rop_cos}, const mpc_t @var{op}, mpc_rnd_t @var{rnd_sin}, mpc_rnd_t @var{rnd_cos})
 Set @var{rop_sin} to the sine of @var{op},
 rounded according to @var{rnd_sin} with the precision of @var{rop_sin},
 and @var{rop_cos} to the cosine of @var{op},
 rounded according to @var{rnd_cos} with the precision of @var{rop_cos}.
 @end deftypefun
 
-@deftypefun int mpc_tan (mpc_t @var{rop}, mpc_t @var{op}, mpc_rnd_t @var{rnd})
-Set @var{rop} to the tangent of @var{op},
+@deftypefun int mpc_sinh (mpc_t @var{rop}, const mpc_t @var{op}, mpc_rnd_t @var{rnd})
+@deftypefunx int mpc_cosh (mpc_t @var{rop}, const mpc_t @var{op}, mpc_rnd_t @var{rnd})
+@deftypefunx int mpc_tanh (mpc_t @var{rop}, const mpc_t @var{op}, mpc_rnd_t @var{rnd})
+Set @var{rop} to the hyperbolic sine, hyperbolic cosine, hyperbolic tangent of @var{op},
 rounded according to @var{rnd} with the precision of @var{rop}.
 @end deftypefun
 
-@deftypefun int mpc_sinh (mpc_t @var{rop}, mpc_t @var{op}, mpc_rnd_t @var{rnd})
-Set @var{rop} to the hyperbolic sine of @var{op},
-rounded according to @var{rnd} with the precision of @var{rop}.
-@end deftypefun
-
-@deftypefun int mpc_cosh (mpc_t @var{rop}, mpc_t @var{op}, mpc_rnd_t @var{rnd})
-Set @var{rop} to the hyperbolic cosine of @var{op},
-rounded according to @var{rnd} with the precision of @var{rop}.
-@end deftypefun
-
-@deftypefun int mpc_tanh (mpc_t @var{rop}, mpc_t @var{op}, mpc_rnd_t @var{rnd})
-Set @var{rop} to the hyperbolic tangent of @var{op},
-rounded according to @var{rnd} with the precision of @var{rop}.
-@end deftypefun
-
-@deftypefun int mpc_asin (mpc_t @var{rop}, mpc_t @var{op}, mpc_rnd_t @var{rnd})
-@deftypefunx int mpc_acos (mpc_t @var{rop}, mpc_t @var{op}, mpc_rnd_t @var{rnd})
-@deftypefunx int mpc_atan (mpc_t @var{rop}, mpc_t @var{op}, mpc_rnd_t @var{rnd})
+@deftypefun int mpc_asin (mpc_t @var{rop}, const mpc_t @var{op}, mpc_rnd_t @var{rnd})
+@deftypefunx int mpc_acos (mpc_t @var{rop}, const mpc_t @var{op}, mpc_rnd_t @var{rnd})
+@deftypefunx int mpc_atan (mpc_t @var{rop}, const mpc_t @var{op}, mpc_rnd_t @var{rnd})
 Set @var{rop} to the inverse sine, inverse cosine, inverse tangent of @var{op},
 rounded according to @var{rnd} with the precision of @var{rop}.
 @end deftypefun
 
-@deftypefun int mpc_asinh (mpc_t @var{rop}, mpc_t @var{op}, mpc_rnd_t @var{rnd})
-@deftypefunx int mpc_acosh (mpc_t @var{rop}, mpc_t @var{op}, mpc_rnd_t @var{rnd})
-@deftypefunx int mpc_atanh (mpc_t @var{rop}, mpc_t @var{op}, mpc_rnd_t @var{rnd})
+@deftypefun int mpc_asinh (mpc_t @var{rop}, const mpc_t @var{op}, mpc_rnd_t @var{rnd})
+@deftypefunx int mpc_acosh (mpc_t @var{rop}, const mpc_t @var{op}, mpc_rnd_t @var{rnd})
+@deftypefunx int mpc_atanh (mpc_t @var{rop}, const mpc_t @var{op}, mpc_rnd_t @var{rnd})
 Set @var{rop} to the inverse hyperbolic sine, inverse hyperbolic cosine,
 inverse hyperbolic tangent of @var{op},
 rounded according to @var{rnd} with the precision of @var{rop}.
-The branch cut of @var{mpc_acosh} is
+The branch cut of @code{mpc_acosh} is
 @iftex
 @math{(-\infty, 1)}.
 @end iftex
@@ -1157,7 +1141,7 @@ Value}).
 
 For instance, you can define mpc_set_ui_fr as follows:
 @example
-int mpc_set_ui_fr (mpc_t rop, long int re, double im, mpc_rnd_t rnd)
+int mpc_set_ui_fr (mpc_t rop, unsigned long int re, mpfr_t im, mpc_rnd_t rnd)
     MPC_SET_X_Y (ui, fr, rop, re, im, rnd);
 @end example
 @end defmac
@@ -1183,19 +1167,18 @@ of the real and imaginary parts of a complex number.
 
 @item
 Torbj@"orn Granlund et al.
-@code{gmp} -- GNU multiprecision library.
-Version 4.2.4, @url{http://gmplib.org/}.
+@code{GMP} -- GNU multiprecision library.
+Version 6.2.0, @url{http://gmplib.org}.
 
 @item
 Guillaume Hanrot, Vincent Lef@`evre, Patrick P@'elissier, Paul Zimmermann et al.
-@code{mpfr} -- A library for multiple-precision floating-point computations with exact rounding.
-Version 2.4.1, @url{http://www.mpfr.org}.
+@code{MPFR} -- A library for multiple-precision floating-point computations with exact rounding.
+Version 4.1.0, @url{http://www.mpfr.org}.
 
 @item
-IEEE standard for binary floating-point arithmetic, Technical Report
-ANSI-IEEE Standard 754-1985, New York, 1985.
-Approved March 21, 1985: IEEE Standards Board; approved July 26,
-  1985: American National Standards Institute, 18 pages.
+IEEE Standard for Floating-Point Arithmetic,
+IEEE Computer Society,
+IEEE Std 754-2019, Approved 13 June 2019, 84 pages.
 
 @item
 Donald E. Knuth, "The Art of Computer Programming", vol 2,

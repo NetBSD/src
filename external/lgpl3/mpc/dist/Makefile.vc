@@ -50,7 +50,7 @@ CPP = cl.exe
 CC = cl.exe
 CDEFAULTFLAGS=/O2 /GR- /MD /nologo /EHs
 
-VERSION=1.2.0
+VERSION=1.2.1
 
 ######################## do not edit below this line ##########################
 
