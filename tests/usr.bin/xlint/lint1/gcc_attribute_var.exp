@@ -1,1 +1,3 @@
-gcc_attribute_var.c(28): error: syntax error 'syntax_error' [249]
+gcc_attribute_var.c(54): error: syntax error '_Bool' [249]
+gcc_attribute_var.c(60): error: syntax error '_Bool' [249]
+gcc_attribute_var.c(69): error: syntax error 'syntax_error' [249]
