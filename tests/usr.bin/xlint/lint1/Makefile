@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.84 2021/07/10 18:25:57 rillig Exp $
+# $NetBSD: Makefile,v 1.85 2021/07/11 18:58:13 rillig Exp $
 
 NOMAN=		# defined
 MAX_MESSAGE=	345		# see lint1/err.c
@@ -181,6 +181,8 @@ FILES+=		op_shl_lp64.c
 FILES+=		op_shl_lp64.exp
 FILES+=		stmt_for.c
 FILES+=		stmt_for.exp
+FILES+=		stmt_if.c
+FILES+=		stmt_if.exp
 
 # Note: only works for adding tests.
 # To remove a test, the $$mi file must be edited manually.
