@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.139 2021/07/07 03:30:35 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.140 2021/07/11 01:55:51 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2019 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.139 2021/07/07 03:30:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.140 2021/07/11 01:55:51 thorpej Exp $");
 
 #include "assym.h"
 
@@ -212,6 +212,15 @@ NESTED_NOPROFILE(locorestart,1,0,ra,0,0)
  */
 #include <alpha/alpha/debug.s>
 #endif /* DDB || KGDB */
+
+/**************************************************************************/
+
+/**************************************************************************/
+
+/*
+ * Pull in optimized pmap subroutines.
+ */
+#include <alpha/alpha/pmap_subr.s>
 
 /**************************************************************************/
 
