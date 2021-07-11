@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.315 2021/07/11 20:07:41 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.316 2021/07/11 20:25:54 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.315 2021/07/11 20:07:41 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.316 2021/07/11 20:25:54 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -281,7 +281,10 @@ anonymize(sym_t *s)
 
 %type	<y_tnode>	primary_expression
 %type	<y_tnode>	postfix_expression
+%type	<y_tnode>	argument_expression_list
 %type	<y_tnode>	unary_expression
+%type	<y_tnode>	cast_expression
+%type	<y_tnode>	expr
 
 %type	<y_sym>		func_decl
 %type	<y_sym>		notype_decl
@@ -327,13 +330,10 @@ anonymize(sym_t *s)
 %type	<y_sym>		vararg_parameter_type_list
 %type	<y_sym>		parameter_type_list
 %type	<y_sym>		parameter_declaration
-%type	<y_tnode>	expr
 %type	<y_tnode>	assignment_expression
 %type	<y_tnode>	gcc_statement_expr_list
 %type	<y_tnode>	gcc_statement_expr_item
-%type	<y_tnode>	term
 %type	<y_tnode>	generic_selection
-%type	<y_tnode>	argument_expression_list
 %type	<y_op>		point_or_arrow
 %type	<y_type>	type_name
 %type	<y_sym>		abstract_declaration
@@ -631,7 +631,7 @@ notype_type_specifier:
 	  T_TYPE {
 		$$ = gettyp($1);
 	  }
-	| T_TYPEOF term {
+	| T_TYPEOF cast_expression {	/* GCC extension */
 		$$ = $2->tn_type;
 	  }
 	| struct_or_union_specifier {
@@ -1353,7 +1353,7 @@ abstract_declarator:		/* C99 6.7.6 */
 	| pointer direct_abstract_declarator {
 		$$ = add_pointer($2, $1);
 	  }
-	| T_TYPEOF term {	/* GCC extension */
+	| T_TYPEOF cast_expression {	/* GCC extension */
 		$$ = mktempsym($2->tn_type);
 	  }
 	;
@@ -1721,8 +1721,8 @@ expr:				/* C99 6.5 */
 	| expr T_COMMA expr {
 		$$ = build(COMMA, $1, $3);
 	  }
-	| term
-	| generic_selection
+	| cast_expression
+	| generic_selection	/* TODO: move to primary_expression */
 	;
 
 assignment_expression:		/* C99 6.5.16 */
@@ -1818,32 +1818,32 @@ unary_expression:		/* C99 6.5.3 */
 	| T_INCDEC unary_expression {
 		$$ = build($1 == INC ? INCBEF : DECBEF, $2, NULL);
 	  }
-	| T_AMPER term {
+	| T_AMPER cast_expression {
 		$$ = build(ADDR, $2, NULL);
 	  }
-	| T_ASTERISK term {
+	| T_ASTERISK cast_expression {
 		$$ = build(INDIR, $2, NULL);
 	  }
-	| T_ADDITIVE term {
+	| T_ADDITIVE cast_expression {
 		if (tflag && $1 == PLUS) {
 			/* unary + is illegal in traditional C */
 			warning(100);
 		}
 		$$ = build($1 == PLUS ? UPLUS : UMINUS, $2, NULL);
 	  }
-	| T_COMPLEMENT term {
+	| T_COMPLEMENT cast_expression {
 		$$ = build(COMPL, $2, NULL);
 	  }
-	| T_LOGNOT term {
+	| T_LOGNOT cast_expression {
 		$$ = build(NOT, $2, NULL);
 	  }
-	| T_REAL term {		/* GCC c_parser_unary_expression */
+	| T_REAL cast_expression {	/* GCC c_parser_unary_expression */
 		$$ = build(REAL, $2, NULL);
 	  }
-	| T_IMAG term {		/* GCC c_parser_unary_expression */
+	| T_IMAG cast_expression {	/* GCC c_parser_unary_expression */
 		$$ = build(IMAG, $2, NULL);
 	  }
-	| T_EXTENSION term {	/* GCC c_parser_unary_expression */
+	| T_EXTENSION cast_expression {	/* GCC c_parser_unary_expression */
 		$$ = $2;
 	  }
 	| T_SIZEOF unary_expression {
@@ -1859,9 +1859,9 @@ unary_expression:		/* C99 6.5.3 */
 	  }
 	;
 
-term:				/* see C99 6.5.1 */
+cast_expression:		/* see C99 6.5.1 */
 	  unary_expression
-	| T_LPAREN type_name T_RPAREN term {
+	| T_LPAREN type_name T_RPAREN cast_expression {
 		$$ = cast($4, $2);
 	  }
 	;
