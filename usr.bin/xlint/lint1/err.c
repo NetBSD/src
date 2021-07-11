@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.127 2021/07/10 12:17:31 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.128 2021/07/11 19:30:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.127 2021/07/10 12:17:31 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.128 2021/07/11 19:30:56 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -77,7 +77,7 @@ const char *const msgs[] = {
 	"negative array dimension (%d)",			      /* 20 */
 	"redeclaration of formal parameter %s",			      /* 21 */
 	"incomplete or misplaced function definition",		      /* 22 */
-	"undefined label %s",					      /* 23 */
+	"undefined label '%s'",					      /* 23 */
 	"cannot initialize function: %s",			      /* 24 */
 	"cannot initialize typedef: %s",			      /* 25 */
 	"cannot initialize extern declaration: %s",		      /* 26 */
@@ -286,7 +286,7 @@ const char *const msgs[] = {
 	"converting '%s' to '%s' is questionable",		      /* 229 */
 	"nonportable character comparison, op %s",		      /* 230 */
 	"argument '%s' unused in function '%s'",		      /* 231 */
-	"label %s unused in function %s",			      /* 232 */
+	"label '%s' unused in function '%s'",			      /* 232 */
 	"struct %s never defined",				      /* 233 */
 	"union %s never defined",				      /* 234 */
 	"enum %s never defined",				      /* 235 */
