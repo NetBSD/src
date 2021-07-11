@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.1 2019/03/10 02:29:52 mrg Exp $
+#	$NetBSD: shlib_version,v 1.2 2021/07/11 20:53:35 mrg Exp $
 #
 # XXX netbsd-4 has major=1 minor=2
 major=3
