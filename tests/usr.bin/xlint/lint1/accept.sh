@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: accept.sh,v 1.1 2021/06/29 09:44:25 rillig Exp $
+# $NetBSD: accept.sh,v 1.2 2021/07/11 12:07:14 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -44,6 +44,7 @@ for pattern in "$@"; do
 		ln_file="$base.ln"
 
 		configure_test_case "$cfile"
+		# shellcheck disable=SC2154
 		if [ $skip = yes ]; then
 			continue
 		fi
@@ -52,6 +53,8 @@ for pattern in "$@"; do
 			ln_file='/dev/null'
 		fi
 
+		# shellcheck disable=SC2154
+		# shellcheck disable=SC2086
 		if "$lint1" $flags "$base.c" "$ln_file" > "$tmpfile"; then
 			if [ -s "$tmpfile" ]; then
 				echo "$base produces output but exits successfully"
