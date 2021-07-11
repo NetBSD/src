@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.20 2021/07/04 12:57:48 cjep Exp $
+$NetBSD: README,v 1.21 2021/07/11 06:15:42 cjep Exp $
 
 Special notes for cross-hosting a NetBSD build on certain platforms.  
 Only those platforms which have been tested to complete a "build.sh" run
@@ -65,14 +65,17 @@ OpenBSD
 -------
 
 As of -current 20210629, ./build.sh will build src on OpenBSD 6.9
-for all targets except MIPS-based ones. 
+for all platforms.
 
-For builds requiring the LLVM RT library (including X on amd64, 
-i386 and evbarm64-el), the build user's limits needs to be setup 
-for higher memory usage, otherwise the build will fail. This can
-be achieved by either building as root (not recommended) or
-by changing the datasize attribute to infinity for the relevant
-groups and users in /etc/login.conf.
+Due to the default limits placed on user accounts, the host may experience
+memory exhaustion on builds requiring the LLVM RT library (including 
+X on amd64, i386 and evbarm64-el) and for MIPS targets.
+
+This can be avoided by building as root (not ideal) or by asking your
+administrator to increase your limits in login.conf. These two variables
+seem to be sufficient:
+        :datasize=infinity:\
+        :stacksize-cur=8M:\
 
 NetBSD (earlier releases)
 -------------------------
