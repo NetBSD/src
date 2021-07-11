@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2021/05/30 22:24:36 joerg Exp $
+#	$NetBSD: Makefile,v 1.14 2021/07/11 20:52:07 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -59,7 +59,7 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
 		-I${X11SRCDIR.${DRIVER}}/../include
 
-LIBDPLIBS+=	gbm ${.CURDIR}/../../../lib/libgbm${OLD_PREFIX}
+LIBDPLIBS+=	gbm ${.CURDIR}/../../../lib/libgbm${OLD_SUFFIX}
 
 COPTS+=		-fcommon
 
