@@ -1,4 +1,4 @@
-/*	$NetBSD: rdreg.h,v 1.16 2021/07/09 17:05:33 tsutsui Exp $	*/
+/*	$NetBSD: rdreg.h,v 1.17 2021/07/11 13:00:52 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -104,7 +104,7 @@ struct	rd_clearcmd {
 } __attribute__((__packed__));
 
 /* HW ids */
-#define	RD7946AID	0x220	/* also 7945A */
+#define	RD7946AID	0x220	/* also 7945A and 7941A */
 #define	RD9134DID	0x221	/* also 9122S */
 #define	RD9134LID	0x222	/* also 9122D */
 #define	RD7912PID	0x209
@@ -120,6 +120,9 @@ struct	rd_clearcmd {
 #define	RD7959BID	0x22E	/* another guess based on 7958B */
 #define	RD2200AID	0x22F
 #define	RD2203AID	0x230	/* yet another guess */
+#define	RD2202AID	0x231	/* from hpdrive.ini.sample */
+#define	RD7908AID	0x200	/* from hpdrive.ini.sample */
+#define	RD7911AID	0x204	/* from hpdrive.ini.sample */
 
 /* Drive names -- per identify description structure */
 #define	RD7945ANAME	"079450"
@@ -140,6 +143,10 @@ struct	rd_clearcmd {
 #define	RD7959BNAME	"079591"
 #define	RD2200ANAME	"022000"
 #define	RD2203ANAME	"022030"
+#define	RD2202ANAME	"022020"
+#define	RD7908ANAME	"079080"
+#define	RD7911ANAME	"079110"
+#define	RD7941ANAME	"079410"
 
 #define	RDNAMELEN	6
 
@@ -163,6 +170,10 @@ struct	rd_clearcmd {
 #define	RD7959B		16
 #define	RD2200A		17
 #define	RD2203A		18
+#define	RD2202A		19
+#define	RD7908A		20
+#define	RD7911A		21
+#define	RD7941A		22
 
 #define	NRD7945ABPT	16
 #define	NRD7945ATRK	7
@@ -178,6 +189,10 @@ struct	rd_clearcmd {
 #define	NRD7933HTRK	13
 #define	NRD9134LBPT	16
 #define	NRD9134LTRK	5
+#define	NRD7911ABPT	32
+#define	NRD7911ATRK	3
+#define	NRD7941ABPT	16
+#define	NRD7941ATRK	3
 
 /*
  * Several HP drives have an odd number of 256 byte sectors per track.
@@ -190,8 +205,8 @@ struct	rd_clearcmd {
  * DISK		REAL (256 BPS)		HPUX (1024 BPS)		BSD (512 BPS)
  * 		SPT x HD x CYL		SPT x HD x CYL		SPT x HD x CYL
  * -----	---------------		---------------		--------------
- * 7936:	123 x  7 x 1396		 25 x  7 x 1716		123 x  7 x  698
- * 7937:	123 x 13 x 1396		 25 x 16 x 1395		123 x 13 x  698
+ * 7936H:	123 x  7 x 1396		 25 x  7 x 1716		123 x  7 x  698
+ * 7937H:	123 x 13 x 1396		 25 x 16 x 1395		123 x 13 x  698
  *
  * 7957A:	 63 x  5 x 1013		 11 x  7 x 1036		 22 x  7 x 1036
  * 7958A:	 63 x  8 x 1013		 21 x  6 x 1013		 36 x  7 x 1013
@@ -202,6 +217,9 @@ struct	rd_clearcmd {
  *
  * 2200A:	113 x  8 x 1449		113 x  2 x 1449		113 x  4 x 1449
  * 2203A:	113 x 16 x 1449		113 x  4 x 1449		113 x  8 x 1449
+ * 2202A:	113 x 16 x 1449		113 x  4 x 1449		113 x  8 x 1449
+ *
+ * 7908A:	 35 x  5 x  370		??? x  ? x  ???		 35 x  5 x  185
  */
 #define	NRD7936HBPT	123
 #define	NRD7936HTRK	7
@@ -221,6 +239,10 @@ struct	rd_clearcmd {
 #define	NRD2200ATRK	4
 #define	NRD2203ABPT	113
 #define	NRD2203ATRK	8
+#define	NRD2202ABPT	113
+#define	NRD2202ATRK	8
+#define	NRD7908ABPT	35
+#define	NRD7908ATRK	5
 
 /* controller "unit" number */
 #define	RDCTLR		15
