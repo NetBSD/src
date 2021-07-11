@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: accept.sh,v 1.2 2021/07/11 12:07:14 rillig Exp $
+# $NetBSD: accept.sh,v 1.3 2021/07/11 14:43:57 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -61,6 +61,9 @@ for pattern in "$@"; do
 				sed 's,^,| ,' "$tmpfile"
 			fi
 			rm -f "$expfile" "$tmpfile"
+		elif [ $? -ge 128 ]; then
+			echo "$base crashed"
+			continue
 		else
 			if [ -f "$tmpfile" ] && cmp -s "$tmpfile" "$expfile"; then
 				rm "$tmpfile"
