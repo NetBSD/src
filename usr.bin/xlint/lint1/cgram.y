@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.317 2021/07/11 20:37:21 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.318 2021/07/11 21:07:44 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.317 2021/07/11 20:37:21 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.318 2021/07/11 21:07:44 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1728,7 +1728,8 @@ assignment_expression:		/* C99 6.5.16 */
 	  expr %prec T_ASSIGN
 	;
 
-primary_expression:		/* C99 6.5.1 */
+/* K&R 7.1, C90 ???, C99 6.5.1, C11 6.5.1, C18 6.5.1 */
+primary_expression:
 	  T_NAME {
 		/* XXX really necessary? */
 		if (yychar < 0)
@@ -1754,7 +1755,41 @@ primary_expression:		/* C99 6.5.1 */
 	  }
 	;
 
-postfix_expression:		/* C99 6.5.2 */
+/* K&R ---, C90 ---, C99 ---, C11 6.5.1.1, C18 6.5.1.1 */
+generic_selection:
+	  T_GENERIC T_LPAREN assignment_expression T_COMMA
+	    generic_assoc_list T_RPAREN {
+	  	/* generic selection requires C11 or later */
+	  	c11ism(345);
+		$$ = build_generic_selection($3, $5);
+	  }
+	;
+
+/* K&R ---, C90 ---, C99 ---, C11 6.5.1.1, C18 6.5.1.1 */
+generic_assoc_list:
+	  generic_association
+	| generic_assoc_list T_COMMA generic_association {
+		$3->ga_prev = $1;
+		$$ = $3;
+	  }
+	;
+
+/* K&R ---, C90 ---, C99 ---, C11 6.5.1.1, C18 6.5.1.1 */
+generic_association:
+	  type_name T_COLON assignment_expression {
+		$$ = getblk(sizeof(*$$));
+		$$->ga_arg = $1;
+		$$->ga_result = $3;
+	  }
+	| T_DEFAULT T_COLON assignment_expression {
+		$$ = getblk(sizeof(*$$));
+		$$->ga_arg = NULL;
+		$$->ga_result = $3;
+	  }
+	;
+
+/* K&R 7.1, C90 ???, C99 6.5.2, C11 6.5.2, C18 6.5.2 */
+postfix_expression:
 	  primary_expression
 	| postfix_expression T_LBRACK expr T_RBRACK {
 		$$ = build(INDIR, build(PLUS, $1, $3), NULL);
@@ -1813,7 +1848,18 @@ postfix_expression:		/* C99 6.5.2 */
 	  }
 	;
 
-unary_expression:		/* C99 6.5.3 */
+/* K&R 7.1, C90 ???, C99 6.5.2, C11 6.5.2, C18 6.5.2 */
+argument_expression_list:
+	  expr %prec T_COMMA {
+		$$ = new_function_argument_node(NULL, $1);
+	  }
+	| argument_expression_list T_COMMA expr {
+		$$ = new_function_argument_node($1, $3);
+	  }
+	;
+
+/* K&R 7.2, C90 ???, C99 6.5.3, C11 6.5.3, C18 6.5.3 */
+unary_expression:
 	  postfix_expression
 	| T_INCDEC unary_expression {
 		$$ = build($1 == INC ? INCBEF : DECBEF, $2, NULL);
@@ -1854,54 +1900,17 @@ unary_expression:		/* C99 6.5.3 */
 	| T_SIZEOF T_LPAREN type_name T_RPAREN {
 		$$ = build_sizeof($3);
 	  }
-	| T_ALIGNOF T_LPAREN type_name T_RPAREN {	/* C11 6.5.3 */
+	/* K&R ---, C90 ---, C99 ---, C11 6.5.3, C18 6.5.3 */
+	| T_ALIGNOF T_LPAREN type_name T_RPAREN {
 		$$ = build_alignof($3);
 	  }
 	;
 
-cast_expression:		/* see C99 6.5.1 */
+/* K&R 7.2, C90 ???, C99 6.5.4, C11 6.5.4, C18 6.5.4 */
+cast_expression:
 	  unary_expression
 	| T_LPAREN type_name T_RPAREN cast_expression {
 		$$ = cast($4, $2);
-	  }
-	;
-
-generic_selection:		/* C11 6.5.1.1 */
-	  T_GENERIC T_LPAREN assignment_expression T_COMMA
-	    generic_assoc_list T_RPAREN {
-	  	/* generic selection requires C11 or later */
-	  	c11ism(345);
-		$$ = build_generic_selection($3, $5);
-	  }
-	;
-
-generic_assoc_list:		/* C11 6.5.1.1 */
-	  generic_association
-	| generic_assoc_list T_COMMA generic_association {
-		$3->ga_prev = $1;
-		$$ = $3;
-	  }
-	;
-
-generic_association:		/* C11 6.5.1.1 */
-	  type_name T_COLON assignment_expression {
-		$$ = getblk(sizeof(*$$));
-		$$->ga_arg = $1;
-		$$->ga_result = $3;
-	  }
-	| T_DEFAULT T_COLON assignment_expression {
-		$$ = getblk(sizeof(*$$));
-		$$->ga_arg = NULL;
-		$$->ga_result = $3;
-	  }
-	;
-
-argument_expression_list:	/* C99 6.5.2 */
-	  expr %prec T_COMMA {
-		$$ = new_function_argument_node(NULL, $1);
-	  }
-	| argument_expression_list T_COMMA expr {
-		$$ = new_function_argument_node($1, $3);
 	  }
 	;
 
