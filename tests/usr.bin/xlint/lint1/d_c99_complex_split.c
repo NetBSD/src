@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_complex_split.c,v 1.7 2021/04/09 21:42:12 rillig Exp $	*/
+/*	$NetBSD: d_c99_complex_split.c,v 1.8 2021/07/11 19:39:00 rillig Exp $	*/
 # 3 "d_c99_complex_split.c"
 
 /*
@@ -80,4 +80,14 @@ trigger_warning(double _Complex c)
 {
 	c += 1.0;
 	return c | c;		/* expect: incompatible types */
+}
+
+void
+precedence_cast_expression(void)
+{
+	double _Complex z = 0;
+	if (b(__real__(double _Complex)z) && b(__imag__(double _Complex)z))
+		return;
+	if (b(__real__(z)) && b(__imag__(z)))
+		return;
 }
