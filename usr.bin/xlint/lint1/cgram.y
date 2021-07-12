@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.319 2021/07/12 21:43:44 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.320 2021/07/12 22:02:44 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.319 2021/07/12 21:43:44 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.320 2021/07/12 22:02:44 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -279,25 +279,33 @@ anonymize(sym_t *s)
 %token	<y_val>		T_CON
 %token	<y_string>	T_STRING
 
+%type	<y_sym>		identifier_sym
+%type	<y_name>	identifier
+%type	<y_string>	string
+%type	<y_string>	string2
+
 %type	<y_tnode>	primary_expression
+%type	<y_tnode>	generic_selection
+%type	<y_generic>	generic_assoc_list
+%type	<y_generic>	generic_association
 %type	<y_tnode>	postfix_expression
+%type	<y_tnode>	gcc_statement_expr_list
+%type	<y_tnode>	gcc_statement_expr_item
+%type	<y_op>		point_or_arrow
 %type	<y_tnode>	argument_expression_list
 %type	<y_tnode>	unary_expression
 %type	<y_tnode>	cast_expression
+%type	<y_tnode>	expr_opt
 %type	<y_tnode>	expr
+%type	<y_tnode>	assignment_expression
+%type	<y_tnode>	constant_expr
 
-%type	<y_sym>		func_decl
-%type	<y_sym>		notype_decl
-%type	<y_sym>		type_decl
-%type	<y_type>	type_specifier
 %type	<y_type>	begin_type_typespec
+%type	<y_type>	type_specifier
 %type	<y_type>	notype_type_specifier
 %type	<y_type>	struct_or_union_specifier
-%type	<y_type>	enum_specifier
 %type	<y_tspec>	struct_or_union
 %type	<y_sym>		braced_struct_declaration_list
-%type	<y_sym>		identifier_sym
-%type	<y_name>	identifier
 %type	<y_sym>		struct_declaration_list_with_rbrace
 %type	<y_sym>		struct_declaration_list
 %type	<y_sym>		struct_declaration
@@ -305,48 +313,42 @@ anonymize(sym_t *s)
 %type	<y_sym>		type_member_decls
 %type	<y_sym>		notype_member_decl
 %type	<y_sym>		type_member_decl
-%type	<y_tnode>	constant_expr
-%type	<y_tnode>	array_size
+%type	<y_type>	enum_specifier
 %type	<y_sym>		enum_declaration
 %type	<y_sym>		enums_with_opt_comma
 %type	<y_sym>		enumerator_list
 %type	<y_sym>		enumerator
-%type	<y_sym>		notype_direct_decl
-%type	<y_sym>		type_direct_decl
+%type	<y_qual_ptr>	type_qualifier
 %type	<y_qual_ptr>	pointer
 %type	<y_qual_ptr>	asterisk
-%type	<y_sym>		type_param_decl
-%type	<y_sym>		param_list
-%type	<y_sym>		abstract_decl_param_list
-%type	<y_sym>		direct_param_decl
-%type	<y_sym>		notype_param_decl
-%type	<y_sym>		direct_notype_param_decl
 %type	<y_qual_ptr>	type_qualifier_list_opt
 %type	<y_qual_ptr>	type_qualifier_list
-%type	<y_qual_ptr>	type_qualifier
+%type	<y_sym>		notype_decl
+%type	<y_sym>		type_decl
+%type	<y_sym>		notype_direct_decl
+%type	<y_sym>		type_direct_decl
+%type	<y_sym>		type_param_decl
+%type	<y_sym>		notype_param_decl
+%type	<y_sym>		direct_param_decl
+%type	<y_sym>		direct_notype_param_decl
+%type	<y_sym>		param_list
+%type	<y_tnode>	array_size
 %type	<y_sym>		identifier_list
+%type	<y_type>	type_name
+%type	<y_sym>		abstract_declaration
 %type	<y_sym>		abstract_declarator
 %type	<y_sym>		direct_abstract_declarator
+%type	<y_sym>		abstract_decl_param_list
 %type	<y_sym>		vararg_parameter_type_list
 %type	<y_sym>		parameter_type_list
 %type	<y_sym>		parameter_declaration
-%type	<y_tnode>	assignment_expression
-%type	<y_tnode>	gcc_statement_expr_list
-%type	<y_tnode>	gcc_statement_expr_item
-%type	<y_tnode>	generic_selection
-%type	<y_op>		point_or_arrow
-%type	<y_type>	type_name
-%type	<y_sym>		abstract_declaration
-%type	<y_tnode>	do_while_expr
-%type	<y_tnode>	expr_opt
-%type	<y_string>	string
-%type	<y_string>	string2
-%type	<y_name>	asm_or_symbolrename_opt
 %type	<y_range>	range
+%type	<y_name>	asm_or_symbolrename_opt
+
 %type	<y_seen_statement> block_item_list
 %type	<y_seen_statement> block_item
-%type	<y_generic>	generic_assoc_list
-%type	<y_generic>	generic_association
+%type	<y_tnode>	do_while_expr
+%type	<y_sym>		func_decl
 
 %%
 
