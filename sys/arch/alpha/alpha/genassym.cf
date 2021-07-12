@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.29 2021/07/11 01:58:41 thorpej Exp $
+# $NetBSD: genassym.cf,v 1.30 2021/07/12 15:21:51 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -67,6 +67,7 @@
 #
 
 quote #define __RWLOCK_PRIVATE
+quote #define __MUTEX_PRIVATE
 
 include <sys/param.h>
 include <sys/buf.h>
@@ -75,6 +76,7 @@ include <sys/sched.h>
 include <sys/mbuf.h>
 include <sys/msgbuf.h>
 include <sys/rwlock.h>
+include <sys/mutex.h>
 include <sys/syscall.h>
 
 include <machine/cpu.h>
@@ -198,6 +200,7 @@ define	CPU_INFO_CURLWP		offsetof(struct cpu_info, ci_curlwp)
 define	CPU_INFO_IDLE_LWP	offsetof(struct cpu_info, ci_data.cpu_idlelwp)
 define	CPU_INFO_SSIR		offsetof(struct cpu_info, ci_ssir)
 define	CPU_INFO_MTX_COUNT	offsetof(struct cpu_info, ci_mtx_count)
+define	CPU_INFO_MTX_OLDSPL	offsetof(struct cpu_info, ci_mtx_oldspl)
 define	CPU_INFO_SIZEOF		sizeof(struct cpu_info)
 
 # Bits in lock fields
@@ -205,3 +208,6 @@ define	RW_WRITE_WANTED		RW_WRITE_WANTED
 define	RW_WRITE_LOCKED		RW_WRITE_LOCKED
 define	RW_READ_INCR		RW_READ_INCR
 define	RW_READ_COUNT_SHIFT	RW_READ_COUNT_SHIFT
+define	MUTEX_IPL		offsetof(struct kmutex, mtx_ipl)
+define	MUTEX_SIMPLELOCK	offsetof(struct kmutex, mtx_lock)
+define	__SIMPLELOCK_LOCKED	__SIMPLELOCK_LOCKED
