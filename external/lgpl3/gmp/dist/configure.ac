@@ -35,7 +35,7 @@ see https://www.gnu.org/licenses/.
 AC_COPYRIGHT(GMP_COPYRIGHT)
 AH_TOP(/*GMP_COPYRIGHT*/)
 
-AC_REVISION($Revision: 1.1.1.4 $)
+AC_REVISION($Revision: 1.2 $)
 AC_PREREQ(2.59)
 AC_INIT(GNU MP, GMP_VERSION, [gmp-bugs@gmplib.org, see https://gmplib.org/manual/Reporting-Bugs.html], gmp)
 AC_CONFIG_SRCDIR(gmp-impl.h)
@@ -1027,7 +1027,7 @@ case $host in
     GMP_INCLUDE_MPN(mips32/mips-defs.m4)
 
     case $host in
-      [mips64*-*-* | mipsisa64*-*-* | mips*-*-irix[6789]*])
+      [mips64*-*-* | mipsisa64*-*-* | mips*-*-irix[6789]* | mipsn64*-*-*])
         abilist="n32 64 o32"
 
         cclist_n32="gcc cc"
