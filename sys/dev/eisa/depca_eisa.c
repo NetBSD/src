@@ -1,4 +1,4 @@
-/*	$NetBSD: depca_eisa.c,v 1.15 2014/03/29 19:28:24 christos Exp $	*/
+/*	$NetBSD: depca_eisa.c,v 1.16 2021/07/12 16:44:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: depca_eisa.c,v 1.15 2014/03/29 19:28:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: depca_eisa.c,v 1.16 2021/07/12 16:44:52 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -106,7 +106,8 @@ depca_eisa_attach(device_t parent, device_t self, void *aux)
 	struct eisa_cfg_irq eci;
 
 	sc->sc_dev = self;
-	aprint_error(": DEC DE422 Ethernet\n");
+	aprint_naive("\n");
+	aprint_normal(": DEC DE422 Ethernet\n");
 
 	sc->sc_iot = ea->ea_iot;
 	sc->sc_memt = ea->ea_memt;
