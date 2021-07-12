@@ -4684,7 +4684,7 @@ echo "include_mpn(\`mips32/mips-defs.m4')" >> $gmp_tmpconfigm4i
 
 
     case $host in
-      mips64*-*-* | mipsisa64*-*-* | mips*-*-irix[6789]*)
+      mips64*-*-* | mipsisa64*-*-* | mips*-*-irix[6789]* | mipsn64*-*-*)
         abilist="n32 64 o32"
 
         cclist_n32="gcc cc"
