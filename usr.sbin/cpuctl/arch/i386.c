@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.116 2021/07/10 17:18:05 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.117 2021/07/12 12:56:52 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.116 2021/07/10 17:18:05 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.117 2021/07/12 12:56:52 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -354,6 +354,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				[0x8c] = "11th gen Core (Tiger Lake)",
 				[0x8d] = "11th gen Core (Tiger Lake)",
 				[0x8e] = "7th or 8th gen Core (Kaby Lake, Coffee Lake) or Xeon E (Coffee Lake)",
+				[0x96] = "Atom x6000E (Elkhart Lake)",
+				[0x9c] = "Pentium Silver N6xxx, Celeron N45xx, Celeron N51xx (Jasper Lake)",
 				[0x9e] = "7th or 8th gen Core (Kaby Lake, Coffee Lake) or Xeon E (Coffee Lake)",
 				[0xa5] = "10th gen Core (Comet Lake)",
 				[0xa6] = "10th gen Core (Comet Lake)",
