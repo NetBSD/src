@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1426 2021/04/21 13:09:33 jakllsch Exp $
+$NetBSD: pcidevs,v 1.1427 2021/07/12 12:58:57 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -5183,6 +5183,56 @@ product INTEL WIFI_LINK_5350_1	0x423a	WiFi Link 5350
 product INTEL WIFI_LINK_5350_2	0x423b	WiFi Link 5350
 product INTEL WIFI_LINK_5150_1	0x423c	WiFi Link 5150
 product INTEL WIFI_LINK_5150_2	0x423d	WiFi Link 5150
+
+product INTEL JSL_ESPI		0x4d87	Jasper Lake eSPI
+product INTEL JSL_P2SB		0x4da0	Jasper Lake P2SB
+product INTEL JSL_PMC		0x4da1	Jasper Lake PMC
+product INTEL JSL_SMB		0x4da3	Jasper Lake SMBus
+product INTEL JSL_SPI_FLASH	0x4da4	Jasper Lake SPI (FLASH)
+product INTEL JSL_TRACE		0x4da6	Jasper Lake Intel Trace Hub
+product INTEL JSL_UART_0	0x4da8	Jasper Lake UART 0
+product INTEL JSL_UART_1	0x4da9	Jasper Lake UART 1
+product INTEL JSL_SPI_0		0x4daa	Jasper Lake SPI 0
+product INTEL JSL_SPI_1		0x4dab	Jasper Lake SPI 1
+product INTEL JSL_PCIE_1	0x4db8	Jasper Lake PCIe Root Port 1
+product INTEL JSL_PCIE_2	0x4db9	Jasper Lake PCIe Root Port 2
+product INTEL JSL_PCIE_3	0x4dba	Jasper Lake PCIe Root Port 3
+product INTEL JSL_PCIE_4	0x4dbb	Jasper Lake PCIe Root Port 4
+product INTEL JSL_PCIE_5	0x4dbc	Jasper Lake PCIe Root Port 5
+product INTEL JSL_PCIE_6	0x4dbd	Jasper Lake PCIe Root Port 6
+product INTEL JSL_PCIE_7	0x4dbe	Jasper Lake PCIe Root Port 7
+product INTEL JSL_PCIE_8	0x4dbf	Jasper Lake PCIe Root Port 8
+product INTEL JSL_EMMC		0x4dc4	Jasper Lake eMMC
+product INTEL JSL_LPSS_I2C_4	0x4dc5	Jasper Lake LPSS I2C 4
+product INTEL JSL_LPSS_I2C_5	0x4dc6	Jasper Lake LPSS I2C 5
+product INTEL JSL_UART_2	0x4dc7	Jasper Lake UART 2
+product INTEL JSL_CAVS		0x4dc8	Jasper Lake cAVS
+product INTEL JSL_AHCI_1	0x4dd2	Jasper Lake SATA (AHCI)
+product INTEL JSL_AHCI_2	0x4dd3	Jasper Lake SATA (AHCI)
+product INTEL JSL_D_RAID	0x4dd6	Jasper Lake SATA (RAID, desktop)
+product INTEL JSL_M_RAID	0x4dd7	Jasper Lake SATA (RAID, mobile)
+product INTEL JSL_AHCI_OPTANE	0x4dde	Jasper Lake SATA (Optane, desktop)
+product INTEL JSL_HECI_1	0x4de0	Jasper Lake HECI 1
+product INTEL JSL_HECI_2	0x4de1	Jasper Lake HECI 2
+product INTEL JSL_HECI_3	0x4de4	Jasper Lake HECI 3
+product INTEL JSL_LPSS_I2C_0	0x4de8	Jasper Lake LPSS I2C 0
+product INTEL JSL_LPSS_I2C_1	0x4de9	Jasper Lake LPSS I2C 1
+product INTEL JSL_LPSS_I2C_2	0x4dea	Jasper Lake LPSS I2C 2
+product INTEL JSL_LPSS_I2C_3	0x4deb	Jasper Lake LPSS I2C 3
+product INTEL JSL_XHCI		0x4ded	Jasper Lake USB Host (xHCI)
+product INTEL JSL_XDCI		0x4dee	Jasper Lake USB Device (xDCI)
+product INTEL JSL_SSRAM		0x4def	Jasper Lake Shared SRAM
+product INTEL JSL_CNVI_0	0x4df0	Jasper Lake CNVi WiFi (SKU 0)
+product INTEL JSL_CNVI_1	0x4df1	Jasper Lake CNVi WiFi (SKU 1)
+product INTEL JSL_CNVI_2	0x4df2	Jasper Lake CNVi WiFi (SKU 2)
+product INTEL JSL_CNVI_3	0x4df3	Jasper Lake CNVi WiFi (SKU 3)
+product INTEL JSL_SCS		0x4df8	Jasper Lake SD Card
+product INTEL JSL_SPI_2		0x4dfb	Jasper Lake SPI 2
+product INTEL JSL_DPTF		0x4e03	Jasper Lake DPTF
+product INTEL JSL_HB		0x4e22	Jasper Lake Processor Transaction Route
+product INTEL JSL_GPU_EU_16	0x4e55	Jasper Lake GPU 16 EU
+product INTEL JSL_GPU_EU_24	0x4e61	Jasper Lake GPU 24 EU
+product INTEL JSL_GPU_EU_32	0x4e71	Jasper Lake GPU 32 EU
 product INTEL EP80579_HB	0x5020	EP80579 Host
 product INTEL EP80579_MEM	0x5021	EP80579 Memory
 product INTEL EP80579_EDMA	0x5023	EP80579 EDMA
@@ -7574,6 +7624,7 @@ product REALTEK RTL8188EE	0x8179	RTL8188EE Wireless LAN 802.11n PCI-E NIC
 product REALTEK RT8180		0x8180	8180 802.11b
 product REALTEK RT8185		0x8185	8185 802.11a/b/g
 product REALTEK RTL8192EE	0x818b	RTL8192EE Wireless LAN 802.11n PCI-E NIC
+product REALTEK RTL8821CE	0xc821	RTL8821CE 802.11ac PCIe NIC
 
 /* Red Hat products */
 product REDHAT PPB		0x0001	Qemu PCI-PCI
