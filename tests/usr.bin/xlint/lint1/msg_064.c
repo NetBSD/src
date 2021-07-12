@@ -1,7 +1,16 @@
-/*	$NetBSD: msg_064.c,v 1.2 2021/02/21 09:07:58 rillig Exp $	*/
+/*	$NetBSD: msg_064.c,v 1.3 2021/07/12 18:00:36 rillig Exp $	*/
 # 3 "msg_064.c"
 
 // Test for message: ()-less function definition [64]
 
-TODO: "Add example code that triggers the above message." /* expect: 249 */
-TODO: "Add example code that almost triggers the above message."
+typedef int (function)(void);
+
+/*
+ * Even though typedef_function has type function, this construction is not
+ * allowed.  A function definition must always look like a function
+ * definition, and that includes the parentheses for the arguments or
+ * parameters.
+ */
+function typedef_function {
+	/* expect-1: error: ()-less function definition [64] */
+}
