@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.s,v 1.5 2021/07/11 01:58:41 thorpej Exp $	*/
+/*	$NetBSD: lock_stubs.s,v 1.6 2021/07/12 15:21:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2021 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: lock_stubs.s,v 1.5 2021/07/11 01:58:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lock_stubs.s,v 1.6 2021/07/12 15:21:51 thorpej Exp $");
 
 #include "assym.h"
 
@@ -109,6 +109,120 @@ LEAF(mutex_exit, 1)
 3:
 	br	1b
 	END(mutex_exit)
+
+/*
+ * void mutex_spin_enter(kmutex_t *mtx);
+ */
+LEAF(mutex_spin_enter, 1);
+	LDGP(pv)
+
+	/*
+	 * STEP 1: Perform the MUTEX_SPIN_SPLRAISE() function.
+	 * (see sys/kern/kern_mutex.c)
+	 *
+	 *	s = splraise(mtx->mtx_ipl);
+	 *	if (curcpu->ci_mtx_count-- == 0)
+	 *		curcpu->ci_mtx_oldspl = s;
+	 */
+
+	call_pal PAL_OSF1_rdps		/* clobbers v0, t0, t8..t11 */
+					/* v0 = cur_ipl */
+#ifdef __BWX__
+	mov	a0, a1			/* a1 = mtx */
+	ldbu	a0, MUTEX_IPL(a0)	/* a0 = new_ipl */
+	mov	v0, a4			/* save cur_ipl in a4 */
+#else
+	mov	a0, a1			/* a1 = mtx */
+	ldq_u	a2, MUTEX_IPL(a0)
+	mov	v0, a4			/* save cur_ipl in a4 */
+	extbl	a2, MUTEX_IPL, a0	/* a0 = new_ipl */
+#endif /* __BWX__ */
+	cmplt	v0, a0, a3		/* a3 = (cur_ipl < new_ipl) */
+	GET_CURLWP	/* Note: GET_CURLWP clobbers v0, t0, t8...t11. */
+	mov	v0, a5			/* save curlwp in a5 */
+	/*
+	 * The forward-branch over the SWPIPL call is correctly predicted
+	 * not-taken by the CPU because it's rare for a code path to acquire
+	 * 2 spin mutexes.
+	 */
+	beq	a3, 1f			/*      no? -> skip... */
+	call_pal PAL_OSF1_swpipl	/* clobbers v0, t0, t8..t11 */
+	/*
+	 * v0 returns the old_ipl, which will be the same as the
+	 * cur_ipl we squirreled away in a4 earlier.
+	 */
+1:
+	/*
+	 * curlwp->l_cpu is now stable.  Update the counter and
+	 * stash the old_ipl.  Just in case it's not clear what's
+	 * going on, we:
+	 *
+	 *	- Load previous value of mtx_oldspl into t1.
+	 *	- Conditionally move old_ipl into t1 if mtx_count == 0.
+	 *	- Store t1 back to mtx_oldspl; if mtx_count != 0,
+	 *	  the store is redundant, but it's faster than a forward
+	 *	  branch.
+	 */
+	ldq	a3, L_CPU(a5)		/* a3 = curlwp->l_cpu (curcpu) */
+	ldl	t0, CPU_INFO_MTX_COUNT(a3)
+	ldl	t1, CPU_INFO_MTX_OLDSPL(a3)
+	cmoveq	t0, a4, t1		/* mtx_count == 0? -> t1 = old_ipl */
+	subl	t0, 1, t2		/* mtx_count-- */
+	stl	t1, CPU_INFO_MTX_OLDSPL(a3)
+	stl	t2, CPU_INFO_MTX_COUNT(a3)
+
+	/*
+	 * STEP 2: __cpu_simple_lock_try(&mtx->mtx_lock)
+	 */
+	ldl_l	t0, MUTEX_SIMPLELOCK(a1)
+	ldiq	t1, __SIMPLELOCK_LOCKED
+	bne	t0, 2f			/* contended */
+	stl_c	t1, MUTEX_SIMPLELOCK(a1)
+	beq	t1, 2f			/* STL_C failed; consider contended */
+	MB
+	RET
+2:
+	mov	a1, a0			/* restore first argument */
+	lda	pv, mutex_spin_retry
+	jmp	(pv)
+	END(mutex_spin_enter)
+
+/*
+ * void mutex_spin_exit(kmutex_t *mtx);
+ */
+LEAF(mutex_spin_exit, 1)
+	LDGP(pv);
+	MB
+
+	/*
+	 * STEP 1: __cpu_simple_unlock(&mtx->mtx_lock)
+	 */
+	stl	zero, MUTEX_SIMPLELOCK(a0)
+
+	/*
+	 * STEP 2: Perform the MUTEX_SPIN_SPLRESTORE() function.
+	 * (see sys/kern/kern_mutex.c)
+	 *
+	 *	s = curcpu->ci_mtx_oldspl;
+	 *	if (++curcpu->ci_mtx_count == 0)
+	 *		splx(s);
+	 */
+	GET_CURLWP	/* Note: GET_CURLWP clobbers v0, t0, t8...t11. */
+	ldq	a3, L_CPU(v0)		/* a3 = curlwp->l_cpu (curcpu) */
+	ldl	t0, CPU_INFO_MTX_COUNT(a3)
+	ldl	a0, CPU_INFO_MTX_OLDSPL(a3)
+	addl	t0, 1, t2		/* mtx_count++ */
+	stl	t2, CPU_INFO_MTX_COUNT(a3)
+	/*
+	 * The forward-branch over the SWPIPL call is correctly predicted
+	 * not-taken by the CPU because it's rare for a code path to acquire
+	 * 2 spin mutexes.
+	 */
+	bne	t2, 1f			/* t2 != 0? Skip... */
+	call_pal PAL_OSF1_swpipl	/* clobbers v0, t0, t8..t11 */
+1:
+	RET
+	END(mutex_spin_exit)
 
 /*
  * void rw_enter(krwlock_t *rwl, krw_t op);
