@@ -1,5 +1,5 @@
 #! /bin/sh
-#	$NetBSD: msg_xlat.sh,v 1.4 2021/07/11 10:51:46 cjep Exp $
+#	$NetBSD: msg_xlat.sh,v 1.5 2021/07/12 19:03:20 kre Exp $
 
 #-
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -174,7 +174,7 @@ do
 		$IGNORE_MISSING_TRANSLATIONS || rval=1
 	fi
 done
-IFS=%
+unset IFS
 
 if $count_fmtargs; then exit $rval; fi
 
@@ -210,7 +210,7 @@ while
 do
 	eval msg=\${MSGTEXT_$msgnum}
 	if [ -z "$msg" ]; then continue; fi
-	printf '%s\0' $msg
+	printf '%s\0' "$msg"
 done
 
 exit $rval
