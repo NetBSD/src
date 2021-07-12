@@ -27,6 +27,7 @@ define(<GMP_NUMB_BITS>,eval(GMP_LIMB_BITS-GMP_NAIL_BITS))
 changequote(`,')
 ifdef(`__CONFIG_M4_INCLUDED__',,`
 include(CONFIG_TOP_SRCDIR`/mpn/asm-defs.m4')
+include_mpn(`arm64/arm64-defs.m4')
 define_not_for_expansion(`HAVE_HOST_CPU_aarch64')
 define_not_for_expansion(`HAVE_ABI_64')
 define_not_for_expansion(`HAVE_LIMB_LITTLE_ENDIAN')

@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.8 2018/06/01 21:46:18 mrg Exp $
+$NetBSD: README,v 1.9 2021/07/12 07:59:51 mrg Exp $
 
 GMP in NetBSD.  We need GMP for GCC >= 4.2.
 
@@ -10,7 +10,20 @@ creates a bunch of symlinks and weeds out the sources lists, and there are
 files with the same name in different subdirectories linked into the same
 final product.  All of these issues need to be dealt with.
 
-There are a few steps to this:
+There is a mostly-working "mknative" for GMP now.  If this fails, see the
+section below for the old instructions.
+
+	- run a "./build tools libs", possibly setting MKGCC=no if the
+	  GMP port is currently not working at all.
+
+	- cd to tools/gmp, and run $TOOLDIR/bin/nbmake-$arch native-gmp
+
+	- if that works, commit the files it changed in the source tree.
+
+	- set NEWCONFIGDIR=/writeable/src if eg /usr/src is read-only.
+
+These are the old steps, that maybe are necessary to fix the automated
+output:
 
 	- run ./configure, save the output.  you can use the makefile
 	  "Makefile.netbsd-gmp" in this directory to run this with the
@@ -54,9 +67,5 @@ There are a few steps to this:
 The amd64 port is a good reference to compare.
 
 
-This is still a work in progress and methods used to build may be
-changed at any time.
-
-
 mrg@netbsd.org
-- 2017/08/22
+- 2021/07/11
