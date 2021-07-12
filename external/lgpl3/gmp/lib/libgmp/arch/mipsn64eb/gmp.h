@@ -361,11 +361,9 @@ typedef __mpq_struct *mpq_ptr;
     GCC 4.3 and above with -std=c99 or -std=gnu99 implements ISO C99
     inline semantics, unless -fgnu89-inline is used.  */
 #ifdef __GNUC__
-#if (defined __GNUC_STDC_INLINE__) || (__GNUC__ == 4 && __GNUC_MINOR__ == 2) \
-  || (defined __GNUC_GNU_INLINE__ && defined __cplusplus)
+#if (defined __GNUC_STDC_INLINE__) || \
+    (__GNUC__ == 4 && __GNUC_MINOR__ >= 2) || (__GNUC__ > 4)
 #define __GMP_EXTERN_INLINE extern __inline__ __attribute__ ((__gnu_inline__))
-#else
-#define __GMP_EXTERN_INLINE      extern __inline__
 #endif
 #define __GMP_INLINE_PROTOTYPES  1
 #endif
@@ -1693,6 +1691,9 @@ __GMP_DECLSPEC int mpn_sec_invert (mp_ptr, mp_ptr, mp_srcptr, mp_size_t, mp_bitc
 #define mpn_sec_invert_itch __MPN(sec_invert_itch)
 __GMP_DECLSPEC mp_size_t mpn_sec_invert_itch (mp_size_t) __GMP_ATTRIBUTE_PURE;
 
+#define mpn_udiv_w_sdiv __MPN(udiv_w_sdiv)
+__GMP_DECLSPEC mp_limb_t mpn_udiv_w_sdiv (mp_limb_t *, mp_limb_t, mp_limb_t, mp_limb_t);
+
 
 /**************** mpz inlines ****************/
 
@@ -2324,12 +2325,12 @@ enum
 
 /* Define CC and CFLAGS which were used to build this version of GMP */
 #define __GMP_CC "gcc"
-#define __GMP_CFLAGS "-O2 -pedantic -mabi=n32"
+#define __GMP_CFLAGS "-O2 -pedantic"
 
 /* Major version number is the value of __GNU_MP__ too, above. */
 #define __GNU_MP_VERSION            6
 #define __GNU_MP_VERSION_MINOR      2
-#define __GNU_MP_VERSION_PATCHLEVEL 0
+#define __GNU_MP_VERSION_PATCHLEVEL 1
 #define __GNU_MP_RELEASE (__GNU_MP_VERSION * 10000 + __GNU_MP_VERSION_MINOR * 100 + __GNU_MP_VERSION_PATCHLEVEL)
 
 #define __GMP_H__

@@ -27,7 +27,7 @@ changequote(`,')
 ifdef(`__CONFIG_M4_INCLUDED__',,`
 include(CONFIG_TOP_SRCDIR`/mpn/asm-defs.m4')
 include_mpn(`mips32/mips-defs.m4')
-define_not_for_expansion(`HAVE_HOST_CPU_mips64el')
+define_not_for_expansion(`HAVE_HOST_CPU_mipsn64el')
 define_not_for_expansion(`HAVE_ABI_n32')
 define_not_for_expansion(`HAVE_LIMB_LITTLE_ENDIAN')
 define_not_for_expansion(`HAVE_DOUBLE_IEEE_LITTLE_ENDIAN')
