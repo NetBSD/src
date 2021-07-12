@@ -548,7 +548,7 @@ see https://www.gnu.org/licenses/.
 #define PACKAGE_NAME "GNU MP"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "GNU MP 6.2.0"
+#define PACKAGE_STRING "GNU MP 6.2.1"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "gmp"
@@ -557,7 +557,7 @@ see https://www.gnu.org/licenses/.
 #define PACKAGE_URL "http://www.gnu.org/software/gmp/"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "6.2.0"
+#define PACKAGE_VERSION "6.2.1"
 
 /* Define as the return type of signal handlers (`int' or `void'). */
 #define RETSIGTYPE void
@@ -590,7 +590,7 @@ see https://www.gnu.org/licenses/.
 #define TUNE_SQR_TOOM2_MAX SQR_TOOM2_MAX_GENERIC
 
 /* Version number of package */
-#define VERSION "6.2.0"
+#define VERSION "6.2.1"
 
 /* Define to 1 to enable ASSERT checking, per --enable-assert */
 /* #undef WANT_ASSERT */
@@ -641,7 +641,7 @@ see https://www.gnu.org/licenses/.
 
 /* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
    `char[]'. */
-#define YYTEXT_POINTER 1
+/* #undef YYTEXT_POINTER */
 
 /* Define to `__inline__' or `__inline' if that's what the C compiler
    calls it, or to nothing if 'inline' is not supported under any name.  */
