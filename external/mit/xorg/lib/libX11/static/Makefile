@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2016/06/02 22:41:26 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2021/07/13 05:53:13 mrg Exp $
 
 NOPIC=	1
 
@@ -17,10 +17,6 @@ SRCS+=	\
 	${SRCS.xlcUTF8Load} \
 	${SRCS.xlibi18n} \
 	${SRCS.xomGeneric}
-
-SRCS+=	\
-	XlcDL.c \
-	XlcSL.c
 
 CWARNFLAGS.clang+=	-Wno-parentheses
 

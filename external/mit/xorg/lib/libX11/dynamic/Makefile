@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/08/11 23:15:38 joerg Exp $
+#	$NetBSD: Makefile,v 1.4 2021/07/13 05:53:12 mrg Exp $
 
 NOLINT=		1
 NOPROFILE=	1
@@ -7,8 +7,20 @@ NOSTATICLIB=	1
 .include <bsd.own.mk>
 
 .include "../Makefile.libx11"
+.include "../Makefile.ximcp"
+.include "../Makefile.xlcDef"
+.include "../Makefile.xlcUTF8Load"
+.include "../Makefile.xlibi18n"
+.include "../Makefile.xomGeneric"
 
-SRCS+=		XlcDL.c XlcSL.c XDefaultIMIF.c XDefaultOMIF.c
+# Set this to use dynamic i18n support.
+#SRCS+=	XlcDL.c XlcSL.c
+
+SRCS+=	${SRCS.ximcp} \
+	${SRCS.xlcDef} \
+	${SRCS.xlcUTF8Load} \
+	${SRCS.xlibi18n} \
+	${SRCS.xomGeneric}
 
 CPPFLAGS.lcInit.c=	$(LC_DYNDEFINES)
 CPPFLAGS.lcGeneric.c=	$(LC_DYNDEFINES)
