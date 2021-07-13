@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.151 2020/10/17 09:20:33 wiz Exp $
+.\"	$NetBSD: sysctl.7,v 1.152 2021/07/13 16:56:43 nia Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd October 17, 2020
+.Dd July 13, 2021
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -2602,7 +2602,7 @@ Return system wide guard size for the main thread of a program.
 .It Li vm.thread_guard_size
 Return system wide default size for the guard area of all other threads
 of a program.
-.It Li vm.swap_encrypt Bq Sy "EXPERIMENTAL" Ns No , default off
+.It Li vm.swap_encrypt
 If true, encrypt data while swapped out to disk.
 .Pp
 Each swap device maintains an independent AES-256 key, generated when
