@@ -20,7 +20,7 @@
 #ifndef GCC_AARCH64_NETBSD_H
 #define GCC_AARCH64_NETBSD_H
 
-/* NetBSD malloc(3) does 64, not 128 bytes. */
+/* NetBSD malloc(3) does 64, not 128 bits. */
 #undef MALLOC_ABI_ALIGNMENT
 #define MALLOC_ABI_ALIGNMENT  64
 
