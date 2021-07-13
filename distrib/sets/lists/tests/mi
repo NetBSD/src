@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1085 2021/07/11 19:24:41 rillig Exp $
+# $NetBSD: mi,v 1.1086 2021/07/13 19:38:10 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6260,6 +6260,8 @@
 ./usr/tests/usr.bin/xlint/lint1/lex_floating.exp		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/lex_integer.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/lex_integer.exp			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/lex_integer_binary.c		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/lex_integer_binary.exp		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/lex_integer_ilp32.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/lex_integer_ilp32.exp		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/lex_string.c			tests-usr.bin-tests	compattestfile,atf
