@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2021/07/12 09:40:31 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2021/07/13 05:22:27 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -102,7 +102,7 @@ LIBDPLIBS=	Xext		${.CURDIR}/../libXext \
 		Xdmcp		${.CURDIR}/../libXdmcp \
 		glapi		${.CURDIR}/../libglapi${OLD_SUFFIX} \
 		drm		${.CURDIR}/../libdrm \
-		gbm		${.CURDIR}/../libgbm \
+		gbm		${.CURDIR}/../libgbm${OLD_SUFFIX} \
 		xshmfence	${.CURDIR}/../libxshmfence \
 		X11-xcb		${.CURDIR}/../libX11/libX11-xcb \
 		xcb-dri2	${.CURDIR}/../libxcb/dri2 \
