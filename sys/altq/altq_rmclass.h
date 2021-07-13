@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rmclass.h,v 1.8 2006/10/28 11:35:17 peter Exp $	*/
+/*	$NetBSD: altq_rmclass.h,v 1.9 2021/07/13 08:04:31 ozaki-r Exp $	*/
 /*	$KAME: altq_rmclass.h,v 1.10 2003/08/20 23:30:23 itojun Exp $	*/
 
 /*
@@ -76,7 +76,7 @@ struct red;
 #define	TV_LT(a, b) (((a)->tv_sec < (b)->tv_sec) ||  \
 	(((a)->tv_usec < (b)->tv_usec) && ((a)->tv_sec <= (b)->tv_sec)))
 
-#define	TV_DELTA(a, b, delta) { \
+#define	TV_DELTA(a, b, delta) do { \
 	register int	xxs;	\
 							\
 	delta = (a)->tv_usec - (b)->tv_usec; \
@@ -95,9 +95,9 @@ struct red;
 			break; \
 		} \
 	} \
-}
+} while (0)
 
-#define	TV_ADD_DELTA(a, delta, res) { \
+#define	TV_ADD_DELTA(a, delta, res) do { \
 	register int xxus = (a)->tv_usec + (delta); \
 	\
 	(res)->tv_sec = (a)->tv_sec; \
@@ -106,7 +106,7 @@ struct red;
 		xxus -= 1000000; \
 	} \
 	(res)->tv_usec = xxus; \
-}
+} while (0)
 
 #define	RM_TIMEOUT	2	/* 1 Clock tick. */
 
