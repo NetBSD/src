@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.70 2021/01/31 22:45:46 rillig Exp $	*/
+/*	$NetBSD: defs.h,v 1.71 2021/07/13 09:13:00 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -68,7 +68,12 @@ const char *getfslabelname(uint, uint);
  * if a system does not have more ram (in MB) than this, swap will be enabled
  * very early (as soon as the swap partition has been created)
  */
+#ifdef	EXTRACT_NEEDS_BIG_RAM	/* we use an expensive decompressor */
+#define	TINY_RAM_SIZE		256
+#else
 #define	TINY_RAM_SIZE		32
+#endif
+
 /*
  * if a system has less ram (in MB) than this, we will not create a
  * tmpfs /tmp by default (to workaround PR misc/54886)
