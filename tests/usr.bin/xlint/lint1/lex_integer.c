@@ -1,4 +1,4 @@
-/*	$NetBSD: lex_integer.c,v 1.5 2021/07/10 18:42:28 rillig Exp $	*/
+/*	$NetBSD: lex_integer.c,v 1.6 2021/07/13 19:38:10 rillig Exp $	*/
 # 3 "lex_integer.c"
 
 /*
@@ -58,4 +58,11 @@ suffixes(void)
 	sinkull(3lul);
 	/* The 'Ll' must not used mixed case. Checked by the compiler. */
 	sinkull(3ULl);
+}
+
+/* https://gcc.gnu.org/onlinedocs/gcc/Binary-constants.html */
+void
+binary_literal(void)
+{
+	sinku(0b1111000001011010);
 }
