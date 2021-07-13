@@ -1,13 +1,19 @@
-# $NetBSD: Makefile,v 1.86 2021/07/11 19:24:42 rillig Exp $
+# $NetBSD: Makefile,v 1.87 2021/07/13 18:50:16 rillig Exp $
 
 NOMAN=		# defined
 MAX_MESSAGE=	345		# see lint1/err.c
 
 .include <bsd.own.mk>
 
+ARCHSUBDIR!=	cd ${NETBSDSRCDIR}/usr.bin/xlint/lint1 && ${MAKE} -v ARCHSUBDIR
+
 TESTSDIR=	${TESTSBASE}/usr.bin/xlint/lint1
 
 TESTS_SH=	t_integration
+TESTS_SH_SRC_t_integration=	archsubdir.sh t_integration.sh
+
+archsubdir.sh:
+	@echo archsubdir=${ARCHSUBDIR} >${.TARGET}
 
 FILESDIR=	${TESTSDIR}
 FILES+=		c11_generic_expression.c
@@ -198,6 +204,6 @@ sync-mi: .PHONY
 	cvs diff "$$mi" || true
 
 accept: .PHONY
-	@sh ./accept.sh ''
+	@archsubdir=${ARCHSUBDIR:Q} sh ./accept.sh ''
 
 .include <bsd.test.mk>

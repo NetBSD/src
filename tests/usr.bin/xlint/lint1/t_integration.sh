@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.67 2021/07/11 22:41:36 rillig Exp $
+# $NetBSD: t_integration.sh,v 1.68 2021/07/13 18:50:16 rillig Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -26,8 +26,7 @@
 #
 
 lint1=/usr/libexec/lint1
-
-: "${machine_arch:="$(sysctl -n hw.machine_arch)"}"
+: "${archsubdir:=archsubdir_must_be_set}"
 
 
 configure_test_case()
@@ -37,7 +36,7 @@ configure_test_case()
 	# shellcheck disable=SC2016
 	awk='
 		BEGIN {
-			# see usr.bin/xlint/arch/.../targparam.h
+			# see usr.bin/xlint/arch/*/targparam.h
 			platform["aarch64"]	= "schar lp64  long ldbl-128"
 			platform["alpha"]	= "schar lp64  long ldbl-64"
 			platform["arm"]		= "uchar ilp32 long ldbl-64"
@@ -68,15 +67,15 @@ configure_test_case()
 				printf("bad property '\''%s'\''\n", prop) > "/dev/stderr"
 				exit(1)
 			}
-			if (platform[machine_arch] == "") {
-				printf("bad machine_arch '\''%s'\''\n", machine_arch) > "/dev/stderr"
+			if (platform[archsubdir] == "") {
+				printf("bad archsubdir '\''%s'\''\n", archsubdir) > "/dev/stderr"
 				exit(1)
 			}
-			return match(" " platform[machine_arch] " ", " " prop " ")
+			return match(" " platform[archsubdir] " ", " " prop " ")
 		}
 
 		BEGIN {
-			machine_arch = "'"$machine_arch"'"
+			archsubdir = "'"$archsubdir"'"
 			flags = "-g -S -w"
 			skip = "no"
 		}
