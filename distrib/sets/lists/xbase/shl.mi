@@ -1,25 +1,25 @@
-# $NetBSD: shl.mi,v 1.95 2021/07/11 00:08:06 mrg Exp $
+# $NetBSD: shl.mi,v 1.96 2021/07/13 05:53:12 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
-./usr/X11R7/lib/X11/locale/lib/common/ximcp.so	xbase-libX11-lib		xorg
-./usr/X11R7/lib/X11/locale/lib/common/ximcp.so.2	xbase-libX11-lib	xorg
-./usr/X11R7/lib/X11/locale/lib/common/ximcp.so.2.0	xbase-libX11-lib	xorg
-./usr/X11R7/lib/X11/locale/lib/common/xlcDef.so	xbase-libX11-lib		xorg
-./usr/X11R7/lib/X11/locale/lib/common/xlcDef.so.2	xbase-libX11-lib	xorg
-./usr/X11R7/lib/X11/locale/lib/common/xlcDef.so.2.0	xbase-libX11-lib	xorg
-./usr/X11R7/lib/X11/locale/lib/common/xlcUTF8Load.so	xbase-libX11-lib	xorg
-./usr/X11R7/lib/X11/locale/lib/common/xlcUTF8Load.so.2	xbase-libX11-lib	xorg
-./usr/X11R7/lib/X11/locale/lib/common/xlcUTF8Load.so.2.0	xbase-libX11-lib	xorg
-./usr/X11R7/lib/X11/locale/lib/common/xlibi18n.so	xbase-libX11-lib	xorg
-./usr/X11R7/lib/X11/locale/lib/common/xlibi18n.so.2	xbase-libX11-lib	xorg
-./usr/X11R7/lib/X11/locale/lib/common/xlibi18n.so.2.0	xbase-libX11-lib	xorg
-./usr/X11R7/lib/X11/locale/lib/common/xlocale.so	xbase-obsolete	obsolete
-./usr/X11R7/lib/X11/locale/lib/common/xlocale.so.2	xbase-obsolete	obsolete
-./usr/X11R7/lib/X11/locale/lib/common/xlocale.so.2.0	xbase-obsolete	obsolete
-./usr/X11R7/lib/X11/locale/lib/common/xomGeneric.so	xbase-libX11-lib	xorg
-./usr/X11R7/lib/X11/locale/lib/common/xomGeneric.so.2	xbase-libX11-lib	xorg
-./usr/X11R7/lib/X11/locale/lib/common/xomGeneric.so.2.0	xbase-libX11-lib	xorg
+./usr/X11R7/lib/X11/locale/lib/common/ximcp.so		obsolet		obsolete
+./usr/X11R7/lib/X11/locale/lib/common/ximcp.so.2	obsolete	obsolete
+./usr/X11R7/lib/X11/locale/lib/common/ximcp.so.2.0	obsolete	obsolete
+./usr/X11R7/lib/X11/locale/lib/common/xlcDef.so		obsolete	obsolete
+./usr/X11R7/lib/X11/locale/lib/common/xlcDef.so.2	obsolete	obsolete
+./usr/X11R7/lib/X11/locale/lib/common/xlcDef.so.2.0	obsolete	obsolete
+./usr/X11R7/lib/X11/locale/lib/common/xlcUTF8Load.so	obsolete	obsolete
+./usr/X11R7/lib/X11/locale/lib/common/xlcUTF8Load.so.2	obsolete	obsolete
+./usr/X11R7/lib/X11/locale/lib/common/xlcUTF8Load.so.2.0	obsolete	obsolete
+./usr/X11R7/lib/X11/locale/lib/common/xlibi18n.so	obsolete	obsolete
+./usr/X11R7/lib/X11/locale/lib/common/xlibi18n.so.2	obsolete	obsolete
+./usr/X11R7/lib/X11/locale/lib/common/xlibi18n.so.2.0	obsolete	obsolete
+./usr/X11R7/lib/X11/locale/lib/common/xlocale.so	obsolete	obsolete
+./usr/X11R7/lib/X11/locale/lib/common/xlocale.so.2	obsolete	obsolete
+./usr/X11R7/lib/X11/locale/lib/common/xlocale.so.2.0	obsolete	obsolete
+./usr/X11R7/lib/X11/locale/lib/common/xomGeneric.so	obsolete	obsolete
+./usr/X11R7/lib/X11/locale/lib/common/xomGeneric.so.2	obsolete	obsolete
+./usr/X11R7/lib/X11/locale/lib/common/xomGeneric.so.2.0	obsolete	obsolete
 ./usr/X11R7/lib/libEGL.so			xbase-libEGL-lib		xorg,compatx11file,xorg_glamor
 ./usr/X11R7/lib/libEGL.so.0			xbase-libEGL-lib		xorg,compatx11file,xorg_glamor
 ./usr/X11R7/lib/libEGL.so.0.0			xbase-libEGL-lib		xorg,compatx11file,xorg_glamor
