@@ -1,7 +1,18 @@
-/*	$NetBSD: msg_065.c,v 1.2 2021/02/21 09:07:58 rillig Exp $	*/
+/*	$NetBSD: msg_065.c,v 1.3 2021/07/13 21:50:05 rillig Exp $	*/
 # 3 "msg_065.c"
 
 // Test for message: %s has no named members [65]
 
-TODO: "Add example code that triggers the above message." /* expect: 249 */
-TODO: "Add example code that almost triggers the above message."
+struct ok {
+	int member;
+};
+
+/* XXX: should generate a warning as well. */
+struct empty {
+};
+
+struct only_unnamed_members {
+	unsigned int :14;
+	unsigned int :0;
+};
+/* expect-1: warning: structure has no named members [65] */
