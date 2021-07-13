@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.s,v 1.7 2021/07/13 01:59:10 thorpej Exp $	*/
+/*	$NetBSD: lock_stubs.s,v 1.8 2021/07/13 13:58:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2021 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: lock_stubs.s,v 1.7 2021/07/13 01:59:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lock_stubs.s,v 1.8 2021/07/13 13:58:30 thorpej Exp $");
 
 #include "assym.h"
 
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: lock_stubs.s,v 1.7 2021/07/13 01:59:10 thorpej Exp $
  */
 #define	MB(label)	label: unop
 #else
-#define	MB		/* nothing */
+#define	MB(label)	/* nothing */
 #endif
 
 /*
