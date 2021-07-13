@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.40 2021/04/13 07:53:19 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.41 2021/07/13 09:13:00 martin Exp $
 #
 # Makefile for sysinst
 
@@ -93,6 +93,10 @@ CPPFLAGS+=	-I. -I${.CURDIR}/../.. -I${.CURDIR} \
 		-DMACH_${MACHINE} -DARCH_${MACHINE_ARCH} \
 		${NODISKLABEL:D-DNO_DISKLABEL} \
 		${NOPARTMAN:D-DNO_PARTMAN}
+
+.if ${USE_XZ_SETS:Uno} != "no"
+CPPFLAGS+=	-DEXTRACT_NEEDS_BIG_RAM
+.endif
 
 .if ${RELEASEMACHINEDIR} != ${MACHINE}
 CPPFLAGS+=	-DARCH_SUBDIR="\"${RELEASEMACHINEDIR}\""
