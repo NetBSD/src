@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.5 2021/06/16 00:21:19 riastradh Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.6 2021/07/13 09:00:26 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.5 2021/06/16 00:21:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.6 2021/07/13 09:00:26 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -369,7 +369,7 @@ lagg_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_extflags = IFEF_MPSAFE;
 	ifp->if_transmit = lagg_transmit;
 	ifp->if_start = lagg_start;
-	IFQ_SET_READY(&ifq->if_send);
+	IFQ_SET_READY(&ifp->if_snd);
 
 	error = lagg_setup_sysctls(sc);
 	if (error != 0)
