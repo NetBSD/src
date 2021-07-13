@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rmclass.c,v 1.23 2021/07/13 07:59:48 ozaki-r Exp $	*/
+/*	$NetBSD: altq_rmclass.c,v 1.24 2021/07/13 08:23:39 ozaki-r Exp $	*/
 /*	$KAME: altq_rmclass.c,v 1.19 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.23 2021/07/13 07:59:48 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.24 2021/07/13 08:23:39 ozaki-r Exp $");
 
 /* #ident "@(#)rm_class.c  1.48     97/12/05 SMI" */
 
@@ -1482,7 +1482,10 @@ rmc_delay_action(struct rm_class *cl, struct rm_class *borrow)
 	int	ndelay, t, extradelay;
 
 	cl->stats_.overactions++;
-	TV_DELTA(&cl->undertime_, &cl->overtime_, ndelay);
+	if (borrow != NULL)
+		TV_DELTA(&borrow->undertime_, &cl->overtime_, ndelay);
+	else
+		TV_DELTA(&cl->undertime_, &cl->overtime_, ndelay);
 #ifndef BORROW_OFFTIME
 	ndelay += cl->offtime_;
 #endif
