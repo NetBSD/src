@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.s,v 1.6 2021/07/12 15:21:51 thorpej Exp $	*/
+/*	$NetBSD: lock_stubs.s,v 1.7 2021/07/13 01:59:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2021 The NetBSD Foundation, Inc.
@@ -34,12 +34,16 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: lock_stubs.s,v 1.6 2021/07/12 15:21:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lock_stubs.s,v 1.7 2021/07/13 01:59:10 thorpej Exp $");
 
 #include "assym.h"
 
 #if defined(MULTIPROCESSOR)
-#define	MB		mb
+/*
+ * These 'unop' insns will be patched with 'mb' insns at run-time if
+ * the system has more than one processor.
+ */
+#define	MB(label)	label: unop
 #else
 #define	MB		/* nothing */
 #endif
@@ -55,11 +59,11 @@ LEAF(_lock_cas, 3)
 	beq	t1, 2f
 	stq_c	v0, 0(a0)
 	beq	v0, 3f
-	MB	
+	MB(.L__lock_cas_mb_1)
 	RET
 2:
 	mov	zero, v0
-	MB
+	MB(.L__lock_cas_mb_2)
 	RET
 3:
 	br	1b
@@ -79,7 +83,7 @@ LEAF(mutex_enter, 1)
 	bne	t2, 2f
 	stq_c	t1, 0(a0)
 	beq	t1, 3f
-	MB
+	MB(.L_mutex_enter_mb_1)
 	RET
 2:
 	lda	t12, mutex_vector_enter
@@ -93,7 +97,7 @@ LEAF(mutex_enter, 1)
  */
 LEAF(mutex_exit, 1)
 	LDGP(pv)
-	MB
+	MB(.L_mutex_exit_mb_1)
 	GET_CURLWP	/* Note: GET_CURLWP clobbers v0, t0, t8...t11. */
 	mov	zero, t3
 1:
@@ -179,7 +183,7 @@ LEAF(mutex_spin_enter, 1);
 	bne	t0, 2f			/* contended */
 	stl_c	t1, MUTEX_SIMPLELOCK(a1)
 	beq	t1, 2f			/* STL_C failed; consider contended */
-	MB
+	MB(.L_mutex_spin_enter_mb_1)
 	RET
 2:
 	mov	a1, a0			/* restore first argument */
@@ -192,7 +196,7 @@ LEAF(mutex_spin_enter, 1);
  */
 LEAF(mutex_spin_exit, 1)
 	LDGP(pv);
-	MB
+	MB(.L_mutex_spin_exit_mb_1)
 
 	/*
 	 * STEP 1: __cpu_simple_unlock(&mtx->mtx_lock)
@@ -247,7 +251,7 @@ LEAF(rw_enter, 2)
 	bne	t1, 4f		/* contended */
 	stq_c	t2, 0(a0)
 	beq	t2, 2f		/* STQ_C failed; retry */
-	MB
+	MB(.L_rw_enter_mb_1)
 	RET
 
 2:	br	1b
@@ -259,7 +263,7 @@ LEAF(rw_enter, 2)
 	bne	t0, 4f		/* contended */
 	stq_c	t2, 0(a0)
 	beq	t2, 4f		/* STQ_C failed; consider it contended */
-	MB
+	MB(.L_rw_enter_mb_2)
 	RET
 
 4:	lda	pv, rw_vector_enter
@@ -284,7 +288,7 @@ LEAF(rw_tryenter, 2)
 	bne	t1, 4f		/* contended */
 	stq_c	v0, 0(a0)
 	beq	v0, 2f		/* STQ_C failed; retry */
-	MB
+	MB(.L_rw_tryenter_mb_1)
 	RET			/* v0 contains non-zero LOCK_FLAG from STQ_C */
 
 2:	br	1b
@@ -302,7 +306,7 @@ LEAF(rw_tryenter, 2)
 	 * in the failure case because we expect it to be rare and it saves
 	 * a branch-not-taken instruction in the success case.
 	 */
-	MB
+	MB(.L_rw_tryenter_mb_2)
 	RET
 
 4:	mov	zero, v0	/* return 0 (failure) */
@@ -316,7 +320,7 @@ LEAF(rw_tryenter, 2)
  */
 LEAF(rw_exit, 1)
 	LDGP(pv)
-	MB
+	MB(.L_rw_exit_mb_1)
 
 	/*
 	 * Check for write-lock release, and get the owner/count field
@@ -381,3 +385,27 @@ LEAF(rw_exit, 1)
 	END(rw_exit)
 
 #endif	/* !LOCKDEBUG */
+
+#if defined(MULTIPROCESSOR)
+/*
+ * Table of locations to patch with MB instructions on multiprocessor
+ * systems.
+ */
+	.section ".rodata"
+	.globl	lock_stub_patch_table
+lock_stub_patch_table:
+	.quad	.L__lock_cas_mb_1
+	.quad	.L__lock_cas_mb_2
+#if !defined(LOCKDEBUG)
+	.quad	.L_mutex_enter_mb_1
+	.quad	.L_mutex_exit_mb_1
+	.quad	.L_mutex_spin_enter_mb_1
+	.quad	.L_mutex_spin_exit_mb_1
+	.quad	.L_rw_enter_mb_1
+	.quad	.L_rw_enter_mb_2
+	.quad	.L_rw_tryenter_mb_1
+	.quad	.L_rw_tryenter_mb_2
+	.quad	.L_rw_exit_mb_1
+#endif /* ! LOCKDEBUG */
+	.quad	0		/* NULL terminator */
+#endif /* MULTIPROCESSOR */
