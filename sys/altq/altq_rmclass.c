@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rmclass.c,v 1.22 2011/11/19 22:51:18 tls Exp $	*/
+/*	$NetBSD: altq_rmclass.c,v 1.23 2021/07/13 07:59:48 ozaki-r Exp $	*/
 /*	$KAME: altq_rmclass.c,v 1.19 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.22 2011/11/19 22:51:18 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.23 2021/07/13 07:59:48 ozaki-r Exp $");
 
 /* #ident "@(#)rm_class.c  1.48     97/12/05 SMI" */
 
@@ -1251,7 +1251,7 @@ rmc_update_class_util(struct rm_ifdat *ifd)
 {
 	int		 idle, avgidle, pktlen;
 	int		 pkt_time, tidle;
-	rm_class_t	*cl, *borrowed;
+	rm_class_t	*cl, *cl0, *borrowed;
 	rm_class_t	*borrows;
 	struct timeval	*nowp;
 
@@ -1261,6 +1261,7 @@ rmc_update_class_util(struct rm_ifdat *ifd)
 	if ((cl = ifd->class_[ifd->qo_]) == NULL)
 		return;
 
+	cl0 = cl;
 	pktlen = ifd->curlen_[ifd->qo_];
 	borrowed = ifd->borrowed_[ifd->qo_];
 	borrows = borrowed;
@@ -1370,7 +1371,7 @@ rmc_update_class_util(struct rm_ifdat *ifd)
 		cl->last_pkttime_ = pkt_time;
 
 #if 1
-		if (cl->parent_ == NULL) {
+		if (cl->parent_ == NULL && cl != cl0) {
 			/* take stats of root class */
 			PKTCNTR_ADD(&cl->stats_.xmit_cnt, pktlen);
 		}
