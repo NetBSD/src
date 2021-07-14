@@ -1,4 +1,4 @@
-/*	$NetBSD: qop_cbq.c,v 1.10 2013/10/19 17:16:37 christos Exp $	*/
+/*	$NetBSD: qop_cbq.c,v 1.11 2021/07/14 08:32:13 ozaki-r Exp $	*/
 /*	$KAME: qop_cbq.c,v 1.7 2002/05/31 06:03:35 kjc Exp $	*/
 /*
  * Copyright (c) Sun Microsystems, Inc. 1993-1998 All rights reserved.
@@ -112,6 +112,8 @@ cbq_interface_parser(const char *ifname, int argc, char **argv)
 	u_int	tbrsize = 0;
 	u_int	is_efficient = 0;
 	u_int	is_wrr = 1;	/* weighted round-robin is default */
+	bool	no_control = false;
+	bool	no_tbr = false;
 
 	/*
 	 * process options
@@ -133,6 +135,10 @@ cbq_interface_parser(const char *ifname, int argc, char **argv)
 			is_wrr = 1;
 		} else if (EQUAL(*argv, "cbq-prr")) {
 			is_wrr = 0;
+		} else if (EQUAL(*argv, "no-tbr")) {
+			no_tbr = true;
+		} else if (EQUAL(*argv, "no-control")) {
+			no_control = true;
 		} else {
 			LOG(LOG_ERR, 0, "Unknown keyword '%s'", *argv);
 			return (0);
@@ -140,12 +146,15 @@ cbq_interface_parser(const char *ifname, int argc, char **argv)
 		argc--; argv++;
 	}
 
-	if (qcmd_tbr_register(ifname, bandwidth, tbrsize) != 0)
-		return (0);
+	if (!no_tbr) {
+		if (qcmd_tbr_register(ifname, bandwidth, tbrsize) != 0)
+			return (0);
+	}
 
 	if (qcmd_cbq_add_if(ifname, bandwidth,
-			    is_wrr, is_efficient) != 0)
+			    is_wrr, is_efficient, no_control) != 0)
 		return (0);
+
 	return (1);
 }
 
@@ -296,11 +305,13 @@ cbq_class_parser(const char *ifname, const char *class_name,
  * qcmd api
  */
 int
-qcmd_cbq_add_if(const char *ifname, u_int bandwidth, int is_wrr, int efficient)
+qcmd_cbq_add_if(const char *ifname, u_int bandwidth, int is_wrr, int efficient,
+    bool no_control)
 {
 	int error;
 	
-	error = qop_cbq_add_if(NULL, ifname, bandwidth, is_wrr, efficient);
+	error = qop_cbq_add_if(NULL, ifname, bandwidth, is_wrr, efficient,
+	    no_control);
 	if (error != 0)
 		LOG(LOG_ERR, errno, "%s: can't add cbq on interface '%s'",
 		    qoperror(error), ifname);
@@ -333,7 +344,7 @@ qcmd_cbq_add_class(const char *ifname, const char *class_name,
 	    (borrow = clname2clinfo(ifinfo, borrow_name)) == NULL)
 		error = QOPERR_BADCLASS;
 
-	if (flags & CBQCLF_DEFCLASS) {
+	if (flags & CBQCLF_DEFCLASS && !cbq_ifinfo->no_control) {
 		/*
 		 * if this is a default class and no ctl_class is defined,
 		 * we will create a ctl_class.
@@ -464,7 +475,7 @@ qcmd_cbq_add_ctl_filters(const char *ifname, const char *clname)
  */
 int 
 qop_cbq_add_if(struct ifinfo **rp, const char *ifname,
-	       u_int bandwidth, int is_wrr, int efficient)
+	       u_int bandwidth, int is_wrr, int efficient, bool no_control)
 {
 	struct ifinfo *ifinfo = NULL;
 	struct cbq_ifinfo *cbq_ifinfo = NULL;
@@ -477,6 +488,7 @@ qop_cbq_add_if(struct ifinfo **rp, const char *ifname,
 		(1.0 / (double)bandwidth) * NS_PER_SEC * 8;
 	cbq_ifinfo->is_wrr = is_wrr;
 	cbq_ifinfo->is_efficient = efficient;
+	cbq_ifinfo->no_control = no_control;
 
 	error = qop_add_if(&ifinfo, ifname, bandwidth,
 			   &cbq_qdisc, cbq_ifinfo);

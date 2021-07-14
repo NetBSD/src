@@ -1,4 +1,4 @@
-/*	$NetBSD: qop_cbq.h,v 1.2 2001/08/16 07:48:13 itojun Exp $	*/
+/*	$NetBSD: qop_cbq.h,v 1.3 2021/07/14 08:32:13 ozaki-r Exp $	*/
 /*	$KAME: qop_cbq.h,v 1.2 2000/10/18 09:15:18 kjc Exp $	*/
 /*
  * Copyright (c) Sun Microsystems, Inc. 1993-1998 All rights reserved.
@@ -53,6 +53,7 @@ struct cbq_ifinfo {
 	double	nsPerByte;		/* bandwidth in ns per sec */
 	int	is_wrr;			/* use weighted-round robin */
 	int	is_efficient;		/* use work-conserving */
+	bool	no_control;		/* don't create a control class automatically */
 };
 
 /*
@@ -76,7 +77,7 @@ int cbq_class_parser(const char *ifname, const char *class_name,
 		     const char *parent_name, int argc, char **argv);
 
 int qcmd_cbq_add_if(const char *ifname, u_int bandwidth,
-		    int is_wrr, int efficient);
+		    int is_wrr, int efficient, bool no_control);
 int qcmd_cbq_add_class(const char *ifname, const char *class_name,
 		       const char *parent_name, const char *borrow_name,
 		       u_int pri, u_int bandwidth,
@@ -89,7 +90,7 @@ int qcmd_cbq_modify_class(const char *ifname, const char *class_name,
 			  u_int av_pkt_size, u_int max_pkt_size, int flags);
 
 int qop_cbq_add_if(struct ifinfo **rp, const char *ifname,
-		   u_int bandwidth, int is_wrr, int efficient);
+		   u_int bandwidth, int is_wrr, int efficient, bool no_control);
 int qop_cbq_add_class(struct classinfo **rp, const char *class_name,
 		      struct ifinfo *ifinfo, struct classinfo *parent, 
 		      struct classinfo *borrow, u_int pri, u_int bandwidth,
