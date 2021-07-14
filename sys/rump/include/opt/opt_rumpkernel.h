@@ -1,4 +1,4 @@
-/*	$NetBSD: opt_rumpkernel.h,v 1.6 2017/05/27 21:02:56 bouyer Exp $	*/
+/*	$NetBSD: opt_rumpkernel.h,v 1.7 2021/07/14 03:19:24 ozaki-r Exp $	*/
 
 #ifndef __NetBSD__
 #define __NetBSD__
@@ -33,3 +33,6 @@
 #define WSEMUL_VT100
 
 #define PPPOE_SERVER
+
+#define ALTQ
+#define ALTQ_CBQ
