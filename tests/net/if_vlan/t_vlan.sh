@@ -1,4 +1,4 @@
-#	$NetBSD: t_vlan.sh,v 1.21 2021/07/14 06:35:59 yamaguchi Exp $
+#	$NetBSD: t_vlan.sh,v 1.22 2021/07/14 08:50:24 yamaguchi Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -681,8 +681,6 @@ vlan_bridge_body_common()
 	$atf_ifconfig shmif0 up
 
 	$atf_ifconfig vlan0 create
-	$atf_ifconfig vlan0 vlan 10 vlanif shmif0
-	$atf_ifconfig vlan0 up
 	$DEBUG && rump.ifconfig vlan0
 
 	$atf_ifconfig bridge0 create
@@ -692,16 +690,36 @@ vlan_bridge_body_common()
 	# Add vlan to bridge member
 	#
 	$atf_ifconfig bridge0 mtu 1496
+
+	# vlan0 can not add to bridge member
+	# because it is not an ethernet device
+	atf_check -s not-exit:0 -e match:'Invalid argument' \
+	    $HIJACKING /sbin/brconfig bridge0 add vlan0
+
+	$atf_ifconfig vlan0 vlan 10 vlanif shmif0
+	$atf_ifconfig vlan0 up
 	atf_check -s exit:0 -o match:'mtu 1496' rump.ifconfig vlan0
 
+	# vlan0 becomes an ethernet device
+	# after attaching the parent interface
 	$atf_brconfig bridge0 add vlan0
-	$DEBUG && brconfig bridge0
+	$DEBUG && $HIJACKING /sbin/brconfig bridge0
+
 	$atf_brconfig bridge0 delete vlan0
+
+	$atf_brconfig bridge0 add vlan0
+	$atf_ifconfig vlan0 -vlanif
+	atf_check -s exit:0 -o not-match:'vlan0' \
+	    $HIJACKING /sbin/brconfig bridge0
+	atf_check -s not-exit:0 -e match:'No such' \
+	    $HIJACKING /sbin/brconfig bridge0 delete vlan0
 
 	#
 	# decrease MTU on adding to bridge member
 	#
 	$atf_ifconfig bridge0 mtu 1495
+	$atf_ifconfig vlan0 vlan 10 vlanif shmif0
+	$atf_ifconfig vlan0 up
 	atf_check -s exit:0 -o match:'mtu 1496' rump.ifconfig vlan0
 
 	$atf_brconfig bridge0 add vlan0
