@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.88 2021/07/13 19:38:10 rillig Exp $
+# $NetBSD: Makefile,v 1.89 2021/07/14 20:39:13 rillig Exp $
 
 NOMAN=		# defined
 MAX_MESSAGE=	345		# see lint1/err.c
@@ -146,6 +146,8 @@ FILES+=		gcc_bit_field_types.c
 FILES+=		gcc_bit_field_types.exp
 FILES+=		gcc_init_compound_literal.c
 FILES+=		gcc_init_compound_literal.exp
+FILES+=		gcc_stmt_asm.c
+FILES+=		gcc_stmt_asm.exp
 FILES+=		gcc_typeof_after_statement.c
 FILES+=		gcc_typeof_after_statement.exp
 FILES+=		init.c
@@ -188,6 +190,8 @@ FILES+=		op_shl_lp64.c
 FILES+=		op_shl_lp64.exp
 FILES+=		stmt_for.c
 FILES+=		stmt_for.exp
+FILES+=		stmt_goto.c
+FILES+=		stmt_goto.exp
 FILES+=		stmt_if.c
 FILES+=		stmt_if.exp
 
