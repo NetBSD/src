@@ -1,4 +1,4 @@
-#	$NetBSD: t_cbq.sh,v 1.1 2021/07/14 03:22:33 ozaki-r Exp $
+#	$NetBSD: t_cbq.sh,v 1.2 2021/07/14 08:33:47 ozaki-r Exp $
 #
 # Copyright (c) 2021 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -40,6 +40,7 @@ IP_LOCAL1=10.0.0.1
 IP_LOCAL2=10.0.1.1
 IP_REMOTE11=10.0.0.2
 IP_REMOTE12=10.0.0.22
+IP_REMOTE13=10.0.0.23
 IP_REMOTE21=10.0.1.2
 IP_REMOTE22=10.0.1.22
 ALTQD_PIDFILE=./pid
@@ -312,6 +313,118 @@ test_altq_cbq_multi_ifaces_ipv4()
 	rump_server_destroy_ifaces
 }
 
+start_altqd_options()
+{
+
+	export RUMP_SERVER=$SOCK_LOCAL
+
+	$HIJACKING_ALTQ mkdir -p /rump/etc
+	$HIJACKING_ALTQ mkdir -p /rump/var/run
+
+	# - no-tbr and no-control are specified
+	# - root_class is the default class
+	cat > ./altq.conf <<-EOF
+	interface shmif0 cbq no-tbr no-control
+	class cbq shmif0 root_class NULL pbandwidth 100 default
+	class cbq shmif0 normal_class root_class pbandwidth 50
+	    filter shmif0 normal_class $IP_REMOTE11 0 0 0 0
+	class cbq shmif0 drop_class root_class pbandwidth 0
+	    filter shmif0 drop_class $IP_REMOTE12 0 0 0 0
+	EOF
+	$DEBUG && cat ./altq.conf
+	atf_check -s exit:0 $HIJACKING_ALTQ cp ./altq.conf /rump/etc/altq.conf
+	$HIJACKING_ALTQ test -f /rump/etc/altq.conf
+
+	$HIJACKING_ALTQ altqd
+
+	$HIJACKING_ALTQ test -f /var/run/altqd.pid
+	if [ $? != 0 ]; then
+		atf_check -s exit:0 $HIJACKING_ALTQ altqd -d
+		# Should abort
+	fi
+
+	$HIJACKING_ALTQ cat /var/run/altqd.pid > $ALTQD_PIDFILE
+
+	$DEBUG && $HIJACKING_ALTQ altqstat -s
+	$HIJACKING_ALTQ altqstat -c 1 >./out
+	$DEBUG && cat ./out
+	atf_check -s exit:0 \
+	    -o match:"altqstat: cbq on interface shmif0" \
+	    -o match:'Class 1 on Interface shmif0: root_class' \
+	    -o match:'Class 2 on Interface shmif0: normal_class' \
+	    -o match:'Class 3 on Interface shmif0: drop_class' \
+	    cat ./out
+	atf_check -s exit:0 -o not-match:'shmif0: ctl_class' cat ./out
+
+	rm -f ./out
+}
+
+test_altq_cbq_options_ipv4()
+{
+	local ifconfig="atf_check -s exit:0 rump.ifconfig"
+	local ping="atf_check -s exit:0 -o ignore rump.ping"
+	local opts="-q -c 1 -w 1"
+
+	rump_server_fs_start $SOCK_LOCAL local altq
+	rump_server_start $SOCK_REMOTE
+
+	rump_server_add_iface $SOCK_LOCAL shmif0 $BUS
+	rump_server_add_iface $SOCK_REMOTE shmif0 $BUS
+
+	export RUMP_SERVER=$SOCK_LOCAL
+	$ifconfig shmif0 inet $IP_LOCAL1/24
+	export RUMP_SERVER=$SOCK_REMOTE
+	$ifconfig shmif0 inet $IP_REMOTE11/24
+	$ifconfig shmif0 inet $IP_REMOTE12/24 alias
+	$ifconfig shmif0 inet $IP_REMOTE13/24 alias
+	$ifconfig -w 10
+
+	export RUMP_SERVER=$SOCK_LOCAL
+	# Invoke ARP
+	$ping $opts $IP_REMOTE11
+	$ping $opts $IP_REMOTE12
+	$ping $opts $IP_REMOTE13
+
+	start_altqd_options
+
+	export RUMP_SERVER=$SOCK_LOCAL
+	$ping $opts $IP_REMOTE11
+
+	$HIJACKING_ALTQ altqstat -c 1 >./out
+	$DEBUG && cat ./out
+
+	check_counter ./out normal 'pkts: 1'
+	check_counter ./out root   'pkts: 1'
+	check_counter ./out drop   'pkts: 0'
+
+	atf_check -s not-exit:0 -o ignore -e match:"No buffer space available" \
+	    rump.ping $opts $IP_REMOTE12
+
+	$HIJACKING_ALTQ altqstat -c 1 >./out
+	$DEBUG && cat ./out
+
+	check_counter ./out drop   'drops: 1'
+	check_counter ./out drop   'pkts: 0'
+	check_counter ./out normal 'pkts: 1'
+	check_counter ./out root   'pkts: 1'
+
+	# The packet goes to the default class
+	$ping $opts $IP_REMOTE13
+
+	$HIJACKING_ALTQ altqstat -c 1 >./out
+	$DEBUG && cat ./out
+
+	check_counter ./out drop   'pkts: 0'
+	check_counter ./out normal 'pkts: 1'
+	check_counter ./out root   'pkts: 2'
+
+	rm -f ./out
+
+	shutdown_altqd
+
+	rump_server_destroy_ifaces
+}
+
 add_test_case()
 {
 	local algo=$1
@@ -344,4 +457,5 @@ atf_init_test_cases()
 
 	add_test_case cbq basic        ipv4
 	add_test_case cbq multi_ifaces ipv4
+	add_test_case cbq options      ipv4
 }
