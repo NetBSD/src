@@ -1,4 +1,4 @@
-#	$NetBSD: t_vlan.sh,v 1.22 2021/07/14 08:50:24 yamaguchi Exp $
+#	$NetBSD: t_vlan.sh,v 1.23 2021/07/14 08:51:51 yamaguchi Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -723,7 +723,7 @@ vlan_bridge_body_common()
 	atf_check -s exit:0 -o match:'mtu 1496' rump.ifconfig vlan0
 
 	$atf_brconfig bridge0 add vlan0
-	$DEBUG && brconfig bridge0
+	$DEBUG && $HIJACKING /sbin/brconfig bridge0
 	atf_check -s exit:0 -o match:'mtu 1495' rump.ifconfig vlan0
 	$atf_brconfig bridge0 delete vlan0
 
@@ -734,13 +734,13 @@ vlan_bridge_body_common()
 	$atf_ifconfig vlan0 mtu 1495
 	$atf_brconfig bridge0 add vlan0
 
-	$DEBUG && brconfig bridge0
+	$DEBUG && $HIJACKING /sbin/brconfig bridge0
 	atf_check -s exit:0 -o match:'mtu 1496' rump.ifconfig vlan0
 	$atf_brconfig bridge0 delete vlan0
 
 	$atf_ifconfig bridge0 mtu 1497
 	atf_check -s not-exit:0 -o ignore -e ignore \
-	    /sbin/brconfig bridge0 add vlan0
+	    $HIJACKING /sbin/brconfig bridge0 add vlan0
 
 	#
 	# Destroy a vlan interface that is bridge member
