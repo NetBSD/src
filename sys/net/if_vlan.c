@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.157 2021/07/06 02:39:46 yamaguchi Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.158 2021/07/14 06:23:06 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.157 2021/07/06 02:39:46 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.158 2021/07/14 06:23:06 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1622,6 +1622,14 @@ vlan_input(struct ifnet *ifp, struct mbuf *m)
 			    "dropping packet.\n", ifp->if_xname);
 			return;
 		}
+
+		if (m_makewritable(&m, 0,
+		    sizeof(struct ether_vlan_header), M_DONTWAIT)) {
+			m_freem(m);
+			if_statinc(ifp, if_ierrors);
+			return;
+		}
+
 		evl = mtod(m, struct ether_vlan_header *);
 		KASSERT(ntohs(evl->evl_encap_proto) == ETHERTYPE_VLAN);
 
