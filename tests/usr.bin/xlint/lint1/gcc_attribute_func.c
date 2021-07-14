@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_attribute_func.c,v 1.1 2021/07/06 17:33:07 rillig Exp $	*/
+/*	$NetBSD: gcc_attribute_func.c,v 1.2 2021/07/14 20:39:13 rillig Exp $	*/
 # 3 "gcc_attribute_func.c"
 
 /*
@@ -21,6 +21,18 @@ void *__attribute__((__cold__)) attribute_before_name(void);
 void *attribute_after_name __attribute__((__cold__))(void);
 void *attribute_after_parameters(void) __attribute__((__cold__));
 
-/* just to trigger _some_ error, to keep the .exp file */
-/* expect+1: error: syntax error 'syntax_error' [249] */
-__attribute__((syntax_error));
+/*
+ * The attribute 'used' does not influence static functions, it only
+ * applies to function parameters.
+ */
+/* expect+2: warning: static function used_function unused [236] */
+static void __attribute__((used))
+used_function(void)
+{
+}
+
+/* expect+2: warning: static function unused_function unused [236] */
+static void
+unused_function(void)
+{
+}

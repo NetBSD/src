@@ -1,0 +1,1 @@
+gcc_stmt_asm.c(37): error: syntax error '__asm__' [249]
