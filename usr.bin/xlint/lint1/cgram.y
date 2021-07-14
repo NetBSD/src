@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.323 2021/07/14 17:07:24 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.324 2021/07/14 17:19:37 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.323 2021/07/14 17:07:24 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.324 2021/07/14 17:19:37 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -309,10 +309,10 @@ anonymize(sym_t *s)
 %type	<y_sym>		struct_declaration_list_with_rbrace
 %type	<y_sym>		struct_declaration_list
 %type	<y_sym>		struct_declaration
-%type	<y_sym>		notype_member_decls
-%type	<y_sym>		type_member_decls
-%type	<y_sym>		notype_member_decl
-%type	<y_sym>		type_member_decl
+%type	<y_sym>		notype_struct_declarators
+%type	<y_sym>		type_struct_declarators
+%type	<y_sym>		notype_struct_declarator
+%type	<y_sym>		type_struct_declarator
 %type	<y_type>	enum_specifier
 %type	<y_sym>		enum_declaration
 %type	<y_sym>		enums_with_opt_comma
@@ -323,14 +323,14 @@ anonymize(sym_t *s)
 %type	<y_qual_ptr>	asterisk
 %type	<y_qual_ptr>	type_qualifier_list_opt
 %type	<y_qual_ptr>	type_qualifier_list
-%type	<y_sym>		notype_decl
-%type	<y_sym>		type_decl
-%type	<y_sym>		notype_direct_decl
-%type	<y_sym>		type_direct_decl
-%type	<y_sym>		type_param_decl
-%type	<y_sym>		notype_param_decl
-%type	<y_sym>		direct_param_decl
-%type	<y_sym>		direct_notype_param_decl
+%type	<y_sym>		notype_declarator
+%type	<y_sym>		type_declarator
+%type	<y_sym>		notype_direct_declarator
+%type	<y_sym>		type_direct_declarator
+%type	<y_sym>		type_param_declarator
+%type	<y_sym>		notype_param_declarator
+%type	<y_sym>		direct_param_declarator
+%type	<y_sym>		direct_notype_param_declarator
 %type	<y_sym>		param_list
 %type	<y_tnode>	array_size
 %type	<y_sym>		identifier_list
@@ -348,7 +348,7 @@ anonymize(sym_t *s)
 %type	<y_seen_statement> block_item_list
 %type	<y_seen_statement> block_item
 %type	<y_tnode>	do_while_expr
-%type	<y_sym>		func_decl
+%type	<y_sym>		func_declarator
 
 %%
 
@@ -726,7 +726,7 @@ declaration:			/* C99 6.7 */
 			warning(2);
 		}
 	  }
-	| begin_type_declmods end_type notype_init_decls T_SEMI
+	| begin_type_declmods end_type notype_init_declarators T_SEMI
 	| begin_type_declaration_specifiers end_type T_SEMI {
 		if (dcs->d_scl == TYPEDEF) {
 			/* typedef declares no type name */
@@ -736,7 +736,8 @@ declaration:			/* C99 6.7 */
 			warning(2);
 		}
 	  }
-	| begin_type_declaration_specifiers end_type type_init_decls T_SEMI
+	| begin_type_declaration_specifiers end_type
+	    type_init_declarators T_SEMI
 	| error T_SEMI
 	;
 
@@ -951,13 +952,13 @@ struct_declaration:		/* C99 6.7.2.1 */
 	  begin_type_noclass_declmods end_type {
 		/* too late, i know, but getsym() compensates it */
 		symtyp = FMEMBER;
-	  } notype_member_decls type_attribute_opt {
+	  } notype_struct_declarators type_attribute_opt {
 		symtyp = FVFT;
 		$$ = $4;
 	  }
 	| begin_type_noclass_declspecs end_type {
 		symtyp = FMEMBER;
-	  } type_member_decls type_attribute_opt {
+	  } type_struct_declarators type_attribute_opt {
 		symtyp = FVFT;
 		$$ = $4;
 	  }
@@ -987,32 +988,31 @@ struct_declaration:		/* C99 6.7.2.1 */
 	  }
 	;
 
-/* TODO: rename 'decls' to 'declarators', everywhere. */
-notype_member_decls:
-	  notype_member_decl {
+notype_struct_declarators:
+	  notype_struct_declarator {
 		$$ = declarator_1_struct_union($1);
 	  }
-	| notype_member_decls {
+	| notype_struct_declarators {
 		symtyp = FMEMBER;
-	  } T_COMMA type_member_decl {
+	  } T_COMMA type_struct_declarator {
 		$$ = lnklst($1, declarator_1_struct_union($4));
 	  }
 	;
 
-type_member_decls:
-	  type_member_decl {
+type_struct_declarators:
+	  type_struct_declarator {
 		$$ = declarator_1_struct_union($1);
 	  }
-	| type_member_decls {
+	| type_struct_declarators {
 		symtyp = FMEMBER;
-	  } T_COMMA type_member_decl {
+	  } T_COMMA type_struct_declarator {
 		$$ = lnklst($1, declarator_1_struct_union($4));
 	  }
 	;
 
-notype_member_decl:
-	  notype_decl
-	| notype_decl T_COLON constant_expr {		/* C99 6.7.2.1 */
+notype_struct_declarator:
+	  notype_declarator
+	| notype_declarator T_COLON constant_expr {		/* C99 6.7.2.1 */
 		$$ = bitfield($1, to_int_constant($3, true));
 	  }
 	| {
@@ -1022,9 +1022,9 @@ notype_member_decl:
 	  }
 	;
 
-type_member_decl:
-	  type_decl
-	| type_decl T_COLON constant_expr {
+type_struct_declarator:
+	  type_declarator
+	| type_declarator T_COLON constant_expr {
 		$$ = bitfield($1, to_int_constant($3, true));
 	  }
 	| {
@@ -1156,22 +1156,22 @@ type_qualifier_list:		/* C99 6.7.5 */
  * manual, section 7.1 "Semantic Info in Token Kinds".
  */
 
-notype_init_decls:
-	  notype_init_decl
-	| notype_init_decls T_COMMA type_init_decl
+notype_init_declarators:
+	  notype_init_declarator
+	| notype_init_declarators T_COMMA type_init_declarator
 	;
 
-type_init_decls:
-	  type_init_decl
-	| type_init_decls T_COMMA type_init_decl
+type_init_declarators:
+	  type_init_declarator
+	| type_init_declarators T_COMMA type_init_declarator
 	;
 
-notype_init_decl:
-	  notype_decl asm_or_symbolrename_opt {
+notype_init_declarator:
+	  notype_declarator asm_or_symbolrename_opt {
 		cgram_declare($1, false, $2);
 		check_size($1);
 	  }
-	| notype_decl asm_or_symbolrename_opt {
+	| notype_declarator asm_or_symbolrename_opt {
 		begin_initialization($1);
 		cgram_declare($1, true, $2);
 	  } T_ASSIGN initializer {
@@ -1180,12 +1180,12 @@ notype_init_decl:
 	  }
 	;
 
-type_init_decl:
-	  type_decl asm_or_symbolrename_opt {
+type_init_declarator:
+	  type_declarator asm_or_symbolrename_opt {
 		cgram_declare($1, false, $2);
 		check_size($1);
 	  }
-	| type_decl asm_or_symbolrename_opt {
+	| type_declarator asm_or_symbolrename_opt {
 		begin_initialization($1);
 		cgram_declare($1, true, $2);
 	  } T_ASSIGN initializer {
@@ -1194,126 +1194,126 @@ type_init_decl:
 	  }
 	;
 
-notype_decl:
-	  notype_direct_decl
-	| pointer notype_direct_decl {
+notype_declarator:
+	  notype_direct_declarator
+	| pointer notype_direct_declarator {
 		$$ = add_pointer($2, $1);
 	  }
 	;
 
-type_decl:
-	  type_direct_decl
-	| pointer type_direct_decl {
+type_declarator:
+	  type_direct_declarator
+	| pointer type_direct_declarator {
 		$$ = add_pointer($2, $1);
 	  }
 	;
 
-notype_direct_decl:
+notype_direct_declarator:
 	  T_NAME {
 		$$ = declarator_name(getsym($1));
 	  }
-	| T_LPAREN type_decl T_RPAREN {
+	| T_LPAREN type_declarator T_RPAREN {
 		$$ = $2;
 	  }
-	| type_attribute notype_direct_decl {
+	| type_attribute notype_direct_declarator {
 		$$ = $2;
 	  }
-	| notype_direct_decl T_LBRACK T_RBRACK {
+	| notype_direct_declarator T_LBRACK T_RBRACK {
 		$$ = add_array($1, false, 0);
 	  }
-	| notype_direct_decl T_LBRACK array_size T_RBRACK {
+	| notype_direct_declarator T_LBRACK array_size T_RBRACK {
 		$$ = add_array($1, true, to_int_constant($3, false));
 	  }
-	| notype_direct_decl param_list asm_or_symbolrename_opt {
+	| notype_direct_declarator param_list asm_or_symbolrename_opt {
 		$$ = add_function(symbolrename($1, $3), $2);
 		end_declaration_level();
 		block_level--;
 	  }
-	| notype_direct_decl type_attribute
+	| notype_direct_declarator type_attribute
 	;
 
-type_direct_decl:
+type_direct_declarator:
 	  identifier {
 		$$ = declarator_name(getsym($1));
 	  }
-	| T_LPAREN type_decl T_RPAREN {
+	| T_LPAREN type_declarator T_RPAREN {
 		$$ = $2;
 	  }
-	| type_attribute type_direct_decl {
+	| type_attribute type_direct_declarator {
 		$$ = $2;
 	  }
-	| type_direct_decl T_LBRACK T_RBRACK {
+	| type_direct_declarator T_LBRACK T_RBRACK {
 		$$ = add_array($1, false, 0);
 	  }
-	| type_direct_decl T_LBRACK array_size T_RBRACK {
+	| type_direct_declarator T_LBRACK array_size T_RBRACK {
 		$$ = add_array($1, true, to_int_constant($3, false));
 	  }
-	| type_direct_decl param_list asm_or_symbolrename_opt {
+	| type_direct_declarator param_list asm_or_symbolrename_opt {
 		$$ = add_function(symbolrename($1, $3), $2);
 		end_declaration_level();
 		block_level--;
 	  }
-	| type_direct_decl type_attribute
+	| type_direct_declarator type_attribute
 	;
 
 /*
- * The two distinct rules type_param_decl and notype_param_decl avoid a
+ * The two distinct rules type_param_declarator and notype_param_declarator avoid a
  * conflict in argument lists. A typename enclosed in parentheses is always
  * treated as a typename, not an argument name. For example, after
  * "typedef double a;", the declaration "f(int (a));" is interpreted as
  * "f(int (double));", not "f(int a);".
  */
-type_param_decl:
-	  direct_param_decl
-	| pointer direct_param_decl {
+type_param_declarator:
+	  direct_param_declarator
+	| pointer direct_param_declarator {
 		$$ = add_pointer($2, $1);
 	  }
 	;
 
-notype_param_decl:
-	  direct_notype_param_decl
-	| pointer direct_notype_param_decl {
+notype_param_declarator:
+	  direct_notype_param_declarator
+	| pointer direct_notype_param_declarator {
 		$$ = add_pointer($2, $1);
 	  }
 	;
 
-direct_param_decl:
+direct_param_declarator:
 	  identifier type_attribute_list {
 		$$ = declarator_name(getsym($1));
 	  }
 	| identifier {
 		$$ = declarator_name(getsym($1));
 	  }
-	| T_LPAREN notype_param_decl T_RPAREN {
+	| T_LPAREN notype_param_declarator T_RPAREN {
 		$$ = $2;
 	  }
-	| direct_param_decl T_LBRACK T_RBRACK {
+	| direct_param_declarator T_LBRACK T_RBRACK {
 		$$ = add_array($1, false, 0);
 	  }
-	| direct_param_decl T_LBRACK array_size T_RBRACK {
+	| direct_param_declarator T_LBRACK array_size T_RBRACK {
 		$$ = add_array($1, true, to_int_constant($3, false));
 	  }
-	| direct_param_decl param_list asm_or_symbolrename_opt {
+	| direct_param_declarator param_list asm_or_symbolrename_opt {
 		$$ = add_function(symbolrename($1, $3), $2);
 		end_declaration_level();
 		block_level--;
 	  }
 	;
 
-direct_notype_param_decl:
+direct_notype_param_declarator:
 	  identifier {
 		$$ = declarator_name(getsym($1));
 	  }
-	| T_LPAREN notype_param_decl T_RPAREN {
+	| T_LPAREN notype_param_declarator T_RPAREN {
 		$$ = $2;
 	  }
-	| direct_notype_param_decl T_LBRACK T_RBRACK {
+	| direct_notype_param_declarator T_LBRACK T_RBRACK {
 		$$ = add_array($1, false, 0);
 	  }
-	| direct_notype_param_decl T_LBRACK array_size T_RBRACK {
+	| direct_notype_param_declarator T_LBRACK array_size T_RBRACK {
 		$$ = add_array($1, true, to_int_constant($3, false));
 	  }
-	| direct_notype_param_decl param_list asm_or_symbolrename_opt {
+	| direct_notype_param_declarator param_list asm_or_symbolrename_opt {
 		$$ = add_function(symbolrename($1, $3), $2);
 		end_declaration_level();
 		block_level--;
@@ -1484,17 +1484,17 @@ parameter_declaration:
 	| begin_type_declaration_specifiers end_type {
 		$$ = declare_argument(abstract_name(), false);
 	  }
-	| begin_type_declmods end_type notype_param_decl {
+	| begin_type_declmods end_type notype_param_declarator {
 		$$ = declare_argument($3, false);
 	  }
 	/*
-	 * type_param_decl is needed because of following conflict:
+	 * type_param_declarator is needed because of following conflict:
 	 * "typedef int a; f(int (a));" could be parsed as
 	 * "function with argument a of type int", or
 	 * "function with an abstract argument of type function".
 	 * This grammar realizes the second case.
 	 */
-	| begin_type_declaration_specifiers end_type type_param_decl {
+	| begin_type_declaration_specifiers end_type type_param_declarator {
 		$$ = declare_argument($3, false);
 	  }
 	| begin_type_declmods end_type abstract_declarator {
@@ -1800,7 +1800,7 @@ for_start:			/* see C99 6.8.5 */
 for_exprs:			/* see C99 6.8.5 */
 	  for_start
 	    begin_type_declaration_specifiers end_type
-	    notype_init_decls T_SEMI
+	    notype_init_declarators T_SEMI
 	    expression_opt T_SEMI expression_opt T_RPAREN {
 		/* variable declaration in for loop */
 		c99ism(325);
@@ -1895,7 +1895,7 @@ top_level_declaration:		/* C99 6.9 calls this 'declaration' */
 			warning(0);
 		}
 	  }
-	| begin_type end_type notype_init_decls T_SEMI {
+	| begin_type end_type notype_init_declarators T_SEMI {
 		if (sflag) {
 			/* old style declaration; add 'int' */
 			error(1);
@@ -1913,7 +1913,7 @@ top_level_declaration:		/* C99 6.9 calls this 'declaration' */
 			warning(2);
 		}
 	  }
-	| begin_type_declmods end_type notype_init_decls T_SEMI
+	| begin_type_declmods end_type notype_init_declarators T_SEMI
 	| begin_type_declaration_specifiers end_type T_SEMI {
 		if (dcs->d_scl == TYPEDEF) {
 			/* typedef declares no type name */
@@ -1923,7 +1923,8 @@ top_level_declaration:		/* C99 6.9 calls this 'declaration' */
 			warning(2);
 		}
 	  }
-	| begin_type_declaration_specifiers end_type type_init_decls T_SEMI
+	| begin_type_declaration_specifiers end_type
+	    type_init_declarators T_SEMI
 	| error T_SEMI {
 		global_clean_up();
 	  }
@@ -1933,7 +1934,7 @@ top_level_declaration:		/* C99 6.9 calls this 'declaration' */
 	;
 
 function_definition:		/* C99 6.9.1 */
-	  func_decl {
+	  func_declarator {
 		if ($1->s_type->t_tspec != FUNC) {
 			/* syntax error '%s' */
 			error(249, yytext);
@@ -1961,14 +1962,14 @@ function_definition:		/* C99 6.9.1 */
 	  }
 	;
 
-func_decl:
-	  begin_type end_type notype_decl {
+func_declarator:
+	  begin_type end_type notype_declarator {
 		$$ = $3;
 	  }
-	| begin_type_declmods end_type notype_decl {
+	| begin_type_declmods end_type notype_declarator {
 		$$ = $3;
 	  }
-	| begin_type_declaration_specifiers end_type type_decl {
+	| begin_type_declaration_specifiers end_type type_declarator {
 		$$ = $3;
 	  }
 	;
@@ -1994,7 +1995,7 @@ arg_declaration:
 		/* empty declaration */
 		warning(2);
 	  }
-	| begin_type_declmods end_type notype_init_decls T_SEMI
+	| begin_type_declmods end_type notype_init_declarators T_SEMI
 	| begin_type_declaration_specifiers end_type T_SEMI {
 		if (!dcs->d_nonempty_decl) {
 			/* empty declaration */
@@ -2004,7 +2005,8 @@ arg_declaration:
 			warning(3, type_name(dcs->d_type));
 		}
 	  }
-	| begin_type_declaration_specifiers end_type type_init_decls T_SEMI {
+	| begin_type_declaration_specifiers end_type
+	    type_init_declarators T_SEMI {
 		if (dcs->d_nonempty_decl) {
 			/* '%s' declared in argument declaration list */
 			warning(3, type_name(dcs->d_type));
