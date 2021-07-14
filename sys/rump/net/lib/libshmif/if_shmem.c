@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.82 2021/06/16 00:21:19 riastradh Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.83 2021/07/14 03:16:06 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.82 2021/06/16 00:21:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.83 2021/07/14 03:16:06 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -191,6 +191,7 @@ allocif(int unit, struct shmif_sc **scp)
 	    IFCAP_CSUM_UDPv4_Rx	| IFCAP_CSUM_UDPv4_Tx |
 	    IFCAP_CSUM_TCPv6_Rx	| IFCAP_CSUM_TCPv6_Tx |
 	    IFCAP_CSUM_UDPv6_Rx	| IFCAP_CSUM_UDPv6_Tx;
+	IFQ_SET_READY(&ifp->if_snd);
 
 	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&sc->sc_cv, "shmifcv");
@@ -206,6 +207,7 @@ allocif(int unit, struct shmif_sc **scp)
 	}
 #endif
 
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, enaddr);
 	if_register(ifp);
 
@@ -545,7 +547,7 @@ shmif_start(struct ifnet *ifp)
 	ifp->if_flags |= IFF_OACTIVE;
 
 	for (;;) {
-		IF_DEQUEUE(&ifp->if_snd, m);
+		IFQ_DEQUEUE(&ifp->if_snd, m);
 		if (m == NULL)
 			break;
 
