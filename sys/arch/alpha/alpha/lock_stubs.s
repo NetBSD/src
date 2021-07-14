@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.s,v 1.8 2021/07/13 13:58:30 thorpej Exp $	*/
+/*	$NetBSD: lock_stubs.s,v 1.9 2021/07/14 02:18:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2021 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: lock_stubs.s,v 1.8 2021/07/13 13:58:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lock_stubs.s,v 1.9 2021/07/14 02:18:10 thorpej Exp $");
 
 #include "assym.h"
 
@@ -114,6 +114,7 @@ LEAF(mutex_exit, 1)
 	br	1b
 	END(mutex_exit)
 
+#if 0 /* XXX disabled for now XXX */
 /*
  * void mutex_spin_enter(kmutex_t *mtx);
  */
@@ -227,6 +228,7 @@ LEAF(mutex_spin_exit, 1)
 1:
 	RET
 	END(mutex_spin_exit)
+#endif /* XXX disabled for now XXX */
 
 /*
  * void rw_enter(krwlock_t *rwl, krw_t op);
@@ -399,8 +401,10 @@ lock_stub_patch_table:
 #if !defined(LOCKDEBUG)
 	.quad	.L_mutex_enter_mb_1
 	.quad	.L_mutex_exit_mb_1
+#if 0 /* XXX disabled for now XXX */
 	.quad	.L_mutex_spin_enter_mb_1
 	.quad	.L_mutex_spin_exit_mb_1
+#endif /* XXX disabled for now XXX */
 	.quad	.L_rw_enter_mb_1
 	.quad	.L_rw_enter_mb_2
 	.quad	.L_rw_tryenter_mb_1
