@@ -1,4 +1,4 @@
-/*	$NetBSD: rdvar.h,v 1.23 2015/04/14 20:32:35 riastradh Exp $	*/
+/*	$NetBSD: rdvar.h,v 1.23.22.1 2021/07/14 18:04:04 martin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,8 +42,7 @@
 #include <sys/rndsource.h>
 
 struct	rdidentinfo {
-	short	ri_hwid;		/* 2 byte HW id */
-	short	ri_maxunum;		/* maximum allowed unit number */
+	uint16_t ri_hwid;		/* 2 byte HW id */
 	const char *ri_desc;		/* drive type description */
 	int	ri_nbpt;		/* DEV_BSIZE blocks per track */
 	int	ri_ntpc;		/* tracks per cylinder */
@@ -69,7 +68,6 @@ struct	rd_softc {
 	short	sc_type;
 	char	*sc_addr;
 	int	sc_resid;
-	struct	rd_describe sc_rddesc;
 	struct	hpibqueue sc_hq;	/* hpib job queue entry */
 	struct	rd_iocmd sc_ioc;
 	struct	rd_rscmd sc_rsc;
@@ -87,16 +85,16 @@ struct	rd_softc {
 /* sc_flags values */
 #define	RDF_ALIVE	0x01
 #define	RDF_SEEK	0x02
-#define RDF_SWAIT	0x04
-#define RDF_OPENING	0x08
-#define RDF_CLOSING	0x10
-#define RDF_WANTED	0x20
-#define RDF_WLABEL	0x40
+#define	RDF_SWAIT	0x04
+#define	RDF_OPENING	0x08
+#define	RDF_CLOSING	0x10
+#define	RDF_WANTED	0x20
+#define	RDF_WLABEL	0x40
 
 #define	rdunit(x)	((int)(minor(x) >> 3))
-#define rdpart(x)	((int)(minor(x) & 0x7))
+#define	rdpart(x)	((int)(minor(x) & 0x7))
 #define	rdpunit(x)	((x) & 7)
-#define rdlabdev(d)	(dev_t)(((int)(d)&~7)|2)	/* rd?c */
+#define	rdlabdev(d)	(dev_t)(((int)(d)&~7)|2)	/* rd?c */
 
 #define	RDRETRY		5
-#define RDWAITC		1	/* min time for timeout in seconds */
+#define	RDWAITC		1	/* min time for timeout in seconds */
