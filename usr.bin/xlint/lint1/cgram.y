@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.322 2021/07/14 16:59:39 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.323 2021/07/14 17:07:24 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.322 2021/07/14 16:59:39 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.323 2021/07/14 17:07:24 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -478,24 +478,7 @@ postfix_expression:
 		$$ = new_function_call_node($1, $3);
 	  }
 	| postfix_expression point_or_arrow T_NAME {
-		if ($1 != NULL) {
-			sym_t	*msym;
-			/*
-			 * XXX struct_or_union_member should be integrated
-			 * in build()
-			 */
-			if ($2 == ARROW) {
-				/*
-				 * must do this before struct_or_union_member
-				 * is called
-				 */
-				$1 = cconv($1);
-			}
-			msym = struct_or_union_member($1, $2, getsym($3));
-			$$ = build($2, $1, new_name_node(msym, 0));
-		} else {
-			$$ = NULL;
-		}
+		$$ = build_member_access($1, $2, $3);
 	  }
 	| postfix_expression T_INCDEC {
 		$$ = build($2 == INC ? INCAFT : DECAFT, $1, NULL);
