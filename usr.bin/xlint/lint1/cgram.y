@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.320 2021/07/12 22:02:44 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.321 2021/07/14 16:51:57 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.320 2021/07/12 22:02:44 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.321 2021/07/14 16:51:57 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -371,7 +371,7 @@ identifier_sym:			/* helper for struct/union/enum */
 	  }
 	;
 
-/* K&R ???, C90 ???, C99 6.4.2.1, C11 ???, C18 ??? */
+/* K&R ???, C90 ???, C99 6.4.2.1, C11 ??? */
 identifier:
 	  T_NAME {
 		$$ = $1;
@@ -405,7 +405,7 @@ string2:
 	  }
 	;
 
-/* K&R 7.1, C90 ???, C99 6.5.1, C11 6.5.1, C18 6.5.1 */
+/* K&R 7.1, C90 ???, C99 6.5.1, C11 6.5.1 */
 primary_expression:
 	  T_NAME {
 		/* XXX really necessary? */
@@ -432,7 +432,7 @@ primary_expression:
 	  }
 	;
 
-/* K&R ---, C90 ---, C99 ---, C11 6.5.1.1, C18 6.5.1.1 */
+/* K&R ---, C90 ---, C99 ---, C11 6.5.1.1 */
 generic_selection:
 	  T_GENERIC T_LPAREN assignment_expression T_COMMA
 	    generic_assoc_list T_RPAREN {
@@ -442,7 +442,7 @@ generic_selection:
 	  }
 	;
 
-/* K&R ---, C90 ---, C99 ---, C11 6.5.1.1, C18 6.5.1.1 */
+/* K&R ---, C90 ---, C99 ---, C11 6.5.1.1 */
 generic_assoc_list:
 	  generic_association
 	| generic_assoc_list T_COMMA generic_association {
@@ -451,7 +451,7 @@ generic_assoc_list:
 	  }
 	;
 
-/* K&R ---, C90 ---, C99 ---, C11 6.5.1.1, C18 6.5.1.1 */
+/* K&R ---, C90 ---, C99 ---, C11 6.5.1.1 */
 generic_association:
 	  type_name T_COLON assignment_expression {
 		$$ = getblk(sizeof(*$$));
@@ -465,7 +465,7 @@ generic_association:
 	  }
 	;
 
-/* K&R 7.1, C90 ???, C99 6.5.2, C11 6.5.2, C18 6.5.2 */
+/* K&R 7.1, C90 ???, C99 6.5.2, C11 6.5.2 */
 postfix_expression:
 	  primary_expression
 	| postfix_expression T_LBRACK expr T_RBRACK {
@@ -577,7 +577,7 @@ point_or_arrow:			/* helper for 'postfix_expression' */
 	  }
 	;
 
-/* K&R 7.1, C90 ???, C99 6.5.2, C11 6.5.2, C18 6.5.2 */
+/* K&R 7.1, C90 ???, C99 6.5.2, C11 6.5.2 */
 argument_expression_list:
 	  expr %prec T_COMMA {
 		$$ = new_function_argument_node(NULL, $1);
@@ -587,7 +587,7 @@ argument_expression_list:
 	  }
 	;
 
-/* K&R 7.2, C90 ???, C99 6.5.3, C11 6.5.3, C18 6.5.3 */
+/* K&R 7.2, C90 ???, C99 6.5.3, C11 6.5.3 */
 unary_expression:
 	  postfix_expression
 	| T_INCDEC unary_expression {
@@ -629,7 +629,7 @@ unary_expression:
 	| T_SIZEOF T_LPAREN type_name T_RPAREN {
 		$$ = build_sizeof($3);
 	  }
-	/* K&R ---, C90 ---, C99 ---, C11 6.5.3, C18 6.5.3 */
+	/* K&R ---, C90 ---, C99 ---, C11 6.5.3 */
 	| T_ALIGNOF T_LPAREN type_name T_RPAREN {
 		$$ = build_alignof($3);
 	  }
@@ -637,7 +637,7 @@ unary_expression:
 
 /* The rule 'unary_operator' is inlined into unary_expression. */
 
-/* K&R 7.2, C90 ???, C99 6.5.4, C11 6.5.4, C18 6.5.4 */
+/* K&R 7.2, C90 ???, C99 6.5.4, C11 6.5.4 */
 cast_expression:
 	  unary_expression
 	| T_LPAREN type_name T_RPAREN cast_expression {
@@ -665,7 +665,7 @@ expr_opt:
 /* 'expression' also implements 'conditional_expression'. */
 /* 'expression' also implements 'assignment_expression'. */
 /* TODO: rename to 'expression' */
-/* K&R ???, C90 ???, C99 6.5.5 to 6.5.17, C11 ???, C18 ??? */
+/* K&R ???, C90 ???, C99 6.5.5 to 6.5.17, C11 ??? */
 expr:
 	  expr T_ASTERISK expr {
 		$$ = build(MULT, $1, $3);
@@ -715,7 +715,7 @@ expr:
 	| cast_expression
 	;
 
-/* K&R ???, C90 ???, C99 6.5.16, C11 ???, C18 ??? */
+/* K&R ???, C90 ???, C99 6.5.16, C11 ??? */
 assignment_expression:
 	  expr %prec T_ASSIGN
 	;
