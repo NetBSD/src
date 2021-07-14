@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.240 2021/06/09 15:44:15 martin Exp $	*/
+/*	$NetBSD: bpf.c,v 1.241 2021/07/14 06:50:22 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.240 2021/06/09 15:44:15 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.241 2021/07/14 06:50:22 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -2194,7 +2194,6 @@ _bpfdetach(struct ifnet *ifp)
 			 * Detach the descriptor from an interface now.
 			 * It will be free'ed later by close routine.
 			 */
-			d->bd_promisc = 0;	/* we can't touch device. */
 			bpf_detachd(d);
 			mutex_exit(d->bd_mtx);
 			goto again_d;
