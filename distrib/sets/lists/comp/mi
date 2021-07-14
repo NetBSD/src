@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2389 2021/06/17 01:17:28 christos Exp $
+#	$NetBSD: mi,v 1.2390 2021/07/14 03:19:24 ozaki-r Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -4011,8 +4011,12 @@
 ./usr/lib/librumpkern_z.a			comp-c-lib		rump
 ./usr/lib/librumpkern_z_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpnet.a				comp-c-lib		compatfile,rump
+./usr/lib/librumpnet_altq.a			comp-c-lib		rump
+./usr/lib/librumpnet_altq_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpnet_agr.a			comp-c-lib		rump
 ./usr/lib/librumpnet_agr_p.a			comp-c-proflib		rump,profile
+./usr/lib/librumpnet_altq.a			comp-c-lib		rump
+./usr/lib/librumpnet_altq_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpnet_bpfjit.a			comp-c-lib		rump,sljit
 ./usr/lib/librumpnet_bpfjit_p.a			comp-c-proflib		rump,sljit,profile
 ./usr/lib/librumpnet_bridge.a			comp-c-lib		rump

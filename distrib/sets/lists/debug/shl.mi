@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.278 2021/06/17 01:17:28 christos Exp $
+# $NetBSD: shl.mi,v 1.279 2021/07/14 03:19:24 ozaki-r Exp $
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libavl.so.0.0.debug			comp-zfs-debug	debug,dynamicroot,zfs
@@ -269,6 +269,7 @@
 ./usr/libdata/debug/usr/lib/librumpkern_z.so.0.0.debug		comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpnet.so.0.0.debug		comp-rump-debug	debug,compatfile,rump
 ./usr/libdata/debug/usr/lib/librumpnet_agr.so.0.0.debug		comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpnet_altq.so.0.0.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpnet_bpfjit.so.0.0.debug	comp-rump-debug	debug,rump,sljit
 ./usr/libdata/debug/usr/lib/librumpnet_bridge.so.0.0.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpnet_gif.so.0.0.debug		comp-rump-debug	debug,rump
