@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cbq.c,v 1.32 2018/11/15 10:23:55 maxv Exp $	*/
+/*	$NetBSD: altq_cbq.c,v 1.33 2021/07/14 08:27:59 ozaki-r Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.21 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.32 2018/11/15 10:23:55 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.33 2021/07/14 08:27:59 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -836,14 +836,11 @@ cbq_set_enable(struct cbq_interface *ep, int enable)
 
 	switch (enable) {
 	case ENABLE:
-		if (cbqp->ifnp.root_ == NULL || cbqp->ifnp.default_ == NULL ||
-		    cbqp->ifnp.ctl_ == NULL) {
+		if (cbqp->ifnp.root_ == NULL || cbqp->ifnp.default_ == NULL) {
 			if (cbqp->ifnp.root_ == NULL)
 				printf("No Root Class for %s\n", ifacename);
 			if (cbqp->ifnp.default_ == NULL)
 				printf("No Default Class for %s\n", ifacename);
-			if (cbqp->ifnp.ctl_ == NULL)
-				printf("No Control Class for %s\n", ifacename);
 			error = EINVAL;
 		} else if ((error = altq_enable(cbqp->ifnp.ifq_)) == 0) {
 			cbqp->cbq_qlen = 0;
