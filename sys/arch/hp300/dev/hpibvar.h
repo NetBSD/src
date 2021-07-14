@@ -1,4 +1,4 @@
-/*	$NetBSD: hpibvar.h,v 1.21 2012/10/13 06:12:23 tsutsui Exp $	*/
+/*	$NetBSD: hpibvar.h,v 1.21.42.1 2021/07/14 18:04:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -60,8 +60,6 @@
  *	@(#)hpibvar.h	8.1 (Berkeley) 6/10/93
  */
 
-#include <sys/queue.h>
-
 #define	HPIB_IPL(x)	((((x) >> 4) & 0x3) + 3)
 
 #define	HPIBA		32
@@ -92,6 +90,36 @@
 #define	C_UNT		0x5f	/* Universal untalk */
 #define	C_UNT_P		0xdf	/*  with odd parity */
 #define	C_SCG		0x60	/* Secondary group commands */
+
+/*
+ * Description structure for CS/80 devices.
+ */
+struct cs80_describe {
+	u_int	d_iuw:16,	/* controller: installed unit word */
+		d_cmaxxfr:16,	/* controller: max transfer rate (Kb) */
+		d_ctype:8,	/* controller: controller type */
+		d_utype:8,	/* unit: unit type */
+		d_name:24,	/* unit: name (6 BCD digits) */
+		d_sectsize:16,	/* unit: # of bytes per block (sector) */
+		d_blkbuf:8,	/* unit: # of blocks which can be buffered */
+		d_burstsize:8,	/* unit: recommended burst size */
+		d_blocktime:16,	/* unit: block time (u-sec) */
+		d_uavexfr:16,	/* unit: average transfer rate (Kb) */
+		d_retry:16,	/* unit: optimal retry time (1/100-sec) */
+		d_access:16,	/* unit: access time param (1/100-sec) */
+		d_maxint:8,	/* unit: maximum interleave */
+		d_fvbyte:8,	/* unit: fixed volume byte */
+		d_rvbyte:8,	/* unit: removable volume byte */
+		d_maxcyl:24,	/* volume: maximum cylinder */
+		d_maxhead:8,	/* volume: maximum head */
+		d_maxsect:16,	/* volume: maximum sector on track */
+		d_maxvsecth:16,	/* volume: maximum sector on volume (MSW) */
+		d_maxvsectl:32,	/* volume: maximum sector on volume (LSWs) */
+		d_interleave:8;	/* volume: current interleave */
+} __attribute__((__packed__));
+
+#ifdef _KERNEL
+#include <sys/queue.h>
 
 struct hpibbus_softc;
 
@@ -139,7 +167,7 @@ struct hpibbus_attach_args {
 #define	hpibbuscf_punit		cf_loc[HPIBBUSCF_PUNIT]
 
 #define	HPIB_NSLAVES		8	/* number of slaves on a bus */
-#define	HPIB_NPUNITS		2	/* number of punits per slave */
+#define	HPIB_NPUNITS		15	/* number of punits per slave */
 
 /*
  * An HP-IB job queue entry.  Slave drivers have one of these used
@@ -174,12 +202,6 @@ struct hpibbus_softc {
 	char	*sc_addr;
 	int	sc_count;
 	int	sc_curcnt;
-
-	/*
-	 * HP-IB is an indirect bus; this cheezy resource map
-	 * keeps track of slave/punit allocations.
-	 */
-	char	sc_rmap[HPIB_NSLAVES][HPIB_NPUNITS];
 };
 
 /* sc_flags */
@@ -190,7 +212,6 @@ struct hpibbus_softc {
 #define	HPIBF_TIMO	0x10
 #define	HPIBF_DMA16	0x8000
 
-#ifdef _KERNEL
 extern	void *internalhpib;
 extern	int hpibtimeout;
 extern	int hpibdmathresh;
