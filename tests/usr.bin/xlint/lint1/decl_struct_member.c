@@ -1,4 +1,4 @@
-/*	$NetBSD: decl_struct_member.c,v 1.5 2021/07/10 22:46:02 rillig Exp $	*/
+/*	$NetBSD: decl_struct_member.c,v 1.6 2021/07/14 20:39:13 rillig Exp $	*/
 # 3 "decl_struct_member.c"
 
 struct multi_attributes {
@@ -6,6 +6,27 @@ struct multi_attributes {
 	__attribute__((deprecated))
 	__attribute__((deprecated))
 	int deprecated;
+};
+
+struct cover_begin_type_noclass_declspecs {
+	int m1;
+	__attribute__((deprecated)) int m2;
+	const int m3;
+	int const m4;
+	int const long m5;
+	int __attribute__((deprecated)) m6;
+};
+
+typedef int number;
+
+struct cover_begin_type_typespec {
+	int m1;
+	number m2;
+};
+
+struct cover_begin_type_noclass_declmods {
+	const m1;
+	const volatile m2;
 };
 
 /*

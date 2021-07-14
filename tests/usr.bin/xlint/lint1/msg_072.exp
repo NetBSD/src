@@ -1,2 +1,6 @@
 msg_072.c(7): warning: typedef declares no type name [72]
 msg_072.c(12): warning: typedef declares no type name [72]
+msg_072.c(19): warning: typedef declares no type name [72]
+msg_072.c(22): warning: empty declaration [2]
+msg_072.c(25): warning: typedef declares no type name [72]
+msg_072.c(28): warning: empty declaration [2]
