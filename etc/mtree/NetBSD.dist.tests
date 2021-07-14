@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.184 2021/05/17 04:07:42 yamaguchi Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.185 2021/07/14 03:22:33 ozaki-r Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -345,6 +345,7 @@
 ./usr/tests/libexec/ld.elf_so/h_helper_symver_dso2
 ./usr/tests/modules
 ./usr/tests/net
+./usr/tests/net/altq
 ./usr/tests/net/arp
 ./usr/tests/net/bpf
 ./usr/tests/net/bpfilter
