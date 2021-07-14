@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.64 2020/05/30 14:16:56 rmind Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.65 2021/07/14 09:15:01 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -301,17 +301,18 @@ npfctl_import(const char *path)
 	 * just leaving this responsibility for the caller.
 	 */
 	if ((fd = open(path, O_RDONLY)) == -1) {
-		err(EXIT_FAILURE, "could not open `%s'", path);
+		err(EXIT_FAILURE, "open: '%s'", path);
 	}
 	if (fstat(fd, &sb) == -1) {
-		err(EXIT_FAILURE, "stat");
+		err(EXIT_FAILURE, "stat: '%s'", path);
 	}
 	if ((blen = sb.st_size) == 0) {
-		err(EXIT_FAILURE, "the binary configuration file is empty");
+		errx(EXIT_FAILURE,
+		    "the binary configuration file '%s' is empty", path);
 	}
 	blob = mmap(NULL, blen, PROT_READ, MAP_FILE | MAP_PRIVATE, fd, 0);
 	if (blob == MAP_FAILED) {
-		err(EXIT_FAILURE, "mmap");
+		err(EXIT_FAILURE, "mmap: '%s'", path);
 	}
 	ncf = npf_config_import(blob, blen);
 	munmap(blob, blen);
@@ -329,7 +330,7 @@ npfctl_load(int fd)
 	 */
 	ncf = npfctl_import(NPF_DB_PATH);
 	if (ncf == NULL) {
-		err(EXIT_FAILURE, "npf_config_import");
+		err(EXIT_FAILURE, "npf_config_import: '%s'", NPF_DB_PATH);
 	}
 	if ((errno = npf_config_submit(ncf, fd, &errinfo)) != 0) {
 		npfctl_print_error(&errinfo);
@@ -345,7 +346,7 @@ npfctl_open_dev(const char *path)
 	int fd;
 
 	if (lstat(path, &st) == -1) {
-		err(EXIT_FAILURE, "fstat");
+		err(EXIT_FAILURE, "fstat: '%s'", path);
 	}
 	if ((st.st_mode & S_IFMT) == S_IFSOCK) {
 		struct sockaddr_un addr;
@@ -358,11 +359,11 @@ npfctl_open_dev(const char *path)
 		strncpy(addr.sun_path, path, sizeof(addr.sun_path) - 1);
 
 		if (connect(fd, (struct sockaddr *)&addr, sizeof(addr)) == -1) {
-			err(EXIT_FAILURE, "connect");
+			err(EXIT_FAILURE, "connect: '%s'", path);
 		}
 	} else {
 		if ((fd = open(path, O_RDONLY)) == -1) {
-			err(EXIT_FAILURE, "cannot open '%s'", path);
+			err(EXIT_FAILURE, "open: '%s'", path);
 		}
 	}
 	return fd;
@@ -416,7 +417,8 @@ npfctl_debug(int argc, char **argv)
 		puts("Loading the active configuration");
 		fd = npfctl_open_dev(NPF_DEV_PATH);
 		if ((ncf = npf_config_retrieve(fd)) == NULL) {
-			err(EXIT_FAILURE, "npf_config_retrieve");
+			err(EXIT_FAILURE, "npf_config_retrieve: '%s'",
+			    NPF_DEV_PATH);
 		}
 	}
 
