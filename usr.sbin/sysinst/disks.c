@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.72 2021/01/31 22:45:46 rillig Exp $ */
+/*	$NetBSD: disks.c,v 1.73 2021/07/14 18:56:05 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -754,17 +754,23 @@ convert_scheme(struct pm_devs *p, bool is_boot_drive, const char **err_msg)
 	new_scheme = select_part_scheme(p, old_parts->pscheme,
 	    false, MSG_select_other_partscheme);
 
-	if (new_scheme == NULL)
+	if (new_scheme == NULL) {
+		if (err_msg)
+			*err_msg = INTERNAL_ERROR;
 		return false;
+	}
 
 	new_parts = new_scheme->create_new_for_disk(p->diskdev,
 	    0, p->dlsize, is_boot_drive, NULL);
-	if (new_parts == NULL)
+	if (new_parts == NULL) {
+		if (err_msg)
+			*err_msg = MSG_out_of_memory;
 		return false;
+	}
 
 	convert_copy(old_parts, new_parts);
 
-	if (new_parts->num_part == 0) {
+	if (new_parts->num_part == 0 && old_parts->num_part != 0) {
 		/* need to cleanup */
 		new_parts->pscheme->free(new_parts);
 		return false;
