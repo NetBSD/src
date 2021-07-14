@@ -1,7 +1,10 @@
-#	$NetBSD: std.ofwgencfg,v 1.1 2002/02/10 01:57:04 thorpej Exp $
+#	$NetBSD: std.ofwgencfg,v 1.2 2021/07/14 13:28:40 thorpej Exp $
 #
 # Configuration options for generic OpenFirmware configurations.
 #
+
+options		VMSWAP_DEFAULT_PLAINTEXT	# do not encrypt swap by
+						# default (slow cpu)
 
 # Pull in OFWGENCFG config definitions.
 include "arch/arm/ofw/files.ofwgencfg"
