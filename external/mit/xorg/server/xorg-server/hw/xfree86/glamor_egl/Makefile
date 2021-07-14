@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/04/16 21:21:51 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2021/07/14 06:34:33 mrg Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules
 
@@ -30,8 +30,10 @@ CPPFLAGS+=	\
 CPPFLAGS+=	\
 	-DGLAMOR_HAS_GBM
 
+.include "../../../../../lib/mesa-which.mk"
+
 LIBDPLIBS=	\
-	gbm	${.CURDIR}/../../../../../lib/libgbm
+	gbm	${.CURDIR}/../../../../../lib/libgbm${OLD_SUFFIX}
 
 .include <bsd.x11.mk>
 LIBDIR=	${XMODULEDIR}
