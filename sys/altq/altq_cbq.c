@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cbq.c,v 1.33 2021/07/14 08:27:59 ozaki-r Exp $	*/
+/*	$NetBSD: altq_cbq.c,v 1.34 2021/07/14 08:31:15 ozaki-r Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.21 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.33 2021/07/14 08:27:59 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.34 2021/07/14 08:31:15 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -363,31 +363,26 @@ cbq_add_queue(struct pf_altq *a)
 	/*
 	 * check parameters
 	 */
-	switch (opts->flags & CBQCLF_CLASSMASK) {
-	case CBQCLF_ROOTCLASS:
+	if ((opts->flags & CBQCLF_ROOTCLASS) != 0) {
 		if (parent != NULL)
 			return (EINVAL);
 		if (cbqp->ifnp.root_)
 			return (EINVAL);
-		break;
-	case CBQCLF_DEFCLASS:
+	}
+	if ((opts->flags & CBQCLF_DEFCLASS) != 0) {
 		if (cbqp->ifnp.default_)
 			return (EINVAL);
-		break;
-	case 0:
+	}
+	if ((opts->flags & CBQCLF_CLASSMASK) == 0) {
 		if (a->qid == 0)
 			return (EINVAL);
-		break;
-	default:
-		/* more than two flags bits set */
-		return (EINVAL);
 	}
 
 	/*
 	 * create a class.  if this is a root class, initialize the
 	 * interface.
 	 */
-	if ((opts->flags & CBQCLF_CLASSMASK) == CBQCLF_ROOTCLASS) {
+	if ((opts->flags & CBQCLF_ROOTCLASS) != 0) {
 		error = rmc_init(cbqp->ifnp.ifq_, &cbqp->ifnp,
 		    opts->ns_per_byte, cbqrestart, a->qlimit, RM_MAXQUEUED,
 		    opts->maxidle, opts->minidle, opts->offtime,
@@ -412,7 +407,7 @@ cbq_add_queue(struct pf_altq *a)
 	/* save the allocated class */
 	cbqp->cbq_class_tbl[i] = cl;
 
-	if ((opts->flags & CBQCLF_CLASSMASK) == CBQCLF_DEFCLASS)
+	if ((opts->flags & CBQCLF_DEFCLASS) != 0)
 		cbqp->ifnp.default_ = cl;
 
 	return (0);
@@ -727,7 +722,7 @@ cbq_class_create(cbq_state_t *cbqp, struct cbq_add_class *acp,
 	 * create a class.  if this is a root class, initialize the
 	 * interface.
 	 */
-	if ((spec->flags & CBQCLF_CLASSMASK) == CBQCLF_ROOTCLASS) {
+	if ((spec->flags & CBQCLF_ROOTCLASS) != 0) {
 		error = rmc_init(cbqp->ifnp.ifq_, &cbqp->ifnp,
 		    spec->nano_sec_per_byte, cbqrestart, spec->maxq,
 		    RM_MAXQUEUED, spec->maxidle, spec->minidle, spec->offtime,
@@ -754,9 +749,9 @@ cbq_class_create(cbq_state_t *cbqp, struct cbq_add_class *acp,
 	/* save the allocated class */
 	cbqp->cbq_class_tbl[i] = cl;
 
-	if ((spec->flags & CBQCLF_CLASSMASK) == CBQCLF_DEFCLASS)
+	if ((spec->flags & CBQCLF_CLASSMASK) != 0)
 		cbqp->ifnp.default_ = cl;
-	if ((spec->flags & CBQCLF_CLASSMASK) == CBQCLF_CTLCLASS)
+	if ((spec->flags & CBQCLF_CTLCLASS) != 0)
 		cbqp->ifnp.ctl_ = cl;
 
 	return (0);
