@@ -1,4 +1,4 @@
-#	$NetBSD: t_vlan.sh,v 1.20 2021/07/09 05:54:11 yamaguchi Exp $
+#	$NetBSD: t_vlan.sh,v 1.21 2021/07/14 06:35:59 yamaguchi Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -986,6 +986,27 @@ vlan_promisc_body()
 
 	atf_check -s exit:0 -o not-match:'PROMISC' rump.ifconfig vlan0
 	atf_check -s exit:0 -o not-match:'PROMISC' rump.ifconfig shmif0
+	$atf_ifconfig vlan0 -vlanif
+
+	#
+	# clear IFF_PROMISC after bpf_detach called from ether_ifdetach
+	#
+	$atf_ifconfig vlan0 vlan 1 vlanif shmif0
+	$atf_ifconfig vlan0 up
+
+	$bpfopen -r vlan0 &
+	pid=$!
+
+	atf_check -s exit:0 -o match:'PROMISC' rump.ifconfig vlan0
+	atf_check -s exit:0 -o match:'PROMISC' rump.ifconfig shmif0
+
+	$atf_ifconfig vlan0 -vlanif
+
+	atf_check -s exit:0 -o not-match:'PROMISC' rump.ifconfig vlan0
+	atf_check -s exit:0 -o not-match:'PROMISC' rump.ifconfig shmif0
+
+	kill -TERM $pid
+	atf_check -s exit:0 -o not-match:'PROMISC' rump.ifconfig vlan0
 }
 
 vlan_promisc_cleanup()
