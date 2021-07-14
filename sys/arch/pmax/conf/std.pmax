@@ -1,4 +1,4 @@
-#	$NetBSD: std.pmax,v 1.18 2005/12/11 12:18:36 christos Exp $
+#	$NetBSD: std.pmax,v 1.19 2021/07/14 13:32:37 thorpej Exp $
 # standard, required pmax info
 
 machine pmax mips
@@ -8,5 +8,8 @@ makeoptions	MACHINE_ARCH="mipsel"
 # Standard exec-package options
 options 	EXEC_ELF32	# 32-bit ELF support (native format)
 options 	EXEC_SCRIPT	# exec of #! scripts
+
+options		VMSWAP_DEFAULT_PLAINTEXT	# do not encrypt swap by
+						# default (slow cpu)
 
 makeoptions	DEFTEXTADDR="0x80030000"
