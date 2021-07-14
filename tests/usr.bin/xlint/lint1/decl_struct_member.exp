@@ -1,4 +1,4 @@
-decl_struct_member.c(17): error: syntax error 'unnamed member' [249]
-decl_struct_member.c(24): error: syntax error '0' [249]
-decl_struct_member.c(25): warning: syntax requires ';' after last struct/union member [66]
-decl_struct_member.c(32): error: cannot recover from previous errors [224]
+decl_struct_member.c(38): error: syntax error 'unnamed member' [249]
+decl_struct_member.c(45): error: syntax error '0' [249]
+decl_struct_member.c(46): warning: syntax requires ';' after last struct/union member [66]
+decl_struct_member.c(53): error: cannot recover from previous errors [224]

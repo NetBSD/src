@@ -1,4 +1,4 @@
-/*	$NetBSD: decl.c,v 1.4 2021/07/11 15:07:39 rillig Exp $	*/
+/*	$NetBSD: decl.c,v 1.5 2021/07/14 20:39:13 rillig Exp $	*/
 # 3 "decl.c"
 
 /*
@@ -98,4 +98,29 @@ unused_local_variable(void)
 
 	__attribute__((unused))
 	__attribute__((unused)) _Bool unused_twice;
+}
+
+int
+declaration_without_type_specifier(void)
+{
+	const i = 3;
+
+	return i;
+}
+
+/* TODO: add quotes around %s */
+/* expect+2: warning: static function unused unused [236] */
+static void
+unused(void)
+{
+}
+
+/*
+ * The attribute 'used' does not influence static functions, it only
+ * applies to function parameters.
+ */
+/* LINTED */
+static void
+unused_linted(void)
+{
 }

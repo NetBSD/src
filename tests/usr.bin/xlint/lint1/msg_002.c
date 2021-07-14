@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_002.c,v 1.4 2021/07/08 05:18:49 rillig Exp $	*/
+/*	$NetBSD: msg_002.c,v 1.5 2021/07/14 20:39:13 rillig Exp $	*/
 # 3 "msg_002.c"
 
 // Test for message: empty declaration [2]
@@ -10,3 +10,20 @@ int local_variable;
 
 /* expect+1: warning: empty declaration [2] */
 const;
+
+void
+cover_cgram_declaration(void)
+{
+
+	/* expect+1: warning: typedef declares no type name [72] */
+	typedef const;
+
+	/* expect+1: warning: empty declaration [2] */
+	const;
+
+	/* expect+1: warning: typedef declares no type name [72] */
+	typedef int;
+
+	/* expect+1: warning: empty declaration [2] */
+	int;
+}

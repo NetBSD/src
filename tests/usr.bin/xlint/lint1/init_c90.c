@@ -1,4 +1,4 @@
-/*	$NetBSD: init_c90.c,v 1.1 2021/07/10 09:24:27 rillig Exp $	*/
+/*	$NetBSD: init_c90.c,v 1.2 2021/07/14 20:39:13 rillig Exp $	*/
 # 3 "init_c90.c"
 
 /*
@@ -21,3 +21,10 @@ struct point point_c99 = { .x = 0, .y = 0 };
 struct point points_c90[] = {{ 0, 0 }};
 /* expect+1: warning: array initializer with designators is a C9X feature [321] */
 struct point points_c99[] = {[3] = { 0, 0 }};
+
+
+struct point
+compound_literal(void) {
+	/* expect+1: compound literals are a C9X/GCC extension [319] */
+	return (struct point){ 0, 0 };
+}
