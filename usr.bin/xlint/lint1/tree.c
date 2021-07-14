@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.313 2021/07/06 04:44:20 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.314 2021/07/14 17:07:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.313 2021/07/06 04:44:20 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.314 2021/07/14 17:07:24 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -685,6 +685,22 @@ build(op_t op, tnode_t *ln, tnode_t *rn)
 	}
 
 	return ntn;
+}
+
+tnode_t *
+build_member_access(tnode_t *ln, op_t op, sbuf_t *member)
+{
+	sym_t	*msym;
+
+	if (ln == NULL)
+		return NULL;
+
+	if (op == ARROW) {
+		/* must do this before struct_or_union_member is called */
+		ln = cconv(ln);
+	}
+	msym = struct_or_union_member(ln, op, getsym(member));
+	return build(op, ln, new_name_node(msym, 0));
 }
 
 /*
