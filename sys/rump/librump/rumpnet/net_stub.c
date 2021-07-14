@@ -1,4 +1,4 @@
-/*	$NetBSD: net_stub.c,v 1.42 2021/05/17 04:07:44 yamaguchi Exp $	*/
+/*	$NetBSD: net_stub.c,v 1.43 2021/07/14 03:19:24 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: net_stub.c,v 1.42 2021/05/17 04:07:44 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: net_stub.c,v 1.43 2021/07/14 03:19:24 ozaki-r Exp $");
 
 #include <sys/mutex.h>
 #include <sys/param.h>
@@ -112,6 +112,14 @@ __weak_alias(key_sp_unref,rumpnet_stub);
 __weak_alias(lagg_ifdetach,rumpnet_stub);
 __weak_alias(lagg_input_ethernet,rumpnet_stub);
 __weak_alias(lagg_linkstate_changed,rumpnet_stub);
+
+/* altq */
+int (*altq_input)(struct mbuf *, int);
+__weak_alias(in6mask128,rumpnet_stub);
+__weak_alias(in6mask0,rumpnet_stub);
+__weak_alias(altq_detach,rumpnet_stub);
+__weak_alias(altq_disable,rumpnet_stub);
+__weak_alias(tbr_dequeue,rumpnet_stub);
 
 struct ifnet_head ifnet_list;
 struct pslist_head ifnet_pslist;
