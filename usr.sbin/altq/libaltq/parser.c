@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.11 2011/08/16 12:49:13 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.12 2021/07/14 08:33:05 ozaki-r Exp $	*/
 /*	$KAME: parser.c,v 1.16 2002/02/20 10:40:39 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2002
@@ -76,7 +76,7 @@ static int conditioner_parser(char *);
 static int tc_action_parser(char *, char **, struct tc_action *);
 
 #define MAX_LINE	1024
-#define MAX_WORD	64
+#define MAX_WORD	128
 #define MAX_ARGS	64
 #define MAX_ACTIONS	16
 
