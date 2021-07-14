@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.321 2021/07/14 16:51:57 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.322 2021/07/14 16:59:39 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.321 2021/07/14 16:51:57 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.322 2021/07/14 16:59:39 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -295,8 +295,8 @@ anonymize(sym_t *s)
 %type	<y_tnode>	argument_expression_list
 %type	<y_tnode>	unary_expression
 %type	<y_tnode>	cast_expression
-%type	<y_tnode>	expr_opt
-%type	<y_tnode>	expr
+%type	<y_tnode>	expression_opt
+%type	<y_tnode>	expression
 %type	<y_tnode>	assignment_expression
 %type	<y_tnode>	constant_expr
 
@@ -419,7 +419,7 @@ primary_expression:
 	| string {
 		$$ = new_string_node($1);
 	  }
-	| T_LPAREN expr T_RPAREN {
+	| T_LPAREN expression T_RPAREN {
 		if ($2 != NULL)
 			$2->tn_parenthesized = true;
 		$$ = $2;
@@ -468,7 +468,7 @@ generic_association:
 /* K&R 7.1, C90 ???, C99 6.5.2, C11 6.5.2 */
 postfix_expression:
 	  primary_expression
-	| postfix_expression T_LBRACK expr T_RBRACK {
+	| postfix_expression T_LBRACK expression T_RBRACK {
 		$$ = build(INDIR, build(PLUS, $1, $3), NULL);
 	  }
 	| postfix_expression T_LPAREN T_RPAREN {
@@ -551,7 +551,7 @@ gcc_statement_expr_item:
 		$$ = expr_zalloc_tnode();
 		$$->tn_type = gettyp(VOID);
 	  }
-	| expr T_SEMI {
+	| expression T_SEMI {
 		if ($1 == NULL) {	/* in case of syntax errors */
 			$$ = expr_zalloc_tnode();
 			$$->tn_type = gettyp(VOID);
@@ -579,10 +579,10 @@ point_or_arrow:			/* helper for 'postfix_expression' */
 
 /* K&R 7.1, C90 ???, C99 6.5.2, C11 6.5.2 */
 argument_expression_list:
-	  expr %prec T_COMMA {
+	  expression %prec T_COMMA {
 		$$ = new_function_argument_node(NULL, $1);
 	  }
-	| argument_expression_list T_COMMA expr {
+	| argument_expression_list T_COMMA expression {
 		$$ = new_function_argument_node($1, $3);
 	  }
 	;
@@ -645,11 +645,11 @@ cast_expression:
 	  }
 	;
 
-expr_opt:
+expression_opt:
 	  /* empty */ {
 		$$ = NULL;
 	  }
-	| expr
+	| expression
 	;
 
 /* 'expression' also implements 'multiplicative_expression'. */
@@ -664,52 +664,51 @@ expr_opt:
 /* 'expression' also implements 'logical_OR_expression'. */
 /* 'expression' also implements 'conditional_expression'. */
 /* 'expression' also implements 'assignment_expression'. */
-/* TODO: rename to 'expression' */
 /* K&R ???, C90 ???, C99 6.5.5 to 6.5.17, C11 ??? */
-expr:
-	  expr T_ASTERISK expr {
+expression:
+	  expression T_ASTERISK expression {
 		$$ = build(MULT, $1, $3);
 	  }
-	| expr T_MULTIPLICATIVE expr {
+	| expression T_MULTIPLICATIVE expression {
 		$$ = build($2, $1, $3);
 	  }
-	| expr T_ADDITIVE expr {
+	| expression T_ADDITIVE expression {
 		$$ = build($2, $1, $3);
 	  }
-	| expr T_SHIFT expr {
+	| expression T_SHIFT expression {
 		$$ = build($2, $1, $3);
 	  }
-	| expr T_RELATIONAL expr {
+	| expression T_RELATIONAL expression {
 		$$ = build($2, $1, $3);
 	  }
-	| expr T_EQUALITY expr {
+	| expression T_EQUALITY expression {
 		$$ = build($2, $1, $3);
 	  }
-	| expr T_AMPER expr {
+	| expression T_AMPER expression {
 		$$ = build(BITAND, $1, $3);
 	  }
-	| expr T_BITXOR expr {
+	| expression T_BITXOR expression {
 		$$ = build(BITXOR, $1, $3);
 	  }
-	| expr T_BITOR expr {
+	| expression T_BITOR expression {
 		$$ = build(BITOR, $1, $3);
 	  }
-	| expr T_LOGAND expr {
+	| expression T_LOGAND expression {
 		$$ = build(LOGAND, $1, $3);
 	  }
-	| expr T_LOGOR expr {
+	| expression T_LOGOR expression {
 		$$ = build(LOGOR, $1, $3);
 	  }
-	| expr T_QUEST expr T_COLON expr {
+	| expression T_QUEST expression T_COLON expression {
 		$$ = build(QUEST, $1, build(COLON, $3, $5));
 	  }
-	| expr T_ASSIGN expr {
+	| expression T_ASSIGN expression {
 		$$ = build(ASSIGN, $1, $3);
 	  }
-	| expr T_OPASSIGN expr {
+	| expression T_OPASSIGN expression {
 		$$ = build($2, $1, $3);
 	  }
-	| expr T_COMMA expr {
+	| expression T_COMMA expression {
 		$$ = build(COMMA, $1, $3);
 	  }
 	| cast_expression
@@ -717,7 +716,7 @@ expr:
 
 /* K&R ???, C90 ???, C99 6.5.16, C11 ??? */
 assignment_expression:
-	  expr %prec T_ASSIGN
+	  expression %prec T_ASSIGN
 	;
 
 constant_expr_list_opt:		/* helper for gcc_attribute */
@@ -731,7 +730,7 @@ constant_expr_list:		/* helper for gcc_attribute */
 	;
 
 constant_expr:			/* C99 6.6 */
-	  expr %prec T_ASSIGN
+	  expression %prec T_ASSIGN
 	;
 
 declaration:			/* C99 6.7 */
@@ -1524,7 +1523,7 @@ parameter_declaration:
 	;
 
 initializer:			/* C99 6.7.8 "Initialization" */
-	  expr %prec T_COMMA {
+	  expression %prec T_COMMA {
 		init_expr($1);
 	  }
 	| init_lbrace init_rbrace {
@@ -1697,7 +1696,7 @@ block_item:			/* C99 6.8.2 */
 	;
 
 expression_statement:		/* C99 6.8.3 */
-	  expr T_SEMI {
+	  expression T_SEMI {
 		expr($1, false, false, false, false);
 		seen_fallthrough = false;
 	  }
@@ -1739,14 +1738,14 @@ if_without_else:		/* see C99 6.8.4 */
 	;
 
 if_expr:			/* see C99 6.8.4 */
-	  T_IF T_LPAREN expr T_RPAREN {
+	  T_IF T_LPAREN expression T_RPAREN {
 		if1($3);
 		clear_warning_flags();
 	  }
 	;
 
 switch_expr:			/* see C99 6.8.4 */
-	  T_SWITCH T_LPAREN expr T_RPAREN {
+	  T_SWITCH T_LPAREN expression T_RPAREN {
 		switch1($3);
 		clear_warning_flags();
 	  }
@@ -1784,7 +1783,7 @@ iteration_statement:		/* C99 6.8.5 */
 	;
 
 while_expr:			/* see C99 6.8.5 */
-	  T_WHILE T_LPAREN expr T_RPAREN {
+	  T_WHILE T_LPAREN expression T_RPAREN {
 		while1($3);
 		clear_warning_flags();
 	  }
@@ -1803,7 +1802,7 @@ do:				/* see C99 6.8.5 */
 	;
 
 do_while_expr:			/* see C99 6.8.5 */
-	  T_WHILE T_LPAREN expr T_RPAREN T_SEMI {
+	  T_WHILE T_LPAREN expression T_RPAREN T_SEMI {
 		$$ = $3;
 	  }
 	;
@@ -1816,14 +1815,19 @@ for_start:			/* see C99 6.8.5 */
 	;
 
 for_exprs:			/* see C99 6.8.5 */
-	  for_start begin_type_declaration_specifiers end_type notype_init_decls T_SEMI
-	    expr_opt T_SEMI expr_opt T_RPAREN {
+	  for_start
+	    begin_type_declaration_specifiers end_type
+	    notype_init_decls T_SEMI
+	    expression_opt T_SEMI expression_opt T_RPAREN {
 		/* variable declaration in for loop */
 		c99ism(325);
 		for1(NULL, $6, $8);
 		clear_warning_flags();
 	    }
-	  | for_start expr_opt T_SEMI expr_opt T_SEMI expr_opt T_RPAREN {
+	  | for_start
+	      expression_opt T_SEMI
+	      expression_opt T_SEMI
+	      expression_opt T_RPAREN {
 		for1($2, $4, $6);
 		clear_warning_flags();
 	  }
@@ -1845,7 +1849,7 @@ jump_statement:			/* C99 6.8.6 */
 	| T_RETURN T_SEMI {
 		do_return(NULL);
 	  }
-	| T_RETURN expr T_SEMI {
+	| T_RETURN expression T_SEMI {
 		do_return($2);
 	  }
 	;
