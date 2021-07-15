@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_247.c,v 1.15 2021/07/15 21:12:46 rillig Exp $	*/
+/*	$NetBSD: msg_247.c,v 1.16 2021/07/15 21:22:19 rillig Exp $	*/
 # 3 "msg_247.c"
 
 // Test for message: pointer cast from '%s' to '%s' may be troublesome [247]
@@ -157,24 +157,32 @@ lh_OPENSSL_STRING_new(void)
 
 void sink(const void *);
 
+/*
+ * Before tree.c 1.316 from 2021-07-15, lint warned about pointer casts from
+ * unsigned char or plain char to another type.  These casts often occur in
+ * traditional code that does not use void pointers, even 30 years after C90
+ * introduced 'void'.
+ */
 void
 unsigned_char_to_unsigned_type(unsigned char *ucp)
 {
 	unsigned short *usp;
 
-	/* FIXME */
-	/* expect+1: warning: pointer cast from 'pointer to unsigned char' to 'pointer to unsigned short' may be troublesome [247] */
 	usp = (unsigned short *)ucp;
 	sink(usp);
 }
 
+/*
+ * Before tree.c 1.316 from 2021-07-15, lint warned about pointer casts from
+ * unsigned char or plain char to another type.  These casts often occur in
+ * traditional code that does not use void pointers, even 30 years after C90
+ * introduced 'void'.
+ */
 void
 plain_char_to_unsigned_type(char *cp)
 {
 	unsigned short *usp;
 
-	/* FIXME */
-	/* expect+1: warning: pointer cast from 'pointer to char' to 'pointer to unsigned short' may be troublesome [247] */
 	usp = (unsigned short *)cp;
 	sink(usp);
 }

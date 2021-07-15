@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_135.c,v 1.8 2021/07/15 21:12:46 rillig Exp $	*/
+/*	$NetBSD: msg_135.c,v 1.9 2021/07/15 21:22:19 rillig Exp $	*/
 # 3 "msg_135.c"
 
 // Test for message: converting '%s' to '%s' may cause alignment problem [135]
@@ -8,11 +8,12 @@
 void sink(const void *);
 
 unsigned
-read_uint(const unsigned char **pp)
+read_uint(const unsigned short **pp)
 {
 	unsigned val;
 
-	val = *(const unsigned *)(*pp);	/* expect: 135 */
+	/* expect+1: warning: converting 'pointer to const unsigned short' to 'pointer to const unsigned int' may cause alignment problem [135] */
+	val = *(const unsigned *)(*pp);
 	pp += sizeof(unsigned);
 	return val;
 }
@@ -43,24 +44,32 @@ pointer_to_structs(struct incomplete *incomplete)
 	sink(complete);
 }
 
+/*
+ * Before tree.c 1.316 from 2021-07-15, lint warned about pointer casts from
+ * unsigned char or plain char to another type.  These casts often occur in
+ * traditional code that does not use void pointers, even 30 years after C90
+ * introduced 'void'.
+ */
 void
 unsigned_char_to_unsigned_type(unsigned char *ucp)
 {
 	unsigned short *usp;
 
-	/* FIXME */
-	/* expect+1: warning: converting 'pointer to unsigned char' to 'pointer to unsigned short' may cause alignment problem [135] */
 	usp = (unsigned short *)ucp;
 	sink(usp);
 }
 
+/*
+ * Before tree.c 1.316 from 2021-07-15, lint warned about pointer casts from
+ * unsigned char or plain char to another type.  These casts often occur in
+ * traditional code that does not use void pointers, even 30 years after C90
+ * introduced 'void'.
+ */
 void
 plain_char_to_unsigned_type(char *cp)
 {
 	unsigned short *usp;
 
-	/* FIXME */
-	/* expect+1: warning: converting 'pointer to char' to 'pointer to unsigned short' may cause alignment problem [135] */
 	usp = (unsigned short *)cp;
 	sink(usp);
 }
