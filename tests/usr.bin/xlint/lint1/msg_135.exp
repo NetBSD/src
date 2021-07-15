@@ -1,2 +1,4 @@
 msg_135.c(15): warning: converting 'pointer to const unsigned char' to 'pointer to const unsigned int' may cause alignment problem [135]
+msg_135.c(53): warning: converting 'pointer to unsigned char' to 'pointer to unsigned short' may cause alignment problem [135]
+msg_135.c(64): warning: converting 'pointer to char' to 'pointer to unsigned short' may cause alignment problem [135]
 msg_135.c(20): warning: struct incomplete never defined [233]
