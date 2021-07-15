@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.114 2021/07/10 17:35:54 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.115 2021/07/15 18:13:25 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -209,11 +209,11 @@ typedef	enum {
 } symt_t;
 
 /*
- * storage classes
+ * storage classes and related things
  */
 typedef enum {
 	NOSCL,
-	EXTERN,		/* external symbols (indep. of decl_t) */
+	EXTERN,		/* external symbols (independent of decl_t) */
 	STATIC,		/* static symbols (local and global) */
 	AUTO,		/* automatic symbols (except register) */
 	REG,		/* register */

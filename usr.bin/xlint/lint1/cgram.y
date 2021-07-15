@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.325 2021/07/15 17:20:57 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.326 2021/07/15 18:13:25 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.325 2021/07/15 17:20:57 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.326 2021/07/15 18:13:25 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -181,7 +181,7 @@ anonymize(sym_t *s)
 
 /*
  * predefined type keywords (char, int, short, long, unsigned, signed,
- * float, double, void); see T_TYPENAME
+ * float, double, void); see T_TYPENAME for types from typedef
  */
 %token	<y_tspec>	T_TYPE
 
@@ -527,7 +527,7 @@ gcc_statement_expr_list:
 	;
 
 gcc_statement_expr_item:
-	  declaration {
+	  declaration_or_error {
 		clear_warning_flags();
 		$$ = NULL;
 	  }
@@ -720,6 +720,11 @@ constant_expr:			/* C99 6.6 */
 	  conditional_expression
 	;
 
+declaration_or_error:
+	  declaration
+	| error T_SEMI
+	;
+
 declaration:			/* C99 6.7 */
 	  begin_type_declmods end_type T_SEMI {
 		if (dcs->d_scl == TYPEDEF) {
@@ -742,7 +747,6 @@ declaration:			/* C99 6.7 */
 	  }
 	| begin_type_declaration_specifiers end_type
 	    type_init_declarators T_SEMI
-	| error T_SEMI
 	;
 
 begin_type_declaration_specifiers:	/* see C99 6.7 */
@@ -1672,7 +1676,7 @@ block_item_list:		/* C99 6.8.2 */
 	;
 
 block_item:			/* C99 6.8.2 */
-	  declaration {
+	  declaration_or_error {
 		$$ = false;
 		restore_warning_flags();
 	  }
