@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.222 2021/07/06 12:42:12 thorpej Exp $
+# $NetBSD: HACKS,v 1.223 2021/07/15 08:02:47 rin Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -996,4 +996,14 @@ port	sh3
 		reflect the exact breakage.
 
 		https://gcc.gnu.org/bugzilla/show_bug.cgi?id=101177
+kcah
+
+port	sh3
+hack	compile lint1/initdecl() with -O0 for sh3 (port-sh3/56311)
+cdate	Thu Jul 15 07:58:05 UTC 2021
+who	rin
+file	src/usr.bin/xlint/lint1/decl.c: 1.200
+descr	GCC 9 and 10 miscompile initdecl() due to improper use of scratch
+	register, as described in the PR. Compiling this function with -O0
+	works around the problem.
 kcah
