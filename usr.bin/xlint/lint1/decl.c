@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.204 2021/07/15 23:07:05 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.205 2021/07/15 23:42:49 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.204 2021/07/15 23:07:05 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.205 2021/07/15 23:42:49 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -746,7 +746,11 @@ dcs_adjust_storage_class(void)
 	}
 }
 
-/* Merge the declaration specifiers from dcs into dcs->d_type. */
+/*
+ * Merge the declaration specifiers from dcs into dcs->d_type.
+ *
+ * See C99 6.7.2 "Type specifiers".
+ */
 static void
 dcs_merge_declaration_specifiers(void)
 {
@@ -776,55 +780,34 @@ dcs_merge_declaration_specifiers(void)
 		return;
 	}
 
-	switch (t) {
-	case BOOL:
-		break;
-	case NOTSPEC:
+	if (t == NOTSPEC)
 		t = INT;
-		/* FALLTHROUGH */
-	case INT:
-		if (s == NOTSPEC)
-			s = SIGNED;
-		break;
-	case CHAR:
-		if (l != NOTSPEC) {
-			dcs->d_terr = true;
-			l = NOTSPEC;
-		}
-		break;
-	case FLOAT:
-		if (l == LONG) {
-			l = NOTSPEC;
-			t = DOUBLE;
-			if (!tflag)
-				/* use 'double' instead of 'long float' */
-				warning(6);
-		}
-		break;
-	case DOUBLE:
-		if (l != LONG)
-			break;
-		/* FALLTHROUGH */
-	case LDOUBLE:
+	if (s == NOTSPEC && t == INT)
+		s = SIGNED;
+	if (l != NOTSPEC && t == CHAR) {
+		dcs->d_terr = true;
+		l = NOTSPEC;
+	}
+	if (l == LONG && t == FLOAT) {
+		l = NOTSPEC;
+		t = DOUBLE;
+		if (!tflag)
+			/* use 'double' instead of 'long float' */
+			warning(6);
+	}
+	if ((l == LONG && t == DOUBLE) || t == LDOUBLE) {
 		l = NOTSPEC;
 		t = LDOUBLE;
-		if (tflag)
-			/* 'long double' is illegal in traditional C */
-			warning(266);
-		break;
-	case DCOMPLEX:
-		if (l == LONG) {
-			l = NOTSPEC;
-			t = LCOMPLEX;
-		}
-		break;
-	case VOID:
-	case FCOMPLEX:
-	case LCOMPLEX:
-		break;
-	default:
-		lint_assert(is_integer(t));
 	}
+	if (t == LDOUBLE && tflag) {
+		/* 'long double' is illegal in traditional C */
+		warning(266);
+	}
+	if (l == LONG && t == DCOMPLEX) {
+		l = NOTSPEC;
+		t = LCOMPLEX;
+	}
+
 	if (t != INT && t != CHAR && (s != NOTSPEC || l != NOTSPEC)) {
 		dcs->d_terr = true;
 		l = s = NOTSPEC;
