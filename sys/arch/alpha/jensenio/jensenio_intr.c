@@ -1,4 +1,4 @@
-/* $NetBSD: jensenio_intr.c,v 1.17 2021/07/04 22:42:35 thorpej Exp $ */
+/* $NetBSD: jensenio_intr.c,v 1.18 2021/07/15 01:43:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: jensenio_intr.c,v 1.17 2021/07/04 22:42:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jensenio_intr.c,v 1.18 2021/07/15 01:43:54 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -43,6 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: jensenio_intr.c,v 1.17 2021/07/04 22:42:35 thorpej E
 #include <sys/syslog.h>
 
 #include <machine/autoconf.h>
+
+#include <dev/ic/i8259reg.h>
 
 #include <dev/eisa/eisavar.h>
 
@@ -97,11 +99,12 @@ static inline void
 jensenio_specific_eoi(int irq)
 {
 
-	if (irq > 7)
-		bus_space_write_1(pic_iot, pic_ioh[1],
-		    0, 0x20 | (irq & 0x07));
-	bus_space_write_1(pic_iot, pic_ioh[0],
-	    0, 0x20 | (irq > 7 ? 2 : irq));
+	if (irq > 7) {
+		bus_space_write_1(pic_iot, pic_ioh[1], PIC_OCW2,
+		    OCW2_EOI | OCW2_SL | (irq & 0x07));
+	}
+	bus_space_write_1(pic_iot, pic_ioh[0], PIC_OCW2,
+	    OCW2_EOI | OCW2_SL | (irq > 7 ? 2 : irq));
 }
 
 void
@@ -341,12 +344,12 @@ jensenio_enable_intr(int irq, int onoff)
 	pic = irq >> 3;
 	bit = 1 << (irq & 0x7);
 
-	mask = bus_space_read_1(pic_iot, pic_ioh[pic], 1);
+	mask = bus_space_read_1(pic_iot, pic_ioh[pic], PIC_OCW1);
 	if (onoff)
 		mask &= ~bit;
 	else
 		mask |= bit;
-	bus_space_write_1(pic_iot, pic_ioh[pic], 1, mask);
+	bus_space_write_1(pic_iot, pic_ioh[pic], PIC_OCW1, mask);
 }
 
 void
@@ -378,12 +381,15 @@ jensenio_pic_init(void)
 	for (pic = 0; pic < 2; pic++) {
 		if (bus_space_map(pic_iot, picaddr[pic], 2, 0, &pic_ioh[pic]))
 			panic("jensenio_init_intr: unable to map PIC %d", pic);
-		bus_space_write_1(pic_iot, pic_ioh[pic], 1, 0xff);
+		bus_space_write_1(pic_iot, pic_ioh[pic], PIC_OCW1, 0xff);
 	}
 
 	/*
-	 * Map the ELCR registers.
+	 * Map the ELCR registers and initialize all interrupts to EDGE
+	 * trigger.
 	 */
 	if (bus_space_map(pic_iot, 0x4d0, 2, 0, &pic_elcr_ioh))
 		panic("jensenio_init_intr: unable to map ELCR registers");
+	bus_space_write_1(pic_iot, pic_elcr_ioh, 0, 0);
+	bus_space_write_1(pic_iot, pic_elcr_ioh, 1, 0);
 }
