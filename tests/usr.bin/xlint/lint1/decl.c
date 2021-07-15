@@ -1,4 +1,4 @@
-/*	$NetBSD: decl.c,v 1.7 2021/07/15 21:34:11 rillig Exp $	*/
+/*	$NetBSD: decl.c,v 1.8 2021/07/15 21:56:51 rillig Exp $	*/
 # 3 "decl.c"
 
 /*
@@ -131,7 +131,33 @@ int *const volatile cover_type_qualifier_list;
 unsigned long cover_abstract_declaration_declmods = sizeof(const);
 unsigned long cover_abstract_declaration_declmods_abstract_declarator =
     sizeof(const *);
-// FIXME:
-// lint: internal error in decl.c:833 near decl.c:135: end_type(unsigned long)
-//unsigned long cover_abstract_declarator_typeof =
-//    sizeof(const typeof(cover_abstract_declaration_declmods));
+
+unsigned long cover_abstract_declarator_typeof =
+    sizeof(const typeof(cover_abstract_declaration_declmods));
+
+_Bool bool;
+char plain_char;
+signed char signed_char;
+unsigned char unsigned_char;
+short signed_short;
+unsigned short unsigned_short;
+int signed_int;
+unsigned int unsigned_int;
+long signed_long;
+unsigned long unsigned_long;
+
+/*
+ * Before decl.c 1.201 from 2021-07-15, lint crashed with an internal error
+ * in end_type.
+ */
+unsigned long sizes =
+    sizeof(const typeof(bool)) +
+    sizeof(const typeof(plain_char)) +
+    sizeof(const typeof(signed_char)) +
+    sizeof(const typeof(unsigned_char)) +
+    sizeof(const typeof(signed_short)) +
+    sizeof(const typeof(unsigned_short)) +
+    sizeof(const typeof(signed_int)) +
+    sizeof(const typeof(unsigned_int)) +
+    sizeof(const typeof(signed_long)) +
+    sizeof(const typeof(unsigned_long));
