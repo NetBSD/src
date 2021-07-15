@@ -1,4 +1,4 @@
-/*	$NetBSD: button.c,v 1.10 2020/12/19 21:25:03 thorpej Exp $	*/
+/*	$NetBSD: button.c,v 1.11 2021/07/15 05:07:50 rin Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: button.c,v 1.10 2020/12/19 21:25:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: button.c,v 1.11 2021/07/15 05:07:50 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -59,7 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: button.c,v 1.10 2020/12/19 21:25:03 thorpej Exp $");
 /*
  * event handler
  */
-static ONCE_DECL(btn_once);
 static LIST_HEAD(, btn_event) btn_event_list;
 static kmutex_t btn_event_list_lock;
 
@@ -105,7 +104,7 @@ const struct cdevsw button_cdevsw = {
 	.d_flag = 0
 };
 
-static int
+int
 btn_init(void)
 {
 
@@ -160,11 +159,6 @@ int
 btnopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int error;
-
-	error = RUN_ONCE(&btn_once, btn_init);
-	if (error) {
-		return error;
-	}
 
 	if (minor(dev) != 0) {
 		return (ENODEV);
