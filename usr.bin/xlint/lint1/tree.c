@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.314 2021/07/14 17:07:24 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.315 2021/07/15 17:03:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.314 2021/07/14 17:07:24 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.315 2021/07/15 17:03:50 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3815,7 +3815,7 @@ display_expression(const tnode_t *tn, int offs)
 		(void)printf("o=%d, l=%d ", tn->tn_type->t_foffs,
 			     tn->tn_type->t_flen);
 	}
-	(void)printf("%s\n", ttos(tn->tn_type));
+	(void)printf("%s\n", type_name(tn->tn_type));
 	if (tn->tn_op == NAME || tn->tn_op == CON || tn->tn_op == STRING)
 		return;
 	display_expression(tn->tn_left, offs + 2);
