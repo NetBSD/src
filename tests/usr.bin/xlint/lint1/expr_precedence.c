@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_precedence.c,v 1.1 2021/07/15 17:09:08 rillig Exp $	*/
+/*	$NetBSD: expr_precedence.c,v 1.2 2021/07/15 17:20:58 rillig Exp $	*/
 # 3 "expr_precedence.c"
 
 /*
@@ -23,9 +23,8 @@ int init_syntactically_ok = var = 1 ? 2 : 3;
  */
 void __attribute__((format(printf,
     /* expect+2: error: 'var' undefined [99] */ /* XXX: why? */
-    /* XXX: allow only constant-expression, not assignment-expression */
+    /* expect+1: syntax error '=' [249] */
     var = 1,
     /* Syntactically ok, must be a constant expression though. */
-    /* expect+1: error: 'var' undefined [99] */
     var > 0 ? 2 : 1)))
 my_printf(const char *, ...);
