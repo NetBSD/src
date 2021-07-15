@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.205 2021/07/15 23:42:49 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.206 2021/07/15 23:47:00 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.205 2021/07/15 23:42:49 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.206 2021/07/15 23:47:00 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -64,7 +64,6 @@ dinfo_t	*dcs;
 
 static	type_t	*tdeferr(type_t *, tspec_t);
 static	void	settdsym(type_t *, sym_t *);
-static	tspec_t	merge_type_specifiers(tspec_t, tspec_t);
 static	void	align(int, int);
 static	sym_t	*newtag(sym_t *, scl_t, bool, bool);
 static	bool	eqargs(const type_t *, const type_t *, bool *);
@@ -382,6 +381,27 @@ add_type(type_t *tp)
 	}
 }
 
+/* Merge the signedness into the abstract type. */
+static tspec_t
+merge_signedness(tspec_t t, tspec_t s)
+{
+
+	if (s != SIGNED && s != UNSIGN)
+		return t;
+
+	if (t == CHAR)
+		return s == SIGNED ? SCHAR : UCHAR;
+	if (t == SHORT)
+		return s == SIGNED ? SHORT : USHORT;
+	if (t == INT)
+		return s == SIGNED ? INT : UINT;
+	if (t == LONG)
+		return s == SIGNED ? LONG : ULONG;
+	if (t == QUAD)
+		return s == SIGNED ? QUAD : UQUAD;
+	return t;
+}
+
 /*
  * called if a list of declaration specifiers contains a typedef name
  * and other specifiers (except struct, union, enum, typedef name)
@@ -401,7 +421,7 @@ tdeferr(type_t *td, tspec_t t)
 			if (!tflag)
 				/* modifying typedef with '%s'; only ... */
 				warning(5, ttab[t].tt_name);
-			td = dup_type(gettyp(merge_type_specifiers(t2, t)));
+			td = dup_type(gettyp(merge_signedness(t2, t)));
 			td->t_typedef = true;
 			return td;
 		}
@@ -814,7 +834,7 @@ dcs_merge_declaration_specifiers(void)
 	}
 	if (l != NOTSPEC)
 		t = l;
-	dcs->d_type = gettyp(merge_type_specifiers(t, s));
+	dcs->d_type = gettyp(merge_signedness(t, s));
 }
 
 /*
@@ -856,29 +876,6 @@ end_type(void)
 		dcs->d_type->t_const |= dcs->d_const;
 		dcs->d_type->t_volatile |= dcs->d_volatile;
 	}
-}
-
-/*
- * Merge type specifiers (char, ..., long long, signed, unsigned).
- */
-static tspec_t
-merge_type_specifiers(tspec_t t, tspec_t s)
-{
-
-	if (s != SIGNED && s != UNSIGN)
-		return t;
-
-	if (t == CHAR)
-		return s == SIGNED ? SCHAR : UCHAR;
-	if (t == SHORT)
-		return s == SIGNED ? SHORT : USHORT;
-	if (t == INT)
-		return s == SIGNED ? INT : UINT;
-	if (t == LONG)
-		return s == SIGNED ? LONG : ULONG;
-	if (t == QUAD)
-		return s == SIGNED ? QUAD : UQUAD;
-	return t;
 }
 
 /*
