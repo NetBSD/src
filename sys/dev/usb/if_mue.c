@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.60 2020/06/27 13:33:26 jmcneill Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.61 2021/07/15 03:25:50 nisimura Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.60 2020/06/27 13:33:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.61 2021/07/15 03:25:50 nisimura Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -98,7 +98,7 @@ static void	mue_setmtu_locked(struct usbnet *);
 static void	mue_reset(struct usbnet *);
 
 static void	mue_uno_stop(struct ifnet *, int);
-static int	mue_uno_ioctl(struct ifnet *, u_long, void *);
+static int	mue_uno_override_ioctl(struct ifnet *, u_long, void *);
 static int	mue_uno_mii_read_reg(struct usbnet *, int, int, uint16_t *);
 static int	mue_uno_mii_write_reg(struct usbnet *, int, int, uint16_t);
 static void	mue_uno_mii_statchg(struct ifnet *);
@@ -110,7 +110,7 @@ static int	mue_uno_init(struct ifnet *);
 
 static const struct usbnet_ops mue_ops = {
 	.uno_stop = mue_uno_stop,
-	.uno_ioctl = mue_uno_ioctl,
+	.uno_override_ioctl = mue_uno_override_ioctl,
 	.uno_read_reg = mue_uno_mii_read_reg,
 	.uno_write_reg = mue_uno_mii_write_reg,
 	.uno_statchg = mue_uno_mii_statchg,
@@ -137,7 +137,14 @@ static const struct usbnet_ops mue_ops = {
 #define ETHER_IS_ZERO(addr) \
 	(!(addr[0] | addr[1] | addr[2] | addr[3] | addr[4] | addr[5]))
 
-CFATTACH_DECL_NEW(mue, sizeof(struct usbnet), mue_match, mue_attach,
+struct mue_softc {
+	struct usbnet	   sc_un;
+	struct usbnet_intr sc_intr;
+	uint8_t sc_ibuf[8];
+	unsigned sc_flowflags;		/* 802.3x PAUSE flow control */
+};
+
+CFATTACH_DECL_NEW(mue, sizeof(struct mue_softc), mue_match, mue_attach,
     usbnet_detach, usbnet_activate);
 
 static uint32_t
@@ -760,14 +767,15 @@ static void
 mue_attach(device_t parent, device_t self, void *aux)
 {
 	USBNET_MII_DECL_DEFAULT(unm);
-	struct usbnet * const un = device_private(self);
 	prop_dictionary_t dict = device_properties(self);
+	struct mue_softc * const sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
 	struct usbd_device *dev = uaa->uaa_device;
+	struct usbnet *un = &sc->sc_un;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
-	char *devinfop;
 	usbd_status err;
+	char *devinfop;
 	const char *descr;
 	uint32_t id_rev;
 	uint8_t i;
@@ -782,7 +790,7 @@ mue_attach(device_t parent, device_t self, void *aux)
 
 	un->un_dev = self;
 	un->un_udev = dev;
-	un->un_sc = un;
+	un->un_sc = sc; /* @@! */
 	un->un_ops = &mue_ops;
 	un->un_rx_xfer_flags = USBD_SHORT_XFER_OK;
 	un->un_tx_xfer_flags = USBD_FORCE_SHORT_XFER;
@@ -884,6 +892,8 @@ mue_attach(device_t parent, device_t self, void *aux)
 	ec->ec_capabilities = ETHERCAP_VLAN_MTU | ETHERCAP_JUMBO_MTU;
 #endif
 
+	unm.un_mii_phyloc = un->un_phyno;	/* use internal PHY 1 */
+	unm.un_mii_flags |= MIIF_DOPAUSE;	/* use PAUSE cap. */
 	usbnet_attach_ifp(un, IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST,
 	    0, &unm);
 }
@@ -997,90 +1007,93 @@ mue_setiff_locked(struct usbnet *un)
 {
 	struct ethercom *ec = usbnet_ec(un);
 	struct ifnet * const ifp = usbnet_ifp(un);
-	const uint8_t *enaddr = CLLADDR(ifp->if_sadl);
-	struct ether_multi *enm;
 	struct ether_multistep step;
-	uint32_t pfiltbl[MUE_NUM_ADDR_FILTX][2];
-	uint32_t hashtbl[MUE_DP_SEL_VHF_HASH_LEN];
-	uint32_t reg, rxfilt, h, hireg, loreg;
+	struct ether_multi *enm;
+	uint32_t mchash[MUE_DP_SEL_VHF_HASH_LEN];
+	uint32_t rfe, rxfilt, crc, hireg, loreg;
 	size_t i;
 
 	if (usbnet_isdying(un))
 		return;
 
-	/* Clear perfect filter and hash tables. */
-	memset(pfiltbl, 0, sizeof(pfiltbl));
-	memset(hashtbl, 0, sizeof(hashtbl));
+	for (i = 1; i < MUE_NUM_ADDR_FILTX; i++) {
+		hireg = (un->un_flags & LAN7500)
+		    ? MUE_7500_ADDR_FILTX(i) : MUE_7800_ADDR_FILTX(i);
+		mue_csr_write(un, hireg, 0);
+	}
+	memset(mchash, 0, sizeof(mchash));
 
-	reg = (un->un_flags & LAN7500) ? MUE_7500_RFE_CTL : MUE_7800_RFE_CTL;
-	rxfilt = mue_csr_read(un, reg);
-	rxfilt &= ~(MUE_RFE_CTL_PERFECT | MUE_RFE_CTL_MULTICAST_HASH |
+	rfe = (un->un_flags & LAN7500) ? MUE_7500_RFE_CTL : MUE_7800_RFE_CTL;
+	rxfilt = mue_csr_read(un, rfe);
+	rxfilt &= ~(MUE_RFE_CTL_MULTICAST_HASH |
 	    MUE_RFE_CTL_UNICAST | MUE_RFE_CTL_MULTICAST);
 
-	/* Always accept broadcast frames. */
-	rxfilt |= MUE_RFE_CTL_BROADCAST;
-
+	ETHER_LOCK(ec);
 	if (ifp->if_flags & IFF_PROMISC) {
-		rxfilt |= MUE_RFE_CTL_UNICAST;
-allmulti:	rxfilt |= MUE_RFE_CTL_MULTICAST;
-		ifp->if_flags |= IFF_ALLMULTI;
-		if (ifp->if_flags & IFF_PROMISC)
-			DPRINTF(un, "promisc\n");
-		else
-			DPRINTF(un, "allmulti\n");
-	} else {
-		/* Now program new ones. */
-		pfiltbl[0][0] = MUE_ENADDR_HI(enaddr) | MUE_ADDR_FILTX_VALID;
-		pfiltbl[0][1] = MUE_ENADDR_LO(enaddr);
-		i = 1;
-		ETHER_LOCK(ec);
-		ETHER_FIRST_MULTI(step, ec, enm);
-		while (enm != NULL) {
-			if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
-			    ETHER_ADDR_LEN)) {
-				memset(pfiltbl, 0, sizeof(pfiltbl));
-				memset(hashtbl, 0, sizeof(hashtbl));
-				rxfilt &= ~MUE_RFE_CTL_MULTICAST_HASH;
-				ETHER_UNLOCK(ec);
-				goto allmulti;
-			}
-			if (i < MUE_NUM_ADDR_FILTX) {
-				/* Use perfect address table if possible. */
-				pfiltbl[i][0] = MUE_ENADDR_HI(enm->enm_addrlo) |
-				    MUE_ADDR_FILTX_VALID;
-				pfiltbl[i][1] = MUE_ENADDR_LO(enm->enm_addrlo);
-			} else {
-				/* Otherwise, use hash table. */
-				rxfilt |= MUE_RFE_CTL_MULTICAST_HASH;
-				h = (ether_crc32_be(enm->enm_addrlo,
-				    ETHER_ADDR_LEN) >> 23) & 0x1ff;
-				hashtbl[h / 32] |= 1 << (h % 32);
-			}
-			i++;
-			ETHER_NEXT_MULTI(step, enm);
-		}
+		ec->ec_flags |= ETHER_F_ALLMULTI;
 		ETHER_UNLOCK(ec);
-		rxfilt |= MUE_RFE_CTL_PERFECT;
-		ifp->if_flags &= ~IFF_ALLMULTI;
-		if (rxfilt & MUE_RFE_CTL_MULTICAST_HASH)
-			DPRINTF(un, "perfect filter and hash tables\n");
-		else
-			DPRINTF(un, "perfect filter\n");
+		/* run promisc. mode */
+		rxfilt |= (MUE_RFE_CTL_UNICAST | MUE_RFE_CTL_MULTICAST);
+		DPRINTF(un, "promisc\n");
+		goto update;
 	}
-
-	for (i = 0; i < MUE_NUM_ADDR_FILTX; i++) {
-		hireg = (un->un_flags & LAN7500) ?
-		    MUE_7500_ADDR_FILTX(i) : MUE_7800_ADDR_FILTX(i);
-		loreg = hireg + 4;
-		mue_csr_write(un, hireg, 0);
-		mue_csr_write(un, loreg, pfiltbl[i][1]);
-		mue_csr_write(un, hireg, pfiltbl[i][0]);
+	ec->ec_flags &= ~ETHER_F_ALLMULTI;
+	ETHER_FIRST_MULTI(step, ec, enm);
+	i = 1; /* the first slot is occupied by my station address */
+	while (enm != NULL) {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			/*
+			 * We must listen to a range of multicast addresses.
+			 * For now, just accept all multicasts, rather than
+			 * trying to set only those filter bits needed to match
+			 * the range.  (At this time, the only use of address
+			 * ranges is for IP multicast routing, for which the
+			 * range is big enough to require all bits set.)
+			 */
+			ec->ec_flags |= ETHER_F_ALLMULTI;
+			ETHER_UNLOCK(ec);
+			/* accept all multicast */
+			for (i = 1; i < MUE_NUM_ADDR_FILTX; i++) {
+				hireg = (un->un_flags & LAN7500)
+				    ? MUE_7500_ADDR_FILTX(i)
+				    : MUE_7800_ADDR_FILTX(i);
+				mue_csr_write(un, hireg, 0);
+			}
+			memset(mchash, 0, sizeof(mchash));
+			rxfilt |= MUE_RFE_CTL_MULTICAST;
+			rxfilt &= ~MUE_RFE_CTL_MULTICAST_HASH;
+			DPRINTF(un, "allmulti\n");
+			goto update;
+		}
+		if (i < MUE_NUM_ADDR_FILTX) {
+			/* Use perfect address table if possible. */
+			uint8_t *en = enm->enm_addrlo;
+			hireg = (un->un_flags & LAN7500) ?
+			    MUE_7500_ADDR_FILTX(i) : MUE_7800_ADDR_FILTX(i);
+			loreg = hireg + 4;
+			mue_csr_write(un, hireg, 0);
+			mue_csr_write(un, loreg, MUE_ENADDR_LO(en));
+			mue_csr_write(un, hireg, MUE_ENADDR_HI(en)
+			    | MUE_ADDR_FILTX_VALID);
+		} else {
+			/* Otherwise, use hash table. */
+			rxfilt |= MUE_RFE_CTL_MULTICAST_HASH;
+			crc = (ether_crc32_be(enm->enm_addrlo,
+			    ETHER_ADDR_LEN) >> 23) & 0x1ff;
+			mchash[crc / 32] |= 1 << (crc % 32);
+		}
+		i++;
+		ETHER_NEXT_MULTI(step, enm);
 	}
-
+	ETHER_UNLOCK(ec);
+ update:
+	if (rxfilt & MUE_RFE_CTL_MULTICAST_HASH)
+		DPRINTF(un, "perfect filter and hash tables\n");
+	else
+		DPRINTF(un, "perfect filter\n");
 	mue_dataport_write(un, MUE_DP_SEL_VHF, MUE_DP_SEL_VHF_VLAN_LEN,
-	    MUE_DP_SEL_VHF_HASH_LEN, hashtbl);
-
-	mue_csr_write(un, reg, rxfilt);
+		    MUE_DP_SEL_VHF_HASH_LEN, mchash);
+	mue_csr_write(un, rfe, rxfilt);
 }
 
 static void
@@ -1222,6 +1235,8 @@ static int
 mue_init_locked(struct ifnet *ifp)
 {
 	struct usbnet * const un = ifp->if_softc;
+	const uint8_t *ea = CLLADDR(ifp->if_sadl);
+	uint32_t rfe, hireg, loreg;
 
 	if (usbnet_isdying(un)) {
 		DPRINTF(un, "dying\n");
@@ -1236,6 +1251,15 @@ mue_init_locked(struct ifnet *ifp)
 
 	/* Set MAC address. */
 	mue_set_macaddr(un);
+
+	hireg = (un->un_flags & LAN7500)
+		    ? MUE_7500_ADDR_FILTX(0) : MUE_7800_ADDR_FILTX(0);
+	loreg = hireg + 4;
+	mue_csr_write(un, loreg, MUE_ENADDR_LO(ea));
+	mue_csr_write(un, hireg, MUE_ENADDR_HI(ea) | MUE_ADDR_FILTX_VALID);
+
+	rfe = (un->un_flags & LAN7500) ? MUE_7500_RFE_CTL : MUE_7800_RFE_CTL;
+	mue_csr_write(un, rfe, MUE_RFE_CTL_BROADCAST | MUE_RFE_CTL_PERFECT);
 
 	/* Load the multicast filter. */
 	mue_setiff_locked(un);
@@ -1265,7 +1289,7 @@ mue_uno_init(struct ifnet *ifp)
 }
 
 static int
-mue_uno_ioctl(struct ifnet *ifp, u_long cmd, void *data)
+mue_uno_override_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct usbnet * const un = ifp->if_softc;
 
