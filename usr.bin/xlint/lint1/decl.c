@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.201 2021/07/15 21:56:51 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.202 2021/07/15 22:42:46 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.201 2021/07/15 21:56:51 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.202 2021/07/15 22:42:46 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -820,9 +820,6 @@ end_type(void)
 			if (l == LONG) {
 				l = NOTSPEC;
 				t = LCOMPLEX;
-				if (tflag)
-					/* 'long double' is illegal in ... */
-					warning(266);
 			}
 			break;
 		case VOID:
