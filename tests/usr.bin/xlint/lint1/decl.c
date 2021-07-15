@@ -1,4 +1,4 @@
-/*	$NetBSD: decl.c,v 1.8 2021/07/15 21:56:51 rillig Exp $	*/
+/*	$NetBSD: decl.c,v 1.9 2021/07/15 23:07:05 rillig Exp $	*/
 # 3 "decl.c"
 
 /*
@@ -145,6 +145,9 @@ int signed_int;
 unsigned int unsigned_int;
 long signed_long;
 unsigned long unsigned_long;
+struct {
+	int member;
+} unnamed_struct;
 
 /*
  * Before decl.c 1.201 from 2021-07-15, lint crashed with an internal error
@@ -160,4 +163,5 @@ unsigned long sizes =
     sizeof(const typeof(signed_int)) +
     sizeof(const typeof(unsigned_int)) +
     sizeof(const typeof(signed_long)) +
-    sizeof(const typeof(unsigned_long));
+    sizeof(const typeof(unsigned_long)) +
+    sizeof(const typeof(unnamed_struct));

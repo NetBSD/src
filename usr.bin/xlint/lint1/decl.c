@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.203 2021/07/15 22:47:17 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.204 2021/07/15 23:07:05 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.203 2021/07/15 22:47:17 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.204 2021/07/15 23:07:05 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -746,14 +746,9 @@ dcs_adjust_storage_class(void)
 	}
 }
 
-/*
- * Create a type structure from the information gathered in
- * the declaration stack.
- * Complain about storage classes which are not possible in current
- * context.
- */
-void
-end_type(void)
+/* Merge the declaration specifiers from dcs into dcs->d_type. */
+static void
+dcs_merge_declaration_specifiers(void)
 {
 	tspec_t	t, s, l, c;
 	type_t	*tp;
@@ -778,68 +773,78 @@ end_type(void)
 		lint_assert(t == NOTSPEC);
 		lint_assert(s == NOTSPEC);
 		lint_assert(l == NOTSPEC);
+		return;
 	}
 
-	if (tp == NULL) {
-		switch (t) {
-		case BOOL:
-			break;
-		case NOTSPEC:
-			t = INT;
-			/* FALLTHROUGH */
-		case INT:
-			if (s == NOTSPEC)
-				s = SIGNED;
-			break;
-		case CHAR:
-			if (l != NOTSPEC) {
-				dcs->d_terr = true;
-				l = NOTSPEC;
-			}
-			break;
-		case FLOAT:
-			if (l == LONG) {
-				l = NOTSPEC;
-				t = DOUBLE;
-				if (!tflag)
-					/* use 'double' instead of 'long ... */
-					warning(6);
-			}
-			break;
-		case DOUBLE:
-			if (l != LONG)
-				break;
-			/* FALLTHROUGH */
-		case LDOUBLE:
-			l = NOTSPEC;
-			t = LDOUBLE;
-			if (tflag)
-				/* 'long double' is illegal in ... */
-				warning(266);
-			break;
-		case DCOMPLEX:
-			if (l == LONG) {
-				l = NOTSPEC;
-				t = LCOMPLEX;
-			}
-			break;
-		case VOID:
-		case FCOMPLEX:
-		case LCOMPLEX:
-			break;
-		default:
-			if (is_integer(t))
-				break;
-			INTERNAL_ERROR("end_type(%s)", tspec_name(t));
-		}
-		if (t != INT && t != CHAR && (s != NOTSPEC || l != NOTSPEC)) {
+	switch (t) {
+	case BOOL:
+		break;
+	case NOTSPEC:
+		t = INT;
+		/* FALLTHROUGH */
+	case INT:
+		if (s == NOTSPEC)
+			s = SIGNED;
+		break;
+	case CHAR:
+		if (l != NOTSPEC) {
 			dcs->d_terr = true;
-			l = s = NOTSPEC;
+			l = NOTSPEC;
 		}
-		if (l != NOTSPEC)
-			t = l;
-		dcs->d_type = gettyp(merge_type_specifiers(t, s));
+		break;
+	case FLOAT:
+		if (l == LONG) {
+			l = NOTSPEC;
+			t = DOUBLE;
+			if (!tflag)
+				/* use 'double' instead of 'long float' */
+				warning(6);
+		}
+		break;
+	case DOUBLE:
+		if (l != LONG)
+			break;
+		/* FALLTHROUGH */
+	case LDOUBLE:
+		l = NOTSPEC;
+		t = LDOUBLE;
+		if (tflag)
+			/* 'long double' is illegal in traditional C */
+			warning(266);
+		break;
+	case DCOMPLEX:
+		if (l == LONG) {
+			l = NOTSPEC;
+			t = LCOMPLEX;
+		}
+		break;
+	case VOID:
+	case FCOMPLEX:
+	case LCOMPLEX:
+		break;
+	default:
+		lint_assert(is_integer(t));
 	}
+	if (t != INT && t != CHAR && (s != NOTSPEC || l != NOTSPEC)) {
+		dcs->d_terr = true;
+		l = s = NOTSPEC;
+	}
+	if (l != NOTSPEC)
+		t = l;
+	dcs->d_type = gettyp(merge_type_specifiers(t, s));
+}
+
+/*
+ * Create a type structure from the information gathered in
+ * the declaration stack.
+ * Complain about storage classes which are not possible in current
+ * context.
+ */
+void
+end_type(void)
+{
+
+	dcs_merge_declaration_specifiers();
 
 	if (dcs->d_mscl) {
 		/* only one storage class allowed */
