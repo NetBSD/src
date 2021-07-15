@@ -1,4 +1,4 @@
-/*	$NetBSD: decl_struct_member.c,v 1.6 2021/07/14 20:39:13 rillig Exp $	*/
+/*	$NetBSD: decl_struct_member.c,v 1.7 2021/07/15 19:51:29 rillig Exp $	*/
 # 3 "decl_struct_member.c"
 
 struct multi_attributes {
@@ -28,6 +28,15 @@ struct cover_begin_type_noclass_declmods {
 	const m1;
 	const volatile m2;
 };
+
+/* cover struct_or_union_specifier: struct_or_union error */
+/* expect+1: error: syntax error 'goto' [249] */
+struct goto {
+	/* expect+1: error: illegal type combination [4] */
+	int member;
+	/* expect+1: error: syntax error '}' [249] */
+};
+/* expect-1: warning: empty declaration [0] */
 
 /*
  * Before cgram.y 1.228 from 2021-06-19, lint ran into an assertion failure:
