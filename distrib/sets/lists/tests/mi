@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1090 2021/07/15 19:51:29 rillig Exp $
+# $NetBSD: mi,v 1.1091 2021/07/15 21:00:05 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6218,6 +6218,10 @@
 ./usr/tests/usr.bin/xlint/lint1/decl.exp			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/decl_arg.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/decl_arg.exp			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/decl_enum.c			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/decl_enum.exp			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/decl_enum_c90.c			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/decl_enum_c90.exp		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/decl_struct_c90.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/decl_struct_c90.exp		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/decl_struct_member.c		tests-usr.bin-tests	compattestfile,atf
