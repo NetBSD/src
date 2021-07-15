@@ -1,4 +1,4 @@
-/* $NetBSD: draw.c,v 1.7 2021/05/29 09:11:41 nia Exp $ */
+/* $NetBSD: draw.c,v 1.8 2021/07/15 06:59:55 nia Exp $ */
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -311,7 +311,7 @@ draw_header(struct aiomixer *aio)
 {
 	wprintw(aio->header, "\n");
 	mvwaddstr(aio->header, 0,
-	    getmaxx(aio->header) - (int)sizeof("NetBSD audio mixer") + 1,
+	    getmaxx(aio->header) - ((int)sizeof("NetBSD audio mixer") + 1),
 	    "NetBSD audio mixer");
 
 	if (aio->mixerdev.version[0] != '\0') {
