@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.45 2021/07/05 19:39:12 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.46 2021/07/15 17:03:50 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit1.c,v 1.45 2021/07/05 19:39:12 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.46 2021/07/15 17:03:50 rillig Exp $");
 #endif
 
 #include "lint1.h"
@@ -155,35 +155,6 @@ outtype(const type_t *tp)
 		}
 		tp = tp->t_subt;
 	}
-}
-
-/*
- * type to string
- * used for debugging output
- *
- * it uses its own output buffer for conversion
- */
-const char *
-ttos(const type_t *tp)
-{
-	static	ob_t	tob;
-	ob_t	tmp;
-
-	if (tob.o_buf == NULL) {
-		tob.o_len = 64;
-		tob.o_buf = tob.o_next = xmalloc(tob.o_len);
-		tob.o_end = tob.o_buf + tob.o_len;
-	}
-
-	tmp = ob;
-	ob = tob;
-	ob.o_next = ob.o_buf;
-	outtype(tp);
-	outchar('\0');
-	tob = ob;
-	ob = tmp;
-
-	return tob.o_buf;
 }
 
 /*

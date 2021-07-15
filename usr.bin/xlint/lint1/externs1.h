@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.117 2021/07/14 17:07:24 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.118 2021/07/15 17:03:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -314,7 +314,6 @@ extern	void	add_designator_subscript(range_t);
  * emit.c
  */
 extern	void	outtype(const type_t *);
-extern	const	char *ttos(const type_t *);
 extern	void	outsym(const sym_t *, scl_t, def_t);
 extern	void	outfdef(const sym_t *, const pos_t *, bool, bool,
 		    const sym_t *);
