@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.286 2021/07/07 08:58:19 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.287 2021/07/15 08:09:31 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.286 2021/07/07 08:58:19 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.287 2021/07/15 08:09:31 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -253,6 +253,7 @@ static int	ixgbe_sysctl_power_state(SYSCTLFN_PROTO);
 static int	ixgbe_sysctl_print_rss_config(SYSCTLFN_PROTO);
 #endif
 static int	ixgbe_sysctl_next_to_check_handler(SYSCTLFN_PROTO);
+static int	ixgbe_sysctl_next_to_refresh_handler(SYSCTLFN_PROTO);
 static int	ixgbe_sysctl_rdh_handler(SYSCTLFN_PROTO);
 static int	ixgbe_sysctl_rdt_handler(SYSCTLFN_PROTO);
 static int	ixgbe_sysctl_tdt_handler(SYSCTLFN_PROTO);
@@ -1930,6 +1931,13 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 			break;
 
 		if (sysctl_createv(log, 0, &rnode, &cnode,
+		    CTLFLAG_READONLY, CTLTYPE_INT, "rxd_nxrf",
+		    SYSCTL_DESCR("Receive Descriptor next to refresh"),
+		    ixgbe_sysctl_next_to_refresh_handler, 0, (void *)rxr, 0,
+		    CTL_CREATE, CTL_EOL) != 0)
+			break;
+
+		if (sysctl_createv(log, 0, &rnode, &cnode,
 		    CTLFLAG_READONLY, CTLTYPE_INT, "rxd_head",
 		    SYSCTL_DESCR("Receive Descriptor Head"),
 		    ixgbe_sysctl_rdh_handler, 0, (void *)rxr, 0,
@@ -2300,6 +2308,32 @@ ixgbe_sysctl_next_to_check_handler(SYSCTLFN_ARGS)
 	node.sysctl_data = &val;
 	return sysctl_lookup(SYSCTLFN_CALL(&node));
 } /* ixgbe_sysctl_next_to_check_handler */
+
+/************************************************************************
+ * ixgbe_sysctl_next_to_refresh_handler - Receive Descriptor next to check
+ * handler function
+ *
+ *   Retrieves the next_to_refresh value
+ ************************************************************************/
+static int
+ixgbe_sysctl_next_to_refresh_handler(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	struct rx_ring *rxr = (struct rx_ring *)node.sysctl_data;
+	struct adapter *adapter;
+	uint32_t val;
+
+	if (!rxr)
+		return (0);
+
+	adapter = rxr->adapter;
+	if (ixgbe_fw_recovery_mode_swflag(adapter))
+		return (EPERM);
+
+	val = rxr->next_to_refresh;
+	node.sysctl_data = &val;
+	return sysctl_lookup(SYSCTLFN_CALL(&node));
+} /* ixgbe_sysctl_next_to_refresh_handler */
 
 /************************************************************************
  * ixgbe_sysctl_rdh_handler - Receive Descriptor Head handler function
