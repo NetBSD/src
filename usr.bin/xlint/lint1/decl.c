@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.206 2021/07/15 23:47:00 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.207 2021/07/15 23:54:22 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.206 2021/07/15 23:47:00 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.207 2021/07/15 23:54:22 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -386,20 +386,16 @@ static tspec_t
 merge_signedness(tspec_t t, tspec_t s)
 {
 
-	if (s != SIGNED && s != UNSIGN)
+	if (s == SIGNED)
+		return t == CHAR ? SCHAR : t;
+	if (s != UNSIGN)
 		return t;
-
-	if (t == CHAR)
-		return s == SIGNED ? SCHAR : UCHAR;
-	if (t == SHORT)
-		return s == SIGNED ? SHORT : USHORT;
-	if (t == INT)
-		return s == SIGNED ? INT : UINT;
-	if (t == LONG)
-		return s == SIGNED ? LONG : ULONG;
-	if (t == QUAD)
-		return s == SIGNED ? QUAD : UQUAD;
-	return t;
+	return t == CHAR ? UCHAR
+	    : t == SHORT ? USHORT
+	    : t == INT ? UINT
+	    : t == LONG ? ULONG
+	    : t == QUAD ? UQUAD
+	    : t;
 }
 
 /*
