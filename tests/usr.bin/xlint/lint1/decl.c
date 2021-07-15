@@ -1,4 +1,4 @@
-/*	$NetBSD: decl.c,v 1.5 2021/07/14 20:39:13 rillig Exp $	*/
+/*	$NetBSD: decl.c,v 1.6 2021/07/15 21:00:05 rillig Exp $	*/
 # 3 "decl.c"
 
 /*
@@ -124,3 +124,6 @@ static void
 unused_linted(void)
 {
 }
+
+/* covers 'type_qualifier_list: type_qualifier_list type_qualifier' */
+int *const volatile cover_type_qualifier_list;

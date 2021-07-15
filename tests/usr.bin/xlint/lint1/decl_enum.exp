@@ -1,0 +1,3 @@
+decl_enum.c(11): error: syntax error 'goto' [249]
+decl_enum.c(16): error: syntax error 'goto' [249]
+decl_enum.c(18): warning: empty declaration [0]
