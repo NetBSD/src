@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.129 2021/07/13 22:01:34 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.130 2021/07/15 20:05:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.129 2021/07/13 22:01:34 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.130 2021/07/15 20:05:49 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -120,7 +120,7 @@ const char *const msgs[] = {
 	"prototype does not match old-style definition",	      /* 63 */
 	"()-less function definition",				      /* 64 */
 	"%s has no named members",				      /* 65 */
-	"syntax requires ';' after last struct/union member",	      /* 66 */
+	"",							      /* 66 */
 	"cannot return incomplete type",			      /* 67 */
 	"typedef already qualified with '%s'",			      /* 68 */
 	"inappropriate qualifiers with 'void'",			      /* 69 */

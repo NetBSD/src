@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.327 2021/07/15 18:18:15 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.328 2021/07/15 20:05:49 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.327 2021/07/15 18:18:15 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.328 2021/07/15 20:05:49 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -933,26 +933,17 @@ struct_declaration_lbrace:	/* see C99 6.7.2.1 */
 	;
 
 struct_declaration_list_with_rbrace:	/* see C99 6.7.2.1 */
-	  struct_declaration_list T_SEMI T_RBRACE
-	| struct_declaration_list T_RBRACE {
-		if (sflag) {
-			/* syntax req. ';' after last struct/union member */
-			error(66);
-		} else {
-			/* syntax req. ';' after last struct/union member */
-			warning(66);
-		}
-		$$ = $1;
-	  }
+	  struct_declaration_list T_RBRACE
 	| T_RBRACE {
+		/* XXX: This is not allowed by any C standard. */
 		$$ = NULL;
 	  }
 	;
 
 struct_declaration_list:	/* C99 6.7.2.1 */
 	  struct_declaration
-	| struct_declaration_list T_SEMI struct_declaration {
-		$$ = lnklst($1, $3);
+	| struct_declaration_list struct_declaration {
+		$$ = lnklst($1, $2);
 	  }
 	;
 
@@ -960,22 +951,22 @@ struct_declaration:		/* C99 6.7.2.1 */
 	  begin_type_noclass_declmods end_type {
 		/* too late, i know, but getsym() compensates it */
 		symtyp = FMEMBER;
-	  } notype_struct_declarators type_attribute_opt {
+	  } notype_struct_declarators type_attribute_opt T_SEMI {
 		symtyp = FVFT;
 		$$ = $4;
 	  }
 	| begin_type_noclass_declspecs end_type {
 		symtyp = FMEMBER;
-	  } type_struct_declarators type_attribute_opt {
+	  } type_struct_declarators type_attribute_opt T_SEMI {
 		symtyp = FVFT;
 		$$ = $4;
 	  }
-	| begin_type_noclass_declmods end_type type_attribute_opt {
+	| begin_type_noclass_declmods end_type type_attribute_opt T_SEMI {
 		/* syntax error '%s' */
 		error(249, "member without type");
 		$$ = NULL;
 	  }
-	| begin_type_noclass_declspecs end_type type_attribute_opt {
+	| begin_type_noclass_declspecs end_type type_attribute_opt T_SEMI {
 		symtyp = FVFT;
 		if (!Sflag)
 			/* anonymous struct/union members is a C9X feature */
@@ -990,7 +981,7 @@ struct_declaration:		/* C99 6.7.2.1 */
 			$$ = NULL;
 		}
 	  }
-	| error {
+	| error T_SEMI {
 		symtyp = FVFT;
 		$$ = NULL;
 	  }

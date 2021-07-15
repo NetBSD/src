@@ -1,4 +1,4 @@
-/*	$NetBSD: decl_struct_member.c,v 1.7 2021/07/15 19:51:29 rillig Exp $	*/
+/*	$NetBSD: decl_struct_member.c,v 1.8 2021/07/15 20:05:49 rillig Exp $	*/
 # 3 "decl_struct_member.c"
 
 struct multi_attributes {
@@ -52,7 +52,7 @@ struct {
  */
 struct {
 	char a(_)0		/* expect: syntax error '0' */
-}				/* expect: ';' after last */
+}
 /*
  * FIXME: adding a semicolon here triggers another assertion:
  *
