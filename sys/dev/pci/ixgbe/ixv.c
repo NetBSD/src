@@ -1,4 +1,4 @@
-/* $NetBSD: ixv.c,v 1.163 2021/07/07 08:58:19 msaitoh Exp $ */
+/* $NetBSD: ixv.c,v 1.164 2021/07/15 08:09:31 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -35,7 +35,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.163 2021/07/07 08:58:19 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.164 2021/07/15 08:09:31 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -144,6 +144,7 @@ static void	ixv_set_sysctl_value(struct adapter *, const char *,
 		    const char *, int *, int);
 static int	ixv_sysctl_interrupt_rate_handler(SYSCTLFN_PROTO);
 static int	ixv_sysctl_next_to_check_handler(SYSCTLFN_PROTO);
+static int	ixv_sysctl_next_to_refresh_handler(SYSCTLFN_PROTO);
 static int	ixv_sysctl_rdh_handler(SYSCTLFN_PROTO);
 static int	ixv_sysctl_rdt_handler(SYSCTLFN_PROTO);
 static int	ixv_sysctl_tdt_handler(SYSCTLFN_PROTO);
@@ -2033,6 +2034,32 @@ ixv_sysctl_next_to_check_handler(SYSCTLFN_ARGS)
 } /* ixv_sysctl_next_to_check_handler */
 
 /************************************************************************
+ * ixv_sysctl_next_to_refresh_handler - Receive Descriptor next to refresh
+ * handler function
+ *
+ *   Retrieves the next_to_refresh value
+ ************************************************************************/
+static int
+ixv_sysctl_next_to_refresh_handler(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	struct rx_ring *rxr = (struct rx_ring *)node.sysctl_data;
+	struct adapter *adapter;
+	uint32_t val;
+
+	if (!rxr)
+		return (0);
+
+	adapter = rxr->adapter;
+	if (ixgbe_fw_recovery_mode_swflag(adapter))
+		return (EPERM);
+
+	val = rxr->next_to_refresh;
+	node.sysctl_data = &val;
+	return sysctl_lookup(SYSCTLFN_CALL(&node));
+} /* ixv_sysctl_next_to_refresh_handler */
+
+/************************************************************************
  * ixv_sysctl_rdh_handler - Receive Descriptor Head handler function
  *
  *   Retrieves the RDH value from the hardware
@@ -2699,6 +2726,13 @@ ixv_add_stats_sysctls(struct adapter *adapter)
 		    CTLFLAG_READONLY, CTLTYPE_INT, "rxd_nxck",
 		    SYSCTL_DESCR("Receive Descriptor next to check"),
 		    ixv_sysctl_next_to_check_handler, 0, (void *)rxr, 0,
+		    CTL_CREATE, CTL_EOL) != 0)
+			break;
+
+		if (sysctl_createv(log, 0, &rnode, &cnode,
+		    CTLFLAG_READONLY, CTLTYPE_INT, "rxd_nxrf",
+		    SYSCTL_DESCR("Receive Descriptor next to refresh"),
+		    ixv_sysctl_next_to_refresh_handler, 0, (void *)rxr, 0,
 		    CTL_CREATE, CTL_EOL) != 0)
 			break;
 
