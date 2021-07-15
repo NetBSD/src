@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.60 2020/08/03 16:43:44 uwe Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.61 2021/07/15 04:58:33 rin Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.60 2020/08/03 16:43:44 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.61 2021/07/15 04:58:33 rin Exp $")
 
 
 /*
@@ -140,7 +140,22 @@ ENTRY(cpu_switchto)
 	mov	r10, r1		! &nlwp->l_md.md_pcb->pcb_sf
 	mov	r9, r0		! return olwp (we are about to clobber r9)
 	ldc.l	@r1+, gbr
-	ldc.l	@r1+, sr
+
+	/*
+	 * We cannot simply pop SR here; PSL_IMASK field should be
+	 * inherited to nlwp. Otherwise, IPL is lost during context
+	 * switch, which allows improper interrupts when, e.g.,
+	 * spin mutexes are hold.
+	 */
+	mov.l	@r1+, r8	! r8  = new SR
+	mov	#0x78, r9
+	shll	r9		! r9  =  PSL_IMASK
+	not	r9, r10		! r10 = ~PSL_IMASK
+	and	r9, r11		! r11 = old SR & PSL_IMASK
+	and	r10, r8
+	or	r11, r8
+	ldc	r8, sr
+
 	lds.l	@r1+, pr
 	mov.l	@r1+, r8
 	mov.l	@r1+, r9
