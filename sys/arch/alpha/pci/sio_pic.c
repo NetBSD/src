@@ -1,4 +1,4 @@
-/* $NetBSD: sio_pic.c,v 1.52 2021/07/04 22:42:36 thorpej Exp $ */
+/* $NetBSD: sio_pic.c,v 1.53 2021/07/15 01:29:23 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2020 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.52 2021/07/04 22:42:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.53 2021/07/15 01:29:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,6 +77,8 @@ __KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.52 2021/07/04 22:42:36 thorpej Exp $")
 
 #include <dev/pci/pciidereg.h>
 #include <dev/pci/pciidevar.h>
+
+#include <dev/ic/i8259reg.h>
 
 #include <dev/pci/cy82c693reg.h>
 #include <dev/pci/cy82c693var.h>
@@ -150,7 +152,7 @@ i82378_setup_elcr(void)
 	 * fall-back in case nothing else matches.
 	 */
 
-	rv = bus_space_map(sio_iot, 0x4d0, 2, 0, &sio_ioh_elcr);
+	rv = bus_space_map(sio_iot, SIO_REG_ICU1ELC, 2, 0, &sio_ioh_elcr);
 
 	if (rv == 0) {
 		sio_read_elcr = i82378_read_elcr;
@@ -270,6 +272,17 @@ static int (*const sio_elcr_setup_funcs[])(void) = {
 
 /******************** Shared SIO/Cypress functions ********************/
 
+static inline void
+specific_eoi(int irq)
+{
+	if (irq > 7) {
+		bus_space_write_1(sio_iot, sio_ioh_icu2, PIC_OCW2,
+		    OCW2_EOI | OCW2_SL | (irq & 0x07));	/* XXX */
+	}
+	bus_space_write_1(sio_iot, sio_ioh_icu1, PIC_OCW2,
+	    OCW2_EOI | OCW2_SL | (irq > 7 ? 2 : irq));
+}
+
 static void
 sio_setirqstat(int irq, int enabled, int type)
 {
@@ -284,8 +297,8 @@ sio_setirqstat(int irq, int enabled, int type)
 	icu = irq / 8;
 	bit = irq % 8;
 
-	ocw1[0] = bus_space_read_1(sio_iot, sio_ioh_icu1, 1);
-	ocw1[1] = bus_space_read_1(sio_iot, sio_ioh_icu2, 1);
+	ocw1[0] = bus_space_read_1(sio_iot, sio_ioh_icu1, PIC_OCW1);
+	ocw1[1] = bus_space_read_1(sio_iot, sio_ioh_icu2, PIC_OCW1);
 	elcr[0] = (*sio_read_elcr)(0);				/* XXX */
 	elcr[1] = (*sio_read_elcr)(1);				/* XXX */
 
@@ -729,13 +742,4 @@ sio_intr_alloc(void *v, int mask, int type, int *irq)
 	*irq = bestirq;
 
 	return (0);
-}
-
-static void
-specific_eoi(int irq)
-{
-	if (irq > 7)
-		bus_space_write_1(sio_iot,
-		    sio_ioh_icu2, 0, 0x60 | (irq & 0x07));	/* XXX */
-	bus_space_write_1(sio_iot, sio_ioh_icu1, 0, 0x60 | (irq > 7 ? 2 : irq));
 }
