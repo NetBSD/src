@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.200 2021/07/15 07:58:05 rin Exp $ */
+/* $NetBSD: decl.c,v 1.201 2021/07/15 21:56:51 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.200 2021/07/15 07:58:05 rin Exp $");
+__RCSID("$NetBSD: decl.c,v 1.201 2021/07/15 21:56:51 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -830,6 +830,8 @@ end_type(void)
 		case LCOMPLEX:
 			break;
 		default:
+			if (is_integer(t))
+				break;
 			INTERNAL_ERROR("end_type(%s)", tspec_name(t));
 		}
 		if (t != INT && t != CHAR && (s != NOTSPEC || l != NOTSPEC)) {
