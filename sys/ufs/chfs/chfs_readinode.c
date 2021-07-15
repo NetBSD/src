@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_readinode.c,v 1.10 2017/06/01 02:45:15 chs Exp $	*/
+/*	$NetBSD: chfs_readinode.c,v 1.11 2021/07/15 22:39:06 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -1012,6 +1012,7 @@ retry:
 				(unsigned long long)vc->vno, vc->state);
 			chfs_err("wants to read a nonexistent ino %llu\n",
 				(unsigned long long)vc->vno);
+			mutex_exit(&chmp->chm_lock_vnocache);
 			return ENOENT;
 		default:
 			panic("BUG() Bad vno cache state.");
