@@ -1,4 +1,4 @@
-/*	$NetBSD: decl_struct_member.c,v 1.8 2021/07/15 20:05:49 rillig Exp $	*/
+/*	$NetBSD: decl_struct_member.c,v 1.9 2021/07/15 21:00:05 rillig Exp $	*/
 # 3 "decl_struct_member.c"
 
 struct multi_attributes {
@@ -45,6 +45,15 @@ struct goto {
  */
 struct {
 	char;			/* expect: syntax error 'unnamed member' */
+};
+
+struct cover_notype_struct_declarators {
+	const a, b;
+};
+
+struct cover_notype_struct_declarator_bit_field {
+	const a: 3, : 0, b: 4;
+	const : 0;
 };
 
 /*

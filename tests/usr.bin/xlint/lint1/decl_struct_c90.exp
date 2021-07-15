@@ -1,2 +1,3 @@
-decl_struct_c90.c(19): error: syntax error '}' [249]
-decl_struct_c90.c(22): error: cannot recover from previous errors [224]
+decl_struct_c90.c(16): warning: anonymous struct/union members is a C9X feature [49]
+decl_struct_c90.c(29): error: syntax error '}' [249]
+decl_struct_c90.c(32): error: cannot recover from previous errors [224]
