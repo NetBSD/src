@@ -1,1 +1,2 @@
-msg_066.c(8): warning: syntax requires ';' after last struct/union member [66]
+msg_066.c(13): error: syntax error '}' [249]
+msg_066.c(16): error: cannot recover from previous errors [224]
