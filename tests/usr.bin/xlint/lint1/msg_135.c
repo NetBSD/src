@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_135.c,v 1.7 2021/04/17 16:58:04 rillig Exp $	*/
+/*	$NetBSD: msg_135.c,v 1.8 2021/07/15 21:12:46 rillig Exp $	*/
 # 3 "msg_135.c"
 
 // Test for message: converting '%s' to '%s' may cause alignment problem [135]
@@ -41,4 +41,26 @@ pointer_to_structs(struct incomplete *incomplete)
 
 	complete = (struct complete *)incomplete;
 	sink(complete);
+}
+
+void
+unsigned_char_to_unsigned_type(unsigned char *ucp)
+{
+	unsigned short *usp;
+
+	/* FIXME */
+	/* expect+1: warning: converting 'pointer to unsigned char' to 'pointer to unsigned short' may cause alignment problem [135] */
+	usp = (unsigned short *)ucp;
+	sink(usp);
+}
+
+void
+plain_char_to_unsigned_type(char *cp)
+{
+	unsigned short *usp;
+
+	/* FIXME */
+	/* expect+1: warning: converting 'pointer to char' to 'pointer to unsigned short' may cause alignment problem [135] */
+	usp = (unsigned short *)cp;
+	sink(usp);
 }

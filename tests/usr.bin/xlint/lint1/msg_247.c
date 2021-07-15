@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_247.c,v 1.14 2021/07/10 17:35:54 rillig Exp $	*/
+/*	$NetBSD: msg_247.c,v 1.15 2021/07/15 21:12:46 rillig Exp $	*/
 # 3 "msg_247.c"
 
 // Test for message: pointer cast from '%s' to '%s' may be troublesome [247]
@@ -154,3 +154,27 @@ lh_OPENSSL_STRING_new(void)
 	return (struct lhash_st_OPENSSL_STRING *)OPENSSL_LH_new();
 }
 # 157 "msg_247.c" 2
+
+void sink(const void *);
+
+void
+unsigned_char_to_unsigned_type(unsigned char *ucp)
+{
+	unsigned short *usp;
+
+	/* FIXME */
+	/* expect+1: warning: pointer cast from 'pointer to unsigned char' to 'pointer to unsigned short' may be troublesome [247] */
+	usp = (unsigned short *)ucp;
+	sink(usp);
+}
+
+void
+plain_char_to_unsigned_type(char *cp)
+{
+	unsigned short *usp;
+
+	/* FIXME */
+	/* expect+1: warning: pointer cast from 'pointer to char' to 'pointer to unsigned short' may be troublesome [247] */
+	usp = (unsigned short *)cp;
+	sink(usp);
+}
