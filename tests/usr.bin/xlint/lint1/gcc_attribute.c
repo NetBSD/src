@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_attribute.c,v 1.9 2021/07/09 18:55:28 rillig Exp $	*/
+/*	$NetBSD: gcc_attribute.c,v 1.10 2021/07/15 21:00:05 rillig Exp $	*/
 # 3 "gcc_attribute.c"
 
 /*
@@ -117,3 +117,13 @@ __attribute__((deprecated("d5")))
     )
     __attribute__((deprecated("d8")))
 ;
+
+/*
+ * The attribute 'const' provides stronger guarantees than 'pure', and
+ * 'volatile' is not defined.  To keep the grammar simple, any T_QUAL is
+ * allowed at this point, but only syntactically.
+ */
+int const_function(int) __attribute__((const));
+/* cover 'gcc_attribute_spec: T_QUAL' */
+/* expect+1: syntax error 'volatile' [249] */
+int volatile_function(int) __attribute__((volatile));

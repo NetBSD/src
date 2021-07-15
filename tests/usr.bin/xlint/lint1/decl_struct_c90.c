@@ -1,4 +1,4 @@
-/*	$NetBSD: decl_struct_c90.c,v 1.2 2021/07/15 20:05:49 rillig Exp $	*/
+/*	$NetBSD: decl_struct_c90.c,v 1.3 2021/07/15 21:00:05 rillig Exp $	*/
 # 3 "decl_struct_c90.c"
 
 /*
@@ -6,6 +6,16 @@
  */
 
 /* lint1-flags: -sw */
+
+struct unnamed_member {
+	enum { A, B, C } tag;
+	union {
+		int a_value;
+		void *b_value;
+		void (*c_value)(void);
+	};
+	/* expect-1: warning: anonymous struct/union members is a C9X feature [49] */
+};
 
 /*
  * All of K&R, C90, C99 require that a struct member declaration is
