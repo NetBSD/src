@@ -1,0 +1,1 @@
+decl_struct_c90.c(17): error: syntax requires ';' after last struct/union member [66]
