@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.326 2021/07/15 18:13:25 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.327 2021/07/15 18:18:15 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.326 2021/07/15 18:13:25 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.327 2021/07/15 18:18:15 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1912,27 +1912,7 @@ top_level_declaration:		/* C99 6.9 calls this 'declaration' */
 			warning(1);
 		}
 	  }
-	| begin_type_declmods end_type T_SEMI {
-		if (dcs->d_scl == TYPEDEF) {
-			/* typedef declares no type name */
-			warning(72);
-		} else {
-			/* empty declaration */
-			warning(2);
-		}
-	  }
-	| begin_type_declmods end_type notype_init_declarators T_SEMI
-	| begin_type_declaration_specifiers end_type T_SEMI {
-		if (dcs->d_scl == TYPEDEF) {
-			/* typedef declares no type name */
-			warning(72);
-		} else if (!dcs->d_nonempty_decl) {
-			/* empty declaration */
-			warning(2);
-		}
-	  }
-	| begin_type_declaration_specifiers end_type
-	    type_init_declarators T_SEMI
+	| declaration
 	| error T_SEMI {
 		global_clean_up();
 	  }
