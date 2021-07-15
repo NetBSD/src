@@ -1,1 +1,2 @@
-decl_struct_c90.c(17): error: syntax requires ';' after last struct/union member [66]
+decl_struct_c90.c(19): error: syntax error '}' [249]
+decl_struct_c90.c(22): error: cannot recover from previous errors [224]
