@@ -1,4 +1,4 @@
-# $NetBSD: ec2_init,v 1.2 2020/09/09 13:25:48 jmcneill Exp $
+# $NetBSD: ec2_init,v 1.3 2021/07/15 17:20:25 rhialto Exp $
 
 is_ec2() {
 	val=NO
@@ -11,6 +11,10 @@ is_ec2() {
 			nodeval="$(/sbin/sysctl -n $node | tr '[A-Z]' '[a-z]')"
 			case "$nodeval" in
 			*amazon*)
+				val=YES
+				;;
+			# OpenStack is not EC2 but it does have a metadata service.
+			*openstack*)
 				val=YES
 				;;
 			esac
