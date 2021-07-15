@@ -1,4 +1,4 @@
-/*	$NetBSD: uchcom.c,v 1.38 2021/07/14 07:34:16 nisimura Exp $	*/
+/*	$NetBSD: uchcom.c,v 1.39 2021/07/15 03:25:50 nisimura Exp $	*/
 
 /*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.38 2021/07/14 07:34:16 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.39 2021/07/15 03:25:50 nisimura Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -759,7 +759,7 @@ clear_chip(struct uchcom_softc *sc)
 	/*
 	 * this REQ_RESET call ends up with
 	 * LCR=0xc0 (8N1)
-	 * PRE=0x02, DIV=0xb2 (19200)
+	 * PRE=0x02, DIV=0xd9 (19200)
 	 */
 	return 0;
 }
