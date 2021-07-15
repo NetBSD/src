@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.324 2021/07/14 17:19:37 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.325 2021/07/15 17:20:57 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.324 2021/07/14 17:19:37 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.325 2021/07/15 17:20:57 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -295,9 +295,10 @@ anonymize(sym_t *s)
 %type	<y_tnode>	argument_expression_list
 %type	<y_tnode>	unary_expression
 %type	<y_tnode>	cast_expression
+%type	<y_tnode>	conditional_expression
+%type	<y_tnode>	assignment_expression
 %type	<y_tnode>	expression_opt
 %type	<y_tnode>	expression
-%type	<y_tnode>	assignment_expression
 %type	<y_tnode>	constant_expr
 
 %type	<y_type>	begin_type_typespec
@@ -562,10 +563,10 @@ point_or_arrow:			/* helper for 'postfix_expression' */
 
 /* K&R 7.1, C90 ???, C99 6.5.2, C11 6.5.2 */
 argument_expression_list:
-	  expression %prec T_COMMA {
+	  assignment_expression {
 		$$ = new_function_argument_node(NULL, $1);
 	  }
-	| argument_expression_list T_COMMA expression {
+	| argument_expression_list T_COMMA assignment_expression {
 		$$ = new_function_argument_node($1, $3);
 	  }
 	;
@@ -635,71 +636,74 @@ expression_opt:
 	| expression
 	;
 
-/* 'expression' also implements 'multiplicative_expression'. */
-/* 'expression' also implements 'additive_expression'. */
-/* 'expression' also implements 'shift_expression'. */
-/* 'expression' also implements 'relational_expression'. */
-/* 'expression' also implements 'equality_expression'. */
-/* 'expression' also implements 'AND_expression'. */
-/* 'expression' also implements 'exclusive_OR_expression'. */
-/* 'expression' also implements 'inclusive_OR_expression'. */
-/* 'expression' also implements 'logical_AND_expression'. */
-/* 'expression' also implements 'logical_OR_expression'. */
-/* 'expression' also implements 'conditional_expression'. */
-/* 'expression' also implements 'assignment_expression'. */
-/* K&R ???, C90 ???, C99 6.5.5 to 6.5.17, C11 ??? */
-expression:
-	  expression T_ASTERISK expression {
+/* 'conditional_expression' also implements 'multiplicative_expression'. */
+/* 'conditional_expression' also implements 'additive_expression'. */
+/* 'conditional_expression' also implements 'shift_expression'. */
+/* 'conditional_expression' also implements 'relational_expression'. */
+/* 'conditional_expression' also implements 'equality_expression'. */
+/* 'conditional_expression' also implements 'AND_expression'. */
+/* 'conditional_expression' also implements 'exclusive_OR_expression'. */
+/* 'conditional_expression' also implements 'inclusive_OR_expression'. */
+/* 'conditional_expression' also implements 'logical_AND_expression'. */
+/* 'conditional_expression' also implements 'logical_OR_expression'. */
+/* K&R ???, C90 ???, C99 6.5.5 to 6.5.15, C11 6.5.5 to 6.5.15 */
+conditional_expression:
+	  conditional_expression T_ASTERISK conditional_expression {
 		$$ = build(MULT, $1, $3);
 	  }
-	| expression T_MULTIPLICATIVE expression {
+	| conditional_expression T_MULTIPLICATIVE conditional_expression {
 		$$ = build($2, $1, $3);
 	  }
-	| expression T_ADDITIVE expression {
+	| conditional_expression T_ADDITIVE conditional_expression {
 		$$ = build($2, $1, $3);
 	  }
-	| expression T_SHIFT expression {
+	| conditional_expression T_SHIFT conditional_expression {
 		$$ = build($2, $1, $3);
 	  }
-	| expression T_RELATIONAL expression {
+	| conditional_expression T_RELATIONAL conditional_expression {
 		$$ = build($2, $1, $3);
 	  }
-	| expression T_EQUALITY expression {
+	| conditional_expression T_EQUALITY conditional_expression {
 		$$ = build($2, $1, $3);
 	  }
-	| expression T_AMPER expression {
+	| conditional_expression T_AMPER conditional_expression {
 		$$ = build(BITAND, $1, $3);
 	  }
-	| expression T_BITXOR expression {
+	| conditional_expression T_BITXOR conditional_expression {
 		$$ = build(BITXOR, $1, $3);
 	  }
-	| expression T_BITOR expression {
+	| conditional_expression T_BITOR conditional_expression {
 		$$ = build(BITOR, $1, $3);
 	  }
-	| expression T_LOGAND expression {
+	| conditional_expression T_LOGAND conditional_expression {
 		$$ = build(LOGAND, $1, $3);
 	  }
-	| expression T_LOGOR expression {
+	| conditional_expression T_LOGOR conditional_expression {
 		$$ = build(LOGOR, $1, $3);
 	  }
-	| expression T_QUEST expression T_COLON expression {
+	| conditional_expression T_QUEST conditional_expression
+	    T_COLON conditional_expression {
 		$$ = build(QUEST, $1, build(COLON, $3, $5));
 	  }
-	| expression T_ASSIGN expression {
+	| cast_expression;
+
+/* K&R ???, C90 ???, C99 6.5.16, C11 6.5.16 */
+assignment_expression:
+	  conditional_expression
+	| assignment_expression T_ASSIGN conditional_expression {
 		$$ = build(ASSIGN, $1, $3);
 	  }
-	| expression T_OPASSIGN expression {
+	| assignment_expression T_OPASSIGN conditional_expression {
 		$$ = build($2, $1, $3);
 	  }
-	| expression T_COMMA expression {
-		$$ = build(COMMA, $1, $3);
-	  }
-	| cast_expression
 	;
 
-/* K&R ???, C90 ???, C99 6.5.16, C11 ??? */
-assignment_expression:
-	  expression %prec T_ASSIGN
+/* K&R ???, C90 ???, C99 6.5.17, C11 6.5.17 */
+expression:
+	  assignment_expression
+	| expression T_COMMA assignment_expression {
+		$$ = build(COMMA, $1, $3);
+	  }
 	;
 
 constant_expr_list_opt:		/* helper for gcc_attribute */
@@ -713,7 +717,7 @@ constant_expr_list:		/* helper for gcc_attribute */
 	;
 
 constant_expr:			/* C99 6.6 */
-	  expression %prec T_ASSIGN
+	  conditional_expression
 	;
 
 declaration:			/* C99 6.7 */
@@ -1506,7 +1510,7 @@ parameter_declaration:
 	;
 
 initializer:			/* C99 6.7.8 "Initialization" */
-	  expression %prec T_COMMA {
+	  assignment_expression {
 		init_expr($1);
 	  }
 	| init_lbrace init_rbrace {
