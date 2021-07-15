@@ -1,4 +1,4 @@
-/*	$NetBSD: decl.c,v 1.6 2021/07/15 21:00:05 rillig Exp $	*/
+/*	$NetBSD: decl.c,v 1.7 2021/07/15 21:34:11 rillig Exp $	*/
 # 3 "decl.c"
 
 /*
@@ -127,3 +127,11 @@ unused_linted(void)
 
 /* covers 'type_qualifier_list: type_qualifier_list type_qualifier' */
 int *const volatile cover_type_qualifier_list;
+
+unsigned long cover_abstract_declaration_declmods = sizeof(const);
+unsigned long cover_abstract_declaration_declmods_abstract_declarator =
+    sizeof(const *);
+// FIXME:
+// lint: internal error in decl.c:833 near decl.c:135: end_type(unsigned long)
+//unsigned long cover_abstract_declarator_typeof =
+//    sizeof(const typeof(cover_abstract_declaration_declmods));
