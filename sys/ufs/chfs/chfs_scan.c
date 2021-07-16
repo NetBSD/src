@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_scan.c,v 1.9 2021/07/15 22:39:06 andvar Exp $	*/
+/*	$NetBSD: chfs_scan.c,v 1.10 2021/07/16 21:18:41 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -225,7 +225,7 @@ chfs_add_fd_to_list(struct chfs_mount *chmp,
 	    new->nsize);
 	cheb = &chmp->chm_blocks[new->nref->nref_lnr];
 
-	mutex_enter(&chmp->chm_lock_sizes);	
+	mutex_enter(&chmp->chm_lock_sizes);
 	TAILQ_FOREACH_SAFE(fd, &pvc->scan_dirents, fds, tmpfd) {
 		if (fd->nhash > new->nhash) {
 			/* insert new before fd */
