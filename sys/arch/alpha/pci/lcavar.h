@@ -1,4 +1,4 @@
-/* $NetBSD: lcavar.h,v 1.11 2012/02/06 02:14:14 matt Exp $ */
+/* $NetBSD: lcavar.h,v 1.12 2021/07/16 18:50:19 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -52,6 +52,7 @@ struct lca_config {
 
 	struct extent *lc_io_ex, *lc_d_mem_ex, *lc_s_mem_ex;
 	int	lc_mallocsafe;
+	u_int	lc_bcache_size;
 };
 
 struct lca_softc {
@@ -60,6 +61,7 @@ struct lca_softc {
 	struct	lca_config *sc_lcp;
 };
 
+void	lca_probe_bcache(void);
 void	lca_init(struct lca_config *, int);
 void	lca_pci_init(pci_chipset_tag_t, void *);
 void	lca_dma_init(struct lca_config *);
