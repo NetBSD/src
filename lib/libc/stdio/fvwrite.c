@@ -1,4 +1,4 @@
-/*	$NetBSD: fvwrite.c,v 1.27 2021/07/08 09:06:51 christos Exp $	*/
+/*	$NetBSD: fvwrite.c,v 1.28 2021/07/16 12:34:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fvwrite.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fvwrite.c,v 1.27 2021/07/08 09:06:51 christos Exp $");
+__RCSID("$NetBSD: fvwrite.c,v 1.28 2021/07/16 12:34:10 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,6 +50,40 @@ __RCSID("$NetBSD: fvwrite.c,v 1.27 2021/07/08 09:06:51 christos Exp $");
 #include "reentrant.h"
 #include "local.h"
 #include "fvwrite.h"
+
+static int
+flush_adj(FILE *fp, struct __suio *uio, struct __siov *iov, ssize_t w)
+{
+	int rc;
+
+	_DIAGASSERT(w >= 0);
+	_DIAGASSERT(fp->_w >= 0);
+
+	if ((rc = fflush(fp)) == 0)
+		return 0;
+
+	/*
+	 * If we have to return without writing the whole buffer,
+	 * adjust for how much fflush() has written for us.
+	 * `w' is the amt. of new user data just copied into our
+	 * internal buffer in _this_ fwrite() call.
+         */
+	if (fp->_w < w)	{
+		/* some new data was also written */
+		ssize_t i = w - fp->_w;
+
+		/* adjust amt. written */
+		uio->uio_resid -= i;
+		iov->iov_len -= i;
+	} else {
+		/* only old stuff was written */
+
+		/* adjust _p and _w so user can retry */
+		fp->_p -= w;
+		fp->_w += w;
+	}
+	return rc;
+}
 
 /*
  * Write some memory regions.  Return zero on success, EOF on error.
@@ -102,10 +136,8 @@ __sfvwrite(FILE *fp, struct __suio *uio)
 	if (w <= 0) \
 		goto err
 #define FLUSH(nw) \
-	if (fflush(fp)) { \
-		fp->_p -= nw;	/* rewind unwritten */ \
-		goto err; \
-	}
+	if (flush_adj(fp, uio, iov - 1, nw)) \
+		goto err
 
 	if (fp->_flags & __SNBF) {
 		/*
