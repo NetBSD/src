@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.84 2021/07/04 22:36:43 thorpej Exp $ */
+/* $NetBSD: intr.h,v 1.85 2021/07/16 19:02:22 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -157,7 +157,7 @@ void	spllower(int);
 static __inline int
 _splraise(int s)
 {
-	int cur = alpha_pal_rdps() & ALPHA_PSL_IPL_MASK;
+	int cur = (int)alpha_pal_rdps();
 	return (s > cur ? (int)alpha_pal_swpipl(s) : cur);
 }
 
