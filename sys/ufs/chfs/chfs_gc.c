@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_gc.c,v 1.9 2017/06/01 02:45:15 chs Exp $	*/
+/*	$NetBSD: chfs_gc.c,v 1.10 2021/07/16 21:18:41 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -89,7 +89,7 @@ chfs_gc_thread(void *data)
 	mutex_enter(&chmp->chm_lock_mountfields);
 	while (gc->gcth_running) {
 		/* we must call chfs_gc_thread_should_wake with chm_lock_mountfields
-		 * held, which is a bit awkwardly done here, but we cant relly
+		 * held, which is a bit awkwardly done here, but we can't really
 		 * do it otherway with the current design...
 		 */
 		if (chfs_gc_thread_should_wake(chmp)) {
@@ -127,7 +127,7 @@ chfs_gc_thread_start(struct chfs_mount *chmp)
 	    "chfsgcth");
 }
 
-/* chfs_gc_thread_start - stops GC */
+/* chfs_gc_thread_stop - stops GC */
 void
 chfs_gc_thread_stop(struct chfs_mount *chmp)
 {
@@ -191,7 +191,7 @@ chfs_gc_thread_should_wake(struct chfs_mount *chmp)
 		return 1;
 	}
 
-	/* There is too much very dirty blocks. */
+	/* There are too much very dirty blocks. */
 	TAILQ_FOREACH(cheb, &chmp->chm_very_dirty_queue, queue) {
 		nr_very_dirty++;
 		if (nr_very_dirty == chmp->chm_vdirty_blocks_gctrigger) {
@@ -200,7 +200,7 @@ chfs_gc_thread_should_wake(struct chfs_mount *chmp)
 		}
 	}
 
-	/* Everythin OK, GC shouldn't run. */
+	/* Everything is OK, GC shouldn't run. */
 	return 0;
 }
 
