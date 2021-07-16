@@ -1,4 +1,4 @@
-/* $NetBSD: lcareg.h,v 1.9 2012/02/06 02:14:14 matt Exp $ */
+/* $NetBSD: lcareg.h,v 1.10 2021/07/16 17:09:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -37,11 +37,51 @@
 /*
  * Base addresses
  */
+#define	LCA_MEMC_BASE	0x120000000L		/* LCA memory controller regs */
 #define LCA_IOC_BASE	0x180000000L		/* LCA IOC Regs */
 #define LCA_PCI_SIO	0x1c0000000L		/* PCI Sp. I/O Space */
 #define LCA_PCI_CONF	0x1e0000000L		/* PCI Conf. Space */
 #define LCA_PCI_SPARSE	0x200000000L		/* PCI Sparse Space */
 #define LCA_PCI_DENSE	0x300000000L		/* PCI Dense Space */
+
+#define LCA_MEMC_BCR0	(LCA_MEMC_BASE + 0x00)	/* Bank Configuration 0 */
+#define LCA_MEMC_BCR1	(LCA_MEMC_BASE + 0x08)	/* Bank Configuration 1 */
+#define LCA_MEMC_BCR2	(LCA_MEMC_BASE + 0x10)	/* Bank Configuration 2 */
+#define LCA_MEMC_BCR3	(LCA_MEMC_BASE + 0x18)	/* Bank Configuration 3 */
+#define LCA_MEMC_BMR0	(LCA_MEMC_BASE + 0x20)	/* Bank Address Mask 0 */
+#define LCA_MEMC_BMR1	(LCA_MEMC_BASE + 0x28)	/* Bank Address Mask 1 */
+#define LCA_MEMC_BMR2	(LCA_MEMC_BASE + 0x30)	/* Bank Address Mask 2 */
+#define LCA_MEMC_BMR3	(LCA_MEMC_BASE + 0x38)	/* Bank Address Mask 3 */
+#define LCA_MEMC_BTR0	(LCA_MEMC_BASE + 0x40)	/* Bank Timing 0 */
+#define LCA_MEMC_BTR1	(LCA_MEMC_BASE + 0x48)	/* Bank Timing 1 */
+#define LCA_MEMC_BTR2	(LCA_MEMC_BASE + 0x50)	/* Bank Timing 2 */
+#define LCA_MEMC_BTR3	(LCA_MEMC_BASE + 0x58)	/* Bank Timing 3 */
+#define LCA_MEMC_GTR	(LCA_MEMC_BASE + 0x60)	/* Global Timing */
+#define LCA_MEMC_ESR	(LCA_MEMC_BASE + 0x68)	/* Error Status */
+#define LCA_MEMC_EAR	(LCA_MEMC_BASE + 0x70)	/* Error Address */
+#define LCA_MEMC_CAR	(LCA_MEMC_BASE + 0x78)	/* Cache */
+#define LCA_MEMC_VGR	(LCA_MEMC_BASE + 0x80)	/* Video and Graphics Control */
+#define LCA_MEMC_PLM	(LCA_MEMC_BASE + 0x88)	/* Plane mask */
+#define LCA_MEMC_FOR	(LCA_MEMC_BASE + 0x90)	/* Foreground */
+
+#define MEMC_CAR_BCE	__BIT(0)	/* Bcache enable */
+#define MEMC_CAR_ETP	__BIT(2)	/* Enable tag parity check */
+#define MEMC_CAR_WWP	__BIT(3)	/* Write wrong tag parity */
+#define MEMC_CAR_ECE	__BIT(4)	/* Enable Bcache ECC */
+#define MEMC_CAR_BCS	__BITS(5,7)	/* Bcache size */
+#define MEMC_CAR_RCC	__BITS(8,10)	/* Read Cycle Count */
+#define MEMC_CAR_WCC	__BITS(11,13)	/* Write Cycle Count */
+#define MEMC_CAR_WHD	__BIT(14)	/* Write Hold Time */
+#define MEMC_CAR_PWR	__BIT(15)	/* Power Saving */
+#define MEMC_CAR_TAG	__BITS(16,30)	/* latched Bcache tag value */
+#define MEMC_CAR_HIT	__BIT(31)	/* Bcache hit */
+
+#define BCS_64K		0
+#define BCS_128K	1
+#define BCS_256K	2
+#define BCS_512K	3
+#define BCS_1M		4
+#define BCS_2M		5
 
 #define LCA_IOC_HAE	LCA_IOC_BASE		/* Host Address Ext. (64) */
 #define	IOC_HAE_ADDREXT	0x00000000f8000000UL
