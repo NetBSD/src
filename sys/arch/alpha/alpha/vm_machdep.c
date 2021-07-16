@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.120 2021/07/06 12:20:52 thorpej Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.121 2021/07/16 19:13:21 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.120 2021/07/06 12:20:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.121 2021/07/16 19:13:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -248,6 +248,14 @@ vunmapbuf(struct buf *bp, vsize_t len)
 }
 
 #ifdef __HAVE_CPU_UAREA_ROUTINES
+static struct evcnt uarea_direct_success =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "uarea direct", "success");
+static struct evcnt uarea_direct_failure =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "uarea direct", "failure");
+
+EVCNT_ATTACH_STATIC(uarea_direct_success);
+EVCNT_ATTACH_STATIC(uarea_direct_failure);
+
 void *
 cpu_uarea_alloc(bool system)
 {
@@ -259,8 +267,11 @@ cpu_uarea_alloc(bool system)
 	 * direct-mapped.
 	 */
 	error = uvm_pglistalloc(USPACE, 0, ptoa(physmem), 0, 0, &pglist, 1, 1);
-	if (error)
+	if (error) {
+		atomic_inc_ulong(&uarea_direct_failure.ev_count);
 		return NULL;
+	}
+	atomic_inc_ulong(&uarea_direct_success.ev_count);
 
 	/*
 	 * Get the physical address from the first page.
