@@ -1,4 +1,4 @@
-/* $NetBSD: dec_eb66.c,v 1.28 2012/10/13 17:58:54 jdc Exp $ */
+/* $NetBSD: dec_eb66.c,v 1.29 2021/07/16 18:50:19 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_eb66.c,v 1.28 2012/10/13 17:58:54 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_eb66.c,v 1.29 2021/07/16 18:50:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,8 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: dec_eb66.c,v 1.28 2012/10/13 17:58:54 jdc Exp $");
 #include <sys/termios.h>
 #include <sys/conf.h>
 #include <dev/cons.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/rpb.h>
 #include <machine/autoconf.h>
@@ -110,10 +108,7 @@ dec_eb66_init(void)
 	platform.cons_init = dec_eb66_cons_init;
 	platform.device_register = dec_eb66_device_register;
 
-	/*
-	 * EB66 systems have 1M secondary caches.
-	 */
-	uvmexp.ncolors = atop(1 * 1024 * 1024);
+	lca_probe_bcache();
 }
 
 static void

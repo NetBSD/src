@@ -1,4 +1,4 @@
-/* $NetBSD: lca.c,v 1.55 2021/07/04 22:42:36 thorpej Exp $ */
+/* $NetBSD: lca.c,v 1.56 2021/07/16 18:50:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -58,12 +58,14 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.55 2021/07/04 22:42:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.56 2021/07/16 18:50:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/rpb.h>
@@ -92,6 +94,16 @@ static int	lca_bus_get_window(int, int,
 struct lca_config lca_configuration;
 static int lcafound;
 
+static const u_int lca_bcache_sizes[__SHIFTOUT(MEMC_CAR_BCS, MEMC_CAR_BCS)] = {
+[BCS_64K]	=	64 * 1024,
+[BCS_128K]	=	128 * 1024,
+[BCS_256K]	=	256 * 1024,
+[BCS_512K]	=	512 * 1024,
+[BCS_1M]	=	1024 * 1024,
+[BCS_2M]	=	2048 * 1024,
+/* Other values are reserved and we treat them as 0. */
+};
+
 static int
 lcamatch(device_t parent, cfdata_t match, void *aux)
 {
@@ -105,6 +117,31 @@ lcamatch(device_t parent, cfdata_t match, void *aux)
 		return (0);
 
 	return (1);
+}
+
+/*
+ * Probe the memory controller's Bcache configuration.
+ */
+void
+lca_probe_bcache(void)
+{
+	const uint64_t car = REGVAL64(LCA_MEMC_CAR);
+
+	if (lca_configuration.lc_bcache_size != 0) {
+		/* Already done. */
+		return;
+	}
+
+	if (car & MEMC_CAR_BCE) {
+		lca_configuration.lc_bcache_size =
+		    lca_bcache_sizes[__SHIFTOUT(car, MEMC_CAR_BCS)];
+	} else {
+		lca_configuration.lc_bcache_size = 0;
+	}
+
+	if (lca_configuration.lc_bcache_size) {
+		uvmexp.ncolors = atop(lca_configuration.lc_bcache_size);
+	}
 }
 
 /*
@@ -188,6 +225,12 @@ lcaattach(device_t parent, device_t self, void *aux)
 
 	/* XXX print chipset information */
 	aprint_normal("\n");
+	if (lcp->lc_bcache_size != 0) {
+		char buf[sizeof("256 KB")];
+		if (format_bytes(buf, sizeof(buf), lcp->lc_bcache_size) > 0) {
+			aprint_normal_dev(self, "%s Bcache detected\n", buf);
+		}
+	}
 
 	lca_dma_init(lcp);
 
