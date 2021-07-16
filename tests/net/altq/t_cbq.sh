@@ -1,4 +1,4 @@
-#	$NetBSD: t_cbq.sh,v 1.2 2021/07/14 08:33:47 ozaki-r Exp $
+#	$NetBSD: t_cbq.sh,v 1.3 2021/07/16 02:33:32 ozaki-r Exp $
 #
 # Copyright (c) 2021 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -45,6 +45,23 @@ IP_REMOTE21=10.0.1.2
 IP_REMOTE22=10.0.1.22
 ALTQD_PIDFILE=./pid
 
+start_altqd()
+{
+
+	$HIJACKING_ALTQ altqd
+
+	sleep 0.1
+	if $HIJACKING_ALTQ test ! -f /var/run/altqd.pid; then
+		sleep 1
+	fi
+
+	$HIJACKING_ALTQ test -f /var/run/altqd.pid
+	if [ $? != 0 ]; then
+		atf_fail "starting altqd failed"
+	fi
+
+	$HIJACKING_ALTQ cat /var/run/altqd.pid > $ALTQD_PIDFILE
+}
 
 start_altqd_basic()
 {
@@ -64,18 +81,9 @@ start_altqd_basic()
 	EOF
 	$DEBUG && cat ./altq.conf
 	atf_check -s exit:0 $HIJACKING_ALTQ cp ./altq.conf /rump/etc/altq.conf
-	$HIJACKING_ALTQ test -f /rump/etc/altq.conf
+	atf_check -s exit:0 $HIJACKING_ALTQ test -f /rump/etc/altq.conf
 
-	#atf_check -s exit:0 $HIJACKING_ALTQ altqd
-	$HIJACKING_ALTQ altqd
-
-	$HIJACKING_ALTQ test -f /var/run/altqd.pid
-	if [ $? != 0 ]; then
-		atf_check -s exit:0 $HIJACKING_ALTQ altqd -d
-		# Should abort
-	fi
-
-	$HIJACKING_ALTQ cat /var/run/altqd.pid > $ALTQD_PIDFILE
+	start_altqd
 
 	$DEBUG && $HIJACKING_ALTQ altqstat -s
 	$HIJACKING_ALTQ altqstat -c 1 >./out
@@ -196,16 +204,7 @@ start_altqd_multi_ifaces()
 	atf_check -s exit:0 $HIJACKING_ALTQ cp ./altq.conf /rump/etc/altq.conf
 	$HIJACKING_ALTQ test -f /rump/etc/altq.conf
 
-	#atf_check -s exit:0 $HIJACKING_ALTQ altqd
-	$HIJACKING_ALTQ altqd
-
-	$HIJACKING_ALTQ test -f /var/run/altqd.pid
-	if [ $? != 0 ]; then
-		atf_check -s exit:0 $HIJACKING_ALTQ altqd -d
-		# Should abort
-	fi
-
-	$HIJACKING_ALTQ cat /var/run/altqd.pid > $ALTQD_PIDFILE
+	start_altqd
 
 	$DEBUG && $HIJACKING_ALTQ altqstat -s
 
@@ -335,15 +334,7 @@ start_altqd_options()
 	atf_check -s exit:0 $HIJACKING_ALTQ cp ./altq.conf /rump/etc/altq.conf
 	$HIJACKING_ALTQ test -f /rump/etc/altq.conf
 
-	$HIJACKING_ALTQ altqd
-
-	$HIJACKING_ALTQ test -f /var/run/altqd.pid
-	if [ $? != 0 ]; then
-		atf_check -s exit:0 $HIJACKING_ALTQ altqd -d
-		# Should abort
-	fi
-
-	$HIJACKING_ALTQ cat /var/run/altqd.pid > $ALTQD_PIDFILE
+	start_altqd
 
 	$DEBUG && $HIJACKING_ALTQ altqstat -s
 	$HIJACKING_ALTQ altqstat -c 1 >./out
