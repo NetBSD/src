@@ -1,4 +1,4 @@
-/* $NetBSD: dec_axppci_33.c,v 1.67 2012/10/13 17:58:54 jdc Exp $ */
+/* $NetBSD: dec_axppci_33.c,v 1.68 2021/07/16 18:50:19 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_axppci_33.c,v 1.67 2012/10/13 17:58:54 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_axppci_33.c,v 1.68 2021/07/16 18:50:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,8 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: dec_axppci_33.c,v 1.67 2012/10/13 17:58:54 jdc Exp $
 #include <sys/termios.h>
 #include <sys/conf.h>
 #include <dev/cons.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/rpb.h>
 #include <machine/alpha.h>
@@ -156,13 +154,7 @@ dec_axppci_33_init(void)
 
 	/* Leave nsio mapped to catch any accidental port space collisions  */
 
-	/*
-	 * AXPpci33 systems have either 0, 256K, or 1M secondary
-	 * caches.  Default to middle-of-the-road.
-	 *
-	 * XXX Dynamically size it!
-	 */
-	uvmexp.ncolors = atop(256 * 1024);
+	lca_probe_bcache();
 }
 
 static void
