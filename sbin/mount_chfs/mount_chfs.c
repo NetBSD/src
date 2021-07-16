@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_chfs.c,v 1.4 2021/06/07 21:44:35 dholland Exp $	*/
+/*	$NetBSD: mount_chfs.c,v 1.5 2021/07/16 12:09:36 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -61,7 +61,7 @@ static const struct mntopt mopts[] = {
 
 /* --------------------------------------------------------------------- */
 
-static void	usage(void) __dead;
+static void usage(void) __dead;
 
 /* --------------------------------------------------------------------- */
 
@@ -98,7 +98,6 @@ mount_chfs_parseargs(int argc, char *argv[], struct ufs_args *args,
 	if (argc != 2)
 		usage();
 
-	//strlcpy(canon_dev, argv[0], MAXPATHLEN);
 	pathadj(argv[0], canon_dev);
 	pathadj(argv[1], canon_dir);
 
@@ -135,11 +134,6 @@ mount_chfs(int argc, char *argv[])
 
 	if (mount(MOUNT_CHFS, fs_name, mntflags, &args, sizeof args) == -1) {
 		err(EXIT_FAILURE, "chfs on %s", fs_name);
-	}
-
-	if (mntflags & MNT_GETARGS) {
-
-		//(void)printf("flash index=%d\n",  args.fl_index);
 	}
 
 	return EXIT_SUCCESS;
