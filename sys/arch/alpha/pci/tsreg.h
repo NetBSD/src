@@ -1,4 +1,4 @@
-/* $NetBSD: tsreg.h,v 1.9 2021/05/27 22:11:31 thorpej Exp $ */
+/* $NetBSD: tsreg.h,v 1.10 2021/07/17 23:53:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -150,13 +150,28 @@
 #define P_WSBA3		0x00c0
 
 #	define	WSBA_ADDR(r) (TSFIELDBB((r), 31, 20) << 20)
-#	define	WSBA_SG	     2
-#	define	WSBA_ENA     1
+#	define	WSBA3_DAC    __BIT(39)
+#	define	WSBA_SG	     __BIT(1)
+#	define	WSBA_ENA     __BIT(0)
 
 #define P_WSM0		0x0100
 #define P_WSM1		0x0140
 #define P_WSM2		0x0180
 #define P_WSM3		0x01c0
+
+#	define	WSM_1MB      (0x000UL << 20)
+#	define	WSM_2MB      (0x001UL << 20)
+#	define	WSM_4MB      (0x003UL << 20)
+#	define	WSM_8MB      (0x007UL << 20)
+#	define	WSM_16MB     (0x00fUL << 20)
+#	define	WSM_32MB     (0x01fUL << 20)
+#	define	WSM_64MB     (0x03fUL << 20)
+#	define	WSM_128MB    (0x07fUL << 20)
+#	define	WSM_256MB    (0x0ffUL << 20)
+#	define	WSM_512MB    (0x1ffUL << 20)
+#	define	WSM_1GB      (0x3ffUL << 20)
+#	define	WSM_2GB      (0x7ffUL << 20)
+/*#	define	WSM_4GB      N/A		monster window / DAC only */
 
 #	define	WSM_AM(r)    TSFIELDBB((r), 31, 20)
 #	define	WSM_LEN(r)   ((WSM_AM(r) + 1) << 20)
