@@ -1,4 +1,4 @@
-/* $NetBSD: cia_dma.c,v 1.34 2021/07/04 22:42:36 thorpej Exp $ */
+/* $NetBSD: cia_dma.c,v 1.35 2021/07/17 00:30:39 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia_dma.c,v 1.34 2021/07/04 22:42:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia_dma.c,v 1.35 2021/07/17 00:30:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: cia_dma.c,v 1.34 2021/07/04 22:42:36 thorpej Exp $")
 
 #define _ALPHA_BUS_DMA_PRIVATE
 #include <sys/bus.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -69,14 +71,20 @@ static void	cia_bus_dmamap_unload_sgmap(bus_dma_tag_t, bus_dmamap_t);
 /*
  * Direct-mapped window: 1G at 1G
  */
-#define	CIA_DIRECT_MAPPED_BASE	(1*1024*1024*1024)
-#define	CIA_DIRECT_MAPPED_SIZE	(1*1024*1024*1024)
+#define	CIA_DIRECT_MAPPED_BASE	(1UL*1024*1024*1024)
+#define	CIA_DIRECT_MAPPED_SIZE	(1UL*1024*1024*1024)
 
 /*
- * SGMAP window: 8M at 8M
+ * SGMAP window for ISA: 8M at 8M
  */
-#define	CIA_SGMAP_MAPPED_BASE	(8*1024*1024)
-#define	CIA_SGMAP_MAPPED_SIZE	(8*1024*1024)
+#define	CIA_SGMAP_MAPPED_LO_BASE (8UL*1024*1024)
+#define	CIA_SGMAP_MAPPED_LO_SIZE (8UL*1024*1024)
+
+/*
+ * SGMAP window for PCI: 1G at 3G
+ */
+#define	CIA_SGMAP_MAPPED_HI_BASE (3UL*1024*1024*1024)
+#define	CIA_SGMAP_MAPPED_HI_SIZE (1UL*1024*1024*1024)
 
 /* ALCOR/ALGOR2/PYXIS have a 256-byte out-bound DMA prefetch threshold. */
 #define	CIA_SGMAP_PFTHRESH	256
@@ -89,14 +97,49 @@ static void	(*cia_tlb_invalidate_fn)(void);
 #define	CIA_TLB_INVALIDATE()	(*cia_tlb_invalidate_fn)()
 
 struct alpha_sgmap cia_pyxis_bug_sgmap;
-#define	CIA_PYXIS_BUG_BASE	(128*1024*1024)
-#define	CIA_PYXIS_BUG_SIZE	(2*1024*1024)
+#define	CIA_PYXIS_BUG_BASE	(128UL*1024*1024)
+#define	CIA_PYXIS_BUG_SIZE	(2UL*1024*1024)
 
 void
 cia_dma_init(struct cia_config *ccp)
 {
 	bus_addr_t tbase;
 	bus_dma_tag_t t;
+	bus_dma_tag_t t_sg_hi = NULL;
+
+	/*
+	 * If we have more than 1GB of RAM, then set up an sgmap-mapped
+	 * DMA window for PCI.  This is better than using the ISA window,
+	 * which is pretty small and PCI devices could starve it.
+	 *
+	 * N.B. avail_end is "last-usable PFN + 1".
+	 */
+	if (uvm_physseg_get_avail_end(uvm_physseg_get_last()) >
+	    atop(CIA_DIRECT_MAPPED_SIZE)) {
+		t = t_sg_hi = &ccp->cc_dmat_sgmap_hi;
+		t->_cookie = ccp;
+		t->_wbase = CIA_SGMAP_MAPPED_HI_BASE;
+		t->_wsize = CIA_SGMAP_MAPPED_HI_SIZE;
+		t->_next_window = NULL;
+		t->_boundary = 0;
+		t->_sgmap = &ccp->cc_sgmap_hi;
+		t->_pfthresh = CIA_SGMAP_PFTHRESH;
+		t->_get_tag = cia_dma_get_tag;
+		t->_dmamap_create = alpha_sgmap_dmamap_create;
+		t->_dmamap_destroy = alpha_sgmap_dmamap_destroy;
+		t->_dmamap_load = cia_bus_dmamap_load_sgmap;
+		t->_dmamap_load_mbuf = cia_bus_dmamap_load_mbuf_sgmap;
+		t->_dmamap_load_uio = cia_bus_dmamap_load_uio_sgmap;
+		t->_dmamap_load_raw = cia_bus_dmamap_load_raw_sgmap;
+		t->_dmamap_unload = cia_bus_dmamap_unload_sgmap;
+		t->_dmamap_sync = _bus_dmamap_sync;
+
+		t->_dmamem_alloc = _bus_dmamem_alloc;
+		t->_dmamem_free = _bus_dmamem_free;
+		t->_dmamem_map = _bus_dmamem_map;
+		t->_dmamem_unmap = _bus_dmamem_unmap;
+		t->_dmamem_mmap = _bus_dmamem_mmap;
+	}
 
 	/*
 	 * Initialize the DMA tag used for direct-mapped DMA.
@@ -105,7 +148,7 @@ cia_dma_init(struct cia_config *ccp)
 	t->_cookie = ccp;
 	t->_wbase = CIA_DIRECT_MAPPED_BASE;
 	t->_wsize = CIA_DIRECT_MAPPED_SIZE;
-	t->_next_window = &ccp->cc_dmat_sgmap;
+	t->_next_window = t_sg_hi;
 	t->_boundary = 0;
 	t->_sgmap = NULL;
 	t->_get_tag = cia_dma_get_tag;
@@ -125,15 +168,15 @@ cia_dma_init(struct cia_config *ccp)
 	t->_dmamem_mmap = _bus_dmamem_mmap;
 
 	/*
-	 * Initialize the DMA tag used for sgmap-mapped DMA.
+	 * Initialize the DMA tag used for sgmap-mapped ISA DMA.
 	 */
-	t = &ccp->cc_dmat_sgmap;
+	t = &ccp->cc_dmat_sgmap_lo;
 	t->_cookie = ccp;
-	t->_wbase = CIA_SGMAP_MAPPED_BASE;
-	t->_wsize = CIA_SGMAP_MAPPED_SIZE;
+	t->_wbase = CIA_SGMAP_MAPPED_LO_BASE;
+	t->_wsize = CIA_SGMAP_MAPPED_LO_SIZE;
 	t->_next_window = NULL;
 	t->_boundary = 0;
-	t->_sgmap = &ccp->cc_sgmap;
+	t->_sgmap = &ccp->cc_sgmap_lo;
 	t->_pfthresh = CIA_SGMAP_PFTHRESH;
 	t->_get_tag = cia_dma_get_tag;
 	t->_dmamap_create = alpha_sgmap_dmamap_create;
@@ -159,29 +202,53 @@ cia_dma_init(struct cia_config *ccp)
 	 */
 
 	/*
-	 * Initialize the SGMAP.  Must align page table to 32k
+	 * Initialize the SGMAP(s).  Must align page table to 32k
 	 * (hardware bug?).
 	 */
-	alpha_sgmap_init(t, &ccp->cc_sgmap, "cia_sgmap",
-	    CIA_SGMAP_MAPPED_BASE, 0, CIA_SGMAP_MAPPED_SIZE,
+	alpha_sgmap_init(t, &ccp->cc_sgmap_lo, "cia_sgmap_lo",
+	    CIA_SGMAP_MAPPED_LO_BASE, 0, CIA_SGMAP_MAPPED_LO_SIZE,
 	    sizeof(uint64_t), NULL, (32*1024));
+	if (t_sg_hi != NULL) {
+		alpha_sgmap_init(t, &ccp->cc_sgmap_hi, "cia_sgmap_hi",
+		    CIA_SGMAP_MAPPED_HI_BASE, 0, CIA_SGMAP_MAPPED_HI_SIZE,
+		    sizeof(uint64_t), NULL, (32*1024));
+	}
 
 	/*
 	 * Set up window 0 as an 8MB SGMAP-mapped window
 	 * starting at 8MB.
 	 */
-	REGVAL(CIA_PCI_W0BASE) = CIA_SGMAP_MAPPED_BASE |
+	REGVAL(CIA_PCI_W0BASE) = CIA_SGMAP_MAPPED_LO_BASE |
 	    CIA_PCI_WnBASE_SG_EN | CIA_PCI_WnBASE_W_EN;
 	alpha_mb();
 
 	REGVAL(CIA_PCI_W0MASK) = CIA_PCI_WnMASK_8M;
 	alpha_mb();
 
-	tbase = ccp->cc_sgmap.aps_ptpa >> CIA_PCI_TnBASE_SHIFT;
+	tbase = ccp->cc_sgmap_lo.aps_ptpa >> CIA_PCI_TnBASE_SHIFT;
 	if ((tbase & CIA_PCI_TnBASE_MASK) != tbase)
 		panic("cia_dma_init: bad page table address");
 	REGVAL(CIA_PCI_T0BASE) = tbase;
 	alpha_mb();
+
+	/*
+	 * (Maybe) set up window 3 as a 1G SGMAP-mapped window starting
+	 * at 3G.
+	 */
+	if (t_sg_hi != NULL) {
+		REGVAL(CIA_PCI_W3BASE) = CIA_SGMAP_MAPPED_HI_BASE |
+		    CIA_PCI_WnBASE_SG_EN | CIA_PCI_WnBASE_W_EN;
+		alpha_mb();
+
+		REGVAL(CIA_PCI_W3MASK) = CIA_PCI_WnMASK_1G;
+		alpha_mb();
+
+		tbase = ccp->cc_sgmap_hi.aps_ptpa >> CIA_PCI_TnBASE_SHIFT;
+		if ((tbase & CIA_PCI_TnBASE_MASK) != tbase)
+			panic("cia_dma_init: bad page table address");
+		REGVAL(CIA_PCI_T3BASE) = tbase;
+		alpha_mb();
+	}
 
 	/*
 	 * Pass 1 and 2 (i.e. revision <= 1) of the Pyxis have a
@@ -248,15 +315,10 @@ cia_dma_get_tag(bus_dma_tag_t t, alpha_bus_t bustype)
 	case ALPHA_BUS_PCI:
 	case ALPHA_BUS_EISA:
 		/*
-		 * Systems with a CIA can only support 1G
-		 * of memory, so we use the direct-mapped window
-		 * on busses that have 32-bit DMA.
-		 *
-		 * Ahem:  I have a PWS 500au with 1.5G of memory, and it
-		 * had problems doing DMA because it was not falling back
-		 * to using SGMAPs.  I've fixed that and my PWS now works with
-		 * 1.5G.  There have been other reports about failures with
-		 * more than 1.0G of memory.  Michael Hitch
+		 * Regardless if how much memory is installed,
+		 * start with the direct-mapped window.  It will
+		 * fall back to the SGMAP window if we encounter a
+		 * page that is out of range.
 		 */
 		return (&ccp->cc_dmat_direct);
 
@@ -266,7 +328,7 @@ cia_dma_get_tag(bus_dma_tag_t t, alpha_bus_t bustype)
 		 * the direct-mapped DMA window, so we must use
 		 * SGMAPs.
 		 */
-		return (&ccp->cc_dmat_sgmap);
+		return (&ccp->cc_dmat_sgmap_lo);
 
 	default:
 		panic("cia_dma_get_tag: shouldn't be here, really...");
