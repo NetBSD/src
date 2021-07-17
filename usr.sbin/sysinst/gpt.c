@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt.c,v 1.23 2021/01/31 22:45:46 rillig Exp $	*/
+/*	$NetBSD: gpt.c,v 1.24 2021/07/17 11:32:50 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -1404,8 +1404,11 @@ gpt_get_part_device(const struct disk_partitions *arg,
 		usage = plain_name;
 	if (usage == plain_name || usage == raw_dev_name)
 		life = true;
-	if (!(p->gp_flags & GPEF_WEDGE) && life)
-		gpt_add_wedge(arg->disk, p);
+	if (!(p->gp_flags & GPEF_WEDGE) && life &&
+	    !gpt_add_wedge(arg->disk, p)) {
+		devname[0] = 0;
+		return false;
+	}
 
 	switch (usage) {
 	case logical_name:
