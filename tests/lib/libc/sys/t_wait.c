@@ -1,4 +1,4 @@
-/* $NetBSD: t_wait.c,v 1.9 2019/02/04 09:35:11 mrg Exp $ */
+/* $NetBSD: t_wait.c,v 1.10 2021/07/17 14:03:35 martin Exp $ */
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_wait.c,v 1.9 2019/02/04 09:35:11 mrg Exp $");
+__RCSID("$NetBSD: t_wait.c,v 1.10 2021/07/17 14:03:35 martin Exp $");
 
 #include <sys/wait.h>
 #include <sys/resource.h>
@@ -85,7 +85,7 @@ ATF_TC_BODY(wait6_exited, tc)
 	default:
 		ATF_REQUIRE(wait6(P_PID, pid, &st, WEXITED, &wru, &si) == pid);
 		ATF_REQUIRE(WIFEXITED(st) && WEXITSTATUS(st) == 0x5a);
-		ATF_REQUIRE(si.si_status = 0x5a5a5a5a);
+		ATF_REQUIRE(si.si_status == 0x5a5a5a5a);
 		ATF_REQUIRE(si.si_pid == pid);
 		ATF_REQUIRE(si.si_uid == getuid());
 		ATF_REQUIRE(si.si_code == CLD_EXITED);
