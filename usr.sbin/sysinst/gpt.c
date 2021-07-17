@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt.c,v 1.24 2021/07/17 11:32:50 martin Exp $	*/
+/*	$NetBSD: gpt.c,v 1.25 2021/07/17 18:07:22 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -32,6 +32,7 @@
 #include "md.h"
 #include "gpt_uuid.h"
 #include <assert.h>
+#include <errno.h>
 #include <err.h>
 #include <paths.h>
 #include <sys/param.h>
@@ -1325,8 +1326,71 @@ bsdlabel_fstype_to_str(uint8_t fstype)
 	return (str);
 }
 
+/*
+ * diskfd is an open file descriptor for a disk we had trouble with
+ * creating some new wedges.
+ * Go through all wedges actually on that disk, check if we have a
+ * record for them and remove all others.
+ * This should sync our internal model of partitions with the real state.
+ */
+static void
+gpt_sanitize(int diskfd, const struct gpt_disk_partitions *parts,
+    struct gpt_part_entry *ignore)
+{
+	struct dkwedge_info *dkw, delw;
+	struct dkwedge_list dkwl;
+	size_t bufsize;
+	u_int i;
+
+	dkw = NULL;
+	dkwl.dkwl_buf = dkw;
+	dkwl.dkwl_bufsize = 0;
+
+	/* get a list of all wedges */
+	for (;;) {
+		if (ioctl(diskfd, DIOCLWEDGES, &dkwl) == -1)
+			return;
+		if (dkwl.dkwl_nwedges == dkwl.dkwl_ncopied)
+			break;
+		bufsize = dkwl.dkwl_nwedges * sizeof(*dkw);
+		if (dkwl.dkwl_bufsize < bufsize) {
+			dkw = realloc(dkwl.dkwl_buf, bufsize);
+			if (dkw == NULL)
+				return;
+			dkwl.dkwl_buf = dkw;
+			dkwl.dkwl_bufsize = bufsize;
+		}
+	}
+
+	/* try to remove all the ones we do not know about */
+	for (i = 0; i < dkwl.dkwl_nwedges; i++) {
+		bool found = false;
+		const char *devname = dkw[i].dkw_devname;
+
+		for (struct gpt_part_entry *pe = parts->partitions;
+		    pe != NULL; pe = pe->gp_next) {
+			if (pe == ignore)
+				continue;
+			if ((pe->gp_flags & GPEF_WEDGE) &&
+			    strcmp(pe->gp_dev_name, devname) == 0) {
+				found = true;
+				break;
+			}
+		}
+		if (found)
+			continue;
+		memset(&delw, 0, sizeof(delw));
+		strncpy(delw.dkw_devname, devname, sizeof(delw.dkw_devname));
+		(void)ioctl(diskfd, DIOCDWEDGE, &delw);
+	}
+
+	/* cleanup */
+	free(dkw);
+}
+
 static bool
-gpt_add_wedge(const char *disk, struct gpt_part_entry *p)
+gpt_add_wedge(const char *disk, struct gpt_part_entry *p,
+    const struct gpt_disk_partitions *parts)
 {
 	struct dkwedge_info dkw;
 	const char *tname;
@@ -1355,9 +1419,16 @@ gpt_add_wedge(const char *disk, struct gpt_part_entry *p)
 	if (fd < 0)
 		return false;
 	if (ioctl(fd, DIOCAWEDGE, &dkw) == -1) {
+		if (errno == EINVAL) {
+			/* sanitize existing wedges and try again */
+			gpt_sanitize(fd, parts, p);
+			if (ioctl(fd, DIOCAWEDGE, &dkw) == 0)
+				goto ok;
+		}
 		close(fd);
 		return false;
 	}
+ok:
 	close(fd);
 
 	strlcpy(p->gp_dev_name, dkw.dkw_devname, sizeof(p->gp_dev_name));
@@ -1405,10 +1476,8 @@ gpt_get_part_device(const struct disk_partitions *arg,
 	if (usage == plain_name || usage == raw_dev_name)
 		life = true;
 	if (!(p->gp_flags & GPEF_WEDGE) && life &&
-	    !gpt_add_wedge(arg->disk, p)) {
-		devname[0] = 0;
+	    !gpt_add_wedge(arg->disk, p, parts))
 		return false;
-	}
 
 	switch (usage) {
 	case logical_name:
