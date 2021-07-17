@@ -420,8 +420,13 @@ typedef struct {
      use __float128 here; that is only available on some
      architectures, but only on i386 is extra alignment needed for
      __float128.  */
-#if defined(__i386__) && !defined(__clang__)
+#if defined(__i386__)
+#ifdef __clang__
+  // 16 is the gcc alignment for __float128
+  long long __max_align_128 __attribute__((__aligned__(16)));
+#else
   __float128 __max_align_f128 __attribute__((__aligned__(__alignof(__float128))));
+#endif
 #endif
 } max_align_t;
 #endif
