@@ -1,4 +1,4 @@
-/* $NetBSD: ciavar.h,v 1.20 2012/02/06 02:14:14 matt Exp $ */
+/* $NetBSD: ciavar.h,v 1.21 2021/07/17 00:30:39 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -44,9 +44,11 @@ struct cia_config {
 	struct alpha_pci_chipset cc_pc;
 
 	struct alpha_bus_dma_tag cc_dmat_direct;
-	struct alpha_bus_dma_tag cc_dmat_sgmap;
+	struct alpha_bus_dma_tag cc_dmat_sgmap_lo;
+	struct alpha_bus_dma_tag cc_dmat_sgmap_hi;
 
-	struct alpha_sgmap cc_sgmap;
+	struct alpha_sgmap cc_sgmap_lo;
+	struct alpha_sgmap cc_sgmap_hi;
 
 	uint32_t cc_hae_mem;
 	uint32_t cc_hae_io;
