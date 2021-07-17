@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.160 2021/07/15 04:05:47 yamaguchi Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.161 2021/07/17 15:37:04 hannken Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.160 2021/07/15 04:05:47 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.161 2021/07/17 15:37:04 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -246,7 +246,7 @@ vlan_safe_ifpromisc(struct ifnet *ifp, int pswitch)
 	return e;
 }
 
-static inline int
+__unused static inline int
 vlan_safe_ifpromisc_locked(struct ifnet *ifp, int pswitch)
 {
 	int e;
