@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt.c,v 1.25 2021/07/17 18:07:22 martin Exp $	*/
+/*	$NetBSD: gpt.c,v 1.26 2021/07/17 19:27:22 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -1380,7 +1380,7 @@ gpt_sanitize(int diskfd, const struct gpt_disk_partitions *parts,
 		if (found)
 			continue;
 		memset(&delw, 0, sizeof(delw));
-		strncpy(delw.dkw_devname, devname, sizeof(delw.dkw_devname));
+		strlcpy(delw.dkw_devname, devname, sizeof(delw.dkw_devname));
 		(void)ioctl(diskfd, DIOCDWEDGE, &delw);
 	}
 
