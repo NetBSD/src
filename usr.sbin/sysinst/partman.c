@@ -1,4 +1,4 @@
-/*	$NetBSD: partman.c,v 1.51 2021/01/31 22:45:46 rillig Exp $ */
+/*	$NetBSD: partman.c,v 1.52 2021/07/17 11:32:50 martin Exp $ */
 
 /*
  * Copyright 2012 Eugene Lozovoy
@@ -2847,13 +2847,13 @@ pm_menufmt(menudesc *m, int opt, void *arg)
 				dev_status);
 			break;
 		case PM_PART:
-			if (parts->pscheme->get_part_device != NULL)
-				parts->pscheme->get_part_device(
-				    parts,  part_num,
-				    dev, sizeof dev, NULL, plain_name, false,
-				    true);
-			else
-				strcpy(dev, "-");
+			if (parts->pscheme->get_part_device == NULL ||
+			    !parts->pscheme->get_part_device(
+				parts,  part_num,
+				dev, sizeof dev, NULL, plain_name, false,
+				true))
+					strcpy(dev, "-");
+
 			parts->pscheme->get_part_info(parts,
 			    part_num, &info);
 			if (pm_cur->mounted != NULL &&
