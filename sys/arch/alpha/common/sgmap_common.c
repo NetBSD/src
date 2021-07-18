@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_common.c,v 1.28 2021/07/04 22:42:35 thorpej Exp $ */
+/* $NetBSD: sgmap_common.c,v 1.29 2021/07/18 05:12:27 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sgmap_common.c,v 1.28 2021/07/04 22:42:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgmap_common.c,v 1.29 2021/07/18 05:12:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,6 +66,14 @@ alpha_sgmap_init(bus_dma_tag_t t, struct alpha_sgmap *sgmap, const char *name,
 	if (sgvasize & PGOFSET) {
 		printf("size botch for sgmap `%s'\n", name);
 		goto die;
+	}
+
+	/*
+	 * If we don't yet have a minimum SGVA alignment, default
+	 * to the system page size.
+	 */
+	if (t->_sgmap_minalign < PAGE_SIZE) {
+		t->_sgmap_minalign = PAGE_SIZE;
 	}
 
 	sgmap->aps_wbase = wbase;
