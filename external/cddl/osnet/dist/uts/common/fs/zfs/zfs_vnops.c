@@ -6337,13 +6337,6 @@ const struct genfs_ops zfs_genfsops = {
 	.gop_putrange = zfs_netbsd_gop_putrange,
 };
 
-#define	zfs_netbsd_lock		genfs_lock
-#define	zfs_netbsd_unlock	genfs_unlock
-#define	zfs_netbsd_islocked	genfs_islocked
-#define zfs_netbsd_seek		genfs_seek
-#define zfs_netbsd_mmap		genfs_mmap
-#define zfs_netbsd_fcntl	genfs_fcntl
-
 int (**zfs_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc zfs_vnodeop_entries[] = {
 	{ &vop_default_desc,		vn_default_error },
@@ -6366,8 +6359,8 @@ const struct vnodeopv_entry_desc zfs_vnodeop_entries[] = {
 	{ &vop_fsync_desc,		zfs_netbsd_fsync },
 	{ &vop_remove_desc,		zfs_netbsd_remove },
 	{ &vop_link_desc,		zfs_netbsd_link },
-	{ &vop_lock_desc,		zfs_netbsd_lock },
-	{ &vop_unlock_desc,		zfs_netbsd_unlock },
+	{ &vop_lock_desc,		genfs_lock },
+	{ &vop_unlock_desc,		genfs_unlock },
 	{ &vop_rename_desc,		zfs_netbsd_rename },
 	{ &vop_mkdir_desc,		zfs_netbsd_mkdir },
 	{ &vop_rmdir_desc,		zfs_netbsd_rmdir },
@@ -6377,14 +6370,14 @@ const struct vnodeopv_entry_desc zfs_vnodeop_entries[] = {
 	{ &vop_inactive_desc,		zfs_netbsd_inactive },
 	{ &vop_reclaim_desc,		zfs_netbsd_reclaim },
 	{ &vop_pathconf_desc,		zfs_netbsd_pathconf },
-	{ &vop_seek_desc,		zfs_netbsd_seek },
+	{ &vop_seek_desc,		genfs_seek },
 	{ &vop_getpages_desc,		zfs_netbsd_getpages },
 	{ &vop_putpages_desc,		zfs_netbsd_putpages },
-	{ &vop_mmap_desc,		zfs_netbsd_mmap },
-	{ &vop_islocked_desc,		zfs_netbsd_islocked },
+	{ &vop_mmap_desc,		genfs_mmap },
+	{ &vop_islocked_desc,		genfs_islocked },
 	{ &vop_advlock_desc,		zfs_netbsd_advlock },
 	{ &vop_print_desc,		zfs_netbsd_print },
-	{ &vop_fcntl_desc,		zfs_netbsd_fcntl },
+	{ &vop_fcntl_desc,		genfs_fcntl },
 	{ NULL, NULL }
 };
 
@@ -6403,14 +6396,14 @@ const struct vnodeopv_entry_desc zfs_specop_entries[] = {
 	{ &vop_read_desc,		/**/zfs_netbsd_read },
 	{ &vop_write_desc,		/**/zfs_netbsd_write },
 	{ &vop_fsync_desc,		zfs_spec_fsync },
-	{ &vop_lock_desc,		zfs_netbsd_lock },
-	{ &vop_unlock_desc,		zfs_netbsd_unlock },
+	{ &vop_lock_desc,		genfs_lock },
+	{ &vop_unlock_desc,		genfs_unlock },
 	{ &vop_inactive_desc,		zfs_netbsd_inactive },
 	{ &vop_reclaim_desc,		zfs_netbsd_reclaim },
-	{ &vop_islocked_desc,		zfs_netbsd_islocked },
-	{ &vop_bwrite_desc,		spec_bwrite },
+	{ &vop_islocked_desc,		genfs_islocked },
+	{ &vop_bwrite_desc,		vn_bwrite },
 	{ &vop_print_desc,		zfs_netbsd_print },
-	{ &vop_fcntl_desc,		zfs_netbsd_fcntl },
+	{ &vop_fcntl_desc,		genfs_fcntl },
 	{ NULL, NULL }
 };
 
@@ -6429,15 +6422,15 @@ const struct vnodeopv_entry_desc zfs_fifoop_entries[] = {
 	{ &vop_read_desc,		/**/zfs_netbsd_read },
 	{ &vop_write_desc,		/**/zfs_netbsd_write },
 	{ &vop_fsync_desc,		zfs_netbsd_fsync },
-	{ &vop_lock_desc,		zfs_netbsd_lock },
-	{ &vop_unlock_desc,		zfs_netbsd_unlock },
+	{ &vop_lock_desc,		genfs_lock },
+	{ &vop_unlock_desc,		genfs_unlock },
 	{ &vop_inactive_desc,		zfs_netbsd_inactive },
 	{ &vop_reclaim_desc,		zfs_netbsd_reclaim },
-	{ &vop_islocked_desc,		zfs_netbsd_islocked },
+	{ &vop_islocked_desc,		genfs_islocked },
 	{ &vop_bwrite_desc,		vn_bwrite },
 	{ &vop_strategy_desc,		vn_fifo_bypass },
 	{ &vop_print_desc,		zfs_netbsd_print },
-	{ &vop_fcntl_desc,		zfs_netbsd_fcntl },
+	{ &vop_fcntl_desc,		genfs_fcntl },
 	{ NULL, NULL }
 };
 

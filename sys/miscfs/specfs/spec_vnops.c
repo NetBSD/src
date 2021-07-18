@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.182 2021/06/29 22:34:09 dholland Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.183 2021/07/18 23:57:14 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.182 2021/06/29 22:34:09 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.183 2021/07/18 23:57:14 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -117,48 +117,48 @@ const struct vnodeopv_entry_desc spec_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_parsepath_desc, genfs_parsepath },	/* parsepath */
 	{ &vop_lookup_desc, spec_lookup },		/* lookup */
-	{ &vop_create_desc, spec_create },		/* create */
-	{ &vop_mknod_desc, spec_mknod },		/* mknod */
+	{ &vop_create_desc, genfs_badop },		/* create */
+	{ &vop_mknod_desc, genfs_badop },		/* mknod */
 	{ &vop_open_desc, spec_open },			/* open */
 	{ &vop_close_desc, spec_close },		/* close */
-	{ &vop_access_desc, spec_access },		/* access */
-	{ &vop_accessx_desc, genfs_accessx },		/* accessx */
-	{ &vop_getattr_desc, spec_getattr },		/* getattr */
-	{ &vop_setattr_desc, spec_setattr },		/* setattr */
+	{ &vop_access_desc, genfs_ebadf },		/* access */
+	{ &vop_accessx_desc, genfs_ebadf },		/* accessx */
+	{ &vop_getattr_desc, genfs_ebadf },		/* getattr */
+	{ &vop_setattr_desc, genfs_ebadf },		/* setattr */
 	{ &vop_read_desc, spec_read },			/* read */
 	{ &vop_write_desc, spec_write },		/* write */
-	{ &vop_fallocate_desc, spec_fallocate },	/* fallocate */
+	{ &vop_fallocate_desc, genfs_eopnotsupp },	/* fallocate */
 	{ &vop_fdiscard_desc, spec_fdiscard },		/* fdiscard */
-	{ &vop_fcntl_desc, spec_fcntl },		/* fcntl */
+	{ &vop_fcntl_desc, genfs_fcntl },		/* fcntl */
 	{ &vop_ioctl_desc, spec_ioctl },		/* ioctl */
 	{ &vop_poll_desc, spec_poll },			/* poll */
 	{ &vop_kqfilter_desc, spec_kqfilter },		/* kqfilter */
-	{ &vop_revoke_desc, spec_revoke },		/* revoke */
+	{ &vop_revoke_desc, genfs_revoke },		/* revoke */
 	{ &vop_mmap_desc, spec_mmap },			/* mmap */
 	{ &vop_fsync_desc, spec_fsync },		/* fsync */
 	{ &vop_seek_desc, spec_seek },			/* seek */
-	{ &vop_remove_desc, spec_remove },		/* remove */
-	{ &vop_link_desc, spec_link },			/* link */
-	{ &vop_rename_desc, spec_rename },		/* rename */
-	{ &vop_mkdir_desc, spec_mkdir },		/* mkdir */
-	{ &vop_rmdir_desc, spec_rmdir },		/* rmdir */
-	{ &vop_symlink_desc, spec_symlink },		/* symlink */
-	{ &vop_readdir_desc, spec_readdir },		/* readdir */
-	{ &vop_readlink_desc, spec_readlink },		/* readlink */
-	{ &vop_abortop_desc, spec_abortop },		/* abortop */
+	{ &vop_remove_desc, genfs_badop },		/* remove */
+	{ &vop_link_desc, genfs_badop },		/* link */
+	{ &vop_rename_desc, genfs_badop },		/* rename */
+	{ &vop_mkdir_desc, genfs_badop },		/* mkdir */
+	{ &vop_rmdir_desc, genfs_badop },		/* rmdir */
+	{ &vop_symlink_desc, genfs_badop },		/* symlink */
+	{ &vop_readdir_desc, genfs_badop },		/* readdir */
+	{ &vop_readlink_desc, genfs_badop },		/* readlink */
+	{ &vop_abortop_desc, genfs_badop },		/* abortop */
 	{ &vop_inactive_desc, spec_inactive },		/* inactive */
 	{ &vop_reclaim_desc, spec_reclaim },		/* reclaim */
-	{ &vop_lock_desc, spec_lock },			/* lock */
-	{ &vop_unlock_desc, spec_unlock },		/* unlock */
+	{ &vop_lock_desc, genfs_nolock },		/* lock */
+	{ &vop_unlock_desc, genfs_nounlock },		/* unlock */
 	{ &vop_bmap_desc, spec_bmap },			/* bmap */
 	{ &vop_strategy_desc, spec_strategy },		/* strategy */
 	{ &vop_print_desc, spec_print },		/* print */
-	{ &vop_islocked_desc, spec_islocked },		/* islocked */
+	{ &vop_islocked_desc, genfs_noislocked },	/* islocked */
 	{ &vop_pathconf_desc, spec_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, spec_advlock },		/* advlock */
-	{ &vop_bwrite_desc, spec_bwrite },		/* bwrite */
-	{ &vop_getpages_desc, spec_getpages },		/* getpages */
-	{ &vop_putpages_desc, spec_putpages },		/* putpages */
+	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
+	{ &vop_getpages_desc, genfs_getpages },		/* getpages */
+	{ &vop_putpages_desc, genfs_putpages },		/* putpages */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc spec_vnodeop_opv_desc =

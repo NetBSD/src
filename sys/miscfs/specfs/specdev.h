@@ -1,4 +1,4 @@
-/*	$NetBSD: specdev.h,v 1.45 2021/07/18 23:56:14 dholland Exp $	*/
+/*	$NetBSD: specdev.h,v 1.46 2021/07/18 23:57:15 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -109,48 +109,24 @@ struct	buf;
 struct	uio;
 
 int	spec_lookup(void *);
-#define	spec_create	genfs_badop
-#define	spec_whiteout	genfs_badop
-#define	spec_mknod	genfs_badop
 int	spec_open(void *);
 int	spec_close(void *);
-#define	spec_access	genfs_ebadf
-#define	spec_getattr	genfs_ebadf
-#define	spec_setattr	genfs_ebadf
 int	spec_read(void *);
 int	spec_write(void *);
-#define spec_fallocate	genfs_eopnotsupp
 int	spec_fdiscard(void *);
-#define spec_fcntl	genfs_fcntl
 int	spec_ioctl(void *);
 int	spec_poll(void *);
 int	spec_kqfilter(void *);
-#define spec_revoke	genfs_revoke
 int	spec_mmap(void *);
 int	spec_fsync(void *);
 #define	spec_seek	genfs_nullop		/* XXX should query device */
-#define	spec_remove	genfs_badop
-#define	spec_link	genfs_badop
-#define	spec_rename	genfs_badop
-#define	spec_mkdir	genfs_badop
-#define	spec_rmdir	genfs_badop
-#define	spec_symlink	genfs_badop
-#define	spec_readdir	genfs_badop
-#define	spec_readlink	genfs_badop
-#define	spec_abortop	genfs_badop
 int	spec_inactive(void *);
 int	spec_reclaim(void *);
-#define	spec_lock	genfs_nolock
-#define	spec_unlock	genfs_nounlock
 int	spec_bmap(void *);
 int	spec_strategy(void *);
 int	spec_print(void *);
-#define	spec_islocked	genfs_noislocked
 int	spec_pathconf(void *);
 int	spec_advlock(void *);
-#define	spec_bwrite	vn_bwrite
-#define	spec_getpages	genfs_getpages
-#define	spec_putpages	genfs_putpages
 
 /*
  * This macro provides an initializer list for the fs-independent part

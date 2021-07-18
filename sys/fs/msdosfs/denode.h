@@ -1,4 +1,4 @@
-/*	$NetBSD: denode.h,v 1.25 2017/01/14 17:17:53 maya Exp $	*/
+/*	$NetBSD: denode.h,v 1.26 2021/07/18 23:57:14 dholland Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -279,19 +279,12 @@ int	msdosfs_getattr		(void *);
 int	msdosfs_setattr		(void *);
 int	msdosfs_read		(void *);
 int	msdosfs_write		(void *);
-#define	msdosfs_lease_check	genfs_lease_check
-#define	msdosfs_ioctl		genfs_enoioctl
-#define	msdosfs_poll		genfs_poll
-#define	msdosfs_revoke		genfs_revoke
-#define	msdosfs_mmap		genfs_mmap
 int	msdosfs_fsync		(void *);
-#define	msdosfs_seek		genfs_seek
 int	msdosfs_remove		(void *);
 int	msdosfs_rename		(void *);
 int	msdosfs_mkdir		(void *);
 int	msdosfs_rmdir		(void *);
 int	msdosfs_readdir		(void *);
-#define	msdosfs_abortop		genfs_abortop
 int	msdosfs_inactive	(void *);
 int	msdosfs_reclaim		(void *);
 int	msdosfs_bmap		(void *);
