@@ -1,4 +1,4 @@
-/* $NetBSD: tsp_dma.c,v 1.19 2021/07/18 00:01:20 thorpej Exp $ */
+/* $NetBSD: tsp_dma.c,v 1.20 2021/07/18 05:09:47 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2021 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsp_dma.c,v 1.19 2021/07/18 00:01:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsp_dma.c,v 1.20 2021/07/18 05:09:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -292,7 +292,7 @@ tsp_dma_init(struct tsp_config *pcp)
 	    TSP_SGMAP_MAPPED_LO_BASE, 0, TSP_SGMAP_MAPPED_LO_SIZE,
 	    sizeof(uint64_t), NULL, (32*1024));
 	if (t_sg_hi != NULL) {
-		alpha_sgmap_init(t, &pcp->pc_sgmap_hi, "tsp_sgmap_hi",
+		alpha_sgmap_init(t_sg_hi, &pcp->pc_sgmap_hi, "tsp_sgmap_hi",
 		    TSP_SGMAP_MAPPED_HI_BASE, 0, TSP_SGMAP_MAPPED_HI_SIZE,
 		    sizeof(uint64_t), NULL, (32*1024));
 	}
