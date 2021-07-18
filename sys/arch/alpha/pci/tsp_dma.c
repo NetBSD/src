@@ -1,4 +1,4 @@
-/* $NetBSD: tsp_dma.c,v 1.18 2021/07/04 22:42:36 thorpej Exp $ */
+/* $NetBSD: tsp_dma.c,v 1.19 2021/07/18 00:01:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2021 The NetBSD Foundation, Inc.
@@ -61,12 +61,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsp_dma.c,v 1.18 2021/07/04 22:42:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsp_dma.c,v 1.19 2021/07/18 00:01:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #define _ALPHA_BUS_DMA_PRIVATE
@@ -79,8 +81,6 @@ __KERNEL_RCSID(0, "$NetBSD: tsp_dma.c,v 1.18 2021/07/04 22:42:36 thorpej Exp $")
 #include <alpha/pci/tsvar.h>
 
 #define tsp_dma() { Generate ctags(1) key. }
-
-#define	EDIFF(a, b) (((a) | WSBA_ENA | WSBA_SG)	!= ((b) | WSBA_ENA | WSBA_SG))
 
 static bus_dma_tag_t tsp_dma_get_tag(bus_dma_tag_t, alpha_bus_t);
 
@@ -126,44 +126,84 @@ static void	tsp_tlb_invalidate(struct tsp_config *);
  * 64-bit DMA tag.  This leaves us possibly having to fall back on SGMAP
  * DMA on a Titan system (those support up to 64GB of RAM), and we may have
  * to address that with an additional large SGMAP DAC window at another
- * time.
+ * time.  XXX Does the Titan Monster Window support the extra bit?
  */
 #define	TSP_MONSTER_DMA_WINDOW_BASE	0x100##00000000UL
 #define	TSP_MONSTER_DMA_WINDOW_SIZE	0x008##00000000UL
 
+/*
+ * Basic 24-bit ISA DMA window is 8MB @ 8MB.  The firmware will
+ * have set this up in Window 0.
+ */
+#define	TSP_SGMAP_MAPPED_LO_BASE	(8UL * 1024 * 1024)
+#define	TSP_SGMAP_MAPPED_LO_SIZE	(8UL * 1024 * 1024)
+
+/*
+ * Basic 32-bit PCI DMA window is 1GB @ 2GB.  The firmware will
+ * have set this up in Window 1.
+ */
+#define	TSP_DIRECT_MAPPED_BASE		(2UL * 1024 * 1024 * 1024)
+#define	TSP_DIRECT_MAPPED_SIZE		(1UL * 1024 * 1024 * 1024)
+
+/*
+ * For systems that have > 1GB of RAM, but PCI devices that don't
+ * support dual-address cycle, we will also set up an additional
+ * SGMAP DMA window 1GB @ 3GB.  We will use Window 2 for this purpose.
+ */
+#define	TSP_SGMAP_MAPPED_HI_BASE	(3UL * 1024 * 1024 * 1024)
+#define	TSP_SGMAP_MAPPED_HI_SIZE	(1UL * 1024 * 1024 * 1024)
+
+/*
+ * Window 3 is still available for use in the future.  Window 3 supports
+ * dual address cycle.
+ */
+
 void
 tsp_dma_init(struct tsp_config *pcp)
 {
-	int i;
 	bus_dma_tag_t t;
+	bus_dma_tag_t t_sg_hi = NULL;
 	struct ts_pchip *pccsr = pcp->pc_csr;
-	bus_addr_t dwbase, dwlen, sgwbase, sgwlen, tbase;
-	static struct map_expected {
-		uint32_t base, mask, enables;
-	} premap[4] = {
-		{ 0x00800000, 0x00700000, WSBA_ENA | WSBA_SG },
-		{ 0x80000000, 0x3ff00000, WSBA_ENA           },
-		{ 0, 0, 0 },
-		{ 0, 0, 0 }
-	};
-
-	alpha_mb();
-	for(i = 0; i < 4; ++i) {
-		if (EDIFF(pccsr->tsp_wsba[i].tsg_r, premap[i].base) ||
-		    EDIFF(pccsr->tsp_wsm[i].tsg_r, premap[i].mask))
-			printf("tsp%d: window %d: %lx/base %lx/mask %lx"
-			    " reinitialized\n",
-			    pcp->pc_pslot, i,
-			    pccsr->tsp_wsba[i].tsg_r,
-			    pccsr->tsp_wsm[i].tsg_r,
-			    pccsr->tsp_tba[i].tsg_r);
-		pccsr->tsp_wsba[i].tsg_r = premap[i].base | premap[i].enables;
-		pccsr->tsp_wsm[i].tsg_r = premap[i].mask;
-	}
+	bus_addr_t tbase;
 
 	/* Ensure the Monster Window is enabled. */
+	alpha_mb();
 	pccsr->tsp_pctl.tsg_r |= PCTL_MWIN;
 	alpha_mb();
+
+	/*
+	 * If we have more than 1GB of RAM, then set up an sgmap-mapped
+	 * DMA window for non-DAC PCI.  This is better than using the ISA
+	 * window, which is pretty small and PCI devices could starve it.
+	 *
+	 * N.B. avail_end is "last-usable PFN + 1".
+	 */
+	if (uvm_physseg_get_avail_end(uvm_physseg_get_last()) >
+	    atop(TSP_DIRECT_MAPPED_SIZE)) {
+		t = t_sg_hi = &pcp->pc_dmat_sgmap_hi;
+		t->_cookie = pcp;
+		t->_wbase = TSP_SGMAP_MAPPED_HI_BASE;
+		t->_wsize = TSP_SGMAP_MAPPED_HI_SIZE;
+		t->_next_window = NULL;
+		t->_boundary = 0;
+		t->_sgmap = &pcp->pc_sgmap_hi;
+		t->_pfthresh = TSP_SGMAP_PFTHRESH;
+		t->_get_tag = tsp_dma_get_tag;
+		t->_dmamap_create = alpha_sgmap_dmamap_create;
+		t->_dmamap_destroy = alpha_sgmap_dmamap_destroy;
+		t->_dmamap_load = tsp_bus_dmamap_load_sgmap;
+		t->_dmamap_load_mbuf = tsp_bus_dmamap_load_mbuf_sgmap;
+		t->_dmamap_load_uio = tsp_bus_dmamap_load_uio_sgmap;
+		t->_dmamap_load_raw = tsp_bus_dmamap_load_raw_sgmap;
+		t->_dmamap_unload = tsp_bus_dmamap_unload_sgmap;
+		t->_dmamap_sync = _bus_dmamap_sync;
+
+		t->_dmamem_alloc = _bus_dmamem_alloc;
+		t->_dmamem_free = _bus_dmamem_free;
+		t->_dmamem_map = _bus_dmamem_map;
+		t->_dmamem_unmap = _bus_dmamem_unmap;
+		t->_dmamem_mmap = _bus_dmamem_mmap;
+	}
 
 	/*
 	 * Initialize the DMA tag used for direct-mapped 64-bit DMA.
@@ -172,7 +212,7 @@ tsp_dma_init(struct tsp_config *pcp)
 	t->_cookie = pcp;
 	t->_wbase = TSP_MONSTER_DMA_WINDOW_BASE;
 	t->_wsize = TSP_MONSTER_DMA_WINDOW_SIZE;
-	t->_next_window = &pcp->pc_dmat_sgmap;
+	t->_next_window = t_sg_hi;
 	t->_boundary = 0;
 	t->_sgmap = NULL;
 	t->_get_tag = tsp_dma_get_tag;
@@ -196,9 +236,9 @@ tsp_dma_init(struct tsp_config *pcp)
 	 */
 	t = &pcp->pc_dmat_direct;
 	t->_cookie = pcp;
-	t->_wbase = dwbase = WSBA_ADDR(pccsr->tsp_wsba[1].tsg_r);
-	t->_wsize = dwlen = WSM_LEN(pccsr->tsp_wsm[1].tsg_r);
-	t->_next_window = &pcp->pc_dmat_sgmap;
+	t->_wbase = TSP_DIRECT_MAPPED_BASE;
+	t->_wsize = TSP_DIRECT_MAPPED_SIZE;
+	t->_next_window = t_sg_hi;
 	t->_boundary = 0;
 	t->_sgmap = NULL;
 	t->_get_tag = tsp_dma_get_tag;
@@ -218,15 +258,15 @@ tsp_dma_init(struct tsp_config *pcp)
 	t->_dmamem_mmap = _bus_dmamem_mmap;
 
 	/*
-	 * Initialize the DMA tag used for sgmap-mapped DMA.
+	 * Initialize the DMA tag used for ISA sgmap-mapped DMA.
 	 */
-	t = &pcp->pc_dmat_sgmap;
+	t = &pcp->pc_dmat_sgmap_lo;
 	t->_cookie = pcp;
-	t->_wbase = sgwbase = WSBA_ADDR(pccsr->tsp_wsba[0].tsg_r);
-	t->_wsize = sgwlen = WSM_LEN(pccsr->tsp_wsm[0].tsg_r);
+	t->_wbase = TSP_SGMAP_MAPPED_LO_BASE;
+	t->_wsize = TSP_SGMAP_MAPPED_LO_SIZE;
 	t->_next_window = NULL;
 	t->_boundary = 0;
-	t->_sgmap = &pcp->pc_sgmap;
+	t->_sgmap = &pcp->pc_sgmap_lo;
 	t->_pfthresh = TSP_SGMAP_PFTHRESH;
 	t->_get_tag = tsp_dma_get_tag;
 	t->_dmamap_create = alpha_sgmap_dmamap_create;
@@ -245,40 +285,70 @@ tsp_dma_init(struct tsp_config *pcp)
 	t->_dmamem_mmap = _bus_dmamem_mmap;
 
 	/*
-	 * Initialize the SGMAP.  Align page table to 32k in case
+	 * Initialize the SGMAPs.  Align page tables to 32k in case
 	 * window is somewhat larger than expected.
 	 */
-	alpha_sgmap_init(t, &pcp->pc_sgmap, "tsp_sgmap",
-	    sgwbase, 0, sgwlen, sizeof(uint64_t), NULL, (32*1024));
+	alpha_sgmap_init(t, &pcp->pc_sgmap_lo, "tsp_sgmap_lo",
+	    TSP_SGMAP_MAPPED_LO_BASE, 0, TSP_SGMAP_MAPPED_LO_SIZE,
+	    sizeof(uint64_t), NULL, (32*1024));
+	if (t_sg_hi != NULL) {
+		alpha_sgmap_init(t, &pcp->pc_sgmap_hi, "tsp_sgmap_hi",
+		    TSP_SGMAP_MAPPED_HI_BASE, 0, TSP_SGMAP_MAPPED_HI_SIZE,
+		    sizeof(uint64_t), NULL, (32*1024));
+	}
 
 	/*
 	 * Enable window 0 and enable SG PTE mapping.
 	 */
 	alpha_mb();
-	pccsr->tsp_wsba[0].tsg_r |= WSBA_SG | WSBA_ENA;
+	pccsr->tsp_wsba[0].tsg_r =
+	    TSP_SGMAP_MAPPED_LO_BASE | WSBA_SG | WSBA_ENA;
+	alpha_mb();
+	pccsr->tsp_wsm[0].tsg_r = WSM_8MB;
+	alpha_mb();
+	tbase = pcp->pc_sgmap_lo.aps_ptpa;
+	if (tbase & ~0x7fffffc00UL)
+		panic("tsp_dma_init: bad page table address");
+	pccsr->tsp_tba[0].tsg_r = tbase;
 	alpha_mb();
 
 	/*
 	 * Enable window 1 in direct mode.
 	 */
 	alpha_mb();
-	pccsr->tsp_wsba[1].tsg_r =
-	    (pccsr->tsp_wsba[1].tsg_r & ~WSBA_SG) | WSBA_ENA;
+	pccsr->tsp_wsba[1].tsg_r = TSP_DIRECT_MAPPED_BASE | WSBA_ENA;
 	alpha_mb();
+	pccsr->tsp_wsm[1].tsg_r = WSM_1GB;
+	alpha_mb();
+	pccsr->tsp_tba[1].tsg_r = 0;
+	alpha_mb();
+
+	if (t_sg_hi != NULL) {
+		/*
+		 * Enable window 2 and enable SG PTE mapping.
+		 */
+		alpha_mb();
+		pccsr->tsp_wsba[2].tsg_r =
+		    TSP_SGMAP_MAPPED_HI_BASE | WSBA_SG | WSBA_ENA;
+		alpha_mb();
+		pccsr->tsp_wsm[2].tsg_r = WSM_1GB;
+		alpha_mb();
+		tbase = pcp->pc_sgmap_hi.aps_ptpa;
+		if (tbase & ~0x7fffffc00UL)
+			panic("tsp_dma_init: bad page table address");
+		pccsr->tsp_tba[2].tsg_r = tbase;
+		alpha_mb();
+	}
 
 	/*
-	 * Check windows for sanity, especially if we later decide to
-	 * use the firmware's initialization in some cases.
+	 * Disable window 3.
 	 */
-	if ((sgwbase <= dwbase && dwbase < sgwbase + sgwlen) ||
-	    (dwbase <= sgwbase && sgwbase < dwbase + dwlen))
-		panic("tsp_dma_init: overlap");
-
-	tbase = pcp->pc_sgmap.aps_ptpa;
-	if (tbase & ~0x7fffffc00UL)
-		panic("tsp_dma_init: bad page table address");
 	alpha_mb();
-	pccsr->tsp_tba[0].tsg_r = tbase;
+	pccsr->tsp_wsba[3].tsg_r = 0;
+	alpha_mb();
+	pccsr->tsp_wsm[3].tsg_r = 0;
+	alpha_mb();
+	pccsr->tsp_tba[3].tsg_r = 0;
 	alpha_mb();
 
 	tsp_tlb_invalidate(pcp);
@@ -310,7 +380,7 @@ tsp_dma_get_tag(bus_dma_tag_t t, alpha_bus_t bustype)
 		 * the direct-mapped DMA window, so we must use
 		 * SGMAPs.
 		 */
-		return (&pcp->pc_dmat_sgmap);
+		return (&pcp->pc_dmat_sgmap_lo);
 
 	default:
 		panic("tsp_dma_get_tag: shouldn't be here, really...");
