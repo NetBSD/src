@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.65 2021/07/18 23:57:14 dholland Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.66 2021/07/18 23:57:34 dholland Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.65 2021/07/18 23:57:14 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.66 2021/07/18 23:57:34 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,11 +167,11 @@ const struct vnodeopv_entry_desc ptyfs_vnodeop_entries[] = {
 	{ &vop_fsync_desc, genfs_nullop },		/* fsync */
 	{ &vop_seek_desc, genfs_nullop },		/* seek */
 	{ &vop_remove_desc, genfs_eopnotsupp },		/* remove */
-	{ &vop_link_desc, genfs_abortop },		/* link */
+	{ &vop_link_desc, genfs_eopnotsupp },		/* link */
 	{ &vop_rename_desc, genfs_eopnotsupp },		/* rename */
 	{ &vop_mkdir_desc, genfs_eopnotsupp },		/* mkdir */
 	{ &vop_rmdir_desc, genfs_eopnotsupp },		/* rmdir */
-	{ &vop_symlink_desc, genfs_abortop },		/* symlink */
+	{ &vop_symlink_desc, genfs_eopnotsupp },	/* symlink */
 	{ &vop_readdir_desc, ptyfs_readdir },		/* readdir */
 	{ &vop_readlink_desc, genfs_eopnotsupp },	/* readlink */
 	{ &vop_abortop_desc, genfs_abortop },		/* abortop */
