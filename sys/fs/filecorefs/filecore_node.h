@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.h,v 1.6 2014/10/04 13:27:24 hannken Exp $	*/
+/*	$NetBSD: filecore_node.h,v 1.7 2021/07/18 23:57:14 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -112,17 +112,11 @@ struct filecore_node {
  * Prototypes for Filecore vnode operations
  */
 int	filecore_lookup(void *);
-#define	filecore_open		genfs_nullop
-#define	filecore_close		genfs_nullop
 int	filecore_access(void *);
 int	filecore_getattr(void *);
 int	filecore_read(void *);
-#define	filecore_poll		genfs_poll
-#define	filecore_mmap		genfs_mmap
-#define	filecore_seek		genfs_seek
 int	filecore_readdir(void *);
 int	filecore_readlink(void *);
-#define	filecore_abortop	genfs_abortop
 int	filecore_inactive(void *);
 int	filecore_reclaim(void *);
 int	filecore_link(void *);

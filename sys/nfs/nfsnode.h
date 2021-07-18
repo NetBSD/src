@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.74 2021/05/27 08:58:29 simonb Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.75 2021/07/18 23:57:15 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -254,12 +254,7 @@ int	nfsspec_read(void *);
 int	nfsspec_write(void *);
 int	nfsfifo_read(void *);
 int	nfsfifo_write(void *);
-#define	nfs_ioctl	genfs_enoioctl
-#define	nfs_poll	genfs_poll
-#define nfs_revoke	genfs_revoke
-#define	nfs_mmap	genfs_mmap
 int	nfs_fsync(void *);
-#define nfs_seek	genfs_seek
 int	nfs_remove(void *);
 int	nfs_link(void *);
 int	nfs_rename(void *);
@@ -268,12 +263,9 @@ int	nfs_rmdir(void *);
 int	nfs_symlink(void *);
 int	nfs_readdir(void *);
 int	nfs_readlink(void *);
-#define	nfs_abortop	genfs_abortop
 int	nfs_inactive(void *);
 int	nfs_reclaim(void *);
-#define nfs_lock	genfs_lock
 int	nfs_unlock(void *);
-#define nfs_islocked	genfs_islocked
 int	nfs_bmap(void *);
 int	nfs_strategy(void *);
 int	nfs_print(void *);

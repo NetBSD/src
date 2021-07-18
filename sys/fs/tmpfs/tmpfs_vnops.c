@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.146 2021/06/29 22:34:07 dholland Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.147 2021/07/18 23:57:14 dholland Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007, 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.146 2021/06/29 22:34:07 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.147 2021/07/18 23:57:14 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -78,14 +78,14 @@ const struct vnodeopv_entry_desc tmpfs_vnodeop_entries[] = {
 	{ &vop_write_desc,		tmpfs_write },
 	{ &vop_fallocate_desc,		genfs_eopnotsupp },
 	{ &vop_fdiscard_desc,		genfs_eopnotsupp },
-	{ &vop_ioctl_desc,		tmpfs_ioctl },
-	{ &vop_fcntl_desc,		tmpfs_fcntl },
-	{ &vop_poll_desc,		tmpfs_poll },
-	{ &vop_kqfilter_desc,		tmpfs_kqfilter },
-	{ &vop_revoke_desc,		tmpfs_revoke },
-	{ &vop_mmap_desc,		tmpfs_mmap },
+	{ &vop_ioctl_desc,		genfs_enoioctl },
+	{ &vop_fcntl_desc,		genfs_fcntl },
+	{ &vop_poll_desc,		genfs_poll },
+	{ &vop_kqfilter_desc,		genfs_kqfilter },
+	{ &vop_revoke_desc,		genfs_revoke },
+	{ &vop_mmap_desc,		genfs_mmap },
 	{ &vop_fsync_desc,		tmpfs_fsync },
-	{ &vop_seek_desc,		tmpfs_seek },
+	{ &vop_seek_desc,		genfs_seek },
 	{ &vop_remove_desc,		tmpfs_remove },
 	{ &vop_link_desc,		tmpfs_link },
 	{ &vop_rename_desc,		tmpfs_rename },
@@ -94,18 +94,18 @@ const struct vnodeopv_entry_desc tmpfs_vnodeop_entries[] = {
 	{ &vop_symlink_desc,		tmpfs_symlink },
 	{ &vop_readdir_desc,		tmpfs_readdir },
 	{ &vop_readlink_desc,		tmpfs_readlink },
-	{ &vop_abortop_desc,		tmpfs_abortop },
+	{ &vop_abortop_desc,		genfs_abortop },
 	{ &vop_inactive_desc,		tmpfs_inactive },
 	{ &vop_reclaim_desc,		tmpfs_reclaim },
-	{ &vop_lock_desc,		tmpfs_lock },
-	{ &vop_unlock_desc,		tmpfs_unlock },
-	{ &vop_bmap_desc,		tmpfs_bmap },
-	{ &vop_strategy_desc,		tmpfs_strategy },
+	{ &vop_lock_desc,		genfs_lock },
+	{ &vop_unlock_desc,		genfs_unlock },
+	{ &vop_bmap_desc,		genfs_eopnotsupp },
+	{ &vop_strategy_desc,		genfs_eopnotsupp },
 	{ &vop_print_desc,		tmpfs_print },
 	{ &vop_pathconf_desc,		tmpfs_pathconf },
-	{ &vop_islocked_desc,		tmpfs_islocked },
+	{ &vop_islocked_desc,		genfs_islocked },
 	{ &vop_advlock_desc,		tmpfs_advlock },
-	{ &vop_bwrite_desc,		tmpfs_bwrite },
+	{ &vop_bwrite_desc,		genfs_nullop },
 	{ &vop_getpages_desc,		tmpfs_getpages },
 	{ &vop_putpages_desc,		tmpfs_putpages },
 	{ &vop_whiteout_desc,		tmpfs_whiteout },

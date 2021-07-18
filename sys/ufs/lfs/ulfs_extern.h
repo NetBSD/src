@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_extern.h,v 1.25 2020/01/17 20:08:10 ad Exp $	*/
+/*	$NetBSD: ulfs_extern.h,v 1.26 2021/07/18 23:57:15 dholland Exp $	*/
 /*  from NetBSD: ufs_extern.h,v 1.79 2015/03/27 17:27:56 riastradh Exp   */
 
 /*-
@@ -59,7 +59,6 @@ struct vattr;
 struct vnode;
 
 __BEGIN_DECLS
-#define	ulfs_abortop	genfs_abortop
 int	ulfs_access(void *);
 int	ulfs_advlock(void *);
 int	ulfs_bmap(void *);
@@ -67,14 +66,8 @@ int	ulfs_close(void *);
 int	ulfs_create(void *);
 int	ulfs_getattr(void *);
 int	ulfs_inactive(void *);
-#define	ulfs_fcntl	genfs_fcntl
-#define	ulfs_ioctl	genfs_enoioctl
-#define	ulfs_islocked	genfs_islocked
 int	ulfs_link(void *);
-#define	ulfs_lock	genfs_lock
 int	ulfs_lookup(void *);
-#define	ulfs_mmap	genfs_mmap
-#define	ulfs_revoke	genfs_revoke
 int	ulfs_open(void *);
 int	ulfs_pathconf(void *);
 int	ulfs_print(void *);
@@ -82,11 +75,8 @@ int	ulfs_readdir(void *);
 int	ulfs_readlink(void *);
 int	ulfs_remove(void *);
 int	ulfs_rmdir(void *);
-#define	ulfs_seek	genfs_seek
-#define	ulfs_poll	genfs_poll
 int	ulfs_setattr(void *);
 int	ulfs_strategy(void *);
-#define	ulfs_unlock	genfs_unlock
 int	ulfs_whiteout(void *);
 int	ulfsspec_close(void *);
 int	ulfsspec_read(void *);

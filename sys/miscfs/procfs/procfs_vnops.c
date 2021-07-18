@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.217 2021/06/29 22:34:09 dholland Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.218 2021/07/18 23:57:14 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.217 2021/06/29 22:34:09 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.218 2021/07/18 23:57:14 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -208,44 +208,20 @@ static const int nproc_root_targets =
     sizeof(proc_root_targets) / sizeof(proc_root_targets[0]);
 
 int	procfs_lookup(void *);
-#define	procfs_create	genfs_eopnotsupp
-#define	procfs_mknod	genfs_eopnotsupp
 int	procfs_open(void *);
 int	procfs_close(void *);
 int	procfs_access(void *);
 int	procfs_getattr(void *);
 int	procfs_setattr(void *);
-#define	procfs_read	procfs_rw
-#define	procfs_write	procfs_rw
-#define	procfs_fcntl	genfs_fcntl
-#define	procfs_ioctl	genfs_enoioctl
-#define	procfs_poll	genfs_poll
-#define	procfs_kqfilter	genfs_kqfilter
-#define	procfs_revoke	genfs_revoke
-#define	procfs_fsync	genfs_nullop
-#define	procfs_seek	genfs_nullop
-#define	procfs_remove	genfs_eopnotsupp
 int	procfs_link(void *);
-#define	procfs_rename	genfs_eopnotsupp
-#define	procfs_mkdir	genfs_eopnotsupp
-#define	procfs_rmdir	genfs_eopnotsupp
 int	procfs_symlink(void *);
 int	procfs_readdir(void *);
 int	procfs_readlink(void *);
-#define	procfs_abortop	genfs_abortop
 int	procfs_inactive(void *);
 int	procfs_reclaim(void *);
-#define	procfs_lock	genfs_lock
-#define	procfs_unlock	genfs_unlock
-#define	procfs_bmap	genfs_eopnotsupp
-#define	procfs_strategy	genfs_badop
 int	procfs_print(void *);
 int	procfs_pathconf(void *);
-#define	procfs_islocked	genfs_islocked
-#define	procfs_advlock	genfs_einval
-#define	procfs_bwrite	genfs_eopnotsupp
 int	procfs_getpages(void *);
-#define procfs_putpages	genfs_null_putpages
 
 static int atoi(const char *, size_t);
 
@@ -257,46 +233,46 @@ const struct vnodeopv_entry_desc procfs_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_parsepath_desc, genfs_parsepath },	/* parsepath */
 	{ &vop_lookup_desc, procfs_lookup },		/* lookup */
-	{ &vop_create_desc, procfs_create },		/* create */
-	{ &vop_mknod_desc, procfs_mknod },		/* mknod */
+	{ &vop_create_desc, genfs_eopnotsupp },		/* create */
+	{ &vop_mknod_desc, genfs_eopnotsupp },		/* mknod */
 	{ &vop_open_desc, procfs_open },		/* open */
 	{ &vop_close_desc, procfs_close },		/* close */
 	{ &vop_access_desc, procfs_access },		/* access */
 	{ &vop_accessx_desc, genfs_accessx },		/* accessx */
 	{ &vop_getattr_desc, procfs_getattr },		/* getattr */
 	{ &vop_setattr_desc, procfs_setattr },		/* setattr */
-	{ &vop_read_desc, procfs_read },		/* read */
-	{ &vop_write_desc, procfs_write },		/* write */
+	{ &vop_read_desc, procfs_rw },			/* read */
+	{ &vop_write_desc, procfs_rw },			/* write */
 	{ &vop_fallocate_desc, genfs_eopnotsupp },	/* fallocate */
 	{ &vop_fdiscard_desc, genfs_eopnotsupp },	/* fdiscard */
-	{ &vop_fcntl_desc, procfs_fcntl },		/* fcntl */
-	{ &vop_ioctl_desc, procfs_ioctl },		/* ioctl */
-	{ &vop_poll_desc, procfs_poll },		/* poll */
-	{ &vop_kqfilter_desc, procfs_kqfilter },	/* kqfilter */
-	{ &vop_revoke_desc, procfs_revoke },		/* revoke */
-	{ &vop_fsync_desc, procfs_fsync },		/* fsync */
-	{ &vop_seek_desc, procfs_seek },		/* seek */
-	{ &vop_remove_desc, procfs_remove },		/* remove */
+	{ &vop_fcntl_desc, genfs_fcntl },		/* fcntl */
+	{ &vop_ioctl_desc, genfs_enoioctl },		/* ioctl */
+	{ &vop_poll_desc, genfs_poll },			/* poll */
+	{ &vop_kqfilter_desc, genfs_kqfilter },		/* kqfilter */
+	{ &vop_revoke_desc, genfs_revoke },		/* revoke */
+	{ &vop_fsync_desc, genfs_nullop },		/* fsync */
+	{ &vop_seek_desc, genfs_nullop },		/* seek */
+	{ &vop_remove_desc, genfs_eopnotsupp },		/* remove */
 	{ &vop_link_desc, procfs_link },		/* link */
-	{ &vop_rename_desc, procfs_rename },		/* rename */
-	{ &vop_mkdir_desc, procfs_mkdir },		/* mkdir */
-	{ &vop_rmdir_desc, procfs_rmdir },		/* rmdir */
+	{ &vop_rename_desc, genfs_eopnotsupp },		/* rename */
+	{ &vop_mkdir_desc, genfs_eopnotsupp },		/* mkdir */
+	{ &vop_rmdir_desc, genfs_eopnotsupp },		/* rmdir */
 	{ &vop_symlink_desc, procfs_symlink },		/* symlink */
 	{ &vop_readdir_desc, procfs_readdir },		/* readdir */
 	{ &vop_readlink_desc, procfs_readlink },	/* readlink */
-	{ &vop_abortop_desc, procfs_abortop },		/* abortop */
+	{ &vop_abortop_desc, genfs_abortop },		/* abortop */
 	{ &vop_inactive_desc, procfs_inactive },	/* inactive */
 	{ &vop_reclaim_desc, procfs_reclaim },		/* reclaim */
-	{ &vop_lock_desc, procfs_lock },		/* lock */
-	{ &vop_unlock_desc, procfs_unlock },		/* unlock */
-	{ &vop_bmap_desc, procfs_bmap },		/* bmap */
-	{ &vop_strategy_desc, procfs_strategy },	/* strategy */
+	{ &vop_lock_desc, genfs_lock },			/* lock */
+	{ &vop_unlock_desc, genfs_unlock },		/* unlock */
+	{ &vop_bmap_desc, genfs_eopnotsupp },		/* bmap */
+	{ &vop_strategy_desc, genfs_badop },		/* strategy */
 	{ &vop_print_desc, procfs_print },		/* print */
-	{ &vop_islocked_desc, procfs_islocked },	/* islocked */
+	{ &vop_islocked_desc, genfs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, procfs_pathconf },	/* pathconf */
-	{ &vop_advlock_desc, procfs_advlock },		/* advlock */
+	{ &vop_advlock_desc, genfs_einval },		/* advlock */
 	{ &vop_getpages_desc, procfs_getpages },	/* getpages */
-	{ &vop_putpages_desc, procfs_putpages },	/* putpages */
+	{ &vop_putpages_desc, genfs_null_putpages },	/* putpages */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc procfs_vnodeop_opv_desc =

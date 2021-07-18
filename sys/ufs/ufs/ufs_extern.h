@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.86 2020/05/16 18:31:54 christos Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.87 2021/07/18 23:57:15 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -60,7 +60,6 @@ struct vnode;
 extern pool_cache_t ufs_direct_cache;	/* memory pool for directs */
 
 __BEGIN_DECLS
-#define	ufs_abortop	genfs_abortop
 int	ufs_accessx(void *);
 int	ufs_advlock(void *);
 int	ufs_bmap(void *);
@@ -68,16 +67,10 @@ int	ufs_close(void *);
 int	ufs_create(void *);
 int	ufs_getattr(void *);
 int	ufs_inactive(void *);
-#define	ufs_fcntl	genfs_fcntl
-#define	ufs_ioctl	genfs_enoioctl
-#define	ufs_islocked	genfs_islocked
 int	ufs_link(void *);
-#define	ufs_lock	genfs_lock
 int	ufs_lookup(void *);
 int	ufs_mkdir(void *);
 int	ufs_mknod(void *);
-#define	ufs_mmap	genfs_mmap
-#define	ufs_revoke	genfs_revoke
 int	ufs_open(void *);
 int	ufs_pathconf(void *);
 int	ufs_print(void *);
@@ -86,13 +79,11 @@ int	ufs_readlink(void *);
 int	ufs_remove(void *);
 int	ufs_rename(void *);
 int	ufs_rmdir(void *);
-#define	ufs_seek	genfs_seek
-#define	ufs_poll	genfs_poll
 int	ufs_setattr(void *);
 int	ufs_strategy(void *);
 int	ufs_symlink(void *);
-#define	ufs_unlock	genfs_unlock
 int	ufs_whiteout(void *);
+
 int	ufsspec_close(void *);
 int	ufsspec_read(void *);
 int	ufsspec_write(void *);

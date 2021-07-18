@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.338 2021/07/18 23:56:14 dholland Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.339 2021/07/18 23:57:15 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.338 2021/07/18 23:56:14 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.339 2021/07/18 23:57:15 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -197,14 +197,14 @@ const struct vnodeopv_entry_desc lfs_vnodeop_entries[] = {
 	{ &vop_write_desc, lfs_write },			/* write */
 	{ &vop_fallocate_desc, genfs_eopnotsupp },	/* fallocate */
 	{ &vop_fdiscard_desc, genfs_eopnotsupp },	/* fdiscard */
-	{ &vop_ioctl_desc, ulfs_ioctl },		/* ioctl */
+	{ &vop_ioctl_desc, genfs_enoioctl },		/* ioctl */
 	{ &vop_fcntl_desc, lfs_fcntl },			/* fcntl */
-	{ &vop_poll_desc, ulfs_poll },			/* poll */
+	{ &vop_poll_desc, genfs_poll },			/* poll */
 	{ &vop_kqfilter_desc, genfs_kqfilter },		/* kqfilter */
-	{ &vop_revoke_desc, ulfs_revoke },		/* revoke */
+	{ &vop_revoke_desc, genfs_revoke },		/* revoke */
 	{ &vop_mmap_desc, lfs_mmap },			/* mmap */
 	{ &vop_fsync_desc, lfs_fsync },			/* fsync */
-	{ &vop_seek_desc, ulfs_seek },			/* seek */
+	{ &vop_seek_desc, genfs_seek },			/* seek */
 	{ &vop_remove_desc, lfs_remove },		/* remove */
 	{ &vop_link_desc, lfs_link },			/* link */
 	{ &vop_rename_desc, lfs_rename },		/* rename */
@@ -213,15 +213,15 @@ const struct vnodeopv_entry_desc lfs_vnodeop_entries[] = {
 	{ &vop_symlink_desc, lfs_symlink },		/* symlink */
 	{ &vop_readdir_desc, ulfs_readdir },		/* readdir */
 	{ &vop_readlink_desc, ulfs_readlink },		/* readlink */
-	{ &vop_abortop_desc, ulfs_abortop },		/* abortop */
+	{ &vop_abortop_desc, genfs_abortop },		/* abortop */
 	{ &vop_inactive_desc, lfs_inactive },		/* inactive */
 	{ &vop_reclaim_desc, lfs_reclaim },		/* reclaim */
-	{ &vop_lock_desc, ulfs_lock },			/* lock */
-	{ &vop_unlock_desc, ulfs_unlock },		/* unlock */
+	{ &vop_lock_desc, genfs_lock },			/* lock */
+	{ &vop_unlock_desc, genfs_unlock },		/* unlock */
 	{ &vop_bmap_desc, ulfs_bmap },			/* bmap */
 	{ &vop_strategy_desc, lfs_strategy },		/* strategy */
 	{ &vop_print_desc, ulfs_print },		/* print */
-	{ &vop_islocked_desc, ulfs_islocked },		/* islocked */
+	{ &vop_islocked_desc, genfs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, ulfs_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, ulfs_advlock },		/* advlock */
 	{ &vop_bwrite_desc, lfs_bwrite },		/* bwrite */
@@ -249,14 +249,14 @@ const struct vnodeopv_entry_desc lfs_specop_entries[] = {
 	{ &vop_setattr_desc, lfs_setattr },		/* setattr */
 	{ &vop_read_desc, ulfsspec_read },		/* read */
 	{ &vop_write_desc, ulfsspec_write },		/* write */
-	{ &vop_fcntl_desc, ulfs_fcntl },		/* fcntl */
+	{ &vop_fcntl_desc, genfs_fcntl },		/* fcntl */
 	{ &vop_fsync_desc, spec_fsync },		/* fsync */
 	{ &vop_inactive_desc, lfs_inactive },		/* inactive */
 	{ &vop_reclaim_desc, lfs_reclaim },		/* reclaim */
-	{ &vop_lock_desc, ulfs_lock },			/* lock */
-	{ &vop_unlock_desc, ulfs_unlock },		/* unlock */
+	{ &vop_lock_desc, genfs_lock },			/* lock */
+	{ &vop_unlock_desc, genfs_unlock },		/* unlock */
 	{ &vop_print_desc, ulfs_print },		/* print */
-	{ &vop_islocked_desc, ulfs_islocked },		/* islocked */
+	{ &vop_islocked_desc, genfs_islocked },		/* islocked */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ &vop_openextattr_desc, lfs_openextattr },	/* openextattr */
 	{ &vop_closeextattr_desc, lfs_closeextattr },	/* closeextattr */
@@ -280,15 +280,15 @@ const struct vnodeopv_entry_desc lfs_fifoop_entries[] = {
 	{ &vop_setattr_desc, lfs_setattr },		/* setattr */
 	{ &vop_read_desc, ulfsfifo_read },		/* read */
 	{ &vop_write_desc, ulfsfifo_write },		/* write */
-	{ &vop_fcntl_desc, ulfs_fcntl },		/* fcntl */
+	{ &vop_fcntl_desc, genfs_fcntl },		/* fcntl */
 	{ &vop_fsync_desc, vn_fifo_bypass },		/* fsync */
 	{ &vop_inactive_desc, lfs_inactive },		/* inactive */
 	{ &vop_reclaim_desc, lfs_reclaim },		/* reclaim */
-	{ &vop_lock_desc, ulfs_lock },			/* lock */
-	{ &vop_unlock_desc, ulfs_unlock },		/* unlock */
+	{ &vop_lock_desc, genfs_lock },			/* lock */
+	{ &vop_unlock_desc, genfs_unlock },		/* unlock */
 	{ &vop_strategy_desc, vn_fifo_bypass },		/* strategy */
 	{ &vop_print_desc, ulfs_print },		/* print */
-	{ &vop_islocked_desc, ulfs_islocked },		/* islocked */
+	{ &vop_islocked_desc, genfs_islocked },		/* islocked */
 	{ &vop_bwrite_desc, lfs_bwrite },		/* bwrite */
 	{ &vop_openextattr_desc, lfs_openextattr },	/* openextattr */
 	{ &vop_closeextattr_desc, lfs_closeextattr },	/* closeextattr */
@@ -1873,7 +1873,7 @@ lfs_fcntl(void *v)
 	/* Only respect LFS fcntls on fs root or Ifile */
 	if (VTOI(ap->a_vp)->i_number != ULFS_ROOTINO &&
 	    VTOI(ap->a_vp)->i_number != LFS_IFILE_INUM) {
-		return ulfs_fcntl(v);
+		return genfs_fcntl(v);
 	}
 
 	/* Avoid locking a draining lock */
@@ -2152,7 +2152,7 @@ segwait_common:
 		return 0;
 
 	    default:
-		return ulfs_fcntl(v);
+		return genfs_fcntl(v);
 	}
 	return 0;
 }
@@ -2214,7 +2214,7 @@ lfs_mmap(void *v)
 
 	if (VTOI(ap->a_vp)->i_number == LFS_IFILE_INUM)
 		return EOPNOTSUPP;
-	return ulfs_mmap(v);
+	return genfs_mmap(v);
 }
 
 static int

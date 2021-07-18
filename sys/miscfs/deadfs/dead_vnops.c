@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vnops.c,v 1.64 2021/06/29 22:34:08 dholland Exp $	*/
+/*	$NetBSD: dead_vnops.c,v 1.65 2021/07/18 23:57:14 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.64 2021/06/29 22:34:08 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.65 2021/07/18 23:57:14 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,30 +48,20 @@ __KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.64 2021/06/29 22:34:08 dholland Exp
 /*
  * Prototypes for dead operations on vnodes.
  */
-#define	dead_bwrite	vn_bwrite
 int	dead_lookup(void *);
 int	dead_open(void *);
-#define dead_close	genfs_nullop
 int	dead_read(void *);
 int	dead_write(void *);
-#define dead_fcntl	genfs_nullop
 int	dead_ioctl(void *);
 int	dead_poll(void *);
 int	dead_remove(void *);
 int	dead_link(void *);
 int	dead_rename(void *);
 int	dead_rmdir(void *);
-#define dead_fsync	genfs_nullop
-#define dead_seek	genfs_nullop
 int	dead_inactive(void *);
-#define dead_reclaim	genfs_nullop
-#define dead_lock	genfs_deadlock
-#define dead_unlock	genfs_deadunlock
 int	dead_bmap(void *);
 int	dead_strategy(void *);
 int	dead_print(void *);
-#define dead_islocked	genfs_deadislocked
-#define dead_revoke	genfs_nullop
 int	dead_getpages(void *);
 int	dead_putpages(void *);
 
@@ -81,33 +71,33 @@ int (**dead_vnodeop_p)(void *);
 
 const struct vnodeopv_entry_desc dead_vnodeop_entries[] = {
 	{ &vop_default_desc, dead_default_error },
-	{ &vop_bwrite_desc, dead_bwrite },		/* bwrite */
+	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ &vop_parsepath_desc, genfs_parsepath },	/* parsepath */
 	{ &vop_lookup_desc, dead_lookup },		/* lookup */
 	{ &vop_open_desc, dead_open },			/* open */
-	{ &vop_close_desc, dead_close },		/* close */
+	{ &vop_close_desc, genfs_nullop },		/* close */
 	{ &vop_read_desc, dead_read },			/* read */
 	{ &vop_write_desc, dead_write },		/* write */
 	{ &vop_fallocate_desc, genfs_eopnotsupp },	/* fallocate */
 	{ &vop_fdiscard_desc, genfs_eopnotsupp },	/* fdiscard */
-	{ &vop_fcntl_desc, dead_fcntl },		/* fcntl */
+	{ &vop_fcntl_desc, genfs_nullop },		/* fcntl */
 	{ &vop_ioctl_desc, dead_ioctl },		/* ioctl */
 	{ &vop_poll_desc, dead_poll },			/* poll */
 	{ &vop_remove_desc, dead_remove },		/* remove */
 	{ &vop_link_desc, dead_link },			/* link */
 	{ &vop_rename_desc, dead_rename },		/* rename */
 	{ &vop_rmdir_desc, dead_rmdir },		/* rmdir */
-	{ &vop_fsync_desc, dead_fsync },		/* fsync */
-	{ &vop_seek_desc, dead_seek },			/* seek */
+	{ &vop_fsync_desc, genfs_nullop },		/* fsync */
+	{ &vop_seek_desc, genfs_nullop },		/* seek */
 	{ &vop_inactive_desc, dead_inactive },		/* inactive */
-	{ &vop_reclaim_desc, dead_reclaim },		/* reclaim */
-	{ &vop_lock_desc, dead_lock },			/* lock */
-	{ &vop_unlock_desc, dead_unlock },		/* unlock */
+	{ &vop_reclaim_desc, genfs_nullop },		/* reclaim */
+	{ &vop_lock_desc, genfs_deadlock },		/* lock */
+	{ &vop_unlock_desc, genfs_deadunlock },		/* unlock */
 	{ &vop_bmap_desc, dead_bmap },			/* bmap */
 	{ &vop_strategy_desc, dead_strategy },		/* strategy */
 	{ &vop_print_desc, dead_print },		/* print */
-	{ &vop_islocked_desc, dead_islocked },		/* islocked */
-	{ &vop_revoke_desc, dead_revoke },		/* revoke */
+	{ &vop_islocked_desc, genfs_deadislocked },	/* islocked */
+	{ &vop_revoke_desc, genfs_nullop },		/* revoke */
 	{ &vop_getpages_desc, dead_getpages },		/* getpages */
 	{ &vop_putpages_desc, dead_putpages },		/* putpages */
 	{ NULL, NULL }
