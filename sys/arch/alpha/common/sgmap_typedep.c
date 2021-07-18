@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_typedep.c,v 1.42 2021/06/24 16:41:16 thorpej Exp $ */
+/* $NetBSD: sgmap_typedep.c,v 1.43 2021/07/18 05:12:27 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: sgmap_typedep.c,v 1.42 2021/06/24 16:41:16 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sgmap_typedep.c,v 1.43 2021/07/18 05:12:27 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -130,7 +130,8 @@ __C(SGMAP_TYPE,_load_buffer)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	const vm_flag_t vmflags = VM_INSTANTFIT |
 	    ((flags & BUS_DMA_NOWAIT) ? VM_NOSLEEP : VM_SLEEP);
 
-	alignment = PAGE_SIZE;
+	KASSERT(t->_sgmap_minalign != 0);
+	alignment = t->_sgmap_minalign;
 	sgvalen = (endva - va);
 
 	SGMAP_PTE_TYPE spill_pte_v = __C(SGMAP_TYPE,_prefetch_spill_page_pte);
@@ -193,13 +194,16 @@ __C(SGMAP_TYPE,_load_buffer)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		 * ARGH!  If the addition of the spill page bumped us
 		 * over our boundary, we have to 2x the boundary limit.
 		 * To compensate (and enforce the original boundary
-		 * constraint), we force our alignment to be the previous
-		 * boundary, thus ensuring that the only boundary violation
-		 * is the pre-fetch that the SGMAP controller performs that
-		 * necessitates the spill page in the first place.
+		 * constraint), we force our alignment to be at least the
+		 * previous boundary, thus ensuring that the only boundary
+		 * violation is the pre-fetch that the SGMAP controller
+		 * performs that necessitates the spill page in the first
+		 * place.
 		 */
 		if (boundary && boundary < sgvalen) {
-			alignment = boundary;
+			if (alignment < boundary) {
+				alignment = boundary;
+			}
 			do {
 				boundary <<= 1;
 			} while (boundary < sgvalen);
