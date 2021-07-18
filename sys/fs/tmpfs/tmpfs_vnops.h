@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.h,v 1.13 2011/05/24 20:17:49 rmind Exp $	*/
+/*	$NetBSD: tmpfs_vnops.h,v 1.14 2021/07/18 23:57:14 dholland Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -55,14 +55,7 @@ int	tmpfs_getattr		(void *);
 int	tmpfs_setattr		(void *);
 int	tmpfs_read		(void *);
 int	tmpfs_write		(void *);
-#define	tmpfs_fcntl		genfs_fcntl
-#define	tmpfs_ioctl		genfs_enoioctl
-#define	tmpfs_poll		genfs_poll
-#define	tmpfs_kqfilter		genfs_kqfilter
-#define	tmpfs_revoke		genfs_revoke
-#define	tmpfs_mmap		genfs_mmap
 int	tmpfs_fsync		(void *);
-#define	tmpfs_seek		genfs_seek
 int	tmpfs_remove		(void *);
 int	tmpfs_link		(void *);
 int	tmpfs_rename		(void *);
@@ -71,18 +64,11 @@ int	tmpfs_rmdir		(void *);
 int	tmpfs_symlink		(void *);
 int	tmpfs_readdir		(void *);
 int	tmpfs_readlink		(void *);
-#define	tmpfs_abortop		genfs_abortop
 int	tmpfs_inactive		(void *);
 int	tmpfs_reclaim		(void *);
-#define	tmpfs_lock		genfs_lock
-#define	tmpfs_unlock		genfs_unlock
-#define	tmpfs_bmap		genfs_eopnotsupp
-#define	tmpfs_strategy		genfs_eopnotsupp
 int	tmpfs_print		(void *);
 int	tmpfs_pathconf		(void *);
-#define	tmpfs_islocked		genfs_islocked
 int	tmpfs_advlock		(void *);
-#define	tmpfs_bwrite		genfs_nullop
 int	tmpfs_getpages		(void *);
 int	tmpfs_putpages		(void *);
 int	tmpfs_whiteout		(void *);

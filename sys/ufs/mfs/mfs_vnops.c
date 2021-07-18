@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vnops.c,v 1.62 2021/06/29 22:34:10 dholland Exp $	*/
+/*	$NetBSD: mfs_vnops.c,v 1.63 2021/07/18 23:57:15 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.62 2021/06/29 22:34:10 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.63 2021/07/18 23:57:15 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,34 +59,34 @@ int (**mfs_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc mfs_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_parsepath_desc, genfs_parsepath },	/* parsepath */
-	{ &vop_lookup_desc, mfs_lookup },		/* lookup */
-	{ &vop_create_desc, mfs_create },		/* create */
-	{ &vop_mknod_desc, mfs_mknod },			/* mknod */
+	{ &vop_lookup_desc, genfs_badop },		/* lookup */
+	{ &vop_create_desc, genfs_badop },		/* create */
+	{ &vop_mknod_desc, genfs_badop },		/* mknod */
 	{ &vop_open_desc, mfs_open },			/* open */
 	{ &vop_close_desc, mfs_close },			/* close */
-	{ &vop_access_desc, mfs_access },		/* access */
-	{ &vop_accessx_desc, genfs_accessx },		/* accessx */
-	{ &vop_getattr_desc, mfs_getattr },		/* getattr */
-	{ &vop_setattr_desc, mfs_setattr },		/* setattr */
-	{ &vop_read_desc, mfs_read },			/* read */
-	{ &vop_write_desc, mfs_write },			/* write */
+	{ &vop_access_desc, genfs_badop },		/* access */
+	{ &vop_accessx_desc, genfs_badop },		/* accessx */
+	{ &vop_getattr_desc, genfs_badop },		/* getattr */
+	{ &vop_setattr_desc, genfs_badop },		/* setattr */
+	{ &vop_read_desc, genfs_badop },		/* read */
+	{ &vop_write_desc, genfs_badop },		/* write */
 	{ &vop_fallocate_desc, genfs_eopnotsupp },	/* fallocate */
 	{ &vop_fdiscard_desc, genfs_eopnotsupp },	/* fdiscard */
-	{ &vop_ioctl_desc, mfs_ioctl },			/* ioctl */
-	{ &vop_poll_desc, mfs_poll },			/* poll */
-	{ &vop_revoke_desc, mfs_revoke },		/* revoke */
-	{ &vop_mmap_desc, mfs_mmap },			/* mmap */
+	{ &vop_ioctl_desc, genfs_enoioctl },		/* ioctl */
+	{ &vop_poll_desc, genfs_badop },		/* poll */
+	{ &vop_revoke_desc, genfs_revoke },		/* revoke */
+	{ &vop_mmap_desc, genfs_badop },		/* mmap */
 	{ &vop_fsync_desc, spec_fsync },		/* fsync */
-	{ &vop_seek_desc, mfs_seek },			/* seek */
-	{ &vop_remove_desc, mfs_remove },		/* remove */
-	{ &vop_link_desc, mfs_link },			/* link */
-	{ &vop_rename_desc, mfs_rename },		/* rename */
-	{ &vop_mkdir_desc, mfs_mkdir },			/* mkdir */
-	{ &vop_rmdir_desc, mfs_rmdir },			/* rmdir */
-	{ &vop_symlink_desc, mfs_symlink },		/* symlink */
-	{ &vop_readdir_desc, mfs_readdir },		/* readdir */
-	{ &vop_readlink_desc, mfs_readlink },		/* readlink */
-	{ &vop_abortop_desc, mfs_abortop },		/* abortop */
+	{ &vop_seek_desc, genfs_badop },		/* seek */
+	{ &vop_remove_desc, genfs_badop },		/* remove */
+	{ &vop_link_desc, genfs_badop },		/* link */
+	{ &vop_rename_desc, genfs_badop },		/* rename */
+	{ &vop_mkdir_desc, genfs_badop },		/* mkdir */
+	{ &vop_rmdir_desc, genfs_badop },		/* rmdir */
+	{ &vop_symlink_desc, genfs_badop },		/* symlink */
+	{ &vop_readdir_desc, genfs_badop },		/* readdir */
+	{ &vop_readlink_desc, genfs_badop },		/* readlink */
+	{ &vop_abortop_desc, genfs_badop },		/* abortop */
 	{ &vop_inactive_desc, mfs_inactive },		/* inactive */
 	{ &vop_reclaim_desc, mfs_reclaim },		/* reclaim */
 	{ &vop_lock_desc, genfs_nolock },		/* lock */
@@ -94,11 +94,11 @@ const struct vnodeopv_entry_desc mfs_vnodeop_entries[] = {
 	{ &vop_bmap_desc, mfs_bmap },			/* bmap */
 	{ &vop_strategy_desc, mfs_strategy },		/* strategy */
 	{ &vop_print_desc, mfs_print },			/* print */
-	{ &vop_islocked_desc, mfs_islocked },		/* islocked */
-	{ &vop_pathconf_desc, mfs_pathconf },		/* pathconf */
-	{ &vop_advlock_desc, mfs_advlock },		/* advlock */
-	{ &vop_bwrite_desc, mfs_bwrite },		/* bwrite */
-	{ &vop_putpages_desc, mfs_putpages },		/* putpages */
+	{ &vop_islocked_desc, genfs_noislocked },	/* islocked */
+	{ &vop_pathconf_desc, genfs_badop },		/* pathconf */
+	{ &vop_advlock_desc, genfs_badop },		/* advlock */
+	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
+	{ &vop_putpages_desc, genfs_null_putpages },	/* putpages */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc mfs_vnodeop_opv_desc =
@@ -122,7 +122,7 @@ mfs_open(void *v)
 	} */ *ap = v;
 
 	if (ap->a_vp->v_type != VBLK) {
-		panic("mfs_ioctl not VBLK");
+		panic("mfs_open not VBLK");
 		/* NOTREACHED */
 	}
 	return (0);

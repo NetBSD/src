@@ -1,4 +1,4 @@
-/*	$NetBSD: mfsnode.h,v 1.21 2008/03/26 14:19:43 ad Exp $	*/
+/*	$NetBSD: mfsnode.h,v 1.22 2021/07/18 23:57:15 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -57,34 +57,6 @@ struct mfsnode {
  */
 #define VTOMFS(vp)	((struct mfsnode *)(vp)->v_data)
 #define MFSTOV(mfsp)	((mfsp)->mfs_vnode)
-
-/* Prototypes for MFS operations on vnodes. */
-#define	mfs_lookup	genfs_badop
-#define	mfs_create	genfs_badop
-#define	mfs_mknod	genfs_badop
-#define	mfs_access	genfs_badop
-#define	mfs_getattr	genfs_badop
-#define	mfs_setattr	genfs_badop
-#define	mfs_read	genfs_badop
-#define	mfs_write	genfs_badop
-#define	mfs_poll	genfs_badop
-#define	mfs_mmap	genfs_badop
-#define	mfs_seek	genfs_badop
-#define	mfs_remove	genfs_badop
-#define	mfs_link	genfs_badop
-#define	mfs_rename	genfs_badop
-#define	mfs_mkdir	genfs_badop
-#define	mfs_rmdir	genfs_badop
-#define	mfs_symlink	genfs_badop
-#define	mfs_readdir	genfs_badop
-#define	mfs_readlink	genfs_badop
-#define	mfs_abortop	genfs_badop
-#define	mfs_islocked	genfs_noislocked
-#define	mfs_pathconf	genfs_badop
-#define	mfs_advlock	genfs_badop
-#define	mfs_bwrite	vn_bwrite
-#define	mfs_revoke	genfs_revoke
-#define	mfs_putpages	genfs_null_putpages
 
 #endif /* defined(_KERNEL) */
 

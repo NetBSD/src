@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.64 2021/06/29 22:34:07 dholland Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.65 2021/07/18 23:57:14 dholland Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.64 2021/06/29 22:34:07 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.65 2021/07/18 23:57:14 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,8 +114,6 @@ MALLOC_DECLARE(M_PTYFSTMP);
  */
 
 int	ptyfs_lookup	(void *);
-#define	ptyfs_create	genfs_eopnotsupp
-#define	ptyfs_mknod	genfs_eopnotsupp
 int	ptyfs_open	(void *);
 int	ptyfs_close	(void *);
 int	ptyfs_access	(void *);
@@ -123,35 +121,15 @@ int	ptyfs_getattr	(void *);
 int	ptyfs_setattr	(void *);
 int	ptyfs_read	(void *);
 int	ptyfs_write	(void *);
-#define	ptyfs_fcntl	genfs_fcntl
 int	ptyfs_ioctl	(void *);
 int	ptyfs_poll	(void *);
 int	ptyfs_kqfilter	(void *);
-#define ptyfs_revoke	genfs_revoke
-#define	ptyfs_mmap	genfs_eopnotsupp
-#define	ptyfs_fsync	genfs_nullop
-#define	ptyfs_seek	genfs_nullop
-#define	ptyfs_remove	genfs_eopnotsupp
-#define	ptyfs_link	genfs_abortop
-#define	ptyfs_rename	genfs_eopnotsupp
-#define	ptyfs_mkdir	genfs_eopnotsupp
-#define	ptyfs_rmdir	genfs_eopnotsupp
-#define	ptyfs_symlink	genfs_abortop
 int	ptyfs_readdir	(void *);
-#define	ptyfs_readlink	genfs_eopnotsupp
-#define	ptyfs_abortop	genfs_abortop
 int	ptyfs_reclaim	(void *);
 int	ptyfs_inactive	(void *);
-#define	ptyfs_lock	genfs_lock
-#define	ptyfs_unlock	genfs_unlock
-#define	ptyfs_bmap	genfs_eopnotsupp
-#define	ptyfs_strategy	genfs_badop
 int	ptyfs_print	(void *);
 int	ptyfs_pathconf	(void *);
-#define	ptyfs_islocked	genfs_islocked
 int	ptyfs_advlock	(void *);
-#define	ptyfs_bwrite	genfs_eopnotsupp
-#define ptyfs_putpages	genfs_null_putpages
 
 static int ptyfs_update(struct vnode *, const struct timespec *,
     const struct timespec *, int);
@@ -168,8 +146,8 @@ const struct vnodeopv_entry_desc ptyfs_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_parsepath_desc, genfs_parsepath },	/* parsepath */
 	{ &vop_lookup_desc, ptyfs_lookup },		/* lookup */
-	{ &vop_create_desc, ptyfs_create },		/* create */
-	{ &vop_mknod_desc, ptyfs_mknod },		/* mknod */
+	{ &vop_create_desc, genfs_eopnotsupp },		/* create */
+	{ &vop_mknod_desc, genfs_eopnotsupp },		/* mknod */
 	{ &vop_open_desc, ptyfs_open },			/* open */
 	{ &vop_close_desc, ptyfs_close },		/* close */
 	{ &vop_access_desc, ptyfs_access },		/* access */
@@ -181,34 +159,34 @@ const struct vnodeopv_entry_desc ptyfs_vnodeop_entries[] = {
 	{ &vop_fallocate_desc, genfs_eopnotsupp },	/* fallocate */
 	{ &vop_fdiscard_desc, genfs_eopnotsupp },	/* fdiscard */
 	{ &vop_ioctl_desc, ptyfs_ioctl },		/* ioctl */
-	{ &vop_fcntl_desc, ptyfs_fcntl },		/* fcntl */
+	{ &vop_fcntl_desc, genfs_fcntl },		/* fcntl */
 	{ &vop_poll_desc, ptyfs_poll },			/* poll */
 	{ &vop_kqfilter_desc, ptyfs_kqfilter },		/* kqfilter */
-	{ &vop_revoke_desc, ptyfs_revoke },		/* revoke */
-	{ &vop_mmap_desc, ptyfs_mmap },			/* mmap */
-	{ &vop_fsync_desc, ptyfs_fsync },		/* fsync */
-	{ &vop_seek_desc, ptyfs_seek },			/* seek */
-	{ &vop_remove_desc, ptyfs_remove },		/* remove */
-	{ &vop_link_desc, ptyfs_link },			/* link */
-	{ &vop_rename_desc, ptyfs_rename },		/* rename */
-	{ &vop_mkdir_desc, ptyfs_mkdir },		/* mkdir */
-	{ &vop_rmdir_desc, ptyfs_rmdir },		/* rmdir */
-	{ &vop_symlink_desc, ptyfs_symlink },		/* symlink */
+	{ &vop_revoke_desc, genfs_revoke },		/* revoke */
+	{ &vop_mmap_desc, genfs_eopnotsupp },		/* mmap */
+	{ &vop_fsync_desc, genfs_nullop },		/* fsync */
+	{ &vop_seek_desc, genfs_nullop },		/* seek */
+	{ &vop_remove_desc, genfs_eopnotsupp },		/* remove */
+	{ &vop_link_desc, genfs_abortop },		/* link */
+	{ &vop_rename_desc, genfs_eopnotsupp },		/* rename */
+	{ &vop_mkdir_desc, genfs_eopnotsupp },		/* mkdir */
+	{ &vop_rmdir_desc, genfs_eopnotsupp },		/* rmdir */
+	{ &vop_symlink_desc, genfs_abortop },		/* symlink */
 	{ &vop_readdir_desc, ptyfs_readdir },		/* readdir */
-	{ &vop_readlink_desc, ptyfs_readlink },		/* readlink */
-	{ &vop_abortop_desc, ptyfs_abortop },		/* abortop */
+	{ &vop_readlink_desc, genfs_eopnotsupp },	/* readlink */
+	{ &vop_abortop_desc, genfs_abortop },		/* abortop */
 	{ &vop_inactive_desc, ptyfs_inactive },		/* inactive */
 	{ &vop_reclaim_desc, ptyfs_reclaim },		/* reclaim */
-	{ &vop_lock_desc, ptyfs_lock },			/* lock */
-	{ &vop_unlock_desc, ptyfs_unlock },		/* unlock */
-	{ &vop_bmap_desc, ptyfs_bmap },			/* bmap */
-	{ &vop_strategy_desc, ptyfs_strategy },		/* strategy */
+	{ &vop_lock_desc, genfs_lock },			/* lock */
+	{ &vop_unlock_desc, genfs_unlock },		/* unlock */
+	{ &vop_bmap_desc, genfs_eopnotsupp },		/* bmap */
+	{ &vop_strategy_desc, genfs_badop },		/* strategy */
 	{ &vop_print_desc, ptyfs_print },		/* print */
-	{ &vop_islocked_desc, ptyfs_islocked },		/* islocked */
+	{ &vop_islocked_desc, genfs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, ptyfs_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, ptyfs_advlock },		/* advlock */
-	{ &vop_bwrite_desc, ptyfs_bwrite },		/* bwrite */
-	{ &vop_putpages_desc, ptyfs_putpages },		/* putpages */
+	{ &vop_bwrite_desc, genfs_eopnotsupp },		/* bwrite */
+	{ &vop_putpages_desc, genfs_null_putpages },	/* putpages */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc ptyfs_vnodeop_opv_desc =
