@@ -1,4 +1,4 @@
-/* $NetBSD: tsp_dma.c,v 1.20 2021/07/18 05:09:47 thorpej Exp $ */
+/* $NetBSD: tsp_dma.c,v 1.21 2021/07/18 19:58:34 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2021 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsp_dma.c,v 1.20 2021/07/18 05:09:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsp_dma.c,v 1.21 2021/07/18 19:58:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -187,6 +187,20 @@ tsp_dma_init(struct tsp_config *pcp)
 		t->_next_window = NULL;
 		t->_boundary = 0;
 		t->_sgmap = &pcp->pc_sgmap_hi;
+		/*
+		 * According to section 8.1.2.2 of the Tsunami/Typhoon
+		 * hardware reference manual (DS-0025A-TE), the SGMAP
+		 * TLB is arranged as 168 locations of 4 consecutive
+		 * quadwords.  It seems that on some revisions of the
+		 * Pchip, SGMAP translation is not perfectly reliable
+		 * unless we align the DMA segments to the TLBs natural
+		 * boundaries (observed on the API CS20).
+		 *
+		 * N.B. the Titan (as observed on a Compaq DS25) does not
+		 * seem to have this problem, but we'll play it safe and
+		 * run this way on both variants.
+		 */
+		t->_sgmap_minalign = PAGE_SIZE * 4;
 		t->_pfthresh = TSP_SGMAP_PFTHRESH;
 		t->_get_tag = tsp_dma_get_tag;
 		t->_dmamap_create = alpha_sgmap_dmamap_create;
@@ -267,6 +281,11 @@ tsp_dma_init(struct tsp_config *pcp)
 	t->_next_window = NULL;
 	t->_boundary = 0;
 	t->_sgmap = &pcp->pc_sgmap_lo;
+	/*
+	 * This appears to be needed to make DMA on the ALI southbridge
+	 * that's present in some systems happy.  ???
+	 */
+	t->_sgmap_minalign = (64UL * 1024);
 	t->_pfthresh = TSP_SGMAP_PFTHRESH;
 	t->_get_tag = tsp_dma_get_tag;
 	t->_dmamap_create = alpha_sgmap_dmamap_create;
