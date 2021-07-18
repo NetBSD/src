@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.164 2021/06/29 22:38:10 dholland Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.165 2021/07/18 23:56:14 dholland Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.164 2021/06/29 22:38:10 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.165 2021/07/18 23:56:14 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1728,6 +1728,7 @@ rump_vop_spec(void *v)
 
 	switch (ap->a_desc->vdesc_offset) {
 	case VOP_ACCESS_DESCOFFSET:
+	case VOP_ACCESSX_DESCOFFSET:
 	case VOP_GETATTR_DESCOFFSET:
 	case VOP_SETATTR_DESCOFFSET:
 	case VOP_LOCK_DESCOFFSET:

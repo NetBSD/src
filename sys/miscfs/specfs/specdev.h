@@ -1,4 +1,4 @@
-/*	$NetBSD: specdev.h,v 1.44 2015/06/23 10:42:35 hannken Exp $	*/
+/*	$NetBSD: specdev.h,v 1.45 2021/07/18 23:56:14 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -151,6 +151,85 @@ int	spec_advlock(void *);
 #define	spec_bwrite	vn_bwrite
 #define	spec_getpages	genfs_getpages
 #define	spec_putpages	genfs_putpages
+
+/*
+ * This macro provides an initializer list for the fs-independent part
+ * of a filesystem's special file vnode ops descriptor table. We still
+ * need such a table in every filesystem, but we can at least avoid
+ * the cutpaste.
+ *
+ * This contains these ops:
+ *    parsepath lookup
+ *    create whiteout mknod open fallocate fdiscard ioctl poll kqfilter
+ *    revoke mmap seek remove link rename mkdir rmdir symlink readdir
+ *    readlink abortop bmap strategy pathconf advlock getpages putpages
+ *
+ * The filesystem should provide these ops that need to be its own:
+ *    access and accessx
+ *    getattr
+ *    setattr
+ *    fcntl
+ *    inactive
+ *    reclaim
+ *    lock
+ *    unlock
+ *    print (should probably also call spec_print)
+ *    islocked
+ *    bwrite (normally vn_bwrite)
+ *    openextattr
+ *    closeextattr
+ *    getextattr
+ *    setextattr
+ *    listextattr
+ *    deleteextattr
+ *    getacl
+ *    setacl
+ *    aclcheck
+ *
+ * The filesystem should also provide these ops that some filesystems
+ * do their own things with:
+ *    close
+ *    read
+ *    write
+ *    fsync
+ * In most cases "their own things" means adjust timestamps and call
+ * spec_foo. For fsync it varies, but should always also call spec_fsync.
+ *
+ * Note that because the op descriptor tables are unordered it does not
+ * matter where in the table this macro goes (except I think default 
+ * still needs to be first...)
+ */
+#define GENFS_SPECOP_ENTRIES \
+	{ &vop_parsepath_desc, genfs_badop },		/* parsepath */	\
+	{ &vop_lookup_desc, spec_lookup },		/* lookup */	\
+	{ &vop_create_desc, genfs_badop },		/* create */	\
+	{ &vop_whiteout_desc, genfs_badop },		/* whiteout */	\
+	{ &vop_mknod_desc, genfs_badop },		/* mknod */	\
+	{ &vop_open_desc, spec_open },			/* open */	\
+	{ &vop_fallocate_desc, genfs_eopnotsupp },	/* fallocate */	\
+	{ &vop_fdiscard_desc, spec_fdiscard },		/* fdiscard */	\
+	{ &vop_ioctl_desc, spec_ioctl },		/* ioctl */	\
+	{ &vop_poll_desc, spec_poll },			/* poll */	\
+	{ &vop_kqfilter_desc, spec_kqfilter },		/* kqfilter */	\
+	{ &vop_revoke_desc, genfs_revoke },		/* revoke */	\
+	{ &vop_mmap_desc, spec_mmap },			/* mmap */	\
+	{ &vop_seek_desc, spec_seek },			/* seek */	\
+	{ &vop_remove_desc, genfs_badop },		/* remove */	\
+	{ &vop_link_desc, genfs_badop },		/* link */	\
+	{ &vop_rename_desc, genfs_badop },		/* rename */	\
+	{ &vop_mkdir_desc, genfs_badop },		/* mkdir */	\
+	{ &vop_rmdir_desc, genfs_badop },		/* rmdir */	\
+	{ &vop_symlink_desc, genfs_badop },		/* symlink */	\
+	{ &vop_readdir_desc, genfs_badop },		/* readdir */	\
+	{ &vop_readlink_desc, genfs_badop },		/* readlink */	\
+	{ &vop_abortop_desc, genfs_badop },		/* abortop */	\
+	{ &vop_bmap_desc, spec_bmap },			/* bmap */	\
+	{ &vop_strategy_desc, spec_strategy },		/* strategy */	\
+	{ &vop_pathconf_desc, spec_pathconf },		/* pathconf */	\
+	{ &vop_advlock_desc, spec_advlock },		/* advlock */	\
+	{ &vop_getpages_desc, genfs_getpages },		/* getpages */	\
+	{ &vop_putpages_desc, genfs_putpages }		/* putpages */
+
 
 bool	iskmemvp(struct vnode *);
 void	spec_init(void);
