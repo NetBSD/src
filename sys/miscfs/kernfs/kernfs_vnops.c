@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.170 2021/07/06 03:23:03 dholland Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.171 2021/07/18 23:56:13 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.170 2021/07/06 03:23:03 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.171 2021/07/18 23:56:13 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,11 +233,7 @@ const struct vnodeopv_desc kernfs_vnodeop_opv_desc =
 int (**kernfs_specop_p)(void *);
 const struct vnodeopv_entry_desc kernfs_specop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
-	{ &vop_parsepath_desc, genfs_parsepath },	/* parsepath */
-	{ &vop_lookup_desc, spec_lookup },		/* lookup */
-	{ &vop_create_desc, spec_create },		/* create */
-	{ &vop_mknod_desc, spec_mknod },		/* mknod */
-	{ &vop_open_desc, spec_open },			/* open */
+	GENFS_SPECOP_ENTRIES,
 	{ &vop_close_desc, spec_close },		/* close */
 	{ &vop_access_desc, kernfs_access },		/* access */
 	{ &vop_accessx_desc, genfs_accessx },		/* accessx */
@@ -245,37 +241,15 @@ const struct vnodeopv_entry_desc kernfs_specop_entries[] = {
 	{ &vop_setattr_desc, kernfs_setattr },		/* setattr */
 	{ &vop_read_desc, spec_read },			/* read */
 	{ &vop_write_desc, spec_write },		/* write */
-	{ &vop_fallocate_desc, spec_fallocate },	/* fallocate */
-	{ &vop_fdiscard_desc, spec_fdiscard },		/* fdiscard */
 	{ &vop_fcntl_desc, spec_fcntl },		/* fcntl */
-	{ &vop_ioctl_desc, spec_ioctl },		/* ioctl */
-	{ &vop_poll_desc, spec_poll },			/* poll */
-	{ &vop_kqfilter_desc, genfs_kqfilter },		/* kqfilter */
-	{ &vop_revoke_desc, spec_revoke },		/* revoke */
 	{ &vop_fsync_desc, spec_fsync },		/* fsync */
-	{ &vop_seek_desc, spec_seek },			/* seek */
-	{ &vop_remove_desc, spec_remove },		/* remove */
-	{ &vop_link_desc, spec_link },			/* link */
-	{ &vop_rename_desc, spec_rename },		/* rename */
-	{ &vop_mkdir_desc, spec_mkdir },		/* mkdir */
-	{ &vop_rmdir_desc, spec_rmdir },		/* rmdir */
-	{ &vop_symlink_desc, spec_symlink },		/* symlink */
-	{ &vop_readdir_desc, spec_readdir },		/* readdir */
-	{ &vop_readlink_desc, spec_readlink },		/* readlink */
-	{ &vop_abortop_desc, spec_abortop },		/* abortop */
 	{ &vop_inactive_desc, kernfs_inactive },	/* inactive */
 	{ &vop_reclaim_desc, kernfs_reclaim },		/* reclaim */
 	{ &vop_lock_desc, kernfs_lock },		/* lock */
 	{ &vop_unlock_desc, kernfs_unlock },		/* unlock */
-	{ &vop_bmap_desc, spec_bmap },			/* bmap */
-	{ &vop_strategy_desc, spec_strategy },		/* strategy */
 	{ &vop_print_desc, kernfs_print },		/* print */
 	{ &vop_islocked_desc, kernfs_islocked },	/* islocked */
-	{ &vop_pathconf_desc, spec_pathconf },		/* pathconf */
-	{ &vop_advlock_desc, spec_advlock },		/* advlock */
 	{ &vop_bwrite_desc, spec_bwrite },		/* bwrite */
-	{ &vop_getpages_desc, spec_getpages },		/* getpages */
-	{ &vop_putpages_desc, spec_putpages },		/* putpages */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc kernfs_specop_opv_desc =
