@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.19 2021/06/29 22:40:53 dholland Exp $	*/
+/*	$NetBSD: vnode.h,v 1.20 2021/07/18 07:22:22 kardel Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -245,8 +245,6 @@ zfs_vn_open(const char *pnamep, enum uio_seg seg, int filemode, int createmode,
 	ASSERT((filemode & (FWRITE | FCREAT | FTRUNC | FOFFMAX)) != 0);
 	ASSERT(crwhy == CRCREAT);
 	ASSERT(umask == 0);
-
-	filemode |= O_NOFOLLOW;
 
 	pb = pathbuf_create(pnamep);
 	error = vn_open(NULL, pb, 0, filemode, createmode, vpp, NULL, NULL);
