@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.136 2021/07/18 23:56:14 dholland Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.137 2021/07/18 23:57:15 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.136 2021/07/18 23:56:14 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.137 2021/07/18 23:57:15 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -117,14 +117,14 @@ const struct vnodeopv_entry_desc ffs_vnodeop_entries[] = {
 	{ &vop_write_desc, ffs_write },			/* write */
 	{ &vop_fallocate_desc, genfs_eopnotsupp },	/* fallocate */
 	{ &vop_fdiscard_desc, genfs_eopnotsupp },	/* fdiscard */
-	{ &vop_ioctl_desc, ufs_ioctl },			/* ioctl */
-	{ &vop_fcntl_desc, ufs_fcntl },			/* fcntl */
-	{ &vop_poll_desc, ufs_poll },			/* poll */
+	{ &vop_ioctl_desc, genfs_enoioctl },		/* ioctl */
+	{ &vop_fcntl_desc, genfs_fcntl },		/* fcntl */
+	{ &vop_poll_desc, genfs_poll },			/* poll */
 	{ &vop_kqfilter_desc, genfs_kqfilter },		/* kqfilter */
-	{ &vop_revoke_desc, ufs_revoke },		/* revoke */
-	{ &vop_mmap_desc, ufs_mmap },			/* mmap */
+	{ &vop_revoke_desc, genfs_revoke },		/* revoke */
+	{ &vop_mmap_desc, genfs_mmap },			/* mmap */
 	{ &vop_fsync_desc, ffs_fsync },			/* fsync */
-	{ &vop_seek_desc, ufs_seek },			/* seek */
+	{ &vop_seek_desc, genfs_seek },			/* seek */
 	{ &vop_remove_desc, ufs_remove },		/* remove */
 	{ &vop_link_desc, ufs_link },			/* link */
 	{ &vop_rename_desc, ufs_rename },		/* rename */
@@ -133,15 +133,15 @@ const struct vnodeopv_entry_desc ffs_vnodeop_entries[] = {
 	{ &vop_symlink_desc, ufs_symlink },		/* symlink */
 	{ &vop_readdir_desc, ufs_readdir },		/* readdir */
 	{ &vop_readlink_desc, ufs_readlink },		/* readlink */
-	{ &vop_abortop_desc, ufs_abortop },		/* abortop */
+	{ &vop_abortop_desc, genfs_abortop },		/* abortop */
 	{ &vop_inactive_desc, ufs_inactive },		/* inactive */
 	{ &vop_reclaim_desc, ffs_reclaim },		/* reclaim */
-	{ &vop_lock_desc, ufs_lock },			/* lock */
-	{ &vop_unlock_desc, ufs_unlock },		/* unlock */
+	{ &vop_lock_desc, genfs_lock },			/* lock */
+	{ &vop_unlock_desc, genfs_unlock },		/* unlock */
 	{ &vop_bmap_desc, ufs_bmap },			/* bmap */
 	{ &vop_strategy_desc, ufs_strategy },		/* strategy */
 	{ &vop_print_desc, ufs_print },			/* print */
-	{ &vop_islocked_desc, ufs_islocked },		/* islocked */
+	{ &vop_islocked_desc, genfs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, ufs_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, ufs_advlock },		/* advlock */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
@@ -172,14 +172,14 @@ const struct vnodeopv_entry_desc ffs_specop_entries[] = {
 	{ &vop_setattr_desc, ufs_setattr },		/* setattr */
 	{ &vop_read_desc, ufsspec_read },		/* read */
 	{ &vop_write_desc, ufsspec_write },		/* write */
-	{ &vop_fcntl_desc, ufs_fcntl },			/* fcntl */
+	{ &vop_fcntl_desc, genfs_fcntl },		/* fcntl */
 	{ &vop_fsync_desc, ffs_spec_fsync },		/* fsync */
 	{ &vop_inactive_desc, ufs_inactive },		/* inactive */
 	{ &vop_reclaim_desc, ffs_reclaim },		/* reclaim */
-	{ &vop_lock_desc, ufs_lock },			/* lock */
-	{ &vop_unlock_desc, ufs_unlock },		/* unlock */
+	{ &vop_lock_desc, genfs_lock },			/* lock */
+	{ &vop_unlock_desc, genfs_unlock },		/* unlock */
 	{ &vop_print_desc, ufs_print },			/* print */
-	{ &vop_islocked_desc, ufs_islocked },		/* islocked */
+	{ &vop_islocked_desc, genfs_islocked },		/* islocked */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ &vop_openextattr_desc, ffs_openextattr },	/* openextattr */
 	{ &vop_closeextattr_desc, ffs_closeextattr },	/* closeextattr */
@@ -206,15 +206,15 @@ const struct vnodeopv_entry_desc ffs_fifoop_entries[] = {
 	{ &vop_setattr_desc, ufs_setattr },		/* setattr */
 	{ &vop_read_desc, ufsfifo_read },		/* read */
 	{ &vop_write_desc, ufsfifo_write },		/* write */
-	{ &vop_fcntl_desc, ufs_fcntl },			/* fcntl */
+	{ &vop_fcntl_desc, genfs_fcntl },		/* fcntl */
 	{ &vop_fsync_desc, ffs_fsync },			/* fsync */
 	{ &vop_inactive_desc, ufs_inactive },		/* inactive */
 	{ &vop_reclaim_desc, ffs_reclaim },		/* reclaim */
-	{ &vop_lock_desc, ufs_lock },			/* lock */
-	{ &vop_unlock_desc, ufs_unlock },		/* unlock */
+	{ &vop_lock_desc, genfs_lock },			/* lock */
+	{ &vop_unlock_desc, genfs_unlock },		/* unlock */
 	{ &vop_strategy_desc, ffsext_strategy },	/* strategy */
 	{ &vop_print_desc, ufs_print },			/* print */
-	{ &vop_islocked_desc, ufs_islocked },		/* islocked */
+	{ &vop_islocked_desc, genfs_islocked },		/* islocked */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ &vop_openextattr_desc, ffs_openextattr },	/* openextattr */
 	{ &vop_closeextattr_desc, ffs_closeextattr },	/* closeextattr */

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.319 2021/07/18 23:56:14 dholland Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.320 2021/07/18 23:57:15 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.319 2021/07/18 23:56:14 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.320 2021/07/18 23:57:15 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -115,13 +115,13 @@ const struct vnodeopv_entry_desc nfsv2_vnodeop_entries[] = {
 	{ &vop_fallocate_desc, genfs_eopnotsupp },	/* fallocate */
 	{ &vop_fdiscard_desc, genfs_eopnotsupp },	/* fdiscard */
 	{ &vop_fcntl_desc, genfs_fcntl },		/* fcntl */
-	{ &vop_ioctl_desc, nfs_ioctl },			/* ioctl */
-	{ &vop_poll_desc, nfs_poll },			/* poll */
+	{ &vop_ioctl_desc, genfs_enoioctl },		/* ioctl */
+	{ &vop_poll_desc, genfs_poll },			/* poll */
 	{ &vop_kqfilter_desc, nfs_kqfilter },		/* kqfilter */
-	{ &vop_revoke_desc, nfs_revoke },		/* revoke */
-	{ &vop_mmap_desc, nfs_mmap },			/* mmap */
+	{ &vop_revoke_desc, genfs_revoke },		/* revoke */
+	{ &vop_mmap_desc, genfs_mmap },			/* mmap */
 	{ &vop_fsync_desc, nfs_fsync },			/* fsync */
-	{ &vop_seek_desc, nfs_seek },			/* seek */
+	{ &vop_seek_desc, genfs_seek },			/* seek */
 	{ &vop_remove_desc, nfs_remove },		/* remove */
 	{ &vop_link_desc, nfs_link },			/* link */
 	{ &vop_rename_desc, nfs_rename },		/* rename */
@@ -130,15 +130,15 @@ const struct vnodeopv_entry_desc nfsv2_vnodeop_entries[] = {
 	{ &vop_symlink_desc, nfs_symlink },		/* symlink */
 	{ &vop_readdir_desc, nfs_readdir },		/* readdir */
 	{ &vop_readlink_desc, nfs_readlink },		/* readlink */
-	{ &vop_abortop_desc, nfs_abortop },		/* abortop */
+	{ &vop_abortop_desc, genfs_abortop },		/* abortop */
 	{ &vop_inactive_desc, nfs_inactive },		/* inactive */
 	{ &vop_reclaim_desc, nfs_reclaim },		/* reclaim */
-	{ &vop_lock_desc, nfs_lock },			/* lock */
+	{ &vop_lock_desc, genfs_lock },			/* lock */
 	{ &vop_unlock_desc, nfs_unlock },		/* unlock */
 	{ &vop_bmap_desc, nfs_bmap },			/* bmap */
 	{ &vop_strategy_desc, nfs_strategy },		/* strategy */
 	{ &vop_print_desc, nfs_print },			/* print */
-	{ &vop_islocked_desc, nfs_islocked },		/* islocked */
+	{ &vop_islocked_desc, genfs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, nfs_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, nfs_advlock },		/* advlock */
 	{ &vop_bwrite_desc, genfs_badop },		/* bwrite */
@@ -167,11 +167,11 @@ const struct vnodeopv_entry_desc spec_nfsv2nodeop_entries[] = {
 	{ &vop_fsync_desc, spec_fsync },		/* fsync */
 	{ &vop_inactive_desc, nfs_inactive },		/* inactive */
 	{ &vop_reclaim_desc, nfs_reclaim },		/* reclaim */
-	{ &vop_lock_desc, nfs_lock },			/* lock */
+	{ &vop_lock_desc, genfs_lock },			/* lock */
 	{ &vop_unlock_desc, nfs_unlock },		/* unlock */
 	{ &vop_print_desc, nfs_print },			/* print */
-	{ &vop_islocked_desc, nfs_islocked },		/* islocked */
-	{ &vop_bwrite_desc, spec_bwrite },		/* bwrite */
+	{ &vop_islocked_desc, genfs_islocked },		/* islocked */
+	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc spec_nfsv2nodeop_opv_desc =
@@ -192,11 +192,11 @@ const struct vnodeopv_entry_desc fifo_nfsv2nodeop_entries[] = {
 	{ &vop_fsync_desc, nfs_fsync },			/* fsync */
 	{ &vop_inactive_desc, nfs_inactive },		/* inactive */
 	{ &vop_reclaim_desc, nfs_reclaim },		/* reclaim */
-	{ &vop_lock_desc, nfs_lock },			/* lock */
+	{ &vop_lock_desc, genfs_lock },			/* lock */
 	{ &vop_unlock_desc, nfs_unlock },		/* unlock */
 	{ &vop_strategy_desc, vn_fifo_bypass },		/* strategy */
 	{ &vop_print_desc, nfs_print },			/* print */
-	{ &vop_islocked_desc, nfs_islocked },		/* islocked */
+	{ &vop_islocked_desc, genfs_islocked },		/* islocked */
 	{ &vop_bwrite_desc, genfs_badop },		/* bwrite */
 	{ NULL, NULL }
 };
