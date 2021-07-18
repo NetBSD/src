@@ -1,4 +1,4 @@
-/* $NetBSD: cia_dma.c,v 1.35 2021/07/17 00:30:39 thorpej Exp $ */
+/* $NetBSD: cia_dma.c,v 1.36 2021/07/18 05:09:47 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia_dma.c,v 1.35 2021/07/17 00:30:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia_dma.c,v 1.36 2021/07/18 05:09:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,14 +202,14 @@ cia_dma_init(struct cia_config *ccp)
 	 */
 
 	/*
-	 * Initialize the SGMAP(s).  Must align page table to 32k
+	 * Initialize the SGMAP(s).  Must align page table to at least 32k
 	 * (hardware bug?).
 	 */
 	alpha_sgmap_init(t, &ccp->cc_sgmap_lo, "cia_sgmap_lo",
 	    CIA_SGMAP_MAPPED_LO_BASE, 0, CIA_SGMAP_MAPPED_LO_SIZE,
 	    sizeof(uint64_t), NULL, (32*1024));
 	if (t_sg_hi != NULL) {
-		alpha_sgmap_init(t, &ccp->cc_sgmap_hi, "cia_sgmap_hi",
+		alpha_sgmap_init(t_sg_hi, &ccp->cc_sgmap_hi, "cia_sgmap_hi",
 		    CIA_SGMAP_MAPPED_HI_BASE, 0, CIA_SGMAP_MAPPED_HI_SIZE,
 		    sizeof(uint64_t), NULL, (32*1024));
 	}
