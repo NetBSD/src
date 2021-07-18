@@ -1,4 +1,4 @@
-/* $NetBSD: bus_defs.h,v 1.5 2019/09/23 16:17:54 skrll Exp $ */
+/* $NetBSD: bus_defs.h,v 1.6 2021/07/18 05:12:27 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -362,6 +362,12 @@ struct alpha_bus_dma_tag {
 	 * windows also get a pointer to their SGMAP state.
 	 */
 	struct alpha_sgmap *_sgmap;
+
+	/*
+	 * Some chipsets may want to enforce a minimum alignment
+	 * constraint for SGMAP DMA addresses.
+	 */
+	bus_size_t _sgmap_minalign;
 
 	/*
 	 * The SGMAP MMU implements a prefetch FIFO to keep data
