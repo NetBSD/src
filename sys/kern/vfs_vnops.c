@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.220 2021/07/01 15:53:20 martin Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.221 2021/07/18 09:30:36 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.220 2021/07/01 15:53:20 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.221 2021/07/18 09:30:36 dholland Exp $");
 
 #include "veriexec.h"
 
@@ -155,8 +155,9 @@ const struct fileops vnops = {
  * EOPNOTSUPP will be produced in the cases that would otherwise return
  * a file descriptor.
  *
- * Note that callers that want NOFOLLOW should pass O_NOFOLLOW in fmode,
- * not NOFOLLOW in nmode.
+ * Note that callers that want no-follow behavior should pass
+ * O_NOFOLLOW in fmode. Neither FOLLOW nor NOFOLLOW in nmode is
+ * honored.
  */
 int
 vn_open(struct vnode *at_dvp, struct pathbuf *pb,
@@ -179,7 +180,7 @@ vn_open(struct vnode *at_dvp, struct pathbuf *pb,
 	if ((fmode & (O_CREAT | O_DIRECTORY)) == (O_CREAT | O_DIRECTORY))
 		return EINVAL;
 
-	NDINIT(&nd, LOOKUP, FOLLOW | nmode, pb);
+	NDINIT(&nd, LOOKUP, nmode, pb);
 	if (at_dvp != NULL)
 		NDAT(&nd, at_dvp);
 
