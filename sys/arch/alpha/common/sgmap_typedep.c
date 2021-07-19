@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_typedep.c,v 1.43 2021/07/18 05:12:27 thorpej Exp $ */
+/* $NetBSD: sgmap_typedep.c,v 1.44 2021/07/19 16:25:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: sgmap_typedep.c,v 1.43 2021/07/18 05:12:27 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sgmap_typedep.c,v 1.44 2021/07/19 16:25:54 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -74,6 +74,7 @@ __C(SGMAP_TYPE,_load_buffer)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	bus_size_t sgvalen, extra_sgvalen, boundary, alignment;
 	SGMAP_PTE_TYPE *pte, *page_table = sgmap->aps_pt;
 	int pteidx, error, spill, seg = *segp;
+	bool address_is_valid __diagused;
 
 	/* Initialize the spill page PTE if it hasn't been already. */
 	if (__C(SGMAP_TYPE,_prefetch_spill_page_pte) == 0)
@@ -268,10 +269,8 @@ __C(SGMAP_TYPE,_load_buffer)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	for (; va < endva; va += PAGE_SIZE, pteidx++,
 	     pte = &page_table[pteidx * SGMAP_PTE_SPACING]) {
 		/* Get the physical address for this segment. */
-		if (!VMSPACE_IS_KERNEL_P(vm))
-			(void) pmap_extract(vm->vm_map.pmap, va, &pa);
-		else
-			pa = vtophys(va);
+		address_is_valid = pmap_extract(vm->vm_map.pmap, va, &pa);
+		KASSERT(address_is_valid);
 
 		/* Load the current PTE with this page. */
 		*pte = (pa >> SGPTE_PGADDR_SHIFT) | SGPTE_VALID;
@@ -289,10 +288,8 @@ __C(SGMAP_TYPE,_load_buffer)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 
 		/* va == endva == address of extra page */
 		KASSERT(va == endva);
-		if (!VMSPACE_IS_KERNEL_P(vm))
-			(void) pmap_extract(vm->vm_map.pmap, va, &pa);
-		else
-			pa = vtophys(va);
+		address_is_valid = pmap_extract(vm->vm_map.pmap, va, &pa);
+		KASSERT(address_is_valid);
 
 		/*
 		 * If a spill page is needed, the previous segment will
