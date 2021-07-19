@@ -1,4 +1,4 @@
-/* $NetBSD: tsp_dma.c,v 1.21 2021/07/18 19:58:34 thorpej Exp $ */
+/* $NetBSD: tsp_dma.c,v 1.22 2021/07/19 01:06:14 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2021 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsp_dma.c,v 1.21 2021/07/18 19:58:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsp_dma.c,v 1.22 2021/07/19 01:06:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,6 +158,26 @@ static void	tsp_tlb_invalidate(struct tsp_config *);
  * dual address cycle.
  */
 
+static void
+tsp_dma_shutdown(void *arg)
+{
+	struct tsp_config *pcp = arg;
+	struct ts_pchip *pccsr = pcp->pc_csr;
+	int i;
+
+	/*
+	 * Restore the initial values, to make the firmware happy.
+	 */
+	for (i = 0; i < 4; i++) {
+		pccsr->tsp_wsba[i].tsg_r = pcp->pc_saved_windows.wsba[i];
+		pccsr->tsp_wsm[i].tsg_r = pcp->pc_saved_windows.wsm[i];
+		pccsr->tsp_tba[i].tsg_r = pcp->pc_saved_windows.tba[i];
+		alpha_mb();
+	}
+	pccsr->tsp_pctl.tsg_r = pcp->pc_saved_pctl;
+	alpha_mb();
+}
+
 void
 tsp_dma_init(struct tsp_config *pcp)
 {
@@ -165,6 +185,19 @@ tsp_dma_init(struct tsp_config *pcp)
 	bus_dma_tag_t t_sg_hi = NULL;
 	struct ts_pchip *pccsr = pcp->pc_csr;
 	bus_addr_t tbase;
+	int i;
+
+	/*
+	 * Save our configuration to restore at shutdown, just
+	 * in case the firmware would get cranky with us.
+	 */
+	for (i = 0; i < 4; i++) {
+		pcp->pc_saved_windows.wsba[i] = pccsr->tsp_wsba[i].tsg_r;
+		pcp->pc_saved_windows.wsm[i] = pccsr->tsp_wsm[i].tsg_r;
+		pcp->pc_saved_windows.tba[i] = pccsr->tsp_tba[i].tsg_r;
+	}
+	pcp->pc_saved_pctl = pccsr->tsp_pctl.tsg_r;
+	shutdownhook_establish(tsp_dma_shutdown, pcp);
 
 	/* Ensure the Monster Window is enabled. */
 	alpha_mb();
