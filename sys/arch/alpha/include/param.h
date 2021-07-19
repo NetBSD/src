@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.49 2021/07/06 12:20:52 thorpej Exp $ */
+/* $NetBSD: param.h,v 1.50 2021/07/19 10:28:58 christos Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -84,8 +84,6 @@
  * EV4 (21064) and EV5 (21164) have a 32-byte cache line size.
  * EV6 (21264) and EV7 (21364) have a 64-byte cache line size.
  */
-#define	COHERENCY_UNIT	64
-#define	CACHE_LINE_SIZE	64
 
 /*
  * Constants related to network buffer management.

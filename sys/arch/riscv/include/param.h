@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.5 2021/05/31 14:38:57 simonb Exp $ */
+/* $NetBSD: param.h,v 1.6 2021/07/19 10:28:58 christos Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -95,9 +95,6 @@
 #ifndef MSGBUFSIZE
 #define MSGBUFSIZE		65536	/* default message buffer size */
 #endif
-
-#define COHERENCY_UNIT		64
-#define CACHE_LINE_SIZE		64
 
 #define MAXCPUS			32
 
