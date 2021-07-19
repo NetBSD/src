@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.697 2021/06/29 21:03:37 pgoyette Exp $	*/
+/*	$NetBSD: param.h,v 1.698 2021/07/19 19:13:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -200,13 +200,19 @@
 #define	dbtob(x)	((x) << DEV_BSHIFT)
 #define	btodb(x)	((x) >> DEV_BSHIFT)
 
-/* Coherency unit: assumed cache line size.  See also MIN_LWP_ALIGNMENT. */
+/*
+ * Coherency unit: assumed cache line size.  See also MIN_LWP_ALIGNMENT.
+ * The MD code depends on the current values of these constants. Don't
+ * change them without coordinating.
+ */
 #ifndef COHERENCY_UNIT
 #define	COHERENCY_UNIT		64
 #endif
 #ifndef CACHE_LINE_SIZE
 #define	CACHE_LINE_SIZE		64
 #endif
+
+
 #ifndef MAXCPUS
 #define	MAXCPUS			32
 #endif
