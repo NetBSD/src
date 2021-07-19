@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_gc.c,v 1.10 2021/07/16 21:18:41 andvar Exp $	*/
+/*	$NetBSD: chfs_gc.c,v 1.11 2021/07/19 22:24:55 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -232,15 +232,13 @@ chfs_gc_fetch_inode(struct chfs_mount *chmp, ino_t vno,
 				mutex_exit(&chmp->chm_lock_vnocache);
 				return NULL;
 			}
+			mutex_exit(&chmp->chm_lock_vnocache);
 			if (vc->state != VNO_STATE_CHECKEDABSENT) {
-				mutex_exit(&chmp->chm_lock_vnocache);
 				/* XXX why do we need the delay here?! */
 				KASSERT(mutex_owned(&chmp->chm_lock_mountfields));
 				cv_timedwait_sig(
 					&chmp->chm_gc_thread.gcth_wakeup,
 					&chmp->chm_lock_mountfields, mstohz(50));
-			} else {
-				mutex_exit(&chmp->chm_lock_vnocache);
 			}
 			return NULL;
 		}
