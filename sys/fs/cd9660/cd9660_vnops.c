@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.60 2021/07/18 23:56:13 dholland Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.61 2021/07/19 01:30:24 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.60 2021/07/18 23:56:13 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.61 2021/07/19 01:30:24 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -829,21 +829,6 @@ cd9660_setattr(void *v)
 }
 
 /*
- * Global vfs data structures for isofs
- */
-#define	cd9660_create	genfs_eopnotsupp
-#define	cd9660_mknod	genfs_eopnotsupp
-#define	cd9660_write	genfs_eopnotsupp
-#define	cd9660_fsync	genfs_nullop
-#define	cd9660_remove	genfs_eopnotsupp
-#define	cd9660_rename	genfs_eopnotsupp
-#define	cd9660_mkdir	genfs_eopnotsupp
-#define	cd9660_rmdir	genfs_eopnotsupp
-#define	cd9660_advlock	genfs_einval
-#define	cd9660_bwrite	genfs_eopnotsupp
-#define cd9660_revoke	genfs_revoke
-
-/*
  * Global vfs data structures for cd9660
  */
 int (**cd9660_vnodeop_p)(void *);
@@ -851,34 +836,34 @@ const struct vnodeopv_entry_desc cd9660_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_parsepath_desc, genfs_parsepath },	/* parsepath */
 	{ &vop_lookup_desc, cd9660_lookup },		/* lookup */
-	{ &vop_create_desc, cd9660_create },		/* create */
-	{ &vop_mknod_desc, cd9660_mknod },		/* mknod */
-	{ &vop_open_desc, cd9660_open },		/* open */
-	{ &vop_close_desc, cd9660_close },		/* close */
+	{ &vop_create_desc, genfs_eopnotsupp },		/* create */
+	{ &vop_mknod_desc, genfs_eopnotsupp },		/* mknod */
+	{ &vop_open_desc, genfs_nullop },		/* open */
+	{ &vop_close_desc, genfs_nullop },		/* close */
 	{ &vop_access_desc, cd9660_access },		/* access */
 	{ &vop_accessx_desc, genfs_accessx },		/* accessx */
 	{ &vop_getattr_desc, cd9660_getattr },		/* getattr */
 	{ &vop_setattr_desc, cd9660_setattr },		/* setattr */
 	{ &vop_read_desc, cd9660_read },		/* read */
-	{ &vop_write_desc, cd9660_write },		/* write */
+	{ &vop_write_desc, genfs_eopnotsupp },		/* write */
 	{ &vop_fallocate_desc, genfs_eopnotsupp },	/* fallocate */
 	{ &vop_fdiscard_desc, genfs_eopnotsupp },	/* fdiscard */
 	{ &vop_fcntl_desc, genfs_fcntl },		/* fcntl */
-	{ &vop_ioctl_desc, cd9660_ioctl },		/* ioctl */
-	{ &vop_poll_desc, cd9660_poll },		/* poll */
-	{ &vop_revoke_desc, cd9660_revoke },		/* revoke */
-	{ &vop_mmap_desc, cd9660_mmap },		/* mmap */
-	{ &vop_fsync_desc, cd9660_fsync },		/* fsync */
-	{ &vop_seek_desc, cd9660_seek },		/* seek */
-	{ &vop_remove_desc, cd9660_remove },		/* remove */
+	{ &vop_ioctl_desc, genfs_enoioctl },		/* ioctl */
+	{ &vop_poll_desc, genfs_poll },			/* poll */
+	{ &vop_revoke_desc, genfs_revoke },		/* revoke */
+	{ &vop_mmap_desc, genfs_mmap },			/* mmap */
+	{ &vop_fsync_desc, genfs_nullop },		/* fsync */
+	{ &vop_seek_desc, genfs_seek },			/* seek */
+	{ &vop_remove_desc, genfs_eopnotsupp },		/* remove */
 	{ &vop_link_desc, cd9660_link },		/* link */
-	{ &vop_rename_desc, cd9660_rename },		/* rename */
-	{ &vop_mkdir_desc, cd9660_mkdir },		/* mkdir */
-	{ &vop_rmdir_desc, cd9660_rmdir },		/* rmdir */
+	{ &vop_rename_desc, genfs_eopnotsupp },		/* rename */
+	{ &vop_mkdir_desc, genfs_eopnotsupp },		/* mkdir */
+	{ &vop_rmdir_desc, genfs_eopnotsupp },		/* rmdir */
 	{ &vop_symlink_desc, cd9660_symlink },		/* symlink */
 	{ &vop_readdir_desc, cd9660_readdir },		/* readdir */
 	{ &vop_readlink_desc, cd9660_readlink },	/* readlink */
-	{ &vop_abortop_desc, cd9660_abortop },		/* abortop */
+	{ &vop_abortop_desc, genfs_abortop },		/* abortop */
 	{ &vop_inactive_desc, cd9660_inactive },	/* inactive */
 	{ &vop_reclaim_desc, cd9660_reclaim },		/* reclaim */
 	{ &vop_lock_desc, genfs_lock },			/* lock */
@@ -888,7 +873,7 @@ const struct vnodeopv_entry_desc cd9660_vnodeop_entries[] = {
 	{ &vop_print_desc, cd9660_print },		/* print */
 	{ &vop_islocked_desc, genfs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, cd9660_pathconf },	/* pathconf */
-	{ &vop_advlock_desc, cd9660_advlock },		/* advlock */
+	{ &vop_advlock_desc, genfs_einval },		/* advlock */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ &vop_getpages_desc, genfs_getpages },		/* getpages */
 	{ &vop_putpages_desc, genfs_putpages },		/* putpages */
