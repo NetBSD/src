@@ -1,4 +1,4 @@
-/* $NetBSD: cia_dma.c,v 1.36 2021/07/18 05:09:47 thorpej Exp $ */
+/* $NetBSD: cia_dma.c,v 1.37 2021/07/19 01:06:14 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia_dma.c,v 1.36 2021/07/18 05:09:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia_dma.c,v 1.37 2021/07/19 01:06:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,12 +100,49 @@ struct alpha_sgmap cia_pyxis_bug_sgmap;
 #define	CIA_PYXIS_BUG_BASE	(128UL*1024*1024)
 #define	CIA_PYXIS_BUG_SIZE	(2UL*1024*1024)
 
+static void
+cia_dma_shutdown(void *arg)
+{
+	struct cia_config *ccp = arg;
+	int i;
+
+	/*
+	 * Restore the original values, to make the firmware happy.
+	 */
+	for (i = 0; i < 4; i++) {
+		REGVAL(CIA_PCI_W0BASE + (i * 0x100)) =
+		    ccp->cc_saved_windows.wbase[i];
+		alpha_mb();
+		REGVAL(CIA_PCI_W0MASK + (i * 0x100)) =
+		    ccp->cc_saved_windows.wmask[i];
+		alpha_mb();
+		REGVAL(CIA_PCI_T0BASE + (i * 0x100)) =
+		    ccp->cc_saved_windows.tbase[i];
+		alpha_mb();
+	}
+}
+
 void
 cia_dma_init(struct cia_config *ccp)
 {
 	bus_addr_t tbase;
 	bus_dma_tag_t t;
 	bus_dma_tag_t t_sg_hi = NULL;
+	int i;
+
+	/*
+	 * Save our configuration to restore at shutdown, just
+	 * in case the firmware would get cranky with us.
+	 */
+	for (i = 0; i < 4; i++) {
+		ccp->cc_saved_windows.wbase[i] =
+		    REGVAL(CIA_PCI_W0BASE + (i * 0x100));
+		ccp->cc_saved_windows.wmask[i] =
+		    REGVAL(CIA_PCI_W0MASK + (i * 0x100));
+		ccp->cc_saved_windows.tbase[i] =
+		    REGVAL(CIA_PCI_T0BASE + (i * 0x100));
+	}
+	shutdownhook_establish(cia_dma_shutdown, ccp);
 
 	/*
 	 * If we have more than 1GB of RAM, then set up an sgmap-mapped
@@ -195,11 +232,17 @@ cia_dma_init(struct cia_config *ccp)
 	t->_dmamem_mmap = _bus_dmamem_mmap;
 
 	/*
-	 * The firmware has set up window 1 as a 1G direct-mapped DMA
-	 * window beginning at 1G.  We leave it alone.  Leave window
-	 * 0 alone until we reconfigure it for SGMAP-mapped DMA.
-	 * Windows 2 and 3 are already disabled.
+	 * The firmware will have set up window 1 as a 1G dirct-mapped
+	 * DMA window beginning at 1G.  While it's pretty safe to assume
+	 * this is the case, we'll go ahead and program the registers
+	 * as we expect as a belt-and-suspenders measure.
 	 */
+	REGVAL(CIA_PCI_W1BASE) = CIA_DIRECT_MAPPED_BASE | CIA_PCI_WnBASE_W_EN;
+	alpha_mb();
+	REGVAL(CIA_PCI_W1MASK) = CIA_PCI_WnMASK_1G;
+	alpha_mb();
+	REGVAL(CIA_PCI_T1BASE) = 0;
+	alpha_mb();
 
 	/*
 	 * Initialize the SGMAP(s).  Must align page table to at least 32k
@@ -248,6 +291,9 @@ cia_dma_init(struct cia_config *ccp)
 			panic("cia_dma_init: bad page table address");
 		REGVAL(CIA_PCI_T3BASE) = tbase;
 		alpha_mb();
+	} else {
+		REGVAL(CIA_PCI_W3BASE) = 0;
+		alpha_mb();
 	}
 
 	/*
@@ -261,7 +307,6 @@ cia_dma_init(struct cia_config *ccp)
 	 */
 	if ((ccp->cc_flags & CCF_ISPYXIS) != 0 && ccp->cc_rev <= 1) {
 		uint64_t *page_table;
-		int i;
 
 		cia_tlb_invalidate_fn =
 		    cia_broken_pyxis_tlb_invalidate;
@@ -296,8 +341,12 @@ cia_dma_init(struct cia_config *ccp)
 			    pci_sgmap_pte64_prefetch_spill_page_pte;
 		}
 		alpha_mb();
-	} else
+	} else {
+		REGVAL(CIA_PCI_W2BASE) = 0;
+		alpha_mb();
+
 		cia_tlb_invalidate_fn = cia_tlb_invalidate;
+	}
 
 	CIA_TLB_INVALIDATE();
 }
