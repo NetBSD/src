@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.135 2019/11/21 19:23:58 ad Exp $ */
+/* $NetBSD: trap.c,v 1.136 2021/07/19 22:21:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -87,13 +87,15 @@
  * rights to redistribute these changes.
  */
 
+#define	__UFETCHSTORE_PRIVATE	/* see handle_opdec() */
+
 #include "opt_fix_unaligned_vax_fp.h"
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.135 2019/11/21 19:23:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.136 2021/07/19 22:21:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -875,65 +877,65 @@ unaligned_fixup(u_long va, u_long opcode, u_long reg, struct lwp *l)
 	signo = SIGSEGV;
 	if (dofix && selected_tab->fixable) {
 		switch (opcode) {
-		case 0x0c:			/* ldwu */
+		case op_ldwu:
 			/* XXX ONLY WORKS ON LITTLE-ENDIAN ALPHA */
 			unaligned_load_integer(worddata);
 			break;
 
-		case 0x0d:			/* stw */
+		case op_stw:
 			/* XXX ONLY WORKS ON LITTLE-ENDIAN ALPHA */
 			unaligned_store_integer(worddata);
 			break;
 
 #ifdef FIX_UNALIGNED_VAX_FP
-		case 0x20:			/* ldf */
+		case op_ldf:
 			unaligned_load_floating(intdata, Ffloat_to_reg);
 			break;
 
-		case 0x21:			/* ldg */
+		case op_ldg:
 			unaligned_load_floating(longdata, Gfloat_reg_cvt);
 			break;
 #endif
 
-		case 0x22:			/* lds */
+		case op_lds:
 			unaligned_load_floating(intdata, Sfloat_to_reg);
 			break;
 
-		case 0x23:			/* ldt */
+		case op_ldt:
 			unaligned_load_floating(longdata, Tfloat_reg_cvt);
 			break;
 
 #ifdef FIX_UNALIGNED_VAX_FP
-		case 0x24:			/* stf */
+		case op_stf:
 			unaligned_store_floating(intdata, reg_to_Ffloat);
 			break;
 
-		case 0x25:			/* stg */
+		case op_stg:
 			unaligned_store_floating(longdata, Gfloat_reg_cvt);
 			break;
 #endif
 
-		case 0x26:			/* sts */
+		case op_sts:
 			unaligned_store_floating(intdata, reg_to_Sfloat);
 			break;
 
-		case 0x27:			/* stt */
+		case op_stt:
 			unaligned_store_floating(longdata, Tfloat_reg_cvt);
 			break;
 
-		case 0x28:			/* ldl */
+		case op_ldl:
 			unaligned_load_integer(intdata);
 			break;
 
-		case 0x29:			/* ldq */
+		case op_ldq:
 			unaligned_load_integer(longdata);
 			break;
 
-		case 0x2c:			/* stl */
+		case op_stl:
 			unaligned_store_integer(intdata);
 			break;
 
-		case 0x2d:			/* stq */
+		case op_stq:
 			unaligned_store_integer(longdata);
 			break;
 
@@ -957,6 +959,28 @@ unaligned_fixup(u_long va, u_long opcode, u_long reg, struct lwp *l)
 
 	return (signo);
 }
+
+static struct evcnt emul_bwx_ldbu =
+    EVCNT_INITIALIZER(EVCNT_TYPE_TRAP, NULL, "emul bwx", "ldbu");
+static struct evcnt emul_bwx_ldwu =
+    EVCNT_INITIALIZER(EVCNT_TYPE_TRAP, NULL, "emul bwx", "ldwu");
+static struct evcnt emul_bwx_stb =
+    EVCNT_INITIALIZER(EVCNT_TYPE_TRAP, NULL, "emul bwx", "stb");
+static struct evcnt emul_bwx_stw =
+    EVCNT_INITIALIZER(EVCNT_TYPE_TRAP, NULL, "emul bwx", "stw");
+static struct evcnt emul_bwx_sextb =
+    EVCNT_INITIALIZER(EVCNT_TYPE_TRAP, NULL, "emul bwx", "sextb");
+static struct evcnt emul_bwx_sextw =
+    EVCNT_INITIALIZER(EVCNT_TYPE_TRAP, NULL, "emul bwx", "sextw");
+
+EVCNT_ATTACH_STATIC(emul_bwx_ldbu);
+EVCNT_ATTACH_STATIC(emul_bwx_ldwu);
+EVCNT_ATTACH_STATIC(emul_bwx_stb);
+EVCNT_ATTACH_STATIC(emul_bwx_stw);
+EVCNT_ATTACH_STATIC(emul_bwx_sextb);
+EVCNT_ATTACH_STATIC(emul_bwx_sextw);
+
+#define	EMUL_COUNT(ev)	atomic_inc_64(&(ev).ev_count)
 
 /*
  * Reserved/unimplemented instruction (opDec fault) handler
@@ -986,7 +1010,7 @@ handle_opdec(struct lwp *l, u_long *ucodep)
 	l->l_md.md_tf->tf_regs[FRAME_SP] = alpha_pal_rdusp();
 
 	inst_pc = memaddr = l->l_md.md_tf->tf_regs[FRAME_PC] - 4;
-	if (copyin((void *)inst_pc, &inst, sizeof (inst)) != 0) {
+	if (ufetch_int((void *)inst_pc, &inst.bits) != 0) {
 		/*
 		 * really, this should never happen, but in case it
 		 * does we handle it.
@@ -1012,6 +1036,11 @@ handle_opdec(struct lwp *l, u_long *ucodep)
 		if (inst.mem_format.opcode == op_ldwu ||
 		    inst.mem_format.opcode == op_stw) {
 			if (memaddr & 0x01) {
+				if (inst.mem_format.opcode == op_ldwu) {
+					EMUL_COUNT(emul_bwx_ldwu);
+				} else {
+					EMUL_COUNT(emul_bwx_stw);
+				}
 				sig = unaligned_fixup(memaddr,
 				    inst.mem_format.opcode,
 				    inst.mem_format.ra, l);
@@ -1021,35 +1050,42 @@ handle_opdec(struct lwp *l, u_long *ucodep)
 			}
 		}
 
+		/*
+		 * We know the addresses are aligned, so it's safe to
+		 * use _u{fetch,store}_{8,16}().  Note, these are
+		 * __UFETCHSTORE_PRIVATE, but this is MD code, and
+		 * we know the details of the alpha implementation.
+		 */
+
 		if (inst.mem_format.opcode == op_ldbu) {
 			uint8_t b;
 
-			/* XXX ONLY WORKS ON LITTLE-ENDIAN ALPHA */
-			if (copyin((void *)memaddr, &b, sizeof (b)) != 0)
+			EMUL_COUNT(emul_bwx_ldbu);
+			if (_ufetch_8((void *)memaddr, &b) != 0)
 				goto sigsegv;
 			if (regptr != NULL)
 				*regptr = b;
 		} else if (inst.mem_format.opcode == op_ldwu) {
 			uint16_t w;
 
-			/* XXX ONLY WORKS ON LITTLE-ENDIAN ALPHA */
-			if (copyin((void *)memaddr, &w, sizeof (w)) != 0)
+			EMUL_COUNT(emul_bwx_ldwu);
+			if (_ufetch_16((void *)memaddr, &w) != 0)
 				goto sigsegv;
 			if (regptr != NULL)
 				*regptr = w;
 		} else if (inst.mem_format.opcode == op_stw) {
 			uint16_t w;
 
-			/* XXX ONLY WORKS ON LITTLE-ENDIAN ALPHA */
+			EMUL_COUNT(emul_bwx_stw);
 			w = (regptr != NULL) ? *regptr : 0;
-			if (copyout(&w, (void *)memaddr, sizeof (w)) != 0)
+			if (_ustore_16((void *)memaddr, w) != 0)
 				goto sigsegv;
 		} else if (inst.mem_format.opcode == op_stb) {
 			uint8_t b;
 
-			/* XXX ONLY WORKS ON LITTLE-ENDIAN ALPHA */
+			EMUL_COUNT(emul_bwx_stb);
 			b = (regptr != NULL) ? *regptr : 0;
-			if (copyout(&b, (void *)memaddr, sizeof (b)) != 0)
+			if (_ustore_8((void *)memaddr, b) != 0)
 				goto sigsegv;
 		}
 		break;
@@ -1059,6 +1095,7 @@ handle_opdec(struct lwp *l, u_long *ucodep)
 		    inst.operate_generic_format.ra == 31) {
 			int8_t b;
 
+			EMUL_COUNT(emul_bwx_sextb);
 			if (inst.operate_generic_format.is_lit) {
 				b = inst.operate_lit_format.literal;
 			} else {
@@ -1077,6 +1114,7 @@ handle_opdec(struct lwp *l, u_long *ucodep)
 		    inst.operate_generic_format.ra == 31) {
 			int16_t w;
 
+			EMUL_COUNT(emul_bwx_sextw);
 			if (inst.operate_generic_format.is_lit) {
 				w = inst.operate_lit_format.literal;
 			} else {
