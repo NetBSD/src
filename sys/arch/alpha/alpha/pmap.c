@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.298 2021/07/16 19:02:22 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.299 2021/07/19 16:31:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008, 2020
@@ -135,7 +135,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.298 2021/07/16 19:02:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.299 2021/07/19 16:31:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2578,18 +2578,18 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 	 * handles K0SEG.
 	 */
 	if (__predict_true(pmap == pmap_kernel())) {
-		if (__predict_true(vtophys_internal(va, pap))) {
 #ifdef DEBUG
-			if (pmapdebug & PDB_FOLLOW)
+		bool address_is_valid = vtophys_internal(va, pap);
+		if (pmapdebug & PDB_FOLLOW) {
+			if (address_is_valid) {
 				printf("0x%lx (kernel vtophys)\n", *pap);
-#endif
-			return true;
+			} else {
+				printf("failed (kernel vtophys)\n");
+			}
 		}
-#ifdef DEBUG
-		if (pmapdebug & PDB_FOLLOW)
-			printf("failed (kernel vtophys)\n");
+#else
+		return vtophys_internal(va, pap);
 #endif
-		return false;
 	}
 
 	pt_entry_t * const lev1map = pmap_lev1map(pmap);
