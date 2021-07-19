@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.94 2019/12/11 20:19:27 ad Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.95 2021/07/19 10:30:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.94 2019/12/11 20:19:27 ad Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.95 2021/07/19 10:30:36 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -159,7 +159,9 @@ struct miniproc {
  */
 struct kvm_kauth_cred {
 	u_int cr_refcnt;		/* reference count */
-	uint8_t cr_pad[CACHE_LINE_SIZE - sizeof(u_int)];
+#if COHERENCY_UNIT > 4
+	uint8_t cr_pad[COHERENCY_UNIT - 4];
+#endif
 	uid_t cr_uid;			/* user id */
 	uid_t cr_euid;			/* effective user id */
 	uid_t cr_svuid;			/* saved effective user id */
