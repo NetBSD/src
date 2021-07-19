@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.106 2021/06/27 12:26:33 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.107 2021/07/19 14:49:45 chs Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.106 2021/06/27 12:26:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.107 2021/07/19 14:49:45 chs Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -328,8 +328,6 @@ struct pvo_entry {
 
 TAILQ_HEAD(pvo_tqhead, pvo_entry);
 struct pvo_tqhead *pmap_pvo_table;	/* pvo entries by ptegroup index */
-static struct pvo_head pmap_pvo_kunmanaged = LIST_HEAD_INITIALIZER(pmap_pvo_kunmanaged);	/* list of unmanaged pages */
-static struct pvo_head pmap_pvo_unmanaged = LIST_HEAD_INITIALIZER(pmap_pvo_unmanaged);	/* list of unmanaged pages */
 
 struct pool pmap_pool;		/* pool for pmap structures */
 struct pool pmap_pvo_pool;	/* pool for pvo entries */
@@ -652,7 +650,7 @@ pa_to_pvoh(paddr_t pa, struct vm_page **pg_p)
 	if (pg_p != NULL)
 		*pg_p = pg;
 	if (pg == NULL)
-		return &pmap_pvo_unmanaged;
+		return NULL;
 	md = VM_PAGE_TO_MD(pg);
 	return &md->mdpg_pvoh;
 }
@@ -1410,22 +1408,19 @@ pmap_pvo_check(const struct pvo_entry *pvo)
 
 	if (PVO_MANAGED_P(pvo)) {
 		pvo_head = pa_to_pvoh(pvo->pvo_pte.pte_lo & PTE_RPGN, NULL);
-	} else {
-		if (pvo->pvo_vaddr < VM_MIN_KERNEL_ADDRESS) {
-			printf("pmap_pvo_check: pvo %p: non kernel address "
-			    "on kernel unmanaged list\n", pvo);
+		LIST_FOREACH(pvo0, pvo_head, pvo_vlink) {
+			if (pvo0 == pvo)
+				break;
+		}
+		if (pvo0 == NULL) {
+			printf("pmap_pvo_check: pvo %p: not present "
+			       "on its vlist head %p\n", pvo, pvo_head);
 			failed = 1;
 		}
-		pvo_head = &pmap_pvo_kunmanaged;
-	}
-	LIST_FOREACH(pvo0, pvo_head, pvo_vlink) {
-		if (pvo0 == pvo)
-			break;
-	}
-	if (pvo0 == NULL) {
-		printf("pmap_pvo_check: pvo %p: not present "
-		    "on its vlist head %p\n", pvo, pvo_head);
-		failed = 1;
+	} else {
+		KASSERT(pvo->pvo_vaddr >= VM_MIN_KERNEL_ADDRESS);
+		if (__predict_false(pvo->pvo_vaddr < VM_MIN_KERNEL_ADDRESS))
+			failed = 1;
 	}
 	if (pvo != pmap_pvo_find_va(pvo->pvo_pmap, pvo->pvo_vaddr, NULL)) {
 		printf("pmap_pvo_check: pvo %p: not present "
@@ -1620,7 +1615,7 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 	}
 	if (flags & PMAP_WIRED)
 		pvo->pvo_vaddr |= PVO_WIRED;
-	if (pvo_head != &pmap_pvo_kunmanaged) {
+	if (pvo_head != NULL) {
 		pvo->pvo_vaddr |= PVO_MANAGED; 
 		PMAPCOUNT(mappings);
 	} else {
@@ -1628,7 +1623,8 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 	}
 	pmap_pte_create(&pvo->pvo_pte, pm, va, pa | pte_lo);
 
-	LIST_INSERT_HEAD(pvo_head, pvo, pvo_vlink);
+	if (pvo_head != NULL)
+		LIST_INSERT_HEAD(pvo_head, pvo, pvo_vlink);
 	if (PVO_WIRED_P(pvo))
 		pvo->pvo_pmap->pm_stats.wired_count++;
 	pvo->pvo_pmap->pm_stats.resident_count++;
@@ -1728,7 +1724,9 @@ pmap_pvo_remove(struct pvo_entry *pvo, int pteidx, struct pvo_head *pvol)
 		pvo->pvo_pmap->pm_stats.wired_count--;
 
 	/*
-	 * Save the REF/CHG bits into their cache if the page is managed.
+	 * If the page is managed:
+	 * Save the REF/CHG bits into their cache.
+	 * Remove the PVO from the P/V list.
 	 */
 	if (PVO_MANAGED_P(pvo)) {
 		register_t ptelo = pvo->pvo_pte.pte_lo;
@@ -1760,15 +1758,15 @@ pmap_pvo_remove(struct pvo_entry *pvo, int pteidx, struct pvo_head *pvol)
 
 			pmap_attr_save(pg, ptelo & (PTE_REF|PTE_CHG));
 		}
+		LIST_REMOVE(pvo, pvo_vlink);
 		PMAPCOUNT(unmappings);
 	} else {
 		PMAPCOUNT(kernel_unmappings);
 	}
 
 	/*
-	 * Remove the PVO from its lists and return it to the pool.
+	 * Remove the PVO from its list and return it to the pool.
 	 */
-	LIST_REMOVE(pvo, pvo_vlink);
 	TAILQ_REMOVE(&pmap_pvo_table[ptegidx], pvo, pvo_olink);
 	if (pvol) {
 		LIST_INSERT_HEAD(pvol, pvo, pvo_vlink);
@@ -1861,9 +1859,10 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	PMAP_LOCK();
 
 	if (__predict_false(!pmap_initialized)) {
-		pvo_head = &pmap_pvo_kunmanaged;
+		pvo_head = NULL;
 		pg = NULL;
 		was_exec = PTE_EXEC;
+
 	} else {
 		pvo_head = pa_to_pvoh(pa, &pg);
 	}
@@ -1952,7 +1951,6 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 			else if (pmapdebug & PMAPDEBUG_EXEC)
 				printf("[pmap_enter: %#" _PRIxpa ": marked-as-exec]\n",
 				    VM_PAGE_TO_PHYS(pg));
-				
 #endif
 		}
 	}
@@ -2010,7 +2008,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	 * We don't care about REF/CHG on PVOs on the unmanaged list.
 	 */
 	error = pmap_pvo_enter(pmap_kernel(), &pmap_pvo_pool,
-	    &pmap_pvo_kunmanaged, va, pa, pte_lo, prot|PMAP_WIRED);
+	    NULL, va, pa, pte_lo, prot|PMAP_WIRED);
 
 	if (error != 0)
 		panic("pmap_kenter_pa: failed to enter va %#" _PRIxva " pa %#" _PRIxpa ": %d",
