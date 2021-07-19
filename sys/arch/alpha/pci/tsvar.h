@@ -1,4 +1,4 @@
-/* $NetBSD: tsvar.h,v 1.16 2021/07/18 00:01:20 thorpej Exp $ */
+/* $NetBSD: tsvar.h,v 1.17 2021/07/19 01:06:14 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -66,6 +66,13 @@ struct tsp_config {
 	long	pc_mem_exstorage[_FSTORE];
 	struct	extent *pc_io_ex, *pc_mem_ex;
 	int	pc_mallocsafe;
+
+	struct {
+		uint64_t wsba[4];
+		uint64_t wsm[4];
+		uint64_t tba[4];
+	} pc_saved_windows;
+	uint64_t pc_saved_pctl;
 };
 
 struct tsp_attach_args {
