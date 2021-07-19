@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.72 2021/05/07 16:58:33 thorpej Exp $ */
+/* $NetBSD: bus_dma.c,v 1.73 2021/07/19 16:25:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.72 2021/05/07 16:58:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.73 2021/07/19 16:25:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,6 +138,7 @@ _bus_dmamap_load_buffer_direct(bus_dma_tag_t t, bus_dmamap_t map,
 	bus_addr_t curaddr, lastaddr, baddr, bmask;
 	vaddr_t vaddr = (vaddr_t)buf;
 	int seg;
+	bool address_is_valid __diagused;
 
 	lastaddr = *lastaddrp;
 	bmask = ~(map->_dm_boundary - 1);
@@ -146,10 +147,9 @@ _bus_dmamap_load_buffer_direct(bus_dma_tag_t t, bus_dmamap_t map,
 		/*
 		 * Get the physical address for this segment.
 		 */
-		if (!VMSPACE_IS_KERNEL_P(vm))
-			(void) pmap_extract(vm->vm_map.pmap, vaddr, &curaddr);
-		else
-			curaddr = vtophys(vaddr);
+		address_is_valid =
+		    pmap_extract(vm->vm_map.pmap, vaddr, &curaddr);
+		KASSERT(address_is_valid);
 
 		/*
 		 * If we're beyond the current DMA window, indicate
