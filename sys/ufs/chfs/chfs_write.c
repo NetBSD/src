@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_write.c,v 1.5 2012/10/19 12:44:39 ttoth Exp $	*/
+/*	$NetBSD: chfs_write.c,v 1.6 2021/07/19 21:04:39 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -438,8 +438,10 @@ chfs_do_link(struct chfs_inode *ip, struct chfs_inode *parent, const char *name,
 
 	/* update vnode information */
 	error = chfs_write_flash_vnode(chmp, ip, ALLOC_NORMAL);
-	if (error)
+	if (error) {
+		mutex_exit(&chmp->chm_lock_mountfields);
 		return error;
+	}
 
 	/* write out the new dirent */
 	error = chfs_write_flash_dirent(chmp,
