@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.220 2021/07/18 23:56:13 dholland Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.221 2021/07/19 01:30:24 dholland Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.220 2021/07/18 23:56:13 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.221 2021/07/19 01:30:24 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -98,10 +98,6 @@ int	puffs_vnop_fifo_write(void *);
 
 int	puffs_vnop_checkop(void *);
 
-#define puffs_vnop_lock genfs_lock
-#define puffs_vnop_unlock genfs_unlock
-#define puffs_vnop_islocked genfs_islocked
-
 int (**puffs_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc puffs_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
@@ -138,11 +134,11 @@ const struct vnodeopv_entry_desc puffs_vnodeop_entries[] = {
         { &vop_abortop_desc, puffs_vnop_abortop },	/* REAL abortop */
         { &vop_inactive_desc, puffs_vnop_inactive },	/* REAL inactive */
         { &vop_reclaim_desc, puffs_vnop_reclaim },	/* REAL reclaim */
-        { &vop_lock_desc, puffs_vnop_lock },		/* REAL lock */
-        { &vop_unlock_desc, puffs_vnop_unlock },	/* REAL unlock */
+        { &vop_lock_desc, genfs_lock },			/* REAL lock */
+        { &vop_unlock_desc, genfs_unlock },		/* REAL unlock */
         { &vop_bmap_desc, puffs_vnop_bmap },		/* REAL bmap */
         { &vop_print_desc, puffs_vnop_print },		/* REAL print */
-        { &vop_islocked_desc, puffs_vnop_islocked },	/* REAL islocked */
+        { &vop_islocked_desc, genfs_islocked },		/* REAL islocked */
         { &vop_bwrite_desc, genfs_nullop },		/* REAL bwrite */
         { &vop_mmap_desc, puffs_vnop_mmap },		/* REAL mmap */
         { &vop_poll_desc, puffs_vnop_poll },		/* REAL poll */
@@ -176,10 +172,10 @@ const struct vnodeopv_entry_desc puffs_specop_entries[] = {
 	{ &vop_fsync_desc, spec_fsync },		/* vflushbuf */
 	{ &vop_inactive_desc, puffs_vnop_inactive },	/* REAL inactive */
 	{ &vop_reclaim_desc, puffs_vnop_reclaim },	/* REAL reclaim */
-	{ &vop_lock_desc, puffs_vnop_lock },		/* REAL lock */
-	{ &vop_unlock_desc, puffs_vnop_unlock },	/* REAL unlock */
+	{ &vop_lock_desc, genfs_lock },			/* REAL lock */
+	{ &vop_unlock_desc, genfs_unlock },		/* REAL unlock */
 	{ &vop_print_desc, puffs_vnop_print },		/* REAL print */
-	{ &vop_islocked_desc, puffs_vnop_islocked },	/* REAL islocked */
+	{ &vop_islocked_desc, genfs_islocked },		/* REAL islocked */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ &vop_getextattr_desc, puffs_vnop_checkop },	/* getextattr */
 	{ &vop_setextattr_desc, puffs_vnop_checkop },	/* setextattr */
@@ -210,11 +206,11 @@ const struct vnodeopv_entry_desc puffs_fifoop_entries[] = {
 	{ &vop_fsync_desc, vn_fifo_bypass },		/* genfs_nullop*/
 	{ &vop_inactive_desc, puffs_vnop_inactive },	/* REAL inactive */
 	{ &vop_reclaim_desc, puffs_vnop_reclaim },	/* REAL reclaim */
-	{ &vop_lock_desc, puffs_vnop_lock },		/* REAL lock */
-	{ &vop_unlock_desc, puffs_vnop_unlock },	/* REAL unlock */
+	{ &vop_lock_desc, genfs_lock },			/* REAL lock */
+	{ &vop_unlock_desc, genfs_unlock },		/* REAL unlock */
 	{ &vop_strategy_desc, vn_fifo_bypass },		/* genfs_badop */
 	{ &vop_print_desc, puffs_vnop_print },		/* REAL print */
-	{ &vop_islocked_desc, puffs_vnop_islocked },	/* REAL islocked */
+	{ &vop_islocked_desc, genfs_islocked },		/* REAL islocked */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 #if 0
 	{ &vop_openextattr_desc, _openextattr },	/* openextattr */
@@ -255,7 +251,7 @@ const struct vnodeopv_entry_desc puffs_msgop_entries[] = {
         { &vop_readdir_desc, puffs_vnop_readdir },	/* readdir */
         { &vop_readlink_desc, puffs_vnop_readlink },	/* readlink */
         { &vop_print_desc, puffs_vnop_print },		/* print */
-        { &vop_islocked_desc, puffs_vnop_islocked },	/* islocked */
+        { &vop_islocked_desc, genfs_islocked },		/* islocked */
         { &vop_pathconf_desc, puffs_vnop_pathconf },	/* pathconf */
         { &vop_getpages_desc, puffs_vnop_getpages },	/* getpages */
 	{ NULL, NULL }

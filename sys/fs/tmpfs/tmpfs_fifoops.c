@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_fifoops.c,v 1.14 2021/07/18 23:56:13 dholland Exp $	*/
+/*	$NetBSD: tmpfs_fifoops.c,v 1.15 2021/07/19 01:30:25 dholland Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_fifoops.c,v 1.14 2021/07/18 23:56:13 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_fifoops.c,v 1.15 2021/07/19 01:30:25 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -51,22 +51,22 @@ const struct vnodeopv_entry_desc tmpfs_fifoop_entries[] = {
 	{ &vop_default_desc,		vn_default_error },
 	GENFS_FIFOOP_ENTRIES,
 	{ &vop_close_desc,		tmpfs_fifo_close },
-	{ &vop_access_desc,		tmpfs_fifo_access },
+	{ &vop_access_desc,		tmpfs_access },
 	{ &vop_accessx_desc,		genfs_accessx },
-	{ &vop_getattr_desc,		tmpfs_fifo_getattr },
-	{ &vop_setattr_desc,		tmpfs_fifo_setattr },
+	{ &vop_getattr_desc,		tmpfs_getattr },
+	{ &vop_setattr_desc,		tmpfs_setattr },
 	{ &vop_read_desc,		tmpfs_fifo_read },
 	{ &vop_write_desc,		tmpfs_fifo_write },
-	{ &vop_fcntl_desc,		tmpfs_fifo_fcntl },
-	{ &vop_fsync_desc,		tmpfs_fifo_fsync },
-	{ &vop_inactive_desc,		tmpfs_fifo_inactive },
-	{ &vop_reclaim_desc,		tmpfs_fifo_reclaim },
-	{ &vop_lock_desc,		tmpfs_fifo_lock },
-	{ &vop_unlock_desc,		tmpfs_fifo_unlock },
-	{ &vop_strategy_desc,		tmpfs_fifo_strategy },
-	{ &vop_print_desc,		tmpfs_fifo_print },
-	{ &vop_islocked_desc,		tmpfs_fifo_islocked },
-	{ &vop_bwrite_desc,		tmpfs_fifo_bwrite },
+	{ &vop_fcntl_desc,		genfs_fcntl },
+	{ &vop_fsync_desc,		vn_fifo_bypass },
+	{ &vop_inactive_desc,		tmpfs_inactive },
+	{ &vop_reclaim_desc,		tmpfs_reclaim },
+	{ &vop_lock_desc,		genfs_lock },
+	{ &vop_unlock_desc,		genfs_unlock },
+	{ &vop_strategy_desc,		vn_fifo_bypass },
+	{ &vop_print_desc,		tmpfs_print },
+	{ &vop_islocked_desc,		genfs_islocked },
+	{ &vop_bwrite_desc,		genfs_nullop },
 	{ NULL, NULL }
 };
 

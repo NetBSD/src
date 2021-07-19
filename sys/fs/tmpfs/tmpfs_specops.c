@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_specops.c,v 1.15 2021/07/18 23:56:13 dholland Exp $	*/
+/*	$NetBSD: tmpfs_specops.c,v 1.16 2021/07/19 01:30:25 dholland Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_specops.c,v 1.15 2021/07/18 23:56:13 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_specops.c,v 1.16 2021/07/19 01:30:25 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -54,21 +54,21 @@ const struct vnodeopv_entry_desc tmpfs_specop_entries[] = {
 	{ &vop_default_desc,		vn_default_error },
 	GENFS_SPECOP_ENTRIES,
 	{ &vop_close_desc,		tmpfs_spec_close },
-	{ &vop_access_desc,		tmpfs_spec_access },
+	{ &vop_access_desc,		tmpfs_access },
 	{ &vop_accessx_desc,		genfs_accessx },
-	{ &vop_getattr_desc,		tmpfs_spec_getattr },
-	{ &vop_setattr_desc,		tmpfs_spec_setattr },
+	{ &vop_getattr_desc,		tmpfs_getattr },
+	{ &vop_setattr_desc,		tmpfs_setattr },
 	{ &vop_read_desc,		tmpfs_spec_read },
 	{ &vop_write_desc,		tmpfs_spec_write },
-	{ &vop_fcntl_desc,		tmpfs_spec_fcntl },
-	{ &vop_fsync_desc,		tmpfs_spec_fsync },
-	{ &vop_inactive_desc,		tmpfs_spec_inactive },
-	{ &vop_reclaim_desc,		tmpfs_spec_reclaim },
-	{ &vop_lock_desc,		tmpfs_spec_lock },
-	{ &vop_unlock_desc,		tmpfs_spec_unlock },
-	{ &vop_print_desc,		tmpfs_spec_print },
-	{ &vop_islocked_desc,		tmpfs_spec_islocked },
-	{ &vop_bwrite_desc,		tmpfs_spec_bwrite },
+	{ &vop_fcntl_desc,		genfs_fcntl },
+	{ &vop_fsync_desc,		spec_fsync },
+	{ &vop_inactive_desc,		tmpfs_inactive },
+	{ &vop_reclaim_desc,		tmpfs_reclaim },
+	{ &vop_lock_desc,		genfs_lock },
+	{ &vop_unlock_desc,		genfs_unlock },
+	{ &vop_print_desc,		tmpfs_print },
+	{ &vop_islocked_desc,		genfs_islocked },
+	{ &vop_bwrite_desc,		vn_bwrite },
 	{ NULL, NULL }
 };
 
