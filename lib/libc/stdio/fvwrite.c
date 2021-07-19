@@ -1,4 +1,4 @@
-/*	$NetBSD: fvwrite.c,v 1.28 2021/07/16 12:34:10 christos Exp $	*/
+/*	$NetBSD: fvwrite.c,v 1.29 2021/07/19 10:00:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fvwrite.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fvwrite.c,v 1.28 2021/07/16 12:34:10 christos Exp $");
+__RCSID("$NetBSD: fvwrite.c,v 1.29 2021/07/19 10:00:32 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: fvwrite.c,v 1.28 2021/07/16 12:34:10 christos Exp $");
 #include "fvwrite.h"
 
 static int
-flush_adj(FILE *fp, struct __suio *uio, struct __siov *iov, ssize_t w)
+flush_adj(FILE *fp, struct __suio *uio, ssize_t w)
 {
 	int rc;
 
@@ -74,7 +74,6 @@ flush_adj(FILE *fp, struct __suio *uio, struct __siov *iov, ssize_t w)
 
 		/* adjust amt. written */
 		uio->uio_resid -= i;
-		iov->iov_len -= i;
 	} else {
 		/* only old stuff was written */
 
@@ -136,7 +135,7 @@ __sfvwrite(FILE *fp, struct __suio *uio)
 	if (w <= 0) \
 		goto err
 #define FLUSH(nw) \
-	if (flush_adj(fp, uio, iov - 1, nw)) \
+	if (flush_adj(fp, uio, nw)) \
 		goto err
 
 	if (fp->_flags & __SNBF) {
