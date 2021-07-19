@@ -38,7 +38,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/contrib/ena-com/ena_plat.h 333453 2018-05-10 09:25:51Z mw $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ena_plat.h,v 1.6 2020/04/16 23:29:53 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ena_plat.h,v 1.7 2021/07/19 21:16:33 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -312,9 +312,11 @@ int	ena_dma_alloc(device_t dmadev, bus_size_t size, ena_mem_handle_t *dma,
 #define ENA_MEM_FREE_COHERENT(dmadev, size, virt, phys, dma)		\
 	do {								\
 		(void)size;						\
+		size_t mapsize = (dma).map->dm_mapsize;			\
 		bus_dmamap_unload((dma).tag, (dma).map);		\
+		bus_dmamem_unmap((dma).tag, (dma).vaddr, mapsize);	\
 		bus_dmamem_free((dma).tag, &(dma).seg, (dma).nseg);	\
-		bus_dma_tag_destroy((dma).tag);	/* XXX remove */	\
+		bus_dmamap_destroy((dma).tag, (dma).map);		\
 		(dma).tag = NULL;					\
 		(virt) = NULL;						\
 	} while (0)

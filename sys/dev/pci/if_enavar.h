@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enavar.h,v 1.7 2018/12/23 12:32:33 jmcneill Exp $	*/
+/*	$NetBSD: if_enavar.h,v 1.8 2021/07/19 21:16:33 jmcneill Exp $	*/
 
 /*-
  * BSD LICENSE
@@ -37,6 +37,8 @@
 #define ENA_H
 
 #include <sys/types.h>
+#include <sys/atomic.h>
+#include <sys/pcq.h>
 
 #include "external/bsd/ena-com/ena_com.h"
 #include "external/bsd/ena-com/ena_eth_com.h"
@@ -147,6 +149,29 @@
 #define	PCI_DEV_ID_ENA_VF	0xec20
 #define	PCI_DEV_ID_ENA_LLQ_VF	0xec21
 
+/*
+ * Flags indicating current ENA driver state
+ */
+enum ena_flags_t {
+	ENA_FLAG_DEVICE_RUNNING,
+	ENA_FLAG_DEV_UP,
+	ENA_FLAG_LINK_UP,
+	ENA_FLAG_MSIX_ENABLED,
+	ENA_FLAG_TRIGGER_RESET,
+	ENA_FLAG_ONGOING_RESET,
+	ENA_FLAG_DEV_UP_BEFORE_RESET,
+	ENA_FLAG_RSS_ACTIVE,
+	ENA_FLAGS_NUMBER = ENA_FLAG_RSS_ACTIVE
+};
+
+#define ENA_FLAG_BITMASK(bit)	(~(uint32_t)__BIT(bit))
+#define ENA_FLAG_ZERO(adapter)	(adapter)->flags = 0;
+#define ENA_FLAG_ISSET(bit, adapter)	((adapter)->flags & __BIT(bit))
+#define ENA_FLAG_SET_ATOMIC(bit, adapter)	\
+	atomic_or_32(&(adapter)->flags, __BIT(bit))
+#define ENA_FLAG_CLEAR_ATOMIC(bit, adapter)	\
+	atomic_and_32(&(adapter)->flags, ENA_FLAG_BITMASK(bit))
+
 typedef __int64_t sbintime_t;
 
 struct msix_entry {
@@ -201,6 +226,7 @@ struct ena_stats_tx {
 	struct evcnt bad_req_id;
 	struct evcnt collapse;
 	struct evcnt collapse_err;
+	struct evcnt pcq_drops;
 };
 
 struct ena_stats_rx {
@@ -209,7 +235,6 @@ struct ena_stats_rx {
 	struct evcnt bytes;
 	struct evcnt refil_partial;
 	struct evcnt bad_csum;
-	struct evcnt mjum_alloc_fail;
 	struct evcnt mbuf_alloc_fail;
 	struct evcnt dma_mapping_err;
 	struct evcnt bad_desc_num;
@@ -217,6 +242,22 @@ struct ena_stats_rx {
 	struct evcnt empty_rx_ring;
 };
 
+/*
+ * Locking notes:
+ * + For TX, a field in ena_ring is protected by ring_mtx (a spin mutex).
+ *   - protect them only when I/F is up.
+ *   - when I/F is down or attaching, detaching, no need to protect them.
+ * + For RX, a field "stopping" is protected by ring_mtx (a spin mutex).
+ *   - other fields in ena_ring are not protected.
+ * + a fields in ena_adapter is protected by global_mtx (a adaptive mutex).
+ *
+ * + a field marked "stable" is unlocked.
+ * + a field marked "atomic" is unlocked,
+ *   but must use atomic ops to read/write.
+ *
+ * Lock order:
+ * + global_mtx -> ring_mtx
+ */
 struct ena_ring {
 	/* Holds the empty requests for TX/RX out of order completions */
 	union {
@@ -258,7 +299,7 @@ struct ena_ring {
 	};
 	int ring_size; /* number of tx/rx_buffer_info's entries */
 
-	struct buf_ring *br; /* only for TX */
+	pcq_t *br; /* only for TX */
 
 	kmutex_t ring_mtx;
 	char mtx_name[16];
@@ -269,11 +310,12 @@ struct ena_ring {
 			struct workqueue *enqueue_tq;
 		};
 		struct {
-			struct work cmpl_task;
-			struct workqueue *cmpl_tq;
+			struct work cleanup_task;
+			struct workqueue *cleanup_tq;
 		};
 	};
-	u_int task_pending;
+	u_int task_pending; /* atomic */
+	bool stopping;
 
 	union {
 		struct ena_stats_tx tx_stats;
@@ -314,7 +356,6 @@ struct ena_adapter {
 
 	/* OS resources */
 	kmutex_t global_mtx;
-	krwlock_t ioctl_sx;
 
 	void *sc_ihs[ENA_MAX_MSIX_VEC(ENA_MAX_NUM_IO_QUEUES)];
 	pci_intr_handle_t *sc_intrs;
@@ -324,6 +365,8 @@ struct ena_adapter {
 	/* Registers */
 	bus_space_handle_t sc_bhandle;
 	bus_space_tag_t	sc_btag;
+	bus_addr_t sc_memaddr;
+	bus_size_t sc_mapsize;
 
 	/* DMA tag used throughout the driver adapter for Tx and Rx */
 	bus_dma_tag_t sc_dmat;
@@ -349,14 +392,11 @@ struct ena_adapter {
 	uint8_t mac_addr[ETHER_ADDR_LEN];
 	/* mdio and phy*/
 
-	bool link_status;
-	bool trigger_reset;
-	bool up;
-	bool running;
+	uint32_t flags; /* atomic */
 
 	/* Queue will represent one TX and one RX ring */
 	struct ena_que que[ENA_MAX_NUM_IO_QUEUES]
-	    __aligned(CACHE_LINE_SIZE);
+	    __aligned(CACHE_LINE_SIZE); /* stable */
 
 	/* TX */
 	struct ena_ring tx_ring[ENA_MAX_NUM_IO_QUEUES]
@@ -388,6 +428,12 @@ struct ena_adapter {
 #define	ENA_RING_MTX_LOCK(_ring)	mutex_enter(&(_ring)->ring_mtx)
 #define	ENA_RING_MTX_TRYLOCK(_ring)	mutex_tryenter(&(_ring)->ring_mtx)
 #define	ENA_RING_MTX_UNLOCK(_ring)	mutex_exit(&(_ring)->ring_mtx)
+#define	ENA_RING_MTX_OWNED(_ring)	mutex_owned(&(_ring)->ring_mtx)
+
+#define	ENA_CORE_MTX_LOCK(_adapter)		mutex_enter(&(_adapter)->global_mtx)
+#define	ENA_CORE_MTX_TRYLOCK(_adapter)	mutex_tryenter(&(_adapter)->global_mtx)
+#define	ENA_CORE_MTX_UNLOCK(_adapter)	mutex_exit(&(_adapter)->global_mtx)
+#define	ENA_CORE_MTX_OWNED(_adapter)	mutex_owned(&(_adapter)->global_mtx)
 
 static inline int ena_mbuf_count(struct mbuf *mbuf)
 {
