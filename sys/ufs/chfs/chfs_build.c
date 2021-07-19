@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_build.c,v 1.5 2012/10/19 12:44:39 ttoth Exp $	*/
+/*	$NetBSD: chfs_build.c,v 1.6 2021/07/19 21:04:39 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -252,8 +252,10 @@ chfs_build_filesystem(struct chfs_mount *chmp)
 				if (chmp->chm_nextblock) {
 					err = chfs_close_eraseblock(chmp,
 					    chmp->chm_nextblock);
-					if (err)
+					if (err) {
+						mutex_exit(&chmp->chm_lock_mountfields);
 						return err;
+					}
 				}
 				chmp->chm_nextblock = &chmp->chm_blocks[i];
 			} else {
@@ -261,8 +263,10 @@ chfs_build_filesystem(struct chfs_mount *chmp)
 				 * dirty and put it on a list */
 				err = chfs_close_eraseblock(chmp,
 				    &chmp->chm_blocks[i]);
-				if (err)
+				if (err) {
+					mutex_exit(&chmp->chm_lock_mountfields);
 					return err;
+				}
 			}
 			break;
 		case CHFS_BLK_STATE_ALLDIRTY:
