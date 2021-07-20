@@ -1,7 +1,7 @@
-/* $NetBSD: trap.c,v 1.136 2021/07/19 22:21:36 thorpej Exp $ */
+/* $NetBSD: trap.c,v 1.137 2021/07/20 01:56:06 thorpej Exp $ */
 
 /*-
- * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2001, 2021 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -95,7 +95,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.136 2021/07/19 22:21:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.137 2021/07/20 01:56:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,6 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.136 2021/07/19 22:21:36 thorpej Exp $");
 #include <sys/kmem.h>
 #include <sys/cpu.h>
 #include <sys/atomic.h>
+#include <sys/bitops.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -980,6 +981,17 @@ EVCNT_ATTACH_STATIC(emul_bwx_stw);
 EVCNT_ATTACH_STATIC(emul_bwx_sextb);
 EVCNT_ATTACH_STATIC(emul_bwx_sextw);
 
+static struct evcnt emul_cix_ctpop =
+    EVCNT_INITIALIZER(EVCNT_TYPE_TRAP, NULL, "emul cix", "ctpop");
+static struct evcnt emul_cix_ctlz =
+    EVCNT_INITIALIZER(EVCNT_TYPE_TRAP, NULL, "emul cix", "ctlz");
+static struct evcnt emul_cix_cttz =
+    EVCNT_INITIALIZER(EVCNT_TYPE_TRAP, NULL, "emul cix", "cttz");
+
+EVCNT_ATTACH_STATIC(emul_cix_ctpop);
+EVCNT_ATTACH_STATIC(emul_cix_ctlz);
+EVCNT_ATTACH_STATIC(emul_cix_cttz);
+
 #define	EMUL_COUNT(ev)	atomic_inc_64(&(ev).ev_count)
 
 /*
@@ -1129,6 +1141,60 @@ handle_opdec(struct lwp *l, u_long *ucodep)
 				*regptr = w;
 			break;
 		}
+		if (inst.operate_reg_format.function == op_ctpop &&
+		    inst.operate_reg_format.zero == 0 &&
+		    inst.operate_reg_format.sbz == 0 &&
+		    inst.operate_reg_format.ra == 31) {
+			unsigned long val;
+			unsigned int res;
+
+			EMUL_COUNT(emul_cix_ctpop);
+			regptr = irp(l, inst.operate_reg_format.rb);
+			val = (regptr != NULL) ? *regptr : 0;
+			res = popcount64(val);
+			regptr = irp(l, inst.operate_reg_format.rc);
+			if (regptr != NULL) {
+				*regptr = res;
+			}
+			break;
+		}
+		if (inst.operate_reg_format.function == op_ctlz &&
+		    inst.operate_reg_format.zero == 0 &&
+		    inst.operate_reg_format.sbz == 0 &&
+		    inst.operate_reg_format.ra == 31) {
+			unsigned long val;
+			unsigned int res;
+
+			EMUL_COUNT(emul_cix_ctlz);
+			regptr = irp(l, inst.operate_reg_format.rb);
+			val = (regptr != NULL) ? *regptr : 0;
+			res = fls64(val);
+			res = (res == 0) ? 64 : 64 - res;
+			regptr = irp(l, inst.operate_reg_format.rc);
+			if (regptr != NULL) {
+				*regptr = res;
+			}
+			break;
+		}
+		if (inst.operate_reg_format.function == op_cttz &&
+		    inst.operate_reg_format.zero == 0 &&
+		    inst.operate_reg_format.sbz == 0 &&
+		    inst.operate_reg_format.ra == 31) {
+			unsigned long val;
+			unsigned int res;
+
+			EMUL_COUNT(emul_cix_cttz);
+			regptr = irp(l, inst.operate_reg_format.rb);
+			val = (regptr != NULL) ? *regptr : 0;
+			res = ffs64(val);
+			res = (res == 0) ? 64 : res - 1;
+			regptr = irp(l, inst.operate_reg_format.rc);
+			if (regptr != NULL) {
+				*regptr = res;
+			}
+			break;
+		}
+
 		goto sigill;
 
 	default:
