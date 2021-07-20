@@ -1,4 +1,4 @@
-# $NetBSD: ec2_init,v 1.3 2021/07/15 17:20:25 rhialto Exp $
+# $NetBSD: ec2_init,v 1.4 2021/07/20 19:27:51 rhialto Exp $
 
 is_ec2() {
 	val=NO
@@ -23,4 +23,9 @@ is_ec2() {
 	printf $val
 }
 
-ec2_init=$(is_ec2)
+# Don't override /etc/rc.conf
+if [ -z "$ec2_init" ]
+then
+	ec2_init=$(is_ec2)
+fi
+
