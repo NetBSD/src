@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.113 2021/07/04 07:09:39 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.114 2021/07/20 19:35:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.113 2021/07/04 07:09:39 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.114 2021/07/20 19:35:53 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1096,7 +1096,7 @@ do_return(tnode_t *tn)
 		ln->tn_lvalue = true;
 		ln->tn_sym = funcsym;		/* better than nothing */
 
-		tn = build(RETURN, ln, tn);
+		tn = build_binary(ln, RETURN, tn);
 
 		if (tn != NULL) {
 			rn = tn->tn_right;

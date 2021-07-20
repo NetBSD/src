@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.328 2021/07/15 20:05:49 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.329 2021/07/20 19:35:53 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.328 2021/07/15 20:05:49 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.329 2021/07/20 19:35:53 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -470,7 +470,7 @@ generic_association:
 postfix_expression:
 	  primary_expression
 	| postfix_expression T_LBRACK expression T_RBRACK {
-		$$ = build(INDIR, build(PLUS, $1, $3), NULL);
+		$$ = build_unary(INDIR, build_binary($1, PLUS, $3));
 	  }
 	| postfix_expression T_LPAREN T_RPAREN {
 		$$ = new_function_call_node($1, NULL);
@@ -482,7 +482,7 @@ postfix_expression:
 		$$ = build_member_access($1, $2, $3);
 	  }
 	| postfix_expression T_INCDEC {
-		$$ = build($2 == INC ? INCAFT : DECAFT, $1, NULL);
+		$$ = build_unary($2 == INC ? INCAFT : DECAFT, $1);
 	  }
 	| T_LPAREN type_name T_RPAREN {	/* C99 6.5.2.5 "Compound literals" */
 		sym_t *tmp = mktempsym($2);
@@ -575,32 +575,32 @@ argument_expression_list:
 unary_expression:
 	  postfix_expression
 	| T_INCDEC unary_expression {
-		$$ = build($1 == INC ? INCBEF : DECBEF, $2, NULL);
+		$$ = build_unary($1 == INC ? INCBEF : DECBEF, $2);
 	  }
 	| T_AMPER cast_expression {
-		$$ = build(ADDR, $2, NULL);
+		$$ = build_unary(ADDR, $2);
 	  }
 	| T_ASTERISK cast_expression {
-		$$ = build(INDIR, $2, NULL);
+		$$ = build_unary(INDIR, $2);
 	  }
 	| T_ADDITIVE cast_expression {
 		if (tflag && $1 == PLUS) {
 			/* unary + is illegal in traditional C */
 			warning(100);
 		}
-		$$ = build($1 == PLUS ? UPLUS : UMINUS, $2, NULL);
+		$$ = build_unary($1 == PLUS ? UPLUS : UMINUS, $2);
 	  }
 	| T_COMPLEMENT cast_expression {
-		$$ = build(COMPL, $2, NULL);
+		$$ = build_unary(COMPL, $2);
 	  }
 	| T_LOGNOT cast_expression {
-		$$ = build(NOT, $2, NULL);
+		$$ = build_unary(NOT, $2);
 	  }
 	| T_REAL cast_expression {	/* GCC c_parser_unary_expression */
-		$$ = build(REAL, $2, NULL);
+		$$ = build_unary(REAL, $2);
 	  }
 	| T_IMAG cast_expression {	/* GCC c_parser_unary_expression */
-		$$ = build(IMAG, $2, NULL);
+		$$ = build_unary(IMAG, $2);
 	  }
 	| T_EXTENSION cast_expression {	/* GCC c_parser_unary_expression */
 		$$ = $2;
@@ -649,41 +649,41 @@ expression_opt:
 /* K&R ???, C90 ???, C99 6.5.5 to 6.5.15, C11 6.5.5 to 6.5.15 */
 conditional_expression:
 	  conditional_expression T_ASTERISK conditional_expression {
-		$$ = build(MULT, $1, $3);
+		$$ = build_binary($1, MULT, $3);
 	  }
 	| conditional_expression T_MULTIPLICATIVE conditional_expression {
-		$$ = build($2, $1, $3);
+		$$ = build_binary($1, $2, $3);
 	  }
 	| conditional_expression T_ADDITIVE conditional_expression {
-		$$ = build($2, $1, $3);
+		$$ = build_binary($1, $2, $3);
 	  }
 	| conditional_expression T_SHIFT conditional_expression {
-		$$ = build($2, $1, $3);
+		$$ = build_binary($1, $2, $3);
 	  }
 	| conditional_expression T_RELATIONAL conditional_expression {
-		$$ = build($2, $1, $3);
+		$$ = build_binary($1, $2, $3);
 	  }
 	| conditional_expression T_EQUALITY conditional_expression {
-		$$ = build($2, $1, $3);
+		$$ = build_binary($1, $2, $3);
 	  }
 	| conditional_expression T_AMPER conditional_expression {
-		$$ = build(BITAND, $1, $3);
+		$$ = build_binary($1, BITAND, $3);
 	  }
 	| conditional_expression T_BITXOR conditional_expression {
-		$$ = build(BITXOR, $1, $3);
+		$$ = build_binary($1, BITXOR, $3);
 	  }
 	| conditional_expression T_BITOR conditional_expression {
-		$$ = build(BITOR, $1, $3);
+		$$ = build_binary($1, BITOR, $3);
 	  }
 	| conditional_expression T_LOGAND conditional_expression {
-		$$ = build(LOGAND, $1, $3);
+		$$ = build_binary($1, LOGAND, $3);
 	  }
 	| conditional_expression T_LOGOR conditional_expression {
-		$$ = build(LOGOR, $1, $3);
+		$$ = build_binary($1, LOGOR, $3);
 	  }
 	| conditional_expression T_QUEST conditional_expression
 	    T_COLON conditional_expression {
-		$$ = build(QUEST, $1, build(COLON, $3, $5));
+		$$ = build_binary($1, QUEST, build_binary($3, COLON, $5));
 	  }
 	| cast_expression;
 
@@ -691,10 +691,10 @@ conditional_expression:
 assignment_expression:
 	  conditional_expression
 	| assignment_expression T_ASSIGN conditional_expression {
-		$$ = build(ASSIGN, $1, $3);
+		$$ = build_binary($1, ASSIGN, $3);
 	  }
 	| assignment_expression T_OPASSIGN conditional_expression {
-		$$ = build($2, $1, $3);
+		$$ = build_binary($1, $2, $3);
 	  }
 	;
 
@@ -702,7 +702,7 @@ assignment_expression:
 expression:
 	  assignment_expression
 	| expression T_COMMA assignment_expression {
-		$$ = build(COMMA, $1, $3);
+		$$ = build_binary($1, COMMA, $3);
 	  }
 	;
 

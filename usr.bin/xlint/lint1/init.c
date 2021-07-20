@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.201 2021/07/02 22:46:43 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.202 2021/07/20 19:35:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.201 2021/07/02 22:46:43 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.202 2021/07/20 19:35:53 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -903,7 +903,7 @@ initialization_expr_using_assign(struct initialization *in, tnode_t *rn)
 	ln->tn_type = expr_dup_type(ln->tn_type);
 	ln->tn_type->t_const = false;
 
-	tn = build(ASSIGN, ln, rn);
+	tn = build_binary(ln, ASSIGN, rn);
 	expr(tn, false, false, false, false);
 
 	return true;
