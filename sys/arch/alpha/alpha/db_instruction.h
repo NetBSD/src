@@ -1,4 +1,4 @@
-/* $NetBSD: db_instruction.h,v 1.12 2021/06/21 02:10:46 thorpej Exp $ */
+/* $NetBSD: db_instruction.h,v 1.13 2021/07/20 02:42:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -445,6 +445,11 @@ typedef union {
 #define	op_cvtql_v	0x130
 #define	op_cvtql_sv	0x530
 
+		/* FIX FLOAT, "function" opcodes (bits 5..11)  */
+
+#define	op_itofs	0x004
+#define	op_itoff	0x014
+#define	op_itoft	0x024
 
 		/* ieee FLOAT, "function" opcodes (bits 5..11)  */
 
