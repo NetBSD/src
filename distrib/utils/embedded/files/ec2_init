@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ec2_init,v 1.3 2021/07/15 19:03:17 rhialto Exp $
+# $NetBSD: ec2_init,v 1.4 2021/07/20 19:31:23 rhialto Exp $
 #
 # PROVIDE: ec2_init
 # REQUIRE: NETWORKING
@@ -28,6 +28,11 @@ ec2_newuser()
 	useradd -g users -G wheel,operator -m "${EC2_USER}"
 }
 
+extract_random_seed()
+{
+	sed -n -e '/random_seed/s/.*"random_seed": *"\([A-Za-z0-9+/=]*\)".*/\1/p'
+}
+
 ec2_init()
 {
 	(
@@ -38,7 +43,7 @@ ec2_init()
 	try=0
 	while [ $((try++)) -lt 20 ]
 	do
-		HOSTNAME=$(ftp -o - -q 1 "${METADATA_URL}${HOSTNAME_URL}")
+		HOSTNAME=$(ftp -o - -q 2 "${METADATA_URL}${HOSTNAME_URL}")
 		if [ -n "$HOSTNAME" ]; then
 			echo "Setting EC2 hostname: ${HOSTNAME}"
 			echo "$HOSTNAME" > /etc/myname
@@ -53,7 +58,7 @@ ec2_init()
 	id "${EC2_USER}" >/dev/null 2>&1 || ec2_newuser
 
 	# fetch the public key from Amazon Web Services
-	EC2_SSH_KEY=$(ftp -o - -q 1 "${METADATA_URL}${SSH_KEY_URL}")
+	EC2_SSH_KEY=$(ftp -o - -q 2 "${METADATA_URL}${SSH_KEY_URL}")
 
 	if [ -n "$EC2_SSH_KEY" ]; then
 		# A key pair is associated with this instance, add it
@@ -71,10 +76,11 @@ ec2_init()
 		fi
 	fi
 
-	# May contain a "random_seed". Everything else doesn't matter.
-	OS_METADATA="$(ftp -o - -q 1 ${OS_METADATA_URL})"
+	# May contain a "random_seed".
+	OS_METADATA="$(ftp -o - -q 2 ${OS_METADATA_URL})"
 	if echo "$OS_METADATA" | grep -q random_seed; then
-		echo "$OS_METADATA" >> /dev/urandom
+		echo "$OS_METADATA" | extract_random_seed |
+		    base64 -di >> /dev/urandom
 	fi
 	)
 }
