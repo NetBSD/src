@@ -1,4 +1,4 @@
-/* $NetBSD: alpha.h,v 1.45 2021/05/05 15:36:17 thorpej Exp $ */
+/* $NetBSD: alpha.h,v 1.46 2021/07/20 05:43:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,18 +41,26 @@
 #ifndef _ALPHA_H_
 #define _ALPHA_H_
 
+typedef union alpha_f_float {
+	uint32_t i;
+	uint32_t frac_hi:  7,
+		     exp:  8,
+		    sign:  1,
+		 frac_lo: 16;
+} f_float;
+
 typedef union alpha_s_float {
 	uint32_t i;
 	uint32_t frac: 23,
-		  exp:   8,
-		  sign:  1;
+		  exp:  8,
+		 sign:  1;
 } s_float;
 
 typedef union alpha_t_float {
 	uint64_t i;
 	uint64_t frac: 52,
-		  exp:  11,
-		  sign:  1;
+		  exp: 11,
+		 sign:  1;
 } t_float;
 
 #ifdef _KERNEL
@@ -73,6 +81,7 @@ extern u_long cpu_implver;		/* from IMPLVER instruction */
 extern u_long cpu_amask;		/* from AMASK instruction */
 extern int bootdev_debug;
 extern int alpha_fp_sync_complete;
+extern int alpha_fp_complete_debug;
 extern int alpha_unaligned_print, alpha_unaligned_fix, alpha_unaligned_sigbus;
 extern void (*alpha_delay_fn)(unsigned long);
 
