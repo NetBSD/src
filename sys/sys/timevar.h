@@ -1,4 +1,4 @@
-/*	$NetBSD: timevar.h,v 1.47 2021/07/20 08:36:11 skrll Exp $	*/
+/*	$NetBSD: timevar.h,v 1.48 2021/07/20 08:37:20 skrll Exp $	*/
 
 /*
  *  Copyright (c) 2005, 2008, 2020 The NetBSD Foundation, Inc.
@@ -64,7 +64,6 @@
 #include <sys/queue.h>
 #include <sys/signal.h>
 #include <sys/systm.h>
-#include <sys/mutex.h>
 
 struct itimer;
 LIST_HEAD(itlist, itimer);
@@ -142,8 +141,6 @@ struct ptimers {
 	struct itlist pts_prof;
 	struct itimer *pts_timers[TIMER_MAX];
 };
-
-extern kmutex_t	itimer_mutex;	/* XXX */
 
 /*
  * Functions for looking at our clock: [get]{bin,nano,micro}[up]time()
