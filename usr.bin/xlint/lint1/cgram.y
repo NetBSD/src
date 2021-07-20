@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.329 2021/07/20 19:35:53 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.330 2021/07/20 19:44:36 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.329 2021/07/20 19:35:53 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.330 2021/07/20 19:44:36 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -412,13 +412,13 @@ primary_expression:
 		/* XXX really necessary? */
 		if (yychar < 0)
 			yychar = yylex();
-		$$ = new_name_node(getsym($1), yychar);
+		$$ = build_name(getsym($1), yychar);
 	  }
 	| T_CON {
-		$$ = expr_new_constant(gettyp($1->v_tspec), $1);
+		$$ = build_constant(gettyp($1->v_tspec), $1);
 	  }
 	| string {
-		$$ = new_string_node($1);
+		$$ = build_string($1);
 	  }
 	| T_LPAREN expression T_RPAREN {
 		if ($2 != NULL)
@@ -473,10 +473,10 @@ postfix_expression:
 		$$ = build_unary(INDIR, build_binary($1, PLUS, $3));
 	  }
 	| postfix_expression T_LPAREN T_RPAREN {
-		$$ = new_function_call_node($1, NULL);
+		$$ = build_function_call($1, NULL);
 	  }
 	| postfix_expression T_LPAREN argument_expression_list T_RPAREN {
-		$$ = new_function_call_node($1, $3);
+		$$ = build_function_call($1, $3);
 	  }
 	| postfix_expression point_or_arrow T_NAME {
 		$$ = build_member_access($1, $2, $3);
@@ -492,7 +492,7 @@ postfix_expression:
 		if (!Sflag)
 			 /* compound literals are a C9X/GCC extension */
 			 gnuism(319);
-		$$ = new_name_node(*current_initsym(), 0);
+		$$ = build_name(*current_initsym(), 0);
 		end_initialization();
 	  }
 	| T_LPAREN compound_statement_lbrace gcc_statement_expr_list {
@@ -504,7 +504,7 @@ postfix_expression:
 		/* ({ }) is a GCC extension */
 		gnuism(320);
 	  } compound_statement_rbrace T_RPAREN {
-		$$ = new_name_node(*current_initsym(), 0);
+		$$ = build_name(*current_initsym(), 0);
 		end_initialization();
 	  }
 	;
@@ -564,10 +564,10 @@ point_or_arrow:			/* helper for 'postfix_expression' */
 /* K&R 7.1, C90 ???, C99 6.5.2, C11 6.5.2 */
 argument_expression_list:
 	  assignment_expression {
-		$$ = new_function_argument_node(NULL, $1);
+		$$ = build_function_argument(NULL, $1);
 	  }
 	| argument_expression_list T_COMMA assignment_expression {
-		$$ = new_function_argument_node($1, $3);
+		$$ = build_function_argument($1, $3);
 	  }
 	;
 
