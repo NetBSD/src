@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.57 2021/01/31 22:45:47 rillig Exp $	*/
+/*	$NetBSD: util.c,v 1.58 2021/07/20 16:40:12 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -264,11 +264,14 @@ file_mode_match(const char *path, unsigned int mode)
 uint64_t
 get_ramsize(void)
 {
-	uint64_t ramsize;
-	size_t len = sizeof ramsize;
-	int mib[2] = {CTL_HW, HW_PHYSMEM64};
+	static uint64_t ramsize;
 
-	sysctl(mib, 2, &ramsize, &len, NULL, 0);
+	if (ramsize == 0) {
+		size_t len = sizeof ramsize;
+		int mib[2] = {CTL_HW, HW_PHYSMEM64};
+
+		sysctl(mib, 2, &ramsize, &len, NULL, 0);
+	}
 
 	/* Find out how many Megs ... round up. */
 	return (ramsize + MEG - 1) / MEG;
