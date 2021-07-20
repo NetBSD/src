@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.317 2021/07/20 19:35:53 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.318 2021/07/20 19:44:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.317 2021/07/20 19:35:53 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.318 2021/07/20 19:44:36 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -50,7 +50,7 @@ __RCSID("$NetBSD: tree.c,v 1.317 2021/07/20 19:35:53 rillig Exp $");
 #include "lint1.h"
 #include "cgram.h"
 
-static	tnode_t	*expr_new_integer_constant(tspec_t, int64_t);
+static	tnode_t	*build_integer_constant(tspec_t, int64_t);
 static	void	check_pointer_comparison(op_t,
 					 const tnode_t *, const tnode_t *);
 static	bool	check_assign_types_compatible(op_t, int,
@@ -174,7 +174,7 @@ expr_derive_type(type_t *tp, tspec_t t)
  * Create a node for a constant.
  */
 tnode_t *
-expr_new_constant(type_t *tp, val_t *v)
+build_constant(type_t *tp, val_t *v)
 {
 	tnode_t	*n;
 
@@ -190,7 +190,7 @@ expr_new_constant(type_t *tp, val_t *v)
 }
 
 static tnode_t *
-expr_new_integer_constant(tspec_t t, int64_t q)
+build_integer_constant(tspec_t t, int64_t q)
 {
 	tnode_t	*n;
 
@@ -245,7 +245,7 @@ is_gcc_builtin(const char *name)
  * follow_token is the token which follows the name.
  */
 tnode_t *
-new_name_node(sym_t *sym, int follow_token)
+build_name(sym_t *sym, int follow_token)
 {
 	tnode_t	*n;
 
@@ -295,7 +295,7 @@ new_name_node(sym_t *sym, int follow_token)
 }
 
 tnode_t *
-new_string_node(strg_t *strg)
+build_string(strg_t *strg)
 {
 	size_t	len;
 	tnode_t	*n;
@@ -706,7 +706,7 @@ build_member_access(tnode_t *ln, op_t op, sbuf_t *member)
 		ln = cconv(ln);
 	}
 	msym = struct_or_union_member(ln, op, getsym(member));
-	return build_binary(ln, op, new_name_node(msym, 0));
+	return build_binary(ln, op, build_name(msym, 0));
 }
 
 /*
@@ -2590,7 +2590,7 @@ build_struct_access(op_t op, tnode_t *ln, tnode_t *rn)
 		ln = convert(NOOP, 0, expr_derive_type(gettyp(VOID), PTR), ln);
 	}
 
-	ctn = expr_new_integer_constant(PTRDIFF_TSPEC,
+	ctn = build_integer_constant(PTRDIFF_TSPEC,
 	    rn->tn_sym->s_value.v_quad / CHAR_SIZE);
 
 	ntn = new_tnode(PLUS, expr_derive_type(rn->tn_type, PTR), ln, ctn);
@@ -2622,7 +2622,7 @@ build_prepost_incdec(op_t op, tnode_t *ln)
 	if (ln->tn_type->t_tspec == PTR) {
 		cn = plength(ln->tn_type);
 	} else {
-		cn = expr_new_integer_constant(INT, (int64_t)1);
+		cn = build_integer_constant(INT, (int64_t)1);
 	}
 	ntn = new_tnode(op, ln->tn_type, ln, cn);
 
@@ -2651,15 +2651,15 @@ build_real_imag(op_t op, tnode_t *ln)
 	switch (ln->tn_type->t_tspec) {
 	case LCOMPLEX:
 		/* XXX: integer and LDOUBLE don't match. */
-		cn = expr_new_integer_constant(LDOUBLE, (int64_t)1);
+		cn = build_integer_constant(LDOUBLE, (int64_t)1);
 		break;
 	case DCOMPLEX:
 		/* XXX: integer and DOUBLE don't match. */
-		cn = expr_new_integer_constant(DOUBLE, (int64_t)1);
+		cn = build_integer_constant(DOUBLE, (int64_t)1);
 		break;
 	case FCOMPLEX:
 		/* XXX: integer and FLOAT don't match. */
-		cn = expr_new_integer_constant(FLOAT, (int64_t)1);
+		cn = build_integer_constant(FLOAT, (int64_t)1);
 		break;
 	default:
 		/* __%s__ is illegal for type %s */
@@ -2947,7 +2947,7 @@ plength(type_t *tp)
 	if (elsz == 0)
 		elsz = CHAR_SIZE;
 
-	return expr_new_integer_constant(PTRDIFF_TSPEC,
+	return build_integer_constant(PTRDIFF_TSPEC,
 	    (int64_t)(elem * elsz / CHAR_SIZE));
 }
 
@@ -3097,7 +3097,7 @@ fold(tnode_t *tn)
 
 	v->v_quad = convert_integer(q, t, -1);
 
-	cn = expr_new_constant(tn->tn_type, v);
+	cn = build_constant(tn->tn_type, v);
 	if (tn->tn_left->tn_system_dependent)
 		cn->tn_system_dependent = true;
 	if (modtab[tn->tn_op].m_binary && tn->tn_right->tn_system_dependent)
@@ -3140,7 +3140,7 @@ fold_test(tnode_t *tn)
 		lint_assert(/*CONSTCOND*/false);
 	}
 
-	return expr_new_constant(tn->tn_type, v);
+	return build_constant(tn->tn_type, v);
 }
 
 /*
@@ -3237,7 +3237,7 @@ fold_float(tnode_t *tn)
 	    fpe = 0;
 	}
 
-	return expr_new_constant(tn->tn_type, v);
+	return build_constant(tn->tn_type, v);
 }
 
 
@@ -3248,7 +3248,7 @@ tnode_t *
 build_sizeof(const type_t *tp)
 {
 	int64_t size_in_bytes = type_size_in_bits(tp) / CHAR_SIZE;
-	tnode_t *tn = expr_new_integer_constant(SIZEOF_TSPEC, size_in_bytes);
+	tnode_t *tn = build_integer_constant(SIZEOF_TSPEC, size_in_bytes);
 	tn->tn_system_dependent = true;
 	return tn;
 }
@@ -3266,7 +3266,7 @@ build_offsetof(const type_t *tp, const sym_t *sym)
 
 	// XXX: wrong size, no checking for sym fixme
 	int64_t offset_in_bytes = type_size_in_bits(tp) / CHAR_SIZE;
-	tnode_t *tn = expr_new_integer_constant(SIZEOF_TSPEC, offset_in_bytes);
+	tnode_t *tn = build_integer_constant(SIZEOF_TSPEC, offset_in_bytes);
 	tn->tn_system_dependent = true;
 	return tn;
 }
@@ -3368,7 +3368,7 @@ build_alignof(const type_t *tp)
 		break;
 	}
 
-	return expr_new_integer_constant(SIZEOF_TSPEC,
+	return build_integer_constant(SIZEOF_TSPEC,
 	    (int64_t)alignment_in_bits(tp) / CHAR_SIZE);
 }
 
@@ -3463,11 +3463,11 @@ cast(tnode_t *tn, type_t *tp)
 /*
  * Create the node for a function argument.
  * All necessary conversions and type checks are done in
- * new_function_call_node because new_function_argument_node has no
+ * build_function_call because build_function_argument has no
  * information about expected argument types.
  */
 tnode_t *
-new_function_argument_node(tnode_t *args, tnode_t *arg)
+build_function_argument(tnode_t *args, tnode_t *arg)
 {
 	tnode_t	*ntn;
 
@@ -3477,7 +3477,7 @@ new_function_argument_node(tnode_t *args, tnode_t *arg)
 	 * will not change.
 	 */
 	if (arg == NULL)
-		arg = expr_new_integer_constant(INT, 0);
+		arg = build_integer_constant(INT, 0);
 
 	ntn = new_tnode(PUSH, arg->tn_type, arg, args);
 
@@ -3489,7 +3489,7 @@ new_function_argument_node(tnode_t *args, tnode_t *arg)
  * function arguments and insert conversions, if necessary.
  */
 tnode_t *
-new_function_call_node(tnode_t *func, tnode_t *args)
+build_function_call(tnode_t *func, tnode_t *args)
 {
 	tnode_t	*ntn;
 	op_t	fcop;
