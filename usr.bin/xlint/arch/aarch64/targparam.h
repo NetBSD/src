@@ -1,4 +1,4 @@
-/* $NetBSD: targparam.h,v 1.5 2021/06/27 08:43:46 rillig Exp $ */
+/* $NetBSD: targparam.h,v 1.6 2021/07/20 18:43:06 rillig Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /*
  * Machine-dependent target parameters for lint1.
  */
-#include "schar.h"
+#include "uchar.h"
 #include "lp64.h"
 
 /*
