@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.119 2021/07/20 19:35:53 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.120 2021/07/20 19:44:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -204,9 +204,9 @@ extern	int	to_int_constant(tnode_t *, bool);
 extern	const tnode_t *before_conversion(const tnode_t *);
 extern	type_t	*derive_type(type_t *, tspec_t);
 extern	type_t	*expr_derive_type(type_t *, tspec_t);
-extern	tnode_t	*expr_new_constant(type_t *, val_t *);
-extern	tnode_t	*new_name_node(sym_t *, int);
-extern	tnode_t	*new_string_node(strg_t *);
+extern	tnode_t	*build_constant(type_t *, val_t *);
+extern	tnode_t	*build_name(sym_t *, int);
+extern	tnode_t	*build_string(strg_t *);
 extern	sym_t	*struct_or_union_member(tnode_t *, op_t, sym_t *);
 extern	tnode_t	*build_generic_selection(const tnode_t *,
 		    struct generic_association *);
@@ -224,8 +224,8 @@ extern	tnode_t	*build_sizeof(const type_t *);
 extern	tnode_t	*build_offsetof(const type_t *, const sym_t *);
 extern	tnode_t	*build_alignof(const type_t *);
 extern	tnode_t	*cast(tnode_t *, type_t *);
-extern	tnode_t	*new_function_argument_node(tnode_t *, tnode_t *);
-extern	tnode_t	*new_function_call_node(tnode_t *, tnode_t *);
+extern	tnode_t	*build_function_argument(tnode_t *, tnode_t *);
+extern	tnode_t	*build_function_call(tnode_t *, tnode_t *);
 extern	val_t	*constant(tnode_t *, bool);
 extern	void	expr(tnode_t *, bool, bool, bool, bool);
 extern	void	check_expr_misc(const tnode_t *, bool, bool, bool,
