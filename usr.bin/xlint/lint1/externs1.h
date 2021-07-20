@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.118 2021/07/15 17:03:50 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.119 2021/07/20 19:35:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -211,7 +211,8 @@ extern	sym_t	*struct_or_union_member(tnode_t *, op_t, sym_t *);
 extern	tnode_t	*build_generic_selection(const tnode_t *,
 		    struct generic_association *);
 
-extern	tnode_t	*build(op_t, tnode_t *, tnode_t *);
+extern	tnode_t	*build_binary(tnode_t *, op_t, tnode_t *);
+extern	tnode_t	*build_unary(op_t, tnode_t *);
 extern	tnode_t	*build_member_access(tnode_t *, op_t, sbuf_t *);
 extern	tnode_t	*cconv(tnode_t *);
 extern	bool	is_typeok_bool_operand(const tnode_t *);

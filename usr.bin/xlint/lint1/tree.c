@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.316 2021/07/15 21:22:19 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.317 2021/07/20 19:35:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.316 2021/07/15 21:22:19 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.317 2021/07/20 19:35:53 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -509,7 +509,7 @@ build_generic_selection(const tnode_t *expr,
  * rn	if not NULL, right operand
  */
 tnode_t *
-build(op_t op, tnode_t *ln, tnode_t *rn)
+build_binary(tnode_t *ln, op_t op, tnode_t *rn)
 {
 	const mod_t *mp;
 	tnode_t	*ntn;
@@ -688,6 +688,12 @@ build(op_t op, tnode_t *ln, tnode_t *rn)
 }
 
 tnode_t *
+build_unary(op_t op, tnode_t *tn)
+{
+	return build_binary(tn, op, NULL);
+}
+
+tnode_t *
 build_member_access(tnode_t *ln, op_t op, sbuf_t *member)
 {
 	sym_t	*msym;
@@ -700,7 +706,7 @@ build_member_access(tnode_t *ln, op_t op, sbuf_t *member)
 		ln = cconv(ln);
 	}
 	msym = struct_or_union_member(ln, op, getsym(member));
-	return build(op, ln, new_name_node(msym, 0));
+	return build_binary(ln, op, new_name_node(msym, 0));
 }
 
 /*
@@ -3682,9 +3688,9 @@ is_constcond_false(const tnode_t *tn, tspec_t t)
 }
 
 /*
- * Perform some tests on expressions which can't be done in build() and
- * functions called by build(). These tests must be done here because
- * we need some information about the context in which the operations
+ * Perform some tests on expressions which can't be done in build_binary()
+ * and functions called by build_binary(). These tests must be done here
+ * because we need some information about the context in which the operations
  * are performed.
  * After all tests are performed and dofreeblk is true, expr() frees the
  * memory which is used for the expression.
