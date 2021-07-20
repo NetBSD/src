@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.58 2021/02/13 15:31:35 martin Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.59 2021/07/20 16:41:27 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1153,7 +1153,8 @@ fill_defaults(struct partition_usage_set *wanted, struct disk_partitions *parts,
 			continue;
 		free_space -= wanted->infos[i].size;
 	}
-	if (free_space < 0 && swap < wanted->num) {
+	if (free_space < 0 && swap < wanted->num &&
+	    get_ramsize() > TINY_RAM_SIZE) {
 		/* steel from swap partition */
 		daddr_t d = wanted->infos[swap].size;
 		daddr_t inc = roundup(-free_space, align);
