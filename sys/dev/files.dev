@@ -1,4 +1,4 @@
-#	$NetBSD: files.dev,v 1.6 2020/04/30 03:28:18 riastradh Exp $
+#	$NetBSD: files.dev,v 1.7 2021/07/21 23:16:09 jmcneill Exp $
 
 file	dev/bio.c			bio			needs-flag
 file	dev/ccd.c			ccd
@@ -26,3 +26,4 @@ file	dev/sequencer.c			sequencer		needs-flag
 file	dev/video.c			video			needs-flag
 file	dev/vnd.c			vnd
 file	dev/ipmi.c			ipmi			needs-flag
+file	dev/smbios.c			smbios

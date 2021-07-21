@@ -1,4 +1,4 @@
-/* $NetBSD: platform.c,v 1.16 2018/12/25 16:45:02 mlelstv Exp $ */
+/* $NetBSD: platform.c,v 1.17 2021/07/21 23:16:09 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "isa.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.16 2018/12/25 16:45:02 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.17 2021/07/21 23:16:09 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.16 2018/12/25 16:45:02 mlelstv Exp $"
 #include <dev/isa/isavar.h>
 #endif
 
-#include <arch/x86/include/smbiosvar.h>
+#include <dev/smbiosvar.h>
 
 static int platform_dminode = CTL_EOL;
 
