@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rmclass.c,v 1.25 2021/07/21 06:33:30 ozaki-r Exp $	*/
+/*	$NetBSD: altq_rmclass.c,v 1.26 2021/07/21 06:41:22 ozaki-r Exp $	*/
 /*	$KAME: altq_rmclass.c,v 1.19 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.25 2021/07/21 06:33:30 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.26 2021/07/21 06:41:22 ozaki-r Exp $");
 
 /* #ident "@(#)rm_class.c  1.48     97/12/05 SMI" */
 
@@ -86,7 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.25 2021/07/21 06:33:30 ozaki-r Ex
  * Local routines.
  */
 
-static int	rmc_satisfied(struct rm_class *, struct timeval *);
+static int	rmc_satisfied(struct rm_class *, struct timespec *);
 static void	rmc_wrr_set_weights(struct rm_ifdat *);
 static void	rmc_depth_compute(struct rm_class *);
 static void	rmc_depth_recompute(rm_class_t *);
@@ -99,8 +99,8 @@ static void	_rmc_dropq(rm_class_t *);
 static mbuf_t	*_rmc_getq(rm_class_t *);
 static mbuf_t	*_rmc_pollq(rm_class_t *);
 
-static int	rmc_under_limit(struct rm_class *, struct timeval *);
-static void	rmc_tl_satisfied(struct rm_ifdat *, struct timeval *);
+static int	rmc_under_limit(struct rm_class *, struct timespec *);
+static void	rmc_tl_satisfied(struct rm_ifdat *, struct timespec *);
 static void	rmc_drop_action(struct rm_class *);
 static void	rmc_restart(struct rm_class *);
 static void	rmc_root_overlimit(struct rm_class *, struct rm_class *);
@@ -253,18 +253,18 @@ rmc_newclass(int pri, struct rm_ifdat *ifd, u_long psecPerByte,
 	cl->flags_ = flags;
 
 #if 1 /* minidle is also scaled in ALTQ */
-	cl->minidle_ = (minidle * (int)PSEC_TO_NSEC(psecPerByte)) / 8;
+	cl->minidle_ = ((long)minidle * (long)psecPerByte) / 8;
 	if (cl->minidle_ > 0)
 		cl->minidle_ = 0;
 #else
 	cl->minidle_ = minidle;
 #endif
-	cl->maxidle_ = (maxidle * PSEC_TO_NSEC(psecPerByte)) / 8;
+	cl->maxidle_ = ((long)maxidle * (long)psecPerByte) / 8;
 	if (cl->maxidle_ == 0)
 		cl->maxidle_ = 1;
 #if 1 /* offtime is also scaled in ALTQ */
 	cl->avgidle_ = cl->maxidle_;
-	cl->offtime_ = ((offtime * PSEC_TO_NSEC(psecPerByte)) / 8) >> RM_FILTER_GAIN;
+	cl->offtime_ = (((long)offtime * (long)psecPerByte) / 8) >> RM_FILTER_GAIN;
 	if (cl->offtime_ == 0)
 		cl->offtime_ = 1;
 #else
@@ -365,18 +365,18 @@ rmc_modclass(struct rm_class *cl, u_long psecPerByte, int maxq, u_int maxidle,
 	qlimit(cl->q_) = maxq;
 
 #if 1 /* minidle is also scaled in ALTQ */
-	cl->minidle_ = (minidle * PSEC_TO_NSEC(psecPerByte)) / 8;
+	cl->minidle_ = ((long)minidle * (long)psecPerByte) / 8;
 	if (cl->minidle_ > 0)
 		cl->minidle_ = 0;
 #else
 	cl->minidle_ = minidle;
 #endif
-	cl->maxidle_ = (maxidle * PSEC_TO_NSEC(psecPerByte)) / 8;
+	cl->maxidle_ = ((long)maxidle * (long)psecPerByte) / 8;
 	if (cl->maxidle_ == 0)
 		cl->maxidle_ = 1;
 #if 1 /* offtime is also scaled in ALTQ */
 	cl->avgidle_ = cl->maxidle_;
-	cl->offtime_ = ((offtime * PSEC_TO_NSEC(psecPerByte)) / 8) >> RM_FILTER_GAIN;
+	cl->offtime_ = (((long)offtime * (long)psecPerByte) / 8) >> RM_FILTER_GAIN;
 	if (cl->offtime_ == 0)
 		cl->offtime_ = 1;
 #else
@@ -748,14 +748,14 @@ rmc_init(struct ifaltq *ifq, struct rm_ifdat *ifd, u_long psecPerByte,
 int
 rmc_queue_packet(struct rm_class *cl, mbuf_t *m)
 {
-	struct timeval	 now;
+	struct timespec	 now;
 	struct rm_ifdat *ifd = cl->ifdat_;
 	int		 cpri = cl->pri_;
 	int		 is_empty = qempty(cl->q_);
 
 	RM_GETTIME(now);
 	if (ifd->cutoff_ > 0) {
-		if (TV_LT(&cl->undertime_, &now)) {
+		if (TS_LT(&cl->undertime_, &now)) {
 			if (ifd->cutoff_ > cl->depth_)
 				ifd->cutoff_ = cl->depth_;
 			CBQTRACE(rmc_queue_packet, 'ffoc', cl->depth_);
@@ -771,7 +771,7 @@ rmc_queue_packet(struct rm_class *cl, mbuf_t *m)
 
 			while (borrow != NULL &&
 			       borrow->depth_ < ifd->cutoff_) {
-				if (TV_LT(&borrow->undertime_, &now)) {
+				if (TS_LT(&borrow->undertime_, &now)) {
 					ifd->cutoff_ = borrow->depth_;
 					CBQTRACE(rmc_queue_packet, 'ffob', ifd->cutoff_);
 					break;
@@ -781,7 +781,7 @@ rmc_queue_packet(struct rm_class *cl, mbuf_t *m)
 		}
 #else /* !ALTQ */
 		else if ((ifd->cutoff_ > 1) && cl->borrow_) {
-			if (TV_LT(&cl->borrow_->undertime_, &now)) {
+			if (TS_LT(&cl->borrow_->undertime_, &now)) {
 				ifd->cutoff_ = cl->borrow_->depth_;
 				CBQTRACE(rmc_queue_packet, 'ffob',
 					 cl->borrow_->depth_);
@@ -809,12 +809,12 @@ rmc_queue_packet(struct rm_class *cl, mbuf_t *m)
 
 /*
  * void
- * rmc_tl_satisfied(struct rm_ifdat *ifd, struct timeval *now) - Check all
+ * rmc_tl_satisfied(struct rm_ifdat *ifd, struct timespec *now) - Check all
  *	classes to see if there are satified.
  */
 
 static void
-rmc_tl_satisfied(struct rm_ifdat *ifd, struct timeval *now)
+rmc_tl_satisfied(struct rm_ifdat *ifd, struct timespec *now)
 {
 	int		 i;
 	rm_class_t	*p, *bp;
@@ -840,13 +840,13 @@ rmc_tl_satisfied(struct rm_ifdat *ifd, struct timeval *now)
  */
 
 static int
-rmc_satisfied(struct rm_class *cl, struct timeval *now)
+rmc_satisfied(struct rm_class *cl, struct timespec *now)
 {
 	rm_class_t	*p;
 
 	if (cl == NULL)
 		return (1);
-	if (TV_LT(now, &cl->undertime_))
+	if (TS_LT(now, &cl->undertime_))
 		return (1);
 	if (cl->depth_ == 0) {
 		if (!cl->sleeping_ && (qlen(cl->q_) > cl->qthresh_))
@@ -873,7 +873,7 @@ rmc_satisfied(struct rm_class *cl, struct timeval *now)
  */
 
 static int
-rmc_under_limit(struct rm_class *cl, struct timeval *now)
+rmc_under_limit(struct rm_class *cl, struct timespec *now)
 {
 	rm_class_t	*p = cl;
 	rm_class_t	*top;
@@ -888,7 +888,7 @@ rmc_under_limit(struct rm_class *cl, struct timeval *now)
 		return (1);
 
 	if (cl->sleeping_) {
-		if (TV_LT(now, &cl->undertime_))
+		if (TS_LT(now, &cl->undertime_))
 			return (0);
 
 		CALLOUT_STOP(&cl->callout_);
@@ -898,7 +898,7 @@ rmc_under_limit(struct rm_class *cl, struct timeval *now)
 	}
 
 	top = NULL;
-	while (cl->undertime_.tv_sec && TV_LT(now, &cl->undertime_)) {
+	while (cl->undertime_.tv_sec && TS_LT(now, &cl->undertime_)) {
 		if (((cl = cl->borrow_) == NULL) ||
 		    (cl->depth_ > ifd->cutoff_)) {
 #ifdef ADJUST_CUTOFF
@@ -961,7 +961,7 @@ _rmc_wrr_dequeue_next(struct rm_ifdat *ifd, int op)
 	u_int		 deficit;
 	int		 cpri;
 	mbuf_t		*m;
-	struct timeval	 now;
+	struct timespec	 now;
 
 	RM_GETTIME(now);
 
@@ -1116,7 +1116,7 @@ _rmc_prr_dequeue_next(struct rm_ifdat *ifd, int op)
 	mbuf_t		*m;
 	int		 cpri;
 	struct rm_class	*cl, *first = NULL;
-	struct timeval	 now;
+	struct timespec	 now;
 
 	RM_GETTIME(now);
 
@@ -1212,7 +1212,7 @@ _rmc_prr_dequeue_next(struct rm_ifdat *ifd, int op)
 
 /*
  * mbuf_t *
- * rmc_dequeue_next(struct rm_ifdat *ifd, struct timeval *now) - this function
+ * rmc_dequeue_next(struct rm_ifdat *ifd, struct timespec *now) - this function
  *	is invoked by the packet driver to get the next packet to be
  *	dequeued and output on the link.  If WRR is enabled, then the
  *	WRR dequeue next routine will determine the next packet to sent.
@@ -1253,12 +1253,12 @@ rmc_dequeue_next(struct rm_ifdat *ifd, int mode)
 void
 rmc_update_class_util(struct rm_ifdat *ifd)
 {
-	int		 idle, avgidle, pktlen;
-	u_long		 pkt_time;
-	int		 tidle;
+	long		 idle, avgidle, pktlen;
+	long		 pkt_time;
+	long		 tidle;
 	rm_class_t	*cl, *cl0, *borrowed;
 	rm_class_t	*borrows;
-	struct timeval	*nowp;
+	struct timespec	*nowp;
 
 	/*
 	 * Get the most recent completed class.
@@ -1267,7 +1267,7 @@ rmc_update_class_util(struct rm_ifdat *ifd)
 		return;
 
 	cl0 = cl;
-	pktlen = ifd->curlen_[ifd->qo_];
+	pktlen = (long)ifd->curlen_[ifd->qo_];
 	borrowed = ifd->borrowed_[ifd->qo_];
 	borrows = borrowed;
 
@@ -1286,13 +1286,13 @@ rmc_update_class_util(struct rm_ifdat *ifd)
 	nowp = &ifd->now_[ifd->qo_];
 	/* get pkt_time (for link) in usec */
 #if 1  /* use approximation */
-	pkt_time = (u_long)ifd->curlen_[ifd->qo_] * ifd->ps_per_byte_;
-	pkt_time = PSEC_TO_USEC(pkt_time);
+	pkt_time = (long)ifd->curlen_[ifd->qo_] * (long)ifd->ps_per_byte_;
+	pkt_time = PSEC_TO_NSEC(pkt_time);
 #else
 	pkt_time = ifd->curlen_[ifd->qo_] * ifd->ns_per_byte_ / 1000;
 #endif
 #if 1 /* ALTQ4PPP */
-	if (TV_LT(nowp, &ifd->ifnow_)) {
+	if (TS_LT(nowp, &ifd->ifnow_)) {
 		int iftime;
 
 		/*
@@ -1301,36 +1301,36 @@ rmc_update_class_util(struct rm_ifdat *ifd)
 		 * data compression or the interface speed is set to
 		 * a much lower value.
 		 */
-		TV_DELTA(&ifd->ifnow_, nowp, iftime);
+		TS_DELTA(&ifd->ifnow_, nowp, iftime);
 		if (iftime+pkt_time < ifd->maxiftime_) {
-			TV_ADD_DELTA(&ifd->ifnow_, pkt_time, &ifd->ifnow_);
+			TS_ADD_DELTA(&ifd->ifnow_, pkt_time, &ifd->ifnow_);
 		} else {
-			TV_ADD_DELTA(nowp, ifd->maxiftime_, &ifd->ifnow_);
+			TS_ADD_DELTA(nowp, ifd->maxiftime_, &ifd->ifnow_);
 		}
 	} else {
-		TV_ADD_DELTA(nowp, pkt_time, &ifd->ifnow_);
+		TS_ADD_DELTA(nowp, pkt_time, &ifd->ifnow_);
 	}
 #else
-	if (TV_LT(nowp, &ifd->ifnow_)) {
-		TV_ADD_DELTA(&ifd->ifnow_, pkt_time, &ifd->ifnow_);
+	if (TS_LT(nowp, &ifd->ifnow_)) {
+		TS_ADD_DELTA(&ifd->ifnow_, pkt_time, &ifd->ifnow_);
 	} else {
-		TV_ADD_DELTA(nowp, pkt_time, &ifd->ifnow_);
+		TS_ADD_DELTA(nowp, pkt_time, &ifd->ifnow_);
 	}
 #endif
 
 	while (cl != NULL) {
-		TV_DELTA(&ifd->ifnow_, &cl->last_, idle);
-		if (idle >= 2000000)
+		TS_DELTA(&ifd->ifnow_, &cl->last_, idle);
+		if (idle >= 2000000000)
 			/*
 			 * this class is idle enough, reset avgidle.
-			 * (TV_DELTA returns 2000000 us when delta is large.)
+			 * (TS_DELTA returns 2000000000 ns when delta is large.)
 			 */
 			cl->avgidle_ = cl->maxidle_;
 
 		/* get pkt_time (for class) in usec */
 #if 1  /* use approximation */
-		pkt_time = (u_long)pktlen * cl->ps_per_byte_;
-		pkt_time = PSEC_TO_USEC(pkt_time);
+		pkt_time = pktlen * (long)cl->ps_per_byte_;
+		pkt_time = PSEC_TO_NSEC(pkt_time);
 #else
 		pkt_time = pktlen * cl->ns_per_byte_ / 1000;
 #endif
@@ -1354,7 +1354,7 @@ rmc_update_class_util(struct rm_ifdat *ifd)
 			/* set next idle to make avgidle 0 */
 			tidle = pkt_time +
 				(((1 - RM_POWER) * avgidle) >> RM_FILTER_GAIN);
-			TV_ADD_DELTA(nowp, tidle, &cl->undertime_);
+			TS_ADD_DELTA(nowp, tidle, &cl->undertime_);
 			++cl->stats_.over;
 		} else {
 			cl->avgidle_ =
@@ -1391,7 +1391,7 @@ rmc_update_class_util(struct rm_ifdat *ifd)
 	cl = ifd->class_[ifd->qo_];
 	if (borrowed && (ifd->cutoff_ >= borrowed->depth_)) {
 #if 1 /* ALTQ */
-		if ((qlen(cl->q_) <= 0) || TV_LT(nowp, &borrowed->undertime_)) {
+		if ((qlen(cl->q_) <= 0) || TS_LT(nowp, &borrowed->undertime_)) {
 			rmc_tl_satisfied(ifd, nowp);
 			CBQTRACE(rmc_update_class_util, 'broe', ifd->cutoff_);
 		} else {
@@ -1399,7 +1399,7 @@ rmc_update_class_util(struct rm_ifdat *ifd)
 			CBQTRACE(rmc_update_class_util, 'ffob', borrowed->depth_);
 		}
 #else /* !ALTQ */
-		if ((qlen(cl->q_) <= 1) || TV_LT(&now, &borrowed->undertime_)) {
+		if ((qlen(cl->q_) <= 1) || TS_LT(&now, &borrowed->undertime_)) {
 			reset_cutoff(ifd);
 #ifdef notdef
 			rmc_tl_satisfied(ifd, &now);
@@ -1484,13 +1484,14 @@ tvhzto(struct timeval *tv)
 void
 rmc_delay_action(struct rm_class *cl, struct rm_class *borrow)
 {
-	int	ndelay, t, extradelay;
+	int	t;
+	long	ndelay, extradelay;
 
 	cl->stats_.overactions++;
 	if (borrow != NULL)
-		TV_DELTA(&borrow->undertime_, &cl->overtime_, ndelay);
+		TS_DELTA(&borrow->undertime_, &cl->overtime_, ndelay);
 	else
-		TV_DELTA(&cl->undertime_, &cl->overtime_, ndelay);
+		TS_DELTA(&cl->undertime_, &cl->overtime_, ndelay);
 #ifndef BORROW_OFFTIME
 	ndelay += cl->offtime_;
 #endif
@@ -1516,7 +1517,7 @@ rmc_delay_action(struct rm_class *cl, struct rm_class *borrow)
 		extradelay -= cl->last_pkttime_;
 #endif
 		if (extradelay > 0) {
-			TV_ADD_DELTA(&cl->undertime_, extradelay, &cl->undertime_);
+			TS_ADD_DELTA(&cl->undertime_, extradelay, &cl->undertime_);
 			ndelay += extradelay;
 		}
 
@@ -1530,13 +1531,13 @@ rmc_delay_action(struct rm_class *cl, struct rm_class *borrow)
 		 * NOTE:  If there's no other traffic, we need the timer as
 		 * a 'backstop' to restart this class.
 		 */
-		if (ndelay > tick * 2) {
+		if (NSEC_TO_USEC(ndelay) > tick * 2) {
 #ifdef __FreeBSD__
 			/* FreeBSD rounds up the tick */
 			t = tvhzto(&cl->undertime_);
 #else
 			/* other BSDs round down the tick */
-			t = tvhzto(&cl->undertime_) + 1;
+			t = tshzto(&cl->undertime_) + 1;
 #endif
 		} else
 			t = 2;
