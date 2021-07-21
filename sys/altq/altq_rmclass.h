@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rmclass.h,v 1.9 2021/07/13 08:04:31 ozaki-r Exp $	*/
+/*	$NetBSD: altq_rmclass.h,v 1.10 2021/07/21 06:33:30 ozaki-r Exp $	*/
 /*	$KAME: altq_rmclass.h,v 1.10 2003/08/20 23:30:23 itojun Exp $	*/
 
 /*
@@ -120,6 +120,7 @@ struct red;
 #define	RM_POWER	(1 << RM_FILTER_GAIN)
 #define	RM_MAXDEPTH	32
 #define	RM_NS_PER_SEC	(1000000000)
+#define	RM_PS_PER_SEC	(1000000000000)
 
 typedef struct _rm_class_stats_ {
 	u_int		handle;
@@ -141,7 +142,7 @@ struct rm_class {
 	rm_ifdat_t	*ifdat_;
 	int		pri_;		/* Class priority. */
 	int		depth_;		/* Class depth */
-	u_int		ns_per_byte_;	/* NanoSeconds per byte. */
+	u_long		ps_per_byte_;	/* PicoSeconds per byte. */
 	u_int		maxrate_;	/* Bytes per second for this class. */
 	u_int		allotment_;	/* Fraction of link bandwidth. */
 	u_int		w_allotment_;	/* Weighted allotment for WRR */
@@ -185,7 +186,7 @@ struct rm_ifdat {
 	int		queued_;	/* # pkts queued downstream */
 	int		efficient_;	/* Link Efficency bit */
 	int		wrr_;		/* Enable Weighted Round-Robin */
-	u_long		ns_per_byte_;	/* Link byte speed. */
+	u_long		ps_per_byte_;	/* Link byte speed. */
 	int		maxqueued_;	/* Max packets to queue */
 	int		maxpkt_;	/* Max packet size. */
 	int		qi_;		/* In/out pointers for downstream */
@@ -241,14 +242,14 @@ struct rm_ifdat {
 
 #define	is_a_parent_class(cl)	((cl)->children_ != NULL)
 
-extern rm_class_t *rmc_newclass(int, struct rm_ifdat *, u_int,
+extern rm_class_t *rmc_newclass(int, struct rm_ifdat *, u_long,
 				void (*)(struct rm_class *, struct rm_class *),
 				int, struct rm_class *, struct rm_class *,
 				u_int, int, u_int, int, int);
 extern void	rmc_delete_class(struct rm_ifdat *, struct rm_class *);
-extern int 	rmc_modclass(struct rm_class *, u_int, int,
+extern int 	rmc_modclass(struct rm_class *, u_long, int,
 			     u_int, int, u_int, int);
-extern int	rmc_init(struct ifaltq *, struct rm_ifdat *, u_int,
+extern int	rmc_init(struct ifaltq *, struct rm_ifdat *, u_long,
 			 void (*)(struct ifaltq *),
 			 int, int, u_int, int, u_int, int);
 extern int	rmc_queue_packet(struct rm_class *, mbuf_t *);
