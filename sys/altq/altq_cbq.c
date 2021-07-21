@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cbq.c,v 1.34 2021/07/14 08:31:15 ozaki-r Exp $	*/
+/*	$NetBSD: altq_cbq.c,v 1.35 2021/07/21 06:33:30 ozaki-r Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.21 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.34 2021/07/14 08:31:15 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.35 2021/07/21 06:33:30 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -226,7 +226,7 @@ get_class_stats(class_stats_t *statsp, struct rm_class *cl)
 	statsp->minidle		= cl->minidle_;
 	statsp->offtime		= cl->offtime_;
 	statsp->qmax		= qlimit(cl->q_);
-	statsp->ns_per_byte	= cl->ns_per_byte_;
+	statsp->ps_per_byte	= cl->ps_per_byte_;
 	statsp->wrr_allot	= cl->w_allotment_;
 	statsp->qcnt		= qlen(cl->q_);
 	statsp->avgidle		= cl->avgidle_;
@@ -384,7 +384,7 @@ cbq_add_queue(struct pf_altq *a)
 	 */
 	if ((opts->flags & CBQCLF_ROOTCLASS) != 0) {
 		error = rmc_init(cbqp->ifnp.ifq_, &cbqp->ifnp,
-		    opts->ns_per_byte, cbqrestart, a->qlimit, RM_MAXQUEUED,
+		    opts->ps_per_byte, cbqrestart, a->qlimit, RM_MAXQUEUED,
 		    opts->maxidle, opts->minidle, opts->offtime,
 		    opts->flags);
 		if (error != 0)
@@ -392,7 +392,7 @@ cbq_add_queue(struct pf_altq *a)
 		cl = cbqp->ifnp.root_;
 	} else {
 		cl = rmc_newclass(a->priority,
-				  &cbqp->ifnp, opts->ns_per_byte,
+				  &cbqp->ifnp, opts->ps_per_byte,
 				  rmc_delay_action, a->qlimit, parent, borrow,
 				  opts->maxidle, opts->minidle, opts->offtime,
 				  opts->pktsize, opts->flags);
@@ -681,7 +681,7 @@ cbq_modify_class(struct cbq_modify_class *acp)
 	if ((cl = clh_to_clp(cbqp, acp->cbq_class_handle)) == NULL)
 		return (EINVAL);
 
-	if (rmc_modclass(cl, acp->cbq_class.nano_sec_per_byte,
+	if (rmc_modclass(cl, acp->cbq_class.pico_sec_per_byte,
 			 acp->cbq_class.maxq, acp->cbq_class.maxidle,
 			 acp->cbq_class.minidle, acp->cbq_class.offtime,
 			 acp->cbq_class.pktsize) < 0)
@@ -724,7 +724,7 @@ cbq_class_create(cbq_state_t *cbqp, struct cbq_add_class *acp,
 	 */
 	if ((spec->flags & CBQCLF_ROOTCLASS) != 0) {
 		error = rmc_init(cbqp->ifnp.ifq_, &cbqp->ifnp,
-		    spec->nano_sec_per_byte, cbqrestart, spec->maxq,
+		    spec->pico_sec_per_byte, cbqrestart, spec->maxq,
 		    RM_MAXQUEUED, spec->maxidle, spec->minidle, spec->offtime,
 		    spec->flags);
 		if (error)
@@ -732,7 +732,7 @@ cbq_class_create(cbq_state_t *cbqp, struct cbq_add_class *acp,
 		cl = cbqp->ifnp.root_;
 	} else {
 		cl = rmc_newclass(spec->priority,
-				  &cbqp->ifnp, spec->nano_sec_per_byte,
+				  &cbqp->ifnp, spec->pico_sec_per_byte,
 				  rmc_delay_action, spec->maxq, parent, borrow,
 				  spec->maxidle, spec->minidle, spec->offtime,
 				  spec->pktsize, spec->flags);

@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rmclass.c,v 1.24 2021/07/13 08:23:39 ozaki-r Exp $	*/
+/*	$NetBSD: altq_rmclass.c,v 1.25 2021/07/21 06:33:30 ozaki-r Exp $	*/
 /*	$KAME: altq_rmclass.c,v 1.19 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.24 2021/07/13 08:23:39 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.25 2021/07/21 06:33:30 ozaki-r Exp $");
 
 /* #ident "@(#)rm_class.c  1.48     97/12/05 SMI" */
 
@@ -79,6 +79,8 @@ __KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.24 2021/07/13 08:23:39 ozaki-r Ex
  */
 
 #define	reset_cutoff(ifd)	{ ifd->cutoff_ = RM_MAXDEPTH; }
+
+#define	PSEC_TO_NSEC(t)	((t) / 1000)
 
 /*
  * Local routines.
@@ -192,7 +194,7 @@ static void	rmc_root_overlimit(struct rm_class *, struct rm_class *);
  * 	offtime = offtime * (8.0 / nsecPerByte);
  */
 struct rm_class *
-rmc_newclass(int pri, struct rm_ifdat *ifd, u_int nsecPerByte,
+rmc_newclass(int pri, struct rm_ifdat *ifd, u_long psecPerByte,
     void (*action)(rm_class_t *, rm_class_t *), int maxq,
     struct rm_class *parent, struct rm_class *borrow, u_int maxidle,
     int minidle, u_int offtime, int pktsize, int flags)
@@ -240,10 +242,10 @@ rmc_newclass(int pri, struct rm_ifdat *ifd, u_int nsecPerByte,
 	cl->leaf_ = 1;
 	cl->ifdat_ = ifd;
 	cl->pri_ = pri;
-	cl->allotment_ = RM_NS_PER_SEC / nsecPerByte; /* Bytes per sec */
+	cl->allotment_ = (u_int)(RM_PS_PER_SEC / psecPerByte); /* Bytes per sec */
 	cl->depth_ = 0;
 	cl->qthresh_ = 0;
-	cl->ns_per_byte_ = nsecPerByte;
+	cl->ps_per_byte_ = psecPerByte;
 
 	qlimit(cl->q_) = maxq;
 	qtype(cl->q_) = Q_DROPHEAD;
@@ -251,18 +253,18 @@ rmc_newclass(int pri, struct rm_ifdat *ifd, u_int nsecPerByte,
 	cl->flags_ = flags;
 
 #if 1 /* minidle is also scaled in ALTQ */
-	cl->minidle_ = (minidle * (int)nsecPerByte) / 8;
+	cl->minidle_ = (minidle * (int)PSEC_TO_NSEC(psecPerByte)) / 8;
 	if (cl->minidle_ > 0)
 		cl->minidle_ = 0;
 #else
 	cl->minidle_ = minidle;
 #endif
-	cl->maxidle_ = (maxidle * nsecPerByte) / 8;
+	cl->maxidle_ = (maxidle * PSEC_TO_NSEC(psecPerByte)) / 8;
 	if (cl->maxidle_ == 0)
 		cl->maxidle_ = 1;
 #if 1 /* offtime is also scaled in ALTQ */
 	cl->avgidle_ = cl->maxidle_;
-	cl->offtime_ = ((offtime * nsecPerByte) / 8) >> RM_FILTER_GAIN;
+	cl->offtime_ = ((offtime * PSEC_TO_NSEC(psecPerByte)) / 8) >> RM_FILTER_GAIN;
 	if (cl->offtime_ == 0)
 		cl->offtime_ = 1;
 #else
@@ -345,7 +347,7 @@ rmc_newclass(int pri, struct rm_ifdat *ifd, u_int nsecPerByte,
 }
 
 int
-rmc_modclass(struct rm_class *cl, u_int nsecPerByte, int maxq, u_int maxidle,
+rmc_modclass(struct rm_class *cl, u_long psecPerByte, int maxq, u_int maxidle,
     int minidle, u_int offtime, int pktsize)
 {
 	struct rm_ifdat	*ifd;
@@ -356,25 +358,25 @@ rmc_modclass(struct rm_class *cl, u_int nsecPerByte, int maxq, u_int maxidle,
 	old_allotment = cl->allotment_;
 
 	s = splnet();
-	cl->allotment_ = RM_NS_PER_SEC / nsecPerByte; /* Bytes per sec */
+	cl->allotment_ = (u_int)(RM_PS_PER_SEC / psecPerByte); /* Bytes per sec */
 	cl->qthresh_ = 0;
-	cl->ns_per_byte_ = nsecPerByte;
+	cl->ps_per_byte_ = psecPerByte;
 
 	qlimit(cl->q_) = maxq;
 
 #if 1 /* minidle is also scaled in ALTQ */
-	cl->minidle_ = (minidle * nsecPerByte) / 8;
+	cl->minidle_ = (minidle * PSEC_TO_NSEC(psecPerByte)) / 8;
 	if (cl->minidle_ > 0)
 		cl->minidle_ = 0;
 #else
 	cl->minidle_ = minidle;
 #endif
-	cl->maxidle_ = (maxidle * nsecPerByte) / 8;
+	cl->maxidle_ = (maxidle * PSEC_TO_NSEC(psecPerByte)) / 8;
 	if (cl->maxidle_ == 0)
 		cl->maxidle_ = 1;
 #if 1 /* offtime is also scaled in ALTQ */
 	cl->avgidle_ = cl->maxidle_;
-	cl->offtime_ = ((offtime * nsecPerByte) / 8) >> RM_FILTER_GAIN;
+	cl->offtime_ = ((offtime * PSEC_TO_NSEC(psecPerByte)) / 8) >> RM_FILTER_GAIN;
 	if (cl->offtime_ == 0)
 		cl->offtime_ = 1;
 #else
@@ -659,7 +661,7 @@ rmc_delete_class(struct rm_ifdat *ifd, struct rm_class *cl)
  */
 
 int
-rmc_init(struct ifaltq *ifq, struct rm_ifdat *ifd, u_int nsecPerByte,
+rmc_init(struct ifaltq *ifq, struct rm_ifdat *ifd, u_long psecPerByte,
     void (*restart)(struct ifaltq *), int maxq, int maxqueued, u_int maxidle,
     int minidle, u_int offtime, int flags)
 {
@@ -681,13 +683,13 @@ rmc_init(struct ifaltq *ifq, struct rm_ifdat *ifd, u_int nsecPerByte,
 	ifd->ifq_ = ifq;
 	ifd->restart = restart;
 	ifd->maxqueued_ = maxqueued;
-	ifd->ns_per_byte_ = nsecPerByte;
+	ifd->ps_per_byte_ = psecPerByte;
 	ifd->maxpkt_ = mtu;
 	ifd->wrr_ = (flags & RMCF_WRR) ? 1 : 0;
 	ifd->efficient_ = (flags & RMCF_EFFICIENT) ? 1 : 0;
 #if 1
-	ifd->maxiftime_ = mtu * nsecPerByte / 1000 * 16;
-	if (mtu * nsecPerByte > 10 * 1000000)
+	ifd->maxiftime_ = mtu * psecPerByte / 1000 / 1000 * 16;
+	if ((long)mtu * psecPerByte > (long)10 * 1000000000)
 		ifd->maxiftime_ /= 4;
 #endif
 
@@ -720,7 +722,7 @@ rmc_init(struct ifaltq *ifq, struct rm_ifdat *ifd, u_int nsecPerByte,
 	 * Create the root class of the link-sharing structure.
 	 */
 	if ((ifd->root_ = rmc_newclass(0, ifd,
-				       nsecPerByte,
+				       psecPerByte,
 				       rmc_root_overlimit, maxq, 0, 0,
 				       maxidle, minidle, offtime,
 				       0, 0)) == NULL) {
@@ -1246,11 +1248,14 @@ rmc_dequeue_next(struct rm_ifdat *ifd, int mode)
  * (on pentium, mul takes 9 cycles but div takes 46!)
  */
 #define	NSEC_TO_USEC(t)	(((t) >> 10) + ((t) >> 16) + ((t) >> 17))
+/* Don't worry.  Recent compilers don't use div. */
+#define	PSEC_TO_USEC(t)	((t) / 1000 / 1000)
 void
 rmc_update_class_util(struct rm_ifdat *ifd)
 {
 	int		 idle, avgidle, pktlen;
-	int		 pkt_time, tidle;
+	u_long		 pkt_time;
+	int		 tidle;
 	rm_class_t	*cl, *cl0, *borrowed;
 	rm_class_t	*borrows;
 	struct timeval	*nowp;
@@ -1281,8 +1286,8 @@ rmc_update_class_util(struct rm_ifdat *ifd)
 	nowp = &ifd->now_[ifd->qo_];
 	/* get pkt_time (for link) in usec */
 #if 1  /* use approximation */
-	pkt_time = ifd->curlen_[ifd->qo_] * ifd->ns_per_byte_;
-	pkt_time = NSEC_TO_USEC(pkt_time);
+	pkt_time = (u_long)ifd->curlen_[ifd->qo_] * ifd->ps_per_byte_;
+	pkt_time = PSEC_TO_USEC(pkt_time);
 #else
 	pkt_time = ifd->curlen_[ifd->qo_] * ifd->ns_per_byte_ / 1000;
 #endif
@@ -1324,8 +1329,8 @@ rmc_update_class_util(struct rm_ifdat *ifd)
 
 		/* get pkt_time (for class) in usec */
 #if 1  /* use approximation */
-		pkt_time = pktlen * cl->ns_per_byte_;
-		pkt_time = NSEC_TO_USEC(pkt_time);
+		pkt_time = (u_long)pktlen * cl->ps_per_byte_;
+		pkt_time = PSEC_TO_USEC(pkt_time);
 #else
 		pkt_time = pktlen * cl->ns_per_byte_ / 1000;
 #endif
