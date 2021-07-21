@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cbq.h,v 1.9 2021/07/21 06:33:30 ozaki-r Exp $	*/
+/*	$NetBSD: altq_cbq.h,v 1.10 2021/07/21 06:41:22 ozaki-r Exp $	*/
 /*	$KAME: altq_cbq.h,v 1.12 2003/10/03 05:05:15 kjc Exp $	*/
 
 /*
@@ -81,15 +81,15 @@ typedef struct _cbq_class_stats_ {
 
 	/* other static class parameters useful for debugging */
 	int		priority;
-	int		maxidle;
-	int		minidle;
-	int		offtime;
+	long		maxidle;
+	long		minidle;
+	long		offtime;
 	int		qmax;
 	u_long		ps_per_byte;
 	int		wrr_allot;
 
 	int		qcnt;		/* # packets in queue */
-	int		avgidle;
+	long		avgidle;
 
 	/* red and rio related info */
 	int		qtype;

@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rmclass.h,v 1.10 2021/07/21 06:33:30 ozaki-r Exp $	*/
+/*	$NetBSD: altq_rmclass.h,v 1.11 2021/07/21 06:41:22 ozaki-r Exp $	*/
 /*	$KAME: altq_rmclass.h,v 1.10 2003/08/20 23:30:23 itojun Exp $	*/
 
 /*
@@ -55,31 +55,15 @@ typedef struct rm_class		rm_class_t;
 
 struct red;
 
-/*
- * Macros for dealing with time values.  We assume all times are
- * 'timevals'.  `microtime' is used to get the best available clock
- * resolution.  If `microtime' *doesn't* return a value that's about
- * ten times smaller than the average packet time on the fastest
- * link that will use these routines, a slightly different clock
- * scheme than this one should be used.
- * (Bias due to truncation error in this scheme will overestimate utilization
- * and discriminate against high bandwidth classes.  To remove this bias an
- * integrator needs to be added.  The simplest integrator uses a history of
- * 10 * avg.packet.time / min.tick.time packet completion entries.  This is
- * straight forward to add but we don't want to pay the extra memory
- * traffic to maintain it if it's not necessary (occasionally a vendor
- * accidentally builds a workstation with a decent clock - e.g., Sun & HP).)
- */
+#define	RM_GETTIME(now) nanotime(&now)
 
-#define	RM_GETTIME(now) microtime(&now)
+#define	TS_LT(a, b) (((a)->tv_sec < (b)->tv_sec) ||  \
+	(((a)->tv_nsec < (b)->tv_nsec) && ((a)->tv_sec <= (b)->tv_sec)))
 
-#define	TV_LT(a, b) (((a)->tv_sec < (b)->tv_sec) ||  \
-	(((a)->tv_usec < (b)->tv_usec) && ((a)->tv_sec <= (b)->tv_sec)))
-
-#define	TV_DELTA(a, b, delta) do { \
-	register int	xxs;	\
+#define	TS_DELTA(a, b, delta) do { \
+	register int64_t	xxs;	\
 							\
-	delta = (a)->tv_usec - (b)->tv_usec; \
+	delta = (int64_t)((a)->tv_nsec - (b)->tv_nsec); \
 	if ((xxs = (a)->tv_sec - (b)->tv_sec)) { \
 		switch (xxs) { \
 		default: \
@@ -88,24 +72,24 @@ struct red;
 			delta = 0; \
 			/* fall through */ \
 		case 2: \
-			delta += 1000000; \
+			delta += 1000000000; \
 			/* fall through */ \
 		case 1: \
-			delta += 1000000; \
+			delta += 1000000000; \
 			break; \
 		} \
 	} \
 } while (0)
 
-#define	TV_ADD_DELTA(a, delta, res) do { \
-	register int xxus = (a)->tv_usec + (delta); \
+#define	TS_ADD_DELTA(a, delta, res) do { \
+	register long xxns = (a)->tv_nsec + (long)(delta); \
 	\
 	(res)->tv_sec = (a)->tv_sec; \
-	while (xxus >= 1000000) { \
+	while (xxns >= 1000000000) { \
 		++((res)->tv_sec); \
-		xxus -= 1000000; \
+		xxns -= 1000000000; \
 	} \
-	(res)->tv_usec = xxus; \
+	(res)->tv_nsec = xxns; \
 } while (0)
 
 #define	RM_TIMEOUT	2	/* 1 Clock tick. */
@@ -148,10 +132,10 @@ struct rm_class {
 	u_int		w_allotment_;	/* Weighted allotment for WRR */
 	int		bytes_alloc_;	/* Allocation for round of WRR */
 
-	int		avgidle_;
-	int		maxidle_;
-	int		minidle_;
-	int		offtime_;
+	long		avgidle_;
+	long		maxidle_;
+	long		minidle_;
+	long		offtime_;
 	int		sleeping_;	/* != 0 if delaying */
 	int		qthresh_;	/* Queue threshold for formal link sharing */
 	int		leaf_;		/* Note whether leaf class or not.*/
@@ -170,10 +154,10 @@ struct rm_class {
 	struct altq_pktattr *pktattr_;	/* saved hdr used by RED/ECN */
 	int		flags_;
 
-	int		last_pkttime_;	/* saved pkt_time */
-	struct timeval	undertime_;	/* time can next send */
-	struct timeval	last_;		/* time last packet sent */
-	struct timeval	overtime_;
+	long		last_pkttime_;	/* saved pkt_time */
+	struct timespec	undertime_;	/* time can next send */
+	struct timespec	last_;		/* time last packet sent */
+	struct timespec	overtime_;
 	struct callout	callout_; 	/* for timeout() calls */
 
 	rm_class_stats_t stats_;	/* Class Statistics */
@@ -216,12 +200,12 @@ struct rm_ifdat {
 	rm_class_t	*borrowed_[RM_MAXQUEUED]; /* Class borrowed last */
 	rm_class_t	*class_[RM_MAXQUEUED];	/* class sending */
 	int		curlen_[RM_MAXQUEUED];	/* Current pktlen */
-	struct timeval	now_[RM_MAXQUEUED];	/* Current packet time. */
+	struct timespec	now_[RM_MAXQUEUED];	/* Current packet time. */
 	int		is_overlimit_[RM_MAXQUEUED];/* Current packet time. */
 
 	int		cutoff_;	/* Cut-off depth for borrowing */
 
-	struct timeval	ifnow_;		/* expected xmit completion time */
+	struct timespec	ifnow_;		/* expected xmit completion time */
 #if 1 /* ALTQ4PPP */
 	int		maxiftime_;	/* max delay inside interface */
 #endif
