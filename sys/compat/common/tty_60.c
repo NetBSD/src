@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_60.c,v 1.10 2020/06/24 17:47:52 jdolecek Exp $	*/
+/*	$NetBSD: tty_60.c,v 1.11 2021/07/21 06:35:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,12 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_60.c,v 1.10 2020/06/24 17:47:52 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_60.c,v 1.11 2021/07/21 06:35:44 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
 #endif
 
+#include <sys/param.h>
 #include <sys/types.h>
 
 #include <sys/conf.h>

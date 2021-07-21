@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.149 2020/12/12 18:41:13 christos Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.150 2021/07/21 06:35:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -172,7 +172,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.149 2020/12/12 18:41:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.150 2021/07/21 06:35:45 skrll Exp $");
 
 #define __NAMECACHE_PRIVATE
 #ifdef _KERNEL_OPT
@@ -180,6 +180,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.149 2020/12/12 18:41:13 christos Exp
 #include "opt_dtrace.h"
 #endif
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/atomic.h>
 #include <sys/callout.h>

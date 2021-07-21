@@ -1,4 +1,4 @@
-/*	$NetBSD: hidkbdmap.c,v 1.13 2021/05/11 10:16:48 nia Exp $	*/
+/*	$NetBSD: hidkbdmap.c,v 1.14 2021/07/21 06:35:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999,2001 The NetBSD Foundation, Inc.
@@ -31,8 +31,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hidkbdmap.c,v 1.13 2021/05/11 10:16:48 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hidkbdmap.c,v 1.14 2021/07/21 06:35:45 skrll Exp $");
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.175 2020/02/23 15:46:43 ad Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.176 2021/07/21 06:35:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -46,11 +46,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.175 2020/02/23 15:46:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.176 2021/07/21 06:35:45 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
