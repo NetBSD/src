@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.121 2021/07/21 23:16:08 jmcneill Exp $
+#	$NetBSD: files.x86,v 1.122 2021/07/21 23:26:15 jmcneill Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPDEBUG MPBIOS_SCANPCI
@@ -103,7 +103,7 @@ file	arch/x86/x86/idt.c		machdep
 file	arch/x86/x86/ipi.c		machdep & !xenpv
 file	arch/x86/x86/mtrr_i686.c	mtrr & !xenpv
 file 	arch/x86/x86/patch.c		machdep & !xenpv
-file	arch/x86/x86/platform.c		machdep
+file	dev/smbios_platform.c		machdep
 file 	arch/x86/x86/pmap.c		machdep
 file 	arch/x86/x86/x86_tlb.c		machdep
 file	arch/x86/x86/procfs_machdep.c	procfs

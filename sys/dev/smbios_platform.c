@@ -1,4 +1,4 @@
-/* $NetBSD: platform.c,v 1.17 2021/07/21 23:16:09 jmcneill Exp $ */
+/* $NetBSD: smbios_platform.c,v 1.1 2021/07/21 23:26:15 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "isa.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.17 2021/07/21 23:16:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbios_platform.c,v 1.1 2021/07/21 23:26:15 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -54,7 +54,6 @@ static void	platform_add_date(struct smbtable *, const char *, int);
 static void	platform_add_uuid(struct smbtable *, const char *,
 				  const uint8_t *);
 static int	platform_dmi_sysctl(SYSCTLFN_PROTO);
-static void	platform_print(void);
 
 /* list of private DMI sysctl nodes */
 static const char *platform_private_nodes[] = {
@@ -151,30 +150,6 @@ platform_init(void)
 		isa_set_slotcount(nisa);
 	}
 #endif
-
-	platform_print();
-}
-
-static void
-platform_print(void)
-{
-	const char *vend, *prod, *ver;
-
-	vend = pmf_get_platform("system-vendor");
-	prod = pmf_get_platform("system-product");
-	ver = pmf_get_platform("system-version");
-
-	if (vend == NULL)
-		aprint_verbose("Generic");
-	else
-		aprint_verbose("%s", vend);
-	if (prod == NULL)
-		aprint_verbose(" PC");
-	else
-		aprint_verbose(" %s", prod);
-	if (ver != NULL)
-		aprint_verbose(" (%s)", ver);
-	aprint_verbose("\n");
 }
 
 static bool
