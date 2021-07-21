@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rmclass.c,v 1.27 2021/07/21 06:47:33 ozaki-r Exp $	*/
+/*	$NetBSD: altq_rmclass.c,v 1.28 2021/07/21 06:49:25 ozaki-r Exp $	*/
 /*	$KAME: altq_rmclass.c,v 1.19 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.27 2021/07/21 06:47:33 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.28 2021/07/21 06:49:25 ozaki-r Exp $");
 
 /* #ident "@(#)rm_class.c  1.48     97/12/05 SMI" */
 
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.27 2021/07/21 06:47:33 ozaki-r Ex
 #include <sys/cprng.h>
 
 #include <net/if.h>
+#include <net/if_types.h>
 #ifdef ALTQ3_COMPAT
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -1291,32 +1292,32 @@ rmc_update_class_util(struct rm_ifdat *ifd)
 #else
 	pkt_time = ifd->curlen_[ifd->qo_] * ifd->ns_per_byte_ / 1000;
 #endif
-#if 1 /* ALTQ4PPP */
-	if (TS_LT(nowp, &ifd->ifnow_)) {
-		int iftime;
+	if (ifd->ifq_->altq_ifp->if_type == IFT_PPP) {
+		if (TS_LT(nowp, &ifd->ifnow_)) {
+			int iftime;
 
-		/*
-		 * make sure the estimated completion time does not go
-		 * too far.  it can happen when the link layer supports
-		 * data compression or the interface speed is set to
-		 * a much lower value.
-		 */
-		TS_DELTA(&ifd->ifnow_, nowp, iftime);
-		if (iftime+pkt_time < ifd->maxiftime_) {
-			TS_ADD_DELTA(&ifd->ifnow_, pkt_time, &ifd->ifnow_);
+			/*
+			 * make sure the estimated completion time does not go
+			 * too far.  it can happen when the link layer supports
+			 * data compression or the interface speed is set to
+			 * a much lower value.
+			 */
+			TS_DELTA(&ifd->ifnow_, nowp, iftime);
+			if (iftime+pkt_time < ifd->maxiftime_) {
+				TS_ADD_DELTA(&ifd->ifnow_, pkt_time, &ifd->ifnow_);
+			} else {
+				TS_ADD_DELTA(nowp, ifd->maxiftime_, &ifd->ifnow_);
+			}
 		} else {
-			TS_ADD_DELTA(nowp, ifd->maxiftime_, &ifd->ifnow_);
+			TS_ADD_DELTA(nowp, pkt_time, &ifd->ifnow_);
 		}
 	} else {
-		TS_ADD_DELTA(nowp, pkt_time, &ifd->ifnow_);
+		if (TS_LT(nowp, &ifd->ifnow_)) {
+			TS_ADD_DELTA(&ifd->ifnow_, pkt_time, &ifd->ifnow_);
+		} else {
+			TS_ADD_DELTA(nowp, pkt_time, &ifd->ifnow_);
+		}
 	}
-#else
-	if (TS_LT(nowp, &ifd->ifnow_)) {
-		TS_ADD_DELTA(&ifd->ifnow_, pkt_time, &ifd->ifnow_);
-	} else {
-		TS_ADD_DELTA(nowp, pkt_time, &ifd->ifnow_);
-	}
-#endif
 
 	while (cl != NULL) {
 		TS_DELTA(&ifd->ifnow_, &cl->last_, idle);
