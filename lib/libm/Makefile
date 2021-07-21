@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.213 2021/04/25 23:43:20 christos Exp $
+#  $NetBSD: Makefile,v 1.214 2021/07/21 12:05:02 tnn Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -71,6 +71,7 @@ COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
 .PATH: ${.CURDIR}/arch/alpha
 ARCH_SRCS = s_copysign.S s_copysignf.S lrint.S
 COMMON_SRCS+= fenv.c
+COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
 COPTS+=	-mfloat-ieee -mieee-with-inexact -mfp-trap-mode=sui -mtrap-precision=i
 
 .elif (${LIBC_MACHINE_CPU} == "arm")
