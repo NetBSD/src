@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.120 2020/10/27 08:57:11 ryo Exp $
+#	$NetBSD: files.x86,v 1.121 2021/07/21 23:16:08 jmcneill Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPDEBUG MPBIOS_SCANPCI
@@ -30,7 +30,7 @@ define	cpufeaturebus {}
 define  ioapicbus { [apid = -1] }
 
 # BIOS32 routines
-define	bios32
+define	bios32: smbios
 file	arch/x86/x86/bios32.c		bios32 needs-flag
 
 #

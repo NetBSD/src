@@ -1,4 +1,4 @@
-/* $NetBSD: exec_multiboot2.c,v 1.4 2020/05/14 08:34:20 msaitoh Exp $ */
+/* $NetBSD: exec_multiboot2.c,v 1.5 2021/07/21 23:16:08 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -34,7 +34,8 @@
 
 #include <dev/acpi/acpica.h>
 #include <x86/acpi_machdep.h>
-#include <x86/smbiosvar.h>
+#include <dev/smbiosvar.h>
+#include <x86/smbios_machdep.h>
 
 #include <lib/libsa/stand.h> 
 #include <lib/libkern/libkern.h> 
