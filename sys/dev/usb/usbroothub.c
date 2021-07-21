@@ -1,4 +1,4 @@
-/* $NetBSD: usbroothub.c,v 1.9 2019/08/21 10:48:37 mrg Exp $ */
+/* $NetBSD: usbroothub.c,v 1.10 2021/07/21 06:35:45 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -58,14 +58,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbroothub.c,v 1.9 2019/08/21 10:48:37 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbroothub.c,v 1.10 2021/07/21 06:35:45 skrll Exp $");
+
+#include <sys/param.h>
+#include <sys/systm.h>		/* for ostype */
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usbroothub.h>
 #include <dev/usb/usbhist.h>
-#include <sys/systm.h>		/* for ostype */
 
 extern int usbdebug;
 
