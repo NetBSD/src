@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cbq.h,v 1.8 2006/10/12 19:59:08 peter Exp $	*/
+/*	$NetBSD: altq_cbq.h,v 1.9 2021/07/21 06:33:30 ozaki-r Exp $	*/
 /*	$KAME: altq_cbq.h,v 1.12 2003/10/03 05:05:15 kjc Exp $	*/
 
 /*
@@ -85,7 +85,7 @@ typedef struct _cbq_class_stats_ {
 	int		minidle;
 	int		offtime;
 	int		qmax;
-	int		ns_per_byte;
+	u_long		ps_per_byte;
 	int		wrr_allot;
 
 	int		qcnt;		/* # packets in queue */
@@ -112,7 +112,7 @@ struct cbq_interface {
 
 typedef struct cbq_class_spec {
 	u_int		priority;
-	u_int		nano_sec_per_byte;
+	u_long		pico_sec_per_byte;
 	u_int		maxq;
 	u_int		maxidle;
 	int		minidle;
