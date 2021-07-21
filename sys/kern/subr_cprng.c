@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cprng.c,v 1.40 2020/05/11 21:40:12 riastradh Exp $	*/
+/*	$NetBSD: subr_cprng.c,v 1.41 2021/07/21 06:35:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -52,8 +52,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.40 2020/05/11 21:40:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.41 2021/07/21 06:35:45 skrll Exp $");
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/cprng.h>
 #include <sys/cpu.h>
