@@ -1,4 +1,4 @@
-/*	$NetBSD: qop_cbq.h,v 1.3 2021/07/14 08:32:13 ozaki-r Exp $	*/
+/*	$NetBSD: qop_cbq.h,v 1.4 2021/07/21 06:36:33 ozaki-r Exp $	*/
 /*	$KAME: qop_cbq.h,v 1.2 2000/10/18 09:15:18 kjc Exp $	*/
 /*
  * Copyright (c) Sun Microsystems, Inc. 1993-1998 All rights reserved.
@@ -50,7 +50,7 @@ struct cbq_ifinfo {
 	struct classinfo *default_class;	/* default class */
 	struct classinfo *ctl_class;		/* control class */
 
-	double	nsPerByte;		/* bandwidth in ns per sec */
+	double	psPerByte;		/* bandwidth in ps per sec */
 	int	is_wrr;			/* use weighted-round robin */
 	int	is_efficient;		/* use work-conserving */
 	bool	no_control;		/* don't create a control class automatically */

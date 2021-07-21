@@ -1,4 +1,4 @@
-/*	$NetBSD: qop_cbq.c,v 1.11 2021/07/14 08:32:13 ozaki-r Exp $	*/
+/*	$NetBSD: qop_cbq.c,v 1.12 2021/07/21 06:36:33 ozaki-r Exp $	*/
 /*	$KAME: qop_cbq.c,v 1.7 2002/05/31 06:03:35 kjc Exp $	*/
 /*
  * Copyright (c) Sun Microsystems, Inc. 1993-1998 All rights reserved.
@@ -78,7 +78,11 @@ static int cbq_delete_filter(struct fltrinfo *);
 #define CTL_PBANDWIDTH	2
 #define NS_PER_MS	(1000000.0)
 #define NS_PER_SEC	(NS_PER_MS*1000.0)
+#define PS_PER_MS	(1000000000.0)
+#define PS_PER_SEC	(PS_PER_MS*1000.0)
 #define RM_FILTER_GAIN	5
+
+#define PSEC_TO_USEC(ps)	((ps) / 1000.0 / 1000.0)
 
 #define CBQ_DEVICE	"/dev/altq/cbq"
 
@@ -484,8 +488,8 @@ qop_cbq_add_if(struct ifinfo **rp, const char *ifname,
 	if ((cbq_ifinfo = calloc(1, sizeof(*cbq_ifinfo))) == NULL)
 		return (QOPERR_NOMEM);
 
-	cbq_ifinfo->nsPerByte =
-		(1.0 / (double)bandwidth) * NS_PER_SEC * 8;
+	cbq_ifinfo->psPerByte =
+		(1.0 / (double)bandwidth) * PS_PER_SEC * 8;
 	cbq_ifinfo->is_wrr = is_wrr;
 	cbq_ifinfo->is_efficient = efficient;
 	cbq_ifinfo->no_control = no_control;
@@ -768,7 +772,7 @@ cbq_class_spec(struct ifinfo *ifinfo, u_long parent_class,
 {
 	struct cbq_ifinfo *cbq_ifinfo = ifinfo->private;
 	double          maxq, maxidle_s, maxidle, minidle,
-			lofftime, nsPerByte, ptime, cptime;
+			lofftime, psPerByte, ptime, cptime;
 	double		z = (double)(1 << RM_FILTER_GAIN);
 	double          g = (1.0 - 1.0 / z);
 	double          f;
@@ -792,22 +796,12 @@ cbq_class_spec(struct ifinfo *ifinfo, u_long parent_class,
 	else if (max_pkt_size > ifinfo->ifmtu)
 		max_pkt_size = ifinfo->ifmtu;
 
-        nsPerByte = cbq_ifinfo->nsPerByte / f;
-	ptime = (double) av_pkt_size * (double)cbq_ifinfo->nsPerByte;
+        psPerByte = cbq_ifinfo->psPerByte / f;
+	ptime = (double) av_pkt_size * (double)cbq_ifinfo->psPerByte;
 	cptime = ptime * (1.0 - f) / f;
-#if 1 /* ALTQ */
-	if (nsPerByte * (double)max_pkt_size > (double)INT_MAX) {
-		/*
-		 * this causes integer overflow in kernel!
-		 * (bandwidth < 6Kbps when max_pkt_size=1500)
-		 */
-		if (bandwidth != 0)
-			LOG(LOG_WARNING, 0, "warning: class is too slow!!");
-		nsPerByte = (double)(INT_MAX / max_pkt_size);
-	}
-#endif
+
 	if (maxburst == 0) {  /* use default */
-		if (cptime > 10.0 * NS_PER_MS)
+		if (cptime > 10.0 * PS_PER_MS)
 			maxburst = 4;
 		else
 			maxburst = 16;
@@ -823,9 +817,9 @@ cbq_class_spec(struct ifinfo *ifinfo, u_long parent_class,
 		    "cbq_flowspec: maxburst=%d,minburst=%d,pkt_size=%d",
 		    maxburst, minburst, av_pkt_size);
 		LOG(LOG_DEBUG, 0,
-		    "  nsPerByte=%.2f ns, link's nsPerByte=%.2f, f=%.3f",
-		    nsPerByte, cbq_ifinfo->nsPerByte, f);
-		packet_time = av_pkt_size * (int)nsPerByte / 1000;
+		    "  psPerByte=%.2f ps, link's psPerByte=%.2f, f=%.3f",
+		    psPerByte, cbq_ifinfo->psPerByte, f);
+		packet_time = av_pkt_size * (int)PSEC_TO_USEC(psPerByte);
 		LOG(LOG_DEBUG, 0,
 		    "  packet time=%d [us]\n", packet_time);
 		if (maxburst * packet_time < 20000) {
@@ -845,21 +839,21 @@ cbq_class_spec(struct ifinfo *ifinfo, u_long parent_class,
 	else
 		maxidle = ptime * maxidle_s;
 	if (IsDebug(DEBUG_ALTQ))
-		LOG(LOG_DEBUG, 0, "  maxidle=%.2f us", maxidle/1000.0);
+		LOG(LOG_DEBUG, 0, "  maxidle=%.2f us", PSEC_TO_USEC(maxidle));
 	if (minburst)
 		lofftime = cptime * (1.0 + 1.0/(1.0 - g) * (1.0 - gtom) / gtom);
 	else
 		lofftime = cptime;
-	minidle = -((double)max_pkt_size * (double)nsPerByte);
+	minidle = -((double)max_pkt_size * (double)psPerByte);
 	if (IsDebug(DEBUG_ALTQ))
 		LOG(LOG_DEBUG, 0, "  lofftime=%.2f us minidle=%.2f us",
-		    lofftime/1000.0, minidle/1000.0);
+		    PSEC_TO_USEC(lofftime), PSEC_TO_USEC(minidle));
 
-	maxidle = ((maxidle * 8.0) / nsPerByte) * pow(2, RM_FILTER_GAIN);
+	maxidle = ((maxidle * 8.0) / psPerByte) * pow(2, RM_FILTER_GAIN);
 #if 1 /* ALTQ */
 	/* also scale lofftime and minidle */
- 	lofftime = (lofftime * 8.0) / nsPerByte * pow(2, RM_FILTER_GAIN);
-	minidle = ((minidle * 8.0) / nsPerByte) * pow(2, RM_FILTER_GAIN);
+	lofftime = (lofftime * 8.0) / psPerByte * pow(2, RM_FILTER_GAIN);
+	minidle = ((minidle * 8.0) / psPerByte) * pow(2, RM_FILTER_GAIN);
 #endif
 	maxidle = maxidle / 1000.0;
 	lofftime = lofftime / 1000.0;
@@ -872,7 +866,7 @@ cbq_class_spec(struct ifinfo *ifinfo, u_long parent_class,
 		else
 			maxq = 30.0;
 	} else {
-		maxq = ((double) maxdelay * NS_PER_MS) / (nsPerByte * av_pkt_size);
+		maxq = ((double) maxdelay * PS_PER_MS) / (psPerByte * av_pkt_size);
 		if (maxq < 4) {
 			LOG(LOG_WARNING, 0,
 			    "warning: maxq (%d) is too small. set to %d",
@@ -905,7 +899,7 @@ cbq_class_spec(struct ifinfo *ifinfo, u_long parent_class,
 
 	memset((void *)cl_spec, 0, sizeof(cbq_class_spec_t));
 	cl_spec->priority = pri;
-	cl_spec->nano_sec_per_byte = (u_int) nsPerByte;
+	cl_spec->pico_sec_per_byte = (u_long) psPerByte;
 	cl_spec->maxq = (u_int) maxq;
 	cl_spec->maxidle = (u_int) fabs(maxidle);
 	cl_spec->minidle = (int)minidle;
