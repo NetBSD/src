@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1286 2021/06/01 03:51:33 yamaguchi Exp $
+#	$NetBSD: files,v 1.1287 2021/07/21 23:16:09 jmcneill Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -378,6 +378,7 @@ define 	pckbport	{[slot = -1]}
 define	pckbport_machdep_cnattach
 define	firmload
 define	ipmibus		{ }
+define	smbios
 
 # speaker devices, attaches to audio or pcppi drivers
 device	spkr: wsbelldev
