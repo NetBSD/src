@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_stmt_asm.c,v 1.2 2021/07/15 21:00:05 rillig Exp $	*/
+/*	$NetBSD: gcc_stmt_asm.c,v 1.3 2021/07/21 21:04:00 rillig Exp $	*/
 # 3 "gcc_stmt_asm.c"
 
 /*
@@ -38,5 +38,5 @@ syntax_error(void)
 }
 
 __asm__(
-/* cover ignore_up_to_rparen at EOF */
+/* cover read_until_rparen at EOF */
 /* expect+1: error: syntax error '' [249] */
