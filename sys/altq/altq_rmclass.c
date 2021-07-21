@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rmclass.c,v 1.26 2021/07/21 06:41:22 ozaki-r Exp $	*/
+/*	$NetBSD: altq_rmclass.c,v 1.27 2021/07/21 06:47:33 ozaki-r Exp $	*/
 /*	$KAME: altq_rmclass.c,v 1.19 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.26 2021/07/21 06:41:22 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.27 2021/07/21 06:47:33 ozaki-r Exp $");
 
 /* #ident "@(#)rm_class.c  1.48     97/12/05 SMI" */
 
@@ -194,7 +194,7 @@ static void	rmc_root_overlimit(struct rm_class *, struct rm_class *);
  * 	offtime = offtime * (8.0 / nsecPerByte);
  */
 struct rm_class *
-rmc_newclass(int pri, struct rm_ifdat *ifd, u_long psecPerByte,
+rmc_newclass(int pri, struct rm_ifdat *ifd, uint64_t psecPerByte,
     void (*action)(rm_class_t *, rm_class_t *), int maxq,
     struct rm_class *parent, struct rm_class *borrow, u_int maxidle,
     int minidle, u_int offtime, int pktsize, int flags)
@@ -253,18 +253,18 @@ rmc_newclass(int pri, struct rm_ifdat *ifd, u_long psecPerByte,
 	cl->flags_ = flags;
 
 #if 1 /* minidle is also scaled in ALTQ */
-	cl->minidle_ = ((long)minidle * (long)psecPerByte) / 8;
+	cl->minidle_ = ((int64_t)minidle * (int64_t)psecPerByte) / 8;
 	if (cl->minidle_ > 0)
 		cl->minidle_ = 0;
 #else
 	cl->minidle_ = minidle;
 #endif
-	cl->maxidle_ = ((long)maxidle * (long)psecPerByte) / 8;
+	cl->maxidle_ = ((int64_t)maxidle * (int64_t)psecPerByte) / 8;
 	if (cl->maxidle_ == 0)
 		cl->maxidle_ = 1;
 #if 1 /* offtime is also scaled in ALTQ */
 	cl->avgidle_ = cl->maxidle_;
-	cl->offtime_ = (((long)offtime * (long)psecPerByte) / 8) >> RM_FILTER_GAIN;
+	cl->offtime_ = (((int64_t)offtime * (int64_t)psecPerByte) / 8) >> RM_FILTER_GAIN;
 	if (cl->offtime_ == 0)
 		cl->offtime_ = 1;
 #else
@@ -347,7 +347,7 @@ rmc_newclass(int pri, struct rm_ifdat *ifd, u_long psecPerByte,
 }
 
 int
-rmc_modclass(struct rm_class *cl, u_long psecPerByte, int maxq, u_int maxidle,
+rmc_modclass(struct rm_class *cl, uint64_t psecPerByte, int maxq, u_int maxidle,
     int minidle, u_int offtime, int pktsize)
 {
 	struct rm_ifdat	*ifd;
@@ -365,18 +365,18 @@ rmc_modclass(struct rm_class *cl, u_long psecPerByte, int maxq, u_int maxidle,
 	qlimit(cl->q_) = maxq;
 
 #if 1 /* minidle is also scaled in ALTQ */
-	cl->minidle_ = ((long)minidle * (long)psecPerByte) / 8;
+	cl->minidle_ = ((int64_t)minidle * (int64_t)psecPerByte) / 8;
 	if (cl->minidle_ > 0)
 		cl->minidle_ = 0;
 #else
 	cl->minidle_ = minidle;
 #endif
-	cl->maxidle_ = ((long)maxidle * (long)psecPerByte) / 8;
+	cl->maxidle_ = ((int64_t)maxidle * (int64_t)psecPerByte) / 8;
 	if (cl->maxidle_ == 0)
 		cl->maxidle_ = 1;
 #if 1 /* offtime is also scaled in ALTQ */
 	cl->avgidle_ = cl->maxidle_;
-	cl->offtime_ = (((long)offtime * (long)psecPerByte) / 8) >> RM_FILTER_GAIN;
+	cl->offtime_ = (((int64_t)offtime * (int64_t)psecPerByte) / 8) >> RM_FILTER_GAIN;
 	if (cl->offtime_ == 0)
 		cl->offtime_ = 1;
 #else
@@ -661,7 +661,7 @@ rmc_delete_class(struct rm_ifdat *ifd, struct rm_class *cl)
  */
 
 int
-rmc_init(struct ifaltq *ifq, struct rm_ifdat *ifd, u_long psecPerByte,
+rmc_init(struct ifaltq *ifq, struct rm_ifdat *ifd, uint64_t psecPerByte,
     void (*restart)(struct ifaltq *), int maxq, int maxqueued, u_int maxidle,
     int minidle, u_int offtime, int flags)
 {
@@ -689,7 +689,7 @@ rmc_init(struct ifaltq *ifq, struct rm_ifdat *ifd, u_long psecPerByte,
 	ifd->efficient_ = (flags & RMCF_EFFICIENT) ? 1 : 0;
 #if 1
 	ifd->maxiftime_ = mtu * psecPerByte / 1000 / 1000 * 16;
-	if ((long)mtu * psecPerByte > (long)10 * 1000000000)
+	if ((int64_t)mtu * psecPerByte > (int64_t)10 * 1000000000)
 		ifd->maxiftime_ /= 4;
 #endif
 
@@ -1253,9 +1253,9 @@ rmc_dequeue_next(struct rm_ifdat *ifd, int mode)
 void
 rmc_update_class_util(struct rm_ifdat *ifd)
 {
-	long		 idle, avgidle, pktlen;
-	long		 pkt_time;
-	long		 tidle;
+	int64_t		 idle, avgidle, pktlen;
+	int64_t		 pkt_time;
+	int64_t		 tidle;
 	rm_class_t	*cl, *cl0, *borrowed;
 	rm_class_t	*borrows;
 	struct timespec	*nowp;
@@ -1267,7 +1267,7 @@ rmc_update_class_util(struct rm_ifdat *ifd)
 		return;
 
 	cl0 = cl;
-	pktlen = (long)ifd->curlen_[ifd->qo_];
+	pktlen = (int64_t)ifd->curlen_[ifd->qo_];
 	borrowed = ifd->borrowed_[ifd->qo_];
 	borrows = borrowed;
 
@@ -1286,7 +1286,7 @@ rmc_update_class_util(struct rm_ifdat *ifd)
 	nowp = &ifd->now_[ifd->qo_];
 	/* get pkt_time (for link) in usec */
 #if 1  /* use approximation */
-	pkt_time = (long)ifd->curlen_[ifd->qo_] * (long)ifd->ps_per_byte_;
+	pkt_time = (int64_t)ifd->curlen_[ifd->qo_] * (int64_t)ifd->ps_per_byte_;
 	pkt_time = PSEC_TO_NSEC(pkt_time);
 #else
 	pkt_time = ifd->curlen_[ifd->qo_] * ifd->ns_per_byte_ / 1000;
@@ -1329,7 +1329,7 @@ rmc_update_class_util(struct rm_ifdat *ifd)
 
 		/* get pkt_time (for class) in usec */
 #if 1  /* use approximation */
-		pkt_time = pktlen * (long)cl->ps_per_byte_;
+		pkt_time = pktlen * (int64_t)cl->ps_per_byte_;
 		pkt_time = PSEC_TO_NSEC(pkt_time);
 #else
 		pkt_time = pktlen * cl->ns_per_byte_ / 1000;
@@ -1485,7 +1485,7 @@ void
 rmc_delay_action(struct rm_class *cl, struct rm_class *borrow)
 {
 	int	t;
-	long	ndelay, extradelay;
+	int64_t	ndelay, extradelay;
 
 	cl->stats_.overactions++;
 	if (borrow != NULL)
