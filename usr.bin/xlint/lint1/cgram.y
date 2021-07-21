@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.330 2021/07/20 19:44:36 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.331 2021/07/21 21:04:00 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.330 2021/07/20 19:44:36 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.331 2021/07/21 21:04:00 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -67,7 +67,7 @@ int	mem_block_level;
 static int olwarn = LWARN_BAD;
 
 static	void	cgram_declare(sym_t *, bool, sbuf_t *);
-static	void	ignore_up_to_rparen(void);
+static	void	read_until_rparen(void);
 static	sym_t	*symbolrename(sym_t *, sbuf_t *);
 
 
@@ -1854,7 +1854,7 @@ asm_statement:			/* GCC extension */
 
 read_until_rparen:		/* helper for 'asm_statement' */
 	  /* empty */ {
-		ignore_up_to_rparen();
+		read_until_rparen();
 	  }
 	;
 
@@ -2104,7 +2104,7 @@ cgram_declare(sym_t *decl, bool initflg, sbuf_t *renaming)
  * unmatched right paren
  */
 static void
-ignore_up_to_rparen(void)
+read_until_rparen(void)
 {
 	int	level;
 
