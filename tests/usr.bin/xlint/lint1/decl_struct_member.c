@@ -1,4 +1,4 @@
-/*	$NetBSD: decl_struct_member.c,v 1.9 2021/07/15 21:00:05 rillig Exp $	*/
+/*	$NetBSD: decl_struct_member.c,v 1.10 2021/07/21 21:17:57 rillig Exp $	*/
 # 3 "decl_struct_member.c"
 
 struct multi_attributes {
@@ -8,7 +8,7 @@ struct multi_attributes {
 	int deprecated;
 };
 
-struct cover_begin_type_noclass_declspecs {
+struct cover_begin_type_specifier_qualifier_list {
 	int m1;
 	__attribute__((deprecated)) int m2;
 	const int m3;
@@ -24,7 +24,7 @@ struct cover_begin_type_typespec {
 	number m2;
 };
 
-struct cover_begin_type_noclass_declmods {
+struct cover_begin_type_qualifier_list {
 	const m1;
 	const volatile m2;
 };
