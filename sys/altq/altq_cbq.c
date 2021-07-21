@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cbq.c,v 1.35 2021/07/21 06:33:30 ozaki-r Exp $	*/
+/*	$NetBSD: altq_cbq.c,v 1.36 2021/07/21 07:34:44 ozaki-r Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.21 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.35 2021/07/21 06:33:30 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.36 2021/07/21 07:34:44 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -306,6 +306,7 @@ cbq_remove_altq(struct pf_altq *a)
 	return (0);
 }
 
+#define NSEC_TO_PSEC(s)	((uint64_t)(s) * 1000 * 1000)
 int
 cbq_add_queue(struct pf_altq *a)
 {
@@ -384,7 +385,7 @@ cbq_add_queue(struct pf_altq *a)
 	 */
 	if ((opts->flags & CBQCLF_ROOTCLASS) != 0) {
 		error = rmc_init(cbqp->ifnp.ifq_, &cbqp->ifnp,
-		    opts->ps_per_byte, cbqrestart, a->qlimit, RM_MAXQUEUED,
+		    NSEC_TO_PSEC(opts->ns_per_byte), cbqrestart, a->qlimit, RM_MAXQUEUED,
 		    opts->maxidle, opts->minidle, opts->offtime,
 		    opts->flags);
 		if (error != 0)
@@ -392,7 +393,7 @@ cbq_add_queue(struct pf_altq *a)
 		cl = cbqp->ifnp.root_;
 	} else {
 		cl = rmc_newclass(a->priority,
-				  &cbqp->ifnp, opts->ps_per_byte,
+				  &cbqp->ifnp, NSEC_TO_PSEC(opts->ns_per_byte),
 				  rmc_delay_action, a->qlimit, parent, borrow,
 				  opts->maxidle, opts->minidle, opts->offtime,
 				  opts->pktsize, opts->flags);

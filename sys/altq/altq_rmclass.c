@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rmclass.c,v 1.28 2021/07/21 06:49:25 ozaki-r Exp $	*/
+/*	$NetBSD: altq_rmclass.c,v 1.29 2021/07/21 07:34:44 ozaki-r Exp $	*/
 /*	$KAME: altq_rmclass.c,v 1.19 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.28 2021/07/21 06:49:25 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.29 2021/07/21 07:34:44 ozaki-r Exp $");
 
 /* #ident "@(#)rm_class.c  1.48     97/12/05 SMI" */
 
@@ -287,7 +287,7 @@ rmc_newclass(int pri, struct rm_ifdat *ifd, uint64_t psecPerByte,
 		if (flags & RMCF_CLEARDSCP)
 			red_flags |= RIOF_CLEARDSCP;
 #endif
-		red_pkttime = nsecPerByte * pktsize  / 1000;
+		red_pkttime = PSEC_TO_NSEC(psecPerByte) * pktsize  / 1000;
 
 		if (flags & RMCF_RED) {
 			cl->red_ = red_alloc(0, 0,
