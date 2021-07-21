@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_ipmi.c,v 1.1 2018/12/25 11:56:13 mlelstv Exp $ */
+/*	$NetBSD: x86_ipmi.c,v 1.2 2021/07/21 23:16:09 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_ipmi.c,v 1.1 2018/12/25 11:56:13 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_ipmi.c,v 1.2 2021/07/21 23:16:09 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: x86_ipmi.c,v 1.1 2018/12/25 11:56:13 mlelstv Exp $")
 #include <sys/bus.h>
 #include <sys/intr.h>
 
-#include <x86/smbiosvar.h>
+#include <dev/smbiosvar.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
