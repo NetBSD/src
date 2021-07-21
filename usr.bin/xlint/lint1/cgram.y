@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.332 2021/07/21 21:11:19 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.333 2021/07/21 21:17:57 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.332 2021/07/21 21:11:19 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.333 2021/07/21 21:17:57 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -773,21 +773,21 @@ begin_type_declmods:		/* see C99 6.7 */
 	| begin_type_declmods declmod
 	;
 
-begin_type_noclass_declspecs:
+begin_type_specifier_qualifier_list:	/* see C11 6.7.2.1 */
 	  begin_type_typespec {
 		add_type($1);
 	  }
-	| type_attribute begin_type_noclass_declspecs
-	| begin_type_noclass_declmods type_specifier {
+	| type_attribute begin_type_specifier_qualifier_list
+	| begin_type_qualifier_list type_specifier {
 		add_type($2);
 	  }
-	| begin_type_noclass_declspecs T_QUAL {
+	| begin_type_specifier_qualifier_list T_QUAL {
 		add_qualifier($2);
 	  }
-	| begin_type_noclass_declspecs notype_type_specifier {
+	| begin_type_specifier_qualifier_list notype_type_specifier {
 		add_type($2);
 	  }
-	| begin_type_noclass_declspecs type_attribute
+	| begin_type_specifier_qualifier_list type_attribute
 	;
 
 begin_type_typespec:
@@ -799,11 +799,11 @@ begin_type_typespec:
 	  }
 	;
 
-begin_type_noclass_declmods:
+begin_type_qualifier_list:
 	  begin_type T_QUAL {
 		add_qualifier($2);
 	  }
-	| begin_type_noclass_declmods T_QUAL {
+	| begin_type_qualifier_list T_QUAL {
 		add_qualifier($2);
 	  }
 	;
@@ -948,25 +948,25 @@ struct_declaration_list:	/* C99 6.7.2.1 */
 	;
 
 struct_declaration:		/* C99 6.7.2.1 */
-	  begin_type_noclass_declmods end_type {
+	  begin_type_qualifier_list end_type {
 		/* too late, i know, but getsym() compensates it */
 		symtyp = FMEMBER;
 	  } notype_struct_declarators type_attribute_opt T_SEMI {
 		symtyp = FVFT;
 		$$ = $4;
 	  }
-	| begin_type_noclass_declspecs end_type {
+	| begin_type_specifier_qualifier_list end_type {
 		symtyp = FMEMBER;
 	  } type_struct_declarators type_attribute_opt T_SEMI {
 		symtyp = FVFT;
 		$$ = $4;
 	  }
-	| begin_type_noclass_declmods end_type type_attribute_opt T_SEMI {
+	| begin_type_qualifier_list end_type type_attribute_opt T_SEMI {
 		/* syntax error '%s' */
 		error(249, "member without type");
 		$$ = NULL;
 	  }
-	| begin_type_noclass_declspecs end_type type_attribute_opt T_SEMI {
+	| begin_type_specifier_qualifier_list end_type type_attribute_opt T_SEMI {
 		symtyp = FVFT;
 		if (!Sflag)
 			/* anonymous struct/union members is a C9X feature */
@@ -1363,16 +1363,16 @@ type_name:			/* C99 6.7.6 */
 	;
 
 abstract_declaration:
-	  begin_type_noclass_declmods end_type {
+	  begin_type_qualifier_list end_type {
 		$$ = declare_1_abstract(abstract_name());
 	  }
-	| begin_type_noclass_declspecs end_type {
+	| begin_type_specifier_qualifier_list end_type {
 		$$ = declare_1_abstract(abstract_name());
 	  }
-	| begin_type_noclass_declmods end_type abstract_declarator {
+	| begin_type_qualifier_list end_type abstract_declarator {
 		$$ = declare_1_abstract($3);
 	  }
-	| begin_type_noclass_declspecs end_type abstract_declarator {
+	| begin_type_specifier_qualifier_list end_type abstract_declarator {
 		$$ = declare_1_abstract($3);
 	  }
 	;
