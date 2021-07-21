@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.333 2021/07/21 21:17:57 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.334 2021/07/21 21:24:45 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.333 2021/07/21 21:17:57 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.334 2021/07/21 21:24:45 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -375,12 +375,12 @@ identifier_sym:			/* helper for struct/union/enum */
 /* K&R ???, C90 ???, C99 6.4.2.1, C11 ??? */
 identifier:
 	  T_NAME {
+		cgram_debug("name '%s'", $1->sb_name);
 		$$ = $1;
-		cgram_debug("name '%s'", $$->sb_name);
 	  }
 	| T_TYPENAME {
+		cgram_debug("typename '%s'", $1->sb_name);
 		$$ = $1;
-		cgram_debug("typename '%s'", $$->sb_name);
 	  }
 	;
 
@@ -543,9 +543,9 @@ gcc_statement_expr_item:
 			/* XXX: do that only on the last name */
 			if ($1->tn_op == NAME)
 				$1->tn_sym->s_used = true;
-			$$ = $1;
 			expr($1, false, false, false, false);
 			seen_fallthrough = false;
+			$$ = $1;
 		}
 	  }
 	;
@@ -615,6 +615,7 @@ unary_expression:
 	  }
 	/* K&R ---, C90 ---, C99 ---, C11 6.5.3 */
 	| T_ALIGNOF T_LPAREN type_name T_RPAREN {
+		/* TODO: c11ism */
 		$$ = build_alignof($3);
 	  }
 	;
@@ -736,6 +737,7 @@ declaration:			/* C99 6.7 */
 		}
 	  }
 	| begin_type_declmods end_type notype_init_declarators T_SEMI
+	/* ^^ There is no check for the missing type-specifier. */
 	| begin_type_declaration_specifiers end_type T_SEMI {
 		if (dcs->d_scl == TYPEDEF) {
 			/* typedef declares no type name */
@@ -777,6 +779,7 @@ begin_type_specifier_qualifier_list:	/* see C11 6.7.2.1 */
 	  begin_type_typespec {
 		add_type($1);
 	  }
+	  /* TODO: shift/reduce conflict for type_attribute */
 	| type_attribute begin_type_specifier_qualifier_list
 	| begin_type_qualifier_list type_specifier {
 		add_type($2);
@@ -834,6 +837,7 @@ type_attribute:			/* See C11 6.7 declaration-specifiers */
 	  } gcc_attribute_spec_list {
 	    attron = false;
 	  } T_RPAREN T_RPAREN
+	  /* TODO: c11ism */
 	| T_ALIGNAS T_LPAREN align_as T_RPAREN
 	| T_PACKED {
 		addpacked();
@@ -949,6 +953,7 @@ struct_declaration_list:	/* C99 6.7.2.1 */
 
 struct_declaration:		/* C99 6.7.2.1 */
 	  begin_type_qualifier_list end_type {
+		/* ^^ There is no check for the missing type-specifier. */
 		/* too late, i know, but getsym() compensates it */
 		symtyp = FMEMBER;
 	  } notype_struct_declarators type_attribute_opt T_SEMI {
@@ -1475,12 +1480,14 @@ parameter_type_list:
 /* XXX: C99 6.7.5 defines the same name, but it looks completely different. */
 parameter_declaration:
 	  begin_type_declmods end_type {
+		/* ^^ There is no check for the missing type-specifier. */
 		$$ = declare_argument(abstract_name(), false);
 	  }
 	| begin_type_declaration_specifiers end_type {
 		$$ = declare_argument(abstract_name(), false);
 	  }
 	| begin_type_declmods end_type notype_param_declarator {
+		/* ^^ There is no check for the missing type-specifier. */
 		$$ = declare_argument($3, false);
 	  }
 	/*
@@ -1494,6 +1501,7 @@ parameter_declaration:
 		$$ = declare_argument($3, false);
 	  }
 	| begin_type_declmods end_type abstract_declarator {
+		/* ^^ There is no check for the missing type-specifier. */
 		$$ = declare_argument($3, false);
 	  }
 	| begin_type_declaration_specifiers end_type abstract_declarator {
@@ -1509,6 +1517,7 @@ initializer:			/* C99 6.7.8 "Initialization" */
 		/* XXX: Empty braces are not covered by C99 6.7.8. */
 	  }
 	| init_lbrace initializer_list comma_opt init_rbrace
+	  /* XXX: What is this error handling for? */
 	| error
 	;
 
@@ -1940,9 +1949,11 @@ function_definition:		/* C99 6.9.1 */
 
 func_declarator:
 	  begin_type end_type notype_declarator {
+		/* ^^ There is no check for the missing type-specifier. */
 		$$ = $3;
 	  }
 	| begin_type_declmods end_type notype_declarator {
+		/* ^^ There is no check for the missing type-specifier. */
 		$$ = $3;
 	  }
 	| begin_type_declaration_specifiers end_type type_declarator {
