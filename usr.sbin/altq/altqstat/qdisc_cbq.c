@@ -1,4 +1,4 @@
-/*	$NetBSD: qdisc_cbq.c,v 1.8 2021/07/21 06:38:57 ozaki-r Exp $	*/
+/*	$NetBSD: qdisc_cbq.c,v 1.9 2021/07/21 06:42:07 ozaki-r Exp $	*/
 /*	$KAME: qdisc_cbq.c,v 1.7 2003/09/17 14:27:37 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -133,10 +133,15 @@ cbq_stat_loop(int fd, const char *ifname, int count, int interval)
 
 			printf("\tQCount: %d,\t(qmax: %d)\n",
 			       sp->qcnt, sp->qmax);
+#if 0
 			printf("\tAvgIdle: %d [us],\t(maxidle: %d minidle: %d [us])\n",
 			       sp->avgidle >> RM_FILTER_GAIN,
 			       sp->maxidle >> RM_FILTER_GAIN,
 			       sp->minidle / RM_POWER);
+#else
+			printf("\tAvgIdle: %d [us],\t(maxidle: %d minidle: %d [us])\n",
+			       sp->avgidle, sp->maxidle, sp->minidle);
+#endif
 		}
 
 		/* swap the buffer pointers */
