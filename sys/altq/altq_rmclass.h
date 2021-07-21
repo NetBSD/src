@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rmclass.h,v 1.11 2021/07/21 06:41:22 ozaki-r Exp $	*/
+/*	$NetBSD: altq_rmclass.h,v 1.12 2021/07/21 06:47:33 ozaki-r Exp $	*/
 /*	$KAME: altq_rmclass.h,v 1.10 2003/08/20 23:30:23 itojun Exp $	*/
 
 /*
@@ -126,16 +126,16 @@ struct rm_class {
 	rm_ifdat_t	*ifdat_;
 	int		pri_;		/* Class priority. */
 	int		depth_;		/* Class depth */
-	u_long		ps_per_byte_;	/* PicoSeconds per byte. */
+	uint64_t	ps_per_byte_;	/* PicoSeconds per byte. */
 	u_int		maxrate_;	/* Bytes per second for this class. */
 	u_int		allotment_;	/* Fraction of link bandwidth. */
 	u_int		w_allotment_;	/* Weighted allotment for WRR */
 	int		bytes_alloc_;	/* Allocation for round of WRR */
 
-	long		avgidle_;
-	long		maxidle_;
-	long		minidle_;
-	long		offtime_;
+	int64_t		avgidle_;
+	int64_t		maxidle_;
+	int64_t		minidle_;
+	int64_t		offtime_;
 	int		sleeping_;	/* != 0 if delaying */
 	int		qthresh_;	/* Queue threshold for formal link sharing */
 	int		leaf_;		/* Note whether leaf class or not.*/
@@ -154,7 +154,7 @@ struct rm_class {
 	struct altq_pktattr *pktattr_;	/* saved hdr used by RED/ECN */
 	int		flags_;
 
-	long		last_pkttime_;	/* saved pkt_time */
+	int64_t		last_pkttime_;	/* saved pkt_time */
 	struct timespec	undertime_;	/* time can next send */
 	struct timespec	last_;		/* time last packet sent */
 	struct timespec	overtime_;
@@ -170,7 +170,7 @@ struct rm_ifdat {
 	int		queued_;	/* # pkts queued downstream */
 	int		efficient_;	/* Link Efficency bit */
 	int		wrr_;		/* Enable Weighted Round-Robin */
-	u_long		ps_per_byte_;	/* Link byte speed. */
+	uint64_t	ps_per_byte_;	/* Link byte speed. */
 	int		maxqueued_;	/* Max packets to queue */
 	int		maxpkt_;	/* Max packet size. */
 	int		qi_;		/* In/out pointers for downstream */
@@ -226,14 +226,14 @@ struct rm_ifdat {
 
 #define	is_a_parent_class(cl)	((cl)->children_ != NULL)
 
-extern rm_class_t *rmc_newclass(int, struct rm_ifdat *, u_long,
+extern rm_class_t *rmc_newclass(int, struct rm_ifdat *, uint64_t,
 				void (*)(struct rm_class *, struct rm_class *),
 				int, struct rm_class *, struct rm_class *,
 				u_int, int, u_int, int, int);
 extern void	rmc_delete_class(struct rm_ifdat *, struct rm_class *);
-extern int 	rmc_modclass(struct rm_class *, u_long, int,
+extern int 	rmc_modclass(struct rm_class *, uint64_t, int,
 			     u_int, int, u_int, int);
-extern int	rmc_init(struct ifaltq *, struct rm_ifdat *, u_long,
+extern int	rmc_init(struct ifaltq *, struct rm_ifdat *, uint64_t,
 			 void (*)(struct ifaltq *),
 			 int, int, u_int, int, u_int, int);
 extern int	rmc_queue_packet(struct rm_class *, mbuf_t *);
