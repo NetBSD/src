@@ -1,4 +1,4 @@
-/*	$NetBSD: qdisc_cbq.c,v 1.9 2021/07/21 06:42:07 ozaki-r Exp $	*/
+/*	$NetBSD: qdisc_cbq.c,v 1.10 2021/07/21 06:45:10 ozaki-r Exp $	*/
 /*	$KAME: qdisc_cbq.c,v 1.7 2003/09/17 14:27:37 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -105,7 +105,7 @@ cbq_stat_loop(int fd, const char *ifname, int count, int interval)
 
 			printf("\tpriority: %d depth: %d",
 			       sp->priority, sp->depth);
-			printf(" offtime: %d [us] wrr_allot: %d bytes\n",
+			printf(" offtime: %ld [ns] wrr_allot: %d bytes\n",
 			       sp->offtime, sp->wrr_allot);
 			printf("\tpsPerByte: %ld", sp->ps_per_byte);
 			printf("\t(%sbps)", rate2str(flow_bps));
@@ -139,7 +139,7 @@ cbq_stat_loop(int fd, const char *ifname, int count, int interval)
 			       sp->maxidle >> RM_FILTER_GAIN,
 			       sp->minidle / RM_POWER);
 #else
-			printf("\tAvgIdle: %d [us],\t(maxidle: %d minidle: %d [us])\n",
+			printf("\tAvgIdle: %ld [ns],\t(maxidle: %ld minidle: %ld [ns])\n",
 			       sp->avgidle, sp->maxidle, sp->minidle);
 #endif
 		}
