@@ -1,4 +1,4 @@
-/*	$NetBSD: qdisc_cbq.c,v 1.7 2006/10/28 11:43:02 peter Exp $	*/
+/*	$NetBSD: qdisc_cbq.c,v 1.8 2021/07/21 06:38:57 ozaki-r Exp $	*/
 /*	$KAME: qdisc_cbq.c,v 1.7 2003/09/17 14:27:37 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -100,14 +100,14 @@ cbq_stat_loop(int fd, const char *ifname, int count, int interval)
 			printf("Class %d on Interface %s: %s\n",
 			    sp->handle, ifname, clnames[i]);
 
-			flow_bps = 8.0 / (double)sp->ns_per_byte
-			    * 1000*1000*1000;
+			flow_bps = 8.0 / (double)sp->ps_per_byte
+			    * 1000*1000*1000*1000;
 
 			printf("\tpriority: %d depth: %d",
 			       sp->priority, sp->depth);
 			printf(" offtime: %d [us] wrr_allot: %d bytes\n",
 			       sp->offtime, sp->wrr_allot);
-			printf("\tnsPerByte: %d", sp->ns_per_byte);
+			printf("\tpsPerByte: %ld", sp->ps_per_byte);
 			printf("\t(%sbps)", rate2str(flow_bps));
 			if (lp->handle != NULL_CLASS_HANDLE) {
 				printf(",\tMeasured: %s [bps]\n",
