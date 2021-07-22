@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.699 2021/07/21 07:39:58 ozaki-r Exp $	*/
+/*	$NetBSD: param.h,v 1.700 2021/07/22 04:46:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -138,6 +138,22 @@
 #define	MIN(a,b)	((/*CONSTCOND*/(a)<(b))?(a):(b))
 #define	MAX(a,b)	((/*CONSTCOND*/(a)>(b))?(a):(b))
 
+/* Machine type dependent parameters. */
+#include <machine/param.h>
+#include <machine/limits.h>
+
+/*
+ * Coherency unit: assumed cache line size.  See also MIN_LWP_ALIGNMENT.
+ * The MD code depends on the current values of these constants. Don't
+ * change them without coordinating.
+ */
+#ifndef COHERENCY_UNIT
+#define	COHERENCY_UNIT		64
+#endif
+#ifndef CACHE_LINE_SIZE
+#define	CACHE_LINE_SIZE		64
+#endif
+
 /* More types and definitions used throughout the kernel. */
 #ifdef _KERNEL
 #include <sys/cdefs.h>
@@ -173,10 +189,6 @@
 /* Signals. */
 #include <sys/signal.h>
 
-/* Machine type dependent parameters. */
-#include <machine/param.h>
-#include <machine/limits.h>
-
 #define	DEV_BSHIFT	9			/* log2(DEV_BSIZE) */
 #define	DEV_BSIZE	(1 << DEV_BSHIFT)	/* 512 */
 
@@ -199,19 +211,6 @@
 /* bytes to disk blocks */
 #define	dbtob(x)	((x) << DEV_BSHIFT)
 #define	btodb(x)	((x) >> DEV_BSHIFT)
-
-/*
- * Coherency unit: assumed cache line size.  See also MIN_LWP_ALIGNMENT.
- * The MD code depends on the current values of these constants. Don't
- * change them without coordinating.
- */
-#ifndef COHERENCY_UNIT
-#define	COHERENCY_UNIT		64
-#endif
-#ifndef CACHE_LINE_SIZE
-#define	CACHE_LINE_SIZE		64
-#endif
-
 
 #ifndef MAXCPUS
 #define	MAXCPUS			32
