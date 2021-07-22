@@ -1,4 +1,4 @@
-.\"	$NetBSD: module.9,v 1.52 2019/04/07 22:32:10 pgoyette Exp $
+.\"	$NetBSD: module.9,v 1.53 2021/07/22 01:38:45 pgoyette Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 8, 2019
+.Dd July 21, 2021
 .Dt MODULE 9
 .Os
 .Sh NAME
@@ -61,7 +61,7 @@
 .Fn module_unload "const char *name"
 .Ft void
 .Fn module_init_class "modclass_t class"
-.Ft int
+.Ft void
 .Fn module_hold "module_t *module"
 .Ft void
 .Fn module_rele "module_t *module"
