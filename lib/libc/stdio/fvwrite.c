@@ -1,4 +1,4 @@
-/*	$NetBSD: fvwrite.c,v 1.29 2021/07/19 10:00:32 christos Exp $	*/
+/*	$NetBSD: fvwrite.c,v 1.30 2021/07/22 17:08:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fvwrite.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fvwrite.c,v 1.29 2021/07/19 10:00:32 christos Exp $");
+__RCSID("$NetBSD: fvwrite.c,v 1.30 2021/07/22 17:08:15 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,39 +50,6 @@ __RCSID("$NetBSD: fvwrite.c,v 1.29 2021/07/19 10:00:32 christos Exp $");
 #include "reentrant.h"
 #include "local.h"
 #include "fvwrite.h"
-
-static int
-flush_adj(FILE *fp, struct __suio *uio, ssize_t w)
-{
-	int rc;
-
-	_DIAGASSERT(w >= 0);
-	_DIAGASSERT(fp->_w >= 0);
-
-	if ((rc = fflush(fp)) == 0)
-		return 0;
-
-	/*
-	 * If we have to return without writing the whole buffer,
-	 * adjust for how much fflush() has written for us.
-	 * `w' is the amt. of new user data just copied into our
-	 * internal buffer in _this_ fwrite() call.
-         */
-	if (fp->_w < w)	{
-		/* some new data was also written */
-		ssize_t i = w - fp->_w;
-
-		/* adjust amt. written */
-		uio->uio_resid -= i;
-	} else {
-		/* only old stuff was written */
-
-		/* adjust _p and _w so user can retry */
-		fp->_p -= w;
-		fp->_w += w;
-	}
-	return rc;
-}
 
 /*
  * Write some memory regions.  Return zero on success, EOF on error.
@@ -130,21 +97,15 @@ __sfvwrite(FILE *fp, struct __suio *uio)
 		len = iov->iov_len; \
 		iov++; \
 	}
-#define WRITE(nw) \
-	w = (*fp->_write)(fp->_cookie, p, nw); \
-	if (w <= 0) \
-		goto err
-#define FLUSH(nw) \
-	if (flush_adj(fp, uio, nw)) \
-		goto err
-
 	if (fp->_flags & __SNBF) {
 		/*
 		 * Unbuffered: write up to BUFSIZ bytes at a time.
 		 */
 		do {
 			GETIOV(;);
-			WRITE(MIN(len, BUFSIZ));
+			w = (*fp->_write)(fp->_cookie, p, MIN(len, BUFSIZ));
+			if (w <= 0)
+				goto err;
 			p += w;
 			len -= w;
 		} while ((uio->uio_resid -= w) != 0);
@@ -195,10 +156,13 @@ __sfvwrite(FILE *fp, struct __suio *uio)
 				COPY(w);
 				/* fp->_w -= w; */ /* unneeded */
 				fp->_p += w;
-				FLUSH(w);
+				if (fflush(fp))
+					goto err;
 			} else if (len >= (size_t)(w = fp->_bf._size)) {
 				/* write directly */
-				WRITE((size_t)w);
+				w = (*fp->_write)(fp->_cookie, p, (size_t)w);
+				if (w <= 0)
+					goto err;
 			} else {
 				/* fill and done */
 				w = len;
@@ -232,9 +196,12 @@ __sfvwrite(FILE *fp, struct __suio *uio)
 				COPY(w);
 				/* fp->_w -= w; */
 				fp->_p += w;
-				FLUSH(w);
+				if (fflush(fp))
+					goto err;
 			} else if (s >= (w = fp->_bf._size)) {
-				WRITE((size_t)w);
+				w = (*fp->_write)(fp->_cookie, p, (size_t)w);
+				if (w <= 0)
+				 	goto err;
 			} else {
 				w = s;
 				COPY(w);
@@ -243,7 +210,8 @@ __sfvwrite(FILE *fp, struct __suio *uio)
 			}
 			if ((nldist -= w) == 0) {
 				/* copied the newline: flush and forget */
-				FLUSH(w);
+				if (fflush(fp))
+					goto err;
 				nlknown = 0;
 			}
 			p += w;
