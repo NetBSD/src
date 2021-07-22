@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.374 2021/07/11 01:58:41 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.375 2021/07/22 01:39:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2019, 2020 The NetBSD Foundation, Inc.
@@ -65,11 +65,11 @@
 #include "opt_dec_3000_500.h"
 #include "opt_execfmt.h"
 
-#define	__RWLOCK_PRIVATE 
+#define	__RWLOCK_PRIVATE
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.374 2021/07/11 01:58:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.375 2021/07/22 01:39:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,6 +195,7 @@ int	alpha_unaligned_print = 1;	/* warn about unaligned accesses */
 int	alpha_unaligned_fix = 1;	/* fix up unaligned accesses */
 int	alpha_unaligned_sigbus = 0;	/* don't SIGBUS on fixed-up accesses */
 int	alpha_fp_sync_complete = 0;	/* fp fixup if sync even without /s */
+int	alpha_fp_complete_debug = 0;	/* fp completion debug enabled */
 
 /*
  * XXX This should be dynamically sized, but we have the chicken-egg problem!
@@ -1646,6 +1647,11 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTLTYPE_BOOL, "is_qemu", NULL,
 		       NULL, 0, &alpha_is_qemu, 0,
 		       CTL_MACHDEP, CPU_IS_QEMU, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "fp_complete_debug", NULL,
+		       NULL, 0, &alpha_fp_complete_debug, 0,
+		       CTL_MACHDEP, CPU_FP_COMPLETE_DEBUG, CTL_EOL);
 }
 
 /*
@@ -1687,8 +1693,10 @@ setregs(register struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	tfp->tf_regs[FRAME_T12] = tfp->tf_regs[FRAME_PC];	/* a.k.a. PV */
 
 	if (__predict_true((l->l_md.md_flags & IEEE_INHERIT) == 0)) {
-		l->l_md.md_flags &= ~MDLWP_FP_C;
-		pcb->pcb_fp.fpr_cr = FPCR_DYN(FP_RN);
+		l->l_md.md_flags =
+		    (l->l_md.md_flags & ~(MDLWP_FP_C | MDLWP_FPACTIVE)) |
+		    FP_C_DEFAULT;
+		pcb->pcb_fp.fpr_cr = FPCR_DEFAULT;
 	}
 }
 

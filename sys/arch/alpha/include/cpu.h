@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.102 2021/06/26 15:02:19 skrll Exp $ */
+/* $NetBSD: cpu.h,v 1.103 2021/07/22 01:39:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -232,6 +232,7 @@ void	cpu_signotify(struct lwp *);
 #define	CPU_FP_SYNC_COMPLETE	7	/* int: always fixup sync fp traps */
 #define	CPU_CCTR		8	/* int: using CC timecounter */
 #define	CPU_IS_QEMU		9	/* int: running under Qemu */
+#define	CPU_FP_COMPLETE_DEBUG	10	/* int: enable FP completion debug */
 
 
 #ifdef _KERNEL
