@@ -1,4 +1,4 @@
-/* $NetBSD: proc.h,v 1.22 2014/05/16 19:18:21 matt Exp $ */
+/* $NetBSD: proc.h,v 1.23 2021/07/22 01:31:55 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -61,7 +61,7 @@ struct mdlwp {
  * 	C99 API's, the use of the MDLWP_FP_C bits is defined variously in
  * 	ieeefp.h and fpu.h.
  */
-#define	MDLWP_FP_C	0x007ffffe	/* Extended FP_C Quadword bits */
+#define	MDLWP_FP_C	__BITS(1,22)	/* Extended FP_C Quadword bits */
 #define	MDLWP_FPACTIVE	__BIT(63)	/* FPU is active on LWP's PCU CPU */
 
 /*
