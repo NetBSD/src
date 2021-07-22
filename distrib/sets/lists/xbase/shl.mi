@@ -1,8 +1,8 @@
-# $NetBSD: shl.mi,v 1.96 2021/07/13 05:53:12 mrg Exp $
+# $NetBSD: shl.mi,v 1.97 2021/07/22 21:49:44 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
-./usr/X11R7/lib/X11/locale/lib/common/ximcp.so		obsolet		obsolete
+./usr/X11R7/lib/X11/locale/lib/common/ximcp.so		obsolete	obsolete
 ./usr/X11R7/lib/X11/locale/lib/common/ximcp.so.2	obsolete	obsolete
 ./usr/X11R7/lib/X11/locale/lib/common/ximcp.so.2.0	obsolete	obsolete
 ./usr/X11R7/lib/X11/locale/lib/common/xlcDef.so		obsolete	obsolete
