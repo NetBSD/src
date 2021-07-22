@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.33 2021/04/26 14:44:16 thorpej Exp $
+# $NetBSD: files.fdt,v 1.34 2021/07/22 00:47:55 jmcneill Exp $
 
 include	"dev/pckbport/files.pckbport"
 
@@ -75,6 +75,7 @@ file	arch/arm/fdt/pmu_fdt.c			pmu_fdt
 attach	genfb at fdt with plfb_fdt: fdt_display_timing
 file	arch/arm/fdt/plfb_fdt.c			plfb_fdt
 
-device	acpifdt: acpibus
+device	acpifdt: acpibus, smbios
 attach	acpifdt at fdt with acpi_fdt
 file	arch/arm/fdt/acpi_fdt.c			acpi_fdt
+file	dev/smbios_platform.c			acpi_fdt
