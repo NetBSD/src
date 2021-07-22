@@ -1,4 +1,4 @@
-/*	$NetBSD: getfstypename.c,v 1.10 2020/03/30 08:36:09 wiz Exp $	*/
+/*	$NetBSD: getfstypename.c,v 1.11 2021/07/22 13:54:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -39,13 +39,15 @@
 # include <sys/cdefs.h>
 # ifndef _KERNEL
 #  if !defined(lint)
-__RCSID("$NetBSD: getfstypename.c,v 1.10 2020/03/30 08:36:09 wiz Exp $");
+__RCSID("$NetBSD: getfstypename.c,v 1.11 2021/07/22 13:54:38 skrll Exp $");
 #  endif
 # else
-__KERNEL_RCSID(0, "$NetBSD: getfstypename.c,v 1.10 2020/03/30 08:36:09 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: getfstypename.c,v 1.11 2021/07/22 13:54:38 skrll Exp $");
 # endif /* _KERNEL */
 
 # define FSTYPE_ENUMNAME fstype_enum
+
+# include <sys/param.h>
 # include <sys/types.h>
 # include <sys/disk.h>
 # include <sys/disklabel.h>
