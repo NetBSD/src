@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.c,v 1.23 2017/12/25 05:08:49 maya Exp $	*/
+/*	$NetBSD: ldd.c,v 1.24 2021/07/22 17:39:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ldd.c,v 1.23 2017/12/25 05:08:49 maya Exp $");
+__RCSID("$NetBSD: ldd.c,v 1.24 2021/07/22 17:39:52 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -123,6 +123,7 @@ main(int argc, char **argv)
 {
 	const char *fmt1 = NULL, *fmt2 = NULL;
 	int c, exit_status = EXIT_SUCCESS;
+	char cwd[MAXPATHLEN], path[MAXPATHLEN];
 
 #ifdef DEBUG
 	debug = 1;
@@ -154,22 +155,28 @@ main(int argc, char **argv)
 		usage();
 		/*NOTREACHED*/
 	}
+	if (getcwd(cwd, sizeof(cwd)) == NULL)
+		err(EXIT_FAILURE, "Can't get working directory");
 
 	for (; argc != 0; argc--, argv++) {
 		int fd;
 
+		if (**argv != '/')
+			snprintf(path, sizeof(path), "%s/%s", cwd, *argv);
+		else
+			strlcpy(path, *argv, sizeof(path));
 		fd = open(*argv, O_RDONLY);
 		if (fd == -1) {
 			exit_status = EXIT_FAILURE;
 			warn("%s", *argv);
 			continue;
 		}
-		if (elf_ldd(fd, *argv, fmt1, fmt2) == -1
+		if (elf_ldd(fd, *argv, path, fmt1, fmt2) == -1
 		    /* Alpha never had 32 bit support. */
 #if (defined(_LP64) && !defined(ELF64_ONLY)) || defined(MIPS_N32)
-		    && elf32_ldd(fd, *argv, fmt1, fmt2) == -1
+		    && elf32_ldd(fd, *argv, path, fmt1, fmt2) == -1
 #if defined(__mips__) && 0 /* XXX this is still hosed for some reason */
-		    && elf32_ldd_compat(fd, *argv, fmt1, fmt2) == -1
+		    && elf32_ldd_compat(fd, *argv, path, fmt1, fmt2) == -1
 #endif
 #endif
 		    ) {
