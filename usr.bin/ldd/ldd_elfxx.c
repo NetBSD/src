@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd_elfxx.c,v 1.7 2017/01/10 21:11:25 christos Exp $	*/
+/*	$NetBSD: ldd_elfxx.c,v 1.8 2021/07/22 17:39:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ldd_elfxx.c,v 1.7 2017/01/10 21:11:25 christos Exp $");
+__RCSID("$NetBSD: ldd_elfxx.c,v 1.8 2021/07/22 17:39:53 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -93,7 +93,7 @@ static void fmtprint(const char *, Obj_Entry *, const char *, const char *);
  * returns 0 on success and -1 on failure.
  */
 int
-ELFNAME(ldd)(int fd, char *path, const char *fmt1, const char *fmt2)
+ELFNAME(ldd)(int fd, char *prog, char *path, const char *fmt1, const char *fmt2)
 {
 	struct stat st;
 
@@ -132,7 +132,7 @@ ELFNAME(ldd)(int fd, char *path, const char *fmt1, const char *fmt2)
 	(void) _rtld_load_needed_objects(_rtld_objmain, 0);
 
 	if (fmt1 == NULL)
-		printf("%s:\n", _rtld_objmain->path);
+		printf("%s:\n", prog);
 	main_local = path;
 	main_progname = _rtld_objmain->path;
 	print_needed(_rtld_objmain, fmt1, fmt2);
