@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.140 2021/07/11 01:55:51 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.141 2021/07/22 15:48:40 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2019 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.140 2021/07/11 01:55:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.141 2021/07/22 15:48:40 thorpej Exp $");
 
 #include "assym.h"
 
@@ -844,14 +844,7 @@ LEAF(cpu_switchto, 0)
 	 */
 	ldq	a0, L_PROC(s2)			/* first ras_lookup() arg */
 	ldq	t0, P_RASLIST(a0)		/* any RAS entries? */
-	beq	t0, 2f				/* no, skip */
-	ldq	s1, L_MD_TF(s2)			/* s1 = l->l_md.md_tf */
-	ldq	a1, (FRAME_PC*8)(s1)		/* second ras_lookup() arg */
-	CALL(ras_lookup)			/* ras_lookup(p, PC) */
-	addq	v0, 1, t0			/* -1 means "not in ras" */
-	beq	t0, 2f
-	stq	v0, (FRAME_PC*8)(s1)
-
+	bne	t0, 4f				/* yes, go deal with it */
 2:
 	mov	s4, v0				/* return the old lwp */
 	/*
@@ -883,6 +876,16 @@ LEAF(cpu_switchto, 0)
 	stq	sp, PCB_HWPCB_KSP(a3)		/* save old SP */
 	ldq	sp, PCB_HWPCB_KSP(a2)		/* restore new SP */
 	br	1b				/* finish up */
+
+4:
+	ldq	s1, L_MD_TF(s2)			/* s1 = l->l_md.md_tf */
+	ldq	a1, (FRAME_PC*8)(s1)		/* second ras_lookup() arg */
+	CALL(ras_lookup)			/* ras_lookup(p, PC) */
+	addq	v0, 1, t0			/* -1 means "not in ras" */
+	beq	t0, 2b				/* not in ras? return */
+	stq	v0, (FRAME_PC*8)(s1)		/* in ras? fix up PC */
+	br	2b				/* finish up */
+
 	END(cpu_switchto)
 
 /*
