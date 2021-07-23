@@ -1,0 +1,31 @@
+# $NetBSD: ec2_init,v 1.1 2021/07/23 21:53:34 jmcneill Exp $
+
+is_ec2() {
+	val=NO
+	# Look for the string "amazon" in one of these sysctl nodes
+	for node in machdep.dmi.system-vendor \
+		    machdep.dmi.system-version \
+		    machdep.dmi.bios-version \
+		    machdep.xen.version ; do
+		if /sbin/sysctl -q $node; then
+			nodeval="$(/sbin/sysctl -n $node | tr '[A-Z]' '[a-z]')"
+			case "$nodeval" in
+			*amazon*)
+				val=YES
+				;;
+			# OpenStack is not EC2 but it does have a metadata service.
+			*openstack*)
+				val=YES
+				;;
+			esac
+		fi
+	done
+	printf $val
+}
+
+# Don't override /etc/rc.conf
+if [ -z "$ec2_init" ]
+then
+	ec2_init=$(is_ec2)
+fi
+

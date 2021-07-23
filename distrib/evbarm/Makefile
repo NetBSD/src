@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2020/11/16 11:38:29 rin Exp $
+#	$NetBSD: Makefile,v 1.16 2021/07/23 21:53:33 jmcneill Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -8,6 +8,7 @@
 SUBDIR=		gzboot instkernel
 .if !empty(MACHINE_ARCH:Maarch64*) || !empty(MACHINE_ARCH:Mearmv7hf*)
 SUBDIR+=	installimage
+SUBDIR+=	liveimage
 .endif
 .if !empty(MACHINE_ARCH:Maarch64*)
 SUBDIR+=	isoimage
@@ -26,6 +27,9 @@ release: check_RELEASEDIR .WAIT ${MDECBOOT}
 iso_image:
 	${MAKEDIRTARGET} isoimage iso_image
 .endif
+
+live_image:
+	${MAKEDIRTARGET} liveimage live_image
 
 install_image:
 	${MAKEDIRTARGET} installimage install_image
