@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegrd.c,v 1.31 2019/10/10 03:43:59 christos Exp $	*/
+/*	$NetBSD: rf_dagdegrd.c,v 1.32 2021/07/23 00:54:45 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagdegrd.c,v 1.31 2019/10/10 03:43:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagdegrd.c,v 1.32 2021/07/23 00:54:45 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -141,19 +141,19 @@ rf_CreateRaidOneDegradedReadDAG(RF_Raid_t *raidPtr,
 
 	/* total number of nodes = 1 + (block + commit + terminator) */
 
-	rdNode = rf_AllocDAGNode();
+	rdNode = rf_AllocDAGNode(raidPtr);
 	rdNode->list_next = dag_h->nodes;
 	dag_h->nodes = rdNode;
 
-	blockNode = rf_AllocDAGNode();
+	blockNode = rf_AllocDAGNode(raidPtr);
 	blockNode->list_next = dag_h->nodes;
 	dag_h->nodes = blockNode;
 
-	commitNode = rf_AllocDAGNode();
+	commitNode = rf_AllocDAGNode(raidPtr);
 	commitNode->list_next = dag_h->nodes;
 	dag_h->nodes = commitNode;
 
-	termNode = rf_AllocDAGNode();
+	termNode = rf_AllocDAGNode(raidPtr);
 	termNode->list_next = dag_h->nodes;
 	dag_h->nodes = termNode;
 
@@ -315,35 +315,35 @@ rf_CreateDegradedReadDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 	nRrdNodes = ((new_asm_h[0]) ? new_asm_h[0]->stripeMap->numStripeUnitsAccessed : 0) +
 	    ((new_asm_h[1]) ? new_asm_h[1]->stripeMap->numStripeUnitsAccessed : 0);
 
-	blockNode = rf_AllocDAGNode();
+	blockNode = rf_AllocDAGNode(raidPtr);
 	blockNode->list_next = dag_h->nodes;
 	dag_h->nodes = blockNode;
 
-	commitNode = rf_AllocDAGNode();
+	commitNode = rf_AllocDAGNode(raidPtr);
 	commitNode->list_next = dag_h->nodes;
 	dag_h->nodes = commitNode;
 
-	xorNode = rf_AllocDAGNode();
+	xorNode = rf_AllocDAGNode(raidPtr);
 	xorNode->list_next = dag_h->nodes;
 	dag_h->nodes = xorNode;
 
-	rpNode = rf_AllocDAGNode();
+	rpNode = rf_AllocDAGNode(raidPtr);
 	rpNode->list_next = dag_h->nodes;
 	dag_h->nodes = rpNode;
 
-	termNode = rf_AllocDAGNode();
+	termNode = rf_AllocDAGNode(raidPtr);
 	termNode->list_next = dag_h->nodes;
 	dag_h->nodes = termNode;
 
 	for (i = 0; i < nRudNodes; i++) {
-		tmpNode = rf_AllocDAGNode();
+		tmpNode = rf_AllocDAGNode(raidPtr);
 		tmpNode->list_next = dag_h->nodes;
 		dag_h->nodes = tmpNode;
 	}
 	rudNodes = dag_h->nodes;
 
 	for (i = 0; i < nRrdNodes; i++) {
-		tmpNode = rf_AllocDAGNode();
+		tmpNode = rf_AllocDAGNode(raidPtr);
 		tmpNode->list_next = dag_h->nodes;
 		dag_h->nodes = tmpNode;
 	}
@@ -420,7 +420,7 @@ rf_CreateDegradedReadDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 		}
 	}
 	/* make a PDA for the parity unit */
-	parityPDA = rf_AllocPhysDiskAddr();
+	parityPDA = rf_AllocPhysDiskAddr(raidPtr);
 	parityPDA->next = dag_h->pda_cleanup_list;
 	dag_h->pda_cleanup_list = parityPDA;
 	parityPDA->col = asmap->parityInfo->col;
@@ -453,7 +453,7 @@ rf_CreateDegradedReadDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 		/* any Rud nodes that overlap the failed access need to be
 		 * xored in */
 		if (overlappingPDAs[i]) {
-			pda = rf_AllocPhysDiskAddr();
+			pda = rf_AllocPhysDiskAddr(raidPtr);
 			memcpy((char *) pda, (char *) tmprudNode->params[0].p, sizeof(RF_PhysDiskAddr_t));
 			/* add it into the pda_cleanup_list *after* the copy, TYVM */
 			pda->next = dag_h->pda_cleanup_list;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid.h,v 1.48 2019/10/10 03:43:59 christos Exp $	*/
+/*	$NetBSD: rf_raid.h,v 1.49 2021/07/23 00:54:45 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -304,6 +304,8 @@ struct RF_Raid_s {
 
 #endif				/* RF_INCLUDE_PARITYLOGGING > 0 */
 	struct rf_paritymap *parity_map;
+	struct RF_Pools_s pools;
+	struct RF_PoolNames_s poolNames;
 };
 
 struct raid_softc {

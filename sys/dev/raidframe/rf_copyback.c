@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_copyback.c,v 1.53 2019/12/08 12:14:40 mlelstv Exp $	*/
+/*	$NetBSD: rf_copyback.c,v 1.54 2021/07/23 00:54:45 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -38,7 +38,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.53 2019/12/08 12:14:40 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.54 2021/07/23 00:54:45 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -198,7 +198,7 @@ rf_CopybackReconstructedData(RF_Raid_t *raidPtr)
 	desc->sectPerSU = raidPtr->Layout.sectorsPerStripeUnit;
 	desc->sectPerStripe = raidPtr->Layout.sectorsPerStripeUnit * raidPtr->Layout.numDataCol;
 	desc->databuf = databuf;
-	desc->mcpair = rf_AllocMCPair();
+	desc->mcpair = rf_AllocMCPair(raidPtr);
 
 	/* quiesce the array, since we don't want to code support for user
 	 * accs here */
@@ -422,7 +422,7 @@ rf_CopybackComplete(RF_CopybackDesc_t *desc, int status)
 		       raidPtr->raidid, status);
 
 	RF_Free(desc->databuf, rf_RaidAddressToByte(raidPtr, desc->sectPerSU));
-	rf_FreeMCPair(desc->mcpair);
+	rf_FreeMCPair(raidPtr, desc->mcpair);
 	RF_Free(desc, sizeof(*desc));
 
 	rf_copyback_in_progress = 0;

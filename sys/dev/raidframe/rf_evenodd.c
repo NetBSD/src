@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_evenodd.c,v 1.22 2019/02/09 03:34:00 christos Exp $	*/
+/*	$NetBSD: rf_evenodd.c,v 1.23 2021/07/23 00:54:45 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ****************************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_evenodd.c,v 1.22 2019/02/09 03:34:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_evenodd.c,v 1.23 2021/07/23 00:54:45 oster Exp $");
 
 #include "rf_archs.h"
 
@@ -356,7 +356,7 @@ rf_VerifyParityEvenOdd(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddr,
 
 	retcode = RF_PARITY_OKAY;
 
-	mcpair = rf_AllocMCPair();
+	mcpair = rf_AllocMCPair(raidPtr);
 	rf_MakeAllocList(alloclist);
 	buf = RF_MallocAndAdd(
 	    numbytes * (layoutPtr->numDataCol + layoutPtr->numParityCol),
@@ -526,10 +526,10 @@ rf_VerifyParityEvenOdd(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddr,
 
 
 out:
-	rf_FreeAccessStripeMap(asm_h);
+	rf_FreeAccessStripeMap(raidPtr, asm_h);
 	rf_FreeAllocList(alloclist);
 	rf_FreeDAG(rd_dag_h);
-	rf_FreeMCPair(mcpair);
+	rf_FreeMCPair(raidPtr, mcpair);
 	return (retcode);
 }
 #endif				/* RF_INCLUDE_EVENODD > 0 */
