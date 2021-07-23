@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_stripelocks.c,v 1.34 2019/07/11 03:49:51 msaitoh Exp $	*/
+/*	$NetBSD: rf_stripelocks.c,v 1.35 2021/07/23 00:54:45 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_stripelocks.c,v 1.34 2019/07/11 03:49:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_stripelocks.c,v 1.35 2021/07/23 00:54:45 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -99,8 +99,8 @@ __KERNEL_RCSID(0, "$NetBSD: rf_stripelocks.c,v 1.34 2019/07/11 03:49:51 msaitoh 
 
 static void AddToWaitersQueue(RF_StripeLockDesc_t * lockDesc,
 			      RF_LockReqDesc_t * lockReqDesc);
-static RF_StripeLockDesc_t *AllocStripeLockDesc(RF_StripeNum_t stripeID);
-static void FreeStripeLockDesc(RF_StripeLockDesc_t * p);
+static RF_StripeLockDesc_t *AllocStripeLockDesc(RF_Raid_t *raidPtr, RF_StripeNum_t stripeID);
+static void FreeStripeLockDesc(RF_Raid_t *raidPtr, RF_StripeLockDesc_t * p);
 static RF_LockTableEntry_t *rf_MakeLockTable(void);
 #if RF_DEBUG_STRIPELOCK
 static void PrintLockedStripes(RF_LockTableEntry_t * lockTable);
@@ -158,19 +158,24 @@ static void rf_ShutdownStripeLockFreeList(void *);
 static void rf_RaidShutdownStripeLocks(void *);
 
 static void
-rf_ShutdownStripeLockFreeList(void *ignored)
+rf_ShutdownStripeLockFreeList(void *arg)
 {
-	pool_destroy(&rf_pools.stripelock);
+	RF_Raid_t *raidPtr;
+
+	raidPtr = (RF_Raid_t *) arg;
+	
+	pool_destroy(&raidPtr->pools.stripelock);
 }
 
 int
-rf_ConfigureStripeLockFreeList(RF_ShutdownList_t **listp)
+rf_ConfigureStripeLockFreeList(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
+			       RF_Config_t *cfgPtr)
 {
 	unsigned mask;
 
-	rf_pool_init(&rf_pools.stripelock, sizeof(RF_StripeLockDesc_t),
-		     "rf_stripelock_pl", RF_MIN_FREE_STRIPELOCK, RF_MAX_FREE_STRIPELOCK);
-	rf_ShutdownCreate(listp, rf_ShutdownStripeLockFreeList, NULL);
+	rf_pool_init(raidPtr, raidPtr->poolNames.stripelock, &raidPtr->pools.stripelock, sizeof(RF_StripeLockDesc_t),
+		     "strplock", RF_MIN_FREE_STRIPELOCK, RF_MAX_FREE_STRIPELOCK);
+	rf_ShutdownCreate(listp, rf_ShutdownStripeLockFreeList, raidPtr);
 
 	for (mask = 0x1; mask; mask <<= 1)
 		if (rf_lockTableSize == mask)
@@ -245,7 +250,7 @@ rf_ConfigureStripeLocks(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
  * *releaseTag that you need to give back to us when you release the
  * lock.  */
 int
-rf_AcquireStripeLock(RF_LockTableEntry_t *lockTable, RF_StripeNum_t stripeID,
+rf_AcquireStripeLock(RF_Raid_t *raidPtr, RF_LockTableEntry_t *lockTable, RF_StripeNum_t stripeID,
 		     RF_LockReqDesc_t *lockReqDesc)
 {
 	RF_StripeLockDesc_t *lockDesc;
@@ -275,7 +280,7 @@ rf_AcquireStripeLock(RF_LockTableEntry_t *lockTable, RF_StripeNum_t stripeID,
 	if (stripeID == -1)
 		return (0);
 	lockReqDesc->next = NULL;	/* just to be sure */
-	newlockDesc = AllocStripeLockDesc(stripeID);
+	newlockDesc = AllocStripeLockDesc(raidPtr, stripeID);
 
 	rf_lock_mutex2(lockTable[hashval].mutex);
 	for (lockDesc = lockTable[hashval].descList; lockDesc;
@@ -301,7 +306,7 @@ rf_AcquireStripeLock(RF_LockTableEntry_t *lockTable, RF_StripeNum_t stripeID,
 #endif
 	} else {
 		/* we won't be needing newlockDesc after all.. pity.. */
-		FreeStripeLockDesc(newlockDesc);
+		FreeStripeLockDesc(raidPtr, newlockDesc);
 
 		if (lockReqDesc->type == RF_IO_TYPE_WRITE)
 			lockDesc->nWriters++;
@@ -368,7 +373,7 @@ rf_AcquireStripeLock(RF_LockTableEntry_t *lockTable, RF_StripeNum_t stripeID,
 }
 
 void
-rf_ReleaseStripeLock(RF_LockTableEntry_t *lockTable, RF_StripeNum_t stripeID,
+rf_ReleaseStripeLock(RF_Raid_t *raidPtr, RF_LockTableEntry_t *lockTable, RF_StripeNum_t stripeID,
 		     RF_LockReqDesc_t *lockReqDesc)
 {
 	RF_StripeLockDesc_t *lockDesc, *ld_t;
@@ -606,7 +611,7 @@ rf_ReleaseStripeLock(RF_LockTableEntry_t *lockTable, RF_StripeNum_t stripeID,
 			RF_ASSERT(lockDesc == lockTable[hashval].descList);
 			lockTable[hashval].descList = lockDesc->next;
 		}
-		FreeStripeLockDesc(lockDesc);
+		FreeStripeLockDesc(raidPtr, lockDesc);
 		lockDesc = NULL;/* only for the ASSERT below */
 	}
 	rf_unlock_mutex2(lockTable[hashval].mutex);
@@ -637,11 +642,11 @@ AddToWaitersQueue(RF_StripeLockDesc_t *lockDesc, RF_LockReqDesc_t *lockReqDesc)
 }
 
 static RF_StripeLockDesc_t *
-AllocStripeLockDesc(RF_StripeNum_t stripeID)
+AllocStripeLockDesc(RF_Raid_t *raidPtr, RF_StripeNum_t stripeID)
 {
 	RF_StripeLockDesc_t *p;
 
-	p = pool_get(&rf_pools.stripelock, PR_WAITOK);
+	p = pool_get(&raidPtr->pools.stripelock, PR_WAITOK);
 	if (p) {
 		p->stripeID = stripeID;
 		p->granted = NULL;
@@ -654,9 +659,9 @@ AllocStripeLockDesc(RF_StripeNum_t stripeID)
 }
 
 static void
-FreeStripeLockDesc(RF_StripeLockDesc_t *p)
+FreeStripeLockDesc(RF_Raid_t *raidPtr, RF_StripeLockDesc_t *p)
 {
-	pool_put(&rf_pools.stripelock, p);
+	pool_put(&raidPtr->pools.stripelock, p);
 }
 
 #if RF_DEBUG_STRIPELOCK

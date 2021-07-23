@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_callback.c,v 1.24 2019/10/10 03:43:59 christos Exp $	*/
+/*	$NetBSD: rf_callback.c,v 1.25 2021/07/23 00:54:45 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_callback.c,v 1.24 2019/10/10 03:43:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_callback.c,v 1.25 2021/07/23 00:54:45 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 #include <sys/pool.h>
@@ -46,51 +46,57 @@ __KERNEL_RCSID(0, "$NetBSD: rf_callback.c,v 1.24 2019/10/10 03:43:59 christos Ex
 #include "rf_general.h"
 #include "rf_shutdown.h"
 #include "rf_netbsd.h"
+#include "rf_raid.h"
 
 #define RF_MAX_FREE_CALLBACK 64
 #define RF_MIN_FREE_CALLBACK 32
 
 static void rf_ShutdownCallback(void *);
 static void
-rf_ShutdownCallback(void *ignored)
+rf_ShutdownCallback(void *arg)
 {
-	pool_destroy(&rf_pools.callbackf);
-	pool_destroy(&rf_pools.callbackv);
+	RF_Raid_t *raidPtr;
+
+	raidPtr = (RF_Raid_t *) arg;
+	
+	pool_destroy(&raidPtr->pools.callbackf);
+	pool_destroy(&raidPtr->pools.callbackv);
 }
 
 int
-rf_ConfigureCallback(RF_ShutdownList_t **listp)
+rf_ConfigureCallback(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
+		     RF_Config_t *cfgPtr)
 {
 
-	rf_pool_init(&rf_pools.callbackf, sizeof(RF_CallbackFuncDesc_t),
-		     "rf_callbackfpl", RF_MIN_FREE_CALLBACK, RF_MAX_FREE_CALLBACK);
-	rf_pool_init(&rf_pools.callbackv, sizeof(RF_CallbackValueDesc_t),
-		     "rf_callbackvpl", RF_MIN_FREE_CALLBACK, RF_MAX_FREE_CALLBACK);
-	rf_ShutdownCreate(listp, rf_ShutdownCallback, NULL);
+	rf_pool_init(raidPtr, raidPtr->poolNames.callbackf, &raidPtr->pools.callbackf, sizeof(RF_CallbackFuncDesc_t),
+		     "callbackf", RF_MIN_FREE_CALLBACK, RF_MAX_FREE_CALLBACK);
+	rf_pool_init(raidPtr, raidPtr->poolNames.callbackv, &raidPtr->pools.callbackv, sizeof(RF_CallbackValueDesc_t),
+		     "callbackv", RF_MIN_FREE_CALLBACK, RF_MAX_FREE_CALLBACK);
+	rf_ShutdownCreate(listp, rf_ShutdownCallback, raidPtr);
 
 	return (0);
 }
 
 RF_CallbackFuncDesc_t *
-rf_AllocCallbackFuncDesc(void)
+rf_AllocCallbackFuncDesc(RF_Raid_t *raidPtr)
 {
-	return pool_get(&rf_pools.callbackf, PR_WAITOK);
+	return pool_get(&raidPtr->pools.callbackf, PR_WAITOK);
 }
 
 void
-rf_FreeCallbackFuncDesc(RF_CallbackFuncDesc_t *p)
+rf_FreeCallbackFuncDesc(RF_Raid_t *raidPtr, RF_CallbackFuncDesc_t *p)
 {
-	pool_put(&rf_pools.callbackf, p);
+	pool_put(&raidPtr->pools.callbackf, p);
 }
 
 RF_CallbackValueDesc_t *
-rf_AllocCallbackValueDesc(void)
+rf_AllocCallbackValueDesc(RF_Raid_t *raidPtr)
 {
-	return pool_get(&rf_pools.callbackv, PR_WAITOK);
+	return pool_get(&raidPtr->pools.callbackv, PR_WAITOK);
 }
 
 void
-rf_FreeCallbackValueDesc(RF_CallbackValueDesc_t *p)
+rf_FreeCallbackValueDesc(RF_Raid_t *raidPtr, RF_CallbackValueDesc_t *p)
 {
-	pool_put(&rf_pools.callbackv, p);
+	pool_put(&raidPtr->pools.callbackv, p);
 }

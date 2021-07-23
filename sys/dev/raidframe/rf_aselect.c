@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_aselect.c,v 1.29 2017/01/04 15:50:34 christos Exp $	*/
+/*	$NetBSD: rf_aselect.c,v 1.30 2021/07/23 00:54:45 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.29 2017/01/04 15:50:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.30 2021/07/23 00:54:45 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -58,7 +58,7 @@ static void
 InitHdrNode(RF_DagHeader_t **hdr, RF_Raid_t *raidPtr, RF_RaidAccessDesc_t *desc)
 {
 	/* create and initialize dag hdr */
-	*hdr = rf_AllocDAGHeader();
+	*hdr = rf_AllocDAGHeader(raidPtr);
 	rf_MakeAllocList((*hdr)->allocList);
 	(*hdr)->status = rf_enable;
 	(*hdr)->numSuccedents = 0;
@@ -149,7 +149,7 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 	desc->numStripes = 0;
 	for (i = 0, asm_p = asmap; asm_p; asm_p = asm_p->next, i++) {
 		desc->numStripes++;
-		stripeFuncs = rf_AllocFuncList();
+		stripeFuncs = rf_AllocFuncList(raidPtr);
 
 		if (stripeFuncsEnd == NULL) {
 			stripeFuncsList = stripeFuncs;
@@ -166,7 +166,7 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 			 * unit in the stripe */
 
 			/* create a failed stripe structure to attempt to deal with the failure */
-			failed_stripe = rf_AllocFailedStripeStruct();
+			failed_stripe = rf_AllocFailedStripeStruct(raidPtr);
 			if (failed_stripes_list == NULL) {
 				failed_stripes_list = failed_stripe;
 				failed_stripes_list_end = failed_stripe;
@@ -189,7 +189,7 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 				length = physPtr->numSector;
 				buffer = physPtr->bufPtr;
 
-				asmhle = rf_AllocASMHeaderListElem();
+				asmhle = rf_AllocASMHeaderListElem(raidPtr);
 				if (failed_stripe->asmh_u == NULL) {
 					failed_stripe->asmh_u = asmhle;      /* we're the head... */
 					failed_stripes_asmh_u_end = asmhle;  /* and the tail      */
@@ -203,7 +203,7 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 				asmhle->asmh = rf_MapAccess(raidPtr, address, length, buffer, RF_DONT_REMAP);
 				asm_up = asmhle->asmh->stripeMap;
 
-				vfple = rf_AllocVFPListElem();
+				vfple = rf_AllocVFPListElem(raidPtr);
 				if (failed_stripe->vfple == NULL) {
 					failed_stripe->vfple = vfple;
 					failed_stripes_vfple_end = vfple;
@@ -236,7 +236,7 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 						length = 1;
 						buffer = (char *)physPtr->bufPtr + (k * (1 << raidPtr->logBytesPerSector));
 
-						asmhle = rf_AllocASMHeaderListElem();
+						asmhle = rf_AllocASMHeaderListElem(raidPtr);
 						if (failed_stripe->asmh_b == NULL) {
 							failed_stripe->asmh_b = asmhle;
 							failed_stripes_asmh_b_end = asmhle;
@@ -248,7 +248,7 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 						asmhle->asmh = rf_MapAccess(raidPtr, address, length, buffer, RF_DONT_REMAP);
 						asm_bp = asmhle->asmh->stripeMap;
 
-						vfple = rf_AllocVFPListElem();
+						vfple = rf_AllocVFPListElem(raidPtr);
 						if (failed_stripe->bvfple == NULL) {
 							failed_stripe->bvfple = vfple;
 							failed_stripes_bvfple_end = vfple;
@@ -286,37 +286,37 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 					while (asmhle) {
 						tmpasmhle= asmhle;
 						asmhle = tmpasmhle->next;
-						rf_FreeAccessStripeMap(tmpasmhle->asmh);
-						rf_FreeASMHeaderListElem(tmpasmhle);
+						rf_FreeAccessStripeMap(raidPtr, tmpasmhle->asmh);
+						rf_FreeASMHeaderListElem(raidPtr, tmpasmhle);
 					}
 
 					asmhle = failed_stripe->asmh_b;
 					while (asmhle) {
 						tmpasmhle= asmhle;
 						asmhle = tmpasmhle->next;
-						rf_FreeAccessStripeMap(tmpasmhle->asmh);
-						rf_FreeASMHeaderListElem(tmpasmhle);
+						rf_FreeAccessStripeMap(raidPtr, tmpasmhle->asmh);
+						rf_FreeASMHeaderListElem(raidPtr, tmpasmhle);
 					}
 
 					vfple = failed_stripe->vfple;
 					while (vfple) {
 						tmpvfple = vfple;
 						vfple = tmpvfple->next;
-						rf_FreeVFPListElem(tmpvfple);
+						rf_FreeVFPListElem(raidPtr, tmpvfple);
 					}
 
 					vfple = failed_stripe->bvfple;
 					while (vfple) {
 						tmpvfple = vfple;
 						vfple = tmpvfple->next;
-						rf_FreeVFPListElem(tmpvfple);
+						rf_FreeVFPListElem(raidPtr, tmpvfple);
 					}
 
 					stripeNum++;
 					/* only move to the next failed stripe slot if the current one was used */
 					tmpfailed_stripe = failed_stripe;
 					failed_stripe = failed_stripe->next;
-					rf_FreeFailedStripeStruct(tmpfailed_stripe);
+					rf_FreeFailedStripeStruct(raidPtr, tmpfailed_stripe);
 				}
 				stripeFuncs = stripeFuncs->next;
 			}
@@ -325,7 +325,7 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 		while (stripeFuncsList != NULL) {
 			temp = stripeFuncsList;
 			stripeFuncsList = stripeFuncsList->next;
-			rf_FreeFuncList(temp);
+			rf_FreeFuncList(raidPtr, temp);
 		}
 		desc->numStripes = 0;
 		return (1);
@@ -344,7 +344,7 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 			/* grab dag header for this stripe */
 			dag_h = NULL;
 
-			dagList = rf_AllocDAGList();
+			dagList = rf_AllocDAGList(raidPtr);
 
 			/* always tack the new dagList onto the end of the list... */
 			if (dagListend == NULL) {
@@ -505,38 +505,38 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 				while (asmhle) {
 					tmpasmhle= asmhle;
 					asmhle = tmpasmhle->next;
-					rf_FreeASMHeaderListElem(tmpasmhle);
+					rf_FreeASMHeaderListElem(raidPtr, tmpasmhle);
 				}
 
 				asmhle = failed_stripe->asmh_b;
 				while (asmhle) {
 					tmpasmhle= asmhle;
 					asmhle = tmpasmhle->next;
-					rf_FreeASMHeaderListElem(tmpasmhle);
+					rf_FreeASMHeaderListElem(raidPtr, tmpasmhle);
 				}
 				vfple = failed_stripe->vfple;
 				while (vfple) {
 					tmpvfple = vfple;
 					vfple = tmpvfple->next;
-					rf_FreeVFPListElem(tmpvfple);
+					rf_FreeVFPListElem(raidPtr, tmpvfple);
 				}
 
 				vfple = failed_stripe->bvfple;
 				while (vfple) {
 					tmpvfple = vfple;
 					vfple = tmpvfple->next;
-					rf_FreeVFPListElem(tmpvfple);
+					rf_FreeVFPListElem(raidPtr, tmpvfple);
 				}
 
 				tmpfailed_stripe = failed_stripe;
 				failed_stripe = tmpfailed_stripe->next;
-				rf_FreeFailedStripeStruct(tmpfailed_stripe);
+				rf_FreeFailedStripeStruct(raidPtr, tmpfailed_stripe);
 			}
 		}
 		while (stripeFuncsList != NULL) {
 			temp = stripeFuncsList;
 			stripeFuncsList = stripeFuncsList->next;
-			rf_FreeFuncList(temp);
+			rf_FreeFuncList(raidPtr, temp);
 		}
 		return (0);
 	}
