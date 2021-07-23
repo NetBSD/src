@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.117 2021/07/23 16:48:48 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.118 2021/07/23 17:06:37 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -444,8 +444,8 @@ typedef struct control_statement {
 	pos_t	c_for_expr3_pos;	/* position of end of loop expr */
 	pos_t	c_for_expr3_csrc_pos;	/* same for csrc_pos */
 
-	struct	control_statement *c_surrounding;
-} cstk_t;
+	struct control_statement *c_surrounding;
+} control_statement;
 
 typedef struct {
 	size_t lo;			/* inclusive */
