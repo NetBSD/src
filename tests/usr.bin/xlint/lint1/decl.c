@@ -1,4 +1,4 @@
-/*	$NetBSD: decl.c,v 1.9 2021/07/15 23:07:05 rillig Exp $	*/
+/*	$NetBSD: decl.c,v 1.10 2021/07/23 15:21:47 rillig Exp $	*/
 # 3 "decl.c"
 
 /*
@@ -165,3 +165,9 @@ unsigned long sizes =
     sizeof(const typeof(signed_long)) +
     sizeof(const typeof(unsigned_long)) +
     sizeof(const typeof(unnamed_struct));
+
+/* expect+1: syntax error 'int' [249] */
+thread int thread_int;
+__thread int thread_int;
+/* expect+1: syntax error 'int' [249] */
+__thread__ int thread_int;
