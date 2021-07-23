@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.116 2021/07/23 16:43:11 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.117 2021/07/23 16:48:48 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -367,8 +367,8 @@ typedef	struct dinfo {
 	bool	d_const : 1;	/* const in declaration specifiers */
 	bool	d_volatile : 1;	/* volatile in declaration specifiers */
 	bool	d_inline : 1;	/* inline in declaration specifiers */
-	bool	d_mscl : 1;	/* multiple storage classes */
-	bool	d_terr : 1;	/* invalid type combination */
+	bool	d_multiple_storage_classes : 1; /* reported in end_type */
+	bool	d_invalid_type_combination : 1;
 	bool	d_nonempty_decl : 1; /* if at least one tag is declared
 				 * ... in the current function decl. */
 	bool	d_vararg : 1;
