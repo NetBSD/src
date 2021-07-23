@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.208 2021/07/23 16:43:11 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.209 2021/07/23 16:48:48 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.208 2021/07/23 16:43:11 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.209 2021/07/23 16:48:48 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -236,11 +236,7 @@ add_storage_class(scl_t sc)
 	if (dcs->d_scl == NOSCL) {
 		dcs->d_scl = sc;
 	} else {
-		/*
-		 * multiple storage classes. An error will be reported in
-		 * end_type().
-		 */
-		dcs->d_mscl = true;
+		dcs->d_multiple_storage_classes = true;
 	}
 }
 
@@ -284,11 +280,7 @@ add_type(type_t *tp)
 		 */
 		if (dcs->d_type != NULL || dcs->d_abstract_type != NOTSPEC ||
 		    dcs->d_rank_mod != NOTSPEC || dcs->d_sign_mod != NOTSPEC) {
-			/*
-			 * remember that an error must be reported in
-			 * end_type().
-			 */
-			dcs->d_terr = true;
+			dcs->d_invalid_type_combination = true;
 			dcs->d_abstract_type = NOTSPEC;
 			dcs->d_sign_mod = NOTSPEC;
 			dcs->d_rank_mod = NOTSPEC;
@@ -302,7 +294,7 @@ add_type(type_t *tp)
 		 * something like "struct a int"
 		 * struct/union/enum with anything else is not allowed
 		 */
-		dcs->d_terr = true;
+		dcs->d_invalid_type_combination = true;
 		return;
 	}
 
@@ -341,11 +333,8 @@ add_type(type_t *tp)
 		 * dcs->d_sign_mod
 		 */
 		if (dcs->d_sign_mod != NOTSPEC)
-			/*
-			 * more than one "signed" and/or "unsigned"; print
-			 * an error in end_type()
-			 */
-			dcs->d_terr = true;
+			/* more than one "signed" and/or "unsigned" */
+			dcs->d_invalid_type_combination = true;
 		dcs->d_sign_mod = t;
 	} else if (t == SHORT || t == LONG || t == QUAD) {
 		/*
@@ -353,18 +342,17 @@ add_type(type_t *tp)
 		 * dcs->d_rank_mod
 		 */
 		if (dcs->d_rank_mod != NOTSPEC)
-			/* more than one, print error in end_type() */
-			dcs->d_terr = true;
+			dcs->d_invalid_type_combination = true;
 		dcs->d_rank_mod = t;
 	} else if (t == FLOAT || t == DOUBLE) {
 		if (dcs->d_rank_mod == NOTSPEC || dcs->d_rank_mod == LONG) {
 			if (dcs->d_complex_mod != NOTSPEC
 			    || (t == FLOAT && dcs->d_rank_mod == LONG))
-				dcs->d_terr = true;
+				dcs->d_invalid_type_combination = true;
 			dcs->d_complex_mod = t;
 		} else {
 			if (dcs->d_abstract_type != NOTSPEC)
-				dcs->d_terr = true;
+				dcs->d_invalid_type_combination = true;
 			dcs->d_abstract_type = t;
 		}
 	} else if (t == PTR) {
@@ -375,8 +363,7 @@ add_type(type_t *tp)
 		 * or "_Complex" in dcs->d_abstract_type
 		 */
 		if (dcs->d_abstract_type != NOTSPEC)
-			/* more than one, print error in end_type() */
-			dcs->d_terr = true;
+			dcs->d_invalid_type_combination = true;
 		dcs->d_abstract_type = t;
 	}
 }
@@ -491,7 +478,7 @@ tdeferr(type_t *td, tspec_t t)
 
 	/* Anything other is not accepted. */
 
-	dcs->d_terr = true;
+	dcs->d_invalid_type_combination = true;
 	return td;
 }
 
@@ -738,8 +725,8 @@ begin_type(void)
 	dcs->d_const = false;
 	dcs->d_volatile = false;
 	dcs->d_inline = false;
-	dcs->d_mscl = false;
-	dcs->d_terr = false;
+	dcs->d_multiple_storage_classes = false;
+	dcs->d_invalid_type_combination = false;
 	dcs->d_nonempty_decl = false;
 	dcs->d_notyp = false;
 }
@@ -801,7 +788,7 @@ dcs_merge_declaration_specifiers(void)
 	if (s == NOTSPEC && t == INT)
 		s = SIGNED;
 	if (l != NOTSPEC && t == CHAR) {
-		dcs->d_terr = true;
+		dcs->d_invalid_type_combination = true;
 		l = NOTSPEC;
 	}
 	if (l == LONG && t == FLOAT) {
@@ -825,7 +812,7 @@ dcs_merge_declaration_specifiers(void)
 	}
 
 	if (t != INT && t != CHAR && (s != NOTSPEC || l != NOTSPEC)) {
-		dcs->d_terr = true;
+		dcs->d_invalid_type_combination = true;
 		l = s = NOTSPEC;
 	}
 	if (l != NOTSPEC)
@@ -845,11 +832,11 @@ end_type(void)
 
 	dcs_merge_declaration_specifiers();
 
-	if (dcs->d_mscl) {
+	if (dcs->d_multiple_storage_classes) {
 		/* only one storage class allowed */
 		error(7);
 	}
-	if (dcs->d_terr) {
+	if (dcs->d_invalid_type_combination) {
 		/* illegal type combination */
 		error(4);
 	}
