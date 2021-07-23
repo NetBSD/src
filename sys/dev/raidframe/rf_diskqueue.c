@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.c,v 1.60 2021/07/23 00:54:45 oster Exp $	*/
+/*	$NetBSD: rf_diskqueue.c,v 1.61 2021/07/23 20:18:24 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -66,7 +66,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.60 2021/07/23 00:54:45 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.61 2021/07/23 20:18:24 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -115,36 +115,31 @@ static const RF_DiskQueueSW_t diskqueuesw[] = {
 		rf_FifoCreate,
 		rf_FifoEnqueue,
 		rf_FifoDequeue,
-		rf_FifoPeek,
-	rf_FifoPromote},
+		rf_FifoPromote},
 
 	{"cvscan",		/* cvscan */
 		rf_CvscanCreate,
 		rf_CvscanEnqueue,
 		rf_CvscanDequeue,
-		rf_CvscanPeek,
-	rf_CvscanPromote},
+		rf_CvscanPromote},
 
 	{"sstf",		/* shortest seek time first */
 		rf_SstfCreate,
 		rf_SstfEnqueue,
 		rf_SstfDequeue,
-		rf_SstfPeek,
-	rf_SstfPromote},
+		rf_SstfPromote},
 
 	{"scan",		/* SCAN (two-way elevator) */
 		rf_ScanCreate,
 		rf_SstfEnqueue,
 		rf_ScanDequeue,
-		rf_ScanPeek,
-	rf_SstfPromote},
+		rf_SstfPromote},
 
 	{"cscan",		/* CSCAN (one-way elevator) */
 		rf_CscanCreate,
 		rf_SstfEnqueue,
 		rf_CscanDequeue,
-		rf_CscanPeek,
-	rf_SstfPromote},
+		rf_SstfPromote},
 
 };
 #define NUM_DISK_QUEUE_TYPES (sizeof(diskqueuesw)/sizeof(RF_DiskQueueSW_t))
