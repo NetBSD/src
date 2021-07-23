@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsd.h,v 1.37 2021/07/23 00:54:45 oster Exp $	*/
+/*	$NetBSD: rf_netbsd.h,v 1.38 2021/07/23 02:18:26 oster Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,6 @@ struct RF_Pools_s {
 	struct pool mcpair;      /* Mutex/Cond Pairs */
 	struct pool pda;         /* Physical Disk Access structures */
 	struct pool pss;         /* Parity Stripe Status */
-	struct pool pss_issued;  /* Parity Stripe Status Issued */
 	struct pool rad;         /* Raid Access Descriptors */
 	struct pool reconbuffer; /* reconstruction buffer (header) pool */
 	struct pool revent;      /* reconstruct events */
@@ -100,7 +99,6 @@ struct RF_PoolNames_s {
 	char mcpair[RF_MAX_POOLNAMELEN];      /* Mutex/Cond Pairs */
 	char pda[RF_MAX_POOLNAMELEN];         /* Physical Disk Access structures */
 	char pss[RF_MAX_POOLNAMELEN];         /* Parity Stripe Status */
-	char pss_issued[RF_MAX_POOLNAMELEN];  /* Parity Stripe Status Issued */
 	char rad[RF_MAX_POOLNAMELEN];         /* Raid Access Descriptors */
 	char reconbuffer[RF_MAX_POOLNAMELEN]; /* reconstruction buffer (header) pool */
 	char revent[RF_MAX_POOLNAMELEN];      /* reconstruct events */
