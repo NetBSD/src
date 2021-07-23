@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.334 2021/07/21 21:24:45 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.335 2021/07/23 15:14:49 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.334 2021/07/21 21:24:45 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.335 2021/07/23 15:14:49 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1870,14 +1870,23 @@ translation_unit:		/* C99 6.9 */
 	;
 
 external_declaration:		/* C99 6.9 */
-	  asm_statement
-	| function_definition {
+	  function_definition {
 		global_clean_up_decl(false);
 		clear_warning_flags();
 	  }
 	| top_level_declaration {
 		global_clean_up_decl(false);
 		clear_warning_flags();
+	  }
+	| asm_statement		/* GCC extension */
+	| T_SEMI {		/* GCC extension */
+		if (sflag) {
+			/* empty declaration */
+			error(0);
+		} else if (!tflag) {
+			/* empty declaration */
+			warning(0);
+		}
 	  }
 	;
 
@@ -1891,16 +1900,7 @@ external_declaration:		/* C99 6.9 */
  * See 'declaration' for all other declarations.
  */
 top_level_declaration:		/* C99 6.9 calls this 'declaration' */
-	  T_SEMI {
-		if (sflag) {
-			/* empty declaration */
-			error(0);
-		} else if (!tflag) {
-			/* empty declaration */
-			warning(0);
-		}
-	  }
-	| begin_type end_type notype_init_declarators T_SEMI {
+	  begin_type end_type notype_init_declarators T_SEMI {
 		if (sflag) {
 			/* old style declaration; add 'int' */
 			error(1);
