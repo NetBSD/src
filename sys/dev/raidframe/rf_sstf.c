@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_sstf.c,v 1.17 2019/02/09 03:34:00 christos Exp $	*/
+/*	$NetBSD: rf_sstf.c,v 1.18 2021/07/23 20:18:24 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_sstf.c,v 1.17 2019/02/09 03:34:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_sstf.c,v 1.18 2021/07/23 20:18:24 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -506,117 +506,6 @@ rf_CscanDequeue(void *qptr)
 	}
 	RF_ASSERT(req);
 	cscanq->last_sector = req->sectorOffset;
-	return (req);
-}
-
-RF_DiskQueueData_t *
-rf_SstfPeek(void *qptr)
-{
-	RF_DiskQueueData_t *req;
-	RF_Sstf_t *sstfq;
-
-	sstfq = (RF_Sstf_t *) qptr;
-
-	if ((sstfq->left.queue == NULL) && (sstfq->right.queue == NULL)) {
-		req = closest_to_arm(&sstfq->lopri, sstfq->last_sector, &sstfq->dir,
-		    sstfq->allow_reverse);
-	} else {
-		if (sstfq->left.queue == NULL)
-			req = sstfq->right.queue;
-		else {
-			if (sstfq->right.queue == NULL)
-				req = sstfq->left.queue;
-			else {
-				if (SNUM_DIFF(sstfq->last_sector, sstfq->right.queue->sectorOffset)
-				    < SNUM_DIFF(sstfq->last_sector, sstfq->left.qtail->sectorOffset)) {
-					req = sstfq->right.queue;
-				} else {
-					req = sstfq->left.qtail;
-				}
-			}
-		}
-	}
-	if (req == NULL) {
-		RF_ASSERT(QSUM(sstfq) == 0);
-	}
-	return (req);
-}
-
-RF_DiskQueueData_t *
-rf_ScanPeek(void *qptr)
-{
-	RF_DiskQueueData_t *req;
-	RF_Sstf_t *scanq;
-	int     dir;
-
-	scanq = (RF_Sstf_t *) qptr;
-	dir = scanq->dir;
-
-	if (scanq->left.queue == NULL) {
-		RF_ASSERT(scanq->left.qlen == 0);
-		if (scanq->right.queue == NULL) {
-			RF_ASSERT(scanq->right.qlen == 0);
-			if (scanq->lopri.queue == NULL) {
-				RF_ASSERT(scanq->lopri.qlen == 0);
-				return (NULL);
-			}
-			req = closest_to_arm(&scanq->lopri, scanq->last_sector,
-			    &dir, scanq->allow_reverse);
-		} else {
-			req = scanq->right.queue;
-		}
-	} else
-		if (scanq->right.queue == NULL) {
-			RF_ASSERT(scanq->right.qlen == 0);
-			RF_ASSERT(scanq->left.queue);
-			req = scanq->left.qtail;
-		} else {
-			RF_ASSERT(scanq->right.queue);
-			RF_ASSERT(scanq->left.queue);
-			if (scanq->dir == DIR_RIGHT) {
-				req = scanq->right.queue;
-			} else {
-				req = scanq->left.qtail;
-			}
-		}
-	if (req == NULL) {
-		RF_ASSERT(QSUM(scanq) == 0);
-	}
-	return (req);
-}
-
-RF_DiskQueueData_t *
-rf_CscanPeek(void *qptr)
-{
-	RF_DiskQueueData_t *req;
-	RF_Sstf_t *cscanq;
-
-	cscanq = (RF_Sstf_t *) qptr;
-
-	RF_ASSERT(cscanq->dir == DIR_RIGHT);
-	if (cscanq->right.queue) {
-		req = cscanq->right.queue;
-	} else {
-		RF_ASSERT(cscanq->right.qlen == 0);
-		if (cscanq->left.queue == NULL) {
-			RF_ASSERT(cscanq->left.qlen == 0);
-			if (cscanq->lopri.queue == NULL) {
-				RF_ASSERT(cscanq->lopri.qlen == 0);
-				return (NULL);
-			}
-			req = closest_to_arm(&cscanq->lopri, cscanq->last_sector,
-			    &cscanq->dir, cscanq->allow_reverse);
-		} else {
-			/*
-			 * There's I/Os to the left of the arm. We'll end
-			 * up swinging on back.
-			 */
-			req = cscanq->left.queue;
-		}
-	}
-	if (req == NULL) {
-		RF_ASSERT(QSUM(cscanq) == 0);
-	}
 	return (req);
 }
 

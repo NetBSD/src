@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.h,v 1.27 2021/07/23 00:54:45 oster Exp $	*/
+/*	$NetBSD: rf_diskqueue.h,v 1.28 2021/07/23 20:18:24 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -89,7 +89,6 @@ struct RF_DiskQueueSW_s {
 												 * system */
 	void    (*Enqueue) (void *, RF_DiskQueueData_t *, int);	/* enqueue routine */
 	RF_DiskQueueData_t *(*Dequeue) (void *);	/* dequeue routine */
-	RF_DiskQueueData_t *(*Peek) (void *);	/* peek at head of queue */
 
 	/* the rest are optional:  they improve performance, but the driver
 	 * will deal with it if they don't exist */
