@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.c,v 1.57 2019/10/10 03:43:59 christos Exp $	*/
+/*	$NetBSD: rf_dagutils.c,v 1.58 2021/07/23 00:54:45 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.57 2019/10/10 03:43:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.58 2021/07/23 00:54:45 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -99,7 +99,8 @@ rf_InitNode(RF_DagNode_t *node, RF_NodeStatus_t initstatus, int commit,
 {
 	void  **ptrs;
 	int     nptrs;
-
+	RF_Raid_t *raidPtr;
+	
 	if (nAnte > RF_MAX_ANTECEDENTS)
 		RF_PANIC();
 	node->status = initstatus;
@@ -122,6 +123,9 @@ rf_InitNode(RF_DagNode_t *node, RF_NodeStatus_t initstatus, int commit,
 	node->big_dag_params = NULL;
 	node->visited = 0;
 
+	RF_ASSERT(hdr != NULL);
+	raidPtr = hdr->raidPtr;
+	
 	/* allocate all the pointers with one call to malloc */
 	nptrs = nSucc + nAnte + nResult + nSucc;
 
@@ -139,7 +143,7 @@ rf_InitNode(RF_DagNode_t *node, RF_NodeStatus_t initstatus, int commit,
 	         */
 		ptrs = (void **) node->dag_ptrs;
 	} else if (nptrs <= (RF_DAGPCACHE_SIZE / sizeof(RF_DagNode_t *))) {
-		node->big_dag_ptrs = rf_AllocDAGPCache();
+		node->big_dag_ptrs = rf_AllocDAGPCache(raidPtr);
 		ptrs = (void **) node->big_dag_ptrs;
 	} else {
 		ptrs = RF_MallocAndAdd(nptrs * sizeof(*ptrs), alist);
@@ -153,7 +157,7 @@ rf_InitNode(RF_DagNode_t *node, RF_NodeStatus_t initstatus, int commit,
 		if (nParam <= RF_DAG_PARAMCACHESIZE) {
 			node->params = (RF_DagParam_t *) node->dag_params;
 		} else if (nParam <= (RF_DAGPCACHE_SIZE / sizeof(RF_DagParam_t))) {
-			node->big_dag_params = rf_AllocDAGPCache();
+			node->big_dag_params = rf_AllocDAGPCache(raidPtr);
 			node->params = node->big_dag_params;
 		} else {
 			node->params = RF_MallocAndAdd(
@@ -179,26 +183,30 @@ rf_FreeDAG(RF_DagHeader_t *dag_h)
 	RF_PhysDiskAddr_t *pda;
 	RF_DagNode_t *tmpnode;
 	RF_DagHeader_t *nextDag;
+	RF_Raid_t *raidPtr;
 
+	if (dag_h)
+		raidPtr = dag_h->raidPtr;
+	
 	while (dag_h) {
 		nextDag = dag_h->next;
 		rf_FreeAllocList(dag_h->allocList);
 		for (asmap = dag_h->asmList; asmap;) {
 			t_asmap = asmap;
 			asmap = asmap->next;
-			rf_FreeAccessStripeMap(t_asmap);
+			rf_FreeAccessStripeMap(raidPtr, t_asmap);
 		}
 		while (dag_h->pda_cleanup_list) {
 			pda = dag_h->pda_cleanup_list;
 			dag_h->pda_cleanup_list = dag_h->pda_cleanup_list->next;
-			rf_FreePhysDiskAddr(pda);
+			rf_FreePhysDiskAddr(raidPtr, pda);
 		}
 		while (dag_h->nodes) {
 			tmpnode = dag_h->nodes;
 			dag_h->nodes = dag_h->nodes->list_next;
-			rf_FreeDAGNode(tmpnode);
+			rf_FreeDAGNode(raidPtr, tmpnode);
 		}
-		rf_FreeDAGHeader(dag_h);
+		rf_FreeDAGHeader(raidPtr, dag_h);
 		dag_h = nextDag;
 	}
 }
@@ -223,98 +231,103 @@ rf_FreeDAG(RF_DagHeader_t *dag_h)
 
 static void rf_ShutdownDAGs(void *);
 static void
-rf_ShutdownDAGs(void *ignored)
+rf_ShutdownDAGs(void *arg)
 {
-	pool_destroy(&rf_pools.dagh);
-	pool_destroy(&rf_pools.dagnode);
-	pool_destroy(&rf_pools.daglist);
-	pool_destroy(&rf_pools.dagpcache);
-	pool_destroy(&rf_pools.funclist);
+	RF_Raid_t *raidPtr;
+
+	raidPtr = (RF_Raid_t *) arg;
+
+	pool_destroy(&raidPtr->pools.dagh);
+	pool_destroy(&raidPtr->pools.dagnode);
+	pool_destroy(&raidPtr->pools.daglist);
+	pool_destroy(&raidPtr->pools.dagpcache);
+	pool_destroy(&raidPtr->pools.funclist);
 }
 
 int
-rf_ConfigureDAGs(RF_ShutdownList_t **listp)
+rf_ConfigureDAGs(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
+		 RF_Config_t *cfgPtr)
 {
 
-	rf_pool_init(&rf_pools.dagnode, sizeof(RF_DagNode_t),
-		     "rf_dagnode_pl", RF_MIN_FREE_DAGNODE, RF_MAX_FREE_DAGNODE);
-	rf_pool_init(&rf_pools.dagh, sizeof(RF_DagHeader_t),
-		     "rf_dagh_pl", RF_MIN_FREE_DAGH, RF_MAX_FREE_DAGH);
-	rf_pool_init(&rf_pools.daglist, sizeof(RF_DagList_t),
-		     "rf_daglist_pl", RF_MIN_FREE_DAGLIST, RF_MAX_FREE_DAGLIST);
-	rf_pool_init(&rf_pools.dagpcache, RF_DAGPCACHE_SIZE,
-		     "rf_dagpcache_pl", RF_MIN_FREE_DAGPCACHE, RF_MAX_FREE_DAGPCACHE);
-	rf_pool_init(&rf_pools.funclist, sizeof(RF_FuncList_t),
-		     "rf_funclist_pl", RF_MIN_FREE_FUNCLIST, RF_MAX_FREE_FUNCLIST);
-	rf_ShutdownCreate(listp, rf_ShutdownDAGs, NULL);
+	rf_pool_init(raidPtr, raidPtr->poolNames.dagnode, &raidPtr->pools.dagnode, sizeof(RF_DagNode_t),
+		     "dagnode", RF_MIN_FREE_DAGNODE, RF_MAX_FREE_DAGNODE);
+	rf_pool_init(raidPtr, raidPtr->poolNames.dagh, &raidPtr->pools.dagh, sizeof(RF_DagHeader_t),
+		     "dagh", RF_MIN_FREE_DAGH, RF_MAX_FREE_DAGH);
+	rf_pool_init(raidPtr, raidPtr->poolNames.daglist, &raidPtr->pools.daglist, sizeof(RF_DagList_t),
+		     "daglist", RF_MIN_FREE_DAGLIST, RF_MAX_FREE_DAGLIST);
+	rf_pool_init(raidPtr, raidPtr->poolNames.dagpcache, &raidPtr->pools.dagpcache, RF_DAGPCACHE_SIZE,
+		     "dagpcache", RF_MIN_FREE_DAGPCACHE, RF_MAX_FREE_DAGPCACHE);
+	rf_pool_init(raidPtr, raidPtr->poolNames.funclist, &raidPtr->pools.funclist, sizeof(RF_FuncList_t),
+		     "funclist", RF_MIN_FREE_FUNCLIST, RF_MAX_FREE_FUNCLIST);
+	rf_ShutdownCreate(listp, rf_ShutdownDAGs, raidPtr);
 
 	return (0);
 }
 
 RF_DagHeader_t *
-rf_AllocDAGHeader(void)
+rf_AllocDAGHeader(RF_Raid_t *raidPtr)
 {
-	return pool_get(&rf_pools.dagh, PR_WAITOK | PR_ZERO);
+	return pool_get(&raidPtr->pools.dagh, PR_WAITOK | PR_ZERO);
 }
 
 void
-rf_FreeDAGHeader(RF_DagHeader_t * dh)
+rf_FreeDAGHeader(RF_Raid_t *raidPtr, RF_DagHeader_t * dh)
 {
-	pool_put(&rf_pools.dagh, dh);
+	pool_put(&raidPtr->pools.dagh, dh);
 }
 
 RF_DagNode_t *
-rf_AllocDAGNode(void)
+rf_AllocDAGNode(RF_Raid_t *raidPtr)
 {
-	return pool_get(&rf_pools.dagnode, PR_WAITOK | PR_ZERO);
+	return pool_get(&raidPtr->pools.dagnode, PR_WAITOK | PR_ZERO);
 }
 
 void
-rf_FreeDAGNode(RF_DagNode_t *node)
+rf_FreeDAGNode(RF_Raid_t *raidPtr, RF_DagNode_t *node)
 {
 	if (node->big_dag_ptrs) {
-		rf_FreeDAGPCache(node->big_dag_ptrs);
+		rf_FreeDAGPCache(raidPtr, node->big_dag_ptrs);
 	}
 	if (node->big_dag_params) {
-		rf_FreeDAGPCache(node->big_dag_params);
+		rf_FreeDAGPCache(raidPtr, node->big_dag_params);
 	}
-	pool_put(&rf_pools.dagnode, node);
+	pool_put(&raidPtr->pools.dagnode, node);
 }
 
 RF_DagList_t *
-rf_AllocDAGList(void)
+rf_AllocDAGList(RF_Raid_t *raidPtr)
 {
-	return pool_get(&rf_pools.daglist, PR_WAITOK | PR_ZERO);
+	return pool_get(&raidPtr->pools.daglist, PR_WAITOK | PR_ZERO);
 }
 
 void
-rf_FreeDAGList(RF_DagList_t *dagList)
+rf_FreeDAGList(RF_Raid_t *raidPtr, RF_DagList_t *dagList)
 {
-	pool_put(&rf_pools.daglist, dagList);
+	pool_put(&raidPtr->pools.daglist, dagList);
 }
 
 void *
-rf_AllocDAGPCache(void)
+rf_AllocDAGPCache(RF_Raid_t *raidPtr)
 {
-	return pool_get(&rf_pools.dagpcache, PR_WAITOK | PR_ZERO);
+	return pool_get(&raidPtr->pools.dagpcache, PR_WAITOK | PR_ZERO);
 }
 
 void
-rf_FreeDAGPCache(void *p)
+rf_FreeDAGPCache(RF_Raid_t *raidPtr, void *p)
 {
-	pool_put(&rf_pools.dagpcache, p);
+	pool_put(&raidPtr->pools.dagpcache, p);
 }
 
 RF_FuncList_t *
-rf_AllocFuncList(void)
+rf_AllocFuncList(RF_Raid_t *raidPtr)
 {
-	return pool_get(&rf_pools.funclist, PR_WAITOK | PR_ZERO);
+	return pool_get(&raidPtr->pools.funclist, PR_WAITOK | PR_ZERO);
 }
 
 void
-rf_FreeFuncList(RF_FuncList_t *funcList)
+rf_FreeFuncList(RF_Raid_t *raidPtr, RF_FuncList_t *funcList)
 {
-	pool_put(&rf_pools.funclist, funcList);
+	pool_put(&raidPtr->pools.funclist, funcList);
 }
 
 /* allocates a stripe buffer -- a buffer large enough to hold all the data
@@ -340,7 +353,7 @@ rf_AllocStripeBuffer(RF_Raid_t *raidPtr, RF_DagHeader_t *dag_h,
 			vple = raidPtr->stripebuf;
 			raidPtr->stripebuf = vple->next;
 			p = vple->p;
-			rf_FreeVPListElem(vple);
+			rf_FreeVPListElem(raidPtr, vple);
 			raidPtr->stripebuf_count--;
 		} else {
 #ifdef DIAGNOSTIC
@@ -357,7 +370,7 @@ rf_AllocStripeBuffer(RF_Raid_t *raidPtr, RF_DagHeader_t *dag_h,
 	}
 	memset(p, 0, raidPtr->numCol * (raidPtr->Layout.sectorsPerStripeUnit << raidPtr->logBytesPerSector));
 
-	vple = rf_AllocVPListElem();
+	vple = rf_AllocVPListElem(raidPtr);
 	vple->p = p;
         vple->next = dag_h->desc->stripebufs;
         dag_h->desc->stripebufs = vple;
@@ -377,7 +390,7 @@ rf_FreeStripeBuffer(RF_Raid_t *raidPtr, RF_VoidPointerListElem_t *vple)
 		raidPtr->stripebuf_count++;
 	} else {
 		free(vple->p, M_RAIDFRAME);
-		rf_FreeVPListElem(vple);
+		rf_FreeVPListElem(raidPtr, vple);
 	}
 	rf_unlock_mutex2(raidPtr->mutex);
 }
@@ -393,7 +406,7 @@ rf_AllocBuffer(RF_Raid_t *raidPtr, RF_DagHeader_t *dag_h, int size)
 	void *p;
 
 	p = rf_AllocIOBuffer(raidPtr, size);
-	vple = rf_AllocVPListElem();
+	vple = rf_AllocVPListElem(raidPtr);
 	vple->p = p;
 	vple->next = dag_h->desc->iobufs;
 	dag_h->desc->iobufs = vple;
@@ -419,7 +432,7 @@ rf_AllocIOBuffer(RF_Raid_t *raidPtr, int size)
 			vple = raidPtr->iobuf;
 			raidPtr->iobuf = vple->next;
 			p = vple->p;
-			rf_FreeVPListElem(vple);
+			rf_FreeVPListElem(raidPtr, vple);
 			raidPtr->iobuf_count--;
 		} else {
 #ifdef DIAGNOSTIC
@@ -450,7 +463,7 @@ rf_FreeIOBuffer(RF_Raid_t *raidPtr, RF_VoidPointerListElem_t *vple)
 		raidPtr->iobuf_count++;
 	} else {
 		free(vple->p, M_RAIDFRAME);
-		rf_FreeVPListElem(vple);
+		rf_FreeVPListElem(raidPtr, vple);
 	}
 	rf_unlock_mutex2(raidPtr->mutex);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_map.c,v 1.50 2019/05/28 08:59:35 msaitoh Exp $	*/
+/*	$NetBSD: rf_map.c,v 1.51 2021/07/23 00:54:45 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.50 2019/05/28 08:59:35 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.51 2021/07/23 00:54:45 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -43,8 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.50 2019/05/28 08:59:35 msaitoh Exp $");
 #include "rf_map.h"
 #include "rf_shutdown.h"
 
-static void rf_FreePDAList(RF_PhysDiskAddr_t *pda_list);
-static void rf_FreeASMList(RF_AccessStripeMap_t *asm_list);
+static void rf_FreePDAList(RF_Raid_t *raidPtr, RF_PhysDiskAddr_t *pda_list);
+static void rf_FreeASMList(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asm_list);
 
 /***************************************************************************
  *
@@ -108,10 +108,10 @@ rf_MapAccess(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddress,
 	SUID = rf_RaidAddressToStripeUnitID(layoutPtr, raidAddress);
 	lastSUID = rf_RaidAddressToStripeUnitID(layoutPtr, lastRaidAddr);
 
-	asmList = rf_AllocASMList(totStripes);
+	asmList = rf_AllocASMList(raidPtr, totStripes);
 
 	/* may also need pda(s) per stripe for parity */
-	pdaList = rf_AllocPDAList(lastSUID - SUID + 1 +
+	pdaList = rf_AllocPDAList(raidPtr, lastSUID - SUID + 1 +
 				  faultsTolerated * totStripes);
 
 
@@ -209,7 +209,7 @@ rf_MapAccess(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddress,
 			/* raidAddr may be needed to find unit to redirect to */
 			pda_p->raidAddress = rf_RaidAddressOfPrevStripeUnitBoundary(layoutPtr, startAddrWithinStripe);
 			rf_ASMCheckStatus(raidPtr, pda_p, asm_p, disks, 1);
-			rf_ASMParityAdjust(asm_p->parityInfo, startAddrWithinStripe, endAddress, layoutPtr, asm_p);
+			rf_ASMParityAdjust(raidPtr, asm_p->parityInfo, startAddrWithinStripe, endAddress, layoutPtr, asm_p);
 
 			break;
 #if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0)
@@ -236,15 +236,15 @@ rf_MapAccess(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddress,
 			/* failure mode stuff */
 			rf_ASMCheckStatus(raidPtr, pda_p, asm_p, disks, 1);
 			rf_ASMCheckStatus(raidPtr, pda_q, asm_p, disks, 1);
-			rf_ASMParityAdjust(asm_p->parityInfo, startAddrWithinStripe, endAddress, layoutPtr, asm_p);
-			rf_ASMParityAdjust(asm_p->qInfo, startAddrWithinStripe, endAddress, layoutPtr, asm_p);
+			rf_ASMParityAdjust(raidPtr, asm_p->parityInfo, startAddrWithinStripe, endAddress, layoutPtr, asm_p);
+			rf_ASMParityAdjust(raidPtr, asm_p->qInfo, startAddrWithinStripe, endAddress, layoutPtr, asm_p);
 			break;
 #endif
 		}
 	}
 	RF_ASSERT(asmList == NULL && pdaList == NULL);
 	/* make the header structure */
-	asm_hdr = rf_AllocAccessStripeMapHeader();
+	asm_hdr = rf_AllocAccessStripeMapHeader(raidPtr);
 	RF_ASSERT(numStripes == totStripes);
 	asm_hdr->numStripes = numStripes;
 	asm_hdr->stripeMap = asm_list;
@@ -339,103 +339,108 @@ rf_MarkFailuresInASMList(RF_Raid_t *raidPtr,
    release all the free lists */
 static void rf_ShutdownMapModule(void *);
 static void
-rf_ShutdownMapModule(void *ignored)
+rf_ShutdownMapModule(void *arg)
 {
-	pool_destroy(&rf_pools.asm_hdr);
-	pool_destroy(&rf_pools.asmap);
-	pool_destroy(&rf_pools.asmhle);
-	pool_destroy(&rf_pools.pda);
-	pool_destroy(&rf_pools.fss);
-	pool_destroy(&rf_pools.vfple);
-	pool_destroy(&rf_pools.vple);
+	RF_Raid_t *raidPtr;
+
+	raidPtr = (RF_Raid_t *) arg;
+
+	pool_destroy(&raidPtr->pools.asm_hdr);
+	pool_destroy(&raidPtr->pools.asmap);
+	pool_destroy(&raidPtr->pools.asmhle);
+	pool_destroy(&raidPtr->pools.pda);
+	pool_destroy(&raidPtr->pools.fss);
+	pool_destroy(&raidPtr->pools.vfple);
+	pool_destroy(&raidPtr->pools.vple);
 }
 
 int
-rf_ConfigureMapModule(RF_ShutdownList_t **listp)
+rf_ConfigureMapModule(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
+		      RF_Config_t *cfgPtr)
 {
 
-	rf_pool_init(&rf_pools.asm_hdr, sizeof(RF_AccessStripeMapHeader_t),
-		     "rf_asmhdr_pl", RF_MIN_FREE_ASMHDR, RF_MAX_FREE_ASMHDR);
-	rf_pool_init(&rf_pools.asmap, sizeof(RF_AccessStripeMap_t),
-		     "rf_asm_pl", RF_MIN_FREE_ASM, RF_MAX_FREE_ASM);
-	rf_pool_init(&rf_pools.asmhle, sizeof(RF_ASMHeaderListElem_t),
-		     "rf_asmhle_pl", RF_MIN_FREE_ASMHLE, RF_MAX_FREE_ASMHLE);
-	rf_pool_init(&rf_pools.pda, sizeof(RF_PhysDiskAddr_t),
-		     "rf_pda_pl", RF_MIN_FREE_PDA, RF_MAX_FREE_PDA);
-	rf_pool_init(&rf_pools.fss, sizeof(RF_FailedStripe_t),
-		     "rf_fss_pl", RF_MIN_FREE_FSS, RF_MAX_FREE_FSS);
-	rf_pool_init(&rf_pools.vfple, sizeof(RF_VoidFunctionPointerListElem_t),
-		     "rf_vfple_pl", RF_MIN_FREE_VFPLE, RF_MAX_FREE_VFPLE);
-	rf_pool_init(&rf_pools.vple, sizeof(RF_VoidPointerListElem_t),
-		     "rf_vple_pl", RF_MIN_FREE_VPLE, RF_MAX_FREE_VPLE);
-	rf_ShutdownCreate(listp, rf_ShutdownMapModule, NULL);
+	rf_pool_init(raidPtr, raidPtr->poolNames.asm_hdr, &raidPtr->pools.asm_hdr, sizeof(RF_AccessStripeMapHeader_t),
+		     "asmhdr", RF_MIN_FREE_ASMHDR, RF_MAX_FREE_ASMHDR);
+	rf_pool_init(raidPtr, raidPtr->poolNames.asmap, &raidPtr->pools.asmap, sizeof(RF_AccessStripeMap_t),
+		     "asmap", RF_MIN_FREE_ASM, RF_MAX_FREE_ASM);
+	rf_pool_init(raidPtr, raidPtr->poolNames.asmhle, &raidPtr->pools.asmhle, sizeof(RF_ASMHeaderListElem_t),
+		     "asmhle", RF_MIN_FREE_ASMHLE, RF_MAX_FREE_ASMHLE);
+	rf_pool_init(raidPtr, raidPtr->poolNames.pda, &raidPtr->pools.pda, sizeof(RF_PhysDiskAddr_t),
+		     "pda", RF_MIN_FREE_PDA, RF_MAX_FREE_PDA);
+	rf_pool_init(raidPtr, raidPtr->poolNames.fss, &raidPtr->pools.fss, sizeof(RF_FailedStripe_t),
+		     "fss", RF_MIN_FREE_FSS, RF_MAX_FREE_FSS);
+	rf_pool_init(raidPtr, raidPtr->poolNames.vfple, &raidPtr->pools.vfple, sizeof(RF_VoidFunctionPointerListElem_t),
+		     "vfple", RF_MIN_FREE_VFPLE, RF_MAX_FREE_VFPLE);
+	rf_pool_init(raidPtr, raidPtr->poolNames.vple, &raidPtr->pools.vple, sizeof(RF_VoidPointerListElem_t),
+		     "vple", RF_MIN_FREE_VPLE, RF_MAX_FREE_VPLE);
+	rf_ShutdownCreate(listp, rf_ShutdownMapModule, raidPtr);
 
 	return (0);
 }
 
 RF_AccessStripeMapHeader_t *
-rf_AllocAccessStripeMapHeader(void)
+rf_AllocAccessStripeMapHeader(RF_Raid_t *raidPtr)
 {
-	return pool_get(&rf_pools.asm_hdr, PR_WAITOK | PR_ZERO);
+	return pool_get(&raidPtr->pools.asm_hdr, PR_WAITOK | PR_ZERO);
 }
 
 void
-rf_FreeAccessStripeMapHeader(RF_AccessStripeMapHeader_t *p)
+rf_FreeAccessStripeMapHeader(RF_Raid_t *raidPtr, RF_AccessStripeMapHeader_t *p)
 {
-	pool_put(&rf_pools.asm_hdr, p);
+	pool_put(&raidPtr->pools.asm_hdr, p);
 }
 
 
 RF_VoidFunctionPointerListElem_t *
-rf_AllocVFPListElem(void)
+rf_AllocVFPListElem(RF_Raid_t *raidPtr)
 {
-	return pool_get(&rf_pools.vfple, PR_WAITOK | PR_ZERO);
+	return pool_get(&raidPtr->pools.vfple, PR_WAITOK | PR_ZERO);
 }
 
 void
-rf_FreeVFPListElem(RF_VoidFunctionPointerListElem_t *p)
+rf_FreeVFPListElem(RF_Raid_t *raidPtr, RF_VoidFunctionPointerListElem_t *p)
 {
 
-	pool_put(&rf_pools.vfple, p);
+	pool_put(&raidPtr->pools.vfple, p);
 }
 
 
 RF_VoidPointerListElem_t *
-rf_AllocVPListElem(void)
+rf_AllocVPListElem(RF_Raid_t *raidPtr)
 {
-	return pool_get(&rf_pools.vple, PR_WAITOK | PR_ZERO);
+	return pool_get(&raidPtr->pools.vple, PR_WAITOK | PR_ZERO);
 }
 
 void
-rf_FreeVPListElem(RF_VoidPointerListElem_t *p)
+rf_FreeVPListElem(RF_Raid_t *raidPtr, RF_VoidPointerListElem_t *p)
 {
 
-	pool_put(&rf_pools.vple, p);
+	pool_put(&raidPtr->pools.vple, p);
 }
 
 RF_ASMHeaderListElem_t *
-rf_AllocASMHeaderListElem(void)
+rf_AllocASMHeaderListElem(RF_Raid_t *raidPtr)
 {
-	return pool_get(&rf_pools.asmhle, PR_WAITOK | PR_ZERO);
+	return pool_get(&raidPtr->pools.asmhle, PR_WAITOK | PR_ZERO);
 }
 
 void
-rf_FreeASMHeaderListElem(RF_ASMHeaderListElem_t *p)
+rf_FreeASMHeaderListElem(RF_Raid_t *raidPtr, RF_ASMHeaderListElem_t *p)
 {
 
-	pool_put(&rf_pools.asmhle, p);
+	pool_put(&raidPtr->pools.asmhle, p);
 }
 
 RF_FailedStripe_t *
-rf_AllocFailedStripeStruct(void)
+rf_AllocFailedStripeStruct(RF_Raid_t *raidPtr)
 {
-	return pool_get(&rf_pools.fss, PR_WAITOK | PR_ZERO);
+	return pool_get(&raidPtr->pools.fss, PR_WAITOK | PR_ZERO);
 }
 
 void
-rf_FreeFailedStripeStruct(RF_FailedStripe_t *p)
+rf_FreeFailedStripeStruct(RF_Raid_t *raidPtr, RF_FailedStripe_t *p)
 {
-	pool_put(&rf_pools.fss, p);
+	pool_put(&raidPtr->pools.fss, p);
 }
 
 
@@ -443,9 +448,9 @@ rf_FreeFailedStripeStruct(RF_FailedStripe_t *p)
 
 
 RF_PhysDiskAddr_t *
-rf_AllocPhysDiskAddr(void)
+rf_AllocPhysDiskAddr(RF_Raid_t *raidPtr)
 {
-	return pool_get(&rf_pools.pda, PR_WAITOK | PR_ZERO);
+	return pool_get(&raidPtr->pools.pda, PR_WAITOK | PR_ZERO);
 }
 /* allocates a list of PDAs, locking the free list only once when we
  * have to call calloc, we do it one component at a time to simplify
@@ -453,7 +458,7 @@ rf_AllocPhysDiskAddr(void)
  * not be much of a performance hit, because it should be very
  * infrequently executed.  */
 RF_PhysDiskAddr_t *
-rf_AllocPDAList(int count)
+rf_AllocPDAList(RF_Raid_t *raidPtr, int count)
 {
 	RF_PhysDiskAddr_t *p, *prev;
 	int i;
@@ -461,7 +466,7 @@ rf_AllocPDAList(int count)
 	p = NULL;
 	prev = NULL;
 	for (i = 0; i < count; i++) {
-		p = pool_get(&rf_pools.pda, PR_WAITOK);
+		p = pool_get(&raidPtr->pools.pda, PR_WAITOK);
 		p->next = prev;
 		prev = p;
 	}
@@ -470,20 +475,20 @@ rf_AllocPDAList(int count)
 }
 
 void
-rf_FreePhysDiskAddr(RF_PhysDiskAddr_t *p)
+rf_FreePhysDiskAddr(RF_Raid_t *raidPtr, RF_PhysDiskAddr_t *p)
 {
-	pool_put(&rf_pools.pda, p);
+	pool_put(&raidPtr->pools.pda, p);
 }
 
 static void
-rf_FreePDAList(RF_PhysDiskAddr_t *pda_list)
+rf_FreePDAList(RF_Raid_t *raidPtr, RF_PhysDiskAddr_t *pda_list)
 {
 	RF_PhysDiskAddr_t *p, *tmp;
 
 	p=pda_list;
 	while (p) {
 		tmp = p->next;
-		pool_put(&rf_pools.pda, p);
+		pool_put(&raidPtr->pools.pda, p);
 		p = tmp;
 	}
 }
@@ -494,7 +499,7 @@ rf_FreePDAList(RF_PhysDiskAddr_t *pda_list)
  * shutdown.  This should not be much of a performance hit, because it
  * should be very infrequently executed.  */
 RF_AccessStripeMap_t *
-rf_AllocASMList(int count)
+rf_AllocASMList(RF_Raid_t *raidPtr, int count)
 {
 	RF_AccessStripeMap_t *p, *prev;
 	int i;
@@ -502,7 +507,7 @@ rf_AllocASMList(int count)
 	p = NULL;
 	prev = NULL;
 	for (i = 0; i < count; i++) {
-		p = pool_get(&rf_pools.asmap, PR_WAITOK);
+		p = pool_get(&raidPtr->pools.asmap, PR_WAITOK);
 		p->next = prev;
 		prev = p;
 	}
@@ -510,20 +515,20 @@ rf_AllocASMList(int count)
 }
 
 static void
-rf_FreeASMList(RF_AccessStripeMap_t *asm_list)
+rf_FreeASMList(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asm_list)
 {
 	RF_AccessStripeMap_t *p, *tmp;
 
 	p=asm_list;
 	while (p) {
 		tmp = p->next;
-		pool_put(&rf_pools.asmap, p);
+		pool_put(&raidPtr->pools.asmap, p);
 		p = tmp;
 	}
 }
 
 void
-rf_FreeAccessStripeMap(RF_AccessStripeMapHeader_t *hdr)
+rf_FreeAccessStripeMap(RF_Raid_t *raidPtr, RF_AccessStripeMapHeader_t *hdr)
 {
 	RF_AccessStripeMap_t *p;
 	RF_PhysDiskAddr_t *pdp, *trailer, *pdaList = NULL, *pdaEnd = NULL;
@@ -576,9 +581,9 @@ rf_FreeAccessStripeMap(RF_AccessStripeMapHeader_t *hdr)
 	RF_ASSERT(t == count);
 
 	if (pdaList)
-		rf_FreePDAList(pdaList);
-	rf_FreeASMList(hdr->stripeMap);
-	rf_FreeAccessStripeMapHeader(hdr);
+		rf_FreePDAList(raidPtr, pdaList);
+	rf_FreeASMList(raidPtr, hdr->stripeMap);
+	rf_FreeAccessStripeMapHeader(raidPtr, hdr);
 }
 /* We can't use the large write optimization if there are any failures
  * in the stripe.  In the declustered layout, there is no way to
@@ -760,7 +765,8 @@ rf_PrintRaidAddressInfo(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddr,
  * range restrict the parity descriptor to touch only the correct
  * stuff.  */
 void
-rf_ASMParityAdjust(RF_PhysDiskAddr_t *toAdjust,
+rf_ASMParityAdjust(RF_Raid_t *raidPtr,
+		   RF_PhysDiskAddr_t *toAdjust,
 		   RF_StripeNum_t startAddrWithinStripe,
 		   RF_SectorNum_t endAddress,
 		   RF_RaidLayout_t *layoutPtr,
@@ -795,7 +801,7 @@ rf_ASMParityAdjust(RF_PhysDiskAddr_t *toAdjust,
 			RF_ASSERT(toAdjust->next == NULL);
 			/* the following will get freed in rf_FreeAccessStripeMap() via
 			   rf_FreePDAList() */
-			new_pda = toAdjust->next = rf_AllocPhysDiskAddr();
+			new_pda = toAdjust->next = rf_AllocPhysDiskAddr(raidPtr);
 			*new_pda = *toAdjust;	/* structure assignment */
 			new_pda->next = NULL;
 

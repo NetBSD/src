@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.h,v 1.29 2019/10/10 03:43:59 christos Exp $	*/
+/*	$NetBSD: rf_reconstruct.h,v 1.30 2021/07/23 00:54:45 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -175,7 +175,7 @@ struct RF_ReconCtrl_s {
 /* the default priority for reconstruction accesses */
 #define RF_IO_RECON_PRIORITY RF_IO_LOW_PRIORITY
 
-int rf_ConfigureReconstruction(RF_ShutdownList_t **);
+int rf_ConfigureReconstruction(RF_ShutdownList_t **, RF_Raid_t *, RF_Config_t *);
 int rf_ReconstructFailedDisk(RF_Raid_t *, RF_RowCol_t);
 int rf_ReconstructFailedDiskBasic(RF_Raid_t *, RF_RowCol_t);
 int rf_ReconstructInPlace(RF_Raid_t *, RF_RowCol_t);

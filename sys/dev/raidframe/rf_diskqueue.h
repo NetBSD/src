@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.h,v 1.26 2020/06/19 19:29:39 jdolecek Exp $	*/
+/*	$NetBSD: rf_diskqueue.h,v 1.27 2021/07/23 00:54:45 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -131,7 +131,7 @@ struct RF_DiskQueue_s {
   (RF_QUEUE_EMPTY(_q_) || \
     (!RF_QUEUE_FULL(_q_) && ((_r_)->priority >= (_q_)->curPriority)))
 
-int rf_ConfigureDiskQueueSystem(RF_ShutdownList_t **);
+int rf_ConfigureDiskQueueSystem(RF_ShutdownList_t **, RF_Raid_t *, RF_Config_t *);
 int rf_ConfigureDiskQueues(RF_ShutdownList_t **, RF_Raid_t *, RF_Config_t *);
 void rf_DiskIOEnqueue(RF_DiskQueue_t *, RF_DiskQueueData_t *, int);
 void rf_DiskIOComplete(RF_DiskQueue_t *, RF_DiskQueueData_t *, int);

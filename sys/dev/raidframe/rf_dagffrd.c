@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagffrd.c,v 1.21 2019/10/10 03:43:59 christos Exp $	*/
+/*	$NetBSD: rf_dagffrd.c,v 1.22 2021/07/23 00:54:45 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagffrd.c,v 1.21 2019/10/10 03:43:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagffrd.c,v 1.22 2021/07/23 00:54:45 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -185,21 +185,21 @@ rf_CreateNonredundantDAG(RF_Raid_t *raidPtr,
 	RF_ASSERT(n > 0);
 
 	for (i = 0; i < n; i++) {
-		tmpNode = rf_AllocDAGNode();
+		tmpNode = rf_AllocDAGNode(raidPtr);
 		tmpNode->list_next = dag_h->nodes;
 		dag_h->nodes = tmpNode;
 	}
 	diskNodes = dag_h->nodes;
 
-	blockNode = rf_AllocDAGNode();
+	blockNode = rf_AllocDAGNode(raidPtr);
 	blockNode->list_next = dag_h->nodes;
 	dag_h->nodes = blockNode;
 
-	commitNode = rf_AllocDAGNode();
+	commitNode = rf_AllocDAGNode(raidPtr);
 	commitNode->list_next = dag_h->nodes;
 	dag_h->nodes = commitNode;
 
-	termNode = rf_AllocDAGNode();
+	termNode = rf_AllocDAGNode(raidPtr);
 	termNode->list_next = dag_h->nodes;
 	dag_h->nodes = termNode;
 
@@ -356,21 +356,21 @@ CreateMirrorReadDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 	RF_ASSERT(n > 0);
 
 	for (i = 0; i < n; i++) {
-		tmpNode = rf_AllocDAGNode();
+		tmpNode = rf_AllocDAGNode(raidPtr);
 		tmpNode->list_next = dag_h->nodes;
 		dag_h->nodes = tmpNode;
 	}
 	readNodes = dag_h->nodes;
 
-	blockNode = rf_AllocDAGNode();
+	blockNode = rf_AllocDAGNode(raidPtr);
 	blockNode->list_next = dag_h->nodes;
 	dag_h->nodes = blockNode;
 
-	commitNode = rf_AllocDAGNode();
+	commitNode = rf_AllocDAGNode(raidPtr);
 	commitNode->list_next = dag_h->nodes;
 	dag_h->nodes = commitNode;
 
-	termNode = rf_AllocDAGNode();
+	termNode = rf_AllocDAGNode(raidPtr);
 	termNode->list_next = dag_h->nodes;
 	dag_h->nodes = termNode;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegwr.c,v 1.35 2019/10/10 03:43:59 christos Exp $	*/
+/*	$NetBSD: rf_dagdegwr.c,v 1.36 2021/07/23 00:54:45 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagdegwr.c,v 1.35 2019/10/10 03:43:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagdegwr.c,v 1.36 2021/07/23 00:54:45 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -232,39 +232,39 @@ rf_CommonCreateSimpleDegradedWriteDAG(RF_Raid_t *raidPtr,
 		rdnodesFaked = 0;
 	}
 
-	blockNode = rf_AllocDAGNode();
+	blockNode = rf_AllocDAGNode(raidPtr);
 	blockNode->list_next = dag_h->nodes;
 	dag_h->nodes = blockNode;
 
-	commitNode = rf_AllocDAGNode();
+	commitNode = rf_AllocDAGNode(raidPtr);
 	commitNode->list_next = dag_h->nodes;
 	dag_h->nodes = commitNode;
 
-	unblockNode = rf_AllocDAGNode();
+	unblockNode = rf_AllocDAGNode(raidPtr);
 	unblockNode->list_next = dag_h->nodes;
 	dag_h->nodes = unblockNode;
 
-	termNode = rf_AllocDAGNode();
+	termNode = rf_AllocDAGNode(raidPtr);
 	termNode->list_next = dag_h->nodes;
 	dag_h->nodes = termNode;
 
-	xorNode = rf_AllocDAGNode();
+	xorNode = rf_AllocDAGNode(raidPtr);
 	xorNode->list_next = dag_h->nodes;
 	dag_h->nodes = xorNode;
 
-	wnpNode = rf_AllocDAGNode();
+	wnpNode = rf_AllocDAGNode(raidPtr);
 	wnpNode->list_next = dag_h->nodes;
 	dag_h->nodes = wnpNode;
 
 	for (i = 0; i < nWndNodes; i++) {
-		tmpNode = rf_AllocDAGNode();
+		tmpNode = rf_AllocDAGNode(raidPtr);
 		tmpNode->list_next = dag_h->nodes;
 		dag_h->nodes = tmpNode;
 	}
 	wndNodes = dag_h->nodes;
 
 	for (i = 0; i < nRrdNodes; i++) {
-		tmpNode = rf_AllocDAGNode();
+		tmpNode = rf_AllocDAGNode(raidPtr);
 		tmpNode->list_next = dag_h->nodes;
 		dag_h->nodes = tmpNode;
 	}
@@ -272,7 +272,7 @@ rf_CommonCreateSimpleDegradedWriteDAG(RF_Raid_t *raidPtr,
 
 #if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0)
 	if (nfaults == 2) {
-		wnqNode = rf_AllocDAGNode();
+		wnqNode = rf_AllocDAGNode(raidPtr);
 		wnqNode->list_next = dag_h->nodes;
 		dag_h->nodes = wnqNode;
 	} else {
@@ -359,7 +359,7 @@ rf_CommonCreateSimpleDegradedWriteDAG(RF_Raid_t *raidPtr,
 	 * asmap->parityInfo describes the failed unit and the copy can also
 	 * be avoided. */
 
-	parityPDA = rf_AllocPhysDiskAddr();
+	parityPDA = rf_AllocPhysDiskAddr(raidPtr);
 	parityPDA->next = dag_h->pda_cleanup_list;
 	dag_h->pda_cleanup_list = parityPDA;
 	parityPDA->col = asmap->parityInfo->col;
@@ -436,7 +436,7 @@ rf_CommonCreateSimpleDegradedWriteDAG(RF_Raid_t *raidPtr,
 		/* any Wnd nodes that overlap the failed access need to be
 		 * xored in */
 		if (overlappingPDAs[i]) {
-			pda = rf_AllocPhysDiskAddr();
+			pda = rf_AllocPhysDiskAddr(raidPtr);
 			memcpy((char *) pda, (char *) tmpwndNode->params[0].p, sizeof(RF_PhysDiskAddr_t));
 			/* add it into the pda_cleanup_list *after* the copy, TYVM */
 			pda->next = dag_h->pda_cleanup_list;

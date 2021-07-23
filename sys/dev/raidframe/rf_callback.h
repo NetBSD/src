@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_callback.h,v 1.7 2019/10/10 03:43:59 christos Exp $	*/
+/*	$NetBSD: rf_callback.h,v 1.8 2021/07/23 00:54:45 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -59,10 +59,11 @@ struct RF_CallbackValueDesc_s {
 	RF_CallbackValueDesc_t *next;/* next entry in list */
 };
 
-int     rf_ConfigureCallback(RF_ShutdownList_t ** listp);
-RF_CallbackFuncDesc_t *rf_AllocCallbackFuncDesc(void);
-void    rf_FreeCallbackFuncDesc(RF_CallbackFuncDesc_t * p);
-RF_CallbackValueDesc_t *rf_AllocCallbackValueDesc(void);
-void    rf_FreeCallbackValueDesc(RF_CallbackValueDesc_t * p);
+int     rf_ConfigureCallback(RF_ShutdownList_t ** listp, RF_Raid_t *raidPtr,
+			     RF_Config_t *cfgPtr);
+RF_CallbackFuncDesc_t *rf_AllocCallbackFuncDesc(RF_Raid_t *raidPtr);
+void    rf_FreeCallbackFuncDesc(RF_Raid_t *raidPtr, RF_CallbackFuncDesc_t * p);
+RF_CallbackValueDesc_t *rf_AllocCallbackValueDesc(RF_Raid_t *raidPtr);
+void    rf_FreeCallbackValueDesc(RF_Raid_t *raidPtr, RF_CallbackValueDesc_t * p);
 
 #endif				/* !_RF__RF_CALLBACK_H_ */

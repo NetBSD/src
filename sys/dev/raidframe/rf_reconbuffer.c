@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconbuffer.c,v 1.26 2019/10/10 03:43:59 christos Exp $	*/
+/*	$NetBSD: rf_reconbuffer.c,v 1.27 2021/07/23 00:54:45 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ***************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconbuffer.c,v 1.26 2019/10/10 03:43:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconbuffer.c,v 1.27 2021/07/23 00:54:45 oster Exp $");
 
 #include "rf_raid.h"
 #include "rf_reconbuffer.h"
@@ -233,8 +233,8 @@ rf_SubmitReconBufferBasic(RF_ReconBuffer_t *rbuf, int keep_it,
 			RF_PANIC();
 		}
 		pssPtr->flags |= RF_PSS_BUFFERWAIT;
-		cb = rf_AllocCallbackValueDesc();/* append to buf wait list in
-						 * recon ctrl structure */
+		cb = rf_AllocCallbackValueDesc(raidPtr); /* append to buf wait list in
+							  * recon ctrl structure */
 		cb->col = rbuf->col;
 		cb->v = rbuf->parityStripeID;
 		cb->next = NULL;
@@ -413,7 +413,7 @@ rf_ReleaseFloatingReconBuffer(RF_Raid_t *raidPtr, RF_ReconBuffer_t *rbuf)
 		rcPtr->bufferWaitList = cb->next;
 		rf_CauseReconEvent(raidPtr, cb->col, (void *) 1, RF_REVENT_BUFCLEAR);	/* arg==1 => we've
 												 * committed a buffer */
-		rf_FreeCallbackValueDesc(cb);
+		rf_FreeCallbackValueDesc(raidPtr, cb);
 		raidPtr->procsInBufWait--;
 	} else {
 		rbuf->next = rcPtr->floatingRbufs;

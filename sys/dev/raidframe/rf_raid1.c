@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid1.c,v 1.37 2019/10/10 03:43:59 christos Exp $	*/
+/*	$NetBSD: rf_raid1.c,v 1.38 2021/07/23 00:54:45 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_raid1.c,v 1.37 2019/10/10 03:43:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_raid1.c,v 1.38 2021/07/23 00:54:45 oster Exp $");
 
 #include "rf_raid.h"
 #include "rf_raid1.h"
@@ -286,7 +286,7 @@ rf_VerifyParityRAID1(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddr,
 	rf_MakeAllocList(allocList);
 	if (allocList == NULL)
 		return (RF_PARITY_COULD_NOT_VERIFY);
-	mcpair = rf_AllocMCPair();
+	mcpair = rf_AllocMCPair(raidPtr);
 	if (mcpair == NULL)
 		goto done;
 	RF_ASSERT(layoutPtr->numDataCol == layoutPtr->numParityCol);
@@ -522,13 +522,13 @@ done:
          * so cleanup what we have to and return our running status.
          */
 	if (asm_h)
-		rf_FreeAccessStripeMap(asm_h);
+		rf_FreeAccessStripeMap(raidPtr, asm_h);
 	if (rd_dag_h)
 		rf_FreeDAG(rd_dag_h);
 	if (wr_dag_h)
 		rf_FreeDAG(wr_dag_h);
 	if (mcpair)
-		rf_FreeMCPair(mcpair);
+		rf_FreeMCPair(raidPtr, mcpair);
 	rf_FreeAllocList(allocList);
 #if RF_DEBUG_VERIFYPARITY
 	if (rf_verifyParityDebug) {
@@ -646,7 +646,7 @@ rf_SubmitReconBufferRAID1(RF_ReconBuffer_t *rbuf, int keep_it,
 			RF_PANIC();
 		}
 		pssPtr->flags |= RF_PSS_BUFFERWAIT;
-		cb = rf_AllocCallbackValueDesc();
+		cb = rf_AllocCallbackValueDesc(raidPtr);
 		cb->col = rbuf->col;
 		cb->v = rbuf->parityStripeID;
 		cb->next = NULL;

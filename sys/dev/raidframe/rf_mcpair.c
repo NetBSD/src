@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_mcpair.c,v 1.24 2011/05/01 01:09:05 mrg Exp $	*/
+/*	$NetBSD: rf_mcpair.c,v 1.25 2021/07/23 00:54:45 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_mcpair.c,v 1.24 2011/05/01 01:09:05 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_mcpair.c,v 1.25 2021/07/23 00:54:45 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_mcpair.c,v 1.24 2011/05/01 01:09:05 mrg Exp $");
 #include "rf_general.h"
 #include "rf_shutdown.h"
 #include "rf_netbsd.h"
+#include "rf_raid.h"
 
 #include <sys/pool.h>
 #include <sys/proc.h>
@@ -53,28 +54,33 @@ __KERNEL_RCSID(0, "$NetBSD: rf_mcpair.c,v 1.24 2011/05/01 01:09:05 mrg Exp $");
 static void rf_ShutdownMCPair(void *);
 
 static void
-rf_ShutdownMCPair(void *ignored)
+rf_ShutdownMCPair(void *arg)
 {
-	pool_destroy(&rf_pools.mcpair);
+	RF_Raid_t *raidPtr;
+
+	raidPtr = (RF_Raid_t *) arg;
+	
+	pool_destroy(&raidPtr->pools.mcpair);
 }
 
 int
-rf_ConfigureMCPair(RF_ShutdownList_t **listp)
+rf_ConfigureMCPair(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
+		   RF_Config_t *cfgPtr)
 {
 
-	rf_pool_init(&rf_pools.mcpair, sizeof(RF_MCPair_t),
-		     "rf_mcpair_pl", RF_MIN_FREE_MCPAIR, RF_MAX_FREE_MCPAIR);
-	rf_ShutdownCreate(listp, rf_ShutdownMCPair, NULL);
+	rf_pool_init(raidPtr, raidPtr->poolNames.mcpair, &raidPtr->pools.mcpair, sizeof(RF_MCPair_t),
+		     "mcpair", RF_MIN_FREE_MCPAIR, RF_MAX_FREE_MCPAIR);
+	rf_ShutdownCreate(listp, rf_ShutdownMCPair, raidPtr);
 
 	return (0);
 }
 
 RF_MCPair_t *
-rf_AllocMCPair(void)
+rf_AllocMCPair(RF_Raid_t *raidPtr)
 {
 	RF_MCPair_t *t;
 
-	t = pool_get(&rf_pools.mcpair, PR_WAITOK);
+	t = pool_get(&raidPtr->pools.mcpair, PR_WAITOK);
 	rf_init_mutex2(t->mutex, IPL_VM);
 	rf_init_cond2(t->cond, "mcpair");
 	t->flag = 0;
@@ -83,11 +89,11 @@ rf_AllocMCPair(void)
 }
 
 void
-rf_FreeMCPair(RF_MCPair_t *t)
+rf_FreeMCPair(RF_Raid_t *raidPtr, RF_MCPair_t *t)
 {
 	rf_destroy_cond2(t->cond);
 	rf_destroy_mutex2(t->mutex);
-	pool_put(&rf_pools.mcpair, t);
+	pool_put(&raidPtr->pools.mcpair, t);
 }
 
 /* the callback function used to wake you up when you use an mcpair to

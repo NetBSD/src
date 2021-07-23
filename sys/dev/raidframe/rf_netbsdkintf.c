@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.394 2021/05/26 06:11:50 mrg Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.395 2021/07/23 00:54:45 oster Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.394 2021/05/26 06:11:50 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.395 2021/07/23 00:54:45 oster Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_autoconfig.h"
@@ -331,7 +331,7 @@ int raidautoconfig = 0;
 #endif
 static bool raidautoconfigdone = false;
 
-struct RF_Pools_s rf_pools;
+struct pool rf_alloclist_pool;   /* AllocList */
 
 static LIST_HEAD(, raid_softc) raids = LIST_HEAD_INITIALIZER(raids);
 static kmutex_t raid_lock;
@@ -3558,14 +3558,18 @@ rf_auto_config_set(RF_ConfigSet_t *cset)
 }
 
 void
-rf_pool_init(struct pool *p, size_t size, const char *w_chan,
+rf_pool_init(RF_Raid_t *raidPtr, char *w_chan, struct pool *p, size_t size, const char *pool_name,
 	     size_t xmin, size_t xmax)
 {
 
+	/* Format: raid%d_foo */
+	snprintf(w_chan, RF_MAX_POOLNAMELEN, "raid%d_%s", raidPtr->raidid, pool_name);
+	
 	pool_init(p, size, 0, 0, 0, w_chan, NULL, IPL_BIO);
 	pool_sethiwat(p, xmax);
 	pool_prime(p, xmin);
 }
+
 
 /*
  * rf_buf_queue_check(RF_Raid_t raidPtr) -- looks into the buffer queue
