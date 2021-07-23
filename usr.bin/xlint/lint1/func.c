@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.114 2021/07/20 19:35:53 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.115 2021/07/23 17:06:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.114 2021/07/20 19:35:53 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.115 2021/07/23 17:06:37 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -76,7 +76,7 @@ bool	warn_about_unreachable;
 bool	seen_fallthrough;
 
 /* The innermost control statement */
-cstk_t	*cstmt;
+control_statement *cstmt;
 
 /*
  * Number of arguments which will be checked for usage in following
@@ -155,12 +155,12 @@ bool	quadflg;
 void
 begin_control_statement(control_statement_kind kind)
 {
-	cstk_t	*ci;
+	control_statement *cs;
 
-	ci = xcalloc(1, sizeof(*ci));
-	ci->c_kind = kind;
-	ci->c_surrounding = cstmt;
-	cstmt = ci;
+	cs = xcalloc(1, sizeof(*cs));
+	cs->c_kind = kind;
+	cs->c_surrounding = cstmt;
+	cstmt = cs;
 }
 
 /*
@@ -169,7 +169,7 @@ begin_control_statement(control_statement_kind kind)
 void
 end_control_statement(control_statement_kind kind)
 {
-	cstk_t	*ci;
+	control_statement *cs;
 	case_label_t *cl, *next;
 
 	lint_assert(cstmt != NULL);
@@ -177,16 +177,16 @@ end_control_statement(control_statement_kind kind)
 	while (cstmt->c_kind != kind)
 		cstmt = cstmt->c_surrounding;
 
-	ci = cstmt;
-	cstmt = ci->c_surrounding;
+	cs = cstmt;
+	cstmt = cs->c_surrounding;
 
-	for (cl = ci->c_case_labels; cl != NULL; cl = next) {
+	for (cl = cs->c_case_labels; cl != NULL; cl = next) {
 		next = cl->cl_next;
 		free(cl);
 	}
 
-	free(ci->c_switch_type);
-	free(ci);
+	free(cs->c_switch_type);
+	free(cs);
 }
 
 static void
@@ -465,32 +465,32 @@ check_case_label_bitand(const tnode_t *case_expr, const tnode_t *switch_expr)
 }
 
 static void
-check_case_label_enum(const tnode_t *tn, const cstk_t *ci)
+check_case_label_enum(const tnode_t *tn, const control_statement *cs)
 {
 	/* similar to typeok_enum in tree.c */
 
-	if (!(tn->tn_type->t_is_enum || ci->c_switch_type->t_is_enum))
+	if (!(tn->tn_type->t_is_enum || cs->c_switch_type->t_is_enum))
 		return;
-	if (tn->tn_type->t_is_enum && ci->c_switch_type->t_is_enum &&
-	    tn->tn_type->t_enum == ci->c_switch_type->t_enum)
+	if (tn->tn_type->t_is_enum && cs->c_switch_type->t_is_enum &&
+	    tn->tn_type->t_enum == cs->c_switch_type->t_enum)
 		return;
 
 #if 0 /* not yet ready, see msg_130.c */
 	/* enum type mismatch: '%s' '%s' '%s' */
-	warning(130, type_name(ci->c_switch_type), op_name(EQ),
+	warning(130, type_name(cs->c_switch_type), op_name(EQ),
 	    type_name(tn->tn_type));
 #endif
 }
 
 static void
-check_case_label(tnode_t *tn, cstk_t *ci)
+check_case_label(tnode_t *tn, control_statement *cs)
 {
 	case_label_t *cl;
 	val_t	*v;
 	val_t	nv;
 	tspec_t	t;
 
-	if (ci == NULL) {
+	if (cs == NULL) {
 		/* case not in switch */
 		error(195);
 		return;
@@ -508,10 +508,10 @@ check_case_label(tnode_t *tn, cstk_t *ci)
 		return;
 	}
 
-	check_case_label_bitand(tn, ci->c_switch_expr);
-	check_case_label_enum(tn, ci);
+	check_case_label_bitand(tn, cs->c_switch_expr);
+	check_case_label_enum(tn, cs);
 
-	lint_assert(ci->c_switch_type != NULL);
+	lint_assert(cs->c_switch_type != NULL);
 
 	if (reached && !seen_fallthrough) {
 		if (hflag)
@@ -533,11 +533,11 @@ check_case_label(tnode_t *tn, cstk_t *ci)
 	 */
 	v = constant(tn, true);
 	(void)memset(&nv, 0, sizeof(nv));
-	convert_constant(CASE, 0, ci->c_switch_type, &nv, v);
+	convert_constant(CASE, 0, cs->c_switch_type, &nv, v);
 	free(v);
 
 	/* look if we had this value already */
-	for (cl = ci->c_case_labels; cl != NULL; cl = cl->cl_next) {
+	for (cl = cs->c_case_labels; cl != NULL; cl = cl->cl_next) {
 		if (cl->cl_val.v_quad == nv.v_quad)
 			break;
 	}
@@ -553,21 +553,21 @@ check_case_label(tnode_t *tn, cstk_t *ci)
 		/* append the value to the list of case values */
 		cl = xcalloc(1, sizeof(*cl));
 		cl->cl_val = nv;
-		cl->cl_next = ci->c_case_labels;
-		ci->c_case_labels = cl;
+		cl->cl_next = cs->c_case_labels;
+		cs->c_case_labels = cl;
 	}
 }
 
 void
 case_label(tnode_t *tn)
 {
-	cstk_t	*ci;
+	control_statement *cs;
 
 	/* find the innermost switch statement */
-	for (ci = cstmt; ci != NULL && !ci->c_switch; ci = ci->c_surrounding)
+	for (cs = cstmt; cs != NULL && !cs->c_switch; cs = cs->c_surrounding)
 		continue;
 
-	check_case_label(tn, ci);
+	check_case_label(tn, cs);
 
 	expr_free_all();
 
@@ -577,16 +577,16 @@ case_label(tnode_t *tn)
 void
 default_label(void)
 {
-	cstk_t	*ci;
+	control_statement *cs;
 
 	/* find the innermost switch statement */
-	for (ci = cstmt; ci != NULL && !ci->c_switch; ci = ci->c_surrounding)
+	for (cs = cstmt; cs != NULL && !cs->c_switch; cs = cs->c_surrounding)
 		continue;
 
-	if (ci == NULL) {
+	if (cs == NULL) {
 		/* default outside switch */
 		error(201);
-	} else if (ci->c_default) {
+	} else if (cs->c_default) {
 		/* duplicate default in switch */
 		error(202);
 	} else {
@@ -595,7 +595,7 @@ default_label(void)
 				/* fallthrough on default statement */
 				warning(284);
 		}
-		ci->c_default = true;
+		cs->c_default = true;
 	}
 
 	set_reached(true);
@@ -1001,18 +1001,18 @@ do_goto(sym_t *lab)
 void
 do_break(void)
 {
-	cstk_t	*ci;
+	control_statement *cs;
 
-	ci = cstmt;
-	while (ci != NULL && !ci->c_loop && !ci->c_switch)
-		ci = ci->c_surrounding;
+	cs = cstmt;
+	while (cs != NULL && !cs->c_loop && !cs->c_switch)
+		cs = cs->c_surrounding;
 
-	if (ci == NULL) {
+	if (cs == NULL) {
 		/* break outside loop or switch */
 		error(208);
 	} else {
 		if (reached)
-			ci->c_break = true;
+			cs->c_break = true;
 	}
 
 	if (bflag)
@@ -1027,17 +1027,17 @@ do_break(void)
 void
 do_continue(void)
 {
-	cstk_t	*ci;
+	control_statement *cs;
 
-	for (ci = cstmt; ci != NULL && !ci->c_loop; ci = ci->c_surrounding)
+	for (cs = cstmt; cs != NULL && !cs->c_loop; cs = cs->c_surrounding)
 		continue;
 
-	if (ci == NULL) {
+	if (cs == NULL) {
 		/* continue outside loop */
 		error(209);
 	} else {
 		/* TODO: only if reachable, for symmetry with c_break */
-		ci->c_continue = true;
+		cs->c_continue = true;
 	}
 
 	check_statement_reachable();
@@ -1053,23 +1053,23 @@ void
 do_return(tnode_t *tn)
 {
 	tnode_t	*ln, *rn;
-	cstk_t	*ci;
+	control_statement *cs;
 	op_t	op;
 
-	ci = cstmt;
-	if (ci == NULL) {
+	cs = cstmt;
+	if (cs == NULL) {
 		/* syntax error '%s' */
 		error(249, "return outside function");
 		return;
 	}
 
-	for (; ci->c_surrounding != NULL; ci = ci->c_surrounding)
+	for (; cs->c_surrounding != NULL; cs = cs->c_surrounding)
 		continue;
 
 	if (tn != NULL)
-		ci->c_had_return_value = true;
+		cs->c_had_return_value = true;
 	else
-		ci->c_had_return_noval = true;
+		cs->c_had_return_noval = true;
 
 	if (tn != NULL && funcsym->s_type->t_subt->t_tspec == VOID) {
 		/* void function %s cannot return value */
