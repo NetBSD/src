@@ -1,4 +1,4 @@
-/* $NetBSD: fp_complete.c,v 1.25 2021/07/22 01:39:18 thorpej Exp $ */
+/* $NetBSD: fp_complete.c,v 1.26 2021/07/23 03:50:32 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.25 2021/07/22 01:39:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.26 2021/07/23 03:50:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -522,13 +522,13 @@ float64_unk(float64 a, float64 b)
  */
 
 static void
-print_fp_instruction(alpha_instruction *pc, struct lwp *l, uint32_t bits)
+print_fp_instruction(unsigned long pc, struct lwp *l, uint32_t bits)
 {
 #if defined(DDB)
 	char buf[32];
 	struct alpha_print_instruction_context ctx = {
 		.insn.bits = bits,
-		.pc = (unsigned long)pc,
+		.pc = pc,
 		.buf = buf,
 		.bufsize = sizeof(buf),
 	};
@@ -553,7 +553,7 @@ print_fp_instruction(alpha_instruction *pc, struct lwp *l, uint32_t bits)
 }
 
 static void
-alpha_fp_interpret(alpha_instruction *pc, struct lwp *l, uint32_t bits)
+alpha_fp_interpret(unsigned long pc, struct lwp *l, uint32_t bits)
 {
 	s_float sfa, sfb, sfc;
 	t_float tfa, tfb, tfc;
@@ -624,16 +624,15 @@ alpha_fp_interpret(alpha_instruction *pc, struct lwp *l, uint32_t bits)
 	}
 }
 
-static int
-alpha_fp_complete_at(alpha_instruction *trigger_pc, struct lwp *l,
-    uint64_t *ucode)
+int
+alpha_fp_complete_at(unsigned long trigger_pc, struct lwp *l, uint64_t *ucode)
 {
 	int needsig;
 	alpha_instruction inst;
 	uint64_t rm, fpcr, orig_fpcr;
 	uint64_t orig_flags, new_flags, changed_flags, md_flags;
 
-	if (__predict_false(copyin(trigger_pc, &inst, sizeof inst))) {
+	if (__predict_false(ufetch_32((void *)trigger_pc, &inst.bits))) {
 		this_cannot_happen(6, -1);
 		return SIGSEGV;
 	}
@@ -712,7 +711,8 @@ alpha_fp_complete(u_long a0, u_long a1, struct lwp *l, uint64_t *ucode)
 	if (cpu_amask & ALPHA_AMASK_PAT) {
 		if ((a0 & (ALPHA_AESR_SWC | ALPHA_AESR_INV)) != 0 ||
 		    alpha_fp_sync_complete) {
-			sig = alpha_fp_complete_at(trigger_pc, l, ucode);
+			sig = alpha_fp_complete_at((u_long)trigger_pc, l,
+			    ucode);
 			goto resolved;
 		}
 	}
@@ -773,7 +773,7 @@ alpha_fp_complete(u_long a0, u_long a1, struct lwp *l, uint64_t *ucode)
 		alpha_shadow.max = t;
 	if (__predict_true(trigger_pc != 0 && a1 == 0)) {
 		++alpha_shadow.resolved;
-		sig = alpha_fp_complete_at(trigger_pc, l, ucode);
+		sig = alpha_fp_complete_at((u_long)trigger_pc, l, ucode);
 		goto resolved;
 	} else {
 		++alpha_shadow.unresolved;
