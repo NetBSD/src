@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_psstatus.c,v 1.37 2019/10/10 03:43:59 christos Exp $	*/
+/*	$NetBSD: rf_psstatus.c,v 1.38 2021/07/23 00:54:45 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,7 +37,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_psstatus.c,v 1.37 2019/10/10 03:43:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_psstatus.c,v 1.38 2021/07/23 00:54:45 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -69,17 +69,21 @@ static void rf_ShutdownPSStatus(void *);
 static void
 rf_ShutdownPSStatus(void *arg)
 {
+	RF_Raid_t *raidPtr;
 
-	pool_destroy(&rf_pools.pss);
+	raidPtr = (RF_Raid_t *) arg;
+
+	pool_destroy(&raidPtr->pools.pss);
 }
 
 int
-rf_ConfigurePSStatus(RF_ShutdownList_t **listp)
+rf_ConfigurePSStatus(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
+		     RF_Config_t *cfgPtr)
 {
 
-	rf_pool_init(&rf_pools.pss, sizeof(RF_ReconParityStripeStatus_t),
-		     "raidpsspl", RF_MIN_FREE_PSS, RF_MAX_FREE_PSS);
-	rf_ShutdownCreate(listp, rf_ShutdownPSStatus, NULL);
+	rf_pool_init(raidPtr, raidPtr->poolNames.pss, &raidPtr->pools.pss, sizeof(RF_ReconParityStripeStatus_t),
+		     "pss", RF_MIN_FREE_PSS, RF_MAX_FREE_PSS);
+	rf_ShutdownCreate(listp, rf_ShutdownPSStatus, raidPtr);
 
 	return (0);
 }
@@ -257,7 +261,7 @@ rf_RemoveFromActiveReconTable(RF_Raid_t *raidPtr, RF_StripeNum_t psid,
 		Dprintf1("Waking up access waiting on parity stripe ID %ld\n", p->parityStripeID);
 		cb1 = cb->next;
 		(cb->callbackFunc) (cb->callbackArg);
-		rf_FreeCallbackFuncDesc(cb);
+		rf_FreeCallbackFuncDesc(raidPtr, cb);
 		cb = cb1;
 	}
 
@@ -267,7 +271,7 @@ rf_RemoveFromActiveReconTable(RF_Raid_t *raidPtr, RF_StripeNum_t psid,
 RF_ReconParityStripeStatus_t *
 rf_AllocPSStatus(RF_Raid_t *raidPtr)
 {
-	return pool_get(&rf_pools.pss, PR_WAITOK | PR_ZERO);
+	return pool_get(&raidPtr->pools.pss, PR_WAITOK | PR_ZERO);
 }
 
 void
@@ -277,7 +281,7 @@ rf_FreePSStatus(RF_Raid_t *raidPtr, RF_ReconParityStripeStatus_t *p)
 	RF_ASSERT(p->blockWaitList == NULL);
 	RF_ASSERT(p->bufWaitList == NULL);
 
-	pool_put(&rf_pools.pss, p);
+	pool_put(&raidPtr->pools.pss, p);
 }
 
 static void
