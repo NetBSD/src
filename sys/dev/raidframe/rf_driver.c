@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.138 2021/07/23 00:54:45 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.139 2021/07/23 02:35:14 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,7 +66,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.138 2021/07/23 00:54:45 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.139 2021/07/23 02:35:14 oster Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_diagnostic.h"
@@ -665,13 +665,11 @@ rf_FreeRaidAccDesc(RF_RaidAccessDesc_t *desc)
  * when either the DAG library is incomplete or there are too many
  * failures in a parity group.
  *
- * type should be read or write async_flag should be RF_TRUE or
- * RF_FALSE bp_in is a buf pointer.  void *to facilitate ignoring it
- * outside the kernel
+ * type should be read or write.  bp_in is a buf pointer.  void *to
+ * facilitate ignoring it outside the kernel
  ********************************************************************/
 int
-rf_DoAccess(RF_Raid_t * raidPtr, RF_IoType_t type, int async_flag,
-	    RF_RaidAddr_t raidAddress, RF_SectorCount_t numBlocks,
+rf_DoAccess(RF_Raid_t * raidPtr, RF_IoType_t type, RF_RaidAddr_t raidAddress, RF_SectorCount_t numBlocks,
 	    void *bufPtr, struct buf *bp, RF_RaidAccessFlags_t flags)
 {
 	RF_RaidAccessDesc_t *desc;
@@ -704,7 +702,6 @@ rf_DoAccess(RF_Raid_t * raidPtr, RF_IoType_t type, int async_flag,
 #if RF_ACC_TRACE > 0
 	RF_ETIMER_START(desc->tracerec.tot_timer);
 #endif
-	desc->async_flag = async_flag;
 
 	if (raidPtr->parity_map != NULL && 
 	    type == RF_IO_TYPE_WRITE)
