@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.395 2021/07/23 00:54:45 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.396 2021/07/23 02:35:14 oster Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.395 2021/07/23 00:54:45 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.396 2021/07/23 02:35:14 oster Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_autoconfig.h"
@@ -1904,7 +1904,6 @@ raiddoaccess(RF_Raid_t *raidPtr, struct buf *bp)
 	RF_SectorCount_t num_blocks, pb, sum;
 	RF_RaidAddr_t raid_addr;
 	daddr_t blocknum;
-	int     do_async;
 	int rc;
 
 	rf_lock_mutex2(raidPtr->mutex);
@@ -1954,17 +1953,12 @@ raiddoaccess(RF_Raid_t *raidPtr, struct buf *bp)
 	raidPtr->openings--;
 	rf_unlock_mutex2(raidPtr->mutex);
 
-	/*
-	 * Everything is async.
-	 */
-	do_async = 1;
-
 	/* don't ever condition on bp->b_flags & B_WRITE.
 	 * always condition on B_READ instead */
 
 	rc = rf_DoAccess(raidPtr, (bp->b_flags & B_READ) ?
 			 RF_IO_TYPE_READ : RF_IO_TYPE_WRITE,
-			 do_async, raid_addr, num_blocks,
+			 raid_addr, num_blocks,
 			 bp->b_data, bp, RF_DAG_NONBLOCKING_IO);
 
 done:
