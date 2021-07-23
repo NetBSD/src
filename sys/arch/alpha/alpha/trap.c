@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.137 2021/07/20 01:56:06 thorpej Exp $ */
+/* $NetBSD: trap.c,v 1.138 2021/07/23 04:19:50 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2021 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.137 2021/07/20 01:56:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.138 2021/07/23 04:19:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -383,6 +383,8 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 				ksi.ksi_code = SEGV_MAPERR;
 			else if (i == SIGILL)
 				ksi.ksi_code = ILL_ILLOPC;
+			else if (i == SIGFPE)
+				ksi.ksi_code = alpha_ucode_to_ksiginfo(ucode);
 			ksi.ksi_signo = i;
 			ksi.ksi_addr =
 				(void *)l->l_md.md_tf->tf_regs[FRAME_PC];
@@ -961,6 +963,128 @@ unaligned_fixup(u_long va, u_long opcode, u_long reg, struct lwp *l)
 	return (signo);
 }
 
+#define	EMUL_COUNT(ev)	atomic_inc_64(&(ev).ev_count)
+
+static struct evcnt emul_fix_ftoit =
+    EVCNT_INITIALIZER(EVCNT_TYPE_TRAP, NULL, "emul fix", "ftoit");
+static struct evcnt emul_fix_ftois =
+    EVCNT_INITIALIZER(EVCNT_TYPE_TRAP, NULL, "emul fix", "ftois");
+static struct evcnt emul_fix_itofs =
+    EVCNT_INITIALIZER(EVCNT_TYPE_TRAP, NULL, "emul fix", "itofs");
+#if 0
+static struct evcnt emul_fix_itoff =
+    EVCNT_INITIALIZER(EVCNT_TYPE_TRAP, NULL, "emul fix", "itoff");
+#endif
+static struct evcnt emul_fix_itoft =
+    EVCNT_INITIALIZER(EVCNT_TYPE_TRAP, NULL, "emul fix", "itoft");
+static struct evcnt emul_fix_sqrtt =
+    EVCNT_INITIALIZER(EVCNT_TYPE_TRAP, NULL, "emul fix", "sqrtt");
+static struct evcnt emul_fix_sqrts =
+    EVCNT_INITIALIZER(EVCNT_TYPE_TRAP, NULL, "emul fix", "sqrts");
+
+EVCNT_ATTACH_STATIC(emul_fix_ftoit);
+EVCNT_ATTACH_STATIC(emul_fix_ftois);
+EVCNT_ATTACH_STATIC(emul_fix_itofs);
+#if 0
+EVCNT_ATTACH_STATIC(emul_fix_itoff);
+#endif
+EVCNT_ATTACH_STATIC(emul_fix_itoft);
+EVCNT_ATTACH_STATIC(emul_fix_sqrtt);
+EVCNT_ATTACH_STATIC(emul_fix_sqrts);
+
+static void
+emul_fix(struct lwp *l, const alpha_instruction *inst)
+{
+	union {
+		f_float f;
+		s_float s;
+		t_float t;
+	} fmem;
+	register_t *regptr;
+
+	KASSERT(l == curlwp);
+
+	/*
+	 * FIX instructions don't cause any exceptions, including
+	 * MM exceptions.  However, they are equivalent in result
+	 * to e.g. STL,LDF.  We will just assume that we can access
+	 * our kernel stack, and thus no exception checks are
+	 * required.
+	 */
+
+	kpreempt_disable();
+	if ((l->l_md.md_flags & MDLWP_FPACTIVE) == 0) {
+		fpu_load();
+	}
+	alpha_pal_wrfen(1);
+
+	if (inst->float_format.opcode == op_intmisc) {
+		regptr = irp(l, inst->float_format.fc);
+		switch (inst->float_format.function) {
+		case op_ftoit:
+			EMUL_COUNT(emul_fix_ftoit);
+			alpha_stt(inst->float_format.fa, &fmem.t);
+			if (regptr != NULL) {
+				*regptr = fmem.t.i;
+			}
+			break;
+
+		case op_ftois:
+			EMUL_COUNT(emul_fix_ftois);
+			alpha_sts(inst->float_format.fa, &fmem.s);
+			if (regptr != NULL) {
+				*regptr = (int32_t)fmem.s.i;
+			}
+			break;
+
+		default:
+			panic("%s: bad intmisc function=0x%x\n", __func__,
+			    inst->float_format.function);
+		}
+	} else if (inst->float_format.opcode == op_fix_float) {
+		regptr = irp(l, inst->float_format.fa);
+		register_t regval = (regptr != NULL) ? *regptr : 0;
+
+		switch (inst->float_format.function) {
+		case op_itofs:
+			EMUL_COUNT(emul_fix_itofs);
+			fmem.s.i = (uint32_t)regval;
+			alpha_lds(inst->float_format.fc, &fmem.s);
+			break;
+
+		/*
+		 * The Book says about ITOFF:
+		 *
+		 *	ITOFF is equivalent to the following sequence,
+		 *	except that the word swapping that LDF normally
+		 *	performs is not performed by ITOFF.
+		 *
+		 *		STL
+		 *		LDF
+		 *
+		 * ...implying that we can't actually use LDF here ??? So
+		 * we'll skip it for now.
+		 */
+
+		case op_itoft:
+			EMUL_COUNT(emul_fix_itoft);
+			fmem.t.i = regval;
+			alpha_ldt(inst->float_format.fc, &fmem.t);
+			break;
+
+		default:
+			panic("%s: bad fix_float function=0x%x\n", __func__,
+			    inst->float_format.function);
+		}
+	} else {
+		panic("%s: bad opcode=0x%02x", __func__,
+		    inst->float_format.opcode);
+	}
+
+	alpha_pal_wrfen(0);
+	kpreempt_enable();
+}
+
 static struct evcnt emul_bwx_ldbu =
     EVCNT_INITIALIZER(EVCNT_TYPE_TRAP, NULL, "emul bwx", "ldbu");
 static struct evcnt emul_bwx_ldwu =
@@ -991,8 +1115,6 @@ static struct evcnt emul_cix_cttz =
 EVCNT_ATTACH_STATIC(emul_cix_ctpop);
 EVCNT_ATTACH_STATIC(emul_cix_ctlz);
 EVCNT_ATTACH_STATIC(emul_cix_cttz);
-
-#define	EMUL_COUNT(ev)	atomic_inc_64(&(ev).ev_count)
 
 /*
  * Reserved/unimplemented instruction (opDec fault) handler
@@ -1191,6 +1313,67 @@ handle_opdec(struct lwp *l, u_long *ucodep)
 			regptr = irp(l, inst.operate_reg_format.rc);
 			if (regptr != NULL) {
 				*regptr = res;
+			}
+			break;
+		}
+
+		/*
+		 * FTOIS and FTOIT are in Floating Operate format according
+		 * to The Book, which is nearly identical to the Reg Operate
+		 * format, but the function field of those overlaps the
+		 * "zero" and "sbz" fields and the FTOIS and FTOIT function
+		 * codes conviently has zero bits in those fields.
+		 */
+		if ((inst.float_format.function == op_ftoit ||
+		     inst.float_format.function == op_ftois) &&
+		    inst.float_format.fb == 31) {
+			/*
+			 * These FIX instructions can't cause any exceptions,
+			 * including MM exceptions.
+			 */
+			emul_fix(l, &inst);
+			break;
+		}
+
+		goto sigill;
+
+	case op_fix_float:
+		if ((inst.float_format.function == op_itofs ||
+		     /* ITOFF is a bit more complicated; skip it for now. */
+		     /* inst.float_format.function == op_itoff || */
+		     inst.float_format.function == op_itoft) &&
+		    inst.float_format.fb == 31) {
+			/*
+			 * These FIX instructions can't cause any exceptions,
+			 * including MM exceptions.
+			 */
+			emul_fix(l, &inst);
+			break;
+		}
+
+		/*
+		 * The SQRT function encodings are explained in a nice
+		 * chart in fp_complete.c -- go read it.
+		 *
+		 * We only handle the IEEE variants here; we do not have
+		 * a VAX softfloat library.
+		 */
+		if (inst.float_detail.opclass == 11 /* IEEE SQRT */ &&
+		    inst.float_detail.fa == 31      /* Fa must be $f31 */ &&
+		    (inst.float_detail.src == 0     /* SQRTS (S_float) */ ||
+		     inst.float_detail.src == 2     /* SQRTT (T_float) */)) {
+			if (inst.float_detail.src == 0) {
+				EMUL_COUNT(emul_fix_sqrts);
+			} else {
+				EMUL_COUNT(emul_fix_sqrtt);
+			}
+			sig = alpha_fp_complete_at(inst_pc, l, ucodep);
+			if (sig) {
+				if (sig == SIGSEGV) {
+					memaddr = inst_pc;
+					goto sigsegv;
+				}
+				return sig;
 			}
 			break;
 		}
