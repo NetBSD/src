@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_fdt.c,v 1.20 2021/07/22 00:47:55 jmcneill Exp $ */
+/* $NetBSD: acpi_fdt.c,v 1.21 2021/07/23 21:33:35 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_efi.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_fdt.c,v 1.20 2021/07/22 00:47:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_fdt.c,v 1.21 2021/07/23 21:33:35 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -140,11 +140,36 @@ acpi_fdt_poweroff(device_t dev)
 		psci_system_off();
 }
 
+static int
+acpi_fdt_smbios_version(void)
+{
+	uint8_t *hdr;
+	int smbver;
+
+	if (smbios_table == 0) {
+		return 0;
+	}
+
+	hdr = AcpiOsMapMemory(smbios_table, 24);
+	if (hdr == NULL) {
+		return 0;
+	}
+	if (smbios3_check_header(hdr)) {
+		smbver = 3;
+	} else if (smbios2_check_header(hdr)) {
+		smbver = 2;
+	} else {
+		smbver = 0;
+	}
+	AcpiOsUnmapMemory(hdr, 24);
+	return smbver;
+}
+
 static void
 acpi_fdt_smbios_init(device_t dev)
 {
-	struct smb3hdr *sh;
 	uint8_t *ptr;
+	int smbver;
 
 	const int chosen = OF_finddevice("/chosen");
 	if (chosen >= 0) {
@@ -154,29 +179,48 @@ acpi_fdt_smbios_init(device_t dev)
 		return;
 	}
 
-	sh = AcpiOsMapMemory(smbios_table, sizeof(*sh));
-	if (sh == NULL) {
-		return;
-	}
-	if (!smbios3_check_header((uint8_t *)sh)) {
-		AcpiOsUnmapMemory(sh, sizeof(*sh));
-		return;
-	}
+	smbver = acpi_fdt_smbios_version();
+	if (smbver == 3) {
+		struct smb3hdr *sh = AcpiOsMapMemory(smbios_table, sizeof(*sh));
+		if (sh == NULL) {
+			return;
+		}
 
-	ptr = AcpiOsMapMemory(sh->addr, sh->size);
-	if (ptr != NULL) {
-		smbios_entry.addr = ptr;
-		smbios_entry.len = sh->size;
-		smbios_entry.rev = sh->eprev;
-		smbios_entry.mjr = sh->majrev;
-		smbios_entry.min = sh->minrev;
-		smbios_entry.doc = sh->docrev;
-		smbios_entry.count = UINT16_MAX;
+		ptr = AcpiOsMapMemory(sh->addr, sh->size);
+		if (ptr != NULL) {
+			smbios_entry.addr = ptr;
+			smbios_entry.len = sh->size;
+			smbios_entry.rev = sh->eprev;
+			smbios_entry.mjr = sh->majrev;
+			smbios_entry.min = sh->minrev;
+			smbios_entry.doc = sh->docrev;
+			smbios_entry.count = UINT16_MAX;
+		}
 
-		device_printf(dev, "SMBIOS rev. %d.%d.%d @ 0x%lx\n",
+		aprint_normal_dev(dev, "SMBIOS rev. %d.%d.%d @ 0x%lx\n",
 		    sh->majrev, sh->minrev, sh->docrev, (u_long)sh->addr);
+		AcpiOsUnmapMemory(sh, sizeof(*sh));
+	} else if (smbver == 2) {
+		struct smbhdr *sh = AcpiOsMapMemory(smbios_table, sizeof(*sh));
+		if (sh == NULL) {
+			return;
+		}
+
+		ptr = AcpiOsMapMemory(sh->addr, sh->size);
+		if (ptr != NULL) {
+			smbios_entry.addr = ptr;
+			smbios_entry.len = sh->size;
+			smbios_entry.rev = 0;
+			smbios_entry.mjr = sh->majrev;
+			smbios_entry.min = sh->minrev;
+			smbios_entry.doc = 0;
+			smbios_entry.count = sh->count;
+		}
+
+		aprint_normal_dev(dev, "SMBIOS rev. %d.%d @ 0x%lx (%d entries)\n",
+		    sh->majrev, sh->minrev, (u_long)sh->addr, sh->count);
+		AcpiOsUnmapMemory(sh, sizeof(*sh));
 	}
-	AcpiOsUnmapMemory(sh, sizeof(*sh));
 }
 
 static void
