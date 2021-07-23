@@ -1,4 +1,4 @@
-/* $NetBSD: efiacpi.c,v 1.9 2021/05/21 21:53:15 jmcneill Exp $ */
+/* $NetBSD: efiacpi.c,v 1.10 2021/07/23 21:33:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -52,10 +52,11 @@ struct acpi_rdsp {
 
 static EFI_GUID Acpi20TableGuid = ACPI_20_TABLE_GUID;
 static EFI_GUID Smbios3TableGuid = SMBIOS3_TABLE_GUID;
+static EFI_GUID SmbiosTableGuid = SMBIOS_TABLE_GUID;
 
 static int acpi_enable = 1;
 static void *acpi_root = NULL;
-static void *smbios3_table = NULL;
+static void *smbios_table = NULL;
 
 int
 efi_acpi_probe(void)
@@ -66,9 +67,13 @@ efi_acpi_probe(void)
 	if (EFI_ERROR(status))
 		return EIO;
 
-	status = LibGetSystemConfigurationTable(&Smbios3TableGuid, &smbios3_table);
-	if (EFI_ERROR(status))
-		smbios3_table = NULL;
+	status = LibGetSystemConfigurationTable(&Smbios3TableGuid, &smbios_table);
+	if (EFI_ERROR(status)) {
+		status = LibGetSystemConfigurationTable(&SmbiosTableGuid, &smbios_table);
+	}
+	if (EFI_ERROR(status)) {
+		smbios_table = NULL;
+	}
 
 	return 0;
 }
@@ -103,8 +108,8 @@ efi_acpi_get_model(void)
 
 	memset(model_buf, 0, sizeof(model_buf));
 
-	if (smbios3_table != NULL) {
-		smbios_init(smbios3_table);
+	if (smbios_table != NULL) {
+		smbios_init(smbios_table);
 
 		buf = model_buf;
 		smbios.cookie = 0;
@@ -136,7 +141,7 @@ efi_acpi_show(void)
 	    rsdp->oemid[0], rsdp->oemid[1], rsdp->oemid[2],
 	    rsdp->oemid[3], rsdp->oemid[4], rsdp->oemid[5]);
 
-	if (smbios3_table)
+	if (smbios_table)
 		printf("SMBIOS: %s\n", efi_acpi_get_model());
 }
 
@@ -166,8 +171,8 @@ efi_acpi_create_fdt(void)
 
 	fdt_add_subnode(fdt, fdt_path_offset(fdt, "/"), "chosen");
 	fdt_setprop_u64(fdt, fdt_path_offset(fdt, "/chosen"), "netbsd,acpi-root-table", (uint64_t)(uintptr_t)acpi_root);
-	if (smbios3_table)
-		fdt_setprop_u64(fdt, fdt_path_offset(fdt, "/chosen"), "netbsd,smbios-table", (uint64_t)(uintptr_t)smbios3_table);
+	if (smbios_table)
+		fdt_setprop_u64(fdt, fdt_path_offset(fdt, "/chosen"), "netbsd,smbios-table", (uint64_t)(uintptr_t)smbios_table);
 
 	fdt_add_subnode(fdt, fdt_path_offset(fdt, "/"), "acpi");
 	fdt_setprop_string(fdt, fdt_path_offset(fdt, "/acpi"), "compatible", "netbsd,acpi");
