@@ -1,4 +1,4 @@
-/*	$NetBSD: smbios.c,v 1.2 2019/12/27 09:45:27 msaitoh Exp $	*/
+/*	$NetBSD: smbios.c,v 1.3 2021/07/23 21:33:00 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbios.c,v 1.2 2019/12/27 09:45:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbios.c,v 1.3 2021/07/23 21:33:00 jmcneill Exp $");
 
 #include <sys/param.h>
 
@@ -91,8 +91,22 @@ __KERNEL_RCSID(0, "$NetBSD: smbios.c,v 1.2 2019/12/27 09:45:27 msaitoh Exp $");
 
 struct smbios_entry smbios_entry;
 
-void
-smbios_init(uint8_t *p)
+static void
+smbios2_init(uint8_t *p)
+{
+	const struct smbhdr *sh = (const struct smbhdr *)p;
+
+	smbios_entry.addr = (void *)(uintptr_t)sh->addr;
+	smbios_entry.len = sh->size;
+	smbios_entry.rev = 0;
+	smbios_entry.mjr = sh->majrev;
+	smbios_entry.min = sh->minrev;
+	smbios_entry.doc = 0;
+	smbios_entry.count = sh->count;
+}
+
+static void
+smbios3_init(uint8_t *p)
 {
 	const struct smb3hdr *sh = (const struct smb3hdr *)p;
 
@@ -103,6 +117,16 @@ smbios_init(uint8_t *p)
 	smbios_entry.min = sh->minrev;
 	smbios_entry.doc = sh->docrev;
 	smbios_entry.count = UINT16_MAX;
+}
+
+void
+smbios_init(uint8_t *p)
+{
+	if (memcmp(p, "_SM3_", 5) == 0) {
+		smbios3_init(p);
+	} else if (memcmp(p, "_SM_", 4) == 0) {
+		smbios2_init(p);
+	}
 }
 
 /*
@@ -120,6 +144,10 @@ smbios_find_table(uint8_t type, struct smbtable *st)
 	uint8_t *va, *end;
 	struct smbtblhdr *hdr;
 	int ret = 0, tcount = 1;
+
+	if (smbios_entry.addr == 0) {
+		return 0;
+	}
 
 	va = smbios_entry.addr;
 	end = va + smbios_entry.len;
@@ -172,6 +200,10 @@ smbios_get_string(struct smbtable *st, uint8_t indx, char *dest, size_t len)
 	uint8_t *va, *end;
 	char *ret = NULL;
 	int i;
+
+	if (smbios_entry.addr == 0) {
+		return NULL;
+	}
 
 	va = (uint8_t *)st->hdr + st->hdr->size;
 	end = smbios_entry.addr + smbios_entry.len;
