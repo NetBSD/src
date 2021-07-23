@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_states.c,v 1.52 2021/07/23 00:54:45 oster Exp $	*/
+/*	$NetBSD: rf_states.c,v 1.53 2021/07/23 02:35:14 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.52 2021/07/23 00:54:45 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.53 2021/07/23 02:35:14 oster Exp $");
 
 #include <sys/errno.h>
 
@@ -214,11 +214,6 @@ rf_State_LastState(RF_RaidAccessDesc_t *desc)
 {
 	void    (*callbackFunc) (void *) = desc->callbackFunc;
 	void * callbackArg = desc->callbackArg;
-
-	/*
-	 * We don't support non-async IO.
-	 */
-	KASSERT(desc->async_flag);
 
 	/*
 	 * The parity_map hook has to go here, because the iodone
