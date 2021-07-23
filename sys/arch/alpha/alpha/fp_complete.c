@@ -1,4 +1,4 @@
-/* $NetBSD: fp_complete.c,v 1.26 2021/07/23 03:50:32 thorpej Exp $ */
+/* $NetBSD: fp_complete.c,v 1.27 2021/07/23 03:57:06 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.26 2021/07/23 03:50:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.27 2021/07/23 03:57:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -588,7 +588,7 @@ alpha_fp_interpret(unsigned long pc, struct lwp *l, uint32_t bits)
 		switch(inst.float_detail.src) {
 		case op_src_sf:
 			sts(inst.float_detail.fb, &sfb, l);
-			if (inst.float_detail.opclass == 10)
+			if (inst.float_detail.opclass == 11)
 				sfc.i = float32_sqrt(sfb.i);
 			else if (inst.float_detail.opclass & ~3) {
 				this_cannot_happen(1, inst.bits);
@@ -607,7 +607,7 @@ alpha_fp_interpret(unsigned long pc, struct lwp *l, uint32_t bits)
 				    inst.bits, l);
 			else {
 				stt(inst.float_detail.fb, &tfb, l);
-				if (inst.float_detail.opclass == 10)
+				if (inst.float_detail.opclass == 11)
 					tfc.i = float64_sqrt(tfb.i);
 				else {
 					stt(inst.float_detail.fa, &tfa, l);
