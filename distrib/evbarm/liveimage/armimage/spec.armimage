@@ -1,0 +1,8 @@
+# $NetBSD: spec.armimage,v 1.1 2021/07/23 21:53:34 jmcneill Exp $
+./etc/rc.conf.d/dhcpcd			type=file mode=0644 uname=root gname=wheel
+./etc/rc.conf.d/ec2_init		type=file mode=0644 uname=root gname=wheel
+./etc/rc.conf.d/resize_gpt		type=file mode=0644 uname=root gname=wheel
+./etc/rc.conf.d/resize_root		type=file mode=0644 uname=root gname=wheel
+./etc/rc.conf.d/sshd			type=file mode=0644 uname=root gname=wheel
+./etc/rc.d/ec2_init			type=file mode=0555 uname=root gname=wheel
+./etc/rc.d/resize_gpt			type=file mode=0555 uname=root gname=wheel
