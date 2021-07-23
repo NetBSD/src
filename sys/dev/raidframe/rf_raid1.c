@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid1.c,v 1.38 2021/07/23 00:54:45 oster Exp $	*/
+/*	$NetBSD: rf_raid1.c,v 1.39 2021/07/23 22:34:12 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_raid1.c,v 1.38 2021/07/23 00:54:45 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_raid1.c,v 1.39 2021/07/23 22:34:12 oster Exp $");
 
 #include "rf_raid.h"
 #include "rf_raid1.h"
@@ -65,6 +65,11 @@ rf_ConfigureRAID1(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 	RF_Raid1ConfigInfo_t *info;
 	RF_RowCol_t i;
 
+	/* Sanity check the number of columns... */
+	if (raidPtr->numCol < 2 || raidPtr->numCol % 2 != 0) {
+		return (EINVAL);
+	}
+	
 	/* create a RAID level 1 configuration structure */
 	info = RF_MallocAndAdd(sizeof(*info), raidPtr->cleanupList);
 	if (info == NULL)
