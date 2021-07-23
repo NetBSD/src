@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.c,v 1.24 2021/07/22 17:39:52 christos Exp $	*/
+/*	$NetBSD: ldd.c,v 1.25 2021/07/23 04:20:05 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ldd.c,v 1.24 2021/07/22 17:39:52 christos Exp $");
+__RCSID("$NetBSD: ldd.c,v 1.25 2021/07/23 04:20:05 martin Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -161,10 +161,13 @@ main(int argc, char **argv)
 	for (; argc != 0; argc--, argv++) {
 		int fd;
 
-		if (**argv != '/')
-			snprintf(path, sizeof(path), "%s/%s", cwd, *argv);
-		else
+		if (**argv != '/') {
+			strcpy(path, cwd);
+			strlcat(path, "/", sizeof(path));
+			strlcat(path, *argv, sizeof(path));
+		} else {
 			strlcpy(path, *argv, sizeof(path));
+		}
 		fd = open(*argv, O_RDONLY);
 		if (fd == -1) {
 			exit_status = EXIT_FAILURE;
