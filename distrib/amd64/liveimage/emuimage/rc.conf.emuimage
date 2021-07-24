@@ -1,4 +1,4 @@
-# $NetBSD: ec2_init,v 1.4 2021/07/20 19:27:51 rhialto Exp $
+# $NetBSD: rc.conf.emuimage,v 1.1 2021/07/24 16:13:44 jmcneill Exp $
 
 is_ec2() {
 	val=NO
@@ -23,9 +23,14 @@ is_ec2() {
 	printf $val
 }
 
-# Don't override /etc/rc.conf
-if [ -z "$ec2_init" ]
-then
-	ec2_init=$(is_ec2)
-fi
+resize_disklabel=YES
+resize_root=YES
+resize_root_flags="-p"
+resize_root_postcmd="/sbin/reboot -n"
+dhcpcd=YES
+sshd=YES
+ec2_init=$(is_ec2)
 
+if checkyesno ec2_init; then
+	dhcpcd_flags="$dhcpcd_flags -w"
+fi
