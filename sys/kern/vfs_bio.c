@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.298 2021/04/01 06:25:59 simonb Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.299 2021/07/24 13:27:39 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.298 2021/04/01 06:25:59 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.299 2021/07/24 13:27:39 simonb Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bufcache.h"
@@ -1850,7 +1850,7 @@ sysctl_dobuf(SYSCTLFN_ARGS)
 
 	*oldlenp = needed;
 	if (oldp == NULL)
-		*oldlenp += KERN_BUFSLOP * sizeof(buf_t);
+		*oldlenp += KERN_BUFSLOP * elem_size;
 
 	return (error);
 }
