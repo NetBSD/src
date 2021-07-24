@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.123 2021/05/27 08:43:02 rin Exp $
+#	$NetBSD: Makefile.inc,v 1.124 2021/07/24 17:07:59 jmcneill Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -173,7 +173,11 @@ SNAP_MD_POST_DEPS+=	smp_rpi_inst
 
 snap_md_post: check_DESTDIR check_RELEASEDIR snap_post .WAIT ${SNAP_MD_POST_DEPS}
 
+.if !empty(MACHINE_ARCH:Maarch64*)
+KERNEL_SUFFIXES=	img
+.else
 KERNEL_SUFFIXES=	bin img srec ub
+.endif
 
 INSTALLATION_DIRS+=	binary/gzimg		\
 			installation/instkernel
