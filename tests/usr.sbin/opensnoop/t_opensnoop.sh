@@ -1,4 +1,4 @@
-# $NetBSD: t_opensnoop.sh,v 1.4 2020/07/11 09:55:26 jruoho Exp $
+# $NetBSD: t_opensnoop.sh,v 1.5 2021/07/24 15:56:05 gson Exp $
 #
 # Copyright (c) 2020 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -27,7 +27,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-tmp="/tmp/opensnoop"
+tmp="opensnoop.out"
 
 atf_test_case basic cleanup
 basic_head() {
@@ -62,10 +62,6 @@ basic_body() {
 }
 
 basic_cleanup() {
-
-	if [ -f $tmp ]; then
-		rm $tmp
-	fi
 }
 
 atf_init_test_cases() {
