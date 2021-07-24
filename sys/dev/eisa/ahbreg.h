@@ -1,4 +1,4 @@
-/*	$NetBSD: ahbreg.h,v 1.16 2008/04/28 20:23:48 martin Exp $	*/
+/*	$NetBSD: ahbreg.h,v 1.17 2021/07/24 15:44:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ typedef u_int32_t physlen;
 #define	INT12	0x03
 #define	INT14	0x05
 #define	INT15	0x06
-#define INTHIGH 0x08		/* int high=ACTIVE (else edge) */
+#define INTHIGH 0x08		/* interrupt signal is active-high */
 #define	INTEN	0x10
 /**** bit definitions for SCSIDEF ****/
 #define	HSCSIID	0x0F		/* our SCSI ID */
