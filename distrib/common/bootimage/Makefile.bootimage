@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootimage,v 1.27 2021/06/04 17:09:36 tsutsui Exp $
+#	$NetBSD: Makefile.bootimage,v 1.28 2021/07/24 13:59:28 jmcneill Exp $
 #
 # Copyright (c) 2009, 2010, 2011 Izumi Tsutsui.  All rights reserved.
 #
@@ -365,6 +365,10 @@ ${TARGETFS}: prepare_md_post ${WORKFSTAB}
 	echo "no_swap=YES" >> ${WORKRCCONF}
 	@echo Setting savecore=NO in /etc/rc.conf ...
 	echo "savecore=NO" >> ${WORKRCCONF}
+.endif
+.if defined(RC_CONF_EXTRA)
+	@echo Adding contents of ${RC_CONF_EXTRA} to /etc/rc.conf ...
+	cat ${RC_CONF_EXTRA} >> ${WORKRCCONF}
 .endif
 	${INSTALL} ${COPY} -m 0644 ${WORKRCCONF} ${WORKDIR}/etc/rc.conf
 .if defined(IMGDIR_EXTRA)
