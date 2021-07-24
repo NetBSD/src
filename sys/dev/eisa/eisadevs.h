@@ -1,10 +1,10 @@
-/*	$NetBSD: eisadevs.h,v 1.30 2005/12/11 12:21:20 christos Exp $	*/
+/*	$NetBSD: eisadevs.h,v 1.31 2021/07/24 22:37:56 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: eisadevs,v 1.27 2005/02/27 00:26:59 perry Exp
+ *	NetBSD: eisadevs,v 1.30 2021/07/24 22:36:31 thorpej Exp
  */
 
 /*
@@ -38,6 +38,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+
 /*
  * List of known products, grouped and sorted by vendor code.
  */
@@ -65,6 +66,13 @@
 #define	EISA_PRODUCT_BUS6301	"BusLogic Bt763E Ethernet"
 
 /* Compaq products */
+#define	EISA_PRODUCT_CPQ3001	"Compaq Advanced VGA"
+#define	EISA_PRODUCT_CPQ3011	"Compaq QVision 1024/E Video Controller"
+#define	EISA_PRODUCT_CPQ3021	"Compaq QVision 1024/I Video Controller"
+#define	EISA_PRODUCT_CPQ3111	"Compaq QVision 1024/E Graphics Controller"
+#define	EISA_PRODUCT_CPQ3112	"Compaq QVision 1280/E Graphics Controller"
+#define	EISA_PRODUCT_CPQ3121	"Compaq QVision 1024/I Graphics Controller"
+#define	EISA_PRODUCT_CPQ3122	"Compaq QVision 1280/I Graphics Controller"
 #define	EISA_PRODUCT_CPQ4001	"Compaq IDA array controller"
 #define	EISA_PRODUCT_CPQ4002	"Compaq IDA-2 array controller"
 #define	EISA_PRODUCT_CPQ4010	"Compaq IEAS array controller"
