@@ -1,4 +1,4 @@
-#	$NetBSD: files.aarch64,v 1.30 2020/10/21 13:31:50 christos Exp $
+#	$NetBSD: files.aarch64,v 1.31 2021/07/24 23:38:41 jmcneill Exp $
 
 defflag opt_cpuoptions.h	AARCH64_ALIGNMENT_CHECK
 defflag opt_cpuoptions.h	AARCH64_EL0_STACK_ALIGNMENT_CHECK
@@ -53,7 +53,6 @@ defflag opt_pmapboot.h		PMAPBOOT_DEBUG
 
 # MI support
 file	dev/cons.c
-#file	kern/kern_cctr.c
 
 # DDB
 file	arch/aarch64/aarch64/db_disasm.c		ddb
@@ -116,11 +115,6 @@ file	uvm/pmap/pmap_pvt.c
 
 # EFI runtime (machdep)
 file	arch/aarch64/aarch64/efi_machdep.c		efi_runtime
-
-# cyclecounter
-#file	arch/aarch64/aarch64/cctr_machdep.c
-#file	kern/kern_cctr.c
-
 
 # NetBSD 32-bit binary compatibility
 include "compat/netbsd32/files.netbsd32"
