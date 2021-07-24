@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_core_wait.h,v 1.3 2020/10/15 22:59:50 rin Exp $	*/
+/*	$NetBSD: t_ptrace_core_wait.h,v 1.4 2021/07/24 08:39:54 rin Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -208,7 +208,8 @@ ATF_TC_BODY(core_dump_procinfo, tc)
 	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
 
-#if defined(__aarch64__) || defined(__arm__) || defined(__powerpc__)
+#if defined(__aarch64__) || defined(__arm__) || defined(__powerpc__) || \
+    defined(__sh3__)
 	/*
 	 * For these archs, program counter is not automatically incremented
 	 * by a trap instruction. We cannot increment PC in the trap handler,
@@ -220,12 +221,7 @@ ATF_TC_BODY(core_dump_procinfo, tc)
 
 	SYSCALL_REQUIRE(ptrace(PT_GETREGS, child, &r, 0) != -1);
 	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child,
-#  if defined(__aarch64__) || defined(__arm__)
-	    (void *)(r.r_pc + PTRACE_BREAKPOINT_SIZE),
-#  elif defined(__powerpc__)
-	    (void *)(r.pc + PTRACE_BREAKPOINT_SIZE),
-#  endif
-	    0) != -1);
+	    (void *)(PTRACE_REG_PC(&r) + PTRACE_BREAKPOINT_SIZE), 0) != -1);
 #else
 	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 #endif
