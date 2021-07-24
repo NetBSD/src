@@ -1,4 +1,4 @@
-$NetBSD: eisadevs,v 1.29 2009/01/21 14:18:44 jnemeth Exp $
+$NetBSD: eisadevs,v 1.30 2021/07/24 22:36:31 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -86,6 +86,13 @@ product BUS 6001	Bt760 Ethernet
 product BUS 6301	Bt763E Ethernet
 
 /* Compaq products */
+product CPQ 3001	Advanced VGA
+product CPQ 3011	QVision 1024/E Video Controller
+product CPQ 3021	QVision 1024/I Video Controller
+product CPQ 3111	QVision 1024/E Graphics Controller
+product CPQ 3112	QVision 1280/E Graphics Controller
+product CPQ 3121	QVision 1024/I Graphics Controller
+product CPQ 3122	QVision 1280/I Graphics Controller
 product	CPQ 4001	IDA array controller
 product CPQ 4002	IDA-2 array controller
 product CPQ 4010	IEAS array controller
