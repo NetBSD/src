@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.142 2020/06/27 17:07:49 jdolecek Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.143 2021/07/24 21:31:37 andvar Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.142 2020/06/27 17:07:49 jdolecek Exp $
+ * $Id: aic7xxx.c,v 1.143 2021/07/24 21:31:37 andvar Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.142 2020/06/27 17:07:49 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.143 2021/07/24 21:31:37 andvar Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -6391,7 +6391,7 @@ ahc_check_patch(struct ahc_softc *ahc, const struct patch **start_patch,
 			cur_patch += cur_patch->skip_patch;
 		} else {
 			/* Accepted this patch.  Advance to the next
-			 * one and wait for our intruction pointer to
+			 * one and wait for our instruction pointer to
 			 * hit this point.
 			 */
 			cur_patch++;

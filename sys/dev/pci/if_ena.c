@@ -36,7 +36,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/dev/ena/ena.c 333456 2018-05-10 09:37:54Z mw $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.29 2021/07/19 21:16:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.30 2021/07/24 21:31:37 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -256,7 +256,7 @@ static const ena_vendor_info_t ena_vendor_info_array[] = {
 };
 
 /*
- * Contains pointers to event handlers, e.g. link state chage.
+ * Contains pointers to event handlers, e.g. link state change.
  */
 static struct ena_aenq_handlers aenq_handlers;
 

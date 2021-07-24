@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.63 2021/01/11 22:02:28 skrll Exp $      */
+/*      $NetBSD: xenevt.c,v 1.64 2021/07/24 21:31:36 andvar Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.63 2021/01/11 22:02:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.64 2021/07/24 21:31:36 andvar Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.63 2021/01/11 22:02:28 skrll Exp $");
 
 /*
  * Interface between the event channel and userland.
- * Each process with a xenevt device instance open can regiter events it
+ * Each process with a xenevt device instance open can register events it
  * wants to receive. It will get pending events by read(), eventually blocking
  * until some event is available. Pending events are ack'd by a bitmask
  * write()en to the device. Some special operations (such as events binding)

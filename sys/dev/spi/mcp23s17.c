@@ -1,4 +1,4 @@
-/*      $NetBSD: mcp23s17.c,v 1.2 2021/04/24 23:36:59 thorpej Exp $ */
+/*      $NetBSD: mcp23s17.c,v 1.3 2021/07/24 21:31:38 andvar Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcp23s17.c,v 1.2 2021/04/24 23:36:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcp23s17.c,v 1.3 2021/07/24 21:31:38 andvar Exp $");
 
 /* 
  * Driver for Microchip MCP23S17 GPIO
@@ -274,7 +274,7 @@ mcp23s17gpio_gpio_pin_ctl(void *arg, int pin, int flags)
 	if (flags & (GPIO_PIN_OUTPUT|GPIO_PIN_INPUT)) {
 		data = mcp23s17gpio_read(sc, MCP23x17_IODIR(sc->sc_bank, port));
 		if ((flags & GPIO_PIN_INPUT) || !(flags & GPIO_PIN_OUTPUT)) {
-			/* for safety INPUT will overide output */
+			/* for safety INPUT will override output */
 			data |= bit;
 		} else {
 			data &= ~bit;

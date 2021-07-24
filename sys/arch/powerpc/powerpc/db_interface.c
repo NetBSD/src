@@ -1,8 +1,8 @@
-/*	$NetBSD: db_interface.c,v 1.56 2021/03/30 03:15:53 rin Exp $ */
+/*	$NetBSD: db_interface.c,v 1.57 2021/07/24 21:31:34 andvar Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.56 2021/03/30 03:15:53 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.57 2021/07/24 21:31:34 andvar Exp $");
 
 #define USERACC
 
@@ -570,7 +570,7 @@ static void
 db_ppc4xx_reset(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif)
 {
-	printf("Reseting...\n");
+	printf("Resetting...\n");
 	ppc4xx_reset();
 }
 

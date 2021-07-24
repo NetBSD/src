@@ -1,4 +1,4 @@
-/* $NetBSD: error.h,v 1.3 2011/02/11 23:44:43 christos Exp $ */
+/* $NetBSD: error.h,v 1.4 2021/07/24 21:31:31 andvar Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -68,7 +68,7 @@ do {					\
 } while(/*CONSTCOND*/0);
 
 /*
- * saslc__eror_get_errno - gets error type
+ * saslc__error_get_errno - gets error type
  *
  * E - error
  */

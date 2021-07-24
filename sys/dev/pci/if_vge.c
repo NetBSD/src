@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.80 2020/03/21 16:56:00 thorpej Exp $ */
+/* $NetBSD: if_vge.c,v 1.81 2021/07/24 21:31:37 andvar Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.80 2020/03/21 16:56:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.81 2021/07/24 21:31:37 andvar Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -1807,7 +1807,7 @@ vge_init(struct ifnet *ifp)
 	/* Set collision backoff algorithm */
 	CSR_CLRBIT_1(sc, VGE_CHIPCFG1, VGE_CHIPCFG1_CRANDOM |
 	    VGE_CHIPCFG1_CAP | VGE_CHIPCFG1_MBA | VGE_CHIPCFG1_BAKOPT);
-	CSR_SETBIT_1(sc, VGE_CHIPCFG1, VGE_CHIPCFG1_OFSET);
+	CSR_SETBIT_1(sc, VGE_CHIPCFG1, VGE_CHIPCFG1_OFFSET);
 
 	/* Disable LPSEL field in priority resolution */
 	CSR_SETBIT_1(sc, VGE_DIAGCTL, VGE_DIAGCTL_LPSEL_DIS);

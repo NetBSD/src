@@ -1,9 +1,9 @@
-/*	$NetBSD: tty.c,v 1.9 2017/06/30 04:41:19 kamil Exp $	*/
+/*	$NetBSD: tty.c,v 1.10 2021/07/24 21:31:31 andvar Exp $	*/
 
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: tty.c,v 1.9 2017/06/30 04:41:19 kamil Exp $");
+__RCSID("$NetBSD: tty.c,v 1.10 2021/07/24 21:31:31 andvar Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -92,7 +92,7 @@ set_tty(fd, ts, flags)
 }
 
 
-/* Initialize tty_fd.  Used for saving/reseting tty modes upon
+/* Initialize tty_fd.  Used for saving/resetting tty modes upon
  * foreground job completion and for setting up tty process group.
  */
 void

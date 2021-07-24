@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixlreg.h,v 1.4 2011/03/18 00:58:35 cliff Exp $	*/
+/*	$NetBSD: rmixlreg.h,v 1.5 2021/07/24 21:31:33 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -69,8 +69,8 @@
 					/*			v	 v  v  v	*/
 #define RMIXL_COP_2_TXBUF	_(0)	/* Transmit Buffers	64	[1][4] L	*/
 #define RMIXL_COP_2_RXBUF	_(1)	/* Receive Buffers	64	[1][4] L	*/
-#define RMIXL_COP_2_MSG_STS	_(2)	/* Mesage Status	32	[1][2] L/G	*/
-#define RMIXL_COP_2_MSG_CFG	_(3)	/* MEssage Config	32	[1][2] G	*/
+#define RMIXL_COP_2_MSG_STS	_(2)	/* Message Status	32	[1][2] L/G	*/
+#define RMIXL_COP_2_MSG_CFG	_(3)	/* Message Config	32	[1][2] G	*/
 #define RMIXL_COP_2_MSG_BSZ	_(4)	/* Message Bucket Size	32	[1][8] G	*/
 #define RMIXL_COP_2_CREDITS	_(16)	/* Credit Counters	 8     [16][8] G	*/
 

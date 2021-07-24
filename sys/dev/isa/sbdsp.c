@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.141 2019/06/08 08:02:38 isaki Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.142 2021/07/24 21:31:37 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2008 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.141 2019/06/08 08:02:38 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.142 2021/07/24 21:31:37 andvar Exp $");
 
 #include "midi.h"
 #include "mpu.h"
@@ -1179,7 +1179,7 @@ sbdsp_pause(struct sbdsp_softc *sc)
 }
 
 /*
- * Turn on the speaker.  The SBK documention says this operation
+ * Turn on the speaker.  The SBK documentation says this operation
  * can take up to 1/10 of a second.  Higher level layers should
  * probably let the task sleep for this amount of time after
  * calling here.  Otherwise, things might not work (because

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.150 2020/06/11 19:20:45 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.151 2021/07/24 21:31:35 andvar Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.150 2020/06/11 19:20:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.151 2021/07/24 21:31:35 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -372,7 +372,7 @@ mach_init(int argc, int32_t argv32[], uintptr_t magic, int32_t bip32)
 		panic("invalid architecture");
 
 	/*
-	 * Get boot device infomation.
+	 * Get boot device information.
 	 */
 
 	/* Try to get the boot device information from bootinfo first. */

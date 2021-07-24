@@ -1,4 +1,4 @@
-/*	$NetBSD: fwdma.c,v 1.17 2018/12/13 16:38:26 jakllsch Exp $	*/
+/*	$NetBSD: fwdma.c,v 1.18 2021/07/24 21:31:37 andvar Exp $	*/
 /*-
  * Copyright (c) 2003
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwdma.c,v 1.17 2018/12/13 16:38:26 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwdma.c,v 1.18 2021/07/24 21:31:37 andvar Exp $");
 #if defined(__FreeBSD__)
 __FBSDID("$FreeBSD: src/sys/dev/firewire/fwdma.c,v 1.9 2007/06/06 14:31:36 simokawa Exp $");
 #endif
@@ -143,7 +143,7 @@ fwdma_alloc_setup(device_t dev, bus_dma_tag_t dmat, bus_size_t size,
 
 /*
  * Allocate multisegment dma buffers
- * each segment size is eqaul to ssize except last segment.
+ * each segment size is equal to ssize except last segment.
  */
 struct fwdma_alloc_multi *
 fwdma_malloc_multiseg(struct firewire_comm *fc, int alignment, int esize, int n,

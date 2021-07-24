@@ -1,4 +1,4 @@
-/*	$NetBSD: aicasm.c,v 1.10 2020/06/27 17:07:49 jdolecek Exp $	*/
+/*	$NetBSD: aicasm.c,v 1.11 2021/07/24 21:31:37 andvar Exp $	*/
 
 /*
  * Aic7xxx SCSI host adapter firmware asssembler
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: aicasm.c,v 1.10 2020/06/27 17:07:49 jdolecek Exp $");
+__RCSID("$NetBSD: aicasm.c,v 1.11 2021/07/24 21:31:37 andvar Exp $");
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -667,7 +667,7 @@ check_patch(patch_t **start_patch, int start_instr,
 				cur_patch = STAILQ_NEXT(cur_patch, links);
 		} else {
 			/* Accepted this patch.  Advance to the next
-			 * one and wait for our intruction pointer to
+			 * one and wait for our instruction pointer to
 			 * hit this point.
 			 */
 			cur_patch = STAILQ_NEXT(cur_patch, links);

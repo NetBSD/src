@@ -1,4 +1,4 @@
-/* $NetBSD: adw.c,v 1.57 2021/04/24 23:36:55 thorpej Exp $	 */
+/* $NetBSD: adw.c,v 1.58 2021/07/24 21:31:37 andvar Exp $	 */
 
 /*
  * Generic driver for the Advanced Systems Inc. SCSI controllers
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adw.c,v 1.57 2021/04/24 23:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adw.c,v 1.58 2021/07/24 21:31:37 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1132,7 +1132,7 @@ adw_isr_callback(ADW_SOFTC *sc, ADW_SCSI_REQ_Q *scsiq)
 			 * the host adapter.
 			 */
 			aprint_error_dev(sc->sc_dev,
-			    "DMA Error. Reseting bus\n");
+			    "DMA Error. Resetting bus\n");
 			TAILQ_REMOVE(&sc->sc_pending_ccb, ccb, chain);
 			adw_reset_bus(sc);
 			xs->error = XS_BUSY;
@@ -1141,7 +1141,7 @@ adw_isr_callback(ADW_SOFTC *sc, ADW_SCSI_REQ_Q *scsiq)
 		case QHSTA_M_WTM_TIMEOUT:
 		case QHSTA_M_SXFR_WD_TMO:
 			/* The SCSI bus hung in a phase */
-			printf("%s: Watch Dog timer expired. Reseting bus\n",
+			printf("%s: Watch Dog timer expired. Resetting bus\n",
 				device_xname(sc->sc_dev));
 			TAILQ_REMOVE(&sc->sc_pending_ccb, ccb, chain);
 			adw_reset_bus(sc);

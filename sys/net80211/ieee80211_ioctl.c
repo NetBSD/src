@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.c,v 1.67 2019/11/10 21:16:38 chs Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.c,v 1.68 2021/07/24 21:31:38 andvar Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.35 2005/08/30 14:27:47 avatar Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.67 2019/11/10 21:16:38 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.68 2021/07/24 21:31:38 andvar Exp $");
 #endif
 
 /*
@@ -1413,7 +1413,7 @@ ieee80211_ioctl_get80211_fbsd(struct ieee80211com *ic, u_long cmd,
  * themselves perilously close to exhausting the stack.
  *
  * To avoid this, we deliberately prevent gcc from inlining this
- * routine. Another way to avoid this is to use less agressive
+ * routine. Another way to avoid this is to use less aggressive
  * optimization when compiling this file (i.e. -O instead of -O2)
  * but special-casing the compilation of this one module in the
  * build system would be awkward.
