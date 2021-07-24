@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx_eisa.c,v 1.28 2021/04/24 23:36:53 thorpej Exp $	*/
+/*	$NetBSD: mlx_eisa.c,v 1.29 2021/07/24 19:06:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx_eisa.c,v 1.28 2021/04/24 23:36:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx_eisa.c,v 1.29 2021/07/24 19:06:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,16 +113,32 @@ mlx_eisa_attach(device_t parent, device_t self, void *aux)
 	struct mlx_softc *mlx;
 	bus_space_tag_t iot;
 	const char *intrstr;
-	int irq, icfg;
+	int irq, ist, icfg;
 	char intrbuf[EISA_INTRSTR_LEN];
 
 	mlx = device_private(self);
 	iot = ea->ea_iot;
 	ec = ea->ea_ec;
 
+	dce = eisa_compatible_lookup(ea, compat_data);
+	KASSERT(dce != NULL);
+
+	mlx->mlx_ci.ci_nchan = (int)dce->value;
+	mlx->mlx_ci.ci_iftype = 1;
+
+	mlx->mlx_submit = mlx_v1_submit;
+	mlx->mlx_findcomplete = mlx_v1_findcomplete;
+	mlx->mlx_intaction = mlx_v1_intaction;
+	mlx->mlx_fw_handshake = mlx_v1_fw_handshake;
+#ifdef MLX_RESET
+	mlx->mlx_reset = mlx_v1_reset;
+#endif
+
+	aprint_normal(": Mylex RAID\n");
+
 	if (bus_space_map(iot, EISA_SLOT_ADDR(ea->ea_slot) +
 	    MLX_EISA_SLOT_OFFSET, MLX_EISA_IOSIZE, 0, &ioh)) {
-		aprint_error(": can't map i/o space\n");
+		aprint_error_dev(self, "can't map i/o space\n");
 		return;
 	}
 
@@ -150,42 +166,32 @@ mlx_eisa_attach(device_t parent, device_t self, void *aux)
 		irq = 15;
 		break;
 	default:
-		aprint_error(": controller on invalid IRQ\n");
+		aprint_error_dev(self,
+		    "controller on invalid IRQ (icfg=0x%02x)\n", icfg);
 		return;
 	}
 
+	ist = (icfg & 0x08) != 0 ? IST_LEVEL : IST_EDGE;
+
 	if (eisa_intr_map(ec, irq, &ih)) {
-		aprint_error(": can't map interrupt (%d)\n", irq);
+		aprint_error_dev(self, "can't map interrupt (%d)\n", irq);
 		return;
 	}
 
 	intrstr = eisa_intr_string(ec, ih, intrbuf, sizeof(intrbuf));
-	mlx->mlx_ih = eisa_intr_establish(ec, ih,
-	    ((icfg & 0x08) != 0 ? IST_LEVEL : IST_EDGE),
-	    IPL_BIO, mlx_intr, mlx);
+	mlx->mlx_ih = eisa_intr_establish(ec, ih, ist, IPL_BIO, mlx_intr, mlx);
 	if (mlx->mlx_ih == NULL) {
-		aprint_error(": can't establish interrupt");
+		aprint_error_dev(self, "can't establish interrupt");
 		if (intrstr != NULL)
-			aprint_normal(" at %s", intrstr);
-		aprint_normal("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
+	if (intrstr != NULL) {
+		aprint_normal_dev(self, "interrupting at %s (%s trigger)\n",
+		    ist == IST_EDGE ? "edge" : "level", intrstr);
+	}
 
-	dce = eisa_compatible_lookup(ea, compat_data);
-	KASSERT(dce != NULL);
-
-	mlx->mlx_ci.ci_nchan = (int)dce->value;
-	mlx->mlx_ci.ci_iftype = 1;
-
-	mlx->mlx_submit = mlx_v1_submit;
-	mlx->mlx_findcomplete = mlx_v1_findcomplete;
-	mlx->mlx_intaction = mlx_v1_intaction;
-	mlx->mlx_fw_handshake = mlx_v1_fw_handshake;
-#ifdef MLX_RESET
-	mlx->mlx_reset = mlx_v1_reset;
-#endif
-
-	aprint_normal(": Mylex RAID\n");
 	mlx_init(mlx, intrstr);
 }
 
