@@ -1,4 +1,4 @@
-/*	$NetBSD: bios32.c,v 1.6 2021/07/24 11:39:19 jmcneill Exp $	*/
+/*	$NetBSD: bios32.c,v 1.7 2021/07/24 20:45:45 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.6 2021/07/24 11:39:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.7 2021/07/24 20:45:45 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -252,7 +252,7 @@ smbios2_map_kva(const uint8_t *p)
 	if (eva == 0)
 		return;
 
-	smbios_entry.hdrphys = vtophys(p);
+	smbios_entry.hdrphys = vtophys((vaddr_t)p);
 	smbios_entry.tabphys = sh->addr;
 	smbios_entry.addr = (uint8_t *)(eva + (sh->addr & PGOFSET));
 	smbios_entry.len = sh->size;
@@ -287,7 +287,7 @@ smbios3_map_kva(const uint8_t *p)
 	if (eva == 0)
 		return;
 
-	smbios_entry.hdrphys = vtophys(p);
+	smbios_entry.hdrphys = vtophys((vaddr_t)p);
 	smbios_entry.tabphys = sh->addr;
 	smbios_entry.addr = (uint8_t *)(eva + ((vaddr_t)sh->addr & PGOFSET));
 	smbios_entry.len = sh->size;
