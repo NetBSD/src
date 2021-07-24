@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.66 2021/04/24 23:36:53 thorpej Exp $	*/
+/*	$NetBSD: ahb.c,v 1.67 2021/07/24 15:52:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.66 2021/04/24 23:36:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.67 2021/07/24 15:52:16 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -112,6 +112,7 @@ struct ahb_softc {
 
 struct ahb_probe_data {
 	int sc_irq;
+	int sc_ist;
 	int sc_scsi_dev;
 };
 
@@ -251,7 +252,7 @@ ahbattach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	intrstr = eisa_intr_string(ec, ih, intrbuf, sizeof(intrbuf));
-	sc->sc_ih = eisa_intr_establish(ec, ih, IST_LEVEL, IPL_BIO,
+	sc->sc_ih = eisa_intr_establish(ec, ih, apd.sc_ist, IPL_BIO,
 	    ahbintr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt");
@@ -260,8 +261,11 @@ ahbattach(device_t parent, device_t self, void *aux)
 		aprint_error("\n");
 		return;
 	}
-	if (intrstr != NULL)
-		aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);
+	if (intrstr != NULL) {
+		aprint_normal_dev(sc->sc_dev,
+		    "interrupting at %s (%s trigger)\n", intrstr,
+		    apd.sc_ist == IST_EDGE ? "edge" : "level");
+	}
 
 	/*
 	 * ask the adapter what subunits are present
@@ -609,7 +613,7 @@ ahb_find(bus_space_tag_t iot, bus_space_handle_t ioh,
     struct ahb_probe_data *sc)
 {
 	u_char intdef;
-	int i, irq, busid;
+	int i, irq, ist, busid;
 	int wait = 1000;	/* 1 sec enough? */
 
 	bus_space_write_1(iot, ioh, PORTADDR, PORTADDR_ENHANCED);
@@ -676,6 +680,21 @@ ahb_find(bus_space_tag_t iot, bus_space_handle_t ioh,
 		return EIO;
 	}
 
+	/*
+	 * On EISA, edge triggered interrupts are signalled by the rising
+	 * edge of the interrupt signal, while level tiggered interrupts
+	 * are signalled so long as the interrupt signal is driven low.
+	 *
+	 * So, if the controller is configured for active-high interrupts,
+	 * that is "edge trigger" in our parlance, while active-low would
+	 * be "level trigger".
+	 */
+	if (intdef & INTHIGH) {
+		ist = IST_EDGE;
+	} else {
+		ist = IST_LEVEL;
+	}
+
 	bus_space_write_1(iot, ioh, INTDEF, (intdef | INTEN));	/* make sure we can interrupt */
 
 	/* who are we on the scsi bus? */
@@ -684,6 +703,7 @@ ahb_find(bus_space_tag_t iot, bus_space_handle_t ioh,
 	/* if we want to return data, do so now */
 	if (sc) {
 		sc->sc_irq = irq;
+		sc->sc_ist = ist;
 		sc->sc_scsi_dev = busid;
 	}
 
