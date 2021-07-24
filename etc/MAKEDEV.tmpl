@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.223 2021/06/29 10:22:33 nia Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.224 2021/07/24 11:39:18 jmcneill Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -2238,6 +2238,10 @@ xmm[0-9])
 
 acpi)
 	mkdev acpi c %acpi_chr% 0
+	;;
+
+smbios)
+	mkdev smbios c %smbios_chr% 0
 	;;
 
 midevend)

@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_fdt.c,v 1.21 2021/07/23 21:33:35 jmcneill Exp $ */
+/* $NetBSD: acpi_fdt.c,v 1.22 2021/07/24 11:39:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_efi.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_fdt.c,v 1.21 2021/07/23 21:33:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_fdt.c,v 1.22 2021/07/24 11:39:19 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -179,6 +179,8 @@ acpi_fdt_smbios_init(device_t dev)
 		return;
 	}
 
+	smbios_entry.hdrphys = smbios_table;
+
 	smbver = acpi_fdt_smbios_version();
 	if (smbver == 3) {
 		struct smb3hdr *sh = AcpiOsMapMemory(smbios_table, sizeof(*sh));
@@ -188,6 +190,7 @@ acpi_fdt_smbios_init(device_t dev)
 
 		ptr = AcpiOsMapMemory(sh->addr, sh->size);
 		if (ptr != NULL) {
+			smbios_entry.tabphys = sh->addr;
 			smbios_entry.addr = ptr;
 			smbios_entry.len = sh->size;
 			smbios_entry.rev = sh->eprev;
@@ -208,6 +211,7 @@ acpi_fdt_smbios_init(device_t dev)
 
 		ptr = AcpiOsMapMemory(sh->addr, sh->size);
 		if (ptr != NULL) {
+			smbios_entry.tabphys = sh->addr;
 			smbios_entry.addr = ptr;
 			smbios_entry.len = sh->size;
 			smbios_entry.rev = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: smbios.c,v 1.1 2021/07/21 23:16:09 jmcneill Exp $	*/
+/*	$NetBSD: smbios.c,v 1.2 2021/07/24 11:39:19 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -86,11 +86,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbios.c,v 1.1 2021/07/21 23:16:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbios.c,v 1.2 2021/07/24 11:39:19 jmcneill Exp $");
 
 #include <sys/param.h>
+#include <sys/conf.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/smbiosvar.h>
 
@@ -98,6 +101,104 @@ __KERNEL_RCSID(0, "$NetBSD: smbios.c,v 1.1 2021/07/21 23:16:09 jmcneill Exp $");
 	((a) | ((b) << 8) | ((c) << 16) | ((d) << 24))
 
 struct smbios_entry smbios_entry;
+
+static dev_type_read(smbios_read);
+
+const struct cdevsw smbios_cdevsw = {
+	.d_open		= nullopen,
+	.d_close	= nullclose,
+	.d_read		= smbios_read,
+	.d_write	= nowrite,
+	.d_ioctl	= noioctl,
+	.d_stop		= nostop,
+	.d_tty		= notty,
+	.d_poll		= nopoll,
+	.d_mmap		= nommap,
+	.d_kqfilter	= nokqfilter,
+	.d_discard	= nodiscard,
+	.d_flag		= D_OTHER | D_MPSAFE,
+};
+
+static void *
+smbios_map_memory(paddr_t pa, size_t size)
+{
+	paddr_t spa, epa, curpa;
+	vaddr_t va, curva;
+
+	spa = trunc_page(pa);
+	epa = round_page(pa + size);
+
+	va = uvm_km_alloc(kernel_map, epa - spa, 0, UVM_KMF_VAONLY);
+	if (va == 0) {
+		return NULL;
+	}
+
+	for (curpa = spa, curva = va; curpa < epa; curpa += PAGE_SIZE, curva += PAGE_SIZE) {
+		pmap_kenter_pa(curva, curpa, VM_PROT_READ, PMAP_WRITE_BACK);
+	}
+	pmap_update(pmap_kernel());
+
+	return (void *)(va + (pa - spa));
+}
+
+static void
+smbios_unmap_memory(void *va, size_t size)
+{
+	vaddr_t ova;
+	vsize_t osz;
+
+	ova = trunc_page((vaddr_t)va);
+	osz = round_page((vaddr_t)va + size) - ova;
+
+	pmap_kremove(ova, osz);
+	pmap_update(pmap_kernel());
+	uvm_km_free(kernel_map, ova, osz, UVM_KMF_VAONLY);
+}
+
+/*
+ * smbios_read --
+ *
+ *	Read data from an SMBIOS table that resides in physical memory.
+ */
+static int
+smbios_read(dev_t dev, struct uio *uio, int flag)
+{
+	paddr_t pa;
+	uint8_t *data;
+	size_t len;
+	int error;
+
+	if (smbios_entry.addr == NULL) {
+		return EIO;
+	}
+	if (uio->uio_rw != UIO_READ) {
+		return EPERM;
+	}
+
+	pa = uio->uio_offset;
+	if (pa == smbios_entry.hdrphys) {
+		/* SMBIOS header */
+		len = uimin(0x20, uio->uio_resid);
+
+	} else {
+		/* Table data */
+		if (pa < smbios_entry.tabphys ||
+		    pa >= smbios_entry.tabphys + smbios_entry.len) {
+			return EFAULT;
+		}
+		len = uimin(smbios_entry.len - (pa - smbios_entry.tabphys),
+			    uio->uio_resid);
+	}
+
+	data = smbios_map_memory(pa, len);
+	if (data == NULL) {
+		return ENOMEM;
+	}
+	error = uiomove(data, len, uio);
+	smbios_unmap_memory(data, len);
+
+	return error;
+}
 
 int
 smbios2_check_header(const uint8_t *p)
