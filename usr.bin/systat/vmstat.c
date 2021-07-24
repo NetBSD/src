@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.88 2020/03/02 09:50:12 mrg Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.89 2021/07/24 13:42:05 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.88 2020/03/02 09:50:12 mrg Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.89 2021/07/24 13:42:05 simonb Exp $");
 #endif /* not lint */
 
 /*
@@ -481,10 +481,8 @@ showvmstat(void)
 	static int relabel = 0;
 	static int last_disks = 0;
 	static u_long bufmem;
-	struct buf_sysctl *buffers;
 	int mib[6];
 	size_t size;
-	int extraslop = 0;
 
 	if (relabel) {
 		labelvmstat();
@@ -528,14 +526,12 @@ showvmstat(void)
 
 	/* Get number of metadata buffers */
 	size = 0;
-	buffers = NULL;
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_BUF;
 	mib[2] = KERN_BUF_ALL;
 	mib[3] = KERN_BUF_ALL;
 	mib[4] = (int)sizeof(struct buf_sysctl);
 	mib[5] = INT_MAX; /* we want them all */
-again:
 	if (sysctl(mib, 6, NULL, &size, NULL, 0) < 0) {
 		error("can't get buffers size: %s\n", strerror(errno));
 		return;
@@ -544,23 +540,8 @@ again:
 		error("buffers size is zero: %s\n", strerror(errno));
 		return;
 	}
-	size += extraslop * sizeof(struct buf_sysctl);
-	buffers = malloc(size);
-	if (buffers == NULL) {
-		error("can't allocate buffers: %s\n", strerror(errno));
-		return;
-	}
-	if (sysctl(mib, 6, buffers, &size, NULL, 0) < 0) {
-		free(buffers);
-		if (extraslop < 1000) {
-			extraslop += 100;
-			goto again;
-		}
-		error("can't get buffers: %s\n", strerror(errno));
-		return;
-	}
-	free(buffers);			/* XXX there must be a better way! */
 	nbuf = size / sizeof(struct buf_sysctl);
+	nbuf -= KERN_BUFSLOP;
 
 	putint((int) (bufmem / 1024),		MEMROW + 3, MEMCOL + 5, 12);
 	putint((int) ((bufmem * 100) + 0.5) / s.uvmexp.pagesize / s.uvmexp.npages,
