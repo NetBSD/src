@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.299 2021/07/24 13:27:39 simonb Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.300 2021/07/24 13:28:14 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.299 2021/07/24 13:27:39 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.300 2021/07/24 13:28:14 simonb Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bufcache.h"
@@ -1765,7 +1765,6 @@ sysctl_fillbuf(const buf_t *i, struct buf_sysctl *o)
 	o->b_lblkno = i->b_lblkno;
 }
 
-#define KERN_BUFSLOP 20
 static int
 sysctl_dobuf(SYSCTLFN_ARGS)
 {
