@@ -1,10 +1,10 @@
-/*	$NetBSD: eisadevs_data.h,v 1.31 2005/12/11 12:21:20 christos Exp $	*/
+/*	$NetBSD: eisadevs_data.h,v 1.32 2021/07/24 22:37:56 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: eisadevs,v 1.27 2005/02/27 00:26:59 perry Exp
+ *	NetBSD: eisadevs,v 1.30 2021/07/24 22:36:31 thorpej Exp
  */
 
 /*
@@ -108,6 +108,41 @@ const struct eisa_knowndev eisa_knowndevs[] = {
 	    0,
 	    "BUS6301",
 	    EISA_PRODUCT_BUS6301,
+	},
+	{
+	    0,
+	    "CPQ3001",
+	    EISA_PRODUCT_CPQ3001,
+	},
+	{
+	    0,
+	    "CPQ3011",
+	    EISA_PRODUCT_CPQ3011,
+	},
+	{
+	    0,
+	    "CPQ3021",
+	    EISA_PRODUCT_CPQ3021,
+	},
+	{
+	    0,
+	    "CPQ3111",
+	    EISA_PRODUCT_CPQ3111,
+	},
+	{
+	    0,
+	    "CPQ3112",
+	    EISA_PRODUCT_CPQ3112,
+	},
+	{
+	    0,
+	    "CPQ3121",
+	    EISA_PRODUCT_CPQ3121,
+	},
+	{
+	    0,
+	    "CPQ3122",
+	    EISA_PRODUCT_CPQ3122,
 	},
 	{
 	    0,
