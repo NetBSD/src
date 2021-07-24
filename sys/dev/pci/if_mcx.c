@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mcx.c,v 1.17 2021/02/20 13:31:35 jmcneill Exp $ */
+/*	$NetBSD: if_mcx.c,v 1.18 2021/07/24 22:30:59 andvar Exp $ */
 /*	$OpenBSD: if_mcx.c,v 1.99 2021/02/15 03:42:00 dlg Exp $ */
 
 /*
@@ -23,7 +23,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mcx.c,v 1.17 2021/02/20 13:31:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mcx.c,v 1.18 2021/07/24 22:30:59 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -332,7 +332,7 @@ struct mcx_cmdq_mailbox {
 #define MCX_CMDQ_MAILBOX_SIZE	roundup(sizeof(struct mcx_cmdq_mailbox), \
 				    MCX_CMDQ_MAILBOX_ALIGN)
 /*
- * command mailbox structres
+ * command mailbox structures
  */
 
 struct mcx_cmd_enable_hca_in {
