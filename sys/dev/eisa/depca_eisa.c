@@ -1,4 +1,4 @@
-/*	$NetBSD: depca_eisa.c,v 1.16 2021/07/12 16:44:52 thorpej Exp $	*/
+/*	$NetBSD: depca_eisa.c,v 1.17 2021/07/24 19:14:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: depca_eisa.c,v 1.16 2021/07/12 16:44:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: depca_eisa.c,v 1.17 2021/07/24 19:14:35 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -175,9 +175,11 @@ depca_eisa_intr_establish(struct depca_softc *sc, struct lance_softc *child)
 		aprint_error("\n");
 		return (NULL);
 	}
-	if (intrstr != NULL)
-		aprint_normal_dev(sc->sc_dev, "interrupting at %s\n",
-		    intrstr);
+	if (intrstr != NULL) {
+		aprint_normal_dev(sc->sc_dev,
+		    "interrupting at %s (%s trigger)\n",
+		    (esc->sc_ist == IST_LEVEL) ? "level" : "edge", intrstr);
+	}
 
 	return (rv);
 }
