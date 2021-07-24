@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc_pnpbus.c,v 1.5 2015/04/13 21:18:42 riastradh Exp $	*/
+/*	$NetBSD: fdc_pnpbus.c,v 1.6 2021/07/24 21:31:34 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_pnpbus.c,v 1.5 2015/04/13 21:18:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_pnpbus.c,v 1.6 2021/07/24 21:31:34 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,7 +158,7 @@ fdc_pnpbus_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal("\n");
 
-	/* The 7043-140 gets the type wrong, so overide to edge allways */
+	/* The 7043-140 gets the type wrong, so override to edge always */
 	fdc->sc_ih = pnpbus_intr_establish(0, IPL_BIO, IST_EDGE, fdcintr, fdc,
 	    &pna->pna_res);
 

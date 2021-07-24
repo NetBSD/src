@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: lua2netbsd,v 1.2 2011/10/08 19:28:40 christos Exp $
+#	$NetBSD: lua2netbsd,v 1.3 2021/07/24 21:31:31 andvar Exp $
 #	adapted from dist/ipf/ipf2netbsd:
 #	NetBSD: ipf2netbsd,v 1.23 2010/04/17 22:05:53 darrenr Exp $
 #
@@ -28,7 +28,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-# lua2netbsd:  prepare a Lua source tree for NeBSD.
+# lua2netbsd:  prepare a Lua source tree for NetBSD.
 
 ### Remove the $'s around various RCSIDs
 cleantags src doc

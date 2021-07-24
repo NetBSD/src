@@ -1,4 +1,4 @@
-#	$NetBSD: README.seagate,v 1.6 2019/12/27 09:41:50 msaitoh Exp $
+#	$NetBSD: README.seagate,v 1.7 2021/07/24 21:31:37 andvar Exp $
 
 The hardware:
 
@@ -55,7 +55,7 @@ possible targets, and interrupt vector for the card.
 
 Every scsi command to be issued are stored in a sea_scb structure. It contains
 a flag describing status/error of the command, current data buffer position,
-and number of bytes remaining to be transfered.
+and number of bytes remaining to be transferred.
 
 
 PROBLEMS

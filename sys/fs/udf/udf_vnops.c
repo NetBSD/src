@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.115 2021/06/29 22:34:07 dholland Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.116 2021/07/24 21:31:38 andvar Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.115 2021/06/29 22:34:07 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.116 2021/07/24 21:31:38 andvar Exp $");
 #endif /* not lint */
 
 
@@ -626,7 +626,7 @@ udf_readdir(void *v)
 			uiomove(dirent, _DIRENT_SIZE(dirent), uio);
 		}
 
-		/* pass on last transfered offset */
+		/* pass on last transferred offset */
 		uio->uio_offset = transoffset;
 		free(fid, M_UDFTEMP);
 	}

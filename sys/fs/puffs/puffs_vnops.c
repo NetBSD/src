@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.221 2021/07/19 01:30:24 dholland Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.222 2021/07/24 21:31:38 andvar Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.221 2021/07/19 01:30:24 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.222 2021/07/24 21:31:38 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1048,7 +1048,7 @@ puffs_vnop_getattr(void *v)
 	/*
 	 * A lock is required so that we do not race with 
 	 * setattr, write and fsync when changing vp->v_size.
-	 * This is critical, since setting a stall smaler value
+	 * This is critical, since setting a stall smaller value
 	 * triggers a file truncate in uvm_vnp_setsize(), which
 	 * most of the time means data corruption (a chunk of
 	 * data is replaced by zeroes). This can be removed if

@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisatareg.h,v 1.15 2019/01/14 21:09:01 jdolecek Exp $	*/
+/*	$NetBSD: ahcisatareg.h,v 1.16 2021/07/24 21:31:37 andvar Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -120,7 +120,7 @@ struct ahci_r_fis {
 #define		AHCI_CAP_IS_GEN3	0x00300000 /* 6.0 Gb/s */
 #define		AHCI_CAP_CLO	0x01000000 /* Command list override */
 #define		AHCI_CAP_AL	0x02000000 /* Single Activitly LED */
-#define		AHCI_CAP_ALP	0x04000000 /* Agressive link power management */
+#define		AHCI_CAP_ALP	0x04000000 /* Aggressive link power management */
 #define		AHCI_CAP_SSU	0x08000000 /* Staggered spin-up */
 #define		AHCI_CAP_MPS	0x10000000 /* Mechanical swicth */
 #define		AHCI_CAP_NTF	0x20000000 /* Snotification */
@@ -221,8 +221,8 @@ struct ahci_r_fis {
 #define		AHCI_P_CMD_ICC_PA   0x20000000 /* State partial */
 #define		AHCI_P_CMD_ICC_AC   0x10000000 /* State active */
 #define		AHCI_P_CMD_ICC_NO   0x00000000 /* State idle/NOP */
-#define		AHCI_P_CMD_ASP	0x08000000 /* Agressive Slumber/Partial */
-#define		AHCI_P_CMD_ALPE	0x04000000 /* Agressive link power management */
+#define		AHCI_P_CMD_ASP	0x08000000 /* Aggressive Slumber/Partial */
+#define		AHCI_P_CMD_ALPE	0x04000000 /* Aggressive link power management */
 #define		AHCI_P_CMD_DLAE	0x02000000 /* drive LED on ATAPI */
 #define		AHCI_P_CMD_ATAP	0x01000000 /* Device is ATAPI */
 #define		AHCI_P_CMD_ESP	0x00200000 /* external SATA port */

@@ -74,7 +74,7 @@ o Retire "attach foo at bar with foo_bar.c"
   are typical examples.  For ehci(4), EHCI-capable controller drivers implement
   "ehcibus" interface, like:
 
-	defne	ehcibus {}
+	define	ehcibus {}
 	device	imxehci: ehcibus
 
   These drivers' attach functions call config_found() to attach ehci(4) via
@@ -319,7 +319,7 @@ o Clean up linker scripts.
   o Remove .rel/.rela handlings.
 
     These are set in relocatable objects, and handled by dynamic linkers.
-    Totally irrelefant for kernels.
+    Totally irrelevant for kernels.
 
   o Clean up debug section handlings.
 
@@ -392,7 +392,7 @@ o Don't use -Ttext ${TEXTADDR}.
   Although ld(1)'s `-Ttext ${TEXTADDR}' is an easy way to specify the virtual
   base address of .text at link time, it needs to change command-line; in
   kernel build, Makefile needs to change to reflect kernel's configuration.
-  It is simpler to reflect kenel configuration using linker script via assym.h.
+  It is simpler to reflect kernel configuration using linker script via assym.h.
 
 o Convert ${DIAGNOSTIC} and ${DEBUG} as flags (defflag).
 
@@ -402,7 +402,7 @@ o Convert ${DIAGNOSTIC} and ${DEBUG} as flags (defflag).
 o Strictly define DIAGNOSTIC.
 
   It is possible to make DIAGNOSTIC kernel and modules binary-compatible with
-  non-DIAGNOSTIC ones.  In that case, debug type informations should match
+  non-DIAGNOSTIC ones.  In that case, debug type information should match
   theoretically (not confirmed).
 
 o Use suffix rules.
@@ -418,7 +418,7 @@ o Use suffix rules.
   DIAGNOSTIC/DEBUG.
 
   genassym(1) definitions will be split into per-source instead of the single
-  assym.h.  Dependencies are corrected and some of misterious dependencies on
+  assym.h.  Dependencies are corrected and some of mysterious dependencies on
   `Makefile' in sys/conf/Makefile.kern.inc can go away.
 
 o Define genassym(1) symbols per file.
@@ -448,7 +448,7 @@ o Clean up ${MD_OBJS} and friends in Makefile.${MACHINE}.
 
   Don't use ${MD_OBJS}, ${MD_LIBS}, ${MD_SFILES}, and ${MD_CFILES}.
 
-  List files in config(5)'s "file".  Override build rules only when neccesary.
+  List files in config(5)'s "file".  Override build rules only when necessary.
 
   Rely on the fact that config(1) parses files.${MACHINE} first, outputs
   files in the order it parses files.* (actually include depth), and

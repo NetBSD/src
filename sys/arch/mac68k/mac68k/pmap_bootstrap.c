@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.95 2019/08/18 07:05:16 rin Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.96 2021/07/24 21:31:33 andvar Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.95 2019/08/18 07:05:16 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.96 2021/07/24 21:31:33 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -483,7 +483,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 * Note about avail_end: msgbuf is initialized just after
 	 * avail_end in machdep.c.  Since the last page is used
 	 * for rebooting the system (code is copied there and
-	 * excution continues from copied code before the MMU
+	 * execution continues from copied code before the MMU
 	 * is disabled), the msgbuf will get trounced between
 	 * reboots if it's placed in the last physical page.
 	 * To work around this, we move avail_end back one more

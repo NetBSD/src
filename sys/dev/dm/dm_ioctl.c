@@ -1,4 +1,4 @@
-/* $NetBSD: dm_ioctl.c,v 1.52 2021/06/21 03:16:43 christos Exp $      */
+/* $NetBSD: dm_ioctl.c,v 1.53 2021/07/24 21:31:37 andvar Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.52 2021/06/21 03:16:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.53 2021/07/24 21:31:37 andvar Exp $");
 
 /*
  * Locking is used to synchronise between ioctl calls and between dm_table's
@@ -387,7 +387,7 @@ dm_dev_remove_ioctl(prop_dictionary_t dm_dict)
 
 	/*
 	 * This seems as hack to me, probably use routine dm_dev_get_devt to
-	 * atomicaly get devt from device.
+	 * atomically get devt from device.
 	 */
 	if ((dmv = dm_dev_lookup(name, uuid, minor)) == NULL) {
 		DM_REMOVE_FLAG(flags, DM_EXISTS_FLAG);

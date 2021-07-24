@@ -1,4 +1,4 @@
-/*	$NetBSD: ace.c,v 1.4 2018/03/07 14:59:14 christos Exp $	*/
+/*	$NetBSD: ace.c,v 1.5 2021/07/24 21:31:32 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -705,7 +705,7 @@ acestrategy(
 	daddr_t bn,
 	size_t reqcnt,
 	void *addr,
-	size_t *cnt)	/* out: number of bytes transfered */
+	size_t *cnt)	/* out: number of bytes transferred */
 {
 	struct ace_softc *sc = (struct ace_softc *)devdata;
 	int part = sc->sc_part;

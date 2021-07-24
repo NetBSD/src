@@ -1,5 +1,5 @@
 /*	$KAME: sctputil.c,v 1.39 2005/06/16 20:54:06 jinmei Exp $	*/
-/*	$NetBSD: sctputil.c,v 1.16 2020/01/19 20:51:13 riastradh Exp $	*/
+/*	$NetBSD: sctputil.c,v 1.17 2021/07/24 21:31:39 andvar Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctputil.c,v 1.16 2020/01/19 20:51:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctputil.c,v 1.17 2021/07/24 21:31:39 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1268,7 +1268,7 @@ sctp_timer_start(int t_type, struct sctp_inpcb *inp, struct sctp_tcb *stcb,
 	case SCTP_TIMER_TYPE_INPKILL:
 		/*
 		 * The inp is setup to die. We re-use the
-		 * signature_chage timer since that has
+		 * signature_change timer since that has
 		 * stopped and we are in the GONE state.
 		 */
 		tmr = &inp->sctp_ep.signature_change;
@@ -1456,7 +1456,7 @@ sctp_timer_stop(int t_type, struct sctp_inpcb *inp, struct sctp_tcb *stcb,
 	case SCTP_TIMER_TYPE_INPKILL:
 		/*
 		 * The inp is setup to die. We re-use the
-		 * signature_chage timer since that has
+		 * signature_change timer since that has
 		 * stopped and we are in the GONE state.
 		 */
 		tmr = &inp->sctp_ep.signature_change;

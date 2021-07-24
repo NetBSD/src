@@ -1,4 +1,4 @@
-\	$NetBSD: bootblk.fth,v 1.15 2015/08/20 05:40:08 dholland Exp $
+\	$NetBSD: bootblk.fth,v 1.16 2021/07/24 21:31:36 andvar Exp $
 \
 \	IEEE 1275 Open Firmware Boot Block
 \
@@ -341,7 +341,7 @@ defer if_daddr
 
 niaddr /w* constant narraysize
 
-\ Assume UFS2 dinodes are always biger than UFS1
+\ Assume UFS2 dinodes are always bigger than UFS1
 ufs2_dinode_SIZEOF buffer: cur-inode
 0 value indir-block
 create indir-addr -1 , -1 ,
@@ -890,7 +890,7 @@ create cur-blockno -1 l, -1 l,		\ Current disk block.
 
 : do-boot ( bootfile -- )
    ." NetBSD IEEE 1275 Multi-FS Bootblock" cr
-   ." Version $NetBSD: bootblk.fth,v 1.15 2015/08/20 05:40:08 dholland Exp $" cr
+   ." Version $NetBSD: bootblk.fth,v 1.16 2021/07/24 21:31:36 andvar Exp $" cr
    boot-path load-file ( -- load-base )
    dup 0<>  if  " init-program " evaluate  then
 ; 

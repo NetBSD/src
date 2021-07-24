@@ -1,4 +1,4 @@
-/*	$NetBSD: imx51_ccm.c,v 1.7 2018/09/03 16:29:23 riastradh Exp $	*/
+/*	$NetBSD: imx51_ccm.c,v 1.8 2021/07/24 21:31:32 andvar Exp $	*/
 
 /*
  * Copyright (c) 2010-2012, 2014  Genetec Corporation.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx51_ccm.c,v 1.7 2018/09/03 16:29:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx51_ccm.c,v 1.8 2021/07/24 21:31:32 andvar Exp $");
 
 #include "opt_imx.h"
 #include "opt_imx51clk.h"
@@ -595,7 +595,7 @@ imx51_clk_gating(int clk_src, int mode)
 	case CCGR_EPDC_AXI_CLK:
 		reg = bus_space_read_4(iot, ioh, CCMC_EPDC_AXI);
 		reg &= ~EPDC_AXI_CLKGATE;
-		reg |= EPDC_AXI_CLKGATE_ALLWAYS;
+		reg |= EPDC_AXI_CLKGATE_ALWAYS;
 		bus_space_write_4(iot, ioh, CCMC_EPDC_AXI, reg);
 
 		/* enable auto-slow */
@@ -607,7 +607,7 @@ imx51_clk_gating(int clk_src, int mode)
 	case CCGR_EPDC_PIX_CLK:
 		reg = bus_space_read_4(iot, ioh, CCMC_EPDC_PIX);
 		reg &= ~EPDC_PIX_CLKGATE;
-		reg |= EPDC_PIX_CLKGATE_ALLWAYS;
+		reg |= EPDC_PIX_CLKGATE_ALWAYS;
 		bus_space_write_4(iot, ioh, CCMC_EPDC_PIX, reg);
 
 		break;

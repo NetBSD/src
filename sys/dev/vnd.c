@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.282 2021/06/29 22:40:53 dholland Exp $	*/
+/*	$NetBSD: vnd.c,v 1.283 2021/07/24 21:31:36 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008, 2020 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.282 2021/06/29 22:40:53 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.283 2021/07/24 21:31:36 andvar Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -1299,7 +1299,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			uint32_t comp_size;
 			uint32_t comp_maxsize;
 
-			/* allocate space for compresed file header */
+			/* allocate space for compressed file header */
 			ch = malloc(sizeof(struct vnd_comp_header),
 			    M_TEMP, M_WAITOK);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_output.c,v 1.65 2020/02/29 16:56:58 mlelstv Exp $	*/
+/*	$NetBSD: ieee80211_output.c,v 1.66 2021/07/24 21:31:38 andvar Exp $	*/
 
 /*
  * Copyright (c) 2001 Atsushi Onoe
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.34 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.65 2020/02/29 16:56:58 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.66 2021/07/24 21:31:38 andvar Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -2001,10 +2001,10 @@ ieee80211_beacon_update(struct ieee80211com *ic, struct ieee80211_node *ni,
 		struct ieee80211_wme_state *wme = &ic->ic_wme;
 
 		/*
-		 * Check for agressive mode change.  When there is
+		 * Check for aggressive mode change.  When there is
 		 * significant high priority traffic in the BSS
 		 * throttle back BE traffic by using conservative
-		 * parameters.  Otherwise BE uses agressive params
+		 * parameters.  Otherwise BE uses aggressive params
 		 * to optimize performance of legacy/non-QoS traffic.
 		 */
 		if (wme->wme_flags & WME_F_AGGRMODE) {

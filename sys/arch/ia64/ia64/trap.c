@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.14 2017/04/08 17:47:14 scole Exp $ */
+/* $NetBSD: trap.c,v 1.15 2021/07/24 21:31:33 andvar Exp $ */
 
 /*-
  * Copyright (c) 2005 Marcel Moolenaar
@@ -61,7 +61,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.14 2017/04/08 17:47:14 scole Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.15 2021/07/24 21:31:33 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -608,7 +608,7 @@ no_fault_in:
 		 * The branching behaviour of the chk instruction is not
 		 * implemented by the processor. All we need to do is
 		 * compute the target address of the branch and make sure
-		 * that control is transfered to that address.
+		 * that control is transferred to that address.
 		 * We should do this in the IVT table and not by entring
 		 * the kernel...
 		 */

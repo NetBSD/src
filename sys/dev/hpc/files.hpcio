@@ -1,9 +1,9 @@
-#	$NetBSD: files.hpcio,v 1.6 2006/10/09 10:33:42 peter Exp $
+#	$NetBSD: files.hpcio,v 1.7 2021/07/24 21:31:37 andvar Exp $
 #	H/PC GPIO interface
 
 #  platform:
 #    iochip: sepecify GPIO chip
-#    evtype: event tyep of config_hook
+#    evtype: event type of config_hook
 #        id: event id of config_hook
 #      port: port number on GPIO
 #    active: which value is 'ON', 0 or 1.

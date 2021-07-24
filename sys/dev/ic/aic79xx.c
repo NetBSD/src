@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.56 2020/06/27 17:07:49 jdolecek Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.57 2021/07/24 21:31:37 andvar Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.56 2020/06/27 17:07:49 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.57 2021/07/24 21:31:37 andvar Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -1963,7 +1963,7 @@ ahd_handle_lqiphase_error(struct ahd_softc *ahd, u_int lqistat1)
 		ahd_outb(ahd, CLRINT, CLRSCSIINT);
 		ahd_unpause(ahd);
 	} else {
-		printf("Reseting Channel for LQI Phase error\n");
+		printf("Resetting Channel for LQI Phase error\n");
 		ahd_dump_card_state(ahd);
 		ahd_reset_channel(ahd, 'A', /*Initiate Reset*/TRUE);
 	}
@@ -8429,7 +8429,7 @@ ahd_check_patch(struct ahd_softc *ahd, const struct patch **start_patch,
 			cur_patch += cur_patch->skip_patch;
 		} else {
 			/* Accepted this patch.  Advance to the next
-			 * one and wait for our intruction pointer to
+			 * one and wait for our instruction pointer to
 			 * hit this point.
 			 */
 			cur_patch++;

@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_common.c,v 1.31 2021/04/30 06:55:32 msaitoh Exp $ */
+/* $NetBSD: ixgbe_common.c,v 1.32 2021/07/24 21:31:38 andvar Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -36,7 +36,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_common.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe_common.c,v 1.31 2021/04/30 06:55:32 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_common.c,v 1.32 2021/07/24 21:31:38 andvar Exp $");
 
 #include "ixgbe_common.h"
 #include "ixgbe_phy.h"
@@ -5034,8 +5034,8 @@ s32 ixgbe_bypass_rw_generic(struct ixgbe_hw *hw, u32 cmd, u32 *status)
  * ixgbe_bypass_valid_rd_generic - Verify valid return from bit-bang.
  *
  * If we send a write we can't be sure it took until we can read back
- * that same register.  It can be a problem as some of the feilds may
- * for valid reasons change inbetween the time wrote the register and
+ * that same register.  It can be a problem as some of the fields may
+ * for valid reasons change in-between the time wrote the register and
  * we read it again to verify.  So this function check everything we
  * can check and then assumes it worked.
  *

@@ -1,4 +1,4 @@
-/*	$NetBSD: sctp_output.c,v 1.22 2020/06/13 01:41:59 roy Exp $ */
+/*	$NetBSD: sctp_output.c,v 1.23 2021/07/24 21:31:39 andvar Exp $ */
 /*	$KAME: sctp_output.c,v 1.48 2005/06/16 18:29:24 jinmei Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.22 2020/06/13 01:41:59 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.23 2021/07/24 21:31:39 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -2187,7 +2187,7 @@ sctp_lowlevel_chunk_output(struct sctp_inpcb *inp,
 #endif
 		/*
 		 * If source address selection fails and we find no route then
-		 * the ip_ouput should fail as well with a NO_ROUTE_TO_HOST
+		 * the ip_output should fail as well with a NO_ROUTE_TO_HOST
 		 * type error. We probably should catch that somewhere and
 		 * abort the association right away (assuming this is an INIT
 		 * being sent).
@@ -8166,7 +8166,7 @@ static struct sctp_nets *
 sctp_select_hb_destination(struct sctp_tcb *stcb, struct timeval *now)
 {
 	struct sctp_nets *net, *hnet;
-	int ms_goneby, highest_ms, state_overide=0;
+	int ms_goneby, highest_ms, state_override=0;
 
 	SCTP_GETTIME_TIMEVAL(now);
 	highest_ms = 0;
@@ -8209,15 +8209,15 @@ sctp_select_hb_destination(struct sctp_tcb *stcb, struct timeval *now)
 #endif
 		/* When the address state is unconfirmed but still considered reachable, we
 		 * HB at a higher rate. Once it goes confirmed OR reaches the "unreachable"
-		 * state, thenw we cut it back to HB at a more normal pace.
+		 * state, then we cut it back to HB at a more normal pace.
 		 */
 		if ((net->dest_state & (SCTP_ADDR_UNCONFIRMED|SCTP_ADDR_NOT_REACHABLE)) == SCTP_ADDR_UNCONFIRMED) {
-			state_overide = 1;
+			state_override = 1;
 		} else {
-			state_overide = 0;
+			state_override = 0;
 		}
 
-		if ((((unsigned int)ms_goneby >= net->RTO) || (state_overide)) &&
+		if ((((unsigned int)ms_goneby >= net->RTO) || (state_override)) &&
 		    (ms_goneby > highest_ms)) {
 			highest_ms = ms_goneby;
 			hnet = net;
@@ -8231,12 +8231,12 @@ sctp_select_hb_destination(struct sctp_tcb *stcb, struct timeval *now)
 	}
 	if (hnet &&
 	   ((hnet->dest_state & (SCTP_ADDR_UNCONFIRMED|SCTP_ADDR_NOT_REACHABLE)) == SCTP_ADDR_UNCONFIRMED)) {
-		state_overide = 1;
+		state_override = 1;
 	} else {
-		state_overide = 0;
+		state_override = 0;
 	}
 
-	if (highest_ms && (((unsigned int)highest_ms >= hnet->RTO) || state_overide)) {
+	if (highest_ms && (((unsigned int)highest_ms >= hnet->RTO) || state_override)) {
 		/* Found the one with longest delay bounds
 		 * OR it is unconfirmed and still not marked
 		 * unreachable.

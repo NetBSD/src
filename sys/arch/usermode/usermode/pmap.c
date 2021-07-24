@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.115 2020/03/14 14:05:44 ad Exp $ */
+/* $NetBSD: pmap.c,v 1.116 2021/07/24 21:31:36 andvar Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.115 2020/03/14 14:05:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.116 2021/07/24 21:31:36 andvar Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -356,7 +356,7 @@ pmap_bootstrap(void)
         pmap = pmap_kernel();
         memset(pmap, 0, sizeof(*pmap));
 	pmap->pm_count = 1;		/* reference */
-	pmap->pm_flags = PM_ACTIVE;	/* kernel pmap is allways active */
+	pmap->pm_flags = PM_ACTIVE;	/* kernel pmap is always active */
 	pmap->pm_l1 = (struct pmap_l2 **) kmem_kvm_cur_start;
 
 	pm_l1_fpos = fpos;

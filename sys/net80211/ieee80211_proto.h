@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_proto.h,v 1.23 2017/01/04 03:05:24 nonaka Exp $	*/
+/*	$NetBSD: ieee80211_proto.h,v 1.24 2021/07/24 21:31:38 andvar Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -210,10 +210,10 @@ struct chanAccParams {
 
 struct ieee80211_wme_state {
 	u_int	wme_flags;
-#define	WME_F_AGGRMODE	0x00000001	/* STATUS: WME agressive mode */
+#define	WME_F_AGGRMODE	0x00000001	/* STATUS: WME aggressive mode */
 	u_int	wme_hipri_traffic;	/* VI/VO frames in beacon interval */
-	u_int	wme_hipri_switch_thresh;/* agressive mode switch thresh */
-	u_int	wme_hipri_switch_hysteresis;/* agressive mode switch hysteresis */
+	u_int	wme_hipri_switch_thresh;/* aggressive mode switch thresh */
+	u_int	wme_hipri_switch_hysteresis;/* aggressive mode switch hysteresis */
 
 	struct wmeParams wme_params[4];		/* from assoc resp for each AC*/
 	struct chanAccParams wme_wmeChanParams;	/* WME params applied to self */

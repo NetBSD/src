@@ -1,4 +1,4 @@
-/* $NetBSD: rs6000_bootrec.h,v 1.1 2007/12/19 19:50:14 garbled Exp $ */
+/* $NetBSD: rs6000_bootrec.h,v 1.2 2021/07/24 21:31:34 andvar Exp $ */
 
 #include <sys/types.h>
 
@@ -9,7 +9,7 @@
 #define CONFRECID	0xF8E9DACB	/* no idea */
 
 typedef struct rs6000_boot_record {
-	uint32_t	ipl_record;	/* allways IPLRECID */
+	uint32_t	ipl_record;	/* always IPLRECID */
 	char		pad1[20];
 	uint32_t	formatted_cap;	/* sectors in the disk */
 	char		floppy_last_head; /* nrof heads -1 */

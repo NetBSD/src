@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.pl,v 1.6 2019/06/20 00:43:56 christos Exp $	*/
+/*	$NetBSD: menus.md.pl,v 1.7 2021/07/24 21:31:39 andvar Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: menus.md.en,v 1.13 2001/11/29 23:20:58 thorpej Exp 	*/
 
@@ -174,7 +174,7 @@ menu chooseid, title  "Rodzaj partycji?";
 		 * Automatically determine root mount points.  The first
 		 *  root-type filesystem is mounted on "/", all others
 		 *  will mount on "/altroot".  If there are multiple
-		 *  occurances of "/altroot" they will be picked up on
+		 *  occurrences of "/altroot" they will be picked up on
 		 *  the sanity_scan in the next step of the installation.
 		 */
 		for (i=0,map.root_cnt=0;i<map.usable_cnt;i++) {

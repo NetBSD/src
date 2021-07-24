@@ -1,4 +1,4 @@
-/*	$NetBSD: pfctl_altq.c,v 1.10 2018/02/04 08:44:36 mrg Exp $	*/
+/*	$NetBSD: pfctl_altq.c,v 1.11 2021/07/24 21:31:31 andvar Exp $	*/
 /*	$OpenBSD: pfctl_altq.c,v 1.92 2007/05/27 05:15:17 claudio Exp $	*/
 
 /*
@@ -1062,7 +1062,7 @@ char *
 rate2str(double rate)
 {
 	char		*buf;
-	static char	 r2sbuf[R2S_BUFS][RATESTR_MAX];  /* ring bufer */
+	static char	 r2sbuf[R2S_BUFS][RATESTR_MAX];  /* ring buffer */
 	static int	 idx = 0;
 	int		 i;
 	static const char unit[] = " KMG";

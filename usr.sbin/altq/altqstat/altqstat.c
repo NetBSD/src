@@ -1,4 +1,4 @@
-/*	$NetBSD: altqstat.c,v 1.8 2011/08/29 20:38:54 joerg Exp $	*/
+/*	$NetBSD: altqstat.c,v 1.9 2021/07/24 21:31:39 andvar Exp $	*/
 /*	$KAME: altqstat.c,v 1.8 2002/10/27 03:19:35 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -227,7 +227,7 @@ char *
 rate2str(double rate)
 {
 	char *buf;
-	static char r2sbuf[R2S_BUFS][RATESTR_MAX];  /* ring bufer */
+	static char r2sbuf[R2S_BUFS][RATESTR_MAX];  /* ring buffer */
 	static int idx = 0;
 
 	buf = r2sbuf[idx++];

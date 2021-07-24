@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_cfg.c,v 1.28 2018/05/19 19:47:47 maxv Exp $	*/
+/*	$NetBSD: isakmp_cfg.c,v 1.29 2021/07/24 21:31:31 andvar Exp $	*/
 
 /* Id: isakmp_cfg.c,v 1.55 2006/08/22 18:17:17 manubsd Exp */
 
@@ -1997,7 +1997,7 @@ isakmp_cfg_setenv(iph1, envp, envc)
 		return -1;
 	}
 
-	/* Deault domain */
+	/* Default domain */
 	if(iph1->mode_cfg->flags & ISAKMP_CFG_GOT_DEFAULT_DOMAIN) 
 		strncpy(defdom, 
 		    iph1->mode_cfg->default_domain, 

@@ -1,4 +1,4 @@
-/* $NetBSD: db_trace.c,v 1.29 2020/09/18 00:09:29 thorpej Exp $ */
+/* $NetBSD: db_trace.c,v 1.30 2021/07/24 21:31:32 andvar Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.29 2020/09/18 00:09:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.30 2021/07/24 21:31:32 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,7 +132,7 @@ do {									\
 			 * The assumption here is that a positive
 			 * stack offset is the function epilogue,
 			 * which may come before callpc when an
-			 * agressive optimizer (like GCC 3.3 or later)
+			 * aggressive optimizer (like GCC 3.3 or later)
 			 * has moved part of the function "out of
 			 * line", past the epilogue. Therefore, ignore
 			 * the positive offset so that

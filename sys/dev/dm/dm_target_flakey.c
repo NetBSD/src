@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_flakey.c,v 1.3 2020/01/21 16:27:53 tkusumi Exp $      */
+/*        $NetBSD: dm_target_flakey.c,v 1.4 2021/07/24 21:31:37 andvar Exp $      */
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_flakey.c,v 1.3 2020/01/21 16:27:53 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_flakey.c,v 1.4 2021/07/24 21:31:37 andvar Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -365,7 +365,7 @@ _flakey_nestiobuf_iodone(buf_t *bp)
 	if (bp->b_error == 0 &&
 	    (bp->b_bcount < bp->b_bufsize || bp->b_resid > 0)) {
 		/*
-		 * Not all got transfered, raise an error. We have no way to
+		 * Not all got transferred, raise an error. We have no way to
 		 * propagate these conditions to mbp.
 		 */
 		error = EIO;
