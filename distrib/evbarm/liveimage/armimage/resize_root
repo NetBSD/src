@@ -1,5 +1,0 @@
-# $NetBSD: resize_root,v 1.1 2021/07/23 21:53:34 jmcneill Exp $
-
-resize_root=YES
-resize_root_flags="-p"
-resize_root_postcmd="/sbin/reboot -n"

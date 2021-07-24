@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2021/07/23 21:53:34 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.2 2021/07/24 14:00:08 jmcneill Exp $
 
 LIVEIMGBASE=	NetBSD-${DISTRIBVER}-${MACHINE_ARCH}-live	# gives ${IMGBASE}.img
 
@@ -10,13 +10,9 @@ IMAGEHOSTNAME=	netbsd
 FILESDIR!=	cd ${.CURDIR}/../../../utils/embedded/files ; pwd
 
 SPEC_EXTRA=	${.CURDIR}/spec.armimage
+RC_CONF_EXTRA=	${.CURDIR}/rc.conf.armimage
 IMGFILE_EXTRA=								\
 	${FILESDIR}/ec2_init		etc/rc.d/ec2_init		\
-	${FILESDIR}/resize_gpt		etc/rc.d/resize_gpt		\
-	${.CURDIR}/dhcpcd		etc/rc.conf.d/dhcpcd		\
-	${.CURDIR}/ec2_init		etc/rc.conf.d/ec2_init		\
-	${.CURDIR}/resize_gpt		etc/rc.conf.d/resize_gpt	\
-	${.CURDIR}/resize_root		etc/rc.conf.d/resize_root	\
-	${.CURDIR}/sshd			etc/rc.conf.d/sshd
+	${FILESDIR}/resize_gpt		etc/rc.d/resize_gpt
 
 .include "${.CURDIR}/../Makefile.liveimage"
