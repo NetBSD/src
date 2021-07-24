@@ -1,4 +1,4 @@
-/*	$NetBSD: yppush.c,v 1.24 2011/08/30 21:10:29 joerg Exp $	*/
+/*	$NetBSD: yppush.c,v 1.25 2021/07/24 21:31:39 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor
@@ -153,7 +153,7 @@ main(int argc, char *argv[])
 			    yperr_string(c));
 	}
 	/*
-         * verify that the domain and specified database exsists
+         * verify that the domain and specified database exists
          *
          * XXXCDC: this effectively prevents us from pushing from any
          * host but the master.   an alternate plan is to find the master

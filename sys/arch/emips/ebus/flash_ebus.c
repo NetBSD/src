@@ -1,4 +1,4 @@
-/*	$NetBSD: flash_ebus.c,v 1.22 2019/12/14 02:58:19 tsutsui Exp $	*/
+/*	$NetBSD: flash_ebus.c,v 1.23 2021/07/24 21:31:32 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: flash_ebus.c,v 1.22 2019/12/14 02:58:19 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash_ebus.c,v 1.23 2021/07/24 21:31:32 andvar Exp $");
 
 /* Driver for the Intel 28F320/640/128 (J3A150) StrataFlash memory device
  * Extended to include the Intel JS28F256P30T95.
@@ -177,7 +177,7 @@ struct eflash_softc {
 	struct callout sc_restart_ch;
 
 	/* IDE disk soft states */
-	struct buf *sc_bp; /* buf being transfered */
+	struct buf *sc_bp; /* buf being transferred */
 	struct buf *active_xfer; /* buf handoff to thread  */
 	struct eflash_bio sc_bio; /* current transfer */
 

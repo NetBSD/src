@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_proto.c,v 1.36 2020/07/22 01:24:40 msaitoh Exp $	*/
+/*	$NetBSD: ieee80211_proto.c,v 1.37 2021/07/24 21:31:38 andvar Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_proto.c,v 1.23 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.36 2020/07/22 01:24:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.37 2021/07/24 21:31:38 andvar Exp $");
 #endif
 
 /*
@@ -711,7 +711,7 @@ ieee80211_wme_initparams(struct ieee80211com *ic)
 	/* NB: check ic_bss to avoid NULL deref on initial attach */
 	if (ic->ic_bss != NULL) {
 		/*
-		 * Calculate agressive mode switching threshold based
+		 * Calculate aggressive mode switching threshold based
 		 * on beacon interval.  This doesn't need locking since
 		 * we're only called before entering the RUN state at
 		 * which point we start sending beacon frames.
@@ -760,11 +760,11 @@ ieee80211_wme_updateparams_locked(struct ieee80211com *ic)
 	}
 
 	/*
-	 * This implements agressive mode as found in certain
+	 * This implements aggressive mode as found in certain
 	 * vendors' AP's.  When there is significant high
 	 * priority (VI/VO) traffic in the BSS throttle back BE
 	 * traffic by using conservative parameters.  Otherwise
-	 * BE uses agressive params to optimize performance of
+	 * BE uses aggressive params to optimize performance of
 	 * legacy/non-QoS traffic.
 	 */
         if ((ic->ic_opmode == IEEE80211_M_HOSTAP &&

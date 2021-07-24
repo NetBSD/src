@@ -1,4 +1,4 @@
-/*	$NetBSD: raw.c,v 1.2 2011/07/17 20:54:39 joerg Exp $	*/
+/*	$NetBSD: raw.c,v 1.3 2021/07/24 21:31:32 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@ rawstrategy(
 	daddr_t bn,
 	size_t reqcnt,
 	void *addr,
-	size_t *cnt)	/* out: number of bytes transfered */
+	size_t *cnt)	/* out: number of bytes transferred */
 {
     /* Never gets here */
     return (EIO);

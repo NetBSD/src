@@ -1,4 +1,4 @@
-/*	$NetBSD: tlp.c,v 1.9 2010/01/19 15:28:52 tsutsui Exp $	*/
+/*	$NetBSD: tlp.c,v 1.10 2021/07/24 21:31:32 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -275,7 +275,7 @@ tlp_init(void *cookie)
 	txd->xd1 = htole32(T1_SET | T1_TCH | TLP_SETUPLEN);
 	txd->xd0 = htole32(T0_OWN);
 
-	/* make sure the entire descriptors transfered to memory */
+	/* make sure the entire descriptors transferred to memory */
 	wbinv(l, sizeof(struct local));
 
 	CSR_WRITE(l, TLP_RRBA, VTOPHYS(rxd));

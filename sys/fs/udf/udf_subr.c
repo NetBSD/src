@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.153 2021/04/13 06:25:49 mrg Exp $ */
+/* $NetBSD: udf_subr.c,v 1.154 2021/07/24 21:31:38 andvar Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.153 2021/04/13 06:25:49 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.154 2021/07/24 21:31:38 andvar Exp $");
 #endif /* not lint */
 
 
@@ -2089,7 +2089,7 @@ udf_process_vds(struct udf_mount *ump) {
 	/*
 	 * Determine sheduler error behaviour. For virtual partitions, update
 	 * the trackinfo; for sparable partitions replace a whole block on the
-	 * sparable table. Allways requeue.
+	 * sparable table. Always requeue.
 	 */
 	ump->lvreadwrite = 0;
 	if (n_virt)
@@ -2320,11 +2320,11 @@ udf_create_parentfid(struct udf_mount *ump, struct fileid_desc *fid,
  * sub-files. In the stream directory a few fixed named subfiles are reserved
  * for NT/Unix ACL's and OS/2 attributes.
  *
- * NOTE: Extended attributes are read randomly but allways written
- * *atomicaly*. For ACL's this interface is propably different but not known
+ * NOTE: Extended attributes are read randomly but always written
+ * *atomically*. For ACL's this interface is probably different but not known
  * to me yet.
  *
- * Order of extended attributes in a space :
+ * Order of extended attributes in a space:
  *   ECMA 167 EAs
  *   Non block aligned Implementation Use EAs
  *   Block aligned Implementation Use EAs

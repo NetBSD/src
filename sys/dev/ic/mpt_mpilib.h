@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_mpilib.h,v 1.3 2007/07/27 13:06:51 tron Exp $	*/
+/*	$NetBSD: mpt_mpilib.h,v 1.4 2021/07/24 21:31:37 andvar Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 by LSI Logic Corporation
@@ -2613,7 +2613,7 @@ typedef struct _MSG_FC_PRIMITIVE_SEND_REPLY
 *****************************************************************************/
 
 /****************************************************************************/
-/*  SCSI IO messages and assocaited structures                              */
+/*  SCSI IO messages and associated structures                              */
 /****************************************************************************/
 
 typedef struct _MSG_SCSI_IO_REQUEST

@@ -1,5 +1,5 @@
 #
-# $NetBSD: isp.s,v 1.3 2015/07/11 10:32:46 kamil Exp $
+# $NetBSD: isp.s,v 1.4 2021/07/24 21:31:33 andvar Exp $
 #
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -586,7 +586,7 @@ uieh_done:
 	mov.b		EXC_CC+1(%a6),EXC_ISR+1(%a6) # insert new ccodes
 
 # if exception occurred in user mode, then we have to restore a7 in case it
-# changed. we don't have to update a7  for supervisor mose because that case
+# changed. we don't have to update a7  for supervisor mouse because that case
 # doesn't flow through here
 	btst		&0x5,EXC_ISR(%a6)	# user or supervisor?
 	bne.b		uieh_finish		# supervisor
@@ -609,7 +609,7 @@ uieh_finish:
 # The instruction that was just emulated was also being traced. The trace 
 # trap for this instruction will be lost unless we jump to the trace handler.
 # So, here we create a Trace Exception format number two exception stack
-# frame from the Unimplemented Integer Intruction Exception stack frame
+# frame from the Unimplemented Integer Instruction Exception stack frame
 # format number zero and jump to the user supplied hook "_real_trace()".
 #
 #		   UIEH FRAME		   TRACE FRAME

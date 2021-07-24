@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_gpio.c,v 1.20 2021/04/24 23:36:26 thorpej Exp $	*/
+/*	$NetBSD: bcm2835_gpio.c,v 1.21 2021/07/24 21:31:32 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2013, 2014, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_gpio.c,v 1.20 2021/04/24 23:36:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_gpio.c,v 1.21 2021/07/24 21:31:32 andvar Exp $");
 
 /*
  * Driver for BCM2835 GPIO
@@ -873,7 +873,7 @@ bcm2835gpio_gpio_pin_ctl(void *arg, int pin, int flags)
 	mutex_enter(&sc->sc_lock);
 	if (flags & (GPIO_PIN_OUTPUT|GPIO_PIN_INPUT)) {
 		if ((flags & GPIO_PIN_INPUT) != 0) {
-			/* for safety INPUT will overide output */
+			/* for safety INPUT will override output */
 			bcm283x_pin_setfunc(sc, pin, BCM2835_GPIO_IN);
 		} else {
 			bcm283x_pin_setfunc(sc, pin, BCM2835_GPIO_OUT);

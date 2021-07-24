@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.36 2020/04/04 20:49:30 ad Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.37 2021/07/24 21:31:38 andvar Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -52,7 +52,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.36 2020/04/04 20:49:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.37 2021/07/24 21:31:38 andvar Exp $");
 
 #include <sys/param.h>
 
@@ -1046,7 +1046,7 @@ removede(struct denode *pdep, struct denode *dep)
 		offset += sizeof(struct direntry);
 		while (1) {
 			/*
-			 * We are a bit agressive here in that we delete any Win95
+			 * We are a bit aggressive here in that we delete any Win95
 			 * entries preceding this entry, not just the ones we "own".
 			 * Since these presumably aren't valid anyway,
 			 * there should be no harm.
