@@ -1,4 +1,4 @@
-/*	$NetBSD: smbios.c,v 1.2 2021/07/24 11:39:19 jmcneill Exp $	*/
+/*	$NetBSD: smbios.c,v 1.3 2021/07/24 22:33:23 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbios.c,v 1.2 2021/07/24 11:39:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbios.c,v 1.3 2021/07/24 22:33:23 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -138,7 +138,7 @@ smbios_map_memory(paddr_t pa, size_t size)
 	}
 	pmap_update(pmap_kernel());
 
-	return (void *)(va + (pa - spa));
+	return (void *)(uintptr_t)(va + (pa - spa));
 }
 
 static void
