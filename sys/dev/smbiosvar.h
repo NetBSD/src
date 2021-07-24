@@ -1,4 +1,4 @@
-/*	$NetBSD: smbiosvar.h,v 1.1 2021/07/21 23:16:09 jmcneill Exp $ */
+/*	$NetBSD: smbiosvar.h,v 1.2 2021/07/24 11:39:19 jmcneill Exp $ */
 /*
  * Copyright (c) 2006 Gordon Willem Klok <gklok@cogeco.ca>
  * Copyright (c) 2005 Jordan Hargrave
@@ -41,6 +41,8 @@
 #define SMBIOS_UUID_REPLEN 37 /* 16 zero padded values, 4 hyphens, 1 null */
 
 struct smbios_entry {
+	paddr_t		hdrphys;
+	paddr_t		tabphys;
 	uint8_t 	rev;
 	uint8_t 	mjr;
 	uint8_t 	min;
