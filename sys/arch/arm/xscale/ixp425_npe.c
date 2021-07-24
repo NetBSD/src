@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_npe.c,v 1.12 2021/04/24 23:36:29 thorpej Exp $	*/
+/*	$NetBSD: ixp425_npe.c,v 1.13 2021/07/24 21:31:32 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2006 Sam Leffler, Errno Consulting
@@ -62,7 +62,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/ixp425_npe.c,v 1.1 2006/11/19 23:55:23 sam Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ixp425_npe.c,v 1.12 2021/04/24 23:36:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_npe.c,v 1.13 2021/07/24 21:31:32 andvar Exp $");
 
 /*
  * Intel XScale Network Processing Engine (NPE) support.
@@ -411,7 +411,7 @@ ixpnpe_stop(struct ixpnpe_softc *sc)
 
 /*
  * Indicates the start of an NPE Image, in new NPE Image Library format.
- * 2 consecutive occurances indicates the end of the NPE Image Library
+ * 2 consecutive occurrences indicates the end of the NPE Image Library
  */
 #define NPE_IMAGE_MARKER 0xfeedf00d
 
@@ -488,7 +488,7 @@ ixpnpe_init(struct ixpnpe_softc *sc, const char *imageName, uint32_t imageId)
 
     /*
      * If download was successful, store image Id in list of
-     * currently loaded images. If a critical error occured
+     * currently loaded images. If a critical error occurred
      * during download, record that the NPE has an invalid image
      */
     mutex_enter(&sc->sc_lock);
@@ -751,7 +751,7 @@ npe_cpu_reset(struct ixpnpe_softc *sc)
     while (npe_checkbits(sc,
 	  IX_NPEDL_REG_OFFSET_STAT, IX_NPEDL_MASK_STAT_IFNE)) {
 	/*
-	 * Step execution of the NPE intruction to read inFIFO using
+	 * Step execution of the NPE instruction to read inFIFO using
 	 * the Debug Executing Context stack.
 	 */
 	error = npe_cpu_step(sc, IX_NPEDL_INSTR_RD_FIFO, 0, 0);
@@ -844,7 +844,7 @@ npe_cpu_reset(struct ixpnpe_softc *sc)
      * sense based on the documentation.  The feature control
      * register always reads back as 0 on the ixp425 and further
      * the bit definition of NPEA/NPEB is off by 1 according to
-     * the Intel documention--so we're blindly following the
+     * the Intel documentation--so we're blindly following the
      * Intel code w/o any real understanding.
      */
     regVal = EXP_BUS_READ_4(ixp425_softc, EXP_FCTRL_OFFSET);

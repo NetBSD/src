@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_npereg.h,v 1.1 2006/12/10 10:01:49 scw Exp $	*/
+/*	$NetBSD: ixp425_npereg.h,v 1.2 2021/07/24 21:31:32 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2006 Sam Leffler, Errno Consulting
@@ -134,7 +134,7 @@
 
 /*
  * Reset value for Mailbox (MBST) register
- * NOTE that if used, it should be complemented with an NPE intruction
+ * NOTE that if used, it should be complemented with an NPE instruction
  * to clear the Mailbox at the NPE side as well
  */
 #define IX_NPEDL_REG_RESET_MBST              0x0000F0F0

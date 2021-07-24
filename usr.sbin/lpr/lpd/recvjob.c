@@ -1,4 +1,4 @@
-/*	$NetBSD: recvjob.c,v 1.25 2019/12/27 09:41:52 msaitoh Exp $	*/
+/*	$NetBSD: recvjob.c,v 1.26 2021/07/24 21:31:39 andvar Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)recvjob.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: recvjob.c,v 1.25 2019/12/27 09:41:52 msaitoh Exp $");
+__RCSID("$NetBSD: recvjob.c,v 1.26 2021/07/24 21:31:39 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -302,7 +302,7 @@ read_number(const char *fn)
 }
 
 /*
- * Remove all the files associated with the current job being transfered.
+ * Remove all the files associated with the current job being transferred.
  */
 static void
 rcleanup(int signo)

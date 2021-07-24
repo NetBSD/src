@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.76 2020/03/30 08:36:09 wiz Exp $	*/
+/*	$NetBSD: disk.h,v 1.77 2021/07/24 21:31:39 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@
 /*
  * Disk information dictionary.
  *
- * This contains general infomation for disk devices.
+ * This contains general information for disk devices.
  *
  *	<dict>
  *		<key>type</key>

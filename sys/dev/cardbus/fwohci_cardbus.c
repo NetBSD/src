@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_cardbus.c,v 1.36 2016/07/14 04:19:26 msaitoh Exp $	*/
+/*	$NetBSD: fwohci_cardbus.c,v 1.37 2021/07/24 21:31:36 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.36 2016/07/14 04:19:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.37 2021/07/24 21:31:36 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,7 @@ fwohci_cardbus_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	/* XXX NULL should be replaced by some call to Cardbus coed */
+	/* XXX NULL should be replaced by some call to Cardbus code */
 	if (fwohci_attach(&sc->sc_sc) != 0) {
 		Cardbus_intr_disestablish(ct, sc->sc_ih);
 		sc->sc_ih = NULL;

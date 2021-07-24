@@ -1,4 +1,4 @@
-/* $NetBSD: udf_allocation.c,v 1.41 2020/04/23 21:47:08 ad Exp $ */
+/* $NetBSD: udf_allocation.c,v 1.42 2021/07/24 21:31:38 andvar Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.41 2020/04/23 21:47:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.42 2021/07/24 21:31:38 andvar Exp $");
 #endif /* not lint */
 
 
@@ -1672,7 +1672,7 @@ udf_late_allocate_buf(struct udf_mount *ump, struct buf *buf,
 	if (error) {
 		/*
 		 * ARGH! we haven't done our accounting right! it should
-		 * allways succeed.
+		 * always succeed.
 		 */
 		panic("UDF disc allocation accounting gone wrong");
 	}

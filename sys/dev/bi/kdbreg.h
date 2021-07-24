@@ -1,4 +1,4 @@
-/*	$NetBSD: kdbreg.h,v 1.5 2005/12/11 12:21:15 christos Exp $	*/
+/*	$NetBSD: kdbreg.h,v 1.6 2021/07/24 21:31:36 andvar Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -58,7 +58,7 @@ struct	kdb_regs {
  * Asserting KDB_MAP in values placed in mscp_seq.seq_buffer tells
  * the KDB to use mscp_seq.seq_mapbase as a set of PTEs and seq_buffer
  * as an offset value.  Hence we need no mappings; the KDB50 reads
- * the hardware page tables directly.  (Without KDB_MAP, seq_bufer
+ * the hardware page tables directly.  (Without KDB_MAP, seq_buffer
  * represents the physical memory address instead, and seq_mapbase is
  * unused.)
  */
