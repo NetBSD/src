@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.34 2021/06/23 21:43:38 jmcneill Exp $	*/
+/*	$NetBSD: boot.c,v 1.35 2021/07/24 10:22:28 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -110,6 +110,7 @@ const struct boot_command commands[] = {
 	{ "dev",	command_dev,		"dev" },
 	{ "dtb",	command_dtb,		"dtb [dev:][filename]" },
 	{ "initrd",	command_initrd,		"initrd [dev:][filename]" },
+	{ "fs",		command_initrd,		NULL },
 	{ "rndseed",	command_rndseed,	"rndseed [dev:][filename]" },
 	{ "dtoverlay",	command_dtoverlay,	"dtoverlay [dev:][filename]" },
 	{ "dtoverlays",	command_dtoverlays,	"dtoverlays [{on|off|reset}]" },
