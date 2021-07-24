@@ -1,4 +1,4 @@
-/* $NetBSD: dtv_device.c,v 1.12 2017/10/28 04:53:55 riastradh Exp $ */
+/* $NetBSD: dtv_device.c,v 1.13 2021/07/24 07:48:38 skrll Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,12 +33,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtv_device.c,v 1.12 2017/10/28 04:53:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtv_device.c,v 1.13 2021/07/24 07:48:38 skrll Exp $");
 
+#include <sys/param.h>
 #include <sys/types.h>
+#include <sys/atomic.h>
 #include <sys/conf.h>
 #include <sys/device.h>
-#include <sys/atomic.h>
 #include <sys/module.h>
 #include <sys/poll.h>
 #include <sys/select.h>
