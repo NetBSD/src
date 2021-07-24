@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_eisa.c,v 1.28 2021/01/27 04:35:15 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_eisa.c,v 1.29 2021/07/24 18:50:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_eisa.c,v 1.28 2021/01/27 04:35:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_eisa.c,v 1.29 2021/07/24 18:50:07 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -150,7 +150,7 @@ tlp_eisa_attach(device_t parent, device_t self, void *aux)
 	const struct tulip_eisa_product *tep;
 	u_int8_t enaddr[ETHER_ADDR_LEN], tmpbuf[sizeof(testpat)];
 	u_int32_t val;
-	int irq, i, cnt;
+	int irq, ist, i, cnt;
 	char intrbuf[EISA_INTRSTR_LEN];
 
 	/*
@@ -244,6 +244,7 @@ tlp_eisa_attach(device_t parent, device_t self, void *aux)
 	 */
 	val = bus_space_read_4(iot, ioh, DE425_CFG0);
 	irq = tlp_eisa_irqs[(val >> 1) & 0x03];
+	ist = (val & 0x01) ? IST_EDGE : IST_LEVEL;
 
 	/*
 	 * Map and establish our interrupt.
@@ -253,8 +254,7 @@ tlp_eisa_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	intrstr = eisa_intr_string(ec, ih, intrbuf, sizeof(intrbuf));
-	esc->sc_ih = eisa_intr_establish(ec, ih,
-	    (val & 0x01) ? IST_EDGE : IST_LEVEL, IPL_NET, tlp_intr, sc);
+	esc->sc_ih = eisa_intr_establish(ec, ih, ist, IPL_NET, tlp_intr, sc);
 	if (esc->sc_ih == NULL) {
 		aprint_error_dev(self, "unable to establish interrupt");
 		if (intrstr != NULL)
@@ -262,8 +262,10 @@ tlp_eisa_attach(device_t parent, device_t self, void *aux)
 		aprint_error("\n");
 		return;
 	}
-	if (intrstr != NULL)
-		aprint_normal_dev(self, "interrupting at %s\n", intrstr);
+	if (intrstr != NULL) {
+		aprint_normal_dev(self, "interrupting at %s (%s trigger)\n",
+		    ist == IST_EDGE ? "edge" : "level", intrstr);
+	}
 
 	/*
 	 * Finish off the attach.
