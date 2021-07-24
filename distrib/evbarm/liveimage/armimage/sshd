@@ -1,3 +1,0 @@
-# $NetBSD: sshd,v 1.1 2021/07/23 21:53:34 jmcneill Exp $
-
-sshd=YES
