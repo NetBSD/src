@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.31 2011/07/02 03:35:03 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.32 2021/07/24 05:29:26 rin Exp $
 
 SRCS+=	bswap16.c bswap32.c
 SRCS+=	htonl.c htons.c ntohl.c ntohs.c
@@ -9,7 +9,9 @@ SRCS+=	gprsavrest.S
 
 # Disable the asm versions on evbppc because they break the Explora
 .if ${MACHINE} == "evbppc"
-memcpy.o: memcpy.c
-memcmp.o: memcmp.c
-memmove.o: memmove.c
+.  for name in memcmp memcpy memmove
+.    for suffix in o po pico go
+${name}.${suffix}: ${name}.c
+.    endfor
+.  endfor
 .endif
