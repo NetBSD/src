@@ -1,4 +1,4 @@
-# $NetBSD: t_execsnoop.sh,v 1.4 2021/07/18 06:24:58 dholland Exp $
+# $NetBSD: t_execsnoop.sh,v 1.5 2021/07/24 15:56:05 gson Exp $
 #
 # Copyright (c) 2020 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -27,7 +27,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-tmp="/tmp/execsnoop"
+tmp="execsnoop.out"
 
 atf_test_case basic cleanup
 basic_head() {
@@ -60,10 +60,6 @@ basic_body() {
 }
 
 basic_cleanup() {
-
-	if [ -f $tmp ]; then
-		rm $tmp
-	fi
 }
 
 atf_init_test_cases() {
