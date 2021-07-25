@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.79 2021/07/10 09:14:38 rillig Exp $
+#	$NetBSD: Makefile,v 1.80 2021/07/25 22:14:36 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,7 @@ PROG=		lint1
 SRCS=		cgram.y \
 		ckbool.c ckctype.c ckgetopt.c \
 		decl.c emit.c emit1.c err.c func.c init.c inittyp.c lex.c \
-		main1.c mem.c mem1.c oper.c print.c scan.l tree.c tyname.c
+		main1.c mem.c mem1.c oper.c scan.l tree.c tyname.c
 
 MAN=		lint.7
 YHEADER=
