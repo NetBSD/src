@@ -1,4 +1,4 @@
-/* $NetBSD: rk_anxdp.c,v 1.3 2021/01/27 03:10:19 thorpej Exp $ */
+/* $NetBSD: rk_anxdp.c,v 1.4 2021/07/25 11:14:15 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jonathan A. Kollasch <jakllsch@kollasch.net>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_anxdp.c,v 1.3 2021/01/27 03:10:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_anxdp.c,v 1.4 2021/07/25 11:14:15 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -172,7 +172,7 @@ rk_anxdp_ep_activate(device_t dev, struct fdt_endpoint *ep, bool activate)
 		break;
 	}
 
-	sc->sc_encoder.possible_crtcs = 0x3; /* XXX */
+	sc->sc_encoder.possible_crtcs = 0x2; /* VOPB only */
 	drm_encoder_init(crtc->dev, &sc->sc_encoder, &rk_anxdp_encoder_funcs,
 	    DRM_MODE_ENCODER_TMDS);
 	drm_encoder_helper_add(&sc->sc_encoder, &rk_anxdp_encoder_helper_funcs);
