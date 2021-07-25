@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.300 2021/07/24 13:28:14 simonb Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.301 2021/07/25 06:06:40 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.300 2021/07/24 13:28:14 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.301 2021/07/25 06:06:40 simonb Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bufcache.h"
@@ -1804,6 +1804,14 @@ sysctl_dobuf(SYSCTLFN_ARGS)
 	    elem_size < 1 || elem_count < 0)
 		return (EINVAL);
 
+	if (oldp == NULL) {
+		/* count only, don't run through the buffer queues */
+		needed = pool_cache_nget(buf_cache) - pool_cache_nput(buf_cache);
+		*oldlenp = (needed + KERN_BUFSLOP) * elem_size;
+
+		return 0;
+	}
+
 	error = 0;
 	needed = 0;
 	sysctl_unlock();
@@ -1848,8 +1856,6 @@ sysctl_dobuf(SYSCTLFN_ARGS)
 	sysctl_relock();
 
 	*oldlenp = needed;
-	if (oldp == NULL)
-		*oldlenp += KERN_BUFSLOP * elem_size;
 
 	return (error);
 }
