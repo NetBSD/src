@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_typeof.c,v 1.1 2021/07/25 10:57:38 rillig Exp $	*/
+/*	$NetBSD: gcc_typeof.c,v 1.2 2021/07/25 11:19:51 rillig Exp $	*/
 # 3 "gcc_typeof.c"
 
 /*
@@ -10,6 +10,13 @@
 void take_double(typeof(0.0));
 
 void take_function_double_returning_double(
+    /*
+     * FIXME: lint's grammar uses 'typeof cast_expression', while GCC's
+     *  c_parser_typeof_specifier uses 'typeof ( expression )'.  The crucial
+     *  difference is that lint parses the following expression as 'typeof
+     *  ((0.0)(typeof(0.0))', that is, it tries to call the function 0.0,
+     *  which of course is nonsense.
+     */
     typeof(0.0)(
 	/* FIXME: GCC can parse this */
 	/* expect+1: error: syntax error 'typeof' [249] */

@@ -1,2 +1,2 @@
-gcc_typeof.c(16): error: syntax error 'typeof' [249]
-gcc_typeof.c(26): warning: passing 'pointer to function(double) returning double' to incompatible 'double', arg #1 [155]
+gcc_typeof.c(23): error: syntax error 'typeof' [249]
+gcc_typeof.c(33): warning: passing 'pointer to function(double) returning double' to incompatible 'double', arg #1 [155]
