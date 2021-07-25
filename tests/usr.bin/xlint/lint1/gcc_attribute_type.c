@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_attribute_type.c,v 1.1 2021/07/06 17:33:07 rillig Exp $	*/
+/*	$NetBSD: gcc_attribute_type.c,v 1.2 2021/07/25 19:05:27 rillig Exp $	*/
 # 3 "gcc_attribute_type.c"
 
 /*
@@ -6,6 +6,8 @@
  *
  * https://gcc.gnu.org/onlinedocs/gcc/Type-Attributes.html
  */
+
+struct __attribute__((__packed__)) __attribute__(()) packed_record;
 
 struct __attribute__((__packed__)) packed_record {
 	unsigned char len[2];

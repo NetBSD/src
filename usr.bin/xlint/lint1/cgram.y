@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.342 2021/07/25 18:48:47 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.343 2021/07/25 19:05:27 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.342 2021/07/25 18:48:47 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.343 2021/07/25 19:05:27 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -650,7 +650,8 @@ expression_opt:
 /* 'conditional_expression' also implements 'logical_OR_expression'. */
 /* K&R ???, C90 ???, C99 6.5.5 to 6.5.15, C11 6.5.5 to 6.5.15 */
 conditional_expression:
-	  conditional_expression T_ASTERISK conditional_expression {
+	  cast_expression
+	| conditional_expression T_ASTERISK conditional_expression {
 		$$ = build_binary($1, MULT, $3);
 	  }
 	| conditional_expression T_MULTIPLICATIVE conditional_expression {
@@ -687,7 +688,7 @@ conditional_expression:
 	    T_COLON conditional_expression {
 		$$ = build_binary($1, QUEST, build_binary($3, COLON, $5));
 	  }
-	| cast_expression;
+	;
 
 /* K&R ???, C90 ???, C99 6.5.16, C11 6.5.16 */
 assignment_expression:
@@ -911,14 +912,14 @@ struct_or_union_specifier:	/* C99 6.7.2.1 */
 	;
 
 struct_or_union:		/* C99 6.7.2.1 */
-	  struct_or_union type_attribute
-	| T_STRUCT_OR_UNION {
+	  T_STRUCT_OR_UNION {
 		symtyp = FTAG;
 		begin_declaration_level($1 == STRUCT ? MOS : MOU);
 		dcs->d_offset = 0;
 		dcs->d_sou_align_in_bits = CHAR_SIZE;
 		$$ = $1;
 	  }
+	| struct_or_union type_attribute
 	;
 
 braced_struct_declaration_list:	/* see C99 6.7.2.1 */
