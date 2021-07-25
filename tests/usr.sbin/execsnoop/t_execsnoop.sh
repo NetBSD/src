@@ -1,4 +1,4 @@
-# $NetBSD: t_execsnoop.sh,v 1.7 2021/07/25 10:21:44 gson Exp $
+# $NetBSD: t_execsnoop.sh,v 1.8 2021/07/25 15:51:32 gson Exp $
 #
 # Copyright (c) 2020 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -37,7 +37,10 @@ basic_head() {
 }
 
 basic_body() {
-	atf_expect_fail "PR kern/53417"
+	case `uname -p` in
+	*arm*)
+		atf_expect_fail "PR kern/53417" ;;
+	esac
 
 	n=10
 	atf_check -s exit:0 -o ignore -e empty -x "execsnoop > $tmp &"
