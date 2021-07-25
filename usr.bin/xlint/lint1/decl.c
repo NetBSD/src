@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.209 2021/07/23 16:48:48 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.210 2021/07/25 22:14:36 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.209 2021/07/23 16:48:48 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.210 2021/07/25 22:14:36 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -131,6 +131,20 @@ initdecl(void)
 	 */
 	typetab[SIGNED].t_tspec = SIGNED;
 	typetab[UNSIGN].t_tspec = UNSIGN;
+}
+
+/* Return the name of the "storage class" in the wider sense. */
+static const char *
+scl_name(scl_t scl)
+{
+	static const char *const names[] = {
+	    "none", "extern", "static", "auto", "register", "typedef",
+	    "struct", "union", "enum", "member of struct", "member of union",
+	    "compile-time constant", "abstract", "argument",
+	    "prototype argument", "inline"
+	};
+
+	return names[scl];
 }
 
 /*
