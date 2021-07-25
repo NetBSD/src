@@ -1,4 +1,4 @@
-/*	$NetBSD: fish.c,v 1.26 2021/05/02 12:25:55 rillig Exp $	*/
+/*	$NetBSD: fish.c,v 1.27 2021/07/25 02:00:42 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)fish.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fish.c,v 1.26 2021/05/02 12:25:55 rillig Exp $");
+__RCSID("$NetBSD: fish.c,v 1.27 2021/07/25 02:00:42 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -432,15 +432,20 @@ init(void)
 static void
 instructions(void)
 {
-	int input;
+	int input, c;
 	pid_t pid;
 	int fd;
 	const char *pager;
 	int status;
 
 	(void)printf("Would you like instructions (y or n)? ");
-	input = getchar();
-	while (getchar() != '\n');
+	input = c = getchar();
+	while (c != '\n') {
+		c = getchar();
+		if (c == EOF) {
+			exit(1);
+		}
+	}
 	if (input != 'y')
 		return;
 
