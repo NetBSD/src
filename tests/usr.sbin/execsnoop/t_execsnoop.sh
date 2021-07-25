@@ -1,4 +1,4 @@
-# $NetBSD: t_execsnoop.sh,v 1.5 2021/07/24 15:56:05 gson Exp $
+# $NetBSD: t_execsnoop.sh,v 1.6 2021/07/25 10:11:32 gson Exp $
 #
 # Copyright (c) 2020 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -41,7 +41,7 @@ basic_body() {
 
 	n=10
 	atf_check -s exit:0 -o ignore -e empty -x "execsnoop > $tmp &"
-	sleep 1
+	sleep 5
 
 	while [ $n -gt 0 ]; do
 		whoami
