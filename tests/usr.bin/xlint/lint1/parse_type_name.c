@@ -1,4 +1,4 @@
-/*	$NetBSD: parse_type_name.c,v 1.3 2021/07/25 09:53:01 rillig Exp $	*/
+/*	$NetBSD: parse_type_name.c,v 1.4 2021/07/25 15:48:58 rillig Exp $	*/
 # 3 "parse_type_name.c"
 
 /*
@@ -48,6 +48,7 @@ cover_abstract_declarator(void)
 	sink(sizeof(int **[3]));
 
 	/* cover 'T_TYPEOF cast_expression' */
+	/* expect+1: error: cannot take size/alignment of function [144] */
 	sink(sizeof(int(typeof(12345))));
 }
 
