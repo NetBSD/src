@@ -1,0 +1,6 @@
+parse_type_name.c(71): error: null dimension [17]
+parse_type_name.c(75): error: null dimension [17]
+parse_type_name.c(141): error: syntax error 'goto' [249]
+parse_type_name.c(143): error: syntax error 'goto' [249]
+parse_type_name.c(149): error: syntax error 'goto' [249]
+parse_type_name.c(163): warning: ANSI C requires formal parameter before '...' [84]
