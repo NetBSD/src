@@ -1,0 +1,3 @@
+parse_stmt_iter_error.c(15): error: syntax error ']' [249]
+parse_stmt_iter_error.c(23): error: syntax error ']' [249]
+parse_stmt_iter_error.c(31): error: syntax error ']' [249]
