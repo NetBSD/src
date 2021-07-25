@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_342.c,v 1.2 2021/07/25 22:31:22 rillig Exp $	*/
+/*	$NetBSD: msg_342.c,v 1.3 2021/07/25 22:43:08 rillig Exp $	*/
 # 3 "msg_341.c"
 
 // Test for message: argument to '%s' must be cast to 'unsigned char', not to '%s' [342]
@@ -26,6 +26,9 @@ int isupper(int);
 int isxdigit(int);
 int tolower(int);
 int toupper(int);
+
+int is_other(int);
+int to_other(int);
 
 void sink(int);
 
@@ -60,6 +63,10 @@ cover_is_ctype_function(char c)
 	tolower(c);
 	/* expect+1: warning: argument to 'toupper' must be 'unsigned char' or EOF, not 'char' [341] */
 	toupper(c);
+
+	/* Functions with similar names are not checked. */
+	is_other(c);
+	to_other(c);
 }
 
 void

@@ -1,4 +1,4 @@
-/* $NetBSD: ckctype.c,v 1.2 2021/04/05 02:17:52 rillig Exp $ */
+/* $NetBSD: ckctype.c,v 1.3 2021/07/25 22:43:08 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: ckctype.c,v 1.2 2021/04/05 02:17:52 rillig Exp $");
+__RCSID("$NetBSD: ckctype.c,v 1.3 2021/07/25 22:43:08 rillig Exp $");
 #endif
 
 #include <string.h>
@@ -56,24 +56,25 @@ static bool
 is_ctype_function(const char *name)
 {
 
-	if (name[0] != 'i' || name[1] != 's')
-		if (name[0] != 't' || name[1] != 'o')
-			return false;
+	if (name[0] == 'i' && name[1] == 's')
+		return strcmp(name, "isalnum") == 0 ||
+		       strcmp(name, "isalpha") == 0 ||
+		       strcmp(name, "isblank") == 0 ||
+		       strcmp(name, "iscntrl") == 0 ||
+		       strcmp(name, "isdigit") == 0 ||
+		       strcmp(name, "isgraph") == 0 ||
+		       strcmp(name, "islower") == 0 ||
+		       strcmp(name, "isprint") == 0 ||
+		       strcmp(name, "ispunct") == 0 ||
+		       strcmp(name, "isspace") == 0 ||
+		       strcmp(name, "isupper") == 0 ||
+		       strcmp(name, "isxdigit") == 0;
 
-	return strcmp(name, "isalnum") == 0 ||
-	       strcmp(name, "isalpha") == 0 ||
-	       strcmp(name, "isblank") == 0 ||
-	       strcmp(name, "iscntrl") == 0 ||
-	       strcmp(name, "isdigit") == 0 ||
-	       strcmp(name, "isgraph") == 0 ||
-	       strcmp(name, "islower") == 0 ||
-	       strcmp(name, "isprint") == 0 ||
-	       strcmp(name, "ispunct") == 0 ||
-	       strcmp(name, "isspace") == 0 ||
-	       strcmp(name, "isupper") == 0 ||
-	       strcmp(name, "isxdigit") == 0 ||
-	       strcmp(name, "tolower") == 0 ||
-	       strcmp(name, "toupper") == 0;
+	if (name[0] == 't' && name[1] == 'o')
+		return strcmp(name, "tolower") == 0 ||
+		       strcmp(name, "toupper") == 0;
+
+	return false;
 }
 
 static bool
