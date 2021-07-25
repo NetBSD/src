@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.318 2021/07/20 19:44:36 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.319 2021/07/25 10:39:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.318 2021/07/20 19:44:36 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.319 2021/07/25 10:39:10 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3423,15 +3423,10 @@ cast(tnode_t *tn, type_t *tp)
 		error(329, type_name(tn->tn_type), type_name(tp));
 		return NULL;
 	} else if (nt == STRUCT || nt == ARRAY || nt == FUNC) {
-		if (!Sflag || nt == ARRAY || nt == FUNC) {
-			/* invalid cast expression */
-			error(147);
-			return NULL;
-		}
+		if (!Sflag || nt == ARRAY || nt == FUNC)
+			goto invalid_cast;
 	} else if (ot == STRUCT || ot == UNION) {
-		/* invalid cast expression */
-		error(147);
-		return NULL;
+		goto invalid_cast;
 	} else if (ot == VOID) {
 		/* improper cast of void expression */
 		error(148);
@@ -3448,16 +3443,18 @@ cast(tnode_t *tn, type_t *tp)
 				/* cast discards 'const' from type '%s' */
 				warning(275, type_name(tn->tn_type));
 		}
-	} else {
-		/* invalid cast expression */
-		error(147);
-		return NULL;
-	}
+	} else
+		goto invalid_cast;
 
 	tn = convert(CVT, 0, tp, tn);
 	tn->tn_cast = true;
 
 	return tn;
+
+invalid_cast:
+	/* invalid cast from '%s' to '%s' */
+	error(147, type_name(tn->tn_type), type_name(tp));
+	return NULL;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.130 2021/07/15 20:05:49 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.131 2021/07/25 10:39:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.130 2021/07/15 20:05:49 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.131 2021/07/25 10:39:10 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -201,7 +201,7 @@ const char *const msgs[] = {
 	"cannot take size/alignment of function",		      /* 144 */
 	"cannot take size/alignment of bit-field",		      /* 145 */
 	"cannot take size/alignment of void",			      /* 146 */
-	"invalid cast expression",				      /* 147 */
+	"invalid cast from '%s' to '%s'",			      /* 147 */
 	"improper cast of void expression",			      /* 148 */
 	"illegal function (type %s)",				      /* 149 */
 	"argument mismatch: %d arg%s passed, %d expected",	      /* 150 */
