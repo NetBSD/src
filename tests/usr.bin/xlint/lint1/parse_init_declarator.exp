@@ -1,3 +1,1 @@
-parse_init_declarator.c(14): error: syntax error '__attribute__' [249]
-parse_init_declarator.c(23): error: syntax error '__attribute__' [249]
-parse_init_declarator.c(33): error: syntax error '__attribute__' [249]
+parse_init_declarator.c(29): error: syntax error '__attribute__' [249]

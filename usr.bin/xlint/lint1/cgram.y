@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.338 2021/07/25 16:57:23 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.339 2021/07/25 17:40:04 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.338 2021/07/25 16:57:23 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.339 2021/07/25 17:40:04 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -124,7 +124,7 @@ anonymize(sym_t *s)
 
 %}
 
-%expect 156
+%expect 159
 
 %union {
 	val_t	*y_val;
@@ -833,11 +833,7 @@ type_attribute_opt:
 	;
 
 type_attribute:			/* See C11 6.7 declaration-specifiers */
-	  T_ATTRIBUTE T_LPAREN T_LPAREN {
-	    attron = true;
-	  } gcc_attribute_spec_list {
-	    attron = false;
-	  } T_RPAREN T_RPAREN
+	  gcc_attribute
 	  /* TODO: c11ism */
 	| T_ALIGNAS T_LPAREN align_as T_RPAREN
 	| T_PACKED {
@@ -1592,11 +1588,11 @@ asm_or_symbolrename_opt:	/* GCC extensions */
 	  /* empty */ {
 		$$ = NULL;
 	  }
-	| T_ASM T_LPAREN T_STRING T_RPAREN {
+	| T_ASM T_LPAREN T_STRING T_RPAREN gcc_attribute_list_opt {
 		freeyyv(&$3, T_STRING);
 		$$ = NULL;
 	  }
-	| T_SYMBOLRENAME T_LPAREN T_NAME T_RPAREN {
+	| T_SYMBOLRENAME T_LPAREN T_NAME T_RPAREN gcc_attribute_list_opt {
 		$$ = $3;
 	  }
 	;
@@ -2004,6 +2000,24 @@ arg_declaration:
 	  }
 	| begin_type_declmods error
 	| begin_type_declaration_specifiers error
+	;
+
+gcc_attribute_list_opt:
+	  /* empty */
+	| gcc_attribute_list
+	;
+
+gcc_attribute_list:
+	  gcc_attribute
+	| gcc_attribute_list gcc_attribute
+	;
+
+gcc_attribute:
+	  T_ATTRIBUTE T_LPAREN T_LPAREN {
+	    attron = true;
+	  } gcc_attribute_spec_list {
+	    attron = false;
+	  } T_RPAREN T_RPAREN
 	;
 
 gcc_attribute_spec_list:
