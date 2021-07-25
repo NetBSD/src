@@ -1,1 +1,7 @@
+gcc_attribute_enum.c(17): error: syntax error '__attribute__' [249]
 gcc_attribute_enum.c(21): error: syntax error '__attribute__' [249]
+gcc_attribute_enum.c(21): error: syntax error '{' [249]
+gcc_attribute_enum.c(23): error: syntax error ';' [249]
+gcc_attribute_enum.c(27): error: syntax error '{' [249]
+gcc_attribute_enum.c(29): error: syntax error ';' [249]
+gcc_attribute_enum.c(29): error: cannot recover from previous errors [224]
