@@ -1,4 +1,4 @@
-/*	$NetBSD: parse_type_name.c,v 1.2 2021/07/25 09:47:08 rillig Exp $	*/
+/*	$NetBSD: parse_type_name.c,v 1.3 2021/07/25 09:53:01 rillig Exp $	*/
 # 3 "parse_type_name.c"
 
 /*
@@ -48,15 +48,7 @@ cover_abstract_declarator(void)
 	sink(sizeof(int **[3]));
 
 	/* cover 'T_TYPEOF cast_expression' */
-	sink(sizeof(typeof(12345)));
-	/* expect+1: error: illegal type combination [4] */
-	sink(sizeof(typeof(12345) typeof(12345)));
-	/*
-	 * TODO: Remove this grammar rule.  No matter how often typeof occurs
-	 * in the expression, it is already covered by abstract_declaration >
-	 * begin_type_specifier_qualifier_list > begin_type_typespec >
-	 * notype_type_specifier > T_TYPEOF.  It can never reduce this rule.
-	 */
+	sink(sizeof(int(typeof(12345))));
 }
 
 void
