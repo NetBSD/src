@@ -1,4 +1,4 @@
-# $NetBSD: t_execsnoop.sh,v 1.6 2021/07/25 10:11:32 gson Exp $
+# $NetBSD: t_execsnoop.sh,v 1.7 2021/07/25 10:21:44 gson Exp $
 #
 # Copyright (c) 2020 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -49,8 +49,6 @@ basic_body() {
 	done
 
 	sleep 5
-	pkill -9 execsnoop
-	sleep 1
 
 	if [ ! $(cat $tmp | grep "whoami" | wc -l) -eq 10 ]; then
 		atf_fail "execsnoop does not work"
