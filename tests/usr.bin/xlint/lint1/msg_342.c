@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_342.c,v 1.1 2021/04/05 02:05:47 rillig Exp $	*/
+/*	$NetBSD: msg_342.c,v 1.2 2021/07/25 22:31:22 rillig Exp $	*/
 # 3 "msg_341.c"
 
 // Test for message: argument to '%s' must be cast to 'unsigned char', not to '%s' [342]
@@ -12,9 +12,55 @@
 extern const unsigned short *_ctype_tab_;
 extern const short *_tolower_tab_;
 extern const short *_toupper_tab_;
+int isalnum(int);
+int isalpha(int);
+int isblank(int);
+int iscntrl(int);
+int isdigit(int);
+int isgraph(int);
+int islower(int);
+int isprint(int);
+int ispunct(int);
 int isspace(int);
+int isupper(int);
+int isxdigit(int);
+int tolower(int);
+int toupper(int);
 
 void sink(int);
+
+void
+cover_is_ctype_function(char c)
+{
+	/* expect+1: warning: argument to 'isalnum' must be 'unsigned char' or EOF, not 'char' [341] */
+	isalnum(c);
+	/* expect+1: warning: argument to 'isalpha' must be 'unsigned char' or EOF, not 'char' [341] */
+	isalpha(c);
+	/* expect+1: warning: argument to 'isblank' must be 'unsigned char' or EOF, not 'char' [341] */
+	isblank(c);
+	/* expect+1: warning: argument to 'iscntrl' must be 'unsigned char' or EOF, not 'char' [341] */
+	iscntrl(c);
+	/* expect+1: warning: argument to 'isdigit' must be 'unsigned char' or EOF, not 'char' [341] */
+	isdigit(c);
+	/* expect+1: warning: argument to 'isgraph' must be 'unsigned char' or EOF, not 'char' [341] */
+	isgraph(c);
+	/* expect+1: warning: argument to 'islower' must be 'unsigned char' or EOF, not 'char' [341] */
+	islower(c);
+	/* expect+1: warning: argument to 'isprint' must be 'unsigned char' or EOF, not 'char' [341] */
+	isprint(c);
+	/* expect+1: warning: argument to 'ispunct' must be 'unsigned char' or EOF, not 'char' [341] */
+	ispunct(c);
+	/* expect+1: warning: argument to 'isspace' must be 'unsigned char' or EOF, not 'char' [341] */
+	isspace(c);
+	/* expect+1: warning: argument to 'isupper' must be 'unsigned char' or EOF, not 'char' [341] */
+	isupper(c);
+	/* expect+1: warning: argument to 'isxdigit' must be 'unsigned char' or EOF, not 'char' [341] */
+	isxdigit(c);
+	/* expect+1: warning: argument to 'tolower' must be 'unsigned char' or EOF, not 'char' [341] */
+	tolower(c);
+	/* expect+1: warning: argument to 'toupper' must be 'unsigned char' or EOF, not 'char' [341] */
+	toupper(c);
+}
 
 void
 function_call_char(char c)
