@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_attribute_enum.c,v 1.2 2021/07/25 18:34:44 rillig Exp $	*/
+/*	$NetBSD: gcc_attribute_enum.c,v 1.3 2021/07/25 18:44:21 rillig Exp $	*/
 # 3 "gcc_attribute_enum.c"
 
 /*
@@ -13,22 +13,15 @@
  * See GCC, c-parser.c, function c_parser_enum_specifier.
  */
 
-/* expect+1: syntax error '__attribute__' [249] */
 enum __attribute__(()) tag;
 
-/* expect+2: syntax error '__attribute__' [249] */
-/* expect+1: syntax error '{' [249] */
 enum __attribute__(()) tag_with_declaration {
 	TAG_WITH_DECL
 } __attribute__(());
-/* expect-1: syntax error ';' [249] */
 
-/* expect+1: syntax error '{' [249] */
 enum __attribute__(()) {
 	ONLY_DECL
 } __attribute__(());
-/* expect-1: syntax error ';' [249] */
-/* expect-2: error: cannot recover from previous errors [224] */
 
 /*
  * Attributes in enumerator.
@@ -36,12 +29,18 @@ enum __attribute__(()) {
  * See GCC, c-parser.c, function c_parser_enum_specifier.
  */
 
-enum {
+enum without_initializer {
+	/* expect+1: error: syntax error '__attribute__' [249] */
 	NO_INIT_FIRST __attribute__(()),
 	NO_INIT__LAST __attribute__(())
 };
 
-enum {
+enum with_initializer {
+	/* expect+1: error: syntax error '__attribute__' [249] */
 	INIT_FIRST __attribute__(()) = 1,
 	INIT__LAST __attribute__(()) = 2
+};
+
+enum tag {
+	TAG
 };
