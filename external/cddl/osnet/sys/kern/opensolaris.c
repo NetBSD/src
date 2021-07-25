@@ -1,4 +1,4 @@
-/*	$NetBSD: opensolaris.c,v 1.2 2018/05/28 21:05:09 chs Exp $	*/
+/*	$NetBSD: opensolaris.c,v 1.3 2021/07/25 06:07:42 skrll Exp $	*/
 /*-
  * Copyright 2007 John Birrell <jb@FreeBSD.org>
  *
@@ -28,11 +28,12 @@
  */
 
 #include <sys/cdefs.h>
+#include <sys/param.h>
 #include <sys/types.h>
+
 #include <sys/conf.h>
 #include <sys/cpuvar.h>
 #include <sys/errno.h>
-#include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/misc.h>
 #include <sys/module.h>
