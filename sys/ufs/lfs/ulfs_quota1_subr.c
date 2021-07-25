@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_quota1_subr.c,v 1.3 2013/06/06 00:49:28 dholland Exp $	*/
+/*	$NetBSD: ulfs_quota1_subr.c,v 1.4 2021/07/25 06:10:01 skrll Exp $	*/
 /*  from NetBSD: quota1_subr.c,v 1.7 2012/01/29 06:23:20 dholland Exp  */
 
 /*-
@@ -28,12 +28,12 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_quota1_subr.c,v 1.3 2013/06/06 00:49:28 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_quota1_subr.c,v 1.4 2021/07/25 06:10:01 skrll Exp $");
 
+#include <sys/param.h>
 #include <sys/types.h>
-#include <machine/limits.h>
-
 #include <sys/quota.h>
+
 #include <ufs/lfs/ulfs_quota1.h>
 
 static uint64_t
