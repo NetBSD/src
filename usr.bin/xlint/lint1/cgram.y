@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.341 2021/07/25 18:44:21 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.342 2021/07/25 18:48:47 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.341 2021/07/25 18:44:21 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.342 2021/07/25 18:48:47 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1101,11 +1101,11 @@ enumerator_list:		/* C99 6.7.2.2 */
 	;
 
 enumerator:			/* C99 6.7.2.2 */
-	  identifier_sym {
+	  identifier_sym gcc_attribute_list_opt {
 		$$ = enumeration_constant($1, enumval, true);
 	  }
-	| identifier_sym T_ASSIGN constant_expr {
-		$$ = enumeration_constant($1, to_int_constant($3, true),
+	| identifier_sym gcc_attribute_list_opt T_ASSIGN constant_expr {
+		$$ = enumeration_constant($1, to_int_constant($4, true),
 		    false);
 	  }
 	;

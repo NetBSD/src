@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_attribute_enum.c,v 1.3 2021/07/25 18:44:21 rillig Exp $	*/
+/*	$NetBSD: gcc_attribute_enum.c,v 1.4 2021/07/25 18:48:47 rillig Exp $	*/
 # 3 "gcc_attribute_enum.c"
 
 /*
@@ -30,15 +30,15 @@ enum __attribute__(()) {
  */
 
 enum without_initializer {
-	/* expect+1: error: syntax error '__attribute__' [249] */
 	NO_INIT_FIRST __attribute__(()),
-	NO_INIT__LAST __attribute__(())
+	NO_INIT_LAST __attribute__(())
 };
 
 enum with_initializer {
-	/* expect+1: error: syntax error '__attribute__' [249] */
 	INIT_FIRST __attribute__(()) = 1,
-	INIT__LAST __attribute__(()) = 2
+	INIT_LAST __attribute__(()) = 2,
+	/* expect+1: syntax error '__attribute__' [249] */
+	INIT_WRONG = 3 __attribute__(()),
 };
 
 enum tag {

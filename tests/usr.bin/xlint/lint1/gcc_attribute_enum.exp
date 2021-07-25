@@ -1,2 +1,1 @@
-gcc_attribute_enum.c(34): error: syntax error '__attribute__' [249]
-gcc_attribute_enum.c(40): error: syntax error '__attribute__' [249]
+gcc_attribute_enum.c(41): error: syntax error '__attribute__' [249]
