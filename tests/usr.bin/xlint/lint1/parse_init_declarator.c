@@ -1,4 +1,4 @@
-/*	$NetBSD: parse_init_declarator.c,v 1.1 2021/07/25 17:27:07 rillig Exp $	*/
+/*	$NetBSD: parse_init_declarator.c,v 1.2 2021/07/25 17:40:04 rillig Exp $	*/
 # 3 "parse_init_declarator.c"
 
 /*
@@ -12,8 +12,6 @@ int global_var;
 
 int *init_declarator_without_initializer
     __asm("") __attribute__((deprecated));
-/* expect-1: error: syntax error '__attribute__' [249] */
-/* FIXME */
 
 /* XXX: GCC does not accept this, neither should lint. */
 int *init_declarator_without_initializer_wrong_order
@@ -21,8 +19,6 @@ int *init_declarator_without_initializer_wrong_order
 
 int *init_declarator_with_initializer
     __asm("") __attribute__((deprecated)) = &global_var;
-/* expect-1: error: syntax error '__attribute__' [249] */
-/* FIXME */
 
 /* XXX: GCC does not accept this, neither should lint. */
 int *init_declarator_with_initializer_wrong_order
