@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.120 2021/07/20 19:44:36 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.121 2021/07/25 22:14:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -338,11 +338,6 @@ extern	void	lex_comment(void);
 extern	void	lex_slash_slash_comment(void);
 extern	void	lex_unknown_character(int);
 extern	int	lex_input(void);
-
-/*
- * print.c
- */
-const char	*scl_name(scl_t);
 
 /*
  * ckbool.c
