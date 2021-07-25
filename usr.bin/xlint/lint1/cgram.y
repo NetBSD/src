@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.340 2021/07/25 18:01:03 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.341 2021/07/25 18:44:21 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.340 2021/07/25 18:01:03 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.341 2021/07/25 18:44:21 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1037,18 +1037,18 @@ type_struct_declarator:
 	;
 
 enum_specifier:			/* C99 6.7.2.2 */
-	  enum identifier_sym {
-		$$ = mktag($2, ENUM, false, false);
+	  enum gcc_attribute_list_opt identifier_sym {
+		$$ = mktag($3, ENUM, false, false);
 	  }
-	| enum identifier_sym {
-		dcs->d_tagtyp = mktag($2, ENUM, true, false);
-	  } enum_declaration {
-		$$ = complete_tag_enum(dcs->d_tagtyp, $4);
+	| enum gcc_attribute_list_opt identifier_sym {
+		dcs->d_tagtyp = mktag($3, ENUM, true, false);
+	  } enum_declaration /*gcc_attribute_list_opt*/ {
+		$$ = complete_tag_enum(dcs->d_tagtyp, $5);
 	  }
-	| enum {
+	| enum gcc_attribute_list_opt {
 		dcs->d_tagtyp = mktag(NULL, ENUM, true, false);
-	  } enum_declaration {
-		$$ = complete_tag_enum(dcs->d_tagtyp, $3);
+	  } enum_declaration /*gcc_attribute_list_opt*/ {
+		$$ = complete_tag_enum(dcs->d_tagtyp, $4);
 	  }
 	| enum error {
 		symtyp = FVFT;
