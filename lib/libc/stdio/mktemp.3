@@ -1,4 +1,4 @@
-.\"	$NetBSD: mktemp.3,v 1.30 2014/06/19 09:30:33 wiz Exp $
+.\"	$NetBSD: mktemp.3,v 1.31 2021/07/25 08:52:03 simonb Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)mktemp.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 18, 2014
+.Dd July 25, 2021
 .Dt MKTEMP 3
 .Os
 .Sh NAME
@@ -67,33 +67,26 @@ This file name is unique and suitable for use
 by the application.
 The template may be any file name with some number of
 .So Li X
-.Sc Ns s
-appended
-to it, for example
+characters appended to it, for example
 .Pa /tmp/temp.XXXXXX .
 The trailing
 .So Li X
-.Sc Ns s
-are replaced with the current process number and/or a
-unique letter combination.
-The number of unique file names
+characters in the template are replaced with a unique letter and number
+combination.
 .Fn mktemp
 can return depends on the number of
 .So Li X
-.Sc Ns s
-provided.
+characters provided.
 Although the
 .Nx
 implementation of the functions will accept any number of trailing
 .So Li X
-.Sc Ns s ,
-for portability reasons one should use only six.
+characters, for portability reasons one should use only six.
 Using six
 .So Li X
-.Sc Ns s
-will result in
+characters will result in
 .Fn mktemp
-testing roughly 26 ** 6 (308915776) combinations.
+testing roughly 62 ** 6 (56800235584) combinations.
 .Pp
 The
 .Fn mkstemp
