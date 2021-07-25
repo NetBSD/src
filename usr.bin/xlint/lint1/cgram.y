@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.337 2021/07/25 15:58:24 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.338 2021/07/25 16:57:23 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.337 2021/07/25 15:58:24 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.338 2021/07/25 16:57:23 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -608,7 +608,8 @@ unary_expression:
 	| T_SIZEOF unary_expression {
 		$$ = $2 == NULL ? NULL : build_sizeof($2->tn_type);
 		if ($$ != NULL)
-			check_expr_misc($2, false, false, false, false, false, true);
+			check_expr_misc($2,
+			    false, false, false, false, false, true);
 	  }
 	| T_SIZEOF T_LPAREN type_name T_RPAREN {
 		$$ = build_sizeof($3);
@@ -971,7 +972,8 @@ struct_declaration:		/* C99 6.7.2.1 */
 		error(249, "member without type");
 		$$ = NULL;
 	  }
-	| begin_type_specifier_qualifier_list end_type type_attribute_opt T_SEMI {
+	| begin_type_specifier_qualifier_list end_type type_attribute_opt
+	    T_SEMI {
 		symtyp = FVFT;
 		if (!Sflag)
 			/* anonymous struct/union members is a C9X feature */
@@ -1016,7 +1018,7 @@ type_struct_declarators:
 
 notype_struct_declarator:
 	  notype_declarator
-	| notype_declarator T_COLON constant_expr {		/* C99 6.7.2.1 */
+	| notype_declarator T_COLON constant_expr {	/* C99 6.7.2.1 */
 		$$ = bitfield($1, to_int_constant($3, true));
 	  }
 	| {
@@ -1107,7 +1109,8 @@ enumerator:			/* C99 6.7.2.2 */
 		$$ = enumeration_constant($1, enumval, true);
 	  }
 	| identifier_sym T_ASSIGN constant_expr {
-		$$ = enumeration_constant($1, to_int_constant($3, true), false);
+		$$ = enumeration_constant($1, to_int_constant($3, true),
+		    false);
 	  }
 	;
 
@@ -1258,9 +1261,9 @@ type_direct_declarator:
 	;
 
 /*
- * The two distinct rules type_param_declarator and notype_param_declarator avoid a
- * conflict in argument lists. A typename enclosed in parentheses is always
- * treated as a typename, not an argument name. For example, after
+ * The two distinct rules type_param_declarator and notype_param_declarator
+ * avoid a conflict in argument lists. A typename enclosed in parentheses is
+ * always treated as a typename, not an argument name. For example, after
  * "typedef double a;", the declaration "f(int (a));" is interpreted as
  * "f(int (double));", not "f(int a);".
  */
@@ -1400,7 +1403,8 @@ direct_abstract_declarator:	/* C99 6.7.6 */
 		$$ = add_array(abstract_name(), false, 0);
 	  }
 	| T_LBRACK array_size T_RBRACK {
-		$$ = add_array(abstract_name(), true, to_int_constant($2, false));
+		$$ = add_array(abstract_name(), true,
+		    to_int_constant($2, false));
 	  }
 	| type_attribute direct_abstract_declarator {
 		$$ = $2;
@@ -1419,7 +1423,8 @@ direct_abstract_declarator:	/* C99 6.7.6 */
 		end_declaration_level();
 		block_level--;
 	  }
-	| direct_abstract_declarator abstract_decl_param_list asm_or_symbolrename_opt {
+	| direct_abstract_declarator abstract_decl_param_list
+	    asm_or_symbolrename_opt {
 		$$ = add_function(symbolrename($1, $3), $2);
 		end_declaration_level();
 		block_level--;
@@ -1431,7 +1436,8 @@ abstract_decl_param_list:
 	  abstract_decl_lparen T_RPAREN type_attribute_opt {
 		$$ = NULL;
 	  }
-	| abstract_decl_lparen vararg_parameter_type_list T_RPAREN type_attribute_opt {
+	| abstract_decl_lparen vararg_parameter_type_list T_RPAREN
+	    type_attribute_opt {
 		dcs->d_proto = true;
 		$$ = $2;
 	  }
