@@ -1,4 +1,4 @@
-/*	$NetBSD: parse_init_declarator.c,v 1.2 2021/07/25 17:40:04 rillig Exp $	*/
+/*	$NetBSD: parse_init_declarator.c,v 1.3 2021/07/25 22:03:42 rillig Exp $	*/
 # 3 "parse_init_declarator.c"
 
 /*
@@ -28,3 +28,6 @@ int *init_declarator_with_initializer_wrong_order
 int *init_declarator_with_initializer_attribute_too_late
     __asm("") = &global_var __attribute__((deprecated));
 /* expect-1: error: syntax error '__attribute__' [249] */
+
+/* cover cgram_declare, freeyyv */
+int original __symbolrename(renamed);
