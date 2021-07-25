@@ -1,4 +1,4 @@
-/*	$NetBSD: parse_type_name.c,v 1.6 2021/07/25 19:41:33 rillig Exp $	*/
+/*	$NetBSD: parse_type_name.c,v 1.7 2021/07/25 22:03:42 rillig Exp $	*/
 # 3 "parse_type_name.c"
 
 /*
@@ -65,7 +65,7 @@ cover_direct_abstract_declarator(void)
 	sink(sizeof(int[3]));
 
 	/* cover 'type_attribute direct_abstract_declarator' */
-	/* TODO */
+	sink(sizeof(int *__attribute__(())[3]));
 
 	/* cover 'direct_abstract_declarator T_LBRACK T_RBRACK' */
 	/* expect+1: error: null dimension [17] */

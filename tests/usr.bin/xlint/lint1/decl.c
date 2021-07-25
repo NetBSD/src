@@ -1,4 +1,4 @@
-/*	$NetBSD: decl.c,v 1.11 2021/07/25 08:42:28 rillig Exp $	*/
+/*	$NetBSD: decl.c,v 1.12 2021/07/25 22:03:42 rillig Exp $	*/
 # 3 "decl.c"
 
 /*
@@ -164,3 +164,9 @@ thread int thread_int;
 __thread int thread_int;
 /* expect+1: syntax error 'int' [249] */
 __thread__ int thread_int;
+
+/* expect+2: warning: static function cover_func_declarator unused [236] */
+static
+cover_func_declarator(void)
+{
+}
