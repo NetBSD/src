@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.339 2021/07/25 17:40:04 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.340 2021/07/25 18:01:03 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.339 2021/07/25 17:40:04 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.340 2021/07/25 18:01:03 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1366,7 +1366,7 @@ type_name:			/* C99 6.7.6 */
 	  }
 	;
 
-abstract_declaration:
+abstract_declaration:		/* specific to lint */
 	  begin_type_qualifier_list end_type {
 		$$ = declare_1_abstract(abstract_name());
 	  }
@@ -1381,7 +1381,9 @@ abstract_declaration:
 	  }
 	;
 
-abstract_declarator:		/* C99 6.7.6 */
+/* K&R 8.7, C90 ???, C99 6.7.6, C11 6.7.7 */
+/* In K&R, abstract-declarator could be empty and was still simpler. */
+abstract_declarator:
 	  pointer {
 		$$ = add_pointer(abstract_name(), $1);
 	  }
@@ -1391,7 +1393,8 @@ abstract_declarator:		/* C99 6.7.6 */
 	  }
 	;
 
-direct_abstract_declarator:	/* C99 6.7.6 */
+/* K&R ---, C90 ???, C99 6.7.6, C11 6.7.7 */
+direct_abstract_declarator:
 	  T_LPAREN abstract_declarator T_RPAREN {
 		$$ = $2;
 	  }
@@ -1428,7 +1431,7 @@ direct_abstract_declarator:	/* C99 6.7.6 */
 	| direct_abstract_declarator type_attribute_list
 	;
 
-abstract_decl_param_list:
+abstract_decl_param_list:	/* specific to lint */
 	  abstract_decl_lparen T_RPAREN type_attribute_opt {
 		$$ = NULL;
 	  }
@@ -1442,14 +1445,14 @@ abstract_decl_param_list:
 	  }
 	;
 
-abstract_decl_lparen:
+abstract_decl_lparen:		/* specific to lint */
 	  T_LPAREN {
 		block_level++;
 		begin_declaration_level(PROTO_ARG);
 	  }
 	;
 
-vararg_parameter_type_list:
+vararg_parameter_type_list:	/* specific to lint */
 	  parameter_type_list
 	| parameter_type_list T_COMMA T_ELLIPSIS {
 		dcs->d_vararg = true;
