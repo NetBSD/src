@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.93 2021/02/24 06:11:38 simonb Exp $	*/
+/*	$NetBSD: pool.h,v 1.94 2021/07/25 06:00:31 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2007, 2020
@@ -319,6 +319,9 @@ bool		pool_drain(struct pool **);
 int		pool_totalpages(void);
 int		pool_totalpages_locked(void);
 
+unsigned int	pool_nget(struct pool *);
+unsigned int	pool_nput(struct pool *);
+
 /*
  * Debugging and diagnostic aides.
  */
@@ -352,6 +355,9 @@ void		pool_cache_sethiwat(pool_cache_t, int);
 void		pool_cache_sethardlimit(pool_cache_t, int, const char *, int);
 void		pool_cache_prime(pool_cache_t, int);
 void		pool_cache_cpu_init(struct cpu_info *);
+
+unsigned int	pool_cache_nget(pool_cache_t);
+unsigned int	pool_cache_nput(pool_cache_t);
 
 #define		pool_cache_get(pc, f) pool_cache_get_paddr((pc), (f), NULL)
 #define		pool_cache_put(pc, o) pool_cache_put_paddr((pc), (o), \
