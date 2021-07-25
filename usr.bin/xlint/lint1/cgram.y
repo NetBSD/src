@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.335 2021/07/23 15:14:49 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.336 2021/07/25 15:48:57 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.335 2021/07/23 15:14:49 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.336 2021/07/25 15:48:57 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -124,7 +124,7 @@ anonymize(sym_t *s)
 
 %}
 
-%expect 165
+%expect 158
 
 %union {
 	val_t	*y_val;
@@ -1389,9 +1389,6 @@ abstract_declarator:		/* C99 6.7.6 */
 	| direct_abstract_declarator
 	| pointer direct_abstract_declarator {
 		$$ = add_pointer($2, $1);
-	  }
-	| T_TYPEOF cast_expression {	/* GCC extension */
-		$$ = mktempsym($2->tn_type);
 	  }
 	;
 
