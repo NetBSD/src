@@ -1,4 +1,4 @@
-/*	$NetBSD: parse_type_name.c,v 1.4 2021/07/25 15:48:58 rillig Exp $	*/
+/*	$NetBSD: parse_type_name.c,v 1.5 2021/07/25 19:22:08 rillig Exp $	*/
 # 3 "parse_type_name.c"
 
 /*
@@ -80,29 +80,17 @@ cover_direct_abstract_declarator(void)
 
 	/* cover 'abstract_decl_param_list asm_or_symbolrename_opt' */
 	sink(sizeof(int(double)));
-	sink(sizeof(
-	int(
-	double) __asm("anything")));
-	sink(sizeof(
-	int(
-	double) __symbolrename(alias)));
+	sink(sizeof(int(double) __asm("anything")));
+	sink(sizeof(int(double) __symbolrename(alias)));
 
 	/* cover 'direct_abstract_declarator abstract_decl_param_list asm_or_symbolrename_opt' */
 	sink(sizeof(int (*)(double)));
-	sink(sizeof(
-	int(*)(double) __asm("anything")));
-	sink(sizeof(
-	int(*)
-	(double)__symbolrename(alias)));
+	sink(sizeof(int (*)(double) __asm("anything")));
+	sink(sizeof(int (*)(double)__symbolrename(alias)));
 
 	/* cover 'direct_abstract_declarator type_attribute_list' */
-	sink(sizeof(
-	int(*)
-	    __attribute__(())));
-	sink(sizeof(
-	int(*)
-	    __attribute__(())
-	    __attribute__(())));
+	sink(sizeof(int (*) __attribute__(())));
+	sink(sizeof(int (*) __attribute__(()) __attribute__(())));
 }
 
 void
@@ -110,32 +98,21 @@ cover_abstract_decl_param_list(void)
 {
 	/* cover 'abstract_decl_lparen T_RPAREN type_attribute_opt' */
 	sink(sizeof(void (*)()));
-	sink(sizeof(
-	void (*)
-	()
-	    __attribute__(())));
+	sink(sizeof(void (*)() __attribute__(())));
 	/*
 	 * XXX: The grammar allows only a single type_attribute_opt.
 	 * Where does the second type_attribute go?
 	 */
 	sink(sizeof(
-	void (*)
-	()
-	    __attribute__(())
-	    __attribute__(())));
+	void (*)() __attribute__(()) __attribute__(())));
 
 	/* cover 'abstract_decl_lparen vararg_parameter_type_list T_RPAREN type_attribute_opt' */
-	sink(sizeof(
-	void (*)
-	(void)__attribute__(())));
+	sink(sizeof(void (*)(void) __attribute__(())));
 	/*
 	 * XXX: The grammar allows only a single type_attribute_opt.
 	 * Where does the second type_attribute go?
 	 */
-	sink(sizeof(
-	void (*)
-	(void)__attribute__(())
-	    __attribute__(())));
+	sink(sizeof(void (*)(void) __attribute__(()) __attribute__(())));
 
 	/* cover 'abstract_decl_lparen error T_RPAREN type_attribute_opt' */
 	/* expect+1: syntax error 'goto' [249] */
@@ -193,8 +170,7 @@ cover_parameter_declaration(void)
 
 	/* cover 'begin_type_declmods end_type abstract_declarator' */
 	/* GCC 11 warns: type defaults to 'int' in type name */
-	sink(sizeof(
-	void (*)(int, const *)));
+	sink(sizeof(void (*)(int, const *)));
 
 	/* cover 'begin_type_declaration_specifiers end_type abstract_declarator' */
 	sink(sizeof(void (*)(int, double *)));
