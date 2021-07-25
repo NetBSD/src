@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.345 2021/07/25 19:57:22 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.346 2021/07/25 21:31:01 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.345 2021/07/25 19:57:22 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.346 2021/07/25 21:31:01 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -337,9 +337,7 @@ anonymize(sym_t *s)
 %type	<y_sym>		identifier_list
 %type	<y_type>	type_name
 %type	<y_sym>		abstract_declaration
-%type	<y_sym>		abstract_declarator_opt
 %type	<y_sym>		abstract_declarator
-%type	<y_sym>		direct_abstract_declarator_opt
 %type	<y_sym>		direct_abstract_declarator
 %type	<y_sym>		abstract_decl_param_list
 %type	<y_sym>		vararg_parameter_type_list
@@ -1373,36 +1371,30 @@ type_name:			/* C99 6.7.6 */
 	;
 
 abstract_declaration:		/* specific to lint */
-	  begin_type_qualifier_list end_type abstract_declarator_opt {
+	  begin_type_qualifier_list end_type {
+		$$ = declare_1_abstract(abstract_name());
+	  }
+	| begin_type_specifier_qualifier_list end_type {
+		$$ = declare_1_abstract(abstract_name());
+	  }
+	| begin_type_qualifier_list end_type abstract_declarator {
 		$$ = declare_1_abstract($3);
 	  }
-	| begin_type_specifier_qualifier_list end_type
-	    abstract_declarator_opt {
+	| begin_type_specifier_qualifier_list end_type abstract_declarator {
 		$$ = declare_1_abstract($3);
 	  }
-	;
-
-abstract_declarator_opt:
-	  /* empty */ {
-		$$ = abstract_name();
-	  }
-	| abstract_declarator
 	;
 
 /* K&R 8.7, C90 ???, C99 6.7.6, C11 6.7.7 */
 /* In K&R, abstract-declarator could be empty and was still simpler. */
 abstract_declarator:
-	  pointer direct_abstract_declarator_opt {
+	  pointer {
+		$$ = add_pointer(abstract_name(), $1);
+	  }
+	| direct_abstract_declarator
+	| pointer direct_abstract_declarator {
 		$$ = add_pointer($2, $1);
 	  }
-	| direct_abstract_declarator
-	;
-
-direct_abstract_declarator_opt:
-	  /* empty */ {
-		$$ = abstract_name();
-	  }
-	| direct_abstract_declarator
 	;
 
 /* K&R ---, C90 ???, C99 6.7.6, C11 6.7.7 */
