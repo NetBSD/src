@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_timer.c,v 1.26 2020/05/29 12:30:41 rin Exp $ */
+/* $NetBSD: acpi_timer.c,v 1.27 2021/07/25 01:43:08 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2006 Matthias Drochner <drochner@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_timer.c,v 1.26 2020/05/29 12:30:41 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_timer.c,v 1.27 2021/07/25 01:43:08 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -61,6 +61,7 @@ int
 acpitimer_init(struct acpi_softc *sc)
 {
 #if (!ACPI_REDUCED_HARDWARE)
+	ACPI_TABLE_WAET *waet;
 	ACPI_STATUS rv;
 	uint32_t bits;
 	int i, j;
@@ -78,6 +79,18 @@ acpitimer_init(struct acpi_softc *sc)
 
 	for (i = j = 0; i < 10; i++)
 		j += acpitimer_test();
+
+	rv = AcpiGetTable(ACPI_SIG_WAET, 0, (ACPI_TABLE_HEADER **)&waet);
+	if (ACPI_SUCCESS(rv)) {
+		/*
+		 * Windows ACPI Emulated Devices Table (WAET) has a hint
+		 * to let the OS know that a single read of the PM timer
+		 * provides a reliable value.
+		 */
+		if ((waet->Flags & ACPI_WAET_TIMER_ONE_READ) != 0) {
+			j += 10;
+		}
+	}
 
 	if (j >= 10) {
 		acpi_timecounter.tc_name = "ACPI-Fast";
