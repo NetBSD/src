@@ -1,1 +1,1 @@
-msg_147.c(15): error: invalid cast expression [147]
+msg_147.c(14): error: invalid cast from 'pointer to function(int) returning int' to 'function(int) returning int' [147]
