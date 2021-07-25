@@ -1,4 +1,4 @@
-/*	$NetBSD: decl_arg.c,v 1.5 2021/07/10 09:24:27 rillig Exp $	*/
+/*	$NetBSD: decl_arg.c,v 1.6 2021/07/25 06:04:40 rillig Exp $	*/
 # 3 "decl_arg.c"
 
 /*
@@ -55,7 +55,8 @@ struct a_struct { int member; } a_struct;
 }
 
 /*
- * Just some unrealistic coverage for the grammar rule 'notype_direct_decl'.
+ * Just some unrealistic coverage for the grammar rule
+ * 'notype_direct_declarator'.
  */
 extern int
 cover_notype_direct_decl(arg)
@@ -129,3 +130,6 @@ void cover_asm_or_symbolrename_asm(void)
 
 void cover_asm_or_symbolrename_symbolrename(void)
     __symbolrename(alternate_name);
+
+// FIXME: internal error in decl.c:906 near decl_arg.c:134: length(0)
+//void cover_abstract_declarator_typeof(void (*)(typeof(no_args)));
