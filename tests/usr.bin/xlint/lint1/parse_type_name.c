@@ -1,4 +1,4 @@
-/*	$NetBSD: parse_type_name.c,v 1.5 2021/07/25 19:22:08 rillig Exp $	*/
+/*	$NetBSD: parse_type_name.c,v 1.6 2021/07/25 19:41:33 rillig Exp $	*/
 # 3 "parse_type_name.c"
 
 /*
@@ -101,16 +101,15 @@ cover_abstract_decl_param_list(void)
 	sink(sizeof(void (*)() __attribute__(())));
 	/*
 	 * XXX: The grammar allows only a single type_attribute_opt.
-	 * Where does the second type_attribute go?
+	 * All following __attribute__ come from direct_abstract_declarator.
 	 */
-	sink(sizeof(
-	void (*)() __attribute__(()) __attribute__(())));
+	sink(sizeof(void (*)() __attribute__(()) __attribute__(())));
 
 	/* cover 'abstract_decl_lparen vararg_parameter_type_list T_RPAREN type_attribute_opt' */
 	sink(sizeof(void (*)(void) __attribute__(())));
 	/*
 	 * XXX: The grammar allows only a single type_attribute_opt.
-	 * Where does the second type_attribute go?
+	 * All following __attribute__ come from direct_abstract_declarator.
 	 */
 	sink(sizeof(void (*)(void) __attribute__(()) __attribute__(())));
 
@@ -121,7 +120,7 @@ cover_abstract_decl_param_list(void)
 	sink(sizeof(void (*)(goto) __attribute__(())));
 	/*
 	 * XXX: The grammar allows only a single type_attribute_opt.
-	 * Where does the second type_attribute go?
+	 * All following __attribute__ come from direct_abstract_declarator.
 	 */
 	/* expect+1: syntax error 'goto' [249] */
 	sink(sizeof(void (*)(goto) __attribute__(()) __attribute__(())));
