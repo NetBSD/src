@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.336 2021/07/25 15:48:57 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.337 2021/07/25 15:58:24 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.336 2021/07/25 15:48:57 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.337 2021/07/25 15:58:24 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -124,7 +124,7 @@ anonymize(sym_t *s)
 
 %}
 
-%expect 158
+%expect 156
 
 %union {
 	val_t	*y_val;
@@ -873,8 +873,8 @@ notype_type_specifier:		/* see C99 6.7.2 */
 	  T_TYPE {
 		$$ = gettyp($1);
 	  }
-	| T_TYPEOF cast_expression {	/* GCC extension */
-		$$ = $2->tn_type;
+	| T_TYPEOF T_LPAREN expression T_RPAREN {	/* GCC extension */
+		$$ = $3->tn_type;
 	  }
 	| struct_or_union_specifier {
 		end_declaration_level();
