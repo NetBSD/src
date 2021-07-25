@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.343 2021/07/25 19:05:27 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.344 2021/07/25 19:27:26 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.343 2021/07/25 19:05:27 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.344 2021/07/25 19:27:26 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -124,7 +124,7 @@ anonymize(sym_t *s)
 
 %}
 
-%expect 159
+%expect 150
 
 %union {
 	val_t	*y_val;
@@ -778,21 +778,24 @@ begin_type_declmods:		/* see C99 6.7 */
 	;
 
 begin_type_specifier_qualifier_list:	/* see C11 6.7.2.1 */
+	  begin_type_specifier_qualifier_list_postfix
+	| type_attribute_list begin_type_specifier_qualifier_list_postfix
+	;
+
+begin_type_specifier_qualifier_list_postfix:
 	  begin_type_typespec {
 		add_type($1);
 	  }
-	  /* TODO: shift/reduce conflict for type_attribute */
-	| type_attribute begin_type_specifier_qualifier_list
 	| begin_type_qualifier_list type_specifier {
 		add_type($2);
 	  }
-	| begin_type_specifier_qualifier_list T_QUAL {
+	| begin_type_specifier_qualifier_list_postfix T_QUAL {
 		add_qualifier($2);
 	  }
-	| begin_type_specifier_qualifier_list notype_type_specifier {
+	| begin_type_specifier_qualifier_list_postfix notype_type_specifier {
 		add_type($2);
 	  }
-	| begin_type_specifier_qualifier_list type_attribute
+	| begin_type_specifier_qualifier_list_postfix type_attribute
 	;
 
 begin_type_typespec:
