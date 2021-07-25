@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.276 2021/02/24 05:36:02 mrg Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.277 2021/07/25 06:00:31 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018,
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.276 2021/02/24 05:36:02 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.277 2021/07/25 06:00:31 simonb Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1609,6 +1609,20 @@ pool_sethardlimit(struct pool *pp, int n, const char *warnmess, int ratecap)
 	mutex_exit(&pp->pr_lock);
 }
 
+unsigned int
+pool_nget(struct pool *pp)
+{
+
+	return pp->pr_nget;
+}
+
+unsigned int
+pool_nput(struct pool *pp)
+{
+
+	return pp->pr_nput;
+}
+
 /*
  * Release all complete pages that have not been used recently.
  *
@@ -2457,6 +2471,20 @@ pool_cache_prime(pool_cache_t pc, int n)
 {
 
 	pool_prime(&pc->pc_pool, n);
+}
+
+unsigned int
+pool_cache_nget(pool_cache_t pc)
+{
+
+	return pool_nget(&pc->pc_pool);
+}
+
+unsigned int
+pool_cache_nput(pool_cache_t pc)
+{
+
+	return pool_nput(&pc->pc_pool);
 }
 
 /*
