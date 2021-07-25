@@ -1,4 +1,4 @@
-/* $NetBSD: fcu.c,v 1.12 2021/01/27 02:29:48 thorpej Exp $ */
+/* $NetBSD: fcu.c,v 1.13 2021/07/25 00:11:43 macallan Exp $ */
 
 /*-
  * Copyright (c) 2018 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fcu.c,v 1.12 2021/01/27 02:29:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fcu.c,v 1.13 2021/07/25 00:11:43 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,11 +75,10 @@ typedef struct _fcu_fan {
 	int duty;	/* for pwm fans */
 } fcu_fan_t;
 
-#define FCU_ZONE_CPU_A		0
-#define FCU_ZONE_CPU_B		1
-#define FCU_ZONE_CASE		2
-#define FCU_ZONE_DRIVEBAY	3
-#define FCU_ZONE_COUNT		4
+#define FCU_ZONE_CPU		0
+#define FCU_ZONE_CASE		1
+#define FCU_ZONE_DRIVEBAY	2
+#define FCU_ZONE_COUNT		3
 
 struct fcu_softc {
 	device_t	sc_dev;
@@ -103,8 +102,7 @@ static void	fcu_attach(device_t, device_t, void *);
 
 static void	fcu_sensors_refresh(struct sysmon_envsys *, envsys_data_t *);
 
-static bool is_cpu_a(const envsys_data_t *);
-static bool is_cpu_b(const envsys_data_t *);
+static bool is_cpu(const envsys_data_t *);
 static bool is_case(const envsys_data_t *);
 static bool is_drive(const envsys_data_t *);
 
@@ -162,12 +160,9 @@ fcu_attach(device_t parent, device_t self, void *aux)
 		have_eeprom1 = 0;
 
 	/* init zones */
-	sc->sc_zones[FCU_ZONE_CPU_A].filter = is_cpu_a;
-	sc->sc_zones[FCU_ZONE_CPU_A].threshold = 50;
-	sc->sc_zones[FCU_ZONE_CPU_A].nfans = 0;
-	sc->sc_zones[FCU_ZONE_CPU_B].filter = is_cpu_b;
-	sc->sc_zones[FCU_ZONE_CPU_B].threshold = 50;
-	sc->sc_zones[FCU_ZONE_CPU_B].nfans = 0;
+	sc->sc_zones[FCU_ZONE_CPU].filter = is_cpu;
+	sc->sc_zones[FCU_ZONE_CPU].threshold = 50;
+	sc->sc_zones[FCU_ZONE_CPU].nfans = 0;
 	sc->sc_zones[FCU_ZONE_CASE].filter = is_case;
 	sc->sc_zones[FCU_ZONE_CASE].threshold = 50;
 	sc->sc_zones[FCU_ZONE_CASE].nfans = 0;
@@ -282,12 +277,8 @@ fcu_attach(device_t parent, device_t self, void *aux)
 			   descr, fan->base_rpm, fan->max_rpm, fan->step);
 
 			/* now stuff them into zones */
-			if (strstr(descr, "CPU A") != NULL) {
-				fcu_zone_t *z = &sc->sc_zones[FCU_ZONE_CPU_A];
-				z->fans[z->nfans] = sc->sc_nfans;
-				z->nfans++;
-			} else if (strstr(descr, "CPU B") != NULL) {
-				fcu_zone_t *z = &sc->sc_zones[FCU_ZONE_CPU_B];
+			if (strstr(descr, "CPU") != NULL) {
+				fcu_zone_t *z = &sc->sc_zones[FCU_ZONE_CPU];
 				z->fans[z->nfans] = sc->sc_nfans;
 				z->nfans++;
 			} else if ((strstr(descr, "BACKSIDE") != NULL) ||
@@ -358,21 +349,11 @@ fcu_sensors_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 }
 
 static bool
-is_cpu_a(const envsys_data_t *edata)
+is_cpu(const envsys_data_t *edata)
 {
 	if (edata->units != ENVSYS_STEMP)
 		return false;
-	if (strstr(edata->desc, "CPU A") != NULL)
-		return TRUE;
-	return false;
-}
-
-static bool
-is_cpu_b(const envsys_data_t *edata)
-{
-	if (edata->units != ENVSYS_STEMP)
-		return false;
-	if (strstr(edata->desc, "CPU B") != NULL)
+	if (strstr(edata->desc, "CPU") != NULL)
 		return TRUE;
 	return false;
 }
@@ -462,7 +443,6 @@ fcu_adjust_zone(struct fcu_softc *sc, int which)
 	fcu_fan_t *f;
 	int temp, i, speed, diff;
 	
-
 	if (z->nfans <= 0)
 		return;
 
