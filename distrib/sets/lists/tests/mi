@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1092 2021/07/25 08:42:28 rillig Exp $
+# $NetBSD: mi,v 1.1093 2021/07/25 09:29:20 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6990,6 +6990,10 @@
 ./usr/tests/usr.bin/xlint/lint1/op_colon.exp			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/op_shl_lp64.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/op_shl_lp64.exp			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/parse_stmt_error.c		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/parse_stmt_error.exp		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/parse_stmt_iter_error.c		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/parse_stmt_iter_error.exp	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/parse_type_name.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/parse_type_name.exp		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/stmt_for.c			tests-usr.bin-tests	compattestfile,atf
