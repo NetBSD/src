@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.396 2021/07/23 02:35:14 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.397 2021/07/26 22:50:36 oster Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.396 2021/07/23 02:35:14 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.397 2021/07/26 22:50:36 oster Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_autoconfig.h"
@@ -483,42 +483,56 @@ rf_containsboot(RF_Raid_t *r, device_t bdv) {
 static void
 rf_buildroothack(RF_ConfigSet_t *config_sets)
 {
+	RF_AutoConfig_t *ac_list;
 	RF_ConfigSet_t *cset;
 	RF_ConfigSet_t *next_cset;
 	int num_root;
+	int raid_added;
 	struct raid_softc *sc, *rsc;
 	struct dk_softc *dksc = NULL;	/* XXX gcc -Os: may be used uninit. */
 
 	sc = rsc = NULL;
 	num_root = 0;
-	cset = config_sets;
-	while (cset != NULL) {
-		next_cset = cset->next;
-		if (rf_have_enough_components(cset) &&
-		    cset->ac->clabel->autoconfigure == 1) {
-			sc = rf_auto_config_set(cset);
-			if (sc != NULL) {
-				aprint_debug("raid%d: configured ok, rootable %d\n",
-				    sc->sc_unit, cset->rootable);
-				if (cset->rootable) {
-					rsc = sc;
-					num_root++;
+
+	raid_added = 1;
+	while (raid_added > 0) {
+		raid_added = 0;
+		cset = config_sets;
+		while (cset != NULL) {
+			next_cset = cset->next;
+			if (rf_have_enough_components(cset) &&
+			    cset->ac->clabel->autoconfigure == 1) {
+				sc = rf_auto_config_set(cset);
+				if (sc != NULL) {
+					aprint_debug("raid%d: configured ok, rootable %d\n",
+						     sc->sc_unit, cset->rootable);
+					/* We added one RAID set */
+					raid_added++;
+					if (cset->rootable) {
+						rsc = sc;
+						num_root++;
+					}
+				} else {
+					/* The autoconfig didn't work :( */
+					aprint_debug("Autoconfig failed\n");
+					rf_release_all_vps(cset);
 				}
 			} else {
-				/* The autoconfig didn't work :( */
-				aprint_debug("Autoconfig failed\n");
+				/* we're not autoconfiguring this set...
+				   release the associated resources */
 				rf_release_all_vps(cset);
 			}
-		} else {
-			/* we're not autoconfiguring this set...
-			   release the associated resources */
-			rf_release_all_vps(cset);
+			/* cleanup */
+			rf_cleanup_config_set(cset);
+			cset = next_cset;
 		}
-		/* cleanup */
-		rf_cleanup_config_set(cset);
-		cset = next_cset;
+		if (raid_added > 0) {
+			/* We added at least one RAID set, so re-scan for recursive RAID */
+			ac_list = rf_find_raid_components();
+			config_sets = rf_create_auto_sets(ac_list);
+		}
 	}
-
+	
 	/* if the user has specified what the root device should be
 	   then we don't touch booted_device or boothowto... */
 
