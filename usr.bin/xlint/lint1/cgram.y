@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.348 2021/07/26 17:27:22 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.349 2021/07/26 18:10:14 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.348 2021/07/26 17:27:22 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.349 2021/07/26 18:10:14 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -682,7 +682,7 @@ conditional_expression:
 	| conditional_expression T_LOGOR conditional_expression {
 		$$ = build_binary($1, LOGOR, $3);
 	  }
-	| conditional_expression T_QUEST conditional_expression
+	| conditional_expression T_QUEST expression
 	    T_COLON conditional_expression {
 		$$ = build_binary($1, QUEST, build_binary($3, COLON, $5));
 	  }
