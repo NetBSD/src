@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_standout.3,v 1.7 2016/11/29 17:33:48 christos Exp $
+.\"	$NetBSD: curses_standout.3,v 1.8 2021/07/26 20:17:09 nia Exp $
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -25,7 +25,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 29, 2016
+.Dd July 26, 2021
 .Dt CURSES_STANDOUT 3
 .Os
 .Sh NAME
@@ -101,8 +101,3 @@ Single Unix Specification.
 .Sh HISTORY
 The Curses package appeared in
 .Bx 4.0 .
-.Sh BUGS
-On modern terminals that support other attributes, there is no difference
-between characters displayed with the standout attribute set and those
-displayed with one of the other attributes set (usually bold).
-It is best to avoid using standout if the terminal supports other attributes.
