@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_precedence.c,v 1.5 2021/07/26 17:27:22 rillig Exp $	*/
+/*	$NetBSD: expr_precedence.c,v 1.6 2021/07/26 18:06:43 rillig Exp $	*/
 # 3 "expr_precedence.c"
 
 /*
@@ -50,4 +50,28 @@ assignment_associativity(int arg)
 	left = right = arg;
 
 	left = arg;
+}
+
+void
+conditional_associativity(_Bool cond1, _Bool cond2, int a, int b, int c)
+{
+	/* The then-expression can be an arbitrary expression. */
+	var = cond1 ? cond2 ? a : b : c;
+	var = cond1 ? (cond2 ? a : b) : c;
+
+	/* The then-expression can even be a comma-expression. */
+	/* expect+1: error: syntax error ',' [249] *//* FIXME */
+	var = cond1 ? cond2 ? a, b : (b, a) : c;
+
+	var = cond1 ? a : cond2 ? b : c;
+	/*
+	 * In almost all programming languages, '?:' is right-associative,
+	 * which allows for easy chaining.
+	 */
+	var = cond1 ? a : (cond2 ? b : c);
+	/*
+	 * In PHP, '?:' is left-associative, which is rather surprising and
+	 * requires more parentheses to get the desired effect.
+	 */
+	var = (cond1 ? a : cond2) ? b : c;
 }
