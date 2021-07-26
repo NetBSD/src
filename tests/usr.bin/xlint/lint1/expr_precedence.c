@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_precedence.c,v 1.4 2021/07/26 17:09:46 rillig Exp $	*/
+/*	$NetBSD: expr_precedence.c,v 1.5 2021/07/26 17:27:22 rillig Exp $	*/
 # 3 "expr_precedence.c"
 
 /*
@@ -42,8 +42,11 @@ assignment_associativity(int arg)
 {
 	int left, right;
 
-	/* FIXME */
-	/* expect+1: error: left operand of '=' must be lvalue [114] */
+	/*
+	 * Assignments are right-associative.  If they were left-associative,
+	 * the result of (left = right) would be an rvalue, resulting in this
+	 * error message: 'left operand of '=' must be lvalue [114]'.
+	 */
 	left = right = arg;
 
 	left = arg;
