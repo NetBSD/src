@@ -1,14 +1,13 @@
-#	$NetBSD: Makefile.inc,v 1.14 2021/07/24 05:27:25 rin Exp $
+#	$NetBSD: Makefile.inc,v 1.15 2021/07/26 12:49:13 rin Exp $
 
 SRCS+=  bzero.S ffs.S strlen.S
 NO_SRCS+= memset.S
 
-# disable the asm versions of these because they break the explora.
-# the special rules here are to override the suffix rules which seem
-# to prefer .S files over .c
+# XXX
+# Disable asm versions that use unaligned memory access and thus break 403.
 .if ${MACHINE} == "evbppc"
 .  for name in bcopy memcmp memcpy memmove
-.    for suffix in o po pico go
+.    for suffix in o po pico go d
 ${name}.${suffix}: ${name}.c
 .    endfor
 .  endfor
