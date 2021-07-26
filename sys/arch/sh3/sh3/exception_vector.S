@@ -1,4 +1,4 @@
-/*	$NetBSD: exception_vector.S,v 1.52 2021/07/24 21:31:35 andvar Exp $	*/
+/*	$NetBSD: exception_vector.S,v 1.53 2021/07/26 21:43:11 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2019 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
 #define _ALIGN_TEXT	.align 5
 #include <sh3/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.52 2021/07/24 21:31:35 andvar Exp $")
+__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.53 2021/07/26 21:43:11 andvar Exp $")
 
 
 /*
@@ -220,7 +220,7 @@ NENTRY(sh3_vector_tlbmiss)
 	bt/s	.L3_call_tlb_exception
 	 mov	#-(PGSHIFT - 2), r1
 
-	!! __PMAP_PTP_OFFSET(vpn) - except we pre-shift 2 bits left to
+	!! __PMAP_PTP_OFSET(vpn) - except we pre-shift 2 bits left to
 	!! get the array offset directly, as we know bits 10 and 11
 	!! are zero (we cleaned them in r5 to get 4K aligned VPN)
 	shld	r1, r2		! vpn >> (PGSHIFT - 2)
