@@ -1,4 +1,4 @@
-/* $NetBSD: ckbool.c,v 1.7 2021/07/04 09:13:59 rillig Exp $ */
+/* $NetBSD: ckbool.c,v 1.8 2021/07/26 16:22:24 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: ckbool.c,v 1.7 2021/07/04 09:13:59 rillig Exp $");
+__RCSID("$NetBSD: ckbool.c,v 1.8 2021/07/26 16:22:24 rillig Exp $");
 #endif
 
 #include <string.h>
@@ -181,7 +181,7 @@ typeok_scalar_strict_bool(op_t op, const mod_t *mp, int arg,
 
 	if (!mp->m_takes_bool) {
 		bool binary = mp->m_binary;
-		bool lbool = ln->tn_type->t_tspec == BOOL;
+		bool lbool = lt == BOOL;
 		bool ok = true;
 
 		if (!binary && lbool) {
@@ -194,7 +194,7 @@ typeok_scalar_strict_bool(op_t op, const mod_t *mp, int arg,
 			error(336, op_name(op));
 			ok = false;
 		}
-		if (binary && rn->tn_type->t_tspec == BOOL) {
+		if (binary && rt == BOOL) {
 			/* right operand of '%s' must not be bool */
 			error(337, op_name(op));
 			ok = false;
