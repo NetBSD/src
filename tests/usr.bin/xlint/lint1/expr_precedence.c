@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_precedence.c,v 1.6 2021/07/26 18:06:43 rillig Exp $	*/
+/*	$NetBSD: expr_precedence.c,v 1.7 2021/07/26 18:10:14 rillig Exp $	*/
 # 3 "expr_precedence.c"
 
 /*
@@ -60,7 +60,6 @@ conditional_associativity(_Bool cond1, _Bool cond2, int a, int b, int c)
 	var = cond1 ? (cond2 ? a : b) : c;
 
 	/* The then-expression can even be a comma-expression. */
-	/* expect+1: error: syntax error ',' [249] *//* FIXME */
 	var = cond1 ? cond2 ? a, b : (b, a) : c;
 
 	var = cond1 ? a : cond2 ? b : c;
