@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.67 2021/07/24 15:52:16 thorpej Exp $	*/
+/*	$NetBSD: ahb.c,v 1.68 2021/07/26 16:45:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.67 2021/07/24 15:52:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.68 2021/07/26 16:45:56 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -108,7 +108,7 @@ struct ahb_softc {
 /*
  * Offset of an ECB from the beginning of the ECB DMA mapping.
  */
-#define	AHB_ECB_OFF(e)	(((u_long)(e)) - ((u_long)&sc->sc_ecbs[0]))
+#define	AHB_ECB_OFF(e)	(((uintptr_t)(e)) - ((uintptr_t)&sc->sc_ecbs[0]))
 
 struct ahb_probe_data {
 	int sc_irq;
@@ -121,7 +121,7 @@ static void	ahb_send_immed(struct ahb_softc *, u_int32_t, struct ahb_ecb *);
 static int	ahbintr(void *);
 static void	ahb_free_ecb(struct ahb_softc *, struct ahb_ecb *);
 static struct	ahb_ecb *ahb_get_ecb(struct ahb_softc *);
-static struct	ahb_ecb *ahb_ecb_phys_kv(struct ahb_softc *, physaddr);
+static struct	ahb_ecb *ahb_ecb_phys_kv(struct ahb_softc *, uint32_t);
 static void	ahb_done(struct ahb_softc *, struct ahb_ecb *);
 static int	ahb_find(bus_space_tag_t, bus_space_handle_t,
 		    struct ahb_probe_data *);
@@ -294,12 +294,7 @@ ahb_send_mbox(struct ahb_softc *sc, int opcode, struct ahb_ecb *ecb)
 		Debugger();
 	}
 
-	/*
-	 * don't know if this will work.
-	 * XXX WHAT DOES THIS COMMENT MEAN?!  --thorpej
-	 */
-	bus_space_write_4(iot, ioh, MBOXOUT0,
-	    sc->sc_dmamap_ecb->dm_segs[0].ds_addr + AHB_ECB_OFF(ecb));
+	bus_space_write_4(iot, ioh, MBOXOUT0, ecb->ecb_dma_addr);
 	bus_space_write_1(iot, ioh, ATTN, opcode |
 		ecb->xs->xs_periph->periph_target);
 
@@ -309,7 +304,7 @@ ahb_send_mbox(struct ahb_softc *sc, int opcode, struct ahb_ecb *ecb)
 }
 
 /*
- * Function to  send an immediate type command to the adapter
+ * Function to send an immediate type command to the adapter
  */
 static void
 ahb_send_immed(struct ahb_softc *sc, u_int32_t cmd, struct ahb_ecb *ecb)
@@ -454,13 +449,14 @@ ahb_init_ecb(struct ahb_softc *sc, struct ahb_ecb *ecb)
 		return (error);
 	}
 
+	ecb->ecb_dma_addr = sc->sc_dmamap_ecb->dm_segs[0].ds_addr +
+	    AHB_ECB_OFF(ecb);
+
 	/*
 	 * put in the phystokv hash table
 	 * Never gets taken out.
 	 */
-	ecb->hashkey = sc->sc_dmamap_ecb->dm_segs[0].ds_addr +
-	    AHB_ECB_OFF(ecb);
-	hashnum = ECB_HASH(ecb->hashkey);
+	hashnum = ECB_HASH(ecb->ecb_dma_addr);
 	ecb->nexthash = sc->sc_ecbhash[hashnum];
 	sc->sc_ecbhash[hashnum] = ecb;
 	ahb_reset_ecb(sc, ecb);
@@ -513,13 +509,13 @@ ahb_get_ecb(struct ahb_softc *sc)
  * given a physical address, find the ecb that it corresponds to.
  */
 static struct ahb_ecb *
-ahb_ecb_phys_kv(struct ahb_softc *sc, physaddr ecb_phys)
+ahb_ecb_phys_kv(struct ahb_softc *sc, uint32_t ecb_phys)
 {
 	int hashnum = ECB_HASH(ecb_phys);
 	struct ahb_ecb *ecb = sc->sc_ecbhash[hashnum];
 
 	while (ecb) {
-		if (ecb->hashkey == ecb_phys)
+		if (ecb->ecb_dma_addr == ecb_phys)
 			break;
 		ecb = ecb->nexthash;
 	}
@@ -867,11 +863,11 @@ ahb_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		ecb->opt2 = periph->periph_lun | ECB_NRB;
 		memcpy(&ecb->scsi_cmd, xs->cmd,
 		    ecb->scsi_cmd_length = xs->cmdlen);
-		ecb->sense_ptr = sc->sc_dmamap_ecb->dm_segs[0].ds_addr +
-		    AHB_ECB_OFF(ecb) + offsetof(struct ahb_ecb, ecb_sense);
+		ecb->sense_ptr = ecb->ecb_dma_addr +
+		    offsetof(struct ahb_ecb, ecb_sense);
 		ecb->req_sense_length = sizeof(ecb->ecb_sense);
-		ecb->status = sc->sc_dmamap_ecb->dm_segs[0].ds_addr +
-		    AHB_ECB_OFF(ecb) + offsetof(struct ahb_ecb, ecb_status);
+		ecb->status = ecb->ecb_dma_addr +
+		    offsetof(struct ahb_ecb, ecb_status);
 		ecb->ecb_status.host_stat = 0x00;
 		ecb->ecb_status.target_stat = 0x00;
 
@@ -927,17 +923,16 @@ ahb_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 				    ecb->dmamap_xfer->dm_segs[seg].ds_len;
 			}
 
-			ecb->data_addr = sc->sc_dmamap_ecb->dm_segs[0].ds_addr +
-			    AHB_ECB_OFF(ecb) +
+			ecb->data_addr = ecb->ecb_dma_addr +
 			    offsetof(struct ahb_ecb, ahb_dma);
 			ecb->data_length = ecb->dmamap_xfer->dm_nsegs *
 			    sizeof(struct ahb_dma_seg);
 			ecb->opt1 |= ECB_S_G;
 		} else {	/* No data xfer, use non S/G values */
-			ecb->data_addr = (physaddr)0;
+			ecb->data_addr = 0;
 			ecb->data_length = 0;
 		}
-		ecb->link_addr = (physaddr)0;
+		ecb->link_addr = 0;
 
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_ecb,
 		    AHB_ECB_OFF(ecb), sizeof(struct ahb_ecb),
