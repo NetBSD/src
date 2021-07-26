@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_precedence.c,v 1.3 2021/07/15 17:48:10 rillig Exp $	*/
+/*	$NetBSD: expr_precedence.c,v 1.4 2021/07/26 17:09:46 rillig Exp $	*/
 # 3 "expr_precedence.c"
 
 /*
@@ -36,3 +36,15 @@ void __attribute__((format(printf,
     /* Syntactically ok, must be a constant expression though. */
     var > 0 ? 2 : 1)))
 my_printf(const char *, ...);
+
+void
+assignment_associativity(int arg)
+{
+	int left, right;
+
+	/* FIXME */
+	/* expect+1: error: left operand of '=' must be lvalue [114] */
+	left = right = arg;
+
+	left = arg;
+}
