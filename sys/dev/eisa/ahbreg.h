@@ -1,4 +1,4 @@
-/*	$NetBSD: ahbreg.h,v 1.17 2021/07/24 15:44:16 thorpej Exp $	*/
+/*	$NetBSD: ahbreg.h,v 1.18 2021/07/26 16:45:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -44,9 +44,6 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  */
-
-typedef u_int32_t physaddr;
-typedef u_int32_t physlen;
 
 /*
  * Offset of AHA1740 registers, relative from slot base.
@@ -133,12 +130,12 @@ typedef u_int32_t physlen;
 #define	AHB_NSEG	33	/* number of DMA segments supported */
 
 struct ahb_dma_seg {
-	physaddr seg_addr;
-	physlen seg_len;
+	uint32_t seg_addr;
+	uint32_t seg_len;
 };
 
 struct ahb_ecb_status {
-	u_short status;
+	uint16_t status;
 #define	ST_DON	0x0001
 #define	ST_DU	0x0002
 #define	ST_QF	0x0008
@@ -151,7 +148,7 @@ struct ahb_ecb_status {
 #define	ST_INI	0x0800
 #define	ST_ME	0x1000
 #define	ST_ECA	0x4000
-	u_char  host_stat;
+	uint8_t  host_stat;
 #define	HS_OK			0x00
 #define	HS_CMD_ABORTED_HOST	0x04
 #define	HS_CMD_ABORTED_ADAPTER	0x05
@@ -159,29 +156,29 @@ struct ahb_ecb_status {
 #define	HS_HARDWARE_ERR		0x20
 #define	HS_SCSI_RESET_ADAPTER	0x22
 #define	HS_SCSI_RESET_INCOMING	0x23
-	u_char  target_stat;
-	u_int32_t  resid_count;
-	u_int32_t  resid_addr;
-	u_short addit_status;
-	u_char  sense_len;
-	u_char  unused[9];
-	u_char  cdb[6];
+	uint8_t  target_stat;
+	uint32_t  resid_count;
+	uint32_t  resid_addr;
+	uint16_t addit_status;
+	uint8_t  sense_len;
+	uint8_t  unused[9];
+	uint8_t  cdb[6];
 };
 
 struct ahb_ecb {
-	u_char  opcode;
+	uint8_t  opcode;
 #define	ECB_SCSI_OP	0x01
-	        u_char:4;
-	u_char  options:3;
-	        u_char:1;
-	short   opt1;
+	        uint8_t:4;
+	uint8_t  options:3;
+	        uint8_t:1;
+	uint16_t opt1;
 #define	ECB_CNE	0x0001
 #define	ECB_DI	0x0080
 #define	ECB_SES	0x0400
 #define	ECB_S_G	0x1000
 #define	ECB_DSB	0x4000
 #define	ECB_ARS	0x8000
-	short   opt2;
+	uint16_t opt2;
 #define	ECB_LUN	0x0007
 #define	ECB_TAG	0x0008
 #define	ECB_TT	0x0030
@@ -192,18 +189,18 @@ struct ahb_ecb {
 #define	ECB_CHK	0x0800
 #define	ECB_REC	0x4000
 #define	ECB_NRB	0x8000
-	u_short unused1;
-	physaddr data_addr;
-	physlen  data_length;
-	physaddr status;
-	physaddr link_addr;
-	short   unused2;
-	short   unused3;
-	physaddr sense_ptr;
-	u_char  req_sense_length;
-	u_char  scsi_cmd_length;
-	short   cksum;
-	u_char	scsi_cmd[12];
+	uint16_t unused1;
+	uint32_t data_addr;
+	uint32_t data_length;
+	uint32_t status;
+	uint32_t link_addr;
+	uint16_t unused2;
+	uint16_t unused3;
+	uint32_t sense_ptr;
+	uint8_t  req_sense_length;
+	uint8_t  scsi_cmd_length;
+	uint16_t cksum;
+	uint8_t	scsi_cmd[12];
 
 	/*-----------------end of hardware supported fields----------------*/
 
@@ -213,7 +210,7 @@ struct ahb_ecb {
 
 	TAILQ_ENTRY(ahb_ecb) chain;
 	struct ahb_ecb *nexthash;
-	int32_t hashkey;
+	uint32_t ecb_dma_addr;
 	struct scsipi_xfer *xs;	/* the scsipi_xfer for this cmd */
 	int flags;
 #define	ECB_ALLOC	0x01
