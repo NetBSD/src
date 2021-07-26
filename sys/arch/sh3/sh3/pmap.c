@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.84 2021/07/24 21:31:35 andvar Exp $	*/
+/*	$NetBSD: pmap.c,v 1.85 2021/07/26 21:43:11 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.84 2021/07/24 21:31:35 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.85 2021/07/26 21:43:11 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.84 2021/07/24 21:31:35 andvar Exp $");
 	(((va) + (1 << __PMAP_PTP_SHIFT) - 1) & ~((1 << __PMAP_PTP_SHIFT) - 1))
 #define	__PMAP_PTP_PG_N		(PAGE_SIZE / sizeof(pt_entry_t))
 #define	__PMAP_PTP_INDEX(va)	(((va) >> __PMAP_PTP_SHIFT) & (__PMAP_PTP_N - 1))
-#define	__PMAP_PTP_OFFSET(va)	((va >> PGSHIFT) & (__PMAP_PTP_PG_N - 1))
+#define	__PMAP_PTP_OFSET(va)	((va >> PGSHIFT) & (__PMAP_PTP_PG_N - 1))
 
 struct pmap __pmap_kernel;
 struct pmap *const kernel_pmap_ptr = &__pmap_kernel;
@@ -966,7 +966,7 @@ __pmap_pte_alloc(pmap_t pmap, vaddr_t va)
 	ptp = (pt_entry_t *)SH3_PHYS_TO_P1SEG(VM_PAGE_TO_PHYS(pg));
 	pmap->pm_ptp[__PMAP_PTP_INDEX(va)] = ptp;
 
-	return (ptp + __PMAP_PTP_OFFSET(va));
+	return (ptp + __PMAP_PTP_OFSET(va));
 }
 
 /*
@@ -986,7 +986,7 @@ __pmap_pte_lookup(pmap_t pmap, vaddr_t va)
 	if (ptp == NULL)
 		return (NULL);
 
-	return (ptp + __PMAP_PTP_OFFSET(va));
+	return (ptp + __PMAP_PTP_OFSET(va));
 }
 
 /*
@@ -1002,7 +1002,7 @@ __pmap_kpte_lookup(vaddr_t va)
 	if (ptp == NULL)
 		return NULL;
 
-	return (ptp + __PMAP_PTP_OFFSET(va));
+	return (ptp + __PMAP_PTP_OFSET(va));
 }
 
 /*
