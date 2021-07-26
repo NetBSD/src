@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.347 2021/07/26 17:15:24 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.348 2021/07/26 17:27:22 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.347 2021/07/26 17:15:24 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.348 2021/07/26 17:27:22 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -691,10 +691,10 @@ conditional_expression:
 /* K&R ???, C90 ???, C99 6.5.16, C11 6.5.16 */
 assignment_expression:
 	  conditional_expression
-	| assignment_expression T_ASSIGN conditional_expression {
+	| unary_expression T_ASSIGN assignment_expression {
 		$$ = build_binary($1, ASSIGN, $3);
 	  }
-	| assignment_expression T_OPASSIGN conditional_expression {
+	| unary_expression T_OPASSIGN assignment_expression {
 		$$ = build_binary($1, $2, $3);
 	  }
 	;
