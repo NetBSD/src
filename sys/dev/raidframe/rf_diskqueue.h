@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.h,v 1.28 2021/07/23 20:18:24 oster Exp $	*/
+/*	$NetBSD: rf_diskqueue.h,v 1.29 2021/07/27 03:01:48 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -142,7 +142,7 @@ RF_DiskQueueData_t *rf_CreateDiskQueueData(RF_IoType_t, RF_SectorNum_t,
 					   void *,
 					   RF_AccTraceEntry_t *, RF_Raid_t *,
 					   RF_DiskQueueDataFlags_t,
-					   const struct buf *, int);
+					   const struct buf *);
 void rf_FreeDiskQueueData(RF_DiskQueueData_t *);
 int rf_ConfigureDiskQueue(RF_Raid_t *, RF_DiskQueue_t *,
 			  RF_RowCol_t, const RF_DiskQueueSW_t *,

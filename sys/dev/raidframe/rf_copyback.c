@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_copyback.c,v 1.54 2021/07/23 00:54:45 oster Exp $	*/
+/*	$NetBSD: rf_copyback.c,v 1.55 2021/07/27 03:01:48 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -38,7 +38,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.54 2021/07/23 00:54:45 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.55 2021/07/27 03:01:48 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -335,12 +335,10 @@ rf_CopybackOne(RF_CopybackDesc_t *desc, int typ, RF_RaidAddr_t addr,
 	/* create reqs to read the old location & write the new */
 	desc->readreq = rf_CreateDiskQueueData(RF_IO_TYPE_READ, spOffs,
 	    sectPerSU, desc->databuf, 0L, 0, rf_CopybackReadDoneProc, desc,
-	    NULL, (void *) raidPtr, RF_DISKQUEUE_DATA_FLAGS_NONE, NULL,
-	    PR_WAITOK);
+	    NULL, (void *) raidPtr, RF_DISKQUEUE_DATA_FLAGS_NONE, NULL);
 	desc->writereq = rf_CreateDiskQueueData(RF_IO_TYPE_WRITE, testOffs,
 	    sectPerSU, desc->databuf, 0L, 0, rf_CopybackWriteDoneProc, desc,
-	    NULL, (void *) raidPtr, RF_DISKQUEUE_DATA_FLAGS_NONE, NULL,
-	    PR_WAITOK);
+	    NULL, (void *) raidPtr, RF_DISKQUEUE_DATA_FLAGS_NONE, NULL);
 	desc->fcol = testCol;
 
 	/* enqueue the read.  the write will go out as part of the callback on

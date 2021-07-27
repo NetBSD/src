@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagfuncs.c,v 1.32 2020/06/19 19:29:39 jdolecek Exp $	*/
+/*	$NetBSD: rf_dagfuncs.c,v 1.33 2021/07/27 03:01:48 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.32 2020/06/19 19:29:39 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.33 2021/07/27 03:01:48 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -280,13 +280,10 @@ rf_DiskReadFuncForThreads(RF_DagNode_t *node)
 #else
              NULL,
 #endif
-	    (void *) (node->dagHdr->raidPtr), 0, node->dagHdr->bp, PR_NOWAIT);
-	if (!req) {
-		(node->wakeFunc) (node, ENOMEM);
-	} else {
-		node->dagFuncData = (void *) req;
-		rf_DiskIOEnqueue(&(dqs[pda->col]), req, priority);
-	}
+	    (void *) (node->dagHdr->raidPtr), 0, node->dagHdr->bp);
+
+	node->dagFuncData = (void *) req;
+	rf_DiskIOEnqueue(&(dqs[pda->col]), req, priority);
 }
 
 
@@ -314,14 +311,10 @@ rf_DiskWriteFuncForThreads(RF_DagNode_t *node)
 	    NULL,
 #endif
 	    (void *) (node->dagHdr->raidPtr),
-	    0, node->dagHdr->bp, PR_NOWAIT);
+	    0, node->dagHdr->bp);
 
-	if (!req) {
-		(node->wakeFunc) (node, ENOMEM);
-	} else {
-		node->dagFuncData = (void *) req;
-		rf_DiskIOEnqueue(&(dqs[pda->col]), req, priority);
-	}
+	node->dagFuncData = (void *) req;
+	rf_DiskIOEnqueue(&(dqs[pda->col]), req, priority);
 }
 /*****************************************************************************
  * the undo function for disk nodes
@@ -343,13 +336,10 @@ rf_DiskUndoFunc(RF_DagNode_t *node)
 	     NULL,
 #endif
 	    (void *) (node->dagHdr->raidPtr),
-	    0, NULL, PR_NOWAIT);
-	if (!req)
-		(node->wakeFunc) (node, ENOMEM);
-	else {
-		node->dagFuncData = (void *) req;
-		rf_DiskIOEnqueue(&(dqs[pda->col]), req, RF_IO_NORMAL_PRIORITY);
-	}
+	    0, NULL);
+
+	node->dagFuncData = (void *) req;
+	rf_DiskIOEnqueue(&(dqs[pda->col]), req, RF_IO_NORMAL_PRIORITY);
 }
 
 /*****************************************************************************
