@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.350 2021/07/27 05:42:36 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.351 2021/07/27 05:52:53 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.350 2021/07/27 05:42:36 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.351 2021/07/27 05:52:53 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -836,17 +836,12 @@ type_attribute_opt:
 
 type_attribute:			/* See C11 6.7 declaration-specifiers */
 	  gcc_attribute
-	  /* TODO: c11ism */
-	| T_ALIGNAS T_LPAREN align_as T_RPAREN
+	| T_ALIGNAS T_LPAREN type_specifier T_RPAREN	/* C11 6.7.5 */
+	| T_ALIGNAS T_LPAREN constant_expr T_RPAREN	/* C11 6.7.5 */
 	| T_PACKED {
 		addpacked();
 	  }
 	| T_NORETURN
-	;
-
-align_as:			/* See alignment-specifier in C11 6.7.5 */
-	  type_specifier
-	| constant_expr
 	;
 
 begin_type:
