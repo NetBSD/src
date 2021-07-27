@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.120 2021/07/27 20:23:41 macallan Exp $
+#	$NetBSD: files.macppc,v 1.121 2021/07/27 23:38:42 macallan Exp $
 #
 # macppc-specific configuration info
 
@@ -176,7 +176,11 @@ device zstty: tty
 attach zstty at zsc
 file dev/ic/z8530tty.c				zstty needs-flag
 
-device smu { }
+define fancontrol
+file arch/macppc/dev/fancontrol.c		fancontrol
+defflag	opt_fancontrol.h	FANCONTROL_DEBUG
+
+device smu { } : fancontrol
 attach smu at mainbus
 file arch/macppc/dev/smu.c			smu needs-flag
 defflag	opt_smu.h	SMU_DEBUG
@@ -328,6 +332,6 @@ file	arch/macppc/dev/lmu.c				lmu
 defflag opt_lmu.h LMU_DEBUG
 
 # Apple Fan Control Unit found in some G5
-device	fcu: sysmon_envsys
+device	fcu: sysmon_envsys, fancontrol
 attach	fcu at iic
 file	arch/macppc/dev/fcu.c				fcu	needs-flag
