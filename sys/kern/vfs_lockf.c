@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.73 2011/01/31 08:25:32 dholland Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.74 2021/07/27 09:32:55 manu Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.73 2011/01/31 08:25:32 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.74 2021/07/27 09:32:55 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,7 +123,7 @@ int	lockf_debug = 0;
  * so that the unlock can succeed.  If the unlocking causes too many splits,
  * however, you're totally cutoff.
  */
-int maxlocksperuid = 1024;
+#define MAXLOCKSPERUID (2 * maxfiles)
 
 #ifdef LOCKF_DEBUG
 /*
@@ -200,7 +200,7 @@ lf_alloc(int allowfail)
 	uip = uid_find(uid);
 	lcnt = atomic_inc_ulong_nv(&uip->ui_lockcnt);
 	if (uid && allowfail && lcnt >
-	    (allowfail == 1 ? maxlocksperuid : (maxlocksperuid * 2))) {
+	    (allowfail == 1 ? MAXLOCKSPERUID : (MAXLOCKSPERUID * 2))) {
 		atomic_dec_ulong(&uip->ui_lockcnt);
 		return NULL;
 	}
