@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2815 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2816 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -387,3 +387,5 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	acpi(4): Updated ACPICA to 20210604. [christos 20210706]
 	hp300: Add support of multiple rd(4) disks on all punits for HPDisk.
 		[tsutsui 20210709]
+	kernel: Tie the maximum file lock per unprivilegied uid to 
+		kern.maxfiles [manu 20210727]
