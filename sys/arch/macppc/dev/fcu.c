@@ -1,4 +1,4 @@
-/* $NetBSD: fcu.c,v 1.13 2021/07/25 00:11:43 macallan Exp $ */
+/* $NetBSD: fcu.c,v 1.1 2021/07/27 20:23:41 macallan Exp $ */
 
 /*-
  * Copyright (c) 2018 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fcu.c,v 1.13 2021/07/25 00:11:43 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fcu.c,v 1.1 2021/07/27 20:23:41 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
