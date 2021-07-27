@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_cvscan.h,v 1.6 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_cvscan.h,v 1.7 2021/07/27 03:09:26 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -75,7 +75,6 @@ rf_CvscanCreate(RF_SectorCount_t sect_per_disk,
     RF_AllocListElem_t * cl_list, RF_ShutdownList_t ** listp);
 void    rf_CvscanEnqueue(void *qptr, RF_DiskQueueData_t * req, int priority);
 RF_DiskQueueData_t *rf_CvscanDequeue(void *qptr);
-RF_DiskQueueData_t *rf_CvscanPeek(void *qptr);
 int
 rf_CvscanPromote(void *qptr, RF_StripeNum_t parityStripeID,
     RF_ReconUnitNum_t which_ru);
