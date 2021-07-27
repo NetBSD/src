@@ -1,4 +1,4 @@
-/* $NetBSD: plmmc_ifpga.c,v 1.1 2015/01/27 16:34:34 jmcneill Exp $ */
+/* $NetBSD: plmmc_ifpga.c,v 1.2 2021/07/27 21:13:41 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,18 +27,17 @@
  */
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: plmmc_ifpga.c,v 1.1 2015/01/27 16:34:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plmmc_ifpga.c,v 1.2 2021/07/27 21:13:41 skrll Exp $");
 
+#include <sys/param.h>
 #include <sys/types.h>
+
+#include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/systm.h>
-#include <sys/param.h>
-#include <sys/malloc.h>
-
 #include <sys/termios.h>
 
 #include <machine/intr.h>
-#include <sys/bus.h>
 
 #include <dev/ic/pl181reg.h>
 #include <dev/ic/pl181var.h>
