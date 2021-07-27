@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.68 2021/07/26 16:45:56 thorpej Exp $	*/
+/*	$NetBSD: ahb.c,v 1.69 2021/07/27 01:18:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.68 2021/07/26 16:45:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.69 2021/07/27 01:18:04 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -58,7 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.68 2021/07/26 16:45:56 thorpej Exp $");
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
 
@@ -121,7 +120,7 @@ static void	ahb_send_immed(struct ahb_softc *, u_int32_t, struct ahb_ecb *);
 static int	ahbintr(void *);
 static void	ahb_free_ecb(struct ahb_softc *, struct ahb_ecb *);
 static struct	ahb_ecb *ahb_get_ecb(struct ahb_softc *);
-static struct	ahb_ecb *ahb_ecb_phys_kv(struct ahb_softc *, uint32_t);
+static struct	ahb_ecb *ahb_ecb_lookup(struct ahb_softc *, uint32_t);
 static void	ahb_done(struct ahb_softc *, struct ahb_ecb *);
 static int	ahb_find(bus_space_tag_t, bus_space_handle_t,
 		    struct ahb_probe_data *);
@@ -324,7 +323,7 @@ ahb_send_immed(struct ahb_softc *sc, u_int32_t cmd, struct ahb_ecb *ecb)
 		Debugger();
 	}
 
-	bus_space_write_4(iot, ioh, MBOXOUT0, cmd);	/* don't know this will work */
+	bus_space_write_4(iot, ioh, MBOXOUT0, cmd);
 	bus_space_write_1(iot, ioh, G2CNTRL, G2CNTRL_SET_HOST_READY);
 	bus_space_write_1(iot, ioh, ATTN, OP_IMMED |
 		ecb->xs->xs_periph->periph_target);
@@ -374,7 +373,7 @@ ahbintr(void *arg)
 		case AHB_ECB_OK:
 		case AHB_ECB_RECOVERED:
 		case AHB_ECB_ERR:
-			ecb = ahb_ecb_phys_kv(sc, mboxval);
+			ecb = ahb_ecb_lookup(sc, mboxval);
 			if (!ecb) {
 				aprint_error_dev(sc->sc_dev,
 				    "BAD ECB RETURNED!\n");
@@ -506,10 +505,10 @@ ahb_get_ecb(struct ahb_softc *sc)
 }
 
 /*
- * given a physical address, find the ecb that it corresponds to.
+ * Lookup and return the ECB that has the specified DMA address.
  */
 static struct ahb_ecb *
-ahb_ecb_phys_kv(struct ahb_softc *sc, uint32_t ecb_phys)
+ahb_ecb_lookup(struct ahb_softc *sc, uint32_t ecb_phys)
 {
 	int hashnum = ECB_HASH(ecb_phys);
 	struct ahb_ecb *ecb = sc->sc_ecbhash[hashnum];
