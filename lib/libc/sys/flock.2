@@ -1,4 +1,4 @@
-.\"	$NetBSD: flock.2,v 1.22 2011/10/15 21:35:50 rmind Exp $
+.\"	$NetBSD: flock.2,v 1.23 2021/07/27 09:32:55 manu Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -137,6 +137,10 @@ does not include exactly one of
 .Dv LOCK_SH ,
 or
 .Dv LOCK_UN .
+.It Bq Eq ENOMEM
+The file lock limit for the current unprivilegied user 
+has been reached. It can be modifed using sysctl
+.Li kern.maxfiles .
 .It Bq Er EOPNOTSUPP
 The argument
 .Fa fd
