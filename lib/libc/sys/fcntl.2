@@ -1,4 +1,4 @@
-.\"	$NetBSD: fcntl.2,v 1.45 2019/09/27 07:20:07 wiz Exp $
+.\"	$NetBSD: fcntl.2,v 1.46 2021/07/27 09:32:55 manu Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -549,6 +549,17 @@ The argument
 is
 .Dv F_GETPATH
 and insufficient memory is available.
+.Pp
+The argument
+.Fa cmd
+is
+.Dv F_GETLK ,
+.Dv F_SETLK ,
+or
+.Dv F_SETLKW ,
+and the file lock limit for the current unprivilegied user
+has been reached. It can be modifed using sysctl
+.Li kern.maxfiles .
 .It Bq Er ERANGE
 The argument
 .Fa cmd
