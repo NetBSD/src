@@ -1,4 +1,4 @@
-# $NetBSD: t_execsnoop.sh,v 1.9 2021/07/27 11:05:39 skrll Exp $
+# $NetBSD: t_execsnoop.sh,v 1.10 2021/07/27 15:29:22 gson Exp $
 #
 # Copyright (c) 2020 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -27,7 +27,8 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-tmp="execsnoop.out"
+stdout="execsnoop.out"
+stderr="execsnoop.stderr"
 
 atf_test_case basic cleanup
 basic_head() {
@@ -38,7 +39,7 @@ basic_head() {
 
 basic_body() {
 	n=10
-	atf_check -s exit:0 -o ignore -e empty -x "execsnoop > $tmp &"
+	atf_check -s exit:0 -o ignore -e empty -x "execsnoop >$stdout 2>$stderr &"
 	sleep 5
 
 	while [ $n -gt 0 ]; do
@@ -48,7 +49,9 @@ basic_body() {
 
 	sleep 5
 
-	if [ ! $(cat $tmp | grep "whoami" | wc -l) -eq 10 ]; then
+	cat $stderr >&2
+
+	if [ ! $(cat $stdout | grep "whoami" | wc -l) -eq 10 ]; then
 		atf_fail "execsnoop does not work"
 	fi
 
