@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.349 2021/07/26 18:10:14 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.350 2021/07/27 05:42:36 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.349 2021/07/26 18:10:14 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.350 2021/07/27 05:42:36 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1154,8 +1154,8 @@ type_qualifier_list:		/* C99 6.7.5 */
 	;
 
 /*
- * For an explanation of 'notype' in the following rules, see the Bison
- * manual, section 7.1 "Semantic Info in Token Kinds".
+ * For an explanation of 'notype' in the following rules, see
+ * https://www.gnu.org/software/bison/manual/bison.html#Semantic-Tokens.
  */
 
 notype_init_declarators:
