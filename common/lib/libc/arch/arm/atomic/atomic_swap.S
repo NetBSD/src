@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_swap.S,v 1.18 2021/07/10 06:53:40 skrll Exp $	*/
+/*	$NetBSD: atomic_swap.S,v 1.19 2021/07/28 07:32:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007,2012 The NetBSD Foundation, Inc.
@@ -44,6 +44,10 @@
  * and fix yet again).
  */
 
+ENTRY_NP(__sync_lock_test_and_set_4)
+	DMB
+	/* FALLTHROUGH */
+
 ENTRY_NP(_atomic_swap_32)
 	mov	ip, r0
 1:
@@ -65,20 +69,15 @@ ENTRY_NP(_atomic_swap_32)
 	cmpne	r3, #0
 #endif
 	bne	1b
-#ifdef _ARM_ARCH_7
-	dmb
-#else
-	mcr	p15, 0, r3, c7, c10, 5	/* data memory barrier */
-#endif
 99:
 	RET
 END(_atomic_swap_32)
+END(__sync_lock_test_and_set_4)
 
 ATOMIC_OP_ALIAS(atomic_swap_32,_atomic_swap_32)
 ATOMIC_OP_ALIAS(atomic_swap_uint,_atomic_swap_32)
 ATOMIC_OP_ALIAS(atomic_swap_ulong,_atomic_swap_32)
 ATOMIC_OP_ALIAS(atomic_swap_ptr,_atomic_swap_32)
-CRT_ALIAS(__sync_lock_test_and_set_4,_atomic_swap_32)
 CRT_ALIAS(__atomic_exchange_4,_atomic_swap_32)
 STRONG_ALIAS(_atomic_swap_uint,_atomic_swap_32)
 STRONG_ALIAS(_atomic_swap_ulong,_atomic_swap_32)
@@ -87,15 +86,16 @@ STRONG_ALIAS(_atomic_swap_ptr,_atomic_swap_32)
 #if (!defined(_KERNEL) || !defined(_RUMPKERNEL)) && !defined(_STANDALONE)
 ENTRY_NP(__sync_lock_release_4)
 	mov	r1, #0
-#ifdef _ARM_ARCH_7
-	dmb	ishst
-#else
-	mcr	p15, 0, r1, c7, c10, 5	/* data memory barrier */
-#endif
+	DMB
+
 	str	r1, [r0]
 	RET
 END(__sync_lock_release_4)
 #endif
+
+ENTRY_NP(__sync_lock_test_and_set_1)
+	DMB
+	/* FALLTHROUGH */
 
 ENTRY_NP(_atomic_swap_8)
 	mov	ip, r0
@@ -109,18 +109,13 @@ ENTRY_NP(_atomic_swap_8)
 #endif
 	cmp	r3, #0
 	bne	1b
-#ifdef _ARM_ARCH_7
-	dmb
-#else
-	mcr	p15, 0, ip, c7, c10, 5	/* data memory barrier */
-#endif
 	RET
 END(_atomic_swap_8)
+END(__sync_lock_test_and_set_1)
 
 ATOMIC_OP_ALIAS(atomic_swap_8,_atomic_swap_8)
 ATOMIC_OP_ALIAS(atomic_swap_char,_atomic_swap_8)
 ATOMIC_OP_ALIAS(atomic_swap_uchar,_atomic_swap_8)
-CRT_ALIAS(__sync_lock_test_and_set_1,_atomic_swap_8)
 CRT_ALIAS(__atomic_exchange_1,_atomic_swap_8)
 STRONG_ALIAS(_atomic_swap_char,_atomic_swap_8)
 STRONG_ALIAS(_atomic_swap_uchar,_atomic_swap_8)
@@ -128,11 +123,8 @@ STRONG_ALIAS(_atomic_swap_uchar,_atomic_swap_8)
 #if (!defined(_KERNEL) || !defined(_RUMPKERNEL)) && !defined(_STANDALONE)
 ENTRY_NP(__sync_lock_release_1)
 	mov	r1, #0
-#ifdef _ARM_ARCH_7
-	dmb	ishst
-#else
-	mcr	p15, 0, r1, c7, c10, 5	/* data memory barrier */
-#endif
+	DMB
+
 	strb	r1, [r0]
 	RET
 END(__sync_lock_release_1)

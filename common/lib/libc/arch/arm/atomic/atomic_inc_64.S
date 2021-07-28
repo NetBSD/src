@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_inc_64.S,v 1.10 2021/07/10 06:53:40 skrll Exp $	*/
+/*	$NetBSD: atomic_inc_64.S,v 1.11 2021/07/28 07:32:20 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -40,11 +40,6 @@ ENTRY_NP(_atomic_inc_64_nv)
 	strexd	r2, r0, r1, [ip]	/* try to store */
 	cmp	r2, #0			/*   succeed? */
 	bne	1b			/*     no, try again? */
-#ifdef _ARM_ARCH_7
-	dmb
-#else
-	mcr	p15, 0, r2, c7, c10, 5	/* data memory barrier */
-#endif
 	RET				/* return new value */
 END(_atomic_inc_64_nv)
 

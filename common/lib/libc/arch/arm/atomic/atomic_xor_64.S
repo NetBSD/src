@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_xor_64.S,v 1.6 2021/07/10 06:53:40 skrll Exp $	*/
+/*	$NetBSD: atomic_xor_64.S,v 1.7 2021/07/28 07:32:20 skrll Exp $	*/
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -45,11 +45,6 @@ ENTRY_NP(_atomic_xor_64_nv)
 	strexd	r4, r0, r1, [ip]	/* try to store */
 	cmp	r4, #0			/*   succeed? */
 	bne	1b			/*     no, try again? */
-#ifdef _ARM_ARCH_7
-	dmb
-#else
-	mcr	p15, 0, r4, c7, c10, 5	/* data memory barrier */
-#endif
 	pop	{r3, r4}		/* restore temporary */
 	RET				/* return new value */
 END(_atomic_xor_64_nv)
