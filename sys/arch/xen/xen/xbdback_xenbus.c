@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.97 2021/02/21 20:02:25 jdolecek Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.98 2021/07/28 21:38:50 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.97 2021/02/21 20:02:25 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.98 2021/07/28 21:38:50 jdolecek Exp $");
 
 #include <sys/buf.h>
 #include <sys/condvar.h>
@@ -71,8 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.97 2021/02/21 20:02:25 jdolecek
 #define VBD_BSIZE 512
 #define VBD_MAXSECT ((PAGE_SIZE / VBD_BSIZE) - 1)
 
-/* Need to alloc one extra page to account for possible mapping offset */
-#define VBD_VA_SIZE	(MAXPHYS + PAGE_SIZE)
+#define VBD_VA_SIZE			MAXPHYS
 #define VBD_MAX_INDIRECT_SEGMENTS	VBD_VA_SIZE >> PAGE_SHIFT
 
 CTASSERT(XENSHM_MAX_PAGES_PER_REQUEST >= VBD_MAX_INDIRECT_SEGMENTS);
