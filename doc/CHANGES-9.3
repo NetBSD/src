@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.17 2021/07/14 18:05:25 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.18 2021/07/28 15:00:31 snj Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -375,4 +375,15 @@ sys/arch/hp300/stand/common/rd.c		1.11
 
 	hp300: various rd(4) improvements.
 	[tsutsui, ticket #1323]
+
+sys/arch/arm/rockchip/rk_anxdp.c		1.4
+
+	Fix display init on Pinebook Pro w/ U-Boot 2021.07.
+	[jmcneill, ticket #1324]
+
+sys/dev/audio/audio.c				1.105
+
+	AUDIO_SETINFO: fix a bug that the gain and the balance could
+	not be set at the same time.  PR kern/56308.
+	[isaki, ticket #1325]
 
