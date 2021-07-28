@@ -1,4 +1,4 @@
-.\"	$NetBSD: fcntl.2,v 1.46 2021/07/27 09:32:55 manu Exp $
+.\"	$NetBSD: fcntl.2,v 1.47 2021/07/28 11:29:59 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -557,9 +557,11 @@ is
 .Dv F_SETLK ,
 or
 .Dv F_SETLKW ,
-and the file lock limit for the current unprivilegied user
-has been reached. It can be modifed using sysctl
-.Li kern.maxfiles .
+and the file lock limit for the current unprivileged user
+has been reached.
+It can be modified using the
+.Li kern.maxfiles
+.Xr sysctl 7 .
 .It Bq Er ERANGE
 The argument
 .Fa cmd
