@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_dec_32.S,v 1.6 2021/07/10 06:53:40 skrll Exp $	*/
+/*	$NetBSD: atomic_dec_32.S,v 1.7 2021/07/28 07:32:20 skrll Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,11 +38,6 @@ ENTRY_NP(_atomic_dec_32)
 	strex	r2, r3, [r0]		/* try to store */
 	cmp	r2, #0			/*   succeed? */
 	bne	1b			/*     no, try again? */
-#ifdef _ARM_ARCH_7
-	dmb
-#else
-	mcr	p15, 0, r2, c7, c10, 5	/* data memory barrier */
-#endif
 	RET				/* return new value */
 END(_atomic_dec_32)
 
@@ -54,6 +49,7 @@ STRONG_ALIAS(_atomic_dec_uint,_atomic_dec_32)
 STRONG_ALIAS(_atomic_dec_ulong,_atomic_dec_32)
 STRONG_ALIAS(_atomic_dec_ptr,_atomic_dec_32)
 
+
 ENTRY_NP(_atomic_dec_32_nv)
 	mov	ip, r0			/* need r0 for return value */
 1:	ldrex	r0, [ip]		/* load old value */
@@ -61,11 +57,6 @@ ENTRY_NP(_atomic_dec_32_nv)
 	strex	r2, r0, [ip]		/* try to store */
 	cmp	r2, #0			/*   succeed? */
 	bne	1b			/*     no, try again? */
-#ifdef _ARM_ARCH_7
-	dmb
-#else
-	mcr	p15, 0, r2, c7, c10, 5	/* data memory barrier */
-#endif
 	RET				/* return new value */
 END(_atomic_dec_32_nv)
 

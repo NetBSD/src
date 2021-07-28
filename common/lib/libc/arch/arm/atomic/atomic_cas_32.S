@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas_32.S,v 1.7 2014/03/04 16:15:28 matt Exp $	*/
+/*	$NetBSD: atomic_cas_32.S,v 1.8 2021/07/28 07:32:20 skrll Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,6 +31,7 @@
 #include "atomic_op_asm.h"
 
 #if defined(_ARM_ARCH_6)
+
 /*
  * ARMv6 has load-exclusive/store-exclusive which works for both user
  * and kernel.
@@ -48,11 +49,6 @@ ENTRY_NP(_atomic_cas_32)
 	strex	r3, r2, [ip]		/* store new value */
 	cmp	r3, #0			/*   succeed? */
 	bne	1b			/*     nope, try again. */
-#ifdef _ARM_ARCH_7
-	dsb
-#else
-	mcr	p15, 0, r3, c7, c10, 4	/* data synchronization barrier */
-#endif
 2:	RET				/* return. */
 END(_atomic_cas_32)
 
@@ -64,7 +60,6 @@ ATOMIC_OP_ALIAS(atomic_cas_32_ni,_atomic_cas_32)
 ATOMIC_OP_ALIAS(atomic_cas_uint_ni,_atomic_cas_32)
 ATOMIC_OP_ALIAS(atomic_cas_ulong_ni,_atomic_cas_32)
 ATOMIC_OP_ALIAS(atomic_cas_ptr_ni,_atomic_cas_32)
-CRT_ALIAS(__sync_val_compare_and_swap_4,_atomic_cas_32)
 STRONG_ALIAS(_atomic_cas_uint,_atomic_cas_32)
 STRONG_ALIAS(_atomic_cas_ulong,_atomic_cas_32)
 STRONG_ALIAS(_atomic_cas_32_ni,_atomic_cas_32)
@@ -72,5 +67,13 @@ STRONG_ALIAS(_atomic_cas_ptr_ni,_atomic_cas_32)
 STRONG_ALIAS(_atomic_cas_uint_ni,_atomic_cas_32)
 STRONG_ALIAS(_atomic_cas_ulong_ni,_atomic_cas_32)
 STRONG_ALIAS(_atomic_cas_ptr,_atomic_cas_32)
+
+ENTRY_NP(__sync_val_compare_and_swap_4)
+	push	{r4, lr}
+	DMB
+	bl	_atomic_cas_32
+	DMB
+	pop	{r4, pc}
+END(__sync_val_compare_and_swap_4)
 
 #endif /* _ARM_ARCH_6 */
