@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-print.c,v 1.42 2012/02/22 06:29:40 agc Exp $");
+__RCSID("$NetBSD: packet-print.c,v 1.43 2021/07/28 22:31:45 jhigh Exp $");
 #endif
 
 #include <string.h>
@@ -1087,6 +1087,14 @@ pgp_print_packet(pgp_printstate_t *print, const pgp_packet_t *pkt)
 		start_subpacket(&print->indent, pkt->tag);
 		print_hexdump(print->indent, "Issuer Key Id",
 			      content->ss_issuer, (unsigned)sizeof(content->ss_issuer));
+		end_subpacket(&print->indent);
+		break;
+
+	case PGP_PTAG_SS_ISSUER_FINGERPRINT:
+		start_subpacket(&print->indent, pkt->tag);
+		print_hexdump(print->indent, "Issuer Fingerprint",
+			      content->ss_issuer_fingerprint.fingerprint, 
+			      content->ss_issuer_fingerprint.len);
 		end_subpacket(&print->indent);
 		break;
 
