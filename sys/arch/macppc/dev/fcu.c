@@ -1,4 +1,4 @@
-/* $NetBSD: fcu.c,v 1.2 2021/07/27 23:38:42 macallan Exp $ */
+/* $NetBSD: fcu.c,v 1.3 2021/07/28 00:59:10 macallan Exp $ */
 
 /*-
  * Copyright (c) 2018 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fcu.c,v 1.2 2021/07/27 23:38:42 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fcu.c,v 1.3 2021/07/28 00:59:10 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -490,7 +490,13 @@ fcu_adjust(void *cookie)
 		sc->sc_pwm = FALSE;
 		for (i = 0; i < FCU_ZONE_COUNT; i++)
 			fancontrol_adjust_zone(&sc->sc_zones[i]);
-		kpause("fanctrl", true, mstohz(sc->sc_pwm ? 1000 : 5000), NULL);
+		/*
+		 * take a shorter nap if we're in the proccess of adjusting a
+		 * PWM fan, which relies on measuring speed and then changing
+		 * its duty cycle until we're reasonable close to the target
+		 * speed
+		 */
+		kpause("fanctrl", true, mstohz(sc->sc_pwm ? 1000 : 2000), NULL);
 	}
 	kthread_exit(0);
 }
