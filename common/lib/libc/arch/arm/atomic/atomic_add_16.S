@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_add_16.S,v 1.4 2021/07/10 06:53:40 skrll Exp $	*/
+/*	$NetBSD: atomic_add_16.S,v 1.5 2021/07/28 07:32:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -43,11 +43,6 @@ ENTRY_NP(_atomic_add_16)
 	strexh	r2, r3, [ip]		/* try to store */
 	cmp	r2, #0			/*   succeed? */
 	bne	1b			/*     no, try again */
-#ifdef _ARM_ARCH_7
-	dmb
-#else
-	mcr	p15, 0, r2, c7, c10, 5	/* data memory barrier */
-#endif
 	RET				/* return old value */
 END(_atomic_add_16)
 END(_atomic_sub_16)
@@ -55,7 +50,6 @@ END(_atomic_sub_16)
 ATOMIC_OP_ALIAS(atomic_add_16,_atomic_add_16)
 ATOMIC_OP_ALIAS(atomic_add_short,_atomic_add_16)
 ATOMIC_OP_ALIAS(atomic_add_ushort,_atomic_add_16)
-CRT_ALIAS(__sync_fetch_and_add_2,_atomic_add_16)
 CRT_ALIAS(__atomic_fetch_add_2,_atomic_add_16)
 STRONG_ALIAS(_atomic_add_short,_atomic_add_16)
 STRONG_ALIAS(_atomic_add_ushort,_atomic_add_16)
@@ -63,10 +57,26 @@ STRONG_ALIAS(_atomic_add_ushort,_atomic_add_16)
 ATOMIC_OP_ALIAS(atomic_sub_16,_atomic_sub_16)
 ATOMIC_OP_ALIAS(atomic_sub_short,_atomic_sub_16)
 ATOMIC_OP_ALIAS(atomic_sub_ushort,_atomic_sub_16)
-CRT_ALIAS(__sync_fetch_and_sub_2,_atomic_sub_16)
 CRT_ALIAS(__atomic_fetch_sub_2,_atomic_sub_16)
 STRONG_ALIAS(_atomic_sub_short,_atomic_sub_16)
 STRONG_ALIAS(_atomic_sub_ushort,_atomic_sub_16)
+
+ENTRY_NP(__sync_fetch_and_add_2)
+	push    {r4, lr}
+	DMB
+	bl	_atomic_add_16
+	DMB
+	pop	{r4, pc}
+END(__sync_fetch_and_add_2)
+
+ENTRY_NP(__sync_fetch_and_sub_2)
+	push    {r4, lr}
+	DMB
+	bl	_atomic_sub_16
+	DMB
+	pop	{r4, pc}
+END(__sync_fetch_and_sub_2)
+
 
 ENTRY_NP(_atomic_sub_16_nv)
 	negs	r1, r1
@@ -78,25 +88,35 @@ ENTRY_NP(_atomic_add_16_nv)
 	strexh	r2, r0, [ip]		/* try to store */
 	cmp	r2, #0			/*   succeed? */
 	bne	1b			/*     no, try again? */
-#ifdef _ARM_ARCH_7
-	dmb
-#else
-	mcr	p15, 0, r2, c7, c10, 5	/* data memory barrier */
-#endif
 	RET				/* return new value */
 END(_atomic_add_16_nv)
 END(_atomic_sub_16_nv)
+
 ATOMIC_OP_ALIAS(atomic_add_16_nv,_atomic_add_16_nv)
 ATOMIC_OP_ALIAS(atomic_add_short_nv,_atomic_add_16_nv)
 ATOMIC_OP_ALIAS(atomic_add_ushort_nv,_atomic_add_16_nv)
-CRT_ALIAS(__sync_add_and_fetch_2,_atomic_add_16_nv)
 STRONG_ALIAS(_atomic_add_short_nv,_atomic_add_16_nv)
 STRONG_ALIAS(_atomic_add_ushort_nv,_atomic_add_16_nv)
-
 ATOMIC_OP_ALIAS(atomic_sub_16_nv,_atomic_sub_16_nv)
 ATOMIC_OP_ALIAS(atomic_sub_short_nv,_atomic_sub_16_nv)
 ATOMIC_OP_ALIAS(atomic_sub_ushort_nv,_atomic_sub_16_nv)
-CRT_ALIAS(__sync_sub_and_fetch_2,_atomic_sub_16_nv)
 STRONG_ALIAS(_atomic_sub_short_nv,_atomic_sub_16_nv)
 STRONG_ALIAS(_atomic_sub_ushort_nv,_atomic_sub_16_nv)
+
+ENTRY_NP(__sync_add_and_fetch_2)
+	push    {r4, lr}
+	DMB
+	bl	_atomic_add_16_nv
+	DMB
+	pop	{r4, pc}
+END(__sync_add_and_fetch_2)
+
+ENTRY_NP(__sync_sub_and_fetch_2)
+	push    {r4, lr}
+	DMB
+	bl	_atomic_sub_16_nv
+	DMB
+	pop	{r4, pc}
+END(__sync_sub_and_fetch_2)
+
 #endif /* _ARM_ARCH_6 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_nand_64.S,v 1.6 2021/07/10 06:53:40 skrll Exp $	*/
+/*	$NetBSD: atomic_nand_64.S,v 1.7 2021/07/28 07:32:20 skrll Exp $	*/
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -47,11 +47,6 @@ ENTRY_NP(_atomic_nand_64_nv)
 	strexd	r4, r0, r1, [ip]	/* try to store */
 	cmp	r4, #0			/*   succeed? */
 	bne	1b			/*     no, try again? */
-#ifdef _ARM_ARCH_7
-	dmb
-#else
-	mcr	p15, 0, r4, c7, c10, 5	/* data memory barrier */
-#endif
 	pop	{r3, r4}		/* restore temporary */
 	RET				/* return new value */
 END(_atomic_nand_64_nv)
@@ -59,6 +54,13 @@ END(_atomic_nand_64_nv)
 STRONG_ALIAS(_atomic_nand_64,_atomic_nand_64_nv)
 ATOMIC_OP_ALIAS(atomic_nand_64_nv,_atomic_nand_64_nv)
 ATOMIC_OP_ALIAS(atomic_nand_64,_atomic_nand_64_nv)
-CRT_ALIAS(__sync_nand_and_fetch_8,_atomic_nand_64_nv)
+
+ENTRY_NP(__sync_nand_and_fetch_8)
+	push	{r4, lr}
+	DMB
+	bl	_atomic_nand_64_nv
+	DMB
+	pop	{r4, pc}
+END(__sync_nand_and_fetch_8)
 
 #endif /* _ARM_ARCH_6 */
