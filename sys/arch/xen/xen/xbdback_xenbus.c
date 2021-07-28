@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.98 2021/07/28 21:38:50 jdolecek Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.99 2021/07/28 22:17:49 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.98 2021/07/28 21:38:50 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.99 2021/07/28 22:17:49 jdolecek Exp $");
 
 #include <sys/buf.h>
 #include <sys/condvar.h>
@@ -1311,7 +1311,7 @@ xbdback_co_io_gotio(struct xbdback_instance *xbdi, void *obj)
 
 	KASSERT(bcount <= MAXPHYS);
 	KASSERT(xbd_io->xio_start_offset < PAGE_SIZE);
-	KASSERT(bcount + xbd_io->xio_start_offset < VBD_VA_SIZE);
+	KASSERT(bcount + xbd_io->xio_start_offset <= VBD_VA_SIZE);
 
 	/* Fill-in the buf */
 	if (xbdi->xbdi_xen_req.operation == BLKIF_OP_WRITE) {
