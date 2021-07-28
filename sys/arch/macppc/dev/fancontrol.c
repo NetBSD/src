@@ -1,7 +1,7 @@
-/* $NetBSD: fancontrol.c,v 1.1 2021/07/27 23:38:42 macallan Exp $ */
+/* $NetBSD: fancontrol.c,v 1.2 2021/07/28 00:36:00 macallan Exp $ */
 
 /*-
- * Copyright (c) 2018 Michael Lorenz
+ * Copyright (c) 2021 Michael Lorenz
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fancontrol.c,v 1.1 2021/07/27 23:38:42 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fancontrol.c,v 1.2 2021/07/28 00:36:00 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,11 +66,12 @@ fancontrol_adjust_zone(fancontrol_zone_t *z)
 	if (diff < 0) diff = 0;
 	diff = (100 * diff) / (z->Tmax - z->Tmin);
 
-	/* now adjust each fan to the new duty cycle */
+	/* now adjust each fan to the new speed */
 	for (i = 0; i < z->nfans; i++) {
 		step = (z->fans[i].max_rpm - z->fans[i].min_rpm) / 100;
 		speed = z->fans[i].min_rpm + diff * step;
-		DPRINTF("diff %d base %d %d sp %d\n", diff, z->fans[i].min_rpm, z->fans[i].max_rpm, speed);
+		DPRINTF("diff %d base %d %d sp %d\n",
+		    diff, z->fans[i].min_rpm, z->fans[i].max_rpm, speed);
 		z->set_rpm(z->cookie, z->fans[i].num, speed);
 	}
 	return 0;
