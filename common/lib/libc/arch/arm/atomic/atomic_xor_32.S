@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_xor_32.S,v 1.4 2021/07/10 06:53:40 skrll Exp $	*/
+/*	$NetBSD: atomic_xor_32.S,v 1.5 2021/07/28 07:32:20 skrll Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,21 +39,23 @@ ENTRY_NP(_atomic_xor_32)
 	strex	r2, r3, [ip]		/* try to store */
 	cmp	r2, #0			/*   succeed? */
 	bne	1b			/*     no, try again */
-#ifdef _ARM_ARCH_7
-	dmb
-#else
-	mcr	p15, 0, r2, c7, c10, 5	/* data memory barrier */
-#endif
 	RET				/* return old value */
 END(_atomic_xor_32)
 
 ATOMIC_OP_ALIAS(atomic_xor_32,_atomic_xor_32)
 ATOMIC_OP_ALIAS(atomic_xor_uint,_atomic_xor_32)
 ATOMIC_OP_ALIAS(atomic_xor_ulong,_atomic_xor_32)
-CRT_ALIAS(__sync_fetch_and_xor_4,_atomic_xor_32)
 CRT_ALIAS(__atomic_fetch_xor_4,_atomic_xor_32)
 STRONG_ALIAS(_atomic_xor_uint,_atomic_xor_32)
 STRONG_ALIAS(_atomic_xor_ulong,_atomic_xor_32)
+
+ENTRY_NP(__sync_fetch_and_xor_4)
+	push	{r4, lr}
+	DMB
+	bl	_atomic_xor_32
+	DMB
+	pop	{r4, pc}
+END(__sync_fetch_and_xor_4)
 
 ENTRY_NP(_atomic_xor_32_nv)
 	mov	ip, r0			/* need r0 for return value */
@@ -62,19 +64,22 @@ ENTRY_NP(_atomic_xor_32_nv)
 	strex	r2, r0, [ip]		/* try to store */
 	cmp	r2, #0			/*   succeed? */
 	bne	1b			/*     no, try again? */
-#ifdef _ARM_ARCH_7
-	dmb
-#else
-	mcr	p15, 0, r2, c7, c10, 5	/* data memory barrier */
-#endif
 	RET				/* return new value */
 END(_atomic_xor_32_nv)
 
 ATOMIC_OP_ALIAS(atomic_xor_32_nv,_atomic_xor_32_nv)
 ATOMIC_OP_ALIAS(atomic_xor_uint_nv,_atomic_xor_32_nv)
 ATOMIC_OP_ALIAS(atomic_xor_ulong_nv,_atomic_xor_32_nv)
-CRT_ALIAS(__sync_xor_and_fetch_4,_atomic_xor_32_nv)
 STRONG_ALIAS(_atomic_xor_uint_nv,_atomic_xor_32_nv)
 STRONG_ALIAS(_atomic_xor_ulong_nv,_atomic_xor_32_nv)
+
+ENTRY_NP(__sync_xor_and_fetch_4)
+	push	{r4, lr}
+	DMB
+	bl	_atomic_xor_32_nv
+	DMB
+	pop	{r4, pc}
+END(__sync_xor_and_fetch_4)
+
 
 #endif /* _ARM_ARCH_6 */

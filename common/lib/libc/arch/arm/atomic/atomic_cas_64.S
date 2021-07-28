@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas_64.S,v 1.11 2019/02/18 11:22:56 martin Exp $	*/
+/*	$NetBSD: atomic_cas_64.S,v 1.12 2021/07/28 07:32:20 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,6 +31,7 @@
 #include "atomic_op_asm.h"
 
 #if defined(_ARM_ARCH_6)
+
 /*
  * ARMv6 has load-exclusive/store-exclusive which works for both user
  * and kernel.
@@ -59,11 +60,6 @@ ENTRY_NP(_atomic_cas_64)
 	strexd	r6, r4, r5, [ip]	/* store new value */
 	cmp	r6, #0			/*   succeed? */
 	bne	1b			/*     nope, try again. */
-#ifdef _ARM_ARCH_7
-	dsb
-#else
-	mcr	p15, 0, ip, c7, c10, 4	/* data synchronization barrier */
-#endif
 2:
 	pop	{r4-r7}			/* restore temporaries */
 	RET				/* return. */
@@ -72,6 +68,13 @@ END(_atomic_cas_64)
 ATOMIC_OP_ALIAS(atomic_cas_64,_atomic_cas_64)
 ATOMIC_OP_ALIAS(atomic_cas_64_ni,_atomic_cas_64)
 STRONG_ALIAS(_atomic_cas_64_ni,_atomic_cas_64)
-CRT_ALIAS(__sync_val_compare_and_swap_8,_atomic_cas_64)
+
+ENTRY_NP(__sync_val_compare_and_swap_8)
+	push	{r4, lr}
+	DMB
+	bl	_atomic_cas_64
+	DMB
+	pop	{r4, pc}
+END(__sync_val_compare_and_swap_8)
 
 #endif /* _ARM_ARCH_6 */
