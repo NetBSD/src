@@ -1,4 +1,4 @@
-/* $NetBSD: atomic_xor_16.S,v 1.1 2014/08/10 05:47:35 matt Exp $ */
+/* $NetBSD: atomic_xor_16.S,v 1.2 2021/07/29 10:29:05 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,14 +33,16 @@
 
 ATOMIC_OP16(xor, eor)
 
+SYNC_FETCH_OP16(xor, eor)
+
 ATOMIC_OP_ALIAS(atomic_xor_16,_atomic_xor_16)
 ATOMIC_OP_ALIAS(atomic_xor_ushort,_atomic_xor_16)
-STRONG_ALIAS(__sync_fetch_and_xor_2,_atomic_xor_16)
 STRONG_ALIAS(_atomic_xor_ushort,_atomic_xor_16)
 
 ATOMIC_OP16_NV(xor, eor)
 
+SYNC_OP16_FETCH(xor, eor)
+
 ATOMIC_OP_ALIAS(atomic_xor_16_nv,_atomic_xor_16_nv)
 ATOMIC_OP_ALIAS(atomic_xor_ushort_nv,_atomic_xor_16_nv)
-STRONG_ALIAS(__sync_xor_and_fetch_2,_atomic_xor_16_nv)
 STRONG_ALIAS(_atomic_xor_ushort_nv,_atomic_xor_16_nv)
