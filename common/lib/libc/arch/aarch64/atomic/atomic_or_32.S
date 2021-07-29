@@ -1,4 +1,4 @@
-/* $NetBSD: atomic_or_32.S,v 1.1 2014/08/10 05:47:35 matt Exp $ */
+/* $NetBSD: atomic_or_32.S,v 1.2 2021/07/29 10:29:05 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,14 +33,16 @@
 
 ATOMIC_OP32(or, orr)
 
+SYNC_FETCH_OP32(or, orr)
+
 ATOMIC_OP_ALIAS(atomic_or_32,_atomic_or_32)
 ATOMIC_OP_ALIAS(atomic_or_uint,_atomic_or_32)
-STRONG_ALIAS(__sync_fetch_and_or_4,_atomic_or_32)
 STRONG_ALIAS(_atomic_or_uint,_atomic_or_32)
 
 ATOMIC_OP32_NV(or, orr)
 
+SYNC_OP32_FETCH(or, orr)
+
 ATOMIC_OP_ALIAS(atomic_or_32_nv,_atomic_or_32_nv)
 ATOMIC_OP_ALIAS(atomic_or_uint_nv,_atomic_or_32_nv)
-STRONG_ALIAS(__sync_or_and_fetch_4,_atomic_or_32_nv)
 STRONG_ALIAS(_atomic_or_uint_nv,_atomic_or_32_nv)

@@ -1,4 +1,4 @@
-/* $NetBSD: atomic_cas_16.S,v 1.3 2020/10/07 07:31:47 skrll Exp $ */
+/* $NetBSD: atomic_cas_16.S,v 1.4 2021/07/29 10:29:05 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -46,3 +46,16 @@ ATOMIC_OP_ALIAS(atomic_cas_16,_atomic_cas_16)
 STRONG_ALIAS(_atomic_cas_short,_atomic_cas_16)
 STRONG_ALIAS(_atomic_cas_ushort,_atomic_cas_16)
 STRONG_ALIAS(__sync_val_compare_and_swap_2,_atomic_cas_16)
+
+ENTRY_NP(__sync_val_compare_and_swap_2)
+	mov	x4, x0			/* we need x0 for return value */
+	dmb	ish
+1:	ldxrh	w0, [x4]		/* load old value */
+	cmp	w0, w1			/*   compare? */
+	b.ne	2f
+	stxrh	w3, w2, [x4]		/* store new value */
+	cbnz	w3, 3f			/*   succeed? nope, try again. */
+	dmb	ish
+2:	ret				/* return. */
+3:	b	1b
+END(__sync_val_compare_and_swap_2)

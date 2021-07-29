@@ -1,4 +1,4 @@
-/* $NetBSD: atomic_nand_16.S,v 1.4 2021/07/06 08:31:41 skrll Exp $ */
+/* $NetBSD: atomic_nand_16.S,v 1.5 2021/07/29 10:29:05 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  * { tmp = *ptr; *ptr = ~(tmp & value); return tmp; }   // nand
  */
 ENTRY_NP(_atomic_nand_16)
-	mov	x4, x0
+	mov	x4, x0			/* need r0 for return value */
 1:	ldxrh	w0, [x4]		/* load old value (*ptr) */
 	and	w3, w0, w1		/* w3 =  (*ptr & value) */
 	mvn	w3, w3			/* w3 = ~(*ptr & value) */
@@ -45,9 +45,21 @@ ENTRY_NP(_atomic_nand_16)
 2:	b	1b
 END(_atomic_nand_16)
 
+ENTRY_NP(__sync_fetch_and_nand_2)
+	mov	x4, x0			/* need r0 for return value */
+	dmb	ish
+1:	ldxrh	w0, [x4]		/* load old value (*ptr) */
+	and	w3, w0, w1		/* w3 =  (*ptr & value) */
+	mvn	w3, w3			/* w3 = ~(*ptr & value) */
+	stxrh	w2, w3, [x4]		/* try to store */
+	cbnz	w2, 2f			/*   succeed? no, try again */
+	dmb	ish
+	ret				/* return old value */
+2:	b	1b
+END(__sync_fetch_and_nand_2)
+
 ATOMIC_OP_ALIAS(atomic_nand_16,_atomic_nand_16)
 ATOMIC_OP_ALIAS(atomic_nand_ushort,_atomic_nand_16)
-STRONG_ALIAS(__sync_fetch_and_nand_2,_atomic_nand_16)
 STRONG_ALIAS(_atomic_nand_ushort,_atomic_nand_16)
 
 
@@ -65,7 +77,19 @@ ENTRY_NP(_atomic_nand_16_nv)
 2:	b	1b
 END(_atomic_nand_16_nv)
 
+ENTRY_NP(__sync_nand_and_fetch_2)
+	mov	x4, x0			/* need r0 for return value */
+	dmb	ish
+1:	ldxrh	w0, [x4]		/* load old value (*ptr) */
+	and	w0, w0, w1		/* w0 =  (*ptr & value) */
+	mvn	w0, w0			/* w0 = ~(*ptr & value), return */
+	stxrh	w2, w0, [x4]		/* try to store */
+	cbnz	w2, 2f			/*   succeed? no, try again? */
+	dmb 	ish
+	ret				/* return new value */
+2:	b	1b
+END(__sync_nand_and_fetch_2)
+
 ATOMIC_OP_ALIAS(atomic_nand_16_nv,_atomic_nand_16_nv)
 ATOMIC_OP_ALIAS(atomic_nand_ushort_nv,_atomic_nand_16_nv)
-STRONG_ALIAS(__sync_nand_and_fetch_2,_atomic_nand_16_nv)
 STRONG_ALIAS(_atomic_nand_ushort_nv,_atomic_nand_16_nv)
