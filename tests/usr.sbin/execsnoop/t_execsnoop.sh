@@ -1,4 +1,4 @@
-# $NetBSD: t_execsnoop.sh,v 1.10 2021/07/27 15:29:22 gson Exp $
+# $NetBSD: t_execsnoop.sh,v 1.11 2021/07/29 14:58:35 gson Exp $
 #
 # Copyright (c) 2020 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -38,6 +38,13 @@ basic_head() {
 }
 
 basic_body() {
+	if
+		! modstat dtrace_syscall | grep dtrace_syscall &&
+		! modstat -A
+	then
+		atf_skip "dtrace_syscall module not loaded and can't be autoloaded"
+	fi
+
 	n=10
 	atf_check -s exit:0 -o ignore -e empty -x "execsnoop >$stdout 2>$stderr &"
 	sleep 5
