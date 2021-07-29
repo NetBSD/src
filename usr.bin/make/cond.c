@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.269 2021/06/21 21:10:01 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.270 2021/07/29 06:35:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.269 2021/06/21 21:10:01 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.270 2021/07/29 06:35:20 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -376,12 +376,12 @@ TryParseNumber(const char *str, double *out_value)
 	unsigned long ul_val;
 	double dbl_val;
 
-	errno = 0;
 	if (str[0] == '\0') {	/* XXX: why is an empty string a number? */
 		*out_value = 0.0;
 		return true;
 	}
 
+	errno = 0;
 	ul_val = strtoul(str, &end, str[1] == 'x' ? 16 : 10);
 	if (*end == '\0' && errno != ERANGE) {
 		*out_value = str[0] == '-' ? -(double)-ul_val : (double)ul_val;
