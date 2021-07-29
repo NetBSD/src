@@ -1,4 +1,4 @@
-/* $NetBSD: atomic_sub_16.S,v 1.1 2014/08/10 05:47:35 matt Exp $ */
+/* $NetBSD: atomic_sub_16.S,v 1.2 2021/07/29 10:29:05 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,18 +33,20 @@
 
 ATOMIC_OP16(sub, sub)
 
+SYNC_FETCH_OP16(sub, sub)
+
 ATOMIC_OP_ALIAS(atomic_sub_16,_atomic_sub_16)
 ATOMIC_OP_ALIAS(atomic_sub_short,_atomic_sub_16)
 ATOMIC_OP_ALIAS(atomic_sub_ushort,_atomic_sub_16)
-STRONG_ALIAS(__sync_fetch_and_sub_2,_atomic_sub_16)
 STRONG_ALIAS(_atomic_sub_short,_atomic_sub_16)
 STRONG_ALIAS(_atomic_sub_ushort,_atomic_sub_16)
 
 ATOMIC_OP16_NV(sub, sub)
 
+SYNC_OP16_FETCH(sub, sub)
+
 ATOMIC_OP_ALIAS(atomic_sub_16_nv,_atomic_sub_16_nv)
 ATOMIC_OP_ALIAS(atomic_sub_short_nv,_atomic_sub_16_nv)
 ATOMIC_OP_ALIAS(atomic_sub_ushort_nv,_atomic_sub_16_nv)
-STRONG_ALIAS(__sync_sub_and_fetch_2,_atomic_sub_16_nv)
 STRONG_ALIAS(_atomic_sub_short_nv,_atomic_sub_16_nv)
 STRONG_ALIAS(_atomic_sub_ushort_nv,_atomic_sub_16_nv)

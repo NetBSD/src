@@ -1,4 +1,4 @@
-/* $NetBSD: atomic_swap_8.S,v 1.4 2021/04/21 16:23:47 skrll Exp $ */
+/* $NetBSD: atomic_swap_8.S,v 1.5 2021/07/29 10:29:05 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -43,9 +43,17 @@ END(_atomic_swap_8)
 ATOMIC_OP_ALIAS(atomic_swap_8,_atomic_swap_8)
 ATOMIC_OP_ALIAS(atomic_swap_char,_atomic_swap_8)
 ATOMIC_OP_ALIAS(atomic_swap_uchar,_atomic_swap_8)
-STRONG_ALIAS(__sync_lock_test_and_set_1,_atomic_swap_8)
 STRONG_ALIAS(_atomic_swap_char,_atomic_swap_8)
 STRONG_ALIAS(_atomic_swap_uchar,_atomic_swap_8)
+
+ENTRY_NP(__sync_lock_test_and_set_1)
+	mov	x4, x0
+1:	ldaxrb	w0, [x4]
+	stxrb	w3, w1, [x4]
+	cbnz	w3, 2f
+	ret
+2:	b	1b
+END(__sync_lock_test_and_set_1)
 
 ENTRY_NP(__sync_lock_release_1)
 	stlrb	wzr, [x0]

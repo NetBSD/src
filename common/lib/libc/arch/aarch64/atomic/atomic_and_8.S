@@ -1,4 +1,4 @@
-/* $NetBSD: atomic_and_8.S,v 1.1 2014/08/10 05:47:35 matt Exp $ */
+/* $NetBSD: atomic_and_8.S,v 1.2 2021/07/29 10:29:05 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,14 +33,16 @@
 
 ATOMIC_OP8(and, and)
 
+SYNC_FETCH_OP8(and, and)
+
 ATOMIC_OP_ALIAS(atomic_and_8,_atomic_and_8)
 ATOMIC_OP_ALIAS(atomic_and_uchar,_atomic_and_8)
-STRONG_ALIAS(__sync_fetch_and_and_1,_atomic_and_8)
 STRONG_ALIAS(_atomic_and_uchar,_atomic_and_8)
 
 ATOMIC_OP8_NV(and, and)
 
+SYNC_OP8_FETCH(and, and)
+
 ATOMIC_OP_ALIAS(atomic_and_8_nv,_atomic_and_8_nv)
 ATOMIC_OP_ALIAS(atomic_and_uchar_nv,_atomic_and_8_nv)
-STRONG_ALIAS(__sync_and_and_fetch_1,_atomic_and_8_nv)
 STRONG_ALIAS(_atomic_and_uchar_nv,_atomic_and_8_nv)
