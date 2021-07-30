@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.938 2021/06/21 18:25:20 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.939 2021/07/30 19:55:22 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.938 2021/06/21 18:25:20 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.939 2021/07/30 19:55:22 sjg Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -3272,6 +3272,56 @@ bad_modifier:
 	return AMR_BAD;
 }
 
+#ifndef NUM_TYPE
+# define NUM_TYPE long long
+#endif
+
+static NUM_TYPE
+num_val(const char *s)
+{
+	NUM_TYPE val;
+	char *ep;
+
+	val = strtoll(s, &ep, 0);
+	if (ep != s) {
+		switch (*ep) {
+		case 'K':
+		case 'k':
+			val <<= 10;
+			break;
+		case 'M':
+		case 'm':
+			val <<= 20;
+			break;
+		case 'G':
+		case 'g':
+			val <<= 30;
+			break;
+		}
+	}
+	return val;
+}
+
+static int
+num_cmp_asc(const void *sa, const void *sb)
+{
+	NUM_TYPE a, b;
+
+	a = num_val(*(const char *const *)sa);
+	b = num_val(*(const char *const *)sb);
+	return (a > b) ? 1 : (b > a) ? -1 : 0;
+}
+    
+static int
+num_cmp_desc(const void *sa, const void *sb)
+{
+	NUM_TYPE a, b;
+
+	a = num_val(*(const char *const *)sa);
+	b = num_val(*(const char *const *)sb);
+	return (a > b) ? -1 : (b > a) ? 1 : 0;
+}
+    
 static int
 str_cmp_asc(const void *a, const void *b)
 {
@@ -3297,22 +3347,35 @@ ShuffleStrings(char **strs, size_t n)
 	}
 }
 
-/* :O (order ascending) or :Or (order descending) or :Ox (shuffle) */
+/* :O (order ascending) or :Or (order descending) or :Ox (shuffle) or
+ * :On (numeric ascending) or :Onr or :Orn (numeric descending)
+ */
 static ApplyModifierResult
 ApplyModifier_Order(const char **pp, ModChain *ch)
 {
 	const char *mod = (*pp)++;	/* skip past the 'O' in any case */
 	Words words;
 	enum SortMode {
-		ASC, DESC, SHUFFLE
+		ASC, DESC, NUM_ASC, NUM_DESC, SHUFFLE
 	} mode;
 
 	if (IsDelimiter(mod[1], ch)) {
 		mode = ASC;
+	} else if (mod[1] == 'n') {
+		mode = NUM_ASC;
+		(*pp)++;
+		if (!IsDelimiter(mod[2], ch)) {
+			(*pp)++;
+			if (mod[2] == 'r')
+				mode = NUM_DESC;
+		}
 	} else if ((mod[1] == 'r' || mod[1] == 'x') &&
 	    IsDelimiter(mod[2], ch)) {
 		(*pp)++;
 		mode = mod[1] == 'r' ? DESC : SHUFFLE;
+	} else if (mod[1] == 'r' && mod[2] == 'n') {
+		(*pp) += 2;
+		mode = NUM_DESC;
 	} else
 		return AMR_BAD;
 
@@ -3322,6 +3385,9 @@ ApplyModifier_Order(const char **pp, ModChain *ch)
 	words = Str_Words(ch->expr->value.str, false);
 	if (mode == SHUFFLE)
 		ShuffleStrings(words.words, words.len);
+	else if (mode == NUM_ASC || mode == NUM_DESC)
+		qsort(words.words, words.len, sizeof words.words[0],
+		    mode == NUM_ASC ? num_cmp_asc : num_cmp_desc);
 	else
 		qsort(words.words, words.len, sizeof words.words[0],
 		    mode == ASC ? str_cmp_asc : str_cmp_desc);

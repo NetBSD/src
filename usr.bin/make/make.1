@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.296 2021/02/04 21:42:46 rillig Exp $
+.\"	$NetBSD: make.1,v 1.297 2021/07/30 19:55:22 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd December 22, 2020
+.Dd July 30, 2020
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -1232,8 +1232,18 @@ but selects all words which do not match
 .Ar pattern .
 .It Cm \&:O
 Orders every word in variable alphabetically.
+.It Cm \&:On
+Orders every word in variable numerically.
+A number followed by one of
+.Ql K ,
+.Ql M
+or
+.Ql G
+is multiplied by the appropriate factor.
 .It Cm \&:Or
 Orders every word in variable in reverse alphabetical order.
+.It Cm \&:Orn
+Orders every word in variable in reverse numerical order.
 .It Cm \&:Ox
 Shuffles the words in variable.
 The results will be different each time you are referring to the
