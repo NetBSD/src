@@ -1,4 +1,4 @@
-/* $NetBSD: ssdfbvar.h,v 1.5 2019/11/02 14:18:36 tnn Exp $ */
+/* $NetBSD: ssdfbvar.h,v 1.6 2021/07/30 13:44:09 tnn Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -36,7 +36,6 @@
 #define SSDFB_ATTACH_FLAG_UPSIDEDOWN		0x00000100
 #define SSDFB_ATTACH_FLAG_INVERSE		0x00000200
 #define SSDFB_ATTACH_FLAG_CONSOLE		0x00000400
-#define SSDFB_ATTACH_FLAG_MPSAFE		0x00000800
 
 /*
  * Fundamental commands
