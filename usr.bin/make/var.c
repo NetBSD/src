@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.941 2021/07/30 22:19:51 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.942 2021/07/30 23:28:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.941 2021/07/30 22:19:51 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.942 2021/07/30 23:28:04 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2045,7 +2045,7 @@ typedef struct Expr {
  *	  Chain 2 ends at the ':' between ${IND1} and ${IND2}.
  *	  Chain 3 starts with all modifiers from ${IND2}.
  *	  Chain 3 ends at the ':' after ${IND2}.
- *	Chain 1 continues with the the 2 modifiers ':O' and ':u'.
+ *	Chain 1 continues with the 2 modifiers ':O' and ':u'.
  *	Chain 1 ends at the final '}' of the expression.
  *
  * After such a chain ends, its properties no longer have any effect.
@@ -3349,31 +3349,39 @@ ShuffleStrings(char **strs, size_t n)
 static ApplyModifierResult
 ApplyModifier_Order(const char **pp, ModChain *ch)
 {
-	const char *mod = (*pp)++;	/* skip past the 'O' in any case */
+	const char *mod = *pp;
 	Words words;
 	enum SortMode {
-		ASC, DESC, NUM_ASC, NUM_DESC, SHUFFLE
-	} mode;
+		STR, NUM, SHUFFLE
+	} mode = STR;
+	enum SortDir {
+		ASC, DESC
+	} dir = ASC;
 
-	if (IsDelimiter(mod[1], ch)) {
-		mode = ASC;
-	} else if (mod[1] == 'n') {
-		mode = NUM_ASC;
+	if (IsDelimiter(mod[1], ch) || mod[1] == '\0') {
+		mode = STR;
 		(*pp)++;
-		if (!IsDelimiter(mod[2], ch)) {
-			(*pp)++;
-			if (mod[2] == 'r')
-				mode = NUM_DESC;
-		}
-	} else if ((mod[1] == 'r' || mod[1] == 'x') &&
-	    IsDelimiter(mod[2], ch)) {
-		(*pp)++;
-		mode = mod[1] == 'r' ? DESC : SHUFFLE;
-	} else if (mod[1] == 'r' && mod[2] == 'n') {
-		(*pp) += 2;
-		mode = NUM_DESC;
-	} else
-		return AMR_BAD;
+	} else if (IsDelimiter(mod[2], ch) || mod[2] == '\0') {
+		if (mod[1] == 'n')
+			mode = NUM;
+		else if (mod[1] == 'r')
+			dir = DESC;
+		else if (mod[1] == 'x')
+			mode = SHUFFLE;
+		else
+			goto bad;
+		*pp += 2;
+	} else if (IsDelimiter(mod[3], ch) || mod[3] == '\0') {
+		if ((mod[1] == 'n' && mod[2] == 'r') ||
+		    (mod[1] == 'r' && mod[2] == 'n')) {
+			mode = NUM;
+			dir = DESC;
+		} else
+			goto bad;
+		*pp += 3;
+	} else {
+		goto bad;
+	}
 
 	if (!ModChain_ShouldEval(ch))
 		return AMR_OK;
@@ -3381,15 +3389,19 @@ ApplyModifier_Order(const char **pp, ModChain *ch)
 	words = Str_Words(ch->expr->value.str, false);
 	if (mode == SHUFFLE)
 		ShuffleStrings(words.words, words.len);
-	else if (mode == NUM_ASC || mode == NUM_DESC)
+	else if (mode == NUM)
 		qsort(words.words, words.len, sizeof words.words[0],
-		    mode == NUM_ASC ? num_cmp_asc : num_cmp_desc);
+		    dir == ASC ? num_cmp_asc : num_cmp_desc);
 	else
 		qsort(words.words, words.len, sizeof words.words[0],
-		    mode == ASC ? str_cmp_asc : str_cmp_desc);
+		    dir == ASC ? str_cmp_asc : str_cmp_desc);
 	Expr_SetValueOwn(ch->expr, Words_JoinFree(words));
 
 	return AMR_OK;
+
+bad:
+	(*pp)++;
+	return AMR_BAD;
 }
 
 /* :? then : else */
