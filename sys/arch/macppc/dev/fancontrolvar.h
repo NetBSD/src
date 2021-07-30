@@ -1,4 +1,4 @@
-/* $NetBSD: fancontrolvar.h,v 1.1 2021/07/27 23:38:42 macallan Exp $ */
+/* $NetBSD: fancontrolvar.h,v 1.2 2021/07/30 22:07:14 macallan Exp $ */
 
 /*-
  * Copyright (c) 2021 Michael Lorenz
@@ -48,5 +48,6 @@ typedef struct _fancontrol_zone {
 } fancontrol_zone_t; 
 
 int fancontrol_adjust_zone(fancontrol_zone_t *);
+int fancontrol_init_zone(fancontrol_zone_t *, struct sysctlnode *);
 
 #endif /* FANCONTROLVAR_H */

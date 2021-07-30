@@ -1,4 +1,4 @@
-/* $NetBSD: fcu.c,v 1.3 2021/07/28 00:59:10 macallan Exp $ */
+/* $NetBSD: fcu.c,v 1.4 2021/07/30 22:07:14 macallan Exp $ */
 
 /*-
  * Copyright (c) 2018 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fcu.c,v 1.3 2021/07/28 00:59:10 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fcu.c,v 1.4 2021/07/30 22:07:14 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -35,6 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: fcu.c,v 1.3 2021/07/28 00:59:10 macallan Exp $");
 #include <sys/conf.h>
 #include <sys/bus.h>
 #include <sys/kthread.h>
+#include <sys/sysctl.h>
 
 #include <dev/i2c/i2cvar.h>
 
@@ -78,8 +79,8 @@ struct fcu_softc {
 	device_t	sc_dev;
 	i2c_tag_t	sc_i2c;
 	i2c_addr_t	sc_addr;
-
-	struct sysmon_envsys *sc_sme;
+	struct sysctlnode 	*sc_sysctl_me;
+	struct sysmon_envsys	*sc_sme;
 	envsys_data_t		sc_sensors[32];
 	int			sc_nsensors;
 	fancontrol_zone_t	sc_zones[FCU_ZONE_COUNT];
@@ -132,7 +133,7 @@ fcu_attach(device_t parent, device_t self, void *aux)
 {
 	struct fcu_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = aux;
-	int have_eeprom1 = 1;
+	int have_eeprom1 = 1, i;
 
 	sc->sc_dev = self;
 	sc->sc_i2c = ia->ia_tag;
@@ -140,6 +141,12 @@ fcu_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal(": Fan Control Unit\n");
+
+	sysctl_createv(NULL, 0, NULL, (void *) &sc->sc_sysctl_me,
+	    CTLFLAG_READWRITE,
+	    CTLTYPE_NODE, device_xname(sc->sc_dev), NULL,
+	    NULL, 0, NULL, 0,
+	    CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 
 	if (get_cpuid(0, sc->sc_eeprom0) < 160) {
 		/*
@@ -164,19 +171,19 @@ fcu_attach(device_t parent, device_t self, void *aux)
 	sc->sc_zones[FCU_ZONE_CPU].nfans = 0;
 	sc->sc_zones[FCU_ZONE_CASE].name = "Slots";
 	sc->sc_zones[FCU_ZONE_CASE].filter = is_case;
-	sc->sc_zones[FCU_ZONE_CASE].Tmin = 50;
 	sc->sc_zones[FCU_ZONE_CASE].cookie = sc;
-	sc->sc_zones[FCU_ZONE_CASE].get_rpm = fcu_get_rpm;
-	sc->sc_zones[FCU_ZONE_CASE].set_rpm = fcu_set_rpm;
+	sc->sc_zones[FCU_ZONE_CASE].Tmin = 50;
 	sc->sc_zones[FCU_ZONE_CASE].Tmax = 75;
 	sc->sc_zones[FCU_ZONE_CASE].nfans = 0;
-	sc->sc_zones[FCU_ZONE_DRIVEBAY].name = "Drive bays";
+	sc->sc_zones[FCU_ZONE_CASE].get_rpm = fcu_get_rpm;
+	sc->sc_zones[FCU_ZONE_CASE].set_rpm = fcu_set_rpm;
+	sc->sc_zones[FCU_ZONE_DRIVEBAY].name = "Drivebays";
 	sc->sc_zones[FCU_ZONE_DRIVEBAY].filter = is_drive;
 	sc->sc_zones[FCU_ZONE_DRIVEBAY].cookie = sc;
 	sc->sc_zones[FCU_ZONE_DRIVEBAY].get_rpm = fcu_get_rpm;
 	sc->sc_zones[FCU_ZONE_DRIVEBAY].set_rpm = fcu_set_rpm;
 	sc->sc_zones[FCU_ZONE_DRIVEBAY].Tmin = 30;
-	sc->sc_zones[FCU_ZONE_DRIVEBAY].Tmax = 60;
+	sc->sc_zones[FCU_ZONE_DRIVEBAY].Tmax = 50;
 	sc->sc_zones[FCU_ZONE_DRIVEBAY].nfans = 0;
 
 	sc->sc_sme = sysmon_envsys_create();
@@ -317,6 +324,11 @@ next:
 		ch = OF_peer(ch);
 	}		
 	sysmon_envsys_register(sc->sc_sme);
+
+	/* setup sysctls for our zones etc. */
+	for (i = 0; i < FCU_ZONE_COUNT; i++) {
+		fancontrol_init_zone(&sc->sc_zones[i], sc->sc_sysctl_me);
+	}
 
 	sc->sc_dying = FALSE;
 	kthread_create(PRI_NONE, 0, curcpu(), fcu_adjust, sc, &sc->sc_thread,
