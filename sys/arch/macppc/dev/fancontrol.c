@@ -1,4 +1,4 @@
-/* $NetBSD: fancontrol.c,v 1.2 2021/07/28 00:36:00 macallan Exp $ */
+/* $NetBSD: fancontrol.c,v 1.3 2021/07/30 22:07:14 macallan Exp $ */
 
 /*-
  * Copyright (c) 2021 Michael Lorenz
@@ -27,13 +27,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fancontrol.c,v 1.2 2021/07/28 00:36:00 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fancontrol.c,v 1.3 2021/07/30 22:07:14 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/bus.h>
+#include <sys/sysctl.h>
 #include <dev/sysmon/sysmonvar.h>
 
 #include <macppc/dev/fancontrolvar.h>
@@ -60,6 +61,10 @@ fancontrol_adjust_zone(fancontrol_zone_t *z)
 		return -1;
 	}
 
+	if (z->Tmin < 30) z->Tmin = 30;
+	if (z->Tmin > 60) z->Tmin = 60;
+	if (z->Tmax > 95) z->Tmax = 95;
+	if (z->Tmax < (z->Tmin + 10)) z->Tmax = z->Tmin + 10;
 	temp = (temp - 273150000) / 1000000;
 	diff = temp - z->Tmin;
 	DPRINTF("%s %d %d\n", z->name, temp, z->Tmin);
@@ -74,5 +79,41 @@ fancontrol_adjust_zone(fancontrol_zone_t *z)
 		    diff, z->fans[i].min_rpm, z->fans[i].max_rpm, speed);
 		z->set_rpm(z->cookie, z->fans[i].num, speed);
 	}
+	return 0;
+}
+
+int
+fancontrol_init_zone(fancontrol_zone_t *z, struct sysctlnode *me)
+{
+	struct sysctlnode *zone_node, *node;
+
+	if (z->nfans <= 0) return 0;
+
+	sysctl_createv(NULL, 0, NULL, (void *) &zone_node,
+	    CTLFLAG_READWRITE | CTLFLAG_OWNDESC,
+	    CTLTYPE_NODE, z->name, NULL,
+	    NULL, 0, NULL, 0,
+	    CTL_MACHDEP,
+	    me->sysctl_num,
+	    CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(NULL, 0, NULL, (void *) &node,
+	    CTLFLAG_READWRITE | CTLFLAG_OWNDESC,
+	    CTLTYPE_INT, "Tmin", "minimum temperature",
+	    NULL, 0, (void *)&z->Tmin, 0,
+	    CTL_MACHDEP,
+	    me->sysctl_num,
+	    zone_node->sysctl_num,
+	    CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(NULL, 0, NULL, (void *) &node,
+	    CTLFLAG_READWRITE | CTLFLAG_OWNDESC,
+	    CTLTYPE_INT, "Tmax", "maximum temperature",
+	    NULL, 0, (void *)&z->Tmax, 0,
+	    CTL_MACHDEP,
+	    me->sysctl_num,
+	    zone_node->sysctl_num,
+	    CTL_CREATE, CTL_EOL);
+
 	return 0;
 }
