@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1096 2021/07/25 22:03:42 rillig Exp $
+# $NetBSD: mi,v 1.1097 2021/07/30 21:29:00 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5809,6 +5809,8 @@
 ./usr/tests/usr.bin/make/unit-tests/varmod-match.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varmod-no-match.exp				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varmod-no-match.mk				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/varmod-order-numeric.exp			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/varmod-order-numeric.mk			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varmod-order-reverse.exp			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varmod-order-reverse.mk			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varmod-order-shuffle.exp			tests-usr.bin-tests	compattestfile,atf
