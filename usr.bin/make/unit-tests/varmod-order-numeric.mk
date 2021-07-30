@@ -1,4 +1,4 @@
-# $NetBSD: varmod-order-numeric.mk,v 1.2 2021/07/30 22:16:09 rillig Exp $
+# $NetBSD: varmod-order-numeric.mk,v 1.3 2021/07/30 23:28:04 rillig Exp $
 #
 # Tests for the :On variable modifier, which returns the words, sorted in
 # ascending numeric order.
@@ -37,11 +37,8 @@ NUMBERS=	3 5 7 1 42 -42 5K -3m 1M 1k -2G
 
 # Extra characters after ':On' are detected and diagnosed.
 # TODO: Add line number information to the "Bad modifier" diagnostic.
-# TODO: Use uniform diagnostics for ':On' and ':Onr'.
-# TODO: Fix the misleading ':typo' in the diagnostic.
-# TODO: The '_' is already wrong but does not occur in the diagnostic.
 #
-# expect-text: Bad modifier ":typo" for variable "NUMBERS"
+# expect-text: Bad modifier ":On_typo" for variable "NUMBERS"
 .if ${NUMBERS:On_typo}
 .  error
 .else
@@ -50,7 +47,7 @@ NUMBERS=	3 5 7 1 42 -42 5K -3m 1M 1k -2G
 
 # Extra characters after ':Onr' are detected and diagnosed.
 #
-# expect+1: Unknown modifier "_typo"
+# expect-text: Bad modifier ":Onr_typo" for variable "NUMBERS"
 .if ${NUMBERS:Onr_typo}
 .  error
 .else
@@ -59,7 +56,7 @@ NUMBERS=	3 5 7 1 42 -42 5K -3m 1M 1k -2G
 
 # Extra characters after ':Orn' are detected and diagnosed.
 #
-# expect+1: Unknown modifier "_typo"
+# expect+1: Bad modifier ":Orn_typo" for variable "NUMBERS"
 .if ${NUMBERS:Orn_typo}
 .  error
 .else
@@ -70,7 +67,7 @@ NUMBERS=	3 5 7 1 42 -42 5K -3m 1M 1k -2G
 # criteria are fixed, not computed, therefore allowing this redundancy does
 # not make sense.
 #
-# TODO: This repetition is not diagnosed.
+# expect-text: Bad modifier ":Onn" for variable "NUMBERS"
 .if ${NUMBERS:Onn}
 .  error
 .else
@@ -79,7 +76,7 @@ NUMBERS=	3 5 7 1 42 -42 5K -3m 1M 1k -2G
 
 # Repeating the 'r' is not supported as well, for the same reasons as above.
 #
-# expect+1: Unknown modifier "r"
+# expect-text: Bad modifier ":Onrr" for variable "NUMBERS"
 .if ${NUMBERS:Onrr}
 .  error
 .else
@@ -88,13 +85,16 @@ NUMBERS=	3 5 7 1 42 -42 5K -3m 1M 1k -2G
 
 # Repeating the 'r' is not supported as well, for the same reasons as above.
 #
-# TODO: Use uniform diagnostics for ':Onrr' and ':Orrn'.
-#
 # expect-text: Bad modifier ":Orrn" for variable "NUMBERS"
 .if ${NUMBERS:Orrn}
 .  error
 .else
 .  error
 .endif
+
+# Missing closing brace, to cover the error handling code.
+_:=	${NUMBERS:O
+_:=	${NUMBERS:On
+_:=	${NUMBERS:Onr
 
 all:
