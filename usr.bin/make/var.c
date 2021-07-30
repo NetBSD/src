@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.942 2021/07/30 23:28:04 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.943 2021/07/30 23:35:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.942 2021/07/30 23:28:04 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.943 2021/07/30 23:35:38 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -3343,8 +3343,12 @@ ShuffleStrings(char **strs, size_t n)
 	}
 }
 
-/* :O (order ascending) or :Or (order descending) or :Ox (shuffle) or
- * :On (numeric ascending) or :Onr or :Orn (numeric descending)
+/*
+ * :O		order ascending
+ * :Or		order descending
+ * :Ox		shuffle
+ * :On		numeric ascending
+ * :Onr, :Orn	numeric descending
  */
 static ApplyModifierResult
 ApplyModifier_Order(const char **pp, ModChain *ch)
