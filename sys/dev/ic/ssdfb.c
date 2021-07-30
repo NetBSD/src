@@ -1,4 +1,4 @@
-/* $NetBSD: ssdfb.c,v 1.13 2021/04/24 23:36:55 thorpej Exp $ */
+/* $NetBSD: ssdfb.c,v 1.14 2021/07/30 13:44:09 tnn Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ssdfb.c,v 1.13 2021/04/24 23:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ssdfb.c,v 1.14 2021/07/30 13:44:09 tnn Exp $");
 
 #include "opt_ddb.h"
 
@@ -227,7 +227,6 @@ ssdfb_attach(struct ssdfb_softc *sc, int flags)
 	int error = 0;
 	long defattr;
 	const struct ssdfb_product *p;
-	int kt_flags;
 
 	p = ssdfb_lookup_product(flags & SSDFB_ATTACH_FLAG_PRODUCT_MASK);
 	if (p == NULL) {
@@ -332,15 +331,11 @@ ssdfb_attach(struct ssdfb_softc *sc, int flags)
 	if (sc->sc_is_console)
 		ssdfb_set_usepoll(sc, true);
 
-	mutex_init(&sc->sc_cond_mtx, MUTEX_DEFAULT,
-	    ISSET(flags, SSDFB_ATTACH_FLAG_MPSAFE) ? IPL_SCHED : IPL_BIO);
+	mutex_init(&sc->sc_cond_mtx, MUTEX_DEFAULT, IPL_SCHED);
 	cv_init(&sc->sc_cond, "ssdfb");
-	kt_flags = KTHREAD_MUSTJOIN;
-	/* XXX spi(4) is not MPSAFE yet. */
-	if (ISSET(flags, SSDFB_ATTACH_FLAG_MPSAFE))
-		kt_flags |= KTHREAD_MPSAFE;
-	error = kthread_create(PRI_SOFTCLOCK, kt_flags, NULL, ssdfb_thread, sc,
-	    &sc->sc_thread, "%s", device_xname(sc->sc_dev));
+	error = kthread_create(PRI_SOFTCLOCK, KTHREAD_MUSTJOIN | KTHREAD_MPSAFE,
+	    NULL, ssdfb_thread, sc,  &sc->sc_thread, "%s",
+	    device_xname(sc->sc_dev));
 	if (error) {
 		cv_destroy(&sc->sc_cond);
 		mutex_destroy(&sc->sc_cond_mtx);
