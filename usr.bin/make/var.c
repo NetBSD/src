@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.940 2021/07/30 22:16:09 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.941 2021/07/30 22:19:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.940 2021/07/30 22:16:09 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.941 2021/07/30 22:19:51 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -3315,11 +3315,7 @@ num_cmp_asc(const void *sa, const void *sb)
 static int
 num_cmp_desc(const void *sa, const void *sb)
 {
-	NUM_TYPE a, b;
-
-	a = num_val(*(const char *const *)sa);
-	b = num_val(*(const char *const *)sb);
-	return (a > b) ? -1 : (b > a) ? 1 : 0;
+	return num_cmp_asc(sb, sa);
 }
 
 static int
@@ -3331,7 +3327,7 @@ str_cmp_asc(const void *a, const void *b)
 static int
 str_cmp_desc(const void *a, const void *b)
 {
-	return strcmp(*(const char *const *)b, *(const char *const *)a);
+	return str_cmp_asc(b, a);
 }
 
 static void
