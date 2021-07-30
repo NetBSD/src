@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_platform.c,v 1.43 2021/04/24 23:36:28 thorpej Exp $ */
+/* $NetBSD: sunxi_platform.c,v 1.44 2021/07/30 12:46:46 tnn Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.43 2021/04/24 23:36:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.44 2021/07/30 12:46:46 tnn Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -237,6 +237,15 @@ sunxi_platform_device_register(device_t self, void *aux)
 		if (get_bootconf_option(boot_args, "nomodeset", BOOTOPT_TYPE_BOOLEAN, &val))
 			if (val)
 				prop_dictionary_set_bool(prop, "nomodeset", true);
+	}
+
+	if (device_is_a(self, "com")) {
+		static const struct device_compatible_entry compat_data[] = {
+			{ .compat = "allwinner,sun7i-a20" },
+			DEVICE_COMPAT_EOL
+		};
+		if (of_compatible_match(OF_finddevice("/"), compat_data))
+			prop_dictionary_set_uint(prop, "fifolen", 64);
 	}
 }
 
