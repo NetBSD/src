@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.123 2021/07/31 17:09:21 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.124 2021/07/31 18:16:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -110,6 +110,42 @@ extern	tnode_t	*expr_zalloc_tnode(void);
 extern	void	expr_free_all(void);
 extern	struct	memory_block *expr_save_memory(void);
 extern	void	expr_restore_memory(struct memory_block *);
+
+/*
+ * debug.c
+ */
+
+#ifdef DEBUG
+void	debug_node(const tnode_t *, int);
+void	debug_printf(const char *fmt, ...) __printflike(1, 2);
+void	debug_indent(void);
+void	debug_indent_inc(void);
+void	debug_indent_dec(void);
+void	debug_enter(const char *);
+void	debug_step(const char *fmt, ...) __printflike(1, 2);
+#define	debug_step0		debug_step
+#define	debug_step1		debug_step
+#define	debug_step2		debug_step
+void	debug_leave(const char *);
+#define	debug_enter()		(debug_enter)(__func__)
+#define	debug_leave()		(debug_leave)(__func__)
+#else
+#define	debug_noop()		do { } while (false)
+#define	debug_node(tn, indent) debug_noop()
+/* ARGSUSED */
+static inline void __printflike(1, 2) debug_printf(const char *fmt, ...) {}
+#define debug_indent()		debug_noop()
+/* ARGSUSED */
+static inline void __printflike(1, 2) debug_step(const char *fmt, ...) {}
+#define	debug_indent()		debug_noop()
+#define	debug_indent_inc()	debug_noop()
+#define	debug_indent_dec()	debug_noop()
+#define	debug_enter()		debug_noop()
+#define	debug_step0(fmt)	debug_noop()
+#define	debug_step1(fmt, arg0)	debug_noop()
+#define	debug_step2(fmt, arg1, arg2) debug_noop()
+#define	debug_leave()		debug_noop()
+#endif
 
 /*
  * err.c
@@ -235,11 +271,6 @@ extern	void	check_expr_misc(const tnode_t *, bool, bool, bool,
 extern	bool	constant_addr(const tnode_t *, const sym_t **, ptrdiff_t *);
 extern	strg_t	*cat_strings(strg_t *, strg_t *);
 extern  int64_t type_size_in_bits(const type_t *);
-#ifdef DEBUG
-extern	void	debug_node(const tnode_t *, int);
-#else
-#define debug_node(tn, indent) do { } while (false)
-#endif
 
 /*
  * func.c
