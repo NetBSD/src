@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.46 2021/07/15 17:03:50 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.47 2021/07/31 19:52:44 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit1.c,v 1.46 2021/07/15 17:03:50 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.47 2021/07/31 19:52:44 rillig Exp $");
 #endif
 
 #include "lint1.h"
@@ -99,6 +99,7 @@ outtype(const type_t *tp)
 	while (tp != NULL) {
 		if ((ts = tp->t_tspec) == INT && tp->t_is_enum)
 			ts = ENUM;
+		/* Available letters: ----E-GH--K-MNO--R--U-W-YZ */
 		switch (ts) {
 		case BOOL:	t = 'B';	s = '\0';	break;
 		case CHAR:	t = 'C';	s = '\0';	break;
@@ -112,16 +113,20 @@ outtype(const type_t *tp)
 		case ULONG:	t = 'L';	s = 'u';	break;
 		case QUAD:	t = 'Q';	s = '\0';	break;
 		case UQUAD:	t = 'Q';	s = 'u';	break;
+#ifdef INT128_SIZE
+		case INT128:	t = 'J';	s = '\0';	break;
+		case UINT128:	t = 'J';	s = 'u';	break;
+#endif
 		case FLOAT:	t = 'D';	s = 's';	break;
 		case DOUBLE:	t = 'D';	s = '\0';	break;
 		case LDOUBLE:	t = 'D';	s = 'l';	break;
 		case VOID:	t = 'V';	s = '\0';	break;
+		case STRUCT:	t = 'T';	s = 's';	break;
+		case UNION:	t = 'T';	s = 'u';	break;
+		case ENUM:	t = 'T';	s = 'e';	break;
 		case PTR:	t = 'P';	s = '\0';	break;
 		case ARRAY:	t = 'A';	s = '\0';	break;
 		case FUNC:	t = 'F';	s = '\0';	break;
-		case ENUM:	t = 'T';	s = 'e';	break;
-		case STRUCT:	t = 'T';	s = 's';	break;
-		case UNION:	t = 'T';	s = 'u';	break;
 		case FCOMPLEX:	t = 'X';	s = 's';	break;
 		case DCOMPLEX:	t = 'X';	s = '\0';	break;
 		case LCOMPLEX:	t = 'X';	s = 'l';	break;

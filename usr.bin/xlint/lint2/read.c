@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.45 2021/04/18 22:51:24 rillig Exp $ */
+/* $NetBSD: read.c,v 1.46 2021/07/31 19:52:44 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.45 2021/04/18 22:51:24 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.46 2021/07/31 19:52:44 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -627,6 +627,11 @@ inptype(const char *cp, const char **epp)
 	case 'Q':
 		tp->t_tspec = s == 'u' ? UQUAD : QUAD;
 		break;
+#ifdef INT128_SIZE
+	case 'J':
+		tp->t_tspec = s == 'u' ? UINT128 : INT128;
+		break;
+#endif
 	case 'D':
 		tp->t_tspec = s == 's' ? FLOAT : (s == 'l' ? LDOUBLE : DOUBLE);
 		break;
