@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_vga.c,v 1.17 2019/05/04 09:03:08 tsutsui Exp $	*/
+/*	$NetBSD: pci_vga.c,v 1.18 2021/07/31 20:51:32 andvar Exp $	*/
 
 /*
  * Copyright (c) 1999 Leo Weppelman.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_vga.c,v 1.17 2019/05/04 09:03:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_vga.c,v 1.18 2021/07/31 20:51:32 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -139,7 +139,7 @@ check_for_vga(bus_space_tag_t iot, bus_space_tag_t memt)
 		switch (id = PCI_PRODUCT(id)) {
 
 			/*
-			 * XXX Make the inclusion of the cases dependend
+			 * XXX Make the inclusion of the cases dependent
 			 *     on config options!
 			 */
 			case PCI_PRODUCT_TSENG_ET6000:
