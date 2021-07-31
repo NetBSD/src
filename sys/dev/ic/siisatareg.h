@@ -1,4 +1,4 @@
-/* $NetBSD: siisatareg.h,v 1.11 2018/02/08 09:05:19 dholland Exp $ */
+/* $NetBSD: siisatareg.h,v 1.12 2021/07/31 20:29:37 andvar Exp $ */
 
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011 Jonathan A. Kollasch.
@@ -176,7 +176,7 @@ struct siisata_prb {
 #define PRO_PCEF	0x1020		/* port command execution fifo */
 #define PRO_PCE		0x1024		/* port command error */
 #define PRO_PFISC	0x1028		/* port FIS config */
-#define PRO_PCIRFIFOT	0x102c		/* pci request fifo threshhold */
+#define PRO_PCIRFIFOT	0x102c		/* pci request fifo threshold */
 #define PRO_P8B10BDEC	0x1040		/* port 8B/10B decode error counter */
 #define PRO_PCRCEC	0x1044		/* port crc error count */
 #define PRO_PHEC	0x1048		/* port handshake error count */
