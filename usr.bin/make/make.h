@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.263 2021/06/21 10:33:11 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.264 2021/07/31 09:30:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -131,7 +131,14 @@
 #endif
 
 #define MAKE_INLINE static inline MAKE_ATTR_UNUSED
+
+/* MAKE_STATIC marks a function that may or may not be inlined. */
+#if defined(lint)
+/* As of 2021-07-31, NetBSD lint ignores __attribute__((unused)). */
+#define MAKE_STATIC MAKE_INLINE
+#else
 #define MAKE_STATIC static MAKE_ATTR_UNUSED
+#endif
 
 #if __STDC_VERSION__ >= 199901L || defined(lint) || defined(USE_C99_BOOLEAN)
 #include <stdbool.h>
@@ -742,16 +749,13 @@ GNode_VarArchive(GNode *gn) { return GNode_ValueDirect(gn, ARCHIVE); }
 MAKE_INLINE const char *
 GNode_VarMember(GNode *gn) { return GNode_ValueDirect(gn, MEMBER); }
 
-#if defined(__GNUC__) && __STDC_VERSION__ >= 199901L
-#define UNCONST(ptr)	({		\
-    union __unconst {			\
-	const void *__cp;		\
-	void *__p;			\
-    } __d;				\
-    __d.__cp = ptr, __d.__p; })
-#else
-#define UNCONST(ptr)	(void *)(ptr)
-#endif
+MAKE_INLINE void *
+UNCONST(const void *ptr)
+{
+	void *ret;
+	memcpy(&ret, &ptr, sizeof(ret));
+	return ret;
+}
 
 /* At least GNU/Hurd systems lack hardcoded MAXPATHLEN/PATH_MAX */
 #include <limits.h>
