@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.266 2021/05/10 23:53:44 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.267 2021/07/31 10:07:22 andvar Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.266 2021/05/10 23:53:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.267 2021/07/31 10:07:22 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1114,7 +1114,7 @@ mainbus_attach(device_t parent, device_t dev, void *aux)
 		const char *const dev;
 #define BS_EARLY	1	/* attach device early */
 #define	BS_IGNORE	2	/* ignore root device */
-#define	BS_OPTIONAL	4	/* device not alwas present */
+#define	BS_OPTIONAL	4	/* device not always present */
 		unsigned int flags;
 	};
 
