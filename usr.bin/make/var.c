@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.943 2021/07/30 23:35:38 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.944 2021/07/31 00:17:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.943 2021/07/30 23:35:38 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.944 2021/07/31 00:17:04 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -3355,32 +3355,26 @@ ApplyModifier_Order(const char **pp, ModChain *ch)
 {
 	const char *mod = *pp;
 	Words words;
-	enum SortMode {
-		STR, NUM, SHUFFLE
-	} mode = STR;
-	enum SortDir {
-		ASC, DESC
-	} dir = ASC;
+	int (*cmp)(const void *, const void *) = NULL;
 
 	if (IsDelimiter(mod[1], ch) || mod[1] == '\0') {
-		mode = STR;
+		cmp = str_cmp_asc;
 		(*pp)++;
 	} else if (IsDelimiter(mod[2], ch) || mod[2] == '\0') {
 		if (mod[1] == 'n')
-			mode = NUM;
+			cmp = num_cmp_asc;
 		else if (mod[1] == 'r')
-			dir = DESC;
+			cmp = str_cmp_desc;
 		else if (mod[1] == 'x')
-			mode = SHUFFLE;
+			cmp = NULL;
 		else
 			goto bad;
 		*pp += 2;
 	} else if (IsDelimiter(mod[3], ch) || mod[3] == '\0') {
 		if ((mod[1] == 'n' && mod[2] == 'r') ||
-		    (mod[1] == 'r' && mod[2] == 'n')) {
-			mode = NUM;
-			dir = DESC;
-		} else
+		    (mod[1] == 'r' && mod[2] == 'n'))
+			cmp = num_cmp_desc;
+		else
 			goto bad;
 		*pp += 3;
 	} else {
@@ -3391,14 +3385,10 @@ ApplyModifier_Order(const char **pp, ModChain *ch)
 		return AMR_OK;
 
 	words = Str_Words(ch->expr->value.str, false);
-	if (mode == SHUFFLE)
+	if (cmp == NULL)
 		ShuffleStrings(words.words, words.len);
-	else if (mode == NUM)
-		qsort(words.words, words.len, sizeof words.words[0],
-		    dir == ASC ? num_cmp_asc : num_cmp_desc);
 	else
-		qsort(words.words, words.len, sizeof words.words[0],
-		    dir == ASC ? str_cmp_asc : str_cmp_desc);
+		qsort(words.words, words.len, sizeof(words.words[0]), cmp);
 	Expr_SetValueOwn(ch->expr, Words_JoinFree(words));
 
 	return AMR_OK;
