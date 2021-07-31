@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.204 2021/07/31 11:03:04 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.205 2021/07/31 18:16:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.204 2021/07/31 11:03:04 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.205 2021/07/31 18:16:42 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -170,74 +170,6 @@ struct initialization {
 
 	struct initialization *in_enclosing;
 };
-
-
-#ifdef DEBUG
-static int debug_indentation = 0;
-#endif
-
-
-#ifdef DEBUG
-
-static void __printflike(1, 2)
-debug_printf(const char *fmt, ...)
-{
-	va_list va;
-
-	va_start(va, fmt);
-	vfprintf(stdout, fmt, va);
-	va_end(va);
-}
-
-static void
-debug_indent(void)
-{
-
-	debug_printf("%*s", 2 * debug_indentation, "");
-}
-
-static void
-debug_enter(const char *func)
-{
-
-	printf("%*s+ %s\n", 2 * debug_indentation++, "", func);
-}
-
-static void __printflike(1, 2)
-debug_step(const char *fmt, ...)
-{
-	va_list va;
-
-	debug_indent();
-	va_start(va, fmt);
-	vfprintf(stdout, fmt, va);
-	va_end(va);
-	printf("\n");
-}
-#define debug_step0		debug_step
-#define debug_step1		debug_step
-#define debug_step2		debug_step
-
-static void
-debug_leave(const char *func)
-{
-
-	printf("%*s- %s\n", 2 * --debug_indentation, "", func);
-}
-
-#define debug_enter()		(debug_enter)(__func__)
-#define debug_leave()		(debug_leave)(__func__)
-
-#else
-
-#define debug_indent()		do { } while (false)
-#define debug_enter()		do { } while (false)
-#define debug_step0(fmt)	do { } while (false)
-#define debug_step1(fmt, arg0)	do { } while (false)
-#define debug_step2(fmt, arg1, arg2) do { } while (false)
-#define debug_leave()		do { } while (false)
-
-#endif
 
 
 static void *
@@ -1037,9 +969,7 @@ begin_initialization(sym_t *sym)
 	struct initialization *in;
 
 	debug_step1("begin initialization of '%s'", type_name(sym->s_type));
-#ifdef DEBUG
-	debug_indentation++;
-#endif
+	debug_indent_inc();
 
 	in = initialization_new(sym);
 	in->in_enclosing = init;
@@ -1055,9 +985,7 @@ end_initialization(void)
 	init = in->in_enclosing;
 	initialization_free(in);
 
-#ifdef DEBUG
-	debug_indentation--;
-#endif
+	debug_indent_dec();
 	debug_step0("end initialization");
 }
 
