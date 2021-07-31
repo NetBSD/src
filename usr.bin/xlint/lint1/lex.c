@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.56 2021/07/23 15:36:56 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.57 2021/07/31 13:47:19 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.56 2021/07/23 15:36:56 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.57 2021/07/31 13:47:19 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -450,17 +450,20 @@ lex_name(const char *yytext, size_t yyleng)
 static sym_t *
 search(sbuf_t *sb)
 {
-	sym_t	*sym;
+	sym_t *sym;
+	const struct kwtab *kw;
 
 	for (sym = symtab[sb->sb_hash]; sym != NULL; sym = sym->s_link) {
-		if (strcmp(sym->s_name, sb->sb_name) == 0) {
-			if (sym->s_keyword != NULL) {
-				const struct kwtab *kw = sym->s_keyword;
-				if (!kw->kw_attr || attron)
-					return sym;
-			} else if (!attron && sym->s_kind == symtyp)
-				return sym;
-		}
+		if (strcmp(sym->s_name, sb->sb_name) != 0)
+			continue;
+		kw = sym->s_keyword;
+
+		if (kw != NULL && !kw->kw_attr)
+			return sym;
+		if (kw != NULL && attron)
+			return sym;
+		if (kw == NULL && !attron && sym->s_kind == symtyp)
+			return sym;
 	}
 
 	return NULL;
