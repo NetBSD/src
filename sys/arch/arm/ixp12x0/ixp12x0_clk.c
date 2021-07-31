@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_clk.c,v 1.18 2020/05/29 12:30:39 rin Exp $	*/
+/*	$NetBSD: ixp12x0_clk.c,v 1.19 2021/07/31 14:36:33 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_clk.c,v 1.18 2020/05/29 12:30:39 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_clk.c,v 1.19 2021/07/31 14:36:33 andvar Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -314,7 +314,7 @@ delay(unsigned int usecs)
 
 	if (ixpclk_sc == NULL) {
 #ifdef DEBUG
-		printf("delay: called befor start ixpclk\n");
+		printf("delay: called before start ixpclk\n");
 #endif
 
 		csec = usecs / 10000;
