@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960var.h,v 1.40 2015/04/13 16:33:24 riastradh Exp $	*/
+/*	$NetBSD: mb86960var.h,v 1.41 2021/07/31 14:36:33 andvar Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -130,7 +130,7 @@ struct mb86960_softc {
 
 	/* Set by probe() and not modified in later phases. */
 	uint32_t sc_flags;		/* controller quirks */
-#define FE_FLAGS_MB86960	0x0001	/* DLCR7 is differnt on MB86960 */
+#define FE_FLAGS_MB86960	0x0001	/* DLCR7 is different on MB86960 */
 #define FE_FLAGS_SBW_BYTE	0x0002	/* byte access mode for system bus */
 #define FE_FLAGS_SRAM_150ns	0x0004	/* The board has slow SRAM */
 
@@ -179,7 +179,7 @@ struct mb86960_softc {
 #define FE_RMASK (FE_D3_OVRFLO | FE_D3_CRCERR | \
 		  FE_D3_ALGERR | FE_D3_SRTPKT | FE_D3_PKTRDY)
 
-/* Maximum number of iterrations for a receive interrupt. */
+/* Maximum number of iterations for a receive interrupt. */
 #define FE_MAX_RECV_COUNT ((65536 - 2048 * 2) / 64)
 	/* Maximum size of SRAM is 65536,
 	 * minimum size of transmission buffer in fe is 2x2KB,

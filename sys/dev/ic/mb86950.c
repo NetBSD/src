@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86950.c,v 1.34 2020/02/04 05:25:39 thorpej Exp $	*/
+/*	$NetBSD: mb86950.c,v 1.35 2021/07/31 14:36:33 andvar Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -67,7 +67,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.34 2020/02/04 05:25:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.35 2021/07/31 14:36:33 andvar Exp $");
 
 /*
  * Device driver for Fujitsu mb86950 based Ethernet cards.
@@ -795,13 +795,13 @@ mb86950_rint(struct mb86950_softc *sc, u_int8_t rstat)
 	 * We just loop checking the flag to pull out all received
 	 * packets.
 	 *
-	 * We limit the number of iterrations to avoid infinite loop.
+	 * We limit the number of iterations to avoid infinite loop.
 	 * It can be caused by a very slow CPU (some broken
 	 * peripheral may insert incredible number of wait cycles)
 	 * or, worse, by a broken mb86950 chip.
 	 */
 	for (i = 0; i < sc->rxb_num_pkt; i++) {
-		/* Stop the iterration if 86950 indicates no packets. */
+		/* Stop the iteration if 86950 indicates no packets. */
 		if (bus_space_read_1(bst, bsh, DLCR_RX_MODE) & RX_BUF_EMTY)
 			break;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sha3.c,v 1.2 2020/05/30 18:40:28 riastradh Exp $	*/
+/*	$NetBSD: sha3.c,v 1.3 2021/07/31 14:36:33 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2015 Taylor R. Campbell
@@ -27,7 +27,7 @@
  */
 
 /*
- * SHA-3: FIPS-202, Permutation-Based Hash and Extendable-Ouptut Functions
+ * SHA-3: FIPS-202, Permutation-Based Hash and Extendable-Output Functions
  */
 
 #if HAVE_NBTOOL_CONFIG_H
@@ -38,14 +38,14 @@
 
 #if defined(_KERNEL) || defined(_STANDALONE)
 
-__KERNEL_RCSID(0, "$NetBSD: sha3.c,v 1.2 2020/05/30 18:40:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sha3.c,v 1.3 2021/07/31 14:36:33 andvar Exp $");
 #include <lib/libkern/libkern.h>
 
 #define	SHA3_ASSERT	KASSERT
 
 #else
 
-__RCSID("$NetBSD: sha3.c,v 1.2 2020/05/30 18:40:28 riastradh Exp $");
+__RCSID("$NetBSD: sha3.c,v 1.3 2021/07/31 14:36:33 andvar Exp $");
 
 #include "namespace.h"
 
