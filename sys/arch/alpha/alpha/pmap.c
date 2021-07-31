@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.299 2021/07/19 16:31:19 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.300 2021/07/31 14:51:25 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008, 2020
@@ -135,7 +135,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.299 2021/07/19 16:31:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.300 2021/07/31 14:51:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2587,6 +2587,7 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 				printf("failed (kernel vtophys)\n");
 			}
 		}
+		return address_is_valid;
 #else
 		return vtophys_internal(va, pap);
 #endif
