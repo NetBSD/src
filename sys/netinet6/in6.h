@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.100 2020/09/08 14:12:57 christos Exp $	*/
+/*	$NetBSD: in6.h,v 1.101 2021/07/31 10:12:04 andvar Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -429,7 +429,7 @@ extern const struct in6_addr in6addr_linklocal_allrouters;
 #define IPV6_HOPLIMIT		47 /* int; send hop limit */
 #define IPV6_NEXTHOP		48 /* sockaddr; next hop addr */
 #define IPV6_HOPOPTS		49 /* ip6_hbh; send hop-by-hop option */
-#define IPV6_DSTOPTS		50 /* ip6_dest; send dst option befor rthdr */
+#define IPV6_DSTOPTS		50 /* ip6_dest; send dst option before rthdr */
 #define IPV6_RTHDR		51 /* ip6_rthdr; send routing header */
 
 #define IPV6_RECVTCLASS		57 /* bool; recv traffic class values */
@@ -440,7 +440,7 @@ extern const struct in6_addr in6addr_linklocal_allrouters;
 #define IPV6_TCLASS		61 /* int; send traffic class value */
 #define IPV6_DONTFRAG		62 /* bool; disable IPv6 fragmentation */
 #define IPV6_PREFER_TEMPADDR	63 /* int; prefer temporary address as
-				    * the sorce address */
+				    * the source address */
 #define IPV6_BINDANY		64 /* bool: allow bind to any address */
 /* to define items, should talk with KAME guys first, for *BSD compatibility */
 
