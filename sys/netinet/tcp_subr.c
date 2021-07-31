@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.288 2021/03/09 13:48:16 christos Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.289 2021/07/31 20:29:37 andvar Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.288 2021/03/09 13:48:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.289 2021/07/31 20:29:37 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1155,7 +1155,7 @@ tcp_close(struct tcpcb *tp)
 		}
 		/*
 		 * update the pipelimit (ssthresh) if it has been updated
-		 * already or if a pipesize was specified & the threshhold
+		 * already or if a pipesize was specified & the threshold
 		 * got below half the pipesize.  I.e., wait for bad news
 		 * before we start updating, then update on both good
 		 * and bad news.

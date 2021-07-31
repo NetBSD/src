@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.50 2021/07/24 21:31:37 andvar Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.51 2021/07/31 20:29:37 andvar Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -212,7 +212,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.50 2021/07/24 21:31:37 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.51 2021/07/31 20:29:37 andvar Exp $");
 
 #include "opt_inet.h"
 
@@ -383,7 +383,7 @@ cs_attach(struct cs_softc *sc, uint8_t *enaddr, int *media,
 	/* Start out not transmitting */
 	sc->sc_txbusy = FALSE;
 
-	/* Set up early transmit threshhold */
+	/* Set up early transmit threshold */
 	sc->sc_xe_ent = 0;
 	sc->sc_xe_togo = cs_xmit_early_table[sc->sc_xe_ent].better_count;
 
