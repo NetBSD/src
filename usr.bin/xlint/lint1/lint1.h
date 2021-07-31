@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.119 2021/07/31 11:03:04 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.120 2021/07/31 19:52:44 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -556,6 +556,13 @@ is_nonzero(const tnode_t *tn)
 static inline uint64_t
 bit(unsigned i)
 {
+	/*
+	 * TODO: Add proper support for INT128.
+	 * This involves changing val_t to 128 bits.
+	 */
+	if (i >= 64)
+		return 0;	/* XXX: not correct for INT128 and UINT128 */
+
 	lint_assert(i < 64);
 	return (uint64_t)1 << i;
 }
