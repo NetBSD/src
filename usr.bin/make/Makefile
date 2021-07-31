@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.115 2021/05/30 21:03:08 rillig Exp $
+#	$NetBSD: Makefile,v 1.116 2021/07/31 09:30:17 rillig Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -117,6 +117,7 @@ SUBDIR+=	unit-tests
 .endif
 
 LINTFLAGS+=	-T	# strict bool mode, available since 2021-01-11
+LINTFLAGS+=	-w	# treat warnings as errors
 CLEANFILES+=	*.o	# for filemon objects
 
 COPTS.arch.c+=	${GCC_NO_FORMAT_TRUNCATION}
