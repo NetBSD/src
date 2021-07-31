@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.350 2021/04/04 10:05:08 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.351 2021/07/31 09:30:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -115,7 +115,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.350 2021/04/04 10:05:08 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.351 2021/07/31 09:30:17 rillig Exp $");
 
 typedef List SuffixList;
 typedef ListNode SuffixListNode;
@@ -619,6 +619,7 @@ Suff_AddTransform(const char *name)
 		/* TODO: Avoid the redundant parsing here. */
 		bool ok = ParseTransform(name, &srcSuff, &targSuff);
 		assert(ok);
+		/* LINTED 129 *//* expression has null effect */
 		(void)ok;
 	}
 
