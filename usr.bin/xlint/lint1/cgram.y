@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.351 2021/07/27 05:52:53 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.352 2021/07/31 17:09:21 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.351 2021/07/27 05:52:53 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.352 2021/07/31 17:09:21 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -121,6 +121,13 @@ anonymize(sym_t *s)
 	for ( ; s != NULL; s = s->s_next)
 		s->s_styp = NULL;
 }
+
+#if defined(YYDEBUG) && (defined(YYBYACC) || defined(YYBISON))
+#define YYSTYPE_TOSTRING cgram_to_string
+#endif
+#if defined(YYDEBUG) && defined(YYBISON)
+#define YYPRINT cgram_print
+#endif
 
 %}
 
@@ -348,6 +355,12 @@ anonymize(sym_t *s)
 %type	<y_seen_statement> block_item
 %type	<y_tnode>	do_while_expr
 %type	<y_sym>		func_declarator
+
+%{
+#if defined(YYDEBUG) && defined(YYBISON)
+static void cgram_print(FILE *, int, YYSTYPE);
+#endif
+%}
 
 %%
 
@@ -2115,6 +2128,47 @@ yyerror(const char *msg)
 		norecover();
 	return 0;
 }
+
+#if (defined(YYDEBUG) && YYDEBUG > 0 && defined(YYBYACC)) \
+    || (defined(YYDEBUG) && defined(YYBISON))
+static const char *
+cgram_to_string(int token, YYSTYPE val)
+{
+	static const char *tqual_name[] = {
+		"const", "volatile", "restrict", "_Thread_local"
+	};
+
+	switch (token) {
+	case T_INCDEC:
+	case T_MULTIPLICATIVE:
+	case T_ADDITIVE:
+	case T_SHIFT:
+	case T_RELATIONAL:
+	case T_EQUALITY:
+	case T_OPASSIGN:
+		return modtab[val.y_op].m_name;
+	case T_SCLASS:
+		return scl_name(val.y_scl);
+	case T_TYPE:
+	case T_STRUCT_OR_UNION:
+		return tspec_name(val.y_tspec);
+	case T_QUAL:
+		return tqual_name[val.y_tqual];
+	case T_NAME:
+		return val.y_name->sb_name;
+	default:
+		return "<none>";
+	}
+}
+#endif
+
+#if defined(YYDEBUG) && defined(YYBISON)
+static void
+cgram_print(FILE *output, int token, YYSTYPE val)
+{
+	fprintf(output, "%s", cgram_to_string(token, val));
+}
+#endif
 
 static void
 cgram_declare(sym_t *decl, bool initflg, sbuf_t *renaming)
