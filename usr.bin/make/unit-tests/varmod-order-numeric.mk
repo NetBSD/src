@@ -1,4 +1,4 @@
-# $NetBSD: varmod-order-numeric.mk,v 1.3 2021/07/30 23:28:04 rillig Exp $
+# $NetBSD: varmod-order-numeric.mk,v 1.4 2021/07/31 20:55:46 rillig Exp $
 #
 # Tests for the :On variable modifier, which returns the words, sorted in
 # ascending numeric order.
@@ -24,77 +24,17 @@ NUMBERS=	3 5 7 1 42 -42 5K -3m 1M 1k -2G
 .  error ${NUMBERS:Onr}
 .endif
 
-# Shuffling numerically doesn't make sense, so don't allow 'x' and 'n' to be
-# combined.
-#
-# expect-text: Bad modifier ":Oxn" for variable "NUMBERS"
-# expect+1: Malformed conditional (${NUMBERS:Oxn})
-.if ${NUMBERS:Oxn}
-.  error
-.else
-.  error
+# If there are several numbers that have the same integer value, they are
+# returned in unspecified order.
+SAME_VALUE:=	${:U 79 80 0x0050 81 :On}
+.if ${SAME_VALUE} != "79 80 0x0050 81" && ${SAME_VALUE} != "79 0x0050 80 81"
+.  error ${SAME_VALUE}
 .endif
 
-# Extra characters after ':On' are detected and diagnosed.
-# TODO: Add line number information to the "Bad modifier" diagnostic.
-#
-# expect-text: Bad modifier ":On_typo" for variable "NUMBERS"
-.if ${NUMBERS:On_typo}
-.  error
-.else
-.  error
+# Hexadecimal and octal numbers are supported as well.
+OCTAL=		0 010 0x7 9
+.if ${OCTAL:On} != "0 0x7 010 9"
+.  error ${OCTAL:On}
 .endif
-
-# Extra characters after ':Onr' are detected and diagnosed.
-#
-# expect-text: Bad modifier ":Onr_typo" for variable "NUMBERS"
-.if ${NUMBERS:Onr_typo}
-.  error
-.else
-.  error
-.endif
-
-# Extra characters after ':Orn' are detected and diagnosed.
-#
-# expect+1: Bad modifier ":Orn_typo" for variable "NUMBERS"
-.if ${NUMBERS:Orn_typo}
-.  error
-.else
-.  error
-.endif
-
-# Repeating the 'n' is not supported.  In the typical use cases, the sorting
-# criteria are fixed, not computed, therefore allowing this redundancy does
-# not make sense.
-#
-# expect-text: Bad modifier ":Onn" for variable "NUMBERS"
-.if ${NUMBERS:Onn}
-.  error
-.else
-.  error
-.endif
-
-# Repeating the 'r' is not supported as well, for the same reasons as above.
-#
-# expect-text: Bad modifier ":Onrr" for variable "NUMBERS"
-.if ${NUMBERS:Onrr}
-.  error
-.else
-.  error
-.endif
-
-# Repeating the 'r' is not supported as well, for the same reasons as above.
-#
-# expect-text: Bad modifier ":Orrn" for variable "NUMBERS"
-.if ${NUMBERS:Orrn}
-.  error
-.else
-.  error
-.endif
-
-# Missing closing brace, to cover the error handling code.
-_:=	${NUMBERS:O
-_:=	${NUMBERS:On
-_:=	${NUMBERS:Onr
 
 all:
