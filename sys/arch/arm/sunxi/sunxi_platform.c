@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_platform.c,v 1.44 2021/07/30 12:46:46 tnn Exp $ */
+/* $NetBSD: sunxi_platform.c,v 1.45 2021/07/31 11:34:40 tnn Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.44 2021/07/30 12:46:46 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.45 2021/07/31 11:34:40 tnn Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -241,11 +241,23 @@ sunxi_platform_device_register(device_t self, void *aux)
 
 	if (device_is_a(self, "com")) {
 		static const struct device_compatible_entry compat_data[] = {
-			{ .compat = "allwinner,sun7i-a20" },
+			{ .compat = "allwinner,sun4i-a10",	.value = 64 },
+			{ .compat = "allwinner,sun5i-a13",	.value = 64 },
+			{ .compat = "allwinner,sun6i-a31",	.value = 64 },
+			{ .compat = "allwinner,sun7i-a20",	.value = 64 },
+			{ .compat = "allwinner,sun8i-h2-plus",	.value = 64 },
+			{ .compat = "allwinner,sun8i-h3",	.value = 64 },
+			{ .compat = "allwinner,sun8i-a83t",	.value = 64 },
+			{ .compat = "allwinner,sun9i-a80",	.value = 64 },
+			{ .compat = "allwinner,sun50i-a64",	.value = 64 },
+			{ .compat = "allwinner,sun50i-h5",	.value = 64 },
+			{ .compat = "allwinner,sun50i-h6",	.value = 256 },
 			DEVICE_COMPAT_EOL
 		};
-		if (of_compatible_match(OF_finddevice("/"), compat_data))
-			prop_dictionary_set_uint(prop, "fifolen", 64);
+		const struct device_compatible_entry *dce =
+		    of_compatible_lookup(OF_finddevice("/"), compat_data);
+		if (dce != NULL)
+			prop_dictionary_set_uint(prop, "fifolen", dce->value);
 	}
 }
 
