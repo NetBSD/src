@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.267 2021/07/31 10:07:22 andvar Exp $ */
+/*	$NetBSD: autoconf.c,v 1.268 2021/07/31 16:54:37 andvar Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.267 2021/07/31 10:07:22 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.268 2021/07/31 16:54:37 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -2009,7 +2009,7 @@ bootinfo_relocate(void *newloc)
 		(size_t)cp < (size_t)bootinfo + BOOTINFO_SIZE);
 
 	/*
-	 * Check propective gains.
+	 * Check prospective gains.
 	 */
 	if ((int)bootinfo - (int)newloc < bi_size)
 		/* Don't bother */
