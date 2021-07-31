@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.321 2021/07/31 11:37:53 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.322 2021/07/31 18:16:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.321 2021/07/31 11:37:53 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.322 2021/07/31 18:16:42 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -102,46 +102,6 @@ op_name(op_t op)
 {
 	return modtab[op].m_name;
 }
-
-#ifdef DEBUG
-void
-debug_node(const tnode_t *tn, int indent)
-{
-	op_t op;
-
-	if (tn == NULL) {
-		printf("%*s" "null\n", indent, "");
-		return;
-	}
-
-	op = tn->tn_op;
-	printf("%*s%s with type '%s'%s%s",
-	    2 * indent, "",
-	    op == CVT && !tn->tn_cast ? "convert" : op_name(op),
-	    type_name(tn->tn_type), tn->tn_lvalue ? ", lvalue" : "",
-	    tn->tn_parenthesized ? ", parenthesized" : "");
-
-	if (op == NAME)
-		printf(" %s\n", tn->tn_sym->s_name);
-	else if (op == CON && is_floating(tn->tn_type->t_tspec))
-		printf(", value %Lg", tn->tn_val->v_ldbl);
-	else if (op == CON && is_uinteger(tn->tn_type->t_tspec))
-		printf(", value %llu\n", (unsigned long long)tn->tn_val->v_quad);
-	else if (op == CON && is_integer(tn->tn_type->t_tspec))
-		printf(", value %lld\n", (long long)tn->tn_val->v_quad);
-	else if (op == CON)
-		printf(", unknown value\n");
-	else if (op == STRING)
-		printf(", length %zu\n", tn->tn_string->st_len);
-	else {
-		printf("\n");
-
-		debug_node(tn->tn_left, indent + 1);
-		if (modtab[op].m_binary || tn->tn_right != NULL)
-			debug_node(tn->tn_right, indent + 1);
-	}
-}
-#endif
 
 /* Build 'pointer to tp', 'array of tp' or 'function returning tp'. */
 type_t *
