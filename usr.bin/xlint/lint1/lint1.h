@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.118 2021/07/23 17:06:37 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.119 2021/07/31 11:03:04 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -192,6 +192,7 @@ struct lint1_type {
 };
 
 #define	t_dim	t_u._t_dim
+/* TODO: rename t_str to t_sou, to avoid confusing it with strings. */
 #define	t_str	t_u._t_str
 #define	t_enum	t_u._t_enum
 #define	t_args	t_u._t_args
@@ -264,6 +265,7 @@ typedef	struct sym {
 	type_t	*s_type;
 	val_t	s_value;	/* value (if enum or bool constant) */
 	union {
+		/* XXX: what is the difference to s_type->t_str? */
 		struct_or_union	*_s_st;
 		enumeration	*_s_et;
 		tspec_t	_s_tsp;	/* type (only for keywords) */

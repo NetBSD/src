@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.210 2021/07/25 22:14:36 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.211 2021/07/31 11:03:04 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.210 2021/07/25 22:14:36 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.211 2021/07/31 11:03:04 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -183,6 +183,27 @@ expr_dup_type(const type_t *tp)
 
 	ntp = expr_zalloc(sizeof(*ntp));
 	*ntp = *tp;
+	return ntp;
+}
+
+/*
+ * Return the unqualified version of the type.  The returned type is freed at
+ * the end of the current expression.
+ *
+ * See C99 6.2.5p25.
+ */
+type_t *
+expr_unqualified_type(const type_t *tp)
+{
+	type_t *ntp;
+
+	ntp = expr_zalloc(sizeof(*ntp));
+	*ntp = *tp;
+	ntp->t_const = false;
+	ntp->t_volatile = false;
+
+	/* TODO: deep-copy struct/union members; see msg_115.c */
+
 	return ntp;
 }
 

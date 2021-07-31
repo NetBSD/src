@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.319 2021/07/25 10:39:10 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.320 2021/07/31 11:03:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.319 2021/07/25 10:39:10 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.320 2021/07/31 11:03:04 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3611,8 +3611,7 @@ check_prototype_argument(
 	bool	dowarn;
 
 	ln = xcalloc(1, sizeof(*ln));
-	ln->tn_type = expr_dup_type(tp);
-	ln->tn_type->t_const = false;
+	ln->tn_type = expr_unqualified_type(tp);
 	ln->tn_lvalue = true;
 	if (typeok(FARG, n, ln, tn)) {
 		if (!eqtype(tp, tn->tn_type,

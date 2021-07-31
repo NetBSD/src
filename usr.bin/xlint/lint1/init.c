@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.203 2021/07/20 19:44:36 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.204 2021/07/31 11:03:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.203 2021/07/20 19:44:36 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.204 2021/07/31 11:03:04 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -400,8 +400,7 @@ check_init_expr(const type_t *tp, sym_t *sym, tnode_t *tn)
 	tspec_t lt, rt;
 	struct memory_block *tmem;
 
-	ltp = expr_dup_type(tp);
-	ltp->t_const = false;
+	ltp = expr_unqualified_type(tp);
 
 	/* Create a temporary node for the left side. */
 	ln = expr_zalloc(sizeof(*ln));
@@ -900,8 +899,7 @@ initialization_expr_using_assign(struct initialization *in, tnode_t *rn)
 	debug_step0("handing over to ASSIGN");
 
 	ln = build_name(in->in_sym, 0);
-	ln->tn_type = expr_dup_type(ln->tn_type);
-	ln->tn_type->t_const = false;
+	ln->tn_type = expr_unqualified_type(ln->tn_type);
 
 	tn = build_binary(ln, ASSIGN, rn);
 	expr(tn, false, false, false, false);
