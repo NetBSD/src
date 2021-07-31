@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.428 2021/03/08 18:17:27 christos Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.429 2021/07/31 20:29:37 andvar Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.428 2021/03/08 18:17:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.429 2021/07/31 20:29:37 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2535,7 +2535,7 @@ after_listen:
 				 * duplicate ack (ie, window info didn't
 				 * change), the ack is the biggest we've
 				 * seen and we've seen exactly our rexmt
-				 * threshhold of them, assume a packet
+				 * threshold of them, assume a packet
 				 * has been dropped and retransmit it.
 				 * Kludge snd_nxt & the congestion
 				 * window so we send only this one
