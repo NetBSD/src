@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.57 2021/07/31 13:47:19 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.58 2021/07/31 19:07:52 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.57 2021/07/31 13:47:19 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.58 2021/07/31 19:07:52 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -82,9 +82,7 @@ lex_next_line(void)
 {
 	curr_pos.p_line++;
 	curr_pos.p_uniq = 0;
-#ifdef DEBUG
-	printf("parsing %s:%d\n", curr_pos.p_file, curr_pos.p_line);
-#endif
+	debug_step("parsing %s:%d", curr_pos.p_file, curr_pos.p_line);
 	if (curr_pos.p_file == csrc_pos.p_file) {
 		csrc_pos.p_line++;
 		csrc_pos.p_uniq = 0;

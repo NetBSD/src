@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.116 2021/07/31 11:03:04 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.117 2021/07/31 19:07:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.116 2021/07/31 11:03:04 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.117 2021/07/31 19:07:52 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -192,11 +192,10 @@ end_control_statement(control_statement_kind kind)
 static void
 set_reached(bool new_reached)
 {
-#ifdef DEBUG
-	printf("%s:%d: %s -> %s\n", curr_pos.p_file, curr_pos.p_line,
+	debug_step("%s:%d: %s -> %s",
+	    curr_pos.p_file, curr_pos.p_line,
 	    reached ? "reachable" : "unreachable",
 	    new_reached ? "reachable" : "unreachable");
-#endif
 	reached = new_reached;
 	warn_about_unreachable = true;
 }
@@ -1328,9 +1327,8 @@ void
 linted(int n)
 {
 
-#ifdef DEBUG
-	printf("%s, %d: lwarn = %d\n", curr_pos.p_file, curr_pos.p_line, n);
-#endif
+	debug_step("%s, %d: lwarn = %d",
+	    curr_pos.p_file, curr_pos.p_line, n);
 	lwarn = n;
 }
 
@@ -1342,10 +1340,8 @@ void
 bitfieldtype(int n)
 {
 
-#ifdef DEBUG
-	printf("%s, %d: bitfieldtype_ok = true\n", curr_pos.p_file,
-	    curr_pos.p_line);
-#endif
+	debug_step("%s, %d: bitfieldtype_ok = true",
+	    curr_pos.p_file, curr_pos.p_line);
 	bitfieldtype_ok = true;
 }
 

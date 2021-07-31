@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.131 2021/07/25 10:39:10 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.132 2021/07/31 19:07:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.131 2021/07/25 10:39:10 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.132 2021/07/31 19:07:52 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -511,9 +511,7 @@ vwarning_at(int msgid, const pos_t *pos, va_list ap)
 	if (ERR_ISSET(msgid, &msgset))
 		return;
 
-#ifdef DEBUG
-	printf("%s: lwarn=%d msgid=%d\n", __func__, lwarn, msgid);
-#endif
+	debug_step("%s: lwarn=%d msgid=%d", __func__, lwarn, msgid);
 	if (lwarn == LWARN_NONE || lwarn == msgid)
 		/* this warning is suppressed by a LINTED comment */
 		return;

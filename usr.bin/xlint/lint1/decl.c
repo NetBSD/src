@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.212 2021/07/31 17:09:21 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.213 2021/07/31 19:07:52 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.212 2021/07/31 17:09:21 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.213 2021/07/31 19:07:52 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -289,9 +289,8 @@ void
 add_type(type_t *tp)
 {
 	tspec_t	t;
-#ifdef DEBUG
-	printf("%s: %s\n", __func__, type_name(tp));
-#endif
+
+	debug_step("%s: %s", __func__, type_name(tp));
 	if (tp->t_typedef) {
 		/*
 		 * something like "typedef int a; int a b;"
@@ -801,9 +800,7 @@ dcs_merge_declaration_specifiers(void)
 	l = dcs->d_rank_mod;	/* SHORT, LONG or QUAD */
 	tp = dcs->d_type;
 
-#ifdef DEBUG
-	printf("%s: %s\n", __func__, type_name(tp));
-#endif
+	debug_step("%s: %s", __func__, type_name(tp));
 	if (t == NOTSPEC && s == NOTSPEC && l == NOTSPEC && c == NOTSPEC &&
 	    tp == NULL)
 		dcs->d_notyp = true;
@@ -3011,17 +3008,13 @@ check_usage(dinfo_t *di)
 	mklwarn = lwarn;
 	lwarn = LWARN_ALL;
 
-#ifdef DEBUG
-	printf("%s, %d: >temp lwarn = %d\n", curr_pos.p_file, curr_pos.p_line,
-	    lwarn);
-#endif
+	debug_step("%s, %d: >temp lwarn = %d",
+	    curr_pos.p_file, curr_pos.p_line, lwarn);
 	for (sym = di->d_dlsyms; sym != NULL; sym = sym->s_dlnxt)
 		check_usage_sym(di->d_asm, sym);
 	lwarn = mklwarn;
-#ifdef DEBUG
-	printf("%s, %d: <temp lwarn = %d\n", curr_pos.p_file, curr_pos.p_line,
-	    lwarn);
-#endif
+	debug_step("%s, %d: <temp lwarn = %d",
+	    curr_pos.p_file, curr_pos.p_line, lwarn);
 }
 
 /*
