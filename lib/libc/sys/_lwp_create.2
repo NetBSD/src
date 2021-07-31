@@ -1,4 +1,4 @@
-.\"	$NetBSD: _lwp_create.2,v 1.7 2017/04/23 11:38:53 wiz Exp $
+.\"	$NetBSD: _lwp_create.2,v 1.8 2021/07/31 20:51:32 andvar Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,7 +50,7 @@ signal mask, stack, and machine registers.
 The signal stack of the newly created light-weight process is reset to
 disabled.
 If this context specifies invalid register values (for example priviledge
-escalation by setting machine dependend bits forbidden for user processes),
+escalation by setting machine dependent bits forbidden for user processes),
 or does not specify cpu register values (uc_flags does not have the
 _UC_CPU bit set), the call will fail and errno will be set to EINVAL.
 .Pp
