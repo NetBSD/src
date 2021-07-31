@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.95 2020/02/04 05:25:39 thorpej Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.96 2021/07/31 14:36:33 andvar Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.95 2020/02/04 05:25:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.96 2021/07/31 14:36:33 andvar Exp $");
 
 /*
  * Device driver for Fujitsu MB86960A/MB86965A based Ethernet cards.
@@ -582,7 +582,7 @@ mb86960_init(struct mb86960_softc *sc)
 	ifp->if_flags |= IFF_RUNNING;
 
 	/*
-	 * At this point, the interface is runnung properly,
+	 * At this point, the interface is running properly,
 	 * except that it receives *no* packets.  we then call
 	 * mb86960_setmode() to tell the chip what packets to be
 	 * received, based on the if_flags and multicast group
@@ -696,7 +696,7 @@ mb86960_start(struct ifnet *ifp)
 	/*
 	 * Stop accepting more transmission packets temporarily, when
 	 * a filter change request is delayed.  Updating the MARs on
-	 * 86960 flushes the transmisstion buffer, so it is delayed
+	 * 86960 flushes the transmission buffer, so it is delayed
 	 * until all buffered transmission packets have been sent
 	 * out.
 	 */
@@ -860,7 +860,7 @@ mb86960_tint(struct mb86960_softc *sc, uint8_t tstat)
 		 * 86960 has a design flow on collision count on multiple
 		 * packet transmission.  When we send two or more packets
 		 * with one start command (that's what we do when the
-		 * transmission queue is clauded), 86960 informs us number
+		 * transmission queue is crowded), 86960 informs us number
 		 * of collisions occurred on the last packet on the
 		 * transmission only.  Number of collisions on previous
 		 * packets are lost.  I have told that the fact is clearly
@@ -958,7 +958,7 @@ mb86960_rint(struct mb86960_softc *sc, uint8_t rstat)
 	 * We just loop checking the flag to pull out all received
 	 * packets.
 	 *
-	 * We limit the number of iterrations to avoid infinite loop.
+	 * We limit the number of iterations to avoid infinite loop.
 	 * It can be caused by a very slow CPU (some broken
 	 * peripheral may insert incredible number of wait cycles)
 	 * or, worse, by a broken MB86960 chip.
@@ -1660,7 +1660,7 @@ mb86960_setmode(struct mb86960_softc *sc)
 	 * DLC trashes all packets in both transmission and receive
 	 * buffers when stopped.
 	 *
-	 * ... Are the above sentenses correct?  I have to check the
+	 * ... Are the above sentences correct?  I have to check the
 	 *     manual of the MB86960A.  FIXME.
 	 *
 	 * To reduce the packet lossage, we delay the filter update
@@ -1689,7 +1689,7 @@ mb86960_setmode(struct mb86960_softc *sc)
 /*
  * Load a new multicast address filter into MARs.
  *
- * The caller must have splnet'ed befor mb86960_loadmar.
+ * The caller must have splnet'ed before mb86960_loadmar.
  * This function starts the DLC upon return.  So it can be called only
  * when the chip is working, i.e., from the driver's point of view, when
  * a device is RUNNING.  (I mistook the point in previous versions.)
