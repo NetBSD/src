@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.124 2021/07/31 18:16:42 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.125 2021/07/31 19:07:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -123,27 +123,20 @@ void	debug_indent_inc(void);
 void	debug_indent_dec(void);
 void	debug_enter(const char *);
 void	debug_step(const char *fmt, ...) __printflike(1, 2);
-#define	debug_step0		debug_step
-#define	debug_step1		debug_step
-#define	debug_step2		debug_step
 void	debug_leave(const char *);
 #define	debug_enter()		(debug_enter)(__func__)
 #define	debug_leave()		(debug_leave)(__func__)
 #else
 #define	debug_noop()		do { } while (false)
-#define	debug_node(tn, indent) debug_noop()
-/* ARGSUSED */
-static inline void __printflike(1, 2) debug_printf(const char *fmt, ...) {}
-#define debug_indent()		debug_noop()
-/* ARGSUSED */
+#define	debug_node(tn, indent)	debug_noop()
+#define	debug_printf(...)	debug_noop()
+#define	debug_indent()		debug_noop()
 static inline void __printflike(1, 2) debug_step(const char *fmt, ...) {}
+/*#define	debug_step(...)		debug_noop()*/
 #define	debug_indent()		debug_noop()
 #define	debug_indent_inc()	debug_noop()
 #define	debug_indent_dec()	debug_noop()
 #define	debug_enter()		debug_noop()
-#define	debug_step0(fmt)	debug_noop()
-#define	debug_step1(fmt, arg0)	debug_noop()
-#define	debug_step2(fmt, arg1, arg2) debug_noop()
 #define	debug_leave()		debug_noop()
 #endif
 
