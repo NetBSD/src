@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.320 2021/07/31 11:03:04 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.321 2021/07/31 11:37:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.320 2021/07/31 11:03:04 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.321 2021/07/31 11:37:53 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2546,19 +2546,17 @@ merge_qualifiers(type_t *tp1, const type_t *tp2)
 static bool
 has_constant_member(const type_t *tp)
 {
-	sym_t	*m;
-	tspec_t	t;
+	sym_t *m;
 
-	lint_assert((t = tp->t_tspec) == STRUCT || t == UNION);
+	lint_assert(is_struct_or_union(tp->t_tspec));
 
 	for (m = tp->t_str->sou_first_member; m != NULL; m = m->s_next) {
-		tp = m->s_type;
-		if (tp->t_const)
+		const type_t *mtp = m->s_type;
+		if (mtp->t_const)
 			return true;
-		if ((t = tp->t_tspec) == STRUCT || t == UNION) {
-			if (has_constant_member(m->s_type))
-				return true;
-		}
+		if (is_struct_or_union(mtp->t_tspec) &&
+		    has_constant_member(mtp))
+			return true;
 	}
 	return false;
 }
