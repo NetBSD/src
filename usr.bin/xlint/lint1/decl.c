@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.214 2021/07/31 19:20:59 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.215 2021/07/31 19:52:44 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.214 2021/07/31 19:20:59 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.215 2021/07/31 19:52:44 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -126,8 +126,8 @@ initdecl(void)
 	typetab[QUAD].t_tspec = QUAD;
 	typetab[UQUAD].t_tspec = UQUAD;
 #ifdef INT128_SIZE
-	/* TODO: add __int128_t */
-	/* TODO: add __uint128_t */
+	typetab[INT128].t_tspec = INT128;
+	typetab[UINT128].t_tspec = UINT128;
 #endif
 	typetab[FLOAT].t_tspec = FLOAT;
 	typetab[DOUBLE].t_tspec = DOUBLE;
