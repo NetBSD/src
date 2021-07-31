@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.80 2021/07/25 22:14:36 rillig Exp $
+#	$NetBSD: Makefile,v 1.81 2021/07/31 17:09:21 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -22,7 +22,7 @@ LOBJS.${PROG}+=		${SRCS:M*.l:.l=.ln}
 
 CPPFLAGS+=	-DIS_LINT1
 CPPFLAGS+=	-I${.CURDIR}
-CPPFLAGS+=	${DEBUG:D-DDEBUG}
+CPPFLAGS+=	${DEBUG:D-DDEBUG -DYYDEBUG}
 
 COPTS.err.c+=	${${ACTIVE_CC} == "clang":? -Wno-format-nonliteral :}
 
