@@ -1,11 +1,11 @@
 #!/bin/sh
 #
-# $NetBSD: devpubd,v 1.1 2011/09/06 21:32:29 riz Exp $
+# $NetBSD: devpubd,v 1.2 2021/07/31 14:47:04 mlelstv Exp $
 #
 
 # PROVIDE: devpubd
-# REQUIRE: DAEMON
-# BEFORE:  LOGIN
+# REQUIRE: root
+# BEFORE:  zfs ccd cgd lvm raidframe
 
 $_rc_subr_loaded . /etc/rc.subr
 
