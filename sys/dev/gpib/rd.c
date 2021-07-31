@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.43 2020/09/29 02:49:56 msaitoh Exp $ */
+/*	$NetBSD: rd.c,v 1.44 2021/07/31 20:29:37 andvar Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.43 2020/09/29 02:49:56 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.44 2021/07/31 20:29:37 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -871,7 +871,7 @@ rderror(struct rd_softc *sc)
 	}
 	/*
 	 * Only report error if we have reached the error reporting
-	 * threshhold.  By default, this will only report after the
+	 * threshold.  By default, this will only report after the
 	 * retry limit has been exceeded.
 	 */
 	if (sc->sc_errcnt < rderrthresh)

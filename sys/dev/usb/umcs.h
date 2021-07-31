@@ -1,4 +1,4 @@
-/* $NetBSD: umcs.h,v 1.3 2021/07/31 14:36:33 andvar Exp $ */
+/* $NetBSD: umcs.h,v 1.4 2021/07/31 20:29:37 andvar Exp $ */
 /* $FreeBSD: head/sys/dev/usb/serial/umcs.h 252123 2013-06-23 20:19:51Z thomas $ */
 
 /*-
@@ -159,7 +159,7 @@
 #define	MCS7840_DEV_REG_THR_VAL_HIGH3	0x44	/* High 1 bit of threshold
 						 * value for Bulk-Out and
 						 * enable flag for Port 3, R/W */
-#define	MCS7840_DEV_REG_THR_VAL_LOW4	0x45	/* Low 8 bits of threshhold
+#define	MCS7840_DEV_REG_THR_VAL_LOW4	0x45	/* Low 8 bits of threshold
 						 * value for Bulk-Out for Port
 						 * 4, R/W */
 #define	MCS7840_DEV_REG_THR_VAL_HIGH4	0x46	/* High 1 bit of threshold

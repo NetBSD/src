@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_congctl.c,v 1.27 2019/10/09 05:29:18 msaitoh Exp $	*/
+/*	$NetBSD: tcp_congctl.c,v 1.28 2021/07/31 20:29:37 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2005, 2006 The NetBSD Foundation, Inc.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_congctl.c,v 1.27 2019/10/09 05:29:18 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_congctl.c,v 1.28 2021/07/31 20:29:37 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -537,12 +537,12 @@ tcp_reno_slow_retransmit(struct tcpcb *tp)
 	 * almost immediately.  To get more time between
 	 * drops but still "push" the network to take advantage
 	 * of improving conditions, we switch from exponential
-	 * to linear window opening at some threshhold size.
-	 * For a threshhold, we use half the current window
+	 * to linear window opening at some threshold size.
+	 * For a threshold, we use half the current window
 	 * size, truncated to a multiple of the mss.
 	 *
 	 * (the minimum cwnd that will give us exponential
-	 * growth is 2 mss.  We don't allow the threshhold
+	 * growth is 2 mss.  We don't allow the threshold
 	 * to go below this.)
 	 */
 

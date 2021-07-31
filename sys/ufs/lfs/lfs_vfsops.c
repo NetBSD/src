@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.380 2020/09/05 16:30:13 riastradh Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.381 2021/07/31 20:29:37 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.380 2020/09/05 16:30:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.381 2021/07/31 20:29:37 andvar Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -383,7 +383,7 @@ struct pool lfs_lbnentry_pool;
 /*
  * The writer daemon.  UVM keeps track of how many dirty pages we are holding
  * in lfs_subsys_pages; the daemon flushes the filesystem when this value
- * crosses the (user-defined) threshhold LFS_MAX_PAGES.
+ * crosses the (user-defined) threshold LFS_MAX_PAGES.
  */
 static void
 lfs_writerd(void *arg)
