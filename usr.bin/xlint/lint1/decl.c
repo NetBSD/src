@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.213 2021/07/31 19:07:52 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.214 2021/07/31 19:20:59 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.213 2021/07/31 19:07:52 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.214 2021/07/31 19:20:59 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -105,6 +105,14 @@ initdecl(void)
 	typetab = xcalloc(NTSPEC, sizeof(*typetab));
 	for (i = 0; i < NTSPEC; i++)
 		typetab[i].t_tspec = NOTSPEC;
+
+	/*
+	 * The following two are not real types. They are only used by the
+	 * parser to handle the keywords "signed" and "unsigned".
+	 */
+	typetab[SIGNED].t_tspec = SIGNED;
+	typetab[UNSIGN].t_tspec = UNSIGN;
+
 	typetab[BOOL].t_tspec = BOOL;
 	typetab[CHAR].t_tspec = CHAR;
 	typetab[SCHAR].t_tspec = SCHAR;
@@ -117,20 +125,19 @@ initdecl(void)
 	typetab[ULONG].t_tspec = ULONG;
 	typetab[QUAD].t_tspec = QUAD;
 	typetab[UQUAD].t_tspec = UQUAD;
+#ifdef INT128_SIZE
+	/* TODO: add __int128_t */
+	/* TODO: add __uint128_t */
+#endif
 	typetab[FLOAT].t_tspec = FLOAT;
 	typetab[DOUBLE].t_tspec = DOUBLE;
 	typetab[LDOUBLE].t_tspec = LDOUBLE;
+	typetab[VOID].t_tspec = VOID;
+	/* struct, union, enum, ptr, array and func are not shared. */
+	typetab[COMPLEX].t_tspec = COMPLEX;
 	typetab[FCOMPLEX].t_tspec = FCOMPLEX;
 	typetab[DCOMPLEX].t_tspec = DCOMPLEX;
 	typetab[LCOMPLEX].t_tspec = LCOMPLEX;
-	typetab[COMPLEX].t_tspec = COMPLEX;
-	typetab[VOID].t_tspec = VOID;
-	/*
-	 * Next two are not real types. They are only used by the parser
-	 * to return keywords "signed" and "unsigned"
-	 */
-	typetab[SIGNED].t_tspec = SIGNED;
-	typetab[UNSIGN].t_tspec = UNSIGN;
 }
 
 /* Return the name of the "storage class" in the wider sense. */
