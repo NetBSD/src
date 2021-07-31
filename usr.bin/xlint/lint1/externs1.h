@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.125 2021/07/31 19:07:52 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.126 2021/07/31 19:12:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -131,8 +131,7 @@ void	debug_leave(const char *);
 #define	debug_node(tn, indent)	debug_noop()
 #define	debug_printf(...)	debug_noop()
 #define	debug_indent()		debug_noop()
-static inline void __printflike(1, 2) debug_step(const char *fmt, ...) {}
-/*#define	debug_step(...)		debug_noop()*/
+#define	debug_step(...)		debug_noop()
 #define	debug_indent()		debug_noop()
 #define	debug_indent_inc()	debug_noop()
 #define	debug_indent_dec()	debug_noop()
