@@ -1,4 +1,4 @@
-/* $NetBSD: ssdfb_spi.c,v 1.5 2021/01/27 02:32:31 thorpej Exp $ */
+/* $NetBSD: ssdfb_spi.c,v 1.6 2021/08/01 14:56:18 tnn Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ssdfb_spi.c,v 1.5 2021/01/27 02:32:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ssdfb_spi.c,v 1.6 2021/08/01 14:56:18 tnn Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -39,6 +39,10 @@ __KERNEL_RCSID(0, "$NetBSD: ssdfb_spi.c,v 1.5 2021/01/27 02:32:31 thorpej Exp $"
 #include <dev/rasops/rasops.h>
 #include <dev/spi/spivar.h>
 #include <dev/ic/ssdfbvar.h>
+#include "opt_fdt.h"
+#ifdef FDT
+#include <dev/fdt/fdtvar.h>
+#endif
 
 struct bs_state {
 	uint8_t	*base;
@@ -49,6 +53,9 @@ struct bs_state {
 struct ssdfb_spi_softc {
 	struct ssdfb_softc	sc;
 	struct spi_handle	*sc_sh;
+#ifdef FDT
+	struct fdtbus_gpio_pin	*sc_gpio_dc;
+#endif
 	bool			sc_3wiremode;
 };
 
@@ -74,7 +81,8 @@ CFATTACH_DECL_NEW(ssdfb_spi, sizeof(struct ssdfb_spi_softc),
     ssdfb_spi_match, ssdfb_spi_attach, NULL, NULL);
 
 static const struct device_compatible_entry compat_data[] = {
-	{ .compat = "solomon,ssd1322" },
+	{ .compat = "solomon,ssd1306",	.value = SSDFB_PRODUCT_SSD1306_GENERIC },
+	{ .compat = "solomon,ssd1322",	.value = SSDFB_PRODUCT_SSD1322_GENERIC },
 	DEVICE_COMPAT_EOL
 };
 
@@ -108,8 +116,14 @@ ssdfb_spi_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_dev = self;
 	sc->sc_sh = sa->sa_handle;
 	sc->sc.sc_cookie = (void *)sc;
-	if ((flags & SSDFB_ATTACH_FLAG_PRODUCT_MASK) == SSDFB_PRODUCT_UNKNOWN)
-		flags |= SSDFB_PRODUCT_SSD1322_GENERIC;
+	if ((flags & SSDFB_ATTACH_FLAG_PRODUCT_MASK) == SSDFB_PRODUCT_UNKNOWN) {
+		const struct device_compatible_entry *dce =
+			device_compatible_lookup(sa->sa_compat, sa->sa_ncompat, compat_data);
+		if (dce)
+			flags |= (int)dce->value;
+		else
+			flags |= SSDFB_PRODUCT_SSD1322_GENERIC;
+	}
 	/*
 	 * Note on interface modes.
 	 *
@@ -117,11 +131,18 @@ ssdfb_spi_attach(device_t parent, device_t self, void *aux)
 	 * the bit that determines if the lower 8 bits are command or data.
 	 *
 	 * 4 wire mode sends 8 bit sequences and requires an auxiliary GPIO
-	 * pin for the command/data bit. But in other to allocate a GPIO pin
-	 * we need to use fdt, so only support 3 wire mode in this frontend,
-	 * at least for now.
+	 * pin for the command/data bit.
 	 */
 	sc->sc_3wiremode = true;
+#ifdef FDT
+	const int phandle = sa->sa_cookie;
+	sc->sc_gpio_dc = fdtbus_gpio_acquire(phandle, "dc-gpio", GPIO_PIN_OUTPUT);
+	if (!sc->sc_gpio_dc)
+		sc->sc_gpio_dc = fdtbus_gpio_acquire(phandle, "cd-gpio", GPIO_PIN_OUTPUT);
+	sc->sc_3wiremode = (sc->sc_gpio_dc == NULL);
+#else
+	sc->sc_3wiremode = true;
+#endif
 
 	switch (flags & SSDFB_ATTACH_FLAG_PRODUCT_MASK) {
 	case SSDFB_PRODUCT_SSD1322_GENERIC:
@@ -141,7 +162,7 @@ ssdfb_spi_attach(device_t parent, device_t self, void *aux)
 	} else {
 		sc->sc.sc_cmd = ssdfb_spi_cmd_4wire;
 	}
-	
+
 	ssdfb_attach(&sc->sc, flags);
 
 	device_printf(sc->sc.sc_dev, "%d-wire SPI interface\n",
@@ -264,8 +285,11 @@ ssdfb_bitstream_final(struct bs_state *s)
 static void
 ssdfb_spi_4wire_set_dc(struct ssdfb_spi_softc *sc, int value)
 {
-	/* TODO: this should toggle an auxilliary GPIO pin */
+#ifdef FDT
+	fdtbus_gpio_write_raw(sc->sc_gpio_dc, value);
+#else
 	panic("ssdfb_spi_4wire_set_dc");
+#endif
 }
 
 static int
