@@ -1,8 +1,8 @@
-# 	$NetBSD: RAMDISK64,v 1.7 2020/09/07 09:14:47 mrg Exp $
+# 	$NetBSD: RAMDISK64,v 1.8 2021/08/01 15:29:29 andvar Exp $
 #
 # Install kernel with ramdisk added.
 # The ramdisk is be too big to netboot directly via ECOFF on some machines,
-# so keep it otherise identical to INSTALL.
+# so keep it otherwise identical to INSTALL.
 #
 
 # Pull in standard `install' config
