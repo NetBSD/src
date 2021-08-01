@@ -1,4 +1,4 @@
-/*	$NetBSD: c11_generic_expression.c,v 1.9 2021/08/01 13:09:38 rillig Exp $	*/
+/*	$NetBSD: c11_generic_expression.c,v 1.10 2021/08/01 21:12:31 rillig Exp $	*/
 # 3 "c11_generic_expression.c"
 
 /*
@@ -101,6 +101,6 @@ primary_expression(void)
  * covered by the compilers, so there is no need for lint to double-check it.
  */
 const char *x = _Generic(
-    (__uint128_t)1 + 1.0f,
+    1ULL + 1.0f,
     int: 1
 );
