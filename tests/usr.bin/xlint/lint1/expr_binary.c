@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_binary.c,v 1.2 2021/08/01 13:45:14 rillig Exp $	*/
+/*	$NetBSD: expr_binary.c,v 1.3 2021/08/01 13:49:17 rillig Exp $	*/
 # 3 "expr_binary.c"
 
 /*
@@ -45,9 +45,9 @@ cover_balance(void)
 	/* expect+1: '__int128_t' */
 	sink((__int128_t)1 + 1);
 
-	/* expect+1: 'unsigned int' *//* FIXME */
+	/* expect+1: '__uint128_t' */
 	sink((__uint128_t)1 + (__int128_t)1);
 
-	/* expect+1: 'unsigned int' *//* FIXME */
+	/* expect+1: '__uint128_t' */
 	sink((__int128_t)1 + (__uint128_t)1);
 }
