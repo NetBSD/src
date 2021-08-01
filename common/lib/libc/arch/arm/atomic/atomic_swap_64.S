@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_swap_64.S,v 1.14 2021/07/28 07:32:20 skrll Exp $	*/
+/*	$NetBSD: atomic_swap_64.S,v 1.15 2021/08/01 21:58:56 andvar Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@ ENTRY_NP(_atomic_swap_64)
 	push	{r3, r4}		/* save temporary */
 	mov	ip, r0			/* return value will be in r0 */
 #ifndef __ARM_EABI__
-	mov	r3, r2			/* r2 will be overwriten by r1 */
+	mov	r3, r2			/* r2 will be overwritten by r1 */
 	mov	r2, r1			/* and r1 will be overwritten by ldrexd */
 #endif
 1:	ldrexd	r0, r1, [ip]		/* load old value */
