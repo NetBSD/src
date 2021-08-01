@@ -37,7 +37,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\
 #if 0
 static char sccsid[] = "from: @(#)diskpart.c	8.3 (Berkeley) 11/30/94";
 #else
-__RCSID("$NetBSD: diskpart.c,v 1.20 2015/01/02 19:46:02 christos Exp $");
+__RCSID("$NetBSD: diskpart.c,v 1.21 2021/08/01 18:02:22 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -123,7 +123,7 @@ main(int argc, char *argv[])
 	struct disklabel *dp;
 	int spc, def, part, layout, j, ch;
 	uint32_t curcyl;
-	int threshhold, numcyls[NPARTITIONS], startcyl[NPARTITIONS];
+	int threshold, numcyls[NPARTITIONS], startcyl[NPARTITIONS];
 	off_t totsize = 0;
 	const char *tyname;
 	char *lp;
@@ -185,10 +185,10 @@ main(int argc, char *argv[])
 	    totsize == 0) {
 		badsecttable = dp->d_nsectors +
 		    roundup(badsecttable, dp->d_nsectors);
-		threshhold = howmany(spc, badsecttable);
+		threshold = howmany(spc, badsecttable);
 	} else {
 		badsecttable = 0;
-		threshhold = 0;
+		threshold = 0;
 	}
 	/*
 	 * If disk size was specified, recompute number of cylinders
@@ -210,7 +210,7 @@ main(int argc, char *argv[])
 		curcyl = 0;
 		for (part = PART('a'); part < NPARTITIONS; part++)
 			curcyl += howmany(defpart[def][part], spc);
-		if (curcyl < dp->d_ncylinders - threshhold)
+		if (curcyl < dp->d_ncylinders - threshold)
 			break;
 	}
 	if (def >= NDEFAULTS) {
