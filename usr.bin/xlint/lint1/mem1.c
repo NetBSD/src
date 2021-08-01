@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.46 2021/08/01 17:59:47 rillig Exp $	*/
+/*	$NetBSD: mem1.c,v 1.47 2021/08/01 18:07:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem1.c,v 1.46 2021/08/01 17:59:47 rillig Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.47 2021/08/01 18:07:35 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -398,8 +398,8 @@ expr_save_memory(void)
 }
 
 /*
- * Free all memory used for the current expression and the memory used
- * be a previous expression and saved by expr_save_memory(). The next call to
+ * Free all memory used for the current expression and restore the memory used
+ * by a previous expression and saved by expr_save_memory(). The next call to
  * expr_free_all() frees the restored memory.
  */
 void

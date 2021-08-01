@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.13 2021/08/01 17:59:47 rillig Exp $	*/
+/*	$NetBSD: mem.c,v 1.14 2021/08/01 18:07:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,17 +37,21 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem.c,v 1.13 2021/08/01 17:59:47 rillig Exp $");
+__RCSID("$NetBSD: mem.c,v 1.14 2021/08/01 18:07:35 rillig Exp $");
 #endif
 
-#include <sys/param.h>
-#include <sys/types.h>
-#include <sys/mman.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "lint.h"
+
+static void __attribute__((noreturn))
+nomem(void)
+{
+
+	errx(1, "virtual memory exhausted");
+}
 
 void *
 xmalloc(size_t s)
@@ -90,13 +94,6 @@ xstrdup(const char *s)
 	if ((s2 = strdup(s)) == NULL)
 		nomem();
 	return s2;
-}
-
-void __attribute__((noreturn))
-nomem(void)
-{
-
-	errx(1, "virtual memory exhausted");
 }
 
 void
