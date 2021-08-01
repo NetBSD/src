@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.114 2020/06/27 17:29:18 christos Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.114.6.1 2021/08/01 22:42:38 thorpej Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.114 2020/06/27 17:29:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.114.6.1 2021/08/01 22:42:38 thorpej Exp $");
 #endif /* not lint */
 
 
@@ -626,7 +626,7 @@ udf_readdir(void *v)
 			uiomove(dirent, _DIRENT_SIZE(dirent), uio);
 		}
 
-		/* pass on last transfered offset */
+		/* pass on last transferred offset */
 		uio->uio_offset = transoffset;
 		free(fid, M_UDFTEMP);
 	}
@@ -2173,6 +2173,7 @@ int (**udf_vnodeop_p)(void *);
 
 const struct vnodeopv_entry_desc udf_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
+	{ &vop_parsepath_desc, genfs_parsepath }, /* parsepath */
 	{ &vop_lookup_desc, udf_lookup },	/* lookup */
 	{ &vop_create_desc, udf_create },	/* create */
 	{ &vop_mknod_desc, udf_mknod },		/* mknod */	/* TODO */

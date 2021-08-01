@@ -1116,6 +1116,10 @@ DbgPrint (
 #define ASL_PARSE_OUTPUT    1
 #define ASL_TREE_OUTPUT     2
 
+BOOLEAN
+UtIsIdInteger (
+    UINT8                   *Target);
+
 UINT8
 UtIsBigEndianMachine (
     void);

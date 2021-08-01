@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.65 2020/06/27 17:29:18 christos Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.65.6.1 2021/08/01 22:42:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.65 2020/06/27 17:29:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.65.6.1 2021/08/01 22:42:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -808,6 +808,7 @@ vop_t **ntfs_vnodeop_p;
 
 const struct vnodeopv_entry_desc ntfs_vnodeop_entries[] = {
 	{ &vop_default_desc, (vop_t *) ntfs_bypass },
+	{ &vop_parsepath_desc, genfs_parsepath },	/* parsepath */
 	{ &vop_lookup_desc, (vop_t *) ntfs_lookup },	/* lookup */
 	{ &vop_create_desc, genfs_eopnotsupp },		/* create */
 	{ &vop_mknod_desc, genfs_eopnotsupp },		/* mknod */

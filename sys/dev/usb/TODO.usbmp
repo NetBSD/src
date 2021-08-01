@@ -1,4 +1,4 @@
-$NetBSD: TODO.usbmp,v 1.19 2020/05/16 13:46:12 maya Exp $
+$NetBSD: TODO.usbmp,v 1.19.6.1 2021/08/01 22:42:31 thorpej Exp $
 
 
 the majority of the USB MP device interface is documented in usbdivar.h.
@@ -20,21 +20,16 @@ KERNEL_LOCK
 
 usb_detach_{waitold,wakeup} to usb_detach_{wait,broadcast} conversion:
   - drivers:
-      if_aue.c
-      stuirda.c
-      ubt.c
-      ucom.c
-      ucycom.c
-      udsir.c
-      uhso.c
-      uirda.c
-      ulpt.c
-      umass.c		- done, partially done -- need to check umass_scsipi.c change
-      uscanner.c
-      usscanner.c
-      ustir.c
-      utoppy.c
-
+      - stuirda.c
+      - ubt.c
+      - ucycom.c
+      - udsir.c
+      - uhso.c
+      - uirda.c
+      - ulpt.c
+      - usscanner.c
+      - ustir.c
+      - utoppy.c
 
 use usb_delay_ms_locked() in places
 
@@ -74,27 +69,24 @@ splusb drivers to convert:
   - ukbd.c
   - ulpt.c
   - usbdi.h
-  - uscanner.c
   - usscanner.c
   - ustir.c
   - utoppy.c
   - uvideo.c
 
 wakeup/tsleep drivers:
-  - if_otus.c
+  - if_rum.c
   - if_run.c
   - if_upgt.c
-  - if_urtwn.c
-  - if_zyd.c
-  - ucom.c
+  - if_ural.c
   - ucycom.c
   - udsir.c
   - uirda.c
-  - ulpt.c
-  - umass_isdata.c
+  - umcs.h
+  - usb.c
+  - usb_subr.c
+  - usbdi.c
   - ustir.c
-  - uthum.c
-  - uvscom.c
 
 missing D_MPSAFE drivers:
   - ucom
@@ -103,7 +95,6 @@ missing D_MPSAFE drivers:
   - uhso
   - ulpt
   - usb
-  - uscanner
   - utoppy
 
 missing CALLOUT_MPSAFE drivers:
@@ -159,7 +150,6 @@ driver testing:		STATUS
   - upl			working
   - uberry
   - uipad
-  - uscanner		? (must take kernel lock for scsipi)
   - usscanner
   - utoppy
   - udsbr

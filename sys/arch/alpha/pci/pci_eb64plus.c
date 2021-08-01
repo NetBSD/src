@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb64plus.c,v 1.25 2020/09/22 15:24:02 thorpej Exp $ */
+/* $NetBSD: pci_eb64plus.c,v 1.25.6.1 2021/08/01 22:42:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -59,26 +59,24 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_eb64plus.c,v 1.25 2020/09/22 15:24:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_eb64plus.c,v 1.25.6.1 2021/08/01 22:42:02 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/syslog.h>
 
 #include <machine/autoconf.h>
+#include <machine/rpb.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 
 #include <alpha/pci/apecsreg.h>
 #include <alpha/pci/apecsvar.h>
-
-#include <alpha/pci/pci_eb64plus.h>
 
 #include "sio.h"
 #if NSIO
@@ -95,15 +93,13 @@ static bus_space_handle_t eb64plus_intrgate_ioh;
 extern void	eb64plus_intr_enable(pci_chipset_tag_t, int irq);
 extern void	eb64plus_intr_disable(pci_chipset_tag_t, int irq);
 
-void
-pci_eb64plus_pickintr(struct apecs_config *acp)
+static void
+pci_eb64plus_pickintr(void *core, bus_space_tag_t iot, bus_space_tag_t memt,
+    pci_chipset_tag_t pc)
 {
-	bus_space_tag_t iot = &acp->ac_iot;
-	pci_chipset_tag_t pc = &acp->ac_pc;
-	char *cp;
 	int i;
 
-	pc->pc_intr_v = acp;
+	pc->pc_intr_v = core;
 	pc->pc_intr_map = alpha_pci_generic_intr_map;
 	pc->pc_intr_string = alpha_pci_generic_intr_string;
 	pc->pc_intr_evcnt = alpha_pci_generic_intr_evcnt;
@@ -117,13 +113,8 @@ pci_eb64plus_pickintr(struct apecs_config *acp)
 	if (bus_space_map(eb64plus_intrgate_iot, 0x804, 3, 0,
 	    &eb64plus_intrgate_ioh) != 0)
 		panic("pci_eb64plus_pickintr: couldn't map interrupt PLD");
-	for (i = 0; i < EB64PLUS_MAX_IRQ; i++)
-		eb64plus_intr_disable(pc, i);	
 
-#define PCI_EB64PLUS_IRQ_STR	8
-	pc->pc_shared_intrs = alpha_shared_intr_alloc(EB64PLUS_MAX_IRQ,
-	    PCI_EB64PLUS_IRQ_STR);
-	pc->pc_intr_desc = "eb64+ irq";
+	pc->pc_intr_desc = "eb64+";
 	pc->pc_vecbase = 0x900;
 	pc->pc_nirq = EB64PLUS_MAX_IRQ;
 
@@ -131,20 +122,16 @@ pci_eb64plus_pickintr(struct apecs_config *acp)
 	pc->pc_intr_disable = eb64plus_intr_disable;
 
 	for (i = 0; i < EB64PLUS_MAX_IRQ; i++) {
-		alpha_shared_intr_set_maxstrays(pc->pc_shared_intrs, i,
-			PCI_STRAY_MAX);
-		
-		cp = alpha_shared_intr_string(pc->pc_shared_intrs, i);
-		snprintf(cp, PCI_EB64PLUS_IRQ_STR, "irq %d", i);
-		evcnt_attach_dynamic(alpha_shared_intr_evcnt(
-		    pc->pc_shared_intrs, i), EVCNT_TYPE_INTR, NULL,
-		    "eb64+", cp);
+		eb64plus_intr_disable(pc, i);	
 	}
+
+	alpha_pci_intr_alloc(pc, PCI_STRAY_MAX);
 
 #if NSIO
 	sio_intr_setup(pc, iot);
 #endif
 }
+ALPHA_PCI_INTR_INIT(ST_EB64P, pci_eb64plus_pickintr)
 
 #if 0		/* THIS DOES NOT WORK!  see pci_eb64plus_intr.S. */
 uint8_t eb64plus_intr_mask[3] = { 0xff, 0xff, 0xff };

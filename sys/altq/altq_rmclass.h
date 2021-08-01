@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rmclass.h,v 1.8 2006/10/28 11:35:17 peter Exp $	*/
+/*	$NetBSD: altq_rmclass.h,v 1.8.158.1 2021/08/01 22:41:59 thorpej Exp $	*/
 /*	$KAME: altq_rmclass.h,v 1.10 2003/08/20 23:30:23 itojun Exp $	*/
 
 /*
@@ -55,31 +55,15 @@ typedef struct rm_class		rm_class_t;
 
 struct red;
 
-/*
- * Macros for dealing with time values.  We assume all times are
- * 'timevals'.  `microtime' is used to get the best available clock
- * resolution.  If `microtime' *doesn't* return a value that's about
- * ten times smaller than the average packet time on the fastest
- * link that will use these routines, a slightly different clock
- * scheme than this one should be used.
- * (Bias due to truncation error in this scheme will overestimate utilization
- * and discriminate against high bandwidth classes.  To remove this bias an
- * integrator needs to be added.  The simplest integrator uses a history of
- * 10 * avg.packet.time / min.tick.time packet completion entries.  This is
- * straight forward to add but we don't want to pay the extra memory
- * traffic to maintain it if it's not necessary (occasionally a vendor
- * accidentally builds a workstation with a decent clock - e.g., Sun & HP).)
- */
+#define	RM_GETTIME(now) nanotime(&now)
 
-#define	RM_GETTIME(now) microtime(&now)
+#define	TS_LT(a, b) (((a)->tv_sec < (b)->tv_sec) ||  \
+	(((a)->tv_nsec < (b)->tv_nsec) && ((a)->tv_sec <= (b)->tv_sec)))
 
-#define	TV_LT(a, b) (((a)->tv_sec < (b)->tv_sec) ||  \
-	(((a)->tv_usec < (b)->tv_usec) && ((a)->tv_sec <= (b)->tv_sec)))
-
-#define	TV_DELTA(a, b, delta) { \
-	register int	xxs;	\
+#define	TS_DELTA(a, b, delta) do { \
+	register int64_t	xxs;	\
 							\
-	delta = (a)->tv_usec - (b)->tv_usec; \
+	delta = (int64_t)((a)->tv_nsec - (b)->tv_nsec); \
 	if ((xxs = (a)->tv_sec - (b)->tv_sec)) { \
 		switch (xxs) { \
 		default: \
@@ -88,25 +72,25 @@ struct red;
 			delta = 0; \
 			/* fall through */ \
 		case 2: \
-			delta += 1000000; \
+			delta += 1000000000; \
 			/* fall through */ \
 		case 1: \
-			delta += 1000000; \
+			delta += 1000000000; \
 			break; \
 		} \
 	} \
-}
+} while (0)
 
-#define	TV_ADD_DELTA(a, delta, res) { \
-	register int xxus = (a)->tv_usec + (delta); \
+#define	TS_ADD_DELTA(a, delta, res) do { \
+	register long xxns = (a)->tv_nsec + (long)(delta); \
 	\
 	(res)->tv_sec = (a)->tv_sec; \
-	while (xxus >= 1000000) { \
+	while (xxns >= 1000000000) { \
 		++((res)->tv_sec); \
-		xxus -= 1000000; \
+		xxns -= 1000000000; \
 	} \
-	(res)->tv_usec = xxus; \
-}
+	(res)->tv_nsec = xxns; \
+} while (0)
 
 #define	RM_TIMEOUT	2	/* 1 Clock tick. */
 
@@ -120,6 +104,7 @@ struct red;
 #define	RM_POWER	(1 << RM_FILTER_GAIN)
 #define	RM_MAXDEPTH	32
 #define	RM_NS_PER_SEC	(1000000000)
+#define	RM_PS_PER_SEC	(1000000000000)
 
 typedef struct _rm_class_stats_ {
 	u_int		handle;
@@ -141,16 +126,16 @@ struct rm_class {
 	rm_ifdat_t	*ifdat_;
 	int		pri_;		/* Class priority. */
 	int		depth_;		/* Class depth */
-	u_int		ns_per_byte_;	/* NanoSeconds per byte. */
+	uint64_t	ps_per_byte_;	/* PicoSeconds per byte. */
 	u_int		maxrate_;	/* Bytes per second for this class. */
 	u_int		allotment_;	/* Fraction of link bandwidth. */
 	u_int		w_allotment_;	/* Weighted allotment for WRR */
 	int		bytes_alloc_;	/* Allocation for round of WRR */
 
-	int		avgidle_;
-	int		maxidle_;
-	int		minidle_;
-	int		offtime_;
+	int64_t		avgidle_;
+	int64_t		maxidle_;
+	int64_t		minidle_;
+	int64_t		offtime_;
 	int		sleeping_;	/* != 0 if delaying */
 	int		qthresh_;	/* Queue threshold for formal link sharing */
 	int		leaf_;		/* Note whether leaf class or not.*/
@@ -169,10 +154,10 @@ struct rm_class {
 	struct altq_pktattr *pktattr_;	/* saved hdr used by RED/ECN */
 	int		flags_;
 
-	int		last_pkttime_;	/* saved pkt_time */
-	struct timeval	undertime_;	/* time can next send */
-	struct timeval	last_;		/* time last packet sent */
-	struct timeval	overtime_;
+	int64_t		last_pkttime_;	/* saved pkt_time */
+	struct timespec	undertime_;	/* time can next send */
+	struct timespec	last_;		/* time last packet sent */
+	struct timespec	overtime_;
 	struct callout	callout_; 	/* for timeout() calls */
 
 	rm_class_stats_t stats_;	/* Class Statistics */
@@ -185,7 +170,7 @@ struct rm_ifdat {
 	int		queued_;	/* # pkts queued downstream */
 	int		efficient_;	/* Link Efficency bit */
 	int		wrr_;		/* Enable Weighted Round-Robin */
-	u_long		ns_per_byte_;	/* Link byte speed. */
+	uint64_t	ps_per_byte_;	/* Link byte speed. */
 	int		maxqueued_;	/* Max packets to queue */
 	int		maxpkt_;	/* Max packet size. */
 	int		qi_;		/* In/out pointers for downstream */
@@ -215,12 +200,12 @@ struct rm_ifdat {
 	rm_class_t	*borrowed_[RM_MAXQUEUED]; /* Class borrowed last */
 	rm_class_t	*class_[RM_MAXQUEUED];	/* class sending */
 	int		curlen_[RM_MAXQUEUED];	/* Current pktlen */
-	struct timeval	now_[RM_MAXQUEUED];	/* Current packet time. */
+	struct timespec	now_[RM_MAXQUEUED];	/* Current packet time. */
 	int		is_overlimit_[RM_MAXQUEUED];/* Current packet time. */
 
 	int		cutoff_;	/* Cut-off depth for borrowing */
 
-	struct timeval	ifnow_;		/* expected xmit completion time */
+	struct timespec	ifnow_;		/* expected xmit completion time */
 #if 1 /* ALTQ4PPP */
 	int		maxiftime_;	/* max delay inside interface */
 #endif
@@ -241,14 +226,14 @@ struct rm_ifdat {
 
 #define	is_a_parent_class(cl)	((cl)->children_ != NULL)
 
-extern rm_class_t *rmc_newclass(int, struct rm_ifdat *, u_int,
+extern rm_class_t *rmc_newclass(int, struct rm_ifdat *, uint64_t,
 				void (*)(struct rm_class *, struct rm_class *),
 				int, struct rm_class *, struct rm_class *,
 				u_int, int, u_int, int, int);
 extern void	rmc_delete_class(struct rm_ifdat *, struct rm_class *);
-extern int 	rmc_modclass(struct rm_class *, u_int, int,
+extern int 	rmc_modclass(struct rm_class *, uint64_t, int,
 			     u_int, int, u_int, int);
-extern int	rmc_init(struct ifaltq *, struct rm_ifdat *, u_int,
+extern int	rmc_init(struct ifaltq *, struct rm_ifdat *, uint64_t,
 			 void (*)(struct ifaltq *),
 			 int, int, u_int, int, u_int, int);
 extern int	rmc_queue_packet(struct rm_class *, mbuf_t *);

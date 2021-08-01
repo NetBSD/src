@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.c,v 1.58 2020/06/19 19:32:03 jdolecek Exp $	*/
+/*	$NetBSD: rf_diskqueue.c,v 1.58.6.1 2021/08/01 22:42:31 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -66,7 +66,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.58 2020/06/19 19:32:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.58.6.1 2021/08/01 22:42:31 thorpej Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -83,6 +83,8 @@ __KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.58 2020/06/19 19:32:03 jdolecek E
 #include "rf_sstf.h"
 #include "rf_fifo.h"
 #include "rf_kintf.h"
+
+#include <sys/buf.h>
 
 static void rf_ShutdownDiskQueueSystem(void *);
 
@@ -113,44 +115,44 @@ static const RF_DiskQueueSW_t diskqueuesw[] = {
 		rf_FifoCreate,
 		rf_FifoEnqueue,
 		rf_FifoDequeue,
-		rf_FifoPeek,
-	rf_FifoPromote},
+		rf_FifoPromote},
 
 	{"cvscan",		/* cvscan */
 		rf_CvscanCreate,
 		rf_CvscanEnqueue,
 		rf_CvscanDequeue,
-		rf_CvscanPeek,
-	rf_CvscanPromote},
+		rf_CvscanPromote},
 
 	{"sstf",		/* shortest seek time first */
 		rf_SstfCreate,
 		rf_SstfEnqueue,
 		rf_SstfDequeue,
-		rf_SstfPeek,
-	rf_SstfPromote},
+		rf_SstfPromote},
 
 	{"scan",		/* SCAN (two-way elevator) */
 		rf_ScanCreate,
 		rf_SstfEnqueue,
 		rf_ScanDequeue,
-		rf_ScanPeek,
-	rf_SstfPromote},
+		rf_SstfPromote},
 
 	{"cscan",		/* CSCAN (one-way elevator) */
 		rf_CscanCreate,
 		rf_SstfEnqueue,
 		rf_CscanDequeue,
-		rf_CscanPeek,
-	rf_SstfPromote},
+		rf_SstfPromote},
 
 };
 #define NUM_DISK_QUEUE_TYPES (sizeof(diskqueuesw)/sizeof(RF_DiskQueueSW_t))
 
+
 #define RF_MAX_FREE_DQD 256
 #define RF_MIN_FREE_DQD  64
 
-#include <sys/buf.h>
+/* XXX: scale these... */
+#define RF_MAX_FREE_BUFIO 256
+#define RF_MIN_FREE_BUFIO  64
+
+
 
 /* configures a single disk queue */
 
@@ -186,18 +188,27 @@ rf_ConfigureDiskQueue(RF_Raid_t *raidPtr, RF_DiskQueue_t *diskqueue,
 }
 
 static void
-rf_ShutdownDiskQueueSystem(void *ignored)
+rf_ShutdownDiskQueueSystem(void *arg)
 {
-	pool_destroy(&rf_pools.dqd);
+	RF_Raid_t *raidPtr;
+
+	raidPtr = (RF_Raid_t *) arg;
+	
+	pool_destroy(&raidPtr->pools.dqd);
+	pool_destroy(&raidPtr->pools.bufio);
 }
 
 int
-rf_ConfigureDiskQueueSystem(RF_ShutdownList_t **listp)
+rf_ConfigureDiskQueueSystem(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
+			    RF_Config_t *cfgPtr)
+
 {
 
-	rf_pool_init(&rf_pools.dqd, sizeof(RF_DiskQueueData_t),
-		     "rf_dqd_pl", RF_MIN_FREE_DQD, RF_MAX_FREE_DQD);
-	rf_ShutdownCreate(listp, rf_ShutdownDiskQueueSystem, NULL);
+	rf_pool_init(raidPtr, raidPtr->poolNames.dqd, &raidPtr->pools.dqd, sizeof(RF_DiskQueueData_t),
+		     "dqd", RF_MIN_FREE_DQD, RF_MAX_FREE_DQD);
+	rf_pool_init(raidPtr, raidPtr->poolNames.bufio, &raidPtr->pools.bufio, sizeof(buf_t),
+		     "bufio", RF_MIN_FREE_BUFIO, RF_MAX_FREE_BUFIO);
+	rf_ShutdownCreate(listp, rf_ShutdownDiskQueueSystem, raidPtr);
 
 	return (0);
 }
@@ -362,24 +373,24 @@ rf_CreateDiskQueueData(RF_IoType_t typ, RF_SectorNum_t ssect,
 		       RF_ReconUnitNum_t which_ru,
 		       void (*wakeF) (void *, int), void *arg,
 		       RF_AccTraceEntry_t *tracerec, RF_Raid_t *raidPtr,
-		       RF_DiskQueueDataFlags_t flags, const struct buf *mbp,
-		       int waitflag)
+		       RF_DiskQueueDataFlags_t flags, const struct buf *mbp)
 {
 	RF_DiskQueueData_t *p;
 
-	p = pool_get(&rf_pools.dqd, waitflag | PR_ZERO);
-	if (p == NULL)
-		return (NULL);
+	p = pool_get(&raidPtr->pools.dqd, PR_WAITOK | PR_ZERO);
+	KASSERT(p != NULL);
 
-	if (waitflag == PR_WAITOK) {
-		p->bp = getiobuf(NULL, true);
-	} else {
-		p->bp = getiobuf(NULL, false);
-	}
-	if (p->bp == NULL) {
-		pool_put(&rf_pools.dqd, p);
-		return (NULL);
-	}
+	/* Obtain a buffer from our own pool.  It is possible for the
+	   regular getiobuf() to run out of memory and return NULL.
+	   We need to guarantee that never happens, as RAIDframe
+	   doesn't have a good way to recover if memory allocation
+	   fails here.
+	*/
+	p->bp = pool_get(&raidPtr->pools.bufio, PR_WAITOK | PR_ZERO);
+	KASSERT(p->bp != NULL);
+	
+	buf_init(p->bp);
+		
 	SET(p->bp->b_cflags, BC_BUSY);	/* mark buffer busy */
 	if (mbp) {
 		SET(p->bp->b_flags, mbp->b_flags & rf_b_pass);
@@ -405,6 +416,6 @@ rf_CreateDiskQueueData(RF_IoType_t typ, RF_SectorNum_t ssect,
 void
 rf_FreeDiskQueueData(RF_DiskQueueData_t *p)
 {
-	putiobuf(p->bp);
-	pool_put(&rf_pools.dqd, p);
+	pool_put(&p->raidPtr->pools.bufio, p->bp);
+	pool_put(&p->raidPtr->pools.dqd, p);
 }

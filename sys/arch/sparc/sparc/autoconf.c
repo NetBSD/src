@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.265.2.1 2021/05/13 00:47:28 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.265.2.2 2021/08/01 22:42:16 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.265.2.1 2021/05/13 00:47:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.265.2.2 2021/08/01 22:42:16 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1114,7 +1114,7 @@ mainbus_attach(device_t parent, device_t dev, void *aux)
 		const char *const dev;
 #define BS_EARLY	1	/* attach device early */
 #define	BS_IGNORE	2	/* ignore root device */
-#define	BS_OPTIONAL	4	/* device not alwas present */
+#define	BS_OPTIONAL	4	/* device not always present */
 		unsigned int flags;
 	};
 
@@ -2009,7 +2009,7 @@ bootinfo_relocate(void *newloc)
 		(size_t)cp < (size_t)bootinfo + BOOTINFO_SIZE);
 
 	/*
-	 * Check propective gains.
+	 * Check prospective gains.
 	 */
 	if ((int)bootinfo - (int)newloc < bi_size)
 		/* Don't bother */

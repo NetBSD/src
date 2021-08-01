@@ -1,4 +1,4 @@
-/* $NetBSD: mfireg.h,v 1.10 2019/10/05 23:27:20 mrg Exp $ */
+/* $NetBSD: mfireg.h,v 1.10.12.1 2021/08/01 22:42:23 thorpej Exp $ */
 /* $OpenBSD: mfireg.h,v 1.24 2006/06/19 19:05:45 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -985,7 +985,7 @@ struct mfi_ld_list {
 	} mll_list[MFI_MAX_LD];
 } __packed;
 
-/* logicl disk details from MR_DCMD_LD_GET_INFO */
+/* logical disk details from MR_DCMD_LD_GET_INFO */
 struct mfi_ld_prop {
 	struct mfi_ld		mlp_ld;
 	char			mlp_name[16];

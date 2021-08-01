@@ -1,4 +1,4 @@
-/*	$NetBSD: iommuvar.h,v 1.23.16.1 2021/05/13 00:47:28 thorpej Exp $	*/
+/*	$NetBSD: iommuvar.h,v 1.23.16.2 2021/08/01 22:42:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -53,7 +53,7 @@ struct iommu_state {
 	int			is_tsbsize;	/* 0 = 8K, ... */
 	u_int			is_dvmabase;
 	u_int			is_dvmaend;
-	int64_t			is_cr;		/* IOMMU control regiter value */
+	int64_t			is_cr;		/* IOMMU control register value */
 	struct extent		*is_dvmamap;	/* DVMA map for this instance */
 	kmutex_t		is_lock;	/* lock for DVMA map */
 	int			is_flags;

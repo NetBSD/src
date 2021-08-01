@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.6.30.1 2021/05/13 00:47:28 thorpej Exp $ */
+/*	$NetBSD: hypervisor.h,v 1.6.30.2 2021/08/01 22:42:17 thorpej Exp $ */
 /*	$OpenBSD: hypervisor.h,v 1.14 2011/06/26 17:23:46 kettenis Exp $	*/
 
 /*
@@ -390,5 +390,16 @@ int64_t	hv_rng_data_read(paddr_t raddr, uint64_t *delta);
 #define H_ENOMAP	14
 #define H_ETOOMANY	15
 #define H_ECHANNEL	16
+
+#ifndef _LOCORE
+extern uint64_t sun4v_group_interrupt_major;
+extern uint64_t sun4v_group_sdio_major;
+
+int64_t sun4v_intr_devino_to_sysino(uint64_t, uint64_t, uint64_t *);
+int64_t sun4v_intr_setcookie(uint64_t, uint64_t, uint64_t);
+int64_t sun4v_intr_setenabled(uint64_t, uint64_t, uint64_t);
+int64_t	sun4v_intr_setstate(uint64_t, uint64_t, uint64_t);
+int64_t	sun4v_intr_settarget(uint64_t, uint64_t, uint64_t);
+#endif
 
 #endif	/* _HYPERVISOR_H_ */

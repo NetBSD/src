@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.153.4.1 2021/06/17 04:46:29 thorpej Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.153.4.2 2021/08/01 22:42:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -66,6 +66,21 @@ typedef u_int16_t pci_product_id_t;
 #define PCI_ID_CODE(vid,pid)					\
 	((((vid) & PCI_VENDOR_MASK) << PCI_VENDOR_SHIFT) |	\
 	 (((pid) & PCI_PRODUCT_MASK) << PCI_PRODUCT_SHIFT))	\
+
+/*
+ * Standard format of a PCI Type 0 Configuration Cycle address.
+ */
+#define	PCI_CONF_TYPE0_IDSEL(d)		__BIT((d) + 11)
+#define	PCI_CONF_TYPE0_FUNCTION		__BITS(8,10)
+#define	PCI_CONF_TYPE0_OFFSET		__BITS(0,7)
+
+/*
+ * Standard format of a PCI Type 1 Configuration Cycle address.
+ */
+#define	PCI_CONF_TYPE1_BUS		__BITS(16,23)
+#define	PCI_CONF_TYPE1_DEVICE		__BITS(11,15)
+#define	PCI_CONF_TYPE1_FUNCTION		__BITS(8,10)
+#define	PCI_CONF_TYPE1_OFFSET		__BITS(0,7)
 
 /*
  * Command and status register.

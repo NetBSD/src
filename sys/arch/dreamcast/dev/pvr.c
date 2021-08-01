@@ -1,4 +1,4 @@
-/*	$NetBSD: pvr.c,v 1.37 2021/04/24 23:36:31 thorpej Exp $	*/
+/*	$NetBSD: pvr.c,v 1.37.2.1 2021/08/01 22:42:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.37 2021/04/24 23:36:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.37.2.1 2021/08/01 22:42:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -377,7 +377,7 @@ pvrmmap(void *v, void *vs, off_t offset, int prot)
 
 	/*
 	 * XXX This should be easy to support -- just need to define
-	 * XXX offsets for the contol regs, etc.
+	 * XXX offsets for the control regs, etc.
 	 */
 
 	struct pvr_softc *sc = v;

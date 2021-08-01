@@ -1,4 +1,4 @@
-/* $NetBSD: sio_pic.c,v 1.46.6.1 2021/05/13 00:47:21 thorpej Exp $ */
+/* $NetBSD: sio_pic.c,v 1.46.6.2 2021/08/01 22:42:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2020 The NetBSD Foundation, Inc.
@@ -59,12 +59,11 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.46.6.1 2021/05/13 00:47:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.46.6.2 2021/08/01 22:42:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/cpu.h>
 #include <sys/syslog.h>
 
@@ -79,11 +78,14 @@ __KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.46.6.1 2021/05/13 00:47:21 thorpej Exp
 #include <dev/pci/pciidereg.h>
 #include <dev/pci/pciidevar.h>
 
+#include <dev/ic/i8259reg.h>
+
 #include <dev/pci/cy82c693reg.h>
 #include <dev/pci/cy82c693var.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
+#include <alpha/pci/sioreg.h>
 #include <alpha/pci/siovar.h>
 
 #include "sio.h"
@@ -150,7 +152,7 @@ i82378_setup_elcr(void)
 	 * fall-back in case nothing else matches.
 	 */
 
-	rv = bus_space_map(sio_iot, 0x4d0, 2, 0, &sio_ioh_elcr);
+	rv = bus_space_map(sio_iot, SIO_REG_ICU1ELC, 2, 0, &sio_ioh_elcr);
 
 	if (rv == 0) {
 		sio_read_elcr = i82378_read_elcr;
@@ -270,6 +272,17 @@ static int (*const sio_elcr_setup_funcs[])(void) = {
 
 /******************** Shared SIO/Cypress functions ********************/
 
+static inline void
+specific_eoi(int irq)
+{
+	if (irq > 7) {
+		bus_space_write_1(sio_iot, sio_ioh_icu2, PIC_OCW2,
+		    OCW2_EOI | OCW2_SL | (irq & 0x07));	/* XXX */
+	}
+	bus_space_write_1(sio_iot, sio_ioh_icu1, PIC_OCW2,
+	    OCW2_EOI | OCW2_SL | (irq > 7 ? 2 : irq));
+}
+
 static void
 sio_setirqstat(int irq, int enabled, int type)
 {
@@ -284,8 +297,8 @@ sio_setirqstat(int irq, int enabled, int type)
 	icu = irq / 8;
 	bit = irq % 8;
 
-	ocw1[0] = bus_space_read_1(sio_iot, sio_ioh_icu1, 1);
-	ocw1[1] = bus_space_read_1(sio_iot, sio_ioh_icu2, 1);
+	ocw1[0] = bus_space_read_1(sio_iot, sio_ioh_icu1, PIC_OCW1);
+	ocw1[1] = bus_space_read_1(sio_iot, sio_ioh_icu2, PIC_OCW1);
 	elcr[0] = (*sio_read_elcr)(0);				/* XXX */
 	elcr[1] = (*sio_read_elcr)(1);				/* XXX */
 
@@ -321,7 +334,8 @@ sio_setirqstat(int irq, int enabled, int type)
 void
 sio_intr_setup(pci_chipset_tag_t pc, bus_space_tag_t iot)
 {
-	char *cp;
+	struct evcnt *ev;
+	const char *cp;
 	int i;
 
 	sio_iot = iot;
@@ -348,8 +362,7 @@ sio_intr_setup(pci_chipset_tag_t pc, bus_space_tag_t iot)
 	shutdownhook_establish(sio_intr_shutdown, 0);
 #endif
 
-#define PCI_SIO_IRQ_STR	8
-	sio_intr = alpha_shared_intr_alloc(ICU_LEN, PCI_SIO_IRQ_STR);
+	sio_intr = alpha_shared_intr_alloc(ICU_LEN);
 
 	/*
 	 * set up initial values for interrupt enables.
@@ -357,10 +370,10 @@ sio_intr_setup(pci_chipset_tag_t pc, bus_space_tag_t iot)
 	for (i = 0; i < ICU_LEN; i++) {
 		alpha_shared_intr_set_maxstrays(sio_intr, i, STRAY_MAX);
 
+		ev = alpha_shared_intr_evcnt(sio_intr, i);
 		cp = alpha_shared_intr_string(sio_intr, i);
-		snprintf(cp, PCI_SIO_IRQ_STR, "irq %d", i);
-		evcnt_attach_dynamic(alpha_shared_intr_evcnt(sio_intr, i),
-		    EVCNT_TYPE_INTR, NULL, "isa", cp);
+
+		evcnt_attach_dynamic(ev, EVCNT_TYPE_INTR, NULL, "isa", cp);
 
 		switch (i) {
 		case 0:
@@ -445,14 +458,14 @@ sio_intr_establish(void *v, int irq, int type, int level, int flags,
 		panic("sio_intr_establish: bogus irq or type");
 
 	cookie = alpha_shared_intr_alloc_intrhand(sio_intr, irq, type, level,
-	    flags, fn, arg, "isa irq");
+	    flags, fn, arg, "isa");
 
 	if (cookie == NULL)
 		return NULL;
 
 	mutex_enter(&cpu_lock);
 
-	if (! alpha_shared_intr_link(sio_intr, cookie, "isa irq")) {
+	if (! alpha_shared_intr_link(sio_intr, cookie, "isa")) {
 		mutex_exit(&cpu_lock);
 		alpha_shared_intr_free_intrhand(cookie);
 		return NULL;
@@ -524,11 +537,41 @@ sio_intr_disestablish(void *v, void *cookie)
 	}
 
 	/* Remove it from the link. */
-	alpha_shared_intr_unlink(sio_intr, cookie, "isa irq");
+	alpha_shared_intr_unlink(sio_intr, cookie, "isa");
 
 	mutex_exit(&cpu_lock);
 
 	alpha_shared_intr_free_intrhand(cookie);
+}
+
+/* XXX All known Alpha systems with Intel i82378 have it at device 7. */
+#define	SIO_I82378_DEV		7
+
+int
+sio_pirq_intr_map(pci_chipset_tag_t pc, int pirq, pci_intr_handle_t *ihp)
+{
+	KASSERT(pirq >= 0 && pirq <= 3);
+	KASSERT(pc == sio_pc);
+
+	const pcireg_t rtctrl =
+	    pci_conf_read(sio_pc, pci_make_tag(sio_pc, 0, SIO_I82378_DEV, 0),
+			  SIO_PCIREG_PIRQ_RTCTRL);
+	const pcireg_t pirqreg = PIRQ_RTCTRL_PIRQx(rtctrl, pirq);
+
+	if (pirqreg & PIRQ_RTCTRL_NOT_ROUTED) {
+		/* not routed -> no mapping */
+		return 1;
+	}
+
+	const int irq = __SHIFTOUT(pirqreg, PIRQ_RTCTRL_IRQ);
+
+#if 0
+	printf("sio_pirq_intr_map: pirq %d -> ISA irq %d, rtctl = 0x%08x\n",
+	    pirq, irq, rtctrl);
+#endif
+
+	alpha_pci_intr_handle_init(ihp, irq, 0);
+	return 0;
 }
 
 const char *
@@ -617,7 +660,7 @@ sio_iointr(void *arg, unsigned long vec)
 #endif
 
 	if (!alpha_shared_intr_dispatch(sio_intr, irq))
-		alpha_shared_intr_stray(sio_intr, irq, "isa irq");
+		alpha_shared_intr_stray(sio_intr, irq, "isa");
 	else
 		alpha_shared_intr_reset_strays(sio_intr, irq);
 
@@ -699,13 +742,4 @@ sio_intr_alloc(void *v, int mask, int type, int *irq)
 	*irq = bestirq;
 
 	return (0);
-}
-
-static void
-specific_eoi(int irq)
-{
-	if (irq > 7)
-		bus_space_write_1(sio_iot,
-		    sio_ioh_icu2, 0, 0x60 | (irq & 0x07));	/* XXX */
-	bus_space_write_1(sio_iot, sio_ioh_icu1, 0, 0x60 | (irq > 7 ? 2 : irq));
 }

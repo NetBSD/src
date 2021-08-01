@@ -1,4 +1,4 @@
-/* $NetBSD: pci_6600.c,v 1.29 2020/09/26 21:07:48 thorpej Exp $ */
+/* $NetBSD: pci_6600.c,v 1.29.6.1 2021/08/01 22:42:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -33,13 +33,12 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pci_6600.c,v 1.29 2020/09/26 21:07:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_6600.c,v 1.29.6.1 2021/08/01 22:42:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/cpu.h>
 
 #include <machine/autoconf.h>
@@ -55,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_6600.c,v 1.29 2020/09/26 21:07:48 thorpej Exp $"
 
 #include <alpha/pci/tsreg.h>
 #include <alpha/pci/tsvar.h>
-#include <alpha/pci/pci_6600.h>
 
 #define pci_6600() { Generate ctags(1) key. }
 
@@ -97,6 +95,7 @@ static void	dec_6600_intr_enable(pci_chipset_tag_t, int irq);
 static void	dec_6600_intr_disable(pci_chipset_tag_t, int irq);
 static void	dec_6600_intr_set_affinity(pci_chipset_tag_t, int,
 		    struct cpu_info *);
+static void	dec_6600_intr_program(pci_chipset_tag_t);
 
 static void	dec_6600_intr_redistribute(void);
 
@@ -107,17 +106,14 @@ static void	dec_6600_intr_redistribute(void);
 static uint64_t	dec_6600_intr_enables __read_mostly;
 static uint64_t dec_6600_cpu_intr_enables[4] __read_mostly;
 
-void
-pci_6600_pickintr(struct tsp_config *pcp)
+static void
+pci_6600_pickintr(void *core, bus_space_tag_t iot, bus_space_tag_t memt,
+    pci_chipset_tag_t pc)
 {
-	bus_space_tag_t iot = &pcp->pc_iot;
-	pci_chipset_tag_t pc = &pcp->pc_pc;
-	char *cp;
-	int i;
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
 
-	pc->pc_intr_v = pcp;
+	pc->pc_intr_v = core;
 	pc->pc_intr_map = dec_6600_intr_map;
 	pc->pc_intr_string = dec_6600_intr_string;
 	pc->pc_intr_evcnt = dec_6600_intr_evcnt;
@@ -126,7 +122,7 @@ pci_6600_pickintr(struct tsp_config *pcp)
 
 	pc->pc_pciide_compat_intr_establish = NULL;
 
-	pc->pc_intr_desc = "dec 6600 irq";
+	pc->pc_intr_desc = "dec 6600";
 	pc->pc_vecbase = 0x900;
 	pc->pc_nirq = PCI_NIRQ;
 
@@ -146,7 +142,7 @@ pci_6600_pickintr(struct tsp_config *pcp)
 	 * System-wide and Pchip-0-only logic...
 	 */
 	if (sioprimary == NULL) {
-		sioprimary = pcp;
+		sioprimary = core;
 		/*
 		 * Unless explicitly routed, all interrupts go to the
 		 * primary CPU.
@@ -155,21 +151,11 @@ pci_6600_pickintr(struct tsp_config *pcp)
 		    __BITS(0,63);
 		pc->pc_pciide_compat_intr_establish =
 		    dec_6600_pciide_compat_intr_establish;
-#define PCI_6600_IRQ_STR	8
-		pc->pc_shared_intrs = alpha_shared_intr_alloc(PCI_NIRQ,
-		    PCI_6600_IRQ_STR);
-		for (i = 0; i < PCI_NIRQ; i++) {
-			alpha_shared_intr_set_maxstrays(pc->pc_shared_intrs, i,
-			    PCI_STRAY_MAX);
-			alpha_shared_intr_set_private(pc->pc_shared_intrs, i,
-			    sioprimary);
 
-			cp = alpha_shared_intr_string(pc->pc_shared_intrs, i);
-			snprintf(cp, PCI_6600_IRQ_STR, "irq %d", i);
-			evcnt_attach_dynamic(alpha_shared_intr_evcnt(
-			    pc->pc_shared_intrs, i), EVCNT_TYPE_INTR, NULL,
-			    "dec 6600", cp);
-		}
+		KASSERT(dec_6600_intr_enables == 0);
+		dec_6600_intr_program(pc);
+
+		alpha_pci_intr_alloc(pc, PCI_STRAY_MAX);
 #if NSIO
 		sio_intr_setup(pc, iot);
 
@@ -181,6 +167,8 @@ pci_6600_pickintr(struct tsp_config *pcp)
 		pc->pc_shared_intrs = sioprimary->pc_pc.pc_shared_intrs;
 	}
 }
+ALPHA_PCI_INTR_INIT(ST_DEC_6600, pci_6600_pickintr)
+ALPHA_PCI_INTR_INIT(ST_DEC_TITAN, pci_6600_pickintr)
 
 static int
 dec_6600_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)

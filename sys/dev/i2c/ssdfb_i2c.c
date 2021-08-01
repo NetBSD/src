@@ -1,4 +1,4 @@
-/* $NetBSD: ssdfb_i2c.c,v 1.9 2021/01/28 14:42:45 thorpej Exp $ */
+/* $NetBSD: ssdfb_i2c.c,v 1.9.4.1 2021/08/01 22:42:23 thorpej Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ssdfb_i2c.c,v 1.9 2021/01/28 14:42:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ssdfb_i2c.c,v 1.9.4.1 2021/08/01 22:42:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -112,7 +112,6 @@ ssdfb_i2c_attach(device_t parent, device_t self, void *aux)
 	if ((flags & SSDFB_ATTACH_FLAG_PRODUCT_MASK) == SSDFB_PRODUCT_UNKNOWN)
 		flags |= SSDFB_PRODUCT_SSD1306_GENERIC;
 
-	flags |= SSDFB_ATTACH_FLAG_MPSAFE;
 	sc->sc.sc_dev = self;
 	sc->sc_i2c_tag = ia->ia_tag;
 	sc->sc_i2c_addr = ia->ia_addr;

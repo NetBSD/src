@@ -1,4 +1,4 @@
-/* $Id: pbms.c,v 1.17 2021/04/24 23:36:41 thorpej Exp $ */
+/* $Id: pbms.c,v 1.17.2.1 2021/08/01 22:42:12 thorpej Exp $ */
 
 /*
  * Copyright (c) 2005, Johan Wallén
@@ -139,7 +139,7 @@
  */
 
 
-/* The amount of data transfered by the USB device. */
+/* The amount of data transferred by the USB device. */
 #define PBMS_DATA_LEN 81
 
 /* The maximum number of sensors. */

@@ -15,10 +15,9 @@
 #include "../assembly.h"
 
 #define ESTABLISH_FRAME \
-    push   {r4, r7, lr}    ;\
-    add     r7,     sp, #4
+    push   {r4, lr}
 #define CLEAR_FRAME_AND_RETURN \
-    pop    {r4, r7, pc}
+    pop    {r4, pc}
 
 	.syntax unified
 	.text

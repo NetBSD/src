@@ -1,4 +1,4 @@
-/* $NetBSD: dm_ioctl.c,v 1.50.6.1 2021/05/13 00:47:30 thorpej Exp $      */
+/* $NetBSD: dm_ioctl.c,v 1.50.6.2 2021/08/01 22:42:22 thorpej Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.50.6.1 2021/05/13 00:47:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.50.6.2 2021/08/01 22:42:22 thorpej Exp $");
 
 /*
  * Locking is used to synchronise between ioctl calls and between dm_table's
@@ -387,7 +387,7 @@ dm_dev_remove_ioctl(prop_dictionary_t dm_dict)
 
 	/*
 	 * This seems as hack to me, probably use routine dm_dev_get_devt to
-	 * atomicaly get devt from device.
+	 * atomically get devt from device.
 	 */
 	if ((dmv = dm_dev_lookup(name, uuid, minor)) == NULL) {
 		DM_REMOVE_FLAG(flags, DM_EXISTS_FLAG);
@@ -910,8 +910,8 @@ dm_table_status_ioctl(prop_dictionary_t dm_dict)
 	name = NULL;
 	flags = 0;
 
-	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_NAME, &name);
-	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_UUID, &uuid);
+	prop_dictionary_get_string(dm_dict, DM_IOCTL_NAME, &name);
+	prop_dictionary_get_string(dm_dict, DM_IOCTL_UUID, &uuid);
 	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_FLAGS, &flags);
 	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_MINOR, &minor);
 

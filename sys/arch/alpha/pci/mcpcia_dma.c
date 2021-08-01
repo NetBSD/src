@@ -1,4 +1,4 @@
-/* $NetBSD: mcpcia_dma.c,v 1.23.6.1 2021/05/13 00:47:21 thorpej Exp $ */
+/* $NetBSD: mcpcia_dma.c,v 1.23.6.2 2021/08/01 22:42:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -32,13 +32,12 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcpcia_dma.c,v 1.23.6.1 2021/05/13 00:47:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcpcia_dma.c,v 1.23.6.2 2021/08/01 22:42:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 
 #define _ALPHA_BUS_DMA_PRIVATE
 #include <sys/bus.h>
@@ -47,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: mcpcia_dma.c,v 1.23.6.1 2021/05/13 00:47:21 thorpej 
 #include <dev/pci/pcivar.h>
 #include <alpha/pci/mcpciareg.h>
 #include <alpha/pci/mcpciavar.h>
-#include <alpha/pci/pci_kn300.h>
 
 static bus_dma_tag_t mcpcia_dma_get_tag(bus_dma_tag_t, alpha_bus_t);
 

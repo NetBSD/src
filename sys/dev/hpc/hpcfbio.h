@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfbio.h,v 1.2 2001/07/22 09:56:41 takemura Exp $	*/
+/*	$NetBSD: hpcfbio.h,v 1.2.226.1 2021/08/01 22:42:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -135,7 +135,7 @@ struct hpcfb_fbconf {
 	u_long	hf_reserved[3];
 
 	/*
-	 * class dependend data
+	 * class dependent data
 	 */
 	short	hf_class_data_length;
 	union {

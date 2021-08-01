@@ -1,4 +1,4 @@
-/*	$NetBSD: buttonvar.h,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
+/*	$NetBSD: buttonvar.h,v 1.1.170.1 2021/08/01 22:42:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -44,6 +44,8 @@ struct btn_event {
 
 	LIST_ENTRY(btn_event) bev_list;
 };
+
+int	btn_init(void);
 
 void	btn_settype(const char *type);
 

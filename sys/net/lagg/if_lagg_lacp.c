@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg_lacp.c,v 1.2.6.2 2021/06/17 04:46:35 thorpej Exp $	*/
+/*	$NetBSD: if_lagg_lacp.c,v 1.2.6.3 2021/08/01 22:42:41 thorpej Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-NetBSD
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.2.6.2 2021/06/17 04:46:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.2.6.3 2021/08/01 22:42:41 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lagg.h"
@@ -2368,13 +2368,17 @@ lacp_unselect(struct lacp_softc *lsc, struct lacp_port *lacpp)
 	lacpp->lp_aggregator = NULL;
 
 	if (LIST_EMPTY(&la->la_ports)) {
+		remove_actaggr = false;
+
 		if (la == lsc->lsc_aggregator) {
 			LACP_DPRINTF((lsc, NULL, "remove active aggregator\n"));
 			lsc->lsc_aggregator = NULL;
 			remove_actaggr = true;
 		}
+
 		TAILQ_REMOVE(&lsc->lsc_aggregators, la, la_q);
 		kmem_free(la, sizeof(*la));
+
 		if (remove_actaggr) {
 			lacp_select_active_aggregator(lsc);
 		}

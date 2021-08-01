@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.363 2021/03/25 05:34:49 rin Exp $ */
+/* $NetBSD: com.c,v 1.363.2.1 2021/08/01 22:42:23 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.363 2021/03/25 05:34:49 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.363.2.1 2021/08/01 22:42:23 thorpej Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -539,9 +539,11 @@ com_attach_subr(struct com_softc *sc)
 		goto fifodelay;
 
 	case COM_TYPE_DW_APB:
-		cpr = bus_space_read_4(sc->sc_regs.cr_iot, sc->sc_regs.cr_ioh,
-		    DW_APB_UART_CPR);
-		sc->sc_fifolen = __SHIFTOUT(cpr, UART_CPR_FIFO_MODE) * 16;
+		if (!prop_dictionary_get_uint(dict, "fifolen", &sc->sc_fifolen)) {
+			cpr = bus_space_read_4(sc->sc_regs.cr_iot,
+			    sc->sc_regs.cr_ioh, DW_APB_UART_CPR);
+			sc->sc_fifolen = __SHIFTOUT(cpr, UART_CPR_FIFO_MODE) * 16;
+		}
 		if (sc->sc_fifolen == 0) {
 			sc->sc_fifolen = 1;
 			fifo_msg = "DesignWare APB UART, no fifo";

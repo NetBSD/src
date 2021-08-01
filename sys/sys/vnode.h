@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.296 2020/05/16 18:31:53 christos Exp $	*/
+/*	$NetBSD: vnode.h,v 1.296.6.1 2021/08/01 22:42:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -594,7 +594,8 @@ int	vn_isunder(struct vnode *, struct vnode *, struct lwp *);
 int	vn_lock(struct vnode *, int);
 void	vn_markexec(struct vnode *);
 int	vn_marktext(struct vnode *);
-int 	vn_open(struct nameidata *, int, int);
+int 	vn_open(struct vnode *, struct pathbuf *, int, int, int,
+	    struct vnode **, bool *, int *);
 int 	vn_rdwr(enum uio_rw, struct vnode *, void *, int, off_t, enum uio_seg,
     int, kauth_cred_t, size_t *, struct lwp *);
 int	vn_readdir(struct file *, char *, int, unsigned int, int *,

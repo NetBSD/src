@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.src,v 1.58.6.1 2021/06/17 04:46:36 thorpej Exp $	*/
+/*	$NetBSD: namei.src,v 1.58.6.2 2021/08/01 22:42:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -94,7 +94,6 @@ struct componentname {
 	 */
 	const char 	*cn_nameptr;	/* pointer to looked up name */
 	size_t		cn_namelen;	/* length of looked up comp */
-	size_t		cn_consume;	/* chars to consume in lookup */
 };
 
 /*

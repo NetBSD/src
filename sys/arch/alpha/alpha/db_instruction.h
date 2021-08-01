@@ -1,4 +1,4 @@
-/* $NetBSD: db_instruction.h,v 1.10 2020/07/21 13:37:18 thorpej Exp $ */
+/* $NetBSD: db_instruction.h,v 1.10.6.1 2021/08/01 22:42:00 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -445,6 +445,11 @@ typedef union {
 #define	op_cvtql_v	0x130
 #define	op_cvtql_sv	0x530
 
+		/* FIX FLOAT, "function" opcodes (bits 5..11)  */
+
+#define	op_itofs	0x004
+#define	op_itoff	0x014
+#define	op_itoft	0x024
 
 		/* ieee FLOAT, "function" opcodes (bits 5..11)  */
 
@@ -741,5 +746,16 @@ typedef union {
 #define	op_cvtgd_su	0x5ad
 #define	op_cvtgqg_sv	0x5af
 
+#ifdef _KERNEL
+struct alpha_print_instruction_context {
+	unsigned long pc;	/* address of insn */
+	alpha_instruction insn;	/* instruction bits */
+	char	*buf;		/* output buffer (if not DDB) */
+	size_t	bufsize;	/* size of output buffer */
+	size_t	cursor;		/* current next output location */
+};
+
+int	alpha_print_instruction(struct alpha_print_instruction_context *);
+#endif /* _KERNEL */
 
 #endif	/* _ALPHA_INSTRUCTION_H_ */

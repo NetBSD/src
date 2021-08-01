@@ -1,4 +1,4 @@
-/* $NetBSD: efiblock.h,v 1.4 2020/10/11 14:03:33 jmcneill Exp $ */
+/* $NetBSD: efiblock.h,v 1.4.6.1 2021/08/01 22:42:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -43,6 +43,7 @@ struct efi_block_dev {
 	uint16_t index;
 	EFI_DEVICE_PATH *path;
 	EFI_BLOCK_IO *bio;
+	EFI_DISK_IO *dio;
 	UINT32 media_id;
 	TAILQ_HEAD(, efi_block_part) partitions;
 
@@ -79,3 +80,5 @@ struct efi_block_part *efi_block_boot_part(void);
 int efi_block_open(struct open_file *, ...);
 int efi_block_close(struct open_file *);
 int efi_block_strategy(void *, int, daddr_t, size_t, void *, size_t *);
+
+void efi_block_set_readahead(bool);

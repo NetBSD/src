@@ -1,4 +1,4 @@
-/* $NetBSD: jensenio_intr.c,v 1.13.6.1 2021/05/13 00:47:21 thorpej Exp $ */
+/* $NetBSD: jensenio_intr.c,v 1.13.6.2 2021/08/01 22:42:01 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -31,19 +31,20 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: jensenio_intr.c,v 1.13.6.1 2021/05/13 00:47:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jensenio_intr.c,v 1.13.6.2 2021/08/01 22:42:01 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/cpu.h>
 #include <sys/syslog.h>
 
 #include <machine/autoconf.h>
+
+#include <dev/ic/i8259reg.h>
 
 #include <dev/eisa/eisavar.h>
 
@@ -66,7 +67,6 @@ static void		jensenio_eisa_intr_disestablish(void *, void *);
 static int		jensenio_eisa_intr_alloc(void *, int, int, int *);
 
 #define	JENSEN_MAX_IRQ		16
-#define	JENSEN_MAX_IRQ_STR	16
 
 static struct alpha_shared_intr *jensenio_eisa_intr;
 
@@ -99,11 +99,12 @@ static inline void
 jensenio_specific_eoi(int irq)
 {
 
-	if (irq > 7)
-		bus_space_write_1(pic_iot, pic_ioh[1],
-		    0, 0x20 | (irq & 0x07));
-	bus_space_write_1(pic_iot, pic_ioh[0],
-	    0, 0x20 | (irq > 7 ? 2 : irq));
+	if (irq > 7) {
+		bus_space_write_1(pic_iot, pic_ioh[1], PIC_OCW2,
+		    OCW2_EOI | OCW2_SL | (irq & 0x07));
+	}
+	bus_space_write_1(pic_iot, pic_ioh[0], PIC_OCW2,
+	    OCW2_EOI | OCW2_SL | (irq > 7 ? 2 : irq));
 }
 
 void
@@ -111,27 +112,23 @@ jensenio_intr_init(struct jensenio_config *jcp)
 {
 	eisa_chipset_tag_t ec = &jcp->jc_ec;
 	isa_chipset_tag_t ic = &jcp->jc_ic;
-	char *cp;
+	struct evcnt *ev;
+	const char *cp;
 	int i;
 
 	pic_iot = &jcp->jc_eisa_iot;
 
 	jensenio_pic_init();
 
-	jensenio_eisa_intr = alpha_shared_intr_alloc(JENSEN_MAX_IRQ,
-	    JENSEN_MAX_IRQ_STR);
+	jensenio_eisa_intr = alpha_shared_intr_alloc(JENSEN_MAX_IRQ);
 	for (i = 0; i < JENSEN_MAX_IRQ; i++) {
 		alpha_shared_intr_set_dfltsharetype(jensenio_eisa_intr,
 		    i, jensenio_intr_deftype[i]);
-		/* Don't bother with stray interrupts. */
-		alpha_shared_intr_set_maxstrays(jensenio_eisa_intr,
-		    i, 0);
 
+		ev = alpha_shared_intr_evcnt(jensenio_eisa_intr, i);
 		cp = alpha_shared_intr_string(jensenio_eisa_intr, i);
-		snprintf(cp, JENSEN_MAX_IRQ_STR, "irq %d", i);
-		evcnt_attach_dynamic(alpha_shared_intr_evcnt(
-		    jensenio_eisa_intr, i), EVCNT_TYPE_INTR,
-		    NULL, "eisa", cp);
+
+		evcnt_attach_dynamic(ev, EVCNT_TYPE_INTR, NULL, "eisa", cp);
 	}
 
 	/*
@@ -269,14 +266,14 @@ jensenio_eisa_intr_establish(void *v, int irq, int type, int level,
 	}
 
 	cookie = alpha_shared_intr_alloc_intrhand(jensenio_eisa_intr, irq,
-	    type, level, 0, fn, arg, "eisa irq");
+	    type, level, 0, fn, arg, "eisa");
 
 	if (cookie == NULL)
 		return NULL;
 
 	mutex_enter(&cpu_lock);
 
-	if (! alpha_shared_intr_link(jensenio_eisa_intr, cookie, "eisa irq")) {
+	if (! alpha_shared_intr_link(jensenio_eisa_intr, cookie, "eisa")) {
 		mutex_exit(&cpu_lock);
 		alpha_shared_intr_free_intrhand(cookie);
 		return NULL;
@@ -310,7 +307,7 @@ jensenio_eisa_intr_disestablish(void *v, void *cookie)
 		scb_free(0x800 + SCB_IDXTOVEC(irq));
 	}
 
-	alpha_shared_intr_unlink(jensenio_eisa_intr, cookie, "eisa irq");
+	alpha_shared_intr_unlink(jensenio_eisa_intr, cookie, "eisa");
 
 	mutex_exit(&cpu_lock);
 
@@ -333,7 +330,7 @@ jensenio_iointr(void *framep, u_long vec)
 	irq = SCB_VECTOIDX(vec - 0x800);
 
 	if (!alpha_shared_intr_dispatch(jensenio_eisa_intr, irq))
-		alpha_shared_intr_stray(jensenio_eisa_intr, irq, "eisa irq");
+		alpha_shared_intr_stray(jensenio_eisa_intr, irq, "eisa");
 
 	jensenio_specific_eoi(irq);
 }
@@ -347,12 +344,12 @@ jensenio_enable_intr(int irq, int onoff)
 	pic = irq >> 3;
 	bit = 1 << (irq & 0x7);
 
-	mask = bus_space_read_1(pic_iot, pic_ioh[pic], 1);
+	mask = bus_space_read_1(pic_iot, pic_ioh[pic], PIC_OCW1);
 	if (onoff)
 		mask &= ~bit;
 	else
 		mask |= bit;
-	bus_space_write_1(pic_iot, pic_ioh[pic], 1, mask);
+	bus_space_write_1(pic_iot, pic_ioh[pic], PIC_OCW1, mask);
 }
 
 void
@@ -384,12 +381,15 @@ jensenio_pic_init(void)
 	for (pic = 0; pic < 2; pic++) {
 		if (bus_space_map(pic_iot, picaddr[pic], 2, 0, &pic_ioh[pic]))
 			panic("jensenio_init_intr: unable to map PIC %d", pic);
-		bus_space_write_1(pic_iot, pic_ioh[pic], 1, 0xff);
+		bus_space_write_1(pic_iot, pic_ioh[pic], PIC_OCW1, 0xff);
 	}
 
 	/*
-	 * Map the ELCR registers.
+	 * Map the ELCR registers and initialize all interrupts to EDGE
+	 * trigger.
 	 */
 	if (bus_space_map(pic_iot, 0x4d0, 2, 0, &pic_elcr_ioh))
 		panic("jensenio_init_intr: unable to map ELCR registers");
+	bus_space_write_1(pic_iot, pic_elcr_ioh, 0, 0);
+	bus_space_write_1(pic_iot, pic_elcr_ioh, 1, 0);
 }

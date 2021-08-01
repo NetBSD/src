@@ -1,4 +1,4 @@
-#	$NetBSD: vnode_if.src,v 1.80 2020/05/18 08:29:34 hannken Exp $
+#	$NetBSD: vnode_if.src,v 1.80.6.1 2021/08/01 22:42:39 thorpej Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -57,6 +57,16 @@
 vop_bwrite {
 	IN struct vnode *vp;
 	IN struct buf *bp;
+};
+
+#
+#% parsepath  dvp     = = =
+#
+vop_parsepath {
+	FSTRANS=NO
+	IN struct vnode *dvp;
+	IN const char *name;
+	OUT size_t *retval;
 };
  
 #

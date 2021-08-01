@@ -1,4 +1,4 @@
-/*	$NetBSD: linear.c,v 1.3 2020/01/11 04:06:13 isaki Exp $	*/
+/*	$NetBSD: linear.c,v 1.3.10.1 2021/08/01 22:42:21 thorpej Exp $	*/
 
 /*
  * Copyright (C) 2017 Tetsuya Isaki. All rights reserved.
@@ -27,8 +27,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linear.c,v 1.3 2020/01/11 04:06:13 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linear.c,v 1.3.10.1 2021/08/01 22:42:21 thorpej Exp $");
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/device.h>

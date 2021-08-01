@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.48 2020/02/05 08:33:19 skrll Exp $ */
+/* $NetBSD: if_ie.c,v 1.48.10.1 2021/08/01 22:42:00 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.48 2020/02/05 08:33:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.48.10.1 2021/08/01 22:42:00 thorpej Exp $");
 
 #define IGNORE_ETHER1_IDROM_CHECKSUM
 
@@ -94,7 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.48 2020/02/05 08:33:19 skrll Exp $");
 #include <netinet/if_inarp.h>
 #endif
 
-/* Import our data structres */
+/* Import our data structures */
 
 #include "if_iereg.h"
 

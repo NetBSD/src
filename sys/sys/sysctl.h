@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.233 2021/04/13 01:10:24 mrg Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.233.2.1 2021/08/01 22:42:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -661,6 +661,8 @@ struct buf_sysctl {
 	uint64_t b_saveaddr;	/* PTR: Original b_addr for physio */
 	uint64_t b_lblkno;	/* DADDR_T: Logical block number */
 };
+
+#define	KERN_BUFSLOP	20
 
 /*
  * kern.file2 returns an array of these structures, which are designed

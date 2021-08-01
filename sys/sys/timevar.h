@@ -1,4 +1,4 @@
-/*	$NetBSD: timevar.h,v 1.46 2020/12/08 04:09:38 thorpej Exp $	*/
+/*	$NetBSD: timevar.h,v 1.46.4.1 2021/08/01 22:42:44 thorpej Exp $	*/
 
 /*
  *  Copyright (c) 2005, 2008, 2020 The NetBSD Foundation, Inc.
@@ -64,7 +64,6 @@
 #include <sys/queue.h>
 #include <sys/signal.h>
 #include <sys/systm.h>
-#include <sys/mutex.h>
 
 struct itimer;
 LIST_HEAD(itlist, itimer);
@@ -143,8 +142,6 @@ struct ptimers {
 	struct itimer *pts_timers[TIMER_MAX];
 };
 
-extern kmutex_t	itimer_mutex;	/* XXX */
-
 /*
  * Functions for looking at our clock: [get]{bin,nano,micro}[up]time()
  *
@@ -154,7 +151,7 @@ extern kmutex_t	itimer_mutex;	/* XXX */
  * "bin"   == struct bintime  == seconds + 64 bit fraction of seconds.
  * "nano"  == struct timespec == seconds + nanoseconds.
  * "micro" == struct timeval  == seconds + microseconds.
- *              
+ *
  * Functions containing "up" returns time relative to boot and
  * should be used for calculating time intervals.
  *
@@ -164,8 +161,8 @@ extern kmutex_t	itimer_mutex;	/* XXX */
  * much faster than the functions without "get" prefix and should
  * be used where a precision of 1/HZ (eg 10 msec on a 100HZ machine)
  * is acceptable or where performance is priority.
- * (NB: "precision", _not_ "resolution" !) 
- * 
+ * (NB: "precision", _not_ "resolution" !)
+ *
  */
 
 void	binuptime(struct bintime *);

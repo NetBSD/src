@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.105 2021/03/12 18:10:00 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.105.4.1 2021/08/01 22:42:14 thorpej Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.105 2021/03/12 18:10:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.105.4.1 2021/08/01 22:42:14 thorpej Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -172,8 +172,7 @@ static u_int mem_cnt, avail_cnt;
 #define pmap_procwr		PMAPNAME(procwr)
 
 #define pmap_pool		PMAPNAME(pool)
-#define pmap_upvo_pool		PMAPNAME(upvo_pool)
-#define pmap_mpvo_pool		PMAPNAME(mpvo_pool)
+#define pmap_pvo_pool		PMAPNAME(pvo_pool)
 #define pmap_pvo_table		PMAPNAME(pvo_table)
 #if defined(DEBUG) || defined(PMAPCHECK) || defined(DDB)
 #define pmap_pte_print		PMAPNAME(pte_print)
@@ -329,12 +328,9 @@ struct pvo_entry {
 
 TAILQ_HEAD(pvo_tqhead, pvo_entry);
 struct pvo_tqhead *pmap_pvo_table;	/* pvo entries by ptegroup index */
-static struct pvo_head pmap_pvo_kunmanaged = LIST_HEAD_INITIALIZER(pmap_pvo_kunmanaged);	/* list of unmanaged pages */
-static struct pvo_head pmap_pvo_unmanaged = LIST_HEAD_INITIALIZER(pmap_pvo_unmanaged);	/* list of unmanaged pages */
 
 struct pool pmap_pool;		/* pool for pmap structures */
-struct pool pmap_upvo_pool;	/* pool for pvo entries for unmanaged pages */
-struct pool pmap_mpvo_pool;	/* pool for pvo entries for managed pages */
+struct pool pmap_pvo_pool;	/* pool for pvo entries */
 
 /*
  * We keep a cache of unmanaged pages to be used for pvo entries for
@@ -344,28 +340,16 @@ struct pvo_page {
 	SIMPLEQ_ENTRY(pvo_page) pvop_link;
 };
 SIMPLEQ_HEAD(pvop_head, pvo_page);
-static struct pvop_head pmap_upvop_head = SIMPLEQ_HEAD_INITIALIZER(pmap_upvop_head);
-static struct pvop_head pmap_mpvop_head = SIMPLEQ_HEAD_INITIALIZER(pmap_mpvop_head);
-static u_long pmap_upvop_free;
-static u_long pmap_upvop_maxfree;
-static u_long pmap_mpvop_free;
-static u_long pmap_mpvop_maxfree;
+static struct pvop_head pmap_pvop_head = SIMPLEQ_HEAD_INITIALIZER(pmap_pvop_head);
+static u_long pmap_pvop_free;
+static u_long pmap_pvop_maxfree;
 
-static void *pmap_pool_ualloc(struct pool *, int);
-static void *pmap_pool_malloc(struct pool *, int);
+static void *pmap_pool_alloc(struct pool *, int);
+static void pmap_pool_free(struct pool *, void *);
 
-static void pmap_pool_ufree(struct pool *, void *);
-static void pmap_pool_mfree(struct pool *, void *);
-
-static struct pool_allocator pmap_pool_mallocator = {
-	.pa_alloc = pmap_pool_malloc,
-	.pa_free = pmap_pool_mfree,
-	.pa_pagesz = 0,
-};
-
-static struct pool_allocator pmap_pool_uallocator = {
-	.pa_alloc = pmap_pool_ualloc,
-	.pa_free = pmap_pool_ufree,
+static struct pool_allocator pmap_pool_allocator = {
+	.pa_alloc = pmap_pool_alloc,
+	.pa_free = pmap_pool_free,
 	.pa_pagesz = 0,
 };
 
@@ -666,7 +650,7 @@ pa_to_pvoh(paddr_t pa, struct vm_page **pg_p)
 	if (pg_p != NULL)
 		*pg_p = pg;
 	if (pg == NULL)
-		return &pmap_pvo_unmanaged;
+		return NULL;
 	md = VM_PAGE_TO_MD(pg);
 	return &md->mdpg_pvoh;
 }
@@ -1101,14 +1085,8 @@ pmap_real_memory(paddr_t *start, psize_t *size)
 void
 pmap_init(void)
 {
-	pool_init(&pmap_mpvo_pool, sizeof(struct pvo_entry),
-	    sizeof(struct pvo_entry), 0, 0, "pmap_mpvopl",
-	    &pmap_pool_mallocator, IPL_NONE);
-
-	pool_setlowat(&pmap_mpvo_pool, 1008);
 
 	pmap_initialized = 1;
-
 }
 
 /*
@@ -1430,22 +1408,19 @@ pmap_pvo_check(const struct pvo_entry *pvo)
 
 	if (PVO_MANAGED_P(pvo)) {
 		pvo_head = pa_to_pvoh(pvo->pvo_pte.pte_lo & PTE_RPGN, NULL);
-	} else {
-		if (pvo->pvo_vaddr < VM_MIN_KERNEL_ADDRESS) {
-			printf("pmap_pvo_check: pvo %p: non kernel address "
-			    "on kernel unmanaged list\n", pvo);
+		LIST_FOREACH(pvo0, pvo_head, pvo_vlink) {
+			if (pvo0 == pvo)
+				break;
+		}
+		if (pvo0 == NULL) {
+			printf("pmap_pvo_check: pvo %p: not present "
+			       "on its vlist head %p\n", pvo, pvo_head);
 			failed = 1;
 		}
-		pvo_head = &pmap_pvo_kunmanaged;
-	}
-	LIST_FOREACH(pvo0, pvo_head, pvo_vlink) {
-		if (pvo0 == pvo)
-			break;
-	}
-	if (pvo0 == NULL) {
-		printf("pmap_pvo_check: pvo %p: not present "
-		    "on its vlist head %p\n", pvo, pvo_head);
-		failed = 1;
+	} else {
+		KASSERT(pvo->pvo_vaddr >= VM_MIN_KERNEL_ADDRESS);
+		if (__predict_false(pvo->pvo_vaddr < VM_MIN_KERNEL_ADDRESS))
+			failed = 1;
 	}
 	if (pvo != pmap_pvo_find_va(pvo->pvo_pmap, pvo->pvo_vaddr, NULL)) {
 		printf("pmap_pvo_check: pvo %p: not present "
@@ -1532,13 +1507,6 @@ pmap_pvo_reclaim(struct pmap *pm)
 	return NULL;
 }
 
-static struct pool *
-pmap_pvo_pl(struct pvo_entry *pvo)
-{
-
-	return PVO_MANAGED_P(pvo) ? &pmap_mpvo_pool : &pmap_upvo_pool;
-}
-
 /*
  * This returns whether this is the first mapping of a page.
  */
@@ -1603,9 +1571,7 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 	--pmap_pvo_enter_depth;
 #endif
 	pmap_interrupts_restore(msr);
-	if (pvo) {
-		KASSERT(pmap_pvo_pl(pvo) == pl);
-	} else {
+	if (pvo == NULL) {
 		pvo = pool_get(pl, poolflags);
 	}
 	KASSERT((vaddr_t)pvo < VM_MIN_KERNEL_ADDRESS);
@@ -1649,7 +1615,7 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 	}
 	if (flags & PMAP_WIRED)
 		pvo->pvo_vaddr |= PVO_WIRED;
-	if (pvo_head != &pmap_pvo_kunmanaged) {
+	if (pvo_head != NULL) {
 		pvo->pvo_vaddr |= PVO_MANAGED; 
 		PMAPCOUNT(mappings);
 	} else {
@@ -1657,7 +1623,8 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 	}
 	pmap_pte_create(&pvo->pvo_pte, pm, va, pa | pte_lo);
 
-	LIST_INSERT_HEAD(pvo_head, pvo, pvo_vlink);
+	if (pvo_head != NULL)
+		LIST_INSERT_HEAD(pvo_head, pvo, pvo_vlink);
 	if (PVO_WIRED_P(pvo))
 		pvo->pvo_pmap->pm_stats.wired_count++;
 	pvo->pvo_pmap->pm_stats.resident_count++;
@@ -1757,7 +1724,9 @@ pmap_pvo_remove(struct pvo_entry *pvo, int pteidx, struct pvo_head *pvol)
 		pvo->pvo_pmap->pm_stats.wired_count--;
 
 	/*
-	 * Save the REF/CHG bits into their cache if the page is managed.
+	 * If the page is managed:
+	 * Save the REF/CHG bits into their cache.
+	 * Remove the PVO from the P/V list.
 	 */
 	if (PVO_MANAGED_P(pvo)) {
 		register_t ptelo = pvo->pvo_pte.pte_lo;
@@ -1789,15 +1758,15 @@ pmap_pvo_remove(struct pvo_entry *pvo, int pteidx, struct pvo_head *pvol)
 
 			pmap_attr_save(pg, ptelo & (PTE_REF|PTE_CHG));
 		}
+		LIST_REMOVE(pvo, pvo_vlink);
 		PMAPCOUNT(unmappings);
 	} else {
 		PMAPCOUNT(kernel_unmappings);
 	}
 
 	/*
-	 * Remove the PVO from its lists and return it to the pool.
+	 * Remove the PVO from its list and return it to the pool.
 	 */
-	LIST_REMOVE(pvo, pvo_vlink);
 	TAILQ_REMOVE(&pmap_pvo_table[ptegidx], pvo, pvo_olink);
 	if (pvol) {
 		LIST_INSERT_HEAD(pvol, pvo, pvo_vlink);
@@ -1811,7 +1780,7 @@ void
 pmap_pvo_free(struct pvo_entry *pvo)
 {
 
-	pool_put(pmap_pvo_pl(pvo), pvo);
+	pool_put(&pmap_pvo_pool, pvo);
 }
 
 void
@@ -1883,7 +1852,6 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	struct mem_region *mp;
 	struct pvo_head *pvo_head;
 	struct vm_page *pg;
-	struct pool *pl;
 	register_t pte_lo;
 	int error;
 	u_int was_exec = 0;
@@ -1891,13 +1859,12 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	PMAP_LOCK();
 
 	if (__predict_false(!pmap_initialized)) {
-		pvo_head = &pmap_pvo_kunmanaged;
-		pl = &pmap_upvo_pool;
+		pvo_head = NULL;
 		pg = NULL;
 		was_exec = PTE_EXEC;
+
 	} else {
 		pvo_head = pa_to_pvoh(pa, &pg);
-		pl = &pmap_mpvo_pool;
 	}
 
 	DPRINTFN(ENTER,
@@ -1961,7 +1928,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	 * Record mapping for later back-translation and pte spilling.
 	 * This will overwrite any existing mapping.
 	 */
-	error = pmap_pvo_enter(pm, pl, pvo_head, va, pa, pte_lo, flags);
+	error = pmap_pvo_enter(pm, &pmap_pvo_pool, pvo_head, va, pa, pte_lo, flags);
 
 	/* 
 	 * Flush the real page from the instruction cache if this page is
@@ -1984,7 +1951,6 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 			else if (pmapdebug & PMAPDEBUG_EXEC)
 				printf("[pmap_enter: %#" _PRIxpa ": marked-as-exec]\n",
 				    VM_PAGE_TO_PHYS(pg));
-				
 #endif
 		}
 	}
@@ -2041,8 +2007,8 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	/*
 	 * We don't care about REF/CHG on PVOs on the unmanaged list.
 	 */
-	error = pmap_pvo_enter(pmap_kernel(), &pmap_upvo_pool,
-	    &pmap_pvo_kunmanaged, va, pa, pte_lo, prot|PMAP_WIRED);
+	error = pmap_pvo_enter(pmap_kernel(), &pmap_pvo_pool,
+	    NULL, va, pa, pte_lo, prot|PMAP_WIRED);
 
 	if (error != 0)
 		panic("pmap_kenter_pa: failed to enter va %#" _PRIxva " pa %#" _PRIxpa ": %d",
@@ -2841,39 +2807,21 @@ pmap_pvo_verify(void)
 }
 #endif /* PMAPCHECK */
 
-
 void *
-pmap_pool_ualloc(struct pool *pp, int flags)
+pmap_pool_alloc(struct pool *pp, int flags)
 {
 	struct pvo_page *pvop;
+	struct vm_page *pg;
 
 	if (uvm.page_init_done != true) {
 		return (void *) uvm_pageboot_alloc(PAGE_SIZE);
 	}
 
 	PMAP_LOCK();
-	pvop = SIMPLEQ_FIRST(&pmap_upvop_head);
+	pvop = SIMPLEQ_FIRST(&pmap_pvop_head);
 	if (pvop != NULL) {
-		pmap_upvop_free--;
-		SIMPLEQ_REMOVE_HEAD(&pmap_upvop_head, pvop_link);
-		PMAP_UNLOCK();
-		return pvop;
-	}
-	PMAP_UNLOCK();
-	return pmap_pool_malloc(pp, flags);
-}
-
-void *
-pmap_pool_malloc(struct pool *pp, int flags)
-{
-	struct pvo_page *pvop;
-	struct vm_page *pg;
-
-	PMAP_LOCK();
-	pvop = SIMPLEQ_FIRST(&pmap_mpvop_head);
-	if (pvop != NULL) {
-		pmap_mpvop_free--;
-		SIMPLEQ_REMOVE_HEAD(&pmap_mpvop_head, pvop_link);
+		pmap_pvop_free--;
+		SIMPLEQ_REMOVE_HEAD(&pmap_pvop_head, pvop_link);
 		PMAP_UNLOCK();
 		return pvop;
 	}
@@ -2894,35 +2842,16 @@ pmap_pool_malloc(struct pool *pp, int flags)
 }
 
 void
-pmap_pool_ufree(struct pool *pp, void *va)
-{
-	struct pvo_page *pvop;
-#if 0
-	if (PHYS_TO_VM_PAGE((paddr_t) va) != NULL) {
-		pmap_pool_mfree(va, size, tag);
-		return;
-	}
-#endif
-	PMAP_LOCK();
-	pvop = va;
-	SIMPLEQ_INSERT_HEAD(&pmap_upvop_head, pvop, pvop_link);
-	pmap_upvop_free++;
-	if (pmap_upvop_free > pmap_upvop_maxfree)
-		pmap_upvop_maxfree = pmap_upvop_free;
-	PMAP_UNLOCK();
-}
-
-void
-pmap_pool_mfree(struct pool *pp, void *va)
+pmap_pool_free(struct pool *pp, void *va)
 {
 	struct pvo_page *pvop;
 
 	PMAP_LOCK();
 	pvop = va;
-	SIMPLEQ_INSERT_HEAD(&pmap_mpvop_head, pvop, pvop_link);
-	pmap_mpvop_free++;
-	if (pmap_mpvop_free > pmap_mpvop_maxfree)
-		pmap_mpvop_maxfree = pmap_mpvop_free;
+	SIMPLEQ_INSERT_HEAD(&pmap_pvop_head, pvop, pvop_link);
+	pmap_pvop_free++;
+	if (pmap_pvop_free > pmap_pvop_maxfree)
+		pmap_pvop_maxfree = pmap_pvop_free;
 	PMAP_UNLOCK();
 #if 0
 	uvm_pagefree(PHYS_TO_VM_PAGE((paddr_t) va));
@@ -3467,14 +3396,14 @@ pmap_bootstrap1(paddr_t kernelstart, paddr_t kernelend)
 	}
 #endif
 
-	pool_init(&pmap_upvo_pool, sizeof(struct pvo_entry),
-	    sizeof(struct pvo_entry), 0, 0, "pmap_upvopl",
-	    &pmap_pool_uallocator, IPL_VM);
+	pool_init(&pmap_pvo_pool, sizeof(struct pvo_entry),
+	    sizeof(struct pvo_entry), 0, 0, "pmap_pvopl",
+	    &pmap_pool_allocator, IPL_VM);
 
-	pool_setlowat(&pmap_upvo_pool, 252);
+	pool_setlowat(&pmap_pvo_pool, 1008);
 
 	pool_init(&pmap_pool, sizeof(struct pmap),
-	    sizeof(void *), 0, 0, "pmap_pl", &pmap_pool_uallocator,
+	    sizeof(void *), 0, 0, "pmap_pl", &pmap_pool_allocator,
 	    IPL_NONE);
 
 #if defined(PMAP_NEED_MAPKERNEL)

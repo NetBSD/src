@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.388 2021/04/17 21:37:21 mrg Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.388.2.1 2021/08/01 22:42:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.388 2021/04/17 21:37:21 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.388.2.1 2021/08/01 22:42:45 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -4451,6 +4451,7 @@ uvm_mapent_forkzero(struct vm_map *new_map, struct vm_map *old_map,
 			new_entry->object.uvm_obj->pgops->pgo_detach(
 			    new_entry->object.uvm_obj);
 		new_entry->object.uvm_obj = NULL;
+		new_entry->offset = 0;
 		new_entry->etype &= ~UVM_ET_OBJ;
 	}
 }
@@ -5164,11 +5165,6 @@ fill_vmentry(struct lwp *l, struct proc *p, struct kinfo_vmentry *kve,
 				kve->kve_vn_fsid = va.va_fsid;
 				error = vnode_to_path(kve->kve_path,
 				    sizeof(kve->kve_path) / 2, vp, l, p);
-#ifdef DIAGNOSTIC
-				if (error)
-					printf("%s: vp %p error %d\n", __func__,
-						vp, error);
-#endif
 			}
 		} else if (UVM_OBJ_IS_KERN_OBJECT(uobj)) {
 			kve->kve_type = KVME_TYPE_KERN;

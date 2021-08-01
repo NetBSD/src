@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.225 2021/01/27 05:00:15 thorpej Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.225.4.1 2021/08/01 22:42:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.225 2021/01/27 05:00:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.225.4.1 2021/08/01 22:42:25 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -71,11 +71,11 @@ __KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.225 2021/01/27 05:00:15 thorpej Exp $
 #endif
 
 #include <dev/pci/pcireg.h>
+#include <dev/pci/pcidevs.h>
 #ifdef _KERNEL
 #include <dev/pci/pcivar.h>
 #else
 #include <dev/pci/pci_verbose.h>
-#include <dev/pci/pcidevs.h>
 #include <dev/pci/pcidevs_data.h>
 #endif
 
@@ -4175,7 +4175,7 @@ pci_conf_print_ptm_cap(const pcireg_t *regs, int extcapoff)
 	pcireg_t reg;
 	uint32_t val;
 
-	printf("\n  Precision Time Management\n");
+	printf("\n  Precision Time Measurement\n");
 
 	reg = regs[o2i(extcapoff + PCI_PTM_CAP)];
 	printf("    PTM Capability register: 0x%08x\n", reg);
@@ -4312,7 +4312,7 @@ static struct {
 	  pci_conf_print_dpc_cap },
 	{ PCI_EXTCAP_L1PM,	"L1 PM Substates",
 	  pci_conf_print_l1pm_cap },
-	{ PCI_EXTCAP_PTM,	"Precision Time Management",
+	{ PCI_EXTCAP_PTM,	"Precision Time Measurement",
 	  pci_conf_print_ptm_cap },
 	{ PCI_EXTCAP_MPCIE,	"M-PCIe",
 	  NULL },

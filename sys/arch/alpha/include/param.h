@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.47.6.1 2021/06/17 04:46:17 thorpej Exp $ */
+/* $NetBSD: param.h,v 1.47.6.2 2021/08/01 22:42:01 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -57,6 +57,12 @@
 #define ALPHA_PGSHIFT	13
 #endif
 
+/*
+ * Compiler assumes 16 byte stack alignment, per recommendation of
+ * Alpha Architecture Handbook.
+ */
+#define	STACK_ALIGNBYTES	(16 - 1)
+
 #define	NBPG		(1 << ALPHA_PGSHIFT)		/* bytes/page */
 #define	PGOFSET		(NBPG-1)			/* byte off. into pg */
 #define	PGSHIFT		ALPHA_PGSHIFT			/* LOG2(NBPG) */
@@ -78,8 +84,6 @@
  * EV4 (21064) and EV5 (21164) have a 32-byte cache line size.
  * EV6 (21264) and EV7 (21364) have a 64-byte cache line size.
  */
-#define	COHERENCY_UNIT	64
-#define	CACHE_LINE_SIZE	64
 
 /*
  * Constants related to network buffer management.

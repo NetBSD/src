@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.162 2020/05/16 18:31:52 christos Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.162.6.1 2021/08/01 22:42:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.162 2020/05/16 18:31:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.162.6.1 2021/08/01 22:42:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.162 2020/05/16 18:31:52 christos Exp $"
 #include <rump/rumpfs.h>
 #include <rump/rumpuser.h>
 
+static int rump_vop_parsepath(void *);
 static int rump_vop_lookup(void *);
 static int rump_vop_getattr(void *);
 static int rump_vop_setattr(void *);
@@ -90,6 +91,7 @@ static int rump_vop_fcntl(void *);
 int (**rump_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc rump_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
+	{ &vop_parsepath_desc, rump_vop_parsepath },
 	{ &vop_lookup_desc, rump_vop_lookup },
 	{ &vop_getattr_desc, rump_vop_getattr },
 	{ &vop_setattr_desc, rump_vop_setattr },
@@ -633,6 +635,33 @@ rumpfs_update(int flags, struct vnode *vp, const struct timespec *acc,
 }
 
 /*
+ * parsepath for rump file systems - check for etfs entries.
+ */
+static int
+rump_vop_parsepath(void *v)
+{
+	struct vop_parsepath_args /* {
+		struct vnode *a_dvp;
+		const char *a_name;
+		size_t *a_retval;
+	}; */ *ap = v;
+	struct etfs *et;
+	bool found;
+
+	/* check for etfs */
+	if (ap->a_dvp == rootvnode) {
+		mutex_enter(&etfs_lock);
+		found = etfs_find(ap->a_name, &et, false);
+		mutex_exit(&etfs_lock);
+		if (found) {
+			*ap->a_retval = et->et_keylen;
+			return 0;
+		}
+	}
+	return genfs_parsepath(v);
+}
+
+/*
  * Simple lookup for rump file systems.
  *
  * uhm, this is twisted.  C F C C, hope of C C F C looming
@@ -653,7 +682,6 @@ rump_vop_lookup(void *v)
 	struct etfs *et;
 	bool dotdot = (cnp->cn_flags & ISDOTDOT) != 0;
 	int rv = 0;
-	const char *cp;
 
 	*vpp = NULL;
 
@@ -686,19 +714,18 @@ rump_vop_lookup(void *v)
 		mutex_exit(&etfs_lock);
 
 		if (found) {
+			if (et->et_keylen != cnp->cn_namelen) {
+				/*
+				 * This can theoretically happen if an
+				 * etfs entry is added or removed
+				 * while lookups are being done as we
+				 * don't hold etfs_lock across here
+				 * and parsepath. Won't ordinarily be
+				 * the case. No biggie, just retry.
+				 */
+				return ERESTART;
+			}
 			rn = et->et_rn;
-			cnp->cn_consume += et->et_keylen - cnp->cn_namelen;
-			/*
-			 * consume trailing slashes if any and clear
-			 * REQUIREDIR if we consumed the full path.
-			 */
-			cp = &cnp->cn_nameptr[cnp->cn_namelen];
-			cp += cnp->cn_consume;
-			KASSERT(*cp == '\0' || *cp == '/');
-			if (*cp == '\0' && rn->rn_va.va_type != VDIR)
-				cnp->cn_flags &= ~REQUIREDIR;
-			while (*cp++ == '/')
-				cnp->cn_consume++;
 			goto getvnode;
 		}
 	}
@@ -1701,6 +1728,7 @@ rump_vop_spec(void *v)
 
 	switch (ap->a_desc->vdesc_offset) {
 	case VOP_ACCESS_DESCOFFSET:
+	case VOP_ACCESSX_DESCOFFSET:
 	case VOP_GETATTR_DESCOFFSET:
 	case VOP_SETATTR_DESCOFFSET:
 	case VOP_LOCK_DESCOFFSET:

@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.134.6.1 2021/05/13 00:47:32 thorpej Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.134.6.2 2021/08/01 22:42:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.134.6.1 2021/05/13 00:47:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.134.6.2 2021/08/01 22:42:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,7 @@ int	fdesc_inactive(void *);
 int	fdesc_reclaim(void *);
 #define	fdesc_lock	genfs_lock
 #define	fdesc_unlock	genfs_unlock
-#define	fdesc_bmap	genfs_badop
+#define	fdesc_bmap	genfs_eopnotsupp
 #define	fdesc_strategy	genfs_badop
 int	fdesc_print(void *);
 int	fdesc_pathconf(void *);
@@ -119,6 +119,7 @@ static int fdesc_attr(int, struct vattr *, kauth_cred_t);
 int (**fdesc_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc fdesc_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
+	{ &vop_parsepath_desc, genfs_parsepath },	/* parsepath */
 	{ &vop_lookup_desc, fdesc_lookup },		/* lookup */
 	{ &vop_create_desc, fdesc_create },		/* create */
 	{ &vop_mknod_desc, fdesc_mknod },		/* mknod */
@@ -325,11 +326,13 @@ fdesc_open(void *v)
 	case Fdesc:
 		/*
 		 * XXX Kludge: set dupfd to contain the value of the
-		 * the file descriptor being sought for duplication. The error
-		 * return ensures that the vnode for this device will be
-		 * released by vn_open. Open will detect this special error and
-		 * take the actions in dupfdopen.  Other callers of vn_open or
-		 * VOP_OPEN will simply report the error.
+		 * the file descriptor being sought for duplication.
+		 * The error return ensures that the vnode for this
+		 * device will be released by vn_open. vn_open will
+		 * then detect this special error and take the actions
+		 * in fd_dupopen. Other callers of vn_open or VOP_OPEN
+		 * not prepared to deal with this situation will
+		 * report a real error.
 		 */
 		curlwp->l_dupfd = VTOFDESC(vp)->fd_fd;	/* XXX */
 		return EDUPFD;

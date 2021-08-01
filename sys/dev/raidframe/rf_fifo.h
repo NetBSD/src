@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_fifo.h,v 1.6 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_fifo.h,v 1.6.182.1 2021/08/01 22:42:31 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -54,7 +54,6 @@ extern void
 rf_FifoEnqueue(void *q_in, RF_DiskQueueData_t * elem,
     int priority);
 extern RF_DiskQueueData_t *rf_FifoDequeue(void *q_in);
-extern RF_DiskQueueData_t *rf_FifoPeek(void *q_in);
 extern int
 rf_FifoPromote(void *q_in, RF_StripeNum_t parityStripeID,
     RF_ReconUnitNum_t which_ru);

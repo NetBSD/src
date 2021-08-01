@@ -1,4 +1,4 @@
-/* $NetBSD: ssdfb_spi.c,v 1.5.4.2 2021/05/19 14:17:08 thorpej Exp $ */
+/* $NetBSD: ssdfb_spi.c,v 1.5.4.3 2021/08/01 22:42:31 thorpej Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,9 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ssdfb_spi.c,v 1.5.4.2 2021/05/19 14:17:08 thorpej Exp $");
-
-#include "opt_fdt.h"
+__KERNEL_RCSID(0, "$NetBSD: ssdfb_spi.c,v 1.5.4.3 2021/08/01 22:42:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -40,12 +38,12 @@ __KERNEL_RCSID(0, "$NetBSD: ssdfb_spi.c,v 1.5.4.2 2021/05/19 14:17:08 thorpej Ex
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
 
+#include <dev/spi/spivar.h>
+#include <dev/ic/ssdfbvar.h>
+#include "opt_fdt.h"
 #ifdef FDT
 #include <dev/fdt/fdtvar.h>
 #endif /* FDT */
-
-#include <dev/spi/spivar.h>
-#include <dev/ic/ssdfbvar.h>
 
 struct bs_state {
 	uint8_t	*base;
@@ -57,7 +55,7 @@ struct ssdfb_spi_softc {
 	struct ssdfb_softc	sc;
 	struct spi_handle	*sc_sh;
 #ifdef FDT
-	struct fdtbus_gpio_pin *sc_dc_gpio;
+	struct fdtbus_gpio_pin	*sc_gpio_dc;
 #endif /* FDT */
 	bool			sc_3wiremode;
 };
@@ -84,7 +82,8 @@ CFATTACH_DECL_NEW(ssdfb_spi, sizeof(struct ssdfb_spi_softc),
     ssdfb_spi_match, ssdfb_spi_attach, NULL, NULL);
 
 static const struct device_compatible_entry compat_data[] = {
-	{ .compat = "solomon,ssd1322" },
+	{ .compat = "solomon,ssd1306",	.value = SSDFB_PRODUCT_SSD1306_GENERIC },
+	{ .compat = "solomon,ssd1322",	.value = SSDFB_PRODUCT_SSD1322_GENERIC },
 	DEVICE_COMPAT_EOL
 };
 
@@ -103,8 +102,12 @@ ssdfb_spi_dc_gpio_fdt(struct ssdfb_spi_softc *sc)
 	devhandle_t devhandle = device_handle(sc->sc.sc_dev);
 	int phandle = devhandle_to_of(devhandle);
 
-	sc->sc_dc_gpio = fdtbus_gpio_acquire(phandle, "dc-gpios",
+	sc->sc_gpio_dc = fdtbus_gpio_acquire(phandle, "dc-gpio",
 	    GPIO_PIN_OUTPUT);
+	if (sc->sc_dc_gpio == NULL) {
+		sc->sc_gpio_dc = fdtbus_gpio_acquire(phandle, "cd-gpio",
+		    GPIO_PIN_OUTPUT);
+	}
 	if (sc->sc_dc_gpio != NULL) {
 		sc->sc_3wiremode = false;
 	}
@@ -125,10 +128,6 @@ ssdfb_spi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_sh = sa->sa_handle;
 	sc->sc.sc_cookie = (void *)sc;
 
-	/* XXX Should get this from the device tree. */
-	if ((flags & SSDFB_ATTACH_FLAG_PRODUCT_MASK) == SSDFB_PRODUCT_UNKNOWN)
-		flags |= SSDFB_PRODUCT_SSD1322_GENERIC;
-
 	/*
 	 * SSD1306 and SSD1322 data sheets specify 100ns cycle time.
 	 */
@@ -137,6 +136,16 @@ ssdfb_spi_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": spi_configure failed (error = %d)\n",
 		    error);
 		return;
+	}
+
+	if ((flags & SSDFB_ATTACH_FLAG_PRODUCT_MASK) == SSDFB_PRODUCT_UNKNOWN) {
+		const struct device_compatible_entry *dce =
+			device_compatible_lookup(sa->sa_compat, sa->sa_ncompat,
+						 compat_data);
+		if (dce)
+			flags |= (int)dce->value;
+		else
+			flags |= SSDFB_PRODUCT_SSD1322_GENERIC;
 	}
 
 	/*
@@ -180,7 +189,7 @@ ssdfb_spi_attach(device_t parent, device_t self, void *aux)
 	} else {
 		sc->sc.sc_cmd = ssdfb_spi_cmd_4wire;
 	}
-	
+
 	ssdfb_attach(&sc->sc, flags);
 
 	device_printf(sc->sc.sc_dev, "%d-wire SPI interface\n",
@@ -306,7 +315,7 @@ ssdfb_spi_4wire_set_dc(struct ssdfb_spi_softc *sc, int value)
 	/* TODO: refactor this if we ever support more that just FDT. */
 
 #ifdef FDT
-	KASSERT(sc->sc_dc_gpio != NULL);
+	KASSERT(sc->sc_gpio_dc != NULL);
 	fdtbus_gpio_write(sc->sc_dc_gpio, value);
 #else
 	/* TODO: this should toggle an auxilliary GPIO pin */

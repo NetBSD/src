@@ -1,4 +1,4 @@
-/*      $NetBSD: lemacreg.h,v 1.5 2005/12/11 12:21:27 christos Exp $ */
+/*      $NetBSD: lemacreg.h,v 1.5.182.1 2021/08/01 22:42:23 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -121,7 +121,7 @@
 #define LEMAC_TX_ISA		0x01	/* Insert Source Address (no) */
 #define LEMAC_TX_IFC		0x02	/* Insert Frame Check (yes) */
 #define LEMAC_TX_PAD		0x04	/* Zero PAD to minimum length (yes) */
-#define LEMAC_TX_LAB		0x08	/* Less Agressive Backoff (no) */
+#define LEMAC_TX_LAB		0x08	/* Less Aggressive Backoff (no) */
 #define LEMAC_TX_QMD		0x10	/* Q-Mode (yes) */
 #define LEMAC_TX_STP		0x20	/* Stop on Error (no) */
 #define LEMAC_TX_SQE		0x40	/* SQE Enable (yes) */

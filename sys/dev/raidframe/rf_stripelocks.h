@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_stripelocks.h,v 1.9 2019/10/10 03:43:59 christos Exp $	*/
+/*	$NetBSD: rf_stripelocks.h,v 1.9.12.1 2021/08/01 22:42:31 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -104,9 +104,9 @@ struct RF_LockTableEntry_s {
     (_lrd).cbArg   = (void *) (_cba);                                                                        \
   }
 
-int rf_ConfigureStripeLockFreeList(RF_ShutdownList_t **);
-int rf_ConfigureStripeLocks(RF_ShutdownList_t **, RF_Raid_t *, RF_Config_t *);
-int rf_AcquireStripeLock(RF_LockTableEntry_t *, RF_StripeNum_t, RF_LockReqDesc_t *);
-void rf_ReleaseStripeLock(RF_LockTableEntry_t *, RF_StripeNum_t, RF_LockReqDesc_t *);
+int rf_ConfigureStripeLockFreeList(RF_ShutdownList_t **, RF_Raid_t *, RF_Config_t *);
+int rf_ConfigureStripeLocks(RF_ShutdownList_t **, RF_Raid_t *, RF_Config_t *); 
+int rf_AcquireStripeLock(RF_Raid_t *, RF_LockTableEntry_t *, RF_StripeNum_t, RF_LockReqDesc_t *);
+void rf_ReleaseStripeLock(RF_Raid_t *, RF_LockTableEntry_t *, RF_StripeNum_t, RF_LockReqDesc_t *);
 
 #endif				/* !_RF__RF_STRIPELOCKS_H_ */

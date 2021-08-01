@@ -1,4 +1,4 @@
-/* $NetBSD: dec_alphabook1.c,v 1.27 2012/10/13 17:58:54 jdc Exp $ */
+/* $NetBSD: dec_alphabook1.c,v 1.27.54.1 2021/08/01 22:42:00 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_alphabook1.c,v 1.27 2012/10/13 17:58:54 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_alphabook1.c,v 1.27.54.1 2021/08/01 22:42:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,6 +107,8 @@ dec_alphabook1_init(void)
 	platform.iobus = "lca";
 	platform.cons_init = dec_alphabook1_cons_init;
 	platform.device_register = dec_alphabook1_device_register;
+
+	lca_probe_bcache();
 }
 
 static void

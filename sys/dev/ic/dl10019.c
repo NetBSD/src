@@ -1,4 +1,4 @@
-/*	$NetBSD: dl10019.c,v 1.15 2020/02/04 05:25:39 thorpej Exp $	*/
+/*	$NetBSD: dl10019.c,v 1.15.10.1 2021/08/01 22:42:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dl10019.c,v 1.15 2020/02/04 05:25:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dl10019.c,v 1.15.10.1 2021/08/01 22:42:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,11 +113,28 @@ dl10019_mii_reset(struct dp8390_softc *sc)
 	bus_space_write_1(sc->sc_regt, sc->sc_regh, NEDL_DL0_GPIO, 0x00);
 }
 
+static void
+dl10019_tick(void *arg)
+{
+	struct dp8390_softc *sc = arg;
+	int s;
+
+	s = splnet();
+	mii_tick(&sc->sc_mii);
+	splx(s);
+
+	callout_schedule(&sc->sc_tick_ch, hz);
+}
+
 void
 dl10019_media_init(struct dp8390_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	struct mii_data *mii = &sc->sc_mii;
+
+	callout_setfunc(&sc->sc_tick_ch, dl10019_tick, sc);
+
+	sc->sc_ec.ec_mii = mii;
 
 	mii->mii_ifp = ifp;
 	mii->mii_readreg = dl10019_mii_readreg;
@@ -142,8 +159,9 @@ void
 dl10019_media_fini(struct dp8390_softc *sc)
 {
 
+	callout_stop(&sc->sc_tick_ch);
 	mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
-	ifmedia_fini(&sc->sc_mii.mii_media);
+	/* dp8390_detach() will call ifmedia_fini(). */
 }
 
 int
@@ -171,12 +189,14 @@ dl10019_init_card(struct dp8390_softc *sc)
 
 	dl10019_mii_reset(sc);
 	mii_mediachg(&sc->sc_mii);
+	callout_schedule(&sc->sc_tick_ch, hz);
 }
 
 void
 dl10019_stop_card(struct dp8390_softc *sc)
 {
 
+	callout_stop(&sc->sc_tick_ch);
 	mii_down(&sc->sc_mii);
 }
 

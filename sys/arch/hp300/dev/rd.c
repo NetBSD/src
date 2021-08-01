@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.103 2021/01/10 00:58:56 tsutsui Exp $	*/
+/*	$NetBSD: rd.c,v 1.103.4.1 2021/08/01 22:42:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.103 2021/01/10 00:58:56 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.103.4.1 2021/08/01 22:42:08 thorpej Exp $");
 
 #include "opt_useleds.h"
 
@@ -172,13 +172,13 @@ static const char *err_info[] = {
 	0, 0
 };
 
-int	rddebug = 0x80;
 #define RDB_FOLLOW	0x01
 #define RDB_STATUS	0x02
 #define RDB_IDENT	0x04
 #define RDB_IO		0x08
 #define RDB_ASYNC	0x10
 #define RDB_ERROR	0x80
+int	rddebug = RDB_ERROR | RDB_IDENT;
 #endif
 
 /*
@@ -186,64 +186,243 @@ int	rddebug = 0x80;
  * Nothing really critical here, could do without it.
  */
 static const struct rdidentinfo rdidentinfo[] = {
-	{ RD7946AID,	0,	"7945A",	NRD7945ABPT,
-	  NRD7945ATRK,	968,	 108416 },
+	[RD7945A] = {
+		.ri_hwid = RD7946AID,
+		.ri_desc = "7945A",
+		.ri_nbpt = NRD7945ABPT,
+		.ri_ntpc = NRD7945ATRK,
+		.ri_ncyl = 968,
+		.ri_nblocks = 108416
+	},
 
-	{ RD9134DID,	1,	"9134D",	NRD9134DBPT,
-	  NRD9134DTRK,	303,	  29088 },
+	[RD9134D] = {
+		.ri_hwid = RD9134DID,
+		.ri_desc = "9134D",
+		.ri_nbpt = NRD9134DBPT,
+		.ri_ntpc = NRD9134DTRK,
+		.ri_ncyl = 303,
+		.ri_nblocks = 29088
+	},
 
-	{ RD9134LID,	1,	"9122S",	NRD9122SBPT,
-	  NRD9122STRK,	77,	   1232 },
+	[RD9122S] = {
+		.ri_hwid = RD9134LID,
+		.ri_desc = "9122S",
+		.ri_nbpt = NRD9122SBPT,
+		.ri_ntpc = NRD9122STRK,
+		.ri_ncyl = 77,
+		.ri_nblocks = 1232
+	},
 
-	{ RD7912PID,	0,	"7912P",	NRD7912PBPT,
-	  NRD7912PTRK,	572,	 128128 },
+	[RD7912P] = {
+		.ri_hwid = RD7912PID,
+		.ri_desc = "7912P",
+		.ri_nbpt = NRD7912PBPT,
+		.ri_ntpc = NRD7912PTRK,
+		.ri_ncyl = 572,
+		.ri_nblocks = 128128
+	},
 
-	{ RD7914PID,	0,	"7914P",	NRD7914PBPT,
-	  NRD7914PTRK,	1152,	 258048 },
+	[RD7914P] = {
+		.ri_hwid = RD7914PID,
+		.ri_desc = "7914P",
+		.ri_nbpt = NRD7914PBPT,
+		.ri_ntpc = NRD7914PTRK,
+		.ri_ncyl = 1152,
+		.ri_nblocks = 258048
+	},
 
-	{ RD7958AID,	0,	"7958A",	NRD7958ABPT,
-	  NRD7958ATRK,	1013,	 255276 },
+	[RD7958A] = {
+		.ri_hwid = RD7958AID,
+		.ri_desc = "7958A",
+		.ri_nbpt = NRD7958ABPT,
+		.ri_ntpc = NRD7958ATRK,
+		.ri_ncyl = 1013,
+		.ri_nblocks = 255276
+	},
 
-	{ RD7957AID,	0,	"7957A",	NRD7957ABPT,
-	  NRD7957ATRK,	1036,	 159544 },
+	[RD7957A] = {
+		.ri_hwid = RD7957AID,
+		.ri_desc = "7957A",
+		.ri_nbpt = NRD7957ABPT,
+		.ri_ntpc = NRD7957ATRK,
+		.ri_ncyl = 1036,
+		.ri_nblocks = 159544
+	},
 
-	{ RD7933HID,	0,	"7933H",	NRD7933HBPT,
-	  NRD7933HTRK,	1321,	 789958 },
+	[RD7933H] = {
+		.ri_hwid = RD7933HID,
+		.ri_desc = "7933H",
+		.ri_nbpt = NRD7933HBPT,
+		.ri_ntpc = NRD7933HTRK,
+		.ri_ncyl = 1321,
+		.ri_nblocks = 789958
+	},
 
-	{ RD9134LID,	1,	"9134L",	NRD9134LBPT,
-	  NRD9134LTRK,	973,	  77840 },
+	[RD9134L] = {
+		.ri_hwid = RD9134LID,
+		.ri_desc = "9134L",
+		.ri_nbpt = NRD9134LBPT,
+		.ri_ntpc = NRD9134LTRK,
+		.ri_ncyl = 973,
+		.ri_nblocks = 77840
+	},
 
-	{ RD7936HID,	0,	"7936H",	NRD7936HBPT,
-	  NRD7936HTRK,	698,	 600978 },
+	[RD7936H] = {
+		.ri_hwid = RD7936HID,
+		.ri_desc = "7936H",
+		.ri_nbpt = NRD7936HBPT,
+		.ri_ntpc = NRD7936HTRK,
+		.ri_ncyl = 698,
+		.ri_nblocks = 600978
+	},
 
-	{ RD7937HID,	0,	"7937H",	NRD7937HBPT,
-	  NRD7937HTRK,	698,	1116102 },
+	[RD7937H] = {
+		.ri_hwid = RD7937HID,
+		.ri_desc = "7937H",
+		.ri_nbpt = NRD7937HBPT,
+		.ri_ntpc = NRD7937HTRK,
+		.ri_ncyl = 698,
+		.ri_nblocks = 1116102
+	},
 
-	{ RD7914CTID,	0,	"7914CT",	NRD7914PBPT,
-	  NRD7914PTRK,	1152,	 258048 },
+	[RD7914CT] = {
+		.ri_hwid = RD7914CTID,
+		.ri_desc = "7914CT",
+		.ri_nbpt = NRD7914PBPT,
+		.ri_ntpc = NRD7914PTRK,
+		.ri_ncyl = 1152,
+		.ri_nblocks = 258048
+	},
 
-	{ RD7946AID,	0,	"7946A",	NRD7945ABPT,
-	  NRD7945ATRK,	968,	 108416 },
+	[RD7946A] = {
+		.ri_hwid = RD7946AID,
+		.ri_desc = "7946A",
+		.ri_nbpt = NRD7945ABPT,
+		.ri_ntpc = NRD7945ATRK,
+		.ri_ncyl = 968,
+		.ri_nblocks = 108416
+	},
 
-	{ RD9134LID,	1,	"9122D",	NRD9122SBPT,
-	  NRD9122STRK,	77,	   1232 },
+	[RD9122D] = {
+		.ri_hwid = RD9134LID,
+		.ri_desc = "9122D",
+		.ri_nbpt = NRD9122SBPT,
+		.ri_ntpc = NRD9122STRK,
+		.ri_ncyl = 77,
+		.ri_nblocks = 1232
+	},
 
-	{ RD7957BID,	0,	"7957B",	NRD7957BBPT,
-	  NRD7957BTRK,	1269,	 159894 },
+	[RD7957B] = {
+		.ri_hwid = RD7957BID,
+		.ri_desc = "7957B",
+		.ri_nbpt = NRD7957BBPT,
+		.ri_ntpc = NRD7957BTRK,
+		.ri_ncyl = 1269,
+		.ri_nblocks = 159894
+	},
 
-	{ RD7958BID,	0,	"7958B",	NRD7958BBPT,
-	  NRD7958BTRK,	786,	 297108 },
+	[RD7958B] = {
+		.ri_hwid = RD7958BID,
+		.ri_desc = "7958B",
+		.ri_nbpt = NRD7958BBPT,
+		.ri_ntpc = NRD7958BTRK,
+		.ri_ncyl = 786,
+		.ri_nblocks = 297108
+	},
 
-	{ RD7959BID,	0,	"7959B",	NRD7959BBPT,
-	  NRD7959BTRK,	1572,	 594216 },
+	[RD7959B] = {
+		.ri_hwid = RD7959BID,
+		.ri_desc = "7959B",
+		.ri_nbpt = NRD7959BBPT,
+		.ri_ntpc = NRD7959BTRK,
+		.ri_ncyl = 1572,
+		.ri_nblocks = 594216
+	},
 
-	{ RD2200AID,	0,	"2200A",	NRD2200ABPT,
-	  NRD2200ATRK,	1449,	 654948 },
+	[RD2200A] = {
+		.ri_hwid = RD2200AID,
+		.ri_desc = "2200A",
+		.ri_nbpt = NRD2200ABPT,
+		.ri_ntpc = NRD2200ATRK,
+		.ri_ncyl = 1449,
+		.ri_nblocks = 654948
+	},
 
-	{ RD2203AID,	0,	"2203A",	NRD2203ABPT,
-	  NRD2203ATRK,	1449,	1309896 }
+	[RD2203A] = {
+		.ri_hwid = RD2203AID,
+		.ri_desc = "2203A",
+		.ri_nbpt = NRD2203ABPT,
+		.ri_ntpc = NRD2203ATRK,
+		.ri_ncyl = 1449,
+		.ri_nblocks = 1309896
+	},
+
+	[RD2202A] = {
+		.ri_hwid = RD2202AID,
+		.ri_desc = "2202A",
+		.ri_nbpt = NRD2202ABPT,
+		.ri_ntpc = NRD2202ATRK,
+		.ri_ncyl = 1449,
+		.ri_nblocks = 1309896
+	},
+
+	[RD7908A] = {
+		.ri_hwid = RD7908AID,
+		.ri_desc = "7908A",
+		.ri_nbpt = NRD7908ABPT,
+		.ri_ntpc = NRD7908ATRK,
+		.ri_ncyl = 185,
+		.ri_nblocks = 32375
+	},
+
+	[RD7911A] = {
+		.ri_hwid = RD7911AID,
+		.ri_desc = "7911A",
+		.ri_nbpt = NRD7911ABPT,
+		.ri_ntpc = NRD7911ATRK,
+		.ri_ncyl = 572,
+		.ri_nblocks = 54912
+	},
+
+	[RD7941A] = {
+		.ri_hwid = RD7946AID,
+		.ri_desc = "7941A",
+		.ri_nbpt = NRD7941ABPT,
+		.ri_ntpc = NRD7941ATRK,
+		.ri_ncyl = 968,
+		.ri_nblocks = 46464
+	}
 };
 static const int numrdidentinfo = __arraycount(rdidentinfo);
+
+struct rdname2id {
+	const char *rn_name;
+	int rn_id;
+};
+static const struct rdname2id rdname2id[] = {
+	{ RD7945ANAME,	RD7945A },
+	{ RD9134DNAME,	RD9134D },
+	{ RD7912PNAME,	RD7912P },
+	{ RD7914PNAME,	RD7914P },
+	{ RD7958ANAME,	RD7958A },
+	{ RD7957ANAME,	RD7957A },
+	{ RD7933HNAME,	RD7933H },
+	{ RD9134LNAME,	RD9134L },
+	{ RD7936HNAME,	RD7936H },
+	{ RD7937HNAME,	RD7937H },
+	{ RD7914CTNAME,	RD7914CT },
+	{ RD9122DNAME,	RD9122D },
+	{ RD7957BNAME,	RD7957B },
+	{ RD7958BNAME,	RD7958B },
+	{ RD7959BNAME,	RD7959B },
+	{ RD2200ANAME,	RD2200A },
+	{ RD2203ANAME,	RD2203A },
+	{ RD2202ANAME,	RD2202A },
+	{ RD7908ANAME,	RD7908A },
+	{ RD7911ANAME,	RD7911A },
+	{ RD7941ANAME,	RD7941A }
+};
+static const int numrdname2id = __arraycount(rdname2id);
 
 static int	rdident(device_t, struct rd_softc *,
 		    struct hpibbus_attach_args *);
@@ -311,25 +490,35 @@ static int
 rdmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct hpibbus_attach_args *ha = aux;
+	struct rd_clearcmd ccmd;
+	int ctlr, slave, punit;
+	int rv;
+	uint8_t stat;
+
+	rv = rdident(parent, NULL, ha);
+
+	if (rv == 0)
+		return 0;
 
 	/*
-	 * Set punit if operator specified one in the kernel
-	 * configuration file.
+	 * The supported device ID is probed.
+	 * Check if the specified physical unit is actually supported
+	 * by brandnew HP-IB emulator devices like HPDisk and HPDrive etc.
 	 */
-	if (cf->hpibbuscf_punit != HPIBBUSCF_PUNIT_DEFAULT &&
-	    cf->hpibbuscf_punit < HPIB_NPUNITS)
-		ha->ha_punit = cf->hpibbuscf_punit;
+	ctlr  = device_unit(parent);
+	slave = ha->ha_slave;
+	punit = ha->ha_punit;
+	if (punit == 0)
+		return 1;
 
-	if (rdident(parent, NULL, ha) == 0) {
-		/*
-		 * XXX Some aging HP-IB drives are slow to
-		 * XXX respond; give them a chance to catch
-		 * XXX up and probe them again.
-		 */
-		delay(10000);
-		ha->ha_id = hpibid(device_unit(parent), ha->ha_slave);
-		return rdident(parent, NULL, ha);
-	}
+	ccmd.c_unit = C_SUNIT(punit);
+	ccmd.c_cmd  = C_CLEAR;
+	hpibsend(ctlr, slave, C_TCMD, &ccmd, sizeof(ccmd));
+	hpibswait(ctlr, slave);
+	hpibrecv(ctlr, slave, C_QSTAT, &stat, sizeof(stat));
+	if (stat != 0)
+		return 0;
+
 	return 1;
 }
 
@@ -338,6 +527,8 @@ rdattach(device_t parent, device_t self, void *aux)
 {
 	struct rd_softc *sc = device_private(self);
 	struct hpibbus_attach_args *ha = aux;
+	int id;
+	char pbuf[9];
 
 	sc->sc_dev = self;
 	bufq_alloc(&sc->sc_tab, "disksort", BUFQ_SORT_RAWBLOCK);
@@ -346,6 +537,21 @@ rdattach(device_t parent, device_t self, void *aux)
 		aprint_error(": didn't respond to describe command!\n");
 		return;
 	}
+
+	/*
+	 * XXX We use DEV_BSIZE instead of the sector size value pulled
+	 * XXX off the driver because all of this code assumes 512 byte
+	 * XXX blocks.  ICK!
+	 */
+	id = sc->sc_type;
+	aprint_normal(": %s\n", rdidentinfo[id].ri_desc);
+	format_bytes(pbuf, sizeof(pbuf),
+	    rdidentinfo[id].ri_nblocks * DEV_BSIZE);
+	aprint_normal_dev(sc->sc_dev, "%s, %d cyl, %d head, %d sec,"
+	    " %d bytes/block x %u blocks\n",
+	    pbuf, rdidentinfo[id].ri_ncyl, rdidentinfo[id].ri_ntpc,
+	    rdidentinfo[id].ri_nbpt,
+	    DEV_BSIZE, rdidentinfo[id].ri_nblocks);
 
 	/*
 	 * Initialize and attach the disk structure.
@@ -382,9 +588,9 @@ rdattach(device_t parent, device_t self, void *aux)
 static int
 rdident(device_t parent, struct rd_softc *sc, struct hpibbus_attach_args *ha)
 {
-	struct rd_describe *desc = sc != NULL ? &sc->sc_rddesc : NULL;
+	struct cs80_describe desc;
 	u_char stat, cmd[3];
-	char name[7], pbuf[9];
+	char name[7];
 	int i, id, n, ctlr, slave;
 
 	ctlr = device_unit(parent);
@@ -398,7 +604,7 @@ rdident(device_t parent, struct rd_softc *sc, struct hpibbus_attach_args *ha)
 	for (id = 0; id < numrdidentinfo; id++)
 		if (ha->ha_id == rdidentinfo[id].ri_hwid)
 			break;
-	if (id == numrdidentinfo || ha->ha_punit > rdidentinfo[id].ri_maxunum)
+	if (id == numrdidentinfo)
 		return 0;
 
 	/*
@@ -416,11 +622,11 @@ rdident(device_t parent, struct rd_softc *sc, struct hpibbus_attach_args *ha)
 	cmd[1] = C_SVOL(0);
 	cmd[2] = C_DESC;
 	hpibsend(ctlr, slave, C_CMD, cmd, sizeof(cmd));
-	hpibrecv(ctlr, slave, C_EXEC, desc, 37);
+	hpibrecv(ctlr, slave, C_EXEC, &desc, sizeof(desc));
 	hpibrecv(ctlr, slave, C_QSTAT, &stat, sizeof(stat));
 	memset(name, 0, sizeof(name));
 	if (stat == 0) {
-		n = desc->d_name;
+		n = desc.d_name;
 		for (i = 5; i >= 0; i--) {
 			name[i] = (n & 0xf) + '0';
 			n >>= 4;
@@ -429,71 +635,75 @@ rdident(device_t parent, struct rd_softc *sc, struct hpibbus_attach_args *ha)
 
 #ifdef DEBUG
 	if (rddebug & RDB_IDENT) {
-		aprint_debug("\n");
-		aprint_debug_dev(sc->sc_dev, "name: %x ('%s')\n",
-		    desc->d_name, name);
-		aprint_debug("  iuw %x, maxxfr %d, ctype %d\n",
-		    desc->d_iuw, desc->d_cmaxxfr, desc->d_ctype);
-		aprint_debug("  utype %d, bps %d, blkbuf %d, burst %d,"
+		aprint_normal("\n");
+		aprint_normal_dev(sc->sc_dev, "id: 0x%04x, name: %x ('%s')\n",
+		    ha->ha_id, desc.d_name, name);
+		aprint_normal("  iuw %x, maxxfr %d, ctype %d\n",
+		    desc.d_iuw, desc.d_cmaxxfr, desc.d_ctype);
+		aprint_normal("  utype %d, bps %d, blkbuf %d, burst %d,"
 		    " blktime %d\n",
-		    desc->d_utype, desc->d_sectsize,
-		    desc->d_blkbuf, desc->d_burstsize, desc->d_blocktime);
-		aprint_debug("  avxfr %d, ort %d, atp %d, maxint %d, fv %x"
+		    desc.d_utype, desc.d_sectsize,
+		    desc.d_blkbuf, desc.d_burstsize, desc.d_blocktime);
+		aprint_normal("  avxfr %d, ort %d, atp %d, maxint %d, fv %x"
 		    ", rv %x\n",
-		    desc->d_uavexfr, desc->d_retry, desc->d_access,
-		    desc->d_maxint, desc->d_fvbyte, desc->d_rvbyte);
-		aprint_debug("  maxcyl/head/sect %d/%d/%d, maxvsect %d,"
+		    desc.d_uavexfr, desc.d_retry, desc.d_access,
+		    desc.d_maxint, desc.d_fvbyte, desc.d_rvbyte);
+		aprint_normal("  maxcyl/head/sect %d/%d/%d, maxvsect %d,"
 		    " inter %d\n",
-		    desc->d_maxcyl, desc->d_maxhead, desc->d_maxsect,
-		    desc->d_maxvsectl, desc->d_interleave);
+		    desc.d_maxcyl, desc.d_maxhead, desc.d_maxsect,
+		    desc.d_maxvsectl, desc.d_interleave);
 		aprint_normal("%s", device_xname(sc->sc_dev));
 	}
 #endif
 
 	/*
 	 * Take care of a couple of anomolies:
-	 * 1. 7945A and 7946A both return same HW id
+	 * 1. 7945A, 7946A, and 7941A all return same HW id
 	 * 2. 9122S and 9134D both return same HW id
 	 * 3. 9122D and 9134L both return same HW id
 	 */
 	switch (ha->ha_id) {
 	case RD7946AID:
-		if (memcmp(name, "079450", 6) == 0)
+		if (memcmp(name, RD7945ANAME, RDNAMELEN) == 0)
 			id = RD7945A;
+		else if (memcmp(name, RD7941ANAME, RDNAMELEN) == 0)
+			id = RD7941A;
 		else
 			id = RD7946A;
 		break;
 
 	case RD9134LID:
-		if (memcmp(name, "091340", 6) == 0)
+		if (memcmp(name, RD9134LNAME, RDNAMELEN) == 0)
 			id = RD9134L;
 		else
 			id = RD9122D;
 		break;
 
 	case RD9134DID:
-		if (memcmp(name, "091220", 6) == 0)
+		if (memcmp(name, RD9122SNAME, RDNAMELEN) == 0)
 			id = RD9122S;
 		else
 			id = RD9134D;
 		break;
 	}
 
-	sc->sc_type = id;
-
 	/*
-	 * XXX We use DEV_BSIZE instead of the sector size value pulled
-	 * XXX off the driver because all of this code assumes 512 byte
-	 * XXX blocks.  ICK!
+	 * HPDisk can have independent physical units that are not
+	 * corresponding to device IDs.
+	 * To handle this, we have to check names in the drive description
+	 * data for punit >= 1.
 	 */
-	aprint_normal(": %s\n", rdidentinfo[id].ri_desc);
-	format_bytes(pbuf, sizeof(pbuf),
-	    rdidentinfo[id].ri_nblocks * DEV_BSIZE);
-	aprint_normal_dev(sc->sc_dev, "%s, %d cyl, %d head, %d sec,"
-	    " %d bytes/block x %u blocks\n",
-	    pbuf, rdidentinfo[id].ri_ncyl, rdidentinfo[id].ri_ntpc,
-	    rdidentinfo[id].ri_nbpt,
-	    DEV_BSIZE, rdidentinfo[id].ri_nblocks);
+	if (ha->ha_punit >= 1) {
+		for (i = 0; i < numrdname2id; i++) {
+			if (memcmp(name, rdname2id[i].rn_name,
+			    RDNAMELEN) == 0) {
+				id = rdname2id[i].rn_id;
+				break;
+			}
+		}
+	}
+
+	sc->sc_type = id;
 
 	return 1;
 }
@@ -1028,7 +1238,7 @@ rderror(int unit)
 	}
 	/*
 	 * Only report error if we have reached the error reporting
-	 * threshhold.  By default, this will only report after the
+	 * threshold.  By default, this will only report after the
 	 * retry limit has been exceeded.
 	 */
 	if (sc->sc_errcnt < rderrthresh)

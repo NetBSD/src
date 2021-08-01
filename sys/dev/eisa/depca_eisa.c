@@ -1,4 +1,4 @@
-/*	$NetBSD: depca_eisa.c,v 1.15 2014/03/29 19:28:24 christos Exp $	*/
+/*	$NetBSD: depca_eisa.c,v 1.15.48.1 2021/08/01 22:42:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: depca_eisa.c,v 1.15 2014/03/29 19:28:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: depca_eisa.c,v 1.15.48.1 2021/08/01 22:42:22 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -106,7 +106,8 @@ depca_eisa_attach(device_t parent, device_t self, void *aux)
 	struct eisa_cfg_irq eci;
 
 	sc->sc_dev = self;
-	aprint_error(": DEC DE422 Ethernet\n");
+	aprint_naive("\n");
+	aprint_normal(": DEC DE422 Ethernet\n");
 
 	sc->sc_iot = ea->ea_iot;
 	sc->sc_memt = ea->ea_memt;
@@ -174,9 +175,11 @@ depca_eisa_intr_establish(struct depca_softc *sc, struct lance_softc *child)
 		aprint_error("\n");
 		return (NULL);
 	}
-	if (intrstr != NULL)
-		aprint_normal_dev(sc->sc_dev, "interrupting at %s\n",
-		    intrstr);
+	if (intrstr != NULL) {
+		aprint_normal_dev(sc->sc_dev,
+		    "interrupting at %s (%s trigger)\n",
+		    (esc->sc_ist == IST_LEVEL) ? "level" : "edge", intrstr);
+	}
 
 	return (rv);
 }

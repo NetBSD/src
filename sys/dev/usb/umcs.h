@@ -1,4 +1,4 @@
-/* $NetBSD: umcs.h,v 1.2 2019/06/04 10:15:22 msaitoh Exp $ */
+/* $NetBSD: umcs.h,v 1.2.14.1 2021/08/01 22:42:32 thorpej Exp $ */
 /* $FreeBSD: head/sys/dev/usb/serial/umcs.h 252123 2013-06-23 20:19:51Z thomas $ */
 
 /*-
@@ -34,7 +34,7 @@
 #define	UMCS7840_READ_LENGTH	1	/* bytes */
 #define	UMCS7840_CTRL_TIMEOUT	500	/* ms */
 
-/* Read/Wrtire registers vendor commands */
+/* Read/Write registers vendor commands */
 #define	MCS7840_RDREQ		0x0d
 #define	MCS7840_WRREQ		0x0e
 
@@ -56,16 +56,16 @@
 #define	MCS7840_DEV_REG_GPIO		0x07	/* GPIO_0 and GPIO_1 bits,
 						 * undocumented, see notes
 						 * below R/W */
-#define	MCS7840_DEV_REG_SP2		0x08	/* Options for for UART 2, R/W */
+#define	MCS7840_DEV_REG_SP2		0x08	/* Options for UART 2, R/W */
 #define	MCS7840_DEV_REG_CONTROL2	0x09	/* Control bits for UART 2,
 						 * R/W */
-#define	MCS7840_DEV_REG_SP3		0x0a	/* Options for for UART 3, R/W */
+#define	MCS7840_DEV_REG_SP3		0x0a	/* Options for UART 3, R/W */
 #define	MCS7840_DEV_REG_CONTROL3	0x0b	/* Control bits for UART 3,
 						 * R/W */
-#define	MCS7840_DEV_REG_SP4		0x0c	/* Options for for UART 4, R/W */
+#define	MCS7840_DEV_REG_SP4		0x0c	/* Options for UART 4, R/W */
 #define	MCS7840_DEV_REG_CONTROL4	0x0d	/* Control bits for UART 4,
 						 * R/W */
-#define	MCS7840_DEV_REG_PLL_DIV_M	0x0e	/* Pre-diviedr for PLL, R/W */
+#define	MCS7840_DEV_REG_PLL_DIV_M	0x0e	/* Pre-divider for PLL, R/W */
 #define	MCS7840_DEV_REG_UNKNOWN1	0x0f	/* NOT MENTIONED AND NOT USED */
 #define	MCS7840_DEV_REG_PLL_DIV_N	0x10	/* Loop divider for PLL, R/W */
 #define	MCS7840_DEV_REG_CLOCK_MUX	0x12	/* PLL input clock & Interrupt
@@ -109,28 +109,28 @@
 						 * 4, R/W */
 #define	MCS7840_DEV_REG_BI_FIFO_STAT1	0x32	/* Bulk-In FIFO Stat for Port
 						 * 1, contains number of
-						 * availiable bytes, R/Only */
+						 * available bytes, R/Only */
 #define	MCS7840_DEV_REG_BO_FIFO_STAT1	0x33	/* Bulk-out FIFO Stat for Port
 						 * 1, contains number of
-						 * availiable bytes, R/Only */
+						 * available bytes, R/Only */
 #define	MCS7840_DEV_REG_BI_FIFO_STAT2	0x34	/* Bulk-In FIFO Stat for Port
 						 * 2, contains number of
-						 * availiable bytes, R/Only */
+						 * available bytes, R/Only */
 #define	MCS7840_DEV_REG_BO_FIFO_STAT2	0x35	/* Bulk-out FIFO Stat for Port
 						 * 2, contains number of
-						 * availiable bytes, R/Only */
+						 * available bytes, R/Only */
 #define	MCS7840_DEV_REG_BI_FIFO_STAT3	0x36	/* Bulk-In FIFO Stat for Port
 						 * 3, contains number of
-						 * availiable bytes, R/Only */
+						 * available bytes, R/Only */
 #define	MCS7840_DEV_REG_BO_FIFO_STAT3	0x37	/* Bulk-out FIFO Stat for Port
 						 * 3, contains number of
-						 * availiable bytes, R/Only */
+						 * available bytes, R/Only */
 #define	MCS7840_DEV_REG_BI_FIFO_STAT4	0x38	/* Bulk-In FIFO Stat for Port
 						 * 4, contains number of
-						 * availiable bytes, R/Only */
+						 * available bytes, R/Only */
 #define	MCS7840_DEV_REG_BO_FIFO_STAT4	0x39	/* Bulk-out FIFO Stat for Port
 						 * 4, contains number of
-						 * availiable bytes, R/Only */
+						 * available bytes, R/Only */
 #define	MCS7840_DEV_REG_ZERO_PERIOD1	0x3a	/* Period between zero out
 						 * frames for Port 1, R/W */
 #define	MCS7840_DEV_REG_ZERO_PERIOD2	0x3b	/* Period between zero out
@@ -141,28 +141,28 @@
 						 * frames for Port 1, R/W */
 #define	MCS7840_DEV_REG_ZERO_ENABLE	0x3e	/* Enable/disable of zero out
 						 * frames, R/W */
-#define	MCS7840_DEV_REG_THR_VAL_LOW1	0x3f	/* Low 8 bits of threshhold
+#define	MCS7840_DEV_REG_THR_VAL_LOW1	0x3f	/* Low 8 bits of threshold
 						 * value for Bulk-Out for Port
 						 * 1, R/W */
-#define	MCS7840_DEV_REG_THR_VAL_HIGH1	0x40	/* High 1 bit of threshhold
+#define	MCS7840_DEV_REG_THR_VAL_HIGH1	0x40	/* High 1 bit of threshold
 						 * value for Bulk-Out and
 						 * enable flag for Port 1, R/W */
-#define	MCS7840_DEV_REG_THR_VAL_LOW2	0x41	/* Low 8 bits of threshhold
+#define	MCS7840_DEV_REG_THR_VAL_LOW2	0x41	/* Low 8 bits of threshold
 						 * value for Bulk-Out for Port
 						 * 2, R/W */
-#define	MCS7840_DEV_REG_THR_VAL_HIGH2	0x42	/* High 1 bit of threshhold
+#define	MCS7840_DEV_REG_THR_VAL_HIGH2	0x42	/* High 1 bit of threshold
 						 * value for Bulk-Out and
 						 * enable flag for Port 2, R/W */
-#define	MCS7840_DEV_REG_THR_VAL_LOW3	0x43	/* Low 8 bits of threshhold
+#define	MCS7840_DEV_REG_THR_VAL_LOW3	0x43	/* Low 8 bits of threshold
 						 * value for Bulk-Out for Port
 						 * 3, R/W */
-#define	MCS7840_DEV_REG_THR_VAL_HIGH3	0x44	/* High 1 bit of threshhold
+#define	MCS7840_DEV_REG_THR_VAL_HIGH3	0x44	/* High 1 bit of threshold
 						 * value for Bulk-Out and
 						 * enable flag for Port 3, R/W */
-#define	MCS7840_DEV_REG_THR_VAL_LOW4	0x45	/* Low 8 bits of threshhold
+#define	MCS7840_DEV_REG_THR_VAL_LOW4	0x45	/* Low 8 bits of threshold
 						 * value for Bulk-Out for Port
 						 * 4, R/W */
-#define	MCS7840_DEV_REG_THR_VAL_HIGH4	0x46	/* High 1 bit of threshhold
+#define	MCS7840_DEV_REG_THR_VAL_HIGH4	0x46	/* High 1 bit of threshold
 						 * value for Bulk-Out and
 						 * enable flag for Port 4, R/W */
 
@@ -229,7 +229,7 @@
  * Bits for PINPONGx registers
  * These registers control how often two input buffers
  * for Bulk-In FIFOs are swapped. One of buffers is used
- * for USB trnasfer, other for receiving data from UART.
+ * for USB transfer, other for receiving data from UART.
  * Exact meaning of 15 bit value in these registers is unknown
  */
 #define	MCS7840_DEV_PINPONGHIGH_MULT	128	/* Only 7 bits in PINPONGLOW
@@ -251,7 +251,7 @@
 
 /*
  * Constants for PLL dividers
- * Ouptut frequency of PLL is:
+ * Output frequency of PLL is:
  *   Fout = (N/M) * Fin.
  * Default PLL input frequency Fin is 12Mhz (on-chip).
  */
@@ -316,7 +316,7 @@
 #define	MCS7840_DEV_CLOCK_SELECT_PLL	0x04	/* PLL output (see for M and N
 						 * dividers) */
 #define	MCS7840_DEV_CLOCK_SELECT_EXT	0x05	/* External clock input
-						 * (device-dependend) */
+						 * (device-dependent) */
 #define	MCS7840_DEV_CLOCK_SELECT_RES1	0x06	/* Unused */
 #define	MCS7840_DEV_CLOCK_SELECT_RES2	0x07	/* Unused */
 
@@ -374,7 +374,7 @@
 
 /* Bits for ZERO_PERIODx */
 #define	MCS7840_DEV_ZERO_PERIODx_DEF	20	/* Number of Bulk-in requests
-						 * befor sending zero-sized
+						 * before sending zero-sized
 						 * reply */
 
 /* Bits for ZERO_ENABLE */
@@ -398,33 +398,33 @@
 #define	MCS7840_DEV_THR_VAL_HIGH_ENABLE	0x80	/* Enable threshold */
 
 /* These are documented in "public" datasheet */
-#define	MCS7840_DEV_REG_DCR0_1	0x04	/* Device contol register 0 for Port
+#define	MCS7840_DEV_REG_DCR0_1	0x04	/* Device control register 0 for Port
 					 * 1, R/W */
-#define	MCS7840_DEV_REG_DCR1_1	0x05	/* Device contol register 1 for Port
+#define	MCS7840_DEV_REG_DCR1_1	0x05	/* Device control register 1 for Port
 					 * 1, R/W */
-#define	MCS7840_DEV_REG_DCR2_1	0x06	/* Device contol register 2 for Port
+#define	MCS7840_DEV_REG_DCR2_1	0x06	/* Device control register 2 for Port
 					 * 1, R/W */
-#define	MCS7840_DEV_REG_DCR0_2	0x16	/* Device contol register 0 for Port
+#define	MCS7840_DEV_REG_DCR0_2	0x16	/* Device control register 0 for Port
 					 * 2, R/W */
-#define	MCS7840_DEV_REG_DCR1_2	0x17	/* Device contol register 1 for Port
+#define	MCS7840_DEV_REG_DCR1_2	0x17	/* Device control register 1 for Port
 					 * 2, R/W */
-#define	MCS7840_DEV_REG_DCR2_2	0x18	/* Device contol register 2 for Port
+#define	MCS7840_DEV_REG_DCR2_2	0x18	/* Device control register 2 for Port
 					 * 2, R/W */
-#define	MCS7840_DEV_REG_DCR0_3	0x19	/* Device contol register 0 for Port
+#define	MCS7840_DEV_REG_DCR0_3	0x19	/* Device control register 0 for Port
 					 * 3, R/W */
-#define	MCS7840_DEV_REG_DCR1_3	0x1a	/* Device contol register 1 for Port
+#define	MCS7840_DEV_REG_DCR1_3	0x1a	/* Device control register 1 for Port
 					 * 3, R/W */
-#define	MCS7840_DEV_REG_DCR2_3	0x1b	/* Device contol register 2 for Port
+#define	MCS7840_DEV_REG_DCR2_3	0x1b	/* Device control register 2 for Port
 					 * 3, R/W */
-#define	MCS7840_DEV_REG_DCR0_4	0x1c	/* Device contol register 0 for Port
+#define	MCS7840_DEV_REG_DCR0_4	0x1c	/* Device control register 0 for Port
 					 * 4, R/W */
-#define	MCS7840_DEV_REG_DCR1_4	0x1d	/* Device contol register 1 for Port
+#define	MCS7840_DEV_REG_DCR1_4	0x1d	/* Device control register 1 for Port
 					 * 4, R/W */
-#define	MCS7840_DEV_REG_DCR2_4	0x1e	/* Device contol register 2 for Port
+#define	MCS7840_DEV_REG_DCR2_4	0x1e	/* Device control register 2 for Port
 					 * 4, R/W */
 
 /* Bits of DCR0 registers, documented in datasheet */
-#define	MCS7840_DEV_DCR0_PWRSAVE		0x01	/* Shutdown transiver
+#define	MCS7840_DEV_DCR0_PWRSAVE		0x01	/* Shutdown transceiver
 							 * when USB Suspend is
 							 * engaged, default = 1 */
 #define	MCS7840_DEV_DCR0_RESERVED1		0x02	/* Unused */
@@ -508,7 +508,7 @@
 /* Interrupt endpoint bytes & bits */
 #define	MCS7840_IEP_FIFO_STATUS_INDEX	5
 /*
- * Thesse can be calculated as "1 << portnumber" for Bulk-out and
+ * These can be calculated as "1 << portnumber" for Bulk-out and
  * "1 << (portnumber+1)" for Bulk-in
  */
 #define	MCS7840_IEP_BO_PORT1_HASDATA	0x01
@@ -529,7 +529,7 @@
 						 * R/W */
 #define	MCS7840_UART_REG_FCR		0x02	/* FIFO Control register -
 						 * W/Only */
-#define	MCS7840_UART_REG_ISR		0x02	/* Interrupt Status Registter
+#define	MCS7840_UART_REG_ISR		0x02	/* Interrupt Status Register
 						 * R/Only */
 #define	MCS7840_UART_REG_LCR		0x03	/* Line control register R/W */
 #define	MCS7840_UART_REG_MCR		0x04	/* Modem control register R/W */
@@ -542,11 +542,11 @@
 #define	MCS7840_UART_REG_DLM		0x01	/* High bits of BAUD divider */
 
 /* IER bits */
-#define	MCS7840_UART_IER_RXREADY	0x01	/* RX Ready interrumpt mask */
-#define	MCS7840_UART_IER_TXREADY	0x02	/* TX Ready interrumpt mask */
-#define	MCS7840_UART_IER_RXSTAT		0x04	/* RX Status interrumpt mask */
+#define	MCS7840_UART_IER_RXREADY	0x01	/* RX Ready interrupt mask */
+#define	MCS7840_UART_IER_TXREADY	0x02	/* TX Ready interrupt mask */
+#define	MCS7840_UART_IER_RXSTAT		0x04	/* RX Status interrupt mask */
 #define	MCS7840_UART_IER_MODEM		0x08	/* Modem status change
-						 * interrumpt mask */
+						 * interrupt mask */
 #define	MCS7840_UART_IER_SLEEP		0x10	/* SLEEP enable */
 
 /* FCR bits */

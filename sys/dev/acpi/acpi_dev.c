@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_dev.c,v 1.1 2020/12/06 02:57:30 jmcneill Exp $ */
+/* $NetBSD: acpi_dev.c,v 1.1.6.1 2021/08/01 22:42:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_dev.c,v 1.1 2020/12/06 02:57:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_dev.c,v 1.1.6.1 2021/08/01 22:42:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -208,7 +208,7 @@ acpi_read(dev_t dev, struct uio *uio, int flag)
 
 	/* Copy the contents of the table to user-space */
 	pa = uio->uio_offset;
-	len = uimin(pa - table_pa + table_len, uio->uio_resid);
+	len = uimin(table_len - (pa - table_pa), uio->uio_resid);
 	data = AcpiOsMapMemory(pa, len);
 	if (data == NULL) {
 		return ENOMEM;

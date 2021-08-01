@@ -1,4 +1,4 @@
-/* $NetBSD: pci_1000.c,v 1.27 2020/09/22 15:24:02 thorpej Exp $ */
+/* $NetBSD: pci_1000.c,v 1.27.6.1 2021/08/01 22:42:02 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -60,23 +60,21 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_1000.c,v 1.27 2020/09/22 15:24:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_1000.c,v 1.27.6.1 2021/08/01 22:42:02 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/syslog.h>
 
 #include <machine/autoconf.h>
+#include <machine/rpb.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
-
-#include <alpha/pci/pci_1000.h>
 
 #include "sio.h"
 #if NSIO > 0 || NPCEB > 0
@@ -96,11 +94,10 @@ static void	dec_1000_enable_intr(pci_chipset_tag_t, int irq);
 static void	dec_1000_disable_intr(pci_chipset_tag_t, int irq);
 static void	pci_1000_imi(void);
 
-void
-pci_1000_pickintr(void *core, bus_space_tag_t iot, bus_space_tag_t memt, pci_chipset_tag_t pc)
+static void
+pci_1000_pickintr(void *core, bus_space_tag_t iot, bus_space_tag_t memt,
+    pci_chipset_tag_t pc)
 {
-	char *cp;
-	int i;
 
 	another_mystery_icu_iot = iot;
 
@@ -116,32 +113,22 @@ pci_1000_pickintr(void *core, bus_space_tag_t iot, bus_space_tag_t memt, pci_chi
 
 	pc->pc_pciide_compat_intr_establish = NULL;
 
-#define PCI_1000_IRQ_STR 8
-	pc->pc_shared_intrs =
-	    alpha_shared_intr_alloc(PCI_NIRQ, PCI_1000_IRQ_STR);
-	pc->pc_intr_desc = "dec 1000 irq";
+	pc->pc_intr_desc = "dec 1000";
 	pc->pc_vecbase = 0x900;
 	pc->pc_nirq = PCI_NIRQ;
 
 	pc->pc_intr_enable = dec_1000_enable_intr;
 	pc->pc_intr_disable = dec_1000_disable_intr;
 
-	for (i = 0; i < PCI_NIRQ; i++) {
-		alpha_shared_intr_set_maxstrays(pc->pc_shared_intrs, i,
-		    PCI_STRAY_MAX);
-		
-		cp = alpha_shared_intr_string(pc->pc_shared_intrs, i);
-		snprintf(cp, PCI_1000_IRQ_STR, "irq %d", i);
-		evcnt_attach_dynamic(alpha_shared_intr_evcnt(
-		    pc->pc_shared_intrs, i), EVCNT_TYPE_INTR, NULL,
-		    "dec 1000", cp);
-	}
-
 	pci_1000_imi();
+
+	alpha_pci_intr_alloc(pc, PCI_STRAY_MAX);
+
 #if NSIO > 0 || NPCEB > 0
 	sio_intr_setup(pc, iot);
 #endif
 }
+ALPHA_PCI_INTR_INIT(ST_DEC_1000, pci_1000_pickintr)
 
 static int
 dec_1000_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)

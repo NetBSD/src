@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx_dma.c,v 1.28.4.1 2021/05/13 00:47:21 thorpej Exp $ */
+/* $NetBSD: dwlpx_dma.c,v 1.28.4.2 2021/08/01 22:42:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx_dma.c,v 1.28.4.1 2021/05/13 00:47:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx_dma.c,v 1.28.4.2 2021/08/01 22:42:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: dwlpx_dma.c,v 1.28.4.1 2021/05/13 00:47:21 thorpej E
 #include <alpha/tlsb/kftxxreg.h>
 #include <alpha/pci/dwlpxreg.h>
 #include <alpha/pci/dwlpxvar.h>
-#include <alpha/pci/pci_kn8ae.h>
 
 static bus_dma_tag_t dwlpx_dma_get_tag(bus_dma_tag_t, alpha_bus_t);
 

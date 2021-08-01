@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_specops.c,v 1.13 2020/05/16 18:31:49 christos Exp $	*/
+/*	$NetBSD: tmpfs_specops.c,v 1.13.6.1 2021/08/01 22:42:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_specops.c,v 1.13 2020/05/16 18:31:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_specops.c,v 1.13.6.1 2021/08/01 22:42:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -52,49 +52,23 @@ int (**tmpfs_specop_p)(void *);
 
 const struct vnodeopv_entry_desc tmpfs_specop_entries[] = {
 	{ &vop_default_desc,		vn_default_error },
-	{ &vop_lookup_desc,		tmpfs_spec_lookup },
-	{ &vop_create_desc,		tmpfs_spec_create },
-	{ &vop_mknod_desc,		tmpfs_spec_mknod },
-	{ &vop_open_desc,		tmpfs_spec_open },
+	GENFS_SPECOP_ENTRIES,
 	{ &vop_close_desc,		tmpfs_spec_close },
-	{ &vop_access_desc,		tmpfs_spec_access },
+	{ &vop_access_desc,		tmpfs_access },
 	{ &vop_accessx_desc,		genfs_accessx },
-	{ &vop_getattr_desc,		tmpfs_spec_getattr },
-	{ &vop_setattr_desc,		tmpfs_spec_setattr },
+	{ &vop_getattr_desc,		tmpfs_getattr },
+	{ &vop_setattr_desc,		tmpfs_setattr },
 	{ &vop_read_desc,		tmpfs_spec_read },
 	{ &vop_write_desc,		tmpfs_spec_write },
-	{ &vop_fallocate_desc,		spec_fallocate },
-	{ &vop_fdiscard_desc,		spec_fdiscard },
-	{ &vop_ioctl_desc,		tmpfs_spec_ioctl },
-	{ &vop_fcntl_desc,		tmpfs_spec_fcntl },
-	{ &vop_poll_desc,		tmpfs_spec_poll },
-	{ &vop_kqfilter_desc,		tmpfs_spec_kqfilter },
-	{ &vop_revoke_desc,		tmpfs_spec_revoke },
-	{ &vop_mmap_desc,		tmpfs_spec_mmap },
-	{ &vop_fsync_desc,		tmpfs_spec_fsync },
-	{ &vop_seek_desc,		tmpfs_spec_seek },
-	{ &vop_remove_desc,		tmpfs_spec_remove },
-	{ &vop_link_desc,		tmpfs_spec_link },
-	{ &vop_rename_desc,		tmpfs_spec_rename },
-	{ &vop_mkdir_desc,		tmpfs_spec_mkdir },
-	{ &vop_rmdir_desc,		tmpfs_spec_rmdir },
-	{ &vop_symlink_desc,		tmpfs_spec_symlink },
-	{ &vop_readdir_desc,		tmpfs_spec_readdir },
-	{ &vop_readlink_desc,		tmpfs_spec_readlink },
-	{ &vop_abortop_desc,		tmpfs_spec_abortop },
-	{ &vop_inactive_desc,		tmpfs_spec_inactive },
-	{ &vop_reclaim_desc,		tmpfs_spec_reclaim },
-	{ &vop_lock_desc,		tmpfs_spec_lock },
-	{ &vop_unlock_desc,		tmpfs_spec_unlock },
-	{ &vop_bmap_desc,		tmpfs_spec_bmap },
-	{ &vop_strategy_desc,		tmpfs_spec_strategy },
-	{ &vop_print_desc,		tmpfs_spec_print },
-	{ &vop_pathconf_desc,		tmpfs_spec_pathconf },
-	{ &vop_islocked_desc,		tmpfs_spec_islocked },
-	{ &vop_advlock_desc,		tmpfs_spec_advlock },
-	{ &vop_bwrite_desc,		tmpfs_spec_bwrite },
-	{ &vop_getpages_desc,		tmpfs_spec_getpages },
-	{ &vop_putpages_desc,		tmpfs_spec_putpages },
+	{ &vop_fcntl_desc,		genfs_fcntl },
+	{ &vop_fsync_desc,		spec_fsync },
+	{ &vop_inactive_desc,		tmpfs_inactive },
+	{ &vop_reclaim_desc,		tmpfs_reclaim },
+	{ &vop_lock_desc,		genfs_lock },
+	{ &vop_unlock_desc,		genfs_unlock },
+	{ &vop_print_desc,		tmpfs_print },
+	{ &vop_islocked_desc,		genfs_islocked },
+	{ &vop_bwrite_desc,		vn_bwrite },
 	{ NULL, NULL }
 };
 

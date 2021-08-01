@@ -317,7 +317,6 @@ unionfs_relookup(struct vnode *dvp, struct vnode **vpp,
 	cn->cn_cred = cnp->cn_cred;
 
 	cn->cn_nameptr = pnbuf;
-	cn->cn_consume = cnp->cn_consume;
 
 	if (nameiop == DELETE)
 		cn->cn_flags |= (cnp->cn_flags & DOWHITEOUT);
@@ -629,7 +628,6 @@ unionfs_vn_create_on_upper(struct vnode **vpp, struct vnode *udvp,
 	cn.cn_flags = (LOCKPARENT | LOCKLEAF | ISLASTCN);
 	cn.cn_cred = cred;
 	cn.cn_nameptr = pnbuf;
-	cn.cn_consume = 0;
 
 	vref(udvp);
 	if ((error = relookup(udvp, &vp, &cn, 0)) != 0)
@@ -860,7 +858,6 @@ unionfs_check_rmdir(struct vnode *vp, kauth_cred_t cred)
 			cn.cn_nameiop = LOOKUP;
 			cn.cn_flags = (LOCKPARENT | LOCKLEAF | RDONLY | ISLASTCN);
 			cn.cn_cred = cred;
-			cn.cn_consume = 0;
 
 			/*
 			 * check entry in lower.

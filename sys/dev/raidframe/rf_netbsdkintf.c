@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.391.2.2 2021/06/17 04:46:30 thorpej Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.391.2.3 2021/08/01 22:42:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.391.2.2 2021/06/17 04:46:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.391.2.3 2021/08/01 22:42:31 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_autoconfig.h"
@@ -331,7 +331,7 @@ int raidautoconfig = 0;
 #endif
 static bool raidautoconfigdone = false;
 
-struct RF_Pools_s rf_pools;
+struct pool rf_alloclist_pool;   /* AllocList */
 
 static LIST_HEAD(, raid_softc) raids = LIST_HEAD_INITIALIZER(raids);
 static kmutex_t raid_lock;
@@ -483,42 +483,56 @@ rf_containsboot(RF_Raid_t *r, device_t bdv) {
 static void
 rf_buildroothack(RF_ConfigSet_t *config_sets)
 {
+	RF_AutoConfig_t *ac_list;
 	RF_ConfigSet_t *cset;
 	RF_ConfigSet_t *next_cset;
 	int num_root;
+	int raid_added;
 	struct raid_softc *sc, *rsc;
 	struct dk_softc *dksc = NULL;	/* XXX gcc -Os: may be used uninit. */
 
 	sc = rsc = NULL;
 	num_root = 0;
-	cset = config_sets;
-	while (cset != NULL) {
-		next_cset = cset->next;
-		if (rf_have_enough_components(cset) &&
-		    cset->ac->clabel->autoconfigure == 1) {
-			sc = rf_auto_config_set(cset);
-			if (sc != NULL) {
-				aprint_debug("raid%d: configured ok, rootable %d\n",
-				    sc->sc_unit, cset->rootable);
-				if (cset->rootable) {
-					rsc = sc;
-					num_root++;
+
+	raid_added = 1;
+	while (raid_added > 0) {
+		raid_added = 0;
+		cset = config_sets;
+		while (cset != NULL) {
+			next_cset = cset->next;
+			if (rf_have_enough_components(cset) &&
+			    cset->ac->clabel->autoconfigure == 1) {
+				sc = rf_auto_config_set(cset);
+				if (sc != NULL) {
+					aprint_debug("raid%d: configured ok, rootable %d\n",
+						     sc->sc_unit, cset->rootable);
+					/* We added one RAID set */
+					raid_added++;
+					if (cset->rootable) {
+						rsc = sc;
+						num_root++;
+					}
+				} else {
+					/* The autoconfig didn't work :( */
+					aprint_debug("Autoconfig failed\n");
+					rf_release_all_vps(cset);
 				}
 			} else {
-				/* The autoconfig didn't work :( */
-				aprint_debug("Autoconfig failed\n");
+				/* we're not autoconfiguring this set...
+				   release the associated resources */
 				rf_release_all_vps(cset);
 			}
-		} else {
-			/* we're not autoconfiguring this set...
-			   release the associated resources */
-			rf_release_all_vps(cset);
+			/* cleanup */
+			rf_cleanup_config_set(cset);
+			cset = next_cset;
 		}
-		/* cleanup */
-		rf_cleanup_config_set(cset);
-		cset = next_cset;
+		if (raid_added > 0) {
+			/* We added at least one RAID set, so re-scan for recursive RAID */
+			ac_list = rf_find_raid_components();
+			config_sets = rf_create_auto_sets(ac_list);
+		}
 	}
-
+	
 	/* if the user has specified what the root device should be
 	   then we don't touch booted_device or boothowto... */
 
@@ -1904,7 +1918,6 @@ raiddoaccess(RF_Raid_t *raidPtr, struct buf *bp)
 	RF_SectorCount_t num_blocks, pb, sum;
 	RF_RaidAddr_t raid_addr;
 	daddr_t blocknum;
-	int     do_async;
 	int rc;
 
 	rf_lock_mutex2(raidPtr->mutex);
@@ -1954,17 +1967,12 @@ raiddoaccess(RF_Raid_t *raidPtr, struct buf *bp)
 	raidPtr->openings--;
 	rf_unlock_mutex2(raidPtr->mutex);
 
-	/*
-	 * Everything is async.
-	 */
-	do_async = 1;
-
 	/* don't ever condition on bp->b_flags & B_WRITE.
 	 * always condition on B_READ instead */
 
 	rc = rf_DoAccess(raidPtr, (bp->b_flags & B_READ) ?
 			 RF_IO_TYPE_READ : RF_IO_TYPE_WRITE,
-			 do_async, raid_addr, num_blocks,
+			 raid_addr, num_blocks,
 			 bp->b_data, bp, RF_DAG_NONBLOCKING_IO);
 
 done:
@@ -3558,14 +3566,18 @@ rf_auto_config_set(RF_ConfigSet_t *cset)
 }
 
 void
-rf_pool_init(struct pool *p, size_t size, const char *w_chan,
+rf_pool_init(RF_Raid_t *raidPtr, char *w_chan, struct pool *p, size_t size, const char *pool_name,
 	     size_t xmin, size_t xmax)
 {
 
+	/* Format: raid%d_foo */
+	snprintf(w_chan, RF_MAX_POOLNAMELEN, "raid%d_%s", raidPtr->raidid, pool_name);
+	
 	pool_init(p, size, 0, 0, 0, w_chan, NULL, IPL_BIO);
 	pool_sethiwat(p, xmax);
 	pool_prime(p, xmin);
 }
+
 
 /*
  * rf_buf_queue_check(RF_Raid_t raidPtr) -- looks into the buffer queue

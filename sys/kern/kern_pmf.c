@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pmf.c,v 1.45 2020/06/11 02:30:21 thorpej Exp $ */
+/* $NetBSD: kern_pmf.c,v 1.45.6.1 2021/08/01 22:42:38 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.45 2020/06/11 02:30:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.45.6.1 2021/08/01 22:42:38 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
