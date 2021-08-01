@@ -1,4 +1,4 @@
-.\"	$NetBSD: ssdfb.4,v 1.5 2021/08/01 15:35:47 tnn Exp $
+.\"	$NetBSD: ssdfb.4,v 1.6 2021/08/01 16:17:05 tnn Exp $
 .\"
 .\" Copyright (c) 2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -95,17 +95,32 @@ On most displays, the contrast setting can be adjusted with the
 .Xr wsconsctl 8
 program.
 .Sh EXAMPLES
-To attach an SSD1322 display using the 4-wire SPI interface on an
+To attach an SSD1322 display using the 4-wire
+.Xr spi 4
+interface on an
 Allwinner A20 ARM single board computer, the following Device Tree overlay
 can be used:
 .Bd -literal -offset indent
 &spi0 {
-        ssdfb@0 {
-                compatible = "solomon,ssd1322";
-                reg = <0x00>;
-                dc-gpio = <0x10 0x07 0x02 0x00>;
-                status = "okay";
-        };
+	ssdfb@0 {
+		compatible = "solomon,ssd1322";
+		reg = <0x00>;
+		dc-gpio = <0x10 0x07 0x02 0x00>;
+		status = "okay";
+	};
+};
+.Ed
+.Pp
+To attach an SSD1306 display using the
+.Xr iic 4
+interface on the same board, use:
+.Bd -literal -offset indent
+&i2c2 {
+	ssdfb@3c {
+		compatible = "solomon,ssd1306fb-i2c";
+		reg = <0x3c>;
+		status = "okay";
+	};
 };
 .Ed
 .Sh SEE ALSO
