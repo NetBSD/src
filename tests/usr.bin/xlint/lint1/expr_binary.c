@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_binary.c,v 1.4 2021/08/01 14:42:21 rillig Exp $	*/
+/*	$NetBSD: expr_binary.c,v 1.5 2021/08/01 14:51:41 rillig Exp $	*/
 # 3 "expr_binary.c"
 
 /*
@@ -117,4 +117,13 @@ cover_balance(void)
 	sink(0UL + 0LL);
 	/* expect+1: 'unsigned long long' */
 	sink(0LL + 0UL);
+
+	/*
+	 * Ensure that __int128_t is listed in the integer ranks.  This table
+	 * only becomes relevant when both operands have the same width.
+	 */
+	/* expect+1: '__uint128_t' */
+	sink((__uint128_t)1 + (__int128_t)1);
+	/* expect+1: '__uint128_t' */
+	sink((__int128_t)1 + (__uint128_t)1);
 }
