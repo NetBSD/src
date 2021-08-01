@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_pqdegdags.c,v 1.14 2021/08/01 15:29:30 andvar Exp $	*/
+/*	$NetBSD: rf_pqdegdags.c,v 1.15 2021/08/01 21:58:56 andvar Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_pqdegdags.c,v 1.14 2021/08/01 15:29:30 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_pqdegdags.c,v 1.15 2021/08/01 21:58:56 andvar Exp $");
 
 #include "rf_archs.h"
 
@@ -379,7 +379,7 @@ RF_CREATE_DAG_FUNC_DECL(rf_PQ_DDLargeWrite)
        failed data units will do the correct thing. So in this case,
        the dag looks like
 
-            full stripe read of surviving data units (not being overwriten)
+            full stripe read of surviving data units (not being overwritten)
 	    write new data (ignoring failed units)   compute P&Q
 	                                             write P&Q
 
