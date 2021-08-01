@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.59 2021/08/01 06:40:37 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.60 2021/08/01 06:58:58 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.59 2021/08/01 06:40:37 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.60 2021/08/01 06:58:58 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -259,10 +259,28 @@ symt_t	symtyp;
 
 
 static void
+symtab_add_hash(sym_t *sym, size_t h)
+{
+
+	if ((sym->s_link = symtab[h]) != NULL)
+		symtab[h]->s_rlink = &sym->s_link;
+	sym->s_rlink = &symtab[h];
+	symtab[h] = sym;
+}
+
+static void
+symtab_add(sym_t *sym)
+{
+	size_t h;
+
+	h = hash(sym->s_name);
+	symtab_add_hash(sym, h);
+}
+
+static void
 add_keyword(const struct kwtab *kw, u_int deco)
 {
 	sym_t *sym;
-	size_t h;
 	char buf[256];
 	const char *name;
 
@@ -298,11 +316,8 @@ add_keyword(const struct kwtab *kw, u_int deco)
 	} else if (kw->kw_token == T_QUAL) {
 		sym->s_tqual = kw->kw_tqual;
 	}
-	h = hash(sym->s_name);
-	if ((sym->s_link = symtab[h]) != NULL)
-		symtab[h]->s_rlink = &sym->s_link;
-	sym->s_rlink = &symtab[h];
-	symtab[h] = sym;
+
+	symtab_add(sym);
 }
 
 /*
@@ -1380,15 +1395,15 @@ lex_wide_string(void)
 }
 
 /*
- * As noted above the scanner does not create new symbol table entries
+ * As noted above, the scanner does not create new symbol table entries
  * for symbols it cannot find in the symbol table. This is to avoid
  * putting undeclared symbols into the symbol table if a syntax error
  * occurs.
  *
- * getsym() is called as soon as it is probably ok to put the symbol to the
+ * getsym() is called as soon as it is probably ok to put the symbol in the
  * symbol table. It is still possible that symbols are put in the symbol
  * table that are not completely declared due to syntax errors. To avoid too
- * many problems in this case, symbols get type int in getsym().
+ * many problems in this case, symbols get type 'int' in getsym().
  *
  * XXX calls to getsym() should be delayed until decl1*() is called.
  */
@@ -1446,10 +1461,7 @@ getsym(sbuf_t *sb)
 
 	symtyp = FVFT;
 
-	if ((sym->s_link = symtab[sb->sb_hash]) != NULL)
-		symtab[sb->sb_hash]->s_rlink = &sym->s_link;
-	sym->s_rlink = &symtab[sb->sb_hash];
-	symtab[sb->sb_hash] = sym;
+	symtab_add_hash(sym, sb->sb_hash);
 
 	*di->d_ldlsym = sym;
 	di->d_ldlsym = &sym->s_dlnxt;
@@ -1466,13 +1478,11 @@ sym_t *
 mktempsym(type_t *t)
 {
 	static int n = 0;
-	int h;
 	char *s = getlblk(block_level, 64);
 	sym_t *sym = getblk(sizeof(*sym));
 	scl_t scl;
 
 	(void)snprintf(s, 64, "%.8d_tmp", n++);
-	h = hash(s);
 
 	scl = dcs->d_scl;
 	if (scl == NOSCL)
@@ -1486,10 +1496,7 @@ mktempsym(type_t *t)
 	sym->s_used = true;
 	sym->s_set = true;
 
-	if ((sym->s_link = symtab[h]) != NULL)
-		symtab[h]->s_rlink = &sym->s_link;
-	sym->s_rlink = &symtab[h];
-	symtab[h] = sym;
+	symtab_add(sym);
 
 	*dcs->d_ldlsym = sym;
 	dcs->d_ldlsym = &sym->s_dlnxt;
@@ -1542,15 +1549,10 @@ rmsyms(sym_t *syms)
 void
 inssym(int bl, sym_t *sym)
 {
-	int	h;
 
 	debug_step("inssym '%s' %d '%s'",
 	    sym->s_name, sym->s_kind, type_name(sym->s_type));
-	h = hash(sym->s_name);
-	if ((sym->s_link = symtab[h]) != NULL)
-		symtab[h]->s_rlink = &sym->s_link;
-	sym->s_rlink = &symtab[h];
-	symtab[h] = sym;
+	symtab_add(sym);
 	sym->s_block_level = bl;
 	lint_assert(sym->s_link == NULL ||
 		    sym->s_block_level >= sym->s_link->s_block_level);
@@ -1589,12 +1591,10 @@ cleanup(void)
 sym_t *
 pushdown(const sym_t *sym)
 {
-	int	h;
 	sym_t	*nsym;
 
 	debug_step("pushdown '%s' %d '%s'",
 	    sym->s_name, (int)sym->s_kind, type_name(sym->s_type));
-	h = hash(sym->s_name);
 	nsym = getblk(sizeof(*nsym));
 	lint_assert(sym->s_block_level <= block_level);
 	nsym->s_name = sym->s_name;
@@ -1602,10 +1602,7 @@ pushdown(const sym_t *sym)
 	nsym->s_kind = sym->s_kind;
 	nsym->s_block_level = block_level;
 
-	if ((nsym->s_link = symtab[h]) != NULL)
-		symtab[h]->s_rlink = &nsym->s_link;
-	nsym->s_rlink = &symtab[h];
-	symtab[h] = nsym;
+	symtab_add(nsym);
 
 	*dcs->d_ldlsym = nsym;
 	dcs->d_ldlsym = &nsym->s_dlnxt;
