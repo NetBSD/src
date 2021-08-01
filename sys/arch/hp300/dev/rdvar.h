@@ -1,4 +1,4 @@
-/*	$NetBSD: rdvar.h,v 1.23.34.1 2021/06/17 04:46:20 thorpej Exp $	*/
+/*	$NetBSD: rdvar.h,v 1.23.34.2 2021/08/01 22:42:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,8 +42,7 @@
 #include <sys/rndsource.h>
 
 struct	rdidentinfo {
-	short	ri_hwid;		/* 2 byte HW id */
-	short	ri_maxunum;		/* maximum allowed unit number */
+	uint16_t ri_hwid;		/* 2 byte HW id */
 	const char *ri_desc;		/* drive type description */
 	int	ri_nbpt;		/* DEV_BSIZE blocks per track */
 	int	ri_ntpc;		/* tracks per cylinder */
@@ -69,7 +68,6 @@ struct	rd_softc {
 	short	sc_type;
 	char	*sc_addr;
 	int	sc_resid;
-	struct	rd_describe sc_rddesc;
 	struct	hpibqueue sc_hq;	/* hpib job queue entry */
 	struct	rd_iocmd sc_ioc;
 	struct	rd_rscmd sc_rsc;

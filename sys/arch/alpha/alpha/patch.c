@@ -1,7 +1,7 @@
-/*	$NetBSD: patch.c,v 1.5 2020/09/04 03:41:49 thorpej Exp $	*/
+/*	$NetBSD: patch.c,v 1.5.6.1 2021/08/01 22:42:00 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2021 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.5 2020/09/04 03:41:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.5.6.1 2021/08/01 22:42:00 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -47,6 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.5 2020/09/04 03:41:49 thorpej Exp $");
 #include <machine/alpha.h>
 #include <machine/intr.h>
 
+#include <alpha/alpha/db_instruction.h>
+
 void	_membar_producer(void);
 void	_membar_producer_end(void);
 void	_membar_producer_mp(void);
@@ -57,7 +59,35 @@ void	_membar_sync_end(void);
 void	_membar_sync_mp(void);
 void	_membar_sync_mp_end(void);
 
-static void __attribute__((__unused__))
+extern char alpha_copystr_bwx[], alpha_copystr_bwx_end[];
+extern char alpha_copystr[], alpha_copystr_end[];
+
+#if defined(MULTIPROCESSOR)
+extern uint32_t *lock_stub_patch_table[];
+
+static void
+patch_lock_stubs(void)
+{
+	alpha_instruction insn = {
+		.mem_format = {
+			.opcode = op_special,
+			.displacement = op_mb,
+		},
+	};
+	int i, s;
+
+	s = splhigh();
+
+	for (i = 0; lock_stub_patch_table[i] != NULL; i++) {
+		*lock_stub_patch_table[i] = insn.bits;
+	}
+	alpha_pal_imb();
+
+	splx(s);
+}
+#endif /* MULTIPROCESSOR */
+
+static void
 patchfunc(void *from_s, void *from_e, void *to_s, void *to_e)
 {
 	int s;
@@ -85,10 +115,17 @@ alpha_patch(bool is_mp)
 	 * kernel code.
 	 */
 
+	if (cpu_amask & ALPHA_AMASK_BWX) {
+		patchfunc(alpha_copystr_bwx, alpha_copystr_bwx_end,
+		    alpha_copystr, alpha_copystr_end);
+	}
+
 #if defined(MULTIPROCESSOR)
 	if (is_mp) {
 		KASSERT(curcpu()->ci_flags & CPUF_PRIMARY);
 		KASSERT((cpus_running & ~(1UL << cpu_number())) == 0);
+
+		patch_lock_stubs();
 
 		patchfunc(_membar_producer_mp, _membar_producer_mp_end,
 			  _membar_producer, _membar_producer_end);

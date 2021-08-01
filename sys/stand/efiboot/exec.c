@@ -1,4 +1,4 @@
-/* $NetBSD: exec.c,v 1.19.6.2 2021/06/17 04:46:36 thorpej Exp $ */
+/* $NetBSD: exec.c,v 1.19.6.3 2021/08/01 22:42:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jason R. Thorpe
@@ -245,6 +245,8 @@ exec_netbsd(const char *fname, const char *args)
 	u_long marks[MARK_MAX], alloc_size;
 	EFI_STATUS status;
 	int fd, ohowto;
+
+	twiddle_toggle = 0;
 
 	load_file(get_initrd_path(), 0, false, &initrd_addr, &initrd_size);
 	load_file(get_dtb_path(), 0, false, &dtb_addr, &dtb_size);

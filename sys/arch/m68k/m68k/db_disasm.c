@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.45 2021/04/06 16:04:44 simonb Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.45.2.1 2021/08/01 22:42:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.45 2021/04/06 16:04:44 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.45.2.1 2021/08/01 22:42:11 thorpej Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -176,7 +176,7 @@ static const char hexdigits[] = "0123456789abcdef";
 #endif
 
 /*
- * Disassemble intruction at location ``loc''.
+ * Disassemble instruction at location ``loc''.
  * Returns location of next instruction.
  */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: smbiosvar.h,v 1.6 2019/08/21 04:51:41 msaitoh Exp $ */
+/*	$NetBSD: smbiosvar.h,v 1.2.4.2 2021/08/01 22:42:21 thorpej Exp $ */
 /*
  * Copyright (c) 2006 Gordon Willem Klok <gklok@cogeco.ca>
  * Copyright (c) 2005 Jordan Hargrave
@@ -25,11 +25,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-#ifndef _I386_SMBIOSVAR_
-#define _I386_SMBIOSVAR_
 
-#define SMBIOS_START			0xf0000
-#define SMBIOS_END			0xfffff
+#ifndef _DEV_SMBIOSVAR_H
+#define _DEV_SMBIOSVAR_H
 
 #define SMBIOS_UUID_NPRESENT		0x1
 #define SMBIOS_UUID_NSET		0x2
@@ -43,6 +41,8 @@
 #define SMBIOS_UUID_REPLEN 37 /* 16 zero padded values, 4 hyphens, 1 null */
 
 struct smbios_entry {
+	paddr_t		hdrphys;
+	paddr_t		tabphys;
 	uint8_t 	rev;
 	uint8_t 	mjr;
 	uint8_t 	min;
@@ -287,6 +287,10 @@ struct smbios_ipmi {
         uint8_t        smipmi_irq;             /* IRQ if applicable */
 } __packed;
 
+extern struct smbios_entry smbios_entry;
+
+int smbios2_check_header(const uint8_t *);
+int smbios3_check_header(const uint8_t *);
 int smbios_find_table(uint8_t, struct smbtable *);
 char *smbios_get_string(struct smbtable *, uint8_t, char *, size_t);
 

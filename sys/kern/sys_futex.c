@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_futex.c,v 1.11 2020/05/05 15:25:18 riastradh Exp $	*/
+/*	$NetBSD: sys_futex.c,v 1.11.6.1 2021/08/01 22:42:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.11 2020/05/05 15:25:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.11.6.1 2021/08/01 22:42:38 thorpej Exp $");
 
 /*
  * Futexes
@@ -114,6 +114,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.11 2020/05/05 15:25:18 riastradh Exp
  *	This implementation does not support priority inheritance.
  */
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/atomic.h>
 #include <sys/condvar.h>

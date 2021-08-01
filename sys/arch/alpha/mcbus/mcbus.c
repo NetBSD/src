@@ -1,4 +1,4 @@
-/* $NetBSD: mcbus.c,v 1.23 2021/04/24 23:36:23 thorpej Exp $ */
+/* $NetBSD: mcbus.c,v 1.23.2.1 2021/08/01 22:42:01 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -37,12 +37,11 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcbus.c,v 1.23 2021/04/24 23:36:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcbus.c,v 1.23.2.1 2021/08/01 22:42:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 
 #include <machine/autoconf.h>
 #include <machine/rpb.h>

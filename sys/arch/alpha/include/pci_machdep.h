@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.21.6.1 2021/06/17 04:46:17 thorpej Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.21.6.2 2021/08/01 22:42:01 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -96,6 +96,18 @@ struct alpha_pci_chipset {
 			    struct cpu_info *);
 };
 
+struct alpha_pci_intr_impl {
+	uint64_t	systype;
+	void		(*intr_init)(void *, bus_space_tag_t, bus_space_tag_t,
+			    pci_chipset_tag_t);
+};
+
+#define	ALPHA_PCI_INTR_INIT(_st_, _fn_)					\
+static const struct alpha_pci_intr_impl __CONCAT(intr_impl_st_,_st_) = {\
+	.systype = (_st_), .intr_init = (_fn_),				\
+};									\
+__link_set_add_rodata(alpha_pci_intr_impls, __CONCAT(intr_impl_st_,_st_));
+
 /*
  * Functions provided to machine-independent PCI code.
  */
@@ -121,6 +133,10 @@ void	pci_intr_disestablish(pci_chipset_tag_t, void *);
 void	pci_display_console(bus_space_tag_t, bus_space_tag_t,
 	    pci_chipset_tag_t, int, int, int);
 void	device_pci_register(device_t, void *);
+
+void	alpha_pci_intr_init(void *, bus_space_tag_t, bus_space_tag_t,
+	    pci_chipset_tag_t);
+void	alpha_pci_intr_alloc(pci_chipset_tag_t, unsigned int);
 
 int	alpha_pci_generic_intr_map(const struct pci_attach_args *,
 	    pci_intr_handle_t *);

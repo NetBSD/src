@@ -1,4 +1,4 @@
-#	$NetBSD: P4032,v 1.82 2020/05/16 13:46:10 maya Exp $
+#	$NetBSD: P4032,v 1.82.6.1 2021/08/01 22:42:00 thorpej Exp $
 #
 # Algorithmics P-4032 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P4032-$Revision: 1.82 $"
+#ident 		"P4032-$Revision: 1.82.6.1 $"
 
 maxusers 32
 
@@ -288,9 +288,6 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 # Kyocera AIR-EDGE PHONE
 #ukyopon* at uhub? port ?
 #ucom*	at ukyopon? portno ?
-
-# USB scanners
-#uscanner* at uhub? port ?
 
 # USB Generic driver
 #ugen*	at uhub? port ?

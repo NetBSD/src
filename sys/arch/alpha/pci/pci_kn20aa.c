@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn20aa.c,v 1.55 2020/09/22 15:24:02 thorpej Exp $ */
+/* $NetBSD: pci_kn20aa.c,v 1.55.6.1 2021/08/01 22:42:02 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,26 +29,24 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.55 2020/09/22 15:24:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.55.6.1 2021/08/01 22:42:02 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/syslog.h>
 
 #include <machine/autoconf.h>
+#include <machine/rpb.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 
 #include <alpha/pci/ciareg.h>
 #include <alpha/pci/ciavar.h>
-
-#include <alpha/pci/pci_kn20aa.h>
 
 #include "sio.h"
 #if NSIO > 0 || NPCEB > 0
@@ -65,17 +63,13 @@ static int	dec_kn20aa_intr_map(const struct pci_attach_args *,
 static void	kn20aa_enable_intr(pci_chipset_tag_t pc, int irq);
 static void	kn20aa_disable_intr(pci_chipset_tag_t pc, int irq);
 
-void
-pci_kn20aa_pickintr(struct cia_config *ccp)
+static void
+pci_kn20aa_pickintr(void *core, bus_space_tag_t iot, bus_space_tag_t memt,
+    pci_chipset_tag_t pc)
 {
 	int i;
-#if NSIO > 0 || NPCEB > 0
-	bus_space_tag_t iot = &ccp->cc_iot;
-#endif
-	pci_chipset_tag_t pc = &ccp->cc_pc;
-	char *cp;
 
-	pc->pc_intr_v = ccp;
+	pc->pc_intr_v = core;
 	pc->pc_intr_map = dec_kn20aa_intr_map;
 	pc->pc_intr_string = alpha_pci_generic_intr_string;
 	pc->pc_intr_evcnt = alpha_pci_generic_intr_evcnt;
@@ -85,10 +79,7 @@ pci_kn20aa_pickintr(struct cia_config *ccp)
 	/* Not supported on KN20AA. */
 	pc->pc_pciide_compat_intr_establish = NULL;
 
-#define PCI_KN20AA_IRQ_STR	8
-	pc->pc_shared_intrs = alpha_shared_intr_alloc(KN20AA_MAX_IRQ,
-	    PCI_KN20AA_IRQ_STR);
-	pc->pc_intr_desc = "kn20aa irq";
+	pc->pc_intr_desc = "kn20aa";
 	pc->pc_vecbase = 0x900;
 	pc->pc_nirq = KN20AA_MAX_IRQ;
 
@@ -96,21 +87,17 @@ pci_kn20aa_pickintr(struct cia_config *ccp)
 	pc->pc_intr_disable = kn20aa_disable_intr;
 
 	for (i = 0; i < KN20AA_MAX_IRQ; i++) {
-		alpha_shared_intr_set_maxstrays(pc->pc_shared_intrs, i,
-		    PCI_STRAY_MAX);
-
-		cp = alpha_shared_intr_string(pc->pc_shared_intrs, i);
-		snprintf(cp, PCI_KN20AA_IRQ_STR, "irq %d", i);
-		evcnt_attach_dynamic(alpha_shared_intr_evcnt(
-		    pc->pc_shared_intrs, i), EVCNT_TYPE_INTR, NULL,
-		    "kn20aa", cp);
+		kn20aa_disable_intr(pc, i);
 	}
+
+	alpha_pci_intr_alloc(pc, PCI_STRAY_MAX);
 
 #if NSIO > 0 || NPCEB > 0
 	sio_intr_setup(pc, iot);
 	kn20aa_enable_intr(pc, KN20AA_PCEB_IRQ);
 #endif
 }
+ALPHA_PCI_INTR_INIT(ST_DEC_KN20AA, pci_kn20aa_pickintr)
 
 static int
 dec_kn20aa_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)

@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.280.2.2 2021/06/17 04:46:29 thorpej Exp $ */
+/* $NetBSD: ixgbe.c,v 1.280.2.3 2021/08/01 22:42:30 thorpej Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.280.2.2 2021/06/17 04:46:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.280.2.3 2021/08/01 22:42:30 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -253,12 +253,14 @@ static int	ixgbe_sysctl_power_state(SYSCTLFN_PROTO);
 static int	ixgbe_sysctl_print_rss_config(SYSCTLFN_PROTO);
 #endif
 static int	ixgbe_sysctl_next_to_check_handler(SYSCTLFN_PROTO);
+static int	ixgbe_sysctl_next_to_refresh_handler(SYSCTLFN_PROTO);
 static int	ixgbe_sysctl_rdh_handler(SYSCTLFN_PROTO);
 static int	ixgbe_sysctl_rdt_handler(SYSCTLFN_PROTO);
 static int	ixgbe_sysctl_tdt_handler(SYSCTLFN_PROTO);
 static int	ixgbe_sysctl_tdh_handler(SYSCTLFN_PROTO);
 static int	ixgbe_sysctl_eee_state(SYSCTLFN_PROTO);
 static int	ixgbe_sysctl_debug(SYSCTLFN_PROTO);
+static int	ixgbe_sysctl_rx_copy_len(SYSCTLFN_PROTO);
 static int	ixgbe_sysctl_wol_enable(SYSCTLFN_PROTO);
 static int	ixgbe_sysctl_wufc(SYSCTLFN_PROTO);
 
@@ -986,6 +988,9 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 	} else
 		adapter->num_rx_desc = ixgbe_rxd;
 
+	/* Set default high limit of copying mbuf in rxeof */
+	adapter->rx_copy_len = IXGBE_RX_COPY_LEN_MAX;
+
 	adapter->num_jcl = adapter->num_rx_desc * IXGBE_JCLNUM_MULTI;
 
 	/* Allocate our TX/RX Queues */
@@ -1177,14 +1182,15 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 	if (hw->phy.media_type == ixgbe_media_type_copper) {
 		uint16_t id1, id2;
 		int oui, model, rev;
-		const char *descr;
+		char descr[MII_MAX_DESCR_LEN];
 
 		id1 = hw->phy.id >> 16;
 		id2 = hw->phy.id & 0xffff;
 		oui = MII_OUI(id1, id2);
 		model = MII_MODEL(id2);
 		rev = MII_REV(id2);
-		if ((descr = mii_get_descr(oui, model)) != NULL)
+		mii_get_descr(descr, sizeof(descr), oui, model);
+		if (descr[0])
 			aprint_normal_dev(dev,
 			    "PHY: %s (OUI 0x%06x, model 0x%04x), rev. %d\n",
 			    descr, oui, model, rev);
@@ -1925,6 +1931,13 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 			break;
 
 		if (sysctl_createv(log, 0, &rnode, &cnode,
+		    CTLFLAG_READONLY, CTLTYPE_INT, "rxd_nxrf",
+		    SYSCTL_DESCR("Receive Descriptor next to refresh"),
+		    ixgbe_sysctl_next_to_refresh_handler, 0, (void *)rxr, 0,
+		    CTL_CREATE, CTL_EOL) != 0)
+			break;
+
+		if (sysctl_createv(log, 0, &rnode, &cnode,
 		    CTLFLAG_READONLY, CTLTYPE_INT, "rxd_head",
 		    SYSCTL_DESCR("Receive Descriptor Head"),
 		    ixgbe_sysctl_rdh_handler, 0, (void *)rxr, 0,
@@ -2295,6 +2308,32 @@ ixgbe_sysctl_next_to_check_handler(SYSCTLFN_ARGS)
 	node.sysctl_data = &val;
 	return sysctl_lookup(SYSCTLFN_CALL(&node));
 } /* ixgbe_sysctl_next_to_check_handler */
+
+/************************************************************************
+ * ixgbe_sysctl_next_to_refresh_handler - Receive Descriptor next to check
+ * handler function
+ *
+ *   Retrieves the next_to_refresh value
+ ************************************************************************/
+static int
+ixgbe_sysctl_next_to_refresh_handler(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	struct rx_ring *rxr = (struct rx_ring *)node.sysctl_data;
+	struct adapter *adapter;
+	uint32_t val;
+
+	if (!rxr)
+		return (0);
+
+	adapter = rxr->adapter;
+	if (ixgbe_fw_recovery_mode_swflag(adapter))
+		return (EPERM);
+
+	val = rxr->next_to_refresh;
+	node.sysctl_data = &val;
+	return sysctl_lookup(SYSCTLFN_CALL(&node));
+} /* ixgbe_sysctl_next_to_refresh_handler */
 
 /************************************************************************
  * ixgbe_sysctl_rdh_handler - Receive Descriptor Head handler function
@@ -3364,6 +3403,13 @@ ixgbe_add_device_sysctls(struct adapter *adapter)
 	    "debug", SYSCTL_DESCR("Debug Info"),
 	    ixgbe_sysctl_debug, 0, (void *)adapter, 0, CTL_CREATE, CTL_EOL)
 	    != 0)
+		aprint_error_dev(dev, "could not create sysctl\n");
+
+	if (sysctl_createv(log, 0, &rnode, &cnode,
+	    CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "rx_copy_len", SYSCTL_DESCR("RX Copy Length"),
+	    ixgbe_sysctl_rx_copy_len, 0,
+	    (void *)adapter, 0, CTL_CREATE, CTL_EOL) != 0)
 		aprint_error_dev(dev, "could not create sysctl\n");
 
 	if (sysctl_createv(log, 0, &rnode, &cnode,
@@ -6171,6 +6217,31 @@ ixgbe_sysctl_debug(SYSCTLFN_ARGS)
 
 	return 0;
 } /* ixgbe_sysctl_debug */
+
+/************************************************************************
+ * ixgbe_sysctl_rx_copy_len
+ ************************************************************************/
+static int
+ixgbe_sysctl_rx_copy_len(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	struct adapter *adapter = (struct adapter *)node.sysctl_data;
+	int error;
+	int result = adapter->rx_copy_len;
+
+	node.sysctl_data = &result;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+
+	if (error || newp == NULL)
+		return error;
+
+	if ((result < 0) || (result > IXGBE_RX_COPY_LEN_MAX))
+		return EINVAL;
+
+	adapter->rx_copy_len = result;
+
+	return 0;
+} /* ixgbe_sysctl_rx_copy_len */
 
 /************************************************************************
  * ixgbe_init_device_features

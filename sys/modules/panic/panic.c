@@ -1,4 +1,4 @@
-/* $NetBSD: panic.c,v 1.1 2011/02/18 01:07:20 jmcneill Exp $ */
+/* $NetBSD: panic.c,v 1.1.78.1 2021/08/01 22:42:40 thorpej Exp $ */
 
 /*
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: panic.c,v 1.1 2011/02/18 01:07:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: panic.c,v 1.1.78.1 2021/08/01 22:42:40 thorpej Exp $");
 
 #include <sys/module.h>
 
@@ -63,7 +63,7 @@ panic_modcmd(modcmd_t cmd, void *opaque)
 		unsigned int i;
 
 		if (props)
-			prop_dictionary_get_cstring_nocopy(props, "how", &how);
+			prop_dictionary_get_string(props, "how", &how);
 		if (how == NULL)
 			how = "panic";
 

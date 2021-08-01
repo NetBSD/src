@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_cec.c,v 1.9 2021/04/24 23:36:27 thorpej Exp $ */
+/* $NetBSD: tegra_cec.c,v 1.9.2.1 2021/08/01 22:42:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_cec.c,v 1.9 2021/04/24 23:36:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_cec.c,v 1.9.2.1 2021/08/01 22:42:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -179,7 +179,7 @@ tegra_cec_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
-	prop_dictionary_get_cstring_nocopy(prop, "hdmi-device",
+	prop_dictionary_get_string(prop, "hdmi-device",
 	    &sc->sc_hdmidevname);
 
 	fdtbus_reset_assert(sc->sc_rst);

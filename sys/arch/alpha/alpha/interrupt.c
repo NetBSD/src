@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.95.2.1 2021/05/13 00:47:20 thorpej Exp $ */
+/* $NetBSD: interrupt.c,v 1.95.2.2 2021/08/01 22:42:00 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -65,14 +65,13 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.95.2.1 2021/05/13 00:47:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.95.2.2 2021/08/01 22:42:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/vmmeter.h>
 #include <sys/sched.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/time.h>
 #include <sys/intr.h>
@@ -503,7 +502,7 @@ void
 softint_trigger(uintptr_t const machdep)
 {
 	/* No need for an atomic; called at splhigh(). */
-	KASSERT((alpha_pal_rdps() & ALPHA_PSL_IPL_MASK) == ALPHA_PSL_IPL_HIGH);
+	KASSERT(alpha_pal_rdps() == ALPHA_PSL_IPL_HIGH);
 	curcpu()->ci_ssir |= machdep;
 }
 
@@ -535,8 +534,7 @@ softint_init_md(lwp_t * const l, u_int const level, uintptr_t * const machdep)
 		ci->ci_ssir &= ~SOFTINT_##level##_MASK;			\
 		alpha_softint_switchto(l, IPL_SOFT##level,		\
 		    ci->ci_silwps[SOFTINT_##level]);			\
-		KASSERT((alpha_pal_rdps() & ALPHA_PSL_IPL_MASK) ==	\
-		    ALPHA_PSL_IPL_HIGH);				\
+		KASSERT(alpha_pal_rdps() == ALPHA_PSL_IPL_HIGH);	\
 		continue;						\
 	}								\
 
@@ -554,7 +552,7 @@ alpha_softint_dispatch(int const ipl)
 	unsigned long ssir;
 	const unsigned long eligible = SOFTINTS_ELIGIBLE(ipl);
 
-	KASSERT((alpha_pal_rdps() & ALPHA_PSL_IPL_MASK) == ALPHA_PSL_IPL_HIGH);
+	KASSERT(alpha_pal_rdps() == ALPHA_PSL_IPL_HIGH);
 
 	for (;;) {
 		ssir = ci->ci_ssir & eligible;

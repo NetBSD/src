@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.83 2020/08/01 20:54:23 uwe Exp $	*/
+/*	$NetBSD: pmap.c,v 1.83.6.1 2021/08/01 22:42:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.83 2020/08/01 20:54:23 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.83.6.1 2021/08/01 22:42:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

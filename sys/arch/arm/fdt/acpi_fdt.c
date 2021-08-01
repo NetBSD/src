@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_fdt.c,v 1.19 2021/04/24 23:36:26 thorpej Exp $ */
+/* $NetBSD: acpi_fdt.c,v 1.19.2.1 2021/08/01 22:42:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_efi.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_fdt.c,v 1.19 2021/04/24 23:36:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_fdt.c,v 1.19.2.1 2021/08/01 22:42:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_fdt.c,v 1.19 2021/04/24 23:36:26 thorpej Exp $"
 
 #include <dev/acpi/acpivar.h>
 #include <dev/pci/pcivar.h>
+#include <dev/smbiosvar.h>
 
 #include <arm/arm/psci.h>
 
@@ -61,6 +62,7 @@ static void	acpi_fdt_attach(device_t, device_t, void *);
 
 static void	acpi_fdt_poweroff(device_t);
 
+static void	acpi_fdt_smbios_init(device_t);
 static void	acpi_fdt_sysctl_init(void);
 
 extern struct arm32_bus_dma_tag acpi_coherent_dma_tag;
@@ -89,17 +91,23 @@ acpi_fdt_match(device_t parent, cfdata_t cf, void *aux)
 static void
 acpi_fdt_attach(device_t parent, device_t self, void *aux)
 {
+	extern void platform_init(void); /* XXX */
 	struct fdt_attach_args * const faa = aux;
 	struct acpibus_attach_args aa;
 
 	aprint_naive("\n");
 	aprint_normal("\n");
 
+	acpi_fdt_smbios_init(self);
+	platform_init();
+
 	fdtbus_register_power_controller(self, faa->faa_phandle,
 	    &acpi_fdt_power_funcs);
 
 	if (!acpi_probe())
 		panic("ACPI subsystem failed to initialize");
+
+	platform_init();
 
 	memset(&aa, 0, sizeof(aa));
 #if NPCI > 0
@@ -132,27 +140,113 @@ acpi_fdt_poweroff(device_t dev)
 		psci_system_off();
 }
 
+static int
+acpi_fdt_smbios_version(void)
+{
+	uint8_t *hdr;
+	int smbver;
+
+	if (smbios_table == 0) {
+		return 0;
+	}
+
+	hdr = AcpiOsMapMemory(smbios_table, 24);
+	if (hdr == NULL) {
+		return 0;
+	}
+	if (smbios3_check_header(hdr)) {
+		smbver = 3;
+	} else if (smbios2_check_header(hdr)) {
+		smbver = 2;
+	} else {
+		smbver = 0;
+	}
+	AcpiOsUnmapMemory(hdr, 24);
+	return smbver;
+}
+
+static void
+acpi_fdt_smbios_init(device_t dev)
+{
+	uint8_t *ptr;
+	int smbver;
+
+	const int chosen = OF_finddevice("/chosen");
+	if (chosen >= 0) {
+		of_getprop_uint64(chosen, "netbsd,smbios-table", &smbios_table);
+	}
+	if (smbios_table == 0) {
+		return;
+	}
+
+	smbios_entry.hdrphys = smbios_table;
+
+	smbver = acpi_fdt_smbios_version();
+	if (smbver == 3) {
+		struct smb3hdr *sh = AcpiOsMapMemory(smbios_table, sizeof(*sh));
+		if (sh == NULL) {
+			return;
+		}
+
+		ptr = AcpiOsMapMemory(sh->addr, sh->size);
+		if (ptr != NULL) {
+			smbios_entry.tabphys = sh->addr;
+			smbios_entry.addr = ptr;
+			smbios_entry.len = sh->size;
+			smbios_entry.rev = sh->eprev;
+			smbios_entry.mjr = sh->majrev;
+			smbios_entry.min = sh->minrev;
+			smbios_entry.doc = sh->docrev;
+			smbios_entry.count = UINT16_MAX;
+		}
+
+		aprint_normal_dev(dev, "SMBIOS rev. %d.%d.%d @ 0x%lx\n",
+		    sh->majrev, sh->minrev, sh->docrev, (u_long)sh->addr);
+		AcpiOsUnmapMemory(sh, sizeof(*sh));
+	} else if (smbver == 2) {
+		struct smbhdr *sh = AcpiOsMapMemory(smbios_table, sizeof(*sh));
+		if (sh == NULL) {
+			return;
+		}
+
+		ptr = AcpiOsMapMemory(sh->addr, sh->size);
+		if (ptr != NULL) {
+			smbios_entry.tabphys = sh->addr;
+			smbios_entry.addr = ptr;
+			smbios_entry.len = sh->size;
+			smbios_entry.rev = 0;
+			smbios_entry.mjr = sh->majrev;
+			smbios_entry.min = sh->minrev;
+			smbios_entry.doc = 0;
+			smbios_entry.count = sh->count;
+		}
+
+		aprint_normal_dev(dev, "SMBIOS rev. %d.%d @ 0x%lx (%d entries)\n",
+		    sh->majrev, sh->minrev, (u_long)sh->addr, sh->count);
+		AcpiOsUnmapMemory(sh, sizeof(*sh));
+	}
+}
+
 static void
 acpi_fdt_sysctl_init(void)
 {
 	const struct sysctlnode *rnode;
 	int error;
 
-	const int chosen = OF_finddevice("/chosen");
-	if (chosen >= 0)
-		of_getprop_uint64(chosen, "netbsd,smbios-table", &smbios_table);
+	if (smbios_table == 0) {
+		return;
+	}
 
 	error = sysctl_createv(NULL, 0, NULL, &rnode,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "machdep", NULL,
 	    NULL, 0, NULL, 0, CTL_MACHDEP, CTL_EOL);
-	if (error)
+	if (error) {
 		return;
-
-	if (smbios_table != 0) {
-		(void)sysctl_createv(NULL, 0, &rnode, NULL,
-		    CTLFLAG_PERMANENT | CTLFLAG_READONLY | CTLFLAG_HEX, CTLTYPE_QUAD,
-		    "smbios", SYSCTL_DESCR("SMBIOS table pointer"),
-		    NULL, 0, &smbios_table, sizeof(smbios_table),
-		    CTL_CREATE, CTL_EOL);
 	}
+
+	(void)sysctl_createv(NULL, 0, &rnode, NULL,
+	    CTLFLAG_PERMANENT | CTLFLAG_READONLY | CTLFLAG_HEX, CTLTYPE_QUAD,
+	    "smbios", SYSCTL_DESCR("SMBIOS table pointer"),
+	    NULL, 0, &smbios_table, sizeof(smbios_table),
+	    CTL_CREATE, CTL_EOL);
 }

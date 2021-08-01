@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.49 2020/02/04 05:25:39 thorpej Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.49.10.1 2021/08/01 22:42:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -138,7 +138,7 @@
 **     to start transmitting after 381 bytes have been fed to it.  if that
 **     gets transmit underruns, ramp down to 1021 bytes then "whole
 **     packet."  If successful at a given level for a while, try the next
-**     more agressive level.  This code doesn't ever try to start
+**     more aggressive level.  This code doesn't ever try to start
 **     transmitting after 5 bytes have been sent to the NIC, because
 **     that underruns rather regularly.  The back-off and ramp-up mechanism
 **     could probably be tuned a little bit, but this works well enough to
@@ -175,7 +175,7 @@
 **       infrequent event.  It could have been used in the IFF_PROMISCUOUS
 **       address check above, but the benefit of it vs. memcmp would be
 **       inconsequential, there.)  Use memcmp() instead.
-**     * restructure csStartOuput to avoid the following bugs in the case where
+**     * restructure csStartOutput to avoid the following bugs in the case where
 **       txWait was being set:
 **         * it would accidentally drop the outgoing packet if told to wait
 **           but the outgoing packet queue was empty.
@@ -212,7 +212,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.49 2020/02/04 05:25:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.49.10.1 2021/08/01 22:42:23 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -383,7 +383,7 @@ cs_attach(struct cs_softc *sc, uint8_t *enaddr, int *media,
 	/* Start out not transmitting */
 	sc->sc_txbusy = FALSE;
 
-	/* Set up early transmit threshhold */
+	/* Set up early transmit threshold */
 	sc->sc_xe_ent = 0;
 	sc->sc_xe_togo = cs_xmit_early_table[sc->sc_xe_ent].better_count;
 

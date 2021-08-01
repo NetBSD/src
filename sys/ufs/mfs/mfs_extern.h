@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_extern.h,v 1.31 2010/03/02 17:20:02 pooka Exp $	*/
+/*	$NetBSD: mfs_extern.h,v 1.31.78.1 2021/08/01 22:42:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,6 @@ struct statvfs;
 struct vnode;
 
 __BEGIN_DECLS
-#define	mfs_ioctl	genfs_enoioctl
 
 /* mfs_vfsops.c */
 VFS_PROTOS(mfs);

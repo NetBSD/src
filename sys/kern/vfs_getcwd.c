@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_getcwd.c,v 1.60 2020/05/16 18:31:50 christos Exp $ */
+/* $NetBSD: vfs_getcwd.c,v 1.60.6.1 2021/08/01 22:42:39 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.60 2020/05/16 18:31:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.60.6.1 2021/08/01 22:42:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,7 +131,6 @@ getcwd_scandir(struct vnode *lvp, struct vnode **uvpp, char **bpp,
 	cn.cn_cred = cred;
 	cn.cn_nameptr = "..";
 	cn.cn_namelen = 2;
-	cn.cn_consume = 0;
 
 	/* At this point, lvp is locked  */
 	error = VOP_LOOKUP(lvp, uvpp, &cn);

@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.29.4.1 2021/06/17 04:46:36 thorpej Exp $	*/
+/*	$NetBSD: boot.c,v 1.29.4.2 2021/08/01 22:42:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -110,6 +110,7 @@ const struct boot_command commands[] = {
 	{ "dev",	command_dev,		"dev" },
 	{ "dtb",	command_dtb,		"dtb [dev:][filename]" },
 	{ "initrd",	command_initrd,		"initrd [dev:][filename]" },
+	{ "fs",		command_initrd,		NULL },
 	{ "rndseed",	command_rndseed,	"rndseed [dev:][filename]" },
 	{ "dtoverlay",	command_dtoverlay,	"dtoverlay [dev:][filename]" },
 	{ "dtoverlays",	command_dtoverlays,	"dtoverlays [{on|off|reset}]" },
@@ -171,7 +172,9 @@ command_boot(char *arg)
 	if (!*bootargs)
 		bootargs = netbsd_args;
 
+	efi_block_set_readahead(true);
 	exec_netbsd(kernel, bootargs);
+	efi_block_set_readahead(false);
 }
 
 void
@@ -448,12 +451,59 @@ set_bootargs(const char *arg)
 	return 0;
 }
 
+static void
+get_memory_info(uint64_t *ptotal)
+{
+	EFI_MEMORY_DESCRIPTOR *md, *memmap;
+	UINTN nentries, mapkey, descsize;
+	UINT32 descver;
+	uint64_t totalpg = 0;
+	int n;
+
+	memmap = LibMemoryMap(&nentries, &mapkey, &descsize, &descver);
+	for (n = 0, md = memmap; n < nentries; n++, md = NextMemoryDescriptor(md, descsize)) {
+		if ((md->Attribute & EFI_MEMORY_WB) == 0) {
+			continue;
+		}
+		totalpg += md->NumberOfPages;
+	}
+
+	*ptotal = totalpg * EFI_PAGE_SIZE;
+}
+
+static void
+format_bytes(uint64_t val, uint64_t *pdiv, const char **punit)
+{
+	static const char *units[] = { "KB", "MB", "GB" };
+	unsigned n;
+
+	*punit = "bytes";
+	*pdiv = 1;
+
+	for (n = 0; n < __arraycount(units) && val >= 1024 * 10; n++) {
+		*punit = units[n];
+		*pdiv *= 1024;
+		val /= 1024;
+	}
+}
+
 void
 print_banner(void)
 {
-	printf("\n\n"
-	    ">> %s, Revision %s\n",
-	    bootprog_name, bootprog_rev);
+	const char *total_unit;
+	uint64_t total, total_div;
+
+	get_memory_info(&total);
+	format_bytes(total, &total_div, &total_unit);
+
+	printf("  \\-__,------,___.\n");
+	printf("   \\        __,---`  %s\n", bootprog_name);
+	printf("    \\       `---,_.  Revision %s\n", bootprog_rev);
+	printf("     \\-,_____,.---`  Memory: %" PRIu64 " %s\n",
+	    total / total_div, total_unit);
+	printf("      \\\n");
+	printf("       \\\n");
+	printf("        \\\n\n");
 }
 
 void
@@ -494,7 +544,9 @@ boot(void)
 		if (c != '\r' && c != '\n' && c != '\0')
 			bootprompt(); /* does not return */
 
+		efi_block_set_readahead(true);
 		exec_netbsd(netbsd_path, netbsd_args);
+		efi_block_set_readahead(false);
 	}
 
 	bootprompt();	/* does not return */

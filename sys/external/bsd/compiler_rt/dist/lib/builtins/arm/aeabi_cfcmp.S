@@ -27,10 +27,11 @@
         .syntax unified
         .p2align 2
 DEFINE_COMPILERRT_FUNCTION(__aeabi_cfcmpeq)
-        push {r0-r3, lr}
+        // Save ip to ensure stack alignment (could be any register)
+        push {r0-r3, ip, lr}
         bl __aeabi_cfcmpeq_check_nan
         cmp r0, #1
-        pop {r0-r3, lr}
+        pop {r0-r3, ip, lr}
 
         // NaN has been ruled out, so __aeabi_cfcmple can't trap
         bne __aeabi_cfcmple
@@ -55,7 +56,8 @@ END_COMPILERRT_FUNCTION(__aeabi_cfcmpeq)
 DEFINE_COMPILERRT_FUNCTION(__aeabi_cfcmple)
         // Per the RTABI, this function must preserve r0-r11.
         // Save lr in the same instruction for compactness
-        push {r0-r3, lr}
+        // Save ip to ensure stack alignment (could be any register)
+        push {r0-r3, ip, lr}
 
         bl __aeabi_fcmplt
         cmp r0, #1
@@ -70,7 +72,7 @@ DEFINE_COMPILERRT_FUNCTION(__aeabi_cfcmple)
 
 1:
         msr CPSR_f, ip
-        pop {r0-r3}
+        pop {r0-r3, ip}
         POP_PC()
 END_COMPILERRT_FUNCTION(__aeabi_cfcmple)
 

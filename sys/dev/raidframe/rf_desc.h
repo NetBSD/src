@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_desc.h,v 1.21 2019/10/10 03:43:59 christos Exp $	*/
+/*	$NetBSD: rf_desc.h,v 1.21.12.1 2021/08/01 22:42:31 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -91,7 +91,6 @@ struct RF_RaidAccessDesc_s {
 						 * I/O */
 	void   *callbackArg;	/* arg to give to callback func */
 	RF_RaidAccessDesc_t *next;
-	int     async_flag;
 	RF_Etimer_t timer;	/* used for timing this access */
 };
 #endif				/* !_RF__RF_DESC_H_ */

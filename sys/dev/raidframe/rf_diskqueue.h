@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.h,v 1.26 2020/06/19 19:29:39 jdolecek Exp $	*/
+/*	$NetBSD: rf_diskqueue.h,v 1.26.6.1 2021/08/01 22:42:31 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -89,7 +89,6 @@ struct RF_DiskQueueSW_s {
 												 * system */
 	void    (*Enqueue) (void *, RF_DiskQueueData_t *, int);	/* enqueue routine */
 	RF_DiskQueueData_t *(*Dequeue) (void *);	/* dequeue routine */
-	RF_DiskQueueData_t *(*Peek) (void *);	/* peek at head of queue */
 
 	/* the rest are optional:  they improve performance, but the driver
 	 * will deal with it if they don't exist */
@@ -131,7 +130,7 @@ struct RF_DiskQueue_s {
   (RF_QUEUE_EMPTY(_q_) || \
     (!RF_QUEUE_FULL(_q_) && ((_r_)->priority >= (_q_)->curPriority)))
 
-int rf_ConfigureDiskQueueSystem(RF_ShutdownList_t **);
+int rf_ConfigureDiskQueueSystem(RF_ShutdownList_t **, RF_Raid_t *, RF_Config_t *);
 int rf_ConfigureDiskQueues(RF_ShutdownList_t **, RF_Raid_t *, RF_Config_t *);
 void rf_DiskIOEnqueue(RF_DiskQueue_t *, RF_DiskQueueData_t *, int);
 void rf_DiskIOComplete(RF_DiskQueue_t *, RF_DiskQueueData_t *, int);
@@ -143,7 +142,7 @@ RF_DiskQueueData_t *rf_CreateDiskQueueData(RF_IoType_t, RF_SectorNum_t,
 					   void *,
 					   RF_AccTraceEntry_t *, RF_Raid_t *,
 					   RF_DiskQueueDataFlags_t,
-					   const struct buf *, int);
+					   const struct buf *);
 void rf_FreeDiskQueueData(RF_DiskQueueData_t *);
 int rf_ConfigureDiskQueue(RF_Raid_t *, RF_DiskQueue_t *,
 			  RF_RowCol_t, const RF_DiskQueueSW_t *,

@@ -1,4 +1,4 @@
-/*	$NetBSD: saio.c,v 1.14 2014/02/06 18:45:35 christos Exp $	*/
+/*	$NetBSD: saio.c,v 1.14.46.1 2021/08/01 22:42:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -98,7 +98,7 @@ extern struct sa_iob *saiob[];
 
 int
 saiostrategy(void *devdata, int rw, daddr_t bn, size_t reqcnt, void *addr, size_t *cnt)
-	/* cnt:	 out: number of bytes transfered */
+	/* cnt:	 out: number of bytes transferred */
 {
 	struct saio_softc *sc = (struct saio_softc *)devdata;
 	int part = sc->sc_part;

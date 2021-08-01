@@ -1,4 +1,4 @@
-/* $NetBSD: tsvar.h,v 1.14.6.1 2021/06/17 04:46:17 thorpej Exp $ */
+/* $NetBSD: tsvar.h,v 1.14.6.2 2021/08/01 22:42:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -53,9 +53,11 @@ struct tsp_config {
 
 	struct	alpha_bus_dma_tag pc_dmat64_direct;
 	struct	alpha_bus_dma_tag pc_dmat_direct;
-	struct	alpha_bus_dma_tag pc_dmat_sgmap;
+	struct	alpha_bus_dma_tag pc_dmat_sgmap_lo;
+	struct	alpha_bus_dma_tag pc_dmat_sgmap_hi;
 
-	struct alpha_sgmap pc_sgmap;
+	struct alpha_sgmap pc_sgmap_lo;
+	struct alpha_sgmap pc_sgmap_hi;
 
 	uint32_t pc_hae_mem;
 	uint32_t pc_hae_io;
@@ -64,6 +66,13 @@ struct tsp_config {
 	long	pc_mem_exstorage[_FSTORE];
 	struct	extent *pc_io_ex, *pc_mem_ex;
 	int	pc_mallocsafe;
+
+	struct {
+		uint64_t wsba[4];
+		uint64_t wsm[4];
+		uint64_t tba[4];
+	} pc_saved_windows;
+	uint64_t pc_saved_pctl;
 };
 
 struct tsp_attach_args {

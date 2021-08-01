@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.101 2021/04/20 00:09:45 thorpej Exp $ */
+/* $NetBSD: cpu.h,v 1.101.2.1 2021/08/01 22:42:01 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@ struct clockframe {
 /*
  * This isn't perfect; if the clock interrupt comes in before the
  * r/m/w cycle is complete, we won't be counted... but it's not
- * like this stastic has to be extremely accurate.
+ * like this statistic has to be extremely accurate.
  */
 #define	CLKF_INTR(framep)						\
 	((curcpu()->ci_intrdepth & 0xf) != 0)	/* see interrupt() */
@@ -232,6 +232,7 @@ void	cpu_signotify(struct lwp *);
 #define	CPU_FP_SYNC_COMPLETE	7	/* int: always fixup sync fp traps */
 #define	CPU_CCTR		8	/* int: using CC timecounter */
 #define	CPU_IS_QEMU		9	/* int: running under Qemu */
+#define	CPU_FP_COMPLETE_DEBUG	10	/* int: enable FP completion debug */
 
 
 #ifdef _KERNEL

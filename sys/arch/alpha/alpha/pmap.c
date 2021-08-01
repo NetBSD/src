@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.276.2.1 2021/06/17 04:46:16 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.276.2.2 2021/08/01 22:42:00 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008, 2020
@@ -135,13 +135,12 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.276.2.1 2021/06/17 04:46:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.276.2.2 2021/08/01 22:42:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/buf.h>
 #include <sys/evcnt.h>
@@ -257,6 +256,11 @@ int		pmap_pv_lowat __read_mostly = PMAP_PV_LOWAT;
  * pmap_activate().
  */
 static TAILQ_HEAD(, pmap) pmap_all_pmaps __cacheline_aligned;
+
+/*
+ * Instrument the number of calls to pmap_growkernel().
+ */
+static struct evcnt pmap_growkernel_evcnt __read_mostly;
 
 /*
  * The pools from which pmap structures and sub-structures are allocated.
@@ -1023,7 +1027,7 @@ pmap_tlb_shootnow(const struct pmap_tlb_context * const tlbctx)
 	 * interrupts and disable preemption.  It is critically important
 	 * that IPIs not be blocked in this routine.
 	 */
-	KASSERT((alpha_pal_rdps() & ALPHA_PSL_IPL_MASK) < ALPHA_PSL_IPL_CLOCK);
+	KASSERT(alpha_pal_rdps() < ALPHA_PSL_IPL_CLOCK);
 	mutex_spin_enter(&tlb_lock);
 	tlb_evcnt.ev_count++;
 
@@ -1117,7 +1121,7 @@ pmap_tlb_shootnow(const struct pmap_tlb_context * const tlbctx)
 				    tlb_pending);
 				printf("TLB CONTEXT = %p\n", tlb_context);
 				printf("TLB LOCAL IPL = %lu\n",
-				    alpha_pal_rdps() & ALPHA_PSL_IPL_MASK);
+				    alpha_pal_rdps());
 				panic("pmap_tlb_shootnow");
 			}
 		}
@@ -1548,6 +1552,10 @@ pmap_init(void)
 
 	/* Initialize TLB handling. */
 	pmap_tlb_init();
+
+	/* Instrument pmap_growkernel(). */
+	evcnt_attach_dynamic_nozero(&pmap_growkernel_evcnt, EVCNT_TYPE_MISC,
+	    NULL, "pmap", "growkernel");
 
 	/*
 	 * Set a low water mark on the pv_entry pool, so that we are
@@ -2345,7 +2353,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 
 		lock = pmap_pvh_lock(pg);
 		mutex_enter(lock);
-		md->pvh_listx |= attrs;
+		attrs = (md->pvh_listx |= attrs);
 		mutex_exit(lock);
 
 		/* Set up referenced/modified emulation for new mapping. */
@@ -2570,18 +2578,19 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 	 * handles K0SEG.
 	 */
 	if (__predict_true(pmap == pmap_kernel())) {
-		if (__predict_true(vtophys_internal(va, pap))) {
 #ifdef DEBUG
-			if (pmapdebug & PDB_FOLLOW)
+		bool address_is_valid = vtophys_internal(va, pap);
+		if (pmapdebug & PDB_FOLLOW) {
+			if (address_is_valid) {
 				printf("0x%lx (kernel vtophys)\n", *pap);
-#endif
-			return true;
+			} else {
+				printf("failed (kernel vtophys)\n");
+			}
 		}
-#ifdef DEBUG
-		if (pmapdebug & PDB_FOLLOW)
-			printf("failed (kernel vtophys)\n");
+		return address_is_valid;
+#else
+		return vtophys_internal(va, pap);
 #endif
-		return false;
 	}
 
 	pt_entry_t * const lev1map = pmap_lev1map(pmap);
@@ -2750,85 +2759,9 @@ pmap_deactivate(struct lwp *l)
 	pmap_destroy(pmap);
 }
 
-/*
- * pmap_zero_page:		[ INTERFACE ]
- *
- *	Zero the specified (machine independent) page by mapping the page
- *	into virtual memory and clear its contents, one machine dependent
- *	page at a time.
- *
- *	Note: no locking is necessary in this function.
- */
-void
-pmap_zero_page(paddr_t phys)
-{
-	u_long *p0, *p1, *pend;
+/* pmap_zero_page() is in pmap_subr.s */
 
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_zero_page(%lx)\n", phys);
-#endif
-
-	p0 = (u_long *)ALPHA_PHYS_TO_K0SEG(phys);
-	p1 = NULL;
-	pend = (u_long *)((u_long)p0 + PAGE_SIZE);
-
-	/*
-	 * Unroll the loop a bit, doing 16 quadwords per iteration.
-	 * Do only 8 back-to-back stores, and alternate registers.
-	 */
-	do {
-		__asm volatile(
-		"# BEGIN loop body\n"
-		"	addq	%2, (8 * 8), %1		\n"
-		"	stq	$31, (0 * 8)(%0)	\n"
-		"	stq	$31, (1 * 8)(%0)	\n"
-		"	stq	$31, (2 * 8)(%0)	\n"
-		"	stq	$31, (3 * 8)(%0)	\n"
-		"	stq	$31, (4 * 8)(%0)	\n"
-		"	stq	$31, (5 * 8)(%0)	\n"
-		"	stq	$31, (6 * 8)(%0)	\n"
-		"	stq	$31, (7 * 8)(%0)	\n"
-		"					\n"
-		"	addq	%3, (8 * 8), %0		\n"
-		"	stq	$31, (0 * 8)(%1)	\n"
-		"	stq	$31, (1 * 8)(%1)	\n"
-		"	stq	$31, (2 * 8)(%1)	\n"
-		"	stq	$31, (3 * 8)(%1)	\n"
-		"	stq	$31, (4 * 8)(%1)	\n"
-		"	stq	$31, (5 * 8)(%1)	\n"
-		"	stq	$31, (6 * 8)(%1)	\n"
-		"	stq	$31, (7 * 8)(%1)	\n"
-		"	# END loop body"
-		: "=r" (p0), "=r" (p1)
-		: "0" (p0), "1" (p1)
-		: "memory");
-	} while (p0 < pend);
-}
-
-/*
- * pmap_copy_page:		[ INTERFACE ]
- *
- *	Copy the specified (machine independent) page by mapping the page
- *	into virtual memory and using memcpy to copy the page, one machine
- *	dependent page at a time.
- *
- *	Note: no locking is necessary in this function.
- */
-void
-pmap_copy_page(paddr_t src, paddr_t dst)
-{
-	const void *s;
-	void *d;
-
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_copy_page(%lx, %lx)\n", src, dst);
-#endif
-	s = (const void *)ALPHA_PHYS_TO_K0SEG(src);
-	d = (void *)ALPHA_PHYS_TO_K0SEG(dst);
-	memcpy(d, s, PAGE_SIZE);
-}
+/* pmap_copy_page() is in pmap_subr.s */
 
 /*
  * pmap_pageidlezero:		[ INTERFACE ]
@@ -3593,6 +3526,8 @@ pmap_growkernel(vaddr_t maxkvaddr)
 
 	if (maxkvaddr <= virtual_end)
 		goto out;		/* we are OK */
+
+	pmap_growkernel_evcnt.ev_count++;
 
 	va = virtual_end;
 

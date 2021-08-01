@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_states.c,v 1.51 2019/10/10 03:43:59 christos Exp $	*/
+/*	$NetBSD: rf_states.c,v 1.51.12.1 2021/08/01 22:42:31 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.51 2019/10/10 03:43:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.51.12.1 2021/08/01 22:42:31 thorpej Exp $");
 
 #include <sys/errno.h>
 
@@ -216,11 +216,6 @@ rf_State_LastState(RF_RaidAccessDesc_t *desc)
 	void * callbackArg = desc->callbackArg;
 
 	/*
-	 * We don't support non-async IO.
-	 */
-	KASSERT(desc->async_flag);
-
-	/*
 	 * The parity_map hook has to go here, because the iodone
 	 * callback goes straight into the kintf layer.
 	 */
@@ -306,7 +301,7 @@ rf_State_Quiesce(RF_RaidAccessDesc_t *desc)
 	if (need_cb) {
 		/* create a callback if we might need it...
 		   and we likely do. */
-		cb = rf_AllocCallbackFuncDesc();
+		cb = rf_AllocCallbackFuncDesc(raidPtr);
 	}
 
 	rf_lock_mutex2(raidPtr->access_suspend_mutex);
@@ -321,7 +316,7 @@ rf_State_Quiesce(RF_RaidAccessDesc_t *desc)
 	rf_unlock_mutex2(raidPtr->access_suspend_mutex);
 
 	if ((need_cb == 1) && (used_cb == 0)) {
-		rf_FreeCallbackFuncDesc(cb);
+		rf_FreeCallbackFuncDesc(raidPtr, cb);
 	}
 
 #if RF_ACC_TRACE > 0
@@ -395,7 +390,7 @@ rf_State_Lock(RF_RaidAccessDesc_t *desc)
 			RF_INIT_LOCK_REQ_DESC(asm_p->lockReqDesc, desc->type,
 					      rf_ContinueRaidAccess, desc, asm_p,
 					      raidPtr->Layout.dataSectorsPerStripe);
-			if (rf_AcquireStripeLock(raidPtr->lockTable, asm_p->stripeID,
+			if (rf_AcquireStripeLock(raidPtr, raidPtr->lockTable, asm_p->stripeID,
 						 &asm_p->lockReqDesc)) {
 				suspended = RF_TRUE;
 				break;
@@ -617,7 +612,7 @@ rf_State_ProcessDAG(RF_RaidAccessDesc_t *desc)
 				rf_FreeDAG(dagList->dags);
 				temp = dagList;
 				dagList = dagList->next;
-				rf_FreeDAGList(temp);
+				rf_FreeDAGList(raidPtr, temp);
 			}
 			desc->dagList = NULL;
 
@@ -709,7 +704,8 @@ rf_State_Cleanup(RF_RaidAccessDesc_t *desc)
 		    asm_p->parityInfo &&
 		    !(desc->flags & RF_DAG_SUPPRESS_LOCKS)) {
 			RF_ASSERT_VALID_LOCKREQ(&asm_p->lockReqDesc);
-			rf_ReleaseStripeLock(raidPtr->lockTable,
+			rf_ReleaseStripeLock(raidPtr,
+					     raidPtr->lockTable,
 					     asm_p->stripeID,
 					     &asm_p->lockReqDesc);
 		}
@@ -724,7 +720,7 @@ rf_State_Cleanup(RF_RaidAccessDesc_t *desc)
 
 	RF_ETIMER_START(timer);
 #endif
-	rf_FreeAccessStripeMap(asmh);
+	rf_FreeAccessStripeMap(raidPtr, asmh);
 #if RF_ACC_TRACE > 0
 	RF_ETIMER_STOP(timer);
 	RF_ETIMER_EVAL(timer);

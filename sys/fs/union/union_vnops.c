@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.74 2020/08/18 09:44:07 hannken Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.74.6.1 2021/08/01 22:42:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.74 2020/08/18 09:44:07 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.74.6.1 2021/08/01 22:42:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.74 2020/08/18 09:44:07 hannken Exp
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
 
+int union_parsepath(void *);
 int union_lookup(void *);
 int union_create(void *);
 int union_whiteout(void *);
@@ -144,6 +145,7 @@ static int union_lookup1(struct vnode *, struct vnode **,
 int (**union_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc union_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
+	{ &vop_parsepath_desc, union_parsepath },	/* parsepath */
 	{ &vop_lookup_desc, union_lookup },		/* lookup */
 	{ &vop_create_desc, union_create },		/* create */
 	{ &vop_whiteout_desc, union_whiteout },		/* whiteout */
@@ -195,6 +197,52 @@ const struct vnodeopv_desc union_vnodeop_opv_desc =
 #define NODE_IS_SPECIAL(vp) \
 	((vp)->v_type == VBLK || (vp)->v_type == VCHR || \
 	(vp)->v_type == VSOCK || (vp)->v_type == VFIFO)
+
+int
+union_parsepath(void *v)
+{
+	struct vop_parsepath_args /* {
+		struct vnode *a_dvp;
+		const char *a_name;
+		size_t *a_retval;
+	} */ *ap = v;
+	struct vnode *upperdvp, *lowerdvp;
+	size_t upper, lower;
+	int error;
+
+	upperdvp = UPPERVP(ap->a_dvp);
+	lowerdvp = LOWERVP(ap->a_dvp);
+
+	if (upperdvp != NULLVP) {
+		error = VOP_PARSEPATH(upperdvp, ap->a_name, &upper);
+		if (error) {
+			return error;
+		}
+	} else {
+		upper = 0;
+	}
+
+	if (lowerdvp != NULLVP) {
+		error = VOP_PARSEPATH(lowerdvp, ap->a_name, &lower);
+		if (error) {
+			return error;
+		}
+	} else {
+		lower = 0;
+	}
+
+	if (upper == 0 && lower == 0) {
+		panic("%s: missing both layers", __func__);
+	}
+
+	/*
+	 * If they're different, use the larger one. This is not a
+	 * comprehensive solution, but it's sufficient for the
+	 * non-default cases of parsepath that currently exist.
+	 */
+	*ap->a_retval = MAX(upper, lower);
+	return 0;
+}
 
 static int
 union_lookup1(struct vnode *udvp, struct vnode **dvpp, struct vnode **vpp,
@@ -322,12 +370,6 @@ start:
 	if (upperdvp != NULLVP) {
 		uerror = union_lookup1(um->um_uppervp, &upperdvp,
 					&uppervp, cnp);
-		if (cnp->cn_consume != 0) {
-			if (uppervp != upperdvp)
-				VOP_UNLOCK(uppervp);
-			*ap->a_vpp = uppervp;
-			return (uerror);
-		}
 		if (uerror == ENOENT || uerror == EJUSTRETURN) {
 			if (cnp->cn_flags & ISWHITEOUT) {
 				iswhiteout = 1;
@@ -379,18 +421,6 @@ start:
 
 		if (lowervp != lowerdvp)
 			VOP_UNLOCK(lowerdvp);
-
-		if (cnp->cn_consume != 0) {
-			if (uppervp != NULLVP) {
-				if (uppervp == upperdvp)
-					vrele(uppervp);
-				else
-					vput(uppervp);
-				uppervp = NULLVP;
-			}
-			*ap->a_vpp = lowervp;
-			return (lerror);
-		}
 	} else {
 		lerror = ENOENT;
 		if ((cnp->cn_flags & ISDOTDOT) && dun->un_pvp != NULLVP) {

@@ -1,11 +1,11 @@
-/*	$NetBSD: namei.h,v 1.113.6.1 2021/06/17 04:46:36 thorpej Exp $	*/
+/*	$NetBSD: namei.h,v 1.113.6.2 2021/08/01 22:42:44 thorpej Exp $	*/
 
 
 /*
  * WARNING: GENERATED FILE.  DO NOT EDIT
  * (edit namei.src and run make namei in src/sys/sys)
  *   by:   NetBSD: gennameih.awk,v 1.5 2009/12/23 14:17:19 pooka Exp 
- *   from: NetBSD: namei.src,v 1.58 2020/05/30 20:16:14 ad Exp 
+ *   from: NetBSD: namei.src,v 1.60 2021/06/29 22:39:21 dholland Exp 
  */
 
 /*
@@ -102,7 +102,6 @@ struct componentname {
 	 */
 	const char 	*cn_nameptr;	/* pointer to looked up name */
 	size_t		cn_namelen;	/* length of looked up comp */
-	size_t		cn_consume;	/* chars to consume in lookup */
 };
 
 /*

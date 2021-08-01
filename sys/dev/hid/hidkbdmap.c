@@ -1,4 +1,4 @@
-/*	$NetBSD: hidkbdmap.c,v 1.12.6.1 2021/05/13 00:47:30 thorpej Exp $	*/
+/*	$NetBSD: hidkbdmap.c,v 1.12.6.2 2021/08/01 22:42:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999,2001 The NetBSD Foundation, Inc.
@@ -31,8 +31,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hidkbdmap.c,v 1.12.6.1 2021/05/13 00:47:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hidkbdmap.c,v 1.12.6.2 2021/08/01 22:42:23 thorpej Exp $");
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>

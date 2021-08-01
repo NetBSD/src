@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.104 2020/06/27 17:29:18 christos Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.104.6.1 2021/08/01 22:42:36 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.104 2020/06/27 17:29:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.104.6.1 2021/08/01 22:42:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1841,6 +1841,7 @@ msdosfs_detimes(struct denode *dep, const struct timespec *acc,
 int (**msdosfs_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc msdosfs_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
+	{ &vop_parsepath_desc, genfs_parsepath },	/* parsepath */
 	{ &vop_lookup_desc, msdosfs_lookup },		/* lookup */
 	{ &vop_create_desc, msdosfs_create },		/* create */
 	{ &vop_mknod_desc, genfs_eopnotsupp },		/* mknod */
@@ -1855,13 +1856,13 @@ const struct vnodeopv_entry_desc msdosfs_vnodeop_entries[] = {
 	{ &vop_fallocate_desc, genfs_eopnotsupp },	/* fallocate */
 	{ &vop_fdiscard_desc, genfs_eopnotsupp },	/* fdiscard */
 	{ &vop_fcntl_desc, genfs_fcntl },		/* fcntl */
-	{ &vop_ioctl_desc, msdosfs_ioctl },		/* ioctl */
-	{ &vop_poll_desc, msdosfs_poll },		/* poll */
+	{ &vop_ioctl_desc, genfs_enoioctl },		/* ioctl */
+	{ &vop_poll_desc, genfs_poll },			/* poll */
 	{ &vop_kqfilter_desc, genfs_kqfilter },		/* kqfilter */
-	{ &vop_revoke_desc, msdosfs_revoke },		/* revoke */
-	{ &vop_mmap_desc, msdosfs_mmap },		/* mmap */
+	{ &vop_revoke_desc, genfs_revoke },		/* revoke */
+	{ &vop_mmap_desc, genfs_mmap },			/* mmap */
 	{ &vop_fsync_desc, msdosfs_fsync },		/* fsync */
-	{ &vop_seek_desc, msdosfs_seek },		/* seek */
+	{ &vop_seek_desc, genfs_seek },			/* seek */
 	{ &vop_remove_desc, msdosfs_remove },		/* remove */
 	{ &vop_link_desc, genfs_eopnotsupp },		/* link */
 	{ &vop_rename_desc, msdosfs_rename },		/* rename */
@@ -1870,7 +1871,7 @@ const struct vnodeopv_entry_desc msdosfs_vnodeop_entries[] = {
 	{ &vop_symlink_desc, genfs_eopnotsupp },	/* symlink */
 	{ &vop_readdir_desc, msdosfs_readdir },		/* readdir */
 	{ &vop_readlink_desc, genfs_einval },		/* readlink */
-	{ &vop_abortop_desc, msdosfs_abortop },		/* abortop */
+	{ &vop_abortop_desc, genfs_abortop },		/* abortop */
 	{ &vop_inactive_desc, msdosfs_inactive },	/* inactive */
 	{ &vop_reclaim_desc, msdosfs_reclaim },		/* reclaim */
 	{ &vop_lock_desc, genfs_lock },			/* lock */

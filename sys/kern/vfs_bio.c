@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.298 2021/04/01 06:25:59 simonb Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.298.2.1 2021/08/01 22:42:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.298 2021/04/01 06:25:59 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.298.2.1 2021/08/01 22:42:38 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bufcache.h"
@@ -1765,7 +1765,6 @@ sysctl_fillbuf(const buf_t *i, struct buf_sysctl *o)
 	o->b_lblkno = i->b_lblkno;
 }
 
-#define KERN_BUFSLOP 20
 static int
 sysctl_dobuf(SYSCTLFN_ARGS)
 {
@@ -1804,6 +1803,14 @@ sysctl_dobuf(SYSCTLFN_ARGS)
 	if (op != KERN_BUF_ALL || arg != KERN_BUF_ALL ||
 	    elem_size < 1 || elem_count < 0)
 		return (EINVAL);
+
+	if (oldp == NULL) {
+		/* count only, don't run through the buffer queues */
+		needed = pool_cache_nget(buf_cache) - pool_cache_nput(buf_cache);
+		*oldlenp = (needed + KERN_BUFSLOP) * elem_size;
+
+		return 0;
+	}
 
 	error = 0;
 	needed = 0;
@@ -1849,8 +1856,6 @@ sysctl_dobuf(SYSCTLFN_ARGS)
 	sysctl_relock();
 
 	*oldlenp = needed;
-	if (oldp == NULL)
-		*oldlenp += KERN_BUFSLOP * sizeof(buf_t);
 
 	return (error);
 }

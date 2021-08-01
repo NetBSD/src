@@ -1,11 +1,8 @@
-/* $NetBSD: cctr_machdep.c,v 1.1 2014/08/10 05:47:37 matt Exp $ */
+/* $NetBSD: fancontrolvar.h,v 1.2.4.2 2021/08/01 22:42:12 thorpej Exp $ */
 
 /*-
- * Copyright (c) 2014 The NetBSD Foundation, Inc.
+ * Copyright (c) 2021 Michael Lorenz
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Matt Thomas of 3am Software Foundry.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,8 +26,28 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
+#ifndef FANCONTROLVAR_H
+#define FANCONTROLVAR_H
 
-__KERNEL_RCSID(1, "$NetBSD: cctr_machdep.c,v 1.1 2014/08/10 05:47:37 matt Exp $");
+#define FANCONTROL_MAX_FANS 10
 
+typedef struct _fancontrol_fan_data {
+	const char *name;
+	int num, min_rpm, max_rpm;
+} fancontrol_fan_data;
 
+typedef struct _fancontrol_zone {
+	void *cookie;
+	const char *name;
+	bool (*filter)(const envsys_data_t *);
+	int (*get_rpm)(void *, int);
+	int (*set_rpm)(void *, int, int);
+	int nfans;
+	fancontrol_fan_data fans[FANCONTROL_MAX_FANS];
+	int Tmin, Tmax;		/* temperature range in this zone */
+} fancontrol_zone_t; 
+
+int fancontrol_adjust_zone(fancontrol_zone_t *);
+int fancontrol_init_zone(fancontrol_zone_t *, struct sysctlnode *);
+
+#endif /* FANCONTROLVAR_H */

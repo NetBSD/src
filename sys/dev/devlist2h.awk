@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$NetBSD: devlist2h.awk,v 1.3 2017/06/27 08:09:14 wiz Exp $
+#	$NetBSD: devlist2h.awk,v 1.3.26.1 2021/08/01 22:42:20 thorpej Exp $
 #
 # Copyright (c) 1995, 1996 Christopher G. Demetriou
 # All rights reserved.
@@ -29,6 +29,34 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+
+function collectline(f) {
+	oparen = 0
+	line = ""
+	while (f <= NF) {
+		if ($f == "#") {
+			line = line "("
+			oparen = 1
+			f++
+			continue
+		}
+		if (oparen) {
+			line = line $f
+			if (f < NF)
+			line = line " "
+			f++
+			continue
+		}
+		line = line $f
+		if (f < NF)
+			line = line " "
+		f++
+	}
+	if (oparen)
+		line = line ")"
+	return line
+}
+
 NR == 1 {
 	nproducts = nvendors = blanklines = 0
 	vendormaxlen = productmaxlen = 0
@@ -41,6 +69,22 @@ NR == 1 {
 	VERSION = $0
 	gsub("\\$", "", VERSION)
 	gsub(/ $/, "", VERSION)
+
+	if ( PREFIX == "MII" ) {
+		VENDOR="OUI"
+		PRODUCT="MODEL"
+		vendor="oui"
+		product="model"
+		fmt_vendor="oui %6.6x"
+		fmt_product="model %4.4x"
+	} else {
+		VENDOR="VENDOR"
+		PRODUCT="PRODUCT"
+		vendor="vendor"
+		product="product"
+		fmt_vendor="vendor %4.4x"
+		fmt_product="product %4.4x"
+	}
 
 	printf("/*\t$NetBSD" "$\t*/\n\n") > dfile
 	printf("/*\n") > dfile
@@ -62,13 +106,13 @@ NR == 1 {
 
 	next
 }
-NF > 0 && $1 == "vendor" {
+NF > 0 && $1 == vendor {
 	nvendors++
 
 	vendorindex[$2] = nvendors;		# record index for this name, for later.
 	vendors[nvendors, 1] = $2;		# name
 	vendors[nvendors, 2] = $3;		# id
-	printf("#define\t%s_VENDOR_%s\t%s", PREFIX, vendors[nvendors, 1],
+	printf("#define\t%s_%s_%s\t%s", PREFIX, VENDOR, vendors[nvendors, 1],
 	    vendors[nvendors, 2]) > hfile
 
 	i = 3; f = 4;
@@ -124,14 +168,15 @@ NF > 0 && $1 == "vendor" {
 
 	next
 }
-NF > 0 && $1 == "product" {
+NF > 0 && $1 == product {
 	nproducts++
 
 	products[nproducts, 1] = $2;		# vendor name
 	products[nproducts, 2] = $3;		# product id
 	products[nproducts, 3] = $4;		# id
-	printf("#define\t%s_PRODUCT_%s_%s\t%s", PREFIX, products[nproducts, 1],
-	    products[nproducts, 2], products[nproducts, 3]) > hfile
+	printf("#define\t%s_%s_%s_%s\t%s", PREFIX, PRODUCT,
+	    products[nproducts, 1], products[nproducts, 2],
+	    products[nproducts, 3]) > hfile
 
 	i=4; f = 5;
 
@@ -184,6 +229,12 @@ NF > 0 && $1 == "product" {
 		productmaxlen = productlen;
 	}
 
+	if (PREFIX == "MII") {
+		printf("#define\tMII_STR_%s_%s\t\"%s\"\n",
+		    products[nproducts, 1], products[nproducts, 2],
+		    collectline(5)) > hfile
+	}
+
 	next
 }
 {
@@ -198,9 +249,9 @@ END {
 
 	printf("\n") > dfile
 
-	printf("static const uint16_t %s_vendors[] = {\n", prefix) > dfile
+	printf("static const uint32_t %s_vendors[] = {\n", prefix) > dfile
 	for (i = 1; i <= nvendors; i++) {
-		printf("\t    %s_VENDOR_%s", PREFIX, vendors[i, 1]) \
+		printf("\t    %s_%s_%s", PREFIX, VENDOR, vendors[i, 1]) \
 		    > dfile
 
 		j = 3;
@@ -218,11 +269,11 @@ END {
 
 	printf("\n") > dfile
 
-	printf("static const uint16_t %s_products[] = {\n", prefix) > dfile
+	printf("static const uint32_t %s_products[] = {\n", prefix) > dfile
 	for (i = 1; i <= nproducts; i++) {
-		printf("\t    %s_VENDOR_%s, %s_PRODUCT_%s_%s, \n",
-		    PREFIX, products[i, 1], PREFIX, products[i, 1],
-		    products[i, 2]) > dfile
+		printf("\t    %s_%s_%s, %s_%s_%s_%s, \n",
+		    PREFIX, VENDOR, products[i, 1], PREFIX, PRODUCT,
+		    products[i, 1], products[i, 2]) > dfile
 
 		printf("\t    ") > dfile
 		j = 4
@@ -250,8 +301,13 @@ END {
 
 	printf("\n") > dfile
 
-	printf("Maximum vendor string length:  %d\n", vendormaxlen + 1)
-	printf("Maximum product string length: %d\n", productmaxlen + 1)
+	printf("\n") > hfile
+	printf("/* Define format strings for non-existent values */\n") > hfile
+	printf("#define %s_id1_format\t\"%s\"\n", prefix, fmt_vendor) > hfile
+	printf("#define %s_id2_format\t\"%s\"\n", prefix, fmt_product) > hfile
+
+	printf("Maximum %s string length:  %d\n", vendor, vendormaxlen + 1)
+	printf("Maximum %s string length: %d\n", product, productmaxlen + 1)
 	printf("\nEnsure that device-specific values are sufficiently large");
 	printf("\ncheck Makefile.%s for details).\n", FILENAME);
 

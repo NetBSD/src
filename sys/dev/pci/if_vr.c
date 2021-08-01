@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.133.10.1 2021/05/13 00:47:31 thorpej Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.133.10.2 2021/08/01 22:42:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.133.10.1 2021/05/13 00:47:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.133.10.2 2021/08/01 22:42:25 thorpej Exp $");
 
 
 
@@ -174,7 +174,7 @@ static const struct device_compatible_entry compat_data[] = {
 #define	VR_NEXTRX(x)		(((x) + 1) & VR_NRXDESC_MASK)
 
 /*
- * Control data structres that are DMA'd to the Rhine chip.  We allocate
+ * Control data structures that are DMA'd to the Rhine chip.  We allocate
  * them in a single clump that maps to a single DMA segment to make several
  * things easier.
  *

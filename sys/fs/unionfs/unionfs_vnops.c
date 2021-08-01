@@ -65,6 +65,42 @@
 #endif
 
 static int
+unionfs_parsepath(void *v)
+{
+	struct vop_parsepath_args /* {
+		struct vnode *a_dvp;
+		const char *a_name;
+		size_t *a_retval;
+	} */ *ap = v;
+	struct unionfs_node *dunp;
+	struct vnode *upperdvp, *lowerdvp;
+	size_t upper, lower;
+	int error;
+
+	dunp = VTOUNIONFS(ap->a_dvp);
+	upperdvp = dunp->un_uppervp;
+	lowerdvp = dunp->un_lowervp;
+
+	error = VOP_PARSEPATH(upperdvp, ap->a_name, &upper);
+	if (error) {
+		return error;
+	}
+
+	error = VOP_PARSEPATH(lowerdvp, ap->a_name, &lower);
+	if (error) {
+		return error;
+	}
+
+	/*
+	 * If they're different, use the larger one. This is not a
+	 * comprehensive solution, but it's sufficient for the
+	 * non-default cases of parsepath that currently exist.
+	 */
+	*ap->a_retval = MAX(upper, lower);
+	return 0;
+}
+
+static int
 unionfs_lookup(void *v)
 {
 	struct vop_lookup_args *ap = v;
@@ -1814,6 +1850,7 @@ unionfs_revoke(void *v)
 int (**unionfs_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc unionfs_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
+	{ &vop_parsepath_desc, unionfs_parsepath },	/* parsepath */
 	{ &vop_lookup_desc, unionfs_lookup },		/* lookup */
 	{ &vop_create_desc, unionfs_create },		/* create */
 	{ &vop_whiteout_desc, unionfs_whiteout },	/* whiteout */

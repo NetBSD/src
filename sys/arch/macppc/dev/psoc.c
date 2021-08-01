@@ -1,4 +1,4 @@
- /* $NetBSD: psoc.c,v 1.6.4.1 2021/05/09 22:36:35 thorpej Exp $ */
+ /* $NetBSD: psoc.c,v 1.6.4.2 2021/08/01 22:42:12 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Michael Lorenz
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psoc.c,v 1.6.4.1 2021/05/09 22:36:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psoc.c,v 1.6.4.2 2021/08/01 22:42:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +56,13 @@ __KERNEL_RCSID(0, "$NetBSD: psoc.c,v 1.6.4.1 2021/05/09 22:36:35 thorpej Exp $")
 #include <dev/i2c/i2cvar.h>
 
 #include <dev/sysmon/sysmonvar.h>
+
+#include "opt_psoc.h"
+#ifdef PSOC_DEBUG
+#define DPRINTF printf
+#else
+#define DPRINTF if (0) printf
+#endif
 
 struct psoc_softc {
 	device_t	sc_dev;
@@ -117,10 +124,10 @@ psoc_attach(device_t parent, device_t self, void *aux)
 
 	error = OF_package_to_path(sc->sc_node, path, 256);
 	path[error] = 0;
-	printf("path [%s]\n", path);
+	DPRINTF("path [%s]\n", path);
 	ih = OF_open("fan");
 	OF_call_method_1("fan-init", ih, 0);
-	printf("ih %08x\n", ih);
+	DPRINTF("ih %08x\n", ih);
 
 	sc->sc_sme = sysmon_envsys_create();
 	sc->sc_sme->sme_name = device_xname(self);
@@ -214,6 +221,8 @@ psoc_dump(struct psoc_softc *sc)
 {
 	int i, j;
 	uint8_t data, cmd;
+
+	iic_acquire_bus(sc->sc_i2c, 0);
 	for (i = 0x20; i < 0x5f; i+= 8) {
 		printf("%02x:", i);
 		for (j = 0; j < 8; j++) {
@@ -225,4 +234,5 @@ psoc_dump(struct psoc_softc *sc)
 		}
 		printf("\n");
 	}
+	iic_release_bus(sc->sc_i2c, 0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.92.2.2 2021/06/17 04:46:27 thorpej Exp $	*/
+/*	$NetBSD: audio.c,v 1.92.2.3 2021/08/01 22:42:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.92.2.2 2021/06/17 04:46:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.92.2.3 2021/08/01 22:42:21 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -7418,59 +7418,46 @@ audio_hw_setinfo(struct audio_softc *sc, const struct audio_info *newai,
 		}
 	}
 
-	/* Backup play.{gain,balance} */
+	/* play.{gain,balance} */
 	if (SPECIFIED(newpi->gain) || SPECIFIED_CH(newpi->balance)) {
 		au_get_gain(sc, &sc->sc_outports, &pgain, &pbalance);
 		if (oldai) {
 			oldpi->gain = pgain;
 			oldpi->balance = pbalance;
 		}
+
+		if (SPECIFIED(newpi->gain))
+			pgain = newpi->gain;
+		if (SPECIFIED_CH(newpi->balance))
+			pbalance = newpi->balance;
+		error = au_set_gain(sc, &sc->sc_outports, pgain, pbalance);
+		if (error) {
+			audio_printf(sc,
+			    "setting play.gain=%d/balance=%d failed: "
+			    "errno=%d\n",
+			    pgain, pbalance, error);
+			goto abort;
+		}
 	}
-	/* Backup record.{gain,balance} */
+
+	/* record.{gain,balance} */
 	if (SPECIFIED(newri->gain) || SPECIFIED_CH(newri->balance)) {
 		au_get_gain(sc, &sc->sc_inports, &rgain, &rbalance);
 		if (oldai) {
 			oldri->gain = rgain;
 			oldri->balance = rbalance;
 		}
-	}
-	if (SPECIFIED(newpi->gain)) {
-		error = au_set_gain(sc, &sc->sc_outports,
-		    newpi->gain, pbalance);
+
+		if (SPECIFIED(newri->gain))
+			rgain = newri->gain;
+		if (SPECIFIED_CH(newri->balance))
+			rbalance = newri->balance;
+		error = au_set_gain(sc, &sc->sc_inports, rgain, rbalance);
 		if (error) {
 			audio_printf(sc,
-			    "setting play.gain=%d failed: errno=%d\n",
-			    newpi->gain, error);
-			goto abort;
-		}
-	}
-	if (SPECIFIED(newri->gain)) {
-		error = au_set_gain(sc, &sc->sc_inports,
-		    newri->gain, rbalance);
-		if (error) {
-			audio_printf(sc,
-			    "setting record.gain=%d failed: errno=%d\n",
-			    newri->gain, error);
-			goto abort;
-		}
-	}
-	if (SPECIFIED_CH(newpi->balance)) {
-		error = au_set_gain(sc, &sc->sc_outports,
-		    pgain, newpi->balance);
-		if (error) {
-			audio_printf(sc,
-			    "setting play.balance=%d failed: errno=%d\n",
-			    newpi->balance, error);
-			goto abort;
-		}
-	}
-	if (SPECIFIED_CH(newri->balance)) {
-		error = au_set_gain(sc, &sc->sc_inports,
-		    rgain, newri->balance);
-		if (error) {
-			audio_printf(sc,
-			    "setting record.balance=%d failed: errno=%d\n",
-			    newri->balance, error);
+			    "setting record.gain=%d/balance=%d failed: "
+			    "errno=%d\n",
+			    rgain, rbalance, error);
 			goto abort;
 		}
 	}

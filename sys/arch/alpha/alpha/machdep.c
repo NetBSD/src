@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.369.6.2 2021/06/17 04:46:16 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.369.6.3 2021/08/01 22:42:00 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2019, 2020 The NetBSD Foundation, Inc.
@@ -65,9 +65,11 @@
 #include "opt_dec_3000_500.h"
 #include "opt_execfmt.h"
 
+#define	__RWLOCK_PRIVATE
+
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.369.6.2 2021/06/17 04:46:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.369.6.3 2021/08/01 22:42:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +81,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.369.6.2 2021/06/17 04:46:16 thorpej Ex
 #include <sys/sched.h>
 #include <sys/reboot.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/module.h>
 #include <sys/mman.h>
 #include <sys/msgbuf.h>
@@ -96,6 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.369.6.2 2021/06/17 04:46:16 thorpej Ex
 #include <sys/kauth.h>
 #include <sys/atomic.h>
 #include <sys/cpu.h>
+#include <sys/rwlock.h>
 
 #include <machine/kcore.h>
 #include <machine/fpu.h>
@@ -133,6 +135,10 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.369.6.2 2021/06/17 04:46:16 thorpej Ex
 int sigdebug = 0x0;
 int sigpid = 0;
 #endif
+
+/* Assert some assumptions made in lock_stubs.s */
+__CTASSERT(RW_READER == 0);
+__CTASSERT(RW_HAS_WAITERS == 1);
 
 #include <machine/alpha.h>
 
@@ -189,6 +195,7 @@ int	alpha_unaligned_print = 1;	/* warn about unaligned accesses */
 int	alpha_unaligned_fix = 1;	/* fix up unaligned accesses */
 int	alpha_unaligned_sigbus = 0;	/* don't SIGBUS on fixed-up accesses */
 int	alpha_fp_sync_complete = 0;	/* fp fixup if sync even without /s */
+int	alpha_fp_complete_debug = 0;	/* fp completion debug enabled */
 
 /*
  * XXX This should be dynamically sized, but we have the chicken-egg problem!
@@ -1640,6 +1647,11 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTLTYPE_BOOL, "is_qemu", NULL,
 		       NULL, 0, &alpha_is_qemu, 0,
 		       CTL_MACHDEP, CPU_IS_QEMU, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "fp_complete_debug", NULL,
+		       NULL, 0, &alpha_fp_complete_debug, 0,
+		       CTL_MACHDEP, CPU_FP_COMPLETE_DEBUG, CTL_EOL);
 }
 
 /*
@@ -1681,8 +1693,10 @@ setregs(register struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	tfp->tf_regs[FRAME_T12] = tfp->tf_regs[FRAME_PC];	/* a.k.a. PV */
 
 	if (__predict_true((l->l_md.md_flags & IEEE_INHERIT) == 0)) {
-		l->l_md.md_flags &= ~MDLWP_FP_C;
-		pcb->pcb_fp.fpr_cr = FPCR_DYN(FP_RN);
+		l->l_md.md_flags =
+		    (l->l_md.md_flags & ~(MDLWP_FP_C | MDLWP_FPACTIVE)) |
+		    FP_C_DEFAULT;
+		pcb->pcb_fp.fpr_cr = FPCR_DEFAULT;
 	}
 }
 

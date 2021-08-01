@@ -1,4 +1,4 @@
-/*	$NetBSD: sbicvar.h,v 1.15 2012/10/27 17:18:04 chs Exp $	*/
+/*	$NetBSD: sbicvar.h,v 1.15.54.1 2021/08/01 22:42:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -116,7 +116,7 @@ struct  sbic_softc {
 	u_char sc_stat[2];
 	u_char sc_msg[7];
 	u_long sc_clkfreq;
-	u_long sc_tcnt;			/* number of bytes transfered */
+	u_long sc_tcnt;			/* number of bytes transferred */
 	u_short sc_dmacmd;		/* used by DMA drivers */
 	u_long sc_dmamask;		/* DMA valid mem mask */
 #ifdef DEBUG

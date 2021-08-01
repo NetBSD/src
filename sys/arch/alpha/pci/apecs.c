@@ -1,4 +1,4 @@
-/* $NetBSD: apecs.c,v 1.55 2021/04/24 23:36:23 thorpej Exp $ */
+/* $NetBSD: apecs.c,v 1.55.2.1 2021/08/01 22:42:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -56,19 +56,13 @@
  * rights to redistribute these changes.
  */
 
-#include "opt_dec_2100_a50.h"
-#include "opt_dec_eb64plus.h"
-#include "opt_dec_1000a.h"
-#include "opt_dec_1000.h"
-
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.55 2021/04/24 23:36:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.55.2.1 2021/08/01 22:42:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
@@ -82,18 +76,6 @@ __KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.55 2021/04/24 23:36:23 thorpej Exp $");
 #include <dev/pci/pcivar.h>
 #include <alpha/pci/apecsreg.h>
 #include <alpha/pci/apecsvar.h>
-#ifdef DEC_2100_A50
-#include <alpha/pci/pci_2100_a50.h>
-#endif
-#ifdef DEC_EB64PLUS
-#include <alpha/pci/pci_eb64plus.h>
-#endif
-#ifdef DEC_1000A
-#include <alpha/pci/pci_1000a.h>
-#endif
-#ifdef DEC_1000
-#include <alpha/pci/pci_1000.h>
-#endif
 
 static int apecsmatch(device_t, cfdata_t, void *);
 static void apecsattach(device_t, device_t, void *);
@@ -106,7 +88,7 @@ static int apecs_bus_get_window(int, int,
     struct alpha_bus_space_translation *);
 
 /* There can be only one. */
-int apecsfound;
+static int apecsfound;
 struct apecs_config apecs_configuration;
 
 static int
@@ -189,36 +171,7 @@ apecsattach(device_t parent, device_t self, void *aux)
 	if (!acp->ac_epic_pass2)
 		printf("WARNING: 21071-DA NOT PASS2... NO BETS...\n");
 
-	switch (cputype) {
-#ifdef DEC_2100_A50
-	case ST_DEC_2100_A50:
-		pci_2100_a50_pickintr(acp);
-		break;
-#endif
-
-#ifdef DEC_EB64PLUS
-	case ST_EB64P:
-		pci_eb64plus_pickintr(acp);
-		break;
-#endif
-
-#ifdef DEC_1000A
-	case ST_DEC_1000A:
-		pci_1000a_pickintr(acp, &acp->ac_iot, &acp->ac_memt,
-			&acp->ac_pc);
-		break;
-#endif
-
-#ifdef DEC_1000
-	case ST_DEC_1000:
-		pci_1000_pickintr(acp, &acp->ac_iot, &acp->ac_memt,
-			&acp->ac_pc);
-		break;
-#endif
-
-	default:
-		panic("apecsattach: shouldn't be here, really...");
-	}
+	alpha_pci_intr_init(acp, &acp->ac_iot, &acp->ac_memt, &acp->ac_pc);
 
 	pba.pba_iot = &acp->ac_iot;
 	pba.pba_memt = &acp->ac_memt;
@@ -234,7 +187,8 @@ apecsattach(device_t parent, device_t self, void *aux)
 }
 
 static int
-apecs_bus_get_window(int type, int window, struct alpha_bus_space_translation *abst)
+apecs_bus_get_window(int type, int window,
+    struct alpha_bus_space_translation *abst)
 {
 	struct apecs_config *acp = &apecs_configuration;
 	bus_space_tag_t st;

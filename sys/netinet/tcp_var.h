@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.195 2021/03/08 18:17:27 christos Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.195.4.1 2021/08/01 22:42:42 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -299,7 +299,7 @@ struct tcpcb {
 
 /* congestion control (for slow start, source quench, retransmit after loss) */
 	u_long	snd_cwnd;		/* congestion-controlled window */
-	u_long	snd_ssthresh;		/* snd_cwnd size threshhold for
+	u_long	snd_ssthresh;		/* snd_cwnd size threshold for
 					 * for slow start exponential to
 					 * linear switch
 					 */

@@ -1,4 +1,4 @@
-/* $NetBSD: cia.c,v 1.75 2021/04/24 23:36:23 thorpej Exp $ */
+/* $NetBSD: cia.c,v 1.75.2.1 2021/08/01 22:42:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -57,20 +57,15 @@
  * rights to redistribute these changes.
  */
 
-#include "opt_dec_eb164.h"
-#include "opt_dec_kn20aa.h"
 #include "opt_dec_550.h"
-#include "opt_dec_1000a.h"
-#include "opt_dec_1000.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.75 2021/04/24 23:36:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.75.2.1 2021/08/01 22:42:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
@@ -86,34 +81,19 @@ __KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.75 2021/04/24 23:36:23 thorpej Exp $");
 #include <alpha/pci/ciareg.h>
 #include <alpha/pci/ciavar.h>
 
-#ifdef DEC_KN20AA
-#include <alpha/pci/pci_kn20aa.h>
-#endif
-#ifdef DEC_EB164
-#include <alpha/pci/pci_eb164.h>
-#endif
-#ifdef DEC_550
-#include <alpha/pci/pci_550.h>
-#endif
-#ifdef DEC_1000A
-#include <alpha/pci/pci_1000a.h>
-#endif
-#ifdef DEC_1000
-#include <alpha/pci/pci_1000.h>
-#endif
-
-int	ciamatch(device_t, cfdata_t, void *);
-void	ciaattach(device_t, device_t, void *);
+static int	ciamatch(device_t, cfdata_t, void *);
+static void	ciaattach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(cia, sizeof(struct cia_softc),
     ciamatch, ciaattach, NULL, NULL);
 
 extern struct cfdriver cia_cd;
 
-int	cia_bus_get_window(int, int, struct alpha_bus_space_translation *);
+static int	cia_bus_get_window(int, int,
+		    struct alpha_bus_space_translation *);
 
 /* There can be only one. */
-int ciafound;
+static int ciafound;
 struct cia_config cia_configuration;
 
 /*
@@ -147,7 +127,7 @@ int	cia_pci_use_bwx = CIA_PCI_USE_BWX;
 int	cia_bus_use_bwx = CIA_BUS_USE_BWX;
 int	cia_pyxis_force_bwx = CIA_PYXIS_FORCE_BWX;
 
-int
+static int
 ciamatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
@@ -260,7 +240,7 @@ cia_init(struct cia_config *ccp, int mallocsafe)
 	ccp->cc_initted = 1;
 }
 
-void
+static void
 ciaattach(device_t parent, device_t self, void *aux)
 {
 	struct cia_softc *sc = device_private(self);
@@ -352,42 +332,7 @@ ciaattach(device_t parent, device_t self, void *aux)
 
 	cia_dma_init(ccp);
 
-	switch (cputype) {
-#ifdef DEC_KN20AA
-	case ST_DEC_KN20AA:
-		pci_kn20aa_pickintr(ccp);
-		break;
-#endif
-
-#ifdef DEC_EB164
-	case ST_EB164:
-		pci_eb164_pickintr(ccp);
-		break;
-#endif
-
-#ifdef DEC_550
-	case ST_DEC_550:
-		pci_550_pickintr(ccp);
-		break;
-#endif
-
-#ifdef DEC_1000A
-	case ST_DEC_1000A:
-		pci_1000a_pickintr(ccp, &ccp->cc_iot, &ccp->cc_memt,
-			&ccp->cc_pc);
-		break;
-#endif
-
-#ifdef DEC_1000
-	case ST_DEC_1000:
-		pci_1000_pickintr(ccp, &ccp->cc_iot, &ccp->cc_memt,
-			&ccp->cc_pc);
-		break;
-#endif
-
-	default:
-		panic("ciaattach: shouldn't be here, really...");
-	}
+	alpha_pci_intr_init(ccp, &ccp->cc_iot, &ccp->cc_memt, &ccp->cc_pc);
 
 	pba.pba_iot = &ccp->cc_iot;
 	pba.pba_memt = &ccp->cc_memt;
@@ -404,8 +349,9 @@ ciaattach(device_t parent, device_t self, void *aux)
 	config_found(self, &pba, pcibusprint, CFARG_EOL);
 }
 
-int
-cia_bus_get_window(int type, int window, struct alpha_bus_space_translation *abst)
+static int
+cia_bus_get_window(int type, int window,
+    struct alpha_bus_space_translation *abst)
 {
 	struct cia_config *ccp = &cia_configuration;
 	bus_space_tag_t st;

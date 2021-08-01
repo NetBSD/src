@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_fifoops.c,v 1.12 2020/05/16 18:31:49 christos Exp $	*/
+/*	$NetBSD: tmpfs_fifoops.c,v 1.12.6.1 2021/08/01 22:42:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_fifoops.c,v 1.12 2020/05/16 18:31:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_fifoops.c,v 1.12.6.1 2021/08/01 22:42:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -49,49 +49,24 @@ __KERNEL_RCSID(0, "$NetBSD: tmpfs_fifoops.c,v 1.12 2020/05/16 18:31:49 christos 
 int (**tmpfs_fifoop_p)(void *);
 const struct vnodeopv_entry_desc tmpfs_fifoop_entries[] = {
 	{ &vop_default_desc,		vn_default_error },
-	{ &vop_lookup_desc,		tmpfs_fifo_lookup },
-	{ &vop_create_desc,		tmpfs_fifo_create },
-	{ &vop_mknod_desc,		tmpfs_fifo_mknod },
-	{ &vop_open_desc,		tmpfs_fifo_open },
+	GENFS_FIFOOP_ENTRIES,
 	{ &vop_close_desc,		tmpfs_fifo_close },
-	{ &vop_access_desc,		tmpfs_fifo_access },
+	{ &vop_access_desc,		tmpfs_access },
 	{ &vop_accessx_desc,		genfs_accessx },
-	{ &vop_getattr_desc,		tmpfs_fifo_getattr },
-	{ &vop_setattr_desc,		tmpfs_fifo_setattr },
+	{ &vop_getattr_desc,		tmpfs_getattr },
+	{ &vop_setattr_desc,		tmpfs_setattr },
 	{ &vop_read_desc,		tmpfs_fifo_read },
 	{ &vop_write_desc,		tmpfs_fifo_write },
-	{ &vop_fallocate_desc,		vn_fifo_bypass },
-	{ &vop_fdiscard_desc,		vn_fifo_bypass },
-	{ &vop_ioctl_desc,		tmpfs_fifo_ioctl },
-	{ &vop_fcntl_desc,		tmpfs_fifo_fcntl },
-	{ &vop_poll_desc,		tmpfs_fifo_poll },
-	{ &vop_kqfilter_desc,		tmpfs_fifo_kqfilter },
-	{ &vop_revoke_desc,		tmpfs_fifo_revoke },
-	{ &vop_mmap_desc,		tmpfs_fifo_mmap },
-	{ &vop_fsync_desc,		tmpfs_fifo_fsync },
-	{ &vop_seek_desc,		tmpfs_fifo_seek },
-	{ &vop_remove_desc,		tmpfs_fifo_remove },
-	{ &vop_link_desc,		tmpfs_fifo_link },
-	{ &vop_rename_desc,		tmpfs_fifo_rename },
-	{ &vop_mkdir_desc,		tmpfs_fifo_mkdir },
-	{ &vop_rmdir_desc,		tmpfs_fifo_rmdir },
-	{ &vop_symlink_desc,		tmpfs_fifo_symlink },
-	{ &vop_readdir_desc,		tmpfs_fifo_readdir },
-	{ &vop_readlink_desc,		tmpfs_fifo_readlink },
-	{ &vop_abortop_desc,		tmpfs_fifo_abortop },
-	{ &vop_inactive_desc,		tmpfs_fifo_inactive },
-	{ &vop_reclaim_desc,		tmpfs_fifo_reclaim },
-	{ &vop_lock_desc,		tmpfs_fifo_lock },
-	{ &vop_unlock_desc,		tmpfs_fifo_unlock },
-	{ &vop_bmap_desc,		tmpfs_fifo_bmap },
-	{ &vop_strategy_desc,		tmpfs_fifo_strategy },
-	{ &vop_print_desc,		tmpfs_fifo_print },
-	{ &vop_pathconf_desc,		tmpfs_fifo_pathconf },
-	{ &vop_islocked_desc,		tmpfs_fifo_islocked },
-	{ &vop_advlock_desc,		tmpfs_fifo_advlock },
-	{ &vop_bwrite_desc,		tmpfs_fifo_bwrite },
-	{ &vop_getpages_desc,		tmpfs_fifo_getpages },
-	{ &vop_putpages_desc,		tmpfs_fifo_putpages },
+	{ &vop_fcntl_desc,		genfs_fcntl },
+	{ &vop_fsync_desc,		vn_fifo_bypass },
+	{ &vop_inactive_desc,		tmpfs_inactive },
+	{ &vop_reclaim_desc,		tmpfs_reclaim },
+	{ &vop_lock_desc,		genfs_lock },
+	{ &vop_unlock_desc,		genfs_unlock },
+	{ &vop_strategy_desc,		vn_fifo_bypass },
+	{ &vop_print_desc,		tmpfs_print },
+	{ &vop_islocked_desc,		genfs_islocked },
+	{ &vop_bwrite_desc,		genfs_nullop },
 	{ NULL, NULL }
 };
 

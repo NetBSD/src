@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.2 2013/08/18 21:57:01 matt Exp $	*/
+/*	$NetBSD: intr.c,v 1.2.48.1 2021/08/01 22:42:07 thorpej Exp $	*/
 /*
  * Copyright (c) 2012 KIYOHARA Takashi
  * All rights reserved.
@@ -26,8 +26,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.2 2013/08/18 21:57:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.2.48.1 2021/08/01 22:42:07 thorpej Exp $");
 
+#include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/cpu.h>
 

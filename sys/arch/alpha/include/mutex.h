@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.8 2020/09/23 00:52:49 thorpej Exp $	*/
+/*	$NetBSD: mutex.h,v 1.8.6.1 2021/08/01 22:42:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -59,6 +59,7 @@ struct kmutex {
 
 #define	__HAVE_SIMPLE_MUTEXES		1
 #define	__HAVE_MUTEX_STUBS		1
+/* XXX #define	__HAVE_SPIN_MUTEX_STUBS		1 XXX */
 
 #define	MUTEX_CAS(p, o, n)		_lock_cas((p), (o), (n))
 

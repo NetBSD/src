@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.23 2018/04/29 19:01:15 ragge Exp $ */
+/*	$NetBSD: db_disasm.c,v 1.23.18.1 2021/08/01 22:42:18 thorpej Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.23 2018/04/29 19:01:15 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.23.18.1 2021/08/01 22:42:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -231,7 +231,7 @@ get_operands(inst_buffer *ib)
 				ib->off = get_long(ib);
 				break;
 			default:
-				err_print("XXX eror\n");
+				err_print("XXX error\n");
 			}
 			/* add_int(ib, ib->off); */
 			ib->addr = (u_int) ib->ppc + ib->off;

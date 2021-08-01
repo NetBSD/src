@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.h,v 1.17 2011/03/16 14:43:36 tsutsui Exp $	*/
+/*	$NetBSD: sysconf.h,v 1.17.72.1 2021/08/01 22:42:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -55,7 +55,7 @@ struct clock_ymdhms;
 extern struct platform {
 	/*
 	 *	cpu_intr	-	interrupt handler
-	 *	cpu_idle	-	CPU dependend idle routine.
+	 *	cpu_idle	-	CPU dependent idle routine.
 	 *	cons_init 	-	console initialization
 	 *	fb_init         -       frame buffer initialization
 	 *      mem_init        -       Count available memory

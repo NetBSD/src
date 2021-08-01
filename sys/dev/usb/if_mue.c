@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.60 2020/06/27 13:33:26 jmcneill Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.60.6.1 2021/08/01 22:42:31 thorpej Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.60 2020/06/27 13:33:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.60.6.1 2021/08/01 22:42:31 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"

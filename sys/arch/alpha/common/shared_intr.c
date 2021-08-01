@@ -1,4 +1,4 @@
-/* $NetBSD: shared_intr.c,v 1.26.6.1 2021/05/13 00:47:20 thorpej Exp $ */
+/* $NetBSD: shared_intr.c,v 1.26.6.2 2021/08/01 22:42:01 thorpej Exp $ */
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.26.6.1 2021/05/13 00:47:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.26.6.2 2021/08/01 22:42:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -96,10 +96,12 @@ intr_typename(int type)
 }
 
 struct alpha_shared_intr *
-alpha_shared_intr_alloc(unsigned int n, unsigned int namesize)
+alpha_shared_intr_alloc(unsigned int n)
 {
 	struct alpha_shared_intr *intr;
 	unsigned int i;
+
+	KASSERT(n != 0);
 
 	intr = kmem_alloc(n * sizeof(*intr), KM_SLEEP);
 	for (i = 0; i < n; i++) {
@@ -107,14 +109,10 @@ alpha_shared_intr_alloc(unsigned int n, unsigned int namesize)
 		intr[i].intr_sharetype = IST_NONE;
 		intr[i].intr_dfltsharetype = IST_NONE;
 		intr[i].intr_nstrays = 0;
-		intr[i].intr_maxstrays = 5;
+		intr[i].intr_maxstrays = 0;
 		intr[i].intr_private = NULL;
 		intr[i].intr_cpu = NULL;
-		if (namesize != 0) {
-			intr[i].intr_string = kmem_zalloc(namesize, KM_SLEEP);
-		} else {
-			intr[i].intr_string = NULL;
-		}
+		intr[i].intr_string = kmem_asprintf("irq %u", i);
 	}
 
 	return (intr);
@@ -170,7 +168,7 @@ alpha_shared_intr_alloc_intrhand(struct alpha_shared_intr *intr,
 	struct alpha_shared_intrhand *ih;
 
 	if (intr[num].intr_sharetype == IST_UNUSABLE) {
-		printf("%s: %s %d: unusable\n", __func__,
+		printf("%s: %s irq %d: unusable\n", __func__,
 		    basename, num);
 		return NULL;
 	}
@@ -249,12 +247,12 @@ alpha_shared_intr_link(struct alpha_shared_intr *intr,
 	case IST_PULSE:
 		if (type != IST_NONE) {
 			if (intr[num].intr_q.tqh_first == NULL) {
-				printf("alpha_shared_intr_establish: %s %d: warning: using %s on %s\n",
+				printf("alpha_shared_intr_establish: %s irq %d: warning: using %s on %s\n",
 				    basename, num, intr_typename(type),
 				    intr_typename(intr[num].intr_sharetype));
 				type = intr[num].intr_sharetype;
 			} else {
-				printf("alpha_shared_intr_establish: %s %d: can't share %s with %s\n",
+				printf("alpha_shared_intr_establish: %s irq %d: can't share %s with %s\n",
 				    basename, num, intr_typename(type),
 				    intr_typename(intr[num].intr_sharetype));
 				return (false);
@@ -381,7 +379,7 @@ alpha_shared_intr_stray(struct alpha_shared_intr *intr, unsigned int num,
 		return;
 
 	if (intr[num].intr_nstrays <= intr[num].intr_maxstrays)
-		log(LOG_ERR, "stray %s %d%s\n", basename, num,
+		log(LOG_ERR, "stray %s irq %d%s\n", basename, num,
 		    intr[num].intr_nstrays >= intr[num].intr_maxstrays ?
 		      "; stopped logging" : "");
 }
@@ -492,7 +490,16 @@ alpha_shared_intr_evcnt(struct alpha_shared_intr *intr,
 	return (&intr[num].intr_evcnt);
 }
 
-char *
+void
+alpha_shared_intr_set_string(struct alpha_shared_intr *intr,
+    unsigned int num, char *str)
+{
+	char *ostr = intr[num].intr_string;
+	intr[num].intr_string = str;
+	kmem_strfree(ostr);
+}
+
+const char *
 alpha_shared_intr_string(struct alpha_shared_intr *intr,
     unsigned int num)
 {

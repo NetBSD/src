@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb164.c,v 1.46 2020/09/22 15:24:02 thorpej Exp $ */
+/* $NetBSD: pci_eb164.c,v 1.46.6.1 2021/08/01 22:42:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -59,14 +59,13 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.46 2020/09/22 15:24:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.46.6.1 2021/08/01 22:42:02 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/syslog.h>
 
@@ -80,8 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.46 2020/09/22 15:24:02 thorpej Exp $
 
 #include <alpha/pci/ciareg.h>
 #include <alpha/pci/ciavar.h>
-
-#include <alpha/pci/pci_eb164.h>
 
 #include "sio.h"
 #if NSIO
@@ -102,15 +99,14 @@ static bus_space_handle_t eb164_intrgate_ioh;
 extern void	eb164_intr_enable(pci_chipset_tag_t, int irq);
 extern void	eb164_intr_disable(pci_chipset_tag_t, int irq);
 
-void
-pci_eb164_pickintr(struct cia_config *ccp)
+static void
+pci_eb164_pickintr(void *core, bus_space_tag_t iot, bus_space_tag_t memt,
+    pci_chipset_tag_t pc)
 {
-	bus_space_tag_t iot = &ccp->cc_iot;
-	pci_chipset_tag_t pc = &ccp->cc_pc;
-	char *cp;
+	struct cia_config *ccp = core;
 	int i;
 
-	pc->pc_intr_v = ccp;
+	pc->pc_intr_v = core;
 	pc->pc_intr_map = dec_eb164_intr_map;
 	pc->pc_intr_string = alpha_pci_generic_intr_string;
 	pc->pc_intr_evcnt = alpha_pci_generic_intr_evcnt;
@@ -124,13 +120,8 @@ pci_eb164_pickintr(struct cia_config *ccp)
 	if (bus_space_map(eb164_intrgate_iot, 0x804, 3, 0,
 	    &eb164_intrgate_ioh) != 0)
 		panic("pci_eb164_pickintr: couldn't map interrupt PLD");
-	for (i = 0; i < EB164_MAX_IRQ; i++)
-		eb164_intr_disable(pc, i);	
 
-#define PCI_EB164_IRQ_STR	8
-	pc->pc_shared_intrs = alpha_shared_intr_alloc(EB164_MAX_IRQ,
-	    PCI_EB164_IRQ_STR);
-	pc->pc_intr_desc = "eb164 irq";
+	pc->pc_intr_desc = "eb164";
 	pc->pc_vecbase = 0x900;
 	pc->pc_nirq = EB164_MAX_IRQ;
 
@@ -138,26 +129,22 @@ pci_eb164_pickintr(struct cia_config *ccp)
 	pc->pc_intr_disable = eb164_intr_disable;
 
 	for (i = 0; i < EB164_MAX_IRQ; i++) {
-		/*
-		 * Systems with a Pyxis seem to have problems with
-		 * stray interrupts, so just ignore them.  Sigh,
-		 * I hate buggy hardware.
-		 */
-		alpha_shared_intr_set_maxstrays(pc->pc_shared_intrs, i,
-			(ccp->cc_flags & CCF_ISPYXIS) ? 0 : PCI_STRAY_MAX);
-
-		cp = alpha_shared_intr_string(pc->pc_shared_intrs, i);
-		snprintf(cp, PCI_EB164_IRQ_STR, "irq %d", i);
-		evcnt_attach_dynamic(alpha_shared_intr_evcnt(
-		    pc->pc_shared_intrs, i), EVCNT_TYPE_INTR, NULL,
-		    "eb164", cp);
+		eb164_intr_disable(pc, i);
 	}
+
+	/*
+	 * Systems with a Pyxis seem to have problems with
+	 * stray interrupts, so just ignore them.
+	 */
+	alpha_pci_intr_alloc(pc,
+	    (ccp->cc_flags & CCF_ISPYXIS) ? 0 : PCI_STRAY_MAX);
 
 #if NSIO
 	sio_intr_setup(pc, iot);
 	eb164_intr_enable(pc, EB164_SIO_IRQ);
 #endif
 }
+ALPHA_PCI_INTR_INIT(ST_EB164, pci_eb164_pickintr)
 
 static int
 dec_eb164_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)

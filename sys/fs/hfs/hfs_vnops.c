@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vnops.c,v 1.36 2020/05/16 18:31:49 christos Exp $	*/
+/*	$NetBSD: hfs_vnops.c,v 1.36.6.1 2021/08/01 22:42:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.36 2020/05/16 18:31:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.36.6.1 2021/08/01 22:42:36 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -132,6 +132,7 @@ __KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.36 2020/05/16 18:31:49 christos Exp 
 
 #include <miscfs/genfs/genfs.h>
 
+int	hfs_vop_parsepath(void *);
 int	hfs_vop_lookup(void *);
 int	hfs_vop_open(void *);
 int	hfs_vop_close(void *);
@@ -155,6 +156,7 @@ int	hfs_vop_print(void *);
 int (**hfs_vnodeop_p) (void *);
 const struct vnodeopv_entry_desc hfs_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
+	{ &vop_parsepath_desc, genfs_parsepath },	/* parsepath */
 	{ &vop_lookup_desc, hfs_vop_lookup },		/* lookup */
 	{ &vop_create_desc, genfs_eopnotsupp },		/* create */
 	{ &vop_whiteout_desc, genfs_eopnotsupp },	/* whiteout */
@@ -213,10 +215,7 @@ const struct vnodeopv_desc hfs_vnodeop_opv_desc =
 int (**hfs_specop_p) (void *);
 const struct vnodeopv_entry_desc hfs_specop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
-	{ &vop_lookup_desc, spec_lookup },		/* lookup */
-	{ &vop_create_desc, spec_create },		/* create */
-	{ &vop_mknod_desc, spec_mknod },		/* mknod */
-	{ &vop_open_desc, spec_open },			/* open */
+	GENFS_SPECOP_ENTRIES,
 	{ &vop_close_desc, spec_close },		/* close */
 	{ &vop_access_desc, hfs_vop_access },		/* access */
 	{ &vop_accessx_desc, genfs_accessx },		/* accessx */
@@ -224,45 +223,22 @@ const struct vnodeopv_entry_desc hfs_specop_entries[] = {
 	{ &vop_setattr_desc, hfs_vop_setattr },		/* setattr */
 	{ &vop_read_desc, spec_read },			/* read */
 	{ &vop_write_desc, spec_write },		/* write */
-	{ &vop_fallocate_desc, spec_fallocate },	/* fallocate */
-	{ &vop_fdiscard_desc, spec_fdiscard },		/* fdiscard */
-	{ &vop_ioctl_desc, spec_ioctl },		/* ioctl */
 	{ &vop_fcntl_desc, genfs_fcntl },		/* fcntl */
-	{ &vop_poll_desc, spec_poll },			/* poll */
-	{ &vop_kqfilter_desc, spec_kqfilter },		/* kqfilter */
-	{ &vop_revoke_desc, spec_revoke },		/* revoke */
-	{ &vop_mmap_desc, spec_mmap },			/* mmap */
 	{ &vop_fsync_desc, spec_fsync },		/* fsync */
-	{ &vop_seek_desc, spec_seek },			/* seek */
-	{ &vop_remove_desc, spec_remove },		/* remove */
-	{ &vop_link_desc, spec_link },			/* link */
-	{ &vop_rename_desc, spec_rename },		/* rename */
-	{ &vop_mkdir_desc, spec_mkdir },		/* mkdir */
-	{ &vop_rmdir_desc, spec_rmdir },		/* rmdir */
-	{ &vop_symlink_desc, spec_symlink },		/* symlink */
-	{ &vop_readdir_desc, spec_readdir },		/* readdir */
-	{ &vop_readlink_desc, spec_readlink },		/* readlink */
-	{ &vop_abortop_desc, spec_abortop },		/* abortop */
 	{ &vop_inactive_desc, genfs_eopnotsupp },	/* inactive */
 	{ &vop_reclaim_desc, hfs_vop_reclaim },		/* reclaim */
 	{ &vop_lock_desc, genfs_lock },			/* lock */
 	{ &vop_unlock_desc, genfs_unlock },		/* unlock */
-	{ &vop_bmap_desc, spec_bmap },			/* bmap */
-	{ &vop_strategy_desc, spec_strategy },		/* strategy */
 	{ &vop_print_desc, hfs_vop_print },		/* print */
 	{ &vop_islocked_desc, genfs_islocked },		/* islocked */
-	{ &vop_pathconf_desc, spec_pathconf },		/* pathconf */
-	{ &vop_advlock_desc, spec_advlock },		/* advlock */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
-	{ &vop_getpages_desc, spec_getpages },		/* getpages */
-	{ &vop_putpages_desc, spec_putpages },		/* putpages */
 #if 0
-	{ &vop_openextattr_desc, ffs_openextattr },	/* openextattr */
-	{ &vop_closeextattr_desc, ffs_closeextattr },	/* closeextattr */
-	{ &vop_getextattr_desc, ffs_getextattr },	/* getextattr */
-	{ &vop_setextattr_desc, ffs_setextattr },	/* setextattr */
-	{ &vop_listextattr_desc, ffs_listextattr },	/* listextattr */
-	{ &vop_deleteextattr_desc, ffs_deleteextattr },	/* deleteextattr */
+	{ &vop_openextattr_desc, hfs_openextattr },	/* openextattr */
+	{ &vop_closeextattr_desc, hfs_closeextattr },	/* closeextattr */
+	{ &vop_getextattr_desc, hfs_getextattr },	/* getextattr */
+	{ &vop_setextattr_desc, hfs_setextattr },	/* setextattr */
+	{ &vop_listextattr_desc, hfs_listextattr },	/* listextattr */
+	{ &vop_deleteextattr_desc, hfs_deleteextattr },	/* deleteextattr */
 #endif
 	{ NULL, NULL }
 };
@@ -272,10 +248,7 @@ const struct vnodeopv_desc hfs_specop_opv_desc =
 int (**hfs_fifoop_p) (void *);
 const struct vnodeopv_entry_desc hfs_fifoop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
-	{ &vop_lookup_desc, vn_fifo_bypass },		/* lookup */
-	{ &vop_create_desc, vn_fifo_bypass },		/* create */
-	{ &vop_mknod_desc, vn_fifo_bypass },		/* mknod */
-	{ &vop_open_desc, vn_fifo_bypass },		/* open */
+	GENFS_FIFOOP_ENTRIES,
 	{ &vop_close_desc, vn_fifo_bypass },		/* close */
 	{ &vop_access_desc, hfs_vop_access },		/* access */
 	{ &vop_accessx_desc, genfs_accessx },		/* accessx */
@@ -283,49 +256,51 @@ const struct vnodeopv_entry_desc hfs_fifoop_entries[] = {
 	{ &vop_setattr_desc, hfs_vop_setattr },		/* setattr */
 	{ &vop_read_desc, vn_fifo_bypass },		/* read */
 	{ &vop_write_desc, vn_fifo_bypass },		/* write */
-	{ &vop_fallocate_desc, vn_fifo_bypass },	/* fallocate */
-	{ &vop_fdiscard_desc, vn_fifo_bypass },		/* fdiscard */
-	{ &vop_ioctl_desc, vn_fifo_bypass },		/* ioctl */
 	{ &vop_fcntl_desc, genfs_fcntl },		/* fcntl */
-	{ &vop_poll_desc, vn_fifo_bypass },		/* poll */
-	{ &vop_kqfilter_desc, vn_fifo_bypass },		/* kqfilter */
-	{ &vop_revoke_desc, vn_fifo_bypass },		/* revoke */
-	{ &vop_mmap_desc, vn_fifo_bypass },		/* mmap */
 	{ &vop_fsync_desc, vn_fifo_bypass },		/* fsync */
-	{ &vop_seek_desc, vn_fifo_bypass },		/* seek */
-	{ &vop_remove_desc, vn_fifo_bypass },		/* remove */
-	{ &vop_link_desc, vn_fifo_bypass },		/* link */
-	{ &vop_rename_desc, vn_fifo_bypass },		/* rename */
-	{ &vop_mkdir_desc, vn_fifo_bypass },		/* mkdir */
-	{ &vop_rmdir_desc, vn_fifo_bypass },		/* rmdir */
-	{ &vop_symlink_desc, vn_fifo_bypass },		/* symlink */
-	{ &vop_readdir_desc, vn_fifo_bypass },		/* readdir */
-	{ &vop_readlink_desc, vn_fifo_bypass },		/* readlink */
-	{ &vop_abortop_desc, vn_fifo_bypass },		/* abortop */
 	{ &vop_inactive_desc, genfs_eopnotsupp },	/* inactive */
 	{ &vop_reclaim_desc, hfs_vop_reclaim },		/* reclaim */
 	{ &vop_lock_desc, genfs_lock },			/* lock */
 	{ &vop_unlock_desc, genfs_unlock },		/* unlock */
-	{ &vop_bmap_desc, vn_fifo_bypass },		/* bmap */
 	{ &vop_strategy_desc, vn_fifo_bypass },		/* strategy */
 	{ &vop_print_desc, hfs_vop_print },		/* print */
 	{ &vop_islocked_desc, genfs_islocked },		/* islocked */
-	{ &vop_pathconf_desc, vn_fifo_bypass },		/* pathconf */
-	{ &vop_advlock_desc, vn_fifo_bypass },		/* advlock */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
-	{ &vop_putpages_desc, vn_fifo_bypass }, 	/* putpages */
 #if 0
-	{ &vop_openextattr_desc, ffs_openextattr },	/* openextattr */
-	{ &vop_closeextattr_desc, ffs_closeextattr },	/* closeextattr */
-	{ &vop_getextattr_desc, ffs_getextattr },	/* getextattr */
-	{ &vop_setextattr_desc, ffs_setextattr },	/* setextattr */
-	{ &vop_listextattr_desc, ffs_listextattr },	/* listextattr */
-	{ &vop_deleteextattr_desc, ffs_deleteextattr },	/* deleteextattr */
+	{ &vop_openextattr_desc, hfs_openextattr },	/* openextattr */
+	{ &vop_closeextattr_desc, hfs_closeextattr },	/* closeextattr */
+	{ &vop_getextattr_desc, hfs_getextattr },	/* getextattr */
+	{ &vop_setextattr_desc, hfs_setextattr },	/* setextattr */
+	{ &vop_listextattr_desc, hfs_listextattr },	/* listextattr */
+	{ &vop_deleteextattr_desc, hfs_deleteextattr },	/* deleteextattr */
 #endif
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc hfs_fifoop_opv_desc =
 	{ &hfs_fifoop_p, hfs_fifoop_entries };
+
+int
+hfs_vop_parsepath(void *v)
+{
+	struct vop_parsepath_args /* {
+		struct vnode *a_dvp;
+		const char *a_name;
+		size_t *a_retval;
+	} */ *ap = v;
+	size_t len;
+	int error;
+
+	error = genfs_parsepath(v);
+	if (error) {
+		return error;
+	}
+
+	len = *ap->a_retval;
+	if (!strcmp(ap->a_name + len, "/rsrc")) {
+		*ap->a_retval += 5;
+	}
+	return 0;
+}
 
 int
 hfs_vop_lookup(void *v)
@@ -343,6 +318,8 @@ hfs_vop_lookup(void *v)
 	struct vnode *vdp;		/* vnode for directory being searched */
 	hfs_catalog_key_t key;	/* hfs+ catalog search key for requested child */
 	hfs_catalog_keyed_record_t rec; /* catalog record of requested child */
+	size_t namelen;
+	int use_resource_fork = 0;
 	unichar_t* unicn;		/* name of component, in Unicode */
 	const char *pname;
 	int error;
@@ -417,12 +394,18 @@ hfs_vop_lookup(void *v)
 
 		hfslib_init_cbargs(&cbargs);
 
+		namelen = cnp->cn_namelen;
+		if (namelen > 5 &&
+		    !strcmp(cnp->cn_nameptr + namelen - 5, "/rsrc")) {
+			namelen -= 5;
+			use_resource_fork = 1;
+		}
+
 		/* XXX: when decomposing, string could grow
 		   and we have to handle overflow */
-		unicn = malloc(cnp->cn_namelen * sizeof(unicn[0]),
-		    M_TEMP, M_WAITOK);
-		len = utf8_to_utf16(unicn, cnp->cn_namelen,
-		    cnp->cn_nameptr, cnp->cn_namelen, 0, NULL);
+		unicn = malloc(namelen * sizeof(unicn[0]), M_TEMP, M_WAITOK);
+		len = utf8_to_utf16(unicn, namelen,
+		    cnp->cn_nameptr, namelen, 0, NULL);
 		for (ni = 0; ni < len; ni++)
 			if (unicn[ni] == (unichar_t)':')
 				unicn[ni] = (unichar_t)'/';
@@ -459,13 +442,11 @@ hfs_vop_lookup(void *v)
 		}
 
 		if (rec.type == HFS_REC_FILE
-		    && strcmp(cnp->cn_nameptr+cnp->cn_namelen, "/rsrc") == 0
+		    && use_resource_fork
 		    && rec.file.rsrc_fork.logical_size > 0) {
-		    /* advance namei next pointer to end of stirng */
-		    cnp->cn_consume = 5;
-		    cnp->cn_flags &= ~REQUIREDIR; /* XXX: needed? */
-		    error = hfs_vget_internal(vdp->v_mount, rec.file.cnid,
-			HFS_RSRCFORK, &tdp);
+		    /* advance namei next pointer to end of string */
+			error = hfs_vget_internal(vdp->v_mount, rec.file.cnid,
+			    HFS_RSRCFORK, &tdp);
 		} else
 			error = hfs_vget_internal(vdp->v_mount, rec.file.cnid,
 			    HFS_DATAFORK, &tdp);

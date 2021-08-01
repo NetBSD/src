@@ -1,4 +1,4 @@
-#	$NetBSD: std.hdl_g,v 1.7 2018/10/07 07:48:44 skrll Exp $
+#	$NetBSD: std.hdl_g,v 1.7.16.1 2021/08/01 22:42:07 thorpej Exp $
 #
 # standard NetBSD/evbarm for I-O DATA HDL-G options
 
@@ -15,3 +15,5 @@ options 	ARM_INTR_IMPL="<arch/arm/xscale/i80321_intr.h>"
 
 # We need to configure the PCI bus.
 options 	PCI_NETBSD_CONFIGURE
+
+options 	KERNEL_BASE_EXT=0xc0000000

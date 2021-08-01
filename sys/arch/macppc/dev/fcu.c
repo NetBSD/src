@@ -1,4 +1,4 @@
-/* $NetBSD: fcu.c,v 1.12.4.1 2021/05/08 16:56:10 thorpej Exp $ */
+/* $NetBSD: fcu.c,v 1.4.4.2 2021/08/01 22:42:12 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fcu.c,v 1.12.4.1 2021/05/08 16:56:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fcu.c,v 1.4.4.2 2021/08/01 22:42:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -35,12 +35,15 @@ __KERNEL_RCSID(0, "$NetBSD: fcu.c,v 1.12.4.1 2021/05/08 16:56:10 thorpej Exp $")
 #include <sys/conf.h>
 #include <sys/bus.h>
 #include <sys/kthread.h>
+#include <sys/sysctl.h>
 
 #include <dev/i2c/i2cvar.h>
 
 #include <dev/sysmon/sysmonvar.h>
 
 #include <dev/ofw/openfirm.h>
+
+#include <macppc/dev/fancontrolvar.h>
 
 //#define FCU_DEBUG
 #ifdef FCU_DEBUG
@@ -58,14 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: fcu.c,v 1.12.4.1 2021/05/08 16:56:10 thorpej Exp $")
 #define FCU_PWM_ACTIVE	0x2d
 #define FCU_PWMREAD(x)	0x30 + (x)*2
 
-#define FCU_MAX_FANS 10
-
-typedef struct _fcu_zone {
-	bool (*filter)(const envsys_data_t *);
-	int nfans;
-	int fans[FCU_MAX_FANS];
-	int threshold;
-} fcu_zone_t; 
 
 typedef struct _fcu_fan {
 	int target;
@@ -75,27 +70,26 @@ typedef struct _fcu_fan {
 	int duty;	/* for pwm fans */
 } fcu_fan_t;
 
-#define FCU_ZONE_CPU_A		0
-#define FCU_ZONE_CPU_B		1
-#define FCU_ZONE_CASE		2
-#define FCU_ZONE_DRIVEBAY	3
-#define FCU_ZONE_COUNT		4
+#define FCU_ZONE_CPU		0
+#define FCU_ZONE_CASE		1
+#define FCU_ZONE_DRIVEBAY	2
+#define FCU_ZONE_COUNT		3
 
 struct fcu_softc {
 	device_t	sc_dev;
 	i2c_tag_t	sc_i2c;
 	i2c_addr_t	sc_addr;
-
-	struct sysmon_envsys *sc_sme;
-	envsys_data_t	sc_sensors[32];
-	int		sc_nsensors;
-	fcu_zone_t	sc_zones[FCU_ZONE_COUNT];
-	fcu_fan_t	sc_fans[FCU_MAX_FANS];
-	int		sc_nfans;
-	lwp_t		*sc_thread;
-	bool		sc_dying, sc_pwm;
-	uint8_t		sc_eeprom0[160];
-	uint8_t		sc_eeprom1[160];
+	struct sysctlnode 	*sc_sysctl_me;
+	struct sysmon_envsys	*sc_sme;
+	envsys_data_t		sc_sensors[32];
+	int			sc_nsensors;
+	fancontrol_zone_t	sc_zones[FCU_ZONE_COUNT];
+	fcu_fan_t		sc_fans[FANCONTROL_MAX_FANS];
+	int			sc_nfans;
+	lwp_t			*sc_thread;
+	bool			sc_dying, sc_pwm;
+	uint8_t			sc_eeprom0[160];
+	uint8_t			sc_eeprom1[160];
 };
 
 static int	fcu_match(device_t, cfdata_t, void *);
@@ -103,13 +97,12 @@ static void	fcu_attach(device_t, device_t, void *);
 
 static void	fcu_sensors_refresh(struct sysmon_envsys *, envsys_data_t *);
 
-static bool is_cpu_a(const envsys_data_t *);
-static bool is_cpu_b(const envsys_data_t *);
+static bool is_cpu(const envsys_data_t *);
 static bool is_case(const envsys_data_t *);
 static bool is_drive(const envsys_data_t *);
 
-static void fcu_set_fan_rpm(struct fcu_softc *, fcu_fan_t *, int);
-static void fcu_adjust_zone(struct fcu_softc *, int);
+static int fcu_set_rpm(void *, int, int);
+static int fcu_get_rpm(void *, int);
 static void fcu_adjust(void *);
 
 CFATTACH_DECL_NEW(fcu, sizeof(struct fcu_softc),
@@ -140,8 +133,7 @@ fcu_attach(device_t parent, device_t self, void *aux)
 {
 	struct fcu_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = aux;
-	int have_eeprom1 = 1;
-	int phandle;
+	int have_eeprom1 = 1, i;
 
 	sc->sc_dev = self;
 	sc->sc_i2c = ia->ia_tag;
@@ -149,6 +141,12 @@ fcu_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal(": Fan Control Unit\n");
+
+	sysctl_createv(NULL, 0, NULL, (void *) &sc->sc_sysctl_me,
+	    CTLFLAG_READWRITE,
+	    CTLTYPE_NODE, device_xname(sc->sc_dev), NULL,
+	    NULL, 0, NULL, 0,
+	    CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 
 	if (get_cpuid(0, sc->sc_eeprom0) < 160) {
 		/*
@@ -163,17 +161,29 @@ fcu_attach(device_t parent, device_t self, void *aux)
 		have_eeprom1 = 0;
 
 	/* init zones */
-	sc->sc_zones[FCU_ZONE_CPU_A].filter = is_cpu_a;
-	sc->sc_zones[FCU_ZONE_CPU_A].threshold = 50;
-	sc->sc_zones[FCU_ZONE_CPU_A].nfans = 0;
-	sc->sc_zones[FCU_ZONE_CPU_B].filter = is_cpu_b;
-	sc->sc_zones[FCU_ZONE_CPU_B].threshold = 50;
-	sc->sc_zones[FCU_ZONE_CPU_B].nfans = 0;
+	sc->sc_zones[FCU_ZONE_CPU].name = "CPUs";
+	sc->sc_zones[FCU_ZONE_CPU].filter = is_cpu;
+	sc->sc_zones[FCU_ZONE_CPU].cookie = sc;
+	sc->sc_zones[FCU_ZONE_CPU].get_rpm = fcu_get_rpm;
+	sc->sc_zones[FCU_ZONE_CPU].set_rpm = fcu_set_rpm;
+	sc->sc_zones[FCU_ZONE_CPU].Tmin = 50;
+	sc->sc_zones[FCU_ZONE_CPU].Tmax = 85;
+	sc->sc_zones[FCU_ZONE_CPU].nfans = 0;
+	sc->sc_zones[FCU_ZONE_CASE].name = "Slots";
 	sc->sc_zones[FCU_ZONE_CASE].filter = is_case;
-	sc->sc_zones[FCU_ZONE_CASE].threshold = 50;
+	sc->sc_zones[FCU_ZONE_CASE].cookie = sc;
+	sc->sc_zones[FCU_ZONE_CASE].Tmin = 50;
+	sc->sc_zones[FCU_ZONE_CASE].Tmax = 75;
 	sc->sc_zones[FCU_ZONE_CASE].nfans = 0;
+	sc->sc_zones[FCU_ZONE_CASE].get_rpm = fcu_get_rpm;
+	sc->sc_zones[FCU_ZONE_CASE].set_rpm = fcu_set_rpm;
+	sc->sc_zones[FCU_ZONE_DRIVEBAY].name = "Drivebays";
 	sc->sc_zones[FCU_ZONE_DRIVEBAY].filter = is_drive;
-	sc->sc_zones[FCU_ZONE_DRIVEBAY].threshold = 30;
+	sc->sc_zones[FCU_ZONE_DRIVEBAY].cookie = sc;
+	sc->sc_zones[FCU_ZONE_DRIVEBAY].get_rpm = fcu_get_rpm;
+	sc->sc_zones[FCU_ZONE_DRIVEBAY].set_rpm = fcu_set_rpm;
+	sc->sc_zones[FCU_ZONE_DRIVEBAY].Tmin = 30;
+	sc->sc_zones[FCU_ZONE_DRIVEBAY].Tmax = 50;
 	sc->sc_zones[FCU_ZONE_DRIVEBAY].nfans = 0;
 
 	sc->sc_sme = sysmon_envsys_create();
@@ -186,11 +196,11 @@ fcu_attach(device_t parent, device_t self, void *aux)
 	sc->sc_nfans = 0;
 
 	/* round up sensors */
-	phandle = devhandle_to_of(device_handle(self));
 	int ch;
 
 	sc->sc_nsensors = 0;
-	for (ch = OF_child(phandle); ch != 0; ch = OF_peer(ch)) {
+	ch = OF_child(ia->ia_cookie);
+	while (ch != 0) {
 		char type[32], descr[32];
 		uint32_t reg;
 
@@ -199,7 +209,7 @@ fcu_attach(device_t parent, device_t self, void *aux)
 		s->state = ENVSYS_SINVALID;
 
 		if (OF_getprop(ch, "device_type", type, 32) <= 0)
-			continue;
+			goto next;
 
 		if (strcmp(type, "fan-rpm-control") == 0) {
 			s->units = ENVSYS_SFANRPM;
@@ -215,15 +225,15 @@ fcu_attach(device_t parent, device_t self, void *aux)
 			s->units = ENVSYS_INDICATOR;
 		} else {
 			/* ignore other types for now */
-			continue;
+			goto next;
 		}
 
 		if (OF_getprop(ch, "reg", &reg, sizeof(reg)) <= 0)
-			continue;
+			goto next;
 		s->private = reg;
 
 		if (OF_getprop(ch, "location", descr, 32) <= 0)
-			continue;
+			goto next;
 		strcpy(s->desc, descr);
 
 		if (s->units == ENVSYS_SFANRPM) {
@@ -283,30 +293,42 @@ fcu_attach(device_t parent, device_t self, void *aux)
 			   descr, fan->base_rpm, fan->max_rpm, fan->step);
 
 			/* now stuff them into zones */
-			if (strstr(descr, "CPU A") != NULL) {
-				fcu_zone_t *z = &sc->sc_zones[FCU_ZONE_CPU_A];
-				z->fans[z->nfans] = sc->sc_nfans;
-				z->nfans++;
-			} else if (strstr(descr, "CPU B") != NULL) {
-				fcu_zone_t *z = &sc->sc_zones[FCU_ZONE_CPU_B];
-				z->fans[z->nfans] = sc->sc_nfans;
+			if (strstr(descr, "CPU") != NULL) {
+				fancontrol_zone_t *z = &sc->sc_zones[FCU_ZONE_CPU];
+				z->fans[z->nfans].num = sc->sc_nfans;
+				z->fans[z->nfans].min_rpm = fan->base_rpm;
+				z->fans[z->nfans].max_rpm = fan->max_rpm;
+				z->fans[z->nfans].name = s->desc;
 				z->nfans++;
 			} else if ((strstr(descr, "BACKSIDE") != NULL) ||
 				   (strstr(descr, "SLOT") != NULL))  {
-				fcu_zone_t *z = &sc->sc_zones[FCU_ZONE_CASE];
-				z->fans[z->nfans] = sc->sc_nfans;
+				fancontrol_zone_t *z = &sc->sc_zones[FCU_ZONE_CASE];
+				z->fans[z->nfans].num = sc->sc_nfans;
+				z->fans[z->nfans].min_rpm = fan->base_rpm;
+				z->fans[z->nfans].max_rpm = fan->max_rpm;
+				z->fans[z->nfans].name = s->desc;
 				z->nfans++;
 			} else if (strstr(descr, "DRIVE") != NULL) {
-				fcu_zone_t *z = &sc->sc_zones[FCU_ZONE_DRIVEBAY];
-				z->fans[z->nfans] = sc->sc_nfans;
+				fancontrol_zone_t *z = &sc->sc_zones[FCU_ZONE_DRIVEBAY];
+				z->fans[z->nfans].num = sc->sc_nfans;
+				z->fans[z->nfans].min_rpm = fan->base_rpm;
+				z->fans[z->nfans].max_rpm = fan->max_rpm;
+				z->fans[z->nfans].name = s->desc;
 				z->nfans++;
 			}
 			sc->sc_nfans++;
 		}
 		sysmon_envsys_sensor_attach(sc->sc_sme, s);
 		sc->sc_nsensors++;
+next:
+		ch = OF_peer(ch);
 	}		
 	sysmon_envsys_register(sc->sc_sme);
+
+	/* setup sysctls for our zones etc. */
+	for (i = 0; i < FCU_ZONE_COUNT; i++) {
+		fancontrol_init_zone(&sc->sc_zones[i], sc->sc_sysctl_me);
+	}
 
 	sc->sc_dying = FALSE;
 	kthread_create(PRI_NONE, 0, curcpu(), fcu_adjust, sc, &sc->sc_thread,
@@ -357,21 +379,11 @@ fcu_sensors_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 }
 
 static bool
-is_cpu_a(const envsys_data_t *edata)
+is_cpu(const envsys_data_t *edata)
 {
 	if (edata->units != ENVSYS_STEMP)
 		return false;
-	if (strstr(edata->desc, "CPU A") != NULL)
-		return TRUE;
-	return false;
-}
-
-static bool
-is_cpu_b(const envsys_data_t *edata)
-{
-	if (edata->units != ENVSYS_STEMP)
-		return false;
-	if (strstr(edata->desc, "CPU B") != NULL)
+	if (strstr(edata->desc, "CPU") != NULL)
 		return TRUE;
 	return false;
 }
@@ -398,10 +410,31 @@ is_drive(const envsys_data_t *edata)
 	return false;
 }
 
-static void
-fcu_set_fan_rpm(struct fcu_softc *sc, fcu_fan_t *f, int speed)
+static int
+fcu_get_rpm(void *cookie, int which)
 {
+	struct fcu_softc *sc = cookie;
+	fcu_fan_t *f = &sc->sc_fans[which];
 	int error;
+	uint16_t data;
+	uint8_t cmd;
+
+	iic_acquire_bus(sc->sc_i2c, 0);
+	cmd = f->reg + 1;
+	error = iic_exec(sc->sc_i2c, I2C_OP_READ_WITH_STOP,
+	    sc->sc_addr, &cmd, 1, &data, 2, 0);
+	iic_release_bus(sc->sc_i2c, 0);
+	if (error != 0) return -1;
+	data = data >> 3;
+	return data;
+}
+
+static int
+fcu_set_rpm(void *cookie, int which, int speed)
+{
+	struct fcu_softc *sc = cookie;
+	fcu_fan_t *f = &sc->sc_fans[which];
+	int error = 0;
 	uint8_t cmd;
 
 	if (speed > f->max_rpm) speed = f->max_rpm;
@@ -411,7 +444,7 @@ fcu_set_fan_rpm(struct fcu_softc *sc, fcu_fan_t *f, int speed)
 		uint16_t data;
 		/* simple rpm fan, just poke the register */
 
-		if (f->target == speed) return;
+		if (f->target == speed) return 0;
 		iic_acquire_bus(sc->sc_i2c, 0);
 		cmd = f->reg;
 		data = (speed << 3);
@@ -421,16 +454,12 @@ fcu_set_fan_rpm(struct fcu_softc *sc, fcu_fan_t *f, int speed)
 	} else {
 		int diff;
 		int nduty = f->duty;
-		uint16_t data;
+		int current_speed;
 		/* pwm fan, measure speed, then adjust duty cycle */
 		DPRINTF("pwm fan ");
-		iic_acquire_bus(sc->sc_i2c, 0);
-		cmd = f->reg + 1;
-		error = iic_exec(sc->sc_i2c, I2C_OP_READ_WITH_STOP,
-		    sc->sc_addr, &cmd, 1, &data, 2, 0);
-		data = data >> 3;
-		diff = data - speed;
-		DPRINTF("d %d s %d t %d diff %d ", f->duty, data, speed, diff);
+		current_speed = fcu_get_rpm(sc, which);
+		diff = current_speed - speed;
+		DPRINTF("d %d s %d t %d diff %d ", f->duty, current_speed, speed, diff);
 		if (diff > 100) {
 			nduty = uimax(20, nduty - 1);
 		}
@@ -441,52 +470,19 @@ fcu_set_fan_rpm(struct fcu_softc *sc, fcu_fan_t *f, int speed)
 		DPRINTF("%s nduty %d", __func__, nduty);
 		if (nduty != f->duty) {
 			uint8_t arg = nduty;
+			iic_acquire_bus(sc->sc_i2c, 0);
 			error = iic_exec(sc->sc_i2c, I2C_OP_WRITE_WITH_STOP,
 			    sc->sc_addr, &cmd, 1, &arg, 1, 0);
+			iic_release_bus(sc->sc_i2c, 0);
 			f->duty = nduty;
 			sc->sc_pwm = TRUE;
 
 		}
-		iic_release_bus(sc->sc_i2c, 0);
 		DPRINTF("ok\n");
 	}
 	if (error) printf("boo\n");
 	f->target = speed;
-}
-
-static void
-fcu_adjust_zone(struct fcu_softc *sc, int which)
-{
-	fcu_zone_t *z = &sc->sc_zones[which];
-	fcu_fan_t *f;
-	int temp, i, speed, diff;
-	
-
-	if (z->nfans <= 0)
-		return;
-
-	temp = sysmon_envsys_get_max_value(z->filter, true);
-	if (temp == 0) {
-		/* no sensor data - leave fan alone */
-		DPRINTF("nodata\n");
-		return;
-	}
-
-	temp = (temp - 273150000) / 1000000;
-	diff = temp - z->threshold;
-	if (diff < 0) diff = 0;
-
-	/* now adjust each fan to the new duty cycle */
-	for (i = 0; i < z->nfans; i++) {
-		if (z->fans[i] > 8) {
-			printf("wtf?!\n");
-			continue;
-		}
-		f = &sc->sc_fans[z->fans[i]];
-		speed = f->base_rpm + diff * f->step;
-		DPRINTF("diff %d base %d sp %d\n", diff, f->base_rpm, speed);
-		fcu_set_fan_rpm(sc, f, speed);
-	}
+	return 0;
 }
 
 static void
@@ -505,8 +501,14 @@ fcu_adjust(void *cookie)
 		iic_release_bus(sc->sc_i2c, 0);
 		sc->sc_pwm = FALSE;
 		for (i = 0; i < FCU_ZONE_COUNT; i++)
-			fcu_adjust_zone(sc, i);
-		kpause("fanctrl", true, mstohz(sc->sc_pwm ? 1000 : 5000), NULL);
+			fancontrol_adjust_zone(&sc->sc_zones[i]);
+		/*
+		 * take a shorter nap if we're in the proccess of adjusting a
+		 * PWM fan, which relies on measuring speed and then changing
+		 * its duty cycle until we're reasonable close to the target
+		 * speed
+		 */
+		kpause("fanctrl", true, mstohz(sc->sc_pwm ? 1000 : 2000), NULL);
 	}
 	kthread_exit(0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.23 2020/08/16 09:37:30 skrll Exp $	*/
+/*	$NetBSD: param.h,v 1.23.6.1 2021/08/01 22:42:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -185,8 +185,5 @@
 #define	COMPAT_ZERODEV(x)	(x == makedev(0, _DEV_ZERO_oARM))
 #endif
 #endif /* _KERNEL */
-
-#define COHERENCY_UNIT		64
-#define CACHE_LINE_SIZE		64
 
 #endif /* _ARM_PARAM_H_ */

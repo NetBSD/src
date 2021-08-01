@@ -1,4 +1,4 @@
-/* $NetBSD: pci_2100_a50.c,v 1.42 2020/09/22 15:24:02 thorpej Exp $ */
+/* $NetBSD: pci_2100_a50.c,v 1.42.6.1 2021/08/01 22:42:02 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_2100_a50.c,v 1.42 2020/09/22 15:24:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_2100_a50.c,v 1.42.6.1 2021/08/01 22:42:02 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_2100_a50.c,v 1.42 2020/09/22 15:24:02 thorpej Ex
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
+#include <machine/rpb.h>
 #include <sys/bus.h>
 #include <machine/intr.h>
 
@@ -48,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_2100_a50.c,v 1.42 2020/09/22 15:24:02 thorpej Ex
 
 #include <alpha/pci/apecsvar.h>
 
-#include <alpha/pci/pci_2100_a50.h>
 #include <alpha/pci/siovar.h>
 #include <alpha/pci/sioreg.h>
 
@@ -57,24 +57,12 @@ __KERNEL_RCSID(0, "$NetBSD: pci_2100_a50.c,v 1.42 2020/09/22 15:24:02 thorpej Ex
 static int	dec_2100_a50_intr_map(const struct pci_attach_args *,
 		    pci_intr_handle_t *);
 
-#define	APECS_SIO_DEVICE	7	/* XXX */
-
-void
-pci_2100_a50_pickintr(struct apecs_config *acp)
+static void
+pci_2100_a50_pickintr(void *core, bus_space_tag_t iot, bus_space_tag_t memt,
+    pci_chipset_tag_t pc)
 {
-	bus_space_tag_t iot = &acp->ac_iot;
-	pci_chipset_tag_t pc = &acp->ac_pc;
-	pcireg_t sioclass;
-	int sioII;
 
-	/* XXX MAGIC NUMBER */
-	sioclass = pci_conf_read(pc, pci_make_tag(pc, 0, 7, 0), PCI_CLASS_REG);
-	sioII = (sioclass & 0xff) >= 3;
-
-	if (!sioII)
-		printf("WARNING: SIO NOT SIO II... NO BETS...\n");
-
-	pc->pc_intr_v = acp;
+	pc->pc_intr_v = core;
 	pc->pc_intr_map = dec_2100_a50_intr_map;
 	pc->pc_intr_string = sio_pci_intr_string;
 	pc->pc_intr_evcnt = sio_pci_intr_evcnt;
@@ -90,6 +78,7 @@ pci_2100_a50_pickintr(struct apecs_config *acp)
 	panic("pci_2100_a50_pickintr: no I/O interrupt handler (no sio)");
 #endif
 }
+ALPHA_PCI_INTR_INIT(ST_DEC_2100_A50, pci_2100_a50_pickintr)
 
 int
 dec_2100_a50_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
@@ -98,8 +87,6 @@ dec_2100_a50_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	int buspin = pa->pa_intrpin;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	int device, pirq;
-	pcireg_t pirqreg;
-	uint8_t pirqline;
 
 #ifndef DIAGNOSTIC
 	pirq = 0;				/* XXX gcc -Wuninitialized */
@@ -189,22 +176,10 @@ dec_2100_a50_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	        return 1;
 	}
 
-	pirqreg = pci_conf_read(pc, pci_make_tag(pc, 0, APECS_SIO_DEVICE, 0),
-	    SIO_PCIREG_PIRQ_RTCTRL);
 #if 0
-	printf("pci_2100_a50_intr_map: device %d pin %c: pirq %d, reg = %x\n",
-		device, '@' + buspin, pirq, pirqreg);
-#endif
-	pirqline = (pirqreg >> (pirq * 8)) & 0xff;
-	if ((pirqline & 0x80) != 0)
-		return 1;
-	pirqline &= 0xf;
-
-#if 0
-	printf("pci_2100_a50_intr_map: device %d pin %c: mapped to line %d\n",
-	    device, '@' + buspin, pirqline);
+	printf("pci_2100_a50_intr_map: device %d pin %c: pirq %d\n",
+		device, '@' + buspin, pirq);
 #endif
 
-	alpha_pci_intr_handle_init(ihp, pirqline, 0);
-	return (0);
+	return sio_pirq_intr_map(pc, pirq, ihp);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: irongate.c,v 1.17 2021/04/24 23:36:23 thorpej Exp $ */
+/* $NetBSD: irongate.c,v 1.17.2.1 2021/08/01 22:42:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -29,16 +29,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_api_up1000.h"
-
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: irongate.c,v 1.17 2021/04/24 23:36:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irongate.c,v 1.17.2.1 2021/08/01 22:42:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 
 #include <machine/autoconf.h>
 #include <machine/rpb.h>
@@ -53,12 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: irongate.c,v 1.17 2021/04/24 23:36:23 thorpej Exp $"
 #include <alpha/pci/irongatereg.h>
 #include <alpha/pci/irongatevar.h>
 
-#ifdef API_UP1000
-#include <alpha/pci/pci_up1000.h>
-#endif
-
-int	irongate_match(device_t, cfdata_t, void *);
-void	irongate_attach(device_t, device_t, void *);
+static int	irongate_match(device_t, cfdata_t, void *);
+static void	irongate_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(irongate, sizeof(struct irongate_softc),
     irongate_match, irongate_attach, NULL, NULL);
@@ -67,9 +60,10 @@ extern struct cfdriver irongate_cd;
 
 /* There can be only one. */
 struct irongate_config irongate_configuration;
-int	irongate_found;
+static int irongate_found;
 
-int	irongate_bus_get_window(int, int, struct alpha_bus_space_translation *);
+static int	irongate_bus_get_window(int, int,
+		    struct alpha_bus_space_translation *);
 
 /*
  * Set up the chipset's function pointers.
@@ -110,7 +104,7 @@ irongate_init(struct irongate_config *icp, int mallocsafe)
 	icp->ic_initted = 1;
 }
 
-int
+static int
 irongate_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
@@ -125,7 +119,7 @@ irongate_match(device_t parent, cfdata_t match, void *aux)
 	return (1);
 }
 
-void
+static void
 irongate_attach(device_t parent, device_t self, void *aux)
 {
 	struct irongate_softc *sc = device_private(self);
@@ -156,16 +150,7 @@ irongate_attach(device_t parent, device_t self, void *aux)
 	 */
 	irongate_bus_mem_init2(&icp->ic_memt, icp);
 
-	switch (cputype) {
-#ifdef API_UP1000
-	case ST_API_NAUTILUS:
-		pci_up1000_pickintr(icp);
-		break;
-#endif
-
-	default:
-		panic("irongate_attach: shouldn't be here, really...");
-	}
+	alpha_pci_intr_init(icp, &icp->ic_iot, &icp->ic_memt, &icp->ic_pc);
 
 	tag = pci_make_tag(&icp->ic_pc, 0, IRONGATE_PCIHOST_DEV, 0);
 
@@ -206,7 +191,7 @@ irongate_attach(device_t parent, device_t self, void *aux)
 	    CFARG_EOL);
 }
 
-int
+static int
 irongate_bus_get_window(int type, int window,
     struct alpha_bus_space_translation *abst)
 {

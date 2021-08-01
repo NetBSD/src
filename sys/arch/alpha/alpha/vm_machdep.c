@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.117.6.1 2021/06/17 04:46:16 thorpej Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.117.6.2 2021/08/01 22:42:00 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,12 +29,11 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.117.6.1 2021/06/17 04:46:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.117.6.2 2021/08/01 22:42:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>
 #include <sys/core.h>
@@ -117,10 +116,12 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 * Floating point state from the FP chip has already been saved.
 	 */
 	*pcb2 = *pcb1;
-	if (stack != NULL)
-		pcb2->pcb_hw.apcb_usp = (u_long)stack + stacksize;
-	else
+	if (stack != NULL) {
+		pcb2->pcb_hw.apcb_usp =
+		    ((u_long)stack + stacksize) & ~((u_long)STACK_ALIGNBYTES);
+	} else {
 		pcb2->pcb_hw.apcb_usp = alpha_pal_rdusp();
+	}
 
 	/*
 	 * Put l2 on the kernel's page tables until its first trip
@@ -247,6 +248,14 @@ vunmapbuf(struct buf *bp, vsize_t len)
 }
 
 #ifdef __HAVE_CPU_UAREA_ROUTINES
+static struct evcnt uarea_direct_success =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "uarea direct", "success");
+static struct evcnt uarea_direct_failure =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "uarea direct", "failure");
+
+EVCNT_ATTACH_STATIC(uarea_direct_success);
+EVCNT_ATTACH_STATIC(uarea_direct_failure);
+
 void *
 cpu_uarea_alloc(bool system)
 {
@@ -258,8 +267,11 @@ cpu_uarea_alloc(bool system)
 	 * direct-mapped.
 	 */
 	error = uvm_pglistalloc(USPACE, 0, ptoa(physmem), 0, 0, &pglist, 1, 1);
-	if (error)
+	if (error) {
+		atomic_inc_ulong(&uarea_direct_failure.ev_count);
 		return NULL;
+	}
+	atomic_inc_ulong(&uarea_direct_success.ev_count);
 
 	/*
 	 * Get the physical address from the first page.

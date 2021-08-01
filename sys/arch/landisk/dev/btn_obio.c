@@ -1,4 +1,4 @@
-/*	$NetBSD: btn_obio.c,v 1.6 2012/01/21 19:44:29 nonaka Exp $	*/
+/*	$NetBSD: btn_obio.c,v 1.6.64.1 2021/08/01 22:42:11 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 2005 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -28,7 +28,7 @@
 #include "pwrsw_obio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btn_obio.c,v 1.6 2012/01/21 19:44:29 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btn_obio.c,v 1.6.64.1 2021/08/01 22:42:11 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -141,6 +141,7 @@ btn_obio_attach(device_t parent, device_t self, void *aux)
 	}
 	sc->sc_mask |= BTN_RESET_BIT;
 
+	btn_init();
 	for (i = 0; i < NBUTTON; i++) {
 		int idx = btnlist[i].idx;
 		sc->sc_bev[idx].bev_name = btnlist[i].name;

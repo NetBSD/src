@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.97 2021/02/21 20:02:25 jdolecek Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.97.4.1 2021/08/01 22:42:19 thorpej Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.97 2021/02/21 20:02:25 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.97.4.1 2021/08/01 22:42:19 thorpej Exp $");
 
 #include <sys/buf.h>
 #include <sys/condvar.h>
@@ -71,8 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.97 2021/02/21 20:02:25 jdolecek
 #define VBD_BSIZE 512
 #define VBD_MAXSECT ((PAGE_SIZE / VBD_BSIZE) - 1)
 
-/* Need to alloc one extra page to account for possible mapping offset */
-#define VBD_VA_SIZE	(MAXPHYS + PAGE_SIZE)
+#define VBD_VA_SIZE			MAXPHYS
 #define VBD_MAX_INDIRECT_SEGMENTS	VBD_VA_SIZE >> PAGE_SHIFT
 
 CTASSERT(XENSHM_MAX_PAGES_PER_REQUEST >= VBD_MAX_INDIRECT_SEGMENTS);
@@ -1312,7 +1311,7 @@ xbdback_co_io_gotio(struct xbdback_instance *xbdi, void *obj)
 
 	KASSERT(bcount <= MAXPHYS);
 	KASSERT(xbd_io->xio_start_offset < PAGE_SIZE);
-	KASSERT(bcount + xbd_io->xio_start_offset < VBD_VA_SIZE);
+	KASSERT(bcount + xbd_io->xio_start_offset <= VBD_VA_SIZE);
 
 	/* Fill-in the buf */
 	if (xbdi->xbdi_xen_req.operation == BLKIF_OP_WRITE) {

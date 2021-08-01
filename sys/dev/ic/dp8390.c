@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.97 2020/02/04 05:25:39 thorpej Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.97.10.1 2021/08/01 22:42:23 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -14,7 +14,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.97 2020/02/04 05:25:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.97.10.1 2021/08/01 22:42:23 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -51,6 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.97 2020/02/04 05:25:39 thorpej Exp $");
 int	dp8390_debug = 0;
 #endif
 
+static void	dp8390_halt(struct dp8390_softc *);
+
 static void dp8390_xmit(struct dp8390_softc *);
 
 static void dp8390_read_hdr(struct dp8390_softc *, int, struct dp8390_ring *);
@@ -66,7 +68,6 @@ void
 dp8390_media_init(struct dp8390_softc *sc)
 {
 
-	sc->sc_ec.ec_ifmedia = &sc->sc_media;
 	ifmedia_init(&sc->sc_media, 0, dp8390_mediachange, dp8390_mediastatus);
 	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_MANUAL, 0, NULL);
 	ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_MANUAL);
@@ -115,7 +116,9 @@ dp8390_config(struct dp8390_softc *sc)
 		goto out;
 
 	/* Set interface to stopped condition (reset). */
-	dp8390_stop(sc);
+	dp8390_halt(sc);
+
+	callout_init(&sc->sc_tick_ch, 0);
 
 	/* Initialize ifnet structure. */
 	strcpy(ifp->if_xname, device_xname(sc->sc_dev));
@@ -131,7 +134,13 @@ dp8390_config(struct dp8390_softc *sc)
 	aprint_normal_dev(sc->sc_dev, "Ethernet address %s\n",
 	    ether_sprintf(sc->sc_enaddr));
 
-	/* Initialize media goo. */
+	/*
+	 * Initialize media structures.  We'll default to pointing ec_ifmedia
+	 * at our embedded media structure.  A card front-end can initialize
+	 * ec_mii if it has an MII interface.  (Note that sc_media is an
+	 * alias of sc_mii.mii_media in dp8390_softc.)
+	 */
+	sc->sc_ec.ec_ifmedia = &sc->sc_media;
 	(*sc->sc_media_init)(sc);
 
 	/* We can support 802.1Q VLAN-sized frames. */
@@ -201,8 +210,8 @@ dp8390_reset(struct dp8390_softc *sc)
 /*
  * Take interface offline.
  */
-void
-dp8390_stop(struct dp8390_softc *sc)
+static void
+dp8390_halt(struct dp8390_softc *sc)
 {
 	bus_space_tag_t regt = sc->sc_regt;
 	bus_space_handle_t regh = sc->sc_regh;
@@ -221,7 +230,12 @@ dp8390_stop(struct dp8390_softc *sc)
 	 */
 	while (((NIC_GET(regt, regh, ED_P0_ISR) & ED_ISR_RST) == 0) && --n)
 		DELAY(1);
+}
 
+void
+dp8390_stop(struct dp8390_softc *sc)
+{
+	dp8390_halt(sc);
 	if (sc->stop_card != NULL)
 		(*sc->stop_card)(sc);
 }

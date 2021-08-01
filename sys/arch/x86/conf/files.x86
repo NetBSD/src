@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.120 2020/10/27 08:57:11 ryo Exp $
+#	$NetBSD: files.x86,v 1.120.6.1 2021/08/01 22:42:18 thorpej Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPDEBUG MPBIOS_SCANPCI
@@ -30,7 +30,7 @@ define	cpufeaturebus {}
 define  ioapicbus { [apid = -1] }
 
 # BIOS32 routines
-define	bios32
+define	bios32: smbios
 file	arch/x86/x86/bios32.c		bios32 needs-flag
 
 #
@@ -103,7 +103,7 @@ file	arch/x86/x86/idt.c		machdep
 file	arch/x86/x86/ipi.c		machdep & !xenpv
 file	arch/x86/x86/mtrr_i686.c	mtrr & !xenpv
 file 	arch/x86/x86/patch.c		machdep & !xenpv
-file	arch/x86/x86/platform.c		machdep
+file	dev/smbios_platform.c		machdep
 file 	arch/x86/x86/pmap.c		machdep
 file 	arch/x86/x86/x86_tlb.c		machdep
 file	arch/x86/x86/procfs_machdep.c	procfs

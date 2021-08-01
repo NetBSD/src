@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.214.4.1 2021/06/17 04:46:33 thorpej Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.214.4.2 2021/08/01 22:42:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.214.4.1 2021/06/17 04:46:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.214.4.2 2021/08/01 22:42:39 thorpej Exp $");
 
 #include "veriexec.h"
 
@@ -139,50 +139,89 @@ const struct fileops vnops = {
 /*
  * Common code for vnode open operations.
  * Check permissions, and call the VOP_OPEN or VOP_CREATE routine.
+ *
+ * at_dvp is the directory for openat(), if any.
+ * pb is the path.
+ * nmode is additional namei flags, restricted to TRYEMULROOT and NOCHROOT.
+ * fmode is the open flags, converted from O_* to F*
+ * cmode is the creation file permissions.
+ *
+ * XXX shouldn't cmode be mode_t?
+ *
+ * On success produces either a vnode in *ret_vp, or if that is NULL,
+ * a file descriptor number in ret_fd.
+ *
+ * The caller may pass NULL for ret_fd (and ret_domove), in which case
+ * EOPNOTSUPP will be produced in the cases that would otherwise return
+ * a file descriptor.
+ *
+ * Note that callers that want no-follow behavior should pass
+ * O_NOFOLLOW in fmode. Neither FOLLOW nor NOFOLLOW in nmode is
+ * honored.
  */
 int
-vn_open(struct nameidata *ndp, int fmode, int cmode)
+vn_open(struct vnode *at_dvp, struct pathbuf *pb,
+	int nmode, int fmode, int cmode,
+	struct vnode **ret_vp, bool *ret_domove, int *ret_fd)
 {
-	struct vnode *vp;
+	struct nameidata nd;
+	struct vnode *vp = NULL;
 	struct lwp *l = curlwp;
 	kauth_cred_t cred = l->l_cred;
 	struct vattr va;
 	int error;
 	const char *pathstring;
 
+	KASSERT((nmode & (TRYEMULROOT | NOCHROOT)) == nmode);
+
+	KASSERT(ret_vp != NULL);
+	KASSERT((ret_domove == NULL) == (ret_fd == NULL));
+
 	if ((fmode & (O_CREAT | O_DIRECTORY)) == (O_CREAT | O_DIRECTORY))
 		return EINVAL;
 
-	ndp->ni_cnd.cn_flags &= TRYEMULROOT | NOCHROOT;
+	NDINIT(&nd, LOOKUP, nmode, pb);
+	if (at_dvp != NULL)
+		NDAT(&nd, at_dvp);
+
+	nd.ni_cnd.cn_flags &= TRYEMULROOT | NOCHROOT;
 
 	if (fmode & O_CREAT) {
-		ndp->ni_cnd.cn_nameiop = CREATE;
-		ndp->ni_cnd.cn_flags |= LOCKPARENT | LOCKLEAF;
+		nd.ni_cnd.cn_nameiop = CREATE;
+		nd.ni_cnd.cn_flags |= LOCKPARENT | LOCKLEAF;
 		if ((fmode & O_EXCL) == 0 &&
 		    ((fmode & O_NOFOLLOW) == 0))
-			ndp->ni_cnd.cn_flags |= FOLLOW;
+			nd.ni_cnd.cn_flags |= FOLLOW;
 		if ((fmode & O_EXCL) == 0)
-			ndp->ni_cnd.cn_flags |= NONEXCLHACK;
+			nd.ni_cnd.cn_flags |= NONEXCLHACK;
 	} else {
-		ndp->ni_cnd.cn_nameiop = LOOKUP;
-		ndp->ni_cnd.cn_flags |= LOCKLEAF;
+		nd.ni_cnd.cn_nameiop = LOOKUP;
+		nd.ni_cnd.cn_flags |= LOCKLEAF;
 		if ((fmode & O_NOFOLLOW) == 0)
-			ndp->ni_cnd.cn_flags |= FOLLOW;
+			nd.ni_cnd.cn_flags |= FOLLOW;
 	}
 
-	pathstring = pathbuf_stringcopy_get(ndp->ni_pathbuf);
+	pathstring = pathbuf_stringcopy_get(nd.ni_pathbuf);
 	if (pathstring == NULL) {
 		return ENOMEM;
 	}
 
-	error = namei(ndp);
+	/*
+	 * When this "interface" was exposed to do_open() it used
+	 * to initialize l_dupfd to -newfd-1 (thus passing in the
+	 * new file handle number to use)... but nothing in the
+	 * kernel uses that value. So just send 0.
+	 */
+	l->l_dupfd = 0;
+
+	error = namei(&nd);
 	if (error)
 		goto out;
 
-	vp = ndp->ni_vp;
+	vp = nd.ni_vp;
 
 #if NVERIEXEC > 0
-	error = veriexec_openchk(l, ndp->ni_vp, pathstring, fmode);
+	error = veriexec_openchk(l, nd.ni_vp, pathstring, fmode);
 	if (error) {
 		/* We have to release the locks ourselves */
 		/*
@@ -190,16 +229,16 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 		 * get ni_dvp == NULL back if ni_vp exists, and we should
 		 * treat that like the non-O_CREAT case.
 		 */
-		if ((fmode & O_CREAT) != 0 && ndp->ni_dvp != NULL) {
+		if ((fmode & O_CREAT) != 0 && nd.ni_dvp != NULL) {
 			if (vp == NULL) {
-				vput(ndp->ni_dvp);
+				vput(nd.ni_dvp);
 			} else {
-				VOP_ABORTOP(ndp->ni_dvp, &ndp->ni_cnd);
-				if (ndp->ni_dvp == ndp->ni_vp)
-					vrele(ndp->ni_dvp);
+				VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
+				if (nd.ni_dvp == nd.ni_vp)
+					vrele(nd.ni_dvp);
 				else
-					vput(ndp->ni_dvp);
-				ndp->ni_dvp = NULL;
+					vput(nd.ni_dvp);
+				nd.ni_dvp = NULL;
 				vput(vp);
 			}
 		} else {
@@ -212,31 +251,31 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 	/*
 	 * 20210604 dholland ditto
 	 */
-	if ((fmode & O_CREAT) != 0 && ndp->ni_dvp != NULL) {
-		if (ndp->ni_vp == NULL) {
+	if ((fmode & O_CREAT) != 0 && nd.ni_dvp != NULL) {
+		if (nd.ni_vp == NULL) {
 			vattr_null(&va);
 			va.va_type = VREG;
 			va.va_mode = cmode;
 			if (fmode & O_EXCL)
 				 va.va_vaflags |= VA_EXCLUSIVE;
-			error = VOP_CREATE(ndp->ni_dvp, &ndp->ni_vp,
-					   &ndp->ni_cnd, &va);
+			error = VOP_CREATE(nd.ni_dvp, &nd.ni_vp,
+					   &nd.ni_cnd, &va);
 			if (error) {
-				vput(ndp->ni_dvp);
+				vput(nd.ni_dvp);
 				goto out;
 			}
 			fmode &= ~O_TRUNC;
-			vp = ndp->ni_vp;
+			vp = nd.ni_vp;
 			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-			vput(ndp->ni_dvp);
+			vput(nd.ni_dvp);
 		} else {
-			VOP_ABORTOP(ndp->ni_dvp, &ndp->ni_cnd);
-			if (ndp->ni_dvp == ndp->ni_vp)
-				vrele(ndp->ni_dvp);
+			VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
+			if (nd.ni_dvp == nd.ni_vp)
+				vrele(nd.ni_dvp);
 			else
-				vput(ndp->ni_dvp);
-			ndp->ni_dvp = NULL;
-			vp = ndp->ni_vp;
+				vput(nd.ni_dvp);
+			nd.ni_dvp = NULL;
+			vp = nd.ni_vp;
 			if (fmode & O_EXCL) {
 				error = EEXIST;
 				goto bad;
@@ -251,17 +290,17 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 		 * half of the following block. (Besides handle
 		 * ni_dvp, anyway.)
 		 */
-		vp = ndp->ni_vp;
+		vp = nd.ni_vp;
 		KASSERT((fmode & O_EXCL) == 0);
 		fmode &= ~O_CREAT;
 	} else {
-		vp = ndp->ni_vp;
+		vp = nd.ni_vp;
 	}
 	if (vp->v_type == VSOCK) {
 		error = EOPNOTSUPP;
 		goto bad;
 	}
-	if (ndp->ni_vp->v_type == VLNK) {
+	if (nd.ni_vp->v_type == VLNK) {
 		error = EFTYPE;
 		goto bad;
 	}
@@ -291,8 +330,27 @@ bad:
 	if (error)
 		vput(vp);
 out:
-	pathbuf_stringcopy_put(ndp->ni_pathbuf, pathstring);
-	return (error);
+	pathbuf_stringcopy_put(nd.ni_pathbuf, pathstring);
+
+	switch (error) {
+	case EDUPFD:
+	case EMOVEFD:
+		/* if the caller isn't prepared to handle fds, fail for them */
+		if (ret_fd == NULL) {
+			error = EOPNOTSUPP;
+			break;
+		}
+		*ret_vp = NULL;
+		*ret_domove = error == EMOVEFD;
+		*ret_fd = l->l_dupfd;
+		error = 0;
+		break;
+	case 0:
+		*ret_vp = vp;
+		break;
+	}
+	l->l_dupfd = 0;
+	return error;
 }
 
 /*
@@ -1235,17 +1293,15 @@ vn_bdev_open(dev_t dev, struct vnode **vpp, struct lwp *l)
 int
 vn_bdev_openpath(struct pathbuf *pb, struct vnode **vpp, struct lwp *l)
 {
-	struct nameidata nd;
 	struct vnode *vp;
 	dev_t dev;
 	enum vtype vt;
 	int     error;
 
-	NDINIT(&nd, LOOKUP, FOLLOW, pb);
-	if ((error = vn_open(&nd, FREAD | FWRITE, 0)) != 0)
+	error = vn_open(NULL, pb, 0, FREAD | FWRITE, 0, &vp, NULL, NULL);
+	if (error != 0)
 		return error;
 
-	vp = nd.ni_vp;
 	dev = vp->v_rdev;
 	vt = vp->v_type;
 

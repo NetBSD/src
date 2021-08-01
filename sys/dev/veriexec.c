@@ -1,4 +1,4 @@
-/*	$NetBSD: veriexec.c,v 1.1 2015/12/09 18:25:32 maxv Exp $	*/
+/*	$NetBSD: veriexec.c,v 1.1.40.1 2021/08/01 22:42:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: veriexec.c,v 1.1 2015/12/09 18:25:32 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: veriexec.c,v 1.1.40.1 2021/08/01 22:42:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -110,7 +110,7 @@ veriexec_delete(prop_dictionary_t dict, struct lwp *l)
 	const char *file;
 	int error;
 
-	if (!prop_dictionary_get_cstring_nocopy(dict, "file", &file))
+	if (!prop_dictionary_get_string(dict, "file", &file))
 		return (EINVAL);
 
 	error = namei_simple_kernel(file, NSM_FOLLOW_NOEMULROOT, &vp);
@@ -135,7 +135,7 @@ veriexec_query(prop_dictionary_t dict, prop_dictionary_t rdict, struct lwp *l)
 	const char *file;
 	int error;
 
-	if (!prop_dictionary_get_cstring_nocopy(dict, "file", &file))
+	if (!prop_dictionary_get_string(dict, "file", &file))
 		return (EINVAL);
 
 	error = namei_simple_kernel(file, NSM_FOLLOW_NOEMULROOT, &vp);

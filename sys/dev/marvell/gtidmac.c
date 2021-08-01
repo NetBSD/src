@@ -1,4 +1,4 @@
-/*	$NetBSD: gtidmac.c,v 1.17 2019/12/27 09:41:51 msaitoh Exp $	*/
+/*	$NetBSD: gtidmac.c,v 1.17.12.1 2021/08/01 22:42:24 thorpej Exp $	*/
 /*
  * Copyright (c) 2008, 2012, 2016 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtidmac.c,v 1.17 2019/12/27 09:41:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtidmac.c,v 1.17.12.1 2021/08/01 22:42:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -130,7 +130,7 @@ struct gtidmac_softc {
 	struct {
 		bus_dmamap_t chan_in[MVXORE_NSRC];	/* In dmamap */
 		bus_dmamap_t chan_out;			/* Out dmamap */
-		uint64_t chan_totalcnt;			/* total transfered */
+		uint64_t chan_totalcnt;			/* total transferred */
 		int chan_ddidx;
 		void *chan_running;			/* opaque object data */
 		void (*chan_dma_done)(void *, int, bus_dmamap_t *,

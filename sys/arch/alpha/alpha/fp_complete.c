@@ -1,4 +1,4 @@
-/* $NetBSD: fp_complete.c,v 1.24 2020/09/01 08:22:36 thorpej Exp $ */
+/* $NetBSD: fp_complete.c,v 1.24.6.1 2021/08/01 22:42:00 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -33,9 +33,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_ddb.h"
+
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.24 2020/09/01 08:22:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.24.6.1 2021/08/01 22:42:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +52,30 @@ __KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.24 2020/09/01 08:22:36 thorpej Exp
 #include <alpha/alpha/db_instruction.h>
 
 #include <lib/libkern/softfloat.h>
+
+/*
+ * Validate our assumptions about bit positions.
+ */
+__CTASSERT(ALPHA_AESR_INV == (FP_X_INV << 1));
+__CTASSERT(ALPHA_AESR_DZE == (FP_X_DZ  << 1));
+__CTASSERT(ALPHA_AESR_OVF == (FP_X_OFL << 1));
+__CTASSERT(ALPHA_AESR_UNF == (FP_X_UFL << 1));
+__CTASSERT(ALPHA_AESR_INE == (FP_X_IMP << 1));
+__CTASSERT(ALPHA_AESR_IOV == (FP_X_IOV << 1));
+
+__CTASSERT(IEEE_TRAP_ENABLE_INV == (FP_X_INV << 1));
+__CTASSERT(IEEE_TRAP_ENABLE_DZE == (FP_X_DZ  << 1));
+__CTASSERT(IEEE_TRAP_ENABLE_OVF == (FP_X_OFL << 1));
+__CTASSERT(IEEE_TRAP_ENABLE_UNF == (FP_X_UFL << 1));
+__CTASSERT(IEEE_TRAP_ENABLE_INE == (FP_X_IMP << 1));
+
+__CTASSERT((uint64_t)FP_X_IMP << (61 - 3) == FPCR_INED);
+__CTASSERT((uint64_t)FP_X_UFL << (61 - 3) == FPCR_UNFD);
+__CTASSERT((uint64_t)FP_X_OFL << (49 - 0) == FPCR_OVFD);
+__CTASSERT((uint64_t)FP_X_DZ  << (49 - 0) == FPCR_DZED);
+__CTASSERT((uint64_t)FP_X_INV << (49 - 0) == FPCR_INVD);
+
+__CTASSERT(FP_C_ALLBITS == MDLWP_FP_C);
 
 #define	TSWINSIZE 4	/* size of trap shadow window in uint32_t units */
 
@@ -351,11 +377,12 @@ fp_c_to_fpcr_1(uint64_t fpcr, uint64_t fp_c)
 	 * it is necessary to initially set a sticky bit.
 	 */
 
-	fpcr &= FPCR_DYN(3);
+	fpcr &= FPCR_DYN_RM;
 
 	/*
-	 * enable traps = case where flag bit is clear OR program wants a trap
-	 * enables = ~flags | mask
+	 * enable traps = case where flag bit is clear AND program wants a trap
+	 *
+	 * enables = ~flags & mask
 	 * disables = ~(~flags | mask)
 	 * disables = flags & ~mask. Thank you, Augustus De Morgan (1806-1871)
 	 */
@@ -363,18 +390,6 @@ fp_c_to_fpcr_1(uint64_t fpcr, uint64_t fp_c)
 
 	fpcr |= (disables & (FP_X_IMP | FP_X_UFL)) << (61 - 3);
 	fpcr |= (disables & (FP_X_OFL | FP_X_DZ | FP_X_INV)) << (49 - 0);
-
-#	if !(FP_X_INV == 1 && FP_X_DZ == 2 && FP_X_OFL == 4 &&		\
-	    FP_X_UFL == 8 && FP_X_IMP == 16 && FP_X_IOV == 32 &&	\
-	    FP_X_UFL << (61 - 3) == FPCR_UNFD &&			\
-	    FP_X_IMP << (61 - 3) == FPCR_INED &&			\
-	    FP_X_OFL << (49 - 0) == FPCR_OVFD)
-#		error "Assertion failed"
-	/*
-	 * We don't care about the other built-in bit numbers because they
-	 * have been architecturally specified.
-	 */
-#	endif
 
 	fpcr |= fp_c & FP_C_MIRRORED << (FPCR_MIR_START - FP_C_MIR_START);
 	fpcr |= (fp_c & IEEE_MAP_DMZ) << 36;
@@ -407,6 +422,11 @@ alpha_write_fp_c(struct lwp *l, uint64_t fp_c)
 		alpha_pal_wrfen(1);
 		fp_c_to_fpcr(l);
 		alpha_pal_wrfen(0);
+	} else {
+		struct pcb *pcb = l->l_addr;
+
+		pcb->pcb_fp.fpr_cr =
+		    fp_c_to_fpcr_1(pcb->pcb_fp.fpr_cr, l->l_md.md_flags);
 	}
 	kpreempt_enable();
 }
@@ -502,11 +522,46 @@ float64_unk(float64 a, float64 b)
  */
 
 static void
-alpha_fp_interpret(alpha_instruction *pc, struct lwp *l, uint32_t bits)
+print_fp_instruction(unsigned long pc, struct lwp *l, uint32_t bits)
+{
+#if defined(DDB)
+	char buf[32];
+	struct alpha_print_instruction_context ctx = {
+		.insn.bits = bits,
+		.pc = pc,
+		.buf = buf,
+		.bufsize = sizeof(buf),
+	};
+
+	(void) alpha_print_instruction(&ctx);
+
+	printf("INSN [%s:%d] @0x%lx -> %s\n",
+	    l->l_proc->p_comm, l->l_proc->p_pid, ctx.pc, ctx.buf);
+#else
+	alpha_instruction insn = {
+		.bits = bits,
+	};
+	printf("INSN [%s:%d] @0x%lx -> opc=0x%x func=0x%x fa=%d fb=%d fc=%d\n",
+	    l->l_proc->p_comm, l->l_proc->p_pid, (unsigned long)pc,
+	    insn.float_format.opcode, insn.float_format.function,
+	    insn.float_format.fa, insn.float_format.fb, insn.float_format.fc);
+	printf("INSN [%s:%d] @0x%lx -> trp=0x%x rnd=0x%x src=0x%x fn=0x%x\n",
+	    l->l_proc->p_comm, l->l_proc->p_pid, (unsigned long)pc,
+	    insn.float_detail.trp, insn.float_detail.rnd,
+	    insn.float_detail.src, insn.float_detail.opclass);
+#endif /* DDB */
+}
+
+static void
+alpha_fp_interpret(unsigned long pc, struct lwp *l, uint32_t bits)
 {
 	s_float sfa, sfb, sfc;
 	t_float tfa, tfb, tfc;
 	alpha_instruction inst;
+
+	if (alpha_fp_complete_debug) {
+		print_fp_instruction(pc, l, bits);
+	}
 
 	inst.bits = bits;
 	switch(inst.generic_format.opcode) {
@@ -533,7 +588,7 @@ alpha_fp_interpret(alpha_instruction *pc, struct lwp *l, uint32_t bits)
 		switch(inst.float_detail.src) {
 		case op_src_sf:
 			sts(inst.float_detail.fb, &sfb, l);
-			if (inst.float_detail.opclass == 10)
+			if (inst.float_detail.opclass == 11)
 				sfc.i = float32_sqrt(sfb.i);
 			else if (inst.float_detail.opclass & ~3) {
 				this_cannot_happen(1, inst.bits);
@@ -552,7 +607,7 @@ alpha_fp_interpret(alpha_instruction *pc, struct lwp *l, uint32_t bits)
 				    inst.bits, l);
 			else {
 				stt(inst.float_detail.fb, &tfb, l);
-				if (inst.float_detail.opclass == 10)
+				if (inst.float_detail.opclass == 11)
 					tfc.i = float64_sqrt(tfb.i);
 				else {
 					stt(inst.float_detail.fa, &tfa, l);
@@ -569,16 +624,15 @@ alpha_fp_interpret(alpha_instruction *pc, struct lwp *l, uint32_t bits)
 	}
 }
 
-static int
-alpha_fp_complete_at(alpha_instruction *trigger_pc, struct lwp *l,
-    uint64_t *ucode)
+int
+alpha_fp_complete_at(unsigned long trigger_pc, struct lwp *l, uint64_t *ucode)
 {
 	int needsig;
 	alpha_instruction inst;
 	uint64_t rm, fpcr, orig_fpcr;
 	uint64_t orig_flags, new_flags, changed_flags, md_flags;
 
-	if (__predict_false(copyin(trigger_pc, &inst, sizeof inst))) {
+	if (__predict_false(ufetch_32((void *)trigger_pc, &inst.bits))) {
 		this_cannot_happen(6, -1);
 		return SIGSEGV;
 	}
@@ -588,15 +642,21 @@ alpha_fp_complete_at(alpha_instruction *trigger_pc, struct lwp *l,
 	}
 	alpha_pal_wrfen(1);
 	/*
-	 * If necessary, lie about the dynamic rounding mode so emulation
-	 * software need go to only one place for it, and so we don't have to
-	 * lock any memory locations or pass a third parameter to every
-	 * SoftFloat entry point.
+	 * Alpha FLOAT instructions can override the rounding mode on a
+	 * per-instruction basis.  If necessary, lie about the dynamic
+	 * rounding mode so emulation software need go to only one place
+	 * for it, and so we don't have to lock any memory locations or
+	 * pass a third parameter to every SoftFloat entry point.
+	 *
+	 * N.B. the rounding mode field of the the FLOAT format instructions
+	 * matches that of the FPCR *except* for the value 3, which means
+	 * "dynamic" rounding mode (i.e. what is programmed into the FPCR).
 	 */
 	orig_fpcr = fpcr = alpha_read_fpcr();
 	rm = inst.float_detail.rnd;
-	if (__predict_false(rm != 3 /* dynamic */ && rm != (fpcr >> 58 & 3))) {
-		fpcr = (fpcr & ~FPCR_DYN(3)) | FPCR_DYN(rm);
+	if (__predict_false(rm != 3 /* dynamic */ &&
+			    rm != __SHIFTOUT(fpcr, FPCR_DYN_RM))) {
+		fpcr = (fpcr & ~FPCR_DYN_RM) | __SHIFTIN(rm, FPCR_DYN_RM);
 		alpha_write_fpcr(fpcr);
 	}
 	orig_flags = FP_C_TO_NETBSD_FLAG(l->l_md.md_flags);
@@ -630,20 +690,34 @@ alpha_fp_complete(u_long a0, u_long a1, struct lwp *l, uint64_t *ucode)
 	alpha_instruction *trigger_pc, *usertrap_pc;
 	alpha_instruction *pc, *win_begin, tsw[TSWINSIZE];
 
-	sig = SIGFPE;
+	if (alpha_fp_complete_debug) {
+		printf("%s: [%s:%d] a0[AESR]=0x%lx a1[regmask]=0x%lx "
+		       "FPCR=0x%lx FP_C=0x%lx\n",
+		    __func__, l->l_proc->p_comm, l->l_proc->p_pid,
+		    a0, a1, alpha_read_fpcr(),
+		    l->l_md.md_flags & (MDLWP_FP_C|MDLWP_FPACTIVE));
+	}
+
 	pc = (alpha_instruction *)l->l_md.md_tf->tf_regs[FRAME_PC];
 	trigger_pc = pc - 1;	/* for ALPHA_AMASK_PAT case */
+
+	/*
+	 * Start out with the code mirroring the exception flags
+	 * (FP_X_*).  Shift right 1 bit to discard SWC to achive
+	 * this.
+	 */
+	*ucode = a0 >> 1;
+
 	if (cpu_amask & ALPHA_AMASK_PAT) {
-		/* SWC | INV */
-		if (a0 & 3 || alpha_fp_sync_complete) {
-			sig = alpha_fp_complete_at(trigger_pc, l, ucode);
-			goto done;
+		if ((a0 & (ALPHA_AESR_SWC | ALPHA_AESR_INV)) != 0 ||
+		    alpha_fp_sync_complete) {
+			sig = alpha_fp_complete_at((u_long)trigger_pc, l,
+			    ucode);
+			goto resolved;
 		}
 	}
-	*ucode = a0;
-	/* SWC | INV */
-	if (!(a0 & 3))
-		return sig;
+	if ((a0 & (ALPHA_AESR_SWC | ALPHA_AESR_INV)) == 0)
+		goto unresolved;
 /*
  * At this point we are somewhere in the trap shadow of one or more instruc-
  * tions that have trapped with software completion specified.  We have a mask
@@ -666,8 +740,13 @@ alpha_fp_complete(u_long a0, u_long a1, struct lwp *l, uint64_t *ucode)
 			if (copyin(win_begin, tsw, sizeof tsw)) {
 				/* sigh, try to get just one */
 				win_begin = pc;
-				if (copyin(win_begin, tsw, 4))
+				if (copyin(win_begin, tsw, 4)) {
+					/*
+					 * We're off the rails here; don't
+					 * bother updating the FP_C.
+					 */
 					return SIGSEGV;
+				}
 			}
 		}
 		assert(win_begin <= pc && !((long)pc  & 3));
@@ -694,18 +773,49 @@ alpha_fp_complete(u_long a0, u_long a1, struct lwp *l, uint64_t *ucode)
 		alpha_shadow.max = t;
 	if (__predict_true(trigger_pc != 0 && a1 == 0)) {
 		++alpha_shadow.resolved;
-		sig = alpha_fp_complete_at(trigger_pc, l, ucode);
+		sig = alpha_fp_complete_at((u_long)trigger_pc, l, ucode);
+		goto resolved;
 	} else {
 		++alpha_shadow.unresolved;
-		return sig;
 	}
-done:
+
+ unresolved: /* obligatory statement */;
+	/*
+	 * *ucode contains the exception bits (FP_X_*).  We need to
+	 * update the FP_C and FPCR, and send a signal for any new
+	 * trap that is enabled.
+	 */
+	uint64_t orig_flags = FP_C_TO_NETBSD_FLAG(l->l_md.md_flags);
+	uint64_t new_flags = orig_flags | *ucode;
+	uint64_t changed_flags = orig_flags ^ new_flags;
+	KASSERT((orig_flags | changed_flags) == new_flags); /* panic on 1->0 */
+
+	l->l_md.md_flags |= NETBSD_FLAG_TO_FP_C(new_flags);
+
+	kpreempt_disable();
+	if ((curlwp->l_md.md_flags & MDLWP_FPACTIVE) == 0) {
+		fpu_load();
+	}
+	alpha_pal_wrfen(1);
+	uint64_t orig_fpcr = alpha_read_fpcr();
+	alpha_write_fpcr(fp_c_to_fpcr_1(orig_fpcr, l->l_md.md_flags));
+	uint64_t needsig =
+	    changed_flags & FP_C_TO_NETBSD_MASK(l->l_md.md_flags);
+	alpha_pal_wrfen(0);
+	kpreempt_enable();
+
+	if (__predict_false(needsig)) {
+		*ucode = needsig;
+		return SIGFPE;
+	}
+	return 0;
+
+ resolved:
 	if (sig) {
 		usertrap_pc = trigger_pc + 1;
 		l->l_md.md_tf->tf_regs[FRAME_PC] = (unsigned long)usertrap_pc;
-		return sig;
 	}
-	return 0;
+	return sig;
 }
 
 /*
@@ -746,6 +856,11 @@ fpu_state_load(struct lwp *l, u_int flags)
 		atomic_inc_ulong(&fpevent_reuse.ev_count);
 	}
 
+	if (alpha_fp_complete_debug) {
+		printf("%s: [%s:%d] loading FPCR=0x%lx\n",
+		    __func__, l->l_proc->p_comm, l->l_proc->p_pid,
+		    pcb->pcb_fp.fpr_cr);
+	}
 	alpha_pal_wrfen(1);
 	restorefpstate(&pcb->pcb_fp);
 	alpha_pal_wrfen(0);
@@ -765,6 +880,11 @@ fpu_state_save(struct lwp *l)
 	alpha_pal_wrfen(1);
 	savefpstate(&pcb->pcb_fp);
 	alpha_pal_wrfen(0);
+	if (alpha_fp_complete_debug) {
+		printf("%s: [%s:%d] saved FPCR=0x%lx\n",
+		    __func__, l->l_proc->p_comm, l->l_proc->p_pid,
+		    pcb->pcb_fp.fpr_cr);
+	}
 }
 
 /*

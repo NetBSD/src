@@ -1,4 +1,4 @@
-/* $NetBSD: omap3_ehci.c,v 1.14 2021/04/24 23:36:28 thorpej Exp $ */
+/* $NetBSD: omap3_ehci.c,v 1.14.2.1 2021/08/01 22:42:05 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2010-2012 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_ehci.c,v 1.14 2021/04/24 23:36:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_ehci.c,v 1.14.2.1 2021/08/01 22:42:05 thorpej Exp $");
 
 #include "locators.h"
 
@@ -365,7 +365,7 @@ omap3_ehci_get_port_mode(prop_dictionary_t prop, const char *key)
 	const char *s = NULL;
 	enum omap3_ehci_port_mode mode = OMAP3_EHCI_PORT_MODE_NONE;
 
-	if (prop_dictionary_get_cstring_nocopy(prop, key, &s) && s != NULL) {
+	if (prop_dictionary_get_string(prop, key, &s) && s != NULL) {
 		if (strcmp(s, "phy") == 0) {
 			mode = OMAP3_EHCI_PORT_MODE_PHY;
 #ifdef OMAP_3XXX

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_copyback.c,v 1.53 2019/12/08 12:14:40 mlelstv Exp $	*/
+/*	$NetBSD: rf_copyback.c,v 1.53.12.1 2021/08/01 22:42:30 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -38,7 +38,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.53 2019/12/08 12:14:40 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.53.12.1 2021/08/01 22:42:30 thorpej Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -198,7 +198,7 @@ rf_CopybackReconstructedData(RF_Raid_t *raidPtr)
 	desc->sectPerSU = raidPtr->Layout.sectorsPerStripeUnit;
 	desc->sectPerStripe = raidPtr->Layout.sectorsPerStripeUnit * raidPtr->Layout.numDataCol;
 	desc->databuf = databuf;
-	desc->mcpair = rf_AllocMCPair();
+	desc->mcpair = rf_AllocMCPair(raidPtr);
 
 	/* quiesce the array, since we don't want to code support for user
 	 * accs here */
@@ -335,12 +335,10 @@ rf_CopybackOne(RF_CopybackDesc_t *desc, int typ, RF_RaidAddr_t addr,
 	/* create reqs to read the old location & write the new */
 	desc->readreq = rf_CreateDiskQueueData(RF_IO_TYPE_READ, spOffs,
 	    sectPerSU, desc->databuf, 0L, 0, rf_CopybackReadDoneProc, desc,
-	    NULL, (void *) raidPtr, RF_DISKQUEUE_DATA_FLAGS_NONE, NULL,
-	    PR_WAITOK);
+	    NULL, (void *) raidPtr, RF_DISKQUEUE_DATA_FLAGS_NONE, NULL);
 	desc->writereq = rf_CreateDiskQueueData(RF_IO_TYPE_WRITE, testOffs,
 	    sectPerSU, desc->databuf, 0L, 0, rf_CopybackWriteDoneProc, desc,
-	    NULL, (void *) raidPtr, RF_DISKQUEUE_DATA_FLAGS_NONE, NULL,
-	    PR_WAITOK);
+	    NULL, (void *) raidPtr, RF_DISKQUEUE_DATA_FLAGS_NONE, NULL);
 	desc->fcol = testCol;
 
 	/* enqueue the read.  the write will go out as part of the callback on
@@ -422,7 +420,7 @@ rf_CopybackComplete(RF_CopybackDesc_t *desc, int status)
 		       raidPtr->raidid, status);
 
 	RF_Free(desc->databuf, rf_RaidAddressToByte(raidPtr, desc->sectPerSU));
-	rf_FreeMCPair(desc->mcpair);
+	rf_FreeMCPair(raidPtr, desc->mcpair);
 	RF_Free(desc, sizeof(*desc));
 
 	rf_copyback_in_progress = 0;

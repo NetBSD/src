@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.89.6.1 2021/06/17 04:46:33 thorpej Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.89.6.2 2021/08/01 22:42:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.89.6.1 2021/06/17 04:46:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.89.6.2 2021/08/01 22:42:38 thorpej Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_copy_symtab.h"
@@ -1084,9 +1084,9 @@ ksymsread(dev_t dev, struct uio *uio, int ioflag)
 	 * Copy out the symbol table.
 	 */
 	filepos = sizeof(struct ksyms_hdr);
-	for (st = TAILQ_FIRST(&ksyms_symtabs);
-	     ;
-	     st = TAILQ_NEXT(st, sd_queue)) {
+	TAILQ_FOREACH(st, &ksyms_symtabs, sd_queue) {
+		if (__predict_false(st->sd_gone))
+			continue;
 		if (uio->uio_resid == 0)
 			return 0;
 		if (uio->uio_offset <= st->sd_symsize + filepos) {

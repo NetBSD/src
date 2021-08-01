@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rmclass.c,v 1.22 2011/11/19 22:51:18 tls Exp $	*/
+/*	$NetBSD: altq_rmclass.c,v 1.22.66.1 2021/08/01 22:41:59 thorpej Exp $	*/
 /*	$KAME: altq_rmclass.c,v 1.19 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.22 2011/11/19 22:51:18 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.22.66.1 2021/08/01 22:41:59 thorpej Exp $");
 
 /* #ident "@(#)rm_class.c  1.48     97/12/05 SMI" */
 
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.22 2011/11/19 22:51:18 tls Exp $"
 #include <sys/cprng.h>
 
 #include <net/if.h>
+#include <net/if_types.h>
 #ifdef ALTQ3_COMPAT
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -80,11 +81,13 @@ __KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.22 2011/11/19 22:51:18 tls Exp $"
 
 #define	reset_cutoff(ifd)	{ ifd->cutoff_ = RM_MAXDEPTH; }
 
+#define	PSEC_TO_NSEC(t)	((t) / 1000)
+
 /*
  * Local routines.
  */
 
-static int	rmc_satisfied(struct rm_class *, struct timeval *);
+static int	rmc_satisfied(struct rm_class *, struct timespec *);
 static void	rmc_wrr_set_weights(struct rm_ifdat *);
 static void	rmc_depth_compute(struct rm_class *);
 static void	rmc_depth_recompute(rm_class_t *);
@@ -97,8 +100,8 @@ static void	_rmc_dropq(rm_class_t *);
 static mbuf_t	*_rmc_getq(rm_class_t *);
 static mbuf_t	*_rmc_pollq(rm_class_t *);
 
-static int	rmc_under_limit(struct rm_class *, struct timeval *);
-static void	rmc_tl_satisfied(struct rm_ifdat *, struct timeval *);
+static int	rmc_under_limit(struct rm_class *, struct timespec *);
+static void	rmc_tl_satisfied(struct rm_ifdat *, struct timespec *);
 static void	rmc_drop_action(struct rm_class *);
 static void	rmc_restart(struct rm_class *);
 static void	rmc_root_overlimit(struct rm_class *, struct rm_class *);
@@ -192,7 +195,7 @@ static void	rmc_root_overlimit(struct rm_class *, struct rm_class *);
  * 	offtime = offtime * (8.0 / nsecPerByte);
  */
 struct rm_class *
-rmc_newclass(int pri, struct rm_ifdat *ifd, u_int nsecPerByte,
+rmc_newclass(int pri, struct rm_ifdat *ifd, uint64_t psecPerByte,
     void (*action)(rm_class_t *, rm_class_t *), int maxq,
     struct rm_class *parent, struct rm_class *borrow, u_int maxidle,
     int minidle, u_int offtime, int pktsize, int flags)
@@ -240,10 +243,10 @@ rmc_newclass(int pri, struct rm_ifdat *ifd, u_int nsecPerByte,
 	cl->leaf_ = 1;
 	cl->ifdat_ = ifd;
 	cl->pri_ = pri;
-	cl->allotment_ = RM_NS_PER_SEC / nsecPerByte; /* Bytes per sec */
+	cl->allotment_ = (u_int)(RM_PS_PER_SEC / psecPerByte); /* Bytes per sec */
 	cl->depth_ = 0;
 	cl->qthresh_ = 0;
-	cl->ns_per_byte_ = nsecPerByte;
+	cl->ps_per_byte_ = psecPerByte;
 
 	qlimit(cl->q_) = maxq;
 	qtype(cl->q_) = Q_DROPHEAD;
@@ -251,18 +254,18 @@ rmc_newclass(int pri, struct rm_ifdat *ifd, u_int nsecPerByte,
 	cl->flags_ = flags;
 
 #if 1 /* minidle is also scaled in ALTQ */
-	cl->minidle_ = (minidle * (int)nsecPerByte) / 8;
+	cl->minidle_ = ((int64_t)minidle * (int64_t)psecPerByte) / 8;
 	if (cl->minidle_ > 0)
 		cl->minidle_ = 0;
 #else
 	cl->minidle_ = minidle;
 #endif
-	cl->maxidle_ = (maxidle * nsecPerByte) / 8;
+	cl->maxidle_ = ((int64_t)maxidle * (int64_t)psecPerByte) / 8;
 	if (cl->maxidle_ == 0)
 		cl->maxidle_ = 1;
 #if 1 /* offtime is also scaled in ALTQ */
 	cl->avgidle_ = cl->maxidle_;
-	cl->offtime_ = ((offtime * nsecPerByte) / 8) >> RM_FILTER_GAIN;
+	cl->offtime_ = (((int64_t)offtime * (int64_t)psecPerByte) / 8) >> RM_FILTER_GAIN;
 	if (cl->offtime_ == 0)
 		cl->offtime_ = 1;
 #else
@@ -284,7 +287,7 @@ rmc_newclass(int pri, struct rm_ifdat *ifd, u_int nsecPerByte,
 		if (flags & RMCF_CLEARDSCP)
 			red_flags |= RIOF_CLEARDSCP;
 #endif
-		red_pkttime = nsecPerByte * pktsize  / 1000;
+		red_pkttime = PSEC_TO_NSEC(psecPerByte) * pktsize  / 1000;
 
 		if (flags & RMCF_RED) {
 			cl->red_ = red_alloc(0, 0,
@@ -345,7 +348,7 @@ rmc_newclass(int pri, struct rm_ifdat *ifd, u_int nsecPerByte,
 }
 
 int
-rmc_modclass(struct rm_class *cl, u_int nsecPerByte, int maxq, u_int maxidle,
+rmc_modclass(struct rm_class *cl, uint64_t psecPerByte, int maxq, u_int maxidle,
     int minidle, u_int offtime, int pktsize)
 {
 	struct rm_ifdat	*ifd;
@@ -356,25 +359,25 @@ rmc_modclass(struct rm_class *cl, u_int nsecPerByte, int maxq, u_int maxidle,
 	old_allotment = cl->allotment_;
 
 	s = splnet();
-	cl->allotment_ = RM_NS_PER_SEC / nsecPerByte; /* Bytes per sec */
+	cl->allotment_ = (u_int)(RM_PS_PER_SEC / psecPerByte); /* Bytes per sec */
 	cl->qthresh_ = 0;
-	cl->ns_per_byte_ = nsecPerByte;
+	cl->ps_per_byte_ = psecPerByte;
 
 	qlimit(cl->q_) = maxq;
 
 #if 1 /* minidle is also scaled in ALTQ */
-	cl->minidle_ = (minidle * nsecPerByte) / 8;
+	cl->minidle_ = ((int64_t)minidle * (int64_t)psecPerByte) / 8;
 	if (cl->minidle_ > 0)
 		cl->minidle_ = 0;
 #else
 	cl->minidle_ = minidle;
 #endif
-	cl->maxidle_ = (maxidle * nsecPerByte) / 8;
+	cl->maxidle_ = ((int64_t)maxidle * (int64_t)psecPerByte) / 8;
 	if (cl->maxidle_ == 0)
 		cl->maxidle_ = 1;
 #if 1 /* offtime is also scaled in ALTQ */
 	cl->avgidle_ = cl->maxidle_;
-	cl->offtime_ = ((offtime * nsecPerByte) / 8) >> RM_FILTER_GAIN;
+	cl->offtime_ = (((int64_t)offtime * (int64_t)psecPerByte) / 8) >> RM_FILTER_GAIN;
 	if (cl->offtime_ == 0)
 		cl->offtime_ = 1;
 #else
@@ -659,7 +662,7 @@ rmc_delete_class(struct rm_ifdat *ifd, struct rm_class *cl)
  */
 
 int
-rmc_init(struct ifaltq *ifq, struct rm_ifdat *ifd, u_int nsecPerByte,
+rmc_init(struct ifaltq *ifq, struct rm_ifdat *ifd, uint64_t psecPerByte,
     void (*restart)(struct ifaltq *), int maxq, int maxqueued, u_int maxidle,
     int minidle, u_int offtime, int flags)
 {
@@ -681,13 +684,13 @@ rmc_init(struct ifaltq *ifq, struct rm_ifdat *ifd, u_int nsecPerByte,
 	ifd->ifq_ = ifq;
 	ifd->restart = restart;
 	ifd->maxqueued_ = maxqueued;
-	ifd->ns_per_byte_ = nsecPerByte;
+	ifd->ps_per_byte_ = psecPerByte;
 	ifd->maxpkt_ = mtu;
 	ifd->wrr_ = (flags & RMCF_WRR) ? 1 : 0;
 	ifd->efficient_ = (flags & RMCF_EFFICIENT) ? 1 : 0;
 #if 1
-	ifd->maxiftime_ = mtu * nsecPerByte / 1000 * 16;
-	if (mtu * nsecPerByte > 10 * 1000000)
+	ifd->maxiftime_ = mtu * psecPerByte / 1000 / 1000 * 16;
+	if ((int64_t)mtu * psecPerByte > (int64_t)10 * 1000000000)
 		ifd->maxiftime_ /= 4;
 #endif
 
@@ -720,7 +723,7 @@ rmc_init(struct ifaltq *ifq, struct rm_ifdat *ifd, u_int nsecPerByte,
 	 * Create the root class of the link-sharing structure.
 	 */
 	if ((ifd->root_ = rmc_newclass(0, ifd,
-				       nsecPerByte,
+				       psecPerByte,
 				       rmc_root_overlimit, maxq, 0, 0,
 				       maxidle, minidle, offtime,
 				       0, 0)) == NULL) {
@@ -746,14 +749,14 @@ rmc_init(struct ifaltq *ifq, struct rm_ifdat *ifd, u_int nsecPerByte,
 int
 rmc_queue_packet(struct rm_class *cl, mbuf_t *m)
 {
-	struct timeval	 now;
+	struct timespec	 now;
 	struct rm_ifdat *ifd = cl->ifdat_;
 	int		 cpri = cl->pri_;
 	int		 is_empty = qempty(cl->q_);
 
 	RM_GETTIME(now);
 	if (ifd->cutoff_ > 0) {
-		if (TV_LT(&cl->undertime_, &now)) {
+		if (TS_LT(&cl->undertime_, &now)) {
 			if (ifd->cutoff_ > cl->depth_)
 				ifd->cutoff_ = cl->depth_;
 			CBQTRACE(rmc_queue_packet, 'ffoc', cl->depth_);
@@ -769,7 +772,7 @@ rmc_queue_packet(struct rm_class *cl, mbuf_t *m)
 
 			while (borrow != NULL &&
 			       borrow->depth_ < ifd->cutoff_) {
-				if (TV_LT(&borrow->undertime_, &now)) {
+				if (TS_LT(&borrow->undertime_, &now)) {
 					ifd->cutoff_ = borrow->depth_;
 					CBQTRACE(rmc_queue_packet, 'ffob', ifd->cutoff_);
 					break;
@@ -779,7 +782,7 @@ rmc_queue_packet(struct rm_class *cl, mbuf_t *m)
 		}
 #else /* !ALTQ */
 		else if ((ifd->cutoff_ > 1) && cl->borrow_) {
-			if (TV_LT(&cl->borrow_->undertime_, &now)) {
+			if (TS_LT(&cl->borrow_->undertime_, &now)) {
 				ifd->cutoff_ = cl->borrow_->depth_;
 				CBQTRACE(rmc_queue_packet, 'ffob',
 					 cl->borrow_->depth_);
@@ -807,12 +810,12 @@ rmc_queue_packet(struct rm_class *cl, mbuf_t *m)
 
 /*
  * void
- * rmc_tl_satisfied(struct rm_ifdat *ifd, struct timeval *now) - Check all
+ * rmc_tl_satisfied(struct rm_ifdat *ifd, struct timespec *now) - Check all
  *	classes to see if there are satified.
  */
 
 static void
-rmc_tl_satisfied(struct rm_ifdat *ifd, struct timeval *now)
+rmc_tl_satisfied(struct rm_ifdat *ifd, struct timespec *now)
 {
 	int		 i;
 	rm_class_t	*p, *bp;
@@ -838,13 +841,13 @@ rmc_tl_satisfied(struct rm_ifdat *ifd, struct timeval *now)
  */
 
 static int
-rmc_satisfied(struct rm_class *cl, struct timeval *now)
+rmc_satisfied(struct rm_class *cl, struct timespec *now)
 {
 	rm_class_t	*p;
 
 	if (cl == NULL)
 		return (1);
-	if (TV_LT(now, &cl->undertime_))
+	if (TS_LT(now, &cl->undertime_))
 		return (1);
 	if (cl->depth_ == 0) {
 		if (!cl->sleeping_ && (qlen(cl->q_) > cl->qthresh_))
@@ -871,7 +874,7 @@ rmc_satisfied(struct rm_class *cl, struct timeval *now)
  */
 
 static int
-rmc_under_limit(struct rm_class *cl, struct timeval *now)
+rmc_under_limit(struct rm_class *cl, struct timespec *now)
 {
 	rm_class_t	*p = cl;
 	rm_class_t	*top;
@@ -886,7 +889,7 @@ rmc_under_limit(struct rm_class *cl, struct timeval *now)
 		return (1);
 
 	if (cl->sleeping_) {
-		if (TV_LT(now, &cl->undertime_))
+		if (TS_LT(now, &cl->undertime_))
 			return (0);
 
 		CALLOUT_STOP(&cl->callout_);
@@ -896,7 +899,7 @@ rmc_under_limit(struct rm_class *cl, struct timeval *now)
 	}
 
 	top = NULL;
-	while (cl->undertime_.tv_sec && TV_LT(now, &cl->undertime_)) {
+	while (cl->undertime_.tv_sec && TS_LT(now, &cl->undertime_)) {
 		if (((cl = cl->borrow_) == NULL) ||
 		    (cl->depth_ > ifd->cutoff_)) {
 #ifdef ADJUST_CUTOFF
@@ -959,7 +962,7 @@ _rmc_wrr_dequeue_next(struct rm_ifdat *ifd, int op)
 	u_int		 deficit;
 	int		 cpri;
 	mbuf_t		*m;
-	struct timeval	 now;
+	struct timespec	 now;
 
 	RM_GETTIME(now);
 
@@ -1114,7 +1117,7 @@ _rmc_prr_dequeue_next(struct rm_ifdat *ifd, int op)
 	mbuf_t		*m;
 	int		 cpri;
 	struct rm_class	*cl, *first = NULL;
-	struct timeval	 now;
+	struct timespec	 now;
 
 	RM_GETTIME(now);
 
@@ -1210,7 +1213,7 @@ _rmc_prr_dequeue_next(struct rm_ifdat *ifd, int op)
 
 /*
  * mbuf_t *
- * rmc_dequeue_next(struct rm_ifdat *ifd, struct timeval *now) - this function
+ * rmc_dequeue_next(struct rm_ifdat *ifd, struct timespec *now) - this function
  *	is invoked by the packet driver to get the next packet to be
  *	dequeued and output on the link.  If WRR is enabled, then the
  *	WRR dequeue next routine will determine the next packet to sent.
@@ -1246,14 +1249,17 @@ rmc_dequeue_next(struct rm_ifdat *ifd, int mode)
  * (on pentium, mul takes 9 cycles but div takes 46!)
  */
 #define	NSEC_TO_USEC(t)	(((t) >> 10) + ((t) >> 16) + ((t) >> 17))
+/* Don't worry.  Recent compilers don't use div. */
+#define	PSEC_TO_USEC(t)	((t) / 1000 / 1000)
 void
 rmc_update_class_util(struct rm_ifdat *ifd)
 {
-	int		 idle, avgidle, pktlen;
-	int		 pkt_time, tidle;
-	rm_class_t	*cl, *borrowed;
+	int64_t		 idle, avgidle, pktlen;
+	int64_t		 pkt_time;
+	int64_t		 tidle;
+	rm_class_t	*cl, *cl0, *borrowed;
 	rm_class_t	*borrows;
-	struct timeval	*nowp;
+	struct timespec	*nowp;
 
 	/*
 	 * Get the most recent completed class.
@@ -1261,7 +1267,8 @@ rmc_update_class_util(struct rm_ifdat *ifd)
 	if ((cl = ifd->class_[ifd->qo_]) == NULL)
 		return;
 
-	pktlen = ifd->curlen_[ifd->qo_];
+	cl0 = cl;
+	pktlen = (int64_t)ifd->curlen_[ifd->qo_];
 	borrowed = ifd->borrowed_[ifd->qo_];
 	borrows = borrowed;
 
@@ -1280,51 +1287,51 @@ rmc_update_class_util(struct rm_ifdat *ifd)
 	nowp = &ifd->now_[ifd->qo_];
 	/* get pkt_time (for link) in usec */
 #if 1  /* use approximation */
-	pkt_time = ifd->curlen_[ifd->qo_] * ifd->ns_per_byte_;
-	pkt_time = NSEC_TO_USEC(pkt_time);
+	pkt_time = (int64_t)ifd->curlen_[ifd->qo_] * (int64_t)ifd->ps_per_byte_;
+	pkt_time = PSEC_TO_NSEC(pkt_time);
 #else
 	pkt_time = ifd->curlen_[ifd->qo_] * ifd->ns_per_byte_ / 1000;
 #endif
-#if 1 /* ALTQ4PPP */
-	if (TV_LT(nowp, &ifd->ifnow_)) {
-		int iftime;
+	if (ifd->ifq_->altq_ifp->if_type == IFT_PPP) {
+		if (TS_LT(nowp, &ifd->ifnow_)) {
+			int iftime;
 
-		/*
-		 * make sure the estimated completion time does not go
-		 * too far.  it can happen when the link layer supports
-		 * data compression or the interface speed is set to
-		 * a much lower value.
-		 */
-		TV_DELTA(&ifd->ifnow_, nowp, iftime);
-		if (iftime+pkt_time < ifd->maxiftime_) {
-			TV_ADD_DELTA(&ifd->ifnow_, pkt_time, &ifd->ifnow_);
+			/*
+			 * make sure the estimated completion time does not go
+			 * too far.  it can happen when the link layer supports
+			 * data compression or the interface speed is set to
+			 * a much lower value.
+			 */
+			TS_DELTA(&ifd->ifnow_, nowp, iftime);
+			if (iftime+pkt_time < ifd->maxiftime_) {
+				TS_ADD_DELTA(&ifd->ifnow_, pkt_time, &ifd->ifnow_);
+			} else {
+				TS_ADD_DELTA(nowp, ifd->maxiftime_, &ifd->ifnow_);
+			}
 		} else {
-			TV_ADD_DELTA(nowp, ifd->maxiftime_, &ifd->ifnow_);
+			TS_ADD_DELTA(nowp, pkt_time, &ifd->ifnow_);
 		}
 	} else {
-		TV_ADD_DELTA(nowp, pkt_time, &ifd->ifnow_);
+		if (TS_LT(nowp, &ifd->ifnow_)) {
+			TS_ADD_DELTA(&ifd->ifnow_, pkt_time, &ifd->ifnow_);
+		} else {
+			TS_ADD_DELTA(nowp, pkt_time, &ifd->ifnow_);
+		}
 	}
-#else
-	if (TV_LT(nowp, &ifd->ifnow_)) {
-		TV_ADD_DELTA(&ifd->ifnow_, pkt_time, &ifd->ifnow_);
-	} else {
-		TV_ADD_DELTA(nowp, pkt_time, &ifd->ifnow_);
-	}
-#endif
 
 	while (cl != NULL) {
-		TV_DELTA(&ifd->ifnow_, &cl->last_, idle);
-		if (idle >= 2000000)
+		TS_DELTA(&ifd->ifnow_, &cl->last_, idle);
+		if (idle >= 2000000000)
 			/*
 			 * this class is idle enough, reset avgidle.
-			 * (TV_DELTA returns 2000000 us when delta is large.)
+			 * (TS_DELTA returns 2000000000 ns when delta is large.)
 			 */
 			cl->avgidle_ = cl->maxidle_;
 
 		/* get pkt_time (for class) in usec */
 #if 1  /* use approximation */
-		pkt_time = pktlen * cl->ns_per_byte_;
-		pkt_time = NSEC_TO_USEC(pkt_time);
+		pkt_time = pktlen * (int64_t)cl->ps_per_byte_;
+		pkt_time = PSEC_TO_NSEC(pkt_time);
 #else
 		pkt_time = pktlen * cl->ns_per_byte_ / 1000;
 #endif
@@ -1348,7 +1355,7 @@ rmc_update_class_util(struct rm_ifdat *ifd)
 			/* set next idle to make avgidle 0 */
 			tidle = pkt_time +
 				(((1 - RM_POWER) * avgidle) >> RM_FILTER_GAIN);
-			TV_ADD_DELTA(nowp, tidle, &cl->undertime_);
+			TS_ADD_DELTA(nowp, tidle, &cl->undertime_);
 			++cl->stats_.over;
 		} else {
 			cl->avgidle_ =
@@ -1370,7 +1377,7 @@ rmc_update_class_util(struct rm_ifdat *ifd)
 		cl->last_pkttime_ = pkt_time;
 
 #if 1
-		if (cl->parent_ == NULL) {
+		if (cl->parent_ == NULL && cl != cl0) {
 			/* take stats of root class */
 			PKTCNTR_ADD(&cl->stats_.xmit_cnt, pktlen);
 		}
@@ -1385,7 +1392,7 @@ rmc_update_class_util(struct rm_ifdat *ifd)
 	cl = ifd->class_[ifd->qo_];
 	if (borrowed && (ifd->cutoff_ >= borrowed->depth_)) {
 #if 1 /* ALTQ */
-		if ((qlen(cl->q_) <= 0) || TV_LT(nowp, &borrowed->undertime_)) {
+		if ((qlen(cl->q_) <= 0) || TS_LT(nowp, &borrowed->undertime_)) {
 			rmc_tl_satisfied(ifd, nowp);
 			CBQTRACE(rmc_update_class_util, 'broe', ifd->cutoff_);
 		} else {
@@ -1393,7 +1400,7 @@ rmc_update_class_util(struct rm_ifdat *ifd)
 			CBQTRACE(rmc_update_class_util, 'ffob', borrowed->depth_);
 		}
 #else /* !ALTQ */
-		if ((qlen(cl->q_) <= 1) || TV_LT(&now, &borrowed->undertime_)) {
+		if ((qlen(cl->q_) <= 1) || TS_LT(&now, &borrowed->undertime_)) {
 			reset_cutoff(ifd);
 #ifdef notdef
 			rmc_tl_satisfied(ifd, &now);
@@ -1478,10 +1485,14 @@ tvhzto(struct timeval *tv)
 void
 rmc_delay_action(struct rm_class *cl, struct rm_class *borrow)
 {
-	int	ndelay, t, extradelay;
+	int	t;
+	int64_t	ndelay, extradelay;
 
 	cl->stats_.overactions++;
-	TV_DELTA(&cl->undertime_, &cl->overtime_, ndelay);
+	if (borrow != NULL)
+		TS_DELTA(&borrow->undertime_, &cl->overtime_, ndelay);
+	else
+		TS_DELTA(&cl->undertime_, &cl->overtime_, ndelay);
 #ifndef BORROW_OFFTIME
 	ndelay += cl->offtime_;
 #endif
@@ -1507,7 +1518,7 @@ rmc_delay_action(struct rm_class *cl, struct rm_class *borrow)
 		extradelay -= cl->last_pkttime_;
 #endif
 		if (extradelay > 0) {
-			TV_ADD_DELTA(&cl->undertime_, extradelay, &cl->undertime_);
+			TS_ADD_DELTA(&cl->undertime_, extradelay, &cl->undertime_);
 			ndelay += extradelay;
 		}
 
@@ -1521,13 +1532,13 @@ rmc_delay_action(struct rm_class *cl, struct rm_class *borrow)
 		 * NOTE:  If there's no other traffic, we need the timer as
 		 * a 'backstop' to restart this class.
 		 */
-		if (ndelay > tick * 2) {
+		if (NSEC_TO_USEC(ndelay) > tick * 2) {
 #ifdef __FreeBSD__
 			/* FreeBSD rounds up the tick */
 			t = tvhzto(&cl->undertime_);
 #else
 			/* other BSDs round down the tick */
-			t = tvhzto(&cl->undertime_) + 1;
+			t = tshzto(&cl->undertime_) + 1;
 #endif
 		} else
 			t = 2;

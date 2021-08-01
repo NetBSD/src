@@ -1,4 +1,4 @@
-/*	$NetBSD: exception_vector.S,v 1.51 2019/12/01 12:19:28 ad Exp $	*/
+/*	$NetBSD: exception_vector.S,v 1.51.12.1 2021/08/01 22:42:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2019 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
 #define _ALIGN_TEXT	.align 5
 #include <sh3/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.51 2019/12/01 12:19:28 ad Exp $")
+__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.51.12.1 2021/08/01 22:42:16 thorpej Exp $")
 
 
 /*

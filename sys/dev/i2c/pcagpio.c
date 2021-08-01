@@ -1,4 +1,4 @@
-/* $NetBSD: pcagpio.c,v 1.10 2021/01/27 02:29:48 thorpej Exp $ */
+/* $NetBSD: pcagpio.c,v 1.10.4.1 2021/08/01 22:42:23 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcagpio.c,v 1.10 2021/01/27 02:29:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcagpio.c,v 1.10.4.1 2021/08/01 22:42:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,7 +191,7 @@ pcagpio_attach(device_t parent, device_t self, void *aux)
 		for (i = 0; i < prop_array_count(pins); i++) {
 			nptr = NULL;
 			pin = prop_array_get(pins, i);
-			ok &= prop_dictionary_get_cstring_nocopy(pin, "name",
+			ok &= prop_dictionary_get_string(pin, "name",
 			    &nptr);
 			ok &= prop_dictionary_get_uint32(pin, "pin", &num);
 			ok &= prop_dictionary_get_bool( pin, "active_high",

@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_scan.c,v 1.8 2019/06/17 17:14:56 ryoon Exp $	*/
+/*	$NetBSD: chfs_scan.c,v 1.8.14.1 2021/08/01 22:42:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -151,6 +151,7 @@ chfs_scan_check_vnode(struct chfs_mount *chmp,
 		} else {
 			err = chfs_update_eb_dirty(chmp, cheb,
 			    sizeof(struct chfs_flash_vnode));
+			mutex_exit(&chmp->chm_lock_vnocache);
 			return CHFS_NODE_OK;
 		}
 	} else {
@@ -224,7 +225,7 @@ chfs_add_fd_to_list(struct chfs_mount *chmp,
 	    new->nsize);
 	cheb = &chmp->chm_blocks[new->nref->nref_lnr];
 
-	mutex_enter(&chmp->chm_lock_sizes);	
+	mutex_enter(&chmp->chm_lock_sizes);
 	TAILQ_FOREACH_SAFE(fd, &pvc->scan_dirents, fds, tmpfd) {
 		if (fd->nhash > new->nhash) {
 			/* insert new before fd */
@@ -325,6 +326,7 @@ chfs_scan_check_dirent_node(struct chfs_mount *chmp,
 	parentvc = chfs_scan_make_vnode_cache(chmp, le64toh(dirent->pvno));
 	if (!parentvc) {
 		chfs_free_dirent(fd);
+		mutex_exit(&chmp->chm_lock_vnocache);
 		return ENOMEM;
 	}
 
@@ -381,8 +383,10 @@ chfs_scan_check_data_node(struct chfs_mount *chmp,
 	vc = chfs_vnode_cache_get(chmp, vno);
 	if (!vc) {
 		vc = chfs_scan_make_vnode_cache(chmp, vno);
-		if (!vc)
+		if (!vc) {
+			mutex_exit(&chmp->chm_lock_vnocache);
 			return ENOMEM;
+		}
 	}
 	chfs_add_node_to_list(chmp, vc, nref, &vc->dnode);
 	mutex_exit(&chmp->chm_lock_vnocache);

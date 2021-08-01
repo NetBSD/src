@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn8ae.c,v 1.31 2020/09/25 03:40:11 thorpej Exp $ */
+/* $NetBSD: pci_kn8ae.c,v 1.31.6.1 2021/08/01 22:42:02 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,26 +32,26 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn8ae.c,v 1.31 2020/09/25 03:40:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn8ae.c,v 1.31.6.1 2021/08/01 22:42:02 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/cpu.h>
 #include <sys/syslog.h>
+#include <sys/once.h>
 
 #include <machine/autoconf.h>
+#include <machine/rpb.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 
 #include <alpha/pci/dwlpxreg.h>
 #include <alpha/pci/dwlpxvar.h>
-#include <alpha/pci/pci_kn8ae.h>
 
 static int	dec_kn8ae_intr_map(const struct pci_attach_args *,
 		    pci_intr_handle_t *);
@@ -87,13 +87,30 @@ kn8ae_intr_wrapper(void *arg, u_long vec)
 	KERNEL_UNLOCK_ONE(NULL);
 }
 
-void
-pci_kn8ae_pickintr(struct dwlpx_config *ccp, int first)
+static ONCE_DECL(pci_kn8ae_once);
+
+static int
+pci_kn8ae_init_imaskcache(void)
 {
 	int io, hose, dev;
-	pci_chipset_tag_t pc = &ccp->cc_pc;
 
-	pc->pc_intr_v = ccp;
+	for (io = 0; io < DWLPX_NIONODE; io++) {
+		for (hose = 0; hose < DWLPX_NHOSE; hose++) {
+			for (dev = 0; dev < NHPC; dev++) {
+				imaskcache[io][hose][dev] = DWLPX_IMASK_DFLT;
+			}
+		}
+	}
+
+	return 0;
+}
+
+static void
+pci_kn8ae_pickintr(void *core, bus_space_tag_t iot, bus_space_tag_t memt,
+    pci_chipset_tag_t pc)
+{
+
+	pc->pc_intr_v = core;
 	pc->pc_intr_map = dec_kn8ae_intr_map;
 	pc->pc_intr_string = dec_kn8ae_intr_string;
 	pc->pc_intr_evcnt = dec_kn8ae_intr_evcnt;
@@ -103,18 +120,9 @@ pci_kn8ae_pickintr(struct dwlpx_config *ccp, int first)
 	/* Not supported on KN8AE. */
 	pc->pc_pciide_compat_intr_establish = NULL;
 
-	if (!first) {
-		return;
-	}
-
-	for (io = 0; io < DWLPX_NIONODE; io++) {
-		for (hose = 0; hose < DWLPX_NHOSE; hose++) {
-			for (dev = 0; dev < NHPC; dev++) {
-				imaskcache[io][hose][dev] = DWLPX_IMASK_DFLT;
-			}
-		}
-	}
+	RUN_ONCE(&pci_kn8ae_once, pci_kn8ae_init_imaskcache);
 }
+ALPHA_PCI_INTR_INIT(ST_DEC_21000, pci_kn8ae_pickintr)
 
 #define	IH_MAKE(vec, dev, pin)						\
 	((vec) | ((dev) << 16) | ((pin) << 24))

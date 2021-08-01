@@ -1,4 +1,4 @@
-/* $NetBSD: mcpcia.c,v 1.31 2021/04/24 23:36:23 thorpej Exp $ */
+/* $NetBSD: mcpcia.c,v 1.31.2.1 2021/08/01 22:42:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.31 2021/04/24 23:36:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.31.2.1 2021/08/01 22:42:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,6 @@ __KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.31 2021/04/24 23:36:23 thorpej Exp $");
 #include <alpha/mcbus/mcbusvar.h>
 #include <alpha/pci/mcpciareg.h>
 #include <alpha/pci/mcpciavar.h>
-#include <alpha/pci/pci_kn300.h>
 
 #define KV(_addr)	((void *)ALPHA_PHYS_TO_K0SEG((_addr)))
 #define	MCPCIA_SYSBASE(mc)	\
@@ -111,8 +110,8 @@ void	mcpcia_init0(struct mcpcia_config *, int);
  */
 struct mcpcia_config mcpcia_console_configuration;
 
-int	mcpcia_bus_get_window(int, int,
-	    struct alpha_bus_space_translation *abst);
+static int	mcpcia_bus_get_window(int, int,
+		    struct alpha_bus_space_translation *abst);
 
 static int
 mcpciamatch(device_t parent, cfdata_t cf, void *aux)
@@ -126,7 +125,6 @@ mcpciamatch(device_t parent, cfdata_t cf, void *aux)
 static void
 mcpciaattach(device_t parent, device_t self, void *aux)
 {
-	static int first = 1;
 	struct mcbus_dev_attach_args *ma = aux;
 	struct mcpcia_softc *mcp = device_private(self);
 	struct mcpcia_config *ccp;
@@ -174,8 +172,7 @@ mcpciaattach(device_t parent, device_t self, void *aux)
 	/*
 	 * Set up interrupts
 	 */
-	pci_kn300_pickintr(ccp, first);
-	first = 0;
+	alpha_pci_intr_init(ccp, &ccp->cc_iot, &ccp->cc_memt, &ccp->cc_pc);
 
 	/*
 	 * Attach PCI bus
@@ -332,8 +329,9 @@ mcpcia_config_cleanup(void)
 #endif
 }
 
-int
-mcpcia_bus_get_window(int type, int window, struct alpha_bus_space_translation *abst)
+static int
+mcpcia_bus_get_window(int type, int window,
+    struct alpha_bus_space_translation *abst)
 {
 	struct mcpcia_config *ccp = &mcpcia_console_configuration;
 	bus_space_tag_t st;
