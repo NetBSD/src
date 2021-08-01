@@ -1,4 +1,4 @@
-/*	$NetBSD: pidfile.c,v 1.15 2019/12/27 09:45:26 msaitoh Exp $	*/
+/*	$NetBSD: pidfile.c,v 1.16 2021/08/01 15:29:29 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2016 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pidfile.c,v 1.15 2019/12/27 09:45:26 msaitoh Exp $");
+__RCSID("$NetBSD: pidfile.c,v 1.16 2021/08/01 15:29:29 andvar Exp $");
 #endif
 
 #include <sys/param.h>
@@ -130,7 +130,7 @@ pidfile_varrun_path(char *path, size_t len, const char *bname)
 }
 
 /* Returns the process ID inside path on success, otherwise -1.
- * If no path is given, use the last pidfile path, othewise the default one. */
+ * If no path is given, use the last pidfile path, otherwise the default one. */
 pid_t
 pidfile_read(const char *path)
 {
