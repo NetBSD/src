@@ -7,5 +7,5 @@ expr_binary.c(37): warning: passing 'float' to incompatible 'struct incompatible
 expr_binary.c(40): warning: passing 'float' to incompatible 'struct incompatible', arg #1 [155]
 expr_binary.c(43): warning: passing '__uint128_t' to incompatible 'struct incompatible', arg #1 [155]
 expr_binary.c(46): warning: passing '__int128_t' to incompatible 'struct incompatible', arg #1 [155]
-expr_binary.c(49): warning: passing 'unsigned int' to incompatible 'struct incompatible', arg #1 [155]
-expr_binary.c(52): warning: passing 'unsigned int' to incompatible 'struct incompatible', arg #1 [155]
+expr_binary.c(49): warning: passing '__uint128_t' to incompatible 'struct incompatible', arg #1 [155]
+expr_binary.c(52): warning: passing '__uint128_t' to incompatible 'struct incompatible', arg #1 [155]
