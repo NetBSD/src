@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_pqdegdags.c,v 1.13 2011/08/01 12:28:53 mbalmer Exp $	*/
+/*	$NetBSD: rf_pqdegdags.c,v 1.14 2021/08/01 15:29:30 andvar Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_pqdegdags.c,v 1.13 2011/08/01 12:28:53 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_pqdegdags.c,v 1.14 2021/08/01 15:29:30 andvar Exp $");
 
 #include "rf_archs.h"
 
@@ -287,7 +287,7 @@ rf_PQWriteDoubleRecoveryFunc(RF_DagNode_t *node)
 	 * & Q to recover the second failed data unit in P. Zero fill Q, then
 	 * apply the recovered data to p. Then apply the data being written to
 	 * the failed drive. Then walk through the surviving drives, applying
-	 * new data when it exists, othewise the recovery data. Quite a mess.
+	 * new data when it exists, otherwise the recovery data. Quite a mess.
 	 *
 	 *
 	 * The params

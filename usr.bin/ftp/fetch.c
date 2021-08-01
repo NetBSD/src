@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.233 2021/07/06 09:26:47 christos Exp $	*/
+/*	$NetBSD: fetch.c,v 1.234 2021/08/01 15:29:30 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1997-2015 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.233 2021/07/06 09:26:47 christos Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.234 2021/08/01 15:29:30 andvar Exp $");
 #endif /* not lint */
 
 /*
@@ -2245,7 +2245,7 @@ go_fetch(const char *url)
 	/*
 	 * Try FTP URL-style and host:file arguments next.
 	 * If ftpproxy is set with an FTP URL, use fetch_url()
-	 * Othewise, use fetch_ftp().
+	 * Otherwise, use fetch_ftp().
 	 */
 	proxyenv = getoptionvalue("ftp_proxy");
 	if (!EMPTYSTRING(proxyenv) && STRNEQUAL(url, FTP_URL))

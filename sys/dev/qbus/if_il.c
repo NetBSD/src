@@ -1,4 +1,4 @@
-/*	$NetBSD: if_il.c,v 1.36 2019/10/21 08:22:06 msaitoh Exp $	*/
+/*	$NetBSD: if_il.c,v 1.37 2021/08/01 15:29:30 andvar Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.36 2019/10/21 08:22:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.37 2021/08/01 15:29:30 andvar Exp $");
 
 #include "opt_inet.h"
 
@@ -497,7 +497,7 @@ ilcint(void *arg)
  * If input error just drop packet.
  * Otherwise purge input buffered data path and examine
  * packet to determine type.  If can't determine length
- * from type, then have to drop packet.  Othewise decapsulate
+ * from type, then have to drop packet.  Otherwise decapsulate
  * packet based on type and pass to type specific higher-level
  * input routine.
  */
