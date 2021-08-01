@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.63 2021/05/02 21:05:42 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.64 2021/08/01 18:13:53 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: xlint.c,v 1.63 2021/05/02 21:05:42 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.64 2021/08/01 18:13:53 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -696,9 +696,9 @@ fname(const char *name)
 			return;
 		}
 		len = bn == suff ? strlen(bn) : (size_t)((suff - 1) - bn);
-		xasprintf(&ofn, "%.*s.ln", (int)len, bn);
+		ofn = xasprintf("%.*s.ln", (int)len, bn);
 	} else {
-		xasprintf(&ofn, "%slint1.XXXXXX", tmpdir);
+		ofn = xasprintf("%slint1.XXXXXX", tmpdir);
 		fd = mkstemp(ofn);
 		if (fd == -1) {
 			warn("can't make temp");
