@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.61 2021/08/01 07:46:51 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.62 2021/08/01 08:03:43 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.61 2021/08/01 07:46:51 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.62 2021/08/01 08:03:43 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -259,22 +259,15 @@ symt_t	symtyp;
 
 
 static void
-symtab_add_hash(sym_t *sym, size_t h)
-{
-
-	if ((sym->s_link = symtab[h]) != NULL)
-		symtab[h]->s_rlink = &sym->s_link;
-	sym->s_rlink = &symtab[h];
-	symtab[h] = sym;
-}
-
-static void
 symtab_add(sym_t *sym)
 {
 	size_t h;
 
 	h = hash(sym->s_name);
-	symtab_add_hash(sym, h);
+	if ((sym->s_link = symtab[h]) != NULL)
+		symtab[h]->s_rlink = &sym->s_link;
+	sym->s_rlink = &symtab[h];
+	symtab[h] = sym;
 }
 
 static void
@@ -445,7 +438,6 @@ lex_name(const char *yytext, size_t yyleng)
 	sb = allocsb();
 	sb->sb_name = yytext;
 	sb->sb_len = yyleng;
-	sb->sb_hash = hash(yytext);
 	if ((sym = search(sb)) != NULL && sym->s_keyword != NULL) {
 		freesb(sb);
 		return keyw(sym);
@@ -473,10 +465,12 @@ lex_name(const char *yytext, size_t yyleng)
 static sym_t *
 search(sbuf_t *sb)
 {
+	int h;
 	sym_t *sym;
 	const struct kwtab *kw;
 
-	for (sym = symtab[sb->sb_hash]; sym != NULL; sym = sym->s_link) {
+	h = hash(sb->sb_name);
+	for (sym = symtab[h]; sym != NULL; sym = sym->s_link) {
 		if (strcmp(sym->s_name, sb->sb_name) != 0)
 			continue;
 		kw = sym->s_keyword;
@@ -1471,7 +1465,7 @@ getsym(sbuf_t *sb)
 
 	symtyp = FVFT;
 
-	symtab_add_hash(sym, sb->sb_hash);
+	symtab_add(sym);
 
 	*di->d_ldlsym = sym;
 	di->d_ldlsym = &sym->s_dlnxt;
