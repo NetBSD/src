@@ -1,4 +1,4 @@
-.\"	$NetBSD: ssdfb.4,v 1.4 2019/11/02 14:47:35 tnn Exp $
+.\"	$NetBSD: ssdfb.4,v 1.5 2021/08/01 15:35:47 tnn Exp $
 .\"
 .\" Copyright (c) 2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 2, 2019
+.Dd August 1, 2021
 .Dt SSDFB 4
 .Os
 .Sh NAME
@@ -90,6 +90,24 @@ enable inverse video
 .Em 0x400 :
 forcibly attach as console
 .El
+.Pp
+On most displays, the contrast setting can be adjusted with the
+.Xr wsconsctl 8
+program.
+.Sh EXAMPLES
+To attach an SSD1322 display using the 4-wire SPI interface on an
+Allwinner A20 ARM single board computer, the following Device Tree overlay
+can be used:
+.Bd -literal -offset indent
+&spi0 {
+        ssdfb@0 {
+                compatible = "solomon,ssd1322";
+                reg = <0x00>;
+                dc-gpio = <0x10 0x07 0x02 0x00>;
+                status = "okay";
+        };
+};
+.Ed
 .Sh SEE ALSO
 .Xr iic 4 ,
 .Xr wsdisplay 4
@@ -113,7 +131,3 @@ It was inspired by (and shares its name with) the
 driver written by
 .An Patrick Wildt Aq Mt patrick@blueri.se
 but does not share any code.
-.Sh BUGS
-The "4-wire SPI" MCU interface which requires an auxiliary
-.Xr gpio 4
-pin for the D/C# signal is currently not supported.
