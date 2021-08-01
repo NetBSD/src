@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.352 2021/07/31 17:09:21 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.353 2021/08/01 06:40:37 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.352 2021/07/31 17:09:21 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.353 2021/08/01 06:40:37 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -75,8 +75,7 @@ static	sym_t	*symbolrename(sym_t *, sbuf_t *);
 static void
 CLEAR_WARN_FLAGS(const char *file, size_t line)
 {
-	printf("%s:%d: %s:%zu: clearing flags\n",
-	    curr_pos.p_file, curr_pos.p_line, file, line);
+	printf("%s:%zu: clearing flags\n", file, line);
 	clear_warn_flags();
 	olwarn = LWARN_BAD;
 }
@@ -85,8 +84,7 @@ static void
 SAVE_WARN_FLAGS(const char *file, size_t line)
 {
 	lint_assert(olwarn == LWARN_BAD);
-	printf("%s:%d: %s:%zu: saving flags %d\n",
-	    curr_pos.p_file, curr_pos.p_line, file, line, lwarn);
+	printf("%s:%zu: saving flags %d\n", file, line, lwarn);
 	olwarn = lwarn;
 }
 
@@ -95,8 +93,7 @@ RESTORE_WARN_FLAGS(const char *file, size_t line)
 {
 	if (olwarn != LWARN_BAD) {
 		lwarn = olwarn;
-		printf("%s:%d: %s:%zu: restoring flags %d\n",
-		    curr_pos.p_file, curr_pos.p_line, file, line, lwarn);
+		printf("%s:%zu: restoring flags %d\n", file, line, lwarn);
 		olwarn = LWARN_BAD;
 	} else
 		CLEAR_WARN_FLAGS(file, line);

@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.58 2021/07/31 19:07:52 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.59 2021/08/01 06:40:37 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.58 2021/07/31 19:07:52 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.59 2021/08/01 06:40:37 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -1506,6 +1506,8 @@ void
 rmsym(sym_t *sym)
 {
 
+	debug_step("rmsym '%s' %d '%s'",
+	    sym->s_name, (int)sym->s_kind, type_name(sym->s_type));
 	if ((*sym->s_rlink = sym->s_link) != NULL)
 		sym->s_link->s_rlink = sym->s_rlink;
 	sym->s_block_level = -1;
@@ -1523,6 +1525,9 @@ rmsyms(sym_t *syms)
 
 	for (sym = syms; sym != NULL; sym = sym->s_dlnxt) {
 		if (sym->s_block_level != -1) {
+			debug_step("rmsyms '%s' %d '%s'",
+			    sym->s_name, (int)sym->s_kind,
+			    type_name(sym->s_type));
 			if ((*sym->s_rlink = sym->s_link) != NULL)
 				sym->s_link->s_rlink = sym->s_rlink;
 			sym->s_link = NULL;
@@ -1539,6 +1544,8 @@ inssym(int bl, sym_t *sym)
 {
 	int	h;
 
+	debug_step("inssym '%s' %d '%s'",
+	    sym->s_name, sym->s_kind, type_name(sym->s_type));
 	h = hash(sym->s_name);
 	if ((sym->s_link = symtab[h]) != NULL)
 		symtab[h]->s_rlink = &sym->s_link;
@@ -1585,6 +1592,8 @@ pushdown(const sym_t *sym)
 	int	h;
 	sym_t	*nsym;
 
+	debug_step("pushdown '%s' %d '%s'",
+	    sym->s_name, (int)sym->s_kind, type_name(sym->s_type));
 	h = hash(sym->s_name);
 	nsym = getblk(sizeof(*nsym));
 	lint_assert(sym->s_block_level <= block_level);
