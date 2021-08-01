@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.359 2021/04/25 18:16:25 thorpej Exp $
+#	$NetBSD: BRANCHES,v 1.360 2021/08/01 21:00:41 thorpej Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -730,6 +730,17 @@ Status:		Merged
 Start Date:	Sat March 20 2021
 End Date:	Sat April 24 2021
 Base Tag:	thorpej-cfargs-base
+Maintainer:	Jason Thorpe <thorpej@netbsd.org>
+Scope:		src/sys
+Notes:
+
+Branch:		thorpej-cfargs2
+Description:	Address complaints regarding the use of variadic arguments in
+		thorpej-cfargs.
+Status:		Active
+Start Date:	Sun Aug 1 2021
+End Date:
+Base Tag:	thorpej-cfargs2-base
 Maintainer:	Jason Thorpe <thorpej@netbsd.org>
 Scope:		src/sys
 Notes:
