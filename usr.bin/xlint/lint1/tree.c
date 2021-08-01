@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.322 2021/07/31 18:16:42 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.323 2021/08/01 13:49:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.322 2021/07/31 18:16:42 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.323 2021/08/01 13:49:17 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1760,7 +1760,13 @@ balance(op_t op, tnode_t **lnp, tnode_t **rnp)
 	bool	u;
 	type_t	*ntp;
 	static const tspec_t tl[] = {
-		LDOUBLE, DOUBLE, FLOAT, UQUAD, QUAD, ULONG, LONG, UINT, INT,
+		LDOUBLE, DOUBLE, FLOAT,
+#ifdef INT128_SIZE
+		UINT128, INT128,
+#endif
+		UQUAD, QUAD,
+		ULONG, LONG,
+		UINT, INT,
 	};
 
 	lt = (*lnp)->tn_type->t_tspec;
