@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.50 2021/07/31 19:07:52 rillig Exp $	*/
+/*	$NetBSD: main1.c,v 1.51 2021/08/01 06:40:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: main1.c,v 1.50 2021/07/31 19:07:52 rillig Exp $");
+__RCSID("$NetBSD: main1.c,v 1.51 2021/08/01 06:40:37 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -284,8 +284,7 @@ main(int argc, char *argv[])
 
 	/* Following warnings cannot be suppressed by LINTED */
 	lwarn = LWARN_ALL;
-	debug_step("%s, %d: lwarn = %d",
-	    curr_pos.p_file, curr_pos.p_line, lwarn);
+	debug_step("main lwarn = %d", lwarn);
 
 	check_global_symbols();
 
