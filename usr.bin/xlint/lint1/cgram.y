@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.353 2021/08/01 06:40:37 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.354 2021/08/01 19:18:10 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.353 2021/08/01 06:40:37 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.354 2021/08/01 19:18:10 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -75,7 +75,7 @@ static	sym_t	*symbolrename(sym_t *, sbuf_t *);
 static void
 CLEAR_WARN_FLAGS(const char *file, size_t line)
 {
-	printf("%s:%zu: clearing flags\n", file, line);
+	debug_step("%s:%zu: clearing flags", file, line);
 	clear_warn_flags();
 	olwarn = LWARN_BAD;
 }
@@ -84,7 +84,7 @@ static void
 SAVE_WARN_FLAGS(const char *file, size_t line)
 {
 	lint_assert(olwarn == LWARN_BAD);
-	printf("%s:%zu: saving flags %d\n", file, line, lwarn);
+	debug_step("%s:%zu: saving flags %d", file, line, lwarn);
 	olwarn = lwarn;
 }
 
@@ -93,18 +93,16 @@ RESTORE_WARN_FLAGS(const char *file, size_t line)
 {
 	if (olwarn != LWARN_BAD) {
 		lwarn = olwarn;
-		printf("%s:%zu: restoring flags %d\n", file, line, lwarn);
+		debug_step("%s:%zu: restoring flags %d", file, line, lwarn);
 		olwarn = LWARN_BAD;
 	} else
 		CLEAR_WARN_FLAGS(file, line);
 }
-#define cgram_debug(fmt, args...) printf("cgram_debug: " fmt "\n", ##args)
 #else
 #define CLEAR_WARN_FLAGS(f, l)	clear_warn_flags(), olwarn = LWARN_BAD
 #define SAVE_WARN_FLAGS(f, l)	olwarn = lwarn
 #define RESTORE_WARN_FLAGS(f, l) \
 	(void)(olwarn == LWARN_BAD ? (clear_warn_flags(), 0) : (lwarn = olwarn))
-#define cgram_debug(fmt, args...) do { } while (false)
 #endif
 
 #define clear_warning_flags()	CLEAR_WARN_FLAGS(__FILE__, __LINE__)
@@ -383,11 +381,11 @@ identifier_sym:			/* helper for struct/union/enum */
 /* K&R ???, C90 ???, C99 6.4.2.1, C11 ??? */
 identifier:
 	  T_NAME {
-		cgram_debug("name '%s'", $1->sb_name);
+		debug_printf("cgram: name '%s'", $1->sb_name);
 		$$ = $1;
 	  }
 	| T_TYPENAME {
-		cgram_debug("typename '%s'", $1->sb_name);
+		debug_printf("cgram: typename '%s'", $1->sb_name);
 		$$ = $1;
 	  }
 	;
