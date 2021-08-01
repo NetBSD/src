@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.45 2021/07/04 09:13:59 rillig Exp $	*/
+/*	$NetBSD: mem1.c,v 1.46 2021/08/01 17:59:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem1.c,v 1.45 2021/07/04 09:13:59 rillig Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.46 2021/08/01 17:59:47 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -214,8 +214,7 @@ xnewblk(void)
 {
 	memory_block	*mb = xmalloc(sizeof(*mb));
 
-	/* use mmap instead of malloc to avoid malloc's size overhead */
-	mb->start = xmapalloc(mblklen);
+	mb->start = xmalloc(mblklen);
 	mb->size = mblklen;
 
 	return mb;
