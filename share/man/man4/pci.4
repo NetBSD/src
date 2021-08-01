@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.119 2021/03/17 14:10:29 nia Exp $
+.\"	$NetBSD: pci.4,v 1.120 2021/08/01 21:56:27 andvar Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -359,6 +359,12 @@ Yamaha YMF724/740/744/754-based audio device.
 .Bl -tag -width pcdisplay(4) -offset indent
 .It Xr cbb 4
 PCI Yenta compatible CardBus bridges.
+.It Xr pceb 4
+Generic PCI-EISA bridges; see
+.Xr eisa 4 .
+.It Xr pcib 4
+Generic PCI-ISA bridges; see
+.Xr isa 4 .
 .It Xr ppb 4
 Generic PCI bridges, including expansion backplanes.
 .El

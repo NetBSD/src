@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.79 2021/06/03 07:41:26 wiz Exp $
+#	$NetBSD: Makefile,v 1.80 2021/08/01 21:56:27 andvar Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/5/93
 
 MAN=	apm.4 \
@@ -6,7 +6,7 @@ MAN=	apm.4 \
 	elanpar.4 elanpex.4 elansc.4 \
 	gcscide.4 gcscpcib.4 geodewdog.4 geodecntr.4 glxsb.4 gscpcib.4 \
 	intro.4 io.4 lms.4 mms.4 \
-	pcibios.4 pnpbios.4 rdcide.4 rdcpcib.4 spic.4 viac7temp.4
+	pcibios.4 pcmb.4 pnpbios.4 rdcide.4 rdcpcib.4 spic.4 viac7temp.4
 MLINKS+=pcibios.4 PCIBIOS.4
 MANSUBDIR=/i386
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.714 2021/06/29 10:22:37 nia Exp $
+#	$NetBSD: Makefile,v 1.715 2021/08/01 21:56:27 andvar Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
@@ -221,7 +221,9 @@ MLINKS+=mii.4 phy.4
 MLINKS+=netintro.4 networking.4
 MLINKS+=nfsmb.4 nfsmbc.4
 MLINKS+=ntwoc.4 ntwo.4
+MLINKS+=pci.4 pceb.4
 MLINKS+=pci.4 pchb.4
+MLINKS+=pci.4 pcib.4
 MLINKS+=pci.4 ppb.4
 MLINKS+=pcppi.4 isabeep.4
 MLINKS+=pcppi.4 sysbeep.4
