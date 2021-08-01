@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.16 2021/08/01 18:07:35 rillig Exp $	*/
+/*	$NetBSD: externs.h,v 1.17 2021/08/01 18:13:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -57,7 +57,7 @@ extern	void	*xmalloc(size_t);
 extern	void	*xcalloc(size_t, size_t);
 extern	void	*xrealloc(void *, size_t);
 extern	char	*xstrdup(const char *);
-extern  void	xasprintf(char **, const char *, ...) __printflike(2, 3);
+extern  char	*xasprintf(const char *, ...) __printflike(1, 2);
 
 /*
  * emit.c

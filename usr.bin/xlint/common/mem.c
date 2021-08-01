@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.14 2021/08/01 18:07:35 rillig Exp $	*/
+/*	$NetBSD: mem.c,v 1.15 2021/08/01 18:13:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem.c,v 1.14 2021/08/01 18:07:35 rillig Exp $");
+__RCSID("$NetBSD: mem.c,v 1.15 2021/08/01 18:13:53 rillig Exp $");
 #endif
 
 #include <stdarg.h>
@@ -82,8 +82,7 @@ xrealloc(void *p, size_t s)
 		free(p);
 		nomem();
 	}
-	p = n;
-	return p;
+	return n;
 }
 
 char *
@@ -96,15 +95,17 @@ xstrdup(const char *s)
 	return s2;
 }
 
-void
-xasprintf(char **buf, const char *fmt, ...)
+char *
+xasprintf(const char *fmt, ...)
 {
+	char *str;
 	int e;
 	va_list ap;
 
 	va_start(ap, fmt);
-	e = vasprintf(buf, fmt, ap);
+	e = vasprintf(&str, fmt, ap);
 	va_end(ap);
 	if (e < 0)
 		nomem();
+	return str;
 }
