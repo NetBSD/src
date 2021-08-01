@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.324 2021/08/01 14:45:39 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.325 2021/08/01 18:37:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.324 2021/08/01 14:45:39 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.325 2021/08/01 18:37:29 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -90,7 +90,6 @@ static	tnode_t	*fold_float(tnode_t *);
 static	tnode_t	*check_function_arguments(type_t *, tnode_t *);
 static	tnode_t	*check_prototype_argument(int, type_t *, tnode_t *);
 static	void	check_null_effect(const tnode_t *);
-static	void	display_expression(const tnode_t *, int);
 static	void	check_array_index(tnode_t *, bool);
 static	void	check_integer_comparison(op_t, tnode_t *, tnode_t *);
 static	void	check_precedence_confusion(tnode_t *);
@@ -3603,8 +3602,7 @@ constant(tnode_t *tn, bool required)
 
 	if (tn == NULL) {
 		lint_assert(nerr != 0);
-		if (dflag)
-			printf("constant node is null; returning 1 instead\n");
+		debug_step("constant node is null; returning 1 instead");
 		v->v_tspec = INT;
 		v->v_quad = 1;
 		return v;
@@ -3644,6 +3642,67 @@ is_constcond_false(const tnode_t *tn, tspec_t t)
 	return (t == BOOL || t == INT) &&
 	       tn->tn_op == CON && tn->tn_val->v_quad == 0;
 }
+
+#ifdef DEBUG
+/* Dump an expression to stdout. */
+static void
+display_expression(const tnode_t *tn, int offs)
+{
+	uint64_t uq;
+
+	if (tn == NULL) {
+		(void)printf("%*s%s\n", offs, "", "NULL");
+		return;
+	}
+	(void)printf("%*sop %s  ", offs, "", op_name(tn->tn_op));
+
+	if (tn->tn_op == NAME) {
+		(void)printf("%s: %s ",
+		    tn->tn_sym->s_name,
+		    storage_class_name(tn->tn_sym->s_scl));
+	} else if (tn->tn_op == CON && is_floating(tn->tn_type->t_tspec)) {
+		(void)printf("%#g ", (double)tn->tn_val->v_ldbl);
+	} else if (tn->tn_op == CON && is_integer(tn->tn_type->t_tspec)) {
+		uq = tn->tn_val->v_quad;
+		(void)printf("0x %08lx %08lx ",
+		    (long)(uq >> 32) & 0xffffffffl,
+		    (long)uq & 0xffffffffl);
+	} else if (tn->tn_op == CON && tn->tn_type->t_tspec == BOOL) {
+		(void)printf("%s ",
+		    tn->tn_val->v_quad != 0 ? "true" : "false");
+	} else if (tn->tn_op == CON) {
+		lint_assert(tn->tn_type->t_tspec == PTR);
+		(void)printf("0x%0*lx ", (int)(sizeof(void *) * CHAR_BIT / 4),
+		    (u_long)tn->tn_val->v_quad);
+	} else if (tn->tn_op == STRING) {
+		if (tn->tn_string->st_tspec == CHAR) {
+			(void)printf("\"%s\"", tn->tn_string->st_cp);
+		} else {
+			char	*s;
+			size_t	n;
+			n = MB_CUR_MAX * (tn->tn_string->st_len + 1);
+			s = xmalloc(n);
+			(void)wcstombs(s, tn->tn_string->st_wcp, n);
+			(void)printf("L\"%s\"", s);
+			free(s);
+		}
+		(void)printf(" ");
+	} else if (tn->tn_op == FSEL) {
+		(void)printf("o=%d, l=%d ", tn->tn_type->t_foffs,
+		    tn->tn_type->t_flen);
+	}
+	(void)printf("%s\n", type_name(tn->tn_type));
+	if (tn->tn_op == NAME || tn->tn_op == CON || tn->tn_op == STRING)
+		return;
+	display_expression(tn->tn_left, offs + 2);
+	if (modtab[tn->tn_op].m_binary ||
+	(tn->tn_op == PUSH && tn->tn_right != NULL)) {
+		display_expression(tn->tn_right, offs + 2);
+	}
+}
+#else
+#define	display_expression(tn, offs)	debug_noop()
+#endif
 
 /*
  * Perform some tests on expressions which can't be done in build_binary()
@@ -3687,8 +3746,7 @@ expr(tnode_t *tn, bool vctx, bool tctx, bool dofreeblk, bool is_do_while)
 		if (tn->tn_op != COMMA && !vctx && !tctx)
 			check_null_effect(tn);
 	}
-	if (dflag)
-		display_expression(tn, 0);
+	display_expression(tn, 0);
 
 	/* free the tree memory */
 	if (dofreeblk)
@@ -3729,66 +3787,6 @@ check_null_effect(const tnode_t *tn)
 	if (hflag && !has_side_effect(tn)) {
 		/* expression has null effect */
 		warning(129);
-	}
-}
-
-/*
- * Dump an expression to stdout
- * only used for debugging
- */
-static void
-display_expression(const tnode_t *tn, int offs)
-{
-	uint64_t uq;
-
-	if (tn == NULL) {
-		(void)printf("%*s%s\n", offs, "", "NULL");
-		return;
-	}
-	(void)printf("%*sop %s  ", offs, "", op_name(tn->tn_op));
-
-	if (tn->tn_op == NAME) {
-		(void)printf("%s: %s ",
-		    tn->tn_sym->s_name,
-		    storage_class_name(tn->tn_sym->s_scl));
-	} else if (tn->tn_op == CON && is_floating(tn->tn_type->t_tspec)) {
-		(void)printf("%#g ", (double)tn->tn_val->v_ldbl);
-	} else if (tn->tn_op == CON && is_integer(tn->tn_type->t_tspec)) {
-		uq = tn->tn_val->v_quad;
-		(void)printf("0x %08lx %08lx ",
-		    (long)(uq >> 32) & 0xffffffffl,
-		    (long)uq & 0xffffffffl);
-	} else if (tn->tn_op == CON && tn->tn_type->t_tspec == BOOL) {
-		(void)printf("%s ",
-		    tn->tn_val->v_quad != 0 ? "true" : "false");
-	} else if (tn->tn_op == CON) {
-		lint_assert(tn->tn_type->t_tspec == PTR);
-		(void)printf("0x%0*lx ", (int)(sizeof(void *) * CHAR_BIT / 4),
-			     (u_long)tn->tn_val->v_quad);
-	} else if (tn->tn_op == STRING) {
-		if (tn->tn_string->st_tspec == CHAR) {
-			(void)printf("\"%s\"", tn->tn_string->st_cp);
-		} else {
-			char	*s;
-			size_t	n;
-			n = MB_CUR_MAX * (tn->tn_string->st_len + 1);
-			s = xmalloc(n);
-			(void)wcstombs(s, tn->tn_string->st_wcp, n);
-			(void)printf("L\"%s\"", s);
-			free(s);
-		}
-		(void)printf(" ");
-	} else if (tn->tn_op == FSEL) {
-		(void)printf("o=%d, l=%d ", tn->tn_type->t_foffs,
-			     tn->tn_type->t_flen);
-	}
-	(void)printf("%s\n", type_name(tn->tn_type));
-	if (tn->tn_op == NAME || tn->tn_op == CON || tn->tn_op == STRING)
-		return;
-	display_expression(tn->tn_left, offs + 2);
-	if (modtab[tn->tn_op].m_binary ||
-	    (tn->tn_op == PUSH && tn->tn_right != NULL)) {
-		display_expression(tn->tn_right, offs + 2);
 	}
 }
 
