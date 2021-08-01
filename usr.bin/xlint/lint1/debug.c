@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.1 2021/07/31 18:16:42 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.2 2021/08/01 19:11:54 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,8 +35,10 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: debug.c,v 1.1 2021/07/31 18:16:42 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.2 2021/08/01 19:11:54 rillig Exp $");
 #endif
+
+#include <stdlib.h>
 
 #include "lint1.h"
 
@@ -104,40 +106,54 @@ void
 }
 
 void
-debug_node(const tnode_t *tn, int indent)
+debug_node(const tnode_t *tn)
 {
 	op_t op;
 
 	if (tn == NULL) {
-		printf("%*s" "null\n", indent, "");
+		debug_step("null");
 		return;
 	}
 
 	op = tn->tn_op;
-	printf("%*s%s with type '%s'%s%s",
-	    2 * indent, "",
+	debug_indent();
+	debug_printf("'%s' with type '%s'%s%s",
 	    op == CVT && !tn->tn_cast ? "convert" : modtab[op].m_name,
 	    type_name(tn->tn_type), tn->tn_lvalue ? ", lvalue" : "",
 	    tn->tn_parenthesized ? ", parenthesized" : "");
 
 	if (op == NAME)
-		printf(" %s\n", tn->tn_sym->s_name);
+		debug_printf(" %s %s\n", tn->tn_sym->s_name,
+		    storage_class_name(tn->tn_sym->s_scl));
 	else if (op == CON && is_floating(tn->tn_type->t_tspec))
-		printf(", value %Lg", tn->tn_val->v_ldbl);
+		debug_printf(", value %Lg", tn->tn_val->v_ldbl);
 	else if (op == CON && is_uinteger(tn->tn_type->t_tspec))
-		printf(", value %llu\n", (unsigned long long)tn->tn_val->v_quad);
+		debug_printf(", value %llu\n", (unsigned long long)tn->tn_val->v_quad);
 	else if (op == CON && is_integer(tn->tn_type->t_tspec))
-		printf(", value %lld\n", (long long)tn->tn_val->v_quad);
+		debug_printf(", value %lld\n", (long long)tn->tn_val->v_quad);
 	else if (op == CON)
-		printf(", unknown value\n");
-	else if (op == STRING)
-		printf(", length %zu\n", tn->tn_string->st_len);
-	else {
-		printf("\n");
+		debug_printf(", unknown value\n");
+	else if (op == STRING && tn->tn_string->st_tspec == CHAR)
+		debug_printf(", length %zu, \"%s\"\n",
+		    tn->tn_string->st_len, tn->tn_string->st_cp);
+	else if (op == STRING && tn->tn_string->st_tspec == WCHAR) {
+		char *s;
+		size_t n;
+		n = MB_CUR_MAX * (tn->tn_string->st_len + 1);
+		s = xmalloc(n);
+		(void)wcstombs(s, tn->tn_string->st_wcp, n);
+		debug_printf(", length %zu, L\"%s\"",
+		    tn->tn_string->st_len, s);
+		free(s);
 
-		debug_node(tn->tn_left, indent + 1);
+	} else {
+		debug_printf("\n");
+
+		debug_indent_inc();
+		debug_node(tn->tn_left);
 		if (modtab[op].m_binary || tn->tn_right != NULL)
-			debug_node(tn->tn_right, indent + 1);
+			debug_node(tn->tn_right);
+		debug_indent_dec();
 	}
 }
 

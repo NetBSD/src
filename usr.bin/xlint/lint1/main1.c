@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.52 2021/08/01 18:37:29 rillig Exp $	*/
+/*	$NetBSD: main1.c,v 1.53 2021/08/01 19:11:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: main1.c,v 1.52 2021/08/01 18:37:29 rillig Exp $");
+__RCSID("$NetBSD: main1.c,v 1.53 2021/08/01 19:11:54 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -178,7 +178,7 @@ main(int argc, char *argv[])
 	setprogname(argv[0]);
 
 	ERR_ZERO(&msgset);
-	while ((c = getopt(argc, argv, "abcdeghmprstuvwyzA:FPR:STX:")) != -1) {
+	while ((c = getopt(argc, argv, "abceghmprstuvwyzA:FPR:STX:")) != -1) {
 		switch (c) {
 		case 'a':	aflag++;	break;
 		case 'b':	bflag = true;	break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.127 2021/08/01 18:37:29 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.128 2021/08/01 19:11:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -115,7 +115,7 @@ extern	void	expr_restore_memory(struct memory_block *);
  */
 
 #ifdef DEBUG
-void	debug_node(const tnode_t *, int);
+void	debug_node(const tnode_t *);
 void	debug_printf(const char *fmt, ...) __printflike(1, 2);
 void	debug_indent(void);
 void	debug_indent_inc(void);
@@ -127,7 +127,7 @@ void	debug_leave(const char *);
 #define	debug_leave()		(debug_leave)(__func__)
 #else
 #define	debug_noop()		do { } while (false)
-#define	debug_node(tn, indent)	debug_noop()
+#define	debug_node(tn)		debug_noop()
 #define	debug_printf(...)	debug_noop()
 #define	debug_indent()		debug_noop()
 #define	debug_step(...)		debug_noop()
