@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1724 2021/07/25 07:35:55 nia Exp $
+# $NetBSD: mi,v 1.1725 2021/08/01 21:56:26 andvar Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4516,6 +4516,7 @@
 ./usr/share/man/html4/i386/ndis.html		man-obsolete		obsolete
 ./usr/share/man/html4/i386/npx.html		man-obsolete		obsolete
 ./usr/share/man/html4/i386/pcibios.html		man-sys-htmlman		html
+./usr/share/man/html4/i386/pcmb.html		man-sys-htmlman		html
 ./usr/share/man/html4/i386/pnpbios.html		man-sys-htmlman		html
 ./usr/share/man/html4/i386/rdcide.html		man-sys-htmlman		html
 ./usr/share/man/html4/i386/rdcpcib.html		man-sys-htmlman		html
@@ -4754,8 +4755,10 @@
 ./usr/share/man/html4/pas.html			man-sys-htmlman		html
 ./usr/share/man/html4/pcdisplay.html		man-sys-htmlman		html
 ./usr/share/man/html4/pcf8563rtc.html		man-sys-htmlman		html
+./usr/share/man/html4/pceb.html			man-sys-htmlman		html
 ./usr/share/man/html4/pchb.html			man-sys-htmlman		html
 ./usr/share/man/html4/pci.html			man-sys-htmlman		html
+./usr/share/man/html4/pcib.html			man-sys-htmlman		html
 ./usr/share/man/html4/pciback.html		man-sys-htmlman		html
 ./usr/share/man/html4/pcic.html			man-sys-htmlman		html
 ./usr/share/man/html4/pciide.html		man-sys-htmlman		html
@@ -7543,6 +7546,7 @@
 ./usr/share/man/man4/i386/omms.4		man-obsolete		obsolete
 ./usr/share/man/man4/i386/opms.4		man-obsolete		obsolete
 ./usr/share/man/man4/i386/pcibios.4		man-sys-man		.man
+./usr/share/man/man4/i386/pcmb.4		man-sys-man		.man
 ./usr/share/man/man4/i386/pcvt.4		man-obsolete		obsolete
 ./usr/share/man/man4/i386/pms.4			man-obsolete		obsolete
 ./usr/share/man/man4/i386/pnpbios.4		man-sys-man		.man
@@ -7813,8 +7817,10 @@
 ./usr/share/man/man4/pc532/scn.4		man-obsolete		obsolete
 ./usr/share/man/man4/pcdisplay.4		man-sys-man		.man
 ./usr/share/man/man4/pcf8563rtc.4		man-sys-man		.man
+./usr/share/man/man4/pceb.4			man-sys-man		.man
 ./usr/share/man/man4/pchb.4			man-sys-man		.man
 ./usr/share/man/man4/pci.4			man-sys-man		.man
+./usr/share/man/man4/pcib.4			man-sys-man		.man
 ./usr/share/man/man4/pciback.4			man-sys-man		.man
 ./usr/share/man/man4/pcic.4			man-sys-man		.man
 ./usr/share/man/man4/pciide.4			man-sys-man		.man
