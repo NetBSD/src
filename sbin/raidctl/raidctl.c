@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.72 2020/09/13 06:04:53 mlelstv Exp $   */
+/*      $NetBSD: raidctl.c,v 1.73 2021/08/01 20:26:53 oster Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.72 2020/09/13 06:04:53 mlelstv Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.73 2021/08/01 20:26:53 oster Exp $");
 #endif
 
 
@@ -197,6 +197,11 @@ main(int argc,char *argv[])
 			serial_number = xstrtouint(optarg);
 			num_options++;
 			break;
+		case 'l': 
+			action = RAIDFRAME_SET_COMPONENT_LABEL;
+			get_comp(component, optarg, sizeof(component));
+			num_options++;
+			break;
 		case 'm':
 			action = RAIDFRAME_PARITYMAP_STATUS;
 			openmode = O_RDONLY;
@@ -213,11 +218,6 @@ main(int argc,char *argv[])
 				parityparams[i++] = xstrtouint(argv[optind++]);
 			while (i < 3)
 				parityparams[i++] = 0;
-			break;
-		case 'l': 
-			action = RAIDFRAME_SET_COMPONENT_LABEL;
-			get_comp(component, optarg, sizeof(component));
-			num_options++;
 			break;
 		case 'r':
 			action = RAIDFRAME_REMOVE_HOT_SPARE;
