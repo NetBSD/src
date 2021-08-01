@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.12 2021/04/18 22:51:24 rillig Exp $	*/
+/*	$NetBSD: mem.c,v 1.13 2021/08/01 17:59:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem.c,v 1.12 2021/04/18 22:51:24 rillig Exp $");
+__RCSID("$NetBSD: mem.c,v 1.13 2021/08/01 17:59:47 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -110,30 +110,4 @@ xasprintf(char **buf, const char *fmt, ...)
 	va_end(ap);
 	if (e < 0)
 		nomem();
-}
-
-#if defined(MAP_ANONYMOUS) && !defined(MAP_ANON)
-#define	MAP_ANON	MAP_ANONYMOUS
-#endif
-
-void *
-xmapalloc(size_t len)
-{
-	static const int prot = PROT_READ | PROT_WRITE;
-	static int fd = -1;
-	void *p;
-#ifdef MAP_ANON
-	static const int flags = MAP_ANON | MAP_PRIVATE;
-#else
-	static const int flags = MAP_PRIVATE;
-
-	if (fd == -1) {
-		if ((fd = open("/dev/zero", O_RDWR)) == -1)
-			err(1, "Cannot open `/dev/zero'");
-	}
-#endif
-	p = mmap(NULL, len, prot, flags, fd, (off_t)0);
-	if (p == (void *)-1)
-		err(1, "Cannot map memory for %lu bytes", (unsigned long)len);
-	return p;
 }

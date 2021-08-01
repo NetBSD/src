@@ -1,4 +1,4 @@
-/*	$NetBSD: mem2.c,v 1.11 2020/12/29 11:35:11 rillig Exp $	*/
+/*	$NetBSD: mem2.c,v 1.12 2021/08/01 17:59:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem2.c,v 1.11 2020/12/29 11:35:11 rillig Exp $");
+__RCSID("$NetBSD: mem2.c,v 1.12 2021/08/01 17:59:47 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -80,8 +80,7 @@ xalloc(size_t sz)
 	/* Align to at least 8 bytes. */
 	sz = (sz + 7) & ~7L;
 	if (nxtfree + sz > mblklen) {
-		/* use mmap() instead of malloc() to avoid malloc overhead. */
-		mbuf = xmapalloc(mblklen);
+		mbuf = xmalloc(mblklen);
 		(void)memset(mbuf, 0, mblklen);
 		nxtfree = 0;
 	}
