@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.60 2021/08/01 06:58:58 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.61 2021/08/01 07:46:51 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.60 2021/08/01 06:58:58 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.61 2021/08/01 07:46:51 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -276,6 +276,16 @@ symtab_add(sym_t *sym)
 	h = hash(sym->s_name);
 	symtab_add_hash(sym, h);
 }
+
+static void
+symtab_remove(sym_t *sym)
+{
+
+	if ((*sym->s_rlink = sym->s_link) != NULL)
+		sym->s_link->s_rlink = sym->s_rlink;
+	sym->s_link = NULL;
+}
+
 
 static void
 add_keyword(const struct kwtab *kw, u_int deco)
@@ -1504,21 +1514,17 @@ mktempsym(type_t *t)
 	return sym;
 }
 
-/*
- * Remove a symbol forever from the symbol table. s_block_level
- * is set to -1 to avoid that the symbol will later be put
- * back to the symbol table.
- */
+/* Remove a symbol forever from the symbol table. */
 void
 rmsym(sym_t *sym)
 {
 
 	debug_step("rmsym '%s' %d '%s'",
 	    sym->s_name, (int)sym->s_kind, type_name(sym->s_type));
-	if ((*sym->s_rlink = sym->s_link) != NULL)
-		sym->s_link->s_rlink = sym->s_rlink;
+	symtab_remove(sym);
+
+	/* avoid that the symbol will later be put back to the symbol table */
 	sym->s_block_level = -1;
-	sym->s_link = NULL;
 }
 
 /*
@@ -1535,9 +1541,7 @@ rmsyms(sym_t *syms)
 			debug_step("rmsyms '%s' %d '%s'",
 			    sym->s_name, (int)sym->s_kind,
 			    type_name(sym->s_type));
-			if ((*sym->s_rlink = sym->s_link) != NULL)
-				sym->s_link->s_rlink = sym->s_rlink;
-			sym->s_link = NULL;
+			symtab_remove(sym);
 			sym->s_rlink = NULL;
 		}
 	}
@@ -1574,10 +1578,8 @@ cleanup(void)
 	for (i = 0; i < HSHSIZ1; i++) {
 		for (sym = symtab[i]; sym != NULL; sym = nsym) {
 			nsym = sym->s_link;
-			if (sym->s_block_level >= 1) {
-				if ((*sym->s_rlink = nsym) != NULL)
-					nsym->s_rlink = sym->s_rlink;
-			}
+			if (sym->s_block_level >= 1)
+				symtab_remove(sym);
 		}
 	}
 
