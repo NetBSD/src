@@ -1,4 +1,4 @@
-/*	$NetBSD: c11_generic_expression.c,v 1.8 2021/07/11 20:37:21 rillig Exp $	*/
+/*	$NetBSD: c11_generic_expression.c,v 1.9 2021/08/01 13:09:38 rillig Exp $	*/
 # 3 "c11_generic_expression.c"
 
 /*
@@ -94,3 +94,13 @@ primary_expression(void)
 {
 	return _Generic(0, int: assignment_expression)(0, 0);
 }
+
+/*
+ * The types don't match, therefore build_generic_selection returns NULL,
+ * which is then silently ignored by init_expr.  This situation is already
+ * covered by the compilers, so there is no need for lint to double-check it.
+ */
+const char *x = _Generic(
+    (__uint128_t)1 + 1.0f,
+    int: 1
+);
