@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.397 2021/07/26 22:50:36 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.398 2021/08/02 20:31:14 oster Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.397 2021/07/26 22:50:36 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.398 2021/08/02 20:31:14 oster Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_autoconfig.h"
@@ -305,6 +305,7 @@ static void rf_RewriteParityThread(RF_Raid_t *raidPtr);
 static void rf_CopybackThread(RF_Raid_t *raidPtr);
 static void rf_ReconstructInPlaceThread(struct rf_recon_req_internal *);
 static int rf_autoconfig(device_t);
+static int rf_rescan(void);
 static void rf_buildroothack(RF_ConfigSet_t *);
 
 static RF_AutoConfig_t *rf_find_raid_components(void);
@@ -479,6 +480,56 @@ rf_containsboot(RF_Raid_t *r, device_t bdv) {
 	}
 	return 0;
 }
+
+static int
+rf_rescan(void)
+{
+	RF_AutoConfig_t *ac_list;
+	RF_ConfigSet_t *config_sets, *cset, *next_cset;
+	struct raid_softc *sc;
+	int raid_added;
+	
+	ac_list = rf_find_raid_components();
+	config_sets = rf_create_auto_sets(ac_list);
+
+	raid_added = 1;
+	while (raid_added > 0) {
+		raid_added = 0;
+		cset = config_sets;
+		while (cset != NULL) {
+			next_cset = cset->next;
+			if (rf_have_enough_components(cset) &&
+			    cset->ac->clabel->autoconfigure == 1) {
+				sc = rf_auto_config_set(cset);
+				if (sc != NULL) {
+					aprint_debug("raid%d: configured ok, rootable %d\n",
+						     sc->sc_unit, cset->rootable);
+					/* We added one RAID set */
+					raid_added++;
+				} else {
+					/* The autoconfig didn't work :( */
+					aprint_debug("Autoconfig failed\n");
+					rf_release_all_vps(cset);
+				}
+			} else {
+				/* we're not autoconfiguring this set...
+				   release the associated resources */
+				rf_release_all_vps(cset);
+			}
+			/* cleanup */
+			rf_cleanup_config_set(cset);
+			cset = next_cset;
+		}
+		if (raid_added > 0) {
+			/* We added at least one RAID set, so re-scan for recursive RAID */
+			ac_list = rf_find_raid_components();
+			config_sets = rf_create_auto_sets(ac_list);
+		}
+	}
+	
+	return 0;
+}
+
 
 static void
 rf_buildroothack(RF_ConfigSet_t *config_sets)
@@ -1529,7 +1580,7 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 	case RAIDFRAME_REBUILD_IN_PLACE:
 		return rf_rebuild_in_place(raidPtr, data);
-
+		
 	case RAIDFRAME_GET_INFO:
 		ucfgp = *(RF_DeviceConfig_t **)data;
 		d_cfg = RF_Malloc(sizeof(*d_cfg));
@@ -1573,6 +1624,9 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		rf_paritymap_set_disable(raidPtr, *(int *)data);
 		/* XXX should errors be passed up? */
 		return 0;
+
+	case RAIDFRAME_RESCAN:
+		return rf_rescan();
 
 	case RAIDFRAME_RESET_ACCTOTALS:
 		memset(&raidPtr->acc_totals, 0, sizeof(raidPtr->acc_totals));
@@ -2680,8 +2734,16 @@ rf_ReconThread(struct rf_recon_req_internal *req)
 	raidPtr = (RF_Raid_t *) req->raidPtr;
 	raidPtr->recon_in_progress = 1;
 
+	if (req->flags & RF_FDFLAGS_RECON_FORCE) {
+		raidPtr->forceRecon = 1;
+	}
+	
 	rf_FailDisk((RF_Raid_t *) req->raidPtr, req->col,
 		    ((req->flags & RF_FDFLAGS_RECON) ? 1 : 0));
+
+	if (req->flags & RF_FDFLAGS_RECON_FORCE) {
+		raidPtr->forceRecon = 0;
+	}
 
 	RF_Free(req, sizeof(*req));
 
@@ -2751,7 +2813,17 @@ rf_ReconstructInPlaceThread(struct rf_recon_req_internal *req)
 	s = splbio();
 	raidPtr = req->raidPtr;
 	raidPtr->recon_in_progress = 1;
+
+	if (req->flags & RF_FDFLAGS_RECON_FORCE) {
+		raidPtr->forceRecon = 1;
+	}
+
 	rf_ReconstructInPlace(raidPtr, req->col);
+
+	if (req->flags & RF_FDFLAGS_RECON_FORCE) {
+		raidPtr->forceRecon = 0;
+	}
+
 	RF_Free(req, sizeof(*req));
 	raidPtr->recon_in_progress = 0;
 	splx(s);

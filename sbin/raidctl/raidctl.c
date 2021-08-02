@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.73 2021/08/01 20:26:53 oster Exp $   */
+/*      $NetBSD: raidctl.c,v 1.74 2021/08/02 20:31:15 oster Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.73 2021/08/01 20:26:53 oster Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.74 2021/08/02 20:31:15 oster Exp $");
 #endif
 
 
@@ -133,7 +133,7 @@ main(int argc,char *argv[])
 	last_unit = 0;
 	openmode = O_RDWR;	/* default to read/write */
 
-	while ((ch = getopt(argc, argv, "a:A:Bc:C:f:F:g:GiI:l:mM:r:R:sSpPuU:v"))
+	while ((ch = getopt(argc, argv, "a:A:Bc:C:f:F:g:GiI:l:LmM:r:R:sSpPuU:v"))
 	       != -1)
 		switch(ch) {
 		case 'a':
@@ -200,6 +200,10 @@ main(int argc,char *argv[])
 		case 'l': 
 			action = RAIDFRAME_SET_COMPONENT_LABEL;
 			get_comp(component, optarg, sizeof(component));
+			num_options++;
+			break;
+		case 'L':
+			action = RAIDFRAME_RESCAN;
 			num_options++;
 			break;
 		case 'm':
@@ -361,6 +365,9 @@ main(int argc,char *argv[])
 	case RAIDFRAME_SET_LAST_UNIT:
 		do_ioctl(fd, RAIDFRAME_SET_LAST_UNIT, &last_unit,
 		    "RAIDFRAME_SET_LAST_UNIT");
+		break;
+	case RAIDFRAME_RESCAN:
+		do_ioctl(fd, RAIDFRAME_RESCAN, NULL, "RAIDFRAME_RESCAN");
 		break;
 	default:
 		break;
