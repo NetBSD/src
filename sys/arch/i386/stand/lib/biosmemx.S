@@ -1,4 +1,4 @@
-/*	$NetBSD: biosmemx.S,v 1.10 2016/12/04 08:21:08 maxv Exp $	*/
+/*	$NetBSD: biosmemx.S,v 1.11 2021/08/02 12:56:23 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999
@@ -115,7 +115,7 @@ ENTRY(getmementry)
 	add	%di,%ax
 	mov	%ax,%es
 	pop	%di
-	and	$0xf,%di		/* buffer addres now in ES:DI */
+	and	$0xf,%di		/* buffer address now in ES:DI */
 
 	movl	$0xe820,%eax		/* Some BIOS check EAX value */
 	int	$0x15

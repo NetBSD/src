@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.8 2016/06/08 01:11:49 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.9 2021/08/02 12:56:25 andvar Exp $	*/
 
 /*
  * Copyright (c) 1993-96 Mats O Jansson.  All rights reserved.
@@ -26,7 +26,7 @@
 
 #include "port.h"
 #ifndef lint
-__RCSID("$NetBSD: print.c,v 1.8 2016/06/08 01:11:49 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.9 2021/08/02 12:56:25 andvar Exp $");
 #endif
 
 #include <sys/types.h>
@@ -350,7 +350,7 @@ mopPrintMopHeader(FILE *fd, const u_char *pkt, int trans)
 			break;
 		case MOP_K_CODE_PLT:
 			(void)fprintf(fd,
-				      "Parameter load with transfer addres\n");
+				      "Parameter load with transfer address\n");
 			break;
 		default:
 			(void)fprintf(fd, "(unknown)\n");
