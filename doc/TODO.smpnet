@@ -1,4 +1,4 @@
-$NetBSD: TODO.smpnet,v 1.40 2021/01/20 10:26:43 nia Exp $
+$NetBSD: TODO.smpnet,v 1.41 2021/08/02 23:49:26 mrg Exp $
 
 MP-safe components
 ==================
@@ -8,12 +8,34 @@ kernel option.  Some components scale up and some don't.
 
  - Device drivers
    - aq(4)
+   - bcmgenet(4)
+   - iavf(4)
+   - ixg(4)
+   - ixgbe(4)
+   - ixl(4)
+   - ixv(4)
+   - mcx(4)
+   - rge(4)
+   - se(4)
+   - sunxi_emac(4)
    - vioif(4)
    - vmx(4)
    - wm(4)
-   - ixg(4)
-   - ixl(4)
-   - ixv(4)
+   - xennet(4)
+   - usbnet(4) based adapters:
+     - axe(4)
+     - axen(4)
+     - cdce(4)
+     - cue(4)
+     - kue(4)
+     - mos(4)
+     - mue(4)
+     - smsc(4)
+     - udav(4)
+     - upl(4)
+     - ure(4)
+     - url(4)
+     - urndis(4)
  - Layer 2
    - Ethernet (if_ethersubr.c)
    - bridge(4)
