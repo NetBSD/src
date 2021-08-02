@@ -1,4 +1,4 @@
-/*	$NetBSD: oper.c,v 1.9 2021/03/20 20:56:58 rillig Exp $	*/
+/*	$NetBSD: oper.c,v 1.10 2021/08/02 20:58:39 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -36,17 +36,23 @@
 const mod_t modtab[NOPS] =
 #define begin_ops() {
 #define op(name, repr, \
-		bi, lo, tb, rb, \
-		in, ic, ar, sc, \
-		fo, va, ts, ba, \
-		se, lu, ru, pc, \
-		cm, ve, de, ew) \
+		is_binary, is_logical, takes_bool, requires_bool, \
+		is_integer, is_complex, is_arithmetic, is_scalar, \
+		can_fold, is_value, is_test, balances_operands, \
+		side_effects, left_unsigned, right_unsigned, \
+		precedence_confusion, is_comparison, \
+		valid_on_enum, bad_on_enum, warn_if_eq) \
 	{ \
-		bi + 0 > 0, lo + 0 > 0, tb + 0 > 0, rb + 0 > 0, \
-		in + 0 > 0, ic + 0 > 0, ar + 0 > 0, sc + 0 > 0, \
-		fo + 0 > 0, va + 0 > 0, ts + 0 > 0, ba + 0 > 0, \
-		se + 0 > 0, lu + 0 > 0, ru + 0 > 0, pc + 0 > 0, \
-		cm + 0 > 0, ve + 0 > 0, de + 0 > 0, ew + 0 > 0, \
+		is_binary	+ 0 > 0, is_logical		+ 0 > 0, \
+		takes_bool	+ 0 > 0, requires_bool		+ 0 > 0, \
+		is_integer	+ 0 > 0, is_complex		+ 0 > 0, \
+		is_arithmetic	+ 0 > 0, is_scalar		+ 0 > 0, \
+		can_fold	+ 0 > 0, is_value		+ 0 > 0, \
+		is_test		+ 0 > 0, balances_operands	+ 0 > 0, \
+		side_effects	+ 0 > 0, left_unsigned		+ 0 > 0, \
+		right_unsigned	+ 0 > 0, precedence_confusion	+ 0 > 0, \
+		is_comparison	+ 0 > 0, valid_on_enum		+ 0 > 0, \
+		bad_on_enum	+ 0 > 0, warn_if_eq		+ 0 > 0, \
 		repr, \
 	},
 #define end_ops(n) };
