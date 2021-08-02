@@ -1,4 +1,4 @@
-/* $NetBSD: if_skreg.h,v 1.29 2020/05/08 16:43:17 jakllsch Exp $ */
+/* $NetBSD: if_skreg.h,v 1.30 2021/08/02 12:56:24 andvar Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -1916,7 +1916,7 @@ struct msk_status_desc {
 /* SMI Data Register (SMIDR) */
 #define YUKON_SMIDR		0x0084
 
-/* PHY Addres Register (PAR) */
+/* PHY Address Register (PAR) */
 #define YUKON_PAR		0x0088
 
 #define YU_PAR_MIB_CLR		0x0020	/* MIB Counters Clear Mode */

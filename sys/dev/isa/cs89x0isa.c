@@ -1,4 +1,4 @@
-/* $NetBSD: cs89x0isa.c,v 1.19 2020/01/29 06:21:40 thorpej Exp $ */
+/* $NetBSD: cs89x0isa.c,v 1.20 2021/08/02 12:56:24 andvar Exp $ */
 
 /*
  * Copyright 1997
@@ -36,7 +36,7 @@
 /* isa DMA routines for cs89x0 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0isa.c,v 1.19 2020/01/29 06:21:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0isa.c,v 1.20 2021/08/02 12:56:24 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -368,7 +368,7 @@ void cs_process_rx_dma(struct cs_softc *sc)
 			 * received, without the alignment considerations.
 			 *
 			 * The cs8900 pads all frames to start at the next 32bit
-			 * aligned addres. hence we need to pad our offset
+			 * aligned address. hence we need to pad our offset
 			 * pointer.
 			 */
 			dma_mem_ptr += 3;

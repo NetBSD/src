@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_common.c,v 1.32 2021/07/24 21:31:38 andvar Exp $ */
+/* $NetBSD: ixgbe_common.c,v 1.33 2021/08/02 12:56:24 andvar Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -36,7 +36,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_common.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe_common.c,v 1.32 2021/07/24 21:31:38 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_common.c,v 1.33 2021/08/02 12:56:24 andvar Exp $");
 
 #include "ixgbe_common.h"
 #include "ixgbe_phy.h"
@@ -5088,7 +5088,7 @@ bool ixgbe_bypass_valid_rd_generic(u32 in_reg, u32 out_reg)
 }
 
 /**
- *  ixgbe_bypass_set_generic - Set a bypass field in the FW CTRL Regiter.
+ *  ixgbe_bypass_set_generic - Set a bypass field in the FW CTRL Register.
  *
  *  @hw: pointer to hardware structure
  *  @cmd: The control word we are setting.
@@ -5134,7 +5134,7 @@ s32 ixgbe_bypass_set_generic(struct ixgbe_hw *hw, u32 ctrl, u32 event,
 }
 
 /**
- *  ixgbe_bypass_rd_eep_generic - Read the bypass FW eeprom addres.
+ *  ixgbe_bypass_rd_eep_generic - Read the bypass FW eeprom address.
  *
  *  @hw: pointer to hardware structure
  *  @addr: The bypass eeprom address to read.

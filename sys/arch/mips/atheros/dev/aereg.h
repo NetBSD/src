@@ -1,4 +1,4 @@
-/*	$NetBSD: aereg.h,v 1.2 2008/04/28 20:23:28 martin Exp $	*/
+/*	$NetBSD: aereg.h,v 1.3 2021/08/02 12:56:23 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -122,7 +122,7 @@ struct ae_desc {
  * Control registers.
  */
 
-/* tese are registers only found on this part */
+/* these are registers only found on this part */
 #define	CSR_MACCTL	0x0000		/* mac control */
 #define	CSR_MACHI	0x0004
 #define	CSR_MACLO	0x0008
@@ -171,7 +171,7 @@ struct ae_desc {
 #define	MACCTL_BLE		0x40000000	/* mac big endian */
 #define	MACCTL_RA		0x80000000	/* receive all packets */
 
-/* CSR_MIIADDR - MII Addess */
+/* CSR_MIIADDR - MII Address */
 #define	MIIADDR_BUSY		0x00000001	/* mii busy */
 #define	MIIADDR_WRITE		0x00000002	/* mii write */
 #define	MIIADDR_REG_MASK	0x000007C0	/* mii register */

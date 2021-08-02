@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.191 2020/05/23 23:42:41 ad Exp $	   */
+/*	$NetBSD: pmap.c,v 1.192 2021/08/02 12:56:23 andvar Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.191 2020/05/23 23:42:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.192 2021/08/02 12:56:23 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -1370,7 +1370,7 @@ pmap_simulref(int bits, int addr)
 	if (bits & 1)
 		panic("pte trans len");
 #endif
-	/* Set addess on logical page boundary */
+	/* Set address on logical page boundary */
 	addr &= ~PGOFSET;
 	/* First decode userspace addr */
 	if (addr >= 0) {

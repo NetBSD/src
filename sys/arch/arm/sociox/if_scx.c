@@ -1,4 +1,4 @@
-/*	$NetBSD: if_scx.c,v 1.24 2021/01/27 03:10:19 thorpej Exp $	*/
+/*	$NetBSD: if_scx.c,v 1.25 2021/08/02 12:56:22 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -38,15 +38,15 @@
  * to handle incoming frames, outgoing frames and packet data crypto
  * processing. uP programs are stored in an external flash memory and
  * have to be loaded by device driver.
- * NetSec uses Synopsys DesignWare Core EMAC.  DWC implmentation
- * regiter (0x20) is known to have 0x10.36 and feature register (0x1058)
+ * NetSec uses Synopsys DesignWare Core EMAC.  DWC implementation
+ * register (0x20) is known to have 0x10.36 and feature register (0x1058)
  * to report XX.XX.
  */
 
 #define NOT_MP_SAFE	0
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.24 2021/01/27 03:10:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.25 2021/08/02 12:56:22 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -202,7 +202,7 @@ struct rdes {
 #define  _MCR_FDX	0x0000280c	/* XXX TBD */
 #define  _MCR_HDX	0x0001a00c	/* XXX TBD */
 #define GMACAFR		0x0004		/* frame DA/SA address filter */
-#define  AFR_RA		(1U<<31)	/* accept all irrecspective of filt. */
+#define  AFR_RA		(1U<<31)	/* accept all irrespective of filt. */
 #define  AFR_HPF	(1U<<10)	/* hash+perfect filter, or hash only */
 #define  AFR_SAF	(1U<<9)		/* source address filter */
 #define  AFR_SAIF	(1U<<8)		/* SA inverse filtering */
@@ -238,10 +238,10 @@ struct rdes {
 #define  ISR_LC		(1U<<0)		/* link status change detected */
 #define GMACMAH0	0x0040		/* my own MAC address 47:32 */
 #define GMACMAL0	0x0044		/* my own MAC address 31:0 */
-#define GMACMAH(i) 	((i)*8+0x40)	/* supplimental MAC addr 1-15 */
+#define GMACMAH(i) 	((i)*8+0x40)	/* supplemental MAC addr 1-15 */
 #define GMACMAL(i) 	((i)*8+0x44)	/* 31:0 MAC address low part */
 /* MAH bit-31: slot in use, 30: SA to match, 29:24 byte-wise don'care */
-#define GMACAMAH(i)	((i)*8+0x800)	/* supplimental MAC addr 16-31 */
+#define GMACAMAH(i)	((i)*8+0x800)	/* supplemental MAC addr 16-31 */
 #define GMACAMAL(i)	((i)*8+0x804)	/* 31: MAC address low part */
 /* MAH bit-31: slot in use, no other bit is effective */
 #define GMACMHTH	0x0008		/* 64bit multicast hash table 63:32 */
@@ -249,7 +249,7 @@ struct rdes {
 #define GMACMHT(i)	((i)*4+0x500)	/* 256-bit alternative mcast hash 0-7 */
 #define GMACVHT		0x0588		/* 16-bit VLAN tag hash */
 #define GMACMIISR	0x00d8		/* resolved xMII link status */
-/* 3: link up detected, 2:1 resovled speed (0/1/2), 1: fdx detected */
+/* 3: link up detected, 2:1 resolved speed (0/1/2), 1: fdx detected */
 
 /* 0x0700 - 0734 ??? */
 
@@ -938,7 +938,7 @@ scx_init(struct ifnet *ifp)
 	sc->sc_rxptr = 0;
 	sc->sc_rxptr = 0;
 
-	/* set my address in perfect match slot 0. little endin order */
+	/* set my address in perfect match slot 0. little endian order */
 	csr = (ea[3] << 24) | (ea[2] << 16) | (ea[1] << 8) |  ea[0];
 	mac_write(sc, GMACMAL0, csr);
 	csr = (ea[5] << 8) | ea[4];
@@ -1050,7 +1050,7 @@ scx_set_rcvfilt(struct scx_softc *sc)
 	csr &= ~(AFR_PR | AFR_PM | AFR_MHTE | AFR_HPF);
 	mac_write(sc, GMACAFR, csr);
 
-	/* clear 15 entry supplimental perfect match filter */
+	/* clear 15 entry supplemental perfect match filter */
 	for (i = 1; i < 16; i++)
 		 mac_write(sc, GMACMAH(i), 0);
 	/* build 64 bit multicast hash filter */

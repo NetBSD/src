@@ -1,4 +1,4 @@
-/*	$NetBSD: armv6_start.S,v 1.34 2021/01/27 13:50:17 skrll Exp $	*/
+/*	$NetBSD: armv6_start.S,v 1.35 2021/08/02 12:56:22 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2017, 2018 The NetBSD Foundation, Inc.
@@ -462,7 +462,7 @@ generic_startv7:
 	movt	r0, #:upper16:TEMP_L1_TABLE
 	sub	r0, R_VTOPDIFF
 
-	// Return to virtual addess after the call to armv7_mmuinit
+	// Return to virtual address after the call to armv7_mmuinit
 	movw	lr, #:lower16:generic_vstartv7
 	movt	lr, #:upper16:generic_vstartv7
 	b	armv7_mmuinit

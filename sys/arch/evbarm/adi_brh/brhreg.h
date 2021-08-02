@@ -1,4 +1,4 @@
-/*	$NetBSD: brhreg.h,v 1.1 2003/01/25 02:00:17 thorpej Exp $	*/
+/*	$NetBSD: brhreg.h,v 1.2 2021/08/02 12:56:22 andvar Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -48,7 +48,7 @@
  * everything.  Note the physical size of the range may be larger
  * or smaller than the virtual size.
  *
- * We need to leave room near the top of the addres space for the
+ * We need to leave room near the top of the address space for the
  * vectors.
  */
 

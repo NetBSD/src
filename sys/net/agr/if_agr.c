@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.51 2020/01/29 04:30:41 thorpej Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.52 2021/08/02 12:56:25 andvar Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.51 2020/01/29 04:30:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.52 2021/08/02 12:56:25 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -846,7 +846,7 @@ agr_ioctl_filter(struct ifnet *ifp, u_long cmd, void *arg)
 	case SIOCSIFMETRIC: /* set IF metric */
 	case SIOCSIFMTU: /* set ifnet mtu */
 	case SIOCSIFNETMASK: /* set net addr mask */
-	case SIOCSIFPHYADDR: /* set gif addres */
+	case SIOCSIFPHYADDR: /* set gif address */
 	case SIOCSLIFPHYADDR: /* set gif addrs */
 	case SIOCSVH: /* set carp param */
 		error = EBUSY;

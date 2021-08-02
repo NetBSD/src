@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.9 2011/08/30 19:49:10 joerg Exp $	*/
+/*	$NetBSD: common.h,v 1.10 2021/08/02 12:56:25 andvar Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -23,7 +23,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$NetBSD: common.h,v 1.9 2011/08/30 19:49:10 joerg Exp $
+ *	$NetBSD: common.h,v 1.10 2021/08/02 12:56:25 andvar Exp $
  *
  */
 
@@ -75,7 +75,7 @@ typedef enum {
 struct dllist {
 	u_char		status;		/* Status byte			*/
 	struct if_info *ii;		/* interface pointer		*/
-	u_char		eaddr[6];	/* targets ethernet addres	*/
+	u_char		eaddr[6];	/* targets ethernet address	*/
 	int		ldfd;		/* filedescriptor for loadfile	*/
 	u_short		dl_bsz;		/* Data Link Buffer Size	*/
 	int		timeout;	/* Timeout counter		*/

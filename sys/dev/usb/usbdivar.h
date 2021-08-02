@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.128 2021/06/13 00:13:24 riastradh Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.129 2021/08/02 12:56:24 andvar Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -191,7 +191,7 @@ struct usbd_bus {
 struct usbd_device {
 	struct usbd_bus	       *ud_bus;		/* our controller */
 	struct usbd_pipe       *ud_pipe0;	/* pipe 0 */
-	uint8_t			ud_addr;	/* device addess */
+	uint8_t			ud_addr;	/* device address */
 	uint8_t			ud_config;	/* current configuration # */
 	uint8_t			ud_depth;	/* distance from root hub */
 	uint8_t			ud_speed;	/* low/full/high speed */

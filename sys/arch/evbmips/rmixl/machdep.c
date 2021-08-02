@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.19 2018/06/06 01:49:08 maya Exp $	*/
+/*	$NetBSD: machdep.c,v 1.20 2021/08/02 12:56:22 andvar Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.19 2018/06/06 01:49:08 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.20 2021/08/02 12:56:22 andvar Exp $");
 
 #define __INTR_PRIVATE
 
@@ -648,7 +648,7 @@ rmixl_physaddr_init(void)
 
 	/*
 	 *  at this point all regions left in "physaddr" extent
-	 *  are unused holes in the physical adress space
+	 *  are unused holes in the physical address space
 	 *  available for use as needed.
 	 */
 	rmixl_configuration.rc_phys_ex = ext;

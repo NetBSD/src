@@ -1,4 +1,4 @@
-/*	$NetBSD: at_control.c,v 1.40 2018/02/17 19:10:18 rjs Exp $	 */
+/*	$NetBSD: at_control.c,v 1.41 2021/08/02 12:56:25 andvar Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.40 2018/02/17 19:10:18 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.41 2021/08/02 12:56:25 andvar Exp $");
 
 #include "opt_atalk.h"
 
@@ -115,7 +115,7 @@ at_control(u_long cmd, void *data, struct ifnet *ifp)
 					break;
 		}
 		/*
-		 * If we a retrying to delete an addres but didn't find such,
+		 * If we a retrying to delete an address but didn't find such,
 		 * then return with an error
 		 */
 		if (cmd == SIOCDIFADDR && aa == 0)

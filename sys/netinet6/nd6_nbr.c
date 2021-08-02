@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.181 2020/09/11 15:03:33 roy Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.182 2021/08/02 12:56:25 andvar Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.181 2020/09/11 15:03:33 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.182 2021/08/02 12:56:25 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -306,7 +306,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 		 * If source address is unspecified address, it is for
 		 * duplicate address detection.
 		 *
-		 * If not, the packet is for addess resolution;
+		 * If not, the packet is for address resolution;
 		 * silently ignore it.
 		 */
 		if (IN6_IS_ADDR_UNSPECIFIED(&saddr6)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagfuncs.c,v 1.33 2021/07/27 03:01:48 oster Exp $	*/
+/*	$NetBSD: rf_dagfuncs.c,v 1.34 2021/08/02 12:56:24 andvar Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.33 2021/07/27 03:01:48 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.34 2021/08/02 12:56:24 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -121,7 +121,7 @@ rf_TerminateUndoFunc(RF_DagNode_t *node)
  *
  * parameters:
  *
- * 0 - physical disk addres of data
+ * 0 - physical disk address of data
  * 1 - buffer for holding read data
  * 2 - parity stripe ID
  * 3 - flags

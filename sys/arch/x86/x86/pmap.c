@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.410 2021/04/17 18:03:21 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.411 2021/08/02 12:56:23 andvar Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.410 2021/04/17 18:03:21 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.411 2021/08/02 12:56:23 andvar Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -3797,7 +3797,7 @@ vtomach(vaddr_t va)
 
 /*
  * pmap_virtual_space: used during bootup [pmap_steal_memory] to
- * determine the bounds of the kernel virtual addess space.
+ * determine the bounds of the kernel virtual address space.
  */
 void
 pmap_virtual_space(vaddr_t *startp, vaddr_t *endp)

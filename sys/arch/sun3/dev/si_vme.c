@@ -1,4 +1,4 @@
-/*	$NetBSD: si_vme.c,v 1.30 2009/11/21 04:16:52 rmind Exp $	*/
+/*	$NetBSD: si_vme.c,v 1.31 2021/08/02 12:56:23 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  ****************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si_vme.c,v 1.30 2009/11/21 04:16:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si_vme.c,v 1.31 2021/08/02 12:56:23 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -311,7 +311,7 @@ si_vme_intr_off(struct ncr5380_softc *ncr_sc)
  * XXX: The VME adapter appears to suppress SBC interrupts
  * when the FIFO is not empty or the FIFO count is non-zero!
  *
- * On the VME version, setup the start addres, but clear the
+ * On the VME version, setup the start address, but clear the
  * count (to make sure it stays idle) and set that later.
  */
 void 

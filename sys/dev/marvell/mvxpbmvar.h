@@ -1,4 +1,4 @@
-/*	$NetBSD: mvxpbmvar.h,v 1.1 2015/06/03 03:55:47 hsuenaga Exp $	*/
+/*	$NetBSD: mvxpbmvar.h,v 1.2 2021/08/02 12:56:24 andvar Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -74,7 +74,7 @@ struct mvxpbm_chunk {
 
 	off_t		buf_off;	/* offset of packet from sc_bm_buf */
 	paddr_t		buf_pa;		/* physical address of packet */
-	vaddr_t		buf_va;		/* virtual addres of packet */
+	vaddr_t		buf_va;		/* virtual address of packet */
 	size_t		buf_size;	/* size of buffer (exclude hdr) */
 
 	LIST_ENTRY(mvxpbm_chunk) link;
