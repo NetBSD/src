@@ -1,4 +1,4 @@
-.\"     $NetBSD: raidctl.8,v 1.77 2021/05/27 07:03:27 wiz Exp $
+.\"     $NetBSD: raidctl.8,v 1.78 2021/08/02 20:31:15 oster Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,7 @@
 .\" any improvements or extensions that they make and grant Carnegie the
 .\" rights to redistribute these changes.
 .\"
-.Dd May 26, 2021
+.Dd August 2, 2021
 .Dt RAIDCTL 8
 .Os
 .Sh NAME
@@ -94,6 +94,9 @@
 .Nm
 .Op Fl v
 .Fl i Ar dev
+.Nm
+.Op Fl v
+.Fl L Ar dev
 .Nm
 .Op Fl v
 .Fl M
@@ -251,6 +254,15 @@ be done for
 .Em all
 RAID sets before the RAID device is labeled and before
 file systems are created on the RAID device.
+.It Fl L Ar dev
+Rescan all devices on the system, looking for RAID sets that can be 
+auto-configured.  The RAID device provided here has to be a valid 
+device, but does not need to be configured.  (e.g.
+.Bd -literal -offset indent
+raidctl -L raid0
+.Ed
+.Pp
+is all that is needed to perform a rescan.)
 .It Fl M Ic yes Ar dev
 .\"XXX should there be a section with more info on the parity map feature?
 Enable the use of a parity map on the RAID set; this is the default,
