@@ -1,4 +1,4 @@
-/* $NetBSD: t_sprintf.c,v 1.7 2017/12/01 01:08:35 kre Exp $ */
+/* $NetBSD: t_sprintf.c,v 1.8 2021/08/02 17:41:07 andvar Exp $ */
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2017\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_sprintf.c,v 1.7 2017/12/01 01:08:35 kre Exp $");
+__RCSID("$NetBSD: t_sprintf.c,v 1.8 2021/08/02 17:41:07 andvar Exp $");
 
 #include <locale.h>
 #include <math.h>
@@ -193,7 +193,7 @@ ATF_TC(sprintf);
 ATF_TC_HEAD(sprintf, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
-		"Checks sprintf %%'d and %%'f under diferent locales");
+		"Checks sprintf %%'d and %%'f under different locales");
 }
 ATF_TC_BODY(sprintf, tc)
 {
@@ -207,7 +207,7 @@ ATF_TC(strto);
 ATF_TC_HEAD(strto, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
-		"Checks strtol and strtod under diferent locales");
+		"Checks strtol and strtod under different locales");
 }
 ATF_TC_BODY(strto, tc)
 {
@@ -221,7 +221,7 @@ ATF_TC(sscanf);
 ATF_TC_HEAD(sscanf, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
-		"Checks sscanf under diferent locales");
+		"Checks sscanf under different locales");
 }
 ATF_TC_BODY(sscanf, tc)
 {

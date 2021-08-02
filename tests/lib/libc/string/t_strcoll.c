@@ -1,4 +1,4 @@
-/* $NetBSD: t_strcoll.c,v 1.1 2017/05/26 01:24:19 perseant Exp $ */
+/* $NetBSD: t_strcoll.c,v 1.2 2021/08/02 17:41:07 andvar Exp $ */
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2017\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_strcoll.c,v 1.1 2017/05/26 01:24:19 perseant Exp $");
+__RCSID("$NetBSD: t_strcoll.c,v 1.2 2021/08/02 17:41:07 andvar Exp $");
 
 #include <locale.h>
 #include <stdio.h>
@@ -84,7 +84,7 @@ ATF_TC(ordering);
 ATF_TC_HEAD(ordering, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
-		"Checks collation ordering under diferent locales");
+		"Checks collation ordering under different locales");
 }
 
 ATF_TC_BODY(ordering, tc)
