@@ -1,4 +1,4 @@
-/* $NetBSD: t_toupper.c,v 1.1 2017/05/30 02:11:03 perseant Exp $ */
+/* $NetBSD: t_toupper.c,v 1.2 2021/08/02 17:41:07 andvar Exp $ */
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2017\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_toupper.c,v 1.1 2017/05/30 02:11:03 perseant Exp $");
+__RCSID("$NetBSD: t_toupper.c,v 1.2 2021/08/02 17:41:07 andvar Exp $");
 
 #include <locale.h>
 #include <stdio.h>
@@ -92,7 +92,7 @@ ATF_TC(toupper);
 ATF_TC_HEAD(toupper, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
-		"Checks toupper under diferent locales");
+		"Checks toupper under different locales");
 }
 
 ATF_TC_BODY(toupper, tc)
@@ -108,7 +108,7 @@ ATF_TC(tolower);
 ATF_TC_HEAD(tolower, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
-		"Checks tolower under diferent locales");
+		"Checks tolower under different locales");
 }
 
 ATF_TC_BODY(tolower, tc)
