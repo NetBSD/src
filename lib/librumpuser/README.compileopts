@@ -1,4 +1,4 @@
-        $NetBSD: README.compileopts,v 1.1 2016/01/25 00:24:23 pooka Exp $
+        $NetBSD: README.compileopts,v 1.2 2021/08/02 17:45:10 andvar Exp $
 
 This file describes compile-time options (make variables) for
 the rumpuser POSIX implementation.
@@ -12,7 +12,7 @@ Global options:
 values: pthread/none/fiber or <undefined>
 defval: <undefined>
 effect: Define the way threading is implemented in the rumpuser hypercall
-	implmentation.
+	implementation.
 	<undefined> - use default implementation (currently "pthread")
 	pthread     - use pthreads to implement threading
 	none        - do not support kernel threads at all
