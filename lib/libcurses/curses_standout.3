@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_standout.3,v 1.8 2021/07/26 20:17:09 nia Exp $
+.\"	$NetBSD: curses_standout.3,v 1.9 2021/08/02 11:11:20 nia Exp $
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -25,7 +25,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 26, 2021
+.Dd July 27, 2021
 .Dt CURSES_STANDOUT 3
 .Os
 .Sh NAME
@@ -55,6 +55,9 @@
 These functions manipulate the standout attribute on
 .Dv stdscr
 or on the specified window.
+The standout attribute applies the "best highlighting mode"
+supported by the current terminal, which may be an alias of
+other attributes.
 .Pp
 The
 .Fn standout
@@ -101,3 +104,9 @@ Single Unix Specification.
 .Sh HISTORY
 The Curses package appeared in
 .Bx 4.0 .
+.Sh CAVEATS
+On some terminals, characters with standout set may have the same appearance
+as characters with the reverse video or bold attribute set.
+However, on legacy terminals, standout may be the only attribute that can be
+used to emphasize characters.
+The standout attribute should not be mixed with other attributes.
