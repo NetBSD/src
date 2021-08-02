@@ -1,4 +1,4 @@
-/*	$NetBSD: raidframeio.h,v 1.9 2018/01/20 01:32:45 mrg Exp $ */
+/*	$NetBSD: raidframeio.h,v 1.10 2021/08/02 20:31:14 oster Exp $ */
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -133,5 +133,6 @@
 #define RAIDFRAME_SET_LAST_UNIT _IOW('r', 41, int)
 #define RAIDFRAME_GET_INFO          _IOWR('r', 42, RF_DeviceConfig_t *)	/* get configuration */
 #define RAIDFRAME_CONFIGURE         _IOW ('r',  43, void *)	/* configure the driver */
-
+#define RAIDFRAME_RESCAN  _IO ('r', 44)
 #endif				/* !_RF_RAIDFRAMEIO_H_ */
+
