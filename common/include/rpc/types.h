@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.3 2019/06/16 16:01:44 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.4 2021/08/02 12:56:22 andvar Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -95,7 +95,7 @@ struct netbuf {
 };
 
 /*
- * The format of the addres and options arguments of the XTI t_bind call.
+ * The format of the address and options arguments of the XTI t_bind call.
  * Only provided for compatibility, it should not be used.
  */
 

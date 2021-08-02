@@ -28,7 +28,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxgb_t3_hw.c,v 1.4 2020/09/29 02:58:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxgb_t3_hw.c,v 1.5 2021/08/02 12:56:24 andvar Exp $");
 
 
 #ifdef CONFIG_DEFINED
@@ -543,7 +543,7 @@ struct t3_vpd {
  *
  *  Read a 32-bit word from a location in VPD EEPROM using the card's PCI
  *  VPD ROM capability.  A zero is written to the flag bit when the
- *  addres is written to the control register.  The hardware device will
+ *  address is written to the control register.  The hardware device will
  *  set the flag to 1 when 4 bytes have been read into the data register.
  */
 int t3_seeprom_read(adapter_t *adapter, u32 addr, u32 *data)

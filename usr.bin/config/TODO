@@ -274,7 +274,7 @@ o Control ELF sections using linker script.
 
   Kernel MD linkage is used purely for MD purposes, that is, how kernels are
   loaded by external loaders.  It might be possible that one kernel relocatable
-  (netbsd.ro) is linked into multiple final kernel image (netbsd) for diferent
+  (netbsd.ro) is linked into multiple final kernel image (netbsd) for different
   load addresses.
 
   Modular MI linkage is to prepare a module to be loadable as modular(9).  This
