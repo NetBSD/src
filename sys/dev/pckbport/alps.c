@@ -1,4 +1,4 @@
-/* $NetBSD: alps.c,v 1.14 2020/02/10 16:12:58 ryoon Exp $ */
+/* $NetBSD: alps.c,v 1.15 2021/08/02 12:56:24 andvar Exp $ */
 
 /*-
  * Copyright (c) 2017 Ryo ONODERA <ryo@tetera.org>
@@ -30,7 +30,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: alps.c,v 1.14 2020/02/10 16:12:58 ryoon Exp $");
+__KERNEL_RCSID(0, "$NetBSD: alps.c,v 1.15 2021/08/02 12:56:24 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -414,7 +414,7 @@ pms_alps_set_address(pckbport_tag_t tag, pckbport_slot_t slot, uint16_t reg)
 	return res;
 
 err:
-	aprint_error("Failed to set addess.\n");
+	aprint_error("Failed to set address.\n");
 	return res;
 }
 

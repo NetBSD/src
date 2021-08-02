@@ -1,5 +1,5 @@
 #
-# $NetBSD: isp.s,v 1.4 2021/07/24 21:31:33 andvar Exp $
+# $NetBSD: isp.s,v 1.5 2021/08/02 12:56:23 andvar Exp $
 #
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -46,7 +46,7 @@
 # to call a given routine. The stub routine actually performs the
 # callout. The ISP code does a "bsr" to the stub routine. This
 # extra layer of hierarchy adds a slight performance penalty but
-# it makes the ISP code easier to read and more mainatinable.
+# it makes the ISP code easier to read and more maintainable.
 #
 
 set	_off_chk,	0x00
@@ -269,7 +269,7 @@ _dmem_write_long:
 
 #
 # This file contains a set of define statements for constants
-# in oreder to promote readability within the core code itself.
+# in order to promote readability within the core code itself.
 #
 
 set LOCAL_SIZE,		96			# stack frame size(bytes)
@@ -762,7 +762,7 @@ uieh_divbyzero_a7:
 # The instruction that was just emulated was also being traced. The trace 
 # trap for this instruction will be lost unless we jump to the trace handler.
 # So, here we create a Trace Exception format number two exception stack
-# frame from the Unimplemented Integer Intruction Exception stack frame
+# frame from the Unimplemented Integer Instruction Exception stack frame
 # format number zero and jump to the user supplied hook "_real_trace()".
 #
 # However, we must also deal with the fact that (a7)+ was used from supervisor
@@ -2933,8 +2933,8 @@ cr_cas2:
 #			    (external to package)			#
 #	_isp_cas_terminate(): create access error stack frame on fault	#
 #			      (external and internal to package)	#
-#	_isp_cas_inrange(): checks whether instr addess is within range	#
-#			    of core cas/cas2emulation code		#
+#	_isp_cas_inrange(): checks whether instr address is within	#
+#			    range of core cas/cas2emulation code	#
 #			    (external to package)			#
 #									#
 # XREF ****************************************************************	#
@@ -3824,7 +3824,7 @@ CAS2W2_FILLER:
 #	(3) Save current DFC/SFC (ASSUMED TO BE EQUAL!!!); Then set	#
 #	    SFC/DFC according to whether exception occurred in user or	#
 #	    supervisor mode.						#
-#	(4) Use "plpaw" instruction to pre-load ATC with efective	#
+#	(4) Use "plpaw" instruction to pre-load ATC with effective	#
 #	    address page(s). THIS SHOULD NOT FAULT!!! The relevant	#
 # 	    page(s) should have been made resident prior to entering 	#
 #	    this routine.						#
@@ -3845,7 +3845,7 @@ CAS2W2_FILLER:
 #	    assert LOCKE* for the final write operation.		#
 #	(13)Exit.							#
 # 									#
-# 	The algorithm is actually implemented slightly diferently	#
+# 	The algorithm is actually implemented slightly differently	#
 # depending on the size of the operation and the misalignment of the	#
 # operand. A misaligned operand must be written in aligned chunks or	#
 # else the BUSCR register control gets confused.			#
@@ -4040,7 +4040,7 @@ casw_update_done:
 
 ################
 
-# there are two possible mis-aligned cases for longword cas. they
+# there are two possible misaligned cases for longword cas. they
 # are separated because the final write which asserts LOCKE* must
 # be an aligned write.
 casl:

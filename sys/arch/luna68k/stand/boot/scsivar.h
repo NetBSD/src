@@ -1,4 +1,4 @@
-/*	$NetBSD: scsivar.h,v 1.3 2015/02/14 05:03:09 tsutsui Exp $	*/
+/*	$NetBSD: scsivar.h,v 1.4 2021/08/02 12:56:23 andvar Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -76,7 +76,7 @@ struct	scsi_softc {
 
 	uint8_t	*sc_buf;				/* Data Buffer Pointor*/
 	uint8_t	*sc_cdb;				/* CDB Buffer Pointor */
-	volatile int *sc_lock;				/* Lock Flag addres   */
+	volatile int *sc_lock;				/* Lock Flag address   */
 	int	sc_flags;				/* SPC Status Flags   */
 	int	sc_phase;				/* Current SCSI Phase */
 	int	sc_target;				/* Current Target ID  */

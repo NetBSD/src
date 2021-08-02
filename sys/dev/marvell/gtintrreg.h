@@ -1,4 +1,4 @@
-/*	$NetBSD: gtintrreg.h,v 1.5 2010/04/28 13:51:56 kiyohara Exp $	*/
+/*	$NetBSD: gtintrreg.h,v 1.6 2021/08/02 12:56:24 andvar Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -78,7 +78,7 @@
 #define ICR_CI3M	0xe6c	/* CPU int[3] mask */
 
 #define IRQ_DEV		1	/* device interface interrupt */
-#define IRQ_DMA		2	/* DMA addres error interrupt */
+#define IRQ_DMA		2	/* DMA address error interrupt */
 #define IRQ_CPU		3	/* CPU interface interrupt */
 #define IRQ_IDMA0_1	4	/* IDMA ch. 0..1 complete interrupt */
 #define IRQ_IDMA2_3	5	/* IDMA ch. 2..3 complete interrupt */

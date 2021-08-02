@@ -1,4 +1,4 @@
-/*	$NetBSD: si_sebuf.c,v 1.30 2020/11/21 00:27:52 thorpej Exp $	*/
+/*	$NetBSD: si_sebuf.c,v 1.31 2021/08/02 12:56:23 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si_sebuf.c,v 1.30 2020/11/21 00:27:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si_sebuf.c,v 1.31 2021/08/02 12:56:23 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -331,7 +331,7 @@ se_intr_off(struct ncr5380_softc *ncr_sc)
  * that precedes a DATA_IN or DATA_OUT phase, in case we need
  * to setup the DMA engine before the bus enters a DATA phase.
  *
- * On the VME version, setup the start addres, but clear the
+ * On the VME version, setup the start address, but clear the
  * count (to make sure it stays idle) and set that later.
  * XXX: The VME adapter appears to suppress SBC interrupts
  * when the FIFO is not empty or the FIFO count is non-zero!

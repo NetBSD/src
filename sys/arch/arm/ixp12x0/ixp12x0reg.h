@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0reg.h,v 1.7 2009/10/21 14:15:50 rmind Exp $ */
+/*	$NetBSD: ixp12x0reg.h,v 1.8 2021/08/02 12:56:22 andvar Exp $ */
 
 /*
  * Copyright (c) 2002, 2003
@@ -121,7 +121,7 @@
  *              F000 1800 - F000 1C03  GPIO
  *              F000 1400 - F000 1403  IRQ
  *              F000 1000 - F000 1003  FIQ
- *              F000 0C00 - F000 0C03  PLL_CFG (not used at this addres)
+ *              F000 0C00 - F000 0C03  PLL_CFG (not used at this address)
  * F000 0000 ---------------------------
  *            Kernel text and data
  * C000 0000 ---------------------------

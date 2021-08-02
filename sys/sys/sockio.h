@@ -1,4 +1,4 @@
-/*	$NetBSD: sockio.h,v 1.39 2020/09/11 15:22:12 roy Exp $	*/
+/*	$NetBSD: sockio.h,v 1.40 2021/08/02 12:56:25 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -96,7 +96,7 @@
 #define	SIOCSIFGENERIC	 _IOW('i', 57, struct ifreq)	/* generic IF set op */
 #define	SIOCGIFGENERIC	_IOWR('i', 58, struct ifreq)	/* generic IF get op */
 
-#define	SIOCSIFPHYADDR	 _IOW('i', 70, struct ifaliasreq) /* set gif addres */
+#define	SIOCSIFPHYADDR	 _IOW('i', 70, struct ifaliasreq) /* set gif address */
 #define	SIOCGIFPSRCADDR	_IOWR('i', 71, struct ifreq)	/* get gif psrc addr */
 #define	SIOCGIFPDSTADDR	_IOWR('i', 72, struct ifreq)	/* get gif pdst addr */
 #define	SIOCDIFPHYADDR	 _IOW('i', 73, struct ifreq)	/* delete gif addrs */

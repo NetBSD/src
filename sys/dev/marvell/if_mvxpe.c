@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpe.c,v 1.33 2020/02/05 08:34:48 skrll Exp $	*/
+/*	$NetBSD: if_mvxpe.c,v 1.34 2021/08/02 12:56:24 andvar Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.33 2020/02/05 08:34:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.34 2021/08/02 12:56:24 andvar Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -88,7 +88,7 @@ STATIC int mvxpe_miibus_readreg(device_t, int, int, uint16_t *);
 STATIC int mvxpe_miibus_writereg(device_t, int, int, uint16_t);
 STATIC void mvxpe_miibus_statchg(struct ifnet *);
 
-/* Addres Decoding Window */
+/* Address Decoding Window */
 STATIC void mvxpe_wininit(struct mvxpe_softc *, enum marvell_tags *);
 
 /* Device Register Initialization */
