@@ -1,4 +1,4 @@
-/*	$NetBSD: raidframevar.h,v 1.21 2019/10/10 03:43:59 christos Exp $ */
+/*	$NetBSD: raidframevar.h,v 1.22 2021/08/02 22:37:29 oster Exp $ */
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -355,6 +355,7 @@ typedef RF_uint32 RF_ReconReqFlags_t;
 /* flags that can be put in the rf_recon_req structure */
 #define RF_FDFLAGS_NONE   0x0	/* just fail the disk */
 #define RF_FDFLAGS_RECON  0x1	/* fail and initiate recon */
+#define RF_FDFLAGS_RECON_FORCE  0x2	/* fail and initiate recon, ignoring errors */
 
 struct rf_recon_req {		/* used to tell the kernel to fail a disk */
 	RF_RowCol_t col;
