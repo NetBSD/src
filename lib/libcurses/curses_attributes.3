@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_attributes.3,v 1.9 2018/10/25 10:36:56 uwe Exp $
+.\"	$NetBSD: curses_attributes.3,v 1.10 2021/08/02 11:11:20 nia Exp $
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -25,7 +25,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 25, 2018
+.Dd July 27, 2021
 .Dt CURSES_ATTRIBUTES 3
 .Os
 .Sh NAME
@@ -102,7 +102,7 @@ The attributes that can be manipulated are:
 .It A_NORMAL
 no special attributes are applied
 .It A_STANDOUT
-characters are displayed in standout mode
+characters are displayed in the "best" highlighting mode of the terminal
 .It A_UNDERLINE
 characters are displayed underlined
 .It A_REVERSE
@@ -193,7 +193,7 @@ The additional wide attributes that can be manipulated are:
 .Pp
 .Bl -tag -width "COLOR_PAIR(n)" -compact -offset indent
 .It WA_STANDOUT
-characters are displayed in standout mode
+characters are displayed in the "best" highlighting mode of the terminal
 .It WA_UNDERLINE
 characters are displayed underlined
 .It WA_REVERSE
@@ -336,7 +336,10 @@ extension.
 .Sh HISTORY
 These functions first appeared in
 .Nx 1.5 .
-.Sh BUGS
+.Sh CAVEATS
 Some terminals do not support characters with both color and other attributes
 set.
 In this case, the other attribute is displayed instead of the color attribute.
+.Pp
+The standout attribute is a higher level alias and should not be mixed with
+other attributes.
