@@ -1,4 +1,4 @@
-/* $NetBSD: ssdfb.c,v 1.14 2021/07/30 13:44:09 tnn Exp $ */
+/* $NetBSD: ssdfb.c,v 1.15 2021/08/02 14:00:48 tnn Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ssdfb.c,v 1.14 2021/07/30 13:44:09 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ssdfb.c,v 1.15 2021/08/02 14:00:48 tnn Exp $");
 
 #include "opt_ddb.h"
 
@@ -271,7 +271,7 @@ ssdfb_attach(struct ssdfb_softc *sc, int flags)
 	ri->ri_depth =	sc->sc_p->p_bits_per_pixel;
 #else
 	ri->ri_depth =	8;
-#endif	
+#endif
 	ri->ri_font =	sc->sc_font;
 	ri->ri_width =	sc->sc_p->p_width;
 	ri->ri_height =	sc->sc_p->p_height;
@@ -774,14 +774,14 @@ ssdfb_init_ssd1322(struct ssdfb_softc *sc)
 	if (error)
 		return error;
 	SSDFB_CMD2(SSD1322_CMD_SET_SECOND_PRECHARGE_PERIOD,
-	    SSD1322_DEFAULT_SECOND_PRECHARGE);
+	    SSD1322_DEFAULT_SECOND_PRECHARGE_PERIOD);
 	if (error)
 		return error;
 
 	/*
 	 * Configure physical display panel layout.
 	 */
-	SSDFB_CMD2(SSD1322_CMD_SET_MUX_RATIO, sc->sc_p->p_multiplex_ratio);
+	SSDFB_CMD2(SSD1322_CMD_SET_MULTIPLEX_RATIO, sc->sc_p->p_multiplex_ratio);
 	if (error)
 		return error;
 	if (sc->sc_upsidedown)
