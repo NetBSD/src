@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_reservation.c,v 1.13 2021/08/02 20:20:54 riastradh Exp $	*/
+/*	$NetBSD: linux_reservation.c,v 1.14 2021/08/02 23:14:15 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_reservation.c,v 1.13 2021/08/02 20:20:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_reservation.c,v 1.14 2021/08/02 23:14:15 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/poll.h>
@@ -1003,6 +1003,7 @@ top:
 		 * assume the event is not ready.
 		 */
 		if (!claimed || callback) {
+			fence_put(fence);
 			revents = 0;
 			break;
 		}
