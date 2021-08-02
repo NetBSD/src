@@ -250,7 +250,7 @@ ATF_TC_BODY(oss_dsp_init, tc)
 	 * and some unsupported sample rates... "best effort"
 	 */
 
-	/* closest suported rate is 1000 */
+	/* closest supported rate is 1000 */
 	rate = 900;
 	if (ioctl(fd, SNDCTL_DSP_SPEED, &rate) < 0)
 		atf_tc_fail("ioctl SNDCTL_DSP_SPEED (900) failed");
@@ -259,7 +259,7 @@ ATF_TC_BODY(oss_dsp_init, tc)
 	ATF_REQUIRE((fabs(900.0 - info.play.sample_rate) / 900.0) < 0.2);
 	ATF_REQUIRE_EQ(rate, (int)info.play.sample_rate);
 
-	/* closest suported rate is 192000 */
+	/* closest supported rate is 192000 */
 	rate = 197000;
 	if (ioctl(fd, SNDCTL_DSP_SPEED, &rate) < 0)
 		atf_tc_fail("ioctl SNDCTL_DSP_SPEED (197000) failed");
