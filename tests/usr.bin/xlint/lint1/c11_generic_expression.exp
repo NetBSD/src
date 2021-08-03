@@ -1,4 +1,4 @@
-c11_generic_expression.c(29): warning: function classify_type_without_default expects to return value [214]
+c11_generic_expression.c(29): warning: function 'classify_type_without_default' expects to return value [214]
 c11_generic_expression.c(21): warning: argument 'var' unused in function 'classify_type_without_default' [231]
 c11_generic_expression.c(37): warning: argument 'var' unused in function 'classify_type_with_default' [231]
 c11_generic_expression.c(53): warning: argument 'c' unused in function 'classify_char' [231]
