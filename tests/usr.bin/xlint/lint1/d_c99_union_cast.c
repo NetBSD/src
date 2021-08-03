@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_union_cast.c,v 1.6 2021/08/03 20:46:10 rillig Exp $	*/
+/*	$NetBSD: d_c99_union_cast.c,v 1.7 2021/08/03 20:57:06 rillig Exp $	*/
 # 3 "d_c99_union_cast.c"
 
 /* C99 does not define union cast, it is a GCC extension. */
@@ -18,9 +18,9 @@ union foo {
 void
 foo(struct bar *a)
 {
-	/* TODO: warn about union casts in general */
+	/* expect+1: error: union cast is a GCC extension [328] */
 	a = ((union foo)a).a;
-	/* expect+1: error: type 'pointer to char' is not a member of 'union foo' [329] */
+	/* expect+1: error: union cast is a GCC extension [328] */
 	a = ((union foo)"string");
 	a->a++;
 }

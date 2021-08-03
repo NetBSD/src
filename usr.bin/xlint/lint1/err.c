@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.133 2021/08/03 18:44:33 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.134 2021/08/03 20:57:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.133 2021/08/03 18:44:33 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.134 2021/08/03 20:57:06 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -382,7 +382,7 @@ const char *const msgs[] = {
 	"variable declaration in for loop",			      /* 325 */
 	"%s attribute ignored for %s",				      /* 326 */
 	"declarations after statements is a C99 feature",	      /* 327 */
-	"union cast is a C9X feature",				      /* 328 */
+	"union cast is a GCC extension",			      /* 328 */
 	"type '%s' is not a member of '%s'",			      /* 329 */
 	"operand of '%s' must be bool, not '%s'",		      /* 330 */
 	"left operand of '%s' must be bool, not '%s'",		      /* 331 */
