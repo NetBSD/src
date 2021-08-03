@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_cast_union.c,v 1.2 2021/08/03 21:09:26 rillig Exp $	*/
+/*	$NetBSD: gcc_cast_union.c,v 1.3 2021/08/03 21:18:24 rillig Exp $	*/
 # 3 "gcc_cast_union.c"
 
 /*
@@ -81,7 +81,7 @@ test(void)
 	any = (union anything)E1;
 	any = (union anything)E2;
 	/* GCC allows enum mismatch even with -Wenum-conversion */
-	/* XXX: Lint should warn about enum type mismatch */
+	/* expect+1: error: type 'enum other_enum' is not a member of 'union anything' [329] */
 	any = (union anything)OTHER;
 	/* expect+1: error: type 'pointer to char' is not a member of 'union anything' [329] */
 	any = (union anything)"char *";
