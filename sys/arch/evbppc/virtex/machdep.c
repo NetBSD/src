@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.29 2021/03/30 02:41:14 rin Exp $ */
+/*	$NetBSD: machdep.c,v 1.30 2021/08/03 09:25:44 rin Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.29 2021/03/30 02:41:14 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30 2021/08/03 09:25:44 rin Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -141,11 +141,6 @@ initppc(vaddr_t startkernel, vaddr_t endkernel)
 	 */
 	kgdb_connect(1);
 #endif /* KGDB */
-
-	/*
-	 * Look for the ibm4xx modules in the right place.
-	 */
-	module_machine = module_machine_ibm4xx;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.67 2021/03/30 05:08:16 rin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.68 2021/08/03 09:25:44 rin Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.67 2021/03/30 05:08:16 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.68 2021/08/03 09:25:44 rin Exp $");
 
 #include "opt_ddb.h"
 
@@ -132,11 +132,6 @@ initppc(vaddr_t startkernel, vaddr_t endkernel, char *args, void *info_block)
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
-
-	/*
-	 * Look for the ibm4xx modules in the right place.
-	 */
-	module_machine = module_machine_ibm4xx;
 }
 
 /*
