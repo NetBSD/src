@@ -1,22 +1,23 @@
-# $NetBSD: varmod-order.mk,v 1.6 2021/07/31 20:55:46 rillig Exp $
+# $NetBSD: varmod-order.mk,v 1.7 2021/08/03 04:46:49 rillig Exp $
 #
 # Tests for the :O variable modifier and its variants, which either sort the
 # words of the value or shuffle them.
 
-NUMBERS=	one two three four five six seven eight nine ten
+WORDS=		one two three four five six seven eight nine ten
+NUMBERS=	8 5 4 9 1 7 6 10 3 2	# in English alphabetical order
 
-.if ${NUMBERS:O} != "eight five four nine one seven six ten three two"
-.  error ${NUMBERS:O}
+.if ${WORDS:O} != "eight five four nine one seven six ten three two"
+.  error ${WORDS:O}
 .endif
 
 # Unknown modifier "OX"
-_:=	${NUMBERS:OX}
+_:=	${WORDS:OX}
 
 # Unknown modifier "OxXX"
-_:=	${NUMBERS:OxXX}
+_:=	${WORDS:OxXX}
 
 # Missing closing brace, to cover the error handling code.
-_:=	${NUMBERS:O
+_:=	${WORDS:O
 _:=	${NUMBERS:On
 _:=	${NUMBERS:Onr
 

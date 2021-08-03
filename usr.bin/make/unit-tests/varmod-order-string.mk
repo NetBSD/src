@@ -1,10 +1,10 @@
-# $NetBSD: varmod-order-string.mk,v 1.1 2021/07/31 20:55:46 rillig Exp $
+# $NetBSD: varmod-order-string.mk,v 1.2 2021/08/03 04:46:49 rillig Exp $
 #
 # Tests for the :O variable modifier, which returns the words, sorted in
 # ascending order.
 
 # Simple words are sorted lexicographically.
-WORDS=	one two three four five six seven eight nine ten
+WORDS=		one two three four five six seven eight nine ten
 .if ${WORDS:O} != "eight five four nine one seven six ten three two"
 .  error ${WORDS:O}
 .endif
