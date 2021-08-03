@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.329 2021/08/03 20:57:06 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.330 2021/08/03 21:09:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.329 2021/08/03 20:57:06 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.330 2021/08/03 21:09:26 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -100,36 +100,6 @@ static const char *
 op_name(op_t op)
 {
 	return modtab[op].m_name;
-}
-
-static bool
-sametype(const type_t *t1, const type_t *t2)
-{
-
-	/* Maybe this can be merged into 'eqtype'. */
-
-	if (t1->t_tspec != t2->t_tspec)
-		return false;
-
-	/* Ignore const/volatile */
-
-	switch (t1->t_tspec) {
-	case ARRAY:
-		if (t1->t_dim != t2->t_dim)
-			return false;
-		/*FALLTHROUGH*/
-	case PTR:
-		return sametype(t1->t_subt, t2->t_subt);
-	case ENUM:
-		return strcmp(t1->t_enum->en_tag->s_name,
-		    t2->t_enum->en_tag->s_name) == 0;
-	case STRUCT:
-	case UNION:
-		return strcmp(t1->t_str->sou_tag->s_name,
-		    t2->t_str->sou_tag->s_name) == 0;
-	default:
-		return true;
-	}
 }
 
 /* Build 'pointer to tp', 'array of tp' or 'function returning tp'. */
@@ -3401,7 +3371,8 @@ cast(tnode_t *tn, type_t *tp)
 			return NULL;
 		}
 		for (m = str->sou_first_member; m != NULL; m = m->s_next) {
-			if (sametype(m->s_type, tn->tn_type)) {
+			if (eqtype(m->s_type, tn->tn_type,
+			    false, false, NULL)) {
 				tn = expr_zalloc_tnode();
 				tn->tn_op = CVT;
 				tn->tn_type = tp;
