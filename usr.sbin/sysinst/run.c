@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.13 2019/11/16 20:26:59 martin Exp $	*/
+/*	$NetBSD: run.c,v 1.14 2021/08/03 13:34:04 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -176,6 +176,7 @@ collect(int kind, char **buffer, const char *name, ...)
 {
 	size_t nbytes;		/* Number of bytes in buffer. */
 	size_t fbytes;		/* Number of bytes in file. */
+	size_t abytes;		/* allocated size of buffer */
 	struct stat st;		/* stat information. */
 	int ch;
 	FILE *f;
@@ -198,6 +199,9 @@ collect(int kind, char **buffer, const char *name, ...)
 		/* Open the file. */
 		f = fopen(fileorcmd, "r");
 		if (f == NULL) {
+			if (logfp)
+				fprintf(logfp, "%s: failed to open %s\n",
+				    __func__, fileorcmd);
 			*buffer = NULL;
 			return -1;
 		}
@@ -205,31 +209,56 @@ collect(int kind, char **buffer, const char *name, ...)
 		/* Open the program. */
 		f = popen(fileorcmd, "r");
 		if (f == NULL) {
+			if (logfp)
+				fprintf(logfp, "%s: failed to open %s\n",
+				    __func__, fileorcmd);
 			*buffer = NULL;
 			return -1;
 		}
-		fbytes = BUFSIZE;
+		fbytes = 0;
 	}
 
 	if (fbytes == 0)
-		fbytes = BUFSIZE;
+		abytes = BUFSIZE;
+	else
+		abytes = fbytes+1;
 
 	/* Allocate the buffer size. */
-	*buffer = cp = malloc(fbytes + 1);
+	*buffer = cp = malloc(abytes);
 	if (!cp)
 		nbytes =  -1;
 	else {
 		/* Read the buffer. */
 		nbytes = 0;
-		while (nbytes < fbytes && (ch = fgetc(f)) != EOF)
+		while ((ch = fgetc(f)) != EOF) {
+			if (nbytes >= abytes-1) {
+				if (fbytes > 0 || abytes >= 512*BUFSIZE) {
+					free(cp);
+					*buffer = cp = NULL;
+					nbytes = -1;
+					break;
+				}
+				abytes *= 2;
+				*buffer = cp = realloc(cp, abytes);
+				if (!cp) {
+					nbytes =  -1;
+					break;
+				}
+
+			}
 			cp[nbytes++] = ch;
-		cp[nbytes] = 0;
+		}
+		if (cp)
+			cp[nbytes] = 0;
 	}
 
 	if (kind == T_FILE)
 		fclose(f);
 	else
 		pclose(f);
+
+	if (nbytes <= 0 && logfp)
+		fprintf(logfp, "%s: failed for %s\n", __func__, fileorcmd);
 
 	return nbytes;
 }
