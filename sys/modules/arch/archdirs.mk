@@ -1,9 +1,9 @@
-#	$NetBSD: archdirs.mk,v 1.6 2020/07/04 21:02:16 chs Exp $
+#	$NetBSD: archdirs.mk,v 1.7 2021/08/03 09:25:44 rin Exp $
 
 # list of subdirs used per-platform
 
 .if ${MACHINE_ARCH} == "powerpc"
-ARCHDIR_SUBDIR=	powerpc/powerpc-ibm4xx powerpc/powerpc-booke
+ARCHDIR_SUBDIR=	powerpc/powerpc-booke
 .endif
 
 .if ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el"

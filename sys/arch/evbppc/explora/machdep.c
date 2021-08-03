@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.51 2021/03/30 03:20:13 rin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.52 2021/08/03 09:25:43 rin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.51 2021/03/30 03:20:13 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.52 2021/08/03 09:25:43 rin Exp $");
 
 #include "opt_explora.h"
 
@@ -107,11 +107,6 @@ initppc(vaddr_t startkernel, vaddr_t endkernel)
 
 	ibm40x_memsize_init(size, startkernel);
 	ibm4xx_init(startkernel, endkernel, pic_ext_intr);
-
-	/*
-	 * Look for the ibm4xx modules in the right place.
-	 */
-	module_machine = module_machine_ibm4xx;
 }
 
 void

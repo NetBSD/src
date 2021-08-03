@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1 2021/04/02 07:00:33 rin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.2 2021/08/03 09:25:43 rin Exp $	*/
 
 /*
  * Taken from src/sys/arch/evbppc/walnut/machdep.c:
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1 2021/04/02 07:00:33 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2 2021/08/03 09:25:43 rin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pci.h"
@@ -188,9 +188,6 @@ initppc(vaddr_t startkernel, vaddr_t endkernel, char *args, void *info_block)
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
-
-	/* Look for the ibm4xx modules in the right place */
-	module_machine = module_machine_ibm4xx;
 }
 
 void
