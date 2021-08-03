@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.15 2021/08/01 18:13:53 rillig Exp $	*/
+/*	$NetBSD: mem.c,v 1.16 2021/08/03 17:20:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem.c,v 1.15 2021/08/01 18:13:53 rillig Exp $");
+__RCSID("$NetBSD: mem.c,v 1.16 2021/08/03 17:20:02 rillig Exp $");
 #endif
 
 #include <stdarg.h>
@@ -46,53 +46,41 @@ __RCSID("$NetBSD: mem.c,v 1.15 2021/08/01 18:13:53 rillig Exp $");
 
 #include "lint.h"
 
-static void __attribute__((noreturn))
-nomem(void)
+static void *
+not_null(void *ptr)
 {
 
-	errx(1, "virtual memory exhausted");
+	if (ptr == NULL)
+		errx(1, "virtual memory exhausted");
+	return ptr;
 }
 
 void *
 xmalloc(size_t s)
 {
-	void	*p;
 
-	if ((p = malloc(s)) == NULL)
-		nomem();
-	return p;
+	return not_null(malloc(s));
 }
 
 void *
 xcalloc(size_t n, size_t s)
 {
-	void	*p;
 
-	if ((p = calloc(n, s)) == NULL)
-		nomem();
-	return p;
+	return not_null(calloc(n, s));
 }
 
 void *
 xrealloc(void *p, size_t s)
 {
-	void *n;
 
-	if ((n = realloc(p, s)) == NULL) {
-		free(p);
-		nomem();
-	}
-	return n;
+	return not_null(realloc(p, s));
 }
 
 char *
 xstrdup(const char *s)
 {
-	char	*s2;
 
-	if ((s2 = strdup(s)) == NULL)
-		nomem();
-	return s2;
+	return not_null(strdup(s));
 }
 
 char *
@@ -106,6 +94,6 @@ xasprintf(const char *fmt, ...)
 	e = vasprintf(&str, fmt, ap);
 	va_end(ap);
 	if (e < 0)
-		nomem();
+		not_null(NULL);
 	return str;
 }
