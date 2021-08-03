@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_cast.c,v 1.1 2021/08/03 18:03:54 rillig Exp $	*/
+/*	$NetBSD: expr_cast.c,v 1.2 2021/08/03 18:38:02 rillig Exp $	*/
 # 3 "expr_cast.c"
 
 /*
@@ -6,7 +6,13 @@
  *
  * K&R C does not mention any restrictions on the target type.
  * C90 requires both the source type and the target type to be scalar.
+ *
+ * GCC allows casting to a struct type but there is no documentation about
+ * it at https://gcc.gnu.org/onlinedocs/gcc/C-Extensions.html.  See
+ * c-typeck.c, function build_c_cast, RECORD_OR_UNION_TYPE_P.
  */
+
+/* lint1-flags: -Sw */
 
 struct S {
 	int member;
@@ -20,14 +26,8 @@ cast(void)
 	} local = {
 		0.0
 	};
-	/* expect-3: warning: 'local' set but not used in function 'cast' [191] */
-	/*
-	 * ^^ XXX: The variable _is_ used, but only in a semantically wrong
-	 * expression.  Lint should rather warn about the invalid cast in the
-	 * 'return' statement, but since all C compilers since C90 are
-	 * required to detect this already, there is no point in duplicating
-	 * that work.
-	 */
 
+	/* expect+2: error: invalid cast from 'struct S' to 'struct S' [147] */
+	/* expect+1: warning: function cast expects to return value [214] */
 	return (struct S)local;
 }
