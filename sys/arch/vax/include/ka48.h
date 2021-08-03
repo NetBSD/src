@@ -1,3 +1,4 @@
+/*	$NetBSD: ka48.h,v 1.5 2021/08/03 23:12:14 andvar Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -51,7 +52,7 @@
 
 /* From OpenVMS $IO440DEF & $KA440DEF */
 #define	KA48_PARCTL	0x20080014
-#define	KA48_PARCTL_CPEN	0x00000001	/* CPU Parity Eanble? */
+#define	KA48_PARCTL_CPEN	0x00000001	/* CPU Parity Enable? */
 #define	KA48_PARCTL_NPEN	0x00000100	/* ?? Parity Enable */
 #define	KA48_PARCTL_INVENA	0x01000000	/* Invalid ? Enable */
 #define	KA48_PARCTL_AGS		0x02000000	/* ??? */
