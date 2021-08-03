@@ -1,0 +1,1 @@
+expr_cast.c(20): warning: 'local' set but not used in function 'cast' [191]
