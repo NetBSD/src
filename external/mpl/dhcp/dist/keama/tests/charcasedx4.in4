@@ -1,9 +1,0 @@
-# lcase/ucase data expression
-
-# empty configs are not accepted by Kea
-default-lease-time 1800;
-
-# reduce literals
-class "literal" {
-    match if option host-name = concat(ucase("www."), "example.", lcase("COM"));
-}

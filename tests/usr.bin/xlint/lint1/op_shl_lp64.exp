@@ -1,2 +1,0 @@
-op_shl_lp64.c(23): warning: shift equal to size of object [267]
-op_shl_lp64.c(25): warning: shift amount 129 is greater than bit-size 128 of '__uint128_t' [122]

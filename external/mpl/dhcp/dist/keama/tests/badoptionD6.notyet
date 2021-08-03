@@ -1,4 +1,0 @@
-# bad 'D' (domain-list) option data
-
-option dhcp6.domain-search example.com;
-

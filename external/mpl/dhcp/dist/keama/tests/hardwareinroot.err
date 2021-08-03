@@ -1,5 +1,0 @@
-# hardware declaration in root config
-
-# hardware declaration must be in a host declaration
-hardware ethernet 00:0B:FD:32:E6:FA;
-

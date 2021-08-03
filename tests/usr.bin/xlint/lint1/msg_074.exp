@@ -1,3 +1,0 @@
-msg_074.c(6): error: no hex digits follow \x [74]
-msg_074.c(7): error: no hex digits follow \x [74]
-msg_074.c(7): warning: multi-character character constant [294]

@@ -1,8 +1,0 @@
-@@
-expression M;
-expression E1, E2;
-@@
-
-- isc_mem_put(M, E1, E2);
-- isc_mem_detach(&M);
-+ isc_mem_putanddetach(&M, E1, E2);
