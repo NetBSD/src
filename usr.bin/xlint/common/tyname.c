@@ -1,4 +1,4 @@
-/*	$NetBSD: tyname.c,v 1.43 2021/07/02 18:22:09 rillig Exp $	*/
+/*	$NetBSD: tyname.c,v 1.44 2021/08/03 17:44:58 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tyname.c,v 1.43 2021/07/02 18:22:09 rillig Exp $");
+__RCSID("$NetBSD: tyname.c,v 1.44 2021/08/03 17:44:58 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -59,7 +59,7 @@ __RCSID("$NetBSD: tyname.c,v 1.43 2021/07/02 18:22:09 rillig Exp $");
 
 /* A tree of strings. */
 typedef struct name_tree_node {
-	char *ntn_name;
+	const char *ntn_name;
 	struct name_tree_node *ntn_less;
 	struct name_tree_node *ntn_greater;
 } name_tree_node;
@@ -85,7 +85,7 @@ new_name_tree_node(const char *name)
 	return n;
 }
 
-/* Return the canonical instance of the string, with unlimited life time. */
+/* Return the canonical instance of the string, with unlimited lifetime. */
 static const char *
 intern(const char *name)
 {
@@ -186,70 +186,6 @@ tspec_name(tspec_t t)
 	default:
 		INTERNAL_ERROR("tspec_name(%d)", t);
 		return NULL;
-	}
-}
-
-bool
-sametype(const type_t *t1, const type_t *t2)
-{
-	tspec_t	t;
-
-	if (t1->t_tspec != t2->t_tspec)
-		return false;
-
-	/* Ignore const/volatile */
-
-	switch (t = t1->t_tspec) {
-	case BOOL:
-	case CHAR:
-	case UCHAR:
-	case SCHAR:
-	case SHORT:
-	case USHORT:
-	case INT:
-	case UINT:
-	case LONG:
-	case ULONG:
-	case QUAD:
-	case UQUAD:
-#ifdef INT128_SIZE
-	case INT128:
-	case UINT128:
-#endif
-	case FLOAT:
-	case DOUBLE:
-	case LDOUBLE:
-	case VOID:
-	case FUNC:
-	case COMPLEX:
-	case FCOMPLEX:
-	case DCOMPLEX:
-	case LCOMPLEX:
-		return true;
-	case ARRAY:
-		if (t1->t_dim != t2->t_dim)
-			return false;
-		/*FALLTHROUGH*/
-	case PTR:
-		return sametype(t1->t_subt, t2->t_subt);
-	case ENUM:
-#ifdef t_enum
-		return strcmp(t1->t_enum->en_tag->s_name,
-		    t2->t_enum->en_tag->s_name) == 0;
-#else
-		return true;
-#endif
-	case STRUCT:
-	case UNION:
-#ifdef t_str
-		return strcmp(t1->t_str->sou_tag->s_name,
-		    t2->t_str->sou_tag->s_name) == 0;
-#else
-		return true;
-#endif
-	default:
-		INTERNAL_ERROR("tyname(%d)", t);
-		return false;
 	}
 }
 
