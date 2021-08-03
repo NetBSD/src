@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.118 2021/08/01 06:40:37 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.119 2021/08/03 18:44:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.118 2021/08/01 06:40:37 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.119 2021/08/03 18:44:33 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1080,7 +1080,7 @@ do_return(tnode_t *tn)
 		 * is explicitly declared.
 		 */
 		if (!funcsym->s_return_type_implicit_int)
-			/* function %s expects to return value */
+			/* function '%s' expects to return value */
 			warning(214, funcsym->s_name);
 	}
 
