@@ -1,4 +1,4 @@
-/*	$NetBSD: spr.h,v 1.13 2014/12/27 12:36:48 nonaka Exp $	*/
+/*	$NetBSD: spr.h,v 1.14 2021/08/03 23:12:14 andvar Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -280,7 +280,7 @@
 #define   TSR_ENW		  0x80000000 /* Enable Next Watchdog (W1C) */
 #define   TSR_WIS		  0x40000000 /* Watchdog Interrupt Status (W1C) */
 #define   TSR_WRS		  0x30000000 /* Watchdog Reset Status (W1C) */
-#define   TSR_DIS		  0x08000000 /* Decementer Interrupt Status (W1C) */
+#define   TSR_DIS		  0x08000000 /* Decrementer Interrupt Status (W1C) */
 #define   TSR_FIS		  0x04000000 /* Fixed-interval Interrupt Status (W1C) */
 #define	SPR_TCR			340	/* E... Timer Control Register */
 #define   TCR_WP		  0xc0000000 /* Watchdog Period */
@@ -290,7 +290,7 @@
 #define   TCR_WRC		  0x30000000 /* Watchdog Timer Reset Control */
 #define   TCR_WRC_RESET		  0x20000000
 #define   TCR_WIE		  0x08000000 /* Watchdog Time Interrupt Enable */
-#define   TCR_DIE		  0x04000000 /* Decremnter Interrupt Enable */
+#define   TCR_DIE		  0x04000000 /* Decrementer Interrupt Enable */
 #define   TCR_FP		  0x03000000 /* Fixed-interval Timer Period */
 #define	  TCR_FP_2_N(n)		  ((((64 - (n)) & 0x30) << 20) | (((64 - (n)) & 0xf) << 13))
 #define	  TCR_FP_2_64		  0x00000000
@@ -337,8 +337,8 @@
 #define  SPEFSCR_FDBZ		  0x00000400 /* 21: Embedded Floating-Point Divide By Zero Error */
 #define  SPEFSCR_FUNF		  0x00000200 /* 22: Embedded Floating-Point Underflow Error */
 #define  SPEFSCR_FOVF		  0x00000100 /* 23: Embedded Floating-Point Overflow Error */
-#define  SPEFSCR_FINXE		  0x00000040 /* 25: Embedded Floating-Point Inexact Execption Enable */
-#define  SPEFSCR_FINVE		  0x00000020 /* 26: Embedded Floating-Point Invalid Operation/Input Error Execption Enable */
+#define  SPEFSCR_FINXE		  0x00000040 /* 25: Embedded Floating-Point Inexact Exception Enable */
+#define  SPEFSCR_FINVE		  0x00000020 /* 26: Embedded Floating-Point Invalid Operation/Input Error Exception Enable */
 #define  SPEFSCR_FDBZE		  0x00000010 /* 27: Embedded Floating-Point Divide By Zero Exception Enable */
 #define  SPEFSCR_FUNFE		  0x00000008 /* 28: Embedded Floating-Point Underflow Exception Enable */
 #define  SPEFSCR_FOVFE		  0x00000004 /* 29: Embedded Floating-Point Overflow Exception Enable */
@@ -347,8 +347,8 @@
 #define  SPEFSCR_FRMC_UPWARD	  0x00000002 /* Round toward +infinity */
 #define  SPEFSCR_FRMC_TOWARDZERO  0x00000001 /* Round toward zero */
 #define  SPEFSCR_FRMC_TONEAREST	  0x00000000 /* Round to nearest */
-#define	SPR_BBEAR		513	/* E... Brach buffer entry addr register */
-#define	SPR_BBTAR		514	/* E... Brach buffer target addr register */
+#define	SPR_BBEAR		513	/* E... Branch buffer entry addr register */
+#define	SPR_BBTAR		514	/* E... Branch buffer target addr register */
 #define	SPR_L1CFG0		515	/* E... L1 Cache Configuration Register 0 */
 #define	SPR_L1CFG1		516	/* E... L1 Cache Configuration Register 1 */
 #define   L1CFG_CARCH_GET(n)	  (((n) >> 30) & 3)
@@ -436,7 +436,7 @@
 #define	  MAS2_W		  0x00000010 /* Write-through */
 #define	  MAS2_I		  0x00000008 /* cache-Inhibited */
 #define	  MAS2_M		  0x00000004 /* Memory coherency required */
-#define	  MAS2_G		  0x00000002 /* Gaurded */
+#define	  MAS2_G		  0x00000002 /* Guarded */
 #define	  MAS2_E		  0x00000001 /* [little] Endianness */
 #define	SPR_MAS3		627	/* E... MAS Register 3 */
 #define   MAS3_RPN		  0xfffff000 /* Real Page Number */
@@ -472,7 +472,7 @@
 #define	  MAS4_WD		  0x00000010 /* default Write-through */
 #define	  MAS4_ID		  0x00000008 /* default Cache-inhibited */
 #define	  MAS4_MD		  0x00000004 /* default Memory coherency req. */
-#define	  MAS4_GD		  0x00000002 /* default Gaurded */
+#define	  MAS4_GD		  0x00000002 /* default Guarded */
 #define	  MAS4_ED		  0x00000001 /* default [little] Endianness */
 #define	SPR_MAS6		630	/* E... MAS Register 6 (TLB Seach CTX) */
 #define   MAS6_SPID0		  0x0fff0000 /* PID used with tlbsx */

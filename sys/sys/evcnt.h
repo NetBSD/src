@@ -1,4 +1,4 @@
-/*	$NetBSD: evcnt.h,v 1.9 2021/04/01 04:41:38 simonb Exp $	*/
+/*	$NetBSD: evcnt.h,v 1.10 2021/08/03 23:12:14 andvar Exp $	*/
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -102,7 +102,7 @@ TAILQ_HEAD(evcntlist, evcnt);
 #define	EVCNT_TYPE_ANY		-1	/* for sysctl */
 #define	EVCNT_TYPE_MISC		0	/* miscellaneous; catch all */
 #define	EVCNT_TYPE_INTR		1	/* interrupt; count with vmstat -i */
-#define	EVCNT_TYPE_TRAP		2	/* processor trap/execption */
+#define	EVCNT_TYPE_TRAP		2	/* processor trap/exception */
 
 #ifdef __HAVE_LEGACY_INTRCNT
 void evcnt_attach_legacy_intrcnt(void);

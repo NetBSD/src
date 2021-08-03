@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.1 2015/03/28 16:13:56 matt Exp $	*/
+/*	$NetBSD: fpu.c,v 1.2 2021/08/03 23:12:14 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.1 2015/03/28 16:13:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.2 2021/08/03 23:12:14 andvar Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -133,7 +133,7 @@ fpu_state_load(lwp_t *l, u_int flags)
 	// Enable the FP when this lwp return to userspace.
 	tf->tf_sr |= SR_EF;
 
-	// If this is a simple reeanble, set the FPU enable flag and return
+	// If this is a simple reenable, set the FPU enable flag and return
 	if (flags & PCU_REENABLE) {
 		curcpu()->ci_ev_fpu_reenables.ev_count++;
 		return;
