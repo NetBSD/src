@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_329.c,v 1.2 2021/01/24 17:44:37 rillig Exp $	*/
+/*	$NetBSD: msg_329.c,v 1.3 2021/08/03 20:57:06 rillig Exp $	*/
 # 3 "msg_329.c"
 
 // Test for message: type '%s' is not a member of '%s' [329]
@@ -30,9 +30,6 @@ example(void)
 	 *
 	 * This is a GCC extension.
 	 * See https://gcc.gnu.org/onlinedocs/gcc/Cast-to-Union.html.
-	 *
-	 * FIXME: lint says in message 328 that "union cast is a C9X feature",
-	 *  but that is wrong.  It is a GCC feature.
 	 */
 	union u u_i1 = (union u)3;
 	union u u_vp = (union u)(void *)0;
