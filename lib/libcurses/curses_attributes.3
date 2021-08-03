@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_attributes.3,v 1.10 2021/08/02 11:11:20 nia Exp $
+.\"	$NetBSD: curses_attributes.3,v 1.11 2021/08/03 07:58:50 nia Exp $
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -102,7 +102,8 @@ The attributes that can be manipulated are:
 .It A_NORMAL
 no special attributes are applied
 .It A_STANDOUT
-characters are displayed in the "best" highlighting mode of the terminal
+characters are displayed in the "best" supported highlighting mode of the
+terminal
 .It A_UNDERLINE
 characters are displayed underlined
 .It A_REVERSE
@@ -193,7 +194,8 @@ The additional wide attributes that can be manipulated are:
 .Pp
 .Bl -tag -width "COLOR_PAIR(n)" -compact -offset indent
 .It WA_STANDOUT
-characters are displayed in the "best" highlighting mode of the terminal
+characters are displayed in the "best" supported highlighting mode of the
+terminal
 .It WA_UNDERLINE
 characters are displayed underlined
 .It WA_REVERSE
