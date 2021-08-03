@@ -1,4 +1,4 @@
-/*	$NetBSD: elb.c,v 1.10 2021/04/24 23:36:36 thorpej Exp $	*/
+/*	$NetBSD: elb.c,v 1.10.8.1 2021/08/04 03:23:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elb.c,v 1.10 2021/04/24 23:36:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elb.c,v 1.10.8.1 2021/08/04 03:23:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -141,7 +141,7 @@ elb_attach(device_t parent, device_t self, void *aux)
 		eaa.elb_base2 = elb->elb_addr2;
 		eaa.elb_irq = elb->elb_irq;
 
-		(void) config_found(self, &eaa, elb_print, CFARG_EOL);
+		(void) config_found(self, &eaa, elb_print, CFARGS_NONE);
 	}
 }
 

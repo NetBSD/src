@@ -1,4 +1,4 @@
-/*	$NetBSD: sti.c,v 1.30 2021/04/24 23:36:55 thorpej Exp $	*/
+/*	$NetBSD: sti.c,v 1.30.8.1 2021/08/04 20:14:42 thorpej Exp $	*/
 
 /*	$OpenBSD: sti.c,v 1.61 2009/09/05 14:09:35 miod Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.30 2021/04/24 23:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.30.8.1 2021/08/04 20:14:42 thorpej Exp $");
 
 #include "wsdisplay.h"
 
@@ -767,7 +767,7 @@ sti_end_attach(struct sti_softc *sc)
 		}
 
 		config_found(sc->sc_dev, &waa, wsemuldisplaydevprint,
-		    CFARG_EOL);
+		    CFARGS_NONE);
 	}
 #endif
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: nhpib.c,v 1.42 2021/04/24 23:36:37 thorpej Exp $	*/
+/*	$NetBSD: nhpib.c,v 1.42.8.1 2021/08/04 01:02:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nhpib.c,v 1.42 2021/04/24 23:36:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nhpib.c,v 1.42.8.1 2021/08/04 01:02:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -252,7 +252,7 @@ nhpib_common_attach(struct nhpib_softc *sc, const char *desc)
 	ha.ha_type = sc->sc_type;			/* XXX */
 	ha.ha_ba = sc->sc_myaddr;
 	ha.ha_softcpp = &sc->sc_hpibbus;		/* XXX */
-	(void)config_found(sc->sc_dev, &ha, hpibdevprint, CFARG_EOL);
+	(void)config_found(sc->sc_dev, &ha, hpibdevprint, CFARGS_NONE);
 }
 
 static void

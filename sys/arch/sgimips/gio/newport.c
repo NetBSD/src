@@ -1,4 +1,4 @@
-/*	$NetBSD: newport.c,v 1.22 2021/04/24 23:36:48 thorpej Exp $	*/
+/*	$NetBSD: newport.c,v 1.22.8.1 2021/08/04 02:53:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: newport.c,v 1.22 2021/04/24 23:36:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: newport.c,v 1.22.8.1 2021/08/04 02:53:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -639,7 +639,7 @@ newport_attach(device_t parent, device_t self, void *aux)
 	wa.accessops = &newport_accessops;
 	wa.accesscookie = &sc->sc_dc->dc_vd;
 
-	config_found(sc->sc_dev, &wa, wsemuldisplaydevprint, CFARG_EOL);
+	config_found(sc->sc_dev, &wa, wsemuldisplaydevprint, CFARGS_NONE);
 }
 
 int

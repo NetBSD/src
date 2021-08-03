@@ -1,4 +1,4 @@
-/*	$NetBSD: sgc.c,v 1.3 2021/04/24 23:36:37 thorpej Exp $	*/
+/*	$NetBSD: sgc.c,v 1.3.8.1 2021/08/04 01:02:36 thorpej Exp $	*/
 /*	$OpenBSD: sgc.c,v 1.6 2010/04/15 20:35:21 miod Exp $	*/
 
 /*
@@ -131,7 +131,7 @@ sgcattach(device_t parent, device_t self, void *aux)
 		saa.saa_slot = slot;
 
 		/* Attach matching device. */
-		config_found(self, &saa, sgcprint, CFARG_EOL);
+		config_found(self, &saa, sgcprint, CFARGS_NONE);
 	}
 }
 

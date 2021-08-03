@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20.c,v 1.18 2021/04/24 23:36:27 thorpej Exp $	*/
+/*	$NetBSD: vidc20.c,v 1.18.8.1 2021/08/04 16:51:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vidc20.c,v 1.18 2021/04/24 23:36:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidc20.c,v 1.18.8.1 2021/08/04 16:51:27 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -110,7 +110,7 @@ vidcsearch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	
 	if (config_probe(parent, cf, NULL))
-		config_attach(parent, cf, NULL, NULL, CFARG_EOL);
+		config_attach(parent, cf, NULL, NULL, CFARGS_NONE);
 
 	return 0;
 }
@@ -150,8 +150,7 @@ vidcattach(device_t parent, device_t self, void *aux)
 	}
 
 	config_search(self, NULL,
-	    CFARG_SEARCH, vidcsearch,
-	    CFARG_EOL);
+	    CFARGS(.search = vidcsearch));
 }
 
 /* End of vidc20.c */

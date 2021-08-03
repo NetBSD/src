@@ -1,4 +1,4 @@
-/*	$NetBSD: zsms.c,v 1.19 2021/04/24 23:36:59 thorpej Exp $	*/
+/*	$NetBSD: zsms.c,v 1.19.8.1 2021/08/04 20:31:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zsms.c,v 1.19 2021/04/24 23:36:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zsms.c,v 1.19.8.1 2021/08/04 20:31:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,7 +183,7 @@ zsms_attach(device_t parent, device_t self, void *aux)
 	zsms->sc_enabled = 0;
 	zsms->sc_selftest = 0;
 	zsms->sc_wsmousedev = config_found(self, &a, wsmousedevprint,
-	    CFARG_EOL);
+	    CFARGS_NONE);
 }
 
 static int

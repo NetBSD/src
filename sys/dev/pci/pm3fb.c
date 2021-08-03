@@ -332,7 +332,7 @@ pm3fb_attach(device_t parent, device_t self, void *aux)
 	aa.accessops = &pm3fb_accessops;
 	aa.accesscookie = &sc->vd;
 
-	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint, CFARG_EOL);
+	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint, CFARGS_NONE);
 }
 
 static int

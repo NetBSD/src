@@ -1,4 +1,4 @@
-/*	$NetBSD: sun6i_spi.c,v 1.9 2021/04/24 23:36:28 thorpej Exp $	*/
+/*	$NetBSD: sun6i_spi.c,v 1.9.8.1 2021/08/04 16:51:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Nygren
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun6i_spi.c,v 1.9 2021/04/24 23:36:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun6i_spi.c,v 1.9.8.1 2021/08/04 16:51:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -188,7 +188,7 @@ sun6ispi_attach(device_t parent, device_t self, void *aux)
 	memset(&sba, 0, sizeof(sba));
 	sba.sba_controller = &sc->sc_spi;
 
-	(void) config_found(self, &sba, spibus_print, CFARG_EOL);
+	(void) config_found(self, &sba, spibus_print, CFARGS_NONE);
 }
 
 static int

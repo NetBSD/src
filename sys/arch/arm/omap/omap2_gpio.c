@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2_gpio.c,v 1.22 2021/04/24 23:36:28 thorpej Exp $	*/
+/*	$NetBSD: omap2_gpio.c,v 1.22.8.1 2021/08/04 16:51:28 thorpej Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_gpio.c,v 1.22 2021/04/24 23:36:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_gpio.c,v 1.22.8.1 2021/08/04 16:51:28 thorpej Exp $");
 
 #define _INTR_PRIVATE
 
@@ -393,7 +393,7 @@ gpio_attach1(device_t self)
 			: GPIO_PIN_LOW;
 	}
 
-	config_found(self, &gba, gpiobus_print, CFARG_EOL);
+	config_found(self, &gba, gpiobus_print, CFARGS_NONE);
 }
 #endif /* NGPIO > 0 */
 
