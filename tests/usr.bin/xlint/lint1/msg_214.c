@@ -1,7 +1,12 @@
-/*	$NetBSD: msg_214.c,v 1.2 2021/02/21 09:07:58 rillig Exp $	*/
+/*	$NetBSD: msg_214.c,v 1.3 2021/08/03 18:38:02 rillig Exp $	*/
 # 3 "msg_214.c"
 
 // Test for message: function %s expects to return value [214]
 
-TODO: "Add example code that triggers the above message." /* expect: 249 */
-TODO: "Add example code that almost triggers the above message."
+int
+int_function(void)
+{
+	/* TODO: add quotes around '%s' */
+	/* expect+1: warning: function int_function expects to return value [214] */
+	return;
+}

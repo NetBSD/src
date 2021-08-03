@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.327 2021/08/03 17:44:59 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.328 2021/08/03 18:38:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.327 2021/08/03 17:44:59 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.328 2021/08/03 18:38:02 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3414,7 +3414,8 @@ cast(tnode_t *tn, type_t *tp)
 		error(329, type_name(tn->tn_type), type_name(tp));
 		return NULL;
 	} else if (nt == STRUCT || nt == ARRAY || nt == FUNC) {
-		if (!Sflag || nt == ARRAY || nt == FUNC)
+		/* Casting to a struct is an undocumented GCC extension. */
+		if (!(gflag && nt == STRUCT))
 			goto invalid_cast;
 	} else if (ot == STRUCT || ot == UNION) {
 		goto invalid_cast;

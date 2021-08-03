@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.217 2021/08/01 18:37:29 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.218 2021/08/03 18:38:02 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.217 2021/08/01 18:37:29 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.218 2021/08/03 18:38:02 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -2230,7 +2230,7 @@ eqtype(const type_t *tp1, const type_t *tp2,
 				return false;
 		}
 
-		/* dont check prototypes for traditional */
+		/* don't check prototypes for traditional */
 		if (t == FUNC && !tflag) {
 			if (tp1->t_proto && tp2->t_proto) {
 				if (!eqargs(tp1, tp2, dowarn))
