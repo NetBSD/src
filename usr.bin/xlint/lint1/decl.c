@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.218 2021/08/03 18:38:02 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.219 2021/08/03 21:18:24 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.218 2021/08/03 18:38:02 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.219 2021/08/03 21:18:24 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -2224,6 +2224,9 @@ eqtype(const type_t *tp1, const type_t *tp2,
 
 		if (t == STRUCT || t == UNION)
 			return tp1->t_str == tp2->t_str;
+
+		if (t == ENUM && eflag)
+			return tp1->t_enum == tp2->t_enum;
 
 		if (t == ARRAY && tp1->t_dim != tp2->t_dim) {
 			if (tp1->t_dim != 0 && tp2->t_dim != 0)
