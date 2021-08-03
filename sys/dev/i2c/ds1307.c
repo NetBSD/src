@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1307.c,v 1.38 2021/01/27 02:29:48 thorpej Exp $	*/
+/*	$NetBSD: ds1307.c,v 1.39 2021/08/03 23:12:14 andvar Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.38 2021/01/27 02:29:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.39 2021/08/03 23:12:14 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -669,7 +669,7 @@ dsrtc_clock_write_ymdhms(struct dsrtc_softc *sc, struct clock_ymdhms *dt)
 	}
 	/*
 	 * If the clock hold register isn't the same register as seconds,
-	 * we need to reeanble the clock.
+	 * we need to reenable the clock.
 	 */
 	if (op != I2C_OP_WRITE_WITH_STOP) {
 		cmdbuf[0] = dm->dm_ch_reg;

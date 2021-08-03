@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.22 2021/05/16 09:02:04 skrll Exp $ */
+/* $NetBSD: locore.S,v 1.23 2021/08/03 23:12:14 andvar Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -274,7 +274,7 @@ ENTRY_NP(cpu_fast_switchto)
 	PTR_L	t1, L_CPU(tp)		// get curcpu() again
 	mv	tp, s0			// return to pinned lwp
 	PTR_S	tp, CI_CURLWP(t1)	// restore curlwp
-	csrw	sstatus, t0		// reeanble interrupts
+	csrw	sstatus, t0		// reenable interrupts
 	mv	sp, s1			// restore stack pointer
 
 	REG_L	ra, (TF_RA + CALLFRAME_RA)(sp)	// get return address
@@ -291,7 +291,7 @@ ENTRY_NP(cpu_exception_handler)
 	csrrw	tp, sscratch, tp	// swap scratch and thread pointer
 	beqz	tp, .Lexception_kernel	//   tp == 0, already on kernel stack
 	//
-	// The execption happened while user code was executing.  We need to
+	// The exception happened while user code was executing.  We need to
 	// get the pointer to the user trapframe from the LWP md area.  Then we
 	// save t1 and tp so we have a register to work with and to get curlwp
 	// into tp.  We also save the saved SP into the trapframe.
@@ -345,7 +345,7 @@ ENTRY_NP(cpu_exception_handler)
 
 	// Now we get the
 	mv	a0, sp			// trapframe pointer
-	csrr	a1, sepc		// get execption pc
+	csrr	a1, sepc		// get exception pc
 	csrr	a2, sstatus		// get status
 	csrr	a3, scause		// get cause
 
@@ -387,10 +387,10 @@ exception_kernexit:
 	REG_L	t5, TF_T3(sp)		// restore t5
 	REG_L	t6, TF_T4(sp)		// restore t6
 
-	REG_L	t0, TF_PC(sp)		// fetch execption PC
+	REG_L	t0, TF_PC(sp)		// fetch exception PC
 	REG_L	t1, TF_SR(sp)		// fetch status
 
-	csrw	sepc, t0		// restore execption PC
+	csrw	sepc, t0		// restore exception PC
 	csrw	sstatus, t1		// restore status
 
 	REG_L	t0, TF_T0(sp)		// restore t0

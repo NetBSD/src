@@ -1,3 +1,5 @@
+/*      $NetBSD: octeon_cpunode.c,v 1.20 2021/08/03 23:12:14 andvar Exp $   */
+
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +31,7 @@
 #define __INTR_PRIVATE
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: octeon_cpunode.c,v 1.19 2021/04/24 23:36:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_cpunode.c,v 1.20 2021/08/03 23:12:14 andvar Exp $");
 
 #include "locators.h"
 #include "cpunode.h"
@@ -214,7 +216,7 @@ octeon_cpu_init(struct cpu_info *ci)
 	(*mips64r2_locore_vec.ljv_tlb_invalidate_all)();
 	mips3_cp0_wired_write(pmap_tlb0_info.ti_wired);
 
-	// First thing is setup the execption vectors for this cpu.
+	// First thing is setup the exception vectors for this cpu.
 	mips64r2_vector_init(&mips_splsw);
 
 	// Next rewrite those exceptions to use this cpu's cpu_info.
