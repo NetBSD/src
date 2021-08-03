@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogin.c,v 1.47 2020/05/03 16:32:16 christos Exp $	*/
+/*	$NetBSD: rlogin.c,v 1.48 2021/08/03 23:21:07 chs Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: rlogin.c,v 1.47 2020/05/03 16:32:16 christos Exp $");
+__RCSID("$NetBSD: rlogin.c,v 1.48 2021/08/03 23:21:07 chs Exp $");
 #endif
 #endif /* not lint */
 
@@ -577,34 +577,16 @@ static pid_t ppid;
 static ssize_t rcvcnt, rcvstate;
 static char rcvbuf[8 * 1024];
 
-static int
-recvx(int fd, void *buf, size_t len, int flags, int *msgflags)
-{
-	struct msghdr msg;
-	struct iovec iov;
-	int error;
-
-	memset(&msg, 0, sizeof(msg));
-	msg.msg_iov = &iov;
-	iov.iov_base = buf;
-	iov.iov_len = len;
-	error = recvmsg(fd, &msg, flags);
-	if (error)
-		return error;
-	*msgflags = msg.msg_flags;
-	return 0;
-}
-
 static void
 oob(int signo)
 {
 	struct termios tty;
-	int atmark = 0;
+	int atmark;
 	ssize_t n, rcvd;
 	char waste[BUFSIZ], mark;
 
 	rcvd = 0;
-	while (recvx(rem, &mark, 1, MSG_OOB, &atmark) == -1) {
+	while (recv(rem, &mark, 1, MSG_OOB) == -1) {
 		switch (errno) {
 		case EWOULDBLOCK:
 			/*
@@ -628,7 +610,6 @@ oob(int signo)
 			return;
 		}
 	}
-	atmark &= MSG_OOB;
 	if (mark & TIOCPKT_WINDOW) {
 		/* Let server know about window size changes */
 		(void)kill(ppid, SIGUSR1);
@@ -645,8 +626,17 @@ oob(int signo)
 	}
 	if (mark & TIOCPKT_FLUSHWRITE) {
 		(void)tcflush(1, TCIOFLUSH);
-		if (!atmark)
+		for (;;) {
+			if (ioctl(rem, SIOCATMARK, &atmark) < 0) {
+				warn("ioctl SIOCATMARK (ignored)");
+				break;
+			}
+			if (atmark)
+				break;
 			n = read(rem, waste, sizeof (waste));
+			if (n <= 0)
+				break;
+		}
 		/*
 		 * Don't want any pending data to be output, so clear the recv
 		 * buffer.  If we were hanging on a write when interrupted,
