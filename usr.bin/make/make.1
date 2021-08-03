@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.298 2021/07/30 22:16:09 rillig Exp $
+.\"	$NetBSD: make.1,v 1.299 2021/08/03 07:12:50 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd July 30, 2021
+.Dd August 3, 2021
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -1235,11 +1235,13 @@ Orders every word in variable alphabetically.
 .It Cm \&:On
 Orders every word in variable numerically.
 A number followed by one of
-.Ql K ,
+.Ql k ,
 .Ql M
 or
 .Ql G
-is multiplied by the appropriate factor.
+is multiplied by the appropriate factor (1024 (k), 1048576 (M), or
+1073741824 (G)).
+Both upper- and lower-case letters are accepted.
 .It Cm \&:Or
 Orders every word in variable in reverse alphabetical order.
 .It Cm \&:Orn
