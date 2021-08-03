@@ -1,9 +1,10 @@
 #!/bin/sh
 #
-# $NetBSD: ccd,v 1.7 2011/04/05 02:52:27 enami Exp $
+# $NetBSD: ccd,v 1.8 2021/08/03 05:15:20 mlelstv Exp $
 #
 
 # PROVIDE: ccd
+# REQUIRE: devpubd
 # BEFORE:  DISKS
 # KEYWORD: shutdown
 
