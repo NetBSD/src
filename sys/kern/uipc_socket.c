@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.294 2020/12/11 03:00:09 thorpej Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.295 2021/08/03 20:27:08 chs Exp $	*/
 
 /*
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.294 2020/12/11 03:00:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.295 2021/08/03 20:27:08 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -2432,6 +2432,7 @@ sbsavetimestamp(int opt, struct mbuf **mp)
 	struct timeval tv;
 	int error;
 
+	memset(&tv, 0, sizeof(tv));
 	microtime(&tv);
 
 	MODULE_HOOK_CALL(uipc_socket_50_sbts_hook, (opt, &mp), enosys(), error);
