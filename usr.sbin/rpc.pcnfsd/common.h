@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.2 1995/07/25 22:20:26 gwr Exp $	*/
+/*	$NetBSD: common.h,v 1.3 2021/08/03 20:59:20 andvar Exp $	*/
 
 /* RE_SID: @(%)/usr/dosnfs/shades_SCCS/unix/pcnfsd/v2/src/SCCS/s.common.h 1.3 91/12/17 14:32:05 SMI */
 /*
@@ -89,7 +89,7 @@
 **---------------------------------------------------------------------
 ** Define (via Makefile) the following symbol to use a cache of recently-used
 ** user names. This has certain uses in university and other settings
-** where (1) the pasword file is very large, and (2) a group of users
+** where (1) the password file is very large, and (2) a group of users
 ** frequently logs in together using the same account (for example,
 ** a class userid).
 **---------------------------------------------------------------------
@@ -132,7 +132,7 @@
 ** to determine if a password entry contains a legal shell (and therefore
 ** identifies a user who may log in). The default is to check that
 ** the last two characters of the shell field are "sh", which should
-** cope with "sh", "csh", "ksh", "bash".... See the routine get_pasword()
+** cope with "sh", "csh", "ksh", "bash".... See the routine get_password()
 ** in pcnfsd_misc.c for more details.
 **
 ** Note: For some reason that I haven't yet figured out, getusershell()
