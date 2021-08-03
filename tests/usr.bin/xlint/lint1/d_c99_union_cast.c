@@ -1,7 +1,7 @@
-/*	$NetBSD: d_c99_union_cast.c,v 1.4 2021/02/21 09:07:58 rillig Exp $	*/
+/*	$NetBSD: d_c99_union_cast.c,v 1.5 2021/08/03 20:34:23 rillig Exp $	*/
 # 3 "d_c99_union_cast.c"
 
-/* union cast */
+/* C99 does not define union cast, it is a GCC extension. */
 
 struct bar {
 	int a;
