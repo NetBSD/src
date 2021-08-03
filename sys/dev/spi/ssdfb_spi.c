@@ -1,4 +1,4 @@
-/* $NetBSD: ssdfb_spi.c,v 1.6 2021/08/01 14:56:18 tnn Exp $ */
+/* $NetBSD: ssdfb_spi.c,v 1.7 2021/08/03 11:30:25 tnn Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ssdfb_spi.c,v 1.6 2021/08/01 14:56:18 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ssdfb_spi.c,v 1.7 2021/08/03 11:30:25 tnn Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -55,6 +55,7 @@ struct ssdfb_spi_softc {
 	struct spi_handle	*sc_sh;
 #ifdef FDT
 	struct fdtbus_gpio_pin	*sc_gpio_dc;
+	struct fdtbus_gpio_pin	*sc_gpio_res;
 #endif
 	bool			sc_3wiremode;
 };
@@ -133,13 +134,22 @@ ssdfb_spi_attach(device_t parent, device_t self, void *aux)
 	 * 4 wire mode sends 8 bit sequences and requires an auxiliary GPIO
 	 * pin for the command/data bit.
 	 */
-	sc->sc_3wiremode = true;
 #ifdef FDT
 	const int phandle = sa->sa_cookie;
-	sc->sc_gpio_dc = fdtbus_gpio_acquire(phandle, "dc-gpio", GPIO_PIN_OUTPUT);
+	sc->sc_gpio_dc =
+	    fdtbus_gpio_acquire(phandle, "dc-gpio", GPIO_PIN_OUTPUT);
 	if (!sc->sc_gpio_dc)
-		sc->sc_gpio_dc = fdtbus_gpio_acquire(phandle, "cd-gpio", GPIO_PIN_OUTPUT);
+		sc->sc_gpio_dc =
+		    fdtbus_gpio_acquire(phandle, "cd-gpio", GPIO_PIN_OUTPUT);
 	sc->sc_3wiremode = (sc->sc_gpio_dc == NULL);
+	sc->sc_gpio_res =
+	    fdtbus_gpio_acquire(phandle, "res-gpio", GPIO_PIN_OUTPUT);
+	if (sc->sc_gpio_res) {
+		fdtbus_gpio_write_raw(sc->sc_gpio_res, 0);
+		DELAY(100);
+		fdtbus_gpio_write_raw(sc->sc_gpio_res, 1);
+		DELAY(100);
+	}
 #else
 	sc->sc_3wiremode = true;
 #endif
