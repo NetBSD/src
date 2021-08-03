@@ -1,1 +1,2 @@
-d_c99_union_cast.c(24): error: type 'pointer to char' is not a member of 'union foo' [329]
+d_c99_union_cast.c(22): error: union cast is a GCC extension [328]
+d_c99_union_cast.c(24): error: union cast is a GCC extension [328]

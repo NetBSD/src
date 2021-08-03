@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.328 2021/08/03 18:38:02 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.329 2021/08/03 20:57:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.328 2021/08/03 18:38:02 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.329 2021/08/03 20:57:06 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3395,8 +3395,8 @@ cast(tnode_t *tn, type_t *tp)
 	} else if (nt == UNION) {
 		sym_t *m;
 		struct_or_union *str = tp->t_str;
-		if (!Sflag) {
-			/* union cast is a C9X feature */
+		if (!gflag) {
+			/* union cast is a GCC extension */
 			error(328);
 			return NULL;
 		}
