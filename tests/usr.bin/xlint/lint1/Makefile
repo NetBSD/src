@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.99 2021/08/01 16:29:28 rillig Exp $
+# $NetBSD: Makefile,v 1.100 2021/08/03 18:03:54 rillig Exp $
 
 NOMAN=		# defined
 MAX_MESSAGE=	345		# see lint1/err.c
@@ -135,6 +135,8 @@ FILES+=		expr_binary.c
 FILES+=		expr_binary.exp
 FILES+=		expr_binary_trad.c
 FILES+=		expr_binary_trad.exp
+FILES+=		expr_cast.c
+FILES+=		expr_cast.exp
 FILES+=		expr_precedence.c
 FILES+=		expr_precedence.exp
 FILES+=		expr_range.c
