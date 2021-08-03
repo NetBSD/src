@@ -1,4 +1,4 @@
-/* $NetBSD: acpipchb.c,v 1.25 2021/05/12 21:56:13 thorpej Exp $ */
+/* $NetBSD: acpipchb.c,v 1.25.4.1 2021/08/04 16:51:26 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpipchb.c,v 1.25 2021/05/12 21:56:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpipchb.c,v 1.25.4.1 2021/08/04 16:51:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -175,8 +175,7 @@ acpipchb_attach(device_t parent, device_t self, void *aux)
 	acpipchb_setup_quirks(sc, &pba);
 
 	config_found(self, &pba, pcibusprint,
-	    CFARG_DEVHANDLE, device_handle(self),
-	    CFARG_EOL);
+	    CFARGS(.devhandle = device_handle(self)));
 }
 
 struct acpipchb_setup_ranges_args {

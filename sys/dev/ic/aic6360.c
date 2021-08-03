@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.103 2021/04/24 23:36:55 thorpej Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.103.8.1 2021/08/04 20:14:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.103 2021/04/24 23:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.103.8.1 2021/08/04 20:14:42 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -294,7 +294,7 @@ aicattach(struct aic_softc *sc)
 	 * Ask the adapter what subunits are present
 	 */
 	sc->sc_child = config_found(sc->sc_dev, &sc->sc_channel, scsiprint,
-	    CFARG_EOL);
+	    CFARGS_NONE);
 	scsipi_adapter_delref(adapt);
 }
 

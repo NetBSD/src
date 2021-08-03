@@ -91,7 +91,6 @@ gecko_callback(device_t self, struct confargs *ca)
 {
 
 	return config_round(self, ca, mbprint,
-	    CFARG_SUBMATCH, mbsubmatch,
-	    CFARG_EOL);
+	    CFARGS(.submatch = mbsubmatch));
 }
 

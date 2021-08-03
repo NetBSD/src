@@ -1,4 +1,4 @@
-/*	$NetBSD: addcom_isa.c,v 1.22 2021/04/24 23:36:55 thorpej Exp $	*/
+/*	$NetBSD: addcom_isa.c,v 1.22.8.1 2021/08/04 20:27:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Graff.  All rights reserved.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: addcom_isa.c,v 1.22 2021/04/24 23:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: addcom_isa.c,v 1.22.8.1 2021/08/04 20:27:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,7 +225,7 @@ addcomattach(device_t parent, device_t self, void *aux)
 		ca.ca_noien = 0;
 
 		sc->sc_slaves[i] = config_found(self, &ca, commultiprint,
-		    CFARG_EOL);
+		    CFARGS_NONE);
 		if (sc->sc_slaves[i] != NULL)
 			sc->sc_alive |= 1 << i;
 	}

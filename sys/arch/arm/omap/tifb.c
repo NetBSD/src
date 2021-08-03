@@ -1,4 +1,4 @@
-/*	$NetBSD: tifb.c,v 1.9 2021/04/24 23:36:28 thorpej Exp $	*/
+/*	$NetBSD: tifb.c,v 1.9.8.1 2021/08/04 16:51:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2010 Michael Lorenz
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tifb.c,v 1.9 2021/04/24 23:36:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tifb.c,v 1.9.8.1 2021/08/04 16:51:28 thorpej Exp $");
 
 #include "opt_omap.h"
 
@@ -633,7 +633,7 @@ tifb_attach(device_t parent, device_t self, void *aux)
 	aa.accessops = &tifb_accessops;
 	aa.accesscookie = &sc->vd;
 
-	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint, CFARG_EOL);
+	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint, CFARGS_NONE);
 }
 
 static int

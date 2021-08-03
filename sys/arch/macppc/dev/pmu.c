@@ -1,4 +1,4 @@
-/*	$NetBSD: pmu.c,v 1.37 2021/04/24 23:36:41 thorpej Exp $ */
+/*	$NetBSD: pmu.c,v 1.37.8.1 2021/08/04 02:39:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.37 2021/04/24 23:36:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.37.8.1 2021/08/04 02:39:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -383,8 +383,7 @@ pmu_attach(device_t parent, device_t self, void *aux)
 			sc->sc_i2c.ic_cookie = sc;
 			sc->sc_i2c.ic_exec = pmu_i2c_exec;
 			config_found(sc->sc_dev, &iba, iicbus_print,
-			    CFARG_IATTR, "i2cbus",
-			    CFARG_EOL);
+			    CFARGS(.iattr = "i2cbus"));
 			goto next;
 		}
 		if (strncmp(name, "adb", 4) == 0) {
@@ -396,8 +395,7 @@ pmu_attach(device_t parent, device_t self, void *aux)
 			sc->sc_adbops.set_handler = pmu_adb_set_handler;
 #if NNADB > 0
 			config_found(self, &sc->sc_adbops, nadb_print,
-			    CFARG_IATTR, "adb_bus",
-			    CFARG_EOL);
+			    CFARGS(.iattr = "adb_bus"));
 #endif
 			goto next;
 		}
@@ -1098,8 +1096,7 @@ pmu_attach_legacy_battery(struct pmu_softc *sc)
 	baa.baa_type = BATTERY_TYPE_LEGACY;
 	baa.baa_pmu_ops = &sc->sc_pmu_ops;
 	config_found(sc->sc_dev, &baa, pmu_print,
-	    CFARG_IATTR, "pmu_bus",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "pmu_bus"));
 }
 
 static void
@@ -1111,6 +1108,5 @@ pmu_attach_smart_battery(struct pmu_softc *sc, int num)
 	baa.baa_pmu_ops = &sc->sc_pmu_ops;
 	baa.baa_num = num;
 	config_found(sc->sc_dev, &baa, pmu_print,
-	    CFARG_IATTR, "pmu_bus",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "pmu_bus"));
 }

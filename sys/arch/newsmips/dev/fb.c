@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.28 2021/04/24 23:36:44 thorpej Exp $	*/
+/*	$NetBSD: fb.c,v 1.28.8.1 2021/08/04 02:49:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.28 2021/04/24 23:36:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.28.8.1 2021/08/04 02:49:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -168,7 +168,7 @@ fb_attach(device_t parent, device_t self, void *aux)
 	waa.accessops = &fb_accessops;
 	waa.accesscookie = sc;
 
-	config_found(self, &waa, wsemuldisplaydevprint, CFARG_EOL);
+	config_found(self, &waa, wsemuldisplaydevprint, CFARGS_NONE);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: ka860.c,v 1.35 2021/04/24 23:36:50 thorpej Exp $	*/
+/*	$NetBSD: ka860.c,v 1.35.8.1 2021/08/04 03:00:08 thorpej Exp $	*/
 /*
  * Copyright (c) 1986, 1988 Regents of the University of California.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka860.c,v 1.35 2021/04/24 23:36:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka860.c,v 1.35.8.1 2021/08/04 03:00:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -426,7 +426,7 @@ void abus_mainbus_attach(device_t parent, device_t self, void *aux)
 			sbiar->sbi_error = 0x1000;
 			sbiar->sbi_fltsts = 0xc0000;
 
-                        config_found(self, &aa, abus_print, CFARG_EOL);
+                        config_found(self, &aa, abus_print, CFARGS_NONE);
                         break;
 
                 default:

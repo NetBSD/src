@@ -1,4 +1,4 @@
-/* $NetBSD: vatapi.c,v 1.3 2021/04/24 23:36:50 thorpej Exp $ */
+/* $NetBSD: vatapi.c,v 1.3.8.1 2021/08/04 03:00:08 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vatapi.c,v 1.3 2021/04/24 23:36:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vatapi.c,v 1.3.8.1 2021/08/04 03:00:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -176,7 +176,7 @@ vatapi_callback(device_t self)
 
 	/* we `discovered' an atapi adapter */
 	sc->sc_vatapibus =
-	    config_found(sc->sc_dev, chan, atapiprint, CFARG_EOL);
+	    config_found(sc->sc_dev, chan, atapiprint, CFARGS_NONE);
 }
 
 

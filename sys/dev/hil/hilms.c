@@ -1,4 +1,4 @@
-/*	$NetBSD: hilms.c,v 1.3 2021/04/24 23:36:54 thorpej Exp $	*/
+/*	$NetBSD: hilms.c,v 1.3.8.1 2021/08/04 20:24:27 thorpej Exp $	*/
 /*	$OpenBSD: hilms.c,v 1.5 2007/04/10 22:37:17 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
@@ -161,7 +161,7 @@ hilmsattach(device_t parent, device_t self, void *aux)
 	a.accessops = &hilms_accessops;
 	a.accesscookie = sc;
 
-	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint, CFARG_EOL);
+	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint, CFARGS_NONE);
 }
 
 int

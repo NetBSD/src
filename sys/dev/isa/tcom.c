@@ -1,4 +1,4 @@
-/*	$NetBSD: tcom.c,v 1.21 2021/04/24 23:36:55 thorpej Exp $	*/
+/*	$NetBSD: tcom.c,v 1.21.8.1 2021/08/04 20:27:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcom.c,v 1.21 2021/04/24 23:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcom.c,v 1.21.8.1 2021/08/04 20:27:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,7 +219,7 @@ tcomattach(device_t parent, device_t self, void *aux)
 		ca.ca_iobase = sc->sc_iobase + i * COM_NPORTS;
 		ca.ca_noien = 0;
 
-		slave = config_found(self, &ca, commultiprint, CFARG_EOL);
+		slave = config_found(self, &ca, commultiprint, CFARGS_NONE);
 		if (slave != NULL) {
 			sc->sc_alive |= 1 << i;
 			sc->sc_slaves[i] = device_private(slave);

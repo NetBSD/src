@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.65 2021/04/24 23:36:54 thorpej Exp $ */
+/* $NetBSD: gpio.c,v 1.65.8.1 2021/08/04 18:33:11 thorpej Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.65 2021/04/24 23:36:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.65.8.1 2021/08/04 18:33:11 thorpej Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -191,8 +191,7 @@ gpio_rescan(device_t self, const char *ifattr, const int *locators)
 {
 
 	config_search(self, NULL,
-	    CFARG_SEARCH, gpio_search,
-	    CFARG_EOL);
+	    CFARGS(.search = gpio_search));
 
 	return 0;
 }
@@ -278,7 +277,7 @@ gpio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	strcpy(ga.ga_dvname, cf->cf_name);
 
 	if (config_probe(parent, cf, &ga))
-		config_attach(parent, cf, &ga, gpio_print, CFARG_EOL);
+		config_attach(parent, cf, &ga, gpio_print, CFARGS_NONE);
 	kmem_free(ga.ga_dvname, namlen);
 	return 0;
 }
@@ -854,13 +853,11 @@ gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 		locs[GPIOCF_FLAG] = ga.ga_flags;
 
 		cf = config_search(sc->sc_dev, &ga,
-		    CFARG_LOCATORS, locs,
-		    CFARG_EOL);
+		    CFARGS(.locators = locs));
 		if (cf != NULL) {
 			dv = config_attach(sc->sc_dev, cf, &ga,
 			    gpiobus_print,
-			    CFARG_LOCATORS, locs,
-			    CFARG_EOL);
+			    CFARGS(.locators = locs));
 #ifdef COMPAT_50
 			if (dv != NULL) {
 				gdev = kmem_alloc(sizeof(struct gpio_dev),

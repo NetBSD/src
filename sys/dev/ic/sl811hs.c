@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.105 2021/04/24 23:36:55 thorpej Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.105.8.1 2021/08/04 20:14:42 thorpej Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.105 2021/04/24 23:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.105.8.1 2021/08/04 20:14:42 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_slhci.h"
@@ -1272,7 +1272,7 @@ slhci_attach(struct slhci_softc *sc)
 
 	/* Attach usb and uhub. */
 	sc->sc_child = config_found(SC_DEV(sc), &sc->sc_bus, usbctlprint,
-	    CFARG_EOL);
+	    CFARGS_NONE);
 
 	if (!sc->sc_child)
 		return -1;

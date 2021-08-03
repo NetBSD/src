@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.115 2021/06/21 03:21:17 christos Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.115.2.1 2021/08/04 21:27:00 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.115 2021/06/21 03:21:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.115.2.1 2021/08/04 21:27:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1014,9 +1014,8 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 		aa.accesscookie = &dp->rd_vd;
 
 		config_found(sc->sc_dev, &aa, wsemuldisplaydevprint,
-		    CFARG_IATTR, "wsemuldisplaydev",
-		    CFARG_EOL);
-		
+		    CFARGS(.iattr = "wsemuldisplaydev"));
+
 		radeonfb_blank(dp, 0);
 
 		/* Initialise delayed lvds operations for backlight. */
@@ -1056,8 +1055,7 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 	 */
 	sc->sc_needs_unmap = 
 	    (config_found(dev, aux, radeonfb_drm_print,
-			  CFARG_IATTR, "drm",
-			  CFARG_EOL) != 0);
+			  CFARGS(.iattr = "drm")) != NULL);
 	DPRINTF(("needs_unmap: %d\n", sc->sc_needs_unmap));
 
 	if (!IS_AVIVO(sc)) {
