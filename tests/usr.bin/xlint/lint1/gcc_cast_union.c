@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_cast_union.c,v 1.1 2021/08/03 20:34:23 rillig Exp $	*/
+/*	$NetBSD: gcc_cast_union.c,v 1.2 2021/08/03 21:09:26 rillig Exp $	*/
 # 3 "gcc_cast_union.c"
 
 /*
@@ -10,6 +10,8 @@
  *
  * https://gcc.gnu.org/onlinedocs/gcc/Cast-to-Union.html
  */
+
+/* lint1-extra-flags: -e */
 
 union anything {
 	_Bool m_bool;
@@ -79,9 +81,9 @@ test(void)
 	any = (union anything)E1;
 	any = (union anything)E2;
 	/* GCC allows enum mismatch even with -Wenum-conversion */
-	/* expect+1: error: type 'enum other_enum' is not a member of 'union anything' [329] */
+	/* XXX: Lint should warn about enum type mismatch */
 	any = (union anything)OTHER;
-	/* GCC strictly complains that 'char *' is not in the union. */
+	/* expect+1: error: type 'pointer to char' is not a member of 'union anything' [329] */
 	any = (union anything)"char *";
 	any = (union anything)(const char *)"char *";
 	/* expect+1: error: type 'pointer to double' is not a member of 'union anything' [329] */
