@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.108 2020/04/12 17:02:52 jdolecek Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.109 2021/08/03 20:25:43 chs Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.108 2020/04/12 17:02:52 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.109 2021/08/03 20:25:43 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -2559,6 +2559,7 @@ wapbl_write_blocks(struct wapbl *wl, off_t *offp)
 		wc->wc_type = WAPBL_WC_BLOCKS;
 		wc->wc_len = blocklen;
 		wc->wc_blkcount = 0;
+		wc->wc_unused = 0;
 		while (bp && (wc->wc_blkcount < wl->wl_brperjblock)) {
 			/*
 			 * Make sure all the physical block numbers are up to
@@ -2647,6 +2648,7 @@ wapbl_write_revocations(struct wapbl *wl, off_t *offp)
 		wc->wc_type = WAPBL_WC_REVOCATIONS;
 		wc->wc_len = blocklen;
 		wc->wc_blkcount = 0;
+		wc->wc_unused = 0;
 		while (wd && (wc->wc_blkcount < wl->wl_brperjblock)) {
 			wc->wc_blocks[wc->wc_blkcount].wc_daddr =
 			    wd->wd_blkno;
