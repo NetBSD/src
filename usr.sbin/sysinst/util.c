@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.58 2021/07/20 16:40:12 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.59 2021/08/03 13:40:33 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1881,25 +1881,26 @@ set_timezone(void)
 			   tzm_set_names, NULL, NULL,
 			   "\nPlease consult the install documents.",
 			   MSG_exit_menu_generic);
-	if (menu_no < 0)
-		goto done;	/* error - skip timezone setting */
+	if (menu_no >= 0) {
+		time_menu = menu_no;
+		process_menu(menu_no, NULL);
+		time_menu = -1;
 
-	time_menu = menu_no;
-	process_menu(menu_no, NULL);
-	time_menu = -1;
+		free_menu(menu_no);
+	}
 
-	free_menu(menu_no);
-
+	alarm(0);
 	signal(SIGALRM, SIG_IGN);
 
-	snprintf(localtime_target, sizeof(localtime_target),
-		 "/usr/share/zoneinfo/%s", tz_selected);
-	strlcpy(localtime_link, target_expand("/etc/localtime"),
-	    sizeof localtime_link);
-	unlink(localtime_link);
-	symlink(localtime_target, localtime_link);
+	if (menu_no >= 0) {
+		snprintf(localtime_target, sizeof(localtime_target),
+			 "/usr/share/zoneinfo/%s", tz_selected);
+		strlcpy(localtime_link, target_expand("/etc/localtime"),
+		    sizeof localtime_link);
+		unlink(localtime_link);
+		symlink(localtime_target, localtime_link);
+	}
 
-done:
 	return 1;
 }
 
