@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.8 2020/12/30 11:43:13 rillig Exp $	*/
+/*	$NetBSD: param.h,v 1.9 2021/08/03 17:27:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -63,7 +63,7 @@
 /*
  * The sparc64 long double code generation is broken in old gcc.
  */
-#if !defined(__sparc64__) || !defined(__GNUC__) || __GNUC__ > 2
+#if !(defined(__sparc64__) && defined(__GNUC__) && __GNUC__ <= 2)
 typedef	long double ldbl_t;
 #else
 typedef	double	ldbl_t;
