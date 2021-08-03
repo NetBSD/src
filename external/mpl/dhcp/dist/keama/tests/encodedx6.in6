@@ -1,9 +1,0 @@
-# encode data expression and extract numeric expression
-
-# empty configs are not accepted by Kea
-default-lease-time 1800;
-
-# reduce literals
-class "literal" {
-    match if option dhcp6.client-data != encode-int(extract-int("\bbar",32),16);
-}

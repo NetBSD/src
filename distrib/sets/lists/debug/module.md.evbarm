@@ -1,7 +1,0 @@
-# $NetBSD: module.md.evbarm,v 1.2 2020/09/10 04:56:00 martin Exp $
-./usr/libdata/debug/@MODULEDIR@/if_iavf				modules-base-kernel	kmod,debug
-./usr/libdata/debug/@MODULEDIR@/if_iavf/if_iavf.kmod.debug		modules-base-kernel	kmod,debug
-./usr/libdata/debug/@MODULEDIR@/if_ixl				modules-base-kernel	kmod,debug
-./usr/libdata/debug/@MODULEDIR@/if_ixl/if_ixl.kmod.debug		modules-base-kernel	kmod,debug
-./usr/libdata/debug/@MODULEDIR@/ubsec				modules-base-kernel	kmod,debug
-./usr/libdata/debug/@MODULEDIR@/ubsec/ubsec.kmod.debug			modules-base-kernel	kmod,debug

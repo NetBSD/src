@@ -1,8 +1,0 @@
-abcdef
-ghijkl
-mnopqr
-1234567890
-final memory stream write offset: 12
-buffer size: 12, content: hallo world
-reading memory stream: hallo world
-final memory stream read offset: 12

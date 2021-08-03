@@ -1,6 +1,0 @@
-# $NetBSD: md.mipsco,v 1.7 2014/08/06 12:15:01 martin Exp $
-./boot						base-sysutil-bin
-./usr/mdec/boot					base-sysutil-bin
-./usr/mdec/bootxx_cd9660			base-sysutil-bin
-./usr/mdec/bootxx_ffs				base-sysutil-bin
-./usr/mdec/installboot				base-sysutil-bin

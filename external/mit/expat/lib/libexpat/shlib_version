@@ -1,5 +1,0 @@
-#	$NetBSD: shlib_version,v 1.4 2016/05/17 23:53:02 spz Exp $
-#
-# XXX netbsd xsrc had major=4
-major=2
-minor=3

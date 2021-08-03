@@ -1,5 +1,0 @@
-msg_333.c(20): error: controlling expression must be bool, not 'int' [333]
-msg_333.c(24): error: controlling expression must be bool, not 'pointer' [333]
-msg_333.c(29): warning: statement not reached [193]
-msg_333.c(33): error: controlling expression must be bool, not 'int' [333]
-msg_333.c(35): warning: statement not reached [193]

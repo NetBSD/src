@@ -1,7 +1,0 @@
-postmap: warning: stdin, line 1: unbalanced '"' in '"dd ee ff' -- ignoring this line
-"aa bb"	cc
-"gg\"hh"	ii
-"jj@kk"	ll
-@oo	pp
-gg\ hh	ii
-mm@nn@oo	pp

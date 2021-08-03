@@ -1,4 +1,0 @@
-@set UPDATED 24 April 2012
-@set UPDATED-MONTH April 2012
-@set EDITION 2.69
-@set VERSION 2.69

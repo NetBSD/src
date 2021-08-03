@@ -1,4 +1,0 @@
-# DHCPv6 prefix declaration in root config
-
-# DHCPv6 prefix declaration must be in a subnet declaration
-prefix6 2001:: 2001:0:1:: / 64;

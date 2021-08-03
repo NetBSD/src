@@ -1,5 +1,0 @@
-# DHCPv4 use ISC DHCP default lifetimes but not when configured.
-
-min-lease-time 3600;
-default-lease-time 7200;
-max-lease-time 14400;

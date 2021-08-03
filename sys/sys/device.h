@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.171 2021/06/12 12:13:51 riastradh Exp $ */
+/* $NetBSD: device.h,v 1.171.2.1 2021/08/03 15:00:15 thorpej Exp $ */
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -412,6 +412,7 @@ TAILQ_HEAD(cftablelist, cftable);
 #endif
 
 typedef int (*cfsubmatch_t)(device_t, cfdata_t, const int *, void *);
+typedef int (*cfsearch_t)(device_t, cfdata_t, const int *, void *);
 
 /*
  * `configuration' attachment and driver (what the machine-independent
@@ -530,19 +531,39 @@ struct pdevinit {
 #define	DVUNIT_ANY	-1
 
 /*
- * Tags for tag-value argument pairs passed to config_search() and
- * config_found().
+ * Arguments passed to config_search() and config_found().
  */
-typedef enum {
-	CFARG_SUBMATCH		= 0,	/* submatch function (direct config) */
-	CFARG_SEARCH		= 1,	/* search function (indirect config) */
-	CFARG_IATTR		= 2,	/* interface attribute */
-	CFARG_LOCATORS		= 3,	/* locators array */
-	CFARG_DEVHANDLE		= 4,	/* devhandle_t (by value) */
+struct cfargs {
+	uintptr_t	cfargs_version;	/* version field */
 
-	/* ...a value not likely to occur randomly in the wild. */
-	CFARG_EOL		= 0xeeeeeeee
-} cfarg_t;
+	/* version 1 fields */
+	cfsubmatch_t	submatch;	/* submatch function (direct config) */
+	cfsearch_t	search;		/* search function (indirect config) */
+	const char *	iattr;		/* interface attribute */
+	const int *	locators;	/* locators array */
+	devhandle_t	devhandle;	/* devhandle_t (by value) */
+
+	/* version 2 fields below here */
+};
+
+#define	CFARGS_VERSION		1	/* current cfargs version */
+
+#define	CFARGS_NONE		NULL	/* no cfargs to pass */
+
+/*
+ * Construct a cfargs with this macro, like so:
+ *
+ *	CFARGS(.submatch = config_stdsubmatch,
+ *	       .devhandle = my_devhandle)
+ *
+ * You must supply at least one field.  If you don't need any, use the
+ * CFARGS_NONE macro.
+ */
+#define	CFARGS(...)							\
+	&((const struct cfargs){					\
+		.cfargs_version = CFARGS_VERSION,			\
+		__VA_ARGS__						\
+	})
 
 #ifdef _KERNEL
 
@@ -587,24 +608,14 @@ const struct cfiattrdata *cfiattr_lookup(const char *, const struct cfdriver *);
 const char *cfdata_ifattr(const struct cfdata *);
 
 int	config_stdsubmatch(device_t, cfdata_t, const int *, void *);
-cfdata_t config_search(device_t, void *, cfarg_t, ...);
+cfdata_t config_search(device_t, void *, const struct cfargs *);
 cfdata_t config_rootsearch(cfsubmatch_t, const char *, void *);
-device_t config_found(device_t, void *, cfprint_t, cfarg_t, ...);
+device_t config_found(device_t, void *, cfprint_t, const struct cfargs *);
 device_t config_rootfound(const char *, void *);
-device_t config_attach(device_t, cfdata_t, void *, cfprint_t, cfarg_t, ...);
+device_t config_attach(device_t, cfdata_t, void *, cfprint_t,
+	    const struct cfargs *);
 int	config_match(device_t, cfdata_t, void *);
 int	config_probe(device_t, cfdata_t, void *);
-
-#if defined(__SUBR_AUTOCONF_PRIVATE)
-/*
- * XXX Some ports abuse the internals of autoconfiguration, so we need
- * XXX provide these symbols to them for the time being.
- */
-cfdata_t config_vsearch(device_t, void *, cfarg_t, va_list);
-device_t config_vfound(device_t, void *, cfprint_t, cfarg_t, va_list);
-device_t config_vattach(device_t, cfdata_t, void *, cfprint_t, cfarg_t,
-			va_list);
-#endif /* __SUBR_AUTOCONF_PRIVATE */
 
 bool	ifattr_match(const char *, const char *);
 
