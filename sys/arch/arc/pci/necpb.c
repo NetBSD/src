@@ -1,4 +1,4 @@
-/*	$NetBSD: necpb.c,v 1.47 2021/04/24 23:36:25 thorpej Exp $	*/
+/*	$NetBSD: necpb.c,v 1.47.8.1 2021/08/03 23:41:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.47 2021/04/24 23:36:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.47.8.1 2021/08/03 23:41:24 thorpej Exp $");
 
 #include "opt_pci.h"
 
@@ -276,7 +276,7 @@ necpbattach(device_t parent, device_t self, void *aux)
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
 
-	config_found(self, &pba, pcibusprint, CFARG_EOL);
+	config_found(self, &pba, pcibusprint, CFARGS_NONE);
 }
 
 static void
