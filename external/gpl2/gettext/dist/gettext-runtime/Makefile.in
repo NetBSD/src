@@ -347,7 +347,7 @@ ACLOCAL_AMFLAGS = -I m4 -I ../autoconf-lib-link/m4 -I ../m4 -I gnulib-m4
 # The list of subdirectories depends on whether --disable-libasprintf was
 # specified.
 @ENABLE_LIBASPRINTF_TRUE@SUBDIR_libasprintf = libasprintf
-SUBDIRS = doc intl intl-java intl-csharp gnulib-lib $(SUBDIR_libasprintf) src po man m4 tests
+SUBDIRS = doc intl intl-java intl-csharp gnulib-lib $(SUBDIR_libasprintf) src po m4
 
 # Allow users to use "gnulib-tool --update".
 
