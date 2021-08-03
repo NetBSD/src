@@ -1,4 +1,4 @@
-/*	$NetBSD: obs200_machdep.c,v 1.23 2021/03/30 04:53:13 rin Exp $	*/
+/*	$NetBSD: obs200_machdep.c,v 1.24 2021/08/03 09:25:44 rin Exp $	*/
 /*	Original: machdep.c,v 1.3 2005/01/17 17:24:09 shige Exp	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs200_machdep.c,v 1.23 2021/03/30 04:53:13 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs200_machdep.c,v 1.24 2021/08/03 09:25:44 rin Exp $");
 
 #include "opt_ddb.h"
 
@@ -156,11 +156,6 @@ initppc(vaddr_t startkernel, vaddr_t endkernel, char *args, void *info_block)
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
-
-	/*
-	 * Look for the ibm4xx modules in the right place.
-	 */
-	module_machine = module_machine_ibm4xx;
 }
 
 void

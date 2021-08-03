@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.7 2011/06/20 06:35:40 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.8 2021/08/03 09:25:43 rin Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -60,7 +60,6 @@ extern int fake_mapiodev;
 
 #if defined(_KERNEL)
 extern char module_machine_booke[];
-extern char module_machine_ibm4xx[];
-#endif	/* _KERNEL */
+#endif
 
 #endif	/* _EVBPPC_CPU_H_ */
