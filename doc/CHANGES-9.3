@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.18 2021/07/28 15:00:31 snj Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.19 2021/08/03 16:14:21 snj Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -386,4 +386,11 @@ sys/dev/audio/audio.c				1.105
 	AUDIO_SETINFO: fix a bug that the gain and the balance could
 	not be set at the same time.  PR kern/56308.
 	[isaki, ticket #1325]
+
+distrib/sets/lists/man/mi			1.1724
+share/man/man4/man4.x86/Makefile		1.23 via patch
+share/man/man4/man4.x86/amdccp.4		1.1
+
+	Add a man page for amdccp(4)
+	[nia, ticket #1326]
 
