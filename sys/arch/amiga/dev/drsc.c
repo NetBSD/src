@@ -1,4 +1,4 @@
-/*	$NetBSD: drsc.c,v 1.34 2021/04/24 23:36:24 thorpej Exp $ */
+/*	$NetBSD: drsc.c,v 1.34.8.1 2021/08/03 23:05:52 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drsc.c,v 1.34 2021/04/24 23:36:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drsc.c,v 1.34.8.1 2021/08/03 23:05:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,7 +170,7 @@ drscattach(device_t parent, device_t self, void *aux)
 	/*
 	 * attach all scsi units on us
 	 */
-	config_found(self, chan, scsiprint, CFARG_EOL);
+	config_found(self, chan, scsiprint, CFARGS_NONE);
 }
 
 /*
