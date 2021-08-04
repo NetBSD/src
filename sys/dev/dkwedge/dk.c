@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.105 2021/06/02 17:56:40 mlelstv Exp $	*/
+/*	$NetBSD: dk.c,v 1.106 2021/08/04 21:44:41 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.105 2021/06/02 17:56:40 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.106 2021/08/04 21:44:41 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -1639,6 +1639,7 @@ static int
 dksize(dev_t dev)
 {
 	struct dkwedge_softc *sc = dkwedge_lookup(dev);
+	uint64_t p_size;
 	int rv = -1;
 
 	if (sc == NULL)
@@ -1651,12 +1652,13 @@ dksize(dev_t dev)
 
 	/* Our content type is static, no need to open the device. */
 
+	p_size   = sc->sc_size << sc->sc_parent->dk_blkshift;
 	if (strcmp(sc->sc_ptype, DKW_PTYPE_SWAP) == 0) {
 		/* Saturate if we are larger than INT_MAX. */
-		if (sc->sc_size > INT_MAX)
+		if (p_size > INT_MAX)
 			rv = INT_MAX;
 		else
-			rv = (int) sc->sc_size;
+			rv = (int) p_size;
 	}
 
 	mutex_exit(&sc->sc_parent->dk_rawlock);
@@ -1675,6 +1677,7 @@ dkdump(dev_t dev, daddr_t blkno, void *va, size_t size)
 {
 	struct dkwedge_softc *sc = dkwedge_lookup(dev);
 	const struct bdevsw *bdev;
+	uint64_t p_size, p_offset;
 	int rv = 0;
 
 	if (sc == NULL)
@@ -1697,16 +1700,20 @@ dkdump(dev_t dev, daddr_t blkno, void *va, size_t size)
 		rv = EINVAL;
 		goto out;
 	}
-	if (blkno < 0 || blkno + size / DEV_BSIZE > sc->sc_size) {
+
+	p_offset = sc->sc_offset << sc->sc_parent->dk_blkshift;
+	p_size   = sc->sc_size << sc->sc_parent->dk_blkshift;
+
+	if (blkno < 0 || blkno + size / DEV_BSIZE > p_size) {
 		printf("%s: blkno (%" PRIu64 ") + size / DEV_BSIZE (%zu) > "
-		    "sc->sc_size (%" PRIu64 ")\n", __func__, blkno,
-		    size / DEV_BSIZE, sc->sc_size);
+		    "p_size (%" PRIu64 ")\n", __func__, blkno,
+		    size / DEV_BSIZE, p_size);
 		rv = EINVAL;
 		goto out;
 	}
 
 	bdev = bdevsw_lookup(sc->sc_pdev);
-	rv = (*bdev->d_dump)(sc->sc_pdev, blkno + sc->sc_offset, va, size);
+	rv = (*bdev->d_dump)(sc->sc_pdev, blkno + p_offset, va, size);
 
 out:
 	mutex_exit(&sc->sc_parent->dk_rawlock);
