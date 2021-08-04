@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.229 2021/03/08 18:17:27 christos Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.230 2021/08/04 08:47:10 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.229 2021/03/08 18:17:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.230 2021/08/04 08:47:10 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -480,7 +480,7 @@ tcp_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 			optval = tp->t_keepcnt;
 			goto setval;
 		case TCP_KEEPINIT:
-			optval = tp->t_keepcnt;
+			optval = tp->t_keepinit;
 setval:			error = sockopt_set(sopt, &optval, sizeof(optval));
 			break;
 		default:
