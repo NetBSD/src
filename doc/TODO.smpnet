@@ -1,4 +1,4 @@
-$NetBSD: TODO.smpnet,v 1.42 2021/08/03 01:44:10 msaitoh Exp $
+$NetBSD: TODO.smpnet,v 1.43 2021/08/04 13:50:47 nia Exp $
 
 MP-safe components
 ==================
@@ -43,13 +43,16 @@ kernel option.  Some components scale up and some don't.
  - Layer 3
    - All except for items in the below section
  - Interfaces
+   - canloop(4)
    - gif(4)
    - ipsecif(4)
    - l2tp(4)
+   - lagg(4)
    - pppoe(4)
      - if_spppsubr.c
    - tap(4)
    - tun(4)
+   - vether(4)
    - vlan(4)
  - Packet filters
    - npf(7)
