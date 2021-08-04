@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_ops.3,v 1.46 2017/07/03 21:32:51 wiz Exp $
+.\"	$NetBSD: puffs_ops.3,v 1.47 2021/08/04 09:31:25 andvar Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -324,7 +324,7 @@ Wait for all I/O for complete until returning.
 .It Dv MNT_NOWAIT
 Initiate I/O, but do not wait for completion.
 .It Dv MNT_LAZY
-Synchorize data not synchoronized by the file system syncer,
+Synchronize data not synchronized by the file system syncer,
 i.e., data not written when
 .Fn node_fsync
 is called with
@@ -631,12 +631,12 @@ Called when a regular file is being memory mapped by
 .Fa flags
 is currently always 0.
 .It Fn puffs_node_fsync "pu" "opc" "pcr" "flags" "offlo" "offhi"
-Sychronize a node's contents onto stable storage.
+Synchronize a node's contents onto stable storage.
 This is necessary only if the file server caches some information
 before committing it.
 The parameter
 .Fa flags
-specifies the minimum level of sychronization required (XXX: they are
+specifies the minimum level of synchronization required (XXX: they are
 not yet available).
 The parameters
 .Fa offlo
@@ -735,7 +735,7 @@ in the buffer.
 The argument
 .Fa offset
 is used to specify the offset to the directory.
-Its intepretation is up to the file system and it should be set to
+Its interpretation is up to the file system and it should be set to
 signal the continuation point when there is no more room for the next
 entry in
 .Fa dent .
@@ -870,7 +870,7 @@ has a link count of zero, it may be safely removed now.
 .It Fn puffs_node_reclaim2 "pu" "opc" "nlookup"
 Same as
 .Fn puffs_node_reclaim
-with an addditional argument for the number of lookups that have been done
+with an additional argument for the number of lookups that have been done
 on the node (Node creation is counted as a lookup). This can be used by the
 file system to avoid a race condition, where the kernel sends a reclaim
 while it does not have received the reply for a lookup.
@@ -882,7 +882,7 @@ If the file system maps cookies to
 .Vt struct puffs_node
 then the framework will do that work, and
 .Fn puffs_node_reclaim
-can be reliabily used without the race condition.
+can be reliably used without the race condition.
 .It Fn puffs_node_abortop "pu" "opc" "pcn"
 In case the operation following lookup (e.g., mkdir or remove) is not
 executed for some reason, abortop will be issued.
