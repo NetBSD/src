@@ -1,4 +1,4 @@
-.\"	$NetBSD: ssdfb.4,v 1.6 2021/08/01 16:17:05 tnn Exp $
+.\"	$NetBSD: ssdfb.4,v 1.7 2021/08/05 19:23:44 tnn Exp $
 .\"
 .\" Copyright (c) 2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 1, 2021
+.Dd August 5, 2021
 .Dt SSDFB 4
 .Os
 .Sh NAME
@@ -54,6 +54,8 @@ Solomon Systech Ltd SSD1306
 Sino Wealth Electronic Ltd SH1106
 .It
 Solomon Systech Ltd SSD1322
+.It
+Solomon Systech Ltd SSD1353
 .El
 .Pp
 The following products (controller + panel assemblies) are supported:
@@ -73,6 +75,12 @@ Adafruit Industries, LLC product 931 (128x32)
 .It
 .Em 0x05 :
 Generic SSD1322 modules using default settings
+.It
+.Em 0x06 :
+Generic SSD1353 modules using default settings
+.It
+.Em 0x07 :
+Display Elektronik GmbH DEP 160128A(1)-RGB
 .El
 .Pp
 The flags value can contain one or more of the following, bitwise OR'ed:
