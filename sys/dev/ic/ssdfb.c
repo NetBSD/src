@@ -1,4 +1,4 @@
-/* $NetBSD: ssdfb.c,v 1.15 2021/08/02 14:00:48 tnn Exp $ */
+/* $NetBSD: ssdfb.c,v 1.16 2021/08/05 00:02:51 tnn Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ssdfb.c,v 1.15 2021/08/02 14:00:48 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ssdfb.c,v 1.16 2021/08/05 00:02:51 tnn Exp $");
 
 #include "opt_ddb.h"
 
@@ -1126,24 +1126,27 @@ ssdfb_sync_ssd1322(struct ssdfb_softc *sc, bool usepoll)
 		src = (uint16_t*)&ri->ri_bits[y * ri->ri_stride];
 		src32 = (uint32_t*)src;
 		for (x = 0; x < width_in_blocks; x++) {
-#if _BYTE_ORDER == _LITTLE_ENDIAN
-#  ifdef SSDFB_USE_NATIVE_DEPTH
+#ifdef SSDFB_USE_NATIVE_DEPTH
 			raw_block =
 			    ((*src << 12) & 0xf000) |
-			    ((*src << 4) & 0x0f00) |
-			    ((*src >> 4) & 0x00f0) |
+			    ((*src << 4)  & 0x0f00) |
+			    ((*src >> 4)  & 0x00f0) |
 			    ((*src >> 12) & 0x000f);
 			src++;
-#  else
+#else
 			raw_block =
+#  if _BYTE_ORDER == _LITTLE_ENDIAN
 			    ((*src32 <<  8) & 0x0f00) |
 			    ((*src32 <<  4) & 0xf000) |
 			    ((*src32 >> 16) & 0x000f) |
 			    ((*src32 >> 20) & 0x00f0);
+#  else
+			    ((*src32 >> 24) & 0x000f) |
+			    ((*src32 >> 12) & 0x00f0) |
+			    ((*src32      ) & 0x0f00) |
+			    ((*src32 << 12) & 0xf000);
 #  endif
 			src32++;
-#else
-#  error please add big endian host support here
 #endif
 			if (raw_block != *blockp) {
 				*blockp = raw_block;
@@ -1159,7 +1162,6 @@ ssdfb_sync_ssd1322(struct ssdfb_softc *sc, bool usepoll)
 			blockp++;
 		}
 	}
-
 	blockp = (uint16_t*)sc->sc_gddram;
 	if (x2 != -1)
 		return sc->sc_transfer_rect(sc->sc_cookie,
