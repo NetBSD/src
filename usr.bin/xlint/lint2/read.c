@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.47 2021/08/05 06:45:37 rillig Exp $ */
+/* $NetBSD: read.c,v 1.48 2021/08/05 06:54:16 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.47 2021/08/05 06:45:37 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.48 2021/08/05 06:54:16 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -1057,7 +1057,7 @@ inpqstrg(const char *src, const char **epp)
 {
 	char	*strg, *dst;
 	size_t	slen;
-	int	c;
+	char	c;
 	int	v;
 
 	dst = strg = xmalloc(slen = 32);
@@ -1110,7 +1110,7 @@ inpqstrg(const char *src, const char **epp)
 				if ((c = *src++) < '0' || c > '7')
 					inperr("not octal: %c", c);
 				v |= c - '0';
-				c = (u_char)v;
+				c = (char)v;
 				break;
 			default:
 				inperr("bad \\ escape: %c", c);
@@ -1122,7 +1122,7 @@ inpqstrg(const char *src, const char **epp)
 			dst = strg + (slen - 1);
 			slen *= 2;
 		}
-		*dst++ = (char)c;
+		*dst++ = c;
 		if ((c = *src++) == '\0')
 			inperr("missing closing quote");
 	}
