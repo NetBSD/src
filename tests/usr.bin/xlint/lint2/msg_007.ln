@@ -1,0 +1,6 @@
+# $NetBSD: msg_007.ln,v 1.1 2021/08/05 22:36:08 rillig Exp $
+#
+# Test data for message 7 of lint2:
+#	%s: variable # of args  	%s  ::  %s
+#
+# TODO: add actual test data
