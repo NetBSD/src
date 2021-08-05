@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.185 2021/07/14 03:22:33 ozaki-r Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.186 2021/08/05 22:36:07 rillig Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -462,6 +462,7 @@
 ./usr/tests/usr.bin/vmstat
 ./usr/tests/usr.bin/xlint
 ./usr/tests/usr.bin/xlint/lint1
+./usr/tests/usr.bin/xlint/lint2
 ./usr/tests/usr.bin/ztest
 ./usr/tests/usr.sbin
 ./usr/tests/usr.sbin/cpuctl
