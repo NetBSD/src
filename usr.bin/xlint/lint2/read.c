@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.46 2021/07/31 19:52:44 rillig Exp $ */
+/* $NetBSD: read.c,v 1.47 2021/08/05 06:45:37 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.46 2021/07/31 19:52:44 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.47 2021/08/05 06:45:37 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -838,6 +838,15 @@ gettlen(const char *cp, const char **epp)
 			t = QUAD;
 		}
 		break;
+#ifdef INT128_SIZE
+	case 'J':
+		if (s == 'u') {
+			t = UINT128;
+		} else if (s == '\0') {
+			t = INT128;
+		}
+		break;
+#endif
 	case 'D':
 		if (s == 's') {
 			t = FLOAT;
