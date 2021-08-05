@@ -1,8 +1,0 @@
-Unit tests for BIND 9 are based on the CMocka testing framework and
-the Kyua test execution engine.
-
-If your distribution of choice doesn't include packages for kyua or cmocka, the
-sources can be found here:
-
- * Kyua 0.13 - https://github.com/jmmv/kyua/releases
- * CMocka 1.0 - https://cmocka.org/files/

@@ -1,8 +1,0 @@
-unknown: dict_open: fail:1maps
-unknown: dict_register: fail:1maps(0,lock) 1
-"": not found
-unknown: warning: fail:1maps lookup error for "foobar"
-unknown: maps_find: whatever: foobar: search aborted
-"foobar": lookup error
-unknown: maps_free: fail:1maps(0,lock)
-unknown: dict_unregister: fail:1maps(0,lock) 1

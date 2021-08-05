@@ -1,5 +1,0 @@
-$TTL		3600
-@		CHAOS SOA       @ @ 1970010100 86400 600 86400 300
-@		CHAOS NS        @
-version         CHAOS TXT       "CH 1.0"
-hostname        CHAOS TXT       "unknown"

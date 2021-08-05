@@ -1,4 +1,0 @@
-syntax(2)
-test_suite('bind9')
-
-tap_test_program{name='result_test'}

@@ -1,8 +1,0 @@
-/* $NetBSD: token-rbrace.0,v 1.1 2021/03/12 00:13:06 rillig Exp $ */
-/* $FreeBSD$ */
-
-/*
- * Tests for the token '}', which ends the corresponding '{' token.
- */
-
-/* TODO: Add some code to be formatted. */

@@ -1,4 +1,0 @@
-expr_precedence.c(15): error: syntax error '4' [249]
-expr_precedence.c(18): error: non-constant initializer [177]
-expr_precedence.c(35): error: 'var' undefined [99]
-expr_precedence.c(35): error: syntax error '=' [249]

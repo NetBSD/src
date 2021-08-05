@@ -1,6 +1,0 @@
-include start
-call OK echochar `\002t`
-compare echochar1.chk
-include window_create
-call OK wechochar $win1 `\001s`
-compare echochar2.chk

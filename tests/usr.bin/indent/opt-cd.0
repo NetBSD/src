@@ -1,4 +1,0 @@
-/* $NetBSD: opt-cd.0,v 1.2 2021/03/06 21:27:39 rillig Exp $ */
-/* $FreeBSD$ */
-
-int aflag; /* Apply to all files. */

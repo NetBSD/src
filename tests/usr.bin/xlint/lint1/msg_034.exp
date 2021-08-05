@@ -1,2 +1,0 @@
-msg_034.c(21): warning: nonportable bit-field type 'unsigned short' [34]
-msg_034.c(24): warning: bit-field of type plain 'int' has implementation-defined signedness [344]

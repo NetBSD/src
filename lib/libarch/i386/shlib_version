@@ -1,5 +1,0 @@
-#	$NetBSD: shlib_version,v 1.7 2017/08/12 19:48:28 maxv Exp $
-#	Remember to update distrib/sets/lists/base/md.i386 when changing
-#
-major=2
-minor=0
