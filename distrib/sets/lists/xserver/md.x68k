@@ -1,6 +1,0 @@
-# $NetBSD: md.x68k,v 1.23 2020/11/10 21:47:41 kamil Exp $
-./usr/X11R7/bin/X					xserver-xorg-server-bin	xorg
-./usr/X11R7/bin/X68k					xserver-xorg-server-bin	xorg
-./usr/X11R7/man/cat1/X68k.0				xserver-xorg-server-catman	.cat,xorg
-./usr/X11R7/man/html1/X68k.html				xserver-xorg-server-htmlman	html,xorg
-./usr/X11R7/man/man1/X68k.1				xserver-xorg-server-man	.man,xorg

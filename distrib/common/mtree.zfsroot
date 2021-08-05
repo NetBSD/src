@@ -1,5 +1,0 @@
-#	$NetBSD: mtree.zfsroot,v 1.3 2020/02/23 10:51:12 roy Exp $
-
-.
-./altroot
-./rpool

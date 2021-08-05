@@ -1,7 +1,0 @@
-args="-z -m2h"
-warn=0
-error=0
-ok=2
-retcode=0
-match=
-zones="one.example. two.example"

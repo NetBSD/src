@@ -1,7 +1,0 @@
-decl_struct_member.c(34): error: syntax error 'goto' [249]
-decl_struct_member.c(36): error: illegal type combination [4]
-decl_struct_member.c(38): error: syntax error '}' [249]
-decl_struct_member.c(38): warning: empty declaration [0]
-decl_struct_member.c(47): error: syntax error 'unnamed member' [249]
-decl_struct_member.c(63): error: syntax error '0' [249]
-decl_struct_member.c(71): error: cannot recover from previous errors [224]

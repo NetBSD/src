@@ -1,9 +1,0 @@
-include start
-wchar key 0x03
-call "^C" key_name $key
-wchar key 0x43
-call "C" key_name $key
-wchar key 0x7f
-call "^?" key_name $key
-wchar key 0x205
-call "UNKNOWN KEY" key_name $key

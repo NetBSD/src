@@ -1,8 +1,0 @@
-/* $NetBSD: opt-npsl.0.stdout,v 1.2 2021/03/07 10:12:18 rillig Exp $ */
-/* $FreeBSD$ */
-
-void		function_declaration(void);
-
-void function_definition(void)
-{
-}
