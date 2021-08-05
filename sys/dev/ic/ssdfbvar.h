@@ -1,4 +1,4 @@
-/* $NetBSD: ssdfbvar.h,v 1.7 2021/08/02 14:00:48 tnn Exp $ */
+/* $NetBSD: ssdfbvar.h,v 1.8 2021/08/05 00:16:36 tnn Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -235,6 +235,13 @@
 #define SSD1353_CMD_SET_SECOND_PRECHARGE_SPEED		0x8a
 	#define SSD1353_DEFAULT_SECOND_PRECHARGE_SPEED	2
 #define SSD1353_CMD_REMAP_COLOR_DEPTH			0xa0
+	#define SSD1353_REMAP_NO_INCREMENT		__BIT(0)
+	#define SSD1353_REMAP_SEG_DIRECTION		__BIT(1)
+	#define SSD1353_REMAP_RGB			__BIT(2)
+	#define SSD1353_REMAP_LR			__BIT(3)
+	#define SSD1353_REMAP_COM_DIRECTION		__BIT(4)
+	#define SSD1353_REMAP_SPLIT_ODD_EVEN		__BIT(5)
+	#define SSD1353_REMAP_PIXEL_FORMAT_MASK		__BITS(7, 6)
 #define SSD1353_CMD_SET_DISPLAY_START_LINE		SSD1322_CMD_SET_DISPLAY_START_LINE
 #define SSD1353_CMD_SET_DISPLAY_OFFSET			SSD1322_CMD_SET_DISPLAY_OFFSET
 #define SSD1353_CMD_SET_VERTICAL_SCROLL_AREA		SSDFB_CMD_SET_VERTICAL_SCROLL_AREA
@@ -305,6 +312,7 @@ struct ssdfb_product {
 	int				p_width;
 	int				p_height;
 	int				p_bits_per_pixel;
+	bool				p_rgb;
 	int				p_panel_shift;
 	uint8_t				p_fosc;
 	uint8_t				p_fosc_div;

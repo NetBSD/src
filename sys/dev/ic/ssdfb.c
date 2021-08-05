@@ -1,4 +1,4 @@
-/* $NetBSD: ssdfb.c,v 1.16 2021/08/05 00:02:51 tnn Exp $ */
+/* $NetBSD: ssdfb.c,v 1.17 2021/08/05 00:16:36 tnn Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ssdfb.c,v 1.16 2021/08/05 00:02:51 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ssdfb.c,v 1.17 2021/08/05 00:16:36 tnn Exp $");
 
 #include "opt_ddb.h"
 
@@ -268,16 +268,35 @@ ssdfb_attach(struct ssdfb_softc *sc, int flags)
 		goto out;
 	}
 #ifdef SSDFB_USE_NATIVE_DEPTH
-	ri->ri_depth =	sc->sc_p->p_bits_per_pixel;
+	ri->ri_depth = sc->sc_p->p_bits_per_pixel;
 #else
-	ri->ri_depth =	8;
+	if (sc->sc_p->p_rgb && sc->sc_p->p_bits_per_pixel == 32) {
+		ri->ri_depth = sc->sc_p->p_bits_per_pixel;
+		ri->ri_rnum = 8;
+		ri->ri_gnum = 8;
+		ri->ri_bnum = 8;
+#if _BYTE_ORDER == _LITTLE_ENDIAN
+		ri->ri_rpos = 0;
+		ri->ri_gpos = 8;
+		ri->ri_bpos = 16;
+#else
+		ri->ri_rpos = 24;
+		ri->ri_gpos = 16;
+		ri->ri_bpos = 8;
+#endif
+	} else {
+		ri->ri_depth = 8;
+	}
 #endif
 	ri->ri_font =	sc->sc_font;
 	ri->ri_width =	sc->sc_p->p_width;
 	ri->ri_height =	sc->sc_p->p_height;
 	ri->ri_stride =	ri->ri_width * ri->ri_depth / 8;
 	ri->ri_hw =	sc;
-	ri->ri_flg =	RI_FULLCLEAR | RI_FORCEMONO;
+	ri->ri_flg =	RI_FULLCLEAR;
+	if (!sc->sc_p->p_rgb) {
+		ri->ri_flg |= RI_FORCEMONO;
+	}
 	sc->sc_ri_bits_len = round_page(ri->ri_stride * ri->ri_height);
 	ri->ri_bits	= (u_char *)uvm_km_alloc(kernel_map, sc->sc_ri_bits_len,
 						 0, UVM_KMF_WIRED);
@@ -290,7 +309,9 @@ ssdfb_attach(struct ssdfb_softc *sc, int flags)
 	if (error)
 		goto out;
 
-	ri->ri_caps &= ~WSSCREEN_WSCOLORS;
+	if (!sc->sc_p->p_rgb) {
+		ri->ri_caps &= ~WSSCREEN_WSCOLORS;
+	}
 
 	/*
 	 * Save original emul ops & insert our damage notification hooks.
@@ -425,8 +446,10 @@ ssdfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 	case WSDISPLAYIO_GET_FBINFO:
 		fbi = (struct wsdisplayio_fbinfo *)data;
 		error = wsdisplayio_get_fbinfo(&sc->sc_ri, fbi);
-		fbi->fbi_subtype.fbi_cmapinfo.cmap_entries = cmaplen;
-		/* fbi->fbi_pixeltype = WSFB_GREYSCALE */;
+		if (!sc->sc_p->p_rgb) {
+			fbi->fbi_subtype.fbi_cmapinfo.cmap_entries = cmaplen;
+			/* fbi->fbi_pixeltype = WSFB_GREYSCALE */;
+		}
 		return error;
 	case WSDISPLAYIO_LINEBYTES:
 		*(u_int *)data = sc->sc_ri.ri_stride;
@@ -483,6 +506,8 @@ ssdfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 		return 0;
 #endif
 	case WSDISPLAYIO_GETCMAP:
+		if (sc->sc_p->p_rgb)
+			return ENOTSUP;
 		wc = (struct wsdisplay_cmap *)data;
 		if (wc->index >= cmaplen ||
 		    wc->count > cmaplen - wc->index)
@@ -1117,9 +1142,9 @@ ssdfb_sync_ssd1322(struct ssdfb_softc *sc, bool usepoll)
 	 * Transfer rasops bitmap into gddram shadow buffer while keeping track
 	 * of the bounding box of the dirty region we scribbled over.
 	 */
-	x1 = sc->sc_p->p_width;
+	x1 = width;
 	x2 = -1;
-	y1 = sc->sc_p->p_height;
+	y1 = height;
 	y2 = -1;
 	blockp = (uint16_t*)sc->sc_gddram;
 	for (y = 0; y < height; y++) {
