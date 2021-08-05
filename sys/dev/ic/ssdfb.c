@@ -1,4 +1,4 @@
-/* $NetBSD: ssdfb.c,v 1.17 2021/08/05 00:16:36 tnn Exp $ */
+/* $NetBSD: ssdfb.c,v 1.18 2021/08/05 19:07:09 tnn Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ssdfb.c,v 1.17 2021/08/05 00:16:36 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ssdfb.c,v 1.18 2021/08/05 19:07:09 tnn Exp $");
 
 #include "opt_ddb.h"
 
@@ -75,6 +75,7 @@ static void	ssdfb_cursor(void *, int, int, int);
 /* hardware interface */
 static int	ssdfb_init_ssd1306(struct ssdfb_softc *);
 static int	ssdfb_init_ssd1322(struct ssdfb_softc *);
+static int	ssdfb_init_ssd1353(struct ssdfb_softc *);
 static int	ssdfb_set_contrast(struct ssdfb_softc *, uint8_t, bool);
 static int	ssdfb_set_display_on(struct ssdfb_softc *, bool, bool);
 static int	ssdfb_set_mode(struct ssdfb_softc *, u_int);
@@ -89,6 +90,7 @@ static void	ssdfb_set_usepoll(struct ssdfb_softc *, bool);
 static int	ssdfb_sync(struct ssdfb_softc *, bool);
 static int	ssdfb_sync_ssd1306(struct ssdfb_softc *, bool);
 static int	ssdfb_sync_ssd1322(struct ssdfb_softc *, bool);
+static int	ssdfb_sync_ssd1353(struct ssdfb_softc *, bool);
 static uint64_t	ssdfb_transpose_block(uint8_t *, size_t);
 
 /* misc helpers */
@@ -104,7 +106,8 @@ static const char *ssdfb_controller_names[] = {
 	[SSDFB_CONTROLLER_UNKNOWN] =	"unknown",
 	[SSDFB_CONTROLLER_SSD1306] =	"Solomon Systech SSD1306",
 	[SSDFB_CONTROLLER_SH1106] =	"Sino Wealth SH1106",
-	[SSDFB_CONTROLLER_SSD1322] =	"Solomon Systech SSD1322"
+	[SSDFB_CONTROLLER_SSD1322] =	"Solomon Systech SSD1322",
+	[SSDFB_CONTROLLER_SSD1353] =	"Solomon Systech SSD1353"
 };
 
 /*
@@ -204,6 +207,44 @@ static const struct ssdfb_product ssdfb_products[] = {
 		.p_multiplex_ratio =	0x3f,
 		.p_init =		ssdfb_init_ssd1322,
 		.p_sync =		ssdfb_sync_ssd1322
+	},
+	{
+		.p_product_id =		SSDFB_PRODUCT_SSD1353_GENERIC,
+		.p_controller_id =	SSDFB_CONTROLLER_SSD1353,
+		.p_name =		"generic",
+		.p_width =		160,
+		.p_height =		132,
+		.p_bits_per_pixel =	32,
+		.p_rgb = 		true,
+		.p_panel_shift =	0,
+		.p_compin_cfg = SSD1353_REMAP_RGB | SSD1353_REMAP_SPLIT_ODD_EVEN
+		    | __SHIFTIN(2, SSD1353_REMAP_PIXEL_FORMAT_MASK),
+		.p_vcomh_deselect_level = SSD1353_DEFAULT_VCOMH,
+		.p_fosc =		SSD1353_DEFAULT_FREQUENCY,
+		.p_fosc_div =		SSD1353_DEFAULT_DIVIDER,
+		.p_default_contrast =	SSD1353_DEFAULT_CONTRAST_CONTROL,
+		.p_multiplex_ratio =	0x83,
+		.p_init =		ssdfb_init_ssd1353,
+		.p_sync =		ssdfb_sync_ssd1353
+	},
+	{
+		.p_product_id =		SSDFB_PRODUCT_DEP_160128A_RGB,
+		.p_controller_id =	SSDFB_CONTROLLER_SSD1353,
+		.p_name =		"Display Elektronik GmbH DEP 160128A(1)-RGB",
+		.p_width =		160,
+		.p_height =		128,
+		.p_bits_per_pixel =	32,
+		.p_rgb = 		true,
+		.p_panel_shift =	0,
+		.p_compin_cfg = SSD1353_REMAP_RGB | SSD1353_REMAP_SPLIT_ODD_EVEN
+		    | __SHIFTIN(2, SSD1353_REMAP_PIXEL_FORMAT_MASK),
+		.p_vcomh_deselect_level = SSD1353_DEFAULT_VCOMH,
+		.p_fosc =		SSD1353_DEFAULT_FREQUENCY,
+		.p_fosc_div =		SSD1353_DEFAULT_DIVIDER,
+		.p_default_contrast =	SSD1353_DEFAULT_CONTRAST_CONTROL,
+		.p_multiplex_ratio =	0x83,
+		.p_init =		ssdfb_init_ssd1353,
+		.p_sync =		ssdfb_sync_ssd1353
 	}
 };
 
@@ -872,18 +913,148 @@ ssdfb_init_ssd1322(struct ssdfb_softc *sc)
 }
 
 static int
+ssdfb_init_ssd1353(struct ssdfb_softc *sc)
+{
+	int error;
+	uint8_t cmd[3];
+	bool usepoll = true;
+	uint8_t remap;
+
+	/*
+	 * Enter sleep.
+	 */
+	SSDFB_CMD2(SSD1353_CMD_SET_COMMAND_LOCK, SSD1353_COMMAND_UNLOCK_MAGIC);
+	if (error)
+		return error;
+	SSDFB_CMD1(SSD1353_CMD_RESET);
+	if (error)
+		return error;
+	SSDFB_CMD1(SSD1353_CMD_DEACTIVATE_SCROLL);
+	if (error)
+		return error;
+	SSDFB_CMD1(SSD1353_CMD_SET_DISPLAY_OFF);
+	if (error)
+		return error;
+
+	/*
+	 * Start charge pumps.
+	 */
+	SSDFB_CMD2(SSD1353_CMD_SET_VCOMH, sc->sc_p->p_vcomh_deselect_level);
+	if (error)
+		return error;
+	SSDFB_CMD2(SSD1353_CMD_SET_PRE_CHARGE_VOLTAGE_LEVEL,
+	    SSD1353_DEFAULT_PRE_CHARGE_VOLTAGE_LEVEL);
+	if (error)
+		return error;
+
+	/*
+	 * Configure timing characteristics.
+	 */
+	SSDFB_CMD2(SSD1353_CMD_SET_FRONT_CLOCK_DIVIDER,
+	   __SHIFTIN(sc->sc_p->p_fosc, SSD1322_FREQUENCY_MASK) |
+	   __SHIFTIN(sc->sc_p->p_fosc_div, SSD1322_DIVIDER_MASK));
+	if (error)
+		return error;
+	SSDFB_CMD2(SSD1353_CMD_SET_PHASE_LENGTH,
+	   __SHIFTIN(SSD1353_DEFAULT_PHASE_2,
+	    SSD1322_PHASE_LENGTH_PHASE_2_MASK) |
+	    __SHIFTIN(SSD1353_DEFAULT_PHASE_1,
+	    SSD1322_PHASE_LENGTH_PHASE_1_MASK));
+	if (error)
+		return error;
+	SSDFB_CMD2(SSD1353_CMD_SET_SECOND_PRECHARGE_PERIOD,
+	    SSD1353_DEFAULT_SECOND_PRECHARGE_PERIOD);
+	if (error)
+		return error;
+	SSDFB_CMD2(SSD1353_CMD_SET_SECOND_PRECHARGE_SPEED,
+	    SSD1353_DEFAULT_SECOND_PRECHARGE_SPEED);
+	if (error)
+		return error;
+
+	/*
+	 * Configure physical display panel layout.
+	 */
+	SSDFB_CMD2(SSD1353_CMD_SET_MULTIPLEX_RATIO, sc->sc_p->p_multiplex_ratio);
+	if (error)
+		return error;
+        remap = sc->sc_p->p_compin_cfg;
+        if (sc->sc_upsidedown)
+                remap ^= SSD1353_REMAP_COM_DIRECTION;
+        else
+                remap ^= SSD1353_REMAP_SEG_DIRECTION;
+	SSDFB_CMD2(SSD1353_CMD_REMAP_COLOR_DEPTH, remap);
+	if (error)
+		return error;
+
+	/*
+	 * Contrast settings.
+	 */
+	SSDFB_CMD1(SSD1353_CMD_SET_DEFAULT_GRAY_SCALE_TABLE);
+	if (error)
+		return error;
+	SSDFB_CMD2(SSD1353_CMD_SET_CONTRAST_CONTROL_A, sc->sc_contrast);
+	if (error)
+		return error;
+	SSDFB_CMD2(SSD1353_CMD_SET_CONTRAST_CONTROL_B, sc->sc_contrast);
+	if (error)
+		return error;
+	SSDFB_CMD2(SSD1353_CMD_SET_CONTRAST_CONTROL_C, sc->sc_contrast);
+	if (error)
+		return error;
+	SSDFB_CMD2(SSD1353_CMD_MASTER_CURRENT_CONTROL,
+	    SSD1353_DEFAULT_MASTER_CURRENT_ATTENUATION);
+	if (error)
+		return error;
+
+	/*
+	 * Reset display engine state.
+	 */
+	SSDFB_CMD2(SSD1353_CMD_SET_DISPLAY_OFFSET, 0x00);
+	if (error)
+		return error;
+	SSDFB_CMD2(SSD1353_CMD_SET_DISPLAY_START_LINE, 0x00);
+	if (error)
+		return error;
+	SSDFB_CMD1(sc->sc_inverse
+	    ? SSD1353_CMD_INVERSE_DISPLAY
+	    : SSD1353_CMD_NORMAL_DISPLAY);
+	if (error)
+		return error;
+
+	ssdfb_clear_screen(sc);
+	error = ssdfb_sync(sc, usepoll);
+	if (error)
+		return error;
+
+	error = ssdfb_set_display_on(sc, true, usepoll);
+
+	return error;
+}
+
+static int
 ssdfb_set_contrast(struct ssdfb_softc *sc, uint8_t value, bool usepoll)
 {
 	uint8_t cmd[2];
+	int error;
 
+	cmd[1] = sc->sc_contrast = value;
 	switch (sc->sc_p->p_controller_id) {
 	case SSDFB_CONTROLLER_SSD1322:
 		cmd[0] = SSD1322_CMD_SET_CONTRAST_CURRENT;
 		break;
+	case SSDFB_CONTROLLER_SSD1353:
+		cmd[0] = SSD1353_CMD_SET_CONTRAST_CONTROL_A;
+		error = sc->sc_cmd(sc->sc_cookie, cmd, sizeof(cmd), usepoll);
+		if (error)
+			return error;
+		cmd[0] = SSD1353_CMD_SET_CONTRAST_CONTROL_B;
+		error = sc->sc_cmd(sc->sc_cookie, cmd, sizeof(cmd), usepoll);
+		if (error)
+			return error;
+		cmd[0] = SSD1353_CMD_SET_CONTRAST_CONTROL_C;
 	default:
 		cmd[0] = SSDFB_CMD_SET_CONTRAST_CONTROL;
 	}
-	cmd[1] = sc->sc_contrast = value;
 
 	return sc->sc_cmd(sc->sc_cookie, cmd, sizeof(cmd), usepoll);
 }
@@ -1195,6 +1366,57 @@ ssdfb_sync_ssd1322(struct ssdfb_softc *sc, bool usepoll)
 		    y1,
 		    y2,
 		    (uint8_t*)&blockp[y1 * width_in_blocks + x1],
+		    width * sc->sc_p->p_bits_per_pixel / 8,
+		    usepoll);
+	return 0;
+}
+
+static int
+ssdfb_sync_ssd1353(struct ssdfb_softc *sc, bool usepoll)
+{
+	int width = sc->sc_p->p_width;
+	int height = sc->sc_p->p_height;
+	struct rasops_info *ri = &sc->sc_ri;
+	int x, y;
+	uint32_t *src, *blockp;
+	int x1, x2, y1, y2;
+
+	/*
+	 * Transfer rasops bitmap into gddram shadow buffer while keeping track
+	 * of the bounding box of the dirty region we scribbled over.
+	 */
+	x1 = width;
+	x2 = -1;
+	y1 = height;
+	y2 = -1;
+	blockp = (uint32_t*)sc->sc_gddram;
+	for (y = 0; y < height; y++) {
+		src = (uint32_t*)&ri->ri_bits[y * ri->ri_stride];
+		for (x = 0; x < width; x++) {
+			if (*blockp != *src) {
+				*blockp = *src;
+				if (x1 > x)
+					x1 = x;
+				if (x2 < x)
+					x2 = x;
+				if (y1 > y)
+					y1 = y;
+				if (y2 < y)
+					y2 = y;
+			}
+			blockp++;
+			src++;
+		}
+	}
+
+	blockp = (uint32_t*)sc->sc_gddram;
+	if (x2 != -1)
+		return sc->sc_transfer_rect(sc->sc_cookie,
+		    x1 + sc->sc_p->p_panel_shift,
+		    x2 + sc->sc_p->p_panel_shift,
+		    y1,
+		    y2,
+		    (uint8_t*)&blockp[y1 * width + x1],
 		    width * sc->sc_p->p_bits_per_pixel / 8,
 		    usepoll);
 	return 0;
