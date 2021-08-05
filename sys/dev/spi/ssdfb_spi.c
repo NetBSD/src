@@ -1,4 +1,4 @@
-/* $NetBSD: ssdfb_spi.c,v 1.7 2021/08/03 11:30:25 tnn Exp $ */
+/* $NetBSD: ssdfb_spi.c,v 1.8 2021/08/05 19:08:59 tnn Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ssdfb_spi.c,v 1.7 2021/08/03 11:30:25 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ssdfb_spi.c,v 1.8 2021/08/05 19:08:59 tnn Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -70,6 +70,8 @@ static int	ssdfb_spi_xfer_rect_3wire_ssd1322(void *, uint8_t, uint8_t,
 static int	ssdfb_spi_cmd_4wire(void *, uint8_t *, size_t, bool);
 static int	ssdfb_spi_xfer_rect_4wire_ssd1322(void *, uint8_t, uint8_t,
 		    uint8_t, uint8_t, uint8_t *, size_t, bool);
+static int	ssdfb_spi_xfer_rect_4wire_ssd1353(void *, uint8_t, uint8_t,
+		    uint8_t, uint8_t, uint8_t *, size_t, bool);
 
 static void	ssdfb_bitstream_init(struct bs_state *, uint8_t *);
 static void	ssdfb_bitstream_append(struct bs_state *, uint8_t, uint8_t);
@@ -84,6 +86,8 @@ CFATTACH_DECL_NEW(ssdfb_spi, sizeof(struct ssdfb_spi_softc),
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "solomon,ssd1306",	.value = SSDFB_PRODUCT_SSD1306_GENERIC },
 	{ .compat = "solomon,ssd1322",	.value = SSDFB_PRODUCT_SSD1322_GENERIC },
+	{ .compat = "solomon,ssd1353",	.value = SSDFB_PRODUCT_SSD1353_GENERIC },
+	{ .compat = "dep160128a",	.value = SSDFB_PRODUCT_DEP_160128A_RGB },
 	DEVICE_COMPAT_EOL
 };
 
@@ -154,28 +158,32 @@ ssdfb_spi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_3wiremode = true;
 #endif
 
+	sc->sc.sc_cmd = sc->sc_3wiremode
+	    ? ssdfb_spi_cmd_3wire
+	    : ssdfb_spi_cmd_4wire;
+
 	switch (flags & SSDFB_ATTACH_FLAG_PRODUCT_MASK) {
 	case SSDFB_PRODUCT_SSD1322_GENERIC:
-		if (sc->sc_3wiremode) {
-			sc->sc.sc_transfer_rect =
-			    ssdfb_spi_xfer_rect_3wire_ssd1322;
-		} else {
-			sc->sc.sc_transfer_rect =
-			    ssdfb_spi_xfer_rect_4wire_ssd1322;
-		}
+		sc->sc.sc_transfer_rect = sc->sc_3wiremode
+		    ? ssdfb_spi_xfer_rect_3wire_ssd1322
+		    : ssdfb_spi_xfer_rect_4wire_ssd1322;
 		break;
-	default:
-		panic("ssdfb_spi_attach: product not implemented");
+	case SSDFB_PRODUCT_SSD1353_GENERIC:
+	case SSDFB_PRODUCT_DEP_160128A_RGB:
+		sc->sc.sc_transfer_rect = sc->sc_3wiremode
+		    ? NULL /* not supported here */
+		    : ssdfb_spi_xfer_rect_4wire_ssd1353;
+		break;
 	}
-	if (sc->sc_3wiremode) {
-		sc->sc.sc_cmd = ssdfb_spi_cmd_3wire;
-	} else {
-		sc->sc.sc_cmd = ssdfb_spi_cmd_4wire;
+
+	if (!sc->sc.sc_transfer_rect) {
+		aprint_error(": sc_transfer_rect not implemented\n");
+		return;
 	}
 
 	ssdfb_attach(&sc->sc, flags);
 
-	device_printf(sc->sc.sc_dev, "%d-wire SPI interface\n",
+	aprint_normal_dev(self, "%d-wire SPI interface\n",
 	    sc->sc_3wiremode == true ? 3 : 4);
 }
 
@@ -374,6 +382,82 @@ ssdfb_spi_xfer_rect_4wire_ssd1322(void *cookie, uint8_t fromcol, uint8_t tocol,
 	ssdfb_spi_4wire_set_dc(sc, 1);
 	for (row = fromrow; row <= torow; row++) {
 		error = spi_send(sc->sc_sh, rlen, p);
+		if (error)
+			return error;
+		p += stride;
+	}
+
+	return 0;
+}
+
+static int
+ssdfb_spi_xfer_rect_4wire_ssd1353(void *cookie, uint8_t fromcol, uint8_t tocol,
+    uint8_t fromrow, uint8_t torow, uint8_t *p, size_t stride, bool usepoll)
+{
+	struct ssdfb_spi_softc *sc = (struct ssdfb_spi_softc *)cookie;
+	uint8_t row;
+	size_t rlen = (tocol + 1 - fromcol) * 3;
+	uint8_t bitstream[160 * 3];
+	uint8_t *dstp, *srcp, *endp;
+	int error;
+	uint8_t cmd;
+	uint8_t data[2];
+
+	/*
+	 * Unlike iic(4), there is no way to force spi(4) to use polling.
+	 */
+	if (usepoll && !cold)
+		return 0;
+
+	ssdfb_spi_4wire_set_dc(sc, 0);
+	cmd = SSD1322_CMD_SET_ROW_ADDRESS;
+	error = spi_send(sc->sc_sh, sizeof(cmd), &cmd);
+	if (error)
+		return error;
+	ssdfb_spi_4wire_set_dc(sc, 1);
+	data[0] = fromrow;
+	data[1] = torow;
+	if (sc->sc.sc_upsidedown) {
+		/* fix picture outside frame on 160x128 panel */
+		data[0] += 132 - sc->sc.sc_p->p_height;
+		data[1] += 132 - sc->sc.sc_p->p_height;
+	}
+	error = spi_send(sc->sc_sh, sizeof(data), data);
+	if (error)
+		return error;
+
+	ssdfb_spi_4wire_set_dc(sc, 0);
+	cmd = SSD1322_CMD_SET_COLUMN_ADDRESS;
+	error = spi_send(sc->sc_sh, sizeof(cmd), &cmd);
+	if (error)
+		return error;
+	ssdfb_spi_4wire_set_dc(sc, 1);
+	data[0] = fromcol;
+	data[1] = tocol;
+	error = spi_send(sc->sc_sh, sizeof(data), data);
+	if (error)
+		return error;
+
+	ssdfb_spi_4wire_set_dc(sc, 0);
+	cmd = SSD1322_CMD_WRITE_RAM;
+	error = spi_send(sc->sc_sh, sizeof(cmd), &cmd);
+	if (error)
+		return error;
+
+	ssdfb_spi_4wire_set_dc(sc, 1);
+	KASSERT(rlen <= sizeof(bitstream));
+	for (row = fromrow; row <= torow; row++) {
+		/* downconvert each row from 32bpp rgba to 18bpp panel format */
+		dstp = bitstream;
+		endp = dstp + rlen;
+		srcp = p;
+		while (dstp < endp) {
+			*dstp++ = (*srcp++) >> 2;
+			*dstp++ = (*srcp++) >> 2;
+			*dstp++ = (*srcp++) >> 2;
+			srcp++;
+		}
+		error = spi_send(sc->sc_sh, rlen, bitstream);
 		if (error)
 			return error;
 		p += stride;
