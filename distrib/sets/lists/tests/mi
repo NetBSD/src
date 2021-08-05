@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1103 2021/08/05 06:34:42 rillig Exp $
+# $NetBSD: mi,v 1.1104 2021/08/05 22:36:07 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7023,6 +7023,48 @@
 ./usr/tests/usr.bin/xlint/lint1/stmt_if.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/stmt_if.exp			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/t_integration			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint2					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint2/Atffile				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint2/Kyuafile			tests-usr.bin-tests	compattestfile,atf,kyua
+./usr/tests/usr.bin/xlint/lint2/msg_000.exp			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint2/msg_000.ln			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint2/msg_001.exp			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint2/msg_001.ln			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint2/msg_002.exp			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint2/msg_002.ln			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint2/msg_003.exp			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint2/msg_003.ln			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint2/msg_004.exp			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint2/msg_004.ln			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint2/msg_005.exp			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint2/msg_005.ln			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint2/msg_006.exp			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint2/msg_006.ln			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint2/msg_007.exp			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint2/msg_007.ln			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint2/msg_008.exp			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint2/msg_008.ln			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint2/msg_009.exp			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint2/msg_009.ln			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint2/msg_010.exp			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint2/msg_010.ln			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint2/msg_011.exp			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint2/msg_011.ln			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint2/msg_012.exp			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint2/msg_012.ln			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint2/msg_013.exp			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint2/msg_013.ln			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint2/msg_014.exp			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint2/msg_014.ln			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint2/msg_015.exp			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint2/msg_015.ln			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint2/msg_016.exp			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint2/msg_016.ln			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint2/msg_017.exp			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint2/msg_017.ln			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint2/msg_018.exp			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint2/msg_018.ln			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/t_lint2				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/ztest				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/ztest/Atffile			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/ztest/Kyuafile			tests-usr.bin-tests	compattestfile,atf,kyua

@@ -1,0 +1,6 @@
+# $NetBSD: msg_002.ln,v 1.1 2021/08/05 22:36:08 rillig Exp $
+#
+# Test data for message 2 of lint2:
+#	%s declared( %s ), but never used or defined
+#
+# TODO: add actual test data

@@ -1,0 +1,6 @@
+# $NetBSD: msg_004.ln,v 1.1 2021/08/05 22:36:08 rillig Exp $
+#
+# Test data for message 4 of lint2:
+#	%s value used inconsistently  	%s  ::  %s
+#
+# TODO: add actual test data

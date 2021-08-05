@@ -1,0 +1,6 @@
+# $NetBSD: msg_014.ln,v 1.1 2021/08/05 22:36:08 rillig Exp $
+#
+# Test data for message 14 of lint2:
+#	%s, arg %d inconsistent with format  	%s
+#
+# TODO: add actual test data
