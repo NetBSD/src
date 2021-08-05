@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: accept.sh,v 1.3 2021/07/11 14:43:57 rillig Exp $
+# $NetBSD: accept.sh,v 1.4 2021/08/05 06:34:43 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -41,7 +41,7 @@ for pattern in "$@"; do
 		cfile="$base.c"
 		expfile="$base.exp"
 		tmpfile="$base.exp.tmp"
-		ln_file="$base.ln"
+		ln_file="$base.exp-ln"
 
 		configure_test_case "$cfile"
 		# shellcheck disable=SC2154
