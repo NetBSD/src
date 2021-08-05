@@ -1,4 +1,4 @@
-/* $NetBSD: ssdfb_spi.c,v 1.8 2021/08/05 19:08:59 tnn Exp $ */
+/* $NetBSD: ssdfb_spi.c,v 1.9 2021/08/05 19:17:22 tnn Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ssdfb_spi.c,v 1.8 2021/08/05 19:08:59 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ssdfb_spi.c,v 1.9 2021/08/05 19:17:22 tnn Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -410,7 +410,7 @@ ssdfb_spi_xfer_rect_4wire_ssd1353(void *cookie, uint8_t fromcol, uint8_t tocol,
 		return 0;
 
 	ssdfb_spi_4wire_set_dc(sc, 0);
-	cmd = SSD1322_CMD_SET_ROW_ADDRESS;
+	cmd = SSD1353_CMD_SET_ROW_ADDRESS;
 	error = spi_send(sc->sc_sh, sizeof(cmd), &cmd);
 	if (error)
 		return error;
@@ -427,7 +427,7 @@ ssdfb_spi_xfer_rect_4wire_ssd1353(void *cookie, uint8_t fromcol, uint8_t tocol,
 		return error;
 
 	ssdfb_spi_4wire_set_dc(sc, 0);
-	cmd = SSD1322_CMD_SET_COLUMN_ADDRESS;
+	cmd = SSD1353_CMD_SET_COLUMN_ADDRESS;
 	error = spi_send(sc->sc_sh, sizeof(cmd), &cmd);
 	if (error)
 		return error;
@@ -439,7 +439,7 @@ ssdfb_spi_xfer_rect_4wire_ssd1353(void *cookie, uint8_t fromcol, uint8_t tocol,
 		return error;
 
 	ssdfb_spi_4wire_set_dc(sc, 0);
-	cmd = SSD1322_CMD_WRITE_RAM;
+	cmd = SSD1353_CMD_WRITE_RAM;
 	error = spi_send(sc->sc_sh, sizeof(cmd), &cmd);
 	if (error)
 		return error;
