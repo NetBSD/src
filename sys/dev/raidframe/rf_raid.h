@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid.h,v 1.49 2021/07/23 00:54:45 oster Exp $	*/
+/*	$NetBSD: rf_raid.h,v 1.49.2.1 2021/08/05 03:37:41 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -187,6 +187,7 @@ struct RF_Raid_s {
 	RF_HeadSepLimit_t headSepLimit;
 	int     numFloatingReconBufs;
 	int     reconInProgress;
+	int     forceRecon;
 	rf_declare_cond2(waitForReconCond);	/* goes with raidPtr->mutex */
 	RF_RaidReconDesc_t *reconDesc;	/* reconstruction descriptor */
 	RF_ReconCtrl_t *reconControl;	/* reconstruction control structure
