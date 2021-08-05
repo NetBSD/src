@@ -1,4 +1,4 @@
-/* $NetBSD: ssdfbvar.h,v 1.8 2021/08/05 00:16:36 tnn Exp $ */
+/* $NetBSD: ssdfbvar.h,v 1.9 2021/08/05 19:07:09 tnn Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -282,6 +282,7 @@ typedef enum {
 	SSDFB_CONTROLLER_SSD1306=1,
 	SSDFB_CONTROLLER_SH1106=2,
 	SSDFB_CONTROLLER_SSD1322=3,
+	SSDFB_CONTROLLER_SSD1353=4,
 } ssdfb_controller_id_t;
 
 typedef enum {
@@ -291,6 +292,8 @@ typedef enum {
 	SSDFB_PRODUCT_ADAFRUIT_931=3,
 	SSDFB_PRODUCT_ADAFRUIT_938=4,
 	SSDFB_PRODUCT_SSD1322_GENERIC=5,
+	SSDFB_PRODUCT_SSD1353_GENERIC=6,
+	SSDFB_PRODUCT_DEP_160128A_RGB=7,
 } ssdfb_product_id_t;
 
 #define SSDFB_I2C_DEFAULT_ADDR		0x3c
