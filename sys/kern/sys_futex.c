@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_futex.c,v 1.12.4.1 2021/08/05 23:14:21 thorpej Exp $	*/
+/*	$NetBSD: sys_futex.c,v 1.12.4.2 2021/08/05 23:23:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.12.4.1 2021/08/05 23:14:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.12.4.2 2021/08/05 23:23:50 thorpej Exp $");
 
 /*
  * Futexes
@@ -1122,8 +1122,23 @@ futex_wait(struct futex *f, int q, const struct timespec *deadline,
 		else if (error != ETIMEDOUT)
 			error = EINTR;
 	} else {
-		KASSERT(l->l_futex == NULL);
-		SDT_PROBE0(futex, wait, finish, normally);
+		f = l->l_futex;
+		if (__predict_false(f != NULL)) {
+			/*
+			 * There are certain situations that can cause
+			 * sleepq_block() to return 0 even if we were
+			 * signalled (by e.g. SIGKILL).  In this case,
+			 * we will need to release our futex hold and
+			 * return EINTR (we're probably about to die
+			 * anyway).
+			 */
+			SDT_PROBE0(futex, wait, finish, aborted);
+			l->l_futex = NULL;
+			futex_rele(f);
+			error = EINTR;
+		} else {
+			SDT_PROBE0(futex, wait, finish, normally);
+		}
 	}
 
 	return error;
