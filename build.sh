@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.353 2021/06/07 17:11:16 christos Exp $
+#	$NetBSD: build.sh,v 1.354 2021/08/06 07:55:13 andvar Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -851,7 +851,7 @@ validatearch()
 
 # listarch -- list valid MACHINE/MACHINE_ARCH/ALIAS values,
 # optionally restricted to those where the MACHINE and/or MACHINE_ARCH
-# match specifed glob patterns.
+# match specified glob patterns.
 #
 listarch()
 {
@@ -1965,7 +1965,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.353 2021/06/07 17:11:16 christos Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.354 2021/08/06 07:55:13 andvar Exp $
 # with these arguments: ${_args}
 #
 

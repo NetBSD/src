@@ -1,4 +1,4 @@
-/*	$NetBSD: evboards.c,v 1.5 2020/06/07 00:58:58 thorpej Exp $	*/
+/*	$NetBSD: evboards.c,v 1.6 2021/08/06 07:55:13 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: evboards.c,v 1.5 2020/06/07 00:58:58 thorpej Exp $");
+__RCSID("$NetBSD: evboards.c,v 1.6 2021/08/06 07:55:13 andvar Exp $");
 #endif  /* !__lint */
 
 #include <sys/types.h>
@@ -153,7 +153,7 @@ __RCSID("$NetBSD: evboards.c,v 1.5 2020/06/07 00:58:58 thorpej Exp $");
  *	/usr/pkg/share/u-boot
  *
  * This can be overridden with the INSTALLBOOT_UBOOT_PATHS environment
- * variable, which contains a colon-sparated list of directories, e.g.:
+ * variable, which contains a colon-separated list of directories, e.g.:
  *
  *	/usr/pkg/share/u-boot:/home/jmcneill/hackityhack/u-boot
  *
@@ -194,7 +194,7 @@ __RCSID("$NetBSD: evboards.c,v 1.5 2020/06/07 00:58:58 thorpej Exp $");
  *		  -- At least one of these objects is required.  If the
  *		  -- board uses a single set of steps for all boot media
  *		  -- types, then it should provide just "u-boot-install".
- *		  -- Otherwise, it whould provide one or more objects
+ *		  -- Otherwise, it would provide one or more objects
  *		  -- with names reflecting the media type, e.g.:
  *		  --
  *		  --	"u-boot-install-sdmmc"	(for SD cards)
@@ -321,13 +321,13 @@ __RCSID("$NetBSD: evboards.c,v 1.5 2020/06/07 00:58:58 thorpej Exp $");
  *			<key>file-offset</key>
  *			<integer>512</integer>
  *
- *			<!-- ...just after the MBR partition talble. -->
+ *			<!-- ...just after the MBR partition table. -->
  *			<key>image-offset</key>
  *			<integer>512</integer>
  *		</dict>
  *	</array>
  *
- * There are some addditional directives for installing on raw flash devices:
+ * There are some additional directives for installing on raw flash devices:
  *
  *	<key>u-boot-install-spi</key>
  *	<array>
@@ -348,9 +348,9 @@ __RCSID("$NetBSD: evboards.c,v 1.5 2020/06/07 00:58:58 thorpej Exp $");
  *			<integer>2048</integer>
  *
  *			<!-- Key: "input-pad-size".
- *			  -- Value: an integer specifing the amount of
+ *			  -- Value: an integer specifying the amount of
  *			  --        zero padding inserted per input block.
- *			  --        Must be used in cojunction with
+ *			  --        Must be used in conjunction with
  *			  --        "input-block-size".
  *			  -- (optional)
  *			  -->
@@ -873,7 +873,7 @@ evb_db_load_overlays(ib_params *params)
 	fts_close(fts);
 
 	/*
-	 * If the user specifed a stage1 loader, then consult it last
+	 * If the user specified a stage1 loader, then consult it last
 	 * for a possible u-boot package location.
 	 */
 	if (params->stage1 != NULL) {
