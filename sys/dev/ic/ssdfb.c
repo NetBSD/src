@@ -1,4 +1,4 @@
-/* $NetBSD: ssdfb.c,v 1.19 2021/08/05 22:31:20 tnn Exp $ */
+/* $NetBSD: ssdfb.c,v 1.20 2021/08/06 18:15:48 tnn Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ssdfb.c,v 1.19 2021/08/05 22:31:20 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ssdfb.c,v 1.20 2021/08/06 18:15:48 tnn Exp $");
 
 #include "opt_ddb.h"
 
@@ -43,6 +43,9 @@ __KERNEL_RCSID(0, "$NetBSD: ssdfb.c,v 1.19 2021/08/05 22:31:20 tnn Exp $");
 
 #include <uvm/uvm_device.h>
 #include <uvm/uvm_extern.h>
+#ifdef pmap_is_modified
+#include <uvm/uvm_page.h>
+#endif
 
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
