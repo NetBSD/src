@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.108 2020/06/11 19:20:44 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.109 2021/08/06 05:53:50 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.108 2020/06/11 19:20:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.109 2021/08/06 05:53:50 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -992,8 +992,17 @@ consinit(void)
 int
 mm_md_physacc(paddr_t pa, vm_prot_t prot)
 {
+	paddr_t memend;
 
-	return (pa < lowram || pa >= 0xfffffffc) ? EFAULT : 0;
+	/*
+	 * news68k has one contiguous memory segment.
+	 */
+	memend = lowram + ctob(physmem);
+
+	if (lowram <= pa && pa < memend) 
+		return 0;
+
+	return EFAULT;
 }
 
 int
