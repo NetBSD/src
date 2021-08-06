@@ -1,0 +1,2 @@
+defined defined( msg_002.c(3) ), but never used
+only_declared declared( msg_002.c(2) ), but never used or defined
