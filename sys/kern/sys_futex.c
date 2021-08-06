@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_futex.c,v 1.12.4.3 2021/08/06 18:23:57 thorpej Exp $	*/
+/*	$NetBSD: sys_futex.c,v 1.12.4.4 2021/08/06 23:53:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.12.4.3 2021/08/06 18:23:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.12.4.4 2021/08/06 23:53:53 thorpej Exp $");
 
 /*
  * Futexes
@@ -190,13 +190,16 @@ SDT_PROBE_DEFINE1(futex, wait, sleepq_block, exit, "int");
  *	A futex is addressed either by a vmspace+va (private) or by
  *	a uvm_voaddr (shared).
  */
-union futex_key {
+typedef union futex_key {
 	struct {
 		struct vmspace			*vmspace;
 		vaddr_t				va;
 	}			fk_private;
 	struct uvm_voaddr	fk_shared;
-};
+} futex_key_t;
+
+CTASSERT(offsetof(futex_key_t, fk_private.va) ==
+	 offsetof(futex_key_t, fk_shared.offset));
 
 /*
  * struct futex
@@ -217,7 +220,7 @@ union futex_key {
  *	XXX field of the key.  Worth it?
  */
 struct futex {
-	union futex_key		fx_key;
+	futex_key_t		fx_key;
 	struct rb_node		fx_node;
 	unsigned long		fx_refcnt;
 	bool			fx_shared;
@@ -284,8 +287,8 @@ static int
 compare_futex_key(void *cookie, const void *n, const void *k)
 {
 	const struct futex *fa = n;
-	const union futex_key *fka = &fa->fx_key;
-	const union futex_key *fkb = k;
+	const futex_key_t *fka = &fa->fx_key;
+	const futex_key_t *fkb = k;
 
 	if ((uintptr_t)fka->fk_private.vmspace <
 	    (uintptr_t)fkb->fk_private.vmspace)
@@ -319,8 +322,8 @@ static int
 compare_futex_shared_key(void *cookie, const void *n, const void *k)
 {
 	const struct futex *fa = n;
-	const union futex_key *fka = &fa->fx_key;
-	const union futex_key *fkb = k;
+	const futex_key_t *fka = &fa->fx_key;
+	const futex_key_t *fkb = k;
 
 	return uvm_voaddr_compare(&fka->fk_shared, &fkb->fk_shared);
 }
@@ -539,7 +542,7 @@ futex_dtor(void *arg __unused, void *obj)
  *	Initialize a futex key for lookup, etc.
  */
 static int
-futex_key_init(union futex_key *fk, struct vmspace *vm, vaddr_t va, bool shared)
+futex_key_init(futex_key_t *fk, struct vmspace *vm, vaddr_t va, bool shared)
 {
 	int error = 0;
 
@@ -560,7 +563,7 @@ futex_key_init(union futex_key *fk, struct vmspace *vm, vaddr_t va, bool shared)
  *	Release a futex key.
  */
 static void
-futex_key_fini(union futex_key *fk, bool shared)
+futex_key_fini(futex_key_t *fk, bool shared)
 {
 	if (__predict_false(shared))
 		uvm_voaddr_release(&fk->fk_shared);
@@ -578,7 +581,7 @@ futex_key_fini(union futex_key *fk, bool shared)
  *	Never sleeps for memory, but may sleep to acquire a lock.
  */
 static struct futex *
-futex_create(union futex_key *fk, bool shared, uint8_t class)
+futex_create(futex_key_t *fk, bool shared, uint8_t class)
 {
 	struct futex *f;
 
@@ -725,7 +728,7 @@ futex_rele_count_not_last(struct futex *f, unsigned long const count)
  *	futex_lookup_create().
  */
 static int
-futex_lookup_by_key(union futex_key *fk, bool shared, uint8_t class,
+futex_lookup_by_key(futex_key_t *fk, bool shared, uint8_t class,
     struct futex **fp)
 {
 	struct futex *f;
@@ -804,7 +807,7 @@ out:	mutex_exit(&futex_tab.lock);
 static int
 futex_lookup(int *uaddr, bool shared, uint8_t class, struct futex **fp)
 {
-	union futex_key fk;
+	futex_key_t fk;
 	struct vmspace *vm = curproc->p_vmspace;
 	vaddr_t va = (vaddr_t)uaddr;
 	int error;
@@ -852,7 +855,7 @@ futex_lookup(int *uaddr, bool shared, uint8_t class, struct futex **fp)
 static int
 futex_lookup_create(int *uaddr, bool shared, uint8_t class, struct futex **fp)
 {
-	union futex_key fk;
+	futex_key_t fk;
 	struct vmspace *vm = curproc->p_vmspace;
 	struct futex *f = NULL;
 	vaddr_t va = (vaddr_t)uaddr;
