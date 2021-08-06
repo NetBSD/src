@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_icu.c,v 1.26 2020/11/20 18:49:45 thorpej Exp $	*/
+/*	$NetBSD: i80321_icu.c,v 1.27 2021/08/06 09:01:36 rin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2006 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_icu.c,v 1.26 2020/11/20 18:49:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_icu.c,v 1.27 2021/08/06 09:01:36 rin Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -166,26 +166,22 @@ i80321_intr_calculate_masks(void)
 	struct intrhand *ih;
 	int irq, ipl;
 
-	/* First, figure out which IPLs each IRQ has. */
-	for (irq = 0; irq < NIRQ; irq++) {
-		int levels = 0;
-		iq = &intrq[irq];
+	/* Disable all IRQs. */
+	for (irq = 0; irq < NIRQ; irq++)
 		i80321_disable_irq(irq);
-		for (ih = TAILQ_FIRST(&iq->iq_list); ih != NULL;
-		     ih = TAILQ_NEXT(ih, ih_list))
-			levels |= (1U << ih->ih_ipl);
-		iq->iq_levels = levels;
+
+	/* Figure out which IRQs are used by each IPL. */
+	for (ipl = 0; ipl < NIPL; ipl++)
+		i80321_imask[ipl] = 0;
+	for (irq = 0; irq < NIRQ; irq++) {
+		iq = &intrq[irq];
+		TAILQ_FOREACH(ih, &iq->iq_list, ih_list)
+			i80321_imask[ih->ih_ipl] |= (1U << irq);
 	}
 
-	/* Next, figure out which IRQs are used by each IPL. */
-	for (ipl = 0; ipl < NIPL; ipl++) {
-		int irqs = 0;
-		for (irq = 0; irq < NIRQ; irq++) {
-			if (intrq[irq].iq_levels & (1U << ipl))
-				irqs |= (1U << irq);
-		}
-		i80321_imask[ipl] = irqs;
-	}
+	/* All IPLs block everything blocked by any lower IPL. */
+	for (ipl = 1; ipl < NIPL; ipl++)
+		i80321_imask[ipl] |= i80321_imask[ipl - 1];
 
 	KASSERT(i80321_imask[IPL_NONE] == 0);
 	KASSERT(i80321_imask[IPL_SOFTCLOCK] == 0);
@@ -193,38 +189,11 @@ i80321_intr_calculate_masks(void)
 	KASSERT(i80321_imask[IPL_SOFTNET] == 0);
 	KASSERT(i80321_imask[IPL_SOFTSERIAL] == 0);
 
-	/*
-	 * Enforce a hierarchy that gives "slow" device (or devices with
-	 * limited input buffer space/"real-time" requirements) a better
-	 * chance at not dropping data.
-	 */
-
-#if 0
-	/*
-	 * This assert might be useful, but only after some interrupts
-	 * are configured.  As it stands now, it will always fire early
-	 * in the initialization phase.  If it's useful enough to re-
-	 * enable, it should be conditionalized on something else like
-	 * having at least something in the levels/irqs above.
-	 */
-	KASSERT(i80321_imask[IPL_VM] != 0);
-#endif
-	i80321_imask[IPL_SCHED] |= i80321_imask[IPL_VM];
-	i80321_imask[IPL_HIGH] |= i80321_imask[IPL_SCHED];
-
-	/*
-	 * Now compute which IRQs must be blocked when servicing any
-	 * given IRQ.
-	 */
+	/* Enable IRQs in use. */
 	for (irq = 0; irq < NIRQ; irq++) {
-		int irqs = (1U << irq);
 		iq = &intrq[irq];
-		if (TAILQ_FIRST(&iq->iq_list) != NULL)
+		if (!TAILQ_EMPTY(&iq->iq_list))
 			i80321_enable_irq(irq);
-		for (ih = TAILQ_FIRST(&iq->iq_list); ih != NULL;
-		     ih = TAILQ_NEXT(ih, ih_list))
-			irqs |= i80321_imask[ih->ih_ipl];
-		iq->iq_mask = irqs;
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321var.h,v 1.13 2012/02/12 16:31:01 matt Exp $	*/
+/*	$NetBSD: i80321var.h,v 1.14 2021/08/06 09:01:36 rin Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -59,8 +59,6 @@ struct intrhand {
 struct intrq {
 	TAILQ_HEAD(, intrhand) iq_list;	/* handler list */
 	struct evcnt iq_ev;		/* event counter */
-	int iq_mask;			/* IRQs to mask while handling */
-	int iq_levels;			/* IPL_*'s this IRQ has */
 	int iq_ist;			/* share type */
 };
 
