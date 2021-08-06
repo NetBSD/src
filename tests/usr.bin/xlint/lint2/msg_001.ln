@@ -1,6 +1,11 @@
-# $NetBSD: msg_001.ln,v 1.1 2021/08/05 22:36:08 rillig Exp $
+# $NetBSD: msg_001.ln,v 1.2 2021/08/06 16:21:00 rillig Exp $
 #
 # Test data for message 1 of lint2:
 #	%s defined( %s ), but never used
 #
-# TODO: add actual test data
+
+0smsg_000.c
+Smsg_000.c
+
+3c0.3p1i16used_not_definedf2IDI
+2d0.2do16defined_not_usedf0I
