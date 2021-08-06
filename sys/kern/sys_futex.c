@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_futex.c,v 1.12.4.2 2021/08/05 23:23:50 thorpej Exp $	*/
+/*	$NetBSD: sys_futex.c,v 1.12.4.3 2021/08/06 18:23:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.12.4.2 2021/08/05 23:23:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.12.4.3 2021/08/06 18:23:57 thorpej Exp $");
 
 /*
  * Futexes
@@ -1250,7 +1250,7 @@ futex_op_lock(struct futex *f)
 /*
  * futex_op_unlock(f)
  *
- *	Release the queue lock of f.
+ *	Release the op lock of f.
  */
 static void
 futex_op_unlock(struct futex *f)
