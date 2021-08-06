@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.234 2020/06/11 19:20:43 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.235 2021/08/06 05:22:21 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.234 2020/06/11 19:20:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.235 2021/08/06 05:22:21 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -1164,6 +1164,10 @@ int
 mm_md_physacc(paddr_t pa, vm_prot_t prot)
 {
 
+	/*
+	 * On the hp300, physical RAM is always located at the end of
+	 * the physical address space, i.e. from 0xffffffff to lowram.
+	 */
 	return (pa < lowram || pa >= 0xfffffffc) ? EFAULT : 0;
 }
 
