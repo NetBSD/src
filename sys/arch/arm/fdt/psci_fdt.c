@@ -1,4 +1,4 @@
-/* $NetBSD: psci_fdt.c,v 1.20 2021/01/27 03:10:19 thorpej Exp $ */
+/* $NetBSD: psci_fdt.c,v 1.21 2021/08/06 19:38:53 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psci_fdt.c,v 1.20 2021/01/27 03:10:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psci_fdt.c,v 1.21 2021/08/06 19:38:53 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: psci_fdt.c,v 1.20 2021/01/27 03:10:19 thorpej Exp $"
 
 #include <dev/fdt/fdtvar.h>
 
+#include <arm/arm/smccc.h>
 #include <arm/arm/psci.h>
 #include <arm/fdt/psci_fdtvar.h>
 
@@ -134,6 +135,8 @@ psci_fdt_init(const int phandle)
 		if (of_getprop_uint32(phandle, "cpu_on", &val) == 0)
 			psci_setfunc(PSCI_FUNC_CPU_ON, val);
 	}
+
+	smccc_probe();
 
 	return 0;
 }
