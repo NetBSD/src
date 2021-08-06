@@ -1,4 +1,4 @@
-#	$NetBSD: files.aarch64,v 1.31 2021/07/24 23:38:41 jmcneill Exp $
+#	$NetBSD: files.aarch64,v 1.32 2021/08/06 19:38:53 jmcneill Exp $
 
 defflag opt_cpuoptions.h	AARCH64_ALIGNMENT_CHECK
 defflag opt_cpuoptions.h	AARCH64_EL0_STACK_ALIGNMENT_CHECK
@@ -33,11 +33,15 @@ defparam opt_console.h		CONSPEED
 defparam opt_console.h		CONMODE
 defparam opt_console.h		CONADDR
 
-# Power State Coordination Interface (PSCI)
 # FP support
 file	arch/aarch64/aarch64/fpu.c
 
-device	psci
+# SMC Calling Convention
+define	smccc
+file	arch/arm/arm/smccc.c			smccc
+
+# Power State Coordination Interface (PSCI)
+device	psci: smccc
 file	arch/arm/arm/psci.c			psci
 file	arch/arm/arm/psci_arm.S			psci
 

@@ -1,4 +1,4 @@
-/* $NetBSD: psci.h,v 1.2 2018/10/13 00:07:55 jmcneill Exp $ */
+/* $NetBSD: psci.h,v 1.3 2021/08/06 19:38:53 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -37,6 +37,7 @@ enum psci_function {
 	PSCI_FUNC_CPU_ON,
 	PSCI_FUNC_SYSTEM_OFF,
 	PSCI_FUNC_SYSTEM_RESET,
+	PSCI_FUNC_FEATURES,
 	PSCI_FUNC_MAX
 };
 
@@ -108,4 +109,13 @@ void	psci_system_off(void);
  */
 void	psci_system_reset(void);
 
+/*
+ * Discover supported features.
+ */
+int	psci_features(uint32_t);
+
+/*
+ * Generic PSCI call.
+ */
+int	psci_call(register_t, register_t, register_t, register_t);
 #endif /* _ARM_PSCI_H */

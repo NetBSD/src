@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.164 2020/10/21 13:31:51 christos Exp $
+#	$NetBSD: files.arm,v 1.165 2021/08/06 19:38:53 jmcneill Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -99,8 +99,12 @@ obsolete defflag		ARMFPE
 file	arch/arm/vfp/vfp_init.c			arm32
 #file	arch/arm/vfp/pmap_vfp.S			arm32 & fpu_vfp
 
+# SMC Calling Convention
+define	smccc
+file	arch/arm/arm/smccc.c			smccc
+
 # Power State Coordination Interface (PSCI)
-device	psci
+device	psci: smccc
 file	arch/arm/arm/psci.c			psci
 file	arch/arm/arm/psci_arm.S			psci
 
