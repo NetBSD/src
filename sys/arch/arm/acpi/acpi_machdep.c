@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.23 2021/08/07 16:18:42 thorpej Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.24 2021/08/07 18:40:45 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.23 2021/08/07 16:18:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.24 2021/08/07 18:40:45 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -417,7 +417,7 @@ default_tag:
 		return;
 	}
 
-	rv = acpi_resource_parse(sc->sc_dev, module, "_DMA", &res,
+	rv = acpi_resource_parse_any(sc->sc_dev, module, "_DMA", &res,
 	    &acpi_resource_parse_ops_quiet);
 	if (ACPI_FAILURE(rv)) {
 		aprint_error_dev(sc->sc_dev,
