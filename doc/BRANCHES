@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.360 2021/08/01 21:00:41 thorpej Exp $
+#	$NetBSD: BRANCHES,v 1.361 2021/08/07 14:19:12 thorpej Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -761,6 +761,19 @@ Notes:		Normal futex operataions pass the test suite, but there are
 		futex operations with respect to Linux compatibility.
 		Also includes implementations of eventfd and timerfd, as
 		well as some additional improvements to COMPAT_LINUX{,32}.
+
+Branch:		thorpej-futex2
+Description:	Overhaul of futex operations to fix thread priority issues
+Status:		Active
+Start Date:	Thu Aug 5 2021
+End Date:
+Base Tag:	thorpej-futex2-base
+Maintainer:	Jason Thorpe <thorpej@netbsd.org>
+Scope:		src/sys src/tests/lib/libc/sys
+Notes:		Re-based version of thorpej-futex that includes ONLY
+		the original futex priority issue fixes.  The other
+		changes in thorpej-futex are still maintained on that
+		branch.
 
 Branch:		thorpej-i2c-spi-conf
 Description:	Improve device tree-based I2C and SPI enumeration.
