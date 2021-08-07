@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.171.2.1 2021/08/03 15:00:15 thorpej Exp $ */
+/* $NetBSD: device.h,v 1.171.2.2 2021/08/07 14:21:28 thorpej Exp $ */
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -530,6 +530,7 @@ struct pdevinit {
 /* This allows us to wildcard a device unit. */
 #define	DVUNIT_ANY	-1
 
+#if defined(_KERNEL) || defined(_KMEMUSER) || defined(_STANDALONE)
 /*
  * Arguments passed to config_search() and config_found().
  */
@@ -564,6 +565,7 @@ struct cfargs {
 		.cfargs_version = CFARGS_VERSION,			\
 		__VA_ARGS__						\
 	})
+#endif /* _KERNEL || _KMEMUSER || _STANDALONE */
 
 #ifdef _KERNEL
 
