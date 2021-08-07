@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.99 2021/06/23 00:56:41 mrg Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.100 2021/08/07 16:19:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.99 2021/06/23 00:56:41 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.100 2021/08/07 16:19:11 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -1817,8 +1817,7 @@ ahci_atapibus_attach(struct atabus_softc * ata_sc)
 	chan->chan_ntargets = 1;
 	chan->chan_nluns = 1;
 	chp->atapibus = config_found(ata_sc->sc_dev, chan, atapiprint,
-	    CFARG_IATTR, "atapi",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "atapi"));
 }
 
 static void

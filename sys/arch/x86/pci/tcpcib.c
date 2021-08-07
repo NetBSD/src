@@ -1,4 +1,4 @@
-/*	$NetBSD: tcpcib.c,v 1.3 2021/04/24 23:36:51 thorpej Exp $	*/
+/*	$NetBSD: tcpcib.c,v 1.4 2021/08/07 16:19:08 thorpej Exp $	*/
 /*	$OpenBSD: tcpcib.c,v 1.4 2012/10/17 22:32:01 deraadt Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcpcib.c,v 1.3 2021/04/24 23:36:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcpcib.c,v 1.4 2021/08/07 16:19:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -275,8 +275,7 @@ tcpcib_rescan(device_t self, const char *ifattr, const int *locators)
 		hpet_arg.hpet_reg = E600_HPET_BASE;
 		sc->sc_hpetbus =
 		    config_found(self, &hpet_arg, NULL,
-				 CFARG_IATTR, "hpetichbus",
-				 CFARG_EOL);
+				 CFARGS(.iattr = "hpetichbus"));
 	}
 
 	return pcibrescan(self, ifattr, locators);

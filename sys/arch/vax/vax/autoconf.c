@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.98 2021/04/24 23:36:50 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.99 2021/08/07 16:19:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.98 2021/04/24 23:36:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.99 2021/08/07 16:19:07 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cputype.h"
@@ -137,7 +137,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 		ma.ma_type = *devp;
 		ma.ma_iot = &vax_mem_bus_space;
 		ma.ma_dmat = &vax_bus_dma_tag;
-		config_found(self, &ma, mainbus_print, CFARG_EOL);
+		config_found(self, &ma, mainbus_print, CFARGS_NONE);
 	}
 
 	/*

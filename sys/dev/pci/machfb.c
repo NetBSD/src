@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.105 2021/06/21 03:19:21 christos Exp $	*/
+/*	$NetBSD: machfb.c,v 1.106 2021/08/07 16:19:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0,
-	"$NetBSD: machfb.c,v 1.105 2021/06/21 03:19:21 christos Exp $");
+	"$NetBSD: machfb.c,v 1.106 2021/08/07 16:19:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -786,8 +786,7 @@ mach64_attach(device_t parent, device_t self, void *aux)
 	aa.accesscookie = &sc->vd;
 
 	config_found(self, &aa, wsemuldisplaydevprint,
-	    CFARG_IATTR, "wsemuldisplaydev",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "wsemuldisplaydev"));
 #if 0
 	/* XXX
 	 * turns out some firmware doesn't turn these back on when needed
@@ -809,8 +808,7 @@ mach64_attach(device_t parent, device_t self, void *aux)
 	}
 #endif
 	config_found(self, aux, machfb_drm_print,
-	    CFARG_IATTR, "drm",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "drm"));
 }
 
 static int

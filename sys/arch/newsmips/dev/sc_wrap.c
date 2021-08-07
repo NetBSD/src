@@ -1,11 +1,11 @@
-/*	$NetBSD: sc_wrap.c,v 1.32 2021/04/24 23:36:44 thorpej Exp $	*/
+/*	$NetBSD: sc_wrap.c,v 1.33 2021/08/07 16:19:01 thorpej Exp $	*/
 
 /*
  * This driver is slow!  Need to rewrite.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sc_wrap.c,v 1.32 2021/04/24 23:36:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sc_wrap.c,v 1.33 2021/08/07 16:19:01 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -127,7 +127,7 @@ cxd1185_attach(device_t parent, device_t self, void *aux)
 
 	hb_intr_establish(intlevel, INTEN1_DMA, IPL_BIO, sc_intr, sc);
 
-	config_found(self, &sc->sc_channel, scsiprint, CFARG_EOL);
+	config_found(self, &sc->sc_channel, scsiprint, CFARGS_NONE);
 }
 
 void

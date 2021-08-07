@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.102 2021/05/10 23:53:44 thorpej Exp $ */
+/*	$NetBSD: sbus.c,v 1.103 2021/08/07 16:19:05 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999-2002 Eduardo Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.102 2021/05/10 23:53:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.103 2021/08/07 16:19:05 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -294,8 +294,7 @@ sbus_attach(device_t parent, device_t self, void *aux)
 			continue;
 		}
 		(void) config_found(self, &sa, sbus_print,
-		    CFARG_DEVHANDLE, prom_node_to_devhandle(node),
-		    CFARG_EOL);
+		    CFARGS(.devhandle = prom_node_to_devhandle(node)));
 		sbus_destroy_attach_args(&sa);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.21 2021/04/24 23:36:23 thorpej Exp $	*/
+/*	$NetBSD: asc.c,v 1.22 2021/08/07 16:18:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -98,7 +98,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.21 2021/04/24 23:36:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.22 2021/08/07 16:18:40 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -277,7 +277,7 @@ ascattach(device_t parent, device_t self, void *aux)
 	/*
 	 * attach all scsi units on us
 	 */
-	config_found(self, &sbic->sc_channel, scsiprint, CFARG_EOL);
+	config_found(self, &sbic->sc_channel, scsiprint, CFARGS_NONE);
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sebuf.c,v 1.18 2021/04/24 23:36:49 thorpej Exp $	*/
+/*	$NetBSD: sebuf.c,v 1.19 2021/08/07 16:19:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sebuf.c,v 1.18 2021/04/24 23:36:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sebuf.c,v 1.19 2021/08/07 16:19:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,7 +161,7 @@ sebuf_attach(device_t parent, device_t self, void *args)
 	aa.buf  = &regs->se_scsi_buf[0];
 	aa.blen = SE_NCRBUFSIZE;
 	aa.regs = &regs->se_scsi_regs;
-	(void)config_found(self, (void *)&aa, sebuf_print, CFARG_EOL);
+	(void)config_found(self, (void *)&aa, sebuf_print, CFARGS_NONE);
 
 	/* Attach the Ethernet child. */
 	aa.ca.ca_intpri++;
@@ -170,7 +170,7 @@ sebuf_attach(device_t parent, device_t self, void *args)
 	aa.buf  = &regs->se_eth_buf[0];
 	aa.blen = SE_IEBUFSIZE;
 	aa.regs = &regs->se_eth_regs;
-	(void)config_found(self, (void *)&aa, sebuf_print, CFARG_EOL);
+	(void)config_found(self, (void *)&aa, sebuf_print, CFARGS_NONE);
 }
 
 static int 

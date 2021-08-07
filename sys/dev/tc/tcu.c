@@ -1,4 +1,4 @@
-/* $NetBSD: tcu.c,v 1.5 2021/04/24 23:36:59 thorpej Exp $ */
+/* $NetBSD: tcu.c,v 1.6 2021/08/07 16:19:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2016, Felix Deichmann
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcu.c,v 1.5 2021/04/24 23:36:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcu.c,v 1.6 2021/08/07 16:19:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,8 +148,7 @@ tcu_attach(device_t parent, device_t self, void *aux)
 #if NSLHCI_TCU > 0
 	/* Attach slhci. */
 	(void)config_found(self, aux, tcu_print,
-	    CFARG_IATTR, "tcu",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "tcu"));
 #endif /* NSLHCI_TCU > 0 */
 #if NGPIO > 0
 	/* Attach gpio(bus). */
@@ -215,8 +214,7 @@ tcu_gpio_attach(device_t parent, device_t self, void *aux)
 	gba.gba_npins = TCU_GPIO_NPINS;
 
 	config_found(self, &gba, gpiobus_print,
-	    CFARG_IATTR, "gpiobus",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "gpiobus"));
 }
 
 static int

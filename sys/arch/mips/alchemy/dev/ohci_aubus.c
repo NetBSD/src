@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_aubus.c,v 1.17 2021/04/24 23:36:42 thorpej Exp $	*/
+/*	$NetBSD: ohci_aubus.c,v 1.18 2021/08/07 16:18:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_aubus.c,v 1.17 2021/04/24 23:36:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_aubus.c,v 1.18 2021/08/07 16:18:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,6 +152,6 @@ ohci_aubus_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Attach USB device */
-	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint, CFARG_EOL);
+	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint, CFARGS_NONE);
 
 }

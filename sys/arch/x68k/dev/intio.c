@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.48 2021/04/24 23:36:51 thorpej Exp $	*/
+/*	$NetBSD: intio.c,v 1.49 2021/08/07 16:19:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.48 2021/04/24 23:36:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.49 2021/08/07 16:19:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,8 +176,7 @@ intio_attach(device_t parent, device_t self, void *aux)
 	ia.ia_dmat = sc->sc_dmat;
 
 	config_search(self, &ia,
-	    CFARG_SEARCH, intio_search,
-	    CFARG_EOL);
+	    CFARGS(.search = intio_search));
 }
 
 static int
@@ -195,7 +194,7 @@ intio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	ia->ia_dmaintr = cf->cf_dmaintr;
 
 	if (config_probe(parent, cf, ia))
-		config_attach(parent, cf, ia, intio_print, CFARG_EOL);
+		config_attach(parent, cf, ia, intio_print, CFARGS_NONE);
 
 	return (0);
 }

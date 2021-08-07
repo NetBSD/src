@@ -1,5 +1,5 @@
-/*	$NetBSD: rmixl_gpio.c,v 1.4 2021/04/24 23:36:43 thorpej Exp $	*/
-/*	$NetBSD: rmixl_gpio.c,v 1.4 2021/04/24 23:36:43 thorpej Exp $	*/
+/*	$NetBSD: rmixl_gpio.c,v 1.5 2021/08/07 16:18:59 thorpej Exp $	*/
+/*	$NetBSD: rmixl_gpio.c,v 1.5 2021/08/07 16:18:59 thorpej Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_gpio.c,v 1.4 2021/04/24 23:36:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_gpio.c,v 1.5 2021/08/07 16:18:59 thorpej Exp $");
 
 #define _INTR_PRIVATE
 
@@ -179,7 +179,7 @@ gpio_defer(device_t self)
 			: GPIO_PIN_HIGH;
 	}
 
-	config_found(self, &gba, gpiobus_print, CFARG_EOL);
+	config_found(self, &gba, gpiobus_print, CFARGS_NONE);
 }
 #endif /* NGPIO > 0 */
 

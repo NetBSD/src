@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss.c,v 1.51 2021/04/24 23:36:55 thorpej Exp $	*/
+/*	$NetBSD: ciss.c,v 1.52 2021/08/07 16:19:12 thorpej Exp $	*/
 /*	$OpenBSD: ciss.c,v 1.68 2013/05/30 16:15:02 deraadt Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.51 2021/04/24 23:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.52 2021/08/07 16:19:12 thorpej Exp $");
 
 #include "bio.h"
 
@@ -472,7 +472,7 @@ ciss_attach(struct ciss_softc *sc)
 	sc->sc_adapter.adapt_minphys = cissminphys;
 	sc->sc_adapter.adapt_ioctl = ciss_scsi_ioctl;
 	sc->sc_adapter.adapt_nchannels = 1;
-	config_found(sc->sc_dev, &sc->sc_channel, scsiprint, CFARG_EOL);
+	config_found(sc->sc_dev, &sc->sc_channel, scsiprint, CFARGS_NONE);
 
 #if 0
 	sc->sc_link_raw.adapter_softc = sc;
@@ -480,7 +480,7 @@ ciss_attach(struct ciss_softc *sc)
 	sc->sc_link_raw.adapter = &ciss_raw_switch;
 	sc->sc_link_raw.adapter_target = sc->ndrives;
 	sc->sc_link_raw.adapter_buswidth = sc->ndrives;
-	config_found(sc->sc_dev, &sc->sc_channel, scsiprint, CFARG_EOL);
+	config_found(sc->sc_dev, &sc->sc_channel, scsiprint, CFARGS_NONE);
 #endif
 
 #if NBIO > 0

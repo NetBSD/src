@@ -1,4 +1,4 @@
-/*	$NetBSD: memory.c,v 1.8 2021/04/24 23:36:41 thorpej Exp $	*/
+/*	$NetBSD: memory.c,v 1.9 2021/08/07 16:18:58 thorpej Exp $	*/
 /*	$OpenBSD: mem.c,v 1.15 2007/10/14 17:29:04 kettenis Exp $	*/
 
 /*-
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memory.c,v 1.8 2021/04/24 23:36:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memory.c,v 1.9 2021/08/07 16:18:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,7 @@ memory_attach(device_t parent, device_t self, void *aux)
 			/* Skip entries that have not been filled in. */
 			if (sc->sc_buf[addr * SPD_SIZE] != 0) {
 				ia.ia_addr = 0x50 + addr;
-				config_found(self, &ia, NULL, CFARG_EOL);
+				config_found(self, &ia, NULL, CFARGS_NONE);
 			}
 			addr++;
 		}

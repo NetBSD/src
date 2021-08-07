@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.18 2021/04/24 23:36:43 thorpej Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.19 2021/08/07 16:19:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.18 2021/04/24 23:36:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.19 2021/08/07 16:19:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,7 +144,7 @@ isabusattach(device_t parent, device_t self, void *aux)
 	(*platform.intr_establish)(SYS_INTR_ATBUS, isa_intr, ic);
 
 	printf("\n");
-	config_found(self, &iba, mipscoisabusprint, CFARG_EOL);
+	config_found(self, &iba, mipscoisabusprint, CFARGS_NONE);
 }
 
 int

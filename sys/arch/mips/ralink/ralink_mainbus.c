@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_mainbus.c,v 1.6 2021/04/24 23:36:42 thorpej Exp $	*/
+/*	$NetBSD: ralink_mainbus.c,v 1.7 2021/08/07 16:18:59 thorpej Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_mainbus.c,v 1.6 2021/04/24 23:36:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_mainbus.c,v 1.7 2021/08/07 16:18:59 thorpej Exp $");
 
 #include "locators.h"
 #include <sys/param.h>
@@ -120,8 +120,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 
 	/* attach other devices */
 	config_search(self, &ma,
-	    CFARG_SEARCH, mainbus_search,
-	    CFARG_EOL);
+	    CFARGS(.search = mainbus_search));
 }
 
 static int
@@ -133,7 +132,7 @@ mainbus_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	ma->ma_addr = cf->cf_loc[MAINBUSCF_ADDR];
 
 	if (config_probe(parent, cf, aux))
-		config_attach(parent, cf, aux, mainbus_print, CFARG_EOL);
+		config_attach(parent, cf, aux, mainbus_print, CFARGS_NONE);
 	else
 		mainbus_print(aux, cf->cf_name);
 	return 0;
@@ -180,13 +179,12 @@ mainbus_attach_critical(struct mainbus_softc *sc)
 		ma.ma_dmat = sc->sc_dmat;
 
 		cf = config_search(sc->sc_dev, &ma,
-				   CFARG_SUBMATCH, mainbus_find,
-				   CFARG_EOL);
+				   CFARGS(.submatch = mainbus_find));
 		if (cf == NULL && critical_devs[i].required)
 			panic("%s: failed to find %s",
 			    __func__, critical_devs[i].name);
 
 		ma.ma_addr = cf->cf_loc[MAINBUSCF_ADDR];
-		config_attach(sc->sc_dev, cf, &ma, mainbus_print, CFARG_EOL);
+		config_attach(sc->sc_dev, cf, &ma, mainbus_print, CFARGS_NONE);
 	}
 }

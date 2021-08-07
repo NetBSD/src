@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcapm.c,v 1.23 2021/04/24 23:36:54 thorpej Exp $	*/
+/*	$NetBSD: hpcapm.c,v 1.24 2021/08/07 16:19:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Takemura Shin
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcapm.c,v 1.23 2021/04/24 23:36:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcapm.c,v 1.24 2021/08/07 16:19:11 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_hpcapm.h"
@@ -149,7 +149,7 @@ hpcapm_attach(device_t parent, device_t self, void *aux)
 	aaa.accesscookie = sc;
 	aaa.apm_detail = 0x0102;
 
-	sc->sc_apmdev = config_found(self, &aaa, apmprint, CFARG_EOL);
+	sc->sc_apmdev = config_found(self, &aaa, apmprint, CFARGS_NONE);
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "unable to establish power handler\n");

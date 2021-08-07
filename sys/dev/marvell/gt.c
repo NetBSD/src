@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.29 2021/04/24 23:36:56 thorpej Exp $	*/
+/*	$NetBSD: gt.c,v 1.30 2021/08/07 16:19:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.29 2021/04/24 23:36:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.30 2021/08/07 16:19:13 thorpej Exp $");
 
 #include "opt_marvell.h"
 #include "gtmpsc.h"
@@ -236,8 +236,7 @@ gt_attach_peripherals(struct gt_softc *sc)
 		mva.mva_irq = gt_devs[i].irq;
 
 		config_found(sc->sc_dev, &mva, gt_cfprint,
-		    CFARG_SUBMATCH, gt_cfsearch,
-		    CFARG_EOL);
+		    CFARGS(.submatch = gt_cfsearch));
 	}
 }
 

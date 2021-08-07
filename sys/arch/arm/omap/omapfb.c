@@ -1,4 +1,4 @@
-/*	$NetBSD: omapfb.c,v 1.29 2021/04/24 23:36:28 thorpej Exp $	*/
+/*	$NetBSD: omapfb.c,v 1.30 2021/08/07 16:18:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2010 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.29 2021/04/24 23:36:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.30 2021/08/07 16:18:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -466,7 +466,7 @@ omapfb_attach(device_t parent, device_t self, void *aux)
 	aa.accessops = &omapfb_accessops;
 	aa.accesscookie = &sc->vd;
 
-	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint, CFARG_EOL);
+	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint, CFARGS_NONE);
 #ifdef OMAPFB_DEBUG
 #if NOMAPDMA > 0
 	omapfb_rectfill(sc, 100, 100, 100, 100, 0xe000);

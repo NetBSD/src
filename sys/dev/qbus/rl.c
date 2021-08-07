@@ -1,4 +1,4 @@
-/*	$NetBSD: rl.c,v 1.52 2021/04/24 23:36:58 thorpej Exp $	*/
+/*	$NetBSD: rl.c,v 1.53 2021/08/07 16:19:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.52 2021/04/24 23:36:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.53 2021/08/07 16:19:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -244,7 +244,7 @@ rlcattach(device_t parent, device_t self, void *aux)
 		ra.type = RL_RREG(RL_MP);
 		ra.hwid = i;
 		if ((RL_RREG(RL_CS) & RLCS_ERR) == 0)
-			config_found(sc->sc_dev, &ra, rlcprint, CFARG_EOL);
+			config_found(sc->sc_dev, &ra, rlcprint, CFARGS_NONE);
 	}
 }
 

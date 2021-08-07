@@ -1,5 +1,5 @@
-/*	$Id: at91pio.c,v 1.7 2021/04/24 23:36:26 thorpej Exp $	*/
-/*	$NetBSD: at91pio.c,v 1.7 2021/04/24 23:36:26 thorpej Exp $	*/
+/*	$Id: at91pio.c,v 1.8 2021/08/07 16:18:43 thorpej Exp $	*/
+/*	$NetBSD: at91pio.c,v 1.8 2021/08/07 16:18:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91pio.c,v 1.7 2021/04/24 23:36:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91pio.c,v 1.8 2021/08/07 16:18:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,15 +184,13 @@ at91pio_attach(device_t parent, device_t self, void *aux)
 	gba.gba_pins = sc->pins;
 	gba.gba_npins = n;
 	config_found(self, &gba, at91piobus_print,
-	    CFARG_IATTR, "gpiobus",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "gpiobus"));
 #endif
 
 	/* attach device */
 	config_search(self, NULL,
-	    CFARG_SEARCH, at91pio_search,
-	    CFARG_IATTR, "at91pio",
-	    CFARG_EOL);
+	    CFARGS(.search = at91pio_search,
+		   .iattr = "at91pio"));
 }
 
 #if NGPIO > 0
@@ -224,7 +222,7 @@ at91pio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	paa.paa_bit = cf->cf_loc[AT91PIOCF_BIT];
 
 	if (config_probe(parent, cf, &paa))
-		config_attach(parent, cf, &paa, at91pio_print, CFARG_EOL);
+		config_attach(parent, cf, &paa, at91pio_print, CFARGS_NONE);
 
 	return 0;
 }

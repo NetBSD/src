@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_mmc.c,v 1.27 2021/04/24 23:36:55 thorpej Exp $ */
+/* $NetBSD: dwc_mmc.c,v 1.28 2021/08/07 16:19:12 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_mmc.c,v 1.27 2021/04/24 23:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_mmc.c,v 1.28 2021/08/07 16:19:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -192,7 +192,7 @@ dwc_mmc_attach_i(device_t self)
 	if (sc->sc_card_detect)
 		saa.saa_caps |= SMC_CAPS_POLL_CARD_DET;
 
-	sc->sc_sdmmc_dev = config_found(self, &saa, NULL, CFARG_EOL);
+	sc->sc_sdmmc_dev = config_found(self, &saa, NULL, CFARGS_NONE);
 }
 
 static void

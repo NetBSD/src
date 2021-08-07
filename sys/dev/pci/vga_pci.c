@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_pci.c,v 1.57 2021/04/24 23:36:57 thorpej Exp $	*/
+/*	$NetBSD: vga_pci.c,v 1.58 2021/08/07 16:19:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.57 2021/04/24 23:36:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.58 2021/08/07 16:19:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,8 +261,7 @@ vga_pci_attach(device_t parent, device_t self, void *aux)
 	if (!pmf_device_register(self, NULL, vga_pci_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 	config_found(self, aux, vga_drm_print,
-	    CFARG_IATTR, "drm",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "drm"));
 }
 
 static int
@@ -271,8 +270,7 @@ vga_pci_rescan(device_t self, const char *ifattr, const int *locators)
 	struct vga_pci_softc *psc = device_private(self);
 
 	config_found(self, &psc->sc_paa, vga_drm_print,
-	    CFARG_IATTR, "drm",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "drm"));
 
 	return 0;
 }

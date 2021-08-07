@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.36 2021/04/24 23:36:51 thorpej Exp $ */
+/*	$NetBSD: pchb.c,v 1.37 2021/08/07 16:19:08 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.36 2021/04/24 23:36:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.37 2021/08/07 16:19:08 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -418,8 +418,7 @@ pchbattach(device_t parent, device_t self, void *aux)
 			       NULL, NULL) != 0) {
 		apa.apa_pci_args = *pa;
 		config_found(self, &apa, agpbusprint,
-		    CFARG_IATTR, "agpbus",
-		    CFARG_EOL);
+		    CFARGS(.iattr = "agpbus"));
 	}
 
 	if (doattach) {
@@ -435,8 +434,7 @@ pchbattach(device_t parent, device_t self, void *aux)
 		pba.pba_intrswiz = 0;
 		memset(&pba.pba_intrtag, 0, sizeof(pba.pba_intrtag));
 		config_found(self, &pba, pcibusprint,
-		    CFARG_IATTR, "pcibus",
-		    CFARG_EOL);
+		    CFARGS(.iattr = "pcibus"));
 	}
 }
 

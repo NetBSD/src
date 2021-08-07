@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.53 2021/04/24 23:36:51 thorpej Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.54 2021/08/07 16:19:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.53 2021/04/24 23:36:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.54 2021/08/07 16:19:07 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -643,8 +643,7 @@ tcotimer_configure(device_t self)
 	arg.ta_pcib = &(sc->sc_pcib);
 
 	sc->sc_tco = config_found(self, &arg, NULL,
-	    CFARG_IATTR, "tcoichbus",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "tcoichbus"));
 }
 
 static int
@@ -872,8 +871,7 @@ lpcib_hpet_configure(device_t self)
 	arg.hpet_reg = hpet_reg;
 
 	sc->sc_hpetbus = config_found(self, &arg, NULL,
-	    CFARG_IATTR, "hpetichbus",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "hpetichbus"));
 }
 
 static int
@@ -982,8 +980,7 @@ lpcib_gpio_configure(device_t self)
 	gba.gba_npins = LPCIB_GPIO_NPINS;
 
 	sc->sc_gpiobus = config_found(self, &gba, gpiobus_print,
-	    CFARG_IATTR, "gpiobus",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "gpiobus"));
 }
 
 static int
@@ -1107,8 +1104,7 @@ lpcib_fwh_configure(device_t self)
 	}
 
 	sc->sc_fwhbus = config_found(self, NULL, NULL,
-	    CFARG_IATTR, "fwhichbus",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "fwhichbus"));
 
 	/* restore previous write enable setting */
 	pci_conf_write(sc->sc_pcib.sc_pc, sc->sc_pcib.sc_tag,

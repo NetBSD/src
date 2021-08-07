@@ -60,7 +60,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/dev/ismt/ismt.c 266474 2014-05-20 19:55:06Z jimharris $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ismt.c,v 1.8 2021/04/24 23:36:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ismt.c,v 1.9 2021/08/07 16:19:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -802,7 +802,7 @@ ismt_rescan(device_t self, const char *ifattr, const int *locators)
 
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c_tag;
-	sc->smbdev = config_found(self, &iba, iicbus_print, CFARG_EOL);
+	sc->smbdev = config_found(self, &iba, iicbus_print, CFARGS_NONE);
 
 	return 0;
 }

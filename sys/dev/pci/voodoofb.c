@@ -1,4 +1,4 @@
-/*	$NetBSD: voodoofb.c,v 1.54 2021/04/24 23:36:57 thorpej Exp $	*/
+/*	$NetBSD: voodoofb.c,v 1.55 2021/08/07 16:19:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2012 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.54 2021/04/24 23:36:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.55 2021/08/07 16:19:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -547,11 +547,9 @@ voodoofb_attach(device_t parent, device_t self, void *aux)
 	aa.accesscookie = &sc->vd;
 
 	config_found(self, &aa, wsemuldisplaydevprint,
-	    CFARG_IATTR, "wsemuldisplaydev",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "wsemuldisplaydev"));
 	config_found(self, aux, voodoofb_drm_print,
-	    CFARG_IATTR, "drm",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "drm"));
 }
 
 static int

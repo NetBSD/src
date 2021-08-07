@@ -1,4 +1,4 @@
-/*	$NetBSD: zrc.c,v 1.11 2021/04/24 23:36:52 thorpej Exp $	*/
+/*	$NetBSD: zrc.c,v 1.12 2021/08/07 16:19:08 thorpej Exp $	*/
 /*	$OpenBSD: zaurus_remote.c,v 1.1 2005/11/17 05:26:31 uwe Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 #include "opt_wsdisplay_compat.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zrc.c,v 1.11 2021/04/24 23:36:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zrc.c,v 1.12 2021/08/07 16:19:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -208,7 +208,7 @@ zrc_attach(device_t parent, device_t self, void *aux)
 	a.accessops = &zrc_accessops;
 	a.accesscookie = sc;
 
-	sc->sc_wskbddev = config_found(self, &a, wskbddevprint, CFARG_EOL);
+	sc->sc_wskbddev = config_found(self, &a, wskbddevprint, CFARGS_NONE);
 }
 
 static int

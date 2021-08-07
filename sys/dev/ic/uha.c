@@ -1,4 +1,4 @@
-/*	$NetBSD: uha.c,v 1.48 2021/04/24 23:36:55 thorpej Exp $	*/
+/*	$NetBSD: uha.c,v 1.49 2021/08/07 16:19:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uha.c,v 1.48 2021/04/24 23:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uha.c,v 1.49 2021/08/07 16:19:12 thorpej Exp $");
 
 #undef UHADEBUG
 #ifdef DDB
@@ -191,7 +191,7 @@ uha_attach(struct uha_softc *sc, struct uha_probe_data *upd)
 	/*
 	 * ask the adapter what subunits are present
 	 */
-	config_found(sc->sc_dev, &sc->sc_channel, scsiprint, CFARG_EOL);
+	config_found(sc->sc_dev, &sc->sc_channel, scsiprint, CFARGS_NONE);
 }
 
 integrate void

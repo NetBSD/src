@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.92 2021/04/24 23:36:58 thorpej Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.93 2021/08/07 16:19:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.92 2021/04/24 23:36:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.93 2021/08/07 16:19:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -279,8 +279,8 @@ atapi_probe_device(struct atapibus_softc *sc, int target,
 	periph->periph_quirks |= quirks;
 
 	if ((cf = config_search(sc->sc_dev, sa,
-				CFARG_SUBMATCH, atapibussubmatch,
-				CFARG_EOL)) != NULL) {
+				CFARGS(.submatch =
+				           atapibussubmatch))) != NULL) {
 		scsipi_insert_periph(chan, periph);
 		/*
 		 * XXX Can't assign periph_dev here, because we'll
@@ -288,7 +288,7 @@ atapi_probe_device(struct atapibus_softc *sc, int target,
 		 * XXX assign it in periph driver.
 		 */
 		return config_attach(sc->sc_dev, cf, sa, atapibusprint,
-		    CFARG_EOL);
+		    CFARGS_NONE);
 	} else {
 		atapibusprint(sa, device_xname(sc->sc_dev));
 		aprint_normal(" not configured\n");

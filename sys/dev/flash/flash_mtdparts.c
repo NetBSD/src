@@ -1,4 +1,4 @@
-/* $NetBSD: flash_mtdparts.c,v 1.2 2021/04/24 23:36:53 thorpej Exp $ */
+/* $NetBSD: flash_mtdparts.c,v 1.3 2021/08/07 16:19:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flash_mtdparts.c,v 1.2 2021/04/24 23:36:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash_mtdparts.c,v 1.3 2021/08/07 16:19:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -49,8 +49,7 @@ flash_attach_partition(struct flash_interface *flash_if, device_t parent,
 	faa.partinfo = *part;
 
 	config_found(parent, &faa, flash_print,
-	    CFARG_IATTR, "flashbus",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "flashbus"));
 }
 
 static flash_size_t

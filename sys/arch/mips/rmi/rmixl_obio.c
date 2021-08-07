@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_obio.c,v 1.6 2021/04/24 23:36:43 thorpej Exp $	*/
+/*	$NetBSD: rmixl_obio.c,v 1.7 2021/08/07 16:18:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_obio.c,v 1.6 2021/04/24 23:36:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_obio.c,v 1.7 2021/08/07 16:18:59 thorpej Exp $");
 
 #include "locators.h"
 #include "pci.h"
@@ -118,9 +118,7 @@ obio_attach(device_t parent, device_t self, void *aux)
 	 * Attach on-board devices as specified in the kernel config file.
 	 */
 	config_search(self, NULL,
-	    CFARG_SEARCH, obio_search,
-	    CFARG_EOL);
-
+	    CFARGS(.search = obio_search));
 }
 
 static int
@@ -162,7 +160,7 @@ obio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	obio.obio_64bit_dmat = sc->sc_64bit_dmat;
 
 	if (config_probe(parent, cf, &obio))
-		config_attach(parent, cf, &obio, obio_print, CFARG_EOL);
+		config_attach(parent, cf, &obio, obio_print, CFARGS_NONE);
 
 	return 0;
 }

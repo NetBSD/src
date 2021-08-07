@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.21 2021/04/24 23:36:35 thorpej Exp $	*/
+/*	$NetBSD: pcib.c,v 1.22 2021/08/07 16:18:51 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.21 2021/04/24 23:36:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.22 2021/08/07 16:18:51 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -352,7 +352,7 @@ pcib_bridge_callback(device_t self)
 	iba.iba_ic->ic_attach_hook = pcib_isa_attach_hook;
 	iba.iba_ic->ic_detach_hook = pcib_isa_detach_hook;
 
-	config_found(self, &iba, isabusprint, CFARG_EOL);
+	config_found(self, &iba, isabusprint, CFARGS_NONE);
 }
 
 static void

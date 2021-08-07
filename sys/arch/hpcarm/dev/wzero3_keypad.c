@@ -1,4 +1,4 @@
-/*	$NetBSD: wzero3_keypad.c,v 1.5 2021/04/24 23:36:37 thorpej Exp $	*/
+/*	$NetBSD: wzero3_keypad.c,v 1.6 2021/08/07 16:18:53 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 2010 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wzero3_keypad.c,v 1.5 2021/04/24 23:36:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wzero3_keypad.c,v 1.6 2021/08/07 16:18:53 thorpej Exp $");
 
 #include "wzero3lcd.h"
 #include "opt_wsdisplay_compat.h"
@@ -330,7 +330,7 @@ wzero3keypad_attach(device_t parent, device_t self, void *aux)
 	wska.keymap = &wzero3keypad_wskbd_keymapdata;
 	wska.accessops = &wzero3keypad_wskbd_accessops;
 	wska.accesscookie = sc;
-	sc->sc_wskbddev = config_found(self, &wska, wskbddevprint, CFARG_EOL);
+	sc->sc_wskbddev = config_found(self, &wska, wskbddevprint, CFARGS_NONE);
 
 	/* setup keypad interrupt */
 	pxa2x0_gpio_set_function(sc->sc_intr_pin, GPIO_IN);

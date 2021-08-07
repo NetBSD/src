@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.154 2021/04/24 23:36:55 thorpej Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.155 2021/08/07 16:19:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.154 2021/04/24 23:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.155 2021/08/07 16:19:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,7 +296,7 @@ ncr53c9x_attach(struct ncr53c9x_softc *sc)
 	 * Now try to attach all the sub-devices
 	 */
 	sc->sc_child = config_found(sc->sc_dev, &sc->sc_channel, scsiprint,
-	    CFARG_EOL);
+	    CFARGS_NONE);
 
 	scsipi_adapter_delref(adapt);
 	callout_reset(&sc->sc_watchdog, 60 * hz, ncr53c9x_watch, sc);

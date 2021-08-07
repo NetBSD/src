@@ -1,4 +1,4 @@
-/*	$NetBSD: i386_mainbus.c,v 1.5 2021/04/24 23:36:39 thorpej Exp $	*/
+/*	$NetBSD: i386_mainbus.c,v 1.6 2021/08/07 16:18:55 thorpej Exp $	*/
 /*	NetBSD: mainbus.c,v 1.104 2018/12/02 08:19:44 cherry Exp 	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i386_mainbus.c,v 1.5 2021/04/24 23:36:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i386_mainbus.c,v 1.6 2021/08/07 16:18:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,8 +230,7 @@ i386_mainbus_attach(device_t parent, device_t self, void *aux)
 		mba.mba_eba.eba_dmat = &eisa_bus_dma_tag;
 #endif
 		config_found(self, &mba.mba_eba, eisabusprint,
-		    CFARG_IATTR, "eisabus",
-		    CFARG_EOL);
+		    CFARGS(.iattr = "eisabus"));
 	}
 
 #if NISA > 0
@@ -240,8 +239,7 @@ i386_mainbus_attach(device_t parent, device_t self, void *aux)
 		mba.mba_iba.iba_iot = x86_bus_space_io;
 		mba.mba_iba.iba_memt = x86_bus_space_mem;
 		config_found(self, &mba.mba_iba, isabusprint,
-		    CFARG_IATTR, "isabus",
-		    CFARG_EOL);
+		    CFARGS(.iattr = "isabus"));
 	}
 #endif
 
@@ -272,8 +270,7 @@ i386_mainbus_rescan(device_t self, const char *ifattr, const int *locators)
 		mba.mba_acpi.aa_dmat = &pci_bus_dma_tag;
 		mba.mba_acpi.aa_dmat64 = NULL;
 		sc->sc_acpi = config_found(self, &mba.mba_acpi, NULL,
-		    CFARG_IATTR, "acpibus",
-		    CFARG_EOL);
+		    CFARGS(.iattr = "acpibus"));
 #if 0 /* XXXJRT not yet */
 		if (acpi_active) {
 			/*
@@ -294,8 +291,7 @@ i386_mainbus_rescan(device_t self, const char *ifattr, const int *locators)
 		if (pnpbios_probe()) {
 			mba.mba_paa.paa_ic = &x86_isa_chipset;
 			sc->sc_pnpbios = config_found(self, &mba.mba_paa, NULL,
-			    CFARG_IATTR, "pnpbiosbus",
-			    CFARG_EOL);
+			    CFARGS(.iattr = "pnpbiosbus"));
 		}
 #endif
 	}
@@ -307,8 +303,7 @@ i386_mainbus_rescan(device_t self, const char *ifattr, const int *locators)
 		mba.mba_ipmi.iaa_memt = x86_bus_space_mem;
 		if (ipmi_probe(&mba.mba_ipmi)) {
 			sc->sc_ipmi = config_found(self, &mba.mba_ipmi, NULL,
-			    CFARG_IATTR, "ipmibus",
-			    CFARG_EOL);
+			    CFARGS(.iattr = "ipmibus"));
 		}
 #endif
 	}
@@ -352,8 +347,7 @@ i386_mainbus_rescan(device_t self, const char *ifattr, const int *locators)
 		if (npcibus == 0 && sc->sc_pci == NULL) {
 			sc->sc_pci =
 			    config_found(self, &mba.mba_pba, pcibusprint,
-			    CFARG_IATTR, "pcibus",
-			    CFARG_EOL);
+					 CFARGS(.iattr = "pcibus"));
 		}
 #if NACPICA > 0
 		if (mp_verbose)
@@ -374,8 +368,7 @@ i386_mainbus_rescan(device_t self, const char *ifattr, const int *locators)
 			mba.mba_mba.mba_bus = 0;
 			sc->sc_mca = config_found(self,
 			    &mba.mba_mba, mcabusprint,
-			    CFARG_IATTR, "mcabus",
-			    CFARG_EOL);
+			    CFARGS(.iattr = "mcabus"));
 		}
 #endif
 	}

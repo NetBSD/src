@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.8 2021/05/10 23:58:52 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.9 2021/08/07 16:18:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2007
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.8 2021/05/10 23:58:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.9 2021/08/07 16:18:59 thorpej Exp $");
 
 #define	_MIPS_BUS_DMA_PRIVATE
 
@@ -98,9 +98,8 @@ mainbus_attach_static(device_t self)
 	for (i = 0; i < (int)mainbus_ndevs; i++) {
 		aa.aa_name = mainbus_devs[i];
 		config_found(self, &aa, mainbus_print,
-		    CFARG_SUBMATCH, mainbus_submatch,
-			CFARG_IATTR, "mainbus",
-			CFARG_EOL);
+		    CFARGS(.submatch = mainbus_submatch,
+			   .iattr = "mainbus"));
 	}
 }
 
@@ -118,15 +117,13 @@ mainbus_attach_devicetree(device_t self)
 
 	aa.aa_name = "cpunode";
 	config_found(self, &aa, mainbus_print,
-	    CFARG_SUBMATCH, mainbus_submatch,
-	    CFARG_IATTR, "mainbus",
-	    CFARG_EOL);
+	    CFARGS(.submatch = mainbus_submatch,
+		   .iattr = "mainbus"));
 
 	aa.aa_name = "iobus";
 	config_found(self, &aa, mainbus_print,
-	    CFARG_SUBMATCH, mainbus_submatch,
-	    CFARG_IATTR, "mainbus",
-	    CFARG_EOL);
+	    CFARGS(.submatch = mainbus_submatch,
+		   .iattr = "mainbus"));
 
 	simplebus_bus_io_init(&simplebus_bus_tag, NULL);
 
@@ -150,8 +147,7 @@ mainbus_attach_devicetree(device_t self)
 
 	faa.faa_phandle = OF_peer(0);
 	config_found(self, &faa, NULL,
-	    CFARG_IATTR, "fdt",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "fdt"));
 }
 
 static int

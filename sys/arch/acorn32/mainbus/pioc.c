@@ -1,4 +1,4 @@
-/*	$NetBSD: pioc.c,v 1.19 2021/04/24 23:36:23 thorpej Exp $	*/     
+/*	$NetBSD: pioc.c,v 1.20 2021/08/07 16:18:40 thorpej Exp $	*/     
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -41,7 +41,7 @@
 /*#define PIOC_DEBUG*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pioc.c,v 1.19 2021/04/24 23:36:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pioc.c,v 1.20 2021/08/07 16:18:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,7 +234,7 @@ piocsearch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 
 		tryagain = 0;
 		if (config_probe(parent, cf, &pa)) {
-			config_attach(parent, cf, &pa, piocprint, CFARG_EOL);
+			config_attach(parent, cf, &pa, piocprint, CFARGS_NONE);
 /*			tryagain = (cf->cf_fstate == FSTATE_STAR);*/
 		}
 	} while (tryagain);
@@ -267,7 +267,7 @@ piocsubmatch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 			pa->pa_irq = cf->cf_loc[PIOCCF_IRQ];
 		tryagain = 0;
 		if (config_probe(parent, cf, pa)) {
-			config_attach(parent, cf, pa, piocprint, CFARG_EOL);
+			config_attach(parent, cf, pa, piocprint, CFARGS_NONE);
 /*			tryagain = (cf->cf_fstate == FSTATE_STAR);*/
 		}
 	} while (tryagain);
@@ -383,8 +383,7 @@ piocattach(device_t parent, device_t self, void *aux)
 		pa.pa_drq = -1;
 		pa.pa_irq = -1;
 		config_found(self, &pa, piocprint,
-		    CFARG_SUBMATCH, piocsubmatch,
-		    CFARG_EOL);
+		    CFARGS(.submatch = piocsubmatch));
 	}
 
 	/*
@@ -403,8 +402,7 @@ piocattach(device_t parent, device_t self, void *aux)
 		pa.pa_drq = -1;
 		pa.pa_irq = -1;
 		config_found(self, &pa, piocprint,
-		    CFARG_SUBMATCH, piocsubmatch,
-		    CFARG_EOL);
+		    CFARGS(.submatch = piocsubmatch));
 	}
 
 	/*
@@ -440,8 +438,7 @@ piocattach(device_t parent, device_t self, void *aux)
 		pa.pa_drq = -1;
 		pa.pa_irq = -1;
 		config_found(self, &pa, piocprint,
-		    CFARG_SUBMATCH, piocsubmatch,
-		    CFARG_EOL);
+		    CFARGS(.submatch = piocsubmatch));
 	}
 
 	if (sc->sc_config[PIOC_CM_CR2] & PIOC_UART2_ENABLE) {
@@ -466,8 +463,7 @@ piocattach(device_t parent, device_t self, void *aux)
 		pa.pa_drq = -1;
 		pa.pa_irq = -1;
 		config_found(self, &pa, piocprint,
-		    CFARG_SUBMATCH, piocsubmatch,
-		    CFARG_EOL);
+		    CFARGS(.submatch = piocsubmatch));
 	}
 
 	/*
@@ -493,14 +489,12 @@ piocattach(device_t parent, device_t self, void *aux)
 		pa.pa_drq = -1;
 		pa.pa_irq = -1;
 		config_found(self, &pa, piocprint,
-		    CFARG_SUBMATCH, piocsubmatch,
-		    CFARG_EOL);
+		    CFARGS(.submatch = piocsubmatch));
 	}
 
 #if 0
 	config_search(self, NULL,
-	    CFARG_SEARCH, piocsearch,
-	    CFARG_EOL);
+	    CFARGS(.search = piocsearch));
 #endif
 }
 

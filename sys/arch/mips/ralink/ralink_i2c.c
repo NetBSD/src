@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_i2c.c,v 1.5 2021/04/24 23:36:42 thorpej Exp $	*/
+/*	$NetBSD: ralink_i2c.c,v 1.6 2021/08/07 16:18:59 thorpej Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
 /* ra_i2c.c - Ralink i2c 3052 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_i2c.c,v 1.5 2021/04/24 23:36:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_i2c.c,v 1.6 2021/08/07 16:18:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -159,7 +159,7 @@ ra_i2c_attach(device_t parent, device_t self, void *aux)
 
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c;
-	config_found(self, &iba, iicbus_print, CFARG_EOL);
+	config_found(self, &iba, iicbus_print, CFARGS_NONE);
 }
 
 

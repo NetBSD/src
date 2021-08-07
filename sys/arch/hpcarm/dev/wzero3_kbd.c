@@ -1,4 +1,4 @@
-/*	$NetBSD: wzero3_kbd.c,v 1.11 2021/04/24 23:36:37 thorpej Exp $	*/
+/*	$NetBSD: wzero3_kbd.c,v 1.12 2021/08/07 16:18:53 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 2008, 2009, 2010 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wzero3_kbd.c,v 1.11 2021/04/24 23:36:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wzero3_kbd.c,v 1.12 2021/08/07 16:18:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -350,7 +350,7 @@ wzero3kbd_attach(device_t parent, device_t self, void *aux)
 
 	/* Attach hpckbd. */
 	haa.haa_ic = &sc->sc_if;
-	config_found(self, &haa, hpckbd_print, CFARG_EOL);
+	config_found(self, &haa, hpckbd_print, CFARGS_NONE);
 
 #if defined(KEYTEST) || defined(KEYTEST2) || defined(KEYTEST3) || defined(KEYTEST4) || defined(KEYTEST5)
 	sc->sc_test_ih = NULL;

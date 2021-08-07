@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee1212.c,v 1.14 2021/04/24 23:36:59 thorpej Exp $	*/
+/*	$NetBSD: ieee1212.c,v 1.15 2021/08/07 16:19:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ieee1212.c,v 1.14 2021/04/24 23:36:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee1212.c,v 1.15 2021/08/07 16:19:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1231,8 +1231,7 @@ p1212_match_units(device_t sc, struct p1212_dir *dir,
 	if (udirs) {
 		do {
 			dev = config_found(sc, udirs, print,
-			    CFARG_IATTR, "fwnode",
-			    CFARG_EOL);
+			    CFARGS(.iattr = "fwnode"));
 			if (dev && numdev) {
 				devret = realloc(devret,
 				    sizeof(device_t) *

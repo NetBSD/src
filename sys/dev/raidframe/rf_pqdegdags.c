@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_pqdegdags.c,v 1.15 2021/08/01 21:58:56 andvar Exp $	*/
+/*	$NetBSD: rf_pqdegdags.c,v 1.16 2021/08/07 16:19:15 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_pqdegdags.c,v 1.15 2021/08/01 21:58:56 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_pqdegdags.c,v 1.16 2021/08/07 16:19:15 thorpej Exp $");
 
 #include "rf_archs.h"
 

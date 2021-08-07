@@ -1,4 +1,4 @@
-/*	$NetBSD: twa.c,v 1.59 2021/04/24 23:36:57 thorpej Exp $ */
+/*	$NetBSD: twa.c,v 1.60 2021/08/07 16:19:14 thorpej Exp $ */
 /*	$wasabi: twa.c,v 1.27 2006/07/28 18:17:21 wrstuden Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.59 2021/04/24 23:36:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.60 2021/08/07 16:19:14 thorpej Exp $");
 
 //#define TWA_DEBUG
 
@@ -1010,10 +1010,9 @@ twa_request_bus_scan(device_t self, const char *attr, const int *flags)
 
 				sc->sc_units[unit].td_dev =
 				    config_found(sc->twa_dv, &twaa, twa_print,
-				    CFARG_SUBMATCH, config_stdsubmatch,
-				    CFARG_IATTR, attr,
-				    CFARG_LOCATORS, locs,
-				    CFARG_EOL);
+				    CFARGS(.submatch = config_stdsubmatch,
+					   .iattr = attr,
+					   .locators = locs));
 			}
 		} else {
 			if (td->td_dev != NULL) {

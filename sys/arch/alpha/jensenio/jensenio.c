@@ -1,4 +1,4 @@
-/* $NetBSD: jensenio.c,v 1.21 2021/05/07 16:58:34 thorpej Exp $ */
+/* $NetBSD: jensenio.c,v 1.22 2021/08/07 16:18:40 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: jensenio.c,v 1.21 2021/05/07 16:58:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jensenio.c,v 1.22 2021/08/07 16:18:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,10 +186,9 @@ jensenio_attach(device_t parent, device_t self, void *aux)
 
 		locs[JENSENIOCF_PORT] = jensenio_devs[i].jd_ioaddr;
 		config_found(self, &ja, jensenio_print,
-		    CFARG_SUBMATCH, config_stdsubmatch,
-		    CFARG_IATTR, "jensenio",
-		    CFARG_LOCATORS, locs,
-		    CFARG_EOL);
+		    CFARGS(.submatch = config_stdsubmatch,
+			   .iattr = "jensenio",
+			   .locators = locs));
 	}
 
 	/*
@@ -203,8 +202,7 @@ jensenio_attach(device_t parent, device_t self, void *aux)
 	ja.ja_eisa.eba_dmat = &jcp->jc_dmat_eisa;
 	ja.ja_eisa.eba_ec = &jcp->jc_ec;
 	config_found(self, &ja.ja_eisa, eisabusprint,
-	    CFARG_IATTR, "eisabus",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "eisabus"));
 
 	/*
 	 * Attach the ISA bus.
@@ -217,8 +215,7 @@ jensenio_attach(device_t parent, device_t self, void *aux)
 	ja.ja_isa.iba_dmat = &jcp->jc_dmat_isa;
 	ja.ja_isa.iba_ic = &jcp->jc_ic;
 	config_found(self, &ja.ja_isa, isabusprint,
-	    CFARG_IATTR, "isabus",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "eisabus"));
 }
 
 static int

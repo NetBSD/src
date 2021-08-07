@@ -1,4 +1,4 @@
-/*	$NetBSD: sni_gpio.c,v 1.10 2021/04/24 23:36:28 thorpej Exp $	*/
+/*	$NetBSD: sni_gpio.c,v 1.11 2021/08/07 16:18:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sni_gpio.c,v 1.10 2021/04/24 23:36:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sni_gpio.c,v 1.11 2021/08/07 16:18:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -258,7 +258,7 @@ snigpio_attach_i(struct snigpio_softc *sc)
 	gba.gba_pins = &sc->sc_gpio_pins[0];
 	gba.gba_npins = sc->sc_maxpins;
 
-	config_found(sc->sc_dev, &gba, gpiobus_print, CFARG_EOL);
+	config_found(sc->sc_dev, &gba, gpiobus_print, CFARGS_NONE);
 }
 
 static int

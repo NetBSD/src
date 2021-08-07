@@ -1,4 +1,4 @@
-/*	$Id: exb.c,v 1.4 2021/04/24 23:36:46 thorpej Exp $	*/
+/*	$Id: exb.c,v 1.5 2021/08/07 16:19:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exb.c,v 1.4 2021/04/24 23:36:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exb.c,v 1.5 2021/08/07 16:19:03 thorpej Exp $");
 
 #include "locators.h"
 
@@ -102,9 +102,8 @@ exb_attach(device_t parent, device_t self, void *aux)
 		ec1.ec_bust = exb_get_bus_space_tag();
 
 		config_found(self, &ec1, exb_print,
-		    CFARG_SUBMATCH, config_stdsubmatch,
-		    CFARG_LOCATORS, locs,
-		    CFARG_EOL);
+		    CFARGS(.submatch = config_stdsubmatch,
+			   .locators = locs));
 		ec++;
 	}
 }

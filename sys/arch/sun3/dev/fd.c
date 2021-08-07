@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.85 2021/04/24 23:36:49 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.86 2021/08/07 16:19:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.85 2021/04/24 23:36:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.86 2021/08/07 16:19:06 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -494,7 +494,7 @@ fdcattach(device_t parent, device_t self, void *aux)
 	for (fa.fa_drive = 0; fa.fa_drive < 4; fa.fa_drive++) {
 		fa.fa_deftype = NULL;		/* unknown */
 	fa.fa_deftype = &fd_types[0];		/* XXX */
-		(void)config_found(self, (void *)&fa, fdprint, CFARG_EOL);
+		(void)config_found(self, (void *)&fa, fdprint, CFARGS_NONE);
 	}
 }
 

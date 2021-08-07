@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuunit.c,v 1.17 2021/04/24 23:36:49 thorpej Exp $	*/
+/*	$NetBSD: cpuunit.c,v 1.18 2021/08/07 16:19:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpuunit.c,v 1.17 2021/04/24 23:36:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpuunit.c,v 1.18 2021/08/07 16:19:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -125,7 +125,7 @@ cpuunit_attach(device_t parent, device_t self, void *aux)
 		if (cpuunit_setup_attach_args(sc, sbt, node, &cpua))
 			panic("cpuunit_attach: failed to set up attach args");
 
-		(void) config_found(self, &cpua, cpuunit_print, CFARG_EOL);
+		(void) config_found(self, &cpua, cpuunit_print, CFARGS_NONE);
 
 		cpuunit_destroy_attach_args(&cpua);
 	}

@@ -1,4 +1,4 @@
-/* $NetBSD: gcscehci.c,v 1.14 2021/04/24 23:36:39 thorpej Exp $ */
+/* $NetBSD: gcscehci.c,v 1.15 2021/08/07 16:18:55 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscehci.c,v 1.14 2021/04/24 23:36:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscehci.c,v 1.15 2021/08/07 16:18:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,7 +172,7 @@ gcscehci_attach(device_t parent, device_t self, void *aux)
 
 	/* Attach usb device. */
 	sc->sc.sc_child = config_found(self, &sc->sc.sc_bus, usbctlprint,
-	    CFARG_EOL);
+	    CFARGS_NONE);
 }
 
 CFATTACH_DECL_NEW(gcscehci, sizeof(struct gcscehci_softc),

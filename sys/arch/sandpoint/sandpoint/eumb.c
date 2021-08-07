@@ -1,4 +1,4 @@
-/* $NetBSD: eumb.c,v 1.7 2021/04/24 23:36:47 thorpej Exp $ */
+/* $NetBSD: eumb.c,v 1.8 2021/08/07 16:19:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eumb.c,v 1.7 2021/04/24 23:36:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eumb.c,v 1.8 2021/08/07 16:19:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -70,8 +70,7 @@ eumb_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal("\n");
 	config_search(self, aux,
-	    CFARG_SEARCH, eumb_search,
-	    CFARG_EOL);
+	    CFARGS(.search = eumb_search));
 }
 
 static int
@@ -84,7 +83,7 @@ eumb_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	eaa.eumb_bt = ma->ma_bst;
 	eaa.eumb_unit = cf->cf_loc[EUMBCF_UNIT];
         if (config_probe(parent, cf, &eaa))
-                config_attach(parent, cf, &eaa, eumb_print, CFARG_EOL);
+                config_attach(parent, cf, &eaa, eumb_print, CFARGS_NONE);
 
 	return 0;
 }

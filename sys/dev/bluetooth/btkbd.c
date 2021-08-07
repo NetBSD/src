@@ -1,4 +1,4 @@
-/*	$NetBSD: btkbd.c,v 1.20 2021/04/24 23:36:53 thorpej Exp $	*/
+/*	$NetBSD: btkbd.c,v 1.21 2021/08/07 16:19:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btkbd.c,v 1.20 2021/04/24 23:36:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btkbd.c,v 1.21 2021/08/07 16:19:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -236,7 +236,7 @@ btkbd_attach(device_t parent, device_t self, void *aux)
 	wska.accessops = &btkbd_accessops;
 	wska.accesscookie = sc;
 
-	sc->sc_wskbd = config_found(self, &wska, wskbddevprint, CFARG_EOL);
+	sc->sc_wskbd = config_found(self, &wska, wskbddevprint, CFARGS_NONE);
 
 	pmf_device_register(self, NULL, NULL);
 }

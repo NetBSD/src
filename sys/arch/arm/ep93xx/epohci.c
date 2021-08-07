@@ -1,4 +1,4 @@
-/*	$NetBSD: epohci.c,v 1.10 2021/04/24 23:36:26 thorpej Exp $ */
+/*	$NetBSD: epohci.c,v 1.11 2021/08/07 16:18:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2004 Jesse Off
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epohci.c,v 1.10 2021/04/24 23:36:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epohci.c,v 1.11 2021/08/07 16:18:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,6 +153,6 @@ epohci_callback(device_t self)
 
 	/* Attach usb device. */
 	sc->sc.sc_child = config_found(self, &sc->sc.sc_bus, usbctlprint,
-	    CFARG_EOL);
+	    CFARGS_NONE);
 
 }

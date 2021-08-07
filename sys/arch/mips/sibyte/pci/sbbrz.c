@@ -1,4 +1,4 @@
-/* $NetBSD: sbbrz.c,v 1.5 2021/04/24 23:36:43 thorpej Exp $ */
+/* $NetBSD: sbbrz.c,v 1.6 2021/08/07 16:18:59 thorpej Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -201,7 +201,7 @@ sbbrz_attach(device_t parent, device_t self, void *aux)
 	pba.pba_bridgetag = NULL;
 	pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
-	config_found(self, &pba, sbbrz_print, CFARG_EOL);
+	config_found(self, &pba, sbbrz_print, CFARGS_NONE);
 }
 
 static int

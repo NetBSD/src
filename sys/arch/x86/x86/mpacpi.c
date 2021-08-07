@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.106 2021/05/12 22:17:40 thorpej Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.107 2021/08/07 16:19:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.106 2021/05/12 22:17:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.107 2021/08/07 16:19:08 thorpej Exp $");
 
 #include "acpica.h"
 #include "opt_acpi.h"
@@ -384,10 +384,9 @@ mpacpi_config_cpu(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 			caa.cpu_func = &mp_cpu_funcs;
 			locs[CPUBUSCF_APID] = caa.cpu_number;
 			config_found(parent, &caa, mpacpi_cpuprint,
-			    CFARG_SUBMATCH, config_stdsubmatch,
-			    CFARG_IATTR, "cpubus",
-			    CFARG_LOCATORS, locs,
-			    CFARG_EOL);
+			    CFARGS(.submatch = config_stdsubmatch,
+				   .iattr = "cpubus",
+				   .locators = locs));
 		}
 		break;
 
@@ -414,10 +413,9 @@ mpacpi_config_cpu(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 			caa.cpu_func = &mp_cpu_funcs;
 			locs[CPUBUSCF_APID] = caa.cpu_number;
 			config_found(parent, &caa, mpacpi_cpuprint,
-			    CFARG_SUBMATCH, config_stdsubmatch,
-			    CFARG_IATTR, "cpubus",
-			    CFARG_LOCATORS, locs,
-			    CFARG_EOL);
+			    CFARGS(.submatch = config_stdsubmatch,
+				   .iattr = "cpubus",
+				   .locators = locs));
 		}
 		break;
 
@@ -442,10 +440,9 @@ mpacpi_config_ioapic(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 		aaa.apic_vecbase = p->GlobalIrqBase;
 		locs[IOAPICBUSCF_APID] = aaa.apic_id;
 		config_found(parent, &aaa, mpacpi_ioapicprint,
-		    CFARG_SUBMATCH, config_stdsubmatch,
-		    CFARG_IATTR, "ioapicbus",
-		    CFARG_LOCATORS, locs,
-		    CFARG_EOL);
+		    CFARGS(.submatch = config_stdsubmatch,
+			   .iattr = "ioapicbus",
+			   .locators = locs));
 	}
 	return AE_OK;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: imcsmb.c,v 1.4 2021/04/24 23:36:51 thorpej Exp $ */
+/* $NetBSD: imcsmb.c,v 1.5 2021/08/07 16:19:08 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imcsmb.c,v 1.4 2021/04/24 23:36:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imcsmb.c,v 1.5 2021/08/07 16:19:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -155,7 +155,7 @@ imcsmb_rescan(device_t self, const char *ifattr, const int *locs)
 
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c_tag;
-	sc->sc_smbus = config_found(self, &iba, iicbus_print, CFARG_EOL);
+	sc->sc_smbus = config_found(self, &iba, iicbus_print, CFARGS_NONE);
 
 	if (sc->sc_smbus == NULL) {
 		aprint_normal_dev(self, "no child found\n");

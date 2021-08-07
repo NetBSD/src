@@ -1,4 +1,4 @@
-/*	$NetBSD: mntva.c,v 1.4 2021/04/24 23:36:24 thorpej Exp $	*/
+/*	$NetBSD: mntva.c,v 1.5 2021/08/07 16:18:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2012, 2016 The NetBSD Foundation, Inc.		
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mntva.c,v 1.4 2021/04/24 23:36:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mntva.c,v 1.5 2021/08/07 16:18:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,7 +238,7 @@ mntva_attach(device_t parent, device_t self, void *aux)
 	ws_aa.accessops = &mntva_accessops;
 	ws_aa.accesscookie = &sc->vd;
 
-	config_found(sc->sc_dev, &ws_aa, wsemuldisplaydevprint, CFARG_EOL);
+	config_found(sc->sc_dev, &ws_aa, wsemuldisplaydevprint, CFARGS_NONE);
 }
 
 static void

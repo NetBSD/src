@@ -1,4 +1,4 @@
-/*	$NetBSD: nct.c,v 1.4 2021/04/24 23:36:55 thorpej Exp $	*/
+/*	$NetBSD: nct.c,v 1.5 2021/08/07 16:19:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nct.c,v 1.4 2021/04/24 23:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nct.c,v 1.5 2021/08/07 16:19:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -441,7 +441,7 @@ nct_attach(device_t parent, device_t self, void *aux)
 	gba.gba_pins = sc->sc_pins;
 	gba.gba_npins = NCT_NUM_PINS;
 
-	(void)config_found(sc->sc_dev, &gba, gpiobus_print, CFARG_EOL);
+	(void)config_found(sc->sc_dev, &gba, gpiobus_print, CFARGS_NONE);
 }
 
 /*

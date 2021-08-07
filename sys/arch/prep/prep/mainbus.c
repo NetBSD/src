@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.39 2021/04/24 23:36:47 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.40 2021/08/07 16:19:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.39 2021/04/24 23:36:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.40 2021/08/07 16:19:03 thorpej Exp $");
 
 #include "opt_pci.h"
 #include "opt_residual.h"
@@ -121,8 +121,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 		ca.ca_name = "cpu";
 		ca.ca_node = i;
 		config_found(self, &ca, NULL,
-		    CFARG_IATTR, "mainbus",
-		    CFARG_EOL);
+		    CFARGS(.iattr = "mainbus"));
 	}
 
 	/*
@@ -170,8 +169,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	mba.mba_paa.paa_ic = &genppc_ict;
 	mba.mba_paa.paa_dmat = &isa_bus_dma_tag;
 	config_found(self, &mba.mba_pba, mainbus_print,
-	    CFARG_IATTR, "mainbus",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "mainbus"));
 #endif /* NPNPBUS */
 
 #if NPCI > 0
@@ -186,8 +184,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	mba.mba_pba.pba_bridgetag = NULL;
 	mba.mba_pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY;
 	config_found(self, &mba.mba_pba, pcibusprint,
-	    CFARG_IATTR, "pcibus",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "pcibus"));
 #endif /* NPCI */
 
 #ifdef RESIDUAL_DATA_DUMP

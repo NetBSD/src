@@ -1,4 +1,4 @@
-/* $NetBSD: arm_fdt.c,v 1.16 2021/04/24 23:36:26 thorpej Exp $ */
+/* $NetBSD: arm_fdt.c,v 1.17 2021/08/07 16:18:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm_fdt.c,v 1.16 2021/04/24 23:36:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_fdt.c,v 1.17 2021/08/07 16:18:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,7 @@ arm_fdt_attach(device_t parent, device_t self, void *aux)
 	faa.faa_name = "";
 	faa.faa_phandle = OF_peer(0);
 
-	config_found(self, &faa, NULL, CFARG_EOL);
+	config_found(self, &faa, NULL, CFARGS_NONE);
 }
 
 const struct arm_platform *

@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiu.c,v 1.43 2021/04/24 23:36:38 thorpej Exp $	*/
+/*	$NetBSD: vrpiu.c,v 1.44 2021/08/07 16:18:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 TAKEMURA Shin All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrpiu.c,v 1.43 2021/04/24 23:36:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrpiu.c,v 1.44 2021/08/07 16:18:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -328,7 +328,7 @@ vrpiu_init(struct vrpiu_softc *sc, void *aux)
 	 * attach the wsmouse
 	 */
 	sc->sc_wsmousedev = config_found(sc->sc_dev, &wsmaa, wsmousedevprint,
-	    CFARG_EOL);
+	    CFARGS_NONE);
 
 	/*
 	 * power management events

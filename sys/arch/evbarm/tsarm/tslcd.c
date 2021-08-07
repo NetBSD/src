@@ -1,4 +1,4 @@
-/* $NetBSD: tslcd.c,v 1.19 2021/04/24 23:36:34 thorpej Exp $ */
+/* $NetBSD: tslcd.c,v 1.20 2021/08/07 16:18:50 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tslcd.c,v 1.19 2021/04/24 23:36:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tslcd.c,v 1.20 2021/08/07 16:18:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,7 +165,7 @@ tslcd_attach(device_t parent, device_t self, void *aux)
 	waa.scrdata = &tslcd_screenlist;
 	waa.accessops = &hlcd_accessops;
 	waa.accesscookie = &sc->sc_hlcd.sc_screen;
-	config_found(self, &waa, wsemuldisplaydevprint, CFARG_EOL);
+	config_found(self, &waa, wsemuldisplaydevprint, CFARGS_NONE);
 }
 
 static void

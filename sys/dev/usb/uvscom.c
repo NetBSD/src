@@ -1,4 +1,4 @@
-/*	$NetBSD: uvscom.c,v 1.38 2021/04/24 23:36:59 thorpej Exp $	*/
+/*	$NetBSD: uvscom.c,v 1.39 2021/08/07 16:19:17 thorpej Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.38 2021/04/24 23:36:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.39 2021/08/07 16:19:17 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -362,8 +362,7 @@ uvscom_attach(device_t parent, device_t self, void *aux)
 	DPRINTF(("uplcom: in=%#x out=%#x intr=%#x\n",
 		ucaa.ucaa_bulkin, ucaa.ucaa_bulkout, sc->sc_intr_number ));
 	sc->sc_subdev = config_found(self, &ucaa, ucomprint,
-				     CFARG_SUBMATCH, ucomsubmatch,
-				     CFARG_EOL);
+	    CFARGS(.submatch = ucomsubmatch));
 
 	return;
 }

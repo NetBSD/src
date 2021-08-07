@@ -1,4 +1,4 @@
-/* $NetBSD: opb.c,v 1.28 2021/04/24 23:36:46 thorpej Exp $ */
+/* $NetBSD: opb.c,v 1.29 2021/08/07 16:19:03 thorpej Exp $ */
 
 /*
  * Copyright 2001,2002 Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opb.c,v 1.28 2021/04/24 23:36:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opb.c,v 1.29 2021/08/07 16:19:03 thorpej Exp $");
 
 #include "locators.h"
 
@@ -259,8 +259,7 @@ opb_attach(device_t parent, device_t self, void *aux)
 		oaa.opb_flags = opb_devs[i].flags;
 
 		config_found(self, &oaa, opb_print,
-		    CFARG_SUBMATCH, opb_submatch,
-		    CFARG_EOL);
+		    CFARGS(.submatch = opb_submatch));
 	}
 }
 

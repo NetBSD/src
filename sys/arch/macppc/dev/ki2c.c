@@ -1,4 +1,4 @@
-/*	$NetBSD: ki2c.c,v 1.31 2021/04/24 23:36:41 thorpej Exp $	*/
+/*	$NetBSD: ki2c.c,v 1.32 2021/08/07 16:18:57 thorpej Exp $	*/
 /*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
 
 /*-
@@ -205,7 +205,7 @@ ki2c_attach(device_t parent, device_t self, void *aux)
 
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c;
-	config_found(sc->sc_dev, &iba, iicbus_print, CFARG_EOL);
+	config_found(sc->sc_dev, &iba, iicbus_print, CFARGS_NONE);
 		
 }
 

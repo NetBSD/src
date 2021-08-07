@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_gmx.c,v 1.19 2021/05/14 13:36:28 simonb Exp $	*/
+/*	$NetBSD: octeon_gmx.c,v 1.20 2021/08/07 16:18:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_gmx.c,v 1.19 2021/05/14 13:36:28 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_gmx.c,v 1.20 2021/08/07 16:18:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -269,7 +269,7 @@ octgmx_attach(device_t parent, device_t self, void *aux)
 		gmx_aa.ga_smi = smi;
 		gmx_aa.ga_gmx = sc;
 		gmx_aa.ga_gmx_port = port_sc;
-		config_found(self, &gmx_aa, octgmx_print, CFARG_EOL);
+		config_found(self, &gmx_aa, octgmx_print, CFARGS_NONE);
 	}
 }
 

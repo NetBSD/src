@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312.c,v 1.25 2021/04/24 23:36:29 thorpej Exp $	*/
+/*	$NetBSD: i80312.c,v 1.26 2021/08/07 16:18:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80312.c,v 1.25 2021/04/24 23:36:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80312.c,v 1.26 2021/08/07 16:18:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -297,8 +297,7 @@ i80312_attach(struct i80312_softc *sc)
 		ia.ia_size = id->id_size;
 
 		config_found(sc->sc_dev, &ia, i80312_iopxs_print,
-		    CFARG_IATTR, "iopxs",
-		    CFARG_EOL);
+		    CFARGS(.iattr = "iopxs"));
 	}
 
 	/*
@@ -322,8 +321,7 @@ i80312_attach(struct i80312_softc *sc)
 	pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY /* |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY */;
 	config_found(sc->sc_dev, &pba, pcibusprint,
-	    CFARG_IATTR, "pcibus",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "pcibus"));
 }
 
 /*

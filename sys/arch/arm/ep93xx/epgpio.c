@@ -1,4 +1,4 @@
-/*	$NetBSD: epgpio.c,v 1.6 2021/04/24 23:36:26 thorpej Exp $	*/
+/*	$NetBSD: epgpio.c,v 1.7 2021/08/07 16:18:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2005 HAMAJIMA Katsuomi. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epgpio.c,v 1.6 2021/04/24 23:36:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epgpio.c,v 1.7 2021/08/07 16:18:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -311,15 +311,13 @@ epgpio_attach(device_t parent, device_t self, void *aux)
 		gba.gba_pins = pi->pins;
 		gba.gba_npins = pin;
 		config_found(self, &gba, epgpiobus_print,
-		    CFARG_IATTR, "gpiobus",
-		    CFARG_EOL);
+		    CFARGS(.iattr = "gpiobus"));
 	}
 #endif
 
 	config_search(self, NULL,
-	    CFARG_SEARCH, epgpio_search,
-	    CFARG_IATTR, "epgpio",
-	    CFARG_EOL);
+	    CFARGS(.search = epgpio_search,
+		   .iattr = "epgpio"));
 }
 
 #if NGPIO > 0
@@ -350,7 +348,7 @@ epgpio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	ga.ga_bit2 = cf->cf_loc[EPGPIOCF_BIT2];
 
 	if (config_probe(parent, cf, &ga))
-		config_attach(parent, cf, &ga, epgpio_print, CFARG_EOL);
+		config_attach(parent, cf, &ga, epgpio_print, CFARGS_NONE);
 
 	return 0;
 }

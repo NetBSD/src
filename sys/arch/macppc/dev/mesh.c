@@ -1,4 +1,4 @@
-/*	$NetBSD: mesh.c,v 1.41 2021/04/24 23:36:41 thorpej Exp $	*/
+/*	$NetBSD: mesh.c,v 1.42 2021/08/07 16:18:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000	Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mesh.c,v 1.41 2021/04/24 23:36:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mesh.c,v 1.42 2021/08/07 16:18:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -259,7 +259,7 @@ mesh_attach(device_t parent, device_t self, void *aux)
 	sc->sc_channel.chan_nluns = 8;
 	sc->sc_channel.chan_id = sc->sc_id;
 
-	config_found(self, &sc->sc_channel, scsiprint, CFARG_EOL);
+	config_found(self, &sc->sc_channel, scsiprint, CFARGS_NONE);
 
 	intr_establish_xname(sc->sc_irq, IST_EDGE, IPL_BIO, mesh_intr, sc,
 	    device_xname(self));

@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm_smbus.c,v 1.24 2021/04/24 23:36:57 thorpej Exp $ */
+/*	$NetBSD: amdpm_smbus.c,v 1.25 2021/08/07 16:19:14 thorpej Exp $ */
 
 /*
  * Copyright (c) 2005 Anil Gopinath (anil_public@yahoo.com)
@@ -32,7 +32,7 @@
  * AMD-8111 HyperTransport I/O Hub
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpm_smbus.c,v 1.24 2021/04/24 23:36:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpm_smbus.c,v 1.25 2021/08/07 16:19:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,7 @@ amdpm_smbus_attach(struct amdpm_softc *sc)
 
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c;
-	config_found(sc->sc_dev, &iba, iicbus_print, CFARG_EOL);
+	config_found(sc->sc_dev, &iba, iicbus_print, CFARGS_NONE);
 }
 
 static int

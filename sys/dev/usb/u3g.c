@@ -1,4 +1,4 @@
-/*	$NetBSD: u3g.c,v 1.42 2021/04/24 23:36:59 thorpej Exp $	*/
+/*	$NetBSD: u3g.c,v 1.43 2021/08/07 16:19:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.42 2021/04/24 23:36:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.43 2021/08/07 16:19:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -387,8 +387,7 @@ u3g_attach(device_t parent, device_t self, void *aux)
 			com->c_open = false;
 			com->c_purging = false;
 			com->c_dev = config_found(self, &ucaa, ucomprint,
-						  CFARG_SUBMATCH, ucomsubmatch,
-						  CFARG_EOL);
+			    CFARGS(.submatch = ucomsubmatch));
 			ucaa.ucaa_bulkin = -1;
 			ucaa.ucaa_bulkout = -1;
 		}

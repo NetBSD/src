@@ -1,4 +1,4 @@
-/*	$NetBSD: xmm7360.c,v 1.8 2021/07/16 12:20:01 andvar Exp $	*/
+/*	$NetBSD: xmm7360.c,v 1.9 2021/08/07 16:19:14 thorpej Exp $	*/
 
 /*
  * Device driver for Intel XMM7360 LTE modems, eg. Fibocom L850-GL.
@@ -75,7 +75,7 @@ MODULE_DEVICE_TABLE(pci, xmm7360_ids);
 #include "opt_gateway.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xmm7360.c,v 1.8 2021/07/16 12:20:01 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xmm7360.c,v 1.9 2021/08/07 16:19:14 thorpej Exp $");
 #endif
 
 #include <sys/param.h>
@@ -2139,7 +2139,7 @@ wwanc_attach_finish(struct device *self)
 	struct wwanc_attach_args wa;
 	memset(&wa, 0, sizeof(wa));
 	wa.aa_type = WWMC_TYPE_NET;
-	sc->sc_net = config_found(self, &wa, wwancprint, CFARG_EOL);
+	sc->sc_net = config_found(self, &wa, wwancprint, CFARGS_NONE);
 }
 
 static void

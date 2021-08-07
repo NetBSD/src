@@ -1,4 +1,4 @@
-/* $NetBSD: dwiic_acpi.c,v 1.8 2021/04/24 23:36:52 thorpej Exp $ */
+/* $NetBSD: dwiic_acpi.c,v 1.9 2021/08/07 16:19:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwiic_acpi.c,v 1.8 2021/04/24 23:36:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwiic_acpi.c,v 1.9 2021/08/07 16:19:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -129,7 +129,7 @@ dwiic_acpi_attach(device_t parent, device_t self, void *aux)
 
 	dwiic_attach(sc);
 
-	config_found(self, &sc->sc_iba, iicbus_print, CFARG_EOL);
+	config_found(self, &sc->sc_iba, iicbus_print, CFARGS_NONE);
 
 	pmf_device_register(self, dwiic_suspend, dwiic_resume);
 

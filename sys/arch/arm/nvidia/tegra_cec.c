@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_cec.c,v 1.10 2021/06/21 03:15:22 christos Exp $ */
+/* $NetBSD: tegra_cec.c,v 1.11 2021/08/07 16:18:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_cec.c,v 1.10 2021/06/21 03:15:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_cec.c,v 1.11 2021/08/07 16:18:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -199,7 +199,7 @@ tegra_cec_attach(device_t parent, device_t self, void *aux)
 	memset(&caa, 0, sizeof(caa));
 	caa.priv = sc;
 	caa.hwif = &tegra_cec_hw_if;
-	sc->sc_cecdev = config_found(self, &caa, NULL, CFARG_EOL);
+	sc->sc_cecdev = config_found(self, &caa, NULL, CFARGS_NONE);
 }
 
 static int

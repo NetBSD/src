@@ -1,4 +1,4 @@
-/* $NetBSD: umcs.c,v 1.16 2021/04/24 23:36:59 thorpej Exp $ */
+/* $NetBSD: umcs.c,v 1.17 2021/08/07 16:19:17 thorpej Exp $ */
 /* $FreeBSD: head/sys/dev/usb/serial/umcs.c 260559 2014-01-12 11:44:28Z hselasky $ */
 
 /*-
@@ -41,7 +41,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umcs.c,v 1.16 2021/04/24 23:36:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umcs.c,v 1.17 2021/08/07 16:19:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -341,8 +341,7 @@ umcs7840_attach(device_t parent, device_t self, void *aux)
 		sc->sc_ports[i].sc_port_phys = phyport;
 		sc->sc_ports[i].sc_port_ucom =
 		    config_found(self, &ucaa, ucomprint,
-				 CFARG_SUBMATCH, ucomsubmatch,
-				 CFARG_EOL);
+				 CFARGS(.submatch = ucomsubmatch));
 	}
 }
 

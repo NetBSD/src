@@ -1,4 +1,4 @@
-/* $NetBSD: rk_drm.c,v 1.6 2021/04/28 04:51:41 mrg Exp $ */
+/* $NetBSD: rk_drm.c,v 1.7 2021/08/07 16:18:45 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_drm.c,v 1.6 2021/04/28 04:51:41 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_drm.c,v 1.7 2021/08/07 16:18:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -352,8 +352,7 @@ rk_drm_fb_probe(struct drm_fb_helper *helper, struct drm_fb_helper_surface_size 
 	sfa.sfa_fb_linebytes = helper->fb->pitches[0];
 
 	helper->fbdev = config_found(ddev->dev, &sfa, NULL,
-	    CFARG_IATTR, "rkfbbus",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "rkfbbus"));
 	if (helper->fbdev == NULL) {
 		DRM_ERROR("unable to attach framebuffer\n");
 		return -ENXIO;

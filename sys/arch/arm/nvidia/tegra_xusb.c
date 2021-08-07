@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_xusb.c,v 1.27 2021/04/24 23:36:27 thorpej Exp $ */
+/* $NetBSD: tegra_xusb.c,v 1.28 2021/08/07 16:18:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 2016 Jonathan A. Kollasch
@@ -30,7 +30,7 @@
 #include "opt_tegra.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_xusb.c,v 1.27 2021/04/24 23:36:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_xusb.c,v 1.28 2021/08/07 16:18:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -495,10 +495,10 @@ tegra_xusb_mountroot(device_t self)
 		return;
 	}
 
-	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint, CFARG_EOL);
+	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint, CFARGS_NONE);
 
 	sc->sc_child2 = config_found(self, &sc->sc_bus2, usbctlprint,
-	    CFARG_EOL);
+	    CFARGS_NONE);
 
 	xhci_start(sc);
 

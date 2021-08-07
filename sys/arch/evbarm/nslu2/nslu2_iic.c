@@ -1,4 +1,4 @@
-/*	$NetBSD: nslu2_iic.c,v 1.11 2021/04/24 23:36:34 thorpej Exp $	*/
+/*	$NetBSD: nslu2_iic.c,v 1.12 2021/08/07 16:18:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -188,7 +188,7 @@ slugiic_deferred_attach(device_t self)
 
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_ic;
-	config_found(self, &iba, iicbus_print, CFARG_EOL);
+	config_found(self, &iba, iicbus_print, CFARGS_NONE);
 }
 
 static int

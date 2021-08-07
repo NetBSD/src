@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_lcd.c,v 1.21 2021/04/24 23:36:37 thorpej Exp $	*/
+/*	$NetBSD: ipaq_lcd.c,v 1.22 2021/08/07 16:18:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipaq_lcd.c,v 1.21 2021/04/24 23:36:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipaq_lcd.c,v 1.22 2021/08/07 16:18:53 thorpej Exp $");
 
 #define IPAQ_LCD_DEBUG
 
@@ -123,7 +123,7 @@ ipaqlcd_attach(device_t parent, device_t self, void *aux)
         ha.ha_ndspconf = 1;
         ha.ha_dspconflist = &sc->sc_dspconf;
 
-        config_found(sc->sc_dev, &ha, hpcfbprint, CFARG_EOL);
+        config_found(sc->sc_dev, &ha, hpcfbprint, CFARGS_NONE);
 }
 
 void

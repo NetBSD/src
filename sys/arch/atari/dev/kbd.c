@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.48 2021/04/24 23:36:29 thorpej Exp $	*/
+/*	$NetBSD: kbd.c,v 1.49 2021/08/07 16:18:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.48 2021/04/24 23:36:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.49 2021/08/07 16:18:46 thorpej Exp $");
 
 #include "mouse.h"
 #include "ite.h"
@@ -246,7 +246,7 @@ kbdattach(device_t parent, device_t self, void *aux)
 		waa.accessops = &kbd_accessops;
 		waa.accesscookie = NULL;
 		kbd_softc.k_wskbddev = config_found(self, &waa, wskbddevprint,
-		    CFARG_EOL);
+		    CFARGS_NONE);
 
 		kbd_softc.k_pollingmode = 0;
 

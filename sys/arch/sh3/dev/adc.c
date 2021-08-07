@@ -1,4 +1,4 @@
-/*	$NetBSD: adc.c,v 1.14 2021/04/24 23:36:48 thorpej Exp $ */
+/*	$NetBSD: adc.c,v 1.15 2021/08/07 16:19:05 thorpej Exp $ */
 
 /*
  * Copyright (c) 2003 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adc.c,v 1.14 2021/04/24 23:36:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adc.c,v 1.15 2021/08/07 16:19:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -80,8 +80,7 @@ adc_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 
 	config_search(self, NULL,
-	    CFARG_SEARCH, adc_search,
-	    CFARG_EOL);
+	    CFARGS(.search = adc_search));
 
 	/*
 	 * XXX: TODO: provide hooks to manage power.  For now register
@@ -99,7 +98,7 @@ adc_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 
 	if (config_probe(parent, cf, NULL))
-		config_attach(parent, cf, NULL, adc_print, CFARG_EOL);
+		config_attach(parent, cf, NULL, adc_print, CFARGS_NONE);
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc_pcmcia.c,v 1.21 2021/04/24 23:36:58 thorpej Exp $	*/
+/*	$NetBSD: fdc_pcmcia.c,v 1.22 2021/08/07 16:19:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_pcmcia.c,v 1.21 2021/04/24 23:36:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_pcmcia.c,v 1.22 2021/08/07 16:19:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,7 +183,7 @@ fdc_pcmcia_attach(device_t parent, device_t self, void *aux)
 			fa.fa_deftype = &fd_types[0];
 		else
 			fa.fa_deftype = NULL;		/* unknown */
-		(void)config_found(self, (void *)&fa, fdprint, CFARG_EOL);
+		(void)config_found(self, (void *)&fa, fdprint, CFARGS_NONE);
 	}
 
 	return;

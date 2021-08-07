@@ -1,4 +1,4 @@
-/*	$NetBSD: lcg.c,v 1.6 2021/04/24 23:36:51 thorpej Exp $ */
+/*	$NetBSD: lcg.c,v 1.7 2021/08/07 16:19:07 thorpej Exp $ */
 /*
  * LCG accelerated framebuffer driver
  * Copyright (c) 2003, 2004 Blaz Antonic
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lcg.c,v 1.6 2021/04/24 23:36:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lcg.c,v 1.7 2021/08/07 16:19:07 thorpej Exp $");
 
 #define LCG_NO_ACCEL
 
@@ -472,7 +472,7 @@ lcg_attach(struct device *parent, struct device *self, void *aux)
 	callout_init(&lcg_cursor_ch, 0);
 	callout_reset(&lcg_cursor_ch, hz / 2, lcg_crsr_blink, NULL);
 
-	config_found(self, &aa, wsemuldisplaydevprint, CFARG_EOL);
+	config_found(self, &aa, wsemuldisplaydevprint, CFARGS_NONE);
 }
 
 static void

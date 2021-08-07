@@ -1,4 +1,4 @@
-/*	$NetBSD: txcom.c,v 1.51 2021/04/24 23:36:38 thorpej Exp $ */
+/*	$NetBSD: txcom.c,v 1.52 2021/08/07 16:18:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.51 2021/04/24 23:36:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.52 2021/08/07 16:18:54 thorpej Exp $");
 
 #include "opt_tx39uart_debug.h"
 
@@ -293,7 +293,7 @@ txcom_attach(device_t parent, device_t self, void *aux)
 		struct txcom_attach_args tca;
 		tca.tca_tc = tc;
 		tca.tca_parent = self;
-		config_found(self, &tca, txcom_print, CFARG_EOL);
+		config_found(self, &tca, txcom_print, CFARGS_NONE);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.42 2021/04/24 23:36:30 thorpej Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.43 2021/08/07 16:18:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Leo Weppelman.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.42 2021/04/24 23:36:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.43 2021/08/07 16:18:46 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -141,7 +141,7 @@ isabusattach(device_t parent, device_t self, void *aux)
 	iba.iba_ic = &sc->sc_chipset;
 
 	printf("\n");
-	config_found(self, &iba, atariisabusprint, CFARG_EOL);
+	config_found(self, &iba, atariisabusprint, CFARGS_NONE);
 }
 
 int

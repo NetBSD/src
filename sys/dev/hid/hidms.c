@@ -1,4 +1,4 @@
-/*	$NetBSD: hidms.c,v 1.5 2021/04/24 23:36:54 thorpej Exp $	*/
+/*	$NetBSD: hidms.c,v 1.6 2021/08/07 16:19:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2017 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hidms.c,v 1.5 2021/04/24 23:36:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hidms.c,v 1.6 2021/08/07 16:19:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -250,7 +250,7 @@ hidms_attach(device_t self, struct hidms *ms,
 	a.accesscookie = device_private(self);
 
 	ms->hidms_wsmousedev = config_found(self, &a, wsmousedevprint,
-	    CFARG_EOL);
+	    CFARGS_NONE);
 
 	return;
 }

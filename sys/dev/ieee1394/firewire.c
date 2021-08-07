@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.c,v 1.51 2021/04/24 23:36:55 thorpej Exp $	*/
+/*	$NetBSD: firewire.c,v 1.52 2021/08/07 16:19:12 thorpej Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.51 2021/04/24 23:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.52 2021/08/07 16:19:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -246,7 +246,7 @@ firewireattach(device_t parent, device_t self, void *aux)
 	faa.name = "fwip";
 	faa.fc = fc;
 	faa.fwdev = NULL;
-	devlist->dev = config_found(sc->dev, &faa, firewire_print, CFARG_EOL);
+	devlist->dev = config_found(sc->dev, &faa, firewire_print, CFARGS_NONE);
 	if (devlist->dev == NULL)
 		free(devlist, M_DEVBUF);
 	else
@@ -2042,9 +2042,8 @@ fw_attach_dev(struct firewire_comm *fc)
 			fwa.name = fw_get_devclass(fwdev);
 			fwa.fwdev = fwdev;
 			fwdev->dev = config_found(sc->dev, &fwa, firewire_print,
-			    CFARG_SUBMATCH, config_stdsubmatch,
-			    CFARG_LOCATORS, locs,
-			    CFARG_EOL);
+			    CFARGS(.submatch = config_stdsubmatch,
+				   .locators = locs));
 			if (fwdev->dev == NULL) {
 				free(devlist, M_DEVBUF);
 				break;

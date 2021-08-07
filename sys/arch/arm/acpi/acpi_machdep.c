@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.22 2021/04/24 23:36:25 thorpej Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.23 2021/08/07 16:18:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.22 2021/04/24 23:36:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.23 2021/08/07 16:18:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -306,8 +306,7 @@ acpi_md_madt_probe_cpu(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 
 	if (hdrp->Type == ACPI_MADT_TYPE_GENERIC_INTERRUPT)
 		config_found(sc->sc_dev, hdrp, NULL,
-		    CFARG_IATTR, "acpimadtbus",
-		    CFARG_EOL);
+		    CFARGS(.iattr = "acpimadtbus"));
 
 	return AE_OK;
 }
@@ -319,8 +318,7 @@ acpi_md_madt_probe_gic(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 
 	if (hdrp->Type == ACPI_MADT_TYPE_GENERIC_DISTRIBUTOR)
 		config_found(sc->sc_dev, hdrp, NULL,
-		    CFARG_IATTR, "acpimadtbus",
-		    CFARG_EOL);
+		    CFARGS(.iattr = "acpimadtbus"));
 
 	return AE_OK;
 }
@@ -331,8 +329,7 @@ acpi_md_gtdt_probe(ACPI_GTDT_HEADER *hdrp, void *aux)
 	struct acpi_softc * const sc = aux;
 
 	config_found(sc->sc_dev, hdrp, NULL,
-	    CFARG_IATTR, "acpigtdtbus",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "acpigtdtbus"));
 
 	return AE_OK;
 }

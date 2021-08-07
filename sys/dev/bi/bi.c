@@ -1,4 +1,4 @@
-/*	$NetBSD: bi.c,v 1.26 2021/04/24 23:36:53 thorpej Exp $ */
+/*	$NetBSD: bi.c,v 1.27 2021/08/07 16:19:09 thorpej Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bi.c,v 1.26 2021/04/24 23:36:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bi.c,v 1.27 2021/08/07 16:19:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,6 +142,6 @@ bi_attach(struct bi_softc *sc)
 		}
 		ba.ba_nodenr = nodenr;
 		ba.ba_ivec = sc->sc_lastiv + 64 + 4 * nodenr; /* all on spl5 */
-		config_found(sc->sc_dev, &ba, bi_print, CFARG_EOL);
+		config_found(sc->sc_dev, &ba, bi_print, CFARGS_NONE);
 	}
 }

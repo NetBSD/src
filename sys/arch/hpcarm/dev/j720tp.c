@@ -1,4 +1,4 @@
-/*	$NetBSD: j720tp.c,v 1.12 2021/04/24 23:36:37 thorpej Exp $	*/
+/*	$NetBSD: j720tp.c,v 1.13 2021/08/07 16:18:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* Jornada 720 touch-panel driver. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j720tp.c,v 1.12 2021/04/24 23:36:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j720tp.c,v 1.13 2021/08/07 16:18:53 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_j720tp.h"
@@ -230,8 +230,7 @@ j720tp_attach(device_t parent, device_t self, void *aux)
 	wsma.accesscookie = sc;
 
 	sc->sc_wsmousedev = config_found(self, &wsma, wsmousedevprint,
-	    CFARG_IATTR, "wsmousedev",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "wsmousedev"));
 	if (sc->sc_wsmousedev == NULL)
 		return;
 
@@ -251,8 +250,7 @@ j720tp_attach(device_t parent, device_t self, void *aux)
 	wska.accesscookie = sc;
 
 	sc->sc_wskbddev = config_found(self, &wska, wskbddevprint,
-	    CFARG_IATTR, "wskbddev",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "wskbddev"));
 
 	/* Setup touch-panel interrupt. */
 	sa11x0_intr_establish(0, 9, 1, IPL_TTY, j720tp_intr, sc);

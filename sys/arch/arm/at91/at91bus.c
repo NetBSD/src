@@ -1,4 +1,4 @@
-/*	$NetBSD: at91bus.c,v 1.28 2021/04/24 23:36:26 thorpej Exp $	*/
+/*	$NetBSD: at91bus.c,v 1.29 2021/08/07 16:18:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91bus.c,v 1.28 2021/04/24 23:36:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91bus.c,v 1.29 2021/08/07 16:18:43 thorpej Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -580,10 +580,9 @@ at91bus_found(device_t self, bus_addr_t addr, int pid)
 	sa.sa_size = 1;
 	sa.sa_pid = pid;
 
-	config_found(self, &sa, at91bus_print,
-	    CFARG_SUBMATCH, at91bus_submatch,
-	    CFARG_LOCATORS, locs,
-	    CFARG_EOL);
+	return config_found(self, &sa, at91bus_print,
+	    CFARGS(.submatch = at91bus_submatch,
+		   .locators = locs));
 }
 
 static void
@@ -623,8 +622,7 @@ at91bus_attach(device_t parent, device_t self, void *aux)
 	sa.sa_iot = sc->sc_iot;
 	sa.sa_dmat = sc->sc_dmat;
 	config_search(self, &sa,
-	    CFARG_SEARCH, at91bus_search,
-	    CFARG_EOL);
+	    CFARGS(.search = at91bus_search));
 }
 
 int
@@ -652,7 +650,7 @@ at91bus_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	sa->sa_pid  = cf->cf_loc[AT91BUSCF_PID];
 
 	if (config_probe(parent, cf, aux))
-		config_attach(parent, cf, aux, at91bus_print, CFARG_EOL);
+		config_attach(parent, cf, aux, at91bus_print, CFARGS_NONE);
 
 	return (0);
 }

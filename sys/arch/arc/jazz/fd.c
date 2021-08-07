@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.50 2021/04/24 23:36:25 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.51 2021/08/07 16:18:42 thorpej Exp $	*/
 /*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
 /*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.50 2021/04/24 23:36:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.51 2021/08/07 16:18:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -282,7 +282,7 @@ fdcattach(struct fdc_softc *fdc)
 	for (fa.fa_drive = 0; fa.fa_drive < 2; fa.fa_drive++) {
 		fa.fa_deftype = &fd_types[type];
 		(void)config_found(fdc->sc_dev, (void *)&fa, fdprint,
-		    CFARG_EOL);
+		    CFARGS_NONE);
 	}
 }
 
