@@ -1,4 +1,4 @@
-/* $NetBSD: t_futex_ops.c,v 1.5 2020/05/06 05:14:27 thorpej Exp $ */
+/* $NetBSD: t_futex_ops.c,v 1.5.8.1 2021/08/07 01:44:51 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2019, 2020\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_futex_ops.c,v 1.5 2020/05/06 05:14:27 thorpej Exp $");
+__RCSID("$NetBSD: t_futex_ops.c,v 1.5.8.1 2021/08/07 01:44:51 thorpej Exp $");
 
 #include <sys/fcntl.h>
 #include <sys/mman.h>
@@ -824,9 +824,21 @@ do_futex_requeue_test(int flags, int op)
 	 * FUTEX 1: 0 LWPs
 	 */
 
-	/* Move all waiters from 0 to 1. */
-	ATF_REQUIRE(__futex(&futex_word, op | flags,
-			    0, NULL, &futex_word1, INT_MAX, good_val3) == 0);
+	/*
+	 * Move all waiters from 0 to 1.
+	 *
+	 * N.B. different return value semantics for FUTEX_REQUEUE
+	 * vs. FUTEX_CMP_REQUEUE.
+	 */
+	if (op == FUTEX_CMP_REQUEUE) {
+		ATF_REQUIRE(__futex(&futex_word, op | flags,
+				    0, NULL, &futex_word1, INT_MAX,
+				    good_val3) == 4);
+	} else {
+		ATF_REQUIRE(__futex(&futex_word, op | flags,
+				    0, NULL, &futex_word1, INT_MAX,
+				    good_val3) == 0);
+	}
 
 	/*
 	 * FUTEX 0: 0 LWPs
