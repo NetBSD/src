@@ -1,4 +1,4 @@
-/*	$NetBSD: pmu.c,v 1.37 2021/04/24 23:36:41 thorpej Exp $ */
+/*	$NetBSD: pmu.c,v 1.38 2021/08/07 06:04:26 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.37 2021/04/24 23:36:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.38 2021/08/07 06:04:26 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -340,7 +340,7 @@ pmu_attach(device_t parent, device_t self, void *aux)
 			goto next;
 
 		if (strncmp(name, "pmu-i2c", 8) == 0) {
-			int devs;
+			int devs, sensors;
 			uint32_t addr;
 			char compat[256];
 			prop_array_t cfg;
@@ -372,6 +372,20 @@ pmu_attach(device_t parent, device_t self, void *aux)
 				prop_object_release(data);
 				prop_dictionary_set_uint32(dev, "addr", addr);
 				prop_dictionary_set_uint64(dev, "cookie", devs);
+				sensors = OF_child(devs);
+				while (sensors != 0) {
+					int reg;
+					char loc[64];
+					char pname[8];
+					if (OF_getprop(sensors, "reg", &reg, 4) != 4)
+						goto nope;
+					if (OF_getprop(sensors, "location", loc, 63) <= 0)
+						goto nope;
+					snprintf(pname, 7, "s%02x", reg);
+					prop_dictionary_set_string(dev, pname, loc);
+				nope:
+					sensors = OF_peer(sensors);
+				}
 				prop_array_add(cfg, dev);
 				prop_object_release(dev);
 			skip:
@@ -818,7 +832,7 @@ pmu_poweroff(void)
 	if (pmu_send(sc, PMU_POWER_OFF, 4, cmd, 16, resp) >= 0)
 		while (1);
 }
-
+	
 void
 pmu_restart(void)
 {
