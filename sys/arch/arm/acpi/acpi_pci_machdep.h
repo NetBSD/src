@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci_machdep.h,v 1.7 2020/02/01 13:26:43 jmcneill Exp $ */
+/* $NetBSD: acpi_pci_machdep.h,v 1.8 2021/08/07 21:27:53 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -39,12 +39,15 @@ struct acpi_pci_context {
 	device_t ap_dev;
 	u_int ap_seg;
 	int ap_bus;
+	int ap_maxbus;
 	bus_space_tag_t ap_bst;
 	bus_space_handle_t ap_conf_bsh;
 	int (*ap_conf_read)(pci_chipset_tag_t, pcitag_t, int, pcireg_t *);
 	int (*ap_conf_write)(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
 	void *ap_conf_priv;
 	int ap_pciflags_clear;
+	u_int ap_flags;
+#define	ACPI_PCI_FLAG_NO_MCFG		__BIT(0)	/* ignore MCFG table */
 };
 
 struct acpi_pci_quirk {
@@ -57,6 +60,7 @@ struct acpi_pci_quirk {
 
 const struct acpi_pci_quirk *	acpi_pci_md_find_quirk(int);
 
+void	acpi_pci_smccc_init(struct acpi_pci_context *);
 void	acpi_pci_graviton_init(struct acpi_pci_context *);
 void	acpi_pci_layerscape_gen4_init(struct acpi_pci_context *);
 void	acpi_pci_n1sdp_init(struct acpi_pci_context *);
