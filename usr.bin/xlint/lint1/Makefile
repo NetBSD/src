@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.82 2021/07/31 18:16:42 rillig Exp $
+#	$NetBSD: Makefile,v 1.83 2021/08/07 17:38:41 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -29,7 +29,6 @@ COPTS.err.c+=	${${ACTIVE_CC} == "clang":? -Wno-format-nonliteral :}
 BINDIR=		/usr/libexec
 
 CLEANFILES+=	${MAN}
-CLEANFILES+=	*.gcno *.gcda *.gcov
 
 .if ${USETOOLS} == "yes"
 LINT1=		${TOOLDIR}/libexec/${MACHINE_GNU_PLATFORM}-lint1
