@@ -1,4 +1,4 @@
-/* $NetBSD: psci.h,v 1.3 2021/08/06 19:38:53 jmcneill Exp $ */
+/* $NetBSD: psci.h,v 1.4 2021/08/07 21:20:14 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -42,6 +42,15 @@ enum psci_function {
 };
 
 /*
+ * Possible PSCI conduits.
+ */
+enum psci_conduit {
+	PSCI_CONDUIT_NONE,
+	PSCI_CONDUIT_SMC,
+	PSCI_CONDUIT_HVC,
+};
+
+/*
  * PSCI error codes
  */
 #define	PSCI_SUCCESS		0
@@ -69,6 +78,11 @@ void	psci_init(psci_fn);
  * Return true if PSCI is available (psci_init has been called).
  */
 bool	psci_available(void);
+
+/*
+ * Return the PSCI conduit type.
+ */
+enum psci_conduit psci_conduit(void);
 
 /*
  * PSCI call methods, implemented in psci.S
