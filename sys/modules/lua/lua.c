@@ -1,4 +1,4 @@
-/*	$NetBSD: lua.c,v 1.25 2021/06/29 22:40:53 dholland Exp $ */
+/*	$NetBSD: lua.c,v 1.26 2021/08/07 04:19:31 rin Exp $ */
 
 /*
  * Copyright (c) 2011 - 2017 by Marc Balmer <mbalmer@NetBSD.org>.
@@ -547,14 +547,18 @@ lua_require(lua_State *L)
 
 typedef struct {
 	size_t size;
-} __packed alloc_header_t;
+} alloc_header_t;
 
 static void *
 lua_alloc(void *ud, void *ptr, size_t osize, size_t nsize)
 {
 	void *nptr = NULL;
 
-	const size_t hdr_size = sizeof(alloc_header_t);
+	/*
+	 * Make sure that buffers allocated by lua_alloc() are aligned to
+	 * 8-byte boundaries as done by kmem_alloc(9).
+	 */
+	const size_t hdr_size = roundup(sizeof(alloc_header_t), 8);
 	alloc_header_t *hdr = (alloc_header_t *) ((char *) ptr - hdr_size);
 
 	if (nsize == 0) { /* freeing */
