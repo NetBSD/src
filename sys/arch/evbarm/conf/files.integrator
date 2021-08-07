@@ -1,6 +1,6 @@
-#	$NetBSD: files.integrator,v 1.13 2017/06/22 15:27:23 christos Exp $
+#	$NetBSD: files.integrator,v 1.14 2021/08/07 19:41:13 andvar Exp $
 #
-# ARM, Ltd. Integrator evaluation board configuraiton info
+# ARM, Ltd. Integrator evaluation board configuration info
 #
 
 file    arch/arm/arm32/irq_dispatch.S
