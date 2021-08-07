@@ -1,4 +1,4 @@
-/* $NetBSD: smccc.c,v 1.1 2021/08/06 19:38:53 jmcneill Exp $ */
+/* $NetBSD: smccc.c,v 1.2 2021/08/07 21:21:49 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smccc.c,v 1.1 2021/08/06 19:38:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smccc.c,v 1.2 2021/08/07 21:21:49 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -42,7 +42,10 @@ __KERNEL_RCSID(0, "$NetBSD: smccc.c,v 1.1 2021/08/06 19:38:53 jmcneill Exp $");
 #define	SMCCC_VERSION		0x80000000
 
 /* True if SMCCC is detected. */
-static bool	smccc_present;
+static bool			smccc_present;
+
+/* SMCCC conduit (SMC or HVC) */
+static enum psci_conduit	smccc_conduit = PSCI_CONDUIT_NONE;
 
 /*
  * smccc_probe --
@@ -58,6 +61,13 @@ smccc_probe(void)
 		}
 
 		smccc_present = psci_features(SMCCC_VERSION) == PSCI_SUCCESS;
+		if (smccc_present) {
+			smccc_conduit = psci_conduit();
+
+			aprint_debug("SMCCC: Version %#x (%s)\n",
+			    smccc_version(),
+			    smccc_conduit == PSCI_CONDUIT_SMC ? "SMC" : "HVC");
+		}
 	}
 	return smccc_present;
 }
@@ -70,7 +80,8 @@ smccc_probe(void)
 int
 smccc_version(void)
 {
-	return smccc_call(SMCCC_VERSION, 0, 0, 0);
+	return smccc_call(SMCCC_VERSION, 0, 0, 0, 0,
+			  NULL, NULL, NULL, NULL);
 }
 
 /*
@@ -79,11 +90,54 @@ smccc_version(void)
  *	Generic call interface for SMC/HVC calls.
  */
 int
-smccc_call(register_t fid, register_t arg1, register_t arg2, register_t arg3)
+smccc_call(uint32_t fid,
+    register_t arg1, register_t arg2, register_t arg3, register_t arg4,
+    register_t *res0, register_t *res1, register_t *res2, register_t *res3)
 {
+	register_t args[5] = { fid, arg1, arg2, arg3, arg4 };
+
+	register register_t r0 asm ("r0");
+	register register_t r1 asm ("r1");
+	register register_t r2 asm ("r2");
+	register register_t r3 asm ("r3");
+	register register_t r4 asm ("r4");
+
 	if (!smccc_present) {
 		return SMCCC_NOT_SUPPORTED;
 	}
 
-	return psci_call(fid, arg1, arg2, arg3);
+	KASSERT(smccc_conduit != PSCI_CONDUIT_NONE);
+
+	r0 = args[0];
+	r1 = args[1];
+	r2 = args[2];
+	r3 = args[3];
+	r4 = args[4];
+
+	if (smccc_conduit == PSCI_CONDUIT_SMC) {
+		asm volatile ("smc #0" :
+			      "=r" (r0), "=r" (r1), "=r" (r2), "=r" (r3) :
+			      "r" (r0), "r" (r1), "r" (r2), "r" (r3), "r" (r4) :
+			      "memory");
+	} else {
+		asm volatile ("hvc #0" :
+			      "=r" (r0), "=r" (r1), "=r" (r2), "=r" (r3) :
+			      "r" (r0), "r" (r1), "r" (r2), "r" (r3), "r" (r4) :
+			      "memory");
+	}
+	
+	if (res0) {
+		*res0 = r0;
+	}
+	if (res1) {
+		*res1 = r1;
+	}
+	if (res2) {
+		*res2 = r2;
+	}
+	if (res3) {
+		*res3 = r3;
+	}
+
+	return r0;
 }
