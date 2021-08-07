@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.373 2021/01/24 07:36:54 mrg Exp $ */
+/*	$NetBSD: pmap.c,v 1.374 2021/08/07 19:23:03 uwe Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.373 2021/01/24 07:36:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.374 2021/08/07 19:23:03 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -663,13 +663,13 @@ sp_tlb_flush(int va, int ctx, int lvl)
 	opsr = getpsr();	/* KDASSERT(opsr & PSR_ET); */
 	__asm volatile ("wr %0, %1, %%psr"
 			:: "r"(opsr), "n"(PSR_ET) : "memory");
-	__asm volatile ("nop; nop;nop");
+	__asm volatile ("nop; nop; nop");
 
 	octx = getcontext4m();	/* save context */
 
 	/* Do the TLB flush in "ctx" */
 	setcontext4m(ctx);
-	__asm volatile("sta %%g0, [%0]%1" :: "r"(va), "n"(ASI_SRMMUFP));
+	__asm volatile ("sta %%g0, [%0]%1" :: "r"(va), "n"(ASI_SRMMUFP));
 
 	setcontext4m(octx);	/* restore context */
 	setpsr(opsr);		/* turn traps on again */
