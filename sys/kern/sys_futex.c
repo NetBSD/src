@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_futex.c,v 1.12.4.4 2021/08/06 23:53:53 thorpej Exp $	*/
+/*	$NetBSD: sys_futex.c,v 1.12.4.5 2021/08/07 01:22:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.12.4.4 2021/08/06 23:53:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.12.4.5 2021/08/07 01:22:33 thorpej Exp $");
 
 /*
  * Futexes
@@ -1158,7 +1158,7 @@ futex_wait(struct futex *f, int q, const struct timespec *deadline,
 static unsigned
 futex_wake(struct futex *f, int q, unsigned int const nwake,
     struct futex *f2, int q2, unsigned int const nrequeue,
-    int bitset)
+    int bitset, unsigned int *nrequeuedp)
 {
 	struct lwp *l, *l_next;
 	unsigned nwoken = 0;
@@ -1234,7 +1234,10 @@ futex_wake(struct futex *f, int q, unsigned int const nwake,
 	futex_sq_unlock2(f, f2);
 
 	/* Return the number of waiters woken and requeued.  */
-	return nwoken + nrequeued;
+	if (nrequeuedp != NULL) {
+		*nrequeuedp = nrequeued;
+	}
+	return nwoken;
 }
 
 /*
@@ -1473,7 +1476,7 @@ futex_func_wake(bool shared, int *uaddr, int val, int val3, register_t *retval)
 	 */
 	futex_op_lock(f);
 	nwoken = futex_wake(f, FUTEX_WRITERQ, val,
-			    NULL, FUTEX_WRITERQ, 0, val3);
+			    NULL, FUTEX_WRITERQ, 0, val3, NULL);
 	futex_op_unlock(f);
 
 	/* Release the futex.  */
@@ -1498,6 +1501,7 @@ futex_func_requeue(bool shared, int op, int *uaddr, int val, int *uaddr2,
 {
 	struct futex *f = NULL, *f2 = NULL;
 	unsigned nwoken = 0;	/* default to zero woken on early return */
+	unsigned nrequeued = 0;
 	int error;
 
 	/* Reject negative number of wakeups or requeues. */
@@ -1534,13 +1538,19 @@ futex_func_requeue(bool shared, int op, int *uaddr, int val, int *uaddr2,
 		error = 0;
 		nwoken = futex_wake(f, FUTEX_WRITERQ, val,
 				    f2, FUTEX_WRITERQ, val2,
-				    FUTEX_BITSET_MATCH_ANY);
+				    FUTEX_BITSET_MATCH_ANY,
+				    &nrequeued);
 	}
 	futex_op_unlock2(f, f2);
 
 out:
-	/* Return the number of waiters woken.  */
-	*retval = nwoken;
+	/*
+	 * For FUTUEX_REQUEUE, return the numner of waiters woken.
+	 *
+	 * For FUTEX_CMP_REQUEUE, return the number of waiters woken
+	 * **and** requeued.
+	 */
+	*retval = nwoken + (op == FUTEX_CMP_REQUEUE) ? nrequeued : 0;
 
 	/* Release the futexes if we got them.  */
 	if (f2)
@@ -1728,11 +1738,11 @@ futex_func_wake_op(bool shared, int *uaddr, int val, int *uaddr2, int val2,
 	} while (actual != oldval);
 	nwoken = (f ? futex_wake(f, FUTEX_WRITERQ, val,
 				 NULL, FUTEX_WRITERQ, 0,
-				 FUTEX_BITSET_MATCH_ANY) : 0);
+				 FUTEX_BITSET_MATCH_ANY, NULL) : 0);
 	if (f2 && futex_compute_cmp(oldval, val3))
 		nwoken += futex_wake(f2, FUTEX_WRITERQ, val2,
 				     NULL, FUTEX_WRITERQ, 0,
-				     FUTEX_BITSET_MATCH_ANY);
+				     FUTEX_BITSET_MATCH_ANY, NULL);
 
 	/* Success! */
 	error = 0;
@@ -2067,7 +2077,7 @@ release_futex(uintptr_t const uptr, lwpid_t const tid, bool const is_pi,
 	if (oldval & FUTEX_WAITERS) {
 		(void)futex_wake(f, FUTEX_WRITERQ, 1,
 				 NULL, FUTEX_WRITERQ, 0,
-				 FUTEX_BITSET_MATCH_ANY);
+				 FUTEX_BITSET_MATCH_ANY, NULL);
 	}
 
 	/* Unlock the queue and release the futex.  */
