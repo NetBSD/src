@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.58 2021/04/24 23:36:40 thorpej Exp $	*/
+/*	$NetBSD: adb.c,v 1.59 2021/08/07 16:18:57 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.58 2021/04/24 23:36:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.59 2021/08/07 16:18:57 thorpej Exp $");
 
 #include "opt_adb.h"
 
@@ -162,7 +162,7 @@ adb_config_interrupts(device_t self)
 	aa_args.origaddr = 0;
 	aa_args.adbaddr = 0;
 	aa_args.handler_id = 0;
-	(void)config_found(self, &aa_args, adbprint, CFARG_EOL);
+	(void)config_found(self, &aa_args, adbprint, CFARGS_NONE);
 #endif
 
 	/* for each ADB device */
@@ -174,7 +174,7 @@ adb_config_interrupts(device_t self)
 		aa_args.adbaddr = adbaddr;
 		aa_args.handler_id = (int)(adbdata.devType);
 
-		(void)config_found(self, &aa_args, adbprint, CFARG_EOL);
+		(void)config_found(self, &aa_args, adbprint, CFARGS_NONE);
 	}
 	adb_polling = 0;
 }

@@ -144,7 +144,7 @@ sstouch_attach(device_t parent, device_t self, void *aux)
 	mas.accessops = &sstouch_accessops;
 	mas.accesscookie = sc;
 
-	sc->wsmousedev = config_found(self, &mas, wsmousedevprint, CFARG_EOL);
+	sc->wsmousedev = config_found(self, &mas, wsmousedevprint, CFARGS_NONE);
 
 	tpcalib_init(&sc->tpcalib);
 	tpcalib_ioctl(&sc->tpcalib, WSMOUSEIO_SCALIBCOORDS,

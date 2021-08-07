@@ -1,4 +1,4 @@
-/*	$NetBSD: zkbd.c,v 1.21 2021/04/24 23:36:52 thorpej Exp $	*/
+/*	$NetBSD: zkbd.c,v 1.22 2021/08/07 16:19:08 thorpej Exp $	*/
 /* $OpenBSD: zaurus_kbd.c,v 1.28 2005/12/21 20:36:03 deraadt Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zkbd.c,v 1.21 2021/04/24 23:36:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zkbd.c,v 1.22 2021/08/07 16:19:08 thorpej Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #if 0	/* XXX */
@@ -336,7 +336,7 @@ zkbd_attach(device_t parent, device_t self, void *aux)
 
 	zkbd_hinge(sc);		/* to initialize sc_hinge */
 
-	sc->sc_wskbddev = config_found(self, &a, wskbddevprint, CFARG_EOL);
+	sc->sc_wskbddev = config_found(self, &a, wskbddevprint, CFARGS_NONE);
 }
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD

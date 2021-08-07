@@ -1,4 +1,4 @@
-/* $Id: imx23_pinctrl.c,v 1.5 2021/04/24 23:36:27 thorpej Exp $ */
+/* $Id: imx23_pinctrl.c,v 1.6 2021/08/07 16:18:44 thorpej Exp $ */
 
 /*
 * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -426,7 +426,7 @@ imx23_pinctrl_attach(device_t parent, device_t self, void *aux)
 	gpiobus_aa.gba_npins = GPIO_PINS;
 	gpiobus_aa.gba_pins = sc->pins;
 
-	config_found(self, &gpiobus_aa, gpiobus_print, CFARG_EOL);
+	config_found(self, &gpiobus_aa, gpiobus_print, CFARGS_NONE);
 
 	return;
 }

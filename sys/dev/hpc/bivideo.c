@@ -1,4 +1,4 @@
-/*	$NetBSD: bivideo.c,v 1.35 2021/04/24 23:36:54 thorpej Exp $	*/
+/*	$NetBSD: bivideo.c,v 1.36 2021/08/07 16:19:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bivideo.c,v 1.35 2021/04/24 23:36:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bivideo.c,v 1.36 2021/08/07 16:19:11 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_hpcfb.h"
@@ -195,7 +195,7 @@ bivideoattach(device_t parent, device_t self, void *aux)
 	ha.ha_ndspconf = 1;
 	ha.ha_dspconflist = &sc->sc_dspconf;
 
-	config_found(self, &ha, hpcfbprint, CFARG_EOL);
+	config_found(self, &ha, hpcfbprint, CFARGS_NONE);
 }
 
 int

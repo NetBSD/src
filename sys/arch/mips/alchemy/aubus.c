@@ -1,4 +1,4 @@
-/* $NetBSD: aubus.c,v 1.24 2021/04/24 23:36:42 thorpej Exp $ */
+/* $NetBSD: aubus.c,v 1.25 2021/08/07 16:18:58 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aubus.c,v 1.24 2021/04/24 23:36:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aubus.c,v 1.25 2021/08/07 16:18:58 thorpej Exp $");
 
 #include "locators.h"
 #define _MIPS_BUS_DMA_PRIVATE
@@ -170,9 +170,8 @@ aubus_attach(device_t parent, device_t self, void *aux)
 		locs[AUBUSCF_ADDR] = ad->addr[0];
 
 		config_found(self, &aa, aubus_print,
-		    CFARG_SUBMATCH, config_stdsubmatch,
-		    CFARG_LOCATORS, locs,
-		    CFARG_EOL);
+		    CFARGS(.submatch = config_stdsubmatch,
+			   .locators = locs));
 	}
 }
 

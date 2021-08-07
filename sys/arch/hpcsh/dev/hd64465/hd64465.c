@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465.c,v 1.18 2021/04/24 23:36:38 thorpej Exp $	*/
+/*	$NetBSD: hd64465.c,v 1.19 2021/08/07 16:18:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64465.c,v 1.18 2021/04/24 23:36:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64465.c,v 1.19 2021/08/07 16:18:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +120,7 @@ hd64465_attach(device_t parent, device_t self, void *aux)
 		if (module->name == 0)
 			continue;
 		ha.ha_module_id = i;
-		config_found(self, &ha, hd64465_print, CFARG_EOL);
+		config_found(self, &ha, hd64465_print, CFARGS_NONE);
 	}	
 }
 

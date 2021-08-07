@@ -1,4 +1,4 @@
-/*	$NetBSD: mly.c,v 1.54 2021/04/24 23:36:57 thorpej Exp $	*/
+/*	$NetBSD: mly.c,v 1.55 2021/08/07 16:19:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.54 2021/04/24 23:36:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.55 2021/08/07 16:19:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -533,7 +533,7 @@ mly_attach(device_t parent, device_t self, void *aux)
 		chan->chan_nluns = MLY_MAX_LUNS;
 		chan->chan_id = mly->mly_controllerparam->initiator_id;
 		chan->chan_flags = SCSIPI_CHAN_NOSETTLE;
-		config_found(self, chan, scsiprint, CFARG_EOL);
+		config_found(self, chan, scsiprint, CFARGS_NONE);
 	}
 
 	/*

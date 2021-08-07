@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.160 2021/05/12 23:22:33 thorpej Exp $	*/
+/*	$NetBSD: pci.c,v 1.161 2021/08/07 16:19:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.160 2021/05/12 23:22:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.161 2021/08/07 16:19:14 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -485,10 +485,9 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 			c->c_psok = false;
 
 		c->c_dev = config_found(sc->sc_dev, &pa, pciprint,
-		    CFARG_SUBMATCH, config_stdsubmatch,
-		    CFARG_LOCATORS, locs,
-		    CFARG_DEVHANDLE, devhandle,
-		    CFARG_EOL);
+		    CFARGS(.submatch = config_stdsubmatch,
+			   .locators = locs,
+			   .devhandle = devhandle));
 
 		ret = (c->c_dev != NULL);
 	}

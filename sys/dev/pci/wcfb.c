@@ -1,4 +1,4 @@
-/*	$NetBSD: wcfb.c,v 1.19 2021/04/24 23:36:57 thorpej Exp $ */
+/*	$NetBSD: wcfb.c,v 1.20 2021/08/07 16:19:14 thorpej Exp $ */
 
 /*
  * Copyright (c) 2007, 2008, 2009 Miodrag Vallat.
@@ -20,7 +20,7 @@
 /* a driver for (some) 3DLabs Wildcat cards, based on OpenBSD's ifb driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wcfb.c,v 1.19 2021/04/24 23:36:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wcfb.c,v 1.20 2021/08/07 16:19:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -335,7 +335,7 @@ wcfb_attach(device_t parent, device_t self, void *aux)
 	aa.accessops = &wcfb_accessops;
 	aa.accesscookie = &sc->vd;
 
-	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint, CFARG_EOL);
+	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint, CFARGS_NONE);
 }
 
 static int

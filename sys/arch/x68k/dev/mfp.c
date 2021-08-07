@@ -1,4 +1,4 @@
-/*	$NetBSD: mfp.c,v 1.28 2021/04/24 23:36:51 thorpej Exp $	*/
+/*	$NetBSD: mfp.c,v 1.29 2021/08/07 16:19:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfp.c,v 1.28 2021/04/24 23:36:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfp.c,v 1.29 2021/08/07 16:19:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,8 +108,7 @@ mfp_attach(device_t parent, device_t self, void *aux)
 #endif
 	bus_space_map(ia->ia_bst, ia->ia_addr, 0x2000, 0, &sc->sc_bht);
 	config_search(self, NULL,
-	    CFARG_SEARCH, mfp_search,
-	    CFARG_EOL);
+	    CFARGS(.search = mfp_search));
 }
 
 static int
@@ -117,7 +116,7 @@ mfp_search(device_t parent, cfdata_t cf, const int *loc, void *aux)
 {
 	if (config_probe(parent, cf, __UNCONST(cf->cf_name)))
 		config_attach(parent, cf, __UNCONST(cf->cf_name), NULL,
-		    CFARG_EOL);
+		    CFARGS_NONE);
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_kbd.c,v 1.31 2021/04/24 23:36:52 thorpej Exp $	*/
+/*	$NetBSD: adb_kbd.c,v 1.32 2021/08/07 16:19:09 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.31 2021/04/24 23:36:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.32 2021/08/07 16:19:09 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -384,8 +384,7 @@ adbkbd_attach(device_t parent, device_t self, void *aux)
 	a.accesscookie = sc;
 
 	sc->sc_wskbddev = config_found(self, &a, wskbddevprint,
-	    CFARG_IATTR, "wskbddev",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "wskbddev"));
 #ifdef ADBKBD_EMUL_USB
 	sc->sc_emul_usb = TRUE;
 	wskbd_set_evtrans(sc->sc_wskbddev, adb_to_usb, 128);
@@ -396,9 +395,7 @@ adbkbd_attach(device_t parent, device_t self, void *aux)
 	am.accessops = &adbkms_accessops;
 	am.accesscookie = sc;
 	sc->sc_wsmousedev = config_found(self, &am, wsmousedevprint,
-	    CFARG_IATTR, "wsmousedev",
-	    CFARG_EOL);
-
+	    CFARGS(.iattr = "wsmousedev"));
 #endif
 	adbkbd_setup_sysctl(sc);
 

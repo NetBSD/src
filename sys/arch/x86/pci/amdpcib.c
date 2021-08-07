@@ -1,4 +1,4 @@
-/* $NetBSD: amdpcib.c,v 1.4 2021/04/24 23:36:51 thorpej Exp $ */
+/* $NetBSD: amdpcib.c,v 1.5 2021/08/07 16:19:07 thorpej Exp $ */
 
 /*
  * Copyright (c) 2006 Nicolas Joly
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpcib.c,v 1.4 2021/04/24 23:36:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpcib.c,v 1.5 2021/08/07 16:19:07 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -73,9 +73,8 @@ amdpcib_attach(device_t parent, device_t self, void *aux)
 	pcibattach(parent, self, aux);
 
 	config_search(self, pa,
-	    CFARG_SEARCH, amdpcib_search,
-	    CFARG_IATTR, "amdpcib",
-	    CFARG_EOL);
+	    CFARGS(.search = amdpcib_search,
+		   .iattr = "amdpcib"));
 }
 
 static int
@@ -84,8 +83,7 @@ amdpcib_search(device_t parent, cfdata_t cf, const int *locs, void *aux)
 
 	if (config_probe(parent, cf, aux))
 		config_attach(parent, cf, aux, NULL,
-		    CFARG_LOCATORS, locs,
-		    CFARG_EOL);
+		    CFARGS(.locators = locs));
 
 	return 0;
 }

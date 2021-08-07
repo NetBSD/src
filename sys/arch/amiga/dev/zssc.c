@@ -1,4 +1,4 @@
-/*	$NetBSD: zssc.c,v 1.47 2021/04/24 23:36:24 thorpej Exp $ */
+/*	$NetBSD: zssc.c,v 1.48 2021/08/07 16:18:42 thorpej Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zssc.c,v 1.47 2021/04/24 23:36:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zssc.c,v 1.48 2021/08/07 16:18:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,7 +149,7 @@ zsscattach(device_t parent, device_t self, void *aux)
 	/*
 	 * attach all scsi units on us
 	 */
-	config_found(self, &sc->sc_channel, scsiprint, CFARG_EOL);
+	config_found(self, &sc->sc_channel, scsiprint, CFARGS_NONE);
 }
 
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.36 2021/07/07 03:24:26 thorpej Exp $ */
+/* $NetBSD: mainbus.c,v 1.37 2021/08/07 16:18:40 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.36 2021/07/07 03:24:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.37 2021/08/07 16:18:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,7 @@ mbattach(device_t parent, device_t self, void *aux)
 
 		ma.ma_name = "cpu";
 		ma.ma_slot = i;
-		if (config_found(self, &ma, mbprint, CFARG_EOL) != NULL)
+		if (config_found(self, &ma, mbprint, CFARGS_NONE) != NULL)
 			cpuattachcnt++;
 	}
 	if (ncpus != cpuattachcnt)
@@ -98,13 +98,13 @@ mbattach(device_t parent, device_t self, void *aux)
 	if (alpha_is_qemu) {
 		ma.ma_name = "qemu";
 		ma.ma_slot = 0;			/* meaningless */
-		config_found(self, &ma, mbprint, CFARG_EOL);
+		config_found(self, &ma, mbprint, CFARGS_NONE);
 	}
 
 	if (platform.iobus != NULL) {
 		ma.ma_name = platform.iobus;
 		ma.ma_slot = 0;			/* meaningless */
-		config_found(self, &ma, mbprint, CFARG_EOL);
+		config_found(self, &ma, mbprint, CFARGS_NONE);
 	}
 }
 

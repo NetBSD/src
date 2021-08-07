@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.66 2021/04/24 23:36:57 thorpej Exp $	*/
+/*	$NetBSD: amr.c,v 1.67 2021/08/07 16:19:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.66 2021/04/24 23:36:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.67 2021/08/07 16:19:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -530,10 +530,9 @@ amr_rescan(device_t self, const char *ifattr, const int *ulocs)
 
 		amr->amr_drive[j].al_dv =
 		    config_found(amr->amr_dv, &amra, amr_print,
-				 CFARG_SUBMATCH, config_stdsubmatch,
-				 CFARG_IATTR, ifattr,
-				 CFARG_LOCATORS, locs,
-				 CFARG_EOL);
+				 CFARGS(.submatch = config_stdsubmatch,
+					.iattr = ifattr,
+					.locators = locs));
 	}
 	return 0;
 }

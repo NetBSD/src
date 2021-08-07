@@ -1,4 +1,4 @@
-/*	$NetBSD: pca9564.c,v 1.4 2021/04/24 23:36:55 thorpej Exp $	*/
+/*	$NetBSD: pca9564.c,v 1.5 2021/08/07 16:19:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2010 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pca9564.c,v 1.4 2021/04/24 23:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pca9564.c,v 1.5 2021/08/07 16:19:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -113,7 +113,7 @@ pca9564_attach(struct pca9564_softc *sc)
 
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c;
-	config_found(sc->sc_dev, &iba, iicbus_print, CFARG_EOL);
+	config_found(sc->sc_dev, &iba, iicbus_print, CFARGS_NONE);
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: epockbd.c,v 1.4 2021/04/24 23:36:32 thorpej Exp $	*/
+/*	$NetBSD: epockbd.c,v 1.5 2021/08/07 16:18:48 thorpej Exp $	*/
 /*
  * Copyright (c) 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epockbd.c,v 1.4 2021/04/24 23:36:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epockbd.c,v 1.5 2021/08/07 16:18:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -101,7 +101,7 @@ epockbd_attach(struct epockbd_softc *sc)
 	aa.accessops = &epockbd_accessops;
 	aa.accesscookie = sc;
 	sc->sc_wskbddev = config_found(sc->sc_dev, &aa, wskbddevprint,
-	    CFARG_EOL);
+	    CFARGS_NONE);
 }
 
 /*

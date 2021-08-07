@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.24 2021/04/24 23:36:25 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.25 2021/08/07 16:18:42 thorpej Exp $	*/
 /*	$OpenBSD: mainbus.c,v 1.4 1998/10/15 21:30:15 imp Exp $	*/
 /*	NetBSD: mainbus.c,v 1.3 1995/06/28 02:45:10 cgd Exp 	*/
 
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.24 2021/04/24 23:36:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.25 2021/08/07 16:18:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,13 +78,13 @@ mbattach(device_t parent, device_t self, void *aux)
 	nca.ca_name = "cpu";
 	nca.ca_slot = 0;
 	nca.ca_offset = 0;
-	config_found(self, &nca, mbprint, CFARG_EOL);
+	config_found(self, &nca, mbprint, CFARGS_NONE);
 
 	for (i = 0; platform->mainbusdevs[i] != NULL; i++) {
 		nca.ca_name = platform->mainbusdevs[i];
 		nca.ca_slot = 0;
 		nca.ca_offset = 0;
-		config_found(self, &nca, mbprint, CFARG_EOL);
+		config_found(self, &nca, mbprint, CFARGS_NONE);
 	}
 }
 

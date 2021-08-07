@@ -1,4 +1,4 @@
-/* $NetBSD: dwc3_fdt.c,v 1.15 2021/05/18 11:13:31 jmcneill Exp $ */
+/* $NetBSD: dwc3_fdt.c,v 1.16 2021/08/07 16:19:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc3_fdt.c,v 1.15 2021/05/18 11:13:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc3_fdt.c,v 1.16 2021/08/07 16:19:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -327,7 +327,7 @@ dwc3_fdt_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint, CFARG_EOL);
+	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint, CFARGS_NONE);
 	sc->sc_child2 = config_found(self, &sc->sc_bus2, usbctlprint,
-	    CFARG_EOL);
+	    CFARGS_NONE);
 }

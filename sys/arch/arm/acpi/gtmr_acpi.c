@@ -1,4 +1,4 @@
-/* $NetBSD: gtmr_acpi.c,v 1.4 2021/04/24 23:36:25 thorpej Exp $ */
+/* $NetBSD: gtmr_acpi.c,v 1.5 2021/08/07 16:18:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr_acpi.c,v 1.4 2021/04/24 23:36:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr_acpi.c,v 1.5 2021/08/07 16:18:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -88,7 +88,7 @@ gtmr_acpi_attach(device_t parent, device_t self, void *aux)
 	memset(&mpcaa, 0, sizeof(mpcaa));
 	mpcaa.mpcaa_name = "armgtmr";
 	mpcaa.mpcaa_irq = -1;
-	config_found(self, &mpcaa, NULL, CFARG_EOL);
+	config_found(self, &mpcaa, NULL, CFARGS_NONE);
 
 	arm_fdt_cpu_hatch_register(self, gtmr_acpi_cpu_hatch);
 	arm_fdt_timer_register(gtmr_cpu_initclocks);

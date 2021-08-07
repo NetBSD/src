@@ -1,4 +1,4 @@
-/* $Id: imx23_usb.c,v 1.4 2021/04/24 23:36:27 thorpej Exp $ */
+/* $Id: imx23_usb.c,v 1.5 2021/08/07 16:18:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -122,8 +122,7 @@ imx23_usb_attach(device_t parent, device_t self, void *aux)
 
 	/* attach OTG/EHCI host controllers */
 	config_search(self, NULL,
-	    CFARG_SEARCH, imxusbc_search,
-	    CFARG_EOL);
+	    CFARGS(.search = imxusbc_search));
 
 	return;
 }
@@ -147,7 +146,7 @@ imxusbc_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
         aa.aa_irq = cf->cf_loc[IMXUSBCCF_IRQ];
 
         if (config_probe(parent, cf, &aa))
-                config_attach(parent, cf, &aa, NULL, CFARG_EOL);
+                config_attach(parent, cf, &aa, NULL, CFARGS_NONE);
 
         return 0;
 }

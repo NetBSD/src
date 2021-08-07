@@ -1,4 +1,4 @@
-/*	$NetBSD: gpio_ebus.c,v 1.4 2021/04/24 23:36:31 thorpej Exp $	*/
+/*	$NetBSD: gpio_ebus.c,v 1.5 2021/08/07 16:18:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: gpio_ebus.c,v 1.4 2021/04/24 23:36:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio_ebus.c,v 1.5 2021/08/07 16:18:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -124,7 +124,7 @@ epio_ebus_attach(device_t parent, device_t self, void *aux)
 	gba.gba_npins = GPIO_NPINS;
 
 	/* Attach GPIO framework */
-	(void)config_found(self, &gba, gpiobus_print, CFARG_EOL);
+	(void)config_found(self, &gba, gpiobus_print, CFARGS_NONE);
 }
 
 static int

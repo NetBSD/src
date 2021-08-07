@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0.c,v 1.23 2021/04/24 23:36:29 thorpej Exp $ */
+/*	$NetBSD: pxa2x0.c,v 1.24 2021/08/07 16:18:46 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002, 2005  Genetec Corporation.  All rights reserved.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0.c,v 1.23 2021/04/24 23:36:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0.c,v 1.24 2021/08/07 16:18:46 thorpej Exp $");
 
 #include "pxaintc.h"
 #include "pxagpio.h"
@@ -231,8 +231,7 @@ pxaip_attach(device_t parent, device_t self, void *aux)
 	 * Attach all other devices
 	 */
 	config_search(self, NULL,
-	    CFARG_SEARCH, pxaip_search,
-	    CFARG_EOL);
+	    CFARGS(.search = pxaip_search));
 }
 
 static int
@@ -250,7 +249,7 @@ pxaip_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	aa.pxa_intr = cf->cf_loc[PXAIPCF_INTR];
 
 	if (config_probe(parent, cf, &aa))
-		config_attach(parent, cf, &aa, pxaip_print, CFARG_EOL);
+		config_attach(parent, cf, &aa, pxaip_print, CFARGS_NONE);
 
 	return 0;
 }
@@ -266,7 +265,7 @@ pxaip_attach_critical(struct pxaip_softc *sc)
 	aa.pxa_addr = PXA2X0_INTCTL_BASE;
 	aa.pxa_size = PXA2X0_INTCTL_SIZE;
 	aa.pxa_intr = PXAIPCF_INTR_DEFAULT;
-	if (config_found(sc->sc_dev, &aa, pxaip_print, CFARG_EOL) == NULL)
+	if (config_found(sc->sc_dev, &aa, pxaip_print, CFARGS_NONE) == NULL)
 		panic("pxaip_attach_critical: failed to attach INTC!");
 
 #if NPXAGPIO > 0
@@ -276,7 +275,7 @@ pxaip_attach_critical(struct pxaip_softc *sc)
 	aa.pxa_addr = PXA2X0_GPIO_BASE;
 	aa.pxa_size = PXA2X0_GPIO_SIZE;
 	aa.pxa_intr = PXAIPCF_INTR_DEFAULT;
-	if (config_found(sc->sc_dev, &aa, pxaip_print, CFARG_EOL) == NULL)
+	if (config_found(sc->sc_dev, &aa, pxaip_print, CFARGS_NONE) == NULL)
 		panic("pxaip_attach_critical: failed to attach GPIO!");
 #endif
 
@@ -287,7 +286,7 @@ pxaip_attach_critical(struct pxaip_softc *sc)
 	aa.pxa_addr = PXA2X0_DMAC_BASE;
 	aa.pxa_size = PXA2X0_DMAC_SIZE;
 	aa.pxa_intr = PXA2X0_INT_DMA;
-	if (config_found(sc->sc_dev, &aa, pxaip_print, CFARG_EOL) == NULL)
+	if (config_found(sc->sc_dev, &aa, pxaip_print, CFARGS_NONE) == NULL)
 		panic("pxaip_attach_critical: failed to attach DMAC!");
 #endif
 }

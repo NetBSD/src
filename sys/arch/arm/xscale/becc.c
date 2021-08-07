@@ -1,4 +1,4 @@
-/*	$NetBSD: becc.c,v 1.17 2021/04/24 23:36:29 thorpej Exp $	*/
+/*	$NetBSD: becc.c,v 1.18 2021/08/07 16:18:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: becc.c,v 1.17 2021/04/24 23:36:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: becc.c,v 1.18 2021/08/07 16:18:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,9 +194,8 @@ becc_attach(struct becc_softc *sc)
 	 * on configuration.
 	 */
 	config_search(sc->sc_dev, NULL,
-	    CFARG_SEARCH, becc_search,
-	    CFARG_IATTR, "becc",
-	    CFARG_EOL);
+	    CFARGS(.search = becc_search,
+		   .iattr = "becc"));
 
 	/*
 	 * Attach the PCI bus.
@@ -213,8 +212,7 @@ becc_attach(struct becc_softc *sc)
 	pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
 	config_found(sc->sc_dev, &pba, pcibusprint,
-	    CFARG_IATTR, "pcibus",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "pcibus"));
 }
 
 /*
@@ -231,7 +229,7 @@ becc_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	ba.ba_dmat = &sc->sc_local_dmat;
 
 	if (config_probe(parent, cf, &ba))
-		config_attach(parent, cf, &ba, becc_print, CFARG_EOL);
+		config_attach(parent, cf, &ba, becc_print, CFARGS_NONE);
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kbd.c,v 1.12 2021/04/24 23:36:47 thorpej Exp $	*/
+/*	$NetBSD: zs_kbd.c,v 1.13 2021/08/07 16:19:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_kbd.c,v 1.12 2021/04/24 23:36:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_kbd.c,v 1.13 2021/08/07 16:19:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -248,7 +248,7 @@ zskbd_attach(device_t parent, device_t self, void *aux)
 	wskaa.accessops =	&zskbd_wskbd_accessops;
 	wskaa.accesscookie =	cs;
 	sc->sc_dc->wskbddev =	config_found(self, &wskaa, wskbddevprint,
-					     CFARG_EOL);
+					     CFARGS_NONE);
 }
 
 static void

@@ -1,4 +1,4 @@
-/* $NetBSD: motoi2c.c,v 1.11 2021/04/24 23:36:54 thorpej Exp $ */
+/* $NetBSD: motoi2c.c,v 1.12 2021/08/07 16:19:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007, 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motoi2c.c,v 1.11 2021/04/24 23:36:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motoi2c.c,v 1.12 2021/08/07 16:19:11 thorpej Exp $");
 
 #if defined(__arm__) || defined(__aarch64__)
 #include "opt_fdt.h"
@@ -135,8 +135,7 @@ motoi2c_attach_common(device_t self, struct motoi2c_softc *sc,
 	} else
 #endif
 	config_found(self, &iba, iicbus_print,
-	    CFARG_IATTR, "i2cbus",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "i2cbus"));
 }
 
 static int

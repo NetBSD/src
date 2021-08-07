@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_usb.c,v 1.9 2021/04/24 23:36:26 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_usb.c,v 1.10 2021/08/07 16:18:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -124,7 +124,7 @@ ohci_bcmusb_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Attach usb device. */
-	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint, CFARG_EOL);
+	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint, CFARGS_NONE);
 }
 
 #ifdef EHCI_DEBUG
@@ -180,7 +180,7 @@ ehci_bcmusb_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	/* Attach usb device. */
-	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint, CFARG_EOL);
+	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint, CFARGS_NONE);
 }
 
 /*
@@ -268,7 +268,7 @@ bcmusb_ccb_attach(device_t parent, device_t self, void *aux)
 	};
 
 	usbsc->usbsc_ohci_dev = config_found(self, &usbaa_ohci, NULL,
-	    CFARG_EOL);
+	    CFARGS_NONE);
 	if (usbsc->usbsc_ohci_dev != NULL)
 		usbsc->usbsc_ohci_sc = device_private(usbsc->usbsc_ohci_dev);
 
@@ -281,7 +281,7 @@ bcmusb_ccb_attach(device_t parent, device_t self, void *aux)
 	};
 
 	usbsc->usbsc_ehci_dev = config_found(self, &usbaa_ehci, NULL,
-	    CFARG_EOL);
+	    CFARGS_NONE);
 	if (usbsc->usbsc_ehci_dev != NULL)
 		usbsc->usbsc_ehci_sc = device_private(usbsc->usbsc_ehci_dev);
 

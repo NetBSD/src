@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.74 2021/04/26 19:28:24 thorpej Exp $	*/
+/*	$NetBSD: eso.c,v 1.75 2021/08/07 16:19:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.74 2021/04/26 19:28:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.75 2021/08/07 16:19:14 thorpej Exp $");
 
 #include "mpu.h"
 
@@ -427,15 +427,13 @@ eso_attach(device_t parent, device_t self, void *aux)
 	aa.hwif = NULL;
 	aa.hdl = NULL;
 	(void)config_found(sc->sc_dev, &aa, audioprint,
-	    CFARG_IATTR, "eso",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "eso"));
 
 	aa.type = AUDIODEV_TYPE_MPU;
 	aa.hwif = NULL;
 	aa.hdl = NULL;
 	sc->sc_mpudev = config_found(sc->sc_dev, &aa, audioprint,
-	    CFARG_IATTR, "eso",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "eso"));
 	if (sc->sc_mpudev != NULL) {
 		/* Unmask the MPU irq. */
 		mutex_spin_enter(&sc->sc_intr_lock);
@@ -449,8 +447,7 @@ eso_attach(device_t parent, device_t self, void *aux)
 	aa.hwif = NULL;
 	aa.hdl = NULL;
 	(void)config_found(sc->sc_dev, &aa, eso_print,
-	    CFARG_IATTR, "eso",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "eso"));
 }
 
 static void

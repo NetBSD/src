@@ -1,4 +1,4 @@
-/*	$NetBSD: kb_hb.c,v 1.14 2021/04/24 23:36:44 thorpej Exp $	*/
+/*	$NetBSD: kb_hb.c,v 1.15 2021/08/07 16:19:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kb_hb.c,v 1.14 2021/04/24 23:36:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kb_hb.c,v 1.15 2021/08/07 16:19:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -135,7 +135,7 @@ kb_hb_attach(device_t parent, device_t self, void *aux)
 	aa.keymap = &kb_hb_keymapdata;
 	aa.accessops = &kb_hb_accessops;
 	aa.accesscookie = sc;
-	sc->sc_wskbddev = config_found(self, &aa, wskbddevprint, CFARG_EOL);
+	sc->sc_wskbddev = config_found(self, &aa, wskbddevprint, CFARGS_NONE);
 }
 
 int

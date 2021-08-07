@@ -1,4 +1,4 @@
-/*	$NetBSD: gvpio.c,v 1.21 2021/04/24 23:36:24 thorpej Exp $ */
+/*	$NetBSD: gvpio.c,v 1.22 2021/08/07 16:18:41 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 Ignatios Souvatzis
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gvpio.c,v 1.21 2021/04/24 23:36:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gvpio.c,v 1.22 2021/08/07 16:18:41 thorpej Exp $");
 
 /*
  * GVP I/O Extender
@@ -131,7 +131,7 @@ gvpioattach(device_t parent, device_t self, void *aux)
 		supa.supio_iobase = giosd->off;
 		supa.supio_arg = giosd->arg;
 		supa.supio_ipl = giosd->ipl;
-		config_found(self, &supa, gvpioprint, CFARG_EOL); /* XXX */
+		config_found(self, &supa, gvpioprint, CFARGS_NONE); /* XXX */
 		++giosd;
 	}
 	if (giosc->sc_comhdls.lh_first) {

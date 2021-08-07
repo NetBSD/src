@@ -1,4 +1,4 @@
-/* $NetBSD: lunaws.c,v 1.32 2021/04/24 23:36:40 thorpej Exp $ */
+/* $NetBSD: lunaws.c,v 1.33 2021/08/07 16:18:57 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.32 2021/04/24 23:36:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.33 2021/08/07 16:18:57 thorpej Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "wsmouse.h"
@@ -175,8 +175,7 @@ wsattach(device_t parent, device_t self, void *aux)
 	a.accessops = &omkbd_accessops;
 	a.accesscookie = (void *)sc;
 	sc->sc_wskbddev = config_found(self, &a, wskbddevprint,
-	    CFARG_IATTR, "wskbddev",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "wskbddev"));
 
 #if NWSMOUSE > 0
 	{
@@ -184,8 +183,7 @@ wsattach(device_t parent, device_t self, void *aux)
 	b.accessops = &omms_accessops;
 	b.accesscookie = (void *)sc;
 	sc->sc_wsmousedev = config_found(self, &b, wsmousedevprint,
-	    CFARG_IATTR, "wsmousedev",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "wsmousedev"));
 	sc->sc_msreport = 0;
 	}
 #endif

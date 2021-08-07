@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.69 2021/07/27 01:18:04 thorpej Exp $	*/
+/*	$NetBSD: ahb.c,v 1.70 2021/08/07 16:19:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.69 2021/07/27 01:18:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.70 2021/08/07 16:19:10 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -269,7 +269,7 @@ ahbattach(device_t parent, device_t self, void *aux)
 	/*
 	 * ask the adapter what subunits are present
 	 */
-	config_found(self, &sc->sc_channel, scsiprint, CFARG_EOL);
+	config_found(self, &sc->sc_channel, scsiprint, CFARGS_NONE);
 }
 
 /*

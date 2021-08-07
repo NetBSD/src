@@ -1,4 +1,4 @@
-/*	$NetBSD: pm.c,v 1.17 2021/04/24 23:36:45 thorpej Exp $	*/
+/*	$NetBSD: pm.c,v 1.18 2021/08/07 16:19:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.17 2021/04/24 23:36:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.18 2021/08/07 16:19:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -193,7 +193,7 @@ pm_attach(device_t parent, device_t self, void *aux)
 	waa.accessops = &pm_accessops;
 	waa.accesscookie = sc;
 
-	config_found(self, &waa, wsemuldisplaydevprint, CFARG_EOL);
+	config_found(self, &waa, wsemuldisplaydevprint, CFARGS_NONE);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: zssp.c,v 1.14 2021/04/24 23:36:52 thorpej Exp $	*/
+/*	$NetBSD: zssp.c,v 1.15 2021/08/07 16:19:08 thorpej Exp $	*/
 /*	$OpenBSD: zaurus_ssp.c,v 1.6 2005/04/08 21:58:49 uwe Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zssp.c,v 1.14 2021/04/24 23:36:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zssp.c,v 1.15 2021/08/07 16:19:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,8 +145,7 @@ zssp_attach(device_t parent, device_t self, void *aux)
 
 	/* Attach all devices */
 	config_search(self, NULL,
-	    CFARG_SEARCH, zssp_search,
-	    CFARG_EOL);
+	    CFARGS(.search = zssp_search));
 }
 
 static int
@@ -157,7 +156,7 @@ zssp_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	aa.zaa_name = cf->cf_name;
 
 	if (config_probe(parent, cf, &aa))
-		config_attach(parent, cf, &aa, zssp_print, CFARG_EOL);
+		config_attach(parent, cf, &aa, zssp_print, CFARGS_NONE);
 
 	return 0;
 }

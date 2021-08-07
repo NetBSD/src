@@ -1,4 +1,4 @@
-/* $NetBSD: ptcd.c,v 1.4 2021/04/24 23:36:55 thorpej Exp $ */
+/* $NetBSD: ptcd.c,v 1.5 2021/08/07 16:19:12 thorpej Exp $ */
 
 /*
  * Copyright (c) 2012 Marc Balmer <marc@msys.ch>
@@ -143,7 +143,7 @@ ptcd_attach(device_t parent, device_t self, void *aux)
 	gba.gba_npins = PTCD_NPINS;
 
 	/* Attach GPIO framework */
-	config_found(self, &gba, gpiobus_print, CFARG_EOL);
+	config_found(self, &gba, gpiobus_print, CFARGS_NONE);
 }
 
 int

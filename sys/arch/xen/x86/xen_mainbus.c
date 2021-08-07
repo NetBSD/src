@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_mainbus.c,v 1.9 2021/04/24 23:36:51 thorpej Exp $	*/
+/*	$NetBSD: xen_mainbus.c,v 1.10 2021/08/07 16:19:08 thorpej Exp $	*/
 /*	NetBSD: mainbus.c,v 1.19 2017/05/23 08:54:39 nonaka Exp 	*/
 /*	NetBSD: mainbus.c,v 1.53 2003/10/27 14:11:47 junyoung Exp 	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_mainbus.c,v 1.9 2021/04/24 23:36:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_mainbus.c,v 1.10 2021/08/07 16:19:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,16 +129,14 @@ xen_mainbus_attach(device_t parent, device_t self, void *aux)
 		mba.mba_ipmi.iaa_memt = x86_bus_space_mem;
 		if (ipmi_probe(&mba.mba_ipmi))
 			config_found(self, &mba.mba_ipmi, NULL,
-			    CFARG_IATTR, "ipmibus",
-			    CFARG_EOL);
+			    CFARGS(.iattr = "ipmibus"));
 #endif
 	/* FALLTHROUGH */
 	case VM_GUEST_XENPVH:
 	case VM_GUEST_XENPVHVM:
 		mba.mba_haa.haa_busname = "hypervisor";
 		config_found(self, &mba.mba_haa, xen_mainbus_print,
-		    CFARG_IATTR, "hypervisorbus",
-		    CFARG_EOL);
+		    CFARGS(.iattr = "hypervisorbus"));
 		break;
 	default:
 		return;

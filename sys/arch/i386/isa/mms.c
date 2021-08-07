@@ -1,4 +1,4 @@
-/*	$NetBSD: mms.c,v 1.54 2021/04/24 23:36:39 thorpej Exp $	*/
+/*	$NetBSD: mms.c,v 1.55 2021/08/07 16:18:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mms.c,v 1.54 2021/04/24 23:36:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mms.c,v 1.55 2021/08/07 16:18:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,7 +157,7 @@ mmsattach(device_t parent, device_t self, void *aux)
 	 * here or in psmintr, because if this fails lms_enable() will
 	 * never be called, so lmsintr() will never be called.
 	 */
-	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint, CFARG_EOL);
+	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint, CFARGS_NONE);
 }
 
 static int

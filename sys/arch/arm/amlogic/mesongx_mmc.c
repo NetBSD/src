@@ -1,4 +1,4 @@
-/* $NetBSD: mesongx_mmc.c,v 1.15 2021/04/24 23:36:26 thorpej Exp $ */
+/* $NetBSD: mesongx_mmc.c,v 1.16 2021/08/07 16:18:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mesongx_mmc.c,v 1.15 2021/04/24 23:36:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mesongx_mmc.c,v 1.16 2021/08/07 16:18:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -594,7 +594,7 @@ mesongx_mmc_attach_i(device_t self)
 	if (sc->sc_gpio_cd)
 		saa.saa_caps |= SMC_CAPS_POLL_CARD_DET;
 
-	sc->sc_sdmmc_dev = config_found(self, &saa, NULL, CFARG_EOL);
+	sc->sc_sdmmc_dev = config_found(self, &saa, NULL, CFARGS_NONE);
 }
 
 static int

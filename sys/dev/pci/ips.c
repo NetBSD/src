@@ -1,4 +1,4 @@
-/*	$NetBSD: ips.c,v 1.3 2021/04/24 23:36:57 thorpej Exp $	*/
+/*	$NetBSD: ips.c,v 1.4 2021/08/07 16:19:14 thorpej Exp $	*/
 /*	$OpenBSD: ips.c,v 1.113 2016/08/14 04:08:03 dlg Exp $	*/
 
 /*-
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ips.c,v 1.3 2021/04/24 23:36:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ips.c,v 1.4 2021/08/07 16:19:14 thorpej Exp $");
 
 #include "bio.h"
 
@@ -813,7 +813,7 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 		chan->chan_nluns = lastarget + 1;
 		chan->chan_id = i;
 		chan->chan_flags = SCSIPI_CHAN_NOSETTLE;
-		config_found(self, chan, scsiprint, CFARG_EOL);
+		config_found(self, chan, scsiprint, CFARGS_NONE);
 	}
 
 	/* Enable interrupts */

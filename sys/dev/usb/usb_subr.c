@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.265 2021/06/13 14:48:10 riastradh Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.266 2021/08/07 16:19:17 thorpej Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.265 2021/06/13 14:48:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.266 2021/08/07 16:19:17 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1042,8 +1042,7 @@ usbd_attach_roothub(device_t parent, struct usbd_device *dev)
 
 	KERNEL_LOCK(1, curlwp);
 	dv = config_found(parent, &uaa, NULL,
-	    CFARG_IATTR, "usbroothubif",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "usbroothubif"));
 	KERNEL_UNLOCK_ONE(curlwp);
 	if (dv) {
 		dev->ud_subdevs = kmem_alloc(sizeof(dv), KM_SLEEP);
@@ -1120,10 +1119,9 @@ usbd_attachwholedevice(device_t parent, struct usbd_device *dev, int port,
 	KERNEL_LOCK(1, curlwp);
 	config_pending_incr(parent);
 	dv = config_found(parent, &uaa, usbd_print,
-			  CFARG_SUBMATCH, config_stdsubmatch,
-			  CFARG_IATTR, "usbdevif",
-			  CFARG_LOCATORS, dlocs,
-			  CFARG_EOL);
+			  CFARGS(.submatch = config_stdsubmatch,
+				 .iattr = "usbdevif",
+				 .locators = dlocs));
 	KERNEL_UNLOCK_ONE(curlwp);
 	if (dv) {
 		dev->ud_subdevs = kmem_alloc(sizeof(dv), KM_SLEEP);
@@ -1203,10 +1201,9 @@ usbd_attachinterfaces(device_t parent, struct usbd_device *dev,
 		}
 		KERNEL_LOCK(1, curlwp);
 		dv = config_found(parent, &uiaa, usbd_ifprint,
-				  CFARG_SUBMATCH, config_stdsubmatch,
-				  CFARG_IATTR, "usbifif",
-				  CFARG_LOCATORS, ilocs,
-				  CFARG_EOL);
+				  CFARGS(.submatch = config_stdsubmatch,
+					 .iattr = "usbifif",
+					 .locators = ilocs));
 		KERNEL_UNLOCK_ONE(curlwp);
 		if (!dv)
 			continue;

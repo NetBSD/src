@@ -1,4 +1,4 @@
-/* $NetBSD: sbscd.c,v 1.19 2021/04/24 23:36:43 thorpej Exp $ */
+/* $NetBSD: sbscd.c,v 1.20 2021/08/07 16:18:59 thorpej Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbscd.c,v 1.19 2021/04/24 23:36:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbscd.c,v 1.20 2021/08/07 16:18:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -118,9 +118,8 @@ sbscd_attach(device_t parent, device_t self, void *aux)
 			sb1250_sbscd_devs[i].sa_intr[1];
 
 		config_found(self, &sa, sbscd_print,
-		    CFARG_SUBMATCH, config_stdsubmatch,
-		    CFARG_LOCATORS, locs,
-		    CFARG_EOL);
+		    CFARGS(.submatch = config_stdsubmatch,
+			   .locators = locs));
 	}
 	return;
 }

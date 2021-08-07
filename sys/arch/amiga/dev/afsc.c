@@ -1,4 +1,4 @@
-/*	$NetBSD: afsc.c,v 1.45 2021/04/24 23:36:24 thorpej Exp $ */
+/*	$NetBSD: afsc.c,v 1.46 2021/08/07 16:18:41 thorpej Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: afsc.c,v 1.45 2021/04/24 23:36:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: afsc.c,v 1.46 2021/08/07 16:18:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,7 +190,7 @@ afscattach(device_t parent, device_t self, void *aux)
 	/*
 	 * attach all scsi units on us
 	 */
-	config_found(self, chan, scsiprint, CFARG_EOL);
+	config_found(self, chan, scsiprint, CFARGS_NONE);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: hvkbd.c,v 1.8 2021/04/24 23:36:54 thorpej Exp $	*/
+/*	$NetBSD: hvkbd.c,v 1.9 2021/08/07 16:19:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2017 Microsoft Corp.
@@ -36,7 +36,7 @@
 #endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hvkbd.c,v 1.8 2021/04/24 23:36:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hvkbd.c,v 1.9 2021/08/07 16:19:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,7 +237,7 @@ hvkbd_attach(device_t parent, device_t self, void *aux)
 	a.keymap = &hvkbd_keymapdata;
 	a.accessops = &hvkbd_accessops;
 	a.accesscookie = sc;
-	sc->sc_wskbddev = config_found(self, &a, wskbddevprint, CFARG_EOL);
+	sc->sc_wskbddev = config_found(self, &a, wskbddevprint, CFARGS_NONE);
 	return;
 
 free_buf:

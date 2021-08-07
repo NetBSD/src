@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_mbox.c,v 1.16 2021/04/24 23:36:26 thorpej Exp $	*/
+/*	$NetBSD: bcm2835_mbox.c,v 1.17 2021/08/07 16:18:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_mbox.c,v 1.16 2021/04/24 23:36:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_mbox.c,v 1.17 2021/08/07 16:18:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ bcmmbox_attach(struct bcm2835mbox_softc *sc)
 		    BCM2835_MBOX_CFG_DATAIRQEN);
 
 	baa.baa_dmat = sc->sc_dmat;
-	sc->sc_platdev = config_found(sc->sc_dev, &baa, NULL, CFARG_EOL);
+	sc->sc_platdev = config_found(sc->sc_dev, &baa, NULL, CFARGS_NONE);
 }
 
 int

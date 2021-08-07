@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.45 2021/04/24 23:36:51 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.46 2021/08/07 16:19:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 Minoura Makoto
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.45 2021/04/24 23:36:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.46 2021/08/07 16:19:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,7 +251,7 @@ zs_attach(device_t parent, device_t self, void *aux)
 		 * The child attach will setup the hardware.
 		 */
 		child = config_found(self, (void *)&zsc_args, zs_print,
-		    CFARG_EOL);
+		    CFARGS_NONE);
 #if ZSTTY > 0
 		if (zc == conschan &&
 		    ((child && strcmp(device_xname(child), "zstty0")) ||

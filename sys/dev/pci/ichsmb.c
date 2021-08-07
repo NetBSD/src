@@ -1,4 +1,4 @@
-/*	$NetBSD: ichsmb.c,v 1.71 2021/07/12 12:59:54 msaitoh Exp $	*/
+/*	$NetBSD: ichsmb.c,v 1.72 2021/08/07 16:19:14 thorpej Exp $	*/
 /*	$OpenBSD: ichiic.c,v 1.44 2020/10/07 11:23:05 jsg Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.71 2021/07/12 12:59:54 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.72 2021/08/07 16:19:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -240,7 +240,7 @@ ichsmb_rescan(device_t self, const char *ifattr, const int *locators)
 
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c_tag;
-	sc->sc_i2c_device = config_found(self, &iba, iicbus_print, CFARG_EOL);
+	sc->sc_i2c_device = config_found(self, &iba, iicbus_print, CFARGS_NONE);
 
 	return 0;
 }

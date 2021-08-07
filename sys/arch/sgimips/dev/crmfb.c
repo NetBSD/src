@@ -1,4 +1,4 @@
-/* $NetBSD: crmfb.c,v 1.48 2021/04/24 23:36:47 thorpej Exp $ */
+/* $NetBSD: crmfb.c,v 1.49 2021/08/07 16:19:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.48 2021/04/24 23:36:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.49 2021/08/07 16:19:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -415,7 +415,7 @@ crmfb_attach(device_t parent, device_t self, void *opaque)
 	aa.accessops = &crmfb_accessops;
 	aa.accesscookie = &sc->sc_vd;
 
-	config_found(self, &aa, wsemuldisplaydevprint, CFARG_EOL);
+	config_found(self, &aa, wsemuldisplaydevprint, CFARGS_NONE);
 
 	sc->sc_cur_x = 0;
 	sc->sc_cur_y = 0;

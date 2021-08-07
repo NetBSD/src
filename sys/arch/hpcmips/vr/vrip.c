@@ -1,4 +1,4 @@
-/*	$NetBSD: vrip.c,v 1.38 2021/04/24 23:36:38 thorpej Exp $	*/
+/*	$NetBSD: vrip.c,v 1.39 2021/08/07 16:18:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrip.c,v 1.38 2021/04/24 23:36:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrip.c,v 1.39 2021/08/07 16:18:54 thorpej Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -246,14 +246,12 @@ vripattach_common(device_t parent, device_t self, void *aux)
 	 */
 	sc->sc_pri = 2;
 	config_search(self, NULL,
-	    CFARG_SEARCH, vrip_search,
-	    CFARG_EOL);
+	    CFARGS(.search = vrip_search));
 
 	/* Other system devices. */
 	sc->sc_pri = 1;
 	config_search(self, NULL,
-	    CFARG_SEARCH, vrip_search,
-	    CFARG_EOL);
+	    CFARGS(.search = vrip_search));
 }
 
 int
@@ -304,7 +302,7 @@ vrip_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	va.va_ac = sc->sc_chipset.vc_ac;
 	va.va_dc = sc->sc_chipset.vc_dc;
 	if (/*XXX*/config_probe(parent, cf, &va) == sc->sc_pri)
-		config_attach(parent, cf, &va, vrip_print, CFARG_EOL);
+		config_attach(parent, cf, &va, vrip_print, CFARGS_NONE);
 
 	return (0);
 }

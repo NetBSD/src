@@ -1,4 +1,4 @@
-/*	$NetBSD: sni_i2c.c,v 1.11 2021/04/24 23:36:28 thorpej Exp $	*/
+/*	$NetBSD: sni_i2c.c,v 1.12 2021/08/07 16:18:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sni_i2c.c,v 1.11 2021/04/24 23:36:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sni_i2c.c,v 1.12 2021/08/07 16:18:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -218,7 +218,7 @@ sniiic_acpi_attach(device_t parent, device_t self, void *aux)
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_ic;
 #if 0
-	config_found(sc->sc_dev, &iba, iicbus_print, CFARG_EOL);
+	config_found(sc->sc_dev, &iba, iicbus_print, CFARGS_NONE);
 #endif
 
 	acpi_resource_cleanup(&res);

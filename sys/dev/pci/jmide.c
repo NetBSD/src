@@ -1,4 +1,4 @@
-/*	$NetBSD: jmide.c,v 1.24 2021/04/24 23:36:57 thorpej Exp $	*/
+/*	$NetBSD: jmide.c,v 1.25 2021/08/07 16:19:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jmide.c,v 1.24 2021/04/24 23:36:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jmide.c,v 1.25 2021/08/07 16:19:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,8 +227,7 @@ jmide_attach(device_t parent, device_t self, void *aux)
 				sc->sc_ahci = config_found(
 				    sc->sc_pciide.sc_wdcdev.sc_atac.atac_dev,
 				    &jma, jmahci_print,
-				    CFARG_IATTR, "jmide_hl",
-				    CFARG_EOL);
+				    CFARGS(.iattr = "jmide_hl"));
 			}
 			/*
 			 * if we couldn't attach an ahci, try to fall back

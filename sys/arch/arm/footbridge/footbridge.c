@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge.c,v 1.27 2021/04/24 23:36:26 thorpej Exp $	*/
+/*	$NetBSD: footbridge.c,v 1.28 2021/08/07 16:18:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge.c,v 1.27 2021/04/24 23:36:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge.c,v 1.28 2021/08/07 16:18:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -245,8 +245,7 @@ footbridge_attach(device_t parent, device_t self, void *aux)
 	fba.fba_pba.pba_bus = 0;
 	fba.fba_pba.pba_bridgetag = NULL;
 	config_found(self, &fba.fba_pba, pcibusprint,
-	    CFARG_IATTR, "pcibus",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "pcibus"));
 
 	/* Attach uart device */
 	fba.fba_fca.fca_name = "fcom";
@@ -255,8 +254,7 @@ footbridge_attach(device_t parent, device_t self, void *aux)
 	fba.fba_fca.fca_rx_irq = IRQ_SERIAL_RX;
 	fba.fba_fca.fca_tx_irq = IRQ_SERIAL_TX;
 	config_found(self, &fba.fba_fca, footbridge_print,
-	    CFARG_IATTR, "footbridge",
-	    CFARG_EOL); 
+	    CFARGS(.iattr = "footbridge"));
 	
 	/* Setup fast SA110 cache clean area */
 #ifdef CPU_SA110

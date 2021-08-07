@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.17 2021/04/24 23:36:45 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.18 2021/08/07 16:19:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.17 2021/04/24 23:36:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.18 2021/08/07 16:19:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -59,11 +59,10 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 
 	/* attach CPU first */
 	config_found(self, &(struct mainbus_attach_args){.ma_name = "cpu"},
-	    mainbus_print, CFARG_EOL);
+	    mainbus_print, CFARGS_NONE);
 
 	config_search(self, NULL,
-	    CFARG_SEARCH, mainbus_search,
-	    CFARG_EOL);
+	    CFARGS(.search = mainbus_search));
 }
 
 static int
@@ -74,7 +73,7 @@ mainbus_search(device_t parent, cfdata_t cf,
 
 	ma.ma_name = cf->cf_name;
 	if (config_probe(parent, cf, &ma))
-		config_attach(parent, cf, &ma, mainbus_print, CFARG_EOL);
+		config_attach(parent, cf, &ma, mainbus_print, CFARGS_NONE);
 	
 	return (0);
 }

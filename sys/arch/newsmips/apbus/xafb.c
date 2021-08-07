@@ -1,4 +1,4 @@
-/*	$NetBSD: xafb.c,v 1.20 2021/04/24 23:36:44 thorpej Exp $	*/
+/*	$NetBSD: xafb.c,v 1.21 2021/08/07 16:19:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -29,7 +29,7 @@
 /* "xa" frame buffer driver.  Currently supports 1280x1024x8 only. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xafb.c,v 1.20 2021/04/24 23:36:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xafb.c,v 1.21 2021/08/07 16:19:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -187,7 +187,7 @@ xafb_attach(device_t parent, device_t self, void *aux)
 	wsa.accessops = &xafb_accessops;
 	wsa.accesscookie = sc;
 
-	config_found(self, &wsa, wsemuldisplaydevprint, CFARG_EOL);
+	config_found(self, &wsa, wsemuldisplaydevprint, CFARGS_NONE);
 }
 
 void

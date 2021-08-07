@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3gpio.c,v 1.13 2021/04/24 23:36:46 thorpej Exp $	*/
+/*	$NetBSD: pq3gpio.c,v 1.14 2021/08/07 16:19:02 thorpej Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 #define	GPIO_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pq3gpio.c,v 1.13 2021/04/24 23:36:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3gpio.c,v 1.14 2021/08/07 16:19:02 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mpc85xx.h"
@@ -238,8 +238,7 @@ pq3gpio_group_create(device_t self, bus_space_tag_t bst, bus_space_handle_t bsh,
 	};
 
 	config_found(self, &gba, gpiobus_print,
-	    CFARG_IATTR, "gpiobus",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "gpiobus"));
 }
 
 #ifdef MPC8536

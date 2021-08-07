@@ -1,7 +1,7 @@
-/* $NetBSD: joy_eap.c,v 1.16 2021/04/26 19:35:16 thorpej Exp $ */
+/* $NetBSD: joy_eap.c,v 1.17 2021/08/07 16:19:14 thorpej Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_eap.c,v 1.16 2021/04/26 19:35:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_eap.c,v 1.17 2021/08/07 16:19:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,8 +60,7 @@ eap_joy_attach(device_t eapdev, struct eap_gameport_args *gpa)
 	aa.aa_iot = gpa->gpa_iot;
 	aa.aa_ioh = ioh;
 	joydev = config_found(eapdev, &aa, 0,
-	    CFARG_IATTR, "eap",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "eap"));
 	/* this cannot fail */
 	KASSERT(joydev != NULL);
 

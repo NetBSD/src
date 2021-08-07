@@ -1,4 +1,4 @@
-/*	$NetBSD: diofb.c,v 1.6 2021/04/24 23:36:37 thorpej Exp $	*/
+/*	$NetBSD: diofb.c,v 1.7 2021/08/07 16:18:53 thorpej Exp $	*/
 /*	$OpenBSD: diofb.c,v 1.18 2010/12/26 15:40:59 miod Exp $	*/
 
 /*
@@ -334,7 +334,7 @@ diofb_end_attach(device_t self, struct wsdisplay_accessops *accessops,
 	waa.accessops = accessops;
 	waa.accesscookie = fb;
 
-	config_found(self, &waa, wsemuldisplaydevprint, CFARG_EOL);
+	config_found(self, &waa, wsemuldisplaydevprint, CFARGS_NONE);
 }
 
 /*

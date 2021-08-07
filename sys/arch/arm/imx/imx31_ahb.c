@@ -1,4 +1,4 @@
-/*	$NetBSD: imx31_ahb.c,v 1.8 2021/04/24 23:36:27 thorpej Exp $	*/
+/*	$NetBSD: imx31_ahb.c,v 1.9 2021/08/07 16:18:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002, 2005  Genetec Corporation.  All rights reserved.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$Id: imx31_ahb.c,v 1.8 2021/04/24 23:36:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$Id: imx31_ahb.c,v 1.9 2021/08/07 16:18:44 thorpej Exp $");
 
 #include "locators.h"
 #include "avic.h"
@@ -176,8 +176,7 @@ ahb_attach(device_t parent, device_t self, void *aux)
 	ahba.ahba_memt = sc->sc_memt;
 	ahba.ahba_dmat = sc->sc_dmat;
 	config_search(self, &ahba,
-	    CFARG_SEARCH, ahb_search,
-	    CFARG_EOL);
+	    CFARGS(.search = ahb_search));
 }
 
 static int
@@ -191,7 +190,7 @@ ahb_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	ahba->ahba_irqbase = cf->cf_loc[AHBCF_IRQBASE];
 
 	if (config_probe(parent, cf, ahba))
-		config_attach(parent, cf, ahba, ahbbus_print, CFARG_EOL);
+		config_attach(parent, cf, ahba, ahbbus_print, CFARGS_NONE);
 
 	return 0;
 }
@@ -262,8 +261,7 @@ ahb_attach_critical(struct ahb_softc *sc)
 		ahba.ahba_irqbase = AHBCF_IRQBASE_DEFAULT;
 
 		cf = config_search(sc->sc_dev, &ahba,
-		    CFARG_SUBMATCH, ahb_find,
-		    CFARG_EOL);
+		    CFARGS(.submatch = ahb_find));
 		if (cf == NULL && critical_devs[i].required)
 			panic("ahb_attach_critical: failed to find %s!",
 			    critical_devs[i].name);
@@ -272,7 +270,7 @@ ahb_attach_critical(struct ahb_softc *sc)
 		ahba.ahba_size = cf->cf_loc[AHBCF_SIZE];
 		ahba.ahba_intr = cf->cf_loc[AHBCF_INTR];
 		ahba.ahba_irqbase = cf->cf_loc[AHBCF_IRQBASE];
-		config_attach(sc->sc_dev, cf, &ahba, ahbbus_print, CFARG_EOL);
+		config_attach(sc->sc_dev, cf, &ahba, ahbbus_print, CFARGS_NONE);
 	}
 }
 

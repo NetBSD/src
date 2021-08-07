@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.59 2021/04/24 23:36:55 thorpej Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.60 2021/08/07 16:19:12 thorpej Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.59 2021/04/24 23:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.60 2021/08/07 16:19:12 thorpej Exp $");
 
 #include "opt_mvsata.h"
 
@@ -742,8 +742,7 @@ mvsata_atapibus_attach(struct atabus_softc *ata_sc)
 	chan->chan_nluns = 1;
 
 	chp->atapibus = config_found(ata_sc->sc_dev, chan, atapiprint,
-	    CFARG_IATTR, "atapi",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "atapi"));
 }
 
 static void

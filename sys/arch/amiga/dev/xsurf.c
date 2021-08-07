@@ -1,4 +1,4 @@
-/*	$NetBSD: xsurf.c,v 1.4 2021/04/24 23:36:24 thorpej Exp $ */
+/*	$NetBSD: xsurf.c,v 1.5 2021/08/07 16:18:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xsurf.c,v 1.4 2021/04/24 23:36:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xsurf.c,v 1.5 2021/08/07 16:18:42 thorpej Exp $");
 
 /*
  * X-Surf driver, split from ne_zbus. 
@@ -128,7 +128,7 @@ xsurf_attach(device_t parent, device_t self, void *aux)
 	/* Add clockport. */
 	xaa_gencp1.xaa_base = (bus_addr_t)zap->va + XSURF_CP2_BASE;
 	strcpy(xaa_gencp1.xaa_name, "gencp_xsurf");
-	config_found(sc->sc_dev, &xaa_gencp1, xsurf_print, CFARG_EOL);
+	config_found(sc->sc_dev, &xaa_gencp1, xsurf_print, CFARGS_NONE);
 
 	/* Now... if we are a fake X-Surf that's enough. */
 	if (zap->serno == DENEB_XSURF_SERNO) {
@@ -139,17 +139,17 @@ xsurf_attach(device_t parent, device_t self, void *aux)
 	/* Otherwise add one more clockport and continue... */
 	xaa_gencp2.xaa_base = (bus_addr_t)zap->va + XSURF_CP1_BASE;
 	strcpy(xaa_gencp2.xaa_name, "gencp_xsurf");
-	config_found(sc->sc_dev, &xaa_gencp2, xsurf_print, CFARG_EOL);
+	config_found(sc->sc_dev, &xaa_gencp2, xsurf_print, CFARGS_NONE);
 		
 	/* Add ne(4). */
 	xaa_ne.xaa_base = (bus_addr_t)zap->va + XSURF_NE_OFFSET;
 	strcpy(xaa_ne.xaa_name, "ne_xsurf");
-	config_found(sc->sc_dev, &xaa_ne, xsurf_print, CFARG_EOL);
+	config_found(sc->sc_dev, &xaa_ne, xsurf_print, CFARGS_NONE);
 
 	/* Add wdc(4). */
 	xaa_wdc.xaa_base = (bus_addr_t)zap->va + XSURF_WDC_OFFSET;
 	strcpy(xaa_wdc.xaa_name, "wdc_xsurf");
-	config_found(sc->sc_dev, &xaa_wdc, xsurf_print, CFARG_EOL);
+	config_found(sc->sc_dev, &xaa_wdc, xsurf_print, CFARGS_NONE);
 
 }
 

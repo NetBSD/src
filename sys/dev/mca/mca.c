@@ -1,4 +1,4 @@
-/*	$NetBSD: mca.c,v 1.33 2021/04/24 23:36:56 thorpej Exp $	*/
+/*	$NetBSD: mca.c,v 1.34 2021/08/07 16:19:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca.c,v 1.33 2021/04/24 23:36:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca.c,v 1.34 2021/08/07 16:19:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,9 +154,8 @@ mca_attach(device_t parent, device_t self, void *aux)
 		if (ma.ma_pos[2] & MCA_POS2_ENABLE
 		    || mca_match_disabled(ma.ma_id))
 			config_found(self, &ma, mca_print,
-				     CFARG_SUBMATCH, config_stdsubmatch,
-				     CFARG_LOCATORS, locs,
-				     CFARG_EOL);
+				     CFARGS(.submatch = config_stdsubmatch,
+					    .locators = locs));
 		else {
 			mca_print(&ma, device_xname(self));
 			aprint_normal(" disabled\n");

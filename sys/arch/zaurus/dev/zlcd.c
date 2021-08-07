@@ -1,4 +1,4 @@
-/*	$NetBSD: zlcd.c,v 1.19 2021/04/24 23:36:52 thorpej Exp $	*/
+/*	$NetBSD: zlcd.c,v 1.20 2021/08/07 16:19:08 thorpej Exp $	*/
 /*	$OpenBSD: zaurus_lcd.c,v 1.20 2006/06/02 20:50:14 miod Exp $	*/
 /* NetBSD: lubbock_lcd.c,v 1.1 2003/08/09 19:38:53 bsh Exp */
 
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zlcd.c,v 1.19 2021/04/24 23:36:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zlcd.c,v 1.20 2021/08/07 16:19:08 thorpej Exp $");
 
 #include "lcdctl.h"
 
@@ -158,7 +158,7 @@ lcd_attach(device_t parent, device_t self, void *aux)
 	aa.accessops = &lcd_accessops;
 	aa.accesscookie = sc;
 
-	(void) config_found(self, &aa, wsemuldisplaydevprint, CFARG_EOL);
+	(void) config_found(self, &aa, wsemuldisplaydevprint, CFARGS_NONE);
 
 	if (!pmf_device_register(self, lcd_suspend, lcd_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");

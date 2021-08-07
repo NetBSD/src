@@ -1,4 +1,4 @@
-/* $NetBSD: gtmr_fdt.c,v 1.10 2021/04/24 23:36:26 thorpej Exp $ */
+/* $NetBSD: gtmr_fdt.c,v 1.11 2021/08/07 16:18:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr_fdt.c,v 1.10 2021/04/24 23:36:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr_fdt.c,v 1.11 2021/08/07 16:18:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -95,7 +95,7 @@ gtmr_fdt_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
-	config_found(self, &mpcaa, NULL, CFARG_EOL);
+	config_found(self, &mpcaa, NULL, CFARGS_NONE);
 
 	arm_fdt_cpu_hatch_register(self, gtmr_fdt_cpu_hatch);
 	arm_fdt_timer_register(gtmr_cpu_initclocks);

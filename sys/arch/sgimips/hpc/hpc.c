@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.72 2021/04/24 23:36:48 thorpej Exp $	*/
+/*	$NetBSD: hpc.c,v 1.73 2021/08/07 16:19:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.72 2021/04/24 23:36:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.73 2021/08/07 16:19:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -537,12 +537,10 @@ hpc_attach(device_t parent, device_t self, void *aux)
 		/* XXXgross! avoid complaining in E++ and GIO32 SCSI cases */
 		if (hpctype != 3 && sc->sc_base != HPC_BASE_ADDRESS_0) {
 			config_found(self, &ha, NULL,
-			    CFARG_SUBMATCH, hpc_submatch,
-			    CFARG_EOL);
+			    CFARGS(.submatch = hpc_submatch));
 		} else {
 			config_found(self, &ha, hpc_print,
-			    CFARG_SUBMATCH, hpc_submatch,
-			    CFARG_EOL);
+			    CFARGS(.submatch = hpc_submatch));
 		}
 	}
 

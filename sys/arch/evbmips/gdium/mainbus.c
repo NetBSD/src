@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.8 2021/04/24 23:36:35 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.9 2021/08/07 16:18:51 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.8 2021/04/24 23:36:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.9 2021/08/07 16:18:51 thorpej Exp $");
 
 #include "opt_pci.h"
 
@@ -120,7 +120,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	for (i = 0; i < __arraycount(mainbusdevs); i++) {
 		struct mainbus_attach_args maa;
 		maa.maa_name = mainbusdevs[i];
-		(void) config_found(self, &maa, mainbus_print, CFARG_EOL);
+		(void) config_found(self, &maa, mainbus_print, CFARGS_NONE);
 	}
 }
 

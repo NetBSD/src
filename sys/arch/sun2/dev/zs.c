@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.22 2021/04/24 23:36:49 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.23 2021/08/07 16:19:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.22 2021/04/24 23:36:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.23 2021/08/07 16:19:06 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -233,7 +233,7 @@ zs_attach(struct zsc_softc *zsc, struct zsdevice *zsd, int pri)
 		 * The child attach will setup the hardware.
 		 */
 		if ((child = config_found(zsc->zsc_dev, (void *)&zsc_args,
-		    zs_print, CFARG_EOL)) == NULL) {
+		    zs_print, CFARGS_NONE)) == NULL) {
 			/* No sub-driver.  Just reset it. */
 			uint8_t reset = (channel == 0) ?
 				ZSWR9_A_RESET : ZSWR9_B_RESET;
@@ -274,14 +274,14 @@ zs_attach(struct zsc_softc *zsc, struct zsdevice *zsd, int pri)
 #if (NKBD > 0)
 					kma.kmta_name = "keyboard";
 					config_found(child, (void *)&kma, NULL,
-					    CFARG_EOL);
+					    CFARGS_NONE);
 #endif
 					break;
 				case ZS_PERIPHERAL_SUNMS:
 #if (NMS > 0)
 					kma.kmta_name = "mouse";
 					config_found(child, (void *)&kma, NULL,
-					    CFARG_EOL);
+					    CFARGS_NONE);
 #endif
 					break;
 				default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: gten.c,v 1.23 2021/04/24 23:36:46 thorpej Exp $	*/
+/*	$NetBSD: gten.c,v 1.24 2021/08/07 16:19:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gten.c,v 1.23 2021/04/24 23:36:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gten.c,v 1.24 2021/08/07 16:19:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -208,7 +208,7 @@ gten_attach(device_t parent, device_t self, void *aux)
 	a.accessops = &gten_accessops;
 	a.accesscookie = gt;
 
-	config_found(self, &a, wsemuldisplaydevprint, CFARG_EOL);
+	config_found(self, &a, wsemuldisplaydevprint, CFARGS_NONE);
 }
 
 static void

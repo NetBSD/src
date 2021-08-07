@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_arbus.c,v 1.4 2021/04/24 23:36:42 thorpej Exp $	*/
+/*	$NetBSD: ohci_arbus.c,v 1.5 2021/08/07 16:18:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_arbus.c,v 1.4 2021/04/24 23:36:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_arbus.c,v 1.5 2021/08/07 16:18:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,5 +129,5 @@ ohci_arbus_attach(device_t parent, device_t self, void *aux)
 #endif
 
 	/* Attach USB device */
-	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint, CFARG_EOL);
+	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint, CFARGS_NONE);
 }

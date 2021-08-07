@@ -1,4 +1,4 @@
-/* $NetBSD: kftxx.c,v 1.18 2021/07/04 22:42:36 thorpej Exp $ */
+/* $NetBSD: kftxx.c,v 1.19 2021/08/07 16:18:41 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: kftxx.c,v 1.18 2021/07/04 22:42:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kftxx.c,v 1.19 2021/08/07 16:18:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,6 +128,6 @@ kftattach(device_t parent, device_t self, void *aux)
 		ka.ka_node = sc->sc_node;
 		ka.ka_dtype = sc->sc_dtype;
 		ka.ka_hosenum = hoseno;
-		config_found(self, &ka, kftprint, CFARG_EOL);
+		config_found(self, &ka, kftprint, CFARGS_NONE);
 	}
 }

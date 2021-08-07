@@ -1,4 +1,4 @@
-/*	$NetBSD: em4k.c,v 1.7 2021/04/24 23:36:25 thorpej Exp $ */
+/*	$NetBSD: em4k.c,v 1.8 2021/08/07 16:18:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -235,7 +235,7 @@ em4k_callback(device_t self) {
 
 	em4k_intr_enable(sc);
 
-	config_found(self, &pba, pcibusprint, CFARG_EOL);
+	config_found(self, &pba, pcibusprint, CFARGS_NONE);
 }
 
 #ifdef PCI_NETBSD_CONFIGURE

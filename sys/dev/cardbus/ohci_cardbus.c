@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_cardbus.c,v 1.45 2021/04/24 23:36:53 thorpej Exp $	*/
+/*	$NetBSD: ohci_cardbus.c,v 1.46 2021/08/07 16:19:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.45 2021/04/24 23:36:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.46 2021/08/07 16:19:10 thorpej Exp $");
 
 #include "ehci_cardbus.h"
 
@@ -167,7 +167,7 @@ ohci_cardbus_attach(device_t parent, device_t self, void *aux)
 
 	/* Attach usb device. */
 	sc->sc.sc_child = config_found(self, &sc->sc.sc_bus, usbctlprint,
-	    CFARG_EOL);
+	    CFARGS_NONE);
 }
 
 int

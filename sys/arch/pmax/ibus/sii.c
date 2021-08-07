@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.15 2021/07/24 21:31:34 andvar Exp $	*/
+/*	$NetBSD: sii.c,v 1.16 2021/08/07 16:19:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sii.c,v 1.15 2021/07/24 21:31:34 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sii.c,v 1.16 2021/08/07 16:19:02 thorpej Exp $");
 
 #include "sii.h"
 /*
@@ -191,7 +191,7 @@ siiattach(struct siisoftc *sc)
 	/*
 	 * Now try to attach all the sub-devices
 	 */
-	config_found(sc->sc_dev, &sc->sc_channel, scsiprint, CFARG_EOL);
+	config_found(sc->sc_dev, &sc->sc_channel, scsiprint, CFARGS_NONE);
 }
 
 /*

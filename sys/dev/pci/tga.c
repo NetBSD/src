@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.87 2021/04/24 23:36:57 thorpej Exp $ */
+/* $NetBSD: tga.c,v 1.88 2021/08/07 16:19:14 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.87 2021/04/24 23:36:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.88 2021/08/07 16:19:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -508,7 +508,7 @@ tgaattach(device_t parent, device_t self, void *aux)
 	aa.accessops = &tga_accessops;
 	aa.accesscookie = sc;
 
-	config_found(self, &aa, wsemuldisplaydevprint, CFARG_EOL);
+	config_found(self, &aa, wsemuldisplaydevprint, CFARGS_NONE);
 
 	config_interrupts(self, tga_config_interrupts);
 }

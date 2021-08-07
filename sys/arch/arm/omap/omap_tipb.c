@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_tipb.c,v 1.7 2021/04/24 23:36:28 thorpej Exp $ */
+/*	$NetBSD: omap_tipb.c,v 1.8 2021/08/07 16:18:45 thorpej Exp $ */
 
 /*
  * Autoconfiguration support for the Texas Instruments OMAP TIPB.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap_tipb.c,v 1.7 2021/04/24 23:36:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap_tipb.c,v 1.8 2021/08/07 16:18:45 thorpej Exp $");
 
 #include "locators.h"
 
@@ -186,16 +186,14 @@ tipb_attach(device_t parent, device_t self, void *aux)
 		 * use __UNCONST to convince the compiler that this is ok.
 		 */
 		config_search(self, __UNCONST(*earlyp),
-		    CFARG_SEARCH, tipb_search,
-		    CFARG_EOL);
+		    CFARGS(.search = tipb_search));
 	}
 
 	/*
 	 * Attach all other devices
 	 */
 	config_search(self, NULL,
-	    CFARG_SEARCH, tipb_search,
-	    CFARG_EOL);
+	    CFARGS(.search = tipb_search));
 }
 
 static int
@@ -230,7 +228,7 @@ tipb_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	aa.tipb_mult = cf->cf_loc[TIPBCF_MULT];
 
 	if (config_probe(parent, cf, &aa))
-		config_attach(parent, cf, &aa, tipb_print, CFARG_EOL);
+		config_attach(parent, cf, &aa, tipb_print, CFARGS_NONE);
 
 	return 0;
 }

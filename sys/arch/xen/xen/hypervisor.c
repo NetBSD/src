@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.91 2021/04/24 23:36:51 thorpej Exp $ */
+/* $NetBSD: hypervisor.c,v 1.92 2021/08/07 16:19:08 thorpej Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.91 2021/04/24 23:36:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.92 2021/08/07 16:19:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -641,8 +641,7 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 	hac.hac_vcaa.vcaa_caa.cpu_role = CPU_ROLE_BP;
 	hac.hac_vcaa.vcaa_caa.cpu_func = NULL; /* See xen/x86/cpu.c:vcpu_attach() */
 	config_found(self, &hac.hac_vcaa, hypervisor_print,
-	    CFARG_IATTR, "xendevbus",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "xendevbus"));
 
 #ifdef MULTIPROCESSOR
 
@@ -663,8 +662,7 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 		hac.hac_vcaa.vcaa_caa.cpu_func = NULL; /* See xen/x86/cpu.c:vcpu_attach() */
 		if (NULL == config_found(self, &hac.hac_vcaa,
 					 hypervisor_vcpu_print,
-					 CFARG_IATTR, "xendevbus",
-					 CFARG_EOL)) {
+					 CFARGS(.iattr = "xendevbus"))) {
 			break;
 		}
 	}
@@ -678,16 +676,14 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 	hac.hac_xenbus.xa_device = "xenbus";
 	hac.hac_xenbus.xa_dmat = &xenbus_bus_dma_tag;
 	config_found(self, &hac.hac_xenbus, hypervisor_print,
-	    CFARG_IATTR, "xendevbus",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "xendevbus"));
 #endif
 #if NXENCONS > 0
 	if (xencons_interface != 0 || vm_guest != VM_GUEST_XENPVHVM) {
 		memset(&hac, 0, sizeof(hac));
 		hac.hac_xencons.xa_device = "xencons";
 		config_found(self, &hac.hac_xencons, hypervisor_print,
-		    CFARG_IATTR, "xendevbus",
-		    CFARG_EOL);
+		    CFARGS(.iattr = "xendevbus"));
 	}
 #endif
 
@@ -712,8 +708,7 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 		hac.hac_acpi.aa_dmat64 = NULL;
 #endif /* _LP64 */
 		config_found(self, &hac.hac_acpi, NULL,
-		    CFARG_IATTR, "acpibus",
-		    CFARG_EOL);
+		    CFARGS(.iattr = "acpibus"));
 	}
 #endif /* NACPICA */
 	memset(&hac, 0, sizeof(hac));
@@ -739,8 +734,7 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 	else
 #endif
 	config_found(self, &hac.hac_pba, pcibusprint,
-	    CFARG_IATTR, "pcibus",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "pcibus"));
 #if NACPICA > 0
 	if (mp_verbose)
 		acpi_pci_link_state();
@@ -754,8 +748,7 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 		hac.hac_iba.iba_dmat = &isa_bus_dma_tag;
 		hac.hac_iba.iba_ic = NULL; /* No isa DMA yet */
 		config_found(self, &hac.hac_iba, isabusprint,
-		    CFARG_IATTR, "isabus",
-		    CFARG_EOL);
+		    CFARGS(.iattr = "isabus"));
 	}
 #endif /* NISA */
 #endif /* NPCI */

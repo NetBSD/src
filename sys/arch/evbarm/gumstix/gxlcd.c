@@ -1,4 +1,4 @@
-/*	$NetBSD: gxlcd.c,v 1.4 2021/04/24 23:36:32 thorpej Exp $	*/
+/*	$NetBSD: gxlcd.c,v 1.5 2021/08/07 16:18:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gxlcd.c,v 1.4 2021/04/24 23:36:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gxlcd.c,v 1.5 2021/08/07 16:18:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,7 +166,7 @@ gxlcd_attach(device_t parent, device_t self, void *aux)
 
 	pxa2x0_lcd_setup_wsscreen(&gxlcd_std_screen, &CURRENT_DISPLAY, NULL);
 
-	(void) config_found(self, &aa, wsemuldisplaydevprint, CFARG_EOL);
+	(void) config_found(self, &aa, wsemuldisplaydevprint, CFARGS_NONE);
 }
 
 void

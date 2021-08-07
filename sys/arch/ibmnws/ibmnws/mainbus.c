@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.16 2021/04/24 23:36:40 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.17 2021/08/07 16:18:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -108,8 +108,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	ca.ca_name = "cpu";
 	ca.ca_node = 0;
 	config_found(self, &ca, mainbus_print,
-	    CFARG_IATTR, "mainbus",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "mainbus"));
 
 #if NOBIO > 0
 	obio_reserve_resource_map();
@@ -148,8 +147,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	mba.mba_pba.pba_bridgetag = NULL;
 	mba.mba_pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY;
 	config_found(self, &mba.mba_pba, pcibusprint,
-	    CFARG_IATTR, "pcibus",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "pcibus"));
 #endif
 
 #if NOBIO > 0
@@ -162,8 +160,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 		mba.mba_pba.pba_iot = &isa_io_space_tag;
 		mba.mba_pba.pba_memt = &isa_mem_space_tag;
 		config_found(self, &mba.mba_pba, mainbus_print,
-		    CFARG_IATTR, "mainbus",
-		    CFARG_EOL);
+		    CFARGS(.iattr = "mainbus"));
 	}
 #endif
 #endif

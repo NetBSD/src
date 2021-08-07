@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_ms.c,v 1.9 2021/04/24 23:36:47 thorpej Exp $	*/
+/*	$NetBSD: zs_ms.c,v 1.10 2021/08/07 16:19:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_ms.c,v 1.9 2021/04/24 23:36:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ms.c,v 1.10 2021/08/07 16:19:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,7 +171,7 @@ zsms_attach(device_t parent, device_t self, void *aux)
 	wsmaa.accessops =	&zsms_wsmouse_accessops;
 	wsmaa.accesscookie =	sc;
 	sc->wsmousedev =	config_found(self, &wsmaa, wsmousedevprint,
-					     CFARG_EOL);
+					     CFARGS_NONE);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: zx.c,v 1.46 2021/04/24 23:36:58 thorpej Exp $	*/
+/*	$NetBSD: zx.c,v 1.47 2021/08/07 16:19:15 thorpej Exp $	*/
 
 /*
  *  Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.46 2021/04/24 23:36:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.47 2021/08/07 16:19:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -336,7 +336,7 @@ zx_attach(device_t parent, device_t self, void *args)
 	aa.console = isconsole;
 	aa.accessops = &zx_accessops;
 	aa.accesscookie = &sc->vd;
-	config_found(sc->sc_dv, &aa, wsemuldisplaydevprint, CFARG_EOL);
+	config_found(sc->sc_dv, &aa, wsemuldisplaydevprint, CFARGS_NONE);
 	fb_attach(&sc->sc_fb, isconsole);
 }
 

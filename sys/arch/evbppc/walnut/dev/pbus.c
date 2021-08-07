@@ -1,4 +1,4 @@
-/*	$NetBSD: pbus.c,v 1.14 2021/04/24 23:36:36 thorpej Exp $	*/
+/*	$NetBSD: pbus.c,v 1.15 2021/08/07 16:18:52 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pbus.c,v 1.14 2021/04/24 23:36:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pbus.c,v 1.15 2021/08/07 16:18:52 thorpej Exp $");
 
 #include "locators.h"
 #include "pckbc.h"
@@ -158,9 +158,8 @@ pbus_attach(device_t parent, device_t self, void *aux)
 		};
 
 		config_found(self, &pba, pbus_print,
-		    CFARG_SUBMATCH, config_stdsubmatch,
-		    CFARG_LOCATORS, locs,
-		    CFARG_EOL);
+		    CFARGS(.submatch = config_stdsubmatch,
+			   .locators = locs));
 	}
 
 #if NPCKBC > 0

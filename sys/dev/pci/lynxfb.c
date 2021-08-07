@@ -1,4 +1,4 @@
-/*	$NetBSD: lynxfb.c,v 1.6 2021/04/24 23:36:57 thorpej Exp $	*/
+/*	$NetBSD: lynxfb.c,v 1.7 2021/08/07 16:19:14 thorpej Exp $	*/
 /*	$OpenBSD: smfb.c,v 1.13 2011/07/21 20:36:12 miod Exp $	*/
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lynxfb.c,v 1.6 2021/04/24 23:36:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lynxfb.c,v 1.7 2021/08/07 16:19:14 thorpej Exp $");
 
 #include "opt_wsemul.h"
 
@@ -364,7 +364,7 @@ lynxfb_attach(device_t parent, device_t self, void *aux)
 	waa.accessops = &lynxfb_accessops;
 	waa.accesscookie = &sc->sc_vd;
 
-	config_found(self, &waa, wsemuldisplaydevprint, CFARG_EOL);
+	config_found(self, &waa, wsemuldisplaydevprint, CFARGS_NONE);
 }
 
 /*

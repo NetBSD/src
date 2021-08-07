@@ -1,4 +1,4 @@
-/*	$NetBSD: uchcom.c,v 1.39 2021/07/15 03:25:50 nisimura Exp $	*/
+/*	$NetBSD: uchcom.c,v 1.40 2021/08/07 16:19:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.39 2021/07/15 03:25:50 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.40 2021/08/07 16:19:17 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -272,8 +272,7 @@ uchcom_attach(device_t parent, device_t self, void *aux)
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
 
 	sc->sc_subdev = config_found(self, &ucaa, ucomprint,
-				     CFARG_SUBMATCH, ucomsubmatch,
-				     CFARG_EOL);
+	    CFARGS(.submatch = ucomsubmatch));
 
 	return;
 

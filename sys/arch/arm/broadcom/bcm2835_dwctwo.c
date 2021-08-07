@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_dwctwo.c,v 1.11 2021/04/24 23:36:26 thorpej Exp $	*/
+/*	$NetBSD: bcm2835_dwctwo.c,v 1.12 2021/08/07 16:18:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_dwctwo.c,v 1.11 2021/04/24 23:36:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_dwctwo.c,v 1.12 2021/08/07 16:18:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,5 +183,5 @@ bcmdwc2_deferred(device_t self)
 		return;
 	}
 	sc->sc_dwc2.sc_child = config_found(sc->sc_dwc2.sc_dev,
-	    &sc->sc_dwc2.sc_bus, usbctlprint, CFARG_EOL);
+	    &sc->sc_dwc2.sc_bus, usbctlprint, CFARGS_NONE);
 }

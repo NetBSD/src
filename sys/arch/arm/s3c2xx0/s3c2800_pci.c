@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2800_pci.c,v 1.31 2021/04/24 23:36:28 thorpej Exp $	*/
+/*	$NetBSD: s3c2800_pci.c,v 1.32 2021/08/07 16:18:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.31 2021/04/24 23:36:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.32 2021/08/07 16:18:45 thorpej Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -330,7 +330,7 @@ sspci_attach(device_t parent, device_t self, void *aux)
 	pci_pba.pba_bus = 0;
 	pci_pba.pba_bridgetag = NULL;
 
-	config_found(self, &pci_pba, pcibusprint, CFARG_EOL);
+	config_found(self, &pci_pba, pcibusprint, CFARGS_NONE);
 
 	return;
 

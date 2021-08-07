@@ -1,4 +1,4 @@
-/*	$NetBSD: jazzio.c,v 1.23 2021/04/24 23:36:25 thorpej Exp $	*/
+/*	$NetBSD: jazzio.c,v 1.24 2021/08/07 16:18:42 thorpej Exp $	*/
 /*	$OpenBSD: picabus.c,v 1.11 1999/01/11 05:11:10 millert Exp $	*/
 /*	NetBSD: tc.c,v 1.2 1995/03/08 00:39:05 cgd Exp 	*/
 
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jazzio.c,v 1.23 2021/04/24 23:36:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jazzio.c,v 1.24 2021/08/07 16:18:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,7 +149,7 @@ jazzioattach(device_t parent, device_t self, void *aux)
 		ja.ja_dma = 0;
 
 		/* Tell the autoconfig machinery we've found the hardware. */
-		config_found(self, &ja, jazzioprint, CFARG_EOL);
+		config_found(self, &ja, jazzioprint, CFARGS_NONE);
 	}
 }
 

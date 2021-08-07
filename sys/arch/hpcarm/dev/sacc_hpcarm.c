@@ -1,4 +1,4 @@
-/*      $NetBSD: sacc_hpcarm.c,v 1.13 2021/04/24 23:36:37 thorpej Exp $	*/
+/*      $NetBSD: sacc_hpcarm.c,v 1.14 2021/08/07 16:18:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sacc_hpcarm.c,v 1.13 2021/04/24 23:36:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sacc_hpcarm.c,v 1.14 2021/08/07 16:18:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,8 +124,7 @@ sacc_attach(device_t parent, device_t self, void *aux)
 
 	/* attach each devices */
 	config_search(self, NULL,
-	    CFARG_SEARCH, sa1111_search,
-	    CFARG_EOL);
+	    CFARGS(.search = sa1111_search));
 }
 
 static int
