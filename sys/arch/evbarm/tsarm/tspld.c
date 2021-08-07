@@ -1,4 +1,4 @@
-/*	$NetBSD: tspld.c,v 1.25 2021/04/24 23:36:34 thorpej Exp $	*/
+/*	$NetBSD: tspld.c,v 1.26 2021/08/07 16:18:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004 Jesse Off
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tspld.c,v 1.25 2021/04/24 23:36:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tspld.c,v 1.26 2021/08/07 16:18:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -443,7 +443,7 @@ tspld_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	sa.ta_iot = sc->sc_iot;
 
 	if (config_probe(parent, cf, &sa))
-		config_attach(parent, cf, &sa, tspld_print, CFARG_EOL);
+		config_attach(parent, cf, &sa, tspld_print, CFARGS_NONE);
 
 	return (0);
 }
@@ -470,17 +470,14 @@ tspld_callback(device_t self)
 	iba.iba_memt = &isa_mem_bs_tag;
 	isa_bs_mallocok();
 	config_found(self, &iba, isabusprint,
-	    CFARG_IATTR, "isabus",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "isabus"));
 #endif
 	/*
 	 *  Attach each devices
 	 */
 	config_search(self, NULL,
-	    CFARG_SEARCH, tspld_search,
-	    CFARG_IATTR, "tspldbus",
-	    CFARG_EOL);
-	
+	    CFARGS(.search = tspld_search,
+		   .iattr = "tspldbus"));
 }
 
 static int

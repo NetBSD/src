@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.76 2021/04/24 23:36:55 thorpej Exp $	*/
+/*	$NetBSD: dpt.c,v 1.77 2021/08/07 16:19:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.76 2021/04/24 23:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.77 2021/08/07 16:19:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -491,7 +491,7 @@ dpt_init(struct dpt_softc *sc, const char *intrstr)
 		chan->chan_ntargets = maxtarget + 1;
 		chan->chan_nluns = ec->ec_maxlun + 1;
 		chan->chan_id = sc->sc_hbaid[i];
-		config_found(sc->sc_dev, chan, scsiprint, CFARG_EOL);
+		config_found(sc->sc_dev, chan, scsiprint, CFARGS_NONE);
 	}
 }
 

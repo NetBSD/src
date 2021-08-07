@@ -1,4 +1,4 @@
-/*	$NetBSD: bthidev.c,v 1.33 2021/04/24 23:36:53 thorpej Exp $	*/
+/*	$NetBSD: bthidev.c,v 1.34 2021/08/07 16:19:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthidev.c,v 1.33 2021/04/24 23:36:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthidev.c,v 1.34 2021/08/07 16:19:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -320,10 +320,9 @@ bthidev_attach(device_t parent, device_t self, void *aux)
 		locs[BTHIDBUSCF_REPORTID] = rep;
 
 		dev = config_found(self, &bha, bthidev_print,
-		    CFARG_SUBMATCH, config_stdsubmatch,
-		    CFARG_IATTR, "bthidbus",
-		    CFARG_LOCATORS, locs,
-		    CFARG_EOL);
+		    CFARGS(.submatch = config_stdsubmatch,
+			   .iattr = "bthidbus",
+			   .locators = locs));
 		if (dev != NULL) {
 			hidev = device_private(dev);
 			hidev->sc_dev = dev;

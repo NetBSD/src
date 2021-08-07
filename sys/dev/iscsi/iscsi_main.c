@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_main.c,v 1.36 2021/06/06 10:40:14 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_main.c,v 1.37 2021/08/07 16:19:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -391,7 +391,7 @@ map_session(session_t *sess, device_t dev)
 	chan->chan_nluns = 16;
 	chan->chan_id = sess->s_id;
 
-	sess->s_child_dev = config_found(dev, chan, scsiprint, CFARG_EOL);
+	sess->s_child_dev = config_found(dev, chan, scsiprint, CFARGS_NONE);
 
 	return sess->s_child_dev != NULL;
 }

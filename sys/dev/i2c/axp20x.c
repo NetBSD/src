@@ -1,4 +1,4 @@
-/* $NetBSD: axp20x.c,v 1.20 2021/04/24 23:36:54 thorpej Exp $ */
+/* $NetBSD: axp20x.c,v 1.21 2021/08/07 16:19:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axp20x.c,v 1.20 2021/04/24 23:36:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axp20x.c,v 1.21 2021/08/07 16:19:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -813,6 +813,6 @@ axp20x_fdt_attach(struct axp20x_softc *sc)
 
 	for (child = OF_child(regulators_phandle); child; child = OF_peer(child)) {
 		struct axp20xreg_attach_args reg = { .reg_phandle = child };
-		config_found(sc->sc_dev, &reg, NULL, CFARG_EOL);
+		config_found(sc->sc_dev, &reg, NULL, CFARGS_NONE);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.101 2021/04/24 23:36:55 thorpej Exp $	*/
+/*	$NetBSD: siop.c,v 1.102 2021/08/07 16:19:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -28,7 +28,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.101 2021/04/24 23:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.102 2021/08/07 16:19:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,7 +173,7 @@ siop_attach(struct siop_softc *sc)
 	siop_dump_script(sc);
 #endif
 
-	config_found(sc->sc_c.sc_dev, &sc->sc_c.sc_chan, scsiprint, CFARG_EOL);
+	config_found(sc->sc_c.sc_dev, &sc->sc_c.sc_chan, scsiprint, CFARGS_NONE);
 }
 
 void

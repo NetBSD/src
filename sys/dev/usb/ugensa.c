@@ -1,4 +1,4 @@
-/*	$NetBSD: ugensa.c,v 1.44 2021/04/24 23:36:59 thorpej Exp $	*/
+/*	$NetBSD: ugensa.c,v 1.45 2021/08/07 16:19:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.44 2021/04/24 23:36:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.45 2021/08/07 16:19:17 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -238,8 +238,7 @@ ugensa_attach(device_t parent, device_t self, void *aux)
 	DPRINTF(("ugensa: in=%#x out=%#x\n", ucaa.ucaa_bulkin,
 	    ucaa.ucaa_bulkout));
 	sc->sc_subdev = config_found(self, &ucaa, ucomprint,
-				     CFARG_SUBMATCH, ucomsubmatch,
-				     CFARG_EOL);
+	    CFARGS(.submatch = ucomsubmatch));
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");

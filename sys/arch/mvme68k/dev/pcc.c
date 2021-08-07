@@ -1,4 +1,4 @@
-/*	$NetBSD: pcc.c,v 1.34 2021/04/24 23:36:44 thorpej Exp $	*/
+/*	$NetBSD: pcc.c,v 1.35 2021/08/07 16:19:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcc.c,v 1.34 2021/04/24 23:36:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcc.c,v 1.35 2021/08/07 16:19:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -220,7 +220,7 @@ pccattach(device_t parent, device_t self, void *aux)
 		npa.pa_offset = pcc_devices[i].pcc_offset + ma->ma_offset;
 
 		/* Attach the device if configured. */
-		(void)config_found(self, &npa, pccprint, CFARG_EOL);
+		(void)config_found(self, &npa, pccprint, CFARGS_NONE);
 	}
 }
 

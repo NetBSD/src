@@ -1,5 +1,5 @@
-/*	$Id: at91spi.c,v 1.6 2021/04/24 23:36:26 thorpej Exp $	*/
-/*	$NetBSD: at91spi.c,v 1.6 2021/04/24 23:36:26 thorpej Exp $	*/
+/*	$Id: at91spi.c,v 1.7 2021/08/07 16:18:43 thorpej Exp $	*/
+/*	$NetBSD: at91spi.c,v 1.7 2021/08/07 16:18:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 Embedtronics Oy. All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91spi.c,v 1.6 2021/04/24 23:36:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91spi.c,v 1.7 2021/08/07 16:18:43 thorpej Exp $");
 
 #include "locators.h"
 
@@ -193,7 +193,7 @@ at91spi_attach_common(device_t parent, device_t self, void *aux,
 	PUTREG(sc, SPI_PDC_BASE + PDC_PTCR, PDC_PTCR_TXTEN | PDC_PTCR_RXTEN);
 
 	/* attach slave devices */
-	config_found(sc->sc_dev, &sba, spibus_print, CFARG_EOL);
+	config_found(sc->sc_dev, &sba, spibus_print, CFARGS_NONE);
 }
 
 int

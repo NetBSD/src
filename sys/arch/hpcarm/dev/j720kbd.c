@@ -1,4 +1,4 @@
-/*	$NetBSD: j720kbd.c,v 1.7 2021/04/24 23:36:37 thorpej Exp $	*/
+/*	$NetBSD: j720kbd.c,v 1.8 2021/08/07 16:18:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* Jornada 720 keyboard driver. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j720kbd.c,v 1.7 2021/04/24 23:36:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j720kbd.c,v 1.8 2021/08/07 16:18:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,7 +126,7 @@ j720kbd_attach(device_t parent, device_t self, void *aux)
 
 	/* Attach hpckbd. */
 	haa.haa_ic = &sc->sc_chip->scc_if;
-	config_found(self, &haa, hpckbd_print, CFARG_EOL);
+	config_found(self, &haa, hpckbd_print, CFARGS_NONE);
 }
 
 static void

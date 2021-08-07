@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.34 2021/04/24 23:36:30 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.35 2021/08/07 16:18:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.34 2021/04/24 23:36:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.35 2021/08/07 16:18:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,13 +111,11 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	ca.ca_name = "cpu";
 	ca.ca_node = 0;
 	config_found(self, &ca, mainbus_print,
-	    CFARG_IATTR, "mainbus",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "mainbus"));
 	ca.ca_name = "cpu";
 	ca.ca_node = 1;
 	config_found(self, &ca, mainbus_print,
-	    CFARG_IATTR, "mainbus",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "mainbus"));
 
 	/*
 	 * XXX Note also that the presence of a PCI bus should
@@ -162,8 +160,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	mba.mba_pba.pba_bridgetag = NULL;
 	mba.mba_pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY;
 	config_found(self, &mba.mba_pba, pcibusprint,
-	    CFARG_IATTR, "pcibus",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "pcibus"));
 #endif /* NPCI */
 
 #ifdef RESIDUAL_DATA_DUMP

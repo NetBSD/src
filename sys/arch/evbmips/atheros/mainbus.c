@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.6 2021/04/24 23:36:35 thorpej Exp $ */
+/* $NetBSD: mainbus.c,v 1.7 2021/08/07 16:18:51 thorpej Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.6 2021/04/24 23:36:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.7 2021/08/07 16:18:51 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 
 	for (md = mainbusdevs; md->md_name != NULL; md++) {
 		struct mainbusdev ma = *md;
-		config_found(self, &ma, mainbus_print, CFARG_EOL);
+		config_found(self, &ma, mainbus_print, CFARGS_NONE);
 	}
 }
 

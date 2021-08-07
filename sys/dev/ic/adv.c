@@ -1,4 +1,4 @@
-/*	$NetBSD: adv.c,v 1.51 2021/04/24 23:36:55 thorpej Exp $	*/
+/*	$NetBSD: adv.c,v 1.52 2021/08/07 16:19:11 thorpej Exp $	*/
 
 /*
  * Generic driver for the Advanced Systems Inc. Narrow SCSI controllers
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adv.c,v 1.51 2021/04/24 23:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adv.c,v 1.52 2021/08/07 16:19:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -487,7 +487,7 @@ adv_attach(ASC_SOFTC *sc)
 	adapt->adapt_openings = i;
 	adapt->adapt_max_periph = adapt->adapt_openings;
 
-	sc->sc_child = config_found(sc->sc_dev, chan, scsiprint, CFARG_EOL);
+	sc->sc_child = config_found(sc->sc_dev, chan, scsiprint, CFARGS_NONE);
 }
 
 int

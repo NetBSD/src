@@ -1,4 +1,4 @@
-/*	$NetBSD: ziic.c,v 1.5 2021/04/24 23:36:52 thorpej Exp $	*/
+/*	$NetBSD: ziic.c,v 1.6 2021/08/07 16:19:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ziic.c,v 1.5 2021/04/24 23:36:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ziic.c,v 1.6 2021/08/07 16:19:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,7 @@ pxaiic_attach(device_t parent, device_t self, void *aux)
 
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c;
-	config_found(psc->sc_dev, &iba, iicbus_print, CFARG_EOL);
+	config_found(psc->sc_dev, &iba, iicbus_print, CFARGS_NONE);
 }
 
 static int

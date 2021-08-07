@@ -1,4 +1,4 @@
-/*	$NetBSD: btl.c,v 1.29 2021/04/24 23:36:25 thorpej Exp $	*/
+/*	$NetBSD: btl.c,v 1.30 2021/08/07 16:18:42 thorpej Exp $	*/
 /*	NetBSD: bt.c,v 1.10 1996/05/12 23:51:54 mycroft Exp 	*/
 
 #undef BTDIAG
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btl.c,v 1.29 2021/04/24 23:36:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btl.c,v 1.30 2021/08/07 16:18:42 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -411,7 +411,7 @@ btattach(device_t parent, device_t self, void *aux)
 	/*
 	 * ask the adapter what subunits are present
 	 */
-	config_found(self, &sc->sc_link, scsiprint, CFARG_EOL);
+	config_found(self, &sc->sc_link, scsiprint, CFARGS_NONE);
 }
 
 integrate void

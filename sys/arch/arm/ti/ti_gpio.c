@@ -1,4 +1,4 @@
-/* $NetBSD: ti_gpio.c,v 1.13 2021/04/24 23:36:29 thorpej Exp $ */
+/* $NetBSD: ti_gpio.c,v 1.14 2021/08/07 16:18:46 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_gpio.c,v 1.13 2021/04/24 23:36:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_gpio.c,v 1.14 2021/08/07 16:18:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -445,7 +445,7 @@ ti_gpio_attach_ports(struct ti_gpio_softc *sc)
 	gba.gba_gc = gp;
 	gba.gba_pins = sc->sc_pins;
 	gba.gba_npins = __arraycount(sc->sc_pins);
-	sc->sc_gpiodev = config_found(sc->sc_dev, &gba, NULL, CFARG_EOL);
+	sc->sc_gpiodev = config_found(sc->sc_dev, &gba, NULL, CFARGS_NONE);
 }
 
 static int

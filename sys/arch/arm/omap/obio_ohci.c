@@ -1,7 +1,7 @@
-/*	$Id: obio_ohci.c,v 1.13 2021/04/24 23:36:28 thorpej Exp $	*/
+/*	$Id: obio_ohci.c,v 1.14 2021/08/07 16:18:45 thorpej Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: obio_ohci.c,v 1.13 2021/04/24 23:36:28 thorpej Exp $	*/
+/*	$NetBSD: obio_ohci.c,v 1.14 2021/08/07 16:18:45 thorpej Exp $	*/
 /*	$OpenBSD: pxa2x0_ohci.c,v 1.19 2005/04/08 02:32:54 dlg Exp $ */
 
 /*
@@ -24,7 +24,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_ohci.c,v 1.13 2021/04/24 23:36:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_ohci.c,v 1.14 2021/08/07 16:18:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,7 +155,7 @@ obioohci_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc.sc_child = config_found(self, &sc->sc.sc_bus, usbctlprint,
-	    CFARG_EOL);
+	    CFARGS_NONE);
 	return;
 
 free_intr:

@@ -1,4 +1,4 @@
-/* $NetBSD: pl061.c,v 1.3 2021/04/24 23:36:55 thorpej Exp $ */
+/* $NetBSD: pl061.c,v 1.4 2021/08/07 16:19:12 thorpej Exp $ */
 
 /*
  * Copyright (c) 2018 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pl061.c,v 1.3 2021/04/24 23:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pl061.c,v 1.4 2021/08/07 16:19:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -76,7 +76,7 @@ plgpio_attach(struct plgpio_softc *sc)
 	gba.gba_npins = 8;
 
 #if NGPIO > 0
-	config_found(sc->sc_dev, &gba, gpiobus_print, CFARG_EOL);
+	config_found(sc->sc_dev, &gba, gpiobus_print, CFARGS_NONE);
 #endif
 }
 

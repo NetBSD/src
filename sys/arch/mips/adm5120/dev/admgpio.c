@@ -1,4 +1,4 @@
-/* $NetBSD: admgpio.c,v 1.5 2021/04/24 23:36:41 thorpej Exp $ */
+/* $NetBSD: admgpio.c,v 1.6 2021/08/07 16:18:58 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 David Young.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: admgpio.c,v 1.5 2021/04/24 23:36:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: admgpio.c,v 1.6 2021/08/07 16:18:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,6 +138,5 @@ admgpio_attach(struct mainbus_softc *sc)
 
 	/* Attach GPIO framework */
 	return config_found(sc->sc_dev, &gba, gpiobus_print,
-	    CFARG_IATTR, "gpiobus",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "gpiobus"));
 }

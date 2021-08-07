@@ -1,4 +1,4 @@
-/* $NetBSD: rkpmic.c,v 1.13 2021/04/24 23:36:54 thorpej Exp $ */
+/* $NetBSD: rkpmic.c,v 1.14 2021/08/07 16:19:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rkpmic.c,v 1.13 2021/04/24 23:36:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rkpmic.c,v 1.14 2021/08/07 16:19:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -525,7 +525,7 @@ rkpmic_attach(device_t parent, device_t self, void *aux)
 			continue;
 		raa.reg_ctrl = &sc->sc_conf->ctrl[n];
 		raa.reg_phandle = child;
-		config_found(self, &raa, NULL, CFARG_EOL);
+		config_found(self, &raa, NULL, CFARGS_NONE);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: depca.c,v 1.18 2021/04/24 23:36:55 thorpej Exp $	*/
+/*	$NetBSD: depca.c,v 1.19 2021/08/07 16:19:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: depca.c,v 1.18 2021/04/24 23:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: depca.c,v 1.19 2021/08/07 16:19:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,7 @@ depca_attach(struct depca_softc *sc)
 
 	da.da_name = "le";
 
-	(void)config_found(sc->sc_dev, &da, depca_print, CFARG_EOL);
+	(void)config_found(sc->sc_dev, &da, depca_print, CFARGS_NONE);
 }
 
 int

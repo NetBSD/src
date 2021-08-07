@@ -1,4 +1,4 @@
-/*	$NetBSD: uhmodem.c,v 1.23 2021/04/24 23:36:59 thorpej Exp $	*/
+/*	$NetBSD: uhmodem.c,v 1.24 2021/08/07 16:19:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.23 2021/04/24 23:36:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.24 2021/08/07 16:19:17 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -352,8 +352,7 @@ uhmodem_attach(device_t parent, device_t self, void *aux)
 		    i, ucaa.ucaa_bulkin, ucaa.ucaa_bulkout,
 		    sc->sc_intr_number));
 		sc->sc_subdevs[i] = config_found(self, &ucaa, ucomprint,
-						 CFARG_SUBMATCH, ucomsubmatch,
-						 CFARG_EOL);
+		    CFARGS(.submatch = ucomsubmatch));
 
 		/* issue endpoint halt to each interface */
 		err = uhmodem_endpointhalt(sc, i);

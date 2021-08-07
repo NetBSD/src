@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.11 2021/04/24 23:36:46 thorpej Exp $	*/
+/*	$NetBSD: pchb.c,v 1.12 2021/08/07 16:19:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.11 2021/04/24 23:36:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.12 2021/08/07 16:19:03 thorpej Exp $");
 
 #include "agp.h"
 
@@ -286,8 +286,7 @@ pchbattach(device_t parent, device_t self, void *aux)
 			       NULL, NULL) != 0) {
 		apa.apa_pci_args = *pa;
 		config_found(self, &apa, agpbusprint,
-		    CFARG_IATTR, "agpbus",
-		    CFARG_EOL);
+		    CFARGS(.iattr = "agpbus"));
 	}
 #endif /* NAGP */
 }

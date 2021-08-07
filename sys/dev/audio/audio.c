@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.105 2021/07/21 06:14:58 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.106 2021/08/07 16:19:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.105 2021/07/21 06:14:58 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.106 2021/08/07 16:19:09 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -1413,7 +1413,7 @@ audiosearch(device_t parent, cfdata_t cf, const int *locs, void *aux)
 
 	if (config_probe(parent, cf, aux))
 		config_attach(parent, cf, aux, NULL,
-		    CFARG_EOL);
+		    CFARGS_NONE);
 
 	return 0;
 }
@@ -1424,8 +1424,7 @@ audiorescan(device_t self, const char *ifattr, const int *locators)
 	struct audio_softc *sc = device_private(self);
 
 	config_search(sc->sc_dev, NULL,
-	    CFARG_SEARCH, audiosearch,
-	    CFARG_EOL);
+	    CFARGS(.search = audiosearch));
 
 	return 0;
 }
@@ -1449,8 +1448,7 @@ audio_attach_mi(const struct audio_hw_if *ahwp, void *hdlp, device_t dev)
 	arg.hwif = ahwp;
 	arg.hdl = hdlp;
 	return config_found(dev, &arg, audioprint,
-	    CFARG_IATTR, "audiobus",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "audiobus"));
 }
 
 /*

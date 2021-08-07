@@ -1,5 +1,5 @@
-/*	$Id: at91ohci.c,v 1.8 2021/04/24 23:36:26 thorpej Exp $	*/
-/*	$NetBSD: at91ohci.c,v 1.8 2021/04/24 23:36:26 thorpej Exp $	*/
+/*	$Id: at91ohci.c,v 1.9 2021/08/07 16:18:43 thorpej Exp $	*/
+/*	$NetBSD: at91ohci.c,v 1.9 2021/08/07 16:18:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 Embedtronics Oy.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91ohci.c,v 1.8 2021/04/24 23:36:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91ohci.c,v 1.9 2021/08/07 16:18:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,5 +138,5 @@ at91ohci_callback(device_t self)
 
 	/* Attach usb device. */
 	sc->sc.sc_child = config_found(self, &sc->sc.sc_bus, usbctlprint,
-	    CFARG_EOL);
+	    CFARGS_NONE);
 }

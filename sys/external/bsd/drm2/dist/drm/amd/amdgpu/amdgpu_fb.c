@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_fb.c,v 1.6 2021/04/24 23:37:00 thorpej Exp $	*/
+/*	$NetBSD: amdgpu_fb.c,v 1.7 2021/08/07 16:19:17 thorpej Exp $	*/
 
 /*
  * Copyright © 2007 David Airlie
@@ -26,7 +26,7 @@
  *     David Airlie
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_fb.c,v 1.6 2021/04/24 23:37:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_fb.c,v 1.7 2021/08/07 16:19:17 thorpej Exp $");
 
 #include <linux/module.h>
 #include <linux/slab.h>
@@ -235,8 +235,7 @@ static int amdgpufb_create(struct drm_fb_helper *helper,
 	afa.afa_fb_linebytes = mode_cmd.pitches[0];
 
 	helper->fbdev = config_found(adev->ddev->dev, &afa, NULL,
-	    CFARG_IATTR, "amdgpufbbus",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "amdgpufbbus"));
 	if (helper->fbdev == NULL) {
 		DRM_ERROR("failed to attach amdgpufb\n");
 		goto out_unref;

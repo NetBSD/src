@@ -1,4 +1,4 @@
-/*	$NetBSD: fb_sbdio.c,v 1.19 2021/04/24 23:36:37 thorpej Exp $	*/
+/*	$NetBSD: fb_sbdio.c,v 1.20 2021/08/07 16:18:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define WIRED_FB_TLB
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb_sbdio.c,v 1.19 2021/04/24 23:36:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb_sbdio.c,v 1.20 2021/08/07 16:18:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,7 +163,7 @@ fb_sbdio_attach(device_t parent, device_t self, void *aux)
 	wa.accessops = &_fb_accessops;
 	wa.accesscookie	= (void *)sc;
 
-	config_found(self, &wa, wsdisplaydevprint, CFARG_EOL);
+	config_found(self, &wa, wsdisplaydevprint, CFARGS_NONE);
 }
 
 void

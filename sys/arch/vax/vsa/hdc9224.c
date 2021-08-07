@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.61 2021/04/24 23:36:51 thorpej Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.62 2021/08/07 16:19:07 thorpej Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -45,7 +45,7 @@
 #undef	RDDEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.61 2021/04/24 23:36:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.62 2021/08/07 16:19:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -324,7 +324,7 @@ hdcattach(device_t parent, device_t self, void *aux)
 		status = HDC_RSTAT;
 		ha.ha_drive = i;
 		if ((status & DKC_ST_TERMCOD) == DKC_TC_SUCCESS)
-			config_found(self, (void *)&ha, hdcprint, CFARG_EOL);
+			config_found(self, (void *)&ha, hdcprint, CFARGS_NONE);
 	}
 }
 

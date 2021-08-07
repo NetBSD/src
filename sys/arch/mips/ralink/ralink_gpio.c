@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_gpio.c,v 1.10 2021/04/24 23:36:42 thorpej Exp $	*/
+/*	$NetBSD: ralink_gpio.c,v 1.11 2021/08/07 16:18:59 thorpej Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
 /* ra_gpio.c -- Ralink 3052 gpio driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_gpio.c,v 1.10 2021/04/24 23:36:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_gpio.c,v 1.11 2021/08/07 16:18:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -752,7 +752,7 @@ ra_gpio_attach(device_t parent, device_t self, void *aux)
 	/* Note, > 52nd pin isn't a gpio, it is a special command */
 	gba.gba_npins = (GPIO_PINS + SPECIAL_COMMANDS);
 
-	config_found(sc->sc_dev, &gba, gpiobus_print, CFARG_EOL);
+	config_found(sc->sc_dev, &gba, gpiobus_print, CFARGS_NONE);
 
 #if 0
 	gpio_register_dump(sc);

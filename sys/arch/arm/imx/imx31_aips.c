@@ -1,7 +1,7 @@
-/*	$Id: imx31_aips.c,v 1.6 2021/04/24 23:36:27 thorpej Exp $	*/
+/*	$Id: imx31_aips.c,v 1.7 2021/08/07 16:18:44 thorpej Exp $	*/
 
 /* derived from:	*/
-/*	$NetBSD: imx31_aips.c,v 1.6 2021/04/24 23:36:27 thorpej Exp $ */
+/*	$NetBSD: imx31_aips.c,v 1.7 2021/08/07 16:18:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002, 2005  Genetec Corporation.  All rights reserved.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$Id: imx31_aips.c,v 1.6 2021/04/24 23:36:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$Id: imx31_aips.c,v 1.7 2021/08/07 16:18:44 thorpej Exp $");
 
 #include "locators.h"
 
@@ -158,8 +158,7 @@ imxaips_attach(device_t parent, device_t self, void *aux)
 	 * Attach all other devices
 	 */
 	config_search(self, sc,
-	    CFARG_SEARCH, imxaips_search,
-	    CFARG_EOL);
+	    CFARGS(.search = imxaips_search));
 }
 
 static int
@@ -175,7 +174,7 @@ imxaips_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	aipsa.aipsa_intr = cf->cf_loc[AIPSCF_INTR];
 
 	if (config_probe(parent, cf, &aipsa))
-		config_attach(parent, cf, &aipsa, imxaips_print, CFARG_EOL);
+		config_attach(parent, cf, &aipsa, imxaips_print, CFARGS_NONE);
 
 	return 0;
 }

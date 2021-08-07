@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.31 2021/04/24 23:36:50 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.32 2021/08/07 16:19:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.31 2021/04/24 23:36:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.32 2021/08/07 16:19:06 thorpej Exp $");
 
 #include "opt_kgdb.h"
 
@@ -145,16 +145,16 @@ mainbus_attach(device_t parent, device_t self, void *args)
 	/* Find all `early' mainbus buses */
 	for (cpp = special; *cpp != NULL; cpp++) {
 		ma.ma_name = *cpp;
-		(void)config_found(self, &ma, NULL, CFARG_EOL);
+		(void)config_found(self, &ma, NULL, CFARGS_NONE);
 	}
 
 	/* Find the remaining buses */
 	ma.ma_name = NULL;
-	(void)config_found(self, &ma, NULL, CFARG_EOL);
+	(void)config_found(self, &ma, NULL, CFARGS_NONE);
 
 	/* Lastly, find the PROM console */
 	ma.ma_name = "pcons";
-	(void)config_found(self, &ma, NULL, CFARG_EOL);
+	(void)config_found(self, &ma, NULL, CFARGS_NONE);
 }
 
 /*
@@ -226,7 +226,7 @@ sun68k_bus_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	 * XXX - This is a hack...
 	 */
 	if (config_probe(parent, cf, &ma)) {
-		config_attach(parent, cf, &ma, sun68k_bus_print, CFARG_EOL);
+		config_attach(parent, cf, &ma, sun68k_bus_print, CFARGS_NONE);
 	}
 	return 0;
 }

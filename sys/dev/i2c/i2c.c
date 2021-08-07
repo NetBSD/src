@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.79 2021/06/21 03:12:54 christos Exp $	*/
+/*	$NetBSD: i2c.c,v 1.80 2021/08/07 16:19:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.79 2021/06/21 03:12:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.80 2021/08/07 16:19:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -358,7 +358,7 @@ iic_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 			continue;
 
 		sc->sc_devices[ia.ia_addr] =
-		    config_attach(parent, cf, &ia, iic_print, CFARG_EOL);
+		    config_attach(parent, cf, &ia, iic_print, CFARGS_NONE);
 	}
 
 	return 0;
@@ -381,9 +381,8 @@ static int
 iic_rescan(device_t self, const char *ifattr, const int *locators)
 {
 	config_search(self, NULL,
-	    CFARG_SEARCH, iic_search,
-	    CFARG_LOCATORS, locators,
-	    CFARG_EOL);
+	    CFARGS(.search = iic_search,
+		   .locators = locators));
 	return 0;
 }
 
@@ -494,8 +493,7 @@ iic_attach(device_t parent, device_t self, void *aux)
 					sc->sc_devices[addr] =
 					    config_found(self, &ia,
 					    iic_print_direct,
-					    CFARG_LOCATORS, loc,
-					    CFARG_EOL);
+					    CFARGS(.locators = loc));
 				}
 			}
 

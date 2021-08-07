@@ -1,4 +1,4 @@
-/* $NetBSD: arspi.c,v 1.14 2021/04/24 23:36:42 thorpej Exp $ */
+/* $NetBSD: arspi.c,v 1.15 2021/08/07 16:18:58 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arspi.c,v 1.14 2021/04/24 23:36:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arspi.c,v 1.15 2021/08/07 16:18:58 thorpej Exp $");
 
 #include "locators.h"
 
@@ -193,7 +193,7 @@ arspi_attach(device_t parent, device_t self, void *aux)
 	 */
 	memset(&sba, 0, sizeof(sba));
 	sba.sba_controller = &sc->sc_spi;
-	config_found(self, &sba, spibus_print, CFARG_EOL);
+	config_found(self, &sba, spibus_print, CFARGS_NONE);
 }
 
 void

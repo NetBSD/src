@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.95 2021/04/24 23:36:58 thorpej Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.96 2021/08/07 16:19:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.95 2021/04/24 23:36:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.96 2021/08/07 16:19:15 thorpej Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -246,9 +246,8 @@ pcmcia_rescan(device_t self, const char *ifattr, const int *locators)
 		paa.pf = pf;
 
 		pf->child = config_found(self, &paa, pcmcia_print,
-		    CFARG_SUBMATCH, config_stdsubmatch,
-		    CFARG_LOCATORS, locs,
-		    CFARG_EOL);
+		    CFARGS(.submatch = config_stdsubmatch,
+			   .locators = locs));
 	}
 
 	return (0);

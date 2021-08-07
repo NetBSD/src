@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.78 2021/04/24 23:36:55 thorpej Exp $	*/
+/*	$NetBSD: wds.c,v 1.79 2021/08/07 16:19:12 thorpej Exp $	*/
 
 /*
  * XXX
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.78 2021/04/24 23:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.79 2021/08/07 16:19:12 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -403,7 +403,7 @@ wds_attach(struct wds_softc *sc, struct wds_probe_data *wpd)
 	/*
 	 * ask the adapter what subunits are present
 	 */
-	config_found(sc->sc_dev, &sc->sc_channel, scsiprint, CFARG_EOL);
+	config_found(sc->sc_dev, &sc->sc_channel, scsiprint, CFARGS_NONE);
 }
 
 integrate void

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0.c,v 1.20 2021/04/24 23:36:27 thorpej Exp $ */
+/*	$NetBSD: ixp12x0.c,v 1.21 2021/08/07 16:18:44 thorpej Exp $ */
 /*
  * Copyright (c) 2002, 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0.c,v 1.20 2021/04/24 23:36:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0.c,v 1.21 2021/08/07 16:18:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,7 +176,7 @@ ixp12x0_attach(struct ixp12x0_softc *sc)
 	pba.pba_intrtag = 0;
 	pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY |
 		PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
-	config_found(sc->sc_dev, &pba, pcibusprint, CFARG_EOL);
+	config_found(sc->sc_dev, &pba, pcibusprint, CFARGS_NONE);
 }
 
 void

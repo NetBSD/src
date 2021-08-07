@@ -1,4 +1,4 @@
-/*	$NetBSD: icpsp.c,v 1.27 2021/04/24 23:36:55 thorpej Exp $	*/
+/*	$NetBSD: icpsp.c,v 1.28 2021/08/07 16:19:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icpsp.c,v 1.27 2021/04/24 23:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icpsp.c,v 1.28 2021/08/07 16:19:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,7 +123,7 @@ icpsp_attach(device_t parent, device_t self, void *aux)
 	sc->sc_channel.chan_id = icp->icp_bus_id[sc->sc_busno];
 	sc->sc_channel.chan_flags = SCSIPI_CHAN_NOSETTLE;
 
-	config_found(self, &sc->sc_channel, scsiprint, CFARG_EOL);
+	config_found(self, &sc->sc_channel, scsiprint, CFARGS_NONE);
 }
 
 void

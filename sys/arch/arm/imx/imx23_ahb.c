@@ -1,4 +1,4 @@
-/* $Id: imx23_ahb.c,v 1.2 2021/04/24 23:36:27 thorpej Exp $ */
+/* $Id: imx23_ahb.c,v 1.3 2021/08/07 16:18:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -84,8 +84,7 @@ ahb_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 
 	config_search(self, &aa,
-	    CFARG_SEARCH, ahb_search_cb,
-	    CFARG_EOL);
+	    CFARGS(.search = ahb_search_cb));
 
 	ahb_attached = 1;
 
@@ -118,7 +117,7 @@ ahb_search_cb(device_t parent, cfdata_t cf, const int *locs, void *aux)
 	aa->aa_irq = cf->cf_loc[AHBCF_IRQ];
 
 	if (config_probe(parent, cf, aux))
-		config_attach(parent, cf, aux, ahb_print, CFARG_EOL);
+		config_attach(parent, cf, aux, ahb_print, CFARGS_NONE);
 
 	return 0;
 }

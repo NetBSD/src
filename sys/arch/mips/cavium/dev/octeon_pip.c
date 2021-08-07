@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_pip.c,v 1.12 2021/04/24 23:36:42 thorpej Exp $	*/
+/*	$NetBSD: octeon_pip.c,v 1.13 2021/08/07 16:18:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_pip.c,v 1.12 2021/04/24 23:36:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_pip.c,v 1.13 2021/08/07 16:18:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,7 @@ octpip_iobus_attach(device_t parent, device_t self, void *aux)
 		else
 			gmxiu.addr = GMX_BASE_PORT(i, 0);
 
-		config_found(self, &gmxaa, NULL, CFARG_EOL);
+		config_found(self, &gmxaa, NULL, CFARGS_NONE);
 	}
 }
 
@@ -163,7 +163,7 @@ octpip_fdt_attach(device_t parent, device_t self, void *aux)
 		else
 			gmxiu.addr = GMX_BASE_PORT(intno, 0);
 
-		config_found(self, &gmxaa, NULL, CFARG_EOL);
+		config_found(self, &gmxaa, NULL, CFARGS_NONE);
 
 		/* XXX only one interface supported by octgmx */
 		return;

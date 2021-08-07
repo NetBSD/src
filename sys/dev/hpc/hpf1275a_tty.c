@@ -1,4 +1,4 @@
-/*	$NetBSD: hpf1275a_tty.c,v 1.30 2021/04/24 23:36:54 thorpej Exp $ */
+/*	$NetBSD: hpf1275a_tty.c,v 1.31 2021/08/07 16:19:11 thorpej Exp $ */
 
 /*
  * Copyright (c) 2004 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.30 2021/04/24 23:36:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.31 2021/08/07 16:19:11 thorpej Exp $");
 
 #include "opt_wsdisplay_compat.h"
 
@@ -271,7 +271,7 @@ hpf1275a_attach(device_t parent, device_t self, void *aux)
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	sc->sc_rawkbd = 0;
 #endif
-	sc->sc_wskbd = config_found(self, &wska, wskbddevprint, CFARG_EOL);
+	sc->sc_wskbd = config_found(self, &wska, wskbddevprint, CFARGS_NONE);
 }
 
 

@@ -1,4 +1,4 @@
-/* $NetBSD: tcds.c,v 1.27 2021/04/24 23:36:59 thorpej Exp $ */
+/* $NetBSD: tcds.c,v 1.28 2021/08/07 16:19:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.27 2021/04/24 23:36:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.28 2021/08/07 16:19:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -295,9 +295,8 @@ tcdsattach(device_t parent, device_t self, void *aux)
 		locs[TCDSCF_CHIP] = i;
 
 		config_found(self, &tcdsdev, tcdsprint,
-		    CFARG_SUBMATCH, config_stdsubmatch,
-		    CFARG_LOCATORS, locs,
-		    CFARG_EOL);
+		    CFARGS(.submatch = config_stdsubmatch,
+			   .locators = locs));
 #ifdef __alpha__
 		/*
 		 * The second SCSI chip isn't present on the baseboard TCDS

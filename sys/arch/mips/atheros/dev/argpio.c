@@ -1,4 +1,4 @@
-/* $NetBSD: argpio.c,v 1.9 2021/04/24 23:36:42 thorpej Exp $ */
+/* $NetBSD: argpio.c,v 1.10 2021/08/07 16:18:58 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Garrett D'Amore
@@ -32,7 +32,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: argpio.c,v 1.9 2021/04/24 23:36:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: argpio.c,v 1.10 2021/08/07 16:18:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -205,7 +205,7 @@ argpio_attach(device_t parent, device_t self, void *aux)
 	gba.gba_gc = &sc->sc_gc;
 	gba.gba_pins = sc->sc_pins;
 	gba.gba_npins = sc->sc_npins;
-	config_found(sc->sc_dev, &gba, gpiobus_print, CFARG_EOL);
+	config_found(sc->sc_dev, &gba, gpiobus_print, CFARGS_NONE);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.12 2021/04/24 23:36:40 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.13 2021/08/07 16:18:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.12 2021/04/24 23:36:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.13 2021/08/07 16:18:56 thorpej Exp $");
 
 #include "acpica.h"
 
@@ -108,8 +108,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 
 			if (entry->Header.Type == ACPI_MADT_TYPE_LOCAL_SAPIC)
 				config_found(self, entry, NULL,
-				    CFARG_IATTR, "cpubus",
-				    CFARG_EOL);
+				    CFARGS(.iattr = "cpubus"));
 
 			p += entry->Header.Length;
 		}
@@ -129,8 +128,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	aaa.aa_dmat = NULL;	/* XXX */
 	aaa.aa_dmat64 = NULL;	/* XXX */
 	config_found(self, &aaa, NULL,
-	    CFARG_IATTR, "acpibus",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "acpibus"));
 #endif
 
 	return;

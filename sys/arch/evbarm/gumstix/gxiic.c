@@ -1,4 +1,4 @@
-/*	$NetBSD: gxiic.c,v 1.10 2021/04/24 23:36:32 thorpej Exp $ */
+/*	$NetBSD: gxiic.c,v 1.11 2021/08/07 16:18:49 thorpej Exp $ */
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gxiic.c,v 1.10 2021/04/24 23:36:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gxiic.c,v 1.11 2021/08/07 16:18:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -105,7 +105,7 @@ gxiicattach(device_t parent, device_t self, void *aux)
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c;
 	pxa2x0_i2c_open(&sc->sc_pxa_i2c);
-	config_found(sc->sc_pxa_i2c.sc_dev, &iba, iicbus_print, CFARG_EOL);
+	config_found(sc->sc_pxa_i2c.sc_dev, &iba, iicbus_print, CFARGS_NONE);
 	pxa2x0_i2c_close(&sc->sc_pxa_i2c);
 }
 

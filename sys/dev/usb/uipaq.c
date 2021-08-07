@@ -1,4 +1,4 @@
-/*	$NetBSD: uipaq.c,v 1.29 2021/04/24 23:36:59 thorpej Exp $	*/
+/*	$NetBSD: uipaq.c,v 1.30 2021/08/07 16:19:17 thorpej Exp $	*/
 /*	$OpenBSD: uipaq.c,v 1.1 2005/06/17 23:50:33 deraadt Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipaq.c,v 1.29 2021/04/24 23:36:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipaq.c,v 1.30 2021/08/07 16:19:17 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -238,8 +238,7 @@ uipaq_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc_subdev = config_found(self, &ucaa, ucomprint,
-				     CFARG_SUBMATCH, ucomsubmatch,
-				     CFARG_EOL);
+	    CFARGS(.submatch = ucomsubmatch));
 
 	return;
 

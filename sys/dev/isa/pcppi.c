@@ -1,4 +1,4 @@
-/* $NetBSD: pcppi.c,v 1.46 2021/04/24 23:36:55 thorpej Exp $ */
+/* $NetBSD: pcppi.c,v 1.47 2021/08/07 16:19:12 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.46 2021/04/24 23:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.47 2021/08/07 16:19:12 thorpej Exp $");
 
 #include "attimer.h"
 
@@ -246,8 +246,7 @@ pcppi_rescan(device_t self, const char *ifattr, const int *locators)
 	pa.pa_bell_func = pcppi_bell;
 
 	config_search(sc->sc_dv, &pa,
-	    CFARG_SEARCH, pcppisearch,
-	    CFARG_EOL);
+	    CFARGS(.search = pcppisearch));
 
 	return 0;
 }
@@ -258,8 +257,7 @@ pcppisearch(device_t parent, cfdata_t cf, const int *locs, void *aux)
 
 	if (config_probe(parent, cf, aux))
 		config_attach(parent, cf, aux, NULL,
-		    CFARG_LOCATORS, locs,
-		    CFARG_EOL);
+		    CFARGS(.locators = locs));
 
 	return 0;
 }

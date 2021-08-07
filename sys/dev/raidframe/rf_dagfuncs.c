@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagfuncs.c,v 1.34 2021/08/02 12:56:24 andvar Exp $	*/
+/*	$NetBSD: rf_dagfuncs.c,v 1.35 2021/08/07 16:19:15 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.34 2021/08/02 12:56:24 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.35 2021/08/07 16:19:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>

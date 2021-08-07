@@ -1,4 +1,4 @@
-/*	$NetBSD: amdnb_misc.c,v 1.4 2021/04/24 23:36:51 thorpej Exp $ */
+/*	$NetBSD: amdnb_misc.c,v 1.5 2021/08/07 16:19:07 thorpej Exp $ */
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdnb_misc.c,v 1.4 2021/04/24 23:36:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdnb_misc.c,v 1.5 2021/08/07 16:19:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -114,7 +114,7 @@ amdnb_misc_search(device_t parent, cfdata_t cf, const int *locs, void *aux)
 	if (!attach)
 		return 0;
 
-	config_attach(parent, cf, aux, NULL, CFARG_EOL);
+	config_attach(parent, cf, aux, NULL, CFARGS_NONE);
 
 	return 0;
 }
@@ -134,8 +134,7 @@ amdnb_misc_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	config_search(self, &sc->sc_pa,
-	    CFARG_SEARCH, amdnb_misc_search,
-	    CFARG_EOL);
+	    CFARGS(.search = amdnb_misc_search));
 
 	return;
 }
@@ -159,8 +158,7 @@ amdnb_misc_rescan(device_t self, const char *ifattr, const int *locators)
 	struct amdnb_misc_softc *sc = device_private(self);
 
 	config_search(self, &sc->sc_pa,
-	    CFARG_SEARCH, amdnb_misc_search,
-	    CFARG_EOL);
+	    CFARGS(.search = amdnb_misc_search));
 
 	return 0;
 }

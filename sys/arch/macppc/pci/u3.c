@@ -1,4 +1,4 @@
-/* $NetBSD: u3.c,v 1.10 2021/04/24 23:36:41 thorpej Exp $ */
+/* $NetBSD: u3.c,v 1.11 2021/08/07 16:18:58 thorpej Exp $ */
 
 /*
  * Copyright 2006 Kyma Systems LLC.
@@ -166,8 +166,7 @@ ibmcpc_attach(device_t parent, device_t self, void *aux)
 		pba.pba_flags = PCI_FLAGS_MEM_OKAY | PCI_FLAGS_IO_OKAY;
 
 		config_found(self, &pba, pcibusprint,
-		    CFARG_DEVHANDLE, devhandle_from_of(child),
-		    CFARG_EOL);
+		    CFARGS(.devhandle = devhandle_from_of(child)));
 
 		pc++;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_subr.c,v 1.23 2021/04/24 23:36:40 thorpej Exp $	*/
+/*	$NetBSD: grf_subr.c,v 1.24 2021/08/07 16:18:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_subr.c,v 1.23 2021/04/24 23:36:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_subr.c,v 1.24 2021/08/07 16:18:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -66,7 +66,7 @@ grf_establish(struct grfbus_softc *sc, nubus_slot *sp,
 	ga.ga_mode = g_mode;
 	ga.ga_set_mapreg = sc->sc_set_mapreg;
 	ga.ga_parent = sc;
-	(void)config_found(sc->sc_dev, &ga, grfbusprint, CFARG_EOL);
+	(void)config_found(sc->sc_dev, &ga, grfbusprint, CFARGS_NONE);
 }
 
 int

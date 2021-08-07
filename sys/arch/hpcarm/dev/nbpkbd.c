@@ -1,4 +1,4 @@
-/*	$NetBSD: nbpkbd.c,v 1.2 2021/04/24 23:36:37 thorpej Exp $ */
+/*	$NetBSD: nbpkbd.c,v 1.3 2021/08/07 16:18:53 thorpej Exp $ */
 /*
  * Copyright (c) 2011 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nbpkbd.c,v 1.2 2021/04/24 23:36:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nbpkbd.c,v 1.3 2021/08/07 16:18:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -121,7 +121,7 @@ nbpkbd_attach(device_t parent, device_t self, void *aux)
 
 	/* Attach hpckbd */
 	haa.haa_ic = &sc->sc_if;
-	config_found(self, &haa, hpckbd_print, CFARG_EOL);
+	config_found(self, &haa, hpckbd_print, CFARGS_NONE);
 
 	if (nbppcon_regist_callback(parent, sc->sc_tag, nbpkbd_input, sc) ==
 	    NULL)

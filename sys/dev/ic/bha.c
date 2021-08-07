@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.78 2021/04/24 23:36:55 thorpej Exp $	*/
+/*	$NetBSD: bha.c,v 1.79 2021/08/07 16:19:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.78 2021/04/24 23:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.79 2021/08/07 16:19:12 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -200,7 +200,7 @@ bha_attach(struct bha_softc *sc)
 	if (bha_init(sc) != 0)
 		return;
 
-	(void) config_found(sc->sc_dev, &sc->sc_channel, scsiprint, CFARG_EOL);
+	(void) config_found(sc->sc_dev, &sc->sc_channel, scsiprint, CFARGS_NONE);
 }
 
 /*

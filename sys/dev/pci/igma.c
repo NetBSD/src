@@ -1,4 +1,4 @@
-/*	$NetBSD: igma.c,v 1.5 2021/04/24 23:36:57 thorpej Exp $	*/
+/*	$NetBSD: igma.c,v 1.6 2021/08/07 16:19:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2014 Michael van Elst
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igma.c,v 1.5 2021/04/24 23:36:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igma.c,v 1.6 2021/08/07 16:19:14 thorpej Exp $");
 
 #include "vga.h"
 
@@ -407,8 +407,7 @@ igma_attach(device_t parent, device_t self, void *aux)
 	strcpy(iaa.iaa_name, "igmafb");
 	iaa.iaa_chip = sc->sc_chip;
 	config_found(sc->sc_dev, &iaa, igma_print,
-	    CFARG_IATTR, "igmabus",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "igmabus"));
 #endif
 
 	igma_i2c_attach(sc);
@@ -470,8 +469,7 @@ igma_i2c_attach(struct igma_softc *sc)
 		memset(&iba, 0, sizeof(iba));
 		iba.iba_tag = &ii->ii_i2c;
 		config_found(sc->sc_dev, &iba, iicbus_print,
-		    CFARG_IATTR, "i2cbus",
-		    CFARG_EOL);
+		    CFARGS(.iattr = "i2cbus"));
 #endif
 	}
 }

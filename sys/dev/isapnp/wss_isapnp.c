@@ -1,4 +1,4 @@
-/*	$NetBSD: wss_isapnp.c,v 1.29 2021/04/24 23:36:55 thorpej Exp $	*/
+/*	$NetBSD: wss_isapnp.c,v 1.30 2021/08/07 16:19:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_isapnp.c,v 1.29 2021/04/24 23:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_isapnp.c,v 1.30 2021/08/07 16:19:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,6 +174,6 @@ wss_isapnp_attach(device_t parent, device_t self, void *aux)
 		arg.type = AUDIODEV_TYPE_OPL;
 		arg.hwif = 0;
 		arg.hdl = 0;
-		(void)config_found(self, &arg, audioprint, CFARG_EOL);
+		(void)config_found(self, &arg, audioprint, CFARGS_NONE);
 	}
 }

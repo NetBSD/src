@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_pci.c,v 1.29 2021/04/24 23:36:57 thorpej Exp $ */
+/* $NetBSD: virtio_pci.c,v 1.30 2021/08/07 16:19:14 thorpej Exp $ */
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.29 2021/04/24 23:36:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.30 2021/08/07 16:19:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -289,7 +289,7 @@ virtio_pci_rescan(device_t self, const char *ifattr, const int *locs)
 	memset(&va, 0, sizeof(va));
 	va.sc_childdevid = sc->sc_childdevid;
 
-	config_found(self, &va, NULL, CFARG_EOL);
+	config_found(self, &va, NULL, CFARGS_NONE);
 
 	if (virtio_attach_failed(sc))
 		return 0;

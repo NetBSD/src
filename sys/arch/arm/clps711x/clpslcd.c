@@ -1,4 +1,4 @@
-/*      $NetBSD: clpslcd.c,v 1.2 2021/04/24 23:36:26 thorpej Exp $      */
+/*      $NetBSD: clpslcd.c,v 1.3 2021/08/07 16:18:43 thorpej Exp $      */
 /*
  * Copyright (c) 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clpslcd.c,v 1.2 2021/04/24 23:36:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clpslcd.c,v 1.3 2021/08/07 16:18:43 thorpej Exp $");
 
 #include "rnd.h"
 
@@ -199,7 +199,7 @@ clpslcd_attach(device_t parent, device_t self, void *aux)
 	waa.accessops = &clpslcd_accessops;
 	waa.accesscookie = sc;
 
-	config_found(self, &waa, wsemuldisplaydevprint, CFARG_EOL);
+	config_found(self, &waa, wsemuldisplaydevprint, CFARGS_NONE);
 }
 
 static int

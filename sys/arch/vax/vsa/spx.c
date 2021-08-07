@@ -1,4 +1,4 @@
-/*	$NetBSD: spx.c,v 1.11 2021/04/24 23:36:51 thorpej Exp $ */
+/*	$NetBSD: spx.c,v 1.12 2021/08/07 16:19:07 thorpej Exp $ */
 /*
  * SPX/LCSPX/SPXg/SPXgt accelerated framebuffer driver for NetBSD/VAX
  * Copyright (c) 2005 Blaz Antonic
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spx.c,v 1.11 2021/04/24 23:36:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spx.c,v 1.12 2021/08/07 16:19:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -668,7 +668,7 @@ spx_attach(device_t parent, device_t self, void *aux)
 	/* enable cursor */
 	set_btreg(SPXDAC_REG_CCR, 0xc1);
 
-	config_found(self, &aa, wsemuldisplaydevprint, CFARG_EOL);
+	config_found(self, &aa, wsemuldisplaydevprint, CFARGS_NONE);
 }
 
 static	int cur_on;

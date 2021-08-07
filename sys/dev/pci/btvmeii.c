@@ -1,4 +1,4 @@
-/* $NetBSD: btvmeii.c,v 1.25 2021/04/24 23:36:57 thorpej Exp $ */
+/* $NetBSD: btvmeii.c,v 1.26 2021/08/07 16:19:14 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btvmeii.c,v 1.25 2021/04/24 23:36:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btvmeii.c,v 1.26 2021/08/07 16:19:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -276,7 +276,7 @@ b3_2706_attach(device_t parent, device_t self, void *aux)
 	vaa.va_bdt = pa->pa_dmat; /* XXX */
 	vaa.va_slaveconfig = 0; /* XXX CSR window? */
 
-	config_found(self, &vaa, 0, CFARG_EOL);
+	config_found(self, &vaa, 0, CFARGS_NONE);
 }
 
 #define sc ((struct b3_2706_softc*)vsc)

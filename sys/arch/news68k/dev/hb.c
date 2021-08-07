@@ -1,4 +1,4 @@
-/*	$NetBSD: hb.c,v 1.20 2021/04/24 23:36:44 thorpej Exp $	*/
+/*	$NetBSD: hb.c,v 1.21 2021/08/07 16:19:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 Izumi Tsutsui.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hb.c,v 1.20 2021/04/24 23:36:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hb.c,v 1.21 2021/08/07 16:19:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,8 +71,7 @@ hb_attach(device_t parent, device_t self, void *aux)
 	memset(&ha, 0, sizeof(ha));
 
 	config_search(self, &ha,
-	    CFARG_SEARCH, hb_search,
-	    CFARG_EOL);
+	    CFARGS(.search = hb_search));
 }
 
 static int
@@ -90,7 +89,7 @@ hb_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	    NEWS68K_BUS_SPACE_INTIO : NEWS68K_BUS_SPACE_EIO;
 
 	if (config_probe(parent, cf, ha))
-		config_attach(parent, cf, ha, hb_print, CFARG_EOL);
+		config_attach(parent, cf, ha, hb_print, CFARGS_NONE);
 
 	return 0;
 }

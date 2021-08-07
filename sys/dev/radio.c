@@ -1,4 +1,4 @@
-/* $NetBSD: radio.c,v 1.30 2021/04/24 23:36:52 thorpej Exp $ */
+/* $NetBSD: radio.c,v 1.31 2021/08/07 16:19:08 thorpej Exp $ */
 /* $OpenBSD: radio.c,v 1.2 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: radio.c,v 1.7 2001/12/04 06:03:05 tm Exp $ */
 
@@ -30,7 +30,7 @@
 /* This is the /dev/radio driver from OpenBSD */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radio.c,v 1.30 2021/04/24 23:36:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radio.c,v 1.31 2021/08/07 16:19:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,7 +177,7 @@ radio_attach_mi(const struct radio_hw_if *rhwp, void *hdlp, device_t dev)
 
 	arg.hwif = rhwp;
 	arg.hdl = hdlp;
-	return (config_found(dev, &arg, radioprint, CFARG_EOL));
+	return (config_found(dev, &arg, radioprint, CFARGS_NONE));
 }
 
 static int

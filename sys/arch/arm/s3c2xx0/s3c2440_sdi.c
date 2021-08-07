@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2440_sdi.c,v 1.6 2021/04/24 23:36:28 thorpej Exp $	*/
+/*	$NetBSD: s3c2440_sdi.c,v 1.7 2021/08/07 16:18:45 thorpej Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2440_sdi.c,v 1.6 2021/04/24 23:36:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2440_sdi.c,v 1.7 2021/08/07 16:18:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -234,7 +234,7 @@ sssdi_attach(device_t parent, device_t self, void *aux)
 
 	/* Attach to the generic SD/MMC bus */
 	/* Is it a good idea to get the private parts of sdmmc ? */
-	sc->sdmmc = config_found(sc->dev, &saa, NULL, CFARG_EOL);
+	sc->sdmmc = config_found(sc->dev, &saa, NULL, CFARGS_NONE);
 
 	sc->sc_xfer = s3c2440_dmac_allocate_xfer();
 	sc->sc_dr.ds_addr = S3C2440_SDI_BASE+SDI_DAT_LI_W;

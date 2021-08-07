@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.69 2021/04/24 23:36:51 thorpej Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.70 2021/08/07 16:19:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.69 2021/04/24 23:36:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.70 2021/08/07 16:19:08 thorpej Exp $");
 
 #include "acpica.h"
 #include "lapic.h"
@@ -819,10 +819,9 @@ mpbios_cpu(const uint8_t *ent, device_t self)
 	locs[CPUBUSCF_APID] = caa.cpu_number;
 
 	config_found(self, &caa, mp_cpuprint,
-	    CFARG_SUBMATCH, config_stdsubmatch,
-	    CFARG_IATTR, "cpubus",
-	    CFARG_LOCATORS, locs,
-	    CFARG_EOL);
+	    CFARGS(.submatch = config_stdsubmatch,
+		   .iattr = "cpubus",
+		   .locators = locs));
 }
 
 static void
@@ -1249,10 +1248,9 @@ mpbios_ioapic(const uint8_t *ent, device_t self)
 	locs[IOAPICBUSCF_APID] = aaa.apic_id;
 
 	config_found(self, &aaa, mp_ioapicprint,
-	    CFARG_SUBMATCH, config_stdsubmatch,
-	    CFARG_IATTR, "ioapicbus",
-	    CFARG_LOCATORS, locs,
-	    CFARG_EOL);
+	    CFARGS(.submatch = config_stdsubmatch,
+		   .iattr = "ioapicbus",
+		   .locators = locs));
 	}
 #endif
 }

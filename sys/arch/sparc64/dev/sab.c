@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.56 2021/04/24 23:36:49 thorpej Exp $	*/
+/*	$NetBSD: sab.c,v 1.57 2021/08/07 16:19:05 thorpej Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.56 2021/04/24 23:36:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.57 2021/08/07 16:19:05 thorpej Exp $");
 
 #include "opt_kgdb.h"
 #include <sys/types.h>
@@ -322,9 +322,8 @@ sab_attach(device_t parent, device_t self, void *aux)
 
 		sc->sc_child[i] = device_private(
 		    config_found(self, &stax, sab_print,
-				 CFARG_SUBMATCH, config_stdsubmatch,
-				 CFARG_LOCATORS, locs,
-				 CFARG_EOL));
+				 CFARGS(.submatch = config_stdsubmatch,
+					.locators = locs)));
 		if (sc->sc_child[i] != NULL)
 			sc->sc_nchild++;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_usb.c,v 1.5 2021/04/24 23:36:28 thorpej Exp $	*/
+/*	$NetBSD: imx6_usb.c,v 1.6 2021/08/07 16:18:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_usb.c,v 1.5 2021/04/24 23:36:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_usb.c,v 1.6 2021/08/07 16:18:45 thorpej Exp $");
 
 #include "opt_fdt.h"
 
@@ -165,7 +165,7 @@ imx6_usb_attach(device_t parent, device_t self, void *aux)
 	iaa.aa_unit = unit;
 	iaa.aa_irq = IMXUSBCCF_IRQ_DEFAULT;
 	config_found(self, &iaa, imxusbc_print,
-	    CFARG_EOL);
+	    CFARGS_NONE);
 
 	return;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_vsbus.c,v 1.45 2021/04/24 23:36:51 thorpej Exp $ */
+/*	$NetBSD: dz_vsbus.c,v 1.46 2021/08/07 16:19:07 thorpej Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz_vsbus.c,v 1.45 2021/04/24 23:36:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz_vsbus.c,v 1.46 2021/08/07 16:19:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,7 +195,7 @@ dz_vsbus_attach(device_t parent, device_t self, void *aux)
 		daa.daa_line = 0;
 		daa.daa_flags =
 		    (cn_tab->cn_pri == CN_INTERNAL ? DZKBD_CONSOLE : 0);
-		config_found(self, &daa, dz_print, CFARG_EOL);
+		config_found(self, &daa, dz_print, CFARGS_NONE);
 	}
 #endif
 #if NDZMS > 0
@@ -203,7 +203,7 @@ dz_vsbus_attach(device_t parent, device_t self, void *aux)
 	    | DZ_LPR_PARENB | DZ_LPR_OPAR | 1 /* line */;
 	daa.daa_line = 1;
 	daa.daa_flags = 0;
-	config_found(self, &daa, dz_print, CFARG_EOL);
+	config_found(self, &daa, dz_print, CFARGS_NONE);
 #endif
 	s = spltty();
 	dzrint(sc);

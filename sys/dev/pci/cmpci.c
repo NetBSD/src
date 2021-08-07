@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpci.c,v 1.58 2021/04/24 23:36:57 thorpej Exp $	*/
+/*	$NetBSD: cmpci.c,v 1.59 2021/08/07 16:19:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.58 2021/04/24 23:36:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.59 2021/08/07 16:19:14 thorpej Exp $");
 
 #if defined(AUDIO_DEBUG) || defined(DEBUG)
 #define DPRINTF(x) if (cmpcidebug) printf x
@@ -419,7 +419,7 @@ cmpci_attach(device_t parent, device_t self, void *aux)
 	aa.type = AUDIODEV_TYPE_OPL;
 	aa.hwif = NULL;
 	aa.hdl = NULL;
-	(void)config_found(sc->sc_dev, &aa, audioprint, CFARG_EOL);
+	(void)config_found(sc->sc_dev, &aa, audioprint, CFARGS_NONE);
 
 	/* attach MPU-401 device */
 	aa.type = AUDIODEV_TYPE_MPU;
@@ -428,7 +428,7 @@ cmpci_attach(device_t parent, device_t self, void *aux)
 	if (bus_space_subregion(sc->sc_iot, sc->sc_ioh,
 	    CMPCI_REG_MPU_BASE, CMPCI_REG_MPU_SIZE, &sc->sc_mpu_ioh) == 0)
 		sc->sc_mpudev = config_found(sc->sc_dev, &aa, audioprint,
-		    CFARG_EOL);
+		    CFARGS_NONE);
 
 	/* get initial value (this is 0 and may be omitted but just in case) */
 	sc->sc_reg_misc = bus_space_read_4(sc->sc_iot, sc->sc_ioh,

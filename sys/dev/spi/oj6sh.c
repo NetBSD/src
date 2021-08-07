@@ -1,4 +1,4 @@
-/*	$NetBSD: oj6sh.c,v 1.8 2021/04/24 23:36:59 thorpej Exp $	*/
+/*	$NetBSD: oj6sh.c,v 1.9 2021/08/07 16:19:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2014  Genetec Corporation.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oj6sh.c,v 1.8 2021/04/24 23:36:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oj6sh.c,v 1.9 2021/08/07 16:19:16 thorpej Exp $");
 
 #include "opt_oj6sh.h"
 
@@ -202,7 +202,7 @@ oj6sh_attach(device_t parent, device_t self, void *aux)
 	a.accessops = &oj6sh_accessops;
 	a.accesscookie = sc;
 
-	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint, CFARG_EOL);
+	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint, CFARGS_NONE);
 
 	config_interrupts(self, oj6sh_doattach);
 }

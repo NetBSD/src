@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: armperiph.c,v 1.18 2021/04/24 23:36:26 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: armperiph.c,v 1.19 2021/08/07 16:18:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -214,7 +214,7 @@ armperiph_attach(device_t parent, device_t self, void *aux)
 			mpcaa.mpcaa_irq = IRQ_GTMR_PPI_VTIMER;
 		}
 
-		config_found(self, &mpcaa, NULL, CFARG_EOL);
+		config_found(self, &mpcaa, NULL, CFARGS_NONE);
 	}
 	attached = true;
 }

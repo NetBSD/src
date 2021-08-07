@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_cca.c,v 1.3 2021/04/24 23:36:26 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_cca.c,v 1.4 2021/08/07 16:18:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -212,7 +212,7 @@ bcmcca_uart_attach(struct bcmcca_softc *sc)
 
 	bool children = false;
 
-	dv = config_found(sc->sc_dev, &ccaaa, bcmcca_print, CFARG_EOL);
+	dv = config_found(sc->sc_dev, &ccaaa, bcmcca_print, CFARGS_NONE);
 	if (dv != NULL) {
 		sc->sc_com_softc[0] = device_private(dv);
 		children = true;
@@ -221,7 +221,7 @@ bcmcca_uart_attach(struct bcmcca_softc *sc)
 	ccaaa.ccaaa_offset = CCA_UART1_BASE;
 	ccaaa.ccaaa_channel = 1;
 
-	dv = config_found(sc->sc_dev, &ccaaa, bcmcca_print, CFARG_EOL);
+	dv = config_found(sc->sc_dev, &ccaaa, bcmcca_print, CFARGS_NONE);
 	if (dv != NULL) {
 		sc->sc_com_softc[1] = device_private(dv);
 		children = true;

@@ -1,4 +1,4 @@
-/* $NetBSD: nextdisplay.c,v 1.24 2021/04/24 23:36:45 thorpej Exp $ */
+/* $NetBSD: nextdisplay.c,v 1.25 2021/08/07 16:19:01 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 Matt DeBergalis
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextdisplay.c,v 1.24 2021/04/24 23:36:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextdisplay.c,v 1.25 2021/08/07 16:19:01 thorpej Exp $");
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
@@ -279,7 +279,7 @@ nextdisplay_attach(device_t parent, device_t self, void *aux)
 #if 0
 	printf("nextdisplay: access cookie is %p\n", sc);
 #endif
-	config_found(self, &waa, wsemuldisplaydevprint, CFARG_EOL);
+	config_found(self, &waa, wsemuldisplaydevprint, CFARGS_NONE);
 }
 
 int

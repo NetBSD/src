@@ -1,4 +1,4 @@
-/*	$NetBSD: voyager.c,v 1.16 2021/04/24 23:36:57 thorpej Exp $	*/
+/*	$NetBSD: voyager.c,v 1.17 2021/08/07 16:19:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2009, 2011 Michael Lorenz
@@ -26,7 +26,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyager.c,v 1.16 2021/04/24 23:36:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyager.c,v 1.17 2021/08/07 16:19:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -228,20 +228,17 @@ voyager_attach(device_t parent, device_t self, void *aux)
 #if NVOYAGERFB > 0
 	strcpy(vaa.vaa_name, "voyagerfb");
 	config_found(sc->sc_dev, &vaa, voyager_print,
-	    CFARG_IATTR, "voyagerbus",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "voyagerbus"));
 #endif
 #if NPWMCLOCK > 0
 	strcpy(vaa.vaa_name, "pwmclock");
 	config_found(sc->sc_dev, &vaa, voyager_print,
-	    CFARG_IATTR, "voyagerbus",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "voyagerbus"));
 #endif
 #ifdef notyet
 	strcpy(vaa.vaa_name, "vac");
 	config_found(sc->sc_dev, &vaa, voyager_print,
-	    CFARG_IATTR, "voyagerbus",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "voyagerbus"));
 #endif
 	/* we use this mutex whether there's an i2c bus or not */
 	mutex_init(&sc->sc_i2c_lock, MUTEX_DEFAULT, IPL_NONE);
@@ -268,8 +265,7 @@ voyager_attach(device_t parent, device_t self, void *aux)
 		sc->sc_i2c.ic_write_byte = voyager_i2c_write_byte;
 		iba.iba_tag = &sc->sc_i2c;
 		config_found(self, &iba, iicbus_print,
-		    CFARG_IATTR, "i2cbus",
-		    CFARG_EOL);
+		    CFARGS(.iattr = "i2cbus"));
 	}
 	voyager_control_gpio(sc, ~(1 << 16), 0);
 	voyager_gpio_dir(sc, 0xffffffff, 1 << 16);

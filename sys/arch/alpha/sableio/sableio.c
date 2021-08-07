@@ -1,4 +1,4 @@
-/* $NetBSD: sableio.c,v 1.15 2021/05/07 16:58:34 thorpej Exp $ */
+/* $NetBSD: sableio.c,v 1.16 2021/08/07 16:18:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sableio.c,v 1.15 2021/05/07 16:58:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sableio.c,v 1.16 2021/08/07 16:18:41 thorpej Exp $");
 
 #include "isadma.h"
 
@@ -170,9 +170,8 @@ sableio_attach(device_t parent, device_t self, void *aux)
 		locs[SABLEIOCF_PORT] = sableio_devs[i].sd_ioaddr;
 
 		config_found(self, &sa, sableio_print,
-		    CFARG_SUBMATCH, config_stdsubmatch,
-		    CFARG_LOCATORS, locs,
-		    CFARG_EOL);
+		    CFARGS(.submatch = config_stdsubmatch,
+			   .locators = locs));
 	}
 }
 

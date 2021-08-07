@@ -1,4 +1,4 @@
-/* $NetBSD: ttwoga.c,v 1.19 2021/07/04 22:42:36 thorpej Exp $ */
+/* $NetBSD: ttwoga.c,v 1.20 2021/08/07 16:18:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ttwoga.c,v 1.19 2021/07/04 22:42:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttwoga.c,v 1.20 2021/08/07 16:18:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,7 +144,7 @@ ttwogaattach(device_t parent, device_t self, void *aux)
 		memset(&pba, 0, sizeof(pba));
 		pba.pba_bus = hose;
 
-		config_found(self, &pba, ttwogaprint, CFARG_EOL);
+		config_found(self, &pba, ttwogaprint, CFARGS_NONE);
 	}
 }
 
@@ -254,13 +254,11 @@ ttwopciattach(device_t parent, device_t self, void *aux)
 	 */
 	if (pba->pba_bus == 0) {
 		config_found(self, &npba, ttwosableioprint,
-		    CFARG_IATTR, "sableiobus",
-		    CFARG_EOL);
+		    CFARGS(.iattr = "sableiobus"));
 	}
 
 	config_found(self, &npba, pcibusprint,
-	    CFARG_IATTR, "pcibus",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "pcibus"));
 }
 
 static int

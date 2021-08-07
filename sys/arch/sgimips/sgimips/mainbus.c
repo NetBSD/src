@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.21 2021/04/24 23:36:48 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.22 2021/08/07 16:19:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.21 2021/04/24 23:36:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.22 2021/08/07 16:19:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,8 +74,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	    ncpus, ncpus == 1 ? "" : "s");
 
 	config_search(self, &ma,
-	    CFARG_SEARCH, mainbus_search,
-	    CFARG_EOL);
+	    CFARGS(.search = mainbus_search));
 }
 
 static int
@@ -89,7 +88,7 @@ mainbus_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 		ma->ma_iot = 0;
 		ma->ma_ioh = MIPS_PHYS_TO_KSEG1(ma->ma_addr);
 		if (config_probe(parent, cf, ma))
-			config_attach(parent, cf, ma, mainbus_print, CFARG_EOL);
+			config_attach(parent, cf, ma, mainbus_print, CFARGS_NONE);
 	} while (cf->cf_fstate == FSTATE_STAR);
 
 	return 0;

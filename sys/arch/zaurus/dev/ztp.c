@@ -1,4 +1,4 @@
-/*	$NetBSD: ztp.c,v 1.15 2021/04/24 23:36:52 thorpej Exp $	*/
+/*	$NetBSD: ztp.c,v 1.16 2021/08/07 16:19:08 thorpej Exp $	*/
 /* $OpenBSD: zts.c,v 1.9 2005/04/24 18:55:49 uwe Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ztp.c,v 1.15 2021/04/24 23:36:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ztp.c,v 1.16 2021/08/07 16:19:08 thorpej Exp $");
 
 #include "lcd.h"
 #include "w100lcd.h"
@@ -206,7 +206,7 @@ ztp_attach(device_t parent, device_t self, void *aux)
 		sc->sc_ccnt_hs = CCNT_HS_400_VGA_C860;
 	}
 
-	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint, CFARG_EOL);
+	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint, CFARGS_NONE);
 
 	/* Initialize calibration, set default parameters. */
 	tpcalib_init(&sc->sc_tpcalib);

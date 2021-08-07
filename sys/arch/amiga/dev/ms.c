@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.41 2021/06/03 07:31:20 rin Exp $ */
+/*	$NetBSD: ms.c,v 1.42 2021/08/07 16:18:41 thorpej Exp $ */
 
 /*
  * based on:
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.41 2021/06/03 07:31:20 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.42 2021/08/07 16:18:41 thorpej Exp $");
 
 /*
  * Mouse driver.
@@ -203,8 +203,7 @@ msattach(device_t parent, device_t self, void *aux)
 		sc->sc_ports[i].ms_wsenabled = 0;
 		sc->sc_ports[i].ms_wsmousedev = 
 		    config_found(self, &waa, wsmousedevprint,
-			CFARG_IATTR, "wsmousedev",
-			CFARG_EOL);
+			CFARGS(.iattr = "wsmousedev"));
 #endif
 	}
 }

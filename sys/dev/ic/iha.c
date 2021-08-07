@@ -1,4 +1,4 @@
-/*	$NetBSD: iha.c,v 1.44 2021/04/24 23:36:55 thorpej Exp $ */
+/*	$NetBSD: iha.c,v 1.45 2021/08/07 16:19:12 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2001, 2002 Izumi Tsutsui
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.44 2021/04/24 23:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.45 2021/08/07 16:19:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -615,7 +615,7 @@ iha_attach(struct iha_softc *sc)
 	/*
 	 * Now try to attach all the sub devices.
 	 */
-	config_found(sc->sc_dev, &sc->sc_channel, scsiprint, CFARG_EOL);
+	config_found(sc->sc_dev, &sc->sc_channel, scsiprint, CFARGS_NONE);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.11 2021/04/24 23:36:43 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.12 2021/08/07 16:19:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.11 2021/04/24 23:36:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.12 2021/08/07 16:19:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,15 +66,15 @@ mbattach(device_t parent, device_t self, void *aux)
 
 	nca.ca_name = "cpu";
 	nca.ca_addr = 0;
-	config_found(self, &nca, mbprint, CFARG_EOL);
+	config_found(self, &nca, mbprint, CFARGS_NONE);
 
 	nca.ca_name = "obio";
 	nca.ca_addr = 0;
-	config_found(self, &nca, NULL, CFARG_EOL);
+	config_found(self, &nca, NULL, CFARGS_NONE);
 
 	nca.ca_name = "isabus";		/* XXX */
 	nca.ca_addr = 0;
-	config_found(self, &nca, NULL, CFARG_EOL);
+	config_found(self, &nca, NULL, CFARGS_NONE);
 
 }
 

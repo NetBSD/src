@@ -1,4 +1,4 @@
-/*	$NetBSD: spif.c,v 1.33 2021/04/24 23:36:58 thorpej Exp $	*/
+/*	$NetBSD: spif.c,v 1.34 2021/08/07 16:19:15 thorpej Exp $	*/
 /*	$OpenBSD: spif.c,v 1.12 2003/10/03 16:44:51 miod Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.33 2021/04/24 23:36:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.34 2021/08/07 16:19:15 thorpej Exp $");
 
 #include "spif.h"
 #if NSPIF > 0
@@ -278,8 +278,8 @@ spif_attach(device_t parent, device_t self, void *aux)
 	printf(": rev %x chiprev %x osc %sMHz\n",
 	    sc->sc_rev, sc->sc_rev2, clockfreq(sc->sc_osc));
 
-	(void)config_found(self, stty_match, NULL, CFARG_EOL);
-	(void)config_found(self, sbpp_match, NULL, CFARG_EOL);
+	(void)config_found(self, stty_match, NULL, CFARGS_NONE);
+	(void)config_found(self, sbpp_match, NULL, CFARGS_NONE);
 
 	return;
 

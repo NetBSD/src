@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.66 2021/04/24 23:36:49 thorpej Exp $	*/
+/*	$NetBSD: ffb.c,v 1.67 2021/08/07 16:19:05 thorpej Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.66 2021/04/24 23:36:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.67 2021/08/07 16:19:05 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -377,7 +377,7 @@ ffb_attach(device_t self)
 	waa.scrdata = &ffb_screenlist;
 	waa.accessops = &ffb_accessops;
 	waa.accesscookie = &sc->vd;
-	config_found(sc->sc_dev, &waa, wsemuldisplaydevprint, CFARG_EOL);
+	config_found(sc->sc_dev, &waa, wsemuldisplaydevprint, CFARGS_NONE);
 }
 
 void

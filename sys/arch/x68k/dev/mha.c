@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.55 2021/04/24 23:36:51 thorpej Exp $	*/
+/*	$NetBSD: mha.c,v 1.56 2021/08/07 16:19:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mha.c,v 1.55 2021/04/24 23:36:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mha.c,v 1.56 2021/08/07 16:19:07 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -387,7 +387,7 @@ mhaattach(device_t parent, device_t self, void *aux)
 
 	tmpsc = NULL;
 
-	config_found(self, &sc->sc_channel, scsiprint, CFARG_EOL);
+	config_found(self, &sc->sc_channel, scsiprint, CFARGS_NONE);
 }
 
 #if 0

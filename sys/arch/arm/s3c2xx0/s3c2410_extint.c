@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2410_extint.c,v 1.14 2021/04/24 23:36:28 thorpej Exp $ */
+/* $NetBSD: s3c2410_extint.c,v 1.15 2021/08/07 16:18:45 thorpej Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2410_extint.c,v 1.14 2021/04/24 23:36:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2410_extint.c,v 1.15 2021/08/07 16:18:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,8 +162,7 @@ ssextio_attach(device_t parent, device_t self, void *aux)
 	 *  Attach each devices
 	 */
 	config_search(self, NULL,
-	    CFARG_SEARCH, ssextio_search,
-	    CFARG_EOL);
+	    CFARGS(.search = ssextio_search));
 }
 
 static int
@@ -181,7 +180,7 @@ ssextio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	sa.sa_dmat = cpuc->sc_sx.sc_dmat;
 
         if (config_probe(parent, cf, &sa))
-                config_attach(parent, cf, &sa, ssextio_print, CFARG_EOL);
+                config_attach(parent, cf, &sa, ssextio_print, CFARGS_NONE);
 
         return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.109 2021/04/24 23:36:57 thorpej Exp $	*/
+/*	$NetBSD: twe.c,v 1.110 2021/08/07 16:19:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.109 2021/04/24 23:36:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.110 2021/08/07 16:19:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -635,9 +635,8 @@ twe_add_unit(struct twe_softc *sc, int unit)
 	locs[TWECF_UNIT] = unit;
 
 	td->td_dev = config_found(sc->sc_dev, &twea, twe_print,
-	    CFARG_SUBMATCH, config_stdsubmatch,
-	    CFARG_LOCATORS, locs,
-	    CFARG_EOL);
+	    CFARGS(.submatch = config_stdsubmatch,
+		   .locators = locs));
 
 	rv = 0;
  out:

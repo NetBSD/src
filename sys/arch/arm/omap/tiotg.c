@@ -1,4 +1,4 @@
-/* $NetBSD: tiotg.c,v 1.8 2021/04/24 23:36:28 thorpej Exp $ */
+/* $NetBSD: tiotg.c,v 1.9 2021/08/07 16:18:45 thorpej Exp $ */
 /*
  * Copyright (c) 2013 Manuel Bouyer.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tiotg.c,v 1.8 2021/04/24 23:36:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tiotg.c,v 1.9 2021/08/07 16:18:45 thorpej Exp $");
 
 #include "opt_omap.h"
 #include "locators.h"
@@ -212,9 +212,8 @@ tiotg_rescan(device_t self, const char *ifattr, const int *locs)
 		aa.aa_intr = sc->sc_intrbase + 1 + i;
 		sc->sc_motgdev[i] =
 		    config_found(self, &aa, ti_motg_print,
-				 CFARG_SUBMATCH, config_stdsubmatch,
-				 CFARG_LOCATORS, mlocs,
-				 CFARG_EOL);
+				 CFARGS(.submatch = config_stdsubmatch,
+					.locators = mlocs));
 	}
 	return 0;
 }
