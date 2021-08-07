@@ -1,4 +1,4 @@
-/*	$NetBSD: gapspci_pci.c,v 1.17 2015/10/23 08:40:08 knakahara Exp $	*/
+/*	$NetBSD: gapspci_pci.c,v 1.18 2021/08/07 19:41:13 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt.
@@ -34,11 +34,11 @@
  */
 
 /*
- * PCI configuraiton space implementation for the SEGA GAPS PCI bridge.
+ * PCI configuration space implementation for the SEGA GAPS PCI bridge.
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: gapspci_pci.c,v 1.17 2015/10/23 08:40:08 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gapspci_pci.c,v 1.18 2021/08/07 19:41:13 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

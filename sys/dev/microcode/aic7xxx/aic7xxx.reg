@@ -39,7 +39,7 @@
  *
  * $FreeBSD: /repoman/r/ncvs/src/sys/dev/aic7xxx/aic7xxx.reg,v 1.43 2003/01/20 20:44:55 gibbs Exp $
  */
-VERSION = "$NetBSD: aic7xxx.reg,v 1.4 2005/12/11 12:22:18 christos Exp $"
+VERSION = "$NetBSD: aic7xxx.reg,v 1.5 2021/08/07 19:41:14 andvar Exp $"
 
 /*
  * This file is processed by the aic7xxx_asm utility for use in assembling
@@ -1518,7 +1518,7 @@ scratch_ram {
 	size		6
 	/*
 	 * These are reserved registers in the card's scratch ram on the 2742.
-	 * The EISA configuraiton chip is mapped here.  On Rev E. of the
+	 * The EISA configuration chip is mapped here.  On Rev E. of the
 	 * aic7770, the sequencer can use this area for scratch, but the
 	 * host cannot directly access these registers.  On later chips, this
 	 * area can be read and written by both the host and the sequencer.
