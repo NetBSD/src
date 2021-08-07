@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_mcfg.c,v 1.23 2021/01/26 15:30:05 skrll Exp $	*/
+/*	$NetBSD: acpi_mcfg.c,v 1.24 2021/08/07 21:19:15 jmcneill Exp $	*/
 
 /*-
  * Copyright (C) 2015 NONAKA Kimihiro <nonaka@NetBSD.org>
@@ -28,7 +28,7 @@
 #include "opt_pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_mcfg.c,v 1.23 2021/01/26 15:30:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_mcfg.c,v 1.24 2021/08/07 21:19:15 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -693,7 +693,7 @@ out:
 }
 
 #ifdef PCI_NETBSD_CONFIGURE
-static ACPI_STATUS
+ACPI_STATUS
 acpimcfg_configure_bus_cb(ACPI_RESOURCE *res, void *ctx)
 {
 	struct pciconf_resources *pcires = ctx;
