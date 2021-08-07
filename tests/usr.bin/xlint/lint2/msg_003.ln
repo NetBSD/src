@@ -1,6 +1,14 @@
-# $NetBSD: msg_003.ln,v 1.1 2021/08/05 22:36:08 rillig Exp $
+# $NetBSD: msg_003.ln,v 1.2 2021/08/07 19:07:03 rillig Exp $
 #
 # Test data for message 3 of lint2:
 #	%s multiply defined  	%s  ::  %s
-#
-# TODO: add actual test data
+
+0smsg_003_a.c
+Smsg_003_a.c
+# msg_003_a.c:10: int function(void);
+10d0.10d8functionF0I
+
+0smsg_003_b.c
+Smsg_003_b.c
+# msg_003_b.c:10: int function(void);
+10d0.10d8functionF0I
