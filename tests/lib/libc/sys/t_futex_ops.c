@@ -1,4 +1,4 @@
-/* $NetBSD: t_futex_ops.c,v 1.5.8.1 2021/08/07 01:44:51 thorpej Exp $ */
+/* $NetBSD: t_futex_ops.c,v 1.5.8.2 2021/08/07 01:46:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2019, 2020\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_futex_ops.c,v 1.5.8.1 2021/08/07 01:44:51 thorpej Exp $");
+__RCSID("$NetBSD: t_futex_ops.c,v 1.5.8.2 2021/08/07 01:46:54 thorpej Exp $");
 
 #include <sys/fcntl.h>
 #include <sys/mman.h>
@@ -1483,7 +1483,6 @@ ATF_TC_HEAD(futex_wake_highest_pri, tc)
 }
 ATF_TC_BODY(futex_wake_highest_pri, tc)
 {
-	atf_tc_expect_fail("PR kern/55230");
 	do_test_wake_highest_pri();
 }
 ATF_TC_CLEANUP(futex_wake_highest_pri, tc)
