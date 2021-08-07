@@ -1,0 +1,6 @@
+add value used inconsistently  	msg_005_define.c(2)  ::  msg_005_call.c(4)
+add value declared inconsistently (double != int) 	msg_005_define.c(2)  ::  msg_005_call.c(2)
+add, arg 1 used inconsistently  	msg_005_define.c(2)[double]  ::  msg_005_call.c(4)[int]
+add, arg 2 used inconsistently  	msg_005_define.c(2)[double]  ::  msg_005_call.c(4)[int]
+add, arg 1 declared inconsistently (double != int)	msg_005_define.c(2) :: msg_005_call.c(2)
+add, arg 2 declared inconsistently (double != int)	msg_005_define.c(2) :: msg_005_call.c(2)
