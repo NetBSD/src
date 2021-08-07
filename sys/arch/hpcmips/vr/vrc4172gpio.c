@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4172gpio.c,v 1.16 2021/04/24 23:36:38 thorpej Exp $	*/
+/*	$NetBSD: vrc4172gpio.c,v 1.17 2021/08/07 16:18:54 thorpej Exp $	*/
 /*-
  * Copyright (c) 2001 TAKEMRUA Shin. All rights reserved.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrc4172gpio.c,v 1.16 2021/04/24 23:36:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrc4172gpio.c,v 1.17 2021/08/07 16:18:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -320,7 +320,7 @@ vrc4172gpio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_haa.haa_sc = sc;
 	sc->sc_haa.haa_getchip = vrc4172gpio_getchip;
 	sc->sc_haa.haa_iot = sc->sc_iot;
-	while (config_found(self, &sc->sc_haa, vrc4172gpio_print, CFARG_EOL)) ;
+	while (config_found(self, &sc->sc_haa, vrc4172gpio_print, CFARGS_NONE)) ;
 	/*
 	 * GIU-ISA bridge
 	 */
@@ -337,7 +337,7 @@ vrc4172gpio_callback(device_t self)
 	struct vrc4172gpio_softc *sc = device_private(self);
 
 	sc->sc_haa.haa_busname = "vrisab";
-	config_found(self, &sc->sc_haa, vrc4172gpio_print, CFARG_EOL);
+	config_found(self, &sc->sc_haa, vrc4172gpio_print, CFARGS_NONE);
 }
 
 int

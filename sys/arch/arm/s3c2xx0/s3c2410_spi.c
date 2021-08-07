@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2410_spi.c,v 1.8 2021/04/24 23:36:28 thorpej Exp $ */
+/* $NetBSD: s3c2410_spi.c,v 1.9 2021/08/07 16:18:45 thorpej Exp $ */
 
 /*
  * Copyright (c) 2004  Genetec Corporation.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2410_spi.c,v 1.8 2021/04/24 23:36:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2410_spi.c,v 1.9 2021/08/07 16:18:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,8 +129,7 @@ ssspi_attach(device_t parent, device_t self, void *aux)
 	 *  Attach child devices
 	 */
 	config_search(self, NULL,
-	    CFARG_SEARCH, ssspi_search,
-	    CFARG_EOL);
+	    CFARGS(.search = ssspi_search));
 }
 
 int
@@ -152,7 +151,7 @@ ssspi_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	spia.spia_dmat = s3c2xx0_softc->sc_dmat;
 
         if (config_probe(parent, cf, &spia))
-                config_attach(parent, cf, &spia, ssspi_print, CFARG_EOL);
+                config_attach(parent, cf, &spia, ssspi_print, CFARGS_NONE);
 
         return 0;
 }

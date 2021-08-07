@@ -1,4 +1,4 @@
-/*	$NetBSD: cbus.c,v 1.6 2021/05/10 23:53:44 thorpej Exp $	*/
+/*	$NetBSD: cbus.c,v 1.7 2021/08/07 16:19:05 thorpej Exp $	*/
 /*	$OpenBSD: cbus.c,v 1.15 2015/09/27 11:29:20 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -122,8 +122,7 @@ cbus_attach(device_t parent, device_t self, void *aux)
 		}
 
 		config_found(self, &ca, cbus_print,
-		    CFARG_DEVHANDLE, devhandle_from_of(ca.ca_node),
-		    CFARG_EOL);
+		    CFARGS(.devhandle = devhandle_from_of(ca.ca_node)));
 	}
 }
 

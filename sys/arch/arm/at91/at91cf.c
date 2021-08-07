@@ -1,5 +1,5 @@
-/*	$Id: at91cf.c,v 1.6 2021/04/24 23:36:26 thorpej Exp $	*/
-/*	$NetBSD: at91cf.c,v 1.6 2021/04/24 23:36:26 thorpej Exp $	*/
+/*	$Id: at91cf.c,v 1.7 2021/08/07 16:18:43 thorpej Exp $	*/
+/*	$NetBSD: at91cf.c,v 1.7 2021/08/07 16:18:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91cf.c,v 1.6 2021/04/24 23:36:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91cf.c,v 1.7 2021/08/07 16:18:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -223,7 +223,7 @@ at91cf_config_socket(struct at91cf_handle *ph)
 	paa.paa_busname = "pcmcia";
 	paa.pct = (pcmcia_chipset_tag_t)&at91cf_functions;
 	paa.pch = (pcmcia_chipset_handle_t)ph;
-	ph->ph_card = config_found(sc->sc_dev, &paa, at91cf_print, CFARG_EOL);
+	ph->ph_card = config_found(sc->sc_dev, &paa, at91cf_print, CFARGS_NONE);
 
 	(*cscf->intr_establish)(sc, CD_IRQ, IPL_BIO, at91cf_intr_carddetect, ph);
 	wait = (*cscf->power_ctl)(sc, POWER_OFF);

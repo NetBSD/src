@@ -1,4 +1,4 @@
-/*	$NetBSD: dt.c,v 1.15 2021/04/24 23:36:46 thorpej Exp $	*/
+/*	$NetBSD: dt.c,v 1.16 2021/08/07 16:19:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dt.c,v 1.15 2021/04/24 23:36:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dt.c,v 1.16 2021/08/07 16:19:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -232,9 +232,9 @@ dt_attach(device_t parent, device_t self, void *aux)
 	printf("\n");
 
 	dta.dta_addr = DT_ADDR_KBD;
-	config_found(self, &dta, dt_print, CFARG_EOL);
+	config_found(self, &dta, dt_print, CFARGS_NONE);
 	dta.dta_addr = DT_ADDR_MOUSE;
-	config_found(self, &dta, dt_print, CFARG_EOL);
+	config_found(self, &dta, dt_print, CFARGS_NONE);
 }
 
 void

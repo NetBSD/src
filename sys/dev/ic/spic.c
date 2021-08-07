@@ -1,4 +1,4 @@
-/*	$NetBSD: spic.c,v 1.20 2021/04/24 23:36:55 thorpej Exp $	*/
+/*	$NetBSD: spic.c,v 1.21 2021/08/07 16:19:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spic.c,v 1.20 2021/04/24 23:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spic.c,v 1.21 2021/08/07 16:19:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -269,7 +269,7 @@ spic_attach(struct spic_softc *sc)
 	a.accessops = &spic_accessops;
 	a.accesscookie = sc;
 	sc->sc_wsmousedev = config_found(sc->sc_dev, &a, wsmousedevprint,
-	    CFARG_EOL);
+	    CFARGS_NONE);
 
 	sc->sc_smpsw[SPIC_PSWITCH_LID].smpsw_name = "spiclid0";
 	sc->sc_smpsw[SPIC_PSWITCH_LID].smpsw_type = PSWITCH_TYPE_LID;

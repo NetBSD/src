@@ -1,4 +1,4 @@
-/*	$NetBSD: plumpcmcia.c,v 1.29 2021/04/24 23:36:38 thorpej Exp $ */
+/*	$NetBSD: plumpcmcia.c,v 1.30 2021/08/07 16:18:54 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 UCHIYAMA Yasushi. All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plumpcmcia.c,v 1.29 2021/04/24 23:36:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plumpcmcia.c,v 1.30 2021/08/07 16:18:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -309,7 +309,7 @@ plumpcmcia_attach_socket(struct plumpcmcia_handle *ph)
 	paa.pch = (pcmcia_chipset_handle_t)ph;
 
 	if ((ph->ph_pcmcia = config_found(ph->ph_parent, &paa, plumpcmcia_print,
-					  CFARG_EOL))) {
+					  CFARGS_NONE))) {
 		/* Enable slot */
 		plum_conf_write(ph->ph_regt, ph->ph_regh,
 		    PLUM_PCMCIA_SLOTCTRL,

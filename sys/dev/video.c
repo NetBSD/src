@@ -1,4 +1,4 @@
-/* $NetBSD: video.c,v 1.40 2021/04/24 23:36:52 thorpej Exp $ */
+/* $NetBSD: video.c,v 1.41 2021/08/07 16:19:08 thorpej Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.40 2021/04/24 23:36:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.41 2021/08/07 16:19:08 thorpej Exp $");
 
 #include "video.h"
 #if NVIDEO > 0
@@ -434,8 +434,7 @@ video_attach_mi(const struct video_hw_if *hw_if, device_t parent)
 
 	args.hw_if = hw_if;
 	return config_found(parent, &args, video_print,
-	    CFARG_IATTR, "videobus",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "videobus"));
 }
 
 /* video_submit_payload - called by hardware driver to submit payload data */

@@ -1,4 +1,4 @@
-/*	$NetBSD: epsoc.c,v 1.14 2021/04/24 23:36:26 thorpej Exp $	*/
+/*	$NetBSD: epsoc.c,v 1.15 2021/08/07 16:18:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epsoc.c,v 1.14 2021/04/24 23:36:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epsoc.c,v 1.15 2021/08/07 16:18:43 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -166,20 +166,17 @@ epsoc_attach(device_t parent, device_t self, void *aux)
 	sa.sa_pclk = sc->sc_pclk;
 	locs[EPSOCCF_ADDR] = EP93XX_APB_HWBASE + EP93XX_APB_TIMERS;
 	config_found(self, &sa, epsoc_print,
-	    CFARG_SUBMATCH, epsoc_submatch,
-	    CFARG_LOCATORS, locs,
-	    CFARG_EOL);
+	    CFARGS(.submatch = epsoc_submatch,
+		   .locators = locs));
 
 	locs[EPSOCCF_ADDR] = EP93XX_APB_HWBASE + EP93XX_APB_GPIO;
 	sa.sa_gpio = device_private(
 	    config_found(self, &sa, epsoc_print,
-			 CFARG_SUBMATCH, epsoc_submatch,
-			 CFARG_LOCATORS, locs,
-			 CFARG_EOL));
+			 CFARGS(.submatch = epsoc_submatch,
+				.locators = locs)));
 
 	config_search(self, &sa,
-	    CFARG_SEARCH, epsoc_search,
-	    CFARG_EOL);
+	    CFARGS(.search = epsoc_search));
 }
 
 int
@@ -206,7 +203,7 @@ epsoc_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	sa->sa_intr = cf->cf_loc[EPSOCCF_INTR];
 
 	if (config_probe(parent, cf, aux))
-		config_attach(parent, cf, aux, epsoc_print, CFARG_EOL);
+		config_attach(parent, cf, aux, epsoc_print, CFARGS_NONE);
 
 	return (0);
 }

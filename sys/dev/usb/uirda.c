@@ -1,4 +1,4 @@
-/*	$NetBSD: uirda.c,v 1.49 2021/04/24 23:36:59 thorpej Exp $	*/
+/*	$NetBSD: uirda.c,v 1.50 2021/08/07 16:19:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.49 2021/04/24 23:36:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.50 2021/08/07 16:19:17 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -289,7 +289,7 @@ uirda_attach(device_t parent, device_t self, void *aux)
 	ia.ia_methods = sc->sc_irm ? sc->sc_irm : &uirda_methods;
 	ia.ia_handle = sc;
 
-	sc->sc_child = config_found(self, &ia, ir_print, CFARG_EOL);
+	sc->sc_child = config_found(self, &ia, ir_print, CFARGS_NONE);
 
 	return;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: tsc.c,v 1.28 2021/07/04 22:42:36 thorpej Exp $ */
+/* $NetBSD: tsc.c,v 1.29 2021/08/07 16:18:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.28 2021/07/04 22:42:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.29 2021/08/07 16:18:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,25 +140,25 @@ tscattach(device_t parent, device_t self, void * aux)
 	tsp.tsp_name = "tsp";
 	tsp.tsp_slot = 0;
 
-	config_found(self, &tsp, tscprint, CFARG_EOL);
+	config_found(self, &tsp, tscprint, CFARGS_NONE);
 	if (titan) {
 		tsp.tsp_slot += 2;
-		config_found(self, &tsp, tscprint, CFARG_EOL);
+		config_found(self, &tsp, tscprint, CFARGS_NONE);
 	}
 
 	if (csc & CSC_P1P) {
 		tsp.tsp_slot = 1;
-		config_found(self, &tsp, tscprint, CFARG_EOL);
+		config_found(self, &tsp, tscprint, CFARGS_NONE);
 		if (titan) {
 			tsp.tsp_slot += 2;
-			config_found(self, &tsp, tscprint, CFARG_EOL);
+			config_found(self, &tsp, tscprint, CFARGS_NONE);
 		}
 	}
 
 	memset(&tsciic, 0, sizeof tsciic);
 	tsciic.tsciic_name = "tsciic";
 
-	config_found(self, &tsciic, tsciicprint, CFARG_EOL);
+	config_found(self, &tsciic, tsciicprint, CFARGS_NONE);
 }
 
 static int
@@ -230,7 +230,7 @@ tspattach(device_t parent, device_t self, void *aux)
 	pba.pba_bridgetag = NULL;
 	pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
-	config_found(self, &pba, pcibusprint, CFARG_EOL);
+	config_found(self, &pba, pcibusprint, CFARGS_NONE);
 }
 
 struct tsp_config *

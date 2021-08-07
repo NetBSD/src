@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_mmio_fdt.c,v 1.8 2021/04/24 23:36:53 thorpej Exp $ */
+/* $NetBSD: virtio_mmio_fdt.c,v 1.9 2021/08/07 16:19:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 2018 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_mmio_fdt.c,v 1.8 2021/04/24 23:36:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_mmio_fdt.c,v 1.9 2021/08/07 16:19:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,7 +123,7 @@ virtio_mmio_fdt_rescan(device_t self, const char *attr, const int *scan_flags)
 	memset(&va, 0, sizeof(va));
 	va.sc_childdevid = vsc->sc_childdevid;
 
-	config_found(self, &va, NULL, CFARG_EOL);
+	config_found(self, &va, NULL, CFARGS_NONE);
 
 	if (virtio_attach_failed(vsc))
 		return 0;

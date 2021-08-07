@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.139 2021/04/24 23:36:55 thorpej Exp $	*/
+/*	$NetBSD: isa.c,v 1.140 2021/08/07 16:19:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.139 2021/04/24 23:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.140 2021/08/07 16:19:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,9 +191,8 @@ isarescan(device_t self, const char *ifattr, const int *locators)
 		locs[ISACF_IOSIZ] = ISACF_IOSIZ_DEFAULT;
 
 	config_search(self, NULL,
-	    CFARG_SEARCH, isasearch,
-	    CFARG_LOCATORS, locs,
-	    CFARG_EOL);
+	    CFARGS(.search = isasearch,
+		   .locators = locs));
 	return (0);
 }
 
@@ -247,8 +246,7 @@ isa_attach_knowndevs(struct isa_softc *sc)
 		/* XXX should setup locator array */
 
 		ik->ik_claimed = config_found(sc->sc_dev, &ia, isaprint,
-		    CFARG_SUBMATCH, isasubmatch,
-		    CFARG_EOL);
+		    CFARGS(.submatch = isasubmatch));
 	}
 }
 
@@ -485,8 +483,7 @@ isasearch(device_t parent, cfdata_t cf, const int *slocs, void *aux)
 			flocs[ISACF_DRQ] = ia.ia_drq[0].ir_drq;
 			flocs[ISACF_DRQ2] = ia.ia_drq[1].ir_drq;
 			config_attach(parent, cf, &ia, isaprint,
-			    CFARG_LOCATORS, flocs,
-			    CFARG_EOL);
+			    CFARGS(.locators = flocs));
 			tryagain = (cf->cf_fstate == FSTATE_STAR);
 		}
 	} while (tryagain);

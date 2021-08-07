@@ -1,4 +1,4 @@
-/*	$NetBSD: bonito_mainbus.c,v 1.4 2021/04/24 23:36:35 thorpej Exp $	*/
+/*	$NetBSD: bonito_mainbus.c,v 1.5 2021/08/07 16:18:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bonito_mainbus.c,v 1.4 2021/04/24 23:36:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bonito_mainbus.c,v 1.5 2021/08/07 16:18:51 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,5 +114,5 @@ bonito_mainbus_attach(device_t parent, device_t self, void *aux)
 	pba.pba_dmat64 = NULL;
 	pba.pba_pc = &bonito_pc;
 
-	config_found(self, &pba, pcibusprint, CFARG_EOL);
+	config_found(self, &pba, pcibusprint, CFARGS_NONE);
 }

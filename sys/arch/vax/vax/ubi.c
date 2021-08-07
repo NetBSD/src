@@ -1,4 +1,4 @@
-/*	$NetBSD: ubi.c,v 1.7 2021/04/24 23:36:50 thorpej Exp $ */
+/*	$NetBSD: ubi.c,v 1.8 2021/08/07 16:19:07 thorpej Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubi.c,v 1.7 2021/04/24 23:36:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubi.c,v 1.8 2021/08/07 16:19:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ ubi_attach(device_t parent, device_t self, void *aux)
 			vax_unmap_physmem((vaddr_t)sa.sa_ioh, NEXPAGES);
 		} else {
 			sa.sa_type = NEX_MEM16;
-			config_found(self, (void*)&sa, ubi_print, CFARG_EOL);
+			config_found(self, (void*)&sa, ubi_print, CFARGS_NONE);
 		}
 	}
 #endif
@@ -100,7 +100,7 @@ ubi_attach(device_t parent, device_t self, void *aux)
 	sa.sa_ioh = vax_map_physmem((int)NEX730 +
 	   sizeof(struct nexus) * sa.sa_nexnum, NEXPAGES);
 	sa.sa_type = NEX_MEM16;
-	config_found(self, (void*)&sa, ubi_print, CFARG_EOL);
+	config_found(self, (void*)&sa, ubi_print, CFARGS_NONE);
 
 	printf("\n");
 
@@ -109,5 +109,5 @@ ubi_attach(device_t parent, device_t self, void *aux)
 	sa.sa_ioh = vax_map_physmem((int)NEX730 +
 	    sizeof(struct nexus) * sa.sa_nexnum, NEXPAGES);
 	sa.sa_type = NEX_UBA0;
-	config_found(self, (void*)&sa, ubi_print, CFARG_EOL);
+	config_found(self, (void*)&sa, ubi_print, CFARGS_NONE);
 }

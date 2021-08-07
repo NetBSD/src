@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.20 2021/04/24 23:36:52 thorpej Exp $	*/
+/*	$NetBSD: spkr.c,v 1.21 2021/08/07 16:19:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.20 2021/04/24 23:36:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.21 2021/08/07 16:19:08 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "wsmux.h"
@@ -460,7 +460,7 @@ spkr_rescan(device_t self, const char *iattr, const int *locators)
 	if (sc->sc_wsbelldev == NULL) {
 		a.accesscookie = sc;
 		sc->sc_wsbelldev = config_found(self, &a, wsbelldevprint,
-		    CFARG_EOL);
+		    CFARGS_NONE);
 	}
 #endif
 	return 0;

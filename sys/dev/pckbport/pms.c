@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.38 2021/04/24 23:36:58 thorpej Exp $ */
+/* $NetBSD: pms.c,v 1.39 2021/08/07 16:19:15 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2004 Kentaro Kurahone.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.38 2021/04/24 23:36:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.39 2021/08/07 16:19:15 thorpej Exp $");
 
 #include "opt_pms.h"
 
@@ -228,7 +228,7 @@ pmsattach(device_t parent, device_t self, void *aux)
 	 * here or in pmsintr, because if this fails pms_enable() will
 	 * never be called, so pmsinput() will never be called.
 	 */
-	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint, CFARG_EOL);
+	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint, CFARGS_NONE);
 
 	/* no interrupts until enabled */
 	cmd[0] = PMS_DEV_DISABLE;

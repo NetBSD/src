@@ -1,4 +1,4 @@
-/*	$NetBSD: txsim.c,v 1.18 2021/04/24 23:36:38 thorpej Exp $ */
+/*	$NetBSD: txsim.c,v 1.19 2021/08/07 16:18:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: txsim.c,v 1.18 2021/04/24 23:36:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: txsim.c,v 1.19 2021/08/07 16:18:54 thorpej Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -91,8 +91,7 @@ txsim_attach(device_t parent, device_t self, void *aux)
 	 */
 	sc->sc_pri = ATTACH_FIRST;
 	config_search(self, NULL,
-	    CFARG_SEARCH, txsim_search,
-	    CFARG_EOL);
+	    CFARGS(.search = txsim_search));
 
 	/*
 	 * unified I/O manager requires all I/O capable module already
@@ -100,16 +99,14 @@ txsim_attach(device_t parent, device_t self, void *aux)
 	 */
 	sc->sc_pri = ATTACH_NORMAL;
 	config_search(self, NULL,
-	    CFARG_SEARCH, txsim_search,
-	    CFARG_EOL);
+	    CFARGS(.search = txsim_search));
 
 	/* 
 	 * UART module uses platform dependent config_hooks.
 	 */
 	sc->sc_pri = ATTACH_LAST;
 	config_search(self, NULL,
-	    CFARG_SEARCH, txsim_search,
-	    CFARG_EOL);
+	    CFARGS(.search = txsim_search));
 }
 
 int
@@ -127,7 +124,7 @@ txsim_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	ta.ta_tc = tx_conf_get_tag();
 	
 	if (/*XXX*/config_probe(parent, cf, &ta) == sc->sc_pri)
-		config_attach(parent, cf, &ta, txsim_print, CFARG_EOL);
+		config_attach(parent, cf, &ta, txsim_print, CFARGS_NONE);
 
 	return (0);
 }

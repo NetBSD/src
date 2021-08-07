@@ -1,4 +1,4 @@
-/*	$NetBSD: epsonlcd.c,v 1.3 2021/04/24 23:36:37 thorpej Exp $ */
+/*	$NetBSD: epsonlcd.c,v 1.4 2021/08/07 16:18:53 thorpej Exp $ */
 /*
  * Copyright (c) 2011 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epsonlcd.c,v 1.3 2021/04/24 23:36:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epsonlcd.c,v 1.4 2021/08/07 16:18:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -143,7 +143,7 @@ epsonlcd_attach(device_t parent, device_t self, void *aux)
 	haa.ha_ndspconf = 1;
 	haa.ha_dspconflist = &sc->sc_dsp;
 
-	config_found(self, &haa, hpcfbprint, CFARG_EOL);
+	config_found(self, &haa, hpcfbprint, CFARGS_NONE);
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "unable to establish power handler\n");

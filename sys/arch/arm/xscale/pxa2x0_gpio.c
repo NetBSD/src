@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_gpio.c,v 1.20 2021/04/24 23:36:29 thorpej Exp $	*/
+/*	$NetBSD: pxa2x0_gpio.c,v 1.21 2021/08/07 16:18:46 thorpej Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_gpio.c,v 1.20 2021/04/24 23:36:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_gpio.c,v 1.21 2021/08/07 16:18:46 thorpej Exp $");
 
 #include "gpio.h"
 #include "opt_pxa2x0_gpio.h"
@@ -234,7 +234,7 @@ pxagpio_attach(device_t parent, device_t self, void *aux)
 	gba.gba_pins = sc->sc_gpio_pins;
 	gba.gba_npins = maxpin;
 
-	config_found(self, &gba, gpiobus_print, CFARG_EOL);
+	config_found(self, &gba, gpiobus_print, CFARGS_NONE);
 #else
 	aprint_normal_dev(sc->sc_dev, "no GPIO configured in kernel\n");
 #endif

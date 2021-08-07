@@ -1,4 +1,4 @@
-/*	$NetBSD: jbus-i2c.c,v 1.6 2021/04/24 23:36:49 thorpej Exp $	*/
+/*	$NetBSD: jbus-i2c.c,v 1.7 2021/08/07 16:19:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2018 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jbus-i2c.c,v 1.6 2021/04/24 23:36:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jbus-i2c.c,v 1.7 2021/08/07 16:19:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -178,7 +178,7 @@ jbusi2c_setup_i2c(struct jbusi2c_softc *sc)
 	}
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c;
-	config_found(sc->sc_dev, &iba, iicbus_print, CFARG_EOL);
+	config_found(sc->sc_dev, &iba, iicbus_print, CFARGS_NONE);
 }
 
 static inline void

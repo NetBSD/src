@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdio.c,v 1.6 2021/04/24 23:36:37 thorpej Exp $	*/
+/*	$NetBSD: sbdio.c,v 1.7 2021/08/07 16:18:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbdio.c,v 1.6 2021/04/24 23:36:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbdio.c,v 1.7 2021/08/07 16:18:53 thorpej Exp $");
 
 #define _EWS4800MIPS_BUS_DMA_PRIVATE
 
@@ -105,7 +105,7 @@ sbdio_attach(device_t parent, device_t self, void *aux)
 		sa.sa_addr2 = sd->sd_addr2;
 		sa.sa_irq   = sd->sd_irq;
 		sa.sa_flags = sd->sd_flags;
-		config_found(self, &sa, sbdio_print, CFARG_EOL);
+		config_found(self, &sa, sbdio_print, CFARGS_NONE);
 	}
 }
 

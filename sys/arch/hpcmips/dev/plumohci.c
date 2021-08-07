@@ -1,4 +1,4 @@
-/*	$NetBSD: plumohci.c,v 1.17 2021/04/24 23:36:38 thorpej Exp $ */
+/*	$NetBSD: plumohci.c,v 1.18 2021/08/07 16:18:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 UCHIYAMA Yasushi
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plumohci.c,v 1.17 2021/04/24 23:36:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plumohci.c,v 1.18 2021/08/07 16:18:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,7 +192,7 @@ plumohci_attach(device_t parent, device_t self, void *aux)
 
 	/* Attach usb device. */
 	sc->sc.sc_child = config_found(self, &sc->sc.sc_bus, usbctlprint,
-	    CFARG_EOL);
+	    CFARGS_NONE);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.82 2021/04/24 23:36:58 thorpej Exp $	   */
+/*	$NetBSD: uba.c,v 1.83 2021/08/07 16:19:15 thorpej Exp $	   */
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uba.c,v 1.82 2021/04/24 23:36:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uba.c,v 1.83 2021/08/07 16:19:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -267,8 +267,7 @@ uba_attach(struct uba_softc *sc, paddr_t iopagephys)
 	 * Now start searching for devices.
 	 */
 	config_search(sc->uh_dev, NULL,
-	    CFARG_SEARCH, ubasearch,
-	    CFARG_EOL);
+	    CFARGS(.search = ubasearch));
 
 	if (sc->uh_afterscan)
 		(*sc->uh_afterscan)(sc);
@@ -317,7 +316,7 @@ ubasearch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 
 	sc->uh_used[ubdevreg(csr)] = 1;
 
-	config_attach(parent, cf, &ua, ubaprint, CFARG_EOL);
+	config_attach(parent, cf, &ua, ubaprint, CFARGS_NONE);
 	return 0;
 
 fail:

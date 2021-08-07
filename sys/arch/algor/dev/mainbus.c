@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.29 2021/04/24 23:36:23 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.30 2021/08/07 16:18:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.29 2021/04/24 23:36:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.30 2021/08/07 16:18:40 thorpej Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h"
@@ -221,8 +221,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 		ma.ma_addr = md->md_addr;
 		ma.ma_irq = md->md_irq;
 		config_found(self, &ma, mainbus_print,
-		    CFARG_SUBMATCH, mainbus_submatch,
-		    CFARG_EOL);
+		    CFARGS(.submatch = mainbus_submatch));
 	}
 }
 

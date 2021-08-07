@@ -1,4 +1,4 @@
-/*	$NetBSD: qms.c,v 1.20 2021/04/24 23:36:27 thorpej Exp $	*/
+/*	$NetBSD: qms.c,v 1.21 2021/08/07 16:18:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Reinoud Zandijk
@@ -34,7 +34,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: qms.c,v 1.20 2021/04/24 23:36:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qms.c,v 1.21 2021/08/07 16:18:44 thorpej Exp $");
 
 #include <sys/callout.h>
 #include <sys/device.h>
@@ -124,7 +124,7 @@ qms_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 
 	sc->sc_wsmousedev =
-	    config_found(sc->sc_dev, &wsmouseargs, wsmousedevprint, CFARG_EOL);
+	    config_found(sc->sc_dev, &wsmouseargs, wsmousedevprint, CFARGS_NONE);
 
 	callout_init(&sc->sc_callout, 0);
 }

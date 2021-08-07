@@ -1,4 +1,4 @@
-/*	$NetBSD: uatp.c,v 1.26 2021/04/24 23:36:59 thorpej Exp $	*/
+/*	$NetBSD: uatp.c,v 1.27 2021/08/07 16:19:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 The NetBSD Foundation, Inc.
@@ -146,7 +146,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.26 2021/04/24 23:36:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.27 2021/08/07 16:19:17 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -985,7 +985,7 @@ uatp_attach(device_t parent, device_t self, void *aux)
 	/* Attach wsmouse.  */
 	a.accessops = &uatp_accessops;
 	a.accesscookie = sc;
-	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint, CFARG_EOL);
+	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint, CFARGS_NONE);
 }
 
 /* Sysctl setup */

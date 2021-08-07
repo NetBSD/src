@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.69 2021/04/24 23:36:55 thorpej Exp $	*/
+/*	$NetBSD: mlx.c,v 1.70 2021/08/07 16:19:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.69 2021/04/24 23:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.70 2021/08/07 16:19:12 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "ld.h"
@@ -628,9 +628,8 @@ mlx_configure(struct mlx_softc *mlx, int waitok)
 		locs[MLXCF_UNIT] = i;
 
 		ms->ms_dv = config_found(mlx->mlx_dv, &mlxa, mlx_print,
-		    CFARG_SUBMATCH, config_stdsubmatch,
-		    CFARG_LOCATORS, locs,
-		    CFARG_EOL);
+		    CFARGS(.submatch = config_stdsubmatch,
+			   .locators = locs));
 		nunits += (ms->ms_dv != NULL);
 	}
 

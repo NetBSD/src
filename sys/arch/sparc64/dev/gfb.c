@@ -1,4 +1,4 @@
-/*	$NetBSD: gfb.c,v 1.10 2021/04/24 23:36:49 thorpej Exp $	*/
+/*	$NetBSD: gfb.c,v 1.11 2021/08/07 16:19:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2009 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gfb.c,v 1.10 2021/04/24 23:36:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gfb.c,v 1.11 2021/08/07 16:19:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -229,7 +229,7 @@ gfb_attach(device_t parent, device_t self, void *aux)
 	aa.accessops = &gfb_accessops;
 	aa.accesscookie = &sc->vd;
 
-	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint, CFARG_EOL);
+	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint, CFARGS_NONE);
 
 #ifdef GFB_DEBUG
 	/*

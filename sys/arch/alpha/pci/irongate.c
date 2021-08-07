@@ -1,4 +1,4 @@
-/* $NetBSD: irongate.c,v 1.20 2021/07/04 22:42:36 thorpej Exp $ */
+/* $NetBSD: irongate.c,v 1.21 2021/08/07 16:18:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: irongate.c,v 1.20 2021/07/04 22:42:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irongate.c,v 1.21 2021/08/07 16:18:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,13 +182,11 @@ irongate_attach(device_t parent, device_t self, void *aux)
 		apa.apa_pci_args.pa_flags = pba.pba_flags;
 
 		config_found(self, &apa, agpbusprint,
-		    CFARG_IATTR, "agpbus",
-		    CFARG_EOL);
+		    CFARGS(.iattr = "agpbus"));
 	}
 
 	config_found(self, &pba, pcibusprint,
-	    CFARG_IATTR, "pcibus",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "pcibus"));
 }
 
 static int

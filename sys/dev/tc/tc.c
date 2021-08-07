@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.58 2021/05/07 16:55:58 thorpej Exp $	*/
+/*	$NetBSD: tc.c,v 1.59 2021/08/07 16:19:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.58 2021/05/07 16:55:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.59 2021/08/07 16:19:16 thorpej Exp $");
 
 #include "opt_tcverbose.h"
 
@@ -138,9 +138,8 @@ tcattach(device_t parent, device_t self, void *aux)
 		 * Attach the device.
 		 */
 		config_found(self, &ta, tcprint,
-		    CFARG_SUBMATCH, config_stdsubmatch,
-		    CFARG_LOCATORS, locs,
-		    CFARG_EOL);
+		    CFARGS(.submatch = config_stdsubmatch,
+			   .locators = locs));
 	}
 
 	/*
@@ -184,9 +183,8 @@ tcattach(device_t parent, device_t self, void *aux)
 		 * Attach the device.
 		 */
 		config_found(self, &ta, tcprint,
-		    CFARG_SUBMATCH, config_stdsubmatch,
-		    CFARG_LOCATORS, locs,
-		    CFARG_EOL);
+		    CFARGS(.submatch = config_stdsubmatch,
+			   .locators = locs));
 	}
 }
 

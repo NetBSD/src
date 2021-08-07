@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.76 2021/04/27 14:48:28 thorpej Exp $ */
+/*	$NetBSD: zbus.c,v 1.77 2021/08/07 16:18:42 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.76 2021/04/27 14:48:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.77 2021/08/07 16:18:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -371,7 +371,7 @@ zbusattach(device_t parent, device_t self, void *aux)
 				pcp->vaddr = za.va;
 		}
 		amiga_config_found(early_cfdata, self, &za, zbusprint,
-				   CFARG_EOL);
+				   CFARGS_NONE);
 	}
 }
 

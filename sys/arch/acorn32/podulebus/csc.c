@@ -1,4 +1,4 @@
-/*	$NetBSD: csc.c,v 1.20 2021/04/24 23:36:23 thorpej Exp $	*/
+/*	$NetBSD: csc.c,v 1.21 2021/08/07 16:18:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: csc.c,v 1.20 2021/04/24 23:36:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: csc.c,v 1.21 2021/08/07 16:18:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,7 +197,7 @@ cscattach(device_t parent, device_t self, void *aux)
 	printf("\n");
 
 	/* attach all scsi units on us */
-	config_found(self, &sc->sc_softc.sc_channel, scsiprint, CFARG_EOL);
+	config_found(self, &sc->sc_softc.sc_channel, scsiprint, CFARGS_NONE);
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: geode.c,v 1.16 2021/04/24 23:36:39 thorpej Exp $	*/
+/*	$NetBSD: geode.c,v 1.17 2021/08/07 16:18:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: geode.c,v 1.16 2021/04/24 23:36:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: geode.c,v 1.17 2021/08/07 16:18:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +120,7 @@ geode_gcb_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": AMD Geode GCB (rev. 0x%02x)\n", rev);
 
-	while (config_found(self, NULL, NULL, CFARG_EOL) != NULL)
+	while (config_found(self, NULL, NULL, CFARGS_NONE) != NULL)
 		/* empty */;
 }
 static int

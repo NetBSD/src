@@ -1,4 +1,4 @@
-/*	$NetBSD: pm2fb.c,v 1.32 2021/04/24 23:36:57 thorpej Exp $	*/
+/*	$NetBSD: pm2fb.c,v 1.33 2021/08/07 16:19:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2009, 2012 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.32 2021/04/24 23:36:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.33 2021/08/07 16:19:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -459,7 +459,7 @@ pm2fb_attach(device_t parent, device_t self, void *aux)
 	aa.accessops = &pm2fb_accessops;
 	aa.accesscookie = &sc->vd;
 
-	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint, CFARG_EOL);
+	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint, CFARGS_NONE);
 
 #ifdef PM2FB_DEBUG
 	/*

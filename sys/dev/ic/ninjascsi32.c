@@ -1,4 +1,4 @@
-/*	$NetBSD: ninjascsi32.c,v 1.27 2021/04/24 23:36:55 thorpej Exp $	*/
+/*	$NetBSD: ninjascsi32.c,v 1.28 2021/08/07 16:19:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ninjascsi32.c,v 1.27 2021/04/24 23:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ninjascsi32.c,v 1.28 2021/08/07 16:19:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -667,7 +667,7 @@ njsc32_attach(struct njsc32_softc *sc)
 	sc->sc_channel.chan_id = NJSC32_INITIATOR_ID;
 
 	sc->sc_scsi = config_found(sc->sc_dev, &sc->sc_channel, scsiprint,
-	    CFARG_EOL);
+	    CFARGS_NONE);
 }
 
 int

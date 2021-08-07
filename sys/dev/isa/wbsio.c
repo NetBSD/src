@@ -1,4 +1,4 @@
-/*	$NetBSD: wbsio.c,v 1.26 2021/04/24 23:36:55 thorpej Exp $	*/
+/*	$NetBSD: wbsio.c,v 1.27 2021/08/07 16:19:12 thorpej Exp $	*/
 /*	$OpenBSD: wbsio.c,v 1.10 2015/03/14 03:38:47 jsg Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
@@ -333,18 +333,16 @@ wbsio_rescan(device_t self, const char *ifattr, const int *locators)
 #if NGPIO > 0
 	if (ifattr_match(ifattr, "gpiobus")) {
 		config_search(self, NULL,
-		    CFARG_SEARCH, wbsio_gpio_search,
-		    CFARG_IATTR, ifattr,
-		    CFARG_LOCATORS, locators,
-		    CFARG_EOL);
+		    CFARGS(.search = wbsio_gpio_search,
+			   .iattr = ifattr,
+			   .locators = locators));
 		return 0;
 	}
 #endif
 	config_search(self, NULL,
-	    CFARG_SEARCH, wbsio_search,
-	    CFARG_IATTR, ifattr,
-	    CFARG_LOCATORS, locators,
-	    CFARG_EOL);
+	    CFARGS(.search = wbsio_search,
+		   .iattr = ifattr,
+		   .locators = locators));
 
 	wbsio_wdog_attach(self);
 
@@ -416,7 +414,7 @@ wbsio_search(device_t parent, cfdata_t cf, const int *slocs, void *aux)
 	/* Store device-id to ia_aux */
 	sc->sc_ia.ia_aux = (void *)(uintptr_t)devid;
 	sc->sc_lm_dev = config_attach(parent, cf, &sc->sc_ia, wbsio_print,
-	    CFARG_EOL);
+	    CFARGS_NONE);
 
 	return 0;
 }
@@ -525,7 +523,7 @@ wbsio_gpio_search(device_t parent, cfdata_t cf, const int *slocs, void *aux)
 	gba.gba_npins = WBSIO_GPIO_NPINS;
 
 	sc->sc_gpio_dev = config_attach(parent, cf, &gba, gpiobus_print,
-	    CFARG_EOL);
+	    CFARGS_NONE);
 
 	return 0;
 }

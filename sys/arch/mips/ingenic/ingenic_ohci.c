@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_ohci.c,v 1.6 2021/04/24 23:36:42 thorpej Exp $ */
+/*	$NetBSD: ingenic_ohci.c,v 1.7 2021/08/07 16:18:59 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ingenic_ohci.c,v 1.6 2021/04/24 23:36:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ingenic_ohci.c,v 1.7 2021/08/07 16:18:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +120,7 @@ ingenic_ohci_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Attach USB device */
-	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint, CFARG_EOL);
+	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint, CFARGS_NONE);
 	ingenic_ohci = self;
 	return;
 

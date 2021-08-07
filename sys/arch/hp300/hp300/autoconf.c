@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.109 2021/04/24 23:36:37 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.110 2021/08/07 16:18:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.109 2021/04/24 23:36:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.110 2021/08/07 16:18:53 thorpej Exp $");
 
 #include "dvbox.h"
 #include "gbox.h"
@@ -261,8 +261,7 @@ mainbusattach(device_t parent, device_t self, void *aux)
 
 	/* Search for and attach children. */
 	config_search(self, NULL,
-	    CFARG_SEARCH, mainbussearch,
-	    CFARG_EOL);
+	    CFARGS(.search = mainbussearch));
 }
 
 static int
@@ -270,7 +269,7 @@ mainbussearch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 
 	if (config_probe(parent, cf, NULL))
-		config_attach(parent, cf, NULL, NULL, CFARG_EOL);
+		config_attach(parent, cf, NULL, NULL, CFARGS_NONE);
 	return 0;
 }
 

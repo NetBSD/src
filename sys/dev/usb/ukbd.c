@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.151 2021/06/27 22:41:55 pgoyette Exp $        */
+/*      $NetBSD: ukbd.c,v 1.152 2021/08/07 16:19:17 thorpej Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.151 2021/06/27 22:41:55 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.152 2021/08/07 16:19:17 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -489,7 +489,7 @@ ukbd_attach(device_t parent, device_t self, void *aux)
 	usbd_delay_ms(uha->parent->sc_udev, 400);
 	ukbd_set_leds(sc, 0);
 
-	sc->sc_wskbddev = config_found(self, &a, wskbddevprint, CFARG_EOL);
+	sc->sc_wskbddev = config_found(self, &a, wskbddevprint, CFARGS_NONE);
 
 	return;
 }

@@ -1,4 +1,4 @@
-/* 	$NetBSD: design_gsrd1.c,v 1.6 2021/04/24 23:36:36 thorpej Exp $ */
+/* 	$NetBSD: design_gsrd1.c,v 1.7 2021/08/07 16:18:52 thorpej Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: design_gsrd1.c,v 1.6 2021/04/24 23:36:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: design_gsrd1.c,v 1.7 2021/08/07 16:18:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -349,8 +349,7 @@ virtex_autoconf(device_t self, struct plb_attach_args *paa)
 		vaa.vaa_tx_dmac = virtex_mpmc_mapdma(g->gdv_tx_dma, &tx);
 
 		config_found(self, &vaa, xcvbus_print,
-		    CFARG_IATTR, g->gdv_attr,
-		    CFARG_EOL);
+		    CFARGS(.attr = g->gdv_attr));
 	}
 
 	/* Setup the dispatch handler. */

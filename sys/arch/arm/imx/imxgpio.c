@@ -1,4 +1,4 @@
-/*	$NetBSD: imxgpio.c,v 1.10 2021/04/24 23:36:27 thorpej Exp $ */
+/*	$NetBSD: imxgpio.c,v 1.11 2021/08/07 16:18:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007, 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxgpio.c,v 1.10 2021/04/24 23:36:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxgpio.c,v 1.11 2021/08/07 16:18:44 thorpej Exp $");
 
 #define	_INTR_PRIVATE
 
@@ -318,7 +318,7 @@ imxgpio_attach_ports(struct imxgpio_softc *gpio)
 	gba.gba_gc = gp;
 	gba.gba_pins = gpio->gpio_pins;
 	gba.gba_npins = __arraycount(gpio->gpio_pins);
-	config_found(gpio->gpio_dev, &gba, gpiobus_print, CFARG_EOL);
+	config_found(gpio->gpio_dev, &gba, gpiobus_print, CFARGS_NONE);
 }
 #endif /* NGPIO > 0 */
 

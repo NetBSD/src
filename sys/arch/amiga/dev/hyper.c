@@ -1,4 +1,4 @@
-/*	$NetBSD: hyper.c,v 1.23 2021/04/24 23:36:24 thorpej Exp $ */
+/*	$NetBSD: hyper.c,v 1.24 2021/08/07 16:18:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997,1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hyper.c,v 1.23 2021/04/24 23:36:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyper.c,v 1.24 2021/08/07 16:18:41 thorpej Exp $");
 
 /*
  * zbus HyperCom driver
@@ -149,7 +149,7 @@ hyperattach(device_t parent, device_t self, void *aux)
 			supa.supio_name = hprsd->name;
 			supa.supio_iobase = hprsd->off;
 			supa.supio_arg = hprsd->arg;
-			config_found(self, &supa, hyperprint, CFARG_EOL); /* XXX */
+			config_found(self, &supa, hyperprint, CFARGS_NONE); /* XXX */
 		}
 		++hprsd;
 	}

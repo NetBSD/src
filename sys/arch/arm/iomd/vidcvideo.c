@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.c,v 1.46 2021/04/24 23:36:27 thorpej Exp $ */
+/* $NetBSD: vidcvideo.c,v 1.47 2021/08/07 16:18:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.46 2021/04/24 23:36:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.47 2021/08/07 16:18:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -350,7 +350,7 @@ vidcvideo_attach(device_t parent, device_t self, void *aux)
 	waa.accessops = &vidcvideo_accessops;
 	waa.accesscookie = &dc->dc_vd;
 
-	config_found(self, &waa, wsemuldisplaydevprint, CFARG_EOL);
+	config_found(self, &waa, wsemuldisplaydevprint, CFARGS_NONE);
 }
 
 

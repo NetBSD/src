@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.57 2021/05/29 10:48:23 riastradh Exp $	*/
+/*	$NetBSD: nvme.c,v 1.58 2021/08/07 16:19:12 thorpej Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.57 2021/05/29 10:48:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.58 2021/08/07 16:19:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -523,9 +523,8 @@ nvme_rescan(device_t self, const char *ifattr, const int *locs)
 		naa.naa_typename = sc->sc_modelname;
 		sc->sc_namespaces[i - 1].dev =
 		    config_found(sc->sc_dev, &naa, nvme_print,
-				 CFARG_SUBMATCH, config_stdsubmatch,
-				 CFARG_LOCATORS, mlocs,
-				 CFARG_EOL);
+				 CFARGS(.submatch = config_stdsubmatch,
+					.locators = mlocs));
 	}
 	return 0;
 }

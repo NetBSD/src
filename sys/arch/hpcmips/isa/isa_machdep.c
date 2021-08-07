@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.40 2021/04/24 23:36:38 thorpej Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.41 2021/08/07 16:18:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.40 2021/04/24 23:36:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.41 2021/08/07 16:18:54 thorpej Exp $");
 
 #include "opt_vr41xx.h"
 
@@ -173,7 +173,7 @@ vrisabattach(device_t parent, device_t self, void *aux)
 	printf(": ISA port %#x-%#x mem %#x-%#x\n",
 	    iot->base, iot->base + iot->size,
 	    memt->base, memt->base + memt->size);
-	config_found(self, &iba, vrisabprint, CFARG_EOL);
+	config_found(self, &iba, vrisabprint, CFARGS_NONE);
 #endif
 
 #ifdef DEBUG_FIND_COMPORT

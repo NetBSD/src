@@ -1,4 +1,4 @@
-/*	$NetBSD: m38813c.c,v 1.14 2021/04/24 23:36:38 thorpej Exp $ */
+/*	$NetBSD: m38813c.c,v 1.15 2021/08/07 16:18:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m38813c.c,v 1.14 2021/04/24 23:36:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m38813c.c,v 1.15 2021/08/07 16:18:54 thorpej Exp $");
 
 #include "opt_use_poll.h"
 
@@ -120,7 +120,7 @@ m38813c_attach(device_t parent, device_t self, void *aux)
 
 	haa.haa_ic = &sc->sc_chip->scc_if;
 
-	config_found(self, &haa, hpckbd_print, CFARG_EOL);
+	config_found(self, &haa, hpckbd_print, CFARGS_NONE);
 }
 
 void

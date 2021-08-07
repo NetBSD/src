@@ -1,4 +1,4 @@
-/* $NetBSD: cxdtv.c,v 1.19 2021/04/24 23:36:57 thorpej Exp $ */
+/* $NetBSD: cxdtv.c,v 1.20 2021/08/07 16:19:14 thorpej Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxdtv.c,v 1.19 2021/04/24 23:36:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxdtv.c,v 1.20 2021/08/07 16:19:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -254,8 +254,7 @@ cxdtv_attach(device_t parent, device_t self, void *aux)
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c;
 	config_found(self, &iba, iicbus_print,
-	    CFARG_IATTR, "i2cbus",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "i2cbus"));
 
 	if (!pmf_device_register(self, NULL, cxdtv_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
@@ -295,8 +294,7 @@ cxdtv_rescan(device_t self, const char *ifattr, const int *locs)
 
 	if (ifattr_match(ifattr, "dtvbus") && sc->sc_dtvdev == NULL)
 		sc->sc_dtvdev = config_found(sc->sc_dev, &daa, dtv_print,
-		    CFARG_IATTR, "dtvbus",
-		    CFARG_EOL);
+		    CFARGS(.iattr = "dtvbus"));
 
 	return 0;
 }

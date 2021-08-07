@@ -1,4 +1,4 @@
-/*	$NetBSD: vioscsi.c,v 1.26 2021/04/24 23:36:57 thorpej Exp $	*/
+/*	$NetBSD: vioscsi.c,v 1.27 2021/08/07 16:19:14 thorpej Exp $	*/
 /*	$OpenBSD: vioscsi.c,v 1.3 2015/03/14 03:38:49 jsg Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.26 2021/04/24 23:36:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.27 2021/08/07 16:19:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,7 +212,7 @@ vioscsi_attach(device_t parent, device_t self, void *aux)
 	 */
 	chan->chan_defquirks = PQUIRK_FORCELUNS;
 
-	config_found(self, &sc->sc_channel, scsiprint, CFARG_EOL);
+	config_found(self, &sc->sc_channel, scsiprint, CFARGS_NONE);
 	return;
 
 err:

@@ -1,4 +1,4 @@
-/* $NetBSD: vr4181giu.c,v 1.7 2021/04/24 23:36:38 thorpej Exp $ */
+/* $NetBSD: vr4181giu.c,v 1.8 2021/08/07 16:18:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vr4181giu.c,v 1.7 2021/04/24 23:36:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vr4181giu.c,v 1.8 2021/08/07 16:18:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -151,7 +151,7 @@ vr4181giu_attach(device_t parent, device_t self, void *aux)
 	sc->sc_haa.haa_sc = sc;
 	sc->sc_haa.haa_getchip = vr4181giu_getchip;
 	sc->sc_haa.haa_iot = sc->sc_iot;
-	while (config_found(self, &sc->sc_haa, vr4181giu_print, CFARG_EOL)) ;
+	while (config_found(self, &sc->sc_haa, vr4181giu_print, CFARGS_NONE)) ;
 
 	/*
 	 * GIU-ISA bridge
@@ -169,7 +169,7 @@ vr4181giu_callback(device_t self)
 	struct vr4181giu_softc		*sc = (void *) self;
 
 	sc->sc_haa.haa_busname = "vrisab";
-	config_found(self, &sc->sc_haa, vr4181giu_print, CFARG_EOL);
+	config_found(self, &sc->sc_haa, vr4181giu_print, CFARGS_NONE);
 }
 
 static int

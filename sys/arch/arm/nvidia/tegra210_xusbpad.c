@@ -1,4 +1,4 @@
-/* $NetBSD: tegra210_xusbpad.c,v 1.15 2021/04/24 23:36:27 thorpej Exp $ */
+/* $NetBSD: tegra210_xusbpad.c,v 1.16 2021/08/07 16:18:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra210_xusbpad.c,v 1.15 2021/04/24 23:36:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra210_xusbpad.c,v 1.16 2021/08/07 16:18:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -765,7 +765,7 @@ tegra210_xusbpad_configure_pads(struct tegra210_xusbpad_softc *sc,
 			.paa_xusbpad = sc,
 			.paa_phandle = child
 		};
-		config_found(sc->sc_dev, &paa, NULL, CFARG_EOL);
+		config_found(sc->sc_dev, &paa, NULL, CFARGS_NONE);
 	}
 }
 

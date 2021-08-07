@@ -1,4 +1,4 @@
-/*	$NetBSD: elroy.c,v 1.3 2021/04/24 23:36:39 thorpej Exp $	*/
+/*	$NetBSD: elroy.c,v 1.4 2021/08/07 16:18:55 thorpej Exp $	*/
 
 /*	$OpenBSD: elroy.c,v 1.5 2009/03/30 21:24:57 kettenis Exp $	*/
 
@@ -1313,5 +1313,5 @@ le64toh(r->eio_base), le64toh(r->eio_mask));
 	pba.pba_bus = 0; /* (le32toh(elroy_read32(&r->busnum)) & 0xff) >> 4; */
  	pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY;
 
-	config_found(self, &pba, pcibusprint, CFARG_EOL);
+	config_found(self, &pba, pcibusprint, CFARGS_NONE);
 }

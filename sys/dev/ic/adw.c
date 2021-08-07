@@ -1,4 +1,4 @@
-/* $NetBSD: adw.c,v 1.58 2021/07/24 21:31:37 andvar Exp $	 */
+/* $NetBSD: adw.c,v 1.59 2021/08/07 16:19:11 thorpej Exp $	 */
 
 /*
  * Generic driver for the Advanced Systems Inc. SCSI controllers
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adw.c,v 1.58 2021/07/24 21:31:37 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adw.c,v 1.59 2021/08/07 16:19:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -516,7 +516,7 @@ adw_attach(ADW_SOFTC *sc)
 	chan->chan_nluns = 8;
 	chan->chan_id = sc->chip_scsi_id;
 
-	config_found(sc->sc_dev, &sc->sc_channel, scsiprint, CFARG_EOL);
+	config_found(sc->sc_dev, &sc->sc_channel, scsiprint, CFARGS_NONE);
 }
 
 

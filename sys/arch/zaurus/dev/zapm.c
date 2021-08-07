@@ -1,4 +1,4 @@
-/*	$NetBSD: zapm.c,v 1.13 2021/04/24 23:36:52 thorpej Exp $	*/
+/*	$NetBSD: zapm.c,v 1.14 2021/08/07 16:19:08 thorpej Exp $	*/
 /*	$OpenBSD: zaurus_apm.c,v 1.13 2006/12/12 23:14:28 dim Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zapm.c,v 1.13 2021/04/24 23:36:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zapm.c,v 1.14 2021/08/07 16:19:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,7 +195,7 @@ zapm_attach(device_t parent, device_t self, void *aux)
 	aaa.accesscookie = sc;
 	aaa.apm_detail = 0x0102;
 
-	sc->sc_apmdev = config_found(self, &aaa, apmprint, CFARG_EOL);
+	sc->sc_apmdev = config_found(self, &aaa, apmprint, CFARGS_NONE);
 	if (sc->sc_apmdev != NULL) {
 		zapm_poll1(sc, 0);
 		callout_schedule(&sc->sc_cyclic_poll, CYCLIC_TIME);

@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus.c,v 1.20 2021/04/24 23:36:42 thorpej Exp $ */
+/*	$NetBSD: apbus.c,v 1.21 2021/08/07 16:18:59 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -29,7 +29,7 @@
 /* catch-all for on-chip peripherals */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.20 2021/04/24 23:36:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.21 2021/08/07 16:18:59 thorpej Exp $");
 
 #include "locators.h"
 #define	_MIPS_BUS_DMA_PRIVATE
@@ -265,7 +265,7 @@ apbus_attach(device_t parent, device_t self, void *aux)
 			writereg(JZ_CLKGR1, reg);
 		}
 
-		config_found(self, &aa, apbus_print, CFARG_EOL);
+		config_found(self, &aa, apbus_print, CFARGS_NONE);
 	}
 }
 

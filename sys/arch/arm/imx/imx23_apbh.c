@@ -1,4 +1,4 @@
-/* $Id: imx23_apbh.c,v 1.2 2021/04/24 23:36:27 thorpej Exp $ */
+/* $Id: imx23_apbh.c,v 1.3 2021/08/07 16:18:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -90,11 +90,9 @@ apbh_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 
 	config_search(self, &aa,
-	    CFARG_SEARCH, apbh_search_crit_cb,
-	    CFARG_EOL);
+	    CFARGS(.search = apbh_search_crit_cb));
 	config_search(self, &aa,
-	    CFARG_SEARCH, apbh_search_cb,
-	    CFARG_EOL);
+	    CFARGS(.search = apbh_search_cb));
 
 	apbh_attached = 1;
 
@@ -127,7 +125,7 @@ apbh_search_cb(device_t parent, cfdata_t cf, const int *locs, void *aux)
 	aa->aa_irq = cf->cf_loc[APBHCF_IRQ];
 
 	if (config_probe(parent, cf, aux))
-		config_attach(parent, cf, aux, apbh_print, CFARG_EOL);
+		config_attach(parent, cf, aux, apbh_print, CFARGS_NONE);
 
 	return 0;
 }
@@ -151,7 +149,7 @@ apbh_search_crit_cb(device_t parent, cfdata_t cf, const int *locs, void *aux)
 	aa->aa_irq = cf->cf_loc[APBHCF_IRQ];
 
 	if (config_probe(parent, cf, aux))
-		config_attach(parent, cf, aux, apbh_print, CFARG_EOL);
+		config_attach(parent, cf, aux, apbh_print, CFARGS_NONE);
 
 	return 0;
 }

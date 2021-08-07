@@ -1,4 +1,4 @@
-/* $NetBSD: gic_fdt.c,v 1.22 2021/04/24 23:36:26 thorpej Exp $ */
+/* $NetBSD: gic_fdt.c,v 1.23 2021/08/07 16:18:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic_fdt.c,v 1.22 2021/04/24 23:36:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic_fdt.c,v 1.23 2021/08/07 16:18:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -181,7 +181,7 @@ gic_fdt_attach(device_t parent, device_t self, void *aux)
 		.mpcaa_off2 = addr_c - addr,
 	};
 
-	sc->sc_gicdev = config_found(self, &mpcaa, NULL, CFARG_EOL);
+	sc->sc_gicdev = config_found(self, &mpcaa, NULL, CFARGS_NONE);
 
 	arm_fdt_irq_set_handler(armgic_irq_handler);
 

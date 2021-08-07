@@ -1,4 +1,4 @@
-/*	$NetBSD: ms_ap.c,v 1.13 2021/04/24 23:36:44 thorpej Exp $	*/
+/*	$NetBSD: ms_ap.c,v 1.14 2021/08/07 16:19:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms_ap.c,v 1.13 2021/04/24 23:36:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms_ap.c,v 1.14 2021/08/07 16:19:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -105,7 +105,7 @@ ms_ap_attach(device_t parent, device_t self, void *aux)
 
 	aa.accessops = &ms_ap_accessops;
 	aa.accesscookie = sc;
-	sc->sc_wsmousedev = config_found(self, &aa, wsmousedevprint, CFARG_EOL);
+	sc->sc_wsmousedev = config_found(self, &aa, wsmousedevprint, CFARGS_NONE);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.33 2021/04/24 23:36:31 thorpej Exp $	*/
+/*	$NetBSD: gt.c,v 1.34 2021/08/07 16:18:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.33 2021/04/24 23:36:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.34 2021/08/07 16:18:47 thorpej Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -157,7 +157,7 @@ gt_attach(device_t parent, device_t self, void *aux)
 	pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY |
 		PCI_FLAGS_MRL_OKAY | /*PCI_FLAGS_MRM_OKAY|*/ PCI_FLAGS_MWI_OKAY;
 	pba.pba_pc = pc;
-	config_found(self, &pba, gt_print, CFARG_EOL);
+	config_found(self, &pba, gt_print, CFARGS_NONE);
 #endif
 }
 

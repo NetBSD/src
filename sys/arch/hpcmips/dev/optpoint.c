@@ -1,4 +1,4 @@
-/*	$NetBSD: optpoint.c,v 1.8 2021/04/24 23:36:38 thorpej Exp $ */
+/*	$NetBSD: optpoint.c,v 1.9 2021/08/07 16:18:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2005 HAMAJIMA Katsuomi. All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: optpoint.c,v 1.8 2021/04/24 23:36:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: optpoint.c,v 1.9 2021/08/07 16:18:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,7 +131,7 @@ optpoint_attach(device_t parent, device_t self, void *aux)
 	wsmaa.accesscookie = sc;
 	/* attach the wsmouse */
 	sc->sc_wsmousedev = config_found(self, &wsmaa, wsmousedevprint,
-	    CFARG_EOL);
+	    CFARGS_NONE);
 
 	/* Add a hard power hook to power saving */
 	sc->sc_powerhook = config_hook(CONFIG_HOOK_PMEVENT,

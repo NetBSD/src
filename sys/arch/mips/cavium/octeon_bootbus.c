@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_bootbus.c,v 1.2 2021/04/24 23:36:42 thorpej Exp $	*/
+/*	$NetBSD: octeon_bootbus.c,v 1.3 2021/08/07 16:18:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2007
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_bootbus.c,v 1.2 2021/04/24 23:36:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_bootbus.c,v 1.3 2021/08/07 16:18:59 thorpej Exp $");
 
 #include "locators.h"
 
@@ -96,8 +96,7 @@ bootbus_attach(device_t parent, device_t self, void *aux)
 			aa.aa_dmat = bootbus_dmat;
 
 			config_found(self, &aa, bootbus_print,
-			    CFARG_SUBMATCH, bootbus_submatch,
-			    CFARG_EOL);
+			    CFARGS(.submatch = bootbus_submatch));
 		}
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: puc.c,v 1.41 2021/04/24 23:36:57 thorpej Exp $	*/
+/*	$NetBSD: puc.c,v 1.42 2021/08/07 16:19:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998, 1999
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.41 2021/04/24 23:36:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.42 2021/08/07 16:19:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -318,9 +318,8 @@ puc_attach(device_t parent, device_t self, void *aux)
 
 		/* and configure it */
 		sc->sc_ports[i].dev = config_found(self, &paa, puc_print,
-		    CFARG_SUBMATCH, config_stdsubmatch,
-		    CFARG_LOCATORS, locs,
-		    CFARG_EOL);
+		    CFARGS(.submatch = config_stdsubmatch,
+			   .locators = locs));
 	}
 }
 

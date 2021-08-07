@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.5 2021/04/24 23:36:40 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.6 2021/08/07 16:18:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.5 2021/04/24 23:36:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.6 2021/08/07 16:18:57 thorpej Exp $");
 
 #include "obio.h"
 #include "pci.h"
@@ -80,19 +80,19 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	memset(&mba, 0, sizeof(mba));
 	mba.mba_ca.ca_name = "cpu";
 	mba.mba_ca.ca_node = 0;
-	config_found(self, &mba, mainbus_print, CFARG_EOL);
+	config_found(self, &mba, mainbus_print, CFARGS_NONE);
 
 #if NPCI > 0
 	/* SH PCIC */
 	memset(&mba, 0, sizeof(mba));
 	mba.mba_mba.ma_name = "shpcic";
-	config_found(self, &mba, mainbus_print, CFARG_EOL);
+	config_found(self, &mba, mainbus_print, CFARGS_NONE);
 #endif
 
 	/* SH bus */
 	memset(&mba, 0, sizeof(mba));
 	mba.mba_mba.ma_name = "shb";
-	config_found(self, &mba, mainbus_print, CFARG_EOL);
+	config_found(self, &mba, mainbus_print, CFARGS_NONE);
 
 #if NOBIO > 0
 	/* on-board I/O */
@@ -100,7 +100,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	mba.mba_oba.oba_busname = "obio";
 	mba.mba_oba.oba_iot = &obio_bus_io;
 	mba.mba_oba.oba_memt = &obio_bus_mem;
-	config_found(self, &mba, mainbus_print, CFARG_EOL);
+	config_found(self, &mba, mainbus_print, CFARGS_NONE);
 #endif
 }
 

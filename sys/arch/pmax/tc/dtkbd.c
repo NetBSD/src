@@ -1,4 +1,4 @@
-/*	$NetBSD: dtkbd.c,v 1.12 2021/04/24 23:36:46 thorpej Exp $	*/
+/*	$NetBSD: dtkbd.c,v 1.13 2021/08/07 16:19:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtkbd.c,v 1.12 2021/04/24 23:36:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtkbd.c,v 1.13 2021/08/07 16:19:02 thorpej Exp $");
 
 #include "locators.h"
 
@@ -129,7 +129,7 @@ dtkbd_attach(device_t parent, device_t self, void *aux)
 	a.keymap = &dtkbd_keymapdata;
 	a.accessops = &dtkbd_accessops;
 	a.accesscookie = sc;
-	sc->sc_wskbddev = config_found(self, &a, wskbddevprint, CFARG_EOL);
+	sc->sc_wskbddev = config_found(self, &a, wskbddevprint, CFARGS_NONE);
 }
 
 void

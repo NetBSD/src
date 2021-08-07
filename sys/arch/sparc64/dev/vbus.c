@@ -1,4 +1,4 @@
-/*	$NetBSD: vbus.c,v 1.7 2021/05/10 23:53:44 thorpej Exp $	*/
+/*	$NetBSD: vbus.c,v 1.8 2021/08/07 16:19:05 thorpej Exp $	*/
 /*	$OpenBSD: vbus.c,v 1.8 2015/09/27 11:29:20 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -97,14 +97,13 @@ vbus_attach(device_t parent, device_t self, void *aux)
 		prom_getprop(node, "interrupts", sizeof(*va.va_intr),
 			     &va.va_nintr, (void **)&va.va_intr);
 		config_found(self, &va, vbus_print,
-		    CFARG_DEVHANDLE, prom_node_to_devhandle(va.va_node),
-		    CFARG_EOL);
+		    CFARGS(.devhandle = prom_node_to_devhandle(va.va_node)));
 	}
 
 	struct vbus_attach_args va;
 	bzero(&va, sizeof(va));
 	va.va_name = "rtc";
-	config_found(self, &va, vbus_print, CFARG_EOL);
+	config_found(self, &va, vbus_print, CFARGS_NONE);
 
 }
 

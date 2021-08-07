@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.58 2021/04/24 23:36:56 thorpej Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.59 2021/08/07 16:19:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.58 2021/04/24 23:36:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.59 2021/08/07 16:19:13 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -250,8 +250,7 @@ gfec_attach(device_t parent, device_t self, void *aux)
 		gfea.mva_dmat = mva->mva_dmat;
 		gfea.mva_irq = gfe_irqs[i];
 		config_found(sc->sc_dev, &gfea, gfec_print,
-		    CFARG_SUBMATCH, gfec_search,
-		    CFARG_EOL);
+		    CFARGS(.submatch = gfec_search));
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: etna.c,v 1.4 2021/04/24 23:36:32 thorpej Exp $	*/
+/*	$NetBSD: etna.c,v 1.5 2021/08/07 16:18:48 thorpej Exp $	*/
 /*
  * Copyright (c) 2012 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: etna.c,v 1.4 2021/04/24 23:36:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: etna.c,v 1.5 2021/08/07 16:18:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -201,7 +201,7 @@ etna_attach(device_t parent, device_t self, void *aux)
 	paa.paa_busname = "pcmcia";
 	paa.pct = &etna_pcmcia_functions;
 	paa.pch = sc;
-	sc->sc_pcmcia = config_found(self, &paa, NULL, CFARG_EOL);
+	sc->sc_pcmcia = config_found(self, &paa, NULL, CFARGS_NONE);
 
 	config_interrupts(self, etna_doattach);
 }

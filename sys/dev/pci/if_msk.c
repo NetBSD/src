@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.116 2021/05/08 00:27:02 thorpej Exp $ */
+/* $NetBSD: if_msk.c,v 1.117 2021/08/07 16:19:14 thorpej Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.79 2009/10/15 17:54:56 deraadt Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.116 2021/05/08 00:27:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.117 2021/08/07 16:19:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1777,13 +1777,13 @@ mskc_attach(device_t parent, device_t self, void *aux)
 	skca.skc_port = SK_PORT_A;
 	skca.skc_type = sc->sk_type;
 	skca.skc_rev = sc->sk_rev;
-	(void)config_found(sc->sk_dev, &skca, mskcprint, CFARG_EOL);
+	(void)config_found(sc->sk_dev, &skca, mskcprint, CFARGS_NONE);
 
 	if (sc->sk_macs > 1) {
 		skca.skc_port = SK_PORT_B;
 		skca.skc_type = sc->sk_type;
 		skca.skc_rev = sc->sk_rev;
-		(void)config_found(sc->sk_dev, &skca, mskcprint, CFARG_EOL);
+		(void)config_found(sc->sk_dev, &skca, mskcprint, CFARGS_NONE);
 	}
 
 	/* Turn on the 'driver is loaded' LED. */

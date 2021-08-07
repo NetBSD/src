@@ -1,4 +1,4 @@
-/*	$NetBSD: imx51_usb.c,v 1.6 2021/04/24 23:36:27 thorpej Exp $	*/
+/*	$NetBSD: imx51_usb.c,v 1.7 2021/08/07 16:18:44 thorpej Exp $	*/
 /*
  * Copyright (c) 2010  Genetec Corporation.  All rights reserved.
  * Written by Hiroyuki Bessho for Genetec Corporation.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx51_usb.c,v 1.6 2021/04/24 23:36:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx51_usb.c,v 1.7 2021/08/07 16:18:44 thorpej Exp $");
 
 #include "locators.h"
 #include "opt_imx.h"
@@ -72,8 +72,7 @@ imxusbc_attach_common(device_t parent, device_t self, bus_space_tag_t iot,
 
 	/* attach OTG/EHCI host controllers */
 	config_search(self, NULL,
-	    CFARG_SEARCH, imxusbc_search,
-	    CFARG_EOL);
+	    CFARGS(.search = imxusbc_search));
 
 	return 0;
 }
@@ -91,7 +90,7 @@ imxusbc_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	aa.aa_irq = cf->cf_loc[IMXUSBCCF_IRQ];
 
 	if (config_probe(parent, cf, &aa))
-		config_attach(parent, cf, &aa, imxusbc_print, CFARG_EOL);
+		config_attach(parent, cf, &aa, imxusbc_print, CFARGS_NONE);
 
 	return 0;
 }

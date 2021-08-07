@@ -1,4 +1,4 @@
-/*	$NetBSD: kdb.c,v 1.48 2021/04/24 23:36:53 thorpej Exp $ */
+/*	$NetBSD: kdb.c,v 1.49 2021/08/07 16:19:09 thorpej Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kdb.c,v 1.48 2021/04/24 23:36:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kdb.c,v 1.49 2021/08/07 16:19:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -210,7 +210,7 @@ err2:		bus_dmamem_unmap(sc->sc_dmat, sc->sc_kdb,
 	KDB_WL(BIREG_BCICSR, KDB_RL(BIREG_BCICSR) |
 	    BCI_STOPEN | BCI_IDENTEN | BCI_UINTEN | BCI_INTEN);
 	KDB_WL(BIREG_UINTRCSR, ba->ba_ivec);
-	config_found(sc->sc_dev, &ma, kdbprint, CFARG_EOL);
+	config_found(sc->sc_dev, &ma, kdbprint, CFARGS_NONE);
 }
 
 void

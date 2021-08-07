@@ -1,4 +1,4 @@
-/*	$NetBSD: udl.c,v 1.26 2021/04/24 23:36:59 thorpej Exp $	*/
+/*	$NetBSD: udl.c,v 1.27 2021/08/07 16:19:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2009 FUKAUMI Naoki.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.26 2021/04/24 23:36:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.27 2021/08/07 16:19:17 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -475,7 +475,7 @@ udl_attach(device_t parent, device_t self, void *aux)
 	aa.accesscookie = sc;
 
 	sc->sc_wsdisplay =
-	    config_found(sc->sc_dev, &aa, wsemuldisplaydevprint, CFARG_EOL);
+	    config_found(sc->sc_dev, &aa, wsemuldisplaydevprint, CFARGS_NONE);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
 

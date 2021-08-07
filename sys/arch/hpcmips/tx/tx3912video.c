@@ -1,4 +1,4 @@
-/*	$NetBSD: tx3912video.c,v 1.46 2021/04/24 23:36:38 thorpej Exp $ */
+/*	$NetBSD: tx3912video.c,v 1.47 2021/08/07 16:18:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx3912video.c,v 1.46 2021/04/24 23:36:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx3912video.c,v 1.47 2021/08/07 16:18:54 thorpej Exp $");
 
 #define TX3912VIDEO_DEBUG
 
@@ -195,7 +195,7 @@ tx3912video_attach(device_t parent, device_t self, void *aux)
 	ha.ha_ndspconf = 1;
 	ha.ha_dspconflist = &sc->sc_dspconf;
 
-	config_found(self, &ha, hpcfbprint, CFARG_EOL);
+	config_found(self, &ha, hpcfbprint, CFARGS_NONE);
 #if NBIVIDEO > 0
 	/* bivideo is no longer need */
 	bivideo_dont_attach = 1;

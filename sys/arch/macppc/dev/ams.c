@@ -1,4 +1,4 @@
-/*	$NetBSD: ams.c,v 1.30 2021/04/24 23:36:41 thorpej Exp $	*/
+/*	$NetBSD: ams.c,v 1.31 2021/08/07 16:18:57 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ams.c,v 1.30 2021/04/24 23:36:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ams.c,v 1.31 2021/08/07 16:18:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -199,7 +199,7 @@ amsattach(device_t parent, device_t self, void *aux)
 
 	a.accessops = &ams_accessops;
 	a.accesscookie = sc;
-	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint, CFARG_EOL);
+	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint, CFARGS_NONE);
 }
 
 

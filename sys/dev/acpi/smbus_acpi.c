@@ -1,4 +1,4 @@
-/* $NetBSD: smbus_acpi.c,v 1.16 2021/04/24 23:36:52 thorpej Exp $ */
+/* $NetBSD: smbus_acpi.c,v 1.17 2021/08/07 16:19:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbus_acpi.c,v 1.16 2021/04/24 23:36:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbus_acpi.c,v 1.17 2021/08/07 16:19:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -173,7 +173,7 @@ acpi_smbus_attach(device_t parent, device_t self, void *aux)
 
 	iba.iba_tag = &sc->sc_i2c_tag;
 
-	config_found(self, &iba, iicbus_print, CFARG_EOL);
+	config_found(self, &iba, iicbus_print, CFARGS_NONE);
 }
 
 static int

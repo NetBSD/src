@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.47 2021/04/24 23:36:55 thorpej Exp $ */
+/* $NetBSD: siisata.c,v 1.48 2021/08/07 16:19:12 thorpej Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.47 2021/04/24 23:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.48 2021/08/07 16:19:12 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1546,8 +1546,7 @@ siisata_atapibus_attach(struct atabus_softc *ata_sc)
 	chan->chan_nluns = 1;
 
 	chp->atapibus = config_found(ata_sc->sc_dev, chan, atapiprint,
-	    CFARG_IATTR, "atapi",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "atapi"));
 }
 
 void

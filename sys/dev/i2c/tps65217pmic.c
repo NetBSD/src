@@ -1,4 +1,4 @@
-/*	$NetBSD: tps65217pmic.c,v 1.19 2021/04/24 23:36:54 thorpej Exp $ */
+/*	$NetBSD: tps65217pmic.c,v 1.20 2021/08/07 16:19:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tps65217pmic.c,v 1.19 2021/04/24 23:36:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tps65217pmic.c,v 1.20 2021/08/07 16:19:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -962,7 +962,7 @@ tps65217pmic_regulator_attach(struct tps65217pmic_softc *sc)
 
 		raa.reg_param = param;
 		raa.reg_phandle = child;
-		config_found(sc->sc_dev, &raa, NULL, CFARG_EOL);
+		config_found(sc->sc_dev, &raa, NULL, CFARGS_NONE);
 	}
 }
 

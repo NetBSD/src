@@ -1,4 +1,4 @@
-/*	$NetBSD: uturn.c,v 1.4 2021/04/24 23:36:39 thorpej Exp $	*/
+/*	$NetBSD: uturn.c,v 1.5 2021/08/07 16:18:55 thorpej Exp $	*/
 
 /*	$OpenBSD: uturn.c,v 1.6 2007/12/29 01:26:14 kettenis Exp $	*/
 
@@ -380,8 +380,7 @@ uturn_callback(device_t self, struct confargs *ca)
 {
 
 	return config_found(self, ca, mbprint,
-	    CFARG_SUBMATCH, mbsubmatch,
-	    CFARG_EOL);
+	    CFARGS(.submatch = mbsubmatch));
 }
 
 /*

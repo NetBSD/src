@@ -1,4 +1,4 @@
-/*	$NetBSD: wdsc.c,v 1.34 2021/04/24 23:36:44 thorpej Exp $	*/
+/*	$NetBSD: wdsc.c,v 1.35 2021/08/07 16:19:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdsc.c,v 1.34 2021/04/24 23:36:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdsc.c,v 1.35 2021/08/07 16:19:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,7 +191,7 @@ wdsc_pcc_attach(device_t parent, device_t self, void *aux)
 	pcc_reg_write(sys_pcc, PCCREG_SCSI_INTR_CTRL,
             sc->sc_ipl | PCC_IENABLE | PCC_ICLEAR);
 
-	(void)config_found(self, &sc->sc_channel, scsiprint, CFARG_EOL);
+	(void)config_found(self, &sc->sc_channel, scsiprint, CFARGS_NONE);
 }
 
 /*

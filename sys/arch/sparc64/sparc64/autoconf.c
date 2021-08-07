@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.233 2021/07/03 19:39:07 palle Exp $ */
+/*	$NetBSD: autoconf.c,v 1.234 2021/08/07 16:19:06 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.233 2021/07/03 19:39:07 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.234 2021/08/07 16:19:06 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -730,8 +730,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		ma.ma_node = node;
 		ma.ma_name = "cpu";
 		config_found(dev, &ma, mbprint,
-		    CFARG_DEVHANDLE, devhandle_from_of(ma.ma_node),
-		    CFARG_EOL);
+		    CFARGS(.devhandle = devhandle_from_of(ma.ma_node)));
 	}
 
 	node = findroot();	/* re-init root node */
@@ -815,8 +814,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		}
 #endif
 		(void) config_found(dev, (void *)&ma, mbprint,
-		    CFARG_DEVHANDLE, prom_node_to_devhandle(ma.ma_node),
-		    CFARG_EOL);
+		    CFARGS(.devhandle = prom_node_to_devhandle(ma.ma_node)));
 		free(ma.ma_reg, M_DEVBUF);
 		if (ma.ma_ninterrupts)
 			free(ma.ma_interrupts, M_DEVBUF);
@@ -826,7 +824,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 	/* Try to attach PROM console */
 	memset(&ma, 0, sizeof ma);
 	ma.ma_name = "pcons";
-	(void) config_found(dev, (void *)&ma, mbprint, CFARG_EOL);
+	(void) config_found(dev, (void *)&ma, mbprint, CFARGS_NONE);
 }
 
 CFATTACH_DECL_NEW(mainbus, 0,

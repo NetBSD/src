@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.72 2021/05/11 06:03:54 thorpej Exp $	*/
+/*	$NetBSD: ppb.c,v 1.73 2021/08/07 16:19:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.72 2021/05/11 06:03:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.73 2021/08/07 16:19:14 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ppb.h"
@@ -441,8 +441,7 @@ configure:
 	     * Forward along the device handle for the bridge to the
 	     * downstream bus.
 	     */
-	    CFARG_DEVHANDLE, device_handle(self),
-	    CFARG_EOL);
+	    CFARGS(.devhandle = device_handle(self)));
 }
 
 static int

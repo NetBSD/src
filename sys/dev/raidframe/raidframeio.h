@@ -1,4 +1,4 @@
-/*	$NetBSD: raidframeio.h,v 1.10 2021/08/02 20:31:14 oster Exp $ */
+/*	$NetBSD: raidframeio.h,v 1.11 2021/08/07 16:19:15 thorpej Exp $ */
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.

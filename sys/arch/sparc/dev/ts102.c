@@ -1,5 +1,5 @@
 /*	$OpenBSD: ts102.c,v 1.14 2005/01/27 17:03:23 millert Exp $	*/
-/*	$NetBSD: ts102.c,v 1.20 2021/06/11 04:58:30 jdc Exp $ */
+/*	$NetBSD: ts102.c,v 1.21 2021/08/07 16:19:05 thorpej Exp $ */
 /*
  * Copyright (c) 2003, 2004, Miodrag Vallat.
  * Copyright (c) 2005, Michael Lorenz.
@@ -410,7 +410,7 @@ tslot_reset(struct tslot_data *td, uint32_t iosize)
 	paa.pch = (pcmcia_chipset_handle_t)td;
 
 	td->td_pcmcia = config_found(td->td_parent->sc_dev, &paa, tslot_print,
-	    CFARG_EOL);
+	    CFARGS_NONE);
 
 	if (td->td_pcmcia == NULL) {
 		/*

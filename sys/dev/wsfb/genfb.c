@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.82 2021/04/24 23:37:00 thorpej Exp $ */
+/*	$NetBSD: genfb.c,v 1.83 2021/08/07 16:19:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.82 2021/04/24 23:37:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.83 2021/08/07 16:19:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -378,8 +378,7 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 #endif
 
 	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint,
-	    CFARG_IATTR, "wsemuldisplaydev",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "wsemuldisplaydev"));
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: xcfb.c,v 1.58 2021/04/24 23:36:59 thorpej Exp $ */
+/* $NetBSD: xcfb.c,v 1.59 2021/08/07 16:19:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.58 2021/04/24 23:36:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.59 2021/08/07 16:19:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -245,7 +245,7 @@ xcfbattach(device_t parent, device_t self, void *aux)
 	waa.accessops = &xcfb_accessops;
 	waa.accesscookie = sc;
 
-	config_found(self, &waa, wsemuldisplaydevprint, CFARG_EOL);
+	config_found(self, &waa, wsemuldisplaydevprint, CFARGS_NONE);
 }
 
 static void

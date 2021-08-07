@@ -183,7 +183,7 @@ opcic_attach(device_t parent, device_t self, void *aux)
 
 		sc->sc_socket[i].ss.pcmcia =
 		    config_found(sc->sc_pc.sc_dev, &paa, opcic_print,
-				 CFARG_EOL);
+				 CFARGS_NONE);
 
 #ifndef DONT_USE_CARD_DETECT_INTR
 		/* interrupt for card insertion/removal */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp.c,v 1.37 2021/04/24 23:36:56 thorpej Exp $	*/
+/*	$NetBSD: mscp.c,v 1.38 2021/08/07 16:19:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp.c,v 1.37 2021/04/24 23:36:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp.c,v 1.38 2021/08/07 16:19:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -496,7 +496,7 @@ mscp_worker(struct work *wk, void *dummy)
 	da.da_mp = &mw->mw_mp;
 	da.da_typ = mi->mi_type;
 
-	config_found(mi->mi_dev, (void *)&da, mscp_print, CFARG_EOL);
+	config_found(mi->mi_dev, (void *)&da, mscp_print, CFARGS_NONE);
 
 	mutex_spin_enter(&mi->mi_mtx);
 	SLIST_INSERT_HEAD(&mw->mw_mi->mi_freelist, mw, mw_list);

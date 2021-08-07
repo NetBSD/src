@@ -1,4 +1,4 @@
-/*	$NetBSD: psh3tp.c,v 1.16 2021/04/24 23:36:38 thorpej Exp $	*/
+/*	$NetBSD: psh3tp.c,v 1.17 2021/08/07 16:18:54 thorpej Exp $	*/
 /*
  * Copyright (c) 2005 KIYOHARA Takashi
  * All rights reserved.
@@ -182,7 +182,7 @@ psh3tp_attach(device_t parent __unused, device_t self, void *aux __unused)
 	wsma.accesscookie = sc;
 
 	sc->sc_wsmousedev = config_found(
-	    self, &wsma, wsmousedevprint, CFARG_EOL);
+	    self, &wsma, wsmousedevprint, CFARGS_NONE);
 	if (sc->sc_wsmousedev == NULL)
 		return;
 

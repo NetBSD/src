@@ -1,4 +1,4 @@
-/*	$NetBSD: oboe.c,v 1.48 2021/04/24 23:36:57 thorpej Exp $	*/
+/*	$NetBSD: oboe.c,v 1.49 2021/08/07 16:19:14 thorpej Exp $	*/
 
 /*	XXXXFVDL THIS DRIVER IS BROKEN FOR NON-i386 -- vtophys() usage	*/
 
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.48 2021/04/24 23:36:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.49 2021/08/07 16:19:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -239,7 +239,7 @@ oboe_attach(device_t parent, device_t self, void *aux)
 
 	oboe_alloc_taskfile(sc);
 
-	sc->sc_child = config_found(self, &ia, ir_print, CFARG_EOL);
+	sc->sc_child = config_found(self, &ia, ir_print, CFARGS_NONE);
 }
 
 static int

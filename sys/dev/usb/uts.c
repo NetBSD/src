@@ -1,4 +1,4 @@
-/*	$NetBSD: uts.c,v 1.13 2021/04/24 23:36:59 thorpej Exp $	*/
+/*	$NetBSD: uts.c,v 1.14 2021/08/07 16:19:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uts.c,v 1.13 2021/04/24 23:36:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uts.c,v 1.14 2021/08/07 16:19:17 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -235,7 +235,7 @@ uts_attach(device_t parent, device_t self, void *aux)
 	a.accessops = &uts_accessops;
 	a.accesscookie = sc;
 
-	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint, CFARG_EOL);
+	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint, CFARGS_NONE);
 
 	/* calibrate the touchscreen */
 	memset(&sc->sc_calibcoords, 0, sizeof(sc->sc_calibcoords));

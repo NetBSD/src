@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4172pci.c,v 1.19 2021/04/24 23:36:38 thorpej Exp $	*/
+/*	$NetBSD: vrc4172pci.c,v 1.20 2021/08/07 16:18:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 TAKEMURA Shin
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrc4172pci.c,v 1.19 2021/04/24 23:36:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrc4172pci.c,v 1.20 2021/08/07 16:18:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,7 +206,7 @@ vrc4172pci_attach(device_t parent, device_t self, void *aux)
 	    PCI_FLAGS_MRL_OKAY;
 	pba.pba_pc = pc;
 
-	config_found(self, &pba, pcibusprint, CFARG_EOL);
+	config_found(self, &pba, pcibusprint, CFARGS_NONE);
 #endif
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ioat66.c,v 1.23 2021/04/24 23:36:55 thorpej Exp $	*/
+/*	$NetBSD: ioat66.c,v 1.24 2021/08/07 16:19:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioat66.c,v 1.23 2021/04/24 23:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioat66.c,v 1.24 2021/08/07 16:19:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,7 +180,7 @@ ioat66attach(device_t parent, device_t self, void *aux)
 		ca.ca_noien = 0;
 
 		sc->sc_slaves[i] = config_found(self, &ca, commultiprint,
-		    CFARG_EOL);
+		    CFARGS_NONE);
 		if (sc->sc_slaves[i] != NULL)
 			sc->sc_alive |= 1 << i;
 	}

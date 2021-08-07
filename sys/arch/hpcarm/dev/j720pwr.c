@@ -1,4 +1,4 @@
-/*	$NetBSD: j720pwr.c,v 1.6 2021/04/24 23:36:37 thorpej Exp $	*/
+/*	$NetBSD: j720pwr.c,v 1.7 2021/08/07 16:18:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* Jornada 720 power management. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j720pwr.c,v 1.6 2021/04/24 23:36:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j720pwr.c,v 1.7 2021/08/07 16:18:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,7 +156,7 @@ j720pwr_attach(device_t parent, device_t self, void *aux)
 		    CONFIG_HOOK_SHARE, j720pwr_event_hook, sc);
 
 	/* Attach hpcapm. */
-	config_found(self, NULL, NULL, CFARG_EOL);
+	config_found(self, NULL, NULL, CFARGS_NONE);
 }
 
 static void

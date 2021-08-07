@@ -1,4 +1,4 @@
-/*	$NetBSD: bootbus.c,v 1.22 2021/05/10 23:53:44 thorpej Exp $	*/
+/*	$NetBSD: bootbus.c,v 1.23 2021/08/07 16:19:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bootbus.c,v 1.22 2021/05/10 23:53:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bootbus.c,v 1.23 2021/08/07 16:19:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -123,9 +123,8 @@ bootbus_attach(device_t parent, device_t self, void *aux)
 			panic("bootbus_attach: failed to set up attach args");
 
 		config_found(self, &baa, bootbus_print,
-		    CFARG_DEVHANDLE, prom_node_to_devhandle(node),
-		    CFARG_SUBMATCH, bootbus_submatch,
-		    CFARG_EOL);
+		    CFARGS(.devhandle = prom_node_to_devhandle(node),
+			   .submatch = bootbus_submatch));
 
 		bootbus_destroy_attach_args(&baa);
 	}

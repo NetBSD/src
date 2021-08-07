@@ -1,4 +1,4 @@
-/*	$NetBSD: eppcic.c,v 1.9 2021/04/24 23:36:26 thorpej Exp $	*/
+/*	$NetBSD: eppcic.c,v 1.10 2021/08/07 16:18:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2005 HAMAJIMA Katsuomi. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eppcic.c,v 1.9 2021/04/24 23:36:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eppcic.c,v 1.10 2021/08/07 16:18:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -242,7 +242,7 @@ eppcic_config_socket(struct eppcic_handle *ph)
 	paa.paa_busname = "pcmcia";
 	paa.pct = (pcmcia_chipset_tag_t)&eppcic_functions;
 	paa.pch = (pcmcia_chipset_handle_t)ph;
-	ph->ph_card = config_found(sc->sc_dev, &paa, eppcic_print, CFARG_EOL);
+	ph->ph_card = config_found(sc->sc_dev, &paa, eppcic_print, CFARGS_NONE);
 
 	epgpio_intr_establish(sc->sc_gpio, ph->ph_port, ph->ph_cd[0],
 			      EDGE_TRIGGER | FALLING_EDGE | DEBOUNCE,

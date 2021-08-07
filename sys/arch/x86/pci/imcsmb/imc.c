@@ -1,4 +1,4 @@
-/* $NetBSD: imc.c,v 1.3 2021/04/24 23:36:51 thorpej Exp $ */
+/* $NetBSD: imc.c,v 1.4 2021/08/07 16:19:08 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.3 2021/04/24 23:36:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.4 2021/08/07 16:19:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -246,7 +246,7 @@ imc_rescan(device_t self, const char *ifattr, const int *locs)
 		imca.ia_pci_tag = sc->sc_pci_tag;
 		imca.ia_pci_chipset_tag = sc->sc_pci_chipset_tag;
 		sc->sc_smbchild[unit] =
-		    config_found(self, &imca, NULL, CFARG_EOL);
+		    config_found(self, &imca, NULL, CFARGS_NONE);
 	}
 
 	return 0;

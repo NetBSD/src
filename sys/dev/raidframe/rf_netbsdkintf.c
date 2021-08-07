@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.398 2021/08/02 20:31:14 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.399 2021/08/07 16:19:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.398 2021/08/02 20:31:14 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.399 2021/08/07 16:19:15 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_autoconfig.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsx.c,v 1.5 2021/04/24 23:36:55 thorpej Exp $	*/
+/*	$NetBSD: rtsx.c,v 1.6 2021/08/07 16:19:12 thorpej Exp $	*/
 /*	$OpenBSD: rtsx.c,v 1.10 2014/08/19 17:55:03 phessler Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsx.c,v 1.5 2021/04/24 23:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsx.c,v 1.6 2021/08/07 16:19:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -239,7 +239,7 @@ rtsx_attach(struct rtsx_softc *sc, bus_space_tag_t iot,
 	saa.saa_clkmax = 25000;
 	saa.saa_caps = SMC_CAPS_DMA|SMC_CAPS_4BIT_MODE;
 
-	sc->sc_sdmmc = config_found(sc->sc_dev, &saa, NULL, CFARG_EOL);
+	sc->sc_sdmmc = config_found(sc->sc_dev, &saa, NULL, CFARGS_NONE);
 	if (sc->sc_sdmmc == NULL)
 		goto destroy_dmamap_cmd;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.16 2021/04/24 23:36:35 thorpej Exp $	*/
+/*	$NetBSD: gt.c,v 1.17 2021/08/07 16:18:51 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.16 2021/04/24 23:36:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.17 2021/08/07 16:18:51 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +118,7 @@ gt_attach(device_t parent, device_t self, void *aux)
 	pba.pba_dmat64 = NULL;
 	pba.pba_pc = &mcp->mc_pc;
 
-	config_found(self, &pba, gt_print, CFARG_EOL);
+	config_found(self, &pba, gt_print, CFARGS_NONE);
 #endif
 }
 

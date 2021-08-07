@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3pci.c,v 1.28 2021/04/24 23:36:46 thorpej Exp $	*/
+/*	$NetBSD: pq3pci.c,v 1.29 2021/08/07 16:19:02 thorpej Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,7 +39,7 @@
 #define	__INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.28 2021/04/24 23:36:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.29 2021/08/07 16:19:02 thorpej Exp $");
 
 #include "locators.h"
 
@@ -994,7 +994,7 @@ pq3pci_cpunode_attach(device_t parent, device_t self, void *aux)
 		pci_conf_print(pc, 0, NULL);
 #endif
 
-	config_found(self, &pba, pcibusprint, CFARG_EOL);
+	config_found(self, &pba, pcibusprint, CFARGS_NONE);
 }
 
 static void

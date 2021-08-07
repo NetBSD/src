@@ -1,4 +1,4 @@
-/*	$NetBSD: wax.c,v 1.3 2021/04/24 23:36:39 thorpej Exp $	*/
+/*	$NetBSD: wax.c,v 1.4 2021/08/07 16:18:55 thorpej Exp $	*/
 
 /*	$OpenBSD: wax.c,v 1.1 1998/11/23 03:04:10 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wax.c,v 1.3 2021/04/24 23:36:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wax.c,v 1.4 2021/08/07 16:18:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,5 +166,5 @@ waxattach(device_t parent, device_t self, void *aux)
 	ga.ga_fix_args = wax_fix_args;
 	ga.ga_fix_args_cookie = sc;
 	ga.ga_scsi_target = 7; /* XXX */
-	config_found(self, &ga, gscprint, CFARG_EOL);
+	config_found(self, &ga, gscprint, CFARGS_NONE);
 }

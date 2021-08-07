@@ -1,4 +1,4 @@
-/*      $NetBSD: p5bus.c,v 1.5 2021/04/24 23:36:24 thorpej Exp $ */
+/*      $NetBSD: p5bus.c,v 1.6 2021/08/07 16:18:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2011, 2012 The NetBSD Foundation, Inc.
@@ -143,11 +143,11 @@ p5bus_attach(device_t parent, device_t self, void *aux)
 	switch (sc->sc_has_scsi) {
 	case P5BUS_SCSI_710:
 		strcpy(p5baa.p5baa_name, "bppcsc");
-		config_found(sc->sc_dev, &p5baa, p5bus_print, CFARG_EOL);
+		config_found(sc->sc_dev, &p5baa, p5bus_print, CFARGS_NONE);
 		break;
 	case P5BUS_SCSI_770:
 		strcpy(p5baa.p5baa_name, "cbiiisc");
-		config_found(sc->sc_dev, &p5baa, p5bus_print, CFARG_EOL);
+		config_found(sc->sc_dev, &p5baa, p5bus_print, CFARGS_NONE);
 		break;
 	default:
 		break;
@@ -173,7 +173,7 @@ p5bus_callback(device_t self) {
 
 	/* p5pb is always found, probe is inside of p5pb driver */
 	strcpy(p5baa.p5baa_name, "p5pb");
-	config_found(sc->sc_dev, &p5baa, p5bus_print, CFARG_EOL);
+	config_found(sc->sc_dev, &p5baa, p5bus_print, CFARGS_NONE);
 }
 
 /* Get serial number of the card. */

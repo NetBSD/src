@@ -1,4 +1,4 @@
-/*	$NetBSD: vme.c,v 1.18 2021/04/24 23:36:50 thorpej Exp $	*/
+/*	$NetBSD: vme.c,v 1.19 2021/08/07 16:19:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.18 2021/04/24 23:36:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.19 2021/08/07 16:19:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,8 +154,7 @@ vme_attach(device_t parent, device_t self, void *args)
 
 	/* We know ca_bustype == BUS_VMExx */
 	config_search(self, args,
-	    CFARG_SEARCH, bus_scan,
-	    CFARG_EOL);
+	    CFARGS(.search = bus_scan));
 }
 
 int

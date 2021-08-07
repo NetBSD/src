@@ -1,4 +1,4 @@
-/* $NetBSD: gpioow.c,v 1.18 2021/04/24 23:36:54 thorpej Exp $ */
+/* $NetBSD: gpioow.c,v 1.19 2021/08/07 16:19:10 thorpej Exp $ */
 /*	$OpenBSD: gpioow.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpioow.c,v 1.18 2021/04/24 23:36:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpioow.c,v 1.19 2021/08/07 16:19:10 thorpej Exp $");
 
 /*
  * 1-Wire bus bit-banging through GPIO pin.
@@ -149,7 +149,7 @@ gpioow_attach(device_t parent, device_t self, void *aux)
 
 	memset(&oba, 0, sizeof(oba));
 	oba.oba_bus = &sc->sc_ow_bus;
-	sc->sc_ow_dev = config_found(self, &oba, onewirebus_print, CFARG_EOL);
+	sc->sc_ow_dev = config_found(self, &oba, onewirebus_print, CFARGS_NONE);
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error("%s: could not establish power handler\n",

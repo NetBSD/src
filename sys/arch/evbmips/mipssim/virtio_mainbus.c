@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_mainbus.c,v 1.2 2021/04/24 23:36:35 thorpej Exp $ */
+/* $NetBSD: virtio_mainbus.c,v 1.3 2021/08/07 16:18:51 thorpej Exp $ */
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_mainbus.c,v 1.2 2021/04/24 23:36:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_mainbus.c,v 1.3 2021/08/07 16:18:51 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,7 @@ virtio_mainbus_rescan(device_t self, const char *ifattr, const int *locs)
 	memset(&va, 0, sizeof(va));
 	va.sc_childdevid = vsc->sc_childdevid;
 
-	config_found(self, &va, NULL, CFARG_EOL);
+	config_found(self, &va, NULL, CFARGS_NONE);
 
 	if (virtio_attach_failed(vsc))
 		return 0;

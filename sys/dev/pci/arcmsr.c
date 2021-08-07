@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsr.c,v 1.42 2021/06/13 10:04:10 mlelstv Exp $ */
+/*	$NetBSD: arcmsr.c,v 1.43 2021/08/07 16:19:14 thorpej Exp $ */
 /*	$OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -21,7 +21,7 @@
 #include "bio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.42 2021/06/13 10:04:10 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.43 2021/08/07 16:19:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -256,7 +256,7 @@ arc_attach(device_t parent, device_t self, void *aux)
 	 * devices via the management interface.
 	 */
 	sc->sc_scsibus_dv = config_found(self, &sc->sc_chan, scsiprint,
-	    CFARG_EOL);
+	    CFARGS_NONE);
 
 	/* enable interrupts */
 	arc_write(sc, ARC_REG_INTRMASK,

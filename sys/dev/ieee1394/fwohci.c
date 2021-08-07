@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.145 2021/04/24 23:36:55 thorpej Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.146 2021/08/07 16:19:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.145 2021/04/24 23:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.146 2021/08/07 16:19:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -504,7 +504,7 @@ fwohci_attach(struct fwohci_softc *sc)
 
 	sc->fc.bdev =
 	    config_found(sc->fc.dev, __UNCONST("ieee1394if"), fwohci_print,
-	    CFARG_EOL);
+	    CFARGS_NONE);
 
 	return 0;
 }

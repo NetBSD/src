@@ -1,4 +1,4 @@
-/*	$NetBSD: apple_smc.c,v 1.7 2021/04/24 23:36:55 thorpej Exp $	*/
+/*	$NetBSD: apple_smc.c,v 1.8 2021/08/07 16:19:12 thorpej Exp $	*/
 
 /*
  * Apple System Management Controller
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apple_smc.c,v 1.7 2021/04/24 23:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apple_smc.c,v 1.8 2021/08/07 16:19:12 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -109,8 +109,7 @@ apple_smc_rescan(struct apple_smc_tag *smc, const char *ifattr,
 
 	/* Let autoconf(9) do the work of finding new children.  */
 	config_search(smc->smc_dev, smc,
-	    CFARG_SEARCH, apple_smc_search,
-	    CFARG_EOL);
+	    CFARGS(.search = apple_smc_search));
 	return 0;
 }
 
@@ -151,8 +150,7 @@ apple_smc_search(device_t parent, cfdata_t cf, const int *locators, void *aux)
 	/* Looks hunky-dory.  Attach.  */
 	asa.asa_smc = smc;
 	config_attach(parent, cf, &asa, NULL,
-	    CFARG_LOCATORS, locators,
-	    CFARG_EOL);
+	    CFARGS(.locators = locators));
 	return 0;
 }
 

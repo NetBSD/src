@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsdio.c,v 1.7 2021/04/24 23:36:56 thorpej Exp $	*/
+/*	$NetBSD: mvsdio.c,v 1.8 2021/08/07 16:19:13 thorpej Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsdio.c,v 1.7 2021/04/24 23:36:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsdio.c,v 1.8 2021/08/07 16:19:13 thorpej Exp $");
 
 #include "opt_mvsdio.h"
 
@@ -251,7 +251,7 @@ mvsdio_attach(device_t parent, device_t self, void *aux)
 #ifndef MVSDIO_CARD_DETECT
 	saa.saa_caps |= SMC_CAPS_POLL_CARD_DET;
 #endif
-	sc->sc_sdmmc = config_found(sc->sc_dev, &saa, NULL, CFARG_EOL);
+	sc->sc_sdmmc = config_found(sc->sc_dev, &saa, NULL, CFARGS_NONE);
 }
 
 static int

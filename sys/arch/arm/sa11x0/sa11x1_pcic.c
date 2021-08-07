@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x1_pcic.c,v 1.23 2021/04/24 23:36:28 thorpej Exp $        */
+/*      $NetBSD: sa11x1_pcic.c,v 1.24 2021/08/07 16:18:45 thorpej Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x1_pcic.c,v 1.23 2021/04/24 23:36:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x1_pcic.c,v 1.24 2021/08/07 16:18:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +107,7 @@ sacpcic_attach_common(struct sacc_softc *psc, struct sacpcic_softc *sc,
 
 		sc->sc_socket[i].pcmcia =
 		    config_found(sc->sc_pc.sc_dev, &paa, sacpcic_print,
-				 CFARG_EOL);
+				 CFARGS_NONE);
 	}
 
 	config_interrupts(sc->sc_pc.sc_dev, sacpcic_config_deferred);

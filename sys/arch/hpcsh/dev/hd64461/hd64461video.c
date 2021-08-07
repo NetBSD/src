@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461video.c,v 1.54 2021/04/24 23:36:38 thorpej Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.55 2021/08/07 16:18:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.54 2021/04/24 23:36:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.55 2021/08/07 16:18:54 thorpej Exp $");
 
 #include "opt_hd64461video.h"
 // #define HD64461VIDEO_HWACCEL
@@ -270,7 +270,7 @@ hd64461video_attach(device_t parent, device_t self, void *aux)
 	hfa.ha_ndspconf	   = 1;
 	hfa.ha_dspconflist = &hd64461video_chip.hd;
 	
-	config_found(self, &hfa, hpcfbprint, CFARG_EOL);
+	config_found(self, &hfa, hpcfbprint, CFARGS_NONE);
 
 	/*
 	 * XXX: TODO: for now this device manages power using

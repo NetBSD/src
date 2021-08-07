@@ -1,4 +1,4 @@
-/* $NetBSD: nsclpcsio_isa.c,v 1.33 2021/04/24 23:36:55 thorpej Exp $ */
+/* $NetBSD: nsclpcsio_isa.c,v 1.34 2021/08/07 16:19:12 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.33 2021/04/24 23:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.34 2021/08/07 16:19:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -401,7 +401,7 @@ nsclpcsio_isa_attach(device_t parent, device_t self, void *aux)
 		gba.gba_gc = &sc->sc_gpio_gc;
 		gba.gba_pins = sc->sc_gpio_pins;
 		gba.gba_npins = SIO_GPIO_NPINS;
-		config_found(self, &gba, NULL, CFARG_EOL);
+		config_found(self, &gba, NULL, CFARGS_NONE);
 	}
 #endif
 }

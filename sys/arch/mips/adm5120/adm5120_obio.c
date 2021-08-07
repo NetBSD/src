@@ -1,4 +1,4 @@
-/* $NetBSD: adm5120_obio.c,v 1.5 2021/04/24 23:36:41 thorpej Exp $ */
+/* $NetBSD: adm5120_obio.c,v 1.6 2021/08/07 16:18:58 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm5120_obio.c,v 1.5 2021/04/24 23:36:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm5120_obio.c,v 1.6 2021/08/07 16:18:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,9 +159,8 @@ obio_attach(device_t parent, device_t self, void *aux)
 		    ma->ma_obiot);
 		OBIO_DPRINTF("%s: %d\n", __func__, __LINE__);
 		config_found(self, &oa, obio_print,
-		    CFARG_SUBMATCH, obio_submatch,
-		    CFARG_IATTR, "obio",
-		    CFARG_EOL);
+		    CFARGS(.submatch = obio_submatch,
+			   .iattr = "obio"));
 	}
 	OBIO_DPRINTF("%s: %d\n", __func__, __LINE__);
 }

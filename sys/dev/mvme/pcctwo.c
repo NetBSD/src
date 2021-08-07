@@ -1,4 +1,4 @@
-/*	$NetBSD: pcctwo.c,v 1.12 2021/04/24 23:36:56 thorpej Exp $	*/
+/*	$NetBSD: pcctwo.c,v 1.13 2021/08/07 16:19:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcctwo.c,v 1.12 2021/04/24 23:36:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcctwo.c,v 1.13 2021/08/07 16:19:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -103,7 +103,7 @@ pcctwo_init(struct pcctwo_softc *sc, const struct pcctwo_device *pd, int devoff)
 		pd++;
 
 		/* Attach the device if configured. */
-		(void) config_found(sc->sc_dev, &npa, pcctwoprint, CFARG_EOL);
+		(void) config_found(sc->sc_dev, &npa, pcctwoprint, CFARGS_NONE);
 	}
 }
 

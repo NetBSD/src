@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_bus.c,v 1.11 2021/04/24 23:36:52 thorpej Exp $ */
+/*	$NetBSD: adb_bus.c,v 1.12 2021/08/07 16:19:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_bus.c,v 1.11 2021/04/24 23:36:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_bus.c,v 1.12 2021/08/07 16:19:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,7 +169,7 @@ nadb_init(device_t dev)
 			    sc->sc_devtable[i].handler_id);
 			aaa.dev = &sc->sc_devtable[i];
 			if (config_found(sc->sc_dev, &aaa, nadb_devprint,
-					 CFARG_EOL)) {
+					 CFARGS_NONE)) {
 				devmask |= (1 << i);
 			} else {
 				aprint_normal(" not configured\n");

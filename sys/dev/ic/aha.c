@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.64 2021/04/24 23:36:55 thorpej Exp $	*/
+/*	$NetBSD: aha.c,v 1.65 2021/08/07 16:19:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aha.c,v 1.64 2021/04/24 23:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aha.c,v 1.65 2021/08/07 16:19:11 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -278,7 +278,7 @@ aha_attach(struct aha_softc *sc, struct aha_probe_data *apd)
 	/*
 	 * ask the adapter what subunits are present
 	 */
-	config_found(sc->sc_dev, &sc->sc_channel, scsiprint, CFARG_EOL);
+	config_found(sc->sc_dev, &sc->sc_channel, scsiprint, CFARGS_NONE);
 }
 
 static void

@@ -1,4 +1,4 @@
-/* $NetBSD: a9wdt_fdt.c,v 1.3 2021/04/24 23:36:26 thorpej Exp $ */
+/* $NetBSD: a9wdt_fdt.c,v 1.4 2021/08/07 16:18:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a9wdt_fdt.c,v 1.3 2021/04/24 23:36:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a9wdt_fdt.c,v 1.4 2021/08/07 16:18:43 thorpej Exp $");
 
 #if 0
 #include <sys/param.h>
@@ -118,6 +118,6 @@ a9wdt_fdt_attach(device_t parent, device_t self, void *aux)
 		.mpcaa_irq = -1,
 	};
 
-	config_found(self, &mpcaa, NULL, CFARG_EOL);
+	config_found(self, &mpcaa, NULL, CFARGS_NONE);
 }
 

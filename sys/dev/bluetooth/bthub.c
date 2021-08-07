@@ -1,4 +1,4 @@
-/*	$NetBSD: bthub.c,v 1.25 2021/04/24 23:36:53 thorpej Exp $	*/
+/*	$NetBSD: bthub.c,v 1.26 2021/08/07 16:19:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthub.c,v 1.25 2021/04/24 23:36:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthub.c,v 1.26 2021/08/07 16:19:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -238,7 +238,7 @@ bthub_pioctl(dev_t devno, unsigned long cmd, prop_dictionary_t dict,
 		if (dev != NULL)
 			return EADDRINUSE;
 
-		dev = config_found(self, dict, bthub_print, CFARG_EOL);
+		dev = config_found(self, dict, bthub_print, CFARGS_NONE);
 		if (dev == NULL)
 			return ENXIO;
 

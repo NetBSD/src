@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.139 2021/04/24 23:36:58 thorpej Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.140 2021/08/07 16:19:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.139 2021/04/24 23:36:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.140 2021/08/07 16:19:16 thorpej Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -142,8 +142,7 @@ wdc_atapibus_attach(struct atabus_softc *ata_sc)
 	chan->chan_nluns = 1;
 
 	chp->atapibus = config_found(ata_sc->sc_dev, chan, atapiprint,
-	    CFARG_IATTR, "atapi",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "atapi"));
 }
 
 static void

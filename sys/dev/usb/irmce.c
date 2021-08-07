@@ -1,4 +1,4 @@
-/* $NetBSD: irmce.c,v 1.7 2021/04/24 23:36:59 thorpej Exp $ */
+/* $NetBSD: irmce.c,v 1.8 2021/08/07 16:19:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irmce.c,v 1.7 2021/04/24 23:36:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irmce.c,v 1.8 2021/08/07 16:19:16 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -308,7 +308,7 @@ irmce_rescan(device_t self, const char *ifattr, const int *locators)
 		iaa.ia_methods = &irmce_cir_methods;
 		iaa.ia_handle = sc;
 		sc->sc_cirdev =
-		    config_found(self, &iaa, irmce_print, CFARG_EOL);
+		    config_found(self, &iaa, irmce_print, CFARGS_NONE);
 	}
 
 	return 0;

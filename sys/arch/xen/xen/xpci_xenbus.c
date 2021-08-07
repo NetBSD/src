@@ -1,4 +1,4 @@
-/*      $NetBSD: xpci_xenbus.c,v 1.24 2021/04/24 23:36:51 thorpej Exp $      */
+/*      $NetBSD: xpci_xenbus.c,v 1.25 2021/08/07 16:19:08 thorpej Exp $      */
 
 /*
  * Copyright (c) 2009 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xpci_xenbus.c,v 1.24 2021/04/24 23:36:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xpci_xenbus.c,v 1.25 2021/08/07 16:19:08 thorpej Exp $");
 
 #include "opt_xen.h"
 
@@ -359,7 +359,7 @@ xpci_attach_pcibus(int domain, int busn)
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
 	pba.pba_bridgetag = NULL;
 	pba.pba_bus = busn;
-	config_found(xpci_sc->sc_dev, &pba, pcibusprint, CFARG_EOL);
+	config_found(xpci_sc->sc_dev, &pba, pcibusprint, CFARGS_NONE);
 }
 
 /* functions required by the MI PCI system */

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf.c,v 1.35 2021/04/24 23:36:58 thorpej Exp $	*/
+/*	$NetBSD: rf.c,v 1.36 2021/08/07 16:19:15 thorpej Exp $	*/
 /*
  * Copyright (c) 2002 Jochen Kunz.
  * All rights reserved.
@@ -36,7 +36,7 @@ TODO:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.35 2021/04/24 23:36:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.36 2021/08/07 16:19:15 thorpej Exp $");
 
 /* autoconfig stuff */
 #include <sys/param.h>
@@ -398,10 +398,10 @@ rfc_attach(device_t parent, device_t self, void *aux)
 	 */
 	rfc_aa.dnum = 0;
 	rfc_sc->sc_childs[0] = config_found(rfc_sc->sc_dev, &rfc_aa, rf_print,
-	    CFARG_EOL);
+	    CFARGS_NONE);
 	rfc_aa.dnum = 1;
 	rfc_sc->sc_childs[1] = config_found(rfc_sc->sc_dev, &rfc_aa, rf_print,
-	    CFARG_EOL);
+	    CFARGS_NONE);
 #else /* RX02_PROBE */
 	/*
 	 * There are clones of the DEC RX system with standard shugart
@@ -415,13 +415,13 @@ rfc_attach(device_t parent, device_t self, void *aux)
 	if (rfcprobedens(rfc_sc, 0) >= 0) {
 		rfc_aa.dnum = 0;
 		rfc_sc->sc_childs[0] = config_found(rfc_sc->sc_dev, &rfc_aa,
-		    rf_print, CFARG_EOL);
+		    rf_print, CFARGS_NONE);
 	} else
 		rfc_sc->sc_childs[0] = NULL;
 	if (rfcprobedens(rfc_sc, 1) >= 0) {
 		rfc_aa.dnum = 1;
 		rfc_sc->sc_childs[1] = config_found(rfc_sc->sc_dev, &rfc_aa,
-		    rf_print, CFARG_EOL);
+		    rf_print, CFARGS_NONE);
 	} else
 		rfc_sc->sc_childs[1] = NULL;
 #endif /* RX02_PROBE */

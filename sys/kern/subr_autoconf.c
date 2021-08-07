@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.288 2021/06/14 08:55:49 skrll Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.289 2021/08/07 16:19:18 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -76,10 +76,8 @@
  *	@(#)subr_autoconf.c	8.3 (Berkeley) 5/17/94
  */
 
-#define	__SUBR_AUTOCONF_PRIVATE	/* see <sys/device.h> */
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.288 2021/06/14 08:55:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.289 2021/08/07 16:19:18 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -168,6 +166,20 @@ struct alldevs_foray {
 	struct devicelist	af_garbage;
 };
 
+/*
+ * Internal version of the cfargs structure; all versions are
+ * canonicalized to this.
+ */
+struct cfargs_internal {
+	union {
+		cfsubmatch_t	submatch;/* submatch function (direct config) */
+		cfsearch_t	search;	 /* search function (indirect config) */
+	};
+	const char *	iattr;		/* interface attribute */
+	const int *	locators;	/* locators array */
+	devhandle_t	devhandle;	/* devhandle_t (by value) */
+};
+
 static char *number(char *, int);
 static void mapply(struct matchinfo *, cfdata_t);
 static void config_devdelete(device_t);
@@ -177,6 +189,8 @@ static void config_devlink(device_t);
 static void config_alldevs_enter(struct alldevs_foray *);
 static void config_alldevs_exit(struct alldevs_foray *);
 static void config_add_attrib_dict(device_t);
+static device_t	config_attach_internal(device_t, cfdata_t, void *,
+		    cfprint_t, const struct cfargs_internal *);
 
 static void config_collect_garbage(struct devicelist *);
 static void config_dump_garbage(struct devicelist *);
@@ -1068,65 +1082,45 @@ config_probe(device_t parent, cfdata_t cf, void *aux)
 	return config_match(parent, cf, aux);
 }
 
-static void
-config_get_cfargs(cfarg_t tag,
-		  cfsubmatch_t *fnp,		/* output */
-		  const char **ifattrp,		/* output */
-		  const int **locsp,		/* output */
-		  devhandle_t *handlep,		/* output */
-		  va_list ap)
+static struct cfargs_internal *
+cfargs_canonicalize(const struct cfargs * const cfargs,
+    struct cfargs_internal * const store)
 {
-	cfsubmatch_t fn = NULL;
-	const char *ifattr = NULL;
-	const int *locs = NULL;
-	devhandle_t handle;
+	struct cfargs_internal *args = store;
 
-	devhandle_invalidate(&handle);
+	memset(args, 0, sizeof(*args));
 
-	while (tag != CFARG_EOL) {
-		switch (tag) {
-		/*
-		 * CFARG_SUBMATCH and CFARG_SEARCH are synonyms, but this
-		 * is merely an implementation detail.  They are distinct
-		 * from the caller's point of view.
-		 */
-		case CFARG_SUBMATCH:
-		case CFARG_SEARCH:
-			/* Only allow one function to be specified. */
-			if (fn != NULL) {
-				panic("%s: caller specified both "
-				    "SUBMATCH and SEARCH", __func__);
-			}
-			fn = va_arg(ap, cfsubmatch_t);
-			break;
-
-		case CFARG_IATTR:
-			ifattr = va_arg(ap, const char *);
-			break;
-
-		case CFARG_LOCATORS:
-			locs = va_arg(ap, const int *);
-			break;
-
-		case CFARG_DEVHANDLE:
-			handle = va_arg(ap, devhandle_t);
-			break;
-
-		default:
-			panic("%s: unknown cfarg tag: %d\n",
-			    __func__, tag);
-		}
-		tag = va_arg(ap, cfarg_t);
+	/* If none specified, are all-NULL pointers are good. */
+	if (cfargs == NULL) {
+		return args;
 	}
 
-	if (fnp != NULL)
-		*fnp = fn;
-	if (ifattrp != NULL)
-		*ifattrp = ifattr;
-	if (locsp != NULL)
-		*locsp = locs;
-	if (handlep != NULL)
-		*handlep = handle;
+	/*
+	 * Only one arguments version is recognized at this time.
+	 */
+	if (cfargs->cfargs_version != CFARGS_VERSION) {
+		panic("cfargs_canonicalize: unknown version %lu\n",
+		    (unsigned long)cfargs->cfargs_version);
+	}
+
+	/*
+	 * submatch and search are mutually-exclusive.
+	 */
+	if (cfargs->submatch != NULL && cfargs->search != NULL) {
+		panic("cfargs_canonicalize: submatch and search are "
+		      "mutually-exclusive");
+	}
+	if (cfargs->submatch != NULL) {
+		args->submatch = cfargs->submatch;
+	} else if (cfargs->search != NULL) {
+		args->search = cfargs->search;
+	}
+
+	args->iattr = cfargs->iattr;
+	args->locators = cfargs->locators;
+	args->devhandle = cfargs->devhandle;
+
+	return args;
 }
 
 /*
@@ -1140,25 +1134,23 @@ config_get_cfargs(cfarg_t tag,
  * an arbitrary function to all potential children (its return value
  * can be ignored).
  */
-cfdata_t
-config_vsearch(device_t parent, void *aux, cfarg_t tag, va_list ap)
+static cfdata_t
+config_search_internal(device_t parent, void *aux,
+    const struct cfargs_internal * const args)
 {
-	cfsubmatch_t fn;
-	const char *ifattr;
-	const int *locs;
 	struct cftable *ct;
 	cfdata_t cf;
 	struct matchinfo m;
 
-	config_get_cfargs(tag, &fn, &ifattr, &locs, NULL, ap);
-
 	KASSERT(config_initialized);
-	KASSERT(!ifattr || cfdriver_get_iattr(parent->dv_cfdriver, ifattr));
-	KASSERT(ifattr || cfdriver_iattr_count(parent->dv_cfdriver) < 2);
+	KASSERT(!args->iattr ||
+		cfdriver_get_iattr(parent->dv_cfdriver, args->iattr));
+	KASSERT(args->iattr ||
+		cfdriver_iattr_count(parent->dv_cfdriver) < 2);
 
-	m.fn = fn;
+	m.fn = args->submatch;		/* N.B. union */
 	m.parent = parent;
-	m.locs = locs;
+	m.locs = args->locators;
 	m.aux = aux;
 	m.match = NULL;
 	m.pri = 0;
@@ -1186,7 +1178,8 @@ config_vsearch(device_t parent, void *aux, cfarg_t tag, va_list ap)
 			 * consider only children which attach to
 			 * that attribute.
 			 */
-			if (ifattr && !STREQ(ifattr, cfdata_ifattr(cf)))
+			if (args->iattr != NULL &&
+			    !STREQ(args->iattr, cfdata_ifattr(cf)))
 				continue;
 
 			if (cfparent_match(parent, cf->cf_pspec))
@@ -1197,14 +1190,13 @@ config_vsearch(device_t parent, void *aux, cfarg_t tag, va_list ap)
 }
 
 cfdata_t
-config_search(device_t parent, void *aux, cfarg_t tag, ...)
+config_search(device_t parent, void *aux, const struct cfargs *cfargs)
 {
 	cfdata_t cf;
-	va_list ap;
+	struct cfargs_internal store;
 
-	va_start(ap, tag);
-	cf = config_vsearch(parent, aux, tag, ap);
-	va_end(ap);
+	cf = config_search_internal(parent, aux,
+	    cfargs_canonicalize(cfargs, &store));
 
 	return cf;
 }
@@ -1256,18 +1248,17 @@ static const char * const msgs[] = {
  * not configured, call the given `print' function and return NULL.
  */
 device_t
-config_vfound(device_t parent, void *aux, cfprint_t print, cfarg_t tag,
-    va_list ap)
+config_found(device_t parent, void *aux, cfprint_t print,
+    const struct cfargs * const cfargs)
 {
 	cfdata_t cf;
-	va_list nap;
+	struct cfargs_internal store;
+	const struct cfargs_internal * const args =
+	    cfargs_canonicalize(cfargs, &store);
 
-	va_copy(nap, ap);
-	cf = config_vsearch(parent, aux, tag, nap);
-	va_end(nap);
-
+	cf = config_search_internal(parent, aux, args);
 	if (cf != NULL) {
-		return config_vattach(parent, cf, aux, print, tag, ap);
+		return config_attach_internal(parent, cf, aux, print, args);
 	}
 
 	if (print) {
@@ -1292,19 +1283,6 @@ config_vfound(device_t parent, void *aux, cfprint_t print, cfarg_t tag,
 	return NULL;
 }
 
-device_t
-config_found(device_t parent, void *aux, cfprint_t print, cfarg_t tag, ...)
-{
-	device_t dev;
-	va_list ap;
-
-	va_start(ap, tag);
-	dev = config_vfound(parent, aux, print, tag, ap);
-	va_end(ap);
-
-	return dev;
-}
-
 /*
  * As above, but for root devices.
  */
@@ -1316,7 +1294,7 @@ config_rootfound(const char *rootname, void *aux)
 
 	KERNEL_LOCK(1, NULL);
 	if ((cf = config_rootsearch(NULL, rootname, aux)) != NULL)
-		dev = config_attach(ROOT, cf, aux, NULL, CFARG_EOL);
+		dev = config_attach(ROOT, cf, aux, NULL, CFARGS_NONE);
 	else
 		aprint_error("root device %s not configured\n", rootname);
 	KERNEL_UNLOCK_ONE(NULL);
@@ -1539,8 +1517,8 @@ config_unit_alloc(device_t dev, cfdriver_t cd, cfdata_t cf)
 }
 
 static device_t
-config_vdevalloc(const device_t parent, const cfdata_t cf, cfarg_t tag,
-    va_list ap)
+config_devalloc(const device_t parent, const cfdata_t cf,
+    const struct cfargs_internal * const args)
 {
 	cfdriver_t cd;
 	cfattach_t ca;
@@ -1552,7 +1530,6 @@ config_vdevalloc(const device_t parent, const cfdata_t cf, cfarg_t tag,
 	void *dev_private;
 	const struct cfiattrdata *ia;
 	device_lock_t dvl;
-	const int *locs;
 
 	cd = config_cfdriver_lookup(cf->cf_name);
 	if (cd == NULL)
@@ -1571,12 +1548,7 @@ config_vdevalloc(const device_t parent, const cfdata_t cf, cfarg_t tag,
 	}
 	dev = kmem_zalloc(sizeof(*dev), KM_SLEEP);
 
-	/*
-	 * If a handle was supplied to config_attach(), we'll get it
-	 * assigned automatically here.  If not, then we'll get the
-	 * default invalid handle.
-	 */
-	config_get_cfargs(tag, NULL, NULL, &locs, &dev->dv_handle, ap);
+	dev->dv_handle = args->devhandle;
 
 	dev->dv_class = cd->cd_class;
 	dev->dv_cfdata = cf;
@@ -1598,7 +1570,7 @@ config_vdevalloc(const device_t parent, const cfdata_t cf, cfarg_t tag,
 	xunit = number(&num[sizeof(num)], myunit);
 	lunit = &num[sizeof(num)] - xunit;
 	if (lname + lunit > sizeof(dev->dv_xname))
-		panic("config_vdevalloc: device name too long");
+		panic("config_devalloc: device name too long");
 
 	dvl = device_getlock(dev);
 
@@ -1613,13 +1585,14 @@ config_vdevalloc(const device_t parent, const cfdata_t cf, cfarg_t tag,
 	else
 		dev->dv_depth = 0;
 	dev->dv_flags |= DVF_ACTIVE;	/* always initially active */
-	if (locs) {
+	if (args->locators) {
 		KASSERT(parent); /* no locators at root */
 		ia = cfiattr_lookup(cfdata_ifattr(cf), parent->dv_cfdriver);
 		dev->dv_locators =
 		    kmem_alloc(sizeof(int) * (ia->ci_loclen + 1), KM_SLEEP);
 		*dev->dv_locators++ = sizeof(int) * (ia->ci_loclen + 1);
-		memcpy(dev->dv_locators, locs, sizeof(int) * ia->ci_loclen);
+		memcpy(dev->dv_locators, args->locators,
+		    sizeof(int) * ia->ci_loclen);
 	}
 	dev->dv_properties = prop_dictionary_create();
 	KASSERT(dev->dv_properties != NULL);
@@ -1635,19 +1608,6 @@ config_vdevalloc(const device_t parent, const cfdata_t cf, cfarg_t tag,
 
 	if (dev->dv_cfdriver->cd_attrs != NULL)
 		config_add_attrib_dict(dev);
-
-	return dev;
-}
-
-static device_t
-config_devalloc(const device_t parent, const cfdata_t cf, cfarg_t tag, ...)
-{
-	device_t dev;
-	va_list ap;
-
-	va_start(ap, tag);
-	dev = config_vdevalloc(parent, cf, tag, ap);
-	va_end(ap);
 
 	return dev;
 }
@@ -1734,9 +1694,9 @@ config_add_attrib_dict(device_t dev)
 /*
  * Attach a found device.
  */
-device_t
-config_vattach(device_t parent, cfdata_t cf, void *aux, cfprint_t print,
-    cfarg_t tag, va_list ap)
+static device_t
+config_attach_internal(device_t parent, cfdata_t cf, void *aux, cfprint_t print,
+    const struct cfargs_internal * const args)
 {
 	device_t dev;
 	struct cftable *ct;
@@ -1745,7 +1705,7 @@ config_vattach(device_t parent, cfdata_t cf, void *aux, cfprint_t print,
 
 	KASSERT(KERNEL_LOCKED_P());
 
-	dev = config_vdevalloc(parent, cf, tag, ap);
+	dev = config_devalloc(parent, cf, args);
 	if (!dev)
 		panic("config_attach: allocation of device softc failed");
 
@@ -1817,18 +1777,14 @@ config_vattach(device_t parent, cfdata_t cf, void *aux, cfprint_t print,
 
 device_t
 config_attach(device_t parent, cfdata_t cf, void *aux, cfprint_t print,
-    cfarg_t tag, ...)
+    const struct cfargs *cfargs)
 {
-	device_t dev;
-	va_list ap;
+	struct cfargs_internal store;
 
 	KASSERT(KERNEL_LOCKED_P());
 
-	va_start(ap, tag);
-	dev = config_vattach(parent, cf, aux, print, tag, ap);
-	va_end(ap);
-
-	return dev;
+	return config_attach_internal(parent, cf, aux, print,
+	    cfargs_canonicalize(cfargs, &store));
 }
 
 /*
@@ -1847,7 +1803,8 @@ config_attach_pseudo(cfdata_t cf)
 
 	KERNEL_LOCK(1, NULL);
 
-	dev = config_devalloc(ROOT, cf, CFARG_EOL);
+	struct cfargs_internal args = { };
+	dev = config_devalloc(ROOT, cf, &args);
 	if (!dev)
 		goto out;
 

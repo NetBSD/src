@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.22 2021/04/24 23:36:30 thorpej Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.23 2021/08/07 16:18:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.22 2021/04/24 23:36:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.23 2021/08/07 16:18:47 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -88,7 +88,7 @@ vmebusattach(device_t parent, device_t self, void *aux)
 	vba.vba_memt->base = 0;
 
 	printf("\n");
-	config_found(self, &vba, vmebusprint, CFARG_EOL);
+	config_found(self, &vba, vmebusprint, CFARGS_NONE);
 }
 
 int

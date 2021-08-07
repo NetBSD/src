@@ -1,4 +1,4 @@
-/*	$NetBSD: j6x0tp.c,v 1.24 2021/04/24 23:36:38 thorpej Exp $ */
+/*	$NetBSD: j6x0tp.c,v 1.25 2021/08/07 16:18:54 thorpej Exp $ */
 
 /*
  * Copyright (c) 2003 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j6x0tp.c,v 1.24 2021/04/24 23:36:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j6x0tp.c,v 1.25 2021/08/07 16:18:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -254,8 +254,7 @@ j6x0tp_attach(device_t parent, device_t self, void *aux)
 	wsma.accesscookie = sc;
 
 	sc->sc_wsmousedev = config_found(self, &wsma, wsmousedevprint,
-	    CFARG_IATTR, "wsmousedev",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "wsmousedev"));
 	if (sc->sc_wsmousedev == NULL)
 		return;
 
@@ -266,8 +265,7 @@ j6x0tp_attach(device_t parent, device_t self, void *aux)
 	wska.accesscookie = sc;
 
 	sc->sc_wskbddev = config_found(self, &wska, wskbddevprint,
-	    CFARG_IATTR, "wskbddev",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "wskbddev"));
 
 	/* init calibration, set default parameters */
 	tpcalib_init(&sc->sc_tpcalib);

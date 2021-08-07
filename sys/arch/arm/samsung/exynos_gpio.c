@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_gpio.c,v 1.31 2021/04/24 23:36:28 thorpej Exp $ */
+/*	$NetBSD: exynos_gpio.c,v 1.32 2021/08/07 16:18:45 thorpej Exp $ */
 
 /*-
 * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.31 2021/04/24 23:36:28 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.32 2021/08/07 16:18:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -397,7 +397,7 @@ exynos_gpio_bank_config(struct exynos_pinctrl_softc * parent,
 
 	bank->bank_sc = sc;
 	bank->bank_dev =
-	    config_found(parent->sc_dev, &gba, exynos_gpio_cfprint, CFARG_EOL);
+	    config_found(parent->sc_dev, &gba, exynos_gpio_cfprint, CFARGS_NONE);
 	bank->bank_dev->dv_private = sc;
 
 	/* read in our initial settings */

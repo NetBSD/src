@@ -1,4 +1,4 @@
-/*	$NetBSD: moxa_isa.c,v 1.22 2021/04/24 23:36:55 thorpej Exp $	*/
+/*	$NetBSD: moxa_isa.c,v 1.23 2021/08/07 16:19:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: moxa_isa.c,v 1.22 2021/04/24 23:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: moxa_isa.c,v 1.23 2021/08/07 16:19:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,7 +172,7 @@ moxa_isaattach(device_t parent, device_t self, void *aux)
 		ca.ca_noien = 1;
 
 		sc->sc_slaves[i] = config_found(self, &ca, commultiprint,
-		    CFARG_EOL);
+		    CFARGS_NONE);
 		if (sc->sc_slaves[i] != NULL)
 			sc->sc_alive |= 1 << i;
 	}

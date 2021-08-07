@@ -1,4 +1,4 @@
-/*      $NetBSD: octeon_cpunode.c,v 1.20 2021/08/03 23:12:14 andvar Exp $   */
+/*      $NetBSD: octeon_cpunode.c,v 1.21 2021/08/07 16:18:59 thorpej Exp $   */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #define __INTR_PRIVATE
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: octeon_cpunode.c,v 1.20 2021/08/03 23:12:14 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_cpunode.c,v 1.21 2021/08/07 16:18:59 thorpej Exp $");
 
 #include "locators.h"
 #include "cpunode.h"
@@ -139,14 +139,14 @@ cpunode_mainbus_attach(device_t parent, device_t self, void *aux)
 			.cnaa_name = "cpu",
 			.cnaa_cpunum = cpunum,
 		};
-		config_found(self, &cnaa, cpunode_mainbus_print, CFARG_EOL);
+		config_found(self, &cnaa, cpunode_mainbus_print, CFARGS_NONE);
 	}
 #if NWDOG > 0
 	struct cpunode_attach_args cnaa = {
 		.cnaa_name = "wdog",
 		.cnaa_cpunum = CPUNODECF_CORE_DEFAULT,
 	};
-	config_found(self, &cnaa, cpunode_mainbus_print, CFARG_EOL);
+	config_found(self, &cnaa, cpunode_mainbus_print, CFARGS_NONE);
 #endif
 }
 

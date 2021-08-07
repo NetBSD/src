@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.12 2021/04/24 23:36:45 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.13 2021/08/07 16:19:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.12 2021/04/24 23:36:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.13 2021/08/07 16:19:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -91,8 +91,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 
 	/* Search for and attach children. */
 	config_search(self, &mba,
-	    CFARG_SEARCH, mainbus_search,
-	    CFARG_EOL);
+	    CFARGS(.search = mainbus_search));
 
 	mainbus_attached = 1;
 }
@@ -102,6 +101,6 @@ mainbus_search(device_t parent, cfdata_t cf,
 	       const int *ldesc, void *aux)
 {
 	if (config_probe(parent, cf, aux))
-		config_attach(parent, cf, aux, NULL, CFARG_EOL);
+		config_attach(parent, cf, aux, NULL, CFARGS_NONE);
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.97 2021/04/24 23:36:59 thorpej Exp $	*/
+/*	$NetBSD: xd.c,v 1.98 2021/08/07 16:19:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles D. Cranor
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.97 2021/04/24 23:36:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.98 2021/08/07 16:19:17 thorpej Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -672,7 +672,7 @@ xdcattach(device_t parent, device_t self, void *aux)
 	xa.booting = 1;
 
 	for (xa.driveno = 0; xa.driveno < XDC_MAXDEV; xa.driveno++)
-		(void) config_found(self, (void *) &xa, NULL, CFARG_EOL);
+		(void) config_found(self, (void *) &xa, NULL, CFARGS_NONE);
 
 	/* start the watchdog clock */
 	callout_reset(&xdc->sc_tick_ch, XDC_TICKCNT, xdc_tick, xdc);

@@ -1,4 +1,4 @@
-/* $NetBSD: ti_iic.c,v 1.14 2021/04/24 23:36:28 thorpej Exp $ */
+/* $NetBSD: ti_iic.c,v 1.15 2021/08/07 16:18:45 thorpej Exp $ */
 
 /*
  * Copyright (c) 2013 Manuel Bouyer.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_iic.c,v 1.14 2021/04/24 23:36:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_iic.c,v 1.15 2021/08/07 16:18:45 thorpej Exp $");
 
 #include "opt_omap.h"
 #include "locators.h"
@@ -296,7 +296,7 @@ ti_iic_rescan(device_t self, const char *ifattr, const int *locs)
 		memset(&iba, 0, sizeof(iba));
 		iba.iba_tag = &sc->sc_ic;
 		sc->sc_i2cdev =
-		    config_found(self, &iba, iicbus_print, CFARG_EOL);
+		    config_found(self, &iba, iicbus_print, CFARGS_NONE);
 	}
 
 	return 0;

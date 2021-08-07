@@ -1,4 +1,4 @@
-/*	$NetBSD: agten.c,v 1.33 2021/04/24 23:36:58 thorpej Exp $ */
+/*	$NetBSD: agten.c,v 1.34 2021/08/07 16:19:15 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.33 2021/04/24 23:36:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.34 2021/08/07 16:19:15 thorpej Exp $");
 
 /*
  * a driver for the Fujitsu AG-10e SBus framebuffer
@@ -370,7 +370,7 @@ agten_attach(device_t parent, device_t dev, void *aux)
 	aa.accessops = &agten_accessops;
 	aa.accesscookie = &sc->vd;
 
-	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint, CFARG_EOL);
+	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint, CFARGS_NONE);
 
 	fb->fb_driver = &agtenfbdriver;
 	fb->fb_device = sc->sc_dev;

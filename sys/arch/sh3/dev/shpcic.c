@@ -1,4 +1,4 @@
-/*	$NetBSD: shpcic.c,v 1.21 2021/04/24 23:36:48 thorpej Exp $	*/
+/*	$NetBSD: shpcic.c,v 1.22 2021/08/07 16:19:05 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 2005 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shpcic.c,v 1.21 2021/04/24 23:36:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shpcic.c,v 1.22 2021/08/07 16:19:05 thorpej Exp $");
 
 #include "opt_pci.h"
 
@@ -244,7 +244,7 @@ shpcic_attach(device_t parent, device_t self, void *aux)
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
 	pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY;
-	config_found(self, &pba, NULL, CFARG_EOL);
+	config_found(self, &pba, NULL, CFARGS_NONE);
 }
 
 int

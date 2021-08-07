@@ -1,4 +1,4 @@
-/* $NetBSD: tlsb.c,v 1.40 2021/07/04 22:42:36 thorpej Exp $ */
+/* $NetBSD: tlsb.c,v 1.41 2021/08/07 16:18:41 thorpej Exp $ */
 /*
  * Copyright (c) 1997 by Matthew Jacob
  * NASA AMES Research Center.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.40 2021/07/04 22:42:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.41 2021/08/07 16:18:41 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -180,9 +180,8 @@ tlsbattach(device_t parent, device_t self, void *aux)
 		locs[TLSBCF_OFFSET] = 0; /* XXX unused? */
 
 		config_found(self, &ta, tlsbprint,
-		    CFARG_SUBMATCH, config_stdsubmatch,
-		    CFARG_LOCATORS, locs,
-		    CFARG_EOL);
+		    CFARGS(.submatch = config_stdsubmatch,
+			   .locators = locs));
 	}
 	/*
 	 * *Now* search for I/O nodes (in descending order)
@@ -228,9 +227,8 @@ tlsbattach(device_t parent, device_t self, void *aux)
 			locs[TLSBCF_OFFSET] = 0; /* XXX unused? */
 
 			config_found(self, &ta, tlsbprint,
-			    CFARG_SUBMATCH, config_stdsubmatch,
-			    CFARG_LOCATORS, locs,
-			    CFARG_EOL);
+			    CFARGS(.submatch = config_stdsubmatch,
+				   .locators = locs));
 		}
 	}
 }

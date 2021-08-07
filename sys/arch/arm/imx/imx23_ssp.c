@@ -1,4 +1,4 @@
-/* $Id: imx23_ssp.c,v 1.5 2021/04/24 23:36:27 thorpej Exp $ */
+/* $Id: imx23_ssp.c,v 1.6 2021/08/07 16:18:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -326,7 +326,7 @@ issp_attach(device_t parent, device_t self, void *aux)
 	saa.saa_caps	= SMC_CAPS_DMA | SMC_CAPS_4BIT_MODE |
 	    SMC_CAPS_MULTI_SEG_DMA;
 
-	sc->sc_sdmmc = config_found(sc->sc_dev, &saa, NULL, CFARG_EOL);
+	sc->sc_sdmmc = config_found(sc->sc_dev, &saa, NULL, CFARGS_NONE);
 	if (sc->sc_sdmmc == NULL) {
 		aprint_error_dev(sc->sc_dev, "unable to attach sdmmc\n");
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.60 2021/07/02 10:14:07 jmcneill Exp $	*/
+/*	$NetBSD: snapper.c,v 1.61 2021/08/07 16:18:58 thorpej Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 /*	Id: i2s.c,v 1.12 2005/01/15 14:32:35 tsubai Exp		*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.60 2021/07/02 10:14:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.61 2021/08/07 16:18:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -2306,9 +2306,7 @@ snapper_setup_ow(struct snapper_softc *sc)
 	memset(&oba, 0, sizeof(oba));
 	oba.oba_bus = &sc->sc_ow_bus;
 	sc->sc_ow_dev = config_found(sc->sc_dev, &oba, onewirebus_print,
-	    CFARG_IATTR, "onewirebus",
-	    CFARG_EOL);
-
+	    CFARGS(.iattr = "onewirebus"));
 }
 
 static int

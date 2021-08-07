@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiep.c,v 1.51 2021/05/10 23:53:44 thorpej Exp $ */
+/*	$NetBSD: msiiep.c,v 1.52 2021/08/07 16:19:05 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.51 2021/05/10 23:53:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.52 2021/08/07 16:19:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -232,11 +232,11 @@ msiiep_attach(device_t parent, device_t self, void *aux)
 
 	/* config timer/counter part of PCIC */
 	msa.msa_name = "timer";
-	config_found(self, &msa, NULL, CFARG_EOL);
+	config_found(self, &msa, NULL, CFARGS_NONE);
 
 	/* config PCI tree */
 	msa.msa_name = "pcic";
-	config_found(self, &msa, NULL, CFARG_EOL);
+	config_found(self, &msa, NULL, CFARGS_NONE);
 }
 
 /* ARGSUSED */
@@ -363,8 +363,7 @@ mspcic_attach(device_t parent, device_t self, void *aux)
 	mspcic_pci_scan(sc->sc_node);
 
 	config_found(self, &pba, mspcic_print,
-	    CFARG_DEVHANDLE, prom_node_to_devhandle(sc->sc_node),
-	    CFARG_EOL);
+	    CFARGS(.devhandle = prom_node_to_devhandle(sc->sc_node)));
 }
 
 

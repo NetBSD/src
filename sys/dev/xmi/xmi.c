@@ -1,4 +1,4 @@
-/*	$NetBSD: xmi.c,v 1.12 2021/04/24 23:37:00 thorpej Exp $	*/
+/*	$NetBSD: xmi.c,v 1.13 2021/08/07 16:19:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xmi.c,v 1.12 2021/04/24 23:37:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xmi.c,v 1.13 2021/08/07 16:19:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,6 +117,6 @@ xmi_attach(struct xmi_softc *sc)
 		xa.xa_nodenr = nodenr;
 		xa.xa_ivec = 256 + lastiv;
 		lastiv += 4;
-		config_found(sc->sc_dev, &xa, xmi_print, CFARG_EOL);
+		config_found(sc->sc_dev, &xa, xmi_print, CFARGS_NONE);
 	}
 }

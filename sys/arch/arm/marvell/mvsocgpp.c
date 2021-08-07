@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsocgpp.c,v 1.7 2021/04/24 23:36:27 thorpej Exp $	*/
+/*	$NetBSD: mvsocgpp.c,v 1.8 2021/08/07 16:18:44 thorpej Exp $	*/
 /*
  * Copyright (c) 2008, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsocgpp.c,v 1.7 2021/04/24 23:36:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsocgpp.c,v 1.8 2021/08/07 16:18:44 thorpej Exp $");
 
 #include "gpio.h"
 
@@ -230,7 +230,7 @@ mvsocgpp_attach(device_t parent, device_t self, void *aux)
 	gba.gba_gc = &sc->sc_gpio_chipset;
 	gba.gba_pins = sc->sc_pins;
 	gba.gba_npins = gpp_npins;
-	config_found(self, &gba, gpiobus_print, CFARG_EOL);
+	config_found(self, &gba, gpiobus_print, CFARGS_NONE);
 #endif
 }
 

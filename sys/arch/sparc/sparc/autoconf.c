@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.268 2021/07/31 16:54:37 andvar Exp $ */
+/*	$NetBSD: autoconf.c,v 1.269 2021/08/07 16:19:05 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.268 2021/07/31 16:54:37 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.269 2021/08/07 16:19:05 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1222,19 +1222,19 @@ mainbus_attach(device_t parent, device_t dev, void *aux)
 		ma.ma_bustag = &mainbus_space_tag;
 		ma.ma_dmatag = &mainbus_dma_tag;
 		ma.ma_name = "cpu";
-		if (config_found(dev, (void *)&ma, mbprint, CFARG_EOL) == NULL)
+		if (config_found(dev, (void *)&ma, mbprint, CFARGS_NONE) == NULL)
 			panic("cpu missing");
 
 		ma.ma_bustag = &mainbus_space_tag;
 		ma.ma_dmatag = &mainbus_dma_tag;
 		ma.ma_name = "obio";
-		if (config_found(dev, (void *)&ma, mbprint, CFARG_EOL) == NULL)
+		if (config_found(dev, (void *)&ma, mbprint, CFARGS_NONE) == NULL)
 			panic("obio missing");
 
 		ma.ma_bustag = &mainbus_space_tag;
 		ma.ma_dmatag = &mainbus_dma_tag;
 		ma.ma_name = "vme";
-		(void)config_found(dev, (void *)&ma, mbprint, CFARG_EOL);
+		(void)config_found(dev, (void *)&ma, mbprint, CFARGS_NONE);
 		return;
 	}
 #endif
@@ -1286,8 +1286,7 @@ mainbus_attach(device_t parent, device_t dev, void *aux)
 			ma.ma_node = node;
 			ma.ma_name = "cpu";
 			config_found(dev, (void *)&ma, mbprint,
-			    CFARG_DEVHANDLE, prom_node_to_devhandle(node),
-			    CFARG_EOL);
+			    CFARGS(.devhandle = prom_node_to_devhandle(node)));
 			if (node == bootnode && bootmid != 0) {
 				/* Re-enter loop to find all remaining CPUs */
 				goto rescan;
@@ -1300,8 +1299,7 @@ mainbus_attach(device_t parent, device_t dev, void *aux)
 		ma.ma_node = findroot();
 		ma.ma_name = "cpu";
 		config_found(dev, (void *)&ma, mbprint,
-		    CFARG_DEVHANDLE, prom_node_to_devhandle(ma.ma_node),
-		    CFARG_EOL);
+		    CFARGS(.devhandle = prom_node_to_devhandle(ma.ma_node)));
 	}
 
 	for (ssp = openboot_special; (sp = ssp->dev) != NULL; ssp++) {
@@ -1332,8 +1330,8 @@ mainbus_attach(device_t parent, device_t dev, void *aux)
 			continue;
 
 		if (config_found(dev, (void *)&ma, mbprint,
-				 CFARG_DEVHANDLE, prom_node_to_devhandle(node),
-				 CFARG_EOL) == NULL) {
+				 CFARGS(.devhandle =
+				     prom_node_to_devhandle(node))) == NULL) {
 			if (ssp->flags & BS_OPTIONAL) continue;
 			panic("%s", sp);
 		}
@@ -1393,8 +1391,7 @@ mainbus_attach(device_t parent, device_t dev, void *aux)
 			ma.ma_promvaddr = 0;
 
 			config_found(dev, (void *)&ma, mbprint,
-			    CFARG_DEVHANDLE, prom_node_to_devhandle(node),
-			    CFARG_EOL);
+			    CFARGS(.devhandle = prom_node_to_devhandle(node)));
 			continue;
 		}
 #endif /* SUN4M */
@@ -1412,8 +1409,7 @@ mainbus_attach(device_t parent, device_t dev, void *aux)
 			continue;
 
 		config_found(dev, (void *)&ma, mbprint,
-		    CFARG_DEVHANDLE, prom_node_to_devhandle(node),
-		    CFARG_EOL);
+		    CFARGS(.devhandle = prom_node_to_devhandle(node)));
 	}
 #endif /* SUN4C || SUN4M || SUN4D */
 }

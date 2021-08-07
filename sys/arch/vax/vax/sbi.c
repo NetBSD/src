@@ -1,4 +1,4 @@
-/*	$NetBSD: sbi.c,v 1.39 2021/04/24 23:36:50 thorpej Exp $ */
+/*	$NetBSD: sbi.c,v 1.40 2021/08/07 16:19:07 thorpej Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbi.c,v 1.39 2021/04/24 23:36:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbi.c,v 1.40 2021/08/07 16:19:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,7 +126,7 @@ sbi_mainbus_attach(device_t parent, device_t self, void *aux)
 			sa.sa_nexnum = nexnum;
 			sa.sa_ioh = (vaddr_t)nexusP;
                         sa.sa_base = (bus_addr_t)NEX780;
-			config_found(self, (void*)&sa, sbi_print, CFARG_EOL);
+			config_found(self, (void*)&sa, sbi_print, CFARGS_NONE);
 		}
 	}
 }
@@ -177,7 +177,7 @@ sbi_abus_attach(device_t parent, device_t self, void *aux)
 
 			sa.sa_nexnum = nexnum;
 			sa.sa_ioh = (vaddr_t)nexusP;
-			config_found(self, (void*)&sa, sbi_print, CFARG_EOL);
+			config_found(self, (void*)&sa, sbi_print, CFARGS_NONE);
 		}
 	}
 }

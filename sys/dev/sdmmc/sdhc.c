@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.110 2021/05/13 05:54:14 msaitoh Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.111 2021/08/07 16:19:16 thorpej Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.110 2021/05/13 05:54:14 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.111 2021/08/07 16:19:16 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -642,7 +642,7 @@ adma_done:
 	if (ISSET(sc->sc_flags, SDHC_FLAG_BROKEN_ADMA2_ZEROLEN))
 		saa.saa_max_seg = 65535;
 
-	hp->sdmmc = config_found(sc->sc_dev, &saa, sdhc_cfprint, CFARG_EOL);
+	hp->sdmmc = config_found(sc->sc_dev, &saa, sdhc_cfprint, CFARGS_NONE);
 
 	return 0;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: atppc.c,v 1.38 2021/04/24 23:36:55 thorpej Exp $ */
+/* $NetBSD: atppc.c,v 1.39 2021/08/07 16:19:12 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.38 2021/04/24 23:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.39 2021/08/07 16:19:12 thorpej Exp $");
 
 #include "opt_atppc.h"
 
@@ -235,7 +235,7 @@ atppc_sc_attach(struct atppc_softc *lsc)
 
 	/* Configure child of the device. */
 	lsc->child = config_found(lsc->sc_dev, &(sc_parport_adapter),
-		atppc_print, CFARG_EOL);
+		atppc_print, CFARGS_NONE);
 
 	return;
 }

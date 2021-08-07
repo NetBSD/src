@@ -1,4 +1,4 @@
-/*	$NetBSD: astro.c,v 1.3 2021/04/24 23:36:39 thorpej Exp $	*/
+/*	$NetBSD: astro.c,v 1.4 2021/08/07 16:18:55 thorpej Exp $	*/
 
 /*	$OpenBSD: astro.c,v 1.8 2007/10/06 23:50:54 krw Exp $	*/
 
@@ -345,8 +345,7 @@ astro_callback(device_t self, struct confargs *ca)
 {
 
 	return config_found(self, ca, mbprint,
-	    CFARG_SUBMATCH, mbsubmatch,
-	    CFARG_EOL);
+	    CFARGS(.submatch = mbsubmatch));
 }
 
 int

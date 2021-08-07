@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_pci.c,v 1.39 2021/04/24 23:36:57 thorpej Exp $ */
+/*	$NetBSD: genfb_pci.c,v 1.40 2021/08/07 16:19:14 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.39 2021/04/24 23:36:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.40 2021/08/07 16:19:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,8 +193,7 @@ pci_genfb_attach(device_t parent, device_t self, void *aux)
 
 		/* now try to attach a DRM */
 		config_found(self, aux, pci_genfb_drm_print,
-		    CFARG_IATTR, "drm",
-		    CFARG_EOL);
+		    CFARGS(.iattr = "drm"));
 	}
 }
 

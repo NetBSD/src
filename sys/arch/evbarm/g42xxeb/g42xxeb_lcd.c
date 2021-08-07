@@ -1,4 +1,4 @@
-/* $NetBSD: g42xxeb_lcd.c,v 1.17 2021/04/24 23:36:32 thorpej Exp $ */
+/* $NetBSD: g42xxeb_lcd.c,v 1.18 2021/08/07 16:18:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2001, 2002, 2005 Genetec corp.
@@ -237,7 +237,7 @@ void lcd_attach(device_t parent, device_t self, void *aux)
 		aa.accesscookie = sc;
 
 		(void) config_found(self, &aa, wsemuldisplaydevprint,
-		    CFARG_EOL);
+		    CFARGS_NONE);
 	}
 #else
 	{

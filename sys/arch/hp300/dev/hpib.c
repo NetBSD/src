@@ -1,4 +1,4 @@
-/*	$NetBSD: hpib.c,v 1.43 2021/07/05 14:03:46 tsutsui Exp $	*/
+/*	$NetBSD: hpib.c,v 1.44 2021/08/07 16:18:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpib.c,v 1.43 2021/07/05 14:03:46 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpib.c,v 1.44 2021/08/07 16:18:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,8 +190,7 @@ hpibbus_attach_children(struct hpibbus_softc *sc)
 			ha.ha_slave = slave;
 			ha.ha_punit = punit;
 			config_found(sc->sc_dev, &ha, hpibbusprint,
-			    CFARG_SUBMATCH, hpibbussubmatch,
-			    CFARG_EOL);
+			    CFARGS(.submatch = hpibbussubmatch));
 		}
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_et.c,v 1.33 2021/04/27 14:48:29 thorpej Exp $	*/
+/*	$NetBSD: ite_et.c,v 1.34 2021/08/07 16:18:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_et.c,v 1.33 2021/04/27 14:48:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_et.c,v 1.34 2021/08/07 16:18:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -205,7 +205,7 @@ grfetattach(device_t parent, device_t self, void *aux)
 
 		/* Attach console ite */
 		atari_config_found(cfdata_grf, &itedev, &congrf, grfetprint,
-		    CFARG_EOL);
+		    CFARGS_NONE);
 		return;
 	}
 
@@ -241,7 +241,7 @@ grfetattach(device_t parent, device_t self, void *aux)
 	/*
 	 * try and attach an ite
 	 */
-	config_found(self, sc /* XXX */, grfetprint, CFARG_EOL);
+	config_found(self, sc /* XXX */, grfetprint, CFARGS_NONE);
 
 	/*
 	 * If attaching the first unit, go ahead and 'find' the rest of us
@@ -251,7 +251,7 @@ grfetattach(device_t parent, device_t self, void *aux)
 		grf_auxp.from_bus_match = 0;
 		for (grf_auxp.unit=0; grf_auxp.unit < NGRFET; grf_auxp.unit++) {
 			config_found(parent, (void*)&grf_auxp,
-			    grf_bus_auxp->busprint, CFARG_EOL);
+			    grf_bus_auxp->busprint, CFARGS_NONE);
 		}
 	}
 }

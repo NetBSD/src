@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_ehci.c,v 1.19 2021/04/24 23:36:27 thorpej Exp $ */
+/* $NetBSD: tegra_ehci.c,v 1.20 2021/08/07 16:18:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_ehci.c,v 1.19 2021/04/24 23:36:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_ehci.c,v 1.20 2021/08/07 16:18:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -146,7 +146,7 @@ tegra_ehci_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc.sc_child = config_found(self, &sc->sc.sc_bus, usbctlprint,
-	    CFARG_EOL);
+	    CFARGS_NONE);
 }
 
 static void

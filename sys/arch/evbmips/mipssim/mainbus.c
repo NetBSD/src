@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.3 2021/04/24 23:36:35 thorpej Exp $ */
+/* $NetBSD: mainbus.c,v 1.4 2021/08/07 16:18:51 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.3 2021/04/24 23:36:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.4 2021/08/07 16:18:51 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -91,7 +91,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 		maa.ma_irq = md->md_irq;
 		maa.ma_iot = &mcp->mc_iot;
 		maa.ma_dmat = &mcp->mc_dmat;
-		config_found(self, &maa, mainbus_print, CFARG_EOL);
+		config_found(self, &maa, mainbus_print, CFARGS_NONE);
 	}
 
 	/* attach virtio children */
@@ -101,7 +101,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 		maa.ma_irq  = 1;
 		maa.ma_iot  = &mcp->mc_iot;
 		maa.ma_dmat = &mcp->mc_dmat;
-		config_found(self, &maa, mainbus_print, CFARG_EOL);
+		config_found(self, &maa, mainbus_print, CFARGS_NONE);
 	}
 }
 

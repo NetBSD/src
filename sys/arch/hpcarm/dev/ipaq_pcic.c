@@ -1,4 +1,4 @@
-/*      $NetBSD: ipaq_pcic.c,v 1.22 2021/04/24 23:36:37 thorpej Exp $        */
+/*      $NetBSD: ipaq_pcic.c,v 1.23 2021/08/07 16:18:53 thorpej Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipaq_pcic.c,v 1.22 2021/04/24 23:36:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipaq_pcic.c,v 1.23 2021/08/07 16:18:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ ipaqpcic_attach(device_t parent, device_t self, void *aux)
 
 		sc->sc_socket[i].pcmcia =
 		    config_found(sc->sc_pc.sc_dev, &paa, ipaqpcic_print,
-				 CFARG_EOL);
+				 CFARGS_NONE);
 
 		sa11x0_intr_establish((sa11x0_chipset_tag_t)psc,
 			    i ? IRQ_CD1 : IRQ_CD0,

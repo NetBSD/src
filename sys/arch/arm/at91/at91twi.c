@@ -1,5 +1,5 @@
-/*	$Id: at91twi.c,v 1.9 2021/04/24 23:36:26 thorpej Exp $	*/
-/*	$NetBSD: at91twi.c,v 1.9 2021/04/24 23:36:26 thorpej Exp $	*/
+/*	$Id: at91twi.c,v 1.10 2021/08/07 16:18:43 thorpej Exp $	*/
+/*	$NetBSD: at91twi.c,v 1.10 2021/08/07 16:18:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 Embedtronics Oy. All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91twi.c,v 1.9 2021/04/24 23:36:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91twi.c,v 1.10 2021/08/07 16:18:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -127,7 +127,7 @@ found_ckdiv:
 
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c;
-	config_found(sc->sc_dev, &iba, iicbus_print, CFARG_EOL);
+	config_found(sc->sc_dev, &iba, iicbus_print, CFARGS_NONE);
 }
 
 u_int

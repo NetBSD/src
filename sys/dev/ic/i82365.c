@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.117 2021/04/24 23:36:55 thorpej Exp $	*/
+/*	$NetBSD: i82365.c,v 1.118 2021/08/07 16:19:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.117 2021/04/24 23:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.118 2021/08/07 16:19:12 thorpej Exp $");
 
 #define	PCICDEBUG
 
@@ -412,9 +412,8 @@ pcic_attach_socket(struct pcic_handle *h)
 	locs[PCMCIABUSCF_SOCKET] = h->socket;
 
 	h->pcmcia = config_found(sc->dev, &paa, pcic_print,
-	    CFARG_SUBMATCH, config_stdsubmatch,
-	    CFARG_LOCATORS, locs,
-	    CFARG_EOL);
+	    CFARGS(.submatch = config_stdsubmatch,
+		   .locators = locs));
 	if (h->pcmcia == NULL) {
 		h->flags &= ~PCIC_FLAG_SOCKETP;
 		return;

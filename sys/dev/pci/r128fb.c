@@ -1,4 +1,4 @@
-/*	$NetBSD: r128fb.c,v 1.43 2021/04/24 23:36:57 thorpej Exp $	*/
+/*	$NetBSD: r128fb.c,v 1.44 2021/08/07 16:19:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2007, 2012 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.43 2021/04/24 23:36:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.44 2021/08/07 16:19:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -356,7 +356,7 @@ r128fb_attach(device_t parent, device_t self, void *aux)
 	aa.accessops = &r128fb_accessops;
 	aa.accesscookie = &sc->vd;
 
-	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint, CFARG_EOL);
+	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint, CFARGS_NONE);
 }
 
 static int

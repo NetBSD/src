@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_at_mainbus.c,v 1.9 2021/04/24 23:37:01 thorpej Exp $	*/
+/*	$NetBSD: pci_at_mainbus.c,v 1.10 2021/08/07 16:19:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_at_mainbus.c,v 1.9 2021/04/24 23:37:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_at_mainbus.c,v 1.10 2021/08/07 16:19:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -99,6 +99,5 @@ RUMP_COMPONENT(RUMP_COMPONENT_DEV_AFTERMAINBUS)
 	if (!mainbus)
 		panic("no mainbus.  use maintaxi instead?");
 	config_found(mainbus, &pba, pcibusprint,
-	    CFARG_IATTR, "pcibus",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "pcibus"));
 }

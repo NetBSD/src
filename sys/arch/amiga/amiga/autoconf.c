@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.119 2021/04/27 14:48:28 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.120 2021/08/07 16:18:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -30,10 +30,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define	__SUBR_AUTOCONF_PRIVATE		/* XXX amiga_config_found() */
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.119 2021/04/27 14:48:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.120 2021/08/07 16:18:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,18 +163,15 @@ matchname(const char *fp, const char *sp)
  */
 int
 amiga_config_found(cfdata_t pcfp, device_t parent, void *aux, cfprint_t pfn,
-    cfarg_t tag, ...)
+    const struct cfargs *cfargs)
 {
 	struct device temp;
 	cfdata_t cf;
 	const struct cfattach *ca;
 	int rv = 0;
-	va_list ap;
-
-	va_start(ap, tag);
 
 	if (amiga_realconfig) {
-		rv = config_vfound(parent, aux, pfn, tag, ap) != NULL;
+		rv = config_found(parent, aux, pfn, cfargs) != NULL;
 		goto out;
 	}
 
@@ -189,7 +184,7 @@ amiga_config_found(cfdata_t pcfp, device_t parent, void *aux, cfprint_t pfn,
 	parent->dv_cfdriver = config_cfdriver_lookup(pcfp->cf_name);
 	parent->dv_unit = pcfp->cf_unit;
 
-	if ((cf = config_vsearch(parent, aux, tag, ap)) != NULL) {
+	if ((cf = config_search(parent, aux, cfargs)) != NULL) {
 		ca = config_cfattach_lookup(cf->cf_name, cf->cf_atname);
 		if (ca != NULL) {
 			(*ca->ca_attach)(parent, NULL, aux);
@@ -198,7 +193,6 @@ amiga_config_found(cfdata_t pcfp, device_t parent, void *aux, cfprint_t pfn,
 	}
 	parent->dv_cfdata = NULL;
  out:
-	va_end(ap);
 	return rv;
 }
 
@@ -225,7 +219,7 @@ config_console(void)
 	/*
 	 * delay clock calibration.
 	 */
-	amiga_config_found(cf, NULL, __UNCONST("clock"), NULL, CFARG_EOL);
+	amiga_config_found(cf, NULL, __UNCONST("clock"), NULL, CFARGS_NONE);
 
 	/*
 	 * internal grf.
@@ -234,13 +228,13 @@ config_console(void)
 	if (!(is_draco()))
 #endif
 		amiga_config_found(cf, NULL, __UNCONST("grfcc"), NULL,
-		    CFARG_EOL);
+		    CFARGS_NONE);
 
 	/*
 	 * zbus knows when its not for real and will
 	 * only configure the appropriate hardware
 	 */
-	amiga_config_found(cf, NULL, __UNCONST("zbus"), NULL, CFARG_EOL);
+	amiga_config_found(cf, NULL, __UNCONST("zbus"), NULL, CFARGS_NONE);
 }
 
 /*
@@ -274,75 +268,75 @@ void
 mbattach(device_t parent, device_t self, void *aux)
 {
 	printf("\n");
-	config_found(self, __UNCONST("clock"), simple_devprint, CFARG_EOL);
+	config_found(self, __UNCONST("clock"), simple_devprint, CFARGS_NONE);
 	if (is_a3000() || is_a4000()) {
 		config_found(self, __UNCONST("a34kbbc"), simple_devprint,
-		    CFARG_EOL);
+		    CFARGS_NONE);
 	} else
 #ifdef DRACO
 	if (!is_draco())
 #endif
 	{
 		config_found(self, __UNCONST("a2kbbc"), simple_devprint,
-		    CFARG_EOL);
+		    CFARGS_NONE);
 	}
 #ifdef DRACO
 	if (is_draco()) {
 		config_found(self, __UNCONST("drbbc"), simple_devprint,
-		    CFARG_EOL);
+		    CFARGS_NONE);
 		config_found(self, __UNCONST("kbd"), simple_devprint,
-		    CFARG_EOL);
+		    CFARGS_NONE);
 		config_found(self, __UNCONST("drsc"), simple_devprint,
-		    CFARG_EOL);
+		    CFARGS_NONE);
 		config_found(self, __UNCONST("drsupio"), simple_devprint,
-		    CFARG_EOL);
+		    CFARGS_NONE);
 	} else
 #endif
 	{
 		config_found(self, __UNCONST("ser"), simple_devprint,
-		    CFARG_EOL);
+		    CFARGS_NONE);
 		config_found(self, __UNCONST("par"), simple_devprint,
-		    CFARG_EOL);
+		    CFARGS_NONE);
 		config_found(self, __UNCONST("kbd"), simple_devprint,
-		    CFARG_EOL);
+		    CFARGS_NONE);
 		config_found(self, __UNCONST("ms"), simple_devprint,
-		    CFARG_EOL);
+		    CFARGS_NONE);
 		config_found(self, __UNCONST("grfcc"), simple_devprint,
-		    CFARG_EOL);
+		    CFARGS_NONE);
 		config_found(self, __UNCONST("amidisplaycc"), simple_devprint,
-		    CFARG_EOL);
+		    CFARGS_NONE);
 		config_found(self, __UNCONST("fdc"), simple_devprint,
-		    CFARG_EOL);
+		    CFARGS_NONE);
 	}
 	if (is_a4000() || is_a1200() || is_a600())
 		config_found(self, __UNCONST("wdc"), simple_devprint,
-		    CFARG_EOL);
+		    CFARGS_NONE);
 	if (is_a4000())			/* Try to configure A4000T SCSI */
 		config_found(self, __UNCONST("afsc"), simple_devprint,
-		    CFARG_EOL);
+		    CFARGS_NONE);
 	if (is_a3000())
 		config_found(self, __UNCONST("ahsc"), simple_devprint,
-		    CFARG_EOL);
+		    CFARGS_NONE);
 	if (is_a600() || is_a1200())
 		config_found(self, __UNCONST("pccard"), simple_devprint,
-		    CFARG_EOL);
+		    CFARGS_NONE);
 	if (is_a1200())
 		config_found(self, __UNCONST("a1k2cp"), simple_devprint,
-		    CFARG_EOL);
+		    CFARGS_NONE);
 #ifdef DRACO
 	if (!is_draco())
 #endif
 		config_found(self, __UNCONST("aucc"), simple_devprint,
-		    CFARG_EOL);
+		    CFARGS_NONE);
 
 #if NACAFH > 0
 	if (!is_a600() && !is_a1200() && !is_a3000() && !is_a4000())
 		if (acafh_mbattach_probe() == true)
 			config_found(self, __UNCONST("acafh"), simple_devprint,
-			    CFARG_EOL);
+			    CFARGS_NONE);
 #endif
 
-	config_found(self, __UNCONST("zbus"), simple_devprint, CFARG_EOL);
+	config_found(self, __UNCONST("zbus"), simple_devprint, CFARGS_NONE);
 }
 
 int

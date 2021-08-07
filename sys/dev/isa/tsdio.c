@@ -1,4 +1,4 @@
-/*	$NetBSD: tsdio.c,v 1.12 2021/04/24 23:36:55 thorpej Exp $	*/
+/*	$NetBSD: tsdio.c,v 1.13 2021/08/07 16:19:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsdio.c,v 1.12 2021/04/24 23:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsdio.c,v 1.13 2021/08/07 16:19:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,8 +123,7 @@ tsdio_attach(device_t parent, device_t self, void *aux)
 	 *  Attach sub-devices
 	 */
 	config_search(self, NULL,
-	    CFARG_SEARCH, tsdio_search,
-	    CFARG_EOL);
+	    CFARGS(.search = tsdio_search));
 }
 
 int
@@ -137,7 +136,7 @@ tsdio_search(device_t parent, cfdata_t cf, const int *l, void *aux)
 	sa.ta_ioh = sc->sc_ioh;
 
 	if (config_probe(parent, cf, &sa))
-		config_attach(parent, cf, &sa, tsdio_print, CFARG_EOL);
+		config_attach(parent, cf, &sa, tsdio_print, CFARGS_NONE);
 
 	return (0);
 }

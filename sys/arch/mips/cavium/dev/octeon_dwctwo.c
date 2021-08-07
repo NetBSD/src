@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_dwctwo.c,v 1.14 2021/04/24 23:36:42 thorpej Exp $	*/
+/*	$NetBSD: octeon_dwctwo.c,v 1.15 2021/08/07 16:18:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2015 Masao Uebayashi <uebayasi@tombiinc.com>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_dwctwo.c,v 1.14 2021/04/24 23:36:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_dwctwo.c,v 1.15 2021/08/07 16:18:59 thorpej Exp $");
 
 #include "opt_usb.h"
 
@@ -306,7 +306,7 @@ octeon_dwc2_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dwc2.sc_child =
 	    config_found(sc->sc_dwc2.sc_dev, &sc->sc_dwc2.sc_bus, usbctlprint,
-	    CFARG_EOL);
+	    CFARGS_NONE);
 
 	sc->sc_ih = octeon_intr_establish(CIU_INT_USB, IPL_VM, dwc2_intr, sc);
 	if (sc->sc_ih == NULL)

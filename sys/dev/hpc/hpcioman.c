@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcioman.c,v 1.20 2021/04/24 23:36:54 thorpej Exp $ */
+/*	$NetBSD: hpcioman.c,v 1.21 2021/08/07 16:19:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcioman.c,v 1.20 2021/04/24 23:36:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcioman.c,v 1.21 2021/08/07 16:19:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,8 +74,7 @@ hpcioman_attach(device_t parent, device_t self, void *aux)
 	printf("\n");
 
 	config_search(self, aux,
-	    CFARG_SEARCH, hpcioman_search,
-	    CFARG_EOL);
+	    CFARGS(.search = hpcioman_search));
 }
 
 int
@@ -155,7 +154,7 @@ hpcioman_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	}
 	hma.hma_connect = cf->cf_connect;
 
-	config_attach(parent, cf, &hma, hpcioman_print, CFARG_EOL);
+	config_attach(parent, cf, &hma, hpcioman_print, CFARGS_NONE);
 
 	return (0);
 }

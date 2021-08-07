@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.292 2021/05/12 23:22:33 thorpej Exp $	*/
+/*	$NetBSD: acpi.c,v 1.293 2021/08/07 16:19:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.292 2021/05/12 23:22:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.293 2021/08/07 16:19:09 thorpej Exp $");
 
 #include "pci.h"
 #include "opt_acpi.h"
@@ -361,9 +361,8 @@ int
 acpi_check(device_t parent, const char *ifattr)
 {
 	return config_search(parent, NULL,
-			     CFARG_SUBMATCH, acpi_submatch,
-			     CFARG_IATTR, ifattr,
-			     CFARG_EOL) != NULL;
+			     CFARGS(.submatch = acpi_submatch,
+				    .iattr = ifattr)) != NULL;
 }
 
 int
@@ -492,8 +491,7 @@ acpi_attach(device_t parent, device_t self, void *aux)
 	 * Early initialization of acpiec(4) via ECDT.
 	 */
 	config_found(self, aa, NULL,
-	    CFARG_IATTR, "acpiecdtbus",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "acpiecdtbus"));
 
 	rv = AcpiInitializeObjects(ACPI_FULL_INITIALIZATION);
 
@@ -558,8 +556,7 @@ acpi_attach(device_t parent, device_t self, void *aux)
 			continue;
 		}
 		config_found(sc->sc_dev, hdr, NULL,
-		    CFARG_IATTR, "acpisdtbus",
-		    CFARG_EOL);
+		    CFARGS(.iattr = "acpisdtbus"));
 		AcpiPutTable(hdr);
 	}
 
@@ -898,8 +895,7 @@ acpi_rescan(device_t self, const char *ifattr, const int *locators)
 
 	if (ifattr_match(ifattr, "acpihpetbus") && sc->sc_hpet == NULL) {
 		sc->sc_hpet = config_found(sc->sc_dev, &aa, NULL,
-					   CFARG_IATTR, "acpihpetbus",
-					   CFARG_EOL);
+					   CFARGS(.iattr = "acpihpetbus"));
 	}
 
 	/*
@@ -915,14 +911,12 @@ acpi_rescan(device_t self, const char *ifattr, const int *locators)
 	 */
 	if (ifattr_match(ifattr, "acpiapmbus") && sc->sc_apmbus == NULL) {
 		sc->sc_apmbus = config_found(sc->sc_dev, NULL, NULL,
-					     CFARG_IATTR, "acpiapmbus",
-					     CFARG_EOL);
+					     CFARGS(.iattr = "acpiapmbus"));
 	}
 
 	if (ifattr_match(ifattr, "acpiwdrtbus") && sc->sc_wdrt == NULL) {
 		sc->sc_wdrt = config_found(sc->sc_dev, NULL, NULL,
-					   CFARG_IATTR, "acpiwdrtbus",
-					   CFARG_EOL);
+					   CFARGS(.iattr = "acpiwdrtbus"));
 	}
 
 	return 0;
@@ -965,9 +959,8 @@ acpi_rescan_early(struct acpi_softc *sc)
 		aa.aa_dmat64 = ad->ad_dmat64;
 
 		ad->ad_device = config_found(sc->sc_dev, &aa, acpi_print,
-		    CFARG_IATTR, "acpinodebus",
-		    CFARG_DEVHANDLE, devhandle_from_acpi(ad->ad_handle),
-		    CFARG_EOL);
+		    CFARGS(.iattr = "acpinodebus",
+			   .devhandle = devhandle_from_acpi(ad->ad_handle)));
 	}
 }
 
@@ -1033,9 +1026,8 @@ acpi_rescan_nodes(struct acpi_softc *sc)
 		aa.aa_dmat64 = ad->ad_dmat64;
 
 		ad->ad_device = config_found(sc->sc_dev, &aa, acpi_print,
-		    CFARG_IATTR, "acpinodebus",
-		    CFARG_DEVHANDLE, devhandle_from_acpi(ad->ad_handle),
-		    CFARG_EOL);
+		    CFARGS(.iattr = "acpinodebus",
+			   .devhandle = devhandle_from_acpi(ad->ad_handle)));
 	}
 }
 

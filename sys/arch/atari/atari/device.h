@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.7 2021/04/27 14:48:29 thorpej Exp $	*/
+/*	$NetBSD: device.h,v 1.8 2021/08/07 16:18:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -39,7 +39,8 @@
  * *and know it* (i.e. everything is really tight certain params won't be 
  * passed in some cases and the devices will deal with it)
  */
-int atari_config_found(cfdata_t, device_t, void *, cfprint_t, cfarg_t, ...);
+int atari_config_found(cfdata_t, device_t, void *, cfprint_t,
+		       const struct cfargs *);
 int simple_devprint(void *, const char *);
 int matchname(char *, char *);
 /*

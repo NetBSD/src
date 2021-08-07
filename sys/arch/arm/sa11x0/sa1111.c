@@ -1,4 +1,4 @@
-/*      $NetBSD: sa1111.c,v 1.27 2021/04/24 23:36:28 thorpej Exp $	*/
+/*      $NetBSD: sa1111.c,v 1.28 2021/08/07 16:18:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa1111.c,v 1.27 2021/04/24 23:36:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa1111.c,v 1.28 2021/08/07 16:18:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ sa1111_search(device_t parent, cfdata_t cf, const int *ldesc,
 #endif
 
         if (config_probe(parent, cf, &aa))
-                config_attach(parent, cf, &aa, sa1111_print, CFARG_EOL);
+                config_attach(parent, cf, &aa, sa1111_print, CFARGS_NONE);
 
         return 0;
 }

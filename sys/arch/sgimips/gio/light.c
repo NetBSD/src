@@ -1,4 +1,4 @@
-/*	$Id: light.c,v 1.9 2021/04/24 23:36:48 thorpej Exp $	*/
+/*	$Id: light.c,v 1.10 2021/08/07 16:19:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: light.c,v 1.9 2021/04/24 23:36:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: light.c,v 1.10 2021/08/07 16:19:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -336,7 +336,7 @@ light_attach(device_t parent, device_t self, void *aux)
 	wa.accessops = &light_accessops;
 	wa.accesscookie = sc->sc_dc;
 
-	config_found(self, &wa, wsemuldisplaydevprint, CFARG_EOL);
+	config_found(self, &wa, wsemuldisplaydevprint, CFARGS_NONE);
 }
 
 int

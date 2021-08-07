@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.8 2021/04/27 14:48:28 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.9 2021/08/07 16:18:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -30,10 +30,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define	__SUBR_AUTOCONF_PRIVATE		/* XXX amiga_config_found() */
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8 2021/04/27 14:48:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.9 2021/08/07 16:18:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,18 +123,15 @@ matchname(const char *fp, const char *sp)
  */
 int
 amiga_config_found(cfdata_t pcfp, device_t parent, void *aux, cfprint_t pfn,
-    cfarg_t tag, ...)
+    const struct cfargs *cfargs)
 {
 	struct device temp;
 	cfdata_t cf;
 	const struct cfattach *ca;
 	int rv = 0;
-	va_list ap;
-
-	va_start(ap, tag);
 
 	if (amiga_realconfig) {
-		rv = config_vfound(parent, aux, pfn, tag, ap) != NULL;
+		rv = config_found(parent, aux, pfn, cfargs) != NULL;
 		goto out;
 	}
 
@@ -149,7 +144,7 @@ amiga_config_found(cfdata_t pcfp, device_t parent, void *aux, cfprint_t pfn,
 	parent->dv_cfdriver = config_cfdriver_lookup(pcfp->cf_name);
 	parent->dv_unit = pcfp->cf_unit;
 
-	if ((cf = config_vsearch(parent, aux,  tag, ap)) != NULL) {
+	if ((cf = config_search(parent, aux,  cfargs)) != NULL) {
 		ca = config_cfattach_lookup(cf->cf_name, cf->cf_atname);
 		if (ca != NULL) {
 			(*ca->ca_attach)(parent, NULL, aux);
@@ -158,7 +153,6 @@ amiga_config_found(cfdata_t pcfp, device_t parent, void *aux, cfprint_t pfn,
 	}
 	parent->dv_cfdata = NULL;
  out:
-	va_end(ap);
 	return rv;
 }
 
@@ -184,13 +178,13 @@ config_console(void)
 	/*
 	 * internal grf.
 	 */
-	amiga_config_found(cf, NULL, __UNCONST("grfcc"), NULL, CFARG_EOL);
+	amiga_config_found(cf, NULL, __UNCONST("grfcc"), NULL, CFARGS_NONE);
 
 	/*
 	 * zbus knows when its not for real and will
 	 * only configure the appropriate hardware
 	 */
-	amiga_config_found(cf, NULL, __UNCONST("zbus"), NULL, CFARG_EOL);
+	amiga_config_found(cf, NULL, __UNCONST("zbus"), NULL, CFARGS_NONE);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: obio_lpchc.c,v 1.6 2021/04/24 23:36:27 thorpej Exp $	*/
+/*	$NetBSD: obio_lpchc.c,v 1.7 2021/08/07 16:18:44 thorpej Exp $	*/
 
 /*
  * obio attachment for GEMINI LPC Host Controller
@@ -7,7 +7,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_lpchc.c,v 1.6 2021/04/24 23:36:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_lpchc.c,v 1.7 2021/08/07 16:18:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -90,8 +90,7 @@ gemini_lpchc_attach(device_t parent, device_t self, void *aux)
 	lpchc.lpchc_tag  = sc;
 
 	config_found(sc->sc_dev, &lpchc, gemini_lpchc_print,
-	    CFARG_IATTR, "lpcbus",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "lpcbus"));
 }
 
 int

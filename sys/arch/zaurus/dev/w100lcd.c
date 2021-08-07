@@ -1,4 +1,4 @@
-/* $NetBSD: w100lcd.c,v 1.4 2021/04/24 23:36:52 thorpej Exp $ */
+/* $NetBSD: w100lcd.c,v 1.5 2021/08/07 16:19:08 thorpej Exp $ */
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
  * Written by Hiroyuki Bessho for Genetec Corporation.
@@ -39,7 +39,7 @@
  * LCD on/off switch and backlight brightness are done in lcdctl.c.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: w100lcd.c,v 1.4 2021/04/24 23:36:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: w100lcd.c,v 1.5 2021/08/07 16:19:08 thorpej Exp $");
 
 #include "lcdctl.h"
 
@@ -145,7 +145,7 @@ w100lcd_attach(device_t parent, device_t self, void *aux)
 	aa.accessops = &w100lcd_accessops;
 	aa.accesscookie = sc;
 
-	(void)config_found(self, &aa, wsemuldisplaydevprint, CFARG_EOL);
+	(void)config_found(self, &aa, wsemuldisplaydevprint, CFARGS_NONE);
 
 	if (!pmf_device_register(self, w100lcd_suspend, w100lcd_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");

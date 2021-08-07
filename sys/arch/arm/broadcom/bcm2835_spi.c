@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_spi.c,v 1.10 2021/04/24 23:36:26 thorpej Exp $	*/
+/*	$NetBSD: bcm2835_spi.c,v 1.11 2021/08/07 16:18:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2012 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_spi.c,v 1.10 2021/04/24 23:36:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_spi.c,v 1.11 2021/08/07 16:18:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -141,7 +141,7 @@ bcmspi_attach(device_t parent, device_t self, void *aux)
 	memset(&sba, 0, sizeof(sba));
 	sba.sba_controller = &sc->sc_spi;
 
-	config_found(self, &sba, spibus_print, CFARG_EOL);
+	config_found(self, &sba, spibus_print, CFARGS_NONE);
 }
 
 static int

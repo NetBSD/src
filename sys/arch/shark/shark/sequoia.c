@@ -1,4 +1,4 @@
-/*	$NetBSD: sequoia.c,v 1.15 2021/04/30 02:11:37 thorpej Exp $	*/
+/*	$NetBSD: sequoia.c,v 1.16 2021/08/07 16:19:05 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -40,7 +40,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequoia.c,v 1.15 2021/04/30 02:11:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequoia.c,v 1.16 2021/08/07 16:19:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -792,13 +792,11 @@ sequoia_attach(device_t parent, device_t self, void *aux)
 	/* attach the i2c bus connected to the DRAM banks slots */
 	strlcpy(noba.oba_ofname, "dec,dnard-i2c", sizeof(noba.oba_ofname));
 	config_found(self, &noba, sequoia_cfprint,
-	    CFARG_IATTR, "sequoia",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "sequoia"));
 
 	/* attach the ofisa instance at the same OFW node */
 	config_found(self, aux, ofisaprint,
-	    CFARG_IATTR, "ofisa_subclass",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "ofisa_subclass"));
 }
 
 CFATTACH_DECL_NEW(sequoia, 0,

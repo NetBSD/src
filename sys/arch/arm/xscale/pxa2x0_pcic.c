@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_pcic.c,v 1.13 2021/04/24 23:36:29 thorpej Exp $	*/
+/*	$NetBSD: pxa2x0_pcic.c,v 1.14 2021/08/07 16:18:46 thorpej Exp $	*/
 /*	$OpenBSD: pxa2x0_pcic.c,v 1.17 2005/12/14 15:08:51 uwe Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_pcic.c,v 1.13 2021/04/24 23:36:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_pcic.c,v 1.14 2021/08/07 16:18:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -379,7 +379,7 @@ pxapcic_attach_common(struct pxapcic_softc *sc,
 		paa.pch = (pcmcia_chipset_handle_t)so;
 
 		so->pcmcia =
-		    config_found(sc->sc_dev, &paa, pxapcic_print, CFARG_EOL);
+		    config_found(sc->sc_dev, &paa, pxapcic_print, CFARGS_NONE);
 
 		pxa2x0_gpio_set_function(sc->sc_irqpin[s[i]], GPIO_IN);
 		pxa2x0_gpio_set_function(sc->sc_irqcfpin[s[i]], GPIO_IN);

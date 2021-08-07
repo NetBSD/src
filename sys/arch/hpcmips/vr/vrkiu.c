@@ -1,4 +1,4 @@
-/*	$NetBSD: vrkiu.c,v 1.40 2021/04/24 23:36:38 thorpej Exp $	*/
+/*	$NetBSD: vrkiu.c,v 1.41 2021/08/07 16:18:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrkiu.c,v 1.40 2021/04/24 23:36:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrkiu.c,v 1.41 2021/08/07 16:18:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/tty.h>
@@ -175,7 +175,7 @@ vrkiuattach(device_t parent, device_t self, void *aux)
 
 	/* attach hpckbd */
 	haa.haa_ic = &sc->sc_chip->kc_if;
-	config_found(self, &haa, hpckbd_print, CFARG_EOL);
+	config_found(self, &haa, hpckbd_print, CFARGS_NONE);
 }
 
 /*

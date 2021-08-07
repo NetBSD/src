@@ -1,4 +1,4 @@
-/*	$NetBSD: vtpbc_mainbus.c,v 1.20 2021/04/24 23:36:23 thorpej Exp $	*/
+/*	$NetBSD: vtpbc_mainbus.c,v 1.21 2021/08/07 16:18:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vtpbc_mainbus.c,v 1.20 2021/04/24 23:36:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vtpbc_mainbus.c,v 1.21 2021/08/07 16:18:40 thorpej Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h"
@@ -128,5 +128,5 @@ vtpbc_mainbus_attach(device_t parent, device_t self, void *aux)
 	    }
 #endif /* ALGOR_P4032 || ALGOR_P5064 */
 
-	config_found(self, &pba, pcibusprint, CFARG_EOL);
+	config_found(self, &pba, pcibusprint, CFARGS_NONE);
 }

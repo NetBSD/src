@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.4 2021/04/24 23:36:34 thorpej Exp $ */
+/* $NetBSD: mainbus.c,v 1.5 2021/08/07 16:18:50 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.4 2021/04/24 23:36:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.5 2021/08/07 16:18:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,8 +153,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	for (md = mainbusdevs; md->md_name != NULL; md++) {
 		ma.ma_name = md->md_name;
 		config_found(self, &ma, mainbus_print,
-		    CFARG_IATTR, "mainbus",
-		    CFARG_EOL);
+		    CFARGS(.iattr = "mainbus"));
 	}
 }
 

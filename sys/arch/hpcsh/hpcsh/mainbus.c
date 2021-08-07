@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.21 2021/04/24 23:36:39 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.22 2021/08/07 16:18:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.21 2021/04/24 23:36:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.22 2021/08/07 16:18:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,19 +64,16 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	/* CPU  */
 	config_found(self,
 	    &(struct mainbus_attach_args){.ma_name = "cpu"}, mainbus_print,
-	    CFARG_IATTR, "mainbus",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "mainbus"));
 
 	/* Devices */
 	config_search(self, NULL,
-	    CFARG_SEARCH, mainbus_search,
-	    CFARG_IATTR, "mainbus",
-	    CFARG_EOL);
+	    CFARGS(.search = mainbus_search,
+		   .iattr = "mainbus"));
 
 	/* APM */
 	config_found(self, NULL, mainbus_print,
-	    CFARG_IATTR, "hpcapmif",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "hpcapmif"));
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "unable to establish power handler\n");
@@ -98,7 +95,7 @@ mainbus_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	maa.ma_name = cf->cf_name;
 
 	if (config_probe(parent, cf, &maa))
-		config_attach(parent, cf, &maa, mainbus_print, CFARG_EOL);
+		config_attach(parent, cf, &maa, mainbus_print, CFARGS_NONE);
 
 	return (0);
 }

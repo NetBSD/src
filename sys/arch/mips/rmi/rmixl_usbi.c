@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_usbi.c,v 1.6 2021/04/24 23:36:43 thorpej Exp $	*/
+/*	$NetBSD: rmixl_usbi.c,v 1.7 2021/08/07 16:18:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_usbi.c,v 1.6 2021/04/24 23:36:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_usbi.c,v 1.7 2021/08/07 16:18:59 thorpej Exp $");
 
 #include "locators.h"
 
@@ -165,8 +165,7 @@ rmixl_usbi_attach(device_t parent, device_t self, void *aux)
 
 	/* attach any children */
 	config_search(self, NULL,
-	    CFARG_SEARCH, rmixl_usbi_search,
-	    CFARG_EOL);
+	    CFARGS(.search = rmixl_usbi_search));
 }
 
 static int
@@ -202,7 +201,7 @@ rmixl_usbi_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	usbi.usbi_dmat = sc->sc_dmat;
 
 	if (config_probe(parent, cf, &usbi))
-		config_attach(parent, cf, &usbi, rmixl_usbi_print, CFARG_EOL);
+		config_attach(parent, cf, &usbi, rmixl_usbi_print, CFARGS_NONE);
 
 	return 0;
 }

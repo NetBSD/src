@@ -1,4 +1,4 @@
-/* $NetBSD: ti_ehci.c,v 1.4 2021/04/24 23:36:29 thorpej Exp $ */
+/* $NetBSD: ti_ehci.c,v 1.5 2021/08/07 16:18:46 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015-2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_ehci.c,v 1.4 2021/04/24 23:36:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_ehci.c,v 1.5 2021/08/07 16:18:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -154,5 +154,5 @@ ti_ehci_attach(device_t parent, device_t self, void *aux)
 
 	pmf_device_register1(self, NULL, NULL, ehci_shutdown);
 
-	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint, CFARG_EOL);
+	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint, CFARGS_NONE);
 }

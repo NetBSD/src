@@ -1,4 +1,4 @@
-/*      $NetBSD: gencp.c,v 1.2 2021/04/24 23:36:24 thorpej Exp $ */
+/*      $NetBSD: gencp.c,v 1.3 2021/08/07 16:18:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -56,6 +56,6 @@ gencp_attach(struct gencp_softc *gsc)
 
 	gsc->cpb_aa->cp_intr_establish = clockport_generic_intr_establish;
 
-	config_found(gsc->sc_dev, gsc->cpb_aa, 0, CFARG_EOL);
+	config_found(gsc->sc_dev, gsc->cpb_aa, 0, CFARGS_NONE);
 }
 

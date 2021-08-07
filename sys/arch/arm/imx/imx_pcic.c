@@ -1,4 +1,4 @@
-/*	$Id: imx_pcic.c,v 1.7 2021/04/24 23:36:27 thorpej Exp $	*/
+/*	$Id: imx_pcic.c,v 1.8 2021/08/07 16:18:44 thorpej Exp $	*/
 
 /*
  * IMX CF interface to pcic/pcmcia
@@ -6,7 +6,7 @@
  * Sun Apr  1 21:42:37 PDT 2007
  */
 
-/*	$NetBSD: imx_pcic.c,v 1.7 2021/04/24 23:36:27 thorpej Exp $	*/
+/*	$NetBSD: imx_pcic.c,v 1.8 2021/08/07 16:18:44 thorpej Exp $	*/
 /*	$OpenBSD: pxa2x0_pcic.c,v 1.17 2005/12/14 15:08:51 uwe Exp $	*/
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$Id: imx_pcic.c,v 1.7 2021/04/24 23:36:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$Id: imx_pcic.c,v 1.8 2021/08/07 16:18:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -409,7 +409,7 @@ imx_pcic_attach_common(struct imx_pcic_softc *sc,
 printf("%s: sc_pa %lx\n", __func__, sc->sc_pa);
 
 		so->pcmcia =
-		    config_found(sc->sc_dev, &paa, imx_pcic_print, CFARG_EOL);
+		    config_found(sc->sc_dev, &paa, imx_pcic_print, CFARGS_NONE);
 
 #ifdef NOTYET
 		imx_gpio_set_direction(sc->sc_irqpin[s[i]], GPIO_IN);

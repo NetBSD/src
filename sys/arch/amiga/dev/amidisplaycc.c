@@ -1,4 +1,4 @@
-/*	$NetBSD: amidisplaycc.c,v 1.36 2021/06/15 09:00:33 rin Exp $ */
+/*	$NetBSD: amidisplaycc.c,v 1.37 2021/08/07 16:18:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 Jukka Andberg.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.36 2021/06/15 09:00:33 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.37 2021/08/07 16:18:41 thorpej Exp $");
 
 /*
  * wscons interface to amiga custom chips. Contains the necessary functions
@@ -472,7 +472,7 @@ amidisplaycc_attach(device_t parent, device_t self, void *aux)
 		waa.console = amidisplaycc_consolescreen.isconsole;
 		waa.accessops = &amidisplaycc_accessops;
 		waa.accesscookie = adp;
-		config_found(self, &waa, wsemuldisplaydevprint, CFARG_EOL);
+		config_found(self, &waa, wsemuldisplaydevprint, CFARGS_NONE);
 
 		wsfont_init();
 	}

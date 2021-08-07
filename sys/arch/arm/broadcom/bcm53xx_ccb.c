@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_ccb.c,v 1.7 2021/04/24 23:36:26 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_ccb.c,v 1.8 2021/08/07 16:18:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -202,10 +202,9 @@ bcmccb_mainbus_attach(device_t parent, device_t self, void *aux)
 			continue;
 
 		cfdata_t cf = config_search(self, &ccbaa,
-					    CFARG_SUBMATCH, bcmccb_find,
-					    CFARG_EOL);
+		    CFARGS(.submatch = bcmccb_find));
 		if (cf != NULL)
 			config_attach(self, cf, &ccbaa, bcmccb_print,
-			    CFARG_EOL);
+			    CFARGS_NONE);
 	}
 }

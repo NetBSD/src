@@ -1,4 +1,4 @@
-/*	$NetBSD: wzero3_lcd.c,v 1.6 2021/04/24 23:36:37 thorpej Exp $	*/
+/*	$NetBSD: wzero3_lcd.c,v 1.7 2021/08/07 16:18:53 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 2008, 2009 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wzero3_lcd.c,v 1.6 2021/04/24 23:36:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wzero3_lcd.c,v 1.7 2021/08/07 16:18:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -255,7 +255,7 @@ wzero3lcd_attach(device_t parent, device_t self, void *aux)
 	aa.accessops = &wzero3lcd_accessops;
 	aa.accesscookie = sc;
 
-	(void) config_found(self, &aa, wsemuldisplaydevprint, CFARG_EOL);
+	(void) config_found(self, &aa, wsemuldisplaydevprint, CFARGS_NONE);
 
 	if (!pmf_device_register(sc->dev, wzero3lcd_suspend, wzero3lcd_resume))
 		aprint_error_dev(sc->dev, "couldn't establish power handler\n");

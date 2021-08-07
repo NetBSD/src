@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.64 2021/04/24 23:36:58 thorpej Exp $ */
+/*	$NetBSD: p9100.c,v 1.65 2021/08/07 16:19:15 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.64 2021/04/24 23:36:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.65 2021/08/07 16:19:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -498,7 +498,7 @@ p9100_sbus_attach(device_t parent, device_t self, void *args)
 	aa.accessops = &p9100_accessops;
 	aa.accesscookie = &sc->vd;
 
-	config_found(self, &aa, wsemuldisplaydevprint, CFARG_EOL);
+	config_found(self, &aa, wsemuldisplaydevprint, CFARGS_NONE);
 
 	fb->fb_type.fb_size = fb->fb_type.fb_height * fb->fb_linebytes;
 	printf("%s: rev %d / %x, %dx%d, depth %d mem %x\n",

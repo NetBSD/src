@@ -1,4 +1,4 @@
-/*	$NetBSD: cac.c,v 1.62 2021/04/24 23:36:55 thorpej Exp $	*/
+/*	$NetBSD: cac.c,v 1.63 2021/08/07 16:19:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.62 2021/04/24 23:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.63 2021/08/07 16:19:12 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bio.h"
@@ -233,9 +233,8 @@ cac_rescan(device_t self, const char *attr, const int *locs)
 		mlocs[CACCF_UNIT] = i;
 
 		if (config_found(self, &caca, cac_print,
-				 CFARG_SUBMATCH, config_stdsubmatch,
-				 CFARG_LOCATORS, mlocs,
-				 CFARG_EOL) != NULL)
+				 CFARGS(.submatch = config_stdsubmatch,
+					.locators = mlocs)) != NULL)
 			sc->sc_unitmask |= 1 << i;
 	}
 	return 0;

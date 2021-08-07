@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_ohci.c,v 1.6 2021/04/24 23:36:42 thorpej Exp $	*/
+/*	$NetBSD: ralink_ohci.c,v 1.7 2021/08/07 16:18:59 thorpej Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -31,7 +31,7 @@
 #include "ehci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_ohci.c,v 1.6 2021/04/24 23:36:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_ohci.c,v 1.7 2021/08/07 16:18:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -149,7 +149,7 @@ ralink_ohci_attach(device_t parent, device_t self, void *aux)
 
 	/* Attach usb device. */
 	sc->sc_ohci.sc_child = config_found(self, &sc->sc_ohci.sc_bus,
-		usbctlprint, CFARG_EOL);
+		usbctlprint, CFARGS_NONE);
 
 	return;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461pcmcia.c,v 1.53 2021/04/24 23:36:38 thorpej Exp $	*/
+/*	$NetBSD: hd64461pcmcia.c,v 1.54 2021/08/07 16:18:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.53 2021/04/24 23:36:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.54 2021/08/07 16:18:54 thorpej Exp $");
 
 #include "opt_hd64461pcmcia.h"
 
@@ -420,8 +420,7 @@ hd64461pcmcia_attach_channel(struct hd64461pcmcia_softc *sc,
 	paa.pch = (pcmcia_chipset_handle_t)ch;
 
 	ch->ch_pcmcia = config_found(parent, &paa, hd64461pcmcia_print,
-	    CFARG_SUBMATCH, hd64461pcmcia_submatch,
-	    CFARG_EOL);
+	    CFARGS(.submatch = hd64461pcmcia_submatch));
 
 	if (ch->ch_pcmcia && (detect_card(ch->ch_channel) == EVENT_INSERT)) {
 		ch->ch_attached = 1;

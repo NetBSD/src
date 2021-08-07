@@ -1,4 +1,4 @@
-/* $NetBSD: spi.c,v 1.18 2021/05/16 08:48:20 mlelstv Exp $ */
+/* $NetBSD: spi.c,v 1.19 2021/08/07 16:19:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.18 2021/05/16 08:48:20 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.19 2021/08/07 16:19:16 thorpej Exp $");
 
 #include "locators.h"
 
@@ -161,7 +161,7 @@ spi_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 
 	if (config_probe(parent, cf, &sa)) {
 		SET(sa.sa_handle->sh_flags, SPIH_ATTACHED);
-		config_attach(parent, cf, &sa, spi_print, CFARG_EOL);
+		config_attach(parent, cf, &sa, spi_print, CFARGS_NONE);
 	}
 
 	return 0;
@@ -251,8 +251,7 @@ spi_direct_attach_child_devices(device_t parent, struct spi_softc *sc,
 				prop_data_value(cdata),
 				prop_data_size(cdata), &buf);
 		config_found(parent, &sa, spi_print,
-		    CFARG_LOCATORS, loc,
-		    CFARG_EOL);
+		    CFARGS(.locators = loc));
 
 		if (sa.sa_compat)
 			free(sa.sa_compat, M_TEMP);
@@ -317,8 +316,7 @@ spi_attach(device_t parent, device_t self, void *aux)
 	}
 	/* Then do any other devices the user may have manually wired */
 	config_search(self, NULL,
-	    CFARG_SEARCH, spi_search,
-	    CFARG_EOL);
+	    CFARGS(.search = spi_search));
 }
 
 static int

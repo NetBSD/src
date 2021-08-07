@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.140 2021/04/24 23:36:51 thorpej Exp $	*/
+/*	$NetBSD: cpu.c,v 1.141 2021/08/07 16:19:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.140 2021/04/24 23:36:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.141 2021/08/07 16:19:08 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -262,8 +262,7 @@ cpu_rescan(device_t self, const char *ifattr, const int *locators)
 			cfaa.name = "frequency";
 			ci->ci_frequency =
 			    config_found(self, &cfaa, NULL,
-					 CFARG_IATTR, "cpufeaturebus",
-					 CFARG_EOL);
+					 CFARGS(.iattr = "cpufeaturebus"));
 		}
 	}
 

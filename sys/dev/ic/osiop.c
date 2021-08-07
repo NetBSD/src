@@ -1,4 +1,4 @@
-/*	$NetBSD: osiop.c,v 1.42 2021/04/24 23:36:55 thorpej Exp $	*/
+/*	$NetBSD: osiop.c,v 1.43 2021/08/07 16:19:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.42 2021/04/24 23:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.43 2021/08/07 16:19:12 thorpej Exp $");
 
 /* #define OSIOP_DEBUG */
 
@@ -329,7 +329,7 @@ osiop_attach(struct osiop_softc *sc)
 	/*
 	 * Now try to attach all the sub devices.
 	 */
-	config_found(sc->sc_dev, &sc->sc_channel, scsiprint, CFARG_EOL);
+	config_found(sc->sc_dev, &sc->sc_channel, scsiprint, CFARGS_NONE);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.30 2021/04/24 23:36:37 thorpej Exp $	*/
+/*	$NetBSD: intio.c,v 1.31 2021/08/07 16:18:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.30 2021/04/24 23:36:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.31 2021/08/07 16:18:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,7 +192,7 @@ intioattach(device_t parent, device_t self, void *aux)
 		ia.ia_iobase = ib[i].ib_offset;
 		ia.ia_addr = (bus_addr_t)(intiobase + ib[i].ib_offset);
 		ia.ia_ipl = ib[i].ib_ipl;
-		config_found(self, &ia, intioprint, CFARG_EOL);
+		config_found(self, &ia, intioprint, CFARGS_NONE);
 	}
 }
 

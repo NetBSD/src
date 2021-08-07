@@ -1,4 +1,4 @@
-/*	$NetBSD: shpcmcia.c,v 1.6 2021/04/24 23:36:36 thorpej Exp $	*/
+/*	$NetBSD: shpcmcia.c,v 1.7 2021/08/07 16:18:52 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 2009 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shpcmcia.c,v 1.6 2021/04/24 23:36:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shpcmcia.c,v 1.7 2021/08/07 16:18:52 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -313,7 +313,7 @@ shpcmcia_attach_socket(struct shpcmcia_handle *h)
 	paa.pch = (pcmcia_chipset_handle_t)h;
 
 	h->pcmcia =
-	    config_found(h->sc->sc_dev, &paa, shpcmcia_print, CFARG_EOL);
+	    config_found(h->sc->sc_dev, &paa, shpcmcia_print, CFARGS_NONE);
 
 	/* if there's actually a pcmcia device attached, initialize the slot */
 	if (h->pcmcia)

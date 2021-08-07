@@ -1,4 +1,4 @@
-/* $NetBSD: fdtbus.c,v 1.41 2021/04/24 23:36:53 thorpej Exp $ */
+/* $NetBSD: fdtbus.c,v 1.42 2021/08/07 16:19:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.41 2021/04/24 23:36:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.42 2021/08/07 16:19:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -346,10 +346,9 @@ fdt_scan_best(struct fdt_softc *sc, struct fdt_node *node)
 		};
 		fdt_init_attach_args(&sc->sc_faa, node, true, &faa);
 		cf = config_search(node->n_bus, &faa,
-		    CFARG_SUBMATCH, fdt_scan_submatch,
-		    CFARG_IATTR, "fdt",
-		    CFARG_LOCATORS, locs,
-		    CFARG_EOL);
+		    CFARGS(.submatch = fdt_scan_submatch,
+			   .iattr = "fdt",
+			   .locators = locs));
 		if (cf == NULL)
 			continue;
 		match = config_match(node->n_bus, cf, &faa);
@@ -395,20 +394,20 @@ fdt_scan(struct fdt_softc *sc, int pass)
 		if (quiet) {
 			node->n_dev = config_attach(node->n_bus, node->n_cf,
 			    &faa, fdtbus_print,
-			    CFARG_LOCATORS, locs,
-			    CFARG_DEVHANDLE, devhandle_from_of(node->n_phandle),
-			    CFARG_EOL);
+			    CFARGS(.locators = locs,
+				   .devhandle =
+				       devhandle_from_of(node->n_phandle)));
 		} else {
 			/*
 			 * Default pass.
 			 */
 			node->n_dev = config_found(node->n_bus, &faa,
 			    fdtbus_print,
-			    CFARG_SUBMATCH, fdt_scan_submatch,
-			    CFARG_IATTR, "fdt",
-			    CFARG_LOCATORS, locs,
-			    CFARG_DEVHANDLE, devhandle_from_of(node->n_phandle),
-			    CFARG_EOL);
+			    CFARGS(.submatch = fdt_scan_submatch,
+				   .iattr = "fdt",
+				   .locators = locs,
+				   .devhandle =
+				       devhandle_from_of(node->n_phandle)));
 		}
 
 		if (node->n_dev != NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: armadillo9_iic.c,v 1.10 2021/04/24 23:36:32 thorpej Exp $	*/
+/*	$NetBSD: armadillo9_iic.c,v 1.11 2021/08/07 16:18:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2005 HAMAJIMA Katsuomi. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadillo9_iic.c,v 1.10 2021/04/24 23:36:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadillo9_iic.c,v 1.11 2021/08/07 16:18:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,7 +119,7 @@ armadillo9iic_attach(device_t parent, device_t self, void *aux)
 
 	printf("\n");
 
-	config_found(self, &iba, iicbus_print, CFARG_EOL);
+	config_found(self, &iba, iicbus_print, CFARGS_NONE);
 
 #if NSEEPROM > 0
 	/* read mac address */

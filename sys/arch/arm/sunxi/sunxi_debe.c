@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_debe.c,v 1.13 2021/04/24 23:36:28 thorpej Exp $ */
+/* $NetBSD: sunxi_debe.c,v 1.14 2021/08/07 16:18:45 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Manuel Bouyer <bouyer@antioche.eu.org>
@@ -38,7 +38,7 @@
 #define SUNXI_DEBE_CURMAX	64
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_debe.c,v 1.13 2021/04/24 23:36:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_debe.c,v 1.14 2021/08/07 16:18:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -394,7 +394,7 @@ sunxi_debe_setup_fbdev(struct sunxi_debe_softc *sc, const struct videomode *mode
 			.afb_dmasegs = sc->sc_dmasegs,
 			.afb_ndmasegs = 1
 		};
-		sc->sc_fbdev = config_found(sc->sc_dev, &afb, NULL, CFARG_EOL);
+		sc->sc_fbdev = config_found(sc->sc_dev, &afb, NULL, CFARGS_NONE);
 	} else if (sc->sc_fbdev != NULL) {
 		sunxi_befb_set_videomode(sc->sc_fbdev, fb_width, fb_height);
 	}

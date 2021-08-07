@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.64 2021/04/24 23:36:57 thorpej Exp $ */
+/* $NetBSD: piixpm.c,v 1.65 2021/08/07 16:19:14 thorpej Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.39 2013/10/01 20:06:02 sf Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.64 2021/04/24 23:36:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.65 2021/08/07 16:19:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -351,7 +351,7 @@ piixpm_rescan(device_t self, const char *ifattr, const int *locators)
 		memset(&iba, 0, sizeof(iba));
 		iba.iba_tag = tag;
 		sc->sc_i2c_device[i] =
-		    config_found(self, &iba, piixpm_iicbus_print, CFARG_EOL);
+		    config_found(self, &iba, piixpm_iicbus_print, CFARGS_NONE);
 	}
 
 	return 0;

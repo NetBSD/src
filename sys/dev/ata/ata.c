@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.161 2021/04/24 23:36:52 thorpej Exp $	*/
+/*	$NetBSD: ata.c,v 1.162 2021/08/07 16:19:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.161 2021/04/24 23:36:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.162 2021/08/07 16:19:09 thorpej Exp $");
 
 #include "opt_ata.h"
 
@@ -206,8 +206,7 @@ ata_channel_attach(struct ata_channel *chp)
 	KASSERT(chp->ch_queue != NULL);
 
 	chp->atabus = config_found(chp->ch_atac->atac_dev, chp, atabusprint,
-		CFARG_IATTR, "ata",
-		CFARG_EOL);
+		CFARGS(.iattr = "ata"));
 }
 
 /*
@@ -375,8 +374,7 @@ atabusconfig_thread(void *arg)
 		adev.adev_drv_data = &chp->ch_drive[i];
 		chp->ch_drive[i].drv_softc = config_found(atabus_sc->sc_dev,
 		    &adev, ataprint,
-		    CFARG_IATTR, "ata_hl",
-		    CFARG_EOL);
+		    CFARGS(.iattr = "ata_hl"));
 		if (chp->ch_drive[i].drv_softc != NULL) {
 			ata_probe_caps(&chp->ch_drive[i]);
 		} else {

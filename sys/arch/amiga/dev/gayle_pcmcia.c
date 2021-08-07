@@ -1,9 +1,9 @@
-/*	$NetBSD: gayle_pcmcia.c,v 1.33 2021/04/24 23:36:24 thorpej Exp $ */
+/*	$NetBSD: gayle_pcmcia.c,v 1.34 2021/08/07 16:18:41 thorpej Exp $ */
 
 /* public domain */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gayle_pcmcia.c,v 1.33 2021/04/24 23:36:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gayle_pcmcia.c,v 1.34 2021/08/07 16:18:41 thorpej Exp $");
 
 /* PCMCIA front-end driver for A1200's and A600's. */
 
@@ -173,7 +173,8 @@ pccard_attach(device_t parent, device_t self, void *aux)
 	paa.paa_busname = "pcmcia";
 	paa.pct = &chip_functions;
 	paa.pch = &sc->devs[0];
-	sc->devs[0].card = config_found(self, &paa, simple_devprint, CFARG_EOL);
+	sc->devs[0].card = config_found(self, &paa, simple_devprint,
+	    CFARGS_NONE);
 	if (sc->devs[0].card == NULL) {
 		printf("attach failed, config_found() returned NULL\n");
 		pmap_remove(kernel_map->pmap, pcmcia_base,

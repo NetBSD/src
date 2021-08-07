@@ -1,4 +1,4 @@
-/*	$NetBSD: valkyriefb.c,v 1.6 2021/04/24 23:36:41 thorpej Exp $	*/
+/*	$NetBSD: valkyriefb.c,v 1.7 2021/08/07 16:18:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2012 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: valkyriefb.c,v 1.6 2021/04/24 23:36:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: valkyriefb.c,v 1.7 2021/08/07 16:18:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -262,7 +262,7 @@ valkyriefb_init(device_t self)
 	aa.accessops = &valkyriefb_accessops;
 	aa.accesscookie = &sc->vd;
 
-	config_found(self, &aa, wsemuldisplaydevprint, CFARG_EOL);
+	config_found(self, &aa, wsemuldisplaydevprint, CFARGS_NONE);
 
 	return 0;
 }

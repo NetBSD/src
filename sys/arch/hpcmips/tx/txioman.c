@@ -1,4 +1,4 @@
-/*	$NetBSD: txioman.c,v 1.11 2021/04/24 23:36:38 thorpej Exp $ */
+/*	$NetBSD: txioman.c,v 1.12 2021/08/07 16:18:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: txioman.c,v 1.11 2021/04/24 23:36:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: txioman.c,v 1.12 2021/08/07 16:18:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,7 @@ txioman_callback(device_t self)
 	haa.haa_getchip = tx_conf_reference_ioman;
 	haa.haa_iot = 0; /* not needed for TX */
 
-	config_found(self, &haa, txioman_print, CFARG_EOL);
+	config_found(self, &haa, txioman_print, CFARGS_NONE);
 }
 
 int

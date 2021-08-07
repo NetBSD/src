@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.59 2021/04/24 23:36:55 thorpej Exp $ */
+/*	$NetBSD: igsfb.c,v 1.60 2021/08/07 16:19:12 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.59 2021/04/24 23:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.60 2021/08/07 16:19:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,7 +215,7 @@ igsfb_attach_subr(struct igsfb_softc *sc, int isconsole)
 	waa.accessops = &igsfb_accessops;
 	waa.accesscookie = &dc->dc_vd;
 
-	config_found(sc->sc_dev, &waa, wsemuldisplaydevprint, CFARG_EOL);
+	config_found(sc->sc_dev, &waa, wsemuldisplaydevprint, CFARGS_NONE);
 }
 
 

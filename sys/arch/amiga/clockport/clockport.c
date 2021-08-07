@@ -1,4 +1,4 @@
-/*      $NetBSD: clockport.c,v 1.6 2021/04/24 23:36:24 thorpej Exp $ */
+/*      $NetBSD: clockport.c,v 1.7 2021/08/07 16:18:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -66,8 +66,7 @@ clockport_attach(device_t parent, device_t self, void *aux)
 	sc->cpb_aa = (struct clockportbus_attach_args *) aux;
 
 	config_search(self, NULL,
-	    CFARG_SEARCH, clockport_search,
-	    CFARG_EOL);
+	    CFARGS(.search = clockport_search));
 }
 
 static int
@@ -83,7 +82,7 @@ clockport_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	a.cp_intr_establish = sc->cpb_aa->cp_intr_establish;
 
 	if (config_probe(parent, cf, &a)) {
-		config_attach(parent, cf, &a, clockport_print, CFARG_EOL);
+		config_attach(parent, cf, &a, clockport_print, CFARGS_NONE);
 		return 1;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs80bus.c,v 1.18 2021/04/24 23:36:53 thorpej Exp $	*/
+/*	$NetBSD: cs80bus.c,v 1.19 2021/08/07 16:19:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs80bus.c,v 1.18 2021/04/24 23:36:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs80bus.c,v 1.19 2021/08/07 16:19:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,8 +135,7 @@ cs80busattach(device_t parent, device_t self, void *aux)
 		ca.ca_id = id;
 
 		config_search(sc->sc_dev, &ca,
-		    CFARG_SEARCH, cs80bussearch,
-		    CFARG_EOL);
+		    CFARGS(.search = cs80bussearch));
 	}
 }
 
@@ -188,7 +187,7 @@ cs80bussearch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 		/*
 		 * This device is allowed; attach it.
 		 */
-		config_attach(parent, cf, ca, cs80busprint, CFARG_EOL);
+		config_attach(parent, cf, ca, cs80busprint, CFARGS_NONE);
 	}
 out:
 	return (0);

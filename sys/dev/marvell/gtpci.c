@@ -1,4 +1,4 @@
-/*	$NetBSD: gtpci.c,v 1.35 2021/04/24 23:36:56 thorpej Exp $	*/
+/*	$NetBSD: gtpci.c,v 1.36 2021/08/07 16:19:13 thorpej Exp $	*/
 /*
  * Copyright (c) 2008, 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtpci.c,v 1.35 2021/04/24 23:36:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtpci.c,v 1.36 2021/08/07 16:19:13 thorpej Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -492,7 +492,7 @@ gtpci_pci_config(struct gtpci_softc *sc, bus_space_tag_t iot,
 	pba.pba_flags |= PCI_FLAGS_MWI_OKAY;
 	pba.pba_bus = GTPCI_P2PC_BUSNUMBER(p2pc);
 	pba.pba_bridgetag = NULL;
-	config_found(sc->sc_dev, &pba, NULL, CFARG_EOL);
+	config_found(sc->sc_dev, &pba, NULL, CFARGS_NONE);
 }
 
 

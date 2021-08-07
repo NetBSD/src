@@ -1,4 +1,4 @@
-/*	$NetBSD: kbc.c,v 1.14 2021/04/24 23:36:44 thorpej Exp $	*/
+/*	$NetBSD: kbc.c,v 1.15 2021/08/07 16:19:00 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 2001 Izumi Tsutsui.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbc.c,v 1.14 2021/04/24 23:36:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbc.c,v 1.15 2021/08/07 16:19:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,10 +96,10 @@ kbc_attach(device_t parent, device_t self, void *aux)
 		ka.ka_ipl = KBC_PRI;
 
 	ka.ka_name = "kb";
-	config_found(self, (void *)&ka, kbc_print, CFARG_EOL);
+	config_found(self, (void *)&ka, kbc_print, CFARGS_NONE);
 
 	ka.ka_name = "ms";
-	config_found(self, (void *)&ka, kbc_print, CFARG_EOL);
+	config_found(self, (void *)&ka, kbc_print, CFARGS_NONE);
 }
 
 static int

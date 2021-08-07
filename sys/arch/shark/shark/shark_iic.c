@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_iic.c,v 1.1 2021/04/30 02:24:05 thorpej Exp $	*/
+/*	$NetBSD: shark_iic.c,v 1.2 2021/08/07 16:19:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: shark_iic.c,v 1.1 2021/04/30 02:24:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shark_iic.c,v 1.2 2021/08/07 16:19:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -284,7 +284,7 @@ sharkiic_attach(device_t parent, device_t self, void *aux)
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c;
 
-	config_found(self, &iba, iicbus_print, CFARG_EOL);
+	config_found(self, &iba, iicbus_print, CFARGS_NONE);
 }
 
 CFATTACH_DECL_NEW(sharkiic, sizeof(struct sharkiic_softc),

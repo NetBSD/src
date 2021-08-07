@@ -1,4 +1,4 @@
-/*	$NetBSD: fhpib.c,v 1.42 2021/04/24 23:36:37 thorpej Exp $	*/
+/*	$NetBSD: fhpib.c,v 1.43 2021/08/07 16:18:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fhpib.c,v 1.42 2021/04/24 23:36:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fhpib.c,v 1.43 2021/08/07 16:18:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,7 +186,7 @@ fhpibattach(device_t parent, device_t self, void *aux)
 	ha.ha_type = HPIBC;			/* XXX */
 	ha.ha_ba = HPIBC_BA;
 	ha.ha_softcpp = &sc->sc_hpibbus;	/* XXX */
-	(void)config_found(self, &ha, hpibdevprint, CFARG_EOL);
+	(void)config_found(self, &ha, hpibdevprint, CFARGS_NONE);
 }
 
 static void

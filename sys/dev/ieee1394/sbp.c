@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp.c,v 1.40 2021/04/24 23:36:55 thorpej Exp $	*/
+/*	$NetBSD: sbp.c,v 1.41 2021/08/07 16:19:12 thorpej Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbp.c,v 1.40 2021/04/24 23:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbp.c,v 1.41 2021/08/07 16:19:12 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -518,7 +518,7 @@ sbpattach(device_t parent, device_t self, void *aux)
 	sc_channel->chan_id = 1;
 
 	sc->sc_bus = config_found(sc->sc_fd.dev, sc_channel, scsiprint,
-	    CFARG_EOL);
+	    CFARGS_NONE);
 	if (sc->sc_bus == NULL) {
 		aprint_error_dev(self, "attach failed\n");
 		return;

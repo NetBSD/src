@@ -1,4 +1,4 @@
-/*	$NetBSD: xirc.c,v 1.37 2021/04/24 23:36:58 thorpej Exp $	*/
+/*	$NetBSD: xirc.c,v 1.38 2021/08/07 16:19:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.37 2021/04/24 23:36:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.38 2021/08/07 16:19:15 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -261,11 +261,11 @@ xirc_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_id & (XIMEDIA_MODEM << 8))
 		/*XXXUNCONST*/
 		sc->sc_modem = config_found(self, __UNCONST("com"), xirc_print,
-		    CFARG_EOL);
+		    CFARGS_NONE);
 	if (sc->sc_id & (XIMEDIA_ETHER << 8))
 		/*XXXUNCONST*/
 		sc->sc_ethernet = config_found(self, __UNCONST("xi"),
-		    xirc_print, CFARG_EOL);
+		    xirc_print, CFARGS_NONE);
 
 	xirc_disable(sc, XIRC_MODEM_ENABLED|XIRC_ETHERNET_ENABLED,
 	    sc->sc_id & (XIMEDIA_MODEM|XIMEDIA_ETHER));

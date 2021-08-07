@@ -1,4 +1,4 @@
-/* $NetBSD: meson_pinctrl.c,v 1.12 2021/04/24 23:36:26 thorpej Exp $ */
+/* $NetBSD: meson_pinctrl.c,v 1.13 2021/08/07 16:18:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_soc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_pinctrl.c,v 1.12 2021/04/24 23:36:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_pinctrl.c,v 1.13 2021/08/07 16:18:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -566,7 +566,7 @@ meson_pinctrl_initgpio(struct meson_pinctrl_softc *sc)
 	gba.gba_gc = gp;
 	gba.gba_pins = sc->sc_pins;
 	gba.gba_npins = npins;
-	config_found(sc->sc_dev, &gba, NULL, CFARG_EOL);
+	config_found(sc->sc_dev, &gba, NULL, CFARGS_NONE);
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: txcsbus.c,v 1.23 2021/04/24 23:36:38 thorpej Exp $ */
+/*	$NetBSD: txcsbus.c,v 1.24 2021/08/07 16:18:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: txcsbus.c,v 1.23 2021/04/24 23:36:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: txcsbus.c,v 1.24 2021/08/07 16:18:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,14 +144,12 @@ txcsbus_attach(device_t parent, device_t self, void *aux)
 	/* higher priority devices attach first */
 	sc->sc_pri = 2;
 	config_search(self, NULL,
-	    CFARG_SEARCH, txcsbus_search,
-	    CFARG_EOL);
+	    CFARGS(.search = txcsbus_search));
 
 	/* then, normal priority devices */
 	sc->sc_pri = 1;
 	config_search(self, NULL,
-	    CFARG_SEARCH, txcsbus_search,
-	    CFARG_EOL);
+	    CFARGS(.search = txcsbus_search));
 }
 
 int
@@ -239,7 +237,7 @@ txcsbus_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	ca.ca_irq3		= cf->cf_loc[TXCSBUSCF_IRQ3];
 	
 	if (/*XXX*/config_probe(parent, cf, &ca) == sc->sc_pri) {
-		config_attach(parent, cf, &ca, txcsbus_print, CFARG_EOL);
+		config_attach(parent, cf, &ca, txcsbus_print, CFARGS_NONE);
 	}
 
 	return (0);

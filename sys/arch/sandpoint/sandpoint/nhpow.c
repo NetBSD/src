@@ -1,4 +1,4 @@
-/* $NetBSD: nhpow.c,v 1.3 2021/04/24 23:36:47 thorpej Exp $ */
+/* $NetBSD: nhpow.c,v 1.4 2021/08/07 16:19:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2012 Frank Wille.
@@ -32,7 +32,7 @@
  * NH230/231 power and LED control, button handling
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nhpow.c,v 1.3 2021/04/24 23:36:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nhpow.c,v 1.4 2021/08/07 16:19:04 thorpej Exp $");
 #include "gpio.h"
 
 #include <sys/param.h>
@@ -208,7 +208,7 @@ nhpow_attach(device_t parent, device_t self, void *aux)
 	gba.gba_gc = &sc->sc_gpio_gc;
 	gba.gba_pins = sc->sc_gpio_pins;
 	gba.gba_npins = NHGPIO_PINS;
-	config_found(self, &gba, gpiobus_print, CFARG_EOL);
+	config_found(self, &gba, gpiobus_print, CFARGS_NONE);
 #endif
 }
 

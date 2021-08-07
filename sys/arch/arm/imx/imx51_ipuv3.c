@@ -1,4 +1,4 @@
-/*	$NetBSD: imx51_ipuv3.c,v 1.10 2021/04/24 23:36:27 thorpej Exp $	*/
+/*	$NetBSD: imx51_ipuv3.c,v 1.11 2021/08/07 16:18:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2011, 2012  Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx51_ipuv3.c,v 1.10 2021/04/24 23:36:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx51_ipuv3.c,v 1.11 2021/08/07 16:18:44 thorpej Exp $");
 
 #include "opt_imx51_ipuv3.h"
 
@@ -658,7 +658,7 @@ imx51_ipuv3_attach_sub(struct imx51_ipuv3_softc *sc,
 		.ifb_outputdev = sc->dev,
 	};
 
-	sc->fbdev = config_found(sc->dev, &ifb, imx51_ipuv3_print, CFARG_EOL);
+	sc->fbdev = config_found(sc->dev, &ifb, imx51_ipuv3_print, CFARGS_NONE);
 
 	return;
 

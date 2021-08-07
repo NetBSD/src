@@ -1,4 +1,4 @@
-/*	$NetBSD: scimci.c,v 1.3 2021/04/24 23:36:37 thorpej Exp $	*/
+/*	$NetBSD: scimci.c,v 1.4 2021/08/07 16:18:53 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 2009 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scimci.c,v 1.3 2021/04/24 23:36:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scimci.c,v 1.4 2021/08/07 16:18:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -235,7 +235,7 @@ scimci_attach(device_t parent, device_t self, void *aux)
 		     | SMC_CAPS_SINGLE_ONLY
 		     | SMC_CAPS_POLL_CARD_DET;
 
-	sc->sc_sdmmc = config_found(sc->sc_dev, &saa, NULL, CFARG_EOL);
+	sc->sc_sdmmc = config_found(sc->sc_dev, &saa, NULL, CFARGS_NONE);
 	if (sc->sc_sdmmc == NULL)
 		aprint_error_dev(sc->sc_dev, "couldn't attach bus\n");
 }

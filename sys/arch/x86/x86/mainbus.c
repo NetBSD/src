@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.6 2021/04/24 23:36:51 thorpej Exp $ */
+/* $NetBSD: mainbus.c,v 1.7 2021/08/07 16:19:08 thorpej Exp $ */
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.6 2021/04/24 23:36:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.7 2021/08/07 16:19:08 thorpej Exp $");
 
 #include "opt_acpi.h"
 #include "opt_mpbios.h"
@@ -197,8 +197,7 @@ x86_cpubus_attach(device_t self)
 			caa.cpu_func = 0;
 
 			config_found(self, &caa, mainbus_cpu_print,
-			    CFARG_IATTR, "cpubus",
-			    CFARG_EOL);
+			    CFARGS(.iattr = "cpubus"));
 		}
 #if NACPICA > 0
 	}

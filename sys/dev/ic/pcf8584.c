@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8584.c,v 1.18 2021/04/24 23:36:55 thorpej Exp $	*/
+/*	$NetBSD: pcf8584.c,v 1.19 2021/08/07 16:19:12 thorpej Exp $	*/
 /*	$OpenBSD: pcf8584.c,v 1.9 2007/10/20 18:46:21 kettenis Exp $ */
 
 /*
@@ -99,7 +99,7 @@ pcfiic_attach(struct pcfiic_softc *sc, i2c_addr_t addr, u_int8_t clock,
 
 	bzero(&iba, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c;
-	config_found(sc->sc_dev, &iba, iicbus_print, CFARG_EOL);
+	config_found(sc->sc_dev, &iba, iicbus_print, CFARGS_NONE);
 }
 
 int

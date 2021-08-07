@@ -1,5 +1,5 @@
-/*	$Id: mpcsa_leds.c,v 1.6 2021/04/24 23:36:34 thorpej Exp $	*/
-/*	$NetBSD: mpcsa_leds.c,v 1.6 2021/04/24 23:36:34 thorpej Exp $	*/
+/*	$Id: mpcsa_leds.c,v 1.7 2021/08/07 16:18:50 thorpej Exp $	*/
+/*	$NetBSD: mpcsa_leds.c,v 1.7 2021/08/07 16:18:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpcsa_leds.c,v 1.6 2021/04/24 23:36:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpcsa_leds.c,v 1.7 2021/08/07 16:18:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,7 +162,7 @@ mpcsa_leds_attach(device_t parent, device_t self, void *aux)
 	gba.gba_gc = &sc->sc_gpio_chipset;
 	gba.gba_pins = sc->sc_pins;
 	gba.gba_npins = MPCSA_LEDS_NPINS;
-	config_found(self, &gba, mpcsa_ledsbus_print, CFARG_EOL);
+	config_found(self, &gba, mpcsa_ledsbus_print, CFARGS_NONE);
 #endif
 
 	/* attach device */

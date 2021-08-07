@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.76 2021/04/24 23:36:49 thorpej Exp $	*/
+/*	$NetBSD: xd.c,v 1.77 2021/08/07 16:19:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles D. Cranor
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.76 2021/04/24 23:36:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.77 2021/08/07 16:19:06 thorpej Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -513,7 +513,7 @@ xdcattach(device_t parent, device_t self, void *aux)
 	/* now we must look for disks using autoconfig */
 	xa.booting = 1;
 	for (xa.driveno = 0; xa.driveno < XDC_MAXDEV; xa.driveno++)
-		(void)config_found(self, (void *)&xa, xdc_print, CFARG_EOL);
+		(void)config_found(self, (void *)&xa, xdc_print, CFARGS_NONE);
 
 	/* start the watchdog clock */
 	callout_reset(&xdc->sc_tick_ch, XDC_TICKCNT, xdc_tick, xdc);

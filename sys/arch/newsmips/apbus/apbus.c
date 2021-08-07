@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus.c,v 1.28 2021/04/24 23:36:44 thorpej Exp $	*/
+/*	$NetBSD: apbus.c,v 1.29 2021/08/07 16:19:01 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.28 2021/04/24 23:36:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.29 2021/08/07 16:19:01 thorpej Exp $");
 
 #define __INTR_PRIVATE
 
@@ -150,7 +150,7 @@ apbusattach(device_t parent, device_t self, void *aux)
 				child.apa_hwbase = apctl->apbc_hwbase;
 
 				config_found(self, &child, apbusprint,
-				    CFARG_EOL);
+				    CFARGS_NONE);
 
 				apctl = apctl->apbc_link;
 			}

@@ -1,7 +1,7 @@
-/*	$NetBSD: hb.c,v 1.22 2021/04/24 23:36:44 thorpej Exp $	*/
+/*	$NetBSD: hb.c,v 1.23 2021/08/07 16:19:01 thorpej Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hb.c,v 1.22 2021/04/24 23:36:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hb.c,v 1.23 2021/08/07 16:19:01 thorpej Exp $");
 
 #define __INTR_PRIVATE
 #include <sys/param.h>
@@ -54,8 +54,7 @@ hb_attach(device_t parent, device_t self, void *aux)
 	}
 
 	config_search(self, &ha,
-	    CFARG_SEARCH, hb_search,
-	    CFARG_EOL);
+	    CFARGS(.search = hb_search));
 }
 
 static int
@@ -68,7 +67,7 @@ hb_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	ha->ha_level = cf->cf_level;
 
 	if (config_probe(parent, cf, ha))
-		config_attach(parent, cf, ha, hb_print, CFARG_EOL);
+		config_attach(parent, cf, ha, hb_print, CFARGS_NONE);
 
 	return 0;
 }

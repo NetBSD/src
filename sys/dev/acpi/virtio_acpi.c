@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_acpi.c,v 1.8 2021/04/24 23:36:52 thorpej Exp $ */
+/* $NetBSD: virtio_acpi.c,v 1.9 2021/08/07 16:19:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_acpi.c,v 1.8 2021/04/24 23:36:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_acpi.c,v 1.9 2021/08/07 16:19:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -160,7 +160,7 @@ virtio_acpi_rescan(device_t self, const char *ifattr, const int *locs)
 	memset(&va, 0, sizeof(va));
 	va.sc_childdevid = vsc->sc_childdevid;
 
-	config_found(self, &va, NULL, CFARG_EOL);
+	config_found(self, &va, NULL, CFARGS_NONE);
 
 	if (virtio_attach_failed(vsc))
 		return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_ocp.c,v 1.6 2021/04/24 23:36:28 thorpej Exp $ */
+/*	$NetBSD: omap_ocp.c,v 1.7 2021/08/07 16:18:45 thorpej Exp $ */
 
 /*
  * Autoconfiguration support for the Texas Instruments OMAP OCP bus.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap_ocp.c,v 1.6 2021/04/24 23:36:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap_ocp.c,v 1.7 2021/08/07 16:18:45 thorpej Exp $");
 
 #include "locators.h"
 
@@ -160,8 +160,7 @@ ocp_attach(device_t parent, device_t self, void *aux)
 	 * Attach all our devices
 	 */
 	config_search(self, NULL,
-	    CFARG_SEARCH, ocp_search,
-	    CFARG_EOL);
+	    CFARGS(.search = ocp_search));
 }
 
 static int
@@ -190,7 +189,7 @@ ocp_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	aa.ocp_intr = cf->cf_loc[OCPCF_INTR];
 
 	if (config_probe(parent, cf, &aa))
-		config_attach(parent, cf, &aa, ocp_print, CFARG_EOL);
+		config_attach(parent, cf, &aa, ocp_print, CFARGS_NONE);
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: auvitek_i2c.c,v 1.6 2021/04/24 23:36:59 thorpej Exp $ */
+/* $NetBSD: auvitek_i2c.c,v 1.7 2021/08/07 16:19:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvitek_i2c.c,v 1.6 2021/04/24 23:36:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvitek_i2c.c,v 1.7 2021/08/07 16:19:16 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -102,8 +102,7 @@ auvitek_i2c_rescan(struct auvitek_softc *sc, const char *ifattr,
 		memset(&iba, 0, sizeof(iba));
 		iba.iba_tag = &sc->sc_i2c;
 		sc->sc_i2cdev = config_found(sc->sc_dev, &iba, iicbus_print,
-		    CFARG_IATTR, "i2cbus",
-		    CFARG_EOL);
+		    CFARGS(.iattr = "i2cbus"));
 	}
 #endif
 }

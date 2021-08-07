@@ -1,4 +1,4 @@
-/* $NetBSD: nextkbd.c,v 1.17 2021/04/24 23:36:45 thorpej Exp $ */
+/* $NetBSD: nextkbd.c,v 1.18 2021/08/07 16:19:01 thorpej Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextkbd.c,v 1.17 2021/04/24 23:36:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextkbd.c,v 1.18 2021/08/07 16:19:01 thorpej Exp $");
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
@@ -180,7 +180,7 @@ nextkbd_attach(device_t parent, device_t self, void *aux)
 	 * Attach the wskbd, saving a handle to it.
 	 * XXX XXX XXX
 	 */
-	sc->sc_wskbddev = config_found(self, &a, wskbddevprint, CFARG_EOL);
+	sc->sc_wskbddev = config_found(self, &a, wskbddevprint, CFARGS_NONE);
 
 	attached = 1;
 }

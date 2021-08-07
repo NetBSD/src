@@ -1,4 +1,4 @@
-/*	$NetBSD: asp.c,v 1.3 2021/04/24 23:36:39 thorpej Exp $	*/
+/*	$NetBSD: asp.c,v 1.4 2021/08/07 16:18:55 thorpej Exp $	*/
 
 /*	$OpenBSD: asp.c,v 1.5 2000/02/09 05:04:22 mickey Exp $	*/
 
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asp.c,v 1.3 2021/04/24 23:36:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asp.c,v 1.4 2021/08/07 16:18:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -275,5 +275,5 @@ aspattach(device_t parent, device_t self, void *aux)
 	ga.ga_fix_args = asp_fix_args;
 	ga.ga_fix_args_cookie = sc;
 	ga.ga_scsi_target = sc->sc_trs->asp_scsi;
-	config_found(self, &ga, gscprint, CFARG_EOL);
+	config_found(self, &ga, gscprint, CFARGS_NONE);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.36 2021/04/24 23:36:59 thorpej Exp $	*/
+/*	$NetBSD: motg.c,v 1.37 2021/08/07 16:19:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.36 2021/04/24 23:36:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.37 2021/08/07 16:19:16 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -472,7 +472,7 @@ motg_init(struct motg_softc *sc)
 	sc->sc_bus.ub_usedma = false;
 	sc->sc_bus.ub_hcpriv = sc;
 	sc->sc_child = config_found(sc->sc_dev, &sc->sc_bus, usbctlprint,
-	    CFARG_EOL);
+	    CFARGS_NONE);
 	return 0;
 }
 

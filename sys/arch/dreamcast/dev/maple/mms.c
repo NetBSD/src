@@ -1,4 +1,4 @@
-/*	$NetBSD: mms.c,v 1.18 2021/04/24 23:36:31 thorpej Exp $	*/
+/*	$NetBSD: mms.c,v 1.19 2021/08/07 16:18:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mms.c,v 1.18 2021/04/24 23:36:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mms.c,v 1.19 2021/08/07 16:18:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -154,7 +154,7 @@ mms_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Attach the mouse, saving a handle to it.
 	 */
-	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint, CFARG_EOL);
+	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint, CFARGS_NONE);
 	if (sc->sc_wsmousedev == NULL) {
 		/* Nothing more to do here. */
 		return;

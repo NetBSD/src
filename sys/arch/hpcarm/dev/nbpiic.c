@@ -1,4 +1,4 @@
-/*	$NetBSD: nbpiic.c,v 1.4 2021/04/24 23:36:37 thorpej Exp $ */
+/*	$NetBSD: nbpiic.c,v 1.5 2021/08/07 16:18:53 thorpej Exp $ */
 /*
  * Copyright (c) 2011 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nbpiic.c,v 1.4 2021/04/24 23:36:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nbpiic.c,v 1.5 2021/08/07 16:18:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -129,7 +129,7 @@ pxaiic_attach(device_t parent, device_t self, void *aux)
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c;
 	pxa2x0_i2c_open(&sc->sc_pxa_i2c);
-	config_found(self, &iba, iicbus_print, CFARG_EOL);
+	config_found(self, &iba, iicbus_print, CFARGS_NONE);
 
 	sc->sc_pcon = device_find_by_xname("nbppcon0");
 

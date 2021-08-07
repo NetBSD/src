@@ -1,4 +1,4 @@
-/*	$NetBSD: mfc.c,v 1.58 2021/04/24 23:36:24 thorpej Exp $ */
+/*	$NetBSD: mfc.c,v 1.59 2021/08/07 16:18:41 thorpej Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -55,7 +55,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.58 2021/04/24 23:36:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.59 2021/08/07 16:18:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -419,14 +419,14 @@ mfcattach(device_t parent, device_t self, void *aux)
 
 	ma.subdev = "mfcs";
 	ma.unit = unit * 2;
-	config_found(self, &ma, mfcprint, CFARG_EOL);
+	config_found(self, &ma, mfcprint, CFARGS_NONE);
 
 	ma.unit = unit * 2 + 1;
-	config_found(self, &ma, mfcprint, CFARG_EOL);
+	config_found(self, &ma, mfcprint, CFARGS_NONE);
 
 	ma.subdev = "mfcp";
 	ma.unit = unit;
-	config_found(self, &ma, mfcprint, CFARG_EOL);
+	config_found(self, &ma, mfcprint, CFARGS_NONE);
 }
 
 /*

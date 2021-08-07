@@ -1,4 +1,4 @@
-/* $NetBSD: gpiosim.c,v 1.22 2021/04/24 23:36:54 thorpej Exp $ */
+/* $NetBSD: gpiosim.c,v 1.23 2021/08/07 16:19:10 thorpej Exp $ */
 /*      $OpenBSD: gpiosim.c,v 1.1 2008/11/23 18:46:49 mbalmer Exp $	*/
 
 /*
@@ -142,7 +142,7 @@ gpiosim_attach(device_t parent, device_t self, void *aux)
 	    CTL_CREATE, CTL_EOL);
 
 	aprint_normal(": simulating %d pins\n", GPIOSIM_NPINS);
-	sc->sc_gdev = config_found(self, &gba, gpiobus_print, CFARG_EOL);
+	sc->sc_gdev = config_found(self, &gba, gpiobus_print, CFARGS_NONE);
 }
 
 static int

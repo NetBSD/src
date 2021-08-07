@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcix.c,v 1.16 2021/04/24 23:36:43 thorpej Exp $	*/
+/*	$NetBSD: rmixl_pcix.c,v 1.17 2021/08/07 16:18:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.16 2021/04/24 23:36:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.17 2021/08/07 16:18:59 thorpej Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -474,7 +474,7 @@ rmixl_pcix_attach(device_t parent, device_t self, void *aux)
 	pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY |
 		PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
 
-	config_found(self, &pba, pcibusprint, CFARG_EOL);
+	config_found(self, &pba, pcibusprint, CFARGS_NONE);
 }
 
 /*

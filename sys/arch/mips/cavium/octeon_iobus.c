@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_iobus.c,v 1.6 2021/04/24 23:36:42 thorpej Exp $	*/
+/*	$NetBSD: octeon_iobus.c,v 1.7 2021/08/07 16:18:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2007
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_iobus.c,v 1.6 2021/04/24 23:36:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_iobus.c,v 1.7 2021/08/07 16:18:59 thorpej Exp $");
 
 #include "locators.h"
 
@@ -113,8 +113,7 @@ iobus_attach(device_t parent, device_t self, void *aux)
 			aa.aa_dmat = iobus_dmat;
 
 			config_found(self, &aa, iobus_print,
-			    CFARG_SUBMATCH, iobus_submatch,
-			    CFARG_EOL);
+			    CFARGS(.submatch = iobus_submatch));
 		}
 	}
 }

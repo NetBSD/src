@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_gpio.c,v 1.2 2021/04/24 23:36:58 thorpej Exp $ */
+/* $NetBSD: ppbus_gpio.c,v 1.3 2021/08/07 16:19:15 thorpej Exp $ */
 
 /*
  *  Copyright (c) 2008, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppbus_gpio.c,v 1.2 2021/04/24 23:36:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppbus_gpio.c,v 1.3 2021/08/07 16:19:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,8 +110,7 @@ gpio_ppbus_attach(struct ppbus_softc *sc)
 	gba.gba_npins = PPBUS_NPINS;
 
 	config_found(sc->sc_dev, &gba, gpiobus_print,
-	    CFARG_IATTR, "gpiobus",
-	    CFARG_EOL);
+	    CFARGS(.iattr = "gpiobus"));
 }
 
 static int

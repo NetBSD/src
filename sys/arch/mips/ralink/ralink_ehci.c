@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_ehci.c,v 1.8 2021/04/24 23:36:42 thorpej Exp $	*/
+/*	$NetBSD: ralink_ehci.c,v 1.9 2021/08/07 16:18:59 thorpej Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
 /* ralink_ehci.c -- Ralink EHCI USB Driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_ehci.c,v 1.8 2021/04/24 23:36:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_ehci.c,v 1.9 2021/08/07 16:18:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -166,7 +166,7 @@ ralink_ehci_attach(device_t parent, device_t self, void *aux)
 
 	/* Attach usb device. */
 	sc->sc_ehci.sc_child = config_found(self, &sc->sc_ehci.sc_bus,
-		usbctlprint, CFARG_EOL);
+		usbctlprint, CFARGS_NONE);
 
 	return;
 

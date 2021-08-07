@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.11 2021/04/24 23:36:50 thorpej Exp $ */
+/* $NetBSD: mainbus.c,v 1.12 2021/08/07 16:19:07 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.11 2021/04/24 23:36:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.12 2021/08/07 16:19:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -80,45 +80,45 @@ mainbus_attach(device_t parent, device_t self, void *opaque)
 	sc->sc_dev = self;
 
 	taa.taa_type = THUNKBUS_TYPE_CPU;
-	config_found(self, &taa, mainbus_print, CFARG_EOL);
+	config_found(self, &taa, mainbus_print, CFARGS_NONE);
 
 	taa.taa_type = THUNKBUS_TYPE_TTYCONS;
-	config_found(self, &taa, mainbus_print, CFARG_EOL);
+	config_found(self, &taa, mainbus_print, CFARGS_NONE);
 
 	if (usermode_vnc_port > 0 && usermode_vnc_port < 65536) {
 		taa.taa_type = THUNKBUS_TYPE_VNCFB;
 		taa.u.vnc.width = usermode_vnc_width;
 		taa.u.vnc.height = usermode_vnc_height;
 		taa.u.vnc.port = usermode_vnc_port;
-		config_found(self, &taa, mainbus_print, CFARG_EOL);
+		config_found(self, &taa, mainbus_print, CFARGS_NONE);
 	}
 
 	taa.taa_type = THUNKBUS_TYPE_CLOCK;
-	config_found(self, &taa, mainbus_print, CFARG_EOL);
+	config_found(self, &taa, mainbus_print, CFARGS_NONE);
 
 	if (usermode_tap_device) {
 		taa.taa_type = THUNKBUS_TYPE_VETH;
 		taa.u.veth.device = usermode_tap_device;
 		taa.u.veth.eaddr = usermode_tap_eaddr;
-		config_found(self, &taa, mainbus_print, CFARG_EOL);
+		config_found(self, &taa, mainbus_print, CFARGS_NONE);
 	}
 
 	if (usermode_audio_device) {
 		taa.taa_type = THUNKBUS_TYPE_VAUDIO;
 		taa.u.vaudio.device = usermode_audio_device;
-		config_found(self, &taa, mainbus_print, CFARG_EOL);
+		config_found(self, &taa, mainbus_print, CFARGS_NONE);
 	}
 
 	for (i = 0; i < usermode_disk_image_path_count; i++) {
 		taa.taa_type = THUNKBUS_TYPE_DISKIMAGE;
 		taa.u.diskimage.path = usermode_disk_image_path[i];
-		config_found(self, &taa, mainbus_print, CFARG_EOL);
+		config_found(self, &taa, mainbus_print, CFARGS_NONE);
 	}
 
 	for (i = 0; i < usermode_vdev_count; i++) {
 		taa.taa_type = usermode_vdev_type[i];
 		taa.u.vdev.path = usermode_vdev_path[i];
-		config_found(self, &taa, mainbus_print, CFARG_EOL);
+		config_found(self, &taa, mainbus_print, CFARGS_NONE);
 	}
 }
 

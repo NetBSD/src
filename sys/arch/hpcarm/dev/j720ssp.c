@@ -1,4 +1,4 @@
-/*	$NetBSD: j720ssp.c,v 1.33 2021/04/24 23:36:37 thorpej Exp $	*/
+/*	$NetBSD: j720ssp.c,v 1.34 2021/08/07 16:18:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* Jornada 720 SSP port. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j720ssp.c,v 1.33 2021/04/24 23:36:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j720ssp.c,v 1.34 2021/08/07 16:18:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,8 +98,7 @@ j720ssp_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 
 	config_search(self, NULL,
-	    CFARG_SEARCH, j720ssp_search,
-	    CFARG_EOL);
+	    CFARGS(.search = j720ssp_search));
 }
 
 static int
@@ -107,7 +106,7 @@ j720ssp_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 
 	if (config_probe(parent, cf, NULL))
-		config_attach(parent, cf, NULL, j720ssp_print, CFARG_EOL);
+		config_attach(parent, cf, NULL, j720ssp_print, CFARGS_NONE);
 
 	return 0;
 }
