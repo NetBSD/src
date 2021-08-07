@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.172 2021/08/07 16:19:18 thorpej Exp $ */
+/* $NetBSD: device.h,v 1.173 2021/08/07 18:16:42 thorpej Exp $ */
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -671,6 +671,8 @@ bool		devhandle_is_valid(devhandle_t);
 void		devhandle_invalidate(devhandle_t *);
 devhandle_type_t devhandle_type(devhandle_t);
 
+device_call_t	devhandle_lookup_device_call(devhandle_t, const char *,
+		    devhandle_t *);
 void		devhandle_impl_inherit(struct devhandle_impl *,
 		    const struct devhandle_impl *);
 
