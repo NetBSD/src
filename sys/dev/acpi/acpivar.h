@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.86 2021/05/12 23:22:33 thorpej Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.87 2021/08/07 18:39:40 jmcneill Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -329,6 +329,8 @@ bool		acpi_register_notify(struct acpi_devnode *,
 void		acpi_deregister_notify(struct acpi_devnode *);
 
 ACPI_STATUS	acpi_resource_parse(device_t, ACPI_HANDLE, const char *,
+		    void *, const struct acpi_resource_parse_ops *);
+ACPI_STATUS	acpi_resource_parse_any(device_t, ACPI_HANDLE, const char *,
 		    void *, const struct acpi_resource_parse_ops *);
 void		acpi_resource_print(device_t, struct acpi_resources *);
 void		acpi_resource_cleanup(struct acpi_resources *);
