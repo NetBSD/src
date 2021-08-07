@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.14 2021/04/18 22:51:24 rillig Exp $
+#	$NetBSD: Makefile.inc,v 1.15 2021/08/07 17:38:41 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -16,6 +16,8 @@ ARCHSUBDIR=	${MACHINE_CPU}
 
 CPPFLAGS+=	-I${.CURDIR}/../arch/${ARCHSUBDIR}
 CPPFLAGS+=	-I${.CURDIR}/../common
+
+CLEANFILES+=	*.gcno *.gcda *.gcov
 
 .if exists(${.CURDIR}/../../Makefile.inc)
 .include "${.CURDIR}/../../Makefile.inc"
