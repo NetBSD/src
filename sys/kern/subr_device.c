@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_device.c,v 1.7 2021/02/06 05:33:20 thorpej Exp $	*/
+/*	$NetBSD: subr_device.c,v 1.8 2021/08/07 18:16:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2006, 2021 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_device.c,v 1.7 2021/02/06 05:33:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_device.c,v 1.8 2021/08/07 18:16:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -72,7 +72,7 @@ devhandle_type(devhandle_t handle)
 	return handle.impl->type;
 }
 
-static device_call_t
+device_call_t
 devhandle_lookup_device_call(devhandle_t handle, const char *name,
     devhandle_t *call_handlep)
 {
