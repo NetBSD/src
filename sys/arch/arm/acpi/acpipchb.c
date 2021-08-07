@@ -1,4 +1,4 @@
-/* $NetBSD: acpipchb.c,v 1.26 2021/08/07 16:18:42 thorpej Exp $ */
+/* $NetBSD: acpipchb.c,v 1.27 2021/08/07 21:27:53 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpipchb.c,v 1.26 2021/08/07 16:18:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpipchb.c,v 1.27 2021/08/07 21:27:53 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -92,6 +92,7 @@ struct acpipchb_softc {
 static int	acpipchb_match(device_t, cfdata_t, void *);
 static void	acpipchb_attach(device_t, device_t, void *);
 
+static void	acpipchb_configure_bus(struct acpipchb_softc *, struct pcibus_attach_args *);
 static void	acpipchb_setup_ranges(struct acpipchb_softc *,
 				      struct pcibus_attach_args *);
 static void	acpipchb_setup_quirks(struct acpipchb_softc *,
@@ -152,13 +153,6 @@ acpipchb_attach(device_t parent, device_t self, void *aux)
 
 	acpi_claim_childdevs(self, aa->aa_node);
 
-	if (acpi_pci_ignore_boot_config(sc->sc_handle)) {
-		if (acpimcfg_configure_bus(self, aa->aa_pc, sc->sc_handle,
-		    sc->sc_bus, PCIHOST_CACHELINE_SIZE) != 0) {
-			aprint_error_dev(self, "failed to configure bus\n");
-		}
-	}
-
 	memset(&pba, 0, sizeof(pba));
 	pba.pba_flags = aa->aa_pciflags &
 			~(PCI_FLAGS_MEM_OKAY | PCI_FLAGS_IO_OKAY);
@@ -174,8 +168,46 @@ acpipchb_attach(device_t parent, device_t self, void *aux)
 	acpipchb_setup_ranges(sc, &pba);
 	acpipchb_setup_quirks(sc, &pba);
 
+	acpipchb_configure_bus(sc, &pba);
+
 	config_found(self, &pba, pcibusprint,
 	    CFARGS(.devhandle = device_handle(self)));
+}
+
+static void
+acpipchb_configure_bus(struct acpipchb_softc *sc, struct pcibus_attach_args *pba)
+{
+	struct arm32_pci_chipset *md_pc =
+	    (struct arm32_pci_chipset *)pba->pba_pc;
+	struct acpi_pci_context *ap = md_pc->pc_conf_v;
+	struct pciconf_resources *pcires;
+	ACPI_STATUS rv;
+	int error;
+
+	if (!acpi_pci_ignore_boot_config(sc->sc_handle)) {
+		return;
+	}
+
+	if ((ap->ap_flags & ACPI_PCI_FLAG_NO_MCFG) != 0) {
+		pcires = pciconf_resource_init();
+		rv = AcpiWalkResources(sc->sc_handle, "_CRS",
+		    acpimcfg_configure_bus_cb, pcires);
+		if (ACPI_FAILURE(rv)) {
+			error = ENXIO;
+		} else {
+			error = pci_configure_bus(pba->pba_pc, pcires, ap->ap_bus,
+			    PCIHOST_CACHELINE_SIZE);
+		}
+		pciconf_resource_fini(pcires);
+	} else {
+		error = acpimcfg_configure_bus(sc->sc_dev, pba->pba_pc, sc->sc_handle,
+		    sc->sc_bus, PCIHOST_CACHELINE_SIZE);
+	}
+
+	if (error != 0) {
+		aprint_error_dev(sc->sc_dev, "failed to configure bus, error %d\n",
+		    error);
+	}
 }
 
 struct acpipchb_setup_ranges_args {
