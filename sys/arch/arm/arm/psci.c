@@ -1,4 +1,4 @@
-/* $NetBSD: psci.c,v 1.6 2021/08/06 19:38:53 jmcneill Exp $ */
+/* $NetBSD: psci.c,v 1.7 2021/08/07 21:20:14 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psci.c,v 1.6 2021/08/06 19:38:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psci.c,v 1.7 2021/08/07 21:20:14 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -66,6 +66,18 @@ psci_call(register_t fid, register_t arg1, register_t arg2, register_t arg3)
 		return PSCI_NOT_SUPPORTED;
 
 	return psci_call_fn(fid, arg1, arg2, arg3);
+}
+
+enum psci_conduit
+psci_conduit(void)
+{
+	if (psci_call_fn == psci_call_smc) {
+		return PSCI_CONDUIT_SMC;
+	} else if (psci_call_fn == psci_call_hvc) {
+		return PSCI_CONDUIT_HVC;
+	} else {
+		return PSCI_CONDUIT_NONE;
+	}
 }
 
 uint32_t
