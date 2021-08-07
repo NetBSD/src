@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2021/08/05 22:36:08 rillig Exp $
+# $NetBSD: Makefile,v 1.2 2021/08/07 21:24:14 rillig Exp $
 
 NOMAN=		yes
 
@@ -13,8 +13,9 @@ FILESDIR=	${TESTSDIR}
 .for msg in \
     000 001 002 003 004 005 006 007 008 009 \
     010 011 012 013 014 015 016 017 018
-FILES+=		msg_${msg}.exp msg_${msg}.ln
+FILES+=		msg_${msg}.exp	msg_${msg}.ln
 .endfor
+FILES+=		read.exp	read.ln
 
 # Note: only works for adding tests.
 # To remove a test, the $$mi file must be edited manually.

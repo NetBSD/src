@@ -1,4 +1,4 @@
-# $NetBSD: t_lint2.sh,v 1.1 2021/08/05 22:36:08 rillig Exp $
+# $NetBSD: t_lint2.sh,v 1.2 2021/08/07 21:24:14 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -27,28 +27,30 @@
 
 lint2=/usr/libexec/lint2
 
-do_msg_head()
+std_head()
 {
 	atf_set 'require.progs' "$lint2"
 }
 
-do_msg_body()
+std_body()
 {
 	# shellcheck disable=SC2155
 	local srcdir="$(atf_get_srcdir)"
 
 	# remove comments and empty lines from the .ln file
-	sed -e '/^#/d' -e '/^$/d' < "$srcdir/msg_$1.ln" > "msg_$1.ln"
+	sed -e '/^#/d' -e '/^$/d' -e 's,[[:space:]]*#.*,,' \
+	    < "$srcdir/$1.ln" \
+	    > "$1.ln"
 
-	atf_check -o "file:$srcdir/msg_$1.exp" \
-	    "$lint2" -h -p -x "msg_$1.ln"
+	atf_check -o "file:$srcdir/$1.exp" \
+	    "$lint2" -h -p -x "$1.ln"
 }
 
 atf_init_test_cases()
 {
-	for i in $(printf '%03d\n' $(seq 0 18)); do
-		eval "msg_${i}_head() { do_msg_head; }"
-		eval "msg_${i}_body() { do_msg_body '$i'; }"
-		atf_add_test_case "msg_$i"
+	for i in $(printf 'msg_%03d\n' $(seq 0 18)) "read"; do
+		eval "${i}_head() { std_head; }"
+		eval "${i}_body() { std_body '$i'; }"
+		atf_add_test_case "$i"
 	done
 }
