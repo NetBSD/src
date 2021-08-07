@@ -1,4 +1,4 @@
-/* $NetBSD: smccc.h,v 1.1 2021/08/06 19:38:53 jmcneill Exp $ */
+/* $NetBSD: smccc.h,v 1.2 2021/08/07 21:21:49 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
@@ -50,6 +50,7 @@ int	smccc_version(void);
 /*
  * Call an SMC/HVC service.
  */
-int	smccc_call(register_t, register_t, register_t, register_t);
+int	smccc_call(uint32_t, register_t, register_t, register_t, register_t,
+		   register_t *, register_t *, register_t *, register_t *);
 
 #endif /* _ARM_SMCCC_H */
