@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2021/08/07 21:24:14 rillig Exp $
+# $NetBSD: Makefile,v 1.3 2021/08/07 23:52:32 rillig Exp $
 
 NOMAN=		yes
 
@@ -13,9 +13,20 @@ FILESDIR=	${TESTSDIR}
 .for msg in \
     000 001 002 003 004 005 006 007 008 009 \
     010 011 012 013 014 015 016 017 018
-FILES+=		msg_${msg}.exp	msg_${msg}.ln
+TESTS+=		msg_${msg}
 .endfor
-FILES+=		read.exp	read.ln
+TESTS+=		read
+.if ${MACHINE_ARCH:M*64}	# close enough to "is a 64-bit platform"
+TESTS+=		read_lp64
+.endif
+TESTS+=		read_printf
+
+FILES+=		${TESTS:=.ln} ${TESTS:=.exp}
+FILES+=		tests
+
+realall: tests
+tests:
+	printf '%s\n' ${TESTS} > ${.TARGET}
 
 # Note: only works for adding tests.
 # To remove a test, the $$mi file must be edited manually.

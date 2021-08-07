@@ -1,0 +1,10 @@
+# $NetBSD: read_lp64.ln,v 1.1 2021/08/07 23:52:32 rillig Exp $
+#
+# Cover reading of 128-bit integer types.
+# These types are only available on 64-bit platforms.
+
+0sread_lp64.c
+Sread_lp64.c
+
+115d0.115e4f115F0J		# INT128
+116d0.116e4f116F0uJ		# UINT128

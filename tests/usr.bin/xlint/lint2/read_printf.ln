@@ -1,0 +1,35 @@
+# $NetBSD: read_printf.ln,v 1.1 2021/08/07 23:52:32 rillig Exp $
+#
+# Test reading of declarations and usage of printf-like functions.
+
+# void my_printf(const char *, ...);
+0sprintf-def.c
+Sprintf-def.c
+3d0.3d9my_printfF2PcCEV
+
+0sprintf-use.c
+Sprintf-use.c
+
+# my_printf("string %s", "string %s%%%3d");
+#
+# Argument 1 is converted to 'const char *', due to the function prototype.
+# After that, is it not a string literal anymore, therefore no information
+# about this argument is written to the .ln file.
+#
+# Argument 2 is part of the '...', therefore no conversion to 'const char *'
+# takes place.  Since it is still the address of a string, its value is
+# analyzed for printf format specifiers.  This is unnecessary though since in
+# this example, the format string is already in argument 1, but not 2.
+11c0.11 s2"%s%%%3d" i 9my_printf f2 PcC PC V
+
+# my_printf("int %d", 12345);
+#
+# Argument 2 is a positive integer.
+12c0.12 p2 i 9my_printf f2 PcC I V
+
+# my_printf("%s %d %p", "\t", -6, (const void *)0);
+#
+# Argument 2 is a string without any printf-like format specifiers.
+# Argument 3 is a negative integer.
+# Argument 4 has no further interesting properties.
+13c0.13 s2"" n3 i 9my_printf f4 PcC PC I PcV V
