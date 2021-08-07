@@ -1,4 +1,4 @@
-.\"     $NetBSD: autoconf.9,v 1.33 2021/08/07 19:41:13 andvar Exp $
+.\"     $NetBSD: autoconf.9,v 1.34 2021/08/07 20:41:17 uwe Exp $
 .\"
 .\" Copyright (c) 2001, 2002, 2021 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 28, 2021
+.Dd August 7, 2021
 .Dt AUTOCONF 9
 .Os
 .Sh NAME
@@ -126,42 +126,51 @@ This list is constructed using the
 .Fn CFARGS
 macro, like this example:
 .Bd -literal -offset indent
-    config_search(self, NULL,
-        CFARGS(.search = mainbus_search,
-               .iattr = "mainbus"));
+config_search(self, NULL,
+    CFARGS(.search = mainbus_search,
+           .iattr = "mainbus"));
 .Ed
 .Pp
 Each tag is followed by a tag-specific value.
-.Bl -tag -width ".devhandle"
-.It Dv .submatch
+.Bl -tag -offset indent -width ".Fa devhandle"
+.It Fa submatch
 A pointer to a
 .Sq submatch
-function used in direct configuration.
-.It Dv .search
+function used in
+.Em direct
+configuration.
+.\"
+.It Fa search
 A pointer to a
 .Sq search
-function used in indirect configuration.
-.It Dv .iattr
-A pointer to a constant C string
-.Pq const char *
+function used in
+.Em indirect
+configuration.
+.\"
+.It Fa iattr
+A pointer to a constant
+.Tn C
+string
+.Pq Vt "const char *"
 specifying an interface attribute.
 If a parent device carries only a single interface attribute, then this
 argument may be omitted.
 If an interface attribute is specified that the parent device does not
-carry, or no interface attribute is specifies and the parent device carries
+carry, or no interface attribute is specified and the parent device carries
 more than one, behavior is undefined.
 On kernels built with the
 .Dv DIAGNOSTIC
 option, this may result in an assertion panic.
-.It Dv .locators
-A pointer an a constant array of type
-.Sq int
-.Pq const int *
+.\"
+.It Fa locators
+A pointer to a constant array of integers
+.Pq Vt "const int *"
 containing interface attribute-specific locators.
-.It Dv .devhandle
-A devhandle_t
-.Pq passed by value
-corresponding to the device being attached.
+.\"
+.It Fa devhandle
+A
+.Vt devhandle_t
+(passed by value) corresponding to the device being attached.
 .El
 .Pp
 If no arguments are to be passed, the special value
@@ -170,13 +179,17 @@ may be used in place of the
 .Fn CFARGS
 macro.
 .Sh FUNCTIONS
-.Bl -tag -width compact
+.Bl -tag -width ".Fn config"
+.\"
+.\"
 .It Fn config_search "parent" "aux" "cfargs"
-Performs indirect configuration of physical devices.
 Cfargs consumed:
-.Em .search ,
-.Em .iattr ,
-.Em .locators .
+.Fa search ,
+.Fa iattr ,
+.Fa locators .
+.\"
+.Pp
+Performs indirect configuration of physical devices.
 .Fn config_search
 iterates over all potential children, calling the given
 search function
@@ -216,13 +229,17 @@ itself.
 Note that this function is designed so that it can be used to apply an
 arbitrary function to all potential children.
 In this case callers may choose to ignore the return value.
+.\"
+.\"
 .It Fn config_found "parent" "aux" "print" "cfargs"
-Performs direct configuration on a physical device.
 Cfargs consumed:
-.Em .submatch ,
-.Em .iattr ,
-.Em .locators ,
-.Em .devhandle .
+.Fa submatch ,
+.Fa iattr ,
+.Fa locators ,
+.Fa devhandle .
+.\"
+.Pp
+Performs direct configuration on a physical device.
 .Fn config_found
 is called by the parent and in turn calls the specified submatch function
 as determined by the configuration table.
@@ -249,7 +266,7 @@ argument describes the device that has been found.
 internally uses
 .Fn config_search .
 The
-.Em softc
+.Vt softc
 structure for the matched device will be allocated, and the
 appropriate driver attach function will be called.
 If the device is matched, the system prints the name of the child and
@@ -277,20 +294,28 @@ and
 unsupported
 .Dc
 will be appended automatically to non-driver reports if the return
-value is UNCONF or UNSUPP respectively; otherwise the function should
-return the value QUIET.
+value is
+.Dv UNCONF
+or
+.Dv UNSUPP
+respectively; otherwise the function should
+return the value
+.Dv QUIET .
 If a device handle is specified, that handle will be associated with
 the resulting child device structure if a driver matches.
 .Pp
 .Fn config_found
 returns a pointer to the attached device's
-.Em device
+.Vt device
 structure if the device is attached,
 .Dv NULL
 otherwise.
 Most callers can ignore this value, since the system will already have
 printed a diagnostic.
+.\"
+.\"
 .It Fn config_match "parent" "cf" "aux"
+.\"
 Match a device
 .Pq direct configuration .
 Invokes the driver's match function according to the configuration table.
@@ -299,7 +324,10 @@ The
 function returns a nonzero integer indicating the confidence of
 supporting this device and a value of 0 if the driver doesn't support
 the device.
+.\"
+.\"
 .It Fn config_probe "parent" "cf" "aux"
+.\"
 Probe for a device
 .Pq indirect configuration .
 Invokes the driver's match function according to the configuration table.
@@ -312,23 +340,30 @@ Unlike
 the return value of
 .Fn config_probe
 is not intended to reflect a confidence value.
+.\"
+.\"
 .It Fn config_attach "parent" "cf" "aux" "print" "cfargs"
-Attach a found device.
 Cfargs consumed:
-.Em .locators ,
-.Em .devhandle .
+.Fa locators ,
+.Fa devhandle .
+.\"
+.Pp
+Attach a found device.
 Allocates the memory for the
-.Em softc
+.Vt softc
 structure and calls the drivers attach function according to the
 configuration table.
 If successful,
 .Fn config_attach
 returns a pointer to the
-.Em device
+.Vt device
 structure.
 If unsuccessful, it returns
 .Dv NULL .
+.\"
+.\"
 .It Fn config_attach_pseudo "cf"
+.\"
 Create an instance of a pseudo-device driver.
 .Xr config 5
 syntax allows the creation of pseudo-devices from which regular
@@ -344,19 +379,29 @@ object and pass it to
 The content of that object is similar to what is returned by
 .Fn config_search
 for regular devices.
+.\"
+.\"
 .It Fn config_detach "dev" "flags"
+.\"
 Called by the parent to detach the child device.
 The second argument
-.Em flags
+.Fa flags
 contains detachment flags.
-Valid values are DETACH_FORCE (force detachment (e.g., because of hardware
-removal)) and DETACH_QUIET (do not print a notice).
+Valid values are
+.Dv DETACH_FORCE
+(force detachment, e.g., because of hardware removal)
+and
+.Dv DETACH_QUIET
+(do not print a notice).
 .Fn config_detach
 returns zero if successful and an error code otherwise.
 .Fn config_detach
 is always called from a thread context, allowing condition variables
 to be used while the device detaches itself.
+.\"
+.\"
 .It Fn config_detach_children "dev" "flags"
+.\"
 Iterate through all attached devices, calling
 .Fn config_detach
 for each child of
@@ -367,7 +412,10 @@ If detaching any child results in an error, the iteration will halt
 and any remaining devices will not be detached.
 .Fn config_detach_children
 returns zero if successful and an error code otherwise.
+.\"
+.\"
 .It Fn config_deactivate "dev"
+.\"
 Called by the parent to deactivate the child device
 .Fa dev .
 .Fn config_deactivate
@@ -377,21 +425,30 @@ detached.
 At some later point
 .Fn config_detach
 will be called to finalise the removal of the device.
+.\"
+.\"
 .It Fn config_defer "dev" "func"
+.\"
 Called by the child to defer the remainder of its configuration until
 all its parent's devices have been attached.
 At this point, the function
 .Fa func
 is called with the argument
 .Fa dev .
+.\"
+.\"
 .It Fn config_interrupts "dev" "func"
+.\"
 Called by the child to defer the remainder of its configuration until
 interrupts are enabled.
 At this point, the function
 .Fa func
 is called with the argument
 .Fa dev .
+.\"
+.\"
 .It Fn config_mountroot "dev" "func"
+.\"
 Called by the child to defer the remainder of its configuration until
 the root file system is mounted.
 At this point, the function
@@ -400,19 +457,29 @@ is called with the argument
 .Fa dev .
 This is used for devices that need to load firmware image from
 a mounted file system.
+.\"
+.\"
 .It Fn config_pending_incr
+.\"
 Increment the
 .Va config_pending
 semaphore.
 It is used to account for deferred configurations before
 mounting the root file system.
+.\"
+.\"
 .It Fn config_pending_decr
+.\"
 Decrement the
 .Va config_pending
 semaphore.
 It is used to account for deferred configurations before
 mounting the root file system.
+.\"
+.\"
 .It Fn config_finalize_register "dev" "func"
+.\"
+.\"
 Register a function to be called after all real devices have been found.
 .Pp
 Registered functions are all executed until all of them return 0.
