@@ -1,4 +1,4 @@
-.\"     $NetBSD: autoconf.9,v 1.31 2021/04/28 00:49:22 thorpej Exp $
+.\"     $NetBSD: autoconf.9,v 1.32 2021/08/07 16:20:02 thorpej Exp $
 .\"
 .\" Copyright (c) 2001, 2002, 2021 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -52,17 +52,17 @@
 .In sys/device.h
 .In sys/errno.h
 .Ft cfdata_t
-.Fn config_search "device_t parent" "void *aux" "cfarg_t tag" "..."
+.Fn config_search "device_t parent" "void *aux" "const struct cfargs *"
 .Ft device_t
 .Fn config_found "device_t parent" "void *aux" "cfprint_t print" \
-"cfarg_t tag" "..."
+"const struct cfargs *"
 .Ft int
 .Fn config_match "device_t parent" "cfdata_t cf" "void *aux"
 .Ft int
 .Fn config_probe "device_t parent" "cfdata_t cf" "void *aux"
 .Ft device_t
 .Fn config_attach "device_t parent" "cfdata_t cf" "void *aux" \
-"cfprint_t print" "cfarg_t tag" "..."
+"cfprint_t print" "const struct cfargs *"
 .Ft device_t
 .Fn config_attach_pseudo "cfdata_t cf"
 .Ft int
@@ -119,53 +119,64 @@ The unit number identifies an instance of the driver.
 Device data structures are allocated dynamically during
 autoconfiguration, giving a unique address for each instance.
 .Pp
-Several of the autoconfiguration functions take a variadic list of
-tag-value arguments to pass information from driver autoconfiguration
+Several of the autoconfiguration functions take a strongly-typed variadic
+list of arguments to pass information from driver autoconfiguration
 functions to the kernel's autoconfiguration system.
+This list is constructed using the
+.Fn CFARGS
+macro, like this example:
+.Bd -literal -offset indent
+    config_search(self, NULL,
+        CFARGS(.search = mainbus_search,
+               .iattr = "mainbus"));
+.Ed
+.Pp
 Each tag is followed by a tag-specific value.
-The end of the argument list must be terminated with the tag
-.Dv CFARG_EOL .
-Passing an invalid tag or an inappropriate value for a tag results
-in undefined behavior and may cause a kernel panic.
-.Bl -tag -width "CFARG_DEVHANDLE"
-.It Dv CFARG_SUBMATCH
+.Bl -tag -width ".devhandle"
+.It Dv .submatch
 A pointer to a
 .Sq submatch
 function used in direct configuration.
-.It Dv CFARG_SEARCH
+.It Dv .search
 A pointer to a
 .Sq search
 function used in indirect configuration.
-.It Dv CFARG_IATTR
+.It Dv .iattr
 A pointer to a constant C string
 .Pq const char *
 specifying an interface attribute.
 If a parent device carries only a single interface attribute, then this
-tag-value pair may be omitted.
+argument may be omitted.
 If an interface attribute is specified that the parent device does not
 carry, or no interface attribute is specifies and the parent device carries
 more than one, behavior is undefined.
 On kernels built with the
 .Dv DIAGNOSTIC
 option, this may result in an assertion panic.
-.It Dv CFARG_LOCATORS
+.It Dv .locators
 A pointer an a constant array of type
 .Sq int
 .Pq const int *
 containing interface attribute-specific locators.
-.It Dv CFARG_DEVHANDLE
+.It Dv .devhandle
 A devhandle_t
 .Pq passed by value
 corresponding to the device being attached.
 .El
+.Pp
+If no arguments are to be passed, the special value
+.Dv CFARGS_NONE
+may be used in place of the
+.Fn CFARGS
+macro.
 .Sh FUNCTIONS
 .Bl -tag -width compact
-.It Fn config_search "parent" "aux" "tag" "..."
+.It Fn config_search "parent" "aux" "cfargs"
 Performs indirect configuration of physical devices.
-Tag-value arguments consumed:
-.Dv CFARG_SEARCH ,
-.Dv CFARG_IATTR ,
-.Dv CFARG_LOCATORS .
+Cfargs consumed:
+.Em .search ,
+.Em .iattr ,
+.Em .locators .
 .Fn config_search
 iterates over all potential children, calling the given
 search function
@@ -205,13 +216,13 @@ itself.
 Note that this function is designed so that it can be used to apply an
 arbitrary function to all potential children.
 In this case callers may choose to ignore the return value.
-.It Fn config_found "parent" "aux" "print" "tag" "..."
+.It Fn config_found "parent" "aux" "print" "cfargs"
 Performs direct configuration on a physical device.
-Tag-value arguments consumed:
-.Dv CFARG_SUBMATCH ,
-.Dv CFARG_IATTR ,
-.Dv CFARG_LOCATORS ,
-.Dv CFARG_DEVHANDLE .
+Cfargs consumed:
+.Em .submatch ,
+.Em .iattr ,
+.Em .locators ,
+.Em .devhandle .
 .Fn config_found
 is called by the parent and in turn calls the specified submatch function
 as determined by the configuration table.
@@ -301,11 +312,11 @@ Unlike
 the return value of
 .Fn config_probe
 is not intended to reflect a confidence value.
-.It Fn config_attach "parent" "cf" "aux" "print" "tag" "..."
+.It Fn config_attach "parent" "cf" "aux" "print" "cfargs"
 Attach a found device.
-Tag-value arguments consumed:
-.Dv CFARG_LOCATORS ,
-.Dv CFARG_DEVHANDLE .
+Cfargs consumed:
+.Em .locators ,
+.Em .devhandle .
 Allocates the memory for the
 .Em softc
 structure and calls the drivers attach function according to the
