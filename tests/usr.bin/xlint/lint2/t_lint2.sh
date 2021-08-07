@@ -1,4 +1,4 @@
-# $NetBSD: t_lint2.sh,v 1.2 2021/08/07 21:24:14 rillig Exp $
+# $NetBSD: t_lint2.sh,v 1.3 2021/08/07 23:52:32 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -37,8 +37,8 @@ std_body()
 	# shellcheck disable=SC2155
 	local srcdir="$(atf_get_srcdir)"
 
-	# remove comments and empty lines from the .ln file
-	sed -e '/^#/d' -e '/^$/d' -e 's,[[:space:]]*#.*,,' \
+	# remove comments and whitespace from the .ln file
+	sed -e '/^#/d' -e '/^$/d' -e 's,#.*,,' -e 's,[[:space:]],,g' \
 	    < "$srcdir/$1.ln" \
 	    > "$1.ln"
 
@@ -48,7 +48,8 @@ std_body()
 
 atf_init_test_cases()
 {
-	for i in $(printf 'msg_%03d\n' $(seq 0 18)) "read"; do
+	# shellcheck disable=SC2013
+	for i in $(cat "$(atf_get_srcdir)/tests"); do
 		eval "${i}_head() { std_head; }"
 		eval "${i}_body() { std_body '$i'; }"
 		atf_add_test_case "$i"
