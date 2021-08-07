@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_platform.c,v 1.27 2021/08/06 19:38:53 jmcneill Exp $ */
+/* $NetBSD: acpi_platform.c,v 1.28 2021/08/07 21:24:56 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.27 2021/08/06 19:38:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.28 2021/08/07 21:24:56 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -253,6 +253,7 @@ acpi_platform_startup(void)
 			} else {
 				psci_init(psci_call_smc);
 			}
+			smccc_probe();
 		}
 		acpi_table_unmap((ACPI_TABLE_HEADER *)fadt);
 	}
