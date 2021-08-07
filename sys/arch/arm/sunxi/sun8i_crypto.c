@@ -1,4 +1,4 @@
-/*	$NetBSD: sun8i_crypto.c,v 1.25 2021/04/28 16:57:05 bad Exp $	*/
+/*	$NetBSD: sun8i_crypto.c,v 1.26 2021/08/07 15:41:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.25 2021/04/28 16:57:05 bad Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.26 2021/08/07 15:41:00 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -211,7 +211,7 @@ static void	sun8i_crypto_timeout(void *);
 static int	sun8i_crypto_intr(void *);
 static void	sun8i_crypto_schedule_worker(struct sun8i_crypto_softc *);
 static void	sun8i_crypto_worker(struct work *, void *);
-static void	sun8i_crypto_chan_done(struct sun8i_crypto_softc *, unsigned,
+static bool	sun8i_crypto_chan_done(struct sun8i_crypto_softc *, unsigned,
 		    int);
 
 static int	sun8i_crypto_allocbuf(struct sun8i_crypto_softc *, size_t,
@@ -1051,6 +1051,7 @@ sun8i_crypto_worker(struct work *wk, void *cookie)
 	struct sun8i_crypto_softc *sc = cookie;
 	uint32_t done, esr, esr_chan;
 	unsigned i, now;
+	bool unblock = false;
 	int error;
 
 	/*
@@ -1084,7 +1085,8 @@ sun8i_crypto_worker(struct work *wk, void *cookie)
 			if ((sc->sc_chan[i].cc_task != NULL) &&
 			    ((now - sc->sc_chan[i].cc_starttime) >=
 				SUN8I_CRYPTO_TIMEOUT))
-				sun8i_crypto_chan_done(sc, i, ETIMEDOUT);
+				unblock |= sun8i_crypto_chan_done(sc, i,
+				    ETIMEDOUT);
 			continue;
 		}
 
@@ -1112,11 +1114,23 @@ sun8i_crypto_worker(struct work *wk, void *cookie)
 		 * Notify the task of completion.  May release the lock
 		 * to invoke a callback.
 		 */
-		sun8i_crypto_chan_done(sc, i, error);
+		unblock |= sun8i_crypto_chan_done(sc, i, error);
 	}
 
 	/* All one; release the lock one last time.  */
 	mutex_exit(&sc->sc_lock);
+
+	/*
+	 * If we cleared any channels, it is time to allow opencrypto
+	 * to issue new operations.  Asymmetric operations (which we
+	 * don't support, at the moment, but we could) and symmetric
+	 * operations (which we do) use the same task channels, so we
+	 * unblock both kinds.
+	 */
+	if (unblock) {
+		crypto_unblock(sc->sc_opencrypto.co_driverid,
+		    CRYPTO_SYMQ|CRYPTO_ASYMQ);
+	}
 }
 
 /*
@@ -1125,7 +1139,7 @@ sun8i_crypto_worker(struct work *wk, void *cookie)
  *	Notify the callback for the task on channel i, if there is one,
  *	of the specified error, or 0 for success.
  */
-static void
+static bool
 sun8i_crypto_chan_done(struct sun8i_crypto_softc *sc, unsigned i, int error)
 {
 	struct sun8i_crypto_task *task;
@@ -1140,7 +1154,8 @@ sun8i_crypto_chan_done(struct sun8i_crypto_softc *sc, unsigned i, int error)
 	if ((task = sc->sc_chan[i].cc_task) == NULL) {
 		device_printf(sc->sc_dev, "channel %u: no task but error=%d\n",
 		    i, error);
-		return;
+		/* We did not clear a channel.  */
+		return false;
 	}
 	sc->sc_chan[i].cc_task = NULL;
 
@@ -1183,6 +1198,9 @@ sun8i_crypto_chan_done(struct sun8i_crypto_softc *sc, unsigned i, int error)
 	SDT_PROBE2(sdt, sun8i_crypto, task, done,  task, error);
 	(*task->ct_callback)(sc, task, task->ct_cookie, error);
 	mutex_enter(&sc->sc_lock);
+
+	/* We cleared a channel.  */
+	return true;
 }
 
 /*
@@ -1811,7 +1829,7 @@ sun8i_crypto_register1(struct sun8i_crypto_softc *sc, uint32_t alg)
  *	Called by opencrypto to allocate a new session.  We don't keep
  *	track of sessions, since there are no persistent keys in the
  *	hardware that we take advantage of, so this only validates the
- *	crypto operations and returns a zero session id.
+ *	crypto operations and returns a dummy session id of 1.
  */
 static int
 sun8i_crypto_newsession(void *cookie, uint32_t *sidp, struct cryptoini *cri)
@@ -1823,7 +1841,7 @@ sun8i_crypto_newsession(void *cookie, uint32_t *sidp, struct cryptoini *cri)
 
 	/*
 	 * No variation of rounds is supported here.  (XXX Unused and
-	 * unimplemented in opencrypto(9) altogether?
+	 * unimplemented in opencrypto(9) altogether?)
 	 */
 	if (cri->cri_rnd)
 		return EINVAL;
