@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci_machdep.c,v 1.18 2020/06/17 06:45:09 thorpej Exp $ */
+/* $NetBSD: acpi_pci_machdep.c,v 1.19 2021/08/07 21:27:53 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018, 2020 The NetBSD Foundation, Inc.
@@ -29,10 +29,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_pci.h"
+
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci_machdep.c,v 1.18 2020/06/17 06:45:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci_machdep.c,v 1.19 2021/08/07 21:27:53 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -59,6 +61,10 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_pci_machdep.c,v 1.18 2020/06/17 06:45:09 thorpe
 
 #include <arm/acpi/acpi_iort.h>
 #include <arm/acpi/acpi_pci_machdep.h>
+
+#ifdef PCI_SMCCC
+#include <arm/pci/pci_smccc.h>
+#endif
 
 #include <arm/pci/pci_msi_machdep.h>
 
@@ -94,13 +100,20 @@ struct acpi_pci_intr {
 static TAILQ_HEAD(, acpi_pci_intr) acpi_pci_intrs =
     TAILQ_HEAD_INITIALIZER(acpi_pci_intrs);
 
-static const struct acpi_pci_quirk acpi_pci_quirks[] = {
+static const struct acpi_pci_quirk acpi_pci_mcfg_quirks[] = {
 	/* OEM ID	OEM Table ID	Revision	Seg	Func */
 	{ "AMAZON",	"GRAVITON",	0,		-1,	acpi_pci_graviton_init },
 	{ "ARMLTD",	"ARMN1SDP",	0x20181101,	0,	acpi_pci_n1sdp_init },
 	{ "ARMLTD",	"ARMN1SDP",	0x20181101,	1,	acpi_pci_n1sdp_init },
 	{ "NXP   ",     "LX2160  ",     0,              -1,	acpi_pci_layerscape_gen4_init },
 };
+
+#ifdef PCI_SMCCC
+static const struct acpi_pci_quirk acpi_pci_smccc_quirk = {
+	.q_segment = -1,
+	.q_init = acpi_pci_smccc_init,
+};
+#endif
 
 pci_chipset_tag_t acpi_pci_md_get_chipset_tag(struct acpi_softc *, int, int);
 
@@ -554,11 +567,19 @@ acpi_pci_md_find_quirk(int seg)
 	u_int n;
 
 	rv = AcpiGetTable(ACPI_SIG_MCFG, 0, (ACPI_TABLE_HEADER **)&mcfg);
-	if (ACPI_FAILURE(rv))
+	if (ACPI_FAILURE(rv)) {
+#ifdef PCI_SMCCC
+		uint32_t ver = pci_smccc_version();
+		aprint_debug("%s: SMCCC version %#x\n", __func__, ver);
+		if (PCI_SMCCC_SUCCESS(ver)) {
+			return &acpi_pci_smccc_quirk;
+		}
+#endif
 		return NULL;
+	}
 
-	for (n = 0; n < __arraycount(acpi_pci_quirks); n++) {
-		const struct acpi_pci_quirk *q = &acpi_pci_quirks[n];
+	for (n = 0; n < __arraycount(acpi_pci_mcfg_quirks); n++) {
+		const struct acpi_pci_quirk *q = &acpi_pci_mcfg_quirks[n];
 		if (memcmp(q->q_oemid, mcfg->Header.OemId, ACPI_OEM_ID_SIZE) == 0 &&
 		    memcmp(q->q_oemtableid, mcfg->Header.OemTableId, ACPI_OEM_TABLE_ID_SIZE) == 0 &&
 		    q->q_oemrevision == mcfg->Header.OemRevision &&
@@ -589,6 +610,7 @@ acpi_pci_md_get_chipset_tag(struct acpi_softc *sc, int seg, int bbn)
 		pct->pct_ap.ap_pc.pc_intr_v = &pct->pct_ap;
 		pct->pct_ap.ap_seg = seg;
 		pct->pct_ap.ap_bus = bbn;
+		pct->pct_ap.ap_maxbus = -1;
 		pct->pct_ap.ap_bst = acpi_softc->sc_memt;
 
 		q = acpi_pci_md_find_quirk(seg);
