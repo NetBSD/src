@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.70 2021/08/08 16:11:08 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.71 2021/08/08 16:19:18 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: xlint.c,v 1.70 2021/08/08 16:11:08 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.71 2021/08/08 16:19:18 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -61,38 +61,30 @@ __RCSID("$NetBSD: xlint.c,v 1.70 2021/08/08 16:11:08 rillig Exp $");
 
 #define DEFAULT_PATH		_PATH_DEFPATH
 
+/* Parameters for the C preprocessor. */
+static struct {
+	char	**flags;	/* flags always passed */
+	char	**lcflags;	/* flags, controlled by sflag/tflag */
+	char	*outfile;	/* path name for preprocessed C source */
+	int	outfd;		/* file descriptor for outfile */
+} cpp = { NULL, NULL, NULL, -1 };
+
+/* Parameters for lint1, which checks an isolated translation unit. */
+static struct {
+	char	**flags;
+	char	**outfiles;
+} lint1;
+
+/* Parameters for lint2, which performs cross-translation-unit checks. */
+static struct {
+	char	**flags;
+	char	**infiles;	/* input files (without libraries) */
+	char	**inlibs;	/* input libraries */
+	char	*outlib;	/* output library that will be created */
+} lint2;
+
 /* directory for temporary files */
-static	const	char *tmpdir;
-
-/* path name for cpp output */
-static	char	*cppout;
-
-/* file descriptor for cpp output */
-static	int	cppoutfd = -1;
-
-/* files created by 1st pass */
-static	char	**p1out;
-
-/* input files for 2nd pass (without libraries) */
-static	char	**p2in;
-
-/* library which will be created by 2nd pass */
-static	char	*p2out;
-
-/* flags always passed to cc(1) */
-static	char	**cflags;
-
-/* flags for cc(1), controlled by sflag/tflag */
-static	char	**lcflags;
-
-/* flags for lint1 */
-static	char	**l1flags;
-
-/* flags for lint2 */
-static	char	**l2flags;
-
-/* libraries for lint2 */
-static	char	**l2libs;
+static	const char *tmpdir;
 
 /* default libraries */
 static	char	**deflibs;
@@ -136,7 +128,7 @@ static	void	fname(const char *);
 static	void	runchild(const char *, char *const *, const char *, int);
 static	void	findlibs(char *const *);
 static	bool	rdok(const char *);
-static	void	lint2(void);
+static	void	run_lint2(void);
 static	void	cat(char *const *, const char *);
 
 static char **
@@ -207,21 +199,21 @@ static void
 pass_to_lint1(const char *opt)
 {
 
-	list_add_copy(&l1flags, opt);
+	list_add_copy(&lint1.flags, opt);
 }
 
 static void
 pass_to_lint2(const char *opt)
 {
 
-	list_add_copy(&l2flags, opt);
+	list_add_copy(&lint2.flags, opt);
 }
 
 static void
 pass_to_cpp(const char *opt)
 {
 
-	list_add_copy(&cflags, opt);
+	list_add_copy(&cpp.flags, opt);
 }
 
 static char *
@@ -244,23 +236,23 @@ terminate(int signo)
 {
 	int	i;
 
-	if (cppoutfd != -1)
-		(void)close(cppoutfd);
-	if (cppout != NULL) {
+	if (cpp.outfd != -1)
+		(void)close(cpp.outfd);
+	if (cpp.outfile != NULL) {
 		if (signo != 0 && getenv("LINT_KEEP_CPPOUT_ON_ERROR") != NULL)
 			printf("lint: preprocessor output kept in %s\n",
-			    cppout);
+			    cpp.outfile);
 		else
-			(void)remove(cppout);
+			(void)remove(cpp.outfile);
 	}
 
-	if (p1out != NULL) {
-		for (i = 0; p1out[i] != NULL; i++)
-			(void)remove(p1out[i]);
+	if (lint1.outfiles != NULL) {
+		for (i = 0; lint1.outfiles[i] != NULL; i++)
+			(void)remove(lint1.outfiles[i]);
 	}
 
-	if (p2out != NULL)
-		(void)remove(p2out);
+	if (lint2.outlib != NULL)
+		(void)remove(lint2.outlib);
 
 	if (currfn != NULL)
 		(void)remove(currfn);
@@ -328,20 +320,20 @@ main(int argc, char *argv[])
 		tmpdir = concat2(tmp, tmp[len - 1] == '/' ? "" : "/");
 	}
 
-	cppout = concat2(tmpdir, "lint0.XXXXXX");
-	cppoutfd = mkstemp(cppout);
-	if (cppoutfd == -1) {
+	cpp.outfile = concat2(tmpdir, "lint0.XXXXXX");
+	cpp.outfd = mkstemp(cpp.outfile);
+	if (cpp.outfd == -1) {
 		warn("can't make temp");
 		terminate(-1);
 	}
 
-	p1out = list_new();
-	p2in = list_new();
-	cflags = list_new();
-	lcflags = list_new();
-	l1flags = list_new();
-	l2flags = list_new();
-	l2libs = list_new();
+	lint1.outfiles = list_new();
+	lint2.infiles = list_new();
+	cpp.flags = list_new();
+	cpp.lcflags = list_new();
+	lint1.flags = list_new();
+	lint2.flags = list_new();
+	lint2.inlibs = list_new();
 	deflibs = list_new();
 	libs = list_new();
 	libsrchpath = list_new();
@@ -443,11 +435,11 @@ main(int argc, char *argv[])
 		case 's':
 			if (tflag)
 				usage();
-			list_clear(&lcflags);
-			list_add_copy(&lcflags, "-trigraphs");
-			list_add_copy(&lcflags, "-Wtrigraphs");
-			list_add_copy(&lcflags, "-pedantic");
-			list_add_copy(&lcflags, "-D__STRICT_ANSI__");
+			list_clear(&cpp.lcflags);
+			list_add_copy(&cpp.lcflags, "-trigraphs");
+			list_add_copy(&cpp.lcflags, "-Wtrigraphs");
+			list_add_copy(&cpp.lcflags, "-pedantic");
+			list_add_copy(&cpp.lcflags, "-D__STRICT_ANSI__");
 			pass_to_lint1("-s");
 			pass_to_lint2("-s");
 			sflag = true;
@@ -467,15 +459,15 @@ main(int argc, char *argv[])
 			pass_to_lint2(flgbuf);
 			break;
 
-#if ! HAVE_NBTOOL_CONFIG_H
+#if !HAVE_NBTOOL_CONFIG_H
 		case 't':
 			if (sflag)
 				usage();
-			list_clear(&lcflags);
-			list_add_copy(&lcflags, "-traditional");
-			list_add_copy(&lcflags, "-Wtraditional");
-			list_add(&lcflags, concat2("-D", MACHINE));
-			list_add(&lcflags, concat2("-D", MACHINE_ARCH));
+			list_clear(&cpp.lcflags);
+			list_add_copy(&cpp.lcflags, "-traditional");
+			list_add_copy(&cpp.lcflags, "-Wtraditional");
+			list_add_copy(&cpp.lcflags, "-D" MACHINE);
+			list_add_copy(&cpp.lcflags, "-D" MACHINE_ARCH);
 			pass_to_lint1("-t");
 			pass_to_lint2("-t");
 			tflag = true;
@@ -490,8 +482,8 @@ main(int argc, char *argv[])
 			if (Cflag || oflag || iflag)
 				usage();
 			Cflag = true;
-			list_add(&l2flags, concat2("-C", optarg));
-			p2out = xasprintf("llib-l%s.ln", optarg);
+			list_add(&lint2.flags, concat2("-C", optarg));
+			lint2.outlib = xasprintf("llib-l%s.ln", optarg);
 			list_clear(&deflibs);
 			break;
 
@@ -508,7 +500,7 @@ main(int argc, char *argv[])
 		case 'I':
 		case 'M':
 		case 'U':
-			list_add(&cflags, xasprintf("-%c%s", c, optarg));
+			list_add(&cpp.flags, xasprintf("-%c%s", c, optarg));
 			break;
 
 		case 'l':
@@ -611,13 +603,13 @@ main(int argc, char *argv[])
 	}
 
 	(void)printf("Lint pass2:\n");
-	lint2();
+	run_lint2();
 
 	if (oflag)
-		cat(p2in, outputfn);
+		cat(lint2.infiles, outputfn);
 
 	if (Cflag)
-		p2out = NULL;
+		lint2.outlib = NULL;
 
 	terminate(0);
 	/* NOTREACHED */
@@ -642,7 +634,7 @@ fname(const char *name)
 	if (strcmp(suff, "ln") == 0) {
 		/* only for lint2 */
 		if (!iflag)
-			list_add_copy(&p2in, name);
+			list_add_copy(&lint2.infiles, name);
 		return;
 	}
 
@@ -673,7 +665,7 @@ fname(const char *name)
 		close(fd);
 	}
 	if (!iflag)
-		list_add_copy(&p1out, ofn);
+		list_add_copy(&lint1.outfiles, ofn);
 
 	args = list_new();
 
@@ -689,21 +681,21 @@ fname(const char *name)
 	}
 
 	list_add_copy(&args, pathname);
-	list_add_all(&args, cflags);
-	list_add_all(&args, lcflags);
+	list_add_all(&args, cpp.flags);
+	list_add_all(&args, cpp.lcflags);
 	list_add_copy(&args, name);
 
 	/* we reuse the same tmp file for cpp output, so rewind and truncate */
-	if (lseek(cppoutfd, (off_t)0, SEEK_SET) != 0) {
+	if (lseek(cpp.outfd, (off_t)0, SEEK_SET) != 0) {
 		warn("lseek");
 		terminate(-1);
 	}
-	if (ftruncate(cppoutfd, (off_t)0) != 0) {
+	if (ftruncate(cpp.outfd, (off_t)0) != 0) {
 		warn("ftruncate");
 		terminate(-1);
 	}
 
-	runchild(pathname, args, cppout, cppoutfd);
+	runchild(pathname, args, cpp.outfile, cpp.outfd);
 	free(pathname);
 	list_clear(&args);
 
@@ -721,15 +713,15 @@ fname(const char *name)
 	}
 
 	list_add_copy(&args, pathname);
-	list_add_all(&args, l1flags);
-	list_add_copy(&args, cppout);
+	list_add_all(&args, lint1.flags);
+	list_add_copy(&args, cpp.outfile);
 	list_add_copy(&args, ofn);
 
 	runchild(pathname, args, ofn, -1);
 	free(pathname);
 	list_clear(&args);
 
-	list_add_copy(&p2in, ofn);
+	list_add_copy(&lint2.infiles, ofn);
 	free(ofn);
 
 	free(args);
@@ -813,7 +805,7 @@ findlib(const char *lib)
 	return;
 
 found:
-	list_add(&l2libs, concat2("-l", lfn));
+	list_add(&lint2.inlibs, concat2("-l", lfn));
 	free(lfn);
 }
 
@@ -841,7 +833,7 @@ rdok(const char *path)
 }
 
 static void
-lint2(void)
+run_lint2(void)
 {
 	char	*path, **args;
 
@@ -858,11 +850,11 @@ lint2(void)
 	}
 
 	list_add_copy(&args, path);
-	list_add_all(&args, l2flags);
-	list_add_all(&args, l2libs);
-	list_add_all(&args, p2in);
+	list_add_all(&args, lint2.flags);
+	list_add_all(&args, lint2.inlibs);
+	list_add_all(&args, lint2.infiles);
 
-	runchild(path, args, p2out, -1);
+	runchild(path, args, lint2.outlib, -1);
 	free(path);
 	list_clear(&args);
 	free(args);
