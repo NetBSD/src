@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2021/08/07 23:52:32 rillig Exp $
+# $NetBSD: Makefile,v 1.4 2021/08/08 00:02:02 rillig Exp $
 
 NOMAN=		yes
 
@@ -22,11 +22,6 @@ TESTS+=		read_lp64
 TESTS+=		read_printf
 
 FILES+=		${TESTS:=.ln} ${TESTS:=.exp}
-FILES+=		tests
-
-realall: tests
-tests:
-	printf '%s\n' ${TESTS} > ${.TARGET}
 
 # Note: only works for adding tests.
 # To remove a test, the $$mi file must be edited manually.
