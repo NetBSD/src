@@ -1,4 +1,4 @@
-#	$NetBSD: files.bcm2835,v 1.41 2021/08/08 10:32:26 jmcneill Exp $
+#	$NetBSD: files.bcm2835,v 1.42 2021/08/08 18:43:21 jmcneill Exp $
 #
 # Configuration info for Broadcom BCM2835 ARM Peripherals
 #
@@ -59,6 +59,11 @@ file	arch/arm/broadcom/bcm2835_aux.c		bcmaux
 # AUX UART (BCM2835_AUX_UART_BASE)
 attach	com at fdt with bcmcom
 file	arch/arm/broadcom/bcm2835_com.c		bcmcom
+
+ifdef acpinodebus
+attach	com at acpinodebus with bcmcom_acpi
+file	arch/arm/broadcom/bcm2835_com_acpi.c	bcmcom_acpi
+endif
 
 # External Mass Media Controller (BCM2835_EMMC_BASE)
 attach	sdhc at fdt with bcmemmc
