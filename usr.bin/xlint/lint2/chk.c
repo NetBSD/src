@@ -1,4 +1,4 @@
-/* $NetBSD: chk.c,v 1.42 2021/04/02 12:16:50 rillig Exp $ */
+/* $NetBSD: chk.c,v 1.43 2021/08/08 11:56:35 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: chk.c,v 1.42 2021/04/02 12:16:50 rillig Exp $");
+__RCSID("$NetBSD: chk.c,v 1.43 2021/08/08 11:56:35 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -1085,9 +1085,9 @@ chkrvu(hte_t *hte, sym_t *def)
 		 * but for now I don't want to be bothered by this warnings
 		 * which are almost always useless.
 		 */
-		if (hflag == 0)
+		if (!hflag)
 			return;
-		if (hflag == 1 && bsearch(hte->h_name, ignorelist,
+		if (hflag && bsearch(hte->h_name, ignorelist,
 		    __arraycount(ignorelist), sizeof(ignorelist[0]),
 		    (int (*)(const void *, const void *))strcmp) != NULL)
 			return;
@@ -1340,7 +1340,7 @@ eqargs(type_t *tp1, type_t *tp2, bool *dowarn)
 
 	while (*a1 != NULL && *a2 != NULL) {
 
-		if (eqtype(*a1, *a2, true, false, false, dowarn) == 0)
+		if (!eqtype(*a1, *a2, true, false, false, dowarn))
 			return false;
 
 		a1++;
