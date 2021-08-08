@@ -1,4 +1,4 @@
-/*	$NetBSD: lua.c,v 1.26 2021/08/07 04:19:31 rin Exp $ */
+/*	$NetBSD: lua.c,v 1.27 2021/08/08 22:26:32 rin Exp $ */
 
 /*
  * Copyright (c) 2011 - 2017 by Marc Balmer <mbalmer@NetBSD.org>.
@@ -74,8 +74,10 @@ static bool	lua_bytecode_on = false;
 static int	lua_verbose;
 static int	lua_max_instr;
 
-static LIST_HEAD(, lua_state)	lua_states;
-static LIST_HEAD(, lua_module)	lua_modules;
+static LIST_HEAD(, lua_state)	lua_states =
+    LIST_HEAD_INITIALIZER(lua_states);
+static LIST_HEAD(, lua_module)	lua_modules =
+    LIST_HEAD_INITIALIZER(lua_modules);
 
 static int lua_match(device_t, cfdata_t, void *);
 static void lua_attach(device_t, device_t, void *);
@@ -723,7 +725,7 @@ kluaL_newstate(const char *name, const char *desc, int ipl)
 void
 klua_close(klua_State *K)
 {
-	struct lua_state *s;
+	struct lua_state *s, *ns;
 	struct lua_softc *sc;
 	struct lua_module *m;
 	int error = 0;
@@ -747,7 +749,7 @@ klua_close(klua_State *K)
 	if (error)
 		return;		/* Nothing we can do... */
 
-	LIST_FOREACH(s, &lua_states, lua_next)
+	LIST_FOREACH_SAFE(s, &lua_states, lua_next, ns)
 		if (s->K == K) {
 			LIST_REMOVE(s, lua_next);
 			LIST_FOREACH(m, &s->lua_modules, mod_next)
