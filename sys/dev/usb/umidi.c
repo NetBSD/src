@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.83 2021/01/20 22:46:33 jdolecek Exp $	*/
+/*	$NetBSD: umidi.c,v 1.84 2021/08/08 20:50:12 andvar Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012, 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.83 2021/01/20 22:46:33 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.84 2021/08/08 20:50:12 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1388,7 +1388,7 @@ close_in_jack(struct umidi_jack *jack)
 			 * We have to drop the (interrupt) lock so that
 			 * the USB thread lock can be safely taken by
 			 * the abort operation.  This is safe as this
-			 * either closing or dying will be set proerly.
+			 * either closing or dying will be set properly.
 			 */
 			mutex_exit(&sc->sc_lock);
 			usbd_abort_pipe(jack->endpoint->pipe);
@@ -1525,7 +1525,7 @@ deactivate_all_mididevs(struct umidi_softc *sc)
  *  Otherwise:
  *  - support a DISPLAY_BASE_CN quirk (add the value to each internal cable
  *    number for display)
- *  - support an array quirk explictly giving a char * for each jack.
+ *  - support an array quirk explicitly giving a char * for each jack.
  * For now, you get 0-based cable numbers. If there are multiple endpoints and
  * the CNs are not globally unique, each is shown with its associated endpoint
  * address in hex also. That should not be necessary when using iJack values
