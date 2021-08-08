@@ -50,3 +50,9 @@ Semit.c
 136d0.135e33taking_struct_union_enum_typedefsF3sT214struct_typedefuT213union_typedefeT212enum_typedefV
 138d0.138e14taking_varargsF2PcCEV
 146d0.146es15static_functionF0I
+148d0.148e9my_printfF2PcCEV
+161c0.161s2"%"i9my_printff2PcCPCV
+162c0.162s2"%s"i9my_printff2PcCPCV
+163c0.163s2"%%"i9my_printff2PcCPCV
+164c0.164s2"%\a%\b%\f%\n%\r%\t%\v%\177"i9my_printff2PcCPCV
+159d0.159d14cover_outqcharF0V

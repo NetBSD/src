@@ -1,4 +1,4 @@
-/*	$NetBSD: emit.c,v 1.1 2021/04/18 20:02:56 rillig Exp $	*/
+/*	$NetBSD: emit.c,v 1.2 2021/08/08 11:07:19 rillig Exp $	*/
 # 3 "emit.c"
 
 /*
@@ -144,3 +144,22 @@ void taking_varargs(const char *, ...);
  * it.
  */
 static int static_function(void);			/* expect: declared */
+
+void my_printf(const char *, ...);
+
+/*
+ * String literals that occur in function calls are written to the .ln file,
+ * just in case they are related to a printf-like or scanf-like function.
+ *
+ * In this example, the various strings are not format strings, they just
+ * serve to cover the code that escapes character literals (outqchar in
+ * lint1) and reads them back into characters (inpqstrg in lint2).
+ */
+void
+cover_outqchar(void)
+{
+	my_printf("%s", "%");
+	my_printf("%s", "%s");
+	my_printf("%s", "%%");
+	my_printf("%s", "%\a %\b %\f %\n %\r %\t %\v %\177");
+}
