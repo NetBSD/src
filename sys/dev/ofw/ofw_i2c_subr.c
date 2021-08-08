@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_i2c_subr.c,v 1.1.6.8 2021/05/18 01:24:39 thorpej Exp $	*/
+/*	$NetBSD: ofw_i2c_subr.c,v 1.1.6.9 2021/08/08 01:06:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_i2c_subr.c,v 1.1.6.8 2021/05/18 01:24:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_i2c_subr.c,v 1.1.6.9 2021/08/08 01:06:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -149,11 +149,13 @@ of_i2c_enumerate_devices(device_t dev, devhandle_t call_handle, void *v)
 		}
 
 		clist_size = OF_getproplen(node, "compatible");
-#ifndef OFW_I2C_ALLOW_MISSING_COMPATIBLE_PROPERTY
 		if (clist_size <= 0) {
+#ifndef OFW_I2C_ALLOW_MISSING_COMPATIBLE_PROPERTY
 			continue;
-		}
+#else
+			clist_size = 0;
 #endif
+		}
 		clist = kmem_tmpbuf_alloc(clist_size,
 		    compat_buf, sizeof(compat_buf), KM_SLEEP);
 		if (OF_getprop(node, "compatible", clist, clist_size) <
