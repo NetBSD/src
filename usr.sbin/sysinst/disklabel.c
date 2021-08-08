@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.43 2021/01/31 22:45:46 rillig Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.44 2021/08/08 21:50:10 andvar Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@ struct disklabel_disk_partitions {
  */
 size_t dl_maxpart;
 
-/* index into this arrray is the type code */
+/* index into this array is the type code */
 static struct part_type_desc dl_types[__arraycount(fstypenames)-1];
 
 struct dl_custom_ptype {
@@ -241,7 +241,7 @@ disklabel_parts_read(const char *disk, daddr_t start, daddr_t len, size_t bps,
 
 		if (dlstart < start || dlend > (start+len)) {
 			/*
-			 * Kernel assumes different outer partion
+			 * Kernel assumes different outer partition
 			 * (probably not yet written back to disk)
 			 * so this label is invalid.
 			 */
@@ -332,7 +332,7 @@ disklabel_parts_read(const char *disk, daddr_t start, daddr_t len, size_t bps,
 			break;
 		}
 		if (!found_real_part) {
-			/* no partion there yet */
+			/* no partition there yet */
 no_valid_label:
 			free(parts);
 			return NULL;

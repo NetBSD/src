@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.73 2021/07/14 18:56:05 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.74 2021/08/08 21:50:10 andvar Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -2522,7 +2522,7 @@ free_selected_partitions(struct selected_partitions *selected)
 		/* remove from list before testing for other instances */
 		selected->selection[i].parts = NULL;
 
-		/* if this is the secondary partion set, the parent owns it */
+		/* if this is the secondary partition set, the parent owns it */
 		if (parts->parent != NULL)
 			continue;
 
