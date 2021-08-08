@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.65 2021/08/08 13:34:57 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.66 2021/08/08 14:05:33 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: xlint.c,v 1.65 2021/08/08 13:34:57 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.66 2021/08/08 14:05:33 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -821,35 +821,38 @@ runchild(const char *path, char *const *args, const char *crfn, int fdout)
 }
 
 static void
-findlibs(char *const *liblst)
+findlib(const char *lib)
 {
-	int	i, k;
-	const	char *lib, *path;
-	char	*lfn;
-	size_t	len;
+	char *const *dir;
+	char *lfn;
 
-	lfn = NULL;
+	for (dir = libsrchpath; *dir != NULL; dir++) {
+		lfn = xasprintf("%s/llib-l%s.ln", *dir, lib);
+		if (rdok(lfn))
+			goto found;
+		free(lfn);
 
-	for (i = 0; (lib = liblst[i]) != NULL; i++) {
-		for (k = 0; (path = libsrchpath[k]) != NULL; k++) {
-			len = strlen(path) + strlen(lib);
-			lfn = xrealloc(lfn, len + sizeof("/llib-l.ln"));
-			(void)sprintf(lfn, "%s/llib-l%s.ln", path, lib);
-			if (rdok(lfn))
-				break;
-			lfn = xrealloc(lfn, len + sizeof("/lint/llib-l.ln"));
-			(void)sprintf(lfn, "%s/lint/llib-l%s.ln", path, lib);
-			if (rdok(lfn))
-				break;
-		}
-		if (path != NULL) {
-			appstrg(&l2libs, concat2("-l", lfn));
-		} else {
-			warnx("cannot find llib-l%s.ln", lib);
-		}
+		lfn = xasprintf("%s/lint/llib-l%s.ln", *dir, lib);
+		if (rdok(lfn))
+			goto found;
+		free(lfn);
 	}
 
+	warnx("cannot find llib-l%s.ln", lib);
+	return;
+
+found:
+	appstrg(&l2libs, concat2("-l", lfn));
 	free(lfn);
+}
+
+static void
+findlibs(char *const *liblst)
+{
+	char *const *p;
+
+	for (p = liblst; *p != NULL; p++)
+		findlib(*p);
 }
 
 static bool
