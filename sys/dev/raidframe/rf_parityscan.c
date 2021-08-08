@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_parityscan.c,v 1.37 2021/07/23 00:54:45 oster Exp $	*/
+/*	$NetBSD: rf_parityscan.c,v 1.38 2021/08/08 21:45:53 andvar Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_parityscan.c,v 1.37 2021/07/23 00:54:45 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_parityscan.c,v 1.38 2021/08/08 21:45:53 andvar Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_parityscan.c,v 1.37 2021/07/23 00:54:45 oster Exp
 
 /*****************************************************************************
  *
- * walk through the entire arry and write new parity.  This works by
+ * walk through the entire array and write new parity.  This works by
  * creating two DAGs, one to read a stripe of data and one to write
  * new parity.  The first is executed, the data is xored together, and
  * then the second is executed.  To avoid constantly building and
