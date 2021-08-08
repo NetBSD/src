@@ -1,4 +1,4 @@
-/*	$NetBSD: c99_bool_strict_suppressed.c,v 1.3 2021/07/05 19:02:14 rillig Exp $	*/
+/*	$NetBSD: c99_bool_strict_suppressed.c,v 1.4 2021/08/08 13:19:51 rillig Exp $	*/
 # 3 "c99_bool_strict_suppressed.c"
 
 /*
@@ -9,12 +9,13 @@
  * This can result in assertion failures later.  One such assertion has been
  * there since at least 1995, at the beginning of expr(), ensuring that the
  * expression is either non-null or an error message has been _printed_.
- * In 1995 it was not possible to suppress error messages, which means that
+ * In 1995, it was not possible to suppress error messages, which means that
  * the number of printed errors equaled the number of occurred errors.
  *
  * In err.c 1.12 from 2000-07-06, the option -X was added, allowing to
  * suppress individual error messages.  That commit did not mention any
- * interaction with the assertion in expr().
+ * interaction with the assertion in expr().  The assertion was removed in
+ * tree.c 1.305 from 2021-07-04.
  */
 
 /* lint1-extra-flags: -T -X 107,330,331,332,333 */

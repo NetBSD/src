@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: accept.sh,v 1.4 2021/08/05 06:34:43 rillig Exp $
+# $NetBSD: accept.sh,v 1.5 2021/08/08 13:19:51 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -36,6 +36,7 @@ set -eu
 . './t_integration.sh'
 
 for pattern in "$@"; do
+	# shellcheck disable=SC2231
 	for test in *$pattern*.c; do
 		base=${test%.*}
 		cfile="$base.c"
@@ -45,7 +46,7 @@ for pattern in "$@"; do
 
 		configure_test_case "$cfile"
 		# shellcheck disable=SC2154
-		if [ $skip = yes ]; then
+		if [ "$skip" = yes ]; then
 			continue
 		fi
 
@@ -93,4 +94,5 @@ for pattern in "$@"; do
 	done
 done
 
+# shellcheck disable=SC2035
 lua '../check-expect.lua' *.c
