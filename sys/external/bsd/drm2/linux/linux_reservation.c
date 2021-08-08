@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_reservation.c,v 1.11.8.1 2021/07/08 11:23:28 martin Exp $	*/
+/*	$NetBSD: linux_reservation.c,v 1.11.8.2 2021/08/08 10:00:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_reservation.c,v 1.11.8.1 2021/07/08 11:23:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_reservation.c,v 1.11.8.2 2021/08/08 10:00:16 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/poll.h>
@@ -794,9 +794,9 @@ wait:
 	KASSERT(fence != NULL);
 	rcu_read_unlock();
 	ret = fence_wait_timeout(fence, intr, timeout);
+	fence_put(fence);
 	if (ret <= 0)
 		return ret;
-	fence_put(fence);
 	KASSERT(ret <= timeout);
 	timeout = ret;
 	goto top;
@@ -1003,6 +1003,7 @@ top:
 		 * assume the event is not ready.
 		 */
 		if (!claimed || callback) {
+			fence_put(fence);
 			revents = 0;
 			break;
 		}
