@@ -1,4 +1,4 @@
-/* $NetBSD: __aarch64_lse.S,v 1.1 2021/04/27 09:14:24 skrll Exp $ */
+/* $NetBSD: __aarch64_lse.S,v 1.2 2021/08/08 07:17:18 skrll Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -204,4 +204,3 @@ ENTRY_NP(INSN_FUNC)
 2:	b	1b
 END(INSN_FUNC)
 #endif
-
