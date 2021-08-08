@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.66 2021/08/08 14:05:33 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.67 2021/08/08 15:03:47 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: xlint.c,v 1.66 2021/08/08 14:05:33 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.67 2021/08/08 15:03:47 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -128,15 +128,10 @@ static	const	char *currfn;
 #endif
 static const char target_prefix[] = TARGET_PREFIX;
 
-static	void	appstrg(char ***, char *);
-static	void	appcstrg(char ***, const char *);
-static	void	applst(char ***, char *const *);
-static	void	freelst(char ***);
 static	char	*concat2(const char *, const char *);
 static	char	*concat3(const char *, const char *, const char *);
 static	void	terminate(int) __attribute__((__noreturn__));
 static	const	char *lbasename(const char *, int);
-static	void	appdef(char ***, const char *);
 static	void	usage(void);
 static	void	fname(const char *);
 static	void	runchild(const char *, char *const *, const char *, int);
@@ -145,12 +140,17 @@ static	bool	rdok(const char *);
 static	void	lint2(void);
 static	void	cat(char *const *, const char *);
 
-/*
- * Some functions to deal with lists of strings.
- * Take care that we get no surprises in case of asynchronous signals.
- */
+static char **
+list_new(void)
+{
+	char **list;
+
+	list = xcalloc(1, sizeof(*list));
+	return list;
+}
+
 static void
-appstrg(char ***lstp, char *s)
+list_add(char ***lstp, char *s)
 {
 	char	**lst, **olst;
 	int	i;
@@ -165,14 +165,14 @@ appstrg(char ***lstp, char *s)
 }
 
 static void
-appcstrg(char ***lstp, const char *s)
+list_add_copy(char ***lstp, const char *s)
 {
 
-	appstrg(lstp, xstrdup(s));
+	list_add(lstp, xstrdup(s));
 }
 
 static void
-applst(char ***destp, char *const *src)
+list_add_all(char ***destp, char *const *src)
 {
 	int	i, k;
 	char	**dest, **odest;
@@ -190,7 +190,15 @@ applst(char ***destp, char *const *src)
 }
 
 static void
-freelst(char ***lstp)
+list_add_defines(char ***lstp, const char *def)
+{
+
+	list_add(lstp, concat2("-D__", def));
+	list_add(lstp, concat3("-D__", def, "__"));
+}
+
+static void
+list_free(char ***lstp)
 {
 	char	*s;
 	int	i;
@@ -208,21 +216,21 @@ static void
 pass_to_lint1(const char *opt)
 {
 
-	appcstrg(&l1flags, opt);
+	list_add_copy(&l1flags, opt);
 }
 
 static void
 pass_to_lint2(const char *opt)
 {
 
-	appcstrg(&l2flags, opt);
+	list_add_copy(&l2flags, opt);
 }
 
 static void
 pass_to_cpp(const char *opt)
 {
 
-	appcstrg(&cflags, opt);
+	list_add_copy(&cflags, opt);
 }
 
 static char *
@@ -303,14 +311,6 @@ lbasename(const char *strg, int delim)
 	return *cp1 == '\0' ? cp2 : cp1;
 }
 
-static void
-appdef(char ***lstp, const char *def)
-{
-
-	appstrg(lstp, concat2("-D__", def));
-	appstrg(lstp, concat3("-D__", def, "__"));
-}
-
 static void __attribute__((noreturn))
 usage(void)
 {
@@ -357,16 +357,16 @@ main(int argc, char *argv[])
 		terminate(-1);
 	}
 
-	p1out = xcalloc(1, sizeof(*p1out));
-	p2in = xcalloc(1, sizeof(*p2in));
-	cflags = xcalloc(1, sizeof(*cflags));
-	lcflags = xcalloc(1, sizeof(*lcflags));
-	l1flags = xcalloc(1, sizeof(*l1flags));
-	l2flags = xcalloc(1, sizeof(*l2flags));
-	l2libs = xcalloc(1, sizeof(*l2libs));
-	deflibs = xcalloc(1, sizeof(*deflibs));
-	libs = xcalloc(1, sizeof(*libs));
-	libsrchpath = xcalloc(1, sizeof(*libsrchpath));
+	p1out = list_new();
+	p2in = list_new();
+	cflags = list_new();
+	lcflags = list_new();
+	l1flags = list_new();
+	l2flags = list_new();
+	l2libs = list_new();
+	deflibs = list_new();
+	libs = list_new();
+	libsrchpath = list_new();
 
 	pass_to_cpp("-E");
 	pass_to_cpp("-x");
@@ -388,9 +388,9 @@ main(int argc, char *argv[])
 	pass_to_cpp("-D__LINT__");
 	pass_to_cpp("-Dlint");		/* XXX don't def. with -s */
 
-	appdef(&cflags, "lint");
+	list_add_defines(&cflags, "lint");
 
-	appcstrg(&deflibs, "c");
+	list_add_copy(&deflibs, "c");
 
 	if (signal(SIGHUP, terminate) == SIG_IGN)
 		(void)signal(SIGHUP, SIG_IGN);
@@ -442,15 +442,15 @@ main(int argc, char *argv[])
 			break;
 
 		case 'n':
-			freelst(&deflibs);
+			list_free(&deflibs);
 			break;
 
 		case 'p':
 			pass_to_lint1("-p");
 			pass_to_lint2("-p");
 			if (*deflibs != NULL) {
-				freelst(&deflibs);
-				appcstrg(&deflibs, "c");
+				list_free(&deflibs);
+				list_add_copy(&deflibs, "c");
 			}
 			break;
 
@@ -465,11 +465,11 @@ main(int argc, char *argv[])
 		case 's':
 			if (tflag)
 				usage();
-			freelst(&lcflags);
-			appcstrg(&lcflags, "-trigraphs");
-			appcstrg(&lcflags, "-Wtrigraphs");
-			appcstrg(&lcflags, "-pedantic");
-			appcstrg(&lcflags, "-D__STRICT_ANSI__");
+			list_free(&lcflags);
+			list_add_copy(&lcflags, "-trigraphs");
+			list_add_copy(&lcflags, "-Wtrigraphs");
+			list_add_copy(&lcflags, "-pedantic");
+			list_add_copy(&lcflags, "-D__STRICT_ANSI__");
 			pass_to_lint1("-s");
 			pass_to_lint2("-s");
 			sflag = true;
@@ -493,11 +493,11 @@ main(int argc, char *argv[])
 		case 't':
 			if (sflag)
 				usage();
-			freelst(&lcflags);
-			appcstrg(&lcflags, "-traditional");
-			appcstrg(&lcflags, "-Wtraditional");
-			appstrg(&lcflags, concat2("-D", MACHINE));
-			appstrg(&lcflags, concat2("-D", MACHINE_ARCH));
+			list_free(&lcflags);
+			list_add_copy(&lcflags, "-traditional");
+			list_add_copy(&lcflags, "-Wtraditional");
+			list_add(&lcflags, concat2("-D", MACHINE));
+			list_add(&lcflags, concat2("-D", MACHINE_ARCH));
 			pass_to_lint1("-t");
 			pass_to_lint2("-t");
 			tflag = true;
@@ -512,9 +512,9 @@ main(int argc, char *argv[])
 			if (Cflag || oflag || iflag)
 				usage();
 			Cflag = true;
-			appstrg(&l2flags, concat2("-C", optarg));
+			list_add(&l2flags, concat2("-C", optarg));
 			p2out = xasprintf("llib-l%s.ln", optarg);
-			freelst(&deflibs);
+			list_free(&deflibs);
 			break;
 
 		case 'd':
@@ -530,11 +530,11 @@ main(int argc, char *argv[])
 		case 'I':
 		case 'M':
 		case 'U':
-			appstrg(&cflags, xasprintf("-%c%s", c, optarg));
+			list_add(&cflags, xasprintf("-%c%s", c, optarg));
 			break;
 
 		case 'l':
-			appcstrg(&libs, optarg);
+			list_add_copy(&libs, optarg);
 			break;
 
 		case 'o':
@@ -545,7 +545,7 @@ main(int argc, char *argv[])
 			break;
 
 		case 'L':
-			appcstrg(&libsrchpath, optarg);
+			list_add_copy(&libsrchpath, optarg);
 			break;
 
 		case 'H':
@@ -603,10 +603,10 @@ main(int argc, char *argv[])
 				/* NOTREACHED */
 			}
 			if (arg[2] != '\0')
-				appcstrg(list, arg + 2);
+				list_add_copy(list, arg + 2);
 			else if (argc > 1) {
 				argc--;
-				appcstrg(list, *++argv);
+				list_add_copy(list, *++argv);
 			} else
 				usage();
 		} else {
@@ -627,7 +627,7 @@ main(int argc, char *argv[])
 	if (!oflag) {
 		if ((ks = getenv("LIBDIR")) == NULL || strlen(ks) == 0)
 			ks = PATH_LINTLIB;
-		appcstrg(&libsrchpath, ks);
+		list_add_copy(&libsrchpath, ks);
 		findlibs(libs);
 		findlibs(deflibs);
 	}
@@ -666,7 +666,7 @@ fname(const char *name)
 	if (strcmp(suff, "ln") == 0) {
 		/* only for lint2 */
 		if (!iflag)
-			appcstrg(&p2in, name);
+			list_add_copy(&p2in, name);
 		return;
 	}
 
@@ -702,9 +702,9 @@ fname(const char *name)
 		close(fd);
 	}
 	if (!iflag)
-		appcstrg(&p1out, ofn);
+		list_add_copy(&p1out, ofn);
 
-	args = xcalloc(1, sizeof(*args));
+	args = list_new();
 
 	/* run cc */
 	if ((CC = getenv("CC")) == NULL)
@@ -717,10 +717,10 @@ fname(const char *name)
 		exit(EXIT_FAILURE);
 	}
 
-	appcstrg(&args, pathname);
-	applst(&args, cflags);
-	applst(&args, lcflags);
-	appcstrg(&args, name);
+	list_add_copy(&args, pathname);
+	list_add_all(&args, cflags);
+	list_add_all(&args, lcflags);
+	list_add_copy(&args, name);
 
 	/* we reuse the same tmp file for cpp output, so rewind and truncate */
 	if (lseek(cppoutfd, (off_t)0, SEEK_SET) != 0) {
@@ -734,7 +734,7 @@ fname(const char *name)
 
 	runchild(pathname, args, cppout, cppoutfd);
 	free(pathname);
-	freelst(&args);
+	list_free(&args);
 
 	/* run lint1 */
 
@@ -749,16 +749,16 @@ fname(const char *name)
 		pathname = concat2(libexec_path, "/lint1");
 	}
 
-	appcstrg(&args, pathname);
-	applst(&args, l1flags);
-	appcstrg(&args, cppout);
-	appcstrg(&args, ofn);
+	list_add_copy(&args, pathname);
+	list_add_all(&args, l1flags);
+	list_add_copy(&args, cppout);
+	list_add_copy(&args, ofn);
 
 	runchild(pathname, args, ofn, -1);
 	free(pathname);
-	freelst(&args);
+	list_free(&args);
 
-	appcstrg(&p2in, ofn);
+	list_add_copy(&p2in, ofn);
 	free(ofn);
 
 	free(args);
@@ -842,7 +842,7 @@ findlib(const char *lib)
 	return;
 
 found:
-	appstrg(&l2libs, concat2("-l", lfn));
+	list_add(&l2libs, concat2("-l", lfn));
 	free(lfn);
 }
 
@@ -874,7 +874,7 @@ lint2(void)
 {
 	char	*path, **args;
 
-	args = xcalloc(1, sizeof(*args));
+	args = list_new();
 
 	if (!Bflag) {
 		path = xasprintf("%s/%slint2", PATH_LIBEXEC, target_prefix);
@@ -886,14 +886,14 @@ lint2(void)
 		path = concat2(libexec_path, "/lint2");
 	}
 
-	appcstrg(&args, path);
-	applst(&args, l2flags);
-	applst(&args, l2libs);
-	applst(&args, p2in);
+	list_add_copy(&args, path);
+	list_add_all(&args, l2flags);
+	list_add_all(&args, l2libs);
+	list_add_all(&args, p2in);
 
 	runchild(path, args, p2out, -1);
 	free(path);
-	freelst(&args);
+	list_free(&args);
 	free(args);
 }
 
