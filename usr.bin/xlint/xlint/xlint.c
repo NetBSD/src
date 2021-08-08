@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.67 2021/08/08 15:03:47 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.68 2021/08/08 15:06:44 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: xlint.c,v 1.67 2021/08/08 15:03:47 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.68 2021/08/08 15:06:44 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -129,7 +129,6 @@ static	const	char *currfn;
 static const char target_prefix[] = TARGET_PREFIX;
 
 static	char	*concat2(const char *, const char *);
-static	char	*concat3(const char *, const char *, const char *);
 static	void	terminate(int) __attribute__((__noreturn__));
 static	const	char *lbasename(const char *, int);
 static	void	usage(void);
@@ -190,14 +189,6 @@ list_add_all(char ***destp, char *const *src)
 }
 
 static void
-list_add_defines(char ***lstp, const char *def)
-{
-
-	list_add(lstp, concat2("-D__", def));
-	list_add(lstp, concat3("-D__", def, "__"));
-}
-
-static void
 list_free(char ***lstp)
 {
 	char	*s;
@@ -241,19 +232,6 @@ concat2(const char *s1, const char *s2)
 	s = xmalloc(strlen(s1) + strlen(s2) + 1);
 	(void)strcpy(s, s1);
 	(void)strcat(s, s2);
-
-	return s;
-}
-
-static char *
-concat3(const char *s1, const char *s2, const char *s3)
-{
-	char	*s;
-
-	s = xmalloc(strlen(s1) + strlen(s2) + strlen(s3) + 1);
-	(void)strcpy(s, s1);
-	(void)strcat(s, s2);
-	(void)strcat(s, s3);
 
 	return s;
 }
@@ -387,8 +365,8 @@ main(int argc, char *argv[])
 	pass_to_cpp("-Wcomment");
 	pass_to_cpp("-D__LINT__");
 	pass_to_cpp("-Dlint");		/* XXX don't def. with -s */
-
-	list_add_defines(&cflags, "lint");
+	pass_to_cpp("-D__lint");
+	pass_to_cpp("-D__lint__");
 
 	list_add_copy(&deflibs, "c");
 
