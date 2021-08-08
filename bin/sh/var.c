@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.78 2019/02/14 11:15:24 kre Exp $	*/
+/*	$NetBSD: var.c,v 1.79 2021/08/08 20:50:12 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.78 2019/02/14 11:15:24 kre Exp $");
+__RCSID("$NetBSD: var.c,v 1.79 2021/08/08 20:50:12 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -197,7 +197,7 @@ static void export_usage(const char *) __dead;
 STATIC int makespecial(const char *);
 
 /*
- * Initialize the varable symbol tables and import the environment
+ * Initialize the variable symbol tables and import the environment
  */
 
 #ifdef mkinit
@@ -1248,7 +1248,7 @@ unsetvar(const char *s, int unexport)
 
 
 /*
- * Returns true if the two strings specify the same varable.  The first
+ * Returns true if the two strings specify the same viarable.  The first
  * variable name is terminated by '='; the second may be terminated by
  * either '=' or '\0'.
  */
@@ -1570,7 +1570,7 @@ get_random(struct var *vp)
 
 			/*
 			 * initialisation (without pre-seeding),
-			 * or explictly requesting a truly random seed.
+			 * or explicitly requesting a truly random seed.
 			 */
 			INTOFF;
 			fd = open("/dev/urandom", 0);
