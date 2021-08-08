@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2021/08/08 00:02:02 rillig Exp $
+# $NetBSD: Makefile,v 1.5 2021/08/08 13:22:22 rillig Exp $
 
 NOMAN=		yes
 
@@ -16,8 +16,8 @@ FILESDIR=	${TESTSDIR}
 TESTS+=		msg_${msg}
 .endfor
 TESTS+=		read
-.if ${MACHINE_ARCH:M*64}	# close enough to "is a 64-bit platform"
-TESTS+=		read_lp64
+.if ${MACHINE_ARCH:M*64} && !${MACHINE_ARCH:Mmips64*}
+TESTS+=		read_lp64	# only on 64-bit platforms
 .endif
 TESTS+=		read_printf
 
