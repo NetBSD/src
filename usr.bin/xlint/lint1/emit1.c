@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.47 2021/07/31 19:52:44 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.48 2021/08/08 10:41:34 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit1.c,v 1.47 2021/07/31 19:52:44 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.48 2021/08/08 10:41:34 rillig Exp $");
 #endif
 
 #include "lint1.h"
@@ -227,26 +227,19 @@ outsym(const sym_t *sym, scl_t sc, def_t def)
 
 	/* flags */
 
-	switch (def) {
-	case DEF:
-		/* defined */
-		outchar('d');
-		break;
-	case TDEF:
-		/* tentative defined */
-		outchar('t');
-		break;
-	case DECL:
-		/* declared */
-		outchar('e');
-		break;
-	default:
-		lint_assert(/*CONSTCOND*/false);
+	if (def == DEF)
+		outchar('d');	/* defined */
+	else if (def == TDEF)
+		outchar('t');	/* tentative defined */
+	else {
+		lint_assert(def == DECL);
+		outchar('e');	/* declared */
 	}
+
 	if (llibflg && def != DECL) {
 		/*
-		 * mark it as used so we get no warnings from lint2 about
-		 * unused symbols in libraries.
+		 * mark it as used so lint2 does not complain about
+		 * unused symbols in libraries
 		 */
 		outchar('u');
 	}
@@ -327,8 +320,7 @@ outfdef(const sym_t *fsym, const pos_t *posp, bool rval, bool osdef,
 	outchar('d');
 
 	if (rval)
-		/* has return value */
-		outchar('r');
+		outchar('r');	/* has return value */
 
 	if (llibflg)
 		/*
@@ -338,8 +330,7 @@ outfdef(const sym_t *fsym, const pos_t *posp, bool rval, bool osdef,
 		outchar('u');
 
 	if (osdef)
-		/* old style function definition */
-		outchar('o');
+		outchar('o');	/* old style function definition */
 
 	if (fsym->s_inline)
 		outchar('i');
