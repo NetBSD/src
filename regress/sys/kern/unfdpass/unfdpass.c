@@ -1,4 +1,4 @@
-/*	$NetBSD: unfdpass.c,v 1.11 2017/01/10 22:37:44 christos Exp $	*/
+/*	$NetBSD: unfdpass.c,v 1.12 2021/08/08 20:54:48 nia Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -168,7 +168,7 @@ main(argc, argv)
 	sun.sun_len = SUN_LEN(&sun);
 
 	i = 1;
-	if (setsockopt(listensock, 0, LOCAL_CREDS, &i, sizeof(i)) == -1)
+	if (setsockopt(listensock, SOL_LOCAL, LOCAL_CREDS, &i, sizeof(i)) == -1)
 		err(1, "setsockopt");
 
 	if (bind(listensock, (struct sockaddr *)&sun, sizeof(sun)) == -1)

@@ -1,4 +1,4 @@
-/*  $NetBSD: msg.c,v 1.25 2019/04/17 12:30:51 maya Exp $ */
+/*  $NetBSD: msg.c,v 1.26 2021/08/08 20:54:49 nia Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -92,7 +92,7 @@ perfused_open_sock(void)
 	 * Request peer credentials
 	 */
 	opt = 1;
-	if (setsockopt(s, 0, LOCAL_CREDS, &opt, sizeof(opt)) != 0)
+	if (setsockopt(s, SOL_LOCAL, LOCAL_CREDS, &opt, sizeof(opt)) != 0)
 		DWARN("%s: setsockopt LOCAL_CREDS failed", __func__);
 	
 	if (bind(s, sa, (socklen_t )sun.sun_len) == -1)

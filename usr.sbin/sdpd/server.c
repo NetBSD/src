@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.11 2012/03/01 22:38:31 joerg Exp $	*/
+/*	$NetBSD: server.c,v 1.12 2021/08/08 20:54:49 nia Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: server.c,v 1.11 2012/03/01 22:38:31 joerg Exp $");
+__RCSID("$NetBSD: server.c,v 1.12 2021/08/08 20:54:49 nia Exp $");
 
 #include <sys/select.h>
 #include <sys/stat.h>
@@ -165,7 +165,7 @@ server_open_control(server_t *srv, char const *control)
 	}
 
 	opt = 1;
-	if (setsockopt(fd, 0, LOCAL_CREDS, &opt, sizeof(opt)) == -1)
+	if (setsockopt(fd, SOL_LOCAL, LOCAL_CREDS, &opt, sizeof(opt)) == -1)
 		log_crit("Warning: No credential checks on control socket");
 
 	memset(&un, 0, sizeof(un));

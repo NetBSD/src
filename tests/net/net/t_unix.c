@@ -1,4 +1,4 @@
-/*	$NetBSD: t_unix.c,v 1.24 2020/08/28 14:18:29 riastradh Exp $	*/
+/*	$NetBSD: t_unix.c,v 1.25 2021/08/08 20:54:49 nia Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #define _GNU_SOURCE
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$Id: t_unix.c,v 1.24 2020/08/28 14:18:29 riastradh Exp $");
+__RCSID("$Id: t_unix.c,v 1.25 2021/08/08 20:54:49 nia Exp $");
 #else
 #define getprogname() argv[0]
 #endif
@@ -147,7 +147,7 @@ peercred(int s, uid_t *euid, gid_t *egid, pid_t *pid)
 # define LOCAL_PEEREID SO_PEERCRED
 # define LEVEL SOL_SOCKET
 #else
-# define LEVEL 0
+# define LEVEL SOL_LOCAL
 #endif
 
 #ifdef LOCAL_PEEREID

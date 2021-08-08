@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.200 2020/11/06 14:50:13 christos Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.201 2021/08/08 20:54:48 nia Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009, 2020 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.200 2020/11/06 14:50:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.201 2021/08/08 20:54:48 nia Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -608,7 +608,7 @@ uipc_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 
 	KASSERT(solocked(so));
 
-	if (sopt->sopt_level != 0) {
+	if (sopt->sopt_level != SOL_LOCAL) {
 		error = ENOPROTOOPT;
 	} else switch (op) {
 

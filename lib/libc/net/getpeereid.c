@@ -1,4 +1,4 @@
-/* $NetBSD: getpeereid.c,v 1.3 2018/02/16 19:21:49 christos Exp $ */
+/* $NetBSD: getpeereid.c,v 1.4 2021/08/08 20:54:48 nia Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getpeereid.c,v 1.3 2018/02/16 19:21:49 christos Exp $");
+__RCSID("$NetBSD: getpeereid.c,v 1.4 2021/08/08 20:54:48 nia Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -57,7 +57,7 @@ getpeereid(int s, uid_t *euid, gid_t *egid)
 	}
 
 	len = sizeof(cred);
-	if (getsockopt(s, 0, LOCAL_PEEREID, &cred, &len) == -1)
+	if (getsockopt(s, SOL_LOCAL, LOCAL_PEEREID, &cred, &len) == -1)
 		return -1;
 
 	if (euid != NULL)
