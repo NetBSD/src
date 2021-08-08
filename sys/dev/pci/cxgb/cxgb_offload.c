@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxgb_offload.c,v 1.6 2019/12/27 09:22:20 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxgb_offload.c,v 1.7 2021/08/08 20:57:09 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -516,7 +516,7 @@ cxgb_insert_tid(struct toedev *tdev, struct cxgb_client *client,
 }
 
 /*
- * Populate a TID_RELEASE WR.  The mbuf must be already propely sized.
+ * Populate a TID_RELEASE WR.  The mbuf must be already properly sized.
  */
 static inline void
 mk_tid_release(struct mbuf *m, unsigned int tid)
