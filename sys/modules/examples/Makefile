@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.11 2020/04/30 00:48:10 christos Exp $
+#	$NetBSD: Makefile,v 1.12 2021/08/08 20:55:33 uwe Exp $
 
 .include <bsd.own.mk>
 
 SUBDIR+=	current_time
+SUBDIR+=	ddbping
 SUBDIR+=	executor
 SUBDIR+=	fopsmapper		# Needs an additional helper program
 SUBDIR+=	hello
