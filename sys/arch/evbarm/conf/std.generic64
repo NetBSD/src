@@ -1,4 +1,4 @@
-#	$NetBSD: std.generic64,v 1.13 2020/09/08 17:39:04 jakllsch Exp $
+#	$NetBSD: std.generic64,v 1.14 2021/08/08 12:31:42 jmcneill Exp $
 #
 #	generic NetBSD/evbarm64 with FDT support
 
@@ -19,6 +19,7 @@ options 	FPU_VFP
 options 	MODULAR
 options 	MODULAR_DEFAULT_AUTOLOAD
 options 	PCI_NETBSD_CONFIGURE
+options 	PCI_SMCCC		# Arm PCI Conf Access Firmware Interface
 options 	_ARM32_NEED_BUS_DMA_BOUNCE
 options 	__HAVE_GENERIC_CPU_INITCLOCKS
 options 	__HAVE_PCI_CONF_HOOK
