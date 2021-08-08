@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.48 2021/08/05 06:54:16 rillig Exp $ */
+/* $NetBSD: read.c,v 1.49 2021/08/08 11:56:35 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.48 2021/08/05 06:54:16 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.49 2021/08/08 11:56:35 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -402,7 +402,7 @@ decldef(pos_t *posp, const char *cp)
 			sym.s_def = DECL;
 			break;
 		case 'i':
-			if (sym.s_inline != NODECL)
+			if (sym.s_inline)
 				inperr("inline %c", c);
 			sym.s_inline = true;
 			break;
