@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.945 2021/07/31 09:30:17 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.946 2021/08/08 12:00:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.945 2021/07/31 09:30:17 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.946 2021/08/08 12:00:30 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -3355,7 +3355,7 @@ ApplyModifier_Order(const char **pp, ModChain *ch)
 {
 	const char *mod = *pp;
 	Words words;
-	int (*cmp)(const void *, const void *) = NULL;
+	int (*cmp)(const void *, const void *);
 
 	if (IsDelimiter(mod[1], ch) || mod[1] == '\0') {
 		cmp = str_cmp_asc;
