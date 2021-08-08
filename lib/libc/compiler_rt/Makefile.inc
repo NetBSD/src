@@ -1,6 +1,7 @@
-# $NetBSD: Makefile.inc,v 1.35 2017/07/23 09:50:54 martin Exp $
+# $NetBSD: Makefile.inc,v 1.35.6.1 2021/08/08 10:11:39 martin Exp $
 
-COMPILER_RT_SRCDIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist
+COMPILER_RT_DIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt
+COMPILER_RT_SRCDIR=	${COMPILER_RT_DIR}/dist
 
 .if ${LIBC_MACHINE_ARCH} == "powerpc" || ${LIBC_MACHINE_ARCH} == "powerpc64"
 COMPILER_RT_CPU_DIR=	${COMPILER_RT_SRCDIR}/lib/builtins/ppc
@@ -296,3 +297,5 @@ COPTS.${src}+=	-Wno-missing-prototypes \
 COPTS.${src}+=	-D__SOFT_FP__
 .endif
 .endfor
+
+.include "${COMPILER_RT_DIR}/abi.mk"
