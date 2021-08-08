@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.69 2021/08/08 15:29:24 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.70 2021/08/08 16:11:08 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: xlint.c,v 1.69 2021/08/08 15:29:24 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.70 2021/08/08 16:11:08 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -189,7 +189,7 @@ list_add_all(char ***destp, char *const *src)
 }
 
 static void
-list_free(char ***lstp)
+list_clear(char ***lstp)
 {
 	char	*s;
 	int	i;
@@ -420,14 +420,14 @@ main(int argc, char *argv[])
 			break;
 
 		case 'n':
-			list_free(&deflibs);
+			list_clear(&deflibs);
 			break;
 
 		case 'p':
 			pass_to_lint1("-p");
 			pass_to_lint2("-p");
 			if (*deflibs != NULL) {
-				list_free(&deflibs);
+				list_clear(&deflibs);
 				list_add_copy(&deflibs, "c");
 			}
 			break;
@@ -443,7 +443,7 @@ main(int argc, char *argv[])
 		case 's':
 			if (tflag)
 				usage();
-			list_free(&lcflags);
+			list_clear(&lcflags);
 			list_add_copy(&lcflags, "-trigraphs");
 			list_add_copy(&lcflags, "-Wtrigraphs");
 			list_add_copy(&lcflags, "-pedantic");
@@ -471,7 +471,7 @@ main(int argc, char *argv[])
 		case 't':
 			if (sflag)
 				usage();
-			list_free(&lcflags);
+			list_clear(&lcflags);
 			list_add_copy(&lcflags, "-traditional");
 			list_add_copy(&lcflags, "-Wtraditional");
 			list_add(&lcflags, concat2("-D", MACHINE));
@@ -492,7 +492,7 @@ main(int argc, char *argv[])
 			Cflag = true;
 			list_add(&l2flags, concat2("-C", optarg));
 			p2out = xasprintf("llib-l%s.ln", optarg);
-			list_free(&deflibs);
+			list_clear(&deflibs);
 			break;
 
 		case 'd':
@@ -705,7 +705,7 @@ fname(const char *name)
 
 	runchild(pathname, args, cppout, cppoutfd);
 	free(pathname);
-	list_free(&args);
+	list_clear(&args);
 
 	/* run lint1 */
 
@@ -727,7 +727,7 @@ fname(const char *name)
 
 	runchild(pathname, args, ofn, -1);
 	free(pathname);
-	list_free(&args);
+	list_clear(&args);
 
 	list_add_copy(&p2in, ofn);
 	free(ofn);
@@ -864,7 +864,7 @@ lint2(void)
 
 	runchild(path, args, p2out, -1);
 	free(path);
-	list_free(&args);
+	list_clear(&args);
 	free(args);
 }
 
