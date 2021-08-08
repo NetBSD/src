@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.116 2021/08/07 16:19:14 thorpej Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.117 2021/08/08 12:17:37 tnn Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.116 2021/08/07 16:19:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.117 2021/08/08 12:17:37 tnn Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -799,7 +799,8 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 
 	sc->sc_memt = pa->pa_memt;
 	if (bus_space_map(sc->sc_memt, sc->sc_memaddr, sc->sc_memsz,
-		BUS_SPACE_MAP_LINEAR, &sc->sc_memh) != 0) {
+		BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE,
+		&sc->sc_memh) != 0) {
 		sc->sc_memsz = 0;
 		aprint_error("%s: Unable to map frame buffer\n", XNAME(sc));
 		goto error;
@@ -1098,7 +1099,8 @@ radeonfb_map(struct radeonfb_softc *sc)
 			return;
 		}
 		if (bus_space_map(sc->sc_memt, sc->sc_memaddr, sc->sc_memsz,
-		    BUS_SPACE_MAP_LINEAR, &sc->sc_memh) != 0) {
+		    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE,
+		    &sc->sc_memh) != 0) {
 			sc->sc_memsz = 0;
 			aprint_error_dev(sc->sc_dev,
 			    "Unable to map frame buffer\n");
