@@ -1,4 +1,4 @@
-/* $NetBSD: __clone.S,v 1.9 2013/11/30 20:20:42 joerg Exp $ */
+/* $NetBSD: __clone.S,v 1.9.28.1 2021/08/08 10:22:04 martin Exp $ */
 
 /*
  * Copyright (c) 2001 Christopher Gilbert
@@ -55,21 +55,17 @@ ENTRY(__clone)
 
 	/* place the func and its arg onto the child's stack */
 #if !defined(__thumb__) || defined(_ARM_ARCH_T2)
-	stmfd	r1!, {r0, r3} 
+	stmfd	r1!, {r0, r3}
 #else
 	subs	r1, r1, #8
-	stmia	r1!, {r0, r3} 
+	stmia	r1!, {r0, r3}
 #endif
-	
+
 	/* syscall expects (flags, stack) */
 	mov	r0, r2
 
 	SYSTRAP(__clone)
-#if !defined(__thumb__) || defined(_ARM_ARCH_T2)
 	_INVOKE_CERROR()
-#else
-	bcs	.Lcerror
-#endif
 
 	/*
 	 * r1 and r0 are the same as from fork:
@@ -121,8 +117,8 @@ ENTRY(__clone)
 	b	CERROR
 #else
 .Lcerror:
-	push	{lr}
+	push	{r3, lr}
 	bl	CERROR
-	pop	{pc}
+	pop	{r3, pc}
 #endif
 END(__clone)
