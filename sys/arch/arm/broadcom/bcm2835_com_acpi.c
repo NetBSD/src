@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_com_acpi.c,v 1.1 2021/08/08 18:43:21 jmcneill Exp $ */
+/* $NetBSD: bcm2835_com_acpi.c,v 1.2 2021/08/08 18:55:12 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_com_acpi.c,v 1.1 2021/08/08 18:43:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_com_acpi.c,v 1.2 2021/08/08 18:55:12 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -100,8 +100,8 @@ bcmcom_acpi_attach(device_t parent, device_t self, void *aux)
 	}
 
 	iot = aa->aa_memt;
-	base = mem->ar_base;
-	size = mem->ar_length;
+	base = mem->ar_base + 0x40;
+	size = mem->ar_length - 0x40;
 
 	irq = acpi_res_irq(&res, 0);
 	if (irq == NULL) {
