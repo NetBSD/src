@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci_machdep.c,v 1.19 2021/08/07 21:27:53 jmcneill Exp $ */
+/* $NetBSD: acpi_pci_machdep.c,v 1.20 2021/08/08 12:09:52 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018, 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci_machdep.c,v 1.19 2021/08/07 21:27:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci_machdep.c,v 1.20 2021/08/08 12:09:52 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -536,7 +536,7 @@ acpi_pci_md_intr_establish(void *v, pci_intr_handle_t ih, int ipl,
 		pi->pi_pic.pic_ops = &acpi_pci_pic_ops;
 		pi->pi_irqbase = pic_add(&pi->pi_pic, PIC_IRQBASE_ALLOC);
 		TAILQ_INSERT_TAIL(&acpi_pci_intrs, pi, pi_list);
-		pi->pi_ih = intr_establish_xname(irq, IPL_SCHED, IST_LEVEL | IST_MPSAFE,
+		pi->pi_ih = intr_establish_xname(irq, IPL_VM, IST_LEVEL | IST_MPSAFE,
 		    pic_handle_intr, &pi->pi_pic, device_xname(ap->ap_dev));
 	}
 	if (pi->pi_ih == NULL)
