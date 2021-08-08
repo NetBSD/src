@@ -1,4 +1,4 @@
-/* $NetBSD: smccc.c,v 1.2 2021/08/07 21:21:49 jmcneill Exp $ */
+/* $NetBSD: smccc.c,v 1.3 2021/08/08 13:43:09 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
@@ -27,13 +27,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smccc.c,v 1.2 2021/08/07 21:21:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smccc.c,v 1.3 2021/08/08 13:43:09 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 
 #include <arm/arm/psci.h>
 #include <arm/arm/smccc.h>
+
+#if defined(__arm__)
+#define	SMCCC_ARCH_ATTRIBUTE  __attribute__ ((target("arch=armv7ve")))
+#else
+#define	SMCCC_ARCH_ATTRIBUTE
+#endif
 
 /* Minimum supported PSCI version for SMCCC discovery */
 #define	PSCI_VERSION_1_0	0x10000
@@ -89,7 +95,7 @@ smccc_version(void)
  *
  *	Generic call interface for SMC/HVC calls.
  */
-int
+SMCCC_ARCH_ATTRIBUTE int
 smccc_call(uint32_t fid,
     register_t arg1, register_t arg2, register_t arg3, register_t arg4,
     register_t *res0, register_t *res1, register_t *res2, register_t *res3)
