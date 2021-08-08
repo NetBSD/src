@@ -1,4 +1,4 @@
-/* $NetBSD: if_bwfm_sdio.c,v 1.26 2021/06/21 03:17:59 christos Exp $ */
+/* $NetBSD: if_bwfm_sdio.c,v 1.27 2021/08/08 11:11:29 jmcneill Exp $ */
 /* $OpenBSD: if_bwfm_sdio.c,v 1.1 2017/10/11 17:19:50 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -592,10 +592,17 @@ bwfm_fdt_find_phandle(device_t self, device_t parent)
 static const char *
 bwfm_fdt_get_model(void)
 {
+	const char *model;
 	int phandle;
 
 	phandle = OF_finddevice("/");
-	return fdtbus_get_string_index(phandle, "compatible", 0);
+	model = fdtbus_get_string_index(phandle, "compatible", 0);
+	if (model == NULL ||
+	    (model != NULL && strcmp(model, "netbsd,generic-acpi") == 0)) {
+		model = pmf_get_platform("system-product");
+	}
+
+	return model;
 }
 
 static int
