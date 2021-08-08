@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.68 2021/08/08 15:06:44 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.69 2021/08/08 15:29:24 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: xlint.c,v 1.68 2021/08/08 15:06:44 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.69 2021/08/08 15:29:24 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -634,10 +634,8 @@ fname(const char *name)
 	char	**args, *ofn, *pathname;
 	const char *CC;
 	size_t	len;
-	bool	is_stdin;
 	int	fd;
 
-	is_stdin = strcmp(name, "-") == 0;
 	bn = lbasename(name, '/');
 	suff = lbasename(bn, '.');
 
@@ -648,15 +646,14 @@ fname(const char *name)
 		return;
 	}
 
-	if (!is_stdin && strcmp(suff, "c") != 0 &&
+	if (strcmp(suff, "c") != 0 &&
 	    (strncmp(bn, "llib-l", 6) != 0 || bn != suff)) {
 		warnx("unknown file type: %s", name);
 		return;
 	}
 
 	if (!iflag || !first)
-		(void)printf("%s:\n",
-		    is_stdin ? "{standard input}" : Fflag ? name : bn);
+		(void)printf("%s:\n", Fflag ? name : bn);
 
 	/* build the name of the output file of lint1 */
 	if (oflag) {
@@ -664,10 +661,6 @@ fname(const char *name)
 		outputfn = NULL;
 		oflag = false;
 	} else if (iflag) {
-		if (is_stdin) {
-			warnx("-i not supported without -o for standard input");
-			return;
-		}
 		len = bn == suff ? strlen(bn) : (size_t)((suff - 1) - bn);
 		ofn = xasprintf("%.*s.ln", (int)len, bn);
 	} else {
