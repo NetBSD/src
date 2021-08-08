@@ -1,4 +1,4 @@
-# $NetBSD: t_lint2.sh,v 1.4 2021/08/08 00:02:02 rillig Exp $
+# $NetBSD: t_lint2.sh,v 1.5 2021/08/08 16:35:15 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -51,6 +51,15 @@ atf_init_test_cases()
 	# shellcheck disable=SC2013
 	for i in $(cd "$(atf_get_srcdir)" && echo *.ln); do
 		i=${i%.ln}
+
+		case "$i" in
+		*lp64*)
+			case "$(uname -p)" in
+			*64) ;;
+			*) continue
+			esac
+		esac
+
 		eval "${i}_head() { std_head; }"
 		eval "${i}_body() { std_body '$i'; }"
 		atf_add_test_case "$i"

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2021/08/08 13:22:22 rillig Exp $
+# $NetBSD: Makefile,v 1.6 2021/08/08 16:35:15 rillig Exp $
 
 NOMAN=		yes
 
@@ -6,7 +6,7 @@ NOMAN=		yes
 
 TESTSDIR=	${TESTSBASE}/usr.bin/xlint/lint2
 
-TESTS_SH=		t_lint2
+TESTS_SH=	t_lint2
 
 FILESDIR=	${TESTSDIR}
 
@@ -16,9 +16,7 @@ FILESDIR=	${TESTSDIR}
 TESTS+=		msg_${msg}
 .endfor
 TESTS+=		read
-.if ${MACHINE_ARCH:M*64} && !${MACHINE_ARCH:Mmips64*}
-TESTS+=		read_lp64	# only on 64-bit platforms
-.endif
+TESTS+=		read_lp64
 TESTS+=		read_printf
 
 FILES+=		${TESTS:=.ln} ${TESTS:=.exp}
