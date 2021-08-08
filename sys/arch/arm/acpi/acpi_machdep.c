@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.24 2021/08/07 18:40:45 jmcneill Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.25 2021/08/08 10:28:26 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.24 2021/08/07 18:40:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.25 2021/08/08 10:28:26 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,6 +62,27 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.24 2021/08/07 18:40:45 jmcneill E
 extern struct bus_space arm_generic_bs_tag;
 extern struct arm32_bus_dma_tag acpi_coherent_dma_tag;
 extern struct arm32_bus_dma_tag arm_generic_dma_tag;
+
+struct acpi_intrhandler {
+	int				(*ah_fn)(void *);
+	void				*ah_arg;
+	TAILQ_ENTRY(acpi_intrhandler)	ah_list;
+};
+
+struct acpi_intrvec {
+	int				ai_irq;
+	int				ai_ipl;
+	int				ai_type;
+	bool				ai_mpsafe;
+	int				ai_refcnt;
+	void				*ai_arg;
+	void				*ai_ih;
+	TAILQ_HEAD(, acpi_intrhandler)	ai_handlers;
+	TAILQ_ENTRY(acpi_intrvec)	ai_list;
+};
+
+static TAILQ_HEAD(, acpi_intrvec) acpi_intrvecs =
+    TAILQ_HEAD_INITIALIZER(acpi_intrvecs);
 
 bus_dma_tag_t	arm_acpi_dma32_tag(struct acpi_softc *, struct acpi_devnode *);
 bus_dma_tag_t	arm_acpi_dma64_tag(struct acpi_softc *, struct acpi_devnode *);
@@ -256,10 +277,116 @@ acpi_md_OsDisableInterrupt(void)
 	cpsid(I32_bit);
 }
 
+static struct acpi_intrvec *
+acpi_md_intr_lookup(int irq)
+{
+	struct acpi_intrvec *ai;
+
+	TAILQ_FOREACH(ai, &acpi_intrvecs, ai_list) {
+		if (ai->ai_irq == irq) {
+			return ai;
+		}
+	}
+
+	return NULL;
+}
+
+static int
+acpi_md_intr(void *arg)
+{
+	struct acpi_intrvec *ai = arg;
+	struct acpi_intrhandler *ah;
+	int rv = 0;
+
+	TAILQ_FOREACH(ah, &ai->ai_handlers, ah_list) {
+		rv += ah->ah_fn(ah->ah_arg);
+	}
+
+	return rv;
+}
+
 void *
 acpi_md_intr_establish(uint32_t irq, int ipl, int type, int (*handler)(void *), void *arg, bool mpsafe, const char *xname)
 {
-	return intr_establish_xname(irq, ipl, type | (mpsafe ? IST_MPSAFE : 0), handler, arg, xname);
+	struct acpi_intrvec *ai;
+	struct acpi_intrhandler *ah;
+
+	ai = acpi_md_intr_lookup(irq);
+	if (ai == NULL) {
+		ai = kmem_zalloc(sizeof(*ai), KM_SLEEP);
+		ai->ai_refcnt = 0;
+		ai->ai_irq = irq;
+		ai->ai_ipl = ipl;
+		ai->ai_type = type;
+		ai->ai_mpsafe = mpsafe;
+		ai->ai_arg = arg;
+		TAILQ_INIT(&ai->ai_handlers);
+		if (arg == NULL) {
+			ai->ai_ih = intr_establish_xname(irq, ipl,
+			    type | (mpsafe ? IST_MPSAFE : 0), handler, NULL,
+			    xname);
+		} else {
+			ai->ai_ih = intr_establish_xname(irq, ipl,
+			    type | (mpsafe ? IST_MPSAFE : 0), acpi_md_intr, ai,
+			    xname);
+		}
+		if (ai->ai_ih == NULL) {
+			kmem_free(ai, sizeof(*ai));
+			return NULL;
+		}
+		TAILQ_INSERT_TAIL(&acpi_intrvecs, ai, ai_list);
+	} else {
+		if (ai->ai_arg == NULL) {
+			printf("ACPI: cannot share irq with NULL arg\n");
+			return NULL;
+		}
+		if (ai->ai_ipl != ipl) {
+			printf("ACPI: cannot share irq with different ipl\n");
+			return NULL;
+		}
+		if (ai->ai_type != type) {
+			printf("ACPI: cannot share edge and level interrupts\n");
+			return NULL;
+		}
+		if (ai->ai_mpsafe != mpsafe) {
+			printf("ACPI: cannot share between mpsafe/non-mpsafe\n");
+			return NULL;
+		}
+	}
+
+	ai->ai_refcnt++;
+
+	ah = kmem_zalloc(sizeof(*ah), KM_SLEEP);
+	ah->ah_fn = handler;
+	ah->ah_arg = arg;
+	TAILQ_INSERT_TAIL(&ai->ai_handlers, ah, ah_list);
+
+	return ai->ai_ih;
+}
+
+void
+acpi_md_intr_disestablish(void *ih)
+{
+	struct acpi_intrvec *ai;
+	struct acpi_intrhandler *ah;
+
+	TAILQ_FOREACH(ai, &acpi_intrvecs, ai_list) {
+		if (ai->ai_ih == ih) {
+			KASSERT(ai->ai_refcnt > 0);
+			if (ai->ai_refcnt > 1) {
+				panic("%s: cannot disestablish shared irq", __func__);
+			}
+
+			TAILQ_REMOVE(&acpi_intrvecs, ai, ai_list);
+			ah = TAILQ_FIRST(&ai->ai_handlers);
+			kmem_free(ah, sizeof(*ah));
+			intr_disestablish(ai->ai_ih);
+			kmem_free(ai, sizeof(*ai));
+			return;
+		}
+	}
+
+	panic("%s: interrupt not established", __func__);
 }
 
 void
@@ -272,12 +399,6 @@ void
 acpi_md_intr_unmask(void *ih)
 {
 	intr_unmask(ih);
-}
-
-void
-acpi_md_intr_disestablish(void *ih)
-{
-	intr_disestablish(ih);
 }
 
 int
