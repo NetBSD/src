@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_vc.c,v 1.34 2015/11/10 20:56:20 christos Exp $	*/
+/*	$NetBSD: svc_vc.c,v 1.35 2021/08/08 20:54:48 nia Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -37,7 +37,7 @@
 static char *sccsid = "@(#)svc_tcp.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_vc.c,v 1.34 2015/11/10 20:56:20 christos Exp $");
+__RCSID("$NetBSD: svc_vc.c,v 1.35 2021/08/08 20:54:48 nia Exp $");
 #endif
 #endif
 
@@ -178,8 +178,8 @@ svc_vc_create(int fd, u_int sendsize, u_int recvsize)
 	 * We want to be able to check credentials on local sockets.
 	 */
 	if (sslocal.ss_family == AF_LOCAL)
-		if (setsockopt(fd, 0, LOCAL_CREDS, &one, (socklen_t)sizeof one)
-		    == -1)
+		if (setsockopt(fd, SOL_LOCAL, LOCAL_CREDS, &one,
+		    (socklen_t)sizeof one) == -1)
 			goto cleanup_svc_vc_create;
 
 	xprt->xp_ltaddr.maxlen = xprt->xp_ltaddr.len = sslocal.ss_len;

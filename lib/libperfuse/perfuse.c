@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse.c,v 1.42 2019/04/17 12:30:51 maya Exp $ */
+/*  $NetBSD: perfuse.c,v 1.43 2021/08/08 20:54:48 nia Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -255,7 +255,7 @@ perfuse_open(const char *path, int flags, mode_t mode)
 	 */
 	opt = 1;
 	optlen = sizeof(opt);
-	if (setsockopt(sv[1], 0, LOCAL_CREDS, &opt, optlen) != 0)
+	if (setsockopt(sv[1], SOL_LOCAL, LOCAL_CREDS, &opt, optlen) != 0)
 		DWARN("%s: setsockopt LOCAL_CREDS failed", __func__);
 
 	(void)sprintf(fdstr, "%d", sv[1]);
