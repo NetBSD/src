@@ -1,4 +1,4 @@
-.\" $NetBSD: lint.1,v 1.44 2021/05/02 21:05:42 rillig Exp $
+.\" $NetBSD: lint.1,v 1.45 2021/08/08 15:29:24 rillig Exp $
 .\"
 .\" Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
 .\" Copyright (c) 1994, 1995 Jochen Pohl
@@ -166,22 +166,6 @@ checks this list of files for mutual compatibility.
 At this point, if a complaint stems not from a given source file,
 but from one of its included files, the source filename will be
 printed followed by a question mark.
-.Pp
-The special input file name
-.Dq Pa -
-causes
-.Nm
-to take input from standard input (until end of file) and process
-it as if it were a
-.Pa \&.c
-file.
-If the
-.Fl i
-flag is given and
-.Dq Pa -
-is named as one of the input files, the
-.Fl o
-flag must also be specified to provide an output file name.
 .Pp
 .Sy Options
 .Bl -tag -width XoXoutputfileXXX
