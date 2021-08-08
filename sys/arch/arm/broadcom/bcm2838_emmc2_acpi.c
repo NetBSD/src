@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2838_emmc2_acpi.c,v 1.1 2021/08/08 10:32:26 jmcneill Exp $	*/
+/*	$NetBSD: bcm2838_emmc2_acpi.c,v 1.2 2021/08/08 10:59:27 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2838_emmc2_acpi.c,v 1.1 2021/08/08 10:32:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2838_emmc2_acpi.c,v 1.2 2021/08/08 10:59:27 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -119,8 +119,10 @@ bcmemmc2_acpi_attach(device_t parent, device_t self, void *opaque)
 	 * disable UHS modes.
 	 */
 	sc->sc.sc_flags = SDHC_FLAG_32BIT_ACCESS |
+#if notyet
 			  SDHC_FLAG_USE_DMA |
 			  SDHC_FLAG_USE_ADMA2 |
+#endif
 			  SDHC_FLAG_NO_1_8_V;
 
 	sc->sc_ih = acpi_intr_establish(self,
