@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: 02-wedgenames,v 1.7 2021/08/05 12:52:47 kre Exp $
+# $NetBSD: 02-wedgenames,v 1.8 2021/08/08 10:48:35 martin Exp $
 #
 # Try to maintain symlinks to wedge devices
 #
@@ -160,4 +160,4 @@ for device do
 		esac
 		;;
 	esac
-ce-attach
+done
