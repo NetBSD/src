@@ -1,4 +1,4 @@
-#	$NetBSD: files.bcm2835,v 1.40 2021/03/10 11:03:48 mlelstv Exp $
+#	$NetBSD: files.bcm2835,v 1.41 2021/08/08 10:32:26 jmcneill Exp $
 #
 # Configuration info for Broadcom BCM2835 ARM Peripherals
 #
@@ -67,6 +67,8 @@ file	arch/arm/broadcom/bcm2835_emmc.c	bcmemmc
 ifdef acpinodebus
 attach	sdhc at acpinodebus with bcmemmc_acpi
 file	arch/arm/broadcom/bcm2835_emmc_acpi.c	bcmemmc_acpi
+attach	sdhc at acpinodebus with bcmemmc2_acpi
+file	arch/arm/broadcom/bcm2838_emmc2_acpi.c	bcmemmc2_acpi
 endif
 
 # SD Host Controller (BCM2835_SDHOST_BASE)
