@@ -1,4 +1,4 @@
-/*	$NetBSD: un.h,v 1.59 2020/11/06 14:50:13 christos Exp $	*/
+/*	$NetBSD: un.h,v 1.60 2021/08/08 20:54:49 nia Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -56,6 +56,7 @@ struct	sockaddr_un {
  * Socket options for UNIX IPC domain.
  */
 #if defined(_NETBSD_SOURCE)
+#define SOL_LOCAL	0		/* options level for getsockopt(2) */
 #define	LOCAL_OCREDS	0x0001		/* pass credentials to receiver */
 #define	LOCAL_CONNWAIT	0x0002		/* connects block until accepted */
 #define	LOCAL_PEEREID	0x0003		/* get peer identification */
