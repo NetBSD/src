@@ -1,4 +1,4 @@
-.\" $NetBSD: lint.1,v 1.45 2021/08/08 15:29:24 rillig Exp $
+.\" $NetBSD: lint.1,v 1.46 2021/08/08 15:59:32 rillig Exp $
 .\"
 .\" Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
 .\" Copyright (c) 1994, 1995 Jochen Pohl
@@ -30,7 +30,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd Apr 14, 2021
+.Dd Aug 08, 2021
 .Dt LINT 1
 .Os
 .Sh NAME
@@ -40,7 +40,7 @@
 .Nm
 .Op Fl abceFgHhPprTVvwxz
 .Op Fl i | Fl nu
-.Op Fl S | Fl s | Fl t
+.Op Fl S | Fl s | Fl t | Fl Ac11
 .Op Fl B Ar directory
 .Op Fl D Ar name Ns Op =def
 .Op Fl d Ar directory
@@ -51,12 +51,11 @@
 .Op Fl o Ar outputfile
 .Op Fl U Ar name
 .Op Fl X Ar id Ns Op ,id ...
-.Op Fl Ac11
 .Op Fl Z Ar cpparg
 .Ar
 .Nm lint
 .Op Fl abceFgHhprTVvwz
-.Op Fl S | Fl s | Fl t
+.Op Fl S | Fl s | Fl t | Fl Ac11
 .Fl C Ar library
 .Op Fl B Ar directory
 .Op Fl D Ar name Ns Op =def
@@ -73,8 +72,8 @@
 attempts to detect features of the named C program files
 that are likely to be bugs, to be non-portable, or to be
 wasteful.
-It also performs stricter type checking than does the C compiler.
-The list of errors
+It also performs stricter type checking than traditional pre-C90 C compilers.
+The list of errors and warnings that
 .Nm
 produces are enumerated in
 .Xr lint 7 .
@@ -98,11 +97,11 @@ variables declared and not used, and logical expressions
 with constant values.
 Function calls are checked for
 inconsistencies, such as calls to functions that return
-values in some places and not in others, functions called
-with varying numbers of arguments, function calls that
+values in some places and not in others, non-prototype functions called
+with varying numbers of arguments, non-prototype function calls that
 pass arguments of a type other than the type the function
-expects to receive, functions whose values are not used,
-and calls to functions not returning values that use
+expects to receive, functions whose return values are not used,
+and calls to non-prototype functions not returning values that nevertheless use
 the non-existent return value of the function.
 .Pp
 Filename arguments ending with
@@ -159,16 +158,17 @@ files are ignored.
 When the
 .Fl i
 option is
-.Em omitted
+.Em omitted ,
 the second pass of
 .Nm
-checks this list of files for mutual compatibility.
+checks this list of files for mutual compatibility
+but always exits successfully.
 At this point, if a complaint stems not from a given source file,
 but from one of its included files, the source filename will be
 printed followed by a question mark.
 .Pp
 .Sy Options
-.Bl -tag -width XoXoutputfileXXX
+.Bl -tag -width XXoutputfile
 .It Fl Ac11
 Allow features from C11, C99 and C90.
 .It Fl a
@@ -233,11 +233,10 @@ instead of
 as the default place to find include files.
 .It Fl e
 Complain about unusual operations on
-.Sy enum Ns -Types
+.Sy enum Ns types
 and combinations of
-.Sy enum Ns -
-and
-.Sy integer Ns -Types .
+.Sy enum
+and integer types .
 .It Fl F
 Print pathnames of files.
 .Nm
@@ -266,7 +265,7 @@ and
 .Sy inline
 are always available).
 .It Fl H
-If a complaint stems from an included file
+If a complaint stems from an included file,
 .Nm
 prints the name of the included file instead of the source file name
 followed by a question mark.
@@ -302,7 +301,7 @@ Include the lint library
 Pass
 .Fl MD
 to
-.Xr cpp 1
+.Xr cpp 1 ,
 causing cpp to create files containing dependency information for
 each source file.
 .It Fl n
@@ -318,7 +317,7 @@ The
 option simply saves this file in the named output file.
 If the
 .Fl i
-option is also used the files are not checked for compatibility.
+option is also used, the files are not checked for compatibility.
 To produce a
 .Pa llib-l Ns Ar library Ns Pa \&.ln
 without extraneous messages, use of the
@@ -329,11 +328,11 @@ The
 option is useful if the source file(s) for the lint library
 are just external interfaces.
 .It Fl P
-Enable more portability warnings: Enum comparisons, sign extension issues
+Enable more portability warnings: enum comparisons, sign extension issues
 when assigning to wider integer types, overflow warnings when assigning
 to wider types.
 .It Fl p
-Attempt to check portability of code to other dialects of C.
+Attempt to check portability of code to other platforms of C.
 .It Fl R Ar old=new
 Remap
 .Ar old
@@ -341,16 +340,15 @@ directory prefixes to
 .Ar new
 for reproducible builds.
 .It Fl r
-In case of redeclarations report the position of the
-previous declaration.
+In case of redeclarations, report the position of the previous declaration.
 .It Fl S
 C9X mode.
 Currently not fully implemented.
 .It Fl s
-Strict ANSI C mode.
-Issue warnings and errors required by ANSI C.
+Strict ANSI C89/ISO C90 mode.
+Issue warnings and errors required by ISO C90, as opposed to traditional C.
 Also do not produce warnings for constructs which behave
-differently in traditional C and ANSI C.
+differently in traditional C and ISO C90.
 With the
 .Fl s
 flag,
@@ -592,6 +590,9 @@ temporaries
 .Xr lint 7
 .Sh AUTHORS
 .An Jochen Pohl
+(1995)
+.An Roland Illig
+(2021)
 .Sh BUGS
 The routines
 .Xr exit 3 ,
