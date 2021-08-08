@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.19 2021/08/03 16:14:21 snj Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.20 2021/08/08 10:23:51 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -393,4 +393,73 @@ share/man/man4/man4.x86/amdccp.4		1.1
 
 	Add a man page for amdccp(4)
 	[nia, ticket #1326]
+
+sys/external/bsd/drm2/linux/linux_reservation.c	1.13,1.14
+
+	drm: fix more drm memory leaks.
+	[riastradh, ticket #1327]
+
+lib/libc/compiler_rt/Makefile.inc		1.40
+lib/libm/compiler_rt/Makefile.inc		1.11
+sys/external/bsd/compiler_rt/abi.mk		1.1
+sys/external/bsd/compiler_rt/dist/lib/builtins/adddf3.c 1.2,1.3
+sys/external/bsd/compiler_rt/dist/lib/builtins/addsf3.c 1.2,1.3
+sys/external/bsd/compiler_rt/dist/lib/builtins/arm/aeabi_cdcmpeq_check_nan.c 1.2
+sys/external/bsd/compiler_rt/dist/lib/builtins/arm/aeabi_cfcmpeq_check_nan.c 1.2
+sys/external/bsd/compiler_rt/dist/lib/builtins/arm/aeabi_div0.c 1.2
+sys/external/bsd/compiler_rt/dist/lib/builtins/arm/aeabi_drsub.c 1.2
+sys/external/bsd/compiler_rt/dist/lib/builtins/arm/aeabi_frsub.c 1.2
+sys/external/bsd/compiler_rt/dist/lib/builtins/ashldi3.c 1.2,1.3
+sys/external/bsd/compiler_rt/dist/lib/builtins/ashrdi3.c 1.2,1.3
+sys/external/bsd/compiler_rt/dist/lib/builtins/comparedf2.c 1.2,1.3
+sys/external/bsd/compiler_rt/dist/lib/builtins/comparesf2.c 1.2,1.3
+sys/external/bsd/compiler_rt/dist/lib/builtins/divdf3.c 1.2,1.3
+sys/external/bsd/compiler_rt/dist/lib/builtins/divsf3.c 1.2,1.3
+sys/external/bsd/compiler_rt/dist/lib/builtins/divsi3.c 1.2,1.3
+sys/external/bsd/compiler_rt/dist/lib/builtins/extendhfsf2.c 1.2,1.3
+sys/external/bsd/compiler_rt/dist/lib/builtins/extendsfdf2.c 1.2,1.3
+sys/external/bsd/compiler_rt/dist/lib/builtins/fixdfdi.c 1.2,1.3
+sys/external/bsd/compiler_rt/dist/lib/builtins/fixdfsi.c 1.2,1.3
+sys/external/bsd/compiler_rt/dist/lib/builtins/fixsfdi.c 1.2,1.3
+sys/external/bsd/compiler_rt/dist/lib/builtins/fixsfsi.c 1.2,1.3
+sys/external/bsd/compiler_rt/dist/lib/builtins/fixunsdfdi.c 1.2,1.3
+sys/external/bsd/compiler_rt/dist/lib/builtins/fixunsdfsi.c 1.2,1.3
+sys/external/bsd/compiler_rt/dist/lib/builtins/fixunssfdi.c 1.2,1.3
+sys/external/bsd/compiler_rt/dist/lib/builtins/fixunssfsi.c 1.2,1.3
+sys/external/bsd/compiler_rt/dist/lib/builtins/floatdidf.c 1.3-1.5
+sys/external/bsd/compiler_rt/dist/lib/builtins/floatdisf.c 1.2,1.3
+sys/external/bsd/compiler_rt/dist/lib/builtins/floatsidf.c 1.2,1.3
+sys/external/bsd/compiler_rt/dist/lib/builtins/floatsisf.c 1.2,1.3
+sys/external/bsd/compiler_rt/dist/lib/builtins/floatundidf.c 1.3,1.4
+sys/external/bsd/compiler_rt/dist/lib/builtins/floatundisf.c 1.2,1.3
+sys/external/bsd/compiler_rt/dist/lib/builtins/floatunsidf.c 1.2,1.3
+sys/external/bsd/compiler_rt/dist/lib/builtins/floatunsisf.c 1.2,1.3
+sys/external/bsd/compiler_rt/dist/lib/builtins/int_lib.h 1.2-1.6
+sys/external/bsd/compiler_rt/dist/lib/builtins/lshrdi3.c 1.2,1.3
+sys/external/bsd/compiler_rt/dist/lib/builtins/muldf3.c 1.2,1.3
+sys/external/bsd/compiler_rt/dist/lib/builtins/muldi3.c 1.2,1.3
+sys/external/bsd/compiler_rt/dist/lib/builtins/mulsf3.c 1.2,1.3
+sys/external/bsd/compiler_rt/dist/lib/builtins/negdf2.c 1.2,1.3
+sys/external/bsd/compiler_rt/dist/lib/builtins/negsf2.c 1.2,1.3
+sys/external/bsd/compiler_rt/dist/lib/builtins/subdf3.c 1.2,1.3
+sys/external/bsd/compiler_rt/dist/lib/builtins/subsf3.c 1.2,1.3
+sys/external/bsd/compiler_rt/dist/lib/builtins/truncdfhf2.c 1.2,1.3
+sys/external/bsd/compiler_rt/dist/lib/builtins/truncdfsf2.c 1.2,1.3
+sys/external/bsd/compiler_rt/dist/lib/builtins/truncsfhf2.c 1.2,1.3
+sys/external/bsd/compiler_rt/dist/lib/builtins/udivsi3.c 1.2,1.3
+sys/lib/libkern/Makefile.compiler-rt		1.13
+
+	arm: PR 55897: fix various complex arithmetics issues by cherry
+	picking the relevant upstream changes.
+	[skrll, ticket #1328]
+
+lib/libc/arch/arm/gen/swapcontext.S		1.16-1.18
+lib/libc/arch/arm/sys/__clone.S			1.10-1.14
+sys/external/bsd/compiler_rt/dist/lib/builtins/arm/aeabi_cfcmp.S 1.2,1.3
+sys/external/bsd/compiler_rt/dist/lib/builtins/arm/divmodsi4.S 1.2,1.3
+sys/external/bsd/compiler_rt/dist/lib/builtins/arm/divsi3.S 1.2,1.3
+sys/external/bsd/compiler_rt/dist/lib/builtins/arm/modsi3.S 1.2,1.3
+
+	arm: align stack pointer to 8-byte boundary as required by EABI.
+	[skrll, ticket #1329]
 
