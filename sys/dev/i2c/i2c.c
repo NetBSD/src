@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.80.2.1 2021/08/09 00:30:09 thorpej Exp $	*/
+/*	$NetBSD: i2c.c,v 1.80.2.2 2021/08/09 01:09:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.80.2.1 2021/08/09 00:30:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.80.2.2 2021/08/09 01:09:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -954,7 +954,8 @@ iic_open(dev_t dev, int flag, int fmt, lwp_t *l)
 static int
 iic_close(dev_t dev, int flag, int fmt, lwp_t *l)
 {
-	struct iic_softc *sc = device_lookup_private(&iic_cd, minor(dev));;
+	struct iic_softc *sc __diagused =
+	    device_lookup_private(&iic_cd, minor(dev));;
 
 	KASSERT(iic_refcnt != 0);
 	KASSERT(sc != NULL);
