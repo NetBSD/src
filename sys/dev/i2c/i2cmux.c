@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cmux.c,v 1.6.2.1 2021/08/09 00:30:09 thorpej Exp $	*/
+/*	$NetBSD: i2cmux.c,v 1.6.2.2 2021/08/09 00:57:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2cmux.c,v 1.6.2.1 2021/08/09 00:30:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2cmux.c,v 1.6.2.2 2021/08/09 00:57:56 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -151,7 +151,7 @@ iicmux_attach_bus(struct iicmux_softc * const sc, devhandle_t devhandle,
 	locs[I2CBUSCF_BUS] = bus->busidx;
 
 	config_found(sc->sc_dev, &iba, iicbus_print_multi,
-	    CFARGS(.subatch = config_stdsubmatch,
+	    CFARGS(.submatch = config_stdsubmatch,
 		   .locators = locs,
 		   .devhandle = devhandle));
 }
