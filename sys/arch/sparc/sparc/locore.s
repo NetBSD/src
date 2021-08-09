@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.280 2021/04/25 21:59:38 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.281 2021/08/09 21:08:06 andvar Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -356,7 +356,7 @@ sun4_notsup:
 	_C_LABEL(kernel_text) = start		! for kvm_mkdb(8)
 _ASM_LABEL(start):
 /*
- * Put sun4 traptable first, since it needs the most stringent aligment (8192)
+ * Put sun4 traptable first, since it needs the most stringent alignment (8192)
  */
 #if defined(SUN4)
 trapbase_sun4:

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.374 2021/08/07 19:23:03 uwe Exp $ */
+/*	$NetBSD: pmap.c,v 1.375 2021/08/09 21:08:06 andvar Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.374 2021/08/07 19:23:03 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.375 2021/08/09 21:08:06 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -310,7 +310,7 @@ struct mmuentry region_freelist, region_lru, region_locked;
 #endif
 /*
  * We use a double linked list looping through its static head (which
- * alway remains on the list), so we can remove any other member from
+ * always remains on the list), so we can remove any other member from
  * a list without knowing which list it is on.
  */
 static void inline
@@ -3636,7 +3636,7 @@ pmap_bootstrap4m(void *top)
 
 	/*
 	 * Allocate context table.
-	 * To keep supersparc happy, minimum aligment is on a 4K boundary.
+	 * To keep supersparc happy, minimum alignment is on a 4K boundary.
 	 */
 	ctxtblsize = uimax(ncontext,1024) * sizeof(int);
 	cpuinfo.ctx_tbl = (int *)roundup((u_int)p, ctxtblsize);
