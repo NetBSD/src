@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.302 2021/06/02 00:00:39 simonb Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.303 2021/08/09 21:38:04 andvar Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.302 2021/06/02 00:00:39 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.303 2021/08/09 21:38:04 andvar Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -2082,7 +2082,7 @@ mips_init_msgbuf(void)
 	uvm_physseg_t bank = uvm_physseg_get_last();
 #ifndef _LP64
 	/*
-	 * Fist the physical segment that can be mapped to KSEG0
+	 * First the physical segment that can be mapped to KSEG0
 	 */
 	for (; uvm_physseg_valid_p(bank); bank = uvm_physseg_get_prev(bank)) {
 		if (uvm_physseg_get_avail_start(bank) + atop(sz) <= atop(MIPS_PHYS_MASK))
