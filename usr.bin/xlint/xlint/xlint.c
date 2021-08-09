@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.71 2021/08/08 16:19:18 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.72 2021/08/09 21:27:20 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: xlint.c,v 1.71 2021/08/08 16:19:18 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.72 2021/08/09 21:27:20 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -341,18 +341,10 @@ main(int argc, char *argv[])
 	pass_to_cpp("-E");
 	pass_to_cpp("-x");
 	pass_to_cpp("c");
-#if 0
-	pass_to_cpp("-D__attribute__(x)=");
-	pass_to_cpp("-D__extension__(x)=/*NOSTRICT*/0");
-#else
 	pass_to_cpp("-U__GNUC__");
 	pass_to_cpp("-U__PCC__");
 	pass_to_cpp("-U__SSE__");
 	pass_to_cpp("-U__SSE4_1__");
-#endif
-#if 0
-	pass_to_cpp("-Wp,-$");
-#endif
 	pass_to_cpp("-Wp,-CC");
 	pass_to_cpp("-Wcomment");
 	pass_to_cpp("-D__LINT__");
