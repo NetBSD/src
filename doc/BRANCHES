@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.362 2021/08/07 16:21:02 thorpej Exp $
+#	$NetBSD: BRANCHES,v 1.363 2021/08/09 00:32:51 thorpej Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -777,10 +777,20 @@ Notes:		Re-based version of thorpej-futex that includes ONLY
 
 Branch:		thorpej-i2c-spi-conf
 Description:	Improve device tree-based I2C and SPI enumeration.
-Status:		Active
+Status:		Abandoned
 Start Date:	Sun April 25, 2021
-End Date:
+End Date:	Sun Aug 8, 2021
 Base Tag:	thorpej-i2c-spi-conf-base
+Maintainer:	Jason Thorpe <thorpej@netbsd.org>
+Scope:		src/sys
+Notes:		Changes ported forward to thorpej-i2c-spi-conf2.
+
+Branch:		thorpej-i2c-spi-conf2
+Description:	Improve device tree-based I2C and SPI enumeration.
+Status:		Active
+Start Date:	Sun Aug 8, 2021
+End Date:
+Base Tag:	thorpej-i2c-spi-conf2-base
 Maintainer:	Jason Thorpe <thorpej@netbsd.org>
 Scope:		src/sys
 Notes:
