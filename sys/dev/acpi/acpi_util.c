@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_util.c,v 1.24 2021/02/05 17:12:43 thorpej Exp $ */
+/*	$NetBSD: acpi_util.c,v 1.25 2021/08/09 20:49:09 andvar Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2021 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.24 2021/02/05 17:12:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.25 2021/08/09 20:49:09 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -435,7 +435,7 @@ acpi_compatible_free_strarray(const char **cpp, unsigned int count,
  * acpi_compatible_match --
  *
  *	Returns a weighted match value, comparing the _HID and _CID
- *	IDs against a driver's compatbility data.
+ *	IDs against a driver's compatibility data.
  */
 int
 acpi_compatible_match(const struct acpi_attach_args * const aa,

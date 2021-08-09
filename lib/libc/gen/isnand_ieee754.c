@@ -1,4 +1,4 @@
-/*	$NetBSD: isnand_ieee754.c,v 1.1 2004/03/04 23:42:39 kleink Exp $	*/
+/*	$NetBSD: isnand_ieee754.c,v 1.2 2021/08/09 20:49:09 andvar Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,14 +40,14 @@
 #if 0
 static char sccsid[] = "@(#)isinf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: isnand_ieee754.c,v 1.1 2004/03/04 23:42:39 kleink Exp $");
+__RCSID("$NetBSD: isnand_ieee754.c,v 1.2 2021/08/09 20:49:09 andvar Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <machine/ieee.h>
 #include <math.h>
 
-/* libc.so.12 ABI compatbility */
+/* libc.so.12 ABI compatibility */
 #ifdef __weak_alias
 __weak_alias(isnan,__isnand)
 #endif
