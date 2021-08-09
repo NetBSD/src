@@ -1,4 +1,4 @@
-/*	$NetBSD: zsvar.h,v 1.12 2008/04/28 20:23:29 martin Exp $	*/
+/*	$NetBSD: zsvar.h,v 1.13 2021/08/09 21:13:06 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 /*
- * Non-exported definitons common to the different attachment
+ * Non-exported definitions common to the different attachment
  * types for the SCC on the Motorola MVME series of computers.
  */
 
