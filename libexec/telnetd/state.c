@@ -1,4 +1,4 @@
-/*	$NetBSD: state.c,v 1.31 2019/02/03 03:19:25 mrg Exp $	*/
+/*	$NetBSD: state.c,v 1.32 2021/08/09 21:38:04 andvar Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)state.c	8.5 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: state.c,v 1.31 2019/02/03 03:19:25 mrg Exp $");
+__RCSID("$NetBSD: state.c,v 1.32 2021/08/09 21:38:04 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -1307,7 +1307,7 @@ suboption(void)
 		 * reversed.  To be interoperable, we need to determine
 		 * which way it is.  If the first recognized character
 		 * is a VAR or VALUE, then that will tell us what
-		 * type of client it is.  If the fist recognized
+		 * type of client it is.  If the first recognized
 		 * character is a USERVAR, then we continue scanning
 		 * the suboption looking for two consecutive
 		 * VAR or VALUE fields.  We should not get two

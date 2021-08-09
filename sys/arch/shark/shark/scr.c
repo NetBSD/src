@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.32 2021/08/09 19:24:33 andvar Exp $	*/
+/*	$NetBSD: scr.c,v 1.33 2021/08/09 21:38:04 andvar Exp $	*/
 
 /*
  * Copyright 1997
@@ -102,7 +102,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.32 2021/08/09 19:24:33 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.33 2021/08/09 21:38:04 andvar Exp $");
 
 #include "opt_ddb.h"
 
@@ -2914,7 +2914,7 @@ static void   t0RecvByteSM(struct scr_softc* sc,int cmd)
                             sc->clkCountDataSend    = sc->clkCountDataSend  *2;
 
 
-                            /* adjust this so that we have clocked in only fist bit of TS */
+                            /* adjust this so that we have clocked in only first bit of TS */
                             sc->shiftParity = 0;
                             sc->shiftByte   = 0;
                             sc->shiftBits   = 1;

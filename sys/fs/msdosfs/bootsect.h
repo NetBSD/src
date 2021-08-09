@@ -1,4 +1,4 @@
-/*	$NetBSD: bootsect.h,v 1.6 2016/01/22 22:48:18 dholland Exp $	*/
+/*	$NetBSD: bootsect.h,v 1.7 2021/08/09 21:38:05 andvar Exp $	*/
 
 /*
  * Written by Paul Popelka (paulp@uts.amdahl.com)
@@ -20,7 +20,7 @@
 
 /*
  * Format of a boot sector.  This is the first sector on a DOS floppy disk
- * or the fist sector of a partition on a hard disk.  But, it is not the
+ * or the first sector of a partition on a hard disk.  But, it is not the
  * first sector of a partitioned hard disk.
  */
 struct bootsector33 {

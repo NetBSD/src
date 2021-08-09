@@ -1,4 +1,4 @@
-/*	$NetBSD: ebh.c,v 1.7 2018/02/07 08:50:13 ozaki-r Exp $	*/
+/*	$NetBSD: ebh.c,v 1.8 2021/08/09 21:38:05 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -1760,7 +1760,7 @@ out_free:
  * @ebh - chfs eraseblock handler
  *
  * This function gets a free eraseblock from the ebh->free RB-tree.
- * The fist entry will be returned and deleted from the tree.
+ * The first entry will be returned and deleted from the tree.
  * The entries sorted by the erase counters, so the PEB with the smallest
  * erase counter will be added back.
  * If something goes bad a negative value will be returned.

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.73 2021/02/03 14:44:32 isaki Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.74 2021/08/09 21:38:04 andvar Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.73 2021/02/03 14:44:32 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.74 2021/08/09 21:38:04 andvar Exp $");
 
 #include "midi.h"
 
@@ -1395,7 +1395,7 @@ cs4280_clear_fifos(struct cs428x_softc *sc)
 		while (BA0READ4(sc, CS4280_SERBST) & SERBST_WBSY) {
 			delay(1000);
 			if (++n > 1000) {
-				printf("clear_fifo: fist timeout cnt=%d\n", cnt);
+				printf("clear_fifo: first timeout cnt=%d\n", cnt);
 				break;
 			}
 		}
