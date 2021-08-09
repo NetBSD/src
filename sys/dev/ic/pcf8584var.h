@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8584var.h,v 1.6 2019/12/22 23:23:32 thorpej Exp $	*/
+/*	$NetBSD: pcf8584var.h,v 1.6.22.1 2021/08/09 01:29:52 thorpej Exp $	*/
 /*	$OpenBSD: pcf8584var.h,v 1.5 2007/10/20 18:46:21 kettenis Exp $ */
 
 /*
@@ -17,21 +17,41 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifndef _DEV_IC_PCF8584VAR_H_
+#define	_DEV_IC_PCF8584VAR_H_
+
+struct pcfiic_channel {
+	struct i2c_controller	ch_i2c;
+	struct pcfiic_softc	*ch_sc;
+	devhandle_t		ch_devhandle;
+	int			ch_channel;
+};
+
 struct pcfiic_softc {
 	device_t		sc_dev;
 
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
-	bus_space_handle_t	sc_ioh2;
-	int			sc_master;
-	u_int8_t		sc_addr;
-	u_int8_t		sc_clock;
-	u_int8_t		sc_regmap[2];
+	uint8_t			sc_addr;
+	uint8_t			sc_clock;
+	uint8_t			sc_regmap[2];
 
 	int			sc_poll;
 
-	struct i2c_controller	sc_i2c;
+	/*
+	 * Some Sun clones of the this i2c controller support
+	 * multiple channels.  The specific attachment will
+	 * initialize these fields for controllers that support
+	 * this.  If not, the core driver will assume a single
+	 * channel.
+	 */
+	struct pcfiic_channel	*sc_channels;
+	int			sc_nchannels;
+	int			(*sc_acquire_bus)(void *, int);
+	void			(*sc_release_bus)(void *, int);
 };
 
-void	pcfiic_attach(struct pcfiic_softc *, i2c_addr_t, u_int8_t, int);
+void	pcfiic_attach(struct pcfiic_softc *, i2c_addr_t, uint8_t, int);
 int	pcfiic_intr(void *);
+
+#endif /* _DEV_IC_PCF8584VAR_H_ */
