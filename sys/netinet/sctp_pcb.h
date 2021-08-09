@@ -1,5 +1,5 @@
 /*	$KAME: sctp_pcb.h,v 1.21 2005/07/16 01:18:47 suz Exp $	*/
-/*	$NetBSD: sctp_pcb.h,v 1.3 2020/01/19 20:51:13 riastradh Exp $ */
+/*	$NetBSD: sctp_pcb.h,v 1.4 2021/08/09 20:49:10 andvar Exp $ */
 
 #ifndef __SCTP_PCB_H__
 #define __SCTP_PCB_H__
@@ -283,7 +283,7 @@ struct sctp_socket_q_list {
 struct sctp_inpcb {
 	/*
 	 * put an inpcb in front of it all, kind of a waste but we need
-	 * to for compatability with all the other stuff.
+	 * to for compatibility with all the other stuff.
 	 */
 	union {
 		struct inpcb inp;

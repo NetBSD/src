@@ -1,4 +1,4 @@
-/* $NetBSD: TODO.modules,v 1.23 2021/05/30 02:37:42 pgoyette Exp $ */
+/* $NetBSD: TODO.modules,v 1.24 2021/08/09 20:49:08 andvar Exp $ */
 
 Some notes on the limitations of our current (as of 7.99.35) module
 subsystem.  This list was triggered by an Email exchange between
@@ -129,7 +129,7 @@ christos and pgoyette.
     kernel and its modules at /netbsd/kernel and /netbsd/modules/...
     Whatever new mechanism we arrive at will probably require changes to
     installation procedures and bootstrap code, and will need to handle
-    both the new and old mechanisms for compatability.
+    both the new and old mechanisms for compatibility.
 
     One additional option mentioned is to be able to specify, at boot
     loader time, an alternate value for the os-release portion of the

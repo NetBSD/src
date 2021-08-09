@@ -1,4 +1,4 @@
-/*	$NetBSD: option.c,v 1.28 2020/11/01 05:38:29 mrg Exp $	*/
+/*	$NetBSD: option.c,v 1.29 2021/08/09 20:49:10 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)option.c	8.2 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: option.c,v 1.28 2020/11/01 05:38:29 mrg Exp $");
+__RCSID("$NetBSD: option.c,v 1.29 2021/08/09 20:49:10 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,7 +94,7 @@ static OPTION const options[] = {
 	{ "-name",	N_NAME,		c_name,		1 },
 	{ "-newer",	N_NEWER,	c_newer,	1 },
 
-/* Aliases for compatability with Gnu findutils */
+/* Aliases for compatibility with Gnu findutils */
 	{ "-neweraa",	N_ANEWER,	c_anewer,	1 },
 	{ "-newerat",	N_ASINCE,	c_asince,	1 },
 	{ "-newercc",	N_CNEWER,	c_cnewer,	1 },
@@ -126,7 +126,7 @@ static OPTION const options[] = {
  */
 
 	{ "-nogroup",	N_NOGROUP,	c_nogroup,	0 },
-/* Alias for compatability with Gnu findutils */
+/* Alias for compatibility with Gnu findutils */
 	{ "-not",	N_NOT,		c_not,		0 },
 	{ "-nouser",	N_NOUSER,	c_nouser,	0 },
 	{ "-o",		N_OR,		c_or,		0 },

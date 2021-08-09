@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.70 2020/06/04 11:21:16 nia Exp $	*/
+/*	$NetBSD: netdb.h,v 1.71 2021/08/09 20:49:08 andvar Exp $	*/
 
 /*
  * ++Copyright++ 1980, 1983, 1988, 1993
@@ -151,7 +151,7 @@ struct	hostent {
 	int	h_addrtype;	/*%< host address type */
 	int	h_length;	/*%< length of address */
 	char	**h_addr_list;	/*%< list of addresses from name server */
-#define	h_addr	h_addr_list[0]	/*%< address, for backward compatiblity */
+#define	h_addr	h_addr_list[0]	/*%< address, for backward compatibility */
 };
 
 /*%
