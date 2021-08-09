@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: upgrade.sh,v 1.3 2003/07/26 17:06:26 salo Exp $
+# $NetBSD: upgrade.sh,v 1.4 2021/08/09 19:24:32 andvar Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -62,7 +62,7 @@ echo	"This program is designed to help you put the new version of NetBSD"
 echo	"on your hard disk, in a simple and rational way.  To upgrade, you"
 echo	"must have plenty of free space on all partitions which will be"
 echo	"upgraded.  If you have at least 1MB free on your root partition,"
-echo	"and several free on your /usr patition, you should be fine."
+echo	"and several free on your /usr partition, you should be fine."
 echo	""
 echo	"As with anything which modifies your hard drive's contents, this"
 echo	"program can cause SIGNIFICANT data loss, and you are advised"

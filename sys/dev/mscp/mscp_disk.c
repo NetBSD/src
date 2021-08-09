@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.89 2016/03/29 04:55:53 mlelstv Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.90 2021/08/09 19:24:33 andvar Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.89 2016/03/29 04:55:53 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.90 2021/08/09 19:24:33 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1060,7 +1060,7 @@ rrreplace(device_t usc, struct mscp *mp)
 
 /*
  * A transfer failed.  We get a chance to fix or restart it.
- * Need to write the bad block forwaring code first....
+ * Need to write the bad block forwarding code first....
  */
 /*ARGSUSED*/
 int

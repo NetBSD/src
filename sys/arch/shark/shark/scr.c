@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.31 2016/07/07 06:55:38 msaitoh Exp $	*/
+/*	$NetBSD: scr.c,v 1.32 2021/08/09 19:24:33 andvar Exp $	*/
 
 /*
  * Copyright 1997
@@ -102,7 +102,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.31 2016/07/07 06:55:38 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.32 2021/08/09 19:24:33 andvar Exp $");
 
 #include "opt_ddb.h"
 
@@ -1386,7 +1386,7 @@ scrioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 **      requirement that the scrioctl disables interrupts before calling this function.
 **
 **      NB:- there is no way for the machine to get from msIdleOn to msIdleOff.  Since
-**      this is just a mater of turning all signals off and resetting state machines,
+**      this is just a matter of turning all signals off and resetting state machines,
 **      scrioctl takes a shortcut and resets everything itself.   Ie it hits everything
 **      with a big hammer!!
 **
