@@ -1,4 +1,4 @@
-/* $NetBSD: start.S,v 1.3 2005/12/11 12:17:34 christos Exp $ */
+/* $NetBSD: start.S,v 1.4 2021/08/09 19:57:57 andvar Exp $ */
 
 /*
  * Copyright (c) 2003 Naoto Shimazaki.
@@ -196,7 +196,7 @@ start:
 	 * B1Config = 01	(16Mbit)
 	 * Bstreftype = 1	(all raw refresh)
 	 * BstRefr = 0		(not allow burst refresh)
-	 * EDOAsym = 0		(asymetric)
+	 * EDOAsym = 0		(asymmetric)
 	 * B0Config = 01	(16Mbit)
 	 * EDO/SDRAM = 1	(SDRAM)
 	 */
@@ -233,7 +233,7 @@ start:
 	 * B1Config = 10	(64Mbit)
 	 * Bstreftype = 1	(all raw refresh)
 	 * BstRefr = 0		(not allow burst refresh)
-	 * EDOAsym = 0		(asymetric)
+	 * EDOAsym = 0		(asymmetric)
 	 * B0Config = 10	(64Mbit)
 	 * EDO/SDRAM = 1	(SDRAM)
 	 */
