@@ -234,7 +234,7 @@ bool CFI_Parser<A, R>::parseCIE(A &addressSpace, pint_t cie,
   while (addressSpace.get8(p) != 0)
     ++p;
   ++p;
-  // Parse code aligment factor
+  // Parse code alignment factor
   cieInfo->codeAlignFactor = addressSpace.getULEB128(p, cieContentEnd);
   // Parse data alignment factor
   cieInfo->dataAlignFactor = addressSpace.getSLEB128(p, cieContentEnd);

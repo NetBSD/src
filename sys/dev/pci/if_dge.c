@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.59 2021/05/08 00:27:02 thorpej Exp $ */
+/*	$NetBSD: if_dge.c,v 1.60 2021/08/09 21:08:06 andvar Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.59 2021/05/08 00:27:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.60 2021/08/09 21:08:06 andvar Exp $");
 
 
 
@@ -1885,7 +1885,7 @@ dge_init(struct ifnet *ifp)
 	uint32_t reg;
 
 	/*
-	 * *_HDR_ALIGNED_P is constant 1 if __NO_STRICT_ALIGMENT is set.
+	 * *_HDR_ALIGNED_P is constant 1 if __NO_STRICT_ALIGNMENT is set.
 	 * There is a small but measurable benefit to avoiding the adjusment
 	 * of the descriptor so that the headers are aligned, for normal mtu,
 	 * on such platforms.  One possibility is that the DMA itself is

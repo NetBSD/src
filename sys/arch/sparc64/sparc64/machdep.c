@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.299 2021/01/04 14:48:52 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.300 2021/08/09 21:08:06 andvar Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2019 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.299 2021/01/04 14:48:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.300 2021/08/09 21:08:06 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1461,7 +1461,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 
 	/*
 	 * Find a region of kernel virtual addresses that can accommodate
-	 * our aligment requirements.
+	 * our alignment requirements.
 	 */
 	oversize = size + align - PAGE_SIZE;
 	r = uvm_map(kernel_map, &sva, oversize, NULL, UVM_UNKNOWN_OFFSET, 0,
