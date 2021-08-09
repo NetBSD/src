@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: gemini_ipm.c,v 1.4 2021/08/07 16:18:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_ipm.c,v 1.5 2021/08/09 19:24:33 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,7 +126,7 @@ gemini_ipm_attach(device_t parent, device_t self, void *aux)
 
 
 	/*
-	 * queues are flipped tx/rx for mater/slave
+	 * queues are flipped tx/rx for master/slave
 	 */
 	KASSERT(GEMINI_IPMQ_SIZE == (2 * sizeof(ipm_queue_t)));
 #if defined(GEMINI_MASTER)
