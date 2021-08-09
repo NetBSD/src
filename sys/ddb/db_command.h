@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.h,v 1.41 2021/02/23 07:13:53 mrg Exp $	*/
+/*	$NetBSD: db_command.h,v 1.42 2021/08/09 20:49:09 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -132,7 +132,7 @@ struct db_command {
 #define	CS_OWN		0x1		/* non-standard syntax */
 #define	CS_MORE		0x2		/* standard syntax, but may have other
 								words at end */
-#define CS_COMPAT	0x4		/* is set for compatibilty with old
+#define CS_COMPAT	0x4		/* is set for compatibility with old
 								ddb versions */
 #define CS_SHOW		0x8		/* select show list */
 #define CS_MACH		0x10		/* select machine dependent list */

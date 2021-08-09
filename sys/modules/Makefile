@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.250 2021/05/17 04:07:43 yamaguchi Exp $
+#	$NetBSD: Makefile,v 1.251 2021/08/09 20:49:10 andvar Exp $
 
 .include <bsd.own.mk>
 
 # For all platforms
 
-# Modules for compatability with earlier versions of NetBSD
+# Modules for compatibility with earlier versions of NetBSD
 
 SUBDIR+=	compat_util
 SUBDIR+=	compat_43   compat_sysctl_09_43

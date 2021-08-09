@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.39 2017/08/03 19:22:15 phx Exp $ */
+/* $NetBSD: brdsetup.c,v 1.40 2021/08/09 20:49:09 andvar Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -513,7 +513,7 @@ encpcifix(struct brdprop *brd)
 #else
 	/*
 	 * //// IDE fixup ////
-	 * - "compatiblity mode" (ide 0x09)
+	 * - "compatibility mode" (ide 0x09)
 	 * - remove PCI pin assignment (ide 0x3d)
 	 */
 
@@ -652,7 +652,7 @@ motpcifix(struct brdprop *brd)
 #else
 	/*
 	 * //// IDE fixup -- case B ////
-	 * - "compatiblity mode" (ide 0x09)
+	 * - "compatibility mode" (ide 0x09)
 	 * - IDE primary/secondary interrupt routing (pcib 0x43)
 	 * - PCI interrupt routing (pcib 0x45/44)
 	 * - no PCI pin/line assignment (ide 0x3d/3c)
