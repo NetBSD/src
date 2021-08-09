@@ -1,4 +1,4 @@
-/* $NetBSD: fcu.c,v 1.4 2021/07/30 22:07:14 macallan Exp $ */
+/* $NetBSD: fcu.c,v 1.4.8.1 2021/08/09 01:16:01 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fcu.c,v 1.4 2021/07/30 22:07:14 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fcu.c,v 1.4.8.1 2021/08/09 01:16:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,8 +198,10 @@ fcu_attach(device_t parent, device_t self, void *aux)
 	/* round up sensors */
 	int ch;
 
+	int const phandle = devhandle_to_of(device_handle(self));
+
 	sc->sc_nsensors = 0;
-	ch = OF_child(ia->ia_cookie);
+	ch = OF_child(phandle);
 	while (ch != 0) {
 		char type[32], descr[32];
 		uint32_t reg;
