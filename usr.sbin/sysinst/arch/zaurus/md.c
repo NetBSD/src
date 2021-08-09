@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.10 2020/10/14 08:49:04 martin Exp $	*/
+/*	$NetBSD: md.c,v 1.11 2021/08/09 19:24:33 andvar Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -197,7 +197,7 @@ md_post_newfs(struct install_partition_desc *install)
 	/* Clear BPB */
 	memset(&pbr.mbr_bpb, 0, sizeof(pbr.mbr_bpb));
 
-	/* write-backed new patition boot record */
+	/* write-backed new partition boot record */
 	(void)pwrite(fd, &pbr, sizeof(pbr), 0);
 
 out:

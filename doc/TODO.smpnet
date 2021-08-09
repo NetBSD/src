@@ -1,4 +1,4 @@
-$NetBSD: TODO.smpnet,v 1.43 2021/08/04 13:50:47 nia Exp $
+$NetBSD: TODO.smpnet,v 1.44 2021/08/09 19:24:33 andvar Exp $
 
 MP-safe components
 ==================
@@ -129,7 +129,7 @@ bpf
 
 MP-ification of bpf requires all of bpf_mtap* are called in normal LWP context
 or softint context, i.e., not in hardware interrupt context.  For Tx, all
-bpf_mtap satisfy the requrement.  For Rx, most of bpf_mtap are called in softint.
+bpf_mtap satisfy the requirement.  For Rx, most of bpf_mtap are called in softint.
 Unfortunately some bpf_mtap on Rx are still called in hardware interrupt context.
 
 This is the list of the functions that have such bpf_mtap:
@@ -240,7 +240,7 @@ initializing address can loop in the network stack in a short period of time.
 The address initialization creates an local route first and then registers an
 initializing address to the global hash table that is used to decide if an
 incoming packet destinates to the host by checking the destination of the packet
-is registered to the hash table.  So, if the host allows forwaring, an incoming
+is registered to the hash table.  So, if the host allows forwarding, an incoming
 packet can match on a local route of an initializing address at ip_output while
 it fails the to-self check described above at ip_input.  Because a matched local
 route points a loopback interface as its destination interface, an incoming
