@@ -1,4 +1,4 @@
-/* $NetBSD: ihidev.c,v 1.20.2.1 2021/08/09 00:30:09 thorpej Exp $ */
+/* $NetBSD: ihidev.c,v 1.20.2.2 2021/08/09 12:36:14 thorpej Exp $ */
 /* $OpenBSD ihidev.c,v 1.13 2017/04/08 02:57:23 deraadt Exp $ */
 
 /*-
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ihidev.c,v 1.20.2.1 2021/08/09 00:30:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ihidev.c,v 1.20.2.2 2021/08/09 12:36:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -672,8 +672,8 @@ ihiddev_intr_init(struct ihidev_softc *sc)
 
 	acpi_resource_cleanup(&res);
 
-	sc->sc_ih = acpi_intr_establish(sc->sc_dev, (uint64_t)hdl, IPL_TTY,
-	    false, ihidev_intr, sc, device_xname(sc->sc_dev));
+	sc->sc_ih = acpi_intr_establish(sc->sc_dev, (uint64_t)(uintptr_t)hdl,
+	    IPL_TTY, false, ihidev_intr, sc, device_xname(sc->sc_dev));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "can't establish interrupt\n");
 		return false;
