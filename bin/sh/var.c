@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.79 2021/08/08 20:50:12 andvar Exp $	*/
+/*	$NetBSD: var.c,v 1.80 2021/08/09 11:29:30 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.79 2021/08/08 20:50:12 andvar Exp $");
+__RCSID("$NetBSD: var.c,v 1.80 2021/08/09 11:29:30 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1248,7 +1248,7 @@ unsetvar(const char *s, int unexport)
 
 
 /*
- * Returns true if the two strings specify the same viarable.  The first
+ * Returns true if the two strings specify the same variable.  The first
  * variable name is terminated by '='; the second may be terminated by
  * either '=' or '\0'.
  */
