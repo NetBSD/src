@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.S,v 1.16 2021/01/16 23:51:51 chs Exp $	*/
+/*	$NetBSD: bcopy.S,v 1.17 2021/08/09 19:57:58 andvar Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 #include <machine/reg.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-RCSID("$NetBSD: bcopy.S,v 1.16 2021/01/16 23:51:51 chs Exp $")
+RCSID("$NetBSD: bcopy.S,v 1.17 2021/08/09 19:57:58 andvar Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -142,7 +142,7 @@ RCSID("$NetBSD: bcopy.S,v 1.16 2021/01/16 23:51:51 chs Exp $")
  *
  * The shift instructions need pairs of registers with adjacent
  * words, with the register containing the word from the lowest
- * address *always* coming first.  It is this assymetry that
+ * address *always* coming first.  It is this asymmetry that
  * gives rise to this macro - depending on which direction
  * we're copying in, these ordered pairs are different.
  *
@@ -409,7 +409,7 @@ RCSID("$NetBSD: bcopy.S,v 1.16 2021/01/16 23:51:51 chs Exp $")
 	 * does no shifting.  NB: unlike the forward case,	! \
 	 * this is NOT strictly an optimization.  If the	! \
 	 * SAR is zero the vshds do NOT do the right thing.	! \
-	 * This is another assymetry more or less the "fault"	! \
+	 * This is another asymmetry more or less the "fault"	! \
 	 * of vshd.						! \
 	 */							! \
 	addi		3, src_off, src_off			! \
