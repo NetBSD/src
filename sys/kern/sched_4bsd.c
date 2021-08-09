@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.44 2020/05/23 21:24:41 ad Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.45 2021/08/09 19:57:57 andvar Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2019, 2020
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.44 2020/05/23 21:24:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.45 2021/08/09 19:57:57 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -150,7 +150,7 @@ sched_tick(struct cpu_info *ci)
 			spc->spc_flags |= SPCF_SHOULDYIELD;
 		} else if ((spc->spc_flags & SPCF_1STCLASS) == 0) {
 			/*
-			 * For SMT or assymetric systems push a little
+			 * For SMT or asymmetric systems push a little
 			 * harder: if this is not a 1st class CPU, try to
 			 * find a better one to run this LWP.
 			 */

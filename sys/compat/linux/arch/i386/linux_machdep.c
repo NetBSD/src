@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.166 2019/05/19 08:46:15 maxv Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.167 2021/08/09 19:57:57 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.166 2019/05/19 08:46:15 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.167 2021/08/09 19:57:57 andvar Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_user_ldt.h"
@@ -491,7 +491,7 @@ linux_read_ldt(struct lwp *l, const struct linux_sys_modify_ldt_args *uap,
 	size_t sz;
 
 	/*
-	 * I've checked the linux code - this function is asymetric with
+	 * I've checked the linux code - this function is asymmetric with
 	 * linux_write_ldt, and returns raw ldt entries.
 	 * NB, the code I saw zerod the spare parts of the user buffer.
 	 */
