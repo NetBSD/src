@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sysio,v 1.13 2020/01/27 17:09:17 pgoyette Exp $
+#	$NetBSD: Makefile.sysio,v 1.14 2021/08/09 20:49:09 andvar Exp $
 
 # Sources for syscall and ioctl compatibility across the versions.
 
@@ -10,7 +10,7 @@ SRCS+=	kern_exit_43.c kern_info_43.c kern_resource_43.c kern_sig_43.c \
 SRCS+=	kern_info_09.c
 SRCS+=	compat_sysctl_09_43.c		# for compat_43 or compat_09
 
-# Compatability code for NetBSD 1.0
+# Compatibility code for NetBSD 1.0
 SRCS+=	vfs_syscalls_10.c
 
 # Compatibility code for NetBSD 1.2
@@ -46,7 +46,7 @@ SRCS+=	kern_sa_60.c tty_60.c kern_time_60.c kern_cpu_60.c ccd_60.c
 # Compatibility code for NetBSD 7.0
 SRCS+=	rtsock_70.c uipc_usrreq_70.c
 
-# Compatability code for NetBSD 8.0
+# Compatibility code for NetBSD 8.0
 SRCS+=	kern_mod_80.c if_media_80.c
 
 # More compatibility code for NetBSD 5.0

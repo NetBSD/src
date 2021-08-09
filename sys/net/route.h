@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.128 2021/03/22 18:40:18 christos Exp $	*/
+/*	$NetBSD: route.h,v 1.129 2021/08/09 20:49:10 andvar Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -207,7 +207,7 @@ struct	rtstat {
 
 #if !defined(_KERNEL) || !defined(COMPAT_RTSOCK)
 /*
- * If we aren't being compiled for backwards compatiblity, enforce 64-bit
+ * If we aren't being compiled for backwards compatibility, enforce 64-bit
  * alignment so any routing message is the same regardless if the kernel
  * is an ILP32 or LP64 kernel.
  */

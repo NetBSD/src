@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.66 2021/08/07 16:19:10 thorpej Exp $ */
+/* $NetBSD: gpio.c,v 1.67 2021/08/09 20:49:09 andvar Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.66 2021/08/07 16:19:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.67 2021/08/09 20:49:09 andvar Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -812,7 +812,7 @@ gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 		/*
 		 * The double assignment to 'attach' in case of GPIOATTACH
 		 * and COMPAT_50 is on purpose. It ensures backward
-		 * compatability in case we are called through the old
+		 * compatibility in case we are called through the old
 		 * GPIOATTACH50 ioctl(2), which had not the ga_flags field
 		 * in struct gpio_attach.
 		 */

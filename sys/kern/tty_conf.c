@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_conf.c,v 1.56 2014/05/22 16:28:06 dholland Exp $	*/
+/*	$NetBSD: tty_conf.c,v 1.57 2021/08/09 20:49:10 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_conf.c,v 1.56 2014/05/22 16:28:06 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_conf.c,v 1.57 2021/08/09 20:49:10 andvar Exp $");
 
 #define TTY_ALLOW_PRIVATE
 
@@ -94,7 +94,7 @@ static struct linesw termios_disc = {
 };
 
 /*
- * This is for the benefit of old BSD TTY compatbility, but since it is
+ * This is for the benefit of old BSD TTY compatibility, but since it is
  * identical to termios (except for the name), don't bother conditionalizing
  * it.
  */

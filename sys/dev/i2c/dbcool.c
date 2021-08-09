@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.62 2021/06/21 03:12:54 christos Exp $ */
+/*	$NetBSD: dbcool.c,v 1.63 2021/08/09 20:49:09 andvar Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.62 2021/06/21 03:12:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.63 2021/08/09 20:49:09 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1501,7 +1501,7 @@ dbcool_setup(device_t self)
 	/*
 	 * Some chips are capable of reporting an extended temperature range
 	 * by default.  On these models, config register 5 bit 0 can be set
-	 * to 1 for compatability with other chips that report 2s complement.
+	 * to 1 for compatibility with other chips that report 2s complement.
 	 */
 	if (sc->sc_dc.dc_chip->flags & DBCFLAG_ADT7466) {
 		if (sc->sc_dc.dc_readreg(&sc->sc_dc, DBCOOL_ADT7466_CONFIG1) & 0x80)

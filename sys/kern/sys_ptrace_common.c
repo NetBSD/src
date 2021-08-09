@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.91 2020/11/04 19:27:41 pgoyette Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.92 2021/08/09 20:49:10 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.91 2020/11/04 19:27:41 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.92 2021/08/09 20:49:10 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -1146,7 +1146,7 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 	 * but was extended to two 16-bit (2 x 64kb) address spaces.
 	 *
 	 * We no longer maintain this feature in maintained architectures, but
-	 * we keep the API for backward compatiblity. Currently the I and D
+	 * we keep the API for backward compatibility. Currently the I and D
 	 * operations are exactly the same and not distinguished in debuggers.
 	 */
 	case PT_WRITE_I:

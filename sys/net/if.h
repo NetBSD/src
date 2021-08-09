@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.291 2021/06/29 21:19:58 riastradh Exp $	*/
+/*	$NetBSD: if.h,v 1.292 2021/08/09 20:49:10 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -762,7 +762,7 @@ struct ifaddr {
 /*
  * Message format for use in obtaining information about interfaces from
  * sysctl and the routing socket.  We need to force 64-bit alignment if we
- * aren't using compatiblity definitons.
+ * aren't using compatibility definitions.
  */
 #if !defined(_KERNEL) || !defined(COMPAT_RTSOCK)
 #define	__align64	__aligned(sizeof(uint64_t))

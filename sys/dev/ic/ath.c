@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.135 2021/06/12 12:15:54 riastradh Exp $	*/
+/*	$NetBSD: ath.c,v 1.136 2021/08/09 20:49:10 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.135 2021/06/12 12:15:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.136 2021/08/09 20:49:10 andvar Exp $");
 #endif
 
 /*
@@ -5307,7 +5307,7 @@ ath_watchdog(struct ifnet *ifp)
  * Diagnostic interface to the HAL.  This is used by various
  * tools to do things like retrieve register contents for
  * debugging.  The mechanism is intentionally opaque so that
- * it can change frequently w/o concern for compatiblity.
+ * it can change frequently w/o concern for compatibility.
  */
 static int
 ath_ioctl_diag(struct ath_softc *sc, struct ath_diag *ad)

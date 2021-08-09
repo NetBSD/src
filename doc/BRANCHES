@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.363 2021/08/09 00:32:51 thorpej Exp $
+#	$NetBSD: BRANCHES,v 1.364 2021/08/09 20:49:08 andvar Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -824,7 +824,7 @@ Maintainer:	Bill Stouder-Studenmund <wrstuden@NetBSD.org>
 Scope:		src, though all the interesting stuff is in the kernel
 Notes:		This branch is intended to revive Scheduler Activations
 		in -current in the 5.0 era. This branch's main goal is
-		to re-add syscall compatability so that SA-based libpthread
+		to re-add syscall compatibility so that SA-based libpthread
 		programs can run with a -current kernel. 1:1 threading will
 		remain the NetBSD-default. This branch will re-add necessary
 		upcall support, and will also serve as a chance to clean

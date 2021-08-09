@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.52 2018/02/20 02:35:24 kamil Exp $	*/
+/*	$NetBSD: string.h,v 1.53 2021/08/09 20:49:08 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -95,7 +95,7 @@ __aconst char *strsignal(int);
 __END_DECLS
 
 #if defined(_NETBSD_SOURCE)
-#include <strings.h>		/* for backwards-compatibilty */
+#include <strings.h>		/* for backwards-compatibility */
 __BEGIN_DECLS
 void	*memmem(const void *, size_t, const void *, size_t);
 char	*strcasestr(const char *, const char *);

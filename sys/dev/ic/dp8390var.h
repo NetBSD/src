@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390var.h,v 1.35 2021/06/30 20:00:18 thorpej Exp $	*/
+/*	$NetBSD: dp8390var.h,v 1.36 2021/08/09 20:49:10 andvar Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -34,7 +34,7 @@ struct dp8390_softc {
 
 	struct ethercom sc_ec;		/* ethernet common */
 	struct mii_data sc_mii;		/* MII glue */
-#define	sc_media sc_mii.mii_media	/* compatibilty definition */
+#define	sc_media sc_mii.mii_media	/* compatibility definition */
 	callout_t	sc_tick_ch;	/* MII tick callout */
 
 	bus_space_tag_t	sc_regt;	/* NIC register space tag */

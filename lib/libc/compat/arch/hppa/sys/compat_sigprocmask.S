@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sigprocmask.S,v 1.5 2020/05/05 20:43:47 skrll Exp $	*/
+/*	$NetBSD: compat_sigprocmask.S,v 1.6 2021/08/09 20:49:08 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@ WARN_REFERENCES(sigprocmask, \
 ENTRY(sigprocmask, 0)
 	/*
 	 * AFAICT, since the hppa port came after __sigprocmask14,
-	 * we shouldn't have to supply the compatability sigprocmask.
+	 * we shouldn't have to supply the compatibility sigprocmask.
 	 */
 	b	__cerror
 	 ldi	EINVAL, %t1

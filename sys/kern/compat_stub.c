@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.c,v 1.21 2020/11/01 18:51:02 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.c,v 1.22 2021/08/09 20:49:10 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -75,83 +75,83 @@ void (*vec_sctp_delete_ip_address)(struct ifaddr *) = NULL;
 
 
 /*
- * usb device_info compatability
+ * usb device_info compatibility
  */
 struct usb_subr_fill_30_hook_t usb_subr_fill_30_hook;
 struct usb_subr_copy_30_hook_t usb_subr_copy_30_hook;
 
 /*
- * ccd device compatability ioctl
+ * ccd device compatibility ioctl
  */
 
 struct ccd_ioctl_60_hook_t ccd_ioctl_60_hook;
 
 /*
- * clockctl device compatability ioctl
+ * clockctl device compatibility ioctl
  */
 
 struct clockctl_ioctl_50_hook_t clockctl_ioctl_50_hook;
 
 /*
- * if_sppp device compatability ioctl subroutine
+ * if_sppp device compatibility ioctl subroutine
  */
 
 struct sppp_params_50_hook_t sppp_params_50_hook;
 
 /*
- * cryptodev compatability ioctl
+ * cryptodev compatibility ioctl
  */
 
 struct ocryptof_50_hook_t ocryptof_50_hook;
 
 /*
- * raidframe compatability
+ * raidframe compatibility
  */
 struct raidframe_ioctl_50_hook_t raidframe_ioctl_50_hook;
 struct raidframe_ioctl_80_hook_t raidframe_ioctl_80_hook;
 struct raidframe_netbsd32_ioctl_hook_t raidframe_netbsd32_ioctl_hook;
 
 /*
- * puffs compatability
+ * puffs compatibility
  */
 
 struct puffs_out_50_hook_t puffs_out_50_hook;
 struct puffs_in_50_hook_t puffs_in_50_hook;
 
 /*
- * wsevents compatability
+ * wsevents compatibility
  */
 struct wscons_copyout_events_50_hook_t wscons_copyout_events_50_hook;
 
 /*
- * sysmon_power compatability
+ * sysmon_power compatibility
  */
 struct compat_sysmon_power_40_hook_t compat_sysmon_power_40_hook;
 
 /*
- * compat_bio compatability
+ * compat_bio compatibility
  */
 struct compat_bio_30_hook_t compat_bio_30_hook;
 
 /*
- * vnd ioctl compatability
+ * vnd ioctl compatibility
  */
 struct compat_vndioctl_30_hook_t compat_vndioctl_30_hook;
 struct compat_vndioctl_50_hook_t compat_vndioctl_50_hook;
 
 /*
- * ieee80211 ioctl compatability
+ * ieee80211 ioctl compatibility
  */
 struct ieee80211_ioctl_20_hook_t ieee80211_ioctl_20_hook;
 
 /*
- * if_43 compatability
+ * if_43 compatibility
  */
 struct if_cvtcmd_43_hook_t if_cvtcmd_43_hook;
 struct if_ifioctl_43_hook_t if_ifioctl_43_hook;
 
 /*
- * if43_cvtcmd_20 compatability
+ * if43_cvtcmd_20 compatibility
  */
 struct if43_cvtcmd_20_hook_t if43_cvtcmd_20_hook;
 
@@ -173,18 +173,18 @@ struct uipc_socket_50_getopt1_hook_t uipc_socket_50_getopt1_hook;
 struct uipc_socket_50_sbts_hook_t uipc_socket_50_sbts_hook;
 
 /*
- * uipc_syscalls_50 compatability
+ * uipc_syscalls_50 compatibility
  */
 struct uipc_syscalls_50_hook_t uipc_syscalls_50_hook;
 
 /*
- * rtsock 14 compatability
+ * rtsock 14 compatibility
  */
 struct rtsock_oifmsg_14_hook_t rtsock_oifmsg_14_hook;
 struct rtsock_iflist_14_hook_t rtsock_iflist_14_hook;
 
 /*
- * rtsock 50 compatability
+ * rtsock 50 compatibility
  */
 struct rtsock_iflist_50_hook_t rtsock_iflist_50_hook;
 struct rtsock_oifmsg_50_hook_t rtsock_oifmsg_50_hook;
@@ -197,7 +197,7 @@ struct rtsock_rt_addrmsg_50_hook_t rtsock_rt_addrmsg_50_hook;
 struct rtsock_rt_ieee80211msg_50_hook_t rtsock_rt_ieee80211msg_50_hook;
 
 /*
- * rtsock 70 compatability
+ * rtsock 70 compatibility
  */
 struct rtsock_newaddr_70_hook_t rtsock_newaddr_70_hook;
 struct rtsock_iflist_70_hook_t rtsock_iflist_70_hook;
@@ -252,7 +252,7 @@ struct uipc_unp_70_hook_t uipc_unp_70_hook;
 struct sysvipc_sysctl_50_hook_t sysvipc_sysctl_50_hook;
 
 /*
- * ifmedia_80 compatability
+ * ifmedia_80 compatibility
  */
 struct ifmedia_80_pre_hook_t ifmedia_80_pre_hook;
 struct ifmedia_80_post_hook_t ifmedia_80_post_hook;

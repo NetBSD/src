@@ -1,4 +1,4 @@
-/*	$NetBSD: key.h,v 1.36 2018/04/19 08:27:38 maxv Exp $	*/
+/*	$NetBSD: key.h,v 1.37 2021/08/09 20:49:10 andvar Exp $	*/
 /*	$FreeBSD: key.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: key.h,v 1.21 2001/07/27 03:51:30 itojun Exp $	*/
 
@@ -61,7 +61,7 @@ struct secpolicy *key_newsp(const char*, int);
 struct secpolicy *key_gettunnel(const struct sockaddr *,
     const struct sockaddr *, const struct sockaddr *,
     const struct sockaddr *, const char *, int);
-/* NB: prepend with _ for KAME IPv6 compatbility */
+/* NB: prepend with _ for KAME IPv6 compatibility */
 void key_init_sp(struct secpolicy *);
 void key_free_sp(struct secpolicy *);
 u_int key_sp_refcnt(const struct secpolicy *);
