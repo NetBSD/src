@@ -1,4 +1,4 @@
-/*	$NetBSD: jbus-i2c.c,v 1.7 2021/08/07 16:19:05 thorpej Exp $	*/
+/*	$NetBSD: jbus-i2c.c,v 1.7.2.1 2021/08/09 00:30:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2018 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jbus-i2c.c,v 1.7 2021/08/07 16:19:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jbus-i2c.c,v 1.7.2.1 2021/08/09 00:30:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -79,10 +79,7 @@ struct jbusi2c_softc {
 	struct i2c_controller sc_i2c;
 	bus_space_tag_t sc_bustag;
 	bus_space_handle_t sc_regh;
-	int sc_node;
 };
-
-static void jbusi2c_setup_i2c(struct jbusi2c_softc *);
 
 CFATTACH_DECL_NEW(jbusi2c, sizeof(struct jbusi2c_softc),
     jbusi2c_match, jbusi2c_attach, NULL, NULL);
@@ -112,11 +109,11 @@ jbusi2c_attach(device_t parent, device_t self, void *aux)
 {
 	struct jbusi2c_softc *sc = device_private(self);
 	struct mainbus_attach_args *ma = aux;
+	struct i2cbus_attach_args iba;
 
 	aprint_normal(": addr %" PRIx64 "\n", ma->ma_reg[0].ur_paddr);
 
 	sc->sc_dev = self;
-	sc->sc_node = ma->ma_node;
 	sc->sc_bustag = ma->ma_bustag;
 
 	if (bus_space_map(sc->sc_bustag, ma->ma_reg[0].ur_paddr, 16, 0,
@@ -124,21 +121,6 @@ jbusi2c_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": failed to map registers\n");
 		return;
 	}
-
-	jbusi2c_setup_i2c(sc);
-}
-
-
-
-static void
-jbusi2c_setup_i2c(struct jbusi2c_softc *sc)
-{
-	struct i2cbus_attach_args iba;
-	prop_array_t cfg;
-	prop_dictionary_t dev;
-	prop_dictionary_t dict = device_properties(sc->sc_dev);
-	int devs, regs[2], addr;
-	char name[64], compat[256];
 
 	iic_tag_init(&sc->sc_i2c);
 	sc->sc_i2c.ic_cookie = sc;
@@ -148,37 +130,10 @@ jbusi2c_setup_i2c(struct jbusi2c_softc *sc)
 	sc->sc_i2c.ic_read_byte = jbusi2c_i2c_read_byte;
 	sc->sc_i2c.ic_write_byte = jbusi2c_i2c_write_byte;
 
-	/* round up i2c devices */
-	devs = OF_child(sc->sc_node);
-	cfg = prop_array_create();
-	prop_dictionary_set(dict, "i2c-child-devices", cfg);
-	prop_object_release(cfg);
-	while (devs != 0) {
-		if (OF_getprop(devs, "name", name, 256) <= 0)
-			goto skip;
-		memset(compat, 0, sizeof(compat));
-		if (OF_getprop(devs, "compatible",
-		    compat, 255) <= 0)
-			goto skip;
-		if (OF_getprop(devs, "reg", regs, 8) <= 0)
-			goto skip;
-		if (regs[0] != 0) goto skip;
-		addr = (regs[1] & 0xff) >> 1;
-		DPRINTF("-> %s@%d,%x\n", name, regs[0], addr);
-		dev = prop_dictionary_create();
-		prop_dictionary_set_string(dev, "name", name);
-		prop_dictionary_set_data(dev, "compatible", compat,
-		    strlen(compat)+1);
-		prop_dictionary_set_uint32(dev, "addr", addr);
-		prop_dictionary_set_uint64(dev, "cookie", devs);
-		prop_array_add(cfg, dev);
-		prop_object_release(dev);
-	skip:
-		devs = OF_peer(devs);
-	}
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c;
-	config_found(sc->sc_dev, &iba, iicbus_print, CFARGS_NONE);
+	config_found(sc->sc_dev, &iba, iicbus_print,
+	    CFARGS(.devhandle = device_handle(self)));
 }
 
 static inline void

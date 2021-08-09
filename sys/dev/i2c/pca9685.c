@@ -1,4 +1,4 @@
-/* $NetBSD: pca9685.c,v 1.6 2021/01/27 02:29:48 thorpej Exp $ */
+/* $NetBSD: pca9685.c,v 1.6.14.1 2021/08/09 00:30:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018, 2019 Jason R. Thorpe
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pca9685.c,v 1.6 2021/01/27 02:29:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pca9685.c,v 1.6.14.1 2021/08/09 00:30:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -526,7 +526,7 @@ pcapwm_attach(device_t parent, device_t self, void *aux)
 	struct pcapwm_softc * const sc = device_private(self);
 	struct i2c_attach_args * const ia = aux;
 	struct clk *clk;
-	const int phandle = (int)ia->ia_cookie;
+	const int phandle = devhandle_to_of(device_handle(self));
 	u_int index;
 	int error;
 

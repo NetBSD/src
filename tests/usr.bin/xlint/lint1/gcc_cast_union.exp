@@ -1,5 +1,0 @@
-gcc_cast_union.c(85): error: type 'enum other_enum' is not a member of 'union anything' [329]
-gcc_cast_union.c(87): error: type 'pointer to char' is not a member of 'union anything' [329]
-gcc_cast_union.c(90): error: type 'pointer to double' is not a member of 'union anything' [329]
-gcc_cast_union.c(92): error: type 'pointer to double' is not a member of 'union anything' [329]
-gcc_cast_union.c(94): error: type 'pointer to int' is not a member of 'union anything' [329]

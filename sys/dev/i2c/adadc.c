@@ -1,4 +1,4 @@
-/* $NetBSD: adadc.c,v 1.10 2021/01/27 02:29:48 thorpej Exp $ */
+/* $NetBSD: adadc.c,v 1.10.14.1 2021/08/09 00:30:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Michael Lorenz
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adadc.c,v 1.10 2021/01/27 02:29:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adadc.c,v 1.10.14.1 2021/08/09 00:30:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,6 +128,7 @@ adadc_attach(device_t parent, device_t self, void *aux)
 	struct i2c_attach_args *ia = aux;
 	envsys_data_t *s;
 	int error, ch;
+	int phandle;
 	uint32_t eeprom[40];
 	char loc[256];
 	int which_cpu;
@@ -151,8 +152,8 @@ adadc_attach(device_t parent, device_t self, void *aux)
 	 * should probably just expose the temperature and four ENVSYS_INTEGERs
 	 */
 	which_cpu = 0;
-	ch = OF_child(ia->ia_cookie);
-	while (ch != 0) {
+	phandle = devhandle_to_of(device_handle(self));
+	for (ch = OF_child(phandle); ch != 0; ch = OF_peer(ch)) {
 		if (OF_getprop(ch, "location", loc, 32) > 0) {
 			int reg = 0;
 			OF_getprop(ch, "reg", &reg, sizeof(reg));
@@ -185,7 +186,6 @@ adadc_attach(device_t parent, device_t self, void *aux)
 			sysmon_envsys_sensor_attach(sc->sc_sme, s);
 			sc->sc_nsensors++;
 		}
-		ch = OF_peer(ch);
 	}
 	aprint_debug_dev(self, "monitoring CPU %d\n", which_cpu);
 	error = get_cpuid(which_cpu, (uint8_t *)eeprom);

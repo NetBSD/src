@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cmuxvar.h,v 1.3 2021/01/25 12:18:18 jmcneill Exp $	*/
+/*	$NetBSD: i2cmuxvar.h,v 1.3.14.1 2021/08/09 00:30:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -34,6 +34,52 @@
 
 #include <dev/i2c/i2cvar.h>
 
+/* XXX This is not ideal, but... XXX */
+
+#if defined(__i386__) || defined(__amd64__) || defined(__aarch64__)
+
+#ifdef _KERNEL_OPT
+#include "acpica.h"
+
+#if NACPICA > 0
+#define	I2CMUX_USE_ACPI
+#endif
+
+#else /* ! _KERNEL_OPT */
+
+#define	I2CMUX_USE_ACPI
+
+#endif /* _KERNEL_OPT */
+
+#endif /* __i386__ || __amd64__ || __aarch64__ */
+
+#if defined(__arm__) || defined(__aarch64__)
+
+#ifdef _KERNEL_OPT
+#include "opt_fdt.h"
+
+#if defined(FDT)
+#define	I2CMUX_USE_FDT
+#endif
+
+#else /* _KERNEL_OPT */
+
+#define	I2CMUX_USE_FDT
+
+#endif /* _KERNEL_OPT */
+
+#endif /* __arm__ || __aarch64__ */
+
+/* XXX ^^^ XXX */
+
+#if defined(I2CMUX_USE_ACPI)
+#include <dev/acpi/acpivar.h>
+#endif
+
+#if defined(I2CMUX_USE_FDT)
+#include <dev/fdt/fdtvar.h>
+#endif
+
 struct iicmux_softc;
 struct iicmux_bus;
 
@@ -48,17 +94,13 @@ struct iicmux_config {
 struct iicmux_bus {
 	struct i2c_controller controller;
 	struct iicmux_softc *mux;
-	uintptr_t handle;
-	enum i2c_cookie_type handletype;
+	devhandle_t devhandle;
 	int busidx;
 	void *bus_data;
 };
 
 struct iicmux_softc {
 	device_t			sc_dev;
-	enum i2c_cookie_type		sc_handletype;
-	uintptr_t			sc_handle;
-	int				sc_i2c_mux_phandle;
 	const struct iicmux_config *	sc_config;
 	i2c_tag_t			sc_i2c_parent;
 	struct iicmux_bus *		sc_busses;

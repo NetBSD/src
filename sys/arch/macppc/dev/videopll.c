@@ -1,4 +1,4 @@
-/*	$NetBSD: videopll.c,v 1.3 2018/06/16 21:22:13 thorpej Exp $	*/
+/*	$NetBSD: videopll.c,v 1.3.28.1 2021/08/09 00:30:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2012 Michael Lorenz
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: videopll.c,v 1.3 2018/06/16 21:22:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: videopll.c,v 1.3.28.1 2021/08/09 00:30:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,13 +66,19 @@ CFATTACH_DECL_NEW(videopll, sizeof(struct videopll_softc),
 
 static void *glob = NULL;
 
+static const struct device_compatible_entry compat_data[] = {
+	/* XXX a real "compatible" string would be nice... */
+	{ .compat = "aapl,valkyrie-videopll" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
 videopll_match(device_t parent, cfdata_t cfdata, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
 	int match_result;
 
-	if (iic_use_direct_match(ia, cfdata, NULL, &match_result))
+	if (iic_use_direct_match(ia, cfdata, compat_data, &match_result))
 		return match_result;
 	
 	/* This driver is direct-config only. */

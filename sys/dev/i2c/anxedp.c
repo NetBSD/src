@@ -1,4 +1,4 @@
-/* $NetBSD: anxedp.c,v 1.6 2021/01/27 02:29:48 thorpej Exp $ */
+/* $NetBSD: anxedp.c,v 1.6.14.1 2021/08/09 00:30:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: anxedp.c,v 1.6 2021/01/27 02:29:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: anxedp.c,v 1.6.14.1 2021/08/09 00:30:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -434,7 +434,7 @@ anxedp_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_i2c = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
-	sc->sc_phandle = ia->ia_cookie;
+	sc->sc_phandle = devhandle_to_of(device_handle(self));
 
 	aprint_naive("\n");
 	aprint_normal(": eDP TX\n");

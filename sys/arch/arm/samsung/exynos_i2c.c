@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_i2c.c,v 1.22 2021/03/14 08:16:57 skrll Exp $ */
+/*	$NetBSD: exynos_i2c.c,v 1.22.14.1 2021/08/09 00:30:07 thorpej Exp $ */
 
 /*
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_arm_debug.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_i2c.c,v 1.22 2021/03/14 08:16:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_i2c.c,v 1.22.14.1 2021/08/09 00:30:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -178,7 +178,11 @@ exynos_i2c_attach(device_t parent, device_t self, void *aux)
 
 	fdtbus_register_i2c_controller(&sc->sc_ic, phandle);
 
-	fdtbus_attach_i2cbus(self, phandle, &sc->sc_ic, iicbus_print);
+	struct i2cbus_attach_args iba = {
+		.iba_tag = &sc->sc_ic,
+	};
+	config_found(self, &iba, iicbus_print,
+	    CFARGS(.devhandle = device_handle(self)));
 }
 
 static int

@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_i2c.c,v 1.11 2021/08/07 16:19:10 thorpej Exp $ */
+/* $NetBSD: fdt_i2c.c,v 1.11.2.1 2021/08/09 00:30:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_i2c.c,v 1.11 2021/08/07 16:19:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_i2c.c,v 1.11.2.1 2021/08/09 00:30:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -96,36 +96,4 @@ fdtbus_i2c_acquire(int phandle, const char *prop)
 		return NULL;
 
 	return fdtbus_get_i2c_tag(i2c_phandle);
-}
-
-device_t
-fdtbus_attach_i2cbus(device_t dev, int phandle, i2c_tag_t tag, cfprint_t print)
-{
-	struct i2cbus_attach_args iba;
-	prop_dictionary_t devs, props;
-	device_t ret;
-	u_int address_cells;
-
-	devs = prop_dictionary_create();
-	if (of_getprop_uint32(phandle, "#address-cells", &address_cells))
-		address_cells = 1;
-
-	of_enter_i2c_devs(devs, phandle, address_cells * 4, 0);
-
-	memset(&iba, 0, sizeof(iba));
-	iba.iba_tag = tag;
-	iba.iba_child_devices = prop_dictionary_get(devs, "i2c-child-devices");
-	if (iba.iba_child_devices)
-		prop_object_retain(iba.iba_child_devices);
-	prop_object_release(devs);
-
-	props = device_properties(dev);
-	prop_dictionary_set_bool(props, "i2c-no-indirect-config", true);
-
-	ret = config_found(dev, &iba, print,
-	    CFARGS(.iattr = "i2cbus"));
-	if (iba.iba_child_devices)
-		prop_object_release(iba.iba_child_devices);
-
-	return ret;
 }

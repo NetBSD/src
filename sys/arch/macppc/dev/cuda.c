@@ -1,4 +1,4 @@
-/*	$NetBSD: cuda.c,v 1.29 2021/08/07 16:18:57 thorpej Exp $ */
+/*	$NetBSD: cuda.c,v 1.29.2.1 2021/08/09 00:30:08 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.29 2021/08/07 16:18:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.29.2.1 2021/08/09 00:30:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,6 +72,8 @@ typedef struct _cuda_handler {
 	void *cookie;
 } CudaHandler;
 
+#define	CUDA_MAX_I2C_DEVICES	2
+
 struct cuda_softc {
 	device_t sc_dev;
 	void *sc_ih;
@@ -81,6 +83,20 @@ struct cuda_softc {
 	struct i2c_controller sc_i2c;
 	bus_space_tag_t sc_memt;
 	bus_space_handle_t sc_memh;
+
+	/*
+	 * We provide our own i2c device enumeration method, so we
+	 * need to provide our own devhandle_impl.
+	 */
+	struct devhandle_impl sc_devhandle_impl;
+
+	struct {
+		const char *name;
+		const char *compatible;
+		i2c_addr_t addr;
+	} sc_i2c_devices[CUDA_MAX_I2C_DEVICES];
+	int sc_ni2c_devices;
+
 	int sc_node;
 	int sc_state;
 	int sc_waiting;
@@ -147,6 +163,63 @@ static	int cuda_adb_set_handler(void *, void (*)(void *, int, uint8_t *), void *
 static int cuda_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *, size_t,
 		    void *, size_t, int);
 
+static void
+cuda_add_i2c_device(struct cuda_softc *sc, const char *name,
+    const char *compatible, i2c_addr_t addr)
+{
+	KASSERT(sc->sc_ni2c_devices < CUDA_MAX_I2C_DEVICES);
+	sc->sc_i2c_devices[sc->sc_ni2c_devices].name = name;
+	sc->sc_i2c_devices[sc->sc_ni2c_devices].compatible = compatible;
+	sc->sc_i2c_devices[sc->sc_ni2c_devices].addr = addr;
+	sc->sc_ni2c_devices++;
+}
+
+static int
+cuda_i2c_enumerate_devices(device_t dev, devhandle_t call_handle, void *v)
+{
+	struct i2c_enumerate_devices_args *args = v;
+	prop_dictionary_t props;
+	int i;
+	bool cbrv;
+
+	/* dev is the "iicbus" instance.  Cuda softc is in args. */
+	struct cuda_softc *sc = args->ia->ia_tag->ic_cookie;
+
+	for (i = 0; i < sc->sc_ni2c_devices; i++) {
+		props = prop_dictionary_create();
+
+		args->ia->ia_addr = sc->sc_i2c_devices[i].addr;
+		args->ia->ia_name = sc->sc_i2c_devices[i].name;
+		args->ia->ia_clist = sc->sc_i2c_devices[i].compatible;
+		args->ia->ia_clist_size = strlen(args->ia->ia_clist) + 1;
+		args->ia->ia_prop = props;
+		/* Child gets no handle. */
+		devhandle_invalidate(&args->ia->ia_devhandle);
+
+		cbrv = args->callback(dev, args);
+
+		prop_object_release(props);
+
+		if (!cbrv) {
+			break;	/* callback decides if we continue */
+		}
+	}
+
+	return 0;
+}
+
+static device_call_t
+cuda_devhandle_lookup_device_call(devhandle_t handle, const char *name,
+    devhandle_t *call_handlep)
+{
+	if (strcmp(name, "i2c-enumerate-devices") == 0) {
+		return cuda_i2c_enumerate_devices;
+	}
+
+	/* Defer everything else to the "super". */
+	return NULL;
+}
+
 static int
 cuda_match(device_t parent, struct cfdata *cf, void *aux)
 {
@@ -172,9 +245,6 @@ cuda_attach(device_t parent, device_t self, void *aux)
 	struct cuda_softc *sc = device_private(self);
 	struct i2cbus_attach_args iba;
 	static struct cuda_attach_args caa;
-	prop_dictionary_t dict = device_properties(self);
-	prop_dictionary_t dev;
-	prop_array_t cfg;
 	int irq = ca->ca_intr[0];
 	int node, i, child;
 	char name[32];
@@ -251,37 +321,41 @@ cuda_attach(device_t parent, device_t self, void *aux)
 #if notyet
 	config_found(self, &caa, cuda_print, CFARGS_NONE);
 #endif
-	cfg = prop_array_create();
-	prop_dictionary_set(dict, "i2c-child-devices", cfg);
-	prop_object_release(cfg);
-
 	/* we don't have OF nodes for i2c devices so we have to make our own */
-
 	node = OF_finddevice("/valkyrie");
 	if (node != -1) {
-		dev = prop_dictionary_create();
-		prop_dictionary_set_string(dev, "name", "videopll");
-		prop_dictionary_set_uint32(dev, "addr", 0x50);
-		prop_array_add(cfg, dev);
-		prop_object_release(dev);
+		/* XXX a real "compatible" string would be nice... */
+		cuda_add_i2c_device(sc, "videopll",
+		    "aapl,valkyrie-videopll", 0x50);
 	}
 
 	node = OF_finddevice("/perch");
 	if (node != -1) {
-		dev = prop_dictionary_create();
-		prop_dictionary_set_string(dev, "name", "sgsmix");
-		prop_dictionary_set_uint32(dev, "addr", 0x8a);
-		prop_array_add(cfg, dev);
-		prop_object_release(dev);
+		cuda_add_i2c_device(sc, "sgsmix", "st,tda7433", 0x8a);
 	}
 
-	memset(&iba, 0, sizeof(iba));
-	iba.iba_tag = &sc->sc_i2c;
+	/*
+	 * Normally the i2c bus instance would automatically inherit
+	 * our devhandle, but we provide our own i2c device enumeration
+	 * method, so we need to supply the bus instance with our own
+	 * device handle implementation, using the one we got from
+	 * OpenFirmware as the "super".
+	 */
+	devhandle_t devhandle = devhandle_from_of(sc->sc_node);
+	devhandle_impl_inherit(&sc->sc_devhandle_impl, devhandle.impl);
+	sc->sc_devhandle_impl.lookup_device_call =
+	    cuda_devhandle_lookup_device_call;
+	devhandle.impl = &sc->sc_devhandle_impl;
+
 	iic_tag_init(&sc->sc_i2c);
 	sc->sc_i2c.ic_cookie = sc;
 	sc->sc_i2c.ic_exec = cuda_i2c_exec;
+
+	memset(&iba, 0, sizeof(iba));
+	iba.iba_tag = &sc->sc_i2c;
 	config_found(self, &iba, iicbus_print,
-	    CFARGS(.iattr = "i2cbus"));
+	    CFARGS(.iattr = "i2cbus",
+		   .devhandle = devhandle));
 
 	if (cuda0 == NULL)
 		cuda0 = &caa;

@@ -1,1 +1,0 @@
-./postconf: fatal: invalid wakeup field "X?" in "bar inet - n n X? 0 other"

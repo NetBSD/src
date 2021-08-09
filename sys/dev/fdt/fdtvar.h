@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.70 2021/04/24 23:36:53 thorpej Exp $ */
+/* $NetBSD: fdtvar.h,v 1.70.12.1 2021/08/09 00:30:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,6 +35,7 @@
 #include <sys/termios.h>
 
 #include <dev/i2c/i2cvar.h>
+#include <dev/spi/spivar.h>
 #include <dev/pwm/pwmvar.h>
 #include <dev/clk/clk.h>
 
@@ -77,10 +78,6 @@ struct fdtbus_interrupt_controller_func {
 	bool	(*intrstr)(device_t, u_int *, char *, size_t);
 	void	(*mask)(device_t, void *);
 	void	(*unmask)(device_t, void *);
-};
-
-struct fdtbus_spi_controller_func {
-	struct spi_controller *	(*get_controller)(device_t);
 };
 
 struct fdtbus_gpio_controller;
@@ -274,8 +271,7 @@ struct fdt_dma_range {
 int		fdtbus_register_interrupt_controller(device_t, int,
 		    const struct fdtbus_interrupt_controller_func *);
 int		fdtbus_register_i2c_controller(i2c_tag_t, int);
-int		fdtbus_register_spi_controller(device_t, int,
-		    const struct fdtbus_spi_controller_func *);
+int		fdtbus_register_spi_controller(struct spi_controller *, int);
 int		fdtbus_register_gpio_controller(device_t, int,
 		    const struct fdtbus_gpio_controller_func *);
 int		fdtbus_register_pinctrl_config(device_t, int,
@@ -402,9 +398,6 @@ int		fdtbus_todr_attach(device_t, int, todr_chip_handle_t);
 
 void		fdtbus_power_reset(void);
 void		fdtbus_power_poweroff(void);
-
-device_t	fdtbus_attach_i2cbus(device_t, int, i2c_tag_t, cfprint_t);
-device_t	fdtbus_attach_spibus(device_t, int, cfprint_t);
 
 bool		fdtbus_init(const void *);
 const void *	fdtbus_get_data(void);

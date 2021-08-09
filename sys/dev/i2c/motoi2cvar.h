@@ -1,4 +1,4 @@
-/* $NetBSD: motoi2cvar.h,v 1.8 2021/01/25 12:08:47 jmcneill Exp $ */
+/* $NetBSD: motoi2cvar.h,v 1.8.14.1 2021/08/09 00:30:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007, 2010 The NetBSD Foundation, Inc.
@@ -51,7 +51,6 @@ struct motoi2c_softc {
 	motoi2c_iord_t		sc_iord;
 	motoi2c_iowr_t		sc_iowr;
 	int			sc_phandle;
-	prop_array_t		sc_child_devices;
 	int			sc_flags;
 #define	MOTOI2C_F_ENABLE_INV	__BIT(0)
 #define	MOTOI2C_F_STATUS_W1C	__BIT(1)

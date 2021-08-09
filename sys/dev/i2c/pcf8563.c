@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8563.c,v 1.15 2021/01/27 02:29:48 thorpej Exp $	*/
+/*	$NetBSD: pcf8563.c,v 1.15.14.1 2021/08/09 00:30:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2011 Jonathan A. Kollasch
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcf8563.c,v 1.15 2021/01/27 02:29:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcf8563.c,v 1.15.14.1 2021/08/09 00:30:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,7 +123,8 @@ pcf8563rtc_attach(device_t parent, device_t self, void *aux)
 	}
 
 #ifdef FDT
-	fdtbus_todr_attach(self, ia->ia_cookie, &sc->sc_todr);
+	fdtbus_todr_attach(self, devhandle_to_of(device_handle(self)),
+	    &sc->sc_todr);
 #else
 	todr_attach(&sc->sc_todr);
 #endif

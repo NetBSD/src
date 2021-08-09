@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.29 2020/07/09 05:12:09 nisimura Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.29.16.1 2021/08/09 00:30:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.29 2020/07/09 05:12:09 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.29.16.1 2021/08/09 00:30:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.29 2020/07/09 05:12:09 nisimura Exp $
 
 #include <dev/cons.h>
 #include <dev/pci/pcivar.h>
+#include <dev/i2c/i2cvar.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -57,31 +58,165 @@ static struct btinfo_net *bi_net;
 static struct btinfo_prodfamily *bi_pfam;
 static struct btinfo_model *bi_model;
 
-struct i2c_dev {
-	const char	*name;
-	unsigned	addr;
-	/* only attach when one of these bits in the model flags is set */
+struct sandpoint_i2cdev {
+	const char *	name;
+	const char *	compat;
 	uint32_t	model_mask;
+	i2c_addr_t	addr;
 };
 
-#define MAXI2CDEVS	4
-struct model_i2c {
-	const char	*family;
-	struct i2c_dev	i2c_devs[MAXI2CDEVS];
+static const struct sandpoint_i2cdev dlink_i2cdevs[] = {
+[0] =	{
+		.name = "strtc",
+		.compat = "st,m41t80",
+		.addr = 0x68,
+	},
+[1] =	{
+		.name = NULL
+	}
 };
 
-static struct model_i2c model_i2c_list[] = {
-	{ "dlink",	{	{ "strtc",	0x68, 0 } } },
-	{ "iomega",	{	{ "dsrtc",	0x68, 0 } } },
-	{ "kurobox",	{	{ "rs5c372rtc", 0x32, 0 } } },
-	{ "kurot4",	{	{ "rs5c372rtc", 0x32, 0 } } },
-	{ "nhnas",	{	{ "pcf8563rtc", 0x51, 0 } } },
-	{ "qnap",	{	{ "s390rtc",    0x30, 0 } } },
-	{ "synology",	{	{ "rs5c372rtc", 0x32, 0 },
-				{ "lmtemp",	0x48, BI_MODEL_THERMAL } } },
+static const struct sandpoint_i2cdev iomega_i2cdevs[] = {
+[0] =	{
+		.name = "dsrtc",
+		.compat = "dallas,ds1307",
+		.addr = 0x68,
+	},
+[1] =	{
+		.name = NULL
+	}
 };
 
-static void add_i2c_child_devices(device_t, const char *);
+static const struct sandpoint_i2cdev kurobox_i2cdevs[] = {
+[0] =	{
+		.name = "rs5c372rtc",
+		.compat = "ricoh,rs5c372a",
+		.addr = 0x32,
+	},
+[1] =	{
+		.name = NULL
+	}
+};
+
+static const struct sandpoint_i2cdev nhnas_i2cdevs[] = {
+[0] =	{
+		.name = "pcf8563rtc",
+		.compat = "nxp,pcf8563",
+		.addr = 0x51,
+	},
+[1] =	{
+		.name = NULL
+	}
+};
+
+static const struct sandpoint_i2cdev qnap_i2cdevs[] = {
+[0] =	{
+		.name = "s390rtc",
+		.compat = "sii,s35390a",
+		.addr = 0x30,
+	},
+[1] =	{
+		.name = NULL
+	}
+};
+
+static const struct sandpoint_i2cdev synology_i2cdevs[] = {
+[0] =	{
+		.name = "rs5c372rtc",
+		.compat = "ricoh,rs5c372a",
+		.addr = 0x32,
+	},
+[1] =	{
+		.name = "lmtemp",
+		.compat = "national,lm75",
+		.addr = 0x48,
+		.model_mask = BI_MODEL_THERMAL,
+	},
+[2] =	{
+		.name = NULL
+	}
+};
+
+static const struct device_compatible_entry sandpoint_i2c_compat[] = {
+	{ .compat = "dlink",		.data = &dlink_i2cdevs },
+	{ .compat = "iomega",		.data = &iomega_i2cdevs },
+	{ .compat = "kurobox",		.data = &kurobox_i2cdevs },
+	/* kurot4 has same i2c devices as kurobox */
+	{ .compat = "kurot4",		.data = &kurobox_i2cdevs },
+	{ .compat = "nhnas",		.data = &nhnas_i2cdevs },
+	{ .compat = "qnap",		.data = &qnap_i2cdevs },
+	{ .compat = "synology",		.data = &synology_i2cdevs },
+	DEVICE_COMPAT_EOL
+};
+
+/*
+ * We provide a device handle implementation for i2c device enumeration.
+ */
+static int
+sandpoint_i2c_enumerate_devices(device_t dev, devhandle_t call_handle, void *v)
+{
+	struct i2c_enumerate_devices_args *args = v;
+	const struct device_compatible_entry *dce;
+	const struct sandpoint_i2cdev *i2cdev;
+	prop_dictionary_t props;
+	bool cbrv;
+
+	KASSERT(bi_pfam != NULL);
+
+	const char *fam_name = bi_pfam->name;
+	dce = device_compatible_lookup(&fam_name, 1, sandpoint_i2c_compat);
+	if (dce == NULL) {
+		/* no i2c devices for this model. */
+		return 0;
+	}
+	i2cdev = dce->data;
+	KASSERT(i2cdev != NULL);
+
+	for (; i2cdev->name != NULL; i2cdev++) {
+		if (i2cdev->model_mask != 0) {
+			KASSERT(bi_model != NULL);
+			if ((i2cdev->model_mask & bi_model->flags) == 0) {
+				/* skip this device. */
+				continue;
+			}
+		}
+
+		props = prop_dictionary_create();
+
+		args->ia->ia_addr = i2cdev->addr;
+		args->ia->ia_name = i2cdev->name;
+		args->ia->ia_clist = i2cdev->compat;
+		args->ia->ia_clist_size = strlen(i2cdev->compat) + 1;
+		args->ia->ia_prop = props;
+		/* no devhandle for child devices. */
+		devhandle_invalidate(&args->ia->ia_devhandle);
+
+		cbrv = args->callback(dev, args);
+
+		prop_object_release(props);
+
+		if (!cbrv) {
+			break;
+		}
+	}
+
+	return 0;
+}
+
+static device_call_t
+sandpoint_i2c_devhandle_lookup_device_call(devhandle_t handle, const char *name,
+    devhandle_t *call_handlep)
+{
+	if (strcmp(name, "i2c-enumerate-devices") == 0) {
+		return sandpoint_i2c_enumerate_devices;
+	}
+	return NULL;
+}
+
+static const struct devhandle_impl sandpoint_i2c_devhandle_impl = {
+	.type = DEVHANDLE_TYPE_PRIVATE,
+	.lookup_device_call = sandpoint_i2c_devhandle_lookup_device_call,
+};
 
 /*
  * Determine i/o configuration for a machine.
@@ -170,45 +305,10 @@ device_register(device_t dev, void *aux)
 		booted_partition = bi_rdev->cookie & 0xff;
 	}
 	else if (device_is_a(dev, "ociic") && bi_pfam != NULL) {
-		add_i2c_child_devices(dev, bi_pfam->name);
+		/* For i2c device enumeration. */
+		devhandle_t devhandle = {
+			.impl = &sandpoint_i2c_devhandle_impl,
+		};
+		device_set_handle(dev, devhandle);
 	}
-}
-
-static void
-add_i2c_child_devices(device_t self, const char *family)
-{
-	struct i2c_dev *model_i2c_devs;
-	prop_dictionary_t pd;
-	prop_array_t pa;
-	int i;
-
-	for (i = 0;
-	    i < (int)(sizeof(model_i2c_list) / sizeof(model_i2c_list[0]));
-	    i++) {
-		if (strcmp(family, model_i2c_list[i].family) == 0) {
-			model_i2c_devs = model_i2c_list[i].i2c_devs;
-			goto found;
-		}
-	}
-	return;
-
- found:
-	/* make an i2c-child-devices property list with for direct config. */
-	pa = prop_array_create();
-
-	for (i = 0; i < MAXI2CDEVS && model_i2c_devs[i].name != NULL; i++) {
-		if (model_i2c_devs[i].model_mask != 0 &&
-		    !(bi_model->flags & model_i2c_devs[i].model_mask))
-			continue;
-		pd = prop_dictionary_create();
-		prop_dictionary_set_string_nocopy(pd, "name",
-		    model_i2c_devs[i].name);
-		prop_dictionary_set_uint32(pd, "addr",
-		    model_i2c_devs[i].addr);
-		prop_array_add(pa, pd);
-		prop_object_release(pd);
-	}
-
-	prop_dictionary_set(device_properties(self), "i2c-child-devices", pa);
-	prop_object_release(pa);
 }

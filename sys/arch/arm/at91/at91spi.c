@@ -1,5 +1,5 @@
-/*	$Id: at91spi.c,v 1.7 2021/08/07 16:18:43 thorpej Exp $	*/
-/*	$NetBSD: at91spi.c,v 1.7 2021/08/07 16:18:43 thorpej Exp $	*/
+/*	$Id: at91spi.c,v 1.7.2.1 2021/08/09 00:30:06 thorpej Exp $	*/
+/*	$NetBSD: at91spi.c,v 1.7.2.1 2021/08/09 00:30:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 Embedtronics Oy. All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91spi.c,v 1.7 2021/08/07 16:18:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91spi.c,v 1.7.2.1 2021/08/09 00:30:06 thorpej Exp $");
 
 #include "locators.h"
 
@@ -105,7 +105,6 @@ at91spi_attach_common(device_t parent, device_t self, void *aux,
 {
 	struct at91spi_softc *sc = device_private(self);
 	struct at91bus_attach_args *sa = aux;
-	struct spibus_attach_args sba;
 	bus_dma_segment_t segs;
 	int rsegs, err;
 
@@ -155,9 +154,6 @@ at91spi_attach_common(device_t parent, device_t self, void *aux,
 		aprint_error("%s: no slaves!\n", device_xname(sc->sc_dev));
 	}
 
-	memset(&sba, 0, sizeof(sba));
-	sba.sba_controller = &sc->sc_spi;
-
 	/* initialize the queue */
 	SIMPLEQ_INIT(&sc->sc_q);
 
@@ -193,7 +189,11 @@ at91spi_attach_common(device_t parent, device_t self, void *aux,
 	PUTREG(sc, SPI_PDC_BASE + PDC_PTCR, PDC_PTCR_TXTEN | PDC_PTCR_RXTEN);
 
 	/* attach slave devices */
-	config_found(sc->sc_dev, &sba, spibus_print, CFARGS_NONE);
+	struct spibus_attach_args sba = {
+		.sba_controller = &sc->sc_spi,
+	};
+	config_found(sc->sc_dev, &sba, spibus_print,
+	    CFARGS(.devhandle = device_handle(sc->sc_dev)));
 }
 
 int

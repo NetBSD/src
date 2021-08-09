@@ -1,2 +1,0 @@
-./postconf: warning: ldap:PWD/test69.cf: unused parameter: junk=junk
-config_directory = .

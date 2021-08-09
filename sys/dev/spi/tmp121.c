@@ -1,4 +1,4 @@
-/* $NetBSD: tmp121.c,v 1.5 2011/06/20 17:31:37 pgoyette Exp $ */
+/* $NetBSD: tmp121.c,v 1.5.82.1 2021/08/09 00:30:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmp121.c,v 1.5 2011/06/20 17:31:37 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmp121.c,v 1.5.82.1 2021/08/09 00:30:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,16 +68,31 @@ static void	tmp121temp_refresh(struct sysmon_envsys *, envsys_data_t *);
 CFATTACH_DECL_NEW(tmp121temp, sizeof(struct tmp121temp_softc),
     tmp121temp_match, tmp121temp_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "ti,tmp121" },
+	{ .compat = "TMP00121" },
+
+#if 0	/* We should also add support for these: */
+	{ .compat = "ti,tmp122" },
+
+	{ .compat = "ti,lm70" },
+	{ .compat = "LM000070" },
+
+	{ .compat = "ti,lm71" },
+	{ .compat = "LM000071" },
+
+	{ .compat = "ti,lm74" },
+	{ .compat = "LM000074" },
+#endif
+	DEVICE_COMPAT_EOL
+};
+
 static int
 tmp121temp_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct spi_attach_args *sa = aux;
 
-	/* configure for 10MHz */
-	if (spi_configure(sa->sa_handle, SPI_MODE_0, 1000000))
-		return 0;
-
-	return 1;
+	return spi_compatible_match(sa, cf, compat_data);
 }
 
 static void
@@ -85,9 +100,18 @@ tmp121temp_attach(device_t parent, device_t self, void *aux)
 {
 	struct tmp121temp_softc *sc = device_private(self);
 	struct spi_attach_args *sa = aux;
+	int error;
 
 	aprint_naive(": Temperature Sensor\n");	
 	aprint_normal(": TI TMP121 Temperature Sensor\n");
+
+	/* configure for 10MHz */
+	error = spi_configure(sa->sa_handle, SPI_MODE_0, 1000000);
+	if (error) {
+		aprint_error_dev(self, "spi_configure failed (error = %d)\n",
+		    error);
+		return;
+	}
 
 	sc->sc_sh = sa->sa_handle;
 

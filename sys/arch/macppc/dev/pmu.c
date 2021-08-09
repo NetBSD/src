@@ -1,4 +1,4 @@
-/*	$NetBSD: pmu.c,v 1.39 2021/08/07 16:18:58 thorpej Exp $ */
+/*	$NetBSD: pmu.c,v 1.39.2.1 2021/08/09 00:30:08 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.39 2021/08/07 16:18:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.39.2.1 2021/08/09 00:30:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,6 +90,7 @@ struct pmu_softc {
 	struct sysmon_pswitch sc_powerbutton;
 	bus_space_tag_t sc_memt;
 	bus_space_handle_t sc_memh;
+
 	uint32_t sc_flags;
 #define PMU_HAS_BACKLIGHT_CONTROL	1
 	int sc_node;
@@ -267,7 +268,6 @@ pmu_attach(device_t parent, device_t self, void *aux)
 	uint8_t cmd[2] = {2, 0};
 	uint8_t resp[16];
 	char name[256], model[32];
-	prop_dictionary_t dict = device_properties(self);
 
 	extint_node = of_getnode_byname(OF_parent(ca->ca_node), "extint-gpio1");
 	if (extint_node) {
@@ -340,64 +340,16 @@ pmu_attach(device_t parent, device_t self, void *aux)
 			goto next;
 
 		if (strncmp(name, "pmu-i2c", 8) == 0) {
-			int devs, sensors;
-			uint32_t addr;
-			char compat[256];
-			prop_array_t cfg;
-			prop_dictionary_t dev;
-			prop_data_t data;
-
-			aprint_normal_dev(self, "initializing IIC bus\n");
-
-			cfg = prop_array_create();
-			prop_dictionary_set(dict, "i2c-child-devices", cfg);
-			prop_object_release(cfg);
-
-			/* look for i2c devices */
-			devs = OF_child(node);
-			while (devs != 0) {
-				if (OF_getprop(devs, "name", name, 256) <= 0)
-					goto skip;
-				if (OF_getprop(devs, "compatible",
-				    compat, 256) <= 0)
-					goto skip;
-				if (OF_getprop(devs, "reg", &addr, 4) <= 0)
-					goto skip;
-				addr = (addr & 0xff) >> 1;
-				DPRINTF("-> %s@%x\n", name, addr);
-				dev = prop_dictionary_create();
-				prop_dictionary_set_string(dev, "name", name);
-				data = prop_data_create_copy(compat, strlen(compat)+1);
-				prop_dictionary_set(dev, "compatible", data);
-				prop_object_release(data);
-				prop_dictionary_set_uint32(dev, "addr", addr);
-				prop_dictionary_set_uint64(dev, "cookie", devs);
-				sensors = OF_child(devs);
-				while (sensors != 0) {
-					int reg;
-					char loc[64];
-					char pname[8];
-					if (OF_getprop(sensors, "reg", &reg, 4) != 4)
-						goto nope;
-					if (OF_getprop(sensors, "location", loc, 63) <= 0)
-						goto nope;
-					snprintf(pname, 7, "s%02x", reg);
-					prop_dictionary_set_string(dev, pname, loc);
-				nope:
-					sensors = OF_peer(sensors);
-				}
-				prop_array_add(cfg, dev);
-				prop_object_release(dev);
-			skip:
-				devs = OF_peer(devs);
-			}
-			memset(&iba, 0, sizeof(iba));
-			iba.iba_tag = &sc->sc_i2c;
+			/* fill in the i2c tag */
 			iic_tag_init(&sc->sc_i2c);
 			sc->sc_i2c.ic_cookie = sc;
 			sc->sc_i2c.ic_exec = pmu_i2c_exec;
+
+			memset(&iba, 0, sizeof(iba));
+			iba.iba_tag = &sc->sc_i2c;
 			config_found(sc->sc_dev, &iba, iicbus_print,
-			    CFARGS(.iattr = "i2cbus"));
+			    CFARGS(.iattr = "i2cbus",
+				   .devhandle = devhandle_from_of(node)));
 			goto next;
 		}
 		if (strncmp(name, "adb", 4) == 0) {

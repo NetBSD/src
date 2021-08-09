@@ -1,7 +1,0 @@
-# no(t) authoritative config
-
-# authoritative is no longer mandatory
-#authoritative;
-
-subnet 10.5.5.0 netmask 255.255.255.224 { }
-

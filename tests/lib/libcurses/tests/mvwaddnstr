@@ -1,4 +1,0 @@
-include window
-call OK mvwaddnstr $win1 2 1 "abcdef" 4
-call OK wrefresh $win1
-compare mvwaddstr.chk

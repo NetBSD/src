@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_rsb.c,v 1.14 2021/01/27 03:10:20 thorpej Exp $ */
+/* $NetBSD: sunxi_rsb.c,v 1.14.14.1 2021/08/09 00:30:07 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_rsb.c,v 1.14 2021/01/27 03:10:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_rsb.c,v 1.14.14.1 2021/08/09 00:30:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -184,7 +184,11 @@ sunxi_rsb_attach(device_t parent, device_t self, void *aux)
 
 	fdtbus_register_i2c_controller(&sc->sc_ic, phandle);
 
-	fdtbus_attach_i2cbus(self, phandle, &sc->sc_ic, iicbus_print);
+	struct i2cbus_attach_args iba = {
+		.iba_tag = &sc->sc_ic,
+	};
+	config_found(self, &iba, iicbus_print,
+	    CFARGS(.devhandle = device_handle(self)));
 }
 
 static int

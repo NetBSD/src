@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.234 2021/08/07 16:19:06 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.234.2.1 2021/08/09 00:30:08 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.234 2021/08/07 16:19:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.234.2.1 2021/08/09 00:30:08 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1099,6 +1099,9 @@ device_register(device_t dev, void *aux)
 	devhandle_t devhandle;
 	int ofnode = 0;
 
+	/* Fixup devices that have missing device tree information. */
+	sparc64_device_tree_fixup(dev, aux);
+
 	/*
 	 * If the device has a valid OpenFirmware node association,
 	 * grab it now.
@@ -1119,24 +1122,6 @@ device_register(device_t dev, void *aux)
 		 * Ignore mainbus0 itself, it certainly is not a boot
 		 * device.
 		 */
-	} else if (device_is_a(busdev, "iic")) {
-		struct i2c_attach_args *ia = aux;
-
-		if (ia->ia_name == NULL)	/* indirect config */
-			return;
-
-		ofnode = (int)ia->ia_cookie;
-		if (device_is_a(dev, "pcagpio")) {
-			if (!strcmp(machine_model, "SUNW,Sun-Fire-V240") ||
-			    !strcmp(machine_model, "SUNW,Sun-Fire-V210")) {
-				add_gpio_props_v210(dev, aux);
-			}
-		} 
-		if (device_is_a(dev, "pcf8574io")) {
-			if (!strcmp(machine_model, "SUNW,Ultra-250")) {
-				add_gpio_props_e250(dev, aux);
-			}
-		} 
 		return;
 	} else if (device_is_a(dev, "sd") || device_is_a(dev, "cd")) {
 		struct scsipibus_attach_args *sa = aux;
@@ -1191,11 +1176,6 @@ device_register(device_t dev, void *aux)
 			dev_bi_unit_drive_match(dev, ofnode,
 			    periph->periph_target + off, 0, periph->periph_lun);
 		}
-
-		if (device_is_a(busdev, "scsibus")) {
-			/* see if we're in a known SCA drivebay */
-			add_drivebay_props(dev, ofnode, aux);
-		}
 		return;
 	} else if (device_is_a(dev, "wd")) {
 		struct ata_device *adev = aux;
@@ -1218,9 +1198,6 @@ device_register(device_t dev, void *aux)
 		devhandle = device_handle(busdev);
 		ofnode = devhandle_to_of(devhandle);
 	}
-
-	if (busdev == NULL)
-		return;
 
 	if (ofnode != 0) {
 		uint8_t eaddr[ETHER_ADDR_LEN];
@@ -1318,64 +1295,6 @@ noether:
 		}
 	}
 
-	/*
-	 * Check for I2C busses and add data for their direct configuration.
-	 */
-	if (device_is_a(dev, "iic")) {
-		devhandle_t bushandle = device_handle(busdev);
-		int busnode =
-		    devhandle_type(bushandle) == DEVHANDLE_TYPE_OF ?
-		    devhandle_to_of(bushandle) : 0;
-
-		if (busnode) {
-			prop_dictionary_t props = device_properties(busdev);
-			prop_object_t cfg = prop_dictionary_get(props,
-				"i2c-child-devices");
-			if (!cfg) {
-				int node;
-				const char *name;
-
-				/*
-				 * pmu's i2c devices are under the "i2c" node,
-				 * so find it out.
-				 */
-				name = prom_getpropstring(busnode, "name");
-				if (strcmp(name, "pmu") == 0) {
-					for (node = OF_child(busnode);
-					     node != 0; node = OF_peer(node)) {
-						name = prom_getpropstring(node,
-						    "name");
-						if (strcmp(name, "i2c") == 0) {
-							busnode = node;
-							break;
-						}
-					}
-				}
-
-				of_enter_i2c_devs(props, busnode,
-				    sizeof(cell_t), 1);
-			}
-		}
-
-		if (!strcmp(machine_model, "TAD,SPARCLE"))
-			add_spdmem_props_sparcle(busdev);
-
-		if (device_is_a(busdev, "pcfiic") &&
-		    (!strcmp(machine_model, "SUNW,Sun-Fire-V240") ||
-		    !strcmp(machine_model, "SUNW,Sun-Fire-V210")))
-			add_env_sensors_v210(busdev);
-
-		/* E450 SUNW,envctrl */
-		if (device_is_a(busdev, "pcfiic") &&
-		    (!strcmp(machine_model, "SUNW,Ultra-4")))
-			add_i2c_props_e450(busdev, busnode);
-
-		/* E250 SUNW,envctrltwo */
-		if (device_is_a(busdev, "pcfiic") &&
-		    (!strcmp(machine_model, "SUNW,Ultra-250")))
-			add_i2c_props_e250(busdev, busnode);
-	}
-
 	/* set properties for PCI framebuffers */
 	if (device_is_a(busdev, "pci")) {
 		/* see if this is going to be console */
@@ -1438,10 +1357,7 @@ noether:
 			}
 		}
 #endif
-		set_static_edid(dict);
 	}
-
-	set_hw_props(dev);
 }
 
 /*

@@ -131,8 +131,7 @@ ibmcpc* 	at mainbus?
 uninorth* 	at mainbus?
 smu* 		at mainbus?
 #options 	SMU_DEBUG
-smuiic* 	at smu?
-iic* 		at smuiic?
+iic* 		at smu?
 
 
 pci*	at ibmcpc? bus ?

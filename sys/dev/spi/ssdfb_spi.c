@@ -1,4 +1,4 @@
-/* $NetBSD: ssdfb_spi.c,v 1.9 2021/08/05 19:17:22 tnn Exp $ */
+/* $NetBSD: ssdfb_spi.c,v 1.9.2.1 2021/08/09 00:30:09 thorpej Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,19 +30,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ssdfb_spi.c,v 1.9 2021/08/05 19:17:22 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ssdfb_spi.c,v 1.9.2.1 2021/08/09 00:30:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
+
 #include <dev/spi/spivar.h>
 #include <dev/ic/ssdfbvar.h>
 #include "opt_fdt.h"
 #ifdef FDT
 #include <dev/fdt/fdtvar.h>
-#endif
+#endif /* FDT */
 
 struct bs_state {
 	uint8_t	*base;
@@ -56,7 +57,7 @@ struct ssdfb_spi_softc {
 #ifdef FDT
 	struct fdtbus_gpio_pin	*sc_gpio_dc;
 	struct fdtbus_gpio_pin	*sc_gpio_res;
-#endif
+#endif /* FDT */
 	bool			sc_3wiremode;
 };
 
@@ -95,40 +96,72 @@ static int
 ssdfb_spi_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct spi_attach_args *sa = aux;
-	int res;
 
-	res = spi_compatible_match(sa, match, compat_data);
-	if (!res)
-		return res;
-
-	/*
-	 * SSD1306 and SSD1322 data sheets specify 100ns cycle time.
-	 */
-	if (spi_configure(sa->sa_handle, SPI_MODE_0, 10000000))
-		res = 0;
-
-	return res;
+	return spi_compatible_match(sa, match, compat_data);
 }
+
+#ifdef FDT
+static void
+ssdfb_spi_gpio_fdt(struct ssdfb_spi_softc *sc)
+{
+	devhandle_t devhandle = device_handle(sc->sc.sc_dev);
+	int phandle = devhandle_to_of(devhandle);
+
+	sc->sc_gpio_dc = fdtbus_gpio_acquire(phandle, "dc-gpio",
+	    GPIO_PIN_OUTPUT);
+	if (sc->sc_gpio_dc == NULL) {
+		sc->sc_gpio_dc = fdtbus_gpio_acquire(phandle, "cd-gpio",
+		    GPIO_PIN_OUTPUT);
+	}
+	if (sc->sc_gpio_dc != NULL) {
+		sc->sc_3wiremode = false;
+	}
+
+	sc->sc_gpio_res = fdtbus_gpio_acquire(phandle, "res-gpio",
+	    GPIO_PIN_OUTPUT);
+	if (sc->sc_gpio_res) {
+		fdtbus_gpio_write_raw(sc->sc_gpio_res, 0);
+		DELAY(100);
+		fdtbus_gpio_write_raw(sc->sc_gpio_res, 1);
+		DELAY(100);
+	}
+}
+#endif /* FDT */
 
 static void
 ssdfb_spi_attach(device_t parent, device_t self, void *aux)
 {
 	struct ssdfb_spi_softc *sc = device_private(self);
+	devhandle_t devhandle = device_handle(self);
 	struct cfdata *cf = device_cfdata(self);
 	struct spi_attach_args *sa = aux;
 	int flags = cf->cf_flags;
+	int error;
 
 	sc->sc.sc_dev = self;
 	sc->sc_sh = sa->sa_handle;
 	sc->sc.sc_cookie = (void *)sc;
+
+	/*
+	 * SSD1306 and SSD1322 data sheets specify 100ns cycle time.
+	 */
+	error = spi_configure(sa->sa_handle, SPI_MODE_0, 10000000);
+	if (error) {
+		aprint_error(": spi_configure failed (error = %d)\n",
+		    error);
+		return;
+	}
+
 	if ((flags & SSDFB_ATTACH_FLAG_PRODUCT_MASK) == SSDFB_PRODUCT_UNKNOWN) {
 		const struct device_compatible_entry *dce =
-			device_compatible_lookup(sa->sa_compat, sa->sa_ncompat, compat_data);
+			device_compatible_lookup(sa->sa_compat, sa->sa_ncompat,
+						 compat_data);
 		if (dce)
 			flags |= (int)dce->value;
 		else
 			flags |= SSDFB_PRODUCT_SSD1322_GENERIC;
 	}
+
 	/*
 	 * Note on interface modes.
 	 *
@@ -137,26 +170,20 @@ ssdfb_spi_attach(device_t parent, device_t self, void *aux)
 	 *
 	 * 4 wire mode sends 8 bit sequences and requires an auxiliary GPIO
 	 * pin for the command/data bit.
+	 *
+	 * Default to 3 wire mode.  If the device tree specifies a
+	 * D/C GPIO pin, then we will use 4 wire mode.
 	 */
-#ifdef FDT
-	const int phandle = sa->sa_cookie;
-	sc->sc_gpio_dc =
-	    fdtbus_gpio_acquire(phandle, "dc-gpio", GPIO_PIN_OUTPUT);
-	if (!sc->sc_gpio_dc)
-		sc->sc_gpio_dc =
-		    fdtbus_gpio_acquire(phandle, "cd-gpio", GPIO_PIN_OUTPUT);
-	sc->sc_3wiremode = (sc->sc_gpio_dc == NULL);
-	sc->sc_gpio_res =
-	    fdtbus_gpio_acquire(phandle, "res-gpio", GPIO_PIN_OUTPUT);
-	if (sc->sc_gpio_res) {
-		fdtbus_gpio_write_raw(sc->sc_gpio_res, 0);
-		DELAY(100);
-		fdtbus_gpio_write_raw(sc->sc_gpio_res, 1);
-		DELAY(100);
-	}
-#else
 	sc->sc_3wiremode = true;
-#endif
+	switch (devhandle_type(devhandle)) {
+#ifdef FDT
+	case DEVHANDLE_TYPE_OF:
+		ssdfb_spi_gpio_fdt(sc);
+		break;
+#endif /* FDT */
+	default:
+		break;
+	}
 
 	sc->sc.sc_cmd = sc->sc_3wiremode
 	    ? ssdfb_spi_cmd_3wire
@@ -303,11 +330,15 @@ ssdfb_bitstream_final(struct bs_state *s)
 static void
 ssdfb_spi_4wire_set_dc(struct ssdfb_spi_softc *sc, int value)
 {
+	/* TODO: refactor this if we ever support more that just FDT. */
+
 #ifdef FDT
-	fdtbus_gpio_write_raw(sc->sc_gpio_dc, value);
+	KASSERT(sc->sc_gpio_dc != NULL);
+	fdtbus_gpio_write(sc->sc_dc_gpio, value);
 #else
+	/* TODO: this should toggle an auxilliary GPIO pin */
 	panic("ssdfb_spi_4wire_set_dc");
-#endif
+#endif /* FDT */
 }
 
 static int

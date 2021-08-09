@@ -1,4 +1,4 @@
-/*	$NetBSD: ki2c.c,v 1.32 2021/08/07 16:18:57 thorpej Exp $	*/
+/*	$NetBSD: ki2c.c,v 1.32.2.1 2021/08/09 00:30:08 thorpej Exp $	*/
 /*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
 
 /*-
@@ -30,6 +30,7 @@
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
+#include <sys/kmem.h>
 #include <sys/mutex.h>
 
 #include <dev/ofw/openfirm.h>
@@ -38,35 +39,220 @@
 #include "opt_ki2c.h"
 #include <macppc/dev/ki2cvar.h>
 
+#include "locators.h"
+
 #ifdef KI2C_DEBUG
 #define DPRINTF printf
 #else
 #define DPRINTF while (0) printf
 #endif
 
-int ki2c_match(device_t, cfdata_t, void *);
-void ki2c_attach(device_t, device_t, void *);
-inline uint8_t ki2c_readreg(struct ki2c_softc *, int);
-inline void ki2c_writereg(struct ki2c_softc *, int, uint8_t);
-u_int ki2c_getmode(struct ki2c_softc *);
-void ki2c_setmode(struct ki2c_softc *, u_int);
-u_int ki2c_getspeed(struct ki2c_softc *);
-void ki2c_setspeed(struct ki2c_softc *, u_int);
-int ki2c_intr(struct ki2c_softc *);
-int ki2c_poll(struct ki2c_softc *, int);
-int ki2c_start(struct ki2c_softc *, int, int, void *, int);
-int ki2c_read(struct ki2c_softc *, int, int, void *, int);
-int ki2c_write(struct ki2c_softc *, int, int, void *, int);
+static int	ki2c_match(device_t, cfdata_t, void *);
+static void	ki2c_attach(device_t, device_t, void *);
+static int	ki2c_intr(struct ki2c_softc *);
 
 /* I2C glue */
-static int ki2c_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *, size_t,
-		    void *, size_t, int);
-
+static int	ki2c_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *,
+		    size_t, void *, size_t, int);
+static int	ki2c_i2c_acquire_bus(void *, int);
+static void	ki2c_i2c_release_bus(void *, int);
 
 CFATTACH_DECL_NEW(ki2c, sizeof(struct ki2c_softc), ki2c_match, ki2c_attach,
 	NULL, NULL);
 
-int
+static prop_dictionary_t
+ki2c_i2c_device_props(struct ki2c_softc *sc, int node)
+{
+	prop_dictionary_t props = prop_dictionary_create();
+	uint32_t reg;
+	char descr[32], num[8];
+
+	/* We're fetching descriptions for sensors. */
+
+	for (node = OF_child(node); node != 0; node = OF_peer(node)) {
+		if (of_getprop_uint32(node, "reg", &reg) == -1) {
+			continue;
+		}
+		if (OF_getprop(node, "location", descr, sizeof(descr)) <= 0) {
+			continue;
+		}
+		snprintf(num, sizeof(num), "s%02x", reg);
+
+		aprint_debug_dev(sc->sc_dev,
+		    "%s: sensor %s -> %s\n", __func__, num, descr);
+
+		prop_dictionary_set_string(props, num, descr);
+	}
+
+	return props;
+}
+
+static bool
+ki2c_i2c_enumerate_device(struct ki2c_softc *sc, device_t dev, int node,
+    const char *name, uint32_t addr,
+    struct i2c_enumerate_devices_args * const args)
+{
+	int compat_size;
+	prop_dictionary_t props;
+	char compat_buf[32];
+	char *compat;
+	bool cbrv;
+
+	compat_size = OF_getproplen(node, "compatible");
+	if (compat_size <= 0) {
+		/* some i2c device nodes don't have 'compatible' */
+		aprint_debug_dev(sc->sc_dev,
+		    "no compatible property for phandle %d; using '%s'\n",
+		    node, name);
+		compat = compat_buf;
+		strlcpy(compat, name, sizeof(compat));
+		compat_size = strlen(compat) + 1;
+	} else {
+		compat = kmem_tmpbuf_alloc(compat_size, compat_buf,
+		    sizeof(compat_buf), KM_SLEEP);
+		if (OF_getprop(node, "compatible", compat,
+			      sizeof(compat)) <= 0) {
+			aprint_error_dev(sc->sc_dev,
+			    "unable to get compatible property for "
+			    "phandle %d ('%s')\n", node, name);
+			goto bad;
+		}
+	}
+
+	props = ki2c_i2c_device_props(sc, node);
+
+	args->ia->ia_addr = (i2c_addr_t)addr;
+	args->ia->ia_name = name;
+	args->ia->ia_clist = compat;
+	args->ia->ia_clist_size = compat_size;
+	args->ia->ia_prop = props;
+	args->ia->ia_devhandle = devhandle_from_of(node);
+
+	cbrv = args->callback(dev, args);
+
+	prop_object_release(props);
+
+	return cbrv;	/* callback decides if we keep enumerating */
+
+ bad:
+	if (compat != compat_buf) {
+		kmem_tmpbuf_free(compat, compat_size, compat_buf);
+	}
+	return true;			/* keep enumerating */
+}
+
+static int
+ki2c_i2c_enumerate_devices(device_t dev, devhandle_t call_handle, void *v)
+{
+	struct i2c_enumerate_devices_args *args = v;
+	int bus_phandle, node;
+	uint32_t addr;
+	char name[32];
+
+	/* dev is the "iic" bus instance.  ki2c channel is in args. */
+	struct ki2c_channel *ch = args->ia->ia_tag->ic_cookie;
+	struct ki2c_softc *sc = ch->ch_ki2c;
+
+	/*
+	 * If we're not using the separate nodes scheme, we need
+	 * to filter out devices from the other channel.  We detect
+	 * this by comparing the bus phandle to the controller phandle,
+	 * and if they match, we are NOT using the separate nodes
+	 * scheme.
+	 */
+	bus_phandle = devhandle_to_of(device_handle(dev));
+	bool filter_by_channel =
+	    bus_phandle == devhandle_to_of(device_handle(sc->sc_dev));
+
+	for (node = OF_child(bus_phandle); node != 0; node = OF_peer(node)) {
+		if (OF_getprop(node, "name", name, sizeof(name)) <= 0) {
+			aprint_error_dev(sc->sc_dev,
+			    "unable to get name property for phandle %d\n",
+			    node);
+			continue;
+		} 
+		if (of_getprop_uint32(node, "reg", &addr) == -1 &&
+		    of_getprop_uint32(node, "i2c-address", &addr) == -1) {
+			aprint_error_dev(sc->sc_dev,
+			    "unable to get i2c address for phandle %d ('%s')\n",
+			    node, name);
+			continue;
+		}
+		if (filter_by_channel && ((addr >> 8) & 1) != ch->ch_channel) {
+			continue;
+		}
+		addr = (addr & 0xff) >> 1;
+		if (!ki2c_i2c_enumerate_device(sc, dev, node, name, addr,
+					       args)) {
+			break;
+		}
+	}
+
+	return 0;
+}
+
+static device_call_t
+ki2c_devhandle_lookup_device_call(devhandle_t handle, const char *name,
+    devhandle_t *call_handlep)
+{
+	if (strcmp(name, "i2c-enumerate-devices") == 0) {
+		return ki2c_i2c_enumerate_devices;
+	}
+
+	/* Defer everything else to the "super". */
+	return NULL;
+}
+
+static inline uint8_t
+ki2c_readreg(struct ki2c_softc *sc, int reg)
+{
+
+	return bus_space_read_1(sc->sc_tag, sc->sc_bh, sc->sc_regstep * reg);
+}
+
+static inline void
+ki2c_writereg(struct ki2c_softc *sc, int reg, uint8_t val)
+{
+	
+	bus_space_write_1(sc->sc_tag, sc->sc_bh, reg * sc->sc_regstep, val);
+	delay(10);
+}
+
+#if 0
+static u_int
+ki2c_getmode(struct ki2c_softc *sc)
+{
+	return ki2c_readreg(sc, MODE) & I2C_MODE;
+}
+#endif
+
+static void
+ki2c_setmode(struct ki2c_softc *sc, u_int mode)
+{
+	ki2c_writereg(sc, MODE, mode);
+}
+
+#if 0
+static u_int
+ki2c_getspeed(struct ki2c_softc *sc)
+{
+	return ki2c_readreg(sc, MODE) & I2C_SPEED;
+}
+#endif
+
+static void
+ki2c_setspeed(struct ki2c_softc *sc, u_int speed)
+{
+	u_int x;
+
+	KASSERT((speed & ~I2C_SPEED) == 0);
+	x = ki2c_readreg(sc, MODE);
+	x &= ~I2C_SPEED;
+	x |= speed;
+	ki2c_writereg(sc, MODE, x);
+}
+
+static int
 ki2c_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct confargs *ca = aux;
@@ -77,21 +263,17 @@ ki2c_match(device_t parent, cfdata_t match, void *aux)
 	return 0;
 }
 
-void
+static void
 ki2c_attach(device_t parent, device_t self, void *aux)
 {
 	struct ki2c_softc *sc = device_private(self);
 	struct confargs *ca = aux;
+	struct ki2c_channel *ch;
 	int node = ca->ca_node;
-	uint32_t addr, channel, reg;
-	int rate, child, /*namelen,*/ i2cbus[2] = {0, 0};
+	uint32_t channel, addr;
+	int i, rate, child;
 	struct i2cbus_attach_args iba;
-	prop_dictionary_t dict = device_properties(self);
-	prop_array_t cfg;
-	int devs, devc;
-	char compat[256], num[8], descr[32];
-	prop_dictionary_t dev;
-	prop_data_t data;
+	devhandle_t devhandle;
 	char name[32];
 
 	sc->sc_dev = self;
@@ -126,135 +308,120 @@ ki2c_attach(device_t parent, device_t self, void *aux)
 	ki2c_setspeed(sc, I2C_100kHz);		/* XXX rate */
 	
 	ki2c_writereg(sc, IER,I2C_INT_DATA|I2C_INT_ADDR|I2C_INT_STOP);
-	
-	cfg = prop_array_create();
-	prop_dictionary_set(dict, "i2c-child-devices", cfg);
-	prop_object_release(cfg);
 
-	/* 
-	 * newer OF puts I2C devices under 'i2c-bus' instead of attaching them 
-	 * directly to the ki2c node so we just check if we have a child named
-	 * 'i2c-bus' and if so we attach its children, not ours
+	/*
+	 * Two physical I2C busses share a single controller.  It's not
+	 * quite a mux, which is why we don't attach it that way.
 	 *
-	 * XXX
-	 * should probably check for multiple i2c-bus children
+	 * The locking order is:
+	 *
+	 *	iic bus mutex -> ctrl_lock
+	 *
+	 * ctrl_lock is taken in ki2c_i2c_acquire_bus.
 	 */
+	mutex_init(&sc->sc_ctrl_lock, MUTEX_DEFAULT, IPL_NONE);
 
-	int found_busnode = 0;
-	channel = 0;
-	child = OF_child(node);
-	while (child != 0) {
+	/* Set up the channel structures. */
+	for (i = 0; i < KI2C_MAX_I2C_CHANNELS; i++) {
+		ch = &sc->sc_channels[i];
+
+		iic_tag_init(&ch->ch_i2c);
+		ch->ch_i2c.ic_channel = ch->ch_channel = i;
+		ch->ch_i2c.ic_cookie = ch;
+		ch->ch_i2c.ic_acquire_bus = ki2c_i2c_acquire_bus;
+		ch->ch_i2c.ic_release_bus = ki2c_i2c_release_bus;
+		ch->ch_i2c.ic_exec = ki2c_i2c_exec;
+
+		ch->ch_ki2c = sc;
+	}
+
+	/*
+	 * Different systems have different I2C device tree topologies.
+	 *
+	 * Some systems use a scheme like this:
+	 *
+	 *   /u3@0,f8000000/i2c@f8001000/temp-monitor@98
+	 *   /u3@0,f8000000/i2c@f8001000/fan@15e
+	 *
+	 * Here, we see the channel encoded in bit #8 of the address.
+	 *
+	 * Other systems use a scheme like this:
+	 *
+	 *   /ht@0,f2000000/pci@4000,0,0/mac-io@7/i2c@18000/i2c-bus@0
+	 *   /ht@0,f2000000/pci@4000,0,0/mac-io@7/i2c@18000/i2c-bus@0/codec@8c
+	 *
+	 *   /u4@0,f8000000/i2c@f8001000/i2c-bus@1
+	 *   /u4@0,f8000000/i2c@f8001000/i2c-bus@1/temp-monitor@94
+	 *
+	 * Here, a separate device tree node represents the channel.
+	 * Note that in BOTH cases, the I2C address of the devices are
+	 * shifted left by 1 (as it would be on the wire to leave room
+	 * for the read/write bit).
+	 *
+	 * So, what we're going to do here is look for i2c-bus nodes.  If
+	 * we find them, we remember those phandles, and will use them for
+	 * device enumeration.  If we don't, then we will use the controller
+	 * phandle for device enumeration and filter based on the channel
+	 * bit in the "reg" property.
+	 */
+	int i2c_bus_phandles[KI2C_MAX_I2C_CHANNELS] = { 0 };
+	bool separate_nodes_scheme = false;
+	for (child = OF_child(node); child != 0; child = OF_peer(child)) {
 		OF_getprop(child, "name", name, sizeof(name));
 		if (strcmp(name, "i2c-bus") == 0) {
-			OF_getprop(child, "reg", &channel, sizeof(channel));
-			i2cbus[channel] = child;
-			DPRINTF("found channel %x\n", channel);
-			found_busnode = 1;
-		}
-		child = OF_peer(child);
-	}
-	if (found_busnode == 0) 
-		i2cbus[0] = node;
-
-	for (channel = 0; channel < 2; channel++) {
-		devs = OF_child(i2cbus[channel]);
-		while (devs != 0) {
-			if (OF_getprop(devs, "name", name, 32) <= 0)
-				goto skip;
-			if (OF_getprop(devs, "compatible", compat, 256) <= 0) {
-				/* some i2c device nodes don't have 'compatible' */
-				memset(compat, 0, 256);
-				strncpy(compat, name, 256);
-			} 
-			if (OF_getprop(devs, "reg", &addr, 4) <= 0)
-				if (OF_getprop(devs, "i2c-address", &addr, 4) <= 0)
-					goto skip;
-			addr |= channel << 8;
-			addr = addr >> 1;
-			DPRINTF("-> %s@%x\n", name, addr);
-			dev = prop_dictionary_create();
-			prop_dictionary_set_string(dev, "name", name);
-			data = prop_data_create_copy(compat, strlen(compat)+1);
-			prop_dictionary_set(dev, "compatible", data);
-			prop_object_release(data);
-			prop_dictionary_set_uint32(dev, "addr", addr);
-			prop_dictionary_set_uint64(dev, "cookie", devs);
-			/* look for location info for sensors */
-			devc = OF_child(devs);
-			while (devc != 0) {
-				if (OF_getprop(devc, "reg", &reg, 4) < 4) goto nope;
-				if (OF_getprop(devc, "location", descr, 32) <= 0)
-					goto nope;
-				DPRINTF("found '%s' at %02x\n", descr, reg);
-				snprintf(num, 7, "s%02x", reg);
-				prop_dictionary_set_string(dev, num, descr);
-			nope:
-				devc = OF_peer(devc);
+			separate_nodes_scheme = true;
+			if (of_getprop_uint32(child, "reg", &channel) == -1) {
+				continue;
 			}
-			prop_array_add(cfg, dev);
-			prop_object_release(dev);
-		skip:
-			devs = OF_peer(devs);
+			if (channel >= KI2C_MAX_I2C_CHANNELS) {
+				continue;
+			}
+			i2c_bus_phandles[channel] = child;
 		}
 	}
 
-	/* fill in the i2c tag */
-	iic_tag_init(&sc->sc_i2c);
-	sc->sc_i2c.ic_cookie = sc;
-	sc->sc_i2c.ic_exec = ki2c_i2c_exec;
+	/*
+	 * Set up our handle implementation (we provide our own
+	 * i2c enumeration call).
+	 */
+	devhandle = device_handle(self);
+	devhandle_impl_inherit(&sc->sc_devhandle_impl, devhandle.impl);
+	sc->sc_devhandle_impl.lookup_device_call =
+	    ki2c_devhandle_lookup_device_call;
 
-	memset(&iba, 0, sizeof(iba));
-	iba.iba_tag = &sc->sc_i2c;
-	config_found(sc->sc_dev, &iba, iicbus_print, CFARGS_NONE);
-		
+	for (i = 0; i < KI2C_MAX_I2C_CHANNELS; i++) {
+		int locs[I2CBUSCF_NLOCS];
+
+		ch = &sc->sc_channels[i];
+
+		if (separate_nodes_scheme) {
+			if (i2c_bus_phandles[i] == 0) {
+				/*
+				 * This wasn't represented (either at all
+				 * or not correctly) in the device tree,
+				 * so skip attaching the "iic" instance.
+				 */
+				continue;
+			}
+			devhandle = devhandle_from_of(i2c_bus_phandles[i]);
+		} else {
+			devhandle = device_handle(self);
+		}
+		devhandle.impl = &sc->sc_devhandle_impl;
+
+		locs[I2CBUSCF_BUS] = ch->ch_i2c.ic_channel;
+
+		memset(&iba, 0, sizeof(iba));
+		iba.iba_tag = &ch->ch_i2c;
+		config_found(sc->sc_dev, &iba, iicbus_print_multi,
+		    CFARGS(.submatch = config_stdsubmatch,
+			   .locators = locs,
+			   .devhandle = devhandle));
+	}
+
 }
 
-uint8_t
-ki2c_readreg(struct ki2c_softc *sc, int reg)
-{
-
-	return bus_space_read_1(sc->sc_tag, sc->sc_bh, sc->sc_regstep * reg);
-}
-
-void
-ki2c_writereg(struct ki2c_softc *sc, int reg, uint8_t val)
-{
-	
-	bus_space_write_1(sc->sc_tag, sc->sc_bh, reg * sc->sc_regstep, val);
-	delay(10);
-}
-
-u_int
-ki2c_getmode(struct ki2c_softc *sc)
-{
-	return ki2c_readreg(sc, MODE) & I2C_MODE;
-}
-
-void
-ki2c_setmode(struct ki2c_softc *sc, u_int mode)
-{
-	ki2c_writereg(sc, MODE, mode);
-}
-
-u_int
-ki2c_getspeed(struct ki2c_softc *sc)
-{
-	return ki2c_readreg(sc, MODE) & I2C_SPEED;
-}
-
-void
-ki2c_setspeed(struct ki2c_softc *sc, u_int speed)
-{
-	u_int x;
-
-	KASSERT((speed & ~I2C_SPEED) == 0);
-	x = ki2c_readreg(sc, MODE);
-	x &= ~I2C_SPEED;
-	x |= speed;
-	ki2c_writereg(sc, MODE, x);
-}
-
-int
+static int
 ki2c_intr(struct ki2c_softc *sc)
 {
 	u_int isr, x;
@@ -320,7 +487,7 @@ out:
 	return 1;
 }
 
-int
+static int
 ki2c_poll(struct ki2c_softc *sc, int timo)
 {
 	while (sc->sc_flags & I2C_BUSY) {
@@ -329,18 +496,18 @@ ki2c_poll(struct ki2c_softc *sc, int timo)
 		timo -= 100;
 		if (timo < 0) {
 			DPRINTF("i2c_poll: timeout\n");
-			return -1;
+			return ETIMEDOUT;
 		}
 		delay(100);
 	}
 	return 0;
 }
 
-int
+static int
 ki2c_start(struct ki2c_softc *sc, int addr, int subaddr, void *data, int len)
 {
 	int rw = (sc->sc_flags & I2C_READING) ? 1 : 0;
-	int timo, x;
+	int error, timo, x;
 
 	KASSERT((addr & 1) == 0);
 
@@ -360,16 +527,17 @@ ki2c_start(struct ki2c_softc *sc, int addr, int subaddr, void *data, int len)
 	x = ki2c_readreg(sc, CONTROL) | I2C_CT_ADDR;
 	ki2c_writereg(sc, CONTROL, x);
 
-	if (ki2c_poll(sc, timo))
-		return -1;
+	if ((error = ki2c_poll(sc, timo)) != 0)
+		return error;
+
 	if (sc->sc_flags & I2C_ERROR) {
 		DPRINTF("I2C_ERROR\n");
-		return -1;
+		return EIO;
 	}
 	return 0;
 }
 
-int
+static int
 ki2c_read(struct ki2c_softc *sc, int addr, int subaddr, void *data, int len)
 {
 	sc->sc_flags = I2C_READING;
@@ -377,7 +545,7 @@ ki2c_read(struct ki2c_softc *sc, int addr, int subaddr, void *data, int len)
 	return ki2c_start(sc, addr, subaddr, data, len);
 }
 
-int
+static int
 ki2c_write(struct ki2c_softc *sc, int addr, int subaddr, void *data, int len)
 {
 	sc->sc_flags = 0;
@@ -385,12 +553,38 @@ ki2c_write(struct ki2c_softc *sc, int addr, int subaddr, void *data, int len)
 	return ki2c_start(sc, addr, subaddr, data, len);
 }
 
+static int
+ki2c_i2c_acquire_bus(void * const v, int const flags)
+{
+	struct ki2c_channel *ch = v;
+	struct ki2c_softc *sc = ch->ch_ki2c;
+
+	if (flags & I2C_F_POLL) {
+		if (! mutex_tryenter(&sc->sc_ctrl_lock)) {
+			return EBUSY;
+		}
+	} else {
+		mutex_enter(&sc->sc_ctrl_lock);
+	}
+	return 0;
+}
+
+static void
+ki2c_i2c_release_bus(void * const v, int const flags)
+{
+	struct ki2c_channel *ch = v;
+	struct ki2c_softc *sc = ch->ch_ki2c;
+
+	mutex_exit(&sc->sc_ctrl_lock);
+}
+
 int
 ki2c_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *vcmd,
     size_t cmdlen, void *vbuf, size_t buflen, int flags)
 {
-	struct ki2c_softc *sc = cookie;
-	int i;
+	struct ki2c_channel *ch = cookie;
+	struct ki2c_softc *sc = ch->ch_ki2c;
+	int i, error;
 	size_t w_len;
 	uint8_t *wp;
 	uint8_t wrbuf[I2C_EXEC_MAX_CMDLEN + I2C_EXEC_MAX_CMDLEN];
@@ -402,11 +596,13 @@ ki2c_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *vcmd,
 	 * return an error.
 	 */
 	if (cmdlen == 0 && buflen == 0)
-		return -1;
+		return ENOTSUP;
 
-	channel = (addr & 0xf80) ? 0x10 : 0x00;
-	addr &= 0x7f;
-	
+	/* Don't support 10-bit addressing. */
+	if (addr > 0x7f)
+		return ENOTSUP;
+
+	channel = ch->ch_channel == 1 ? 0x10 : 0x00;
 
 	/* we handle the subaddress stuff ourselves */
 	ki2c_setmode(sc, channel | I2C_STDMODE);	
@@ -440,13 +636,18 @@ ki2c_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *vcmd,
 		}
 	}
 
-	if (w_len > 0)
-		if (ki2c_write(sc, addr << 1, 0, wp, w_len) !=0 )
-			return -1;
+	if (w_len > 0) {
+		error = ki2c_write(sc, addr << 1, 0, wp, w_len);
+		if (error) {
+			return error;
+		}
+	}
 
 	if (I2C_OP_READ_P(op)) {
-		if (ki2c_read(sc, addr << 1, 0, vbuf, buflen) !=0 )
-			return -1;
+		error = ki2c_read(sc, addr << 1, 0, vbuf, buflen);
+		if (error) {
+			return error;
+		}
 	}
 	return 0;
 }

@@ -1,3 +1,0 @@
-# Don't build FPBIT and DPBIT; we'll be using the SDE soft-float library.
-FPBIT =
-DPBIT =
