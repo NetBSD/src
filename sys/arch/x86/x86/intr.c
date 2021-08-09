@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.154 2021/02/19 05:34:37 knakahara Exp $	*/
+/*	$NetBSD: intr.c,v 1.155 2021/08/09 21:20:50 andvar Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.154 2021/02/19 05:34:37 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.155 2021/08/09 21:20:50 andvar Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -317,7 +317,7 @@ intr_create_intrid(int legacy_irq, struct pic *pic, int pin, char *buf,
 	}
 
 	/*
-	 * If the device is pci, "legacy_irq" is alway -1. Least 8 bit of "ih"
+	 * If the device is pci, "legacy_irq" is always -1. Least 8 bit of "ih"
 	 * is only used in intr_string() to show the irq number.
 	 * If the device is "legacy"(such as floppy), it should not use
 	 * intr_string().
