@@ -1,4 +1,4 @@
-/*	$NetBSD: athrate-sample.c,v 1.20 2019/11/10 21:16:35 chs Exp $ */
+/*	$NetBSD: athrate-sample.c,v 1.21 2021/08/09 21:20:50 andvar Exp $ */
 
 /*-
  * Copyright (c) 2005 John Bicket
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/ath_rate/sample/sample.c,v 1.9 2005/07/22 16:50:17 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: athrate-sample.c,v 1.20 2019/11/10 21:16:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athrate-sample.c,v 1.21 2021/08/09 21:20:50 andvar Exp $");
 #endif
 
 
@@ -372,7 +372,7 @@ ath_rate_setupxtxdesc(struct ath_softc *sc, struct ath_node *an,
 	int size_bin = 0;
 	int ndx = 0;
 
-	size_bin = size_to_bin(frame_size);	// TODO: it's correct that frame_size alway 0 ?
+	size_bin = size_to_bin(frame_size);	// TODO: it's correct that frame_size always 0 ?
 	ndx = sn->current_rate[size_bin]; /* retry at the current bit-rate */
 	
 	if (!sn->stats[size_bin][ndx].packets_acked) {
