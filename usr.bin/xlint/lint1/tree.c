@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.330 2021/08/03 21:09:26 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.331 2021/08/09 20:07:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.330 2021/08/03 21:09:26 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.331 2021/08/09 20:07:23 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1346,6 +1346,63 @@ check_pointer_comparison(op_t op, const tnode_t *ln, const tnode_t *rn)
 	}
 }
 
+static bool
+is_direct_function_call(const tnode_t *tn, const char *name)
+{
+	return tn->tn_op == CALL &&
+	       tn->tn_left->tn_op == ADDR &&
+	       tn->tn_left->tn_left->tn_op == NAME &&
+	       strcmp(tn->tn_left->tn_left->tn_sym->s_name, name) == 0;
+}
+
+static bool
+is_const_char_pointer(const tnode_t *tn)
+{
+	const type_t *tp;
+
+	/*
+	 * For traditional reasons, C99 6.4.5p5 defines that string literals
+	 * have type 'char[]'.  They are often implicitly converted to
+	 * 'char *', for example when they are passed as function arguments.
+	 *
+	 * C99 6.4.5p6 further defines that modifying a string that is
+	 * constructed from a string literal invokes undefined behavior.
+	 *
+	 * Out of these reasons, string literals are treated as 'effectively
+	 * const' here.
+	 */
+	if (tn->tn_op == CVT &&
+	    tn->tn_left->tn_op == ADDR &&
+	    tn->tn_left->tn_left->tn_op == STRING)
+		return true;
+
+	tp = before_conversion(tn)->tn_type;
+	return tp->t_tspec == PTR &&
+	       tp->t_subt->t_tspec == CHAR &&
+	       tp->t_subt->t_const;
+}
+
+static bool
+is_strchr_arg_const(const tnode_t *tn)
+{
+	return tn->tn_right->tn_op == PUSH &&
+	       tn->tn_right->tn_right->tn_op == PUSH &&
+	       tn->tn_right->tn_right->tn_right == NULL &&
+	       is_const_char_pointer(tn->tn_right->tn_right->tn_left);
+}
+
+static void
+check_unconst_strchr(const type_t *lstp,
+		     const tnode_t *rn, const type_t *rstp)
+{
+	if (lstp->t_tspec == CHAR && !lstp->t_const &&
+	    is_direct_function_call(rn, "strchr") &&
+	    is_strchr_arg_const(rn)) {
+		/* call to '%s' effectively discards 'const' from argument */
+		warning(346, "strchr");
+	}
+}
+
 /*
  * Checks type compatibility for ASSIGN, INIT, FARG and RETURN
  * and prints warnings/errors if necessary.
@@ -1429,6 +1486,10 @@ check_assign_types_compatible(op_t op, int arg,
 				break;
 			}
 		}
+
+		if (!tflag)
+			check_unconst_strchr(lstp, rn, rstp);
+
 		return true;
 	}
 
