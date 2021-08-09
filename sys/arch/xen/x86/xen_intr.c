@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_intr.c,v 1.28 2020/08/01 12:39:40 jdolecek Exp $	*/
+/*	$NetBSD: xen_intr.c,v 1.29 2021/08/09 21:20:50 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.28 2020/08/01 12:39:40 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.29 2021/08/09 21:20:50 andvar Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_pci.h"
@@ -465,7 +465,7 @@ xen_intr_create_intrid(int legacy_irq, struct pic *pic, int pin, char *buf, size
 	}
 
 	/*
-	 * If the device is pci, "legacy_irq" is alway -1. Least 8 bit of "ih"
+	 * If the device is pci, "legacy_irq" is always -1. Least 8 bit of "ih"
 	 * is only used in intr_string() to show the irq number.
 	 * If the device is "legacy"(such as floppy), it should not use
 	 * intr_string().
