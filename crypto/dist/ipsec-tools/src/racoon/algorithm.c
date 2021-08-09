@@ -1,4 +1,4 @@
-/*	$NetBSD: algorithm.c,v 1.9 2012/11/29 15:31:24 vanhu Exp $	*/
+/*	$NetBSD: algorithm.c,v 1.10 2021/08/09 19:57:57 andvar Exp $	*/
 
 /* Id: algorithm.c,v 1.15 2006/05/23 20:23:09 manubsd Exp */
 
@@ -229,7 +229,7 @@ static struct misc_algorithm ipsec_compdef[] = {
 };
 
 /*
- * In case of asymetric modes (hybrid xauth), what's racoon mode of
+ * In case of asymmetric modes (hybrid xauth), what's racoon mode of
  * operations ; it seems that the proposal should always use the
  * initiator half (unless a server initiates a connection, which is
  * not handled, and probably not useful).

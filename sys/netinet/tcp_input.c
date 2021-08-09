@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.430 2021/08/06 07:55:13 andvar Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.431 2021/08/09 19:57:58 andvar Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.430 2021/08/06 07:55:13 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.431 2021/08/09 19:57:58 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -4539,7 +4539,7 @@ syn_cache_respond(struct syn_cache *sc)
 
 	/*
 	 * Send ECN SYN-ACK setup packet.
-	 * Routes can be assymetric, so, even if we receive a packet
+	 * Routes can be asymmetric, so, even if we receive a packet
 	 * with ECE and CWR set, we must not assume no one will block
 	 * the ECE packet we are about to send.
 	 */
