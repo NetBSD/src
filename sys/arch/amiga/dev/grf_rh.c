@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rh.c,v 1.59 2021/08/07 16:18:41 thorpej Exp $ */
+/*	$NetBSD: grf_rh.c,v 1.60 2021/08/09 21:13:05 andvar Exp $ */
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -34,7 +34,7 @@
 #include "opt_retina.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_rh.c,v 1.59 2021/08/07 16:18:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_rh.c,v 1.60 2021/08/09 21:13:05 andvar Exp $");
 
 #include "grfrh.h"
 #include "ite.h"
@@ -1221,7 +1221,7 @@ unsigned char RZ3StdPalette[16*3] = {
  * Make sure your maximum width (MW) and height (MH) are even multiples of
  * the fonts' width and height.
  *
- * You may use definitons created by the old DefineMonitor, but you'll get
+ * You may use definitions created by the old DefineMonitor, but you'll get
  * better results with the new DefineMonitor supplied along with the Retin Z3.
 */
 

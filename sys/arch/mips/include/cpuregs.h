@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.111 2021/05/29 12:35:27 simonb Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.112 2021/08/09 21:13:05 andvar Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -273,7 +273,7 @@
 #define	MIPS_SR_INT_ENA_PREV	MIPS1_SR_INT_ENA_PREV
 
 /*
- * R4000 status register bit definitons,
+ * R4000 status register bit definitions,
  * where different from r2000/r3000.
  */
 #define	MIPS3_SR_XX		0x80000000
