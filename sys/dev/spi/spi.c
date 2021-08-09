@@ -1,4 +1,4 @@
-/* $NetBSD: spi.c,v 1.19 2021/08/07 16:19:16 thorpej Exp $ */
+/* $NetBSD: spi.c,v 1.19.2.1 2021/08/09 00:30:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.19 2021/08/07 16:19:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.19.2.1 2021/08/09 00:30:09 thorpej Exp $");
 
 #include "locators.h"
 
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.19 2021/08/07 16:19:16 thorpej Exp $");
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/conf.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>
 #include <sys/errno.h>
@@ -62,12 +62,14 @@ __KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.19 2021/08/07 16:19:16 thorpej Exp $");
 #include "locators.h"
 
 struct spi_softc {
+	device_t		sc_dev;
 	struct spi_controller	sc_controller;
 	int			sc_mode;
 	int			sc_speed;
 	int			sc_slave;
 	int			sc_nslaves;
 	struct spi_handle	*sc_slaves;
+	kmutex_t		sc_slave_state_lock;
 	kmutex_t		sc_lock;
 	kcondvar_t		sc_cv;
 	kmutex_t		sc_dev_lock;
@@ -98,13 +100,14 @@ const struct cdevsw spi_cdevsw = {
  * SPI slave device.  We have one of these per slave.
  */
 struct spi_handle {
-	struct spi_softc	*sh_sc;
-	struct spi_controller	*sh_controller;
-	int			sh_slave;
-	int			sh_mode;
-	int			sh_speed;
-	int			sh_flags;
-#define SPIH_ATTACHED		1
+	struct spi_softc	*sh_sc;		/* static */
+	struct spi_controller	*sh_controller;	/* static */
+	int			sh_slave;	/* static */
+	int			sh_mode;	/* locked by owning child */
+	int			sh_speed;	/* locked by owning child */
+	int			sh_flags;	/* ^^ slave_state_lock ^^ */
+#define SPIH_ATTACHED		__BIT(0)
+#define SPIH_DIRECT		__BIT(1)
 };
 
 #define SPI_MAXDATA 4096
@@ -132,14 +135,93 @@ spi_match(device_t parent, cfdata_t cf, void *aux)
 }
 
 static int
+spi_print_direct(void *aux, const char *pnp)
+{
+	struct spi_attach_args *sa = aux;
+
+	if (pnp != NULL) {
+		aprint_normal("%s%s%s%s at %s slave %d",
+		    sa->sa_name ? sa->sa_name : "(unknown)",
+		    sa->sa_clist ? " (" : "",
+		    sa->sa_clist ? sa->sa_clist : "",
+		    sa->sa_clist ? ")" : "",
+		    pnp, sa->sa_handle->sh_slave);
+	} else {
+		aprint_normal(" slave %d", sa->sa_handle->sh_slave);
+	}
+
+	return UNCONF;
+}
+
+static int
 spi_print(void *aux, const char *pnp)
 {
 	struct spi_attach_args *sa = aux;
 
-	if (sa->sa_handle->sh_slave != -1)
-		aprint_normal(" slave %d", sa->sa_handle->sh_slave);
+	aprint_normal(" slave %d", sa->sa_handle->sh_slave);
 
-	return (UNCONF);
+	return UNCONF;
+}
+
+/*
+ * Direct and indrect for SPI are pretty similar, so we can collapse
+ * them into a single function.
+ */
+static void
+spi_attach_child(struct spi_softc *sc, struct spi_attach_args *sa,
+    int chip_select, cfdata_t cf)
+{
+	struct spi_handle *sh;
+	device_t newdev = NULL;
+	bool is_direct = cf == NULL;
+	const int skip_flags = is_direct ? SPIH_ATTACHED
+					 : (SPIH_ATTACHED | SPIH_DIRECT);
+	const int claim_flags = skip_flags ^ SPIH_DIRECT;
+	int locs[SPICF_NLOCS] = { 0 };
+
+	if (chip_select < 0 ||
+	    chip_select >= sc->sc_controller.sct_nslaves) {
+		return;
+	}
+
+	sh = &sc->sc_slaves[chip_select];
+
+	mutex_enter(&sc->sc_slave_state_lock);
+	if (ISSET(sh->sh_flags, skip_flags)) {
+		mutex_exit(&sc->sc_slave_state_lock);
+		return;
+	}
+
+	/* Keep others off of this chip select. */
+	SET(sh->sh_flags, claim_flags);
+	mutex_exit(&sc->sc_slave_state_lock);
+
+	locs[SPICF_SLAVE] = chip_select;
+	sa->sa_handle = sh;
+
+	if (is_direct) {
+		newdev = config_found(sc->sc_dev, sa, spi_print_direct,
+		    CFARGS(/* .submatch = config_stdsubmatch, XXX */
+			   .locators = locs,
+			   .devhandle = sa->sa_devhandle));
+	} else {
+		if (config_probe(sc->sc_dev, cf, &sa)) {
+			newdev = config_attach(sc->sc_dev, cf, &sa, spi_print,
+			    CFARGS(.locators = locs));
+		}
+	}
+
+	if (newdev == NULL) {
+		/*
+		 * Clear our claim on this chip select (yes, just
+		 * the ATTACHED flag; we want to keep indirects off
+		 * of chip selects for which there is a device tree
+		 * node).
+		 */
+		mutex_enter(&sc->sc_slave_state_lock);
+		CLR(sh->sh_flags, SPIH_ATTACHED);
+		mutex_exit(&sc->sc_slave_state_lock);
+	}
 }
 
 static int
@@ -147,136 +229,47 @@ spi_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct spi_softc *sc = device_private(parent);
 	struct spi_attach_args sa;
-	int addr;
 
-	addr = cf->cf_loc[SPICF_SLAVE];
-	if ((addr < 0) || (addr >= sc->sc_controller.sct_nslaves)) {
-		return -1;
+	if (cf->cf_loc[SPICF_SLAVE] == SPICF_SLAVE_DEFAULT) {
+		/* No wildcards for indirect on SPI. */
+		return 0;
 	}
 
-	memset(&sa, 0, sizeof sa);
-	sa.sa_handle = &sc->sc_slaves[addr];
-	if (ISSET(sa.sa_handle->sh_flags, SPIH_ATTACHED))
-		return -1;
-
-	if (config_probe(parent, cf, &sa)) {
-		SET(sa.sa_handle->sh_flags, SPIH_ATTACHED);
-		config_attach(parent, cf, &sa, spi_print, CFARGS_NONE);
-	}
+	memset(&sa, 0, sizeof(sa));
+	spi_attach_child(sc, &sa, cf->cf_loc[SPICF_SLAVE], cf);
 
 	return 0;
 }
 
-/*
- * XXX this is the same as i2c_fill_compat. It could be refactored into a
- * common fill_compat function with pointers to compat & ncompat instead
- * of attach_args as the first parameter.
- */
-static void
-spi_fill_compat(struct spi_attach_args *sa, const char *compat, size_t len,
-	char **buffer)
+static bool
+spi_enumerate_devices_callback(device_t self,
+    struct spi_enumerate_devices_args *args)
 {
-	int count, i;
-	const char *c, *start, **ptr;
+	struct spi_softc *sc = device_private(self);
 
-	*buffer = NULL;
-	for (i = count = 0, c = compat; i < len; i++, c++)
-		if (*c == 0)
-			count++;
-	count += 2;
-	ptr = malloc(sizeof(char*)*count, M_TEMP, M_WAITOK);
-	if (!ptr)
-		return;
+	spi_attach_child(sc, args->sa, args->chip_select, NULL);
 
-	for (i = count = 0, start = c = compat; i < len; i++, c++) {
-		if (*c == 0) {
-			ptr[count++] = start;
-			start = c + 1;
-		}
-	}
-	if (start < compat + len) {
-		/* last string not 0 terminated */
-		size_t l = c - start;
-		*buffer = malloc(l + 1, M_TEMP, M_WAITOK);
-		memcpy(*buffer, start, l);
-		(*buffer)[l] = 0;
-		ptr[count++] = *buffer;
-	}
-	ptr[count] = NULL;
-
-	sa->sa_compat = ptr;
-	sa->sa_ncompat = count;
-}
-
-static void
-spi_direct_attach_child_devices(device_t parent, struct spi_softc *sc,
-    prop_array_t child_devices)
-{
-	unsigned int count;
-	prop_dictionary_t child;
-	prop_data_t cdata;
-	uint32_t slave;
-	uint64_t cookie;
-	struct spi_attach_args sa;
-	int loc[SPICF_NLOCS];
-	char *buf;
-	int i;
-
-	memset(loc, 0, sizeof loc);
-	count = prop_array_count(child_devices);
-	for (i = 0; i < count; i++) {
-		child = prop_array_get(child_devices, i);
-		if (!child)
-			continue;
-		if (!prop_dictionary_get_uint32(child, "slave", &slave))
-			continue;
-		if(slave >= sc->sc_controller.sct_nslaves)
-			continue;
-		if (!prop_dictionary_get_uint64(child, "cookie", &cookie))
-			continue;
-		if (!(cdata = prop_dictionary_get(child, "compatible")))
-			continue;
-		loc[SPICF_SLAVE] = slave;
-
-		memset(&sa, 0, sizeof sa);
-		sa.sa_handle = &sc->sc_slaves[i];
-		sa.sa_prop = child;
-		sa.sa_cookie = cookie;
-		if (ISSET(sa.sa_handle->sh_flags, SPIH_ATTACHED))
-			continue;
-		SET(sa.sa_handle->sh_flags, SPIH_ATTACHED);
-
-		buf = NULL;
-		spi_fill_compat(&sa,
-				prop_data_value(cdata),
-				prop_data_size(cdata), &buf);
-		config_found(parent, &sa, spi_print,
-		    CFARGS(.locators = loc));
-
-		if (sa.sa_compat)
-			free(sa.sa_compat, M_TEMP);
-		if (buf)
-			free(buf, M_TEMP);
-	}
+	return true;				/* keep enumerating */
 }
 
 int
 spi_compatible_match(const struct spi_attach_args *sa, const cfdata_t cf,
 		     const struct device_compatible_entry *compats)
 {
-	if (sa->sa_ncompat > 0)
-		return device_compatible_match(sa->sa_compat, sa->sa_ncompat,
-					       compats);
+	if (sa->sa_clist != NULL) {
+		return device_compatible_match_strlist(sa->sa_clist,
+		    sa->sa_clist_size, compats);
+	}
 
+	/*
+	 * In this case, we're using indirect configuration, but SPI
+	 * has no real addressing system, and we've filtered out
+	 * wildcarded chip selects in spi_search(), so we have no
+	 * choice but to trust the user-specified config.
+	 */
 	return 1;
 }
 
-/*
- * API for device drivers.
- *
- * We provide wrapper routines to decouple the ABI for the SPI
- * device drivers from the ABI for the SPI bus drivers.
- */
 static void
 spi_attach(device_t parent, device_t self, void *aux)
 {
@@ -284,18 +277,22 @@ spi_attach(device_t parent, device_t self, void *aux)
 	struct spibus_attach_args *sba = aux;
 	int i;
 
+	sc->sc_dev = self;
+
 	aprint_naive(": SPI bus\n");
 	aprint_normal(": SPI bus\n");
 
 	mutex_init(&sc->sc_dev_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_VM);
+	mutex_init(&sc->sc_slave_state_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&sc->sc_cv, "spictl");
 
 	sc->sc_controller = *sba->sba_controller;
 	sc->sc_nslaves = sba->sba_controller->sct_nslaves;
+
 	/* allocate slave structures */
-	sc->sc_slaves = malloc(sizeof (struct spi_handle) * sc->sc_nslaves,
-	    M_DEVBUF, M_WAITOK | M_ZERO);
+	sc->sc_slaves = kmem_zalloc(sizeof(*sc->sc_slaves) * sc->sc_nslaves,
+	    KM_SLEEP);
 
 	sc->sc_speed = 0;
 	sc->sc_mode = -1;
@@ -310,14 +307,24 @@ spi_attach(device_t parent, device_t self, void *aux)
 		sc->sc_slaves[i].sh_controller = &sc->sc_controller;
 	}
 
-	/* First attach devices known to be present via fdt */
-	if (sba->sba_child_devices) {
-		spi_direct_attach_child_devices(self, sc, sba->sba_child_devices);
-	}
+	/*
+	 * Attempt to enumerate the devices on the bus using the
+	 * platform device tree.
+	 */
+	struct spi_attach_args sa = { 0 };
+	struct spi_enumerate_devices_args enumargs = {
+		.sa = &sa,
+		.callback = spi_enumerate_devices_callback,
+	};
+	device_call(self, "spi-enumerate-devices", &enumargs);
+
 	/* Then do any other devices the user may have manually wired */
 	config_search(self, NULL,
 	    CFARGS(.search = spi_search));
 }
+
+CFATTACH_DECL_NEW(spi, sizeof(struct spi_softc),
+    spi_match, spi_attach, NULL, NULL);
 
 static int
 spi_open(dev_t dev, int flag, int fmt, lwp_t *l)
@@ -377,11 +384,11 @@ spi_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 		sbuf = rbuf = NULL;
 		error = 0;
 		if (sit->sit_send && sit->sit_sendlen <= SPI_MAXDATA) {
-			sbuf = malloc(sit->sit_sendlen, M_DEVBUF, M_WAITOK);
+			sbuf = kmem_alloc(sit->sit_sendlen, KM_SLEEP);
 			error = copyin(sit->sit_send, sbuf, sit->sit_sendlen);
 		}
 		if (sit->sit_recv && sit->sit_recvlen <= SPI_MAXDATA) {
-			rbuf = malloc(sit->sit_recvlen, M_DEVBUF, M_WAITOK);
+			rbuf = kmem_alloc(sit->sit_recvlen, KM_SLEEP);
 		}
 		if (error == 0) {
 			if (sbuf && rbuf)
@@ -399,10 +406,10 @@ spi_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 			if (error == 0)
 				error = copyout(rbuf, sit->sit_recv,
 						sit->sit_recvlen);
-			free(rbuf, M_DEVBUF);
+			kmem_free(rbuf, sit->sit_recvlen);
 		}
 		if (sbuf) {
-			free(sbuf, M_DEVBUF);
+			kmem_free(sbuf, sit->sit_sendlen);
 		}
 		break;
 	default:
@@ -415,8 +422,12 @@ spi_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 	return error;
 }
 
-CFATTACH_DECL_NEW(spi, sizeof(struct spi_softc),
-    spi_match, spi_attach, NULL, NULL);
+/*
+ * API for device drivers.
+ *
+ * We provide wrapper routines to decouple the ABI for the SPI
+ * device drivers from the ABI for the SPI bus drivers.
+ */
 
 /*
  * Configure.  This should be the first thing that the SPI driver
@@ -666,4 +677,3 @@ spi_send_recv(struct spi_handle *sh, int scnt, const uint8_t *snd,
 
 	return 0;
 }
-

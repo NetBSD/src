@@ -1,4 +1,4 @@
-/*	$NetBSD: pcai2cmux.c,v 1.8 2021/01/27 02:29:48 thorpej Exp $	*/
+/*	$NetBSD: pcai2cmux.c,v 1.8.14.1 2021/08/09 00:30:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -29,12 +29,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if defined(__i386__) || defined(__amd64__) || defined(__aarch64__)
-#include "acpica.h"
-#endif
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcai2cmux.c,v 1.8 2021/01/27 02:29:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcai2cmux.c,v 1.8.14.1 2021/08/09 00:30:09 thorpej Exp $");
 
 /*
  * Driver for NXP PCA954x / PCA984x I2C switches and multiplexers.
@@ -60,12 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: pcai2cmux.c,v 1.8 2021/01/27 02:29:48 thorpej Exp $"
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <dev/fdt/fdtvar.h>
 #include <dev/i2c/i2cmuxvar.h>
-
-#if NACPICA > 0
-#include <dev/acpi/acpivar.h>
-#endif
 
 /* There are a maximum of 8 busses supported. */
 #define	PCAIICMUX_MAX_BUSSES	8
@@ -166,7 +157,9 @@ struct pcaiicmux_softc {
 	int			sc_cur_value;
 
 	const struct pcaiicmux_type *sc_type;
+#if defined(I2CMUX_USE_FDT)
 	struct fdtbus_gpio_pin *sc_reset_gpio;
+#endif /* I2CMUX_USE_FDT */
 
 	bool			sc_idle_disconnect;
 
@@ -207,6 +200,7 @@ pcaiicmux_get_bus_info(struct iicmux_bus * const bus)
 {
 	struct iicmux_softc * const iicmux = bus->mux;
 	struct pcaiicmux_softc * const sc = iicmux->sc_mux_data;
+	devhandle_t devhandle = bus->devhandle;
 	bus_addr_t addr;
 	int error;
 
@@ -220,9 +214,11 @@ pcaiicmux_get_bus_info(struct iicmux_bus * const bus)
 	struct pcaiicmux_bus_info * const bus_info =
 	    &sc->sc_bus_info[bus->busidx];
 
-	switch (bus->handletype) {
-	case I2C_COOKIE_OF:
-		error = fdtbus_get_reg(bus->handle, 0, &addr, NULL);
+	switch (devhandle_type(devhandle)) {
+#if defined(I2CMUX_USE_FDT)
+	case DEVHANDLE_TYPE_OF:
+		error = fdtbus_get_reg(devhandle_to_of(devhandle),
+		    0, &addr, NULL);
 		if (error) {
 			aprint_error_dev(iicmux->sc_dev,
 			    "unable to get reg property for bus %d\n",
@@ -230,11 +226,14 @@ pcaiicmux_get_bus_info(struct iicmux_bus * const bus)
 			return NULL;
 		}
 		break;
-#if NACPICA > 0
-	case I2C_COOKIE_ACPI: {
+#endif /* I2CMUX_USE_FDT */
+
+#if defined(I2CMUX_USE_ACPI)
+	case DEVHANDLE_TYPE_ACPI: {
 		ACPI_INTEGER val;
 		ACPI_STATUS rv;
-		rv = acpi_eval_integer((ACPI_HANDLE)bus->handle, "_ADR", &val);
+		rv = acpi_eval_integer(devhandle_to_acpi(devhandle),
+		    "_ADR", &val);
 		if (ACPI_FAILURE(rv)) {
 			aprint_error_dev(iicmux->sc_dev,
 			    "unable to evaluate _ADR for bus %d: %s\n",
@@ -243,7 +242,8 @@ pcaiicmux_get_bus_info(struct iicmux_bus * const bus)
 		}
 		addr = (bus_addr_t)val;
 	}	break;
-#endif
+#endif /* I2CMUX_USE_ACPI */
+
 	default:
 		aprint_error_dev(iicmux->sc_dev, "unsupported handle type\n");
 		return NULL;
@@ -337,8 +337,6 @@ pcaiicmux_attach(device_t parent, device_t self, void *aux)
 	int error;
 
 	sc->sc_iicmux.sc_dev = self;
-	sc->sc_iicmux.sc_handle = ia->ia_cookie;
-	sc->sc_iicmux.sc_handletype = ia->ia_cookietype;
 	sc->sc_iicmux.sc_config = &pcaiicmux_config;
 	sc->sc_iicmux.sc_i2c_parent = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
@@ -350,8 +348,10 @@ pcaiicmux_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": PCA954x I2C %s\n",
 	    sc->sc_type->enable_bit ? "mux" : "switch");
 
-	if (ia->ia_cookietype == I2C_COOKIE_OF) {
-		const int phandle = (int)ia->ia_cookie;
+#if defined(I2CMUX_USE_FDT)
+	devhandle_t devhandle = device_handle(self);
+	if (devhandle_type(devhandle) == DEVHANDLE_TYPE_OF) {
+		const int phandle = devhandle_to_of(devhandle);
 		if (of_hasprop(phandle, "i2c-mux-idle-disconnect")) {
 			sc->sc_idle_disconnect = true;
 		}
@@ -366,6 +366,7 @@ pcaiicmux_attach(device_t parent, device_t self, void *aux)
 			delay(10);
 		}
 	}
+#endif /* I2CMUX_USE_FDT */
 
 	/* Force the mux into a disconnected state. */
 	sc->sc_cur_value = -1;

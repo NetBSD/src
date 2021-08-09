@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem_i2c.c,v 1.22 2021/06/13 09:48:04 mlelstv Exp $ */
+/* $NetBSD: spdmem_i2c.c,v 1.22.6.1 2021/08/09 00:30:09 thorpej Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem_i2c.c,v 1.22 2021/06/13 09:48:04 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem_i2c.c,v 1.22.6.1 2021/08/09 00:30:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -180,6 +180,50 @@ static const struct device_compatible_entry compat_data[] = {
 	DEVICE_COMPAT_EOL
 };
 
+/*
+ * Some device trees don't have real "compatible" entries, so we
+ * end up having to match by name.
+ */
+static const struct device_compatible_entry name_data[] = {
+	{ .compat = "dimm-spd" },
+	{ .compat = "dimm" },
+	DEVICE_COMPAT_EOL
+};
+
+#define	SPDMEM_HIGH_CONFIDENCE_MATCH	(I2C_MATCH_DIRECT_COMPATIBLE + 20)
+
+static bool
+spdmem_i2c_use_name_match(const struct i2c_attach_args *ia, int *match_resultp)
+{
+	const char *name = ia->ia_name;
+
+	if (name != NULL) {
+		*match_resultp = device_compatible_match(&name, 1, name_data)
+		    ? SPDMEM_HIGH_CONFIDENCE_MATCH
+		    : 0;
+		return true;
+	}
+	return false;
+}
+
+static bool
+spdmem_i2c_use_direct_match(const struct i2c_attach_args *ia, const cfdata_t cf,
+			    const struct device_compatible_entry *cdata,
+			    int *match_resultp)
+{
+	/*
+	 * Matching by name is not ideal, but some device trees only
+	 * have a name and no "compatible" property.
+	 */
+	if (spdmem_i2c_use_name_match(ia, match_resultp))
+		return true;
+
+	if (iic_use_direct_match(ia, cf, cdata, match_resultp))
+		return true;
+
+	return false;
+}
+
 static int
 spdmem_i2c_match(device_t parent, cfdata_t match, void *aux)
 {
@@ -187,46 +231,32 @@ spdmem_i2c_match(device_t parent, cfdata_t match, void *aux)
 	struct spdmem_i2c_softc sc;
 	int match_result;
 
-	if (iic_use_direct_match(ia, match, compat_data, &match_result))
-		return match_result;
+	if (spdmem_i2c_use_direct_match(ia, match, compat_data, &match_result))
+		goto do_probe;
 
-	/*
-	 * XXXJRT
-	 * Should do this with "compatible" strings.  There are also
-	 * other problems with this "match" routine.  Specifically, if
-	 * we are doing direct-config, we know the device is already
-	 * there aren't do need to probe.  I'll leave the logic for
-	 * now and let someone who knows better clean it later.
-	 */
-
-	if (ia->ia_name) {
-		/* add other names as we find more firmware variations */
-		if (strcmp(ia->ia_name, "dimm-spd") &&
-		    strcmp(ia->ia_name, "dimm"))
-			return 0;
-	}
-
-	/* only do this lame test when not using direct config */
-	if (ia->ia_name == NULL) {
-		if ((ia->ia_addr & SPDMEM_I2C_ADDRMASK) != SPDMEM_I2C_ADDR)
-			return 0;
-	}
+	/* Filter out by address when not using direct config. */
+	if ((ia->ia_addr & SPDMEM_I2C_ADDRMASK) != SPDMEM_I2C_ADDR)
+		return 0;
 
 	sc.sc_tag = ia->ia_tag;
 	sc.sc_addr = ia->ia_addr;
 	sc.sc_page0 = SPDCTL_SPA0;
 	sc.sc_page1 = SPDCTL_SPA1;
 	sc.sc_base.sc_read = spdmem_i2c_read;
+	match_result = 0;
 
+ do_probe:
 	/* Check the bank and reset to the page 0 */
 	if (spdmem_reset_page(&sc) != 0)
 		return 0;
 
 	if (spdmem_common_probe(&sc.sc_base)) {
-		return ia->ia_name ? I2C_MATCH_DIRECT_SPECIFIC
-				   : I2C_MATCH_ADDRESS_AND_PROBE;
+		if (match_result < SPDMEM_HIGH_CONFIDENCE_MATCH) {
+			match_result = SPDMEM_HIGH_CONFIDENCE_MATCH;
+		}
 	}
-	return 0;
+
+	return match_result;
 }
 
 static void
@@ -234,6 +264,7 @@ spdmem_i2c_attach(device_t parent, device_t self, void *aux)
 {
 	struct spdmem_i2c_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = aux;
+	int match_result;
 
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
@@ -241,10 +272,28 @@ spdmem_i2c_attach(device_t parent, device_t self, void *aux)
 	sc->sc_page1 = SPDCTL_SPA1;
 	sc->sc_base.sc_read = spdmem_i2c_read;
 
-	if (!pmf_device_register(self, NULL, NULL))
-		aprint_error_dev(self, "couldn't establish power handler\n");
+	/*
+	 * SPD stands for "Serial Presence Detect".  If we're using
+	 * direct configuration, the device tree may have given us
+	 * a location where and SPD memory modudle *could* be found,
+	 * not necessarily where it is known to be present.
+	 *
+	 * Accordingly, if we get a direct configuration match based
+	 * on compatible data or device name, we still check to see
+	 * if the device is there.
+	 */
+	if (spdmem_i2c_use_direct_match(ia, device_cfdata(self), compat_data,
+					&match_result)) {
+		if (! spdmem_common_probe(&sc->sc_base)) {
+			aprint_normal(": module not present\n");
+			return;
+		}
+	}
 
 	spdmem_common_attach(&sc->sc_base, self);
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cmux.c,v 1.6 2021/08/07 16:19:11 thorpej Exp $	*/
+/*	$NetBSD: i2cmux.c,v 1.6.2.1 2021/08/09 00:30:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -29,26 +29,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if defined(__i386__) || defined(__amd64__) || defined(__aarch64__)
-#include "acpica.h"
-#endif
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2cmux.c,v 1.6 2021/08/07 16:19:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2cmux.c,v 1.6.2.1 2021/08/09 00:30:09 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/kmem.h>
 
-#include <dev/fdt/fdtvar.h>
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/i2cmuxvar.h>
 
-#if NACPICA > 0
-#include <dev/acpi/acpivar.h>
-#include <dev/acpi/acpi_i2c.h>
-#endif
+#include "locators.h"
 
 /*
  * i2c mux
@@ -120,57 +112,15 @@ iicmux_exec(void * const v, i2c_op_t const op, i2c_addr_t const addr,
 
 /*****************************************************************************/
 
-static int
-iicmux_count_children(struct iicmux_softc * const sc)
-{
-	char name[32];
-	int child, count;
-
- restart:
-	for (child = OF_child(sc->sc_i2c_mux_phandle), count = 0; child;
-	     child = OF_peer(child)) {
-		if (OF_getprop(child, "name", name, sizeof(name)) <= 0) {
-			continue;
-		}
-		if (strcmp(name, "i2c-mux") == 0) {
-			/*
-			 * The node we encountered is the acutal parent
-			 * of the i2c bus children.  Stash its phandle
-			 * and restart the enumeration.
-			 */
-			sc->sc_i2c_mux_phandle = child;
-			goto restart;
-		}
-		count++;
-	}
-
-	return count;
-}
-
-/* XXX iicbus_print() should be able to do this. */
-static int
-iicmux_print(void * const aux, const char * const pnp)
-{
-	i2c_tag_t const tag = aux;
-	struct iicmux_bus * const bus = tag->ic_cookie;
-	int rv;
-
-	rv = iicbus_print(aux, pnp);
-	aprint_normal(" bus %d", bus->busidx);
-
-	return rv;
-}
-
 static void
-iicmux_attach_bus(struct iicmux_softc * const sc,
-    uintptr_t const handle, enum i2c_cookie_type handletype, int const busidx)
+iicmux_attach_bus(struct iicmux_softc * const sc, devhandle_t devhandle,
+    int const busidx)
 {
 	struct iicmux_bus * const bus = &sc->sc_busses[busidx];
 
 	bus->mux = sc;
 	bus->busidx = busidx;
-	bus->handle = handle;
-	bus->handletype = handletype;
+	bus->devhandle = devhandle;
 
 	bus->bus_data = sc->sc_config->get_bus_info(bus);
 	if (bus->bus_data == NULL) {
@@ -181,108 +131,83 @@ iicmux_attach_bus(struct iicmux_softc * const sc,
 
 	iic_tag_init(&bus->controller);
 	bus->controller.ic_cookie = bus;
+	bus->controller.ic_channel = bus->busidx;
 	bus->controller.ic_acquire_bus = iicmux_acquire_bus;
 	bus->controller.ic_release_bus = iicmux_release_bus;
 	bus->controller.ic_exec = iicmux_exec;
 
-	switch (handletype) {
-	case I2C_COOKIE_OF:
+#if defined(I2CMUX_USE_FDT)
+	if (devhandle_type(devhandle) == DEVHANDLE_TYPE_OF) {
 		fdtbus_register_i2c_controller(&bus->controller,
-		    (int)bus->handle);
-
-		fdtbus_attach_i2cbus(sc->sc_dev, (int)bus->handle,
-		    &bus->controller, iicmux_print);
-		break;
-#if NACPICA > 0
-	case I2C_COOKIE_ACPI: {
-		struct acpi_devnode *ad = acpi_match_node((ACPI_HANDLE)handle);
-		KASSERT(ad != NULL);
-		struct i2cbus_attach_args iba = {
-			.iba_tag = &bus->controller,
-			.iba_child_devices = acpi_enter_i2c_devs(NULL, ad)
-		};
-		config_found(sc->sc_dev, &iba, iicbus_print, CFARGS_NONE);
-	}	break;
-#endif
-	default:
-		aprint_error_dev(sc->sc_dev, "unknown handle type\n");
-		break;
+		    devhandle_to_of(devhandle));
 	}
+#endif /* I2CMUX_USE_FDT */
+
+	struct i2cbus_attach_args iba = {
+		.iba_tag = &bus->controller,
+	};
+
+	int locs[I2CBUSCF_NLOCS];
+	locs[I2CBUSCF_BUS] = bus->busidx;
+
+	config_found(sc->sc_dev, &iba, iicbus_print_multi,
+	    CFARGS(.subatch = config_stdsubmatch,
+		   .locators = locs,
+		   .devhandle = devhandle));
 }
 
-static void
-iicmux_attach_fdt(struct iicmux_softc * const sc)
+static bool
+iicmux_count_busses_callback(device_t self, devhandle_t devhandle,
+    void *v __unused)
 {
-	/*
-	 * We start out assuming that the i2c bus nodes are children of
-	 * our own node.  We'll adjust later if we encounter an "i2c-mux"
-	 * node when counting our children.  If we encounter such a node,
-	 * then it's that node that is the parent of the i2c bus children.
-	 */
-	sc->sc_i2c_mux_phandle = (int)sc->sc_handle;
+	struct iicmux_softc *sc = device_private(self);
 
-	sc->sc_nbusses = iicmux_count_children(sc);
-	if (sc->sc_nbusses == 0) {
-		return;
+#if defined(I2CMUX_USE_FDT)
+	if (devhandle_type(devhandle) == DEVHANDLE_TYPE_OF) {
+		char name[32];
+
+		if (OF_getprop(devhandle_to_of(devhandle), "name", name,
+			       sizeof(name)) <= 0) {
+			/* Skip this DT node (shouldn't happen). */
+			return true;	/* keep enumerating */
+		}
+		if (strcmp(name, "i2c-mux") == 0) {
+			/*
+			 * This DT node is the actual mux node; reset the
+			 * our devhandle and restart enumeration.
+			 */
+			device_set_handle(self, devhandle);
+			sc->sc_nbusses = -1;
+			return false;	/* stop enumerating */
+		}
 	}
+#endif /* I2CMUX_USE_FDT */
 
-	sc->sc_busses = kmem_zalloc(sizeof(*sc->sc_busses) * sc->sc_nbusses,
-	    KM_SLEEP);
-
-	int child, idx;
-	for (child = OF_child(sc->sc_i2c_mux_phandle), idx = 0; child;
-	     child = OF_peer(child), idx++) {
-		KASSERT(idx < sc->sc_nbusses);
-		iicmux_attach_bus(sc, child, I2C_COOKIE_OF, idx);
-	}
+	sc->sc_nbusses++;
+	return true;			/* keep enumerating */
 }
 
-#if NACPICA > 0
-static void
-iicmux_attach_acpi(struct iicmux_softc * const sc)
+static bool
+iicmux_attach_busses_callback(device_t self, devhandle_t devhandle, void *v)
 {
-	ACPI_HANDLE hdl = (ACPI_HANDLE)sc->sc_handle;
-	struct acpi_devnode *devnode, *ad;
-	int idx;
+	struct iicmux_softc *sc = device_private(self);
+	int * const idxp = v;
 
-	devnode = acpi_match_node(hdl);
-	KASSERT(devnode != NULL);
+	KASSERT(*idxp < sc->sc_nbusses);
+	iicmux_attach_bus(sc, devhandle, (*idxp)++);
 
-	/* Count child busses */
-	sc->sc_nbusses = 0;
-	SIMPLEQ_FOREACH(ad, &devnode->ad_child_head, ad_child_list) {
-		if (ad->ad_devinfo->Type != ACPI_TYPE_DEVICE ||
-		    !acpi_device_present(ad->ad_handle)) {
-			continue;
-		}
-		sc->sc_nbusses++;
-	}
-
-	sc->sc_busses = kmem_zalloc(sizeof(*sc->sc_busses) * sc->sc_nbusses,
-	    KM_SLEEP);
-
-	/* Attach child busses */
-	idx = 0;
-	SIMPLEQ_FOREACH(ad, &devnode->ad_child_head, ad_child_list) {
-		if (ad->ad_devinfo->Type != ACPI_TYPE_DEVICE ||
-		    !acpi_device_present(ad->ad_handle)) {
-			continue;
-		}
-		iicmux_attach_bus(sc, (uintptr_t)ad->ad_handle,
-		    I2C_COOKIE_ACPI, idx);
-		idx++;
-	}
+	return true;			/* keep enumerating */
 }
-#endif
 
 void
 iicmux_attach(struct iicmux_softc * const sc)
 {
+	int error, idx;
+
 	/*
-	 * We expect sc->sc_handle, sc->sc_config, and sc->sc_i2c_parent
-	 * to be initialized by the front-end.
+	 * We expect sc->sc_config and sc->sc_i2c_parent to be initialized
+	 * by the front-end.
 	 */
-	KASSERT(sc->sc_handle > 0);
 	KASSERT(sc->sc_config != NULL);
 	KASSERT(sc->sc_i2c_parent != NULL);
 
@@ -297,20 +222,39 @@ iicmux_attach(struct iicmux_softc * const sc)
 	}
 
 	/*
-	 * Do configuration method (OF, ACPI) specific setup.
+	 * Count the number of busses behind this mux.
 	 */
-	switch (sc->sc_handletype) {
-	case I2C_COOKIE_OF:
-		iicmux_attach_fdt(sc);
-		break;
-#if NACPICA > 0
-	case I2C_COOKIE_ACPI:
-		iicmux_attach_acpi(sc);
-		break;
-#endif
-	default:
-		aprint_error_dev(sc->sc_dev, "could not configure mux: "
-		    "handle type %u not supported\n", sc->sc_handletype);
-		break;
+ count_again:
+	error = device_enumerate_children(sc->sc_dev,
+	    iicmux_count_busses_callback, NULL);
+	if (error) {
+		aprint_error_dev(sc->sc_dev,
+		    "unable to enumerate busses to count, error = %d\n", error);
+		return;
+	}
+	if (sc->sc_nbusses == -1) {
+		/*
+		 * We had to reset our devhandle to a different device
+		 * tree node.  We need to try counting again.
+		 */
+		sc->sc_nbusses = 0;
+		goto count_again;
+	}
+	if (sc->sc_nbusses == 0) {
+		/* No busses; no more work to do. */
+		return;
+	}
+
+	sc->sc_busses = kmem_zalloc(sizeof(*sc->sc_busses) * sc->sc_nbusses,
+	    KM_SLEEP);
+
+	/* Now attach them. */
+	idx = 0;
+	error = device_enumerate_children(sc->sc_dev,
+	    iicmux_attach_busses_callback, &idx);
+	if (error) {
+		aprint_error_dev(sc->sc_dev,
+		    "unable to enumerate busses to attach, error = %d\n",
+		    error);
 	}
 }

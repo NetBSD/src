@@ -1,4 +1,4 @@
-/*	$NetBSD: mcp3k.c,v 1.2 2016/11/20 12:38:04 phx Exp $ */
+/*	$NetBSD: mcp3k.c,v 1.2.46.1 2021/08/09 00:30:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -45,6 +45,8 @@
  * MPC3302/3304: http://ww1.microchip.com/downloads/en/DeviceDoc/21697F.pdf
  */
 
+#include "opt_fdt.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -54,6 +56,10 @@
 
 #include <dev/sysmon/sysmonvar.h>
 #include <dev/spi/spivar.h>
+
+#ifdef FDT
+#include <dev/fdt/fdtvar.h>
+#endif /* FDT */
 
 #define M3K_MAX_SENSORS		16		/* 8 single-ended & 8 diff. */
 
@@ -72,14 +78,17 @@ struct mcp3kadc_model {
 };
 
 struct mcp3kadc_softc {
-	device_t		sc_dev;
-	struct spi_handle 	*sc_sh;
-	int			sc_model;
-	uint32_t		sc_adc_max;
-	int32_t			sc_vref_mv;
+	device_t			sc_dev;
+	struct spi_handle 		*sc_sh;
+	const struct mcp3kadc_model	*sc_model;
+	uint32_t			sc_adc_max;
+	int32_t				sc_vref_mv;
+#ifdef FDT
+	struct fdtbus_regulator		*sc_vref_supply;
+#endif
 
-	struct sysmon_envsys 	*sc_sme;
-	envsys_data_t 		sc_sensors[M3K_MAX_SENSORS];
+	struct sysmon_envsys 		*sc_sme;
+	envsys_data_t 			sc_sensors[M3K_MAX_SENSORS];
 };
 
 static int	mcp3kadc_match(device_t, cfdata_t, void *);
@@ -91,127 +100,257 @@ static int	sysctl_mcp3kadc_vref(SYSCTLFN_ARGS);
 CFATTACH_DECL_NEW(mcp3kadc, sizeof(struct mcp3kadc_softc),
     mcp3kadc_match,  mcp3kadc_attach, NULL, NULL);
 
-static struct mcp3kadc_model mcp3k_models[] = {
-	{
-		.name = 3001,
-		.bits = 10,
-		.channels = 1,
-		.lead = 3,
-		.flags = 0
-	},
-	{
-		.name = 3002,
-		.bits = 10,
-		.channels = 2,
-		.lead = 2,
-		.flags = M3K_SGLDIFF | M3K_MSBF
-	},
-	{
-		.name = 3004,
-		.bits = 10,
-		.channels = 4,
-		.lead = 2,
-		.flags = M3K_SGLDIFF | M3K_D2D1D0
-	},
-	{
-		.name = 3008,
-		.bits = 10,
-		.channels = 8,
-		.lead = 2,
-		.flags = M3K_SGLDIFF | M3K_D2D1D0
-	},
-	{
-		.name = 3201,
-		.bits = 12,
-		.channels = 1,
-		.lead = 3,
-		.flags = 0
-	},
-	{
-		.name = 3202,
-		.bits = 12,
-		.channels = 2,
-		.lead = 2,
-		.flags = M3K_SGLDIFF | M3K_MSBF
-	},
-	{
-		.name = 3204,
-		.bits = 12,
-		.channels = 4,
-		.lead = 2,
-		.flags = M3K_SGLDIFF | M3K_D2D1D0
-	},
-	{
-		.name = 3208,
-		.bits = 12,
-		.channels = 8,
-		.lead = 2,
-		.flags = M3K_SGLDIFF | M3K_D2D1D0
-	},
-	{
-		.name = 3301,
-		.bits = 13,
-		.channels = 1,
-		.lead = 3,
-		.flags = M3K_SIGNED
-	},
-	{
-		.name = 3302,
-		.bits = 13,
-		.channels = 4,
-		.lead = 2,
-		.flags = M3K_SIGNED | M3K_SGLDIFF | M3K_D2D1D0
-	},
-	{
-		.name = 3304,
-		.bits = 13,
-		.channels = 8,
-		.lead = 2,
-		.flags = M3K_SIGNED | M3K_SGLDIFF | M3K_D2D1D0
-	},
+static const struct mcp3kadc_model mcp3001 = {
+	.name = 3001,
+	.bits = 10,
+	.channels = 1,
+	.lead = 3,
+	.flags = 0
 };
+
+static const struct mcp3kadc_model mcp3002 = {
+	.name = 3002,
+	.bits = 10,
+	.channels = 2,
+	.lead = 2,
+	.flags = M3K_SGLDIFF | M3K_MSBF
+};
+
+static const struct mcp3kadc_model mcp3004 = {
+	.name = 3004,
+	.bits = 10,
+	.channels = 4,
+	.lead = 2,
+	.flags = M3K_SGLDIFF | M3K_D2D1D0
+};
+
+static const struct mcp3kadc_model mcp3008 = {
+	.name = 3008,
+	.bits = 10,
+	.channels = 8,
+	.lead = 2,
+	.flags = M3K_SGLDIFF | M3K_D2D1D0
+};
+
+static const struct mcp3kadc_model mcp3201 = {
+	.name = 3201,
+	.bits = 12,
+	.channels = 1,
+	.lead = 3,
+	.flags = 0
+};
+
+static const struct mcp3kadc_model mcp3202 = {
+	.name = 3202,
+	.bits = 12,
+	.channels = 2,
+	.lead = 2,
+	.flags = M3K_SGLDIFF | M3K_MSBF
+};
+
+static const struct mcp3kadc_model mcp3204 = {
+	.name = 3204,
+	.bits = 12,
+	.channels = 4,
+	.lead = 2,
+	.flags = M3K_SGLDIFF | M3K_D2D1D0
+};
+
+static const struct mcp3kadc_model mcp3208 = {
+	.name = 3208,
+	.bits = 12,
+	.channels = 8,
+	.lead = 2,
+	.flags = M3K_SGLDIFF | M3K_D2D1D0
+};
+
+static const struct mcp3kadc_model mcp3301 = {
+	.name = 3301,
+	.bits = 13,
+	.channels = 1,
+	.lead = 3,
+	.flags = M3K_SIGNED
+};
+
+static const struct mcp3kadc_model mcp3302 = {
+	.name = 3302,
+	.bits = 13,
+	.channels = 4,
+	.lead = 2,
+	.flags = M3K_SIGNED | M3K_SGLDIFF | M3K_D2D1D0
+};
+
+static const struct mcp3kadc_model mcp3304 = {
+	.name = 3304,
+	.bits = 13,
+	.channels = 8,
+	.lead = 2,
+	.flags = M3K_SIGNED | M3K_SGLDIFF | M3K_D2D1D0
+};
+
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "microchip,mcp3001",	.data = &mcp3001 },
+	{ .compat = "microchip,mcp3002",	.data = &mcp3002 },
+	{ .compat = "microchip,mcp3004",	.data = &mcp3004 },
+	{ .compat = "microchip,mcp3008",	.data = &mcp3008 },
+	{ .compat = "microchip,mcp3201",	.data = &mcp3201 },
+	{ .compat = "microchip,mcp3202",	.data = &mcp3202 },
+	{ .compat = "microchip,mcp3204",	.data = &mcp3204 },
+	{ .compat = "microchip,mcp3208",	.data = &mcp3208 },
+	{ .compat = "microchip,mcp3301",	.data = &mcp3301 },
+	{ .compat = "microchip,mcp3302",	.data = &mcp3302 },
+	{ .compat = "microchip,mcp3304",	.data = &mcp3304 },
+
+#if 0	/* We should also add support for these: */
+	{ .compat = "microchip,mcp3550-50" },
+	{ .compat = "microchip,mcp3550-60" },
+	{ .compat = "microchip,mcp3551" },
+	{ .compat = "microchip,mcp3553" },
+#endif
+
+	DEVICE_COMPAT_EOL
+};
+
+static const struct mcp3kadc_model *
+mcp3kadc_lookup(const struct spi_attach_args *sa, const cfdata_t cf)
+{
+	const struct device_compatible_entry *dce;
+
+	if (sa->sa_clist != NULL) {
+		dce = device_compatible_lookup_strlist(sa->sa_clist,
+		    sa->sa_clist_size, compat_data);
+		if (dce == NULL) {
+			return NULL;
+		}
+		return dce->data;
+	} else {
+		const struct mcp3kadc_model *model;
+
+		for (dce = compat_data; dce->compat != NULL; dce++) {
+			model = dce->data;
+			if (model->name == cf->cf_flags) {
+				return model;
+			}
+		}
+		return NULL;
+	}
+}
 
 static int
 mcp3kadc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct spi_attach_args *sa = aux;
+	int rv;
 
-	if (strcmp(cf->cf_name, "mcp3kadc") != 0)
-		return 0;
+	rv = spi_compatible_match(sa, cf, compat_data);
+	if (rv != 0) {
+		/*
+		 * If we're doing indirect config, the user must
+		 * have specified the correct model.
+		 */
+		if (sa->sa_clist == NULL && mcp3kadc_lookup(sa, cf) == NULL) {
+			return 0;
+		}
+	}
 
-	/* configure for 1MHz */
-	if (spi_configure(sa->sa_handle, SPI_MODE_0, 1000000))
-		return 0;
-
-	return 1;
+	return rv;
 }
+
+#ifdef FDT
+static bool
+mcp3kadc_vref_fdt(struct mcp3kadc_softc *sc)
+{
+	devhandle_t devhandle = device_handle(sc->sc_dev);
+	int phandle = devhandle_to_of(devhandle);
+	int error;
+	u_int uvolts;
+
+	sc->sc_vref_supply = fdtbus_regulator_acquire(phandle, "vref-supply");
+	if (sc->sc_vref_supply == NULL) {
+		aprint_error_dev(sc->sc_dev,
+		    "unable to acquire \"vref-supply\"\n");
+		return false;
+	}
+
+	error = fdtbus_regulator_enable(sc->sc_vref_supply);
+	if (error) {
+		aprint_error_dev(sc->sc_dev,
+		    "failed to enable \"vref-supply\" (error = %d)\n",
+		    error);
+		return false;
+	}
+
+	error = fdtbus_regulator_get_voltage(sc->sc_vref_supply, &uvolts);
+	if (error) {
+		aprint_error_dev(sc->sc_dev,
+		    "unable to get \"vref-supply\" voltage (error = %d)\n",
+		    error);
+		(void) fdtbus_regulator_disable(sc->sc_vref_supply);
+		return false;
+	}
+
+	/*
+	 * Device tree property is uV, convert to mV that we use
+	 * internally.
+	 */
+	sc->sc_vref_mv = uvolts / 1000;
+	return true;
+}
+#endif /* FDT */
 
 static void
 mcp3kadc_attach(device_t parent, device_t self, void *aux)
 {
 	const struct sysctlnode *rnode, *node;
-	struct spi_attach_args *sa;
-	struct mcp3kadc_softc *sc;
-	struct mcp3kadc_model *model;
-	int ch, i;
+	struct spi_attach_args *sa = aux;
+	struct mcp3kadc_softc *sc = device_private(self);
+	devhandle_t devhandle = device_handle(self);
+	const struct mcp3kadc_model *model;
+	int ch, i, error;
+	bool vref_read_only;
 
-	sa = aux;
-	sc = device_private(self);
 	sc->sc_dev = self;
 	sc->sc_sh = sa->sa_handle;
 
-	/* device flags define the model */
-	sc->sc_model = device_cfdata(sc->sc_dev)->cf_flags;
-	model = &mcp3k_models[sc->sc_model];
+	model = mcp3kadc_lookup(sa, device_cfdata(self));
+	KASSERT(model != NULL);
+
+	sc->sc_model = model;
 
 	aprint_naive(": Analog to Digital converter\n");
 	aprint_normal(": MCP%u %u-channel %u-bit ADC\n",
 	    (unsigned)model->name, (unsigned)model->channels,
 	    (unsigned)model->bits);
 
-	/* set a default Vref in mV according to the chip's ADC resolution */
-	sc->sc_vref_mv = 1 << ((model->flags & M3K_SIGNED) ?
-	    model->bits - 1 : model->bits);
+	/* configure for 1MHz */
+	error = spi_configure(sa->sa_handle, SPI_MODE_0, 1000000);
+	if (error) {
+		aprint_error_dev(self, "spi_configure failed (error = %d)\n",
+		    error);
+		return;
+	}
+
+	vref_read_only = false;
+	switch (devhandle_type(devhandle)) {
+#ifdef FDT
+	case DEVHANDLE_TYPE_OF:
+		vref_read_only = mcp3kadc_vref_fdt(sc);
+		if (! vref_read_only) {
+			/* Error already displayed. */
+			return;
+		}
+		break;
+#endif /* FDT */
+	default:
+		/*
+		 * set a default Vref in mV according to the chip's ADC
+		 * resolution
+		 */
+		sc->sc_vref_mv = 1 << ((model->flags & M3K_SIGNED) ?
+		    model->bits - 1 : model->bits);
+		break;
+	}
+
 
 	/* remember maximum value for this ADC - also used for masking */
 	sc->sc_adc_max = (1 << model->bits) - 1;
@@ -266,9 +405,11 @@ mcp3kadc_attach(device_t parent, device_t self, void *aux)
 	    NULL, 0, NULL, 0,
 	    CTL_HW, CTL_CREATE, CTL_EOL);
 
+	const int ctlflag = vref_read_only ? CTLFLAG_READONLY
+					   : CTLFLAG_READWRITE;
 	if (rnode != NULL)
 		sysctl_createv(NULL, 0, NULL, &node,
-		    CTLFLAG_READWRITE | CTLFLAG_OWNDESC,
+		    ctlflag | CTLFLAG_OWNDESC,
 		    CTLTYPE_INT, "vref",
 		    SYSCTL_DESCR("ADC reference voltage"),
 		    sysctl_mcp3kadc_vref, 0, (void *)sc, 0,
@@ -279,12 +420,12 @@ static void
 mcp3kadc_envsys_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	struct mcp3kadc_softc *sc;
-	struct mcp3kadc_model *model;
+	const struct mcp3kadc_model *model;
 	uint8_t buf[2], ctrl;
 	int32_t val, scale;
 
 	sc = sme->sme_cookie;
-	model = &mcp3k_models[sc->sc_model];
+	model = sc->sc_model;
 	scale = sc->sc_adc_max + 1;
 
 	if (model->flags & M3K_CTRL_NEEDED) {

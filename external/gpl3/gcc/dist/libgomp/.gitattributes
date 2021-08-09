@@ -1,2 +1,0 @@
-# For the Fortran file, complain about tabs
-openacc_lib.h whitespace=tab-in-indent,space-before-tab,trailing-space

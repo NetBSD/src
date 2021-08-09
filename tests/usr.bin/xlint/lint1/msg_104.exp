@@ -1,1 +1,0 @@
-msg_104.c(15): error: left operand of '->' must be pointer to struct or union, not 'struct point' [104]

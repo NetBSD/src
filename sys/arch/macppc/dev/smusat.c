@@ -41,8 +41,6 @@
 #include <dev/sysmon/sysmonvar.h>
 #include <dev/sysmon/sysmon_taskq.h>
 
-#include <macppc/dev/smuiicvar.h>
-
 #include "opt_smusat.h"
 
 extern int smu_get_datablock(int, uint8_t *, size_t);
@@ -137,7 +135,7 @@ smusat_attach(device_t parent, device_t self, void *aux)
 	int node, i, j;
 
 	sc->sc_dev = self;
-	sc->sc_node = ia->ia_cookie;
+	sc->sc_node = devhandle_to_of(device_handle(self));
 	sc->sc_addr = ia->ia_addr;
 	sc->sc_i2c = ia->ia_tag;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: lmu.c,v 1.9 2021/06/18 22:52:04 macallan Exp $ */
+/* $NetBSD: lmu.c,v 1.9.6.1 2021/08/09 00:30:08 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lmu.c,v 1.9 2021/06/18 22:52:04 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lmu.c,v 1.9.6.1 2021/08/09 00:30:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,6 @@ struct lmu_softc {
 	device_t	sc_dev;
 	i2c_tag_t	sc_i2c;
 	i2c_addr_t	sc_addr;
-	int		sc_node;
 
 	struct sysmon_envsys *sc_sme;
 	envsys_data_t	sc_sensors[2];
@@ -167,7 +166,6 @@ lmu_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_i2c = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
-	sc->sc_node = ia->ia_cookie;
 	sc->sc_last = 0;
 
 	aprint_naive("\n");

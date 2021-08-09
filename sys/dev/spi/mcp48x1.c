@@ -1,4 +1,4 @@
-/*      $NetBSD: mcp48x1.c,v 1.1 2014/02/25 20:09:37 rkujawa Exp $ */
+/*      $NetBSD: mcp48x1.c,v 1.1.64.1 2021/08/09 00:30:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcp48x1.c,v 1.1 2014/02/25 20:09:37 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcp48x1.c,v 1.1.64.1 2021/08/09 00:30:09 thorpej Exp $");
 
 /* 
  * Driver for Microchip MCP4801/MCP4811/MCP4821 DAC. 
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: mcp48x1.c,v 1.1 2014/02/25 20:09:37 rkujawa Exp $");
 #define MCP48X1DAC_DATA		__BITS(11,0)	/* data */
 
 struct mcp48x1dac_model {
-	const char *name;
+	u_int name;
 	uint8_t	resolution;
 	uint8_t	shift;			/* data left shift during write */
 };
@@ -66,7 +66,7 @@ struct mcp48x1dac_softc {
 	device_t sc_dev;
 	struct spi_handle *sc_sh;
 
-	struct mcp48x1dac_model *sc_dm;	/* struct describing DAC model */
+	const struct mcp48x1dac_model *sc_dm;
 
 	uint16_t sc_dac_data;
 	bool sc_dac_gain;
@@ -93,55 +93,102 @@ static int	sysctl_mcp48x1dac_gain(SYSCTLFN_ARGS);
 CFATTACH_DECL_NEW(mcp48x1dac, sizeof(struct mcp48x1dac_softc),
     mcp48x1dac_match, mcp48x1dac_attach, NULL, NULL);
 
-static struct mcp48x1dac_model mcp48x1_models[] = {
-	{
-		.name = "MCP4801",
-		.resolution = 8,
-		.shift = 4
-	},
-	{
-		.name = "MCP4811",
-		.resolution = 10,
-		.shift = 2
-	},
-	{
-		.name = "MCP4821",
-		.resolution = 12,
-		.shift = 0
-	}
+static const struct mcp48x1dac_model mcp4801 = {
+	.name = 4801,
+	.resolution = 8,
+	.shift = 4
 };
 
+static const struct mcp48x1dac_model mcp4811 = {
+	.name = 4811,
+	.resolution = 10,
+	.shift = 2
+};
+
+static const struct mcp48x1dac_model mcp4821 = {
+	.name = 4821,
+	.resolution = 12,
+	.shift = 0
+};
+
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "microchip,mcp4801",	.data = &mcp4801 },
+	{ .compat = "microchip,mcp4811",	.data = &mcp4811 },
+	{ .compat = "microchip,mcp4821",	.data = &mcp4821 },
+	DEVICE_COMPAT_EOL
+};
+
+static const struct mcp48x1dac_model *
+mcp48x1dac_lookup(const struct spi_attach_args *sa, const cfdata_t cf)
+{
+	const struct device_compatible_entry *dce;
+
+	if (sa->sa_clist != NULL) {
+		dce = device_compatible_lookup_strlist(sa->sa_clist,
+		    sa->sa_clist_size, compat_data);
+		if (dce == NULL) {
+			return NULL;
+		}
+		return dce->data;
+	} else {
+		const struct mcp48x1dac_model *model;
+
+		for (dce = compat_data; dce->compat != NULL; dce++) {
+			model = dce->data;
+			if (model->name == cf->cf_flags) {
+				return model;
+			}
+		}
+		return NULL;
+	}
+}
 
 static int
 mcp48x1dac_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct spi_attach_args *sa = aux;
+	int rv;
 
-	/* MCP48x1 is a write-only device, so no way to detect it! */
+	rv = spi_compatible_match(sa, cf, compat_data);
+	if (rv != 0) {
+		/*
+		 * If we're doing indorect config, the user must
+		 * have specified the correct model.
+		 */
+		if (sa->sa_clist == NULL && mcp48x1dac_lookup(sa, cf) == NULL) {
+			return 0;
+		}
+	}
 
-	if (spi_configure(sa->sa_handle, SPI_MODE_0, 20000000))
-		return 0;
-
-	return 1;
+	return rv;
 }
 
 static void
 mcp48x1dac_attach(device_t parent, device_t self, void *aux)
 {
-	struct mcp48x1dac_softc *sc;
-	struct spi_attach_args *sa;
-	int cf_flags;
+	struct mcp48x1dac_softc *sc = device_private(self);
+	struct spi_attach_args *sa = aux;
+	const struct mcp48x1dac_model *model;
+	int error;
 
-	aprint_naive(": Digital to Analog converter\n");	
-	aprint_normal(": MCP48x1 DAC\n");
-
-	sa = aux;
-	sc = device_private(self);
 	sc->sc_dev = self;
 	sc->sc_sh = sa->sa_handle;
-	cf_flags = device_cfdata(sc->sc_dev)->cf_flags;
 
-	sc->sc_dm = &mcp48x1_models[cf_flags]; /* flag value defines model */
+	model = mcp48x1dac_lookup(sa, device_cfdata(self));
+	KASSERT(model != NULL);
+
+	sc->sc_dm = model;
+
+	aprint_naive(": Digital to Analog converter\n");	
+	aprint_normal(": MCP%u DAC\n", model->name);
+
+	/* configure for 20MHz */
+	error = spi_configure(sa->sa_handle, SPI_MODE_0, 20000000);
+	if (error) {
+		aprint_error_dev(self, "spi_configure failed (error = %d)\n",
+		    error);
+		return;
+	}
 
 	if(!mcp48x1dac_envsys_attach(sc)) {
 		aprint_error_dev(sc->sc_dev, "failed to attach envsys\n");

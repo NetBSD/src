@@ -1,4 +1,4 @@
-/*	$NetBSD: ki2cvar.h,v 1.5 2017/09/15 21:34:42 macallan Exp $	*/
+/*	$NetBSD: ki2cvar.h,v 1.5.30.1 2021/08/09 00:30:08 thorpej Exp $	*/
 /*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
 
 /*-
@@ -83,25 +83,31 @@
 #define I2C_READING	0x02
 #define I2C_ERROR	0x04
 
+#define	KI2C_MAX_I2C_CHANNELS	2
+
 struct ki2c_softc {
 	device_t sc_dev;
 	bus_space_tag_t sc_tag;
 	bus_space_handle_t sc_bh;
 	int sc_regstep;
-	
-	struct i2c_controller sc_i2c;
-	kmutex_t sc_buslock;
+
+	/*
+	 * We provide our own i2c device enumeration method, so we
+	 * need to provide our own devhandle_impl.
+	 */
+	struct devhandle_impl sc_devhandle_impl;
+
+	struct ki2c_channel {
+		struct i2c_controller ch_i2c;
+		struct ki2c_softc *ch_ki2c;
+		int ch_channel;
+	} sc_channels[KI2C_MAX_I2C_CHANNELS];
+
+	kmutex_t sc_ctrl_lock;
 
 	int sc_flags;
 	u_char *sc_data;
 	int sc_resid;
-};
-
-struct ki2c_confargs {
-	char 		*ka_name;	/* device name */
-	int		ka_node;
-	i2c_tag_t	ka_tag;		/* our controller */
-	i2c_addr_t	ka_addr;	/* address of device */
 };
 
 #endif

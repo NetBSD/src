@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8591_envctrl.c,v 1.19 2021/01/27 02:20:03 thorpej Exp $	*/
+/*	$NetBSD: pcf8591_envctrl.c,v 1.19.14.1 2021/08/09 00:30:08 thorpej Exp $	*/
 /*	$OpenBSD: pcf8591_envctrl.c,v 1.6 2007/10/25 21:17:20 kettenis Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcf8591_envctrl.c,v 1.19 2021/01/27 02:20:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcf8591_envctrl.c,v 1.19.14.1 2021/08/09 00:30:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,8 +125,10 @@ ecadc_attach(device_t parent, device_t self, void *aux)
 	int64_t minv, warnv, crit, num, den;
 	u_int8_t junk[PCF8591_CHANNELS + 1];
 	envsys_data_t *sensor;
-	int len, error, addr, chan, node = (int)ia->ia_cookie;
+	int len, error, addr, chan, node;
 	u_int i;
+
+	node = devhandle_to_of(device_handle(self));
 
 	sc->sc_dev = self;
 	sc->sc_nchan = 0;

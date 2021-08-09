@@ -1,4 +1,4 @@
-/* $NetBSD: ac100.c,v 1.7 2021/01/27 02:29:48 thorpej Exp $ */
+/* $NetBSD: ac100.c,v 1.7.14.1 2021/08/09 00:30:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac100.c,v 1.7 2021/01/27 02:29:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac100.c,v 1.7.14.1 2021/08/09 00:30:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,7 +153,7 @@ ac100_attach(device_t parent, device_t self, void *aux)
 	sc->sc_todr.cookie = sc;
 
 #ifdef FDT
-	const int phandle = ia->ia_cookie;
+	const int phandle = devhandle_to_of(device_handle(self));
 	const int rtc_phandle = of_find_firstchild_byname(phandle, "rtc");
 	if (rtc_phandle > 0)
 		fdtbus_todr_attach(self, rtc_phandle, &sc->sc_todr);

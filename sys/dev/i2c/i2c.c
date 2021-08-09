@@ -1,4 +1,33 @@
-/*	$NetBSD: i2c.c,v 1.80 2021/08/07 16:19:11 thorpej Exp $	*/
+/*	$NetBSD: i2c.c,v 1.80.2.1 2021/08/09 00:30:09 thorpej Exp $	*/
+
+/*-
+ * Copyright (c) 2021 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +69,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.80 2021/08/07 16:19:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.80.2.1 2021/08/09 00:30:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,22 +95,25 @@ __KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.80 2021/08/07 16:19:11 thorpej Exp $");
 #define I2C_MAX_ADDR	0x3ff	/* 10-bit address, max */
 #endif
 
+struct i2c_device_link {
+	TAILQ_ENTRY(i2c_device_link) l_list;
+	device_t		l_device;
+	i2c_addr_t		l_addr;
+};
+
+TAILQ_HEAD(i2c_devlist_head, i2c_device_link);
+
 struct iic_softc {
 	device_t sc_dev;
 	i2c_tag_t sc_tag;
-	device_t sc_devices[I2C_MAX_ADDR + 1];
+
+	kmutex_t sc_devlist_lock;
+	struct i2c_devlist_head sc_devlist;
 };
 
 static dev_type_open(iic_open);
 static dev_type_close(iic_close);
 static dev_type_ioctl(iic_ioctl);
-
-int iic_init(void);
-
-kmutex_t iic_mtx;
-int iic_refcnt;
-
-ONCE_DECL(iic_once);
 
 const struct cdevsw iic_cdevsw = {
 	.d_open = iic_open,
@@ -95,12 +127,188 @@ const struct cdevsw iic_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
 	.d_discard = nodiscard,
-	.d_flag = D_OTHER
+	.d_flag = D_OTHER | D_MCLOSE,
 };
 
 static void	iic_smbus_intr_thread(void *);
-static void	iic_fill_compat(struct i2c_attach_args*, const char*,
-			size_t, char **);
+
+static kmutex_t iic_mtx;
+static int iic_refcnt;
+static bool iic_unloading;
+static ONCE_DECL(iic_once);
+
+static struct i2c_device_link *
+iic_devslot_lookup(struct iic_softc *sc, i2c_addr_t addr)
+{
+	struct i2c_device_link *link;
+
+	KASSERT(mutex_owned(&sc->sc_devlist_lock));
+
+	/*
+	 * A common pattern is "reserve then insert or delete", and
+	 * this is often done in increasing address order.  So check
+	 * if the last entry is the one we're looking for before we
+	 * search the list from the front.
+	 */
+	link = TAILQ_LAST(&sc->sc_devlist, i2c_devlist_head);
+	if (link == NULL) {
+		/* List is empty. */
+		return NULL;
+	}
+	if (link->l_addr == addr) {
+		return link;
+	}
+
+	TAILQ_FOREACH(link, &sc->sc_devlist, l_list) {
+		/*
+		 * The list is sorted, so if the current list element
+		 * has an address larger than the one we're looking
+		 * for, then it's not in the list.
+		 */
+		if (link->l_addr > addr) {
+			break;
+		}
+		if (link->l_addr == addr) {
+			return link;
+		}
+	}
+	return NULL;
+}
+
+static bool
+iic_devslot_reserve(struct iic_softc *sc, i2c_addr_t addr)
+{
+	struct i2c_device_link *link, *new_link;
+
+	new_link = kmem_zalloc(sizeof(*new_link), KM_SLEEP);
+	new_link->l_addr = addr;
+
+	mutex_enter(&sc->sc_devlist_lock);
+
+	/* Optimize for reserving in increasing i2c address order. */
+	link = TAILQ_LAST(&sc->sc_devlist, i2c_devlist_head);
+	if (link == NULL || link->l_addr < new_link->l_addr) {
+		TAILQ_INSERT_TAIL(&sc->sc_devlist, new_link, l_list);
+		new_link = NULL;
+		goto done;
+	}
+	KASSERT(!TAILQ_EMPTY(&sc->sc_devlist));
+
+	/* Sort the new entry into the list. */
+	TAILQ_FOREACH(link, &sc->sc_devlist, l_list) {
+		if (link->l_addr < new_link->l_addr) {
+			continue;
+		}
+		if (link->l_addr == new_link->l_addr) {
+			/* Address is already reserved / in-use. */
+			goto done;
+		}
+		/*
+		 * If we get here, we know we should be inserted
+		 * before this element, because we checked to see
+		 * if we should be the last entry before entering
+		 * the loop.
+		 */
+		KASSERT(link->l_addr > new_link->l_addr);
+		TAILQ_INSERT_BEFORE(link, new_link, l_list);
+		new_link = NULL;
+		break;
+	}
+	/*
+	 * Because we checked for an empty list early, if we got
+	 * here it means we inserted before "link".
+	 */
+	KASSERT(link != NULL);
+	KASSERT(TAILQ_NEXT(new_link, l_list) == link);
+
+ done:
+	mutex_exit(&sc->sc_devlist_lock);
+
+	if (new_link != NULL) {
+		kmem_free(new_link, sizeof(*new_link));
+		return false;
+	}
+	return true;
+}
+
+static bool
+iic_devslot_insert(struct iic_softc *sc, device_t dev, i2c_addr_t addr)
+{
+	struct i2c_device_link *link;
+	bool rv = false;
+
+	mutex_enter(&sc->sc_devlist_lock);
+
+	link = iic_devslot_lookup(sc, addr);
+	if (link != NULL) {
+		if (link->l_device == NULL) {
+			link->l_device = dev;
+			rv = true;
+		}
+	}
+
+	mutex_exit(&sc->sc_devlist_lock);
+
+	return rv;
+}
+
+static bool
+iic_devslot_remove(struct iic_softc *sc, device_t dev, i2c_addr_t addr)
+{
+	struct i2c_device_link *link;
+	bool rv = false;
+
+	mutex_enter(&sc->sc_devlist_lock);
+
+	link = iic_devslot_lookup(sc, addr);
+	if (link != NULL) {
+		if (link->l_device == dev) {
+			TAILQ_REMOVE(&sc->sc_devlist, link, l_list);
+			rv = true;
+		} else {
+			link = NULL;
+		}
+	}
+
+	mutex_exit(&sc->sc_devlist_lock);
+
+	if (link != NULL) {
+		kmem_free(link, sizeof(*link));
+		return false;
+	}
+	return rv;
+}
+
+static bool
+iic_devslot_set(struct iic_softc *sc, device_t dev, i2c_addr_t addr)
+{
+	return dev != NULL ? iic_devslot_insert(sc, dev, addr)
+			   : iic_devslot_remove(sc, dev, addr);
+}
+
+static bool
+iic_devslot_lookup_addr(struct iic_softc *sc, device_t dev, i2c_addr_t *addrp)
+{
+	struct i2c_device_link *link;
+	bool rv = false;
+
+	KASSERT(dev != NULL);
+	KASSERT(addrp != NULL);
+
+	mutex_enter(&sc->sc_devlist_lock);
+
+	TAILQ_FOREACH(link, &sc->sc_devlist, l_list) {
+		if (link->l_device == dev) {
+			*addrp = link->l_addr;
+			rv = true;
+			break;
+		}
+	}
+
+	mutex_exit(&sc->sc_devlist_lock);
+
+	return rv;
+}
 
 static int
 iic_print_direct(void *aux, const char *pnp)
@@ -108,8 +316,11 @@ iic_print_direct(void *aux, const char *pnp)
 	struct i2c_attach_args *ia = aux;
 
 	if (pnp != NULL)
-		aprint_normal("%s at %s addr 0x%02x",
+		aprint_normal("%s%s%s%s at %s addr 0x%02x",
 			      ia->ia_name ? ia->ia_name : "(unknown)",
+			      ia->ia_clist ? " (" : "",
+			      ia->ia_clist ? ia->ia_clist : "",
+			      ia->ia_clist ? ")" : "",
 			      pnp, ia->ia_addr);
 	else
 		aprint_normal(" addr 0x%02x", ia->ia_addr);
@@ -287,8 +498,8 @@ iic_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	ia.ia_tag = sc->sc_tag;
 
 	ia.ia_name = NULL;
-	ia.ia_ncompat = 0;
-	ia.ia_compat = NULL;
+	ia.ia_clist = NULL;
+	ia.ia_clist_size = 0;
 	ia.ia_prop = NULL;
 
 	if (cf->cf_loc[IICCF_ADDR] == IICCF_ADDR_DEFAULT) {
@@ -316,6 +527,8 @@ iic_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 
 	for (ia.ia_addr = first_addr; ia.ia_addr <= last_addr; ia.ia_addr++) {
 		int error, match_result;
+		device_t newdev;
+		bool rv __diagused;
 
 		/*
 		 * Skip I2C addresses that are reserved for
@@ -327,7 +540,7 @@ iic_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 		/*
 		 * Skip addresses where a device is already attached.
 		 */
-		if (sc->sc_devices[ia.ia_addr] != NULL)
+		if (! iic_devslot_reserve(sc, ia.ia_addr))
 			continue;
 
 		/*
@@ -344,8 +557,11 @@ iic_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 		 * is there.
 		 */
 		match_result = config_probe(parent, cf, &ia);/*XXX*/
-		if (match_result <= 0)
+		if (match_result <= 0) {
+			rv = iic_devslot_remove(sc, NULL, ia.ia_addr);
+			KASSERT(rv);
 			continue;
+		}
 
 		/*
 		 * If the quality of the match by the driver was low
@@ -354,11 +570,15 @@ iic_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 		 * to see if it looks like something is really there.
 		 */
 		if (match_result == I2C_MATCH_ADDRESS_ONLY &&
-		    (error = (*probe_func)(sc, &ia, 0)) != 0)
+		    (error = (*probe_func)(sc, &ia, 0)) != 0) {
+			rv = iic_devslot_remove(sc, NULL, ia.ia_addr);
+			KASSERT(rv);
 			continue;
+		}
 
-		sc->sc_devices[ia.ia_addr] =
-		    config_attach(parent, cf, &ia, iic_print, CFARGS_NONE);
+		newdev = config_attach(parent, cf, &ia, iic_print, CFARGS_NONE);
+		rv = iic_devslot_set(sc, newdev, ia.ia_addr);
+		KASSERT(rv);
 	}
 
 	return 0;
@@ -368,13 +588,15 @@ static void
 iic_child_detach(device_t parent, device_t child)
 {
 	struct iic_softc *sc = device_private(parent);
-	int i;
+	i2c_addr_t addr;
+	bool rv __diagused;
 
-	for (i = 0; i <= I2C_MAX_ADDR; i++)
-		if (sc->sc_devices[i] == child) {
-			sc->sc_devices[i] = NULL;
-			break;
-		}
+	if (! iic_devslot_lookup_addr(sc, child, &addr)) {
+		return;
+	}
+
+	rv = iic_devslot_remove(sc, child, addr);
+	KASSERT(rv);
 }
 
 static int
@@ -384,6 +606,34 @@ iic_rescan(device_t self, const char *ifattr, const int *locators)
 	    CFARGS(.search = iic_search,
 		   .locators = locators));
 	return 0;
+}
+
+static bool
+iic_enumerate_devices_callback(device_t self,
+    struct i2c_enumerate_devices_args *args)
+{
+	struct iic_softc *sc = device_private(self);
+	int loc[IICCF_NLOCS] = { 0 };
+	device_t newdev;
+	bool rv __diagused;
+
+	loc[IICCF_ADDR] = args->ia->ia_addr;
+
+	if (args->ia->ia_addr > I2C_MAX_ADDR) {
+		aprint_error_dev(self,
+		    "WARNING: ignoring bad device address @ 0x%02x\n",
+		    args->ia->ia_addr);
+		return true;			/* keep enumerating */
+	}
+	if (iic_devslot_reserve(sc, args->ia->ia_addr)) {
+		newdev = config_found(self, args->ia, iic_print_direct,
+		    CFARGS(/* .submatch = config_stdsubmatch, XXX */
+			   .locators = loc,
+			   .devhandle = args->ia->ia_devhandle));
+		rv = iic_devslot_set(sc, newdev, args->ia->ia_addr);
+		KASSERT(rv);
+	}
+	return true;				/* keep enumerating */
 }
 
 static int
@@ -398,20 +648,20 @@ iic_attach(device_t parent, device_t self, void *aux)
 {
 	struct iic_softc *sc = device_private(self);
 	struct i2cbus_attach_args *iba = aux;
-	prop_array_t child_devices;
-	prop_dictionary_t props;
-	char *buf;
 	i2c_tag_t ic;
 	int rv;
-	bool no_indirect_config = false;
 
 	aprint_naive("\n");
 	aprint_normal(": I2C bus\n");
 
 	sc->sc_dev = self;
 	sc->sc_tag = iba->iba_tag;
+
 	ic = sc->sc_tag;
 	ic->ic_devname = device_xname(self);
+
+	TAILQ_INIT(&sc->sc_devlist);
+	mutex_init(&sc->sc_devlist_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	LIST_INIT(&(sc->sc_tag->ic_list));
 	LIST_INIT(&(sc->sc_tag->ic_proc_list));
@@ -425,89 +675,29 @@ iic_attach(device_t parent, device_t self, void *aux)
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
-	if (iba->iba_child_devices) {
-		child_devices = iba->iba_child_devices;
-		no_indirect_config = true;
-	} else {
-		props = device_properties(parent);
-		prop_dictionary_get_bool(props, "i2c-no-indirect-config",
-		    &no_indirect_config);
-		child_devices = prop_dictionary_get(props, "i2c-child-devices");
-	}
+	/*
+	 * Attempt to enumerate the devices on the bus.  If there is no
+	 * enumeration method, then we will attempt indirect configuration.
+	 */
+	struct i2c_enumerate_devices_args enumargs;
+	struct i2c_attach_args ia;
 
-	if (child_devices) {
-		unsigned int i, count;
-		prop_dictionary_t dev;
-		prop_data_t cdata;
-		uint32_t addr;
-		uint64_t cookie;
-		uint32_t cookietype;
-		const char *name;
-		struct i2c_attach_args ia;
-		int loc[IICCF_NLOCS];
+	memset(&ia, 0, sizeof(ia));
+	ia.ia_tag = ic;
 
-		memset(loc, 0, sizeof loc);
-		count = prop_array_count(child_devices);
-		for (i = 0; i < count; i++) {
-			dev = prop_array_get(child_devices, i);
-			if (!dev) continue;
- 			if (!prop_dictionary_get_string(
-			    dev, "name", &name)) {
-				/* "name" property is optional. */
-				name = NULL;
-			}
-			if (!prop_dictionary_get_uint32(dev, "addr", &addr))
-				continue;
-			if (!prop_dictionary_get_uint64(dev, "cookie", &cookie))
-				cookie = 0;
-			if (!prop_dictionary_get_uint32(dev, "cookietype",
-			    &cookietype))
-				cookietype = I2C_COOKIE_NONE;
-			loc[IICCF_ADDR] = addr;
+	memset(&enumargs, 0, sizeof(enumargs));
+	enumargs.ia = &ia;
+	enumargs.callback = iic_enumerate_devices_callback;
 
-			memset(&ia, 0, sizeof ia);
-			ia.ia_addr = addr;
-			ia.ia_tag = ic;
-			ia.ia_name = name;
-			ia.ia_cookie = cookie;
-			ia.ia_cookietype = cookietype;
-			ia.ia_prop = dev;
-
-			buf = NULL;
-			cdata = prop_dictionary_get(dev, "compatible");
-			if (cdata)
-				iic_fill_compat(&ia,
-				    prop_data_value(cdata),
-				    prop_data_size(cdata), &buf);
-
-			if (name == NULL && cdata == NULL) {
-				aprint_error_dev(self,
-				    "WARNING: ignoring bad child device entry "
-				    "for address 0x%02x\n", addr);
-			} else {
-				if (addr > I2C_MAX_ADDR) {
-					aprint_error_dev(self,
-					    "WARNING: ignoring bad device "
-					    "address @ 0x%02x\n", addr);
-				} else if (sc->sc_devices[addr] == NULL) {
-					sc->sc_devices[addr] =
-					    config_found(self, &ia,
-					    iic_print_direct,
-					    CFARGS(.locators = loc));
-				}
-			}
-
-			if (ia.ia_compat)
-				free(ia.ia_compat, M_TEMP);
-			if (buf)
-				free(buf, M_TEMP);
-		}
-	} else if (!no_indirect_config) {
+	rv = device_call(self, "i2c-enumerate-devices", &enumargs);
+	if (rv == ENOTSUP) {
 		/*
-		 * Attach all i2c devices described in the kernel
+		 * Direct configuration is not supported on this
+		 * bus; perform indirect configuration: attempt
+		 * to attach the i2c devices listed in the kernel
 		 * configuration file.
 		 */
-		iic_rescan(self, "iic", NULL);
+		iic_rescan(self, NULL, NULL);
 	}
 }
 
@@ -516,14 +706,25 @@ iic_detach(device_t self, int flags)
 {
 	struct iic_softc *sc = device_private(self);
 	i2c_tag_t ic = sc->sc_tag;
-	int i, error;
+	struct i2c_device_link *link;
+	device_t child;
+	int error;
 	void *hdl;
 
-	for (i = 0; i <= I2C_MAX_ADDR; i++) {
-		if (sc->sc_devices[i]) {
-			error = config_detach(sc->sc_devices[i], flags);
-			if (error)
-				return error;
+	/* Detach all children in address order. */
+	for (;;) {
+		mutex_enter(&sc->sc_devlist_lock);
+		link = TAILQ_FIRST(&sc->sc_devlist);
+		if (link == NULL) {
+			mutex_exit(&sc->sc_devlist_lock);
+			break;
+		}
+		child = link->l_device;
+		mutex_exit(&sc->sc_devlist_lock);
+
+		error = config_detach(child, flags);
+		if (error) {
+			return error;
 		}
 	}
 
@@ -652,41 +853,6 @@ iic_smbus_intr(i2c_tag_t ic)
 	return 1;
 }
 
-static void
-iic_fill_compat(struct i2c_attach_args *ia, const char *compat, size_t len,
-	char **buffer)
-{
-	int count, i;
-	const char *c, *start, **ptr;
-
-	*buffer = NULL;
-	for (i = count = 0, c = compat; i < len; i++, c++)
-		if (*c == 0)
-			count++;
-	count += 2;
-	ptr = malloc(sizeof(char*)*count, M_TEMP, M_WAITOK);
-	if (!ptr) return;
-
-	for (i = count = 0, start = c = compat; i < len; i++, c++) {
-		if (*c == 0) {
-			ptr[count++] = start;
-			start = c+1;
-		}
-	}
-	if (start < compat+len) {
-		/* last string not 0 terminated */
-		size_t l = c-start;
-		*buffer = malloc(l+1, M_TEMP, M_WAITOK);
-		memcpy(*buffer, start, l);
-		(*buffer)[l] = 0;
-		ptr[count++] = *buffer;
-	}
-	ptr[count] = NULL;
-
-	ia->ia_compat = ptr;
-	ia->ia_ncompat = count;
-}
-
 /*
  * iic_compatible_match --
  *	Match a device's "compatible" property against the list
@@ -694,12 +860,12 @@ iic_fill_compat(struct i2c_attach_args *ia, const char *compat, size_t len,
  */
 int
 iic_compatible_match(const struct i2c_attach_args *ia,
-		     const struct device_compatible_entry *compats)
+		     const struct device_compatible_entry *compat_data)
 {
 	int match_result;
 
-	match_result = device_compatible_match(ia->ia_compat, ia->ia_ncompat,
-					       compats);
+	match_result = device_compatible_match_strlist(ia->ia_clist,
+	    ia->ia_clist_size, compat_data);
 	if (match_result) {
 		match_result =
 		    MIN(I2C_MATCH_DIRECT_COMPATIBLE + match_result - 1,
@@ -716,10 +882,10 @@ iic_compatible_match(const struct i2c_attach_args *ia,
  */
 const struct device_compatible_entry *
 iic_compatible_lookup(const struct i2c_attach_args *ia,
-		      const struct device_compatible_entry *compats)
+		      const struct device_compatible_entry *compat_data)
 {
-	return device_compatible_lookup(ia->ia_compat, ia->ia_ncompat,
-					compats);
+	return device_compatible_lookup_strlist(ia->ia_clist,
+	    ia->ia_clist_size, compat_data);
 }
 
 /*
@@ -731,19 +897,21 @@ iic_compatible_lookup(const struct i2c_attach_args *ia,
  */
 bool
 iic_use_direct_match(const struct i2c_attach_args *ia, const cfdata_t cf,
-		     const struct device_compatible_entry *compats,
+		     const struct device_compatible_entry *compat_data,
 		     int *match_resultp)
 {
 	KASSERT(match_resultp != NULL);
 
+	/* XXX Should not really be using "name". */
 	if (ia->ia_name != NULL &&
 	    strcmp(ia->ia_name, cf->cf_name) == 0) {
 		*match_resultp = I2C_MATCH_DIRECT_SPECIFIC;
 		return true;
 	}
 
-	if (ia->ia_ncompat > 0 && ia->ia_compat != NULL) {
-		*match_resultp = iic_compatible_match(ia, compats);
+	if (ia->ia_clist != NULL) {
+		KASSERT(ia->ia_clist_size != 0);
+		*match_resultp = iic_compatible_match(ia, compat_data);
 		return true;
 	}
 
@@ -753,15 +921,32 @@ iic_use_direct_match(const struct i2c_attach_args *ia, const cfdata_t cf,
 static int
 iic_open(dev_t dev, int flag, int fmt, lwp_t *l)
 {
-	struct iic_softc *sc = device_lookup_private(&iic_cd, minor(dev));
+	struct iic_softc *sc;
 
 	mutex_enter(&iic_mtx);
-	if (sc == NULL) {
+
+	if (iic_unloading) {
 		mutex_exit(&iic_mtx);
 		return ENXIO;
 	}
+
+	/* Hold a refrence while we look up the softc. */
+	if (iic_refcnt == INT_MAX) {
+		mutex_exit(&iic_mtx);
+		return EBUSY;
+	}
 	iic_refcnt++;
+
 	mutex_exit(&iic_mtx);
+
+	sc = device_lookup_private(&iic_cd, minor(dev));
+
+	if (sc == NULL) {
+		mutex_enter(&iic_mtx);
+		iic_refcnt--;
+		mutex_exit(&iic_mtx);
+		return ENXIO;
+	}
 
 	return 0;
 }
@@ -769,6 +954,10 @@ iic_open(dev_t dev, int flag, int fmt, lwp_t *l)
 static int
 iic_close(dev_t dev, int flag, int fmt, lwp_t *l)
 {
+	struct iic_softc *sc = device_lookup_private(&iic_cd, minor(dev));;
+
+	KASSERT(iic_refcnt != 0);
+	KASSERT(sc != NULL);
 
 	mutex_enter(&iic_mtx);
 	iic_refcnt--;
@@ -798,12 +987,6 @@ iic_ioctl_exec(struct iic_softc *sc, i2c_ioctl_exec_t *iie, int flag)
 	if (I2C_OP_WRITE_P(iie->iie_op) && (flag & FWRITE) == 0)
 		return EBADF;
 
-#if 0
-	/* Disallow userspace access to devices that have drivers attached. */
-	if (sc->sc_devices[iie->iie_addr] != NULL)
-		return EBUSY;
-#endif
-
 	if (iie->iie_cmd != NULL) {
 		cmd = kmem_alloc(iie->iie_cmdlen, KM_SLEEP);
 		error = copyin(iie->iie_cmd, cmd, iie->iie_cmdlen);
@@ -817,7 +1000,9 @@ iic_ioctl_exec(struct iic_softc *sc, i2c_ioctl_exec_t *iie, int flag)
 			goto out;
 	}
 
-	iic_acquire_bus(ic, 0);
+	if ((error = iic_acquire_bus(ic, 0)) != 0) {
+		goto out;
+	}
 	error = iic_exec(ic, iie->iie_op, iie->iie_addr, cmd, iie->iie_cmdlen,
 	    buf, iie->iie_buflen, 0);
 	iic_release_bus(ic, 0);
@@ -868,7 +1053,7 @@ MODULE(MODULE_CLASS_DRIVER, iic, "i2cexec,i2c_bitbang");
 #include "ioconf.c"
 #endif
 
-int
+static int
 iic_init(void)
 {
 
@@ -915,19 +1100,26 @@ iic_modcmd(modcmd_t cmd, void *opaque)
 			mutex_exit(&iic_mtx);
 			return EBUSY;
 		}
+		iic_unloading = true;
+		mutex_exit(&iic_mtx);
 #ifdef _MODULE
 		error = config_fini_component(cfdriver_ioconf_iic,
 		    cfattach_ioconf_iic, cfdata_ioconf_iic);
 		if (error != 0) {
+			mutex_enter(&iic_mtx);
+			iic_unloading = false;
 			mutex_exit(&iic_mtx);
 			break;
 		}
 		error = devsw_detach(NULL, &iic_cdevsw);
-		if (error != 0)
+		if (error != 0) {
 			config_init_component(cfdriver_ioconf_iic,
 			    cfattach_ioconf_iic, cfdata_ioconf_iic);
+			mutex_enter(&iic_mtx);
+			iic_unloading = false;
+			mutex_exit(&iic_mtx);
+		}
 #endif
-		mutex_exit(&iic_mtx);
 		break;
 	default:
 		error = ENOTTY;

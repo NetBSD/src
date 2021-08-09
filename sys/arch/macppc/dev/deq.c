@@ -1,4 +1,4 @@
-/*	$NetBSD: deq.c,v 1.20 2021/01/27 02:17:27 thorpej Exp $	*/
+/*	$NetBSD: deq.c,v 1.20.14.1 2021/08/09 00:30:08 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz
@@ -32,7 +32,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: deq.c,v 1.20 2021/01/27 02:17:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: deq.c,v 1.20.14.1 2021/08/09 00:30:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,7 @@ deq_attach(device_t parent, device_t self, void *aux)
 	char name[256];
 
 	sc->sc_dev = self;
-	sc->sc_node = ia->ia_cookie;
+	sc->sc_node = devhandle_to_of(device_handle(self));
 	sc->sc_parent = parent;
 	sc->sc_address = ia->ia_addr;
 	sc->sc_i2c = ia->ia_tag;

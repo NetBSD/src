@@ -1,6 +1,0 @@
-msg_224.c(6): error: syntax error 'error' [249]
-msg_224.c(7): error: syntax error 'error' [249]
-msg_224.c(8): error: syntax error 'error' [249]
-msg_224.c(9): error: syntax error 'error' [249]
-msg_224.c(10): error: syntax error 'error' [249]
-msg_224.c(10): error: cannot recover from previous errors [224]

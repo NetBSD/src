@@ -1,3 +1,5 @@
+/*	$NetBSD: smu.c,v 1.14.2.1 2021/08/09 00:30:08 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 2013 Phileas Fogg
  * All rights reserved.
@@ -30,6 +32,7 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/proc.h>
+#include <sys/kmem.h>
 #include <sys/mutex.h>
 #include <sys/time.h>
 #include <sys/reboot.h>
@@ -72,14 +75,15 @@ struct smu_fan {
 };
 
 struct smu_iicbus {
-	struct smu_softc* sc;
+	struct smu_softc *sc;
 
 	int reg;
 	struct i2c_controller i2c;
+
+	LIST_ENTRY(smu_iicbus) buslist;
 };
 
 #define SMU_MAX_FANS		8
-#define SMU_MAX_IICBUS		3
 #define SMU_MAX_SME_SENSORS	(SMU_MAX_FANS + 8)
 
 struct smu_zone {
@@ -113,8 +117,7 @@ struct smu_softc {
 	int sc_num_fans;
 	struct smu_fan sc_fans[SMU_MAX_FANS];
 
-	int sc_num_iicbus;
-	struct smu_iicbus sc_iicbus[SMU_MAX_IICBUS];
+	LIST_HEAD(, smu_iicbus) sc_iic_busses;
 
 	struct todr_chip_handle sc_todr;
 
@@ -158,7 +161,6 @@ static int smu_setup_doorbell(struct smu_softc *);
 static void smu_setup_fans(struct smu_softc *);
 static void smu_setup_iicbus(struct smu_softc *);
 static void smu_setup_sme(struct smu_softc *);
-static int smu_iicbus_print(void *, const char *);
 static void smu_sme_refresh(struct sysmon_envsys *, envsys_data_t *);
 static int smu_do_cmd(struct smu_softc *, struct smu_cmd *, int);
 static int smu_dbell_gpio_intr(void *);
@@ -445,42 +447,43 @@ static void
 smu_setup_iicbus(struct smu_softc *sc)
 {
 	struct smu_iicbus *iicbus;
-	struct i2c_controller *i2c;
-	struct smu_iicbus_confargs ca;
+	struct i2cbus_attach_args iba;
 	int node;
 	char name[32];
 
 	node = of_getnode_byname(sc->sc_node, "smu-i2c-control");
-	if (node == 0) node = sc->sc_node;
-	for (node = OF_child(node);
-	    (node != 0) && (sc->sc_num_iicbus < SMU_MAX_IICBUS);
-	    node = OF_peer(node)) {
+	if (node == 0)
+		node = sc->sc_node;
+
+	for (node = OF_child(node); node != 0; node = OF_peer(node)) {
+
 		memset(name, 0, sizeof(name));
 		OF_getprop(node, "name", name, sizeof(name));
-		if ((strcmp(name, "i2c-bus") != 0) &&
-		    (strcmp(name, "i2c") != 0))
+		if (strcmp(name, "i2c-bus") != 0 && strcmp(name, "i2c") != 0)
 			continue;
 
-		iicbus = &sc->sc_iicbus[sc->sc_num_iicbus];
+		iicbus = kmem_zalloc(sizeof(*iicbus), KM_SLEEP);
 		iicbus->sc = sc;
-		i2c = &iicbus->i2c;
 
-		if (OF_getprop(node, "reg", &iicbus->reg, sizeof(iicbus->reg)) <= 0)
+		if (OF_getprop(node, "reg", &iicbus->reg,
+			       sizeof(iicbus->reg)) <= 0) {
+			kmem_free(iicbus, sizeof(*iicbus));
 			continue;
+		}
+		LIST_INSERT_HEAD(&sc->sc_iic_busses, iicbus, buslist);
 
 		DPRINTF("iicbus: reg %x\n", iicbus->reg);
 
-		iic_tag_init(i2c);
-		i2c->ic_cookie = iicbus;
-		i2c->ic_exec = smu_iicbus_exec;
+		iic_tag_init(&iicbus->i2c);
+		iicbus->i2c.ic_cookie = iicbus;
+		iicbus->i2c.ic_channel = iicbus->reg;
+		iicbus->i2c.ic_exec = smu_iicbus_exec;
 
-		ca.ca_name = name;
-		ca.ca_node = node;
-		ca.ca_tag = i2c;
-		config_found(sc->sc_dev, &ca, smu_iicbus_print,
+		memset(&iba, 0, sizeof(iba));
+		iba.iba_tag = &iicbus->i2c;
+
+		config_found(sc->sc_dev, &iba, iicbus_print_multi,
 		    CFARGS(.devhandle = devhandle_from_of(node)));
-
-		sc->sc_num_iicbus++;
 	}
 }
 
@@ -537,17 +540,6 @@ next:
 		    "unable to register with sysmon\n");
 		sysmon_envsys_destroy(sc->sc_sme);
 	}
-}
-
-static int
-smu_iicbus_print(void *aux, const char *smu)
-{
-	struct smu_iicbus_confargs *ca = aux;
-
-	if (smu)
-		aprint_normal("%s at %s", ca->ca_name, smu);
-
-	return UNCONF;
 }
 
 static void

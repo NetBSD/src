@@ -1,7 +1,0 @@
-# two server duid config
-
-# EN server duid declaration
-server-duid en 2495 "enterprise-specific-identifier-1234";
-
-# LL server duid declaration
-server-duid ll ethernet 00:16:6F:49:7D:9B;

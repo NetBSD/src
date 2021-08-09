@@ -1,4 +1,4 @@
-/*	$NetBSD: imxspi.c,v 1.9 2021/08/07 16:18:44 thorpej Exp $	*/
+/*	$NetBSD: imxspi.c,v 1.9.2.1 2021/08/09 00:30:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2014  Genetec Corporation.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxspi.c,v 1.9 2021/08/07 16:18:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxspi.c,v 1.9.2.1 2021/08/09 00:30:07 thorpej Exp $");
 
 #include "opt_imxspi.h"
 #include "opt_fdt.h"
@@ -86,20 +86,6 @@ int imxspi_debug = IMXSPI_DEBUG;
 #define	DPRINTFN(n,x)
 #endif
 
-#ifdef FDT
-static struct spi_controller *
-imxspi_get_controller(device_t dev)
-{
-	struct imxspi_softc * const sc = device_private(dev);
-
-	return &sc->sc_spi;
-}
-
-static const struct fdtbus_spi_controller_func imxspi_funcs = {
-	.get_controller = imxspi_get_controller
-};
-#endif
-
 int
 imxspi_attach_common(device_t self)
 {
@@ -140,16 +126,13 @@ imxspi_attach_common(device_t self)
 #ifdef FDT
 	KASSERT(sc->sc_phandle != 0);
 
-	fdtbus_register_spi_controller(self, sc->sc_phandle, &imxspi_funcs);
-	(void) fdtbus_attach_spibus(self, sc->sc_phandle, spibus_print);
-#else
-	struct spibus_attach_args sba;
-	memset(&sba, 0, sizeof(sba));
-	sba.sba_controller = &sc->sc_spi;
-
-	/* attach slave devices */
-	config_found(sc->sc_dev, &sba, spibus_print, CFARGS_NONE);
+	fdtbus_register_spi_controller(&sc->sc_spi, sc->sc_phandle);
 #endif
+	struct spibus_attach_args sba = {
+		.sba_controller = &sc->sc_spi,
+	};
+	config_found(self, &sba, spibus_print,
+	    CFARGS(.devhandle = device_handle(self)));
 
 	return 0;
 }

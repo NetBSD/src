@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_bsc_acpi.c,v 1.4 2021/08/07 16:18:43 thorpej Exp $ */
+/* $NetBSD: bcm2835_bsc_acpi.c,v 1.4.2.1 2021/08/09 00:30:06 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_bsc_acpi.c,v 1.4 2021/08/07 16:18:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_bsc_acpi.c,v 1.4.2.1 2021/08/09 00:30:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -37,7 +37,6 @@ __KERNEL_RCSID(0, "$NetBSD: bcm2835_bsc_acpi.c,v 1.4 2021/08/07 16:18:43 thorpej
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_intr.h>
-#include <dev/acpi/acpi_i2c.h>
 
 #include <arm/broadcom/bcm2835var.h>
 #include <arm/broadcom/bcm2835_mbox.h>
@@ -160,8 +159,8 @@ bsciic_acpi_attach(device_t parent, device_t self, void *aux)
 
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c;
-	iba.iba_child_devices = acpi_enter_i2c_devs(self, aa->aa_node);
-	config_found(self, &iba, iicbus_print, CFARGS_NONE);
+	config_found(self, &iba, iicbus_print,
+	    CFARGS(.devhandle = device_handle(self)));
 
 done:
 	acpi_resource_cleanup(&res);

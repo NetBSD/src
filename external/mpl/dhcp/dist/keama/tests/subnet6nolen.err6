@@ -1,7 +1,0 @@
-# bad (no length) DHCPv6 subnet declaration config
-
-# DHCPv6 subnet declaration
-subnet6 2001::/ {
-     default-lease-time 1800;
-}
-

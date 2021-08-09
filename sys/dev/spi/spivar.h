@@ -1,4 +1,4 @@
-/* $NetBSD: spivar.h,v 1.10 2020/08/04 13:20:45 kardel Exp $ */
+/* $NetBSD: spivar.h,v 1.10.16.1 2021/08/09 00:30:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -77,18 +77,30 @@ int spibus_print(void *, const char *);
 /* one per chip select */
 struct spibus_attach_args {
 	struct spi_controller	*sba_controller;
-	prop_array_t		sba_child_devices;
 };
 
 struct spi_attach_args {
 	struct spi_handle	*sa_handle;
-	/* only set if using direct config */
-	int		sa_ncompat;	/* number of pointers in the
-					   ia_compat array */
-	const char **	sa_compat;	/* chip names */
-	prop_dictionary_t sa_prop;	/* dictionary for this device */
 
-	uintptr_t	sa_cookie;	/* OF node in openfirmware machines */
+	/* only set if using direct config */
+	const char	*sa_name;	/* name of the device */
+	const char	*sa_clist;	/* compatible strlist */
+	size_t		sa_clist_size;	/* size of compatible strlist */
+	devhandle_t	sa_devhandle;	/* device handle for the device */
+};
+
+/*
+ * spi-enumerate-devices device call
+ *
+ *	Enumerates the devices connected to the SPI bus, filling out
+ *	the spi_attach_args and invoking the callback for each one.
+ *	If the callback returns true, then enumeration continues.  If
+ *	the callback returns false, enumeration is stopped.
+ */
+struct spi_enumerate_devices_args {
+	struct spi_attach_args *sa;
+	bool (*callback)(device_t, struct spi_enumerate_devices_args *);
+	int chip_select;
 };
 
 /*
