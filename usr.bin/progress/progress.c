@@ -1,4 +1,4 @@
-/*	$NetBSD: progress.c,v 1.23 2021/01/07 12:02:52 lukem Exp $ */
+/*	$NetBSD: progress.c,v 1.24 2021/08/09 10:46:39 gson Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: progress.c,v 1.23 2021/01/07 12:02:52 lukem Exp $");
+__RCSID("$NetBSD: progress.c,v 1.24 2021/08/09 10:46:39 gson Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -259,7 +259,7 @@ main(int argc, char *argv[])
 		 */
 		ws = WIFSIGNALED(ws) ? WTERMSIG(ws) : WEXITSTATUS(ws);
 
-		if (deadpid != -1 && errno == EINTR)
+		if (deadpid == -1 && errno == EINTR)
 			continue;
 		if (deadpid == pid) {
 			pid = 0;
