@@ -1,4 +1,4 @@
-/* $NetBSD: bcmgenet.c,v 1.9 2021/05/03 10:28:26 rin Exp $ */
+/* $NetBSD: bcmgenet.c,v 1.10 2021/08/10 15:28:44 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcmgenet.c,v 1.9 2021/05/03 10:28:26 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcmgenet.c,v 1.10 2021/08/10 15:28:44 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -726,9 +726,11 @@ genet_rxintr(struct genet_softc *sc, int qid)
 		}
 
 		/* unload map before it gets loaded in setup_rxbuf */
-		bus_dmamap_sync(sc->sc_rx.buf_tag, sc->sc_rx.buf_map[index].map,
-		    0, sc->sc_rx.buf_map[index].map->dm_mapsize,
-		    BUS_DMASYNC_POSTREAD);
+		if (sc->sc_rx.buf_map[index].map->dm_mapsize > 0) {
+			bus_dmamap_sync(sc->sc_rx.buf_tag, sc->sc_rx.buf_map[index].map,
+			    0, sc->sc_rx.buf_map[index].map->dm_mapsize,
+			    BUS_DMASYNC_POSTREAD);
+		}
 		bus_dmamap_unload(sc->sc_rx.buf_tag, sc->sc_rx.buf_map[index].map);
 		sc->sc_rx.buf_map[index].mbuf = NULL;
 
@@ -778,15 +780,18 @@ genet_txintr(struct genet_softc *sc, int qid)
 		bmap = &sc->sc_tx.buf_map[i];
 		if (bmap->mbuf != NULL) {
 			/* XXX first segment already unloads */
-			bus_dmamap_sync(sc->sc_tx.buf_tag, bmap->map,
-			    0, bmap->map->dm_mapsize,
-			    BUS_DMASYNC_POSTWRITE);
+			if (bmap->map->dm_mapsize > 0) {
+				bus_dmamap_sync(sc->sc_tx.buf_tag, bmap->map,
+				    0, bmap->map->dm_mapsize,
+				    BUS_DMASYNC_POSTWRITE);
+			}
 			bus_dmamap_unload(sc->sc_tx.buf_tag, bmap->map);
 			m_freem(bmap->mbuf);
 			bmap->mbuf = NULL;
 			++pkts;
 		}
 
+		ifp->if_flags &= ~IFF_OACTIVE;
 		i = TX_NEXT(i);
 		sc->sc_tx.cidx = (sc->sc_tx.cidx + 1) & 0xffff;
 	}
