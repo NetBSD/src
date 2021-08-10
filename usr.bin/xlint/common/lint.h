@@ -1,4 +1,4 @@
-/*	$NetBSD: lint.h,v 1.27 2021/04/10 18:36:27 rillig Exp $	*/
+/*	$NetBSD: lint.h,v 1.28 2021/08/10 17:31:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -80,7 +80,7 @@ typedef enum {
 	PTR,		/* pointer */
 	ARRAY,		/* array */
 	FUNC,		/* function */
-	COMPLEX,	/* _Complex */
+	COMPLEX,	/* keyword "_Complex", only used in the parser */
 	FCOMPLEX,	/* float _Complex */
 	DCOMPLEX,	/* double _Complex */
 	LCOMPLEX	/* long double _Complex */
