@@ -1,4 +1,4 @@
-/*	$NetBSD: integrator_machdep.c,v 1.79 2020/04/18 11:00:39 skrll Exp $	*/
+/*	$NetBSD: integrator_machdep.c,v 1.80 2021/08/10 06:47:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 ARM Ltd
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: integrator_machdep.c,v 1.79 2020/04/18 11:00:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: integrator_machdep.c,v 1.80 2021/08/10 06:47:49 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -371,7 +371,7 @@ initarm(void *arg)
 	bootconfig.dramblocks = 1;
 	bootconfig.dram[0].address = memstart;
 	bootconfig.dram[0].pages = memsize / PAGE_SIZE;
-	bootconfig.dram[0].flags = BOOT_DRAM_CAN_DMA | BOOT_DRAM_PREFER;
+	bootconfig.dram[0].flags = BOOT_DRAM_CAN_DMA;
 
 	arm32_bootmem_init(bootconfig.dram[0].address,
 		bootconfig.dram[0].pages * PAGE_SIZE, (unsigned int) KERNEL_BASE_phys);

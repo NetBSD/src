@@ -1,4 +1,4 @@
-/* $Id: imx23_olinuxino_machdep.c,v 1.11 2020/11/28 14:02:30 skrll Exp $ */
+/* $Id: imx23_olinuxino_machdep.c,v 1.12 2021/08/10 06:47:48 skrll Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -178,7 +178,7 @@ initarm(void *arg)
 	bootconfig.dramblocks = 1;
 	bootconfig.dram[0].address = DRAM_BASE;
 	bootconfig.dram[0].pages = ram_size / PAGE_SIZE;
-	bootconfig.dram[0].flags = BOOT_DRAM_CAN_DMA | BOOT_DRAM_PREFER;
+	bootconfig.dram[0].flags = BOOT_DRAM_CAN_DMA;
 
         arm32_bootmem_init(bootconfig.dram[0].address, ram_size,
             ((vsize_t)&KERNEL_BASE_phys));
