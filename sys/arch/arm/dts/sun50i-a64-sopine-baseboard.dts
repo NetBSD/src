@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i-a64-sopine-baseboard.dts,v 1.4 2021/06/30 06:24:02 skrll Exp $ */
+/* $NetBSD: sun50i-a64-sopine-baseboard.dts,v 1.5 2021/08/10 16:52:43 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -37,3 +37,15 @@
 	status = "okay";
 };
 
+&cpu0 {
+        cpu-supply = <&reg_dcdc2>;
+        operating-points = <
+                /* kHz    uV */
+                1152000 1300000
+                1104000 1260000
+                1008000 1200000
+                816000  1080000
+                648000  1040000
+                408000  1000000
+                >;
+};
