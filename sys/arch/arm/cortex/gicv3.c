@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.c,v 1.45 2021/08/10 15:33:09 jmcneill Exp $ */
+/* $NetBSD: gicv3.c,v 1.46 2021/08/10 17:12:31 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,11 +27,12 @@
  */
 
 #include "opt_multiprocessor.h"
+#include "opt_gic.h"
 
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.45 2021/08/10 15:33:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.46 2021/08/10 17:12:31 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -51,7 +52,10 @@ __KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.45 2021/08/10 15:33:09 jmcneill Exp $");
 
 #include <arm/cortex/gicv3.h>
 #include <arm/cortex/gic_reg.h>
+
+#ifdef GIC_SPLFUNCS
 #include <arm/cortex/gic_splfuncs.h>
+#endif
 
 #define	PICTOSOFTC(pic)	\
 	((void *)((uintptr_t)(pic) - offsetof(struct gicv3_softc, sc_pic)))
@@ -952,7 +956,9 @@ gicv3_init(struct gicv3_softc *sc)
 #endif
 #endif
 
+#ifdef GIC_SPLFUNCS
 	gic_spl_init();
+#endif
 
 	return 0;
 }
