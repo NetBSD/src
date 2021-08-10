@@ -1,9 +1,31 @@
-/*	$NetBSD: ops.def,v 1.20 2021/04/01 14:59:21 rillig Exp $ */
+/*	$NetBSD: ops.def,v 1.21 2021/08/10 06:31:16 rillig Exp $ */
 
 begin_ops()
 
-/* See mod_t in op.h for the definition of the table columns. */
-
+/*
+ * Operator properties; see mod_t in op.h.
+ *
+ * 	warn if operand '='					      x
+ *	bad on enum						    x
+ *	valid on enum						  x
+ *	comparison		- - - - - - - - - - - - - - - - x
+ *	possible precedence confusion			      x	|
+ *	warn if right operand unsigned			    x	|
+ *	warn if left operand unsigned			  x	|
+ *	has side effects	- - - - - - - - - - - - x	|
+ *	balance operands			      x	|	|
+ *	left test context			    x	|	|
+ *	left value context			  x	|	|
+ *	fold constant operands	- - - - - - - - x	|	|
+ *	requires scalar			      x	|	|	|
+ *	requires arithmetic		    x	|	|	|
+ *	requires integer or complex	  x	|	|	|
+ *	requires integer	- - - - x	|	|	|
+ *	requires _Bool		      x	|	|	|	|
+ *	takes _Bool		    x	|	|	|	|
+ *	logical			  x	|	|	|	|
+ *	binary			x	|	|	|	|
+ */
 /*	name	repr		b l b B i c a s f v t b s l r p c e e =	*/
 op(	NOOP,	"no-op",	-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-)
 op(	ARROW,	"->",		1,-,1,-,-,-,-,-,-,1,-,-,-,-,-,-,-,-,-,-)
