@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.c,v 1.44 2021/03/28 11:13:24 jmcneill Exp $ */
+/* $NetBSD: gicv3.c,v 1.45 2021/08/10 15:33:09 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.44 2021/03/28 11:13:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.45 2021/08/10 15:33:09 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.44 2021/03/28 11:13:24 jmcneill Exp $");
 
 #include <arm/cortex/gicv3.h>
 #include <arm/cortex/gic_reg.h>
+#include <arm/cortex/gic_splfuncs.h>
 
 #define	PICTOSOFTC(pic)	\
 	((void *)((uintptr_t)(pic) - offsetof(struct gicv3_softc, sc_pic)))
@@ -230,12 +231,11 @@ gicv3_set_priority(struct pic_softc *pic, int ipl)
 {
 	struct gicv3_softc * const sc = PICTOSOFTC(pic);
 	struct cpu_info * const ci = curcpu();
-	const uint8_t newpmr = IPL_TO_PMR(sc, ipl);
 
-	if (newpmr > ci->ci_hwpl) {
+	if (ipl < ci->ci_hwpl) {
 		/* Lowering priority mask */
-		ci->ci_hwpl = newpmr;
-		icc_pmr_write(newpmr);
+		ci->ci_hwpl = ipl;
+		icc_pmr_write(IPL_TO_PMR(sc, ipl));
 	}
 }
 
@@ -422,8 +422,8 @@ gicv3_cpu_init(struct pic_softc *pic, struct cpu_info *ci)
 		;
 
 	/* Set initial priority mask */
-	ci->ci_hwpl = IPL_TO_PMR(sc, IPL_HIGH);
-	icc_pmr_write(ci->ci_hwpl);
+	ci->ci_hwpl = IPL_HIGH;
+	icc_pmr_write(IPL_TO_PMR(sc, IPL_HIGH));
 
 	/* Set the binary point field to the minimum value */
 	icc_bpr1_write(0);
@@ -738,13 +738,12 @@ gicv3_irq_handler(void *frame)
 	struct gicv3_softc * const sc = gicv3_softc;
 	struct pic_softc *pic;
 	const int oldipl = ci->ci_cpl;
-	const uint8_t pmr = IPL_TO_PMR(sc, oldipl);
 
 	ci->ci_data.cpu_nintr++;
 
-	if (ci->ci_hwpl != pmr) {
-		ci->ci_hwpl = pmr;
-		icc_pmr_write(pmr);
+	if (ci->ci_hwpl != oldipl) {
+		ci->ci_hwpl = oldipl;
+		icc_pmr_write(IPL_TO_PMR(sc, oldipl));
 		if (oldipl == IPL_HIGH) {
 			return;
 		}
@@ -952,6 +951,8 @@ gicv3_init(struct gicv3_softc *sc)
 	intr_establish_xname(IPI_KPREEMPT, IPL_VM, IST_MPSAFE | IST_EDGE, pic_ipi_kpreempt, (void *)-1, "IPI kpreempt");
 #endif
 #endif
+
+	gic_spl_init();
 
 	return 0;
 }
