@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_115.c,v 1.6 2021/07/31 10:09:03 rillig Exp $	*/
+/*	$NetBSD: msg_115.c,v 1.7 2021/08/10 20:43:13 rillig Exp $	*/
 # 3 "msg_115.c"
 
 // Test for message: %soperand of '%s' must be modifiable lvalue [115]
@@ -30,21 +30,18 @@ initialize_const_struct_member(void)
 	/* expect+1: warning: left operand of '=' must be modifiable lvalue [115] */
 	const_member cm1 = (const_member) { 12345 };
 	if (cm1.member != 0)
-		/* FIXME: In a function call, const members can be assigned. */
-		/* expect+1: warning: left operand of 'farg' must be modifiable lvalue [115] */
+		/* In a function call, const members can be assigned. */
 		take_const_member(cm1);
 
 	struct {
 		const_member member;
 	} cm2 = {
-	    /* FIXME: In an initialization, const members can be assigned. */
-	    /* expect+1: warning: left operand of 'init' must be modifiable lvalue [115] */
+	    /* In an initialization, const members can be assigned. */
 	    cm1,
 	};
 	if (cm2.member.member != 0) {
 	}
 
-	/* FIXME: In a return statement, const members can be assigned. */
-	/* expect+1: warning: left operand of 'return' must be modifiable lvalue [115] */
+	/* In a return statement, const members can be assigned. */
 	return cm1;
 }
