@@ -1,4 +1,4 @@
-/*	$NetBSD: picvar.h,v 1.34 2021/03/27 12:15:09 jmcneill Exp $	*/
+/*	$NetBSD: picvar.h,v 1.35 2021/08/10 15:31:55 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -40,9 +40,10 @@
 
 typedef uint32_t	intr_handle_t;		/* for ACPI */
 
-int	_splraise(int);
-int	_spllower(int);
-void	splx(int);
+extern int	(*_splraise)(int);
+extern int	(*_spllower)(int);
+extern void	(*splx)(int);
+
 const char *
 	intr_typename(int);
 

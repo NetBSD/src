@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_splfuncs.c,v 1.20 2021/03/27 12:15:09 jmcneill Exp $	*/
+/*	$NetBSD: pic_splfuncs.c,v 1.21 2021/08/10 15:31:55 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_splfuncs.c,v 1.20 2021/03/27 12:15:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_splfuncs.c,v 1.21 2021/08/10 15:31:55 jmcneill Exp $");
 
 #define _INTR_PRIVATE
 #include <sys/param.h>
@@ -46,9 +46,16 @@ __KERNEL_RCSID(0, "$NetBSD: pic_splfuncs.c,v 1.20 2021/03/27 12:15:09 jmcneill E
 
 #include <arm/pic/picvar.h>
 
+static int	pic_default_splraise(int);
+static int	pic_default_spllower(int);
+static void	pic_default_splx(int);
 
-int
-_splraise(int newipl)
+int (*_splraise)(int) = pic_default_splraise;
+int (*_spllower)(int) = pic_default_spllower;
+void (*splx)(int) = pic_default_splx;
+
+static int
+pic_default_splraise(int newipl)
 {
 	struct cpu_info * const ci = curcpu();
 	const int oldipl = ci->ci_cpl;
@@ -58,8 +65,9 @@ _splraise(int newipl)
 	}
 	return oldipl;
 }
-int
-_spllower(int newipl)
+
+static int
+pic_default_spllower(int newipl)
 {
 	struct cpu_info * const ci = curcpu();
 	const int oldipl = ci->ci_cpl;
@@ -76,8 +84,8 @@ _spllower(int newipl)
 	return oldipl;
 }
 
-void
-splx(int savedipl)
+static void
+pic_default_splx(int savedipl)
 {
 	struct cpu_info * const ci = curcpu();
 	KASSERT(savedipl < NIPL);
