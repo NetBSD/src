@@ -1,4 +1,4 @@
-/*	$NetBSD: gic.c,v 1.47 2021/03/28 09:11:38 skrll Exp $	*/
+/*	$NetBSD: gic.c,v 1.48 2021/08/10 15:33:09 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.47 2021/03/28 09:11:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.48 2021/08/10 15:33:09 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.47 2021/03/28 09:11:38 skrll Exp $");
 #include <arm/locore.h>
 
 #include <arm/cortex/gic_reg.h>
+#include <arm/cortex/gic_splfuncs.h>
 #include <arm/cortex/mpcore_var.h>
 
 void armgic_irq_handler(void *);
@@ -224,11 +225,10 @@ armgic_set_priority(struct pic_softc *pic, int ipl)
 	struct armgic_softc * const sc = PICTOSOFTC(pic);
 	struct cpu_info * const ci = curcpu();
 
-	const uint32_t priority = armgic_ipl_to_priority(ipl);
-	if (priority > ci->ci_hwpl) {
+	if (ipl < ci->ci_hwpl) {
 		/* Lowering priority mask */
-		ci->ci_hwpl = priority;
-		gicc_write(sc, GICC_PMR, priority);
+		ci->ci_hwpl = ipl;
+		gicc_write(sc, GICC_PMR, armgic_ipl_to_priority(ipl));
 	}
 }
 
@@ -327,10 +327,9 @@ armgic_irq_handler(void *tf)
 
 	ci->ci_data.cpu_nintr++;
 
-	const uint32_t priority = armgic_ipl_to_priority(old_ipl);
-	if (ci->ci_hwpl != priority) {
-		ci->ci_hwpl = priority;
-		gicc_write(sc, GICC_PMR, priority);
+	if (ci->ci_hwpl != old_ipl) {
+		ci->ci_hwpl = old_ipl;
+		gicc_write(sc, GICC_PMR, armgic_ipl_to_priority(old_ipl));
 		if (old_ipl == IPL_HIGH) {
 			return;
 		}
@@ -545,7 +544,7 @@ armgic_cpu_init(struct pic_softc *pic, struct cpu_info *ci)
 			    sc->sc_enabled_local);
 		}
 	}
-	ci->ci_hwpl = armgic_ipl_to_priority(ci->ci_cpl);
+	ci->ci_hwpl = ci->ci_cpl;
 	gicc_write(sc, GICC_PMR, armgic_ipl_to_priority(ci->ci_cpl));	// set PMR
 	gicc_write(sc, GICC_CTRL, GICC_CTRL_V1_Enable);	// enable interrupt
 	ENABLE_INTERRUPT();				// allow IRQ exceptions
@@ -730,6 +729,8 @@ armgic_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(sc->sc_dev, "%u Priorities, %zu SPIs, %u PPIs, "
 	    "%u SGIs\n",  priorities, sc->sc_gic_lines - ppis - sgis, ppis,
 	    sgis);
+
+	gic_spl_init();
 }
 
 CFATTACH_DECL_NEW(armgic, 0,
