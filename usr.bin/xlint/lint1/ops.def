@@ -1,4 +1,4 @@
-/*	$NetBSD: ops.def,v 1.22 2021/08/10 07:02:00 rillig Exp $ */
+/*	$NetBSD: ops.def,v 1.23 2021/08/10 16:59:28 rillig Exp $ */
 
 begin_ops()
 
@@ -93,6 +93,12 @@ op(	COMMA,	",",		1,-,1,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,1)
 op(	CVT,	"convert",	-,-,-,-,-,-,-,-,-,1,-,-,-,-,-,-,-,-,-,-)
 op(	ICALL,	"icall",	1,-,-,-,-,-,-,-,-,-,-,-,1,-,-,-,-,-,-,-)
 op(	LOAD,	"load",		-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-)
+/*
+ * PUSH is a virtual node that is used to concatenate arguments in a function
+ * call expression.  The PUSH nodes are ordered from right to left.  For
+ * example, the function call f(17, 23) is represented as
+ * CALL(f, PUSH(23, PUSH(17, NULL))).
+ */
 op(	PUSH,	"push",		-,-,-,-,-,-,-,-,-,1,-,-,-,-,-,-,-,-,-,-)
 op(	RETURN,	"return",	1,-,1,-,-,-,-,-,-,-,-,-,1,-,-,-,-,1,-,-)
 op(	REAL,	"real",		-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-)
@@ -102,17 +108,11 @@ op(	IMAG,	"imag",		-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-)
 /*	name	repr		b l b B i c a s f v t b s l r p c e e = */
 op(	INIT,	"init",		1,-,1,-,-,-,-,-,-,-,-,-,-,-,-,-,-,1,-,-)
 op(	CASE,	"case",		-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-)
-op(	FARG,	"farg",		1,-,1,-,-,-,-,-,-,-,-,-,-,-,-,-,-,1,-,-)
-
 /*
- * Both FARG and PUSH represent function arguments.  FARG is used in the
- * early phase of analysis, when the node is not yet part of a function call
- * expression (CALL or ICALL).  Later, build_function_argument builds a
- * function call expression out of the FARG nodes, where they become PUSH.
- * In a function call expression, the PUSH nodes are ordered from right to
- * left, that is, the function call f(17, 23) is represented as
- * CALL(f, PUSH(23, PUSH(17, NULL))).
+ * FARG is only used temporarily in check_prototype_argument to check type
+ * compatibility and conversion for function arguments.
  */
+op(	FARG,	"farg",		1,-,1,-,-,-,-,-,-,-,-,-,-,-,-,-,-,1,-,-)
 
 end_ops()
 
