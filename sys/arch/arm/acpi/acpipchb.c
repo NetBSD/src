@@ -1,4 +1,4 @@
-/* $NetBSD: acpipchb.c,v 1.27 2021/08/07 21:27:53 jmcneill Exp $ */
+/* $NetBSD: acpipchb.c,v 1.28 2021/08/10 15:31:38 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpipchb.c,v 1.27 2021/08/07 21:27:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpipchb.c,v 1.28 2021/08/10 15:31:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -123,7 +123,7 @@ acpipchb_attach(device_t parent, device_t self, void *aux)
 	struct acpipchb_softc * const sc = device_private(self);
 	struct acpi_attach_args *aa = aux;
 	struct pcibus_attach_args pba;
-	ACPI_INTEGER seg;
+	ACPI_INTEGER seg, nomsi;
 	ACPI_STATUS rv;
 	uint16_t bus_start;
 
@@ -148,6 +148,11 @@ acpipchb_attach(device_t parent, device_t self, void *aux)
 		seg = 0;
 	}
 
+	if (ACPI_FAILURE(acpi_dsd_integer(sc->sc_handle, "linux,pcie-nomsi",
+	    &nomsi))) {
+		nomsi = 0;
+	}
+
 	aprint_naive("\n");
 	aprint_normal(": PCI Express Host Bridge\n");
 
@@ -156,6 +161,9 @@ acpipchb_attach(device_t parent, device_t self, void *aux)
 	memset(&pba, 0, sizeof(pba));
 	pba.pba_flags = aa->aa_pciflags &
 			~(PCI_FLAGS_MEM_OKAY | PCI_FLAGS_IO_OKAY);
+	if (nomsi) {
+		pba.pba_flags &= ~(PCI_FLAGS_MSI_OKAY | PCI_FLAGS_MSIX_OKAY);
+	}
 	pba.pba_memt = 0;
 	pba.pba_iot = 0;
 	pba.pba_dmat = aa->aa_dmat;
