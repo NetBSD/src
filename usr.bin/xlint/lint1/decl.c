@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.220 2021/08/10 19:52:14 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.221 2021/08/10 20:43:12 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.220 2021/08/10 19:52:14 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.221 2021/08/10 20:43:12 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -209,7 +209,13 @@ expr_unqualified_type(const type_t *tp)
 	ntp->t_const = false;
 	ntp->t_volatile = false;
 
-	/* TODO: deep-copy struct/union members; see msg_115.c */
+	/*
+	 * In case of a struct or union type, the members should lose their
+	 * qualifiers as well, but that would require a deep copy of the
+	 * struct or union type.  This in turn would defeat the type
+	 * comparison in eqtype, which simply tests whether tp1->t_str ==
+	 * tp2->t_str.
+	 */
 
 	return ntp;
 }

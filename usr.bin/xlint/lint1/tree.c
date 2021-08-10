@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.331 2021/08/09 20:07:23 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.332 2021/08/10 20:43:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.331 2021/08/09 20:07:23 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.332 2021/08/10 20:43:12 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1048,8 +1048,11 @@ typeok_colon(const mod_t *mp,
 }
 
 static bool
-typeok_assign(const mod_t *mp, const tnode_t *ln, const type_t *ltp, tspec_t lt)
+typeok_assign(op_t op, const tnode_t *ln, const type_t *ltp, tspec_t lt)
 {
+	if (op == RETURN || op == INIT || op == FARG)
+		return true;
+
 	if (!ln->tn_lvalue) {
 		if (ln->tn_op == CVT && ln->tn_cast &&
 		    ln->tn_left->tn_op == LOAD) {
@@ -1057,18 +1060,16 @@ typeok_assign(const mod_t *mp, const tnode_t *ln, const type_t *ltp, tspec_t lt)
 			error(163);
 		}
 		/* %soperand of '%s' must be lvalue */
-		error(114, "left ", mp->m_name);
+		error(114, "left ", op_name(op));
 		return false;
 	} else if (ltp->t_const || ((lt == STRUCT || lt == UNION) &&
 				    has_constant_member(ltp))) {
 		if (!tflag)
 			/* %soperand of '%s' must be modifiable lvalue */
-			warning(115, "left ", mp->m_name);
+			warning(115, "left ", op_name(op));
 	}
 	return true;
 }
-
-
 
 /* Check the types using the information from modtab[]. */
 static bool
@@ -1223,7 +1224,7 @@ typeok_op(op_t op, const mod_t *mp, int arg,
 	case ORASS:
 		goto assign;
 	assign:
-		if (!typeok_assign(mp, ln, ltp, lt))
+		if (!typeok_assign(op, ln, ltp, lt))
 			return false;
 		break;
 	case COMMA:
@@ -3792,9 +3793,6 @@ check_null_effect(const tnode_t *tn)
 	}
 }
 
-/*
- * Called by expr() to recursively perform some tests.
- */
 /* ARGSUSED */
 void
 check_expr_misc(const tnode_t *tn, bool vctx, bool tctx,
@@ -3974,7 +3972,6 @@ check_expr_misc(const tnode_t *tn, bool vctx, bool tctx,
 			    szof);
 		break;
 	}
-
 }
 
 /*
