@@ -1,4 +1,4 @@
-/* $NetBSD: externs2.h,v 1.9 2021/01/16 02:40:02 rillig Exp $ */
+/* $NetBSD: externs2.h,v 1.10 2021/08/10 17:31:44 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 /*
- * main.c
+ * main2.c
  */
 extern	bool	xflag;
 extern	bool	uflag;
