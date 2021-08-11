@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.27 2021/08/11 05:23:05 rillig Exp $
+# $NetBSD: Makefile,v 1.28 2021/08/11 09:12:07 christos Exp $
 #-
 # Copyright (c) 1998 Juniper Networks, Inc.
 # All rights reserved.
@@ -54,8 +54,6 @@ NOPROFILE=
 
 WARNS=		6
 LINTFLAGS+=	-w
-# warning: call to 'strchr' effectively discards 'const' from argument
-LINTFLAGS.pam_putenv.c+= -X 346
 
 CPPFLAGS+= -DLIB_MAJ=${SHLIB_MAJOR} -DHAVE_CONFIG_H -I${.CURDIR}
 #CPPFLAGS+= -DOPENPAM_DEBUG
