@@ -46,7 +46,7 @@ typedef uint64_t le64;
 enum {
 	CHFS_NODETYPE_VNODE = 1,	/* vnode information */
 	CHFS_NODETYPE_DATA,			/* data node */
-	CHFS_NODETYPE_DIRENT,		/* directory enrty */
+	CHFS_NODETYPE_DIRENT,		/* directory entry */
 	CHFS_NODETYPE_PADDING,		/* padding node */
 };
 
