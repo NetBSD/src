@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.94 2021/07/14 17:55:18 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.95 2021/08/11 17:25:54 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -1987,4 +1987,10 @@ sys/arch/hppa/dev/sti_sgc.c			1.3
 
 	PR 52162: Fix silent freeze on probing sti(4) framebuffer on 712/60.
 	[tsutsui, ticket #1689]
+
+sys/netinet6/in6_src.c				1.88
+
+	PR 56348: MTU discovery fails with IPv6 sockets bound to IPv4
+	mapped address.
+	[kardel, ticket #1690]
 
