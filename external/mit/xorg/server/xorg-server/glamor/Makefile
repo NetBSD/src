@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2016/09/02 03:58:59 jakllsch Exp $
+#	$NetBSD: Makefile,v 1.4 2021/08/11 23:02:39 maya Exp $
 
 .include "../Makefile.serverlib"
 .include "../Makefile.servermod"
@@ -42,13 +42,19 @@ SRCS= \
 	glamor_sync.c
 SRCS+= \
 	glamor_xv.c
+.if ${HAVE_XORG_GLAMOR} == "no"
 SRCS+= \
 	glamor_egl_stubs.c
-SRCS.EGL= \
-	glamor_egl.c
+.else
+SRCS+= \
+	glamor_egl.c \
+	glamor_eglmodule.c
+.endif
 
 CPPFLAGS+=      -I${DESTDIR}${X11INCDIR}/xorg \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
+		-I${DESTDIR}${X11INCDIR}/libdrm \
+		-I${X11SRCDIR.xorg-server}/glamor \
 		-I${X11SRCDIR.xorg-server}/../include
 CPPFLAGS+=      ${X11FLAGS.DIX}
 
