@@ -1,4 +1,4 @@
-/*	$NetBSD: membar_ops.S,v 1.6.28.1 2021/04/30 13:54:00 martin Exp $	*/
+/*	$NetBSD: membar_ops.S,v 1.6.28.2 2021/08/11 17:05:42 martin Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,15 +30,10 @@
 
 #include "atomic_op_asm.h"
 
-#ifdef _ARM_ARCH_6
+#if defined(_ARM_ARCH_6)
 
 ENTRY_NP(_membar_producer)
-#ifdef _ARM_ARCH_7
-	dmb	ishst
-#else
-	mov	r0, #0
-	mcr	p15, 0, r0, c7, c10, 5	/* Data Memory Barrier */
-#endif
+	DMBST
 	RET
 END(_membar_producer)
 ATOMIC_OP_ALIAS(membar_producer,_membar_producer)
@@ -46,12 +41,7 @@ ATOMIC_OP_ALIAS(membar_write,_membar_producer)
 STRONG_ALIAS(_membar_write,_membar_producer)
 
 ENTRY_NP(_membar_sync)
-#ifdef _ARM_ARCH_7
-	dmb	ish
-#else
-	mov	r0, #0
-	mcr	p15, 0, r0, c7, c10, 5	/* Data Memory Barrier */
-#endif
+	DMB
 	RET
 END(_membar_sync)
 ATOMIC_OP_ALIAS(membar_sync,_membar_sync)
@@ -59,7 +49,7 @@ ATOMIC_OP_ALIAS(membar_enter,_membar_sync)
 ATOMIC_OP_ALIAS(membar_exit,_membar_sync)
 ATOMIC_OP_ALIAS(membar_consumer,_membar_sync)
 ATOMIC_OP_ALIAS(membar_read,_membar_sync)
-CRT_ALIAS(__sync_synchronize,_membar_sync)
+STRONG_ALIAS(__sync_synchronize,_membar_sync)
 STRONG_ALIAS(_membar_enter,_membar_sync)
 STRONG_ALIAS(_membar_exit,_membar_sync)
 STRONG_ALIAS(_membar_consumer,_membar_sync)

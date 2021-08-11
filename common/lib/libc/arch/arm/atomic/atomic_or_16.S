@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_or_16.S,v 1.3 2014/06/23 21:53:45 joerg Exp $	*/
+/*	$NetBSD: atomic_or_16.S,v 1.3.28.1 2021/08/11 17:05:42 martin Exp $	*/
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include "atomic_op_asm.h"
 
-#ifdef _ARM_ARCH_6
+#if defined(_ARM_ARCH_6)
 
 ENTRY_NP(_atomic_or_16)
 	mov	ip, r0
@@ -39,19 +39,22 @@ ENTRY_NP(_atomic_or_16)
 	strexh	r2, r3, [ip]		/* try to store */
 	cmp	r2, #0			/*   succeed? */
 	bne	1b			/*     no, try again */
-#ifdef _ARM_ARCH_7
-	dmb
-#else
-	mcr	p15, 0, r2, c7, c10, 5	/* data memory barrier */
-#endif
 	RET				/* return old value */
 END(_atomic_or_16)
 
 ATOMIC_OP_ALIAS(atomic_or_16,_atomic_or_16)
 ATOMIC_OP_ALIAS(atomic_or_ushort,_atomic_or_16)
-CRT_ALIAS(__sync_fetch_and_or_2,_atomic_or_16)
 CRT_ALIAS(__atomic_fetch_or_2,_atomic_or_16)
 STRONG_ALIAS(_atomic_or_ushort,_atomic_or_16)
+
+ENTRY_NP(__sync_fetch_and_or_2)
+	push	{r4, lr}
+	DMB
+	bl	_atomic_or_16
+	DMB
+	pop	{r4, pc}
+END(__sync_fetch_and_or_2)
+
 
 ENTRY_NP(_atomic_or_16_nv)
 	mov	ip, r0			/* need r0 for return value */
@@ -60,17 +63,19 @@ ENTRY_NP(_atomic_or_16_nv)
 	strexh	r2, r0, [ip]		/* try to store */
 	cmp	r2, #0			/*   succeed? */
 	bne	1b			/*     no, try again? */
-#ifdef _ARM_ARCH_7
-	dmb
-#else
-	mcr	p15, 0, r2, c7, c10, 5	/* data memory barrier */
-#endif
 	RET				/* return new value */
 END(_atomic_or_16_nv)
 
 ATOMIC_OP_ALIAS(atomic_or_16_nv,_atomic_or_16_nv)
 ATOMIC_OP_ALIAS(atomic_or_ushort_nv,_atomic_or_16_nv)
-CRT_ALIAS(__sync_or_and_fetch_2,_atomic_or_16_nv)
 STRONG_ALIAS(_atomic_or_ushort_nv,_atomic_or_16_nv)
+
+ENTRY_NP(__sync_or_and_fetch_2)
+	push	{r4, lr}
+	DMB
+	bl	_atomic_or_16_nv
+	DMB
+	pop	{r4, pc}
+END(__sync_or_and_fetch_2)
 
 #endif /* _ARM_ARCH_6 */

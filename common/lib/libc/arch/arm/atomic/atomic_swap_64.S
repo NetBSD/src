@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_swap_64.S,v 1.10.18.3 2021/07/06 04:11:31 martin Exp $	*/
+/*	$NetBSD: atomic_swap_64.S,v 1.10.18.4 2021/08/11 17:05:42 martin Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,6 +30,10 @@
 
 #include "atomic_op_asm.h"
 
+ENTRY_NP(__sync_lock_test_and_set_8)
+	DMB
+	/* FALLTHROUGH */
+
 ENTRY_NP(_atomic_swap_64)
 	push	{r3, r4}		/* save temporary */
 	mov	ip, r0			/* return value will be in r0 */
@@ -41,27 +45,21 @@ ENTRY_NP(_atomic_swap_64)
 	strexd	r4, r2, r3, [ip]	/* store new value */
 	cmp	r4, #0			/*   succeed? */
 	bne	1b			/*    no, try again */
-#ifdef _ARM_ARCH_7
-	dmb
-#else
-	mcr	p15, 0, r4, c7, c10, 5	/* data memory barrier */
-#endif
 	pop	{r3, r4}		/* restore temporary */
 	RET
 END(_atomic_swap_64)
+END(__sync_lock_test_and_set_8)
+
+
 ATOMIC_OP_ALIAS(atomic_swap_64,_atomic_swap_64)
-CRT_ALIAS(__sync_lock_test_and_set_8,_atomic_swap_64)
 CRT_ALIAS(__atomic_exchange_8,_atomic_swap_64)
 
 #if (!defined(_KERNEL) || !defined(_RUMPKERNEL)) && !defined(_STANDALONE)
 ENTRY_NP(__sync_lock_release_8)
 	mov	r2, #0
 	mov	r3, #0
-#ifdef _ARM_ARCH_7
-	dmb	ishst
-#else
-	mcr	p15, 0, r2, c7, c10, 5	/* data memory barrier */
-#endif
+
+	DMB
 	strd	r2, r3, [r0]
 	RET
 END(__sync_lock_release_8)

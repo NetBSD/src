@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_nand_8.S,v 1.3 2015/12/11 12:41:10 skrll Exp $	*/
+/*	$NetBSD: atomic_nand_8.S,v 1.3.18.1 2021/08/11 17:05:42 martin Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "atomic_op_asm.h"
 
-#ifdef _ARM_ARCH_6
+#if defined(_ARM_ARCH_6)
 
 ENTRY_NP(_atomic_nand_8)
 	mov	ip, r0
@@ -41,18 +41,21 @@ ENTRY_NP(_atomic_nand_8)
 	strexb	r2, r3, [ip]		/* try to store */
 	cmp	r2, #0			/*   succeed? */
 	bne	1b			/*     no, try again */
-#ifdef _ARM_ARCH_7
-	dmb
-#else
-	mcr	p15, 0, r2, c7, c10, 5	/* data memory barrier */
-#endif
 	RET				/* return old value */
 END(_atomic_nand_8)
 
 ATOMIC_OP_ALIAS(atomic_nand_8,_atomic_nand_8)
 ATOMIC_OP_ALIAS(atomic_nand_uchar,_atomic_nand_8)
-CRT_ALIAS(__sync_fetch_and_nand_1,_atomic_nand_8)
 STRONG_ALIAS(_atomic_nand_uchar,_atomic_nand_8)
+
+ENTRY_NP(__sync_fetch_and_nand_1)
+	push	{r4, lr}
+	DMB
+	bl	_atomic_nand_8
+	DMB
+	pop	{r4, pc}
+END(__sync_fetch_and_nand_1)
+
 
 ENTRY_NP(_atomic_nand_8_nv)
 	mov	ip, r0			/* need r0 for return value */
@@ -62,17 +65,20 @@ ENTRY_NP(_atomic_nand_8_nv)
 	strexb	r2, r0, [ip]		/* try to store */
 	cmp	r2, #0			/*   succeed? */
 	bne	1b			/*     no, try again? */
-#ifdef _ARM_ARCH_7
-	dmb
-#else
-	mcr	p15, 0, r2, c7, c10, 5	/* data memory barrier */
-#endif
 	RET				/* return new value */
 END(_atomic_nand_8_nv)
 
 ATOMIC_OP_ALIAS(atomic_nand_8_nv,_atomic_nand_8_nv)
 ATOMIC_OP_ALIAS(atomic_nand_uchar_nv,_atomic_nand_8_nv)
-CRT_ALIAS(__sync_nand_and_fetch_1,_atomic_nand_8_nv)
 STRONG_ALIAS(_atomic_nand_uchar_nv,_atomic_nand_8_nv)
+
+ENTRY_NP(__sync_nand_and_fetch_1)
+	push	{r4, lr}
+	DMB
+	bl	_atomic_nand_8_nv
+	DMB
+	pop	{r4, pc}
+END(__sync_nand_and_fetch_1)
+
 
 #endif /* _ARM_ARCH_6 */

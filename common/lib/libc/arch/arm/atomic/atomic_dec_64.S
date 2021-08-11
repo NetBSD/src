@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_dec_64.S,v 1.7 2013/11/30 21:09:11 joerg Exp $	*/
+/*	$NetBSD: atomic_dec_64.S,v 1.7.30.1 2021/08/11 17:05:42 martin Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include "atomic_op_asm.h"
 
-#ifdef _ARM_ARCH_6
+#if defined(_ARM_ARCH_6)
 
 ENTRY_NP(_atomic_dec_64_nv)
 	mov	ip, r0			/* need r0 for return value */
@@ -40,11 +40,6 @@ ENTRY_NP(_atomic_dec_64_nv)
 	strexd	r2, r0, r1, [ip]	/* try to store */
 	cmp	r2, #0			/*   succeed? */
 	bne	1b			/*     no, try again? */
-#ifdef _ARM_ARCH_7
-	dmb
-#else
-	mcr	p15, 0, r2, c7, c10, 5	/* data memory barrier */
-#endif
 	RET				/* return new value */
 END(_atomic_dec_64_nv)
 
