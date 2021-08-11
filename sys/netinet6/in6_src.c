@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_src.c,v 1.85 2018/05/01 07:21:39 maxv Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.85.6.1 2021/08/11 17:22:17 martin Exp $	*/
 /*	$KAME: in6_src.c,v 1.159 2005/10/19 01:40:32 t-momose Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.85 2018/05/01 07:21:39 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.85.6.1 2021/08/11 17:22:17 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -612,6 +612,7 @@ in6_selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 	struct rtentry *rt = NULL;
 	union {
 		struct sockaddr		dst;
+		struct sockaddr_in	dst4;
 		struct sockaddr_in6	dst6;
 	} u;
 
@@ -678,9 +679,17 @@ in6_selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 	 * Use a cached route if it exists and is valid, else try to allocate
 	 * a new one.  Note that we should check the address family of the
 	 * cached destination, in case of sharing the cache with IPv4.
+	 *
+	 * for V4 mapped addresses we want to pick up the v4 route
+	 * see PR kern/56348
 	 */
-	u.dst6 = *dstsock;
-	u.dst6.sin6_scope_id = 0;
+	if (IN6_IS_ADDR_V4MAPPED(&dstsock->sin6_addr)) {
+		in6_sin6_2_sin(&u.dst4, dstsock);
+	} else {
+		u.dst6 = *dstsock;
+		u.dst6.sin6_scope_id = 0;
+	}
+
 	rt = rtcache_lookup1(*ro, &u.dst, 1);
 
 	if (rt == NULL)
