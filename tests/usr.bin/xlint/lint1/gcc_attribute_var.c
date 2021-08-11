@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_attribute_var.c,v 1.4 2021/08/11 05:08:35 rillig Exp $	*/
+/*	$NetBSD: gcc_attribute_var.c,v 1.5 2021/08/11 05:19:33 rillig Exp $	*/
 # 3 "gcc_attribute_var.c"
 
 /*
@@ -65,8 +65,6 @@ ambiguity_for_attribute(void)
 
 void
 attribute_after_array_brackets(
-    /* FIXME: GCC accepts this */
-    /* expect+1: error: syntax error '__attribute__' [249] */
     const char *argv[] __attribute__((__unused__))
 )
 {

@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.354 2021/08/01 19:18:10 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.355 2021/08/11 05:19:32 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.354 2021/08/01 19:18:10 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.355 2021/08/11 05:19:32 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1292,10 +1292,11 @@ direct_param_declarator:
 	| T_LPAREN notype_param_declarator T_RPAREN {
 		$$ = $2;
 	  }
-	| direct_param_declarator T_LBRACK T_RBRACK {
+	| direct_param_declarator T_LBRACK T_RBRACK gcc_attribute_list_opt {
 		$$ = add_array($1, false, 0);
 	  }
-	| direct_param_declarator T_LBRACK array_size T_RBRACK {
+	| direct_param_declarator T_LBRACK array_size T_RBRACK
+	    gcc_attribute_list_opt {
 		$$ = add_array($1, true, to_int_constant($3, false));
 	  }
 	| direct_param_declarator param_list asm_or_symbolrename_opt {
