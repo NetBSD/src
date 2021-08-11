@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2020/09/13 23:01:02 mrg Exp $
+#	$NetBSD: Makefile,v 1.19 2021/08/11 23:02:39 maya Exp $
 
 .include <bsd.own.mk>
 
@@ -33,7 +33,7 @@ LDADD+=	${LDADD.dix}
 LDADD+=	${LDADD.config}
 LDADD+=	${LDADD.dbe}
 .if ${HAVE_XORG_GLAMOR} != "no"  
-LDADD+=	${LDADD.glamor} ${LDADD.gbm}
+LDADD+=	${LDADD.glamor} -lgbm
 .endif
 LDADD+=	${LDADD.record}
 LDADD+=	${LDADD.hw/xfree86/loader}
