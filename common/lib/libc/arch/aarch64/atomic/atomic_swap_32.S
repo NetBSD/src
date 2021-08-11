@@ -1,4 +1,4 @@
-/* $NetBSD: atomic_swap_32.S,v 1.1 2014/08/10 05:47:35 matt Exp $ */
+/* $NetBSD: atomic_swap_32.S,v 1.1.28.1 2021/08/11 17:19:01 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -35,15 +35,23 @@ ENTRY_NP(_atomic_swap_32)
 	mov	x4, x0
 1:	ldxr	w0, [x4]
 	stxr	w3, w1, [x4]
-	cbnz	w3, 1b
-	dmb	st
+	cbnz	w3, 2f
 	ret
+2:	b	1b
 END(_atomic_swap_32)
 
 ATOMIC_OP_ALIAS(atomic_swap_32,_atomic_swap_32)
 ATOMIC_OP_ALIAS(atomic_swap_uint,_atomic_swap_32)
-STRONG_ALIAS(__sync_lock_test_and_set_4,_atomic_swap_32)
 STRONG_ALIAS(_atomic_swap_uint,_atomic_swap_32)
+
+ENTRY_NP(__sync_lock_test_and_set_4)
+	mov	x4, x0
+1:	ldaxr	w0, [x4]
+	stxr	w3, w1, [x4]
+	cbnz	w3, 2f
+	ret
+2:	b	1b
+END(__sync_lock_test_and_set_4)
 
 ENTRY_NP(__sync_lock_release_4)
 	stlr	wzr, [x0]

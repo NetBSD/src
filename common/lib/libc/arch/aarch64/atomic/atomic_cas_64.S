@@ -1,4 +1,4 @@
-/* $NetBSD: atomic_cas_64.S,v 1.3 2019/02/19 12:51:44 rin Exp $ */
+/* $NetBSD: atomic_cas_64.S,v 1.3.2.1 2021/08/11 17:19:01 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -37,9 +37,9 @@ ENTRY_NP(_atomic_cas_64)
 	cmp	x0, x1			/*   compare? */
 	b.ne	2f			/*     return if different */
 	stxr	w3, x2, [x4]		/* store new value */
-	cbnz	w3, 1b			/*   succeed? nope, try again. */
-	dmb	st
+	cbnz	w3, 3f			/*   succeed? nope, try again. */
 2:	ret				/* return. */
+3:	b	1b
 END(_atomic_cas_64)
 
 ATOMIC_OP_ALIAS(atomic_cas_64,_atomic_cas_64)
@@ -48,9 +48,21 @@ ATOMIC_OP_ALIAS(atomic_cas_ptr,_atomic_cas_64)
 ATOMIC_OP_ALIAS(atomic_cas_64_ni,_atomic_cas_64)
 ATOMIC_OP_ALIAS(atomic_cas_ulong_ni,_atomic_cas_64)
 ATOMIC_OP_ALIAS(atomic_cas_ptr_ni,_atomic_cas_64)
-STRONG_ALIAS(__sync_val_compare_and_swap_8,_atomic_cas_64)
 STRONG_ALIAS(_atomic_cas_ulong,_atomic_cas_64)
 STRONG_ALIAS(_atomic_cas_ptr,_atomic_cas_64)
 STRONG_ALIAS(_atomic_cas_64_ni,_atomic_cas_64)
 STRONG_ALIAS(_atomic_cas_ulong_ni,_atomic_cas_64)
 STRONG_ALIAS(_atomic_cas_ptr_ni,_atomic_cas_64)
+
+ENTRY_NP(__sync_val_compare_and_swap_8)
+	mov	x4, x0			/* we need x0 for return value */
+	dmb	ish
+1:	ldxr	x0, [x4]		/* load old value */
+	cmp	x0, x1			/*   compare? */
+	b.ne	2f			/*     return if different */
+	stxr	w3, x2, [x4]		/* store new value */
+	cbnz	w3, 3f			/*   succeed? nope, try again. */
+	dmb	ish
+2:	ret				/* return. */
+3:	b	1b
+END(__sync_val_compare_and_swap_8)

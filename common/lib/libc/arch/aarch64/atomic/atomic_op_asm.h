@@ -1,4 +1,4 @@
-/* $NetBSD: atomic_op_asm.h,v 1.3 2019/02/08 06:56:56 ryo Exp $ */
+/* $NetBSD: atomic_op_asm.h,v 1.3.2.1 2021/08/11 17:19:01 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -41,9 +41,20 @@ ENTRY_NP(_atomic_##OP##_8)						;\
 	INSN	w2, w0, w1		/* calculate new value */	;\
 	stxrb	w3, w2, [x4]		/* try to store */		;\
 	cbnz	w3, 1b			/*   succeed? no, try again */	;\
-	dmb	st							;\
 	ret				/* return old value */		;\
 END(_atomic_##OP##_8)
+
+#define	SYNC_FETCH_OP8(OP, INSN)					\
+ENTRY_NP(__sync_fetch_and_##OP##_1)					;\
+	mov	x4, x0							;\
+	dmb	ish							;\
+1:	ldxrb	w0, [x4]		/* load old value */		;\
+	INSN	w2, w0, w1		/* calculate new value */	;\
+	stxrb	w3, w2, [x4]		/* try to store */		;\
+	cbnz	w3, 1b			/*   succeed? no, try again */	;\
+	dmb	ish							;\
+	ret				/* return old value */		;\
+END(__sync_fetch_and_##OP##_1)
 
 #define	ATOMIC_OP8_NV(OP, INSN)						\
 ENTRY_NP(_atomic_##OP##_8_nv)						;\
@@ -52,9 +63,20 @@ ENTRY_NP(_atomic_##OP##_8_nv)						;\
 	INSN	w0, w0, w1		/* calc new (return) value */	;\
 	stxrb	w3, w0, [x4]		/* try to store */		;\
 	cbnz	w3, 1b			/*   succeed? no, try again */	;\
-	dmb	sy							;\
 	ret				/* return new value */		;\
 END(_atomic_##OP##_8_nv)
+
+#define	SYNC_OP8_FETCH(OP, INSN)					\
+ENTRY_NP(__sync_##OP##_and_fetch_1)					;\
+	mov	x4, x0			/* need x0 for return value */	;\
+	dmb	ish							;\
+1:	ldxrb	w0, [x4]		/* load old value */		;\
+	INSN	w0, w0, w1		/* calc new (return) value */	;\
+	stxrb	w3, w0, [x4]		/* try to store */		;\
+	cbnz	w3, 1b			/*   succeed? no, try again */	;\
+	dmb	ish							;\
+	ret				/* return new value */		;\
+END(__sync_##OP##_and_fetch_1)
 
 #define	ATOMIC_OP16(OP, INSN)						\
 ENTRY_NP(_atomic_##OP##_16)						;\
@@ -63,9 +85,20 @@ ENTRY_NP(_atomic_##OP##_16)						;\
 	INSN	w2, w0, w1		/* calculate new value */	;\
 	stxrh	w3, w2, [x4]		/* try to store */		;\
 	cbnz	w3, 1b			/*   succeed? no, try again */	;\
-	dmb	st							;\
 	ret				/* return old value */		;\
 END(_atomic_##OP##_16)
+
+#define	SYNC_FETCH_OP16(OP, INSN)					\
+ENTRY_NP(__sync_fetch_and_##OP##_2)					;\
+	mov	x4, x0							;\
+	dmb	ish							;\
+1:	ldxrh	w0, [x4]		/* load old value */		;\
+	INSN	w2, w0, w1		/* calculate new value */	;\
+	stxrh	w3, w2, [x4]		/* try to store */		;\
+	cbnz	w3, 1b			/*   succeed? no, try again */	;\
+	dmb	ish							;\
+	ret				/* return old value */		;\
+END(__sync_fetch_and_##OP##_2)
 
 #define	ATOMIC_OP16_NV(OP, INSN)					\
 ENTRY_NP(_atomic_##OP##_16_nv)						;\
@@ -74,9 +107,20 @@ ENTRY_NP(_atomic_##OP##_16_nv)						;\
 	INSN	w0, w0, w1		/* calc new (return) value */	;\
 	stxrh	w3, w0, [x4]		/* try to store */		;\
 	cbnz	w3, 1b			/*   succeed? no, try again */	;\
-	dmb	sy							;\
 	ret				/* return new value */		;\
 END(_atomic_##OP##_16_nv)
+
+#define	SYNC_OP16_FETCH(OP, INSN)					\
+ENTRY_NP(__sync__##OP##_and_fetch_2)					;\
+	mov	x4, x0			/* need x0 for return value */	;\
+	dmb	ish							;\
+1:	ldxrh	w0, [x4]		/* load old value */		;\
+	INSN	w0, w0, w1		/* calc new (return) value */	;\
+	stxrh	w3, w0, [x4]		/* try to store */		;\
+	cbnz	w3, 1b			/*   succeed? no, try again */	;\
+	dmb	ish							;\
+	ret				/* return new value */		;\
+END(__sync__##OP##_and_fetch_2)
 
 #define	ATOMIC_OP32(OP, INSN)						\
 ENTRY_NP(_atomic_##OP##_32)						;\
@@ -85,9 +129,20 @@ ENTRY_NP(_atomic_##OP##_32)						;\
 	INSN	w2, w0, w1		/* calculate new value */	;\
 	stxr	w3, w2, [x4]		/* try to store */		;\
 	cbnz	w3, 1b			/*   succeed? no, try again */	;\
-	dmb	st							;\
 	ret				/* return old value */		;\
 END(_atomic_##OP##_32)
+
+#define	SYNC_FETCH_OP32(OP, INSN)					\
+ENTRY_NP(__sync_fetch_and_##OP##_4)					;\
+	mov	x4, x0							;\
+	dmb	ish							;\
+1:	ldxr	w0, [x4]		/* load old value */		;\
+	INSN	w2, w0, w1		/* calculate new value */	;\
+	stxr	w3, w2, [x4]		/* try to store */		;\
+	cbnz	w3, 1b			/*   succeed? no, try again */	;\
+	dmb	ish							;\
+	ret				/* return old value */		;\
+END(__sync_fetch_and_##OP##_4)
 
 #define	ATOMIC_OP32_NV(OP, INSN)					\
 ENTRY_NP(_atomic_##OP##_32_nv)						;\
@@ -96,9 +151,20 @@ ENTRY_NP(_atomic_##OP##_32_nv)						;\
 	INSN	w0, w0, w1		/* calc new (return) value */	;\
 	stxr	w3, w0, [x4]		/* try to store */		;\
 	cbnz	w3, 1b			/*   succeed? no, try again? */	;\
-	dmb	sy							;\
 	ret				/* return new value */		;\
 END(_atomic_##OP##_32_nv)
+
+#define	SYNC_OP32_FETCH(OP, INSN)					\
+ENTRY_NP(__sync__##OP##_and_fetch_4)					;\
+	mov	x4, x0			/* need x0 for return value */	;\
+	dmb	ish							;\
+1:	ldxr	w0, [x4]		/* load old value */		;\
+	INSN	w0, w0, w1		/* calc new (return) value */	;\
+	stxr	w3, w0, [x4]		/* try to store */		;\
+	cbnz	w3, 1b			/*   succeed? no, try again? */	;\
+	dmb	ish							;\
+	ret				/* return new value */		;\
+END(__sync__##OP##_and_fetch_4)
 
 #define	ATOMIC_OP64(OP, INSN)						\
 ENTRY_NP(_atomic_##OP##_64)						;\
@@ -107,9 +173,20 @@ ENTRY_NP(_atomic_##OP##_64)						;\
 	INSN	x2, x0, x1		/* calculate new value */	;\
 	stxr	w3, x2, [x4]		/* try to store */		;\
 	cbnz	w3, 1b			/*   succeed? no, try again */	;\
-	dmb	st							;\
 	ret				/* return old value */		;\
 END(_atomic_##OP##_64)
+
+#define	SYNC_FETCH_OP64(OP, INSN)					\
+ENTRY_NP(__sync_fetch_and_##OP##_8)					;\
+	mov	x4, x0							;\
+	dmb	ish							;\
+1:	ldxr	x0, [x4]		/* load old value */		;\
+	INSN	x2, x0, x1		/* calculate new value */	;\
+	stxr	w3, x2, [x4]		/* try to store */		;\
+	cbnz	w3, 1b			/*   succeed? no, try again */	;\
+	dmb	ish							;\
+	ret				/* return old value */		;\
+END(__sync_fetch_and_##OP##_8)
 
 #define	ATOMIC_OP64_NV(OP, INSN)					\
 ENTRY_NP(_atomic_##OP##_64_nv)						;\
@@ -118,9 +195,20 @@ ENTRY_NP(_atomic_##OP##_64_nv)						;\
 	INSN	x0, x0, x1		/* calc new (return) value */	;\
 	stxr	w3, x0, [x4]		/* try to store */		;\
 	cbnz	w3, 1b			/*   succeed? no, try again? */	;\
-	dmb	sy							;\
 	ret				/* return new value */		;\
 END(_atomic_##OP##_64_nv)
+
+#define	SYNC_OP64_FETCH(OP, INSN)					\
+ENTRY_NP(__sync_##OP##_and_fetch_8)					;\
+	mov	x4, x0			/* need x0 for return value */	;\
+	dmb	ish							;\
+1:	ldxr	x0, [x4]		/* load old value */		;\
+	INSN	x0, x0, x1		/* calc new (return) value */	;\
+	stxr	w3, x0, [x4]		/* try to store */		;\
+	cbnz	w3, 1b			/*   succeed? no, try again? */	;\
+	dmb	ish							;\
+	ret				/* return new value */		;\
+END(__sync_##OP##_and_fetch_8)
 
 #if defined(_KERNEL)
 
