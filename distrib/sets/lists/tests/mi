@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1109 2021/08/09 20:07:23 rillig Exp $
+# $NetBSD: mi,v 1.1110 2021/08/11 20:42:26 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5972,6 +5972,8 @@
 ./usr/tests/usr.bin/mkdep				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/mkdep/Atffile			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/mkdep/Kyuafile			tests-usr.bin-tests	compattestfile,atf,kyua
+./usr/tests/usr.bin/mkdep/h_findcc			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/mkdep/t_findcc			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/mkdep/t_mkdep			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/nbperf				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/nbperf/Atffile			tests-usr.bin-tests	compattestfile,atf
