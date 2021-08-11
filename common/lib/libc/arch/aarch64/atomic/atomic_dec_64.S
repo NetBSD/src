@@ -1,4 +1,4 @@
-/* $NetBSD: atomic_dec_64.S,v 1.1 2014/08/10 05:47:35 matt Exp $ */
+/* $NetBSD: atomic_dec_64.S,v 1.1.28.1 2021/08/11 17:19:01 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -35,9 +35,9 @@ ENTRY_NP(_atomic_dec_64)
 1:	ldxr	x2, [x0]		/* load old value (return value) */
 	sub	x2, x2, #1		/* calculate new value */
 	stxr	w3, x2, [x0]		/* try to store */
-	cbnz	w3, 1b			/*   succeed? no, try again? */
-	dmb	st
+	cbnz	w3, 2f			/*   succeed? no, try again? */
 	ret				/* return new value */
+2:	b	1b
 END(_atomic_dec_64)
 
 ATOMIC_OP_ALIAS(atomic_dec_64,_atomic_dec_64)
@@ -51,9 +51,9 @@ ENTRY_NP(_atomic_dec_64_nv)
 1:	ldxr	x0, [x4]		/* load old value */
 	sub	x0, x0, #1		/* calculate new value (return value) */
 	stxr	w3, x0, [x4]		/* try to store */
-	cbnz	w3, 1b			/*   succeed? no, try again? */
-	dmb	st
+	cbnz	w3, 2f			/*   succeed? no, try again? */
 	ret				/* return new value */
+2:	b	1b
 END(_atomic_dec_64_nv)
 
 ATOMIC_OP_ALIAS(atomic_dec_64_nv,_atomic_dec_64_nv)

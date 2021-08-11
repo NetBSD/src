@@ -1,4 +1,4 @@
-/* $NetBSD: atomic_swap_16.S,v 1.1 2014/08/10 05:47:35 matt Exp $ */
+/* $NetBSD: atomic_swap_16.S,v 1.1.28.1 2021/08/11 17:19:01 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -35,17 +35,25 @@ ENTRY_NP(_atomic_swap_16)
 	mov	x4, x0
 1:	ldxrh	w0, [x4]
 	stxrh	w3, w1, [x4]
-	cbnz	w3, 1b
-	dmb	st
+	cbnz	w3, 2f
 	ret
+2:	b	1b
 END(_atomic_swap_16)
 
 ATOMIC_OP_ALIAS(atomic_swap_16,_atomic_swap_16)
 ATOMIC_OP_ALIAS(atomic_swap_short,_atomic_swap_16)
 ATOMIC_OP_ALIAS(atomic_swap_ushort,_atomic_swap_16)
-STRONG_ALIAS(__sync_lock_test_and_set_2,_atomic_swap_16)
 STRONG_ALIAS(_atomic_swap_short,_atomic_swap_16)
 STRONG_ALIAS(_atomic_swap_ushort,_atomic_swap_16)
+
+ENTRY_NP(__sync_lock_test_and_set_2)
+	mov	x4, x0
+1:	ldaxrh	w0, [x4]
+	stxrh	w3, w1, [x4]
+	cbnz	w3, 2f
+	ret
+2:	b	1b
+END(__sync_lock_test_and_set_2)
 
 ENTRY_NP(__sync_lock_release_2)
 	stlrh	wzr, [x0]

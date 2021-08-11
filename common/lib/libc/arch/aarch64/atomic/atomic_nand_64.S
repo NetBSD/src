@@ -1,4 +1,4 @@
-/* $NetBSD: atomic_nand_64.S,v 1.1.28.1 2021/07/06 04:13:50 martin Exp $ */
+/* $NetBSD: atomic_nand_64.S,v 1.1.28.2 2021/08/11 17:19:01 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -35,20 +35,32 @@
  * { tmp = *ptr; *ptr = ~(tmp & value); return tmp; }   // nand
  */
 ENTRY_NP(_atomic_nand_64)
-	mov	x4, x0
+	mov	x4, x0			/* need r0 for return value */
 1:	ldxr	x0, [x4]		/* load old value (*ptr) */
 	and	x2, x0, x1		/* x2 =  (*ptr & value) */
 	mvn	x2, x2			/* x2 = ~(*ptr & value) */
 	stxr	w3, x2, [x4]		/* try to store */
-	cbnz	w3, 1b			/*   succeed? no, try again */
-	dmb	st
+	cbnz	w3, 2f			/*   succeed? no, try again */
 	ret				/* return old value */
+2:	b	1b
 END(_atomic_nand_64)
 
 ATOMIC_OP_ALIAS(atomic_nand_64,_atomic_nand_64)
 ATOMIC_OP_ALIAS(atomic_nand_ulong,_atomic_nand_64)
-STRONG_ALIAS(__sync_fetch_and_nand_8,_atomic_nand_64)
 STRONG_ALIAS(_atomic_nand_ulong,_atomic_nand_64)
+
+ENTRY_NP(__sync_fetch_and_nand_8)
+	mov	x4, x0			/* need r0 for return value */
+	dmb	ish
+1:	ldxr	x0, [x4]		/* load old value (*ptr) */
+	and	x2, x0, x1		/* x2 =  (*ptr & value) */
+	mvn	x2, x2			/* x2 = ~(*ptr & value) */
+	stxr	w3, x2, [x4]		/* try to store */
+	cbnz	w3, 2f			/*   succeed? no, try again */
+	dmb	ish
+	ret				/* return old value */
+2:	b	1b
+END(__sync_fetch_and_nand_8)
 
 
 /*
@@ -60,12 +72,24 @@ ENTRY_NP(_atomic_nand_64_nv)
 	and	x0, x0, x1		/* x0 =  (*ptr & value) */
 	mvn	x0, x0			/* x0 = ~(*ptr & value), return value */
 	stxr	w3, x0, [x4]		/* try to store */
-	cbnz	w3, 1b			/*   succeed? no, try again? */
-	dmb	st
+	cbnz	w3, 2f			/*   succeed? no, try again? */
 	ret				/* return new value */
+2:	b	1b
 END(_atomic_nand_64_nv)
 
 ATOMIC_OP_ALIAS(atomic_nand_64_nv,_atomic_nand_64_nv)
 ATOMIC_OP_ALIAS(atomic_nand_ulong_nv,_atomic_nand_64_nv)
-STRONG_ALIAS(__sync_nand_and_fetch_8,_atomic_nand_64_nv)
 STRONG_ALIAS(_atomic_nand_ulong_nv,_atomic_nand_64_nv)
+
+ENTRY_NP(__sync_nand_and_fetch_8)
+	mov	x4, x0			/* need r0 for return value */
+	dmb	ish
+1:	ldxr	x0, [x4]		/* load old value (*ptr) */
+	and	x0, x0, x1		/* x0 =  (*ptr & value) */
+	mvn	x0, x0			/* x0 = ~(*ptr & value) */
+	stxr	w3, x0, [x4]		/* try to store */
+	cbnz	w3, 2f			/*   succeed? no, try again? */
+	dmb	ish
+	ret				/* return new value */
+2:	b	1b
+END(__sync_nand_and_fetch_8)

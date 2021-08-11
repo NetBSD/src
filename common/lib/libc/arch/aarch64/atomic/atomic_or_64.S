@@ -1,4 +1,4 @@
-/* $NetBSD: atomic_or_64.S,v 1.1.28.1 2019/09/17 19:23:23 martin Exp $ */
+/* $NetBSD: atomic_or_64.S,v 1.1.28.2 2021/08/11 17:19:01 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,14 +33,16 @@
 
 ATOMIC_OP64(or, orr)
 
+SYNC_FETCH_OP64(or, orr)
+
 ATOMIC_OP_ALIAS(atomic_or_64,_atomic_or_64)
 ATOMIC_OP_ALIAS(atomic_or_ulong,_atomic_or_64)
 STRONG_ALIAS(_atomic_or_ulong,_atomic_or_64)
-STRONG_ALIAS(__sync_fetch_and_or_8,_atomic_or_64)
 
 ATOMIC_OP64_NV(or, orr)
+
+SYNC_OP64_FETCH(or, orr)
 
 STRONG_ALIAS(_atomic_or_ulong_nv,_atomic_or_64_nv)
 ATOMIC_OP_ALIAS(atomic_or_64_nv,_atomic_or_64_nv)
 ATOMIC_OP_ALIAS(atomic_or_ulong_nv,_atomic_or_64_nv)
-STRONG_ALIAS(__sync_or_and_fetch_8,_atomic_or_64_nv)

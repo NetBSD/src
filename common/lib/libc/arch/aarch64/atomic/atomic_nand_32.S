@@ -1,4 +1,4 @@
-/* $NetBSD: atomic_nand_32.S,v 1.1.28.1 2021/07/06 04:13:50 martin Exp $ */
+/* $NetBSD: atomic_nand_32.S,v 1.1.28.2 2021/08/11 17:19:01 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -35,20 +35,32 @@
  * { tmp = *ptr; *ptr = ~(tmp & value); return tmp; }   // nand
  */
 ENTRY_NP(_atomic_nand_32)
-	mov	x4, x0
-1:	ldxr	w0, [x4]		/* load old value (to be returned) */
+	mov	x4, x0			/* need r0 for return value */
+1:	ldxr	w0, [x4]		/* load old value (*ptr) */
 	and	w3, w0, w1		/* w3 =  (*ptr & value) */
-	mvn	w3, w3			/* x3 = ~(*ptr & value) */
+	mvn	w3, w3			/* w3 = ~(*ptr & value) */
 	stxr	w2, w3, [x4]		/* try to store */
-	cbnz	w2, 1b			/*   succeed? no, try again */
-	dmb	st
+	cbnz	w2, 2f			/*   succeed? no, try again */
 	ret				/* return old value */
+2:	b	1b
 END(_atomic_nand_32)
 
 ATOMIC_OP_ALIAS(atomic_nand_32,_atomic_nand_32)
 ATOMIC_OP_ALIAS(atomic_nand_uint,_atomic_nand_32)
-STRONG_ALIAS(__sync_fetch_and_nand_4,_atomic_nand_32)
 STRONG_ALIAS(_atomic_nand_uint,_atomic_nand_32)
+
+ENTRY_NP(__sync_fetch_and_nand_4)
+	mov	x4, x0			/* need r0 for return value */
+	dmb	ish
+1:	ldxr	w0, [x4]		/* load old value (*ptr) */
+	and	w3, w0, w1		/* w3 =  (*ptr & value) */
+	mvn	w3, w3			/* w3 = ~(*ptr & value) */
+	stxr	w2, w3, [x4]		/* try to store */
+	cbnz	w2, 2f			/*   succeed? no, try again */
+	dmb	ish
+	ret				/* return old value */
+2:	b	1b
+END(__sync_fetch_and_nand_4)
 
 
 /*
@@ -57,15 +69,27 @@ STRONG_ALIAS(_atomic_nand_uint,_atomic_nand_32)
 ENTRY_NP(_atomic_nand_32_nv)
 	mov	x4, x0			/* need r0 for return value */
 1:	ldxr	w0, [x4]		/* load old value (*ptr) */
-	and	w0, w0, w1		/* x0 =  (*ptr & value) */
-	mvn	w0, w0			/* x0 = ~(*ptr & value), return value */
+	and	w0, w0, w1		/* w0 =  (*ptr & value) */
+	mvn	w0, w0			/* w0 = ~(*ptr & value), return value */
 	stxr	w2, w0, [x4]		/* try to store */
-	cbnz	w2, 1b			/*   succeed? no, try again? */
-	dmb	st
+	cbnz	w2, 2f			/*   succeed? no, try again? */
 	ret				/* return new value */
+2:	b	1b
 END(_atomic_nand_32_nv)
 
 ATOMIC_OP_ALIAS(atomic_nand_32_nv,_atomic_nand_32_nv)
 ATOMIC_OP_ALIAS(atomic_nand_uint_nv,_atomic_nand_32_nv)
-STRONG_ALIAS(__sync_nand_and_fetch_4,_atomic_nand_32_nv)
 STRONG_ALIAS(_atomic_nand_uint_nv,_atomic_nand_32_nv)
+
+ENTRY_NP(__sync_nand_and_fetch_4)
+	mov	x4, x0			/* need r0 for return value */
+	dmb	ish
+1:	ldxr	w0, [x4]		/* load old value (tmp) */
+	and	w0, w0, w1		/* w0 =  (tmp & value) */
+	mvn	w0, w0			/* w0 = ~(tmp & value), return */
+	stxr	w2, w0, [x4]		/* try to store */
+	cbnz	w2, 2f			/*   succeed? no, try again? */
+	dmb	ish
+	ret				/* return new value */
+2:	b	1b
+END(__sync_nand_and_fetch_4)
