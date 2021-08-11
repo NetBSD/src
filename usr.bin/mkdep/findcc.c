@@ -1,4 +1,4 @@
-/* $NetBSD: findcc.c,v 1.6 2011/09/04 20:30:06 joerg Exp $ */
+/* $NetBSD: findcc.c,v 1.7 2021/08/11 20:48:16 rillig Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\
  All rights reserved.");
-__RCSID("$NetBSD: findcc.c,v 1.6 2011/09/04 20:30:06 joerg Exp $");
+__RCSID("$NetBSD: findcc.c,v 1.7 2021/08/11 20:48:16 rillig Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -55,6 +55,11 @@ findcc(const char *progname)
 	char   buffer[MAXPATHLEN];
 
 	if ((next = strchr(progname, ' ')) != NULL) {
+		/*
+		 * FIXME: writing to a 'const char *' invokes undefined
+		 * behavior.  The call to 'strchr' subtly hides the unconst
+		 * cast from the compiler.
+		 */
 		*next = '\0';
 	}
 
