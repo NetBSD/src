@@ -29,7 +29,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.70 2020/05/16 18:31:50 christos Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.71 2021/08/12 19:15:15 andvar Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -86,7 +86,7 @@ fi
 # Input to this parser is pre-processed slightly by sed
 # so this awk parser doesn't have to work so hard.  The
 # changes done by the sed pre-processing step are:
-#	insert a space beween * and pointer name
+#	insert a space between * and pointer name
 #	replace semicolons with spaces
 #
 sed_prep='s:\*\([^\*/]\):\* \1:g
