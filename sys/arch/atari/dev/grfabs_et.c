@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_et.c,v 1.35 2018/09/03 16:29:24 riastradh Exp $	*/
+/*	$NetBSD: grfabs_et.c,v 1.36 2021/08/12 19:53:18 andvar Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grfabs_et.c,v 1.35 2018/09/03 16:29:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grfabs_et.c,v 1.36 2021/08/12 19:53:18 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -165,7 +165,7 @@ struct grfabs_et_priv {
 
 /*
  * XXX: called from ite console init routine.
- * Initialize list of posible video modes.
+ * Initialize list of possible video modes.
  */
 void
 et_probe_video(MODES *modelp)
