@@ -1,4 +1,4 @@
-/*	$NetBSD: cc.c,v 1.27 2017/08/20 11:03:04 maxv Exp $	*/
+/*	$NetBSD: cc.c,v 1.28 2021/08/12 20:13:54 andvar Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cc.c,v 1.27 2017/08/20 11:03:04 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cc.c,v 1.28 2021/08/12 20:13:54 andvar Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -61,7 +61,7 @@ custom_chips_init(void)
 }
 
 /*
- * Vertical blank iterrupt sever chains.
+ * Vertical blank interrupt server chains.
  */
 LIST_HEAD(vbllist, vbl_node) vbl_list;
 

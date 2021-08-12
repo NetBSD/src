@@ -1,4 +1,4 @@
-/*	$NetBSD: cc.h,v 1.18 2014/01/03 07:14:20 mlelstv Exp $	*/
+/*	$NetBSD: cc.h,v 1.19 2021/08/12 20:13:54 andvar Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -71,7 +71,7 @@ struct audio_channel {
 #define AUCC_ALLDMAF (DMAF_AUD0|DMAF_AUD1|DMAF_AUD2|DMAF_AUD3)
 
 /*
- * Vertical blank iterrupt sever chains.
+ * Vertical blank interrupt server chains.
  */
 
 struct vbl_node {
