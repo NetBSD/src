@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1110 2021/08/11 20:42:26 rillig Exp $
+# $NetBSD: mi,v 1.1111 2021/08/12 15:06:39 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -197,6 +197,7 @@
 ./usr/libdata/debug/usr/tests/usr.bin			tests-usr.bin-debug	compattestfile,atf
 ./usr/libdata/debug/usr/tests/usr.bin/cpio		tests-usr.bin-debug	compattestfile,atf
 ./usr/libdata/debug/usr/tests/usr.bin/id		tests-usr.bin-debug	compattestfile,atf
+./usr/libdata/debug/usr/tests/usr.bin/mkdep		tests-usr.bin-debug	compattestfile,atf
 ./usr/libdata/debug/usr/tests/usr.bin/netpgpverify	tests-usr.bin-debug	compattestfile,atf
 ./usr/libdata/debug/usr/tests/usr.bin/tar		tests-usr.bin-debug	compattestfile,atf
 ./usr/libdata/debug/usr/tests/usr.sbin			tests-usr.sbin-debug	compattestfile,atf
