@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.54 2020/04/04 07:07:20 mlelstv Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.55 2021/08/12 20:25:27 andvar Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -152,7 +152,7 @@
  * for nfsv3, dissect post_op_fh3 and following post_op_attr.
  * for nfsv2, dissect fhandle and following fattr.
  *
- * d: (IN) the vnode of the parent directry.
+ * d: (IN) the vnode of the parent directory.
  * v: (OUT) the corresponding vnode (we allocate one if needed)
  * v3: (IN) true for nfsv3.
  * f: (OUT) true if we got valid filehandle.  always true for nfsv2.
