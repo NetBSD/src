@@ -1,4 +1,4 @@
-/*	$NetBSD: rf.c,v 1.36 2021/08/07 16:19:15 thorpej Exp $	*/
+/*	$NetBSD: rf.c,v 1.37 2021/08/12 19:53:18 andvar Exp $	*/
 /*
  * Copyright (c) 2002 Jochen Kunz.
  * All rights reserved.
@@ -36,7 +36,7 @@ TODO:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.36 2021/08/07 16:19:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.37 2021/08/12 19:53:18 andvar Exp $");
 
 /* autoconfig stuff */
 #include <sys/param.h>
@@ -70,7 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.36 2021/08/07 16:19:15 thorpej Exp $");
 /* hz for above */
 #include <sys/kernel.h>
 
-/* bitdefinitions for RX211 */
+/* bit definitions for RX211 */
 #include <dev/qbus/rfreg.h>
 
 
@@ -392,8 +392,8 @@ rfc_attach(device_t parent, device_t self, void *aux)
 
 #ifndef RX02_PROBE
 	/*
-	 * Bouth disk drievs and the controller are one physical unit.
-	 * If we found the controller, there will be bouth disk drievs.
+	 * Both disk drives and the controller are one physical unit.
+	 * If we found the controller, there will be both disk drives.
 	 * So attach them.
 	 */
 	rfc_aa.dnum = 0;
@@ -406,7 +406,7 @@ rfc_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * There are clones of the DEC RX system with standard shugart
 	 * interface. In this case we can not be sure that there are
-	 * bouth disk drievs. So we want to do a detection of attached
+	 * both disk drives. So we want to do a detection of attached
 	 * drives. This is done by reading a sector from disk. This means
 	 * that there must be a formatted disk in the drive at boot time.
 	 * This is bad, but I did not find another way to detect the
@@ -472,7 +472,7 @@ rf_attach(device_t parent, device_t self, void *aux)
 	dl->d_typename[4] = '\0';
 	dl->d_secsize = DEV_BSIZE;		/* bytes per sector */
 	/*
-	 * Fill in some values to have a initialized data structure. Some
+	 * Fill in some values to have an initialized data structure. Some
 	 * values will be reset by rfopen() depending on the actual density.
 	 */
 	dl->d_nsectors = RX2_SECTORS;		/* sectors per track */
@@ -617,7 +617,7 @@ rfstrategy(struct buf *buf)
  * and start to process it if there is one.
  * If the bufferqueue is empty, look at the bufferqueue of the other drive
  * that is attached to this controller.
- * Start procesing the bufferqueue of the other drive if it isn't empty.
+ * Start processing the bufferqueue of the other drive if it isn't empty.
  * Return a pointer to the softc structure of the drive that is now
  * ready to process a buffer or NULL if there is no buffer in either queues.
  */
@@ -1011,9 +1011,9 @@ rfopen(dev_t dev, int oflags, int devtype, struct lwp *l)
 		 * Controller is idle and density is not detected.
 		 * Start a density probe by issuing a read sector command
 		 * and sleep until the density probe finished.
-		 * Due to this it is imposible to open unformatted media.
+		 * Due to this it is impossible to open unformatted media.
 		 * As the RX02/02 is not able to format its own media,
-		 * media must be purchased preformatted. fsck DEC makreting!
+		 * media must be purchased preformatted. fsck DEC marketing!
 		 */
 		RFS_SETCMD(rf_sc->sc_state, RFS_PROBING);
 		disk_busy(&rf_sc->sc_disk);
