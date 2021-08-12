@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.12 2016/01/24 20:02:38 christos Exp $	*/
+/*	$NetBSD: reg.h,v 1.13 2021/08/12 20:53:18 andvar Exp $	*/
 
 #ifndef _POWERPC_REG_H_
 #define _POWERPC_REG_H_
@@ -21,7 +21,7 @@
  *
  *  [Start of callee-saved registers]
  *  r14-r30	Registers used for local variables
- *  r31		Used for local variable or "environent pointers"
+ *  r31		Used for local variable or "environment pointers"
  *  f14-f31	Registers used for local variables
  *
  *
