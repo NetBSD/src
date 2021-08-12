@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.186 2021/08/05 22:36:07 rillig Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.187 2021/08/12 11:50:42 martin Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -177,6 +177,7 @@
 ./usr/libdata/debug/usr/tests/usr.bin/cpio
 ./usr/libdata/debug/usr/tests/usr.bin/id
 ./usr/libdata/debug/usr/tests/usr.bin/tar
+./usr/libdata/debug/usr/tests/usr.bin/mkdep
 ./usr/libdata/debug/usr/tests/usr.bin/netpgpverify
 ./usr/libdata/debug/usr/tests/usr.sbin
 ./usr/tests
