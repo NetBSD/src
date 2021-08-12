@@ -1,4 +1,4 @@
-/* $NetBSD: fenv.c,v 1.7 2017/03/22 23:11:09 chs Exp $ */
+/* $NetBSD: fenv.c,v 1.8 2021/08/12 20:53:18 andvar Exp $ */
 
 /*-
  * Copyright (c) 2004-2005 David Schultz <das (at) FreeBSD.ORG>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fenv.c,v 1.7 2017/03/22 23:11:09 chs Exp $");
+__RCSID("$NetBSD: fenv.c,v 1.8 2021/08/12 20:53:18 andvar Exp $");
 
 #include "namespace.h"
 
@@ -150,7 +150,7 @@ feclearexcept(int excepts)
 	/* Clear the requested floating-point exceptions */
 	fenv.x87.status &= ~ex;
 
-	/* Load the x87 floating-point environent */
+	/* Load the x87 floating-point environment */
 	__fldenv(fenv);
 
 	/* Same for SSE environment */
@@ -239,7 +239,7 @@ fesetexceptflag(const fexcept_t *flagp, int excepts)
 	/* Set the requested status flags */
 	fenv.x87.status |= *flagp & ex;
 
-	/* Load the x87 floating-point environent */
+	/* Load the x87 floating-point environment */
 	__fldenv(fenv);
 
 	/* Same for SSE environment */

@@ -1,4 +1,4 @@
-/*	$NetBSD: setenv.c,v 1.44 2015/01/20 18:31:25 christos Exp $	*/
+/*	$NetBSD: setenv.c,v 1.45 2021/08/12 20:53:18 andvar Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: setenv.c,v 1.44 2015/01/20 18:31:25 christos Exp $");
+__RCSID("$NetBSD: setenv.c,v 1.45 2021/08/12 20:53:18 andvar Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -76,7 +76,7 @@ setenv(const char *name, const char *value, int rewrite)
 	if (!__writelockenv())
 		return -1;
 
-	/* Find slot in the enviroment. */
+	/* Find slot in the environment. */
 	offset = __getenvslot(name, l_name, true);
 	if (offset == -1)
 		goto bad;
