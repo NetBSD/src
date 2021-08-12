@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.358 2021/08/12 12:51:25 martin Exp $
+# $NetBSD: mi,v 1.359 2021/08/12 13:27:42 martin Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -2487,10 +2487,10 @@
 ./usr/libdata/debug/usr/tests/syscall/t_unlink.debug			tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/usr.bin/cpio/h_cpio.debug			tests-usr.bin-debug	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/usr.bin/id/h_id.debug			tests-usr.bin-debug	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/usr.bin/mkdep/h_findcc.debug		tests-usr.bin-debug	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/usr.bin/tar/h_tar.debug			tests-usr.bin-debug	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/util/df/h_df.debug			tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/util/id/h_id.debug			tests-obsolete		obsolete,compattestfile
-./usr/libdata/debug/usr/tests/usr.bin/mkdep/h_findcc.debug		tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/util/systrace/h_have_systrace.debug	tests-obsolete		obsolete,compattestfile
 ./usr/tests/lib/libc/tls/libh_tls_dynamic_g.a	comp-c-debuglib		atf,debuglib,compattestfile
 ./var/db/obsolete/debug				base-sys-root		debug
