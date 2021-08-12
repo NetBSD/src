@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.151 2021/07/24 21:31:35 andvar Exp $	*/
+/*	$NetBSD: machdep.c,v 1.152 2021/08/12 20:53:18 andvar Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.151 2021/07/24 21:31:35 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.152 2021/08/12 20:53:18 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -402,8 +402,8 @@ mach_init(int argc, int32_t argv32[], uintptr_t magic, int32_t bip32)
 	}
 
 	/*
-	 * Also try to get the default bootpath from ARCBIOS envronment
-	 * bacause bootpath is not set properly by old bootloaders and
+	 * Also try to get the default bootpath from ARCBIOS environment
+	 * because bootpath is not set properly by old bootloaders and
 	 * argv[0] might be invalid on some machine.
 	 */
 	osload = arcbios_GetEnvironmentVariable("OSLoadPartition");
