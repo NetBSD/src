@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.74 2021/08/08 21:50:10 andvar Exp $ */
+/*	$NetBSD: disks.c,v 1.75 2021/08/12 09:33:59 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1921,16 +1921,15 @@ mount_disks(struct install_partition_desc *install)
 
 static char swap_dev[PATH_MAX];
 
-int
+void
 set_swap_if_low_ram(struct install_partition_desc *install)
 {
 	swap_dev[0] = 0;
 	if (get_ramsize() <= TINY_RAM_SIZE)
-		return set_swap(install);
-	return 0;
+		set_swap(install);
 }
 
-int
+void
 set_swap(struct install_partition_desc *install)
 {
 	size_t i;
@@ -1942,20 +1941,16 @@ set_swap(struct install_partition_desc *install)
 			break;
 	}
 	if (i >= install->num)
-		return 0;
+		return;
 
 	if (!install->infos[i].parts->pscheme->get_part_device(
 	    install->infos[i].parts, install->infos[i].cur_part_id, swap_dev,
 	    sizeof swap_dev, NULL, plain_name, true, true))
-		return -1;
+		return;
 
 	rval = swapctl(SWAP_ON, swap_dev, 0);
-	if (rval != 0) {
+	if (rval != 0)
 		swap_dev[0] = 0;
-		return -1;
-	}
-
-	return 1;
 }
 
 void
