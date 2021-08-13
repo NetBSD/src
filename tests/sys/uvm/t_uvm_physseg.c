@@ -1,4 +1,4 @@
-/* $NetBSD: t_uvm_physseg.c,v 1.8 2019/01/16 13:54:17 fox Exp $ */
+/* $NetBSD: t_uvm_physseg.c,v 1.9 2021/08/13 20:19:13 andvar Exp $ */
 
 /*-
  * Copyright (c) 2015, 2016 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_uvm_physseg.c,v 1.8 2019/01/16 13:54:17 fox Exp $");
+__RCSID("$NetBSD: t_uvm_physseg.c,v 1.9 2021/08/13 20:19:13 andvar Exp $");
 
 /*
  * If this line is commented out tests related to uvm_physseg_get_pmseg()
@@ -2251,7 +2251,7 @@ ATF_TC_BODY(uvm_page_physunload_force, tc)
 	/* Insert more than one segment iff VM_PHYSSEG_MAX > 1 */
 #if VM_PHYSSEG_MAX > 1
 	/*
-	 * We have couple of physloads done this is bacause of the fact that if
+	 * We have couple of physloads done this is because of the fact that if
 	 * we physunload all the PFs from a given range and we have only one
 	 * segment in total a panic() is called
 	 */
