@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.108 2021/02/14 14:05:03 jakllsch Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.109 2021/08/13 20:26:07 andvar Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.101 2013/03/28 17:21:44 brad Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.108 2021/02/14 14:05:03 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.109 2021/08/13 20:26:07 andvar Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -2304,7 +2304,7 @@ bnx_init_media(struct bnx_softc *sc)
 /****************************************************************************/
 /* Free any DMA memory owned by the driver.                                 */
 /*                                                                          */
-/* Scans through each data structre that requires DMA memory and frees      */
+/* Scans through each data structure that requires DMA memory and frees     */
 /* the memory if allocated.                                                 */
 /*                                                                          */
 /* Returns:                                                                 */
