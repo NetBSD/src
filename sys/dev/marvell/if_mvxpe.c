@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpe.c,v 1.34 2021/08/02 12:56:24 andvar Exp $	*/
+/*	$NetBSD: if_mvxpe.c,v 1.35 2021/08/13 21:04:44 andvar Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.34 2021/08/02 12:56:24 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.35 2021/08/13 21:04:44 andvar Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -218,7 +218,7 @@ STATIC struct mvxpe_mib_def {
 	    "Frame Size  256 -  511"},
 	{MVXPE_MIB_RX_FRAME1023_OCT, 0,	"rx_frame_512_1023",
 	    "Frame Size  512 - 1023", 0},
-	{MVXPE_MIB_RX_FRAMEMAX_OCT, 0,	"rx_fame_1024_max",
+	{MVXPE_MIB_RX_FRAMEMAX_OCT, 0,	"rx_frame_1024_max",
 	    "Frame Size 1024 -  Max", 0},
 	{MVXPE_MIB_TX_GOOD_OCT, 1,	"tx_good_oct",
 	    "Good Octets Tx", 0},
