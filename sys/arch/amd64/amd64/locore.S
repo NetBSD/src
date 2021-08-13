@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.210 2020/06/21 16:57:18 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.211 2021/08/13 20:26:07 andvar Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1050,7 +1050,7 @@ ENTRY(start_xen32)
 	movl	$RELOC(HYPERVISOR_shared_info_pa),%ebp
 	movl	%ebx,(%ebp)
 	movl	$0,4(%ebp)
-	/* XXX assume hvm_start_info+dependant struture fits in a single page */
+	/* XXX assume hvm_start_info+dependant structure fits in a single page */
 	addl	$PAGE_SIZE, %ebx
 	addl	$PGOFSET,%ebx
 	andl	$~PGOFSET,%ebx

@@ -1,4 +1,4 @@
-/*	$NetBSD: mvxpsec.c,v 1.7 2020/07/25 22:37:48 riastradh Exp $	*/
+/*	$NetBSD: mvxpsec.c,v 1.8 2021/08/13 20:26:07 andvar Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -1487,7 +1487,7 @@ mvxpsec_packet_dtor(void *arg, void *obj)
 }
 
 /*
- * allocate new session struture.
+ * allocate new session structure.
  */
 STATIC struct mvxpsec_session *
 mvxpsec_session_alloc(struct mvxpsec_softc *sc)
