@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_io.c,v 1.9 2018/03/16 17:56:31 ryo Exp $	*/
+/*	$NetBSD: isa_io.c,v 1.10 2021/08/13 11:40:43 skrll Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_io.c,v 1.9 2018/03/16 17:56:31 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_io.c,v 1.10 2021/08/13 11:40:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,7 @@ bs_protos(bs_notimpl);
  */
 
 /*
- * NOTE: ASSEMBLY LANGUAGE RELIES ON THE COOKIE -- THE FIRST MEMBER OF 
+ * NOTE: ASSEMBLY LANGUAGE RELIES ON THE COOKIE -- THE FIRST MEMBER OF
  *       THIS STRUCTURE -- TO BE THE VIRTUAL ADDRESS OF ISA/IO!
  */
 struct bus_space isa_io_bs_tag = {
@@ -139,7 +139,7 @@ struct bus_space isa_io_bs_tag = {
 };
 
 /*
- * NOTE: ASSEMBLY LANGUAGE RELIES ON THE COOKIE -- THE FIRST MEMBER OF 
+ * NOTE: ASSEMBLY LANGUAGE RELIES ON THE COOKIE -- THE FIRST MEMBER OF
  *       THIS STRUCTURE -- TO BE THE VIRTUAL ADDRESS OF ISA/MEMORY!
  */
 struct bus_space isa_mem_bs_tag = {
@@ -282,7 +282,7 @@ isa_bs_alloc(
 	panic("isa_alloc(): Help!");
 }
 
-void    
+void
 isa_bs_free(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
 	panic("isa_free(): Help!");
@@ -299,4 +299,4 @@ void
 isa_bs_barrier(void *t, bus_space_handle_t bsh, bus_size_t offset, bus_size_t len, int flags)
 {
 	/* just return */
-}	
+}
