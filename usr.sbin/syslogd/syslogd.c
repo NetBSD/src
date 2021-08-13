@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.136 2020/11/08 01:12:46 dholland Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.137 2021/08/13 20:19:14 andvar Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.136 2020/11/08 01:12:46 dholland Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.137 2021/08/13 20:19:14 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -580,7 +580,7 @@ getgroup:
 	/*
 	 * Create the global kernel event descriptor.
 	 *
-	 * NOTE: We MUST do this after daemon(), bacause the kqueue()
+	 * NOTE: We MUST do this after daemon(), because the kqueue()
 	 * API dictates that kqueue descriptors are not inherited
 	 * across forks (lame!).
 	 */
