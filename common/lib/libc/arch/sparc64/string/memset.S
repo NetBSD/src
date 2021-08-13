@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.S,v 1.2 2013/03/17 02:12:41 christos Exp $	*/
+/*	$NetBSD: memset.S,v 1.3 2021/08/13 20:47:54 andvar Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -25,7 +25,7 @@
  */
 #include "strmacros.h"
 #if defined(LIBC_SCCS) && !defined(lint)
-RCSID("$NetBSD: memset.S,v 1.2 2013/03/17 02:12:41 christos Exp $")
+RCSID("$NetBSD: memset.S,v 1.3 2021/08/13 20:47:54 andvar Exp $")
 #endif  /* LIBC_SCCS and not lint */
 
 
@@ -120,7 +120,7 @@ Lmemset_cleanup:
 	 stb	%o1, [%o0]		!	*addr = 0;
 Lmemset_done:
 	retl
-	 mov	%o4, %o0		! Restore ponter for memset (ugh)
+	 mov	%o4, %o0		! Restore pointer for memset (ugh)
 
 #ifdef USE_BLOCK_STORE_LOAD
 Lmemset_block:

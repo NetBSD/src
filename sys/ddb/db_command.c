@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.176 2021/02/23 07:13:53 mrg Exp $	*/
+/*	$NetBSD: db_command.c,v 1.177 2021/08/13 20:47:55 andvar Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009, 2019
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.176 2021/02/23 07:13:53 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.177 2021/08/13 20:47:55 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -479,7 +479,7 @@ db_init_commands(void)
  * Add command table to the specified list
  * Arg:
  * int type specifies type of command table DDB_SHOW_CMD|DDB_BASE_CMD|DDB_MAC_CMD
- * *cmd_tbl poiter to static allocated db_command table
+ * *cmd_tbl pointer to static allocated db_command table
  *
  * Command table must be NULL terminated array of struct db_command
  */

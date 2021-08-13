@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_reg.h,v 1.9 2016/10/05 15:54:58 ryo Exp $	*/
+/*	$NetBSD: ralink_reg.h,v 1.10 2021/08/13 20:47:55 andvar Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -725,7 +725,7 @@ enum ralink_irq {
 #define RA_FE_TX_BASE_PTR_0	0x800	/*  TX Ring #0 Base Pointer */
 #define RA_FE_TX_MAX_CNT_0	0x804	/*  TX Ring #0 Maximum Count */
 #define RA_FE_TX_CTX_IDX_0	0x808	/*  TX Ring #0 CPU pointer */
-#define RA_FE_TX_DTX_IDX_0	0x80c	/*  TX Ring #0 DMA poitner */
+#define RA_FE_TX_DTX_IDX_0	0x80c	/*  TX Ring #0 DMA pointer */
 #define RA_FE_PDMA_TX0_PTR	RA_FE_TX_BASE_PTR_0
 #define RA_FE_PDMA_TX0_COUNT	RA_FE_TX_MAX_CNT_0
 #define RA_FE_PDMA_TX0_CPU_IDX	RA_FE_TX_CTX_IDX_0
@@ -733,19 +733,19 @@ enum ralink_irq {
 #define RA_FE_TX_BASE_PTR_1	0x810	/*  TX Ring #1 Base Pointer */
 #define RA_FE_TX_MAX_CNT_1	0x814	/*  TX Ring #1 Maximum Count */
 #define RA_FE_TX_CTX_IDX_1	0x818	/*  TX Ring #1 CPU pointer */
-#define RA_FE_TX_DTX_IDX_1	0x81c	/*  TX Ring #1 DMA poitner */
+#define RA_FE_TX_DTX_IDX_1	0x81c	/*  TX Ring #1 DMA pointer */
 #define RA_FE_TX_BASE_PTR_2	0x820	/*  TX Ring #2 Base Pointer */
 #define RA_FE_TX_MAX_CNT_2	0x824	/*  TX Ring #2 Maximum Count */
 #define RA_FE_TX_CTX_IDX_2	0x828	/*  TX Ring #2 CPU pointer */
-#define RA_FE_TX_DTX_IDX_2	0x82c	/*  TX Ring #2 DMA poitner */
+#define RA_FE_TX_DTX_IDX_2	0x82c	/*  TX Ring #2 DMA pointer */
 #define RA_FE_TX_BASE_PTR_3	0x830	/*  TX Ring #3 Base Pointer */
 #define RA_FE_TX_MAX_CNT_3	0x834	/*  TX Ring #3 Maximum Count */
 #define RA_FE_TX_CTX_IDX_3	0x838	/*  TX Ring #3 CPU pointer */
-#define RA_FE_TX_DTX_IDX_3	0x83c	/*  TX Ring #3 DMA poitner */
+#define RA_FE_TX_DTX_IDX_3	0x83c	/*  TX Ring #3 DMA pointer */
 #define RA_FE_RX_BASE_PTR_0	0x900	/*  RX Ring #0 Base Pointer */
 #define RA_FE_RX_MAX_CNT_0	0x904	/*  RX Ring #0 Maximum Count */
 #define RA_FE_RX_CRX_IDX_0	0x908	/*  RX Ring #0 CPU pointer */
-#define RA_FE_RX_DRX_IDX_0	0x90c	/*  RX Ring #0 DMA poitner */
+#define RA_FE_RX_DRX_IDX_0	0x90c	/*  RX Ring #0 DMA pointer */
 #define RA_FE_PDMA_RX0_PTR	RA_FE_RX_BASE_PTR_0
 #define RA_FE_PDMA_RX0_COUNT	RA_FE_RX_MAX_CNT_0
 #define RA_FE_PDMA_RX0_CPU_IDX	RA_FE_RX_CRX_IDX_0
@@ -753,7 +753,7 @@ enum ralink_irq {
 #define RA_FE_RX_BASE_PTR_1	0x910	/*  RX Ring #1 Base Pointer */
 #define RA_FE_RX_MAX_CNT_1	0x914	/*  RX Ring #1 Maximum Count */
 #define RA_FE_RX_CRX_IDX_1	0x918	/*  RX Ring #1 CPU pointer */
-#define RA_FE_RX_DRX_IDX_1	0x91c	/*  RX Ring #1 DMA poitner */
+#define RA_FE_RX_DRX_IDX_1	0x91c	/*  RX Ring #1 DMA pointer */
 #define RA_FE_PDMA_INFO		0xa00	/*  PDMA Information */
 #define RA_FE_PDMA_GLOBAL_CFG	0xa04	/*  PDMA Global Configuration */
 #define RA_FE_DELAY_INT_CFG	0xa0c	/*  Delay Interrupt Configuration */

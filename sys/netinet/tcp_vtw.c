@@ -121,7 +121,7 @@
 
 #include <netinet/tcp_vtw.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tcp_vtw.c,v 1.20 2019/10/01 18:00:09 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_vtw.c,v 1.21 2021/08/13 20:47:55 andvar Exp $");
 
 #define db_trace(__a, __b)	do { } while (/*CONSTCOND*/0)
 
@@ -1447,7 +1447,7 @@ vtw_alloc(vtw_ctl_t *ctl)
 		return 0;
 	}
 
-	/* Advance allocation poiter.
+	/* Advance allocation pointer.
 	 */
 	ctl->alloc.v = vtw_next(ctl, vtw);
 
