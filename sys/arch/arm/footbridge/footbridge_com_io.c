@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com_io.c,v 1.9 2018/03/16 17:56:31 ryo Exp $	*/
+/*	$NetBSD: footbridge_com_io.c,v 1.10 2021/08/13 11:40:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_com_io.c,v 1.9 2018/03/16 17:56:31 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_com_io.c,v 1.10 2021/08/13 11:40:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,7 +171,7 @@ fcomcons_bs_unmap(void *t, bus_space_handle_t bsh, bus_size_t size)
 	 */
 }
 
-void    
+void
 fcomcons_bs_free(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
 
@@ -191,6 +191,6 @@ fcomcons_bs_subregion(void *t, bus_space_handle_t bsh, bus_size_t offset, bus_si
 void
 fcomcons_bs_barrier(void *t, bus_space_handle_t bsh, bus_size_t offset, bus_size_t len, int flags)
 {
-}	
+}
 
 /* End of footbridge_com_io.c */

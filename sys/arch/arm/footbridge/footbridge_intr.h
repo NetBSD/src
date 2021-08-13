@@ -1,4 +1,4 @@
-/* 	$NetBSD: footbridge_intr.h,v 1.21 2020/12/09 15:28:38 martin Exp $	*/
+/* 	$NetBSD: footbridge_intr.h,v 1.22 2021/08/13 11:40:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@ static inline void __attribute__((__unused__))
 footbridge_set_intrmask(void)
 {
 	extern volatile uint32_t intr_enabled;
-	volatile uint32_t * const dc21285_armcsr_vbase = 
+	volatile uint32_t * const dc21285_armcsr_vbase =
 	    (volatile uint32_t *)(DC21285_ARMCSR_VBASE);
 
 	/* fetch once so we write the same number to both registers */
@@ -93,7 +93,7 @@ footbridge_set_intrmask(void)
 	dc21285_armcsr_vbase[IRQ_ENABLE_SET>>2] = tmp;
 	dc21285_armcsr_vbase[IRQ_ENABLE_CLEAR>>2] = ~tmp;
 }
-    
+
 static inline void __attribute__((__unused__))
 footbridge_splx(int ipl)
 {

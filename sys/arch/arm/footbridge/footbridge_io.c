@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_io.c,v 1.24 2018/03/16 17:56:31 ryo Exp $	*/
+/*	$NetBSD: footbridge_io.c,v 1.25 2021/08/13 11:40:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Causality Limited
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_io.c,v 1.24 2018/03/16 17:56:31 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_io.c,v 1.25 2021/08/13 11:40:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ struct bus_space footbridge_bs_tag = {
 
 	/* Mmap bus space for user */
 	.bs_mmap = bs_notimpl_bs_mmap,
-	
+
 	/* barrier */
 	.bs_barrier = footbridge_bs_barrier,
 
@@ -169,7 +169,7 @@ footbridge_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int cacheable, bus_s
 	 * The whole 64K of PCI space is always completely mapped during
 	 * boot.
 	 *
-	 * Eventually this function will do the mapping check overlapping / 
+	 * Eventually this function will do the mapping check overlapping /
 	 * multiple mappings.
 	 */
 
@@ -208,7 +208,7 @@ footbridge_mem_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flags,
  	}
 
 	/*
-	 * Eventually this function will do the mapping check for overlapping / 
+	 * Eventually this function will do the mapping check for overlapping /
 	 * multiple mappings
 	 */
 
@@ -286,7 +286,7 @@ footbridge_mem_bs_unmap(void *t, bus_space_handle_t bsh, bus_size_t size)
 	uvm_km_free(kernel_map, startva, endva - startva, UVM_KMF_VAONLY);
 }
 
-void    
+void
 footbridge_bs_free(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
 
@@ -313,7 +313,7 @@ footbridge_bs_vaddr(void *t, bus_space_handle_t bsh)
 void
 footbridge_bs_barrier(void *t, bus_space_handle_t bsh, bus_size_t offset, bus_size_t len, int flags)
 {
-}	
+}
 
 
 paddr_t
