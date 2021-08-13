@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.300 2021/07/31 14:51:25 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.301 2021/08/13 20:19:45 andvar Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008, 2020
@@ -106,8 +106,8 @@
  *
  *	All user page table access is done via K0SEG.  Kernel
  *	page table access is done via the recursive Virtual Page
- *	Table becase kernel PT pages are pre-allocated and never
- *	freed, so no VPT fault handling is requiried.
+ *	Table because kernel PT pages are pre-allocated and never
+ *	freed, so no VPT fault handling is required.
  */
 
 /*
@@ -135,7 +135,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.300 2021/07/31 14:51:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.301 2021/08/13 20:19:45 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -578,9 +578,9 @@ pmap_pvlist_free(struct pmap_pvlist * const list)
  * that includes room for 8 VAs, the pmap the VAs belong to, a bitmap of
  * CPUs to be notified, and a list for PT pages that are freed during
  * removal off mappings.  The number of valid addresses in the list as
- * well as flags are sqeezed into the lower bits of the first two VAs.
+ * well as flags are squeezed into the lower bits of the first two VAs.
  * Storage for this structure is allocated on the stack.  We need to be
- * careful to keep the size of this struture under control.
+ * careful to keep the size of this structure under control.
  *
  * When notifying remote CPUs, we acquire the tlb_lock (which also
  * blocks IPIs), record the pointer to our context structure, set a
@@ -589,9 +589,9 @@ pmap_pvlist_free(struct pmap_pvlist * const list)
  * any invalidations necessary on the local CPU.  Once that is done,
  * we then wait the the global context pointer to be cleared, which
  * will be done by the final remote CPU to complete their work. This
- * method reduces cache line contention during pocessing.
+ * method reduces cache line contention during processing.
  *
- * When removing mappings in user pmaps, this implemention frees page
+ * When removing mappings in user pmaps, this implementation frees page
  * table pages back to the VM system once they contain no valid mappings.
  * As we do this, we must ensure to invalidate TLB entries that the
  * CPU might hold for the respective recursive VPT mappings.  This must
@@ -1038,7 +1038,7 @@ pmap_tlb_shootnow(const struct pmap_tlb_context * const tlbctx)
 
 	/*
 	 * Figure out who to notify.  If it's for the kernel or
-	 * multiple aaddress spaces, we notify everybody.  If
+	 * multiple address spaces, we notify everybody.  If
 	 * it's a single user pmap, then we try to acquire the
 	 * activation lock so we can get an accurate accounting
 	 * of who needs to be notified.  If we can't acquire
@@ -2094,7 +2094,7 @@ pmap_enter_tlb_shootdown(pmap_t const pmap, vaddr_t const va,
  * pmap_enter_l2pt_delref:
  *
  *	Release a reference on an L2 PT page for pmap_enter().
- *	This is factored out separately becacause we expect it
+ *	This is factored out separately because we expect it
  *	to be a rare case.
  */
 static void __noinline
@@ -2105,7 +2105,7 @@ pmap_enter_l2pt_delref(pmap_t const pmap, pt_entry_t * const l1pte,
 
 	/*
 	 * PALcode may have tried to service a TLB miss with
-	 * this L2 PTE, so we need to make sure we don't actully
+	 * this L2 PTE, so we need to make sure we don't actually
 	 * free the PT page untl we've shot down any TLB entries
 	 * for this VPT index.
 	 */
@@ -2122,7 +2122,7 @@ pmap_enter_l2pt_delref(pmap_t const pmap, pt_entry_t * const l1pte,
  * pmap_enter_l3pt_delref:
  *
  *	Release a reference on an L3 PT page for pmap_enter().
- *	This is factored out separately becacause we expect it
+ *	This is factored out separately because we expect it
  *	to be a rare case.
  */
 static void __noinline
@@ -2133,8 +2133,8 @@ pmap_enter_l3pt_delref(pmap_t const pmap, vaddr_t const va,
 
 	/*
 	 * PALcode may have tried to service a TLB miss with
-	 * this PTE, so we need to make sure we don't actully
-	 * free the PT page untl we've shot down any TLB entries
+	 * this PTE, so we need to make sure we don't actually
+	 * free the PT page until we've shot down any TLB entries
 	 * for this VPT index.
 	 */
 
@@ -2256,7 +2256,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	 * new one immediately.
 	 */
 	if ((opte & PG_V) == 0) {
-		/* No TLB invalidatons needed for new mappings. */
+		/* No TLB invalidations needed for new mappings. */
 
 		if (pmap != pmap_kernel()) {
 			/*
@@ -2949,7 +2949,7 @@ alpha_protection_init(void)
  *	If (pte != NULL), it is the already computed PTE for the page.
  *
  *	Note: locking in this function is complicated by the fact
- *	that we can be called when the PV list is already locked.
+ *	that it can be called when the PV list is already locked.
  *	(pmap_page_protect()).  In this case, the caller must be
  *	careful to get the next PV entry while we remove this entry
  *	from beneath it.  We assume that the pmap itself is already
