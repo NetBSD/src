@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.185 2020/05/27 19:33:40 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.186 2021/08/13 20:26:07 andvar Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.185 2020/05/27 19:33:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.186 2021/08/13 20:26:07 andvar Exp $");
 
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
@@ -1205,7 +1205,7 @@ ENTRY(start_xenpvh)
 	andl	$~PGOFSET,%ebx
 	movl	$RELOC(HYPERVISOR_shared_info_pa),%ebp
 	movl	%ebx,(%ebp)
-	/* XXX assume hvm_start_info+dependant struture fits in a single page */
+	/* XXX assume hvm_start_info+dependant structure fits in a single page */
 	addl	$PAGE_SIZE, %ebx
 	addl	$PGOFSET,%ebx
 	andl	$~PGOFSET,%ebx
