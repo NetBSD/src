@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_clock.c,v 1.26 2009/07/21 07:35:55 skrll Exp $	*/
+/*	$NetBSD: footbridge_clock.c,v 1.27 2021/08/13 11:40:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_clock.c,v 1.26 2009/07/21 07:35:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_clock.c,v 1.27 2021/08/13 11:40:43 skrll Exp $");
 
 /* Include header files */
 
@@ -88,8 +88,8 @@ CFATTACH_DECL_NEW(footbridge_clock, sizeof(struct clock_softc),
  * int clockmatch(device_t parent, cfdata_t cf, void *aux);
  *
  * Just return ok for this if it is device 0
- */ 
- 
+ */
+
 static int
 clockmatch(device_t parent, cfdata_t cf, void *aux)
 {
@@ -105,7 +105,7 @@ clockmatch(device_t parent, cfdata_t cf, void *aux)
  * void clockattach(device_t parent, device_t self, void *aux)
  *
  */
-  
+
 static void
 clockattach(device_t parent, device_t self, void *aux)
 {
@@ -119,7 +119,7 @@ clockattach(device_t parent, device_t self, void *aux)
 	clock_sc = sc;
 
 	/* Cannot do anything until cpu_initclocks() has been called */
-	
+
 	aprint_normal("\n");
 }
 #endif
@@ -147,7 +147,7 @@ clockhandler(void *aframe)
  * Function called by timer 2 interrupts.
  * This just clears the interrupt condition and calls statclock().
  */
- 
+
 int
 statclockhandler(void *aframe)
 {
@@ -163,12 +163,12 @@ statclockhandler(void *aframe)
 		r = random() & (statvar-1);
 	} while (r == 0);
 	newint = statmin + (r * statcountperusec);
-	
+
 	/* fetch the current count */
 	currentclock = bus_space_read_4(clock_sc->sc_iot, clock_sc->sc_ioh,
 		    TIMER_2_VALUE);
 
-	/* 
+	/*
 	 * work out how much time has run, add another usec for time spent
 	 * here
 	 */
@@ -178,11 +178,11 @@ statclockhandler(void *aframe)
 		newint -= r;
 		r = 0;
 	}
-	else 
+	else
 		printf("statclockhandler: Statclock overrun\n");
 
 
-	/* 
+	/*
 	 * update the clock to the new counter, this reloads the existing
 	 * timer
 	 */
@@ -193,7 +193,7 @@ statclockhandler(void *aframe)
 	if (r)
 		/*
 		 * We've completely overrun the previous interval,
-		 * make sure we report the correct number of ticks. 
+		 * make sure we report the correct number of ticks.
 		 */
 		statclock(frame);
 
@@ -242,16 +242,16 @@ setstatclockrate(int herz)
 	/* statint == num in counter to drop by desired herz */
 	statint = statprev = clock_sc->sc_statclock_count =
 	    load_timer(TIMER_2_BASE, herz);
-	
+
 	/* Get the total ticks a second */
 	countpersecond = statint * herz;
-	
+
 	/* now work out how many ticks per usec */
 	statcountperusec = countpersecond / 1000000;
 
 	/* calculate a variance range of statvar */
 	statvarticks = statcountperusec * statvar;
-	
+
 	/* minimum is statint - 50% of variant */
 	statmin = statint - (statvarticks / 2);
 }
@@ -264,7 +264,7 @@ setstatclockrate(int herz)
  * Timer 1 is used for the main system clock (hardclock)
  * Timer 2 is used for the statistics clock (statclock)
  */
- 
+
 void
 cpu_initclocks(void)
 {
@@ -365,7 +365,7 @@ delay(unsigned n)
 	if (n == 0)
 		return;
 
-	/* 
+	/*
 	 * not calibrated the timer yet, so try to live with this horrible
 	 * loop!
 	 *
@@ -388,13 +388,13 @@ delay(unsigned n)
 		while (n-- > 0) {
 			for (i = delaycount; --i;);
 		}
-		return;	
+		return;
 	}
 
 	last = bus_space_read_4(clock_sc->sc_iot, clock_sc->sc_ioh,
 	    TIMER_3_VALUE);
 	delta = usecs = 0;
-	
+
 	while (n > usecs) {
 		cur = bus_space_read_4(clock_sc->sc_iot, clock_sc->sc_ioh,
 		    TIMER_3_VALUE);

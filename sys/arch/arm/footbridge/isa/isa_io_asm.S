@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_io_asm.S,v 1.2 2008/04/28 20:23:14 martin Exp $	*/
+/*	$NetBSD: isa_io_asm.S,v 1.3 2021/08/13 11:40:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -219,7 +219,7 @@ ENTRY(isa_bs_w_4)
 /*
  * write multiple
  */
- 
+
 ENTRY(isa_bs_wm_1)
 	add	r0, r1, r2
 	mov	r1, r3
@@ -242,7 +242,7 @@ ENTRY(isa_bs_wm_2)
 	teq	r2, #0
 	moveq	pc, lr
 
-Lisa_wm_2_loop:	
+Lisa_wm_2_loop:
 	ldrh	r3, [r1], #2	/*.word 0xe0d130b2*/
 	strh	r3, [r0]	/*.word 0xe1c030b0*/
 	subs	r2, r2, #1
@@ -292,7 +292,7 @@ ENTRY(isa_bs_wr_2)
 	teq	r2, #0
 	moveq	pc, lr
 
-Lisa_wr_2_loop:	
+Lisa_wr_2_loop:
 	ldrh	r3, [r1], #2	/*.word 0xe0d130b2*/
 	strh	r3, [r0], #2
 	subs	r2, r2, #1
