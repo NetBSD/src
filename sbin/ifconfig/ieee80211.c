@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.30 2019/08/16 10:33:17 msaitoh Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.31 2021/08/13 20:47:55 andvar Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ieee80211.c,v 1.30 2019/08/16 10:33:17 msaitoh Exp $");
+__RCSID("$NetBSD: ieee80211.c,v 1.31 2021/08/13 20:47:55 andvar Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -531,7 +531,7 @@ ieee80211_statistics(prop_dictionary_t env)
 	STAT_PRINT(is_rx_badsubtype, "rx frame w/ unknown subtyp");
 	STAT_PRINT(is_rx_nobuf, "rx failed for lack of buf");
 	STAT_PRINT(is_rx_decryptcrc, "rx decrypt failed on crc");
-	STAT_PRINT(is_rx_ahdemo_mgt, "rx discard ahdemo mgt fram");
+	STAT_PRINT(is_rx_ahdemo_mgt, "rx discard ahdemo mgt frame");
 	STAT_PRINT(is_rx_bad_auth, "rx bad auth request");
 	STAT_PRINT(is_rx_unauth, "rx on unauthorized port");
 	STAT_PRINT(is_rx_badkeyid, "rx w/ incorrect keyid");
