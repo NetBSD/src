@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_inline.h,v 1.23 2020/02/08 08:23:01 msaitoh Exp $	*/
+/*	$NetBSD: aic79xx_inline.h,v 1.24 2021/08/13 20:47:55 andvar Exp $	*/
 
 /*
  * Inline routines shareable across OS platforms.
@@ -284,7 +284,7 @@ static __inline void
 ahd_setup_data_scb(struct ahd_softc *ahd, struct scb *scb)
 {
 	/*
-	 * Copy the first SG into the "current" data ponter area.
+	 * Copy the first SG into the "current" data pointer area.
 	 */
 	if ((ahd->flags & AHD_64BIT_ADDRESSING) != 0) {
 		struct ahd_dma64_seg *sg;

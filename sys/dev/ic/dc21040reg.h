@@ -1,4 +1,4 @@
-/*	$NetBSD: dc21040reg.h,v 1.19 2005/12/11 12:21:26 christos Exp $	*/
+/*	$NetBSD: dc21040reg.h,v 1.20 2021/08/13 20:47:55 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -152,7 +152,7 @@ typedef struct {
 #define	TULIP_STS_ABNRMLINTR	0x00008000L		/* (RW)  Abnormal Interrupt */
 #define	TULIP_STS_SYSERROR	0x00002000L		/* (RW)  System Error */
 #define	TULIP_STS_LINKFAIL	0x00001000L		/* (RW)  Link Failure (21040) */
-#define	TULIP_STS_FULDPLXSHRT	0x00000800L		/* (RW)  Full Duplex Short Fram Rcvd (21040) */
+#define	TULIP_STS_FULDPLXSHRT	0x00000800L		/* (RW)  Full Duplex Short Frame Rcvd (21040) */
 #define	TULIP_STS_GPTIMEOUT	0x00000800L		/* (RW)  General Purpose Timeout (21140) */
 #define	TULIP_STS_AUI		0x00000400L		/* (RW)  AUI/TP Switch (21040) */
 #define	TULIP_STS_RXTIMEOUT	0x00000200L		/* (RW)  Receive Watchdog Timeout */
