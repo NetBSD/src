@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.146 2021/06/12 13:58:05 riastradh Exp $	*/
+/*	$NetBSD: xhci.c,v 1.147 2021/08/13 20:47:55 andvar Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.146 2021/06/12 13:58:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.147 2021/08/13 20:47:55 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1958,7 +1958,7 @@ xhci_stop_endpoint(struct usbd_pipe *pipe)
  * Set TR Dequeue Pointer.
  * xHCI 1.1  4.6.10  6.4.3.9
  * Purge all of the TRBs on ring and reinitialize ring.
- * Set TR dequeue Pointr to 0 and Cycle State to 1.
+ * Set TR dequeue Pointer to 0 and Cycle State to 1.
  * EPSTATE of endpoint must be ERROR or STOPPED, otherwise CONTEXT_STATE
  * error will be generated.
  */
