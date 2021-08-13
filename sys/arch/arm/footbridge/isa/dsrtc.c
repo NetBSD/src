@@ -1,4 +1,4 @@
-/*	$NetBSD: dsrtc.c,v 1.12 2012/10/11 08:53:27 skrll Exp $	*/
+/*	$NetBSD: dsrtc.c,v 1.13 2021/08/13 11:40:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Mark Brinicombe.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dsrtc.c,v 1.12 2012/10/11 08:53:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dsrtc.c,v 1.13 2021/08/13 11:40:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ ds1687_ram_read(struct dsrtc_softc *sc, int addr)
 
 	addr -= RTC_PC_RAM_SIZE;
 	if (addr < RTC_BANK0_RAM_SIZE)
-		return(ds1687_read(sc, RTC_BANK0_RAM_START + addr));		
+		return(ds1687_read(sc, RTC_BANK0_RAM_START + addr));
 
 	addr -= RTC_BANK0_RAM_SIZE;
 	if (addr < RTC_EXT_RAM_SIZE) {
@@ -218,7 +218,7 @@ dsrtcattach(device_t parent, device_t self, void *aux)
 {
 	struct dsrtc_softc *sc = device_private(self);
 	struct isa_attach_args *ia = aux;
-	
+
 	sc->sc_iot = ia->ia_iot;
 	if (bus_space_map(sc->sc_iot, ia->ia_io[0].ir_addr,
 	    ia->ia_io[0].ir_size, 0, &sc->sc_ioh)) {

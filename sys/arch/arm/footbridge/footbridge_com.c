@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com.c,v 1.39 2020/11/20 18:03:52 thorpej Exp $	*/
+/*	$NetBSD: footbridge_com.c,v 1.40 2021/08/13 11:40:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 Mark Brinicombe
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.39 2020/11/20 18:03:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.40 2021/08/13 11:40:43 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
@@ -89,8 +89,8 @@ struct fcom_softc {
 #define HW_FLAG_CONSOLE	0x01
 	int			sc_swflags;
 	int			sc_l_ubrlcr;
-	int			sc_m_ubrlcr;	
-	int			sc_h_ubrlcr;	
+	int			sc_m_ubrlcr;
+	int			sc_h_ubrlcr;
 	char			*sc_rxbuffer[2];
 	char			*sc_rxbuf;
 	int			sc_rxpos;
@@ -317,7 +317,7 @@ fcomwrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct fcom_softc *sc = device_lookup_private(&fcom_cd, minor(dev));
 	struct tty *tp = sc->sc_tty;
-	
+
 	return (*tp->t_linesw->l_write)(tp, uio, flag);
 }
 
@@ -326,7 +326,7 @@ fcompoll(dev_t dev, int events, struct lwp *l)
 {
 	struct fcom_softc *sc = device_lookup_private(&fcom_cd, minor(dev));
 	struct tty *tp = sc->sc_tty;
- 
+
 	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
@@ -336,7 +336,7 @@ fcomioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	struct fcom_softc *sc = device_lookup_private(&fcom_cd, minor(dev));
 	struct tty *tp = sc->sc_tty;
 	int error;
-	
+
 	if ((error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l)) !=
 	    EPASSTHROUGH)
 		return error;
@@ -350,9 +350,9 @@ fcomioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 	case TIOCSFLAGS:
 		error = kauth_authorize_device_tty(l->l_cred,
-		    KAUTH_DEVICE_TTY_PRIVSET, tp); 
+		    KAUTH_DEVICE_TTY_PRIVSET, tp);
 		if (error)
-			return (error); 
+			return (error);
 		sc->sc_swflags = *(int *)data;
 		break;
 	}
@@ -403,7 +403,7 @@ fcomstart(struct tty *tp)
 	}
 
 	(void)splx(s);
-	
+
 	cl = &tp->t_outq;
 	len = q_to_b(cl, buf, 64);
 	for (loop = 0; loop < len; ++loop) {
@@ -553,7 +553,7 @@ fcom_txintr(void *arg)
 {
 /*	struct fcom_softc *sc = arg;*/
 
-	printf("fcom_txintr()\n");	
+	printf("fcom_txintr()\n");
 	return(0);
 }
 #endif

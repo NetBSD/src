@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_pci.c,v 1.32 2020/02/24 12:20:29 rin Exp $	*/
+/*	$NetBSD: footbridge_pci.c,v 1.33 2021/08/13 11:40:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.32 2020/02/24 12:20:29 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.33 2021/08/13 11:40:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -326,7 +326,7 @@ footbridge_pci_intr_string(void *pcv, pci_intr_handle_t ih, char *buf, size_t le
 	}
 #endif
 	snprintf(buf, len, "irq %" PRIu64, ih);
-	return buf;	
+	return buf;
 }
 
 void *

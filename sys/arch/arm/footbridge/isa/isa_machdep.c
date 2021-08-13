@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.23 2020/11/20 18:03:53 thorpej Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.24 2021/08/13 11:40:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.23 2020/11/20 18:03:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.24 2021/08/13 11:40:43 skrll Exp $");
 
 #include "opt_irqstats.h"
 
@@ -272,7 +272,7 @@ isa_intr_alloc(isa_chipset_tag_t ic, int mask, int type, int *irq)
 	for (i = 0; i < ICU_LEN; i++) {
 		if (LEGAL_IRQ(i) == 0 || (mask & (1<<i)) == 0)
 			continue;
-		
+
 		iq = &isa_intrq[i];
 		switch(iq->iq_ist) {
 		case IST_NONE:
@@ -380,12 +380,12 @@ isa_intr_establish(isa_chipset_tag_t ic, int irq, int type, int level, int (*ih_
 
 	/* do not stop us */
 	oldirqstate = disable_interrupts(I32_bit);
-	
+
 	TAILQ_INSERT_TAIL(&iq->iq_list, ih, ih_list);
 
 	intr_calculatemasks();
-	restore_interrupts(oldirqstate);	
-	
+	restore_interrupts(oldirqstate);
+
 	return (ih);
 }
 
@@ -399,7 +399,7 @@ isa_intr_disestablish(isa_chipset_tag_t ic, void *arg)
 	struct intrq *iq = &isa_intrq[ih->ih_irq];
 	int irq = ih->ih_irq;
 	u_int oldirqstate;
-	
+
 	if (!LEGAL_IRQ(irq))
 		panic("intr_disestablish: bogus irq");
 
@@ -428,29 +428,29 @@ isa_intr_init(void)
 {
  	struct intrq *iq;
  	int i;
- 
- 	/* 
+
+ 	/*
  	 * should get the parent here, but initialisation order being so
  	 * strange I need to check if it's available
  	 */
  	for (i = 0; i < ICU_LEN; i++) {
  		iq = &isa_intrq[i];
  		TAILQ_INIT(&iq->iq_list);
-  
+
  		snprintf(iq->iq_name, sizeof(iq->iq_name), "irq %d", i);
  		evcnt_attach_dynamic(&iq->iq_ev, EVCNT_TYPE_INTR,
  		    NULL, "isa", iq->iq_name);
  	}
-	
+
 	isa_icu_init();
 	intr_calculatemasks();
 	/* something to break the build in an informative way */
-#ifndef ISA_FOOTBRIDGE_IRQ 
+#ifndef ISA_FOOTBRIDGE_IRQ
 #warning Before using isa with footbridge you must define ISA_FOOTBRIDGE_IRQ
 #endif
 	footbridge_intr_claim(ISA_FOOTBRIDGE_IRQ, IPL_BIO, "isabus",
 	    isa_irqdispatch, NULL);
-	
+
 }
 
 /* Static array of ISA DMA segments. We only have one on CATS */
