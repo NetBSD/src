@@ -1,6 +1,17 @@
-# $NetBSD: msg_010.ln,v 1.1 2021/08/05 22:36:08 rillig Exp $
+# $NetBSD: msg_010.ln,v 1.2 2021/08/14 14:25:51 rillig Exp $
 #
 # Test data for message 10 of lint2:
 #	%s value is used( %s ), but none returned
 #
-# TODO: add actual test data
+
+0 s msg_010.c
+S msg_010.c
+1 s msg_010_use.c
+
+# msg_010.c:10: func() {}
+10 d 0.10 d o 4func f0I
+
+# msg_010_use.c:20: func();
+20 d 1.20 e 4func F I
+# msg_010_use.c:30: use() { return func(); }
+30 c 1.30 u 4func f 0 I
