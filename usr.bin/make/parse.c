@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.561 2021/08/14 13:32:12 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.562 2021/08/14 13:37:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.561 2021/08/14 13:32:12 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.562 2021/08/14 13:37:55 rillig Exp $");
 
 /* types and constants */
 
@@ -530,7 +530,7 @@ ParseIsEscaped(const char *line, const char *c)
  * was first defined.
  */
 static void
-ParseMark(GNode *gn)
+RememberLocation(GNode *gn)
 {
 	IFile *curFile = CurFile();
 	gn->fname = curFile->fname;
@@ -782,7 +782,7 @@ TryApplyDependencyOperator(GNode *gn, GNodeType op)
 
 		cohort = Targ_NewInternalNode(gn->name);
 		if (doing_depend)
-			ParseMark(cohort);
+			RememberLocation(cohort);
 		/*
 		 * Make the cohort invisible as well to avoid duplicating it
 		 * into other variables. True, parents of this target won't
@@ -837,7 +837,7 @@ ParseDependencySourceWait(bool isSpecial)
 	snprintf(wait_src, sizeof wait_src, ".WAIT_%u", ++wait_number);
 	gn = Targ_NewInternalNode(wait_src);
 	if (doing_depend)
-		ParseMark(gn);
+		RememberLocation(gn);
 	gn->type = OP_WAIT | OP_PHONY | OP_DEPENDS | OP_NOTMAIN;
 	LinkToTargets(gn, isSpecial);
 
@@ -897,7 +897,7 @@ ParseDependencySourceOrder(const char *src)
 	 */
 	gn = Targ_GetNode(src);
 	if (doing_depend)
-		ParseMark(gn);
+		RememberLocation(gn);
 	if (order_pred != NULL) {
 		Lst_Append(&order_pred->order_succ, gn);
 		Lst_Append(&gn->order_pred, order_pred);
@@ -934,7 +934,7 @@ ParseDependencySourceOther(const char *src, GNodeType tOp,
 	/* Find/create the 'src' node and attach to all targets */
 	gn = Targ_GetNode(src);
 	if (doing_depend)
-		ParseMark(gn);
+		RememberLocation(gn);
 	if (tOp != OP_NONE)
 		gn->type |= tOp;
 	else
@@ -1085,7 +1085,7 @@ ParseDependencyTargetSpecial(ParseSpecial *inout_specType,
 	case SP_INTERRUPT: {
 		GNode *gn = Targ_GetNode(targetName);
 		if (doing_depend)
-			ParseMark(gn);
+			RememberLocation(gn);
 		gn->type |= OP_NOTMAIN | OP_SPECIAL;
 		Lst_Append(targets, gn);
 		break;
@@ -1215,7 +1215,7 @@ ParseDependencyTargetMundane(char *targetName, StringList *curTargs)
 		    ? Suff_AddTransform(targName)
 		    : Targ_GetNode(targName);
 		if (doing_depend)
-			ParseMark(gn);
+			RememberLocation(gn);
 
 		Lst_Append(targets, gn);
 	}
@@ -2084,7 +2084,7 @@ ParseAddCmd(GNode *gn, char *cmd)
 		Lst_Append(&gn->commands, cmd);
 		if (MaybeSubMake(cmd))
 			gn->type |= OP_SUBMAKE;
-		ParseMark(gn);
+		RememberLocation(gn);
 	} else {
 #if 0
 		/* XXX: We cannot do this until we fix the tree */
