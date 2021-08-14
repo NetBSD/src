@@ -1,10 +1,10 @@
-/*	$NetBSD: collect.c,v 1.2 2020/08/11 13:15:42 christos Exp $	*/
+/*	$NetBSD: collect.c,v 1.3 2021/08/14 16:15:02 christos Exp $	*/
 
 /* collect.c - Demonstration of overlay code */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2020 The OpenLDAP Foundation.
+ * Copyright 2003-2021 The OpenLDAP Foundation.
  * Portions Copyright 2003 Howard Chu.
  * All rights reserved.
  *
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: collect.c,v 1.2 2020/08/11 13:15:42 christos Exp $");
+__RCSID("$NetBSD: collect.c,v 1.3 2021/08/14 16:15:02 christos Exp $");
 
 #include "portable.h"
 
@@ -34,7 +34,7 @@ __RCSID("$NetBSD: collect.c,v 1.2 2020/08/11 13:15:42 christos Exp $");
 #include <ac/socket.h>
 
 #include "slap.h"
-#include "config.h"
+#include "slap-config.h"
 
 #include "lutil.h"
 
@@ -211,7 +211,7 @@ collect_cf( ConfigArgs *c )
 			snprintf( c->cr_msg, sizeof( c->cr_msg ), "%s invalid DN: \"%s\"",
 				c->argv[0], c->argv[1] );
 			Debug( LDAP_DEBUG_CONFIG|LDAP_DEBUG_NONE,
-				"%s: %s\n", c->log, c->cr_msg, 0 );
+				"%s: %s\n", c->log, c->cr_msg );
 			return ARG_BAD_CONF;
 		}
 
@@ -231,7 +231,7 @@ collect_cf( ConfigArgs *c )
 			snprintf( c->cr_msg, sizeof( c->cr_msg ), "%s DN already configured: \"%s\"",
 				c->argv[0], c->argv[1] );
 			Debug( LDAP_DEBUG_CONFIG|LDAP_DEBUG_NONE,
-				"%s: %s\n", c->log, c->cr_msg, 0 );
+				"%s: %s\n", c->log, c->cr_msg );
 			return ARG_BAD_CONF;
 		}
 
@@ -249,7 +249,7 @@ collect_cf( ConfigArgs *c )
 					"%s attribute description unknown: \"%s\"",
 					c->argv[0], arg);
 				Debug( LDAP_DEBUG_CONFIG|LDAP_DEBUG_NONE,
-					"%s: %s\n", c->log, c->cr_msg, 0 );
+					"%s: %s\n", c->log, c->cr_msg );
 				ch_free( ci );
 				return ARG_BAD_CONF;
 			}
@@ -424,6 +424,7 @@ int collect_initialize() {
 	int code;
 
 	collect.on_bi.bi_type = "collect";
+	collect.on_bi.bi_flags = SLAPO_BFLAG_SINGLE;
 	collect.on_bi.bi_db_destroy = collect_destroy;
 	collect.on_bi.bi_op_modify = collect_modify;
 	collect.on_response = collect_response;

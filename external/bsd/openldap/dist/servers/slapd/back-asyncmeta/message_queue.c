@@ -1,4 +1,4 @@
-/*	$NetBSD: message_queue.c,v 1.1.1.1 2021/08/14 16:05:23 christos Exp $	*/
+/*	$NetBSD: message_queue.c,v 1.2 2021/08/14 16:14:59 christos Exp $	*/
 
 /* message_queue.c - routines to maintain the per-connection lists
  * of pending operations */
@@ -24,7 +24,7 @@
  * This work was sponsored by Ericsson. */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: message_queue.c,v 1.1.1.1 2021/08/14 16:05:23 christos Exp $");
+__RCSID("$NetBSD: message_queue.c,v 1.2 2021/08/14 16:14:59 christos Exp $");
 
 #include "portable.h"
 

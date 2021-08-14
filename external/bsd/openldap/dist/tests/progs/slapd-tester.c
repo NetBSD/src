@@ -1,9 +1,9 @@
-/*	$NetBSD: slapd-tester.c,v 1.2 2020/08/11 13:15:42 christos Exp $	*/
+/*	$NetBSD: slapd-tester.c,v 1.3 2021/08/14 16:15:03 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2020 The OpenLDAP Foundation.
+ * Copyright 1999-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: slapd-tester.c,v 1.2 2020/08/11 13:15:42 christos Exp $");
+__RCSID("$NetBSD: slapd-tester.c,v 1.3 2021/08/14 16:15:03 christos Exp $");
 
 #include "portable.h"
 
@@ -97,7 +97,7 @@ usage( char *name, char opt )
 
 	fprintf( stderr,
 		"usage: %s "
-		"-H <uri> | ([-h <host>] -p <port>) "
+		"-H <uri> "
 		"-D <manager> "
 		"-w <passwd> "
 		"-d <datadir> "
@@ -121,8 +121,6 @@ main( int argc, char **argv )
 {
 	int		i, j;
 	char		*uri = NULL;
-	char		*host = "localhost";
-	char		*port = NULL;
 	char		*manager = NULL;
 	char		*passwd = NULL;
 	char		*dirname = NULL;
@@ -256,7 +254,7 @@ main( int argc, char **argv )
 			break;
 
 		case 'd':		/* data directory */
-			dirname = strdup( optarg );
+			dirname = optarg;
 			break;
 
 		case 'F':
@@ -264,11 +262,7 @@ main( int argc, char **argv )
 			break;
 
 		case 'H':		/* slapd uri */
-			uri = strdup( optarg );
-			break;
-
-		case 'h':		/* slapd host */
-			host = strdup( optarg );
+			uri = optarg;
 			break;
 
 		case 'I':
@@ -330,7 +324,7 @@ main( int argc, char **argv )
 			break;
 
 		case 'L':		/* the number of outerloops per client */
-			outerloops = strdup( optarg );
+			outerloops = optarg;
 			break;
 
 		case 'N':
@@ -338,15 +332,11 @@ main( int argc, char **argv )
 			break;
 
 		case 'P':		/* prog directory */
-			progdir = strdup( optarg );
-			break;
-
-		case 'p':		/* the servers port number */
-			port = strdup( optarg );
+			progdir = optarg;
 			break;
 
 		case 'r':		/* the number of retries in case of error */
-			retries = strdup( optarg );
+			retries = optarg;
 			break;
 
 		case 'S':
@@ -354,7 +344,7 @@ main( int argc, char **argv )
 			break;
 
 		case 't':		/* the delay in seconds between each retry */
-			delay = strdup( optarg );
+			delay = optarg;
 			break;
 
 		case 'w':		/* the managers passwd */
@@ -376,7 +366,7 @@ main( int argc, char **argv )
 		}
 	}
 
-	if (( dirname == NULL ) || ( port == NULL && uri == NULL ) ||
+	if (( dirname == NULL ) || ( uri == NULL ) ||
 			( manager == NULL ) || ( passwd == NULL ) || ( progdir == NULL ))
 	{
 		usage( argv[0], '\0' );
@@ -532,15 +522,8 @@ main( int argc, char **argv )
 	snprintf( scmd, sizeof scmd, "%s" LDAP_DIRSEP SEARCHCMD,
 		progdir );
 	sargs[sanum++] = scmd;
-	if ( uri ) {
-		sargs[sanum++] = "-H";
-		sargs[sanum++] = uri;
-	} else {
-		sargs[sanum++] = "-h";
-		sargs[sanum++] = host;
-		sargs[sanum++] = "-p";
-		sargs[sanum++] = port;
-	}
+	sargs[sanum++] = "-H";
+	sargs[sanum++] = uri;
 	sargs[sanum++] = "-D";
 	sargs[sanum++] = manager;
 	sargs[sanum++] = "-w";
@@ -593,15 +576,8 @@ main( int argc, char **argv )
 	snprintf( rcmd, sizeof rcmd, "%s" LDAP_DIRSEP READCMD,
 		progdir );
 	rargs[ranum++] = rcmd;
-	if ( uri ) {
-		rargs[ranum++] = "-H";
-		rargs[ranum++] = uri;
-	} else {
-		rargs[ranum++] = "-h";
-		rargs[ranum++] = host;
-		rargs[ranum++] = "-p";
-		rargs[ranum++] = port;
-	}
+	rargs[ranum++] = "-H";
+	rargs[ranum++] = uri;
 	rargs[ranum++] = "-D";
 	rargs[ranum++] = manager;
 	rargs[ranum++] = "-w";
@@ -647,15 +623,8 @@ main( int argc, char **argv )
 	snprintf( ncmd, sizeof ncmd, "%s" LDAP_DIRSEP MODRDNCMD,
 		progdir );
 	nargs[nanum++] = ncmd;
-	if ( uri ) {
-		nargs[nanum++] = "-H";
-		nargs[nanum++] = uri;
-	} else {
-		nargs[nanum++] = "-h";
-		nargs[nanum++] = host;
-		nargs[nanum++] = "-p";
-		nargs[nanum++] = port;
-	}
+	nargs[nanum++] = "-H";
+	nargs[nanum++] = uri;
 	nargs[nanum++] = "-D";
 	nargs[nanum++] = manager;
 	nargs[nanum++] = "-w";
@@ -690,15 +659,8 @@ main( int argc, char **argv )
 	snprintf( mcmd, sizeof mcmd, "%s" LDAP_DIRSEP MODIFYCMD,
 		progdir );
 	margs[manum++] = mcmd;
-	if ( uri ) {
-		margs[manum++] = "-H";
-		margs[manum++] = uri;
-	} else {
-		margs[manum++] = "-h";
-		margs[manum++] = host;
-		margs[manum++] = "-p";
-		margs[manum++] = port;
-	}
+	margs[manum++] = "-H";
+	margs[manum++] = uri;
 	margs[manum++] = "-D";
 	margs[manum++] = manager;
 	margs[manum++] = "-w";
@@ -735,15 +697,8 @@ main( int argc, char **argv )
 	snprintf( acmd, sizeof acmd, "%s" LDAP_DIRSEP ADDCMD,
 		progdir );
 	aargs[aanum++] = acmd;
-	if ( uri ) {
-		aargs[aanum++] = "-H";
-		aargs[aanum++] = uri;
-	} else {
-		aargs[aanum++] = "-h";
-		aargs[aanum++] = host;
-		aargs[aanum++] = "-p";
-		aargs[aanum++] = port;
-	}
+	aargs[aanum++] = "-H";
+	aargs[aanum++] = uri;
 	aargs[aanum++] = "-D";
 	aargs[aanum++] = manager;
 	aargs[aanum++] = "-w";
@@ -781,25 +736,16 @@ main( int argc, char **argv )
 	if ( !noinit ) {
 		bargs[banum++] = "-I";	/* init on each bind */
 	}
-	if ( uri ) {
-		bargs[banum++] = "-H";
-		bargs[banum++] = uri;
-	} else {
-		bargs[banum++] = "-h";
-		bargs[banum++] = host;
-		bargs[banum++] = "-p";
-		bargs[banum++] = port;
-	}
+	bargs[banum++] = "-H";
+	bargs[banum++] = uri;
 	bargs[banum++] = "-l";
 	bargs[banum++] = bloops;
 	bargs[banum++] = "-L";
 	bargs[banum++] = outerloops;
-#if 0
 	bargs[banum++] = "-r";
 	bargs[banum++] = retries;
 	bargs[banum++] = "-t";
 	bargs[banum++] = delay;
-#endif
 	if ( friendly ) {
 		bargs[banum++] = friendlyOpt;
 	}

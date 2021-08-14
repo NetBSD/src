@@ -1,4 +1,4 @@
-/*	$NetBSD: id2entry.c,v 1.1.1.1 2021/08/14 16:05:24 christos Exp $	*/
+/*	$NetBSD: id2entry.c,v 1.2 2021/08/14 16:15:02 christos Exp $	*/
 
 /* OpenLDAP WiredTiger backend */
 /* $OpenLDAP$ */

@@ -1,10 +1,10 @@
-/*	$NetBSD: dupent.c,v 1.2 2020/08/11 13:15:35 christos Exp $	*/
+/*	$NetBSD: dupent.c,v 1.3 2021/08/14 16:14:51 christos Exp $	*/
 
 /* dupent.c - LDAP Control for a Duplicate Entry Representation of Search Results */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2006-2020 The OpenLDAP Foundation.
+ * Copyright 2006-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dupent.c,v 1.2 2020/08/11 13:15:35 christos Exp $");
+__RCSID("$NetBSD: dupent.c,v 1.3 2021/08/14 16:14:51 christos Exp $");
 
 #include "portable.h"
 
@@ -540,12 +540,13 @@ dupent_initialize( void )
 	if ( rc != LDAP_SUCCESS ) {
 		Debug( LDAP_DEBUG_ANY,
 			"dupent_initialize: Failed to register control (%d)\n",
-			rc, 0, 0 );
+			rc );
 		return -1;
 	}
 
 	dupent.on_bi.bi_type = "dupent";
 
+	dupent.on_bi.bi_flags = SLAPO_BFLAG_SINGLE;
 	dupent.on_bi.bi_op_search = dupent_op_search;
 
 	return overlay_register( &dupent );

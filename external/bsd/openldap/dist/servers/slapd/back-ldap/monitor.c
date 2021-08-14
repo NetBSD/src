@@ -1,10 +1,10 @@
-/*	$NetBSD: monitor.c,v 1.2 2020/08/11 13:15:40 christos Exp $	*/
+/*	$NetBSD: monitor.c,v 1.3 2021/08/14 16:14:59 christos Exp $	*/
 
 /* monitor.c - monitor ldap backend */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2020 The OpenLDAP Foundation.
+ * Copyright 2003-2021 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Howard Chu.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * All rights reserved.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: monitor.c,v 1.2 2020/08/11 13:15:40 christos Exp $");
+__RCSID("$NetBSD: monitor.c,v 1.3 2021/08/14 16:14:59 christos Exp $");
 
 #include "portable.h"
 
@@ -37,7 +37,7 @@ __RCSID("$NetBSD: monitor.c,v 1.2 2020/08/11 13:15:40 christos Exp $");
 #include "lutil.h"
 #include "back-ldap.h"
 
-#include "config.h"
+#include "slap-config.h"
 
 static ObjectClass		*oc_olmLDAPDatabase;
 static ObjectClass		*oc_olmLDAPConnection;
@@ -386,7 +386,7 @@ ldap_back_monitor_subsystem_destroy(
 
 /*
  * Connection monitoring subsystem:
- * Tries to mimick what the cn=connections,cn=monitor subsystem does
+ * Tries to mimic what the cn=connections,cn=monitor subsystem does
  * by creating volatile entries for each connection and populating them
  * according to the information attached to the connection.
  * At this moment the only exposed information is the DN used to bind it.
@@ -545,6 +545,7 @@ ldap_back_monitor_conn_create(
 
 	struct ldap_back_monitor_conn_arg *arg;
 	int conn_type;
+	TAvlnode *edge;
 
 	assert( e_parent->e_private != NULL );
 
@@ -569,8 +570,13 @@ ldap_back_monitor_conn_create(
 		}
 	}
 
-	avl_apply( li->li_conninfo.lai_tree, (AVL_APPLY)ldap_back_monitor_conn_entry,
-		arg, -1, AVL_INORDER );
+	edge = ldap_tavl_end( li->li_conninfo.lai_tree, TAVL_DIR_LEFT );
+	while ( edge ) {
+		TAvlnode *next = ldap_tavl_next( edge, TAVL_DIR_RIGHT );
+		ldapconn_t *lc = (ldapconn_t *)edge->avl_data;
+		ldap_back_monitor_conn_entry( lc, arg );
+		edge = next;
+	}
 
 	ch_free( arg );
 
@@ -603,7 +609,7 @@ ldap_back_monitor_conn_init(
 			"ldap_back_monitor_conn_init: "
 			"unable to create entry \"%s,%s\"\n",
 			li->li_monitor_info.lmi_conn_rdn.bv_val,
-			ms->mss_ndn.bv_val, 0 );
+			ms->mss_ndn.bv_val );
 		return( -1 );
 	}
 
@@ -632,8 +638,7 @@ ldap_back_monitor_conn_init(
 		if ( rc != LDAP_URL_SUCCESS ) {
 			Debug( LDAP_DEBUG_ANY,
 				"ldap_back_monitor_db_open: "
-				"unable to parse URI list (ignored)\n",
-				0, 0, 0 );
+				"unable to parse URI list (ignored)\n" );
 		} else {
 			Attribute *a2 = attr_alloc( slap_schema.si_ad_labeledURI );
 
@@ -760,7 +765,7 @@ ldap_back_monitor_ops_init(
 			"ldap_back_monitor_ops_init: "
 			"unable to create entry \"%s,%s\"\n",
 			li->li_monitor_info.lmi_ops_rdn.bv_val,
-			ms->mss_ndn.bv_val, 0 );
+			ms->mss_ndn.bv_val );
 		return( -1 );
 	}
 
@@ -773,7 +778,7 @@ ldap_back_monitor_ops_init(
 		Debug( LDAP_DEBUG_ANY,
 			"ldap_back_monitor_ops_init: "
 			"unable to register entry \"%s\" for monitoring\n",
-			parent->e_name.bv_val, 0, 0 );
+			parent->e_name.bv_val );
 		goto done;
 	}
 
@@ -790,7 +795,7 @@ ldap_back_monitor_ops_init(
 				"ldap_back_monitor_ops_init: "
 				"unable to create entry \"%s,%s\"\n",
 				ldap_back_monitor_op[op].rdn.bv_val,
-				parent->e_nname.bv_val, 0 );
+				parent->e_nname.bv_val );
 			return( -1 );
 		}
 
@@ -823,7 +828,7 @@ ldap_back_monitor_ops_init(
 			Debug( LDAP_DEBUG_ANY,
 				"ldap_back_monitor_ops_init: "
 				"unable to register entry \"%s\" for monitoring\n",
-				e->e_name.bv_val, 0, 0 );
+				e->e_name.bv_val );
 			ch_free( cb );
 			break;
 		}
@@ -850,8 +855,7 @@ ldap_back_monitor_initialize( void )
 	/* set to 0 when successfully initialized; otherwise, remember failure */
 	static int	ldap_back_monitor_initialized_failure = 1;
 
-	/* register schema here; if compiled as dynamic object,
-	 * must be loaded __after__ back_monitor.la */
+	/* register schema here */
 
 	if ( ldap_back_monitor_initialized++ ) {
 		return ldap_back_monitor_initialized_failure;
@@ -874,7 +878,7 @@ ldap_back_monitor_initialize( void )
 			Debug( LDAP_DEBUG_ANY,
 				"ldap_back_monitor_initialize: unable to add "
 				"objectIdentifier \"%s=%s\"\n",
-				s_oid[ i ].name, s_oid[ i ].oid, 0 );
+				s_oid[ i ].name, s_oid[ i ].oid );
 			return 2;
 		}
 	}
@@ -884,7 +888,7 @@ ldap_back_monitor_initialize( void )
 		if ( code != LDAP_SUCCESS ) {
 			Debug( LDAP_DEBUG_ANY,
 				"ldap_back_monitor_initialize: register_at failed for attributeType (%s)\n",
-				s_at[ i ].desc, 0, 0 );
+				s_at[ i ].desc );
 			return 3;
 
 		} else {
@@ -897,7 +901,7 @@ ldap_back_monitor_initialize( void )
 		if ( code != LDAP_SUCCESS ) {
 			Debug( LDAP_DEBUG_ANY,
 				"ldap_back_monitor_initialize: register_oc failed for objectClass (%s)\n",
-				s_oc[ i ].desc, 0, 0 );
+				s_oc[ i ].desc );
 			return 4;
 
 		} else {
@@ -910,7 +914,7 @@ ldap_back_monitor_initialize( void )
 		if ( ! *s_moc[i].oc ) {
 			Debug( LDAP_DEBUG_ANY,
 				"ldap_back_monitor_initialize: failed to find objectClass (%s)\n",
-				s_moc[ i ].name, 0, 0 );
+				s_moc[ i ].name );
 			return 5;
 
 		}
@@ -968,10 +972,9 @@ ldap_back_monitor_db_open( BackendDB *be )
 		static int warning = 0;
 
 		if ( warning++ == 0 ) {
-			Debug( LDAP_DEBUG_ANY, "ldap_back_monitor_db_open: "
+			Debug( LDAP_DEBUG_CONFIG, "ldap_back_monitor_db_open: "
 				"monitoring disabled; "
-				"configure monitor database to enable\n",
-				0, 0, 0 );
+				"configure monitor database to enable\n" );
 		}
 
 		return 0;
@@ -983,8 +986,7 @@ ldap_back_monitor_db_open( BackendDB *be )
 		rc = mbe->register_database( be, &li->li_monitor_info.lmi_ndn );
 		if ( rc != 0 ) {
 			Debug( LDAP_DEBUG_ANY, "ldap_back_monitor_db_open: "
-				"failed to register the databse with back-monitor\n",
-				0, 0, 0 );
+				"failed to register the database with back-monitor\n" );
 		}
 	}
 	if ( BER_BVISNULL( &li->li_monitor_info.lmi_conn_rdn ) ) {
@@ -1008,7 +1010,7 @@ ldap_back_monitor_db_open( BackendDB *be )
 	{
 		Debug( LDAP_DEBUG_ANY,
 			"ldap_back_monitor_db_open: "
-			"failed to register connection subsystem", 0, 0, 0 );
+			"failed to register connection subsystem" );
 		return -1;
 	}
 
@@ -1023,7 +1025,7 @@ ldap_back_monitor_db_open( BackendDB *be )
 	{
 		Debug( LDAP_DEBUG_ANY,
 			"ldap_back_monitor_db_open: "
-			"failed to register operation subsystem", 0, 0, 0 );
+			"failed to register operation subsystem" );
 		return -1;
 	}
 

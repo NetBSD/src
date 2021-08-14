@@ -1,10 +1,10 @@
-/*	$NetBSD: rww.c,v 1.2 2020/08/11 13:15:41 christos Exp $	*/
+/*	$NetBSD: rww.c,v 1.3 2021/08/14 16:15:00 christos Exp $	*/
 
 /* readw.c - deal with read waiters subsystem */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2020 The OpenLDAP Foundation.
+ * Copyright 2001-2021 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rww.c,v 1.2 2020/08/11 13:15:41 christos Exp $");
+__RCSID("$NetBSD: rww.c,v 1.3 2021/08/14 16:15:00 christos Exp $");
 
 #include "portable.h"
 
@@ -82,7 +82,7 @@ monitor_subsys_rww_init(
 		Debug( LDAP_DEBUG_ANY,
 			"monitor_subsys_rww_init: "
 			"unable to get entry \"%s\"\n",
-			ms->mss_ndn.bv_val, 0, 0 );
+			ms->mss_ndn.bv_val );
 		return( -1 );
 	}
 
@@ -100,7 +100,7 @@ monitor_subsys_rww_init(
 			Debug( LDAP_DEBUG_ANY,
 				"monitor_subsys_rww_init: "
 				"unable to create entry \"cn=Read,%s\"\n",
-				ms->mss_ndn.bv_val, 0, 0 );
+				ms->mss_ndn.bv_val );
 			return( -1 );
 		}
 
@@ -125,7 +125,7 @@ monitor_subsys_rww_init(
 				"monitor_subsys_rww_init: "
 				"unable to add entry \"%s,%s\"\n",
 				monitor_rww[ i ].rdn.bv_val,
-				ms->mss_ndn.bv_val, 0 );
+				ms->mss_ndn.bv_val );
 			return( -1 );
 		}
 	

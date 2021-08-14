@@ -1,10 +1,10 @@
-/*	$NetBSD: extended.c,v 1.2 2020/08/11 13:15:42 christos Exp $	*/
+/*	$NetBSD: extended.c,v 1.3 2021/08/14 16:15:01 christos Exp $	*/
 
 /* extended.c - sock backend extended routines */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2020 The OpenLDAP Foundation.
+ * Copyright 2000-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: extended.c,v 1.2 2020/08/11 13:15:42 christos Exp $");
+__RCSID("$NetBSD: extended.c,v 1.3 2021/08/14 16:15:01 christos Exp $");
 
 #include "portable.h"
 
@@ -37,8 +37,8 @@ sock_back_extended( Operation *op, SlapReply *rs )
 	FILE		*fp;
 	struct berval b64;
 
-	Debug( LDAP_DEBUG_ARGS, "==> sock_back_extended(%s)\n",
-		op->ore_reqoid.bv_val, op->o_req_dn.bv_val, 0 );
+	Debug( LDAP_DEBUG_ARGS, "==> sock_back_extended(%s, %s)\n",
+		op->ore_reqoid.bv_val, op->o_req_dn.bv_val );
 
 	if ( (fp = opensock( si->si_sockpath )) == NULL ) {
 		send_ldap_error( op, rs, LDAP_OTHER,

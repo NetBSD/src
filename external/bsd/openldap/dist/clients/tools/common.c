@@ -1,10 +1,10 @@
-/*	$NetBSD: common.c,v 1.9 2020/08/11 13:15:34 christos Exp $	*/
+/*	$NetBSD: common.c,v 1.10 2021/08/14 16:14:49 christos Exp $	*/
 
 /* common.c - common routines for the ldap client tools */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * Portions Copyright 2003 Kurt D. Zeilenga.
  * Portions Copyright 2003 IBM Corporation.
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: common.c,v 1.9 2020/08/11 13:15:34 christos Exp $");
+__RCSID("$NetBSD: common.c,v 1.10 2021/08/14 16:14:49 christos Exp $");
 
 #include "portable.h"
 
@@ -76,8 +76,6 @@ char		*prog = NULL;
 
 /* connection */
 char		*ldapuri = NULL;
-char		*ldaphost = NULL;
-int  		ldapport = 0;
 int		use_tls = 0;
 int		protocol = -1;
 int		version = 0;
@@ -102,6 +100,7 @@ int		assertctl;
 char		*assertion = NULL;
 struct berval	assertionvalue = BER_BVNULL;
 char		*authzid = NULL;
+int		authzcrit = 1;
 /* support deprecated early version of proxyAuthz */
 #define LDAP_CONTROL_OBSOLETE_PROXY_AUTHZ	"2.16.840.1.113730.3.4.12"
 #ifdef LDAP_CONTROL_OBSOLETE_PROXY_AUTHZ
@@ -124,11 +123,13 @@ static int	chainingContinuation = -1;
 #endif /* LDAP_CONTROL_X_CHAINING_BEHAVIOR */
 #ifdef LDAP_CONTROL_X_SESSION_TRACKING
 static int	sessionTracking = 0;
+static char	*sessionTrackingName;
 struct berval	stValue;
 #endif /* LDAP_CONTROL_X_SESSION_TRACKING */
 ber_int_t vlvPos;
 ber_int_t vlvCount;
 struct berval *vlvContext;
+static int	bauthzid;
 
 LDAPControl	*unknown_ctrls = NULL;
 int		unknown_ctrls_num = 0;
@@ -141,6 +142,10 @@ typedef int (*print_ctrl_fn)( LDAP *ld, LDAPControl *ctrl );
 static int print_preread( LDAP *ld, LDAPControl *ctrl );
 static int print_postread( LDAP *ld, LDAPControl *ctrl );
 static int print_paged_results( LDAP *ld, LDAPControl *ctrl );
+static int print_psearch( LDAP *ld, LDAPControl *ctrl );
+#ifdef LDAP_CONTROL_AUTHZID_RESPONSE
+static int print_authzid( LDAP *ld, LDAPControl *ctrl );
+#endif
 #ifdef LDAP_CONTROL_PASSWORDPOLICYREQUEST
 static int print_ppolicy( LDAP *ld, LDAPControl *ctrl );
 #endif
@@ -152,6 +157,18 @@ static int print_deref( LDAP *ld, LDAPControl *ctrl );
 #ifdef LDAP_CONTROL_X_WHATFAILED
 static int print_whatfailed( LDAP *ld, LDAPControl *ctrl );
 #endif
+static int print_syncstate( LDAP *ld, LDAPControl *ctrl );
+static int print_syncdone( LDAP *ld, LDAPControl *ctrl );
+#ifdef LDAP_CONTROL_X_DIRSYNC
+static int print_dirsync( LDAP *ld, LDAPControl *ctrl );
+#endif
+#ifdef LDAP_CONTROL_X_ACCOUNT_USABILITY
+static int print_account_usability( LDAP *ld, LDAPControl *ctrl );
+#endif
+#ifdef LDAP_CONTROL_X_PASSWORD_EXPIRED
+static int print_netscape_pwexpired( LDAP *ld, LDAPControl *ctrl );
+static int print_netscape_pwexpiring( LDAP *ld, LDAPControl *ctrl );
+#endif
 
 static struct tool_ctrls_t {
 	const char	*oid;
@@ -161,6 +178,11 @@ static struct tool_ctrls_t {
 	{ LDAP_CONTROL_PRE_READ,			TOOL_ALL,	print_preread },
 	{ LDAP_CONTROL_POST_READ,			TOOL_ALL,	print_postread },
 	{ LDAP_CONTROL_PAGEDRESULTS,			TOOL_SEARCH,	print_paged_results },
+	{ LDAP_CONTROL_PERSIST_ENTRY_CHANGE_NOTICE,			TOOL_SEARCH,	print_psearch },
+#ifdef LDAP_CONTROL_AUTHZID_RESPONSE
+	/* this is generally deprecated in favor of LDAP WhoAmI? operation, hence only supported as a VC inner control */
+	{ LDAP_CONTROL_AUTHZID_RESPONSE,		TOOL_VC,	print_authzid },
+#endif
 #ifdef LDAP_CONTROL_PASSWORDPOLICYREQUEST
 	{ LDAP_CONTROL_PASSWORDPOLICYRESPONSE,		TOOL_ALL,	print_ppolicy },
 #endif
@@ -172,12 +194,26 @@ static struct tool_ctrls_t {
 #ifdef LDAP_CONTROL_X_WHATFAILED
 	{ LDAP_CONTROL_X_WHATFAILED,			TOOL_ALL,	print_whatfailed },
 #endif
+	{ LDAP_CONTROL_SYNC_STATE,			TOOL_SEARCH,	print_syncstate },
+	{ LDAP_CONTROL_SYNC_DONE,			TOOL_SEARCH,	print_syncdone },
+#ifdef LDAP_CONTROL_X_DIRSYNC
+	{ LDAP_CONTROL_X_DIRSYNC,			TOOL_SEARCH,	print_dirsync },
+#endif
+#ifdef LDAP_CONTROL_X_ACCOUNT_USABILITY
+	{ LDAP_CONTROL_X_ACCOUNT_USABILITY,		TOOL_SEARCH,	print_account_usability },
+#endif
+#ifdef LDAP_CONTROL_X_PASSWORD_EXPIRED
+	{ LDAP_CONTROL_X_PASSWORD_EXPIRED,		TOOL_ALL,	print_netscape_pwexpired },
+	{ LDAP_CONTROL_X_PASSWORD_EXPIRING,		TOOL_ALL,	print_netscape_pwexpiring },
+#endif
 	{ NULL,						0,		NULL }
 };
 
 /* "features" */
 enum { Intr_None = 0, Intr_Abandon, Intr_Cancel, Intr_Ignore }; 
 static volatile sig_atomic_t	gotintr, abcan;
+
+int backlog;
 
 
 #ifdef LDAP_CONTROL_X_SESSION_TRACKING
@@ -201,6 +237,9 @@ st_value( LDAP *ld, struct berval *value )
 		}
 	}
 
+	if ( sessionTrackingName != NULL ) {
+		ber_str2bv( sessionTrackingName , 0, 0, &id );
+	} else
 #ifdef HAVE_CYRUS_SASL
 	if ( sasl_authz_id != NULL ) {
 		ber_str2bv( sasl_authz_id, 0, 0, &id );
@@ -265,45 +304,18 @@ tool_destroy( void )
 		BER_BVZERO( &pr_cookie );
 	}
 
-	if ( binddn != NULL ) {
-		ber_memfree( binddn );
-		binddn = NULL;
-	}
-
 	if ( passwd.bv_val != NULL ) {
 		ber_memfree( passwd.bv_val );
 		BER_BVZERO( &passwd );
 	}
 
-	if ( infile != NULL ) {
-		ber_memfree( infile );
-		infile = NULL;
+#ifdef LDAP_CONTROL_X_SESSION_TRACKING
+	if ( !BER_BVISNULL( &stValue ) ) {
+		ber_memfree( stValue.bv_val );
+		BER_BVZERO( &stValue );
 	}
 
-	if ( assertion ) {
-		ber_memfree( assertion );
-		assertion = NULL;
-	}
-
-	if ( authzid ) {
-		ber_memfree( authzid );
-		authzid = NULL;
-	}
-
-	if ( proxydn ) {
-		ber_memfree( proxydn );
-		proxydn = NULL;
-	}
-
-	if ( preread_attrs ) {
-		ber_memfree( preread_attrs );
-		preread_attrs = NULL;
-	}
-
-	if ( postread_attrs ) {
-		ber_memfree( postread_attrs );
-		postread_attrs = NULL;
-	}
+#endif /* LDAP_CONTROL_X_SESSION_TRACKING */
 }
 
 void
@@ -315,6 +327,7 @@ N_("  -D binddn  bind DN\n"),
 N_("  -e [!]<ext>[=<extparam>] general extensions (! indicates criticality)\n")
 N_("             [!]assert=<filter>     (RFC 4528; a RFC 4515 Filter string)\n")
 N_("             [!]authzid=<authzid>   (RFC 4370; \"dn:<dn>\" or \"u:<user>\")\n")
+N_("             [!]bauthzid            (RFC 3829)\n")
 #ifdef LDAP_CONTROL_OBSOLETE_PROXY_AUTHZ
 #if 0
                  /* non-advertized support for proxyDN */
@@ -335,21 +348,19 @@ N_("             [!]postread[=<attrs>]  (RFC 4527; comma-separated attr list)\n"
 N_("             [!]preread[=<attrs>]   (RFC 4527; comma-separated attr list)\n")
 N_("             [!]relax\n")
 #ifdef LDAP_CONTROL_X_SESSION_TRACKING
-N_("             [!]sessiontracking\n")
+N_("             [!]sessiontracking[=<username>]\n")
 #endif /* LDAP_CONTROL_X_SESSION_TRACKING */
 N_("             abandon, cancel, ignore (SIGINT sends abandon/cancel,\n"
    "             or ignores response; if critical, doesn't wait for SIGINT.\n"
    "             not really controls)\n")
-N_("  -h host    LDAP server\n"),
 N_("  -H URI     LDAP Uniform Resource Identifier(s)\n"),
 N_("  -I         use SASL Interactive mode\n"),
 N_("  -n         show what would be done but don't actually do it\n"),
 N_("  -N         do not use reverse DNS to canonicalize SASL host name\n"),
 N_("  -O props   SASL security properties\n"),
-N_("  -o <opt>[=<optparam>] general options\n"),
+N_("  -o <opt>[=<optparam>] any libldap ldap.conf options, plus\n"),
+N_("             ldif_wrap=<width> (in columns, or \"no\" for no wrapping)\n"),
 N_("             nettimeout=<timeout> (in seconds, or \"none\" or \"max\")\n"),
-N_("             ldif-wrap=<width> (in columns, or \"no\" for no wrapping)\n"),
-N_("  -p port    port on LDAP server\n"),
 N_("  -Q         use SASL Quiet mode\n"),
 N_("  -R realm   SASL realm\n"),
 N_("  -U authcid SASL authentication identity\n"),
@@ -433,7 +444,7 @@ tool_args( int argc, char **argv )
 				fprintf( stderr, "%s: -D previously specified\n", prog );
 				exit( EXIT_FAILURE );
 			}
-			binddn = ber_strdup( optarg );
+			binddn = optarg;
 			break;
 		case 'e':	/* general extensions (controls and such) */
 			/* should be extended to support comma separated list of
@@ -442,12 +453,12 @@ tool_args( int argc, char **argv )
 
 			crit = 0;
 			cvalue = NULL;
-			if( optarg[0] == '!' ) {
-				crit = 1;
+			while ( optarg[0] == '!' ) {
+				crit++;
 				optarg++;
 			}
 
-			control = ber_strdup( optarg );
+			control = optarg;
 			if ( (cvalue = strchr( control, '=' )) != NULL ) {
 				*cvalue++ = '\0';
 			}
@@ -465,7 +476,7 @@ tool_args( int argc, char **argv )
 				assertctl = 1 + crit;
 
 				assert( assertion == NULL );
-				assertion = ber_strdup( cvalue );
+				assertion = cvalue;
 
 			} else if ( strcasecmp( control, "authzid" ) == 0 ) {
 				if( authzid != NULL ) {
@@ -485,10 +496,14 @@ tool_args( int argc, char **argv )
 				if( !crit ) {
 					fprintf( stderr, "authzid: must be marked critical\n" );
 					usage();
+				} else if ( crit > 1 ) {
+					/* purposely flag proxied authorization
+					 * as non-critical, to test DSA */
+					authzcrit = 0;
 				}
 
 				assert( authzid == NULL );
-				authzid = ber_strdup( cvalue );
+				authzid = cvalue;
 
 #ifdef LDAP_CONTROL_OBSOLETE_PROXY_AUTHZ
 			} else if ( strcasecmp( control, "proxydn" ) == 0 ) {
@@ -507,11 +522,26 @@ tool_args( int argc, char **argv )
 				if( !crit ) {
 					fprintf( stderr, "proxydn: must be marked critical\n" );
 					usage();
+				} else if ( crit > 1 ) {
+					/* purposely flag proxied authorization
+					 * as non-critical, to test DSA */
+					authzcrit = 0;
 				}
 
 				assert( proxydn == NULL );
-				proxydn = ber_strdup( cvalue );
+				proxydn = cvalue;
 #endif /* LDAP_CONTROL_OBSOLETE_PROXY_AUTHZ */
+
+			} else if ( strcasecmp( control, "bauthzid" ) == 0 ) {
+				if( bauthzid ) {
+					fprintf( stderr, "bauthzid control previously specified\n");
+					exit( EXIT_FAILURE );
+				}
+				if( cvalue != NULL ) {
+					fprintf( stderr, "bauthzid: no control value expected\n" );
+					usage();
+				}
+				bauthzid = 1 + crit;
 
 			} else if ( ( strcasecmp( control, "relax" ) == 0 ) ||
 				( strcasecmp( control, "manageDIT" ) == 0 ) )
@@ -580,7 +610,7 @@ tool_args( int argc, char **argv )
 				}
 
 				preread = 1 + crit;
-				preread_attrs = ber_strdup( cvalue );
+				preread_attrs = cvalue;
 
 			} else if ( strcasecmp( control, "postread" ) == 0 ) {
 				if( postread ) {
@@ -589,10 +619,15 @@ tool_args( int argc, char **argv )
 				}
 
 				postread = 1 + crit;
-				postread_attrs = ber_strdup( cvalue );
+				postread_attrs = cvalue;
 
 #ifdef LDAP_CONTROL_X_CHAINING_BEHAVIOR
 			} else if ( strcasecmp( control, "chaining" ) == 0 ) {
+				if ( chaining ) {
+					fprintf( stderr, "chaining control previously specified\n");
+					exit( EXIT_FAILURE );
+				}
+
 				chaining = 1 + crit;
 
 				if ( cvalue != NULL ) {
@@ -644,9 +679,12 @@ tool_args( int argc, char **argv )
 					exit( EXIT_FAILURE );
 				}
 				sessionTracking = 1;
-				if( crit ) {
+				if ( crit ) {
 					fprintf( stderr, "sessiontracking: critical flag not allowed\n" );
 					usage();
+				}
+				if ( cvalue ) {
+					sessionTrackingName = cvalue;
 				}
 #endif /* LDAP_CONTROL_X_SESSION_TRACKING */
 
@@ -669,8 +707,25 @@ tool_args( int argc, char **argv )
 					gotintr = abcan;
 				}
 
+			} else if ( strcasecmp( control, "backlog" ) == 0 ) {
+				/* special search: accumulate lots of responses
+				 * but don't read any, force slapd writer to wait.
+				 * Then abandon the search and issue a new one.
+				 */
+				backlog = 1;
+
 			} else if ( tool_is_oid( control ) ) {
 				LDAPControl	*tmpctrls, ctrl;
+
+				if ( unknown_ctrls != NULL ) {
+					int i;
+					for ( i = 0; unknown_ctrls[ i ].ldctl_oid != NULL; i++ ) {
+						if ( strcmp( control, unknown_ctrls[ i ].ldctl_oid ) == 0 ) {
+							fprintf( stderr, "%s control previously specified\n", control );
+							exit( EXIT_FAILURE );
+						}
+					}
+				}
 
 				tmpctrls = (LDAPControl *)ber_memrealloc( unknown_ctrls,
 					(unknown_ctrls_num + 1)*sizeof( LDAPControl ) );
@@ -680,8 +735,6 @@ tool_args( int argc, char **argv )
 				}
 				unknown_ctrls = tmpctrls;
 				ctrl.ldctl_oid = control;
-				/* don't free it */
-				control = NULL;
 				ctrl.ldctl_value.bv_val = NULL;
 				ctrl.ldctl_value.bv_len = 0;
 				ctrl.ldctl_iscritical = crit;
@@ -708,6 +761,8 @@ tool_args( int argc, char **argv )
 					ctrl.ldctl_value = bv;
 				}
 
+				/* don't free it */
+				control = NULL;
 				unknown_ctrls[ unknown_ctrls_num ] = ctrl;
 				unknown_ctrls_num++;
 
@@ -716,24 +771,13 @@ tool_args( int argc, char **argv )
 					control );
 				usage();
 			}
-			if ( control ) {
-				ber_memfree( control );	 
-				control = NULL;
-			}
 			break;
 		case 'f':	/* read from file */
 			if( infile != NULL ) {
 				fprintf( stderr, "%s: -f previously specified\n", prog );
 				exit( EXIT_FAILURE );
 			}
-			infile = ber_strdup( optarg );
-			break;
-		case 'h':	/* ldap host */
-			if( ldaphost != NULL ) {
-				fprintf( stderr, "%s: -h previously specified\n", prog );
-				exit( EXIT_FAILURE );
-			}
-			ldaphost = ber_strdup( optarg );
+			infile = optarg;
 			break;
 		case 'H':	/* ldap URI */
 			if( ldapuri != NULL ) {
@@ -769,9 +813,14 @@ tool_args( int argc, char **argv )
 			nocanon++;
 			break;
 		case 'o':
-			control = ber_strdup( optarg );
+			control = optarg;
 			if ( (cvalue = strchr( control, '=' )) != NULL ) {
 				*cvalue++ = '\0';
+			}
+			for ( next=control; *next; next++ ) {
+				if ( *next == '-' ) {
+					*next = '_';
+				}
 			}
 
 			if ( strcasecmp( control, "nettimeout" ) == 0 ) {
@@ -802,7 +851,7 @@ tool_args( int argc, char **argv )
 	 				exit( EXIT_FAILURE );
  				}
 
-			} else if ( strcasecmp( control, "ldif-wrap" ) == 0 ) {
+			} else if ( strcasecmp( control, "ldif_wrap" ) == 0 ) {
 				if ( cvalue == 0 ) {
 					ldif_wrap = LDIF_LINE_WIDTH;
 
@@ -813,18 +862,17 @@ tool_args( int argc, char **argv )
 					unsigned int u;
 					if ( lutil_atou( &u, cvalue ) ) {
 						fprintf( stderr,
-							_("Unable to parse ldif-wrap=\"%s\"\n"), cvalue );
+							_("Unable to parse ldif_wrap=\"%s\"\n"), cvalue );
 		 				exit( EXIT_FAILURE );
 					}
 					ldif_wrap = (ber_len_t)u;
 				}
 
-			} else {
+			} else if ( ldap_pvt_conf_option( control, cvalue, 1 ) ) {
 				fprintf( stderr, "Invalid general option name: %s\n",
 					control );
 				usage();
 			}
-			ber_memfree(control);
 			break;
 		case 'O':
 #ifdef HAVE_CYRUS_SASL
@@ -838,23 +886,11 @@ tool_args( int argc, char **argv )
 				exit( EXIT_FAILURE );
 			}
 			authmethod = LDAP_AUTH_SASL;
-			sasl_secprops = ber_strdup( optarg );
+			sasl_secprops = optarg;
 #else
 			fprintf( stderr, "%s: not compiled with SASL support\n", prog );
 			exit( EXIT_FAILURE );
 #endif
-			break;
-		case 'p':
-			if( ldapport ) {
-				fprintf( stderr, "%s: -p previously specified\n", prog );
-				exit( EXIT_FAILURE );
-			}
-			ival = strtol( optarg, &next, 10 );
-			if ( next == NULL || next[0] != '\0' ) {
-				fprintf( stderr, "%s: unable to parse port number \"%s\"\n", prog, optarg );
-				exit( EXIT_FAILURE );
-			}
-			ldapport = ival;
 			break;
 		case 'P':
 			ival = strtol( optarg, &next, 10 );
@@ -914,7 +950,7 @@ tool_args( int argc, char **argv )
 				exit( EXIT_FAILURE );
 			}
 			authmethod = LDAP_AUTH_SASL;
-			sasl_realm = ber_strdup( optarg );
+			sasl_realm = optarg;
 #else
 			fprintf( stderr, "%s: not compiled with SASL support\n",
 				prog );
@@ -934,7 +970,7 @@ tool_args( int argc, char **argv )
 				exit( EXIT_FAILURE );
 			}
 			authmethod = LDAP_AUTH_SASL;
-			sasl_authc_id = ber_strdup( optarg );
+			sasl_authc_id = optarg;
 #else
 			fprintf( stderr, "%s: not compiled with SASL support\n",
 				prog );
@@ -976,7 +1012,7 @@ tool_args( int argc, char **argv )
 				exit( EXIT_FAILURE );
 			}
 			authmethod = LDAP_AUTH_SASL;
-			sasl_mech = ber_strdup( optarg );
+			sasl_mech = optarg;
 #else
 			fprintf( stderr, "%s: not compiled with SASL support\n", prog );
 			exit( EXIT_FAILURE );
@@ -1002,7 +1038,7 @@ tool_args( int argc, char **argv )
 				exit( EXIT_FAILURE );
 			}
 			authmethod = LDAP_AUTH_SASL;
-			sasl_authz_id = ber_strdup( optarg );
+			sasl_authz_id = optarg;
 #else
 			fprintf( stderr, "%s: not compiled with SASL support\n", prog );
 			exit( EXIT_FAILURE );
@@ -1090,22 +1126,6 @@ tool_args( int argc, char **argv )
 #endif
 	}
 
-	if( ldapuri == NULL ) {
-		if( ldapport && ( ldaphost == NULL )) {
-			fprintf( stderr, "%s: -p without -h is invalid.\n", prog );
-			exit( EXIT_FAILURE );
-		}
-	} else {
-		if( ldaphost != NULL ) {
-			fprintf( stderr, "%s: -H incompatible with -h\n", prog );
-			exit( EXIT_FAILURE );
-		}
-		if( ldapport ) {
-			fprintf( stderr, "%s: -H incompatible with -p\n", prog );
-			exit( EXIT_FAILURE );
-		}
-	}
-
 	if( protocol == LDAP_VERSION2 ) {
 		if( assertctl || authzid || manageDIT || manageDSAit ||
 #ifdef LDAP_CONTROL_OBSOLETE_PROXY_AUTHZ
@@ -1176,19 +1196,7 @@ tool_conn_setup( int dont, void (*private_setup)( LDAP * ) )
 	if ( !dont ) {
 		int rc;
 
-		if( ( ldaphost != NULL || ldapport ) && ( ldapuri == NULL ) ) {
-			/* construct URL */
-			LDAPURLDesc url;
-			memset( &url, 0, sizeof(url));
-
-			url.lud_scheme = "ldap";
-			url.lud_host = ldaphost;
-			url.lud_port = ldapport;
-			url.lud_scope = LDAP_SCOPE_DEFAULT;
-
-			ldapuri = ldap_url_desc2str( &url );
-
-		} else if ( ldapuri != NULL ) {
+		if ( ldapuri != NULL ) {
 			LDAPURLDesc	*ludlist, **ludp;
 			char		**urls = NULL;
 			int		nurls = 0;
@@ -1370,7 +1378,7 @@ dnssrv_free:;
 				ldap_get_option( ld, LDAP_OPT_DIAGNOSTIC_MESSAGE, (void*)&msg);
 				tool_perror( "ldap_start_tls", rc, NULL, NULL, msg, NULL );
 				ldap_memfree(msg);
-				if ( use_tls > 1 ) {
+				if ( use_tls > 1 || rc < 0 ) {
 					tool_exit( ld, EXIT_FAILURE );
 				}
 			}
@@ -1396,9 +1404,21 @@ void
 tool_bind( LDAP *ld )
 {
 	LDAPControl	**sctrlsp = NULL;
-	LDAPControl	*sctrls[3];
+	LDAPControl	*sctrls[4];
 	LDAPControl	sctrl[3];
 	int		nsctrls = 0;
+
+	int rc, msgid;
+	LDAPMessage *result = NULL;
+
+	int err;
+	char *matched = NULL;
+	char *info = NULL;
+	char **refs = NULL;
+	LDAPControl **ctrls = NULL;
+	char msgbuf[256];
+
+	msgbuf[0] = 0;
 
 #ifdef LDAP_CONTROL_PASSWORDPOLICYREQUEST
 	if ( ppolicy ) {
@@ -1413,6 +1433,18 @@ tool_bind( LDAP *ld )
 	}
 #endif
 
+	if ( bauthzid ) {
+		LDAPControl c;
+
+		c.ldctl_oid = LDAP_CONTROL_AUTHZID_REQUEST;
+		c.ldctl_iscritical = bauthzid > 1;
+		BER_BVZERO( &c.ldctl_value );
+
+		sctrl[nsctrls] = c;
+		sctrls[nsctrls] = &sctrl[nsctrls];
+		sctrls[++nsctrls] = NULL;
+	}
+
 #ifdef LDAP_CONTROL_X_SESSION_TRACKING
 	if ( sessionTracking ) {
 		LDAPControl c;
@@ -1423,7 +1455,7 @@ tool_bind( LDAP *ld )
 
 		c.ldctl_oid = LDAP_CONTROL_X_SESSION_TRACKING;
 		c.ldctl_iscritical = 0;
-		ber_dupbv( &c.ldctl_value, &stValue );
+		c.ldctl_value = stValue;
 
 		sctrl[nsctrls] = c;
 		sctrls[nsctrls] = &sctrl[nsctrls];
@@ -1457,7 +1489,7 @@ tool_bind( LDAP *ld )
 	if ( authmethod == LDAP_AUTH_SASL ) {
 #ifdef HAVE_CYRUS_SASL
 		void *defaults;
-		int rc;
+		const char *rmech = NULL;
 
 		if( sasl_secprops != NULL ) {
 			rc = ldap_set_option( ld, LDAP_OPT_X_SASL_SECPROPS,
@@ -1478,17 +1510,33 @@ tool_bind( LDAP *ld )
 			passwd.bv_val,
 			sasl_authz_id );
 
-		rc = ldap_sasl_interactive_bind_s( ld, binddn, sasl_mech,
-			sctrlsp,
-			NULL, sasl_flags, lutil_sasl_interact, defaults );
+		do {
+			rc = ldap_sasl_interactive_bind( ld, binddn, sasl_mech,
+				sctrlsp, NULL, sasl_flags, lutil_sasl_interact, defaults,
+				result, &rmech, &msgid );
+
+			if ( rc != LDAP_SASL_BIND_IN_PROGRESS )
+				break;
+
+			ldap_msgfree( result );
+
+			if ( ldap_result( ld, msgid, LDAP_MSG_ALL, NULL, &result ) == -1 || !result ) {
+				ldap_get_option( ld, LDAP_OPT_RESULT_CODE, (void*)&err );
+				ldap_get_option( ld, LDAP_OPT_DIAGNOSTIC_MESSAGE, (void*)&info );
+				tool_perror( "ldap_sasl_interactive_bind",
+					err, NULL, NULL, info, NULL );
+				ldap_memfree( info );
+				tool_exit( ld, err );
+			}
+		} while ( rc == LDAP_SASL_BIND_IN_PROGRESS );
 
 		lutil_sasl_freedefs( defaults );
-		if( rc != LDAP_SUCCESS ) {
-			char *msg=NULL;
-			ldap_get_option( ld, LDAP_OPT_DIAGNOSTIC_MESSAGE, (void*)&msg);
-			tool_perror( "ldap_sasl_interactive_bind_s",
-				rc, NULL, NULL, msg, NULL );
-			ldap_memfree(msg);
+
+		if ( rc != LDAP_SUCCESS ) {
+			ldap_get_option( ld, LDAP_OPT_DIAGNOSTIC_MESSAGE, (void*)&info );
+			tool_perror( "ldap_sasl_interactive_bind",
+				rc, NULL, NULL, info, NULL );
+			ldap_memfree( info );
 			tool_exit( ld, rc );
 		}
 #else
@@ -1496,25 +1544,13 @@ tool_bind( LDAP *ld )
 		tool_exit( ld, LDAP_NOT_SUPPORTED );
 #endif
 	} else {
-		int msgid, err, rc;
-		LDAPMessage *result;
-		LDAPControl **ctrls;
-		char msgbuf[256];
-		char *matched = NULL;
-		char *info = NULL;
-		char **refs = NULL;
-
-		msgbuf[0] = 0;
-
-		{
-			/* simple bind */
-			rc = ldap_sasl_bind( ld, binddn, LDAP_SASL_SIMPLE, &passwd,
-				sctrlsp, NULL, &msgid );
-			if ( msgid == -1 ) {
-				tool_perror( "ldap_sasl_bind(SIMPLE)", rc,
-					NULL, NULL, NULL, NULL );
-				tool_exit( ld, rc );
-			}
+		/* simple bind */
+		rc = ldap_sasl_bind( ld, binddn, LDAP_SASL_SIMPLE, &passwd,
+			sctrlsp, NULL, &msgid );
+		if ( msgid == -1 ) {
+			tool_perror( "ldap_sasl_bind(SIMPLE)", rc,
+				NULL, NULL, NULL, NULL );
+			tool_exit( ld, rc );
 		}
 
 		rc = ldap_result( ld, msgid, LDAP_MSG_ALL, NULL, &result );
@@ -1527,65 +1563,95 @@ tool_bind( LDAP *ld )
 			tool_perror( "ldap_result", LDAP_TIMEOUT, NULL, NULL, NULL, NULL );
 			tool_exit( ld, LDAP_LOCAL_ERROR );
 		}
+	}
 
-		if ( result ) {
-			rc = ldap_parse_result( ld, result, &err, &matched, &info, &refs,
-			                        &ctrls, 1 );
-			if ( rc != LDAP_SUCCESS ) {
-				tool_perror( "ldap_bind parse result", rc, NULL, matched, info, refs );
-				tool_exit( ld, LDAP_LOCAL_ERROR );
-			}
+	if ( result ) {
+		rc = ldap_parse_result( ld, result, &err, &matched, &info, &refs,
+		                        &ctrls, 1 );
+		if ( rc != LDAP_SUCCESS ) {
+			tool_perror( "ldap_bind parse result", rc, NULL, matched, info, refs );
+			tool_exit( ld, LDAP_LOCAL_ERROR );
 		}
+	}
 
 #ifdef LDAP_CONTROL_PASSWORDPOLICYREQUEST
-		if ( ctrls && ppolicy ) {
-			LDAPControl *ctrl;
-			int expire, grace, len = 0;
-			LDAPPasswordPolicyError pErr = -1;
-			
-			ctrl = ldap_control_find( LDAP_CONTROL_PASSWORDPOLICYRESPONSE,
-				ctrls, NULL );
+	if ( ctrls && ppolicy ) {
+		LDAPControl *ctrl;
+		int expire, grace, len = 0;
+		LDAPPasswordPolicyError pErr = -1;
+		
+		ctrl = ldap_control_find( LDAP_CONTROL_PASSWORDPOLICYRESPONSE,
+			ctrls, NULL );
 
-			if ( ctrl && ldap_parse_passwordpolicy_control( ld, ctrl,
-				&expire, &grace, &pErr ) == LDAP_SUCCESS )
-			{
-				if ( pErr != PP_noError ){
-					msgbuf[0] = ';';
-					msgbuf[1] = ' ';
-					strcpy( msgbuf+2, ldap_passwordpolicy_err2txt( pErr ));
-					len = strlen( msgbuf );
-				}
-				if ( expire >= 0 ) {
-					sprintf( msgbuf+len,
-						" (Password expires in %d seconds)",
-						expire );
-				} else if ( grace >= 0 ) {
-					sprintf( msgbuf+len,
-						" (Password expired, %d grace logins remain)",
-						grace );
-				}
+		if ( ctrl && ldap_parse_passwordpolicy_control( ld, ctrl,
+			&expire, &grace, &pErr ) == LDAP_SUCCESS )
+		{
+			if ( pErr != PP_noError ){
+				msgbuf[0] = ';';
+				msgbuf[1] = ' ';
+				strcpy( msgbuf+2, ldap_passwordpolicy_err2txt( pErr ));
+				len = strlen( msgbuf );
+			}
+			if ( expire >= 0 ) {
+				sprintf( msgbuf+len,
+					" (Password expires in %d seconds)",
+					expire );
+			} else if ( grace >= 0 ) {
+				sprintf( msgbuf+len,
+					" (Password expired, %d grace logins remain)",
+					grace );
 			}
 		}
+	}
 #endif
 
-		if ( ctrls ) {
-			ldap_controls_free( ctrls );
+	if ( ctrls && bauthzid ) {
+		LDAPControl *ctrl;
+		
+		ctrl = ldap_control_find( LDAP_CONTROL_AUTHZID_RESPONSE,
+			ctrls, NULL );
+		if ( ctrl ) {
+			LDAPControl *ctmp[2];
+			ctmp[0] = ctrl;
+			ctmp[1] = NULL;
+			tool_print_ctrls( ld, ctmp );
 		}
+	}
 
-		if ( err != LDAP_SUCCESS
-			|| msgbuf[0]
-			|| ( matched && matched[ 0 ] )
-			|| ( info && info[ 0 ] )
-			|| refs )
-		{
-			tool_perror( "ldap_bind", err, msgbuf, matched, info, refs );
-
-			if( matched ) ber_memfree( matched );
-			if( info ) ber_memfree( info );
-			if( refs ) ber_memvfree( (void **)refs );
-
-			if ( err != LDAP_SUCCESS ) tool_exit( ld, err );
+#ifdef LDAP_CONTROL_X_PASSWORD_EXPIRED
+	if ( ctrls ) {
+		LDAPControl *ctrl;
+		ctrl = ldap_control_find( LDAP_CONTROL_X_PASSWORD_EXPIRED,
+			ctrls, NULL );
+		if ( !ctrl )
+			ctrl = ldap_control_find( LDAP_CONTROL_X_PASSWORD_EXPIRING,
+				ctrls, NULL );
+		if ( ctrl ) {
+			LDAPControl *ctmp[2];
+			ctmp[0] = ctrl;
+			ctmp[1] = NULL;
+			tool_print_ctrls( ld, ctmp );
 		}
+	}
+#endif
+
+	if ( ctrls ) {
+		ldap_controls_free( ctrls );
+	}
+
+	if ( err != LDAP_SUCCESS
+		|| msgbuf[0]
+		|| ( matched && matched[ 0 ] )
+		|| ( info && info[ 0 ] )
+		|| refs )
+	{
+		tool_perror( "ldap_bind", err, msgbuf, matched, info, refs );
+
+		if( matched ) ber_memfree( matched );
+		if( info ) ber_memfree( info );
+		if( refs ) ber_memvfree( (void **)refs );
+
+		if ( err != LDAP_SUCCESS ) tool_exit( ld, err );
 	}
 }
 
@@ -1672,7 +1738,7 @@ tool_server_controls( LDAP *ld, LDAPControl *extra_c, int count )
 		c[i].ldctl_value.bv_val = authzid;
 		c[i].ldctl_value.bv_len = strlen( authzid );
 		c[i].ldctl_oid = LDAP_CONTROL_PROXY_AUTHZ;
-		c[i].ldctl_iscritical = 1;
+		c[i].ldctl_iscritical = authzcrit;
 		ctrls[i] = &c[i];
 		i++;
 	}
@@ -1695,7 +1761,7 @@ tool_server_controls( LDAP *ld, LDAPControl *extra_c, int count )
 		}
 
 		c[i].ldctl_oid = LDAP_CONTROL_OBSOLETE_PROXY_AUTHZ;
-		c[i].ldctl_iscritical = 1;
+		c[i].ldctl_iscritical = authzcrit;
 		ctrls[i] = &c[i];
 		i++;
 	}
@@ -1849,7 +1915,7 @@ tool_server_controls( LDAP *ld, LDAPControl *extra_c, int count )
 
 		c[i].ldctl_oid = LDAP_CONTROL_X_SESSION_TRACKING;
 		c[i].ldctl_iscritical = 0;
-		ber_dupbv( &c[i].ldctl_value, &stValue );
+		c[i].ldctl_value = stValue;
 
 		ctrls[i] = &c[i];
 		i++;
@@ -2002,12 +2068,13 @@ print_paged_results( LDAP *ld, LDAPControl *ctrl )
 		return 1;
 
 	} else {
-		/* FIXME: check buffer overflow */
 		char	buf[ BUFSIZ ], *ptr = buf;
+		int plen;
 
 		if ( estimate > 0 ) {
-			ptr += snprintf( ptr, sizeof( buf ) - ( ptr - buf ),
-				"estimate=%d", estimate );
+			plen = sprintf( buf, "estimate=%d cookie=", estimate );
+		} else {
+			plen = sprintf( buf, "cookie=" );
 		}
 
 		if ( pr_cookie.bv_len > 0 ) {
@@ -2015,32 +2082,85 @@ print_paged_results( LDAP *ld, LDAPControl *ctrl )
 
 			bv.bv_len = LUTIL_BASE64_ENCODE_LEN(
 				pr_cookie.bv_len ) + 1;
-			bv.bv_val = ber_memalloc( bv.bv_len + 1 );
+			ptr = ber_memalloc( bv.bv_len + 1 + plen );
+			bv.bv_val = ptr + plen;
+
+			strcpy( ptr, buf );
 
 			bv.bv_len = lutil_b64_ntop(
 				(unsigned char *) pr_cookie.bv_val,
 				pr_cookie.bv_len,
 				bv.bv_val, bv.bv_len );
 
-			ptr += snprintf( ptr, sizeof( buf ) - ( ptr - buf ),
-				"%scookie=%s", ptr == buf ? "" : " ",
-				bv.bv_val );
-
-			ber_memfree( bv.bv_val );
-
 			pr_morePagedResults = 1;
-
-		} else {
-			ptr += snprintf( ptr, sizeof( buf ) - ( ptr - buf ),
-				"%scookie=", ptr == buf ? "" : " " );
+			plen += bv.bv_len;
 		}
 
 		tool_write_ldif( ldif ? LDIF_PUT_COMMENT : LDIF_PUT_VALUE,
 			ldif ? "pagedresults: " : "pagedresults",
-			buf, ptr - buf );
+			ptr, plen );
+
+		if ( ptr != buf )
+			ber_memfree( ptr );
 	}
 
 	return 0;
+}
+
+static int
+print_psearch( LDAP *ld, LDAPControl *ctrl )
+{
+	int rc;
+	int chgtype;
+	int chgpres;
+	long chgnum;
+	struct berval prevdn;
+
+	rc = ldap_parse_entrychange_control( ld, ctrl, &chgtype, &prevdn,
+		&chgpres, &chgnum );
+	if ( rc == LDAP_SUCCESS ) {
+		char buf[ BUFSIZ ];
+		char *ptr = buf;
+		int blen = sizeof(buf), len;
+		
+		switch( chgtype ) {
+		case LDAP_CONTROL_PERSIST_ENTRY_CHANGE_ADD:
+			len = snprintf( ptr, blen, "add" );
+			ptr += len;
+			blen -= len;
+			break;
+		case LDAP_CONTROL_PERSIST_ENTRY_CHANGE_DELETE:
+			len = snprintf( ptr, blen, "delete" );
+			ptr += len;
+			blen -= len;
+			break;
+		case LDAP_CONTROL_PERSIST_ENTRY_CHANGE_MODIFY:
+			len = snprintf( ptr, blen, "modify" );
+			ptr += len;
+			blen -= len;
+			break;
+		case LDAP_CONTROL_PERSIST_ENTRY_CHANGE_RENAME:
+			len = snprintf( ptr, blen, "moddn" );
+			ptr += len;
+			blen -= len;
+			if ( prevdn.bv_val != NULL ) {
+				len = snprintf( ptr, blen, " prevdn %s", prevdn.bv_val );
+				ptr += len;
+				blen -= len;
+			}
+			break;
+		}
+		if ( chgpres ) {
+			len = snprintf( ptr, blen, " changeNumber %ld", chgnum) ;
+			ptr += len;
+			blen -= len;
+		}
+
+		tool_write_ldif( ldif ? LDIF_PUT_COMMENT : LDIF_PUT_VALUE,
+			ldif ? "persistentSearch: " : "persistentSearch", buf, len );
+	}
+
+	return rc;
 }
 
 static int
@@ -2172,7 +2292,6 @@ print_deref( LDAP *ld, LDAPControl *ctrl )
 			}
 		}
 		ptr = lutil_strncopy( ptr, dr->derefVal.bv_val, dr->derefVal.bv_len );
-		*ptr++ = '\n';
 		*ptr = '\0';
 		assert( ptr <= buf + len );
 
@@ -2227,6 +2346,184 @@ print_whatfailed( LDAP *ld, LDAPControl *ctrl )
 }
 #endif
 
+static int
+print_syncstate( LDAP *ld, LDAPControl *ctrl )
+{
+	struct berval syncUUID, syncCookie = BER_BVNULL;
+	char buf[LDAP_LUTIL_UUIDSTR_BUFSIZE], *uuidstr = "(UUID malformed)";
+	BerElement *ber;
+	ber_tag_t tag;
+	ber_int_t state;
+	int rc;
+
+	if ( ldif ) {
+		return 0;
+	}
+
+	/* Create a BerElement from the berval returned in the control. */
+	ber = ber_init( &ctrl->ldctl_value );
+
+	if ( ber == NULL ) {
+		return LDAP_NO_MEMORY;
+	}
+
+	if ( ber_scanf( ber, "{em", &state, &syncUUID ) == LBER_ERROR ) {
+		ber_free( ber, 1 );
+		return 1;
+	}
+
+	tag = ber_get_stringbv( ber, &syncCookie, 0 );
+
+	rc = lutil_uuidstr_from_normalized(
+			syncUUID.bv_val, syncUUID.bv_len,
+			buf, LDAP_LUTIL_UUIDSTR_BUFSIZE );
+
+	if ( rc > 0 && rc < LDAP_LUTIL_UUIDSTR_BUFSIZE ) {
+		uuidstr = buf;
+	}
+
+	switch ( state ) {
+		case LDAP_SYNC_PRESENT:
+			printf(_("# SyncState control, UUID %s present\n"), uuidstr);
+			break;
+		case LDAP_SYNC_ADD:
+			printf(_("# SyncState control, UUID %s added\n"), uuidstr);
+			break;
+		case LDAP_SYNC_MODIFY:
+			printf(_("# SyncState control, UUID %s modified\n"), uuidstr);
+			break;
+		case LDAP_SYNC_DELETE:
+			printf(_("# SyncState control, UUID %s deleted\n"), uuidstr);
+			break;
+		default:
+			ber_free( ber, 1 );
+			return 1;
+	}
+
+	if ( tag != LBER_ERROR ) {
+		if ( ldif_is_not_printable( syncCookie.bv_val, syncCookie.bv_len ) ) {
+			struct berval bv;
+
+			bv.bv_len = LUTIL_BASE64_ENCODE_LEN( syncCookie.bv_len ) + 1;
+			bv.bv_val = ber_memalloc( bv.bv_len + 1 );
+
+			bv.bv_len = lutil_b64_ntop(
+					(unsigned char *) syncCookie.bv_val, syncCookie.bv_len,
+					bv.bv_val, bv.bv_len );
+
+			printf(_("# cookie:: %s\n"), bv.bv_val );
+			ber_memfree( bv.bv_val );
+		} else {
+			printf(_("# cookie: %s\n"), syncCookie.bv_val );
+		}
+	}
+
+	ber_free( ber, 1 );
+	return 0;
+}
+
+static int
+print_syncdone( LDAP *ld, LDAPControl *ctrl )
+{
+	BerElement *ber;
+	struct berval cookie = BER_BVNULL;
+	ber_len_t len;
+	ber_int_t refreshDeletes = 0;
+
+	if ( ldif ) {
+		return 0;
+	}
+
+	/* Create a BerElement from the berval returned in the control. */
+	ber = ber_init( &ctrl->ldctl_value );
+
+	if ( ber == NULL ) {
+		return LDAP_NO_MEMORY;
+	}
+
+	ber_skip_tag( ber, &len );
+	if ( ber_peek_tag( ber, &len ) == LDAP_TAG_SYNC_COOKIE ) {
+		ber_scanf( ber, "m", &cookie );
+	}
+	if ( ber_peek_tag( ber, &len ) == LDAP_TAG_REFRESHDELETES ) {
+		ber_scanf( ber, "b", &refreshDeletes );
+	}
+
+	printf(_("# SyncDone control refreshDeletes=%d\n"), refreshDeletes ? 1 : 0 );
+
+	if ( !BER_BVISNULL( &cookie ) ) {
+		if ( ldif_is_not_printable( cookie.bv_val, cookie.bv_len ) ) {
+			struct berval bv;
+
+			bv.bv_len = LUTIL_BASE64_ENCODE_LEN( cookie.bv_len ) + 1;
+			bv.bv_val = ber_memalloc( bv.bv_len + 1 );
+
+			bv.bv_len = lutil_b64_ntop(
+					(unsigned char *) cookie.bv_val, cookie.bv_len,
+					bv.bv_val, bv.bv_len );
+
+			printf(_("# cookie:: %s\n"), bv.bv_val );
+			ber_memfree( bv.bv_val );
+		} else {
+			printf(_("# cookie: %s\n"), cookie.bv_val );
+		}
+	}
+
+	ber_free( ber, 1 );
+	return 0;
+}
+
+#ifdef LDAP_CONTROL_X_DIRSYNC
+static int
+print_dirsync( LDAP *ld, LDAPControl *ctrl )
+{
+	int rc, continueFlag;
+	struct berval cookie;
+
+	rc = ldap_parse_dirsync_control( ld, ctrl,
+		&continueFlag, &cookie );
+	if ( rc == LDAP_SUCCESS ) {
+		printf(_("# DirSync control continueFlag=%d\n"), continueFlag );
+		if ( !BER_BVISNULL( &cookie )) {
+			if ( ldif_is_not_printable( cookie.bv_val, cookie.bv_len ) ) {
+				struct berval bv;
+
+				bv.bv_len = LUTIL_BASE64_ENCODE_LEN( cookie.bv_len ) + 1;
+				bv.bv_val = ber_memalloc( bv.bv_len + 1 );
+
+				bv.bv_len = lutil_b64_ntop(
+						(unsigned char *) cookie.bv_val, cookie.bv_len,
+						bv.bv_val, bv.bv_len );
+
+				printf(_("# cookie:: %s\n"), bv.bv_val );
+				ber_memfree( bv.bv_val );
+			} else {
+				printf(_("# cookie: %s\n"), cookie.bv_val );
+			}
+		}
+	}
+	return rc;
+}
+#endif
+
+#ifdef LDAP_CONTROL_AUTHZID_RESPONSE
+static int
+print_authzid( LDAP *ld, LDAPControl *ctrl )
+{
+	if ( ctrl->ldctl_value.bv_len ) {
+		tool_write_ldif( ldif ? LDIF_PUT_COMMENT : LDIF_PUT_VALUE,
+			ldif ? "authzid: " : "authzid",
+		ctrl->ldctl_value.bv_val, ctrl->ldctl_value.bv_len );
+	} else {
+		tool_write_ldif( ldif ? LDIF_PUT_COMMENT : LDIF_PUT_VALUE,
+			ldif ? "authzid: " : "authzid",
+			"anonymous",  STRLENOF("anonymous") );
+	}
+
+	return 0;
+}
+#endif
+
 #ifdef LDAP_CONTROL_PASSWORDPOLICYREQUEST
 static int
 print_ppolicy( LDAP *ld, LDAPControl *ctrl )
@@ -2258,6 +2555,99 @@ print_ppolicy( LDAP *ld, LDAPControl *ctrl )
 
 		tool_write_ldif( ldif ? LDIF_PUT_COMMENT : LDIF_PUT_VALUE,
 			ldif ? "ppolicy: " : "ppolicy", buf, ptr - buf );
+	}
+
+	return rc;
+}
+#endif
+
+#ifdef LDAP_CONTROL_X_PASSWORD_EXPIRED
+static int
+print_netscape_pwexpired( LDAP *ld, LDAPControl *ctrl )
+{
+	printf(_("# PasswordExpired control\n") );
+	return 0;
+}
+
+static int
+print_netscape_pwexpiring( LDAP *ld, LDAPControl *ctrl )
+{
+	long expiring = 0;
+	int rc;
+
+	rc = ldap_parse_password_expiring_control( ld, ctrl, &expiring );
+	if ( rc == LDAP_SUCCESS ) {
+		printf(_("# PasswordExpiring control seconds=%ld\n"), expiring );
+	}
+	return rc;
+}
+#endif
+
+#ifdef LDAP_CONTROL_X_ACCOUNT_USABILITY
+static int
+print_account_usability( LDAP *ld, LDAPControl *ctrl )
+{
+	LDAPAccountUsability usability;
+	ber_int_t available = 0;
+	int rc;
+
+	rc = ldap_parse_accountusability_control( ld, ctrl, &available, &usability );
+	if ( rc == LDAP_SUCCESS ) {
+		char	buf[ BUFSIZ ], *ptr = buf;
+
+		ptr += snprintf( ptr, sizeof( buf ) - ( ptr - buf ),
+			   "%savailable", available ? "" : "not " );
+		if ( available ) {
+			if ( usability.seconds_remaining == -1 ) {
+				ptr += snprintf( ptr, sizeof( buf ) - ( ptr - buf ),
+					" and does not expire" );
+			} else {
+				ptr += snprintf( ptr, sizeof( buf ) - ( ptr - buf ),
+					" expire=%d", usability.seconds_remaining );
+			}
+		} else {
+			int added = 0;
+			ptr += snprintf( ptr, sizeof( buf ) - ( ptr - buf ),
+				" (" /* ')' */ );
+
+			if ( usability.more_info.inactive ) {
+				ptr += snprintf( ptr, sizeof( buf ) - ( ptr - buf ),
+					"inactive " );
+				added++;
+			}
+			if ( usability.more_info.reset ) {
+				ptr += snprintf( ptr, sizeof( buf ) - ( ptr - buf ),
+					"reset " );
+				added++;
+			}
+			if ( usability.more_info.expired ) {
+				ptr += snprintf( ptr, sizeof( buf ) - ( ptr - buf ),
+					"expired " );
+				added++;
+			}
+
+			if ( added ) {
+				ptr[-1] = ')';
+				*ptr++ = ' ';
+			} else {
+				*(--ptr) = '\0';
+			}
+
+			if ( usability.more_info.remaining_grace != -1 ) {
+				ptr += snprintf( ptr, sizeof( buf ) - ( ptr - buf ),
+					"grace=%d ", usability.more_info.remaining_grace );
+			}
+
+			if ( usability.more_info.seconds_before_unlock != -1 ) {
+				ptr += snprintf( ptr, sizeof( buf ) - ( ptr - buf ),
+					"seconds_before_unlock=%d ", usability.more_info.seconds_before_unlock );
+			}
+
+			*(--ptr) = '\0';
+		}
+
+		tool_write_ldif( ldif ? LDIF_PUT_COMMENT : LDIF_PUT_VALUE,
+			ldif ? "accountUsability: " : "accountUsability", buf, ptr - buf );
 	}
 
 	return rc;

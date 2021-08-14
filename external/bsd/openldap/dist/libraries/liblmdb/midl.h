@@ -1,4 +1,4 @@
-/*	$NetBSD: midl.h,v 1.2 2020/08/11 13:15:38 christos Exp $	*/
+/*	$NetBSD: midl.h,v 1.3 2021/08/14 16:14:57 christos Exp $	*/
 
 /**	@file midl.h
  *	@brief LMDB ID List header file.
@@ -13,8 +13,8 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2020 The OpenLDAP Foundation.
- * Portions Copyright 2001-2020 Howard Chu, Symas Corp.
+ * Copyright 2000-2021 The OpenLDAP Foundation.
+ * Portions Copyright 2001-2021 Howard Chu, Symas Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

@@ -1,10 +1,10 @@
-/*	$NetBSD: log.c,v 1.2 2020/08/11 13:15:41 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.3 2021/08/14 16:15:00 christos Exp $	*/
 
 /* log.c - deal with log subsystem */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2020 The OpenLDAP Foundation.
+ * Copyright 2001-2021 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: log.c,v 1.2 2020/08/11 13:15:41 christos Exp $");
+__RCSID("$NetBSD: log.c,v 1.3 2021/08/14 16:15:00 christos Exp $");
 
 #include "portable.h"
 
@@ -92,7 +92,7 @@ monitor_subsys_log_open(
 			Debug( LDAP_DEBUG_ANY,
 				"monitor_subsys_log_init: "
 				"unable to get entry \"%s\"\n",
-				ms->mss_ndn.bv_val, 0, 0 );
+				ms->mss_ndn.bv_val );
 			ber_bvarray_free( bva );
 			return( -1 );
 		}
@@ -129,7 +129,7 @@ monitor_subsys_log_modify(
 
 		/*
 		 * accept all operational attributes;
-		 * this includes modifersName and modifyTimestamp
+		 * this includes modifiersName and modifyTimestamp
 		 * if lastmod is "on"
 		 */
 		if ( is_at_operational( mod->sm_desc->ad_type ) ) {

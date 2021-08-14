@@ -1,10 +1,10 @@
-/*	$NetBSD: ad.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
+/*	$NetBSD: ad.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
 
 /* ad.c - routines for dealing with attribute descriptions */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ad.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
+__RCSID("$NetBSD: ad.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
 
 #include "portable.h"
 
@@ -224,6 +224,7 @@ int slap_bv2ad(
 	optn = bv->bv_val + bv->bv_len;
 
 	for( opt=options; opt != NULL; opt=next ) {
+		Attr_option *aopt;
 		int optlen;
 		opt++; 
 		next = strchrlen( opt, optn, ';', &optlen );
@@ -250,11 +251,11 @@ int slap_bv2ad(
 			desc.ad_flags |= SLAP_DESC_BINARY;
 			continue;
 
-		} else if ( ad_find_option_definition( opt, optlen ) ) {
+		} else if (( aopt = ad_find_option_definition( opt, optlen )) ) {
 			int i;
 
 			if( opt[optlen-1] == '-' ||
-				( opt[optlen-1] == '=' && msad_range_hack )) {
+				( aopt->name.bv_val[aopt->name.bv_len-1] == '=' && msad_range_hack )) {
 				desc.ad_flags |= SLAP_DESC_TAG_RANGE;
 			}
 
@@ -550,7 +551,7 @@ int ad_inlist(
 			}
 
 			/*
-			 * EXTENSION: if requested description is preceeded by
+			 * EXTENSION: if requested description is preceded by
 			 * a '-' character, do not match on subtypes.
 			 */
 			if ( attrs->an_name.bv_val[0] == '-' ) {
@@ -791,7 +792,7 @@ int slap_bv2undef_ad(
 		Debug( LDAP_DEBUG_ANY,
 			"%s attributeDescription \"%s\" inserted.\n",
 			( flags & SLAP_AD_PROXIED ) ? "PROXIED" : "UNKNOWN",
-			desc->ad_cname.bv_val, 0 );
+			desc->ad_cname.bv_val );
 	}
 
 	if( !*ad ) {
@@ -1147,17 +1148,18 @@ file2anlist( AttributeName *an, const char *fname, const char *brkstr )
 
 	fp = fopen( fname, "r" );
 	if ( fp == NULL ) {
+		char ebuf[128];
+		int saved_errno = errno;
 		Debug( LDAP_DEBUG_ANY,
 			"get_attrs_from_file: failed to open attribute list file "
-			"\"%s\": %s\n", fname, strerror(errno), 0 );
+			"\"%s\": %s\n", fname, AC_STRERROR_R( saved_errno, ebuf, sizeof(ebuf) ) );
 		return NULL;
 	}
 
 	lcur = line = (char *) ch_malloc( lmax );
 	if ( !line ) {
 		Debug( LDAP_DEBUG_ANY,
-			"get_attrs_from_file: could not allocate memory\n",
-			0, 0, 0 );
+			"get_attrs_from_file: could not allocate memory\n" );
 		fclose(fp);
 		return NULL;
 	}
@@ -1176,8 +1178,7 @@ file2anlist( AttributeName *an, const char *fname, const char *brkstr )
 			line = (char *) ch_realloc( line, lmax );
 			if ( !line ) {
 				Debug( LDAP_DEBUG_ANY,
-					"get_attrs_from_file: could not allocate memory\n",
-					0, 0, 0 );
+					"get_attrs_from_file: could not allocate memory\n" );
 				fclose(fp);
 				return NULL;
 			}

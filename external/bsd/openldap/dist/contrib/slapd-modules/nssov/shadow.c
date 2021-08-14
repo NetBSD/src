@@ -1,10 +1,10 @@
-/*	$NetBSD: shadow.c,v 1.2 2020/08/11 13:15:36 christos Exp $	*/
+/*	$NetBSD: shadow.c,v 1.3 2021/08/14 16:14:52 christos Exp $	*/
 
 /* shadow.c - shadow account lookup routines */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>. 
  *
- * Copyright 2008-2020 The OpenLDAP Foundation.
+ * Copyright 2008-2021 The OpenLDAP Foundation.
  * Portions Copyright 2008 by Howard Chu, Symas Corp.
  * All rights reserved.
  *
@@ -85,7 +85,7 @@ static long to_date(struct berval *date,AttributeDescription *attr)
 		/* we expect an AD 64-bit datetime value;
 			 we should do date=date/864000000000-134774
 			 but that causes problems on 32-bit platforms,
-			 first we devide by 1000000000 by stripping the
+			 first we divide by 1000000000 by stripping the
 			 last 9 digits from the string and going from there */
 		l=date->bv_len-9;
 		if (l<1 || l>(sizeof(buffer)-1))
@@ -96,7 +96,7 @@ static long to_date(struct berval *date,AttributeDescription *attr)
 		if ((buffer[0]=='\0')||(*tmp!='\0'))
 		{
 			Debug(LDAP_DEBUG_ANY,"shadow entry contains non-numeric %s value\n",
-				attr->ad_cname.bv_val,0,0);
+				attr->ad_cname.bv_val );
 			return 0;
 		}
 		return value/864-134774;
@@ -107,7 +107,7 @@ static long to_date(struct berval *date,AttributeDescription *attr)
 	if ((date->bv_val[0]=='\0')||(*tmp!='\0'))
 	{
 		Debug(LDAP_DEBUG_ANY,"shadow entry contains non-numeric %s value\n",
-			attr->ad_cname.bv_val,0,0);
+			attr->ad_cname.bv_val );
 		return 0;
 	}
 	return value;
@@ -126,13 +126,13 @@ static long to_date(struct berval *date,AttributeDescription *attr)
 		if (a->a_numvals > 1) \
 		{ \
 			Debug(LDAP_DEBUG_ANY,"shadow entry %s contains multiple %s values\n", \
-				entry->e_name.bv_val, cbp->mi->mi_attrs[key].an_desc->ad_cname.bv_val,0); \
+				entry->e_name.bv_val, cbp->mi->mi_attrs[key].an_desc->ad_cname.bv_val); \
 		} \
 		var=strtol(a->a_vals[0].bv_val,&tmp,0); \
 		if ((a->a_vals[0].bv_val[0]=='\0')||(*tmp!='\0')) \
 		{ \
 			Debug(LDAP_DEBUG_ANY,"shadow entry %s contains non-numeric %s value\n", \
-				entry->e_name.bv_val, cbp->mi->mi_attrs[key].an_desc->ad_cname.bv_val,0); \
+				entry->e_name.bv_val, cbp->mi->mi_attrs[key].an_desc->ad_cname.bv_val); \
 			return 0; \
 		} \
 	}
@@ -146,7 +146,7 @@ static long to_date(struct berval *date,AttributeDescription *attr)
 		if (a->a_numvals > 1) \
 		{ \
 			Debug(LDAP_DEBUG_ANY,"shadow entry %s contains multiple %s values\n", \
-				entry->e_name.bv_val, cbp->mi->mi_attrs[key].an_desc->ad_cname.bv_val,0); \
+				entry->e_name.bv_val, cbp->mi->mi_attrs[key].an_desc->ad_cname.bv_val); \
 		} \
 		var=to_date(&a->a_vals[0],cbp->mi->mi_attrs[key].an_desc); \
 	}
@@ -178,7 +178,7 @@ static int write_shadow(nssov_shadow_cbp *cbp,Entry *entry)
 		if (!a)
 		{
 			Debug(LDAP_DEBUG_ANY,"shadow entry %s does not contain %s value\n",
-				entry->e_name.bv_val, cbp->mi->mi_attrs[UID_KEY].an_desc->ad_cname.bv_val,0);
+				entry->e_name.bv_val, cbp->mi->mi_attrs[UID_KEY].an_desc->ad_cname.bv_val );
 			return 0;
 		}
 		names = a->a_vals;
@@ -243,7 +243,7 @@ NSSOV_HANDLE(
 	READ_STRING(fp,cbp.buf);,
 	cbp.name.bv_len = tmpint32;
 	cbp.name.bv_val = cbp.buf;
-	Debug(LDAP_DEBUG_ANY,"nssov_shadow_byname(%s)\n",cbp.name.bv_val,0,0);,
+	Debug(LDAP_DEBUG_ANY,"nssov_shadow_byname(%s)\n",cbp.name.bv_val);,
 	NSLCD_ACTION_SHADOW_BYNAME,
 	nssov_filter_byname(cbp.mi,UID_KEY,&cbp.name,&filter)
 )
@@ -253,7 +253,7 @@ NSSOV_HANDLE(
 	struct berval filter;
 	/* no parameters to read */
 	BER_BVZERO(&cbp.name);,
-	Debug(LDAP_DEBUG_ANY,"nssov_shadow_all()\n",0,0,0);,
+	Debug(LDAP_DEBUG_ANY,"nssov_shadow_all()\n");,
 	NSLCD_ACTION_SHADOW_ALL,
 	(filter=cbp.mi->mi_filter,0)
 )

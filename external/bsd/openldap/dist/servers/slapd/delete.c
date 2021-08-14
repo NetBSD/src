@@ -1,9 +1,9 @@
-/*	$NetBSD: delete.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
+/*	$NetBSD: delete.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: delete.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
+__RCSID("$NetBSD: delete.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
 
 #include "portable.h"
 
@@ -47,7 +47,7 @@ do_delete(
 	struct berval dn = BER_BVNULL;
 
 	Debug( LDAP_DEBUG_TRACE, "%s do_delete\n",
-		op->o_log_prefix, 0, 0 );
+		op->o_log_prefix );
 	/*
 	 * Parse the delete request.  It looks like this:
 	 *
@@ -56,14 +56,14 @@ do_delete(
 
 	if ( ber_scanf( op->o_ber, "m", &dn ) == LBER_ERROR ) {
 		Debug( LDAP_DEBUG_ANY, "%s do_delete: ber_scanf failed\n",
-			op->o_log_prefix, 0, 0 );
+			op->o_log_prefix );
 		send_ldap_discon( op, rs, LDAP_PROTOCOL_ERROR, "decoding error" );
 		return SLAPD_DISCONNECT;
 	}
 
 	if( get_ctrls( op, rs, 1 ) != LDAP_SUCCESS ) {
 		Debug( LDAP_DEBUG_ANY, "%s do_delete: get_ctrls failed\n",
-			op->o_log_prefix, 0, 0 );
+			op->o_log_prefix );
 		goto cleanup;
 	} 
 
@@ -71,17 +71,17 @@ do_delete(
 		op->o_tmpmemctx );
 	if( rs->sr_err != LDAP_SUCCESS ) {
 		Debug( LDAP_DEBUG_ANY, "%s do_delete: invalid dn (%s)\n",
-			op->o_log_prefix, dn.bv_val, 0 );
+			op->o_log_prefix, dn.bv_val );
 		send_ldap_error( op, rs, LDAP_INVALID_DN_SYNTAX, "invalid DN" );
 		goto cleanup;
 	}
 
-	Statslog( LDAP_DEBUG_STATS, "%s DEL dn=\"%s\"\n",
-		op->o_log_prefix, op->o_req_dn.bv_val, 0, 0, 0 );
+	Debug( LDAP_DEBUG_STATS, "%s DEL dn=\"%s\"\n",
+		op->o_log_prefix, op->o_req_dn.bv_val );
 
 	if( op->o_req_ndn.bv_len == 0 ) {
 		Debug( LDAP_DEBUG_ANY, "%s do_delete: root dse!\n",
-			op->o_log_prefix, 0, 0 );
+			op->o_log_prefix );
 		/* protocolError would likely be a more appropriate error */
 		send_ldap_error( op, rs, LDAP_UNWILLING_TO_PERFORM,
 			"cannot delete the root DSE" );
@@ -89,7 +89,7 @@ do_delete(
 
 	} else if ( bvmatch( &op->o_req_ndn, &frontendDB->be_schemandn ) ) {
 		Debug( LDAP_DEBUG_ANY, "%s do_delete: subschema subentry!\n",
-			op->o_log_prefix, 0, 0 );
+			op->o_log_prefix );
 		/* protocolError would likely be a more appropriate error */
 		send_ldap_error( op, rs, LDAP_UNWILLING_TO_PERFORM,
 			"cannot delete the root DSE" );
@@ -98,13 +98,15 @@ do_delete(
 
 	op->o_bd = frontendDB;
 	rs->sr_err = frontendDB->be_delete( op, rs );
-
-#ifdef LDAP_X_TXN
-	if( rs->sr_err == LDAP_X_TXN_SPECIFY_OKAY ) {
+	if ( rs->sr_err == SLAPD_ASYNCOP ) {
 		/* skip cleanup */
 		return rs->sr_err;
 	}
-#endif
+
+	if( rs->sr_err == LDAP_TXN_SPECIFY_OKAY ) {
+		/* skip cleanup */
+		return rs->sr_err;
+	}
 
 cleanup:;
 	op->o_tmpfree( op->o_req_dn.bv_val, op->o_tmpmemctx );
@@ -162,7 +164,7 @@ fe_op_delete( Operation *op, SlapReply *rs )
 	/*
 	 * do the delete if 1 && (2 || 3)
 	 * 1) there is a delete function implemented in this backend;
-	 * 2) this backend is master for what it holds;
+	 * 2) this backend is the provider for what it holds;
 	 * 3) it's a replica and the dn supplied is the update_ndn.
 	 */
 	if ( op->o_bd->be_delete ) {
@@ -174,6 +176,11 @@ fe_op_delete( Operation *op, SlapReply *rs )
 			struct berval	org_dn = BER_BVNULL;
 			struct berval	org_ndn = BER_BVNULL;
 			int		org_managedsait;
+
+			if ( op->o_txnSpec ) {
+				txn_preop( op, rs );
+				goto cleanup;
+			}
 
 			op->o_bd = op_be;
 			op->o_bd->be_delete( op, rs );

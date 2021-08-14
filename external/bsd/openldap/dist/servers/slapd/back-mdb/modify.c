@@ -1,10 +1,10 @@
-/*	$NetBSD: modify.c,v 1.2 2020/08/11 13:15:40 christos Exp $	*/
+/*	$NetBSD: modify.c,v 1.3 2021/08/14 16:15:00 christos Exp $	*/
 
 /* modify.c - mdb backend modify routine */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2020 The OpenLDAP Foundation.
+ * Copyright 2000-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: modify.c,v 1.2 2020/08/11 13:15:40 christos Exp $");
+__RCSID("$NetBSD: modify.c,v 1.3 2021/08/14 16:15:00 christos Exp $");
 
 #include "portable.h"
 
@@ -54,11 +54,20 @@ mdb_modify_idxflags(
 			ap = attr_find( oldattrs, desc );
 			if ( ap ) ap->a_flags |= SLAP_ATTR_IXDEL;
 
-			/* Find all other attrs that index to same slot */
-			for ( ap = newattrs; ap; ap = ap->a_next ) {
-				ai = mdb_index_mask( op->o_bd, ap->a_desc, &ix2 );
-				if ( ai && ix2.bv_val == ix_at.bv_val )
-					ap->a_flags |= SLAP_ATTR_IXADD;
+			/* ITS#8678 FIXME
+			 * If using 32bit hashes, or substring index, must account for
+			 * possible index collisions. If no substring index, and using
+			 * 64bit hashes, assume we don't need to check for collisions.
+			 *
+			 * In 2.5 use refcounts and avoid all of this mess.
+			 */
+			if (!slap_hash64(-1) || (ai->ai_indexmask & SLAP_INDEX_SUBSTR)) {
+				/* Find all other attrs that index to same slot */
+				for ( ap = newattrs; ap; ap = ap->a_next ) {
+					ai = mdb_index_mask( op->o_bd, ap->a_desc, &ix2 );
+					if ( ai && ix2.bv_val == ix_at.bv_val )
+						ap->a_flags |= SLAP_ATTR_IXADD;
+				}
 			}
 
 		} else {
@@ -79,16 +88,20 @@ int mdb_modify_internal(
 	char *textbuf,
 	size_t textlen )
 {
+	struct mdb_info *mdb = (struct mdb_info *) op->o_bd->be_private;
 	int rc, err;
 	Modification	*mod;
 	Modifications	*ml;
 	Attribute	*save_attrs;
-	Attribute 	*ap;
+	Attribute 	*ap, *aold, *anew;
 	int			glue_attr_delete = 0;
+	int			softop, chkpresent;
 	int			got_delete;
+	int			a_flags;
+	MDB_cursor	*mvc = NULL;
 
 	Debug( LDAP_DEBUG_TRACE, "mdb_modify_internal: 0x%08lx: %s\n",
-		e->e_id, e->e_dn, 0);
+		e->e_id, e->e_dn );
 
 	if ( !acl_check_modlist( op, e, modlist )) {
 		return LDAP_INSUFFICIENT_ACCESS;
@@ -134,16 +147,71 @@ int mdb_modify_internal(
 		mod = &ml->sml_mod;
 		got_delete = 0;
 
+		aold = attr_find( e->e_attrs, mod->sm_desc );
+		if (aold)
+			a_flags = aold->a_flags;
+		else
+			a_flags = 0;
+
 		switch ( mod->sm_op ) {
 		case LDAP_MOD_ADD:
+			softop = 0;
+			chkpresent = 0;
 			Debug(LDAP_DEBUG_ARGS,
 				"mdb_modify_internal: add %s\n",
-				mod->sm_desc->ad_cname.bv_val, 0, 0);
+				mod->sm_desc->ad_cname.bv_val );
+
+do_add:
 			err = modify_add_values( e, mod, get_permissiveModify(op),
 				text, textbuf, textlen );
+
+			if( softop ) {
+				mod->sm_op = SLAP_MOD_SOFTADD;
+				if ( err == LDAP_TYPE_OR_VALUE_EXISTS )
+					err = LDAP_SUCCESS;
+			}
+			if( chkpresent ) {
+				mod->sm_op = SLAP_MOD_ADD_IF_NOT_PRESENT;
+			}
+
 			if( err != LDAP_SUCCESS ) {
 				Debug(LDAP_DEBUG_ARGS, "mdb_modify_internal: %d %s\n",
-					err, *text, 0);
+					err, *text );
+			} else {
+				unsigned hi;
+				if (!aold)
+					anew = attr_find( e->e_attrs, mod->sm_desc );
+				else
+					anew = aold;
+				mdb_attr_multi_thresh( mdb, mod->sm_desc, &hi, NULL );
+				/* check for big multivalued attrs */
+				if ( anew->a_numvals > hi )
+					anew->a_flags |= SLAP_ATTR_BIG_MULTI;
+				if ( anew->a_flags & SLAP_ATTR_BIG_MULTI ) {
+					if (!mvc) {
+						err = mdb_cursor_open( tid, mdb->mi_dbis[MDB_ID2VAL], &mvc );
+						if (err) {
+mval_fail:					strncpy( textbuf, mdb_strerror( err ), textlen );
+							err = LDAP_OTHER;
+							break;
+						}
+					}
+					/* if prev was set, just add new values */
+					if (a_flags & SLAP_ATTR_BIG_MULTI ) {
+						anew = (Attribute *)mod;
+						/* Tweak nvals */
+						if (!anew->a_nvals)
+							anew->a_nvals = anew->a_vals;
+					}
+					err = mdb_mval_put(op, mvc, e->e_id, anew);
+					if (a_flags & SLAP_ATTR_BIG_MULTI ) {
+						/* Undo nvals tweak */
+						if (anew->a_nvals == anew->a_vals)
+							anew->a_nvals = NULL;
+					}
+					if ( err )
+						goto mval_fail;
+				}
 			}
 			break;
 
@@ -153,43 +221,120 @@ int mdb_modify_internal(
 				break;
 			}
 
+			softop = 0;
 			Debug(LDAP_DEBUG_ARGS,
 				"mdb_modify_internal: delete %s\n",
-				mod->sm_desc->ad_cname.bv_val, 0, 0);
+				mod->sm_desc->ad_cname.bv_val );
+do_del:
 			err = modify_delete_values( e, mod, get_permissiveModify(op),
 				text, textbuf, textlen );
+
+			if (softop) {
+				mod->sm_op = SLAP_MOD_SOFTDEL;
+				if ( err == LDAP_NO_SUCH_ATTRIBUTE ) {
+					err = LDAP_SUCCESS;
+					softop = 2;
+				}
+			}
+
 			if( err != LDAP_SUCCESS ) {
 				Debug(LDAP_DEBUG_ARGS, "mdb_modify_internal: %d %s\n",
-					err, *text, 0);
+					err, *text );
 			} else {
-				got_delete = 1;
+				if (softop != 2)
+					got_delete = 1;
+				/* check for big multivalued attrs */
+				if (a_flags & SLAP_ATTR_BIG_MULTI) {
+					Attribute a_dummy;
+					if (!mvc) {
+						err = mdb_cursor_open( tid, mdb->mi_dbis[MDB_ID2VAL], &mvc );
+						if (err)
+							goto mval_fail;
+					}
+					if ( mod->sm_numvals ) {
+						anew = attr_find( e->e_attrs, mod->sm_desc );
+						if ( anew ) {
+							unsigned lo;
+							mdb_attr_multi_thresh( mdb, mod->sm_desc, NULL, &lo );
+							if ( anew->a_numvals < lo ) {
+								anew->a_flags ^= SLAP_ATTR_BIG_MULTI;
+								anew = NULL;
+							} else {
+								anew = (Attribute *)mod;
+							}
+						}
+					} else {
+						anew = NULL;
+					}
+					if (!anew) {
+					/* delete all values */
+						anew = &a_dummy;
+						anew->a_desc = mod->sm_desc;
+						anew->a_numvals = 0;
+					}
+					err = mdb_mval_del( op, mvc, e->e_id, anew );
+					if ( err )
+						goto mval_fail;
+				}
 			}
 			break;
 
 		case LDAP_MOD_REPLACE:
 			Debug(LDAP_DEBUG_ARGS,
 				"mdb_modify_internal: replace %s\n",
-				mod->sm_desc->ad_cname.bv_val, 0, 0);
+				mod->sm_desc->ad_cname.bv_val );
 			err = modify_replace_values( e, mod, get_permissiveModify(op),
 				text, textbuf, textlen );
 			if( err != LDAP_SUCCESS ) {
 				Debug(LDAP_DEBUG_ARGS, "mdb_modify_internal: %d %s\n",
-					err, *text, 0);
+					err, *text );
 			} else {
+				unsigned hi;
 				got_delete = 1;
+				if (a_flags & SLAP_ATTR_BIG_MULTI) {
+					Attribute a_dummy;
+					if (!mvc) {
+						err = mdb_cursor_open( tid, mdb->mi_dbis[MDB_ID2VAL], &mvc );
+						if (err)
+							goto mval_fail;
+					}
+					/* delete all values */
+					anew = &a_dummy;
+					anew->a_desc = mod->sm_desc;
+					anew->a_numvals = 0;
+					err = mdb_mval_del( op, mvc, e->e_id, anew );
+					if (err)
+						goto mval_fail;
+				}
+				anew = attr_find( e->e_attrs, mod->sm_desc );
+				mdb_attr_multi_thresh( mdb, mod->sm_desc, &hi, NULL );
+				if (mod->sm_numvals > hi) {
+					anew->a_flags |= SLAP_ATTR_BIG_MULTI;
+					if (!mvc) {
+						err = mdb_cursor_open( tid, mdb->mi_dbis[MDB_ID2VAL], &mvc );
+						if (err)
+							goto mval_fail;
+					}
+					err = mdb_mval_put(op, mvc, e->e_id, anew);
+					if (err)
+						goto mval_fail;
+				} else if (anew) {
+					/* revert back to normal attr */
+					anew->a_flags &= ~SLAP_ATTR_BIG_MULTI;
+				}
 			}
 			break;
 
 		case LDAP_MOD_INCREMENT:
 			Debug(LDAP_DEBUG_ARGS,
 				"mdb_modify_internal: increment %s\n",
-				mod->sm_desc->ad_cname.bv_val, 0, 0);
+				mod->sm_desc->ad_cname.bv_val );
 			err = modify_increment_values( e, mod, get_permissiveModify(op),
 				text, textbuf, textlen );
 			if( err != LDAP_SUCCESS ) {
 				Debug(LDAP_DEBUG_ARGS,
 					"mdb_modify_internal: %d %s\n",
-					err, *text, 0);
+					err, *text );
 			} else {
 				got_delete = 1;
 			}
@@ -198,52 +343,25 @@ int mdb_modify_internal(
 		case SLAP_MOD_SOFTADD:
 			Debug(LDAP_DEBUG_ARGS,
 				"mdb_modify_internal: softadd %s\n",
-				mod->sm_desc->ad_cname.bv_val, 0, 0);
+				mod->sm_desc->ad_cname.bv_val );
  			/* Avoid problems in index_add_mods()
  			 * We need to add index if necessary.
  			 */
  			mod->sm_op = LDAP_MOD_ADD;
-
-			err = modify_add_values( e, mod, get_permissiveModify(op),
-				text, textbuf, textlen );
-
- 			mod->sm_op = SLAP_MOD_SOFTADD;
-
- 			if ( err == LDAP_TYPE_OR_VALUE_EXISTS ) {
- 				err = LDAP_SUCCESS;
- 			}
-
-			if( err != LDAP_SUCCESS ) {
-				Debug(LDAP_DEBUG_ARGS, "mdb_modify_internal: %d %s\n",
-					err, *text, 0);
-			}
- 			break;
+			softop = 1;
+			chkpresent = 0;
+			goto do_add;
 
 		case SLAP_MOD_SOFTDEL:
 			Debug(LDAP_DEBUG_ARGS,
 				"mdb_modify_internal: softdel %s\n",
-				mod->sm_desc->ad_cname.bv_val, 0, 0);
+				mod->sm_desc->ad_cname.bv_val );
  			/* Avoid problems in index_delete_mods()
  			 * We need to add index if necessary.
  			 */
  			mod->sm_op = LDAP_MOD_DELETE;
-
-			err = modify_delete_values( e, mod, get_permissiveModify(op),
-				text, textbuf, textlen );
-
- 			mod->sm_op = SLAP_MOD_SOFTDEL;
-
-			if ( err == LDAP_SUCCESS ) {
-				got_delete = 1;
-			} else if ( err == LDAP_NO_SUCH_ATTRIBUTE ) {
- 				err = LDAP_SUCCESS;
- 			}
-
-			if( err != LDAP_SUCCESS ) {
-				Debug(LDAP_DEBUG_ARGS, "mdb_modify_internal: %d %s\n",
-					err, *text, 0);
-			}
- 			break;
+			softop = 1;
+			goto do_del;
 
 		case SLAP_MOD_ADD_IF_NOT_PRESENT:
 			if ( attr_find( e->e_attrs, mod->sm_desc ) != NULL ) {
@@ -254,30 +372,22 @@ int mdb_modify_internal(
 
 			Debug(LDAP_DEBUG_ARGS,
 				"mdb_modify_internal: add_if_not_present %s\n",
-				mod->sm_desc->ad_cname.bv_val, 0, 0);
+				mod->sm_desc->ad_cname.bv_val );
  			/* Avoid problems in index_add_mods()
  			 * We need to add index if necessary.
  			 */
  			mod->sm_op = LDAP_MOD_ADD;
-
-			err = modify_add_values( e, mod, get_permissiveModify(op),
-				text, textbuf, textlen );
-
- 			mod->sm_op = SLAP_MOD_ADD_IF_NOT_PRESENT;
-
-			if( err != LDAP_SUCCESS ) {
-				Debug(LDAP_DEBUG_ARGS, "mdb_modify_internal: %d %s\n",
-					err, *text, 0);
-			}
- 			break;
+			softop = 0;
+			chkpresent = 1;
+			goto do_add;
 
 		default:
 			Debug(LDAP_DEBUG_ANY, "mdb_modify_internal: invalid op %d\n",
-				mod->sm_op, 0, 0);
+				mod->sm_op );
 			*text = "Invalid modify operation";
 			err = LDAP_OTHER;
 			Debug(LDAP_DEBUG_ARGS, "mdb_modify_internal: %d %s\n",
-				err, *text, 0);
+				err, *text );
 		}
 
 		if ( err != LDAP_SUCCESS ) {
@@ -317,7 +427,7 @@ int mdb_modify_internal(
 		if ( rc != LDAP_SUCCESS ) {
 			Debug( LDAP_DEBUG_ANY,
 				"entry failed schema check: %s\n",
-				*text, 0, 0 );
+				*text );
 		}
 
 		/* if NOOP then silently revert to saved attrs */
@@ -344,19 +454,35 @@ int mdb_modify_internal(
 			a2 = attr_find( e->e_attrs, ap->a_desc );
 			if ( a2 ) {
 				/* need to detect which values were deleted */
-				int i, j;
+				int i, j, k;
 				/* let add know there were deletes */
 				if ( a2->a_flags & SLAP_ATTR_IXADD )
 					a2->a_flags |= SLAP_ATTR_IXDEL;
 				vals = op->o_tmpalloc( (ap->a_numvals + 1) *
 					sizeof(struct berval), op->o_tmpmemctx );
 				j = 0;
-				for ( i=0; i < ap->a_numvals; i++ ) {
-					rc = attr_valfind( a2, SLAP_MR_ASSERTED_VALUE_NORMALIZED_MATCH,
-						&ap->a_nvals[i], NULL, op->o_tmpmemctx );
-					/* Save deleted values */
-					if ( rc == LDAP_NO_SUCH_ATTRIBUTE )
-						vals[j++] = ap->a_nvals[i];
+				for ( i=k=0; i < ap->a_numvals; i++ ) {
+					char found = 0;
+					BerValue* current = &ap->a_nvals[i];
+					int k2 = k;
+					for (k2 = k ; k2 < a2->a_numvals; k2 ++) {
+						int match = -1, rc;
+						const char *text;
+
+						rc = ordered_value_match( &match, a2->a_desc,
+								ap->a_desc->ad_type->sat_equality, 0,
+							&a2->a_nvals[k2], current, &text );
+						if ( rc == LDAP_SUCCESS && match == 0 ) {
+							found = 1;
+							break;
+						}
+					}
+
+					if (!found) {
+						vals[j++] = *current;
+					} else {
+						k = k2 + 1;
+					}
 				}
 				BER_BVZERO(vals+j);
 			} else {
@@ -370,7 +496,7 @@ int mdb_modify_internal(
 				if ( rc != LDAP_SUCCESS ) {
 					Debug( LDAP_DEBUG_ANY,
 						"%s: attribute \"%s\" index delete failure\n",
-						op->o_log_prefix, ap->a_desc->ad_cname.bv_val, 0 );
+						op->o_log_prefix, ap->a_desc->ad_cname.bv_val );
 					attrs_free( e->e_attrs );
 					e->e_attrs = save_attrs;
 				}
@@ -435,7 +561,7 @@ int mdb_modify_internal(
 			if ( rc != LDAP_SUCCESS ) {
 				Debug( LDAP_DEBUG_ANY,
 				       "%s: attribute \"%s\" index add failure\n",
-					op->o_log_prefix, ap->a_desc->ad_cname.bv_val, 0 );
+					op->o_log_prefix, ap->a_desc->ad_cname.bv_val );
 				attrs_free( e->e_attrs );
 				e->e_attrs = save_attrs;
 				return rc;
@@ -465,50 +591,8 @@ mdb_modify( Operation *op, SlapReply *rs )
 	int num_ctrls = 0;
 	int numads = mdb->mi_numads;
 
-#ifdef LDAP_X_TXN
-	int settle = 0;
-#endif
-
 	Debug( LDAP_DEBUG_ARGS, LDAP_XSTRING(mdb_modify) ": %s\n",
-		op->o_req_dn.bv_val, 0, 0 );
-
-#ifdef LDAP_X_TXN
-	if( op->o_txnSpec ) {
-		/* acquire connection lock */
-		ldap_pvt_thread_mutex_lock( &op->o_conn->c_mutex );
-		if( op->o_conn->c_txn == CONN_TXN_INACTIVE ) {
-			rs->sr_text = "invalid transaction identifier";
-			rs->sr_err = LDAP_X_TXN_ID_INVALID;
-			goto txnReturn;
-		} else if( op->o_conn->c_txn == CONN_TXN_SETTLE ) {
-			settle=1;
-			goto txnReturn;
-		}
-
-		if( op->o_conn->c_txn_backend == NULL ) {
-			op->o_conn->c_txn_backend = op->o_bd;
-
-		} else if( op->o_conn->c_txn_backend != op->o_bd ) {
-			rs->sr_text = "transaction cannot span multiple database contexts";
-			rs->sr_err = LDAP_AFFECTS_MULTIPLE_DSAS;
-			goto txnReturn;
-		}
-
-		/* insert operation into transaction */
-
-		rs->sr_text = "transaction specified";
-		rs->sr_err = LDAP_X_TXN_SPECIFY_OKAY;
-
-txnReturn:
-		/* release connection lock */
-		ldap_pvt_thread_mutex_unlock( &op->o_conn->c_mutex );
-
-		if( !settle ) {
-			send_ldap_result( op, rs );
-			return rs->sr_err;
-		}
-	}
-#endif
+		op->o_req_dn.bv_val );
 
 	ctrls[num_ctrls] = NULL;
 
@@ -518,7 +602,7 @@ txnReturn:
 	if( rs->sr_err != 0 ) {
 		Debug( LDAP_DEBUG_TRACE,
 			LDAP_XSTRING(mdb_modify) ": txn_begin failed: "
-			"%s (%d)\n", mdb_strerror(rs->sr_err), rs->sr_err, 0 );
+			"%s (%d)\n", mdb_strerror(rs->sr_err), rs->sr_err );
 		rs->sr_err = LDAP_OTHER;
 		rs->sr_text = "internal error";
 		goto return_results;
@@ -539,7 +623,7 @@ txnReturn:
 	if ( rs->sr_err != 0 ) {
 		Debug( LDAP_DEBUG_TRACE,
 			LDAP_XSTRING(mdb_modify) ": dn2entry failed (%d)\n",
-			rs->sr_err, 0, 0 );
+			rs->sr_err );
 		switch( rs->sr_err ) {
 		case MDB_NOTFOUND:
 			break;
@@ -587,8 +671,7 @@ txnReturn:
 		rs->sr_ref = get_entry_referrals( op, e );
 
 		Debug( LDAP_DEBUG_TRACE,
-			LDAP_XSTRING(mdb_modify) ": entry is referral\n",
-			0, 0, 0 );
+			LDAP_XSTRING(mdb_modify) ": entry is referral\n" );
 
 		rs->sr_err = LDAP_REFERRAL;
 		rs->sr_matched = e->e_name.bv_val;
@@ -615,7 +698,7 @@ txnReturn:
 		{
 			Debug( LDAP_DEBUG_TRACE,
 				"<=- " LDAP_XSTRING(mdb_modify) ": pre-read "
-				"failed!\n", 0, 0, 0 );
+				"failed!\n" );
 			if ( op->o_preread & SLAP_CONTROL_CRITICAL ) {
 				/* FIXME: is it correct to abort
 				 * operation if control fails? */
@@ -632,7 +715,7 @@ txnReturn:
 	if( rs->sr_err != LDAP_SUCCESS ) {
 		Debug( LDAP_DEBUG_TRACE,
 			LDAP_XSTRING(mdb_modify) ": modify failed (%d)\n",
-			rs->sr_err, 0, 0 );
+			rs->sr_err );
 		/* Only free attrs if they were dup'd.  */
 		if ( dummy.e_attrs == e->e_attrs ) dummy.e_attrs = NULL;
 		goto return_results;
@@ -643,8 +726,13 @@ txnReturn:
 	if ( rs->sr_err != 0 ) {
 		Debug( LDAP_DEBUG_TRACE,
 			LDAP_XSTRING(mdb_modify) ": id2entry update failed " "(%d)\n",
-			rs->sr_err, 0, 0 );
-		rs->sr_text = "entry update failed";
+			rs->sr_err );
+		if ( rs->sr_err == LDAP_ADMINLIMIT_EXCEEDED ) {
+			rs->sr_text = "entry too big";
+		} else {
+			rs->sr_err = LDAP_OTHER;
+			rs->sr_text = "entry update failed";
+		}
 		goto return_results;
 	}
 
@@ -658,7 +746,7 @@ txnReturn:
 		{
 			Debug( LDAP_DEBUG_TRACE,
 				"<=- " LDAP_XSTRING(mdb_modify)
-				": post-read failed!\n", 0, 0, 0 );
+				": post-read failed!\n" );
 			if ( op->o_postread & SLAP_CONTROL_CRITICAL ) {
 				/* FIXME: is it correct to abort
 				 * operation if control fails? */

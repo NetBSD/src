@@ -1,9 +1,9 @@
-/*	$NetBSD: ucpgba.c,v 1.2 2020/08/11 13:15:38 christos Exp $	*/
+/*	$NetBSD: ucpgba.c,v 1.3 2021/08/14 16:14:57 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -37,7 +37,7 @@
 /* Id: ucpgba.c,v 1.5 2001/01/02 18:46:20 mleisher Exp  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ucpgba.c,v 1.2 2020/08/11 13:15:38 christos Exp $");
+__RCSID("$NetBSD: ucpgba.c,v 1.3 2021/08/14 16:14:57 christos Exp $");
 
 #include "portable.h"
 
@@ -495,7 +495,7 @@ _ucstring_visual_cursor_right(ucstring_t *str, int count)
              */
             if (cursor->visual_next == 0)
               /*
-               * If movement occured, then report it.
+               * If movement occurred, then report it.
                */
               return (cnt != count);
 
@@ -621,7 +621,7 @@ _ucstring_visual_cursor_left(ucstring_t *str, int count)
              */
             if (cursor->visual_prev == 0)
               /*
-               * If movement occured, then report it.
+               * If movement occurred, then report it.
                */
               return (cnt != count);
 

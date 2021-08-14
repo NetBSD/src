@@ -1,9 +1,9 @@
-/*	$NetBSD: matchedValues.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
+/*	$NetBSD: matchedValues.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2020 The OpenLDAP Foundation.
+ * Copyright 1999-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: matchedValues.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
+__RCSID("$NetBSD: matchedValues.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
 
 #include "portable.h"
 
@@ -70,7 +70,7 @@ filter_matched_values(
 	ValuesReturnFilter *vrf;
 	int		rc = LDAP_SUCCESS;
 
-	Debug( LDAP_DEBUG_FILTER, "=> filter_matched_values\n", 0, 0, 0 );
+	Debug( LDAP_DEBUG_FILTER, "=> filter_matched_values\n" );
 
 	for ( vrf = op->o_vrFilter; vrf != NULL; vrf = vrf->vrf_next ) {
 		switch ( vrf->vrf_choice ) {
@@ -80,27 +80,27 @@ filter_matched_values(
 				: vrf->vrf_result == LDAP_COMPARE_TRUE ? "true"
 				: vrf->vrf_result == SLAPD_COMPARE_UNDEFINED ? "undefined"
 				: "error",
-				vrf->vrf_result, 0 );
+				vrf->vrf_result );
 			/*This type of filter does not affect the result */
 			rc = LDAP_SUCCESS;
 		break;
 
 		case LDAP_FILTER_EQUALITY:
-			Debug( LDAP_DEBUG_FILTER, "	EQUALITY\n", 0, 0, 0 );
+			Debug( LDAP_DEBUG_FILTER, "	EQUALITY\n" );
 			rc = test_ava_vrFilter( op, a, vrf->vrf_ava,
 				LDAP_FILTER_EQUALITY, e_flags );
 			if( rc == -1 ) return rc;
 			break;
 
 		case LDAP_FILTER_SUBSTRINGS:
-			Debug( LDAP_DEBUG_FILTER, "	SUBSTRINGS\n", 0, 0, 0 );
+			Debug( LDAP_DEBUG_FILTER, "	SUBSTRINGS\n" );
 			rc = test_substrings_vrFilter( op, a,
 				vrf, e_flags );
 			if( rc == -1 ) return rc;
 			break;
 
 		case LDAP_FILTER_PRESENT:
-			Debug( LDAP_DEBUG_FILTER, "	PRESENT\n", 0, 0, 0 );
+			Debug( LDAP_DEBUG_FILTER, "	PRESENT\n" );
 			rc = test_presence_vrFilter( op, a,
 				vrf->vrf_desc, e_flags );
 			if( rc == -1 ) return rc;
@@ -119,7 +119,7 @@ filter_matched_values(
 			break;
 
 		case LDAP_FILTER_EXT:
-			Debug( LDAP_DEBUG_FILTER, "	EXT\n", 0, 0, 0 );
+			Debug( LDAP_DEBUG_FILTER, "	EXT\n" );
 			rc = test_mra_vrFilter( op, a,
 				vrf->vrf_mra, e_flags );
 			if( rc == -1 ) return rc;
@@ -127,12 +127,12 @@ filter_matched_values(
 
 		default:
 			Debug( LDAP_DEBUG_ANY, "	unknown filter type %lu\n",
-				vrf->vrf_choice, 0, 0 );
+				vrf->vrf_choice );
 			rc = LDAP_PROTOCOL_ERROR;
 		}
 	}
 
-	Debug( LDAP_DEBUG_FILTER, "<= filter_matched_values %d\n", rc, 0, 0 );
+	Debug( LDAP_DEBUG_FILTER, "<= filter_matched_values %d\n", rc );
 	return( rc );
 }
 

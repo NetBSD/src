@@ -1,10 +1,10 @@
-/*	$NetBSD: monitor.c,v 1.2 2020/08/11 13:15:40 christos Exp $	*/
+/*	$NetBSD: monitor.c,v 1.3 2021/08/14 16:15:00 christos Exp $	*/
 
 /* monitor.c - monitor mdb backend */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2020 The OpenLDAP Foundation.
+ * Copyright 2000-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: monitor.c,v 1.2 2020/08/11 13:15:40 christos Exp $");
+__RCSID("$NetBSD: monitor.c,v 1.3 2021/08/14 16:15:00 christos Exp $");
 
 #include "portable.h"
 
@@ -32,7 +32,7 @@ __RCSID("$NetBSD: monitor.c,v 1.2 2020/08/11 13:15:40 christos Exp $");
 
 #include "../back-monitor/back-monitor.h"
 
-#include "config.h"
+#include "slap-config.h"
 
 static ObjectClass		*oc_olmMDBDatabase;
 
@@ -212,13 +212,13 @@ mdb_monitor_update(
 	a = attr_find( e->e_attrs, ad_olmMDBReadersMax );
 	assert( a != NULL );
 	bv.bv_val = buf;
-	bv.bv_len = snprintf( buf, sizeof( buf ), "%lu", mei.me_maxreaders );
+	bv.bv_len = snprintf( buf, sizeof( buf ), "%u", mei.me_maxreaders );
 	ber_bvreplace( &a->a_vals[ 0 ], &bv );
 
 	a = attr_find( e->e_attrs, ad_olmMDBReadersUsed );
 	assert( a != NULL );
 	bv.bv_val = buf;
-	bv.bv_len = snprintf( buf, sizeof( buf ), "%lu", mei.me_numreaders );
+	bv.bv_len = snprintf( buf, sizeof( buf ), "%u", mei.me_numreaders );
 	ber_bvreplace( &a->a_vals[ 0 ], &bv );
 
 	rc = mdb_txn_begin( mdb->mi_dbenv, NULL, MDB_RDONLY, &txn );
@@ -346,7 +346,7 @@ mdb_monitor_initialize( void )
 			Debug( LDAP_DEBUG_ANY, LDAP_XSTRING(mdb_monitor_initialize)
 				": unable to add "
 				"objectIdentifier \"%s=%s\"\n",
-				s_oid[ i ].name, s_oid[ i ].oid, 0 );
+				s_oid[ i ].name, s_oid[ i ].oid );
 			return 2;
 		}
 	}
@@ -356,7 +356,7 @@ mdb_monitor_initialize( void )
 		if ( code != LDAP_SUCCESS ) {
 			Debug( LDAP_DEBUG_ANY, LDAP_XSTRING(mdb_monitor_initialize)
 				": register_at failed for attributeType (%s)\n",
-				s_at[ i ].desc, 0, 0 );
+				s_at[ i ].desc );
 			return 3;
 
 		} else {
@@ -369,7 +369,7 @@ mdb_monitor_initialize( void )
 		if ( code != LDAP_SUCCESS ) {
 			Debug( LDAP_DEBUG_ANY, LDAP_XSTRING(mdb_monitor_initialize)
 				": register_oc failed for objectClass (%s)\n",
-				s_oc[ i ].desc, 0, 0 );
+				s_oc[ i ].desc );
 			return 4;
 
 		} else {
@@ -432,10 +432,9 @@ mdb_monitor_db_open( BackendDB *be )
 		static int warning = 0;
 
 		if ( warning++ == 0 ) {
-			Debug( LDAP_DEBUG_ANY, LDAP_XSTRING(mdb_monitor_db_open)
+			Debug( LDAP_DEBUG_CONFIG, LDAP_XSTRING(mdb_monitor_db_open)
 				": monitoring disabled; "
-				"configure monitor database to enable\n",
-				0, 0, 0 );
+				"configure monitor database to enable\n" );
 		}
 
 		return 0;
@@ -583,7 +582,7 @@ mdb_monitor_db_close( BackendDB *be )
 		BackendInfo		*mi = backend_info( "monitor" );
 		monitor_extra_t		*mbe;
 
-		if ( mi && &mi->bi_extra ) {
+		if ( mi && mi->bi_extra ) {
 			mbe = mi->bi_extra;
 			mbe->unregister_entry_callback( &mdb->mi_monitor.mdm_ndn,
 				(monitor_callback_t *)mdb->mi_monitor.mdm_cb,
@@ -607,7 +606,7 @@ mdb_monitor_db_destroy( BackendDB *be )
 
 	/* TODO: free tree */
 	ldap_pvt_thread_mutex_destroy( &mdb->mi_idx_mutex );
-	avl_free( mdb->mi_idx, ch_free );
+	ldap_avl_free( mdb->mi_idx, ch_free );
 #endif /* MDB_MONITOR_IDX */
 
 	return 0;
@@ -696,14 +695,14 @@ mdb_monitor_idx_add(
 
 	ldap_pvt_thread_mutex_lock( &mdb->mi_idx_mutex );
 
-	idx = (monitor_idx_t *)avl_find( mdb->mi_idx,
+	idx = (monitor_idx_t *)ldap_avl_find( mdb->mi_idx,
 		(caddr_t)&idx_dummy, monitor_idx_cmp );
 	if ( idx == NULL ) {
 		idx = (monitor_idx_t *)ch_calloc( sizeof( monitor_idx_t ), 1 );
 		idx->idx_ad = desc;
 		idx->idx_count[ key ] = 1;
 
-		switch ( avl_insert( &mdb->mi_idx, (caddr_t)idx, 
+		switch ( ldap_avl_insert( &mdb->mi_idx, (caddr_t)idx, 
 			monitor_idx_cmp, monitor_idx_dup ) )
 		{
 		case 0:
@@ -783,7 +782,7 @@ mdb_monitor_idx_entry_add(
 
 	ldap_pvt_thread_mutex_lock( &mdb->mi_idx_mutex );
 
-	avl_apply( mdb->mi_idx, mdb_monitor_idx_apply,
+	ldap_avl_apply( mdb->mi_idx, mdb_monitor_idx_apply,
 		&vals, -1, AVL_INORDER );
 
 	ldap_pvt_thread_mutex_unlock( &mdb->mi_idx_mutex );

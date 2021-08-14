@@ -1,4 +1,4 @@
-/*	$NetBSD: slapd-totp.c,v 1.1.1.1 2021/08/14 16:05:15 christos Exp $	*/
+/*	$NetBSD: slapd-totp.c,v 1.2 2021/08/14 16:14:53 christos Exp $	*/
 
 /* slapd-totp.c - Password module and overlay for TOTP */
 /* $OpenLDAP$ */

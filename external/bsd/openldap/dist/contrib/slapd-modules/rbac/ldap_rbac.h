@@ -1,4 +1,4 @@
-/*	$NetBSD: ldap_rbac.h,v 1.1.1.1 2021/08/14 16:05:14 christos Exp $	*/
+/*	$NetBSD: ldap_rbac.h,v 1.2 2021/08/14 16:14:53 christos Exp $	*/
 
 #ifndef LDAP_RBAC_H
 #define LDAP_RBAC_H

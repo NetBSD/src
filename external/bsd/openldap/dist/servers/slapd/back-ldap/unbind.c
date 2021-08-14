@@ -1,10 +1,10 @@
-/*	$NetBSD: unbind.c,v 1.2 2020/08/11 13:15:40 christos Exp $	*/
+/*	$NetBSD: unbind.c,v 1.3 2021/08/14 16:14:59 christos Exp $	*/
 
 /* unbind.c - ldap backend unbind function */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2020 The OpenLDAP Foundation.
+ * Copyright 1999-2021 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Howard Chu.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * All rights reserved.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: unbind.c,v 1.2 2020/08/11 13:15:40 christos Exp $");
+__RCSID("$NetBSD: unbind.c,v 1.3 2021/08/14 16:14:59 christos Exp $");
 
 #include "portable.h"
 
@@ -48,7 +48,7 @@ ldap_back_conn_destroy(
 
 	Debug( LDAP_DEBUG_TRACE,
 		"=>ldap_back_conn_destroy: fetching conn %ld\n",
-		conn->c_connid, 0, 0 );
+		conn->c_connid );
 
 	lc_curr.lc_conn = conn;
 	
@@ -56,7 +56,7 @@ ldap_back_conn_destroy(
 #if LDAP_BACK_PRINT_CONNTREE > 0
 	ldap_back_print_conntree( li, ">>> ldap_back_conn_destroy" );
 #endif /* LDAP_BACK_PRINT_CONNTREE */
-	while ( ( lc = avl_delete( &li->li_conninfo.lai_tree, (caddr_t)&lc_curr, ldap_back_conn_cmp ) ) != NULL )
+	while ( ( lc = ldap_tavl_delete( &li->li_conninfo.lai_tree, (caddr_t)&lc_curr, ldap_back_conn_cmp ) ) != NULL )
 	{
 		assert( !LDAP_BACK_PCONN_ISPRIV( lc ) );
 		Debug( LDAP_DEBUG_TRACE,

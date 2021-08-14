@@ -1,10 +1,10 @@
-/*	$NetBSD: lock.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
+/*	$NetBSD: lock.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
 
 /* lock.c - routines to open and apply an advisory lock to a file */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lock.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
+__RCSID("$NetBSD: lock.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
 
 #include "portable.h"
 
@@ -55,7 +55,7 @@ lock_fopen( const char *fname, const char *type, FILE **lfp )
 	snprintf( buf, sizeof buf, "%s.lock", fname );
 
 	if ( (*lfp = fopen( buf, "w" )) == NULL ) {
-		Debug( LDAP_DEBUG_ANY, "could not open \"%s\"\n", buf, 0, 0 );
+		Debug( LDAP_DEBUG_ANY, "could not open \"%s\"\n", buf );
 
 		return( NULL );
 	}
@@ -65,7 +65,7 @@ lock_fopen( const char *fname, const char *type, FILE **lfp )
 
 	/* open the log file */
 	if ( (fp = fopen( fname, type )) == NULL ) {
-		Debug( LDAP_DEBUG_ANY, "could not open \"%s\"\n", fname, 0, 0 );
+		Debug( LDAP_DEBUG_ANY, "could not open \"%s\"\n", fname );
 
 		ldap_unlockf( fileno(*lfp) );
 		fclose( *lfp );

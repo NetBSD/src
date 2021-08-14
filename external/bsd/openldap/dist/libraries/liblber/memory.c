@@ -1,9 +1,9 @@
-/*	$NetBSD: memory.c,v 1.2 2020/08/11 13:15:37 christos Exp $	*/
+/*	$NetBSD: memory.c,v 1.3 2021/08/14 16:14:55 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: memory.c,v 1.2 2020/08/11 13:15:37 christos Exp $");
+__RCSID("$NetBSD: memory.c,v 1.3 2021/08/14 16:14:55 christos Exp $");
 
 #include "portable.h"
 
@@ -36,7 +36,7 @@ __RCSID("$NetBSD: memory.c,v 1.2 2020/08/11 13:15:37 christos Exp $");
  *
  * It should only be enabled by an experienced developer as it causes
  * the inclusion of numerous assert()'s, many of which may be triggered
- * by a prefectly valid program.  If LDAP_MEMORY_DEBUG & 2 is true,
+ * by a perfectly valid program.  If LDAP_MEMORY_DEBUG & 2 is true,
  * that includes asserts known to break both slapd and current clients.
  *
  * The code behind this macro is subject to change as needed to

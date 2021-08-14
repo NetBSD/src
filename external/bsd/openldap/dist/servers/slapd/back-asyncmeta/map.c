@@ -1,4 +1,4 @@
-/*	$NetBSD: map.c,v 1.1.1.1 2021/08/14 16:05:23 christos Exp $	*/
+/*	$NetBSD: map.c,v 1.2 2021/08/14 16:14:59 christos Exp $	*/
 
 /* map.c - ldap backend mapping routines */
 /* $OpenLDAP$ */
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: map.c,v 1.1.1.1 2021/08/14 16:05:23 christos Exp $");
+__RCSID("$NetBSD: map.c,v 1.2 2021/08/14 16:14:59 christos Exp $");
 
 #include "portable.h"
 

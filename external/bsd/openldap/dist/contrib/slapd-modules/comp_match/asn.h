@@ -1,4 +1,4 @@
-/*	$NetBSD: asn.h,v 1.1.1.4 2021/08/14 16:05:14 christos Exp $	*/
+/*	$NetBSD: asn.h,v 1.2 2021/08/14 16:14:51 christos Exp $	*/
 
 /* Copyright 2004 IBM Corporation
  * All rights reserved.

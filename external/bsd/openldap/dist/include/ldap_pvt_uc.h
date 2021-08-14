@@ -1,9 +1,9 @@
-/*	$NetBSD: ldap_pvt_uc.h,v 1.2 2020/08/11 13:15:37 christos Exp $	*/
+/*	$NetBSD: ldap_pvt_uc.h,v 1.3 2021/08/14 16:14:55 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -77,7 +77,7 @@ LDAP_F (int) ldap_utf8_isspace( const char * );
 LDAP_F (ber_len_t) ldap_utf8_strcspn( const char* str, const char *set);
 /* span characters in set, return bytes spanned */
 LDAP_F (ber_len_t) ldap_utf8_strspn( const char* str, const char *set);
-/* return first occurance of character in string */
+/* return first occurrence of character in string */
 LDAP_F (char *) ldap_utf8_strchr( const char* str, const char *chr);
 /* return first character of set in string */
 LDAP_F (char *) ldap_utf8_strpbrk( const char* str, const char *set);

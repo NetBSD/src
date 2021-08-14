@@ -1,10 +1,10 @@
-/*	$NetBSD: limits.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
+/*	$NetBSD: limits.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
 
 /* limits.c - routines to handle regex-based size and time limits */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: limits.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
+__RCSID("$NetBSD: limits.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
 
 #include "portable.h"
 
@@ -180,7 +180,7 @@ limits_get(
 		case SLAP_LIMITS_USERS:
 		found_nodn:
 			Debug( LDAP_DEBUG_TRACE, "<== limits_get: type=%s match=%s\n",
-				dn_source[isthis], limits2str( style ), 0 );
+				dn_source[isthis], limits2str( style ) );
 		found_any:
 			*limit = &lm[0]->lm_limits;
 			return( 0 );
@@ -333,8 +333,8 @@ limits_parse(
 	if ( argc < 3 ) {
 		Debug( LDAP_DEBUG_ANY,
 			"%s : line %d: missing arg(s) in "
-			"\"limits <pattern> <limits>\" line.\n%s",
-			fname, lineno, "" );
+			"\"limits <pattern> <limits>\" line.\n",
+			fname, lineno );
 		return( -1 );
 	}
 
@@ -418,7 +418,7 @@ limits_parse(
 					Debug( LDAP_DEBUG_ANY,
 						"%s : line %d: deprecated \"one\" style "
 						"\"limits <pattern> <limits>\" line; "
-						"use \"onelevel\" instead.\n", fname, lineno, 0 );
+						"use \"onelevel\" instead.\n", fname, lineno );
 				}
 
 			} else if ( STRSTART( pattern, "sub" ) ) {
@@ -431,7 +431,7 @@ limits_parse(
 					Debug( LDAP_DEBUG_ANY,
 						"%s : line %d: deprecated \"sub\" style "
 						"\"limits <pattern> <limits>\" line; "
-						"use \"subtree\" instead.\n", fname, lineno, 0 );
+						"use \"subtree\" instead.\n", fname, lineno );
 				}
 
 			} else if ( STRSTART( pattern, "children" ) ) {
@@ -551,7 +551,7 @@ no_ad:;
 				"\"group[/objectClass[/attributeType]]"
 				"=<pattern>\" in "
 				"\"limits <pattern> <limits>\" line.\n",
-				fname, lineno, 0 );
+				fname, lineno );
 			return( -1 );
 		}
 
@@ -624,7 +624,7 @@ no_ad:;
 		Debug( LDAP_DEBUG_ANY,
 			"%s : line %d: unable to add limit in "
 			"\"limits <pattern> <limits>\" line.\n",
-		fname, lineno, 0 );
+		fname, lineno );
 	}
 
 	return( rc );

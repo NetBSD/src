@@ -1,9 +1,9 @@
-/*	$NetBSD: utils.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
+/*	$NetBSD: utils.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: utils.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
+__RCSID("$NetBSD: utils.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
 
 #include "portable.h"
 
@@ -161,10 +161,10 @@ int lutil_tm2time( struct lutil_tm *tm, struct lutil_timet *tt )
 	static int moffset[12] = {
 		0, 31, 59, 90, 120,
 		151, 181, 212, 243,
-		273, 304, 334 }; 
+		273, 304, 334 };
 	int sec;
 
-	tt->tt_usec = tm->tm_usec;
+	tt->tt_nsec = tm->tm_nsec;
 
 	/* special case 0000/01/01+00:00:00 is returned as zero */
 	if ( tm->tm_year == -1900 && tm->tm_mon == 0 && tm->tm_mday == 1 &&
@@ -175,23 +175,23 @@ int lutil_tm2time( struct lutil_tm *tm, struct lutil_timet *tt )
 	}
 
 	/* tm->tm_year is years since 1900 */
-	/* calculate days from years since 1970 (epoch) */ 
-	tt->tt_sec = tm->tm_year - 70; 
-	tt->tt_sec *= 365L; 
+	/* calculate days from years since 1970 (epoch) */
+	tt->tt_sec = tm->tm_year - 70;
+	tt->tt_sec *= 365L;
 
-	/* count leap days in preceding years */ 
-	tt->tt_sec += ((tm->tm_year -69) >> 2); 
+	/* count leap days in preceding years */
+	tt->tt_sec += ((tm->tm_year -69) >> 2);
 
-	/* calculate days from months */ 
-	tt->tt_sec += moffset[tm->tm_mon]; 
+	/* calculate days from months */
+	tt->tt_sec += moffset[tm->tm_mon];
 
-	/* add in this year's leap day, if any */ 
-	if (((tm->tm_year & 3) == 0) && (tm->tm_mon > 1)) { 
-		tt->tt_sec ++; 
-	} 
+	/* add in this year's leap day, if any */
+	if (((tm->tm_year & 3) == 0) && (tm->tm_mon > 1)) {
+		tt->tt_sec ++;
+	}
 
-	/* add in days in this month */ 
-	tt->tt_sec += (tm->tm_mday - 1); 
+	/* add in days in this month */
+	tt->tt_sec += (tm->tm_mday - 1);
 
 	/* this function can handle a range of about 17408 years... */
 	/* 86400 seconds in a day, divided by 128 = 675 */
@@ -201,30 +201,110 @@ int lutil_tm2time( struct lutil_tm *tm, struct lutil_timet *tt )
 	tt->tt_gsec = tt->tt_sec >> 25;
 	tt->tt_sec -= tt->tt_gsec << 25;
 
-	/* get hours */ 
-	sec = tm->tm_hour; 
+	/* get hours */
+	sec = tm->tm_hour;
 
-	/* convert to minutes */ 
-	sec *= 60L; 
-	sec += tm->tm_min; 
+	/* convert to minutes */
+	sec *= 60L;
+	sec += tm->tm_min;
 
-	/* convert to seconds */ 
-	sec *= 60L; 
-	sec += tm->tm_sec; 
-	
+	/* convert to seconds */
+	sec *= 60L;
+	sec += tm->tm_sec;
+
 	/* add remaining seconds */
 	tt->tt_sec <<= 7;
 	tt->tt_sec += sec;
 
 	/* return success */
-	return 0; 
+	return 0;
+}
+
+/* Proleptic Gregorian Calendar, 1BCE = year 0 */
+
+int lutil_tm2gtime( struct lutil_tm *tm, struct lutil_timet *tt )
+{
+	static int moffset[12] = {
+		0, 31, 59, 90, 120,
+		151, 181, 212, 243,
+		273, 304, 334 };
+	int sec, year;
+	long tmp;
+
+	tt->tt_nsec = tm->tm_nsec;
+
+	/* tm->tm_year is years since 1900 */
+	/* calculate days from 0000 */
+	year = tm->tm_year + 1900;
+	tmp = year * 365;
+
+	/* add in leap days */
+	sec = (year - 1) / 4;
+	tmp += sec;
+	sec /= 25;
+	tmp -= sec;
+	sec /= 4;
+	tmp += sec;
+	/* Year 0000 was a leap year */
+	if (year > 0)
+		tmp++;
+
+	/* calculate days from months */
+	tmp += moffset[tm->tm_mon];
+
+	/* add in this year's leap day, if any */
+	if (tm->tm_mon > 1) {
+		sec = (year % 4) ? 0 : (year % 100) ? 1 : (year % 400) ? 0 : 1;
+		tmp += sec;
+	}
+
+	/* add in days in this month */
+	tmp += (tm->tm_mday - 1);
+
+	/* this function can handle a range of about 17408 years... */
+	/* 86400 seconds in a day, divided by 128 = 675 */
+	tmp *= 675;
+
+	/* move high 7 bits into tt_gsec */
+	tt->tt_gsec = tmp >> 25;
+	tmp -= tt->tt_gsec << 25;
+
+	/* toggle sign bit, keep positive greater than negative */
+	tt->tt_gsec &= 0x7f;
+	tt->tt_gsec ^= 0x40;
+
+	/* get hours */
+	sec = tm->tm_hour;
+
+	/* convert to minutes */
+	sec *= 60L;
+	sec += tm->tm_min;
+
+	/* convert to seconds */
+	sec *= 60L;
+	sec += tm->tm_sec;
+	
+	/* add remaining seconds */
+	tmp <<= 7;
+	tmp += sec;
+	tt->tt_sec = tmp;
+
+	/* return success */
+	return 0;
 }
 
 int lutil_parsetime( char *atm, struct lutil_tm *tm )
 {
 	while (atm && tm) {
-		char *ptr = atm;
+		char *ptr;
 		unsigned i, fracs;
+		int neg = 0;
+
+		if (*atm == '-') {
+			neg = 1;
+			atm++;
+		}
+		ptr = atm;
 
 		/* Is the stamp reasonably long? */
 		for (i=0; isdigit((unsigned char) atm[i]); i++);
@@ -239,6 +319,8 @@ int lutil_parsetime( char *atm, struct lutil_tm *tm )
 		tm->tm_year *= 10; tm->tm_year += *ptr++ - '0';
 		tm->tm_year *= 10; tm->tm_year += *ptr++ - '0';
 		tm->tm_year *= 10; tm->tm_year += *ptr++ - '0';
+		if (neg)
+			tm->tm_year = -tm->tm_year;
 		tm->tm_year -= 1900;
 		/* month 01-12 to 0-11 */
 		tm->tm_mon = *ptr++ - '0';
@@ -273,12 +355,15 @@ int lutil_parsetime( char *atm, struct lutil_tm *tm )
 				i*=10; i+= *ptr++ - '0';
 				fracs++;
 			}
-			tm->tm_usec = i;
+			tm->tm_nsec = i;
 			if (i) {
-				for (i = fracs; i<6; i++)
-					tm->tm_usec *= 10;
+				for (i = fracs; i<9; i++)
+					tm->tm_nsec *= 10;
 			}
+		} else {
+			tm->tm_nsec = 0;
 		}
+		tm->tm_usub = 0;
 
 		/* Must be UTC */
 		if (*ptr != 'Z') break;
@@ -989,4 +1074,3 @@ lutil_snprintf( char *buf, ber_len_t bufsize, char **next, ber_len_t *len, LDAP_
 
 	return 0;
 }
-

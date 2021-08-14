@@ -1,4 +1,4 @@
-/*	$NetBSD: vc.c,v 1.1.1.1 2021/08/14 16:05:15 christos Exp $	*/
+/*	$NetBSD: vc.c,v 1.2 2021/08/14 16:14:54 christos Exp $	*/
 
 /* vc.c - LDAP Verify Credentials extop (no spec yet) */
 /* $OpenLDAP$ */
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: vc.c,v 1.1.1.1 2021/08/14 16:05:15 christos Exp $");
+__RCSID("$NetBSD: vc.c,v 1.2 2021/08/14 16:14:54 christos Exp $");
 
 #include "portable.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: remoteauth.c,v 1.1.1.1 2021/08/14 16:05:24 christos Exp $	*/
+/*	$NetBSD: remoteauth.c,v 1.2 2021/08/14 16:15:02 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* remoteauth.c - Overlay to delegate bind processing to a remote server */
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: remoteauth.c,v 1.1.1.1 2021/08/14 16:05:24 christos Exp $");
+__RCSID("$NetBSD: remoteauth.c,v 1.2 2021/08/14 16:15:02 christos Exp $");
 
 #include "portable.h"
 

@@ -1,10 +1,10 @@
-/*	$NetBSD: back-relay.h,v 1.2 2020/08/11 13:15:41 christos Exp $	*/
+/*	$NetBSD: back-relay.h,v 1.3 2021/08/14 16:15:01 christos Exp $	*/
 
 /* back-relay.h - relay backend header file */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2020 The OpenLDAP Foundation.
+ * Copyright 2004-2021 The OpenLDAP Foundation.
  * Portions Copyright 2004 Pierangelo Masarati.
  * All rights reserved.
  *

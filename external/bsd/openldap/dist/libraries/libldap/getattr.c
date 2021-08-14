@@ -1,9 +1,9 @@
-/*	$NetBSD: getattr.c,v 1.2 2020/08/11 13:15:37 christos Exp $	*/
+/*	$NetBSD: getattr.c,v 1.3 2021/08/14 16:14:56 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getattr.c,v 1.2 2020/08/11 13:15:37 christos Exp $");
+__RCSID("$NetBSD: getattr.c,v 1.3 2021/08/14 16:14:56 christos Exp $");
 
 #include "portable.h"
 
@@ -41,7 +41,7 @@ ldap_first_attribute( LDAP *ld, LDAPMessage *entry, BerElement **berout )
 	char *attr;
 	BerElement *ber;
 
-	Debug( LDAP_DEBUG_TRACE, "ldap_first_attribute\n", 0, 0, 0 );
+	Debug0( LDAP_DEBUG_TRACE, "ldap_first_attribute\n" );
 
 	assert( ld != NULL );
 	assert( LDAP_VALID( ld ) );
@@ -103,7 +103,7 @@ ldap_next_attribute( LDAP *ld, LDAPMessage *entry, BerElement *ber )
 	ber_tag_t tag;
 	char *attr;
 
-	Debug( LDAP_DEBUG_TRACE, "ldap_next_attribute\n", 0, 0, 0 );
+	Debug0( LDAP_DEBUG_TRACE, "ldap_next_attribute\n" );
 
 	assert( ld != NULL );
 	assert( LDAP_VALID( ld ) );
@@ -136,7 +136,7 @@ ldap_get_attribute_ber( LDAP *ld, LDAPMessage *entry, BerElement *ber,
 	ber_tag_t tag;
 	int rc = LDAP_SUCCESS;
 
-	Debug( LDAP_DEBUG_TRACE, "ldap_get_attribute_ber\n", 0, 0, 0 );
+	Debug0( LDAP_DEBUG_TRACE, "ldap_get_attribute_ber\n" );
 
 	assert( ld != NULL );
 	assert( LDAP_VALID( ld ) );
