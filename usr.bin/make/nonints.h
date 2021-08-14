@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.213 2021/04/11 13:35:56 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.214 2021/08/14 13:32:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -164,7 +164,7 @@ void Parse_AddIncludeDir(const char *);
 void Parse_File(const char *, int);
 void Parse_SetInput(const char *, int, int, ReadMoreProc, void *);
 void Parse_MainName(GNodeList *);
-int Parse_GetFatals(void);
+int Parse_NumErrors(void);
 
 
 /* suff.c */
