@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.h,v 1.41 2021/08/09 19:57:58 andvar Exp $ */
+/*	$NetBSD: cryptodev.h,v 1.42 2021/08/14 20:43:05 andvar Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.6 2003/07/02 17:04:50 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
@@ -325,7 +325,7 @@ struct cryptret {
 
 
 /* Asymmetric key operations */
-#define	CRK_ALGORITM_MIN	0
+#define	CRK_ALGORITHM_MIN	0
 #define CRK_MOD_EXP		0
 #define CRK_MOD_EXP_CRT		1
 #define CRK_DSA_SIGN		2
@@ -402,7 +402,7 @@ struct cryptostats {
 	 * accumulate statistics about how long it takes to process
 	 * crypto requests at various points during processing.
 	 */
-	struct cryptotstat cs_invoke;	/* crypto_dipsatch -> crypto_invoke */
+	struct cryptotstat cs_invoke;	/* crypto_dispatch -> crypto_invoke */
 	struct cryptotstat cs_done;	/* crypto_invoke -> crypto_done */
 	struct cryptotstat cs_cb;	/* crypto_done -> callback */
 	struct cryptotstat cs_finis;	/* callback -> callback return */
@@ -636,8 +636,8 @@ extern	int crypto_devallowsoft;	/* only use hardware crypto */
 /*
  * initialize the crypto framework subsystem (not the pseudo-device).
  * This must be called very early in boot, so the framework is ready
- * to handle registration requests when crpto hardware is autoconfigured.
- * (This declaration doesnt really belong here but there's no header
+ * to handle registration requests when crypto hardware is autoconfigured.
+ * (This declaration doesn't really belong here but there's no header
  * for the raw framework.)
  */
 int	crypto_init(void);
