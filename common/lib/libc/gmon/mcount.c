@@ -1,4 +1,4 @@
-/*	$NetBSD: mcount.c,v 1.15 2021/08/14 17:38:44 ryo Exp $	*/
+/*	$NetBSD: mcount.c,v 1.16 2021/08/14 17:51:18 ryo Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Wasabi Systems, Inc.
@@ -76,13 +76,14 @@
 #if 0
 static char sccsid[] = "@(#)mcount.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: mcount.c,v 1.15 2021/08/14 17:38:44 ryo Exp $");
+__RCSID("$NetBSD: mcount.c,v 1.16 2021/08/14 17:51:18 ryo Exp $");
 #endif
 #endif
 
 #include <sys/param.h>
 #include <sys/gmon.h>
 #include <sys/lock.h>
+#include <sys/proc.h>
 
 #ifndef _KERNEL
 #include "reentrant.h"
@@ -92,10 +93,6 @@ __RCSID("$NetBSD: mcount.c,v 1.15 2021/08/14 17:38:44 ryo Exp $");
 extern thread_key_t _gmonkey;
 extern struct gmonparam _gmondummy;
 struct gmonparam *_m_gmon_alloc(void);
-#endif
-
-#if defined(_KERNEL) && !defined(_RUMPKERNEL) && defined(MULTIPROCESSOR)
-__cpu_simple_lock_t __mcount_lock;
 #endif
 
 #ifndef __LINT__
@@ -168,8 +165,11 @@ _MCOUNT_DECL(u_long frompc, u_long selfpc)
 #if defined(_KERNEL) && !defined(_RUMPKERNEL)
 	MCOUNT_ENTER;
 #ifdef MULTIPROCESSOR
-	__cpu_simple_lock(&__mcount_lock);
-	__insn_barrier();
+	p = curcpu()->ci_gmon;
+	if (p == NULL || p->state != GMON_PROF_ON) {
+		MCOUNT_EXIT;
+		return;
+	}
 #endif
 #endif
 	p->state = GMON_PROF_BUSY;
@@ -264,10 +264,6 @@ _MCOUNT_DECL(u_long frompc, u_long selfpc)
 done:
 	p->state = GMON_PROF_ON;
 #if defined(_KERNEL) && !defined(_RUMPKERNEL)
-#ifdef MULTIPROCESSOR
-	__insn_barrier();
-	__cpu_simple_unlock(&__mcount_lock);
-#endif
 	MCOUNT_EXIT;
 #endif
 	return;
@@ -275,10 +271,6 @@ done:
 overflow:
 	p->state = GMON_PROF_ERROR;
 #if defined(_KERNEL) && !defined(_RUMPKERNEL)
-#ifdef MULTIPROCESSOR
-	__insn_barrier();
-	__cpu_simple_unlock(&__mcount_lock);
-#endif
 	MCOUNT_EXIT;
 #endif
 	return;
@@ -291,6 +283,108 @@ overflow:
  * which is included by <sys/gmon.h>.
  */
 MCOUNT
+#endif
+
+#if defined(_KERNEL) && !defined(_RUMPKERNEL) && defined(MULTIPROCESSOR)
+void _gmonparam_merge(struct gmonparam *, struct gmonparam *);
+
+void
+_gmonparam_merge(struct gmonparam *p, struct gmonparam *q)
+{
+	u_long fromindex;
+	u_short *frompcindex, qtoindex, toindex;
+	u_long selfpc;
+	u_long endfrom;
+	long count;
+	struct tostruct *top;
+	int i;
+
+	count = q->kcountsize / sizeof(*q->kcount);
+	for (i = 0; i < count; i++)
+		p->kcount[i] += q->kcount[i];
+
+	endfrom = (q->fromssize / sizeof(*q->froms));
+	for (fromindex = 0; fromindex < endfrom; fromindex++) {
+		if (q->froms[fromindex] == 0)
+			continue;
+		for (qtoindex = q->froms[fromindex]; qtoindex != 0;
+		     qtoindex = q->tos[qtoindex].link) {
+			selfpc = q->tos[qtoindex].selfpc;
+			count = q->tos[qtoindex].count;
+			/* cribbed from mcount */
+			frompcindex = &p->froms[fromindex];
+			toindex = *frompcindex;
+			if (toindex == 0) {
+				/*
+				 * first time traversing this arc
+				 */
+				toindex = ++p->tos[0].link;
+				if (toindex >= p->tolimit)
+					/* halt further profiling */
+					goto overflow;
+
+				*frompcindex = (u_short)toindex;
+				top = &p->tos[(size_t)toindex];
+				top->selfpc = selfpc;
+				top->count = count;
+				top->link = 0;
+				goto done;
+			}
+			top = &p->tos[(size_t)toindex];
+			if (top->selfpc == selfpc) {
+				/*
+				 * arc at front of chain; usual case.
+				 */
+				top->count+= count;
+				goto done;
+			}
+			/*
+			 * have to go looking down chain for it.
+			 * top points to what we are looking at,
+			 * we know it is not at the head of the chain.
+			 */
+			for (; /* goto done */; ) {
+				if (top->link == 0) {
+					/*
+					 * top is end of the chain and
+					 * none of the chain had
+					 * top->selfpc == selfpc.  so
+					 * we allocate a new tostruct
+					 * and link it to the head of
+					 * the chain.
+					 */
+					toindex = ++p->tos[0].link;
+					if (toindex >= p->tolimit)
+						goto overflow;
+
+					top = &p->tos[(size_t)toindex];
+					top->selfpc = selfpc;
+					top->count = count;
+					top->link = *frompcindex;
+					*frompcindex = (u_short)toindex;
+					goto done;
+				}
+				/*
+				 * otherwise, check the next arc on the chain.
+				 */
+				top = &p->tos[top->link];
+				if (top->selfpc == selfpc) {
+					/*
+					 * there it is.
+					 * add to its count.
+					 */
+					top->count += count;
+					goto done;
+				}
+			}
+
+		done: ;
+		}
+
+	}
+ overflow: ;
+
+}
 #endif
 
 #endif /* (!_KERNEL || GPROF) && !_STANDALONE */

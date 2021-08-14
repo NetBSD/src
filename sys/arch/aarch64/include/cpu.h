@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.37 2021/08/08 19:28:08 skrll Exp $ */
+/* $NetBSD: cpu.h,v 1.38 2021/08/14 17:51:18 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
 #ifdef __aarch64__
 
 #ifdef _KERNEL_OPT
+#include "opt_gprof.h"
 #include "opt_multiprocessor.h"
 #endif
 
@@ -133,6 +134,9 @@ struct cpu_info {
 	struct aarch64_cache_info *ci_cacheinfo;
 	struct aarch64_cpufuncs ci_cpufuncs;
 
+#if defined(GPROF) && defined(MULTIPROCESSOR)
+	struct gmonparam *ci_gmon;	/* MI per-cpu GPROF */
+#endif
 } __aligned(COHERENCY_UNIT);
 
 #ifdef _KERNEL

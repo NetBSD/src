@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.7 2019/12/01 15:34:45 ad Exp $ */
+/* $NetBSD: cpu.h,v 1.8 2021/08/14 17:51:19 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -78,6 +78,9 @@ struct cpu_info {
 	struct evcnt ci_ev_fpu_saves;
 	struct evcnt ci_ev_fpu_loads;
 	struct evcnt ci_ev_fpu_reenables;
+#if defined(GPROF) && defined(MULTIPROCESSOR)
+	struct gmonparam *ci_gmon;	/* MI per-cpu GPROF */
+#endif
 };
 
 #endif /* _KERNEL || _KMEMUSER */

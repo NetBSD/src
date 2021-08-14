@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.109 2021/01/24 07:36:54 mrg Exp $ */
+/*	$NetBSD: cpu.h,v 1.110 2021/08/14 17:51:19 ryo Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -120,6 +120,7 @@ struct cacheinfo {
 #if defined(_KERNEL) || defined(_KMEMUSER)
 
 #if defined(_KERNEL_OPT)
+#include "opt_gprof.h"
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
 #include "opt_sparc_arch.h"
@@ -395,6 +396,10 @@ struct cpu_info {
 	struct evcnt ci_sintrcnt[16];
 
 	struct cpu_data ci_data;	/* MI per-cpu data */
+
+#if defined(GPROF) && defined(MULTIPROCESSOR)
+	struct gmonparam *ci_gmon;	/* MI per-cpu GPROF */
+#endif
 };
 
 #endif /* _KERNEL || _KMEMUSER */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.118 2021/08/08 19:28:08 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.119 2021/08/14 17:51:18 ryo Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -92,6 +92,7 @@ void	cpu_proc_fork(struct proc *, struct proc *);
  */
 
 #if !defined(_MODULE) && defined(_KERNEL_OPT)
+#include "opt_gprof.h"
 #include "opt_multiprocessor.h"
 #include "opt_cpuoptions.h"
 #include "opt_lockdebug.h"
@@ -223,6 +224,10 @@ struct cpu_info {
 
 	struct arm_cache_info *
 			ci_cacheinfo;
+
+#if defined(GPROF) && defined(MULTIPROCESSOR)
+	struct gmonparam *ci_gmon;	/* MI per-cpu GPROF */
+#endif
 };
 
 extern struct cpu_info cpu_info_store[];
