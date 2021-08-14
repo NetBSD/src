@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.560 2021/06/21 10:42:06 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.561 2021/08/14 13:32:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.560 2021/06/21 10:42:06 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.561 2021/08/14 13:32:12 rillig Exp $");
 
 /* types and constants */
 
@@ -218,7 +218,7 @@ static GNode *order_pred;
 /* parser state */
 
 /* number of fatal errors */
-static int fatals = 0;
+static int parseErrors = 0;
 
 /*
  * Variables for doing includes
@@ -613,7 +613,7 @@ ParseVErrorInternal(FILE *f, const char *fname, size_t lineno,
 		goto print_stack_trace;
 	if (type == PARSE_WARNING && !opts.parseWarnFatal)
 		goto print_stack_trace;
-	fatals++;
+	parseErrors++;
 	if (type == PARSE_WARNING && !fatal_warning_error_printed) {
 		Error("parsing warnings being treated as errors");
 		fatal_warning_error_printed = true;
@@ -3250,7 +3250,7 @@ Parse_File(const char *name, int fd)
 
 	FinishDependencyGroup();
 
-	if (fatals != 0) {
+	if (parseErrors != 0) {
 		(void)fflush(stdout);
 		(void)fprintf(stderr,
 		    "%s: Fatal errors encountered -- cannot continue",
@@ -3305,7 +3305,7 @@ Parse_MainName(GNodeList *mainList)
 }
 
 int
-Parse_GetFatals(void)
+Parse_NumErrors(void)
 {
-	return fatals;
+	return parseErrors;
 }
