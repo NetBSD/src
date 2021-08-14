@@ -1,1 +1,1 @@
-msg_184.c(9): warning: illegal pointer combination [184]
+msg_184.c(10): warning: illegal combination of 'pointer to int' and 'pointer to char' [184]

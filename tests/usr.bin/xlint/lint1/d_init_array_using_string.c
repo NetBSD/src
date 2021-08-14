@@ -1,4 +1,4 @@
-/*	$NetBSD: d_init_array_using_string.c,v 1.4 2021/04/09 23:03:26 rillig Exp $	*/
+/*	$NetBSD: d_init_array_using_string.c,v 1.5 2021/08/14 13:00:55 rillig Exp $	*/
 # 3 "d_init_array_using_string.c"
 
 /*
@@ -13,8 +13,10 @@ test_assignment_initialization(void)
 	const char *cs_match = "";
 	const int *ws_match = L"";
 
-	const char *cs_mismatch = L"";	/* expect: illegal pointer combination */
-	const int *ws_mismatch = "";	/* expect: illegal pointer combination */
+	/* expect+1: warning: illegal combination of 'pointer to const char' and 'pointer to int', op 'init' [124] */
+	const char *cs_mismatch = L"";
+	/* expect+1: warning: illegal combination of 'pointer to const int' and 'pointer to char', op 'init' [124] */
+	const int *ws_mismatch = "";
 }
 
 void
@@ -31,8 +33,10 @@ test_pointer_initialization_in_struct(void)
 	};
 
 	struct cs_ws type_mismatch = {
-	    	L"",		/* expect: illegal pointer combination */
-	    	"",		/* expect: illegal pointer combination */
+		/* expect+1: warning: illegal combination of 'pointer to const char' and 'pointer to int', op 'init' [124] */
+	    	L"",
+	    	/* expect+1: warning: illegal combination of 'pointer to const int' and 'pointer to char', op 'init' [124] */
+	    	"",
 	};
 
 	struct cs_ws extra_braces = {
