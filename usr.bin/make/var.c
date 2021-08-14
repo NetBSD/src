@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.946 2021/08/08 12:00:30 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.947 2021/08/14 13:11:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.946 2021/08/08 12:00:30 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.947 2021/08/14 13:11:33 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -4019,8 +4019,6 @@ ApplyModifiers(
     char endc		/* ')' or '}'; or '\0' for indirect modifiers */
 )
 {
-	/* LINTED 115 *//* warning: left operand of '=' must be modifiable lvalue */
-	/* That's a bug in lint; see tests/usr.bin/xlint/lint1/msg_115.c. */
 	ModChain ch = ModChain_Literal(expr, startc, endc, ' ', false);
 	const char *p;
 	const char *mod;
