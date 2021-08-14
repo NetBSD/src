@@ -1,9 +1,9 @@
-/*	$NetBSD: search.c,v 1.1.1.8 2020/08/11 13:12:17 christos Exp $	*/
+/*	$NetBSD: search.c,v 1.1.1.9 2021/08/14 16:05:22 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2020 The OpenLDAP Foundation.
+ * Copyright 1999-2021 The OpenLDAP Foundation.
  * Portions Copyright 1999 John C. Quillan.
  * Portions Copyright 2002 myinternet Limited.
  * All rights reserved.
@@ -72,7 +72,7 @@ perl_back_search(
 				buf = POPp;
 
 				if ( (e = str2entry( buf )) == NULL ) {
-					Debug( LDAP_DEBUG_ANY, "str2entry(%s) failed\n", buf, 0, 0 );
+					Debug( LDAP_DEBUG_ANY, "str2entry(%s) failed\n", buf );
 
 				} else {
 					int send_entry;

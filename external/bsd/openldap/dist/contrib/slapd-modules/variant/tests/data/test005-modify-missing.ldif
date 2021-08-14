@@ -1,0 +1,4 @@
+dn: cn=Gern Jensen,ou=Information Technology Division,ou=People,dc=example,dc=com
+changetype: modify
+replace: description
+description: Ghost

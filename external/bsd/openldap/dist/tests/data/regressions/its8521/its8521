@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2020 The OpenLDAP Foundation.
+## Copyright 1998-2021 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -14,7 +14,7 @@
 ## <http://www.OpenLDAP.org/license.html>.
 
 echo "This test is no longer valid after the fixes in ITS#9015"
-echo "http://www.openldap.org/its/index.cgi/?findid=9015"
+echo "https://bugs.openldap.org/show_bug.cgi?id=9015"
 exit 0
 
 echo "running defines.sh"
@@ -28,8 +28,8 @@ fi
 echo ""
 echo "  This test tracks a case where a consumer fails to replicate from the provider"
 echo "  when the provider is dynamically configured for replication."
-echo "  See http://www.openldap.org/its/index.cgi/?findid=8521 and"
-echo "  See http://www.openldap.org/its/index.cgi/?findid=8281 for more information."
+echo "  See https://bugs.openldap.org/show_bug.cgi?id=8521 and"
+echo "  See https://bugs.openldap.org/show_bug.cgi?id=8281 for more information."
 echo ""
 
 PRODIR=$TESTDIR/pro
@@ -45,9 +45,9 @@ ITS=8521
 ITSDIR=$DATADIR/regressions/its$ITS
 
 echo "Starting provider slapd on TCP/IP port $PORT1..."
-. $CONFFILTER $BACKEND $MONITORDB < $ITSDIR/slapd-provider.ldif > $CONFLDIF
+. $CONFFILTER $BACKEND < $ITSDIR/slapd-provider.ldif > $CONFLDIF
 $SLAPADD -F $CFPRO -n 0 -l $CONFLDIF
-$SLAPD -F $CFPRO -h $URI1 -d $LVL $TIMING > $LOG1 2>&1 &
+$SLAPD -F $CFPRO -h $URI1 -d $LVL > $LOG1 2>&1 &
 PID=$!
 if test $WAIT != 0 ; then
 	echo PID $PID
@@ -76,9 +76,9 @@ if test $RC != 0 ; then
 fi
 
 echo "Starting consumer slapd on TCP/IP port $PORT2..."
-. $CONFFILTER $BACKEND $MONITORDB < $ITSDIR/slapd-consumer.ldif > $CONFLDIF
+. $CONFFILTER $BACKEND < $ITSDIR/slapd-consumer.ldif > $CONFLDIF
 $SLAPADD -F $CFCON -n 0 -l $CONFLDIF
-$SLAPD -F $CFCON -h $URI2 -d $LVL $TIMING > $LOG2 2>&1 &
+$SLAPD -F $CFCON -h $URI2 -d $LVL > $LOG2 2>&1 &
 SLAVEPID=$!
 if test $WAIT != 0 ; then
 	echo SLAVEPID $SLAVEPID

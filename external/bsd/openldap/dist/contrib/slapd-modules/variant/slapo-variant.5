@@ -1,0 +1,472 @@
+.TH SLAPO-VARIANT 5 "RELEASEDATE" "OpenLDAP"
+.\" Copyright 2016-2017 Symas Corp. All Rights Reserved.
+.\" Copying restrictions apply.  See LICENSE.
+.SH NAME
+slapo\-variant \- share values between entries
+.SH SYNOPSIS
+olcOverlay=variant
+.SH DESCRIPTION
+The
+.B variant
+overlay to
+.BR slapd (8)
+allows attributes/values to be shared between several entries. In some ways
+this is similar to
+.BR slapo-collect (5)
+with the exception that the source and target attributes can be different.
+.LP
+The overlay operates on configured
+.B variant
+entries which can have several
+.B attributes
+each configured to borrow values from an attribute in the
+.B alternate
+entry.
+.LP
+Two types of
+.B variant
+entries can be configured,
+.B regular
+and
+.BR regex ,
+where the latter are configured with a regular expression and patterns to
+locate each alternate entry, with access to the variant DN and first nine
+submatches captured by the regular expression.
+.LP
+For most purposes (see
+.BR LIMITATIONS ,
+especially for
+.B regex
+variants), the resulting entry is completely transparent to the operations
+performed on it, e.g. a modify operation on the
+.B variant
+attribute gets transformed
+into an operation on the
+.B alternate
+entry+attribute. As such, the usual ACL rules apply, appropriate
+access to both the
+.B variant
+and
+.B alternate
+entry is checked.
+.LP
+As a special case,
+.B Add
+and
+.B Delete
+operations will not affect the
+.B alternate
+entries. Should an attempt be made to add a configured
+.B variant
+entry with the
+.B variant
+attributes already populated, the operation will be rejected with a
+.B Constraint
+.BR Violation .
+
+.SH CONFIGURATION LAYOUT
+
+The overlay has to be instantiated under a database adding an entry of
+.B olcOverlay=variant
+with objectClass of
+.BR olcVariantConfig .
+
+The overlay configuration subtree consists of the following levels:
+.RS
+.TP
+.B objectClass=olcVariantConfig
+Main overlay configuration. Created directly under the database
+configuration entry.
+.TP
+.B objectClass=olcVariantVariant
+Specifies a
+.B regular variant
+entry and must be a child of an entry with
+.BR objectClass=olcVariantConfig .
+There may be as many such entries as necessary provided they all specify a
+different DN in the
+.BR olcVariantEntry
+attribute.
+.TP
+.B objectClass=olcVariantAttribute
+Specifies a
+.B regular variant
+attribute together with information where the
+.B alternate
+attribute is stored. Must be a child of an entry with
+.BR objectClass=olcVariantVariant .
+There may be as many such entries as necessary provided they all specify a
+different attribute in
+.BR olcVariantVariantAttribute .
+.TP
+.B objectClass=olcVariantRegex
+Specifies a
+.B regex variant
+entry and must be a child of an entry with
+.BR objectClass=olcVariantConfig .
+There may be as many such entries as necessary provided they all specify a
+different DN in the
+.BR olcVariantEntryRegex
+attribute.
+.TP
+.B objectClass=olcVariantAttributePattern
+Specifies a
+.B regex variant
+attribute together with information where the
+.B alternate
+attribute is stored. Must be a child of an entry with
+.BR objectClass=olcVariantRegex .
+There may be as many such entries as necessary provided they all specify a
+different attribute in
+.BR olcVariantVariantAttribute .
+.RE
+
+In the case of
+.BR slapd.conf (5),
+the variant definition is delimited by the keyword
+.B variantDN
+followed by an arbitrary number of
+.B variantSpec
+providing the attribute definitions following it. Each new
+.B variantDN
+line starts configuring a new variant.
+
+.SH OVERLAY CONFIGURATION ENTRY
+
+The top entry
+.RB ( olcVariantConfig )
+has the following options available:
+
+.RS
+.TP
+.B olcVariantPassReplication: TRUE | FALSE
+If set to
+.BR TRUE ,
+.B search
+operations with the
+.B SyncReplication
+control will be passed unchanged so that replication can be unaffected.
+Defaults to
+.B FALSE
+while unset. The
+.BR slapd.conf (5)
+equivalent is
+.BR passReplication .
+.RE
+
+.SH VARIANT CONFIGURATION ENTRY
+
+The
+.B regular variant entry
+configuration
+.RB ( olcVariantVariant )
+has the following options available:
+
+.RS
+.TP
+.B olcVariantEntry: <dn>
+Mandatory attribute, indicates that the named entry is to be treated as a
+.B variant
+entry. The
+.BR slapd.conf (5)
+equivalent is
+.BR variantDN .
+.TP
+.B name: <reference>
+Name of the entry for reference, usually the attribute present in the
+configuration entry's RDN. There is no
+.BR slapd.conf (5)
+equivalent as this has no effect on the overlay operation.
+.RE
+
+Similarly, the
+.B regex variant entry
+configuration
+.RB ( olcVariantRegex )
+has these options available:
+
+.RS
+.TP
+.B olcVariantRegex: <regex>
+Mandatory attribute, indicates that the entries whose normalised DN matches is
+to be treated as a
+.B regex variant
+entry. The (POSIX.2) regex can use submatches to capture parts of the DN for
+later use in locating the
+.B alternative
+.BR entry .
+The
+.BR slapd.conf (5)
+equivalent is
+.BR variantRegex .
+.TP
+.B name: <reference>
+Name of the entry for reference, usually the attribute present in the
+configuration entry's RDN. There is no
+.BR slapd.conf (5)
+equivalent as this has no effect on the overlay operation.
+.RE
+
+.SH CONFIGURATION PRECEDENCE
+
+While several
+.B regex variants
+can match the same entry, only one can apply at a time. The list of the
+.B regular variants
+is checked first. Should none match, the list of
+.B regex variants
+is checked in the order they have been configured using only the first one that
+matches.
+
+.SH VARIANT ATTRIBUTE CONFIGURATION ENTRY
+
+The
+.B regular variant
+attribute configuration
+.RB ( olcVariantAttribute )
+and
+.B regex variant
+attribute configuration
+.RB ( olcVariantAttributePattern )
+have the following options available:
+
+.RS
+.TP
+.B name: <reference>
+Name of the attribute configuration for reference and/or documentation, if
+present, usually found in the configuration entry's RDN. There is no
+.BR slapd.conf (5)
+equivalent as this has no effect on the overlay operation.
+.TP
+.B olcVariantVariantAttribute: <attr>
+Mandatory attribute, indicates that the named attribute is not present in
+the
+.B variant
+entry but is to be retrieved from the
+.B alternate
+entry.
+.TP
+.B olcVariantAlternativeAttribute: <attr>
+Mandatory attribute, indicates that the values of the named attribute is to
+be retrieved from the
+.B alternate
+entry for use as the values of the
+.B variant
+attribute. The syntaxes of the corresponding
+.B variant
+and
+.B alternate
+attributes have to match or the configuration will be rejected.
+.TP
+.B olcVariantAlternativeEntry: <dn>
+Attribute mandatory for
+.B regular
+.BR variants ,
+indicates the
+.B alternate
+entry to use when retrieving the attribute from.
+.TP
+.B olcVariantAlternativeEntryPattern: <pattern>
+Attribute mandatory for
+.B regex
+.BR variants ,
+indicates the
+.B alternate
+entry to use when retrieving the attribute from. Substitution patterns
+.RB ( $n )
+can be used to insert parts of the variant entry's DN.
+.B $0
+will place the entire variant DN,
+.B $1
+to
+.B $9
+can be used to place respective capture patterns from the
+.B variant
+entry.
+.TP
+.B variantSpec <attr> <attr2> <dn>
+.BR slapd.conf (5)
+only. The equivalent to options above, where
+.B <attr>
+represents the
+.BR olcVariantVariantAttribute ,
+.B <attr2>
+represents the
+.B olcVariantAlternativeAttribute
+and
+.B <dn>
+has the same meaning as the content of
+.BR olcVariantAlternativeEntry .
+Has to follow a
+.B variantDN
+line in the overlay's configuration.
+.TP
+.B variantRegexSpec <attr> <attr2> <pattern>
+.BR slapd.conf (5)
+only. The equivalent to options above, where
+.B <attr>
+represents the
+.BR olcVariantVariantAttribute ,
+.B <attr2>
+represents the
+.B olcVariantAlternativeAttribute
+and
+.B <pattern>
+has the same meaning as the content of
+.BR olcVariantAlternativeEntryPattern .
+Has to follow a
+.B variantRegex
+line in the overlay's configuration.
+.RE
+
+.SH EXAMPLE
+
+The following is an example of a configured overlay, substitute
+.B $DATABASE
+for the DN of the database it is attached to and
+.B {x}
+with the desired position of the overlay in the overlay stack.
+
+.nf
+dn: olcOverlay={x}variant,$DATABASE
+objectClass: olcVariantConfig
+olcOverlay: variant
+# Let replication requests pass through unmodified
+olcVariantPassReplication: TRUE
+
+# when an operation considers dc=example,dc=com
+dn: name=example,olcOverlay={x}variant,$DATABASE
+objectClass: olcVariantVariant
+olcVariantEntry: dc=example,dc=com
+
+# share the Headquarters' address as the company address
+dn: olcVariantVariantAttribute=postaladdress,name={0}example,olcOverlay={x}variant,$DATABASE
+objectClass: olcVariantVariantAttribute
+olcVariantVariantAttribute: postaladdress
+olcVariantAlternativeAttribute: postaladdress
+olcVariantAlternativeEntry: ou=Headquarters,dc=example,dc=com
+
+# populate telephonenumber from CEO's home phone
+dn: name=Take phone from CEO entry,name={0}example,olcOverlay={x}variant,$DATABASE
+objectClass: olcVariantVariantAttribute
+olcVariantVariantAttribute: telephonenumber
+olcVariantAlternativeAttribute: homephone
+olcVariantAlternativeEntry: cn=John Doe,ou=People,dc=example,dc=com
+
+# Match all entries with example in the DN
+#
+# It will not match dc=example,dc=com as that's already configured as a regular
+# variant
+dn: name=example 2,olcOverlay={x}variant,$DATABASE
+objectClass: olcVariantRegex
+olcVariantEntryRegex: .*example[^,]*,(.*)
+
+dn: olcVariantVariantAttribute=location,name={1}example 2,olcOverlay={x}variant,$DATABASE
+objectClass: olcVariantAttributePattern
+olcVariantVariantAttribute: location
+olcVariantAlternativeAttribute: location
+olcVariantAlternativeEntryPattern: ou=object with location,$1
+.fi
+
+The
+.BR slapd.conf (5)
+equivalent of the above follows (note that the converted
+.B cn=config
+will differ in the first variant attribute configuration entry):
+
+.nf
+overlay variant
+passReplication TRUE
+
+variantDN dc=example,dc=com
+variantSpec telephonenumber homephone "cn=John Doe,ou=People,dc=example,dc=com"
+variantSpec postaladdress postaladdress ou=Headquarters,dc=example,dc=com
+
+variantRegex .*example[^,]*,(.*)
+variantRegexSpec location location "ou=object with location,$1"
+.fi
+
+.SH REPLICATION
+
+There are two ways that a database with
+.BR slapo-variant (5)
+might be replicated, either replicating the data as stored in the database,
+or as seen by the clients interacting with the server.
+
+The former can be achieved by setting the overlay option
+.B olcVariantPassReplication
+on the provider and configuring
+.BR slapo-syncprov (5)
+to appear before (with a lower index than)
+.BR slapo-variant (5).
+This is the preferred way and the only to work with
+.B regex variants
+or support multi-provider replication,
+but care must be taken to configure
+.BR slapo-variant (5)
+correctly on each replica.
+
+The latter is mostly possible by keeping the option
+.B olcVariantPassReplication
+set to
+.B FALSE
+on the provider and configuring
+.BR slapo-syncprov (5)
+to appear after (with a higher index than)
+.BR slapo-variant (5).
+However, it will only really work for replication set-ups that do not
+utilise
+.B regex
+.BR variants ,
+delta-replication nor the refresh and persist mode and is therefore
+discouraged.
+
+.SH LIMITATIONS
+For
+.B regex
+.BR variants ,
+the
+.B Search
+operation will only apply if the search scope is set to
+.BR base .
+
+The
+.B ModRDN
+operation is not currently handled and will always modify only the entry in
+question, not the configured
+.B alternate
+entry.
+
+The
+.B Modify
+operation is not atomic with respect to the alternate entries. Currently,
+the overlay processes the operations on the entry, sends the result message
+and, if successful, starts modifying the
+.B alternate
+entries accordingly.
+There is currently no support to indicate whether modifications to the
+.B alternate
+entries have been successful or whether they have finished.
+
+The only control explicitly handled is the
+.B SyncReplication
+control if enabled through the
+.B olcVariantPassReplication
+setting, adding any controls to an operation that is handled by the overlay
+might lead to unexpected behaviour and is therefore discouraged.
+
+.SH FILES
+.TP
+ETCDIR/slapd.conf
+default slapd configuration file
+.TP
+ETCDIR/slapd.d
+default slapd configuration directory
+.SH SEE ALSO
+.BR slapd-config (5),
+.BR slapd.conf (5),
+.BR slapd.overlays (5),
+.BR regex (7),
+.BR slapd (8)
+.SH ACKNOWLEDGEMENTS
+This module was developed in 2016-2017 by Ondřej Kuzník for Symas Corp.

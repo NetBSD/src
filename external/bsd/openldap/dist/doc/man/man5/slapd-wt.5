@@ -1,0 +1,91 @@
+.TH SLAPD-WT 5 "RELEASEDATE" "OpenLDAP LDVERSION"
+.\" Copyright 2011-2021 The OpenLDAP Foundation All Rights Reserved.
+.\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
+.\" $OpenLDAP$
+.SH NAME
+slapd\-wt \- WiredTiger backend to slapd
+.SH SYNOPSIS
+.B ETCDIR/slapd.conf
+.SH DESCRIPTION
+The \fBwt\fP backend to
+.BR slapd (8)
+uses WiredTiger database library to store data.
+.LP
+The \fBwt\fP backend is experimental module that have potential high
+write performance and high concurrency performance.
+This backend have not some basic feature yet. Please backup data using
+slapcat before update the module.
+
+.SH CONFIGURATION
+These
+.B slapd.conf
+options apply to the \fBwt\fP backend database.
+That is, they must follow a "database wt" line and
+come before any subsequent "backend" or "database" lines.
+Other database options are described in the
+.BR slapd.conf (5)
+manual page.
+.TP
+.BI directory \ <directory>
+Specify WiredTiger home directory that containing this database and
+associated indexes live.
+A separate directory must be specified for each database.
+The default is
+.BR LOCALSTATEDIR/openldap\-data .
+.TP
+\fBwtconfig \fR{\fBcreate\fR,\fBcache_size=512M\fR,\fBasync=(enabled)\fR}
+Specify configuration for wiredtiger, This parameter is pass to
+.BR wiredtiger_open (3).
+.RS
+.TP
+.B create
+create the database if it does not exist.
+.RE
+.RS
+.TP
+.B cache_size
+maximum heap memory to allocate for the cache.
+.RE
+.RS
+.TP
+.B async
+asynchronous operations configuration options. disabled by default.
+.RE
+.RS
+.TP
+\fBindex \fR{\fI<attrlist>\fR|\fBdefault\fR} [\fBpres\fR,\fBeq\fR,\fBapprox\fR,\fBsub\fR,\fI<special>\fR]
+Specify the indexes to maintain for the given attribute (or
+list of attributes).
+Some attributes only support a subset of indexes.
+If only an \fI<attr>\fP is given, the indices specified for \fBdefault\fR
+are maintained.
+Note that setting a default does not imply that all attributes will be
+indexed. Also, for best performance, an
+.B eq
+index should always be configured for the
+.B objectClass
+attribute.
+
+.SH ACCESS CONTROL
+The
+.B wt
+backend honors access control semantics as indicated in
+.BR slapd.access (5).
+.SH FILES
+.TP
+.B ETCDIR/slapd.conf
+default
+.B slapd
+configuration file
+.SH SEE ALSO
+.BR slapd.conf (5),
+.BR slapd\-config (5),
+.BR slapd (8),
+.BR slapadd (8),
+.BR slapcat (8),
+.BR slapindex (8),
+.BR slapmodify (8),
+WiredTiger documentation.
+.SH ACKNOWLEDGEMENTS
+.so ../Project
+Written by HAMANO Tsukasa <hamano@osstech.co.jp>.

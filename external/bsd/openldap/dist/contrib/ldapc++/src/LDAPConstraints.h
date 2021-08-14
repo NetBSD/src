@@ -1,8 +1,8 @@
-/*	$NetBSD: LDAPConstraints.h,v 1.1.1.8 2020/08/11 13:12:03 christos Exp $	*/
+/*	$NetBSD: LDAPConstraints.h,v 1.1.1.9 2021/08/14 16:05:14 christos Exp $	*/
 
 // $OpenLDAP$
 /*
- * Copyright 2000-2020 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2000-2021 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -20,7 +20,7 @@
 // * the Restart-Option ???
 // * default Server(s)
 
-//* Class for representating the various protocol options
+//* Class for representing the various protocol options
 /** This class represents some options that can be set for a LDAPConnection
  *  operation. Namely these are time and size limits. Options for referral
  *  chasing and a default set of client of server controls to be used with

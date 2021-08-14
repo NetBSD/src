@@ -1,5 +1,5 @@
 .TH SLAPPASSWD 8C "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2020 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2021 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .\" $OpenLDAP$
 .SH NAME
@@ -165,7 +165,7 @@ Possible generic options/values are:
 .LP
 .nf
               module\-path=<pathspec> (see `\fBmodulepath\fP' in slapd.conf(5))
-              module\-load=<filename> (see `\fBmoduleload\fP' in slapd.conf(5))
+              module\-load="<filename> [<arguments>...]" (see `\fBmoduleload\fP' in slapd.conf(5))
 
 .in
 You can load a dynamically loadable password hash module by

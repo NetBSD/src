@@ -1,0 +1,118 @@
+.TH SLAPD-PW-SHA2 5 "RELEASEDATE" "OpenLDAP LDVERSION"
+.\" Copyright 2015-2021 The OpenLDAP Foundation All Rights Reserved.
+.\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
+.\" $OpenLDAP$
+.SH NAME
+slapd-pw-sha2 \- SHA-2 password module to slapd
+.SH SYNOPSIS
+ETCDIR/slapd.conf
+.RS
+.LP
+.B moduleload
+.B pw-sha2
+.RE
+.SH DESCRIPTION
+.LP
+The
+.B pw-sha2
+module to
+.BR slapd (8)
+provides support for the use of SSHA-512, SSHA-384, SSHA-256, SHA-512,
+SHA-384 and SHA-256 from the SHA-2 family (FIPS 180-2) of hash functions
+in hashed passwords in OpenLDAP.
+.LP
+It does so by providing the following additional password schemes for use in slapd:
+.RS
+.TP
+.B {SSHA256}
+SHA-256 with salt, giving hash values of 256 bits length
+.TP
+.B {SHA256}
+plain SHA-256 giving hash values of 256 bits length
+.TP
+.B {SSHA384}
+SHA-384 with salt, giving hash values of 384 bits length
+.TP
+.B {SHA384}
+plain SHA-384 giving hash values of 384 bits length
+.TP
+.B {SSHA512}
+SHA-512 with salt, giving hash values of 512 bits length
+.TP
+.B {SHA512}
+plain SHA-512 giving hash values of 512 bits length
+.RE
+
+.SH CONFIGURATION
+The
+.B pw-sha2
+module does not need any configuration.
+.LP
+After loading the module, the password schemes
+{SSHA256}, {SSHA384}, {SSHA512}, {SSHA256}, {SHA384}, and {SHA512}
+will be recognised in values of the
+.I userPassword
+attribute.
+.LP
+You can then instruct OpenLDAP to use these schemes when processing
+the LDAPv3 Password Modify (RFC 3062) extended operations by using the
+.BR password-hash
+option in
+.BR slapd.conf (5).
+
+.SH NOTES
+If you want to use the schemes described here with
+.BR slappasswd (8),
+don't forget to load the module using its command line options.
+The relevant option/value is:
+.RS
+.LP
+.B \-o
+.BR module\-load = pw-sha2
+.LP
+.RE
+Depending on
+.BR pw-sha2 's
+location, you may also need:
+.RS
+.LP
+.B \-o
+.BR module\-path = \fIpathspec\fP
+.RE
+
+.SH EXAMPLES
+All of the userPassword LDAP attributes below encode the password
+.RI ' secret '.
+.EX
+.LP
+userPassword: {SHA512}vSsar3708Jvp9Szi2NWZZ02Bqp1qRCFpbcTZPdBhnWgs5WtNZKnvCXdhztmeD2cmW192CF5bDufKRpayrW/isg==
+.LP
+userPassword: {SHA384}WKd1ukESvjAFrkQHznV9iP2nHUBJe7gCbsrFTU4//HIyzo3jq1rLMK45dg/ufFPt
+.LP
+userPassword: {SHA256}K7gNU3sdo+OL0wNhqoVWhr3g6s1xYv72ol/pe/Unols=
+.EE
+.LP
+To make {SSHA512} the password hash used in Password Modify extended operations,
+simply set this line in slapd.conf(5):
+.EX
+.LP
+password-hash   {SSHA512}
+.EX
+
+.SH SEE ALSO
+.BR slapd.conf (5),
+.BR ldappasswd (1),
+.BR slappasswd (8),
+.BR ldap (3),
+.LP
+"OpenLDAP Administrator's Guide" (http://www.OpenLDAP.org/doc/admin/)
+.LP
+
+.SH ACKNOWLEDGEMENTS
+This manual page has been written by Peter Marschall based on the
+module's README file written by Jeff Turner.
+.LP
+.B OpenLDAP
+is developed and maintained by The OpenLDAP Project (http://www.openldap.org/).
+.B OpenLDAP
+is derived from University of Michigan LDAP 3.3 Release.

@@ -1,11 +1,13 @@
 .TH SLAPD 8C "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2020 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2021 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .\" $OpenLDAP$
 .SH NAME
 slapd \- Stand-alone LDAP Daemon
 .SH SYNOPSIS
 .B LIBEXECDIR/slapd 
+[\c
+.BR \-V [ V [ V ]]
 [\c
 .BR \-4 | \-6 ]
 [\c
@@ -67,6 +69,11 @@ will not fork and disassociate from the invoking tty.
 See the "OpenLDAP Administrator's Guide" for more details on
 .BR slapd .
 .SH OPTIONS
+.TP
+.BR \-V [ V [ V ]]
+Print version info and proceed with startup.
+If \fB\-VV\fP is given, exit after providing version info. If \fB\-VVV\fP is
+given, additionally provide information on static overlays and backends.
 .TP
 .B \-4
 Listen on IPv4 addresses only.
@@ -185,13 +192,21 @@ For example, if slapd is given
 it will listen on 127.0.0.1:9009 for LDAP, 0.0.0.0:636 for LDAP over TLS,
 and LDAP over IPC (Unix domain sockets).  Host 0.0.0.0 represents
 INADDR_ANY (any interface).
-A space separated list of URLs is expected.  The URLs should be of
-the LDAP, LDAPS, or LDAPI schemes, and generally
-without a DN or other optional parameters (excepting as discussed below).
-Support for the latter two schemes depends on selected configuration 
-options.  Hosts may be specified by name or IPv4 and IPv6 address formats.
-Ports, if specified, must be numeric.  The default ldap:// port is \fB389\fP
-and the default ldaps:// port is \fB636\fP.
+A space separated list of URLs is expected.  The URLs should be of the LDAP,
+PLDAP, LDAPS, PLDAPS, or LDAPI schemes, and generally without a DN or other
+optional parameters (excepting as discussed below).  Support for the latter
+three schemes depends on selected configuration options. Hosts may be specified
+by name or IPv4 and IPv6 address formats.  Ports, if specified, must be
+numeric.  The default ldap:// port is \fB389\fP and the default ldaps:// port
+is \fB636\fP, same for the proxy enabled variants.
+
+The PLDAP and PLDAPS URL schemes provide support for the HAProxy proxy protocol
+version 2, which allows a load balancer or proxy server to provide the remote
+client IP address to slapd to be used for access control or logging. Ports
+configured for PLDAP or PLDAPS will only accept connections that include the
+necessary proxy protocol header. Connections to these ports should be
+restricted at the network level to only trusted load balancers or proxies to
+avoid spoofing of client IP addresses by third parties.
 
 For LDAP over IPC,
 .B name 
@@ -275,12 +290,12 @@ having the matching replication identifier in its definition. The
 .B rid
 must be provided in order for any other specified values to be used.
 .B sid
-is the server id in a multi-master/mirror-mode configuration.
+is the server id in a multi-provider configuration.
 .B csn
 is the commit sequence number received by a previous synchronization
-and represents the state of the consumer replica content which the
+and represents the state of the consumer content which the
 syncrepl engine will synchronize to the current provider content.
-In case of \fImirror-mode\fP or \fImulti-master\fP replication agreement,
+In case of \fImulti-provider\fP replication agreement,
 multiple
 .B csn
 values, semicolon separated, can appear.

@@ -21,12 +21,6 @@ include: file://@TESTWD@/@SCHEMADIR@/misc.ldif
 #mod#olcModulePath: @TESTWD@/../servers/slapd/back-@BACKEND@/
 #mod#olcModuleLoad: {0}back_@BACKEND@.la
 
-#monitormod#dn: cn=module{1},cn=config
-#monitormod#objectClass: olcModuleList
-#monitormod#cn: module{1}
-#monitormod#olcModulePath: @TESTWD@/../servers/slapd/back-monitor/
-#monitormod#olcModuleLoad: {0}back_monitor.la
-
 dn: olcDatabase={-1}frontend,cn=config
 objectClass: olcDatabaseConfig
 objectClass: olcFrontendConfig

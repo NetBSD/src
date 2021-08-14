@@ -1,0 +1,110 @@
+version: 1
+
+# LEADING COMMENT AND WHITE SPACE
+
+dn: cn=James A Jones 1,ou=Alumni Association,ou=People,dc=example,dc=com
+# EMBEDDED COMMENT
+changetype: modify
+add: drink
+drink: Pils
+-
+add: drink
+drink: Orange Juice
+-
+delete: drink
+drink: Pils
+-
+delete: sn
+sn: Jones
+-
+add: sn
+sn: Jones
+
+dn: cn=Bjorn Jensen,ou=Information Technology Division,ou=People,dc=example,dc=com
+changetype: modify
+# EMBEDDED COMMENT
+ CONTINUED
+replace: description
+description: The replaced multiLineDescription $ Blah Woof.
+-
+replace: drink
+drink: Iced Tea
+drink: Mad Dog 20/20
+
+dn: cn=ITD Staff,ou=Groups,dc=example,dc=com
+changetype: modify
+delete: uniquemember
+uniquemember: cn=James A Jones 2,ou=Information Technology Division,
+ ou=People,dc=example,dc=com
+uniquemember: cn=Bjorn Jensen,ou=Information Technology Division,
+ ou=People,dc=example,dc=com
+-
+add: uniquemember
+uniquemember: cn=Dorothy Stevens,ou=Alumni Association,
+ ou=People,dc=example,dc=com
+uniquemember: cn=James A Jones 1,ou=Alumni Association,
+ ou=People,dc=example,dc=com
+-
+add: objectClass
+objectClass: OpenLDAPdisplayableObject
+objectClass: pkiUser
+objectClass: userSecurityInformation
+-
+delete: objectClass
+objectClass: userSecurityInformation
+objectClass: pkiUser
+objectClass: OpenLDAPdisplayableObject
+
+dn: cn=All Staff,ou=Groups,dc=example,dc=com
+changetype: modify
+delete: member
+-
+add: member
+member: cn=Dorothy Stevens,ou=Alumni Association,ou=People,dc=example,dc=com
+-
+delete: description
+-
+add: objectClass
+objectClass: OpenLDAPdisplayableObject
+objectClass: pkiUser
+objectClass: userSecurityInformation
+-
+delete: objectClass
+objectClass: OpenLDAPdisplayableObject
+objectClass: pkiUser
+objectClass: userSecurityInformation
+
+dn: cn=Gern Jensen,ou=Information Technology Division,ou=People,dc=example,dc=com
+changetype: add
+objectclass: testPerson
+cn: Gern Jensen
+sn: Jensen
+uid: gjensen
+title: Chief Investigator, ITD
+postaladdress: ITD $ 535 W. William St $ Anytown, MI 48103
+seealso: cn=All Staff,ou=Groups,dc=example,dc=com
+drink: Coffee
+homepostaladdress: 844 Brown St. Apt. 4 $ Anytown, MI 48104
+description: Very odd
+facsimiletelephonenumber: +1 313 555 7557
+telephonenumber: +1 313 555 8343
+mail: gjensen@mailgw.example.com
+homephone: +1 313 555 8844
+testTime: 20050304001801.234Z
+
+dn: cn=James A Jones 2,ou=Information Technology Division,ou=People,dc=example,dc=com
+changetype: delete
+# TRAILING COMMENT AND WHITE SPACE
+
+dn: ou=People,dc=example,dc=com
+changetype: modify
+increment: uidNumber
+uidNumber: 1
+-
+increment: gidNumber
+gidNumber: -1
+
+dn: dc=example,dc=com
+changetype: modify
+# EMPTY SEQUENCE OF CHANGE
+

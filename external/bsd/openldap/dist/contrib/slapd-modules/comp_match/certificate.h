@@ -1,4 +1,4 @@
-/*	$NetBSD: certificate.h,v 1.1.1.3 2018/02/06 01:53:06 christos Exp $	*/
+/*	$NetBSD: certificate.h,v 1.1.1.4 2021/08/14 16:05:14 christos Exp $	*/
 
 
 #include "asn-incl.h"

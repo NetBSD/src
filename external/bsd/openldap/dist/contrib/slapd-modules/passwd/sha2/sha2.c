@@ -1,4 +1,4 @@
-/*	$NetBSD: sha2.c,v 1.1.1.4 2018/02/06 01:53:06 christos Exp $	*/
+/*	$NetBSD: sha2.c,v 1.1.1.5 2021/08/14 16:05:15 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /*
@@ -67,7 +67,7 @@
  * Please make sure that your system defines BYTE_ORDER.  If your
  * architecture is little-endian, make sure it also defines
  * LITTLE_ENDIAN and that the two (BYTE_ORDER and LITTLE_ENDIAN) are
- * equivilent.
+ * equivalent.
  *
  * If your system does not define the above, then you can do so by
  * hand like this:
@@ -94,9 +94,9 @@
 
 /*
  * Define the followingsha2_* types to types of the correct length on
- * the native archtecture.   Most BSD systems and Linux define u_intXX_t
+ * the native architecture.   Most BSD systems and Linux define u_intXX_t
  * types.  Machines with very recent ANSI C headers, can use the
- * uintXX_t definintions from inttypes.h by defining SHA2_USE_INTTYPES_H
+ * uintXX_t definitions from inttypes.h by defining SHA2_USE_INTTYPES_H
  * during compile or in the sha.h header file.
  *
  * Machines that support neither u_intXX_t nor inttypes.h's uintXX_t

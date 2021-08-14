@@ -44,7 +44,7 @@ ucstring_t *ucstring_create(unsigned long *source, unsigned long start,
 
 void ucstring_free(ucstring_t *string)
 
-  This function will deallocate the memory used by the string, incuding the
+  This function will deallocate the memory used by the string, including the
   string itself.
 
 -----------------------------------------------------------------------------

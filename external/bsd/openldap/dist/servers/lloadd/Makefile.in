@@ -1,0 +1,48 @@
+# Makefile.in for Load Balancer
+# $OpenLDAP$
+## This work is part of OpenLDAP Software <http://www.openldap.org/>.
+##
+## Copyright 1998-2021 The OpenLDAP Foundation.
+## All rights reserved.
+##
+## Redistribution and use in source and binary forms, with or without
+## modification, are permitted only as authorized by the OpenLDAP
+## Public License.
+##
+## A copy of this license is available in the file LICENSE in the
+## top-level directory of the distribution or, alternatively, at
+## <http://www.OpenLDAP.org/license.html>.
+
+
+XSRCS	= version.c
+
+NT_SRCS = nt_svc.c
+NT_OBJS = nt_svc.o ../../libraries/liblutil/slapdmsg.res
+
+SRCS	= backend.c bind.c config.c connection.c client.c \
+		  daemon.c epoch.c extended.c init.c operation.c \
+		  upstream.c libevent_support.c \
+		  $(@PLAT@_SRCS)
+
+
+LDAP_INCDIR= ../../include -I$(srcdir) -I$(srcdir)/../slapd
+LDAP_LIBDIR= ../../libraries
+
+
+# $(LTHREAD_LIBS) must be last!
+XLIBS = $(LLOADD_L)
+XXLIBS = $(LLOADD_LIBS) $(SECURITY_LIBS) $(LUTIL_LIBS)
+XXXLIBS = $(LTHREAD_LIBS)
+
+NT_DEPENDS = slapd.exp
+NT_OBJECTS = slapd.exp symdummy.o $(LLOADD_OBJS) version.o
+
+UNIX_DEPENDS = version.o $(LLOADD_L)
+UNIX_OBJECTS = $(OBJS) version.o
+
+LLOADD_DEPENDS = $(@PLAT@_DEPENDS)
+LLOADD_OBJECTS = $(@PLAT@_OBJECTS)
+
+include @BALANCER_INCLUDE@
+
+

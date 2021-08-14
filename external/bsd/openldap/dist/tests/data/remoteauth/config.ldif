@@ -1,0 +1,21 @@
+dn: olcOverlay={0}remoteauth,olcDatabase={1}@BACKEND@,cn=config
+objectClass: olcOverlayConfig
+objectclass: olcRemoteAuthCfg
+olcOverlay: {0}remoteauth
+olcRemoteAuthRetryCount: 3
+olcRemoteAuthTLS: starttls=critical
+  tls_cert="@TESTDIR@/tls/certs/localhost.crt"
+  tls_key="@TESTDIR@/tls/private/localhost.key"
+  tls_cacert="@TESTDIR@/tls/ca/certs/testsuiteCA.crt"
+  tls_reqcert=demand tls_reqsan=allow
+#openssl#  tls_crlcheck=none
+olcRemoteAuthDNAttribute: seeAlso
+olcRemoteAuthDomainAttribute: o
+olcRemoteAuthDefaultDomain: default
+olcRemoteAuthDefaultRealm: @SURIP3@
+olcRemoteAuthStore: FALSE
+olcRemoteAuthMapping: default file://@TESTDIR@/default_domain
+olcRemoteAuthMapping: working_ldaps @SURIP3@
+olcRemoteAuthMapping: failing_ldaps @SURIP2@
+olcRemoteAuthMapping: self @URIP1@
+

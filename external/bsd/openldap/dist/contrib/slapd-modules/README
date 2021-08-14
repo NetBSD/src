@@ -1,4 +1,4 @@
-Copyright 2008-2020 The OpenLDAP Foundation. All rights reserved.
+Copyright 2008-2021 The OpenLDAP Foundation. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted only as authorized by the OpenLDAP
@@ -21,7 +21,7 @@ autogroup (overlay)
 	Automated updates of group memberships.
 
 cloak (overlay)
-	Hide specific attributes unless explicitely requested
+	Hide specific attributes unless explicitly requested
 
 comp_match (plugin)
 	Component Matching rules (RFC 3687).
@@ -57,5 +57,8 @@ smbk5pwd (overlay)
 
 trace (overlay)
 	Trace overlay invocation.
+
+usn (overlay)
+	Maintain usnCreated and usnChanged attrs similar to Microsoft AD.
 
 $OpenLDAP$

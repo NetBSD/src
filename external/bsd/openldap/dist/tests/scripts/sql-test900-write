@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2020 The OpenLDAP Foundation.
+## Copyright 1998-2021 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -34,8 +34,8 @@ fi
 mkdir -p $TESTDIR
 
 echo "Starting slapd on TCP/IP port $PORT1..."
-. $CONFFILTER $BACKEND $MONITORDB < $SQLCONF > $CONF1
-$SLAPD -f $CONF1 -h $URI1 -d $LVL $TIMING > $LOG1 2>&1 &
+. $CONFFILTER $BACKEND < $SQLCONF > $CONF1
+$SLAPD -f $CONF1 -h $URI1 -d $LVL > $LOG1 2>&1 &
 PID=$!
 if test $WAIT != 0 ; then
     echo PID $PID
@@ -45,7 +45,7 @@ KILLPIDS="$PID"
 
 echo "Testing SQL backend write operations..."
 for i in 0 1 2 3 4 5; do
-	$LDAPSEARCH -s base -b "$MONITOR" -h $LOCALHOST -p $PORT1 \
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI1 \
 		'objectclass=*' > /dev/null 2>&1
 	RC=$?
 	if test $RC = 0 ; then
@@ -67,7 +67,7 @@ BASEDN="dc=example,dc=com"
 
 echo "Using ldapsearch to retrieve all the entries..."
 echo "# Using ldapsearch to retrieve all the entries..." >> $SEARCHOUT
-$LDAPSEARCH -S "" -h $LOCALHOST -p $PORT1 -b "$BASEDN" \
+$LDAPSEARCH -S "" -H $URI1 -b "$BASEDN" \
 	 "objectClass=*" >> $SEARCHOUT 2>&1
 
 RC=$?
@@ -83,7 +83,7 @@ pgsql|ibmdb2)
 	MANAGERDN="cn=Manager,${BASEDN}"
 	echo "Testing add..."
 	$LDAPMODIFY -v -c -D "$MANAGERDN" -w $PASSWD \
-		-h $LOCALHOST -p $PORT1 >> $TESTOUT 2>&1 << EOMODS
+		-H $URI1 >> $TESTOUT 2>&1 << EOMODS
 version: 1
 
 # Adding an organization...
@@ -158,7 +158,7 @@ EOMODS
 
 	echo "Using ldapsearch to retrieve all the entries..."
 	echo "# Using ldapsearch to retrieve all the entries..." >> $SEARCHOUT
-	$LDAPSEARCH -S "" -h $LOCALHOST -p $PORT1 -b "$BASEDN" \
+	$LDAPSEARCH -S "" -H $URI1 -b "$BASEDN" \
 		 "objectClass=*" >> $SEARCHOUT 2>&1
 
 	RC=$?
@@ -170,7 +170,7 @@ EOMODS
 
 	echo "Testing modify..."
 	$LDAPMODIFY -v -c -D "$MANAGERDN" -w $PASSWD \
-		-h $LOCALHOST -p $PORT1 >> $TESTOUT 2>&1 << EOMODS
+		-H $URI1 >> $TESTOUT 2>&1 << EOMODS
 version: 1
 
 # Deleting all telephone numbers...
@@ -240,7 +240,7 @@ EOMODS
 
 	echo "Using ldapsearch to retrieve all the entries..."
 	echo "# Using ldapsearch to retrieve all the entries..." >> $SEARCHOUT
-	$LDAPSEARCH -S "" -h $LOCALHOST -p $PORT1 -b "$BASEDN" \
+	$LDAPSEARCH -S "" -H $URI1 -b "$BASEDN" \
 		 "objectClass=*" >> $SEARCHOUT 2>&1
 
 	RC=$?
@@ -252,7 +252,7 @@ EOMODS
 
 	echo "Testing delete..."
 	$LDAPMODIFY -v -c -D "$MANAGERDN" -w $PASSWD \
-		-h $LOCALHOST -p $PORT1 >> $TESTOUT 2>&1 << EOMODS
+		-H $URI1 >> $TESTOUT 2>&1 << EOMODS
 version: 1
 
 # Deleting a person...
@@ -277,7 +277,7 @@ EOMODS
 
 	echo "Using ldapsearch to retrieve all the entries..."
 	echo "# Using ldapsearch to retrieve all the entries..." >> $SEARCHOUT
-	$LDAPSEARCH -S "" -h $LOCALHOST -p $PORT1 -b "$BASEDN" \
+	$LDAPSEARCH -S "" -H $URI1 -b "$BASEDN" \
 		 "objectClass=*" >> $SEARCHOUT 2>&1
 
 	RC=$?
@@ -289,7 +289,7 @@ EOMODS
 
 	echo "Testing rename..."
 	$LDAPMODIFY -v -c -D "$MANAGERDN" -w $PASSWD \
-		-h $LOCALHOST -p $PORT1 >> $TESTOUT 2>&1 << EOMODS
+		-H $URI1 >> $TESTOUT 2>&1 << EOMODS
 version: 1
 
 # Renaming an organization...
@@ -321,7 +321,7 @@ EOMODS
 
 	echo "Using ldapsearch to retrieve all the entries..."
 	echo "# Using ldapsearch to retrieve all the entries..." >> $SEARCHOUT
-	$LDAPSEARCH -S "" -h $LOCALHOST -p $PORT1 -b "$BASEDN" \
+	$LDAPSEARCH -S "" -H $URI1 -b "$BASEDN" \
 		 "objectClass=*" >> $SEARCHOUT 2>&1
 
 	RC=$?
@@ -333,7 +333,7 @@ EOMODS
 
 	echo "Adding a child to a referral (should fail)..."
 	$LDAPMODIFY -v -c -D "$MANAGERDN" -w $PASSWD \
-		-h $LOCALHOST -p $PORT1 >> $TESTOUT 2>&1 << EOMODS
+		-H $URI1 >> $TESTOUT 2>&1 << EOMODS
 version: 1
 
 dn: cn=Should Fail,ou=Referral,${BASEDN}
@@ -353,7 +353,7 @@ EOMODS
 
 	echo "Modifying a referral (should fail)..."
 	$LDAPMODIFY -v -c -D "$MANAGERDN" -w $PASSWD \
-		-h $LOCALHOST -p $PORT1 >> $TESTOUT 2>&1 << EOMODS
+		-H $URI1 >> $TESTOUT 2>&1 << EOMODS
 version: 1
 
 dn: ou=Referral,${BASEDN}
@@ -372,7 +372,7 @@ EOMODS
 
 	echo "Renaming a referral (should fail)..."
 	$LDAPMODIFY -v -c -D "$MANAGERDN" -w $PASSWD \
-		-h $LOCALHOST -p $PORT1 >> $TESTOUT 2>&1 << EOMODS
+		-H $URI1 >> $TESTOUT 2>&1 << EOMODS
 version: 1
 
 dn: ou=Referral,${BASEDN}
@@ -390,7 +390,7 @@ EOMODS
 
 	echo "Deleting a referral (should fail)..."
 	$LDAPMODIFY -v -c -D "$MANAGERDN" -w $PASSWD \
-		-h $LOCALHOST -p $PORT1 >> $TESTOUT 2>&1 << EOMODS
+		-H $URI1 >> $TESTOUT 2>&1 << EOMODS
 version: 1
 
 dn: ou=Referral,${BASEDN}
@@ -406,7 +406,7 @@ EOMODS
 
 	echo "Adding a referral..."
 	$LDAPMODIFY -v -c -D "$MANAGERDN" -w $PASSWD \
-		-h $LOCALHOST -p $PORT1 -M >> $TESTOUT 2>&1 << EOMODS
+		-H $URI1 -M >> $TESTOUT 2>&1 << EOMODS
 version: 1
 
 dn: ou=Another Referral,${BASEDN}
@@ -426,7 +426,7 @@ EOMODS
 
 	echo "Modifying a referral with manageDSAit..."
 	$LDAPMODIFY -v -c -D "$MANAGERDN" -w $PASSWD \
-		-h $LOCALHOST -p $PORT1 -M >> $TESTOUT 2>&1 << EOMODS
+		-H $URI1 -M >> $TESTOUT 2>&1 << EOMODS
 version: 1
 
 dn: ou=Referral,${BASEDN}
@@ -445,7 +445,7 @@ EOMODS
 
 	echo "Using ldapsearch to retrieve the modified entry..."
 	echo "# Using ldapsearch to retrieve the modified entry..." >> $SEARCHOUT
-	$LDAPSEARCH -S "" -h $LOCALHOST -p $PORT1 -b "ou=Referral,$BASEDN" -M \
+	$LDAPSEARCH -S "" -H $URI1 -b "ou=Referral,$BASEDN" -M \
 		 "objectClass=*" '*' ref >> $SEARCHOUT 2>&1
 
 	RC=$?
@@ -457,7 +457,7 @@ EOMODS
 
 	echo "Renaming a referral with manageDSAit..."
 	$LDAPMODIFY -v -c -D "$MANAGERDN" -w $PASSWD \
-		-h $LOCALHOST -p $PORT1 -M >> $TESTOUT 2>&1 << EOMODS
+		-H $URI1 -M >> $TESTOUT 2>&1 << EOMODS
 version: 1
 
 dn: ou=Referral,${BASEDN}
@@ -475,7 +475,7 @@ EOMODS
 
 	echo "Using ldapsearch to retrieve the renamed entry..."
 	echo "# Using ldapsearch to retrieve the renamed entry..." >> $SEARCHOUT
-	$LDAPSEARCH -S "" -h $LOCALHOST -p $PORT1 -b "ou=Renamed Referral,$BASEDN" -M \
+	$LDAPSEARCH -S "" -H $URI1 -b "ou=Renamed Referral,$BASEDN" -M \
 		 "objectClass=*" '*' ref >> $SEARCHOUT 2>&1
 
 	RC=$?
@@ -487,7 +487,7 @@ EOMODS
 
 	echo "Deleting a referral with manageDSAit..."
 	$LDAPMODIFY -v -c -D "$MANAGERDN" -w $PASSWD \
-		-h $LOCALHOST -p $PORT1 -M >> $TESTOUT 2>&1 << EOMODS
+		-H $URI1 -M >> $TESTOUT 2>&1 << EOMODS
 version: 1
 
 dn: ou=Renamed Referral,${BASEDN}
@@ -505,7 +505,7 @@ EOMODS
 	BINDPW="mit"
 	NEWPW="newsecret"
 	echo "Testing passwd change..."
-	$LDAPPASSWD -h $LOCALHOST -p $PORT1 \
+	$LDAPPASSWD -H $URI1 \
 		-D "${BINDDN}" -w ${BINDPW} -s ${NEWPW} \
 		"$BINDDN" >> $TESTOUT 2>&1
 
@@ -517,7 +517,7 @@ EOMODS
 	fi
 
 	echo -n "Testing bind with new secret... "
-	$LDAPWHOAMI -h $LOCALHOST -p $PORT1 -D "$BINDDN" -w $NEWPW
+	$LDAPWHOAMI -H $URI1 -D "$BINDDN" -w $NEWPW
 	RC=$?
 	if test $RC != 0 ; then
 		echo "ldapwhoami failed ($RC)!"
@@ -528,7 +528,7 @@ EOMODS
 	BINDDN="cn=Some One,${BASEDN}"
 	BINDPW="someone"
 	echo -n "Testing bind with newly added user... "
-	$LDAPWHOAMI -h $LOCALHOST -p $PORT1 -D "$BINDDN" -w $BINDPW
+	$LDAPWHOAMI -H $URI1 -D "$BINDDN" -w $BINDPW
 	RC=$?
 	if test $RC != 0 ; then
 		echo "ldapwhoami failed ($RC)!"
@@ -538,7 +538,7 @@ EOMODS
 
 	echo "Using ldapsearch to retrieve all the entries..."
 	echo "# Using ldapsearch to retrieve all the entries..." >> $SEARCHOUT
-	$LDAPSEARCH -S "" -h $LOCALHOST -p $PORT1 -b "$BASEDN" \
+	$LDAPSEARCH -S "" -H $URI1 -b "$BASEDN" \
 		 "objectClass=*" >> $SEARCHOUT 2>&1
 
 	RC=$?

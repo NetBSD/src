@@ -1,10 +1,10 @@
-/*	$NetBSD: ldapcompare.c,v 1.1.1.8 2020/08/11 13:12:03 christos Exp $	*/
+/*	$NetBSD: ldapcompare.c,v 1.1.1.9 2021/08/14 16:05:12 christos Exp $	*/
 
 /* ldapcompare.c -- LDAP compare tool */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 1998-2001 Net Boolean Incorporated.
  * All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ldapcompare.c,v 1.1.1.8 2020/08/11 13:12:03 christos Exp $");
+__RCSID("$NetBSD: ldapcompare.c,v 1.1.1.9 2021/08/14 16:05:12 christos Exp $");
 
 #include "portable.h"
 
@@ -140,7 +140,7 @@ handle_private_option( int i )
 			optarg++;
 		}
 
-		control = ber_strdup( optarg );
+		control = optarg;
 		if ( (cvalue = strchr( control, '=' )) != NULL ) {
 			*cvalue++ = '\0';
 		}

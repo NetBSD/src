@@ -1,9 +1,9 @@
-/*	$NetBSD: whoami.c,v 1.1.1.8 2020/08/11 13:12:06 christos Exp $	*/
+/*	$NetBSD: whoami.c,v 1.1.1.9 2021/08/14 16:05:27 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -15,12 +15,12 @@
  * <http://www.OpenLDAP.org/license.html>.
  */
 /* ACKNOWLEDGEMENTS:
- * This program was orignally developed by Kurt D. Zeilenga for inclusion in
+ * This program was originally developed by Kurt D. Zeilenga for inclusion in
  * OpenLDAP Software.
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: whoami.c,v 1.1.1.8 2020/08/11 13:12:06 christos Exp $");
+__RCSID("$NetBSD: whoami.c,v 1.1.1.9 2021/08/14 16:05:27 christos Exp $");
 
 #include "portable.h"
 

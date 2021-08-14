@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 2005-2020 The OpenLDAP Foundation.
+## Copyright 2005-2021 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@ fi
 mkdir -p $TESTDIR $DBDIR1
 
 echo "Running slapadd to build slapd database..."
-. $CONFFILTER $BACKEND $MONITORDB < $MCONF > $ADDCONF
+. $CONFFILTER $BACKEND < $MCONF > $ADDCONF
 $SLAPADD -f $ADDCONF -l $LDIFORDERED
 RC=$?
 if test $RC != 0 ; then
@@ -39,7 +39,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Running slapindex to index slapd database..."
-. $CONFFILTER $BACKEND $MONITORDB < $DDSCONF > $CONF1
+. $CONFFILTER $BACKEND < $DDSCONF > $CONF1
 $SLAPINDEX -f $CONF1
 RC=$?
 if test $RC != 0 ; then
@@ -48,7 +48,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Starting slapd on TCP/IP port $PORT1..."
-$SLAPD -f $CONF1 -h $URI1 -d $LVL $TIMING > $LOG1 2>&1 &
+$SLAPD -f $CONF1 -h $URI1 -d $LVL > $LOG1 2>&1 &
 PID=$!
 if test $WAIT != 0 ; then
     echo PID $PID
@@ -60,7 +60,7 @@ sleep 1
 
 echo "Testing slapd searching..."
 for i in 0 1 2 3 4 5; do
-	$LDAPSEARCH -s base -b "$MONITOR" -h $LOCALHOST -p $PORT1 \
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI1 \
 		'(objectclass=*)' > /dev/null 2>&1
 	RC=$?
 	if test $RC = 0 ; then
@@ -79,7 +79,7 @@ fi
 cat /dev/null > $SEARCHOUT
 
 echo "Creating a dynamic entry..."
-$LDAPADD -D $MANAGERDN -w $PASSWD -h $LOCALHOST -p $PORT1 \
+$LDAPADD -D $MANAGERDN -w $PASSWD -H $URI1 \
 	>> $TESTOUT 2>&1 << EOMODS
 dn: cn=Dynamic Object,dc=example,dc=com
 objectClass: inetOrgPerson
@@ -95,7 +95,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Refreshing the newly created dynamic entry..."
-$LDAPEXOP -D $MANAGERDN -w $PASSWD -h $LOCALHOST -p $PORT1 \
+$LDAPEXOP -D $MANAGERDN -w $PASSWD -H $URI1 \
 	"refresh" "cn=Dynamic Object,dc=example,dc=com" "120" \
 	>> $TESTOUT 2>&1
 RC=$?
@@ -106,7 +106,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Modifying the newly created dynamic entry..."
-$LDAPMODIFY -D $MANAGERDN -w $PASSWD -h $LOCALHOST -p $PORT1 \
+$LDAPMODIFY -D $MANAGERDN -w $PASSWD -H $URI1 \
 	>> $TESTOUT 2>&1 << EOMODS
 dn: cn=Dynamic Object,dc=example,dc=com
 changetype: modify
@@ -121,7 +121,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Binding as the newly created dynamic entry..."
-$LDAPWHOAMI -h $LOCALHOST -p $PORT1 \
+$LDAPWHOAMI -H $URI1 \
 	-D "cn=Dynamic Object,dc=example,dc=com" -w dynamic
 RC=$?
 if test $RC != 0 ; then
@@ -131,7 +131,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Creating a dynamic entry subordinate to another..."
-$LDAPADD -D $MANAGERDN -w $PASSWD -h $LOCALHOST -p $PORT1 \
+$LDAPADD -D $MANAGERDN -w $PASSWD -H $URI1 \
 	>> $TESTOUT 2>&1 << EOMODS
 dn: cn=Subordinate Dynamic Object,cn=Dynamic Object,dc=example,dc=com
 objectClass: inetOrgPerson
@@ -152,7 +152,7 @@ SEARCH=0
 SEARCH=`expr $SEARCH + 1`
 sleep $SLEEP0
 echo "# [$SEARCH] Searching the dynamic portion of the database..." >> $SEARCHOUT
-$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
 	'(objectClass=dynamicObject)' '*' entryTtl \
 	>> $SEARCHOUT 2>&1
 RC=$?
@@ -163,7 +163,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Creating a static entry subordinate to a dynamic one (should fail)..."
-$LDAPADD -D $MANAGERDN -w $PASSWD -h $LOCALHOST -p $PORT1 \
+$LDAPADD -D $MANAGERDN -w $PASSWD -H $URI1 \
 	>> $TESTOUT 2>&1 << EOMODS
 dn: cn=Subordinate Static Object,cn=Dynamic Object,dc=example,dc=com
 objectClass: inetOrgPerson
@@ -189,7 +189,7 @@ case $RC in
 esac
 
 echo "Turning a static into a dynamic entry (should fail)..."
-$LDAPMODIFY -D $MANAGERDN -w $PASSWD -h $LOCALHOST -p $PORT1 \
+$LDAPMODIFY -D $MANAGERDN -w $PASSWD -H $URI1 \
 	>> $TESTOUT 2>&1 << EOMODS
 dn: ou=People,dc=example,dc=com
 changetype: modify
@@ -214,7 +214,7 @@ case $RC in
 esac
 
 echo "Turning a dynamic into a static entry (should fail)..."
-$LDAPMODIFY -D $MANAGERDN -w $PASSWD -h $LOCALHOST -p $PORT1 \
+$LDAPMODIFY -D $MANAGERDN -w $PASSWD -H $URI1 \
 	>> $TESTOUT 2>&1 << EOMODS
 dn: cn=Dynamic Object,dc=example,dc=com
 changetype: modify
@@ -239,7 +239,7 @@ case $RC in
 esac
 
 echo "Renaming a dynamic entry..."
-$LDAPMODIFY -D $MANAGERDN -w $PASSWD -h $LOCALHOST -p $PORT1 \
+$LDAPMODIFY -D $MANAGERDN -w $PASSWD -H $URI1 \
 	>> $TESTOUT 2>&1 << EOMODS
 dn: cn=Subordinate Dynamic Object,cn=Dynamic Object,dc=example,dc=com
 changetype: modrdn
@@ -256,7 +256,7 @@ fi
 SEARCH=`expr $SEARCH + 1`
 sleep $SLEEP0
 echo "# [$SEARCH] Searching the dynamic portion of the database..." >> $SEARCHOUT
-$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
 	'(objectClass=dynamicObject)' '*' entryTtl \
 	>> $SEARCHOUT 2>&1
 RC=$?
@@ -267,7 +267,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Refreshing the initial dynamic entry to make it expire earlier than the subordinate..."
-$LDAPEXOP -D $MANAGERDN -w $PASSWD -h $LOCALHOST -p $PORT1 \
+$LDAPEXOP -D $MANAGERDN -w $PASSWD -H $URI1 \
 	"refresh" "cn=Dynamic Object,dc=example,dc=com" "1" \
 	>> $TESTOUT 2>&1
 RC=$?
@@ -282,7 +282,7 @@ echo "Waiting $SLEEP seconds to force a subordinate/superior expiration conflict
 sleep $SLEEP
 
 echo "Re-vitalizing the initial dynamic entry..."
-$LDAPEXOP -D $MANAGERDN -w $PASSWD -h $LOCALHOST -p $PORT1 \
+$LDAPEXOP -D $MANAGERDN -w $PASSWD -H $URI1 \
 	"refresh" "cn=Dynamic Object,dc=example,dc=com" "120" \
 	>> $TESTOUT 2>&1
 RC=$?
@@ -293,7 +293,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Re-renaming the subordinate dynamic entry (new superior)..."
-$LDAPMODIFY -D $MANAGERDN -w $PASSWD -h $LOCALHOST -p $PORT1 \
+$LDAPMODIFY -D $MANAGERDN -w $PASSWD -H $URI1 \
 	>> $TESTOUT 2>&1 << EOMODS
 dn: cn=Renamed Dynamic Object,cn=Dynamic Object,dc=example,dc=com
 changetype: modrdn
@@ -311,7 +311,7 @@ fi
 SEARCH=`expr $SEARCH + 1`
 sleep $SLEEP0
 echo "# [$SEARCH] Searching the dynamic portion of the database..." >> $SEARCHOUT
-$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
 	'(objectClass=dynamicObject)' '*' entryTtl \
 	>> $SEARCHOUT 2>&1
 RC=$?
@@ -322,7 +322,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Deleting a dynamic entry..."
-$LDAPMODIFY -D $MANAGERDN -w $PASSWD -h $LOCALHOST -p $PORT1 \
+$LDAPMODIFY -D $MANAGERDN -w $PASSWD -H $URI1 \
 	>> $TESTOUT 2>&1 << EOMODS
 dn: cn=Dynamic Object,dc=example,dc=com
 changetype: delete
@@ -337,7 +337,7 @@ fi
 SEARCH=`expr $SEARCH + 1`
 sleep $SLEEP0
 echo "# [$SEARCH] Searching the dynamic portion of the database..." >> $SEARCHOUT
-$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
 	'(objectClass=dynamicObject)' '*' entryTtl \
 	>> $SEARCHOUT 2>&1
 RC=$?
@@ -348,7 +348,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Refreshing the remaining dynamic entry..."
-$LDAPEXOP -D $MANAGERDN -w $PASSWD -h $LOCALHOST -p $PORT1 \
+$LDAPEXOP -D $MANAGERDN -w $PASSWD -H $URI1 \
 	"refresh" "cn=Renamed Dynamic Object,dc=example,dc=com" "1" \
 	>> $TESTOUT 2>&1
 RC=$?
@@ -361,7 +361,7 @@ fi
 SEARCH=`expr $SEARCH + 1`
 sleep $SLEEP0
 echo "# [$SEARCH] Searching the dynamic portion of the database..." >> $SEARCHOUT
-$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
 	'(objectClass=dynamicObject)' '*' entryTtl \
 	>> $SEARCHOUT 2>&1
 RC=$?
@@ -378,7 +378,7 @@ sleep $SLEEP
 SEARCH=`expr $SEARCH + 1`
 sleep $SLEEP0
 echo "# [$SEARCH] Searching the dynamic portion of the database..." >> $SEARCHOUT
-$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
 	'(objectClass=dynamicObject)' '*' entryTtl \
 	>> $SEARCHOUT 2>&1
 RC=$?
@@ -391,7 +391,7 @@ fi
 # Meeting
 MEETINGDN="cn=Meeting,ou=Groups,dc=example,dc=com"
 echo "Creating a meeting as $BJORNSDN..."
-$LDAPMODIFY -D "$BJORNSDN" -w bjorn -h $LOCALHOST -p $PORT1 \
+$LDAPMODIFY -D "$BJORNSDN" -w bjorn -H $URI1 \
 	>> $TESTOUT 2>&1 << EOMODS
 dn: $MEETINGDN
 changetype: add
@@ -413,7 +413,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Refreshing the meeting as $BJORNSDN..."
-$LDAPEXOP -D "$BJORNSDN" -w bjorn -h $LOCALHOST -p $PORT1 \
+$LDAPEXOP -D "$BJORNSDN" -w bjorn -H $URI1 \
 	"refresh" "$MEETINGDN" "120" \
 	>> $TESTOUT 2>&1
 RC=$?
@@ -424,7 +424,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Joining the meeting as $BABSDN..."
-$LDAPMODIFY -D "$BABSDN" -w bjensen -h $LOCALHOST -p $PORT1 \
+$LDAPMODIFY -D "$BABSDN" -w bjensen -H $URI1 \
 	>> $TESTOUT 2>&1 << EOMODS
 dn: $MEETINGDN
 changetype: modify
@@ -439,7 +439,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Trying to add a member as $BABSDN (should fail)..."
-$LDAPMODIFY -D "$BABSDN" -w bjensen -h $LOCALHOST -p $PORT1 \
+$LDAPMODIFY -D "$BABSDN" -w bjensen -H $URI1 \
 	>> $TESTOUT 2>&1 << EOMODS
 dn: $MEETINGDN
 changetype: modify
@@ -464,7 +464,7 @@ case $RC in
 esac
 
 echo "Refreshing the meeting as $BABSDN..."
-$LDAPEXOP -D "$BABSDN" -w bjensen -h $LOCALHOST -p $PORT1 \
+$LDAPEXOP -D "$BABSDN" -w bjensen -H $URI1 \
 	"refresh" "$MEETINGDN" "180" \
 	>> $TESTOUT 2>&1
 RC=$?
@@ -475,7 +475,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Trying to refresh the meeting anonymously (should fail)..."
-$LDAPEXOP -h $LOCALHOST -p $PORT1 \
+$LDAPEXOP -H $URI1 \
 	"refresh" "$MEETINGDN" "240" \
 	>> $TESTOUT 2>&1
 RC=$?
@@ -486,7 +486,7 @@ if test $RC = 0 ; then
 fi
 
 echo "Trying to refresh the meeting as $JAJDN (should fail)..."
-$LDAPEXOP -D "$JAJDN" -w "jaj" -h $LOCALHOST -p $PORT1 \
+$LDAPEXOP -D "$JAJDN" -w "jaj" -H $URI1 \
 	"refresh" "$MEETINGDN" "240" \
 	>> $TESTOUT 2>&1
 RC=$?
@@ -497,7 +497,7 @@ if test $RC = 0 ; then
 fi
 
 echo "Trying to delete the meeting as $BABSDN (should fail)..."
-$LDAPMODIFY -D "$BABSDN" -w bjensen -h $LOCALHOST -p $PORT1 \
+$LDAPMODIFY -D "$BABSDN" -w bjensen -H $URI1 \
 	>> $TESTOUT 2>&1 << EOMODS
 dn: $MEETINGDN
 changetype: delete
@@ -520,7 +520,7 @@ case $RC in
 esac
 
 echo "Deleting the meeting as $BJORNSDN..."
-$LDAPMODIFY -D "$BJORNSDN" -w bjorn -h $LOCALHOST -p $PORT1 \
+$LDAPMODIFY -D "$BJORNSDN" -w bjorn -H $URI1 \
 	>> $TESTOUT 2>&1 << EOMODS
 dn: $MEETINGDN
 changetype: delete

@@ -30,8 +30,7 @@ olcPidFile: %LOCALSTATEDIR%/run/slapd.pid
 #objectClass: olcModuleList
 #cn: module
 #olcModulepath:	%MODULEDIR%
-#olcModuleload:	back_bdb.la
-#olcModuleload:	back_hdb.la
+#olcModuleload:	back_mdb.la
 #olcModuleload:	back_ldap.la
 #olcModuleload:	back_passwd.la
 #olcModuleload:	back_shell.la
@@ -81,6 +80,7 @@ dn: olcDatabase=mdb,cn=config
 objectClass: olcDatabaseConfig
 objectClass: olcMdbConfig
 olcDatabase: mdb
+olcDbMaxSize: 1073741824
 olcSuffix: dc=my-domain,dc=com
 olcRootDN: cn=Manager,dc=my-domain,dc=com
 # Cleartext passwords, especially for the rootdn, should
@@ -93,3 +93,9 @@ olcRootPW: secret
 olcDbDirectory:	%LOCALSTATEDIR%/openldap-data
 # Indices to maintain
 olcDbIndex: objectClass eq
+
+dn: olcDatabase=monitor,cn=config
+objectClass: olcDatabaseConfig
+olcDatabase: monitor
+olcRootDN: cn=config
+olcMonitoring: FALSE

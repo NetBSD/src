@@ -1,10 +1,10 @@
-/*	$NetBSD: bind.c,v 1.1.1.8 2020/08/11 13:12:05 christos Exp $	*/
+/*	$NetBSD: bind.c,v 1.1.1.9 2021/08/14 16:05:27 christos Exp $	*/
 
 /* bind.c */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bind.c,v 1.1.1.8 2020/08/11 13:12:05 christos Exp $");
+__RCSID("$NetBSD: bind.c,v 1.1.1.9 2021/08/14 16:05:27 christos Exp $");
 
 #include "portable.h"
 
@@ -70,16 +70,11 @@ __RCSID("$NetBSD: bind.c,v 1.1.1.8 2020/08/11 13:12:05 christos Exp $");
 int
 ldap_bind( LDAP *ld, LDAP_CONST char *dn, LDAP_CONST char *passwd, int authmethod )
 {
-	Debug( LDAP_DEBUG_TRACE, "ldap_bind\n", 0, 0, 0 );
+	Debug0( LDAP_DEBUG_TRACE, "ldap_bind\n" );
 
 	switch ( authmethod ) {
 	case LDAP_AUTH_SIMPLE:
 		return( ldap_simple_bind( ld, dn, passwd ) );
-
-#ifdef HAVE_GSSAPI
-	case LDAP_AUTH_NEGOTIATE:
-		return( ldap_gssapi_bind_s( ld, dn, passwd) );
-#endif
 
 	case LDAP_AUTH_SASL:
 		/* user must use ldap_sasl_bind */
@@ -111,16 +106,11 @@ ldap_bind_s(
 	LDAP_CONST char *passwd,
 	int authmethod )
 {
-	Debug( LDAP_DEBUG_TRACE, "ldap_bind_s\n", 0, 0, 0 );
+	Debug0( LDAP_DEBUG_TRACE, "ldap_bind_s\n" );
 
 	switch ( authmethod ) {
 	case LDAP_AUTH_SIMPLE:
 		return( ldap_simple_bind_s( ld, dn, passwd ) );
-
-#ifdef HAVE_GSSAPI
-	case LDAP_AUTH_NEGOTIATE:
-		return( ldap_gssapi_bind_s( ld, dn, passwd) );
-#endif
 
 	case LDAP_AUTH_SASL:
 		/* user must use ldap_sasl_bind */

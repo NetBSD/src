@@ -1,0 +1,104 @@
+.TH SLAPO-ADREMAP 5 "RELEASEDATE" "OpenLDAP LDVERSION"
+.\" Copyright 2015 Howard Chu, All Rights Reserved.
+.\" $OpenLDAP$
+.SH NAME
+slapo-adremap \- AD Remap overlay to slapd
+.SH SYNOPSIS
+ETCDIR/slapd.conf
+.SH DESCRIPTION
+The
+.B adremap
+overlay to
+.BR slapd (8)
+remaps some attribute values for compatibility between Microsoft AD
+and older POSIX systems' PAM/NSS clients. It can be configured to
+convert values of given attributes to lower case, and it can be
+configured to generate RFC2307-compliant group memberships based
+on RFC2307bis groups. All mapping is only performed on entries
+returned as search responses.
+
+.SH CONFIGURATION
+The config directives that are specific to the
+.B adremap
+overlay must be prefixed by
+.BR adremap\- ,
+to avoid potential conflicts with directives specific to the underlying 
+database or to other stacked overlays.
+
+.TP
+.B overlay adremap
+This directive adds the
+.B adremap
+overlay to the current database, see
+.BR slapd.conf (5)
+for details.
+
+.LP
+These
+.B slapd.conf
+configuration options are defined for the adremap overlay. They must
+appear after the
+.B overlay
+directive. They can each be specified multiple times:
+.TP
+.B adremap-downcase <attr>
+Specify an attributeType whose values will all be mapped to lowercase
+when returned in search responses.
+.TP
+.B adremap-dnmap <dnattr> <targetattr> <newattr> <remoteOC> <localOC> <targetOC> <baseDN>
+Specify a DN-valued attributeType whose values will be dereferenced. The
+.B <targetattr>
+of the target entry will be retrieved and its value will be added to the
+.B <newattr>
+in the entry. In addition, searches using a filter of the form
+.B (&(objectClass=<localOC>)(<newattr>=xxx))
+will be rewritten into the form
+.BR (&(objectClass=<remoteOC>)(<dnattr>=xxx-DN)) .
+This rewrite will accomplished by performing an additional internal search,
+with subtree scope, using the specified baseDN and a filter of the form
+.BR (&(objectClass=<targetOC>)(<targetattr>=xxx)) .
+
+
+.SH EXAMPLE
+This example configures the
+.B adremap
+overlay to map all
+.B uid
+attributes to lowercase, and create
+.B memberUid
+values for group entries. The mapping will turn requests for posixGroup
+entries into requests for groupOfNames entries, and the internal search
+will use inetOrgPerson entries under the ou=People,dc=example,dc=com subtree.
+
+Add the following to
+.BR slapd.conf (5):
+
+.LP
+.nf
+    database <database>
+    # ...
+
+    overlay adremap
+    adremap-downcase uid
+    adremap-dnmap member uid memberUid groupOfNames posixGroup inetOrgPerson ou=people,dc=example,dc=com
+.fi
+.LP
+.B slapd
+must also load
+.B adremap.la,
+if compiled as a run-time module;
+
+.SH FILES
+.TP
+ETCDIR/slapd.conf
+default slapd configuration file
+.SH SEE ALSO
+.BR slapd.conf (5),
+.BR slapd (8).
+The
+.BR slapo-adremap (5)
+overlay supports dynamic configuration via
+.BR back-config.
+.SH ACKNOWLEDGEMENTS
+.P
+This module was written in 2015 by Howard Chu.

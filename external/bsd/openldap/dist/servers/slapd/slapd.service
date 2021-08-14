@@ -1,0 +1,15 @@
+[Unit]
+Description=OpenLDAP Server Daemon
+After=syslog.target network-online.target
+Documentation=man:slapd
+Documentation=man:slapd-config
+Documentation=man:slapd-mdb
+
+[Service]
+Type=notify
+Environment="SLAPD_URLS=ldap:/// ldapi:///" "SLAPD_OPTIONS="
+EnvironmentFile=/etc/sysconfig/slapd
+ExecStart=%LIBEXECDIR%/slapd -d 0 -h ${SLAPD_URLS} $SLAPD_OPTIONS
+
+[Install]
+WantedBy=multi-user.target

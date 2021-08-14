@@ -1,8 +1,8 @@
-/*	$NetBSD: LDAPAttribute.h,v 1.1.1.7 2020/08/11 13:12:03 christos Exp $	*/
+/*	$NetBSD: LDAPAttribute.h,v 1.1.1.8 2021/08/14 16:05:13 christos Exp $	*/
 
 // $OpenLDAP$
 /*
- * Copyright 2000-2020 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2000-2021 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -126,7 +126,7 @@ class LDAPAttribute{
         void setValues(const StringList& values); 
 
         /**
-         * For interal use only.
+         * For internal use only.
          * This method is used to translate the values of the Attribute to
          * 0-terminated Array of BerValue-structs as used by the C-API
          * @return  The Values of the Attribute as an 0-terminated Array of 

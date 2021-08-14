@@ -1,9 +1,9 @@
-/*	$NetBSD: string.c,v 1.1.1.8 2020/08/11 13:12:05 christos Exp $	*/
+/*	$NetBSD: string.c,v 1.1.1.9 2021/08/14 16:05:27 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: string.c,v 1.1.1.8 2020/08/11 13:12:05 christos Exp $");
+__RCSID("$NetBSD: string.c,v 1.1.1.9 2021/08/14 16:05:27 christos Exp $");
 
 #include "portable.h"
 

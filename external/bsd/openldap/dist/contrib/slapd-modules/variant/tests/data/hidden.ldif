@@ -1,0 +1,4 @@
+dn: ou=Groups,dc=example,dc=com
+changetype: modify
+add: description
+description: This is hidden by the overlay config

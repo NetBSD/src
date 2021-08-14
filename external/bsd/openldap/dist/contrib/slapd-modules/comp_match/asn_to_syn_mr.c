@@ -1,4 +1,4 @@
-/*	$NetBSD: asn_to_syn_mr.c,v 1.1.1.3 2018/02/06 01:53:06 christos Exp $	*/
+/*	$NetBSD: asn_to_syn_mr.c,v 1.1.1.4 2021/08/14 16:05:14 christos Exp $	*/
 
 #include <component.h>
 #include "asn.h"
@@ -125,7 +125,7 @@ AsnTypetoCompMatchingRule asntype_to_compMR_mapping_tbl[] = {
 };
 
 /*
- * This table mapps an ASN type to a corresponding ComponentType which has
+ * This table maps an ASN type to a corresponding ComponentType which has
  * equivalent contents of an existing AttributeType
  */
 AsnTypetoCompType asntype_to_compType_mapping_tbl[] = {

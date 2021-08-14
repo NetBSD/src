@@ -1,4 +1,4 @@
-/*	$NetBSD: sha2.h,v 1.1.1.4 2018/02/06 01:53:06 christos Exp $	*/
+/*	$NetBSD: sha2.h,v 1.1.1.5 2021/08/14 16:05:15 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /*
@@ -39,7 +39,7 @@
 #define __SHA2_H__
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sha2.h,v 1.1.1.4 2018/02/06 01:53:06 christos Exp $");
+__RCSID("$NetBSD: sha2.h,v 1.1.1.5 2021/08/14 16:05:15 christos Exp $");
 
 #include "portable.h"
 

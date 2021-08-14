@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2020 The OpenLDAP Foundation.
+## Copyright 1998-2021 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -24,7 +24,7 @@ echo "running defines.sh"
 mkdir -p $TESTDIR $DBDIR1
 
 echo "Running slapadd to build slapd database..."
-. $CONFFILTER $BACKEND $MONITORDB < $ACLCONF > $CONF1
+. $CONFFILTER $BACKEND < $ACLCONF > $CONF1
 $SLAPADD -f $CONF1 -l $LDIFORDERED
 RC=$?
 if test $RC != 0 ; then
@@ -33,7 +33,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Starting slapd on TCP/IP port $PORT1..."
-$SLAPD -f $CONF1 -h $URI1 -d $LVL $TIMING > $LOG1 2>&1 &
+$SLAPD -f $CONF1 -h $URI1 -d $LVL > $LOG1 2>&1 &
 PID=$!
 if test $WAIT != 0 ; then
     echo PID $PID
@@ -45,7 +45,7 @@ sleep 1
 
 echo "Testing slapd access control..."
 for i in 0 1 2 3 4 5; do
-	$LDAPSEARCH -s base -b "$MONITOR" -h $LOCALHOST -p $PORT1 \
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI1 \
 		'objectclass=*' > /dev/null 2>&1
 	RC=$?
 	if test $RC = 0 ; then
@@ -68,35 +68,35 @@ echo "# Try to read an entry inside the Alumni Association container.
 >> $SEARCHOUT
 # FIXME: temporarily remove the "No such object" message to make
 # the test succeed even if SLAP_ACL_HONOR_DISCLOSE is not #define'd
-$LDAPSEARCH -b "$JAJDN" -h $LOCALHOST -p $PORT1 "(objectclass=*)" \
+$LDAPSEARCH -b "$JAJDN" -H $URI1 "(objectclass=*)" \
 	2>&1 | grep -v "No such object" >> $SEARCHOUT
 
 echo "# ... and should return all attributes if we're bound as anyone
 # under Example." \
 >> $SEARCHOUT
-$LDAPSEARCH -b "$JAJDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -b "$JAJDN" -H $URI1 \
 	-D "$BABSDN" -w bjensen "(objectclass=*)" >> $SEARCHOUT 2>&1
 
 # ITS#4253, ITS#4255
 echo "# Checking exact/regex attrval clause" >> $SEARCHOUT
-$LDAPSEARCH -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -H $URI1 \
 	-D "$BABSDN" -w bjensen \
 	-b "$MELLIOTDN" -s base "(objectclass=*)" cn >> $SEARCHOUT 2>&1
-$LDAPSEARCH -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -H $URI1 \
 	-D "$BJORNSDN" -w bjorn \
 	-b "$MELLIOTDN" -s base "(objectclass=*)" cn >> $SEARCHOUT 2>&1
 
-$LDAPSEARCH -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -H $URI1 \
 	-D "$BABSDN" -w bjensen \
 	-b "$JOHNDDN" -s base "(objectclass=*)" cn >> $SEARCHOUT 2>&1
-$LDAPSEARCH -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -H $URI1 \
 	-D "$BJORNSDN" -w bjorn \
 	-b "$JOHNDDN" -s base "(objectclass=*)" cn >> $SEARCHOUT 2>&1
 
-$LDAPSEARCH -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -H $URI1 \
 	-D "$BABSDN" -w bjensen \
 	-b "$BJORNSDN" -s base "(objectclass=*)" cn >> $SEARCHOUT 2>&1
-$LDAPSEARCH -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -H $URI1 \
 	-D "$BJORNSDN" -w bjorn \
 	-b "$BABSDN" -s base "(objectclass=*)" cn >> $SEARCHOUT 2>&1
 
@@ -108,7 +108,7 @@ $LDAPSEARCH -h $LOCALHOST -p $PORT1 \
 # 5) add self and someone else (should fail)
 # 6) add self (should succeed)
 #
-$LDAPMODIFY -D "$JAJDN" -h $LOCALHOST -p $PORT1 -w jaj >> \
+$LDAPMODIFY -D "$JAJDN" -H $URI1 -w jaj >> \
 	$TESTOUT 2>&1 << EOMODS
 dn: cn=All Staff,ou=Groups,dc=example,dc=com
 changetype: modify
@@ -131,7 +131,7 @@ case $RC in
 	;;
 esac
 
-$LDAPMODIFY -D "$JAJDN" -h $LOCALHOST -p $PORT1 -w jaj >> \
+$LDAPMODIFY -D "$JAJDN" -H $URI1 -w jaj >> \
 	$TESTOUT 2>&1 << EOMODS
 dn: cn=All Staff,ou=Groups,dc=example,dc=com
 changetype: modify
@@ -145,7 +145,7 @@ if test $RC != 0 ; then
 	exit $RC
 fi
 
-$LDAPMODIFY -D "$JAJDN" -h $LOCALHOST -p $PORT1 -w jaj >> \
+$LDAPMODIFY -D "$JAJDN" -H $URI1 -w jaj >> \
 	$TESTOUT 2>&1 << EOMODS
 dn: cn=All Staff,ou=Groups,dc=example,dc=com
 changetype: modify
@@ -168,7 +168,7 @@ case $RC in
 	;;
 esac
 
-$LDAPMODIFY -D "$JAJDN" -h $LOCALHOST -p $PORT1 -w jaj >> \
+$LDAPMODIFY -D "$JAJDN" -H $URI1 -w jaj >> \
 	$TESTOUT 2>&1 << EOMODS
 dn: cn=All Staff,ou=Groups,dc=example,dc=com
 changetype: modify
@@ -192,7 +192,7 @@ case $RC in
 	;;
 esac
 
-$LDAPMODIFY -D "$JAJDN" -h $LOCALHOST -p $PORT1 -w jaj >> \
+$LDAPMODIFY -D "$JAJDN" -H $URI1 -w jaj >> \
 	$TESTOUT 2>&1 << EOMODS
 dn: cn=All Staff,ou=Groups,dc=example,dc=com
 changetype: modify
@@ -216,7 +216,7 @@ case $RC in
 	;;
 esac
 
-$LDAPMODIFY -D "$JAJDN" -h $LOCALHOST -p $PORT1 -w jaj >> \
+$LDAPMODIFY -D "$JAJDN" -H $URI1 -w jaj >> \
 	$TESTOUT 2>&1 << EOMODS
 dn: cn=All Staff,ou=Groups,dc=example,dc=com
 changetype: modify
@@ -235,7 +235,7 @@ fi
 # 1) bound as "James A Jones 1" - should fail
 # 2) bound as "Bjorn Jensen" - should succeed
 
-$LDAPMODIFY -D "$JAJDN" -h $LOCALHOST -p $PORT1 -w jaj >> \
+$LDAPMODIFY -D "$JAJDN" -H $URI1 -w jaj >> \
 	$TESTOUT 2>&1 << EOMODS5
 dn: $BABSDN
 changetype: modify
@@ -258,7 +258,7 @@ case $RC in
 	;;
 esac
 
-$LDAPMODIFY -D "$BJORNSDN" -h $LOCALHOST -p $PORT1 -w bjorn >> \
+$LDAPMODIFY -D "$BJORNSDN" -H $URI1 -w bjorn >> \
 	$TESTOUT 2>&1 << EOMODS6
 dn: $BABSDN
 changetype: modify
@@ -281,7 +281,7 @@ esac
 # fail when we add some DN other than our own, and should succeed when
 # we add our own DN.
 # bjensen
-$LDAPMODIFY -D "$JAJDN" -h $LOCALHOST -p $PORT1 -w jaj >> \
+$LDAPMODIFY -D "$JAJDN" -H $URI1 -w jaj >> \
 	$TESTOUT 2>&1 << EOMODS1
 version: 1
 dn: cn=ITD Staff, ou=Groups, dc=example, dc=com
@@ -305,7 +305,7 @@ case $RC in
 	;;
 esac
 
-$LDAPMODIFY -D "$JAJDN" -h $LOCALHOST -p $PORT1 -w jaj >> \
+$LDAPMODIFY -D "$JAJDN" -H $URI1 -w jaj >> \
 	$TESTOUT 2>&1 << EOMODS2
 version: 1
 
@@ -330,7 +330,7 @@ esac
 # 1) bound as "James A Jones 1" - should fail
 # 2) bound as "Bjorn Jensen" - should succeed
 #
-$LDAPMODIFY -D "$JAJDN" -h $LOCALHOST -p $PORT1 -w jaj >> \
+$LDAPMODIFY -D "$JAJDN" -H $URI1 -w jaj >> \
 	$TESTOUT 2>&1 << EOMODS3
 
 dn: cn=ITD Staff, ou=Groups, dc=example, dc=com
@@ -353,7 +353,7 @@ case $RC in
 	;;
 esac
 
-$LDAPMODIFY -D "$BJORNSDN" -h $LOCALHOST -p $PORT1 -w bjorn >> \
+$LDAPMODIFY -D "$BJORNSDN" -H $URI1 -w bjorn >> \
 	$TESTOUT 2>&1 << EOMODS4
 # COMMENT
 version: 1
@@ -384,7 +384,7 @@ esac
 # 2) bound as "Barbara Jensen" - should fail
 # should exploit sets
 #
-$LDAPMODIFY -D "$JAJDN" -h $LOCALHOST -p $PORT1 -w jaj >> \
+$LDAPMODIFY -D "$JAJDN" -H $URI1 -w jaj >> \
 	$TESTOUT 2>&1 << EOMODS5
 dn: cn=Alumni Assoc Staff, ou=Groups, dc=example, dc=com
 changetype: modify
@@ -403,7 +403,7 @@ case $RC in
 	;;
 esac
 
-$LDAPMODIFY -D "$BABSDN" -h $LOCALHOST -p $PORT1 -w bjensen >> \
+$LDAPMODIFY -D "$BABSDN" -H $URI1 -w bjensen >> \
 	$TESTOUT 2>&1 << EOMODS6
 dn: cn=Alumni Assoc Staff, ou=Groups, dc=example, dc=com
 changetype: modify
@@ -427,7 +427,7 @@ case $RC in
 	;;
 esac
 
-$LDAPMODIFY -D "$MANAGERDN" -h $LOCALHOST -p $PORT1 -w $PASSWD >> \
+$LDAPMODIFY -D "$MANAGERDN" -H $URI1 -w $PASSWD >> \
 	$TESTOUT 2>&1 << EOMODS7
 dn: ou=Add & Delete,dc=example,dc=com
 changetype: add
@@ -441,7 +441,7 @@ if test $RC != 0 ; then
 	exit $RC
 fi
 
-$LDAPMODIFY -D "$BABSDN" -h $LOCALHOST -p $PORT1 -w bjensen >> \
+$LDAPMODIFY -D "$BABSDN" -H $URI1 -w bjensen >> \
 	$TESTOUT 2>&1 << EOMODS8
 dn: cn=Added by Babs (must fail),ou=Add & Delete,dc=example,dc=com
 changetype: add
@@ -465,7 +465,7 @@ case $RC in
 	;;
 esac
 
-$LDAPMODIFY -D "$BJORNSDN" -h $LOCALHOST -p $PORT1 -w bjorn >> \
+$LDAPMODIFY -D "$BJORNSDN" -H $URI1 -w bjorn >> \
 	$TESTOUT 2>&1 << EOMODS9
 dn: cn=Added by Bjorn (must succeed),ou=Add & Delete,dc=example,dc=com
 changetype: add
@@ -504,7 +504,7 @@ case $RC in
 	;;
 esac
 
-$LDAPMODIFY -D "$BJORNSDN" -h $LOCALHOST -p $PORT1 -w bjorn >> \
+$LDAPMODIFY -D "$BJORNSDN" -H $URI1 -w bjorn >> \
 	$TESTOUT 2>&1 << EOMODS10
 dn: cn=Added by Bjorn (will be deleted),ou=Add & Delete,dc=example,dc=com
 changetype: delete
@@ -525,7 +525,7 @@ case $RC in
 	;;
 esac
 
-$LDAPMODIFY -D "$BJORNSDN" -h $LOCALHOST -p $PORT1 -w bjorn >> \
+$LDAPMODIFY -D "$BJORNSDN" -H $URI1 -w bjorn >> \
 	$TESTOUT 2>&1 << EOMODS11
 dn: cn=Added by Bjorn (will be renamed),ou=Add & Delete,dc=example,dc=com
 changetype: modrdn
@@ -548,7 +548,7 @@ case $RC in
 	;;
 esac
 
-$LDAPMODIFY -D "$BABSDN" -h $LOCALHOST -p $PORT1 -w bjensen >> \
+$LDAPMODIFY -D "$BABSDN" -H $URI1 -w bjensen >> \
 	$TESTOUT 2>&1 << EOMODS12
 dn: cn=Added by Bjorn (will be renamed),ou=Add & Delete,dc=example,dc=com
 changetype: modrdn
@@ -571,7 +571,7 @@ case $RC in
 	;;
 esac
 
-$LDAPMODIFY -D "$JAJDN" -h $LOCALHOST -p $PORT1 -w jaj >> \
+$LDAPMODIFY -D "$JAJDN" -H $URI1 -w jaj >> \
 	$TESTOUT 2>&1 << EOMODS13
 dn: cn=Added by Bjorn (will be renamed),ou=Add & Delete,dc=example,dc=com
 changetype: modrdn
@@ -589,7 +589,7 @@ case $RC in
 	;;
 esac
 
-$LDAPMODIFY -D "$BJORNSDN" -h $LOCALHOST -p $PORT1 -w bjorn >> \
+$LDAPMODIFY -D "$BJORNSDN" -H $URI1 -w bjorn >> \
 	$TESTOUT 2>&1 << EOMODS14
 dn: cn=Added by Bjorn (must succeed),ou=Add & Delete,dc=example,dc=com
 changetype: modify
@@ -613,7 +613,7 @@ case $RC in
 	;;
 esac
 
-$LDAPMODIFY -D "$BABSDN" -h $LOCALHOST -p $PORT1 -w bjensen >> \
+$LDAPMODIFY -D "$BABSDN" -H $URI1 -w bjensen >> \
 	$TESTOUT 2>&1 << EOMODS15
 dn: cn=Added by Bjorn (will be deleted),ou=Add & Delete,dc=example,dc=com
 changetype: delete
@@ -637,7 +637,7 @@ esac
 
 echo "Using ldapsearch to retrieve all the entries..."
 echo "# Using ldapsearch to retrieve all the entries..." >> $SEARCHOUT
-$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
 	    'objectClass=*' >> $SEARCHOUT 2>&1
 RC=$?
 test $KILLSERVERS != no && kill -HUP $KILLPIDS
@@ -646,7 +646,7 @@ if test $RC != 0 ; then
 	exit $RC
 fi
 
-LDIF=$ACLOUTMASTER
+LDIF=$ACLOUTPROVIDER
 
 echo "Filtering ldapsearch results..."
 $LDIFFILTER < $SEARCHOUT > $SEARCHFLT

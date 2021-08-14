@@ -1,9 +1,9 @@
-/*	$NetBSD: proto-back-monitor.h,v 1.1.1.8 2020/08/11 13:12:15 christos Exp $	*/
+/*	$NetBSD: proto-back-monitor.h,v 1.1.1.9 2021/08/14 16:05:25 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2020 The OpenLDAP Foundation.
+ * Copyright 2001-2021 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -136,9 +136,13 @@ monitor_back_entry_stub LDAP_P((
 	ObjectClass		*oc,
 	struct berval	*create,
 	struct berval	*modify ));
+extern Entry *
+monitor_back_entry_get_unlocked LDAP_P((
+	struct berval	*ndn ));
 
 #define monitor_entrypriv_create monitor_back_entrypriv_create
 #define monitor_entry_stub monitor_back_entry_stub
+#define monitor_entry_get_unlocked monitor_back_entry_get_unlocked
 
 /*
  * init

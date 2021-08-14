@@ -1,6 +1,6 @@
 .TH LDAP_SCHEMA 3 "RELEASEDATE" "OpenLDAP LDVERSION"
 .\" $OpenLDAP$
-.\" Copyright 2000-2020 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 2000-2021 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 ldap_str2syntax, ldap_syntax2str, ldap_syntax2name, ldap_syntax_free, ldap_str2matchingrule, ldap_matchingrule2str, ldap_matchingrule2name, ldap_matchingrule_free, ldap_str2attributetype, ldap_attributetype2str, ldap_attributetype2name, ldap_attributetype_free, ldap_str2objectclass, ldap_objectclass2str, ldap_objectclass2name, ldap_objectclass_free, ldap_scherr2str \- Schema definition handling routines
@@ -235,7 +235,7 @@ the attribute type is non-operational.
 .TP
 .B LDAP_SCHEMA_DIRECTORY_OPERATION
 the attribute type is operational and is pertinent to the directory
-itself, i.e. it has the same value on all servers that master the
+itself, i.e. it has the same value on all servers that provide the
 entry containing this attribute type.
 .TP
 .B LDAP_SCHEMA_DISTRIBUTED_OPERATION
@@ -245,7 +245,7 @@ shadowing or other distributed directory aspect.  TBC.
 .B LDAP_SCHEMA_DSA_OPERATION
 the attribute type is operational and is pertinent to the directory
 server itself, i.e. it may have different values for the same entry
-when retrieved from different servers that master the entry.
+when retrieved from different servers that provide the entry.
 .LP
 Object classes can be of three kinds:
 .TP

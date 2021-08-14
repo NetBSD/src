@@ -1,0 +1,120 @@
+.TH SLAPO-AUTOCA 5 "RELEASEDATE" "OpenLDAP LDVERSION"
+.\" Copyright 2009-2021 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 2009-2018 Howard Chu All Rights Reserved.
+.\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
+.\" $OpenLDAP$
+.SH NAME
+slapo\-autoca \- Automatic Certificate Authority overlay to slapd
+.SH SYNOPSIS
+ETCDIR/slapd.conf
+.SH DESCRIPTION
+The Automatic CA overlay generates X.509 certificate/key pairs for
+entries in the directory. The DN of a generated certificate is
+identical to the DN of the entry containing it. On startup it
+looks for a CA certificate and key in the suffix entry of the
+database which it will use to sign all subsequently generated
+certificates. A new CA certificate and key will be generated
+and stored in the suffix entry if none already exists. The CA
+certificate is stored in the cACertificate;binary attribute of
+the suffix entry, and the private key is stored in the
+cAPrivateKey;binary attribute of the suffix entry. These
+attributes may be overwritten if some other CA certificate/key
+pair is desired for use.
+.LP
+Certificates for users and servers are generated on demand using
+a Search request returning only the userCertificate;binary and
+userPrivateKey;binary attributes. Any Search for anything besides
+exactly these two attributes is ignored by the overlay. Note that
+these values are stored in ASN.1 DER form in the directory so the
+";binary" attribute option is mandatory.
+.LP
+Entries that do not belong to selected objectClasses will be
+ignored by the overlay. By default, entries of objectClass
+.B person
+will be treated as users, and entries of objectClass
+.B ipHost
+will be treated as servers. There are slight differences in the
+set of X.509V3 certificate extensions added to the certificate
+between users and servers.
+.LP
+The CA's private key is stored in a
+.B cAPrivateKey
+attribute, and user and server private keys are stored in the
+.B userPrivateKey
+attribute. The private key values are encoded in PKCS#8 format.
+It is essential that access to these attributes be
+properly secured with ACLs. Both of these attributes inherit
+from the
+.B pKCS8PrivateKey
+attribute, so it is sufficient to use a single ACL rule like
+
+.nf
+        access to attrs=pKCS8PrivateKey by self ssf=128 write
+.fi
+
+at the beginning of the rules.
+.LP
+Currently there is no automated management for expiration or revocation.
+Obsolete certificates and keys must be manually removed by deleting
+an entry's userCertificate and userPrivateKey attributes.
+
+.SH CONFIGURATION
+These
+.B slapd.conf
+options apply to the Automatic CA overlay.
+They should appear after the
+.B overlay
+directive.
+.TP
+.B userClass <objectClass>
+Specify the objectClass to be treated as user entries.
+.TP
+.B serverClass <objectClass>
+Specify the objectClass to be treated as server entries.
+.TP
+.B userKeybits <integer>
+Specify the size of the private key to use for user certificates.
+The default is 2048 and the minimum is 512.
+.TP
+.B serverKeybits <integer>
+Specify the size of the private key to use for server certificates.
+The default is 2048 and the minimum is 512.
+.TP
+.B caKeybits <integer>
+Specify the size of the private key to use for the CA certificate.
+The default is 2048 and the minimum is 512.
+.TP
+.B userDays <integer>
+Specify the duration for a user certificate's validity.
+The default is 365, 1 year.
+.TP
+.B serverDays <integer>
+Specify the duration for a server certificate's validity.
+The default is 1826, 5 years.
+.TP
+.B caDays <integer>
+Specify the duration for the CA certificate's validity.
+The default is 3652, 10 years.
+.TP
+.B localDN <DN>
+Specify the DN of an entry that represents this server. Requests
+to generate a certificate/key pair for this DN will also install
+the certificate and key into slapd's TLS settings in cn=config
+for immediate use.
+
+.SH EXAMPLES
+.nf
+  database mdb
+  ...
+  overlay autoca
+  caKeybits 4096
+.fi
+.SH FILES
+.TP
+ETCDIR/slapd.conf
+default slapd configuration file
+.SH SEE ALSO
+.BR slapd.conf (5),
+.BR slapd\-config (5).
+.SH AUTHOR
+Howard Chu

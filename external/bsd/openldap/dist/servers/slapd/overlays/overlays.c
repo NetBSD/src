@@ -1,10 +1,10 @@
-/*	$NetBSD: overlays.c,v 1.1.1.8 2020/08/11 13:12:14 christos Exp $	*/
+/*	$NetBSD: overlays.c,v 1.1.1.9 2021/08/14 16:05:24 christos Exp $	*/
 
 /* overlays.c - Static overlay framework */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2020 The OpenLDAP Foundation.
+ * Copyright 2003-2021 The OpenLDAP Foundation.
  * Copyright 2003 by Howard Chu.
  * All rights reserved.
  *
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: overlays.c,v 1.1.1.8 2020/08/11 13:12:14 christos Exp $");
+__RCSID("$NetBSD: overlays.c,v 1.1.1.9 2021/08/14 16:05:24 christos Exp $");
 
 #include "portable.h"
 
@@ -40,7 +40,7 @@ overlay_init(void)
 		if ( rc ) {
 			Debug( LDAP_DEBUG_ANY,
 				"%s overlay setup failed, err %d\n",
-				slap_oinfo[i].ov_type, rc, 0 );
+				slap_oinfo[i].ov_type, rc );
 			break;
 		}
 	}

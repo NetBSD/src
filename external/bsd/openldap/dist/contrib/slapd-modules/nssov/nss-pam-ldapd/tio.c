@@ -1,4 +1,4 @@
-/*	$NetBSD: tio.c,v 1.1.1.4 2018/02/06 01:53:06 christos Exp $	*/
+/*	$NetBSD: tio.c,v 1.1.1.5 2021/08/14 16:05:14 christos Exp $	*/
 
 /*
    tio.c - timed io functions
@@ -23,7 +23,7 @@
 */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tio.c,v 1.1.1.4 2018/02/06 01:53:06 christos Exp $");
+__RCSID("$NetBSD: tio.c,v 1.1.1.5 2021/08/14 16:05:14 christos Exp $");
 
 #include "portable.h"
 
@@ -175,7 +175,7 @@ static int tio_wait(int fd, short events, int timeout,
       errno = ETIME;
       return -1;
     }
-    /* sanitiy check for moving clock */
+    /* sanity check for moving clock */
     if (t > timeout)
       t = timeout;
     /* wait for activity */
@@ -189,7 +189,7 @@ static int tio_wait(int fd, short events, int timeout,
       return -1;
     }
     else if ((errno != EINTR) && (errno != EAGAIN))
-      /* some error ocurred */
+      /* some error occurred */
       return -1;
     /* we just try again on EINTR or EAGAIN */
   }
@@ -427,7 +427,7 @@ int tio_write(TFILE *fp, const void *buf, size_t count)
   uint8_t *tmp;
   size_t newsz;
   const uint8_t *ptr = (const uint8_t *)buf;
-  /* keep filling the buffer until we have bufferred everything */
+  /* keep filling the buffer until we have buffered everything */
   while (count > 0)
   {
     /* figure out free size in buffer */

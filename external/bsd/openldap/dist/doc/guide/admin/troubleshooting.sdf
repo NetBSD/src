@@ -1,5 +1,5 @@
 # $OpenLDAP$
-# Copyright 2007-2020 The OpenLDAP Foundation, All Rights Reserved.
+# Copyright 2007-2021 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Troubleshooting
@@ -90,8 +90,8 @@ H2: Debugging {{slapd}}(8)
 After reading through the above sections and before e-mailing the OpenLDAP lists, you
 might want to try out some of the following to track down the cause of your problems:
 
-* Loglevel stats (256) is generally a good first loglevel to try for getting 
-  information useful to list members on issues
+* A loglevel of stats (256) is generally a good first loglevel to use for getting
+  information useful to list members on issues. This is the default loglevel if none is configured.
 * Running {{slapd -d -1}} can often track down fairly simple issues, such as 
   missing schemas and incorrect file permissions for the {{slapd}} user to things like certs
 * Check your logs for errors, as discussed at {{URL:http://www.openldap.org/faq/data/cache/358.html}}

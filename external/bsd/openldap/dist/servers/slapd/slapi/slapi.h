@@ -1,9 +1,9 @@
-/*	$NetBSD: slapi.h,v 1.1.1.8 2020/08/11 13:12:16 christos Exp $	*/
+/*	$NetBSD: slapi.h,v 1.1.1.9 2021/08/14 16:05:25 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2002-2020 The OpenLDAP Foundation.
+ * Copyright 2002-2021 The OpenLDAP Foundation.
  * Portions Copyright 1997,2002-2003 IBM Corporation.
  * All rights reserved.
  *
@@ -182,7 +182,7 @@ struct slapi_pblock {
 #define	SLAPI_PLUGIN_DB_TEST_FN			227
 #define SLAPI_PLUGIN_DB_NO_ACL        		250
 
-/* OpenLDAP private parametrs */
+/* OpenLDAP private parameters */
 #define SLAPI_PLUGIN_COMPUTE_EVALUATOR_FN	1200
 #define SLAPI_PLUGIN_COMPUTE_SEARCH_REWRITER_FN	1201
 

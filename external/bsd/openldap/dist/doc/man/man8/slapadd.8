@@ -1,5 +1,5 @@
 .TH SLAPADD 8C "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2020 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2021 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .\" $OpenLDAP$
 .SH NAME
@@ -75,8 +75,8 @@ any are configured. For specific details, please see
 .TP
 .BI \-b \ suffix 
 Use the specified \fIsuffix\fR to determine which database to
-add entries to.  The \fB\-b\fP cannot be used in conjunction
-with the
+add entries to. By default, the first database that supports the requested
+operation is used. The \fB\-b\fP cannot be used in conjunction with the
 .B \-n
 option.
 .TP
@@ -164,7 +164,7 @@ database will be unusable.
 .B \-s
 disable schema checking.  This option is intended to be used when loading
 databases containing special objects, such as fractional objects on a
-partial replica.  Loading normal objects which do not conform to
+partial consumer.  Loading normal objects which do not conform to
 schema may result in unexpected and ill behavior.
 .TP
 .BI \-S \ SID
@@ -209,6 +209,7 @@ database give the command:
 .BR ldif (5),
 .BR slapcat (8),
 .BR slapindex (8),
+.BR slapmodify (8),
 .BR ldapadd (1),
 .BR slapd (8)
 .LP

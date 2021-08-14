@@ -1,10 +1,10 @@
-/*	$NetBSD: ldapexop.c,v 1.1.1.8 2020/08/11 13:12:03 christos Exp $	*/
+/*	$NetBSD: ldapexop.c,v 1.1.1.9 2021/08/14 16:05:12 christos Exp $	*/
 
 /* ldapexop.c -- a tool for performing well-known extended operations */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2020 The OpenLDAP Foundation.
+ * Copyright 2005-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ldapexop.c,v 1.1.1.8 2020/08/11 13:12:03 christos Exp $");
+__RCSID("$NetBSD: ldapexop.c,v 1.1.1.9 2021/08/14 16:05:12 christos Exp $");
 
 #include "portable.h"
 
@@ -356,5 +356,5 @@ skip:
 	/* disconnect from server */
 	if ( res )
 		ldap_msgfree( res );
-	tool_exit( ld, code == LDAP_SUCCESS ? EXIT_SUCCESS : EXIT_FAILURE );
+	tool_exit( ld, rc );
 }

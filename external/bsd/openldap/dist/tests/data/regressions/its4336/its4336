@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2020 The OpenLDAP Foundation.
+## Copyright 1998-2021 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -37,7 +37,7 @@ ITS=4336
 ITSDIR=$DATADIR/regressions/its$ITS
 
 echo "Running slapadd to build slapd database..."
-. $CONFFILTER $BACKEND $MONITORDB < $RETCODECONF > $CONF1
+. $CONFFILTER $BACKEND < $RETCODECONF > $CONF1
 $SLAPADD -f $CONF1 -l $LDIFORDERED
 RC=$?
 if test $RC != 0 ; then
@@ -46,7 +46,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Starting slapd on TCP/IP port $PORT1..."
-$SLAPD -f $CONF1 -h $URI1 -d $LVL $TIMING > $LOG1 2>&1 &
+$SLAPD -f $CONF1 -h $URI1 -d $LVL > $LOG1 2>&1 &
 SERVERPID=$!
 if test $WAIT != 0 ; then
     echo SERVERPID $SERVERPID
@@ -58,7 +58,7 @@ sleep 1
 
 echo "Using ldapsearch to check that slapd is running..."
 for i in 0 1 2 3 4 5; do
-	$LDAPSEARCH -s base -b "$MONITOR" -h $LOCALHOST -p $PORT1 \
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI1 \
 		'objectclass=*' > /dev/null 2>&1
 	RC=$?
 	if test $RC = 0 ; then
@@ -75,8 +75,8 @@ if test $RC != 0 ; then
 fi
 
 echo "Starting chain slapd on TCP/IP port $PORT2..."
-. $CONFFILTER $BACKEND $MONITORDB < $ITSDIR/slapd.conf > $CONF2
-$SLAPD -f $CONF2 -h $URI2 -d $LVL $TIMING > $LOG2 2>&1 &
+. $CONFFILTER $BACKEND < $ITSDIR/slapd.conf > $CONF2
+$SLAPD -f $CONF2 -h $URI2 -d $LVL > $LOG2 2>&1 &
 PROXYPID=$!
 if test $WAIT != 0 ; then
     echo PROXYPID $PROXYPID
@@ -88,7 +88,7 @@ sleep 1
 
 echo "Using ldapsearch to check that chain slapd is running..."
 for i in 0 1 2 3 4 5; do
-	$LDAPSEARCH -s base -b "$MONITOR" -h $LOCALHOST -p $PORT2 \
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI2 \
 		'objectclass=*' > /dev/null 2>&1
 	RC=$?
 	if test $RC = 0 ; then
@@ -111,7 +111,7 @@ echo "
 	set to 0/0, which internally means 0 instead of unlimited, the
 	underlying back-ldap search timed out.
 "
-$LDAPSEARCH -b "cn=success w/ delay,ou=RetCodes,$BASEDN" -h $LOCALHOST -p $PORT2 \
+$LDAPSEARCH -b "cn=success w/ delay,ou=RetCodes,$BASEDN" -H $URI2 \
 	'(objectClass=*)' > /dev/null 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -121,7 +121,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Re-searching the chain..."
-$LDAPSEARCH -b "cn=success w/ delay,ou=RetCodes,$BASEDN" -h $LOCALHOST -p $PORT2 \
+$LDAPSEARCH -b "cn=success w/ delay,ou=RetCodes,$BASEDN" -H $URI2 \
 	'(objectClass=*)' > /dev/null 2>&1
 RC=$?
 if test $RC != 0 ; then

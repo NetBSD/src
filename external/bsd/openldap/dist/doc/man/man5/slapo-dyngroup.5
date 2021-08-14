@@ -1,5 +1,5 @@
 .TH SLAPO-DYNGROUP 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 2005-2020 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 2005-2021 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .\" $OpenLDAP$
 .SH NAME
@@ -33,7 +33,7 @@ will cause the
 to be evaluated for the result.
 .SH EXAMPLES
 .nf
-  database bdb
+  database mdb
   ...
   overlay dyngroup
   attrpair member memberURL
@@ -42,6 +42,15 @@ to be evaluated for the result.
 .TP
 ETCDIR/slapd.conf
 default slapd configuration file
+.SH BACKWARD COMPATIBILITY
+The dyngroup overlay has been reworked with the 2.5 release to use
+a consistent namespace as with other overlays. As a side-effect the
+following cn=config parameters are deprecated and will be removed in
+a future release:
+.B olcDGAttrPair
+is replaced with olcDynGroupAttrPair
+.B olcDGConfig
+is replaced with olcDynGroupConfig
 .SH SEE ALSO
 .BR slapd.conf (5),
 .BR slapd\-config (5).
