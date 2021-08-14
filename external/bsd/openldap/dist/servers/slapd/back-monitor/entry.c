@@ -1,10 +1,10 @@
-/*	$NetBSD: entry.c,v 1.2 2020/08/11 13:15:41 christos Exp $	*/
+/*	$NetBSD: entry.c,v 1.3 2021/08/14 16:15:00 christos Exp $	*/
 
 /* entry.c - monitor backend entry handling routines */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2020 The OpenLDAP Foundation.
+ * Copyright 2001-2021 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: entry.c,v 1.2 2020/08/11 13:15:41 christos Exp $");
+__RCSID("$NetBSD: entry.c,v 1.3 2021/08/14 16:15:00 christos Exp $");
 
 #include "portable.h"
 
@@ -225,4 +225,17 @@ monitor_entry_stub(
 			modify ? modify : &mi->mi_startTime, NULL );
 	}
 	return e;
+}
+
+Entry *
+monitor_entry_get_unlocked(
+	struct berval *ndn
+)
+{
+	monitor_info_t *mi = ( monitor_info_t * )be_monitor->be_private;
+	Entry *ret = NULL;
+
+	if ( !monitor_cache_get( mi, ndn, &ret ))
+		monitor_cache_release( mi, ret );
+	return ret;
 }

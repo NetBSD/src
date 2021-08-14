@@ -1,8 +1,8 @@
-/*	$NetBSD: LDAPException.h,v 1.2 2020/08/11 13:15:34 christos Exp $	*/
+/*	$NetBSD: LDAPException.h,v 1.3 2021/08/14 16:14:49 christos Exp $	*/
 
 // $OpenLDAP$
 /*
- * Copyright 2000-2020 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2000-2021 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -29,8 +29,8 @@ class LDAPException : public std::runtime_error
         /**
          * Constructs a LDAPException-object from the parameters
          * @param res_code A valid LDAP result code.
-         * @param err_string    An addional error message for the error
-         *                      that happend (optional)
+         * @param err_string    An additional error message for the error
+         *                      that happened (optional)
          */
         LDAPException(int res_code, 
                 const std::string& err_string=std::string()) throw();
@@ -38,7 +38,7 @@ class LDAPException : public std::runtime_error
         /**
          * Constructs a LDAPException-object from the error state of a
          * LDAPAsynConnection-object
-         * @param lc A LDAP-Connection for that an error has happend. The
+         * @param lc A LDAP-Connection for that an error has happened. The
          *          Constructor tries to read its error state.
          */
         LDAPException(const LDAPAsynConnection *lc) throw();
@@ -60,7 +60,7 @@ class LDAPException : public std::runtime_error
         const std::string& getResultMsg() const throw();
         
         /**
-         * @return The addional error message of the error (if it was set)
+         * @return The additional error message of the error (if it was set)
          */
         const std::string& getServerMsg() const throw();
 

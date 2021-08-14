@@ -1,10 +1,10 @@
-/*	$NetBSD: slapi_overlay.c,v 1.2 2020/08/11 13:15:42 christos Exp $	*/
+/*	$NetBSD: slapi_overlay.c,v 1.3 2021/08/14 16:15:02 christos Exp $	*/
 
 /* slapi_overlay.c - SLAPI overlay */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2020 The OpenLDAP Foundation.
+ * Copyright 2001-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: slapi_overlay.c,v 1.2 2020/08/11 13:15:42 christos Exp $");
+__RCSID("$NetBSD: slapi_overlay.c,v 1.3 2021/08/14 16:15:02 christos Exp $");
 
 #include "portable.h"
 
@@ -32,7 +32,7 @@ __RCSID("$NetBSD: slapi_overlay.c,v 1.2 2020/08/11 13:15:42 christos Exp $");
 
 #include "slap.h"
 #include "slapi.h"
-#include "config.h"
+#include "slap-config.h"
 
 #ifdef LDAP_SLAPI
 
@@ -282,13 +282,13 @@ slapi_op_bind_callback( Operation *op, SlapReply *rs, int prc )
 			ldap_pvt_thread_mutex_unlock( &op->o_conn->c_mutex );
 
 			/* log authorization identity */
-			Statslog( LDAP_DEBUG_STATS,
+			Debug( LDAP_DEBUG_STATS,
 				"%s BIND dn=\"%s\" mech=%s (SLAPI) ssf=0\n",
 				op->o_log_prefix,
 				BER_BVISNULL( &op->o_conn->c_dn )
 					? "<empty>" : op->o_conn->c_dn.bv_val,
 				BER_BVISNULL( &op->orb_mech )
-					? "<empty>" : op->orb_mech.bv_val, 0, 0 );
+					? "<empty>" : op->orb_mech.bv_val );
 
 			return -1;
 		}
@@ -932,7 +932,7 @@ int slapi_over_config( BackendDB *be, ConfigReply *cr )
 	if ( slapi_over_initialized == 0 ) {
 		int rc;
 
-		/* do global initializaiton */
+		/* do global initialization */
 		ldap_pvt_thread_mutex_init( &slapi_hn_mutex );
 		ldap_pvt_thread_mutex_init( &slapi_time_mutex );
 		ldap_pvt_thread_mutex_init( &slapi_printmessage_mutex );

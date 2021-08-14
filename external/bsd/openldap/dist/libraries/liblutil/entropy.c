@@ -1,10 +1,10 @@
-/*	$NetBSD: entropy.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
+/*	$NetBSD: entropy.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
 
 /* entropy.c -- routines for providing pseudo-random data */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2020 The OpenLDAP Foundation.
+ * Copyright 1999-2021 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Kurt D. Zeilenga.
  * All rights reserved.
  *
@@ -17,12 +17,12 @@
  * <http://www.OpenLDAP.org/license.html>.
  */
 /* This work was initially developed by Kurt D. Zeilenga for
- * inclusion in OpenLDAP Software based, in part, on publically
+ * inclusion in OpenLDAP Software based, in part, on publicly
  * available works (as noted below).
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: entropy.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
+__RCSID("$NetBSD: entropy.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
 
 #include "portable.h"
 
@@ -41,7 +41,7 @@ __RCSID("$NetBSD: entropy.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
 
 /*
  * lutil_entropy() provides nbytes of entropy in buf.
- * Quality offerred is suitable for one-time uses, such as "once" keys.
+ * Quality offered is suitable for one-time uses, such as "once" keys.
  * Values may not be suitable for multi-time uses.
  *
  * Note:  Callers are encouraged to provide additional bytes of

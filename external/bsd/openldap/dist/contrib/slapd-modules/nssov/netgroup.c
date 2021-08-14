@@ -1,10 +1,10 @@
-/*	$NetBSD: netgroup.c,v 1.2 2020/08/11 13:15:36 christos Exp $	*/
+/*	$NetBSD: netgroup.c,v 1.3 2021/08/14 16:14:52 christos Exp $	*/
 
 /* netgroup.c - netgroup lookup routines */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>. 
  *
- * Copyright 2008-2020 The OpenLDAP Foundation.
+ * Copyright 2008-2021 The OpenLDAP Foundation.
  * Portions Copyright 2008 by Howard Chu, Symas Corp.
  * All rights reserved.
  *
@@ -95,7 +95,7 @@ static int write_netgroup_triple(TFILE *fp,const char *triple)
 	/* we should have a bracket now */
 	if (triple[i]!='(')
 	{
-		Debug(LDAP_DEBUG_ANY,"write_netgroup_triple(): entry does not begin with '(' (entry skipped)\n",0,0,0);
+		Debug(LDAP_DEBUG_ANY,"write_netgroup_triple(): entry does not begin with '(' (entry skipped)\n" );
 		return 0;
 	}
 	i++;
@@ -105,7 +105,7 @@ static int write_netgroup_triple(TFILE *fp,const char *triple)
 		/* nothing else to do */ ;
 	if (triple[i]!=',')
 	{
-		Debug(LDAP_DEBUG_ANY,"write_netgroup_triple(): missing ',' (entry skipped)\n",0,0,0);
+		Debug(LDAP_DEBUG_ANY,"write_netgroup_triple(): missing ',' (entry skipped)\n" );
 		return 0;
 	}
 	hoste=i;
@@ -116,7 +116,7 @@ static int write_netgroup_triple(TFILE *fp,const char *triple)
 		/* nothing else to do */ ;
 	if (triple[i]!=',')
 	{
-		Debug(LDAP_DEBUG_ANY,"write_netgroup_triple(): missing ',' (entry skipped)\n",0,0,0);
+		Debug(LDAP_DEBUG_ANY,"write_netgroup_triple(): missing ',' (entry skipped)\n" );
 		return 0;
 	}
 	usere=i;
@@ -127,7 +127,7 @@ static int write_netgroup_triple(TFILE *fp,const char *triple)
 		/* nothing else to do */ ;
 	if (triple[i]!=')')
 	{
-		Debug(LDAP_DEBUG_ANY,"write_netgroup_triple(): missing ')' (entry skipped)\n",0,0,0);
+		Debug(LDAP_DEBUG_ANY,"write_netgroup_triple(): missing ')' (entry skipped)\n" );
 		return 0;
 	}
 	domaine=i;
@@ -138,7 +138,7 @@ static int write_netgroup_triple(TFILE *fp,const char *triple)
 	/* if anything is left in the string we have a problem */
 	if (triple[i]!='\0')
 	{
-		Debug(LDAP_DEBUG_ANY,"write_netgroup_triple(): string contains trailing data (entry skipped)\n",0,0,0);
+		Debug(LDAP_DEBUG_ANY,"write_netgroup_triple(): string contains trailing data (entry skipped)\n" );
 		return 0;
 	}
 	/* write strings */
@@ -195,7 +195,7 @@ NSSOV_HANDLE(
 	READ_STRING(fp,cbp.buf);,
 	cbp.name.bv_len = tmpint32;
 	cbp.name.bv_val = cbp.buf;
-	Debug(LDAP_DEBUG_TRACE,"nssov_netgroup_byname(%s)\n",cbp.name.bv_val,0,0);,
+	Debug(LDAP_DEBUG_TRACE,"nssov_netgroup_byname(%s)\n",cbp.name.bv_val);,
 	NSLCD_ACTION_NETGROUP_BYNAME,
 	nssov_filter_byname(cbp.mi,0,&cbp.name,&filter)
 )

@@ -1,10 +1,10 @@
-/*	$NetBSD: rwmmap.c,v 1.2 2020/08/11 13:15:42 christos Exp $	*/
+/*	$NetBSD: rwmmap.c,v 1.3 2021/08/14 16:15:02 christos Exp $	*/
 
 /* rwmmap.c - rewrite/mapping routines */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2020 The OpenLDAP Foundation.
+ * Copyright 1999-2021 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Howard Chu.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * All rights reserved.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rwmmap.c,v 1.2 2020/08/11 13:15:42 christos Exp $");
+__RCSID("$NetBSD: rwmmap.c,v 1.3 2021/08/14 16:15:02 christos Exp $");
 
 #include "portable.h"
 
@@ -104,9 +104,9 @@ rwm_map_init( struct ldapmap *lm, struct ldapmapping **m )
 	mapping[1].m_src_ad = mapping[0].m_src_ad;
 	mapping[1].m_dst_ad = mapping[1].m_src_ad;
 
-	avl_insert( &lm->map, (caddr_t)&mapping[0], 
+	ldap_avl_insert( &lm->map, (caddr_t)&mapping[0], 
 			rwm_mapping_cmp, rwm_mapping_dup );
-	avl_insert( &lm->remap, (caddr_t)&mapping[1], 
+	ldap_avl_insert( &lm->remap, (caddr_t)&mapping[1], 
 			rwm_mapping_cmp, rwm_mapping_dup );
 
 	*m = mapping;
@@ -143,7 +143,7 @@ rwm_mapping( struct ldapmap *map, struct berval *s, struct ldapmapping **m, int 
 	}
 
 	fmapping.m_src = *s;
-	*m = (struct ldapmapping *)avl_find( tree, (caddr_t)&fmapping,
+	*m = (struct ldapmapping *)ldap_avl_find( tree, (caddr_t)&fmapping,
 			rwm_mapping_cmp );
 
 	if ( *m == NULL ) {
@@ -522,7 +522,7 @@ rwm_int_filter_map_rewrite(
 	struct berval		*fstr )
 {
 	int		i;
-	Filter		*p;
+	Filter		*p, ftmp;
 	AttributeDescription *ad;
 	struct berval	atmp,
 			vtmp,
@@ -774,7 +774,7 @@ rwm_int_filter_map_rewrite(
 
 	case -1:
 computed:;
-		filter_free_x( op, f, 0 );
+		f = &ftmp;
 		f->f_choice = SLAPD_FILTER_COMPUTED;
 		f->f_result = SLAPD_COMPARE_UNDEFINED;
 		/* fallthru */

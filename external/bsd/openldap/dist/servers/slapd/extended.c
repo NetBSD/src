@@ -1,9 +1,9 @@
-/*	$NetBSD: extended.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
+/*	$NetBSD: extended.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2020 The OpenLDAP Foundation.
+ * Copyright 1999-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: extended.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
+__RCSID("$NetBSD: extended.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
 
 #include "portable.h"
 
@@ -63,10 +63,8 @@ static struct {
 	slap_mask_t flags;
 	SLAP_EXTOP_MAIN_FN *ext_main;
 } builtin_extops[] = {
-#ifdef LDAP_X_TXN
 	{ &slap_EXOP_TXN_START, 0, txn_start_extop },
 	{ &slap_EXOP_TXN_END, 0, txn_end_extop },
-#endif
 	{ &slap_EXOP_CANCEL, 0, cancel_extop },
 	{ &slap_EXOP_WHOAMI, 0, whoami_extop },
 	{ &slap_EXOP_MODIFY_PASSWD, SLAP_EXOP_WRITES, passwd_extop },
@@ -128,11 +126,11 @@ do_extended(
 	ber_len_t len;
 
 	Debug( LDAP_DEBUG_TRACE, "%s do_extended\n",
-		op->o_log_prefix, 0, 0 );
+		op->o_log_prefix );
 
 	if( op->o_protocol < LDAP_VERSION3 ) {
 		Debug( LDAP_DEBUG_ANY, "%s do_extended: protocol version (%d) too low\n",
-			op->o_log_prefix, op->o_protocol, 0 );
+			op->o_log_prefix, op->o_protocol );
 		send_ldap_discon( op, rs, LDAP_PROTOCOL_ERROR, "requires LDAPv3" );
 		rs->sr_err = SLAPD_DISCONNECT;
 		goto done;
@@ -140,7 +138,7 @@ do_extended(
 
 	if ( ber_scanf( op->o_ber, "{m" /*}*/, &op->ore_reqoid ) == LBER_ERROR ) {
 		Debug( LDAP_DEBUG_ANY, "%s do_extended: ber_scanf failed\n",
-			op->o_log_prefix, 0, 0 );
+			op->o_log_prefix );
 		send_ldap_discon( op, rs, LDAP_PROTOCOL_ERROR, "decoding error" );
 		rs->sr_err = SLAPD_DISCONNECT;
 		goto done;
@@ -149,7 +147,7 @@ do_extended(
 	if( ber_peek_tag( op->o_ber, &len ) == LDAP_TAG_EXOP_REQ_VALUE ) {
 		if( ber_scanf( op->o_ber, "m", &reqdata ) == LBER_ERROR ) {
 			Debug( LDAP_DEBUG_ANY, "%s do_extended: ber_scanf failed\n",
-				op->o_log_prefix, 0, 0 );
+				op->o_log_prefix );
 			send_ldap_discon( op, rs, LDAP_PROTOCOL_ERROR, "decoding error" );
 			rs->sr_err = SLAPD_DISCONNECT;
 			goto done;
@@ -158,12 +156,12 @@ do_extended(
 
 	if( get_ctrls( op, rs, 1 ) != LDAP_SUCCESS ) {
 		Debug( LDAP_DEBUG_ANY, "%s do_extended: get_ctrls failed\n",
-			op->o_log_prefix, 0, 0 );
+			op->o_log_prefix );
 		return rs->sr_err;
 	} 
 
-	Statslog( LDAP_DEBUG_STATS, "%s EXT oid=%s\n",
-	    op->o_log_prefix, op->ore_reqoid.bv_val, 0, 0, 0 );
+	Debug( LDAP_DEBUG_STATS, "%s EXT oid=%s\n",
+	    op->o_log_prefix, op->ore_reqoid.bv_val );
 
 	/* check for controls inappropriate for all extended operations */
 	if( get_manageDSAit( op ) == SLAP_CONTROL_CRITICAL ) {
@@ -180,6 +178,12 @@ do_extended(
 
 	op->o_bd = frontendDB;
 	rs->sr_err = frontendDB->be_extended( op, rs );
+
+	if ( rs->sr_err == SLAPD_ASYNCOP ||
+		rs->sr_err == LDAP_TXN_SPECIFY_OKAY ) {
+		/* skip cleanup */
+		return rs->sr_err;
+	}
 
 	/* clean up in case some overlay set them? */
 	if ( !BER_BVISNULL( &op->o_req_ndn ) ) {
@@ -210,7 +214,7 @@ fe_extended( Operation *op, SlapReply *rs )
 	ext = find_extop(supp_ext_list, &op->ore_reqoid );
 	if ( ext == NULL ) {
 		Debug( LDAP_DEBUG_ANY, "%s do_extended: unsupported operation \"%s\"\n",
-			op->o_log_prefix, op->ore_reqoid.bv_val, 0 );
+			op->o_log_prefix, op->ore_reqoid.bv_val );
 		send_ldap_error( op, rs, LDAP_PROTOCOL_ERROR,
 			"unsupported extended operation" );
 		goto done;
@@ -219,7 +223,7 @@ fe_extended( Operation *op, SlapReply *rs )
 	op->ore_flags = ext->flags;
 
 	Debug( LDAP_DEBUG_ARGS, "do_extended: oid=%s\n",
-		op->ore_reqoid.bv_val, 0 ,0 );
+		op->ore_reqoid.bv_val );
 
 	{ /* start of OpenLDAP extended operation */
 		BackendDB	*bd = op->o_bd;
@@ -329,6 +333,57 @@ load_extop2(
 }
 
 int
+unload_extop(
+	const struct berval *ext_oid,
+	SLAP_EXTOP_MAIN_FN *ext_main,
+	unsigned flags )
+{
+	struct berval		oidm = BER_BVNULL;
+	struct extop_list	*ext, **extp;
+
+	/* oid must be given */
+	if ( ext_oid == NULL || BER_BVISNULL( ext_oid ) ||
+		BER_BVISEMPTY( ext_oid ) )
+	{
+		return -1; 
+	}
+
+	/* if it's not an oid, check if it's a macto */
+	if ( numericoidValidate( NULL, (struct berval *)ext_oid ) !=
+		LDAP_SUCCESS )
+	{
+		oidm.bv_val = oidm_find( ext_oid->bv_val );
+		if ( oidm.bv_val == NULL ) {
+			return -1;
+		}
+		oidm.bv_len = strlen( oidm.bv_val );
+		ext_oid = &oidm;
+	}
+
+	/* lookup the oid */
+	for ( extp = &supp_ext_list; *extp; extp = &(*extp)->next ) {
+		if ( bvmatch( ext_oid, &(*extp)->oid ) ) {
+			/* if ext_main is given, only remove if it matches */
+			if ( ext_main != NULL && (*extp)->ext_main != ext_main ) {
+				return -1;
+			}
+			break;
+		}
+	}
+
+	if ( *extp == NULL ) {
+		return -1;
+	}
+
+	ext = *extp;
+	*extp = (*extp)->next;
+
+	ch_free( ext );
+
+	return 0;
+}
+
+int
 extops_init (void)
 {
 	int i;
@@ -338,6 +393,7 @@ extops_init (void)
 			builtin_extops[i].flags,
 			builtin_extops[i].ext_main );
 	}
+
 	return(0);
 }
 
@@ -382,8 +438,8 @@ whoami_extop (
 		return LDAP_PROTOCOL_ERROR;
 	}
 
-	Statslog( LDAP_DEBUG_STATS, "%s WHOAMI\n",
-	    op->o_log_prefix, 0, 0, 0, 0 );
+	Debug( LDAP_DEBUG_STATS, "%s WHOAMI\n",
+	    op->o_log_prefix );
 
 	op->o_bd = op->o_conn->c_authz_backend;
 	if( backend_check_restrictions( op, rs,

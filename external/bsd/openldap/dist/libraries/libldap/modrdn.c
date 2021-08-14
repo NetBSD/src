@@ -1,9 +1,9 @@
-/*	$NetBSD: modrdn.c,v 1.2 2020/08/11 13:15:37 christos Exp $	*/
+/*	$NetBSD: modrdn.c,v 1.3 2021/08/14 16:14:56 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: modrdn.c,v 1.2 2020/08/11 13:15:37 christos Exp $");
+__RCSID("$NetBSD: modrdn.c,v 1.3 2021/08/14 16:14:56 christos Exp $");
 
 #include "portable.h"
 
@@ -141,7 +141,7 @@ ldap_rename(
 	int rc;
 	ber_int_t id;
 
-	Debug( LDAP_DEBUG_TRACE, "ldap_rename\n", 0, 0, 0 );
+	Debug0( LDAP_DEBUG_TRACE, "ldap_rename\n" );
 
 	/* check client controls */
 	rc = ldap_int_client_controls( ld, cctrls );
@@ -186,7 +186,7 @@ ldap_rename2(
 	int msgid;
 	int rc;
 
-	Debug( LDAP_DEBUG_TRACE, "ldap_rename2\n", 0, 0, 0 );
+	Debug0( LDAP_DEBUG_TRACE, "ldap_rename2\n" );
 
 	rc = ldap_rename( ld, dn, newrdn, newSuperior,
 		deleteoldrdn, NULL, NULL, &msgid );

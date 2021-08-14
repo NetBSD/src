@@ -1,10 +1,10 @@
-/*	$NetBSD: schema.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
+/*	$NetBSD: schema.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
 
 /* schema.c - routines to manage schema definitions */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: schema.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
+__RCSID("$NetBSD: schema.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
 
 #include "portable.h"
 
@@ -51,7 +51,7 @@ schema_info( Entry **entry, const char **text )
 	if( e == NULL ) {
 		/* Out of memory, do something about it */
 		Debug( LDAP_DEBUG_ANY, 
-			"schema_info: entry_alloc failed - out of memory.\n", 0, 0, 0 );
+			"schema_info: entry_alloc failed - out of memory.\n" );
 		*text = "out of memory";
 		return LDAP_OTHER;
 	}

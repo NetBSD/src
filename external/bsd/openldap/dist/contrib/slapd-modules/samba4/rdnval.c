@@ -1,10 +1,10 @@
-/*	$NetBSD: rdnval.c,v 1.2 2020/08/11 13:15:36 christos Exp $	*/
+/*	$NetBSD: rdnval.c,v 1.3 2021/08/14 16:14:53 christos Exp $	*/
 
 /* rdnval.c - RDN value overlay */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * Portions Copyright 2008 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rdnval.c,v 1.2 2020/08/11 13:15:36 christos Exp $");
+__RCSID("$NetBSD: rdnval.c,v 1.3 2021/08/14 16:14:53 christos Exp $");
 
 #include "portable.h"
 
@@ -34,7 +34,7 @@ __RCSID("$NetBSD: rdnval.c,v 1.2 2020/08/11 13:15:36 christos Exp $");
 #include "ac/socket.h"
 
 #include "slap.h"
-#include "config.h"
+#include "slap-config.h"
 
 #include "lutil.h"
 
@@ -203,7 +203,7 @@ rdnval_rdn2vals(
 		Debug( LDAP_DEBUG_TRACE,
 			"%s rdnval: can't figure out "
 			"type(s)/value(s) of rdn DN=\"%s\"\n",
-			op->o_log_prefix, dn->bv_val, 0 );
+			op->o_log_prefix, dn->bv_val );
 		rs->sr_err = LDAP_INVALID_DN_SYNTAX;
 		rs->sr_text = "unknown type(s) used in RDN";
 
@@ -216,7 +216,7 @@ rdnval_rdn2vals(
 		Debug( LDAP_DEBUG_TRACE,
 			"%s rdnval: can't figure out "
 			"type(s)/value(s) of normalized rdn DN=\"%s\"\n",
-			op->o_log_prefix, ndn->bv_val, 0 );
+			op->o_log_prefix, ndn->bv_val );
 		rs->sr_err = LDAP_INVALID_DN_SYNTAX;
 		rs->sr_text = "unknown type(s) used in RDN";
 
@@ -228,8 +228,8 @@ rdnval_rdn2vals(
 
 	/* NOTE: we assume rdn and nrdn contain the same AVAs! */
 
-	*valsp = SLAP_CALLOC( sizeof( struct berval ), nAVA + 1 );
-	*nvalsp = SLAP_CALLOC( sizeof( struct berval ), nAVA + 1 );
+	*valsp = ch_calloc( sizeof( struct berval ), nAVA + 1 );
+	*nvalsp = ch_calloc( sizeof( struct berval ), nAVA + 1 );
 
 	/* Add new attribute values to the entry */
 	for ( i = 0; rdn[ i ]; i++ ) {
@@ -251,7 +251,7 @@ rdnval_rdn2vals(
 			Debug( LDAP_DEBUG_TRACE,
 				"%s rdnval: syntax of naming attribute '%s' "
 				"not compatible with directoryString",
-				op->o_log_prefix, rdn[ i ]->la_attr.bv_val, 0 );
+				op->o_log_prefix, rdn[ i ]->la_attr.bv_val );
 			continue;
 		}
 
@@ -359,7 +359,7 @@ rdnval_op_rename( Operation *op, SlapReply *rs )
 		send_ldap_result( op, rs );
 	}
 
-	ml = SLAP_CALLOC( sizeof( Modifications ), 1 );
+	ml = ch_calloc( sizeof( Modifications ), 1 );
 	ml->sml_values = vals;
 	ml->sml_nvalues = nvals;
 
@@ -384,19 +384,19 @@ rdnval_db_init(
 	ConfigReply	*cr)
 {
 	if ( SLAP_ISGLOBALOVERLAY( be ) ) {
-		Log0( LDAP_DEBUG_ANY, LDAP_LEVEL_ERR,
+		Log( LDAP_DEBUG_ANY, LDAP_LEVEL_ERR,
 			"rdnval_db_init: rdnval cannot be used as global overlay.\n" );
 		return 1;
 	}
 
 	if ( be->be_nsuffix == NULL ) {
-		Log0( LDAP_DEBUG_ANY, LDAP_LEVEL_ERR,
+		Log( LDAP_DEBUG_ANY, LDAP_LEVEL_ERR,
 			"rdnval_db_init: database must have suffix\n" );
 		return 1;
 	}
 
 	if ( BER_BVISNULL( &be->be_rootndn ) || BER_BVISEMPTY( &be->be_rootndn ) ) {
-		Log1( LDAP_DEBUG_ANY, LDAP_LEVEL_ERR,
+		Log( LDAP_DEBUG_ANY, LDAP_LEVEL_ERR,
 			"rdnval_db_init: missing rootdn for database DN=\"%s\", YMMV\n",
 			be->be_suffix[ 0 ].bv_val );
 	}
@@ -463,7 +463,7 @@ rdnval_repair_cb( Operation *op, SlapReply *rs )
 	rcb->mods = mod;
 
 	Debug( LDAP_DEBUG_TRACE, "%s: rdnval_repair_cb: scheduling entry DN=\"%s\" for repair\n",
-		op->o_log_prefix, rs->sr_entry->e_name.bv_val, 0 );
+		op->o_log_prefix, rs->sr_entry->e_name.bv_val );
 
 	return 0;
 }
@@ -557,7 +557,7 @@ rdnval_repair( BackendDB *be )
 		slap_mods_free( op->orm_modlist, 1 );
 		if ( rs2.sr_err == LDAP_SUCCESS ) {
 			Debug( LDAP_DEBUG_TRACE, "%s: rdnval_repair: entry DN=\"%s\" repaired\n",
-				op->o_log_prefix, rmod->ndn.bv_val, 0 );
+				op->o_log_prefix, rmod->ndn.bv_val );
 			nrepaired++;
 
 		} else {
@@ -574,7 +574,7 @@ done_search:;
 	op->o_tmpfree( op->ors_filterstr.bv_val, op->o_tmpmemctx );
 	filter_free_x( op, op->ors_filter, 1 );
 
-	Log1( LDAP_DEBUG_STATS, LDAP_LEVEL_INFO,
+	Log( LDAP_DEBUG_STATS, LDAP_LEVEL_INFO,
 		"rdnval: repaired=%d\n", nrepaired );
 
 	return 0;
@@ -587,7 +587,7 @@ rdnval_db_open(
 	ConfigReply	*cr )
 {
 	if ( SLAP_SINGLE_SHADOW( be ) ) {
-		Log1( LDAP_DEBUG_ANY, LDAP_LEVEL_ERR,
+		Log( LDAP_DEBUG_ANY, LDAP_LEVEL_ERR,
 			"rdnval incompatible with shadow database \"%s\".\n",
 			be->be_suffix[ 0 ].bv_val );
 		return 1;
@@ -622,7 +622,7 @@ rdnval_initialize(void)
 		if ( code ) {
 			Debug( LDAP_DEBUG_ANY,
 				"rdnval_initialize: register_at #%d failed\n",
-				i, 0, 0 );
+				i );
 			return code;
 		}
 
@@ -636,8 +636,7 @@ rdnval_initialize(void)
 	syn_IA5String = syn_find( "1.3.6.1.4.1.1466.115.121.1.26" );
 	if ( syn_IA5String == NULL ) {
 		Debug( LDAP_DEBUG_ANY,
-			"rdnval_initialize: unable to find syntax '1.3.6.1.4.1.1466.115.121.1.26' (IA5String)\n",
-			0, 0, 0 );
+			"rdnval_initialize: unable to find syntax '1.3.6.1.4.1.1466.115.121.1.26' (IA5String)\n" );
 		return LDAP_OTHER;
 	}
 

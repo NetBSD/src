@@ -1,9 +1,9 @@
-/*	$NetBSD: lber.h,v 1.2 2020/08/11 13:15:37 christos Exp $	*/
+/*	$NetBSD: lber.h,v 1.3 2021/08/14 16:14:55 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -258,6 +258,11 @@ ber_peek_tag LDAP_P((
 	ber_len_t *len ));
 
 LBER_F( ber_tag_t )
+ber_skip_raw LDAP_P((
+	BerElement *ber,
+	struct berval *bv ));
+
+LBER_F( ber_tag_t )
 ber_skip_element LDAP_P((
 	BerElement *ber,
 	struct berval *bv ));
@@ -275,6 +280,11 @@ ber_get_int LDAP_P((
 LBER_F( ber_tag_t )
 ber_get_enum LDAP_P((
 	BerElement *ber,
+	ber_int_t *num ));
+
+LBER_F( int )
+ber_decode_int LDAP_P((
+	const struct berval *bv,
 	ber_int_t *num ));
 
 LBER_F( ber_tag_t )

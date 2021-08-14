@@ -1,10 +1,10 @@
-/*	$NetBSD: dn2entry.c,v 1.2 2020/08/11 13:15:40 christos Exp $	*/
+/*	$NetBSD: dn2entry.c,v 1.3 2021/08/14 16:15:00 christos Exp $	*/
 
 /* dn2entry.c - routines to deal with the dn2id / id2entry glue */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2020 The OpenLDAP Foundation.
+ * Copyright 2000-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dn2entry.c,v 1.2 2020/08/11 13:15:40 christos Exp $");
+__RCSID("$NetBSD: dn2entry.c,v 1.3 2021/08/14 16:15:00 christos Exp $");
 
 #include "portable.h"
 
@@ -49,7 +49,7 @@ mdb_dn2entry(
 	MDB_cursor *mc;
 
 	Debug(LDAP_DEBUG_TRACE, "mdb_dn2entry(\"%s\")\n",
-		dn->bv_val ? dn->bv_val : "", 0, 0 );
+		dn->bv_val ? dn->bv_val : "" );
 
 	*e = NULL;
 

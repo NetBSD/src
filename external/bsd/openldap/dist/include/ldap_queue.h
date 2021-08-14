@@ -1,10 +1,10 @@
-/*	$NetBSD: ldap_queue.h,v 1.7 2020/08/11 13:15:37 christos Exp $	*/
+/*	$NetBSD: ldap_queue.h,v 1.8 2021/08/14 16:14:55 christos Exp $	*/
 
 /* ldap_queue.h -- queue macros */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2020 The OpenLDAP Foundation.
+ * Copyright 2001-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -104,7 +104,9 @@
  * traverse the list. New elements can be added to the list before or after
  * an existing element, at the head of the list, or at the end of the list.
  * A circle queue may be traversed in either direction, but has a more
- * complex end of list detection.
+ * complex end of list detection. Also, it is possible to rotate the queue,
+ * rejoining the ends and splitting it so that a given element becomes the
+ * new head or tail.
  *
  * For details on the use of these macros, see the queue(3) manual page.
  * All macros are prefixed with LDAP_.
@@ -452,6 +454,142 @@ struct {								\
 	else								\
 		(head)->tqh_last = (elm)->field.tqe_prev;		\
 	*(elm)->field.tqe_prev = (elm)->field.tqe_next;			\
+} while (0)
+
+/*
+ * Circular queue definitions.
+ */
+#define LDAP_CIRCLEQ_HEAD(name, type)					\
+struct name {								\
+	struct type *cqh_first;		/* first element */		\
+	struct type *cqh_last;		/* last element */		\
+}
+
+#define LDAP_CIRCLEQ_HEAD_INITIALIZER(head)				\
+	{ (void *)&(head), (void *)&(head) }
+
+#define LDAP_CIRCLEQ_ENTRY(type)					\
+struct {								\
+	struct type *cqe_next;		/* next element */		\
+	struct type *cqe_prev;		/* previous element */		\
+}
+
+/*
+ * Circular queue functions.
+ */
+#define LDAP_CIRCLEQ_EMPTY(head) ((head)->cqh_first == (void *)(head))
+
+#define LDAP_CIRCLEQ_FIRST(head) ((head)->cqh_first)
+
+#define LDAP_CIRCLEQ_FOREACH(var, head, field)				\
+	for((var) = (head)->cqh_first;					\
+	    (var) != (void *)(head);					\
+	    (var) = (var)->field.cqe_next)
+
+#define LDAP_CIRCLEQ_FOREACH_REVERSE(var, head, field)			\
+	for((var) = (head)->cqh_last;					\
+	    (var) != (void *)(head);					\
+	    (var) = (var)->field.cqe_prev)
+
+#define	LDAP_CIRCLEQ_INIT(head) do {					\
+	(head)->cqh_first = (void *)(head);				\
+	(head)->cqh_last = (void *)(head);				\
+} while (0)
+
+#define LDAP_CIRCLEQ_ENTRY_INIT(var, field) do {			\
+	(var)->field.cqe_next = NULL;					\
+	(var)->field.cqe_prev = NULL;					\
+} while (0)
+
+#define LDAP_CIRCLEQ_INSERT_AFTER(head, listelm, elm, field) do {	\
+	(elm)->field.cqe_next = (listelm)->field.cqe_next;		\
+	(elm)->field.cqe_prev = (listelm);				\
+	if ((listelm)->field.cqe_next == (void *)(head))		\
+		(head)->cqh_last = (elm);				\
+	else								\
+		(listelm)->field.cqe_next->field.cqe_prev = (elm);	\
+	(listelm)->field.cqe_next = (elm);				\
+} while (0)
+
+#define LDAP_CIRCLEQ_INSERT_BEFORE(head, listelm, elm, field) do {	\
+	(elm)->field.cqe_next = (listelm);				\
+	(elm)->field.cqe_prev = (listelm)->field.cqe_prev;		\
+	if ((listelm)->field.cqe_prev == (void *)(head))		\
+		(head)->cqh_first = (elm);				\
+	else								\
+		(listelm)->field.cqe_prev->field.cqe_next = (elm);	\
+	(listelm)->field.cqe_prev = (elm);				\
+} while (0)
+
+#define LDAP_CIRCLEQ_INSERT_HEAD(head, elm, field) do {			\
+	(elm)->field.cqe_next = (head)->cqh_first;			\
+	(elm)->field.cqe_prev = (void *)(head);				\
+	if ((head)->cqh_last == (void *)(head))				\
+		(head)->cqh_last = (elm);				\
+	else								\
+		(head)->cqh_first->field.cqe_prev = (elm);		\
+	(head)->cqh_first = (elm);					\
+} while (0)
+
+#define LDAP_CIRCLEQ_INSERT_TAIL(head, elm, field) do {			\
+	(elm)->field.cqe_next = (void *)(head);				\
+	(elm)->field.cqe_prev = (head)->cqh_last;			\
+	if ((head)->cqh_first == (void *)(head))			\
+		(head)->cqh_first = (elm);				\
+	else								\
+		(head)->cqh_last->field.cqe_next = (elm);		\
+	(head)->cqh_last = (elm);					\
+} while (0)
+
+#define LDAP_CIRCLEQ_LAST(head) ((head)->cqh_last)
+
+#define LDAP_CIRCLEQ_NEXT(elm,field) ((elm)->field.cqe_next)
+
+#define LDAP_CIRCLEQ_PREV(elm,field) ((elm)->field.cqe_prev)
+
+#define	LDAP_CIRCLEQ_REMOVE(head, elm, field) do {			\
+	if ((elm)->field.cqe_next == (void *)(head))			\
+		(head)->cqh_last = (elm)->field.cqe_prev;		\
+	else								\
+		(elm)->field.cqe_next->field.cqe_prev =			\
+		    (elm)->field.cqe_prev;				\
+	if ((elm)->field.cqe_prev == (void *)(head))			\
+		(head)->cqh_first = (elm)->field.cqe_next;		\
+	else								\
+		(elm)->field.cqe_prev->field.cqe_next =			\
+		    (elm)->field.cqe_next;				\
+} while (0)
+
+#define LDAP_CIRCLEQ_LOOP_NEXT(head, elm, field)			\
+	(((elm)->field.cqe_next == (void *)(head))			\
+		? ((head)->cqh_first)					\
+		: ((elm)->field.cqe_next))
+
+#define LDAP_CIRCLEQ_LOOP_PREV(head, elm, field)			\
+	(((elm)->field.cqe_prev == (void *)(head))			\
+		? ((head)->cqh_last)					\
+		: ((elm)->field.cqe_prev))
+
+#define LDAP_CIRCLEQ_MAKE_HEAD(head, elm, field) do {			\
+	if ((elm)->field.cqe_prev != (void *)(head)) {			\
+		(head)->cqh_first->field.cqe_prev = (head)->cqh_last;	\
+		(head)->cqh_last->field.cqe_next = (head)->cqh_first;	\
+		(head)->cqh_first = elm;				\
+		(head)->cqh_last = (elm)->field.cqe_prev;		\
+		(elm)->field.cqe_prev->field.cqe_next = (void *)(head);	\
+		(elm)->field.cqe_prev = (void *)(head);			\
+	}								\
+} while (0)
+
+#define LDAP_CIRCLEQ_MAKE_TAIL(head, elm, field) do {			\
+	if ((elm)->field.cqe_next != (void *)(head)) {			\
+		(head)->cqh_first->field.cqe_prev = (head)->cqh_last;	\
+		(head)->cqh_last->field.cqe_next = (head)->cqh_first;	\
+		(head)->cqh_first = (elm)->field.cqe_next;		\
+		(head)->cqh_last = elm;					\
+		(elm)->field.cqe_next->field.cqe_prev = (void *)(head);	\
+		(elm)->field.cqe_next = (void *)(head);			\
+	}								\
 } while (0)
 
 #endif /* !_LDAP_QUEUE_H_ */

@@ -1,9 +1,9 @@
-/*	$NetBSD: slappasswd.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
+/*	$NetBSD: slappasswd.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * All rights reserved.
  *
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: slappasswd.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
+__RCSID("$NetBSD: slappasswd.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
 
 #include "portable.h"
 
@@ -42,11 +42,15 @@ __RCSID("$NetBSD: slappasswd.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
 #include <lutil_sha1.h>
 
 #include "ldap_defaults.h"
-#include "slap.h"
 
-static int	verbose = 0;
+#include "slap.h"
+#include "slap-config.h"
+#include "slapcommon.h"
+
 static char	*modulepath = NULL;
 static char	*moduleload = NULL;
+static int	moduleargc = 0;
+static char	**moduleargv = NULL;
 
 static void
 usage(const char *s)
@@ -82,14 +86,20 @@ parse_slappasswdopt( void )
 	}
 
 	if ( strncasecmp( optarg, "module-path", len ) == 0 ) {
-		if ( modulepath )
-			ch_free( modulepath );
-		modulepath = ch_strdup( p );
+		modulepath = p;
 
 	} else if ( strncasecmp( optarg, "module-load", len ) == 0 ) {
-		if ( moduleload )
-			ch_free( moduleload );
-		moduleload = ch_strdup( p );
+		ConfigArgs c = { .line = p };
+
+		if ( config_fp_parse_line( &c ) ) {
+			return -1;
+		}
+		moduleload = c.argv[0];
+
+		moduleargc = c.argc - 1;
+		if ( moduleargc ) {
+			moduleargv = c.argv+1;
+		}
 
 	} else {
 		return -1;
@@ -117,7 +127,7 @@ slappasswd( int argc, char *argv[] )
 	int		i;
 	char		*newline = "\n";
 	struct berval passwd = BER_BVNULL;
-	struct berval hash;
+	struct berval hash = BER_BVNULL;
 
 #ifdef LDAP_DEBUG
 	/* tools default to "none", so that at least LDAP_DEBUG_ANY
@@ -156,7 +166,7 @@ slappasswd( int argc, char *argv[] )
 				return EXIT_FAILURE;
 
 			} else {
-				scheme = ch_strdup( optarg );
+				scheme = optarg;
 			}
 			break;
 
@@ -213,6 +223,7 @@ slappasswd( int argc, char *argv[] )
 			usage ( progname );
 		}
 	}
+	slapTool = SLAPPASSWD;
 
 	if( argc - optind != 0 ) {
 		usage( progname );
@@ -229,7 +240,7 @@ slappasswd( int argc, char *argv[] )
 		goto destroy;
 	}
 
-	if ( moduleload && module_load(moduleload, 0, NULL) ) {
+	if ( moduleload && module_load(moduleload, moduleargc, moduleargv) ) {
 		rc = EXIT_FAILURE;
 		goto destroy;
 	}
@@ -262,7 +273,7 @@ slappasswd( int argc, char *argv[] )
 	}
 
 	lutil_passwd_hash( &passwd, scheme, &hash, &text );
-	if( hash.bv_val == NULL ) {
+	if ( BER_BVISNULL( &hash ) ) {
 		fprintf( stderr,
 			"Password generation failed for scheme %s: %s\n",
 			scheme, text ? text : "" );
@@ -284,6 +295,12 @@ destroy:;
 #ifdef SLAPD_MODULES
 	module_kill();
 #endif
+	if ( !BER_BVISNULL( &hash ) ) {
+		ber_memfree( hash.bv_val );
+	}
+	if ( passwd.bv_val != hash.bv_val && !BER_BVISNULL( &passwd ) ) {
+		ber_memfree( passwd.bv_val );
+	}
 
 	return rc;
 }

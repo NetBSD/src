@@ -1,4 +1,4 @@
-/*	$NetBSD: ldap_thr_debug.h,v 1.1.1.1 2021/08/14 16:05:27 christos Exp $	*/
+/*	$NetBSD: ldap_thr_debug.h,v 1.2 2021/08/14 16:14:56 christos Exp $	*/
 
 /* ldap_thr_debug.h - preprocessor magic for LDAP_THREAD_DEBUG */
 /* $OpenLDAP$ */

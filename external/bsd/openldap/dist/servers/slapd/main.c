@@ -1,9 +1,9 @@
-/*	$NetBSD: main.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
 
 #include "portable.h"
 
@@ -70,7 +70,7 @@ static struct sockaddr_in	bind_addr;
 
 typedef int (MainFunc) LDAP_P(( int argc, char *argv[] ));
 extern MainFunc slapadd, slapcat, slapdn, slapindex, slappasswd,
-	slaptest, slapauth, slapacl, slapschema;
+	slaptest, slapauth, slapacl, slapschema, slapmodify;
 
 static struct {
 	char *name;
@@ -80,6 +80,7 @@ static struct {
 	{"slapcat", slapcat},
 	{"slapdn", slapdn},
 	{"slapindex", slapindex},
+	{"slapmodify", slapmodify},
 	{"slappasswd", slappasswd},
 	{"slapschema", slapschema},
 	{"slaptest", slaptest},
@@ -193,7 +194,7 @@ parse_syslog_user( const char *arg, int *syslogUser )
 	if ( BER_BVISNULL( &syslogUsers[ i ].word ) ) {
 		Debug( LDAP_DEBUG_ANY,
 			"unrecognized syslog user \"%s\".\n",
-			arg, 0, 0 );
+			arg );
 		return 1;
 	}
 
@@ -221,7 +222,7 @@ parse_syslog_level( const char *arg, int *levelp )
 	if ( BER_BVISNULL( &str2syslog_level[ i ].word ) ) {
 		Debug( LDAP_DEBUG_ANY,
 			"unknown syslog level \"%s\".\n",
-			arg, 0, 0 );
+			arg );
 		return 1;
 	}
 	
@@ -230,6 +231,9 @@ parse_syslog_level( const char *arg, int *levelp )
 	return 0;
 }
 #endif /* LDAP_DEBUG && LDAP_SYSLOG */
+
+static char **debug_unknowns;
+static char **syslog_unknowns;
 
 int
 parse_debug_unknowns( char **unknowns, int *levelp )
@@ -307,6 +311,29 @@ parse_debug_level( const char *arg, int *levelp, char ***unknowns )
 	return 0;
 }
 
+void slap_check_unknown_level( char *levelstr, int level )
+{
+	int i;
+
+	if ( debug_unknowns ) {
+		for ( i = 0; debug_unknowns[ i ]; i++ ) {
+			if ( !strcasecmp( debug_unknowns[ i ], levelstr )) {
+				slap_debug |= level;
+				break;
+			}
+		}
+	}
+
+	if ( syslog_unknowns ) {
+		for ( i = 0; syslog_unknowns[ i ]; i++ ) {
+			if ( !strcasecmp( syslog_unknowns[ i ], levelstr )) {
+				ldap_syslog |= level;
+				break;
+			}
+		}
+	}
+}
+
 static void
 usage( char *name )
 {
@@ -314,8 +341,10 @@ usage( char *name )
 		"usage: %s options\n", name );
 	fprintf( stderr,
 		"\t-4\t\tIPv4 only\n"
+#ifdef LDAP_PF_INET6
 		"\t-6\t\tIPv6 only\n"
-		"\t-T {acl|add|auth|cat|dn|index|passwd|test}\n"
+#endif
+		"\t-T {acl|add|auth|cat|dn|index|modify|passwd|test}\n"
 		"\t\t\tRun in Tool mode\n"
 		"\t-c cookie\tSync cookie of consumer\n"
 		"\t-d level\tDebug level" "\n"
@@ -353,6 +382,29 @@ usage( char *name )
     );
 }
 
+typedef void (BER_logger)(const char *buf);
+static BER_logger *ber_logger;
+static void debug_print( const char *data )
+{
+	char buf[4136];	/* 4096 + 40 */
+#ifdef HAVE_CLOCK_GETTIME
+	struct timespec tv;
+#define	TS	"%08x"
+#define	Tfrac	tv.tv_nsec
+	clock_gettime( CLOCK_REALTIME, &tv );
+#else
+	struct timeval tv;
+#define	TS	"%05x"
+#define	Tfrac	tv.tv_usec
+	gettimeofday( &tv, NULL );
+#endif
+
+	buf[sizeof(buf)-1] = '\0';
+	snprintf( buf, sizeof(buf)-1, "%lx." TS " %p %s",
+		(long)tv.tv_sec, Tfrac, (void *)ldap_pvt_thread_self(), data );
+	ber_logger( buf );
+}
+
 #ifdef HAVE_NT_SERVICE_MANAGER
 void WINAPI ServiceMain( DWORD argc, LPTSTR *argv )
 #else
@@ -386,9 +438,6 @@ int main( int argc, char **argv )
 
 	struct sync_cookie *scp = NULL;
 	struct sync_cookie *scp_entry = NULL;
-
-	char **debug_unknowns = NULL;
-	char **syslog_unknowns = NULL;
 
 	char *serverNamePrefix = "";
 	size_t	l;
@@ -441,7 +490,7 @@ int main( int argc, char **argv )
 		if ( ip != NULL ) {
 			slap_debug = *ip;
 			Debug( LDAP_DEBUG_ANY,
-				"new debug level from registry is: %d\n", slap_debug, 0, 0 );
+				"new debug level from registry is: %d\n", slap_debug );
 		}
 
 		newUrls = (char *) lutil_getRegParam(regService, "Urls");
@@ -451,19 +500,19 @@ int main( int argc, char **argv )
 
 		    urls = ch_strdup(newUrls);
 		    Debug(LDAP_DEBUG_ANY, "new urls from registry: %s\n",
-				urls, 0, 0);
+				urls );
 		}
 
 		newConfigFile = (char*)lutil_getRegParam( regService, "ConfigFile" );
 		if ( newConfigFile != NULL ) {
 			configfile = ch_strdup(newConfigFile);
-			Debug ( LDAP_DEBUG_ANY, "new config file from registry is: %s\n", configfile, 0, 0 );
+			Debug ( LDAP_DEBUG_ANY, "new config file from registry is: %s\n", configfile );
 		}
 
 		newConfigDir = (char*)lutil_getRegParam( regService, "ConfigDir" );
 		if ( newConfigDir != NULL ) {
 			configdir = ch_strdup(newConfigDir);
-			Debug ( LDAP_DEBUG_ANY, "new config dir from registry is: %s\n", configdir, 0, 0 );
+			Debug ( LDAP_DEBUG_ANY, "new config dir from registry is: %s\n", configdir );
 		}
 	}
 #endif
@@ -487,10 +536,10 @@ int main( int argc, char **argv )
 #endif
 			     )) != EOF ) {
 		switch ( i ) {
-#ifdef LDAP_PF_INET6
 		case '4':
 			slap_inet4or6 = AF_INET;
 			break;
+#ifdef LDAP_PF_INET6
 		case '6':
 			slap_inet4or6 = AF_INET6;
 			break;
@@ -498,10 +547,10 @@ int main( int argc, char **argv )
 
 		case 'h':	/* listen URLs */
 			if ( urls != NULL ) free( urls );
-			urls = ch_strdup( optarg );
+			urls = optarg;
 			break;
 
-		case 'c':	/* provide sync cookie, override if exist in replica */
+		case 'c':	/* provide sync cookie, override if exist in consumer */
 			scp = (struct sync_cookie *) ch_calloc( 1,
 										sizeof( struct sync_cookie ));
 			ber_str2bv( optarg, 0, 1, &scp->octet_str );
@@ -512,7 +561,7 @@ int main( int argc, char **argv )
 			if ( scp->rid == -1 ) {
 				Debug( LDAP_DEBUG_ANY,
 						"main: invalid cookie \"%s\"\n",
-						optarg, 0, 0 );
+						optarg );
 				slap_sync_cookie_free( scp, 1 );
 				goto destroy;
 			}
@@ -520,8 +569,7 @@ int main( int argc, char **argv )
 			LDAP_STAILQ_FOREACH( scp_entry, &slap_sync_cookie, sc_next ) {
 				if ( scp->rid == scp_entry->rid ) {
 					Debug( LDAP_DEBUG_ANY,
-						    "main: duplicated replica id in cookies\n",
-							0, 0, 0 );
+						    "main: duplicated replica id in cookies\n" );
 					slap_sync_cookie_free( scp, 1 );
 					goto destroy;
 				}
@@ -551,11 +599,11 @@ int main( int argc, char **argv )
 			} break;
 
 		case 'f':	/* read config file */
-			configfile = ch_strdup( optarg );
+			configfile = optarg;
 			break;
 
 		case 'F':	/* use config dir */
-			configdir = ch_strdup( optarg );
+			configdir = optarg;
 			break;
 
 		case 'o': {
@@ -620,25 +668,22 @@ int main( int argc, char **argv )
 
 #ifdef HAVE_CHROOT
 		case 'r':
-			if( sandbox ) free(sandbox);
-			sandbox = ch_strdup( optarg );
+			sandbox = optarg;
 			break;
 #endif
 
 #if defined(HAVE_SETUID) && defined(HAVE_SETGID)
 		case 'u':	/* user name */
-			if( username ) free(username);
-			username = ch_strdup( optarg );
+			username = optarg;
 			break;
 
 		case 'g':	/* group name */
-			if( groupname ) free(groupname);
-			groupname = ch_strdup( optarg );
+			groupname = optarg;
 			break;
 #endif /* SETUID && GETUID */
 
 		case 'n':  /* NT service name */
-			serverName = ch_strdup( optarg );
+			serverName = optarg;
 			break;
 
 		case 't':
@@ -702,6 +747,8 @@ unhandled_option:;
 	if ( optind != argc )
 		goto unhandled_option;
 
+	ber_get_option(NULL, LBER_OPT_LOG_PRINT_FN, &ber_logger);
+	ber_set_option(NULL, LBER_OPT_LOG_PRINT_FN, debug_print);
 	ber_set_option(NULL, LBER_OPT_DEBUG_LEVEL, &slap_debug);
 	ldap_set_option(NULL, LDAP_OPT_DEBUG_LEVEL, &slap_debug);
 	ldif_debug = slap_debug;
@@ -747,7 +794,7 @@ unhandled_option:;
 	}
 #endif /* LDAP_DEBUG && LDAP_SYSLOG */
 
-	Debug( LDAP_DEBUG_ANY, "%s", Versionstr, 0, 0 );
+	Debug( LDAP_DEBUG_ANY, "%s", Versionstr );
 
 	global_host = ldap_pvt_get_fqdn( NULL );
 	ber_str2bv( global_host, 0, 0, &global_host_bv );
@@ -825,6 +872,8 @@ unhandled_option:;
 		debug_unknowns = NULL;
 		if ( rc )
 			goto destroy;
+		ber_set_option( NULL, LBER_OPT_DEBUG_LEVEL, &slap_debug );
+		ldap_set_option( NULL, LDAP_OPT_DEBUG_LEVEL, &slap_debug );
 	}
 	if ( syslog_unknowns ) {
 		rc = parse_debug_unknowns( syslog_unknowns, &ldap_syslog );
@@ -851,26 +900,24 @@ unhandled_option:;
 
 	if ( glue_sub_attach( 0 ) != 0 ) {
 		Debug( LDAP_DEBUG_ANY,
-		    "subordinate config error\n",
-		    0, 0, 0 );
+		    "subordinate config error\n" );
 
 		goto destroy;
 	}
 
 	if ( slap_schema_check( ) != 0 ) {
 		Debug( LDAP_DEBUG_ANY,
-		    "schema prep error\n",
-		    0, 0, 0 );
+		    "schema prep error\n" );
 
 		goto destroy;
 	}
 
 #ifdef HAVE_TLS
-	rc = ldap_pvt_tls_init();
+	rc = ldap_pvt_tls_init( 1 );
 	if( rc != 0) {
 		Debug( LDAP_DEBUG_ANY,
 		    "main: TLS init failed: %d\n",
-		    rc, 0, 0 );
+		    rc );
 		rc = 1;
 		SERVICE_EXIT( ERROR_SERVICE_SPECIFIC_ERROR, 20 );
 		goto destroy;
@@ -888,7 +935,7 @@ unhandled_option:;
 		} else if ( rc != LDAP_NOT_SUPPORTED ) {
 			Debug( LDAP_DEBUG_ANY,
 			    "main: TLS init def ctx failed: %d\n",
-			    rc, 0, 0 );
+			    rc );
 			rc = 1;
 			SERVICE_EXIT( ERROR_SERVICE_SPECIFIC_ERROR, 20 );
 			goto destroy;
@@ -929,7 +976,7 @@ unhandled_option:;
 		if ( lutil_pair( waitfds ) < 0 ) {
 			Debug( LDAP_DEBUG_ANY,
 				"main: lutil_pair failed: %d\n",
-				0, 0, 0 );
+				0 );
 			rc = 1;
 			goto destroy;
 		}
@@ -955,12 +1002,13 @@ unhandled_option:;
 		FILE *fp = fopen( slapd_pid_file, "w" );
 
 		if ( fp == NULL ) {
+			char ebuf[128];
 			int save_errno = errno;
 
 			Debug( LDAP_DEBUG_ANY, "unable to open pid file "
 				"\"%s\": %d (%s)\n",
 				slapd_pid_file,
-				save_errno, strerror( save_errno ) );
+				save_errno, AC_STRERROR_R( save_errno, ebuf, sizeof(ebuf) ) );
 
 			free( slapd_pid_file );
 			slapd_pid_file = NULL;
@@ -977,12 +1025,13 @@ unhandled_option:;
 		FILE *fp = fopen( slapd_args_file, "w" );
 
 		if ( fp == NULL ) {
+			char ebuf[128];
 			int save_errno = errno;
 
 			Debug( LDAP_DEBUG_ANY, "unable to open args file "
 				"\"%s\": %d (%s)\n",
 				slapd_args_file,
-				save_errno, strerror( save_errno ) );
+				save_errno, AC_STRERROR_R( save_errno, ebuf, sizeof(ebuf) ) );
 
 			free( slapd_args_file );
 			slapd_args_file = NULL;
@@ -1013,7 +1062,7 @@ unhandled_option:;
 		goto shutdown;
 	}
 
-	Debug( LDAP_DEBUG_ANY, "slapd starting\n", 0, 0, 0 );
+	Debug( LDAP_DEBUG_ANY, "slapd starting\n" );
 
 #ifndef HAVE_WINSOCK
 	if ( !no_detach ) {
@@ -1068,7 +1117,7 @@ stop:
 	lutil_LogStoppedEvent( serverName );
 #endif
 
-	Debug( LDAP_DEBUG_ANY, "slapd stopped.\n", 0, 0, 0 );
+	Debug( LDAP_DEBUG_ANY, "slapd stopped.\n" );
 
 
 #ifdef HAVE_NT_SERVICE_MANAGER
@@ -1107,17 +1156,11 @@ stop:
 
 	config_destroy();
 
-	if ( configfile )
-		ch_free( configfile );
-	if ( configdir )
-		ch_free( configdir );
-	if ( urls )
-		ch_free( urls );
 	if ( global_host )
 		ch_free( global_host );
 
 	/* kludge, get symbols referenced */
-	tavl_free( NULL, NULL );
+	ldap_tavl_free( NULL, NULL );
 
 #ifdef CSRIMALLOC
 	mal_dumpleaktrace( leakfile );

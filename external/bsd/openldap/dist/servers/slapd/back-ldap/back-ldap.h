@@ -1,10 +1,10 @@
-/*	$NetBSD: back-ldap.h,v 1.2 2020/08/11 13:15:40 christos Exp $	*/
+/*	$NetBSD: back-ldap.h,v 1.3 2021/08/14 16:14:59 christos Exp $	*/
 
 /* back-ldap.h - ldap backend header file */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2020 The OpenLDAP Foundation.
+ * Copyright 1999-2021 The OpenLDAP Foundation.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -182,7 +182,7 @@ typedef struct ldapconn_t {
 
 typedef struct ldap_avl_info_t {
 	ldap_pvt_thread_mutex_t		lai_mutex;
-	Avlnode				*lai_tree;
+	TAvlnode			*lai_tree;
 } ldap_avl_info_t;
 
 typedef struct slap_retry_info_t {
@@ -235,6 +235,9 @@ typedef struct slap_idassert_t {
 #define	LDAP_BACK_AUTH_OBSOLETE_ENCODING_WORKAROUND	(0x10U)
 #define	LDAP_BACK_AUTH_AUTHZ_ALL			(0x20U)
 #define	LDAP_BACK_AUTH_PROXYAUTHZ_CRITICAL		(0x40U)
+#define LDAP_BACK_AUTH_DN_AUTHZID			(0x100U)
+#define LDAP_BACK_AUTH_DN_WHOAMI			(0x200U)
+#define LDAP_BACK_AUTH_DN_MASK				(LDAP_BACK_AUTH_DN_AUTHZID|LDAP_BACK_AUTH_DN_WHOAMI)
 #define	li_idassert_flags	li_idassert.si_flags
 
 	BerVarray	si_authz;
@@ -416,6 +419,7 @@ typedef struct ldapinfo_t {
 
 	ldap_pvt_thread_mutex_t li_counter_mutex;
 	ldap_pvt_mp_t		li_ops_completed[SLAP_OP_LAST];
+	struct re_s*		li_conn_expire_task;
 } ldapinfo_t;
 
 #define	LDAP_ERR_OK(err) ((err) == LDAP_SUCCESS || (err) == LDAP_COMPARE_FALSE || (err) == LDAP_COMPARE_TRUE)

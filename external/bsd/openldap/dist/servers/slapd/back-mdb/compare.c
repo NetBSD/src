@@ -1,10 +1,10 @@
-/*	$NetBSD: compare.c,v 1.2 2020/08/11 13:15:40 christos Exp $	*/
+/*	$NetBSD: compare.c,v 1.3 2021/08/14 16:15:00 christos Exp $	*/
 
 /* compare.c - mdb backend compare routine */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2020 The OpenLDAP Foundation.
+ * Copyright 2000-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: compare.c,v 1.2 2020/08/11 13:15:40 christos Exp $");
+__RCSID("$NetBSD: compare.c,v 1.3 2021/08/14 16:15:00 christos Exp $");
 
 #include "portable.h"
 
@@ -109,7 +109,7 @@ mdb_compare( Operation *op, SlapReply *rs )
 			rs->sr_matched = e->e_name.bv_val;
 		}
 
-		Debug( LDAP_DEBUG_TRACE, "entry is referral\n", 0, 0, 0 );
+		Debug( LDAP_DEBUG_TRACE, "entry is referral\n" );
 
 		send_ldap_result( op, rs );
 

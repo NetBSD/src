@@ -1,9 +1,9 @@
-/*	$NetBSD: modrdn.c,v 1.2 2020/08/11 13:15:42 christos Exp $	*/
+/*	$NetBSD: modrdn.c,v 1.3 2021/08/14 16:15:01 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2020 The OpenLDAP Foundation.
+ * Copyright 1999-2021 The OpenLDAP Foundation.
  * Portions Copyright 1999 Dmitry Kovalev.
  * Portions Copyright 2002 Pierangelo Masarati.
  * All rights reserved.
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: modrdn.c,v 1.2 2020/08/11 13:15:42 christos Exp $");
+__RCSID("$NetBSD: modrdn.c,v 1.3 2021/08/14 16:15:01 christos Exp $");
 
 #include "portable.h"
 
@@ -64,8 +64,7 @@ backsql_modrdn( Operation *op, SlapReply *rs )
 	rs->sr_err = backsql_get_db_conn( op, &dbh );
 	if ( rs->sr_err != LDAP_SUCCESS ) {
 		Debug( LDAP_DEBUG_TRACE, "   backsql_modrdn(): "
-			"could not get connection handle - exiting\n", 
-			0, 0, 0 );
+			"could not get connection handle - exiting\n" );
 		rs->sr_text = ( rs->sr_err == LDAP_OTHER )
 			?  "SQL-backend error" : NULL;
 		e = NULL;
@@ -100,8 +99,7 @@ backsql_modrdn( Operation *op, SlapReply *rs )
 
 	default:
 		Debug( LDAP_DEBUG_TRACE, "backsql_modrdn(): "
-			"could not retrieve modrdnDN ID - no such entry\n", 
-			0, 0, 0 );
+			"could not retrieve modrdnDN ID - no such entry\n" );
 		if ( !BER_BVISNULL( &r.e_nname ) ) {
 			/* FIXME: should always be true! */
 			e = &r;
@@ -114,7 +112,7 @@ backsql_modrdn( Operation *op, SlapReply *rs )
 
 	Debug( LDAP_DEBUG_TRACE,
 		"   backsql_modrdn(): entry id=" BACKSQL_IDFMT "\n",
-		BACKSQL_IDARG(e_id.eid_id), 0, 0 );
+		BACKSQL_IDARG(e_id.eid_id) );
 
 	if ( get_assert( op ) &&
 			( test_filter( op, &r, get_assertion( op ) )
@@ -128,7 +126,7 @@ backsql_modrdn( Operation *op, SlapReply *rs )
 	if ( backsql_has_children( op, dbh, &op->o_req_ndn ) == LDAP_COMPARE_TRUE ) {
 		Debug( LDAP_DEBUG_TRACE, "   backsql_modrdn(): "
 			"entry \"%s\" has children\n",
-			op->o_req_dn.bv_val, 0, 0 );
+			op->o_req_dn.bv_val );
 		rs->sr_err = LDAP_NOT_ALLOWED_ON_NONLEAF;
 		rs->sr_text = "subtree rename not supported";
 		e = &r;
@@ -140,7 +138,7 @@ backsql_modrdn( Operation *op, SlapReply *rs )
 	 */
 	if ( !access_allowed( op, &r, slap_schema.si_ad_entry, 
 				NULL, ACL_WRITE, NULL ) ) {
-		Debug( LDAP_DEBUG_TRACE, "   no access to entry\n", 0, 0, 0 );
+		Debug( LDAP_DEBUG_TRACE, "   no access to entry\n" );
 		rs->sr_err = LDAP_INSUFFICIENT_ACCESS;
 		goto done;
 	}
@@ -153,7 +151,7 @@ backsql_modrdn( Operation *op, SlapReply *rs )
 	 */
 	if ( BER_BVISEMPTY( &pdn ) ) {
 		Debug( LDAP_DEBUG_TRACE, "   backsql_modrdn(): "
-			"parent is \"\" - aborting\n", 0, 0, 0 );
+			"parent is \"\" - aborting\n" );
 		rs->sr_err = LDAP_UNWILLING_TO_PERFORM;
 		rs->sr_text = "not allowed within namingContext";
 		e = NULL;
@@ -174,12 +172,11 @@ backsql_modrdn( Operation *op, SlapReply *rs )
 
 	Debug( LDAP_DEBUG_TRACE,
 		"   backsql_modrdn(): old parent entry id is " BACKSQL_IDFMT "\n",
-		BACKSQL_IDARG(bsi.bsi_base_id.eid_id), 0, 0 );
+		BACKSQL_IDARG(bsi.bsi_base_id.eid_id) );
 
 	if ( rs->sr_err != LDAP_SUCCESS ) {
 		Debug( LDAP_DEBUG_TRACE, "backsql_modrdn(): "
-			"could not retrieve renameDN ID - no such entry\n", 
-			0, 0, 0 );
+			"could not retrieve renameDN ID - no such entry\n" );
 		e = &p;
 		goto done;
 	}
@@ -187,7 +184,7 @@ backsql_modrdn( Operation *op, SlapReply *rs )
 	if ( !access_allowed( op, &p, slap_schema.si_ad_children, NULL,
 			newSuperior ? ACL_WDEL : ACL_WRITE, NULL ) )
 	{
-		Debug( LDAP_DEBUG_TRACE, "   no access to parent\n", 0, 0, 0 );
+		Debug( LDAP_DEBUG_TRACE, "   no access to parent\n" );
 		rs->sr_err = LDAP_INSUFFICIENT_ACCESS;
 		goto done;
 	}
@@ -200,7 +197,7 @@ backsql_modrdn( Operation *op, SlapReply *rs )
 		 */
 		if ( BER_BVISEMPTY( newSuperior ) ) {
 			Debug( LDAP_DEBUG_TRACE, "   backsql_modrdn(): "
-				"newSuperior is \"\" - aborting\n", 0, 0, 0 );
+				"newSuperior is \"\" - aborting\n" );
 			rs->sr_err = LDAP_UNWILLING_TO_PERFORM;
 			rs->sr_text = "not allowed within namingContext";
 			e = NULL;
@@ -221,8 +218,7 @@ backsql_modrdn( Operation *op, SlapReply *rs )
 				( BACKSQL_ISF_MATCHED | BACKSQL_ISF_GET_ENTRY ) );
 		if ( rs->sr_err != LDAP_SUCCESS ) {
 			Debug( LDAP_DEBUG_TRACE, "backsql_modrdn(): "
-				"could not retrieve renameDN ID - no such entry\n", 
-				0, 0, 0 );
+				"could not retrieve renameDN ID - no such entry\n" );
 			e = &n;
 			goto done;
 		}
@@ -231,13 +227,13 @@ backsql_modrdn( Operation *op, SlapReply *rs )
 
 		Debug( LDAP_DEBUG_TRACE,
 			"   backsql_modrdn(): new parent entry id=" BACKSQL_IDFMT "\n",
-			BACKSQL_IDARG(n_id.eid_id), 0, 0 );
+			BACKSQL_IDARG(n_id.eid_id) );
 
 		if ( !access_allowed( op, &n, slap_schema.si_ad_children, 
 					NULL, ACL_WADD, NULL ) ) {
 			Debug( LDAP_DEBUG_TRACE, "   backsql_modrdn(): "
 					"no access to new parent \"%s\"\n", 
-					new_pdn->bv_val, 0, 0 );
+					new_pdn->bv_val );
 			rs->sr_err = LDAP_INSUFFICIENT_ACCESS;
 			e = &n;
 			goto done;
@@ -253,15 +249,14 @@ backsql_modrdn( Operation *op, SlapReply *rs )
 
 	if ( newSuperior && dn_match( &pndn, new_npdn ) ) {
 		Debug( LDAP_DEBUG_TRACE, "   backsql_modrdn(): "
-			"newSuperior is equal to old parent - ignored\n",
-			0, 0, 0 );
+			"newSuperior is equal to old parent - ignored\n" );
 		newSuperior = NULL;
 	}
 
 	if ( newSuperior && dn_match( &op->o_req_ndn, new_npdn ) ) {
 		Debug( LDAP_DEBUG_TRACE, "   backsql_modrdn(): "
 			"newSuperior is equal to entry being moved "
-			"- aborting\n", 0, 0, 0 );
+			"- aborting\n" );
 		rs->sr_err = LDAP_OTHER;
 		rs->sr_text = "newSuperior is equal to old DN";
 		e = &r;
@@ -274,13 +269,13 @@ backsql_modrdn( Operation *op, SlapReply *rs )
 			op->o_tmpmemctx );
 	
 	Debug( LDAP_DEBUG_TRACE, "   backsql_modrdn(): new entry dn is \"%s\"\n",
-			new_dn.bv_val, 0, 0 );
+			new_dn.bv_val );
 
 	realnew_dn = new_dn;
 	if ( backsql_api_dn2odbc( op, rs, &realnew_dn ) ) {
 		Debug( LDAP_DEBUG_TRACE, "   backsql_modrdn(\"%s\"): "
 			"backsql_api_dn2odbc(\"%s\") failed\n", 
-			op->o_req_dn.bv_val, realnew_dn.bv_val, 0 );
+			op->o_req_dn.bv_val, realnew_dn.bv_val );
 		SQLFreeStmt( sth, SQL_DROP );
 
 		rs->sr_text = "SQL-backend error";
@@ -290,13 +285,13 @@ backsql_modrdn( Operation *op, SlapReply *rs )
 	}
 
 	Debug( LDAP_DEBUG_TRACE, "   backsql_modrdn(): "
-		"executing renentry_stmt\n", 0, 0, 0 );
+		"executing renentry_stmt\n" );
 
 	rc = backsql_Prepare( dbh, &sth, bi->sql_renentry_stmt, 0 );
 	if ( rc != SQL_SUCCESS ) {
 		Debug( LDAP_DEBUG_TRACE,
 			"   backsql_modrdn(): "
-			"error preparing renentry_stmt\n", 0, 0, 0 );
+			"error preparing renentry_stmt\n" );
 		backsql_PrintErrors( bi->sql_db_env, dbh, 
 				sth, rc );
 
@@ -311,7 +306,7 @@ backsql_modrdn( Operation *op, SlapReply *rs )
 		Debug( LDAP_DEBUG_TRACE,
 			"   backsql_modrdn(): "
 			"error binding DN parameter for objectClass %s\n",
-			oc->bom_oc->soc_cname.bv_val, 0, 0 );
+			oc->bom_oc->soc_cname.bv_val );
 		backsql_PrintErrors( bi->sql_db_env, dbh, 
 			sth, rc );
 		SQLFreeStmt( sth, SQL_DROP );
@@ -327,7 +322,7 @@ backsql_modrdn( Operation *op, SlapReply *rs )
 		Debug( LDAP_DEBUG_TRACE,
 			"   backsql_modrdn(): "
 			"error binding parent ID parameter for objectClass %s\n",
-			oc->bom_oc->soc_cname.bv_val, 0, 0 );
+			oc->bom_oc->soc_cname.bv_val );
 		backsql_PrintErrors( bi->sql_db_env, dbh, 
 			sth, rc );
 		SQLFreeStmt( sth, SQL_DROP );
@@ -343,7 +338,7 @@ backsql_modrdn( Operation *op, SlapReply *rs )
 		Debug( LDAP_DEBUG_TRACE,
 			"   backsql_modrdn(): "
 			"error binding entry ID parameter for objectClass %s\n",
-			oc->bom_oc->soc_cname.bv_val, 0, 0 );
+			oc->bom_oc->soc_cname.bv_val );
 		backsql_PrintErrors( bi->sql_db_env, dbh, 
 			sth, rc );
 		SQLFreeStmt( sth, SQL_DROP );
@@ -359,7 +354,7 @@ backsql_modrdn( Operation *op, SlapReply *rs )
 		Debug( LDAP_DEBUG_TRACE,
 			"   backsql_modrdn(): "
 			"error binding ID parameter for objectClass %s\n",
-			oc->bom_oc->soc_cname.bv_val, 0, 0 );
+			oc->bom_oc->soc_cname.bv_val );
 		backsql_PrintErrors( bi->sql_db_env, dbh, 
 			sth, rc );
 		SQLFreeStmt( sth, SQL_DROP );
@@ -373,7 +368,7 @@ backsql_modrdn( Operation *op, SlapReply *rs )
 	rc = SQLExecute( sth );
 	if ( rc != SQL_SUCCESS ) {
 		Debug( LDAP_DEBUG_TRACE, "   backsql_modrdn(): "
-			"could not rename ldap_entries record\n", 0, 0, 0 );
+			"could not rename ldap_entries record\n" );
 		backsql_PrintErrors( bi->sql_db_env, dbh, sth, rc );
 		SQLFreeStmt( sth, SQL_DROP );
 		rs->sr_err = LDAP_OTHER;
@@ -383,17 +378,18 @@ backsql_modrdn( Operation *op, SlapReply *rs )
 	}
 	SQLFreeStmt( sth, SQL_DROP );
 
-	assert( op->orr_modlist != NULL );
-
 	slap_mods_opattrs( op, &op->orr_modlist, 1 );
 
 	assert( e_id.eid_oc != NULL );
 	oc = e_id.eid_oc;
-	rs->sr_err = backsql_modify_internal( op, rs, dbh, oc, &e_id, op->orr_modlist );
-	slap_graduate_commit_csn( op );
-	if ( rs->sr_err != LDAP_SUCCESS ) {
-		e = &r;
-		goto done;
+
+	if ( op->orr_modlist != NULL ) {
+		rs->sr_err = backsql_modify_internal( op, rs, dbh, oc, &e_id, op->orr_modlist );
+		slap_graduate_commit_csn( op );
+		if ( rs->sr_err != LDAP_SUCCESS ) {
+			e = &r;
+			goto done;
+		}
 	}
 
 	if ( BACKSQL_CHECK_SCHEMA( bi ) ) {
@@ -430,8 +426,7 @@ backsql_modrdn( Operation *op, SlapReply *rs )
 
 		default:
 			Debug( LDAP_DEBUG_TRACE, "backsql_modrdn(): "
-				"could not retrieve modrdnDN ID - no such entry\n", 
-				0, 0, 0 );
+				"could not retrieve modrdnDN ID - no such entry\n" );
 			if ( !BER_BVISNULL( &r.e_nname ) ) {
 				/* FIXME: should always be true! */
 				e = &r;
@@ -449,7 +444,7 @@ backsql_modrdn( Operation *op, SlapReply *rs )
 		if ( rs->sr_err != LDAP_SUCCESS ) {
 			Debug( LDAP_DEBUG_TRACE, "   backsql_modrdn(\"%s\"): "
 				"entry failed schema check -- aborting\n",
-				r.e_name.bv_val, 0, 0 );
+				r.e_name.bv_val );
 			e = NULL;
 			goto done;
 		}
@@ -527,7 +522,7 @@ done:;
 		rs->sr_ref = NULL;
 	}
 
-	Debug( LDAP_DEBUG_TRACE, "<==backsql_modrdn()\n", 0, 0, 0 );
+	Debug( LDAP_DEBUG_TRACE, "<==backsql_modrdn()\n" );
 
 	return rs->sr_err;
 }

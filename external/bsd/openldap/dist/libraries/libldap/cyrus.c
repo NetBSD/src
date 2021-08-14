@@ -1,9 +1,9 @@
-/*	$NetBSD: cyrus.c,v 1.2 2020/08/11 13:15:37 christos Exp $	*/
+/*	$NetBSD: cyrus.c,v 1.3 2021/08/14 16:14:55 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cyrus.c,v 1.2 2020/08/11 13:15:37 christos Exp $");
+__RCSID("$NetBSD: cyrus.c,v 1.3 2021/08/14 16:14:55 christos Exp $");
 
 #include "portable.h"
 
@@ -93,10 +93,10 @@ int ldap_int_sasl_init( void )
 		sprintf( version, "%u.%d.%d", (unsigned)rc >> 24, (rc >> 16) & 0xff,
 			rc & 0xffff );
 
-		Debug( LDAP_DEBUG_ANY,
+		Debug1( LDAP_DEBUG_ANY,
 		"ldap_int_sasl_init: SASL library version mismatch:"
 		" expected " SASL_VERSION_STRING ","
-		" got %s\n", version, 0, 0 );
+		" got %s\n", version );
 		return -1;
 	}
 	}
@@ -343,8 +343,8 @@ ldap_int_sasl_open(
 		return ld->ld_errno;
 	}
 
-	Debug( LDAP_DEBUG_TRACE, "ldap_int_sasl_open: host=%s\n",
-		host, 0, 0 );
+	Debug1( LDAP_DEBUG_TRACE, "ldap_int_sasl_open: host=%s\n",
+		host );
 
 	lc->lconn_sasl_authctx = ctx;
 
@@ -365,8 +365,71 @@ int ldap_int_sasl_close( LDAP *ld, LDAPConn *lc )
 		lc->lconn_sasl_sockctx = NULL;
 		lc->lconn_sasl_authctx = NULL;
 	}
+	if( lc->lconn_sasl_cbind ) {
+		ldap_memfree( lc->lconn_sasl_cbind );
+		lc->lconn_sasl_cbind = NULL;
+	}
 
 	return LDAP_SUCCESS;
+}
+
+int ldap_pvt_sasl_cbinding_parse( const char *arg )
+{
+	int i = -1;
+
+	if ( strcasecmp(arg, "none") == 0 )
+		i = LDAP_OPT_X_SASL_CBINDING_NONE;
+	else if ( strcasecmp(arg, "tls-unique") == 0 )
+		i = LDAP_OPT_X_SASL_CBINDING_TLS_UNIQUE;
+	else if ( strcasecmp(arg, "tls-endpoint") == 0 )
+		i = LDAP_OPT_X_SASL_CBINDING_TLS_ENDPOINT;
+
+	return i;
+}
+
+void *ldap_pvt_sasl_cbinding( void *ssl, int type, int is_server )
+{
+#if defined(SASL_CHANNEL_BINDING) && defined(HAVE_TLS)
+	char unique_prefix[] = "tls-unique:";
+	char endpoint_prefix[] = "tls-server-end-point:";
+	char cbinding[ 64 ];
+	struct berval cbv = { 64, cbinding };
+	void *cb_data; /* used since cb->data is const* */
+	sasl_channel_binding_t *cb;
+	char *prefix;
+	int plen;
+
+	switch (type) {
+	case LDAP_OPT_X_SASL_CBINDING_NONE:
+		return NULL;
+	case LDAP_OPT_X_SASL_CBINDING_TLS_UNIQUE:
+		if ( !ldap_pvt_tls_get_unique( ssl, &cbv, is_server ))
+			return NULL;
+		prefix = unique_prefix;
+		plen = sizeof(unique_prefix) -1;
+		break;
+	case LDAP_OPT_X_SASL_CBINDING_TLS_ENDPOINT:
+		if ( !ldap_pvt_tls_get_endpoint( ssl, &cbv, is_server ))
+			return NULL;
+		prefix = endpoint_prefix;
+		plen = sizeof(endpoint_prefix) -1;
+		break;
+	default:
+		return NULL;
+	}
+
+	cb = ldap_memalloc( sizeof(*cb) + plen + cbv.bv_len );
+	cb->len = plen + cbv.bv_len;
+	cb->data = cb_data = cb+1;
+	memcpy( cb_data, prefix, plen );
+	memcpy( cb_data + plen, cbv.bv_val, cbv.bv_len );
+	cb->name = "ldap";
+	cb->critical = 0;
+
+	return cb;
+#else
+	return NULL;
+#endif
 }
 
 int
@@ -395,8 +458,8 @@ ldap_int_sasl_bind(
 #endif
 	int free_saslhost = 0;
 
-	Debug( LDAP_DEBUG_TRACE, "ldap_int_sasl_bind: %s\n",
-		mechs ? mechs : "<null>", 0, 0 );
+	Debug1( LDAP_DEBUG_TRACE, "ldap_int_sasl_bind: %s\n",
+		mechs ? mechs : "<null>" );
 
 	/* do a quick !LDAPv3 check... ldap_sasl_bind will do the rest. */
 	if (ld->ld_version < LDAP_VERSION3) {
@@ -497,6 +560,19 @@ ldap_int_sasl_bind(
 
 			(void) ldap_int_sasl_external( ld, ld->ld_defconn, authid.bv_val, fac );
 			LDAP_FREE( authid.bv_val );
+#ifdef SASL_CHANNEL_BINDING	/* 2.1.25+ */
+			if ( ld->ld_defconn->lconn_sasl_cbind == NULL ) {
+				void *cb;
+				cb = ldap_pvt_sasl_cbinding( ssl,
+							     ld->ld_options.ldo_sasl_cbinding,
+							     0 );
+				if ( cb != NULL ) {
+					sasl_setprop( ld->ld_defconn->lconn_sasl_authctx,
+						SASL_CHANNEL_BINDING, cb );
+					ld->ld_defconn->lconn_sasl_cbind = cb;
+				}
+			}
+#endif
 		}
 #endif
 
@@ -570,9 +646,9 @@ ldap_int_sasl_bind(
 		if ( rc != LDAP_SUCCESS && rc != LDAP_SASL_BIND_IN_PROGRESS ) {
 			if( scred ) {
 				/* and server provided us with data? */
-				Debug( LDAP_DEBUG_TRACE,
+				Debug2( LDAP_DEBUG_TRACE,
 					"ldap_int_sasl_bind: rc=%d len=%ld\n",
-					rc, scred ? (long) scred->bv_len : -1L, 0 );
+					rc, scred ? (long) scred->bv_len : -1L );
 				ber_bvfree( scred );
 				scred = NULL;
 			}
@@ -589,9 +665,8 @@ ldap_int_sasl_bind(
 		do {
 			if( ! scred ) {
 				/* no data! */
-				Debug( LDAP_DEBUG_TRACE,
-					"ldap_int_sasl_bind: no data in step!\n",
-					0, 0, 0 );
+				Debug0( LDAP_DEBUG_TRACE,
+					"ldap_int_sasl_bind: no data in step!\n" );
 			}
 
 			saslrc = sasl_client_step( ctx,
@@ -601,8 +676,8 @@ ldap_int_sasl_bind(
 				(SASL_CONST char **)&ccred.bv_val,
 				&credlen );
 
-			Debug( LDAP_DEBUG_TRACE, "sasl_client_step: %d\n",
-				saslrc, 0, 0 );
+			Debug1( LDAP_DEBUG_TRACE, "sasl_client_step: %d\n",
+				saslrc );
 
 			if( saslrc == SASL_INTERACT ) {
 				int res;
@@ -913,12 +988,20 @@ int ldap_pvt_sasl_secprops(
 int
 ldap_int_sasl_config( struct ldapoptions *lo, int option, const char *arg )
 {
-	int rc;
+	int rc, i;
 
 	switch( option ) {
 	case LDAP_OPT_X_SASL_SECPROPS:
 		rc = ldap_pvt_sasl_secprops( arg, &lo->ldo_sasl_secprops );
 		if( rc == LDAP_SUCCESS ) return 0;
+		break;
+	case LDAP_OPT_X_SASL_CBINDING:
+		i = ldap_pvt_sasl_cbinding_parse( arg );
+		if ( i >= 0 ) {
+			lo->ldo_sasl_cbinding = i;
+			return 0;
+		}
+		break;
 	}
 
 	return -1;
@@ -1024,6 +1107,10 @@ ldap_int_sasl_get_option( LDAP *ld, int option, void *arg )
 			/* this option is write only */
 			return -1;
 
+		case LDAP_OPT_X_SASL_CBINDING:
+			*(int *)arg = ld->ld_options.ldo_sasl_cbinding;
+			break;
+
 #ifdef SASL_GSS_CREDS
 		case LDAP_OPT_X_SASL_GSS_CREDS: {
 			sasl_conn_t *ctx;
@@ -1124,6 +1211,17 @@ ldap_int_sasl_set_option( LDAP *ld, int option, void *arg )
 
 		return sc == LDAP_SUCCESS ? 0 : -1;
 		}
+
+	case LDAP_OPT_X_SASL_CBINDING:
+		if ( !arg ) return -1;
+		switch( *(int *) arg ) {
+		case LDAP_OPT_X_SASL_CBINDING_NONE:
+		case LDAP_OPT_X_SASL_CBINDING_TLS_UNIQUE:
+		case LDAP_OPT_X_SASL_CBINDING_TLS_ENDPOINT:
+			ld->ld_options.ldo_sasl_cbinding = *(int *) arg;
+			return 0;
+		}
+		return -1;
 
 #ifdef SASL_GSS_CREDS
 	case LDAP_OPT_X_SASL_GSS_CREDS: {

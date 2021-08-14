@@ -1,9 +1,9 @@
-/*	$NetBSD: ldap_pvt.h,v 1.3 2020/08/11 13:15:37 christos Exp $	*/
+/*	$NetBSD: ldap_pvt.h,v 1.4 2021/08/14 16:14:55 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  * 
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,9 @@ ldap_pvt_url_scheme2proto LDAP_P((
 	const char * ));
 LDAP_F ( int )
 ldap_pvt_url_scheme2tls LDAP_P((
+	const char * ));
+LDAP_F ( int )
+ldap_pvt_url_scheme2proxied LDAP_P((
 	const char * ));
 
 LDAP_F ( int )
@@ -130,6 +133,13 @@ ldap_pvt_gettime LDAP_P(( struct lutil_tm * ));
 struct timeval;
 LDAP_F( int )
 ldap_pvt_gettimeofday LDAP_P(( struct timeval *tv, void *unused ));
+#ifndef CLOCK_REALTIME
+#define CLOCK_REALTIME	0
+#endif
+#define clock_gettime(clkid,tv)	ldap_pvt_clock_gettime(clkid,tv)
+struct timespec;
+LDAP_F( int )
+ldap_pvt_clock_gettime LDAP_P(( int clkid, struct timespec *tv ));
 #endif
 
 /* use this macro to allocate buffer for ldap_pvt_csnstr */
@@ -168,6 +178,21 @@ ldap_pvt_get_hname LDAP_P((
 	char *name,
 	int namelen,
 	char **herr ));
+
+#ifdef LDAP_PF_LOCAL
+#define LDAP_IPADDRLEN	(MAXPATHLEN + sizeof("PATH="))
+#elif defined(LDAP_PF_INET6)
+#define LDAP_IPADDRLEN	sizeof("IP=[ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff]:65535")
+#else
+#define LDAP_IPADDRLEN	sizeof("IP=255.255.255.255:65336")
+#endif
+
+typedef union Sockaddr Sockaddr;
+
+LDAP_F (void)
+ldap_pvt_sockaddrstr LDAP_P((
+	Sockaddr *sa,
+	struct berval * ));
 
 
 /* charray.c */
@@ -264,6 +289,10 @@ LDAP_F (void *) ldap_pvt_sasl_mutex_new LDAP_P((void));
 LDAP_F (int) ldap_pvt_sasl_mutex_lock LDAP_P((void *mutex));
 LDAP_F (int) ldap_pvt_sasl_mutex_unlock LDAP_P((void *mutex));
 LDAP_F (void) ldap_pvt_sasl_mutex_dispose LDAP_P((void *mutex));
+
+LDAP_F (int) ldap_pvt_sasl_cbinding_parse LDAP_P(( const char *arg ));
+LDAP_F (void *) ldap_pvt_sasl_cbinding LDAP_P(( void *ssl, int type,
+					        int is_server ));
 #endif /* HAVE_CYRUS_SASL */
 
 struct sockbuf; /* avoid pulling in <lber.h> */
@@ -321,10 +350,26 @@ struct sb_sasl_generic_data {
 
 struct ldap;
 struct ldapmsg;
+struct ldifrecord;
 
 /* abandon */
 LDAP_F ( int ) ldap_pvt_discard LDAP_P((
 	struct ldap *ld, ber_int_t msgid ));
+
+/* init.c */
+LDAP_F( int )
+ldap_pvt_conf_option LDAP_P((
+	char *cmd, char *opt, int userconf ));
+
+/* ldifutil.c */
+LDAP_F( int )
+ldap_parse_ldif_record_x LDAP_P((
+	struct berval *rbuf,
+	unsigned long linenum,
+	struct ldifrecord *lr,
+	const char *errstr,
+	unsigned int flags,
+	void *ctx ));
 
 /* messages.c */
 LDAP_F( BerElement * )
@@ -400,7 +445,7 @@ LDAP_F( struct berval * )
 ldap_pvt_str2lowerbv LDAP_P(( char *str, struct berval *bv ));
 
 /* tls.c */
-LDAP_F (int) ldap_int_tls_config LDAP_P(( struct ldap *ld,
+LDAP_F (int) ldap_pvt_tls_config LDAP_P(( struct ldap *ld,
 	int option, const char *arg ));
 LDAP_F (int) ldap_pvt_tls_get_option LDAP_P(( struct ldap *ld,
 	int option, void *arg ));
@@ -408,9 +453,10 @@ LDAP_F (int) ldap_pvt_tls_set_option LDAP_P(( struct ldap *ld,
 	int option, void *arg ));
 
 LDAP_F (void) ldap_pvt_tls_destroy LDAP_P(( void ));
-LDAP_F (int) ldap_pvt_tls_init LDAP_P(( void ));
+LDAP_F (int) ldap_pvt_tls_init LDAP_P(( int do_threads ));
 LDAP_F (int) ldap_pvt_tls_init_def_ctx LDAP_P(( int is_server ));
 LDAP_F (int) ldap_pvt_tls_accept LDAP_P(( Sockbuf *sb, void *ctx_arg ));
+LDAP_F (int) ldap_pvt_tls_connect LDAP_P(( struct ldap *ld, Sockbuf *sb, const char *host ));
 LDAP_F (int) ldap_pvt_tls_inplace LDAP_P(( Sockbuf *sb ));
 LDAP_F (void *) ldap_pvt_tls_sb_ctx LDAP_P(( Sockbuf *sb ));
 LDAP_F (void) ldap_pvt_tls_ctx_free LDAP_P(( void * ));
@@ -425,6 +471,10 @@ LDAP_F (int) ldap_pvt_tls_get_my_dn LDAP_P(( void *ctx, struct berval *dn,
 LDAP_F (int) ldap_pvt_tls_get_peer_dn LDAP_P(( void *ctx, struct berval *dn,
 	LDAPDN_rewrite_dummy *func, unsigned flags ));
 LDAP_F (int) ldap_pvt_tls_get_strength LDAP_P(( void *ctx ));
+LDAP_F (int) ldap_pvt_tls_get_unique LDAP_P(( void *ctx, struct berval *buf, int is_server ));
+LDAP_F (int) ldap_pvt_tls_get_endpoint LDAP_P(( void *ctx, struct berval *buf, int is_server ));
+LDAP_F (const char *) ldap_pvt_tls_get_version LDAP_P(( void *ctx ));
+LDAP_F (const char *) ldap_pvt_tls_get_cipher LDAP_P(( void *ctx ));
 
 LDAP_END_DECL
 

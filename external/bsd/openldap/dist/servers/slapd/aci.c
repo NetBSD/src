@@ -1,10 +1,10 @@
-/*	$NetBSD: aci.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
+/*	$NetBSD: aci.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
 
 /* aci.c - routines to parse and check acl's */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: aci.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
+__RCSID("$NetBSD: aci.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
 
 #include "portable.h"
 
@@ -286,20 +286,19 @@ aci_list_get_attr_rights(
 			Debug( LDAP_DEBUG_ACL,
 				"        <= aci_list_get_attr_rights "
 				"test %s for %s -> failed\n",
-				bv.bv_val, attr->bv_val, 0 );
+				bv.bv_val, attr->bv_val );
 			continue;
 		}
 
 		Debug( LDAP_DEBUG_ACL,
 			"        <= aci_list_get_attr_rights "
 			"test %s for %s -> ok\n",
-			bv.bv_val, attr->bv_val, 0 );
+			bv.bv_val, attr->bv_val );
 
 		if ( acl_get_part( list, i, ';', &bv ) < 0 ) {
 			Debug( LDAP_DEBUG_ACL,
 				"        <= aci_list_get_attr_rights "
-				"test no rights\n",
-				0, 0, 0 );
+				"test no rights\n" );
 			continue;
 		}
 
@@ -307,7 +306,7 @@ aci_list_get_attr_rights(
 		Debug( LDAP_DEBUG_ACL,
 			"        <= aci_list_get_attr_rights "
 			"rights %s to mask 0x%x\n",
-			bv.bv_val, mask, 0 );
+			bv.bv_val, mask );
 	}
 
 	return mask;
@@ -735,7 +734,7 @@ aci_init( void )
 	rc = register_at( aci_at.desc, aci_at.ad, 0 );
 	if ( rc != LDAP_SUCCESS ) {
 		Debug( LDAP_DEBUG_ANY,
-			"aci_init: at_register failed\n", 0, 0, 0 );
+			"aci_init: at_register failed\n" );
 		return rc;
 	}
 
@@ -855,7 +854,7 @@ dynacl_aci_mask(
 		
 		Debug( LDAP_DEBUG_ACL, "        <= aci_mask grant %s deny %s\n",
 			  accessmask2str( tgrant, accessmaskbuf, 1 ), 
-			  accessmask2str( tdeny, accessmaskbuf1, 1 ), 0 );
+			  accessmask2str( tdeny, accessmaskbuf1, 1 ) );
 	}
 
 	/* If the entry level aci didn't contain anything valid for the 
@@ -893,7 +892,7 @@ dynacl_aci_mask(
 				op->o_ndn = op->o_bd->be_rootndn;
 			}
 
-			Debug( LDAP_DEBUG_ACL, "        checking ACI of \"%s\"\n", parent_ndn.bv_val, 0, 0 );
+			Debug( LDAP_DEBUG_ACL, "        checking ACI of \"%s\"\n", parent_ndn.bv_val );
 			ret = backend_attribute( op, NULL, &parent_ndn, ad, &bvals, ACL_AUTH );
 
 			if ( !BER_BVISNULL( &op->o_bd->be_rootndn ) ) {
@@ -926,7 +925,7 @@ dynacl_aci_mask(
 					}
 					Debug( LDAP_DEBUG_ACL, "<= aci_mask grant %s deny %s\n", 
 						accessmask2str( tgrant, accessmaskbuf, 1 ),
-						accessmask2str( tdeny, accessmaskbuf1, 1 ), 0 );
+						accessmask2str( tdeny, accessmaskbuf1, 1 ) );
 				}
 				break;
 
@@ -934,13 +933,13 @@ dynacl_aci_mask(
 				/* just go on if the aci-Attribute is not present in
 				 * the current entry 
 				 */
-				Debug( LDAP_DEBUG_ACL, "no such attribute\n", 0, 0, 0 );
+				Debug( LDAP_DEBUG_ACL, "no such attribute\n" );
 				stop = 0;
 				break;
 
 			case LDAP_NO_SUCH_OBJECT:
 				/* We have reached the base object */
-				Debug( LDAP_DEBUG_ACL, "no such object\n", 0, 0, 0 );
+				Debug( LDAP_DEBUG_ACL, "no such object\n" );
 				stop = 1;
 				break;
 
@@ -1065,7 +1064,7 @@ OpenLDAPaciValidatePerms(
 			break;
 
 		default:
-		        Debug( LDAP_DEBUG_ACL, "aciValidatePerms: perms needs to be one of x,d,c,s,r,w in '%s'\n", perms->bv_val, 0, 0 );
+		        Debug( LDAP_DEBUG_ACL, "aciValidatePerms: perms needs to be one of x,d,c,s,r,w in '%s'\n", perms->bv_val );
 			return LDAP_INVALID_SYNTAX;
 		}
 
@@ -1079,7 +1078,7 @@ OpenLDAPaciValidatePerms(
 		assert( i != perms->bv_len );
 
 		if ( perms->bv_val[ i ] != ',' ) {
-		        Debug( LDAP_DEBUG_ACL, "aciValidatePerms: missing comma in '%s'\n", perms->bv_val, 0, 0 );
+		        Debug( LDAP_DEBUG_ACL, "aciValidatePerms: missing comma in '%s'\n", perms->bv_val );
 			return LDAP_INVALID_SYNTAX;
 		}
 
@@ -1108,7 +1107,7 @@ OpenLDAPaciValidateRight(
 	if ( acl_get_part( action, 0, ';', &bv ) < 0 ||
 		bv_getcaseidx( &bv, ACIgrantdeny ) == -1 )
 	{
-		Debug( LDAP_DEBUG_ACL, "aciValidateRight: '%s' must be either 'grant' or 'deny'\n", bv.bv_val, 0, 0 );
+		Debug( LDAP_DEBUG_ACL, "aciValidateRight: '%s' must be either 'grant' or 'deny'\n", bv.bv_val );
 		return LDAP_INVALID_SYNTAX;
 	}
 
@@ -1142,13 +1141,13 @@ OpenLDAPaciValidateRight(
 				{
 					if ( slap_bv2ad( &attr, &ad, &text ) != LDAP_SUCCESS ) 
 					{
-						Debug( LDAP_DEBUG_ACL, "aciValidateRight: unknown attribute: '%s'\n", attr.bv_val, 0, 0 );
+						Debug( LDAP_DEBUG_ACL, "aciValidateRight: unknown attribute: '%s'\n", attr.bv_val );
 						return LDAP_INVALID_SYNTAX;
 					}
 				} else {
 					if ( slap_bv2ad( &left, &ad, &text ) != LDAP_SUCCESS ) 
 					{
-						Debug( LDAP_DEBUG_ACL, "aciValidateRight: unknown attribute: '%s'\n", left.bv_val, 0, 0 );
+						Debug( LDAP_DEBUG_ACL, "aciValidateRight: unknown attribute: '%s'\n", left.bv_val );
 						return LDAP_INVALID_SYNTAX;
 					}
 				}
@@ -1161,7 +1160,7 @@ OpenLDAPaciValidateRight(
 		return LDAP_SUCCESS;
 
 	} else {
-		Debug( LDAP_DEBUG_ACL, "aciValidateRight: perms:attr need to be pairs in '%s'\n", action->bv_val, 0, 0 );
+		Debug( LDAP_DEBUG_ACL, "aciValidateRight: perms:attr need to be pairs in '%s'\n", action->bv_val );
 		return LDAP_INVALID_SYNTAX;
 	}
 
@@ -1182,12 +1181,12 @@ OpenLDAPaciNormalizeRight(
 
 	/* grant|deny */
 	if ( acl_get_part( action, 0, ';', &grantdeny ) < 0 ) {
-	        Debug( LDAP_DEBUG_ACL, "aciNormalizeRight: missing ';' in '%s'\n", action->bv_val, 0, 0 );
+	        Debug( LDAP_DEBUG_ACL, "aciNormalizeRight: missing ';' in '%s'\n", action->bv_val );
 		return LDAP_INVALID_SYNTAX;
 	}
 	idx = bv_getcaseidx( &grantdeny, ACIgrantdeny );
 	if ( idx == -1 ) {
-	        Debug( LDAP_DEBUG_ACL, "aciNormalizeRight: '%s' must be grant or deny\n", grantdeny.bv_val, 0, 0 );
+	        Debug( LDAP_DEBUG_ACL, "aciNormalizeRight: '%s' must be grant or deny\n", grantdeny.bv_val );
 		return LDAP_INVALID_SYNTAX;
 	}
 
@@ -1225,17 +1224,17 @@ OpenLDAPaciNormalizeRight(
 				{
 					ad = NULL;
 					text = NULL;
-					/* openldap 2.1 aci compabitibility [entry] -> entry */
+					/* openldap 2.1 aci compatibility [entry] -> entry */
 					if ( ber_bvstrcasecmp( &attr, &aci_bv[ ACI_BV_BR_ENTRY ] ) == 0 ) {
 						ad = &adstatic;
 						adstatic.ad_cname = aci_bv[ ACI_BV_ENTRY ];
 
-					/* openldap 2.1 aci compabitibility [children] -> children */
+					/* openldap 2.1 aci compatibility [children] -> children */
 					} else if ( ber_bvstrcasecmp( &attr, &aci_bv[ ACI_BV_BR_CHILDREN ] ) == 0 ) {
 						ad = &adstatic;
 						adstatic.ad_cname = aci_bv[ ACI_BV_CHILDREN ];
 
-					/* openldap 2.1 aci compabitibility [all] -> only [all] */
+					/* openldap 2.1 aci compatibility [all] -> only [all] */
 					} else if ( ber_bvstrcasecmp( &attr, &aci_bv[ ACI_BV_BR_ALL ] ) == 0 ) {
 						ber_memfree_x( nattrs.bv_val, ctx );
 						nattrs = aci_bv[ ACI_BV_BR_ALL ];
@@ -1248,7 +1247,7 @@ OpenLDAPaciNormalizeRight(
 						if ( slap_bv2ad( &attr, &ad, &text ) != LDAP_SUCCESS ) 
 						{
 							ber_memfree_x( nattrs.bv_val, ctx );
-							Debug( LDAP_DEBUG_ACL, "aciNormalizeRight: unknown attribute: '%s'\n", attr.bv_val, 0, 0 );
+							Debug( LDAP_DEBUG_ACL, "aciNormalizeRight: unknown attribute: '%s'\n", attr.bv_val );
 							return LDAP_INVALID_SYNTAX;
 						}
 
@@ -1256,7 +1255,7 @@ OpenLDAPaciNormalizeRight(
 						if ( slap_bv2ad( &left, &ad, &text ) != LDAP_SUCCESS ) 
 						{
 							ber_memfree_x( nattrs.bv_val, ctx );
-							Debug( LDAP_DEBUG_ACL, "aciNormalizeRight: unknown attribute: '%s'\n", left.bv_val, 0, 0 );
+							Debug( LDAP_DEBUG_ACL, "aciNormalizeRight: unknown attribute: '%s'\n", left.bv_val );
 							return LDAP_INVALID_SYNTAX;
 						}
 					}
@@ -1264,7 +1263,7 @@ OpenLDAPaciNormalizeRight(
 				
 					len = nattrs.bv_len + ( !BER_BVISEMPTY( &nattrs ) ? STRLENOF( "," ) : 0 )
 				      		+ ad->ad_cname.bv_len;
-					nattrs.bv_val = ber_memrealloc_x( nattrs.bv_val, len + 1, ctx );
+					nattrs.bv_val = slap_sl_realloc( nattrs.bv_val, len + 1, ctx );
 	                        	ptr = &nattrs.bv_val[ nattrs.bv_len ];
 					if ( !BER_BVISEMPTY( &nattrs ) ) {
 						*ptr++ = ',';
@@ -1276,7 +1275,7 @@ OpenLDAPaciNormalizeRight(
 
 			}
 
-			naction->bv_val = ber_memrealloc_x( naction->bv_val,
+			naction->bv_val = slap_sl_realloc( naction->bv_val,
 				naction->bv_len + STRLENOF( ";" )
 				+ perms.bv_len + STRLENOF( ";" )
 				+ nattrs.bv_len + 1,
@@ -1303,7 +1302,7 @@ OpenLDAPaciNormalizeRight(
 		return LDAP_SUCCESS;
 
 	} else {
-		Debug( LDAP_DEBUG_ACL, "aciNormalizeRight: perms:attr need to be pairs in '%s'\n", action->bv_val, 0, 0 );
+		Debug( LDAP_DEBUG_ACL, "aciNormalizeRight: perms:attr need to be pairs in '%s'\n", action->bv_val );
 		return LDAP_INVALID_SYNTAX;
 	}
 }
@@ -1351,7 +1350,7 @@ OpenLDAPaciNormalizeRights(
 			*nactions = nbv;
 
 		} else {
-			nactions->bv_val = ber_memrealloc_x( nactions->bv_val,
+			nactions->bv_val = slap_sl_realloc( nactions->bv_val,
 				nactions->bv_len + STRLENOF( "$" )
 				+ nbv.bv_len + 1,
 				ctx );
@@ -1416,7 +1415,7 @@ OpenLDAPaciValidate(
 	int		rc;
 	
 	if ( BER_BVISEMPTY( val ) ) {
-		Debug( LDAP_DEBUG_ACL, "aciValidatet: value is empty\n", 0, 0, 0 );
+		Debug( LDAP_DEBUG_ACL, "aciValidatet: value is empty\n" );
 		return LDAP_INVALID_SYNTAX;
 	}
 
@@ -1428,7 +1427,7 @@ OpenLDAPaciValidate(
 		 * I'd replace it with X-ORDERED VALUES so that
 		 * it's guaranteed values are maintained and used
 		 * in the desired order */
-		Debug( LDAP_DEBUG_ACL, "aciValidate: invalid oid '%s'\n", oid.bv_val, 0, 0 );
+		Debug( LDAP_DEBUG_ACL, "aciValidate: invalid oid '%s'\n", oid.bv_val );
 		return LDAP_INVALID_SYNTAX;
 	}
 
@@ -1436,7 +1435,7 @@ OpenLDAPaciValidate(
 	if ( acl_get_part( val, 1, '#', &scope ) < 0 || 
 		bv_getcaseidx( &scope, OpenLDAPaciscopes ) == -1 )
 	{
-		Debug( LDAP_DEBUG_ACL, "aciValidate: invalid scope '%s'\n", scope.bv_val, 0, 0 );
+		Debug( LDAP_DEBUG_ACL, "aciValidate: invalid scope '%s'\n", scope.bv_val );
 		return LDAP_INVALID_SYNTAX;
 	}
 
@@ -1449,7 +1448,7 @@ OpenLDAPaciValidate(
 
 	/* type */
 	if ( acl_get_part( val, 3, '#', &type ) < 0 ) {
-		Debug( LDAP_DEBUG_ACL, "aciValidate: missing type in '%s'\n", val->bv_val, 0, 0 );
+		Debug( LDAP_DEBUG_ACL, "aciValidate: missing type in '%s'\n", val->bv_val );
 		return LDAP_INVALID_SYNTAX;
 	}
 	idx = bv_getcaseidx( &type, OpenLDAPacitypes );
@@ -1457,13 +1456,13 @@ OpenLDAPaciValidate(
 		struct berval	isgr;
 
 		if ( acl_get_part( &type, 0, '/', &isgr ) < 0 ) {
-			Debug( LDAP_DEBUG_ACL, "aciValidate: invalid type '%s'\n", type.bv_val, 0, 0 );
+			Debug( LDAP_DEBUG_ACL, "aciValidate: invalid type '%s'\n", type.bv_val );
 			return LDAP_INVALID_SYNTAX;
 		}
 
 		idx = bv_getcaseidx( &isgr, OpenLDAPacitypes );
 		if ( idx == -1 || idx >= LAST_OPTIONAL ) {
-			Debug( LDAP_DEBUG_ACL, "aciValidate: invalid type '%s'\n", isgr.bv_val, 0, 0 );
+			Debug( LDAP_DEBUG_ACL, "aciValidate: invalid type '%s'\n", isgr.bv_val );
 			return LDAP_INVALID_SYNTAX;
 		}
 	}
@@ -1471,7 +1470,7 @@ OpenLDAPaciValidate(
 	/* subject */
 	bv_get_tail( val, &type, &subject );
 	if ( subject.bv_val[ 0 ] != '#' ) {
-		Debug( LDAP_DEBUG_ACL, "aciValidate: missing subject in '%s'\n", val->bv_val, 0, 0 );
+		Debug( LDAP_DEBUG_ACL, "aciValidate: missing subject in '%s'\n", val->bv_val );
 		return LDAP_INVALID_SYNTAX;
 	}
 
@@ -1482,13 +1481,13 @@ OpenLDAPaciValidate(
 
 			rc = slap_bv2ad( &subject, &ad, &text );
 			if ( rc != LDAP_SUCCESS ) {
-				Debug( LDAP_DEBUG_ACL, "aciValidate: unknown dn attribute '%s'\n", subject.bv_val, 0, 0 );
+				Debug( LDAP_DEBUG_ACL, "aciValidate: unknown dn attribute '%s'\n", subject.bv_val );
 				return LDAP_INVALID_SYNTAX;
 			}
 
 			if ( ad->ad_type->sat_syntax != slap_schema.si_syn_distinguishedName ) {
 				/* FIXME: allow nameAndOptionalUID? */
-				Debug( LDAP_DEBUG_ACL, "aciValidate: wrong syntax for dn attribute '%s'\n", subject.bv_val, 0, 0 );
+				Debug( LDAP_DEBUG_ACL, "aciValidate: wrong syntax for dn attribute '%s'\n", subject.bv_val );
 				return LDAP_INVALID_SYNTAX;
 			}
 		}
@@ -1522,13 +1521,13 @@ OpenLDAPaciValidate(
 
 				rc = slap_bv2ad( &atbv, &ad, &text );
 				if ( rc != LDAP_SUCCESS ) {
-				        Debug( LDAP_DEBUG_ACL, "aciValidate: unknown group attribute '%s'\n", atbv.bv_val, 0, 0 );
+				        Debug( LDAP_DEBUG_ACL, "aciValidate: unknown group attribute '%s'\n", atbv.bv_val );
 					return LDAP_INVALID_SYNTAX;
 				}
 			}
 
 			if ( oc_bvfind( &ocbv ) == NULL ) {
-			        Debug( LDAP_DEBUG_ACL, "aciValidate: unknown group '%s'\n", ocbv.bv_val, 0, 0 );
+			        Debug( LDAP_DEBUG_ACL, "aciValidate: unknown group '%s'\n", ocbv.bv_val );
 				return LDAP_INVALID_SYNTAX;
 			}
 		}
@@ -1536,7 +1535,7 @@ OpenLDAPaciValidate(
 
 	if ( BER_BVISEMPTY( &subject ) ) {
 		/* empty DN invalid */
-	        Debug( LDAP_DEBUG_ACL, "aciValidate: missing dn in '%s'\n", val->bv_val, 0, 0 );
+	        Debug( LDAP_DEBUG_ACL, "aciValidate: missing dn in '%s'\n", val->bv_val );
 		return LDAP_INVALID_SYNTAX;
 	}
 
@@ -1546,7 +1545,7 @@ OpenLDAPaciValidate(
 	/* FIXME: pass DN syntax? */
 	rc = dnValidate( NULL, &subject );
 	if ( rc != LDAP_SUCCESS ) {
-	        Debug( LDAP_DEBUG_ACL, "aciValidate: invalid dn '%s'\n", subject.bv_val, 0, 0 );
+	        Debug( LDAP_DEBUG_ACL, "aciValidate: invalid dn '%s'\n", subject.bv_val );
 	}
 	return rc;
 }
@@ -1575,7 +1574,7 @@ OpenLDAPaciPrettyNormal(
 	BER_BVZERO( out );
 
 	if ( BER_BVISEMPTY( val ) ) {
-		Debug( LDAP_DEBUG_ACL, "aciPrettyNormal: value is empty\n", 0, 0, 0 );
+		Debug( LDAP_DEBUG_ACL, "aciPrettyNormal: value is empty\n" );
 		return LDAP_INVALID_SYNTAX;
 	}
 
@@ -1583,25 +1582,25 @@ OpenLDAPaciPrettyNormal(
 	if ( acl_get_part( val, 0, '#', &oid ) < 0 || 
 		numericoidValidate( NULL, &oid ) != LDAP_SUCCESS )
 	{
-		Debug( LDAP_DEBUG_ACL, "aciPrettyNormal: invalid oid '%s'\n", oid.bv_val, 0, 0 );
+		Debug( LDAP_DEBUG_ACL, "aciPrettyNormal: invalid oid '%s'\n", oid.bv_val );
 		return LDAP_INVALID_SYNTAX;
 	}
 
 	/* scope: normalize by replacing with OpenLDAPaciscopes */
 	if ( acl_get_part( val, 1, '#', &scope ) < 0 ) {
-		Debug( LDAP_DEBUG_ACL, "aciPrettyNormal: missing scope in '%s'\n", val->bv_val, 0, 0 );
+		Debug( LDAP_DEBUG_ACL, "aciPrettyNormal: missing scope in '%s'\n", val->bv_val );
 		return LDAP_INVALID_SYNTAX;
 	}
 	idx = bv_getcaseidx( &scope, OpenLDAPaciscopes );
 	if ( idx == -1 ) {
-		Debug( LDAP_DEBUG_ACL, "aciPrettyNormal: invalid scope '%s'\n", scope.bv_val, 0, 0 );
+		Debug( LDAP_DEBUG_ACL, "aciPrettyNormal: invalid scope '%s'\n", scope.bv_val );
 		return LDAP_INVALID_SYNTAX;
 	}
 	scope = *OpenLDAPaciscopes[ idx ];
 
 	/* rights */
 	if ( acl_get_part( val, 2, '#', &rights ) < 0 ) {
-		Debug( LDAP_DEBUG_ACL, "aciPrettyNormal: missing rights in '%s'\n", val->bv_val, 0, 0 );
+		Debug( LDAP_DEBUG_ACL, "aciPrettyNormal: missing rights in '%s'\n", val->bv_val );
 		return LDAP_INVALID_SYNTAX;
 	}
 	if ( OpenLDAPaciNormalizeRights( &rights, &nrights, ctx )
@@ -1612,7 +1611,7 @@ OpenLDAPaciPrettyNormal(
 
 	/* type */
 	if ( acl_get_part( val, 3, '#', &type ) < 0 ) {
-		Debug( LDAP_DEBUG_ACL, "aciPrettyNormal: missing type in '%s'\n", val->bv_val, 0, 0 );
+		Debug( LDAP_DEBUG_ACL, "aciPrettyNormal: missing type in '%s'\n", val->bv_val );
 		rc = LDAP_INVALID_SYNTAX;
 		goto cleanup;
 	}
@@ -1621,14 +1620,14 @@ OpenLDAPaciPrettyNormal(
 		struct berval	isgr;
 
 		if ( acl_get_part( &type, 0, '/', &isgr ) < 0 ) {
-		        Debug( LDAP_DEBUG_ACL, "aciPrettyNormal: invalid type '%s'\n", type.bv_val, 0, 0 );
+		        Debug( LDAP_DEBUG_ACL, "aciPrettyNormal: invalid type '%s'\n", type.bv_val );
 			rc = LDAP_INVALID_SYNTAX;
 			goto cleanup;
 		}
 
 		idx = bv_getcaseidx( &isgr, OpenLDAPacitypes );
 		if ( idx == -1 || idx >= LAST_OPTIONAL ) {
-		        Debug( LDAP_DEBUG_ACL, "aciPrettyNormal: invalid type '%s'\n", isgr.bv_val, 0, 0 );
+		        Debug( LDAP_DEBUG_ACL, "aciPrettyNormal: invalid type '%s'\n", isgr.bv_val );
 			rc = LDAP_INVALID_SYNTAX;
 			goto cleanup;
 		}
@@ -1639,7 +1638,7 @@ OpenLDAPaciPrettyNormal(
 	bv_get_tail( val, &type, &subject );
 
 	if ( BER_BVISEMPTY( &subject ) || subject.bv_val[ 0 ] != '#' ) {
-	        Debug( LDAP_DEBUG_ACL, "aciPrettyNormal: missing subject in '%s'\n", val->bv_val, 0, 0 );
+	        Debug( LDAP_DEBUG_ACL, "aciPrettyNormal: missing subject in '%s'\n", val->bv_val );
 		rc = LDAP_INVALID_SYNTAX;
 		goto cleanup;
 	}
@@ -1660,7 +1659,7 @@ OpenLDAPaciPrettyNormal(
 			freesubject = 1;
 
 		} else {
-	                Debug( LDAP_DEBUG_ACL, "aciPrettyNormal: invalid subject dn '%s'\n", subject.bv_val, 0, 0 );
+	                Debug( LDAP_DEBUG_ACL, "aciPrettyNormal: invalid subject dn '%s'\n", subject.bv_val );
 			goto cleanup;
 		}
 
@@ -1693,7 +1692,7 @@ OpenLDAPaciPrettyNormal(
 	
 					rc = slap_bv2ad( &atbv, &ad, &text );
 					if ( rc != LDAP_SUCCESS ) {
-	                                        Debug( LDAP_DEBUG_ACL, "aciPrettyNormal: unknown group attribute '%s'\n", atbv.bv_val, 0, 0 );
+	                                        Debug( LDAP_DEBUG_ACL, "aciPrettyNormal: unknown group attribute '%s'\n", atbv.bv_val );
 						rc = LDAP_INVALID_SYNTAX;
 						goto cleanup;
 					}
@@ -1703,13 +1702,13 @@ OpenLDAPaciPrettyNormal(
 
 				oc = oc_bvfind( &ocbv );
 				if ( oc == NULL ) {
-                                        Debug( LDAP_DEBUG_ACL, "aciPrettyNormal: invalid group '%s'\n", ocbv.bv_val, 0, 0 );
+                                        Debug( LDAP_DEBUG_ACL, "aciPrettyNormal: invalid group '%s'\n", ocbv.bv_val );
 					rc = LDAP_INVALID_SYNTAX;
 					goto cleanup;
 				}
 
 				bv.bv_len += STRLENOF( "/" ) + oc->soc_cname.bv_len;
-				bv.bv_val = ber_memalloc_x( bv.bv_len + 1, ctx );
+				bv.bv_val = slap_sl_malloc( bv.bv_len + 1, ctx );
 
 				ptr = bv.bv_val;
 				ptr = lutil_strncopy( ptr, ntype.bv_val, ntype.bv_len );
@@ -1739,14 +1738,14 @@ OpenLDAPaciPrettyNormal(
 
 		rc = slap_bv2ad( &subject, &ad, &text );
 		if ( rc != LDAP_SUCCESS ) {
-                        Debug( LDAP_DEBUG_ACL, "aciPrettyNormal: unknown dn attribute '%s'\n", subject.bv_val, 0, 0 );
+                        Debug( LDAP_DEBUG_ACL, "aciPrettyNormal: unknown dn attribute '%s'\n", subject.bv_val );
 			rc = LDAP_INVALID_SYNTAX;
 			goto cleanup;
 		}
 
 		if ( ad->ad_type->sat_syntax != slap_schema.si_syn_distinguishedName ) {
 			/* FIXME: allow nameAndOptionalUID? */
-                        Debug( LDAP_DEBUG_ACL, "aciPrettyNormal: wrong syntax for dn attribute '%s'\n", subject.bv_val, 0, 0 );
+                        Debug( LDAP_DEBUG_ACL, "aciPrettyNormal: wrong syntax for dn attribute '%s'\n", subject.bv_val );
 			rc = LDAP_INVALID_SYNTAX;
 			goto cleanup;
 		}
@@ -1768,7 +1767,7 @@ OpenLDAPaciPrettyNormal(
 		+ ntype.bv_len + STRLENOF( "#" )
 		+ nsubject.bv_len;
 
-	out->bv_val = ber_memalloc_x( out->bv_len + 1, ctx );
+	out->bv_val = slap_sl_malloc( out->bv_len + 1, ctx );
 	ptr = lutil_strncopy( out->bv_val, oid.bv_val, oid.bv_len );
 	ptr[ 0 ] = '#';
 	ptr++;

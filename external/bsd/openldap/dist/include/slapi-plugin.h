@@ -1,9 +1,9 @@
-/*	$NetBSD: slapi-plugin.h,v 1.2 2020/08/11 13:15:37 christos Exp $	*/
+/*	$NetBSD: slapi-plugin.h,v 1.3 2021/08/14 16:14:55 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * Portions Copyright 1997,2002,2003 IBM Corporation.
  * All rights reserved.
  *
@@ -345,7 +345,7 @@ Slapi_PBlock *slapi_modrdn_internal( char * olddn, char * newrdn,
 	int deloldrdn, LDAPControl **controls,
 	int log_change );
 Slapi_PBlock *slapi_rename_internal( const char * olddn, const char *newrdn,
-	const char *newsuperior, int delolrdn,
+	const char *newsuperior, int deloldrdn,
 	LDAPControl **controls, int log_change );
 void slapi_free_search_results_internal(Slapi_PBlock *pb);
 
@@ -557,7 +557,7 @@ int slapi_x_backend_get_flags( const Slapi_Backend *be, unsigned long *flags );
 #define SLAPI_PLUGIN_DESCRIPTION		12
 #define SLAPI_PLUGIN_IDENTITY			13
 
-/* internal opreations params */
+/* internal operations params */
 #define SLAPI_PLUGIN_INTOP_RESULT		15
 #define SLAPI_PLUGIN_INTOP_SEARCH_ENTRIES	16
 #define SLAPI_PLUGIN_INTOP_SEARCH_REFERRALS	17

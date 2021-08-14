@@ -1,10 +1,10 @@
-/*	$NetBSD: cache.c,v 1.2 2020/08/11 13:15:41 christos Exp $	*/
+/*	$NetBSD: cache.c,v 1.3 2021/08/14 16:15:00 christos Exp $	*/
 
 /* cache.c - routines to maintain an in-core cache of entries */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2020 The OpenLDAP Foundation.
+ * Copyright 2001-2021 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cache.c,v 1.2 2020/08/11 13:15:41 christos Exp $");
+__RCSID("$NetBSD: cache.c,v 1.3 2021/08/14 16:15:00 christos Exp $");
 
 #include "portable.h"
 
@@ -87,19 +87,16 @@ monitor_cache_add(
 	Entry		*e )
 {
 	monitor_cache_t	*mc;
-	monitor_entry_t	*mp;
 	int		rc;
 
 	assert( mi != NULL );
 	assert( e != NULL );
 
-	mp = ( monitor_entry_t *)e->e_private;
-
 	mc = ( monitor_cache_t * )ch_malloc( sizeof( monitor_cache_t ) );
 	mc->mc_ndn = e->e_nname;
 	mc->mc_e = e;
 	ldap_pvt_thread_mutex_lock( &mi->mi_cache_mutex );
-	rc = avl_insert( &mi->mi_cache, ( caddr_t )mc,
+	rc = ldap_avl_insert( &mi->mi_cache, ( caddr_t )mc,
 			monitor_cache_cmp, monitor_cache_dup );
 	ldap_pvt_thread_mutex_unlock( &mi->mi_cache_mutex );
 
@@ -161,7 +158,7 @@ monitor_cache_get(
 	tmp_mc.mc_ndn = *ndn;
 retry:;
 	ldap_pvt_thread_mutex_lock( &mi->mi_cache_mutex );
-	mc = ( monitor_cache_t * )avl_find( mi->mi_cache,
+	mc = ( monitor_cache_t * )ldap_avl_find( mi->mi_cache,
 			( caddr_t )&tmp_mc, monitor_cache_cmp );
 
 	if ( mc != NULL ) {
@@ -204,7 +201,7 @@ retry:;
 	ldap_pvt_thread_mutex_lock( &mi->mi_cache_mutex );
 
 	tmp_mc.mc_ndn = *ndn;
-	mc = ( monitor_cache_t * )avl_find( mi->mi_cache,
+	mc = ( monitor_cache_t * )ldap_avl_find( mi->mi_cache,
 			( caddr_t )&tmp_mc, monitor_cache_cmp );
 
 	if ( mc != NULL ) {
@@ -216,7 +213,7 @@ retry:;
 		}
 
 		tmp_mc.mc_ndn = pndn;
-		pmc = ( monitor_cache_t * )avl_find( mi->mi_cache,
+		pmc = ( monitor_cache_t * )ldap_avl_find( mi->mi_cache,
 			( caddr_t )&tmp_mc, monitor_cache_cmp );
 		if ( pmc != NULL ) {
 			monitor_entry_t	*mp = (monitor_entry_t *)mc->mc_e->e_private,
@@ -244,7 +241,7 @@ retry:;
 				Debug( LDAP_DEBUG_ANY,
 					"monitor_cache_remove(\"%s\"): "
 					"not in parent's list\n",
-					ndn->bv_val, 0, 0 );
+					ndn->bv_val );
 			}
 
 			/* either succeeded, and the entry is no longer
@@ -256,7 +253,7 @@ retry:;
 				monitor_cache_t *tmpmc;
 
 				tmp_mc.mc_ndn = *ndn;
-				tmpmc = avl_delete( &mi->mi_cache,
+				tmpmc = ldap_avl_delete( &mi->mi_cache,
 					( caddr_t )&tmp_mc, monitor_cache_cmp );
 				assert( tmpmc == mc );
 
@@ -375,7 +372,7 @@ monitor_cache_release(
 		/* volatile entries do not return to cache */
 		ldap_pvt_thread_mutex_lock( &mi->mi_cache_mutex );
 		tmp_mc.mc_ndn = e->e_nname;
-		mc = avl_delete( &mi->mi_cache,
+		mc = ldap_avl_delete( &mi->mi_cache,
 				( caddr_t )&tmp_mc, monitor_cache_cmp );
 		ldap_pvt_thread_mutex_unlock( &mi->mi_cache_mutex );
 		if ( mc != NULL ) {
@@ -438,7 +435,7 @@ monitor_cache_destroy(
 	monitor_info_t	*mi )
 {
 	if ( mi->mi_cache ) {
-		avl_free( mi->mi_cache, monitor_entry_destroy );
+		ldap_avl_free( mi->mi_cache, monitor_entry_destroy );
 	}
 
 	return 0;

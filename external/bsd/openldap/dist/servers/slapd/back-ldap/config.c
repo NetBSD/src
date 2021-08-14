@@ -1,10 +1,10 @@
-/*	$NetBSD: config.c,v 1.2 2020/08/11 13:15:40 christos Exp $	*/
+/*	$NetBSD: config.c,v 1.3 2021/08/14 16:14:59 christos Exp $	*/
 
 /* config.c - ldap backend configuration file routine */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2020 The OpenLDAP Foundation.
+ * Copyright 2003-2021 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Howard Chu.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * All rights reserved.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: config.c,v 1.2 2020/08/11 13:15:40 christos Exp $");
+__RCSID("$NetBSD: config.c,v 1.3 2021/08/14 16:14:59 christos Exp $");
 
 #include "portable.h"
 
@@ -35,7 +35,7 @@ __RCSID("$NetBSD: config.c,v 1.2 2020/08/11 13:15:40 christos Exp $");
 #include <ac/socket.h>
 
 #include "slap.h"
-#include "config.h"
+#include "slap-config.h"
 #include "back-ldap.h"
 #include "lutil.h"
 #include "ldif.h"
@@ -48,16 +48,9 @@ static ConfigDriver ldap_pbind_cf_gen;
 enum {
 	LDAP_BACK_CFG_URI = 1,
 	LDAP_BACK_CFG_TLS,
-	LDAP_BACK_CFG_ACL_AUTHCDN,
-	LDAP_BACK_CFG_ACL_PASSWD,
-	LDAP_BACK_CFG_ACL_METHOD,
 	LDAP_BACK_CFG_ACL_BIND,
-	LDAP_BACK_CFG_IDASSERT_MODE,
-	LDAP_BACK_CFG_IDASSERT_AUTHCDN,
-	LDAP_BACK_CFG_IDASSERT_PASSWD,
 	LDAP_BACK_CFG_IDASSERT_AUTHZFROM,
 	LDAP_BACK_CFG_IDASSERT_PASSTHRU,
-	LDAP_BACK_CFG_IDASSERT_METHOD,
 	LDAP_BACK_CFG_IDASSERT_BIND,
 	LDAP_BACK_CFG_REBIND,
 	LDAP_BACK_CFG_CHASE,
@@ -78,8 +71,8 @@ enum {
 	LDAP_BACK_CFG_NOUNDEFFILTER,
 	LDAP_BACK_CFG_ONERR,
 
-	LDAP_BACK_CFG_REWRITE,
 	LDAP_BACK_CFG_KEEPALIVE,
+	LDAP_BACK_CFG_TCP_USER_TIMEOUT,
 
 	LDAP_BACK_CFG_OMIT_UNKNOWN_SCHEMA,
 
@@ -92,6 +85,7 @@ static ConfigTable ldapcfg[] = {
 		ldap_back_cf_gen, "( OLcfgDbAt:0.14 "
 			"NAME 'olcDbURI' "
 			"DESC 'URI (list) for remote DSA' "
+			"EQUALITY caseExactMatch "
 			"SYNTAX OMsDirectoryString "
 			"SINGLE-VALUE )",
 		NULL, NULL },
@@ -100,92 +94,27 @@ static ConfigTable ldapcfg[] = {
 		ldap_back_cf_gen, "( OLcfgDbAt:3.1 "
 			"NAME 'olcDbStartTLS' "
 			"DESC 'StartTLS' "
+			"EQUALITY caseExactMatch "
 			"SYNTAX OMsDirectoryString "
 			"SINGLE-VALUE )",
 		NULL, NULL },
-	{ "acl-authcDN", "DN", 2, 2, 0,
-		ARG_DN|ARG_MAGIC|LDAP_BACK_CFG_ACL_AUTHCDN,
-		ldap_back_cf_gen, "( OLcfgDbAt:3.2 "
-			"NAME 'olcDbACLAuthcDn' "
-			"DESC 'Remote ACL administrative identity' "
-			"OBSOLETE "
-			"SYNTAX OMsDN "
-			"SINGLE-VALUE )",
-		NULL, NULL },
-	/* deprecated, will be removed; aliases "acl-authcDN" */
-	{ "binddn", "DN", 2, 2, 0,
-		ARG_DN|ARG_MAGIC|LDAP_BACK_CFG_ACL_AUTHCDN,
-		ldap_back_cf_gen, NULL, NULL, NULL },
-	{ "acl-passwd", "cred", 2, 2, 0,
-		ARG_MAGIC|LDAP_BACK_CFG_ACL_PASSWD,
-		ldap_back_cf_gen, "( OLcfgDbAt:3.3 "
-			"NAME 'olcDbACLPasswd' "
-			"DESC 'Remote ACL administrative identity credentials' "
-			"OBSOLETE "
-			"SYNTAX OMsDirectoryString "
-			"SINGLE-VALUE )",
-		NULL, NULL },
-	/* deprecated, will be removed; aliases "acl-passwd" */
-	{ "bindpw", "cred", 2, 2, 0,
-		ARG_MAGIC|LDAP_BACK_CFG_ACL_PASSWD,
-		ldap_back_cf_gen, NULL, NULL, NULL },
-	/* deprecated, will be removed; aliases "acl-bind" */
-	{ "acl-method", "args", 2, 0, 0,
-		ARG_MAGIC|LDAP_BACK_CFG_ACL_METHOD,
-		ldap_back_cf_gen, NULL, NULL, NULL },
 	{ "acl-bind", "args", 2, 0, 0,
 		ARG_MAGIC|LDAP_BACK_CFG_ACL_BIND,
 		ldap_back_cf_gen, "( OLcfgDbAt:3.4 "
 			"NAME 'olcDbACLBind' "
 			"DESC 'Remote ACL administrative identity auth bind configuration' "
+			"EQUALITY caseIgnoreMatch "
 			"SYNTAX OMsDirectoryString "
 			"SINGLE-VALUE )",
 		NULL, NULL },
-	{ "idassert-authcDN", "DN", 2, 2, 0,
-		ARG_DN|ARG_MAGIC|LDAP_BACK_CFG_IDASSERT_AUTHCDN,
-		ldap_back_cf_gen, "( OLcfgDbAt:3.5 "
-			"NAME 'olcDbIDAssertAuthcDn' "
-			"DESC 'Remote Identity Assertion administrative identity' "
-			"OBSOLETE "
-			"SYNTAX OMsDN "
-			"SINGLE-VALUE )",
-		NULL, NULL },
-	/* deprecated, will be removed; partially aliases "idassert-authcDN" */
-	{ "proxyauthzdn", "DN", 2, 2, 0,
-		ARG_DN|ARG_MAGIC|LDAP_BACK_CFG_IDASSERT_AUTHCDN,
-		ldap_back_cf_gen, NULL, NULL, NULL },
-	{ "idassert-passwd", "cred", 2, 2, 0,
-		ARG_MAGIC|LDAP_BACK_CFG_IDASSERT_PASSWD,
-		ldap_back_cf_gen, "( OLcfgDbAt:3.6 "
-			"NAME 'olcDbIDAssertPasswd' "
-			"DESC 'Remote Identity Assertion administrative identity credentials' "
-			"OBSOLETE "
-			"SYNTAX OMsDirectoryString "
-			"SINGLE-VALUE )",
-		NULL, NULL },
-	/* deprecated, will be removed; partially aliases "idassert-passwd" */
-	{ "proxyauthzpw", "cred", 2, 2, 0,
-		ARG_MAGIC|LDAP_BACK_CFG_IDASSERT_PASSWD,
-		ldap_back_cf_gen, NULL, NULL, NULL },
 	{ "idassert-bind", "args", 2, 0, 0,
 		ARG_MAGIC|LDAP_BACK_CFG_IDASSERT_BIND,
 		ldap_back_cf_gen, "( OLcfgDbAt:3.7 "
 			"NAME 'olcDbIDAssertBind' "
 			"DESC 'Remote Identity Assertion administrative identity auth bind configuration' "
+			"EQUALITY caseIgnoreMatch "
 			"SYNTAX OMsDirectoryString "
 			"SINGLE-VALUE )",
-		NULL, NULL },
-	{ "idassert-method", "args", 2, 0, 0,
-		ARG_MAGIC|LDAP_BACK_CFG_IDASSERT_METHOD,
-		ldap_back_cf_gen, NULL, NULL, NULL },
-	{ "idassert-mode", "mode>|u:<user>|[dn:]<DN", 2, 0, 0,
-		ARG_STRING|ARG_MAGIC|LDAP_BACK_CFG_IDASSERT_MODE,
-		ldap_back_cf_gen, "( OLcfgDbAt:3.8 "
-			"NAME 'olcDbIDAssertMode' "
-			"DESC 'Remote Identity Assertion mode' "
-			"OBSOLETE "
-			"SYNTAX OMsDirectoryString "
-			"SINGLE-VALUE)",
 		NULL, NULL },
 	{ "idassert-authzFrom", "authzRule", 2, 2, 0,
 		ARG_MAGIC|LDAP_BACK_CFG_IDASSERT_AUTHZFROM,
@@ -201,6 +130,7 @@ static ConfigTable ldapcfg[] = {
 		ldap_back_cf_gen, "( OLcfgDbAt:3.10 "
 			"NAME 'olcDbRebindAsUser' "
 			"DESC 'Rebind as user' "
+			"EQUALITY booleanMatch "
 			"SYNTAX OMsBoolean "
 			"SINGLE-VALUE )",
 		NULL, NULL },
@@ -209,6 +139,7 @@ static ConfigTable ldapcfg[] = {
 		ldap_back_cf_gen, "( OLcfgDbAt:3.11 "
 			"NAME 'olcDbChaseReferrals' "
 			"DESC 'Chase referrals' "
+			"EQUALITY booleanMatch "
 			"SYNTAX OMsBoolean "
 			"SINGLE-VALUE )",
 		NULL, NULL },
@@ -217,6 +148,7 @@ static ConfigTable ldapcfg[] = {
 		ldap_back_cf_gen, "( OLcfgDbAt:3.12 "
 			"NAME 'olcDbTFSupport' "
 			"DESC 'Absolute filters support' "
+			"EQUALITY caseIgnoreMatch "
 			"SYNTAX OMsDirectoryString "
 			"SINGLE-VALUE )",
 		NULL, NULL },
@@ -225,6 +157,7 @@ static ConfigTable ldapcfg[] = {
 		ldap_back_cf_gen, "( OLcfgDbAt:3.13 "
 			"NAME 'olcDbProxyWhoAmI' "
 			"DESC 'Proxy whoAmI exop' "
+			"EQUALITY booleanMatch "
 			"SYNTAX OMsBoolean "
 			"SINGLE-VALUE )",
 		NULL, NULL },
@@ -233,6 +166,7 @@ static ConfigTable ldapcfg[] = {
 		ldap_back_cf_gen, "( OLcfgDbAt:3.14 "
 			"NAME 'olcDbTimeout' "
 			"DESC 'Per-operation timeouts' "
+			"EQUALITY caseIgnoreMatch "
 			"SYNTAX OMsDirectoryString "
 			"SINGLE-VALUE )",
 		NULL, NULL },
@@ -241,6 +175,7 @@ static ConfigTable ldapcfg[] = {
 		ldap_back_cf_gen, "( OLcfgDbAt:3.15 "
 			"NAME 'olcDbIdleTimeout' "
 			"DESC 'connection idle timeout' "
+			"EQUALITY caseIgnoreMatch "
 			"SYNTAX OMsDirectoryString "
 			"SINGLE-VALUE )",
 		NULL, NULL },
@@ -249,6 +184,7 @@ static ConfigTable ldapcfg[] = {
 		ldap_back_cf_gen, "( OLcfgDbAt:3.16 "
 			"NAME 'olcDbConnTtl' "
 			"DESC 'connection ttl' "
+			"EQUALITY caseIgnoreMatch "
 			"SYNTAX OMsDirectoryString "
 			"SINGLE-VALUE )",
 		NULL, NULL },
@@ -257,6 +193,7 @@ static ConfigTable ldapcfg[] = {
 		ldap_back_cf_gen, "( OLcfgDbAt:3.17 "
 			"NAME 'olcDbNetworkTimeout' "
 			"DESC 'connection network timeout' "
+			"EQUALITY caseIgnoreMatch "
 			"SYNTAX OMsDirectoryString "
 			"SINGLE-VALUE )",
 		NULL, NULL },
@@ -265,6 +202,7 @@ static ConfigTable ldapcfg[] = {
 		ldap_back_cf_gen, "( OLcfgDbAt:3.18 "
 			"NAME 'olcDbProtocolVersion' "
 			"DESC 'protocol version' "
+			"EQUALITY integerMatch "
 			"SYNTAX OMsInteger "
 			"SINGLE-VALUE )",
 		NULL, NULL },
@@ -273,6 +211,7 @@ static ConfigTable ldapcfg[] = {
 		ldap_back_cf_gen, "( OLcfgDbAt:3.19 "
 			"NAME 'olcDbSingleConn' "
 			"DESC 'cache a single connection per identity' "
+			"EQUALITY booleanMatch "
 			"SYNTAX OMsBoolean "
 			"SINGLE-VALUE )",
 		NULL, NULL },
@@ -281,6 +220,7 @@ static ConfigTable ldapcfg[] = {
 		ldap_back_cf_gen, "( OLcfgDbAt:3.20 "
 			"NAME 'olcDbCancel' "
 			"DESC 'abandon/ignore/exop operations when appropriate' "
+			"EQUALITY caseIgnoreMatch "
 			"SYNTAX OMsDirectoryString "
 			"SINGLE-VALUE )",
 		NULL, NULL },
@@ -289,6 +229,7 @@ static ConfigTable ldapcfg[] = {
 		ldap_back_cf_gen, "( OLcfgDbAt:3.21 "
 			"NAME 'olcDbQuarantine' "
 			"DESC 'Quarantine database if connection fails and retry according to rule' "
+			"EQUALITY caseIgnoreMatch "
 			"SYNTAX OMsDirectoryString "
 			"SINGLE-VALUE )",
 		NULL, NULL },
@@ -297,6 +238,7 @@ static ConfigTable ldapcfg[] = {
 		ldap_back_cf_gen, "( OLcfgDbAt:3.22 "
 			"NAME 'olcDbUseTemporaryConn' "
 			"DESC 'Use temporary connections if the cached one is busy' "
+			"EQUALITY booleanMatch "
 			"SYNTAX OMsBoolean "
 			"SINGLE-VALUE )",
 		NULL, NULL },
@@ -305,6 +247,7 @@ static ConfigTable ldapcfg[] = {
 		ldap_back_cf_gen, "( OLcfgDbAt:3.23 "
 			"NAME 'olcDbConnectionPoolMax' "
 			"DESC 'Max size of privileged connections pool' "
+			"EQUALITY integerMatch "
 			"SYNTAX OMsInteger "
 			"SINGLE-VALUE )",
 		NULL, NULL },
@@ -314,6 +257,7 @@ static ConfigTable ldapcfg[] = {
 		ldap_back_cf_gen, "( OLcfgDbAt:3.24 "
 			"NAME 'olcDbSessionTrackingRequest' "
 			"DESC 'Add session tracking control to proxied requests' "
+			"EQUALITY booleanMatch "
 			"SYNTAX OMsBoolean "
 			"SINGLE-VALUE )",
 		NULL, NULL },
@@ -323,6 +267,7 @@ static ConfigTable ldapcfg[] = {
 		ldap_back_cf_gen, "( OLcfgDbAt:3.25 "
 			"NAME 'olcDbNoRefs' "
 			"DESC 'Do not return search reference responses' "
+			"EQUALITY booleanMatch "
 			"SYNTAX OMsBoolean "
 			"SINGLE-VALUE )",
 		NULL, NULL },
@@ -331,6 +276,7 @@ static ConfigTable ldapcfg[] = {
 		ldap_back_cf_gen, "( OLcfgDbAt:3.26 "
 			"NAME 'olcDbNoUndefFilter' "
 			"DESC 'Do not propagate undefined search filters' "
+			"EQUALITY booleanMatch "
 			"SYNTAX OMsBoolean "
 			"SINGLE-VALUE )",
 		NULL, NULL },
@@ -339,6 +285,7 @@ static ConfigTable ldapcfg[] = {
 		ldap_back_cf_gen, "( OLcfgDbAt:3.108 "
 			"NAME 'olcDbOnErr' "
 			"DESC 'error handling' "
+			"EQUALITY caseIgnoreMatch "
 			"SYNTAX OMsDirectoryString "
 			"SINGLE-VALUE )",
 		NULL, NULL },
@@ -351,21 +298,12 @@ static ConfigTable ldapcfg[] = {
 			"SYNTAX OMsDirectoryString "
 			"X-ORDERED 'VALUES' )",
 		NULL, NULL },
-
-	{ "suffixmassage", "[virtual]> <real", 2, 3, 0,
-		ARG_STRING|ARG_MAGIC|LDAP_BACK_CFG_REWRITE,
-		ldap_back_cf_gen, NULL, NULL, NULL },
-	{ "map", "attribute|objectClass> [*|<local>] *|<remote", 3, 4, 0,
-		ARG_STRING|ARG_MAGIC|LDAP_BACK_CFG_REWRITE,
-		ldap_back_cf_gen, NULL, NULL, NULL },
-	{ "rewrite", "<arglist>", 2, 4, STRLENOF( "rewrite" ),
-		ARG_STRING|ARG_MAGIC|LDAP_BACK_CFG_REWRITE,
-		ldap_back_cf_gen, NULL, NULL, NULL },
 	{ "omit-unknown-schema", "true|FALSE", 2, 2, 0,
 		ARG_MAGIC|ARG_ON_OFF|LDAP_BACK_CFG_OMIT_UNKNOWN_SCHEMA,
 		ldap_back_cf_gen, "( OLcfgDbAt:3.28 "
 			"NAME 'olcDbRemoveUnknownSchema' "
 			"DESC 'Omit unknown schema when returning search results' "
+			"EQUALITY booleanMatch "
 			"SYNTAX OMsBoolean "
 			"SINGLE-VALUE )",
 		NULL, NULL },
@@ -374,7 +312,16 @@ static ConfigTable ldapcfg[] = {
 		ldap_back_cf_gen, "( OLcfgDbAt:3.29 "
 			"NAME 'olcDbKeepalive' "
 			"DESC 'TCP keepalive' "
+			"EQUALITY caseIgnoreMatch "
 			"SYNTAX OMsDirectoryString "
+			"SINGLE-VALUE )",
+		NULL, NULL },
+	{ "tcp-user-timeout", "milliseconds", 2, 2, 0,
+		ARG_MAGIC|ARG_UINT|LDAP_BACK_CFG_TCP_USER_TIMEOUT,
+		ldap_back_cf_gen, "( OLcfgDbAt:3.30 "
+			"NAME 'olcDbTcpUserTimeout' "
+			"DESC 'TCP User Timeout' "
+			"SYNTAX OMsInteger "
 			"SINGLE-VALUE )",
 		NULL, NULL },
 	{ NULL, NULL, 0, 0, 0, ARG_IGNORED,
@@ -388,13 +335,8 @@ static ConfigOCs ldapocs[] = {
 		"SUP olcDatabaseConfig "
 		"MAY ( olcDbURI "
 			"$ olcDbStartTLS "
-			"$ olcDbACLAuthcDn "
-			"$ olcDbACLPasswd "
 			"$ olcDbACLBind "
-			"$ olcDbIDAssertAuthcDn "
-			"$ olcDbIDAssertPasswd "
 			"$ olcDbIDAssertBind "
-			"$ olcDbIDAssertMode "
 			"$ olcDbIDAssertAuthzFrom "
 			"$ olcDbIDAssertPassThru "
 			"$ olcDbRebindAsUser "
@@ -695,10 +637,10 @@ slap_idassert_authzfrom_parse( ConfigArgs *c, slap_idassert_t *si )
  	{
  		if ( si->si_authz != NULL ) {
  			snprintf( c->cr_msg, sizeof( c->cr_msg ),
- 				"\"idassert-authzFrom <authz>\": "
+ 				"\"%s <authz>\": "
  				"\"%s\" conflicts with existing authz rules",
- 				c->argv[ 1 ] );
- 			Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg, 0 );
+ 				c->argv[ 0 ], c->argv[ 1 ] );
+			Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg );
  			return 1;
  		}
  
@@ -708,9 +650,9 @@ slap_idassert_authzfrom_parse( ConfigArgs *c, slap_idassert_t *si )
  
  	} else if ( ( si->si_flags & LDAP_BACK_AUTH_AUTHZ_ALL ) ) {
   		snprintf( c->cr_msg, sizeof( c->cr_msg ),
-  			"\"idassert-authzFrom <authz>\": "
- 			"\"<authz>\" conflicts with \"*\"" );
-  		Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg, 0 );
+  			"\"%s <authz>\": "
+ 			"\"<authz>\" conflicts with \"*\"", c->argv[0] );
+		Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg );
   		return 1;
   	}
  	
@@ -718,9 +660,9 @@ slap_idassert_authzfrom_parse( ConfigArgs *c, slap_idassert_t *si )
  	rc = authzNormalize( 0, NULL, NULL, &in, &bv, NULL );
  	if ( rc != LDAP_SUCCESS ) {
  		snprintf( c->cr_msg, sizeof( c->cr_msg ),
- 			"\"idassert-authzFrom <authz>\": "
- 			"invalid syntax" );
- 		Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg, 0 );
+ 			"\"%s <authz>\": "
+ 			"invalid syntax", c->argv[0] );
+		Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg );
  		return 1;
  	}
 
@@ -765,9 +707,9 @@ slap_idassert_passthru_parse( ConfigArgs *c, slap_idassert_t *si )
  	rc = authzNormalize( 0, NULL, NULL, &in, &bv, NULL );
  	if ( rc != LDAP_SUCCESS ) {
  		snprintf( c->cr_msg, sizeof( c->cr_msg ),
- 			"\"idassert-passThru <authz>\": "
- 			"invalid syntax" );
- 		Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg, 0 );
+ 			"\"%s <authz>\": "
+ 			"invalid syntax", c->argv[0] );
+		Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg );
  		return 1;
  	}
   
@@ -806,6 +748,9 @@ slap_idassert_parse( ConfigArgs *c, slap_idassert_t *si )
 {
 	int		i;
 
+	/* set default */
+	si->si_mode = LDAP_BACK_IDASSERT_LEGACY;
+
 	for ( i = 1; i < c->argc; i++ ) {
 		if ( strncasecmp( c->argv[ i ], "mode=", STRLENOF( "mode=" ) ) == 0 ) {
 			char	*argvi = c->argv[ i ] + STRLENOF( "mode=" );
@@ -814,10 +759,10 @@ slap_idassert_parse( ConfigArgs *c, slap_idassert_t *si )
 			j = verb_to_mask( argvi, idassert_mode );
 			if ( BER_BVISNULL( &idassert_mode[ j ].word ) ) {
 				snprintf( c->cr_msg, sizeof( c->cr_msg ),
-					"\"idassert-bind <args>\": "
+					"\"%s <args>\": "
 					"unknown mode \"%s\"",
-					argvi );
-				Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg, 0 );
+					c->argv[0], argvi );
+				Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg );
 				return 1;
 			}
 
@@ -829,10 +774,10 @@ slap_idassert_parse( ConfigArgs *c, slap_idassert_t *si )
 			if ( strcasecmp( argvi, "native" ) == 0 ) {
 				if ( si->si_bc.sb_method != LDAP_AUTH_SASL ) {
 					snprintf( c->cr_msg, sizeof( c->cr_msg ),
-						"\"idassert-bind <args>\": "
+						"\"%s <args>\": "
 						"authz=\"native\" incompatible "
-						"with auth method" );
-					Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg, 0 );
+						"with auth method", c->argv[0] );
+					Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg );
 					return 1;
 				}
 				si->si_flags |= LDAP_BACK_AUTH_NATIVE_AUTHZ;
@@ -842,10 +787,10 @@ slap_idassert_parse( ConfigArgs *c, slap_idassert_t *si )
 
 			} else {
 				snprintf( c->cr_msg, sizeof( c->cr_msg ),
-					"\"idassert-bind <args>\": "
+					"\"%s <args>\": "
 					"unknown authz \"%s\"",
-					argvi );
-				Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg, 0 );
+					c->argv[0], argvi );
+				Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg );
 				return 1;
 			}
 
@@ -856,10 +801,10 @@ slap_idassert_parse( ConfigArgs *c, slap_idassert_t *si )
 
 			if ( flags == NULL ) {
 				snprintf( c->cr_msg, sizeof( c->cr_msg ),
-					"\"idassert-bind <args>\": "
+					"\"%s <args>\": "
 					"unable to parse flags \"%s\"",
-					argvi );
-				Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg, 0 );
+					c->argv[0], argvi );
+				Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg );
 				return 1;
 			}
 
@@ -876,11 +821,12 @@ slap_idassert_parse( ConfigArgs *c, slap_idassert_t *si )
 
 				} else if ( strcasecmp( flags[ j ], "obsolete-proxy-authz" ) == 0 ) {
 					if ( si->si_flags & LDAP_BACK_AUTH_OBSOLETE_ENCODING_WORKAROUND ) {
-						Debug( LDAP_DEBUG_ANY,
-                                      		 		"%s: \"obsolete-proxy-authz\" flag "
-                                      		 		"in \"idassert-mode <args>\" "
-                                      		 		"incompatible with previously issued \"obsolete-encoding-workaround\" flag.\n",
-                                      	 			c->log, 0, 0 );
+						snprintf( c->cr_msg, sizeof( c->cr_msg ),
+							"\"%s <args>\": "
+							"\"obsolete-proxy-authz\" flag "
+							"incompatible with previously issued \"obsolete-encoding-workaround\" flag.",
+							c->argv[0] );
+						Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg );
 						err = 1;
 						break;
 
@@ -890,11 +836,12 @@ slap_idassert_parse( ConfigArgs *c, slap_idassert_t *si )
 
 				} else if ( strcasecmp( flags[ j ], "obsolete-encoding-workaround" ) == 0 ) {
 					if ( si->si_flags & LDAP_BACK_AUTH_OBSOLETE_PROXY_AUTHZ ) {
-						Debug( LDAP_DEBUG_ANY,
-                                      	 			"%s: \"obsolete-encoding-workaround\" flag "
-                                       			"in \"idassert-mode <args>\" "
-                                       			"incompatible with previously issued \"obsolete-proxy-authz\" flag.\n",
-                                       			c->log, 0, 0 );
+						snprintf( c->cr_msg, sizeof( c->cr_msg ),
+							"\"%s <args>\": "
+							"\"obsolete-encoding-workaround\" flag "
+							"incompatible with previously issued \"obsolete-proxy-authz\" flag.",
+							c->argv[0] );
+						Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg );
 						err = 1;
 						break;
 
@@ -908,12 +855,23 @@ slap_idassert_parse( ConfigArgs *c, slap_idassert_t *si )
 				} else if ( strcasecmp( flags[ j ], "proxy-authz-non-critical" ) == 0 ) {
 					si->si_flags &= ~LDAP_BACK_AUTH_PROXYAUTHZ_CRITICAL;
 
+				} else if ( strcasecmp( flags[ j ], "dn-none" ) == 0 ) {
+					si->si_flags &= ~LDAP_BACK_AUTH_DN_MASK;
+
+				} else if ( strcasecmp( flags[ j ], "dn-authzid" ) == 0 ) {
+					si->si_flags &= ~LDAP_BACK_AUTH_DN_MASK;
+					si->si_flags |= LDAP_BACK_AUTH_DN_AUTHZID;
+
+				} else if ( strcasecmp( flags[ j ], "dn-whoami" ) == 0 ) {
+					si->si_flags &= ~LDAP_BACK_AUTH_DN_MASK;
+					si->si_flags |= LDAP_BACK_AUTH_DN_WHOAMI;
+
 				} else {
 					snprintf( c->cr_msg, sizeof( c->cr_msg ),
-						"\"idassert-bind <args>\": "
+						"\"%s <args>\": "
 						"unknown flag \"%s\"",
-						flags[ j ] );
-					Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg, 0 );
+						c->argv[0], flags[ j ] );
+					Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg );
 					err = 1;
 					break;
 				}
@@ -926,10 +884,10 @@ slap_idassert_parse( ConfigArgs *c, slap_idassert_t *si )
 
 		} else if ( bindconf_parse( c->argv[ i ], &si->si_bc ) ) {
 			snprintf( c->cr_msg, sizeof( c->cr_msg ),
-				"\"idassert-bind <args>\": "
+				"\"%s <args>\": "
 				"unable to parse field \"%s\"",
-				c->argv[ i ] );
-			Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg, 0 );
+				c->argv[0], c->argv[ i ] );
+			Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg );
 			return 1;
 		}
 	}
@@ -939,14 +897,28 @@ slap_idassert_parse( ConfigArgs *c, slap_idassert_t *si )
 			|| BER_BVISNULL( &si->si_bc.sb_cred ) )
 		{
 			snprintf( c->cr_msg, sizeof( c->cr_msg ),
-				"\"idassert-bind <args>\": "
-				"SIMPLE needs \"binddn\" and \"credentials\"" );
-			Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg, 0 );
+				"\"%s <args>\": "
+				"SIMPLE needs \"binddn\" and \"credentials\"", c->argv[0] );
+			Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg );
 			return 1;
+		}
+
+	} else if ( si->si_bc.sb_method == LDAP_AUTH_SASL ) {
+		if ( BER_BVISNULL( &si->si_bc.sb_binddn ) &&
+			!(si->si_flags & LDAP_BACK_AUTH_DN_MASK) )
+		{
+			static struct berval authid = BER_BVC("cn=auth");
+			ber_dupbv( &si->si_bc.sb_binddn, &authid );
 		}
 	}
 
 	bindconf_tls_defaults( &si->si_bc );
+#ifdef HAVE_TLS
+	if ( si->si_bc.sb_tls_ctx ) {
+		ldap_pvt_tls_ctx_free( si->si_bc.sb_tls_ctx );
+		si->si_bc.sb_tls_ctx = NULL;
+	}
+#endif
 
 	return 0;
 }
@@ -1020,13 +992,6 @@ ldap_back_cf_gen( ConfigArgs *c )
 			}
 			break;
 
-		case LDAP_BACK_CFG_ACL_AUTHCDN:
-		case LDAP_BACK_CFG_ACL_PASSWD:
-		case LDAP_BACK_CFG_ACL_METHOD:
-			/* handled by LDAP_BACK_CFG_ACL_BIND */
-			rc = 1;
-			break;
-
 		case LDAP_BACK_CFG_ACL_BIND: {
 			int	i;
 
@@ -1048,14 +1013,6 @@ ldap_back_cf_gen( ConfigArgs *c )
 			ber_bvarray_add( &c->rvalue_vals, &bv );
 			break;
 		}
-
-		case LDAP_BACK_CFG_IDASSERT_MODE:
-		case LDAP_BACK_CFG_IDASSERT_AUTHCDN:
-		case LDAP_BACK_CFG_IDASSERT_PASSWD:
-		case LDAP_BACK_CFG_IDASSERT_METHOD:
-			/* handled by LDAP_BACK_CFG_IDASSERT_BIND */
-			rc = 1;
-			break;
 
 		case LDAP_BACK_CFG_IDASSERT_AUTHZFROM:
 		case LDAP_BACK_CFG_IDASSERT_PASSTHRU: {
@@ -1154,7 +1111,7 @@ ldap_back_cf_gen( ConfigArgs *c )
 					(void)lutil_strcopy( ptr, "authz=native" );
 				}
 
-				len = bv.bv_len + STRLENOF( "flags=non-prescriptive,override,obsolete-encoding-workaround,proxy-authz-non-critical" );
+				len = bv.bv_len + STRLENOF( "flags=non-prescriptive,override,obsolete-encoding-workaround,proxy-authz-non-critical,dn-authzid" );
 				/* flags */
 				if ( !BER_BVISEMPTY( &bv ) ) {
 					len += STRLENOF( " " );
@@ -1192,6 +1149,22 @@ ldap_back_cf_gen( ConfigArgs *c )
 
 				} else {
 					ptr = lutil_strcopy( ptr, ",proxy-authz-non-critical" );
+				}
+
+				switch ( li->li_idassert_flags & LDAP_BACK_AUTH_DN_MASK ) {
+				case LDAP_BACK_AUTH_DN_AUTHZID:
+					ptr = lutil_strcopy( ptr, ",dn-authzid" );
+					break;
+
+				case LDAP_BACK_AUTH_DN_WHOAMI:
+					ptr = lutil_strcopy( ptr, ",dn-whoami" );
+					break;
+
+				default:
+#if 0 /* implicit */
+					ptr = lutil_strcopy( ptr, ",dn-none" );
+#endif
+					break;
 				}
 
 				bv.bv_len = ( ptr - bv.bv_val );
@@ -1314,8 +1287,7 @@ ldap_back_cf_gen( ConfigArgs *c )
 				return 1;
 			}
 
-			snprintf( buf, sizeof( buf ), "%ld",
-				(long)li->li_network_timeout );
+			lutil_unparse_time( buf, sizeof( buf ), li->li_network_timeout );
 			ber_str2bv( buf, 0, 0, &bv );
 			value_add_one( &c->rvalue_vals, &bv );
 			} break;
@@ -1406,6 +1378,10 @@ ldap_back_cf_gen( ConfigArgs *c )
 			break;
 			}
 
+		case LDAP_BACK_CFG_TCP_USER_TIMEOUT:
+			c->value_uint = li->li_tls.sb_tcp_user_timeout;
+			break;
+
 		default:
 			/* FIXME: we need to handle all... */
 			assert( 0 );
@@ -1429,7 +1405,7 @@ ldap_back_cf_gen( ConfigArgs *c )
 			/* NOTE: don't worry about locking: if we got here,
 			 * other threads are suspended. */
 			if ( li->li_conninfo.lai_tree != NULL ) {
-				avl_free( li->li_conninfo.lai_tree, ldap_back_conn_free );
+				ldap_tavl_free( li->li_conninfo.lai_tree, ldap_back_conn_free );
 				li->li_conninfo.lai_tree = NULL;
 			}
 			
@@ -1439,23 +1415,8 @@ ldap_back_cf_gen( ConfigArgs *c )
 			rc = 1;
 			break;
 
-		case LDAP_BACK_CFG_ACL_AUTHCDN:
-		case LDAP_BACK_CFG_ACL_PASSWD:
-		case LDAP_BACK_CFG_ACL_METHOD:
-			/* handled by LDAP_BACK_CFG_ACL_BIND */
-			rc = 1;
-			break;
-
 		case LDAP_BACK_CFG_ACL_BIND:
 			bindconf_free( &li->li_acl );
-			break;
-
-		case LDAP_BACK_CFG_IDASSERT_MODE:
-		case LDAP_BACK_CFG_IDASSERT_AUTHCDN:
-		case LDAP_BACK_CFG_IDASSERT_PASSWD:
-		case LDAP_BACK_CFG_IDASSERT_METHOD:
-			/* handled by LDAP_BACK_CFG_IDASSERT_BIND */
-			rc = 1;
 			break;
 
 		case LDAP_BACK_CFG_IDASSERT_AUTHZFROM:
@@ -1583,6 +1544,10 @@ ldap_back_cf_gen( ConfigArgs *c )
 			li->li_tls.sb_keepalive.sk_interval = 0;
 			break;
 
+		case LDAP_BACK_CFG_TCP_USER_TIMEOUT:
+			li->li_tls.sb_tcp_user_timeout = 0;
+			break;
+
 		default:
 			/* FIXME: we need to handle all... */
 			assert( 0 );
@@ -1651,7 +1616,7 @@ ldap_back_cf_gen( ConfigArgs *c )
 					"unable to parse uri \"%s\" "
 					"in \"uri <uri>\" line: %s",
 					c->value_string, why );
-			Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg, 0 );
+			Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg );
 			urlrc = 1;
 			goto done_url;
 		}
@@ -1673,7 +1638,7 @@ ldap_back_cf_gen( ConfigArgs *c )
 						"in \"uri <uri>\" statement "
 						"for uri #%d of \"%s\"",
 						i, c->argv[ 1 ] );
-				Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg, 0 );
+				Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg );
 			}
 		}
 
@@ -1707,7 +1672,7 @@ ldap_back_cf_gen( ConfigArgs *c )
 					"in \"uri <uri>\" statement "
 					"for \"%s\"",
 					c->argv[ 1 ] );
-				Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg, 0 );
+				Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg );
 				urlrc = 1;
 				goto done_url;
 			}
@@ -1751,58 +1716,14 @@ done_url:;
 			}
 			bindconf_tls_defaults( &li->li_tls );
 		}
+#ifdef HAVE_TLS
+		if ( li->li_tls.sb_tls_ctx ) {
+			ldap_pvt_tls_ctx_free( li->li_tls.sb_tls_ctx );
+			li->li_tls.sb_tls_ctx = NULL;
+		}
+#endif
 		break;
 
-	case LDAP_BACK_CFG_ACL_AUTHCDN:
-		switch ( li->li_acl_authmethod ) {
-		case LDAP_AUTH_NONE:
-			li->li_acl_authmethod = LDAP_AUTH_SIMPLE;
-			break;
-
-		case LDAP_AUTH_SIMPLE:
-			break;
-
-		default:
-			snprintf( c->cr_msg, sizeof( c->cr_msg),
-				"\"acl-authcDN <DN>\" incompatible "
-				"with auth method %d",
-				li->li_acl_authmethod );
-			Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg, 0 );
-			return 1;
-		}
-		if ( !BER_BVISNULL( &li->li_acl_authcDN ) ) {
-			free( li->li_acl_authcDN.bv_val );
-		}
-		ber_memfree_x( c->value_dn.bv_val, NULL );
-		li->li_acl_authcDN = c->value_ndn;
-		BER_BVZERO( &c->value_dn );
-		BER_BVZERO( &c->value_ndn );
-		break;
-
-	case LDAP_BACK_CFG_ACL_PASSWD:
-		switch ( li->li_acl_authmethod ) {
-		case LDAP_AUTH_NONE:
-			li->li_acl_authmethod = LDAP_AUTH_SIMPLE;
-			break;
-
-		case LDAP_AUTH_SIMPLE:
-			break;
-
-		default:
-			snprintf( c->cr_msg, sizeof( c->cr_msg ),
-				"\"acl-passwd <cred>\" incompatible "
-				"with auth method %d",
-				li->li_acl_authmethod );
-			Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg, 0 );
-			return 1;
-		}
-		if ( !BER_BVISNULL( &li->li_acl_passwd ) ) {
-			free( li->li_acl_passwd.bv_val );
-		}
-		ber_str2bv( c->argv[ 1 ], 0, 1, &li->li_acl_passwd );
-		break;
-
-	case LDAP_BACK_CFG_ACL_METHOD:
 	case LDAP_BACK_CFG_ACL_BIND:
 		for ( i = 1; i < c->argc; i++ ) {
 			if ( bindconf_parse( c->argv[ i ], &li->li_acl ) ) {
@@ -1810,141 +1731,12 @@ done_url:;
 			}
 		}
 		bindconf_tls_defaults( &li->li_acl );
-		break;
-
-	case LDAP_BACK_CFG_IDASSERT_MODE:
-		i = verb_to_mask( c->argv[1], idassert_mode );
-		if ( BER_BVISNULL( &idassert_mode[i].word ) ) {
-			if ( strncasecmp( c->argv[1], "u:", STRLENOF( "u:" ) ) == 0 ) {
-				li->li_idassert_mode = LDAP_BACK_IDASSERT_OTHERID;
-				ber_str2bv( c->argv[1], 0, 1, &li->li_idassert_authzID );
-				li->li_idassert_authzID.bv_val[ 0 ] = 'u';
-				
-			} else {
-				struct berval	id, ndn;
-
-				ber_str2bv( c->argv[1], 0, 0, &id );
-
-				if ( strncasecmp( c->argv[1], "dn:", STRLENOF( "dn:" ) ) == 0 ) {
-					id.bv_val += STRLENOF( "dn:" );
-					id.bv_len -= STRLENOF( "dn:" );
-				}
-
-				rc = dnNormalize( 0, NULL, NULL, &id, &ndn, NULL );
-                                if ( rc != LDAP_SUCCESS ) {
-                                        Debug( LDAP_DEBUG_ANY,
-                                                "%s: line %d: idassert ID \"%s\" is not a valid DN\n",
-                                                c->fname, c->lineno, c->argv[1] );
-                                        return 1;
-                                }
-
-                                li->li_idassert_authzID.bv_len = STRLENOF( "dn:" ) + ndn.bv_len;
-                                li->li_idassert_authzID.bv_val = ch_malloc( li->li_idassert_authzID.bv_len + 1 );
-                                AC_MEMCPY( li->li_idassert_authzID.bv_val, "dn:", STRLENOF( "dn:" ) );
-                                AC_MEMCPY( &li->li_idassert_authzID.bv_val[ STRLENOF( "dn:" ) ], ndn.bv_val, ndn.bv_len + 1 );
-                                ch_free( ndn.bv_val );
-
-                                li->li_idassert_mode = LDAP_BACK_IDASSERT_OTHERDN;
-			}
-
-		} else {
-			li->li_idassert_mode = idassert_mode[i].mask;
+#ifdef HAVE_TLS
+		if ( li->li_acl.sb_tls_ctx ) {
+			ldap_pvt_tls_ctx_free( li->li_acl.sb_tls_ctx );
+			li->li_acl.sb_tls_ctx = NULL;
 		}
-
-		if ( c->argc > 2 ) {
-			int	i;
-
-			for ( i = 2; i < c->argc; i++ ) {
-				if ( strcasecmp( c->argv[ i ], "override" ) == 0 ) {
-					li->li_idassert_flags |= LDAP_BACK_AUTH_OVERRIDE;
-
-				} else if ( strcasecmp( c->argv[ i ], "prescriptive" ) == 0 ) {
-					li->li_idassert_flags |= LDAP_BACK_AUTH_PRESCRIPTIVE;
-
-				} else if ( strcasecmp( c->argv[ i ], "non-prescriptive" ) == 0 ) {
-					li->li_idassert_flags &= ( ~LDAP_BACK_AUTH_PRESCRIPTIVE );
-
-				} else if ( strcasecmp( c->argv[ i ], "obsolete-proxy-authz" ) == 0 ) {
-					if ( li->li_idassert_flags & LDAP_BACK_AUTH_OBSOLETE_ENCODING_WORKAROUND ) {
-						Debug( LDAP_DEBUG_ANY,
-                                       	 		"%s: line %d: \"obsolete-proxy-authz\" flag "
-                                        		"in \"idassert-mode <args>\" "
-                                        		"incompatible with previously issued \"obsolete-encoding-workaround\" flag.\n",
-                                        		c->fname, c->lineno, 0 );
-                                		return 1;
-					}
-					li->li_idassert_flags |= LDAP_BACK_AUTH_OBSOLETE_PROXY_AUTHZ;
-
-				} else if ( strcasecmp( c->argv[ i ], "obsolete-encoding-workaround" ) == 0 ) {
-					if ( li->li_idassert_flags & LDAP_BACK_AUTH_OBSOLETE_PROXY_AUTHZ ) {
-						Debug( LDAP_DEBUG_ANY,
-                                       	 		"%s: line %d: \"obsolete-encoding-workaround\" flag "
-                                        		"in \"idassert-mode <args>\" "
-                                        		"incompatible with previously issued \"obsolete-proxy-authz\" flag.\n",
-                                        		c->fname, c->lineno, 0 );
-                                		return 1;
-					}
-					li->li_idassert_flags |= LDAP_BACK_AUTH_OBSOLETE_ENCODING_WORKAROUND;
-
-				} else {
-					Debug( LDAP_DEBUG_ANY,
-                                        	"%s: line %d: unknown flag #%d "
-                                        	"in \"idassert-mode <args> "
-                                        	"[<flags>]\" line.\n",
-                                        	c->fname, c->lineno, i - 2 );
-                                	return 1;
-				}
-                        }
-                }
-		break;
-
-	case LDAP_BACK_CFG_IDASSERT_AUTHCDN:
-		switch ( li->li_idassert_authmethod ) {
-		case LDAP_AUTH_NONE:
-			li->li_idassert_authmethod = LDAP_AUTH_SIMPLE;
-			break;
-
-		case LDAP_AUTH_SIMPLE:
-			break;
-
-		default:
-			snprintf( c->cr_msg, sizeof( c->cr_msg ),
-				"\"idassert-authcDN <DN>\" incompatible "
-				"with auth method %d",
-				li->li_idassert_authmethod );
-			Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg, 0 );
-			return 1;
-		}
-		if ( !BER_BVISNULL( &li->li_idassert_authcDN ) ) {
-			free( li->li_idassert_authcDN.bv_val );
-		}
-		ber_memfree_x( c->value_dn.bv_val, NULL );
-		li->li_idassert_authcDN = c->value_ndn;
-		BER_BVZERO( &c->value_dn );
-		BER_BVZERO( &c->value_ndn );
-		break;
-
-	case LDAP_BACK_CFG_IDASSERT_PASSWD:
-		switch ( li->li_idassert_authmethod ) {
-		case LDAP_AUTH_NONE:
-			li->li_idassert_authmethod = LDAP_AUTH_SIMPLE;
-			break;
-
-		case LDAP_AUTH_SIMPLE:
-			break;
-
-		default:
-			snprintf( c->cr_msg, sizeof( c->cr_msg ),
-				"\"idassert-passwd <cred>\" incompatible "
-				"with auth method %d",
-				li->li_idassert_authmethod );
-			Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg, 0 );
-			return 1;
-		}
-		if ( !BER_BVISNULL( &li->li_idassert_passwd ) ) {
-			free( li->li_idassert_passwd.bv_val );
-		}
-		ber_str2bv( c->argv[ 1 ], 0, 1, &li->li_idassert_passwd );
+#endif
 		break;
 
 	case LDAP_BACK_CFG_IDASSERT_AUTHZFROM:
@@ -1954,14 +1746,6 @@ done_url:;
 	case LDAP_BACK_CFG_IDASSERT_PASSTHRU:
 		rc = slap_idassert_passthru_parse( c, &li->li_idassert );
 		break;
-
-	case LDAP_BACK_CFG_IDASSERT_METHOD:
-		/* no longer supported */
-		snprintf( c->cr_msg, sizeof( c->cr_msg ),
-			"\"idassert-method <args>\": "
-			"no longer supported; use \"idassert-bind\"" );
-		Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg, 0 );
-		return 1;
 
 	case LDAP_BACK_CFG_IDASSERT_BIND:
 		rc = slap_idassert_parse( c, &li->li_idassert );
@@ -2006,7 +1790,7 @@ done_url:;
 				snprintf( c->cr_msg, sizeof( c->cr_msg ),
 					"need URI to discover absolute filters support "
 					"in \"t-f-support discover\"" );
-				Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg, 0 );
+				Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg );
 				return 1;
 			}
 
@@ -2048,7 +1832,7 @@ done_url:;
 					snprintf( c->cr_msg, sizeof( c->cr_msg),
 						"unable to parse timeout \"%s\"",
 						c->argv[ i ] );
-					Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg, 0 );
+					Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg );
 					return 1;
 				}
 
@@ -2063,7 +1847,7 @@ done_url:;
 				snprintf( c->cr_msg, sizeof( c->cr_msg),
 					"unable to parse timeout \"%s\"",
 					c->argv[ i ] );
-				Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg, 0 );
+				Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg );
 				return 1;
 			}
 		}
@@ -2076,7 +1860,7 @@ done_url:;
 			snprintf( c->cr_msg, sizeof( c->cr_msg),
 				"unable to parse idle timeout \"%s\"",
 				c->argv[ 1 ] );
-			Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg, 0 );
+			Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg );
 			return 1;
 		}
 		li->li_idle_timeout = (time_t)t;
@@ -2089,7 +1873,7 @@ done_url:;
 			snprintf( c->cr_msg, sizeof( c->cr_msg),
 				"unable to parse conn ttl\"%s\"",
 				c->argv[ 1 ] );
-			Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg, 0 );
+			Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg );
 			return 1;
 		}
 		li->li_conn_ttl = (time_t)t;
@@ -2102,7 +1886,7 @@ done_url:;
 			snprintf( c->cr_msg, sizeof( c->cr_msg),
 				"unable to parse network timeout \"%s\"",
 				c->argv[ 1 ] );
-			Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg, 0 );
+			Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg );
 			return 1;
 		}
 		li->li_network_timeout = (time_t)t;
@@ -2114,7 +1898,7 @@ done_url:;
 				"unsupported version \"%s\" "
 				"in \"protocol-version <version>\"",
 				c->argv[ 1 ] );
-			Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg, 0 );
+			Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg );
 			return 1;
 		}
 
@@ -2151,7 +1935,7 @@ done_url:;
 				c->argv[ 1 ],
 				LDAP_BACK_CONN_PRIV_MIN,
 				LDAP_BACK_CONN_PRIV_MAX );
-			Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg, 0 );
+			Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg );
 			return 1;
 		}
 		li->li_conn_priv_max = c->value_int;
@@ -2178,7 +1962,7 @@ done_url:;
 				snprintf( c->cr_msg, sizeof( c->cr_msg ),
 					"need URI to discover \"cancel\" support "
 					"in \"cancel exop-discover\"" );
-				Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg, 0 );
+				Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg );
 				return 1;
 			}
 
@@ -2203,13 +1987,13 @@ done_url:;
 		if ( LDAP_BACK_QUARANTINE( li ) ) {
 			snprintf( c->cr_msg, sizeof( c->cr_msg ),
 				"quarantine already defined" );
-			Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg, 0 );
+			Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg );
 			return 1;
 		}
 		rc = slap_retry_info_parse( c->argv[1], &li->li_quarantine,
 			c->cr_msg, sizeof( c->cr_msg ) );
 		if ( rc ) {
-			Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg, 0 );
+			Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg );
 
 		} else {
 			ldap_pvt_thread_mutex_init( &li->li_quarantine_mutex );
@@ -2256,21 +2040,12 @@ done_url:;
 			snprintf( c->cr_msg, sizeof( c->cr_msg ),
 				"%s unknown argument \"%s\"",
 				c->argv[0], c->argv[1] );
-			Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg, 0 );
+			Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg );
 			return 1;
 		}
 		li->li_flags &= ~LDAP_BACK_F_ONERR_STOP;
 		li->li_flags |= onerr_mode[i].mask;
 		break;
-
-	case LDAP_BACK_CFG_REWRITE:
-		snprintf( c->cr_msg, sizeof( c->cr_msg ),
-			"rewrite/remap capabilities have been moved "
-			"to the \"rwm\" overlay; see slapo-rwm(5) "
-			"for details (hint: add \"overlay rwm\" "
-			"and prefix all directives with \"rwm-\")" );
-		Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg, 0 );
-		return 1;
 
 	case LDAP_BACK_CFG_OMIT_UNKNOWN_SCHEMA:
 		if ( c->value_int ) {
@@ -2285,7 +2060,11 @@ done_url:;
 		slap_keepalive_parse( ber_bvstrdup(c->argv[1]),
 				 &li->li_tls.sb_keepalive, 0, 0, 0);
 		break;
-		
+
+	case LDAP_BACK_CFG_TCP_USER_TIMEOUT:
+		li->li_tls.sb_tcp_user_timeout = c->value_uint;
+		break;
+
 	default:
 		/* FIXME: try to catch inconsistencies */
 		assert( 0 );
@@ -2299,8 +2078,6 @@ int
 ldap_back_init_cf( BackendInfo *bi )
 {
 	int			rc;
-	AttributeDescription	*ad = NULL;
-	const char		*text;
 
 	/* Make sure we don't exceed the bits reserved for userland */
 	config_check_userland( LDAP_BACK_CFG_LAST );
@@ -2310,32 +2087,6 @@ ldap_back_init_cf( BackendInfo *bi )
 	rc = config_register_schema( ldapcfg, ldapocs );
 	if ( rc ) {
 		return rc;
-	}
-
-	/* setup olcDbAclPasswd and olcDbIDAssertPasswd 
-	 * to be base64-encoded when written in LDIF form;
-	 * basically, we don't care if it fails */
-	rc = slap_str2ad( "olcDbACLPasswd", &ad, &text );
-	if ( rc ) {
-		Debug( LDAP_DEBUG_ANY, "config_back_initialize: "
-			"warning, unable to get \"olcDbACLPasswd\" "
-			"attribute description: %d: %s\n",
-			rc, text, 0 );
-	} else {
-		(void)ldif_must_b64_encode_register( ad->ad_cname.bv_val,
-			ad->ad_type->sat_oid );
-	}
-
-	ad = NULL;
-	rc = slap_str2ad( "olcDbIDAssertPasswd", &ad, &text );
-	if ( rc ) {
-		Debug( LDAP_DEBUG_ANY, "config_back_initialize: "
-			"warning, unable to get \"olcDbIDAssertPasswd\" "
-			"attribute description: %d: %s\n",
-			rc, text, 0 );
-	} else {
-		(void)ldif_must_b64_encode_register( ad->ad_cname.bv_val,
-			ad->ad_type->sat_oid );
 	}
 
 	return 0;
@@ -2375,8 +2126,8 @@ ldap_back_exop_whoami(
 		return rs->sr_err = LDAP_PROTOCOL_ERROR;
 	}
 
-	Statslog( LDAP_DEBUG_STATS, "%s WHOAMI\n",
-	    op->o_log_prefix, 0, 0, 0, 0 );
+	Debug( LDAP_DEBUG_STATS, "%s WHOAMI\n",
+	    op->o_log_prefix );
 
 	rs->sr_err = backend_check_restrictions( op, rs, 
 			(struct berval *)&slap_EXOP_WHOAMI );

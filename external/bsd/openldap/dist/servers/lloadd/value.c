@@ -1,4 +1,4 @@
-/*	$NetBSD: value.c,v 1.1.1.1 2021/08/14 16:05:25 christos Exp $	*/
+/*	$NetBSD: value.c,v 1.2 2021/08/14 16:14:58 christos Exp $	*/
 
 /* value.c - routines for dealing with values */
 /* $OpenLDAP$ */
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: value.c,v 1.1.1.1 2021/08/14 16:05:25 christos Exp $");
+__RCSID("$NetBSD: value.c,v 1.2 2021/08/14 16:14:58 christos Exp $");
 
 #include "portable.h"
 

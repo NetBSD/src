@@ -1,4 +1,4 @@
-/*	$NetBSD: authzid.c,v 1.1.1.1 2021/08/14 16:05:14 christos Exp $	*/
+/*	$NetBSD: authzid.c,v 1.2 2021/08/14 16:14:50 christos Exp $	*/
 
 /* authzid.c - RFC 3829 Authzid Control */
 /* $OpenLDAP$ */
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: authzid.c,v 1.1.1.1 2021/08/14 16:05:14 christos Exp $");
+__RCSID("$NetBSD: authzid.c,v 1.2 2021/08/14 16:14:50 christos Exp $");
 
 #include "portable.h"
 

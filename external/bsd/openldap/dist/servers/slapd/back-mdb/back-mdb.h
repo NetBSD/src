@@ -1,10 +1,10 @@
-/*	$NetBSD: back-mdb.h,v 1.2 2020/08/11 13:15:40 christos Exp $	*/
+/*	$NetBSD: back-mdb.h,v 1.3 2021/08/14 16:15:00 christos Exp $	*/
 
 /* back-mdb.h - mdb back-end header file */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2020 The OpenLDAP Foundation.
+ * Copyright 2000-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 
 LDAP_BEGIN_DECL
 
-#undef MDB_TOOL_IDL_CACHING	/* currently broken */
+#undef	MDB_TOOL_IDL_CACHING	/* currently no perf gain */
 
 #define DN_BASE_PREFIX		SLAP_INDEX_EQUALITY_PREFIX
 #define DN_ONE_PREFIX	 	'%'
@@ -34,7 +34,8 @@ LDAP_BEGIN_DECL
 #define MDB_AD2ID		0
 #define MDB_DN2ID		1
 #define MDB_ID2ENTRY	2
-#define MDB_NDB			3
+#define MDB_ID2VAL		3
+#define MDB_NDB			4
 
 /* The default search IDL stack cache depth */
 #define DEFAULT_SEARCH_STACK_DEPTH	16
@@ -50,11 +51,11 @@ LDAP_BEGIN_DECL
 #define DEFAULT_MAPSIZE	(10*1048576)
 
 /* Most users will never see this */
-#define DEFAULT_RTXN_SIZE      10000
+#define DEFAULT_RTXN_SIZE	10000
 
 #ifdef LDAP_DEVEL
 #define MDB_MONITOR_IDX
-#endif /* LDAP_DEVEL */
+#endif
 
 typedef struct mdb_monitor_t {
 	void		*mdm_cb;
@@ -74,6 +75,7 @@ struct mdb_info {
 
 	size_t		mi_mapsize;
 	ID			mi_nextid;
+	size_t		mi_maxentrysize;
 
 	slap_mask_t	mi_defaultmask;
 	int			mi_nattrs;
@@ -86,6 +88,7 @@ struct mdb_info {
 	int			mi_txn_cp;
 	unsigned	mi_txn_cp_min;
 	unsigned	mi_txn_cp_kbyte;
+
 	struct re_s		*mi_txn_cp_task;
 	struct re_s		*mi_index_task;
 
@@ -105,6 +108,13 @@ struct mdb_info {
 
 	int mi_numads;
 
+	unsigned	mi_multi_hi;
+		/* more than this many values in an attr goes
+		 * into a separate DB */
+	unsigned	mi_multi_lo;
+		/* less than this many values in an attr goes
+		 * back into main blob */
+
 	MDB_dbi	mi_dbis[MDB_NDB];
 	AttributeDescription *mi_ads[MDB_MAXADS];
 	int mi_adxs[MDB_MAXADS];
@@ -113,6 +123,7 @@ struct mdb_info {
 #define mi_id2entry	mi_dbis[MDB_ID2ENTRY]
 #define mi_dn2id	mi_dbis[MDB_DN2ID]
 #define mi_ad2id	mi_dbis[MDB_AD2ID]
+#define mi_id2val	mi_dbis[MDB_ID2VAL]
 
 typedef struct mdb_op_info {
 	OpExtra		moi_oe;
@@ -122,24 +133,7 @@ typedef struct mdb_op_info {
 } mdb_op_info;
 #define MOI_READER	0x01
 #define MOI_FREEIT	0x02
-
-/* Copy an ID "src" to pointer "dst" in big-endian byte order */
-#define MDB_ID2DISK( src, dst )	\
-	do { int i0; ID tmp; unsigned char *_p;	\
-		tmp = (src); _p = (unsigned char *)(dst);	\
-		for ( i0=sizeof(ID)-1; i0>=0; i0-- ) {	\
-			_p[i0] = tmp & 0xff; tmp >>= 8;	\
-		} \
-	} while(0)
-
-/* Copy a pointer "src" to a pointer "dst" from big-endian to native order */
-#define MDB_DISK2ID( src, dst ) \
-	do { unsigned i0; ID tmp = 0; unsigned char *_p;	\
-		_p = (unsigned char *)(src);	\
-		for ( i0=0; i0<sizeof(ID); i0++ ) {	\
-			tmp <<= 8; tmp |= *_p++;	\
-		} *(dst) = tmp; \
-	} while (0)
+#define MOI_KEEPER	0x04
 
 LDAP_END_DECL
 
@@ -151,13 +145,21 @@ typedef struct mdb_attrinfo {
 #ifdef LDAP_COMP_MATCH
 	ComponentReference* ai_cr; /*component indexing*/
 #endif
-	Avlnode *ai_root;		/* for tools */
-	void *ai_flist;		/* for tools */
-	void *ai_clist;		/* for tools */
+	TAvlnode *ai_root;		/* for tools */
 	MDB_cursor *ai_cursor;	/* for tools */
 	int ai_idx;	/* position in AI array */
 	MDB_dbi ai_dbi;
+	unsigned ai_multi_hi;
+	unsigned ai_multi_lo;
 } AttrInfo;
+
+/* tool threaded indexer state */
+typedef struct mdb_attrixinfo {
+	OpExtra ai_oe;
+	void *ai_flist;
+	void *ai_clist;
+	AttrInfo *ai_ai;
+} AttrIxInfo;
 
 /* These flags must not clash with SLAP_INDEX flags or ops in slap.h! */
 #define	MDB_INDEX_DELETING	0x8000U	/* index is being modified */

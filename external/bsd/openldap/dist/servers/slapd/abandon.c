@@ -1,10 +1,10 @@
-/*	$NetBSD: abandon.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
+/*	$NetBSD: abandon.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
 
 /* abandon.c - decode and handle an ldap abandon operation */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: abandon.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
+__RCSID("$NetBSD: abandon.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
 
 #include "portable.h"
 
@@ -44,7 +44,7 @@ do_abandon( Operation *op, SlapReply *rs )
 	const char	*msg;
 
 	Debug( LDAP_DEBUG_TRACE, "%s do_abandon\n",
-		op->o_log_prefix, 0, 0 );
+		op->o_log_prefix );
 
 	/*
 	 * Parse the abandon request.  It looks like this:
@@ -54,26 +54,26 @@ do_abandon( Operation *op, SlapReply *rs )
 
 	if ( ber_scanf( op->o_ber, "i", &id ) == LBER_ERROR ) {
 		Debug( LDAP_DEBUG_ANY, "%s do_abandon: ber_scanf failed\n",
-			op->o_log_prefix, 0, 0 );
+			op->o_log_prefix );
 		send_ldap_discon( op, rs, LDAP_PROTOCOL_ERROR, "decoding error" );
 		return SLAPD_DISCONNECT;
 	}
 
-	Statslog( LDAP_DEBUG_STATS, "%s ABANDON msg=%ld\n",
-		op->o_log_prefix, (long) id, 0, 0, 0 );
+	Debug( LDAP_DEBUG_STATS, "%s ABANDON msg=%ld\n",
+		op->o_log_prefix, (long) id );
 
 	if( get_ctrls( op, rs, 0 ) != LDAP_SUCCESS ) {
 		Debug( LDAP_DEBUG_ANY, "%s do_abandon: get_ctrls failed\n",
-			op->o_log_prefix, 0, 0 );
+			op->o_log_prefix );
 		return rs->sr_err;
 	} 
 
 	Debug( LDAP_DEBUG_ARGS, "%s do_abandon: id=%ld\n",
-		op->o_log_prefix, (long) id, 0 );
+		op->o_log_prefix, (long) id );
 
 	if( id <= 0 ) {
 		Debug( LDAP_DEBUG_ANY, "%s do_abandon: bad msgid %ld\n",
-			op->o_log_prefix, (long) id, 0 );
+			op->o_log_prefix, (long) id );
 		return LDAP_SUCCESS;
 	}
 

@@ -1,10 +1,10 @@
-/*	$NetBSD: dsaschema.c,v 1.2 2020/08/11 13:15:35 christos Exp $	*/
+/*	$NetBSD: dsaschema.c,v 1.3 2021/08/14 16:14:51 christos Exp $	*/
 
 /* dsaschema.c */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2020 The OpenLDAP Foundation.
+ * Copyright 2004-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,9 +42,8 @@
 #include <ldap.h>
 #include <ldap_schema.h>
 
-extern int at_add(LDAPAttributeType *at, const char **err);
-extern int oc_add(LDAPObjectClass *oc, int user, const char **err);
-extern int cr_add(LDAPContentRule *cr, int user, const char **err);
+#include <slap.h>
+#include <slap-config.h>
 
 #define ARGS_STEP 512
 
@@ -60,118 +59,38 @@ static char *strtok_quote_ptr;
 
 int init_module(int argc, char *argv[]);
 
-static int dsaschema_parse_at(const char *fname, int lineno, char *line, char **argv)
-{
-	LDAPAttributeType *at;
-	int code;
-	const char *err;
-
-	at = ldap_str2attributetype(line, &code, &err, LDAP_SCHEMA_ALLOW_ALL);
-	if (!at) {
-		fprintf(stderr, "%s: line %d: %s before %s\n",
-			fname, lineno, ldap_scherr2str(code), err);
-		return 1;
-	}
-
-	if (at->at_oid == NULL) {
-		fprintf(stderr, "%s: line %d: attributeType has no OID\n",
-			fname, lineno);
-		return 1;
-	}
-
-	code = at_add(at, &err);
-	if (code) {
-		fprintf(stderr, "%s: line %d: %s: \"%s\"\n",
-			fname, lineno, ldap_scherr2str(code), err);
-		return 1;
-	}
-
-	ldap_memfree(at);
-
-	return 0;
-}
-
-static int dsaschema_parse_oc(const char *fname, int lineno, char *line, char **argv)
-{
-	LDAPObjectClass *oc;
-	int code;
-	const char *err;
-
-	oc = ldap_str2objectclass(line, &code, &err, LDAP_SCHEMA_ALLOW_ALL);
-	if (!oc) {
-		fprintf(stderr, "%s: line %d: %s before %s\n",
-			fname, lineno, ldap_scherr2str(code), err);
-		return 1;
-	}
-
-	if (oc->oc_oid == NULL) {
-		fprintf(stderr,
-			"%s: line %d: objectclass has no OID\n",
-			fname, lineno);
-		return 1;
-	}
-
-	code = oc_add(oc, 0, &err);
-	if (code) {
-		fprintf(stderr, "%s: line %d: %s: \"%s\"\n",
-			fname, lineno, ldap_scherr2str(code), err);
-		return 1;
-	}
-
-	ldap_memfree(oc);
-	return 0;
-}
-
 static int dsaschema_parse_cr(const char *fname, int lineno, char *line, char **argv)
 {
-	LDAPContentRule *cr;
-	int code;
-	const char *err;
+	struct config_args_s c = { .line = line };
 
-	cr = ldap_str2contentrule(line, &code, &err, LDAP_SCHEMA_ALLOW_ALL);
-	if (!cr) {
-		fprintf(stderr, "%s: line %d: %s before %s\n",
-			fname, lineno, ldap_scherr2str(code), err);
+	if ( parse_cr( &c, NULL ) ) {
+		Debug( LDAP_DEBUG_ANY, "dsaschema_parse_cr: "
+				"ditcontentrule definition invalid at %s:%d\n",
+				fname, lineno );
 		return 1;
 	}
 
-	if (cr->cr_oid == NULL) {
-		fprintf(stderr,
-			"%s: line %d: objectclass has no OID\n",
-			fname, lineno);
-		return 1;
-	}
-
-	code = cr_add(cr, 0, &err);
-	if (code) {
-		fprintf(stderr, "%s: line %d: %s: \"%s\"\n",
-			fname, lineno, ldap_scherr2str(code), err);
-		return 1;
-	}
-
-	ldap_memfree(cr);
 	return 0;
 }
 
 static int dsaschema_read_config(const char *fname, int depth)
 {
 	FILE *fp;
-	char *line, *savefname, *saveline;
+	char *line, *savefname, *saveline = NULL;
 	int savelineno, lineno;
 	int rc;
 
 	if (depth == 0) {
-		cargv = calloc(ARGS_STEP + 1, sizeof(*cargv));
-		if (cargv == NULL) {
-			return 1;
-		}
+		cargv = ch_calloc(ARGS_STEP + 1, sizeof(*cargv));
 		cargv_size = ARGS_STEP + 1;
 	}
 
 	fp = fopen(fname, "r");
 	if (fp == NULL) {
+		char ebuf[128];
+		int saved_errno = errno;
 		fprintf(stderr, "could not open config file \"%s\": %s (%d)\n",
-			fname, strerror(errno), errno);
+			fname, AC_STRERROR_R(saved_errno, ebuf, sizeof(ebuf)), saved_errno);
 		return 1;
 	}
 	fp_getline_init(&lineno);
@@ -182,13 +101,11 @@ static int dsaschema_read_config(const char *fname, int depth)
 			continue;
 		}
 
-		saveline = strdup(line);
-		if (saveline == NULL) {
-			return 1;
-		}
+		saveline = ch_strdup(line);
 
 		if (fp_parse_line(lineno, line) != 0) {
-			return 1;
+			rc = 1;
+			break;
 		}
 
 		if (cargc < 1) {
@@ -200,14 +117,19 @@ static int dsaschema_read_config(const char *fname, int depth)
 			if (cargc < 2) {
 				fprintf(stderr, "%s: line %d: illegal attribute type format\n",
 					fname, lineno);
-				return 1;
+				rc = 1;
+				break;
 			} else if (*cargv[1] == '(' /*')'*/) {
 				char *p;
 	
 				p = strchr(saveline, '(' /*')'*/);
-				rc = dsaschema_parse_at(fname, lineno, p, cargv);
-				if (rc != 0)
-					return rc;
+				rc = register_at(p, NULL, 0);
+				if (rc != 0) {
+					Debug( LDAP_DEBUG_ANY, "dsaschema_read_config: "
+							"attribute definition invalid at %s:%d\n",
+							fname, lineno );
+					break;
+				}
 			} else {
 				fprintf(stderr, "%s: line %d: old attribute type format not supported\n",
 					fname, lineno);
@@ -217,19 +139,24 @@ static int dsaschema_read_config(const char *fname, int depth)
 			p = strchr(saveline, '(' /*')'*/);
 			rc = dsaschema_parse_cr(fname, lineno, p, cargv);
 			if (rc != 0)
-				return rc;
+				break;
 		} else if (strcasecmp(cargv[0], "objectclass") == 0) {
 			if (cargc < 2) {
 				fprintf(stderr, "%s: line %d: illegal objectclass format\n",
 					fname, lineno);
-				return 1;
+				rc = 1;
+				break;
 			} else if (*cargv[1] == '(' /*')'*/) {
 				char *p;
 
 				p = strchr(saveline, '(' /*')'*/);
-				rc = dsaschema_parse_oc(fname, lineno, p, cargv);
-				if (rc != 0)
-					return rc;
+				rc = register_oc(p, NULL, 0);
+				if (rc != 0) {
+					Debug( LDAP_DEBUG_ANY, "dsaschema_read_config: "
+							"objectclass definition invalid at %s:%d\n",
+							fname, lineno );
+					break;
+				}
 			} else {
 				fprintf(stderr, "%s: line %d: object class format not supported\n",
 					fname, lineno);
@@ -238,29 +165,36 @@ static int dsaschema_read_config(const char *fname, int depth)
 			if (cargc < 2) {
 				fprintf(stderr, "%s: line %d: missing file name in \"include <filename>\" line",
 					fname, lineno);
-				return 1;
+				rc = 1;
+				break;
 			}
-			savefname = strdup(cargv[1]);
-			if (savefname == NULL) {
-				return 1;
-			}
-			if (dsaschema_read_config(savefname, depth + 1) != 0) {
-				return 1;
-			}
-			free(savefname);
+			savelineno = lineno;
+			savefname = ch_strdup(cargv[1]);
+
+			rc = dsaschema_read_config(savefname, depth + 1);
+			ch_free(savefname);
 			lineno = savelineno - 1;
+			if (rc != 0) {
+				break;
+			}
 		} else {
 			fprintf(stderr, "%s: line %d: unknown directive \"%s\" (ignored)\n",
 				fname, lineno, cargv[0]);
 		}
+
+		ch_free(saveline);
+		saveline = NULL;
 	}
 
 	fclose(fp);
 
 	if (depth == 0)
-		free(cargv);
+		ch_free(cargv);
 
-	return 0;
+	if (saveline != NULL)
+		ch_free(saveline);
+
+	return rc;
 }
 
 int init_module(int argc, char *argv[])
@@ -301,11 +235,8 @@ fp_parse_line(
 	for ( ; token != NULL; token = strtok_quote( NULL, " \t" ) ) {
 		if ( cargc == cargv_size - 1 ) {
 			char **tmp;
-			tmp = realloc( cargv, (cargv_size + ARGS_STEP) *
+			tmp = ch_realloc( cargv, (cargv_size + ARGS_STEP) *
 					    sizeof(*cargv) );
-			if ( tmp == NULL ) {
-				return -1;
-			}
 			cargv = tmp;
 			cargv_size += ARGS_STEP;
 		}
@@ -379,7 +310,7 @@ static size_t lmax, lcur;
 		size_t len = strlen( buf ); \
 		while ( lcur + len + 1 > lmax ) { \
 			lmax += BUFSIZ; \
-			line = (char *) realloc( line, lmax ); \
+			line = (char *) ch_realloc( line, lmax ); \
 		} \
 		strcpy( line + lcur, buf ); \
 		lcur += len; \

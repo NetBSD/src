@@ -1,10 +1,10 @@
-/*	$NetBSD: dyngroup.c,v 1.2 2020/08/11 13:15:42 christos Exp $	*/
+/*	$NetBSD: dyngroup.c,v 1.3 2021/08/14 16:15:02 christos Exp $	*/
 
 /* dyngroup.c - Demonstration of overlay code */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2020 The OpenLDAP Foundation.
+ * Copyright 2003-2021 The OpenLDAP Foundation.
  * Copyright 2003 by Howard Chu.
  * All rights reserved.
  *
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dyngroup.c,v 1.2 2020/08/11 13:15:42 christos Exp $");
+__RCSID("$NetBSD: dyngroup.c,v 1.3 2021/08/14 16:15:02 christos Exp $");
 
 #include "portable.h"
 
@@ -35,7 +35,7 @@ __RCSID("$NetBSD: dyngroup.c,v 1.2 2020/08/11 13:15:42 christos Exp $");
 
 #include "lutil.h"
 #include "slap.h"
-#include "config.h"
+#include "slap-config.h"
 
 /* This overlay extends the Compare operation to detect members of a
  * dynamic group. It has no effect on any other operations. It must
@@ -101,14 +101,14 @@ static int dgroup_cf( ConfigArgs *c )
 			snprintf( c->cr_msg, sizeof( c->cr_msg ), "%s attribute description unknown: \"%s\"",
 				c->argv[0], c->argv[1] );
 			Debug( LDAP_DEBUG_CONFIG|LDAP_DEBUG_NONE,
-				"%s: %s\n", c->log, c->cr_msg, 0 );
+				"%s: %s\n", c->log, c->cr_msg );
 			return ARG_BAD_CONF;
 		}
 		if ( slap_str2ad( c->argv[2], &ap.ap_uri, &text ) ) {
 			snprintf( c->cr_msg, sizeof( c->cr_msg ), "%s attribute description unknown: \"%s\"",
 				c->argv[0], c->argv[2] );
 			Debug( LDAP_DEBUG_CONFIG|LDAP_DEBUG_NONE,
-				"%s: %s\n", c->log, c->cr_msg, 0 );
+				"%s: %s\n", c->log, c->cr_msg );
 			return ARG_BAD_CONF;
 		}
 		/* The on->on_bi.bi_private pointer can be used for
@@ -128,7 +128,8 @@ static int dgroup_cf( ConfigArgs *c )
 static ConfigTable dgroupcfg[] = {
 	{ "attrpair", "member-attribute> <URL-attribute", 3, 3, 0,
 	  ARG_MAGIC, dgroup_cf,
-	  "( OLcfgOvAt:17.1 NAME 'olcDGAttrPair' "
+	  "( OLcfgOvAt:17.1 NAME ( 'olcDynGroupAttrPair' 'olcDGAttrPair' ) "
+	  "EQUALITY caseIgnoreMatch "
 	  "DESC 'Member and MemberURL attribute pair' "
 	  "SYNTAX OMsDirectoryString )", NULL, NULL },
 	{ NULL, NULL, 0, 0, 0, ARG_IGNORED }
@@ -136,10 +137,10 @@ static ConfigTable dgroupcfg[] = {
 
 static ConfigOCs dgroupocs[] = {
 	{ "( OLcfgOvOc:17.1 "
-	  "NAME 'olcDGConfig' "
+	  "NAME ( 'olcDynGroupConfig' 'olcDGConfig' ) "
 	  "DESC 'Dynamic Group configuration' "
 	  "SUP olcOverlayConfig "
-	  "MAY olcDGAttrPair )",
+	  "MAY olcDynGroupAttrPair)",
 	  Cft_Overlay, dgroupcfg },
 	{ NULL, 0, NULL }
 };
@@ -212,6 +213,7 @@ int dyngroup_initialize() {
 	int code;
 
 	dyngroup.on_bi.bi_type = "dyngroup";
+	dyngroup.on_bi.bi_flags = SLAPO_BFLAG_SINGLE;
 	dyngroup.on_bi.bi_db_destroy = dyngroup_destroy;
 	dyngroup.on_response = dyngroup_response;
 

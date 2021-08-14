@@ -1,10 +1,10 @@
-/*	$NetBSD: operation.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
+/*	$NetBSD: operation.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
 
 /* operation.c - routines to deal with pending ldap operations */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: operation.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
+__RCSID("$NetBSD: operation.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
 
 #include "portable.h"
 
@@ -48,7 +48,11 @@ static int last_incr;
 
 void slap_op_init(void)
 {
+	struct timeval tv;
 	ldap_pvt_thread_mutex_init( &slap_op_mutex );
+	gettimeofday( &tv, NULL );
+	last_time = tv.tv_sec;
+	last_incr = tv.tv_usec;
 }
 
 void slap_op_destroy(void)
@@ -164,8 +168,10 @@ slap_op_free( Operation *op, void *ctx )
 void
 slap_op_time(time_t *t, int *nop)
 {
+	struct timeval tv;
 	ldap_pvt_thread_mutex_lock( &slap_op_mutex );
-	*t = slap_get_time();
+	gettimeofday( &tv, NULL );
+	*t = tv.tv_sec;
 	if ( *t == last_time ) {
 		*nop = ++last_incr;
 	} else {
@@ -174,6 +180,7 @@ slap_op_time(time_t *t, int *nop)
 		*nop = 0;
 	}
 	ldap_pvt_thread_mutex_unlock( &slap_op_mutex );
+	nop[1] = tv.tv_usec;
 }
 
 Operation *

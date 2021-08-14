@@ -1,9 +1,9 @@
-/*	$NetBSD: rewrite-int.h,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
+/*	$NetBSD: rewrite-int.h,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2020 The OpenLDAP Foundation.
+ * Copyright 2000-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@
 #define LDAP_DEFINE_LDAP_DEBUG
 #include <ldap_log.h>
 #include <lutil.h>
-#include <avl.h>
+#include <ldap_avl.h>
 
 #include <rewrite.h>
 
@@ -49,9 +49,10 @@
 #undef strdup
 #define	strdup(x)	ber_strdup(x)
 
-/* Uncomment to use ldap pvt threads */
+#ifndef NO_THREADS
 #define USE_REWRITE_LDAP_PVT_THREADS
 #include <ldap_pvt_thread.h>
+#endif
 
 /*
  * For details, see RATIONALE.

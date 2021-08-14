@@ -1,8 +1,8 @@
-/*	$NetBSD: LDAPRequest.h,v 1.2 2020/08/11 13:15:34 christos Exp $	*/
+/*	$NetBSD: LDAPRequest.h,v 1.3 2021/08/14 16:14:49 christos Exp $	*/
 
 // $OpenLDAP$
 /*
- * Copyright 2000-2020 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2000-2021 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -21,7 +21,7 @@ class LDAPUrl;
  * 
  * Each request that is sent to a LDAP-server by this library is
  * represented by a special object that contains the parameters and some
- * other info of the request. This virtual class is the common base classe
+ * other info of the request. This virtual class is the common base class
  * for these specialized request classes.
  */
 class LDAPRequest{
@@ -63,7 +63,7 @@ class LDAPRequest{
         void unbind() const; 
 
         /**
-         * This method encodes the request an calls the apprpriate
+         * This method encodes the request an calls the appropriate
          * functions of the C-API to send the Request to a LDAP-Server
          */
         virtual LDAPMessageQueue* sendRequest()=0;

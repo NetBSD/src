@@ -1,10 +1,10 @@
-/*	$NetBSD: add.c,v 1.2 2020/08/11 13:15:40 christos Exp $	*/
+/*	$NetBSD: add.c,v 1.3 2021/08/14 16:14:59 christos Exp $	*/
 
 /* add.c - ldap backend add function */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2020 The OpenLDAP Foundation.
+ * Copyright 1999-2021 The OpenLDAP Foundation.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: add.c,v 1.2 2020/08/11 13:15:40 christos Exp $");
+__RCSID("$NetBSD: add.c,v 1.3 2021/08/14 16:14:59 christos Exp $");
 
 #include "portable.h"
 
@@ -57,7 +57,7 @@ ldap_back_add(
 	rs->sr_err = LDAP_SUCCESS;
 	
 	Debug( LDAP_DEBUG_ARGS, "==> ldap_back_add(\"%s\")\n",
-			op->o_req_dn.bv_val, 0, 0 );
+			op->o_req_dn.bv_val );
 
 	if ( !ldap_back_dobind( &lc, op, rs, LDAP_BACK_SENDERR ) ) {
 		lc = NULL;
@@ -137,7 +137,7 @@ cleanup:
 	}
 
 	Debug( LDAP_DEBUG_ARGS, "<== ldap_back_add(\"%s\"): %d\n",
-			op->o_req_dn.bv_val, rs->sr_err, 0 );
+			op->o_req_dn.bv_val, rs->sr_err );
 
 	return rs->sr_err;
 }

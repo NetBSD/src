@@ -1,10 +1,10 @@
-/*	$NetBSD: ava.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
+/*	$NetBSD: ava.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
 
 /* ava.c - routines for dealing with attribute value assertions */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ava.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
+__RCSID("$NetBSD: ava.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
 
 #include "portable.h"
 
@@ -77,7 +77,7 @@ get_ava(
 	rtag = ber_scanf( ber, "{mm}", &type, &value );
 
 	if( rtag == LBER_ERROR ) {
-		Debug( LDAP_DEBUG_ANY, "  get_ava ber_scanf\n", 0, 0, 0 );
+		Debug( LDAP_DEBUG_ANY, "  get_ava ber_scanf\n" );
 		*text = "Error decoding attribute value assertion";
 		return SLAPD_DISCONNECT;
 	}
@@ -99,7 +99,7 @@ get_ava(
 
 		if( rc != LDAP_SUCCESS ) {
 			Debug( LDAP_DEBUG_FILTER,
-			"get_ava: unknown attributeType %s\n", type.bv_val, 0, 0 );
+			"get_ava: unknown attributeType %s\n", type.bv_val );
 			aa->aa_desc = slap_bv2tmp_ad( &type, op->o_tmpmemctx );
 			ber_dupbv_x( &aa->aa_value, &value, op->o_tmpmemctx );
 			f->f_ava = aa;
@@ -114,7 +114,7 @@ get_ava(
 	if( rc != LDAP_SUCCESS ) {
 		f->f_choice |= SLAPD_FILTER_UNDEFINED;
 		Debug( LDAP_DEBUG_FILTER,
-		"get_ava: illegal value for attributeType %s\n", type.bv_val, 0, 0 );
+		"get_ava: illegal value for attributeType %s\n", type.bv_val );
 		ber_dupbv_x( &aa->aa_value, &value, op->o_tmpmemctx );
 		*text = NULL;
 		rc = LDAP_SUCCESS;
@@ -127,7 +127,7 @@ get_ava(
 			rc = get_aliased_filter_aa ( op, aa, a_alias, text );
 			if( rc != LDAP_SUCCESS ) {
 				Debug( LDAP_DEBUG_FILTER,
-						"get_ava: Invalid Attribute Aliasing\n", 0, 0, 0 );
+						"get_ava: Invalid Attribute Aliasing\n" );
 				return rc;
 			}
 		}

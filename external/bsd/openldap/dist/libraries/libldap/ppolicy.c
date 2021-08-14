@@ -1,9 +1,9 @@
-/*	$NetBSD: ppolicy.c,v 1.2 2020/08/11 13:15:37 christos Exp $	*/
+/*	$NetBSD: ppolicy.c,v 1.3 2021/08/14 16:14:56 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2020 The OpenLDAP Foundation.
+ * Copyright 2004-2021 The OpenLDAP Foundation.
  * Portions Copyright 2004 Hewlett-Packard Company.
  * Portions Copyright 2004 Howard Chu, Symas Corp.
  * All rights reserved.
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ppolicy.c,v 1.2 2020/08/11 13:15:37 christos Exp $");
+__RCSID("$NetBSD: ppolicy.c,v 1.3 2021/08/14 16:14:56 christos Exp $");
 
 #include "portable.h"
 
@@ -86,7 +86,7 @@ ldap_create_passwordpolicy_control( LDAP *ld,
    
    ctrl         (IN)   The address of an
 					   LDAPControl structure, either obtained 
-					   by running thorugh the list of response controls or
+					   by running through the list of response controls or
 					   by a call to ldap_control_find().
 
    exptimep     (OUT)  This result parameter is filled in with the number of seconds before
@@ -211,9 +211,52 @@ ldap_passwordpolicy_err2txt( LDAPPasswordPolicyError err )
 	case PP_passwordTooShort: return "Password is too short for policy";
 	case PP_passwordTooYoung: return "Password has been changed too recently";
 	case PP_passwordInHistory: return "New password is in list of old passwords";
+	case PP_passwordTooLong: return "Password is too long for policy";
 	case PP_noError: return "No error";
 	default: return "Unknown error code";
 	}
 }
 
 #endif /* LDAP_CONTROL_PASSWORDPOLICYREQUEST */
+
+#ifdef LDAP_CONTROL_X_PASSWORD_EXPIRING
+
+int
+ldap_parse_password_expiring_control(
+	LDAP           *ld,
+	LDAPControl    *ctrl,
+	long           *secondsp )
+{
+	long seconds = 0;
+	char buf[sizeof("-2147483648")];
+	char *next;
+
+	assert( ld != NULL );
+	assert( LDAP_VALID( ld ) );
+	assert( ctrl != NULL );
+
+	if ( BER_BVISEMPTY( &ctrl->ldctl_value ) ||
+		ctrl->ldctl_value.bv_len >= sizeof(buf) ) {
+		ld->ld_errno = LDAP_DECODING_ERROR;
+		return(ld->ld_errno);
+	}
+
+	memcpy( buf, ctrl->ldctl_value.bv_val, ctrl->ldctl_value.bv_len );
+	buf[ctrl->ldctl_value.bv_len] = '\0';
+
+	seconds = strtol( buf, &next, 10 );
+	if ( next == buf || next[0] != '\0' ) goto exit;
+
+	if ( secondsp != NULL ) {
+		*secondsp = seconds;
+	}
+
+	ld->ld_errno = LDAP_SUCCESS;
+	return(ld->ld_errno);
+
+  exit:
+	ld->ld_errno = LDAP_DECODING_ERROR;
+	return(ld->ld_errno);
+}
+
+#endif /* LDAP_CONTROL_X_PASSWORD_EXPIRING */

@@ -1,4 +1,4 @@
-/*	$NetBSD: back-asyncmeta.h,v 1.1.1.1 2021/08/14 16:05:23 christos Exp $	*/
+/*	$NetBSD: back-asyncmeta.h,v 1.2 2021/08/14 16:14:59 christos Exp $	*/
 
 /* back-asyncmeta.h - main header file for back-asyncmeta module */
 /* $OpenLDAP$ */

@@ -1,9 +1,9 @@
-/*	$NetBSD: config.c,v 1.2 2020/08/11 13:15:42 christos Exp $	*/
+/*	$NetBSD: config.c,v 1.3 2021/08/14 16:15:01 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2020 The OpenLDAP Foundation.
+ * Copyright 1999-2021 The OpenLDAP Foundation.
  * Portions Copyright 1999 Dmitry Kovalev.
  * Portions Copyright 2002 Pierangelo Masarati.
  * Portions Copyright 2004 Mark Adamson.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: config.c,v 1.2 2020/08/11 13:15:42 christos Exp $");
+__RCSID("$NetBSD: config.c,v 1.3 2021/08/14 16:15:01 christos Exp $");
 
 #include "portable.h"
 
@@ -33,7 +33,7 @@ __RCSID("$NetBSD: config.c,v 1.2 2020/08/11 13:15:42 christos Exp $");
 #include <sys/types.h>
 
 #include "slap.h"
-#include "config.h"
+#include "slap-config.h"
 #include "ldif.h"
 #include "lutil.h"
 #include "proto-sql.h"
@@ -73,155 +73,186 @@ static ConfigTable sqlcfg[] = {
 		(void *)offsetof(struct backsql_info, sql_dbhost),
 		"( OLcfgDbAt:6.1 NAME 'olcDbHost' "
 			"DESC 'Hostname of SQL server' "
+			"EQUALITY caseExactMatch "
 			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
 	{ "dbname", "name", 2, 2, 0, ARG_STRING|ARG_OFFSET,
 		(void *)offsetof(struct backsql_info, sql_dbname),
 		"( OLcfgDbAt:6.2 NAME 'olcDbName' "
 			"DESC 'Name of SQL database' "
+			"EQUALITY caseExactMatch "
 			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
 	{ "dbuser", "username", 2, 2, 0, ARG_STRING|ARG_OFFSET,
 		(void *)offsetof(struct backsql_info, sql_dbuser),
 		"( OLcfgDbAt:6.3 NAME 'olcDbUser' "
 			"DESC 'Username for SQL session' "
+			"EQUALITY caseExactMatch "
 			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
 	{ "dbpasswd", "password", 2, 2, 0, ARG_STRING|ARG_OFFSET,
 		(void *)offsetof(struct backsql_info, sql_dbpasswd),
 		"( OLcfgDbAt:6.4 NAME 'olcDbPass' "
 			"DESC 'Password for SQL session' "
+			"EQUALITY caseExactMatch "
 			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
 	{ "concat_pattern", "pattern", 2, 2, 0,
 		ARG_STRING|ARG_MAGIC|BSQL_CONCAT_PATT, (void *)sql_cf_gen,
 		"( OLcfgDbAt:6.20 NAME 'olcSqlConcatPattern' "
 			"DESC 'Pattern used to concatenate strings' "
+			"EQUALITY caseExactMatch "
 			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
 	{ "subtree_cond", "SQL expression", 2, 0, 0, ARG_BERVAL|ARG_QUOTE|ARG_OFFSET,
 		(void *)offsetof(struct backsql_info, sql_subtree_cond),
 		"( OLcfgDbAt:6.21 NAME 'olcSqlSubtreeCond' "
 			"DESC 'Where-clause template for a subtree search condition' "
+			"EQUALITY caseExactMatch "
 			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
 	{ "children_cond", "SQL expression", 2, 0, 0, ARG_BERVAL|ARG_QUOTE|ARG_OFFSET,
 		(void *)offsetof(struct backsql_info, sql_children_cond),
 		"( OLcfgDbAt:6.22 NAME 'olcSqlChildrenCond' "
 			"DESC 'Where-clause template for a children search condition' "
+			"EQUALITY caseExactMatch "
 			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
 	{ "dn_match_cond", "SQL expression", 2, 0, 0, ARG_BERVAL|ARG_QUOTE|ARG_OFFSET,
 		(void *)offsetof(struct backsql_info, sql_dn_match_cond),
 		"( OLcfgDbAt:6.23 NAME 'olcSqlDnMatchCond' "
 			"DESC 'Where-clause template for a DN match search condition' "
+			"EQUALITY caseExactMatch "
 			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
 	{ "oc_query", "SQL expression", 2, 0, 0, ARG_STRING|ARG_QUOTE|ARG_OFFSET,
 		(void *)offsetof(struct backsql_info, sql_oc_query),
 		"( OLcfgDbAt:6.24 NAME 'olcSqlOcQuery' "
 			"DESC 'Query used to collect objectClass mapping data' "
+			"EQUALITY caseExactMatch "
 			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
 	{ "at_query", "SQL expression", 2, 0, 0, ARG_STRING|ARG_QUOTE|ARG_OFFSET,
 		(void *)offsetof(struct backsql_info, sql_at_query),
 		"( OLcfgDbAt:6.25 NAME 'olcSqlAtQuery' "
 			"DESC 'Query used to collect attributeType mapping data' "
+			"EQUALITY caseExactMatch "
 			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
 	{ "insentry_stmt", "SQL expression", 2, 0, 0, ARG_STRING|ARG_QUOTE|ARG_OFFSET,
 		(void *)offsetof(struct backsql_info, sql_insentry_stmt),
 		"( OLcfgDbAt:6.26 NAME 'olcSqlInsEntryStmt' "
 			"DESC 'Statement used to insert a new entry' "
+			"EQUALITY caseExactMatch "
 			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
 	{ "create_needs_select", "yes|no", 2, 2, 0,
 		ARG_ON_OFF|ARG_MAGIC|BSQL_CREATE_NEEDS_SEL, (void *)sql_cf_gen,
 		"( OLcfgDbAt:6.27 NAME 'olcSqlCreateNeedsSelect' "
 			"DESC 'Whether entry creation needs a subsequent select' "
+			"EQUALITY booleanMatch "
 			"SYNTAX OMsBoolean SINGLE-VALUE )", NULL, NULL },
 	{ "upper_func", "SQL function name", 2, 2, 0, ARG_BERVAL|ARG_OFFSET,
 		(void *)offsetof(struct backsql_info, sql_upper_func),
 		"( OLcfgDbAt:6.28 NAME 'olcSqlUpperFunc' "
 			"DESC 'Function that converts a value to uppercase' "
+			"EQUALITY caseExactMatch "
 			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
 	{ "upper_needs_cast", "yes|no", 2, 2, 0,
 		ARG_ON_OFF|ARG_MAGIC|BSQL_UPPER_NEEDS_CAST, (void *)sql_cf_gen,
 		"( OLcfgDbAt:6.29 NAME 'olcSqlUpperNeedsCast' "
 			"DESC 'Whether olcSqlUpperFunc needs an explicit cast' "
+			"EQUALITY booleanMatch "
 			"SYNTAX OMsBoolean SINGLE-VALUE )", NULL, NULL },
 	{ "strcast_func", "SQL function name", 2, 2, 0, ARG_BERVAL|ARG_OFFSET,
 		(void *)offsetof(struct backsql_info, sql_strcast_func),
 		"( OLcfgDbAt:6.30 NAME 'olcSqlStrcastFunc' "
 			"DESC 'Function that converts a value to a string' "
+			"EQUALITY caseExactMatch "
 			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
 	{ "delentry_stmt", "SQL expression", 2, 0, 0, ARG_STRING|ARG_QUOTE|ARG_OFFSET,
 		(void *)offsetof(struct backsql_info, sql_delentry_stmt),
 		"( OLcfgDbAt:6.31 NAME 'olcSqlDelEntryStmt' "
 			"DESC 'Statement used to delete an existing entry' "
+			"EQUALITY caseExactMatch "
 			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
 	{ "renentry_stmt", "SQL expression", 2, 0, 0, ARG_STRING|ARG_QUOTE|ARG_OFFSET,
 		(void *)offsetof(struct backsql_info, sql_renentry_stmt),
 		"( OLcfgDbAt:6.32 NAME 'olcSqlRenEntryStmt' "
 			"DESC 'Statement used to rename an entry' "
+			"EQUALITY caseExactMatch "
 			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
 	{ "delobjclasses_stmt", "SQL expression", 2, 0, 0, ARG_STRING|ARG_QUOTE|ARG_OFFSET,
 		(void *)offsetof(struct backsql_info, sql_delobjclasses_stmt),
 		"( OLcfgDbAt:6.33 NAME 'olcSqlDelObjclassesStmt' "
 			"DESC 'Statement used to delete the ID of an entry' "
+			"EQUALITY caseExactMatch "
 			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
 	{ "has_ldapinfo_dn_ru", "yes|no", 2, 2, 0,
 		ARG_ON_OFF|ARG_MAGIC|BSQL_HAS_LDAPINFO_DN_RU, (void *)sql_cf_gen,
 		"( OLcfgDbAt:6.34 NAME 'olcSqlHasLDAPinfoDnRu' "
 			"DESC 'Whether the dn_ru column is present' "
+			"EQUALITY booleanMatch "
 			"SYNTAX OMsBoolean SINGLE-VALUE )", NULL, NULL },
 	{ "fail_if_no_mapping", "yes|no", 2, 2, 0,
 		ARG_ON_OFF|ARG_MAGIC|BSQL_FAIL_IF_NO_MAPPING, (void *)sql_cf_gen,
 		"( OLcfgDbAt:6.35 NAME 'olcSqlFailIfNoMapping' "
 			"DESC 'Whether to fail on unknown attribute mappings' "
+			"EQUALITY booleanMatch "
 			"SYNTAX OMsBoolean SINGLE-VALUE )", NULL, NULL },
 	{ "allow_orphans", "yes|no", 2, 2, 0,
 		ARG_ON_OFF|ARG_MAGIC|BSQL_ALLOW_ORPHANS, (void *)sql_cf_gen,
 		"( OLcfgDbAt:6.36 NAME 'olcSqlAllowOrphans' "
 			"DESC 'Whether to allow adding entries with no parent' "
+			"EQUALITY booleanMatch "
 			"SYNTAX OMsBoolean SINGLE-VALUE )", NULL, NULL },
 	{ "baseobject", "[file]", 1, 2, 0,
 		ARG_STRING|ARG_MAGIC|BSQL_BASE_OBJECT, (void *)sql_cf_gen,
 		"( OLcfgDbAt:6.37 NAME 'olcSqlBaseObject' "
 			"DESC 'Manage an in-memory baseObject entry' "
+			"EQUALITY caseExactMatch "
 			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
 	{ "sqllayer", "name", 2, 0, 0,
 		ARG_MAGIC|BSQL_LAYER, (void *)sql_cf_gen,
 		"( OLcfgDbAt:6.38 NAME 'olcSqlLayer' "
 			"DESC 'Helper used to map DNs between LDAP and SQL' "
+			"EQUALITY caseExactMatch "
 			"SYNTAX OMsDirectoryString )", NULL, NULL },
 	{ "use_subtree_shortcut", "yes|no", 2, 2, 0,
 		ARG_ON_OFF|ARG_MAGIC|BSQL_SUBTREE_SHORTCUT, (void *)sql_cf_gen,
 		"( OLcfgDbAt:6.39 NAME 'olcSqlUseSubtreeShortcut' "
 			"DESC 'Collect all entries when searchBase is DB suffix' "
+			"EQUALITY booleanMatch "
 			"SYNTAX OMsBoolean SINGLE-VALUE )", NULL, NULL },
 	{ "fetch_all_attrs", "yes|no", 2, 2, 0,
 		ARG_ON_OFF|ARG_MAGIC|BSQL_FETCH_ALL_ATTRS, (void *)sql_cf_gen,
 		"( OLcfgDbAt:6.40 NAME 'olcSqlFetchAllAttrs' "
 			"DESC 'Require all attributes to always be loaded' "
+			"EQUALITY booleanMatch "
 			"SYNTAX OMsBoolean SINGLE-VALUE )", NULL, NULL },
 	{ "fetch_attrs", "attrlist", 2, 0, 0,
 		ARG_MAGIC|BSQL_FETCH_ATTRS, (void *)sql_cf_gen,
 		"( OLcfgDbAt:6.41 NAME 'olcSqlFetchAttrs' "
 			"DESC 'Set of attributes to always fetch' "
+			"EQUALITY caseIgnoreMatch "
 			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
 	{ "check_schema", "yes|no", 2, 2, 0,
 		ARG_ON_OFF|ARG_MAGIC|BSQL_CHECK_SCHEMA, (void *)sql_cf_gen,
 		"( OLcfgDbAt:6.42 NAME 'olcSqlCheckSchema' "
 			"DESC 'Check schema after modifications' "
+			"EQUALITY booleanMatch "
 			"SYNTAX OMsBoolean SINGLE-VALUE )", NULL, NULL },
 	{ "aliasing_keyword", "string", 2, 2, 0,
 		ARG_STRING|ARG_MAGIC|BSQL_ALIASING_KEYWORD, (void *)sql_cf_gen,
 		"( OLcfgDbAt:6.43 NAME 'olcSqlAliasingKeyword' "
 			"DESC 'The aliasing keyword' "
+			"EQUALITY caseExactMatch "
 			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
 	{ "aliasing_quote", "string", 2, 2, 0, ARG_BERVAL|ARG_OFFSET,
 		(void *)offsetof(struct backsql_info, sql_aliasing_quote),
 		"( OLcfgDbAt:6.44 NAME 'olcSqlAliasingQuote' "
 			"DESC 'Quoting char of the aliasing keyword' "
+			"EQUALITY caseIgnoreMatch "
 			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
 	{ "autocommit", "yes|no", 2, 2, 0,
 		ARG_ON_OFF|ARG_MAGIC|BSQL_AUTOCOMMIT, (void *)sql_cf_gen,
 		"( OLcfgDbAt:6.45 NAME 'olcSqlAutocommit' "
+			"EQUALITY booleanMatch "
 			"SYNTAX OMsBoolean SINGLE-VALUE )", NULL, NULL },
 	{ "id_query", "SQL expression", 2, 0, 0, ARG_STRING|ARG_QUOTE|ARG_OFFSET,
 		(void *)offsetof(struct backsql_info, sql_id_query),
 		"( OLcfgDbAt:6.46 NAME 'olcSqlIdQuery' "
 			"DESC 'Query used to collect entryID mapping data' "
+			"EQUALITY caseExactMatch "
 			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
 	{ NULL, NULL, 0, 0, 0, ARG_IGNORED,
 		NULL, NULL, NULL, NULL }
@@ -389,7 +420,7 @@ sql_cf_gen( ConfigArgs *c )
 			snprintf( c->cr_msg, sizeof( c->cr_msg ),
 				"%s: unable to parse pattern \"%s\"",
 				c->log, c->argv[ 1 ] );
-			Debug( LDAP_DEBUG_ANY, "%s\n", c->cr_msg, 0, 0 );
+			Debug( LDAP_DEBUG_ANY, "%s\n", c->cr_msg );
 			return -1;
 		}
 		bi->sql_concat_patt = c->value_string;
@@ -453,7 +484,7 @@ sql_cf_gen( ConfigArgs *c )
 		if ( c->be->be_nsuffix == NULL ) {
 			snprintf( c->cr_msg, sizeof( c->cr_msg ),
 				"%s: suffix must be set", c->log );
-			Debug( LDAP_DEBUG_ANY, "%s\n", c->cr_msg, 0, 0 );
+			Debug( LDAP_DEBUG_ANY, "%s\n", c->cr_msg );
 			rc = ARG_BAD_CONF;
 			break;
 		}
@@ -461,7 +492,7 @@ sql_cf_gen( ConfigArgs *c )
 			Debug( LDAP_DEBUG_CONFIG,
 				"%s: "
 				"\"baseObject\" already provided (will be overwritten)\n",
-				c->log, 0, 0 );
+				c->log );
 			entry_free( bi->sql_baseObject );
 		}
 		if ( c->argc == 2 && !strcmp( c->argv[1], "TRUE" ))
@@ -481,7 +512,7 @@ sql_cf_gen( ConfigArgs *c )
 		default:
 			snprintf( c->cr_msg, sizeof( c->cr_msg ),
 				"%s: trailing values in directive", c->log );
-			Debug( LDAP_DEBUG_ANY, "%s\n", c->cr_msg, 0, 0 );
+			Debug( LDAP_DEBUG_ANY, "%s\n", c->cr_msg );
 			return 1;
 		}
 		break;
@@ -491,7 +522,7 @@ sql_cf_gen( ConfigArgs *c )
 			snprintf( c->cr_msg, sizeof( c->cr_msg ),
 				"%s: unable to load sql layer", c->log );
 			Debug( LDAP_DEBUG_ANY, "%s \"%s\"\n",
-				c->cr_msg, c->argv[1], 0 );
+				c->cr_msg, c->argv[1] );
 			return 1;
 		}
 		break;
@@ -560,7 +591,7 @@ read_baseObject(
 		Debug( LDAP_DEBUG_ANY,
 			"could not open back-sql baseObject "
 			"attr file \"%s\" - absolute path?\n",
-			fname, 0, 0 );
+			fname );
 		perror( fname );
 		return LDAP_OTHER;
 	}
@@ -568,7 +599,7 @@ read_baseObject(
 	bi->sql_baseObject = entry_alloc();
 	if ( bi->sql_baseObject == NULL ) {
 		Debug( LDAP_DEBUG_ANY,
-			"read_baseObject_file: entry_alloc failed", 0, 0, 0 );
+			"read_baseObject_file: entry_alloc failed" );
 		ldif_close( fp );
 		return LDAP_NO_MEMORY;
 	}
@@ -633,7 +664,7 @@ read_baseObject(
 	ldif_close( fp );
 
 	Debug( LDAP_DEBUG_CONFIG, "back-sql baseObject file \"%s\" read.\n",
-			fname, 0, 0 );
+			fname );
 
 	return rc;
 }
@@ -666,7 +697,7 @@ create_baseObject(
 		Debug( LDAP_DEBUG_TRACE,
 			"<==backsql_db_config (%s line %d): "
 			"unable to parse baseObject entry\n",
-			fname, lineno, 0 );
+			fname, lineno );
 		return 1;
 	}
 
@@ -677,14 +708,10 @@ create_baseObject(
 	rc = ldap_bv2rdn( &be->be_suffix[ 0 ], &rdn, (char **)&p,
 			LDAP_DN_FORMAT_LDAP );
 	if ( rc != LDAP_SUCCESS ) {
-		snprintf( buf, sizeof(buf),
-			"unable to extract RDN "
-			"from baseObject DN \"%s\" (%d: %s)",
-			be->be_suffix[ 0 ].bv_val,
-			rc, ldap_err2string( rc ) );
-		Debug( LDAP_DEBUG_TRACE,
-			"<==backsql_db_config (%s line %d): %s\n",
-			fname, lineno, buf );
+		Debug(LDAP_DEBUG_TRACE,
+		      "<==backsql_db_config (%s line %d): unable to extract RDN " "from baseObject DN \"%s\" (%d: %s)\n",
+		      fname, lineno, be->be_suffix[0].bv_val, rc,
+		      ldap_err2string(rc) );
 		return 1;
 	}
 
@@ -699,15 +726,10 @@ create_baseObject(
 
 		rc = slap_bv2ad( &ava->la_attr, &ad, &text );
 		if ( rc != LDAP_SUCCESS ) {
-			snprintf( buf, sizeof(buf),
-				"AttributeDescription of naming "
-				"attribute #%d from baseObject "
-				"DN \"%s\": %d: %s",
-				iAVA, be->be_suffix[ 0 ].bv_val,
-				rc, ldap_err2string( rc ) );
-			Debug( LDAP_DEBUG_TRACE,
-				"<==backsql_db_config (%s line %d): %s\n",
-				fname, lineno, buf );
+			Debug(LDAP_DEBUG_TRACE,
+			      "<==backsql_db_config (%s line %d): AttributeDescription of naming " "attribute #%d from baseObject " "DN \"%s\": %d: %s\n",
+			      fname, lineno, iAVA, be->be_suffix[0].bv_val,
+			      rc, ldap_err2string(rc) );
 			return 1;
 		}
 		
@@ -724,16 +746,11 @@ create_baseObject(
 				&bv, NULL );
 	
 			if ( rc != LDAP_SUCCESS ) {
-				snprintf( buf, sizeof(buf),
-					"prettying of attribute #%d "
-					"from baseObject "
-					"DN \"%s\" failed: %d: %s",
-					iAVA, be->be_suffix[ 0 ].bv_val,
-					rc, ldap_err2string( rc ) );
-				Debug( LDAP_DEBUG_TRACE,
-					"<==backsql_db_config (%s line %d): "
-					"%s\n",
-					fname, lineno, buf );
+				Debug(LDAP_DEBUG_TRACE,
+				      "<==backsql_db_config (%s line %d): " "prettying of attribute #%d " "from baseObject " "DN \"%s\" failed: %d: %s\n",
+				      fname, lineno, iAVA,
+				      be->be_suffix[0].bv_val, rc,
+				      ldap_err2string(rc) );
 				return 1;
 			}
 		}

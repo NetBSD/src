@@ -1,9 +1,9 @@
-/*	$NetBSD: delete.c,v 1.2 2020/08/11 13:15:41 christos Exp $	*/
+/*	$NetBSD: delete.c,v 1.3 2021/08/14 16:15:01 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2020 The OpenLDAP Foundation.
+ * Copyright 1999-2021 The OpenLDAP Foundation.
  * Portions Copyright 1999 John C. Quillan.
  * Portions Copyright 2002 myinternet Limited.
  * All rights reserved.
@@ -56,6 +56,6 @@ perl_back_delete(
 
 	send_ldap_result( op, rs );
 
-	Debug( LDAP_DEBUG_ANY, "Perl DELETE\n", 0, 0, 0 );
+	Debug( LDAP_DEBUG_ANY, "Perl DELETE\n" );
 	return( 0 );
 }

@@ -1,10 +1,10 @@
-/*	$NetBSD: noopsrch.c,v 1.2 2020/08/11 13:15:35 christos Exp $	*/
+/*	$NetBSD: noopsrch.c,v 1.3 2021/08/14 16:14:52 christos Exp $	*/
 
 /* noopsrch.c - LDAP Control that counts entries a search would return */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2010-2020 The OpenLDAP Foundation.
+ * Copyright 2010-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: noopsrch.c,v 1.2 2020/08/11 13:15:35 christos Exp $");
+__RCSID("$NetBSD: noopsrch.c,v 1.3 2021/08/14 16:14:52 christos Exp $");
 
 #include "portable.h"
 
@@ -95,7 +95,7 @@ noopsrch_response( Operation *op, SlapReply *rs )
 	if ( rs->sr_type == REP_SEARCH ) {
 		nc->nc_nentries++;
 #ifdef NOOPSRCH_DEBUG
-		Debug( LDAP_DEBUG_TRACE, "noopsrch_response(REP_SEARCH): nentries=%d\n", nc->nc_nentries, 0, 0 );
+		Debug( LDAP_DEBUG_TRACE, "noopsrch_response(REP_SEARCH): nentries=%d\n", nc->nc_nentries );
 #endif
 		return 0;
 
@@ -208,7 +208,7 @@ noopsrch_db_init( BackendDB *be, ConfigReply *cr)
 		if ( rc != LDAP_SUCCESS ) {
 			Debug( LDAP_DEBUG_ANY,
 				"noopsrch_initialize: Failed to register control '%s' (%d)\n",
-				LDAP_CONTROL_X_NOOPSRCH, rc, 0 );
+				LDAP_CONTROL_X_NOOPSRCH, rc );
 			return rc;
 		}
 	}
@@ -241,6 +241,7 @@ noopsrch_initialize( void )
 
 	noopsrch.on_bi.bi_type = "noopsrch";
 
+	noopsrch.on_bi.bi_flags = SLAPO_BFLAG_SINGLE;
 	noopsrch.on_bi.bi_db_init = noopsrch_db_init;
 	noopsrch.on_bi.bi_db_destroy = noopsrch_db_destroy;
 	noopsrch.on_bi.bi_op_search = noopsrch_op_search;

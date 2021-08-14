@@ -1,10 +1,10 @@
-/*	$NetBSD: mra.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
+/*	$NetBSD: mra.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
 
 /* mra.c - routines for dealing with extensible matching rule assertions */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mra.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
+__RCSID("$NetBSD: mra.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
 
 #include "portable.h"
 
@@ -72,7 +72,7 @@ get_mra(
 	rtag = ber_scanf( ber, "{t" /*"}"*/, &tag );
 
 	if( rtag == LBER_ERROR ) {
-		Debug( LDAP_DEBUG_ANY, "  get_mra ber_scanf\n", 0, 0, 0 );
+		Debug( LDAP_DEBUG_ANY, "  get_mra ber_scanf\n" );
 
 		*text = "Error parsing matching rule assertion";
 		return SLAPD_DISCONNECT;
@@ -81,7 +81,7 @@ get_mra(
 	if ( tag == LDAP_FILTER_EXT_OID ) {
 		rtag = ber_scanf( ber, "m", &rule_text );
 		if ( rtag == LBER_ERROR ) {
-			Debug( LDAP_DEBUG_ANY, "  get_mra ber_scanf for mr\n", 0, 0, 0 );
+			Debug( LDAP_DEBUG_ANY, "  get_mra ber_scanf for mr\n" );
 
 			*text = "Error parsing matching rule in matching rule assertion";
 			return SLAPD_DISCONNECT;
@@ -89,7 +89,7 @@ get_mra(
 
 		rtag = ber_scanf( ber, "t", &tag );
 		if( rtag == LBER_ERROR ) {
-			Debug( LDAP_DEBUG_ANY, "  get_mra ber_scanf\n", 0, 0, 0 );
+			Debug( LDAP_DEBUG_ANY, "  get_mra ber_scanf\n" );
 
 			*text = "Error parsing matching rule assertion";
 			return SLAPD_DISCONNECT;
@@ -99,7 +99,7 @@ get_mra(
 	if ( tag == LDAP_FILTER_EXT_TYPE ) {
 		rtag = ber_scanf( ber, "m", &type );
 		if ( rtag == LBER_ERROR ) {
-			Debug( LDAP_DEBUG_ANY, "  get_mra ber_scanf for ad\n", 0, 0, 0 );
+			Debug( LDAP_DEBUG_ANY, "  get_mra ber_scanf for ad\n" );
 
 			*text = "Error parsing attribute description in matching rule assertion";
 			return SLAPD_DISCONNECT;
@@ -107,7 +107,7 @@ get_mra(
 
 		rtag = ber_scanf( ber, "t", &tag );
 		if( rtag == LBER_ERROR ) {
-			Debug( LDAP_DEBUG_ANY, "  get_mra ber_scanf\n", 0, 0, 0 );
+			Debug( LDAP_DEBUG_ANY, "  get_mra ber_scanf\n" );
 
 			*text = "Error parsing matching rule assertion";
 			return SLAPD_DISCONNECT;
@@ -115,7 +115,7 @@ get_mra(
 	}
 
 	if ( tag != LDAP_FILTER_EXT_VALUE ) {
-		Debug( LDAP_DEBUG_ANY, "  get_mra ber_scanf missing value\n", 0, 0, 0 );
+		Debug( LDAP_DEBUG_ANY, "  get_mra ber_scanf missing value\n" );
 
 		*text = "Missing value in matching rule assertion";
 		return SLAPD_DISCONNECT;
@@ -124,7 +124,7 @@ get_mra(
 	rtag = ber_scanf( ber, "m", &value );
 
 	if( rtag == LBER_ERROR ) {
-		Debug( LDAP_DEBUG_ANY, "  get_mra ber_scanf\n", 0, 0, 0 );
+		Debug( LDAP_DEBUG_ANY, "  get_mra ber_scanf\n" );
 
 		*text = "Error decoding value in matching rule assertion";
 		return SLAPD_DISCONNECT;
@@ -139,7 +139,7 @@ get_mra(
 	}
 
 	if( rtag == LBER_ERROR ) {
-		Debug( LDAP_DEBUG_ANY, "  get_mra ber_scanf\n", 0, 0, 0 );
+		Debug( LDAP_DEBUG_ANY, "  get_mra ber_scanf\n" );
 
 		*text = "Error decoding dnattrs matching rule assertion";
 		return SLAPD_DISCONNECT;

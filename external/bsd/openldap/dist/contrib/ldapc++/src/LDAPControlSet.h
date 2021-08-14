@@ -1,8 +1,8 @@
-/*	$NetBSD: LDAPControlSet.h,v 1.2 2020/08/11 13:15:34 christos Exp $	*/
+/*	$NetBSD: LDAPControlSet.h,v 1.3 2021/08/14 16:14:49 christos Exp $	*/
 
 // $OpenLDAP$
 /*
- * Copyright 2000-2020 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2000-2021 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -36,10 +36,10 @@ class LDAPControlSet {
          * For internal use only
          *
          * This constructor creates a new LDAPControlSet for a
-         * 0-terminiated array of LDAPControl-structures as used by the
+         * 0-terminated array of LDAPControl-structures as used by the
          * C-API
          * @param controls: pointer to a 0-terminated array of pointers to 
-         *                  LDAPControll-structures
+         *                  LDAPControl-structures
          * @note: untested til now. Due to lack of server that return 
          *          Controls
          */

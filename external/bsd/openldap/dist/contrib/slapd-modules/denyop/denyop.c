@@ -1,10 +1,10 @@
-/*	$NetBSD: denyop.c,v 1.2 2020/08/11 13:15:35 christos Exp $	*/
+/*	$NetBSD: denyop.c,v 1.3 2021/08/14 16:14:51 christos Exp $	*/
 
 /* denyop.c - Denies operations */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2020 The OpenLDAP Foundation.
+ * Copyright 2004-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: denyop.c,v 1.2 2020/08/11 13:15:35 christos Exp $");
+__RCSID("$NetBSD: denyop.c,v 1.3 2021/08/14 16:14:51 christos Exp $");
 
 #include "portable.h"
 
@@ -146,7 +146,7 @@ denyop_config(
 			Debug( LDAP_DEBUG_ANY, "%s: line %d: "
 				"operation list missing in "
 				"\"denyop <op-list>\" line.\n",
-				fname, lineno, 0 );
+				fname, lineno );
 			return( 1 );
 		}
 
@@ -234,6 +234,7 @@ denyop_initialize( void )
 {
 	memset( &denyop, 0, sizeof( slap_overinst ) );
 	denyop.on_bi.bi_type = "denyop";
+	denyop.on_bi.bi_flags = SLAPO_BFLAG_SINGLE;
 	denyop.on_bi.bi_db_init = denyop_over_init;
 	denyop.on_bi.bi_db_config = denyop_config;
 	denyop.on_bi.bi_db_destroy = denyop_destroy;

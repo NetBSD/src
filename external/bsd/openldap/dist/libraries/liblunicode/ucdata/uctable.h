@@ -1,4 +1,4 @@
-/*	$NetBSD: uctable.h,v 1.1.1.5 2021/08/14 16:05:27 christos Exp $	*/
+/*	$NetBSD: uctable.h,v 1.2 2021/08/14 16:14:57 christos Exp $	*/
 
 static const ac_uint4 _ucprop_size = 50;
 

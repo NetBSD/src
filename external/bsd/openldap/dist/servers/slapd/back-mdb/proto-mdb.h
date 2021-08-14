@@ -1,9 +1,9 @@
-/*	$NetBSD: proto-mdb.h,v 1.2 2020/08/11 13:15:40 christos Exp $	*/
+/*	$NetBSD: proto-mdb.h,v 1.3 2021/08/14 16:15:00 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2020 The OpenLDAP Foundation.
+ * Copyright 2000-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -45,6 +45,15 @@ void mdb_attr_index_unparse LDAP_P(( struct mdb_info *mdb, BerVarray *bva ));
 void mdb_attr_index_destroy LDAP_P(( struct mdb_info *mdb ));
 void mdb_attr_index_free LDAP_P(( struct mdb_info *mdb,
 	AttributeDescription *ad ));
+
+int mdb_attr_multi_config LDAP_P(( struct mdb_info *mdb,
+	const char *fname, int lineno,
+	int argc, char **argv, struct config_reply_s *cr ));
+
+void mdb_attr_multi_unparse LDAP_P(( struct mdb_info *mdb, BerVarray *bva ));
+
+void mdb_attr_multi_thresh LDAP_P(( struct mdb_info *mdb, AttributeDescription *ad,
+	unsigned *hi, unsigned *lo ));
 
 void mdb_attr_info_free( AttrInfo *ai );
 
@@ -171,6 +180,9 @@ int mdb_filter_candidates(
  * id2entry.c
  */
 
+MDB_cmp_func mdb_id2v_compare;
+MDB_cmp_func mdb_id2v_dupsort;
+
 int mdb_id2entry_add(
 	Operation *op,
 	MDB_txn *tid,
@@ -203,11 +215,15 @@ int mdb_id2edata(
 int mdb_entry_return( Operation *op, Entry *e );
 BI_entry_release_rw mdb_entry_release;
 BI_entry_get_rw mdb_entry_get;
+BI_op_txn mdb_txn;
 
-int mdb_entry_decode( Operation *op, MDB_txn *txn, MDB_val *data, Entry **e );
+int mdb_entry_decode( Operation *op, MDB_txn *txn, MDB_val *data, ID id, Entry **e );
 
 void mdb_reader_flush( MDB_env *env );
 int mdb_opinfo_get( Operation *op, struct mdb_info *mdb, int rdonly, mdb_op_info **moi );
+
+int mdb_mval_put(Operation *op, MDB_cursor *mc, ID id, Attribute *a);
+int mdb_mval_del(Operation *op, MDB_cursor *mc, ID id, Attribute *a);
 
 /*
  * idl.c
@@ -388,6 +404,7 @@ extern BI_tool_entry_put		mdb_tool_entry_put;
 extern BI_tool_entry_reindex		mdb_tool_entry_reindex;
 extern BI_tool_dn2id_get		mdb_tool_dn2id_get;
 extern BI_tool_entry_modify		mdb_tool_entry_modify;
+extern BI_tool_entry_delete		mdb_tool_entry_delete;
 
 extern mdb_idl_keyfunc mdb_tool_idl_add;
 

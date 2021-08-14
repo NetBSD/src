@@ -1,10 +1,10 @@
-/*	$NetBSD: auditlog.c,v 1.2 2020/08/11 13:15:42 christos Exp $	*/
+/*	$NetBSD: auditlog.c,v 1.3 2021/08/14 16:15:02 christos Exp $	*/
 
 /* auditlog.c - log modifications for audit/history purposes */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2020 The OpenLDAP Foundation.
+ * Copyright 2005-2021 The OpenLDAP Foundation.
  * Portions copyright 2004-2005 Symas Corporation.
  * All rights reserved.
  *
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: auditlog.c,v 1.2 2020/08/11 13:15:42 christos Exp $");
+__RCSID("$NetBSD: auditlog.c,v 1.3 2021/08/14 16:15:02 christos Exp $");
 
 #include "portable.h"
 
@@ -34,7 +34,7 @@ __RCSID("$NetBSD: auditlog.c,v 1.2 2020/08/11 13:15:42 christos Exp $");
 #include <ac/ctype.h>
 
 #include "slap.h"
-#include "config.h"
+#include "slap-config.h"
 #include "ldif.h"
 
 typedef struct auditlog_data {
@@ -48,6 +48,7 @@ static ConfigTable auditlogcfg[] = {
 	  (void *)offsetof(auditlog_data, ad_logfile),
 	  "( OLcfgOvAt:15.1 NAME 'olcAuditlogFile' "
 	  "DESC 'Filename for auditlogging' "
+	  "EQUALITY caseExactMatch "
 	  "SYNTAX OMsDirectoryString )", NULL, NULL },
 	{ NULL, NULL, 0, 0, 0, ARG_IGNORED }
 };
@@ -223,6 +224,7 @@ int auditlog_initialize() {
 	int rc;
 
 	auditlog.on_bi.bi_type = "auditlog";
+	auditlog.on_bi.bi_flags = SLAPO_BFLAG_SINGLE;
 	auditlog.on_bi.bi_db_init = auditlog_db_init;
 	auditlog.on_bi.bi_db_destroy = auditlog_db_destroy;
 	auditlog.on_response = auditlog_response;

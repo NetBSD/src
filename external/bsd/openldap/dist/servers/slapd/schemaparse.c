@@ -1,10 +1,10 @@
-/*	$NetBSD: schemaparse.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
+/*	$NetBSD: schemaparse.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
 
 /* schemaparse.c - routines to parse config file objectclass definitions */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: schemaparse.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
+__RCSID("$NetBSD: schemaparse.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
 
 #include "portable.h"
 
@@ -29,7 +29,7 @@ __RCSID("$NetBSD: schemaparse.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
 
 #include "slap.h"
 #include "ldap_schema.h"
-#include "config.h"
+#include "slap-config.h"
 
 static void		oc_usage(void); 
 static void		at_usage(void);
@@ -146,7 +146,7 @@ parse_cr(
 		snprintf( c->cr_msg, sizeof( c->cr_msg ), "%s: %s before %s",
 			c->argv[0], ldap_scherr2str( code ), err );
 		Debug( LDAP_DEBUG_CONFIG|LDAP_DEBUG_NONE,
-			"%s %s\n", c->log, c->cr_msg, 0 );
+			"%s %s\n", c->log, c->cr_msg );
 		cr_usage();
 		return 1;
 	}
@@ -155,7 +155,7 @@ parse_cr(
 		snprintf( c->cr_msg, sizeof( c->cr_msg ), "%s: OID is missing",
 			c->argv[0] );
 		Debug( LDAP_DEBUG_CONFIG|LDAP_DEBUG_NONE,
-			"%s %s\n", c->log, c->cr_msg, 0 );
+			"%s %s\n", c->log, c->cr_msg );
 		cr_usage();
 		code = 1;
 		goto done;
@@ -166,7 +166,7 @@ parse_cr(
 		snprintf( c->cr_msg, sizeof( c->cr_msg ), "%s: %s: \"%s\"",
 			c->argv[0], scherr2str(code), err);
 		Debug( LDAP_DEBUG_CONFIG|LDAP_DEBUG_NONE,
-			"%s %s\n", c->log, c->cr_msg, 0 );
+			"%s %s\n", c->log, c->cr_msg );
 		code = 1;
 		goto done;
 	}
@@ -198,7 +198,7 @@ parse_oc(
 		snprintf( c->cr_msg, sizeof( c->cr_msg ), "%s: %s before %s",
 			c->argv[0], ldap_scherr2str( code ), err );
 		Debug( LDAP_DEBUG_CONFIG|LDAP_DEBUG_NONE,
-			"%s %s\n", c->log, c->cr_msg, 0 );
+			"%s %s\n", c->log, c->cr_msg );
 		oc_usage();
 		return 1;
 	}
@@ -207,7 +207,7 @@ parse_oc(
 		snprintf( c->cr_msg, sizeof( c->cr_msg ), "%s: OID is missing",
 			c->argv[0] );
 		Debug( LDAP_DEBUG_CONFIG|LDAP_DEBUG_NONE,
-			"%s %s\n", c->log, c->cr_msg, 0 );
+			"%s %s\n", c->log, c->cr_msg );
 		oc_usage();
 		code = 1;
 		goto done;
@@ -218,7 +218,7 @@ parse_oc(
 		snprintf( c->cr_msg, sizeof( c->cr_msg ), "%s: %s: \"%s\"",
 			c->argv[0], scherr2str(code), err);
 		Debug( LDAP_DEBUG_CONFIG|LDAP_DEBUG_NONE,
-			"%s %s\n", c->log, c->cr_msg, 0 );
+			"%s %s\n", c->log, c->cr_msg );
 		code = 1;
 		goto done;
 	}
@@ -293,7 +293,7 @@ parse_at(
 		snprintf( c->cr_msg, sizeof( c->cr_msg ), "%s: %s before %s",
 			c->argv[0], ldap_scherr2str(code), err );
 		Debug( LDAP_DEBUG_CONFIG|LDAP_DEBUG_NONE,
-			"%s %s\n", c->log, c->cr_msg, 0 );
+			"%s %s\n", c->log, c->cr_msg );
 		at_usage();
 		return 1;
 	}
@@ -302,7 +302,7 @@ parse_at(
 		snprintf( c->cr_msg, sizeof( c->cr_msg ), "%s: OID is missing",
 			c->argv[0] );
 		Debug( LDAP_DEBUG_CONFIG|LDAP_DEBUG_NONE,
-			"%s %s\n", c->log, c->cr_msg, 0 );
+			"%s %s\n", c->log, c->cr_msg );
 		at_usage();
 		code = 1;
 		goto done;
@@ -313,7 +313,7 @@ parse_at(
 		snprintf( c->cr_msg, sizeof( c->cr_msg ), "%s: \"%s\" is operational",
 			c->argv[0], at->at_oid );
 		Debug( LDAP_DEBUG_CONFIG|LDAP_DEBUG_NONE,
-			"%s %s\n", c->log, c->cr_msg, 0 );
+			"%s %s\n", c->log, c->cr_msg );
 		code = 1;
 		goto done;
 	}
@@ -323,7 +323,7 @@ parse_at(
 		snprintf( c->cr_msg, sizeof( c->cr_msg ), "%s: %s: \"%s\"",
 			c->argv[0], scherr2str(code), err);
 		Debug( LDAP_DEBUG_CONFIG|LDAP_DEBUG_NONE,
-			"%s %s\n", c->log, c->cr_msg, 0 );
+			"%s %s\n", c->log, c->cr_msg );
 		code = 1;
 		goto done;
 	}
@@ -367,7 +367,7 @@ parse_syn(
 		snprintf( c->cr_msg, sizeof( c->cr_msg ), "%s: %s before %s",
 			c->argv[0], ldap_scherr2str(code), err );
 		Debug( LDAP_DEBUG_CONFIG|LDAP_DEBUG_NONE,
-			"%s %s\n", c->log, c->cr_msg, 0 );
+			"%s %s\n", c->log, c->cr_msg );
 		syn_usage();
 		return 1;
 	}
@@ -376,7 +376,7 @@ parse_syn(
 		snprintf( c->cr_msg, sizeof( c->cr_msg ), "%s: OID is missing",
 			c->argv[0] );
 		Debug( LDAP_DEBUG_CONFIG|LDAP_DEBUG_NONE,
-			"%s %s\n", c->log, c->cr_msg, 0 );
+			"%s %s\n", c->log, c->cr_msg );
 		syn_usage();
 		code = 1;
 		goto done;
@@ -387,7 +387,7 @@ parse_syn(
 		snprintf( c->cr_msg, sizeof( c->cr_msg ), "%s: %s: \"%s\"",
 			c->argv[0], scherr2str(code), err);
 		Debug( LDAP_DEBUG_CONFIG|LDAP_DEBUG_NONE,
-			"%s %s\n", c->log, c->cr_msg, 0 );
+			"%s %s\n", c->log, c->cr_msg );
 		code = 1;
 		goto done;
 	}

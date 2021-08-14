@@ -1,10 +1,10 @@
-/*	$NetBSD: attr.c,v 1.2 2020/08/11 13:15:40 christos Exp $	*/
+/*	$NetBSD: attr.c,v 1.3 2021/08/14 16:15:00 christos Exp $	*/
 
 /* attr.c - backend routines for dealing with attributes */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2020 The OpenLDAP Foundation.
+ * Copyright 2000-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: attr.c,v 1.2 2020/08/11 13:15:40 christos Exp $");
+__RCSID("$NetBSD: attr.c,v 1.3 2021/08/14 16:15:00 christos Exp $");
 
 #include "portable.h"
 
@@ -28,7 +28,7 @@ __RCSID("$NetBSD: attr.c,v 1.2 2020/08/11 13:15:40 christos Exp $");
 
 #include "slap.h"
 #include "back-mdb.h"
-#include "config.h"
+#include "slap-config.h"
 #include "lutil.h"
 
 /* Find the ad, return -1 if not found,
@@ -112,7 +112,7 @@ mdb_attr_dbs_open(
 				be->be_suffix[0].bv_val, mdb_strerror(rc), rc );
 			Debug( LDAP_DEBUG_ANY,
 				LDAP_XSTRING(mdb_attr_dbs) ": %s\n",
-				cr->msg, 0, 0 );
+				cr->msg );
 			return rc;
 		}
 		dbis = ch_calloc( 1, mdb->mi_nattrs * sizeof(MDB_dbi) );
@@ -127,6 +127,8 @@ mdb_attr_dbs_open(
 	for ( i=0; i<mdb->mi_nattrs; i++ ) {
 		if ( mdb->mi_attrs[i]->ai_dbi )	/* already open */
 			continue;
+		if ( !( mdb->mi_attrs[i]->ai_indexmask || mdb->mi_attrs[i]->ai_newmask ))	/* not an index record */
+			continue;
 		rc = mdb_dbi_open( txn, mdb->mi_attrs[i]->ai_desc->ad_type->sat_cname.bv_val,
 			flags, &mdb->mi_attrs[i]->ai_dbi );
 		if ( rc ) {
@@ -137,7 +139,7 @@ mdb_attr_dbs_open(
 				mdb_strerror(rc), rc );
 			Debug( LDAP_DEBUG_ANY,
 				LDAP_XSTRING(mdb_attr_dbs) ": %s\n",
-				cr->msg, 0, 0 );
+				cr->msg );
 			break;
 		}
 		/* Remember newly opened DBI handles */
@@ -155,7 +157,7 @@ mdb_attr_dbs_open(
 					be->be_suffix[0].bv_val, mdb_strerror(rc), rc );
 				Debug( LDAP_DEBUG_ANY,
 					LDAP_XSTRING(mdb_attr_dbs) ": %s\n",
-					cr->msg, 0, 0 );
+					cr->msg );
 			}
 		} else {
 			mdb_txn_abort( txn );
@@ -314,6 +316,10 @@ mdb_attr_index_config(
 				fprintf( stderr, "%s: line %d: %s\n",
 					fname, lineno, c_reply->msg );
 			}
+fail:
+#ifdef LDAP_COMP_MATCH
+			ch_free( cr );
+#endif
 			goto done;
 		}
 
@@ -325,7 +331,7 @@ mdb_attr_index_config(
 					fname, lineno, c_reply->msg );
 			}
 			rc = LDAP_UNWILLING_TO_PERFORM;
-			goto done;
+			goto fail;
 		}
 
 		if( IS_SLAP_INDEX( mask, SLAP_INDEX_APPROX ) && !(
@@ -340,7 +346,7 @@ mdb_attr_index_config(
 					fname, lineno, c_reply->msg );
 			}
 			rc = LDAP_INAPPROPRIATE_MATCHING;
-			goto done;
+			goto fail;
 		}
 
 		if( IS_SLAP_INDEX( mask, SLAP_INDEX_EQUALITY ) && !(
@@ -355,7 +361,7 @@ mdb_attr_index_config(
 					fname, lineno, c_reply->msg );
 			}
 			rc = LDAP_INAPPROPRIATE_MATCHING;
-			goto done;
+			goto fail;
 		}
 
 		if( IS_SLAP_INDEX( mask, SLAP_INDEX_SUBSTR ) && !(
@@ -370,11 +376,11 @@ mdb_attr_index_config(
 					fname, lineno, c_reply->msg );
 			}
 			rc = LDAP_INAPPROPRIATE_MATCHING;
-			goto done;
+			goto fail;
 		}
 
 		Debug( LDAP_DEBUG_CONFIG, "index %s 0x%04lx\n",
-			ad->ad_cname.bv_val, mask, 0 ); 
+			ad->ad_cname.bv_val, mask );
 
 		a = (AttrInfo *) ch_malloc( sizeof(AttrInfo) );
 
@@ -382,11 +388,11 @@ mdb_attr_index_config(
 		a->ai_cr = NULL;
 #endif
 		a->ai_cursor = NULL;
-		a->ai_flist = NULL;
-		a->ai_clist = NULL;
 		a->ai_root = NULL;
 		a->ai_desc = ad;
 		a->ai_dbi = 0;
+		a->ai_multi_hi = UINT_MAX;
+		a->ai_multi_lo = UINT_MAX;
 
 		if ( mdb->mi_flags & MDB_IS_OPEN ) {
 			a->ai_indexmask = 0;
@@ -405,11 +411,12 @@ mdb_attr_index_config(
 				 * just add the extracted component reference
 				 * in the AttrInfo
 				 */
+				ch_free( a );
 				rc = insert_component_reference( cr, &a_cr->ai_cr );
 				if ( rc != LDAP_SUCCESS) {
 					fprintf( stderr, " error during inserting component reference in %s ", attrs[i]);
 					rc = LDAP_PARAM_ERROR;
-					goto done;
+					goto fail;
 				}
 				continue;
 			} else {
@@ -417,15 +424,24 @@ mdb_attr_index_config(
 				if ( rc != LDAP_SUCCESS) {
 					fprintf( stderr, " error during inserting component reference in %s ", attrs[i]);
 					rc = LDAP_PARAM_ERROR;
-					goto done;
+					ch_free( a );
+					goto fail;
 				}
 			}
 		}
 #endif
 		rc = ainfo_insert( mdb, a );
 		if( rc ) {
+			AttrInfo *b = mdb_attr_mask( mdb, ad );
+			/* If this is just a multival record, reuse it for index info */
+			if ( !( b->ai_indexmask || b->ai_newmask ) && b->ai_multi_lo < UINT_MAX ) {
+				b->ai_indexmask = a->ai_indexmask;
+				b->ai_newmask = a->ai_newmask;
+				ch_free( a );
+				rc = 0;
+				continue;
+			}
 			if ( mdb->mi_flags & MDB_IS_OPEN ) {
-				AttrInfo *b = mdb_attr_mask( mdb, ad );
 				/* If there is already an index defined for this attribute
 				 * it must be replaced. Otherwise we end up with multiple 
 				 * olcIndex values for the same attribute */
@@ -495,7 +511,169 @@ mdb_attr_index_unparse( struct mdb_info *mdb, BerVarray *bva )
 		mdb_attr_index_unparser( &aidef, bva );
 	}
 	for ( i=0; i<mdb->mi_nattrs; i++ )
-		mdb_attr_index_unparser( mdb->mi_attrs[i], bva );
+		if ( mdb->mi_attrs[i]->ai_indexmask )
+			mdb_attr_index_unparser( mdb->mi_attrs[i], bva );
+}
+
+int
+mdb_attr_multi_config(
+	struct mdb_info	*mdb,
+	const char		*fname,
+	int			lineno,
+	int			argc,
+	char		**argv,
+	struct		config_reply_s *c_reply)
+{
+	int rc = 0;
+	int	i;
+	unsigned hi,lo;
+	char **attrs, *next, *s;
+
+	attrs = ldap_str2charray( argv[0], "," );
+
+	if( attrs == NULL ) {
+		fprintf( stderr, "%s: line %d: "
+			"no attributes specified: %s\n",
+			fname, lineno, argv[0] );
+		return LDAP_PARAM_ERROR;
+	}
+
+	hi = strtoul( argv[1], &next, 10 );
+	if ( next == argv[1] || next[0] != ',' )
+		goto badval;
+	s = next+1;
+	lo = strtoul( s, &next, 10 );
+	if ( next == s || next[0] != '\0' )
+		goto badval;
+
+	if ( lo > hi ) {
+badval:
+		snprintf(c_reply->msg, sizeof(c_reply->msg),
+			"invalid hi/lo thresholds" );
+		fprintf( stderr, "%s: line %d: %s\n",
+			fname, lineno, c_reply->msg );
+		return LDAP_PARAM_ERROR;
+	}
+
+	for ( i = 0; attrs[i] != NULL; i++ ) {
+		AttrInfo	*a;
+		AttributeDescription *ad;
+		const char *text;
+
+		if( strcasecmp( attrs[i], "default" ) == 0 ) {
+			mdb->mi_multi_hi = hi;
+			mdb->mi_multi_lo = lo;
+			continue;
+		}
+
+		ad = NULL;
+		rc = slap_str2ad( attrs[i], &ad, &text );
+
+		if( rc != LDAP_SUCCESS ) {
+			if ( c_reply )
+			{
+				snprintf(c_reply->msg, sizeof(c_reply->msg),
+					"multival attribute \"%s\" undefined",
+					attrs[i] );
+
+				fprintf( stderr, "%s: line %d: %s\n",
+					fname, lineno, c_reply->msg );
+			}
+fail:
+			goto done;
+		}
+
+		a = (AttrInfo *) ch_calloc( 1, sizeof(AttrInfo) );
+
+		a->ai_desc = ad;
+		a->ai_multi_hi = hi;
+		a->ai_multi_lo = lo;
+
+		rc = ainfo_insert( mdb, a );
+		if( rc ) {
+			AttrInfo *b = mdb_attr_mask( mdb, ad );
+			/* If this is just an index record, reuse it for multival info */
+			if ( b->ai_multi_lo == UINT_MAX ) {
+				b->ai_multi_hi = a->ai_multi_hi;
+				b->ai_multi_lo = a->ai_multi_lo;
+				ch_free( a );
+				rc = 0;
+				continue;
+			}
+			if (c_reply) {
+				snprintf(c_reply->msg, sizeof(c_reply->msg),
+					"duplicate multival definition for attr \"%s\"",
+					attrs[i] );
+				fprintf( stderr, "%s: line %d: %s\n",
+					fname, lineno, c_reply->msg );
+			}
+
+			rc = LDAP_PARAM_ERROR;
+			goto done;
+		}
+	}
+
+done:
+	ldap_charray_free( attrs );
+
+	return rc;
+}
+
+static int
+mdb_attr_multi_unparser( void *v1, void *v2 )
+{
+	AttrInfo *ai = v1;
+	BerVarray *bva = v2;
+	struct berval bv;
+	char digbuf[sizeof("4294967296,4294967296")];
+	char *ptr;
+
+	bv.bv_len = snprintf( digbuf, sizeof(digbuf), "%u,%u",
+		ai->ai_multi_hi, ai->ai_multi_lo );
+	if ( bv.bv_len ) {
+		bv.bv_len += ai->ai_desc->ad_cname.bv_len + 1;
+		ptr = ch_malloc( bv.bv_len+1 );
+		bv.bv_val = lutil_strcopy( ptr, ai->ai_desc->ad_cname.bv_val );
+		*bv.bv_val++ = ' ';
+		strcpy(bv.bv_val, digbuf);
+		bv.bv_val = ptr;
+		ber_bvarray_add( bva, &bv );
+	}
+	return 0;
+}
+
+void
+mdb_attr_multi_unparse( struct mdb_info *mdb, BerVarray *bva )
+{
+	int i;
+
+	if ( mdb->mi_multi_hi < UINT_MAX ) {
+		aidef.ai_multi_hi = mdb->mi_multi_hi;
+		aidef.ai_multi_lo = mdb->mi_multi_lo;
+		mdb_attr_multi_unparser( &aidef, bva );
+	}
+	for ( i=0; i<mdb->mi_nattrs; i++ )
+		if ( mdb->mi_attrs[i]->ai_multi_hi < UINT_MAX )
+			mdb_attr_multi_unparser( mdb->mi_attrs[i], bva );
+}
+
+void
+mdb_attr_multi_thresh( struct mdb_info *mdb, AttributeDescription *ad, unsigned *hi, unsigned *lo )
+{
+	AttrInfo *ai = mdb_attr_mask( mdb, ad );
+	if ( ai && ai->ai_multi_hi < UINT_MAX )
+	{
+		if ( hi )
+			*hi = ai->ai_multi_hi;
+		if ( lo )
+			*lo = ai->ai_multi_lo;
+	} else
+	{
+		if ( hi )
+			*hi = mdb->mi_multi_hi;
+		if ( lo )
+			*lo = mdb->mi_multi_lo;
+	}
 }
 
 void
@@ -537,12 +715,18 @@ void mdb_attr_flush( struct mdb_info *mdb )
 
 	for ( i=0; i<mdb->mi_nattrs; i++ ) {
 		if ( mdb->mi_attrs[i]->ai_indexmask & MDB_INDEX_DELETING ) {
-			int j;
-			mdb_attr_info_free( mdb->mi_attrs[i] );
-			mdb->mi_nattrs--;
-			for (j=i; j<mdb->mi_nattrs; j++)
-				mdb->mi_attrs[j] = mdb->mi_attrs[j+1];
-			i--;
+			/* if this is also a multival rec, just clear index */
+			if ( mdb->mi_attrs[i]->ai_multi_lo < UINT_MAX ) {
+				mdb->mi_attrs[i]->ai_indexmask = 0;
+				mdb->mi_attrs[i]->ai_newmask = 0;
+			} else {
+				int j;
+				mdb_attr_info_free( mdb->mi_attrs[i] );
+				mdb->mi_nattrs--;
+				for (j=i; j<mdb->mi_nattrs; j++)
+					mdb->mi_attrs[j] = mdb->mi_attrs[j+1];
+				i--;
+			}
 		}
 	}
 }
@@ -560,7 +744,7 @@ int mdb_ad_read( struct mdb_info *mdb, MDB_txn *txn )
 	if ( rc ) {
 		Debug( LDAP_DEBUG_ANY,
 			"mdb_ad_read: cursor_open failed %s(%d)\n",
-			mdb_strerror(rc), rc, 0);
+			mdb_strerror(rc), rc );
 		return rc;
 	}
 
@@ -581,8 +765,7 @@ int mdb_ad_read( struct mdb_info *mdb, MDB_txn *txn )
 		} else {
 			if ( ad->ad_index >= MDB_MAXADS ) {
 				Debug( LDAP_DEBUG_ANY,
-					"mdb_adb_read: too many AttributeDescriptions in use\n",
-					0, 0, 0 );
+					"mdb_adb_read: too many AttributeDescriptions in use\n" );
 				return LDAP_OTHER;
 			}
 			mdb->mi_adxs[ad->ad_index] = i;
@@ -628,7 +811,7 @@ int mdb_ad_get( struct mdb_info *mdb, MDB_txn *txn, AttributeDescription *ad )
 	} else {
 		Debug( LDAP_DEBUG_ANY,
 			"mdb_ad_get: mdb_put failed %s(%d)\n",
-			mdb_strerror(rc), rc, 0);
+			mdb_strerror(rc), rc );
 	}
 
 	return rc;

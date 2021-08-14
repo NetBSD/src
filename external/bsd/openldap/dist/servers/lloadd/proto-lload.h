@@ -1,4 +1,4 @@
-/*	$NetBSD: proto-lload.h,v 1.1.1.1 2021/08/14 16:05:25 christos Exp $	*/
+/*	$NetBSD: proto-lload.h,v 1.2 2021/08/14 16:14:58 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.

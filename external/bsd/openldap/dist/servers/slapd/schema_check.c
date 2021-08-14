@@ -1,10 +1,10 @@
-/*	$NetBSD: schema_check.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
+/*	$NetBSD: schema_check.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
 
 /* schema_check.c - routines to enforce schema definitions */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: schema_check.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
+__RCSID("$NetBSD: schema_check.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
 
 #include "portable.h"
 
@@ -123,7 +123,7 @@ entry_schema_check(
 
 			Debug( LDAP_DEBUG_ANY,
 			    "Entry (%s), %s\n",
-			    e->e_dn, textbuf, 0 );
+			    e->e_dn, textbuf );
 
 			return LDAP_CONSTRAINT_VIOLATION;
 		}
@@ -132,7 +132,7 @@ entry_schema_check(
 	/* check the object class attribute */
 	if ( aoc == NULL ) {
 		Debug( LDAP_DEBUG_ANY, "No objectClass for entry (%s)\n",
-		    e->e_dn, 0, 0 );
+		    e->e_dn );
 
 		*text = "no objectClass attribute";
 		return LDAP_OBJECT_CLASS_VIOLATION;
@@ -145,7 +145,7 @@ entry_schema_check(
 	if ( asc == NULL && !add ) {
 		Debug( LDAP_DEBUG_ANY,
 			"No structuralObjectClass for entry (%s)\n",
-		    e->e_dn, 0, 0 );
+		    e->e_dn );
 
 		*text = "no structuralObjectClass operational attribute";
 		return LDAP_OTHER;
@@ -176,7 +176,7 @@ entry_schema_check(
 
 		Debug( LDAP_DEBUG_ANY,
 			"entry_check_schema(%s): %s\n",
-			e->e_dn, textbuf, 0 );
+			e->e_dn, textbuf );
 
 		rc = LDAP_OBJECT_CLASS_VIOLATION;
 		goto done;
@@ -189,7 +189,7 @@ entry_schema_check(
 
 		Debug( LDAP_DEBUG_ANY,
 			"entry_check_schema(%s): %s\n",
-			e->e_dn, textbuf, 0 );
+			e->e_dn, textbuf );
 
 		rc = LDAP_OTHER;
 		goto done;
@@ -203,7 +203,7 @@ got_soc:
 
 		Debug( LDAP_DEBUG_ANY,
 			"entry_check_schema(%s): %s\n",
-			e->e_dn, textbuf, 0 );
+			e->e_dn, textbuf );
 
 		rc = LDAP_OBJECT_CLASS_VIOLATION;
 		goto done;
@@ -267,7 +267,7 @@ got_soc:
 
 			Debug( LDAP_DEBUG_ANY,
 				"Entry (%s): %s\n",
-				e->e_dn, textbuf, 0 );
+				e->e_dn, textbuf );
 
 			rc = LDAP_OBJECT_CLASS_VIOLATION;
 			goto done;
@@ -291,7 +291,7 @@ got_soc:
 
 				Debug( LDAP_DEBUG_ANY,
 					"Entry (%s): %s\n",
-					e->e_dn, textbuf, 0 );
+					e->e_dn, textbuf );
 
 				rc = LDAP_OBJECT_CLASS_VIOLATION;
 				goto done;
@@ -316,7 +316,7 @@ got_soc:
 
 				Debug( LDAP_DEBUG_ANY,
 					"Entry (%s): %s\n",
-					e->e_dn, textbuf, 0 );
+					e->e_dn, textbuf );
 
 				rc = LDAP_OBJECT_CLASS_VIOLATION;
 				goto done;
@@ -335,7 +335,7 @@ got_soc:
 
 			Debug( LDAP_DEBUG_ANY,
 				"entry_check_schema(%s): %s\n",
-				e->e_dn, textbuf, 0 );
+				e->e_dn, textbuf );
 
 			rc = LDAP_OBJECT_CLASS_VIOLATION;
 			goto done;
@@ -382,7 +382,7 @@ got_soc:
 
 					Debug( LDAP_DEBUG_ANY,
 						"entry_check_schema(%s): %s\n",
-						e->e_dn, textbuf, 0 );
+						e->e_dn, textbuf );
 
 					rc = LDAP_OBJECT_CLASS_VIOLATION;
 					goto done;
@@ -425,7 +425,7 @@ got_soc:
 				if( k == -1 ) {
 					Debug( LDAP_DEBUG_ANY,
 						"Entry (%s): %s\n",
-						e->e_dn, textbuf, 0 );
+						e->e_dn, textbuf );
 
 					rc = LDAP_OBJECT_CLASS_VIOLATION;
 					goto done;
@@ -440,7 +440,7 @@ got_soc:
 
 				Debug( LDAP_DEBUG_ANY,
 					"Entry (%s): %s\n",
-					e->e_dn, textbuf, 0 );
+					e->e_dn, textbuf );
 
 				rc = LDAP_OBJECT_CLASS_VIOLATION;
 				goto done;
@@ -494,7 +494,7 @@ got_soc:
 
 			Debug( LDAP_DEBUG_ANY,
 			    "Entry (%s), %s\n",
-			    e->e_dn, textbuf, 0 );
+			    e->e_dn, textbuf );
 
 			goto done;
 		}
@@ -518,7 +518,7 @@ oc_check_required(
 
 	Debug( LDAP_DEBUG_TRACE,
 		"oc_check_required entry (%s), objectClass \"%s\"\n",
-		e->e_dn, ocname->bv_val, 0 );
+		e->e_dn?e->e_dn:"(null)", ocname->bv_val );
 
 
 	/* check for empty oc_required */
@@ -553,7 +553,7 @@ int oc_check_allowed(
 
 	Debug( LDAP_DEBUG_TRACE,
 		"oc_check_allowed type \"%s\"\n",
-		at->sat_cname.bv_val, 0, 0 );
+		at->sat_cname.bv_val );
 
 	/* always allow objectClass attribute */
 	if ( strcasecmp( at->sat_cname.bv_val, "objectClass" ) == 0 ) {

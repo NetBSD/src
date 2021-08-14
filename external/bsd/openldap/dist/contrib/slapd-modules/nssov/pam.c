@@ -1,10 +1,10 @@
-/*	$NetBSD: pam.c,v 1.2 2020/08/11 13:15:36 christos Exp $	*/
+/*	$NetBSD: pam.c,v 1.3 2021/08/14 16:14:52 christos Exp $	*/
 
 /* pam.c - pam processing routines */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>. 
  *
- * Copyright 2008-2020 The OpenLDAP Foundation.
+ * Copyright 2008-2021 The OpenLDAP Foundation.
  * Portions Copyright 2008 by Howard Chu, Symas Corp.
  * Portions Copyright 2013 by Ted C. Cheng, Symas Corp.
  * All rights reserved.
@@ -119,7 +119,7 @@ static int pam_uid2dn(nssov_info *ni, Operation *op,
 
 	if (!isvalidusername(&pi->uid)) {
 		Debug(LDAP_DEBUG_ANY,"nssov_pam_uid2dn(%s): invalid user name\n",
-			pi->uid.bv_val ? pi->uid.bv_val : "NULL",0,0);
+			pi->uid.bv_val ? pi->uid.bv_val : "NULL" );
 		return NSLCD_PAM_USER_UNKNOWN;
 	}
 
@@ -212,7 +212,7 @@ int pam_do_bind(nssov_info *ni,TFILE *fp,Operation *op,
 	}
 finish:
 	Debug(LDAP_DEBUG_ANY,"pam_do_bind (%s): rc (%d)\n",
-		pi->dn.bv_val ? pi->dn.bv_val : "NULL", rc, 0);
+		pi->dn.bv_val ? pi->dn.bv_val : "NULL", rc );
 	return rc;
 }
 
@@ -249,7 +249,7 @@ int pam_authc(nssov_info *ni,TFILE *fp,Operation *op,uid_t calleruid)
 	pi.pwd.bv_len = tmpint32;
 
 	Debug(LDAP_DEBUG_TRACE,"nssov_pam_authc(%s)\n",
-			pi.uid.bv_val ? pi.uid.bv_val : "NULL",0,0);
+			pi.uid.bv_val ? pi.uid.bv_val : "NULL" );
 
 	BER_BVZERO(&pi.msg);
 	pi.ispwdmgr = 0;
@@ -260,7 +260,7 @@ int pam_authc(nssov_info *ni,TFILE *fp,Operation *op,uid_t calleruid)
 		!BER_BVISEMPTY(&ni->ni_pam_password_prohibit_message)) {
 		Debug(LDAP_DEBUG_TRACE,"nssov_pam_authc(): %s (%s)\n",
 			"password_prohibit_message for passwd",
-			ni->ni_pam_password_prohibit_message.bv_val,0);
+			ni->ni_pam_password_prohibit_message.bv_val );
 		ber_str2bv(ni->ni_pam_password_prohibit_message.bv_val, 0, 0, &pi.msg);
 		pi.authz = NSLCD_PAM_PERM_DENIED;
 		rc = NSLCD_PAM_PERM_DENIED;
@@ -272,14 +272,14 @@ int pam_authc(nssov_info *ni,TFILE *fp,Operation *op,uid_t calleruid)
 		if (BER_BVISEMPTY(&ni->ni_pam_pwdmgr_dn)) {
 			/* pwdmgr dn not configured */
 			Debug(LDAP_DEBUG_TRACE,"nssov_pam_authc(prelim check): %s\n",
-				"pwdmgr dn not configured", 0, 0);
+				"pwdmgr dn not configured" );
 			ber_str2bv("pwdmgr dn not configured", 0, 0, &pi.msg);
 			pi.authz = NSLCD_PAM_PERM_DENIED;
 			rc = NSLCD_PAM_PERM_DENIED;
 			goto finish;
 		} else if (calleruid != 0) {
 			Debug(LDAP_DEBUG_TRACE,"nssov_pam_authc(prelim check): %s\n",
-				"caller is not root", 0, 0);
+				"caller is not root" );
 			ber_str2bv("only root may do that", 0, 0, &pi.msg);
 			pi.authz = NSLCD_PAM_PERM_DENIED;
 			rc = NSLCD_PAM_PERM_DENIED;
@@ -293,7 +293,7 @@ int pam_authc(nssov_info *ni,TFILE *fp,Operation *op,uid_t calleruid)
 		if (BER_BVISEMPTY(&pi.pwd)) {
 			if (BER_BVISEMPTY(&ni->ni_pam_pwdmgr_pwd)) {
 				Debug(LDAP_DEBUG_TRACE,"nssov_pam_authc(prelim check): %s\n",
-					"no pwdmgr pwd", 0, 0);
+					"no pwdmgr pwd" );
 				ber_str2bv("pwdmgr pwd not configured", 0, 0, &pi.msg);
 				pi.authz = NSLCD_PAM_PERM_DENIED;
 				rc = NSLCD_PAM_PERM_DENIED;
@@ -313,7 +313,7 @@ int pam_authc(nssov_info *ni,TFILE *fp,Operation *op,uid_t calleruid)
 
 finish:
 	Debug(LDAP_DEBUG_TRACE,"nssov_pam_authc(%s): rc (%d)\n",
-		pi.dn.bv_val ? pi.dn.bv_val : "NULL",rc,0);
+		pi.dn.bv_val ? pi.dn.bv_val : "NULL",rc );
 	WRITE_INT32(fp,NSLCD_VERSION);
 	WRITE_INT32(fp,NSLCD_ACTION_PAM_AUTHC);
 	WRITE_INT32(fp,NSLCD_RESULT_BEGIN);
@@ -376,7 +376,7 @@ int pam_authz(nssov_info *ni,TFILE *fp,Operation *op)
 	if (rc) goto finish;
 
 	Debug(LDAP_DEBUG_TRACE,"nssov_pam_authz(%s)\n",
-			pi.dn.bv_val ? pi.dn.bv_val : "NULL",0,0);
+			pi.dn.bv_val ? pi.dn.bv_val : "NULL" );
 
 	/* See if they have access to the host and service */
 	if ((ni->ni_pam_opts & NI_PAM_HOSTSVC) && nssov_pam_svc_ad) {
@@ -550,16 +550,16 @@ finish:
 	}
 	switch (rc) {
 	case NSLCD_PAM_SUCCESS:
-		Debug(LDAP_DEBUG_TRACE,"nssov_pam_authz(): success\n", 0,0,0);
+		Debug(LDAP_DEBUG_TRACE,"nssov_pam_authz(): success\n" );
 		break;
 	case NSLCD_PAM_PERM_DENIED:
 		Debug(LDAP_DEBUG_TRACE,"nssov_pam_authz(): %s\n",
-			authzmsg.bv_val ? authzmsg.bv_val : "NULL",0,0);
+			authzmsg.bv_val ? authzmsg.bv_val : "NULL" );
 		break;
 	default:
 		Debug(LDAP_DEBUG_TRACE,
 			"nssov_pam_authz(): permission denied, rc (%d)\n",
-			rc, 0, 0);
+			rc );
 	}
 	return 0;
 }
@@ -614,12 +614,12 @@ static int pam_sess(nssov_info *ni,TFILE *fp,Operation *op,int action)
 	if (rc) goto done;
 
 	Debug(LDAP_DEBUG_TRACE,"nssov_pam_sess_%c(%s)\n",
-		action==NSLCD_ACTION_PAM_SESS_O ? 'o' : 'c', pi.dn.bv_val,0);
+		action==NSLCD_ACTION_PAM_SESS_O ? 'o' : 'c', pi.dn.bv_val );
 
 	if (!ni->ni_pam_sessions) {
 		Debug(LDAP_DEBUG_TRACE,"nssov_pam_sess_%c(): %s\n",
 			action==NSLCD_ACTION_PAM_SESS_O ? 'o' : 'c',
-			"pam session(s) not configured, ignored",0);
+			"pam session(s) not configured, ignored" );
 		rc = -1;
 		goto done;
 	}
@@ -638,7 +638,7 @@ static int pam_sess(nssov_info *ni,TFILE *fp,Operation *op,int action)
 			Debug(LDAP_DEBUG_TRACE,
 				"nssov_pam_sess_%c(): service(%s) not configured, ignored\n",
 				action==NSLCD_ACTION_PAM_SESS_O ? 'o' : 'c',
-				pi.svc.bv_val,0);
+				pi.svc.bv_val );
 			rc = -1;
 			goto done;
 		}
@@ -652,7 +652,7 @@ static int pam_sess(nssov_info *ni,TFILE *fp,Operation *op,int action)
 		pi.ruser.bv_val, pi.rhost.bv_val);
 
 	Debug(LDAP_DEBUG_TRACE, "nssov_pam_sess_%c(): loginStatus (%s) \n",
-			action==NSLCD_ACTION_PAM_SESS_O ? 'o' : 'c', bv[0].bv_val,0);
+			action==NSLCD_ACTION_PAM_SESS_O ? 'o' : 'c', bv[0].bv_val );
 	
 	mod.sml_numvals = 1;
 	mod.sml_values = bv;
@@ -677,8 +677,7 @@ static int pam_sess(nssov_info *ni,TFILE *fp,Operation *op,int action)
 	if (op->o_bd->be_modify( op, &rs ) != LDAP_SUCCESS) {
 		Debug(LDAP_DEBUG_TRACE,
 			"nssov_pam_sess_%c(): modify op failed\n",
-			action==NSLCD_ACTION_PAM_SESS_O ? 'o' : 'c',
-			0,0);
+			action==NSLCD_ACTION_PAM_SESS_O ? 'o' : 'c' );
 		rc = -1;
 	}
 
@@ -692,8 +691,7 @@ done:;
 	if (rc == 0) {
 		Debug(LDAP_DEBUG_TRACE,
 			"nssov_pam_sess_%c(): success\n",
-			action==NSLCD_ACTION_PAM_SESS_O ? 'o' : 'c',
-			0,0);
+			action==NSLCD_ACTION_PAM_SESS_O ? 'o' : 'c' );
 	}
 	WRITE_INT32(fp,NSLCD_VERSION);
 	WRITE_INT32(fp,action);
@@ -767,7 +765,7 @@ int pam_pwmod(nssov_info *ni,TFILE *fp,Operation *op,uid_t calleruid)
 	if (!BER_BVISEMPTY(&ni->ni_pam_password_prohibit_message)) {
 		Debug(LDAP_DEBUG_TRACE,"nssov_pam_pwmod(): %s (%s)\n",
 			"password_prohibit_message",
-			ni->ni_pam_password_prohibit_message.bv_val,0);
+			ni->ni_pam_password_prohibit_message.bv_val );
 		ber_str2bv(ni->ni_pam_password_prohibit_message.bv_val, 0, 0, &pi.msg);
 		rc = NSLCD_PAM_PERM_DENIED;
 		goto done;
@@ -776,14 +774,14 @@ int pam_pwmod(nssov_info *ni,TFILE *fp,Operation *op,uid_t calleruid)
 	if (asroot) {
 		if (BER_BVISEMPTY(&ni->ni_pam_pwdmgr_dn)) {
 			Debug(LDAP_DEBUG_TRACE,"nssov_pam_pwmod(), %s\n",
-				"pwdmgr not configured", 0, 0);
+				"pwdmgr not configured" );
 			ber_str2bv("pwdmgr not configured", 0, 0, &pi.msg);
 			rc = NSLCD_PAM_PERM_DENIED;
 			goto done;
 		}
 		if (calleruid != 0) {
 			Debug(LDAP_DEBUG_TRACE,"nssov_pam_pwmod(): %s\n",
-				"caller is not root", 0, 0);
+				"caller is not root" );
 			ber_str2bv("only root may do that", 0, 0, &pi.msg);
 			rc = NSLCD_PAM_PERM_DENIED;
 			goto done;
@@ -794,7 +792,7 @@ int pam_pwmod(nssov_info *ni,TFILE *fp,Operation *op,uid_t calleruid)
 
 	if (!pi.ispwdmgr && BER_BVISEMPTY(&pi.pwd)) {
 		Debug(LDAP_DEBUG_TRACE,"nssov_pam_pwmod(), %s\n",
-			"not pwdmgr and old pwd empty", 0, 0);
+			"not pwdmgr and old pwd empty" );
 		ber_str2bv("must provide old password", 0, 0, &pi.msg);
 		rc = NSLCD_PAM_PERM_DENIED;
 		goto done;
@@ -846,7 +844,7 @@ int pam_pwmod(nssov_info *ni,TFILE *fp,Operation *op,uid_t calleruid)
 		rc = NSLCD_PAM_PERM_DENIED;
 
 done:;
-	Debug(LDAP_DEBUG_TRACE,"nssov_pam_pwmod(), rc (%d)\n", rc, 0, 0);
+	Debug(LDAP_DEBUG_TRACE,"nssov_pam_pwmod(), rc (%d)\n", rc );
 	WRITE_INT32(fp,NSLCD_VERSION);
 	WRITE_INT32(fp,NSLCD_ACTION_PAM_PWMOD);
 	WRITE_INT32(fp,NSLCD_RESULT_BEGIN);

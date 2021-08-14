@@ -1,10 +1,10 @@
-/*	$NetBSD: modify.c,v 1.2 2020/08/11 13:15:41 christos Exp $	*/
+/*	$NetBSD: modify.c,v 1.3 2021/08/14 16:15:00 christos Exp $	*/
 
 /* modify.c - monitor backend modify routine */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2020 The OpenLDAP Foundation.
+ * Copyright 2001-2021 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: modify.c,v 1.2 2020/08/11 13:15:41 christos Exp $");
+__RCSID("$NetBSD: modify.c,v 1.3 2021/08/14 16:15:00 christos Exp $");
 
 #include "portable.h"
 
@@ -43,7 +43,7 @@ monitor_back_modify( Operation *op, SlapReply *rs )
 	Entry		*matched;
 	Entry		*e;
 
-	Debug(LDAP_DEBUG_ARGS, "monitor_back_modify:\n", 0, 0, 0);
+	Debug(LDAP_DEBUG_ARGS, "monitor_back_modify:\n" );
 
 	/* acquire and lock entry */
 	monitor_cache_dn2entry( op, rs, &op->o_req_ndn, &e, &matched );

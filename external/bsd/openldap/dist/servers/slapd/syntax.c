@@ -1,10 +1,10 @@
-/*	$NetBSD: syntax.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
+/*	$NetBSD: syntax.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
 
 /* syntax.c - routines to manage syntax definitions */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: syntax.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
+__RCSID("$NetBSD: syntax.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
 
 #include "portable.h"
 
@@ -65,7 +65,7 @@ syn_find( const char *synname )
 {
 	struct sindexrec	*sir = NULL;
 
-	if ( (sir = avl_find( syn_index, synname, syn_index_name_cmp )) != NULL ) {
+	if ( (sir = ldap_avl_find( syn_index, synname, syn_index_name_cmp )) != NULL ) {
 		return( sir->sir_syn );
 	}
 	return( NULL );
@@ -118,7 +118,7 @@ syn_destroy( void )
 {
 	Syntax	*s;
 
-	avl_free( syn_index, ldap_memfree );
+	ldap_avl_free( syn_index, ldap_memfree );
 	while( !LDAP_STAILQ_EMPTY( &syn_list ) ) {
 		s = LDAP_STAILQ_FIRST( &syn_list );
 		LDAP_STAILQ_REMOVE_HEAD( &syn_list, ssyn_next );
@@ -143,13 +143,13 @@ syn_insert(
 		sir = (struct sindexrec *)
 			SLAP_CALLOC( 1, sizeof(struct sindexrec) );
 		if( sir == NULL ) {
-			Debug( LDAP_DEBUG_ANY, "SLAP_CALLOC Error\n", 0, 0, 0 );
+			Debug( LDAP_DEBUG_ANY, "SLAP_CALLOC Error\n" );
 			return LDAP_OTHER;
 		}
 		sir->sir_name = ssyn->ssyn_oid;
 		sir->sir_syn = ssyn;
-		if ( avl_insert( &syn_index, (caddr_t) sir,
-		                 syn_index_cmp, avl_dup_error ) ) {
+		if ( ldap_avl_insert( &syn_index, (caddr_t) sir,
+		                 syn_index_cmp, ldap_avl_dup_error ) ) {
 			*err = ssyn->ssyn_oid;
 			ldap_memfree(sir);
 			return SLAP_SCHERR_SYN_DUP;
@@ -189,7 +189,7 @@ syn_add(
 
 	ssyn = (Syntax *) SLAP_CALLOC( 1, sizeof(Syntax) );
 	if ( ssyn == NULL ) {
-		Debug( LDAP_DEBUG_ANY, "SLAP_CALLOC Error\n", 0, 0, 0 );
+		Debug( LDAP_DEBUG_ANY, "SLAP_CALLOC Error\n" );
 		return SLAP_SCHERR_OUTOFMEM;
 	}
 
@@ -228,7 +228,7 @@ syn_add(
 				|| (*lsei)->lsei_values[1] != NULL )
 			{
 				Debug( LDAP_DEBUG_ANY, "syn_add(%s): exactly one substitute syntax must be present\n",
-					ssyn->ssyn_syn.syn_oid, 0, 0 );
+					ssyn->ssyn_syn.syn_oid );
 				SLAP_FREE( ssyn );
 				return SLAP_SCHERR_SYN_SUBST_NOT_SPECIFIED;
 			}
@@ -236,7 +236,7 @@ syn_add(
 			subst = syn_find( (*lsei)->lsei_values[0] );
 			if ( subst == NULL ) {
 				Debug( LDAP_DEBUG_ANY, "syn_add(%s): substitute syntax %s not found\n",
-					ssyn->ssyn_syn.syn_oid, (*lsei)->lsei_values[0], 0 );
+					ssyn->ssyn_syn.syn_oid, (*lsei)->lsei_values[0] );
 				SLAP_FREE( ssyn );
 				return SLAP_SCHERR_SYN_SUBST_NOT_FOUND;
 			}
@@ -266,7 +266,7 @@ syn_add(
 		ssyn->ssyn_sups = (Syntax **)SLAP_CALLOC( cnt + 1,
 			sizeof( Syntax * ) );
 		if ( ssyn->ssyn_sups == NULL ) {
-			Debug( LDAP_DEBUG_ANY, "SLAP_CALLOC Error\n", 0, 0, 0 );
+			Debug( LDAP_DEBUG_ANY, "SLAP_CALLOC Error\n" );
 			code = SLAP_SCHERR_OUTOFMEM;
 
 		} else {
@@ -356,7 +356,7 @@ syn_schema_info( Entry *e )
 		}
 #if 0
 		Debug( LDAP_DEBUG_TRACE, "Merging syn [%ld] %s\n",
-	       (long) val.bv_len, val.bv_val, 0 );
+	       (long) val.bv_len, val.bv_val );
 #endif
 
 		nval.bv_val = syn->ssyn_oid;

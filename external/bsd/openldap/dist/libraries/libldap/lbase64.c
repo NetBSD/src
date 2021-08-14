@@ -1,4 +1,4 @@
-/*	$NetBSD: lbase64.c,v 1.1.1.1 2021/08/14 16:05:27 christos Exp $	*/
+/*	$NetBSD: lbase64.c,v 1.2 2021/08/14 16:14:56 christos Exp $	*/
 
 /* lbase64.c - routines for dealing with base64 strings */
 /* $OpenLDAP$ */
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lbase64.c,v 1.1.1.1 2021/08/14 16:05:27 christos Exp $");
+__RCSID("$NetBSD: lbase64.c,v 1.2 2021/08/14 16:14:56 christos Exp $");
 
 #include "portable.h"
 

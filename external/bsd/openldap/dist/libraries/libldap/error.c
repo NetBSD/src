@@ -1,9 +1,9 @@
-/*	$NetBSD: error.c,v 1.2 2020/08/11 13:15:37 christos Exp $	*/
+/*	$NetBSD: error.c,v 1.3 2021/08/14 16:14:55 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: error.c,v 1.2 2020/08/11 13:15:37 christos Exp $");
+__RCSID("$NetBSD: error.c,v 1.3 2021/08/14 16:14:55 christos Exp $");
 
 #include "portable.h"
 
@@ -38,7 +38,7 @@ ldap_err2string( int err )
 {
 	char *m;
 
-	Debug( LDAP_DEBUG_TRACE, "ldap_err2string\n", 0, 0, 0 );
+	Debug0( LDAP_DEBUG_TRACE, "ldap_err2string\n" );
 
 	switch ( err ) {
 #	define C(code, message) case code: m = message; break
@@ -131,11 +131,8 @@ ldap_err2string( int err )
 	C(LDAP_CUP_UNSUPPORTED_SCHEME,	N_("LCUP Unsupported Scheme"));
 	C(LDAP_CUP_RELOAD_REQUIRED,		N_("LCUP Reload Required"));
 
-#ifdef LDAP_X_TXN
-	/* Codes related to LDAP Transactions (draft-zeilenga-ldap-txn) */
-	C(LDAP_X_TXN_SPECIFY_OKAY,		N_("TXN specify okay"));
-	C(LDAP_X_TXN_ID_INVALID,		N_("TXN ID is invalid"));
-#endif
+	C(LDAP_TXN_SPECIFY_OKAY,		N_("TXN specify okay"));
+	C(LDAP_TXN_ID_INVALID,			N_("TXN ID is invalid"));
 
 	/* API codes - renumbered since draft-ietf-ldapext-ldap-c-api */
 	C(LDAP_SERVER_DOWN,				N_("Can't contact LDAP server"));
@@ -254,7 +251,7 @@ ldap_parse_result(
 	ber_tag_t tag;
 	BerElement	*ber;
 
-	Debug( LDAP_DEBUG_TRACE, "ldap_parse_result\n", 0, 0, 0 );
+	Debug0( LDAP_DEBUG_TRACE, "ldap_parse_result\n" );
 
 	assert( ld != NULL );
 	assert( LDAP_VALID( ld ) );
@@ -327,7 +324,7 @@ ldap_parse_result(
 		/* need to clean out misc items */
 		if( tag != LBER_ERROR ) {
 			if( lm->lm_msgtype == LDAP_RES_BIND ) {
-				/* look for sasl result creditials */
+				/* look for sasl result credentials */
 				if ( ber_peek_tag( ber, &len ) == LDAP_TAG_SASL_RES_CREDS ) {
 					/* skip 'em */
 					tag = ber_scanf( ber, "x" );

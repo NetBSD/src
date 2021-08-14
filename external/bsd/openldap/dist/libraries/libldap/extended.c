@@ -1,9 +1,9 @@
-/*	$NetBSD: extended.c,v 1.2 2020/08/11 13:15:37 christos Exp $	*/
+/*	$NetBSD: extended.c,v 1.3 2021/08/14 16:14:55 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: extended.c,v 1.2 2020/08/11 13:15:37 christos Exp $");
+__RCSID("$NetBSD: extended.c,v 1.3 2021/08/14 16:14:55 christos Exp $");
 
 #include "portable.h"
 
@@ -110,7 +110,7 @@ ldap_extended_operation(
 	BerElement *ber;
 	ber_int_t id;
 
-	Debug( LDAP_DEBUG_TRACE, "ldap_extended_operation\n", 0, 0, 0 );
+	Debug0( LDAP_DEBUG_TRACE, "ldap_extended_operation\n" );
 
 	assert( ld != NULL );
 	assert( LDAP_VALID( ld ) );
@@ -148,7 +148,7 @@ ldap_extended_operation_s(
     int     msgid;
     LDAPMessage *res;
 
-	Debug( LDAP_DEBUG_TRACE, "ldap_extended_operation_s\n", 0, 0, 0 );
+	Debug0( LDAP_DEBUG_TRACE, "ldap_extended_operation_s\n" );
 
 	assert( ld != NULL );
 	assert( LDAP_VALID( ld ) );
@@ -199,7 +199,7 @@ ldap_parse_extended_result (
 	assert( LDAP_VALID( ld ) );
 	assert( res != NULL );
 
-	Debug( LDAP_DEBUG_TRACE, "ldap_parse_extended_result\n", 0, 0, 0 );
+	Debug0( LDAP_DEBUG_TRACE, "ldap_parse_extended_result\n" );
 
 	if( ld->ld_version < LDAP_VERSION3 ) {
 		ld->ld_errno = LDAP_NOT_SUPPORTED;
@@ -323,7 +323,7 @@ ldap_parse_intermediate (
 	assert( LDAP_VALID( ld ) );
 	assert( res != NULL );
 
-	Debug( LDAP_DEBUG_TRACE, "ldap_parse_intermediate\n", 0, 0, 0 );
+	Debug0( LDAP_DEBUG_TRACE, "ldap_parse_intermediate\n" );
 
 	if( ld->ld_version < LDAP_VERSION3 ) {
 		ld->ld_errno = LDAP_NOT_SUPPORTED;

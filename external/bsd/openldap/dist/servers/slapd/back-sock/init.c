@@ -1,10 +1,10 @@
-/*	$NetBSD: init.c,v 1.2 2020/08/11 13:15:42 christos Exp $	*/
+/*	$NetBSD: init.c,v 1.3 2021/08/14 16:15:01 christos Exp $	*/
 
 /* init.c - initialize sock backend */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2007-2020 The OpenLDAP Foundation.
+ * Copyright 2007-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: init.c,v 1.2 2020/08/11 13:15:42 christos Exp $");
+__RCSID("$NetBSD: init.c,v 1.3 2021/08/14 16:15:01 christos Exp $");
 
 #include "portable.h"
 

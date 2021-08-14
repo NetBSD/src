@@ -1,10 +1,10 @@
-/*	$NetBSD: ldap-int.h,v 1.2 2020/08/11 13:15:37 christos Exp $	*/
+/*	$NetBSD: ldap-int.h,v 1.3 2021/08/14 16:14:56 christos Exp $	*/
 
 /*  ldap-int.h - defines & prototypes internal to the LDAP library */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,12 +22,13 @@
 #ifndef	_LDAP_INT_H
 #define	_LDAP_INT_H 1
 
-#ifdef LDAP_R_COMPILE
-#define LDAP_THREAD_SAFE 1
+#ifndef NO_THREADS
+#define LDAP_R_COMPILE 1
 #endif
 
 #include "../liblber/lber-int.h"
 #include "lutil.h"
+#include "ldap_avl.h"
 
 #ifdef LDAP_R_COMPILE
 #include <ldap_pvt_thread.h>
@@ -47,9 +48,7 @@
 
 /* for struct timeval */
 #include <ac/time.h>
-#ifdef _WIN32
 #include <ac/socket.h>
-#endif
 
 #undef TV2MILLISEC
 #define TV2MILLISEC(tv) (((tv)->tv_sec * 1000) + ((tv)->tv_usec/1000))
@@ -73,30 +72,46 @@
 #	define LDAP_INT_GLOBAL_OPT() (&ldap_int_global_options)
 #endif
 
+/* if used from server code, ldap_debug already points elsewhere */
+#ifndef ldap_debug
 #define ldap_debug	((LDAP_INT_GLOBAL_OPT())->ldo_debug)
+#endif /* !ldap_debug */
 
+#define LDAP_INT_DEBUG
 #include "ldap_log.h"
-
-#undef Debug
 
 #ifdef LDAP_DEBUG
 
 #define DebugTest( level ) \
 	( ldap_debug & level )
 
-#define Debug( level, fmt, arg1, arg2, arg3 ) \
-	do { if ( ldap_debug & level ) \
-	ldap_log_printf( NULL, (level), (fmt), (arg1), (arg2), (arg3) ); \
+#define Debug0( level, fmt ) \
+	do { if ( DebugTest( (level) ) ) \
+	ldap_log_printf( NULL, (level), fmt ); \
 	} while ( 0 )
 
-#define LDAP_Debug( subsystem, level, fmt, arg1, arg2, arg3 )\
-	ldap_log_printf( NULL, (level), (fmt), (arg1), (arg2), (arg3) )
+#define Debug1( level, fmt, arg1 ) \
+	do { if ( DebugTest( (level) ) ) \
+	ldap_log_printf( NULL, (level), fmt, arg1 ); \
+	} while ( 0 )
+
+#define Debug2( level, fmt, arg1, arg2 ) \
+	do { if ( DebugTest( (level) ) ) \
+	ldap_log_printf( NULL, (level), fmt, arg1, arg2 ); \
+	} while ( 0 )
+
+#define Debug3( level, fmt, arg1, arg2, arg3 ) \
+	do { if ( DebugTest( (level) ) ) \
+	ldap_log_printf( NULL, (level), fmt, arg1, arg2, arg3 ); \
+	} while ( 0 )
 
 #else
 
 #define DebugTest( level )                                    (0 == 1)
-#define Debug( level, fmt, arg1, arg2, arg3 )                 ((void)0)
-#define LDAP_Debug( subsystem, level, fmt, arg1, arg2, arg3 ) ((void)0)
+#define Debug0( level, fmt )                                  ((void)0)
+#define Debug1( level, fmt, arg1 )                            ((void)0)
+#define Debug2( level, fmt, arg1, arg2 )                      ((void)0)
+#define Debug3( level, fmt, arg1, arg2, arg3 )                ((void)0)
 
 #endif /* LDAP_DEBUG */
 
@@ -109,8 +124,12 @@ LDAP_BEGIN_DECL
 
 #define LDAP_URL_PREFIX         "ldap://"
 #define LDAP_URL_PREFIX_LEN     STRLENOF(LDAP_URL_PREFIX)
+#define PLDAP_URL_PREFIX	"pldap://"
+#define PLDAP_URL_PREFIX_LEN	STRLENOF(PLDAP_URL_PREFIX)
 #define LDAPS_URL_PREFIX	"ldaps://"
 #define LDAPS_URL_PREFIX_LEN	STRLENOF(LDAPS_URL_PREFIX)
+#define PLDAPS_URL_PREFIX	"pldaps://"
+#define PLDAPS_URL_PREFIX_LEN	STRLENOF(PLDAPS_URL_PREFIX)
 #define LDAPI_URL_PREFIX	"ldapi://"
 #define LDAPI_URL_PREFIX_LEN	STRLENOF(LDAPI_URL_PREFIX)
 #ifdef LDAP_CONNECTIONLESS
@@ -132,6 +151,7 @@ LDAP_BEGIN_DECL
 #define LDAP_BOOL_TLS			3
 #define	LDAP_BOOL_CONNECT_ASYNC		4
 #define	LDAP_BOOL_SASL_NOCANON		5
+#define	LDAP_BOOL_KEEPCONN		6
 
 #define LDAP_BOOLEANS	unsigned long
 #define LDAP_BOOL(n)	((LDAP_BOOLEANS)1 << (n))
@@ -169,6 +189,10 @@ struct ldaptls {
 	char		*lt_randfile;	/* OpenSSL only */
 	char		*lt_ecname;		/* OpenSSL only */
 	int		lt_protocol_min;
+	int		lt_protocol_max;
+	struct berval	lt_cacert;
+	struct berval	lt_cert;
+	struct berval	lt_key;
 };
 #endif
 
@@ -176,6 +200,19 @@ typedef struct ldaplist {
 	struct ldaplist *ll_next;
 	void *ll_data;
 } ldaplist;
+
+/*
+ * LDAP Client Source IP structure
+ */
+typedef struct ldapsourceip {
+	char	*local_ip_addrs;
+	struct in_addr	ip4_addr;
+	unsigned short	has_ipv4;
+#ifdef LDAP_PF_INET6
+	struct in6_addr	ip6_addr;
+	unsigned short	has_ipv6;
+#endif
+} ldapsourceip;
 
 /*
  * structure representing get/set'able options
@@ -213,6 +250,12 @@ struct ldapoptions {
 	ber_int_t ldo_keepalive_probes;
 	ber_int_t ldo_keepalive_interval;
 
+	/*
+	 * Per connection tcp user timeout (Linux >= 2.6.37 only,
+	 * ignored where unsupported)
+	 */
+	ber_uint_t ldo_tcp_user_timeout;
+
 	int		ldo_refhoplimit;	/* limit on referral nesting */
 
 	/* LDAPv3 server and client controls */
@@ -232,7 +275,16 @@ struct ldapoptions {
 
 	LDAP_BOOLEANS ldo_booleans;	/* boolean options */
 
-#define LDAP_LDO_NULLARG	,0,0,0,0 ,{0},{0} ,0,0,0,0, 0,0,0,0, 0,0, 0,0,0,0,0,0, 0, 0
+#define LDAP_LDO_NULLARG	,0,0,0,0 ,{0},{0} ,0,0,0,0, 0,0,0,0,0, 0,0, 0,0,0,0,0,0, 0, 0
+
+	/* LDAP user configured bind IPs */
+	struct ldapsourceip ldo_local_ip_addrs;
+
+#ifdef LDAP_PF_INET6
+#define LDAP_LDO_SOURCEIP_NULLARG	,{0,0,0,0,0}
+#else
+#define LDAP_LDO_SOURCEIP_NULLARG	,{0,0,0}
+#endif
 
 #ifdef LDAP_CONNECTIONLESS
 #define	LDAP_IS_UDP(ld)		((ld)->ld_options.ldo_is_udp)
@@ -258,13 +310,20 @@ struct ldapoptions {
 #define ldo_tls_cacertdir	ldo_tls_info.lt_cacertdir
 #define ldo_tls_ciphersuite	ldo_tls_info.lt_ciphersuite
 #define ldo_tls_protocol_min	ldo_tls_info.lt_protocol_min
+#define ldo_tls_protocol_max	ldo_tls_info.lt_protocol_max
 #define ldo_tls_crlfile	ldo_tls_info.lt_crlfile
 #define ldo_tls_randfile	ldo_tls_info.lt_randfile
+#define ldo_tls_cacert	ldo_tls_info.lt_cacert
+#define ldo_tls_cert	ldo_tls_info.lt_cert
+#define ldo_tls_key	ldo_tls_info.lt_key
    	int			ldo_tls_mode;
    	int			ldo_tls_require_cert;
 	int			ldo_tls_impl;
    	int			ldo_tls_crlcheck;
-#define LDAP_LDO_TLS_NULLARG ,0,0,0,{0,0,0,0,0,0,0,0,0},0,0,0,0
+	int			ldo_tls_require_san;
+	char		*ldo_tls_pin_hashalg;
+	struct berval	ldo_tls_pin;
+#define LDAP_LDO_TLS_NULLARG ,0,0,0,{0,0,0,0,0,0,0,0,0},0,0,0,0,0,0,{0,0}
 #else
 #define LDAP_LDO_TLS_NULLARG
 #endif
@@ -277,7 +336,8 @@ struct ldapoptions {
 
 	/* SASL Security Properties */
 	struct sasl_security_properties	ldo_sasl_secprops;
-#define LDAP_LDO_SASL_NULLARG ,0,0,0,0,{0}
+	int ldo_sasl_cbinding;
+#define LDAP_LDO_SASL_NULLARG ,0,0,0,0,{0},0
 #else
 #define LDAP_LDO_SASL_NULLARG
 #endif
@@ -309,6 +369,7 @@ typedef struct ldap_conn {
 #ifdef HAVE_CYRUS_SASL
 	void		*lconn_sasl_authctx;	/* context for bind */
 	void		*lconn_sasl_sockctx;	/* for security layer */
+	void		*lconn_sasl_cbind;		/* for channel binding */
 #endif
 #ifdef HAVE_GSSAPI
 	void		*lconn_gss_ctx;		/* gss_ctx_id_t */
@@ -401,7 +462,7 @@ struct ldap_common {
 
 	/* do not mess with these */
 	/* protected by req_mutex */
-	LDAPRequest	*ldc_requests;	/* list of outstanding requests */
+	TAvlnode	*ldc_requests;	/* list of outstanding requests */
 	/* protected by res_mutex */
 	LDAPMessage	*ldc_responses;	/* list of outstanding responses */
 #define	ld_requests		ldc->ldc_requests
@@ -496,6 +557,7 @@ struct ldap {
 #ifdef LDAP_R_COMPILE
 LDAP_V ( ldap_pvt_thread_mutex_t ) ldap_int_resolv_mutex;
 LDAP_V ( ldap_pvt_thread_mutex_t ) ldap_int_hostname_mutex;
+LDAP_V ( int ) ldap_int_stackguard;
 
 #ifdef HAVE_GSSAPI
 LDAP_V( ldap_pvt_thread_mutex_t ) ldap_int_gssapi_mutex;
@@ -541,6 +603,13 @@ LDAP_F (BerElement *) ldap_build_add_req LDAP_P((
 	LDAPControl **sctrls,
 	LDAPControl **cctrls,
 	ber_int_t *msgidp ));
+
+/*
+ * in lbase64.c
+ */
+
+LDAP_F (int) ldap_int_decode_b64_inplace LDAP_P((
+	struct berval *value ));
 
 /*
  * in compare.c
@@ -649,14 +718,6 @@ LDAP_F (void) ldap_int_utils_init LDAP_P(( void ));
 LDAP_F (int) ldap_log_printf LDAP_P((LDAP *ld, int level, const char *fmt, ...)) LDAP_GCCATTR((format(printf, 3, 4)));
 
 /*
- * in cache.c
- */
-LDAP_F (void) ldap_add_request_to_cache LDAP_P(( LDAP *ld, ber_tag_t msgtype,
-        BerElement *request ));
-LDAP_F (void) ldap_add_result_to_cache LDAP_P(( LDAP *ld, LDAPMessage *result ));
-LDAP_F (int) ldap_check_cache LDAP_P(( LDAP *ld, ber_tag_t msgtype, BerElement *request ));
-
-/*
  * in controls.c
  */
 LDAP_F (int) ldap_int_put_controls LDAP_P((
@@ -713,6 +774,9 @@ LDAP_F (void) ldap_clear_select_write( LDAP *ld, Sockbuf *sb );
 LDAP_F (int) ldap_is_read_ready( LDAP *ld, Sockbuf *sb );
 LDAP_F (int) ldap_is_write_ready( LDAP *ld, Sockbuf *sb );
 
+LDAP_F (int) ldap_validate_and_fill_sourceip  ( char** source_ip_lst,
+	ldapsourceip* temp_source_ip );
+
 LDAP_F (int) ldap_int_connect_cbs( LDAP *ld, Sockbuf *sb,
 	ber_socket_t *s, LDAPURLDesc *srv, struct sockaddr *addr );
 
@@ -739,6 +803,8 @@ LDAP_F (LDAPConn *) ldap_new_connection( LDAP *ld, LDAPURLDesc **srvlist,
 	int use_ldsb, int connect, LDAPreqinfo *bind, int m_req, int m_res );
 LDAP_F (LDAPRequest *) ldap_find_request_by_msgid( LDAP *ld, ber_int_t msgid );
 LDAP_F (void) ldap_return_request( LDAP *ld, LDAPRequest *lr, int freeit );
+LDAP_F (int) ldap_req_cmp( const void *l, const void *r );
+LDAP_F (void) ldap_do_free_request( void *arg );
 LDAP_F (void) ldap_free_request( LDAP *ld, LDAPRequest *lr );
 LDAP_F (void) ldap_free_connection( LDAP *ld, LDAPConn *lc, int force, int unbind );
 LDAP_F (void) ldap_dump_connection( LDAP *ld, LDAPConn *lconns, int all );
@@ -861,9 +927,6 @@ LDAP_F (char *) ldap_int_parse_numericoid LDAP_P((
 /*
  * in tls.c
  */
-LDAP_F (int) ldap_int_tls_config LDAP_P(( LDAP *ld,
-	int option, const char *arg ));
-
 LDAP_F (int) ldap_int_tls_start LDAP_P(( LDAP *ld,
 	LDAPConn *conn, LDAPURLDesc *srv ));
 

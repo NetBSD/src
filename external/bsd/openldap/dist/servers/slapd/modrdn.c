@@ -1,9 +1,9 @@
-/*	$NetBSD: modrdn.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
+/*	$NetBSD: modrdn.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: modrdn.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
+__RCSID("$NetBSD: modrdn.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
 
 #include "portable.h"
 
@@ -63,7 +63,7 @@ do_modrdn(
 	ber_len_t	length;
 
 	Debug( LDAP_DEBUG_TRACE, "%s do_modrdn\n",
-			op->o_log_prefix, 0, 0 );
+			op->o_log_prefix );
 	/*
 	 * Parse the modrdn request.  It looks like this:
 	 *
@@ -79,7 +79,7 @@ do_modrdn(
 	    == LBER_ERROR )
 	{
 		Debug( LDAP_DEBUG_ANY, "%s do_modrdn: ber_scanf failed\n",
-			op->o_log_prefix, 0, 0 );
+			op->o_log_prefix );
 		send_ldap_discon( op, rs, LDAP_PROTOCOL_ERROR, "decoding error" );
 		return SLAPD_DISCONNECT;
 	}
@@ -93,7 +93,7 @@ do_modrdn(
 			 */
 			Debug( LDAP_DEBUG_ANY,
 				"%s do_modrdn: newSuperior requires LDAPv3\n",
-				op->o_log_prefix, 0, 0 );
+				op->o_log_prefix );
 
 			send_ldap_discon( op, rs,
 				LDAP_PROTOCOL_ERROR, "newSuperior requires LDAPv3" );
@@ -105,7 +105,7 @@ do_modrdn(
 		     == LBER_ERROR ) {
 
 			Debug( LDAP_DEBUG_ANY, "%s do_modrdn: ber_scanf(\"m\") failed\n",
-				op->o_log_prefix, 0, 0 );
+				op->o_log_prefix );
 
 			send_ldap_discon( op, rs,
 				LDAP_PROTOCOL_ERROR, "decoding error" );
@@ -123,7 +123,7 @@ do_modrdn(
 
 	if ( ber_scanf( op->o_ber, /*{*/ "}") == LBER_ERROR ) {
 		Debug( LDAP_DEBUG_ANY, "%s do_modrdn: ber_scanf failed\n",
-			op->o_log_prefix, 0, 0 );
+			op->o_log_prefix );
 		send_ldap_discon( op, rs,
 			LDAP_PROTOCOL_ERROR, "decoding error" );
 		rs->sr_err = SLAPD_DISCONNECT;
@@ -132,7 +132,7 @@ do_modrdn(
 
 	if( get_ctrls( op, rs, 1 ) != LDAP_SUCCESS ) {
 		Debug( LDAP_DEBUG_ANY, "%s do_modrdn: get_ctrls failed\n",
-			op->o_log_prefix, 0, 0 );
+			op->o_log_prefix );
 		/* get_ctrls has sent results.	Now clean up. */
 		goto cleanup;
 	} 
@@ -140,7 +140,7 @@ do_modrdn(
 	rs->sr_err = dnPrettyNormal( NULL, &dn, &op->o_req_dn, &op->o_req_ndn, op->o_tmpmemctx );
 	if( rs->sr_err != LDAP_SUCCESS ) {
 		Debug( LDAP_DEBUG_ANY, "%s do_modrdn: invalid dn (%s)\n",
-			op->o_log_prefix, dn.bv_val, 0 );
+			op->o_log_prefix, dn.bv_val );
 		send_ldap_error( op, rs, LDAP_INVALID_DN_SYNTAX, "invalid DN" );
 		goto cleanup;
 	}
@@ -150,14 +150,14 @@ do_modrdn(
 	rs->sr_err = dnPrettyNormal( NULL, &newrdn, &op->orr_newrdn, &op->orr_nnewrdn, op->o_tmpmemctx );
 	if( rs->sr_err != LDAP_SUCCESS ) {
 		Debug( LDAP_DEBUG_ANY, "%s do_modrdn: invalid newrdn (%s)\n",
-			op->o_log_prefix, newrdn.bv_val, 0 );
+			op->o_log_prefix, newrdn.bv_val );
 		send_ldap_error( op, rs, LDAP_INVALID_DN_SYNTAX, "invalid new RDN" );
 		goto cleanup;
 	}
 
 	if( rdn_validate( &op->orr_newrdn ) != LDAP_SUCCESS ) {
 		Debug( LDAP_DEBUG_ANY, "%s do_modrdn: invalid rdn (%s)\n",
-			op->o_log_prefix, op->orr_newrdn.bv_val, 0 );
+			op->o_log_prefix, op->orr_newrdn.bv_val );
 		send_ldap_error( op, rs, LDAP_INVALID_DN_SYNTAX, "invalid new RDN" );
 		goto cleanup;
 	}
@@ -168,14 +168,14 @@ do_modrdn(
 		if( rs->sr_err != LDAP_SUCCESS ) {
 			Debug( LDAP_DEBUG_ANY,
 				"%s do_modrdn: invalid newSuperior (%s)\n",
-				op->o_log_prefix, newSuperior.bv_val, 0 );
+				op->o_log_prefix, newSuperior.bv_val );
 			send_ldap_error( op, rs, LDAP_INVALID_DN_SYNTAX, "invalid newSuperior" );
 			goto cleanup;
 		}
 	}
 
-	Statslog( LDAP_DEBUG_STATS, "%s MODRDN dn=\"%s\"\n",
-	    op->o_log_prefix, op->o_req_dn.bv_val, 0, 0, 0 );
+	Debug( LDAP_DEBUG_STATS, "%s MODRDN dn=\"%s\"\n",
+	    op->o_log_prefix, op->o_req_dn.bv_val );
 
 	op->orr_deleteoldrdn = deloldrdn;
 	op->orr_modlist = NULL;
@@ -190,11 +190,14 @@ do_modrdn(
 	op->o_bd = frontendDB;
 	rs->sr_err = frontendDB->be_modrdn( op, rs );
 
-#ifdef LDAP_X_TXN
-	if( rs->sr_err == LDAP_X_TXN_SPECIFY_OKAY ) {
+	if ( rs->sr_err == SLAPD_ASYNCOP ) {
 		/* skip cleanup */
+		return rs->sr_err;
 	}
-#endif
+	if( rs->sr_err == LDAP_TXN_SPECIFY_OKAY ) {
+		/* skip cleanup */
+		return rs->sr_err;
+	}
 
 cleanup:
 	op->o_tmpfree( op->o_req_dn.bv_val, op->o_tmpmemctx );
@@ -225,7 +228,7 @@ fe_op_modrdn( Operation *op, SlapReply *rs )
 	
 	if( op->o_req_ndn.bv_len == 0 ) {
 		Debug( LDAP_DEBUG_ANY, "%s do_modrdn: root dse!\n",
-			op->o_log_prefix, 0, 0 );
+			op->o_log_prefix );
 		send_ldap_error( op, rs, LDAP_UNWILLING_TO_PERFORM,
 			"cannot rename the root DSE" );
 		goto cleanup;
@@ -307,7 +310,7 @@ fe_op_modrdn( Operation *op, SlapReply *rs )
 	/*
 	 * do the modrdn if 1 && (2 || 3)
 	 * 1) there is a modrdn function implemented in this backend;
-	 * 2) this backend is master for what it holds;
+	 * 2) this backend is the provider for what it holds;
 	 * 3) it's a replica and the dn supplied is the update_ndn.
 	 */
 	if ( op->o_bd->be_modrdn ) {
@@ -315,6 +318,11 @@ fe_op_modrdn( Operation *op, SlapReply *rs )
 		int repl_user = be_isupdate( op );
 		if ( !SLAP_SINGLE_SHADOW(op->o_bd) || repl_user )
 		{
+			if ( op->o_txnSpec ) {
+				txn_preop( op, rs );
+				goto cleanup;
+			}
+
 			op->o_bd = op_be;
 			op->o_bd->be_modrdn( op, rs );
 
@@ -387,6 +395,50 @@ cleanup:;
 	return rs->sr_err;
 }
 
+/* extracted from slap_modrdn2mods() */
+static int
+mod_op_add_val(
+	Operation *op,
+	AttributeDescription * const desc,
+	struct berval * const val,
+	short const sm_op )
+{
+	int rv = LDAP_SUCCESS;
+	Modifications *mod_tmp;
+	mod_tmp = ( Modifications * )ch_malloc( sizeof( Modifications ) );
+	mod_tmp->sml_desc = desc;
+	BER_BVZERO( &mod_tmp->sml_type );
+	mod_tmp->sml_numvals = 1;
+	mod_tmp->sml_values = ( BerVarray )ch_malloc( 2 * sizeof( struct berval ) );
+	ber_dupbv( &mod_tmp->sml_values[0], val );
+	mod_tmp->sml_values[1].bv_val = NULL;
+	if( desc->ad_type->sat_equality && desc->ad_type->sat_equality->smr_normalize) {
+		mod_tmp->sml_nvalues = ( BerVarray )ch_malloc( 2 * sizeof( struct berval ) );
+		rv = desc->ad_type->sat_equality->smr_normalize(
+			SLAP_MR_EQUALITY|SLAP_MR_VALUE_OF_ASSERTION_SYNTAX,
+			desc->ad_type->sat_syntax,
+			desc->ad_type->sat_equality,
+			&mod_tmp->sml_values[0],
+			&mod_tmp->sml_nvalues[0], NULL );
+		if (rv != LDAP_SUCCESS) {
+			ch_free(mod_tmp->sml_nvalues);
+			ch_free(mod_tmp->sml_values[0].bv_val);
+			ch_free(mod_tmp->sml_values);
+			ch_free(mod_tmp);
+			goto done;
+		}
+		mod_tmp->sml_nvalues[1].bv_val = NULL;
+	} else {
+		mod_tmp->sml_nvalues = NULL;
+	}
+	mod_tmp->sml_op = sm_op;
+	mod_tmp->sml_flags = 0;
+	mod_tmp->sml_next = op->orr_modlist;
+	op->orr_modlist = mod_tmp;
+done:
+	return rv;
+}
+
 int
 slap_modrdn2mods(
 	Operation	*op,
@@ -406,7 +458,7 @@ slap_modrdn2mods(
 		Debug( LDAP_DEBUG_TRACE,
 			"%s slap_modrdn2mods: can't figure out "
 			"type(s)/value(s) of newrdn\n",
-			op->o_log_prefix, 0, 0 );
+			op->o_log_prefix );
 		rs->sr_err = LDAP_INVALID_DN_SYNTAX;
 		rs->sr_text = "unknown type(s)/value(s) used in RDN";
 		goto done;
@@ -418,7 +470,7 @@ slap_modrdn2mods(
 			Debug( LDAP_DEBUG_TRACE,
 				"%s slap_modrdn2mods: can't figure out "
 				"type(s)/value(s) of oldrdn\n",
-				op->o_log_prefix, 0, 0 );
+				op->o_log_prefix );
 			rs->sr_err = LDAP_OTHER;
 			rs->sr_text = "cannot parse RDN from old DN";
 			goto done;
@@ -429,7 +481,6 @@ slap_modrdn2mods(
 	/* Add new attribute values to the entry */
 	for ( a_cnt = 0; new_rdn[a_cnt]; a_cnt++ ) {
 		AttributeDescription	*desc = NULL;
-		Modifications 		*mod_tmp;
 
 		rs->sr_err = slap_bv2ad( &new_rdn[a_cnt]->la_attr, &desc, &rs->sr_text );
 
@@ -454,43 +505,15 @@ slap_modrdn2mods(
 		}
 
 		/* Apply modification */
-		mod_tmp = ( Modifications * )ch_malloc( sizeof( Modifications ) );
-		mod_tmp->sml_desc = desc;
-		BER_BVZERO( &mod_tmp->sml_type );
-		mod_tmp->sml_numvals = 1;
-		mod_tmp->sml_values = ( BerVarray )ch_malloc( 2 * sizeof( struct berval ) );
-		ber_dupbv( &mod_tmp->sml_values[0], &new_rdn[a_cnt]->la_value );
-		mod_tmp->sml_values[1].bv_val = NULL;
-		if( desc->ad_type->sat_equality->smr_normalize) {
-			mod_tmp->sml_nvalues = ( BerVarray )ch_malloc( 2 * sizeof( struct berval ) );
-			rs->sr_err = desc->ad_type->sat_equality->smr_normalize(
-				SLAP_MR_EQUALITY|SLAP_MR_VALUE_OF_ASSERTION_SYNTAX,
-				desc->ad_type->sat_syntax,
-				desc->ad_type->sat_equality,
-				&mod_tmp->sml_values[0],
-				&mod_tmp->sml_nvalues[0], NULL );
-			if (rs->sr_err != LDAP_SUCCESS) {
-				ch_free(mod_tmp->sml_nvalues);
-				ch_free(mod_tmp->sml_values[0].bv_val);
-				ch_free(mod_tmp->sml_values);
-				ch_free(mod_tmp);
-				goto done;
-			}
-			mod_tmp->sml_nvalues[1].bv_val = NULL;
-		} else {
-			mod_tmp->sml_nvalues = NULL;
-		}
-		mod_tmp->sml_op = SLAP_MOD_SOFTADD;
-		mod_tmp->sml_flags = 0;
-		mod_tmp->sml_next = op->orr_modlist;
-		op->orr_modlist = mod_tmp;
+		rs->sr_err = mod_op_add_val( op, desc, &new_rdn[a_cnt]->la_value, SLAP_MOD_SOFTADD );
+		if (rs->sr_err != LDAP_SUCCESS)
+			goto done;
 	}
 
 	/* Remove old rdn value if required */
 	if ( op->orr_deleteoldrdn ) {
 		for ( d_cnt = 0; old_rdn[d_cnt]; d_cnt++ ) {
 			AttributeDescription	*desc = NULL;
-			Modifications 		*mod_tmp;
 
 			rs->sr_err = slap_bv2ad( &old_rdn[d_cnt]->la_attr, &desc, &rs->sr_text );
 			if ( rs->sr_err != LDAP_SUCCESS ) {
@@ -503,29 +526,9 @@ slap_modrdn2mods(
 			}
 
 			/* Apply modification */
-			mod_tmp = ( Modifications * )ch_malloc( sizeof( Modifications ) );
-			mod_tmp->sml_desc = desc;
-			BER_BVZERO( &mod_tmp->sml_type );
-			mod_tmp->sml_numvals = 1;
-			mod_tmp->sml_values = ( BerVarray )ch_malloc( 2 * sizeof( struct berval ) );
-			ber_dupbv( &mod_tmp->sml_values[0], &old_rdn[d_cnt]->la_value );
-			mod_tmp->sml_values[1].bv_val = NULL;
-			if( desc->ad_type->sat_equality->smr_normalize) {
-				mod_tmp->sml_nvalues = ( BerVarray )ch_malloc( 2 * sizeof( struct berval ) );
-				(void) (*desc->ad_type->sat_equality->smr_normalize)(
-					SLAP_MR_EQUALITY|SLAP_MR_VALUE_OF_ASSERTION_SYNTAX,
-					desc->ad_type->sat_syntax,
-					desc->ad_type->sat_equality,
-					&mod_tmp->sml_values[0],
-					&mod_tmp->sml_nvalues[0], NULL );
-				mod_tmp->sml_nvalues[1].bv_val = NULL;
-			} else {
-				mod_tmp->sml_nvalues = NULL;
-			}
-			mod_tmp->sml_op = LDAP_MOD_DELETE;
-			mod_tmp->sml_flags = 0;
-			mod_tmp->sml_next = op->orr_modlist;
-			op->orr_modlist = mod_tmp;
+			rs->sr_err = mod_op_add_val( op, desc, &old_rdn[d_cnt]->la_value, LDAP_MOD_DELETE );
+			if (rs->sr_err != LDAP_SUCCESS)
+				goto done;
 		}
 	}
 	
@@ -533,12 +536,8 @@ done:
 
 	/* LDAP v2 supporting correct attribute handling. */
 	if ( rs->sr_err != LDAP_SUCCESS && op->orr_modlist != NULL ) {
-		Modifications *tmp;
-
-		for ( ; op->orr_modlist != NULL; op->orr_modlist = tmp ) {
-			tmp = op->orr_modlist->sml_next;
-			ch_free( op->orr_modlist );
-		}
+		slap_mods_free( op->orr_modlist, 1 );
+		op->orr_modlist = NULL;
 	}
 
 	if ( new_rdn != NULL ) {

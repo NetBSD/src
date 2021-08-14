@@ -1,4 +1,4 @@
-/*	$NetBSD: compare.c,v 1.1.1.1 2021/08/14 16:05:23 christos Exp $	*/
+/*	$NetBSD: compare.c,v 1.2 2021/08/14 16:14:59 christos Exp $	*/
 
 /* compare.c - compare exop handler for back-asyncmeta */
 /* $OpenLDAP$ */
@@ -23,7 +23,7 @@
 + * This work was sponsored by Ericsson. */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: compare.c,v 1.1.1.1 2021/08/14 16:05:23 christos Exp $");
+__RCSID("$NetBSD: compare.c,v 1.2 2021/08/14 16:14:59 christos Exp $");
 
 #include "portable.h"
 

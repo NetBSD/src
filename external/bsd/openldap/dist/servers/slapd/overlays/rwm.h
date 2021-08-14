@@ -1,10 +1,10 @@
-/*	$NetBSD: rwm.h,v 1.2 2020/08/11 13:15:42 christos Exp $	*/
+/*	$NetBSD: rwm.h,v 1.3 2021/08/14 16:15:02 christos Exp $	*/
 
 /* rwm.h - dn rewrite/attribute mapping header file */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2020 The OpenLDAP Foundation.
+ * Copyright 1999-2021 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Howard Chu.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * All rights reserved.
@@ -25,10 +25,6 @@
 
 #ifndef RWM_H
 #define RWM_H
-
-#ifndef ENABLE_REWRITE
-#error "librewrite must be enabled!"
-#endif /* ENABLE_REWRITE */
 
 /* String rewrite library */
 #include "rewrite.h"

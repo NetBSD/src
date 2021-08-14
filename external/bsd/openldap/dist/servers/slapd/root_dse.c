@@ -1,10 +1,10 @@
-/*	$NetBSD: root_dse.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
+/*	$NetBSD: root_dse.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
 
 /* root_dse.c - Provides the Root DSA-Specific Entry */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2020 The OpenLDAP Foundation.
+ * Copyright 1999-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: root_dse.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
+__RCSID("$NetBSD: root_dse.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
 
 #include "portable.h"
 
@@ -221,7 +221,7 @@ root_dse_info(
 	e = entry_alloc();
 	if( e == NULL ) {
 		Debug( LDAP_DEBUG_ANY,
-			"root_dse_info: entry_alloc failed", 0, 0, 0 );
+			"root_dse_info: entry_alloc failed" );
 		return LDAP_OTHER;
 	}
 
@@ -416,7 +416,7 @@ root_dse_read_file( const char *fname )
 	if ( (fp = ldif_open( fname, "r" )) == NULL ) {
 		Debug( LDAP_DEBUG_ANY,
 			"root_dse_read_file: could not open rootdse attr file \"%s\" - absolute path?\n",
-			fname, 0, 0 );
+			fname );
 		perror( fname );
 		return EXIT_FAILURE;
 	}
@@ -424,7 +424,7 @@ root_dse_read_file( const char *fname )
 	usr_attr = entry_alloc();
 	if( usr_attr == NULL ) {
 		Debug( LDAP_DEBUG_ANY,
-			"root_dse_read_file: entry_alloc failed", 0, 0, 0 );
+			"root_dse_read_file: entry_alloc failed" );
 		ldif_close( fp );
 		return LDAP_OTHER;
 	}
@@ -437,7 +437,7 @@ root_dse_read_file( const char *fname )
 		if( e == NULL ) {
 			Debug( LDAP_DEBUG_ANY, "root_dse_read_file: "
 				"could not parse entry (file=\"%s\" line=%lu)\n",
-				fname, lineno, 0 );
+				fname, lineno );
 			rc = LDAP_OTHER;
 			break;
 		}
@@ -484,7 +484,7 @@ root_dse_read_file( const char *fname )
 
 	ldif_close( fp );
 
-	Debug(LDAP_DEBUG_CONFIG, "rootDSE file=\"%s\" read.\n", fname, 0, 0);
+	Debug(LDAP_DEBUG_CONFIG, "rootDSE file=\"%s\" read.\n", fname );
 	return rc;
 }
 

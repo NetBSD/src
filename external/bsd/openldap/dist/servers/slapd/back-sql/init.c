@@ -1,9 +1,9 @@
-/*	$NetBSD: init.c,v 1.2 2020/08/11 13:15:42 christos Exp $	*/
+/*	$NetBSD: init.c,v 1.3 2021/08/14 16:15:01 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2020 The OpenLDAP Foundation.
+ * Copyright 1999-2021 The OpenLDAP Foundation.
  * Portions Copyright 1999 Dmitry Kovalev.
  * Portions Copyright 2002 Pierangelo Masarati.
  * All rights reserved.
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: init.c,v 1.2 2020/08/11 13:15:42 christos Exp $");
+__RCSID("$NetBSD: init.c,v 1.3 2021/08/14 16:15:01 christos Exp $");
 
 #include "portable.h"
 
@@ -32,7 +32,7 @@ __RCSID("$NetBSD: init.c,v 1.2 2020/08/11 13:15:42 christos Exp $");
 #include "ac/string.h"
 
 #include "slap.h"
-#include "config.h"
+#include "slap-config.h"
 #include "proto-sql.h"
 
 int
@@ -61,7 +61,7 @@ sql_back_initialize(
 #endif
 		SLAP_BFLAG_REFERRALS;
 
-	Debug( LDAP_DEBUG_TRACE,"==>sql_back_initialize()\n", 0, 0, 0 );
+	Debug( LDAP_DEBUG_TRACE,"==>sql_back_initialize()\n" );
 	
 	bi->bi_db_init = backsql_db_init;
 	bi->bi_db_config = config_generic_wrapper;
@@ -87,7 +87,7 @@ sql_back_initialize(
 	bi->bi_connection_init = 0;
 
 	rc = backsql_init_cf( bi );
-	Debug( LDAP_DEBUG_TRACE,"<==sql_back_initialize()\n", 0, 0, 0 );
+	Debug( LDAP_DEBUG_TRACE,"<==sql_back_initialize()\n" );
 	return rc;
 }
 
@@ -95,8 +95,8 @@ int
 backsql_destroy( 
 	BackendInfo 	*bi )
 {
-	Debug( LDAP_DEBUG_TRACE, "==>backsql_destroy()\n", 0, 0, 0 );
-	Debug( LDAP_DEBUG_TRACE, "<==backsql_destroy()\n", 0, 0, 0 );
+	Debug( LDAP_DEBUG_TRACE, "==>backsql_destroy()\n" );
+	Debug( LDAP_DEBUG_TRACE, "<==backsql_destroy()\n" );
 	return 0;
 }
 
@@ -108,7 +108,7 @@ backsql_db_init(
 	backsql_info	*bi;
 	int		rc = 0;
  
-	Debug( LDAP_DEBUG_TRACE, "==>backsql_db_init()\n", 0, 0, 0 );
+	Debug( LDAP_DEBUG_TRACE, "==>backsql_db_init()\n" );
 
 	bi = (backsql_info *)ch_calloc( 1, sizeof( backsql_info ) );
 	ldap_pvt_thread_mutex_init( &bi->sql_dbconn_mutex );
@@ -121,7 +121,7 @@ backsql_db_init(
 	bd->be_private = bi;
 	bd->be_cf_ocs = bd->bd_info->bi_cf_ocs;
 
-	Debug( LDAP_DEBUG_TRACE, "<==backsql_db_init()\n", 0, 0, 0 );
+	Debug( LDAP_DEBUG_TRACE, "<==backsql_db_init()\n" );
 
 	return rc;
 }
@@ -133,7 +133,7 @@ backsql_db_destroy(
 {
 	backsql_info	*bi = (backsql_info*)bd->be_private;
  
-	Debug( LDAP_DEBUG_TRACE, "==>backsql_db_destroy()\n", 0, 0, 0 );
+	Debug( LDAP_DEBUG_TRACE, "==>backsql_db_destroy()\n" );
 
 	backsql_free_db_env( bi );
 	ldap_pvt_thread_mutex_destroy( &bi->sql_dbconn_mutex );
@@ -222,7 +222,7 @@ backsql_db_destroy(
 	
 	ch_free( bi );
 	
-	Debug( LDAP_DEBUG_TRACE, "<==backsql_db_destroy()\n", 0, 0, 0 );
+	Debug( LDAP_DEBUG_TRACE, "<==backsql_db_destroy()\n" );
 	return 0;
 }
 
@@ -241,24 +241,24 @@ backsql_db_open(
 	void		*thrctx = ldap_pvt_thread_pool_context();
 
 	Debug( LDAP_DEBUG_TRACE, "==>backsql_db_open(): "
-		"testing RDBMS connection\n", 0, 0, 0 );
+		"testing RDBMS connection\n" );
 	if ( bi->sql_dbname == NULL ) {
 		Debug( LDAP_DEBUG_TRACE, "backsql_db_open(): "
 			"datasource name not specified "
-			"(use \"dbname\" directive in slapd.conf)\n", 0, 0, 0 );
+			"(use \"dbname\" directive in slapd.conf)\n" );
 		return 1;
 	}
 
 	if ( bi->sql_concat_func == NULL ) {
 		Debug( LDAP_DEBUG_TRACE, "backsql_db_open(): "
 			"concat func not specified (use \"concat_pattern\" "
-			"directive in slapd.conf)\n", 0, 0, 0 );
+			"directive in slapd.conf)\n" );
 
 		if ( backsql_split_pattern( backsql_def_concat_func, 
 				&bi->sql_concat_func, 2 ) ) {
 			Debug( LDAP_DEBUG_TRACE, "backsql_db_open(): "
 				"unable to parse pattern \"%s\"",
-				backsql_def_concat_func, 0, 0 );
+				backsql_def_concat_func );
 			return 1;
 		}
 	}
@@ -314,7 +314,7 @@ backsql_db_open(
 	if ( bi->sql_dbuser == NULL ) {
 		Debug( LDAP_DEBUG_TRACE, "backsql_db_open(): "
 			"user name not specified "
-			"(use \"dbuser\" directive in slapd.conf)\n", 0, 0, 0 );
+			"(use \"dbuser\" directive in slapd.conf)\n" );
 		return 1;
 	}
 	
@@ -333,14 +333,12 @@ backsql_db_open(
 		Debug( LDAP_DEBUG_TRACE, "backsql_db_open(): "
 			"subtree search SQL condition not specified "
 			"(use \"subtree_cond\" directive in slapd.conf); "
-			"preparing default\n", 
-			0, 0, 0);
+			"preparing default\n" );
 
 		if ( backsql_prepare_pattern( bi->sql_concat_func, values, 
 				&concat ) ) {
 			Debug( LDAP_DEBUG_TRACE, "backsql_db_open(): "
-				"unable to prepare CONCAT pattern for subtree search",
-				0, 0, 0 );
+				"unable to prepare CONCAT pattern for subtree search" );
 			return 1;
 		}
 			
@@ -376,7 +374,7 @@ backsql_db_open(
 			
 		Debug( LDAP_DEBUG_TRACE, "backsql_db_open(): "
 			"setting \"%s\" as default \"subtree_cond\"\n",
-			bi->sql_subtree_cond.bv_val, 0, 0 );
+			bi->sql_subtree_cond.bv_val );
 	}
 
 	if ( bi->sql_children_cond.bv_val == NULL ) {
@@ -394,13 +392,12 @@ backsql_db_open(
 		Debug( LDAP_DEBUG_TRACE, "backsql_db_open(): "
 			"children search SQL condition not specified "
 			"(use \"children_cond\" directive in slapd.conf); "
-			"preparing default\n", 
-			0, 0, 0);
+			"preparing default\n" );
 
 		if ( backsql_prepare_pattern( bi->sql_concat_func, values, 
 				&concat ) ) {
 			Debug( LDAP_DEBUG_TRACE, "backsql_db_open(): "
-				"unable to prepare CONCAT pattern for children search", 0, 0, 0 );
+				"unable to prepare CONCAT pattern for children search" );
 			return 1;
 		}
 			
@@ -436,7 +433,7 @@ backsql_db_open(
 			
 		Debug( LDAP_DEBUG_TRACE, "backsql_db_open(): "
 			"setting \"%s\" as default \"children_cond\"\n",
-			bi->sql_children_cond.bv_val, 0, 0 );
+			bi->sql_children_cond.bv_val );
 	}
 
 	if ( bi->sql_dn_match_cond.bv_val == NULL ) {
@@ -448,8 +445,7 @@ backsql_db_open(
 		Debug( LDAP_DEBUG_TRACE, "backsql_db_open(): "
 			"DN match search SQL condition not specified "
 			"(use \"dn_match_cond\" directive in slapd.conf); "
-			"preparing default\n", 
-			0, 0, 0);
+			"preparing default\n" );
 
 		if ( bi->sql_upper_func.bv_val ) {
 
@@ -480,7 +476,7 @@ backsql_db_open(
 			
 		Debug( LDAP_DEBUG_TRACE, "backsql_db_open(): "
 			"setting \"%s\" as default \"dn_match_cond\"\n",
-			bi->sql_dn_match_cond.bv_val, 0, 0 );
+			bi->sql_dn_match_cond.bv_val );
 	}
 
 	if ( bi->sql_oc_query == NULL ) {
@@ -494,64 +490,58 @@ backsql_db_open(
 
 		Debug( LDAP_DEBUG_TRACE, "backsql_db_open(): "
 			"objectclass mapping SQL statement not specified "
-			"(use \"oc_query\" directive in slapd.conf)\n", 
-			0, 0, 0 );
+			"(use \"oc_query\" directive in slapd.conf)\n" );
 		Debug( LDAP_DEBUG_TRACE, "backsql_db_open(): "
-			"setting \"%s\" by default\n", bi->sql_oc_query, 0, 0 );
+			"setting \"%s\" by default\n", bi->sql_oc_query );
 	}
 	
 	if ( bi->sql_at_query == NULL ) {
 		Debug( LDAP_DEBUG_TRACE, "backsql_db_open(): "
 			"attribute mapping SQL statement not specified "
-			"(use \"at_query\" directive in slapd.conf)\n",
-			0, 0, 0 );
+			"(use \"at_query\" directive in slapd.conf)\n" );
 		Debug(LDAP_DEBUG_TRACE, "backsql_db_open(): "
 			"setting \"%s\" by default\n",
-			backsql_def_at_query, 0, 0 );
+			backsql_def_at_query );
 		bi->sql_at_query = ch_strdup( backsql_def_at_query );
 	}
 	
 	if ( bi->sql_insentry_stmt == NULL ) {
 		Debug( LDAP_DEBUG_TRACE, "backsql_db_open(): "
 			"entry insertion SQL statement not specified "
-			"(use \"insentry_stmt\" directive in slapd.conf)\n",
-			0, 0, 0 );
+			"(use \"insentry_stmt\" directive in slapd.conf)\n" );
 		Debug(LDAP_DEBUG_TRACE, "backsql_db_open(): "
 			"setting \"%s\" by default\n",
-			backsql_def_insentry_stmt, 0, 0 );
+			backsql_def_insentry_stmt );
 		bi->sql_insentry_stmt = ch_strdup( backsql_def_insentry_stmt );
 	}
 	
 	if ( bi->sql_delentry_stmt == NULL ) {
 		Debug( LDAP_DEBUG_TRACE, "backsql_db_open(): "
 			"entry deletion SQL statement not specified "
-			"(use \"delentry_stmt\" directive in slapd.conf)\n",
-			0, 0, 0 );
+			"(use \"delentry_stmt\" directive in slapd.conf)\n" );
 		Debug( LDAP_DEBUG_TRACE, "backsql_db_open(): "
 			"setting \"%s\" by default\n",
-			backsql_def_delentry_stmt, 0, 0 );
+			backsql_def_delentry_stmt );
 		bi->sql_delentry_stmt = ch_strdup( backsql_def_delentry_stmt );
 	}
 
 	if ( bi->sql_renentry_stmt == NULL ) {
 		Debug( LDAP_DEBUG_TRACE, "backsql_db_open(): "
 			"entry deletion SQL statement not specified "
-			"(use \"renentry_stmt\" directive in slapd.conf)\n",
-			0, 0, 0 );
+			"(use \"renentry_stmt\" directive in slapd.conf)\n" );
 		Debug( LDAP_DEBUG_TRACE, "backsql_db_open(): "
 			"setting \"%s\" by default\n",
-			backsql_def_renentry_stmt, 0, 0 );
+			backsql_def_renentry_stmt );
 		bi->sql_renentry_stmt = ch_strdup( backsql_def_renentry_stmt );
 	}
 
 	if ( bi->sql_delobjclasses_stmt == NULL ) {
 		Debug( LDAP_DEBUG_TRACE, "backsql_db_open(): "
 			"objclasses deletion SQL statement not specified "
-			"(use \"delobjclasses_stmt\" directive in slapd.conf)\n",
-			0, 0, 0 );
+			"(use \"delobjclasses_stmt\" directive in slapd.conf)\n" );
 		Debug( LDAP_DEBUG_TRACE, "backsql_db_open(): "
 			"setting \"%s\" by default\n",
-			backsql_def_delobjclasses_stmt, 0, 0 );
+			backsql_def_delobjclasses_stmt );
 		bi->sql_delobjclasses_stmt = ch_strdup( backsql_def_delobjclasses_stmt );
 	}
 
@@ -561,22 +551,21 @@ backsql_db_open(
 	op->o_bd = bd;
 	if ( backsql_get_db_conn( op, &dbh ) != LDAP_SUCCESS ) {
 		Debug( LDAP_DEBUG_TRACE, "backsql_db_open(): "
-			"connection failed, exiting\n", 0, 0, 0 );
+			"connection failed, exiting\n" );
 		return 1;
 	}
 	if ( backsql_load_schema_map( bi, dbh ) != LDAP_SUCCESS ) {
 		Debug( LDAP_DEBUG_TRACE, "backsql_db_open(): "
-			"schema mapping failed, exiting\n", 0, 0, 0 );
+			"schema mapping failed, exiting\n" );
 		return 1;
 	}
 	if ( backsql_free_db_conn( op, dbh ) != SQL_SUCCESS ) {
 		Debug( LDAP_DEBUG_TRACE, "backsql_db_open(): "
-			"connection free failed\n", 0, 0, 0 );
+			"connection free failed\n" );
 	}
 	if ( !BACKSQL_SCHEMA_LOADED( bi ) ) {
 		Debug( LDAP_DEBUG_TRACE, "backsql_db_open(): "
-			"test failed, schema map not loaded - exiting\n",
-			0, 0, 0 );
+			"test failed, schema map not loaded - exiting\n" );
 		return 1;
 	}
 
@@ -648,7 +637,7 @@ backsql_db_open(
 	bi->sql_flags |= BSQLF_CHECK_SCHEMA;
 	
 	Debug( LDAP_DEBUG_TRACE, "<==backsql_db_open(): "
-		"test succeeded, schema map loaded\n", 0, 0, 0 );
+		"test succeeded, schema map loaded\n" );
 	return 0;
 }
 
@@ -659,11 +648,11 @@ backsql_db_close(
 {
 	backsql_info 	*bi = (backsql_info*)bd->be_private;
 
-	Debug( LDAP_DEBUG_TRACE, "==>backsql_db_close()\n", 0, 0, 0 );
+	Debug( LDAP_DEBUG_TRACE, "==>backsql_db_close()\n" );
 
 	backsql_conn_destroy( bi );
 
-	Debug( LDAP_DEBUG_TRACE, "<==backsql_db_close()\n", 0, 0, 0 );
+	Debug( LDAP_DEBUG_TRACE, "<==backsql_db_close()\n" );
 
 	return 0;
 }

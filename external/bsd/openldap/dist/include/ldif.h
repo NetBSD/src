@@ -1,9 +1,9 @@
-/*	$NetBSD: ldif.h,v 1.2 2020/08/11 13:15:37 christos Exp $	*/
+/*	$NetBSD: ldif.h,v 1.3 2021/08/14 16:14:55 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,7 +35,7 @@ LDAP_BEGIN_DECL
 /* This is NOT a bogus extern declaration (unlike ldap_debug) */
 LDAP_LDIF_V (int) ldif_debug;
 
-#define LDIF_LINE_WIDTH      76      /* default maximum length of LDIF lines */
+#define LDIF_LINE_WIDTH      78      /* default maximum length of LDIF lines */
 #define LDIF_LINE_WIDTH_MAX  ((ber_len_t)-1) /* maximum length of LDIF lines */
 #define LDIF_LINE_WIDTH_WRAP(wrap) ((wrap) == 0 ? LDIF_LINE_WIDTH : (wrap))
 
@@ -52,9 +52,7 @@ LDAP_LDIF_V (int) ldif_debug;
  * first newline + base64 value + continued lines.  Each continued line
  * needs room for a newline and a leading space character.
  */
-#define LDIF_SIZE_NEEDED(nlen,vlen) \
-    ((nlen) + 4 + LDIF_BASE64_LEN(vlen) \
-    + ((LDIF_BASE64_LEN(vlen) + (nlen) + 3) / (LDIF_LINE_WIDTH-1) * 2 ))
+#define LDIF_SIZE_NEEDED(nlen,vlen) LDIF_SIZE_NEEDED_WRAP(nlen, vlen, 0)
 
 #define LDIF_SIZE_NEEDED_WRAP(nlen,vlen,wrap) \
     ((nlen) + 4 + LDIF_BASE64_LEN(vlen) \
@@ -100,6 +98,10 @@ typedef struct LDIFFP {
 
 LDAP_LDIF_F( LDIFFP * )
 ldif_open LDAP_P(( LDAP_CONST char *file, LDAP_CONST char *mode ));
+
+/* ldif_open equivalent that opens ldif stream in memory rather than from file */
+LDAP_LDIF_F( LDIFFP * )
+ldif_open_mem LDAP_P(( char *ldif, size_t size, LDAP_CONST char *mode ));
 
 LDAP_LDIF_F( void )
 ldif_close LDAP_P(( LDIFFP * ));

@@ -1,10 +1,10 @@
-/*	$NetBSD: sssvlv.c,v 1.2 2020/08/11 13:15:42 christos Exp $	*/
+/*	$NetBSD: sssvlv.c,v 1.3 2021/08/14 16:15:02 christos Exp $	*/
 
 /* sssvlv.c - server side sort / virtual list view */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2009-2020 The OpenLDAP Foundation.
+ * Copyright 2009-2021 The OpenLDAP Foundation.
  * Portions copyright 2009 Symas Corporation.
  * All rights reserved.
  *
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sssvlv.c,v 1.2 2020/08/11 13:15:42 christos Exp $");
+__RCSID("$NetBSD: sssvlv.c,v 1.3 2021/08/14 16:15:02 christos Exp $");
 
 #include "portable.h"
 
@@ -34,11 +34,11 @@ __RCSID("$NetBSD: sssvlv.c,v 1.2 2020/08/11 13:15:42 christos Exp $");
 #include <ac/string.h>
 #include <ac/ctype.h>
 
-#include <avl.h>
+#include <ldap_avl.h>
 
 #include "slap.h"
 #include "lutil.h"
-#include "config.h"
+#include "slap-config.h"
 
 #include "../../../libraries/liblber/lber-int.h"	/* ber_rewind */
 
@@ -110,7 +110,7 @@ typedef struct sssvlv_info
 
 typedef struct sort_op
 {
-	Avlnode	*so_tree;
+	TAvlnode *so_tree;
 	sort_ctrl *so_ctrl;
 	sssvlv_info *so_info;
 	int so_paged;
@@ -160,8 +160,7 @@ static struct berval* select_value(
 
 	Debug(LDAP_DEBUG_TRACE, "%s: value selected for compare: %s\n",
 		debug_header,
-		SAFESTR(ber1->bv_val, "<Empty>"),
-		0);
+		SAFESTR(ber1->bv_val, "<Empty>") );
 
 	return ber1;
 }
@@ -414,17 +413,17 @@ static void free_sort_op( Connection *conn, sort_op *so )
 	if ( sess_id > -1 ){
 	    if ( so->so_tree ) {
 		    if ( so->so_paged > SLAP_CONTROL_IGNORED ) {
-			    Avlnode *cur_node, *next_node;
+			    TAvlnode *cur_node, *next_node;
 			    cur_node = so->so_tree;
 			    while ( cur_node ) {
-				    next_node = tavl_next( cur_node, TAVL_DIR_RIGHT );
+				    next_node = ldap_tavl_next( cur_node, TAVL_DIR_RIGHT );
 				    ch_free( cur_node->avl_data );
 				    ber_memfree( cur_node );
 
 				    cur_node = next_node;
 			    }
 		    } else {
-			    tavl_free( so->so_tree, ch_free );
+			    ldap_tavl_free( so->so_tree, ch_free );
 		    }
 		    so->so_tree = NULL;
 	    }
@@ -452,7 +451,7 @@ static void send_list(
 	SlapReply		*rs,
 	sort_op			*so)
 {
-	Avlnode	*cur_node, *tmp_node;
+	TAvlnode *cur_node, *tmp_node;
 	vlv_ctrl *vc = op->o_controls[vlv_cid];
 	int i, j, dir, rc;
 	BackendDB *be;
@@ -469,11 +468,11 @@ static void send_list(
 	if ( BER_BVISNULL( &vc->vc_value )) {
 		if ( vc->vc_offset == vc->vc_count ) {
 			/* wants the last entry in the list */
-			cur_node = tavl_end(so->so_tree, TAVL_DIR_RIGHT);
+			cur_node = ldap_tavl_end(so->so_tree, TAVL_DIR_RIGHT);
 			so->so_vlv_target = so->so_nentries;
 		} else if ( vc->vc_offset == 1 ) {
 			/* wants the first entry in the list */
-			cur_node = tavl_end(so->so_tree, TAVL_DIR_LEFT);
+			cur_node = ldap_tavl_end(so->so_tree, TAVL_DIR_LEFT);
 			so->so_vlv_target = 1;
 		} else {
 			int target;
@@ -497,15 +496,15 @@ range_err:
 			so->so_vlv_target = target;
 			/* Start at left and go right, or start at right and go left? */
 			if ( target < so->so_nentries / 2 ) {
-				cur_node = tavl_end(so->so_tree, TAVL_DIR_LEFT);
+				cur_node = ldap_tavl_end(so->so_tree, TAVL_DIR_LEFT);
 				dir = TAVL_DIR_RIGHT;
 			} else {
-				cur_node = tavl_end(so->so_tree, TAVL_DIR_RIGHT);
+				cur_node = ldap_tavl_end(so->so_tree, TAVL_DIR_RIGHT);
 				dir = TAVL_DIR_LEFT;
 				target = so->so_nentries - target + 1;
 			}
 			for ( i=1; i<target; i++ )
-				cur_node = tavl_next( cur_node, dir );
+				cur_node = ldap_tavl_next( cur_node, dir );
 		}
 	} else {
 	/* we're looking for a specific value */
@@ -538,11 +537,11 @@ range_err:
 		for (i=1; i<sc->sc_nkeys; i++) {
 			BER_BVZERO( &sn->sn_vals[i] );
 		}
-		cur_node = tavl_find3( so->so_tree, sn, node_cmp, &j );
+		cur_node = ldap_tavl_find3( so->so_tree, sn, node_cmp, &j );
 		/* didn't find >= match */
 		if ( j > 0 ) {
 			if ( cur_node )
-				cur_node = tavl_next( cur_node, TAVL_DIR_RIGHT );
+				cur_node = ldap_tavl_next( cur_node, TAVL_DIR_RIGHT );
 		}
 		op->o_tmpfree( sn, op->o_tmpmemctx );
 
@@ -553,14 +552,14 @@ range_err:
 			/* start from the left or the right side? */
 			mr->smr_match( &i, 0, mr->smr_syntax, mr, &bv, &sn->sn_vals[0] );
 			if ( i > 0 ) {
-				tmp_node = tavl_end(so->so_tree, TAVL_DIR_RIGHT);
+				tmp_node = ldap_tavl_end(so->so_tree, TAVL_DIR_RIGHT);
 				dir = TAVL_DIR_LEFT;
 			} else {
-				tmp_node = tavl_end(so->so_tree, TAVL_DIR_LEFT);
+				tmp_node = ldap_tavl_end(so->so_tree, TAVL_DIR_LEFT);
 				dir = TAVL_DIR_RIGHT;
 			}
 			for (i=0; tmp_node != cur_node;
-				tmp_node = tavl_next( tmp_node, dir ), i++);
+				tmp_node = ldap_tavl_next( tmp_node, dir ), i++);
 			so->so_vlv_target = (dir == TAVL_DIR_RIGHT) ? i+1 : so->so_nentries - i;
 		}
 		if ( bv.bv_val != vc->vc_value.bv_val )
@@ -568,12 +567,12 @@ range_err:
 	}
 	if ( !cur_node ) {
 		i = 1;
-		cur_node = tavl_end(so->so_tree, TAVL_DIR_RIGHT);
+		cur_node = ldap_tavl_end(so->so_tree, TAVL_DIR_RIGHT);
 	} else {
 		i = 0;
 	}
 	for ( ; i<vc->vc_before; i++ ) {
-		tmp_node = tavl_next( cur_node, TAVL_DIR_LEFT );
+		tmp_node = ldap_tavl_next( cur_node, TAVL_DIR_LEFT );
 		if ( !tmp_node ) break;
 		cur_node = tmp_node;
 	}
@@ -595,7 +594,7 @@ range_err:
 			if ( rs->sr_err == LDAP_UNAVAILABLE )
 				break;
 		}
-		cur_node = tavl_next( cur_node, TAVL_DIR_RIGHT );
+		cur_node = ldap_tavl_next( cur_node, TAVL_DIR_RIGHT );
 		if ( !cur_node ) break;
 	}
 	so->so_vlv_rc = LDAP_SUCCESS;
@@ -605,8 +604,8 @@ range_err:
 
 static void send_page( Operation *op, SlapReply *rs, sort_op *so )
 {
-	Avlnode		*cur_node		= so->so_tree;
-	Avlnode		*next_node		= NULL;
+	TAvlnode *cur_node = so->so_tree;
+	TAvlnode *next_node = NULL;
 	BackendDB *be = op->o_bd;
 	Entry *e;
 	int rc;
@@ -618,7 +617,7 @@ static void send_page( Operation *op, SlapReply *rs, sort_op *so )
 
 		if ( slapd_shutdown ) break;
 
-		next_node = tavl_next( cur_node, TAVL_DIR_RIGHT );
+		next_node = ldap_tavl_next( cur_node, TAVL_DIR_RIGHT );
 
 		op->o_bd = select_backend( &sn->sn_dn, 0 );
 		e = NULL;
@@ -660,7 +659,7 @@ static void send_entry(
 		return;
 
 	/* RFC 2891: If critical then send the entries iff they were
-	 * succesfully sorted.  If non-critical send all entries
+	 * successfully sorted.  If non-critical send all entries
 	 * whether they were sorted or not.
 	 */
 	if ( (op->o_ctrlflag[sss_cid] != SLAP_CONTROL_CRITICAL) ||
@@ -670,7 +669,7 @@ static void send_entry(
 			send_list( op, rs, so );
 		} else {
 			/* Get the first node to send */
-			Avlnode *start_node = tavl_end(so->so_tree, TAVL_DIR_LEFT);
+			TAvlnode *start_node = ldap_tavl_end(so->so_tree, TAVL_DIR_LEFT);
 			so->so_tree = start_node;
 
 			if ( so->so_paged <= SLAP_CONTROL_IGNORED ) {
@@ -783,7 +782,7 @@ static int sssvlv_op_response(
 		sn->sn_session = find_session_by_so( so->so_info->svi_max_percon, op->o_conn->c_conn_idx, so );
 
 		/* Insert into the AVL tree */
-		tavl_insert(&(so->so_tree), sn, node_insert, avl_dup_error);
+		ldap_tavl_insert(&(so->so_tree), sn, node_insert, ldap_avl_dup_error);
 
 		so->so_nentries++;
 
@@ -1007,7 +1006,7 @@ static int get_ordering_rule(
 			rs->sr_err = LDAP_INAPPROPRIATE_MATCHING;
 			rs->sr_text = "serverSort control: No ordering rule";
 			Debug(LDAP_DEBUG_TRACE, "%s: no ordering rule function for %s\n",
-				debug_header, matchrule->bv_val, 0);
+				debug_header, matchrule->bv_val );
 		}
 	}
 	else {
@@ -1017,7 +1016,7 @@ static int get_ordering_rule(
 			rs->sr_text = "serverSort control: No ordering rule";
 			Debug(LDAP_DEBUG_TRACE,
 				"%s: no ordering rule specified and no default ordering rule for attribute %s\n",
-				debug_header, ad->ad_cname.bv_val, 0);
+				debug_header, ad->ad_cname.bv_val );
 		}
 	}
 
@@ -1101,7 +1100,7 @@ static int build_key(
 			"serverSort control: Unrecognized attribute type in sort key";
 		Debug(LDAP_DEBUG_TRACE,
 			"%s: Unrecognized attribute type in sort key: %s\n",
-			debug_header, SAFESTR(attr.bv_val, "<None>"), 0);
+			debug_header, SAFESTR(attr.bv_val, "<None>") );
 		rs->sr_err = LDAP_NO_SUCH_ATTRIBUTE;
 		return rs->sr_err;
 	}
@@ -1290,19 +1289,24 @@ static ConfigTable sssvlv_cfg[] = {
 			(void *)offsetof(sssvlv_info, svi_max),
 		"( OLcfgOvAt:21.1 NAME 'olcSssVlvMax' "
 			"DESC 'Maximum number of concurrent Sort requests' "
+			"EQUALITY integerMatch "
 			"SYNTAX OMsInteger SINGLE-VALUE )", NULL, NULL },
 	{ "sssvlv-maxkeys", "num",
 		2, 2, 0, ARG_INT|ARG_OFFSET,
 			(void *)offsetof(sssvlv_info, svi_max_keys),
 		"( OLcfgOvAt:21.2 NAME 'olcSssVlvMaxKeys' "
 			"DESC 'Maximum number of Keys in a Sort request' "
-			"SYNTAX OMsInteger SINGLE-VALUE )", NULL, NULL },
+			"EQUALITY integerMatch "
+			"SYNTAX OMsInteger SINGLE-VALUE )", NULL,
+		{ .v_int = SSSVLV_DEFAULT_MAX_KEYS } },
 	{ "sssvlv-maxperconn", "num",
 		2, 2, 0, ARG_INT|ARG_OFFSET,
 			(void *)offsetof(sssvlv_info, svi_max_percon),
 		"( OLcfgOvAt:21.3 NAME 'olcSssVlvMaxPerConn' "
 			"DESC 'Maximum number of concurrent paged search requests per connection' "
-			"SYNTAX OMsInteger SINGLE-VALUE )", NULL, NULL },
+			"EQUALITY integerMatch "
+			"SYNTAX OMsInteger SINGLE-VALUE )", NULL,
+		{ .v_int = SSSVLV_DEFAULT_MAX_REQUEST_PER_CONN } },
 	{ NULL, NULL, 0, 0, 0, ARG_IGNORED }
 };
 
@@ -1334,7 +1338,7 @@ static int sssvlv_db_init(
 			&sss_cid );
 		if ( rc != LDAP_SUCCESS ) {
 			Debug( LDAP_DEBUG_ANY, "Failed to register Sort Request control '%s' (%d)\n",
-				LDAP_CONTROL_SORTREQUEST, rc, 0 );
+				LDAP_CONTROL_SORTREQUEST, rc );
 			return rc;
 		}
 
@@ -1346,7 +1350,7 @@ static int sssvlv_db_init(
 			&vlv_cid );
 		if ( rc != LDAP_SUCCESS ) {
 			Debug( LDAP_DEBUG_ANY, "Failed to register VLV Request control '%s' (%d)\n",
-				LDAP_CONTROL_VLVREQUEST, rc, 0 );
+				LDAP_CONTROL_VLVREQUEST, rc );
 #ifdef SLAP_CONFIG_DELETE
 			overlay_unregister_control( be, LDAP_CONTROL_SORTREQUEST );
 			unregister_supported_control( LDAP_CONTROL_SORTREQUEST );
@@ -1409,6 +1413,7 @@ int sssvlv_initialize()
 	int rc;
 
 	sssvlv.on_bi.bi_type				= "sssvlv";
+	sssvlv.on_bi.bi_flags				= SLAPO_BFLAG_SINGLE;
 	sssvlv.on_bi.bi_db_init				= sssvlv_db_init;
 	sssvlv.on_bi.bi_db_destroy			= sssvlv_db_destroy;
 	sssvlv.on_bi.bi_db_open				= sssvlv_db_open;
@@ -1423,7 +1428,7 @@ int sssvlv_initialize()
 
 	rc = overlay_register( &sssvlv );
 	if ( rc != LDAP_SUCCESS ) {
-		Debug( LDAP_DEBUG_ANY, "Failed to register server side sort overlay\n", 0, 0, 0 );
+		Debug( LDAP_DEBUG_ANY, "Failed to register server side sort overlay\n" );
 	}
 
 	return rc;

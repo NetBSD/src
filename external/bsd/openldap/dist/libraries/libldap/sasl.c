@@ -1,9 +1,9 @@
-/*	$NetBSD: sasl.c,v 1.2 2020/08/11 13:15:37 christos Exp $	*/
+/*	$NetBSD: sasl.c,v 1.3 2021/08/14 16:14:56 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sasl.c,v 1.2 2020/08/11 13:15:37 christos Exp $");
+__RCSID("$NetBSD: sasl.c,v 1.3 2021/08/14 16:14:56 christos Exp $");
 
 #include "portable.h"
 
@@ -151,7 +151,7 @@ ldap_sasl_bind(
 	int rc;
 	ber_int_t id;
 
-	Debug( LDAP_DEBUG_TRACE, "ldap_sasl_bind\n", 0, 0, 0 );
+	Debug0( LDAP_DEBUG_TRACE, "ldap_sasl_bind\n" );
 
 	assert( ld != NULL );
 	assert( LDAP_VALID( ld ) );
@@ -189,7 +189,7 @@ ldap_sasl_bind_s(
 	LDAPMessage	*result;
 	struct berval	*scredp = NULL;
 
-	Debug( LDAP_DEBUG_TRACE, "ldap_sasl_bind_s\n", 0, 0, 0 );
+	Debug0( LDAP_DEBUG_TRACE, "ldap_sasl_bind_s\n" );
 
 	/* do a quick !LDAPv3 check... ldap_sasl_bind will do the rest. */
 	if( servercredp != NULL ) {
@@ -271,7 +271,7 @@ ldap_parse_sasl_bind_result(
 	ber_tag_t tag;
 	BerElement	*ber;
 
-	Debug( LDAP_DEBUG_TRACE, "ldap_parse_sasl_bind_result\n", 0, 0, 0 );
+	Debug0( LDAP_DEBUG_TRACE, "ldap_parse_sasl_bind_result\n" );
 
 	assert( ld != NULL );
 	assert( LDAP_VALID( ld ) );
@@ -380,7 +380,7 @@ ldap_pvt_sasl_getmechs ( LDAP *ld, char **pmechlist )
 	char **values, *mechlist;
 	int rc;
 
-	Debug( LDAP_DEBUG_TRACE, "ldap_pvt_sasl_getmech\n", 0, 0, 0 );
+	Debug0( LDAP_DEBUG_TRACE, "ldap_pvt_sasl_getmech\n" );
 
 	rc = ldap_search_s( ld, "", LDAP_SCOPE_BASE,
 		NULL, attrs, 0, &res );
@@ -477,16 +477,16 @@ ldap_sasl_interactive_bind(
 			goto done;
 		}
 
-		Debug( LDAP_DEBUG_TRACE,
+		Debug1( LDAP_DEBUG_TRACE,
 			"ldap_sasl_interactive_bind: server supports: %s\n",
-			smechs, 0, 0 );
+			smechs );
 
 		mechs = smechs;
 
 	} else {
-		Debug( LDAP_DEBUG_TRACE,
+		Debug1( LDAP_DEBUG_TRACE,
 			"ldap_sasl_interactive_bind: user selected: %s\n",
-			mechs, 0, 0 );
+			mechs );
 	}
 	}
 	rc = ldap_int_sasl_bind( ld, dn, mechs,
@@ -702,7 +702,7 @@ sb_sasl_generic_read( Sockbuf_IO_Desc *sbiod, void *buf, ber_len_t len)
 	ret = sb_sasl_generic_pkt_length(p, (unsigned char *) p->sec_buf_in.buf_base,
 		sbiod->sbiod_sb->sb_debug );
 
-	/* Grow the packet buffer if neccessary */
+	/* Grow the packet buffer if necessary */
 	if ( ( p->sec_buf_in.buf_size < (ber_len_t) ret ) && 
 		ber_pvt_sb_grow_buffer( &p->sec_buf_in, ret ) < 0 )
 	{
@@ -843,8 +843,7 @@ int ldap_pvt_sasl_generic_install(
 	Sockbuf *sb,
 	struct sb_sasl_generic_install *install_arg )
 {
-	Debug( LDAP_DEBUG_TRACE, "ldap_pvt_sasl_generic_install\n",
-		0, 0, 0 );
+	Debug0( LDAP_DEBUG_TRACE, "ldap_pvt_sasl_generic_install\n" );
 
 	/* don't install the stuff unless security has been negotiated */
 

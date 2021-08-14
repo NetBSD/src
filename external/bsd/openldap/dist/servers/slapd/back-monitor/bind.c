@@ -1,10 +1,10 @@
-/*	$NetBSD: bind.c,v 1.2 2020/08/11 13:15:41 christos Exp $	*/
+/*	$NetBSD: bind.c,v 1.3 2021/08/14 16:15:00 christos Exp $	*/
 
 /* bind.c - monitor backend bind routine */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2020 The OpenLDAP Foundation.
+ * Copyright 2001-2021 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bind.c,v 1.2 2020/08/11 13:15:41 christos Exp $");
+__RCSID("$NetBSD: bind.c,v 1.3 2021/08/14 16:15:00 christos Exp $");
 
 #include "portable.h"
 
@@ -39,7 +39,7 @@ int
 monitor_back_bind( Operation *op, SlapReply *rs )
 {
 	Debug(LDAP_DEBUG_ARGS, "==> monitor_back_bind: dn: %s\n", 
-			op->o_req_dn.bv_val, 0, 0 );
+			op->o_req_dn.bv_val );
 
 	if ( be_isroot_pw( op ) ) {
 		return LDAP_SUCCESS;

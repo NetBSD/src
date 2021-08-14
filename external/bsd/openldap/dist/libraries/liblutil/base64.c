@@ -1,10 +1,10 @@
-/*	$NetBSD: base64.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
+/*	$NetBSD: base64.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
 
 /* base64.c -- routines to encode/decode base64 data */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 1995 IBM Corporation.
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: base64.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
+__RCSID("$NetBSD: base64.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
 
 #include "portable.h"
 

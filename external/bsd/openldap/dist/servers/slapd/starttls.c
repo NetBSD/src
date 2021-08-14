@@ -1,9 +1,9 @@
-/*	$NetBSD: starttls.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
+/*	$NetBSD: starttls.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: starttls.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
+__RCSID("$NetBSD: starttls.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
 
 #include "portable.h"
 
@@ -35,8 +35,8 @@ starttls_extop ( Operation *op, SlapReply *rs )
 {
 	int rc;
 
-	Statslog( LDAP_DEBUG_STATS, "%s STARTTLS\n",
-	    op->o_log_prefix, 0, 0, 0, 0 );
+	Debug( LDAP_DEBUG_STATS, "%s STARTTLS\n",
+	    op->o_log_prefix );
 
 	if ( op->ore_reqdata != NULL ) {
 		/* no request data should be provided */
@@ -68,9 +68,9 @@ starttls_extop ( Operation *op, SlapReply *rs )
 	if ( !( global_disallows & SLAP_DISALLOW_TLS_2_ANON ) &&
 		( op->o_conn->c_dn.bv_len != 0 ) )
 	{
-		Statslog( LDAP_DEBUG_STATS,
+		Debug( LDAP_DEBUG_STATS,
 			"%s AUTHZ anonymous mech=starttls ssf=0\n",
-			op->o_log_prefix, 0, 0, 0, 0 );
+			op->o_log_prefix );
 
 		/* force to anonymous */
 		connection2anonymous( op->o_conn );

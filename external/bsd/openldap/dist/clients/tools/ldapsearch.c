@@ -1,10 +1,10 @@
-/*	$NetBSD: ldapsearch.c,v 1.2 2020/08/11 13:15:34 christos Exp $	*/
+/*	$NetBSD: ldapsearch.c,v 1.3 2021/08/14 16:14:49 christos Exp $	*/
 
 /* ldapsearch -- a tool for searching LDAP directories */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 1998-2001 Net Boolean Incorporated.
  * Portions Copyright 2001-2003 IBM Corporation.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ldapsearch.c,v 1.2 2020/08/11 13:15:34 christos Exp $");
+__RCSID("$NetBSD: ldapsearch.c,v 1.3 2021/08/14 16:14:49 christos Exp $");
 
 #include "portable.h"
 
@@ -130,10 +130,14 @@ usage( void )
 	fprintf( stderr, _("  -b basedn  base dn for search\n"));
 	fprintf( stderr, _("  -c         continuous operation mode (do not stop on errors)\n"));
 	fprintf( stderr, _("  -E [!]<ext>[=<extparam>] search extensions (! indicates criticality)\n"));
+#ifdef LDAP_CONTROL_X_ACCOUNT_USABILITY
+	fprintf( stderr, _("             [!]accountUsability         (NetScape Account usability)\n"));
+#endif
 	fprintf( stderr, _("             [!]domainScope              (domain scope)\n"));
 	fprintf( stderr, _("             !dontUseCopy                (Don't Use Copy)\n"));
 	fprintf( stderr, _("             [!]mv=<filter>              (RFC 3876 matched values filter)\n"));
 	fprintf( stderr, _("             [!]pr=<size>[/prompt|noprompt] (RFC 2696 paged results/prompt)\n"));
+	fprintf( stderr, _("             [!]ps=<changetypes>/<changesonly>/<echg> (draft persistent search)\n"));
 	fprintf( stderr, _("             [!]sss=[-]<attr[:OID]>[/[-]<attr[:OID]>...]\n"));
 	fprintf( stderr, _("                                         (RFC 2891 server side sorting)\n"));
 	fprintf( stderr, _("             [!]subentries[=true|false]  (RFC 3672 subentries)\n"));
@@ -144,7 +148,20 @@ usage( void )
 #ifdef LDAP_CONTROL_X_DEREF
 	fprintf( stderr, _("             [!]deref=derefAttr:attr[,...][;derefAttr:attr[,...][;...]]\n"));
 #endif
-	fprintf( stderr, _("             [!]<oid>[=:<b64value>] (generic control; no response handling)\n"));
+#ifdef LDAP_CONTROL_X_DIRSYNC
+	fprintf( stderr, _("             !dirSync=<flags>/<maxAttrCount>[/<cookie>]\n"));
+	fprintf( stderr, _("                                         (MS AD DirSync)\n"));
+#endif
+#ifdef LDAP_CONTROL_X_EXTENDED_DN
+	fprintf( stderr, _("             [!]extendedDn=<flag>        (MS AD Extended DN\n"));
+#endif
+#ifdef LDAP_CONTROL_X_SHOW_DELETED
+	fprintf( stderr, _("             [!]showDeleted              (MS AD Show Deleted)\n"));
+#endif
+#ifdef LDAP_CONTROL_X_SERVER_NOTIFICATION
+	fprintf( stderr, _("             [!]serverNotif              (MS AD Server Notification)\n"));
+#endif
+	fprintf( stderr, _("             [!]<oid>[=:<value>|::<b64value>] (generic control; no response handling)\n"));
 	fprintf( stderr, _("  -f file    read operations from `file'\n"));
 	fprintf( stderr, _("  -F prefix  URL prefix for files (default: %s)\n"), def_urlpre);
 	fprintf( stderr, _("  -l limit   time limit (in seconds, or \"none\" or \"max\") for search\n"));
@@ -178,6 +195,9 @@ static void print_extended(
 	LDAP *ld,
 	LDAPMessage *extended );
 
+static void print_syncinfo(
+	BerValue *info );
+
 static void print_partial(
 	LDAP *ld,
 	LDAPMessage *partial );
@@ -209,6 +229,10 @@ static int  includeufn, vals2tmp = 0;
 static int subentries = 0, valuesReturnFilter = 0;
 static char	*vrFilter = NULL;
 
+#ifdef LDAP_CONTROL_X_ACCOUNT_USABILITY
+static int accountUsability = 0;
+#endif
+
 #ifdef LDAP_CONTROL_DONTUSECOPY
 static int dontUseCopy = 0;
 #endif
@@ -225,6 +249,9 @@ static struct berval vlvValue;
 static int ldapsync = 0;
 static struct berval sync_cookie = { 0, NULL };
 static int sync_slimit = -1;
+
+static int psearch = 0;
+static int ps_chgtypes, ps_chgsonly, ps_echg_ctrls;
 
 /* cookie and morePagedResults moved to common.c */
 static int pagedResults = 0;
@@ -245,6 +272,26 @@ static int save_nctrls = 0;
 static int derefcrit;
 static LDAPDerefSpec *ds;
 static struct berval derefval;
+#endif
+
+#ifdef LDAP_CONTROL_X_DIRSYNC
+static int dirSync;
+static int dirSyncFlags;
+static int dirSyncMaxAttrCount;
+static struct berval dirSyncCookie;
+#endif
+
+#ifdef LDAP_CONTROL_X_EXTENDED_DN
+static int extendedDn;
+static int extendedDnFlag;
+#endif
+
+#ifdef LDAP_CONTROL_X_SHOW_DELETED
+static int showDeleted;
+#endif
+
+#ifdef LDAP_CONTROL_X_SERVER_NOTIFICATION
+static int serverNotif;
 #endif
 
 static int
@@ -348,7 +395,7 @@ handle_private_option( int i )
 		++attrsonly;
 		break;
 	case 'b': /* search base */
-		base = ber_strdup( optarg );
+		base = optarg;
 		break;
 	case 'E': /* search extensions */
 		if( protocol == LDAP_VERSION2 ) {
@@ -363,12 +410,12 @@ handle_private_option( int i )
 
 		crit = 0;
 		cvalue = NULL;
-		if( optarg[0] == '!' ) {
-			crit = 1;
+		while ( optarg[0] == '!' ) {
+			crit++;
 			optarg++;
 		}
 
-		control = ber_strdup( optarg );
+		control = optarg;
 		if ( (cvalue = strchr( control, '=' )) != NULL ) {
 			*cvalue++ = '\0';
 		}
@@ -435,6 +482,28 @@ handle_private_option( int i )
 			}
 			pageSize = (ber_int_t) tmp;
 			pagedResults = 1 + crit;
+
+		} else if ( strcasecmp( control, "ps" ) == 0 ) {
+			int num;
+			/* PersistentSearch control */
+			if ( psearch != 0 ) {
+				fprintf( stderr,
+					_("PersistentSearch previously specified\n") );
+				exit( EXIT_FAILURE );
+			}
+			if( cvalue != NULL ) {
+				num = sscanf( cvalue, "%i/%d/%d", &ps_chgtypes, &ps_chgsonly, &ps_echg_ctrls );
+				if ( num != 3 ) {
+					fprintf( stderr,
+						_("Invalid value for PersistentSearch, %s.\n"),
+						cvalue );
+					exit( EXIT_FAILURE );
+				}
+			} else {
+				fprintf(stderr, _("Invalid value for PersistentSearch.\n"));
+				exit( EXIT_FAILURE );
+			}
+			psearch = 1 + crit;
 
 #ifdef LDAP_CONTROL_DONTUSECOPY
 		} else if ( strcasecmp( control, "dontUseCopy" ) == 0 ) {
@@ -627,7 +696,157 @@ handle_private_option( int i )
 			ldap_memfree( specs );
 #endif /* LDAP_CONTROL_X_DEREF */
 
+#ifdef LDAP_CONTROL_X_DIRSYNC
+		} else if ( strcasecmp( control, "dirSync" ) == 0 ) {
+			char *maxattrp;
+			char *cookiep;
+			int num, tmp;
+			if( dirSync ) {
+				fprintf( stderr,
+					_("dirSync control previously specified\n"));
+				exit( EXIT_FAILURE );
+			}
+			if ( cvalue == NULL ) {
+				fprintf( stderr, _("missing specification of dirSync control\n"));
+				exit( EXIT_FAILURE );
+			}
+			if( !crit ) {
+				fprintf( stderr,
+			         _("dirSync: critical flag required\n") );
+				usage();
+			}
+			maxattrp = strchr( cvalue, '/' );
+			if ( maxattrp == NULL ) {
+				fprintf( stderr, _("dirSync control value \"%s\" invalid\n"),
+					cvalue );
+				exit( EXIT_FAILURE );
+			}
+			*maxattrp++ = '\0';
+			cookiep = strchr( maxattrp, '/' );
+			if ( cookiep != NULL ) {
+				if ( cookiep[1] != '\0' ) {
+					struct berval type;
+					int freeval;
+					char save1, save2;
+
+					/* dummy type "x"
+					 * to use ldif_parse_line2() */
+					save1 = cookiep[ -1 ];
+					save2 = cookiep[ -2 ];
+					cookiep[ -2 ] = 'x';
+					cookiep[ -1 ] = ':';
+					cookiep[  0 ] = ':';
+					ldif_parse_line2( &cookiep[ -2 ], &type,
+						&dirSyncCookie, &freeval );
+					cookiep[ -1 ] = save1;
+					cookiep[ -2 ] = save2;
+				}
+				*cookiep = '\0';
+			}
+			num = sscanf( cvalue, "%i", &tmp );
+			if ( num != 1 ) {
+				fprintf( stderr,
+					_("Invalid value for dirSync, %s.\n"),
+					cvalue );
+				exit( EXIT_FAILURE );
+			}
+			dirSyncFlags = tmp;
+
+			num = sscanf( maxattrp, "%d", &tmp );
+			if ( num != 1 ) {
+				fprintf( stderr,
+					_("Invalid value for dirSync, %s.\n"),
+					maxattrp );
+				exit( EXIT_FAILURE );
+			}
+			dirSyncMaxAttrCount = tmp;
+
+			dirSync = 1 + crit;
+#endif /* LDAP_CONTROL_X_DIRSYNC */
+
+#ifdef LDAP_CONTROL_X_EXTENDED_DN
+		} else if ( strcasecmp( control, "extendedDn" ) == 0 ) {
+			int num, tmp;
+			if( extendedDn ) {
+				fprintf( stderr,
+					_("extendedDn control previously specified\n"));
+				exit( EXIT_FAILURE );
+			}
+			if ( cvalue == NULL ) {
+				fprintf( stderr, _("missing specification of extendedDn control\n"));
+				exit( EXIT_FAILURE );
+			}
+			num = sscanf( cvalue, "%d", &tmp );
+			if ( num != 1 ) {
+				fprintf( stderr,
+					_("Invalid value for extendedDn, %s.\n"),
+					cvalue );
+				exit( EXIT_FAILURE );
+			}
+
+			extendedDnFlag = tmp;
+			extendedDn = 1 + crit;
+#endif /* LDAP_CONTROL_X_EXTENDED_DN */
+
+#ifdef LDAP_CONTROL_X_SHOW_DELETED
+		} else if ( strcasecmp( control, "showDeleted" ) == 0 ) {
+			if( showDeleted ) {
+				fprintf( stderr,
+					_("showDeleted control previously specified\n"));
+				exit( EXIT_FAILURE );
+			}
+			if ( cvalue != NULL ) {
+				fprintf( stderr,
+			         _("showDeleted: no control value expected\n") );
+				usage();
+			}
+
+			showDeleted = 1 + crit;
+#endif /* LDAP_CONTROL_X_SHOW_DELETED */
+
+#ifdef LDAP_CONTROL_X_SERVER_NOTIFICATION
+		} else if ( strcasecmp( control, "serverNotif" ) == 0 ) {
+			if( serverNotif ) {
+				fprintf( stderr,
+					_("serverNotif control previously specified\n"));
+				exit( EXIT_FAILURE );
+			}
+			if ( cvalue != NULL ) {
+				fprintf( stderr,
+			         _("serverNotif: no control value expected\n") );
+				usage();
+			}
+
+			serverNotif = 1 + crit;
+#endif /* LDAP_CONTROL_X_SERVER_NOTIFICATION */
+
+#ifdef LDAP_CONTROL_X_ACCOUNT_USABILITY
+		} else if ( strcasecmp( control, "accountUsability" ) == 0 ) {
+			if( accountUsability ) {
+				fprintf( stderr,
+					_("accountUsability control previously specified\n"));
+				exit( EXIT_FAILURE );
+			}
+			if( cvalue != NULL ) {
+				fprintf( stderr,
+			         _("accountUsability: no control value expected\n") );
+				usage();
+			}
+
+			accountUsability = 1 + crit;
+#endif /* LDAP_CONTROL_X_ACCOUNT_USABILITY */
+
 		} else if ( tool_is_oid( control ) ) {
+			if ( c != NULL ) {
+				int i;
+				for ( i = 0; i < nctrls; i++ ) {
+					if ( strcmp( control, c[ i ].ldctl_oid ) == 0 ) {
+						fprintf( stderr, "%s control previously specified\n", control );
+						exit( EXIT_FAILURE );
+					}
+				}
+			}
+
 			if ( ctrl_add() ) {
 				exit( EXIT_FAILURE );
 			}
@@ -680,7 +899,7 @@ handle_private_option( int i )
 		break;
 	case 'F':	/* uri prefix */
 		if( urlpre ) free( urlpre );
-		urlpre = strdup( optarg );
+		urlpre = optarg;
 		break;
 	case 'l':	/* time limit */
 		if ( strcasecmp( optarg, "none" ) == 0 ) {
@@ -724,14 +943,14 @@ handle_private_option( int i )
 		}
 		break;
 	case 'S':	/* sort attribute */
-		sortattr = strdup( optarg );
+		sortattr = optarg;
 		break;
 	case 't':	/* write attribute values to TMPDIR files */
 		++vals2tmp;
 		break;
 	case 'T':	/* tmpdir */
 		if( tmpdir ) free( tmpdir );
-		tmpdir = strdup( optarg );
+		tmpdir = optarg;
 		break;
 	case 'u':	/* include UFN */
 		++includeufn;
@@ -910,20 +1129,50 @@ getNextPage:
 	save_nctrls = nctrls;
 	i = nctrls;
 	if ( nctrls > 0
+#ifdef LDAP_CONTROL_X_ACCOUNT_USABILITY
+		|| accountUsability
+#endif
 #ifdef LDAP_CONTROL_DONTUSECOPY
 		|| dontUseCopy
 #endif
 #ifdef LDAP_CONTROL_X_DEREF
 		|| derefcrit
 #endif
+#ifdef LDAP_CONTROL_X_DIRSYNC
+		|| dirSync
+#endif
+#ifdef LDAP_CONTROL_X_EXTENDED_DN
+		|| extendedDn
+#endif
+#ifdef LDAP_CONTROL_X_SHOW_DELETED
+		|| showDeleted
+#endif
+#ifdef LDAP_CONTROL_X_SERVER_NOTIFICATION
+		|| serverNotif
+#endif
 		|| domainScope
 		|| pagedResults
+		|| psearch
 		|| ldapsync
 		|| sss
 		|| subentries
 		|| valuesReturnFilter
 		|| vlv )
 	{
+
+#ifdef LDAP_CONTROL_X_ACCOUNT_USABILITY
+		if ( accountUsability ) {
+			if ( ctrl_add() ) {
+				tool_exit( ld, EXIT_FAILURE );
+			}
+
+			c[i].ldctl_oid = LDAP_CONTROL_X_ACCOUNT_USABILITY;
+			c[i].ldctl_value.bv_val = NULL;
+			c[i].ldctl_value.bv_len = 0;
+			c[i].ldctl_iscritical = accountUsability == 2;
+			i++;
+		}
+#endif
 
 #ifdef LDAP_CONTROL_DONTUSECOPY
 		if ( dontUseCopy ) {
@@ -934,7 +1183,7 @@ getNextPage:
 			c[i].ldctl_oid = LDAP_CONTROL_DONTUSECOPY;
 			c[i].ldctl_value.bv_val = NULL;
 			c[i].ldctl_value.bv_len = 0;
-			c[i].ldctl_iscritical = dontUseCopy > 1;
+			c[i].ldctl_iscritical = dontUseCopy == 2;
 			i++;
 		}
 #endif
@@ -1054,6 +1303,22 @@ getNextPage:
 			i++;
 		}
 
+		if ( psearch ) {
+			if ( ctrl_add() ) {
+				tool_exit( ld, EXIT_FAILURE );
+			}
+
+			if ( ldap_create_persistentsearch_control_value( ld,
+				ps_chgtypes, ps_chgsonly, ps_echg_ctrls, &c[i].ldctl_value ) )
+			{
+				tool_exit( ld, EXIT_FAILURE );
+			}
+
+			c[i].ldctl_oid = LDAP_CONTROL_PERSIST_REQUEST;
+			c[i].ldctl_iscritical = psearch > 1;
+			i++;
+		}
+
 		if ( sss ) {
 			if ( ctrl_add() ) {
 				tool_exit( ld, EXIT_FAILURE );
@@ -1082,7 +1347,7 @@ getNextPage:
 			}
 
 			c[i].ldctl_oid = LDAP_CONTROL_VLVREQUEST;
-			c[i].ldctl_iscritical = sss > 1;
+			c[i].ldctl_iscritical = vlv > 1;
 			i++;
 		}
 #ifdef LDAP_CONTROL_X_DEREF
@@ -1114,6 +1379,67 @@ getNextPage:
 			i++;
 		}
 #endif /* LDAP_CONTROL_X_DEREF */
+#ifdef LDAP_CONTROL_X_DIRSYNC
+		if ( dirSync ) {
+			if ( ctrl_add() ) {
+				tool_exit( ld, EXIT_FAILURE );
+			}
+
+			if ( ldap_create_dirsync_value( ld,
+				dirSyncFlags, dirSyncMaxAttrCount, &dirSyncCookie,
+				&c[i].ldctl_value ) )
+			{
+				tool_exit( ld, EXIT_FAILURE );
+			}
+
+			c[i].ldctl_oid = LDAP_CONTROL_X_DIRSYNC;
+			c[i].ldctl_iscritical = dirSync > 1;
+			i++;
+		}
+#endif
+#ifdef LDAP_CONTROL_X_EXTENDED_DN
+		if ( extendedDn ) {
+			if ( ctrl_add() ) {
+				tool_exit( ld, EXIT_FAILURE );
+			}
+
+			if ( ldap_create_extended_dn_value( ld,
+				extendedDnFlag, &c[i].ldctl_value ) )
+			{
+				tool_exit( ld, EXIT_FAILURE );
+			}
+
+			c[i].ldctl_oid = LDAP_CONTROL_X_EXTENDED_DN;
+			c[i].ldctl_iscritical = extendedDn > 1;
+			i++;
+		}
+#endif
+#ifdef LDAP_CONTROL_X_SHOW_DELETED
+		if ( showDeleted ) {
+			if ( ctrl_add() ) {
+				tool_exit( ld, EXIT_FAILURE );
+			}
+
+			c[i].ldctl_oid = LDAP_CONTROL_X_SHOW_DELETED;
+			c[i].ldctl_value.bv_val = NULL;
+			c[i].ldctl_value.bv_len = 0;
+			c[i].ldctl_iscritical = showDeleted > 1;
+			i++;
+		}
+#endif
+#ifdef LDAP_CONTROL_X_SERVER_NOTIFICATION
+		if ( serverNotif ) {
+			if ( ctrl_add() ) {
+				tool_exit( ld, EXIT_FAILURE );
+			}
+
+			c[i].ldctl_oid = LDAP_CONTROL_X_SERVER_NOTIFICATION;
+			c[i].ldctl_value.bv_val = NULL;
+			c[i].ldctl_value.bv_len = 0;
+			c[i].ldctl_iscritical = serverNotif > 1;
+			i++;
+		}
+#endif
 	}
 
 	tool_server_controls( ld, c, i );
@@ -1326,12 +1652,6 @@ getNextPage:
 		goto getNextPage;
 	}
 
-	if ( base != NULL ) {
-		ber_memfree( base );
-	}
-	if ( control != NULL ) {
-		ber_memfree( control );
-	}
 	if ( sss_keys != NULL ) {
 		ldap_free_sort_keylist( sss_keys );
 	}
@@ -1425,6 +1745,7 @@ static int dosearch(
 		tv_timelimitp = &tv_timelimit;
 	}
 
+again:
 	rc = ldap_search_ext( ld, base, scope, filter, attrs, attrsonly,
 		sctrls, cctrls, tv_timelimitp, sizelimit, &msgid );
 
@@ -1446,6 +1767,21 @@ static int dosearch(
 		tv.tv_sec = -1;
 		tv.tv_usec = 0;
 		tvp = &tv;
+	}
+
+	if ( backlog == 1 ) {
+		printf( _("\nWaiting for responses to accumulate, press Enter to continue: "));
+		fflush( stdout );
+		getchar();
+		printf( _("Abandoning msgid %d\n"), msgid );
+		ldap_abandon_ext( ld, msgid, NULL, NULL );
+		/* turn off syncrepl control */
+		ldap_set_option( ld, LDAP_OPT_SERVER_CONTROLS, NULL );
+		backlog = 2;
+		scope = LDAP_SCOPE_BASE;
+		goto again;
+	} else if ( backlog == 2 ) {
+		tv.tv_sec = timelimit;
 	}
 
 	while ((rc = ldap_result( ld, LDAP_RES_ANY,
@@ -1516,7 +1852,11 @@ static int dosearch(
 				nresponses_psearch = 0;
 
 				if ( strcmp( retoid, LDAP_SYNC_INFO ) == 0 ) {
-					printf(_("# SyncInfo Received\n"));
+					if ( ldif < 1 ) {
+						print_syncinfo( retdata );
+					} else if ( ldif < 2 ) {
+						printf(_("# SyncInfo Received\n"));
+					}
 					ldap_memfree( retoid );
 					ber_bvfree( retdata );
 					break;
@@ -1769,6 +2109,178 @@ static void print_extended(
 	}
 
 	print_result( ld, extended, 0 );
+}
+
+static void print_syncinfo(
+	BerValue *data )
+{
+	BerElement *syncinfo;
+	struct berval bv, cookie;
+	ber_tag_t tag;
+	ber_len_t len;
+
+	if ( (syncinfo = ber_alloc()) == NULL ) {
+		return;
+	}
+	ber_init2( syncinfo, data, 0 );
+
+	printf(_("# SyncInfo Received: "));
+	tag = ber_peek_tag( syncinfo, &len );
+	switch (tag) {
+		case LDAP_TAG_SYNC_NEW_COOKIE: {
+			printf(_("new cookie\n"));
+			ber_scanf( syncinfo, "m", &cookie );
+
+			if ( ldif_is_not_printable( cookie.bv_val, cookie.bv_len ) ) {
+				bv.bv_len = LUTIL_BASE64_ENCODE_LEN(
+						cookie.bv_len ) + 1;
+				bv.bv_val = ber_memalloc( bv.bv_len + 1 );
+
+				bv.bv_len = lutil_b64_ntop(
+						(unsigned char *) cookie.bv_val,
+						cookie.bv_len,
+						bv.bv_val, bv.bv_len );
+
+				printf(_("# cookie:: %s\n"), bv.bv_val );
+				ber_memfree( bv.bv_val );
+			} else {
+				printf(_("# cookie: %s\n"), cookie.bv_val );
+			}
+			} break;
+		case LDAP_TAG_SYNC_REFRESH_DELETE: {
+			ber_int_t done = 1;
+
+			printf(_("refresh delete\n"));
+			/* Skip sequence tag first */
+			ber_skip_tag( syncinfo, &len );
+
+			tag = ber_peek_tag( syncinfo, &len );
+			if ( tag == LDAP_TAG_SYNC_COOKIE ) {
+				ber_scanf( syncinfo, "m", &cookie );
+
+				if ( ldif_is_not_printable( cookie.bv_val, cookie.bv_len ) ) {
+					bv.bv_len = LUTIL_BASE64_ENCODE_LEN(
+							cookie.bv_len ) + 1;
+					bv.bv_val = ber_memalloc( bv.bv_len + 1 );
+
+					bv.bv_len = lutil_b64_ntop(
+							(unsigned char *) cookie.bv_val,
+							cookie.bv_len,
+							bv.bv_val, bv.bv_len );
+
+					printf(_("# cookie:: %s\n"), bv.bv_val );
+					ber_memfree( bv.bv_val );
+				} else {
+					printf(_("# cookie: %s\n"), cookie.bv_val );
+				}
+
+				tag = ber_peek_tag( syncinfo, &len );
+			}
+			if ( tag == LDAP_TAG_REFRESHDONE ) {
+				ber_get_boolean( syncinfo, &done );
+			}
+			if ( done )
+				printf(_("# refresh done, switching to persist stage\n"));
+			} break;
+		case LDAP_TAG_SYNC_REFRESH_PRESENT: {
+			ber_int_t done = 1;
+
+			printf(_("refresh present\n"));
+			/* Skip sequence tag first */
+			ber_skip_tag( syncinfo, &len );
+
+			tag = ber_peek_tag( syncinfo, &len );
+			if ( tag == LDAP_TAG_SYNC_COOKIE ) {
+				ber_scanf( syncinfo, "m", &cookie );
+
+				if ( ldif_is_not_printable( cookie.bv_val, cookie.bv_len ) ) {
+					bv.bv_len = LUTIL_BASE64_ENCODE_LEN(
+							cookie.bv_len ) + 1;
+					bv.bv_val = ber_memalloc( bv.bv_len + 1 );
+
+					bv.bv_len = lutil_b64_ntop(
+							(unsigned char *) cookie.bv_val,
+							cookie.bv_len,
+							bv.bv_val, bv.bv_len );
+
+					printf(_("# cookie:: %s\n"), bv.bv_val );
+					ber_memfree( bv.bv_val );
+				} else {
+					printf(_("# cookie: %s\n"), cookie.bv_val );
+				}
+
+				tag = ber_peek_tag( syncinfo, &len );
+			}
+			if ( tag == LDAP_TAG_REFRESHDONE ) {
+				ber_get_boolean( syncinfo, &done );
+			}
+			if ( done )
+				printf(_("# refresh done, switching to persist stage\n"));
+			} break;
+		case LDAP_TAG_SYNC_ID_SET: {
+			ber_int_t refreshDeletes = 0;
+			BerVarray uuids;
+
+			printf(_("ID Set\n"));
+			/* Skip sequence tag first */
+			ber_skip_tag( syncinfo, &len );
+
+			tag = ber_peek_tag( syncinfo, &len );
+			if ( tag == LDAP_TAG_SYNC_COOKIE ) {
+				ber_scanf( syncinfo, "m", &cookie );
+
+				if ( ldif_is_not_printable( cookie.bv_val, cookie.bv_len ) ) {
+					bv.bv_len = LUTIL_BASE64_ENCODE_LEN(
+							cookie.bv_len ) + 1;
+					bv.bv_val = ber_memalloc( bv.bv_len + 1 );
+
+					bv.bv_len = lutil_b64_ntop(
+							(unsigned char *) cookie.bv_val,
+							cookie.bv_len,
+							bv.bv_val, bv.bv_len );
+
+					printf(_("# cookie:: %s\n"), bv.bv_val );
+					ber_memfree( bv.bv_val );
+				} else {
+					printf(_("# cookie: %s\n"), cookie.bv_val );
+				}
+
+				tag = ber_peek_tag( syncinfo, &len );
+			}
+			if ( tag == LDAP_TAG_REFRESHDELETES ) {
+				ber_get_boolean( syncinfo, &refreshDeletes );
+				tag = ber_peek_tag( syncinfo, &len );
+			}
+			if ( refreshDeletes ) {
+				printf(_("# following UUIDs no longer match the search\n"));
+			}
+
+			printf(_("# syncUUIDs:\n"));
+			ber_scanf( syncinfo, "[W]", &uuids );
+			if ( uuids ) {
+				char buf[LDAP_LUTIL_UUIDSTR_BUFSIZE];
+				int i;
+
+				for ( i=0; !BER_BVISNULL( &uuids[i] ); i++ ) {
+					int rc = lutil_uuidstr_from_normalized(
+							uuids[i].bv_val, uuids[i].bv_len,
+							buf, LDAP_LUTIL_UUIDSTR_BUFSIZE );
+					if ( rc <= 0 || rc >= LDAP_LUTIL_UUIDSTR_BUFSIZE ) {
+						printf(_("#\t(UUID malformed)\n"));
+					} else {
+						printf(_("#\t%s\n"), buf);
+					}
+				}
+				ber_bvarray_free( uuids );
+			}
+			} break;
+		case LBER_DEFAULT:
+			printf(_("empty SyncInfoValue\n"));
+		default:
+			printf(_("SyncInfoValue unknown\n"));
+			break;
+	}
+	ber_free( syncinfo, 0 );
 }
 
 static void print_partial(

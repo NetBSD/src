@@ -1,10 +1,10 @@
-/*	$NetBSD: init.c,v 1.2 2020/08/11 13:15:41 christos Exp $	*/
+/*	$NetBSD: init.c,v 1.3 2021/08/14 16:15:00 christos Exp $	*/
 
 /* init.c - initialize monitor backend */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2020 The OpenLDAP Foundation.
+ * Copyright 2001-2021 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: init.c,v 1.2 2020/08/11 13:15:41 christos Exp $");
+__RCSID("$NetBSD: init.c,v 1.3 2021/08/14 16:15:00 christos Exp $");
 
 #include "portable.h"
 
@@ -31,11 +31,11 @@ __RCSID("$NetBSD: init.c,v 1.2 2020/08/11 13:15:41 christos Exp $");
 
 #include <lutil.h>
 #include "slap.h"
-#include "config.h"
+#include "slap-config.h"
 #include "lber_pvt.h"
 #include "back-monitor.h"
 
-#include "config.h"
+#include "slap-config.h"
 
 #undef INTEGRATE_CORE_SCHEMA
 
@@ -73,7 +73,8 @@ static const monitor_extra_t monitor_extra = {
 
 	monitor_back_entry_stub,
 	monitor_back_entrypriv_create,
-	monitor_back_register_subsys_late
+	monitor_back_register_subsys_late,
+	monitor_back_entry_get_unlocked
 };
 	
 
@@ -327,12 +328,11 @@ monitor_back_register_subsys_late(
 	if ( be_monitor == NULL ) {
 		Debug( LDAP_DEBUG_ANY,
 			"monitor_back_register_subsys_late: "
-			"monitor database not configured.\n",
-			0, 0, 0 );
+			"monitor database not configured.\n" );
 		return -1;
 	}
 
-	/* everyting is ready, can register already */
+	/* everything is ready, can register already */
 	if ( monitor_subsys_is_opened() ) {
 		return monitor_back_register_subsys( ms );
 	}
@@ -389,8 +389,7 @@ monitor_back_register_database_limbo(
 	if ( be_monitor == NULL ) {
 		Debug( LDAP_DEBUG_ANY,
 			"monitor_back_register_database_limbo: "
-			"monitor database not configured.\n",
-			0, 0, 0 );
+			"monitor database not configured.\n" );
 		return -1;
 	}
 
@@ -434,8 +433,7 @@ monitor_back_register_overlay_limbo(
 	if ( be_monitor == NULL ) {
 		Debug( LDAP_DEBUG_ANY,
 			"monitor_back_register_overlay_limbo: "
-			"monitor database not configured.\n",
-			0, 0, 0 );
+			"monitor database not configured.\n" );
 		return -1;
 	}
 
@@ -469,12 +467,13 @@ monitor_back_register_entry(
 	unsigned long		flags )
 {
 	monitor_info_t 	*mi;
+	int rc = 0;
 
 	if ( be_monitor == NULL ) {
 		Debug( LDAP_DEBUG_ANY,
 			"monitor_back_register_entry(\"%s\"): "
 			"monitor database not configured.\n",
-			e->e_name.bv_val, 0, 0 );
+			e->e_name.bv_val );
 		return -1;
 	}
 
@@ -491,14 +490,13 @@ monitor_back_register_entry(
 		struct berval	pdn = BER_BVNULL;
 		monitor_entry_t *mp = NULL,
 				*mp_parent = NULL;
-		int		rc = 0;
 
 		if ( monitor_cache_get( mi, &e->e_nname, &e_parent ) == 0 ) {
 			/* entry exists */
 			Debug( LDAP_DEBUG_ANY,
 				"monitor_back_register_entry(\"%s\"): "
 				"entry exists\n",
-				e->e_name.bv_val, 0, 0 );
+				e->e_name.bv_val );
 			monitor_cache_release( mi, e_parent );
 			return -1;
 		}
@@ -509,7 +507,7 @@ monitor_back_register_entry(
 			Debug( LDAP_DEBUG_ANY,
 				"monitor_back_register_entry(\"%s\"): "
 				"parent \"%s\" not found\n",
-				e->e_name.bv_val, pdn.bv_val, 0 );
+				e->e_name.bv_val, pdn.bv_val );
 			return -1;
 		}
 
@@ -521,7 +519,7 @@ monitor_back_register_entry(
 			Debug( LDAP_DEBUG_ANY,
 				"monitor_back_register_entry(\"%s\"): "
 				"parent \"%s\" is volatile\n",
-				e->e_name.bv_val, e_parent->e_name.bv_val, 0 );
+				e->e_name.bv_val, e_parent->e_name.bv_val );
 			rc = -1;
 			goto done;
 		}
@@ -531,7 +529,7 @@ monitor_back_register_entry(
 			Debug( LDAP_DEBUG_ANY,
 				"monitor_back_register_entry(\"%s\"): "
 				"monitor_entrypriv_create() failed\n",
-				e->e_name.bv_val, 0, 0 );
+				e->e_name.bv_val );
 			rc = -1;
 			goto done;
 		}
@@ -541,7 +539,7 @@ monitor_back_register_entry(
 			Debug( LDAP_DEBUG_ANY,
 				"monitor_back_register_entry(\"%s\"): "
 				"entry_dup() failed\n",
-				e->e_name.bv_val, 0, 0 );
+				e->e_name.bv_val );
 			rc = -1;
 			goto done;
 		}
@@ -568,7 +566,7 @@ monitor_back_register_entry(
 			Debug( LDAP_DEBUG_ANY,
 				"monitor_back_register_entry(\"%s\"): "
 				"unable to add entry\n",
-				e->e_name.bv_val, 0, 0 );
+				e->e_name.bv_val );
 			rc = -1;
 			goto done;
 		}
@@ -598,7 +596,7 @@ done:;
 			Debug( LDAP_DEBUG_ANY,
 				"monitor_back_register_entry(\"%s\"): "
 				"entry_dup() failed\n",
-				e->e_name.bv_val, 0, 0 );
+				e->e_name.bv_val );
 			return -1;
 		}
 		
@@ -622,7 +620,7 @@ done:;
 		**elpp = el;
 	}
 
-	return 0;
+	return rc;
 }
 
 int
@@ -658,8 +656,7 @@ monitor_back_register_entry_parent(
 		/* need a filter */
 		Debug( LDAP_DEBUG_ANY,
 			"monitor_back_register_entry_parent(\"\"): "
-			"need a valid filter\n",
-			0, 0, 0 );
+			"need a valid filter\n" );
 		return -1;
 	}
 
@@ -690,7 +687,7 @@ monitor_back_register_entry_parent(
 			Debug( LDAP_DEBUG_ANY,
 				"monitor_back_register_entry_parent(\"%s\"): "
 				"parent entry does not exist\n",
-				ndn.bv_val, 0, 0 );
+				ndn.bv_val );
 			rc = -1;
 			goto done;
 		}
@@ -703,7 +700,7 @@ monitor_back_register_entry_parent(
 			Debug( LDAP_DEBUG_ANY,
 				"monitor_back_register_entry_parent(\"%s\"): "
 				"entry is volatile\n",
-				e_parent->e_name.bv_val, 0, 0 );
+				e_parent->e_name.bv_val );
 			rc = -1;
 			goto done;
 		}
@@ -716,7 +713,7 @@ monitor_back_register_entry_parent(
 			Debug( LDAP_DEBUG_ANY,
 				"monitor_back_register_entry_parent(\"%s\"): "
 				"entry already exists\n",
-				e_name.bv_val, 0, 0 );
+				e_name.bv_val );
 			monitor_cache_release( mi, e_new );
 			e_new = NULL;
 			rc = -1;
@@ -728,7 +725,7 @@ monitor_back_register_entry_parent(
 			Debug( LDAP_DEBUG_ANY,
 				"monitor_back_register_entry_parent(\"%s\"): "
 				"monitor_entrypriv_create() failed\n",
-				e->e_name.bv_val, 0, 0 );
+				e->e_name.bv_val );
 			rc = -1;
 			goto done;
 		}
@@ -738,7 +735,7 @@ monitor_back_register_entry_parent(
 			Debug( LDAP_DEBUG_ANY,
 				"monitor_back_register_entry(\"%s\"): "
 				"entry_dup() failed\n",
-				e->e_name.bv_val, 0, 0 );
+				e->e_name.bv_val );
 			rc = -1;
 			goto done;
 		}
@@ -769,7 +766,7 @@ monitor_back_register_entry_parent(
 			Debug( LDAP_DEBUG_ANY,
 				"monitor_back_register_entry(\"%s\"): "
 				"unable to add entry\n",
-				e->e_name.bv_val, 0, 0 );
+				e->e_name.bv_val );
 			rc = -1;
 			goto done;
 		}
@@ -803,7 +800,7 @@ done:;
 			Debug( LDAP_DEBUG_ANY,
 				"monitor_back_register_entry(\"%s\"): "
 				"entry_dup() failed\n",
-				e->e_name.bv_val, 0, 0 );
+				e->e_name.bv_val );
 			goto done_limbo;
 		}
 		
@@ -997,16 +994,11 @@ monitor_back_register_entry_attrs(
 	if ( filter == NULL ) filter = &empty_bv;
 
 	if ( be_monitor == NULL ) {
-		char		buf[ SLAP_TEXT_BUFLEN ];
-
-		snprintf( buf, sizeof( buf ),
-			"monitor_back_register_entry_%s(base=\"%s\" scope=%s filter=\"%s\"): "
-			"monitor database not configured.\n",
-			fname,
-			BER_BVISNULL( nbase ) ? "" : nbase->bv_val,
-			ldap_pvt_scope2str( scope ),
-			BER_BVISNULL( filter ) ? "" : filter->bv_val );
-		Debug( LDAP_DEBUG_ANY, "%s\n", buf, 0, 0 );
+		Debug(LDAP_DEBUG_ANY,
+		      "monitor_back_register_entry_%s(base=\"%s\" scope=%s filter=\"%s\"): " "monitor database not configured.\n\n",
+		      fname, BER_BVISNULL(nbase) ? "" : nbase->bv_val,
+		      ldap_pvt_scope2str(scope),
+		      BER_BVISNULL(filter) ? "" : filter->bv_val );
 
 		return -1;
 	}
@@ -1031,7 +1023,7 @@ monitor_back_register_entry_attrs(
 		Debug( LDAP_DEBUG_ANY,
 			"monitor_back_register_entry_%s(\"\"): "
 			"need a valid filter\n",
-			fname, 0, 0 );
+			fname );
 		return -1;
 	}
 
@@ -1045,19 +1037,12 @@ monitor_back_register_entry_attrs(
 
 		if ( BER_BVISNULL( &ndn ) ) {
 			if ( monitor_search2ndn( nbase, scope, filter, &ndn ) ) {
-				char		buf[ SLAP_TEXT_BUFLEN ];
-
-				snprintf( buf, sizeof( buf ),
-					"monitor_back_register_entry_%s(\"\"): "
-					"base=\"%s\" scope=%s filter=\"%s\": "
-					"unable to find entry\n",
-					fname,
-					nbase->bv_val ? nbase->bv_val : "\"\"",
-					ldap_pvt_scope2str( scope ),
-					filter->bv_val );
-
-				/* entry does not exist */
-				Debug( LDAP_DEBUG_ANY, "%s\n", buf, 0, 0 );
+				Debug(LDAP_DEBUG_ANY,
+				      "monitor_back_register_entry_%s(\"\"): " "base=\"%s\" scope=%s filter=\"%s\": " "unable to find entry\n\n",
+				      fname,
+				      nbase->bv_val ? nbase->bv_val : "\"\"",
+				      ldap_pvt_scope2str(scope),
+				      filter->bv_val );
 				return -1;
 			}
 
@@ -1069,7 +1054,7 @@ monitor_back_register_entry_attrs(
 			Debug( LDAP_DEBUG_ANY,
 				"monitor_back_register_entry_%s(\"%s\"): "
 				"entry does not exist\n",
-				fname, ndn.bv_val, 0 );
+				fname, ndn.bv_val );
 			rc = -1;
 			goto done;
 		}
@@ -1082,7 +1067,7 @@ monitor_back_register_entry_attrs(
 			Debug( LDAP_DEBUG_ANY,
 				"monitor_back_register_entry_%s(\"%s\"): "
 				"entry is volatile\n",
-				fname, e->e_name.bv_val, 0 );
+				fname, e->e_name.bv_val );
 			rc = -1;
 			goto done;
 		}
@@ -1105,7 +1090,7 @@ monitor_back_register_entry_attrs(
 						Debug( LDAP_DEBUG_ANY,
 							"monitor_back_register_entry_%s(\"%s\"): "
 							"attr_dup() failed\n",
-							fname, e->e_name.bv_val, 0 );
+							fname, e->e_name.bv_val );
 						rc = -1;
 						goto done;
 					}
@@ -1208,7 +1193,7 @@ monitor_back_unregister_entry(
 		Debug( LDAP_DEBUG_ANY,
 			"monitor_back_unregister_entry(\"%s\"): "
 			"monitor database not configured.\n",
-			ndn->bv_val, 0, 0 );
+			ndn->bv_val );
 
 		return -1;
 	}
@@ -1233,7 +1218,7 @@ monitor_back_unregister_entry(
 			Debug( LDAP_DEBUG_ANY,
 				"monitor_back_unregister_entry(\"%s\"): "
 				"entry removal failed.\n",
-				ndn->bv_val, 0, 0 );
+				ndn->bv_val );
 			return -1;
 		}
 
@@ -1334,8 +1319,7 @@ monitor_back_unregister_entry_parent(
 		/* need a filter */
 		Debug( LDAP_DEBUG_ANY,
 			"monitor_back_unregister_entry_parent(\"\"): "
-			"need a valid filter\n",
-			0, 0, 0 );
+			"need a valid filter\n" );
 		return -1;
 	}
 
@@ -1360,7 +1344,7 @@ monitor_back_unregister_entry_parent(
 			Debug( LDAP_DEBUG_ANY,
 				"monitor_back_unregister_entry(\"%s\"): "
 				"entry removal failed.\n",
-				ndn.bv_val, 0, 0 );
+				ndn.bv_val );
 			ber_memfree( ndn.bv_val );
 			return -1;
 		}
@@ -1453,16 +1437,11 @@ monitor_back_unregister_entry_attrs(
 	char		*fname = ( target_a == NULL ? "callback" : "attrs" );
 
 	if ( be_monitor == NULL ) {
-		char		buf[ SLAP_TEXT_BUFLEN ];
-
-		snprintf( buf, sizeof( buf ),
-			"monitor_back_unregister_entry_%s(base=\"%s\" scope=%s filter=\"%s\"): "
-			"monitor database not configured.\n",
-			fname,
-			BER_BVISNULL( nbase ) ? "" : nbase->bv_val,
-			ldap_pvt_scope2str( scope ),
-			BER_BVISNULL( filter ) ? "" : filter->bv_val );
-		Debug( LDAP_DEBUG_ANY, "%s\n", buf, 0, 0 );
+		Debug(LDAP_DEBUG_ANY,
+		      "monitor_back_unregister_entry_%s(base=\"%s\" scope=%s filter=\"%s\"): " "monitor database not configured.\n\n",
+		      fname, BER_BVISNULL(nbase) ? "" : nbase->bv_val,
+		      ldap_pvt_scope2str(scope),
+		      BER_BVISNULL(filter) ? "" : filter->bv_val );
 
 		return -1;
 	}
@@ -1493,7 +1472,7 @@ monitor_back_unregister_entry_attrs(
 		Debug( LDAP_DEBUG_ANY,
 			"monitor_back_unregister_entry_%s(\"\"): "
 			"need a valid filter\n",
-			fname, 0, 0 );
+			fname );
 		return -1;
 	}
 
@@ -1504,18 +1483,11 @@ monitor_back_unregister_entry_attrs(
 
 		if ( BER_BVISNULL( &ndn ) ) {
 			if ( monitor_search2ndn( nbase, scope, filter, &ndn ) ) {
-				char		buf[ SLAP_TEXT_BUFLEN ];
-
-				snprintf( buf, sizeof( buf ),
-					"monitor_back_unregister_entry_%s(\"\"): "
-					"base=\"%s\" scope=%d filter=\"%s\": "
-					"unable to find entry\n",
-					fname,
-					nbase->bv_val ? nbase->bv_val : "\"\"",
-					scope, filter->bv_val );
-
-				/* entry does not exist */
-				Debug( LDAP_DEBUG_ANY, "%s\n", buf, 0, 0 );
+				Debug(LDAP_DEBUG_ANY,
+				      "monitor_back_unregister_entry_%s(\"\"): " "base=\"%s\" scope=%d filter=\"%s\": " "unable to find entry\n\n",
+				      fname,
+				      nbase->bv_val ? nbase->bv_val : "\"\"",
+				      scope, filter->bv_val );
 				return -1;
 			}
 
@@ -1527,7 +1499,7 @@ monitor_back_unregister_entry_attrs(
 			Debug( LDAP_DEBUG_ANY,
 				"monitor_back_unregister_entry(\"%s\"): "
 				"entry removal failed.\n",
-				ndn.bv_val, 0, 0 );
+				ndn.bv_val );
 			return -1;
 		}
 
@@ -1995,9 +1967,11 @@ monitor_back_initialize(
 		{ "olmSubSystemAttributes",		"olmAttributes:0" },
 		{ "olmGenericAttributes",		"olmSubSystemAttributes:0" },
 		{ "olmDatabaseAttributes",		"olmSubSystemAttributes:1" },
+		{ "olmOverlayAttributes",		"olmSubSystemAttributes:2" },
+		{ "olmModuleAttributes",		"olmSubSystemAttributes:3" },
 
-		/* for example, back-bdb specific attrs
-		 * are in "olmDatabaseAttributes:1"
+		/* for example, back-mdb specific attrs
+		 * are in "olmDatabaseAttributes:12"
 		 *
 		 * NOTE: developers, please record here OID assignments
 		 * for other modules */
@@ -2006,9 +1980,11 @@ monitor_back_initialize(
 		{ "olmSubSystemObjectClasses",		"olmObjectClasses:0" },
 		{ "olmGenericObjectClasses",		"olmSubSystemObjectClasses:0" },
 		{ "olmDatabaseObjectClasses",		"olmSubSystemObjectClasses:1" },
+		{ "olmOverlayObjectClasses",		"olmSubSystemObjectClasses:2" },
+		{ "olmModuleObjectClasses",			"olmSubSystemObjectClasses:3" },
 
-		/* for example, back-bdb specific objectClasses
-		 * are in "olmDatabaseObjectClasses:1"
+		/* for example, back-mdb specific objectClasses
+		 * are in "olmDatabaseObjectClasses:12"
 		 *
 		 * NOTE: developers, please record here OID assignments
 		 * for other modules */
@@ -2034,7 +2010,7 @@ monitor_back_initialize(
 			Debug( LDAP_DEBUG_ANY,
 				"monitor_back_initialize: unable to add "
 				"objectIdentifier \"%s=%s\"\n",
-				s_oid[ i ].name, s_oid[ i ].oid, 0 );
+				s_oid[ i ].name, s_oid[ i ].oid );
 			return 1;
 		}
 	}
@@ -2050,7 +2026,7 @@ monitor_back_initialize(
 
 		if ( code ) {
 			Debug( LDAP_DEBUG_ANY,
-				"monitor_back_db_init: register_at failed\n", 0, 0, 0 );
+				"monitor_back_db_init: register_at failed\n" );
 			return -1;
 		}
 		(*ad)->ad_type->sat_flags |= mat[ i ].flags;
@@ -2064,7 +2040,7 @@ monitor_back_initialize(
 		code = register_oc( moc[ i ].schema, Oc, 0 );
 		if ( code ) {
 			Debug( LDAP_DEBUG_ANY,
-				"monitor_back_db_init: register_oc failed\n", 0, 0, 0 );
+				"monitor_back_db_init: register_oc failed\n" );
 			return -1;
 		}
 		(*Oc)->soc_flags |= moc[ i ].flags;
@@ -2175,7 +2151,7 @@ monitor_back_db_init(
 	if( rc != LDAP_SUCCESS ) {
 		Debug( LDAP_DEBUG_ANY,
 			"unable to normalize/pretty monitor DN \"%s\" (%d)\n",
-			dn.bv_val, rc, 0 );
+			dn.bv_val, rc );
 		return -1;
 	}
 
@@ -2297,7 +2273,7 @@ monitor_back_db_open(
 	if ( e == NULL) {
 		Debug( LDAP_DEBUG_ANY,
 			"unable to create \"%s\" entry\n",
-			SLAPD_MONITOR_DN, 0, 0 );
+			SLAPD_MONITOR_DN );
 		return( -1 );
 	}
 
@@ -2330,7 +2306,7 @@ monitor_back_db_open(
 					&bv, NULL ) ) {
 			Debug( LDAP_DEBUG_ANY,
 				"unable to add monitoredInfo to \"%s\" entry\n",
-				SLAPD_MONITOR_DN, 0, 0 );
+				SLAPD_MONITOR_DN );
 			return( -1 );
 		}
 	}
@@ -2345,7 +2321,7 @@ monitor_back_db_open(
 	if ( monitor_cache_add( mi, e ) ) {
 		Debug( LDAP_DEBUG_ANY,
 			"unable to add entry \"%s\" to cache\n",
-			SLAPD_MONITOR_DN, 0, 0 );
+			SLAPD_MONITOR_DN );
 		return -1;
 	}
 	root = e;
@@ -2367,7 +2343,7 @@ monitor_back_db_open(
 		if ( rc != LDAP_SUCCESS ) {
 			Debug( LDAP_DEBUG_ANY,
 				"monitor RDN \"%s\" is invalid\n", 
-				dn.bv_val, 0, 0 );
+				dn.bv_val );
 			return( -1 );
 		}
 
@@ -2378,7 +2354,7 @@ monitor_back_db_open(
 		if ( e == NULL) {
 			Debug( LDAP_DEBUG_ANY,
 				"unable to create \"%s\" entry\n", 
-				monitor_subsys[ i ]->mss_dn.bv_val, 0, 0 );
+				monitor_subsys[ i ]->mss_dn.bv_val );
 			return( -1 );
 		}
 		monitor_subsys[i]->mss_dn = e->e_name;
@@ -2400,7 +2376,7 @@ monitor_back_db_open(
 		if ( monitor_cache_add( mi, e ) ) {
 			Debug( LDAP_DEBUG_ANY,
 				"unable to add entry \"%s\" to cache\n",
-				monitor_subsys[ i ]->mss_dn.bv_val, 0, 0 );
+				monitor_subsys[ i ]->mss_dn.bv_val );
 			return -1;
 		}
 
@@ -2593,11 +2569,3 @@ monitor_back_db_destroy(
 
 	return 0;
 }
-
-#if SLAPD_MONITOR == SLAPD_MOD_DYNAMIC
-
-/* conditionally define the init_module() function */
-SLAP_BACKEND_INIT_MODULE( monitor )
-
-#endif /* SLAPD_MONITOR == SLAPD_MOD_DYNAMIC */
-

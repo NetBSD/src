@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.libldap,v 1.10 2019/10/16 07:39:18 mrg Exp $
+#	$NetBSD: Makefile.libldap,v 1.11 2021/08/14 16:15:03 christos Exp $
 
 .include "../../openldap.mk"
 
@@ -8,21 +8,23 @@ CPPFLAGS+=	-I${LDAP_DISTDIR}/libraries/libldap
 SRCS+=		bind.c open.c result.c error.c compare.c search.c \
 		controls.c messages.c references.c extended.c cyrus.c \
 		modify.c add.c modrdn.c delete.c abandon.c \
-		sasl.c gssapi.c sbind.c unbind.c cancel.c \
-		filter.c free.c sort.c passwd.c whoami.c \
+		sasl.c sbind.c unbind.c cancel.c msctrl.c \
+		filter.c free.c sort.c passwd.c whoami.c lbase64.c \
 		getdn.c getentry.c getattr.c getvalues.c addentry.c \
 		request.c os-ip.c url.c pagectrl.c sortctrl.c vlvctrl.c \
 		init.c options.c print.c string.c util-int.c schema.c \
 		charray.c os-local.c dnssrv.c utf-8.c utf-8-conv.c \
 		turn.c ppolicy.c dds.c txn.c ldap_sync.c stctrl.c \
-		assertion.c deref.c fetch.c ldif.c
+		assertion.c deref.c fetch.c ldif.c tavl.c \
+		account_usability.c avl.c psearchctrl.c ldifutil.c gssapi.c
 
-SRCS+=		tls2.c tls_o.c tls_g.c tls_m.c
+SRCS+=		tls2.c tls_o.c tls_g.c
 
-CPPFLAGS+=	-DLDAP_LIBRARY
+CPPFLAGS+=	-DLDAP_LIBRARY -DHAVE_GSSAPI
 
 LIBDPLIBS+=	lber	${.CURDIR}/../liblber
 
+LIBDPLIBS+=	gssapi	${NETBSDSRCDIR}/crypto/external/bsd/heimdal/lib/libgssapi
 LIBDPLIBS+=	crypto	${NETBSDSRCDIR}/crypto/external/bsd/${EXTERNAL_OPENSSL_SUBDIR}/lib/libcrypto
 LIBDPLIBS+=	ssl	${NETBSDSRCDIR}/crypto/external/bsd/${EXTERNAL_OPENSSL_SUBDIR}/lib/libssl
 

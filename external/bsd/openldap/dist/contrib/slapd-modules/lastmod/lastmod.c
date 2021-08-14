@@ -1,10 +1,10 @@
-/*	$NetBSD: lastmod.c,v 1.2 2020/08/11 13:15:35 christos Exp $	*/
+/*	$NetBSD: lastmod.c,v 1.3 2021/08/14 16:14:52 christos Exp $	*/
 
 /* lastmod.c - returns last modification info */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2020 The OpenLDAP Foundation.
+ * Copyright 2004-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lastmod.c,v 1.2 2020/08/11 13:15:35 christos Exp $");
+__RCSID("$NetBSD: lastmod.c,v 1.3 2021/08/14 16:14:52 christos Exp $");
 
 #include "portable.h"
 
@@ -760,7 +760,7 @@ lastmod_db_init( BackendDB *be, ConfigReply *cr )
 			code = register_at( mat[i].schema, ad, 0 );
 			if ( code ) {
 				Debug( LDAP_DEBUG_ANY,
-					"lastmod_init: register_at failed\n", 0, 0, 0 );
+					"lastmod_init: register_at failed\n" );
 				return -1;
 			}
 			(*ad)->ad_type->sat_flags |= mat[i].flags;
@@ -774,7 +774,7 @@ lastmod_db_init( BackendDB *be, ConfigReply *cr )
 			code = register_oc( moc[i].schema, Oc, 0 );
 			if ( code ) {
 				Debug( LDAP_DEBUG_ANY,
-					"lastmod_init: register_oc failed\n", 0, 0, 0 );
+					"lastmod_init: register_oc failed\n" );
 				return -1;
 			}
 			(*Oc)->soc_flags |= moc[i].flags;
@@ -938,6 +938,7 @@ int
 lastmod_initialize()
 {
 	lastmod.on_bi.bi_type = "lastmod";
+	lastmod.on_bi.bi_flags = SLAPO_BFLAG_SINGLE;
 	lastmod.on_bi.bi_db_init = lastmod_db_init;
 	lastmod.on_bi.bi_db_config = lastmod_db_config;
 	lastmod.on_bi.bi_db_destroy = lastmod_db_destroy;

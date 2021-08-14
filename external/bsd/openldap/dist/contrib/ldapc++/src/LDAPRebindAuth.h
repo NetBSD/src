@@ -1,8 +1,8 @@
-/*	$NetBSD: LDAPRebindAuth.h,v 1.2 2020/08/11 13:15:34 christos Exp $	*/
+/*	$NetBSD: LDAPRebindAuth.h,v 1.3 2021/08/14 16:14:49 christos Exp $	*/
 
 // $OpenLDAP$
 /*
- * Copyright 2000-2020 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2000-2021 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -12,7 +12,7 @@
 #include<string>
 
 /**
- * This class represent Authenication information for the case that the
+ * This class represent Authentication information for the case that the
  * library is chasing referrals.
  *
  * The LDAPRebind::getRebindAuth() method returns an object of this type.

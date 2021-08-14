@@ -1,10 +1,10 @@
-/*	$NetBSD: operational.c,v 1.2 2020/08/11 13:15:40 christos Exp $	*/
+/*	$NetBSD: operational.c,v 1.3 2021/08/14 16:15:00 christos Exp $	*/
 
 /* operational.c - mdb backend operational attributes function */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2020 The OpenLDAP Foundation.
+ * Copyright 2000-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: operational.c,v 1.2 2020/08/11 13:15:40 christos Exp $");
+__RCSID("$NetBSD: operational.c,v 1.3 2021/08/14 16:15:00 christos Exp $");
 
 #include "portable.h"
 
@@ -73,7 +73,7 @@ mdb_hasSubordinates(
 		Debug(LDAP_DEBUG_ARGS, 
 			"<=- " LDAP_XSTRING(mdb_hasSubordinates)
 			": has_children failed: %s (%d)\n", 
-			mdb_strerror(rc), rc, 0 );
+			mdb_strerror(rc), rc );
 		rc = LDAP_OTHER;
 	}
 

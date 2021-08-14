@@ -1,9 +1,9 @@
-/*	$NetBSD: init.c,v 1.2 2020/08/11 13:15:41 christos Exp $	*/
+/*	$NetBSD: init.c,v 1.3 2021/08/14 16:15:01 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2020 The OpenLDAP Foundation.
+ * Copyright 1999-2021 The OpenLDAP Foundation.
  * Portions Copyright 1999 John C. Quillan.
  * Portions Copyright 2002 myinternet Limited.
  * All rights reserved.
@@ -18,7 +18,7 @@
  */
 
 #include "perl_back.h"
-#include "../config.h"
+#include "../slap-config.h"
 
 #ifdef PERL_SYS_INIT3
 #include <ac/unistd.h>		/* maybe get environ */
@@ -79,12 +79,11 @@ perl_back_initialize(
 	bi->bi_connection_init = 0;
 	bi->bi_connection_destroy = 0;
 
-	/* injecting code from perl_back_open, because using fonction reference  (bi->bi_open) is not functional */
-	Debug( LDAP_DEBUG_TRACE, "perl backend open\n", 0, 0, 0 );
+	/* injecting code from perl_back_open, because using function reference  (bi->bi_open) is not functional */
+	Debug( LDAP_DEBUG_TRACE, "perl backend open\n" );
 
 	if( PERL_INTERPRETER != NULL ) {
-		Debug( LDAP_DEBUG_ANY, "perl backend open: already opened\n",
-			0, 0, 0 );
+		Debug( LDAP_DEBUG_ANY, "perl backend open: already opened\n" );
 		return 1;
 	}
 	
@@ -114,7 +113,7 @@ perl_back_db_init(
 
 	((PerlBackend *)be->be_private)->pb_filter_search_results = 0;
 
-	Debug( LDAP_DEBUG_TRACE, "perl backend db init\n", 0, 0, 0 );
+	Debug( LDAP_DEBUG_TRACE, "perl backend db init\n" );
 
 	be->be_cf_ocs = be->bd_info->bi_cf_ocs;
 

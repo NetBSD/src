@@ -1,10 +1,10 @@
-/*	$NetBSD: rwm.c,v 1.2 2020/08/11 13:15:42 christos Exp $	*/
+/*	$NetBSD: rwm.c,v 1.3 2021/08/14 16:15:02 christos Exp $	*/
 
 /* rwm.c - rewrite/remap operations */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2020 The OpenLDAP Foundation.
+ * Copyright 2003-2021 The OpenLDAP Foundation.
  * Portions Copyright 2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rwm.c,v 1.2 2020/08/11 13:15:42 christos Exp $");
+__RCSID("$NetBSD: rwm.c,v 1.3 2021/08/14 16:15:02 christos Exp $");
 
 #include "portable.h"
 
@@ -29,7 +29,7 @@ __RCSID("$NetBSD: rwm.c,v 1.2 2020/08/11 13:15:42 christos Exp $");
 #include <ac/string.h>
 
 #include "slap.h"
-#include "config.h"
+#include "slap-config.h"
 #include "lutil.h"
 #include "rwm.h"
 
@@ -1676,7 +1676,7 @@ rwm_suffixmassage_config(
 				       " <massaged suffix>\" without "
 				       "<suffix> part requires database "
 				       "suffix be defined first.\n",
-				fname, lineno, 0 );
+				fname, lineno );
 			return 1;
 		}
 		bvnc = be->be_suffix[ 0 ];
@@ -1690,7 +1690,7 @@ rwm_suffixmassage_config(
  		Debug( LDAP_DEBUG_ANY, "%s: line %d: syntax is"
 			       " \"suffixMassage [<suffix>]"
 			       " <massaged suffix>\"\n",
-			fname, lineno, 0 );
+			fname, lineno );
 		return 1;
 	}
 
@@ -1821,7 +1821,7 @@ rwm_db_config(
 		if ( argc != 2 ) {
 			Debug( LDAP_DEBUG_ANY,
 		"%s: line %d: \"t-f-support {no|yes|discover}\" needs 1 argument.\n",
-					fname, lineno, 0 );
+					fname, lineno );
 			return( 1 );
 		}
 
@@ -1836,7 +1836,7 @@ rwm_db_config(
 			Debug( LDAP_DEBUG_ANY,
 		"%s: line %d: \"discover\" not supported yet "
 		"in \"t-f-support {no|yes|discover}\".\n",
-					fname, lineno, 0 );
+					fname, lineno );
 			return( 1 );
 #if 0
 			rwmap->rwm_flags |= RWM_F_SUPPORT_T_F_DISCOVER;
@@ -1853,7 +1853,7 @@ rwm_db_config(
 		if ( argc !=2 ) { 
 			Debug( LDAP_DEBUG_ANY,
 		"%s: line %d: \"normalize-mapped-attrs {no|yes}\" needs 1 argument.\n",
-					fname, lineno, 0 );
+					fname, lineno );
 			return( 1 );
 		}
 
@@ -1922,6 +1922,7 @@ static ConfigTable rwmcfg[] = {
 		2, 2, 0, ARG_MAGIC|RWM_CF_T_F_SUPPORT, rwm_cf_gen,
 		"( OLcfgOvAt:16.2 NAME 'olcRwmTFSupport' "
 			"DESC 'Absolute filters support' "
+			"EQUALITY caseIgnoreMatch "
 			"SYNTAX OMsDirectoryString "
 			"SINGLE-VALUE )",
 		NULL, NULL },
@@ -1939,6 +1940,7 @@ static ConfigTable rwmcfg[] = {
 		2, 2, 0, ARG_MAGIC|ARG_ON_OFF|RWM_CF_NORMALIZE_MAPPED, rwm_cf_gen,
 		"( OLcfgOvAt:16.4 NAME 'olcRwmNormalizeMapped' "
 			"DESC 'Normalize mapped attributes/objectClasses' "
+			"EQUALITY booleanMatch "
 			"SYNTAX OMsBoolean "
 			"SINGLE-VALUE )",
 		NULL, NULL },
@@ -1947,6 +1949,7 @@ static ConfigTable rwmcfg[] = {
 		2, 2, 0, ARG_MAGIC|ARG_ON_OFF|RWM_CF_DROP_UNREQUESTED, rwm_cf_gen,
 		"( OLcfgOvAt:16.5 NAME 'olcRwmDropUnrequested' "
 			"DESC 'Drop unrequested attributes' "
+			"EQUALITY booleanMatch "
 			"SYNTAX OMsBoolean "
 			"SINGLE-VALUE )",
 		NULL, NULL },
@@ -1969,46 +1972,6 @@ static ConfigOCs rwmocs[] = {
 		Cft_Overlay, rwmcfg, NULL, NULL },
 	{ NULL, 0, NULL }
 };
-
-static void
-slap_bv_x_ordered_unparse( BerVarray in, BerVarray *out )
-{
-	int		i;
-	BerVarray	bva = NULL;
-	char		ibuf[32], *ptr;
-	struct berval	idx;
-
-	assert( in != NULL );
-
-	for ( i = 0; !BER_BVISNULL( &in[i] ); i++ )
-		/* count'em */ ;
-
-	if ( i == 0 ) {
-		return;
-	}
-
-	idx.bv_val = ibuf;
-
-	bva = ch_malloc( ( i + 1 ) * sizeof(struct berval) );
-	BER_BVZERO( &bva[ 0 ] );
-
-	for ( i = 0; !BER_BVISNULL( &in[i] ); i++ ) {
-		idx.bv_len = snprintf( idx.bv_val, sizeof( ibuf ), "{%d}", i );
-		if ( idx.bv_len >= sizeof( ibuf ) ) {
-			ber_bvarray_free( bva );
-			return;
-		}
-
-		bva[i].bv_len = idx.bv_len + in[i].bv_len;
-		bva[i].bv_val = ch_malloc( bva[i].bv_len + 1 );
-		ptr = lutil_strcopy( bva[i].bv_val, ibuf );
-		ptr = lutil_strcopy( ptr, in[i].bv_val );
-		*ptr = '\0';
-		BER_BVZERO( &bva[ i + 1 ] );
-	}
-
-	*out = bva;
-}
 
 static int
 rwm_bva_add(
@@ -2110,10 +2073,7 @@ rwm_cf_gen( ConfigArgs *c )
 				rc = 1;
 
 			} else {
-				slap_bv_x_ordered_unparse( rwmap->rwm_bva_rewrite, &c->rvalue_vals );
-				if ( !c->rvalue_vals ) {
-					rc = 1;
-				}
+				rc = slap_bv_x_ordered_unparse( rwmap->rwm_bva_rewrite, &c->rvalue_vals );
 			}
 			break;
 
@@ -2274,10 +2234,10 @@ rwm_cf_gen( ConfigArgs *c )
 					/* in case of failure, restore
 					 * the existing mapping */
 					if ( rc ) {
-						avl_free( rwmap->rwm_oc.remap, rwm_mapping_dst_free );
-						avl_free( rwmap->rwm_oc.map, rwm_mapping_free );
-						avl_free( rwmap->rwm_at.remap, rwm_mapping_dst_free );
-						avl_free( rwmap->rwm_at.map, rwm_mapping_free );
+						ldap_avl_free( rwmap->rwm_oc.remap, rwm_mapping_dst_free );
+						ldap_avl_free( rwmap->rwm_oc.map, rwm_mapping_free );
+						ldap_avl_free( rwmap->rwm_at.remap, rwm_mapping_dst_free );
+						ldap_avl_free( rwmap->rwm_at.map, rwm_mapping_free );
 						rwmap->rwm_oc = rwm_oc;
 						rwmap->rwm_at = rwm_at;
 						break;
@@ -2287,10 +2247,10 @@ rwm_cf_gen( ConfigArgs *c )
 				/* in case of success, destroy the old mapping
 				 * and eliminate the deleted one */
 				if ( rc == 0 ) {
-					avl_free( rwm_oc.remap, rwm_mapping_dst_free );
-					avl_free( rwm_oc.map, rwm_mapping_free );
-					avl_free( rwm_at.remap, rwm_mapping_dst_free );
-					avl_free( rwm_at.map, rwm_mapping_free );
+					ldap_avl_free( rwm_oc.remap, rwm_mapping_dst_free );
+					ldap_avl_free( rwm_oc.map, rwm_mapping_free );
+					ldap_avl_free( rwm_at.remap, rwm_mapping_dst_free );
+					ldap_avl_free( rwm_at.map, rwm_mapping_free );
 
 					ber_memfree( rwmap->rwm_bva_map[ c->valx ].bv_val );
 					for ( cnt = c->valx; !BER_BVISNULL( &rwmap->rwm_bva_map[ cnt ] ); cnt++ ) {
@@ -2299,10 +2259,10 @@ rwm_cf_gen( ConfigArgs *c )
 				}
 
 			} else {
-				avl_free( rwmap->rwm_oc.remap, rwm_mapping_dst_free );
-				avl_free( rwmap->rwm_oc.map, rwm_mapping_free );
-				avl_free( rwmap->rwm_at.remap, rwm_mapping_dst_free );
-				avl_free( rwmap->rwm_at.map, rwm_mapping_free );
+				ldap_avl_free( rwmap->rwm_oc.remap, rwm_mapping_dst_free );
+				ldap_avl_free( rwmap->rwm_oc.map, rwm_mapping_free );
+				ldap_avl_free( rwmap->rwm_at.remap, rwm_mapping_dst_free );
+				ldap_avl_free( rwmap->rwm_at.map, rwm_mapping_free );
 
 				rwmap->rwm_oc.remap = NULL;
 				rwmap->rwm_oc.map = NULL;
@@ -2580,10 +2540,10 @@ rwm_cf_gen( ConfigArgs *c )
 				rwmap->rwm_bva_map = tmp;
 				BER_BVZERO( &rwmap->rwm_bva_map[ cnt + 1 ] );
 
-				avl_free( rwm_oc.remap, rwm_mapping_dst_free );
-				avl_free( rwm_oc.map, rwm_mapping_free );
-				avl_free( rwm_at.remap, rwm_mapping_dst_free );
-				avl_free( rwm_at.map, rwm_mapping_free );
+				ldap_avl_free( rwm_oc.remap, rwm_mapping_dst_free );
+				ldap_avl_free( rwm_oc.map, rwm_mapping_free );
+				ldap_avl_free( rwm_at.remap, rwm_mapping_dst_free );
+				ldap_avl_free( rwm_at.map, rwm_mapping_free );
 
 				for ( ; cnt-- > c->valx; ) {
 					rwmap->rwm_bva_map[ cnt + 1 ] = rwmap->rwm_bva_map[ cnt ];
@@ -2592,10 +2552,10 @@ rwm_cf_gen( ConfigArgs *c )
 
 			} else {
 rwmmap_fail:;
-				avl_free( rwmap->rwm_oc.remap, rwm_mapping_dst_free );
-				avl_free( rwmap->rwm_oc.map, rwm_mapping_free );
-				avl_free( rwmap->rwm_at.remap, rwm_mapping_dst_free );
-				avl_free( rwmap->rwm_at.map, rwm_mapping_free );
+				ldap_avl_free( rwmap->rwm_oc.remap, rwm_mapping_dst_free );
+				ldap_avl_free( rwmap->rwm_oc.map, rwm_mapping_free );
+				ldap_avl_free( rwmap->rwm_at.remap, rwm_mapping_dst_free );
+				ldap_avl_free( rwmap->rwm_at.map, rwm_mapping_free );
 				rwmap->rwm_oc = rwm_oc;
 				rwmap->rwm_at = rwm_at;
 			}
@@ -2689,10 +2649,10 @@ rwm_db_destroy(
 				ber_bvarray_free( rwmap->rwm_bva_rewrite );
 		}
 
-		avl_free( rwmap->rwm_oc.remap, rwm_mapping_dst_free );
-		avl_free( rwmap->rwm_oc.map, rwm_mapping_free );
-		avl_free( rwmap->rwm_at.remap, rwm_mapping_dst_free );
-		avl_free( rwmap->rwm_at.map, rwm_mapping_free );
+		ldap_avl_free( rwmap->rwm_oc.remap, rwm_mapping_dst_free );
+		ldap_avl_free( rwmap->rwm_oc.map, rwm_mapping_free );
+		ldap_avl_free( rwmap->rwm_at.remap, rwm_mapping_dst_free );
+		ldap_avl_free( rwmap->rwm_at.map, rwm_mapping_free );
 		ber_bvarray_free( rwmap->rwm_bva_map );
 
 		ch_free( rwmap );

@@ -1,10 +1,10 @@
-/*	$NetBSD: back-monitor.h,v 1.2 2020/08/11 13:15:41 christos Exp $	*/
+/*	$NetBSD: back-monitor.h,v 1.3 2021/08/14 16:15:00 christos Exp $	*/
 
 /* back-monitor.h - ldap monitor back-end header file */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2020 The OpenLDAP Foundation.
+ * Copyright 2001-2021 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -26,7 +26,7 @@
 
 #include <ldap_pvt.h>
 #include <ldap_pvt_thread.h>
-#include <avl.h>
+#include <ldap_avl.h>
 #include <slap.h>
 
 LDAP_BEGIN_DECL
@@ -74,6 +74,7 @@ typedef struct monitor_entry_t {
 /* NOTE: flags with 0xF0000000U mask are reserved for subsystem internals */
 
 	struct monitor_callback_t	*mp_cb;		/* callback sequence */
+	void		*mp_private;
 } monitor_entry_t;
 
 struct entry_limbo_t;			/* in init.c */
@@ -316,6 +317,7 @@ typedef struct monitor_extra_t {
 		struct berval *modify );
 	monitor_entry_t * (*entrypriv_create)( void );
 	int (*register_subsys_late)( monitor_subsys_t *ms );
+	Entry * (*entry_get_unlocked)( struct berval *ndn );
 } monitor_extra_t;
 
 LDAP_END_DECL

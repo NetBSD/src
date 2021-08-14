@@ -1,10 +1,10 @@
-/*	$NetBSD: ctxcsn.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
+/*	$NetBSD: ctxcsn.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
 
 /* ctxcsn.c -- Context CSN Management Routines */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2020 The OpenLDAP Foundation.
+ * Copyright 2003-2021 The OpenLDAP Foundation.
  * Portions Copyright 2003 IBM Corporation.
  * All rights reserved.
  *
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ctxcsn.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
+__RCSID("$NetBSD: ctxcsn.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
 
 #include "portable.h"
 
@@ -55,11 +55,11 @@ slap_get_commit_csn(
 		*foundit = 0;
 	}
 
-	ldap_pvt_thread_mutex_lock( &be->be_pcl_mutex );
-
 	if ( !BER_BVISEMPTY( &op->o_csn )) {
 		sid = slap_parse_csn_sid( &op->o_csn );
 	}
+
+	ldap_pvt_thread_mutex_lock( &be->be_pcl_mutex );
 
 	LDAP_TAILQ_FOREACH( csne, be->be_pending_csn_list, ce_csn_link ) {
 		if ( csne->ce_op == op ) {
@@ -125,7 +125,7 @@ slap_graduate_commit_csn( Operation *op )
 			LDAP_TAILQ_REMOVE( be->be_pending_csn_list,
 				csne, ce_csn_link );
 			Debug( LDAP_DEBUG_SYNC, "slap_graduate_commit_csn: removing %p %s\n",
-				csne, csne->ce_csn.bv_val, 0 );
+				csne, csne->ce_csn.bv_val );
 			if ( op->o_csn.bv_val == csne->ce_csn.bv_val ) {
 				BER_BVZERO( &op->o_csn );
 			}
@@ -191,15 +191,15 @@ slap_queue_csn(
 	pending = (struct slap_csn_entry *) ch_calloc( 1,
 			sizeof( struct slap_csn_entry ));
 
-	Debug( LDAP_DEBUG_SYNC, "slap_queue_csn: queueing %p %s\n", pending, csn->bv_val, 0 );
-
-	ldap_pvt_thread_mutex_lock( &be->be_pcl_mutex );
+	Debug( LDAP_DEBUG_SYNC, "slap_queue_csn: queueing %p %s\n", pending, csn->bv_val );
 
 	ber_dupbv( &pending->ce_csn, csn );
 	ber_bvreplace_x( &op->o_csn, &pending->ce_csn, op->o_tmpmemctx );
 	pending->ce_sid = slap_parse_csn_sid( csn );
 	pending->ce_op = op;
 	pending->ce_state = SLAP_CSN_PENDING;
+
+	ldap_pvt_thread_mutex_lock( &be->be_pcl_mutex );
 	LDAP_TAILQ_INSERT_TAIL( be->be_pending_csn_list,
 		pending, ce_csn_link );
 	ldap_pvt_thread_mutex_unlock( &be->be_pcl_mutex );
@@ -214,6 +214,8 @@ slap_get_csn(
 	if ( csn == NULL ) return LDAP_OTHER;
 
 	csn->bv_len = ldap_pvt_csnstr( csn->bv_val, csn->bv_len, slap_serverID, 0 );
+	Debug( LDAP_DEBUG_SYNC, "slap_get_csn: %s generated new csn=%s manage=%d\n",
+		op->o_log_prefix, csn->bv_val, manage_ctxcsn );
 	if ( manage_ctxcsn )
 		slap_queue_csn( op, csn );
 

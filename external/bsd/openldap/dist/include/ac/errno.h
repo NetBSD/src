@@ -1,10 +1,10 @@
-/*	$NetBSD: errno.h,v 1.2 2020/08/11 13:15:37 christos Exp $	*/
+/*	$NetBSD: errno.h,v 1.3 2021/08/14 16:14:55 christos Exp $	*/
 
 /* Generic errno.h */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,33 +25,10 @@
 # include <sys/errno.h>
 #endif
 
-#ifndef HAVE_SYS_ERRLIST
-	/* no sys_errlist */
-#	define		sys_nerr	0
-#	define		sys_errlist	((char **)0)
-#elif defined( DECL_SYS_ERRLIST )
+#if defined( HAVE_SYS_ERRLIST ) && defined( DECL_SYS_ERRLIST )
 	/* have sys_errlist but need declaration */
 	LDAP_LIBC_V(int)      sys_nerr;
 	LDAP_LIBC_V(char)    *sys_errlist[];
-#endif
-
-#undef _AC_ERRNO_UNKNOWN
-#define _AC_ERRNO_UNKNOWN "unknown error"
-
-#ifdef HAVE_SYS_ERRLIST
-	/* this is thread safe */
-#	define	STRERROR(e) ( (e) > -1 && (e) < sys_nerr \
-			? sys_errlist[(e)] : _AC_ERRNO_UNKNOWN )
-
-#elif defined( HAVE_STRERROR )
-	/* this may not be thread safe */
-	/* and, yes, some implementations of strerror may return NULL */
-#	define	STRERROR(e) ( strerror(e) \
-		? strerror(e) : _AC_ERRNO_UNKNOWN )
-
-#else
-	/* this is thread safe */
-#	define	STRERROR(e) ( _AC_ERRNO_UNKNOWN )
 #endif
 
 #endif /* _AC_ERRNO_H */

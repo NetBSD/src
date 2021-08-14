@@ -1,10 +1,10 @@
-/*	$NetBSD: service.c,v 1.2 2020/08/11 13:15:36 christos Exp $	*/
+/*	$NetBSD: service.c,v 1.3 2021/08/14 16:14:52 christos Exp $	*/
 
 /* service.c - service lookup routines */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>. 
  *
- * Copyright 2008-2020 The OpenLDAP Foundation.
+ * Copyright 2008-2021 The OpenLDAP Foundation.
  * Portions Copyright 2008 by Howard Chu, Symas Corp.
  * All rights reserved.
  *
@@ -129,7 +129,7 @@ static int write_service(nssov_service_cbp *cbp,Entry *entry)
 	if ( !a || !a->a_vals )
 	{
 		Debug(LDAP_DEBUG_ANY,"service entry %s does not contain %s value\n",
-			entry->e_name.bv_val, cbp->mi->mi_attrs[0].an_desc->ad_cname.bv_val, 0 );
+			entry->e_name.bv_val, cbp->mi->mi_attrs[0].an_desc->ad_cname.bv_val );
 		return 0;
 	}
 	names = a->a_vals;
@@ -152,17 +152,17 @@ static int write_service(nssov_service_cbp *cbp,Entry *entry)
 	if ( !a || !a->a_vals )
 	{
 		Debug(LDAP_DEBUG_ANY,"service entry %s does not contain %s value\n",
-			entry->e_name.bv_val, cbp->mi->mi_attrs[1].an_desc->ad_cname.bv_val, 0 );
+			entry->e_name.bv_val, cbp->mi->mi_attrs[1].an_desc->ad_cname.bv_val );
 		return 0;
 	} else if ( a->a_numvals > 1 ) {
 		Debug(LDAP_DEBUG_ANY,"service entry %s contains multiple %s values\n",
-			entry->e_name.bv_val, cbp->mi->mi_attrs[1].an_desc->ad_cname.bv_val, 0 );
+			entry->e_name.bv_val, cbp->mi->mi_attrs[1].an_desc->ad_cname.bv_val );
 	}
 	port=(int)strtol(a->a_vals[0].bv_val,&tmp,0);
 	if (*tmp)
 	{
 		Debug(LDAP_DEBUG_ANY,"service entry %s contains non-numeric %s value\n",
-			entry->e_name.bv_val, cbp->mi->mi_attrs[1].an_desc->ad_cname.bv_val, 0 );
+			entry->e_name.bv_val, cbp->mi->mi_attrs[1].an_desc->ad_cname.bv_val );
 		return 0;
 	}
 	/* get protocols */
@@ -172,7 +172,7 @@ static int write_service(nssov_service_cbp *cbp,Entry *entry)
 		if ( !a || !a->a_vals )
 		{
 			Debug(LDAP_DEBUG_ANY,"service entry %s does not contain %s value\n",
-				entry->e_name.bv_val, cbp->mi->mi_attrs[2].an_desc->ad_cname.bv_val, 0 );
+				entry->e_name.bv_val, cbp->mi->mi_attrs[2].an_desc->ad_cname.bv_val );
 			return 0;
 		}
 		protos = a->a_vals;
@@ -219,7 +219,7 @@ NSSOV_HANDLE(
 	READ_STRING(fp,cbp.pbuf);
 	cbp.prot.bv_len = tmpint32;
 	cbp.prot.bv_val = tmpint32 ? cbp.pbuf : NULL;,
-	Debug(LDAP_DEBUG_TRACE,"nssov_service_byname(%s,%s)\n",cbp.name.bv_val,cbp.prot.bv_val ? cbp.prot.bv_val : "",0);,
+	Debug(LDAP_DEBUG_TRACE,"nssov_service_byname(%s,%s)\n",cbp.name.bv_val,cbp.prot.bv_val ? cbp.prot.bv_val : "");,
 	NSLCD_ACTION_SERVICE_BYNAME,
 	mkfilter_service_byname(cbp.mi,&cbp.name,&cbp.prot,&filter)
 )
@@ -236,7 +236,7 @@ NSSOV_HANDLE(
 	READ_STRING(fp,cbp.pbuf);
 	cbp.prot.bv_len = tmpint32;
 	cbp.prot.bv_val = tmpint32 ? cbp.pbuf : NULL;,
-	Debug(LDAP_DEBUG_TRACE,"nssov_service_bynumber(%s,%s)\n",cbp.name.bv_val,cbp.prot.bv_val,0);,
+	Debug(LDAP_DEBUG_TRACE,"nssov_service_bynumber(%s,%s)\n",cbp.name.bv_val,cbp.prot.bv_val);,
 	NSLCD_ACTION_SERVICE_BYNUMBER,
 	mkfilter_service_bynumber(cbp.mi,&cbp.name,&cbp.prot,&filter)
 )
@@ -246,7 +246,7 @@ NSSOV_HANDLE(
 	struct berval filter;
 	/* no parameters to read */
 	BER_BVZERO(&cbp.prot);,
-	Debug(LDAP_DEBUG_TRACE,"nssov_service_all()\n",0,0,0);,
+	Debug(LDAP_DEBUG_TRACE,"nssov_service_all()\n");,
 	NSLCD_ACTION_SERVICE_ALL,
 	(filter=cbp.mi->mi_filter,0)
 )

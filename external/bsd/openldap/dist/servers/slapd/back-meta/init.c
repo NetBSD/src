@@ -1,9 +1,9 @@
-/*	$NetBSD: init.c,v 1.2 2020/08/11 13:15:40 christos Exp $	*/
+/*	$NetBSD: init.c,v 1.3 2021/08/14 16:15:00 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2020 The OpenLDAP Foundation.
+ * Copyright 1999-2021 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: init.c,v 1.2 2020/08/11 13:15:40 christos Exp $");
+__RCSID("$NetBSD: init.c,v 1.3 2021/08/14 16:15:00 christos Exp $");
 
 #include "portable.h"
 
@@ -28,7 +28,7 @@ __RCSID("$NetBSD: init.c,v 1.2 2020/08/11 13:15:40 christos Exp $");
 #include <ac/socket.h>
 
 #include "slap.h"
-#include "config.h"
+#include "slap-config.h"
 #include "../back-ldap/back-ldap.h"
 #include "back-meta.h"
 
@@ -106,8 +106,7 @@ meta_back_db_init(
 	bi = backend_info( "ldap" );
 	if ( !bi || !bi->bi_extra ) {
 		Debug( LDAP_DEBUG_ANY,
-			"meta_back_db_init: needs back-ldap\n",
-			0, 0, 0 );
+			"meta_back_db_init: needs back-ldap\n" );
 		return 1;
 	}
 
@@ -205,7 +204,7 @@ meta_target_finish(
 			"(likely authz=\"*\" used with \"non-prescriptive\" flag)",
 			log );
 		Debug( LDAP_DEBUG_ANY, "%s (target %s)\n",
-			msg, mt->mt_uri, 0 );
+			msg, mt->mt_uri );
 		return 1;
 	}
 
@@ -256,8 +255,7 @@ meta_back_db_open(
 			return 0;
 
 		Debug( LDAP_DEBUG_ANY,
-			"meta_back_db_open: no targets defined\n",
-			0, 0, 0 );
+			"meta_back_db_open: no targets defined\n" );
 		return 1;
 	}
 
@@ -327,8 +325,8 @@ mapping_dst_free(
 void
 meta_back_map_free( struct ldapmap *lm )
 {
-	avl_free( lm->remap, mapping_dst_free );
-	avl_free( lm->map, mapping_free );
+	ldap_avl_free( lm->remap, mapping_dst_free );
+	ldap_avl_free( lm->map, mapping_free );
 	lm->remap = NULL;
 	lm->map = NULL;
 }
@@ -412,7 +410,7 @@ meta_back_db_destroy(
 		ldap_pvt_thread_mutex_lock( &mi->mi_conninfo.lai_mutex );
 
 		if ( mi->mi_conninfo.lai_tree ) {
-			avl_free( mi->mi_conninfo.lai_tree, meta_back_conn_free );
+			ldap_tavl_free( mi->mi_conninfo.lai_tree, meta_back_conn_free );
 		}
 		for ( i = LDAP_BACK_PCONN_FIRST; i < LDAP_BACK_PCONN_LAST; i++ ) {
 			while ( !LDAP_TAILQ_EMPTY( &mi->mi_conn_priv[ i ].mic_priv ) ) {
@@ -448,7 +446,7 @@ meta_back_db_destroy(
 
 		ldap_pvt_thread_mutex_lock( &mi->mi_cache.mutex );
 		if ( mi->mi_cache.tree ) {
-			avl_free( mi->mi_cache.tree, meta_dncache_free );
+			ldap_avl_free( mi->mi_cache.tree, meta_dncache_free );
 		}
 		
 		ldap_pvt_thread_mutex_unlock( &mi->mi_cache.mutex );

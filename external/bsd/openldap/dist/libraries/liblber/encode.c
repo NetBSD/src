@@ -1,10 +1,10 @@
-/*	$NetBSD: encode.c,v 1.2 2020/08/11 13:15:37 christos Exp $	*/
+/*	$NetBSD: encode.c,v 1.3 2021/08/14 16:14:55 christos Exp $	*/
 
 /* encode.c - ber output encoding routines */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: encode.c,v 1.2 2020/08/11 13:15:37 christos Exp $");
+__RCSID("$NetBSD: encode.c,v 1.3 2021/08/14 16:14:55 christos Exp $");
 
 #include "portable.h"
 
@@ -354,7 +354,7 @@ ber_put_boolean(
 typedef struct seqorset_header {
 	char xtagbuf[TAGBUF_SIZE + 1];	/* room for tag + len(tag or len) */
 	union {
-		ber_elem_size_t offset;		/* enclosing seqence/set */
+		ber_elem_size_t offset;		/* enclosing sequence/set */
 		char padding[SOS_LENLEN-1];	/* for final length encoding */
 	} next_sos;
 #	define SOS_TAG_END(header) ((unsigned char *) &(header).next_sos - 1)

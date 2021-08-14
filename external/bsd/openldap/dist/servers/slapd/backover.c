@@ -1,10 +1,10 @@
-/*	$NetBSD: backover.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
+/*	$NetBSD: backover.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
 
 /* backover.c - backend overlay routines */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2020 The OpenLDAP Foundation.
+ * Copyright 2003-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -19,7 +19,7 @@
 /* Functions to overlay other modules over a backend. */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: backover.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
+__RCSID("$NetBSD: backover.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
 
 #include "portable.h"
 
@@ -30,7 +30,7 @@ __RCSID("$NetBSD: backover.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
 
 #define SLAPD_TOOLS
 #include "slap.h"
-#include "config.h"
+#include "slap-config.h"
 
 static slap_overinst *overlays;
 
@@ -80,7 +80,7 @@ over_db_config(
 					Debug( LDAP_DEBUG_ANY, "over_db_config(): "
 							"warning, freshly added "
 							"overlay #%d \"%s\" is already in list\n",
-							i, (*onp)->on_bi.bi_type, 0 );
+							i, (*onp)->on_bi.bi_type );
 
 					/* NOTE: if the overlay already exists,
 					 * there is no way to merge the results
@@ -155,6 +155,8 @@ over_db_open(
 	}
 
 	for (; on && rc == 0; on=on->on_next) {
+		if ( on->on_bi.bi_flags & SLAPO_BFLAG_DISABLED )
+			continue;
 		db.bd_info = &on->on_bi;
 		if ( db.bd_info->bi_db_open ) {
 			rc = db.bd_info->bi_db_open( &db, cr );
@@ -176,6 +178,8 @@ over_db_close(
 	int rc = 0;
 
 	for (; on && rc == 0; on=on->on_next) {
+		if ( on->on_bi.bi_flags & SLAPO_BFLAG_DISABLED )
+			continue;
 		be->bd_info = &on->on_bi;
 		if ( be->bd_info->bi_db_close ) {
 			rc = be->bd_info->bi_db_close( be, cr );
@@ -208,6 +212,8 @@ over_db_destroy(
 	}
 
 	for (; on && rc == 0; on=on->on_next) {
+		if ( on->on_bi.bi_flags & SLAPO_BFLAG_DISABLED )
+			continue;
 		be->bd_info = &on->on_bi;
 		if ( be->bd_info->bi_db_destroy ) {
 			rc = be->bd_info->bi_db_destroy( be, cr );
@@ -237,6 +243,8 @@ over_back_response ( Operation *op, SlapReply *rs )
 	db.be_flags |= SLAP_DBFLAG_OVERLAY;
 	op->o_bd = &db;
 	for (; on; on=on->on_next ) {
+		if ( on->on_bi.bi_flags & SLAPO_BFLAG_DISABLED )
+			continue;
 		if ( on->on_response ) {
 			db.bd_info = (BackendInfo *)on;
 			rc = on->on_response( op, rs );
@@ -282,6 +290,8 @@ over_access_allowed(
 	on = oi->oi_list;
 
 	for ( ; on; on = on->on_next ) {
+		if ( on->on_bi.bi_flags & SLAPO_BFLAG_DISABLED )
+			continue;
 		if ( on->on_bi.bi_access_allowed ) {
 			/* NOTE: do not copy the structure until required */
 		 	if ( !SLAP_ISOVERLAY( op->o_bd ) ) {
@@ -322,7 +332,9 @@ over_access_allowed(
 	}
 
 	op->o_bd = be;
-	op->o_bd->bd_info = bi;
+	if ( SLAP_ISOVERLAY( op->o_bd ) ) {
+		op->o_bd->bd_info = bi;
+	}
 
 	return rc;
 }
@@ -343,6 +355,8 @@ overlay_entry_get_ov(
 	int rc = SLAP_CB_CONTINUE;
 
 	for ( ; on; on = on->on_next ) {
+		if ( on->on_bi.bi_flags & SLAPO_BFLAG_DISABLED )
+			continue;
 		if ( on->on_bi.bi_entry_get_rw ) {
 			/* NOTE: do not copy the structure until required */
 		 	if ( !SLAP_ISOVERLAY( op->o_bd ) ) {
@@ -376,7 +390,9 @@ overlay_entry_get_ov(
 	}
 
 	op->o_bd = be;
-	op->o_bd->bd_info = bi;
+	if ( SLAP_ISOVERLAY( op->o_bd ) ) {
+		op->o_bd->bd_info = bi;
+	}
 
 	return rc;
 }
@@ -414,6 +430,8 @@ overlay_entry_release_ov(
 	int rc = SLAP_CB_CONTINUE;
 
 	for ( ; on; on = on->on_next ) {
+		if ( on->on_bi.bi_flags & SLAPO_BFLAG_DISABLED )
+			continue;
 		if ( on->on_bi.bi_entry_release_rw ) {
 			/* NOTE: do not copy the structure until required */
 		 	if ( !SLAP_ISOVERLAY( op->o_bd ) ) {
@@ -446,7 +464,9 @@ overlay_entry_release_ov(
 	}
 
 	op->o_bd = be;
-	op->o_bd->bd_info = bi;
+	if ( SLAP_ISOVERLAY( op->o_bd ) ) {
+		op->o_bd->bd_info = bi;
+	}
 
 	return rc;
 }
@@ -492,6 +512,8 @@ over_acl_group(
 	on = oi->oi_list;
 
 	for ( ; on; on = on->on_next ) {
+		if ( on->on_bi.bi_flags & SLAPO_BFLAG_DISABLED )
+			continue;
 		if ( on->on_bi.bi_acl_group ) {
 			/* NOTE: do not copy the structure until required */
 		 	if ( !SLAP_ISOVERLAY( op->o_bd ) ) {
@@ -532,7 +554,9 @@ over_acl_group(
 	}
 
 	op->o_bd = be;
-	op->o_bd->bd_info = bi;
+	if ( SLAP_ISOVERLAY( op->o_bd ) ) {
+		op->o_bd->bd_info = bi;
+	}
 
 	return rc;
 }
@@ -561,6 +585,8 @@ over_acl_attribute(
 	on = oi->oi_list;
 
 	for ( ; on; on = on->on_next ) {
+		if ( on->on_bi.bi_flags & SLAPO_BFLAG_DISABLED )
+			continue;
 		if ( on->on_bi.bi_acl_attribute ) {
 			/* NOTE: do not copy the structure until required */
 		 	if ( !SLAP_ISOVERLAY( op->o_bd ) ) {
@@ -601,7 +627,9 @@ over_acl_attribute(
 	}
 
 	op->o_bd = be;
-	op->o_bd->bd_info = bi;
+	if ( SLAP_ISOVERLAY( op->o_bd ) ) {
+		op->o_bd->bd_info = bi;
+	}
 
 	return rc;
 }
@@ -656,30 +684,31 @@ int overlay_op_walk(
 	slap_overinst *on
 )
 {
-	BI_op_bind **func;
+	BackendInfo *bi;
 	int rc = SLAP_CB_CONTINUE;
 
 	for (; on; on=on->on_next ) {
-		func = &on->on_bi.bi_op_bind;
-		if ( func[which] ) {
+		if ( on->on_bi.bi_flags & SLAPO_BFLAG_DISABLED )
+			continue;
+		bi = &on->on_bi;
+		if ( (&bi->bi_op_bind)[ which ] ) {
 			op->o_bd->bd_info = (BackendInfo *)on;
-			rc = func[which]( op, rs );
+			rc = (&bi->bi_op_bind)[ which ]( op, rs );
 			if ( rc != SLAP_CB_CONTINUE ) break;
 		}
 	}
 	if ( rc == SLAP_CB_BYPASS )
 		rc = SLAP_CB_CONTINUE;
-
 	/* if an overlay halted processing, make sure
 	 * any previously set cleanup handlers are run
 	 */
 	if ( rc != SLAP_CB_CONTINUE )
 		goto cleanup;
 
-	func = &oi->oi_orig->bi_op_bind;
-	if ( func[which] ) {
-		op->o_bd->bd_info = oi->oi_orig;
-		rc = func[which]( op, rs );
+	bi = oi->oi_orig;
+	if ( (&bi->bi_op_bind)[ which ] ) {
+		op->o_bd->bd_info = bi;
+		rc = (&bi->bi_op_bind)[ which ]( op, rs );
 	}
 	/* should not fall thru this far without anything happening... */
 	if ( rc == SLAP_CB_CONTINUE ) {
@@ -713,7 +742,8 @@ over_op_func(
 	slap_overinfo *oi;
 	slap_overinst *on;
 	BackendDB *be = op->o_bd, db;
-	slap_callback cb = {NULL, over_back_response, NULL, NULL}, **sc;
+	slap_callback **sc;
+	slap_callback *cb;
 	int rc = SLAP_CB_CONTINUE;
 
 	/* FIXME: used to happen for instance during abandon
@@ -728,15 +758,24 @@ over_op_func(
 		db.be_flags |= SLAP_DBFLAG_OVERLAY;
 		op->o_bd = &db;
 	}
-	cb.sc_next = op->o_callback;
-	cb.sc_private = oi;
-	op->o_callback = &cb;
+	if ( op->o_tag != LDAP_REQ_ABANDON && op->o_tag != LDAP_REQ_UNBIND ) {
+		cb = (slap_callback *)op->o_tmpcalloc( 1, sizeof(slap_callback), op->o_tmpmemctx );
+		cb->sc_cleanup = NULL;
+		cb->sc_response = over_back_response;
+		cb->sc_writewait = NULL;
+		cb->sc_next = op->o_callback;
+		cb->sc_private = oi;
+		op->o_callback = cb;
+	}
 
 	rc = overlay_op_walk( op, rs, which, oi, on );
-	for ( sc = &op->o_callback; *sc; sc = &(*sc)->sc_next ) {
-		if ( *sc == &cb ) {
-			*sc = cb.sc_next;
-			break;
+	if ( rc != SLAPD_ASYNCOP && op->o_tag != LDAP_REQ_ABANDON && op->o_tag != LDAP_REQ_UNBIND ) {
+		for ( sc = &op->o_callback; *sc; sc = &(*sc)->sc_next ) {
+			if ( *sc == cb ) {
+				*sc = cb->sc_next;
+				op->o_tmpfree( cb, op->o_tmpmemctx );
+				break;
+			}
 		}
 	}
 
@@ -861,6 +900,8 @@ over_connection_func(
 	}
 
 	for ( ; on; on = on->on_next ) {
+		if ( on->on_bi.bi_flags & SLAPO_BFLAG_DISABLED )
+			continue;
 		func = &on->on_bi.bi_connection_init;
 		if ( func[ which ] ) {
 			bd->bd_info = (BackendInfo *)on;
@@ -913,7 +954,7 @@ overlay_register(
 			Debug( LDAP_DEBUG_ANY,
 				"overlay_register(\"%s\"): "
 				"name already in use.\n",
-				on->on_bi.bi_type, 0, 0 );
+				on->on_bi.bi_type );
 			return -1;
 		}
 
@@ -946,7 +987,7 @@ overlay_register(
 						"name already in use "
 						"as obsolete by overlay \"%s\".\n",
 						on->on_bi.bi_type,
-						tmp->on_bi.bi_obsolete_names[ i ], 0 );
+						tmp->on_bi.bi_obsolete_names[ i ] );
 					return -1;
 				}
 
@@ -1018,7 +1059,7 @@ overlay_find( const char *over_type )
 						"overlay_find(\"%s\"): "
 						"obsolete name for \"%s\".\n",
 						on->on_bi.bi_obsolete_names[ i ],
-						on->on_bi.bi_type, 0 );
+						on->on_bi.bi_type );
 					goto foundit;
 				}
 			}
@@ -1088,7 +1129,7 @@ overlay_register_control( BackendDB *be, const char *oid )
 				gotit = 1;
 			}
 
-			/* overlays can be instanciated multiple times, use
+			/* overlays can be instantiated multiple times, use
 			 * be_ctrls[ cid ] as an instance counter, so that the
 			 * overlay's controls are only really disabled after the
 			 * last instance called overlay_register_control() */
@@ -1099,7 +1140,7 @@ overlay_register_control( BackendDB *be, const char *oid )
 	}
 	
 	if ( !gotit ) {
-		/* overlays can be instanciated multiple times, use
+		/* overlays can be instantiated multiple times, use
 		 * be_ctrls[ cid ] as an instance counter, so that the
 		 * overlay's controls are only really unregistered after the
 		 * last instance called overlay_register_control() */
@@ -1163,36 +1204,32 @@ overlay_destroy_one( BackendDB *be, slap_overinst *on )
 
 #ifdef SLAP_CONFIG_DELETE
 typedef struct ov_remove_ctx {
-	BackendDB *be;
+	BackendDB be;
 	slap_overinst *on;
 } ov_remove_ctx;
 
 int
 overlay_remove_cb( Operation *op, SlapReply *rs )
 {
+	slap_callback *sc = op->o_callback;
 	ov_remove_ctx *rm_ctx = (ov_remove_ctx*) op->o_callback->sc_private;
-	BackendInfo *bi_orig = rm_ctx->be->bd_info;
 
-	rm_ctx->be->bd_info = (BackendInfo*) rm_ctx->on;
+	op->o_callback = sc->sc_next;
+	rm_ctx->be.bd_info = (BackendInfo*) rm_ctx->on;
 
 	if ( rm_ctx->on->on_bi.bi_db_close ) {
-		rm_ctx->on->on_bi.bi_db_close( rm_ctx->be, NULL );
+		rm_ctx->on->on_bi.bi_db_close( &rm_ctx->be, NULL );
 	}
 	if ( rm_ctx->on->on_bi.bi_db_destroy ) {
-		rm_ctx->on->on_bi.bi_db_destroy( rm_ctx->be, NULL );
+		rm_ctx->on->on_bi.bi_db_destroy( &rm_ctx->be, NULL );
 	}
 
 	/* clean up after removing last overlay */
 	if ( ! rm_ctx->on->on_info->oi_list ) {
-		/* reset db flags and bd_info to orig */
-		SLAP_DBFLAGS( rm_ctx->be ) &= ~SLAP_DBFLAG_GLOBAL_OVERLAY;
-		rm_ctx->be->bd_info = rm_ctx->on->on_info->oi_orig;
 		ch_free(rm_ctx->on->on_info);
-	} else {
-		rm_ctx->be->bd_info = bi_orig;
 	}
-	free( rm_ctx->on );
-	op->o_tmpfree(rm_ctx, op->o_tmpmemctx);
+	ch_free( rm_ctx->on );
+	op->o_tmpfree( sc, op->o_tmpmemctx );
 	return SLAP_CB_CONTINUE;
 }
 
@@ -1215,16 +1252,17 @@ overlay_remove( BackendDB *be, slap_overinst *on, Operation *op )
 	/* The db_close and db_destroy handlers to cleanup a release
 	 * the overlay's resources are called from the cleanup callback
 	 */
-	rm_ctx = op->o_tmpalloc( sizeof( ov_remove_ctx ), op->o_tmpmemctx );
-	rm_ctx->be = be;
-	rm_ctx->on = on;
 
-	rm_cb = op->o_tmpalloc( sizeof( slap_callback ), op->o_tmpmemctx );
+	rm_cb = op->o_tmpalloc( sizeof( slap_callback ) + sizeof( ov_remove_ctx ), op->o_tmpmemctx );
 	rm_cb->sc_next = NULL;
 	rm_cb->sc_cleanup = overlay_remove_cb;
 	rm_cb->sc_response = NULL;
-	rm_cb->sc_private = (void*) rm_ctx;
+	rm_cb->sc_private = (void*) ( rm_cb + 1 );
 	rm_cb->sc_writewait = NULL;
+
+	rm_ctx = rm_cb->sc_private;
+	rm_ctx->be = *be;
+	rm_ctx->on = on;
 
 	/* Append callback to the end of the list */
 	if ( !op->o_callback ) {
@@ -1232,6 +1270,13 @@ overlay_remove( BackendDB *be, slap_overinst *on, Operation *op )
 	} else {
 		for ( cb = op->o_callback; cb->sc_next; cb = cb->sc_next );
 		cb->sc_next = rm_cb;
+	}
+
+	/* if this is the last overlay */
+	if ( ! on->on_info->oi_list ) {
+		/* reset db flags and bd_info to orig */
+		SLAP_DBFLAGS( be ) &= ~SLAP_DBFLAG_GLOBAL_OVERLAY;
+		be->bd_info = on->on_info->oi_orig;
 	}
 }
 #endif /* SLAP_CONFIG_DELETE */
@@ -1303,7 +1348,7 @@ overlay_config( BackendDB *be, const char *ov, int idx, BackendInfo **res, Confi
 
 	on = overlay_find( ov );
 	if ( !on ) {
-		Debug( LDAP_DEBUG_ANY, "overlay \"%s\" not found\n", ov, 0, 0 );
+		Debug( LDAP_DEBUG_ANY, "overlay \"%s\" not found\n", ov );
 		return 1;
 	}
 
@@ -1319,16 +1364,16 @@ overlay_config( BackendDB *be, const char *ov, int idx, BackendInfo **res, Confi
 		if ( be->bd_info == frontendDB->bd_info || SLAP_ISGLOBALOVERLAY( be ) ) {
 			isglobal = 1;
 			if ( on->on_bi.bi_flags & SLAPO_BFLAG_DBONLY ) {
-				Debug( LDAP_DEBUG_ANY, "overlay_config(): "
-					"overlay \"%s\" cannot be global.\n",
-					ov, 0, 0 );
+				snprintf( cr->msg, sizeof( cr->msg ), "overlay_config(): "
+					"overlay \"%s\" cannot be global.", ov );
+				Debug( LDAP_DEBUG_ANY, "%s\n", cr->msg );
 				return 1;
 			}
 
 		} else if ( on->on_bi.bi_flags & SLAPO_BFLAG_GLOBONLY ) {
-			Debug( LDAP_DEBUG_ANY, "overlay_config(): "
-				"overlay \"%s\" can only be global.\n",
-				ov, 0, 0 );
+			snprintf( cr->msg, sizeof( cr->msg ), "overlay_config(): "
+				"overlay \"%s\" can only be global.", ov );
+			Debug( LDAP_DEBUG_ANY, "%s\n", cr->msg );
 			return 1;
 		}
 
@@ -1391,10 +1436,10 @@ overlay_config( BackendDB *be, const char *ov, int idx, BackendInfo **res, Confi
 
 	} else {
 		if ( overlay_is_inst( be, ov ) ) {
-			if ( SLAPO_SINGLE( be ) ) {
-				Debug( LDAP_DEBUG_ANY, "overlay_config(): "
-					"overlay \"%s\" already in list\n",
-					ov, 0, 0 );
+			if ( on->on_bi.bi_flags & SLAPO_BFLAG_SINGLE ) {
+				snprintf( cr->msg, sizeof( cr->msg ), "overlay_config(): "
+					"overlay \"%s\" already in list", ov );
+				Debug( LDAP_DEBUG_ANY, "%s\n", cr->msg );
 				return 1;
 			}
 		}
@@ -1442,4 +1487,3 @@ overlay_config( BackendDB *be, const char *ov, int idx, BackendInfo **res, Confi
 
 	return 0;
 }
-

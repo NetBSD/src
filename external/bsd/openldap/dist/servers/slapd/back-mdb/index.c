@@ -1,10 +1,10 @@
-/*	$NetBSD: index.c,v 1.2 2020/08/11 13:15:40 christos Exp $	*/
+/*	$NetBSD: index.c,v 1.3 2021/08/14 16:15:00 christos Exp $	*/
 
 /* index.c - routines for dealing with attribute indexes */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2020 The OpenLDAP Foundation.
+ * Copyright 2000-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: index.c,v 1.2 2020/08/11 13:15:40 christos Exp $");
+__RCSID("$NetBSD: index.c,v 1.3 2021/08/14 16:15:00 christos Exp $");
 
 #include "portable.h"
 
@@ -196,8 +196,10 @@ static int indexer(
 	if ( opid == SLAP_INDEX_ADD_OP ) {
 #ifdef MDB_TOOL_IDL_CACHING
 		if (( slapMode & SLAP_TOOL_QUICK ) && slap_tool_thread_max > 2 ) {
+			AttrIxInfo *ax = (AttrIxInfo *)LDAP_SLIST_FIRST(&op->o_extra);
+			ax->ai_ai = ai;
 			keyfunc = mdb_tool_idl_add;
-			mc = (MDB_cursor *)ai;
+			mc = (MDB_cursor *)ax;
 		} else
 #endif
 			keyfunc = mdb_idl_insert_keys;
@@ -315,7 +317,7 @@ static int index_at_values(
 	/* If this type has no AD, we've never used it before */
 	if( type->sat_ad ) {
 		ai = mdb_attr_mask( op->o_bd->be_private, type->sat_ad );
-		if ( ai ) {
+		if ( ai && ( ai->ai_indexmask || ai->ai_newmask )) {
 #ifdef LDAP_COMP_MATCH
 			/* component indexing */
 			if ( ai->ai_cr ) {
@@ -354,7 +356,7 @@ static int index_at_values(
 		if( desc ) {
 			ai = mdb_attr_mask( op->o_bd->be_private, desc );
 
-			if( ai ) {
+			if( ai && ( ai->ai_indexmask || ai->ai_newmask )) {
 				if ( opid == MDB_INDEX_UPDATE_OP )
 					mask = ai->ai_newmask & ~ai->ai_indexmask;
 				else

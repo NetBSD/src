@@ -1,9 +1,9 @@
-/*	$NetBSD: lber_pvt.h,v 1.2 2020/08/11 13:15:37 christos Exp $	*/
+/*	$NetBSD: lber_pvt.h,v 1.3 2021/08/14 16:14:55 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -203,7 +203,8 @@ ber_bvarray_dup_x LDAP_P(( BerVarray *dst, BerVarray src, void *ctx ));
 		(dst)->bv_val = (bv)->bv_val; \
 	} while (0)
 
-#define BER_BVC(s)		{ STRLENOF(s), (char *)(s) }
+#define BER_STRLENOF(s)	(sizeof(s)-1)
+#define BER_BVC(s)		{ BER_STRLENOF(s), (char *)(s) }
 #define BER_BVNULL		{ 0L, NULL }
 #define BER_BVZERO(bv) \
 	do { \
@@ -212,7 +213,7 @@ ber_bvarray_dup_x LDAP_P(( BerVarray *dst, BerVarray src, void *ctx ));
 	} while (0)
 #define BER_BVSTR(bv,s)	\
 	do { \
-		(bv)->bv_len = STRLENOF(s); \
+		(bv)->bv_len = BER_STRLENOF(s); \
 		(bv)->bv_val = (s); \
 	} while (0)
 #define BER_BVISNULL(bv)	((bv)->bv_val == NULL)

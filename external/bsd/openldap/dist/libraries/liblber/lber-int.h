@@ -1,9 +1,9 @@
-/*	$NetBSD: lber-int.h,v 1.2 2020/08/11 13:15:37 christos Exp $	*/
+/*	$NetBSD: lber-int.h,v 1.3 2021/08/14 16:14:55 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,7 @@
 #define _LBER_INT_H
 
 #include "lber.h"
+#define LDAP_INT_DEBUG
 #include "ldap_log.h"
 #include "lber_pvt.h"
 #include "ldap_queue.h"

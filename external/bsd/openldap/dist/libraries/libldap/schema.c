@@ -1,9 +1,9 @@
-/*	$NetBSD: schema.c,v 1.2 2020/08/11 13:15:37 christos Exp $	*/
+/*	$NetBSD: schema.c,v 1.3 2021/08/14 16:14:56 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: schema.c,v 1.2 2020/08/11 13:15:37 christos Exp $");
+__RCSID("$NetBSD: schema.c,v 1.3 2021/08/14 16:14:56 christos Exp $");
 
 #include "portable.h"
 
@@ -982,7 +982,7 @@ ldap_attributetype2bv(  LDAPAttributeType * at, struct berval *bv )
  *
  * Each of them is written as a recursive-descent parser, except that
  * none of them is really recursive.  But the idea is kept: there
- * is one routine per non-terminal that eithers gobbles lexical tokens
+ * is one routine per non-terminal that either gobbles lexical tokens
  * or calls lower-level routines, etc.
  *
  * The scanner is implemented in the routine get_token.  Actually,
@@ -1346,7 +1346,7 @@ parse_oids(const char **sp, int *code, const int allow_quoted)
 
 	/*
 	 * Strictly speaking, doing this here accepts whsp before the
-	 * ( at the begining of an oidlist, but this is harmless.  Also,
+	 * ( at the beginning of an oidlist, but this is harmless.  Also,
 	 * we are very liberal in what we accept as an OID.  Maybe
 	 * refine later.
 	 */
@@ -2131,6 +2131,11 @@ ldap_str2attributetype( LDAP_CONST char * s,
 					/* Non-numerical OID ... */
 					int len = ss-savepos;
 					at->at_oid = LDAP_MALLOC(len+1);
+					if ( !at->at_oid ) {
+						ldap_attributetype_free(at);
+						return NULL;
+					}
+
 					strncpy(at->at_oid, savepos, len);
 					at->at_oid[len] = 0;
 				}
@@ -2504,6 +2509,11 @@ ldap_str2objectclass( LDAP_CONST char * s,
 					/* Non-numerical OID, ignore */
 					int len = ss-savepos;
 					oc->oc_oid = LDAP_MALLOC(len+1);
+					if ( !oc->oc_oid ) {
+						ldap_objectclass_free(oc);
+						return NULL;
+					}
+
 					strncpy(oc->oc_oid, savepos, len);
 					oc->oc_oid[len] = 0;
 				}
@@ -2785,6 +2795,11 @@ ldap_str2contentrule( LDAP_CONST char * s,
 					/* Non-numerical OID, ignore */
 					int len = ss-savepos;
 					cr->cr_oid = LDAP_MALLOC(len+1);
+					if ( !cr->cr_oid ) {
+						ldap_contentrule_free(cr);
+						return NULL;
+					}
+
 					strncpy(cr->cr_oid, savepos, len);
 					cr->cr_oid[len] = 0;
 				}

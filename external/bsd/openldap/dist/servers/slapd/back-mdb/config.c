@@ -1,10 +1,10 @@
-/*	$NetBSD: config.c,v 1.2 2020/08/11 13:15:40 christos Exp $	*/
+/*	$NetBSD: config.c,v 1.3 2021/08/14 16:15:00 christos Exp $	*/
 
 /* config.c - mdb backend configuration file routine */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2020 The OpenLDAP Foundation.
+ * Copyright 2000-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: config.c,v 1.2 2020/08/11 13:15:40 christos Exp $");
+__RCSID("$NetBSD: config.c,v 1.3 2021/08/14 16:15:00 christos Exp $");
 
 #include "portable.h"
 
@@ -27,13 +27,16 @@ __RCSID("$NetBSD: config.c,v 1.2 2020/08/11 13:15:40 christos Exp $");
 #include <ac/errno.h>
 
 #include "back-mdb.h"
+#include "idl.h"
 
-#include "config.h"
+#include "slap-config.h"
 
 #include "lutil.h"
 #include "ldap_rq.h"
 
+
 static ConfigDriver mdb_cf_gen;
+static ConfigDriver mdb_bk_cfg;
 
 enum {
 	MDB_CHKPT = 1,
@@ -44,22 +47,31 @@ enum {
 	MDB_MAXREADERS,
 	MDB_MAXSIZE,
 	MDB_MODE,
-	MDB_SSTACK
+	MDB_SSTACK,
+	MDB_MULTIVAL,
+	MDB_IDLEXP,
 };
 
 static ConfigTable mdbcfg[] = {
+	{ "idlexp", "log", 2, 2, 0, ARG_UINT|ARG_MAGIC|MDB_IDLEXP,
+		mdb_bk_cfg, "( OLcfgBkAt:12.1 NAME 'olcBkMdbIdlExp' "
+			"DESC 'Power of 2 used to set IDL size' "
+			"EQUALITY integerMatch "
+			"SYNTAX OMsInteger SINGLE-VALUE )", NULL, NULL },
 	{ "directory", "dir", 2, 2, 0, ARG_STRING|ARG_MAGIC|MDB_DIRECTORY,
 		mdb_cf_gen, "( OLcfgDbAt:0.1 NAME 'olcDbDirectory' "
 			"DESC 'Directory for database content' "
-			"EQUALITY caseIgnoreMatch "
+			"EQUALITY caseExactMatch "
 			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
 	{ "checkpoint", "kbyte> <min", 3, 3, 0, ARG_MAGIC|MDB_CHKPT,
 		mdb_cf_gen, "( OLcfgDbAt:1.2 NAME 'olcDbCheckpoint' "
 			"DESC 'Database checkpoint interval in kbytes and minutes' "
+			"EQUALITY caseIgnoreMatch "
 			"SYNTAX OMsDirectoryString SINGLE-VALUE )",NULL, NULL },
 	{ "dbnosync", NULL, 1, 2, 0, ARG_ON_OFF|ARG_MAGIC|MDB_DBNOSYNC,
 		mdb_cf_gen, "( OLcfgDbAt:1.4 NAME 'olcDbNoSync' "
 			"DESC 'Disable synchronous database writes' "
+			"EQUALITY booleanMatch "
 			"SYNTAX OMsBoolean SINGLE-VALUE )", NULL, NULL },
 	{ "envflags", "flags", 2, 0, 0, ARG_MAGIC|MDB_ENVFLAGS,
 		mdb_cf_gen, "( OLcfgDbAt:12.3 NAME 'olcDbEnvFlags' "
@@ -71,26 +83,44 @@ static ConfigTable mdbcfg[] = {
 		"DESC 'Attribute index parameters' "
 		"EQUALITY caseIgnoreMatch "
 		"SYNTAX OMsDirectoryString )", NULL, NULL },
+	{ "maxentrysize", "size", 2, 2, 0, ARG_ULONG|ARG_OFFSET,
+		(void *)offsetof(struct mdb_info, mi_maxentrysize),
+		"( OLcfgDbAt:12.4 NAME 'olcDbMaxEntrySize' "
+		"DESC 'Maximum size of an entry in bytes' "
+		"EQUALITY integerMatch "
+		"SYNTAX OMsInteger SINGLE-VALUE )", NULL, NULL },
 	{ "maxreaders", "num", 2, 2, 0, ARG_UINT|ARG_MAGIC|MDB_MAXREADERS,
 		mdb_cf_gen, "( OLcfgDbAt:12.1 NAME 'olcDbMaxReaders' "
 		"DESC 'Maximum number of threads that may access the DB concurrently' "
+		"EQUALITY integerMatch "
 		"SYNTAX OMsInteger SINGLE-VALUE )", NULL, NULL },
 	{ "maxsize", "size", 2, 2, 0, ARG_ULONG|ARG_MAGIC|MDB_MAXSIZE,
 		mdb_cf_gen, "( OLcfgDbAt:12.2 NAME 'olcDbMaxSize' "
 		"DESC 'Maximum size of DB in bytes' "
+		"EQUALITY integerMatch "
 		"SYNTAX OMsInteger SINGLE-VALUE )", NULL, NULL },
 	{ "mode", "mode", 2, 2, 0, ARG_MAGIC|MDB_MODE,
 		mdb_cf_gen, "( OLcfgDbAt:0.3 NAME 'olcDbMode' "
 		"DESC 'Unix permissions of database files' "
+		"EQUALITY caseIgnoreMatch "
 		"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
+	{ "multival", "attr> <hi,lo", 3, 3, 0, ARG_MAGIC|MDB_MULTIVAL,
+		mdb_cf_gen,
+		"( OLcfgDbAt:12.6 NAME 'olcDbMultival' "
+		"DESC 'Hi/Lo thresholds for splitting multivalued attr out of main blob' "
+		"EQUALITY caseIgnoreMatch "
+		"SYNTAX OMsDirectoryString )", NULL, NULL },
 	{ "rtxnsize", "entries", 2, 2, 0, ARG_UINT|ARG_OFFSET,
 		(void *)offsetof(struct mdb_info, mi_rtxn_size),
 		"( OLcfgDbAt:12.5 NAME 'olcDbRtxnSize' "
 		"DESC 'Number of entries to process in one read transaction' "
-		"SYNTAX OMsInteger SINGLE-VALUE )", NULL, NULL },
+		"EQUALITY integerMatch "
+		"SYNTAX OMsInteger SINGLE-VALUE )", NULL,
+		{ .v_uint = DEFAULT_RTXN_SIZE } },
 	{ "searchstack", "depth", 2, 2, 0, ARG_INT|ARG_MAGIC|MDB_SSTACK,
 		mdb_cf_gen, "( OLcfgDbAt:1.9 NAME 'olcDbSearchStack' "
 		"DESC 'Depth of search stack in IDLs' "
+		"EQUALITY integerMatch "
 		"SYNTAX OMsInteger SINGLE-VALUE )", NULL, NULL },
 	{ NULL, NULL, 0, 0, 0, ARG_IGNORED,
 		NULL, NULL, NULL, NULL }
@@ -98,15 +128,23 @@ static ConfigTable mdbcfg[] = {
 
 static ConfigOCs mdbocs[] = {
 	{
+		"( OLcfgBkOc:12.1 "
+		"NAME 'olcMdbBkConfig' "
+		"DESC 'MDB backend configuration' "
+		"SUP olcBackendConfig "
+		"MAY olcBkMdbIdlExp )",
+			Cft_Backend, mdbcfg },
+	{
 		"( OLcfgDbOc:12.1 "
 		"NAME 'olcMdbConfig' "
-		"DESC 'MDB backend configuration' "
+		"DESC 'MDB database configuration' "
 		"SUP olcDatabaseConfig "
 		"MUST olcDbDirectory "
 		"MAY ( olcDbCheckpoint $ olcDbEnvFlags $ "
 		"olcDbNoSync $ olcDbIndex $ olcDbMaxReaders $ olcDbMaxSize $ "
-		"olcDbMode $ olcDbSearchStack $ olcDbRtxnSize ) )",
-		 	Cft_Database, mdbcfg },
+		"olcDbMode $ olcDbSearchStack $ olcDbMaxEntrySize $ olcDbRtxnSize $ "
+		"olcDbMultival ) )",
+			Cft_Database, mdbcfg+1 },
 	{ NULL, 0, NULL }
 };
 
@@ -118,6 +156,32 @@ static slap_verbmasks mdb_envflags[] = {
 	{ BER_BVC("nordahead"),	MDB_NORDAHEAD },
 	{ BER_BVNULL, 0 }
 };
+
+static int
+mdb_bk_cfg( ConfigArgs *c )
+{
+	int rc = 0;
+	if ( c->op == SLAP_CONFIG_EMIT ) {
+		if ( MDB_idl_logn != MDB_IDL_LOGN )
+			c->value_int = MDB_idl_logn;
+		else
+			rc = 1;
+	} else if ( c->op == LDAP_MOD_DELETE ) {
+		/* We expect to immediately be followed by an Add, but */
+		MDB_idl_logn = MDB_IDL_LOGN;	/* return to default for safety */
+		mdb_idl_reset();
+		c->bi->bi_private = 0;
+	} else {
+		if ( c->value_int >= MDB_IDL_LOGN && c->value_int < sizeof(int) * CHAR_BIT ) {
+			MDB_idl_logn = c->value_int;
+			mdb_idl_reset();
+			c->bi->bi_private = (void *)8;	/* non-NULL to show we're using it */
+		} else {
+			rc = 1;
+		}
+	}
+	return rc;
+}
 
 /* perform periodic syncs */
 static void *
@@ -259,7 +323,7 @@ mdb_cf_cleanup( ConfigArgs *c )
 			snprintf( c->cr_msg, sizeof( c->cr_msg ),
 				"failed to reopen database, rc=%d", rc );
 			Debug( LDAP_DEBUG_ANY, LDAP_XSTRING(mdb_cf_cleanup)
-				": %s\n", c->cr_msg, 0, 0 );
+				": %s\n", c->cr_msg );
 			rc = LDAP_OTHER;
 		}
 	}
@@ -347,6 +411,11 @@ mdb_cf_gen( ConfigArgs *c )
 		case MDB_MAXSIZE:
 			c->value_ulong = mdb->mi_mapsize;
 			break;
+
+		case MDB_MULTIVAL:
+			mdb_attr_multi_unparse( mdb, &c->rvalue_vals );
+			if ( !c->rvalue_vals ) rc = 1;
+			break;
 		}
 		return rc;
 	} else if ( c->op == LDAP_MOD_DELETE ) {
@@ -382,7 +451,7 @@ mdb_cf_gen( ConfigArgs *c )
 			mdb->mi_flags |= MDB_RE_OPEN;
 			ch_free( mdb->mi_dbenv_home );
 			mdb->mi_dbenv_home = NULL;
-			c->cleanup = mdb_cf_cleanup;
+			config_push_cleanup( c, mdb_cf_cleanup );
 			ldap_pvt_thread_pool_purgekey( mdb->mi_dbenv );
 			break;
 		case MDB_DBNOSYNC:
@@ -399,7 +468,7 @@ mdb_cf_gen( ConfigArgs *c )
 						rc = mdb_env_set_flags( mdb->mi_dbenv, mdb_envflags[i].mask, 0 );
 						if ( rc ) {
 							mdb->mi_flags |= MDB_RE_OPEN;
-							c->cleanup = mdb_cf_cleanup;
+							config_push_cleanup( c, mdb_cf_cleanup );
 							rc = 0;
 						}
 						mdb->mi_dbenv_flags ^= mdb_envflags[i].mask;
@@ -411,7 +480,7 @@ mdb_cf_gen( ConfigArgs *c )
 					rc = mdb_env_set_flags( mdb->mi_dbenv, mdb_envflags[i].mask, 0 );
 					if ( rc ) {
 						mdb->mi_flags |= MDB_RE_OPEN;
-						c->cleanup = mdb_cf_cleanup;
+						config_push_cleanup( c, mdb_cf_cleanup );
 						rc = 0;
 					}
 					mdb->mi_dbenv_flags ^= mdb_envflags[i].mask;
@@ -419,7 +488,7 @@ mdb_cf_gen( ConfigArgs *c )
 					/* unknown keyword */
 					snprintf( c->cr_msg, sizeof( c->cr_msg ), "%s: unknown keyword \"%s\"",
 						c->argv[0], c->argv[i] );
-					Debug( LDAP_DEBUG_CONFIG, "%s %s\n", c->log, c->cr_msg, 0 );
+					Debug( LDAP_DEBUG_CONFIG, "%s %s\n", c->log, c->cr_msg );
 					rc = 1;
 				}
 			}
@@ -435,7 +504,7 @@ mdb_cf_gen( ConfigArgs *c )
 				}
 				mdb->mi_defaultmask = 0;
 				mdb->mi_flags |= MDB_DEL_INDEX;
-				c->cleanup = mdb_cf_cleanup;
+				config_push_cleanup( c, mdb_cf_cleanup );
 
 			} else {
 				struct berval bv, def = BER_BVC("default");
@@ -472,7 +541,62 @@ mdb_cf_gen( ConfigArgs *c )
 
 						ai->ai_indexmask |= MDB_INDEX_DELETING;
 						mdb->mi_flags |= MDB_DEL_INDEX;
-						c->cleanup = mdb_cf_cleanup;
+						config_push_cleanup( c, mdb_cf_cleanup );
+					}
+
+					bv.bv_val[ bv.bv_len ] = sep;
+					ldap_charray_free( attrs );
+				}
+			}
+			break;
+		case MDB_MULTIVAL:
+			if ( c->valx == -1 ) {
+				int i;
+
+				/* delete all */
+				for ( i = 0; i < mdb->mi_nattrs; i++ ) {
+					mdb->mi_attrs[i]->ai_multi_hi = UINT_MAX;
+					mdb->mi_attrs[i]->ai_multi_lo = UINT_MAX;
+				}
+				mdb->mi_multi_hi = UINT_MAX;
+				mdb->mi_multi_lo = UINT_MAX;
+
+			} else {
+				struct berval bv, def = BER_BVC("default");
+				char *ptr;
+
+				for (ptr = c->line; !isspace( (unsigned char) *ptr ); ptr++);
+
+				bv.bv_val = c->line;
+				bv.bv_len = ptr - bv.bv_val;
+				if ( bvmatch( &bv, &def )) {
+					mdb->mi_multi_hi = UINT_MAX;
+					mdb->mi_multi_lo = UINT_MAX;
+
+				} else {
+					int i;
+					char **attrs;
+					char sep;
+
+					sep = bv.bv_val[ bv.bv_len ];
+					bv.bv_val[ bv.bv_len ] = '\0';
+					attrs = ldap_str2charray( bv.bv_val, "," );
+
+					for ( i = 0; attrs[ i ]; i++ ) {
+						AttributeDescription *ad = NULL;
+						const char *text;
+						AttrInfo *ai;
+
+						slap_str2ad( attrs[ i ], &ad, &text );
+						/* if we got here... */
+						assert( ad != NULL );
+
+						ai = mdb_attr_mask( mdb, ad );
+						/* if we got here... */
+						assert( ai != NULL );
+
+						ai->ai_multi_hi = UINT_MAX;
+						ai->ai_multi_lo = UINT_MAX;
 					}
 
 					bv.bv_val[ bv.bv_len ] = sep;
@@ -582,9 +706,11 @@ mdb_cf_gen( ConfigArgs *c )
 		}
 		ch_free( testpath );
 		if ( !f ) {
+			char ebuf[128];
+			int saved_errno = errno;
 			snprintf( c->cr_msg, sizeof( c->cr_msg ), "%s: invalid path: %s",
-				c->log, strerror( errno ));
-			Debug( LDAP_DEBUG_ANY, "%s\n", c->cr_msg, 0, 0 );
+				c->log, AC_STRERROR_R( saved_errno, ebuf, sizeof(ebuf) ) );
+			Debug( LDAP_DEBUG_ANY, "%s\n", c->cr_msg );
 			return -1;
 		}
 
@@ -617,7 +743,7 @@ mdb_cf_gen( ConfigArgs *c )
 					rc = 0;
 				if ( rc ) {
 					mdb->mi_flags |= MDB_RE_OPEN;
-					c->cleanup = mdb_cf_cleanup;
+					config_push_cleanup( c, mdb_cf_cleanup );
 					rc = 0;
 				}
 				mdb->mi_dbenv_flags |= mdb_envflags[j].mask;
@@ -625,7 +751,7 @@ mdb_cf_gen( ConfigArgs *c )
 				/* unknown keyword */
 				snprintf( c->cr_msg, sizeof( c->cr_msg ), "%s: unknown keyword \"%s\"",
 					c->argv[0], c->argv[i] );
-				Debug( LDAP_DEBUG_ANY, "%s %s\n", c->log, c->cr_msg, 0 );
+				Debug( LDAP_DEBUG_ANY, "%s %s\n", c->log, c->cr_msg );
 				return 1;
 			}
 		}
@@ -639,7 +765,7 @@ mdb_cf_gen( ConfigArgs *c )
 		if( rc != LDAP_SUCCESS ) return 1;
 		if ( mdb->mi_flags & MDB_IS_OPEN ) {
 			mdb->mi_flags |= MDB_OPEN_INDEX;
-			c->cleanup = mdb_cf_cleanup;
+			config_push_cleanup( c, mdb_cf_cleanup );
 			if ( !mdb->mi_index_task ) {
 				/* Start the task as soon as we finish here. Set a long
 				 * interval (10 hours) so that it only gets scheduled once.
@@ -673,7 +799,7 @@ mdb_cf_gen( ConfigArgs *c )
 		mdb->mi_readers = c->value_int;
 		if ( mdb->mi_flags & MDB_IS_OPEN ) {
 			mdb->mi_flags |= MDB_RE_OPEN;
-			c->cleanup = mdb_cf_cleanup;
+			config_push_cleanup( c, mdb_cf_cleanup );
 		}
 		break;
 
@@ -681,10 +807,16 @@ mdb_cf_gen( ConfigArgs *c )
 		mdb->mi_mapsize = c->value_ulong;
 		if ( mdb->mi_flags & MDB_IS_OPEN ) {
 			mdb->mi_flags |= MDB_RE_OPEN;
-			c->cleanup = mdb_cf_cleanup;
+			config_push_cleanup( c, mdb_cf_cleanup );
 		}
 		break;
 
+	case MDB_MULTIVAL:
+		rc = mdb_attr_multi_config( mdb, c->fname, c->lineno,
+			c->argc - 1, &c->argv[1], &c->reply);
+
+		if( rc != LDAP_SUCCESS ) return 1;
+		break;
 	}
 	return 0;
 }

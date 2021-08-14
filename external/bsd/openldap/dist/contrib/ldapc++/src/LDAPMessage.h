@@ -1,8 +1,8 @@
-/*	$NetBSD: LDAPMessage.h,v 1.2 2020/08/11 13:15:34 christos Exp $	*/
+/*	$NetBSD: LDAPMessage.h,v 1.3 2021/08/14 16:14:49 christos Exp $	*/
 
 // $OpenLDAP$
 /*
- * Copyright 2000-2020 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2000-2021 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -48,7 +48,7 @@ class LDAPMsg{
         static const int EXTENDED_REQUEST=LDAP_REQ_EXTENDED;
        
         /**
-         * The destructor has no implemenation, because this is an abstract
+         * The destructor has no implementation, because this is an abstract
          * class.
          */
         virtual ~LDAPMsg() {}
@@ -83,7 +83,7 @@ class LDAPMsg{
          *          DEL_RESPONSE       <BR>  
          *          MODDN_RESPONSE     <BR>    
          *          COMPARE_RESPONSE   <BR>
-         *          EXTENDED_REPONSE   <BR>      
+         *          EXTENDED_RESPONSE   <BR>
          */
         int getMessageType();
         

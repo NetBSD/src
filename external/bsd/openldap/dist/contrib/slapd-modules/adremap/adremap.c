@@ -1,4 +1,4 @@
-/*	$NetBSD: adremap.c,v 1.1.1.1 2021/08/14 16:05:15 christos Exp $	*/
+/*	$NetBSD: adremap.c,v 1.2 2021/08/14 16:14:50 christos Exp $	*/
 
 /* adremap.c - Case-folding and DN-value remapping for AD proxies */
 /* $OpenLDAP$ */
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: adremap.c,v 1.1.1.1 2021/08/14 16:05:15 christos Exp $");
+__RCSID("$NetBSD: adremap.c,v 1.2 2021/08/14 16:14:50 christos Exp $");
 
 #include "portable.h"
 

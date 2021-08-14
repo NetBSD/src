@@ -1,9 +1,9 @@
-/*	$NetBSD: seqmod.c,v 1.2 2020/08/11 13:15:42 christos Exp $	*/
+/*	$NetBSD: seqmod.c,v 1.3 2021/08/14 16:15:02 christos Exp $	*/
 
 /* seqmod.c - sequenced modifies */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2020 The OpenLDAP Foundation.
+ * Copyright 2004-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -20,14 +20,14 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: seqmod.c,v 1.2 2020/08/11 13:15:42 christos Exp $");
+__RCSID("$NetBSD: seqmod.c,v 1.3 2021/08/14 16:15:02 christos Exp $");
 
 #include "portable.h"
 
 #ifdef SLAPD_OVER_SEQMOD
 
 #include "slap.h"
-#include "config.h"
+#include "slap-config.h"
 
 /* This overlay serializes concurrent attempts to modify a single entry */
 
@@ -66,7 +66,7 @@ seqmod_op_cleanup( Operation *op, SlapReply *rs )
 	mtdummy.mt_op = op;
 	/* This op is done, remove it */
 	ldap_pvt_thread_mutex_lock( &sm->sm_mutex );
-	av = avl_find2( sm->sm_mods, &mtdummy, sm_avl_cmp );
+	av = ldap_avl_find2( sm->sm_mods, &mtdummy, sm_avl_cmp );
 	assert(av != NULL);
 
 	mt = av->avl_data;
@@ -76,7 +76,7 @@ seqmod_op_cleanup( Operation *op, SlapReply *rs )
 		av->avl_data = mt->mt_next;
 		mt->mt_next->mt_tail = mt->mt_tail;
 	} else {
-		avl_delete( &sm->sm_mods, mt, sm_avl_cmp );
+		ldap_avl_delete( &sm->sm_mods, mt, sm_avl_cmp );
 	}
 	ldap_pvt_thread_mutex_unlock( &sm->sm_mutex );
 	op->o_callback = sc->sc_next;
@@ -105,7 +105,7 @@ seqmod_op_mod( Operation *op, SlapReply *rs )
 	 * near-simultaneous mods of the same entry
 	 */
 	ldap_pvt_thread_mutex_lock( &sm->sm_mutex );
-	av = avl_find2( sm->sm_mods, mt, sm_avl_cmp );
+	av = ldap_avl_find2( sm->sm_mods, mt, sm_avl_cmp );
 	if ( av ) {
 		modtarget *mtp = av->avl_data;
 		mtp->mt_tail->mt_next = mt;
@@ -121,7 +121,7 @@ seqmod_op_mod( Operation *op, SlapReply *rs )
 		}
 	} else {
 		/* Record that we're modifying this now */
-		avl_insert( &sm->sm_mods, mt, sm_avl_cmp, avl_dup_error );
+		ldap_avl_insert( &sm->sm_mods, mt, sm_avl_cmp, ldap_avl_dup_error );
 	}
 	ldap_pvt_thread_mutex_unlock( &sm->sm_mutex );
 
@@ -190,6 +190,7 @@ int
 seqmod_initialize()
 {
 	seqmod.on_bi.bi_type = "seqmod";
+	seqmod.on_bi.bi_flags = SLAPO_BFLAG_SINGLE;
 	seqmod.on_bi.bi_db_open = seqmod_db_open;
 	seqmod.on_bi.bi_db_close = seqmod_db_close;
 

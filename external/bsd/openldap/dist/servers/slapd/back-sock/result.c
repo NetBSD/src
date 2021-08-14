@@ -1,10 +1,10 @@
-/*	$NetBSD: result.c,v 1.2 2020/08/11 13:15:42 christos Exp $	*/
+/*	$NetBSD: result.c,v 1.3 2021/08/14 16:15:01 christos Exp $	*/
 
 /* result.c - sock backend result reading function */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2007-2020 The OpenLDAP Foundation.
+ * Copyright 2007-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: result.c,v 1.2 2020/08/11 13:15:42 christos Exp $");
+__RCSID("$NetBSD: result.c,v 1.3 2021/08/14 16:15:01 christos Exp $");
 
 #include "portable.h"
 
@@ -62,15 +62,16 @@ sock_read_and_send_results(
 	while ( !feof(fp) ) {
 		errno = 0;
 		if ( fgets( line, sizeof(line), fp ) == NULL ) {
+			int saved_errno = errno;
 			if ( errno == EINTR ) continue;
 
 			Debug( LDAP_DEBUG_ANY, "sock: fgets failed: %s (%d)\n",
-				AC_STRERROR_R(errno, ebuf, sizeof ebuf), errno, 0 ); 
+				AC_STRERROR_R(saved_errno, ebuf, sizeof ebuf), saved_errno );
 			break;
 		}
 
 		Debug( LDAP_DEBUG_SHELL, "sock search reading line (%s)\n",
-		    line, 0, 0 );
+		    line );
 
 		/* ignore lines beginning with # (LDIFv1 comments) */
 		if ( *line == '#' ) {
@@ -108,7 +109,7 @@ sock_read_and_send_results(
 
 			if ( (rs->sr_entry = str2entry( buf )) == NULL ) {
 				Debug( LDAP_DEBUG_ANY, "str2entry(%s) failed\n",
-				    buf, 0, 0 );
+				    buf );
 			} else {
 				rs->sr_attrs = op->oq_search.rs_attrs;
 				rs->sr_flags = REP_ENTRY_MODIFIABLE;

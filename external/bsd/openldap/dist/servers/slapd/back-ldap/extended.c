@@ -1,10 +1,10 @@
-/*	$NetBSD: extended.c,v 1.2 2020/08/11 13:15:40 christos Exp $	*/
+/*	$NetBSD: extended.c,v 1.3 2021/08/14 16:14:59 christos Exp $	*/
 
 /* extended.c - ldap backend extended routines */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2020 The OpenLDAP Foundation.
+ * Copyright 2003-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: extended.c,v 1.2 2020/08/11 13:15:40 christos Exp $");
+__RCSID("$NetBSD: extended.c,v 1.3 2021/08/14 16:14:59 christos Exp $");
 
 #include "portable.h"
 
@@ -188,7 +188,7 @@ ldap_back_exop_passwd(
 	isproxy = ber_bvcmp( &ndn, &op->o_ndn );
 
 	Debug( LDAP_DEBUG_ARGS, "==> ldap_back_exop_passwd(\"%s\")%s\n",
-		dn.bv_val, isproxy ? " (proxy)" : "", 0 );
+		dn.bv_val, isproxy ? " (proxy)" : "" );
 
 retry:
 	rc = ldap_passwd( lc->lc_ld,  &dn,
@@ -318,7 +318,7 @@ ldap_back_exop_generic(
 	char		*text = NULL;
 
 	Debug( LDAP_DEBUG_ARGS, "==> ldap_back_exop_generic(%s, \"%s\")\n",
-		op->ore_reqoid.bv_val, op->o_req_dn.bv_val, 0 );
+		op->ore_reqoid.bv_val, op->o_req_dn.bv_val );
 	assert( lc != NULL );
 	assert( rs->sr_ctrls == NULL );
 

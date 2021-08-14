@@ -1,9 +1,9 @@
-/*	$NetBSD: ldap.h,v 1.2 2020/08/11 13:15:37 christos Exp $	*/
+/*	$NetBSD: ldap.h,v 1.3 2021/08/14 16:14:55 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  * 
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -56,19 +56,12 @@ LDAP_BEGIN_DECL
 /* OpenLDAP API Features */
 #define LDAP_API_FEATURE_X_OPENLDAP LDAP_VENDOR_VERSION
 
-#if defined( LDAP_API_FEATURE_X_OPENLDAP_REENTRANT ) || \
-	( defined( LDAP_THREAD_SAFE ) && \
-		defined( LDAP_API_FEATURE_X_OPENLDAP_THREAD_SAFE ) )
-	/* -lldap may or may not be thread safe */
-	/* -lldap_r, if available, is always thread safe */
+#if defined( LDAP_API_FEATURE_X_OPENLDAP_REENTRANT )
 #	define	LDAP_API_FEATURE_THREAD_SAFE 		1
+#endif
+#if defined( LDAP_API_FEATURE_X_OPENLDAP_THREAD_SAFE )
 #	define  LDAP_API_FEATURE_SESSION_THREAD_SAFE	1
 #	define  LDAP_API_FEATURE_OPERATION_THREAD_SAFE	1
-#endif
-#if defined( LDAP_THREAD_SAFE ) && \
-	defined( LDAP_API_FEATURE_X_OPENLDAP_THREAD_SAFE )
-/* #define LDAP_API_FEATURE_SESSION_SAFE	1	*/
-/* #define LDAP_API_OPERATION_SESSION_SAFE	1	*/
 #endif
 
 
@@ -140,6 +133,9 @@ LDAP_BEGIN_DECL
 #define	LDAP_OPT_CONNECT_ASYNC		0x5010	/* create connections asynchronously */
 #define	LDAP_OPT_CONNECT_CB			0x5011	/* connection callbacks */
 #define	LDAP_OPT_SESSION_REFCNT		0x5012	/* session reference count */
+#define	LDAP_OPT_KEEPCONN		0x5013	/* keep the connection on read error or NoD */
+#define	LDAP_OPT_SOCKET_BIND_ADDRESSES	0x5014	/* user configured bind IPs */
+#define	LDAP_OPT_TCP_USER_TIMEOUT	0x5015	/* set TCP_USER_TIMEOUT if the OS supports it, ignored otherwise */
 
 /* OpenLDAP TLS options */
 #define LDAP_OPT_X_TLS				0x6000
@@ -161,6 +157,15 @@ LDAP_BEGIN_DECL
 #define LDAP_OPT_X_TLS_CRLFILE		0x6010	/* GNUtls only */
 #define LDAP_OPT_X_TLS_PACKAGE		0x6011
 #define LDAP_OPT_X_TLS_ECNAME		0x6012
+#define LDAP_OPT_X_TLS_VERSION		0x6013	/* read-only */
+#define LDAP_OPT_X_TLS_CIPHER		0x6014	/* read-only */
+#define LDAP_OPT_X_TLS_PEERCERT		0x6015	/* read-only */
+#define LDAP_OPT_X_TLS_CACERT		0x6016
+#define LDAP_OPT_X_TLS_CERT			0x6017
+#define LDAP_OPT_X_TLS_KEY			0x6018
+#define LDAP_OPT_X_TLS_PEERKEY_HASH	0x6019
+#define LDAP_OPT_X_TLS_REQUIRE_SAN	0x601a
+#define LDAP_OPT_X_TLS_PROTOCOL_MAX	0x601b
 
 #define LDAP_OPT_X_TLS_NEVER	0
 #define LDAP_OPT_X_TLS_HARD		1
@@ -172,13 +177,18 @@ LDAP_BEGIN_DECL
 #define LDAP_OPT_X_TLS_CRL_PEER	1
 #define LDAP_OPT_X_TLS_CRL_ALL	2
 
-/* for LDAP_OPT_X_TLS_PROTOCOL_MIN */
+/* for LDAP_OPT_X_TLS_PROTOCOL_MIN/MAX */
 #define LDAP_OPT_X_TLS_PROTOCOL(maj,min)	(((maj) << 8) + (min))
 #define LDAP_OPT_X_TLS_PROTOCOL_SSL2		(2 << 8)
 #define LDAP_OPT_X_TLS_PROTOCOL_SSL3		(3 << 8)
 #define LDAP_OPT_X_TLS_PROTOCOL_TLS1_0		((3 << 8) + 1)
 #define LDAP_OPT_X_TLS_PROTOCOL_TLS1_1		((3 << 8) + 2)
 #define LDAP_OPT_X_TLS_PROTOCOL_TLS1_2		((3 << 8) + 3)
+#define LDAP_OPT_X_TLS_PROTOCOL_TLS1_3		((3 << 8) + 4)
+
+#define LDAP_OPT_X_SASL_CBINDING_NONE		0
+#define LDAP_OPT_X_SASL_CBINDING_TLS_UNIQUE	1
+#define LDAP_OPT_X_SASL_CBINDING_TLS_ENDPOINT	2
 
 /* OpenLDAP SASL options */
 #define LDAP_OPT_X_SASL_MECH			0x6100
@@ -195,6 +205,7 @@ LDAP_BEGIN_DECL
 #define LDAP_OPT_X_SASL_NOCANON			0x610b
 #define LDAP_OPT_X_SASL_USERNAME		0x610c /* read-only */
 #define LDAP_OPT_X_SASL_GSS_CREDS		0x610d
+#define LDAP_OPT_X_SASL_CBINDING		0x610e
 
 /* OpenLDAP GSSAPI options */
 #define LDAP_OPT_X_GSSAPI_DO_NOT_FREE_CONTEXT      0x6200
@@ -268,6 +279,9 @@ typedef struct ldapcontrol {
 /*	non-standard track controls */
 #define LDAP_CONTROL_PAGEDRESULTS	"1.2.840.113556.1.4.319"   /* RFC 2696 */
 
+#define LDAP_CONTROL_AUTHZID_REQUEST	"2.16.840.1.113730.3.4.16"   /* RFC 3829 */
+#define LDAP_CONTROL_AUTHZID_RESPONSE   "2.16.840.1.113730.3.4.15"   /* RFC 3829 */
+
 /* LDAP Content Synchronization Operation -- RFC 4533 */
 #define LDAP_SYNC_OID			"1.3.6.1.4.1.4203.1.9.1"
 #define LDAP_CONTROL_SYNC		LDAP_SYNC_OID ".1"
@@ -328,6 +342,7 @@ typedef struct ldapcontrol {
 #define LDAP_REFERRALS_REQUIRED				3
 
 /* MS Active Directory controls (for compatibility) */
+#define LDAP_CONTROL_X_LAZY_COMMIT			"1.2.840.113556.1.4.619"
 #define LDAP_CONTROL_X_INCREMENTAL_VALUES	"1.2.840.113556.1.4.802"
 #define LDAP_CONTROL_X_DOMAIN_SCOPE			"1.2.840.113556.1.4.1339"
 #define LDAP_CONTROL_X_PERMISSIVE_MODIFY	"1.2.840.113556.1.4.1413"
@@ -337,7 +352,16 @@ typedef struct ldapcontrol {
 #define LDAP_CONTROL_X_TREE_DELETE		"1.2.840.113556.1.4.805"
 
 /* MS Active Directory controls - not implemented in slapd(8) */
+#define LDAP_CONTROL_X_SERVER_NOTIFICATION	"1.2.840.113556.1.4.528"
 #define LDAP_CONTROL_X_EXTENDED_DN		"1.2.840.113556.1.4.529"
+#define LDAP_CONTROL_X_SHOW_DELETED		"1.2.840.113556.1.4.417"
+#define LDAP_CONTROL_X_DIRSYNC			"1.2.840.113556.1.4.841"
+
+#define LDAP_CONTROL_X_DIRSYNC_OBJECT_SECURITY		0x00000001
+#define LDAP_CONTROL_X_DIRSYNC_ANCESTORS_FIRST		0x00000800
+#define LDAP_CONTROL_X_DIRSYNC_PUBLIC_DATA_ONLY		0x00002000
+#define LDAP_CONTROL_X_DIRSYNC_INCREMENTAL_VALUES	0x80000000
+
 
 /* <draft-wahl-ldap-session> */
 #define LDAP_CONTROL_X_SESSION_TRACKING		"1.3.6.1.4.1.21008.108.63.1"
@@ -367,6 +391,23 @@ typedef struct ldapcontrol {
 #define LDAP_CONTROL_VLVREQUEST    	"2.16.840.1.113730.3.4.9"
 #define LDAP_CONTROL_VLVRESPONSE    "2.16.840.1.113730.3.4.10"
 
+/* Sun's analogue to ppolicy */
+#define LDAP_CONTROL_X_ACCOUNT_USABILITY "1.3.6.1.4.1.42.2.27.9.5.8"
+
+#define LDAP_TAG_X_ACCOUNT_USABILITY_AVAILABLE	((ber_tag_t) 0x80U)	/* primitive + 0 */
+#define LDAP_TAG_X_ACCOUNT_USABILITY_NOT_AVAILABLE	((ber_tag_t) 0xA1U)	/* constructed + 1 */
+
+#define LDAP_TAG_X_ACCOUNT_USABILITY_INACTIVE	((ber_tag_t) 0x80U)	/* primitive + 0 */
+#define LDAP_TAG_X_ACCOUNT_USABILITY_RESET	((ber_tag_t) 0x81U)	/* primitive + 1 */
+#define LDAP_TAG_X_ACCOUNT_USABILITY_EXPIRED	((ber_tag_t) 0x82U)	/* primitive + 2 */
+#define LDAP_TAG_X_ACCOUNT_USABILITY_REMAINING_GRACE	((ber_tag_t) 0x83U)	/* primitive + 3 */
+#define LDAP_TAG_X_ACCOUNT_USABILITY_UNTIL_UNLOCK	((ber_tag_t) 0x84U)	/* primitive + 4 */
+
+/* Netscape Password policy response controls */
+/* <draft-vchu-ldap-pwd-policy> */
+#define LDAP_CONTROL_X_PASSWORD_EXPIRED		"2.16.840.1.113730.3.4.4"
+#define LDAP_CONTROL_X_PASSWORD_EXPIRING	"2.16.840.1.113730.3.4.5"
+
 /* LDAP Unsolicited Notifications */
 #define	LDAP_NOTICE_OF_DISCONNECTION	"1.3.6.1.4.1.1466.20036" /* RFC 4511 */
 #define LDAP_NOTICE_DISCONNECT LDAP_NOTICE_OF_DISCONNECTION
@@ -387,6 +428,13 @@ typedef struct ldapcontrol {
 #define	LDAP_TAG_EXOP_REFRESH_REQ_DN	((ber_tag_t) 0x80U)
 #define	LDAP_TAG_EXOP_REFRESH_REQ_TTL	((ber_tag_t) 0x81U)
 #define	LDAP_TAG_EXOP_REFRESH_RES_TTL	((ber_tag_t) 0x81U)
+
+#define LDAP_EXOP_VERIFY_CREDENTIALS	"1.3.6.1.4.1.4203.666.6.5"
+#define LDAP_EXOP_X_VERIFY_CREDENTIALS	LDAP_EXOP_VERIFY_CREDENTIALS
+
+#define LDAP_TAG_EXOP_VERIFY_CREDENTIALS_COOKIE	 ((ber_tag_t) 0x80U)
+#define LDAP_TAG_EXOP_VERIFY_CREDENTIALS_SCREDS	 ((ber_tag_t) 0x81U)
+#define LDAP_TAG_EXOP_VERIFY_CREDENTIALS_CONTROLS ((ber_tag_t) 0xa2U) /* context specific + constructed + 2 */
 
 #define LDAP_EXOP_WHO_AM_I		"1.3.6.1.4.1.4203.1.11.3"		/* RFC 4532 */
 #define LDAP_EXOP_X_WHO_AM_I	LDAP_EXOP_WHO_AM_I
@@ -411,13 +459,11 @@ typedef struct ldapcontrol {
 #define LDAP_URLEXT_X_SEARCHEDSUBTREE	"x-searchedSubtree"
 #define LDAP_URLEXT_X_FAILEDNAME	"x-failedName"
 
-#ifdef LDAP_DEVEL
-#define LDAP_X_TXN						"1.3.6.1.4.1.4203.666.11.7" /* tmp */
-#define LDAP_EXOP_X_TXN_START			LDAP_X_TXN ".1"
-#define LDAP_CONTROL_X_TXN_SPEC			LDAP_X_TXN ".2"
-#define LDAP_EXOP_X_TXN_END				LDAP_X_TXN ".3"
-#define LDAP_EXOP_X_TXN_ABORTED_NOTICE	LDAP_X_TXN ".4"
-#endif
+#define LDAP_TXN						"1.3.6.1.1.21" /* RFC 5805 */
+#define LDAP_EXOP_TXN_START				LDAP_TXN ".1"
+#define LDAP_CONTROL_TXN_SPEC			LDAP_TXN ".2"
+#define LDAP_EXOP_TXN_END				LDAP_TXN ".3"
+#define LDAP_EXOP_TXN_ABORTED_NOTICE	LDAP_TXN ".4"
 
 /* LDAP Features */
 #define LDAP_FEATURE_ALL_OP_ATTRS	"1.3.6.1.4.1.4203.1.5.1"	/* RFC 3673 */
@@ -682,10 +728,8 @@ typedef struct ldapcontrol {
 #define LDAP_X_INVALIDREFERENCE			0x4112
 #endif
 
-#ifdef LDAP_X_TXN
-#define LDAP_X_TXN_SPECIFY_OKAY		0x4120
-#define LDAP_X_TXN_ID_INVALID		0x4121
-#endif
+#define LDAP_TXN_SPECIFY_OKAY		0x4120
+#define LDAP_TXN_ID_INVALID			0x4121
 
 /* API Error Codes
  *
@@ -1358,7 +1402,7 @@ ldap_parse_result LDAP_P((
 	LDAPMessage		*res,
 	int				*errcodep,
 	char			**matcheddnp,
-	char			**errmsgp,
+	char			**diagmsgp,
 	char			***referralsp,
 	LDAPControl		***serverctrls,
 	int				freeit ));
@@ -1379,7 +1423,6 @@ ldap_perror LDAP_P((	/* deprecated, use ldap_err2string */
 	LDAP *ld,
 	LDAP_CONST char *s ));
 #endif
-
 
 /*
  * gssapi.c:
@@ -1528,6 +1571,9 @@ ldap_initialize LDAP_P((
 LDAP_F( LDAP * )
 ldap_dup LDAP_P((
 	LDAP *old ));
+
+LDAP_F( int )
+ldap_connect( LDAP *ld );
 
 /*
  * in tls.c
@@ -2224,6 +2270,76 @@ ldap_parse_vlvresponse_control LDAP_P((
 	int           *errcodep ));
 
 /*
+ * LDAP Verify Credentials
+ */
+#define LDAP_API_FEATURE_VERIFY_CREDENTIALS 1000
+
+LDAP_F( int )
+ldap_verify_credentials LDAP_P((
+	LDAP		*ld,
+	struct berval	*cookie,
+	LDAP_CONST char	*dn,
+	LDAP_CONST char	*mechanism,
+	struct berval	*cred,
+	LDAPControl	**ctrls,
+	LDAPControl	**serverctrls,
+	LDAPControl	**clientctrls,
+	int		*msgidp ));
+
+LDAP_F( int )
+ldap_verify_credentials_s LDAP_P((
+	LDAP		*ld,
+	struct berval	*cookie,
+	LDAP_CONST char	*dn,
+	LDAP_CONST char	*mechanism,
+	struct berval	*cred,
+	LDAPControl	**vcictrls,
+	LDAPControl	**serverctrls,
+	LDAPControl	**clientctrls,
+	int				*code,
+	char			**diagmsgp,
+	struct berval	**scookie,
+	struct berval	**servercredp,
+	LDAPControl	***vcoctrls));
+	
+
+LDAP_F( int )
+ldap_parse_verify_credentials LDAP_P((
+	LDAP		*ld,
+	LDAPMessage	*res,
+	int			*code,
+	char			**diagmsgp,
+	struct berval	**cookie,
+	struct berval	**servercredp,
+	LDAPControl	***vcctrls));
+
+/* not yet implemented */
+/* #define LDAP_API_FEATURE_VERIFY_CREDENTIALS_INTERACTIVE 1000 */
+#ifdef LDAP_API_FEATURE_VERIFY_CREDENTIALS_INTERACTIVE
+LDAP_F( int )
+ldap_verify_credentials_interactive LDAP_P((
+	LDAP *ld,
+	LDAP_CONST char *dn, /* usually NULL */
+	LDAP_CONST char *saslMechanism,
+	LDAPControl **vcControls,
+	LDAPControl **serverControls,
+	LDAPControl **clientControls,
+
+	/* should be client controls */
+	unsigned flags,
+	LDAP_SASL_INTERACT_PROC *proc,
+	void *defaults,
+	void *context,
+	
+	/* as obtained from ldap_result() */
+	LDAPMessage *result,
+
+	/* returned during bind processing */
+	const char **rmech,
+	int *msgid ));
+#endif
+
+/*
  * LDAP Who Am I?
  *	in whoami.c
  */
@@ -2296,6 +2412,7 @@ typedef enum passpolicyerror_enum {
        PP_passwordTooShort = 6,
        PP_passwordTooYoung = 7,
        PP_passwordInHistory = 8,
+       PP_passwordTooLong = 9,
        PP_noError = 65535
 } LDAPPasswordPolicyError;
 
@@ -2315,6 +2432,12 @@ ldap_parse_passwordpolicy_control LDAP_P((
 LDAP_F( const char * )
 ldap_passwordpolicy_err2txt LDAP_P(( LDAPPasswordPolicyError ));
 #endif /* LDAP_CONTROL_PASSWORDPOLICYREQUEST */
+
+LDAP_F( int )
+ldap_parse_password_expiring_control LDAP_P((
+	LDAP           *ld,
+	LDAPControl    *ctrl,
+	long           *secondsp ));
 
 /*
  * LDAP Dynamic Directory Services Refresh -- RFC 2589
@@ -2348,7 +2471,6 @@ ldap_refresh_s LDAP_P((
 /*
  * LDAP Transactions
  */
-#ifdef LDAP_X_TXN
 LDAP_F( int )
 ldap_txn_start LDAP_P(( LDAP *ld,
 	LDAPControl		**sctrls,
@@ -2376,7 +2498,6 @@ ldap_txn_end_s LDAP_P(( LDAP *ld,
 	LDAPControl **sctrl,
 	LDAPControl **cctrl,
 	int *retidp ));
-#endif
 
 /*
  * in ldap_sync.c
@@ -2461,6 +2582,62 @@ ldap_parse_session_tracking_control LDAP_P((
 #endif /* LDAP_CONTROL_X_SESSION_TRACKING */
 
 /*
+ * in msctrl.c
+ */
+#ifdef LDAP_CONTROL_X_DIRSYNC
+LDAP_F( int )
+ldap_create_dirsync_value LDAP_P((
+	LDAP		*ld,
+	int		flags,
+	int		maxAttrCount,
+	struct berval	*cookie,
+	struct berval	*value ));
+
+LDAP_F( int )
+ldap_create_dirsync_control LDAP_P((
+	LDAP		*ld,
+	int		flags,
+	int		maxAttrCount,
+	struct berval	*cookie,
+	LDAPControl	**ctrlp ));
+
+LDAP_F( int )
+ldap_parse_dirsync_control LDAP_P((
+	LDAP		*ld,
+	LDAPControl	*ctrl,
+	int		*continueFlag,
+	struct berval	*cookie ));
+#endif /* LDAP_CONTROL_X_DIRSYNC */
+
+#ifdef LDAP_CONTROL_X_EXTENDED_DN
+LDAP_F( int )
+ldap_create_extended_dn_value LDAP_P((
+	LDAP		*ld,
+	int		flag,
+	struct berval	*value ));
+
+LDAP_F( int )
+ldap_create_extended_dn_control LDAP_P((
+	LDAP		*ld,
+	int		flag,
+	LDAPControl	**ctrlp ));
+#endif /* LDAP_CONTROL_X_EXTENDED_DN */
+
+#ifdef LDAP_CONTROL_X_SHOW_DELETED
+LDAP_F( int )
+ldap_create_show_deleted_control LDAP_P((
+	LDAP		*ld,
+	LDAPControl	**ctrlp ));
+#endif /* LDAP_CONTROL_X_SHOW_DELETED */
+
+#ifdef LDAP_CONTROL_X_SERVER_NOTIFICATION
+LDAP_F( int )
+ldap_create_server_notification_control LDAP_P((
+	LDAP		*ld,
+	LDAPControl	**ctrlp ));
+#endif /* LDAP_CONTROL_X_SERVER_NOTIFICATION */
+
+/*
  * in assertion.c
  */
 LDAP_F (int)
@@ -2526,6 +2703,136 @@ ldap_parse_deref_control LDAP_P((
 	LDAP		*ld,
 	LDAPControl	**ctrls,
 	LDAPDerefRes	**drp ));
+
+/*
+ * in psearch.c
+ */
+
+LDAP_F( int )
+ldap_create_persistentsearch_control_value LDAP_P((
+	LDAP *ld,
+	int changetypes,
+	int changesonly,
+	int return_echg_ctls,
+	struct berval *value ));
+
+LDAP_F( int )
+ldap_create_persistentsearch_control LDAP_P((
+	LDAP *ld,
+	int changetypes,
+	int changesonly,
+	int return_echg_ctls,
+	int isCritical,
+	LDAPControl **ctrlp ));
+
+LDAP_F( int )
+ldap_parse_entrychange_control LDAP_P((
+	LDAP *ld,
+	LDAPControl *ctrl,
+	int *chgtypep,
+	struct berval *prevdnp,
+	int *chgnumpresentp,
+	long *chgnump ));
+
+/* in account_usability.c */
+
+LDAP_F( int )
+ldap_create_accountusability_control LDAP_P((
+	LDAP *ld,
+	LDAPControl **ctrlp ));
+
+typedef struct LDAPAccountUsabilityMoreInfo {
+	ber_int_t inactive;
+	ber_int_t reset;
+	ber_int_t expired;
+	ber_int_t remaining_grace;
+	ber_int_t seconds_before_unlock;
+} LDAPAccountUsabilityMoreInfo;
+
+typedef union LDAPAccountUsability {
+	ber_int_t seconds_remaining;
+	LDAPAccountUsabilityMoreInfo more_info;
+} LDAPAccountUsability;
+
+LDAP_F( int )
+ldap_parse_accountusability_control LDAP_P((
+	LDAP           *ld,
+	LDAPControl    *ctrl,
+	int            *availablep,
+	LDAPAccountUsability *usabilityp ));
+
+
+/*
+ * high level LDIF to LDAP structure support
+ */
+#define LDIF_DEFAULT_ADD  0x01 /* if changetype missing, assume LDAP_ADD */
+#define LDIF_ENTRIES_ONLY 0x02 /* ignore changetypes other than add */
+#define LDIF_NO_CONTROLS  0x04 /* ignore control specifications */
+#define LDIF_MODS_ONLY    0x08 /* no changetypes, assume LDAP_MODIFY */
+#define LDIF_NO_DN        0x10 /* dn is not present */
+
+typedef struct ldifrecord {
+	ber_tag_t lr_op; /* type of operation - LDAP_REQ_MODIFY, LDAP_REQ_ADD, etc. */
+	struct berval lr_dn; /* DN of operation */
+	LDAPControl **lr_ctrls; /* controls specified for operation */
+	/* some ops such as LDAP_REQ_DELETE require only a DN */
+	/* other ops require different data - the ldif_ops union
+	   is used to specify the data for each type of operation */
+	union ldif_ops_u {
+		LDAPMod **lr_mods; /* list of mods for LDAP_REQ_MODIFY, LDAP_REQ_ADD */
+#define lrop_mods ldif_ops.lr_mods
+		struct ldif_op_rename_s {
+			struct berval lr_newrdn; /* LDAP_REQ_MODDN, LDAP_REQ_MODRDN, LDAP_REQ_RENAME */
+#define lrop_newrdn ldif_ops.ldif_op_rename.lr_newrdn
+			struct berval lr_newsuperior; /* LDAP_REQ_MODDN, LDAP_REQ_MODRDN, LDAP_REQ_RENAME */
+#define lrop_newsup ldif_ops.ldif_op_rename.lr_newsuperior
+			int lr_deleteoldrdn; /* LDAP_REQ_MODDN, LDAP_REQ_MODRDN, LDAP_REQ_RENAME */
+#define lrop_delold ldif_ops.ldif_op_rename.lr_deleteoldrdn
+		} ldif_op_rename; /* rename/moddn/modrdn */
+		/* the following are for future support */
+		struct ldif_op_ext_s {
+			struct berval lr_extop_oid; /* LDAP_REQ_EXTENDED */
+#define lrop_extop_oid ldif_ops.ldif_op_ext.lr_extop_oid
+			struct berval lr_extop_data; /* LDAP_REQ_EXTENDED */
+#define lrop_extop_data ldif_ops.ldif_op_ext.lr_extop_data
+		} ldif_op_ext; /* extended operation */
+		struct ldif_op_cmp_s {
+			struct berval lr_cmp_attr; /* LDAP_REQ_COMPARE */
+#define lrop_cmp_attr ldif_ops.ldif_op_cmp.lr_cmp_attr
+			struct berval lr_cmp_bvalue; /* LDAP_REQ_COMPARE */
+#define lrop_cmp_bval ldif_ops.ldif_op_cmp.lr_cmp_bvalue
+		} ldif_op_cmp; /* compare operation */
+	} ldif_ops;
+	/* PRIVATE STUFF - DO NOT TOUCH */
+	/* for efficiency, the implementation allocates memory */
+	/* in large blobs, and makes the above fields point to */
+	/* locations inside those blobs - one consequence is that */
+	/* you cannot simply free the above allocated fields, nor */
+	/* assign them to be owned by another memory context which */
+	/* might free them (unless providing your own mem ctx) */
+	/* we use the fields below to keep track of those blobs */
+	/* so we that we can free them later */
+	void *lr_ctx; /* the memory context or NULL */
+	int lr_lines;
+	LDAPMod	*lr_lm;
+	unsigned char *lr_mops;
+	char *lr_freeval;
+	struct berval *lr_vals;
+	struct berval *lr_btype;
+} LDIFRecord;
+
+/* free internal fields - does not free the LDIFRecord */
+LDAP_F( void )
+ldap_ldif_record_done LDAP_P((
+	LDIFRecord *lr ));
+
+LDAP_F( int )
+ldap_parse_ldif_record LDAP_P((
+	struct berval *rbuf,
+	unsigned long linenum,
+	LDIFRecord *lr,
+	const char *errstr,
+	unsigned int flags ));
 
 LDAP_END_DECL
 #endif /* _LDAP_H */

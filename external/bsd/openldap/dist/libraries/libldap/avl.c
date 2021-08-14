@@ -1,4 +1,4 @@
-/*	$NetBSD: avl.c,v 1.1.1.1 2021/08/14 16:05:27 christos Exp $	*/
+/*	$NetBSD: avl.c,v 1.2 2021/08/14 16:14:55 christos Exp $	*/
 
 /* avl.c - routines to implement an avl tree */
 /* $OpenLDAP$ */
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: avl.c,v 1.1.1.1 2021/08/14 16:05:27 christos Exp $");
+__RCSID("$NetBSD: avl.c,v 1.2 2021/08/14 16:14:55 christos Exp $");
 
 #include "portable.h"
 

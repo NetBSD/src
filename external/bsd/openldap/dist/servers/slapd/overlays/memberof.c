@@ -1,4 +1,4 @@
-/*	$NetBSD: memberof.c,v 1.1.1.9 2021/08/14 16:05:24 christos Exp $	*/
+/*	$NetBSD: memberof.c,v 1.2 2021/08/14 16:15:02 christos Exp $	*/
 
 /* memberof.c - back-reference for group membership */
 /* $OpenLDAP$ */
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: memberof.c,v 1.1.1.9 2021/08/14 16:05:24 christos Exp $");
+__RCSID("$NetBSD: memberof.c,v 1.2 2021/08/14 16:15:02 christos Exp $");
 
 #include "portable.h"
 

@@ -1,10 +1,10 @@
-/*	$NetBSD: search.c,v 1.2 2020/08/11 13:15:40 christos Exp $	*/
+/*	$NetBSD: search.c,v 1.3 2021/08/14 16:14:59 christos Exp $	*/
 
 /* search.c - DNS SRV backend search function */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2020 The OpenLDAP Foundation.
+ * Copyright 2000-2021 The OpenLDAP Foundation.
  * Portions Copyright 2000-2003 Kurt D. Zeilenga.
  * All rights reserved.
  *
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: search.c,v 1.2 2020/08/11 13:15:40 christos Exp $");
+__RCSID("$NetBSD: search.c,v 1.3 2021/08/14 16:14:59 christos Exp $");
 
 #include "portable.h"
 
@@ -85,11 +85,11 @@ dnssrv_back_search(
 	}
 
 	Debug( LDAP_DEBUG_TRACE, "DNSSRV: dn=\"%s\" -> domain=\"%s\"\n",
-		op->o_req_dn.bv_len ? op->o_req_dn.bv_val : "", domain, 0 );
+		op->o_req_dn.bv_len ? op->o_req_dn.bv_val : "", domain );
 
 	if( ( rc = ldap_domain2hostlist( domain, &hostlist ) ) ) {
 		Debug( LDAP_DEBUG_TRACE, "DNSSRV: domain2hostlist returned %d\n",
-			rc, 0, 0 );
+			rc );
 		send_ldap_error( op, rs, LDAP_NO_SUCH_OBJECT,
 			"no DNS SRV RR available for DN" );
 		goto done;
@@ -98,7 +98,7 @@ dnssrv_back_search(
 	hosts = ldap_str2charray( hostlist, " " );
 
 	if( hosts == NULL ) {
-		Debug( LDAP_DEBUG_TRACE, "DNSSRV: str2charrary error\n", 0, 0, 0 );
+		Debug( LDAP_DEBUG_TRACE, "DNSSRV: str2charray error\n" );
 		send_ldap_error( op, rs, LDAP_OTHER,
 			"problem processing DNS SRV records for DN" );
 		goto done;
@@ -121,10 +121,10 @@ dnssrv_back_search(
 		}
 	}
 
-	Statslog( LDAP_DEBUG_STATS,
+	Debug( LDAP_DEBUG_STATS,
 	    "%s DNSSRV p=%d dn=\"%s\" url=\"%s\"\n",
 	    op->o_log_prefix, op->o_protocol,
-		op->o_req_dn.bv_len ? op->o_req_dn.bv_val : "", urls[0].bv_val, 0 );
+		op->o_req_dn.bv_len ? op->o_req_dn.bv_val : "", urls[0].bv_val );
 
 	Debug( LDAP_DEBUG_TRACE,
 		"DNSSRV: ManageDSAit scope=%d dn=\"%s\" -> url=\"%s\"\n",
@@ -158,8 +158,7 @@ dnssrv_back_search(
 		Debug( LDAP_DEBUG_TRACE,
 			"DNSSRV: dn=\"%s\" subordinate to refdn=\"%s\"\n",
 			op->o_req_dn.bv_len ? op->o_req_dn.bv_val : "",
-			refdn == NULL ? "" : refdn,
-			NULL );
+			refdn == NULL ? "" : refdn );
 
 		rs->sr_matched = refdn;
 		rs->sr_err = LDAP_NO_SUCH_OBJECT;

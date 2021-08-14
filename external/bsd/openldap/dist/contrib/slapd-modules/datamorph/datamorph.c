@@ -1,4 +1,4 @@
-/*	$NetBSD: datamorph.c,v 1.1.1.1 2021/08/14 16:05:14 christos Exp $	*/
+/*	$NetBSD: datamorph.c,v 1.2 2021/08/14 16:14:51 christos Exp $	*/
 
 /* datamorph.c - enumerated and native integer value support */
 /* $OpenLDAP$ */
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: datamorph.c,v 1.1.1.1 2021/08/14 16:05:14 christos Exp $");
+__RCSID("$NetBSD: datamorph.c,v 1.2 2021/08/14 16:14:51 christos Exp $");
 
 #include "portable.h"
 

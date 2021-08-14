@@ -1,9 +1,9 @@
-/*	$NetBSD: deref.c,v 1.2 2020/08/11 13:15:37 christos Exp $	*/
+/*	$NetBSD: deref.c,v 1.3 2021/08/14 16:14:55 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * Portions Copyright 2008 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: deref.c,v 1.2 2020/08/11 13:15:37 christos Exp $");
+__RCSID("$NetBSD: deref.c,v 1.3 2021/08/14 16:14:55 christos Exp $");
 
 #include "portable.h"
 
@@ -196,6 +196,12 @@ ldap_parse_derefresponse_control(
 		char *last2;
 
 		dr = LDAP_CALLOC( 1, sizeof(LDAPDerefRes) );
+		if ( dr == NULL ) {
+			ldap_derefresponse_free( drhead );
+			*drp2 = NULL;
+			ld->ld_errno = LDAP_NO_MEMORY;
+			return ld->ld_errno;
+		}
 		dvp = &dr->attrVals;
 
 		tag = ber_scanf( ber, "{ao", &dr->derefAttr, &dr->derefVal );
@@ -212,6 +218,13 @@ ldap_parse_derefresponse_control(
 				LDAPDerefVal *dv;
 
 				dv = LDAP_CALLOC( 1, sizeof(LDAPDerefVal) );
+				if ( dv == NULL ) {
+					ldap_derefresponse_free( drhead );
+					LDAP_FREE( dr );
+					*drp2 = NULL;
+					ld->ld_errno = LDAP_NO_MEMORY;
+					return ld->ld_errno;
+				}
 
 				tag = ber_scanf( ber, "{a[W]}", &dv->type, &dv->vals );
 				if ( tag == LBER_ERROR ) {
