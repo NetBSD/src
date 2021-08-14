@@ -1,0 +1,4 @@
+dn: name=variant,olcOverlay={0}variant,olcDatabase={1}@BACKEND@,cn=config
+changetype: add
+objectclass: olcVariantVariant
+olcVariantEntry: ou=Groups,dc=example,dc=com

@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2020 The OpenLDAP Foundation.
+## Copyright 1998-2021 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@ fi
 mkdir -p $TESTDIR $DBDIR1
 
 echo "Running slapadd to build slapd database..."
-. $CONFFILTER $BACKEND $MONITORDB < $LIMITSCONF > $ADDCONF
+. $CONFFILTER $BACKEND < $LIMITSCONF > $ADDCONF
 $SLAPADD -f $ADDCONF -l $LDIFLIMITS
 RC=$?
 if test $RC != 0 ; then
@@ -35,7 +35,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Running slapindex to index slapd database..."
-. $CONFFILTER $BACKEND $MONITORDB < $LIMITSCONF > $CONF1
+. $CONFFILTER $BACKEND < $LIMITSCONF > $CONF1
 $SLAPINDEX -f $CONF1
 RC=$?
 if test $RC != 0 ; then
@@ -44,7 +44,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Starting slapd on TCP/IP port $PORT1..."
-$SLAPD -f $CONF1 -h $URI1 -d $LVL $TIMING > $LOG1 2>&1 &
+$SLAPD -f $CONF1 -h $URI1 -d $LVL > $LOG1 2>&1 &
 PID=$!
 if test $WAIT != 0 ; then
     echo PID $PID
@@ -56,7 +56,7 @@ sleep 1
 
 echo "Testing slapd searching..."
 for i in 0 1 2 3 4 5; do
-	$LDAPSEARCH -s base -b "$MONITOR" -h $LOCALHOST -p $PORT1 \
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI1 \
 		'(objectclass=*)' > /dev/null 2>&1
 	RC=$?
 	if test $RC = 0 ; then
@@ -79,7 +79,7 @@ echo "Testing regular search limits"
 echo ""
 
 echo "Testing no limits requested for unlimited ID..."
-$LDAPRSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 -w secret \
+$LDAPRSEARCH -S "" -b "$BASEDN" -H $URI1 -w secret \
 	-D 'cn=Unlimited User,ou=People,dc=example,dc=com' \
 	'(objectClass=*)' >$SEARCHOUT 2>&1
 RC=$?
@@ -102,7 +102,7 @@ case $RC in
 esac
 
 echo "Testing no limits requested for rootdn=$MANAGERDN..."
-$LDAPRSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 -w secret \
+$LDAPRSEARCH -S "" -b "$BASEDN" -H $URI1 -w secret \
 	-D "$MANAGERDN" \
 	'(objectClass=*)' >$SEARCHOUT 2>&1
 RC=$?
@@ -126,7 +126,7 @@ esac
 
 SIZELIMIT=4
 echo "Testing limit requested for rootdn=$MANAGERDN..."
-$LDAPRSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 -w secret -z $SIZELIMIT \
+$LDAPRSEARCH -S "" -b "$BASEDN" -H $URI1 -w secret -z $SIZELIMIT \
 	-D "$MANAGERDN" \
 	'(objectClass=*)' >$SEARCHOUT 2>&1
 RC=$?
@@ -170,7 +170,7 @@ esac
 
 SIZELIMIT=2
 echo "Testing size limit request ($SIZELIMIT) for unlimited ID..."
-$LDAPRSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 -w secret -z $SIZELIMIT \
+$LDAPRSEARCH -S "" -b "$BASEDN" -H $URI1 -w secret -z $SIZELIMIT \
 	-D 'cn=Unlimited User,ou=People,dc=example,dc=com' \
 	'(objectClass=*)' > $SEARCHOUT 2>&1
 RC=$?
@@ -214,7 +214,7 @@ esac
 
 TIMELIMIT=10
 echo "Testing time limit request ($TIMELIMIT s) for unlimited ID..."
-$LDAPRSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 -w secret -l $TIMELIMIT \
+$LDAPRSEARCH -S "" -b "$BASEDN" -H $URI1 -w secret -l $TIMELIMIT \
 	-D 'cn=Unlimited User,ou=People,dc=example,dc=com' \
 	'(objectClass=*)' > $SEARCHOUT 2>&1
 RC=$?
@@ -243,7 +243,7 @@ case $RC in
 esac
 
 echo "Testing no limits requested for soft limited ID..."
-$LDAPRSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 -w secret \
+$LDAPRSEARCH -S "" -b "$BASEDN" -H $URI1 -w secret \
 	-D 'cn=Soft Limited User,ou=People,dc=example,dc=com' \
 	'(objectClass=*)' > $SEARCHOUT 2>&1
 RC=$?
@@ -276,7 +276,7 @@ esac
 
 SIZELIMIT=2
 echo "Testing lower than soft limit request ($SIZELIMIT) for soft limited ID..."
-$LDAPRSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 -w secret -z $SIZELIMIT \
+$LDAPRSEARCH -S "" -b "$BASEDN" -H $URI1 -w secret -z $SIZELIMIT \
 	-D 'cn=Soft Limited User,ou=People,dc=example,dc=com' \
 	'(objectClass=*)' > $SEARCHOUT 2>&1
 RC=$?
@@ -318,7 +318,7 @@ esac
 
 SIZELIMIT=100
 echo "Testing higher than soft limit request ($SIZELIMIT) for soft limited ID..."
-$LDAPRSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 -w secret -z $SIZELIMIT \
+$LDAPRSEARCH -S "" -b "$BASEDN" -H $URI1 -w secret -z $SIZELIMIT \
 	-D 'cn=Soft Limited User,ou=People,dc=example,dc=com' \
 	'(objectClass=*)' > $SEARCHOUT 2>&1
 RC=$?
@@ -360,7 +360,7 @@ esac
 
 SIZELIMIT=2
 echo "Testing lower than hard limit request ($SIZELIMIT) for hard limited ID..."
-$LDAPRSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 -w secret -z $SIZELIMIT \
+$LDAPRSEARCH -S "" -b "$BASEDN" -H $URI1 -w secret -z $SIZELIMIT \
 	-D 'cn=Hard Limited User,ou=People,dc=example,dc=com' \
 	'(objectClass=*)' > $SEARCHOUT 2>&1
 RC=$?
@@ -392,7 +392,7 @@ esac
 
 SIZELIMIT=100
 echo "Testing higher than hard limit request ($SIZELIMIT) for hard limited ID..."
-$LDAPRSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 -w secret -z $SIZELIMIT \
+$LDAPRSEARCH -S "" -b "$BASEDN" -H $URI1 -w secret -z $SIZELIMIT \
 	-D 'cn=Hard Limited User,ou=People,dc=example,dc=com' \
 	'(objectClass=*)' > $SEARCHOUT 2>&1
 RC=$?
@@ -439,7 +439,7 @@ esac
 
 SIZELIMIT=max
 echo "Testing max limit request ($SIZELIMIT) for hard limited ID..."
-$LDAPRSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 -w secret -z $SIZELIMIT \
+$LDAPRSEARCH -S "" -b "$BASEDN" -H $URI1 -w secret -z $SIZELIMIT \
 	-D 'cn=Hard Limited User,ou=People,dc=example,dc=com' \
 	'(objectClass=*)' > $SEARCHOUT 2>&1
 RC=$?
@@ -474,7 +474,7 @@ case $RC in
 esac
 
 echo "Testing lower than unchecked limit request for unchecked limited ID..."
-$LDAPRSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 -w secret \
+$LDAPRSEARCH -S "" -b "$BASEDN" -H $URI1 -w secret \
 	-D 'cn=Unchecked Limited User,ou=People,dc=example,dc=com' \
 	'(uid=uncheckedlimited)' > $SEARCHOUT 2>&1
 RC=$?
@@ -504,7 +504,7 @@ esac
 if test $INDEXDB = indexdb ; then
 
 echo "Testing higher than unchecked limit requested for unchecked limited ID..."
-$LDAPRSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 -w secret \
+$LDAPRSEARCH -S "" -b "$BASEDN" -H $URI1 -w secret \
 	-D 'cn=Unchecked Limited User,ou=People,dc=example,dc=com' \
 	'(objectClass=*)' > $SEARCHOUT 2>&1
 RC=$?
@@ -530,7 +530,7 @@ case $RC in
 esac
 
 echo "Testing no limits requested for unchecked limited group..."
-$LDAPRSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 -w secret \
+$LDAPRSEARCH -S "" -b "$BASEDN" -H $URI1 -w secret \
 	-D 'cn=Unchecked Limited User 2,ou=People,dc=example,dc=com' \
 	'(objectClass=*)' > $SEARCHOUT 2>&1
 RC=$?
@@ -559,7 +559,7 @@ else
 fi
 
 echo "Testing no limits requested for limited regex..."
-$LDAPRSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 -w secret \
+$LDAPRSEARCH -S "" -b "$BASEDN" -H $URI1 -w secret \
 	-D 'cn=Foo User,ou=People,dc=example,dc=com' \
 	'(objectClass=*)' > $SEARCHOUT 2>&1
 RC=$?
@@ -591,7 +591,7 @@ case $RC in
 esac
 
 echo "Testing no limits requested for limited onelevel..."
-$LDAPRSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 -w secret \
+$LDAPRSEARCH -S "" -b "$BASEDN" -H $URI1 -w secret \
 	-D 'cn=Bar User,ou=People,dc=example,dc=com' \
 	'(objectClass=*)' > $SEARCHOUT 2>&1
 RC=$?
@@ -623,7 +623,7 @@ case $RC in
 esac
 
 echo "Testing no limit requested for limited children..."
-$LDAPRSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 -w secret \
+$LDAPRSEARCH -S "" -b "$BASEDN" -H $URI1 -w secret \
 	-D 'cn=Unchecked Limited Users,ou=Groups,dc=example,dc=com' \
 	'(objectClass=*)' > $SEARCHOUT 2>&1
 RC=$?
@@ -655,7 +655,7 @@ case $RC in
 esac
 
 echo "Testing no limit requested for limited subtree..."
-$LDAPRSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 -w secret \
+$LDAPRSEARCH -S "" -b "$BASEDN" -H $URI1 -w secret \
 	-D 'cn=Unchecked Limited User 3,ou=Admin,dc=example,dc=com' \
 	'(objectClass=*)' > $SEARCHOUT 2>&1
 RC=$?
@@ -687,7 +687,7 @@ case $RC in
 esac
 
 echo "Testing no limit requested for limited users..."
-$LDAPRSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 -w secret \
+$LDAPRSEARCH -S "" -b "$BASEDN" -H $URI1 -w secret \
 	-D 'cn=Special User,dc=example,dc=com' \
 	'(objectClass=*)' > $SEARCHOUT 2>&1
 RC=$?
@@ -719,7 +719,7 @@ case $RC in
 esac
 
 echo "Testing no limit requested for limited anonymous..."
-$LDAPRSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+$LDAPRSEARCH -S "" -b "$BASEDN" -H $URI1 \
 	'(objectClass=*)' > $SEARCHOUT 2>&1
 RC=$?
 COUNT=`awk '/^# numEntries:/ {print $3}' $SEARCHOUT`
@@ -750,7 +750,7 @@ case $RC in
 esac
 
 if test $MAINDB != maindb ; then
-		# only bdb|hdb|mdb currently supports pagedResults control
+		# only mdb currently supports pagedResults control
 		test $KILLSERVERS != no && kill -HUP $KILLPIDS
 
 		echo ">>>>> Test succeeded"
@@ -777,7 +777,7 @@ echo "Testing regular search limits with pagedResults control (page size $PAGESI
 echo ""
 
 echo "Testing no limits requested for unlimited ID..."
-$LDAPRSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 -w secret \
+$LDAPRSEARCH -S "" -b "$BASEDN" -H $URI1 -w secret \
 	-D 'cn=Unlimited User,ou=People,dc=example,dc=com' \
 	-E '!pr='$PAGESIZE'/noprompt' '(objectClass=*)' >$SEARCHOUT 2>&1
 RC=$?
@@ -801,7 +801,7 @@ esac
 
 SIZELIMIT=2
 echo "Testing size limit request ($SIZELIMIT) for unlimited ID..."
-$LDAPRSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 -w secret -z $SIZELIMIT \
+$LDAPRSEARCH -S "" -b "$BASEDN" -H $URI1 -w secret -z $SIZELIMIT \
 	-D 'cn=Unlimited User,ou=People,dc=example,dc=com' \
 	-E '!pr='$PAGESIZE'/noprompt' '(objectClass=*)' > $SEARCHOUT 2>&1
 RC=$?
@@ -845,7 +845,7 @@ esac
 
 TIMELIMIT=10
 echo "Testing time limit request ($TIMELIMIT s) for unlimited ID..."
-$LDAPRSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 -w secret -l $TIMELIMIT \
+$LDAPRSEARCH -S "" -b "$BASEDN" -H $URI1 -w secret -l $TIMELIMIT \
 	-D 'cn=Unlimited User,ou=People,dc=example,dc=com' \
 	-E '!pr='$PAGESIZE'/noprompt' '(objectClass=*)' > $SEARCHOUT 2>&1
 RC=$?
@@ -874,7 +874,7 @@ case $RC in
 esac
 
 echo "Testing no limits requested for soft limited ID..."
-$LDAPRSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 -w secret \
+$LDAPRSEARCH -S "" -b "$BASEDN" -H $URI1 -w secret \
 	-D 'cn=Soft Limited User,ou=People,dc=example,dc=com' \
 	-E '!pr='$PAGESIZE'/noprompt' '(objectClass=*)' > $SEARCHOUT 2>&1
 RC=$?
@@ -907,7 +907,7 @@ esac
 
 SIZELIMIT=2
 echo "Testing lower than soft limit request ($SIZELIMIT) for soft limited ID..."
-$LDAPRSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 -w secret -z $SIZELIMIT \
+$LDAPRSEARCH -S "" -b "$BASEDN" -H $URI1 -w secret -z $SIZELIMIT \
 	-D 'cn=Soft Limited User,ou=People,dc=example,dc=com' \
 	-E '!pr='$PAGESIZE'/noprompt' '(objectClass=*)' > $SEARCHOUT 2>&1
 RC=$?
@@ -947,7 +947,7 @@ esac
 
 SIZELIMIT=100
 echo "Testing higher than soft limit request ($SIZELIMIT) for soft limited ID..."
-$LDAPRSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 -w secret -z $SIZELIMIT \
+$LDAPRSEARCH -S "" -b "$BASEDN" -H $URI1 -w secret -z $SIZELIMIT \
 	-D 'cn=Soft Limited User,ou=People,dc=example,dc=com' \
 	-E '!pr='$PAGESIZE'/noprompt' '(objectClass=*)' > $SEARCHOUT 2>&1
 RC=$?
@@ -987,7 +987,7 @@ esac
 
 SIZELIMIT=2
 echo "Testing lower than hard limit request ($SIZELIMIT) for hard limited ID..."
-$LDAPRSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 -w secret -z $SIZELIMIT \
+$LDAPRSEARCH -S "" -b "$BASEDN" -H $URI1 -w secret -z $SIZELIMIT \
 	-D 'cn=Hard Limited User,ou=People,dc=example,dc=com' \
 	-E '!pr='$PAGESIZE'/noprompt' '(objectClass=*)' > $SEARCHOUT 2>&1
 RC=$?
@@ -1031,7 +1031,7 @@ esac
 
 SIZELIMIT=100
 echo "Testing higher than hard limit request ($SIZELIMIT) for hard limited ID..."
-$LDAPRSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 -w secret -z $SIZELIMIT \
+$LDAPRSEARCH -S "" -b "$BASEDN" -H $URI1 -w secret -z $SIZELIMIT \
 	-D 'cn=Hard Limited User,ou=People,dc=example,dc=com' \
 	-E '!pr='$PAGESIZE'/noprompt' '(objectClass=*)' > $SEARCHOUT 2>&1
 RC=$?
@@ -1078,7 +1078,7 @@ esac
 
 SIZELIMIT=max
 echo "Testing max limit request ($SIZELIMIT) for hard limited ID..."
-$LDAPRSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 -w secret -z $SIZELIMIT \
+$LDAPRSEARCH -S "" -b "$BASEDN" -H $URI1 -w secret -z $SIZELIMIT \
 	-D 'cn=Hard Limited User,ou=People,dc=example,dc=com' \
 	-E '!pr='$PAGESIZE'/noprompt' '(objectClass=*)' > $SEARCHOUT 2>&1
 RC=$?
@@ -1113,7 +1113,7 @@ case $RC in
 esac
 
 echo "Testing lower than unchecked limit request for unchecked limited ID..."
-$LDAPRSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 -w secret \
+$LDAPRSEARCH -S "" -b "$BASEDN" -H $URI1 -w secret \
 	-D 'cn=Unchecked Limited User,ou=People,dc=example,dc=com' \
 	-E '!pr='$PAGESIZE'/noprompt' '(uid=uncheckedlimited)' > $SEARCHOUT 2>&1
 RC=$?
@@ -1139,7 +1139,7 @@ case $RC in
 esac
 
 echo "Testing higher than unchecked limit requested for unchecked limited ID..."
-$LDAPRSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 -w secret \
+$LDAPRSEARCH -S "" -b "$BASEDN" -H $URI1 -w secret \
 	-D 'cn=Unchecked Limited User,ou=People,dc=example,dc=com' \
 	-E '!pr='$PAGESIZE'/noprompt' '(objectClass=*)' > $SEARCHOUT 2>&1
 RC=$?
@@ -1169,7 +1169,7 @@ echo "Testing specific search limits with pagedResults control"
 echo ""
 
 echo "Testing no limit requested for unlimited page size ID..."
-$LDAPRSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 -w secret \
+$LDAPRSEARCH -S "" -b "$BASEDN" -H $URI1 -w secret \
 	-D 'cn=Unlimited User,ou=Paged Results Users,dc=example,dc=com' \
 	-E '!pr='$PAGESIZE'/noprompt' '(objectClass=*)' > $SEARCHOUT 2>&1
 RC=$?
@@ -1201,7 +1201,7 @@ case $RC in
 esac
 
 echo "Testing no limit requested for limited page size ID..."
-$LDAPRSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 -w secret \
+$LDAPRSEARCH -S "" -b "$BASEDN" -H $URI1 -w secret \
 	-D 'cn=Page Size Limited User,ou=Paged Results Users,dc=example,dc=com' \
 	-E '!pr='$PAGESIZE'/noprompt' '(objectClass=*)' > $SEARCHOUT 2>&1
 RC=$?
@@ -1224,7 +1224,7 @@ case $RC in
 esac
 
 echo "Testing no limit requested for pagedResults disabled ID..."
-$LDAPRSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 -w secret \
+$LDAPRSEARCH -S "" -b "$BASEDN" -H $URI1 -w secret \
 	-D 'cn=Paged Results Disabled User,ou=Paged Results Users,dc=example,dc=com' \
 	-E '!pr='$PAGESIZE'/noprompt' '(objectClass=*)' > $SEARCHOUT 2>&1
 RC=$?
@@ -1247,7 +1247,7 @@ case $RC in
 esac
 
 echo "Testing no limit requested for pagedResults total count limited ID..."
-$LDAPRSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 -w secret \
+$LDAPRSEARCH -S "" -b "$BASEDN" -H $URI1 -w secret \
 	-D 'cn=Paged Results Limited User,ou=Paged Results Users,dc=example,dc=com' \
 	-E '!pr='$PAGESIZE'/noprompt' '(objectClass=*)' > $SEARCHOUT 2>&1
 RC=$?
@@ -1271,7 +1271,7 @@ esac
 
 SIZELIMIT=8
 echo "Testing higher than hard but lower then total count limit requested for pagedResults total count limited ID..."
-$LDAPRSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 -w secret \
+$LDAPRSEARCH -S "" -b "$BASEDN" -H $URI1 -w secret \
 	-D 'cn=Paged Results Limited User,ou=Paged Results Users,dc=example,dc=com' \
 	-z $SIZELIMIT -E '!pr='$PAGESIZE'/noprompt' '(objectClass=*)' > $SEARCHOUT 2>&1
 RC=$?
@@ -1303,7 +1303,7 @@ esac
 
 SIZELIMIT=15
 echo "Testing higher than total count limit requested for pagedResults total count limited ID..."
-$LDAPRSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 -w secret \
+$LDAPRSEARCH -S "" -b "$BASEDN" -H $URI1 -w secret \
 	-D 'cn=Paged Results Limited User,ou=Paged Results Users,dc=example,dc=com' \
 	-z $SIZELIMIT -E '!pr='$PAGESIZE'/noprompt' '(objectClass=*)' > $SEARCHOUT 2>&1
 RC=$?
@@ -1335,7 +1335,7 @@ esac
 
 SIZELIMIT=max
 echo "Testing max limit requested for pagedResults total count limited ID..."
-$LDAPRSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 -w secret \
+$LDAPRSEARCH -S "" -b "$BASEDN" -H $URI1 -w secret \
 	-D 'cn=Paged Results Limited User,ou=Paged Results Users,dc=example,dc=com' \
 	-z $SIZELIMIT -E '!pr='$PAGESIZE'/noprompt' '(objectClass=*)' > $SEARCHOUT 2>&1
 RC=$?
@@ -1369,7 +1369,7 @@ esac
 PAGESIZE=1
 SIZELIMIT=2
 echo "Testing size limit request ($SIZELIMIT) for unlimited ID and pagesize=$PAGESIZE..."
-$LDAPRSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 -w secret -z $SIZELIMIT \
+$LDAPRSEARCH -S "" -b "$BASEDN" -H $URI1 -w secret -z $SIZELIMIT \
 	-D 'cn=Unlimited User,ou=People,dc=example,dc=com' \
 	-E '!pr='$PAGESIZE'/noprompt' '(objectClass=*)' > $SEARCHOUT 2>&1
 RC=$?

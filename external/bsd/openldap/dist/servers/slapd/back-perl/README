@@ -15,7 +15,7 @@ Differences from 2.0 Perl API:
   *all* configuration file directives have been read
 
 - the interface for the search method is improved to
-  pass the scope, deferencing policy, size limit, etc.
+  pass the scope, dereferencing policy, size limit, etc.
   See SampleLDAP.pm for details.
 
 These changes were sponsored by myinternet Limited.

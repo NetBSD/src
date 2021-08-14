@@ -1,0 +1,227 @@
+#! /bin/sh
+## $OpenLDAP$
+## This work is part of OpenLDAP Software <http://www.openldap.org/>.
+##
+## Copyright 2016-2021 The OpenLDAP Foundation.
+## All rights reserved.
+##
+## Redistribution and use in source and binary forms, with or without
+## modification, are permitted only as authorized by the OpenLDAP
+## Public License.
+##
+## A copy of this license is available in the file LICENSE in the
+## top-level directory of the distribution or, alternatively, at
+## <http://www.OpenLDAP.org/license.html>.
+##
+## ACKNOWLEDGEMENTS:
+## This module was written in 2016 by Ondřej Kuzník for Symas Corp.
+
+echo "running defines.sh"
+. $SRCDIR/scripts/defines.sh
+
+if test "$SYNCPROV" = syncprovno; then 
+	echo "Syncrepl provider overlay not available, test skipped"
+	exit 0
+fi 
+
+. ${SCRIPTDIR}/common.sh
+
+if test "$SYNCPROV" = syncprovmod; then
+	$LDAPMODIFY -v -D cn=config -H $URI1 -y $CONFIGPWF \
+	> $TESTOUT 2>&1 <<EOMOD
+dn: cn=module{0},cn=config
+changetype: modify
+add: olcModuleLoad
+olcModuleLoad: $LDAP_BUILD/servers/slapd/overlays/syncprov.la
+EOMOD
+
+	RC=$?
+	if test $RC != 0 ; then
+		echo "ldapmodify failed ($RC)!"
+		test $KILLSERVERS != no && kill -HUP $KILLPIDS
+		exit $RC
+	fi
+fi
+
+echo "Configuring syncprov on the provider..."
+$LDAPMODIFY -v -D cn=config -H $URI1 -y $CONFIGPWF \
+	> $TESTOUT 2>&1 <<EOMOD
+dn: olcOverlay={0}syncprov,olcDatabase={1}$BACKEND,cn=config
+changetype: add
+objectclass: olcSyncProvConfig
+EOMOD
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapmodify failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+mkdir $DBDIR4 $TESTDIR/confdir-consumer
+
+echo "Starting consumer slapd on TCP/IP port $PORT4..."
+. $CONFFILTER $BACKEND $MONITORDB < $P1SRCONSUMERCONF > $CONF4
+
+echo "database config" >>$CONF4
+echo "rootpw `$SLAPPASSWD -T $CONFIGPWF`" >>$CONF4
+
+$SLAPD -f $CONF4 -F $TESTDIR/confdir-consumer -h $URI4 -d $LVL > $LOG4 2>&1 &
+CONSUMERPID=$!
+if test $WAIT != 0 ; then
+	echo CONSUMERPID $CONSUMERPID
+	read foo
+fi
+KILLPIDS="$KILLPIDS $CONSUMERPID"
+
+sleep $SLEEP0
+
+echo "Setting up variant overlay on consumer..."
+$LDAPSEARCH -D cn=config -H $URI4 -y $CONFIGPWF \
+	-s base -b 'cn=module{0},cn=config' 1.1 >$TESTOUT 2>&1
+RC=$?
+case $RC in
+0)
+	$LDAPMODIFY -v -D cn=config -H $URI4 -y $CONFIGPWF \
+	>> $TESTOUT 2>&1 <<EOMOD
+dn: cn=module{0},cn=config
+changetype: modify
+add: olcModuleLoad
+olcModuleLoad: `pwd`/../variant.la
+EOMOD
+	;;
+32)
+	$LDAPMODIFY -v -D cn=config -H $URI4 -y $CONFIGPWF \
+	>> $TESTOUT 2>&1 <<EOMOD
+dn: cn=module,cn=config
+changetype: add
+objectClass: olcModuleList
+olcModuleLoad: `pwd`/../variant.la
+EOMOD
+	;;
+*)
+	echo "Failed testing for module load entry"
+	exit $RC;
+	;;
+esac
+
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapmodify failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+. $CONFFILTER $BACKEND $MONITORDB < $OVERLAY_CONFIG | \
+$LDAPMODIFY -v -D cn=config -H $URI4 -y $CONFIGPWF \
+	> $TESTOUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapmodify failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+for i in 0 1 2 3 4 5; do
+	$LDAPSEARCH -s base -b "$BASEDN" -H $URI4 \
+		'objectclass=*' > /dev/null 2>&1
+	RC=$?
+	if test $RC = 0 ; then
+		break
+	fi
+	echo "Waiting ${SLEEP1} seconds for consumer to start replication..."
+	sleep ${SLEEP1}
+done
+
+echo "Waiting ${SLEEP1} seconds for consumer to finish replicating..."
+sleep ${SLEEP1}
+
+echo "Testing searches against regular entries..."
+echo "# Testing searches against regular entries..." >> $SEARCHOUT
+$LDAPSEARCH -b "$BASEDN" -H $URI4 \
+	"(|(name=Elliot)(description=*hiker*))" \
+	>> $SEARCHOUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Testing searches listing replicated variants..."
+echo >> $SEARCHOUT
+echo "# Testing searches listing replicated variants..." >> $SEARCHOUT
+$LDAPSEARCH -b "$BASEDN" -s one -H $URI4 \
+	>> $SEARCHOUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo >> $SEARCHOUT
+$LDAPSEARCH -b "$BASEDN" -s base -H $URI4 \
+	>> $SEARCHOUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo >> $SEARCHOUT
+$LDAPSEARCH -s base -H $URI4 \
+	-b "cn=Bjorn Jensen,ou=Information Technology Division,ou=People,$BASEDN" \
+	'(ou=Information Technology Division)' \
+	>> $SEARCHOUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo >> $SEARCHOUT
+$LDAPSEARCH -b "cn=ITD Staff,ou=Groups,$BASEDN" -s base -H $URI4 \
+	>> $SEARCHOUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Testing searches filtering on replicated variants..."
+echo >> $SEARCHOUT
+echo "# Testing searches filtering on replicated variants..." >> $SEARCHOUT
+$LDAPSEARCH -b "$BASEDN" -H $URI4 \
+	"(st=Alumni Association)" st \
+	>> $SEARCHOUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+test $KILLSERVERS != no && kill -HUP $KILLPIDS
+
+LDIF=data/test003-out.ldif
+
+echo "Filtering ldapsearch results..."
+$LDIFFILTER -s e < $SEARCHOUT > $SEARCHFLT
+echo "Filtering expected entries..."
+$LDIFFILTER -s e < $LDIF > $LDIFFLT
+echo "Comparing filter output..."
+$CMP $SEARCHFLT $LDIFFLT > $CMPOUT
+
+if test $? != 0 ; then
+	echo "Comparison failed"
+	exit 1
+fi
+
+echo ">>>>> Test succeeded"
+
+test $KILLSERVERS != no && wait
+
+exit 0

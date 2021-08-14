@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2020 The OpenLDAP Foundation.
+## Copyright 1998-2021 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -45,9 +45,9 @@ fi
 mkdir -p $TESTDIR $DBDIR1 $DBDIR2
 
 # Test proxy caching:
-# - start master
+# - start provider
 # - start proxy cache
-# - populate master 
+# - populate provider 
 # - perform a first search
 # - verify cacheability
 # - perform a second search with the same filter and same user 
@@ -55,8 +55,8 @@ mkdir -p $TESTDIR $DBDIR1 $DBDIR2
 # - perform a third search with the same user but a different filter
 # - verify cacheability of the bind and the non-answerability of the result 
 
-echo "Starting master slapd on TCP/IP port $PORT1..."
-. $CONFFILTER < $PROXYAUTHZMASTERCONF > $CONF1
+echo "Starting provider slapd on TCP/IP port $PORT1..."
+. $CONFFILTER < $PROXYAUTHZPROVIDERCONF > $CONF1
 $SLAPD -f $CONF1 -h $URI1 -d $LVL > $LOG1 2>&1 &
 PID=$!
 if test $WAIT != 0 ; then
@@ -67,9 +67,9 @@ KILLPIDS="$PID"
 
 sleep 1
 
-echo "Using ldapsearch to check that master slapd is running..."
+echo "Using ldapsearch to check that provider slapd is running..."
 for i in 0 1 2 3 4 5; do
-	$LDAPSEARCH -s base -b "$MONITOR" -h $LOCALHOST -p $PORT1 \
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI1 \
 		-D "cn=Manager,dc=example,dc=com" -w secret 'objectclass=*' > /dev/null 2>&1
 	RC=$?
 	if test $RC = 0 ; then
@@ -85,8 +85,8 @@ if test $RC != 0 ; then
 	exit $RC
 fi
 
-echo "Using ldapadd to populate the master directory..."
-$LDAPADD -x -D "$MANAGERDN" -h $LOCALHOST -p $PORT1 -w $PASSWD < \
+echo "Using ldapadd to populate the provider directory..."
+$LDAPADD -x -D "$MANAGERDN" -H $URI1 -w $PASSWD < \
 	$LDIFORDERED > /dev/null 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -118,7 +118,7 @@ sleep 1
 
 echo "Using ldapsearch to check that proxy slapd is running..."
 for i in 0 1 2 3 4 5; do
-	$LDAPSEARCH -s base -b "$MONITOR" -h $LOCALHOST -p $PORT2 \
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI2 \
 		-D "cn=Manager,dc=example,dc=com" -w secret 'objectclass=*' > /dev/null 2>&1
 	RC=$?
 	if test $RC = 0 ; then
@@ -146,7 +146,7 @@ UPASSWD="jaj"
 echo "Query $CNT: $USERDN"
 echo "# Query $CNT: $USERDN" >> $SEARCHOUT
 
-$LDAPSEARCH -S "" -b "dc=example,dc=com" -s SUB -h $LOCALHOST -p $PORT2 \
+$LDAPSEARCH -S "" -b "dc=example,dc=com" -s SUB -H $URI2 \
 	-D "$USERDN" -w "$UPASSWD" "(sn=je*)" sn >> $SEARCHOUT 2>> $TESTOUT
 RC=$?
 
@@ -172,7 +172,7 @@ UPASSWD="jaj"
 echo "Query $CNT: (Bind should be cached)"
 echo "# Query $CNT: (Bind should be cached)" >> $SEARCHOUT
 
-$LDAPSEARCH -S "" -b "dc=example,dc=com" -s SUB -h $LOCALHOST -p $PORT2 \
+$LDAPSEARCH -S "" -b "dc=example,dc=com" -s SUB -H $URI2 \
 	-D "$USERDN" -w "$UPASSWD" "(sn=je*)" sn >> $SEARCHOUT 2>> $TESTOUT
 
 RC=$?
@@ -195,7 +195,7 @@ USERDN="cn=James A Jones 1,ou=Alumni Association,ou=People,dc=example,dc=com"
 
 echo "Query $CNT: (Bind should be cached)"
 echo "# Query $CNT: (Bind should be cached)" >> $SEARCHOUT
-$LDAPSEARCH -S "" -b "dc=example,dc=com" -s SUB -h $LOCALHOST -p $PORT2 \
+$LDAPSEARCH -S "" -b "dc=example,dc=com" -s SUB -H $URI2 \
 	-D "$USERDN" -w "$UPASSWD" "(sn=je*)" sn >> $SEARCHOUT 2>> $TESTOUT
 
 RC=$?
@@ -215,7 +215,7 @@ fi
 echo "=== New search on (sn=jo*)"
 cat /dev/null > $SEARCHOUT
 echo "# Query $CNT: (Bind should be cached)" >> $SEARCHOUT
-$LDAPSEARCH -S "" -b "dc=example,dc=com" -s SUB -h $LOCALHOST -p $PORT2 \
+$LDAPSEARCH -S "" -b "dc=example,dc=com" -s SUB -H $URI2 \
 	-D "$USERDN" -w "$UPASSWD" "(sn=jo*)" sn >> $SEARCHOUT 2>> $TESTOUT
 
 RC=$?

@@ -1,5 +1,5 @@
 # $OpenLDAP$
-# Copyright 2007-2020 The OpenLDAP Foundation, All Rights Reserved.
+# Copyright 2007-2021 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Common errors encountered when using OpenLDAP Software
@@ -109,10 +109,6 @@ target entry does not support the given operation.
 The password backend is only willing to perform searches. It will return an 
 unwilling to perform error for all other operations.
 
-The shell backend is configurable and may support a limited subset of operations.
-Check for other errors indicating a shortage of resources required by the 
-directory server. i.e. you may have a full disk etc
-
 H3: ldap_*: Insufficient access
 
 This error occurs when server denies the operation due to insufficient access. 
@@ -210,7 +206,7 @@ class chain.
 
 Modify operation attempts to change the structural class of the entry. 
 
->      Instanstantiation of abstract objectClass.
+>      Instantiation of abstract objectClass.
 
 An abstract class is not subordinate to any listed structural or auxiliary class. 
 
@@ -585,12 +581,12 @@ H3: `make test' fails
 Some times, `make test' fails at the very first test with an obscure message like
 
 >    make test
->    make[1]: Entering directory `/ldap_files/openldap-2.4.6/tests'
->    make[2]: Entering directory `/ldap_files/openldap-2.4.6/tests'
->    Initiating LDAP tests for BDB...
+>    make[1]: Entering directory `/ldap_files/openldap-2.5.0/tests'
+>    make[2]: Entering directory `/ldap_files/openldap-2.5.0/tests'
+>    Initiating LDAP tests for MDB...
 >    Cleaning up test run directory leftover from previous run.
 >     Running ./scripts/all...
->    >>>>> Executing all LDAP tests for bdb
+>    >>>>> Executing all LDAP tests for mdb
 >    >>>>> Starting test000-rootdse ...
 >    running defines.sh
 >    Starting slapd on TCP/IP port 9011...
@@ -606,10 +602,10 @@ Some times, `make test' fails at the very first test with an obscure message lik
 >    ldap_sasl_bind_s: Can't contact LDAP server (-1)
 >    >>>>> Test failed
 >    >>>>> ./scripts/test000-rootdse failed (exit 1)
->    make[2]: *** [bdb-yes] Error 1
->    make[2]: Leaving directory `/ldap_files/openldap-2.4.6/tests'
+>    make[2]: *** [mdb-yes] Error 1
+>    make[2]: Leaving directory `/ldap_files/openldap-2.5.0/tests'
 >    make[1]: *** [test] Error 2
->    make[1]: Leaving directory `/ldap_files/openldap-2.4.6/tests'
+>    make[1]: Leaving directory `/ldap_files/openldap-2.5.0/tests'
 >    make: *** [test] Error 2
 
 or so. Usually, the five lines
@@ -636,7 +632,7 @@ values of <n>.
 
 H3: ldap_*: Internal (implementation specific) error (80) - additional info: entry index delete failed
 
-This seems to be related with wrong ownership of the BDB's dir (/var/lib/ldap) 
+This seems to be related with wrong ownership of the MDB's dir (/var/lib/ldap)
 and files. The files must be owned by the user that slapd runs as.
 
 >    chown -R ldap:ldap /var/lib/ldap 
@@ -652,11 +648,3 @@ immediately and client gets an error :
 >     SASL/GSSAPI authentication started ldap_sasl_interactive_bind_s: Can't contact LDAP server (-1)
 
 Then check the slapd service, it stopped.
-
-This may come from incompatible of using different versions of BerkeleyDB for 
-installing of SASL and installing of OpenLDAP. The problem arises in case of 
-using multiple version of BerkeleyDB. Solution: - Check which version of 
-BerkeleyDB when install Cyrus SASL. 
-
-Reinstall OpenLDAP with the version of BerkeleyDB above.
-

@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2020 The OpenLDAP Foundation.
+## Copyright 1998-2021 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -40,8 +40,8 @@ SQLDATADIR=$TESTDIR/sql-concurrency
 mkdir -p $TESTDIR $SQLDATADIR
 
 echo "Starting slapd on TCP/IP port $PORT1..."
-. $CONFFILTER $BACKEND $MONITORDB < $SQLCONF > $CONF1
-$SLAPD -f $CONF1 -h $URI1 -d $LVL $TIMING > $LOG1 2>&1 &
+. $CONFFILTER $BACKEND < $SQLCONF > $CONF1
+$SLAPD -f $CONF1 -h $URI1 -d $LVL > $LOG1 2>&1 &
 PID=$!
 if test $WAIT != 0 ; then
     echo PID $PID
@@ -51,7 +51,7 @@ KILLPIDS="$PID"
 
 echo "Testing SQL backend concurrency..."
 for i in 0 1 2 3 4 5; do
-	$LDAPSEARCH -s base -b "$MONITOR" -h $LOCALHOST -p $PORT1 \
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI1 \
 		'objectclass=*' > /dev/null 2>&1
 	RC=$?
 	if test $RC = 0 ; then
@@ -68,7 +68,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Using ldapsearch to retrieve all the entries..."
-$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
 			'(objectClass=*)' > $SEARCHOUT 2>&1
 RC=$?
 
@@ -101,7 +101,7 @@ fi
 
 echo "Using tester for concurrent server access..."
 $SLAPDTESTER -P "$PROGDIR" -d "$SQLDATADIR" \
-	-h $LOCALHOST -p $PORT1 -D "$MANAGERDN" -w $PASSWD \
+	-H $URI1 -D "$MANAGERDN" -w $PASSWD \
 	-l $TESTLOOPS $CHILDREN -FF
 RC=$?
 
@@ -112,7 +112,7 @@ if test $RC != 0 ; then
 fi 
 
 echo "Using ldapsearch to retrieve all the entries..."
-$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
 			'(objectClass=*)' > $SEARCHOUT 2>&1
 RC=$?
 

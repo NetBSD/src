@@ -32,7 +32,7 @@ The \fBexplode\fR form provides a means (via ldap_explode(3)) to explode a DN
 into its component parts.  \fB-nonames\fR strips off the attribute names,
 and -list returns a list suitable for \fBarray set\fR.
 .PP
-Finally, the last form, described in more detail below, refers genericly
+Finally, the last form, described in more detail below, refers generically
 to how the command created by the first two examples is used.
 .SH DESCRIPTION
 
@@ -84,8 +84,7 @@ Currently simple and kerberos-based authentication, are supported.
 To use LDAP and still have reasonable security in a networked, 
 Internet/Intranet environment, secure shell can be used to setup
 secure, encrypted connections between client machines and the LDAP
-server, and between the LDAP server and any replica or slave servers
-that might be used.
+server, and between all LDAP nodes that might be used.
 
 To perform the LDAP "bind" operation:
 
@@ -374,7 +373,7 @@ The \fBldap init\fR syntax fails to return anything useful.  Use
 are also shared, and ldaptcl.so is itself created with the correct flags
 (eg. -R for Solaris).  In short there's a lot of details to make this part
 work, but it should work out of the box for Solaris.  Other systems may
-require that LD_LIBRARY_PATH or other appropraite environment variables
+require that LD_LIBRARY_PATH or other appropriate environment variables
 be set at build and/or runtime.
 
 An asynchronous interface should be provided with callbacks.

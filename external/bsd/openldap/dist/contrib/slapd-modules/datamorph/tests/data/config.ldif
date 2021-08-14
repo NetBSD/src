@@ -1,0 +1,108 @@
+dn: cn=datamorph,cn=schema,cn=config
+changetype: add
+objectClass: olcSchemaConfig
+olcAttributeTypes: ( 1.3.6.1.4.1.4203.666.11.12.123.1
+  NAME 'enumerated'
+  DESC 'Enumerated attribute'
+  EQUALITY fixedSizeIntegerMatch
+  ORDERING fixedSizeIntegerOrderingMatch
+  SYNTAX 1.3.6.1.4.1.4203.666.11.12.1.2 )
+olcAttributeTypes: ( 1.3.6.1.4.1.4203.666.11.12.123.2
+  NAME 'number'
+  DESC 'Integer attribute'
+  EQUALITY fixedSizeIntegerMatch
+  ORDERING fixedSizeIntegerOrderingMatch
+  SYNTAX 1.3.6.1.4.1.4203.666.11.12.1.3 )
+olcAttributeTypes: ( 1.3.6.1.4.1.4203.666.11.12.123.3
+  NAME 'signed'
+  DESC 'Signed integer attribute'
+  EQUALITY fixedSizeSignedIntegerMatch
+  ORDERING fixedSizeSignedIntegerOrderingMatch
+  SYNTAX 1.3.6.1.4.1.4203.666.11.12.1.4 )
+olcObjectClasses: ( 1.3.6.1.4.1.4203.666.11.12.123.4
+  NAME 'transformedObject'
+  DESC 'Testing objectclass'
+  SUP top AUXILIARY
+  MAY ( enumerated $ number $ signed ) )
+
+dn: olcOverlay={0}datamorph,olcDatabase={1}@BACKEND@,cn=config
+changetype: add
+objectClass: olcOverlayConfig
+objectclass: olcDatamorphConfig
+
+# a basic enum
+dn: olcDatamorphAttribute={0}enumerated,olcOverlay={0}datamorph,olcDatabase={1}@BACKEND@,cn=config
+changetype: add
+objectclass: olcDatamorphEnum
+
+dn: olcDatamorphValue=bjensen,olcDatamorphAttribute={0}enumerated,olcOverlay={0}datamorph,olcDatabase={1}@BACKEND@,cn=config
+changetype: add
+objectclass: olcDatamorphEnumValue
+olcDatamorphIndex: 1
+
+dn: olcDatamorphValue=bjorn,olcDatamorphAttribute={0}enumerated,olcOverlay={0}datamorph,olcDatabase={1}@BACKEND@,cn=config
+changetype: add
+objectclass: olcDatamorphEnumValue
+olcDatamorphIndex: 11
+
+dn: olcDatamorphValue=dots,olcDatamorphAttribute={0}enumerated,olcOverlay={0}datamorph,olcDatabase={1}@BACKEND@,cn=config
+changetype: add
+objectclass: olcDatamorphEnumValue
+olcDatamorphIndex: 12
+
+dn: olcDatamorphValue=jaj,olcDatamorphAttribute={0}enumerated,olcOverlay={0}datamorph,olcDatabase={1}@BACKEND@,cn=config
+changetype: add
+objectclass: olcDatamorphEnumValue
+olcDatamorphIndex: 13
+
+dn: olcDatamorphValue=jjones,olcDatamorphAttribute={0}enumerated,olcOverlay={0}datamorph,olcDatabase={1}@BACKEND@,cn=config
+changetype: add
+objectclass: olcDatamorphEnumValue
+olcDatamorphIndex: 14
+
+dn: olcDatamorphValue=jdoe,olcDatamorphAttribute={0}enumerated,olcOverlay={0}datamorph,olcDatabase={1}@BACKEND@,cn=config
+changetype: add
+objectclass: olcDatamorphEnumValue
+olcDatamorphIndex: 10
+
+dn: olcDatamorphValue=jen,olcDatamorphAttribute={0}enumerated,olcOverlay={0}datamorph,olcDatabase={1}@BACKEND@,cn=config
+changetype: add
+objectclass: olcDatamorphEnumValue
+olcDatamorphIndex: 101
+
+dn: olcDatamorphValue=johnd,olcDatamorphAttribute={0}enumerated,olcOverlay={0}datamorph,olcDatabase={1}@BACKEND@,cn=config
+changetype: add
+objectclass: olcDatamorphEnumValue
+olcDatamorphIndex: 20
+
+dn: olcDatamorphValue=melliot,olcDatamorphAttribute={0}enumerated,olcOverlay={0}datamorph,olcDatabase={1}@BACKEND@,cn=config
+changetype: add
+objectclass: olcDatamorphEnumValue
+olcDatamorphIndex: 51
+
+dn: olcDatamorphValue=uham,olcDatamorphAttribute={0}enumerated,olcOverlay={0}datamorph,olcDatabase={1}@BACKEND@,cn=config
+changetype: add
+objectclass: olcDatamorphEnumValue
+olcDatamorphIndex: 31
+
+dn: olcDatamorphValue=\5Cno \22name\22,olcDatamorphAttribute={0}enumerated,olcOverlay={0}datamorph,olcDatabase={1}@BACKEND@,cn=config
+changetype: add
+objectclass: olcDatamorphEnumValue
+olcDatamorphIndex: 200
+
+# an interval
+dn: olcDatamorphAttribute=signed,olcOverlay={0}datamorph,olcDatabase={1}@BACKEND@,cn=config
+changetype: add
+objectclass: olcDatamorphInteger
+olcDatamorphIntegerBytes: 2
+olcDatamorphIntegerSigned: TRUE
+olcDatamorphIntegerLowerBound: -20000
+olcDatamorphIntegerUpperBound: 30000
+
+# an number interval (essentially TRUE/FALSE)
+dn: olcDatamorphAttribute=number,olcOverlay={0}datamorph,olcDatabase={1}@BACKEND@,cn=config
+changetype: add
+objectclass: olcDatamorphInteger
+olcDatamorphIntegerBytes: 1
+olcDatamorphIntegerUpperBound: 1
+olcDatamorphIntegerSigned: FALSE

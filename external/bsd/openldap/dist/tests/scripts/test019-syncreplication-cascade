@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2020 The OpenLDAP Foundation.
+## Copyright 1998-2021 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -25,16 +25,16 @@ mkdir -p $TESTDIR $DBDIR1 $DBDIR2 $DBDIR3 $DBDIR4 $DBDIR5 $DBDIR6
 
 #
 # Test replication:
-# - start master
-# - start slave
+# - start provider
+# - start consumer
 # - populate over ldap
 # - perform some modifies and deleted
 # - retrieve database over ldap and compare against expected results
 #
 
-echo "Starting master slapd on TCP/IP port $PORT1..."
-. $CONFFILTER $BACKEND $MONITORDB < $SRMASTERCONF > $CONF1
-$SLAPD -f $CONF1 -h $URI1 -d $LVL $TIMING > $LOG1 2>&1 &
+echo "Starting provider slapd on TCP/IP port $PORT1..."
+. $CONFFILTER $BACKEND < $SRPROVIDERCONF > $CONF1
+$SLAPD -f $CONF1 -h $URI1 -d $LVL > $LOG1 2>&1 &
 PID=$!
 if test $WAIT != 0 ; then
     echo PID $PID
@@ -44,9 +44,9 @@ KILLPIDS="$PID"
 
 sleep 1
 
-echo "Using ldapsearch to check that master slapd (pid=$PID) is running..."
+echo "Using ldapsearch to check that provider slapd (pid=$PID) is running..."
 for i in 0 1 2 3 4 5; do
-	$LDAPSEARCH -s base -b "$MONITOR" -h $LOCALHOST -p $PORT1 \
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI1 \
 		'objectclass=*' > /dev/null 2>&1
 	RC=$?
 	if test $RC = 0 ; then
@@ -62,8 +62,8 @@ if test $RC != 0 ; then
 	exit $RC
 fi
 
-echo "Using ldapadd to create the context prefix entry in the master..."
-$LDAPADD -D "$MANAGERDN" -h $LOCALHOST -p $PORT1 -w $PASSWD < \
+echo "Using ldapadd to create the context prefix entry in the provider..."
+$LDAPADD -D "$MANAGERDN" -H $URI1 -w $PASSWD < \
 	$LDIFORDEREDCP > /dev/null 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -72,21 +72,21 @@ if test $RC != 0 ; then
 	exit $RC
 fi
 
-echo "Starting R1 slave slapd on TCP/IP port $PORT2..."
-. $CONFFILTER $BACKEND $MONITORDB < $R1SRSLAVECONF > $CONF2
-$SLAPD -f $CONF2 -h $URI2 -d $LVL $TIMING > $LOG2 2>&1 &
-SLAVEPID=$!
+echo "Starting R1 consumer slapd on TCP/IP port $PORT2..."
+. $CONFFILTER $BACKEND < $R1SRCONSUMERCONF > $CONF2
+$SLAPD -f $CONF2 -h $URI2 -d $LVL > $LOG2 2>&1 &
+CONSUMERPID=$!
 if test $WAIT != 0 ; then
-    echo SLAVE R1 PID $SLAVEPID
+    echo CONSUMER R1 PID $CONSUMERPID
     read foo
 fi
-KILLPIDS="$KILLPIDS $SLAVEPID"
+KILLPIDS="$KILLPIDS $CONSUMERPID"
 
 sleep 1
 
-echo "Using ldapsearch to check that R1 slave slapd (pid=$SLAVEPID) is running..."
+echo "Using ldapsearch to check that R1 consumer slapd (pid=$CONSUMERPID) is running..."
 for i in 0 1 2 3 4 5; do
-	$LDAPSEARCH -s base -b "$MONITOR" -h $LOCALHOST -p $PORT2 \
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI2 \
 		'objectclass=*' > /dev/null 2>&1
 	RC=$?
 	if test $RC = 0 ; then
@@ -102,27 +102,27 @@ if test $RC != 0 ; then
 	exit $RC
 fi
 
-echo "Starting R2 slave slapd on TCP/IP port $PORT3..."
-. $CONFFILTER $BACKEND $MONITORDB < $R2SRSLAVECONF > $CONF3
-$SLAPD -f $CONF3 -h $URI3 -d $LVL $TIMING > $LOG3 2>&1 &
-SLAVEPID=$!
+echo "Starting R2 consumer slapd on TCP/IP port $PORT3..."
+. $CONFFILTER $BACKEND < $R2SRCONSUMERCONF > $CONF3
+$SLAPD -f $CONF3 -h $URI3 -d $LVL > $LOG3 2>&1 &
+CONSUMERPID=$!
 if test $WAIT != 0 ; then
-    echo SLAVE R2 PID $SLAVEPID
+    echo CONSUMER R2 PID $CONSUMERPID
     read foo
 fi
-KILLPIDS="$KILLPIDS $SLAVEPID"
+KILLPIDS="$KILLPIDS $CONSUMERPID"
 
 sleep 1
 
-echo "Using ldapsearch to check that R2 slave slapd (pid=$SLAVEPID) is running..."
+echo "Using ldapsearch to check that R2 consumer slapd (pid=$CONSUMERPID) is running..."
 for i in 0 1 2 3 4 5; do
-	$LDAPSEARCH -s base -b "$MONITOR" -h $LOCALHOST -p $PORT3 \
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI3 \
 		'objectclass=*' > /dev/null 2>&1
 	RC=$?
 	if test $RC = 0 ; then
 		break
 	fi
-	echo "Waiting 5 seconds for R2 slave slapd to start..."
+	echo "Waiting 5 seconds for R2 consumer slapd to start..."
 	sleep 5
 done
 
@@ -132,27 +132,27 @@ if test $RC != 0 ; then
 	exit $RC
 fi
 
-echo "Starting P1 slave slapd on TCP/IP port $PORT4..."
-. $CONFFILTER $BACKEND $MONITORDB < $P1SRSLAVECONF > $CONF4
-$SLAPD -f $CONF4 -h $URI4 -d $LVL $TIMING > $LOG4 2>&1 &
-SLAVEPID=$!
+echo "Starting P1 consumer slapd on TCP/IP port $PORT4..."
+. $CONFFILTER $BACKEND < $P1SRCONSUMERCONF > $CONF4
+$SLAPD -f $CONF4 -h $URI4 -d $LVL > $LOG4 2>&1 &
+CONSUMERPID=$!
 if test $WAIT != 0 ; then
-    echo SLAVE P1 PID $SLAVEPID
+    echo CONSUMER P1 PID $CONSUMERPID
     read foo
 fi
-KILLPIDS="$KILLPIDS $SLAVEPID"
+KILLPIDS="$KILLPIDS $CONSUMERPID"
 
 sleep 1
 
-echo "Using ldapsearch to check that P1 slave slapd (pid=$SLAVEPID) is running..."
+echo "Using ldapsearch to check that P1 consumer slapd (pid=$CONSUMERPID) is running..."
 for i in 0 1 2 3 4 5; do
-	$LDAPSEARCH -s base -b "$MONITOR" -h $LOCALHOST -p $PORT4 \
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI4 \
 		'objectclass=*' > /dev/null 2>&1
 	RC=$?
 	if test $RC = 0 ; then
 		break
 	fi
-	echo "Waiting 5 seconds for P1 slave slapd to start..."
+	echo "Waiting 5 seconds for P1 consumer slapd to start..."
 	sleep 5
 done
 
@@ -162,27 +162,27 @@ if test $RC != 0 ; then
 	exit $RC
 fi
 
-echo "Starting P2 slave slapd on TCP/IP port $PORT5..."
-. $CONFFILTER $BACKEND $MONITORDB < $P2SRSLAVECONF > $CONF5
-$SLAPD -f $CONF5 -h $URI5 -d $LVL $TIMING > $LOG5 2>&1 &
-SLAVEPID=$!
+echo "Starting P2 consumer slapd on TCP/IP port $PORT5..."
+. $CONFFILTER $BACKEND < $P2SRCONSUMERCONF > $CONF5
+$SLAPD -f $CONF5 -h $URI5 -d $LVL > $LOG5 2>&1 &
+CONSUMERPID=$!
 if test $WAIT != 0 ; then
-    echo SLAVE P2 PID $SLAVEPID
+    echo CONSUMER P2 PID $CONSUMERPID
     read foo
 fi
-KILLPIDS="$KILLPIDS $SLAVEPID"
+KILLPIDS="$KILLPIDS $CONSUMERPID"
 
 sleep 1
 
-echo "Using ldapsearch to check that P2 slave slapd (pid=$SLAVEPID) is running..."
+echo "Using ldapsearch to check that P2 consumer slapd (pid=$CONSUMERPID) is running..."
 for i in 0 1 2 3 4 5; do
-	$LDAPSEARCH -s base -b "$MONITOR" -h $LOCALHOST -p $PORT5 \
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI5 \
 		'objectclass=*' > /dev/null 2>&1
 	RC=$?
 	if test $RC = 0 ; then
 		break
 	fi
-	echo "Waiting 5 seconds for P2 slave slapd to start..."
+	echo "Waiting 5 seconds for P2 consumer slapd to start..."
 	sleep 5
 done
 
@@ -192,27 +192,27 @@ if test $RC != 0 ; then
 	exit $RC
 fi
 
-echo "Starting P3 slave slapd on TCP/IP port $PORT6..."
-. $CONFFILTER $BACKEND $MONITORDB < $P3SRSLAVECONF > $CONF6
-$SLAPD -f $CONF6 -h $URI6 -d $LVL $TIMING > $LOG6 2>&1 &
-SLAVEPID=$!
+echo "Starting P3 consumer slapd on TCP/IP port $PORT6..."
+. $CONFFILTER $BACKEND < $P3SRCONSUMERCONF > $CONF6
+$SLAPD -f $CONF6 -h $URI6 -d $LVL > $LOG6 2>&1 &
+CONSUMERPID=$!
 if test $WAIT != 0 ; then
-    echo SLAVE P3 PID $SLAVEPID
+    echo CONSUMER P3 PID $CONSUMERPID
     read foo
 fi
-KILLPIDS="$KILLPIDS $SLAVEPID"
+KILLPIDS="$KILLPIDS $CONSUMERPID"
 
 sleep 1
 
-echo "Using ldapsearch to check that P3 slave slapd (pid=$SLAVEPID) is running..."
+echo "Using ldapsearch to check that P3 consumer slapd (pid=$CONSUMERPID) is running..."
 for i in 0 1 2 3 4 5; do
-	$LDAPSEARCH -s base -b "$MONITOR" -h $LOCALHOST -p $PORT6 \
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI6 \
 		'objectclass=*' > /dev/null 2>&1
 	RC=$?
 	if test $RC = 0 ; then
 		break
 	fi
-	echo "Waiting 5 seconds for P3 slave slapd to start..."
+	echo "Waiting 5 seconds for P3 consumer slapd to start..."
 	sleep 5
 done
 
@@ -222,8 +222,8 @@ if test $RC != 0 ; then
 	exit $RC
 fi
 
-echo "Using ldapadd to populate the master directory..."
-$LDAPADD -D "$MANAGERDN" -h $LOCALHOST -p $PORT1 -w $PASSWD < \
+echo "Using ldapadd to populate the provider directory..."
+$LDAPADD -D "$MANAGERDN" -H $URI1 -w $PASSWD < \
 	$LDIFORDEREDNOCP > /dev/null 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -235,13 +235,13 @@ fi
 echo "Waiting $SLEEP2 seconds for syncrepl to receive changes..."
 sleep $SLEEP2
 
-echo "Using ldapmodify to modify master directory..."
+echo "Using ldapmodify to modify provider directory..."
 
 #
 # Do some modifications
 #
 
-$LDAPMODIFY -v -D "$MANAGERDN" -h $LOCALHOST -p $PORT1 -w $PASSWD > \
+$LDAPMODIFY -v -D "$MANAGERDN" -H $URI1 -w $PASSWD > \
 	$TESTOUT 2>&1 << EOMODS
 dn: cn=James A Jones 1, ou=Alumni Association, ou=People, dc=example,dc=com
 changetype: modify
@@ -340,7 +340,7 @@ echo "Waiting $SLEEP2 seconds for syncrepl to receive changes..."
 sleep $SLEEP2
 
 echo "Performing modify alone on provider..."
-$LDAPMODIFY -v -D "$MANAGERDN" -h $LOCALHOST -p $PORT1 -w $PASSWD > \
+$LDAPMODIFY -v -D "$MANAGERDN" -H $URI1 -w $PASSWD > \
         $TESTOUT 2>&1 << EOMODS
 dn: dc=itsdomain2,dc=example,dc=com
 changetype: modify
@@ -359,124 +359,124 @@ fi
 echo "Waiting $SLEEP2 seconds for syncrepl to receive changes..."
 sleep $SLEEP2 
 
-echo "Using ldapsearch to read all the entries from the master..."
-$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
-	'(objectClass=*)' '*' entryCSN > $MASTEROUT 2>&1
+echo "Using ldapsearch to read all the entries from the provider..."
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
+	'(objectClass=*)' '*' entryCSN > $PROVIDEROUT 2>&1
 RC=$?
 
 if test $RC != 0 ; then
-	echo "ldapsearch failed at master ($RC)!"
+	echo "ldapsearch failed at provider ($RC)!"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
 	exit $RC
 fi
 
-echo "Using ldapsearch to read all the entries from the R1 slave..."
-$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT2 \
+echo "Using ldapsearch to read all the entries from the R1 consumer..."
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI2 \
 	'(objectClass=*)' '*' entryCSN > $SERVER2OUT 2>&1
 RC=$?
 
 if test $RC != 0 ; then
-	echo "ldapsearch failed at R1 slave ($RC)!"
+	echo "ldapsearch failed at R1 consumer ($RC)!"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
 	exit $RC
 fi
 
-echo "Using ldapsearch to read all the entries from the R2 slave..."
-$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT3 \
+echo "Using ldapsearch to read all the entries from the R2 consumer..."
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI3 \
 	'(objectClass=*)' '*' entryCSN > $SERVER3OUT 2>&1
 RC=$?
 
 if test $RC != 0 ; then
-	echo "ldapsearch failed at R2 slave ($RC)!"
+	echo "ldapsearch failed at R2 consumer ($RC)!"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
 	exit $RC
 fi
 
-echo "Using ldapsearch to read all the entries from the P1 slave..."
-$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT4 \
+echo "Using ldapsearch to read all the entries from the P1 consumer..."
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI4 \
 	'(objectClass=*)' '*' entryCSN > $SERVER4OUT 2>&1
 RC=$?
 
 if test $RC != 0 ; then
-	echo "ldapsearch failed at P1 slave ($RC)!"
+	echo "ldapsearch failed at P1 consumer ($RC)!"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
 	exit $RC
 fi
 
-echo "Using ldapsearch to read all the entries from the P2 slave..."
-$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT5 \
+echo "Using ldapsearch to read all the entries from the P2 consumer..."
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI5 \
 	'(objectClass=*)' '*' entryCSN > $SERVER5OUT 2>&1
 RC=$?
 
 if test $RC != 0 ; then
-	echo "ldapsearch failed at P2 slave ($RC)!"
+	echo "ldapsearch failed at P2 consumer ($RC)!"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
 	exit $RC
 fi
 
-echo "Using ldapsearch to read all the entries from the P3 slave..."
-$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT6 \
+echo "Using ldapsearch to read all the entries from the P3 consumer..."
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI6 \
 	'(objectClass=*)' '*' entryCSN > $SERVER6OUT 2>&1
 RC=$?
 
 if test $RC != 0 ; then
-	echo "ldapsearch failed at P3 slave ($RC)!"
+	echo "ldapsearch failed at P3 consumer ($RC)!"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
 	exit $RC
 fi
 
 test $KILLSERVERS != no && kill -HUP $KILLPIDS
 
-echo "Filtering master ldapsearch results..."
-$LDIFFILTER < $MASTEROUT > $MASTERFLT
-echo "Filtering R1 slave ldapsearch results..."
+echo "Filtering provider ldapsearch results..."
+$LDIFFILTER < $PROVIDEROUT > $PROVIDERFLT
+echo "Filtering R1 consumer ldapsearch results..."
 $LDIFFILTER < $SERVER2OUT > $SERVER2FLT
-echo "Filtering R2 slave ldapsearch results..."
+echo "Filtering R2 consumer ldapsearch results..."
 $LDIFFILTER < $SERVER3OUT > $SERVER3FLT
-echo "Filtering P1 slave ldapsearch results..."
+echo "Filtering P1 consumer ldapsearch results..."
 $LDIFFILTER < $SERVER4OUT > $SERVER4FLT
-echo "Filtering P2 slave ldapsearch results..."
+echo "Filtering P2 consumer ldapsearch results..."
 $LDIFFILTER < $SERVER5OUT > $SERVER5FLT
-echo "Filtering P3 slave ldapsearch results..."
+echo "Filtering P3 consumer ldapsearch results..."
 $LDIFFILTER < $SERVER6OUT > $SERVER6FLT
 
-echo "Comparing retrieved entries from master and R1 slave..."
-$CMP $MASTERFLT $SERVER2FLT > $CMPOUT
+echo "Comparing retrieved entries from provider and R1 consumer..."
+$CMP $PROVIDERFLT $SERVER2FLT > $CMPOUT
 
 if test $? != 0 ; then
-	echo "test failed - master and R1 slave databases differ"
+	echo "test failed - provider and R1 consumer databases differ"
 	exit 1
 fi
 
-echo "Comparing retrieved entries from master and R2 slave..."
-$CMP $MASTERFLT $SERVER3FLT > $CMPOUT
+echo "Comparing retrieved entries from provider and R2 consumer..."
+$CMP $PROVIDERFLT $SERVER3FLT > $CMPOUT
 
 if test $? != 0 ; then
-	echo "test failed - master and R2 slave databases differ"
+	echo "test failed - provider and R2 consumer databases differ"
 	exit 1
 fi
 
-echo "Comparing retrieved entries from master and P1 slave..."
-$CMP $MASTERFLT $SERVER4FLT > $CMPOUT
+echo "Comparing retrieved entries from provider and P1 consumer..."
+$CMP $PROVIDERFLT $SERVER4FLT > $CMPOUT
 
 if test $? != 0 ; then
-	echo "test failed - master and P1 slave databases differ"
+	echo "test failed - provider and P1 consumer databases differ"
 	exit 1
 fi
 
-echo "Comparing retrieved entries from master and P2 slave..."
-$CMP $MASTERFLT $SERVER5FLT > $CMPOUT
+echo "Comparing retrieved entries from provider and P2 consumer..."
+$CMP $PROVIDERFLT $SERVER5FLT > $CMPOUT
 
 if test $? != 0 ; then
-	echo "test failed - master and P2 slave databases differ"
+	echo "test failed - provider and P2 consumer databases differ"
 	exit 1
 fi
 
-echo "Comparing retrieved entries from master and P3 slave..."
-$CMP $MASTERFLT $SERVER6FLT > $CMPOUT
+echo "Comparing retrieved entries from provider and P3 consumer..."
+$CMP $PROVIDERFLT $SERVER6FLT > $CMPOUT
 
 if test $? != 0 ; then
-	echo "test failed - master and P3 slave databases differ"
+	echo "test failed - provider and P3 consumer databases differ"
 	exit 1
 fi
 

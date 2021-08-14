@@ -1,0 +1,5 @@
+# invalid enum value
+dn: cn=Dorothy Stevens,ou=Alumni Association,ou=People,dc=example,dc=com
+changetype: modify
+replace: enumerated
+enumerated: 2dots

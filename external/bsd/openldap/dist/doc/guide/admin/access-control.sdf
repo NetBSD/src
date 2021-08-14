@@ -1,5 +1,5 @@
 # $OpenLDAP$
-# Copyright 1999-2020 The OpenLDAP Foundation, All Rights Reserved.
+# Copyright 1999-2021 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Access Control
@@ -1112,8 +1112,9 @@ You can restrict access based on the security strength factor (SSF)
 0 (zero) implies no protection,
 1 implies integrity protection only,
 56 DES or other weak ciphers,
-112 triple DES and other strong ciphers,
-128 RC4, Blowfish and other modern strong ciphers.
+112 triple DES and similar ciphers,
+128 RC4, Blowfish and other similar ciphers,
+256 modern ciphers.
 
 Other possibilities:
 
@@ -1228,7 +1229,7 @@ With sets, however, it's also possible to use simple names in group ACLs, as thi
 show.
 
 Let's say we want to allow members of the {{F:sudoadm}} group to write to the
-{{F:ou=suders}} branch of our tree. But our group definition now is using {{F:memberUid}} for
+{{F:ou=sudoers}} branch of our tree. But our group definition now is using {{F:memberUid}} for
 the group members:
 
 > dn: cn=sudoadm,ou=group,dc=example,dc=com

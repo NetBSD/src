@@ -1,0 +1,9 @@
+dn: olcDatamorphValue=gjensen,olcDatamorphAttribute={0}enumerated,olcOverlay={0}datamorph,olcDatabase={1}@BACKEND@,cn=config
+changetype: add
+objectclass: olcDatamorphEnumValue
+olcDatamorphIndex: 55
+
+dn: olcDatamorphAttribute={1}signed,olcOverlay={0}datamorph,olcDatabase={1}@BACKEND@,cn=config
+changetype: modify
+delete: olcDatamorphIntegerUpperBound
+olcDatamorphIntegerUpperBound: 30000

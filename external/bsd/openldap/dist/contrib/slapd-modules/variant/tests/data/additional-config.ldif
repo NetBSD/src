@@ -1,0 +1,23 @@
+dn: name={4}test002,olcOverlay={0}variant,olcDatabase={1}@BACKEND@,cn=config
+changetype: add
+objectclass: olcVariantVariant
+olcVariantEntry: cn=Gern Jensen,ou=Information Technology Division,ou=People,dc=example,dc=com
+
+dn: name=attribute 1,name={4}test002,olcOverlay={0}variant,olcDatabase={1}@BACKEND@,cn=config
+changetype: add
+objectclass: olcVariantAttribute
+olcVariantVariantAttribute: cn
+olcVariantAlternativeAttribute: description
+olcVariantAlternativeEntry: dc=example,dc=com
+
+dn: name=attribute 2,name={4}test002,olcOverlay={0}variant,olcDatabase={1}@BACKEND@,cn=config
+changetype: add
+objectclass: olcVariantAttribute
+olcVariantVariantAttribute: pager
+olcVariantAlternativeAttribute: telephonenumber
+olcVariantAlternativeEntry: dc=example,dc=com
+
+dn: name={0}attribute 1,name={4}test002,olcOverlay={0}variant,olcDatabase={1}@BACKEND@,cn=config
+changetype: modify
+replace: olcVariantVariantAttribute
+olcVariantVariantAttribute: description

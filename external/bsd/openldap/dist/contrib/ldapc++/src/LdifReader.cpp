@@ -1,6 +1,6 @@
 // $OpenLDAP$
 /*
- * Copyright 2008-2020 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2008-2021 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -75,7 +75,7 @@ int LdifReader::readNextRecord( bool first )
                 {
                     std::ostringstream err;
                     err << "Line " << this->m_lineNumber 
-                        << ": Unsuported LDIF Version";
+                        << ": Unsupported LDIF Version";
                     throw( std::runtime_error(err.str()) );
                 }
                 continue;
@@ -98,7 +98,7 @@ int LdifReader::readNextRecord( bool first )
                 {
                     std::ostringstream err;
                     err << "Line " << this->m_lineNumber 
-                        << ": \"include\" not yet suppported.";
+                        << ": \"include\" not yet supported.";
                     throw( std::runtime_error(err.str()) );
                 }
             }

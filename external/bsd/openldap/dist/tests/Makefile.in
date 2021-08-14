@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2020 The OpenLDAP Foundation.
+## Copyright 1998-2021 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -16,37 +16,20 @@
 RUN=./run
 SUBDIRS= progs
 
-BUILD_BDB=@BUILD_BDB@
-BUILD_HDB=@BUILD_HDB@
 BUILD_MDB=@BUILD_MDB@
 BUILD_SQL=@BUILD_SQL@
+BUILD_SLAPD=@BUILD_SLAPD@
+BUILD_BALANCER=@BUILD_BALANCER@
 
 # test primary backends (default)
 test tests:
-	@$(MAKE) bdb
-	@$(MAKE) hdb
 	@$(MAKE) mdb
+	@$(MAKE) lloadd
 
 # test all backends
 alltests: tests
 	@$(MAKE) sql
 	@$(MAKE) ldif
-
-bdb test-bdb:	bdb-$(BUILD_BDB)
-bdb-no:
-	@echo "run configure with --enable-bdb to run BDB tests"
-
-bdb-yes bdb-mod: FORCE
-	@echo "Initiating LDAP tests for BDB..."
-	@$(RUN) -b bdb all
-
-hdb test-hdb:	hdb-$(BUILD_HDB)
-hdb-no:
-	@echo "run configure with --enable-hdb to run HDB tests"
-
-hdb-yes hdb-mod: FORCE
-	@echo "Initiating LDAP tests for HDB..."
-	@$(RUN) -b hdb all
 
 mdb test-mdb:	mdb-$(BUILD_MDB)
 mdb-no:
@@ -68,27 +51,24 @@ ldif test-ldif: FORCE
 	@echo "Initiating LDAP tests for LDIF..."
 	@$(RUN) -b ldif all
 
+lloadd test-lloadd: lloadd-$(BUILD_BALANCER)
+lloadd-no:
+	@echo "run configure with --enable-balancer to run the Load Balancer tests"
+
+lloadd-yes lloadd-mod: lloadd-slapd-$(BUILD_SLAPD)
+
+lloadd-slapd-no:
+	@echo "run configure with --enable-slapd to run the Load Balancer tests"
+
+lloadd-slapd-yes: FORCE
+	@echo "Initiating LDAP tests for the Load Balancer..."
+	@$(RUN) lloadd-all
+
 regressions:	FORCE
 	@echo "Testing (available) ITS regressions"
-	@$(MAKE) bdb-its
-	@$(MAKE) hdb-its
 	@$(MAKE) mdb-its
 
 its: regressions
-
-bdb-its: bdb-its-$(BUILD_BDB)
-bdb-its-no:
-	@echo "run configure with --enable-bdb to run BDB ITS regressions"
-
-bdb-its-yes bdb-its-mod: FORCE
-	@$(RUN) -b bdb its-all
-
-hdb-its: hdb-its-$(BUILD_HDB)
-hdb-its-no:
-	@echo "run configure with --enable-hdb to run HDB ITS regressions"
-
-hdb-its-yes hdb-its-mod: FORCE
-	@$(RUN) -b hdb its-all
 
 mdb-its: mdb-its-$(BUILD_MDB)
 mdb-its-no:

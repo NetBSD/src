@@ -2,7 +2,7 @@ dnl OpenLDAP Autoconf Macros
 dnl $OpenLDAP$
 dnl This work is part of OpenLDAP Software <http://www.openldap.org/>.
 dnl
-dnl Copyright 1998-2020 The OpenLDAP Foundation.
+dnl Copyright 1998-2021 The OpenLDAP Foundation.
 dnl All rights reserved.
 dnl
 dnl Redistribution and use in source and binary forms, with or without
@@ -245,299 +245,6 @@ OL_RESOLVER_TRY(ol_cv_resolver_bind,[-lbind])
 ])
 dnl
 dnl ====================================================================
-dnl Berkeley DB macros
-dnl
-dnl --------------------------------------------------------------------
-dnl Try to link
-AC_DEFUN([OL_BERKELEY_DB_TRY],
-[if test $ol_cv_lib_db = no ; then
-	AC_CACHE_CHECK([for Berkeley DB link (]ifelse($2,,default,$2)[)],[$1],
-[
-	ol_DB_LIB=ifelse($2,,,$2)
-	ol_LIBS=$LIBS
-	LIBS="$ol_DB_LIB $LTHREAD_LIBS $LIBS"
-
-	AC_LINK_IFELSE([AC_LANG_PROGRAM([[
-#ifdef HAVE_DB_185_H
-# include <db_185.h>
-#else
-# include <db.h>
-#endif
-
-#ifndef DB_VERSION_MAJOR
-# define DB_VERSION_MAJOR 1
-#endif
-
-#ifndef NULL
-#define NULL ((void*)0)
-#endif
-]], [[
-#if DB_VERSION_MAJOR > 2
-	db_env_create( NULL, 0 );
-#elif DB_VERSION_MAJOR > 1
-	db_appexit( NULL );
-#else
-	(void) dbopen( NULL, 0, 0, 0, NULL);
-#endif
-]])],[$1=yes],[$1=no])
-
-	LIBS="$ol_LIBS"
-])
-
-	if test $$1 = yes ; then
-		ol_cv_lib_db=ifelse($2,,yes,$2)
-	fi
-fi
-])
-dnl
-dnl --------------------------------------------------------------------
-dnl Get major and minor version from <db.h>
-AC_DEFUN([OL_BDB_HEADER_VERSION],
-[AC_CACHE_CHECK([for Berkeley DB major version in db.h], [ol_cv_bdb_major],[
-	AC_LANG_CONFTEST([
-#include <db.h>
-#ifndef DB_VERSION_MAJOR
-#	define DB_VERSION_MAJOR 1
-#endif
-__db_version DB_VERSION_MAJOR
-])
-	set X `eval "$ac_cpp -P conftest.$ac_ext" | $EGREP __db_version` none none
-	ol_cv_bdb_major=${3}
-])
-case $ol_cv_bdb_major in [[1-9]]*) : ;; *)
-	AC_MSG_ERROR([Unknown Berkeley DB major version in db.h]) ;;
-esac
-
-dnl Determine minor version
-AC_CACHE_CHECK([for Berkeley DB minor version in db.h], [ol_cv_bdb_minor],[
-	AC_LANG_CONFTEST([
-#include <db.h>
-#ifndef DB_VERSION_MINOR
-#	define DB_VERSION_MINOR 0
-#endif
-__db_version DB_VERSION_MINOR
-])
-	set X `eval "$ac_cpp -P conftest.$ac_ext" | $EGREP __db_version` none none
-	ol_cv_bdb_minor=${3}
-])
-case $ol_cv_bdb_minor in [[0-9]]*) : ;; *)
-	AC_MSG_ERROR([Unknown Berkeley DB minor version in db.h]) ;;
-esac
-])
-dnl
-dnl --------------------------------------------------------------------
-dnl Try to locate appropriate library
-AC_DEFUN([OL_BERKELEY_DB_LINK],
-[ol_cv_lib_db=no
-
-if test $ol_cv_bdb_major = 5 ; then
-	OL_BERKELEY_DB_TRY(ol_cv_db_db_5_dot_m,[-ldb-5.$ol_cv_bdb_minor])
-	OL_BERKELEY_DB_TRY(ol_cv_db_db5m,[-ldb5$ol_cv_bdb_minor])
-	OL_BERKELEY_DB_TRY(ol_cv_db_db_5m,[-ldb-5$ol_cv_bdb_minor])
-	OL_BERKELEY_DB_TRY(ol_cv_db_db_5_m,[-ldb-5-$ol_cv_bdb_minor])
-	OL_BERKELEY_DB_TRY(ol_cv_db_db_5,[-ldb-5])
-	OL_BERKELEY_DB_TRY(ol_cv_db_db5,[-ldb5])
-elif test $ol_cv_bdb_major = 4 ; then
-	OL_BERKELEY_DB_TRY(ol_cv_db_db_4_dot_m,[-ldb-4.$ol_cv_bdb_minor])
-	OL_BERKELEY_DB_TRY(ol_cv_db_db4m,[-ldb4$ol_cv_bdb_minor])
-	OL_BERKELEY_DB_TRY(ol_cv_db_db_4m,[-ldb-4$ol_cv_bdb_minor])
-	OL_BERKELEY_DB_TRY(ol_cv_db_db_4_m,[-ldb-4-$ol_cv_bdb_minor])
-	OL_BERKELEY_DB_TRY(ol_cv_db_db_4,[-ldb-4])
-	OL_BERKELEY_DB_TRY(ol_cv_db_db4,[-ldb4])
-fi
-OL_BERKELEY_DB_TRY(ol_cv_db_db,[-ldb])
-OL_BERKELEY_DB_TRY(ol_cv_db_none)
-])
-dnl
-dnl --------------------------------------------------------------------
-dnl Check if Berkeley DB version
-AC_DEFUN([OL_BERKELEY_DB_VERSION],
-[AC_CACHE_CHECK([for Berkeley DB library and header version match], [ol_cv_berkeley_db_version], [
-	ol_LIBS="$LIBS"
-	LIBS="$LTHREAD_LIBS $LIBS"
-	if test $ol_cv_lib_db != yes ; then
-		LIBS="$ol_cv_lib_db $LIBS"
-	fi
-
-	AC_RUN_IFELSE([AC_LANG_SOURCE([[
-#ifdef HAVE_DB_185_H
-	choke me;
-#else
-#include <db.h>
-#endif
-#ifndef DB_VERSION_MAJOR
-# define DB_VERSION_MAJOR 1
-#endif
-#ifndef NULL
-#define NULL ((void *)0)
-#endif
-main()
-{
-#if DB_VERSION_MAJOR > 1
-	char *version;
-	int major, minor, patch;
-
-	version = db_version( &major, &minor, &patch );
-
-	if( major != DB_VERSION_MAJOR ||
-		minor != DB_VERSION_MINOR ||
-		patch != DB_VERSION_PATCH )
-	{
-		printf("Berkeley DB version mismatch\n"
-			"\theader: %s\n\tlibrary: %s\n",
-			DB_VERSION_STRING, version);
-		return 1;
-	}
-#endif
-
-	return 0;
-}]])],[ol_cv_berkeley_db_version=yes],[ol_cv_berkeley_db_version=no],[ol_cv_berkeley_db_version=cross])
-
-	LIBS="$ol_LIBS"
-])
-
-	if test $ol_cv_berkeley_db_version = no ; then
-		AC_MSG_ERROR([Berkeley DB version mismatch])
-	fi
-])dnl
-dnl
-dnl --------------------------------------------------------------------
-dnl Check if Berkeley DB supports DB_THREAD
-AC_DEFUN([OL_BERKELEY_DB_THREAD],
-[AC_CACHE_CHECK([for Berkeley DB thread support], [ol_cv_berkeley_db_thread], [
-	ol_LIBS="$LIBS"
-	LIBS="$LTHREAD_LIBS $LIBS"
-	if test $ol_cv_lib_db != yes ; then
-		LIBS="$ol_cv_lib_db $LIBS"
-	fi
-
-	AC_RUN_IFELSE([AC_LANG_SOURCE([[
-#ifdef HAVE_DB_185_H
-	choke me;
-#else
-#include <db.h>
-#endif
-#ifndef NULL
-#define NULL ((void *)0)
-#endif
-main()
-{
-	int rc;
-	u_int32_t flags = DB_CREATE |
-#ifdef DB_PRIVATE
-		DB_PRIVATE |
-#endif
-		DB_THREAD;
-
-#if DB_VERSION_MAJOR > 2
-	DB_ENV *env = NULL;
-
-	rc = db_env_create( &env, 0 );
-
-	flags |= DB_INIT_MPOOL;
-#ifdef DB_MPOOL_PRIVATE
-	flags |= DB_MPOOL_PRIVATE;
-#endif
-
-	if( rc ) {
-		printf("BerkeleyDB: %s\n", db_strerror(rc) );
-		return rc;
-	}
-
-#if (DB_VERSION_MAJOR > 3) || (DB_VERSION_MINOR >= 1)
-	rc = (env->open)( env, NULL, flags, 0 );
-#else
-	rc = (env->open)( env, NULL, NULL, flags, 0 );
-#endif
-
-	if ( rc == 0 ) {
-		rc = env->close( env, 0 );
-	}
-
-	if( rc ) {
-		printf("BerkeleyDB: %s\n", db_strerror(rc) );
-		return rc;
-	}
-
-#else
-	DB_ENV env;
-	memset( &env, '\0', sizeof(env) );
-
-	rc = db_appinit( NULL, NULL, &env, flags );
-
-	if( rc == 0 ) {
-		db_appexit( &env );
-	}
-
-	unlink("__db_mpool.share");
-	unlink("__db_lock.share");
-#endif
-
-	return rc;
-}]])],[ol_cv_berkeley_db_thread=yes],[ol_cv_berkeley_db_thread=no],[ol_cv_berkeley_db_thread=cross])
-
-	LIBS="$ol_LIBS"
-])
-
-	if test $ol_cv_berkeley_db_thread != no ; then
-		AC_DEFINE(HAVE_BERKELEY_DB_THREAD, 1,
-			[define if Berkeley DB has DB_THREAD support])
-	fi
-])dnl
-dnl
-dnl --------------------------------------------------------------------
-dnl Find any DB
-AC_DEFUN([OL_BERKELEY_DB],
-[ol_cv_berkeley_db=no
-AC_CHECK_HEADERS(db.h)
-if test $ac_cv_header_db_h = yes; then
-	OL_BDB_HEADER_VERSION
-	OL_BDB_COMPAT
-
-	if test $ol_cv_bdb_compat != yes ; then
-		AC_MSG_ERROR([BerkeleyDB version incompatible with BDB/HDB backends])
-	fi
-
-	OL_BERKELEY_DB_LINK
-	if test "$ol_cv_lib_db" != no ; then
-		ol_cv_berkeley_db=yes
-		OL_BERKELEY_DB_VERSION
-		OL_BERKELEY_DB_THREAD
-	fi
-fi
-])
-dnl --------------------------------------------------------------------
-dnl Check for version compatility with back-bdb
-AC_DEFUN([OL_BDB_COMPAT],
-[AC_CACHE_CHECK([if Berkeley DB version supported by BDB/HDB backends], [ol_cv_bdb_compat],[
-	AC_EGREP_CPP(__db_version_compat,[
-#include <db.h>
-
- /* this check could be improved */
-#ifndef DB_VERSION_MAJOR
-#	define DB_VERSION_MAJOR 1
-#endif
-#ifndef DB_VERSION_MINOR
-#	define DB_VERSION_MINOR 0
-#endif
-#ifndef DB_VERSION_PATCH
-#      define DB_VERSION_PATCH 0
-#endif
-
-#define DB_VERSION_FULL        ((DB_VERSION_MAJOR<<16)|(DB_VERSION_MINOR<<8)|DB_VERSION_PATCH)
-
-/* require 4.4 or later, but less than 6.0.20 */
-#if DB_VERSION_FULL >= 0x040400 && DB_VERSION_FULL < 0x060014
-	__db_version_compat
-#endif
-#if DB_VERSION_FULL >= 0x060014
-#error "BerkeleyDB 6.0.20+ license is incompatible with LDAP"
-#endif
-	], [ol_cv_bdb_compat=yes], [ol_cv_bdb_compat=no])])
-])
-
-dnl
-dnl ====================================================================
 dnl Check POSIX Thread version 
 dnl
 dnl defines ol_cv_pthread_version to 4, 5, 6, 7, 8, 10, depending on the
@@ -651,7 +358,7 @@ AC_DEFUN([OL_PTHREAD_TEST_FUNCTION],[[
 ]])
 
 AC_DEFUN([OL_PTHREAD_TEST_PROGRAM],
-AC_LANG_SOURCE([OL_PTHREAD_TEST_INCLUDES
+[AC_LANG_SOURCE([OL_PTHREAD_TEST_INCLUDES
 
 int main(argc, argv)
 	int argc;
@@ -659,7 +366,7 @@ int main(argc, argv)
 {
 OL_PTHREAD_TEST_FUNCTION
 }
-]))
+])])
 dnl --------------------------------------------------------------------
 AC_DEFUN([OL_PTHREAD_TRY], [# Pthread try link: $1 ($2)
 if test "$ol_link_threads" = no ; then
@@ -692,7 +399,7 @@ dnl Check GNU Pth pthread Header
 dnl
 dnl defines ol_cv_header linux_threads to 'yes' or 'no'
 dnl		'no' implies pthreads.h is not LinuxThreads or pthreads.h
-dnl		doesn't exists.  Existance of pthread.h should separately
+dnl		doesn't exist.  Existence of pthread.h should separately
 dnl		checked.
 dnl 
 AC_DEFUN([OL_HEADER_GNU_PTH_PTHREAD_H], [
@@ -723,7 +430,7 @@ dnl Check LinuxThreads Header
 dnl
 dnl defines ol_cv_header linux_threads to 'yes' or 'no'
 dnl		'no' implies pthreads.h is not LinuxThreads or pthreads.h
-dnl		doesn't exists.  Existance of pthread.h should separately
+dnl		doesn't exist.  Existence of pthread.h should separately
 dnl		checked.
 dnl 
 AC_DEFUN([OL_HEADER_LINUX_THREADS], [
@@ -823,29 +530,32 @@ dnl Check for declaration of sys_errlist in one of stdio.h and errno.h.
 dnl Declaration of sys_errlist on BSD4.4 interferes with our declaration.
 dnl Reported by Keith Bostic.
 AC_DEFUN([OL_SYS_ERRLIST],
-[AC_CACHE_CHECK([declaration of sys_errlist],ol_cv_dcl_sys_errlist,[
-	AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+[AC_CACHE_CHECK([existence of sys_errlist],ol_cv_have_sys_errlist,[
+	AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <errno.h>]], [[char *c = (char *) *sys_errlist]])],[ol_cv_have_sys_errlist=yes],[ol_cv_have_sys_errlist=no])])
+if test $ol_cv_have_sys_errlist = yes ; then
+	AC_DEFINE(HAVE_SYS_ERRLIST,1,
+		[define if you actually have sys_errlist in your libs])
+	AC_CACHE_CHECK([declaration of sys_errlist],ol_cv_dcl_sys_errlist,[
+		AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #include <stdio.h>
 #include <sys/types.h>
 #include <errno.h>
 #ifdef _WIN32
 #include <stdlib.h>
-#endif ]], [[char *c = (char *) *sys_errlist]])],[ol_cv_dcl_sys_errlist=yes
-	ol_cv_have_sys_errlist=yes],[ol_cv_dcl_sys_errlist=no])])
+#endif ]], [[char *c = (char *) *sys_errlist]])],[ol_cv_dcl_sys_errlist=yes],
+	[ol_cv_dcl_sys_errlist=no])])
 #
-# It's possible (for near-UNIX clones) that sys_errlist doesn't exist
-if test $ol_cv_dcl_sys_errlist = no ; then
-	AC_DEFINE(DECL_SYS_ERRLIST,1,
-		[define if sys_errlist is not declared in stdio.h or errno.h])
-
-	AC_CACHE_CHECK([existence of sys_errlist],ol_cv_have_sys_errlist,[
-		AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <errno.h>]], [[char *c = (char *) *sys_errlist]])],[ol_cv_have_sys_errlist=yes],[ol_cv_have_sys_errlist=no])])
-fi
-if test $ol_cv_have_sys_errlist = yes ; then
-	AC_DEFINE(HAVE_SYS_ERRLIST,1,
-		[define if you actually have sys_errlist in your libs])
+	# It's possible (for near-UNIX clones) that sys_errlist doesn't exist
+	if test $ol_cv_dcl_sys_errlist = no ; then
+		AC_DEFINE(DECL_SYS_ERRLIST,1,
+			[define if sys_errlist is not declared in stdio.h or errno.h])
+	fi
 fi
 ])dnl
+dnl
+dnl ====================================================================
+dnl glibc supplies a non-standard strerror_r if _GNU_SOURCE is defined.
+dnl It's actually preferable to the POSIX version, if available.
 AC_DEFUN([OL_NONPOSIX_STRERROR_R],
 [AC_CACHE_CHECK([non-posix strerror_r],ol_cv_nonposix_strerror_r,[
 	AC_EGREP_CPP(strerror_r,[#include <string.h>],
@@ -865,7 +575,7 @@ AC_DEFUN([OL_NONPOSIX_STRERROR_R],
 				strerror_r( 1, buf, sizeof buf );
 				exit( buf[0] == 0 );
 			}
-			]])],[ol_cv_nonposix_strerror_r=yes],[ol_cv_nonposix_strerror=no],[ol_cv_nonposix_strerror=no])
+			]])],[ol_cv_nonposix_strerror_r=yes],[ol_cv_nonposix_strerror_r=no],[ol_cv_nonposix_strerror_r=no])
 	fi
 	])
 if test $ol_cv_nonposix_strerror_r = yes ; then
@@ -875,8 +585,7 @@ fi
 ])dnl
 dnl
 AC_DEFUN([OL_STRERROR],
-[OL_SYS_ERRLIST dnl TEMPORARY
-AC_CHECK_FUNCS(strerror strerror_r)
+[AC_CHECK_FUNCS(strerror strerror_r)
 ol_cv_func_strerror_r=no
 if test "${ac_cv_func_strerror_r}" = yes ; then
 	OL_NONPOSIX_STRERROR_R
@@ -1080,7 +789,7 @@ AC_DEFUN([OL_FUNC_GETHOSTBYADDR_R_NARGS],
 ])dnl
 dnl
 dnl --------------------------------------------------------------------
-dnl Check for Cyrus SASL version compatility
+dnl Check for Cyrus SASL version compatibility
 AC_DEFUN([OL_SASL_COMPAT],
 [AC_CACHE_CHECK([Cyrus SASL library version], [ol_cv_sasl_compat],[
 	AC_EGREP_CPP(__sasl_compat,[
@@ -1098,20 +807,4 @@ AC_DEFUN([OL_SASL_COMPAT],
 	char *__sasl_compat = "2.1.15+ or better okay";
 #endif
 	],	[ol_cv_sasl_compat=yes], [ol_cv_sasl_compat=no])])
-])
-dnl ====================================================================
-dnl check for SSL compatibility
-AC_DEFUN([OL_SSL_COMPAT],
-[AC_CACHE_CHECK([OpenSSL library version (CRL checking capability)],
-	[ol_cv_ssl_crl_compat],[
-		AC_EGREP_CPP(__ssl_compat,[
-#ifdef HAVE_OPENSSL_SSL_H
-#include <openssl/ssl.h>
-#endif
-
-/* Require 0.9.7d+ */
-#if OPENSSL_VERSION_NUMBER >= 0x0090704fL
-	char *__ssl_compat = "0.9.7d";
-#endif
-	], [ol_cv_ssl_crl_compat=yes], [ol_cv_ssl_crl_compat=no])])
 ])

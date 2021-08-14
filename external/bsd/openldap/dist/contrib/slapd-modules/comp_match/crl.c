@@ -1,4 +1,4 @@
-/*	$NetBSD: crl.c,v 1.1.1.3 2018/02/06 01:53:06 christos Exp $	*/
+/*	$NetBSD: crl.c,v 1.1.1.4 2021/08/14 16:05:14 christos Exp $	*/
 
 /*
  *    crl.c

@@ -1,5 +1,5 @@
 # $OpenLDAP$
-# Copyright 2007-2020 The OpenLDAP Foundation, All Rights Reserved.
+# Copyright 2007-2021 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Backends
@@ -14,38 +14,9 @@ name of the module for a backend is usually of the form:
 
 >	back_<backend name>.la
 
-So for example, if you need to load the {{hdb}} backend, you would configure
+So for example, if you need to load the {{mdb}} backend, you would configure
 
->	moduleload back_hdb.la
-
-H2: Berkeley DB Backends
-
-
-H3: Overview
-
-The {{hdb}} backend to {{slapd}}(8) is a backend for a 
-normal {{slapd}} database.  It uses the Oracle Berkeley DB ({{TERM:BDB}}) 
-package to store data. It makes extensive use of indexing and caching 
-(see the {{SECT:Tuning}} section) to speed data access.
-
-{{hdb}} is a variant of the original {{bdb}} backend which was first written for use with BDB.
-{{hdb}} uses a hierarchical database layout which supports subtree renames.
-It is otherwise identical to the {{bdb}}
-behavior, and all the same configuration options apply.
-
-Note: An {{hdb}} database needs a large {{idlcachesize}} for good search performance, 
-typically three times the {{cachesize}} (entry cache size) or larger.
-
-Note: The {{hdb}} backend has superseded the {{bdb}} backend, and both will
-soon be deprecated in favor of the new {{mdb}} backend. See below.
-
-H3: back-bdb/back-hdb Configuration
-
-MORE LATER
-
-H3: Further Information
-
-{{slapd-bdb}}(5)
+>	moduleload back_mdb.la
 
 H2: LDAP
 
@@ -115,7 +86,7 @@ server is moved to the head, so that it will be first contacted the next time
 a connection needs be created.
 
 This feature can be used to provide a form of load balancing when using 
-{{SECT: MirrorMode replication}}.
+{{SECT: Mirror mode replication}}.
 
 H3: Further Information
 
@@ -199,16 +170,16 @@ H3: Overview
 The {{mdb}} backend to {{slapd}}(8) is the recommended primary backend for a
 normal {{slapd}} database.  It uses OpenLDAP's own
 Lightning Memory-Mapped Database ({{TERM:LMDB}})
-library to store data and is intended to replace the Berkeley DB backends.
+library to store data and replaces the BerkeleyDB backends used in older
+OpenLDAP releases.
 
-It supports indexing like the BDB backends, but it uses no caching and requires
-no tuning to deliver maximum search performance.  Like {{hdb}}, it is also
-fully hierarchical and supports subtree renames in constant time.
+It supports indexing, it uses no caching, and requires no tuning to deliver
+maximum search performance.  It is fully hierarchical and supports subtree
+renames in constant time.
 
 H3: back-mdb Configuration
 
-Unlike the BDB backends, the {{mdb}} backend can be instantiated with very few
-configuration lines:
+The {{mdb}} backend can be instantiated with very few configuration lines:
 
 >	include ./schema/core.schema
 >
@@ -433,7 +404,7 @@ H3: Further Information
 
 {{slapd-passwd}}(5)
 
-H2: Perl/Shell
+H2: Perl
 
 H3: Overview
 
@@ -442,17 +413,13 @@ into {{slapd}}(8). Any perl database section of the configuration file
 {{slapd.conf}}(5) must then specify what Perl module to use. Slapd then creates 
 a new Perl object that handles all the requests for that particular instance of the backend.
 
-The Shell backend to {{slapd}}(8) executes external programs to implement 
-operations, and is designed to make it easy to tie an existing database to the 
-slapd front-end. This backend is primarily intended to be used in prototypes.
-
-H3: back-perl/back-shell Configuration
+H3: back-perl Configuration
 
 LATER
 
 H3: Further Information
 
-{{slapd-shell}}(5) and {{slapd-perl}}(5)
+{{slapd-perl}}(5)
 
 H2: Relay
 
@@ -490,7 +457,7 @@ distribute information between different sites/applications that use RDBMSes
 and/or LDAP. Or whatever else...
 
 It is {{B:NOT}} designed as a general-purpose backend that uses RDBMS instead of 
-BerkeleyDB (as the standard BDB backend does), though it can be used as such with 
+LMDB (as the standard back-mdb backend does), though it can be used as such with
 several limitations. Please see {{SECT: LDAP vs RDBMS}} for discussion.
 
 The idea is to use some meta-information to translate LDAP queries to SQL queries, 
@@ -504,7 +471,7 @@ ODBC to connect to RDBMSes, and is highly configurable for SQL dialects RDBMSes
 may use, so it may be used for integration and distribution of data on different 
 RDBMSes, OSes, hosts etc., in other words, in highly heterogeneous environments.
 
-This backend is experimental.
+This backend is experimental and deprecated.
 
 H3: back-sql Configuration
 
@@ -582,7 +549,7 @@ only for PostgreSQL and IBM db2.
 Using {{F: sql-test000}}, files in {{F: servers/slapd/back-sql/rdbms_depend/pgsql/}}
 and the man page, you should be set.
 
-Note: This backend is experimental.
+Note: This backend is experimental and deprecated.
 
 H3: Further Information
 

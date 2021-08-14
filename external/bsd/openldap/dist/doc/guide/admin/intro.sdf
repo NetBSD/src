@@ -1,5 +1,5 @@
 # $OpenLDAP$
-# Copyright 1999-2020 The OpenLDAP Foundation, All Rights Reserved.
+# Copyright 1999-2021 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 H1: Introduction to OpenLDAP Directory Services
 
@@ -33,7 +33,7 @@ tuned to give quick response to high-volume lookup or search
 operations. They may have the ability to replicate information
 widely in order to increase availability and reliability, while
 reducing response time.  When directory information is replicated,
-temporary inconsistencies between the replicas may be okay, as long
+temporary inconsistencies between the consumers may be okay, as long
 as inconsistencies are resolved in a timely manner.
 
 There are many different ways to provide a directory service.
@@ -50,14 +50,14 @@ provide the directory service. Typically a global service defines
 a uniform {{namespace}} which gives the same view of the data no
 matter where you are in relation to the data itself.
 
-A web directory, such as provided by the {{Open Directory Project}}
-<{{URL:http://dmoz.org}}>, is a good example of a directory service.
+A web directory, such as provided by the {{Curlie Project}}
+<{{URL:https://curlie.org}}>, is a good example of a directory service.
 These services catalog web pages and are specifically designed to
 support browsing and searching.
 
 While some consider the Internet {{TERM[expand]DNS}} (DNS) is an
 example of a globally distributed directory service, DNS is not
-browseable nor searchable.  It is more properly described as a
+browsable nor searchable.  It is more properly described as a
 globally distributed {{lookup}} service.
 
 
@@ -346,7 +346,7 @@ really have a "directory".
 
 Existing commercial LDAP server implementations that use a relational database 
 are either from the first kind or the third. I don't know of any implementation 
-that uses a relational database to do inefficiently what BDB does efficiently.
+that uses a relational database to do inefficiently what LMDB does efficiently.
 For those who are interested in "third way" (exposing EXISTING data from RDBMS 
 as LDAP tree, having some limitations compared to classic LDAP model, but making 
 it possible to interoperate between LDAP and SQL applications):
@@ -383,8 +383,8 @@ SASL}} software which supports a number of mechanisms including
 {{B:{{TERM[expand]TLS}}}}: {{slapd}} supports certificate-based
 authentication and data security (integrity and confidentiality)
 services through the use of TLS (or SSL).  {{slapd}}'s TLS
-implementation can utilize {{PRD:OpenSSL}}, {{PRD:GnuTLS}},
-or {{PRD:MozNSS}} software.
+implementation can utilize {{PRD:OpenSSL}} or {{PRD:GnuTLS}},
+software.
 
 {{B:Topology control}}: {{slapd}} can be configured to restrict
 access at the socket layer based upon network topology information.
@@ -403,15 +403,8 @@ tags.
 {{B:Choice of database backends}}: {{slapd}} comes with a variety
 of different database backends you can choose from. They include
 {{TERM:MDB}}, a hierarchical high-performance transactional database backend;
-{{TERM:BDB}}, a high-performance transactional database backend (deprecated);
-{{TERM:HDB}}, a hierarchical high-performance transactional
-backend (deprecated); {{SHELL}}, a backend interface to arbitrary shell scripts;
 and PASSWD, a simple backend interface to the {{passwd}}(5) file.
-The MDB backend utilizes {{TERM:LMDB}}, a high performance replacement
-for {{ORG[expand]Oracle}}'s Berkeley DB.
-The BDB and HDB backends utilize {{ORG[expand]Oracle}} Berkeley DB. These
-backends have been deprecated as LMDB provides significantly higher read
-and write throughput and data reliability.
+The MDB backend utilizes {{TERM:LMDB}}.
 
 {{B:Multiple database instances}}: {{slapd}} can be configured to
 serve multiple databases at the same time. This means that a single
@@ -428,7 +421,7 @@ well-defined {{TERM:C}} {{TERM:API}}, you can write your own
 customized modules which extend {{slapd}} in numerous ways.  Also,
 a number of {{programmable database}} modules are provided.  These
 allow you to expose external data sources to {{slapd}} using popular
-programming languages ({{PRD:Perl}}, {{shell}}, and {{TERM:SQL}}).
+programming languages ({{PRD:Perl}}, and {{TERM:SQL}}).
 
 {{B:Threads}}: {{slapd}} is threaded for high performance.  A single
 multi-threaded {{slapd}} process handles all incoming requests using
@@ -436,12 +429,15 @@ a pool of threads.  This reduces the amount of system overhead
 required while providing high performance.
 
 {{B:Replication}}: {{slapd}} can be configured to maintain shadow
-copies of directory information.  This {{single-master/multiple-slave}}
+copies of directory information.  This {{single-provider/multiple-consumer}}
 replication scheme is vital in high-volume environments where a
 single {{slapd}} installation just doesn't provide the necessary availability
 or reliability.  For extremely demanding environments where a
-single point of failure is not acceptable, {{multi-master}} replication
-is also available.  {{slapd}} includes support for {{LDAP Sync}}-based
+single point of failure is not acceptable, {{multi-provider}} replication
+is also available. With {{multi-provider}} replication two or more nodes can
+accept write operations allowing for redundancy at the provider level.
+
+{{slapd}} includes support for {{LDAP Sync}}-based
 replication.
 
 {{B:Proxy Cache}}: {{slapd}} can be configured as a caching

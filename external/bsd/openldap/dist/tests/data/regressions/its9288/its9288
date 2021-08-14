@@ -1,0 +1,186 @@
+#! /bin/sh
+# $OpenLDAP$
+## This work is part of OpenLDAP Software <http://www.openldap.org/>.
+##
+## Copyright 1998-2021 The OpenLDAP Foundation.
+## All rights reserved.
+##
+## Redistribution and use in source and binary forms, with or without
+## modification, are permitted only as authorized by the OpenLDAP
+## Public License.
+##
+## A copy of this license is available in the file LICENSE in the
+## top-level directory of the distribution or, alternatively, at
+## <http://www.OpenLDAP.org/license.html>.
+
+echo "running defines.sh"
+. $SRCDIR/scripts/defines.sh
+
+ITS=9288
+ITSDIR=$DATADIR/regressions/its$ITS
+
+if test $BACKLDAP = "ldapno" ; then
+	echo "LDAP backend not available, test skipped"
+	exit 0
+fi
+
+mkdir -p $TESTDIR $DBDIR1 $DBDIR2
+cp -r $DATADIR/tls $TESTDIR
+
+echo "This test checks that back-ldap does not crash when proxy retries "
+echo "connection to remote server and the retry fails with an LDAP error."
+
+#
+# Start slapd that acts as a remote LDAP server that will be proxied
+#
+echo "Running slapadd to build database for the remote slapd server..."
+. $CONFFILTER $BACKEND < $CONF > $CONF1
+$SLAPADD -f $CONF1 -l $LDIFORDERED
+
+RC=$?
+if test $RC != 0 ; then
+	echo "slapadd failed ($RC)!"
+	exit $RC
+fi
+
+
+echo "Starting remote slapd server on TCP/IP port $PORT1..."
+$SLAPD -f $CONF1 -h "$URI1" -d $LVL > $LOG1 2>&1 &
+SERVERPID=$!
+if test $WAIT != 0 ; then
+	echo SERVERPID $SERVERPID
+	read foo
+fi
+
+sleep $SLEEP0
+
+echo "Using ldapsearch to check that slapd is running..."
+for i in 0 1 2 3 4 5; do
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI1 \
+		'objectclass=*' > /dev/null 2>&1
+	RC=$?
+	if test $RC = 0 ; then
+		break
+	fi
+	echo "Waiting $SLEEP1 seconds for slapd to start..."
+	sleep $SLEEP1
+done
+
+#
+# Start ldapd that will proxy for the remote server
+#
+echo "Starting slapd proxy on TCP/IP port $PORT2..."
+. $CONFFILTER $BACKEND < $ITSDIR/slapd-proxy.conf > $CONF2
+$SLAPD -f $CONF2 -h $URI2 -d $LVL > $LOG2 2>&1 &
+PROXYPID=$!
+if test $WAIT != 0 ; then
+	echo PROXYPID $PROXYPID
+	read foo
+fi
+KILLPIDS="$KILLPIDS $PROXYPID"
+
+sleep $SLEEP0
+
+echo "Using ldapsearch to check that slapd is running..."
+for i in 0 1 2 3 4 5; do
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI2 \
+		'objectclass=*' > /dev/null 2>&1
+	RC=$?
+	if test $RC = 0 ; then
+		break
+	fi
+	echo "Waiting $SLEEP1 seconds for slapd to start..."
+	sleep $SLEEP1
+done
+
+#
+# Test case:
+#
+#   1. Client establishes connection to proxy and binds
+#   2. Proxy establishes connection to remote server and passes through the bind.
+#   3. Change the user password on the remote server
+#   4. Kill and restart the remote server to invalidate the TCP connection between proxy and remote
+#   5. Make a new search from client
+#   6. Proxy notices connection is down and retries bind (rebind-as-user)
+#   7. Server responds with error: invalid credentials
+#   8. Proxy crashes
+#
+
+# Create fifo that is used to pass searches from the test case to ldapsearch without
+# disconnecting the client -> proxy connection
+rm -f $TESTDIR/ldapsearch.fifo
+mkfifo $TESTDIR/ldapsearch.fifo
+
+# Start ldapsearch on background and have it read search filters from fifo,
+# so that single client connection will persist over many searches
+echo "Make the proxy to connect the remote LDAP server..."
+$LDAPSEARCH -b "$BASEDN" -H $URI2 \
+	-D "$BABSDN" -w "bjensen" \
+	-f $TESTDIR/ldapsearch.fifo > $TESTOUT 2>&1 &
+LDAPSEARCHPID=$!
+KILLPIDS="$KILLPIDS $LDAPSEARCHPID"
+
+# Open fifo as file descriptor
+exec 3>$TESTDIR/ldapsearch.fifo
+
+# Trigger LDAP connections towards the proxy by executing a search￼
+echo 'objectclass=*' >&3
+
+echo "Change user's bind password on the remote server in order to make rebind-as-user fail when proxy retries"
+$LDAPPASSWD -H $URI1 -D "$MANAGERDN" -w $PASSWD \
+	-s "newpass" "$BABSDN" >> $TESTOUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldappasswd failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS $SERVERPID
+	exit $RC
+fi
+
+# Restart the remote server to invalidate TCP connection between proxy and remote
+echo "Killing and Re-starting remote slapd server on TCP/IP port $PORT1..."
+kill -HUP $SERVERPID
+wait $SERVERPID
+
+$SLAPD -f $CONF1 -h "$URI1" -d $LVL >> $LOG1 2>&1 &
+SERVERPID=$!
+if test $WAIT != 0 ; then
+	echo SERVERPID $SERVERPID
+	read foo
+fi
+KILLPIDS="$KILLPIDS $SERVERPID"
+
+sleep $SLEEP0
+
+echo "Using ldapsearch to check that slapd is running..."
+for i in 0 1 2 3 4 5; do
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI1 \
+		'objectclass=*' > /dev/null 2>&1
+	RC=$?
+	if test $RC = 0 ; then
+		break
+	fi
+	echo "Waiting $SLEEP1 seconds for slapd to start..."
+	sleep $SLEEP1
+done
+
+echo "Make new ldap search to trigger proxy retry logic"
+echo 'objectclass=*' >&3
+
+sleep $SLEEP0
+echo "Checking if proxy slapd is still up"
+$LDAPSEARCH -s base -b "$MONITOR" -H $URI1 \
+	'objectclass=*' > /dev/null 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "slapd crashed!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS 2>/dev/null
+	exit $RC
+fi
+
+test $KILLSERVERS != no && kill -HUP $KILLPIDS 2>/dev/null
+
+echo ">>>>> Test succeeded"
+
+test $KILLSERVERS != no && wait
+
+exit 0

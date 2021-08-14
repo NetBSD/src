@@ -4691,7 +4691,7 @@
            x="96.974648"
            y="113.75929"
            style="font-size:18px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;font-family:Arial" /></flowRegion><flowPara
-         id="flowPara27617">Master/Provider</flowPara></flowRoot>    <g
+         id="flowPara27617">Provider</flowPara></flowRoot>    <g
        id="g3073"
        transform="matrix(0.1267968,0,0,0.1710106,264.00249,370.01498)"
        inkscape:export-filename="/anything/src/openldap/ldap/doc/guide/images/src/push-based-complete.png"
@@ -4772,7 +4772,7 @@
            x="412.14224"
            y="279.42432"
            style="font-size:18px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;font-family:Arial" /></flowRegion><flowPara
-         id="flowPara3136">Primary directory is a standard OpenLDAP Master, ldap proxy using Syncrepl pulls in changes from the master and pushes out to replicas. Useful if you don't have access to original master.</flowPara></flowRoot>    <flowRoot
+         id="flowPara3136">Primary directory is a standard OpenLDAP provider, ldap proxy using Syncrepl pulls in changes from the provider and pushes out to replicas. Useful if you don't have access to original provider.</flowPara></flowRoot>    <flowRoot
        xml:space="preserve"
        id="flowRoot6975"
        style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"

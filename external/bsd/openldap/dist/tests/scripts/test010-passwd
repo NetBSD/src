@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2020 The OpenLDAP Foundation.
+## Copyright 1998-2021 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -19,8 +19,8 @@ echo "running defines.sh"
 mkdir -p $TESTDIR $DBDIR1
 
 echo "Starting slapd on TCP/IP port $PORT1..."
-. $CONFFILTER $BACKEND $MONITORDB < $PWCONF > $CONF1
-$SLAPD -f $CONF1 -h $URI1 -d $LVL $TIMING > $LOG1 2>&1 &
+. $CONFFILTER $BACKEND < $PWCONF > $CONF1
+$SLAPD -f $CONF1 -h $URI1 -d $LVL > $LOG1 2>&1 &
 PID=$!
 if test $WAIT != 0 ; then
     echo PID $PID
@@ -32,7 +32,7 @@ sleep 1
 
 echo "Using ldapsearch to check that slapd is running..."
 for i in 0 1 2 3 4 5; do
-	$LDAPSEARCH -s base -b "$MONITOR" -h $LOCALHOST -p $PORT1 \
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI1 \
 		'objectclass=*' > /dev/null 2>&1
 	RC=$?
 	if test $RC = 0 ; then
@@ -43,7 +43,7 @@ for i in 0 1 2 3 4 5; do
 done
 
 echo "Using ldapadd to populate the database..."
-$LDAPADD -D "$MANAGERDN" -h $LOCALHOST -p $PORT1 -w $PASSWD < \
+$LDAPADD -D "$MANAGERDN" -H $URI1 -w $PASSWD < \
 	$LDIFPASSWD > $TESTOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -57,14 +57,14 @@ echo > $TESTOUT
 
 echo "Using ldapsearch to verify population ..."
 echo "++ Initial search" >> $SEARCHOUT
-$LDAPSEARCH -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -H $URI1 \
 	-D "$MANAGERDN" -w $PASSWD \
 	-b "$BASEDN" \
 	'objectclass=*' >> $SEARCHOUT 2>&1
 
 echo "Using ldappasswd to test a few error conditions ..."
 echo "Pass 0" >> $TESTOUT
-$LDAPPASSWD -h $LOCALHOST -p $PORT1 \
+$LDAPPASSWD -H $URI1 \
 	-w secret -a "" -s newsecret \
 	-D "cn=md5, $BASEDN" >> $TESTOUT 2>&1
 RC=$?
@@ -73,7 +73,7 @@ if test $RC = 0 ; then
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
 	exit 1
 fi
-$LDAPPASSWD -h $LOCALHOST -p $PORT1 \
+$LDAPPASSWD -H $URI1 \
 	-w secret -a oldsecret -s "" \
 	-D "cn=md5, $BASEDN" >> $TESTOUT 2>&1
 RC=$?
@@ -82,7 +82,7 @@ if test $RC = 0 ; then
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
 	exit 1
 fi
-$LDAPPASSWD -h $LOCALHOST -p $PORT1 \
+$LDAPPASSWD -H $URI1 \
 	-w secret -a oldsecret -s newsecret \
 	-D "cn=md5, $BASEDN" >> $TESTOUT 2>&1
 RC=$?
@@ -94,7 +94,7 @@ fi
 
 echo "Using ldappasswd (PASS 1)  ..."
 echo "Pass 1" >> $TESTOUT
-$LDAPPASSWD -h $LOCALHOST -p $PORT1 \
+$LDAPPASSWD -H $URI1 \
 	-w secret -s newsecret \
 	-D "cn=md5, $BASEDN" >> $TESTOUT 2>&1
 RC=$?
@@ -103,7 +103,7 @@ if test $RC != 0 ; then
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
 	exit $RC
 fi
-$LDAPPASSWD -h $LOCALHOST -p $PORT1 \
+$LDAPPASSWD -H $URI1 \
 	-w $PASSWD -s newsecret \
 	-D "$MANAGERDN" "cn=smd5, $BASEDN" >> $TESTOUT 2>&1
 RC=$?
@@ -112,7 +112,7 @@ if test $RC != 0 ; then
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
 	exit $RC
 fi
-$LDAPPASSWD -h $LOCALHOST -p $PORT1 \
+$LDAPPASSWD -H $URI1 \
 	-w secret -s newsecret \
 	-D "cn=sha, $BASEDN" >> $TESTOUT 2>&1
 RC=$?
@@ -121,7 +121,7 @@ if test $RC != 0 ; then
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
 	exit $RC
 fi
-$LDAPPASSWD -h $LOCALHOST -p $PORT1 \
+$LDAPPASSWD -H $URI1 \
 	-w secret -s newsecret \
 	-D "cn=ssha, $BASEDN" >> $TESTOUT 2>&1
 RC=$?
@@ -134,7 +134,7 @@ fi
 echo "" >> $TESTOUT
 echo "Pass 2" >> $TESTOUT
 echo "Using ldappasswd (PASS 2)  ..."
-$LDAPPASSWD -h $LOCALHOST -p $PORT1 \
+$LDAPPASSWD -H $URI1 \
 	-w newsecret \
 	-D "cn=md5, $BASEDN" >> $TESTOUT 2>&1
 RC=$?
@@ -143,7 +143,7 @@ if test $RC != 0 ; then
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
 	exit $RC
 fi
-$LDAPPASSWD -h $LOCALHOST -p $PORT1 \
+$LDAPPASSWD -H $URI1 \
 	-w newsecret \
 	-D "cn=smd5, $BASEDN" >> $TESTOUT 2>&1
 RC=$?
@@ -152,7 +152,7 @@ if test $RC != 0 ; then
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
 	exit $RC
 fi
-$LDAPPASSWD -h $LOCALHOST -p $PORT1 \
+$LDAPPASSWD -H $URI1 \
 	-w newsecret \
 	-D "cn=sha, $BASEDN" >> $TESTOUT 2>&1
 RC=$?
@@ -161,7 +161,7 @@ if test $RC != 0 ; then
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
 	exit $RC
 fi
-$LDAPPASSWD -h $LOCALHOST -p $PORT1 \
+$LDAPPASSWD -H $URI1 \
 	-w newsecret \
 	-D "cn=ssha, $BASEDN" >> $TESTOUT 2>&1
 RC=$?
@@ -174,7 +174,7 @@ fi
 echo "Logging end state with ldapsearch..."
 echo "" >> $TESTOUT
 echo "++ End search" >> $TESTOUT
-$LDAPSEARCH -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -H $URI1 \
 	-D "$MANAGERDN" -w $PASSWD \
 	-b "$BASEDN" \
 	'objectclass=*' >> $TESTOUT 2>&1

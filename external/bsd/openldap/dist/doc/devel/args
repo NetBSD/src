@@ -7,6 +7,7 @@ ldapmodrdn       *CDE**HI** MNOPQR  UVWXYZ  cdef*h*** *nop*rs  vwxy
 ldappasswd      A*CDE**HI**  NO QRS UVWXYZa  def*h*** * o * s  vwxy  
 ldapsearch      A*CDE**HI**LMNOPQRSTUVWXYZab def*h***l*nop* stuvwxyz
 ldapurl          *  E**H **       S       ab   f*h*** *  p* s
+ldapvc           * DE**HI**  NO QRS UVWXYZa cdef*h*** *nop*    vwxy 
 ldapwhoami       * DE**HI**  NO QR  UVWXYZ   def*h*** *nop*    vwxy 
 
 
@@ -27,7 +28,7 @@ ldapwhoami       * DE**HI**  NO QR  UVWXYZ   def*h*** *nop*    vwxy
 	-h host
 	-n no-op
 	-N no (SASLprep) normalization of simple bind password
-	-o general options (currently nettimeout and ldif-wrap only)
+	-o general libldap options (plus ldif_wrap and nettimeout for backwards comp.)
 	-p port
 	-v verbose
 	-V version

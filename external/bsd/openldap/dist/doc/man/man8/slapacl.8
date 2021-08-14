@@ -1,5 +1,5 @@
 .TH SLAPACL 8C "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 2004-2020 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 2004-2021 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .\" $OpenLDAP$
 .SH NAME
@@ -58,8 +58,10 @@ from the database, and thus it must exist.
 The
 .I DN
 is also used to determine what rules apply; thus, it must be
-in the naming context of a configured database.  See also
+in the naming context of a configured database. By default, the first
+database that supports the requested operation is used.  See also
 .BR \-u .
+
 .TP
 .BI \-d \ debug-level
 enable debugging messages as defined by the specified
