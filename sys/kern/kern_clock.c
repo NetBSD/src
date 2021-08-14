@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.145 2021/08/14 17:51:20 ryo Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.146 2021/08/14 21:17:11 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.145 2021/08/14 17:51:20 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.146 2021/08/14 21:17:11 ryo Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
@@ -457,7 +457,7 @@ statclock(struct clockframe *frame)
 		/*
 		 * Kernel statistics are just like addupc_intr, only easier.
 		 */
-#ifdef MULTIPROCESSOR
+#if defined(MULTIPROCESSOR) && !defined(_RUMPKERNEL)
 		g = curcpu()->ci_gmon;
 		if (g != NULL &&
 		    profsrc == PROFSRC_CLOCK && g->state == GMON_PROF_ON) {
