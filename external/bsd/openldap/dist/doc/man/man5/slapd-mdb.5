@@ -1,5 +1,5 @@
 .TH SLAPD-MDB 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 2011-2020 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 2011-2021 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .\" $OpenLDAP$
 .SH NAME
@@ -14,12 +14,22 @@ It relies completely on the underlying operating system for memory
 management and does no caching of its own. It is the recommended
 primary database backend.
 .LP
-The \fBmdb\fP backend is similar to the \fBhdb\fP backend in that
-it uses a hierarchical database layout which
-supports subtree renames. It is both more space-efficient and more
-execution-efficient than the \fBbdb\fP backend, while being overall
-much simpler to manage.
+The \fBmdb\fP backend uses a hierarchical database layout which
+supports subtree renames.
 .SH CONFIGURATION
+These
+.B slapd.conf
+options apply to the \fBmdb\fP backend.
+That is, they must follow a "backend mdb" line and
+come before any subsequent "backend" or "database" lines.
+.TP
+.BI idlexp \ <exp>
+Specify a power of 2 for the maximum size of an index slot.
+The default is 16, yielding a maximum slot size of 2^16 or 65536.
+Once set, this option applies to every \fBmdb\fP database instance.
+The specified value must be in the range of 16-31.
+.LP
+
 These
 .B slapd.conf
 options apply to the \fBmdb\fP backend database.
@@ -140,6 +150,11 @@ changing \fBindex\fP settings
 dynamically by LDAPModifying "cn=config" automatically causes rebuilding
 of the indices online in a background task.
 .TP
+.BI maxentrysize \ <bytes>
+Specify the maximum size of an entry in bytes. Attempts to store
+an entry larger than this size will be rejected with the error
+LDAP_ADMINLIMIT_EXCEEDED. The default is 0, which is unlimited.
+.TP
 .BI maxreaders \ <integer>
 Specify the maximum number of threads that may have concurrent read access
 to the database. Tools such as slapcat count as a single thread,
@@ -161,6 +176,23 @@ heavy load.
 Specify the file protection mode that newly created database 
 files should have.
 The default is 0600.
+.TP
+\fBmultival \fR{\fI<attrlist>\fR|\fBdefault\fR} \fI<integer hi>\fR,\fI<integer lo>
+Specify the number of values for which a multivalued attribute is
+stored in a separate table. Normally entries are stored as a single
+blob inside the database. When an entry gets very large or contains
+attributes with a very large number of values, modifications on that
+entry may get very slow. Splitting the large attributes out to a separate
+table can improve the performance of modification operations.
+The threshold is specified as a pair of integers. If the number of
+values exceeds the hi threshold the values will be split out. If
+a modification deletes enough values to bring an attribute below
+the lo threshold the values will be removed from the separate
+table and merged back into the main entry blob.
+The threshold can be set for a specific list of attributes, or
+the default can be configured for all other attributes.
+The default value for both hi and lo thresholds is UINT_MAX, which keeps
+all attributes in the main blob.
 .TP
 .BI rtxnsize \ <entries>
 Specify the maximum number of entries to process in a single read
@@ -202,6 +234,7 @@ configuration file
 .BR slapadd (8),
 .BR slapcat (8),
 .BR slapindex (8),
+.BR slapmodify (8),
 OpenLDAP LMDB documentation.
 .SH ACKNOWLEDGEMENTS
 .so ../Project

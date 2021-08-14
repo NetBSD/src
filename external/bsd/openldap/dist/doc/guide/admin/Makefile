@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 2005-2020 The OpenLDAP Foundation.
+## Copyright 2005-2021 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -15,7 +15,7 @@
 all: guide.html index.html
 
 # for website building (for webmaster use, don't change)
-www: guide.html index.html OpenLDAP-Admin-Guide.pdf
+www: guide.html booktitle.html index.html OpenLDAP-Admin-Guide.pdf
 
 sdf-src: \
 	../plain.sdf \
@@ -69,7 +69,7 @@ sdf-img: \
 	intro_tree.png \
 	ldap-sync-refreshandpersist.png \
 	ldap-sync-refreshonly.png \
-	n-way-multi-master.png \
+	n-way-multi-provider.png \
 	push-based-complete.png \
 	push-based-standalone.png \
 	refint.png \
@@ -86,7 +86,10 @@ index.html: index.sdf sdf-src sdf-img
 admin.html: admin.sdf sdf-src sdf-img
 	sdf -DPDF -2html admin.sdf
 
-guide.pdf: admin.html guide.book
+booktitle.html: booktitle.sdf
+	sdf -2html booktitle.sdf
+
+guide.pdf: admin.html booktitle.html guide.book
 	htmldoc --batch guide.book -f guide.pdf
 
 OpenLDAP-Admin-Guide.pdf: admin.html guide.book

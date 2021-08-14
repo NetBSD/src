@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2020 The OpenLDAP Foundation.
+## Copyright 1998-2021 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -22,7 +22,7 @@ $SLAPPASSWD -g -n >$CONFIGPWF
 echo "rootpw `$SLAPPASSWD -T $CONFIGPWF`" >$TESTDIR/configpw.conf
 
 echo "Running slapadd to build slapd database..."
-. $CONFFILTER $BACKEND $MONITORDB < $UNDOCONF > $CONF1
+. $CONFFILTER $BACKEND < $UNDOCONF > $CONF1
 $SLAPADD -f $CONF1 <<EOF
 dn: o=undo
 objectClass: organization
@@ -37,7 +37,7 @@ fi
 
 echo "Starting slapd on TCP/IP port $PORT1..."
 mkdir $TESTDIR/confdir
-$SLAPD -f $CONF1 -F $TESTDIR/confdir -h $URI1 -d $LVL $TIMING > $LOG1 2>&1 &
+$SLAPD -f $CONF1 -F $TESTDIR/confdir -h $URI1 -d $LVL > $LOG1 2>&1 &
 PID=$!
 if test $WAIT != 0 ; then
     echo PID $PID
@@ -47,7 +47,7 @@ KILLPIDS="$PID"
 
 sleep 1
 for i in 0 1 2 3 4 5; do
-	$LDAPSEARCH -s base -b "$MONITOR" -h $LOCALHOST -p $PORT1 \
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI1 \
 		'objectclass=*' > /dev/null 2>&1
 	RC=$?
 	if test $RC = 0 ; then
@@ -63,7 +63,7 @@ if test $RC != 0 ; then
 fi
 
 echo Dynamically assaulting the schema
-$LDAPMODIFY -D cn=config -h $LOCALHOST -p $PORT1 -y $CONFIGPWF \
+$LDAPMODIFY -D cn=config -H $URI1 -y $CONFIGPWF \
     > $TESTOUT 2>&1 <<EOF
 dn: cn={0}core,cn=schema,cn=config
 changetype: modify
@@ -78,7 +78,7 @@ if test $RC != 80 ; then
 	exit -1
 fi
 
-$LDAPMODIFY -D cn=config -h $LOCALHOST -p $PORT1 -y $CONFIGPWF \
+$LDAPMODIFY -D cn=config -H $URI1 -y $CONFIGPWF \
     > $TESTOUT 2>&1 <<EOF
 dn: cn={0}core,cn=schema,cn=config
 changetype: modify
@@ -94,7 +94,7 @@ if test $RC != 80 ; then
 fi
 
 echo Surveying the damage
-$LDAPMODIFY -D "cn=manager,o=undo" -w secret -h $LOCALHOST -p $PORT1 <<EOF
+$LDAPMODIFY -D "cn=manager,o=undo" -w secret -H $URI1 <<EOF
 dn: o=foo,o=undo
 changetype: add
 objectClass: organization

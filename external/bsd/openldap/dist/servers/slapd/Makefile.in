@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2020 The OpenLDAP Foundation.
+## Copyright 1998-2021 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -13,12 +13,12 @@
 ## top-level directory of the distribution or, alternatively, at
 ## <http://www.OpenLDAP.org/license.html>.
 
-SLAPTOOLS=slapadd slapcat slapdn slapindex slappasswd slaptest slapauth slapacl slapschema
+SLAPTOOLS=slapadd slapcat slapdn slapindex slapmodify slappasswd slaptest slapauth slapacl slapschema
 PROGRAMS=slapd $(SLAPTOOLS)
 XPROGRAMS=sslapd libbackends.a .backend liboverlays.a
 XSRCS=version.c
 
-SUBDIRS=back-* shell-backends slapi overlays
+SUBDIRS=back-* slapi overlays pwmods
 
 NT_SRCS = nt_svc.c
 NT_OBJS = nt_svc.o ../../libraries/liblutil/slapdmsg.res
@@ -29,7 +29,7 @@ SRCS	= main.c globals.c bconfig.c config.c daemon.c \
 		dn.c compare.c modify.c delete.c modrdn.c ch_malloc.c \
 		value.c ava.c bind.c unbind.c abandon.c filterentry.c \
 		phonetic.c acl.c str2filter.c aclparse.c init.c user.c \
-		lock.c controls.c extended.c passwd.c \
+		lock.c controls.c extended.c passwd.c proxyp.c \
 		schema.c schema_check.c schema_init.c schema_prep.c \
 		schemaparse.c ad.c at.c mr.c syntax.c oc.c saslauthz.c \
 		oidm.c starttls.c index.c sets.c referral.c root_dse.c \
@@ -38,7 +38,7 @@ SRCS	= main.c globals.c bconfig.c config.c daemon.c \
 		backglue.c backover.c ctxcsn.c ldapsync.c frontend.c \
 		slapadd.c slapcat.c slapcommon.c slapdn.c slapindex.c \
 		slappasswd.c slaptest.c slapauth.c slapacl.c component.c \
-		aci.c alock.c txn.c slapschema.c \
+		aci.c txn.c slapschema.c slapmodify.c \
 		$(@PLAT@_SRCS)
 
 OBJS	= main.o globals.o bconfig.o config.o daemon.o \
@@ -47,7 +47,7 @@ OBJS	= main.o globals.o bconfig.o config.o daemon.o \
 		dn.o compare.o modify.o delete.o modrdn.o ch_malloc.o \
 		value.o ava.o bind.o unbind.o abandon.o filterentry.o \
 		phonetic.o acl.o str2filter.o aclparse.o init.o user.o \
-		lock.o controls.o extended.o passwd.o \
+		lock.o controls.o extended.o passwd.o proxyp.o \
 		schema.o schema_check.o schema_init.o schema_prep.o \
 		schemaparse.o ad.o at.o mr.o syntax.o oc.o saslauthz.o \
 		oidm.o starttls.o index.o sets.o referral.o root_dse.o \
@@ -56,7 +56,7 @@ OBJS	= main.o globals.o bconfig.o config.o daemon.o \
 		backglue.o backover.o ctxcsn.o ldapsync.o frontend.o \
 		slapadd.o slapcat.o slapcommon.o slapdn.o slapindex.o \
 		slappasswd.o slaptest.o slapauth.o slapacl.o component.o \
-		aci.o alock.o txn.o slapschema.o \
+		aci.o txn.o slapschema.o slapmodify.o \
 		$(@PLAT@_OBJS)
 
 LDAP_INCDIR= ../../include -I$(srcdir) -I$(srcdir)/slapi -I.
@@ -104,7 +104,7 @@ SLAPD_OBJECTS = $(@PLAT@_SLAPD_OBJECTS)
 # symbols that are imported from other DLLs). The set of symbols to
 # export INCLUDES symbols from all static libraries that slapd gets
 # linked with, e.g. avl, lunicode, lutil, etc. This list
-# will also include liblber and libldap_r if they were built as static
+# will also include liblber and libldap if they were built as static
 # libraries. ALSO included will be symbols from other STATIC libraries
 # outside the domain of the OpenLDAP source tree, e.g. regex, ltdl,
 # crypto, ssl, sasl, etc. (If these libraries are dynamic, we won't want
@@ -260,7 +260,7 @@ slapd.exp: libslapd.a
 		--base-file slapd.base --output-exp $@
 
 slapi/libslapi.la: FORCE
-	(cd slapi; $(MAKE) $(MFLAGS) all)
+	cd slapi && $(MAKE) $(MFLAGS) all
 
 slapd: $(SLAPD_DEPENDS) @LIBSLAPI@
 	$(LTLINK) -o $@ $(SLAPD_OBJECTS) $(LIBS) \
@@ -274,11 +274,14 @@ sslapd: version.o
 	$(LTLINK) -static -o $@ $(OBJS) version.o $(LIBS) $(WRAP_LIBS)
 
 dummy $(SLAPD_DYNAMIC_BACKENDS): slapd
-	cd $@; $(MAKE) $(MFLAGS) all
+	cd $@ && $(MAKE) $(MFLAGS) all
 	@touch $@
 
 dynamic_overlays: slapd
-	cd overlays; $(MAKE) $(MFLAGS) dynamic
+	cd overlays && $(MAKE) $(MFLAGS) dynamic
+
+dynamic_pwmods: slapd
+	cd pwmods && $(MAKE) $(MFLAGS) dynamic
 
 #
 # In Windows, dynamic backends have to be built after slapd. For this
@@ -289,8 +292,8 @@ dynamic_overlays: slapd
 	    echo "building static backends..."; \
 	    for i in XX $(SLAPD_STATIC_BACKENDS); do \
 	    	if test $$i != XX; then \
-		    echo " "; echo "  cd $$i; $(MAKE) $(MFLAGS) all"; \
-		    ( cd $$i; $(MAKE) $(MFLAGS) all ); \
+		    echo " "; echo "  cd $$i && $(MAKE) $(MFLAGS) all"; \
+		    ( cd $$i && $(MAKE) $(MFLAGS) all ); \
 		    if test $$? != 0; then exit 1; fi; \
 		fi; \
 	    done; \
@@ -322,7 +325,7 @@ libbackends.a: .backend
 	@ls -l libbackends.a; echo ""
 
 liboverlays.a: FORCE
-	cd overlays; $(MAKE) $(MFLAGS) static
+	cd overlays && $(MAKE) $(MFLAGS) static
 
 version.c: Makefile
 	@-$(RM) $@
@@ -335,8 +338,8 @@ backends.o: backends.c $(srcdir)/slap.h
 depend-local-srv: FORCE
 	@for i in $(SUBDIRS); do \
 		if test -d $$i && test -f $$i/Makefile ; then \
-			echo; echo "  cd $$i; $(MAKE) $(MFLAGS) depend"; \
-			( cd $$i; $(MAKE) $(MFLAGS) depend ); \
+			echo; echo "  cd $$i && $(MAKE) $(MFLAGS) depend"; \
+			( cd $$i && $(MAKE) $(MFLAGS) depend ); \
 			if test $$? != 0 ; then exit 1; fi ; \
 		fi; \
 	done
@@ -351,8 +354,8 @@ veryclean-local:
 clean-local-srv: FORCE
 	@for i in $(SUBDIRS); do \
 		if test -d $$i && test -f $$i/Makefile ; then \
-			echo; echo "  cd $$i; $(MAKE) $(MFLAGS) clean"; \
-			( cd $$i; $(MAKE) $(MFLAGS) clean ); \
+			echo; echo "  cd $$i && $(MAKE) $(MFLAGS) clean"; \
+			( cd $$i && $(MAKE) $(MFLAGS) clean ); \
 			if test $$? != 0 ; then exit 1; fi ; \
 		fi; \
 	done
@@ -361,34 +364,28 @@ clean-local-srv: FORCE
 veryclean-local-srv: FORCE
 	@for i in $(SUBDIRS); do \
 		if test -d $$i && test -f $$i/Makefile ; then \
-			echo; echo "  cd $$i; $(MAKE) $(MFLAGS) clean"; \
-			( cd $$i; $(MAKE) $(MFLAGS) veryclean ); \
+			echo; echo "  cd $$i && $(MAKE) $(MFLAGS) clean"; \
+			( cd $$i && $(MAKE) $(MFLAGS) veryclean ); \
 		fi; \
 	done
 
-install-dbc-maybe: install-dbc-@BUILD_BDB@ install-dbc-@BUILD_HDB@
-
-install-dbc-yes:	install-db-config
-install-dbc-mod:	install-db-config
-install-dbc-no:
-
 install-local-srv: install-slapd install-tools \
-	install-conf install-dbc-maybe install-schema install-tools
+	install-conf install-schema install-tools
 
 install-slapd: FORCE
 	-$(MKDIR) $(DESTDIR)$(libexecdir)
 	-$(MKDIR) $(DESTDIR)$(localstatedir)/run
-	$(LTINSTALL) $(INSTALLFLAGS) $(STRIP) -m 755 \
+	$(LTINSTALL) $(INSTALLFLAGS) $(STRIP_OPTS) -m 755 \
 		slapd$(EXEEXT) $(DESTDIR)$(libexecdir)
 	@for i in $(SUBDIRS); do \
 	    if test -d $$i && test -f $$i/Makefile ; then \
-		echo; echo "  cd $$i; $(MAKE) $(MFLAGS) install"; \
-		( cd $$i; $(MAKE) $(MFLAGS) install ); \
+		echo; echo "  cd $$i && $(MAKE) $(MFLAGS) install"; \
+		( cd $$i && $(MAKE) $(MFLAGS) install ); \
 		if test $$? != 0 ; then exit 1; fi ; \
 	    fi; \
 	done
 
-all-cffiles: slapd $(SLAPD_DYNAMIC_BACKENDS) dynamic_overlays
+all-cffiles: slapd $(SLAPD_DYNAMIC_BACKENDS) dynamic_overlays dynamic_pwmods
 	@if test $(PLAT) = NT; then \
 	    sysconfdir=`cygpath -w $(sysconfdir) | \
 		$(SED) -e 's/\\\\/\\\\\\\\\\\\\\\\/g'`; \
@@ -404,11 +401,15 @@ all-cffiles: slapd $(SLAPD_DYNAMIC_BACKENDS) dynamic_overlays
 	$(SED) -e "s;%SYSCONFDIR%;$$sysconfdir;" \
 		-e "s;%LOCALSTATEDIR%;$$localstatedir;" \
 		-e "s;%MODULEDIR%;$$moduledir;" \
-		$(srcdir)/slapd.conf > slapd.conf.tmp ; \
+		$(srcdir)/slapd.conf > slapd.conf.tmp || exit $$? ; \
 	$(SED) -e "s;%SYSCONFDIR%;$$sysconfdir;" \
 		-e "s;%LOCALSTATEDIR%;$$localstatedir;" \
 		-e "s;%MODULEDIR%;$$moduledir;" \
-		$(srcdir)/slapd.ldif > slapd.ldif.tmp ; \
+		$(srcdir)/slapd.ldif > slapd.ldif.tmp || exit $$? ;
+	@if test -n "$(systemdsystemunitdir)"; then \
+		$(SED) -e "s;%LIBEXECDIR%;$(libexecdir);" \
+			$(srcdir)/slapd.service > slapd.service.tmp ; \
+	fi
 	touch all-cffiles
 
 install-schema: FORCE
@@ -441,6 +442,12 @@ install-conf: FORCE
 		$(INSTALL) $(INSTALLFLAGS) -m 600 slapd.ldif.tmp $(DESTDIR)$(sysconfdir)/slapd.ldif; \
 	else \
 		echo "PRESERVING EXISTING CONFIGURATION FILE $(DESTDIR)$(sysconfdir)/slapd.ldif" ; \
+	fi
+	if test -n "$(systemdsystemunitdir)" && test ! -f $(DESTDIR)$(systemdsystemunitdir)/slapd.service; then \
+		$(MKDIR) $(DESTDIR)$(systemdsystemunitdir); \
+		echo "installing slapd.service in $(systemdsystemunitdir)"; \
+		echo "$(INSTALL) $(INSTALLFLAGS) -m 644 slapd.service.tmp $(DESTDIR)$(systemdsystemunitdir)/slapd.service"; \
+		$(INSTALL) $(INSTALLFLAGS) -m 644 slapd.service.tmp $(DESTDIR)$(systemdsystemunitdir)/slapd.service; \
 	fi
 
 install-db-config: FORCE

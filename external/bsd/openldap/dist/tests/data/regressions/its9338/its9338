@@ -1,0 +1,100 @@
+#! /bin/sh
+# $OpenLDAP$
+## This work is part of OpenLDAP Software <http://www.openldap.org/>.
+##
+## Copyright 1998-2021 The OpenLDAP Foundation.
+## All rights reserved.
+##
+## Redistribution and use in source and binary forms, with or without
+## modification, are permitted only as authorized by the OpenLDAP
+## Public License.
+##
+## A copy of this license is available in the file LICENSE in the
+## top-level directory of the distribution or, alternatively, at
+## <http://www.OpenLDAP.org/license.html>.
+
+echo "running defines.sh"
+. $SRCDIR/scripts/defines.sh
+
+if test $SYNCPROV = syncprovno; then
+	echo "Syncrepl provider overlay not available, test skipped"
+	exit 0
+fi
+
+mkdir -p $TESTDIR $DBDIR1
+
+echo "This test checks for pending operations to resume correctly"
+echo "after they were stopped by a writer getting blocked by a full"
+echo "socket output buffer. It uses a search with syncrepl control"
+echo "and multiple modifications to generate enough responses to"
+echo "fill the output buffer."
+echo ""
+
+#
+# Test replication:
+# - start provider
+# - populate over ldap
+# - start persistent search and ignoring responses
+# - perform some repeated adds/deletes to fill buffer
+# - abandon persistent search and issue new search
+# - if the bug is present, this will timeout.
+#
+
+echo "Starting provider slapd on TCP/IP port $PORT1..."
+. $CONFFILTER $BACKEND < $SRPROVIDERCONF > $CONF1
+$SLAPD -f $CONF1 -h $URI1 -d $LVL > $LOG1 2>&1 &
+PID=$!
+if test $WAIT != 0 ; then
+    echo PID $PID
+    read foo
+fi
+KILLPIDS="$PID"
+
+sleep 1
+
+echo "Using ldapsearch to check that provider slapd is running..."
+for i in 0 1 2 3 4 5; do
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI1 \
+		'objectclass=*' > /dev/null 2>&1
+	RC=$?
+	if test $RC = 0 ; then
+		break
+	fi
+	echo "Waiting 5 seconds for slapd to start..."
+	sleep 5
+done
+
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Using ldapadd to populate the provider directory..."
+$LDAPADD -D "$MANAGERDN" -H $URI1 -w $PASSWD < \
+	$LDIFORDERED > /dev/null 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapadd failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Starting persistent search and modifications..."
+echo '(Ignore the "press Enter to continue" that appears below)'
+( sleep 3; echo "" 1>&2; $PROGDIR/slapd-addel -H $URI1 -D "$MANAGERDN" -w $PASSWD -l 4000 -f $DATADIR/do_add.1 1>&2; \
+echo "" ) | $LDAPSEARCH -b "$BASEDN" -H $URI1 -E sync=rp -e backlog -l $SLEEP1
+
+if test $? != 0 ; then
+	echo "ldapsearch failed - write waiter didn't resume pending ops"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit 1
+fi
+
+test $KILLSERVERS != no && kill -HUP $KILLPIDS
+
+echo ">>>>> Test succeeded"
+
+test $KILLSERVERS != no && wait
+
+exit 0

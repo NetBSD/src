@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2020 The OpenLDAP Foundation.
+## Copyright 1998-2021 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -19,7 +19,7 @@ echo "running defines.sh"
 echo ""
 echo "  This test tracks a case where the -g flag to slapcat fails to work"
 echo "  correctly, exporting the subordinate dbs as well as the root db."
-echo "  See http://www.openldap.org/its/index.cgi/?findid=8667 for more information."
+echo "  See https://bugs.openldap.org/show_bug.cgi?id=8667 for more information."
 echo ""
 
 DBDIR1=$TESTDIR/db.1.a
@@ -36,7 +36,7 @@ ITS=8667
 ITSDIR=$DATADIR/regressions/its$ITS
 
 echo "Starting slapd on TCP/IP port $PORT1..."
-. $CONFFILTER $BACKEND $MONITORDB < $ITSDIR/slapd.ldif > $CONFLDIF
+. $CONFFILTER $BACKEND < $ITSDIR/slapd.ldif > $CONFLDIF
 $SLAPADD -F $CFPRO -n 0 -l $CONFLDIF
 
 echo "Populating root database..."

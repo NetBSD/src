@@ -1,0 +1,10 @@
+# a value outside the bounds
+dn: ou=People,dc=example,dc=com
+changetype: modify
+replace: signed
+signed: 2
+-
+replace: number
+number: -1
+-
+

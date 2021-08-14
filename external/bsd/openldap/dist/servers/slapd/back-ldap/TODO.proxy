@@ -71,7 +71,7 @@ directly determined.
 Note that, as the remote servers may have been updated by some direct
 operation, this mechanism does not guarantee the uniqueness of the result.
 So write operations will require to skip the cache search and to perform
-the exaustive search of all the URIs unless some hint mechanism is provided
+the exhaustive search of all the URIs unless some hint mechanism is provided
 to the backend (e.g. a server is read-only).
 
 Again, the lag between the fetching of the required DN and the actual
@@ -87,7 +87,7 @@ cache-level DN fetch.
 nothing to say; all the open handles related to the connection are reset.
 
 - search
-if updates are to be strictly honored, a search operation is performed agaist
+if updates are to be strictly honored, a search operation is performed against
 each URI. Note that this needs be performed also when the backend suffix
 is used as base. In case the base is stricter, the URI pool may be restricted 
 by performing a cache DN fetch of the base first.

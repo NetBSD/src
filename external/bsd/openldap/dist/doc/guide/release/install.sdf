@@ -1,5 +1,5 @@
 # $OpenLDAP$
-# Copyright 1999-2020 The OpenLDAP Foundation, All Rights Reserved.
+# Copyright 1999-2021 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 P1: Making and Installing the OpenLDAP Distribution
@@ -13,15 +13,6 @@ information and instructions can be found in
 It is recommended that you read, or at least skim through, ALL of
 the instructions in this file before attempting to build the
 software.
-
-It is also recommended you review
-the {{Frequently Asked Questions}} ({{URL:http://www.openldap.org/faq/}})
-pages, in particular the
-{{Installation section}} ({{URL:http://www.openldap.org/faq/index.cgi?file=8}})
-and
-{{Platform Hints}} ({{URL:http://www.openldap.org/faq/index.cgi?file=9}})
-should be examined.
-
 
 P2: Making and Installing the OpenLDAP Distribution
 
@@ -64,9 +55,7 @@ the appropriate settings.  If the {{EX:configure}} script fails, you should
 read the {{FILE:config.log}} file that it generated to see what it was trying
 to do and exactly what failed.  You may need to specify additional
 options and/or variables besides those listed above to
-obtain desired results, depending on your operating system. The
-{{Platform Hints}} section of the {{FAQ}} provides help for operating system
-related problems.
+obtain desired results, depending on your operating system.
 
 + Build dependencies:
 
@@ -77,21 +66,17 @@ E:	% make depend
 E:	% make
 
 .If all goes well, the system will build as configured.  If not,
-return to step 3 after reviewing the configuration settings.  You
-may want to consult the {{Platform Hints}} subsection of the {{FAQ}}
-if you have not done so already.
+return to step 3 after reviewing the configuration settings.
 
 + Test the standalone system:
 
 .This step requires the standalone LDAP server, {{slapd}}(8),
-with {{HDB}} and/or {{BDB}} support.
+with {{MDB}} support.
 
 E:	% make test
 
 .If all goes well, the system has been built as configured.  If not,
-return to step 2 after reviewing your configuration settings.  You
-may want to consult the {{Installation}} section of the {{FAQ}}
-if you have not done so already.
+return to step 2 after reviewing your configuration settings.
 
 + Install the software.  You may need to become the
 {{super-user}} (e.g. {{EX:root}}) to do this (depending on where you
@@ -110,5 +95,6 @@ the OpenLDAP configuration directory (normally
 
 >	ldap.conf		client defaults
 >	slapd.conf		Standalone LDAP daemon
+>	lload.conf		LDAP Load Balancer daemon
 >	schema/*.schema		Schema Definitions
 

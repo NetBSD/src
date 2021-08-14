@@ -1,0 +1,63 @@
+#! /bin/sh
+## $OpenLDAP$
+## This work is part of OpenLDAP Software <http://www.openldap.org/>.
+##
+## Copyright 2016-2021 The OpenLDAP Foundation.
+## All rights reserved.
+##
+## Redistribution and use in source and binary forms, with or without
+## modification, are permitted only as authorized by the OpenLDAP
+## Public License.
+##
+## A copy of this license is available in the file LICENSE in the
+## top-level directory of the distribution or, alternatively, at
+## <http://www.OpenLDAP.org/license.html>.
+##
+## ACKNOWLEDGEMENTS:
+## This module was written in 2016 by Ondřej Kuzník for Symas Corp.
+
+echo "running defines.sh"
+. $SRCDIR/scripts/defines.sh
+
+. ${SCRIPTDIR}/common.sh
+
+echo "Comparing a regular entry..."
+$LDAPCOMPARE -H $URI1 \
+	"cn=Mark Elliot,ou=Alumni Association,ou=People,$BASEDN" \
+	"cn:Mark Elliot" >> $TESTOUT 2>&1
+RC=$?
+if test $RC != 6 && test $RC,$BACKEND != 5,null ; then
+	echo "ldapcompare failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit 1
+fi
+
+echo "Comparing a variant entry..."
+$LDAPCOMPARE -H $URI1 \
+	"ou=People,$BASEDN" \
+	"description:The Example, Inc. at Anytown" >> $TESTOUT 2>&1
+RC=$?
+if test $RC != 6 && test $RC,$BACKEND != 5,null ; then
+	echo "ldapcompare failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit 1
+fi
+
+echo "Comparing a regex entry..."
+$LDAPCOMPARE -H $URI1 \
+	"cn=Barbara Jensen,ou=Information Technology Division,ou=People,$BASEDN" \
+	"ou:Information Technology Division" >> $TESTOUT 2>&1
+RC=$?
+if test $RC != 6 && test $RC,$BACKEND != 5,null ; then
+	echo "ldapcompare failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit 1
+fi
+
+test $KILLSERVERS != no && kill -HUP $KILLPIDS
+
+echo ">>>>> Test succeeded"
+
+test $KILLSERVERS != no && wait
+
+exit 0

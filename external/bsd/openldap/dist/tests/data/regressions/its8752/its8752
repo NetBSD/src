@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2020 The OpenLDAP Foundation.
+## Copyright 1998-2021 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -37,7 +37,7 @@ if test $dtest = N; then
 fi
 
 # This mimics the scenario where a single server has been used until now (no
-# syncprov either, so no contextCSN) and we convert it to a delta-MMR setup:
+# syncprov either, so no contextCSN) and we convert it to a delta-MPR setup:
 # 1. stop the server (note that there is likely no contextCSN in the DB at this point)
 # 2. configure all servers to delta-replicate from each other and start them up
 #    - empty servers will start with a refresh of the main DB
@@ -45,9 +45,9 @@ fi
 # 3. keep making changes on all servers to see things still work
 
 echo "This test tracks a case where slapd deadlocks during a significant write load"
-echo "See http://www.openldap.org/its/index.cgi/?findid=8752 for more information."
+echo "See https://bugs.openldap.org/show_bug.cgi?id=8752 for more information."
 
-MMR=4
+MPR=4
 iterations=20000
 check_sync_every=100
 MAPSIZE=`expr 100 \* 1024 \* 1024`
@@ -59,7 +59,7 @@ ITS=8752
 ITSDIR=$DATADIR/regressions/its$ITS
 
 n=1
-while [ $n -le $MMR ]; do
+while [ $n -le $MPR ]; do
 	DBDIR=${XDIR}$n/db
 	mkdir -p ${XDIR}$n $DBDIR.1 $DBDIR.2
 	n=`expr $n + 1`
@@ -68,8 +68,8 @@ done
 KILLPIDS=
 
 echo "Starting slapd on TCP/IP port $PORT1..."
-. $CONFFILTER $BACKEND $MONITORDB < $ITSDIR/slapd.conf > $CONF1
-$SLAPD -f $CONF1 -h $URI1 -d $LVL $TIMING > $LOG1 2>&1 &
+. $CONFFILTER $BACKEND < $ITSDIR/slapd.conf > $CONF1
+$SLAPD -f $CONF1 -h $URI1 -d $LVL > $LOG1 2>&1 &
 PID=$!
 if test $WAIT != 0 ; then
 	echo PID $PID
@@ -81,7 +81,7 @@ sleep $SLEEP0
 
 echo "Using ldapsearch to check that slapd is running..."
 for i in 0 1 2 3 4 5; do
-	$LDAPSEARCH -s base -b "$MONITOR" -h $LOCALHOST -p $PORT1 \
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI1 \
 		'objectclass=*' > /dev/null 2>&1
 	RC=$?
 	if test $RC = 0 ; then
@@ -158,22 +158,22 @@ if test $RC != 0 ; then
 	exit $RC
 fi
 
-echo "Stopping slapd and reworking configuration for MMR..."
+echo "Stopping slapd and reworking configuration for MPR..."
 
 kill -HUP $KILLPIDS
 wait $KILLPIDS
 
 KILLPIDS=
 n=1
-while [ $n -le $MMR ]; do
+while [ $n -le $MPR ]; do
 	MYURI=`eval echo '$URI'$n`
 	MYLOG=`eval echo '$LOG'$n`
 	MYCONF=`eval echo '$CONF'$n`
 	echo "Starting provider slapd on TCP/IP URI $MYURI"
-	. $CONFFILTER $BACKEND $MONITORDB < $ITSDIR/slapd.conf.mmr > $TESTDIR/slapd.conf
-	sed -e "s/MMR/$n/g" -e "s/wronglog/log/" -e "s/@MAPSIZE@/$MAPSIZE/" $TESTDIR/slapd.conf > $MYCONF
+	. $CONFFILTER $BACKEND < $ITSDIR/slapd.conf.mpr > $TESTDIR/slapd.conf
+	sed -e "s/MPR/$n/g" -e "s/wronglog/log/" -e "s/@MAPSIZE@/$MAPSIZE/" $TESTDIR/slapd.conf > $MYCONF
 	j=1
-	while [ $j -le $MMR ]; do
+	while [ $j -le $MPR ]; do
 		MMCURI=`eval echo '$URI'$j`
 		sed -e "s|MMC${j}|${MMCURI}|" $MYCONF > $TESTDIR/slapd.conf
 		mv $TESTDIR/slapd.conf $MYCONF
@@ -182,7 +182,7 @@ while [ $n -le $MMR ]; do
 	if [ -f $TESTDIR/slapd.conf ]; then
 		rm -f $TESTDIR/slapd.conf
 	fi
-	$SLAPD -f $MYCONF -h $MYURI  -d $LVL $TIMING >> $MYLOG 2>&1 &
+	$SLAPD -f $MYCONF -h $MYURI  -d $LVL >> $MYLOG 2>&1 &
 	PID=$!
 	if test $WAIT != 0 ; then
 		echo PID $PID
@@ -211,10 +211,10 @@ while [ $n -le $MMR ]; do
 	n=`expr $n + 1`
 done
 
-echo "Setting up accesslog on each master..."
+echo "Setting up accesslog on each provider..."
 n=1
-while [ $n -le $MMR ]; do
-	echo "Modifying dn: cn=Elmer_Fudd,ou=People,$BASEDN on master $n"
+while [ $n -le $MPR ]; do
+	echo "Modifying dn: cn=Elmer_Fudd,ou=People,$BASEDN on provider $n"
 	MYURI=`eval echo '$URI'$n`
 	$LDAPMODIFY -v -D "$MANAGERDN" -H $MYURI -w $PASSWD > \
 		$TESTOUT 2>&1 << EOMODS
@@ -246,7 +246,7 @@ done
 
 for i in 0 1 2 3 4 5; do
 	j=1
-	while [ $j -le $MMR ]; do
+	while [ $j -le $MPR ]; do
         MYURI=`eval echo '$URI'$j`
 		$LDAPSEARCH -b "$BASEDN" -H "$MYURI" \
 			'*' '+' >"$TESTDIR/server$j.out" 2>&1
@@ -262,7 +262,7 @@ for i in 0 1 2 3 4 5; do
 
 	in_sync=1
 	j=1
-	while [ $j -lt $MMR ]; do
+	while [ $j -lt $MPR ]; do
 		k=$j
 		j=`expr $j + 1`
 		$CMP "$TESTDIR/server$k.flt" "$TESTDIR/server$j.flt" > $CMPOUT
@@ -287,7 +287,7 @@ fi
 echo "The next step of the test will perform $iterations random write operations and may take some time."
 echo "As this test is for a deadlock, it will take manual intervention to exit the test if one occurs."
 
-echo "Starting random master/entry modifications..."
+echo "Starting random provider/entry modifications..."
 DN1="cn=Elmer_Fudd,ou=People,$BASEDN"
 VAL1="Fudd"
 
@@ -304,7 +304,7 @@ n=1
 while [ $n -le $iterations ]; do
 	seed=`date +%N|sed s/...$//`
 	rvalue=`echo|awk "BEGIN {srand($seed)
-{print int(1+rand()*$MMR)}}"`
+{print int(1+rand()*$MPR)}}"`
 	MYURI=`eval echo '$URI'$rvalue`
 	seed=`date +%N|sed s/...$//`
 	rvalue=`echo|awk "BEGIN {srand($seed)
@@ -332,7 +332,7 @@ EOMODS
         echo "Checking replication status before we start iteration $n..."
         for i in 0 1 2 3 4 5; do
             j=1
-            while [ $j -le $MMR ]; do
+            while [ $j -le $MPR ]; do
                 MYURI=`eval echo '$URI'$j`
                 echo "Reading database from server $j..."
                 $LDAPSEARCH -b "$BASEDN" -H "$MYURI" \
@@ -349,7 +349,7 @@ EOMODS
 
             in_sync=1
             j=1
-            while [ $j -lt $MMR ]; do
+            while [ $j -lt $MPR ]; do
                 k=`expr $j + 1`
                 $CMP "$TESTDIR/server$j.flt" "$TESTDIR/server$k.flt" > $CMPOUT
                 if test $? != 0 ; then
@@ -383,15 +383,15 @@ echo "As this test is for a deadlock, it will take manual intervention to exit t
 echo "Starting servers again, this time with the wrong logbase setting..."
 KILLPIDS=
 n=1
-while [ $n -le $MMR ]; do
+while [ $n -le $MPR ]; do
     MYURI=`eval echo '$URI'$n`
     MYLOG=`eval echo '$LOG'$n`
     MYCONF=`eval echo '$CONF'$n`
     echo "Starting provider slapd on TCP/IP URI $MYURI"
-    . $CONFFILTER $BACKEND $MONITORDB < $ITSDIR/slapd.conf.mmr > $TESTDIR/slapd.conf
-    sed -e "s/MMR/$n/g" -e "s/@MAPSIZE@/$MAPSIZE/" $TESTDIR/slapd.conf > $MYCONF
+    . $CONFFILTER $BACKEND < $ITSDIR/slapd.conf.mpr > $TESTDIR/slapd.conf
+    sed -e "s/MPR/$n/g" -e "s/@MAPSIZE@/$MAPSIZE/" $TESTDIR/slapd.conf > $MYCONF
     j=1
-    while [ $j -le $MMR ]; do
+    while [ $j -le $MPR ]; do
         MMCURI=`eval echo '$URI'$j`
         sed -e "s|MMC${j}|${MMCURI}|" $MYCONF > $TESTDIR/slapd.conf
         mv $TESTDIR/slapd.conf $MYCONF
@@ -400,7 +400,7 @@ while [ $n -le $MMR ]; do
     if [ -f $TESTDIR/slapd.conf ]; then
         rm -f $TESTDIR/slapd.conf
     fi
-    $SLAPD -f $MYCONF -h $MYURI  -d $LVL $TIMING >> $MYLOG 2>&1 &
+    $SLAPD -f $MYCONF -h $MYURI  -d $LVL >> $MYLOG 2>&1 &
     PID=$!
     if test $WAIT != 0 ; then
         echo PID $PID
@@ -429,12 +429,12 @@ while [ $n -le $MMR ]; do
                 n=`expr $n + 1`
             done
 
-            echo "Starting random master/entry modifications..."
+            echo "Starting random provider/entry modifications..."
             n=1
             while [ $n -le $iterations ]; do
                 seed=`date +%N|sed s/...$//`
                 rvalue=`echo|awk "BEGIN {srand($seed)
-                {print int(1+rand()*$MMR)}}"`
+                {print int(1+rand()*$MPR)}}"`
                     MYURI=`eval echo '$URI'$rvalue`
                     seed=`date +%N|sed s/...$//`
                     rvalue=`echo|awk "BEGIN {srand($seed)
@@ -462,7 +462,7 @@ if [ "$check_sync_every" -gt 0 ] && [ `expr $n % $check_sync_every` = 0 ]; then
     echo "Checking replication status before we start iteration $n..."
     for i in 0 1 2 3 4 5; do
         j=1
-        while [ $j -le $MMR ]; do
+        while [ $j -le $MPR ]; do
             MYURI=`eval echo '$URI'$j`
             echo "Reading database from server $j..."
             $LDAPSEARCH -b "$BASEDN" -H "$MYURI" \
@@ -479,7 +479,7 @@ if [ "$check_sync_every" -gt 0 ] && [ `expr $n % $check_sync_every` = 0 ]; then
 
             in_sync=1
             j=1
-            while [ $j -lt $MMR ]; do
+            while [ $j -lt $MPR ]; do
                 k=`expr $j + 1`
                 $CMP "$TESTDIR/server$j.flt" "$TESTDIR/server$k.flt" > $CMPOUT
                 if test $? != 0 ; then

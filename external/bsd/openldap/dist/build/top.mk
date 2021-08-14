@@ -1,7 +1,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2020 The OpenLDAP Foundation.
+## Copyright 1998-2021 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -45,6 +45,7 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@$(ldap_subdir)
 schemadir = $(sysconfdir)/schema
+systemdsystemunitdir = @systemdsystemunitdir@
 
 PLAT = @PLAT@
 EXEEXT = @EXEEXT@
@@ -59,7 +60,7 @@ INSTALL_PROGRAM = $(INSTALL)
 INSTALL_DATA = $(INSTALL) -m 644
 INSTALL_SCRIPT = $(INSTALL)
 
-STRIP = -s
+STRIP_OPTS = -s
 
 LINT = lint
 5LINT = 5lint
@@ -104,6 +105,9 @@ LTFLAGS_MOD = $(@PLAT@_LTFLAGS_MOD)
 # LINK_LIBS referenced in library and module link commands.
 LINK_LIBS = $(MOD_LIBS) $(@PLAT@_LINK_LIBS)
 
+# compiler options for versioned library symbol support
+OL_VERSIONED_SYMBOLS = @OL_VERSIONED_SYMBOLS@
+
 LTSTATIC = @LTSTATIC@
 
 LTLINK   = $(LIBTOOL) --mode=link \
@@ -113,7 +117,7 @@ LTCOMPILE_LIB = $(LIBTOOL) $(LTONLY_LIB) --mode=compile \
 	$(CC) $(LT_CFLAGS) $(LT_CPPFLAGS) $(LIB_DEFS) -c
 
 LTLINK_LIB = $(LIBTOOL) $(LTONLY_LIB) --mode=link \
-	$(CC) $(LT_CFLAGS) $(LDFLAGS) $(LTFLAGS_LIB)
+	$(CC) $(LT_CFLAGS) $(LDFLAGS) $(LTFLAGS_LIB) $(SYMBOL_VERSION_FLAGS)
 
 LTCOMPILE_MOD = $(LIBTOOL) $(LTONLY_MOD) --mode=compile \
 	$(CC) $(LT_CFLAGS) $(LT_CPPFLAGS) $(MOD_DEFS) -c
@@ -156,15 +160,18 @@ INCLUDEDIR= $(top_srcdir)/include
 LDAP_INCPATH= -I$(LDAP_INCDIR) -I$(INCLUDEDIR)
 LDAP_LIBDIR= $(top_builddir)/libraries
 
+CLIENT_LIBS = @CLIENT_LIBS@
+
 LUTIL_LIBS = @LUTIL_LIBS@
 LTHREAD_LIBS = @LTHREAD_LIBS@
 
-BDB_LIBS = @BDB_LIBS@
 SLAPD_NDB_LIBS = @SLAPD_NDB_LIBS@
+WT_LIBS = @WT_LIBS@
+
+LEVENT_LIBS = @LEVENT_LIBS@
 
 LDAP_LIBLBER_LA = $(LDAP_LIBDIR)/liblber/liblber.la
 LDAP_LIBLDAP_LA = $(LDAP_LIBDIR)/libldap/libldap.la
-LDAP_LIBLDAP_R_LA = $(LDAP_LIBDIR)/libldap_r/libldap_r.la
 
 LDAP_LIBREWRITE_A = $(LDAP_LIBDIR)/librewrite/librewrite.a
 LDAP_LIBLUNICODE_A = $(LDAP_LIBDIR)/liblunicode/liblunicode.a
@@ -173,7 +180,9 @@ LDAP_LIBLUTIL_A = $(LDAP_LIBDIR)/liblutil/liblutil.a
 LDAP_L = $(LDAP_LIBLUTIL_A) \
 	$(LDAP_LIBLDAP_LA) $(LDAP_LIBLBER_LA)
 SLAPD_L = $(LDAP_LIBLUNICODE_A) $(LDAP_LIBREWRITE_A) \
-	$(LDAP_LIBLUTIL_A) $(LDAP_LIBLDAP_R_LA) $(LDAP_LIBLBER_LA)
+	$(LDAP_LIBLUTIL_A) $(LDAP_LIBLDAP_LA) $(LDAP_LIBLBER_LA)
+LLOADD_L = $(LDAP_LIBLUTIL_A) $(LDAP_LIBLDAP_LA) \
+	$(LDAP_LIBLBER_LA)
 
 WRAP_LIBS = @WRAP_LIBS@
 # AutoConfig generated 
@@ -183,13 +192,12 @@ AC_DEFS = @CPPFLAGS@ # @DEFS@
 AC_LDFLAGS = @LDFLAGS@
 AC_LIBS = @LIBS@
 
-KRB4_LIBS = @KRB4_LIBS@
-KRB5_LIBS = @KRB5_LIBS@
-KRB_LIBS = @KRB4_LIBS@ @KRB5_LIBS@
 SASL_LIBS = @SASL_LIBS@
 TLS_LIBS = @TLS_LIBS@
 AUTH_LIBS = @AUTH_LIBS@
-SECURITY_LIBS = $(SASL_LIBS) $(KRB_LIBS) $(TLS_LIBS) $(AUTH_LIBS)
+ARGON2_LIBS = @ARGON2_LIBS@
+SECURITY_LIBS = $(SASL_LIBS) $(TLS_LIBS) $(AUTH_LIBS)
+SYSTEMD_LIBS = @SYSTEMD_LIBS@
 
 MODULES_CPPFLAGS = @SLAPD_MODULES_CPPFLAGS@
 MODULES_LDFLAGS = @SLAPD_MODULES_LDFLAGS@
@@ -200,7 +208,8 @@ SLAPD_SQL_LDFLAGS = @SLAPD_SQL_LDFLAGS@
 SLAPD_SQL_INCLUDES = @SLAPD_SQL_INCLUDES@
 SLAPD_SQL_LIBS = @SLAPD_SQL_LIBS@
 
-SLAPD_LIBS = @SLAPD_LIBS@ @SLAPD_PERL_LDFLAGS@ @SLAPD_SQL_LDFLAGS@ @SLAPD_SQL_LIBS@ @SLAPD_SLP_LIBS@ @SLAPD_GMP_LIBS@
+SLAPD_LIBS = @SLAPD_LIBS@ @SLAPD_PERL_LDFLAGS@ @SLAPD_SQL_LDFLAGS@ @SLAPD_SQL_LIBS@ @SLAPD_SLP_LIBS@ @SLAPD_GMP_LIBS@ $(SYSTEMD_LIBS)
+LLOADD_LIBS = @BALANCER_LIBS@ $(LEVENT_LIBS)
 
 # Our Defaults
 CC = $(AC_CC)

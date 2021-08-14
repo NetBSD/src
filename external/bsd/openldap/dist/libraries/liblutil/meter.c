@@ -1,4 +1,4 @@
-/*	$NetBSD: meter.c,v 1.1.1.4 2018/02/06 01:53:08 christos Exp $	*/
+/*	$NetBSD: meter.c,v 1.1.1.5 2021/08/14 16:05:28 christos Exp $	*/
 
 /* meter.c - lutil_meter meters */
 /* $OpenLDAP$ */
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: meter.c,v 1.1.1.4 2018/02/06 01:53:08 christos Exp $");
+__RCSID("$NetBSD: meter.c,v 1.1.1.5 2021/08/14 16:05:28 christos Exp $");
 
 #include "portable.h"
 #include "lutil_meter.h"
@@ -153,7 +153,7 @@ lutil_meter_update (
 
 	frac = ((double)position) / ((double) meter->goal_value);
 	elapsed = now - meter->start_time;
-	if (frac <= 0.0) return 0;
+	if (frac <= 0.0 || elapsed == 0) return 0;
 	if (frac >= 1.0) {
 		rc = meter->display->display_update(
 			&meter->display_data,

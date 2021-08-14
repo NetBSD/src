@@ -1,0 +1,35 @@
+dn: ou=People,dc=example,dc=com
+changetype: modify
+add: description
+description: Everyone's heard of them
+-
+increment: uidNumber
+uidNumber: 1
+-
+
+dn: ou=Groups,dc=example,dc=com
+changetype: modify
+add: st
+st: Alabama
+-
+
+# check regex
+dn: cn=Bjorn Jensen,ou=Information Technology Division,ou=People,dc=example,dc
+ =com
+changetype: modify
+replace: description
+description: A mouthful
+-
+add: ou
+ou: The IT Crowd
+-
+
+# have the two mods merge
+dn: dc=example,dc=com
+changetype: modify
+add: l
+l: Locally
+-
+replace: st
+st: Antarctica
+-

@@ -19,7 +19,7 @@ sites/applications that use RDBMSes and/or LDAP.
 Or whatever else...
 .LP
 It is NOT designed as a general-purpose backend that uses RDBMS instead
-of BerkeleyDB (as the standard BDB backend does), though it can be
+of LMDB (as the standard MDB backend does), though it can be
 used as such with several limitations.
 You can take a look at
 .B http://www.openldap.org/faq/index.cgi?file=378 
@@ -541,7 +541,7 @@ like this (by Robin Elfrink):
               1, 0, userid FROM unixusers
       UNION
           SELECT (2000000000+groupnummer),
-              UPPER(CONCAT(CONCAT('cn=',groupnaam),',o=MyCompany,c=NL')),
+              UPPER(CONCAT(CONCAT('cn=',groupname),',o=MyCompany,c=NL')),
               2, 0, groupnummer FROM groups;
 .fi
 
@@ -643,7 +643,7 @@ As previously stated, this backend should not be considered
 a replacement of other data storage backends, but rather a gateway
 to existing RDBMS storages that need to be published in LDAP form.
 .LP
-The \fBhasSubordintes\fP operational attribute is honored by back-sql
+The \fBhasSubordinates\fP operational attribute is honored by back-sql
 in search results and in compare operations; it is partially honored
 also in filtering.  Owing to design limitations, a (brain-dead?) filter
 of the form

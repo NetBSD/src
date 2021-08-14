@@ -1,0 +1,13 @@
+dn: dc=demonstration,dc=com
+changetype: add
+objectclass: organization
+objectclass: domainRelatedObject
+objectclass: dcobject
+o: demo
+associateddomain: demonstration.com
+
+dn: ou=Societies,dc=demonstration,dc=com
+changetype: add
+objectclass: organizationalUnit
+ou: Societies
+seealso: dc=example,dc=com

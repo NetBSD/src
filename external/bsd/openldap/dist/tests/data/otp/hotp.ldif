@@ -1,0 +1,61 @@
+dn: dc=example, dc=com
+changetype: modify
+add: objectClass
+objectClass: oathHOTPParams
+-
+add: oathOTPLength
+oathOTPLength: 6
+-
+add: oathHOTPLookAhead
+oathHOTPLookAhead: 3
+-
+add: oathHMACAlgorithm
+# SHA-1
+oathHMACAlgorithm: 1.2.840.113549.2.7
+
+dn: ou=Information Technology Division,ou=People,dc=example,dc=com
+changetype: modify
+add: objectClass
+objectclass: oathHOTPToken
+-
+add: oathHOTPParams
+oathHOTPParams: dc=example, dc=com
+-
+add: oathSecret
+oathSecret:: PcbKpIJKbSiHZ7IzHiC0MWbLhdk=
+-
+add: oathHOTPCounter
+oathHOTPCounter: 3
+
+dn: ou=Alumni Association,ou=People,dc=example,dc=com
+changetype: modify
+add: objectClass
+objectClass: oathHOTPParams
+-
+add: oathOTPLength
+oathOTPLength: 8
+-
+add: oathHOTPLookAhead
+oathHOTPLookAhead: 0
+-
+add: oathHMACAlgorithm
+# SHA-512
+oathHMACAlgorithm: 1.2.840.113549.2.11
+
+dn: cn=Barbara Jensen,ou=Information Technology Division,ou=People,dc=example,
+ dc=com
+changetype: modify
+add: objectClass
+objectClass: oathHOTPUser
+-
+add: oathHOTPToken
+oathHOTPToken: ou=Information Technology Division,ou=People,dc=example,dc=com
+
+dn: cn=Bjorn Jensen,ou=Information Technology Division,ou=People,dc=example,
+ dc=com
+changetype: modify
+add: objectClass
+objectClass: oathHOTPUser
+-
+add: oathHOTPToken
+oathHOTPToken: ou=Information Technology Division,ou=People,dc=example,dc=com

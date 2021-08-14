@@ -1,5 +1,5 @@
 .TH MDB_LOAD 1 "2015/09/30" "LMDB 0.9.17"
-.\" Copyright 2014-2020 Howard Chu, Symas Corp. All Rights Reserved.
+.\" Copyright 2014-2021 Howard Chu, Symas Corp. All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 mdb_load \- LMDB environment import tool
@@ -36,6 +36,13 @@ option below.
 .TP
 .BR \-V
 Write the library version number to the standard output, and exit.
+.TP
+.BR \-a
+Append all records in the order they appear in the input. The input is assumed to already be
+in correctly sorted order and no sorting or checking for redundant values will be performed.
+This option must be used to reload data that was produced by running
+.B mdb_dump
+on a database that uses custom compare functions.
 .TP
 .BR \-f \ file
 Read from the specified file instead of from the standard input.

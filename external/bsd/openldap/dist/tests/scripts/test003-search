@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2020 The OpenLDAP Foundation.
+## Copyright 1998-2021 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -19,7 +19,7 @@ echo "running defines.sh"
 mkdir -p $TESTDIR $DBDIR1
 
 echo "Running slapadd to build slapd database..."
-. $CONFFILTER $BACKEND $MONITORDB < $MCONF > $ADDCONF
+. $CONFFILTER $BACKEND < $MCONF > $ADDCONF
 $SLAPADD -f $ADDCONF -l $LDIFORDERED
 RC=$?
 if test $RC != 0 ; then
@@ -28,7 +28,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Running slapindex to index slapd database..."
-. $CONFFILTER $BACKEND $MONITORDB < $CONF > $CONF1
+. $CONFFILTER $BACKEND < $CONF > $CONF1
 $SLAPINDEX -f $CONF1
 RC=$?
 if test $RC != 0 ; then
@@ -37,7 +37,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Starting slapd on TCP/IP port $PORT1..."
-$SLAPD -f $CONF1 -h $URI1 -d $LVL $TIMING > $LOG1 2>&1 &
+$SLAPD -f $CONF1 -h $URI1 -d $LVL > $LOG1 2>&1 &
 PID=$!
 if test $WAIT != 0 ; then
     echo PID $PID
@@ -49,7 +49,7 @@ sleep 1
 
 echo "Testing slapd searching..."
 for i in 0 1 2 3 4 5; do
-	$LDAPSEARCH -s base -b "$MONITOR" -h $LOCALHOST -p $PORT1 \
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI1 \
 		'(objectclass=*)' > /dev/null 2>&1
 	RC=$?
 	if test $RC = 0 ; then
@@ -67,7 +67,7 @@ fi
 
 echo "Testing exact searching..."
 echo "# Testing exact searching..." > $SEARCHOUT
-$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
 	'(sn=jENSEN)' >> $SEARCHOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -78,7 +78,7 @@ fi
 
 echo "Testing approximate searching..."
 echo "# Testing approximate searching..." >> $SEARCHOUT
-$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
 	'(sn~=jENSEN)' name >> $SEARCHOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -89,7 +89,7 @@ fi
 
 echo "Testing OR searching..."
 echo "# Testing OR searching..." >> $SEARCHOUT
-$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
 	'(|(givenname=Xx*yY*Z)(cn=)(undef=*)(objectclass=groupofnames)(sn=jones)(member=cn=Manager,dc=example,dc=com)(uniqueMember=cn=Manager,dc=example,dc=com))' >> $SEARCHOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -100,7 +100,7 @@ fi
 
 echo "Testing AND matching and ends-with searching..."
 echo "# Testing AND matching and ends-with searching..." >> $SEARCHOUT
-$LDAPSEARCH -S "" -b "ou=groups,$BASEDN" -s one -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -S "" -b "ou=groups,$BASEDN" -s one -H $URI1 \
 	'(&(objectclass=groupofnames)(cn=A*)(member=cn=Mark Elliot,ou=Alumni Association,ou=People,dc=example,dc=com))' >> $SEARCHOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -111,7 +111,7 @@ fi
 
 echo "Testing NOT searching..."
 echo "# Testing NOT searching..." >> $SEARCHOUT
-$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
 	'(!(objectclass=pilotPerson))' >> $SEARCHOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -122,7 +122,7 @@ fi
 
 echo "Testing objectClass/attributeType inheritance ..."
 echo "# Testing objectClass/attributeType inheritance ..." >> $SEARCHOUT
-$LDAPSEARCH -M -a never -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -M -a never -S "" -b "$BASEDN" -H $URI1 \
 	'(&(objectClass=inetorgperson)(userid=uham))' \
 	"2.5.4.0" "userid" >> $SEARCHOUT 2>&1
 RC=$?
@@ -134,7 +134,7 @@ fi
 
 test $KILLSERVERS != no && kill -HUP $KILLPIDS
 
-LDIF=$SEARCHOUTMASTER
+LDIF=$SEARCHOUTPROVIDER
 
 echo "Filtering ldapsearch results..."
 $LDIFFILTER < $SEARCHOUT > $SEARCHFLT

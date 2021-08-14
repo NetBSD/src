@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2020 The OpenLDAP Foundation.
+## Copyright 1998-2021 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -29,9 +29,9 @@ NIS_LDIF=$SRCDIR/data/nis_sample.ldif
 
 # Sample configuration file for your LDAP server
 if test "$BACKEND" = "bdb2" ; then
-	NIS_CONF=$DATADIR/slapd-bdb2-nis-master.conf
+	NIS_CONF=$DATADIR/slapd-bdb2-nis-provider.conf
 else
-	NIS_CONF=$DATADIR/slapd-nis-master.conf
+	NIS_CONF=$DATADIR/slapd-nis-provider.conf
 fi
 
 echo "Cleaning up in $DBDIR..."
@@ -47,7 +47,7 @@ if [ $RC != 0 ]; then
 fi
 
 echo "Starting slapd on TCP/IP port $PORT..."
-$SLAPD -f $NIS_CONF -p $PORT -d $LVL $TIMING > $MASTERLOG 2>&1 &
+$SLAPD -f $NIS_CONF -p $PORT -d $LVL > $PROVIDERLOG 2>&1 &
 PID=$!
 
 echo ">>>>> LDAP server with NIS schema is up! PID=$PID"

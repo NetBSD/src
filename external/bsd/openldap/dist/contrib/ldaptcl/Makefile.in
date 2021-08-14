@@ -75,7 +75,7 @@ TCL_BIN_DIR =       @TCL_BIN_DIR@
 
 
 # The symbol below provides support for dynamic loading and shared
-# libraries.  See configure.in for a description of what it means.
+# libraries.  See configure.ac for a description of what it means.
 # The values of the symbolis normally set by the configure script.
 
 SHLIB_LD = @SHLIB_LD@

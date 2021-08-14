@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2020 The OpenLDAP Foundation.
+## Copyright 1998-2021 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -19,7 +19,7 @@ echo "running defines.sh"
 mkdir -p $TESTDIR $DBDIR1
 
 echo "Running slapadd to build slapd database..."
-. $CONFFILTER $BACKEND $MONITORDB < $CONF > $CONF1
+. $CONFFILTER $BACKEND < $CONF > $CONF1
 $SLAPADD -f $CONF1 -l $LDIFORDERED
 RC=$?
 if test $RC != 0 ; then
@@ -28,7 +28,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Starting slapd on TCP/IP port $PORT1..."
-$SLAPD -f $CONF1 -h $URI1 -d $LVL $TIMING > $LOG1 2>&1 &
+$SLAPD -f $CONF1 -h $URI1 -d $LVL > $LOG1 2>&1 &
 PID=$!
 if test $WAIT != 0 ; then
     echo PID $PID
@@ -40,7 +40,7 @@ sleep 1
 
 echo "Testing slapd modify operations..."
 for i in 0 1 2 3 4 5; do
-	$LDAPSEARCH -s base -b "$MONITOR" -h $LOCALHOST -p $PORT1 \
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI1 \
 		'objectclass=*' > /dev/null 2>&1
 	RC=$?
 	if test $RC = 0 ; then
@@ -57,120 +57,8 @@ if test $RC != 0 ; then
 fi
 
 echo "Testing modify, add, and delete..."
-$LDAPMODIFY -v -D "$MANAGERDN" -h $LOCALHOST -p $PORT1 -w $PASSWD > \
-	$TESTOUT 2>&1 << EOMODS
-version: 1
-
-# LEADING COMMENT AND WHITE SPACE
-
-dn: cn=James A Jones 1,ou=Alumni Association,ou=People,dc=example,dc=com
-# EMBEDDED COMMENT
-changetype: modify
-add: drink
-drink: Pils
--
-add: drink
-drink: Orange Juice
--
-delete: drink
-drink: Pils
--
-delete: sn
-sn: Jones
--
-add: sn
-sn: Jones
-
-dn: cn=Bjorn Jensen,ou=Information Technology Division,ou=People,dc=example,dc=com
-changetype: modify
-# EMBEDDED COMMENT
- CONTINUED
-replace: description
-description: The replaced multiLineDescription $ Blah Woof.
--
-replace: drink
-drink: Iced Tea
-drink: Mad Dog 20/20
-
-dn: cn=ITD Staff,ou=Groups,dc=example,dc=com
-changetype: modify
-delete: uniquemember
-uniquemember: cn=James A Jones 2,ou=Information Technology Division,
- ou=People,dc=example,dc=com
-uniquemember: cn=Bjorn Jensen,ou=Information Technology Division,
- ou=People,dc=example,dc=com
--
-add: uniquemember
-uniquemember: cn=Dorothy Stevens,ou=Alumni Association,
- ou=People,dc=example,dc=com
-uniquemember: cn=James A Jones 1,ou=Alumni Association,
- ou=People,dc=example,dc=com
--
-add: objectClass
-objectClass: OpenLDAPdisplayableObject
-objectClass: pkiUser
-objectClass: userSecurityInformation
--
-delete: objectClass
-objectClass: userSecurityInformation
-objectClass: pkiUser
-objectClass: OpenLDAPdisplayableObject
-
-dn: cn=All Staff,ou=Groups,dc=example,dc=com
-changetype: modify
-delete: member
--
-add: member
-member: cn=Dorothy Stevens,ou=Alumni Association,ou=People,dc=example,dc=com
--
-delete: description
--
-add: objectClass
-objectClass: OpenLDAPdisplayableObject
-objectClass: pkiUser
-objectClass: userSecurityInformation
--
-delete: objectClass
-objectClass: OpenLDAPdisplayableObject
-objectClass: pkiUser
-objectClass: userSecurityInformation
-
-dn: cn=Gern Jensen,ou=Information Technology Division,ou=People,dc=example,dc=com
-changetype: add
-objectclass: testPerson
-cn: Gern Jensen
-sn: Jensen
-uid: gjensen
-title: Chief Investigator, ITD
-postaladdress: ITD $ 535 W. William St $ Anytown, MI 48103
-seealso: cn=All Staff,ou=Groups,dc=example,dc=com
-drink: Coffee
-homepostaladdress: 844 Brown St. Apt. 4 $ Anytown, MI 48104
-description: Very odd
-facsimiletelephonenumber: +1 313 555 7557
-telephonenumber: +1 313 555 8343
-mail: gjensen@mailgw.example.com
-homephone: +1 313 555 8844
-testTime: 20050304001801.234Z
-
-dn: cn=James A Jones 2,ou=Information Technology Division,ou=People,dc=example,dc=com
-changetype: delete
-# TRAILING COMMENT AND WHITE SPACE
-
-dn: ou=People,dc=example,dc=com
-changetype: modify
-increment: uidNumber
-uidNumber: 1
--
-increment: gidNumber
-gidNumber: -1
-
-dn: dc=example,dc=com
-changetype: modify
-# EMPTY SEQUENCE OF CHANGE
-
-EOMODS
-
+$LDAPMODIFY -v -D "$MANAGERDN" -H $URI1 -w $PASSWD > \
+	$TESTOUT -f $LDIFMODIFY
 RC=$?
 if test $RC != 0 ; then
 	echo "ldapmodify failed ($RC)!"
@@ -179,7 +67,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Using ldapmodify to add an empty entry (should fail with protocolError)..."
-$LDAPMODIFY -D "$MANAGERDN" -h $LOCALHOST -p $PORT1 -w $PASSWD \
+$LDAPMODIFY -D "$MANAGERDN" -H $URI1 -w $PASSWD \
 	 >> $TESTOUT 2>&1 << EOMODS
 dn: cn=Foo Bar,dc=example,dc=com
 changetype: add
@@ -204,7 +92,7 @@ case $RC in
 esac
 
 echo "Using ldapsearch to retrieve all the entries..."
-$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
 	    'objectClass=*' > $SEARCHOUT 2>&1
 RC=$?
 test $KILLSERVERS != no && kill -HUP $KILLPIDS
@@ -213,7 +101,7 @@ if test $RC != 0 ; then
 	exit $RC
 fi
 
-LDIF=$MODIFYOUTMASTER
+LDIF=$MODIFYOUTPROVIDER
 
 echo "Filtering ldapsearch results..."
 $LDIFFILTER < $SEARCHOUT > $SEARCHFLT

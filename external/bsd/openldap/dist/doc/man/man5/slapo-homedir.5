@@ -1,0 +1,130 @@
+.TH SLAPO-HOMEDIR 5 "RELEASEDATE" "OpenLDAP LDVERSION"
+.\" Copyright 1998-2021 The OpenLDAP Foundation, All Rights Reserved.
+.\" Copying restrictions apply.  See the COPYRIGHT file.
+.\" $OpenLDAP$
+.SH NAME
+slapo\-homedir \- Home directory provisioning overlay
+.SH SYNOPSIS
+ETCDIR/slapd.conf
+.SH DESCRIPTION
+The
+.B homedir
+overlay causes
+.BR slapd (8)
+to notice changes involving RFC-2307bis style user-objects and make
+appropriate changes to the local filesystem.  This can be performed
+on both master and replica systems, so it is possible to perform
+remote home directory provisioning.
+.SH CONFIGURATION
+Both slapd.conf and back-config style configuration is supported.
+.TP
+.B overlay homedir
+This directive adds the homedir overlay to the current database,
+or to the frontend, if used before any database instantiation; see
+.BR slapd.conf (5)
+for details.
+.TP
+.B homedir\-skeleton\-path <pathname>
+.TP
+.B olcSkeletonPath: pathname
+These options set the path to the skeleton account directory.
+(Generally, /etc/skel) Files in this directory will be copied into
+newly created home directories.  Copying is recursive and handles
+symlinks and fifos, but will skip most specials.
+.TP
+.B homedir\-min\-uidnumber <user id number>
+.TP
+.B olcMinimumUidNumber: number
+These options configure the minimum userid to use in any home
+directory attempt.  This is a basic safety measure to prevent
+accidentally using system accounts.  See REPLICATION for more flexible
+options for selecting accounts.
+.TP
+.B homedir\-regexp <regexp> <path>
+.TP
+.B olcHomedirRegexp: regexp path
+These options configure a set of regular expressions to use for
+matching and optionally remapping incoming
+.B homeDirectory
+attribute values to pathnames on the local filesystem.  $number
+expansion is supported to access values captured in parentheses.
+
+For example, to accept any directory starting with \/home and use it
+verbatim on the local filesystem:
+
+.B homedir-regexp ^(/home/[\-_/a\-z0\-9]+)$ $1
+
+To match the same set of directories, but create them instead under
+\/export\/home, as is popular on Solaris NFS servers:
+
+.B homedir-regexp ^(/home/[\-_/a\-z0\-9]+)$ /export$1
+.TP
+.B homedir\-delete\-style style
+.TP
+.B olcHomedirDeleteStyle: style
+These options configure how deletes of posixAccount entries or their
+attributes are handled; valid styles are
+.B IGNORE,
+which does nothing, and
+.B DELETE,
+which immediately performs a recursive delete on the home directory,
+and
+.B ARCHIVE,
+which archives the home directory contents in a TAR file for later
+examination.  The default is IGNORE.  Use with caution.  ARCHIVE
+requires homedir-archive-path to be set, or it functions similar to
+IGNORE.
+.TP
+.B homedir\-archive\-path <pathname>
+.TP
+.B olcArchivePath: pathname
+These options specify the destination path for TAR files created by
+the ARCHIVE delete style.
+.SH REPLICATION
+The homedir overlay can operate on either master or replica systems
+with no changes.  See
+.BR slapd.conf (5)
+or
+.BR slapd\-config (5)
+for more information on configure syncrepl.
+
+Partial replication (e.g. with filters) is especially useful for
+providing different provisioning options to different sets of users.
+.SH BUGS
+DELETE, MOD, and MODRDN operations that remove the unix attributes
+when delete style is set to DELETE will recursively delete the (regex
+modified) home directory from the disk.  Please be careful when
+deleting or changing values.
+
+MOD and MODRDN will correctly respond to homeDirectory changes and
+perform a non-destructive rename() operation on the filesystem, but
+this does not correctly retry with a recursive copy when moving
+between filesystems.
+
+The recursive copy/delete/chown/tar functions are not aware of ACLs,
+extended attributes, forks, sparse files, or hard links.  Block and
+character device archival is non-portable, but should not be an issue
+in home directories, hopefully.
+
+Copying and archiving may not support files larger than 2GiB on some
+architectures.  Bare POSIX UStar archives cannot support internal
+files larger than 8GiB.  The current tar generator does not attempt to
+resolve uid/gid into symbolic names.
+
+No attempt is made to try to mkdir() the parent directories needed for
+a given home directory or archive path.
+.SH FILES
+.TP
+ETCDIR/slapd.conf
+default slapd configuration file
+.TP
+/etc/skel (or similar)
+source of new homedir files.
+.SH SEE ALSO
+.BR slapd.conf (5),
+.BR slapd\-config (5),
+.BR slapd (8),
+RFC-2307, RFC-2307bis.
+.SH ACKNOWLEDGEMENTS
+.P
+This module was written in 2009 by Emily Backes for Symas Corporation.

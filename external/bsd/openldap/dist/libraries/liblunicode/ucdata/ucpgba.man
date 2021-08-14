@@ -53,7 +53,7 @@ ustring_set_cursor_motion().
 
 .TP 4
 .BR ucstring_free()
-This function will deallocate the memory used by the string, incuding the
+This function will deallocate the memory used by the string, including the
 string itself.
 
 .TP 4

@@ -1,4 +1,4 @@
-/*	$NetBSD: apr1.c,v 1.1.1.3 2018/02/06 01:53:06 christos Exp $	*/
+/*	$NetBSD: apr1.c,v 1.1.1.4 2021/08/14 16:05:15 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /*
@@ -20,6 +20,12 @@
  * revision 42, as noted.
  *
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: apr1.c,v 1.1.1.4 2021/08/14 16:05:15 christos Exp $");
+
+#include "portable.h"
+
 #include <lber.h>
 #include <lber_pvt.h>
 #include "lutil.h"

@@ -1,5 +1,5 @@
 # $OpenLDAP$
-# Copyright 1999-2020 The OpenLDAP Foundation, All Rights Reserved.
+# Copyright 1999-2021 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 H1: The Big Picture - Configuration Choices
 
@@ -45,9 +45,9 @@ H2: Replicated Directory Service
 slapd(8) includes support for {{LDAP Sync}}-based replication, called
 {{syncrepl}}, which may be used to maintain shadow copies of directory
 information on multiple directory servers.   In its most basic
-configuration, the {{master}} is a syncrepl provider and one or more
-{{slave}} (or {{shadow}}) are syncrepl consumers.  An example
-master-slave configuration is shown in figure 3.3. Multi-Master 
+configuration, the {{provider}} is a syncrepl provider and one or more
+{{consumer}} (or {{shadow}}) are syncrepl consumers.  An example
+provider-consumer configuration is shown in figure 3.3. Multi-Provider 
 configurations are also supported.
 
 !import "config_repl.png"; align="center"; title="Replicated Directory Services"

@@ -1,4 +1,17 @@
-#!/bin/bash
+#!/bin/sh
+# $OpenLDAP$
+## This work is part of OpenLDAP Software <http://www.openldap.org/>.
+##
+## Copyright 1998-2021 The OpenLDAP Foundation.
+## All rights reserved.
+##
+## Redistribution and use in source and binary forms, with or without
+## modification, are permitted only as authorized by the OpenLDAP
+## Public License.
+##
+## A copy of this license is available in the file LICENSE in the
+## top-level directory of the distribution or, alternatively, at
+## <http://www.OpenLDAP.org/license.html>.
 
 echo "running defines.sh"
 . $SRCDIR/scripts/defines.sh
@@ -109,7 +122,7 @@ EOF
 $SLAPADD -F $CONFDIR -n 0 -l $TESTDIR/config.ldif
 
 echo "Starting slapd on TCP/IP port $PORT1..."
-$SLAPD -F $CONFDIR -h $URI1 -d $LVL $TIMING > $LOG1 2>&1 &
+$SLAPD -F $CONFDIR -h $URI1 -d $LVL > $LOG1 2>&1 &
 PID=$!
 if test $WAIT != 0 ; then
 	echo PID $PID
@@ -120,7 +133,7 @@ sleep 1
 
 echo "Using ldapsearch to check that slapd is running..."
 for i in 0 1 2 3 4 5; do
-	$LDAPSEARCH -s base -b "$MONITOR" -h $LOCALHOST -p $PORT1 \
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI1 \
 		'objectclass=*' > /dev/null 2>&1
 	RC=$?
 	if test $RC = 0 ; then
@@ -136,14 +149,14 @@ if test $RC != 0 ; then
 fi
 
 echo "Adding basic structure..."
-$LDAPADD -D "$MANAGERDN" -H $URI1 -w $PASSWD -f $ROOTLDIF &>/dev/null
+$LDAPADD -D "$MANAGERDN" -H $URI1 -w $PASSWD -f $ROOTLDIF >/dev/null 2>&1
 RC=$?
 if test $RC != 0 ; then
 	echo "ldapadd failed ($RC)!"
 	test $KILLSERVERS != no && kill -HUP $PID
 	exit $RC
 fi
-$LDAPADD -D "$MANAGERDN" -H $URI1 -w $PASSWD -f $USERLDIF &>/dev/null
+$LDAPADD -D "$MANAGERDN" -H $URI1 -w $PASSWD -f $USERLDIF >/dev/null 2>&1
 RC=$?
 if test $RC != 0 ; then
 	echo "ldapadd failed ($RC)!"
@@ -152,16 +165,16 @@ if test $RC != 0 ; then
 fi
 
 echo "Running constraint tests..."
-for ldif in $SRCDIR/data/constraint/{*ok*,*fail*}.ldif; do
+for ldif in $CONSTRAINTDIR/*ok*.ldif $CONSTRAINTDIR/*fail*.ldif; do
 	### reload
-	$LDAPDELETE -D "$MANAGERDN" -H $URI1 -w $PASSWD "$USERDN" &>/dev/null
+	$LDAPDELETE -D "$MANAGERDN" -H $URI1 -w $PASSWD "$USERDN" >/dev/null 2>&1
 	RC=$?
 	if test $RC != 0 ; then
 		echo "ldapdelete failed ($RC)!"
 		test $KILLSERVERS != no && kill -HUP $PID
 		exit $RC
 	fi
-	$LDAPADD -D "$MANAGERDN" -H $URI1 -w $PASSWD -f $USERLDIF &>/dev/null
+	$LDAPADD -D "$MANAGERDN" -H $URI1 -w $PASSWD -f $USERLDIF >/dev/null 2>&1
 	RC=$?
 	if test $RC != 0 ; then
 		echo "ldapadd failed ($RC)!"
@@ -173,11 +186,11 @@ for ldif in $SRCDIR/data/constraint/{*ok*,*fail*}.ldif; do
 	echo -n "  [$ldif]: "
 
 	### modify
-	$LDAPMODIFY -H $URI1 -x -D "$MANAGERDN" -f $ldif -w $PASSWD &>/dev/null
+	$LDAPMODIFY -H $URI1 -x -D "$MANAGERDN" -f $ldif -w $PASSWD >/dev/null 2>&1
 	RC=$?
-	if test $RC == 0 ; then
+	if test $RC = 0 ; then
 		echo "OK" | tee -a $SCRIPTOUT
-	elif test $RC == 19 ; then
+	elif test $RC = 19 ; then
 		echo "FAIL" | tee -a $SCRIPTOUT
 	else
 		echo "UNEXPECTED ($RC)"

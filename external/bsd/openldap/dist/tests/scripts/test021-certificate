@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2020 The OpenLDAP Foundation.
+## Copyright 1998-2021 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -19,7 +19,7 @@ echo "running defines.sh"
 mkdir -p $TESTDIR $DBDIR1
 
 echo "Running slapadd to build slapd database..."
-. $CONFFILTER $BACKEND $MONITORDB < $CONF > $CONF1
+. $CONFFILTER $BACKEND < $CONF > $CONF1
 #echo $SLAPADD -f $CONF1 -l $LDIFORDERED
 $SLAPADD -f $CONF1 -l $LDIFORDERED
 RC=$?
@@ -29,8 +29,8 @@ if test $RC != 0 ; then
 fi
 
 echo "Starting slapd on TCP/IP port $PORT1..."
-#valgrind -v --gdb-attach=yes --logfile=info --num-callers=16 --leak-check=yes --leak-resolution=high $SLAPD -f $CONF1 -h $URI1 -d $LVL $TIMING </dev/tty > $LOG1 2>&1 &
-$SLAPD -f $CONF1 -h $URI1 -d $LVL $TIMING > $LOG1 2>&1 &
+#valgrind -v --gdb-attach=yes --logfile=info --num-callers=16 --leak-check=yes --leak-resolution=high $SLAPD -f $CONF1 -h $URI1 -d $LVL </dev/tty > $LOG1 2>&1 &
+$SLAPD -f $CONF1 -h $URI1 -d $LVL > $LOG1 2>&1 &
 PID=$!
 if test $WAIT != 0 ; then
     echo PID $PID
@@ -43,7 +43,7 @@ echo "Testing certificate handling..."
 sleep 1
 
 for i in 0 1 2 3 4 5; do
-	$LDAPSEARCH -s base -b "$MONITOR" -h $LOCALHOST -p $PORT1 \
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI1 \
 		'objectclass=*' > /dev/null 2>&1
 	RC=$?
 	if test $RC = 0 ; then
@@ -60,7 +60,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Add certificates..."
-$LDAPMODIFY -v -D "$MANAGERDN" -h $LOCALHOST -p $PORT1 -w $PASSWD > \
+$LDAPMODIFY -v -D "$MANAGERDN" -H $URI1 -w $PASSWD > \
 	$TESTOUT 2>&1 << EOMODS
 version: 1
 
@@ -230,7 +230,7 @@ fi
 
 echo 'Using ldapsearch to retrieve (userCertificate;binary=*) ...'
 echo "# (userCertificate;binary=*)" > $SEARCHOUT
-$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
     '(userCertificate;binary=*)' >> $SEARCHOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -241,7 +241,7 @@ fi
 
 echo 'Using ldapsearch to retrieve (cAcertificate=*) ...'
 echo "# (cAcertificate=*)" >> $SEARCHOUT
-$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
     '(cAcertificate=*)' >> $SEARCHOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -254,7 +254,7 @@ SNAI='2$EMAIL=ca@example.com,CN=Example CA,O=Openldap Example\5C, Ltd.,ST=Califo
 
 echo 'Using ldapsearch to retrieve (userCertificate=serialNumberAndIssuer) [old format] ...'
 echo "# (userCertificate=$SNAI)" >> $SEARCHOUT
-$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
     "(userCertificate=$SNAI)" >> $SEARCHOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -267,7 +267,7 @@ SNAI='{ serialNumber 2, issuer "EMAIL=ca@example.com,CN=Example CA,O=Openldap Ex
 
 echo 'Using ldapsearch to retrieve (userCertificate=serialNumberAndIssuer) [new format] ...'
 echo "# (userCertificate=$SNAI)" >> $SEARCHOUT
-$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
     "(userCertificate=$SNAI)" >> $SEARCHOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -280,7 +280,7 @@ SNAI='3$EMAIL=ca@example.com,CN=Example CA,O=Openldap Example\5C, Ltd.,ST=Califo
 
 echo 'Using ldapsearch to retrieve (userCertificate:certificateExactMatch:=serialNumberAndIssuer) [old format] ...'
 echo "# (userCertificate:certificateExactMatch:=$SNAI)" >> $SEARCHOUT
-$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
     "(userCertificate:certificateExactMatch:=$SNAI)" >> $SEARCHOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -293,7 +293,7 @@ SNAI='{ issuer "EMAIL=ca@example.com,CN=Example CA,O=Openldap Example\5C, Ltd.,S
 
 echo 'Using ldapsearch to retrieve (userCertificate:certificateExactMatch:=serialNumberAndIssuer) [new format]...'
 echo "# (userCertificate:certificateExactMatch:=$SNAI)" >> $SEARCHOUT
-$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
     "(userCertificate:certificateExactMatch:=$SNAI)" >> $SEARCHOUT 2>&1
 RC=$?
 if test $RC != 0 ; then

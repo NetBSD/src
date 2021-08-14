@@ -1,0 +1,87 @@
+TOTP OpenLDAP support
+----------------------
+
+slapd-totp.c provides support for RFC 6238 TOTP Time-based One
+Time Passwords in OpenLDAP using SHA-1, SHA-256, and SHA-512.
+For instance, one could have the LDAP attribute:
+
+userPassword: {TOTP1}GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ
+
+which encodes the key '12345678901234567890'.
+
+It can also encode credentials consisting of a TOTP and a static
+password.  The format for this is:
+
+userPassword: {TOTP1ANDPW}GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ|<some_other_passwd>
+
+where <some_other_passwd> can be any scheme currently understood
+by OpenLDAP.  For example, using '{SHA}5en6G6MezRroT3XKqkdPOmY/BfQ='
+would encode the above TOTP with a static password of 'secret'.  To
+authenticate using this scheme, enter the static password immediately
+followed by the TOTP, for example 'secret123456'.
+
+
+Building
+--------
+
+1) Customize the LDAP_SRC variable in Makefile to point to the OpenLDAP
+source root.
+
+2) Run 'make' to produce slapd-totp.so
+
+3) Copy slapd-totp.so somewhere permanent.
+
+4) Edit your slapd.conf (eg. /etc/ldap/slapd.conf), and add:
+
+moduleload ...path/to/slapd-totp.so
+
+5) This module replaces the function of the slapo-lastbind overlay. You
+cannot use that overlay on the same database as this one.
+
+6) Restart slapd.
+
+
+Configuring
+-----------
+
+The {TOTP1}, {TOTP256}, {TOTP512}, {TOTP1ANDPW}, {TOTP256ANDPW},
+and {TOTP512ANDPW} password schemes should now be recognised.
+
+You can also tell OpenLDAP to use one of these new schemes when processing LDAP
+Password Modify Extended Operations, thanks to the password-hash option in
+slapd.conf. For example:
+
+password-hash	{TOTP1}
+
+TOTP password schemes will only work on databases that have a rootdn and the
+totp overlay configured:
+
+database mdb
+rootdn "..."
+...
+
+overlay totp
+
+
+
+Testing
+-------
+
+The TOTP1 algorithm is compatible with Google Authenticator.
+
+---
+
+This work is part of OpenLDAP Software <http://www.openldap.org/>.
+
+Copyright 2015-2021 The OpenLDAP Foundation.
+Portions Copyright 2015 by Howard Chu, Symas Corp.
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted only as authorized by the OpenLDAP
+Public License.
+
+A copy of this license is available in the file LICENSE in the
+top-level directory of the distribution or, alternatively, at
+<http://www.OpenLDAP.org/license.html>.
+

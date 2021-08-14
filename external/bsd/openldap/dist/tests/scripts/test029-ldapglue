@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2020 The OpenLDAP Foundation.
+## Copyright 1998-2021 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -45,7 +45,7 @@ fi
 mkdir -p $TESTDIR $DBDIR1 $DBDIR2 $DBDIR3
 
 echo "Running slapadd to build slapd database..."
-. $CONFFILTER $BACKEND $MONITORDB < $LDAPGLUECONF1 > $ADDCONF
+. $CONFFILTER $BACKEND < $LDAPGLUECONF1 > $ADDCONF
 $SLAPADD -f $ADDCONF -l $LDIFLDAPGLUE1
 RC=$?
 if test $RC != 0 ; then
@@ -53,7 +53,7 @@ if test $RC != 0 ; then
 	exit $RC
 fi
 
-. $CONFFILTER $BACKEND $MONITORDB < $LDAPGLUECONF2 > $ADDCONF
+. $CONFFILTER $BACKEND < $LDAPGLUECONF2 > $ADDCONF
 $SLAPADD -f $ADDCONF -l $LDIFLDAPGLUE2
 RC=$?
 if test $RC != 0 ; then
@@ -61,7 +61,7 @@ if test $RC != 0 ; then
 	exit $RC
 fi
 
-. $CONFFILTER $BACKEND $MONITORDB < $LDAPGLUECONF3 > $ADDCONF
+. $CONFFILTER $BACKEND < $LDAPGLUECONF3 > $ADDCONF
 $SLAPADD -f $ADDCONF -l $LDIFLDAPGLUE3
 RC=$?
 if test $RC != 0 ; then
@@ -70,8 +70,8 @@ if test $RC != 0 ; then
 fi
 
 echo "Starting local slapd on TCP/IP port $PORT1..."
-. $CONFFILTER $BACKEND $MONITORDB < $LDAPGLUECONF1 > $CONF1
-$SLAPD -f $CONF1 -h $URI1 -d $LVL $TIMING > $LOG1 2>&1 &
+. $CONFFILTER $BACKEND < $LDAPGLUECONF1 > $CONF1
+$SLAPD -f $CONF1 -h $URI1 -d $LVL > $LOG1 2>&1 &
 PID1=$!
 if test $WAIT != 0 ; then
     echo PID $PID1
@@ -79,8 +79,8 @@ if test $WAIT != 0 ; then
 fi
 
 echo "Starting remote slapd 1 on TCP/IP port $PORT2..."
-. $CONFFILTER $BACKEND $MONITORDB < $LDAPGLUECONF2 > $CONF2
-$SLAPD -f $CONF2 -h $URI2 -d $LVL $TIMING > $LOG2 2>&1 &
+. $CONFFILTER $BACKEND < $LDAPGLUECONF2 > $CONF2
+$SLAPD -f $CONF2 -h $URI2 -d $LVL > $LOG2 2>&1 &
 PID2=$!
 if test $WAIT != 0 ; then
     echo PID $PID2
@@ -88,8 +88,8 @@ if test $WAIT != 0 ; then
 fi
 
 echo "Starting remote slapd 2 on TCP/IP port $PORT3..."
-. $CONFFILTER $BACKEND $MONITORDB < $LDAPGLUECONF3 > $CONF3
-$SLAPD -f $CONF3 -h $URI3 -d $LVL $TIMING > $LOG3 2>&1 &
+. $CONFFILTER $BACKEND < $LDAPGLUECONF3 > $CONF3
+$SLAPD -f $CONF3 -h $URI3 -d $LVL > $LOG3 2>&1 &
 PID3=$!
 if test $WAIT != 0 ; then
     echo PID $PID3
@@ -101,7 +101,7 @@ sleep 1
 
 echo "Using ldapsearch to check that slapd is running..."
 for i in 0 1 2 3 4 5; do
-	$LDAPSEARCH -s base -b "$MONITOR" -h $LOCALHOST -p $PORT1 \
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI1 \
 		'objectclass=*' > /dev/null 2>&1
 	RC=$?
 	if test $RC = 0 ; then
@@ -113,7 +113,7 @@ done
 
 echo "Using ldapsearch to check that slapd is running..."
 for i in 0 1 2 3 4 5; do
-	$LDAPSEARCH -s base -b "$MONITOR" -h $LOCALHOST -p $PORT2 \
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI2 \
 		'objectclass=*' > /dev/null 2>&1
 	RC=$?
 	if test $RC = 0 ; then
@@ -125,7 +125,7 @@ done
 
 echo "Using ldapsearch to check that slapd is running..."
 for i in 0 1 2 3 4 5; do
-	$LDAPSEARCH -s base -b "$MONITOR" -h $LOCALHOST -p $PORT3 \
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI3 \
 		'objectclass=*' > /dev/null 2>&1
 	RC=$?
 	if test $RC = 0 ; then
@@ -138,7 +138,7 @@ done
 ID="uid=bjorn,ou=People,dc=example,dc=com"
 BASE="dc=example,dc=com"
 echo "Testing ldapsearch as $ID for \"$BASE\"..."
-$LDAPSEARCH -h $LOCALHOST -p $PORT1 -b "$BASE" \
+$LDAPSEARCH -H $URI1 -b "$BASE" \
 	-D "$ID" -w bjorn > $SEARCHOUT 2>&1
 
 RC=$?
@@ -163,7 +163,7 @@ fi
 
 BASE="dc=example,dc=com"
 echo "Testing ldapsearch as anonymous for \"$BASE\"..."
-$LDAPSEARCH -h $LOCALHOST -p $PORT1 -b "$BASE" \
+$LDAPSEARCH -H $URI1 -b "$BASE" \
 	 > $SEARCHOUT 2>&1
 
 RC=$?
@@ -191,7 +191,7 @@ if test $USE_SASL != "no" ; then
 	ID="bjorn"
 	BASE="dc=example,dc=com"
 	echo "Testing ldapsearch as $ID for \"$BASE\" with SASL bind and identity assertion..."
-	$LDAPSASLSEARCH -h $LOCALHOST -p $PORT1 -b "$BASE" \
+	$LDAPSASLSEARCH -H $URI1 -b "$BASE" \
 		-Q -U "$ID" -w bjorn -Y $MECH > $SEARCHOUT 2>&1
 
 	RC=$?

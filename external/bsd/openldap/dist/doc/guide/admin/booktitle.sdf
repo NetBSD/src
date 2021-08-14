@@ -1,0 +1,34 @@
+# $OpenLDAP$
+# Copyright 1999-2021 The OpenLDAP Foundation, All Rights Reserved.
+# COPYING RESTRICTIONS APPLY, see COPYRIGHT.
+#
+# Document: OpenLDAP Administrator's Guide
+# Master: master.sdf
+# 
+
+!include "../preamble.sdf"
+
+!define DOC_TOC	3
+!define DOC_TYPE	"Administrator's Guide"
+
+!macro build_html_cover
+!block inline
+<DIV align="Center">
+!endblock
+!default DOC_HTML_LOGO_BASE  $var{'DOC_LOGO_BASE'}
+!import "../images/LDAPwww.gif"; base=$var{'DOC_HTML_LOGO_BASE'}
+P1[notoc; class='doc-title'] [[DOC_TITLE]]
+Sign[class='doc-modified'] [[DATE:DOC_MODIFIED]]
+!block inline
+</DIV>
+!endblock
+!endmacro
+
+!macro HTML_HEADER
+!endmacro
+
+!macro HTML_FOOTER
+!endmacro
+
+!build_title
+
