@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.922 2021/07/14 03:19:23 ozaki-r Exp $
+# $NetBSD: shl.mi,v 1.923 2021/08/14 16:18:32 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -417,14 +417,14 @@
 ./usr/lib/libkvm.so.6				base-sys-shlib		compatfile
 ./usr/lib/libkvm.so.6.0				base-sys-shlib		compatfile
 ./usr/lib/liblber.so				base-ldap-shlib		ldap,compatfile
-./usr/lib/liblber.so.3				base-ldap-shlib		ldap,compatfile
-./usr/lib/liblber.so.3.3			base-ldap-shlib		ldap,compatfile
+./usr/lib/liblber.so.5				base-ldap-shlib		ldap,compatfile
+./usr/lib/liblber.so.5.0			base-ldap-shlib		ldap,compatfile
 ./usr/lib/libldap.so				base-ldap-shlib		ldap,compatfile
-./usr/lib/libldap.so.4				base-ldap-shlib		ldap,compatfile
-./usr/lib/libldap.so.4.3			base-ldap-shlib		ldap,compatfile
+./usr/lib/libldap.so.5				base-ldap-shlib		ldap,compatfile
+./usr/lib/libldap.so.5.0			base-ldap-shlib		ldap,compatfile
 ./usr/lib/libldap_r.so				base-ldap-shlib		ldap,compatfile
-./usr/lib/libldap_r.so.4			base-ldap-shlib		ldap,compatfile
-./usr/lib/libldap_r.so.4.3			base-ldap-shlib		ldap,compatfile
+./usr/lib/libldap_r.so.5			base-ldap-shlib		ldap,compatfile
+./usr/lib/libldap_r.so.5.0			base-ldap-shlib		ldap,compatfile
 ./usr/lib/liblsan.so				base-sys-shlib		compatfile,cxx,gcc
 ./usr/lib/liblsan.so.1				base-sys-shlib		compatfile,obsolete
 ./usr/lib/liblsan.so.1.0			base-sys-shlib		compatfile,obsolete
