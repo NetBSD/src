@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.4 2019/12/01 15:34:45 ad Exp $ */
+/* $NetBSD: cpu.h,v 1.5 2021/08/14 17:51:19 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -64,6 +64,9 @@ struct cpu_info {
 	int ci_cpl;
 	u_int ci_softints;
 	volatile u_int ci_intr_depth;
+#if defined(GPROF) && defined(MULTIPROCESSOR)
+	struct gmonparam *ci_gmon;	/* MI per-cpu GPROF */
+#endif
 };
 
 register struct lwp *or1k_curlwp __asm("r10");

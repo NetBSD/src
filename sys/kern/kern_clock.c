@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.144 2021/01/16 02:20:00 riastradh Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.145 2021/08/14 17:51:20 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,11 +69,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.144 2021/01/16 02:20:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.145 2021/08/14 17:51:20 ryo Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
 #include "opt_gprof.h"
+#include "opt_multiprocessor.h"
 #endif
 
 #include <sys/param.h>
@@ -456,8 +457,14 @@ statclock(struct clockframe *frame)
 		/*
 		 * Kernel statistics are just like addupc_intr, only easier.
 		 */
+#ifdef MULTIPROCESSOR
+		g = curcpu()->ci_gmon;
+		if (g != NULL &&
+		    profsrc == PROFSRC_CLOCK && g->state == GMON_PROF_ON) {
+#else
 		g = &_gmonparam;
 		if (profsrc == PROFSRC_CLOCK && g->state == GMON_PROF_ON) {
+#endif
 			i = CLKF_PC(frame) - g->lowpc;
 			if (i < g->textsize) {
 				i /= HISTFRACTION * sizeof(*g->kcount);

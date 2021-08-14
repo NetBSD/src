@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.104 2019/12/01 15:34:46 ad Exp $      */
+/*      $NetBSD: cpu.h,v 1.105 2021/08/14 17:51:19 ryo Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -29,6 +29,7 @@
 #define _VAX_CPU_H_
 
 #if defined(_KERNEL_OPT)
+#include "opt_gprof.h"
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
 #endif
@@ -142,6 +143,9 @@ struct cpu_info {
 	SIMPLEQ_ENTRY(cpu_info) ci_next; /* next cpu_info */
 #endif
 	uintptr_t ci_cas_addr;		/* current address doing CAS in a RAS */
+#if defined(GPROF) && defined(MULTIPROCESSOR)
+	struct gmonparam *ci_gmon;	/* MI per-cpu GPROF */
+#endif
 };
 #define	CI_MASTERCPU	1		/* Set if master CPU */
 #define	CI_RUNNING	2		/* Set when a slave CPU is running */
