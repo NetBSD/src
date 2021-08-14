@@ -1,4 +1,4 @@
-/*	$NetBSD: ops.def,v 1.23 2021/08/10 16:59:28 rillig Exp $ */
+/*	$NetBSD: ops.def,v 1.24 2021/08/14 12:46:23 rillig Exp $ */
 
 begin_ops()
 
@@ -106,7 +106,7 @@ op(	IMAG,	"imag",		-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-)
 
 /* INIT, CASE and FARG are pseudo operators that don't appear in the tree. */
 /*	name	repr		b l b B i c a s f v t b s l r p c e e = */
-op(	INIT,	"init",		1,-,1,-,-,-,-,-,-,-,-,-,-,-,-,-,-,1,-,-)
+op(	INIT,	"init",		1,-,1,-,-,-,-,-,-,-,-,-,1,-,-,-,-,1,-,-)
 op(	CASE,	"case",		-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-)
 /*
  * FARG is only used temporarily in check_prototype_argument to check type
