@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.181 2021/04/04 10:05:08 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.182 2021/08/14 13:04:00 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -321,8 +321,7 @@ is_submake(const char *cmd, GNode *gn)
     static const char *p_make = NULL;
     static size_t p_len;
     char *mp = NULL;
-    char *cp;
-    char *cp2;
+    const char *cp, *cp2;
     bool rc = false;
 
     if (p_make == NULL) {
