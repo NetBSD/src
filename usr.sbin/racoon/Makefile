@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.39 2021/04/13 01:11:05 mrg Exp $
+# $NetBSD: Makefile,v 1.40 2021/08/14 17:08:21 christos Exp $
 
 WARNS?=	0	# XXX third-party program, many issues
 NOCLANGERROR=	# defined
@@ -60,8 +60,8 @@ CPPFLAGS+=-DINET6
 
 .if (${USE_LDAP} != "no")
 CPPFLAGS+=-DHAVE_LIBLDAP
-LDADD+=-lldap -llber -lssl
-DPADD+= ${LIBLDAP} ${LIBLBER} ${LIBSSL}
+LDADD+= ${LIBLDAP_LDADD}
+DPADD+= ${LIBLDAP_DPADD}
 .endif
 
 LDADD+= -lcrypto -lcrypt
