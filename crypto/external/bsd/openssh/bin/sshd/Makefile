@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2021/03/05 17:47:15 christos Exp $
+#	$NetBSD: Makefile,v 1.24 2021/08/14 16:17:57 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -54,8 +54,8 @@ DPADD+= ${LIBKRB5_DPADD}
 
 .if (${USE_LDAP} != "no")
 SRCS+=	ldapauth.c
-LDADD+=	-lldap -lssl -llber
-DPADD+=	${LIBLDAP} ${LIBSSL} ${LIBLBER}
+LDADD+=	${LIBLDAP_LDADD}
+DPADD+=	${LIBLDAP_DPADD}
 .endif
 
 LDADD+=	-lcrypt -lutil

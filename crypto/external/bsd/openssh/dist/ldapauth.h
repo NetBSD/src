@@ -1,4 +1,4 @@
-/*	$NetBSD: ldapauth.h,v 1.5 2017/04/18 18:41:46 christos Exp $	*/
+/*	$NetBSD: ldapauth.h,v 1.6 2021/08/14 16:17:57 christos Exp $	*/
 
 /*
  *
@@ -112,7 +112,7 @@ typedef struct ldap_keys {
 
 /* function headers */
 void ldap_close(ldap_opt_t *);
-int ldap_connect(ldap_opt_t *);
+int ldap_xconnect(ldap_opt_t *);
 char * ldap_parse_groups(const char *);
 char * ldap_parse_servers(const char *);
 void ldap_options_print(ldap_opt_t *);
