@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.562 2021/08/14 13:37:55 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.563 2021/08/14 13:39:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.562 2021/08/14 13:37:55 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.563 2021/08/14 13:39:43 rillig Exp $");
 
 /* types and constants */
 
@@ -1004,7 +1004,7 @@ ParseErrorNoDependency(const char *lstart)
 	    (strncmp(lstart, "======", 6) == 0) ||
 	    (strncmp(lstart, ">>>>>>", 6) == 0))
 		Parse_Error(PARSE_FATAL,
-		    "Makefile appears to contain unresolved cvs/rcs/??? merge conflicts");
+		    "Makefile appears to contain unresolved CVS/RCS/??? merge conflicts");
 	else if (lstart[0] == '.') {
 		const char *dirstart = lstart + 1;
 		const char *dirend;
