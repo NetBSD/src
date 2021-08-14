@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2019/10/13 07:28:05 mrg Exp $
+#	$NetBSD: Makefile,v 1.14 2021/08/14 16:17:57 christos Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -28,14 +28,8 @@ SRCS+=	info_hesiod.c
 .if (${USE_LDAP} != "no")
 SRCS+=	info_ldap.c
 
-LDADD+=	-lldap
-DPADD+=	${LIBLDAP}
-.if (${MKPIC} == "no" || (defined(LDSTATIC) && ${LDSTATIC} != ""))
-LDADD+=	-llber
-DPADD+=	${LIBLBER}
-DPADD+=	${LIBSSL} ${LIBCRYPTO}
-LDADD+=	-lssl -lcrypto
-.endif
+LDADD+=	${LIBLDAP_LDADD}
+DPADD+=	${LIBLDAP_DPADD}
 .endif
 
 .if (${USE_YP} != "no")

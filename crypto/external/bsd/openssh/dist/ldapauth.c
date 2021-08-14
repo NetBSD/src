@@ -1,4 +1,4 @@
-/*	$NetBSD: ldapauth.c,v 1.7 2017/04/18 18:41:46 christos Exp $	*/
+/*	$NetBSD: ldapauth.c,v 1.8 2021/08/14 16:17:57 christos Exp $	*/
 
 /*
  *
@@ -21,7 +21,7 @@
  *
  */
 #include "includes.h"
-__RCSID("$NetBSD: ldapauth.c,v 1.7 2017/04/18 18:41:46 christos Exp $");
+__RCSID("$NetBSD: ldapauth.c,v 1.8 2021/08/14 16:17:57 christos Exp $");
 
 #ifdef WITH_LDAP_PUBKEY
 #include <stdarg.h>
@@ -124,7 +124,7 @@ void ldap_close(ldap_opt_t * ldap) {
 }
 
 /* init && bind */
-int ldap_connect(ldap_opt_t * ldap) {
+int ldap_xconnect(ldap_opt_t * ldap) {
     int version = LDAP_VERSION3;
 
     if (!ldap->servers)
@@ -154,7 +154,7 @@ int ldap_connect(ldap_opt_t * ldap) {
     if ( (ldap->tls == -1) || (ldap->tls == 1) ) {
         if (ldap_start_tls_s(ldap->ld, NULL, NULL ) != LDAP_SUCCESS) {
             /* failed then reinit the initial connect */
-            ldap_perror(ldap->ld, "ldap_connect: (TLS) ldap_start_tls()");
+            ldap_perror(ldap->ld, "ldap_xconnect: (TLS) ldap_start_tls()");
             if (ldap->tls == 1)
                 return FAILURE;
 
@@ -378,7 +378,7 @@ ldap_key_t * ldap_getuserkey(ldap_opt_t *l, const char * user) {
     /* XXX TODO: setup some conf value for retrying */
     if (!(l->flags & FLAG_CONNECTED))
         for (i = 0 ; i < 2 ; i++)
-            if (ldap_connect(l) == 0)
+            if (ldap_xconnect(l) == 0)
                 break;
 
     /* quick check for attempts to be evil */
@@ -445,7 +445,7 @@ int ldap_ismember(ldap_opt_t * l, const char * user) {
     /* XXX TODO: setup some conf value for retrying */
     if (!(l->flags & FLAG_CONNECTED)) 
         for (i = 0 ; i < 2 ; i++)
-            if (ldap_connect(l) == 0)
+            if (ldap_xconnect(l) == 0)
                  break;
 
     /* quick check for attempts to be evil */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sshd.c,v 1.42 2021/04/19 14:40:15 christos Exp $	*/
+/*	$NetBSD: sshd.c,v 1.43 2021/08/14 16:17:57 christos Exp $	*/
 /* $OpenBSD: sshd.c,v 1.572 2021/04/03 06:18:41 djm Exp $ */
 
 /*
@@ -45,7 +45,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshd.c,v 1.42 2021/04/19 14:40:15 christos Exp $");
+__RCSID("$NetBSD: sshd.c,v 1.43 2021/08/14 16:17:57 christos Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -1713,7 +1713,7 @@ main(int ac, char **av)
 	if (options.lpk.on) {
 	    if (options.lpk.l_conf && (ldap_parse_lconf(&options.lpk) < 0) )
 		error("[LDAP] could not parse %s", options.lpk.l_conf);
-	    if (ldap_connect(&options.lpk) < 0)
+	    if (ldap_xconnect(&options.lpk) < 0)
 		error("[LDAP] could not initialize ldap connection");
 	}
 #endif
