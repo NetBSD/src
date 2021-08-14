@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prof.c,v 1.49 2019/04/06 03:06:28 thorpej Exp $	*/
+/*	$NetBSD: subr_prof.c,v 1.50 2021/08/14 17:51:20 ryo Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,10 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.49 2019/04/06 03:06:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.50 2021/08/14 17:51:20 ryo Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gprof.h"
+#include "opt_multiprocessor.h"
 #endif
 
 #include <sys/param.h>
@@ -51,8 +52,14 @@ __KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.49 2019/04/06 03:06:28 thorpej Exp $
 #ifdef GPROF
 #include <sys/malloc.h>
 #include <sys/gmon.h>
+#include <sys/xcall.h>
 
 MALLOC_DEFINE(M_GPROF, "gprof", "kernel profiling buffer");
+
+static int sysctl_kern_profiling(SYSCTLFN_ARGS);
+#ifdef MULTIPROCESSOR
+void _gmonparam_merge(struct gmonparam *, struct gmonparam *);
+#endif
 
 /*
  * Froms is actually a bunch of unsigned shorts indexing tos
@@ -70,6 +77,7 @@ kmstartup(void)
 {
 	char *cp;
 	struct gmonparam *p = &_gmonparam;
+	unsigned long size;
 	/*
 	 * Round lowpc and highpc to multiples of the density we're using
 	 * so the rest of the scaling (here and in gprof) stays in ints.
@@ -90,8 +98,101 @@ kmstartup(void)
 	else if (p->tolimit > MAXARCS)
 		p->tolimit = MAXARCS;
 	p->tossize = p->tolimit * sizeof(struct tostruct);
-	cp = malloc(p->kcountsize + p->fromssize + p->tossize,
-	    M_GPROF, M_NOWAIT | M_ZERO);
+
+	size = p->kcountsize + p->fromssize + p->tossize;
+#ifdef MULTIPROCESSOR
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		p = malloc(sizeof(struct gmonparam) + size, M_GPROF,
+		    M_NOWAIT | M_ZERO);
+		if (p == NULL) {
+			printf("No memory for profiling on %s\n",
+			    cpu_name(ci));
+			/* cannot profile on this cpu */
+			continue;
+		}
+		memcpy(p, &_gmonparam, sizeof(_gmonparam));
+		ci->ci_gmon = p;
+
+		/*
+		 * To allow profiling to be controlled only by the global
+		 * _gmonparam.state, set the default value for each CPU to
+		 * GMON_PROF_ON. If _gmonparam.state is not ON, mcount will
+		 * not be executed.
+		 * This is For compatibility of the kgmon(8) kmem interface.
+		 */
+		p->state = GMON_PROF_ON;
+
+		cp = (char *)(p + 1);
+		p->tos = (struct tostruct *)cp;
+		p->kcount = (u_short *)(cp + p->tossize);
+		p->froms = (u_short *)(cp + p->tossize + p->kcountsize);
+	}
+
+	sysctl_createv(NULL, 0, NULL, NULL,
+	    0, CTLTYPE_NODE, "percpu",
+	    SYSCTL_DESCR("per cpu profiling information"),
+	    NULL, 0, NULL, 0,
+	    CTL_KERN, KERN_PROF, GPROF_PERCPU, CTL_EOL);
+
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		if (ci->ci_gmon == NULL)
+			continue;
+
+		sysctl_createv(NULL, 0, NULL, NULL,
+		    0, CTLTYPE_NODE, cpu_name(ci),
+		    NULL,
+		    NULL, 0, NULL, 0,
+		    CTL_KERN, KERN_PROF, GPROF_PERCPU, cpu_index(ci), CTL_EOL);
+
+		sysctl_createv(NULL, 0, NULL, NULL,
+		    CTLFLAG_READWRITE, CTLTYPE_INT, "state",
+		    SYSCTL_DESCR("Profiling state"),
+		    sysctl_kern_profiling, 0, (void *)ci, 0,
+		    CTL_KERN, KERN_PROF, GPROF_PERCPU, cpu_index(ci),
+		    GPROF_STATE, CTL_EOL);
+		sysctl_createv(NULL, 0, NULL, NULL,
+		    CTLFLAG_READWRITE, CTLTYPE_STRUCT, "count",
+		    SYSCTL_DESCR("Array of statistical program counters"),
+		    sysctl_kern_profiling, 0, (void *)ci, 0,
+		    CTL_KERN, KERN_PROF, GPROF_PERCPU, cpu_index(ci),
+		    GPROF_COUNT, CTL_EOL);
+		sysctl_createv(NULL, 0, NULL, NULL,
+		    CTLFLAG_READWRITE, CTLTYPE_STRUCT, "froms",
+		    SYSCTL_DESCR("Array indexed by program counter of "
+		    "call-from points"),
+		    sysctl_kern_profiling, 0, (void *)ci, 0,
+		    CTL_KERN, KERN_PROF, GPROF_PERCPU, cpu_index(ci),
+		    GPROF_FROMS, CTL_EOL);
+		sysctl_createv(NULL, 0, NULL, NULL,
+		    CTLFLAG_READWRITE, CTLTYPE_STRUCT, "tos",
+		    SYSCTL_DESCR("Array of structures describing "
+		    "destination of calls and their counts"),
+		    sysctl_kern_profiling, 0, (void *)ci, 0,
+		    CTL_KERN, KERN_PROF, GPROF_PERCPU, cpu_index(ci),
+		    GPROF_TOS, CTL_EOL);
+		sysctl_createv(NULL, 0, NULL, NULL,
+		    CTLFLAG_READWRITE, CTLTYPE_STRUCT, "gmonparam",
+		    SYSCTL_DESCR("Structure giving the sizes of the above "
+		    "arrays"),
+		    sysctl_kern_profiling, 0, (void *)ci, 0,
+		    CTL_KERN, KERN_PROF, GPROF_PERCPU, cpu_index(ci),
+		    GPROF_GMONPARAM, CTL_EOL);
+	}
+
+	/*
+	 * For minimal compatibility of the kgmon(8) kmem interface,
+	 * the _gmonparam and cpu0:ci_gmon share buffers.
+	 */
+	p = curcpu()->ci_gmon;
+	if (p != NULL) {
+		_gmonparam.tos = p->tos;
+		_gmonparam.kcount = p->kcount;
+		_gmonparam.froms = p->froms;
+	}
+#else /* MULTIPROCESSOR */
+	cp = malloc(size, M_GPROF, M_NOWAIT | M_ZERO);
 	if (cp == 0) {
 		printf("No memory for profiling.\n");
 		return;
@@ -101,7 +202,20 @@ kmstartup(void)
 	p->kcount = (u_short *)cp;
 	cp += p->kcountsize;
 	p->froms = (u_short *)cp;
+#endif /* MULTIPROCESSOR */
 }
+
+#ifdef MULTIPROCESSOR
+static void
+prof_set_state_xc(void *arg1, void *arg2 __unused)
+{
+	int state = PTRTOUINT64(arg1);
+	struct gmonparam *gp = curcpu()->ci_gmon;
+
+	if (gp != NULL)
+		gp->state = state;
+}
+#endif /* MULTIPROCESSOR */
 
 /*
  * Return kernel profiling information.
@@ -113,15 +227,72 @@ kmstartup(void)
 static int
 sysctl_kern_profiling(SYSCTLFN_ARGS)
 {
-	struct gmonparam *gp = &_gmonparam;
+	struct sysctlnode node = *rnode;
+	struct gmonparam *gp;
 	int error;
-	struct sysctlnode node;
+#ifdef MULTIPROCESSOR
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci, *target_ci;
+	uint64_t where;
+	int state;
+	bool prof_on, do_merge;
 
-	node = *rnode;
+	target_ci = (struct cpu_info *)rnode->sysctl_data;
+	do_merge = (oldp != NULL) && (target_ci == NULL) &&
+	    ((node.sysctl_num == GPROF_COUNT) ||
+	    (node.sysctl_num == GPROF_FROMS) ||
+	    (node.sysctl_num == GPROF_TOS));
+
+	if (do_merge) {
+		/* kern.profiling.{count,froms,tos} */
+		unsigned long size;
+		char *cp;
+
+		/* allocate temporary gmonparam, and merge results of all CPU */
+		size = _gmonparam.kcountsize + _gmonparam.fromssize +
+		    _gmonparam.tossize;
+		gp = malloc(sizeof(struct gmonparam) + size, M_GPROF,
+		    M_NOWAIT | M_ZERO);
+		if (gp == NULL)
+			return ENOMEM;
+		memcpy(gp, &_gmonparam, sizeof(_gmonparam));
+		cp = (char *)(gp + 1);
+		gp->tos = (struct tostruct *)cp;
+		gp->kcount = (u_short *)(cp + gp->tossize);
+		gp->froms = (u_short *)(cp + gp->tossize + gp->kcountsize);
+
+		for (CPU_INFO_FOREACH(cii, ci)) {
+			if (ci->ci_gmon == NULL)
+				continue;
+			_gmonparam_merge(gp, ci->ci_gmon);
+		}
+	} else if (target_ci != NULL) {
+		/* kern.profiling.percpu.* */
+		gp = target_ci->ci_gmon;
+	} else {
+		/* kern.profiling.{state,gmonparam} */
+		gp = &_gmonparam;
+	}
+#else /* MULTIPROCESSOR */
+	gp = &_gmonparam;
+#endif
 
 	switch (node.sysctl_num) {
 	case GPROF_STATE:
+#ifdef MULTIPROCESSOR
+		/*
+		 * if _gmonparam.state is OFF, the state of each CPU is
+		 * considered to be OFF, even if it is actually ON.
+		 */
+		if (_gmonparam.state == GMON_PROF_OFF ||
+		    gp->state == GMON_PROF_OFF)
+			state = GMON_PROF_OFF;
+		else
+			state = GMON_PROF_ON;
+		node.sysctl_data = &state;
+#else
 		node.sysctl_data = &gp->state;
+#endif
 		break;
 	case GPROF_COUNT:
 		node.sysctl_data = gp->kcount;
@@ -145,8 +316,97 @@ sysctl_kern_profiling(SYSCTLFN_ARGS)
 
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
-		return (error);
+		goto done;
 
+#ifdef MULTIPROCESSOR
+	switch (node.sysctl_num) {
+	case GPROF_STATE:
+		if (target_ci != NULL) {
+			where = xc_unicast(0, prof_set_state_xc,
+			    UINT64TOPTR(state), NULL, target_ci);
+			xc_wait(where);
+
+			/* if even one CPU being profiled, enable perfclock. */
+			prof_on = false;
+			for (CPU_INFO_FOREACH(cii, ci)) {
+				if (ci->ci_gmon == NULL)
+					continue;
+				if (ci->ci_gmon->state != GMON_PROF_OFF) {
+					prof_on = true;
+					break;
+				}
+			}
+			mutex_spin_enter(&proc0.p_stmutex);
+			if (prof_on)
+				startprofclock(&proc0);
+			else
+				stopprofclock(&proc0);
+			mutex_spin_exit(&proc0.p_stmutex);
+
+			if (prof_on) {
+				_gmonparam.state = GMON_PROF_ON;
+			} else {
+				_gmonparam.state = GMON_PROF_OFF;
+				/*
+				 * when _gmonparam.state and all CPU gmon state
+				 * are OFF, all CPU states should be ON so that
+				 * the entire CPUs profiling can be controlled
+				 * by _gmonparam.state only.
+				 */
+				for (CPU_INFO_FOREACH(cii, ci)) {
+					if (ci->ci_gmon == NULL)
+						continue;
+					ci->ci_gmon->state = GMON_PROF_ON;
+				}
+			}
+		} else {
+			_gmonparam.state = state;
+			where = xc_broadcast(0, prof_set_state_xc,
+			    UINT64TOPTR(state), NULL);
+			xc_wait(where);
+
+			mutex_spin_enter(&proc0.p_stmutex);
+			if (state == GMON_PROF_OFF)
+				stopprofclock(&proc0);
+			else
+				startprofclock(&proc0);
+			mutex_spin_exit(&proc0.p_stmutex);
+		}
+		break;
+	case GPROF_COUNT:
+		/*
+		 * if 'kern.profiling.{count,froms,tos}' is written, the same
+		 * data will be written to 'kern.profiling.percpu.cpuN.xxx'
+		 */
+		if (target_ci == NULL) {
+			for (CPU_INFO_FOREACH(cii, ci)) {
+				if (ci->ci_gmon == NULL)
+					continue;
+				memmove(ci->ci_gmon->kcount, gp->kcount,
+				    newlen);
+			}
+		}
+		break;
+	case GPROF_FROMS:
+		if (target_ci == NULL) {
+			for (CPU_INFO_FOREACH(cii, ci)) {
+				if (ci->ci_gmon == NULL)
+					continue;
+				memmove(ci->ci_gmon->froms, gp->froms, newlen);
+			}
+		}
+		break;
+	case GPROF_TOS:
+		if (target_ci == NULL) {
+			for (CPU_INFO_FOREACH(cii, ci)) {
+				if (ci->ci_gmon == NULL)
+					continue;
+				memmove(ci->ci_gmon->tos, gp->tos, newlen);
+			}
+		}
+		break;
+	}
+#else
 	if (node.sysctl_num == GPROF_STATE) {
 		mutex_spin_enter(&proc0.p_stmutex);
 		if (gp->state == GMON_PROF_OFF)
@@ -155,8 +415,14 @@ sysctl_kern_profiling(SYSCTLFN_ARGS)
 			startprofclock(&proc0);
 		mutex_spin_exit(&proc0.p_stmutex);
 	}
+#endif
 
-	return (0);
+ done:
+#ifdef MULTIPROCESSOR
+	if (do_merge)
+		free(gp, M_GPROF);
+#endif
+	return error;
 }
 
 SYSCTL_SETUP(sysctl_kern_gprof_setup, "sysctl kern.profiling subtree setup")

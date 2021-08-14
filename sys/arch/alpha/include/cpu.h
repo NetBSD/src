@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.103 2021/07/22 01:39:18 thorpej Exp $ */
+/* $NetBSD: cpu.h,v 1.104 2021/08/14 17:51:18 ryo Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -72,6 +72,7 @@
 #define _ALPHA_CPU_H_
 
 #if defined(_KERNEL_OPT)
+#include "opt_gprof.h"
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
 #endif
@@ -140,6 +141,9 @@ struct cpu_info {
 	uint64_t ci_pcc_freq;		/* cpu cycles/second */
 	struct trapframe *ci_db_regs;	/* registers for debuggers */
 	u_int	ci_nintrhand;		/* # of interrupt handlers */
+#if defined(GPROF) && defined(MULTIPROCESSOR)
+	struct gmonparam *ci_gmon;	/* [MI] per-cpu GPROF */
+#endif
 };
 
 /* Ensure some cpu_info fields are within the signed 16-bit displacement. */
