@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.207 2021/08/10 20:43:12 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.208 2021/08/14 12:46:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.207 2021/08/10 20:43:12 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.208 2021/08/14 12:46:23 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -812,12 +812,11 @@ initialization_add_designator(struct initialization *in,
 }
 
 /*
- * An object with automatic storage duration that has a single initializer
- * expression without braces and is not an array is initialized by delegating
- * to the ASSIGN operator.
+ * Initialize an object with automatic storage duration that has an
+ * initializer expression without braces.
  */
 static bool
-initialization_expr_using_assign(struct initialization *in, tnode_t *rn)
+initialization_expr_using_op(struct initialization *in, tnode_t *rn)
 {
 	tnode_t *ln, *tn;
 
@@ -828,13 +827,12 @@ initialization_expr_using_assign(struct initialization *in, tnode_t *rn)
 	if (in->in_sym->s_type->t_tspec == ARRAY)
 		return false;
 
-	debug_step("handing over to ASSIGN");
+	debug_step("handing over to INIT");
 
 	ln = build_name(in->in_sym, 0);
 	ln->tn_type = expr_unqualified_type(ln->tn_type);
 
-	/* TODO: allow 'const' on the left-hand side; see msg_115.c */
-	tn = build_binary(ln, ASSIGN, rn);
+	tn = build_binary(ln, INIT, rn);
 	expr(tn, false, false, false, false);
 
 	return true;
@@ -899,7 +897,7 @@ initialization_expr(struct initialization *in, tnode_t *tn)
 
 	if (tn == NULL)
 		goto advance;
-	if (initialization_expr_using_assign(in, tn))
+	if (initialization_expr_using_op(in, tn))
 		goto done;
 	if (initialization_init_array_using_string(in, tn))
 		goto advance;

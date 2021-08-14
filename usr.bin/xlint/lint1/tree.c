@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.332 2021/08/10 20:43:12 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.333 2021/08/14 12:46:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.332 2021/08/10 20:43:12 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.333 2021/08/14 12:46:23 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -513,7 +513,7 @@ build_binary(tnode_t *ln, op_t op, tnode_t *rn)
 	 * union member, or if it is not to be assigned to the left operand
 	 */
 	if (mp->m_binary && op != ARROW && op != POINT &&
-	    op != ASSIGN && op != RETURN) {
+	    op != ASSIGN && op != RETURN && op != INIT) {
 		rn = promote(op, false, rn);
 	}
 
@@ -587,6 +587,7 @@ build_binary(tnode_t *ln, op_t op, tnode_t *rn)
 	case XORASS:
 	case ORASS:
 	case RETURN:
+	case INIT:
 		ntn = build_assignment(op, ln, rn);
 		break;
 	case COMMA:
@@ -1520,7 +1521,6 @@ check_assign_types_compatible(op_t op, int arg,
 
 	if (lt == PTR && rt == PTR) {
 		switch (op) {
-		case INIT:
 		case RETURN:
 			warn_incompatible_pointers(NULL, ltp, rtp);
 			break;
@@ -2876,7 +2876,8 @@ build_assignment(op_t op, tnode_t *ln, tnode_t *rn)
 			rn = fold(rn);
 	}
 
-	if ((op == ASSIGN || op == RETURN) && (lt == STRUCT || rt == STRUCT)) {
+	if ((op == ASSIGN || op == RETURN || op == INIT) &&
+	    (lt == STRUCT || rt == STRUCT)) {
 		lint_assert(lt == rt);
 		lint_assert(ln->tn_type->t_str == rn->tn_type->t_str);
 		if (is_incomplete(ln->tn_type)) {
