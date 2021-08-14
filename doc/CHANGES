@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2820 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2821 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -317,6 +317,7 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	acpicpu(4): Add support for Arm CPUs. [jmcneill 20201207]
 	OpenSSL: Imported 1.1.1i. [christos 20201209]
 	pkg_install: Updated to 20201212. [wiz 20201212]
+	evbarm: Support "boot -d" for early DDB access. [mrg 20201219]
 	sparc64: Add environment monitoring for the E250 [jdc 20201223]
 	sti(4), hp300: Add bitmap access ops support for SGC CRX (A1659-66001)
 		framebuffer for HP9000/425t. [tsutsui 20201223]
@@ -378,15 +379,20 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	raid(4): Add support for swapped-endian autoconfiguration.
 		[mrg 20210525]
 	dhcp: Import version 4.4.2-P1. [christos 20210526]
-	mips: Switch to GCC 10.  [mrg 20210526]
-	i386: Switch to GCC 10.  [mrg 20210526]
+	libsa: Add support for other-endian FFS volumes. [mrg 20210526]
+	efiboot: Add support for other-endian FFS and booting from RAIDframe
+		volumes. [mrg 20210526]
+	mips: Switch to GCC 10. [mrg 20210526]
+	i386: Switch to GCC 10. [mrg 20210526]
+	arm: Remove support for building the old ABI (oabi). [christos 20210607]
 	libfido2: Import 1.7.0 [christos 20210616]
-	m68k: Switch to GCC 10.  [mrg 20210619]
-	arm: Switch to GCC 10.  [mrg 20210619]
+	m68k: Switch to GCC 10. [mrg 20210619]
+	arm: Switch to GCC 10. [mrg 20210619]
 	uscanner(4): Removed from the tree. [nia 20210629]
 	acpi(4): Updated ACPICA to 20210604. [christos 20210706]
 	hp300: Add support of multiple rd(4) disks on all punits for HPDisk.
 		[tsutsui 20210709]
+	GMP: Import 6.2.1 [mrg 20210711]
 	kernel: Tie the maximum file lock per unprivilegied uid to 
 		kern.maxfiles [manu 20210727]
 	evbppc: Switch ibm4xx to generic evbppc kernel modules. [rin 20210803]
