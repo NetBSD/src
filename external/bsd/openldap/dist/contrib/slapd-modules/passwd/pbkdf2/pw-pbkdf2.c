@@ -1,9 +1,9 @@
-/*	$NetBSD: pw-pbkdf2.c,v 1.2 2020/08/11 13:15:36 christos Exp $	*/
+/*	$NetBSD: pw-pbkdf2.c,v 1.3 2021/08/14 16:14:53 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2009-2020 The OpenLDAP Foundation.
+ * Copyright 2009-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -21,7 +21,7 @@
 #define _GNU_SOURCE
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pw-pbkdf2.c,v 1.2 2020/08/11 13:15:36 christos Exp $");
+__RCSID("$NetBSD: pw-pbkdf2.c,v 1.3 2021/08/14 16:14:53 christos Exp $");
 
 #include "portable.h"
 #include <ac/string.h>
@@ -57,7 +57,7 @@ const struct berval pbkdf2_sha512_scheme = BER_BVC("{PBKDF2-SHA512}");
  * Converting base64 string to adapted base64 string.
  * Adapted base64 encode is identical to general base64 encode except
  * that it uses '.' instead of '+', and omits trailing padding '=' and
- * whitepsace.
+ * whitespace.
  * see http://pythonhosted.org/passlib/lib/passlib.utils.html
  * This is destructive function.
  */

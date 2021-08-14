@@ -1,9 +1,9 @@
-/*	$NetBSD: operational.c,v 1.2 2020/08/11 13:15:42 christos Exp $	*/
+/*	$NetBSD: operational.c,v 1.3 2021/08/14 16:15:01 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2020 The OpenLDAP Foundation.
+ * Copyright 1999-2021 The OpenLDAP Foundation.
  * Portions Copyright 1999 Dmitry Kovalev.
  * Portions Copyright 2002 Pierangelo Masarati.
  * All rights reserved.
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: operational.c,v 1.2 2020/08/11 13:15:42 christos Exp $");
+__RCSID("$NetBSD: operational.c,v 1.3 2021/08/14 16:15:01 christos Exp $");
 
 #include "portable.h"
 
@@ -126,7 +126,7 @@ backsql_operational(
 			got[ BACKSQL_OP_LAST ] = { 0 };
 
 	Debug( LDAP_DEBUG_TRACE, "==>backsql_operational(): entry \"%s\"\n",
-			rs->sr_entry->e_nname.bv_val, 0, 0 );
+			rs->sr_entry->e_nname.bv_val );
 
 	for ( ap = &rs->sr_entry->e_attrs; *ap; ap = &(*ap)->a_next ) {
 		if ( (*ap)->a_desc == slap_schema.si_ad_hasSubordinates ) {
@@ -171,8 +171,7 @@ backsql_operational(
 	rc = backsql_get_db_conn( op, &dbh );
 	if ( rc != LDAP_SUCCESS ) {
 		Debug( LDAP_DEBUG_TRACE, "backsql_operational(): "
-			"could not get connection handle - exiting\n", 
-			0, 0, 0 );
+			"could not get connection handle - exiting\n" );
 		return 1;
 	}
 
@@ -193,7 +192,7 @@ backsql_operational(
 
 		default:
 			Debug( LDAP_DEBUG_TRACE, "backsql_operational(): "
-				"has_children failed( %d)\n", rc, 0, 0 );
+				"has_children failed( %d)\n", rc );
 			return 1;
 		}
 	}
@@ -210,8 +209,7 @@ backsql_operational(
 				BACKSQL_ISF_GET_ID );
 		if ( rc != LDAP_SUCCESS ) {
 			Debug( LDAP_DEBUG_TRACE, "backsql_operational(): "
-				"could not retrieve entry ID - no such entry\n", 
-				0, 0, 0 );
+				"could not retrieve entry ID - no such entry\n" );
 			return 1;
 		}
 
@@ -225,8 +223,7 @@ backsql_operational(
 
 		if ( *ap == NULL ) {
 			Debug( LDAP_DEBUG_TRACE, "backsql_operational(): "
-				"could not retrieve entryUUID\n", 
-				0, 0, 0 );
+				"could not retrieve entryUUID\n" );
 			return 1;
 		}
 
@@ -240,15 +237,14 @@ backsql_operational(
 		*ap = backsql_operational_entryCSN( op );
 		if ( *ap == NULL ) {
 			Debug( LDAP_DEBUG_TRACE, "backsql_operational(): "
-				"could not retrieve entryCSN\n", 
-				0, 0, 0 );
+				"could not retrieve entryCSN\n" );
 			return 1;
 		}
 
 		ap = &(*ap)->a_next;
 	}
 
-	Debug( LDAP_DEBUG_TRACE, "<==backsql_operational(%d)\n", rc, 0, 0);
+	Debug( LDAP_DEBUG_TRACE, "<==backsql_operational(%d)\n", rc );
 
 	return rc;
 }

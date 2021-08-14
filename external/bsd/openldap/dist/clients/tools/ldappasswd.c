@@ -1,10 +1,10 @@
-/*	$NetBSD: ldappasswd.c,v 1.2 2020/08/11 13:15:34 christos Exp $	*/
+/*	$NetBSD: ldappasswd.c,v 1.3 2021/08/14 16:14:49 christos Exp $	*/
 
 /* ldappasswd -- a tool for change LDAP passwords */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 1998-2001 Net Boolean Incorporated.
  * Portions Copyright 2001-2003 IBM Corporation.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ldappasswd.c,v 1.2 2020/08/11 13:15:34 christos Exp $");
+__RCSID("$NetBSD: ldappasswd.c,v 1.3 2021/08/14 16:14:49 christos Exp $");
 
 #include "portable.h"
 
@@ -113,7 +113,7 @@ handle_private_option( int i )
 			optarg++;
 		}
 
-		control = strdup( optarg );
+		control = optarg;
 		if ( (cvalue = strchr( control, '=' )) != NULL ) {
 			*cvalue++ = '\0';
 		}
@@ -138,7 +138,7 @@ handle_private_option( int i )
 		break;
 
 	case 's':	/* new password (secret) */
-		newpw.bv_val = strdup (optarg);
+		newpw.bv_val = strdup( optarg );
 		{
 			char* p;
 			for( p = optarg; *p != '\0'; p++ ) {

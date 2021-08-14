@@ -1,9 +1,9 @@
-/*	$NetBSD: slapi_utils.c,v 1.2 2020/08/11 13:15:42 christos Exp $	*/
+/*	$NetBSD: slapi_utils.c,v 1.3 2021/08/14 16:15:02 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2002-2020 The OpenLDAP Foundation.
+ * Copyright 2002-2021 The OpenLDAP Foundation.
  * Portions Copyright 1997,2002-2003 IBM Corporation.
  * All rights reserved.
  *
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: slapi_utils.c,v 1.2 2020/08/11 13:15:42 christos Exp $");
+__RCSID("$NetBSD: slapi_utils.c,v 1.3 2021/08/14 16:15:02 christos Exp $");
 
 #include "portable.h"
 
@@ -2052,7 +2052,7 @@ int slapi_is_connection_ssl( Slapi_PBlock *pb, int *isSSL )
 }
 
 /*
- * DS 5.x compatability API follow
+ * DS 5.x compatibility API follow
  */
 
 int slapi_attr_get_flags( const Slapi_Attr *attr, unsigned long *flags )

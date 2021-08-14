@@ -1,9 +1,9 @@
-/*	$NetBSD: lutil_hash.h,v 1.2 2020/08/11 13:15:37 christos Exp $	*/
+/*	$NetBSD: lutil_hash.h,v 1.3 2021/08/14 16:14:55 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,26 +24,56 @@ LDAP_BEGIN_DECL
 
 #define LUTIL_HASH_BYTES 4
 
-struct lutil_HASHContext {
+#ifdef HAVE_LONG_LONG
+
+typedef union lutil_HASHContext {
 	ber_uint_t hash;
-};
+	unsigned long long hash64;
+} lutil_HASH_CTX;
+
+#else /* !HAVE_LONG_LONG */
+
+typedef struct lutil_HASHContext {
+	ber_uint_t hash;
+} lutil_HASH_CTX;
+
+#endif /* HAVE_LONG_LONG */
 
 LDAP_LUTIL_F( void )
 lutil_HASHInit LDAP_P((
-	struct lutil_HASHContext *context));
+	lutil_HASH_CTX *context));
 
 LDAP_LUTIL_F( void )
 lutil_HASHUpdate LDAP_P((
-	struct lutil_HASHContext *context,
+	lutil_HASH_CTX *context,
 	unsigned char const *buf,
 	ber_len_t len));
 
 LDAP_LUTIL_F( void )
 lutil_HASHFinal LDAP_P((
 	unsigned char digest[LUTIL_HASH_BYTES],
-	struct lutil_HASHContext *context));
+	lutil_HASH_CTX *context));
 
-typedef struct lutil_HASHContext lutil_HASH_CTX;
+#ifdef HAVE_LONG_LONG
+
+#define LUTIL_HASH64_BYTES	8
+
+LDAP_LUTIL_F( void )
+lutil_HASH64Init LDAP_P((
+	lutil_HASH_CTX *context));
+
+LDAP_LUTIL_F( void )
+lutil_HASH64Update LDAP_P((
+	lutil_HASH_CTX *context,
+	unsigned char const *buf,
+	ber_len_t len));
+
+LDAP_LUTIL_F( void )
+lutil_HASH64Final LDAP_P((
+	unsigned char digest[LUTIL_HASH64_BYTES],
+	lutil_HASH_CTX *context));
+
+#endif /* HAVE_LONG_LONG */
 
 LDAP_END_DECL
 

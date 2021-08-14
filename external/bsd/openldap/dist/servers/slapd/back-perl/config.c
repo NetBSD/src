@@ -1,9 +1,9 @@
-/*	$NetBSD: config.c,v 1.2 2020/08/11 13:15:41 christos Exp $	*/
+/*	$NetBSD: config.c,v 1.3 2021/08/14 16:15:01 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2020 The OpenLDAP Foundation.
+ * Copyright 1999-2021 The OpenLDAP Foundation.
  * Portions Copyright 1999 John C. Quillan.
  * Portions Copyright 2002 myinternet Limited.
  * All rights reserved.
@@ -18,7 +18,7 @@
  */
 
 #include "perl_back.h"
-#include "../config.h"
+#include "../slap-config.h"
 
 static ConfigDriver perl_cf;
 
@@ -45,6 +45,7 @@ static ConfigTable perlcfg[] = {
 		(void *)offsetof(PerlBackend, pb_filter_search_results),
 		"( OLcfgDbAt:11.3 NAME 'olcPerlFilterSearchResults' "
 			"DESC 'Filter search results before returning to client' "
+			"EQUALITY booleanMatch "
 			"SYNTAX OMsBoolean SINGLE-VALUE )", NULL, NULL },
 	{ "perlModuleConfig", "args", 2, 0, 0,
 		ARG_MAGIC|PERL_CONFIG, perl_cf, 
@@ -173,6 +174,7 @@ perl_cf(
 			break;
 		}
 	} else {
+		PERL_SET_CONTEXT( PERL_INTERPRETER );
 		switch( c->type ) {
 		case PERL_MODULE:
 			snprintf( eval_str, EVAL_BUF_SIZE, "use %s;", c->argv[1] );
@@ -183,7 +185,7 @@ perl_cf(
 
 				snprintf( c->cr_msg, sizeof( c->cr_msg ), "%s: error %s",
 					c->log, SvPV(ERRSV, len ));
-				Debug( LDAP_DEBUG_ANY, "%s\n", c->cr_msg, 0, 0 );
+				Debug( LDAP_DEBUG_ANY, "%s\n", c->cr_msg );
 				rc = 1;
 			} else {
 				dSP; ENTER; SAVETMPS;

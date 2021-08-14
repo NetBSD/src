@@ -1,10 +1,10 @@
-/*	$NetBSD: socket.h,v 1.2 2020/08/11 13:15:37 christos Exp $	*/
+/*	$NetBSD: socket.h,v 1.3 2021/08/14 16:14:55 christos Exp $	*/
 
 /* Generic socket.h */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -84,7 +84,7 @@
 #undef	sock_errno
 #undef	sock_errstr
 #define sock_errno()	errno
-#define sock_errstr(e)	STRERROR(e)
+#define sock_errstr(e, b, l)	AC_STRERROR_R(e, b, l)
 #define sock_errset(e)	((void) (errno = (e)))
 
 #ifdef HAVE_WINSOCK
@@ -108,7 +108,7 @@
 #undef	sock_errstr
 #undef	sock_errset
 #define	sock_errno()	WSAGetLastError()
-#define	sock_errstr(e)	ber_pvt_wsa_err2string(e)
+#define	sock_errstr(e, b, l)	ber_pvt_wsa_err2string(e)
 #define	sock_errset(e)	WSASetLastError(e)
 
 LBER_F( char * ) ber_pvt_wsa_err2string LDAP_P((int));
@@ -151,7 +151,7 @@ LBER_F( char * ) ber_pvt_wsa_err2string LDAP_P((int));
 #ifdef HAVE_PIPE
 /*
  * Only use pipe() on systems where file and socket descriptors
- * are interchangable
+ * are interchangeable
  */
 #	define USE_PIPE HAVE_PIPE
 #endif
@@ -235,6 +235,18 @@ LDAP_LUTIL_F( int ) lutil_getpeereid( int s, uid_t *, gid_t *, struct berval *bv
 LDAP_LUTIL_F( int ) lutil_getpeereid( int s, uid_t *, gid_t * );
 #define	LUTIL_GETPEEREID( s, uid, gid, bv )	lutil_getpeereid( s, uid, gid )
 #endif
+
+union Sockaddr {
+	struct sockaddr sa_addr;
+	struct sockaddr_in sa_in_addr;
+#ifdef LDAP_PF_INET6
+	struct sockaddr_storage sa_storage;
+	struct sockaddr_in6 sa_in6_addr;
+#endif
+#ifdef LDAP_PF_LOCAL
+	struct sockaddr_un sa_un_addr;
+#endif
+};
 
 /* DNS RFC defines max host name as 255. New systems seem to use 1024 */
 #ifndef NI_MAXHOST

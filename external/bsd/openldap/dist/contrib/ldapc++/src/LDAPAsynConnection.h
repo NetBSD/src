@@ -1,8 +1,8 @@
-/*	$NetBSD: LDAPAsynConnection.h,v 1.2 2020/08/11 13:15:34 christos Exp $	*/
+/*	$NetBSD: LDAPAsynConnection.h,v 1.3 2021/08/14 16:14:49 christos Exp $	*/
 
 // $OpenLDAP$
 /*
- * Copyright 2000-2020 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2000-2021 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -64,8 +64,8 @@ class LDAPAsynConnection{
          */
         static const int SEARCH_SUB=2;
 
-        /** Construtor that initializes a connection to a server
-         * @param hostname Name (or IP-Adress) of the destination host
+        /** Constructor that initializes a connection to a server
+         * @param hostname Name (or IP-Address) of the destination host
          * @param port Port the LDAP server is running on
          * @param cons Default constraints to use with operations over 
          *      this connection
@@ -110,10 +110,10 @@ class LDAPAsynConnection{
          *
          * @throws LDAPException If the Request could not be sent to the
          *      destination server, a LDAPException-object contains the
-         *      error that occured.
+         *      error that occurred.
          * This method does a simple (username, password) bind to the server.
          * Other, saver, authentcation methods are provided later
-         * @param dn the distiguished name to bind as
+         * @param dn the distinguished name to bind as
          * @param passwd cleartext password to use
          */
         LDAPMessageQueue* bind(const std::string& dn="", 
@@ -134,7 +134,7 @@ class LDAPAsynConnection{
          * Use the search method to perform a search on the LDAP-Directory
          * @throws LDAPException If the Request could not be sent to the
          *      destination server, a LDAPException-object contains the
-         *      error that occured.
+         *      error that occurred.
          * @param base The distinguished name of the starting point for the
          *      search operation
          * @param scope The scope of the search. Possible values: <BR> 
@@ -159,7 +159,7 @@ class LDAPAsynConnection{
          * This method sends a delete request to the server
          * @throws LDAPException If the Request could not be sent to the
          *      destination server, a LDAPException-object contains the
-         *      error that occured.
+         *      error that occurred.
          * @param dn    Distinguished name of the entry that should be deleted
          * @param cons  A set of constraints that should be used with this
          *              request
@@ -171,7 +171,7 @@ class LDAPAsynConnection{
          *
          * @throws LDAPException If the Request could not be sent to the
          *      destination server, a LDAPException-object contains the
-         *      error that occured.
+         *      error that occurred.
          * @param dn    Distinguished name of the entry for which the compare
          *              should be performed
          * @param attr  An Attribute (one (!) value) to use for the
@@ -187,7 +187,7 @@ class LDAPAsynConnection{
          *
          * @throws LDAPException If the Request could not be sent to the
          *      destination server, a LDAPException-object contains the
-         *      error that occured.
+         *      error that occurred.
          * @param le The entry that will be added to the directory
          */
         LDAPMessageQueue* add( const LDAPEntry* le,
@@ -197,8 +197,8 @@ class LDAPAsynConnection{
          *
          * @throws LDAPException If the Request could not be sent to the
          *      destination server, a LDAPException-object contains the
-         *      error that occured.
-         * @param dn Distiguished Name of the Entry to modify
+         *      error that occurred.
+         * @param dn Distinguished Name of the Entry to modify
          * @param modlist A set of modification that should be applied
          *      to the Entry
          * @param cons  A set of constraints that should be used with this
@@ -212,7 +212,7 @@ class LDAPAsynConnection{
          *
          * @throws LDAPException If the Request could not be sent to the
          *      destination server, a LDAPException-object contains the
-         *      error that occured.
+         *      error that occurred.
          * @param dn            DN to modify
          * @param newRDN        The new relative DN for the entry
          * @param delOldRDN     true=The old RDN will be removed from the 
@@ -231,10 +231,10 @@ class LDAPAsynConnection{
          *
          * @throws LDAPException If the Request could not be sent to the
          *      destination server, a LDAPException-object contains the
-         *      error that occured.
+         *      error that occurred.
          * @param oid The dotted decimal representation of the extended 
          *      Operation that should be performed
-         * @param value The data asociated with this operation
+         * @param value The data associated with this operation
          * @param cons  A set of constraints that should be used with this
          *              request
          */

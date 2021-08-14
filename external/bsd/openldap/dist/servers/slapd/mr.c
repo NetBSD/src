@@ -1,10 +1,10 @@
-/*	$NetBSD: mr.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
+/*	$NetBSD: mr.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
 
 /* mr.c - routines to manage matching rule definitions */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mr.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
+__RCSID("$NetBSD: mr.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
 
 #include "portable.h"
 
@@ -81,7 +81,7 @@ mr_bvfind( struct berval *mrname )
 {
 	struct mindexrec	*mir = NULL;
 
-	if ( (mir = avl_find( mr_index, mrname, mr_index_name_cmp )) != NULL ) {
+	if ( (mir = ldap_avl_find( mr_index, mrname, mr_index_name_cmp )) != NULL ) {
 		return( mir->mir_mr );
 	}
 	return( NULL );
@@ -92,7 +92,7 @@ mr_destroy( void )
 {
 	MatchingRule *m;
 
-	avl_free(mr_index, ldap_memfree);
+	ldap_avl_free(mr_index, ldap_memfree);
 	while( !LDAP_SLIST_EMPTY(&mr_list) ) {
 		m = LDAP_SLIST_FIRST(&mr_list);
 		LDAP_SLIST_REMOVE_HEAD(&mr_list, smr_next);
@@ -120,8 +120,8 @@ mr_insert(
 		mir->mir_name.bv_val = smr->smr_oid;
 		mir->mir_name.bv_len = strlen( smr->smr_oid );
 		mir->mir_mr = smr;
-		if ( avl_insert( &mr_index, (caddr_t) mir,
-		                 mr_index_cmp, avl_dup_error ) ) {
+		if ( ldap_avl_insert( &mr_index, (caddr_t) mir,
+		                 mr_index_cmp, ldap_avl_dup_error ) ) {
 			*err = smr->smr_oid;
 			ldap_memfree(mir);
 			return SLAP_SCHERR_MR_DUP;
@@ -136,8 +136,8 @@ mr_insert(
 			mir->mir_name.bv_val = *names;
 			mir->mir_name.bv_len = strlen( *names );
 			mir->mir_mr = smr;
-			if ( avl_insert( &mr_index, (caddr_t) mir,
-			                 mr_index_cmp, avl_dup_error ) ) {
+			if ( ldap_avl_insert( &mr_index, (caddr_t) mir,
+			                 mr_index_cmp, ldap_avl_dup_error ) ) {
 				*err = *names;
 				ldap_memfree(mir);
 				return SLAP_SCHERR_MR_DUP;
@@ -161,7 +161,7 @@ mr_make_syntax_compat_with_mr(
 	assert( mr != NULL );
 
 	if ( mr->smr_compat_syntaxes ) {
-		/* count esisting */
+		/* count existing */
 		for ( n = 0;
 			mr->smr_compat_syntaxes[ n ];
 			n++ )
@@ -288,7 +288,7 @@ register_matching_rule(
 
 	if( def->mrd_usage == SLAP_MR_NONE && def->mrd_compat_syntaxes == NULL ) {
 		Debug( LDAP_DEBUG_ANY, "register_matching_rule: not usable %s\n",
-		    def->mrd_desc, 0, 0 );
+		    def->mrd_desc );
 
 		return -1;
 	}
@@ -298,7 +298,7 @@ register_matching_rule(
 		if( amr == NULL ) {
 			Debug( LDAP_DEBUG_ANY, "register_matching_rule: "
 				"could not locate associated matching rule %s for %s\n",
-				def->mrd_associated, def->mrd_desc, 0 );
+				def->mrd_associated, def->mrd_desc );
 
 			return -1;
 		}
@@ -311,14 +311,14 @@ register_matching_rule(
 			{
 				Debug( LDAP_DEBUG_ANY, "register_matching_rule: "
 						"inappropriate (approx) association %s for %s\n",
-					def->mrd_associated, def->mrd_desc, 0 );
+					def->mrd_associated, def->mrd_desc );
 				return -1;
 			}
 
 		} else if (!( amr->smr_usage & SLAP_MR_EQUALITY )) {
 				Debug( LDAP_DEBUG_ANY, "register_matching_rule: "
 					"inappropriate (equalilty) association %s for %s\n",
-					def->mrd_associated, def->mrd_desc, 0 );
+					def->mrd_associated, def->mrd_desc );
 				return -1;
 		}
 	}
@@ -378,7 +378,7 @@ matching_rule_use_init( void )
 	MatchingRule	*mr;
 	MatchingRuleUse	**mru_ptr = &LDAP_SLIST_FIRST(&mru_list);
 
-	Debug( LDAP_DEBUG_TRACE, "matching_rule_use_init\n", 0, 0, 0 );
+	Debug( LDAP_DEBUG_TRACE, "matching_rule_use_init\n" );
 
 	LDAP_SLIST_FOREACH( mr, &mr_list, smr_next ) {
 		AttributeType	*at;
@@ -420,9 +420,9 @@ matching_rule_use_init( void )
 		mru->smru_names = mr->smr_names;
 		mru->smru_desc = mr->smr_desc;
 
-		Debug( LDAP_DEBUG_TRACE, "    %s (%s): ", 
-				mru->smru_oid, 
-				mru->smru_names ? mru->smru_names[ 0 ] : "", 0 );
+		Debug( LDAP_DEBUG_TRACE, "    %s (%s):\n",
+				mru->smru_oid,
+				mru->smru_names ? mru->smru_names[ 0 ] : "" );
 
 		at = NULL;
 		for ( at_start( &at ); at; at_next( &at ) ) {
@@ -442,7 +442,7 @@ matching_rule_use_init( void )
 			mru->smru_applies_oids = applies_oids;
 			{
 				char *str = ldap_matchingruleuse2str( &mru->smru_mruleuse );
-				Debug( LDAP_DEBUG_TRACE, "matchingRuleUse: %s\n", str, 0, 0 );
+				Debug( LDAP_DEBUG_TRACE, "       matchingRuleUse: %s\n", str );
 				ldap_memfree( str );
 			}
 
@@ -510,7 +510,7 @@ int mr_schema_info( Entry *e )
 		}
 #if 0
 		Debug( LDAP_DEBUG_TRACE, "Merging mr [%lu] %s\n",
-			mr->smr_str.bv_len, mr->smr_str.bv_val, 0 );
+			mr->smr_str.bv_len, mr->smr_str.bv_val );
 #endif
 
 		nval.bv_val = mr->smr_oid;
@@ -541,7 +541,7 @@ int mru_schema_info( Entry *e )
 
 #if 0
 		Debug( LDAP_DEBUG_TRACE, "Merging mru [%lu] %s\n",
-			mru->smru_str.bv_len, mru->smru_str.bv_val, 0 );
+			mru->smru_str.bv_len, mru->smru_str.bv_val );
 #endif
 
 		nval.bv_val = mru->smru_oid;

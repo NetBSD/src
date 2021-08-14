@@ -1,9 +1,9 @@
-/*	$NetBSD: back-meta.h,v 1.2 2020/08/11 13:15:40 christos Exp $	*/
+/*	$NetBSD: back-meta.h,v 1.3 2021/08/14 16:15:00 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2020 The OpenLDAP Foundation.
+ * Copyright 1999-2021 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -29,9 +29,7 @@
 #ifndef SLAPD_META_H
 #define SLAPD_META_H
 
-#ifdef LDAP_DEVEL
 #define SLAPD_META_CLIENT_PR 1
-#endif /* LDAP_DEVEL */
 
 #include "proto-meta.h"
 
@@ -64,13 +62,7 @@ struct ldaprwmap {
 	/*
 	 * DN rewriting
 	 */
-#ifdef ENABLE_REWRITE
 	struct rewrite_info *rwm_rw;
-#else /* !ENABLE_REWRITE */
-	/* some time the suffix massaging without librewrite
-	 * will be disabled */
-	BerVarray rwm_suffix_massage;
-#endif /* !ENABLE_REWRITE */
 	BerVarray rwm_bva_rewrite;
 
 	/*
@@ -85,14 +77,9 @@ struct ldaprwmap {
 typedef struct dncookie {
 	struct metatarget_t	*target;
 
-#ifdef ENABLE_REWRITE
 	Connection		*conn;
 	char			*ctx;
 	SlapReply		*rs;
-#else
-	int			normalized;
-	int			tofrom;
-#endif
 } dncookie;
 
 int ldap_back_dn_massage(dncookie *dc, struct berval *dn,
@@ -137,14 +124,12 @@ ldap_back_filter_map_rewrite(
 	void		*memctx );
 
 /* suffix massaging by means of librewrite */
-#ifdef ENABLE_REWRITE
 extern int
 suffix_massage_config( struct rewrite_info *info,
 	struct berval *pvnc,
 	struct berval *nvnc,
 	struct berval *prnc,
 	struct berval *nrnc );
-#endif /* ENABLE_REWRITE */
 extern int
 ldap_back_referral_result_rewrite(
 	dncookie	*dc,

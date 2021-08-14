@@ -1,9 +1,9 @@
-/*	$NetBSD: slapi_ops.c,v 1.2 2020/08/11 13:15:42 christos Exp $	*/
+/*	$NetBSD: slapi_ops.c,v 1.3 2021/08/14 16:15:02 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2002-2020 The OpenLDAP Foundation.
+ * Copyright 2002-2021 The OpenLDAP Foundation.
  * Portions Copyright 1997,2002-2003 IBM Corporation.
  * All rights reserved.
  *
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: slapi_ops.c,v 1.2 2020/08/11 13:15:42 christos Exp $");
+__RCSID("$NetBSD: slapi_ops.c,v 1.3 2021/08/14 16:15:02 christos Exp $");
 
 #include "portable.h"
 
@@ -230,9 +230,7 @@ slapi_int_connection_init_pb( Slapi_PBlock *pb, ber_tag_t tag )
 	/* should check status of thread calls */
 	ldap_pvt_thread_mutex_init( &conn->c_mutex );
 	ldap_pvt_thread_mutex_init( &conn->c_write1_mutex );
-	ldap_pvt_thread_mutex_init( &conn->c_write2_mutex );
 	ldap_pvt_thread_cond_init( &conn->c_write1_cv );
-	ldap_pvt_thread_cond_init( &conn->c_write2_cv );
 
 	ldap_pvt_thread_mutex_lock( &conn->c_mutex );
 
@@ -257,8 +255,7 @@ slapi_int_connection_init_pb( Slapi_PBlock *pb, ber_tag_t tag )
 	 */
 	connection_assign_nextid( conn );
 
-	conn->c_conn_state  = 0x01;	/* SLAP_C_ACTIVE */
-	conn->c_struct_state = 0x02;	/* SLAP_C_USED */
+	conn->c_conn_state  = SLAP_C_ACTIVE;
 
 	conn->c_ssf = conn->c_transport_ssf = local_ssf;
 	conn->c_tls_ssf = 0;
@@ -389,7 +386,6 @@ slapi_int_connection_done_pb( Slapi_PBlock *pb )
 static int
 slapi_int_func_internal_pb( Slapi_PBlock *pb, slap_operation_t which )
 {
-	BI_op_bind		**func;
 	SlapReply		*rs = pb->pb_rs;
 	int			rc;
 
@@ -402,9 +398,7 @@ slapi_int_func_internal_pb( Slapi_PBlock *pb, slap_operation_t which )
 	}
 
 	pb->pb_op->o_bd = frontendDB;
-	func = &frontendDB->be_bind;
-
-	return func[which]( pb->pb_op, pb->pb_rs );
+	return (&frontendDB->be_bind)[which]( pb->pb_op, pb->pb_rs );
 }
 
 int
@@ -958,4 +952,3 @@ slapi_delete_internal(
 }
 
 #endif /* LDAP_SLAPI */
-

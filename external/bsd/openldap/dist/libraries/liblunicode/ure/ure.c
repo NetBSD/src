@@ -1,9 +1,9 @@
-/*	$NetBSD: ure.c,v 1.2 2020/08/11 13:15:38 christos Exp $	*/
+/*	$NetBSD: ure.c,v 1.3 2021/08/14 16:14:57 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@
 /* Id: ure.c,v 1.2 1999/09/21 15:47:43 mleisher Exp " */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ure.c,v 1.2 2020/08/11 13:15:38 christos Exp $");
+__RCSID("$NetBSD: ure.c,v 1.3 2021/08/14 16:14:57 christos Exp $");
 
 #include "portable.h"
 
@@ -1705,7 +1705,7 @@ ure_compile(ucs2_t *re, unsigned long relen, int casefold, ure_buffer_t buf)
 
     /*
      * Reset the various fields of the compilation buffer.  Default the flags
-     * to indicate the presense of the "^$" pattern.  If any other pattern
+     * to indicate the presence of the "^$" pattern.  If any other pattern
      * occurs, then this flag will be removed.  This is done to catch this
      * special pattern and handle it specially when matching.
      */
@@ -1725,7 +1725,7 @@ ure_compile(ucs2_t *re, unsigned long relen, int casefold, ure_buffer_t buf)
     buf->states.states_used = 0;
 
     /*
-     * Construct the NFA.  If this stage returns a 0, then an error occured or
+     * Construct the NFA.  If this stage returns a 0, then an error occurred or
      * an empty expression was passed.
      */
     if ((state = _ure_re2nfa(re, relen, buf)) == _URE_NOOP)
@@ -1864,7 +1864,7 @@ ure_write_dfa(ure_dfa_t dfa, FILE *out)
                     if (sym->props & (1 << k)) {
                         if (h != 0)
                           putc(',', out);
-                        fprintf(out, "%hd", k + 1);
+                        fprintf(out, "%d", k + 1);
                         h = 1;
                     }
                 }

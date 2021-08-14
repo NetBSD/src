@@ -1,4 +1,4 @@
-/*	$NetBSD: sha2.c,v 1.1.1.5 2021/08/14 16:05:15 christos Exp $	*/
+/*	$NetBSD: sha2.c,v 1.2 2021/08/14 16:14:53 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /*

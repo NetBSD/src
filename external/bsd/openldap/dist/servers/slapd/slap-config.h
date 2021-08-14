@@ -1,4 +1,4 @@
-/*	$NetBSD: slap-config.h,v 1.1.1.1 2021/08/14 16:05:20 christos Exp $	*/
+/*	$NetBSD: slap-config.h,v 1.2 2021/08/14 16:14:58 christos Exp $	*/
 
 /* slap-config.h - configuration abstraction structure */
 /* $OpenLDAP$ */

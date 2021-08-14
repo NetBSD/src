@@ -1,10 +1,10 @@
-/*	$NetBSD: ldapurl.c,v 1.2 2020/08/11 13:15:34 christos Exp $	*/
+/*	$NetBSD: ldapurl.c,v 1.3 2021/08/14 16:14:49 christos Exp $	*/
 
 /* ldapurl -- a tool for generating LDAP URLs */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2008-2020 The OpenLDAP Foundation.
+ * Copyright 2008-2021 The OpenLDAP Foundation.
  * Portions Copyright 2008 Pierangelo Masarati, SysNet
  * All rights reserved.
  *
@@ -32,13 +32,14 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ldapurl.c,v 1.2 2020/08/11 13:15:34 christos Exp $");
+__RCSID("$NetBSD: ldapurl.c,v 1.3 2021/08/14 16:14:49 christos Exp $");
 
 #include "portable.h"
 
 #include <ac/stdlib.h>
 #include <stdio.h>
 #include <ac/unistd.h>
+#include <ac/socket.h>
 
 #include "ldap.h"
 #include "ldap_pvt.h"

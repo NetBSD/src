@@ -1,10 +1,10 @@
-/*	$NetBSD: trace.c,v 1.2 2020/08/11 13:15:37 christos Exp $	*/
+/*	$NetBSD: trace.c,v 1.3 2021/08/14 16:14:54 christos Exp $	*/
 
 /* trace.c - traces overlay invocation */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2006-2020 The OpenLDAP Foundation.
+ * Copyright 2006-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: trace.c,v 1.2 2020/08/11 13:15:37 christos Exp $");
+__RCSID("$NetBSD: trace.c,v 1.3 2021/08/14 16:14:54 christos Exp $");
 
 #include "portable.h"
 
@@ -95,7 +95,7 @@ trace_op_func( Operation *op, SlapReply *rs )
 
 	switch ( op->o_tag ) {
 	case LDAP_REQ_EXTENDED:
-		Log3( LDAP_DEBUG_ANY, LDAP_LEVEL_INFO,
+		Log( LDAP_DEBUG_ANY, LDAP_LEVEL_INFO,
 			"%s trace op=EXTENDED dn=\"%s\" reqoid=%s\n",
 			op->o_log_prefix, 
 			BER_BVISNULL( &op->o_req_ndn ) ? "(null)" : op->o_req_ndn.bv_val,
@@ -103,7 +103,7 @@ trace_op_func( Operation *op, SlapReply *rs )
 		break;
 
 	default:
-		Log3( LDAP_DEBUG_ANY, LDAP_LEVEL_INFO,
+		Log( LDAP_DEBUG_ANY, LDAP_LEVEL_INFO,
 			"%s trace op=%s dn=\"%s\"\n",
 			op->o_log_prefix, op_str,
 			BER_BVISNULL( &op->o_req_ndn ) ? "(null)" : op->o_req_ndn.bv_val );
@@ -122,7 +122,7 @@ trace_response( Operation *op, SlapReply *rs )
 
 	switch ( op->o_tag ) {
 	case LDAP_REQ_EXTENDED:
-		Log5( LDAP_DEBUG_ANY, LDAP_LEVEL_INFO,
+		Log( LDAP_DEBUG_ANY, LDAP_LEVEL_INFO,
 			"%s trace op=EXTENDED RESPONSE dn=\"%s\" reqoid=%s rspoid=%s err=%d\n",
 			op->o_log_prefix,
 			BER_BVISNULL( &op->o_req_ndn ) ? "(null)" : op->o_req_ndn.bv_val,
@@ -134,14 +134,14 @@ trace_response( Operation *op, SlapReply *rs )
 	case LDAP_REQ_SEARCH:
 		switch ( rs->sr_type ) {
 		case REP_SEARCH:
-			Log2( LDAP_DEBUG_ANY, LDAP_LEVEL_INFO,
+			Log( LDAP_DEBUG_ANY, LDAP_LEVEL_INFO,
 				"%s trace op=SEARCH ENTRY dn=\"%s\"\n",
 				op->o_log_prefix,
 				rs->sr_entry->e_name.bv_val );
 			goto done;
 
 		case REP_SEARCHREF:
-			Log2( LDAP_DEBUG_ANY, LDAP_LEVEL_INFO,
+			Log( LDAP_DEBUG_ANY, LDAP_LEVEL_INFO,
 				"%s trace op=SEARCH REFERENCE ref=\"%s\"\n",
 				op->o_log_prefix,
 				rs->sr_ref[ 0 ].bv_val );
@@ -156,7 +156,7 @@ trace_response( Operation *op, SlapReply *rs )
 		/* fallthru */
 
 	default:
-		Log4( LDAP_DEBUG_ANY, LDAP_LEVEL_INFO,
+		Log( LDAP_DEBUG_ANY, LDAP_LEVEL_INFO,
 			"%s trace op=%s RESPONSE dn=\"%s\" err=%d\n",
 			op->o_log_prefix,
 			op_str,
@@ -172,7 +172,7 @@ done:;
 static int
 trace_db_init( BackendDB *be, ConfigReply *cr )
 {
-	Log0( LDAP_DEBUG_ANY, LDAP_LEVEL_INFO,
+	Log( LDAP_DEBUG_ANY, LDAP_LEVEL_INFO,
 		"trace DB_INIT\n" );
 
 	return 0;
@@ -186,7 +186,7 @@ trace_db_config(
 	int		argc,
 	char		**argv )
 {
-	Log2( LDAP_DEBUG_ANY, LDAP_LEVEL_INFO,
+	Log( LDAP_DEBUG_ANY, LDAP_LEVEL_INFO,
 		"trace DB_CONFIG argc=%d argv[0]=\"%s\"\n",
 		argc, argv[ 0 ] );
 
@@ -196,7 +196,7 @@ trace_db_config(
 static int
 trace_db_open( BackendDB *be, ConfigReply *cr )
 {
-	Log0( LDAP_DEBUG_ANY, LDAP_LEVEL_INFO,
+	Log( LDAP_DEBUG_ANY, LDAP_LEVEL_INFO,
 		"trace DB_OPEN\n" );
 
 	return 0;
@@ -205,7 +205,7 @@ trace_db_open( BackendDB *be, ConfigReply *cr )
 static int
 trace_db_close( BackendDB *be, ConfigReply *cr )
 {
-	Log0( LDAP_DEBUG_ANY, LDAP_LEVEL_INFO,
+	Log( LDAP_DEBUG_ANY, LDAP_LEVEL_INFO,
 		"trace DB_CLOSE\n" );
 
 	return 0;
@@ -214,7 +214,7 @@ trace_db_close( BackendDB *be, ConfigReply *cr )
 static int
 trace_db_destroy( BackendDB *be, ConfigReply *cr )
 {
-	Log0( LDAP_DEBUG_ANY, LDAP_LEVEL_INFO,
+	Log( LDAP_DEBUG_ANY, LDAP_LEVEL_INFO,
 		"trace DB_DESTROY\n" );
 
 	return 0;
@@ -227,6 +227,7 @@ trace_initialize()
 {
 	trace.on_bi.bi_type = "trace";
 
+	trace.on_bi.bi_flags = SLAPO_BFLAG_SINGLE;
 	trace.on_bi.bi_db_init = trace_db_init;
 	trace.on_bi.bi_db_open = trace_db_open;
 	trace.on_bi.bi_db_config = trace_db_config;

@@ -1,9 +1,9 @@
-/*	$NetBSD: ntservice.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
+/*	$NetBSD: ntservice.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ntservice.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
+__RCSID("$NetBSD: ntservice.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
 
 #include "portable.h"
 
@@ -246,8 +246,8 @@ static void *start_status_routine( void *ptr )
 				SetServiceStatus(hlutil_ServiceStatus, &lutil_ServiceStatus);
 				break;
 			case WAIT_FAILED:
-				/* theres been some problem with WaitForSingleObject so tell the Service
-				 * Control Manager to wait 30 seconds before deploying its assasin and 
+				/* there's been some problem with WaitForSingleObject so tell the Service
+				 * Control Manager to wait 30 seconds before deploying its assassin and 
 				 * then leave the thread. */
 				lutil_ServiceStatus.dwCheckPoint++;
 				lutil_ServiceStatus.dwWaitHint = THIRTY_SECONDS;
@@ -288,8 +288,8 @@ static void *stop_status_routine( void *ptr )
 				SetServiceStatus(hlutil_ServiceStatus, &lutil_ServiceStatus);
 				break;
 			case WAIT_FAILED:
-				/* theres been some problem with WaitForSingleObject so tell the Service
-				 * Control Manager to wait 30 seconds before deploying its assasin and 
+				/* there's been some problem with WaitForSingleObject so tell the Service
+				 * Control Manager to wait 30 seconds before deploying its assassin and 
 				 * then leave the thread. */
 				lutil_ServiceStatus.dwCheckPoint++;
 				lutil_ServiceStatus.dwWaitHint = THIRTY_SECONDS;
@@ -337,7 +337,7 @@ static void WINAPI lutil_ServiceCtrlHandler( IN DWORD Opcode)
 				/* failed to create the thread that tells the Service Control Manager that the
 				 * service stopping is proceeding. 
 				 * tell the Service Control Manager to wait another 30 seconds before deploying its
-				 * assasin.  */
+				 * assassin.  */
 				lutil_ServiceStatus.dwCheckPoint++;
 				lutil_ServiceStatus.dwWaitHint = THIRTY_SECONDS;
 				SetServiceStatus(hlutil_ServiceStatus, &lutil_ServiceStatus);
@@ -449,7 +449,7 @@ void lutil_CommenceStartupProcessing( char *lpszServiceName,
 	{
 		/* failed to create the event to determine when the startup process is complete so
 		 * tell the Service Control Manager to wait another 30 seconds before deploying its
-		 * assasin  */
+		 * assassin  */
 		lutil_ServiceStatus.dwCheckPoint++;
 		lutil_ServiceStatus.dwWaitHint = THIRTY_SECONDS;
 		SetServiceStatus(hlutil_ServiceStatus, &lutil_ServiceStatus);
@@ -466,7 +466,7 @@ void lutil_CommenceStartupProcessing( char *lpszServiceName,
 			/* failed to create the thread that tells the Service Control Manager that the
 			 * service startup is proceeding. 
 			 * tell the Service Control Manager to wait another 30 seconds before deploying its
-			 * assasin.  */
+			 * assassin.  */
 			lutil_ServiceStatus.dwCheckPoint++;
 			lutil_ServiceStatus.dwWaitHint = THIRTY_SECONDS;
 			SetServiceStatus(hlutil_ServiceStatus, &lutil_ServiceStatus);

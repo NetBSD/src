@@ -1,10 +1,10 @@
-/*	$NetBSD: cancel.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
+/*	$NetBSD: cancel.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
 
 /* cancel.c - LDAP cancel extended operation */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cancel.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
+__RCSID("$NetBSD: cancel.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
 
 #include "portable.h"
 
@@ -62,12 +62,17 @@ int cancel_extop( Operation *op, SlapReply *rs )
 		return LDAP_PROTOCOL_ERROR;
 	}
 
-	Statslog( LDAP_DEBUG_STATS, "%s CANCEL msg=%d\n",
-		op->o_log_prefix, opid, 0, 0, 0 );
+	Debug( LDAP_DEBUG_STATS, "%s CANCEL msg=%d\n",
+		op->o_log_prefix, opid );
 
 	if ( opid < 0 ) {
 		rs->sr_text = "message ID invalid";
 		return LDAP_PROTOCOL_ERROR;
+	}
+
+	if ( opid == op->o_msgid ) {
+		op->o_cancel = SLAP_CANCEL_DONE;
+		return LDAP_SUCCESS;
 	}
 
 	ldap_pvt_thread_mutex_lock( &op->o_conn->c_mutex );

@@ -1,10 +1,10 @@
-/*	$NetBSD: abandon.c,v 1.2 2020/08/11 13:15:37 christos Exp $	*/
+/*	$NetBSD: abandon.c,v 1.3 2021/08/14 16:14:55 christos Exp $	*/
 
 /* abandon.c */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: abandon.c,v 1.2 2020/08/11 13:15:37 christos Exp $");
+__RCSID("$NetBSD: abandon.c,v 1.3 2021/08/14 16:14:55 christos Exp $");
 
 #include "portable.h"
 
@@ -45,7 +45,7 @@ static int
 do_abandon(
 	LDAP *ld,
 	ber_int_t origid,
-	ber_int_t msgid,
+	LDAPRequest *lr,
 	LDAPControl **sctrls,
 	int sendabandon );
 
@@ -73,14 +73,14 @@ ldap_abandon_ext(
 {
 	int	rc;
 
-	Debug( LDAP_DEBUG_TRACE, "ldap_abandon_ext %d\n", msgid, 0, 0 );
+	Debug1( LDAP_DEBUG_TRACE, "ldap_abandon_ext %d\n", msgid );
 
 	/* check client controls */
 	LDAP_MUTEX_LOCK( &ld->ld_req_mutex );
 
 	rc = ldap_int_client_controls( ld, cctrls );
 	if ( rc == LDAP_SUCCESS ) {
-		rc = do_abandon( ld, msgid, msgid, sctrls, 1 );
+		rc = do_abandon( ld, msgid, NULL, sctrls, 1 );
 	}
 
 	LDAP_MUTEX_UNLOCK( &ld->ld_req_mutex );
@@ -103,7 +103,7 @@ ldap_abandon_ext(
 int
 ldap_abandon( LDAP *ld, int msgid )
 {
-	Debug( LDAP_DEBUG_TRACE, "ldap_abandon %d\n", msgid, 0, 0 );
+	Debug1( LDAP_DEBUG_TRACE, "ldap_abandon %d\n", msgid );
 	return ldap_abandon_ext( ld, msgid, NULL, NULL ) == LDAP_SUCCESS
 		? 0 : -1;
 }
@@ -117,7 +117,7 @@ ldap_pvt_discard(
 	int	rc;
 
 	LDAP_MUTEX_LOCK( &ld->ld_req_mutex );
-	rc = do_abandon( ld, msgid, msgid, NULL, 0 );
+	rc = do_abandon( ld, msgid, NULL, NULL, 0 );
 	LDAP_MUTEX_UNLOCK( &ld->ld_req_mutex );
 	return rc;
 }
@@ -126,48 +126,51 @@ static int
 do_abandon(
 	LDAP *ld,
 	ber_int_t origid,
-	ber_int_t msgid,
+	LDAPRequest *lr,
 	LDAPControl **sctrls,
 	int sendabandon )
 {
 	BerElement	*ber;
 	int		i, err;
+	ber_int_t	msgid = origid;
 	Sockbuf		*sb;
-	LDAPRequest	*lr;
+	LDAPRequest	needle = {0};
 
-	Debug( LDAP_DEBUG_TRACE, "do_abandon origid %d, msgid %d\n",
-		origid, msgid, 0 );
-
-	/* find the request that we are abandoning */
-start_again:;
-	lr = ld->ld_requests;
-	while ( lr != NULL ) {
-		/* this message */
-		if ( lr->lr_msgid == msgid ) {
-			break;
-		}
-
-		/* child: abandon it */
-		if ( lr->lr_origid == msgid && !lr->lr_abandoned ) {
-			(void)do_abandon( ld, lr->lr_origid, lr->lr_msgid,
-				sctrls, sendabandon );
-
-			/* restart, as lr may now be dangling... */
-			goto start_again;
-		}
-
-		lr = lr->lr_next;
-	}
+	needle.lr_msgid = origid;
 
 	if ( lr != NULL ) {
-		if ( origid == msgid && lr->lr_parent != NULL ) {
+		msgid = lr->lr_msgid;
+		Debug2( LDAP_DEBUG_TRACE, "do_abandon origid %d, msgid %d\n",
+				origid, msgid );
+	} else if ( (lr = ldap_tavl_find( ld->ld_requests, &needle, ldap_req_cmp )) != NULL ) {
+		Debug2( LDAP_DEBUG_TRACE, "do_abandon origid %d, msgid %d\n",
+				origid, msgid );
+		if ( lr->lr_parent != NULL ) {
 			/* don't let caller abandon child requests! */
 			ld->ld_errno = LDAP_PARAM_ERROR;
 			return( LDAP_PARAM_ERROR );
 		}
+		msgid = lr->lr_msgid;
+	}
+
+	if ( lr != NULL ) {
+		LDAPRequest **childp = &lr->lr_child;
+
+		needle.lr_msgid = lr->lr_msgid;
+
 		if ( lr->lr_status != LDAP_REQST_INPROGRESS ) {
 			/* no need to send abandon message */
 			sendabandon = 0;
+		}
+
+		while ( *childp ) {
+			/* Abandon children */
+			LDAPRequest *child = *childp;
+
+			(void)do_abandon( ld, lr->lr_origid, child, sctrls, sendabandon );
+			if ( *childp == child ) {
+				childp = &child->lr_refnext;
+			}
 		}
 	}
 
@@ -184,12 +187,7 @@ start_again:;
 
 	/* fetch again the request that we are abandoning */
 	if ( lr != NULL ) {
-		for ( lr = ld->ld_requests; lr != NULL; lr = lr->lr_next ) {
-			/* this message */
-			if ( lr->lr_msgid == msgid ) {
-				break;
-			}
-		}
+		lr = ldap_tavl_find( ld->ld_requests, &needle, ldap_req_cmp );
 	}
 
 	err = 0;

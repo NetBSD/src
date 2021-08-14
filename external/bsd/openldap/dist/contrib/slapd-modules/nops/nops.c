@@ -1,10 +1,10 @@
-/*	$NetBSD: nops.c,v 1.2 2020/08/11 13:15:35 christos Exp $	*/
+/*	$NetBSD: nops.c,v 1.3 2021/08/14 16:14:52 christos Exp $	*/
 
 /* nops.c - Overlay to filter idempotent operations */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>. 
  *
- * Copyright 2008-2020 The OpenLDAP Foundation.
+ * Copyright 2008-2021 The OpenLDAP Foundation.
  * Copyright 2008 Emmanuel Dreyfus.
  * All rights reserved.
  *
@@ -21,7 +21,7 @@
  * inclusion in OpenLDAP Software.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: nops.c,v 1.2 2020/08/11 13:15:35 christos Exp $");
+__RCSID("$NetBSD: nops.c,v 1.3 2021/08/14 16:14:52 christos Exp $");
 
 #include "portable.h"
 
@@ -34,7 +34,7 @@ __RCSID("$NetBSD: nops.c,v 1.2 2020/08/11 13:15:35 christos Exp $");
 
 #include "lutil.h"
 #include "slap.h"
-#include "config.h"
+#include "slap-config.h"
 
 static ConfigDriver nops_cf_gen;
 
@@ -135,8 +135,8 @@ nops_modify( Operation *op, SlapReply *rs )
 			continue;
 
 		/* This is a nop, remove it */
-		Debug(LDAP_DEBUG_TRACE, "removing nop on %s%s%s",
-			a->a_desc->ad_cname.bv_val, "", "");
+		Debug(LDAP_DEBUG_TRACE, "removing nop on %s",
+			a->a_desc->ad_cname.bv_val );
 
 		nops_rm_mod(&op->orm_modlist, mc);
 	}
@@ -168,6 +168,7 @@ static
 int
 nops_initialize( void ) {
 	nops_ovl.on_bi.bi_type = "nops";
+	nops_ovl.on_bi.bi_flags = SLAPO_BFLAG_SINGLE;
 	nops_ovl.on_bi.bi_op_modify = nops_modify;
 	return overlay_register( &nops_ovl );
 }

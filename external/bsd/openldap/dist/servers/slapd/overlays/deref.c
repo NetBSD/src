@@ -1,10 +1,10 @@
-/*	$NetBSD: deref.c,v 1.6 2020/08/11 13:15:42 christos Exp $	*/
+/*	$NetBSD: deref.c,v 1.7 2021/08/14 16:15:02 christos Exp $	*/
 
 /* deref.c - dereference overlay */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * Portions Copyright 2008 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: deref.c,v 1.6 2020/08/11 13:15:42 christos Exp $");
+__RCSID("$NetBSD: deref.c,v 1.7 2021/08/14 16:15:02 christos Exp $");
 
 #include "portable.h"
 
@@ -34,7 +34,7 @@ __RCSID("$NetBSD: deref.c,v 1.6 2020/08/11 13:15:42 christos Exp $");
 #include "ac/socket.h"
 
 #include "slap.h"
-#include "config.h"
+#include "slap-config.h"
 
 #include "lutil.h"
 
@@ -538,7 +538,7 @@ deref_db_init( BackendDB *be, ConfigReply *cr)
 		if ( rc != LDAP_SUCCESS ) {
 			Debug( LDAP_DEBUG_ANY,
 				"deref_init: Failed to register control (%d)\n",
-				rc, 0, 0 );
+				rc );
 			return rc;
 		}
 	}
@@ -569,6 +569,7 @@ int
 deref_initialize(void)
 {
 	deref.on_bi.bi_type = "deref";
+	deref.on_bi.bi_flags = SLAPO_BFLAG_SINGLE;
 	deref.on_bi.bi_db_init = deref_db_init;
 	deref.on_bi.bi_db_open = deref_db_open;
 #ifdef SLAP_CONFIG_DELETE

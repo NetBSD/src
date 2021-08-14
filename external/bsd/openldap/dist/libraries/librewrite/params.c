@@ -1,9 +1,9 @@
-/*	$NetBSD: params.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
+/*	$NetBSD: params.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2020 The OpenLDAP Foundation.
+ * Copyright 2000-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -104,7 +104,7 @@ rewrite_param_get(
 	ldap_pvt_thread_rdwr_runlock( &info->li_params_mutex );
 #endif /* USE_REWRITE_LDAP_PVT_THREADS */
 
-	return REWRITE_SUCCESS;
+	return rc;
 }
 
 static void
@@ -131,15 +131,13 @@ rewrite_param_destroy(
 		struct rewrite_info *info
 )
 {
-	int count;
-
 	assert( info != NULL );
 	
 #ifdef USE_REWRITE_LDAP_PVT_THREADS
 	ldap_pvt_thread_rdwr_wlock( &info->li_params_mutex );
 #endif /* USE_REWRITE_LDAP_PVT_THREADS */
 	
-	count = avl_free( info->li_params, rewrite_param_free );
+	ldap_avl_free( info->li_params, rewrite_param_free );
 	info->li_params = NULL;
 
 #ifdef USE_REWRITE_LDAP_PVT_THREADS

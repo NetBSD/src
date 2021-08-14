@@ -1,8 +1,8 @@
-/*	$NetBSD: LDAPRebind.h,v 1.2 2020/08/11 13:15:34 christos Exp $	*/
+/*	$NetBSD: LDAPRebind.h,v 1.3 2021/08/14 16:14:49 christos Exp $	*/
 
 // $OpenLDAP$
 /*
- * Copyright 2000-2020 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2000-2021 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -13,7 +13,7 @@
 #include <LDAPRebindAuth.h>
 
 /**
- * Just an abstract class to provide a mechnism for rebind to another
+ * Just an abstract class to provide a mechanism for rebind to another
  * server when chasing referrals. Clients have to implement a class
  * derived from this. To use authentication other than anonymous for
  * referral chasing

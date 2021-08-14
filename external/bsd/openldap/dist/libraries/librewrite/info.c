@@ -1,9 +1,9 @@
-/*	$NetBSD: info.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
+/*	$NetBSD: info.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2020 The OpenLDAP Foundation.
+ * Copyright 2000-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -83,13 +83,13 @@ rewrite_info_init(
 
 #ifdef USE_REWRITE_LDAP_PVT_THREADS
 	if ( ldap_pvt_thread_rdwr_init( &info->li_cookies_mutex ) ) {
-		avl_free( info->li_context, rewrite_context_free );
+		ldap_avl_free( info->li_context, rewrite_context_free );
 		free( info );
 		return NULL;
 	}
 	if ( ldap_pvt_thread_rdwr_init( &info->li_params_mutex ) ) {
 		ldap_pvt_thread_rdwr_destroy( &info->li_cookies_mutex );
-		avl_free( info->li_context, rewrite_context_free );
+		ldap_avl_free( info->li_context, rewrite_context_free );
 		free( info );
 		return NULL;
 	}
@@ -114,12 +114,12 @@ rewrite_info_delete(
 	info = *pinfo;
 	
 	if ( info->li_context ) {
-		avl_free( info->li_context, rewrite_context_free );
+		ldap_avl_free( info->li_context, rewrite_context_free );
 	}
 	info->li_context = NULL;
 
 	if ( info->li_maps ) {
-		avl_free( info->li_maps, rewrite_builtin_map_free );
+		ldap_avl_free( info->li_maps, rewrite_builtin_map_free );
 	}
 	info->li_maps = NULL;
 

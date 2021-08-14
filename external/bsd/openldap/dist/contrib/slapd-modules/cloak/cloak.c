@@ -1,10 +1,10 @@
-/*	$NetBSD: cloak.c,v 1.2 2020/08/11 13:15:35 christos Exp $	*/
+/*	$NetBSD: cloak.c,v 1.3 2021/08/14 16:14:51 christos Exp $	*/
 
-/* cloak.c - Overlay to hide some attribute except if explicitely requested */
+/* cloak.c - Overlay to hide some attribute except if explicitly requested */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2008-2020 The OpenLDAP Foundation.
+ * Copyright 2008-2021 The OpenLDAP Foundation.
  * Portions Copyright 2008 Emmanuel Dreyfus
  * All rights reserved.
  *
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cloak.c,v 1.2 2020/08/11 13:15:35 christos Exp $");
+__RCSID("$NetBSD: cloak.c,v 1.3 2021/08/14 16:14:51 christos Exp $");
 
 #include "portable.h"
 
@@ -35,7 +35,7 @@ __RCSID("$NetBSD: cloak.c,v 1.2 2020/08/11 13:15:35 christos Exp $");
 
 #include "lutil.h"
 #include "slap.h"
-#include "config.h"
+#include "slap-config.h"
 
 enum { CLOAK_ATTR = 1 };
 
@@ -134,7 +134,7 @@ cloak_cfgen( ConfigArgs *c )
 					  "unable to find ObjectClass \"%s\"",
 					  c->argv[ 2 ] );
 				Debug( LDAP_DEBUG_ANY, "%s: %s.\n",
-				       c->log, c->cr_msg, 0 );
+				       c->log, c->cr_msg );
 				return 1;
 			}
 		}
@@ -145,7 +145,7 @@ cloak_cfgen( ConfigArgs *c )
 				"unable to find AttributeDescription \"%s\"",
 				c->argv[ 1 ] );
 			Debug( LDAP_DEBUG_ANY, "%s: %s.\n",
-				c->log, c->cr_msg, 0 );
+				c->log, c->cr_msg );
 			return 1;
 		}
 
@@ -158,7 +158,7 @@ cloak_cfgen( ConfigArgs *c )
 					"invalid index {%d}\n",
 					c->valx );
 				Debug( LDAP_DEBUG_ANY, "%s: %s.\n",
-					c->log, c->cr_msg, 0 );
+					c->log, c->cr_msg );
 				return 1;
 			}
 			ci_next = *cip;
@@ -240,8 +240,7 @@ cloak_search_response_cb( Operation *op, SlapReply *rs )
 				continue;
 
 			Debug( LDAP_DEBUG_TRACE, "cloak_search_response_cb: cloak %s\n", 
-			       a->a_desc->ad_cname.bv_val,
-			       0, 0 );
+			       a->a_desc->ad_cname.bv_val );
 
 			if ( pa != NULL ) 
 				pa->a_next = a->a_next;
@@ -338,6 +337,7 @@ int
 cloak_initialize( void ) {
 	int rc;
 	cloak_ovl.on_bi.bi_type = "cloak";
+	cloak_ovl.on_bi.bi_flags = SLAPO_BFLAG_SINGLE;
 	cloak_ovl.on_bi.bi_db_destroy = cloak_db_destroy;
 	cloak_ovl.on_bi.bi_op_search = cloak_search;
         cloak_ovl.on_bi.bi_cf_ocs = cloakocs;

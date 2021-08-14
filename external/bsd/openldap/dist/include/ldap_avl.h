@@ -1,4 +1,4 @@
-/*	$NetBSD: ldap_avl.h,v 1.1.1.1 2021/08/14 16:05:12 christos Exp $	*/
+/*	$NetBSD: ldap_avl.h,v 1.2 2021/08/14 16:14:55 christos Exp $	*/
 
 /* ldap_avl.h - avl tree definitions */
 /* $OpenLDAP$ */

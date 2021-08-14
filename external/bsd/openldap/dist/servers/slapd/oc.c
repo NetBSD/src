@@ -1,10 +1,10 @@
-/*	$NetBSD: oc.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
+/*	$NetBSD: oc.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
 
 /* oc.c - object class routines */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: oc.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
+__RCSID("$NetBSD: oc.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
 
 #include "portable.h"
 
@@ -95,7 +95,7 @@ int is_entry_objectclass(
 		Debug( LDAP_DEBUG_ANY, "is_entry_objectclass(\"%s\", \"%s\") "
 			"no objectClass attribute\n",
 			e->e_dn == NULL ? "" : e->e_dn,
-			oc->soc_oclass.oc_oid, 0 );
+			oc->soc_oclass.oc_oid );
 
 		/* mark flags as set */
 		e->e_ocflags |= SLAP_OC__END;
@@ -185,15 +185,15 @@ oc_bvfind( struct berval *ocname )
 	struct oindexrec	*oir;
 
 	if ( oc_cache ) {
-		oir = avl_find( oc_cache, ocname, oc_index_name_cmp );
+		oir = ldap_avl_find( oc_cache, ocname, oc_index_name_cmp );
 		if ( oir ) return oir->oir_oc;
 	}
-	oir = avl_find( oc_index, ocname, oc_index_name_cmp );
+	oir = ldap_avl_find( oc_index, ocname, oc_index_name_cmp );
 
 	if ( oir != NULL ) {
 		if ( at_oc_cache ) {
-			avl_insert( &oc_cache, (caddr_t) oir,
-				oc_index_cmp, avl_dup_error );
+			ldap_avl_insert( &oc_cache, (caddr_t) oir,
+				oc_index_cmp, ldap_avl_dup_error );
 		}
 		return( oir->oir_oc );
 	}
@@ -412,7 +412,7 @@ oc_delete_names( ObjectClass *oc )
 
 		ber_str2bv( *names, 0, 0, &tmpoir.oir_name );
 		tmpoir.oir_oc = oc;
-		oir = (struct oindexrec *)avl_delete( &oc_index,
+		oir = (struct oindexrec *)ldap_avl_delete( &oc_index,
 			(caddr_t)&tmpoir, oc_index_cmp );
 		assert( oir != NULL );
 		ldap_memfree( oir );
@@ -477,7 +477,7 @@ oc_destroy( void )
 		oc_delete_names( o );
 	}
 	
-	avl_free( oc_index, oc_destroy_one );
+	ldap_avl_free( oc_index, oc_destroy_one );
 
 	while( !LDAP_STAILQ_EMPTY(&oc_undef_list) ) {
 		o = LDAP_STAILQ_FIRST(&oc_undef_list);
@@ -602,7 +602,7 @@ oc_insert(
 		oir->oir_oc = soc;
 		oir_old = NULL;
 
-		if ( avl_insert( &oc_index, (caddr_t) oir,
+		if ( ldap_avl_insert( &oc_index, (caddr_t) oir,
 			oc_index_cmp, oc_dup_error ) )
 		{
 			ObjectClass	*old_soc;
@@ -654,8 +654,8 @@ oc_insert(
 			oir->oir_name.bv_len = strlen( *names );
 			oir->oir_oc = soc;
 
-			if ( avl_insert( &oc_index, (caddr_t) oir,
-				oc_index_cmp, avl_dup_error ) )
+			if ( ldap_avl_insert( &oc_index, (caddr_t) oir,
+				oc_index_cmp, ldap_avl_dup_error ) )
 			{
 				ObjectClass	*old_soc;
 				int		rc;
@@ -674,7 +674,7 @@ oc_insert(
 					names--;
 					ber_str2bv( *names, 0, 0, &tmpoir.oir_name );
 					tmpoir.oir_oc = soc;
-					oir = (struct oindexrec *)avl_delete( &oc_index,
+					oir = (struct oindexrec *)ldap_avl_delete( &oc_index,
 						(caddr_t)&tmpoir, oc_index_cmp );
 					assert( oir != NULL );
 					ldap_memfree( oir );
@@ -685,7 +685,7 @@ oc_insert(
 
 					ber_str2bv( soc->soc_oid, 0, 0, &tmpoir.oir_name );
 					tmpoir.oir_oc = soc;
-					oir = (struct oindexrec *)avl_delete( &oc_index,
+					oir = (struct oindexrec *)ldap_avl_delete( &oc_index,
 						(caddr_t)&tmpoir, oc_index_cmp );
 					assert( oir != NULL );
 					ldap_memfree( oir );
