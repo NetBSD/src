@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.200 2021/05/30 21:16:54 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.201 2021/08/14 13:26:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.200 2021/05/30 21:16:54 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.201 2021/08/14 13:26:07 rillig Exp $");
 
 typedef struct List ArchList;
 typedef struct ListNode ArchListNode;
@@ -988,6 +988,34 @@ Arch_FindLib(GNode *gn, SearchPath *path)
 #endif
 }
 
+static bool
+RanlibOODate(const GNode *gn MAKE_ATTR_UNUSED)
+{
+#ifdef RANLIBMAG
+	struct ar_hdr *arh;	/* Header for __.SYMDEF */
+	int tocModTime;		/* The table-of-contents' mod time */
+
+	arh = ArchStatMember(gn->path, RANLIBMAG, false);
+
+	if (arh == NULL) {
+		/* A library without a table of contents is out-of-date. */
+		if (DEBUG(ARCH) || DEBUG(MAKE))
+			debug_printf("no toc...");
+		return true;
+	}
+
+	tocModTime = (int)strtol(arh->ar_date, NULL, 10);
+
+	if (DEBUG(ARCH) || DEBUG(MAKE))
+		debug_printf("%s modified %s...",
+		    RANLIBMAG, Targ_FmtTime(tocModTime));
+	return gn->youngestChild == NULL ||
+	       gn->youngestChild->mtime > tocModTime;
+#else
+	return false;
+#endif
+}
+
 /*
  * Decide if a node with the OP_LIB attribute is out-of-date. Called from
  * GNode_IsOODate to make its life easier.
@@ -1021,46 +1049,19 @@ Arch_FindLib(GNode *gn, SearchPath *path)
 bool
 Arch_LibOODate(GNode *gn)
 {
-	bool oodate;
 
 	if (gn->type & OP_PHONY) {
-		oodate = true;
+		return true;
 	} else if (!GNode_IsTarget(gn) && Lst_IsEmpty(&gn->children)) {
-		oodate = false;
+		return false;
 	} else if ((!Lst_IsEmpty(&gn->children) && gn->youngestChild == NULL) ||
 		   (gn->mtime > now) ||
 		   (gn->youngestChild != NULL &&
 		    gn->mtime < gn->youngestChild->mtime)) {
-		oodate = true;
+		return true;
 	} else {
-#ifdef RANLIBMAG
-		struct ar_hdr *arh;	/* Header for __.SYMDEF */
-		int modTimeTOC;		/* The table-of-contents' mod time */
-
-		arh = ArchStatMember(gn->path, RANLIBMAG, false);
-
-		if (arh != NULL) {
-			modTimeTOC = (int)strtol(arh->ar_date, NULL, 10);
-
-			if (DEBUG(ARCH) || DEBUG(MAKE))
-				debug_printf("%s modified %s...",
-					     RANLIBMAG,
-					     Targ_FmtTime(modTimeTOC));
-			oodate = gn->youngestChild == NULL ||
-				 gn->youngestChild->mtime > modTimeTOC;
-		} else {
-			/*
-			 * A library without a table of contents is out-of-date.
-			 */
-			if (DEBUG(ARCH) || DEBUG(MAKE))
-				debug_printf("no toc...");
-			oodate = true;
-		}
-#else
-		oodate = false;
-#endif
+		return RanlibOODate(gn);
 	}
-	return oodate;
 }
 
 /* Initialize the archives module. */
